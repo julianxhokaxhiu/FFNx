@@ -274,12 +274,7 @@ void swirl_sub_56D390(uint x, uint y, uint w, uint h)
 
 void ff8_read_basedir()
 {
-	DWORD basedir_length = sizeof(basedir);
-	HKEY ff8_regkey;
-
-	RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Square Soft, Inc\\Final Fantasy VIII\\1.00", 0, KEY_QUERY_VALUE, &ff8_regkey);
-	RegQueryValueEx(ff8_regkey, "AppPath", 0, 0, (LPBYTE)basedir, &basedir_length);
-	basedir[sizeof(basedir) - 1] = 0;
+	GetCurrentDirectory(sizeof(basedir), basedir);
 }
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};

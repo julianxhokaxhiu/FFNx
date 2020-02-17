@@ -38,13 +38,7 @@
 
 void ff7_read_basedir()
 {
-	DWORD basedir_length = sizeof(basedir);
-	HKEY ff7_regkey;
-
-	RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Square Soft, Inc.\\Final Fantasy VII", 0, KEY_QUERY_VALUE, &ff7_regkey);
-	RegQueryValueEx(ff7_regkey, "AppPath", 0, 0, (LPBYTE)basedir, &basedir_length);
-	RegCloseKey(ff7_regkey);
-	basedir[sizeof(basedir) - 1] = 0;
+	GetCurrentDirectory(sizeof(basedir), basedir);
 }
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
