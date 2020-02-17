@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.15)
+cmake_policy(VERSION 3.15)
+cmake_policy(SET CMP0091 NEW)
+
+project(libconfuse)
+
+set (LIBCONFUSE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set (LIBCONFUSE_LIB_NAME libconfuse)
+set (LIBCONFUSE_PUBLIC_HEADER_FILE ${LIBCONFUSE_DIR}/src/confuse.h)
+set (LIBCONFUSE_SRC_FILES ${LIBCONFUSE_DIR}/src/fmemopen.c ${LIBCONFUSE_DIR}/src/lexer.c ${LIBCONFUSE_DIR}/src/confuse.c)
+
+add_library (libconfuse STATIC ${LIBCONFUSE_PUBLIC_HEADER_FILE} ${LIBCONFUSE_SRC_FILES})
+set_target_properties (libconfuse PROPERTIES PUBLIC_HEADER "${LIBCONFUSE_PUBLIC_HEADER_FILE}" COMPILE_DEFINITIONS "BUILDING_STATIC" OUTPUT_NAME "${LIBCONFUSE_LIB_NAME}")
+
+target_include_directories(libconfuse PRIVATE "${LIBCONFUSE_DIR}/windows/msvs.net" "${LIBCONFUSE_DIR}/src")
+target_compile_definitions (libconfuse PUBLIC BUILDING_STATIC HAVE_STRDUP HAVE_CONFIG_H)
+target_compile_definitions (libconfuse PRIVATE _CRT_SECURE_NO_WARNINGS)
+
+target_compile_definitions(libconfuse INTERFACE "BUILDING_STATIC")
+target_include_directories(libconfuse PUBLIC $<INSTALL_INTERFACE:include>)
+
+install(TARGETS libconfuse
+		LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION include
+)

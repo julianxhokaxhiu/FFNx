@@ -1,0 +1,32 @@
+include(FindPackageHandleStandardArgs)
+
+if(NOT CONFUSE_FOUND)
+	find_library(
+		CONFUSE_LIBRARY
+		libconfuse
+		PATH_SUFFIXES
+		lib
+	)
+
+	find_path(
+		CONFUSE_INCLUDE_DIR
+		confuse.h
+		PATH_SUFFIXES
+		include
+	)
+
+	add_library(CONFUSE::CONFUSE STATIC IMPORTED)
+
+	set_target_properties(
+		CONFUSE::CONFUSE
+		PROPERTIES
+		IMPORTED_LOCATION
+		"${CONFUSE_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES
+		"${CONFUSE_INCLUDE_DIR}"
+		INTERFACE_COMPILE_DEFINITIONS
+		BUILDING_STATIC=1
+	)
+
+	find_package_handle_standard_args(CONFUSE DEFAULT_MSG CONFUSE_LIBRARY CONFUSE_INCLUDE_DIR)
+endif()
