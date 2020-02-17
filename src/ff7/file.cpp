@@ -135,7 +135,7 @@ uint original_lgp_open_file(char *filename, uint lgp_num, struct lgp_file *ret)
 		{
 			struct lgp_toc_entry *toc_entry = &ff7_externals.lgp_tocs[lgp_num * 2][toc_offset + i - 1];
 
-			if(!_strnicmp(toc_entry->name, filename, strlen(toc_entry->name)))
+			if(!_stricmp(toc_entry->name, filename))
 			{
 				if(!toc_entry->conflict)
 				{
@@ -154,7 +154,7 @@ uint original_lgp_open_file(char *filename, uint lgp_num, struct lgp_file *ret)
 					// current directory in the conflict table
 					for(i = 0; i < num_conflicts; i++)
 					{
-						if(!_strnicmp(conflict_entries[i].name, lgp_current_dir, strlen(conflict_entries[i].name)))
+						if(!_stricmp(conflict_entries[i].name, lgp_current_dir))
 						{
 							struct lgp_toc_entry *toc_entry = &ff7_externals.lgp_tocs[lgp_num * 2][conflict_entries[i].toc_index];
 
@@ -178,7 +178,7 @@ uint original_lgp_open_file(char *filename, uint lgp_num, struct lgp_file *ret)
 	{
 		struct lgp_toc_entry *toc_entry = &ff7_externals.lgp_tocs[lgp_num * 2][i];
 
-		if(!_strnicmp(toc_entry->name, filename, strlen(toc_entry->name)))
+		if(!_stricmp(toc_entry->name, filename))
 		{
 			glitch("broken LGP file (%s), don't use LGP Tools!\n", lgp_names[lgp_num]);
 
