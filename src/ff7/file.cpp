@@ -524,11 +524,11 @@ void seek_file(struct ff7_file *file, uint offset)
 }
 
 // construct modpath name from file context, file handle and filename
-char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename, bool external)
+char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename)
 {
 	uint i, len;
 	char *backslash;
-	char* ret = external ? (char*)external_malloc(1024) : (char*)driver_malloc(1024);
+	char* ret = (char*)external_malloc(1024);
 
 	if(file_context->use_lgp)
 	{

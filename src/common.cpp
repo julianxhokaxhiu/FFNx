@@ -584,8 +584,8 @@ void common_unload_texture(struct texture_set *texture_set)
 	for (uint idx = 0; idx < VREF(texture_set, ogl.gl_set->textures); idx++)
 		newRenderer.deleteTexture(VREF(texture_set, texturehandle[idx]));
 
-	driver_free(VREF(texture_set, texturehandle));
-	driver_free(VREF(texture_set, ogl.gl_set));
+	external_free(VREF(texture_set, texturehandle));
+	external_free(VREF(texture_set, ogl.gl_set));
 
 	VRASS(texture_set, texturehandle, 0);
 	VRASS(texture_set, ogl.gl_set, 0);
@@ -800,7 +800,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	if(!VPTR(texture_set)) VASS(texture_set, texture_set, common_externals.create_texture_set());
 
 	// allocate space for our private data
-	if(!VREF(texture_set, ogl.gl_set)) VRASS(texture_set, ogl.gl_set, (gl_texture_set*)driver_calloc(sizeof(struct gl_texture_set), 1));
+	if(!VREF(texture_set, ogl.gl_set)) VRASS(texture_set, ogl.gl_set, (gl_texture_set*)external_calloc(sizeof(struct gl_texture_set), 1));
 
 	// texture handle array may not have been initialized
 	if(!VREF(texture_set, texturehandle))
@@ -808,7 +808,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 		// allocate some more textures just in case, there could be more palettes we don't know about yet
 		// FF8 likes to change its mind about just how many palettes a texture has
 		VRASS(texture_set, ogl.gl_set->textures, VREF(tex_header, palettes) > 0 ? VREF(tex_header, palettes) * 2 : 1);
-		VRASS(texture_set, texturehandle, (uint*)driver_calloc(VREF(texture_set, ogl.gl_set->textures), sizeof(uint)));
+		VRASS(texture_set, texturehandle, (uint*)external_calloc(VREF(texture_set, ogl.gl_set->textures), sizeof(uint)));
 
 		if(ff8 && VREF(tex_header, version) != FB_TEX_VERSION)
 		{

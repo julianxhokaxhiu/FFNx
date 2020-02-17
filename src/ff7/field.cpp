@@ -58,7 +58,7 @@ void field_load_textures_helper(struct ff7_game_obj *game_object, struct struc_3
 	
 	tex_header->image_data = (unsigned char*)ff7_externals.field_layers[dst]->image_data;
 
-	tex_header->file.pc_name = (char*)driver_malloc(1024);
+	tex_header->file.pc_name = (char*)external_malloc(1024);
 	sprintf(tex_header->file.pc_name, "field/%s/%s_%02i", strchr(ff7_externals.field_file_name, '\\') + 1, strchr(ff7_externals.field_file_name, '\\') + 1, src);
 
 	ff7_externals.field_layers[dst]->graphics_object = ff7_externals._load_texture(1, PT_S2D, struc_3, 0, game_object->dx_sfx_something);

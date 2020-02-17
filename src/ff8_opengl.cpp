@@ -114,7 +114,7 @@ void ff8_destroy_tex_header(struct ff8_tex_header *tex_header)
 {
 	if(!tex_header) return;
 
-	if((uint)tex_header->file.pc_name > 32) driver_free(tex_header->file.pc_name);
+	if((uint)tex_header->file.pc_name > 32) external_free(tex_header->file.pc_name);
 
 	external_free(tex_header->old_palette_data);
 	external_free(tex_header->palette_colorkey);
@@ -161,7 +161,7 @@ struct ff8_tex_header *ff8_load_tex_file(struct file_context *file_context, char
 		}
 	}
 
-	ret->file.pc_name = (char*)driver_malloc(1024);
+	ret->file.pc_name = (char*)external_malloc(1024);
 
 	len = _snprintf(ret->file.pc_name, 1024, "%s", &filename[7]);
 

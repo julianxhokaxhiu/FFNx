@@ -57,7 +57,7 @@ uint write_file(uint count, void *buffer, struct ff7_file *file);
 uint get_filesize(struct ff7_file *file);
 uint tell_file(struct ff7_file *file);
 void seek_file(struct ff7_file *file, uint offset);
-char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename, bool external);
+char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename);
 
 // graphics
 void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip);

@@ -79,7 +79,7 @@ struct anim_header *load_animation(struct file_context *file_context, char *file
 		data_pointer += sizeof(struct point3d) * ret->num_bones;
 	}
 
-	ret->file.pc_name = make_pc_name(file_context, file, filename, false);
+	ret->file.pc_name = make_pc_name(file_context, file, filename);
 
 	close_file(file);
 	return ret;
@@ -150,7 +150,7 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint create_
 	ret->polycolordata = 0;
 	ret->edgedata = 0;
 	ret->polydata = 0;
-	ret->pc_name = make_pc_name(file_context, file, filename, true);
+	ret->pc_name = make_pc_name(file_context, file, filename);
 	ret->field_64 = 0;
 	ret->hundredsdata = 0;
 	ret->groupdata = 0;
@@ -196,7 +196,7 @@ void destroy_tex_header(struct ff7_tex_header *tex_header)
 {
 	if(!tex_header) return;
 
-	if((uint)tex_header->file.pc_name > 32) driver_free(tex_header->file.pc_name);
+	if((uint)tex_header->file.pc_name > 32) external_free(tex_header->file.pc_name);
 
 	external_free(tex_header->old_palette_data);
 	external_free(tex_header->palette_colorkey);
@@ -239,7 +239,7 @@ struct ff7_tex_header *load_tex_file(struct file_context *file_context, char *fi
 		}
 	}
 
-	ret->file.pc_name = make_pc_name(file_context, file, filename, false);
+	ret->file.pc_name = make_pc_name(file_context, file, filename);
 
 	close_file(file);
 	return ret;
