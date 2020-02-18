@@ -41,7 +41,7 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 1. Install the game on this path: `C:\Games\Final Fantasy VII`
 2. Update your game to v1.02 ( https://www.gamefront.com/games/final-fantasy-7-advent-children/file/final-fantasy-7-retail-v1-02-patch )
 2. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
-3. Extract the ZIP content next to where you `ff7.exe` file lives
+3. Extract the ZIP content next to where your `ff7.exe` file lives
 4. Double click on [`FFNx.reg`](misc/FFNx.reg)
 5. Click on Yes.
 6. Enjoy!
