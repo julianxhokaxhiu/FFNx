@@ -50,6 +50,15 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 1. Convert the official Steam release to the 1998 Eidos Release ( see https://forums.qhimm.com/index.php?topic=15520.0 )
 2. Follow now the official 1998 release installation instructions starting from point 3
 
+### Final Fantasy VIII
+
+#### 2000 Official Squaresoft Release
+1. Install the game on this path: `C:\Games\Final Fantasy VIII`
+2. Update your game to v1.2 ( search for `ff8_1.2.zip` or `ff8_1.2G.zip` here http://forums.qhimm.com/index.php?topic=12909.msg180223#msg180223 )
+2. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
+3. Extract the ZIP content next to where your `ff8.exe` file lives
+4. Enjoy!
+
 ## Tweak the configuration
 If you want a more advanced experience, for example using another backend renderer ( Vulkan instead of OpenGL, or DirectX 11 ) feel free to change the driver configuration file [FFNx.cfg](misc/FFNx.cfg).
 
