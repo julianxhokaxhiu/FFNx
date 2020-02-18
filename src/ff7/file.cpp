@@ -393,7 +393,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 error:
 	// it's normal for save files to be missing, anything else is probably
 	// going to cause trouble
-	if(file_context->use_lgp || _strnicmp(&_filename[strlen(_filename) - 4], ".ff7", 4)) error("could not open file %s\n", filename);
+	if(file_context->use_lgp || _stricmp(&_filename[strlen(_filename) - 4], ".ff7")) error("could not open file %s\n", filename);
 	close_file(ret);
 	return 0;
 }
@@ -541,8 +541,8 @@ char *make_pc_name(struct file_context *file_context, struct ff7_file *file, cha
 	{
 		if(ret[i] == '.')
 		{
-			if(!_strnicmp(&ret[i], ".tex", 4)) ret[i] = 0;
-			else if(!_strnicmp(&ret[i], ".p", 2)) ret[i] = 0;
+			if(!_stricmp(&ret[i], ".tex")) ret[i] = 0;
+			else if(!_stricmp(&ret[i], ".p")) ret[i] = 0;
 			else ret[i] = '_';
 		}
 	}
