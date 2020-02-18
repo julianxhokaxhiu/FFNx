@@ -554,6 +554,8 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
 
 uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool generateMips)
 {
+    bgfx::TextureHandle ret;
+
     bgfx::TextureFormat::Enum texFormat = bgfx::TextureFormat::R8;
     bimg::TextureFormat::Enum imgFormat = bimg::TextureFormat::R8;
 
@@ -566,32 +568,41 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
     bimg::TextureInfo texInfo;
     bimg::imageGetSize(&texInfo, width, height, 0, false, false, 1, imgFormat);
 
-    const bgfx::Memory* mem = bgfx::copy(data, texInfo.storageSize);
+    // If the texture we are going to create does not fit in memory, return an empty one.
+    // Will prevent the game from crashing, while allowing the player to not loose its progress.
+    if ((texInfo.storageSize + get_ram_size()) > pow(1024, 3))
+    {
+        ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
+    }
+    else
+    {
+        const bgfx::Memory* mem = bgfx::copy(data, texInfo.storageSize);
 
-    bgfx::TextureHandle handle = bgfx::createTexture2D(
-        width,
-        height,
-        false,
-        1,
-        texFormat,
-        BGFX_TEXTURE_NONE | generateMips ? BGFX_SAMPLER_MIP_POINT : BGFX_SAMPLER_NONE,
-        stride > 0 ? NULL : mem
-    );
-
-    if (stride > 0)
-        bgfx::updateTexture2D(
-            handle,
-            0,
-            0,
-            0,
-            0,
+        ret = bgfx::createTexture2D(
             width,
             height,
-            mem,
-            stride
+            false,
+            1,
+            texFormat,
+            BGFX_TEXTURE_NONE | generateMips ? BGFX_SAMPLER_MIP_POINT : BGFX_SAMPLER_NONE,
+            stride > 0 ? NULL : mem
         );
 
-    return handle.idx;
+        if (stride > 0)
+            bgfx::updateTexture2D(
+                ret,
+                0,
+                0,
+                0,
+                0,
+                width,
+                height,
+                mem,
+                stride
+            );
+    }
+
+    return ret.idx;
 };
 
 void Renderer::deleteTexture(uint16_t rt)

@@ -260,6 +260,7 @@ struct driver_stats
 	time_t timer;
 };
 
+SIZE_T get_ram_size();
 void qpc_get_time(time_t *dest);
 uint get_version();
 struct game_mode *getmode();

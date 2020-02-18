@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <math.h>
 #include <bx/math.h>
 #include <bx/bx.h>
 #include <bimg/bimg.h>

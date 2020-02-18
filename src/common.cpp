@@ -335,14 +335,6 @@ void common_flip(struct game_obj *game_object)
 
 	if(show_stats)
 	{
-		PROCESS_MEMORY_COUNTERS_EX pmc;
-		SIZE_T ram_size;
-
-		pmc.cb = sizeof(pmc);
-
-		GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS *)&pmc, sizeof(pmc));
-		ram_size = pmc.WorkingSetSize;
-
 		if (fullscreen)
 		{
 			static uint col = 4;
@@ -354,7 +346,7 @@ void common_flip(struct game_obj *game_object)
 #ifdef PROFILE
 			gl_draw_text(col, row++, color, 255, "Profiling: %I64u us", (time_t)((profile_total * 1000000.0) / VREF(game_object, countspersecond)));
 #endif
-			gl_draw_text(col, row++, color, 255, "RAM usage: %uMB", ram_size / (1024 * 1024));
+			gl_draw_text(col, row++, color, 255, "RAM usage: %uMB", get_ram_size() / (1024 * 1024));
 			gl_draw_text(col, row++, color, 255, "textures: %u", stats.texture_count);
 			gl_draw_text(col, row++, color, 255, "external textures: %u", stats.external_textures);
 			gl_draw_text(col, row++, color, 255, "texture reloads: %u", stats.texture_reloads);
@@ -367,7 +359,7 @@ void common_flip(struct game_obj *game_object)
 		else
 		{
 			char tmp[768];
-			sprintf_s(tmp, 768, " | RAM: %u MB | nTex: %u | nExt.Tex: %u", ram_size / (1024 * 1024), stats.texture_count, stats.external_textures);
+			sprintf_s(tmp, 768, " | RAM: %u MB | nTex: %u | nExt.Tex: %u", get_ram_size() / (1024 * 1024), stats.texture_count, stats.external_textures);
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 	}
@@ -1577,6 +1569,16 @@ struct tex_header *make_framebuffer_tex(uint tex_w, uint tex_h, uint x, uint y, 
 	VRASS(tex_header, fb_tex.h, newRenderer.getInternalCoordY(h));
 
 	return VPTRCAST(tex_header, tex_header);
+}
+
+SIZE_T get_ram_size()
+{
+	PROCESS_MEMORY_COUNTERS_EX pmc;
+
+	pmc.cb = sizeof(pmc);
+
+	GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+	return pmc.WorkingSetSize;
 }
 
 void qpc_get_time(time_t *dest)
