@@ -1,7 +1,7 @@
 # .appveyor.yml
 
 # Build version
-version: '0.0.0.{build}'
+version: '1.0.0.{build}'
 
 # Use the latest available toolchain
 image: Visual Studio 2019
