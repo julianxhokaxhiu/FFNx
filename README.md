@@ -14,6 +14,8 @@ Welcome to FFNx project. This is an attempt to move forward what you were used t
 
 Some of the improvements that you can find on FFNx are:
 - One single .dll file to be copied
+- Support for 7h 1.x/2.x
+- Support for external textures using `direct/` path
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
 - In-Game music OGG files playback WITH LOOP support!
 - Five different Rendering Backends ( Vulkan, OpenGL, DirectX 9/11/12)
