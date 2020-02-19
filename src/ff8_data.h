@@ -267,16 +267,18 @@ void ff8_find_externals()
 
 void ff8_data()
 {
+	num_modes = sizeof(ff8_modes) / sizeof(ff8_modes[0]);
+
 	ff8_find_externals();
 
 	memcpy(modes, ff8_modes, sizeof(ff8_modes));
-	num_modes = sizeof(ff8_modes) / sizeof(ff8_modes[0]);
 
-	text_colors[TEXTCOLOR_GRAY] = 1;
-	text_colors[TEXTCOLOR_YELLOW] = 2;
-	text_colors[TEXTCOLOR_RED] = 3;
-	text_colors[TEXTCOLOR_GREEN] = 4;
-	text_colors[TEXTCOLOR_LIGHT_BLUE] = 5;
-	text_colors[TEXTCOLOR_PINK] = 6;
-	text_colors[TEXTCOLOR_WHITE] = 7;
+	text_colors[TEXTCOLOR_GRAY] = 0x08;
+	text_colors[TEXTCOLOR_BLUE] = 0x01;
+	text_colors[TEXTCOLOR_RED] = 0x04;
+	text_colors[TEXTCOLOR_PINK] = 0x05;
+	text_colors[TEXTCOLOR_GREEN] = 0x02;
+	text_colors[TEXTCOLOR_LIGHT_BLUE] = 0x09;
+	text_colors[TEXTCOLOR_YELLOW] = 0x0E;
+	text_colors[TEXTCOLOR_WHITE] = 0x0F;
 }
