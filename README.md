@@ -22,7 +22,9 @@ Some of the improvements that you can find on FFNx are:
 
 ## Tech Stack
 If you're curious to know it, FFNx is made with:
-- C++ code base built on latest MSVC ( [Visual Studio 2019](https://visualstudio.microsoft.com/vs/features/cplusplus/) )
+- C++ code base
+- Latest MSVC available on [Visual Studio 2019 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+- [CMake](https://cmake.org/) ( as make files )
 - [BGFX](https://github.com/bkaradzic/bgfx) ( as backend renderer )
 - [FFMpeg](https://www.ffmpeg.org/) 4.2.2 with H/W Accelleration support
 - [VGMStream](https://github.com/julianxhokaxhiu/vgmstream) using FFMpeg as backend, [with loop support for Ogg files](https://github.com/julianxhokaxhiu/vgmstream/commit/a4155c817f709a7d75eec6b83973d2c6efae12ac)
