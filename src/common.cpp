@@ -1915,6 +1915,109 @@ uint APIENTRY DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 	return TRUE;
 }
 
+// Steam compatibility
+__declspec(dllexport) LSTATUS dotemuRegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
+{
+	return ERROR_SUCCESS;
+}
+
+__declspec(dllexport) LSTATUS dotemuRegCloseKey(HKEY hKey)
+{
+	return ERROR_SUCCESS;
+}
+
+__declspec(dllexport) LSTATUS dotemuRegDeleteValueA(HKEY hKey, LPCSTR lpValueName)
+{
+	return ERROR_SUCCESS;
+}
+
+__declspec(dllexport) LSTATUS dotemuRegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+{
+	LSTATUS ret = ERROR_SUCCESS;
+
+	LPSTR buf = new CHAR[*lpcbData]{ 0 };
+
+	// General
+	if (strcmp(lpValueName, "AppPath") == 0)
+	{
+		GetCurrentDirectory(*lpcbData, buf);
+		strcat(buf, R"(\)");
+
+		strcpy((CHAR*)lpData, buf);
+	}
+	else if (strcmp(lpValueName, "DataPath") == 0)
+	{
+		GetCurrentDirectory(*lpcbData, buf);
+		strcat(buf, R"(\data\)");
+
+		strcpy((CHAR*)lpData, buf);
+	}
+	else if (strcmp(lpValueName, "DataDrive") == 0)
+	{
+		strcpy((CHAR*)lpData, R"(D:\)");
+	}
+	else if (strcmp(lpValueName, "MoviePath") == 0)
+	{
+		GetCurrentDirectory(*lpcbData, buf);
+		strcat(buf, R"(\data\movies\)");
+
+		strcpy((CHAR*)lpData, buf);
+	}
+	else if (strcmp(lpValueName, "FullInstall") == 0)
+	{
+		lpData[0] = 0x1;
+	}
+	// Audio
+	else if (strcmp(lpValueName, "DD_GUID") == 0 || strcmp(lpValueName, "Sound_GUID") == 0)
+	{
+		memcpy(lpData, buf, *lpcbData);
+	}
+	else if (strcmp(lpValueName, "MIDI_DeviceID") == 0)
+	{
+		lpData[0] = 0x0;
+	}
+	else if (strcmp(lpValueName, "Sound") == 0 || strcmp(lpValueName, "Midi") == 0 || strcmp(lpValueName, "wave_music") == 0)
+	{
+		ret = 2;
+	}
+	else if (strcmp(lpValueName, "SFXVolume") == 0 || strcmp(lpValueName, "MusicVolume") == 0)
+	{
+		lpData[0] = 0x64;
+	}
+	// Graphics
+	else if (strcmp(lpValueName, "Driver") == 0)
+	{
+		lpData[0] = 0x3;
+	}
+	else if (strcmp(lpValueName, "DriverPath") == 0)
+	{
+		strcpy((CHAR*)lpData, R"(AF3DN.P)");
+	}
+	else if (strcmp(lpValueName, "Mode") == 0)
+	{
+		lpData[0] = 0x2;
+
+		// Steam release is somehow requesting this key multiple times.
+		// Returning 1 will set 2 internally in the engine
+		if (*lpcbData == 256) ret = 1;
+
+		//trace("%s: %s => %lu (%lu)\n", __func__, lpValueName, *lpData, *lpcbData);
+	}
+	else if (strcmp(lpValueName, "Options") == 0)
+	{
+		lpData[0] = 0x12;
+	}
+
+	delete[] buf;
+
+	return ret;
+}
+
+__declspec(dllexport) LSTATUS dotemuRegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE* lpData, DWORD cbData)
+{
+	return ERROR_SUCCESS;
+}
+
 #if defined(__cplusplus)
 }
 #endif
