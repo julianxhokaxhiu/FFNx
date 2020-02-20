@@ -29,17 +29,6 @@
 #include "../cfg.h"
 #include "../log.h"
 
-// cd check
-uint get_inserted_cd(void) {
-	int requiredCD = -1;
-
-	requiredCD = *(uint8_t*)(ff7_externals.requiredCD);
-	if (requiredCD == 0)
-		requiredCD = 1;
-
-	return requiredCD;
-}
-
 // MDEF fix
 uint get_equipment_stats(uint party_index, uint type)
 {

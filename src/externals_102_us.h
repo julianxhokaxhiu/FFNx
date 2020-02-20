@@ -63,7 +63,3 @@ ff7_externals.menu_objects =          (menu_objects *)0xDC0FC0;
 ff7_externals.magic_thread_start =            0x427928;
 ff7_externals.destroy_magic_effects = (void (*)(void))0x429322;
 ff7_externals.init_stuff =					  0x40A091;
-
-// cd check offsets
-ff7_externals.get_inserted_cd_sub =           0x404A7D;
-ff7_externals.requiredCD =                    0xDC0BDC;

@@ -1910,8 +1910,30 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	return ret;
 }
 
+// cd check
+uint ff7_get_inserted_cd(void) {
+	int requiredCD = -1;
+
+	requiredCD = *(uint8_t*)(0xDC0BDC);
+	if (requiredCD == 0)
+		requiredCD = 1;
+
+	return requiredCD;
+}
+
 uint APIENTRY DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 {
+	CHAR parentName[1024];
+
+	GetModuleFileNameA(NULL, parentName, sizeof(parentName));
+
+	_strlwr(parentName);
+
+	if (strstr(parentName, "ff7_en.exe") != NULL || strstr(parentName, "ff7.exe") != NULL)
+	{
+		replace_function(0x404A7D, ff7_get_inserted_cd);
+	}
+
 	return TRUE;
 }
 
@@ -1954,7 +1976,7 @@ __declspec(dllexport) LSTATUS dotemuRegQueryValueExA(HKEY hKey, LPCSTR lpValueNa
 	}
 	else if (strcmp(lpValueName, "DataDrive") == 0)
 	{
-		strcpy((CHAR*)lpData, R"(D:\)");
+		strcpy((CHAR*)lpData, R"(C:\)");
 	}
 	else if (strcmp(lpValueName, "MoviePath") == 0)
 	{

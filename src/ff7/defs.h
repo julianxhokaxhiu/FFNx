@@ -22,9 +22,6 @@
 
 #pragma once
 
-// cd check
-uint get_inserted_cd(void);
-
 // battle
 void magic_thread_start(void (*func)());
 

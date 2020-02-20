@@ -76,11 +76,6 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 
 	game_object->window_title = "Final Fantasy VII";
 
-	// cd check
-	if (version == VERSION_FF7_102_US) {
-		replace_function(ff7_externals.get_inserted_cd_sub, get_inserted_cd);
-	}
-
 	// DirectInput hack, try to reacquire on any error
 	memset_code(ff7_externals.dinput_getdata2 + 0x65, 0x90, 9);
 	memset_code(ff7_externals.dinput_getstate2 + 0x3C, 0x90, 9);
