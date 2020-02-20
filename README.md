@@ -39,6 +39,8 @@ When you access the releases page, you will see two available download options:
 ## How to install
 In either way, in order to use this driver you MUST have a legal copy of the game. DO NOT ask for a copy unless bought legally.
 
+> **WARNING:** FFNx at this current stage is tested on English releases only. Other languages support will come in the future!
+
 ### Final Fantasy VII
 
 #### 1998 Official Eidos Release
@@ -56,7 +58,9 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
 4. Extract the ZIP content next to your `ff7_en.exe` file
 5. Delete existing `AF3DN.P`, and rename `FFNx.dll` to `AF3DN.P`
-6. Enjoy!
+6. In your `FFNx.cfg` file set `external_music_path = data/music_ogg`
+7. Move all the contents from `data/lang-en/*` to `data/`
+8. Enjoy!
 
 ### Final Fantasy VIII
 
