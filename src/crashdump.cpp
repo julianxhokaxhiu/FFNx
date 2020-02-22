@@ -180,6 +180,45 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 		save = false;
 	}
 
+	if (create_crash_dump)
+	{
+		// save crash dump to game directory
+		HANDLE file = CreateFile("crash.dmp", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+		HANDLE proc = GetCurrentProcess();
+		DWORD procid = GetCurrentProcessId();
+		MINIDUMP_EXCEPTION_INFORMATION mdei;
+
+		CONTEXT c;
+		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, GetCurrentThreadId());;
+		memset(&c, 0, sizeof(c));
+		c.ContextFlags = CONTEXT_FULL;
+		GetThreadContext(hThread, &c);
+
+		mdei.ThreadId = GetCurrentThreadId();
+		mdei.ExceptionPointers = ep;
+		mdei.ExceptionPointers->ContextRecord = &c;
+		mdei.ClientPointers = true;
+
+		if (!MiniDumpWriteDump(
+			proc,
+			procid,
+			file,
+			(MINIDUMP_TYPE)(MiniDumpWithFullMemory |
+				MiniDumpWithFullMemoryInfo |
+				MiniDumpWithHandleData |
+				MiniDumpWithUnloadedModules |
+				MiniDumpWithThreadInfo),
+			&mdei, NULL, NULL)) {
+			wchar_t buf[256];
+
+			FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, GetLastError(), MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+				buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
+
+			trace("MiniDumpWriteDump failed with error: %ls\n", buf);
+		}
+	}
+
 
 	if(!ff8)
 	{

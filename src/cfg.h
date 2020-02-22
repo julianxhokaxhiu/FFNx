@@ -80,5 +80,6 @@ extern cfg_bool_t info_popup;
 extern cfg_bool_t movie_sync_debug;
 extern char *renderer_backend;
 extern cfg_bool_t renderer_debug;
+extern cfg_bool_t create_crash_dump;
 
 void read_cfg();
