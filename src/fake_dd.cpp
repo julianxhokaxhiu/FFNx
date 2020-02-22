@@ -235,6 +235,10 @@ struct d3d2device fake_d3d2device = {
 };
 struct d3d2device *_fake_d3d2device = &fake_d3d2device;
 
+uint8_t* fake_dd_surface_buffer = nullptr;
+
+uint movie_texture = 0;
+
 uint __stdcall fake_dd_blit_fast(struct ddsurface **me, uint unknown1, uint unknown2, struct ddsurface **source, LPRECT src_rect, uint unknown3)
 {
 	if(trace_all || trace_fake_dx) trace("blit_fast\n");
@@ -279,20 +283,18 @@ uint __stdcall fake_ddsurface_get_palette(struct ddsurface **me, void **palette)
 	return DDERR_UNSUPPORTED;
 }
 
-char *fake_dd_surface_buffer;
-
 uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFACEDESC sd, uint flags, uint unused)
 {
 	if(trace_all || trace_fake_dx) trace("lock\n");
 
-	if(!fake_dd_surface_buffer) fake_dd_surface_buffer = (char*)driver_malloc(640 * 480 * 3);
+	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_malloc(640 * 480 * 4);
 
 	sd->lpSurface = fake_dd_surface_buffer;
 	sd->dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT | DDSD_LPSURFACE;
 
 	sd->dwWidth = 640;
 	sd->dwHeight = 480;
-	sd->lPitch = 640 * 3;
+	sd->lPitch = 640 * 4;
 
 	sd->ddpfPixelFormat.dwFlags = DDPF_RGB;
 	sd->ddpfPixelFormat.dwRGBBitCount = 24;
@@ -303,8 +305,6 @@ uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFA
 	return DD_OK;
 }
 
-uint movie_texture;
-
 uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 {
 	if(trace_all || trace_fake_dx) trace("unlock\n");
@@ -312,10 +312,10 @@ uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 	if (movie_texture) newRenderer.deleteTexture(movie_texture);
 
 	movie_texture = newRenderer.createTexture(
-		(uint8_t*)fake_dd_surface_buffer,
+		fake_dd_surface_buffer,
 		640,
 		480,
-		0
+		640 * 4
 	);
 
 	newRenderer.useTexture(movie_texture);

@@ -1,0 +1,12 @@
+LIBRARY FFNx.dll
+EXPORTS
+dotemuRegOpenKeyExA
+dotemuRegCloseKey
+dotemuRegFlushKey
+dotemuRegDeleteValueA
+dotemuRegSetValueExA
+dotemuRegQueryValueExA
+dotemuCreateFileA
+dotemuGetDriveTypeA
+dotemuDeleteFileA
+new_dll_graphics_driver

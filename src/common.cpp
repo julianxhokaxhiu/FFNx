@@ -21,6 +21,7 @@
  */
 
 #include <windows.h>
+#include <Shlwapi.h>
 #include <psapi.h>
 #include <stdio.h>
 #include <sys/timeb.h>
@@ -90,6 +91,8 @@ struct texture_format *texture_format;
 
 // install directory for the current game
 char basedir[BASEDIR_LENGTH];
+
+uint version;
 
 // global data used for profiling macros, see compile_cfg.h for more info
 #ifdef PROFILE
@@ -279,9 +282,10 @@ void common_cleanup(struct game_obj *game_object)
 {
 	if(trace_all) trace("dll_gfx: cleanup\n");
 
-	if(!ff8) ff7_release_movie_objects();
-
-	if (use_external_music) music_cleanup();
+	if (!ff8) {
+		ff7_release_movie_objects();
+		if (use_external_music) music_cleanup();
+	}
 
 	gl_cleanup_deferred();
 
@@ -1691,7 +1695,16 @@ uint get_version()
 	return 0;
 }
 
-uint version;
+// cd check
+uint ff7_get_inserted_cd(void) {
+	int requiredCD = -1;
+
+	requiredCD = *(uint8_t*)(0xDC0BDC);
+	if (requiredCD == 0)
+		requiredCD = 1;
+
+	return requiredCD;
+}
 
 #if defined(__cplusplus)
 extern "C" {
@@ -1703,12 +1716,6 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	void *ret;
 	VOBJ(game_obj, game_object, game_object);
 	DEVMODE dmScreenSettings;
-
-	open_applog("app.log");
-
-	info("FFNx driver version " VERSION PRERELEASE_WARNING "\n");
-
-	version = get_version();
 
 	if(version == VERSION_FF7_102_US)
 	{
@@ -1743,28 +1750,14 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 		exit(1);
 	}
 
-	if(version >= VERSION_FF8_12_US) ff8 = true;
-
-	// install crash handler
-	SetUnhandledExceptionFilter(ExceptionHandler);
-
 	// try to prevent screensavers from going off
 	SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
-
-	// read main executable entry point from memory
-	common_externals.start = (*((uint *)0x400128) + 0x400000);
 
 	// game-specific initialization
 	if(!ff8)
 		ret = ff7_load_driver(VPTRCAST(ff7_game_obj, game_object));
 	else
-	{
-		// VOBJ macro initialized the wrong variable
-		ff7_game_object = 0;
-		ff8_game_object = (ff8_game_obj*)game_object;
-
 		ret = ff8_load_driver(VPTRCAST(ff8_game_obj, game_object));
-	}
 
 	// catch all applog messages
 	replace_function(common_externals.debug_print, external_debug_print);
@@ -1910,55 +1903,100 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	return ret;
 }
 
-// cd check
-uint ff7_get_inserted_cd(void) {
-	int requiredCD = -1;
-
-	requiredCD = *(uint8_t*)(0xDC0BDC);
-	if (requiredCD == 0)
-		requiredCD = 1;
-
-	return requiredCD;
-}
-
-uint APIENTRY DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	CHAR parentName[1024];
-
-	GetModuleFileNameA(NULL, parentName, sizeof(parentName));
-
-	_strlwr(parentName);
-
-	if (strstr(parentName, "ff7_en.exe") != NULL || strstr(parentName, "ff7.exe") != NULL)
+	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
-		replace_function(0x404A7D, ff7_get_inserted_cd);
+		// Enable the following block if you wish to use VS2019 ReAttach extension
+		/*
+		while (!IsDebuggerPresent())
+		{
+			Sleep(100);
+		}
+		__debugbreak();
+		*/
+
+		// install crash handler
+		open_applog("FFNx.log");
+		SetUnhandledExceptionFilter(ExceptionHandler);
+
+		info("FFNx driver version " VERSION PRERELEASE_WARNING "\n");
+		version = get_version();
+
+		if (version >= VERSION_FF8_12_US) ff8 = true;
+
+		CHAR parentName[1024];
+
+		GetModuleFileNameA(NULL, parentName, sizeof(parentName));
+
+		_strlwr(parentName);
+
+		if (!ff8 && (strstr(parentName, "ff7_en.exe") != NULL || strstr(parentName, "ff7.exe") != NULL))
+		{
+			replace_function(0x404A7D, ff7_get_inserted_cd);
+		}
+		else if (ff8 && (strstr(parentName, "ff8_en.exe") != NULL))
+		{
+			DWORD offset = version == VERSION_FF8_12_JP ? 0x402320 : 0x401F60;
+
+			// 1
+			patch_code_int(offset, 0x000001BA);
+			patch_code_int(offset + 0x4, -0x2F793900);
+			patch_code_word(offset + 0x8, 0x000B);
+			patch_code_byte(offset + 0xA, 0x00);
+			// 2
+			patch_code_dword(offset + 0xB, (DWORD)new_dll_graphics_driver);
+			// 3
+			patch_code_int(offset + 0xF, 0x0001E0B8);
+			patch_code_word(offset + 0x13, -0x7000);
+		}
 	}
 
 	return TRUE;
 }
 
 // Steam compatibility
-__declspec(dllexport) LSTATUS dotemuRegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
+__declspec(dllexport) LSTATUS __stdcall dotemuRegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
 	return ERROR_SUCCESS;
 }
 
-__declspec(dllexport) LSTATUS dotemuRegCloseKey(HKEY hKey)
+__declspec(dllexport) LSTATUS __stdcall dotemuRegCloseKey(HKEY hKey)
 {
 	return ERROR_SUCCESS;
 }
 
-__declspec(dllexport) LSTATUS dotemuRegDeleteValueA(HKEY hKey, LPCSTR lpValueName)
+__declspec(dllexport) LSTATUS __stdcall dotemuRegFlushKey(HKEY hKey)
 {
 	return ERROR_SUCCESS;
 }
 
-__declspec(dllexport) LSTATUS dotemuRegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+__declspec(dllexport) LSTATUS __stdcall dotemuRegDeleteValueA(HKEY hKey, LPCSTR lpValueName)
+{
+	return ERROR_SUCCESS;
+}
+
+__declspec(dllexport) LSTATUS __stdcall dotemuRegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, LPBYTE lpData, DWORD cbData)
+{
+	if (ff8)
+	{
+		if (strcmp(lpValueName, "SFXVolume") == 0 || strcmp(lpValueName, "MusicVolume") == 0)
+		{
+			if (lpData[0] > 0x64)
+				lpData[0] = 0x64;
+		}
+	}
+
+	return ERROR_SUCCESS;
+}
+
+__declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
 	LSTATUS ret = ERROR_SUCCESS;
 
 	LPSTR buf = new CHAR[*lpcbData]{ 0 };
 
+	/* FF7 */
 	// General
 	if (strcmp(lpValueName, "AppPath") == 0)
 	{
@@ -2022,12 +2060,31 @@ __declspec(dllexport) LSTATUS dotemuRegQueryValueExA(HKEY hKey, LPCSTR lpValueNa
 		// Steam release is somehow requesting this key multiple times.
 		// Returning 1 will set 2 internally in the engine
 		if (*lpcbData == 256) ret = 1;
-
-		//trace("%s: %s => %lu (%lu)\n", __func__, lpValueName, *lpData, *lpcbData);
 	}
 	else if (strcmp(lpValueName, "Options") == 0)
 	{
 		lpData[0] = 0x12;
+	}
+	/* FF8 */
+	else if (strcmp(lpValueName, "GraphicsGUID") == 0 || strcmp(lpValueName, "SoundGUID") == 0 || strcmp(lpValueName, "MIDIGUID") == 0)
+	{
+		memcpy(lpData, buf, 16);
+	}
+	else if (strcmp(lpValueName, "SoundOptions") == 0)
+	{
+		lpData[0] = 0x00000000;
+	}
+	else if (strcmp(lpValueName, "InstallOptions") == 0)
+	{
+		lpData[0] = 0x000000ff;
+	}
+	else if (strcmp(lpValueName, "MidiOptions") == 0)
+	{
+		lpData[0] = 0x00000001;
+	}
+	else if (strcmp(lpValueName, "Graphics") == 0)
+	{
+		lpData[0] = 0x10100001;
 	}
 
 	delete[] buf;
@@ -2035,11 +2092,50 @@ __declspec(dllexport) LSTATUS dotemuRegQueryValueExA(HKEY hKey, LPCSTR lpValueNa
 	return ret;
 }
 
-__declspec(dllexport) LSTATUS dotemuRegSetValueExA(HKEY hKey, LPCSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE* lpData, DWORD cbData)
+__declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	return ERROR_SUCCESS;
+	HANDLE ret;
+
+	if (strstr(lpFileName, "CD:") != NULL)
+	{
+		CHAR newPath[260];
+
+		// Search for the '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		if (strstr(lpFileName, "DISK1") != NULL || strstr(lpFileName, "DISK2") != NULL || strstr(lpFileName, "DISK3") != NULL || strstr(lpFileName, "DISK4") != NULL)
+		{
+			PathAppendA(newPath, R"(data\disk)");
+			PathAppendA(newPath, pos);
+			ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+		}
+	}
+	else
+		ret = CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+
+	return ret;
 }
 
+__declspec(dllexport) UINT __stdcall dotemuGetDriveTypeA(LPCSTR lpRootPathName)
+{
+	UINT ret;
+
+	if (strstr(lpRootPathName, "CD:") != NULL)
+	{
+		ret = 5;
+	}
+	else
+	{
+		ret = GetDriveTypeA(lpRootPathName);
+	}
+
+	return ret;
+}
+
+__declspec(dllexport) BOOL __stdcall dotemuDeleteFileA(LPCSTR lpFileName)
+{
+	return DeleteFileA(lpFileName);
+}
 #if defined(__cplusplus)
 }
 #endif

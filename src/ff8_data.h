@@ -54,8 +54,7 @@ void ff8_find_externals()
 {
 	uint battle_main_loop;
 
-	common_externals.winmain = get_relative_call(common_externals.start, 0xDB);
-	ff8_externals.sub_401ED0 = get_relative_call(common_externals.winmain, 0x4D);
+	ff8_externals.sub_401ED0 = version == VERSION_FF8_12_JP ? 0x402290 : 0x401ED0;
 	ff8_externals.pubintro_init = get_absolute_value(ff8_externals.sub_401ED0, 0x158);
 	ff8_externals.sub_467C00 = get_relative_call(ff8_externals.pubintro_init, 0xB5);
 	ff8_externals.sub_468810 = get_relative_call(ff8_externals.sub_467C00, 0x59);

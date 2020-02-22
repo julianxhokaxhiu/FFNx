@@ -36,6 +36,8 @@ uint get_relative_call(uint base, uint offset);
 uint get_absolute_value(uint base, uint offset);
 void patch_code_byte(uint offset, unsigned char r);
 void patch_code_word(uint offset, word r);
+void patch_code_dword(uint offset, DWORD r);
+void patch_code_int(uint offset, int r);
 void patch_code_uint(uint offset, uint r);
 void patch_code_float(uint offset, float r);
 void patch_code_double(uint offset, double r);

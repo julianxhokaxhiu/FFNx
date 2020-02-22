@@ -103,6 +103,24 @@ void patch_code_word(uint offset, word r)
 	*(word *)offset = r;
 }
 
+void patch_code_dword(uint offset, DWORD r)
+{
+	DWORD dummy;
+
+	VirtualProtect((void*)offset, sizeof(r), PAGE_EXECUTE_READWRITE, &dummy);
+
+	*(DWORD*)offset = r;
+}
+
+void patch_code_int(uint offset, int r)
+{
+	DWORD dummy;
+
+	VirtualProtect((void*)offset, sizeof(r), PAGE_EXECUTE_READWRITE, &dummy);
+
+	*(int*)offset = r;
+}
+
 void patch_code_uint(uint offset, uint r)
 {
 	DWORD dummy;

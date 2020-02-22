@@ -33,7 +33,10 @@ target_compile_options(${RELEASE_NAME}
 	PRIVATE /DNOMINMAX
 	PRIVATE /EHsc
 )
-target_link_options(${RELEASE_NAME} PRIVATE /PDBALTPATH:${RELEASE_NAME}.pdb)
+target_link_options(${RELEASE_NAME}
+    PRIVATE /PDBALTPATH:${RELEASE_NAME}.pdb
+    PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.def
+)
 if(_DLL_VERSION)
 	target_compile_options(${RELEASE_NAME} PRIVATE /DVERSION="${_DLL_VERSION}")
 endif()

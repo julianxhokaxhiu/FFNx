@@ -32,7 +32,7 @@
 
 void music_init()
 {
-	if (use_external_music)
+	if (use_external_music && !ff8)
 	{
 		replace_function(common_externals.midi_init, midi_init);
 		replace_function(common_externals.play_midi, play_midi);

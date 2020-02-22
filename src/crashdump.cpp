@@ -168,14 +168,14 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	if(!ff8)
 	{
 		MessageBoxA(0, "Oops! Something very bad happened.\n\nWrote emergency save to save/crash.ff7 dir.\n\n"
-			"Please provide a copy of those files along with APP.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
+			"Please provide a copy of those files along with FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
 
 		save = true;
 	}
 	else
 	{
 		MessageBoxA(0, "Oops! Something very bad happened.\n\n"
-			"Please provide a copy of APP.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
+			"Please provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
 
 		save = false;
 	}
