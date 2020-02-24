@@ -2,7 +2,11 @@
   <img src=".screens/ff7.png" alt="Final Fantasy VII running on Vulkan!">
   <br><strong><small>Final Fantasy VII running on Vulkan!</small></strong>
 </div>
-
+<br><br>
+<div align="center">
+  <img src=".screens/ff8.png" alt="Final Fantasy VIII running on Vulkan!">
+  <br><strong><small>Final Fantasy VIII running on Vulkan!</small></strong>
+</div>
 ---
 
 # FFNx
