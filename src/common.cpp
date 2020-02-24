@@ -1933,11 +1933,28 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		_strlwr(parentName);
 
-		if (!ff8 && (strstr(parentName, "ff7_en.exe") != NULL || strstr(parentName, "ff7.exe") != NULL))
+		if (!ff8 &&
+			(
+				strstr(parentName, "ff7.exe") != NULL ||
+				strstr(parentName, "ff7_en.exe") != NULL ||
+				strstr(parentName, "ff7_de.exe") != NULL ||
+				strstr(parentName, "ff7_fr.exe") != NULL ||
+				strstr(parentName, "ff7_sp.exe") != NULL
+			)
+		)
 		{
 			replace_function(0x404A7D, ff7_get_inserted_cd);
 		}
-		else if (ff8 && (strstr(parentName, "ff8_en.exe") != NULL))
+		else if (ff8 &&
+			(
+				strstr(parentName, "ff8_en.exe") != NULL ||
+				strstr(parentName, "ff8_fr.exe") != NULL ||
+				strstr(parentName, "ff8_de.exe") != NULL ||
+				strstr(parentName, "ff8_it.exe") != NULL ||
+				strstr(parentName, "ff8_sp.exe") != NULL ||
+				strstr(parentName, "ff8_jp.exe") != NULL
+			)
+		)
 		{
 			DWORD offset = version == VERSION_FF8_12_JP ? 0x402320 : 0x401F60;
 

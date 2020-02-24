@@ -39,9 +39,9 @@ When you access the releases page, you will see two available download options:
 ## How to install
 In either way, in order to use this driver you MUST have a legal copy of the game. DO NOT ask for a copy unless bought legally.
 
-> **WARNING:** FFNx at this current stage is tested on English releases only. Other languages support will come in the future!
-
 ### Final Fantasy VII
+
+**Supported Languages:** EN, DE, FR, SP
 
 #### 1998 Official Eidos Release
 1. Install the game on this path: `C:\Games\Final Fantasy VII`
@@ -56,13 +56,15 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 1. Install the game using Steam Client
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
 3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
-4. Extract the ZIP content next to your `ff7_en.exe` file
+4. Extract the ZIP content next to your `ff7_*.exe` file ( for eg. for EN language `ff7_en.exe`)
 5. Delete existing `AF3DN.P`, and rename `FFNx.dll` to `AF3DN.P`
 6. In your `FFNx.cfg` file set `external_music_path = data/music_ogg`
-7. Move all the contents from `data/lang-en/*` to `data/`
+7. Move all the contents from `data/lang-*/*` to `data/` ( for eg. for EN language `data/lang-en/*`)
 8. Enjoy!
 
 ### Final Fantasy VIII
+
+**Supported Languages:** EN, DE, FR, SP, IT, JP
 
 #### 2000 Official Squaresoft Release
 1. Install the game on this path: `C:\Games\Final Fantasy VIII`
@@ -75,9 +77,9 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 1. Install the game using Steam Client
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
 3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
-4. Extract the ZIP content next to your `ff8_en.exe` file
+4. Extract the ZIP content next to your `ff8_*.exe` file ( for eg. for EN language `ff8_en.exe`)
 5. Delete existing `AF3DN.P`, and rename `FFNx.dll` to `AF3DN.P`
-6. Move all the contents from `data/lang-en/*` to `data/`
+6. Move all the contents from `data/lang-*/*` to `data/` ( for eg. for EN language `data/lang-en/*`)
 7. Enjoy!
 
 ## Tweak the configuration
