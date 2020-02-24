@@ -85,10 +85,10 @@ void gl_draw_movie_quad_common(int movie_width, int movie_height)
 	float v3 = v1;
 
 	struct nvertex vertices[] = {
-		{x0, y0, 1.0f, 1.0f, 0x00000000, 0, u0, v0},
-		{x1, y1, 1.0f, 1.0f, 0x00000000, 0, u1, v1},
-		{x2, y2, 1.0f, 1.0f, 0x00000000, 0, u2, v2},
-		{x3, y3, 1.0f, 1.0f, 0x00000000, 0, u3, v3},
+		{x0, y0, 1.0f, 1.0f, 0xffffffff, 0, u0, v0},
+		{x1, y1, 1.0f, 1.0f, 0xffffffff, 0, u1, v1},
+		{x2, y2, 1.0f, 1.0f, 0xffffffff, 0, u2, v2},
+		{x3, y3, 1.0f, 1.0f, 0xffffffff, 0, u3, v3},
 	};
 	word indices[] = {
 		0, 1, 2,

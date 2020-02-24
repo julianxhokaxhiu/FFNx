@@ -18,6 +18,7 @@ uniform vec4 FSMiscFlags;
 #define isFullRange FSMiscFlags.x > 0.0
 #define isYUV FSMiscFlags.y > 0.0
 #define inheritTextureAlpha FSMiscFlags.z > 0.0
+#define isTextureRGB FSMiscFlags.w > 0.0
 
 void main()
 {

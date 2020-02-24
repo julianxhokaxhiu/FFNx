@@ -32,9 +32,9 @@ void Renderer::setCommonUniforms()
         (float)internalState.bIsMovieFullRange,
         (float)internalState.bIsMovieYUV,
         (float)internalState.bInheritTextureAlpha,
-        NULL
+        (float)internalState.bIsTextureRGB,
     };
-    if (renderer_debug) trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, inheritTextureAlpha %f, NULL)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2]);
+    if (renderer_debug) trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, inheritTextureAlpha %f, isTextureRGB %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
 
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
@@ -461,6 +461,7 @@ void Renderer::reset()
     isFullRange();
     isFBTexture();
     isTexture();
+    isTextureRGB();
     doInheritTextureAlpha();
 };
 
@@ -564,6 +565,11 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
         texFormat = bgfx::TextureFormat::BGRA8;
         imgFormat = bimg::TextureFormat::BGRA8;
     }
+    else if (type == RendererTextureType::RGB)
+    {
+        texFormat = bgfx::TextureFormat::RGB8;
+        imgFormat = bimg::TextureFormat::RGB8;
+    }
 
     bimg::TextureInfo texInfo;
     bimg::imageGetSize(&texInfo, width, height, 0, false, false, 1, imgFormat);
@@ -660,6 +666,11 @@ void Renderer::isTexture(bool flag)
 {
     internalState.bIsTexture = flag;
 };
+
+void Renderer::isTextureRGB(bool flag)
+{
+    internalState.bIsTextureRGB = flag;
+}
 
 void Renderer::isFBTexture(bool flag)
 {

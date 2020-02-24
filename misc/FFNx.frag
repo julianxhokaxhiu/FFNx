@@ -20,6 +20,7 @@ uniform vec4 FSMiscFlags;
 #define isFullRange FSMiscFlags.x > 0.0
 #define isYUV FSMiscFlags.y > 0.0
 #define inheritTextureAlpha FSMiscFlags.z > 0.0
+#define isTextureRGB FSMiscFlags.w > 0.0
 
 void main()
 {
@@ -86,6 +87,8 @@ void main()
             if(isFBTexture && all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
             if (texture_color.a == 0.0) discard;
+
+            if (isTextureRGB) texture_color.rgba = texture_color.bgra;
 
             color *= texture_color;
 

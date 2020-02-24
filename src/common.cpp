@@ -1925,6 +1925,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		if (version >= VERSION_FF8_12_US) ff8 = true;
 
+		read_cfg();
+
 		CHAR parentName[1024];
 
 		GetModuleFileNameA(NULL, parentName, sizeof(parentName));
@@ -1949,6 +1951,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			// 3
 			patch_code_int(offset + 0xF, 0x0001E0B8);
 			patch_code_word(offset + 0x13, -0x7000);
+
+			// Steam edition contains movies unpacked
+			use_external_movie = cfg_bool_t(true);
 		}
 	}
 

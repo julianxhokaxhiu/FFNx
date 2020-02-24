@@ -287,20 +287,20 @@ uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFA
 {
 	if(trace_all || trace_fake_dx) trace("lock\n");
 
-	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_malloc(640 * 480 * 4);
+	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_malloc(640 * 480 * 3);
 
 	sd->lpSurface = fake_dd_surface_buffer;
 	sd->dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT | DDSD_LPSURFACE;
 
 	sd->dwWidth = 640;
 	sd->dwHeight = 480;
-	sd->lPitch = 640 * 4;
+	sd->lPitch = 640 * 3;
 
 	sd->ddpfPixelFormat.dwFlags = DDPF_RGB;
 	sd->ddpfPixelFormat.dwRGBBitCount = 24;
 	sd->ddpfPixelFormat.dwRBitMask = 0xFF0000;
-	sd->ddpfPixelFormat.dwGBitMask = 0xFF00;
-	sd->ddpfPixelFormat.dwBBitMask = 0xFF;
+	sd->ddpfPixelFormat.dwGBitMask = 0x00FF00;
+	sd->ddpfPixelFormat.dwBBitMask = 0x0000FF;
 
 	return DD_OK;
 }
@@ -315,12 +315,17 @@ uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 		fake_dd_surface_buffer,
 		640,
 		480,
-		640 * 4
+		640 * 3,
+		RendererTextureType::RGB
 	);
 
 	newRenderer.useTexture(movie_texture);
 
+	newRenderer.isTextureRGB(true);
+
 	gl_draw_movie_quad(640, 480);
+
+	newRenderer.isTextureRGB(false);
 
 	return DD_OK;
 }
