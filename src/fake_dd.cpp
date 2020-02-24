@@ -321,11 +321,13 @@ uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 
 	newRenderer.useTexture(movie_texture);
 
+	newRenderer.isMovie(true);
 	newRenderer.isTextureRGB(true);
 
 	gl_draw_movie_quad(640, 480);
 
 	newRenderer.isTextureRGB(false);
+	newRenderer.isMovie(false);
 
 	return DD_OK;
 }
