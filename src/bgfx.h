@@ -54,7 +54,6 @@ enum RendererPrimitiveType
 enum RendererTextureType
 {
     BGRA = 0,
-    RGB,
     YUV,
 };
 
@@ -178,7 +177,6 @@ private:
         bool bIsTLVertex = false;
         bool bIsFBTexture = false;
         bool bIsTexture = false;
-        bool bIsTextureRGB = false;
         bool bDoTextureFiltering = false;
         bool bInheritTextureAlpha = false;
         bool bIsMovie = false;
@@ -284,7 +282,6 @@ public:
     void isTLVertex(bool flag = false);
     void setBlendMode(RendererBlendMode mode = RendererBlendMode::BLEND_NONE);
     void isTexture(bool flag = false);
-    void isTextureRGB(bool flag = false);
     void isFBTexture(bool flag = false);
     void isFullRange(bool flag = false);
     void isYUV(bool flag = false);

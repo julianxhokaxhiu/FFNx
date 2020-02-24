@@ -250,11 +250,12 @@ uint __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIXELFO
 {
 	if(trace_all || trace_fake_dx) trace("get_pixelformat\n");
 
-	pf->dwFlags = DDPF_RGB;
-	pf->dwRGBBitCount = 24;
-	pf->dwRBitMask = 0xFF0000;
-	pf->dwGBitMask = 0xFF00;
+	pf->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+	pf->dwRGBBitCount = 32;
 	pf->dwBBitMask = 0xFF;
+	pf->dwGBitMask = 0xFF00;
+	pf->dwRBitMask = 0xFF0000;
+	pf->dwRGBAlphaBitMask = 0xFF000000;
 
 	return 0;
 }
@@ -287,20 +288,21 @@ uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFA
 {
 	if(trace_all || trace_fake_dx) trace("lock\n");
 
-	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_malloc(game_width * game_height * 3);
+	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_malloc(game_width * game_height * 4);
 
 	sd->lpSurface = fake_dd_surface_buffer;
 	sd->dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT | DDSD_LPSURFACE;
 
 	sd->dwWidth = game_width;
 	sd->dwHeight = game_height;
-	sd->lPitch = game_width * 3;
+	sd->lPitch = game_width * 4;
 
-	sd->ddpfPixelFormat.dwFlags = DDPF_RGB;
-	sd->ddpfPixelFormat.dwRGBBitCount = 24;
+	sd->ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+	sd->ddpfPixelFormat.dwRGBBitCount = 32;
+	sd->ddpfPixelFormat.dwBBitMask = 0xFF;
+	sd->ddpfPixelFormat.dwGBitMask = 0xFF00;
 	sd->ddpfPixelFormat.dwRBitMask = 0xFF0000;
-	sd->ddpfPixelFormat.dwGBitMask = 0x00FF00;
-	sd->ddpfPixelFormat.dwBBitMask = 0x0000FF;
+	sd->ddpfPixelFormat.dwRGBAlphaBitMask = 0xFF000000;
 
 	return DD_OK;
 }
@@ -315,18 +317,15 @@ uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 		fake_dd_surface_buffer,
 		game_width,
 		game_height,
-		game_width * 3,
-		RendererTextureType::RGB
+		game_width * 4
 	);
 
 	newRenderer.useTexture(movie_texture);
 
 	newRenderer.isMovie(true);
-	newRenderer.isTextureRGB(true);
 
 	gl_draw_movie_quad(game_width, game_height);
 
-	newRenderer.isTextureRGB(false);
 	newRenderer.isMovie(false);
 
 	return DD_OK;
@@ -428,11 +427,11 @@ uint __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDESC sd
 	sd->dwHeight = game_height;
 	sd->lPitch = game_width * 4;
 
-	sd->ddpfPixelFormat.dwFlags = DDPF_RGB;
+	sd->ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
 	sd->ddpfPixelFormat.dwRGBBitCount = 32;
-	sd->ddpfPixelFormat.dwRBitMask = 0xFF;
+	sd->ddpfPixelFormat.dwBBitMask = 0xFF;
 	sd->ddpfPixelFormat.dwGBitMask = 0xFF00;
-	sd->ddpfPixelFormat.dwBBitMask = 0xFF0000;
+	sd->ddpfPixelFormat.dwRBitMask = 0xFF0000;
 	sd->ddpfPixelFormat.dwRGBAlphaBitMask = 0xFF000000;
 
 	return 0;
