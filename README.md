@@ -11,7 +11,7 @@
 
 # FFNx
 
-Next generation driver for Final Fantasy VII and Final Fantasy VIII
+Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam release support! )
 
 ## Introduction
 Welcome to FFNx project. This is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
