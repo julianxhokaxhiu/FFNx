@@ -71,6 +71,15 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 3. Extract the ZIP content next to where your `ff8.exe` file lives
 4. Enjoy!
 
+#### Steam Official Release
+1. Install the game using Steam Client
+2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
+3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
+4. Extract the ZIP content next to your `ff8_en.exe` file
+5. Delete existing `AF3DN.P`, and rename `FFNx.dll` to `AF3DN.P`
+6. Move all the contents from `data/lang-en/*` to `data/`
+7. Enjoy!
+
 ## Tweak the configuration
 If you want a more advanced experience, for example using another backend renderer ( Vulkan instead of OpenGL, or DirectX 11 ) feel free to change the driver configuration file [FFNx.cfg](misc/FFNx.cfg).
 
