@@ -287,14 +287,14 @@ uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFA
 {
 	if(trace_all || trace_fake_dx) trace("lock\n");
 
-	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_malloc(640 * 480 * 3);
+	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_malloc(game_width * game_height * 3);
 
 	sd->lpSurface = fake_dd_surface_buffer;
 	sd->dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT | DDSD_LPSURFACE;
 
-	sd->dwWidth = 640;
-	sd->dwHeight = 480;
-	sd->lPitch = 640 * 3;
+	sd->dwWidth = game_width;
+	sd->dwHeight = game_height;
+	sd->lPitch = game_width * 3;
 
 	sd->ddpfPixelFormat.dwFlags = DDPF_RGB;
 	sd->ddpfPixelFormat.dwRGBBitCount = 24;
@@ -313,9 +313,9 @@ uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 
 	movie_texture = newRenderer.createTexture(
 		fake_dd_surface_buffer,
-		640,
-		480,
-		640 * 3,
+		game_width,
+		game_height,
+		game_width * 3,
 		RendererTextureType::RGB
 	);
 
@@ -324,7 +324,7 @@ uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 	newRenderer.isMovie(true);
 	newRenderer.isTextureRGB(true);
 
-	gl_draw_movie_quad(640, 480);
+	gl_draw_movie_quad(game_width, game_height);
 
 	newRenderer.isTextureRGB(false);
 	newRenderer.isMovie(false);
@@ -424,9 +424,9 @@ uint __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDESC sd
 
 	sd->dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT;
 
-	sd->dwWidth = 1280;
-	sd->dwHeight = 960;
-	sd->lPitch = 1280 * 4;
+	sd->dwWidth = game_width;
+	sd->dwHeight = game_height;
+	sd->lPitch = game_width * 4;
 
 	sd->ddpfPixelFormat.dwFlags = DDPF_RGB;
 	sd->ddpfPixelFormat.dwRGBBitCount = 32;
