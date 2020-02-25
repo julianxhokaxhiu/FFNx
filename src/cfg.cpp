@@ -168,6 +168,12 @@ void read_cfg()
 
 	cfg_free(cfg);
 
+	if (ff8)
+	{
+		// Reset some internal flags as they are not compatible with FF8
+		fancy_transparency = cfg_bool_t(false);
+	}
+
 #ifdef SINGLE_STEP
 	window_size_x = 0;
 	window_size_y = 0;
