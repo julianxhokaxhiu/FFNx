@@ -19,7 +19,7 @@ uniform vec4 FSMiscFlags;
 // ---
 #define isFullRange FSMiscFlags.x > 0.0
 #define isYUV FSMiscFlags.y > 0.0
-#define inheritTextureAlpha FSMiscFlags.z > 0.0
+#define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
 
 void main()
@@ -92,7 +92,7 @@ void main()
 
             color *= texture_color;
 
-            if(inheritTextureAlpha) color.a = texture_color.a;
+            if(modulateAlpha) color.a = texture_color.a;
         }
     }
 

@@ -31,10 +31,10 @@ void Renderer::setCommonUniforms()
     internalState.FSMiscFlags = {
         (float)internalState.bIsMovieFullRange,
         (float)internalState.bIsMovieYUV,
-        (float)internalState.bInheritTextureAlpha,
+        (float)internalState.bModulateAlpha,
         (float)internalState.bIsMovie
     };
-    if (renderer_debug) trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, inheritTextureAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
+    if (renderer_debug) trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, modulateAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
 
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
@@ -461,7 +461,7 @@ void Renderer::reset()
     isFullRange();
     isFBTexture();
     isTexture();
-    doInheritTextureAlpha();
+    doModulateAlpha();
 };
 
 void Renderer::printText(uint16_t x, uint16_t y, uint color, const char* text)
@@ -676,9 +676,9 @@ void Renderer::isYUV(bool flag)
     internalState.bIsMovieYUV = flag;
 };
 
-void Renderer::doInheritTextureAlpha(bool flag)
+void Renderer::doModulateAlpha(bool flag)
 {
-    internalState.bInheritTextureAlpha = flag;
+    internalState.bModulateAlpha = flag;
 };
 
 void Renderer::doTextureFiltering(bool flag)

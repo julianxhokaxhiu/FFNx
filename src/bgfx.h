@@ -178,7 +178,7 @@ private:
         bool bIsFBTexture = false;
         bool bIsTexture = false;
         bool bDoTextureFiltering = false;
-        bool bInheritTextureAlpha = false;
+        bool bModulateAlpha = false;
         bool bIsMovie = false;
         bool bIsMovieFullRange = false;
         bool bIsMovieYUV = false;
@@ -285,7 +285,7 @@ public:
     void isFBTexture(bool flag = false);
     void isFullRange(bool flag = false);
     void isYUV(bool flag = false);
-    void doInheritTextureAlpha(bool flag = false);
+    void doModulateAlpha(bool flag = false);
     void doTextureFiltering(bool flag = false);
 
     // Alpha mode emulation
