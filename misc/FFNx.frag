@@ -84,15 +84,15 @@ void main()
         {
             mediump vec4 texture_color = texture2D(tex, v_texcoord0.xy);
 
-            if(isFBTexture && all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
+            if (isFBTexture && all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
-            if(isMovie) texture_color.a = 1.0;
+            if (isMovie) texture_color.a = 1.0;
 
             if (texture_color.a == 0.0) discard;
 
             color *= texture_color;
 
-            if(modulateAlpha) color.a = texture_color.a;
+            if (modulateAlpha) color.a = texture_color.a;
         }
     }
 
