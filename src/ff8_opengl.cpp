@@ -82,17 +82,17 @@ void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *ga
 
 void ff8gl_field_54(struct texture_set *texture_set, struct game_obj *game_object)
 {
-	trace("field_54\n");
+	if (trace_all) trace("field_54\n");
 }
 
 void ff8gl_field_58(struct texture_set *texture_set, struct game_obj *game_object)
 {
-	trace("field_58\n");
+	if (trace_all) trace("field_58\n");
 }
 
 void ff8gl_field_5C(struct texture_set *texture_set, struct game_obj *game_object)
 {
-	trace("field_5C\n");
+	if (trace_all) trace("field_5C\n");
 }
 
 void ff8gl_field_60(struct palette *palette, struct texture_set *texture_set)
@@ -102,12 +102,12 @@ void ff8gl_field_60(struct palette *palette, struct texture_set *texture_set)
 
 void ff8gl_field_84(uint unknown, struct game_obj *game_object)
 {
-	trace("field_84\n");
+	if (trace_all) trace("field_84\n");
 }
 
 void ff8gl_field_88()
 {
-	trace("field_88\n");
+	if (trace_all) trace("field_88\n");
 }
 
 void ff8_destroy_tex_header(struct ff8_tex_header *tex_header)
