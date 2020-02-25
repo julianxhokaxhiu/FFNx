@@ -150,21 +150,16 @@ void error_callback(cfg_t *cfg, const char *fmt, va_list ap)
 
 void read_cfg()
 {
-	char filename[BASEDIR_LENGTH + 1024];
-
 	cfg_t *cfg;
 
 	mod_path = _strdup("");
 	use_external_movie = cfg_bool_t(!ff8);
-
-	if(!ff8) _snprintf(filename, sizeof(filename), "%s/FFNx.cfg", basedir);
-	else _snprintf(filename, sizeof(filename), "%s/FFNx.cfg", basedir);
 	
 	cfg = cfg_init(opts, 0);
 
 	cfg_set_error_function(cfg, error_callback);
 
-	cfg_parse(cfg, filename);
+	cfg_parse(cfg, "FFNx.cfg");
 
 	cfg_free(cfg);
 
