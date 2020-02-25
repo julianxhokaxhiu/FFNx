@@ -346,8 +346,10 @@ void Renderer::draw()
     // Set current view rect
     if (backendViewId == RendererView::POSTPROCESSING)
         bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
-    else
+    else {
         bgfx::setViewRect(backendViewId, viewOffsetX, viewOffsetY, viewWidth, viewHeight);
+        bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
+    }
 
     // Set current view transform
     bgfx::setViewTransform(backendViewId, NULL, internalState.backendProjMatrix);
@@ -528,7 +530,10 @@ void Renderer::bindIndexBuffer(word* inIndex, uint inCount)
 
 void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
-    bgfx::setViewScissor(backendViewId, getInternalCoordX(x) + viewOffsetX, getInternalCoordY(y) + viewOffsetY, getInternalCoordX(width), getInternalCoordY(height));
+    scissorOffsetX = getInternalCoordX(x) + viewOffsetX;
+    scissorOffsetY = getInternalCoordY(y) + viewOffsetY;
+    scissorWidth = getInternalCoordX(width);
+    scissorHeight = getInternalCoordY(height);
 }
 
 void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)

@@ -237,6 +237,11 @@ private:
     float viewWidth = 0.0f;
     float viewHeight = 0.0f;
 
+    uint16_t scissorOffsetX = 0;
+    uint16_t scissorOffsetY = 0;
+    uint16_t scissorWidth = 0;
+    uint16_t scissorHeight = 0;
+
     uint32_t createBGRA(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     void setCommonUniforms();
     bgfx::RendererType::Enum getRendererType();
