@@ -90,9 +90,12 @@ void main()
 
             if (texture_color.a == 0.0) discard;
 
-            color *= texture_color;
-
-            if (modulateAlpha) color.a = texture_color.a;
+            if (modulateAlpha) color *= texture_color;
+            else
+            {
+                color.rgb *= texture_color.rgb;
+			    color.a = texture_color.a;
+            }
         }
     }
 
