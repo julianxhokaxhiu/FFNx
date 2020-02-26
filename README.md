@@ -16,10 +16,11 @@ Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with nativ
 ## Introduction
 Welcome to FFNx project. This is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
-Some of the improvements that you can find on FFNx are:
+Some of the improvements that you can find only on FFNx are:
+- **Native** Steam support! No Game converter required.
 - One single .dll file to be copied
 - Support for 7h 1.x/2.x
-- Support for external textures using `direct/` path
+- Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L80)
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
 - In-Game music OGG files playback WITH LOOP support!
 - Five different Rendering Backends ( Vulkan, OpenGL, DirectX 9/11/12)
@@ -62,9 +63,7 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
 4. Extract the ZIP content next to your `ff7_*.exe` file ( for eg. for EN language `ff7_en.exe`)
 5. Delete existing `AF3DN.P`, and rename `FFNx.dll` to `AF3DN.P`
-6. In your `FFNx.cfg` file set `external_music_path = data/music_ogg`
-7. Move all the contents from `data/lang-*/*` to `data/` ( for eg. for EN language `data/lang-en/*`)
-8. Enjoy!
+6. Enjoy!
 
 ### Final Fantasy VIII
 
@@ -81,13 +80,15 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 1. Install the game using Steam Client
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
 3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
-4. Extract the ZIP content next to your `ff8_*.exe` file ( for eg. for EN language `ff8_en.exe`)
+4. Extract the ZIP content next to your `ff8_*.exe` file ( for eg. for EN language `ff8_en.exe`). **DO NOT** replace `eax.dll` when asked.
 5. Delete existing `AF3DN.P`, and rename `FFNx.dll` to `AF3DN.P`
-6. Move all the contents from `data/lang-*/*` to `data/` ( for eg. for EN language `data/lang-en/*`)
-7. Enjoy!
+6. Enjoy!
 
 ## Tweak the configuration
 If you want a more advanced experience, for example using another backend renderer ( Vulkan instead of OpenGL, or DirectX 11 ) feel free to change the driver configuration file [FFNx.cfg](misc/FFNx.cfg).
+
+## Inspect logs
+If you want to check what is going on behind the scene, or you may happen to have a crash, feel free to check the `FFNx.log` file.
 
 ## Join us on Discord
 If you want to join our community, you can find us on Discord: https://discord.gg/N6M6pKS
