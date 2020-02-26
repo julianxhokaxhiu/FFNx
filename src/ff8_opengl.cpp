@@ -272,21 +272,12 @@ void swirl_sub_56D390(uint x, uint y, uint w, uint h)
 	last_tex_header = tex_header;
 }
 
-void ff8_read_basedir()
-{
-	GetCurrentDirectory(sizeof(basedir), basedir);
-}
-
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
 
 struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 {
 	struct ff8_gfx_driver *ret;
-
-	ff8_read_basedir();
-
-	read_cfg();
 
 	if(version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
 	{

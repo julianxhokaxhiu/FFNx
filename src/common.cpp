@@ -1916,6 +1916,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		__debugbreak();
 		*/
 
+		GetCurrentDirectory(sizeof(basedir), basedir);
+
 		// install crash handler
 		open_applog("FFNx.log");
 		SetUnhandledExceptionFilter(ExceptionHandler);
@@ -2116,7 +2118,7 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 
 __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	HANDLE ret;
+	HANDLE ret = INVALID_HANDLE_VALUE;
 
 	if (strstr(lpFileName, "CD:") != NULL)
 	{

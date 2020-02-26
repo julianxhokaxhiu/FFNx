@@ -36,11 +36,6 @@
 
 #include "ff7_data.h"
 
-void ff7_read_basedir()
-{
-	GetCurrentDirectory(sizeof(basedir), basedir);
-}
-
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 word snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
@@ -49,10 +44,6 @@ static uint noop() { return 0; }
 struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 {
 	struct ff7_gfx_driver *ret;
-
-	ff7_read_basedir();
-
-	read_cfg();
 
 	common_externals.add_texture_format        = game_object->externals->add_texture_format;
 	common_externals.assert_calloc             = game_object->externals->assert_calloc;
