@@ -160,10 +160,41 @@ void ff8_prepare_movie(uint disc, uint movie)
 {
 	char fmvName[512];
 	char camName[512];
+	char dataPath[64]{"data"};
 	FILE *camFile;
 	uint camOffset = 0;
 
-	_snprintf(fmvName, sizeof(fmvName), "%s/data/movies/disc%02i_%02ih.avi", basedir, disc, movie);
+	// The only movie which is translated needs to be loaded from specific language path
+	if (disc == 3u && movie == 5u)
+	{
+		switch (version)
+		{
+		case VERSION_FF8_12_US_NV:
+			strcat(dataPath, R"(/lang-en)");
+			break;
+		case VERSION_FF8_12_FR_NV:
+			strcat(dataPath, R"(/lang-fr)");
+			break;
+		case VERSION_FF8_12_DE_NV:
+			strcat(dataPath, R"(/lang-de)");
+			break;
+		case VERSION_FF8_12_SP_NV:
+			strcat(dataPath, R"(/lang-sp)");
+			break;
+		case VERSION_FF8_12_IT_NV:
+			strcat(dataPath, R"(/lang-it)");
+			break;
+		case VERSION_FF8_12_JP:
+			strcat(dataPath, R"(/lang-jp)");
+			break;
+		}
+	}
+	// Unexpected cases default to Disc 0
+	else if (disc >= 5) {
+		disc = 0;
+	}
+
+	_snprintf(fmvName, sizeof(fmvName), "%s/%s/movies/disc%02i_%02ih.avi", basedir, dataPath, disc, movie);
 	_snprintf(camName, sizeof(camName), "%s/data/movies/disc%02i_%02i.cam", basedir, disc, movie);
 
 	if(trace_all || trace_movies) trace("prepare_movie %s\n", fmvName);
