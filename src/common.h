@@ -22,6 +22,10 @@
 
 #pragma once
 
+#include <Shlwapi.h>
+#include <psapi.h>
+#include <mmsystem.h>
+
 #include <time.h>
 #include <malloc.h>
 #include <stdio.h>

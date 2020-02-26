@@ -333,7 +333,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 {
 	char mangled_name[200];
 	struct ff7_file *ret = (ff7_file*)external_calloc(sizeof(*ret), 1);
-	char *_filename = filename;
+	char _filename[260]{ 0 };
 
 	if(trace_all || trace_files)
 	{
@@ -341,18 +341,52 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 		else trace("open %s (mode %i)\n", filename, file_context->mode);
 	}
 
+	// Add support for Steam language directory
+	if (strstr(filename, "steamapps") != NULL && _access(filename, 0) == -1)
+	{
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(filename, 92) + 1;
+
+		strcat(_filename, R"(data\lang-)");
+		switch (version)
+		{
+		case VERSION_FF7_102_US:
+			strcat(_filename, "en");
+			break;
+		case VERSION_FF7_102_FR:
+			strcat(_filename, "fr");
+			break;
+		case VERSION_FF7_102_DE:
+			strcat(_filename, "de");
+			break;
+		case VERSION_FF7_102_SP:
+			strcat(_filename, "sp");
+			break;
+		}
+		PathAppendA(_filename, pos);
+
+		if (_access(_filename, 0) == -1)
+		{
+			// Savegame files can be skipped, if not found, while the game is running
+			if (strstr(_filename, ".ff7") == NULL) error("Opening file %s\n", _filename);
+			goto error;
+		}
+	}
+	else
+		strcpy(_filename, filename);
+
 	if(!ret) return 0;
 
-	ret->name = (char*)external_malloc(strlen(filename) + 1);
-	strcpy(ret->name, filename);
+	ret->name = (char*)external_malloc(strlen(_filename) + 1);
+	strcpy(ret->name, _filename);
 	memcpy(&ret->context, file_context, sizeof(*file_context));
 
 	// file name mangler used mainly by battle module to convert PSX file names
 	// to LGP-friendly PC names
 	if(file_context->name_mangler)
 	{
-		file_context->name_mangler(filename, mangled_name);
-		_filename = mangled_name;
+		file_context->name_mangler(_filename, mangled_name);
+		strcpy(_filename, mangled_name);
 
 		if(trace_all || trace_files) trace("mangled name: %s\n", mangled_name);
 	}
@@ -364,14 +398,14 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 		use_files_array = true;
 		if(!ret->fd)
 		{
-			if(file_context->name_mangler) error("offset error: %s %s\n", filename, _filename);
-			else error("offset error: %s\n", filename);
+			if(file_context->name_mangler) error("offset error: %s %s\n", _filename, mangled_name);
+			else error("offset error: %s\n", _filename);
 			goto error;
 		}
 
 		if(!lgp_seek_file(ret->fd->offset + 24, ret->context.lgp_num))
 		{
-			error("seek error: %s\n", filename);
+			error("seek error: %s\n", _filename);
 			goto error;
 		}
 	}

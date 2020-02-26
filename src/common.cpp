@@ -21,9 +21,6 @@
  */
 
 #include <windows.h>
-#include <Shlwapi.h>
-#include <psapi.h>
-#include <mmsystem.h>
 #include <stdio.h>
 #include <sys/timeb.h>
 
