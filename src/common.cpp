@@ -2181,7 +2181,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 	{
 		CHAR newPath[260]{ 0 };
 
-		// Search for the '\' character and get a pointer to the next char
+		// Search for the last '\' character and get a pointer to the next char
 		const char* pos = strrchr(lpFileName, 92) + 1;
 
 		if (strstr(lpFileName, "DISK1") != NULL || strstr(lpFileName, "DISK2") != NULL || strstr(lpFileName, "DISK3") != NULL || strstr(lpFileName, "DISK4") != NULL)
@@ -2190,6 +2190,38 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 			PathAppendA(newPath, pos);
 			ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 		}
+	}
+	else if (strstr(lpFileName, ".fi") != NULL || strstr(lpFileName, ".fl") != NULL || strstr(lpFileName, ".fs") != NULL)
+	{
+		CHAR newPath[260]{ 0 };
+
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		strcat(newPath, R"(data\lang-)");
+		switch (version)
+		{
+		case VERSION_FF8_12_US_NV:
+			strcat(newPath, "en");
+			break;
+		case VERSION_FF8_12_FR_NV:
+			strcat(newPath, "fr");
+			break;
+		case VERSION_FF8_12_DE_NV:
+			strcat(newPath, "de");
+			break;
+		case VERSION_FF8_12_SP_NV:
+			strcat(newPath, "sp");
+			break;
+		case VERSION_FF8_12_IT_NV:
+			strcat(newPath, "it");
+			break;
+		case VERSION_FF8_12_JP:
+			strcat(newPath, "jp");
+			break;
+		}
+		PathAppendA(newPath, pos);
+		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	}
 	else
 		ret = CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
