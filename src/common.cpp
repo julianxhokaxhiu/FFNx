@@ -2036,7 +2036,7 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 	}
 	else if (strcmp(lpValueName, "DataDrive") == 0)
 	{
-		strcpy((CHAR*)lpData, R"(C:\)");
+		strcpy((CHAR*)lpData, "CD:");
 	}
 	else if (strcmp(lpValueName, "MoviePath") == 0)
 	{
@@ -2120,7 +2120,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 
 	if (strstr(lpFileName, "CD:") != NULL)
 	{
-		CHAR newPath[260];
+		CHAR newPath[260]{ 0 };
 
 		// Search for the '\' character and get a pointer to the next char
 		const char* pos = strrchr(lpFileName, 92) + 1;
@@ -2142,9 +2142,9 @@ __declspec(dllexport) UINT __stdcall dotemuGetDriveTypeA(LPCSTR lpRootPathName)
 {
 	UINT ret;
 
-	if (strstr(lpRootPathName, "CD:") != NULL)
+	if (strcmp(lpRootPathName, "CD:") == 0)
 	{
-		ret = 5;
+		ret = DRIVE_CDROM;
 	}
 	else
 	{
