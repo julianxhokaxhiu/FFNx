@@ -1971,8 +1971,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		{
 			replace_function(0x404A7D, ff7_get_inserted_cd);
 
-			// Steam edition has music files under a different path by default
-			external_music_path = "data/music_ogg";
+			if (strstr(parentName, "ff7_en.exe") != NULL ||
+				strstr(parentName, "ff7_de.exe") != NULL ||
+				strstr(parentName, "ff7_fr.exe") != NULL ||
+				strstr(parentName, "ff7_sp.exe") != NULL)
+			{
+				// Steam edition has music files under a different path by default
+				external_music_path = "data/music_ogg";
+			}
 		}
 		else if (ff8 &&
 			(
