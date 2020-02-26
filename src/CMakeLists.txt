@@ -16,6 +16,7 @@ target_link_libraries(${RELEASE_NAME}
 	dbghelp
 	shlwapi
     psapi
+    winmm
 	BGFX::BGFX
     BGFX::BIMG
     BGFX::BX

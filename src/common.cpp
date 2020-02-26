@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <Shlwapi.h>
 #include <psapi.h>
+#include <mmsystem.h>
 #include <stdio.h>
 #include <sys/timeb.h>
 
@@ -1706,6 +1707,32 @@ uint ff7_get_inserted_cd(void) {
 	return requiredCD;
 }
 
+MCIERROR __stdcall dotemuMciSendCommandA(MCIDEVICEID mciId, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+{
+	DWORD mciStatusRet;
+
+	switch (uMsg)
+	{
+	case MCI_OPEN:
+		((LPDWORD)dwParam2)[2] = (DWORD)"waveaudio";
+		dwParam1 = 8704;
+		((LPDWORD)dwParam2)[3] = (DWORD)R"(Data\Music\eyes_on_me.wav)";
+		return mciSendCommandA(mciId, uMsg, dwParam1, dwParam2);
+	case MCI_SET:
+		((LPDWORD)dwParam2)[1] = 0;
+		break;
+	case MCI_STATUS:
+		mciStatusRet = 0;
+		((LPDWORD)dwParam2)[1] = (DWORD)&mciStatusRet;
+		return 0;
+	case MCI_PLAY:
+		((LPDWORD)dwParam2)[2] = 339000;
+		break;
+	}
+
+	return mciSendCommandA(mciId, uMsg, dwParam1, dwParam2);
+}
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -1959,7 +1986,33 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		)
 		{
 			DWORD offset = version == VERSION_FF8_12_JP ? 0x402320 : 0x401F60;
+			DWORD offset2; // No idea what is this required
+			DWORD offset3; // Eyes on me patch
 
+			// Calculate offset2
+			switch (version)
+			{
+			case VERSION_FF8_12_US_NV:
+				offset2 = 0xB86014;
+				offset3 = 0xB69388;
+				break;
+			case VERSION_FF8_12_FR_NV:
+			case VERSION_FF8_12_DE_NV:
+			case VERSION_FF8_12_SP_NV:
+			case VERSION_FF8_12_IT_NV:
+				offset2 = 0xB85F74;
+				offset3 = 0xB69388;
+				break;
+			case VERSION_FF8_12_JP:
+				offset2 = 0xD89654;
+				offset3 = 0x2CA3DC8;
+				break;
+			}
+
+			/*
+			Patch 1,2,3 are required to inject this DLL into the main process
+			Patch 4 is done as well by the official Steam driver, but no idea why.
+			*/
 			// 1
 			patch_code_int(offset, 0x000001BA);
 			patch_code_int(offset + 0x4, -0x2F793900);
@@ -1970,6 +2023,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			// 3
 			patch_code_int(offset + 0xF, 0x0001E0B8);
 			patch_code_word(offset + 0x13, -0x7000);
+			// 4
+			patch_code_int(offset2, ((DWORD*)offset2)[11]);
+			// 5
+			patch_code_dword(offset3, (DWORD)dotemuMciSendCommandA);
 
 			// Steam edition contains movies unpacked
 			use_external_movie = cfg_bool_t(true);
@@ -2160,6 +2217,7 @@ __declspec(dllexport) BOOL __stdcall dotemuDeleteFileA(LPCSTR lpFileName)
 {
 	return DeleteFileA(lpFileName);
 }
+
 #if defined(__cplusplus)
 }
 #endif
