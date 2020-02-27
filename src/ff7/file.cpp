@@ -347,22 +347,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 		// Search for the last '\' character and get a pointer to the next char
 		const char* pos = strrchr(filename, 92) + 1;
 
-		strcat(_filename, R"(data\lang-)");
-		switch (version)
-		{
-		case VERSION_FF7_102_US:
-			strcat(_filename, "en");
-			break;
-		case VERSION_FF7_102_FR:
-			strcat(_filename, "fr");
-			break;
-		case VERSION_FF7_102_DE:
-			strcat(_filename, "de");
-			break;
-		case VERSION_FF7_102_SP:
-			strcat(_filename, "sp");
-			break;
-		}
+		get_data_lang_path(_filename);
 		PathAppendA(_filename, pos);
 
 		if (_access(_filename, 0) == -1)

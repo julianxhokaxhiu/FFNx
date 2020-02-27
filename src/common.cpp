@@ -1693,6 +1693,36 @@ uint get_version()
 	return 0;
 }
 
+void get_data_lang_path(PCHAR buffer)
+{
+	strcpy(buffer, R"(data\lang-)");
+	switch (version)
+	{
+	case VERSION_FF7_102_US:
+	case VERSION_FF8_12_US_NV:
+		strcat(buffer, "en");
+		break;
+	case VERSION_FF7_102_FR:
+	case VERSION_FF8_12_FR_NV:
+		strcat(buffer, "fr");
+		break;
+	case VERSION_FF7_102_DE:
+	case VERSION_FF8_12_DE_NV:
+		strcat(buffer, "de");
+		break;
+	case VERSION_FF7_102_SP:
+	case VERSION_FF8_12_SP_NV:
+		strcat(buffer, "sp");
+		break;
+	case VERSION_FF8_12_IT_NV:
+		strcat(buffer, "it");
+		break;
+	case VERSION_FF8_12_JP:
+		strcat(buffer, "jp");
+		break;
+	}
+}
+
 // cd check
 uint ff7_get_inserted_cd(void) {
 	int requiredCD = -1;
@@ -2204,28 +2234,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 		// Search for the last '\' character and get a pointer to the next char
 		const char* pos = strrchr(lpFileName, 92) + 1;
 
-		strcat(newPath, R"(data\lang-)");
-		switch (version)
-		{
-		case VERSION_FF8_12_US_NV:
-			strcat(newPath, "en");
-			break;
-		case VERSION_FF8_12_FR_NV:
-			strcat(newPath, "fr");
-			break;
-		case VERSION_FF8_12_DE_NV:
-			strcat(newPath, "de");
-			break;
-		case VERSION_FF8_12_SP_NV:
-			strcat(newPath, "sp");
-			break;
-		case VERSION_FF8_12_IT_NV:
-			strcat(newPath, "it");
-			break;
-		case VERSION_FF8_12_JP:
-			strcat(newPath, "jp");
-			break;
-		}
+		get_data_lang_path(newPath);
 		PathAppendA(newPath, pos);
 		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	}

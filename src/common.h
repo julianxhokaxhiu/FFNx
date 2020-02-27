@@ -271,3 +271,5 @@ struct game_mode *getmode();
 struct game_mode *getmode_cached();
 struct tex_header *make_framebuffer_tex(uint tex_w, uint tex_h, uint x, uint y, uint w, uint h, uint color_key);
 void internal_set_renderstate(uint state, uint option, struct game_obj *game_object);
+
+void get_data_lang_path(PCHAR buffer);
