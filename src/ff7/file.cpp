@@ -352,9 +352,18 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 
 		if (_access(_filename, 0) == -1)
 		{
-			// Savegame files can be skipped, if not found, while the game is running
-			if (strstr(_filename, ".ff7") == NULL) error("Opening file %s\n", _filename);
-			goto error;
+			bool isSavegame = strstr(_filename, ".ff7") != NULL;
+
+			// Do one more try in the user data path
+			get_userdata_path(_filename, sizeof(_filename), isSavegame);
+			if (isSavegame) pos = strrchr(filename, 47) + 1;
+			PathAppendA(_filename, pos);
+
+			if (_access(_filename, 0) == -1)
+			{
+				error("Opening file %s\n", _filename);
+				goto error;
+			}
 		}
 	}
 	else

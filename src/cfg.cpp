@@ -77,6 +77,7 @@ cfg_bool_t movie_sync_debug = cfg_bool_t(false);
 char *renderer_backend;
 cfg_bool_t renderer_debug = cfg_bool_t(false);
 cfg_bool_t create_crash_dump = cfg_bool_t(false);
+char* steam_game_userdata = nullptr;
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -131,6 +132,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("renderer_backend", &renderer_backend),
 		CFG_SIMPLE_BOOL("renderer_debug", &renderer_debug),
 		CFG_SIMPLE_BOOL("create_crash_dump", &create_crash_dump),
+		CFG_SIMPLE_STR("steam_game_userdata", &steam_game_userdata),
 
 		CFG_END()
 };

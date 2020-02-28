@@ -1723,6 +1723,49 @@ void get_data_lang_path(PCHAR buffer)
 	}
 }
 
+void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
+{
+	PWSTR outPath = NULL;
+
+	HRESULT hr = SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &outPath);
+
+	if (SUCCEEDED(hr))
+	{
+		wcstombs(buffer, outPath, bufSize);
+
+		CoTaskMemFree(outPath);
+
+		if (ff8)
+			PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VIII Steam)");
+		else
+			PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VII Steam)");
+
+		if (isSavegameFile)
+		{
+			if (steam_game_userdata != nullptr)
+			{
+				// Directly use the given userdata
+				PathAppendA(buffer, steam_game_userdata);
+			}
+			else
+			{
+				// Search for the first "user_" match in the game path
+				CHAR searchPath[260];
+				WIN32_FIND_DATA pathFound;
+				HANDLE hFind;
+
+				strcpy(searchPath, buffer);
+				strcat(searchPath, R"(\user_*)");
+				if (hFind = FindFirstFileA(searchPath, &pathFound))
+				{
+					PathAppendA(buffer, pathFound.cFileName);
+					FindClose(hFind);
+				}
+			}
+		}
+	}
+}
+
 // cd check
 uint ff7_get_inserted_cd(void) {
 	int requiredCD = -1;
@@ -2236,6 +2279,23 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 
 		get_data_lang_path(newPath);
 		PathAppendA(newPath, pos);
+		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	}
+	else if (strstr(lpFileName, R"(SAVE\)") != NULL)
+	{
+		CHAR newPath[260]{ 0 };
+		CHAR saveFileName[50]{ 0 };
+
+		// Search for the next character pointer after "SAVE\"
+		const char* pos = strstr(lpFileName, R"(SAVE\)") + 5;
+		strcpy(saveFileName, pos);
+		_strlwr(saveFileName);
+		*(strstr(saveFileName, R"(\)")) = 95;
+		strcat(saveFileName, R"(.ff8)");
+
+		get_userdata_path(newPath, 260, true);
+		PathAppendA(newPath, saveFileName);
+
 		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	}
 	else

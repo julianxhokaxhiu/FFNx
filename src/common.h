@@ -23,6 +23,7 @@
 #pragma once
 
 #include <Shlwapi.h>
+#include <shlobj.h>
 #include <psapi.h>
 #include <mmsystem.h>
 
@@ -273,3 +274,4 @@ struct tex_header *make_framebuffer_tex(uint tex_w, uint tex_h, uint x, uint y, 
 void internal_set_renderstate(uint state, uint option, struct game_obj *game_object);
 
 void get_data_lang_path(PCHAR buffer);
+void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);

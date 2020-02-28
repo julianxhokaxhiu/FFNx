@@ -81,5 +81,6 @@ extern cfg_bool_t movie_sync_debug;
 extern char *renderer_backend;
 extern cfg_bool_t renderer_debug;
 extern cfg_bool_t create_crash_dump;
+extern char* steam_game_userdata;
 
 void read_cfg();
