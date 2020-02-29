@@ -145,10 +145,6 @@ void ffmpeg_release_movie_objects()
 		for (uint idx = 0; idx < 3; idx++) newRenderer.deleteTexture(video_buffer[i].yuv_textures[idx]);
 		memset(video_buffer[i].yuv_textures, 0, sizeof(video_buffer[i].yuv_textures));
 	}
-
-	newRenderer.setClearFlags(true);
-	newRenderer.isMovie(false);
-	newRenderer.isYUV(false);
 }
 
 // prepare a movie for playback
@@ -315,8 +311,6 @@ uint ffmpeg_prepare_movie(char *name)
 		ffmpeg_sound_write_pointer = 0;
 	}
 
-	newRenderer.isMovie(true);
-
 exit:
 	movie_frame_counter = 0;
 	skipped_frames = 0;
@@ -352,8 +346,10 @@ void buffer_bgra_frame(uint8_t *data, int upload_stride)
 
 void draw_bgra_frame(uint buffer_index)
 {
+	newRenderer.isMovie(true);
 	newRenderer.useTexture(video_buffer[buffer_index].bgra_texture);
 	gl_draw_movie_quad(movie_width, movie_height);
+	newRenderer.isMovie(false);
 }
 
 void upload_yuv_texture(uint8_t **planes, int *strides, uint num, uint buffer_index)
@@ -391,9 +387,13 @@ void draw_yuv_frame(uint buffer_index, bool full_range)
 	for (uint idx = 0; idx < 3; idx++)
 		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
 
+	newRenderer.isMovie(true);
 	newRenderer.isYUV(true);
 	newRenderer.isFullRange(full_range);
 	gl_draw_movie_quad(movie_width, movie_height);
+	newRenderer.isFullRange(false);
+	newRenderer.isYUV(false);
+	newRenderer.isMovie(false);
 }
 
 // display the next frame

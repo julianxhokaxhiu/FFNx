@@ -465,6 +465,7 @@ void Renderer::reset()
     isFBTexture();
     isTexture();
     doModulateAlpha();
+    doTextureFiltering();
 };
 
 void Renderer::printText(uint16_t x, uint16_t y, uint color, const char* text)
@@ -548,9 +549,6 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
         clearFlags |= BGFX_CLEAR_DEPTH;
 
     bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f);
-
-    // Create an empty frame only when movies finish to play
-    if (internalState.bIsMovie) bgfx::touch(backendViewId);
 }
 
 void Renderer::setBackgroundColor(float r, float g, float b, float a)
