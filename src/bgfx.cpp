@@ -248,10 +248,14 @@ void Renderer::printMatrix(char* name, float* mat)
 
 void Renderer::init()
 {
-    viewWidth = (preserve_aspect ? ::round(window_size_y * ( (float)game_width / (float)game_height )) : window_size_x);
+    viewWidth = (preserve_aspect ? ((window_size_y * 4) / 3) : window_size_x);
     viewHeight = window_size_y;
-    viewOffsetX = (preserve_aspect ? ((window_size_x - viewWidth) / 2.0f) : 0.0f);
-    viewOffsetY = 0.0f;
+    viewOffsetX = (preserve_aspect ? ((window_size_x - viewWidth) / 2) : 0);
+    viewOffsetY = 0;
+
+    // In order to prevent weird glitches while rendering we need to use the closest resolution to native's game one
+    framebufferWidth = (viewWidth % game_width) ? (viewWidth / game_width + 1) * game_width : viewWidth;
+    framebufferHeight = (viewHeight % game_height) ? (viewHeight / game_height + 1) * game_height : viewHeight;
 
     // Init renderer
     bgfx::Init bgfxInit;
@@ -275,16 +279,16 @@ void Renderer::init()
 
     backendFrameBufferRT = {
         bgfx::createTexture2D(
-            window_size_x,
-            window_size_y,
+            framebufferWidth,
+            framebufferHeight,
             false,
             1,
             bgfx::TextureFormat::RGBA8,
             0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP
         ),
         bgfx::createTexture2D(
-            window_size_x,
-            window_size_y,
+            framebufferWidth,
+            framebufferHeight,
             false,
             1,
             bgfx::TextureFormat::D24S8,
@@ -345,9 +349,9 @@ void Renderer::draw()
 
     // Set current view rect
     if (backendViewId == RendererView::POSTPROCESSING)
-        bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
-    else {
         bgfx::setViewRect(backendViewId, viewOffsetX, viewOffsetY, viewWidth, viewHeight);
+    else {
+        bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
         bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
     }
 
@@ -527,8 +531,8 @@ void Renderer::bindIndexBuffer(word* inIndex, uint inCount)
 
 void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
-    scissorOffsetX = getInternalCoordX(x) + viewOffsetX;
-    scissorOffsetY = getInternalCoordY(y) + viewOffsetY;
+    scissorOffsetX = getInternalCoordX(x);
+    scissorOffsetY = getInternalCoordY(y);
     scissorWidth = getInternalCoordX(width);
     scissorHeight = getInternalCoordY(height);
 }
@@ -749,12 +753,12 @@ void Renderer::setD3DProjection(struct matrix* matrix)
 
 float Renderer::getInternalCoordX(float inX)
 {
-    return (inX * viewWidth) / game_width;
+    return (inX * framebufferWidth) / game_width;
 }
 
 float Renderer::getInternalCoordY(float inY)
 {
-    return (inY * viewHeight) / game_height;
+    return (inY * framebufferHeight) / game_height;
 }
 
 bool Renderer::supportsAutoMips(RendererTextureType type)

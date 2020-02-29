@@ -232,10 +232,13 @@ private:
 
     RendererCallbacks bgfxCallbacks;
 
-    float viewOffsetX = 0.0f;
-    float viewOffsetY = 0.0f;
-    float viewWidth = 0.0f;
-    float viewHeight = 0.0f;
+    uint16_t viewOffsetX = 0;
+    uint16_t viewOffsetY = 0;
+    uint16_t viewWidth = 0;
+    uint16_t viewHeight = 0;
+
+    uint16_t framebufferWidth = 0;
+    uint16_t framebufferHeight = 0;
 
     uint16_t scissorOffsetX = 0;
     uint16_t scissorOffsetY = 0;
