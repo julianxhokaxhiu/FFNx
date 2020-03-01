@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <direct.h>
-#include "bgfx.h"
+#include "renderer.h"
 
 #include "types.h"
 #include "globals.h"

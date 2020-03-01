@@ -21,7 +21,7 @@
  */
 
 #include <ddraw.h>
-#include "bgfx.h"
+#include "renderer.h"
 
 #include "fake_dd.h"
 #include "types.h"

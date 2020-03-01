@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <sys/timeb.h>
 
-#include "bgfx.h"
+#include "renderer.h"
 
 #include "types.h"
 #include "log.h"

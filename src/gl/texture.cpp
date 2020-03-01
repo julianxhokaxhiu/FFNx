@@ -20,7 +20,7 @@
  * gl/texture.c - support functions for loading/using OpenGL textures
  */
 
-#include "../bgfx.h"
+#include "../renderer.h"
 
 #include "../types.h"
 #include "../log.h"

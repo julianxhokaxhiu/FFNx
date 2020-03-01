@@ -22,7 +22,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include "../bgfx.h"
+#include "../renderer.h"
 
 #include "../types.h"
 #include "../common.h"

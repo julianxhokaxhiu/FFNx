@@ -20,7 +20,7 @@
  * gl/deferred.c - implements triangle re-ordering to achieve correct blending
  */
 
-#include "../bgfx.h"
+#include "../renderer.h"
 
 #include "../types.h"
 #include "../gl.h"
