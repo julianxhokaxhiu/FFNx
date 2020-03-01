@@ -354,7 +354,8 @@ void Renderer::draw()
         bgfx::setViewRect(backendViewId, viewOffsetX, viewOffsetY, viewWidth, viewHeight);
     else {
         bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
-        bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
+
+        if (internalState.bDoScissorTest) bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
     }
 
     // Set current view transform
@@ -459,6 +460,7 @@ void Renderer::reset()
 
     doDepthTest();
     doDepthWrite();
+    doScissorTest();
     setCullMode();
     setBlendMode();
     isTLVertex();
@@ -723,6 +725,11 @@ void Renderer::doDepthTest(bool flag)
 void Renderer::doDepthWrite(bool flag)
 {
     internalState.bDoDepthWrite = flag;
+}
+
+void Renderer::doScissorTest(bool flag)
+{
+    internalState.bDoScissorTest = flag;
 }
 
 void Renderer::setWireframeMode(bool flag)

@@ -173,6 +173,7 @@ private:
 
         bool bDoDepthTest = false;
         bool bDoDepthWrite = false;
+        bool bDoScissorTest = false;
 
         bool bIsTLVertex = false;
         bool bIsFBTexture = false;
@@ -305,6 +306,9 @@ public:
     void setCullMode(RendererCullMode mode = RendererCullMode::DISABLED);
     void doDepthTest(bool flag = false);
     void doDepthWrite(bool flag = false);
+
+    // Scissor test
+    void doScissorTest(bool flag = false);
 
     // Wireframe mode
     void setWireframeMode(bool flag = false);

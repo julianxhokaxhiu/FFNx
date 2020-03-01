@@ -171,6 +171,10 @@ void gl_draw_indexed_primitive(uint primitivetype, uint vertextype, struct nvert
 	// should never happen, broken 3rd-party models cause this
 	if(!count) return;
 
+	// scissor test is used to emulate D3D viewports
+	if (clip) newRenderer.doScissorTest(true);
+	else newRenderer.doScissorTest(false);
+
 	if(vertextype > TLVERTEX)
 	{
 		unexpected_once("vertextype > TLVERTEX\n");
