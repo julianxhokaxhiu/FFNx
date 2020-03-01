@@ -315,8 +315,8 @@ public:
     void setD3DProjection(struct matrix* matrix);
 
     // Internal coord calculation
-    float getInternalCoordX(float inX);
-    float getInternalCoordY(float inY);
+    uint16_t getInternalCoordX(uint16_t inX);
+    uint16_t getInternalCoordY(uint16_t inY);
 
     // Hardware capabilities
     bool supportsAutoMips(RendererTextureType type = RendererTextureType::BGRA);

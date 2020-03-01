@@ -612,7 +612,7 @@ uint load_framebuffer_texture(struct texture_set *texture_set, struct tex_header
 
 	if(VREF(tex_header, version) != FB_TEX_VERSION) return false;
 
-	if(trace_all) trace("load_framebuffer_texture: 0x%x\n", VPTR(texture_set));
+	if(trace_all) trace("load_framebuffer_texture: XY(%u,%u) %ux%u\n", VREF(tex_header, fb_tex.x), VREF(tex_header, fb_tex.y), VREF(tex_header, fb_tex.w), VREF(tex_header, fb_tex.h));
 
 	texture = newRenderer.blitTexture(
 		VREF(tex_header, fb_tex.x),
@@ -1565,10 +1565,10 @@ struct tex_header *make_framebuffer_tex(uint tex_w, uint tex_h, uint x, uint y, 
 
 	VRASS(tex_header, version, FB_TEX_VERSION);
 
-	VRASS(tex_header, fb_tex.x, newRenderer.getInternalCoordX(x));
-	VRASS(tex_header, fb_tex.y, newRenderer.getInternalCoordY(y));
-	VRASS(tex_header, fb_tex.w, newRenderer.getInternalCoordX(w));
-	VRASS(tex_header, fb_tex.h, newRenderer.getInternalCoordY(h));
+	VRASS(tex_header, fb_tex.x, x);
+	VRASS(tex_header, fb_tex.y, y);
+	VRASS(tex_header, fb_tex.w, w);
+	VRASS(tex_header, fb_tex.h, h);
 
 	return VPTRCAST(tex_header, tex_header);
 }

@@ -637,10 +637,10 @@ void Renderer::useTexture(uint rt, uint slot)
 
 uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 {
-    uint64_t samplerFlags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
+    uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
     
-    bgfx::TextureHandle ret = bgfx::createTexture2D(width, height, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST | samplerFlags);
-    bgfx::blit(backendViewId, ret, 0, 0, backendFrameBufferRT[0], x + viewOffsetX, y + viewOffsetY);
+    bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > width ? width : framebufferWidth, framebufferHeight > height ? height : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST | samplerFlags);
+    bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), x, y);
     
     return ret.idx;
 };
@@ -749,12 +749,12 @@ void Renderer::setD3DProjection(struct matrix* matrix)
     if (uniform_log) printMatrix(__func__, internalState.d3dProjectionMatrix);
 };
 
-float Renderer::getInternalCoordX(float inX)
+uint16_t Renderer::getInternalCoordX(uint16_t inX)
 {
     return (inX * framebufferWidth) / game_width;
 }
 
-float Renderer::getInternalCoordY(float inY)
+uint16_t Renderer::getInternalCoordY(uint16_t inY)
 {
     return (inY * framebufferHeight) / game_height;
 }
