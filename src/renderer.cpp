@@ -219,7 +219,9 @@ void Renderer::renderFrameBuffer()
         bindVertexBuffer(vertices, 4);
         bindIndexBuffer(indices, 6);
 
-        useTexture(backendFrameBufferRT[0].idx);
+        useTexture(
+            bgfx::getTexture(backendFrameBuffer).idx
+        );
 
         if (internalState.bIsMovieYUV)
         {
