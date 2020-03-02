@@ -1982,12 +1982,6 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 
 	info("Original resolution %ix%i, New resolution %ix%i\n", game_width, game_height, window_size_x, window_size_y);
 
-	if(use_mipmaps && !newRenderer.supportsAutoMips())
-	{
-		error("no FBO support, will not be able to generate mipmaps\n");
-		use_mipmaps = cfg_bool_t(false);
-	}
-
 	// perform any additional initialization that requires the rendering environment to be set up
 	if(!ff8) ff7_post_init();
 	else ff8_post_init();

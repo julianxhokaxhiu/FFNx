@@ -282,11 +282,16 @@ void Renderer::init()
     // Create an empty texture
     emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
 
+    bool canAutogenMipmaps = (getCaps()->formats[bgfx::TextureFormat::RGBA8] & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN);
+
+    if (!canAutogenMipmaps)
+        error("Possible pixelated output. Your GPU DOES NOT support Mipmap autogeneration on %s. Please try with another backend.\n", renderer_backend);
+
     backendFrameBufferRT = {
         bgfx::createTexture2D(
             framebufferWidth,
             framebufferHeight,
-            true,
+            canAutogenMipmaps && use_mipmaps,
             1,
             bgfx::TextureFormat::RGBA8,
             0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP
@@ -770,10 +775,3 @@ uint16_t Renderer::getInternalCoordY(uint16_t inY)
 {
     return (inY * framebufferHeight) / game_height;
 }
-
-bool Renderer::supportsAutoMips(RendererTextureType type)
-{
-    bgfx::TextureFormat::Enum format = type == RendererTextureType::BGRA ? bgfx::TextureFormat::BGRA8 : bgfx::TextureFormat::R8;
-
-    return (getCaps()->formats[format] & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN);
-};

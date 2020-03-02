@@ -321,9 +321,6 @@ public:
     // Internal coord calculation
     uint16_t getInternalCoordX(uint16_t inX);
     uint16_t getInternalCoordY(uint16_t inY);
-
-    // Hardware capabilities
-    bool supportsAutoMips(RendererTextureType type = RendererTextureType::BGRA);
 };
 
 extern Renderer newRenderer;
