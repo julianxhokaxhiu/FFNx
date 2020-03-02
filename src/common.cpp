@@ -1872,13 +1872,13 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	// steal window handle
 	hwnd = VREF(game_object, hwnd);
 
+	// fetch current user screen settings
+	EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmScreenSettings);
+
 	if(window_size_x == 0 || window_size_y == 0)
 	{
 		if(fullscreen)
 		{
-			// default fullscreen mode is current desktop resolution
-			EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmScreenSettings);
-
 			window_size_x = dmScreenSettings.dmPelsWidth;
 			window_size_y = dmScreenSettings.dmPelsHeight;
 		}
@@ -1891,24 +1891,23 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	}
 	else
 	{
-		// custom resolution
-		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
-		dmScreenSettings.dmSize = sizeof(dmScreenSettings);
-		dmScreenSettings.dmPelsWidth = window_size_x;
-		dmScreenSettings.dmPelsHeight = window_size_y;
-		dmScreenSettings.dmBitsPerPel = 32;
-		dmScreenSettings.dmFields = DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
+		if (fullscreen)
+		{
+			dmScreenSettings.dmPelsWidth = window_size_x;
+			dmScreenSettings.dmPelsHeight = window_size_y;
+			dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+		}
 
 		if(refresh_rate)
 		{
 			dmScreenSettings.dmDisplayFrequency = refresh_rate;
-			dmScreenSettings.dmFields = DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT|DM_DISPLAYFREQUENCY;
+			dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
 		}
 	}
 
 	if(fullscreen)
 	{
-		if(ChangeDisplaySettingsEx(0, &dmScreenSettings, 0, CDS_FULLSCREEN, 0) != DISP_CHANGE_SUCCESSFUL)
+		if(ChangeDisplaySettingsEx(0, &dmScreenSettings, 0, CDS_FULLSCREEN | CDS_RESET, 0) != DISP_CHANGE_SUCCESSFUL)
 		{
 			MessageBoxA(hwnd, "Failed to set the requested fullscreen mode, reverting to original resolution window mode.\n", "Error", 0);
 			error("failed to set fullscreen mode\n");
@@ -1924,19 +1923,15 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	if(!fullscreen)
 	{
 		RECT tmp;
-		DEVMODE currentUserScreen;
 		uint w, h;
-
-		// Read current user resolution
-		EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &currentUserScreen);
 
 		tmp.left = 0;
 		tmp.top = 0;
 		tmp.right = window_size_x;
 		tmp.bottom = window_size_y;
 
-		uint32_t initialWindowsPositionOffsetX = (currentUserScreen.dmPelsWidth / 2) - (window_size_x / 2);
-		uint32_t initialWindowsPositionOffsetY = (currentUserScreen.dmPelsHeight / 2) - (window_size_y / 2);
+		uint32_t initialWindowsPositionOffsetX = (dmScreenSettings.dmPelsWidth / 2) - (window_size_x / 2);
+		uint32_t initialWindowsPositionOffsetY = (dmScreenSettings.dmPelsHeight / 2) - (window_size_y / 2);
 
 		// in windowed mode we need to create our own window with the proper decorations
 		DestroyWindow(hwnd);
