@@ -362,10 +362,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 				PathAppendA(_filename, pos);
 
 				if (_access(_filename, 0) == -1)
-				{
-					error("Opening file %s\n", _filename);
 					goto error;
-				}
 			}
 		}
 		else
