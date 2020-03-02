@@ -234,6 +234,8 @@ void Renderer::renderFrameBuffer()
             bgfx::getTexture(backendFrameBuffer).idx
         );
 
+        doTextureFiltering(true);
+
         draw();
     }
     backendViewId = RendererView::FRAMEBUFFER;
@@ -284,7 +286,7 @@ void Renderer::init()
         bgfx::createTexture2D(
             framebufferWidth,
             framebufferHeight,
-            false,
+            true,
             1,
             bgfx::TextureFormat::RGBA8,
             0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP
@@ -380,7 +382,7 @@ void Renderer::draw()
             {
                 uint32_t flags = 0;
 
-                if (internalState.bIsMovie) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                if (internalState.bIsMovie || backendViewId == RendererView::POSTPROCESSING) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
                 if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
 
