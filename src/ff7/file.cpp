@@ -342,29 +342,34 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 	}
 
 	// Add support for Steam language directory
-	if (strstr(filename, "steamapps") != NULL && _access(filename, 0) == -1)
+	if (!file_context->use_lgp)
 	{
-		// Search for the last '\' character and get a pointer to the next char
-		const char* pos = strrchr(filename, 92) + 1;
-
-		get_data_lang_path(_filename);
-		PathAppendA(_filename, pos);
-
-		if (_access(_filename, 0) == -1)
+		if (strstr(filename, "steamapps") != NULL && _access(filename, 0) == -1)
 		{
-			bool isSavegame = strstr(_filename, ".ff7") != NULL;
+			// Search for the last '\' character and get a pointer to the next char
+			const char* pos = strrchr(filename, 92) + 1;
 
-			// Do one more try in the user data path
-			get_userdata_path(_filename, sizeof(_filename), isSavegame);
-			if (isSavegame) pos = strrchr(filename, 47) + 1;
+			get_data_lang_path(_filename);
 			PathAppendA(_filename, pos);
 
 			if (_access(_filename, 0) == -1)
 			{
-				error("Opening file %s\n", _filename);
-				goto error;
+				bool isSavegame = strstr(_filename, ".ff7") != NULL;
+
+				// Do one more try in the user data path
+				get_userdata_path(_filename, sizeof(_filename), isSavegame);
+				if (isSavegame) pos = strrchr(filename, 47) + 1;
+				PathAppendA(_filename, pos);
+
+				if (_access(_filename, 0) == -1)
+				{
+					error("Opening file %s\n", _filename);
+					goto error;
+				}
 			}
 		}
+		else
+			strcpy(_filename, filename);
 	}
 	else
 		strcpy(_filename, filename);
