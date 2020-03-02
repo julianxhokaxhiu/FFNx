@@ -223,17 +223,7 @@ void Renderer::renderFrameBuffer()
             bgfx::getTexture(backendFrameBuffer).idx
         );
 
-        if (internalState.bIsMovieYUV)
-        {
-            // Temporarily disable the YUV flag and re-enable it for the next pass
-            isYUV(false);
-
-            draw();
-
-            isYUV(true);
-        }
-        else
-            draw();
+        draw();
     }
     backendViewId = RendererView::FRAMEBUFFER;
 };
