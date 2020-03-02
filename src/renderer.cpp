@@ -201,6 +201,17 @@ void Renderer::renderFrameBuffer()
     float u3 = u2;
     float v3 = v1;
 
+    if (preserve_aspect)
+    {
+        uint16_t inGameWidth = (viewWidth * game_width) / window_size_x;
+        uint16_t inGameOffsetX = (game_width - inGameWidth) / 2;
+
+        x0 = inGameOffsetX;
+        x1 = x0;
+        x2 = x0 + inGameWidth;
+        x3 = x2;
+    }
+
     struct nvertex vertices[] = {
         {x0, y0, 1.0f, 1.0f, 0x00000000, 0, u0, v0},
         {x1, y1, 1.0f, 1.0f, 0x00000000, 0, u1, v1},
@@ -341,7 +352,7 @@ void Renderer::draw()
 
     // Set current view rect
     if (backendViewId == RendererView::POSTPROCESSING)
-        bgfx::setViewRect(backendViewId, viewOffsetX, viewOffsetY, viewWidth, viewHeight);
+        bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
     else {
         bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
 
