@@ -335,13 +335,21 @@ void common_flip(struct game_obj *game_object)
 	// draw any z-sorted content now that we're done drawing everything else
 	gl_draw_deferred();
 
-	if(show_stats)
+	if (fullscreen)
 	{
-		if (fullscreen)
+		static uint col = 4;
+		uint row = 1;
+
+		if (show_fps)
 		{
-			static uint col = 4;
+			// average last two seconds and round up for our FPS counter
+			gl_draw_text(col, row++, text_colors[TEXTCOLOR_YELLOW], 255, "FPS: %2i", (fps_counters[1] + fps_counters[2] + 1) / 2);
+		}
+
+		if (show_stats)
+		{
 			static uint color = text_colors[TEXTCOLOR_PINK];
-			uint row = 1;
+
 #ifdef HEAP_DEBUG
 			gl_draw_text(col, row++, color, 255, "Allocations: %u", allocs);
 #endif
@@ -358,28 +366,28 @@ void common_flip(struct game_obj *game_object)
 			gl_draw_text(col, row++, color, 255, "vertices: %u", stats.vertex_count);
 			gl_draw_text(col, row++, color, 255, "timer: %I64u", stats.timer);
 		}
-		else
+	}
+	else
+	{
+		if (show_stats)
 		{
 			char tmp[768];
 			sprintf_s(tmp, 768, " | RAM: %u MB | nTex: %u | nExt.Tex: %u", get_ram_size() / (1024 * 1024), stats.texture_count, stats.external_textures);
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
-	}
 
-	if(show_fps)
-	{
-		if (fullscreen)
-		{
-			// average last two seconds and round up for our FPS counter
-			gl_draw_text(230, 3, text_colors[TEXTCOLOR_YELLOW], 255, "%2i", (fps_counters[1] + fps_counters[2] + 1) / 2);
-		}
-		else
+		if (show_fps)
 		{
 			char tmp[64];
 			sprintf_s(tmp, 64, " | FPS: %2i", (fps_counters[1] + fps_counters[2] + 1) / 2);
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 
+		SetWindowText(hwnd, newWindowTitle);
+	}
+
+	if(show_fps)
+	{
 		fps_counters[0]++;
 		ftime(&last_frame);
 
@@ -389,10 +397,7 @@ void common_flip(struct game_obj *game_object)
 			fps_counters[1] = fps_counters[0];
 			fps_counters[0] = 0;
 		}
-	}
-
-	if (!fullscreen)
-		SetWindowText(hwnd, newWindowTitle);
+	}		
 
 	// if there is an active popup message, display it
 	if(popup_ttl > 0)
