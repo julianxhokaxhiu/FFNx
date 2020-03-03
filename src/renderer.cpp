@@ -181,7 +181,7 @@ void Renderer::renderFrameBuffer()
     */
 
     // 0
-    float x0 = 0.0f;
+    float x0 = preserve_aspect ? framebufferVertexOffsetX : 0.0f;
     float y0 = 0.0f;
     float u0 = 0.0f;
     float v0 = getCaps()->originBottomLeft ? 1.0f : 0.0f;
@@ -191,7 +191,7 @@ void Renderer::renderFrameBuffer()
     float u1 = u0;
     float v1 = getCaps()->originBottomLeft ? 0.0f : 1.0f;
     // 2
-    float x2 = game_width;
+    float x2 = x0 + (preserve_aspect ? framebufferVertexWidth : game_width);
     float y2 = y0;
     float u2 = 1.0f;
     float v2 = v0;
@@ -200,17 +200,6 @@ void Renderer::renderFrameBuffer()
     float y3 = y1;
     float u3 = u2;
     float v3 = v1;
-
-    if (preserve_aspect)
-    {
-        uint16_t inGameWidth = (viewWidth * game_width) / window_size_x;
-        uint16_t inGameOffsetX = (game_width - inGameWidth) / 2;
-
-        x0 = inGameOffsetX;
-        x1 = x0;
-        x2 = x0 + inGameWidth;
-        x3 = x2;
-    }
 
     struct nvertex vertices[] = {
         {x0, y0, 1.0f, 1.0f, 0x00000000, 0, u0, v0},
@@ -261,6 +250,9 @@ void Renderer::init()
     // In order to prevent weird glitches while rendering we need to use the closest resolution to native's game one
     framebufferWidth = (viewWidth % game_width) ? (viewWidth / game_width + 1) * game_width : viewWidth;
     framebufferHeight = (viewHeight % game_height) ? (viewHeight / game_height + 1) * game_height : viewHeight;
+
+    framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
+    framebufferVertexOffsetX = (game_width - framebufferVertexWidth) / 2;
 
     // Init renderer
     bgfx::Init bgfxInit;
