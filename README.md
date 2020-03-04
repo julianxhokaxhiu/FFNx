@@ -23,7 +23,7 @@ Some of the improvements that you can find only on FFNx are:
 - Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L80)
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
 - In-Game music OGG files playback WITH LOOP support!
-- Five different Rendering Backends ( Vulkan, OpenGL, DirectX 9/11/12)
+- Four different Rendering Backends ( Vulkan, OpenGL, DirectX 11, DirectX 12)
 
 ## Tech Stack
 If you're curious to know it, FFNx is made with:

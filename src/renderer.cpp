@@ -63,10 +63,6 @@ bgfx::RendererType::Enum Renderer::getRendererType() {
         ret = bgfx::RendererType::Direct3D11;
         shaderSuffix = ".d3d11";
     }
-    else if (backend == "Direct3D9") {
-        ret = bgfx::RendererType::Direct3D9;
-        shaderSuffix = ".d3d9";
-    }
     else if (backend == "OpenGL") {
         ret = bgfx::RendererType::OpenGL;
         shaderSuffix = ".gl";
