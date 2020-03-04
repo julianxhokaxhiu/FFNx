@@ -17,13 +17,18 @@ Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with nativ
 Welcome to FFNx project. This is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
 Some of the improvements that you can find only on FFNx are:
+- Inspect game internals using [RenderDoc](https://renderdoc.org/)!
 - **Native** Steam support! No Game converter required.
 - One single .dll file to be copied
 - Support for 7h 1.x/2.x
 - Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L80)
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
 - In-Game music OGG files playback WITH LOOP support!
-- Four different Rendering Backends ( Vulkan, OpenGL, DirectX 11, DirectX 12)
+- Four different Rendering Backends:
+  - Vulkan
+  - OpenGL
+  - DirectX 11
+  - DirectX 12
 
 ## Tech Stack
 If you're curious to know it, FFNx is made with:
