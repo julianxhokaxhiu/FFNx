@@ -344,25 +344,44 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 	// Add support for Steam language directory
 	if (!file_context->use_lgp)
 	{
-		if (strstr(filename, "steamapps") != NULL && _access(filename, 0) == -1)
+		if (steam_edition && _access(filename, 0) == -1)
 		{
-			// Search for the last '\' character and get a pointer to the next char
-			const char* pos = strrchr(filename, 92) + 1;
-
-			get_data_lang_path(_filename);
-			PathAppendA(_filename, pos);
-
-			if (_access(_filename, 0) == -1)
+			if (
+				strcmp(filename, "scene.bin") == 0 ||
+				strcmp(filename, "camdat0.bin") == 0 ||
+				strcmp(filename, "camdat1.bin") == 0 ||
+				strcmp(filename, "camdat2.bin") == 0 ||
+				strcmp(filename, "co.bin") == 0
+			)
 			{
-				bool isSavegame = strstr(_filename, ".ff7") != NULL;
-
-				// Do one more try in the user data path
-				get_userdata_path(_filename, sizeof(_filename), isSavegame);
-				if (isSavegame) pos = strrchr(filename, 47) + 1;
-				PathAppendA(_filename, pos);
+				PathAppendA(_filename, basedir);
+				get_data_lang_path(_filename);
+				PathAppendA(_filename, R"(battle)");
+				PathAppendA(_filename, filename);
 
 				if (_access(_filename, 0) == -1)
 					goto error;
+			}
+			else
+			{
+				// Search for the last '\' character and get a pointer to the next char
+				const char* pos = strrchr(filename, 92) + 1;
+
+				get_data_lang_path(_filename);
+				PathAppendA(_filename, pos);
+
+				if (_access(_filename, 0) == -1)
+				{
+					bool isSavegame = strstr(_filename, ".ff7") != NULL;
+
+					// Do one more try in the user data path
+					get_userdata_path(_filename, sizeof(_filename), isSavegame);
+					if (isSavegame) pos = strrchr(filename, 47) + 1;
+					PathAppendA(_filename, pos);
+
+					if (_access(_filename, 0) == -1)
+						goto error;
+				}
 			}
 		}
 		else
@@ -423,7 +442,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 error:
 	// it's normal for save files to be missing, anything else is probably
 	// going to cause trouble
-	if(file_context->use_lgp || _stricmp(&_filename[strlen(_filename) - 4], ".ff7")) error("could not open file %s\n", filename);
+	if(file_context->use_lgp || _stricmp(&_filename[strlen(_filename) - 4], ".ff7")) error("could not open file %s\n", _filename);
 	close_file(ret);
 	return 0;
 }

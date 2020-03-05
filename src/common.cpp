@@ -43,6 +43,9 @@
 // global FF7/FF8 flag, available after version check
 uint ff8 = false;
 
+// global FF7/FF8 flag, check if is steam edition
+uint steam_edition = false;
+
 // window dimensions requested by the game, normally 640x480
 uint game_width;
 uint game_height;
@@ -1700,7 +1703,7 @@ uint get_version()
 
 void get_data_lang_path(PCHAR buffer)
 {
-	strcpy(buffer, R"(data\lang-)");
+	PathAppendA(buffer, R"(data\lang-)");
 	switch (version)
 	{
 	case VERSION_FF7_102_US:
@@ -2007,7 +2010,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		__debugbreak();
 		*/
 
-		GetCurrentDirectory(sizeof(basedir), basedir);
+		GetCurrentDirectoryA(BASEDIR_LENGTH, basedir);
 
 		// install crash handler
 		open_applog("FFNx.log");
@@ -2043,6 +2046,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				strstr(parentName, "ff7_fr.exe") != NULL ||
 				strstr(parentName, "ff7_sp.exe") != NULL)
 			{
+				steam_edition = true;
+
 				// Steam edition has music files under a different path by default
 				external_music_path = "data/music_ogg";
 			}
@@ -2058,6 +2063,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			)
 		)
 		{
+			steam_edition = true;
+
 			DWORD offset = version == VERSION_FF8_12_JP ? 0x402320 : 0x401F60;
 			DWORD offset2; // No idea what is this required
 			DWORD offset3; // Eyes on me patch

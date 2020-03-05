@@ -29,6 +29,7 @@
 #include "ff8.h"
 
 extern uint version;
+extern uint steam_edition;
 
 #define BASEDIR_LENGTH 512
 extern char basedir[BASEDIR_LENGTH];
