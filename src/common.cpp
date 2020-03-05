@@ -2260,6 +2260,10 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 	if (strstr(lpFileName, "CD:") != NULL)
 	{
 		CHAR newPath[260]{ 0 };
+		uint8_t requiredDisk = *(uint8_t*)(*(DWORD*)ff8_externals.requiredDisk + 0xCC);
+		CHAR diskAsChar[2];
+
+		itoa(requiredDisk, diskAsChar, 10);
 
 		// Search for the last '\' character and get a pointer to the next char
 		const char* pos = strrchr(lpFileName, 92) + 1;
@@ -2268,7 +2272,9 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 		{
 			PathAppendA(newPath, R"(data\disk)");
 			PathAppendA(newPath, pos);
-			ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+
+			if (strstr(lpFileName, diskAsChar) != NULL)
+				ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 		}
 	}
 	else if (strstr(lpFileName, ".fi") != NULL || strstr(lpFileName, ".fl") != NULL || strstr(lpFileName, ".fs") != NULL)

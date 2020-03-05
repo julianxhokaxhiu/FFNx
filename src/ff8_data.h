@@ -262,6 +262,28 @@ void ff8_find_externals()
 
 		ff8_externals.sub_546100 = get_relative_call(ff8_externals.sub_545F10, 0x54);
 	}
+
+	switch (version)
+	{
+	case VERSION_FF8_12_US_NV:
+		ff8_externals.requiredDisk = 0xB8EE90;
+		break;
+	case VERSION_FF8_12_FR_NV:
+		ff8_externals.requiredDisk = 0xB8EDB8;
+		break;
+	case VERSION_FF8_12_DE_NV:
+		ff8_externals.requiredDisk = 0xB8EDC0;
+		break;
+	case VERSION_FF8_12_SP_NV:
+		ff8_externals.requiredDisk = 0xB8EDC0;
+		break;
+	case VERSION_FF8_12_IT_NV:
+		ff8_externals.requiredDisk = 0xB8EDB8;
+		break;
+	case VERSION_FF8_12_JP:
+		ff8_externals.requiredDisk = 0xD92BB0;
+		break;
+	}
 }
 
 void ff8_data()
