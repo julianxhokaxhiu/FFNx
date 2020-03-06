@@ -58,5 +58,6 @@ extern uint num_modes;
 extern uint text_colors[];
 
 extern uint ff8;
+extern uint ff8_currentdisk;
 
 extern uint frame_counter;

@@ -43,6 +43,8 @@
 // global FF7/FF8 flag, available after version check
 uint ff8 = false;
 
+uint ff8_currentdisk = 0;
+
 // global FF7/FF8 flag, check if is steam edition
 uint steam_edition = false;
 
@@ -2274,7 +2276,11 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 			PathAppendA(newPath, pos);
 
 			if (strstr(lpFileName, diskAsChar) != NULL)
+			{
+				ff8_currentdisk = requiredDisk;
+
 				ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			}
 		}
 	}
 	else if (strstr(lpFileName, ".fi") != NULL || strstr(lpFileName, ".fl") != NULL || strstr(lpFileName, ".fs") != NULL)

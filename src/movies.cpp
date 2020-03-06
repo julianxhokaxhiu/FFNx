@@ -169,9 +169,9 @@ void ff8_prepare_movie(uint disc, uint movie)
 	{
 		get_data_lang_path(dataPath);
 	}
-	// Unexpected cases default to Disc 0
+	// Unexpected cases default to current disk
 	else if (disc >= 5) {
-		disc = 0;
+		disc = ff8_currentdisk - 1;
 	}
 
 	_snprintf(fmvName, sizeof(fmvName), "%s/%s/movies/disc%02i_%02ih.avi", basedir, dataPath, disc, movie);
