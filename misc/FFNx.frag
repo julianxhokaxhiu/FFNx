@@ -14,7 +14,15 @@ uniform vec4 FSMiscFlags;
 #define isTexture VSFlags.w > 0.0
 // ---
 #define inAlphaRef FSAlphaFlags.x
-#define inAlphaFunc FSAlphaFlags.y
+
+#define isAlphaNever abs(FSAlphaFlags.y - 0.0) < 0.00001
+#define isAlphaLess abs(FSAlphaFlags.y - 1.0) < 0.00001
+#define isAlphaEqual abs(FSAlphaFlags.y - 2.0) < 0.00001
+#define isAlphaLEqual abs(FSAlphaFlags.y - 3.0) < 0.00001
+#define isAlphaGreater abs(FSAlphaFlags.y - 4.0) < 0.00001
+#define isAlphaNotEqual abs(FSAlphaFlags.y - 5.0) < 0.00001
+#define isAlphaGEqual abs(FSAlphaFlags.y - 6.0) < 0.00001
+
 #define doAlphaTest FSAlphaFlags.z > 0.0
 // ---
 #define isFullRange FSMiscFlags.x > 0.0
@@ -63,26 +71,49 @@ void main()
         }
         else
         {
+            mediump vec4 texture_color = texture2D(tex, v_texcoord0.xy);
+
             if (doAlphaTest)
             {
-                // ALPHA TEST
-                if ( inAlphaFunc == 0.0) //NEVER
-                    discard;
-                else if ( inAlphaFunc == 1.0) //LESS
-                    if (!(color.a < inAlphaRef)) discard;
-                else if ( inAlphaFunc == 2.0) //EQUAL
-                    if (!(color.a == inAlphaRef)) discard;
-                else if ( inAlphaFunc == 3.0) //LEQUAL
-                    if (!(color.a <= inAlphaRef)) discard;
-                else if ( inAlphaFunc == 4.0) //GREATER
-                    if (!(color.a > inAlphaRef)) discard;
-                else if ( inAlphaFunc == 5.0) //NOTEQUAL
-                    if (!(color.a != inAlphaRef)) discard;
-                else if ( inAlphaFunc == 6.0) //GEQUAL
-                    if (!(color.a >= inAlphaRef)) discard;
-            }
+                //NEVER
+                if (isAlphaNever) discard;
 
-            mediump vec4 texture_color = texture2D(tex, v_texcoord0.xy);
+                //LESS
+                if (isAlphaLess)
+                {
+                    if (!(texture_color.a < inAlphaRef)) discard;
+                }
+
+                //EQUAL
+                if (isAlphaEqual)
+                {
+                    if (!(texture_color.a == inAlphaRef)) discard;
+                }
+
+                //LEQUAL
+                if (isAlphaLEqual)
+                {
+                    if (!(texture_color.a <= inAlphaRef)) discard;
+                }
+
+                //GREATER
+                if (isAlphaGreater)
+                {
+                    if (!(texture_color.a > inAlphaRef)) discard;
+                }
+
+                //NOTEQUAL
+                if (isAlphaNotEqual)
+                {
+                    if (!(texture_color.a != inAlphaRef)) discard;
+                }
+
+                //GEQUAL
+                if (isAlphaGEqual)
+                {
+                    if (!(texture_color.a >= inAlphaRef)) discard;
+                }
+            }
 
             if (isFBTexture && all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
