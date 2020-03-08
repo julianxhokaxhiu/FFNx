@@ -494,7 +494,7 @@ void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint inCount)
         vertices[idx].x = inVertex[idx]._.x;
         vertices[idx].y = inVertex[idx]._.y;
         vertices[idx].z = inVertex[idx]._.z;
-        vertices[idx].w = inVertex[idx].color.w;
+        vertices[idx].w = ( std::isinf(inVertex[idx].color.w) ? 1.0f : inVertex[idx].color.w );
         vertices[idx].bgra = inVertex[idx].color.color;
         vertices[idx].u = inVertex[idx].u;
         vertices[idx].v = inVertex[idx].v;
