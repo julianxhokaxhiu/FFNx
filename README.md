@@ -11,7 +11,7 @@
 
 # FFNx
 
-Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam release support! )
+Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )
 
 ## Introduction
 Welcome to FFNx project. This is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
@@ -53,7 +53,7 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 
 **Supported Languages:** EN, DE, FR, SP
 
-#### 1998 Official Eidos Release
+#### [1998 Eidos Release](https://www.mobygames.com/game/windows/final-fantasy-vii)
 1. Install the game on this path: `C:\Games\Final Fantasy VII`
 2. Update your game to v1.02 ( https://www.gamefront.com/games/final-fantasy-7-advent-children/file/final-fantasy-7-retail-v1-02-patch )
 2. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
@@ -62,7 +62,7 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 5. Click on Yes.
 6. Enjoy!
 
-#### Steam Official Release
+#### [2013 Steam Release](https://store.steampowered.com/app/39140/FINAL_FANTASY_VII/)
 1. Install the game using Steam Client
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
 3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
@@ -74,14 +74,14 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 
 **Supported Languages:** EN, DE, FR, SP, IT, JP
 
-#### 2000 Official Squaresoft Release
+#### [2000 Squaresoft Release](https://www.mobygames.com/game/windows/final-fantasy-viii)
 1. Install the game on this path: `C:\Games\Final Fantasy VIII`
 2. Update your game to v1.2 ( search for `ff8_1.2.zip` or `ff8_1.2G.zip` here http://forums.qhimm.com/index.php?topic=12909.msg180223#msg180223 )
 2. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
 3. Extract the ZIP content next to where your `ff8.exe` file lives
 4. Enjoy!
 
-#### Steam Official Release
+#### [2013 Steam Release](https://store.steampowered.com/app/39150/FINAL_FANTASY_VIII/)
 1. Install the game using Steam Client
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
 3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
