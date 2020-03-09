@@ -641,8 +641,9 @@ uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
     uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
     
     bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > width ? width : framebufferWidth, framebufferHeight > height ? height : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST | samplerFlags);
-    bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), x, y);
-    
+    bgfx::blit(RendererView::BLIT, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), x, y);
+    bgfx::touch(RendererView::BLIT);
+
     return ret.idx;
 };
 

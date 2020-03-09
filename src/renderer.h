@@ -147,7 +147,8 @@ class Renderer {
 private:
     // Current renderer view
     enum RendererView {
-        FRAMEBUFFER = 0,
+        BLIT = 0,
+        FRAMEBUFFER,
         POSTPROCESSING
     };
 
@@ -216,7 +217,7 @@ private:
 
     bgfx::ViewId backendViewId = RendererView::FRAMEBUFFER;
 
-    std::vector<bgfx::ProgramHandle> backendProgramHandles = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
+    std::vector<bgfx::ProgramHandle> backendProgramHandles = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
 
     std::vector<bgfx::TextureHandle> backendFrameBufferRT = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
     bgfx::FrameBufferHandle backendFrameBuffer = BGFX_INVALID_HANDLE;
