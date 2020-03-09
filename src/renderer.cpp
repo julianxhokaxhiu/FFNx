@@ -220,6 +220,7 @@ void Renderer::renderFrameBuffer()
         );
 
         doTextureFiltering(true);
+        setPrimitiveType();
 
         draw();
     }
