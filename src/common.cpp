@@ -2247,7 +2247,7 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 	}
 	else if (strcmp(lpValueName, "Graphics") == 0)
 	{
-		lpData[0] = 0x10100001;
+		lpData[0] = 0x10100021;
 	}
 
 	delete[] buf;
