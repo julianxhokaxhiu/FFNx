@@ -2283,6 +2283,30 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 			}
 		}
 	}
+	else if (strstr(lpFileName, "app.log"))
+	{
+		CHAR newPath[260]{ 0 };
+
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		get_userdata_path(newPath, 260, false);
+		PathAppendA(newPath, pos);
+
+		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	}
+	else if (strstr(lpFileName, "temp.fi") || strstr(lpFileName, "temp.fl") || strstr(lpFileName, "temp.fs") || strstr(lpFileName, "temp_evn.") || strstr(lpFileName, "temp_odd."))
+	{
+		CHAR newPath[260]{ 0 };
+
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		get_userdata_path(newPath, 260, false);
+		PathAppendA(newPath, pos);
+
+		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	}
 	else if (strstr(lpFileName, ".fi") != NULL || strstr(lpFileName, ".fl") != NULL || strstr(lpFileName, ".fs") != NULL)
 	{
 		CHAR newPath[260]{ 0 };
@@ -2292,6 +2316,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 
 		get_data_lang_path(newPath);
 		PathAppendA(newPath, pos);
+
 		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	}
 	else if (strstr(lpFileName, R"(SAVE\)") != NULL)
@@ -2335,7 +2360,36 @@ __declspec(dllexport) UINT __stdcall dotemuGetDriveTypeA(LPCSTR lpRootPathName)
 
 __declspec(dllexport) BOOL __stdcall dotemuDeleteFileA(LPCSTR lpFileName)
 {
-	return DeleteFileA(lpFileName);
+	BOOL ret = false;
+
+	if (strstr(lpFileName, "app.log"))
+	{
+		CHAR newPath[260]{ 0 };
+
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		get_userdata_path(newPath, 260, false);
+		PathAppendA(newPath, pos);
+
+		ret = DeleteFileA(newPath);
+	}
+	else if (strstr(lpFileName, "temp.fi") || strstr(lpFileName, "temp.fl") || strstr(lpFileName, "temp.fs") || strstr(lpFileName, "temp_evn.") || strstr(lpFileName, "temp_odd."))
+	{
+		CHAR newPath[260]{ 0 };
+
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		get_userdata_path(newPath, 260, false);
+		PathAppendA(newPath, pos);
+
+		ret = DeleteFileA(newPath);
+	}
+	else
+		ret = DeleteFileA(lpFileName);
+
+	return ret;
 }
 
 #if defined(__cplusplus)
