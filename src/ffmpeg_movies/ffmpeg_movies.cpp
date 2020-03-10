@@ -327,16 +327,20 @@ void ffmpeg_stop_movie()
 void buffer_bgra_frame(uint8_t *data, int upload_stride)
 {
 	uint upload_width = codec_ctx->pix_fmt == AV_PIX_FMT_BGRA ? upload_stride / 4 : upload_stride / 3;
+	uint tex_width = movie_width;
+	uint tex_height = movie_height;
 
 	if(upload_stride < 0) return;
 
 	if (video_buffer[vbuffer_write].bgra_texture)
 		newRenderer.deleteTexture(video_buffer[vbuffer_write].bgra_texture);
 
+	if (upload_width > tex_width) tex_width = upload_width;
+
 	video_buffer[vbuffer_write].bgra_texture = newRenderer.createTexture(
 		data,
-		movie_width,
-		movie_height,
+		tex_width,
+		tex_height,
 		upload_width,
 		RendererTextureType::BGRA
 	);
@@ -348,7 +352,7 @@ void draw_bgra_frame(uint buffer_index)
 {
 	newRenderer.isMovie(true);
 	newRenderer.useTexture(video_buffer[buffer_index].bgra_texture);
-	gl_draw_movie_quad(movie_width, movie_height);
+	gl_draw_movie_quad();
 	newRenderer.isMovie(false);
 }
 
@@ -357,6 +361,8 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint num, uint buffer_in
 	uint upload_width = strides[num];
 	uint tex_width = num == 0 ? movie_width : movie_width / 2;
 	uint tex_height = num == 0 ? movie_height : movie_height / 2;
+
+	if (upload_width > tex_width) tex_width = upload_width;
 
 	video_buffer[buffer_index].yuv_textures[num] = newRenderer.createTexture(
 		planes[num],
@@ -390,7 +396,7 @@ void draw_yuv_frame(uint buffer_index, bool full_range)
 	newRenderer.isMovie(true);
 	newRenderer.isYUV(true);
 	newRenderer.isFullRange(full_range);
-	gl_draw_movie_quad(movie_width, movie_height);
+	gl_draw_movie_quad();
 	newRenderer.isFullRange(false);
 	newRenderer.isYUV(false);
 	newRenderer.isMovie(false);

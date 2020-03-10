@@ -49,7 +49,7 @@ int max_texture_size;
 extern uint nodefer;
 
 // draw a fullscreen quad, respect aspect ratio of source image
-void gl_draw_movie_quad_common(int movie_width, int movie_height)
+void gl_draw_movie_quad_common()
 {
 	struct game_obj *game_object = common_externals.get_game_object();
 	/*  y0    y2
@@ -109,13 +109,13 @@ void gl_draw_movie_quad_common(int movie_width, int movie_height)
 }
 
 // draw movie frame
-void gl_draw_movie_quad(int movie_width, int movie_height)
+void gl_draw_movie_quad()
 {
 	struct driver_state saved_state;
 
 	gl_save_state(&saved_state);
 
-	gl_draw_movie_quad_common(movie_width, movie_height);
+	gl_draw_movie_quad_common();
 
 	gl_load_state(&saved_state);
 }
