@@ -20,18 +20,24 @@
  * movies.c - replacements routines for FMV player
  */
 
-#include <windows.h>
-#include <stdio.h>
-
-#include "types.h"
-#include "gl.h"
 #include "movies.h"
+#include "renderer.h"
+#include "gl.h"
 #include "patch.h"
 #include "globals.h"
 #include "log.h"
 #include "common.h"
 #include "cfg.h"
 #include "ffmpeg_movies/ffmpeg_movies.h"
+
+void addMovieBlackBars()
+{
+	newRenderer.setBackgroundColor();
+	newRenderer.setScissor(0, 16, 640, 448);
+
+	newRenderer.setClearFlags(true, true);
+	newRenderer.doScissorTest(true);
+}
 
 void movie_init()
 {
@@ -144,6 +150,10 @@ retry:
 
 void draw_current_frame()
 {
+	if (trace_all || trace_movies) trace("draw_current_frame\n");
+
+	addMovieBlackBars();
+
 	ffmpeg_draw_current_frame();
 }
 
@@ -252,6 +262,8 @@ void ff8_stop_movie()
 void ff8_update_movie_sample()
 {
 	if(trace_all || trace_movies) trace("update_movie_sample\n");
+
+	addMovieBlackBars();
 
 	if(!ffmpeg_update_movie_sample())
 	{
