@@ -155,6 +155,9 @@ void draw_current_frame()
 	addMovieBlackBars();
 
 	ffmpeg_draw_current_frame();
+
+	// FF8 on Steam sometimes forgets to release the movie objects, so we do ensure it's done anyway
+	ffmpeg_release_movie_objects();
 }
 
 uint ff7_get_movie_frame()
