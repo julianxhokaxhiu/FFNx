@@ -288,7 +288,7 @@ uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFA
 {
 	if(trace_all || trace_fake_dx) trace("lock\n");
 
-	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_malloc(game_width * game_height * 4);
+	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_calloc(game_width * game_height, 4);
 
 	sd->lpSurface = fake_dd_surface_buffer;
 	sd->dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT | DDSD_LPSURFACE;
