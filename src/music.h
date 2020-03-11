@@ -24,21 +24,6 @@
 
 #include "types.h"
 
-struct music_plugin
-{
-	void (*music_init)(void *, void *, void *, void *, void **, const char *);
-	void (*play_music)(char *, uint);
-	uint (*cross_fade_music)(char *, uint, uint);
-	void (*pause_music)();
-	void (*resume_music)();
-	void (*stop_music)();
-	uint (*music_status)();
-	void (*set_master_music_volume)(uint);
-	void (*set_music_volume)(uint);
-	void (*set_music_volume_trans)(uint, uint);
-	void (*set_music_tempo)(unsigned char);
-};
-
 void music_init();
 uint midi_init(uint unknown);
 void music_cleanup();

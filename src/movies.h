@@ -26,18 +26,6 @@
 
 #include "types.h"
 
-struct movie_plugin
-{
-	void (*movie_init)(void *, void *, void *, void *, void *, void *, void **, uint, uint);
-	uint (*prepare_movie)(char *);
-	void (*release_movie_objects)();
-	uint (*update_movie_sample)();
-	void (*draw_current_frame)();
-	void (*loop)();
-	void (*stop_movie)();
-	uint (*get_movie_frame)();
-};
-
 void movie_init();
 uint ff7_prepare_movie(char *, uint, struct dddevice **, uint);
 void ff7_release_movie_objects();

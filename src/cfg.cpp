@@ -72,7 +72,6 @@ cfg_bool_t show_applog = cfg_bool_t(true);
 cfg_bool_t direct_mode = cfg_bool_t(true);
 cfg_bool_t show_missing_textures = cfg_bool_t(false);
 cfg_bool_t ff7_popup = cfg_bool_t(false);
-cfg_bool_t info_popup = cfg_bool_t(false);
 cfg_bool_t movie_sync_debug = cfg_bool_t(false);
 char *renderer_backend;
 cfg_bool_t renderer_debug = cfg_bool_t(false);
@@ -127,7 +126,6 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("direct_mode", &direct_mode),
 		CFG_SIMPLE_BOOL("show_missing_textures", &show_missing_textures),
 		CFG_SIMPLE_BOOL("ff7_popup", &ff7_popup),
-		CFG_SIMPLE_BOOL("info_popup", &info_popup),
 		CFG_SIMPLE_BOOL("movie_sync_debug", &movie_sync_debug),
 		CFG_SIMPLE_STR("renderer_backend", &renderer_backend),
 		CFG_SIMPLE_BOOL("renderer_debug", &renderer_debug),

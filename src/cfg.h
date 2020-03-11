@@ -76,7 +76,6 @@ extern cfg_bool_t show_applog;
 extern cfg_bool_t direct_mode;
 extern cfg_bool_t show_missing_textures;
 extern cfg_bool_t ff7_popup;
-extern cfg_bool_t info_popup;
 extern cfg_bool_t movie_sync_debug;
 extern char *renderer_backend;
 extern cfg_bool_t renderer_debug;
