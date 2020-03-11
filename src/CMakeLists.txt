@@ -74,5 +74,6 @@ add_custom_command(
 install(TARGETS ${RELEASE_NAME} RUNTIME DESTINATION bin)
 install(FILES $<TARGET_PDB_FILE:${RELEASE_NAME}> DESTINATION bin OPTIONAL)
 install(FILES ../misc/${RELEASE_NAME}.cfg DESTINATION bin OPTIONAL)
-install(FILES ../misc/${RELEASE_NAME}.reg DESTINATION bin OPTIONAL)
+install(FILES ../misc/FF7.reg DESTINATION bin OPTIONAL)
+install(FILES ../misc/FF8.reg DESTINATION bin OPTIONAL)
 install(FILES ../misc/eax.dll DESTINATION bin OPTIONAL)
