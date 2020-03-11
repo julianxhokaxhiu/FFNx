@@ -56,18 +56,18 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 #### [1998 Eidos Release](https://www.mobygames.com/game/windows/final-fantasy-vii)
 1. Install the game on this path: `C:\Games\Final Fantasy VII`
 2. Update your game to v1.02 ( https://www.gamefront.com/games/final-fantasy-7-advent-children/file/final-fantasy-7-retail-v1-02-patch )
-2. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
+2. Download the latest `FFNx-FF7_1998` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 3. Extract the ZIP content next to `ff7.exe` file
-4. Double click on [`FFNx.reg`](misc/FFNx.reg)
+4. Double click on [`FFNx.reg`](misc/FF7.reg)
 5. Click on Yes.
 6. Enjoy!
 
 #### [2013 Steam Release](https://store.steampowered.com/app/39140/FINAL_FANTASY_VII/)
 1. Install the game using Steam Client
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
-3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
+3. Download the latest `FFNx-Steam` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 4. Extract the ZIP content next to your `ff7_*.exe` file ( for eg. for EN language `ff7_en.exe`)
-5. Delete existing `AF3DN.P`, and rename `FFNx.dll` to `AF3DN.P`
+5. Replace all files when asked.
 6. Enjoy!
 
 ### Final Fantasy VIII
@@ -77,17 +77,17 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 #### [2000 Squaresoft Release](https://www.mobygames.com/game/windows/final-fantasy-viii)
 1. Install the game on this path: `C:\Games\Final Fantasy VIII`
 2. Update your game to v1.2 ( search for `ff8_1.2.zip` or `ff8_1.2G.zip` here http://forums.qhimm.com/index.php?topic=12909.msg180223#msg180223 )
-2. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
+2. Download the latest `FFNx-FF8_2000` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 3. Extract the ZIP content next to `ff8.exe` file
-4. Double click on [`FFNx.reg`](misc/FFNx.reg)
+4. Double click on [`FFNx.reg`](misc/FF8.reg)
 5. Enjoy!
 
 #### [2013 Steam Release](https://store.steampowered.com/app/39150/FINAL_FANTASY_VIII/)
 1. Install the game using Steam Client
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
-3. Download the latest release here: https://github.com/julianxhokaxhiu/FFNx/releases
-4. Extract the ZIP content next to your `ff8_*.exe` file ( for eg. for EN language `ff8_en.exe`). **DO NOT** replace `eax.dll` when asked.
-5. Delete existing `AF3DN.P`, and rename `FFNx.dll` to `AF3DN.P`
+3. Download the latest `FFNx-Steam` release here: https://github.com/julianxhokaxhiu/FFNx/releases
+4. Extract the ZIP content next to your `ff8_*.exe` file ( for eg. for EN language `ff8_en.exe`)
+5. Replace all files when asked.
 6. Enjoy!
 
 ## Tweak the configuration
