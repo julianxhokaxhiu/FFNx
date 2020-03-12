@@ -324,9 +324,6 @@ void Renderer::init()
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .end();
 
-    // Set view to order draws sequentially
-    bgfx::setViewMode(RendererView::FRAMEBUFFER, bgfx::ViewMode::Sequential);
-
     // Set view to render in the framebuffer
     bgfx::setViewFrameBuffer(RendererView::FRAMEBUFFER, backendFrameBuffer);
 
