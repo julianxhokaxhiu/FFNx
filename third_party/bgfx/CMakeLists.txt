@@ -7,7 +7,7 @@ endif()
 
 ExternalProject_Add(
 	bgfx
-	URL                 "https://github.com/julianxhokaxhiu/bgfxCI/releases/download/1.0.0/bgfx-v1.0.0_${BGFX_RELEASE}.zip"
+	URL                 "https://github.com/julianxhokaxhiu/bgfxCI/releases/download/1.1.0/bgfx-v1.1.0_${BGFX_RELEASE}.zip"
 	INSTALL_DIR		    "${CMAKE_BINARY_DIR}/vendor"
 	CONFIGURE_COMMAND	""
 	BUILD_COMMAND		""
