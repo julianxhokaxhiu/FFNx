@@ -166,6 +166,24 @@ void Renderer::destroyAll()
     }
 };
 
+void Renderer::reset()
+{
+    setBackgroundColor();
+
+    doDepthTest();
+    doDepthWrite();
+    doScissorTest();
+    setCullMode();
+    setBlendMode();
+    isTLVertex();
+    isYUV();
+    isFullRange();
+    isFBTexture();
+    isTexture();
+    doModulateAlpha();
+    doTextureFiltering();
+};
+
 void Renderer::renderFrameBuffer()
 {
     /*  y0    y2
@@ -450,24 +468,6 @@ void Renderer::show()
 
     bgfx::dbgTextClear();
 }
-
-void Renderer::reset()
-{
-    setBackgroundColor();
-
-    doDepthTest();
-    doDepthWrite();
-    doScissorTest();
-    setCullMode();
-    setBlendMode();
-    isTLVertex();
-    isYUV();
-    isFullRange();
-    isFBTexture();
-    isTexture();
-    doModulateAlpha();
-    doTextureFiltering();
-};
 
 void Renderer::printText(uint16_t x, uint16_t y, uint color, const char* text)
 {

@@ -260,6 +260,8 @@ private:
     void destroyUniforms();
     void destroyAll();
 
+    void reset();
+
     void renderFrameBuffer();
 
     void printMatrix(char* name, float* mat);
@@ -270,8 +272,6 @@ public:
 
     void draw();
     void show();
-
-    void reset();
 
     void printText(uint16_t x, uint16_t y, uint attr, const char* text);
 
