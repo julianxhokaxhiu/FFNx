@@ -159,8 +159,11 @@ void Renderer::destroyAll()
 
     bgfx::destroy(backendFrameBuffer);
 
-    for ( auto handle : backendProgramHandles)
-        bgfx::destroy(handle);
+    for (auto handle : backendProgramHandles)
+    {
+        if (bgfx::isValid(handle))
+            bgfx::destroy(handle);
+    }
 };
 
 void Renderer::renderFrameBuffer()
