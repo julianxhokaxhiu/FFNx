@@ -18,7 +18,7 @@ void Renderer::setCommonUniforms()
         (float)internalState.bIsFBTexture,
         (float)internalState.bIsTexture
     };
-    if (renderer_debug) trace("%s: VSFlags XYZW(isTLVertex %f, blendMode %f, isFBTexture %f, isTexture %f)\n", __func__, internalState.VSFlags[0], internalState.VSFlags[1], internalState.VSFlags[2], internalState.VSFlags[3]);
+    if (uniform_log) trace("%s: VSFlags XYZW(isTLVertex %f, blendMode %f, isFBTexture %f, isTexture %f)\n", __func__, internalState.VSFlags[0], internalState.VSFlags[1], internalState.VSFlags[2], internalState.VSFlags[3]);
 
     internalState.FSAlphaFlags = {
         (float)internalState.alphaRef,
@@ -26,7 +26,7 @@ void Renderer::setCommonUniforms()
         (float)internalState.bDoAlphaTest,
         NULL
     };
-    if (renderer_debug) trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, NULL)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2]);
+    if (uniform_log) trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, NULL)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2]);
 
     internalState.FSMiscFlags = {
         (float)internalState.bIsMovieFullRange,
@@ -34,7 +34,7 @@ void Renderer::setCommonUniforms()
         (float)internalState.bModulateAlpha,
         (float)internalState.bIsMovie
     };
-    if (renderer_debug) trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, modulateAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
+    if (uniform_log) trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, modulateAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
 
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
