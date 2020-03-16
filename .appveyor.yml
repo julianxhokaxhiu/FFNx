@@ -31,7 +31,6 @@ before_build:
   - cmd: |
       call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat"
       set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
-      set VULKAN_SDK=%VULKAN%\\%VULKAN_VERSION%
   - ps: |
       if ($env:APPVEYOR_REPO_TAG -eq "true" -and $env:APPVEYOR_REPO_TAG_NAME) {
         $env:APPVEYOR_BUILD_VERSION = $env:APPVEYOR_BUILD_VERSION.Substring(0,$env:APPVEYOR_BUILD_VERSION.LastIndexOf('.')) + ".0"
