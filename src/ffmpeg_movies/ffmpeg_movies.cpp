@@ -74,9 +74,9 @@ void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
 
 	switch (level) {
 		case AV_LOG_VERBOSE:
-		case AV_LOG_DEBUG: trace(msg); break;
+		case AV_LOG_DEBUG: if (trace_movies) trace(msg); break;
 		case AV_LOG_INFO:
-		case AV_LOG_WARNING: info(msg); break;
+		case AV_LOG_WARNING: if (trace_movies) info(msg); break;
 		case AV_LOG_ERROR:
 		case AV_LOG_FATAL:
 		case AV_LOG_PANIC: error(msg); break;
@@ -184,7 +184,7 @@ uint ffmpeg_prepare_movie(char *name)
 		goto exit;
 	}
 
-	if(audiostream == -1) trace("prepare_movie: no audio stream found\n");
+	if(audiostream == -1 && trace_movies) trace("prepare_movie: no audio stream found\n");
 
 	codec_ctx = format_ctx->streams[videostream]->codec;
 
@@ -229,9 +229,12 @@ uint ffmpeg_prepare_movie(char *name)
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
 	movie_frames = (uint)round(movie_fps * movie_duration);
 
-	if(movie_fps < 100.0) info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames);
-	// bogus FPS value, assume the codec provides frame limiting
-	else info("prepare_movie: %s; %s/%s %ix%i, duration: %f\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_duration);
+	if (trace_movies)
+	{
+		if (movie_fps < 100.0) info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames);
+		// bogus FPS value, assume the codec provides frame limiting
+		else info("prepare_movie: %s; %s/%s %ix%i, duration: %f\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_duration);
+	}
 
 	if(movie_width > max_texture_size || movie_height > max_texture_size)
 	{
@@ -253,7 +256,7 @@ uint ffmpeg_prepare_movie(char *name)
 	if(codec_ctx->pix_fmt != AV_PIX_FMT_BGRA && codec_ctx->pix_fmt != AV_PIX_FMT_BGR24 && (codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P || !yuv_fast_path))
 	{
 		sws_ctx = sws_getContext(movie_width, movie_height, codec_ctx->pix_fmt, movie_width, movie_height, AV_PIX_FMT_BGR24, SWS_FAST_BILINEAR | SWS_ACCURATE_RND, NULL, NULL, NULL);
-		info("prepare_movie: slow output format from video codec %s; %i\n", codec->name, codec_ctx->pix_fmt);
+		if (trace_movies) info("prepare_movie: slow output format from video codec %s; %i\n", codec->name, codec_ctx->pix_fmt);
 	}
 	else sws_ctx = 0;
 
@@ -261,9 +264,12 @@ uint ffmpeg_prepare_movie(char *name)
 	{
 		if (acodec_ctx->sample_fmt != AV_SAMPLE_FMT_U8 && acodec_ctx->sample_fmt != AV_SAMPLE_FMT_S16) {
 			audio_must_be_converted = true;
-			trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_fmt: %s\n", av_get_sample_fmt_name(acodec_ctx->sample_fmt));
-			trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_rate: %d\n", acodec_ctx->sample_rate);
-			trace("prepare_movie: Audio must be converted: IN acodec_ctx->channel_layout: %u\n", acodec_ctx->channel_layout);
+			if (trace_movies)
+			{
+				trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_fmt: %s\n", av_get_sample_fmt_name(acodec_ctx->sample_fmt));
+				trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_rate: %d\n", acodec_ctx->sample_rate);
+				trace("prepare_movie: Audio must be converted: IN acodec_ctx->channel_layout: %u\n", acodec_ctx->channel_layout);
+			}
 
 			// Prepare software conversion context
 			swr_ctx = swr_alloc_set_opts(
