@@ -93,6 +93,8 @@
  */
 #define UNSAFE_VREF(T,X,Y) (ff8 ? (struct T *)ff8_ ## X->Y : (struct T *)ff7_ ## X->Y)
 
+#define BGRA2RGBA(n) (((n >> 24) & 0xFF) << 24 | (n & 0xFF) << 16 | ((n >> 8) & 0xFF) << 8 | ((n >> 16) & 0xFF))
+
 #define BGRA_R(x) (x >> 16 & 0xFF)
 #define BGRA_G(x) (x >> 8 & 0xFF)
 #define BGRA_B(x) (x & 0xFF)
