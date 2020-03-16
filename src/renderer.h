@@ -146,9 +146,8 @@ struct RendererCallbacks : public bgfx::CallbackI {
 class Renderer {
 private:
     // Current renderer view
-    enum RendererView {
-        BLIT = 0,
-        FRAMEBUFFER,
+    enum RendererProgram {
+        FRAMEBUFFER = 0,
         POSTPROCESSING
     };
 
@@ -215,7 +214,8 @@ private:
     std::string vertexPostPath = "shaders/FFNx.post";
     std::string fragmentPostPath = "shaders/FFNx.post";
 
-    bgfx::ViewId backendViewId = RendererView::FRAMEBUFFER;
+    bgfx::ViewId backendViewId;
+    RendererProgram backendProgram = RendererProgram::FRAMEBUFFER;
 
     std::vector<bgfx::ProgramHandle> backendProgramHandles = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
 

@@ -229,7 +229,8 @@ void Renderer::renderFrameBuffer()
         1, 3, 2
     };
 
-    backendViewId = RendererView::POSTPROCESSING;
+    backendProgram = RendererProgram::POSTPROCESSING;
+    backendViewId++;
     {
         setClearFlags(true, true);
 
@@ -245,7 +246,7 @@ void Renderer::renderFrameBuffer()
 
         draw();
     }
-    backendViewId = RendererView::FRAMEBUFFER;
+    backendProgram = RendererProgram::FRAMEBUFFER;
 };
 
 void Renderer::printMatrix(char* name, float* mat)
@@ -323,13 +324,13 @@ void Renderer::init()
     );
 
     // Create Program
-    backendProgramHandles[RendererView::POSTPROCESSING] = bgfx::createProgram(
+    backendProgramHandles[RendererProgram::POSTPROCESSING] = bgfx::createProgram(
         getShader(vertexPostPath.c_str()),
         getShader(fragmentPostPath.c_str()),
         true
     );
 
-    backendProgramHandles[RendererView::FRAMEBUFFER] = bgfx::createProgram(
+    backendProgramHandles[RendererProgram::FRAMEBUFFER] = bgfx::createProgram(
         getShader(vertexPath.c_str()),
         getShader(fragmentPath.c_str()),
         true
@@ -341,9 +342,6 @@ void Renderer::init()
         .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .end();
-
-    // Set view to render in the framebuffer
-    bgfx::setViewFrameBuffer(RendererView::FRAMEBUFFER, backendFrameBuffer);
 
     if (fullscreen) bgfx::setDebug(BGFX_DEBUG_TEXT);
 
@@ -365,9 +363,12 @@ void Renderer::draw()
     if (trace_all) trace("Renderer::%s\n", __func__);
 
     // Set current view rect
-    if (backendViewId == RendererView::POSTPROCESSING)
+    if (backendProgram == RendererProgram::POSTPROCESSING)
         bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
     else {
+        // Set view to render in the framebuffer
+        bgfx::setViewFrameBuffer(backendViewId, backendFrameBuffer);
+
         bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
 
         if (internalState.bDoScissorTest) bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
@@ -394,7 +395,7 @@ void Renderer::draw()
             {
                 uint32_t flags = 0;
 
-                if (internalState.bIsMovie || backendViewId == RendererView::POSTPROCESSING) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                if (internalState.bIsMovie || backendProgram == RendererProgram::POSTPROCESSING) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
                 if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
 
@@ -454,7 +455,7 @@ void Renderer::draw()
     }
     bgfx::setState(internalState.state);
 
-    bgfx::submit(backendViewId, backendProgramHandles[backendViewId]);
+    bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
 };
 
 void Renderer::show()
@@ -467,6 +468,8 @@ void Renderer::show()
     bgfx::frame();
 
     bgfx::dbgTextClear();
+
+    backendViewId = 1;
 }
 
 void Renderer::printText(uint16_t x, uint16_t y, uint color, const char* text)
@@ -638,11 +641,20 @@ void Renderer::useTexture(uint rt, uint slot)
 
 uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 {
+    uint mode = getmode()->driver_mode;
     uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
     
     bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > width ? width : framebufferWidth, framebufferHeight > height ? height : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST | samplerFlags);
-    bgfx::blit(RendererView::BLIT, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), x, y);
-    bgfx::touch(RendererView::BLIT);
+    
+    if (backendViewId == 1) backendViewId = 0;
+    else if (backendViewId > 0) backendViewId++;
+
+    bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), x, y);
+    
+    if (backendViewId == 0) {
+        if (mode == MODE_SWIRL) bgfx::touch(backendViewId);
+        backendViewId = 1;
+    }
 
     return ret.idx;
 };
