@@ -428,7 +428,8 @@ uint ffmpeg_update_movie_sample()
 		{
 			ret = avcodec_send_packet(codec_ctx, &packet);
 
-			if (ret < 0) {
+			if (ret < 0)
+			{
 				trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
@@ -436,11 +437,7 @@ uint ffmpeg_update_movie_sample()
 
 			ret = avcodec_receive_frame(codec_ctx, movie_frame);
 
-			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-			{
-				continue;
-			}
-			else if (ret < 0)
+			if (ret == AVERROR_EOF)
 			{
 				trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
@@ -523,7 +520,8 @@ uint ffmpeg_update_movie_sample()
 
 			ret = avcodec_send_packet(acodec_ctx, &packet);
 
-			if (ret < 0) {
+			if (ret < 0)
+			{
 				trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
@@ -531,11 +529,7 @@ uint ffmpeg_update_movie_sample()
 
 			ret = avcodec_receive_frame(acodec_ctx, movie_frame);
 
-			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-			{
-				continue;
-			}
-			else if (ret < 0)
+			if (ret == AVERROR_EOF)
 			{
 				trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
