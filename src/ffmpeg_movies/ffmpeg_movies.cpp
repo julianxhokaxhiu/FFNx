@@ -430,6 +430,7 @@ uint ffmpeg_update_movie_sample()
 
 			if (ret < 0) {
 				trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
+				av_packet_unref(&packet);
 				break;
 			}
 
@@ -442,6 +443,7 @@ uint ffmpeg_update_movie_sample()
 			else if (ret < 0)
 			{
 				trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
+				av_packet_unref(&packet);
 				break;
 			}
 
@@ -455,10 +457,14 @@ uint ffmpeg_update_movie_sample()
 				if(skipping_frames && LAG > 0.0)
 				{
 					skipped_frames++;
+					
 					if(((skipped_frames - 1) & skipped_frames) == 0) glitch("update_movie_sample: video playback is lagging behind, skipping frames (frame #: %i, skipped: %i, lag: %f)\n", movie_frame_counter, skipped_frames, LAG);
-					av_packet_unref(&packet);
+
 					if(use_bgra_texture) draw_bgra_frame(vbuffer_read);
 					else draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
+					
+					av_packet_unref(&packet);
+
 					break;
 				}
 				else skipping_frames = false;
@@ -483,14 +489,14 @@ uint ffmpeg_update_movie_sample()
 				else if(use_bgra_texture) buffer_bgra_frame(movie_frame->extended_data[0], movie_frame->linesize[0]);
 				else buffer_yuv_frame(movie_frame->extended_data, movie_frame->linesize);
 
-				av_packet_unref(&packet);
-
 				if(vbuffer_write == vbuffer_read)
 				{
 					if(use_bgra_texture) draw_bgra_frame(vbuffer_read);
 					else draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
 
 					vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
+
+					av_packet_unref(&packet);
 
 					break;
 				}
@@ -519,6 +525,7 @@ uint ffmpeg_update_movie_sample()
 
 			if (ret < 0) {
 				trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
+				av_packet_unref(&packet);
 				break;
 			}
 
@@ -531,6 +538,7 @@ uint ffmpeg_update_movie_sample()
 			else if (ret < 0)
 			{
 				trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
+				av_packet_unref(&packet);
 				break;
 			}
 
