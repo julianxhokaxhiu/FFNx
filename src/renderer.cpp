@@ -288,7 +288,7 @@ void Renderer::init()
 
     if (!bgfx::init(bgfxInit)) exit(1);
 
-    bx::mtxOrtho(internalState.backendProjMatrix, 0.0f, game_width, game_height, 0.0f, -1.0f, 1.0f, 0.0, bgfx::getCaps()->homogeneousDepth);
+    bx::mtxOrtho(internalState.backendProjMatrix, 0.0f, game_width, game_height, 0.0f, bgfxInit.type == bgfx::RendererType::OpenGL ? -1.0f : 0.0f, 1.0f, 0.0, bgfx::getCaps()->homogeneousDepth);
 
     // Create an empty texture
     emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
