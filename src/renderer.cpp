@@ -592,7 +592,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
             false,
             1,
             texFormat,
-            BGFX_TEXTURE_NONE | generateMips ? BGFX_SAMPLER_MIP_POINT : BGFX_SAMPLER_NONE,
+            BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
             stride > 0 ? NULL : mem
         );
 
