@@ -257,6 +257,11 @@ void Renderer::printMatrix(char* name, float* mat)
     trace("%s: 3 [%f, %f, %f, %f]\n", name, mat[12], mat[13], mat[14], mat[15]);
 };
 
+bool Renderer::doesTextureFitInMemory(size_t size)
+{
+    return ((size + get_ram_size()) < textureMemoryCap);
+}
+
 // PUBLIC
 
 void Renderer::init()
@@ -578,7 +583,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
 
     // If the texture we are going to create does not fit in memory, return an empty one.
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
-    if ((texInfo.storageSize + get_ram_size()) > pow(1024, 3))
+    if (!doesTextureFitInMemory(texInfo.storageSize))
     {
         ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
     }
@@ -612,6 +617,62 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
 
     return ret.idx;
 };
+
+uint Renderer::createTexture(char* filename, uint* width, uint* height)
+{
+    bgfx::TextureHandle ret = { 0 };
+
+    FILE* file = fopen(filename, "rb");
+        
+    if (file)
+    {
+        size_t filesize = 0;
+
+        fseek(file, 0, SEEK_END);
+        filesize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        char* buffer = (char*)driver_malloc(filesize+1);
+
+        fread(buffer, filesize, 1, file);
+        fclose(file);
+
+        // ==================================
+
+        bx::DefaultAllocator defaultAllocator;
+        bimg::ImageContainer* img = bimg::imageParse(&defaultAllocator, buffer, filesize+1);
+
+        driver_free(buffer);
+
+        // If the texture we are going to create does not fit in memory, return an empty one.
+        // Will prevent the game from crashing, while allowing the player to not loose its progress.
+        if (!doesTextureFitInMemory(img->m_size))
+        {
+            ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
+        }
+        else if (gl_check_texture_dimensions(img->m_width, img->m_height, filename))
+        {
+            const bgfx::Memory* mem = bgfx::copy(img->m_data, img->m_size);
+
+            ret = bgfx::createTexture2D(
+                img->m_width,
+                img->m_height,
+                1 < img->m_numMips,
+                img->m_numLayers,
+                bgfx::TextureFormat::Enum(img->m_format),
+                BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+                mem
+                );
+
+            *width = img->m_width;
+            *height = img->m_height;
+        }
+
+        bimg::imageFree(img);
+    }
+
+    return ret.idx;
+}
 
 void Renderer::deleteTexture(uint16_t rt)
 {

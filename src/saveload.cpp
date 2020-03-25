@@ -64,34 +64,30 @@ uint save_texture(void *data, uint width, uint height, uint palette_index, char 
 	else return true;
 }
 
-uint load_texture_helper(char *png_name, char *ctx_name, uint *width, uint *height, uint use_compression)
+uint load_texture_helper(char* name, uint* width, uint* height, uint use_compression)
 {
-	uint ret;
-	uint *data;
+	uint ret = 0;
+	struct stat dummy;
 
-	data = read_png(png_name, width, height);
-
-	if(!data) return 0;
-
-	gl_check_texture_dimensions(*width, *height, png_name);
-
-	ret = gl_commit_pixel_buffer(data, *width, *height, RendererTextureType::BGRA, true);
-
-	driver_free(data);
+	if (stat(name, &dummy) == 0) ret = newRenderer.createTexture(name, width, height);
 
 	return ret;
 }
 
 uint load_texture(char *name, uint palette_index, uint *width, uint *height, uint use_compression)
 {
+	char dds_name[sizeof(basedir) + 1024];
 	char png_name[sizeof(basedir) + 1024];
-	char ctx_name[sizeof(basedir) + 1024];
 	uint ret;
 
+	_snprintf(dds_name, sizeof(png_name), "%s/%s/%s_%02i.dds", basedir, mod_path, name, palette_index);
 	_snprintf(png_name, sizeof(png_name), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
-	_snprintf(ctx_name, sizeof(ctx_name), "%s/%s/cache/%s_%02i.ctx", basedir, mod_path, name, palette_index);
 
-	ret = load_texture_helper(png_name, ctx_name, width, height, use_compression);
+	// Try loading DDS
+	ret = load_texture_helper(dds_name, width, height, use_compression);
+	
+	// If not successfull fallback to PNG
+	if (!ret) ret = load_texture_helper(png_name, width, height, use_compression);
 
 	if(!ret)
 	{

@@ -94,7 +94,7 @@ void gl_draw_indexed_primitive(uint, uint, struct nvertex *, uint, word *, uint,
 void gl_set_world_matrix(struct matrix *matrix);
 void gl_set_d3dprojection_matrix(struct matrix *matrix);
 void gl_set_blend_func(uint);
-void gl_check_texture_dimensions(uint width, uint height, char *source);
+bool gl_check_texture_dimensions(uint width, uint height, char *source);
 uint gl_create_texture(void *data, uint width, uint height, uint format, uint internalformat, uint size, uint generate_mipmaps);
 void *gl_get_pixel_buffer(uint size);
 uint gl_commit_pixel_buffer(void *data, uint width, uint height, uint format, uint generate_mipmaps);

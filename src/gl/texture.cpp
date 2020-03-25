@@ -30,9 +30,14 @@
 #include "../saveload.h"
 
 // check to make sure we can actually load a given texture
-void gl_check_texture_dimensions(uint width, uint height, char *source)
+bool gl_check_texture_dimensions(uint width, uint height, char *source)
 {
-	if(width > max_texture_size || height > max_texture_size) error("texture dimensions exceed max texture size, will not be able to load %s\n", source);
+	if (width > max_texture_size || height > max_texture_size) {
+		error("Texture dimensions exceed max texture size, will not be able to load %s\n", source);
+		return false;
+	}
+	else
+		return true;
 }
 
 // create a simple texture from pixel data, if the size parameter is used it

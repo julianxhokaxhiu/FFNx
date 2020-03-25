@@ -26,7 +26,6 @@ if (SUPERBUILD)
 		DEPENDS
 		bgfx
 		ffmpeg
-		libpng
 		libconfuse
 		vgmstream
 	)

@@ -7,11 +7,13 @@
 #include <math.h>
 #include <bx/math.h>
 #include <bx/bx.h>
-#include <bimg/bimg.h>
 #include <bx/allocator.h>
+#include <bimg/bimg.h>
+#include <bimg/decode.h>
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
 #include "log.h"
+#include "gl.h"
 
 enum RendererBlendMode {
     BLEND_AVG = 0,
@@ -55,6 +57,7 @@ enum RendererTextureType
 {
     BGRA = 0,
     YUV,
+    DDS
 };
 
 enum RendererInternalType
@@ -266,6 +269,9 @@ private:
 
     void printMatrix(char* name, float* mat);
 
+    size_t textureMemoryCap = 1 * 1024 * 1024 * 1024; // 1GB
+    bool doesTextureFitInMemory(size_t size);
+
 public:
     void init();
     void shutdown();
@@ -287,6 +293,7 @@ public:
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
     uint createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool generateMips = false);
+    uint createTexture(char* filename, uint* width, uint* height);
     void deleteTexture(uint16_t texId);
     void useTexture(uint texId, uint slot = 0);
     uint blitTexture(uint x, uint y, uint width, uint height);
