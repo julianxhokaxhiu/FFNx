@@ -39,6 +39,7 @@ cfg_bool_t trace_loaders = cfg_bool_t(false);
 cfg_bool_t trace_lights = cfg_bool_t(false);
 cfg_bool_t vertex_log = cfg_bool_t(false);
 cfg_bool_t uniform_log = cfg_bool_t(false);
+cfg_bool_t show_renderer_backend = cfg_bool_t(true);
 cfg_bool_t show_fps = cfg_bool_t(false);
 cfg_bool_t show_stats = cfg_bool_t(false);
 long window_size_x = 0;
@@ -93,6 +94,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("trace_lights", &trace_lights),
 		CFG_SIMPLE_BOOL("vertex_log", &vertex_log),
 		CFG_SIMPLE_BOOL("uniform_log", &uniform_log),
+		CFG_SIMPLE_BOOL("show_renderer_backend", &show_renderer_backend),
 		CFG_SIMPLE_BOOL("show_fps", &show_fps),
 		CFG_SIMPLE_BOOL("show_stats", &show_stats),
 		CFG_SIMPLE_INT("window_size_x", &window_size_x),

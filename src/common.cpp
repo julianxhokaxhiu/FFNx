@@ -329,6 +329,7 @@ void common_flip(struct game_obj *game_object)
 	strcpy_s(newWindowTitle, 1024, VREF(game_object, window_title));
 
 	// Append chosen rendering engine
+	if (show_renderer_backend)
 	{
 		char tmp[64];
 		sprintf_s(tmp, 64, " (%s)", renderer_backend);
