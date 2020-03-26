@@ -1,5 +1,4 @@
 find_package(BGFX REQUIRED)
-find_package(ZLib REQUIRED)
 find_package(CONFUSE REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(VGMSTREAM REQUIRED)
@@ -19,6 +18,7 @@ target_link_libraries(${RELEASE_NAME}
 	BGFX::BGFX
     BGFX::BIMG
     BGFX::BIMG_DECODE
+    BGFX::BIMG_ENCODE
     BGFX::BX
 	CONFUSE::CONFUSE
 	FFMPEG::AVUtil

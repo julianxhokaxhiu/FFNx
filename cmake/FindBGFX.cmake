@@ -107,5 +107,24 @@ if (NOT BGFX_FOUND)
 
 	#-----------------------------------------
 
-	find_package_handle_standard_args(BGFX DEFAULT_MSG BGFX_LIBRARY BGFX_INCLUDE_DIR BX_LIBRARY BX_INCLUDE_DIR BIMG_LIBRARY BIMG_INCLUDE_DIR BIMG_DECODE_LIBRARY)
+	find_library(
+		BIMG_ENCODE_LIBRARY
+		bimg_encodeDebug
+		bimg_encodeRelease
+		PATH_SUFFIXES
+		lib/bgfx
+	)
+
+	add_library(BGFX::BIMG_ENCODE STATIC IMPORTED)
+
+	set_target_properties(
+		BGFX::BIMG_ENCODE
+		PROPERTIES
+		IMPORTED_LOCATION
+		"${BIMG_ENCODE_LIBRARY}"
+	)
+
+	#-----------------------------------------
+
+	find_package_handle_standard_args(BGFX DEFAULT_MSG BGFX_LIBRARY BGFX_INCLUDE_DIR BX_LIBRARY BX_INCLUDE_DIR BIMG_LIBRARY BIMG_INCLUDE_DIR BIMG_DECODE_LIBRARY BIMG_ENCODE_LIBRARY)
 endif()
