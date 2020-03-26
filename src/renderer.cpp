@@ -639,7 +639,6 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
 
         // ==================================
 
-        bx::DefaultAllocator defaultAllocator;
         bimg::ImageContainer* img = bimg::imageParse(&defaultAllocator, buffer, filesize+1);
 
         driver_free(buffer);
@@ -672,6 +671,28 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
     }
 
     return ret.idx;
+}
+
+bool Renderer::saveTexture(char* filename, uint width, uint height, void* data)
+{
+    if (bx::open(&defaultWriter, filename, false))
+    {
+        bimg::imageWritePng(
+            &defaultWriter,
+            width,
+            height,
+            width * 4,
+            data,
+            bimg::TextureFormat::BGRA8,
+            false
+        );
+
+        bx::close(&defaultWriter);
+
+        return true;
+    }
+
+    return false;
 }
 
 void Renderer::deleteTexture(uint16_t rt)

@@ -8,8 +8,10 @@
 #include <bx/math.h>
 #include <bx/bx.h>
 #include <bx/allocator.h>
+#include <bx/file.h>
 #include <bimg/bimg.h>
 #include <bimg/decode.h>
+#include <bimg/encode.h>
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
 #include "log.h"
@@ -272,6 +274,9 @@ private:
     size_t textureMemoryCap = 1 * 1024 * 1024 * 1024; // 1GB
     bool doesTextureFitInMemory(size_t size);
 
+    bx::DefaultAllocator defaultAllocator;
+    bx::FileWriter defaultWriter;
+
 public:
     void init();
     void shutdown();
@@ -294,6 +299,7 @@ public:
 
     uint createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool generateMips = false);
     uint createTexture(char* filename, uint* width, uint* height);
+    bool saveTexture(char* filename, uint width, uint height, void* data);
     void deleteTexture(uint16_t texId);
     void useTexture(uint texId, uint slot = 0);
     uint blitTexture(uint x, uint y, uint width, uint height);

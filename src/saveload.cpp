@@ -31,7 +31,6 @@
 #include "gl.h"
 #include "cfg.h"
 #include "compile_cfg.h"
-#include "png.h"
 #include "macro.h"
 
 void make_path(char *name)
@@ -60,7 +59,7 @@ uint save_texture(void *data, uint width, uint height, uint palette_index, char 
 
 	make_path(filename);
 
-	if(stat(filename, &dummy)) return write_png(filename, width, height, (char*)data);
+	if(stat(filename, &dummy)) return newRenderer.saveTexture(filename, width, height, data);
 	else return true;
 }
 
