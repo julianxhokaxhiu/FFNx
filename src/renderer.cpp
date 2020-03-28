@@ -415,7 +415,7 @@ void Renderer::draw()
 
     // Set state
     {
-        internalState.state = BGFX_STATE_MSAA | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
+        internalState.state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
 
         switch (internalState.cullMode)
         {
