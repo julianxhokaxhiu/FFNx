@@ -312,7 +312,7 @@ void Renderer::init()
             canAutogenMipmaps && use_mipmaps,
             1,
             bgfx::TextureFormat::RGBA8,
-            0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP
+            BGFX_TEXTURE_RT
         ),
         bgfx::createTexture2D(
             framebufferWidth,
@@ -320,7 +320,7 @@ void Renderer::init()
             false,
             1,
             bgfx::TextureFormat::D24S8,
-            0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP
+            BGFX_TEXTURE_RT
         )
     };
 
@@ -601,7 +601,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
             false,
             1,
             texFormat,
-            BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+            BGFX_TEXTURE_NONE,
             stride > 0 ? NULL : mem
         );
 
@@ -663,7 +663,7 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
                 1 < img->m_numMips,
                 img->m_numLayers,
                 bgfx::TextureFormat::Enum(img->m_format),
-                BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+                BGFX_TEXTURE_NONE,
                 mem
                 );
 
