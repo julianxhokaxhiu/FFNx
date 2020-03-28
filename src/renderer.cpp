@@ -398,7 +398,7 @@ void Renderer::draw()
 
             if (bgfx::isValid(handle))
             {
-                uint32_t flags = 0;
+                uint32_t flags = BGFX_SAMPLER_MIP_POINT;
 
                 if (internalState.bIsMovie || backendProgram == RendererProgram::POSTPROCESSING) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
