@@ -182,6 +182,7 @@ void Renderer::reset()
     isTexture();
     doModulateAlpha();
     doTextureFiltering();
+    isExternalTexture();
 };
 
 void Renderer::renderFrameBuffer()
