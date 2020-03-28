@@ -98,8 +98,6 @@ bool gl_check_texture_dimensions(uint width, uint height, char *source);
 uint gl_create_texture(void *data, uint width, uint height, uint format, uint internalformat, uint size, uint generate_mipmaps);
 void *gl_get_pixel_buffer(uint size);
 uint gl_commit_pixel_buffer(void *data, uint width, uint height, uint format, uint generate_mipmaps);
-uint gl_compress_pixel_buffer(void *data, uint width, uint height, uint format);
-uint gl_commit_compressed_buffer(void *data, uint width, uint height, uint format, uint size);
 void gl_replace_texture(struct texture_set *texture_set, uint palette_index, uint new_texture);
 void gl_upload_texture(struct texture_set *texture_set, uint palette_index, void *image_data, uint format);
 void gl_bind_texture_set(struct texture_set *);

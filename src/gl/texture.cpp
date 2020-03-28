@@ -72,16 +72,6 @@ uint gl_commit_pixel_buffer(void *data, uint width, uint height, uint format, ui
 	return gl_commit_pixel_buffer_generic(data, width, height, format, RendererInternalType::RGBA8, 0, generate_mipmaps);
 }
 
-uint gl_compress_pixel_buffer(void *data, uint width, uint height, uint format)
-{
-	return gl_commit_pixel_buffer_generic(data, width, height, format, RendererInternalType::COMPRESSED_RGBA, 0, true);
-}
-
-uint gl_commit_compressed_buffer(void *data, uint width, uint height, uint format, uint size)
-{
-	return gl_commit_pixel_buffer_generic(data, width, height, format, 0, size, true);
-}
-
 // apply OpenGL texture for a certain palette in a texture set, possibly
 // replacing an existing texture which will then be unloaded
 void gl_replace_texture(struct texture_set *texture_set, uint palette_index, uint new_texture)
