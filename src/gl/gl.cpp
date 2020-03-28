@@ -181,6 +181,8 @@ void gl_draw_indexed_primitive(uint primitivetype, uint vertextype, struct nvert
 		return;
 	}
 
+	newRenderer.useFancyTransparency(fancy_transparency);
+
 	// handle some special cases, see special_case.c
 	if(gl_special_case(primitivetype, vertextype, vertices, vertexcount, indices, count, graphics_object, clip, mipmap))
 	{

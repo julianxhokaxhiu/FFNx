@@ -49,7 +49,7 @@ uint gl_special_case(uint primitivetype, uint vertextype, struct nvertex *vertic
 		// restore original blend mode for non-modpath textures
 		if (!VREF(texture_set, ogl.external))
 		{
-			newRenderer.setBlendMode(RendererBlendMode::BLEND_NONE);
+			newRenderer.useFancyTransparency(false);
 		}
 	}
 
