@@ -190,6 +190,14 @@ void gl_draw_indexed_primitive(uint primitivetype, uint vertextype, struct nvert
 		return;
 	}
 
+	// use mipmaps if available
+	if (current_state.texture_filter && use_mipmaps && current_state.texture_set)
+	{
+		VOBJ(texture_set, texture_set, current_state.texture_set);
+
+		if (VREF(texture_set, ogl.external)) newRenderer.isExternalTexture(true);
+	}
+
 	// OpenGL treats texture filtering as a per-texture parameter, we need it
 	// to be consistent with our global render state
 	newRenderer.doTextureFiltering(current_state.texture_filter);

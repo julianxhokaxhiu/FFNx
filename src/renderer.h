@@ -188,6 +188,7 @@ private:
         bool bIsMovie = false;
         bool bIsMovieFullRange = false;
         bool bIsMovieYUV = false;
+        bool bIsExternalTexture = false;
 
         float backendProjMatrix[16];
 
@@ -313,6 +314,7 @@ public:
     void isYUV(bool flag = false);
     void doModulateAlpha(bool flag = false);
     void doTextureFiltering(bool flag = false);
+    void isExternalTexture(bool flag = false);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);

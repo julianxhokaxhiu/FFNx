@@ -398,11 +398,13 @@ void Renderer::draw()
 
             if (bgfx::isValid(handle))
             {
-                uint32_t flags = BGFX_SAMPLER_MIP_POINT;
+                uint32_t flags = 0;
 
                 if (internalState.bIsMovie || backendProgram == RendererProgram::POSTPROCESSING) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
                 if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
+
+                if (!internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIP_POINT;
 
                 bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), handle, flags);
             }
@@ -785,6 +787,11 @@ void Renderer::doTextureFiltering(bool flag)
 {
     internalState.bDoTextureFiltering = flag;
 };
+
+void Renderer::isExternalTexture(bool flag)
+{
+    internalState.bIsExternalTexture = flag;
+}
 
 void Renderer::setAlphaRef(RendererAlphaFunc func, float ref)
 {
