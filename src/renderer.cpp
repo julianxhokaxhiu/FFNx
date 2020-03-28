@@ -268,10 +268,23 @@ bool Renderer::doesTextureFitInMemory(size_t size)
 
 void Renderer::init()
 {
-    viewWidth = (preserve_aspect ? ((window_size_y * 4) / 3) : window_size_x);
+    viewWidth = window_size_x;
     viewHeight = window_size_y;
-    viewOffsetX = (preserve_aspect ? ((window_size_x - viewWidth) / 2) : 0);
-    viewOffsetY = 0;
+
+    // aspect correction
+    if (preserve_aspect && viewWidth * 3 != viewHeight * 4)
+    {
+        if (viewHeight * 4 > viewWidth * 3)
+        {
+            viewOffsetY = viewHeight - (viewWidth * 3) / 4;
+            viewHeight = (viewWidth * 3) / 4;
+        }
+        else if (viewWidth * 3 > viewHeight * 4)
+        {
+            viewOffsetX = (viewWidth - (viewHeight * 4) / 3) / 2;
+            viewWidth = (viewHeight * 4) / 3;
+        }
+    }
 
     // In order to prevent weird glitches while rendering we need to use the closest resolution to native's game one
     framebufferWidth = (viewWidth % game_width) ? (viewWidth / game_width + 1) * game_width : viewWidth;
