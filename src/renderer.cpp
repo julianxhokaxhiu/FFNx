@@ -244,13 +244,11 @@ void Renderer::renderFrameBuffer()
         );
 
         setBlendMode(RendererBlendMode::BLEND_DISABLED);
-        doTextureFiltering(true);
         setPrimitiveType();
 
         draw();
 
         setBlendMode();
-        doTextureFiltering();
     }
     backendProgram = RendererProgram::FRAMEBUFFER;
 };
@@ -420,11 +418,18 @@ void Renderer::draw()
             {
                 uint32_t flags = 0;
 
-                if (internalState.bIsMovie || backendProgram == RendererProgram::POSTPROCESSING) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                if (backendProgram == RendererProgram::POSTPROCESSING)
+                {
+                    flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                }
+                else
+                {
+                    if (internalState.bIsMovie) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
-                if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
+                    if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
 
-                if (!internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIP_POINT;
+                    if (internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                }
 
                 bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), handle, flags);
             }
