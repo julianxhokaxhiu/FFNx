@@ -243,10 +243,14 @@ void Renderer::renderFrameBuffer()
             bgfx::getTexture(backendFrameBuffer).idx
         );
 
+        setBlendMode(RendererBlendMode::BLEND_DISABLED);
         doTextureFiltering(true);
         setPrimitiveType();
 
         draw();
+
+        setBlendMode();
+        doTextureFiltering();
     }
     backendProgram = RendererProgram::FRAMEBUFFER;
 };

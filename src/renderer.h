@@ -22,7 +22,8 @@ enum RendererBlendMode {
     BLEND_ADD,
     BLEND_SUB,
     BLEND_25P,
-    BLEND_NONE
+    BLEND_NONE,
+    BLEND_DISABLED = 999
 };
 
 enum RendererCullMode {
