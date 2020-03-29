@@ -301,7 +301,10 @@ void Renderer::init()
     bgfxInit.type = getRendererType();
     bgfxInit.resolution.width = window_size_x;
     bgfxInit.resolution.height = window_size_y;
-    bgfxInit.resolution.reset = BGFX_RESET_MAXANISOTROPY;
+    bgfxInit.resolution.reset = BGFX_RESET_NONE;
+
+    if (use_mipmaps)
+        bgfxInit.resolution.reset |= BGFX_RESET_MAXANISOTROPY;
 
     if (enable_vsync)
         bgfxInit.resolution.reset |= BGFX_RESET_VSYNC;
@@ -428,7 +431,7 @@ void Renderer::draw()
 
                     if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
 
-                    if (internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                    if (internalState.bIsExternalTexture && use_mipmaps) flags |= BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
                 }
 
                 bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), handle, flags);
