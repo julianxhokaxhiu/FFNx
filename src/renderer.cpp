@@ -303,7 +303,7 @@ void Renderer::init()
     bgfxInit.resolution.height = window_size_y;
     bgfxInit.resolution.reset = BGFX_RESET_NONE;
 
-    if (use_mipmaps)
+    if (enable_anisotropic)
         bgfxInit.resolution.reset |= BGFX_RESET_MAXANISOTROPY;
 
     if (enable_vsync)
@@ -328,7 +328,7 @@ void Renderer::init()
         bgfx::createTexture2D(
             framebufferWidth,
             framebufferHeight,
-            canAutogenMipmaps && use_mipmaps,
+            canAutogenMipmaps && enable_anisotropic,
             1,
             bgfx::TextureFormat::RGBA8,
             BGFX_TEXTURE_RT
@@ -431,7 +431,7 @@ void Renderer::draw()
 
                     if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
 
-                    if (internalState.bIsExternalTexture && use_mipmaps) flags |= BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                    if (internalState.bIsExternalTexture && enable_anisotropic) flags |= BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
                 }
 
                 bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), handle, flags);

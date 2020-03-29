@@ -195,7 +195,7 @@ void gl_draw_indexed_primitive(uint primitivetype, uint vertextype, struct nvert
 	}
 
 	// use mipmaps if available
-	if (current_state.texture_filter && use_mipmaps && current_state.texture_set)
+	if (current_state.texture_filter && enable_anisotropic && current_state.texture_set)
 	{
 		VOBJ(texture_set, texture_set, current_state.texture_set);
 

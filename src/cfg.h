@@ -70,7 +70,7 @@ extern cfg_bool_t linear_filter;
 extern cfg_bool_t transparent_dialogs;
 extern cfg_bool_t mdef_fix;
 extern cfg_bool_t fancy_transparency;
-extern cfg_bool_t use_mipmaps;
+extern cfg_bool_t enable_anisotropic;
 extern cfg_bool_t skip_frames;
 extern cfg_bool_t more_ff7_debug;
 extern cfg_bool_t show_applog;
