@@ -96,6 +96,7 @@ void gl_draw_movie_quad_common()
 	};
 
 	current_state.texture_filter = true;
+
 	internal_set_renderstate(V_NOCULL, 1, game_object);
 	internal_set_renderstate(V_DEPTHTEST, 0, game_object);
 	internal_set_renderstate(V_DEPTHMASK, 0, game_object);
@@ -104,6 +105,7 @@ void gl_draw_movie_quad_common()
 	newRenderer.bindIndexBuffer(indices, 6);
 
 	newRenderer.isTLVertex(true);
+	newRenderer.doTextureFiltering(current_state.texture_filter);
 
 	newRenderer.draw();
 }
