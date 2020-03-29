@@ -303,9 +303,10 @@ void Renderer::init()
     bgfxInit.type = getRendererType();
     bgfxInit.resolution.width = window_size_x;
     bgfxInit.resolution.height = window_size_y;
+    bgfxInit.resolution.reset = BGFX_RESET_MAXANISOTROPY;
 
     if (enable_vsync)
-        bgfxInit.resolution.reset = BGFX_RESET_VSYNC;
+        bgfxInit.resolution.reset |= BGFX_RESET_VSYNC;
 
     bgfxInit.debug = renderer_debug;
     bgfxInit.callback = &bgfxCallbacks;
@@ -745,9 +746,8 @@ void Renderer::useTexture(uint rt, uint slot)
 uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 {
     uint mode = getmode()->driver_mode;
-    uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;
     
-    bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > width ? width : framebufferWidth, framebufferHeight > height ? height : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST | samplerFlags);
+    bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > width ? width : framebufferWidth, framebufferHeight > height ? height : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
     
     if (backendViewId == 1) backendViewId = 0;
     else if (backendViewId > 0) backendViewId++;
