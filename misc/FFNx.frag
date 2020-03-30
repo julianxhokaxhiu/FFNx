@@ -32,7 +32,7 @@ uniform vec4 FSMiscFlags;
 
 void main()
 {
-	mediump vec4 color = v_color0;
+	vec4 color = v_color0;
     
     if (isTexture)
     {
@@ -71,7 +71,7 @@ void main()
         }
         else
         {
-            mediump vec4 texture_color = texture2D(tex, v_texcoord0.xy);
+            vec4 texture_color = texture2D(tex, v_texcoord0.xy);
 
             if (doAlphaTest)
             {
