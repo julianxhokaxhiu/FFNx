@@ -319,16 +319,11 @@ void Renderer::init()
     // Create an empty texture
     emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
 
-    bool canAutogenMipmaps = (getCaps()->formats[bgfx::TextureFormat::RGBA8] & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN);
-
-    if (!canAutogenMipmaps)
-        error("Possible pixelated output. Your GPU DOES NOT support Mipmap autogeneration on %s. Please try with another backend.\n", renderer_backend);
-
     backendFrameBufferRT = {
         bgfx::createTexture2D(
             framebufferWidth,
             framebufferHeight,
-            canAutogenMipmaps && enable_anisotropic,
+            false,
             1,
             bgfx::TextureFormat::RGBA8,
             BGFX_TEXTURE_RT
