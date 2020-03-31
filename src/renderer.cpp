@@ -747,13 +747,18 @@ void Renderer::useTexture(uint rt, uint slot)
 uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 {
     uint mode = getmode()->driver_mode;
+
+    uint newX = getInternalCoordX(x);
+    uint newY = getInternalCoordY(y);
+    uint newWidth = getInternalCoordX(width);
+    uint newHeight = getInternalCoordY(height);
     
-    bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > width ? width : framebufferWidth, framebufferHeight > height ? height : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
+    bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > newWidth ? newWidth : framebufferWidth, framebufferHeight > newHeight ? newHeight : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
     
     if (backendViewId == 1) backendViewId = 0;
     else if (backendViewId > 0) backendViewId++;
 
-    bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), x, y);
+    bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
     
     if (backendViewId == 0) {
         if (!ff8 || mode == MODE_SWIRL) bgfx::touch(backendViewId);
