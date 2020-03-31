@@ -92,12 +92,12 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height, uin
 	{
 		if(palette_index != 0)
 		{
-			if(show_missing_textures) info("tried to load %s, falling back to palette 0\n", png_name, palette_index);
+			if(show_missing_textures) info("tried to load %s/%s/%s_%02i.(dds|png), falling back to palette 0\n", basedir, mod_path, name, palette_index);
 			return load_texture(name, 0, width, height, use_compression);
 		}
 		else
 		{
-			if(show_missing_textures) info("tried to load %s, failed\n", png_name);
+			if(show_missing_textures) info("tried to load %s/%s/%s_%02i.(dds|png), failed\n", basedir, mod_path, name, palette_index);
 			return 0;
 		}
 	}
