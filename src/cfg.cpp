@@ -173,6 +173,9 @@ void read_cfg()
 		fancy_transparency = cfg_bool_t(false);
 	}
 
+	// Internal scale of 1 is not allowed
+	if (internal_resolution_scale < 2) internal_resolution_scale = 2;
+
 #ifdef SINGLE_STEP
 	window_size_x = 0;
 	window_size_y = 0;
