@@ -48,6 +48,7 @@ extern cfg_bool_t show_fps;
 extern cfg_bool_t show_stats;
 extern long window_size_x;
 extern long window_size_y;
+extern long internal_resolution_scale;
 extern cfg_bool_t preserve_aspect;
 extern cfg_bool_t fullscreen;
 extern long refresh_rate;

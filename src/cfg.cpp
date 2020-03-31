@@ -44,6 +44,7 @@ cfg_bool_t show_fps = cfg_bool_t(false);
 cfg_bool_t show_stats = cfg_bool_t(false);
 long window_size_x = 0;
 long window_size_y = 0;
+long internal_resolution_scale = 2;
 cfg_bool_t preserve_aspect = cfg_bool_t(true);
 cfg_bool_t fullscreen = cfg_bool_t(false);
 long refresh_rate = 0;
@@ -99,6 +100,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("show_stats", &show_stats),
 		CFG_SIMPLE_INT("window_size_x", &window_size_x),
 		CFG_SIMPLE_INT("window_size_y", &window_size_y),
+		CFG_SIMPLE_INT("internal_resolution_scale", &internal_resolution_scale),
 		CFG_SIMPLE_BOOL("preserve_aspect", &preserve_aspect),
 		CFG_SIMPLE_BOOL("fullscreen", &fullscreen),
 		CFG_SIMPLE_INT("refresh_rate", &refresh_rate),

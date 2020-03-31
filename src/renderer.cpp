@@ -289,8 +289,8 @@ void Renderer::init()
     }
 
     // In order to prevent weird glitches while rendering we need to use the closest resolution to native's game one
-    framebufferWidth = (viewWidth % game_width) ? (viewWidth / game_width + 1) * game_width : viewWidth;
-    framebufferHeight = (viewHeight % game_height) ? (viewHeight / game_height + 1) * game_height : viewHeight;
+    framebufferWidth = (viewWidth % game_width) ? (viewWidth / game_width + 1) * game_width * (internal_resolution_scale - 1) : viewWidth;
+    framebufferHeight = (viewHeight % game_height) ? (viewHeight / game_height + 1) * game_height * (internal_resolution_scale - 1) : viewHeight;
 
     framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
     framebufferVertexOffsetX = (game_width - framebufferVertexWidth) / 2;
