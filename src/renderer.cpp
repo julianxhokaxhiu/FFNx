@@ -756,7 +756,7 @@ uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
     bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), x, y);
     
     if (backendViewId == 0) {
-        if (mode == MODE_SWIRL) bgfx::touch(backendViewId);
+        if (!ff8 || mode == MODE_SWIRL) bgfx::touch(backendViewId);
         backendViewId = 1;
     }
 
