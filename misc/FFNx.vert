@@ -44,7 +44,13 @@ void main()
     if (blendMode == 4.0) color.a = 1.0;
     else if (blendMode == 3.0) color.a = 0.25;
 
-    if (isFBTexture) coords.y = 1.0 - coords.y;
+#if BGFX_SHADER_LANGUAGE_HLSL
+#else
+    #if BGFX_SHADER_LANGUAGE_SPIRV
+    #else
+        if (isFBTexture) coords.y = 1.0 - coords.y;
+    #endif
+#endif
 
     gl_Position = pos;
     v_color0 = color;

@@ -752,8 +752,13 @@ uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
     uint16_t newY = getInternalCoordY(y);
     uint16_t newWidth = getInternalCoordX(width);
     uint16_t newHeight = getInternalCoordY(height);
+
+    uint16_t texWidth = framebufferWidth > newWidth ? newWidth : framebufferWidth;
+    uint16_t texHeight = framebufferHeight > newHeight ? newHeight : framebufferHeight;
     
-    bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > newWidth ? newWidth : framebufferWidth, framebufferHeight > newHeight ? newHeight : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
+    bgfx::TextureHandle ret = bgfx::createTexture2D(texWidth, texHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
+
+    if (getCaps()->originBottomLeft) newY = framebufferHeight - (newY + texHeight);
     
     if (backendViewId == 1) backendViewId = 0;
     else if (backendViewId > 0) backendViewId++;
