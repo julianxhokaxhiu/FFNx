@@ -585,7 +585,7 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
 
 void Renderer::setBackgroundColor(float r, float g, float b, float a)
 {
-    internalState.clearColorValue = createBGRA(r, g, b, a);
+    internalState.clearColorValue = createBGRA(r * 255, g * 255, b * 255, a * 255);
 }
 
 uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool generateMips)
