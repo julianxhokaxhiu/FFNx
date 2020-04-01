@@ -748,10 +748,10 @@ uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 {
     uint mode = getmode()->driver_mode;
 
-    uint newX = getInternalCoordX(x);
-    uint newY = getInternalCoordY(y);
-    uint newWidth = getInternalCoordX(width);
-    uint newHeight = getInternalCoordY(height);
+    uint16_t newX = getInternalCoordX(x);
+    uint16_t newY = getInternalCoordY(y);
+    uint16_t newWidth = getInternalCoordX(width);
+    uint16_t newHeight = getInternalCoordY(height);
     
     bgfx::TextureHandle ret = bgfx::createTexture2D(framebufferWidth > newWidth ? newWidth : framebufferWidth, framebufferHeight > newHeight ? newHeight : framebufferHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
     
