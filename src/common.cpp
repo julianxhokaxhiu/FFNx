@@ -476,7 +476,7 @@ void common_clear(uint clear_color, uint clear_depth, uint unknown, struct game_
 	if(trace_all) trace("dll_gfx: clear %i %i %i\n", clear_color, clear_depth, unknown);
 
 	newRenderer.setClearFlags(
-		clear_color || mode == MODE_MENU,
+		clear_color || mode == MODE_MENU || mode == MODE_CONDOR,
 		clear_depth
 	);
 }
