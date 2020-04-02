@@ -760,15 +760,12 @@ uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 
     if (getCaps()->originBottomLeft) newY = framebufferHeight - (newY + texHeight);
     
-    if (backendViewId == 1) backendViewId = 0;
-    else if (backendViewId > 0) backendViewId++;
+    backendViewId++;
 
     bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
+    bgfx::touch(backendViewId);
     
-    if (backendViewId == 0) {
-        if (!ff8 || mode == MODE_SWIRL) bgfx::touch(backendViewId);
-        backendViewId = 1;
-    }
+    backendViewId++;
 
     return ret.idx;
 };
