@@ -336,12 +336,12 @@ void common_flip(struct game_obj *game_object)
 
 		if (show_version)
 		{
-			gl_draw_text(col, row++, text_colors[TEXTCOLOR_GRAY], 255, "VERSION: " VERSION);
+			gl_draw_text(col, row++, text_colors[TEXTCOLOR_GRAY], 255, "Version: " VERSION);
 		}
 
 		if (show_renderer_backend)
 		{
-			gl_draw_text(col, row++, text_colors[TEXTCOLOR_GREEN], 255, "RENDERER: %s", renderer_backend);
+			gl_draw_text(col, row++, text_colors[TEXTCOLOR_GREEN], 255, "Renderer: %s", renderer_backend);
 		}
 
 		if (show_fps)
@@ -361,14 +361,14 @@ void common_flip(struct game_obj *game_object)
 			gl_draw_text(col, row++, color, 255, "Profiling: %I64u us", (time_t)((profile_total * 1000000.0) / VREF(game_object, countspersecond)));
 #endif
 			gl_draw_text(col, row++, color, 255, "RAM usage: %uMB", get_ram_size() / (1024 * 1024));
-			gl_draw_text(col, row++, color, 255, "textures: %u", stats.texture_count);
-			gl_draw_text(col, row++, color, 255, "external textures: %u", stats.external_textures);
-			gl_draw_text(col, row++, color, 255, "texture reloads: %u", stats.texture_reloads);
-			gl_draw_text(col, row++, color, 255, "palette writes: %u", stats.palette_writes);
-			gl_draw_text(col, row++, color, 255, "palette changes: %u", stats.palette_changes);
-			gl_draw_text(col, row++, color, 255, "zsort layers: %u", stats.deferred);
-			gl_draw_text(col, row++, color, 255, "vertices: %u", stats.vertex_count);
-			gl_draw_text(col, row++, color, 255, "timer: %I64u", stats.timer);
+			gl_draw_text(col, row++, color, 255, "Textures: %u", stats.texture_count);
+			gl_draw_text(col, row++, color, 255, "External textures: %u", stats.external_textures);
+			gl_draw_text(col, row++, color, 255, "Texture reloads: %u", stats.texture_reloads);
+			gl_draw_text(col, row++, color, 255, "Palette writes: %u", stats.palette_writes);
+			gl_draw_text(col, row++, color, 255, "Palette changes: %u", stats.palette_changes);
+			gl_draw_text(col, row++, color, 255, "Zsort layers: %u", stats.deferred);
+			gl_draw_text(col, row++, color, 255, "Vertices: %u", stats.vertex_count);
+			gl_draw_text(col, row++, color, 255, "Timer: %I64u", stats.timer);
 		}
 	}
 	else
