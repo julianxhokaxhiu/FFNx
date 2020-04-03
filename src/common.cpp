@@ -317,26 +317,14 @@ uint common_unlock(uint surface)
 // buffers
 void common_flip(struct game_obj *game_object)
 {
+	if (trace_all) trace("dll_gfx: flip (%i)\n", frame_counter);
+
 	VOBJ(game_obj, game_object, game_object);
 	static time_t last_gametime;
 	static struct timeb last_frame;
 	static uint fps_counters[3] = {0, 0, 0};
 	time_t last_seconds = last_frame.time;
 	struct game_mode *mode = getmode();
-
-	char newWindowTitle[1024];
-
-	strcpy_s(newWindowTitle, 1024, VREF(game_object, window_title));
-
-	// Append chosen rendering engine
-	if (show_renderer_backend)
-	{
-		char tmp[64];
-		sprintf_s(tmp, 64, " (%s)", renderer_backend);
-		strcat_s(newWindowTitle, 1024, tmp);
-	}
-
-	if(trace_all) trace("dll_gfx: flip (%i)\n", frame_counter);
 
 	// draw any z-sorted content now that we're done drawing everything else
 	gl_draw_deferred();
@@ -345,6 +333,11 @@ void common_flip(struct game_obj *game_object)
 	{
 		static uint col = 4;
 		uint row = 1;
+
+		if (show_version)
+		{
+			gl_draw_text(col, row++, text_colors[TEXTCOLOR_GRAY], 255, "VERSION: " VERSION);
+		}
 
 		if (show_renderer_backend)
 		{
@@ -380,6 +373,25 @@ void common_flip(struct game_obj *game_object)
 	}
 	else
 	{
+		char newWindowTitle[1024];
+
+		strcpy_s(newWindowTitle, 1024, VREF(game_object, window_title));
+
+		// Append chosen rendering engine
+		if (show_renderer_backend)
+		{
+			char tmp[64];
+			sprintf_s(tmp, 64, " (%s)", renderer_backend);
+			strcat_s(newWindowTitle, 1024, tmp);
+		}
+
+		if (show_version)
+		{
+			char tmp[16];
+			sprintf_s(tmp, 16, " " VERSION);
+			strcat_s(newWindowTitle, 1024, tmp);
+		}
+
 		if (show_stats)
 		{
 			char tmp[768];

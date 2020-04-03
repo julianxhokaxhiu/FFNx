@@ -46,6 +46,7 @@ extern cfg_bool_t uniform_log;
 extern cfg_bool_t show_renderer_backend;
 extern cfg_bool_t show_fps;
 extern cfg_bool_t show_stats;
+extern cfg_bool_t show_version;
 extern long window_size_x;
 extern long window_size_y;
 extern long internal_resolution_scale;
