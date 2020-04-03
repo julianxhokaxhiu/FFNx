@@ -528,7 +528,7 @@ void common_setbg(struct bgra_color *color, struct game_obj *game_object)
 		color->r,
 		color->g,
 		color->b,
-		color->a
+		ff8 ? color->a : 0.0f
 	);
 }
 
