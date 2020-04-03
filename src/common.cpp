@@ -346,6 +346,11 @@ void common_flip(struct game_obj *game_object)
 		static uint col = 4;
 		uint row = 1;
 
+		if (show_renderer_backend)
+		{
+			gl_draw_text(col, row++, text_colors[TEXTCOLOR_GREEN], 255, "RENDERER: %s", renderer_backend);
+		}
+
 		if (show_fps)
 		{
 			// average last two seconds and round up for our FPS counter
