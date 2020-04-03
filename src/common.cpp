@@ -324,7 +324,7 @@ void common_flip(struct game_obj *game_object)
 	static struct timeb last_frame;
 	static uint fps_counters[3] = {0, 0, 0};
 	time_t last_seconds = last_frame.time;
-	struct game_mode *mode = getmode();
+	struct game_mode *mode = getmode_cached();
 
 	// draw any z-sorted content now that we're done drawing everything else
 	gl_draw_deferred();
@@ -488,7 +488,7 @@ void common_flip(struct game_obj *game_object)
 // clear_all below
 void common_clear(uint clear_color, uint clear_depth, uint unknown, struct game_obj *game_object)
 {
-	uint mode = getmode()->driver_mode;
+	uint mode = getmode_cached()->driver_mode;
 
 	if(trace_all) trace("dll_gfx: clear %i %i %i\n", clear_color, clear_depth, unknown);
 
@@ -510,7 +510,7 @@ void common_clear_all(struct game_obj *game_object)
 // to clip drawing to the requested area
 void common_setviewport(uint _x, uint _y, uint _w, uint _h, struct game_obj *game_object)
 {
-	uint mode = getmode()->driver_mode;
+	uint mode = getmode_cached()->driver_mode;
 
 	if(trace_all) trace("dll_gfx: setviewport %i %i %i %i\n", _x, _y, _w, _h);
 

@@ -201,6 +201,8 @@ void Renderer::renderFrameBuffer()
         y1    y3
     */
 
+    uint mode = getmode_cached()->driver_mode;
+
     // 0
     float x0 = preserve_aspect ? framebufferVertexOffsetX : 0.0f;
     float y0 = 0.0f;
@@ -748,7 +750,7 @@ void Renderer::useTexture(uint rt, uint slot)
 
 uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 {
-    uint mode = getmode()->driver_mode;
+    uint mode = getmode_cached()->driver_mode;
 
     uint16_t newX = getInternalCoordX(x);
     uint16_t newY = getInternalCoordY(y);
