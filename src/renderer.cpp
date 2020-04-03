@@ -170,11 +170,13 @@ void Renderer::reset()
 {
     setBackgroundColor();
 
+    doAlphaTest();
     doDepthTest();
     doDepthWrite();
     doScissorTest();
     setCullMode();
     setBlendMode();
+    setAlphaRef();
     isTLVertex();
     isYUV();
     isFullRange();
