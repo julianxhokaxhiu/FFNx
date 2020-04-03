@@ -750,8 +750,6 @@ void Renderer::useTexture(uint rt, uint slot)
 
 uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 {
-    uint mode = getmode_cached()->driver_mode;
-
     uint16_t newX = getInternalCoordX(x);
     uint16_t newY = getInternalCoordY(y);
     uint16_t newWidth = getInternalCoordX(width);
