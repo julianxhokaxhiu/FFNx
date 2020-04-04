@@ -265,20 +265,41 @@ void ff8_find_externals()
 
 	switch (version)
 	{
+	case VERSION_FF8_12_US:
+		ff8_externals.uvWorldMapFix = 0x553B10;
+		break;
 	case VERSION_FF8_12_US_NV:
 		ff8_externals.requiredDisk = 0xB8EE90;
+		ff8_externals.uvWorldMapFix = 0x553CC0;
+		break;
+	case VERSION_FF8_12_FR:
+		ff8_externals.uvWorldMapFix = 0x553EAF;
 		break;
 	case VERSION_FF8_12_FR_NV:
 		ff8_externals.requiredDisk = 0xB8EDB8;
+		ff8_externals.uvWorldMapFix = 0x55405F;
+		break;
+	case VERSION_FF8_12_DE:
+		ff8_externals.uvWorldMapFix = 0x0;
+		ff8_externals.uvWorldMapFix = 0x553FAF;
 		break;
 	case VERSION_FF8_12_DE_NV:
 		ff8_externals.requiredDisk = 0xB8EDC0;
+		ff8_externals.uvWorldMapFix = 0x55415F;
+		break;
+	case VERSION_FF8_12_SP:
+		ff8_externals.uvWorldMapFix = 0x553F9F;
 		break;
 	case VERSION_FF8_12_SP_NV:
 		ff8_externals.requiredDisk = 0xB8EDC0;
+		ff8_externals.uvWorldMapFix = 0x55414F;
+		break;
+	case VERSION_FF8_12_IT:
+		ff8_externals.uvWorldMapFix = 0x553F2F;
 		break;
 	case VERSION_FF8_12_IT_NV:
 		ff8_externals.requiredDisk = 0xB8EDB8;
+		ff8_externals.uvWorldMapFix = 0x5540DF;
 		break;
 	case VERSION_FF8_12_JP:
 		ff8_externals.requiredDisk = 0xD92BB0;
