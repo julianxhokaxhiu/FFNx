@@ -17,6 +17,8 @@ Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with nativ
 Welcome to FFNx project. This is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
 Some of the improvements that you can find only on FFNx are:
+- [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format!
+- PNG Texture support as fallback.
 - Inspect game internals using [RenderDoc](https://renderdoc.org/)!
 - **Native** Steam support! No Game converter required.
 - One single .dll file to be copied
@@ -36,9 +38,9 @@ If you're curious to know it, FFNx is made with:
 - Latest MSVC available on [Visual Studio 2019 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
 - [CMake](https://cmake.org/) ( as make files )
 - [BGFX](https://github.com/bkaradzic/bgfx) ( as backend renderer )
+- [BIMG](https://github.com/bkaradzic/bimg) ( for custom textures )
 - [FFMpeg](https://www.ffmpeg.org/) 4.2.2 with H/W Accelleration support
 - [VGMStream](https://github.com/julianxhokaxhiu/vgmstream) using FFMpeg as backend, [with loop support for Ogg files](https://github.com/julianxhokaxhiu/vgmstream/commit/a4155c817f709a7d75eec6b83973d2c6efae12ac)
-- [libpng](http://www.libpng.org/pub/png/libpng.html) 1.6.37 ( for custom textures )
 - [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) 3.2.4 ( for the configuration management )
 
 ## Canary vs Latest Release
