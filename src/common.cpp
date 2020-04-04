@@ -1682,7 +1682,7 @@ uint get_version()
 		info("Auto-detected version: FF8 1.2 German (Nvidia)\n");
 		return VERSION_FF8_12_DE_NV;
 	}
-	else if(version_check1 == 0x9085048D && version_check2 == 0x159C58)
+	else if(version_check1 == 0x8085048D && version_check2 == 0x159C38)
 	{
 		info("Auto-detected version: FF8 1.2 Spanish\n");
 		return VERSION_FF8_12_SP;
