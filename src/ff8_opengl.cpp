@@ -376,6 +376,8 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 	{
 	case VERSION_FF8_12_US:
 	case VERSION_FF8_12_US_NV:
+	case VERSION_FF8_12_US_EIDOS:
+	case VERSION_FF8_12_US_EIDOS_NV:
 		patch_code_byte(ff8_externals.uvWorldMapFix, 0x00);
 		patch_code_byte(ff8_externals.uvWorldMapFix + 0xA, 0x00);
 		patch_code_byte(ff8_externals.uvWorldMapFix + 0x18, 0x00);

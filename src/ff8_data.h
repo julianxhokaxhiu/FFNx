@@ -274,6 +274,12 @@ void ff8_find_externals()
 		ff8_externals.requiredDisk = 0xB8EE90;
 		ff8_externals.uvWorldMapFix = 0x553CC0;
 		break;
+	case VERSION_FF8_12_US_EIDOS:
+		ff8_externals.uvWorldMapFix = 0x553A90;
+		break;
+	case VERSION_FF8_12_US_EIDOS_NV:
+		ff8_externals.uvWorldMapFix = 0x553C40;
+		break;
 	case VERSION_FF8_12_FR:
 		ff8_externals.uvWorldMapFix = 0x553EAF;
 		break;
