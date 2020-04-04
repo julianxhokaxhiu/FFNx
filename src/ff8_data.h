@@ -261,6 +261,8 @@ void ff8_find_externals()
 		ff8_externals.sub_545F10 = get_relative_call(ff8_externals.sub_545EA0, 0x1C);
 
 		ff8_externals.sub_546100 = get_relative_call(ff8_externals.sub_545F10, 0x54);
+
+		ff8_externals.sub_54A0D0 = 0x54A0D0;
 	}
 
 	switch (version)
