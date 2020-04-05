@@ -98,6 +98,17 @@ If you want a more advanced experience, for example using another backend render
 ## Inspect logs
 If you want to check what is going on behind the scene, or you may happen to have a crash, feel free to check the `FFNx.log` file.
 
+## How to install on 7h 2.x
+> **WARNING:** This method is NOT SUPPORTED officially by 7h team. Please use at your own risk. DO NOT approach 7h team if something is not working properly.
+
+1) Go to your 7h installation path
+2) Go to `Resources\Game Driver`
+3) Rename `7H_GameDriver.dll` to `_7H_GameDriver.dll`
+4) Install FFNx following instructions here: https://github.com/julianxhokaxhiu/FFNx#1998-eidos-release
+5) Rename `FFNx.dll` to `7H_GameDriver.dll`
+
+Click Play and enjoy!
+
 ## Join us on Discord
 If you want to join our community, you can find us on Discord: https://discord.gg/N6M6pKS
 
