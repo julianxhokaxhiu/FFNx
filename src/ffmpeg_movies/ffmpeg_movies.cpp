@@ -253,9 +253,9 @@ uint ffmpeg_prepare_movie(char *name)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
-	if(codec_ctx->pix_fmt != AV_PIX_FMT_BGRA && codec_ctx->pix_fmt != AV_PIX_FMT_BGR24 && (codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P || !yuv_fast_path))
+	if(codec_ctx->pix_fmt != AV_PIX_FMT_BGRA && (codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P || !yuv_fast_path))
 	{
-		sws_ctx = sws_getContext(movie_width, movie_height, codec_ctx->pix_fmt, movie_width, movie_height, AV_PIX_FMT_BGR24, SWS_FAST_BILINEAR | SWS_ACCURATE_RND, NULL, NULL, NULL);
+		sws_ctx = sws_getContext(movie_width, movie_height, codec_ctx->pix_fmt, movie_width, movie_height, AV_PIX_FMT_BGRA, SWS_FAST_BILINEAR | SWS_ACCURATE_RND, NULL, NULL, NULL);
 		if (trace_movies) info("prepare_movie: slow output format from video codec %s; %i\n", codec->name, codec_ctx->pix_fmt);
 	}
 	else sws_ctx = 0;
@@ -332,7 +332,7 @@ void ffmpeg_stop_movie()
 
 void buffer_bgra_frame(uint8_t *data, int upload_stride)
 {
-	uint upload_width = codec_ctx->pix_fmt == AV_PIX_FMT_BGRA ? upload_stride / 4 : upload_stride / 3;
+	uint upload_width = upload_stride;
 	uint tex_width = movie_width;
 	uint tex_height = movie_height;
 
@@ -340,8 +340,6 @@ void buffer_bgra_frame(uint8_t *data, int upload_stride)
 
 	if (video_buffer[vbuffer_write].bgra_texture)
 		newRenderer.deleteTexture(video_buffer[vbuffer_write].bgra_texture);
-
-	if (upload_width > tex_width) tex_width = upload_width;
 
 	video_buffer[vbuffer_write].bgra_texture = newRenderer.createTexture(
 		data,
@@ -470,16 +468,16 @@ uint ffmpeg_update_movie_sample()
 				
 				if(sws_ctx)
 				{
-					uint8_t *planes[3] = {0, 0, 0};
-					int strides[3] = {0, 0, 0};
-					uint8_t *data = (uint8_t*)driver_calloc(movie_width * movie_height, 3);
+					uint8_t *planes[4] = { 0 };
+					int strides[4] = { 0 };
+					uint8_t *data = (uint8_t*)driver_calloc(movie_width * movie_height, 4);
 
 					planes[0] = data;
-					strides[0] = movie_width * 3;
+					strides[0] = movie_width * 4;
 
 					sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, movie_height, planes, strides);
 
-					buffer_bgra_frame(data, movie_width * 3);
+					buffer_bgra_frame(data, movie_width * 4);
 
 					driver_free(data);
 				}
