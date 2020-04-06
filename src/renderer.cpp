@@ -585,6 +585,7 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
         clearFlags |= BGFX_CLEAR_DEPTH;
 
     bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f);
+    bgfx::touch(backendViewId);
 }
 
 void Renderer::setBackgroundColor(float r, float g, float b, float a)
