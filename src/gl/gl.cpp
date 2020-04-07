@@ -54,6 +54,9 @@ void gl_draw_movie_quad_common(uint width, uint height)
 {
 	struct game_obj *game_object = common_externals.get_game_object();
 	float ratio = game_width / (float)width;
+	float movieHeight = ratio * height;
+	float movieWidth = ratio * width;
+	float movieOffsetY = ff8 ? (game_height - movieHeight) / 2.0f : 0.0f;
 
 	/*  y0    y2
 	 x0 +-----+ x2
@@ -68,16 +71,16 @@ void gl_draw_movie_quad_common(uint width, uint height)
 
 	// 0
 	float x0 = 0.0f;
-	float y0 = 0.0f;
+	float y0 = movieOffsetY;
 	float u0 = 0.0f;
 	float v0 = 0.0f;
 	// 1
 	float x1 = x0;
-	float y1 = ratio * height;
+	float y1 = movieHeight + movieOffsetY;
 	float u1 = u0;
 	float v1 = 1.0f;
 	// 2
-	float x2 = ratio * width;
+	float x2 = movieWidth;
 	float y2 = y0;
 	float u2 = 1.0f;
 	float v2 = v0;

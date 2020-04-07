@@ -30,15 +30,6 @@
 #include "cfg.h"
 #include "ffmpeg_movies/ffmpeg_movies.h"
 
-void addMovieBlackBars()
-{
-	newRenderer.setBackgroundColor();
-	newRenderer.setScissor(0, 16, 640, 448);
-
-	newRenderer.setClearFlags(true, true);
-	newRenderer.doScissorTest(true);
-}
-
 void movie_init()
 {
 	if(!ff8)
@@ -152,8 +143,6 @@ void draw_current_frame()
 {
 	if (trace_all || trace_movies) trace("draw_current_frame\n");
 
-	addMovieBlackBars();
-
 	ffmpeg_draw_current_frame();
 
 	// FF8 on Steam sometimes forgets to release the movie objects, so we do ensure it's done anyway
@@ -265,8 +254,6 @@ void ff8_stop_movie()
 void ff8_update_movie_sample()
 {
 	if(trace_all || trace_movies) trace("update_movie_sample\n");
-
-	addMovieBlackBars();
 
 	if(!ffmpeg_update_movie_sample())
 	{
