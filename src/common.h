@@ -107,7 +107,6 @@ struct game_mode
 	uint driver_mode;
 	uint trace;
 	uint main_loop;
-	uint framerate;
 };
 
 gfx_init common_init;

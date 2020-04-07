@@ -63,13 +63,6 @@ void ff7_set_main_loop(uint driver_mode, uint main_loop)
 	for(i = 0; i < num_modes; i++) if(ff7_modes[i].driver_mode == driver_mode) ff7_modes[i].main_loop = main_loop;
 }
 
-void ff7_set_mode_framerate(uint driver_mode, uint framerate)
-{
-	uint i;
-
-	for(i = 0; i < num_modes; i++) if(ff7_modes[i].driver_mode == driver_mode) ff7_modes[i].framerate = framerate;
-}
-
 void ff7_find_externals()
 {
 	uint main_loop = ff7_externals.cdcheck + 0xF3;
@@ -308,20 +301,6 @@ void ff7_find_externals()
 
 	ff7_externals.cleanup_game = get_absolute_value(ff7_externals.init_stuff, 0x350);
 	ff7_externals.cleanup_midi = get_relative_call(ff7_externals.cleanup_game, 0x72);
-
-	ff7_set_mode_framerate(MODE_FIELD, field_framerate);
-	ff7_set_mode_framerate(MODE_BATTLE, battle_framerate);
-	ff7_set_mode_framerate(MODE_WORLDMAP, worldmap_framerate);
-	ff7_set_mode_framerate(MODE_MENU, menu_framerate);
-	ff7_set_mode_framerate(MODE_CHOCOBO, chocobo_framerate);
-	ff7_set_mode_framerate(MODE_CONDOR, condor_framerate);
-	ff7_set_mode_framerate(MODE_SUBMARINE, submarine_framerate);
-	ff7_set_mode_framerate(MODE_GAMEOVER, gameover_framerate);
-	ff7_set_mode_framerate(MODE_CREDITS, credits_framerate);
-	ff7_set_mode_framerate(MODE_SNOWBOARD, snowboard_framerate);
-	ff7_set_mode_framerate(MODE_HIGHWAY, highway_framerate);
-	ff7_set_mode_framerate(MODE_COASTER, coaster_framerate);
-	ff7_set_mode_framerate(MODE_SWIRL, battleswirl_framerate);
 }
 
 void ff7_data()

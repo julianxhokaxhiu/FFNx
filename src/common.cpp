@@ -320,7 +320,6 @@ void common_flip(struct game_obj *game_object)
 	if (trace_all) trace("dll_gfx: flip (%i)\n", frame_counter);
 
 	VOBJ(game_obj, game_object, game_object);
-	static time_t last_gametime;
 	static struct timeb last_frame;
 	static uint fps_counters[3] = {0, 0, 0};
 	time_t last_seconds = last_frame.time;
@@ -450,19 +449,6 @@ void common_flip(struct game_obj *game_object)
 
 	current_state.texture_filter = true;
 	current_state.fb_texture = false;
-
-	// new framelimiter, not based on vsync
-	if(!ff8 && use_new_timer)
-	{
-		time_t gametime;
-		double framerate = mode->framerate;
-
-		if(framerate == 0.0) framerate = 60.0;
-
-		do qpc_get_time(&gametime); while(gametime > last_gametime && gametime - last_gametime < VREF(game_object, countspersecond * (1.0 / framerate)));
-
-		last_gametime = gametime;
-	}
 
 	if(!fullscreen) ShowCursor(true);
 

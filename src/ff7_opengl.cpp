@@ -122,16 +122,6 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	replace_function(ff7_externals.lgp_get_filesize, lgp_get_filesize);
 	replace_function(ff7_externals.lgp_seek_file, lgp_seek_file);
 
-	if(use_new_timer)
-	{
-		// replace rdtsc timing
-		replace_function(common_externals.get_time, qpc_get_time);
-
-		// override the timer calibration
-		QueryPerformanceFrequency((LARGE_INTEGER *)&game_object->_countspersecond);
-		game_object->countspersecond = (double)game_object->_countspersecond;
-	}
-
 	replace_function(ff7_externals.magic_thread_start, magic_thread_start);
 
 	replace_function(ff7_externals.kernel2_reset_counters, kernel2_reset_counters);

@@ -50,20 +50,6 @@ cfg_bool_t preserve_aspect = cfg_bool_t(true);
 cfg_bool_t fullscreen = cfg_bool_t(false);
 long refresh_rate = 0;
 cfg_bool_t enable_vsync = cfg_bool_t(true);
-long field_framerate = 60;
-long battle_framerate = 60;
-long worldmap_framerate = 60;
-long menu_framerate = 60;
-long chocobo_framerate = 60;
-long condor_framerate = 60;
-long submarine_framerate = 60;
-long gameover_framerate = 60;
-long credits_framerate = 60;
-long snowboard_framerate = 60;
-long highway_framerate = 30;
-long coaster_framerate = 60;
-long battleswirl_framerate = 60;
-cfg_bool_t use_new_timer = cfg_bool_t(true);
 cfg_bool_t linear_filter = cfg_bool_t(false);
 cfg_bool_t transparent_dialogs = cfg_bool_t(false);
 cfg_bool_t mdef_fix = cfg_bool_t(true);
@@ -107,20 +93,6 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("fullscreen", &fullscreen),
 		CFG_SIMPLE_INT("refresh_rate", &refresh_rate),
 		CFG_SIMPLE_BOOL("enable_vsync", &enable_vsync),
-		CFG_SIMPLE_INT("field_framerate", &field_framerate),
-		CFG_SIMPLE_INT("battle_framerate", &battle_framerate),
-		CFG_SIMPLE_INT("worldmap_framerate", &worldmap_framerate),
-		CFG_SIMPLE_INT("menu_framerate", &menu_framerate),
-		CFG_SIMPLE_INT("chocobo_framerate", &chocobo_framerate),
-		CFG_SIMPLE_INT("condor_framerate", &condor_framerate),
-		CFG_SIMPLE_INT("submarine_framerate", &submarine_framerate),
-		CFG_SIMPLE_INT("gameover_framerate", &gameover_framerate),
-		CFG_SIMPLE_INT("credits_framerate", &credits_framerate),
-		CFG_SIMPLE_INT("snowboard_framerate", &snowboard_framerate),
-		CFG_SIMPLE_INT("highway_framerate", &highway_framerate),
-		CFG_SIMPLE_INT("coaster_framerate", &coaster_framerate),
-		CFG_SIMPLE_INT("battleswirl_framerate", &battleswirl_framerate),
-		CFG_SIMPLE_BOOL("use_new_timer", &use_new_timer),
 		CFG_SIMPLE_BOOL("linear_filter", &linear_filter),
 		CFG_SIMPLE_BOOL("transparent_dialogs", &transparent_dialogs),
 		CFG_SIMPLE_BOOL("mdef_fix", &mdef_fix),
