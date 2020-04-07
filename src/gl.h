@@ -81,7 +81,7 @@ extern uint current_program;
 
 extern int max_texture_size;
 
-void gl_draw_movie_quad();
+void gl_draw_movie_quad(uint width, uint height);
 void gl_save_state(struct driver_state *dest);
 void gl_load_state(struct driver_state *src);
 uint gl_defer_draw(uint primitivetype, uint vertextype, struct nvertex *vertices, uint vertexcount, word *indices, uint count, uint clip, uint mipmap);

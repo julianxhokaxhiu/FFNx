@@ -356,7 +356,7 @@ void draw_bgra_frame(uint buffer_index)
 {
 	newRenderer.isMovie(true);
 	newRenderer.useTexture(video_buffer[buffer_index].bgra_texture);
-	gl_draw_movie_quad();
+	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isMovie(false);
 }
 
@@ -400,7 +400,7 @@ void draw_yuv_frame(uint buffer_index, bool full_range)
 	newRenderer.isMovie(true);
 	newRenderer.isYUV(true);
 	newRenderer.isFullRange(full_range);
-	gl_draw_movie_quad();
+	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isFullRange(false);
 	newRenderer.isYUV(false);
 	newRenderer.isMovie(false);

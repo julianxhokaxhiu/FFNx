@@ -324,7 +324,7 @@ uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 
 	newRenderer.isMovie(true);
 
-	gl_draw_movie_quad();
+	gl_draw_movie_quad(game_width, game_height);
 
 	newRenderer.isMovie(false);
 

@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <math.h>
+#include <algorithm>
 
 #include "../renderer.h"
 
@@ -49,9 +50,11 @@ int max_texture_size;
 extern uint nodefer;
 
 // draw a fullscreen quad, respect aspect ratio of source image
-void gl_draw_movie_quad_common()
+void gl_draw_movie_quad_common(uint width, uint height)
 {
 	struct game_obj *game_object = common_externals.get_game_object();
+	float ratio = game_width / (float)width;
+
 	/*  y0    y2
 	 x0 +-----+ x2
 		|    /|
@@ -70,11 +73,11 @@ void gl_draw_movie_quad_common()
 	float v0 = 0.0f;
 	// 1
 	float x1 = x0;
-	float y1 = game_height;
+	float y1 = ratio * height;
 	float u1 = u0;
 	float v1 = 1.0f;
 	// 2
-	float x2 = game_width;
+	float x2 = ratio * width;
 	float y2 = y0;
 	float u2 = 1.0f;
 	float v2 = v0;
@@ -111,13 +114,13 @@ void gl_draw_movie_quad_common()
 }
 
 // draw movie frame
-void gl_draw_movie_quad()
+void gl_draw_movie_quad(uint width, uint height)
 {
 	struct driver_state saved_state;
 
 	gl_save_state(&saved_state);
 
-	gl_draw_movie_quad_common();
+	gl_draw_movie_quad_common(width, height);
 
 	gl_load_state(&saved_state);
 }
