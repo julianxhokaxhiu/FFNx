@@ -20,6 +20,7 @@
  * ff7/file.c - replacement routines for FF7's file system functions
  */
 
+#include <filesystem>
 #include <sys/stat.h>
 
 #include "../types.h"
@@ -365,22 +366,36 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 			else
 			{
 				// Search for the last '\' character and get a pointer to the next char
-				const char* pos = strrchr(filename, 92) + 1;
+				const char* pos = strrchr(filename, 92);
+
+				if (pos != NULL) pos += 1;
 
 				get_data_lang_path(_filename);
-				PathAppendA(_filename, pos);
 
-				if (_access(_filename, 0) == -1)
+				if (pos != NULL) PathAppendA(_filename, pos);
+
+				if (_access(_filename, 0) == -1 || pos == NULL)
 				{
-					bool isSavegame = strstr(_filename, ".ff7") != NULL;
+					bool isSavegame = strstr(filename, ".ff7") != NULL;
+					bool isCacheFile = strstr(filename, ".P") != NULL;
 
 					// Do one more try in the user data path
 					get_userdata_path(_filename, sizeof(_filename), isSavegame);
-					if (isSavegame) pos = strrchr(filename, 47) + 1;
-					PathAppendA(_filename, pos);
 
-					if (_access(_filename, 0) == -1)
-						goto error;
+					if (isCacheFile)
+					{
+						PathAppendA(_filename, "cache");
+						std::filesystem::create_directories(_filename);
+						PathAppendA(_filename, filename);
+					}
+					else
+					{
+						if (isSavegame) pos = strrchr(filename, 47) + 1;
+						PathAppendA(_filename, pos);
+
+						if (_access(_filename, 0) == -1)
+							goto error;
+					}
 				}
 			}
 		}
