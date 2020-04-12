@@ -148,6 +148,36 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x16D, 5);
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x190, 5);
 
+	// vertically center fields
+	switch (version)
+	{
+	case VERSION_FF7_102_US:
+		patch_code_byte(0x60D86C, 0x10);
+		patch_code_byte(0x60D9CB, 0x08);
+		patch_code_byte(0x640C78, 0xE8);
+		patch_code_byte(0x640FD5, 0xE8);
+		patch_code_byte(0x641398, 0xE8);
+		patch_code_byte(0x60D8A5, 0xF0);
+		break;
+	case VERSION_FF7_102_FR:
+	case VERSION_FF7_102_SP:
+		patch_code_byte(0x60D80C, 0x10);
+		patch_code_byte(0x60D96B, 0x08);
+		patch_code_byte(0x640C18, 0xE8);
+		patch_code_byte(0x64082C, 0xE8);
+		patch_code_byte(0x641338, 0xE8);
+		patch_code_byte(0x60D845, 0xF0);
+		break;
+	case VERSION_FF7_102_DE:
+		patch_code_byte(0x60D7FC, 0x10);
+		patch_code_byte(0x60D95B, 0x08);
+		patch_code_byte(0x640C48, 0xE8);
+		patch_code_byte(0x640FA5, 0xE8);
+		patch_code_byte(0x641368, 0xE8);
+		patch_code_byte(0x60D835, 0xF0);
+		break;
+	}
+
 	ret = (ff7_gfx_driver*)external_calloc(1, sizeof(*ret));
 
 	ret->init = common_init;

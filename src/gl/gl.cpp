@@ -56,7 +56,7 @@ void gl_draw_movie_quad_common(uint width, uint height)
 	float ratio = game_width / (float)width;
 	float movieHeight = ratio * height;
 	float movieWidth = ratio * width;
-	float movieOffsetY = ff8 ? (game_height - movieHeight) / 2.0f : 0.0f;
+	float movieOffsetY = (game_height - movieHeight) / 2.0f;
 
 	/*  y0    y2
 	 x0 +-----+ x2

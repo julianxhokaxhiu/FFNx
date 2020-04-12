@@ -105,7 +105,7 @@ void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc
 void field_layer2_pick_tiles(short x_offset, short y_offset)
 {
 	int x_add = (320 - x_offset) * 2;
-	int y_add = (224 - y_offset) * 2;
+	int y_add = (232 - y_offset) * 2;
 	uint i;
 	struct field_tile *layer2_tiles = *ff7_externals.field_layer2_tiles;
 
