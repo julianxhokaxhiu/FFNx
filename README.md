@@ -16,14 +16,11 @@ Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with nativ
 ## Introduction
 Welcome to FFNx project. This is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
-Some of the improvements that you can find only on FFNx are:
-- [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format!
-- PNG Texture support as fallback.
-- Inspect game internals using [RenderDoc](https://renderdoc.org/)!
+Some of the improvements that you can find on FFNx are:
 - **Native** Steam support! No Game converter required.
+- **Native** Vertical centering for Fields and Movies on Final Fantasy VII. No mods required.
 - One single .dll file to be copied
 - Support for 7h 1.x/2.x
-- Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L80)
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
 - In-Game music OGG files playback WITH LOOP support!
 - Four different Rendering Backends:
@@ -31,6 +28,12 @@ Some of the improvements that you can find only on FFNx are:
   - OpenGL
   - DirectX 11
   - DirectX 12
+
+## Modding
+In order to enhance the modding experience, FFNx does also provide:
+- Game rendering inspection through [RenderDoc](https://renderdoc.org/)!
+- [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
+- Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L80)
 
 ## Tech Stack
 If you're curious to know it, FFNx is made with:
