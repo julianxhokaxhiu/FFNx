@@ -95,12 +95,6 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 5. Replace all files when asked.
 6. Enjoy!
 
-## Tweak the configuration
-If you want a more advanced experience, for example using another backend renderer ( Vulkan instead of OpenGL, or DirectX 11 ) feel free to change the driver configuration file [FFNx.cfg](misc/FFNx.cfg).
-
-## Inspect logs
-If you want to check what is going on behind the scene, or you may happen to have a crash, feel free to check the `FFNx.log` file.
-
 ## How to install on 7h 2.x
 > **WARNING:** This method is NOT SUPPORTED officially by 7h team. Please use at your own risk. DO NOT approach 7h team if something is not working properly.
 
@@ -111,6 +105,12 @@ If you want to check what is going on behind the scene, or you may happen to hav
 5) Rename `FFNx.dll` to `7H_GameDriver.dll`
 
 Click Play and enjoy!
+
+## Tweak the configuration
+If you want a more advanced experience, for example using another backend renderer ( Vulkan instead of OpenGL, or DirectX 11 ) feel free to change the driver configuration file [FFNx.cfg](misc/FFNx.cfg).
+
+## Inspect logs
+If you want to check what is going on behind the scene, or you may happen to have a crash, feel free to check the `FFNx.log` file.
 
 ## Join us on Discord
 If you want to join our community, you can find us on Discord: https://discord.gg/N6M6pKS
