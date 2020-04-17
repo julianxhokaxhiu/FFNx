@@ -1,11 +1,10 @@
 include(ExternalProject)
 
-set(LIBCONFUSE_VERSION "3.2.4")
+set(LIBCONFUSE_VERSION "3.2.3")
 
 ExternalProject_Add(
     libconfuse
     URL                 "https://github.com/julianxhokaxhiu/libconfuse/releases/download/v${LIBCONFUSE_VERSION}/confuse-${LIBCONFUSE_VERSION}.0.zip"
-    URL_HASH			"SHA256=799d0e6cda04d0f21000af739c78429692dd4117cf531a4792d29e2d9f354356"
 	INSTALL_DIR			"${CMAKE_BINARY_DIR}/vendor"
 	PATCH_COMMAND		"${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third_party/libconfuse/CMakeLists.txt.in" "<SOURCE_DIR>/CMakeLists.txt"
 	CMAKE_ARGS
