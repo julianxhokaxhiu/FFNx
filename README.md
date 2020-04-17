@@ -44,7 +44,7 @@ If you're curious to know it, FFNx is made with:
 - [BIMG](https://github.com/bkaradzic/bimg) ( for custom textures )
 - [FFMpeg](https://www.ffmpeg.org/) 4.2.2 with H/W Accelleration support
 - [VGMStream](https://github.com/julianxhokaxhiu/vgmstream) using FFMpeg as backend, [with loop support for Ogg files](https://github.com/julianxhokaxhiu/vgmstream/commit/249afed15176ba254c73055e8c5124b7e7cd4b95)
-- [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) 3.2.4 ( for the configuration management )
+- [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) 3.2.3 ( for the configuration management )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
