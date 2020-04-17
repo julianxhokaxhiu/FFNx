@@ -43,7 +43,7 @@ If you're curious to know it, FFNx is made with:
 - [BGFX](https://github.com/bkaradzic/bgfx) ( as backend renderer )
 - [BIMG](https://github.com/bkaradzic/bimg) ( for custom textures )
 - [FFMpeg](https://www.ffmpeg.org/) 4.2.2 with H/W Accelleration support
-- [VGMStream](https://github.com/julianxhokaxhiu/vgmstream) using FFMpeg as backend, [with loop support for Ogg files](https://github.com/julianxhokaxhiu/vgmstream/commit/a4155c817f709a7d75eec6b83973d2c6efae12ac)
+- [VGMStream](https://github.com/julianxhokaxhiu/vgmstream) using FFMpeg as backend, [with loop support for Ogg files](https://github.com/julianxhokaxhiu/vgmstream/commit/249afed15176ba254c73055e8c5124b7e7cd4b95)
 - [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) 3.2.4 ( for the configuration management )
 
 ## Canary vs Latest Release
