@@ -48,6 +48,7 @@ ff7_externals.chocobo_fix =                   0x70B4B2;
 ff7_externals.midi_fix =                      0x6E03C2;
 ff7_externals.snowboard_fix =         (void *)0x94BA48;
 ff7_externals.cdcheck =                       0x409003;
+ff7_externals.get_inserted_cd_sub =           0x404A8D;
 ff7_externals.sub_665D9A = (void (*)(matrix*, nvertex*, indexed_primitive*, p_hundred*, struc_186*, ff7_game_obj*))0x665D3A;
 ff7_externals.sub_671742 = (void (*)(uint, p_hundred*, struc_186*))0x6716E2;
 ff7_externals.sub_6B27A9 = (void (*)(matrix*, indexed_primitive*, ff7_polygon_set*, p_hundred*, p_group*, void*, ff7_game_obj*))0x6B2749;

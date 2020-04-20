@@ -1782,13 +1782,35 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 
 // cd check
 uint ff7_get_inserted_cd(void) {
-	int requiredCD = -1;
+	int ret = 1;
+	int requiredCD;
+	int insertedCD;
 
-	requiredCD = *(uint8_t*)(0xDC0BDC);
-	if (requiredCD == 0)
-		requiredCD = 1;
+	switch (version)
+	{
+	case VERSION_FF7_102_US:
+		requiredCD = *(uint8_t*)(0xDC0BDC);
+		insertedCD = *(DWORD*)(0x9A0538);
+		break;
+	case VERSION_FF7_102_FR:
+		requiredCD = *(uint8_t*)(0xF3A91C);
+		insertedCD = *(DWORD*)(0x9A2328);
+		break;
+	case VERSION_FF7_102_DE:
+		requiredCD = *(uint8_t*)(0xF3990C);
+		insertedCD = *(DWORD*)(0x9A12F8);
+		break;
+	case VERSION_FF7_102_SP:
+		requiredCD = *(uint8_t*)(0xF3B3EC);
+		insertedCD = *(DWORD*)(0x9A2D88);
+		break;
+	}
 
-	return requiredCD;
+	if (requiredCD > 0 && requiredCD <= 3) ret = requiredCD;
+
+	insertedCD = ret;
+
+	return ret;
 }
 
 MCIERROR __stdcall dotemuMciSendCommandA(MCIDEVICEID mciId, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
@@ -1827,39 +1849,6 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	void *ret;
 	VOBJ(game_obj, game_object, game_object);
 	DEVMODE dmScreenSettings;
-
-	if(version == VERSION_FF7_102_US)
-	{
-		#include "externals_102_us.h"
-	}
-	else if(version == VERSION_FF7_102_FR)
-	{
-		#include "externals_102_fr.h"
-	}
-	else if(version == VERSION_FF7_102_DE)
-	{
-		#include "externals_102_de.h"
-	}
-	else if(version == VERSION_FF7_102_SP)
-	{
-		#include "externals_102_sp.h"
-	}
-
-	if(!version)
-	{
-		error("no compatible version found\n");
-		MessageBoxA(hwnd, "Your ff7.exe or ff8.exe is incompatible with this driver and will exit after this message.\n"
-			"Possible reasons for this error:\n"
-			" - You have the faulty \"1.4 XP Patch\" for FF7.\n"
-			" - You have FF7 retail 1.00 version (you need the 1.02 patch).\n"
-			" - You have an unsupported translation of FF7. (US English, French, German and Spanish versions are currently supported)\n"
-			" - You have FF8 retail 1.0 version (you need the 1.2 patch).\n"
-			" - You have FF8 1.2 from Eidos (you need the newer 1.2 patch from Squaresoft).\n"
-			" - You have an unsupported translation of FF8. (US English, French, German, Spanish and Italian versions are currently supported)\n"
-			" - You have a conflicting patch applied.\n\n"
-			, "Error", 0);
-		exit(1);
-	}
 
 	// try to prevent screensavers from going off
 	SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
@@ -2025,7 +2014,42 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		info("FFNx driver version " VERSION PRERELEASE_WARNING "\n");
 		version = get_version();
 
-		if (version >= VERSION_FF8_12_US) ff8 = true;
+		if (version >= VERSION_FF8_12_US)
+		{
+			ff8 = true;
+		}
+		else if (version == VERSION_FF7_102_US)
+		{
+#include "externals_102_us.h"
+		}
+		else if (version == VERSION_FF7_102_FR)
+		{
+#include "externals_102_fr.h"
+		}
+		else if (version == VERSION_FF7_102_DE)
+		{
+#include "externals_102_de.h"
+		}
+		else if (version == VERSION_FF7_102_SP)
+		{
+#include "externals_102_sp.h"
+		}
+
+		if (!version)
+		{
+			error("no compatible version found\n");
+			MessageBoxA(hwnd, "Your ff7.exe or ff8.exe is incompatible with this driver and will exit after this message.\n"
+				"Possible reasons for this error:\n"
+				" - You have the faulty \"1.4 XP Patch\" for FF7.\n"
+				" - You have FF7 retail 1.00 version (you need the 1.02 patch).\n"
+				" - You have an unsupported translation of FF7. (US English, French, German and Spanish versions are currently supported)\n"
+				" - You have FF8 retail 1.0 version (you need the 1.2 patch).\n"
+				" - You have FF8 1.2 from Eidos (you need the newer 1.2 patch from Squaresoft).\n"
+				" - You have an unsupported translation of FF8. (US English, French, German, Spanish and Italian versions are currently supported)\n"
+				" - You have a conflicting patch applied.\n\n"
+				, "Error", 0);
+			exit(1);
+		}
 
 		read_cfg();
 
@@ -2045,7 +2069,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			)
 		)
 		{
-			replace_function(0x404A7D, ff7_get_inserted_cd);
+			replace_function(ff7_externals.get_inserted_cd_sub, ff7_get_inserted_cd);
 
 			if (strstr(parentName, "ff7_en.exe") != NULL ||
 				strstr(parentName, "ff7_de.exe") != NULL ||
