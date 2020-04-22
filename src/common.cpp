@@ -1726,7 +1726,7 @@ void get_data_lang_path(PCHAR buffer)
 		break;
 	case VERSION_FF7_102_SP:
 	case VERSION_FF8_12_SP_NV:
-		strcat(buffer, "sp");
+		strcat(buffer, "es");
 		break;
 	case VERSION_FF8_12_IT_NV:
 		strcat(buffer, "it");
@@ -2065,7 +2065,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				strstr(parentName, "ff7_en.exe") != NULL ||
 				strstr(parentName, "ff7_de.exe") != NULL ||
 				strstr(parentName, "ff7_fr.exe") != NULL ||
-				strstr(parentName, "ff7_sp.exe") != NULL
+				strstr(parentName, "ff7_es.exe") != NULL
 			)
 		)
 		{
@@ -2074,7 +2074,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			if (strstr(parentName, "ff7_en.exe") != NULL ||
 				strstr(parentName, "ff7_de.exe") != NULL ||
 				strstr(parentName, "ff7_fr.exe") != NULL ||
-				strstr(parentName, "ff7_sp.exe") != NULL)
+				strstr(parentName, "ff7_es.exe") != NULL)
 			{
 				steam_edition = true;
 
