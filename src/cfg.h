@@ -31,6 +31,7 @@
 
 extern char *mod_path;
 extern cfg_bool_t use_external_movie;
+extern char* external_movie_ext;
 extern cfg_bool_t use_external_music;
 extern cfg_bool_t use_external_ff7music;
 extern char* external_music_path;

@@ -27,6 +27,7 @@
 // configuration variables with their default values
 char *mod_path;
 cfg_bool_t use_external_movie = cfg_bool_t(true);
+char* external_movie_ext;
 cfg_bool_t use_external_music = cfg_bool_t(true);
 cfg_bool_t use_external_ff7music = cfg_bool_t(false);
 char* external_music_path;
@@ -72,6 +73,7 @@ char* steam_game_userdata = nullptr;
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
 		CFG_SIMPLE_BOOL("use_external_movie", &use_external_movie),
+		CFG_SIMPLE_STR("external_movie_ext", &external_movie_ext),
 		CFG_SIMPLE_BOOL("use_external_music", &use_external_music),
 		CFG_SIMPLE_BOOL("use_external_ff7music", &use_external_ff7music),
 		CFG_SIMPLE_STR("external_music_path", &external_music_path),

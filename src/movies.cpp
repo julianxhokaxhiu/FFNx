@@ -57,6 +57,10 @@ void movie_init()
 
 uint ff7_prepare_movie(char *name, uint loop, struct dddevice **dddevice, uint dd2interface)
 {
+	char dirname[256];
+	char filename[128];
+	char fmvName[512];
+
 	if(trace_all || trace_movies) trace("prepare_movie %s\n", name);
 
 	ff7_externals.movie_object->loop = loop;
@@ -68,7 +72,11 @@ uint ff7_prepare_movie(char *name, uint loop, struct dddevice **dddevice, uint d
 	ff7_externals.movie_object->global_movie_flag = 0;
 	ff7_externals.movie_object->field_E0 = !((struct ff7_game_obj *)common_externals.get_game_object())->field_968;
 
-	ffmpeg_prepare_movie(name);
+	_splitpath(name, NULL, dirname, filename, NULL);
+
+	_snprintf(fmvName, sizeof(fmvName), "%s/%s.%s", dirname, filename, external_movie_ext);
+
+	ffmpeg_prepare_movie(fmvName);
 
 	ff7_externals.movie_object->global_movie_flag = 1;
 
@@ -176,7 +184,7 @@ void ff8_prepare_movie(uint disc, uint movie)
 		disc = ff8_currentdisk - 1;
 	}
 
-	_snprintf(fmvName, sizeof(fmvName), "%s/%s/movies/disc%02i_%02ih.avi", basedir, dataPath, disc, movie);
+	_snprintf(fmvName, sizeof(fmvName), "%s/%s/movies/disc%02i_%02ih.%s", basedir, dataPath, disc, movie, external_movie_ext);
 	_snprintf(camName, sizeof(camName), "%s/data/movies/disc%02i_%02i.cam", basedir, disc, movie);
 
 	if(trace_all || trace_movies) trace("prepare_movie %s\n", fmvName);
