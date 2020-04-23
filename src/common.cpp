@@ -2081,7 +2081,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				steam_edition = true;
 
 				// Steam edition has music files under a different path by default
-				external_music_path = "data/music_ogg";
+				if (strstr(basedir, "steamapps") != NULL) external_music_path = "data/music_ogg";
 			}
 		}
 		else if (ff8 &&
