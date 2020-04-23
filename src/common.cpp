@@ -2065,7 +2065,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				strstr(parentName, "ff7_en.exe") != NULL ||
 				strstr(parentName, "ff7_de.exe") != NULL ||
 				strstr(parentName, "ff7_fr.exe") != NULL ||
-				strstr(parentName, "ff7_es.exe") != NULL
+				strstr(parentName, "ff7_es.exe") != NULL ||
+				strstr(parentName, "ff7_ja.exe") != NULL
 			)
 		)
 		{
@@ -2074,7 +2075,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			if (strstr(parentName, "ff7_en.exe") != NULL ||
 				strstr(parentName, "ff7_de.exe") != NULL ||
 				strstr(parentName, "ff7_fr.exe") != NULL ||
-				strstr(parentName, "ff7_es.exe") != NULL)
+				strstr(parentName, "ff7_es.exe") != NULL ||
+				strstr(parentName, "ff7_ja.exe") != NULL)
 			{
 				steam_edition = true;
 
