@@ -48,6 +48,9 @@ uint ff8_currentdisk = 0;
 // global FF7/FF8 flag, check if is steam edition
 uint steam_edition = false;
 
+// global FF7 flag, check if is japanese edition ( detected as US )
+uint japanese_edition = false;
+
 // window dimensions requested by the game, normally 640x480
 uint game_width;
 uint game_height;
@@ -1714,7 +1717,10 @@ void get_data_lang_path(PCHAR buffer)
 	{
 	case VERSION_FF7_102_US:
 	case VERSION_FF8_12_US_NV:
-		strcat(buffer, "en");
+		if (japanese_edition)
+			strcat(buffer, "ja");
+		else
+			strcat(buffer, "en");
 		break;
 	case VERSION_FF7_102_FR:
 	case VERSION_FF8_12_FR_NV:
@@ -2079,6 +2085,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				strstr(parentName, "ff7_ja.exe") != NULL)
 			{
 				steam_edition = true;
+
+				japanese_edition = strstr(parentName, "ff7_ja.exe") != NULL;
 
 				// Steam edition has music files under a different path by default
 				if (strstr(basedir, "steamapps") != NULL) external_music_path = "data/music_ogg";
