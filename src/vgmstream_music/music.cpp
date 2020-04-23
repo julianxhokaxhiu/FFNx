@@ -102,7 +102,7 @@ void load_song(char *midi, uint id)
 		return;
 	}
 
-	sprintf(tmp, "%s/%s/%s.ogg", basedir, external_music_path, midi);
+	sprintf(tmp, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
 
 	if(!vgmstream[id])
 	{

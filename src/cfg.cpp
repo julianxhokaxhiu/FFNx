@@ -29,6 +29,7 @@ char *mod_path;
 cfg_bool_t use_external_movie = cfg_bool_t(true);
 cfg_bool_t use_external_music = cfg_bool_t(true);
 char* external_music_path;
+char* external_music_ext;
 cfg_bool_t save_textures = cfg_bool_t(false);
 cfg_bool_t trace_all = cfg_bool_t(false);
 cfg_bool_t trace_movies = cfg_bool_t(false);
@@ -72,6 +73,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("use_external_movie", &use_external_movie),
 		CFG_SIMPLE_BOOL("use_external_music", &use_external_music),
 		CFG_SIMPLE_STR("external_music_path", &external_music_path),
+		CFG_SIMPLE_STR("external_music_ext", &external_music_ext),
 		CFG_SIMPLE_BOOL("save_textures", &save_textures),
 		CFG_SIMPLE_BOOL("trace_all", &trace_all),
 		CFG_SIMPLE_BOOL("trace_movies", &trace_movies),

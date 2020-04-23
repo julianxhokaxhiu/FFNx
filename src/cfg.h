@@ -33,6 +33,7 @@ extern char *mod_path;
 extern cfg_bool_t use_external_movie;
 extern cfg_bool_t use_external_music;
 extern char* external_music_path;
+extern char* external_music_ext;
 extern cfg_bool_t save_textures;
 extern cfg_bool_t trace_all;
 extern cfg_bool_t trace_movies;
