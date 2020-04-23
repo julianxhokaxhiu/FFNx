@@ -28,7 +28,8 @@
 #include "cfg.h"
 #include "log.h"
 #include "patch.h"
-#include "vgmstream_music/music.h"
+#include "vgmstream/music.h"
+#include "ff7music/music.h"
 
 void music_init()
 {
@@ -46,7 +47,7 @@ void music_init()
 		replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
 		replace_function(common_externals.set_midi_tempo, set_midi_tempo);
 
-		vgm_music_init();
+		if (!use_external_ff7music) vgm_music_init();
 	}
 }
 
@@ -63,55 +64,132 @@ uint midi_init(uint unknown)
 
 void play_midi(uint midi)
 {
-	vgm_play_music(common_externals.get_midi_name(midi), midi);
+	if (use_external_ff7music)
+	{
+		ff7music_play_music(common_externals.get_midi_name(midi), midi);
+	}
+	else
+	{
+		vgm_play_music(common_externals.get_midi_name(midi), midi);
+	}
 }
 
 void cross_fade_midi(uint midi, uint time)
 {
-	vgm_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
+	if (use_external_ff7music)
+	{
+		ff7music_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
+	}
+	else
+	{
+		vgm_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
+	}
 }
 
 void pause_midi()
 {
-	vgm_pause_music();
+	if (use_external_ff7music)
+	{
+		ff7music_pause_music();
+	}
+	else
+	{
+		vgm_pause_music();
+	}
 }
 
 void restart_midi()
 {
-	vgm_resume_music();
+	if (use_external_ff7music)
+	{
+		ff7music_resume_music();
+	}
+	else
+	{
+		vgm_resume_music();
+	}
 }
 
 void stop_midi()
 {
-	vgm_stop_music();
+	if (use_external_ff7music)
+	{
+		ff7music_stop_music();
+	}
+	else
+	{
+		vgm_stop_music();
+	}
 }
 
 uint midi_status()
 {
-	return vgm_music_status();
+	if (use_external_ff7music)
+	{
+		ff7music_music_status();
+	}
+	else
+	{
+		return vgm_music_status();
+	}
 }
 
 void set_master_midi_volume(uint volume)
 {
-	vgm_set_master_music_volume(volume);
+	if (use_external_ff7music)
+	{
+		ff7music_set_master_music_volume(volume);
+	}
+	else
+	{
+		vgm_set_master_music_volume(volume);
+	}
 }
 
 void set_midi_volume(uint volume)
 {
-	vgm_set_music_volume(volume);
+	if (use_external_ff7music)
+	{
+		ff7music_set_music_volume(volume);
+	}
+	else
+	{
+		vgm_set_music_volume(volume);
+	}
 }
 
 void set_midi_volume_trans(uint volume, uint step)
 {
-	vgm_set_music_volume_trans(volume, step);
+	if (use_external_ff7music)
+	{
+		ff7music_set_music_volume_trans(volume, step);
+	}
+	else
+	{
+		vgm_set_music_volume_trans(volume, step);
+	}
 }
 
 void set_midi_tempo(unsigned char tempo)
 {
-	vgm_set_music_tempo(tempo);
+	if (use_external_ff7music)
+	{
+		ff7music_set_music_tempo(tempo);
+	}
+	else
+	{
+		vgm_set_music_tempo(tempo);
+	}
 }
 
 void music_cleanup()
 {
-	vgm_music_cleanup();
+	if (use_external_ff7music)
+	{
+		ff7music_music_cleanup();
+	}
+	else
+	{
+		vgm_music_cleanup();
+	}
 }
