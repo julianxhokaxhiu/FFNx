@@ -72,5 +72,7 @@ extern char *renderer_backend;
 extern cfg_bool_t renderer_debug;
 extern cfg_bool_t create_crash_dump;
 extern char* steam_game_userdata;
+extern cfg_bool_t ff7_center_fields;
+extern cfg_bool_t ff7_battle_fullscreen;
 
 void read_cfg();

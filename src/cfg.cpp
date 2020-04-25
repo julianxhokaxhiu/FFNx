@@ -68,6 +68,8 @@ char *renderer_backend;
 cfg_bool_t renderer_debug = cfg_bool_t(false);
 cfg_bool_t create_crash_dump = cfg_bool_t(false);
 char* steam_game_userdata = nullptr;
+cfg_bool_t ff7_center_fields = cfg_bool_t(true);
+cfg_bool_t ff7_battle_fullscreen = cfg_bool_t(true);
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -113,6 +115,8 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("renderer_debug", &renderer_debug),
 		CFG_SIMPLE_BOOL("create_crash_dump", &create_crash_dump),
 		CFG_SIMPLE_STR("steam_game_userdata", &steam_game_userdata),
+		CFG_SIMPLE_BOOL("ff7_center_fields", &ff7_center_fields),
+		CFG_SIMPLE_BOOL("ff7_battle_fullscreen", &ff7_battle_fullscreen),
 
 		CFG_END()
 };
