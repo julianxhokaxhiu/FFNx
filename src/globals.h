@@ -28,6 +28,10 @@
 #include "ff7.h"
 #include "ff8.h"
 
+#define FFNX_MUSIC_NONE 0
+#define FFNX_MUSIC_VGMSTREAM 1
+#define FFNX_MUSIC_FF7MUSIC 2
+
 extern uint version;
 extern uint steam_edition;
 extern uint japanese_edition;
