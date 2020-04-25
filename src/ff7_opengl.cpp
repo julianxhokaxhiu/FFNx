@@ -164,7 +164,7 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 		patch_code_byte(0x60D80C, 0x10);
 		patch_code_byte(0x60D96B, 0x08);
 		patch_code_byte(0x640C18, 0xE8);
-		patch_code_byte(0x64082C, 0xE8);
+		patch_code_byte(0x640F75, 0xE8);
 		patch_code_byte(0x641338, 0xE8);
 		patch_code_byte(0x60D845, 0xF0);
 		break;
