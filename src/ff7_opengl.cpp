@@ -190,8 +190,8 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 		case VERSION_FF7_102_US:
 			patch_code_byte(0x41B51A, 0x70);
 			patch_code_byte(0x41B4E8, 0x4C);
-			patch_code_byte(0x6CF639, 0xF0);
-			patch_code_byte(0x6CF6CB, 0xF0);
+			patch_code_byte(0x6CF639, 0xF4);
+			patch_code_byte(0x6CF6CB, 0xF4);
 			patch_code_byte(0x6DD49A, 0x80);
 			patch_code_byte(0x6DD44D, 0x80);
 			patch_code_byte(0x6DD0BE, 0x77);
