@@ -20,14 +20,7 @@
  * crashdump.c - crash dump & emergency save functionality
  */
 
-#include <windows.h>
-#include <stdio.h>
-#include <dbghelp.h>
-
 #include "crashdump.h"
-#include "globals.h"
-#include "types.h"
-#include "log.h"
 
 // FF7 save file checksum, original by dziugo
 int ff7_checksum(void* qw)
@@ -56,93 +49,6 @@ int ff7_checksum(void* qw)
 
 static const char save_name[] = "\x25" "MERGENCY" "\x00\x33" "AVE" "\xFF";
 
-// Prints stack trace based on context record
-// Via https://stackoverflow.com/a/50208684
-void printStack(CONTEXT *ctx)
-{
-	uint result;
-	HANDLE process;
-	HANDLE thread;
-	HMODULE hModule;
-
-	STACKFRAME stack;
-	ULONG frame;
-	DWORD64 displacement;
-
-	DWORD disp;
-	IMAGEHLP_LINE *line;
-
-	char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
-	char name[STACK_MAX_NAME_LENGTH];
-	char module[STACK_MAX_NAME_LENGTH];
-	PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)buffer;
-
-	memset(&stack, 0, sizeof(STACKFRAME));
-
-	process = GetCurrentProcess();
-	thread = GetCurrentThread();
-	displacement = 0;
-	stack.AddrPC.Offset = (*ctx).Eip;
-	stack.AddrPC.Mode = AddrModeFlat;
-	stack.AddrStack.Offset = (*ctx).Esp;
-	stack.AddrStack.Mode = AddrModeFlat;
-	stack.AddrFrame.Offset = (*ctx).Ebp;
-	stack.AddrFrame.Mode = AddrModeFlat;
-
-	SymInitialize(process, NULL, TRUE); //load symbols
-
-	for (frame = 0;; frame++)
-	{
-		//get next call from stack
-		result = StackWalk(
-				IMAGE_FILE_MACHINE_I386,
-				process,
-				thread,
-				&stack,
-				ctx,
-				NULL,
-				SymFunctionTableAccess,
-				SymGetModuleBase,
-				NULL);
-
-		if (!result)
-			break;
-
-		//get symbol name for address
-		pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-		pSymbol->MaxNameLen = MAX_SYM_NAME;
-		SymFromAddr(process, (ULONG64)stack.AddrPC.Offset, &displacement, pSymbol);
-
-		line = (IMAGEHLP_LINE *)driver_malloc(sizeof(IMAGEHLP_LINE));
-		line->SizeOfStruct = sizeof(IMAGEHLP_LINE);
-
-		//try to get line
-		if (SymGetLineFromAddr(process, stack.AddrPC.Offset, &disp, line))
-		{
-			trace("\tat %s in %s: line: %lu: address: 0x%I64x\n", pSymbol->Name, line->FileName, line->LineNumber, pSymbol->Address);
-		}
-		else
-		{
-			hModule = NULL;
-			lstrcpyA(module, "");
-			GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-												(LPCTSTR)(stack.AddrPC.Offset), &hModule);
-
-			//at least print module name
-			if (hModule != NULL)
-				GetModuleFileNameA(hModule, module, STACK_MAX_NAME_LENGTH);
-
-			trace("in \"%s\"\n", module);
-
-			//failed to get line
-			trace("\tat %s, address 0x%I64x\n", pSymbol->Name, pSymbol->Address);
-		}
-
-		driver_free(line);
-		line = NULL;
-	}
-}
-
 LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 {
 	static uint had_exception = false;
@@ -158,7 +64,11 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	}
 
 	trace("*** Exception 0x%x, address 0x%x ***\n", ep->ExceptionRecord->ExceptionCode, ep->ExceptionRecord->ExceptionAddress);
-	printStack(ep->ContextRecord);
+	FFNxStackWalker sw;
+	sw.ShowCallstack(
+		GetCurrentThread(),
+		ep->ContextRecord
+	);
 
 	had_exception = true;
 

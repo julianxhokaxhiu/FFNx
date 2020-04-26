@@ -83,17 +83,8 @@ void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
 	}
 
 	if (level <= AV_LOG_ERROR) {
-		CONTEXT ctx;
-
-		ctx.ContextFlags = CONTEXT_CONTROL;
-
-		if (
-			GetThreadContext(
-				GetCurrentThread(),
-				&ctx
-			)
-			)
-			printStack(&ctx);
+		FFNxStackWalker sw;
+		sw.ShowCallstack();
 	}
 }
 
