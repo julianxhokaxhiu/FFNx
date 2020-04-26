@@ -1,6 +1,6 @@
 #include "../renderer.h"
 
-#include "ffmpeg_movies.h"
+#include "movies.h"
 
 // 10 frames
 #define VIDEO_BUFFER_SIZE 10

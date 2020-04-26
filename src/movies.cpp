@@ -28,7 +28,7 @@
 #include "log.h"
 #include "common.h"
 #include "cfg.h"
-#include "ffmpeg_movies/ffmpeg_movies.h"
+#include "ffmpeg/movies.h"
 
 void movie_init()
 {
