@@ -2,6 +2,7 @@ find_package(BGFX REQUIRED)
 find_package(CONFUSE REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(VGMSTREAM REQUIRED)
+find_package(STACKWALKER REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -27,6 +28,7 @@ target_link_libraries(${RELEASE_NAME}
 	FFMPEG::AVFormat
 	FFMPEG::SWScale
 	VGMSTREAM::VGMSTREAM
+    STACKWALKER::STACKWALKER
 )
 target_compile_options(${RELEASE_NAME}
 	PRIVATE /D_CRT_SECURE_NO_WARNINGS

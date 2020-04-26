@@ -28,6 +28,7 @@ if (SUPERBUILD)
 		ffmpeg
 		libconfuse
 		vgmstream
+		StackWalker
 	)
 	ExternalProject_Add_Step(
 		FFNx
