@@ -244,6 +244,8 @@ unsigned __stdcall render_thread(void *parameter)
 		LeaveCriticalSection(&mutex);
 	}
 
+	_endthreadex(0);
+
 	return 0;
 }
 
