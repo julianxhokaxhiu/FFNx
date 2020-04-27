@@ -58,11 +58,11 @@ cfg_bool_t mdef_fix = cfg_bool_t(true);
 cfg_bool_t fancy_transparency = cfg_bool_t(true);
 cfg_bool_t enable_anisotropic = cfg_bool_t(true);
 cfg_bool_t skip_frames = cfg_bool_t(false);
-cfg_bool_t more_ff7_debug = cfg_bool_t(false);
+cfg_bool_t ff7_more_debug = cfg_bool_t(false);
 cfg_bool_t show_applog = cfg_bool_t(true);
 cfg_bool_t direct_mode = cfg_bool_t(true);
 cfg_bool_t show_missing_textures = cfg_bool_t(false);
-cfg_bool_t ff7_popup = cfg_bool_t(false);
+cfg_bool_t show_error_popup = cfg_bool_t(false);
 cfg_bool_t movie_sync_debug = cfg_bool_t(false);
 char *renderer_backend = nullptr;
 cfg_bool_t renderer_debug = cfg_bool_t(false);
@@ -106,16 +106,16 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("fancy_transparency", &fancy_transparency),
 		CFG_SIMPLE_BOOL("enable_anisotropic", &enable_anisotropic),
 		CFG_SIMPLE_BOOL("skip_frames", &skip_frames),
-		CFG_SIMPLE_BOOL("more_ff7_debug", &more_ff7_debug),
 		CFG_SIMPLE_BOOL("show_applog", &show_applog),
 		CFG_SIMPLE_BOOL("direct_mode", &direct_mode),
 		CFG_SIMPLE_BOOL("show_missing_textures", &show_missing_textures),
-		CFG_SIMPLE_BOOL("ff7_popup", &ff7_popup),
+		CFG_SIMPLE_BOOL("show_error_popup", &error_popup),
 		CFG_SIMPLE_BOOL("movie_sync_debug", &movie_sync_debug),
 		CFG_SIMPLE_STR("renderer_backend", &renderer_backend),
 		CFG_SIMPLE_BOOL("renderer_debug", &renderer_debug),
 		CFG_SIMPLE_BOOL("create_crash_dump", &create_crash_dump),
 		CFG_SIMPLE_STR("steam_game_userdata", &steam_game_userdata),
+		CFG_SIMPLE_BOOL("ff7_more_debug", &ff7_more_debug),
 		CFG_SIMPLE_BOOL("ff7_center_fields", &ff7_center_fields),
 		CFG_SIMPLE_BOOL("ff7_battle_fullscreen", &ff7_battle_fullscreen),
 		CFG_SIMPLE_BOOL("ff7_menu_fix_cursor_vcenter", &ff7_menu_fix_cursor_vcenter),
