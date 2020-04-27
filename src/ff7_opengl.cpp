@@ -75,7 +75,7 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
 
-	if(more_ff7_debug) replace_function(common_externals.debug_print2, external_debug_print2);
+	if(ff7_more_debug) replace_function(common_externals.debug_print2, external_debug_print2);
 
 	// TODO: Comment this if Chocobo's not visible in race
 	// replace_function(ff7_externals.draw_3d_model, draw_3d_model);

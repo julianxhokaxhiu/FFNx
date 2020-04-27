@@ -113,7 +113,7 @@ void external_debug_print(const char *str)
 
 	if(show_applog) debug_print(str);
 
-	if(ff7_popup)
+	if(show_error_popup)
 	{
 		strcpy(popup_msg, str);
 		popup_ttl = POPUP_TTL_MAX;
