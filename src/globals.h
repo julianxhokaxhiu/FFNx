@@ -34,6 +34,7 @@
 
 extern uint version;
 extern uint steam_edition;
+extern uint estore_edition;
 extern uint japanese_edition;
 
 #define BASEDIR_LENGTH 512

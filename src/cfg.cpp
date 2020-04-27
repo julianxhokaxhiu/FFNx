@@ -27,10 +27,10 @@
 // configuration variables with their default values
 char *mod_path;
 cfg_bool_t use_external_movie = cfg_bool_t(true);
-char* external_movie_ext;
+char* external_movie_ext = nullptr;
 long use_external_music = FFNX_MUSIC_VGMSTREAM;
-char* external_music_path;
-char* external_music_ext;
+char* external_music_path = nullptr;
+char* external_music_ext = nullptr;
 cfg_bool_t save_textures = cfg_bool_t(false);
 cfg_bool_t trace_all = cfg_bool_t(false);
 cfg_bool_t trace_movies = cfg_bool_t(false);
@@ -64,7 +64,7 @@ cfg_bool_t direct_mode = cfg_bool_t(true);
 cfg_bool_t show_missing_textures = cfg_bool_t(false);
 cfg_bool_t ff7_popup = cfg_bool_t(false);
 cfg_bool_t movie_sync_debug = cfg_bool_t(false);
-char *renderer_backend;
+char *renderer_backend = nullptr;
 cfg_bool_t renderer_debug = cfg_bool_t(false);
 cfg_bool_t create_crash_dump = cfg_bool_t(false);
 char* steam_game_userdata = nullptr;
