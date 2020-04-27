@@ -109,7 +109,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("show_applog", &show_applog),
 		CFG_SIMPLE_BOOL("direct_mode", &direct_mode),
 		CFG_SIMPLE_BOOL("show_missing_textures", &show_missing_textures),
-		CFG_SIMPLE_BOOL("show_error_popup", &error_popup),
+		CFG_SIMPLE_BOOL("show_error_popup", &show_error_popup),
 		CFG_SIMPLE_BOOL("movie_sync_debug", &movie_sync_debug),
 		CFG_SIMPLE_STR("renderer_backend", &renderer_backend),
 		CFG_SIMPLE_BOOL("renderer_debug", &renderer_debug),
