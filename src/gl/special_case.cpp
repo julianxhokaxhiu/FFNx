@@ -72,34 +72,6 @@ uint gl_special_case(uint primitivetype, uint vertextype, struct nvertex *vertic
 
 	if(!ff8)
 	{
-		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->buster_tex))
-		{
-			// stretch main menu to fullscreen if it is a modpath texture
-			if(VREF(texture_set, ogl.external) && vertexcount == 4)
-			{
-				vertices[0]._.x = 0.0f;
-				vertices[0]._.y = 0.0f;
-				vertices[0]._.z = 1.0f;
-				vertices[1]._.x = 0.0f;
-				vertices[1]._.y = (float)game_height;
-				vertices[1]._.z = 1.0f;
-				vertices[2]._.x = (float)game_width;
-				vertices[2]._.y = 0.0f;
-				vertices[2]._.z = 1.0f;
-				vertices[3]._.x = (float)game_width;
-				vertices[3]._.y = (float)game_height;
-				vertices[3]._.z = 1.0f;
-				vertices[0].u = 0.0f;
-				vertices[0].v = 0.0f;
-				vertices[1].u = 0.0f;
-				vertices[1].v = 1.0f;
-				vertices[2].u = 1.0f;
-				vertices[2].v = 0.0f;
-				vertices[3].u = 1.0f;
-				vertices[3].v = 1.0f;
-			}
-		}
-
 		if(current_state.texture_set && VREF(texture_set, tex_header))
 		{
 			VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
