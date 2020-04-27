@@ -30,6 +30,7 @@
 #include "patch.h"
 #include "vgmstream/music.h"
 #include "ff7music/music.h"
+#include "winamp/music.h"
 
 void music_init()
 {
@@ -47,7 +48,17 @@ void music_init()
 		replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
 		replace_function(common_externals.set_midi_tempo, set_midi_tempo);
 
-		if (use_external_music == FFNX_MUSIC_VGMSTREAM) vgm_music_init();
+		switch (use_external_music)
+		{
+		case FFNX_MUSIC_VGMSTREAM:
+			vgm_music_init();
+			break;
+		case FFNX_MUSIC_FF7MUSIC:
+			break;
+		case FFNX_MUSIC_WINAMP:
+			winamp_music_init();
+			break;
+		}
 	}
 }
 
@@ -72,6 +83,9 @@ void play_midi(uint midi)
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_play_music(common_externals.get_midi_name(midi), midi);
 		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_play_music(common_externals.get_midi_name(midi), midi);
+		break;
 	}
 }
 
@@ -84,6 +98,9 @@ void cross_fade_midi(uint midi, uint time)
 		break;
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
+		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
 		break;
 	}
 }
@@ -98,6 +115,9 @@ void pause_midi()
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_pause_music();
 		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_pause_music();
+		break;
 	}
 }
 
@@ -110,6 +130,9 @@ void restart_midi()
 		break;
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_resume_music();
+		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_resume_music();
 		break;
 	}
 }
@@ -124,6 +147,9 @@ void stop_midi()
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_stop_music();
 		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_stop_music();
+		break;
 	}
 }
 
@@ -136,6 +162,9 @@ uint midi_status()
 		break;
 	case FFNX_MUSIC_FF7MUSIC:
 		return ff7music_music_status();
+		break;
+	case FFNX_MUSIC_WINAMP:
+		return winamp_music_status();
 		break;
 	}
 }
@@ -150,6 +179,9 @@ void set_master_midi_volume(uint volume)
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_set_master_music_volume(volume);
 		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_set_master_music_volume(volume);
+		break;
 	}
 }
 
@@ -162,6 +194,9 @@ void set_midi_volume(uint volume)
 		break;
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_set_music_volume(volume);
+		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_set_music_volume(volume);
 		break;
 	}
 }
@@ -176,6 +211,9 @@ void set_midi_volume_trans(uint volume, uint step)
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_set_music_volume_trans(volume, step);
 		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_set_music_volume_trans(volume, step);
+		break;
 	}
 }
 
@@ -189,6 +227,9 @@ void set_midi_tempo(unsigned char tempo)
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_set_music_tempo(tempo);
 		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_set_music_tempo(tempo);
+		break;
 	}
 }
 
@@ -201,6 +242,9 @@ void music_cleanup()
 		break;
 	case FFNX_MUSIC_FF7MUSIC:
 		ff7music_music_cleanup();
+		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_music_cleanup();
 		break;
 	}
 }
