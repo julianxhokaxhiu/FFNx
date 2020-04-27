@@ -74,5 +74,6 @@ extern cfg_bool_t create_crash_dump;
 extern char* steam_game_userdata;
 extern cfg_bool_t ff7_center_fields;
 extern cfg_bool_t ff7_battle_fullscreen;
+extern cfg_bool_t ff7_menu_fix_cursor_vcenter;
 
 void read_cfg();

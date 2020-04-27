@@ -70,6 +70,7 @@ cfg_bool_t create_crash_dump = cfg_bool_t(false);
 char* steam_game_userdata = nullptr;
 cfg_bool_t ff7_center_fields = cfg_bool_t(true);
 cfg_bool_t ff7_battle_fullscreen = cfg_bool_t(true);
+cfg_bool_t ff7_menu_fix_cursor_vcenter = cfg_bool_t(true);;
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -117,6 +118,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("steam_game_userdata", &steam_game_userdata),
 		CFG_SIMPLE_BOOL("ff7_center_fields", &ff7_center_fields),
 		CFG_SIMPLE_BOOL("ff7_battle_fullscreen", &ff7_battle_fullscreen),
+		CFG_SIMPLE_BOOL("ff7_menu_fix_cursor_vcenter", &ff7_menu_fix_cursor_vcenter),
 
 		CFG_END()
 };
