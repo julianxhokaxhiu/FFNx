@@ -34,11 +34,12 @@ void apply_volume()
 {
 	if (in && out)
 	{
-		/* int volume = (((song_volume * 100) / 127) * master_volume) / 100;
-		float decibel = 20.0f * log10f(volume / 100.0f);
+		int volume = (((song_volume * 100) / 127) * master_volume) / 100;
+		/* float decibel = 20.0f * log10f(volume / 100.0f);
 
 		in->setVolume(volume ? (int)(decibel * 100.0f) : 0); */
-		in->setVolume(255);
+		// TODO: set correct volume
+		in->setVolume(volume ? 255 : 0);
 	}
 }
 
@@ -75,22 +76,20 @@ void winamp_play_music(char *midi, uint id)
 {
 	trace("play music: %s\n", midi);
 
-	if (id != current_id || song_ended)
+	if (in && out && (id != current_id || song_ended))
 	{
-		if (in) {
-			char tmp[MAX_PATH];
-			sprintf(tmp, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
+		char tmp[MAX_PATH];
+		sprintf(tmp, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
 
-			song_ended = false;
-			current_id = id;
+		song_ended = false;
+		current_id = id;
 
-			apply_volume();
+		apply_volume();
 
-			int err = in->play(tmp);
+		int err = in->play(tmp);
 
-			if (0 != err) {
-				error("couldn't play music\n", err);
-			}
+		if (0 != err) {
+			error("couldn't play music\n", err);
 		}
 	}
 }
@@ -113,6 +112,10 @@ void winamp_cross_fade_music(char *midi, uint id, uint time)
 
 	if (id != current_id || song_ended)
 	{
+		winamp_stop_music();
+		winamp_play_music(midi, id);
+
+		// TODO: real fade
 		/* if (!song_ended && fade_time)
 		{
 			trans_volume = 0;
@@ -190,7 +193,11 @@ void winamp_set_music_volume_trans(uint volume, uint step)
 {
 	trace("set volume trans: %i (%i)\n", volume, step);
 
-	step /= 4;
+	song_volume = volume;
+	// TODO: transition
+	apply_volume();
+
+	/* step /= 4;
 
 	if (step < 2)
 	{
@@ -205,12 +212,12 @@ void winamp_set_music_volume_trans(uint volume, uint step)
 		trans_volume = volume;
 		trans_counter = step;
 		trans_step = (trans_volume - song_volume) / step;
-	}
+	} */
 }
 
 void winamp_set_music_tempo(unsigned char tempo)
 {
-	// Set tempo
+	// TODO: Set tempo
 }
 
 void winamp_music_cleanup()
