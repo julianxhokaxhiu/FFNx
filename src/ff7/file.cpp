@@ -21,6 +21,7 @@
  */
 
 #include <filesystem>
+#include <string.h>
 #include <sys/stat.h>
 
 #include "../types.h"
@@ -345,7 +346,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 	// Add support for Steam language directory
 	if (!file_context->use_lgp)
 	{
-		if (steam_edition && _access(filename, 0) == -1)
+		if ((steam_edition || estore_edition) && _access(filename, 0) == -1)
 		{
 			if (
 				strcmp(filename, "scene.bin") == 0 ||
@@ -374,18 +375,22 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 
 				if (pos != NULL) PathAppendA(_filename, pos);
 
-				if (_access(_filename, 0) == -1 || pos == NULL)
+				if ((_access(_filename, 0) == -1 || pos == NULL))
 				{
 					bool isSavegame = strstr(filename, ".ff7") != NULL;
 					bool isCacheFile = strstr(filename, ".P") != NULL;
 
-					// Do one more try in the user data path
-					get_userdata_path(_filename, sizeof(_filename), isSavegame);
+					// If steam edition, do one more try in the user data path
+					if (steam_edition) get_userdata_path(_filename, sizeof(_filename), isSavegame);
+					else strcpy(_filename, "");
 
 					if (isCacheFile)
 					{
-						PathAppendA(_filename, "cache");
-						std::filesystem::create_directories(_filename);
+						if (steam_edition)
+						{
+							PathAppendA(_filename, "cache");
+							std::filesystem::create_directories(_filename);
+						}
 						PathAppendA(_filename, filename);
 					}
 					else

@@ -48,6 +48,9 @@ uint ff8_currentdisk = 0;
 // global FF7/FF8 flag, check if is steam edition
 uint steam_edition = false;
 
+// global FF7 flag, check if is eStore edition
+uint estore_edition = false;
+
 // global FF7 flag, check if is japanese edition ( detected as US )
 uint japanese_edition = false;
 
@@ -2084,12 +2087,25 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				strstr(parentName, "ff7_es.exe") != NULL ||
 				strstr(parentName, "ff7_ja.exe") != NULL)
 			{
-				steam_edition = true;
-
 				japanese_edition = strstr(parentName, "ff7_ja.exe") != NULL;
 
-				// Steam edition has music files under a different path by default
-				if (strstr(basedir, "steamapps") != NULL) external_music_path = "data/music_ogg";
+				// Steam edition is usually installed in this path
+				if (strstr(basedir, "steamapps") != NULL) {
+					trace("Detected Steam edition.\n");
+					steam_edition = true;
+				}
+				// otherwise it's the eStore edition which has same exe names but installed somewhere else
+				else
+				{
+					trace("Detected eStore edition.\n");
+					estore_edition = true;
+				}
+
+				if (external_music_path == nullptr) external_music_path = "data/music_ogg";
+
+			}
+			else if (external_music_path == nullptr) {
+				external_music_path = "music/vgmstream";
 			}
 		}
 		else if (ff8 &&
@@ -2103,6 +2119,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			)
 		)
 		{
+			trace("Detected Steam edition.\n");
+
 			steam_edition = true;
 
 			DWORD offset = version == VERSION_FF8_12_JP ? 0x402320 : 0x401F60;
