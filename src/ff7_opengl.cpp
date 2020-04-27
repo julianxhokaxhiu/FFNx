@@ -743,6 +743,30 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 		}
 	}
 
+	if (ff7_menu_fix_cursor_vcenter)
+	{
+		// Fix Main Menu cursor position ( vcenter relative to text entry )
+		switch (version)
+		{
+		case VERSION_FF7_102_US:
+			patch_code_byte(0x715240, 0x14);
+			patch_code_byte(0x71526B, 0x14);
+			break;
+		case VERSION_FF7_102_FR:
+			patch_code_byte(0x7A07A0, 0x14);
+			patch_code_byte(0x7A07CB, 0x14);
+			break;
+		case VERSION_FF7_102_DE:
+			patch_code_byte(0x7A0490, 0x14);
+			patch_code_byte(0x7A04BB, 0x14);
+			break;
+		case VERSION_FF7_102_SP:
+			patch_code_byte(0x7A08E0, 0x14);
+			patch_code_byte(0x7A090B, 0x14);
+			break;
+		}
+	}
+
 	ret = (ff7_gfx_driver*)external_calloc(1, sizeof(*ret));
 
 	ret->init = common_init;
