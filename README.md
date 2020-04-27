@@ -18,7 +18,10 @@ Welcome to FFNx project. This is an attempt to move forward what you were used t
 
 Some of the improvements that you can find on FFNx are:
 - **Native** Steam support! No Game converter required.
+- **Native** eStore support! No Game converter required.
 - **Native** Vertical centering for Fields and Movies on Final Fantasy VII. No mods required.
+- **Native** Fullscreen Battle scenes on Final Fantasy VII. No mods required.
+- **Native** Menu cursor alignment in Menu scenes on Final Fantasy VII. No mods required.
 - One single .dll file to be copied
 - Support for 7h 1.x/2.x
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
@@ -34,6 +37,7 @@ In order to enhance the modding experience, FFNx does also provide:
 - Game rendering inspection through [RenderDoc](https://renderdoc.org/)!
 - [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
 - Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L80)
+- Support for [Ficedula FF7Music](http://ff8.fr/pub/FF7Music.zip)
 
 ## Tech Stack
 If you're curious to know it, FFNx is made with:
@@ -45,6 +49,7 @@ If you're curious to know it, FFNx is made with:
 - [FFMpeg](https://www.ffmpeg.org/) 4.2.2 with H/W Accelleration support
 - [VGMStream](https://github.com/julianxhokaxhiu/vgmstream) using FFMpeg as backend, [with loop support for Ogg files](https://github.com/julianxhokaxhiu/vgmstream/commit/249afed15176ba254c73055e8c5124b7e7cd4b95)
 - [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) 3.2.3 ( for the configuration management )
+- [StackWalker](https://github.com/JochenKalmbach/StackWalker) ( for stack traces in the log file )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
@@ -56,7 +61,9 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 
 ### Final Fantasy VII
 
-**Supported Languages:** EN, DE, FR, SP
+**Supported Languages:** EN, DE, FR, SP, JP*
+
+> *: Japanese support is currently work in progress. The game starts fine but font is not rendering properly and battles do crash sometimes.
 
 #### [1998 Eidos Release](https://www.mobygames.com/game/windows/final-fantasy-vii)
 1. Install the game on this path: `C:\Games\Final Fantasy VII`
@@ -74,6 +81,30 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 4. Extract the ZIP content next to your `ff7_*.exe` file ( for eg. for EN language `ff7_en.exe`)
 5. Replace all files when asked.
 6. Enjoy!
+
+#### [2013 eStore Release](http://www.jp.square-enix.com/ffvii-pc-jp/)
+1. Install the game using eStore installer.
+2. Open the installation directory of the game
+3. Download the latest `FFNx-Steam` release here: https://github.com/julianxhokaxhiu/FFNx/releases
+4. Extract the ZIP content next to your `ff7_*.exe` file ( for eg. for EN language `ff7_en.exe`)
+5. Replace all files when asked.
+6. Enjoy!
+
+#### [Android Release](https://play.google.com/store/apps/details?id=com.square_enix.android_googleplay.FFVII)
+1. Install the game in your Android device.
+2. Locate the OBB file ( usually in `Android/obb` or `/obb` in your internal storage )
+3. Save the OBB file in your Windows desktop
+4. Rename the OBB file extension from `.obb` to `.zip` and extract it
+5. In the extracted folder, go to `ff7_1.02` directory
+6. Download the latest `FFNx-Steam` release here: https://github.com/julianxhokaxhiu/FFNx/releases
+7. Extract the ZIP content next to the `ff7_*.exe` files
+8. Update `FFNx.cfg` flags with these values:
+```
+external_movie_ext = webm
+external_music_path = data/music_2
+external_music_ext = akb
+```
+9. You can now run any `ff7_*.exe` file you prefer. Enjoy!
 
 ### Final Fantasy VIII
 
