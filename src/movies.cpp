@@ -57,6 +57,7 @@ void movie_init()
 
 uint ff7_prepare_movie(char *name, uint loop, struct dddevice **dddevice, uint dd2interface)
 {
+	char drivename[4];
 	char dirname[256];
 	char filename[128];
 	char fmvName[512];
@@ -72,9 +73,9 @@ uint ff7_prepare_movie(char *name, uint loop, struct dddevice **dddevice, uint d
 	ff7_externals.movie_object->global_movie_flag = 0;
 	ff7_externals.movie_object->field_E0 = !((struct ff7_game_obj *)common_externals.get_game_object())->field_968;
 
-	_splitpath(name, NULL, dirname, filename, NULL);
+	_splitpath(name, drivename, dirname, filename, NULL);
 
-	_snprintf(fmvName, sizeof(fmvName), "%s/%s.%s", dirname, filename, external_movie_ext);
+	_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, external_movie_ext);
 
 	ffmpeg_prepare_movie(fmvName);
 
