@@ -21,10 +21,23 @@ public:
 	bool open(char* libFileName);
 	void close();
 };
-/*
-class WinampOutPlugin : public WinampPlugin {
-private:
+
+class AbstractOutPlugin {
+protected:
 	WinampOutModule* mod;
+public:
+	AbstractOutPlugin() : mod(nullptr) {}
+	virtual ~AbstractOutPlugin() {}
+	inline WinampOutModule* getModule() const {
+		return mod;
+	}
+	virtual int isPlaying() const = 0;
+	// This method is not part of the winamp plugin
+	virtual void setTempo(int tempo) = 0;
+};
+
+class WinampOutPlugin : public WinampPlugin, public AbstractOutPlugin {
+private:
 	inline LPCSTR procName() const {
 		return "winampGetOutModule";
 	}
@@ -32,19 +45,20 @@ private:
 	void closeModule();
 public:
 	WinampOutPlugin();
-	~WinampOutPlugin();
-	inline WinampOutModule* getModule() const {
-		return mod;
-	}
-};*/
+	virtual ~WinampOutPlugin();
+	int isPlaying() const;
+	// This method is not part of the winamp plugin
+	void setTempo(int tempo);
+};
 
-class CustomOutPlugin {
+class CustomOutPlugin : public AbstractOutPlugin {
 private:
-	WinampOutModule mod;
 	static IDirectSoundBuffer* sound_buffer;
 	static uint sound_buffer_size;
 	static uint sound_write_pointer;
 	static uint bytes_written;
+	static DWORD start_t;
+	static DWORD last_pause_t;
 	static int last_pause;
 	static int volume;
 	static WAVEFORMATEX sound_format;
@@ -65,27 +79,24 @@ private:
 	static int GetWrittenTime();
 public:
 	CustomOutPlugin();
-	~CustomOutPlugin();
-	inline WinampOutModule* getModule() {
-		return &mod;
-	}
+	virtual ~CustomOutPlugin();
 	int isPlaying() const;
 	// This method is not part of the winamp plugin
-	static void setTempo(int tempo);
+	void setTempo(int tempo);
 };
 
 class WinampInPlugin : public WinampPlugin {
 private:
 	WinampInModule* mod;
-	WinampOutModule* outMod;
+	AbstractOutPlugin* outPlugin;
 	inline LPCSTR procName() const {
 		return "winampGetInModule2";
 	}
 	bool openModule(FARPROC procAddress);
 	void closeModule();
 public:
-	WinampInPlugin(WinampOutModule* outMod);
-	~WinampInPlugin();
+	WinampInPlugin(AbstractOutPlugin* outPlugin);
+	virtual ~WinampInPlugin();
 
 	int play(const char* fn);
 	int play(const wchar_t* fn);
