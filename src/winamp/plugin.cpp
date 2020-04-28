@@ -245,8 +245,6 @@ void CustomOutPlugin::Quit()
 
 int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms)
 {
-	info("OutPlugin Open\n");
-
 	UNUSED_PARAM(bufferlenms);
 	UNUSED_PARAM(prebufferms);
 
@@ -293,8 +291,6 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 void CustomOutPlugin::Close()
 {
-	error("OutPlugin Close\n");
-
 	if (sound_buffer) {
 		sound_buffer->Release();
 	}
@@ -306,8 +302,6 @@ int CustomOutPlugin::Write(char* buffer, int len)
 {
 	LPVOID ptr1, ptr2;
 	DWORD bytes1, bytes2;
-
-	error("OutPlugin Write %i\n", len);
 
 	if (sound_buffer->Lock(sound_write_pointer, len, &ptr1, &bytes1, &ptr2, &bytes2, 0)) {
 		error("couldn't lock sound buffer\n");
@@ -329,17 +323,14 @@ int CustomOutPlugin::Write(char* buffer, int len)
 int CustomOutPlugin::CanWrite()
 {
 	if (!sound_buffer || last_pause) {
-		error("OutPlugin CanWrite No\n");
 		return 0;
 	}
 	DWORD lpdwCurrentPlayCursor, lpdwCurrentWriteCursor;
 
 	if (DS_OK != sound_buffer->GetCurrentPosition(&lpdwCurrentPlayCursor, &lpdwCurrentWriteCursor)) {
-		error("OutPlugin CanWrite Error\n");
+		error("DirectSound GetCurrentPosition Error\n");
 		return 0;
 	}
-
-	error("OutPlugin CanWrite %i %i %i %i\n", lpdwCurrentPlayCursor, lpdwCurrentWriteCursor, sound_write_pointer, sound_buffer_size);
 
 	if (lpdwCurrentPlayCursor <= sound_write_pointer) {
 		return (sound_buffer_size - sound_write_pointer) + lpdwCurrentPlayCursor;
@@ -353,17 +344,15 @@ int CustomOutPlugin::IsPlaying()
 		DWORD ret;
 
 		if (DS_OK == sound_buffer->GetStatus(&ret)) {
-			error("OutPlugin IsPlaying %i\n", ret & DSBSTATUS_PLAYING ? 1 : 0);
 			return ret & DSBSTATUS_PLAYING ? 1 : 0;
 		}
 	}
-	error("OutPlugin IsPlaying no\n");
+
 	return 0;
 }
 
 int CustomOutPlugin::Pause(int pause)
 {
-	error("OutPlugin Pause %i\n", pause);
 	int t = last_pause;
 
 	if (sound_buffer) {
@@ -381,8 +370,6 @@ int CustomOutPlugin::Pause(int pause)
 
 void CustomOutPlugin::SetVolume(int volume)
 {
-	info("OutPlugin SetVolume: %i/255\n", volume);
-
 	if (volume < 0 || volume > 255) {
 		return;
 	}
@@ -391,7 +378,6 @@ void CustomOutPlugin::SetVolume(int volume)
 
 	if (sound_buffer) {
 		float decibel = 20.0f * log10f((volume * 100 / 255) / 100.0f);
-		info("OutPlugin SetVolume: %f DB\n", decibel);
 		sound_buffer->SetVolume(volume ? int(decibel * 100.0f) : DSBVOLUME_MIN);
 	}
 }
@@ -406,13 +392,12 @@ void CustomOutPlugin::SetPan(int pan)
 
 void CustomOutPlugin::Flush(int t)
 {
-	info("OutPlugin Flush: %i\n", t);
+	info("CustomOutPlugin Flush: %i\n", t);
 	// TODO: implement seek?
 }
 
 int CustomOutPlugin::GetOutputTime()
 {
-	info("OutPlugin GetOutputTime\n");
 	return GetWrittenTime();
 }
 
@@ -425,9 +410,12 @@ int CustomOutPlugin::GetWrittenTime()
 	int written_time = bytes_written / sound_format.nAvgBytesPerSec * 1000;
 	written_time += ((bytes_written % sound_format.nAvgBytesPerSec) * 1000) / sound_format.nAvgBytesPerSec;
 
-	info("OutPlugin GetWrittenTime %i\n", written_time);
-
 	return written_time;
+}
+
+int CustomOutPlugin::isPlaying() const
+{
+	return CustomOutPlugin::IsPlaying();
 }
 
 void CustomOutPlugin::setTempo(int tempo)
