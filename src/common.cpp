@@ -1722,6 +1722,7 @@ void get_data_lang_path(PCHAR buffer)
 	{
 	case VERSION_FF7_102_US:
 	case VERSION_FF8_12_US_NV:
+	case VERSION_FF8_12_US_EIDOS_NV:
 		if (ff7_japanese_edition)
 			strcat(buffer, "ja");
 		else
