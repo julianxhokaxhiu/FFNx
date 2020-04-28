@@ -53,7 +53,7 @@ uint steam_edition = false;
 uint estore_edition = false;
 
 // global FF7 flag, check if is japanese edition ( detected as US )
-uint japanese_edition = false;
+uint ff7_japanese_edition = false;
 
 // window dimensions requested by the game, normally 640x480
 uint game_width;
@@ -1722,7 +1722,7 @@ void get_data_lang_path(PCHAR buffer)
 	{
 	case VERSION_FF7_102_US:
 	case VERSION_FF8_12_US_NV:
-		if (japanese_edition)
+		if (ff7_japanese_edition)
 			strcat(buffer, "ja");
 		else
 			strcat(buffer, "en");
@@ -2089,7 +2089,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				strstr(parentName, "ff7_es.exe") != NULL ||
 				strstr(parentName, "ff7_ja.exe") != NULL)
 			{
-				japanese_edition = strstr(parentName, "ff7_ja.exe") != NULL;
+				ff7_japanese_edition = strstr(parentName, "ff7_ja.exe") != NULL;
 
 				// Steam edition is usually installed in this path
 				if (strstr(basedir, "steamapps") != NULL) {

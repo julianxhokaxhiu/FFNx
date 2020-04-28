@@ -35,7 +35,7 @@
 extern uint version;
 extern uint steam_edition;
 extern uint estore_edition;
-extern uint japanese_edition;
+extern uint ff7_japanese_edition;
 
 #define BASEDIR_LENGTH 512
 extern char basedir[BASEDIR_LENGTH];
