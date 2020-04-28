@@ -1715,6 +1715,7 @@ uint get_version()
 
 void get_data_lang_path(PCHAR buffer)
 {
+	PathAppendA(buffer, basedir);
 	PathAppendA(buffer, R"(data\lang-)");
 	switch (version)
 	{

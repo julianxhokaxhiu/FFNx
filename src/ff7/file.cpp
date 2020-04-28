@@ -356,7 +356,6 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 				strcmp(filename, "co.bin") == 0
 			)
 			{
-				PathAppendA(_filename, basedir);
 				get_data_lang_path(_filename);
 				PathAppendA(_filename, R"(battle)");
 				PathAppendA(_filename, filename);
