@@ -4,7 +4,7 @@ CRITICAL_SECTION mutex;
 
 #define AUDIO_BUFFER_SIZE 5
 
-IDirectSoundBuffer* vgm_sound_buffer;
+IDirectSoundBuffer* vgm_sound_buffer = 0;
 uint vgm_sound_buffer_size;
 uint vgm_sound_write_pointer;
 

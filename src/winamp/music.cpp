@@ -20,8 +20,8 @@
 uint current_id = 0;
 uint song_ended = true;
 
-WinampOutPlugin *out = NULL;
-WinampInPlugin *in = NULL;
+CustomOutPlugin* out = NULL;
+WinampInPlugin* in = NULL;
 
 int trans_step;
 int trans_counter;
@@ -30,16 +30,14 @@ int trans_volume;
 int master_volume;
 int song_volume;
 
-void apply_volume()
+void winamp_apply_volume()
 {
-	if (in && out)
+	trace("apply_volume %i\n", song_volume);
+
+	if (in)
 	{
 		int volume = (((song_volume * 100) / 127) * master_volume) / 100;
-		/* float decibel = 20.0f * log10f(volume / 100.0f);
-
-		in->setVolume(volume ? (int)(decibel * 100.0f) : 0); */
-		// TODO: set correct volume
-		in->setVolume(volume ? 255 : 0);
+		in->setVolume(volume * 255 / 100);
 	}
 }
 
@@ -48,24 +46,16 @@ void winamp_music_init()
 	if (NULL != out) {
 		delete out;
 	}
-	out = new WinampOutPlugin();
-	if (out->open(out_plugin_dll_name)) {
+	out = new CustomOutPlugin();
+	in = new WinampInPlugin(out->getModule());
 
-		in = new WinampInPlugin(out);
-
-		if (in->open(in_plugin_dll_name)) {
-			info("Winamp music plugin loaded\n");
-		}
-		else {
-			error("couldn't load in_psf.dll\n");
-			delete in;
-			in = NULL;
-			delete out;
-			out = NULL;
-		}
+	if (in->open(in_plugin_dll_name)) {
+		info("Winamp music plugin loaded\n");
 	}
 	else {
-		error("couldn't load out_wave.dll\n");
+		error("couldn't load in_psf.dll\n");
+		delete in;
+		in = NULL;
 		delete out;
 		out = NULL;
 	}
@@ -76,7 +66,7 @@ void winamp_play_music(char *midi, uint id)
 {
 	trace("play music: %s\n", midi);
 
-	if (in && out && (id != current_id || song_ended))
+	if (in && (id != current_id || song_ended))
 	{
 		char tmp[MAX_PATH];
 		sprintf(tmp, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
@@ -84,7 +74,11 @@ void winamp_play_music(char *midi, uint id)
 		song_ended = false;
 		current_id = id;
 
-		apply_volume();
+		trace("play music 2: %s\n", tmp);
+
+		winamp_apply_volume();
+
+		trace("play music 3: %s\n", midi);
 
 		int err = in->play(tmp);
 
@@ -172,20 +166,24 @@ bool winamp_music_status()
 
 void winamp_set_master_music_volume(uint volume)
 {
+	trace("set master volume: %i\n", volume);
+
 	master_volume = volume;
 
-	apply_volume();
+	winamp_apply_volume();
 }
 
 void winamp_set_music_volume(uint volume)
 {
+	trace("set song volume: %i\n", volume);
+
 	song_volume = volume;
 
 	trans_volume = 0;
 	trans_counter = 0;
 	trans_step = 0;
 
-	apply_volume();
+	winamp_apply_volume();
 }
 
 // make a volume transition
@@ -195,7 +193,7 @@ void winamp_set_music_volume_trans(uint volume, uint step)
 
 	song_volume = volume;
 	// TODO: transition
-	apply_volume();
+	winamp_apply_volume();
 
 	/* step /= 4;
 
@@ -205,7 +203,7 @@ void winamp_set_music_volume_trans(uint volume, uint step)
 		trans_counter = 0;
 		trans_step = 0;
 		song_volume = volume;
-		apply_volume();
+		winamp_apply_volume();
 	}
 	else
 	{
@@ -217,7 +215,11 @@ void winamp_set_music_volume_trans(uint volume, uint step)
 
 void winamp_set_music_tempo(unsigned char tempo)
 {
-	// TODO: Set tempo
+	trace("set music tempo: %i\n", int(tempo));
+
+	if (in) {
+		in->setTempo(tempo);
+	}
 }
 
 void winamp_music_cleanup()

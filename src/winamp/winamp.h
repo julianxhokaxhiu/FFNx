@@ -1,5 +1,6 @@
 #include "windows.h"
 
+#define OUT_VER 0x10
 #define IN_UNICODE 0x0F000000
 #define IN_VER 0x100
 #define IN_VER_UNICODE (IN_UNICODE | IN_VER)
