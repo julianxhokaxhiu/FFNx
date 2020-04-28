@@ -75,5 +75,7 @@ extern char* steam_game_userdata;
 extern cfg_bool_t ff7_center_fields;
 extern cfg_bool_t ff7_battle_fullscreen;
 extern cfg_bool_t ff7_menu_fix_cursor_vcenter;
+extern cfg_bool_t use_hext_patching;
+extern char* hext_patching_path;
 
 void read_cfg();

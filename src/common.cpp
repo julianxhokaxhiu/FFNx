@@ -25,6 +25,7 @@
 #include <sys/timeb.h>
 
 #include "renderer.h"
+#include "hext.h"
 
 #include "types.h"
 #include "log.h"
@@ -2170,6 +2171,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			// Steam edition contains movies unpacked
 			use_external_movie = cfg_bool_t(true);
 		}
+
+		// Apply hext patching
+		if (use_hext_patching) hextPatcher.apply();
 	}
 
 	return TRUE;

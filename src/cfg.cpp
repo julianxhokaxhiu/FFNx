@@ -70,7 +70,9 @@ cfg_bool_t create_crash_dump = cfg_bool_t(false);
 char* steam_game_userdata = nullptr;
 cfg_bool_t ff7_center_fields = cfg_bool_t(true);
 cfg_bool_t ff7_battle_fullscreen = cfg_bool_t(true);
-cfg_bool_t ff7_menu_fix_cursor_vcenter = cfg_bool_t(true);;
+cfg_bool_t ff7_menu_fix_cursor_vcenter = cfg_bool_t(true);
+cfg_bool_t use_hext_patching = cfg_bool_t(true);
+char* hext_patching_path = nullptr;
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -119,6 +121,8 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("ff7_center_fields", &ff7_center_fields),
 		CFG_SIMPLE_BOOL("ff7_battle_fullscreen", &ff7_battle_fullscreen),
 		CFG_SIMPLE_BOOL("ff7_menu_fix_cursor_vcenter", &ff7_menu_fix_cursor_vcenter),
+		CFG_SIMPLE_BOOL("use_hext_patching", &use_hext_patching),
+		CFG_SIMPLE_STR("hext_patching_path", &hext_patching_path),
 
 		CFG_END()
 };
@@ -138,11 +142,11 @@ void error_callback(cfg_t *cfg, const char *fmt, va_list ap)
 
 void read_cfg()
 {
-	cfg_t *cfg;
+	cfg_t* cfg;
 
 	mod_path = _strdup("");
 	use_external_movie = cfg_bool_t(!ff8);
-	
+
 	cfg = cfg_init(opts, 0);
 
 	cfg_set_error_function(cfg, error_callback);
@@ -159,6 +163,53 @@ void read_cfg()
 
 	// Internal scale of 1 is not allowed
 	if (internal_resolution_scale < 2) internal_resolution_scale = 2;
+
+	// If not set, use default
+	if (hext_patching_path == nullptr)
+	{
+		hext_patching_path = (char*)calloc(12, sizeof(char));
+		PathAppendA(hext_patching_path, "hext");
+	}
+
+	// Append languae to hext path
+	switch (version)
+	{
+	case VERSION_FF7_102_US:
+	case VERSION_FF8_12_US:
+	case VERSION_FF8_12_US_NV:
+	case VERSION_FF8_12_US_EIDOS:
+	case VERSION_FF8_12_US_EIDOS_NV:
+		if (japanese_edition)
+		{
+			PathAppendA(hext_patching_path, "jp");
+		}
+		else
+		{
+			PathAppendA(hext_patching_path, "en");
+		}
+		break;
+	case VERSION_FF7_102_FR:
+	case VERSION_FF8_12_FR:
+	case VERSION_FF8_12_FR_NV:
+		PathAppendA(hext_patching_path, "fr");
+		break;
+	case VERSION_FF7_102_DE:
+	case VERSION_FF8_12_DE:
+		PathAppendA(hext_patching_path, "de");
+		break;
+	case VERSION_FF7_102_SP:
+	case VERSION_FF8_12_SP:
+	case VERSION_FF8_12_SP_NV:
+		PathAppendA(hext_patching_path, "sp");
+		break;
+	case VERSION_FF8_12_IT:
+	case VERSION_FF8_12_IT_NV:
+		PathAppendA(hext_patching_path, "it");
+		break;
+	case VERSION_FF8_12_JP:
+		PathAppendA(hext_patching_path, "jp");
+		break;
+	}
 
 #ifdef SINGLE_STEP
 	window_size_x = 0;
