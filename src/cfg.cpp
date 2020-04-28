@@ -33,7 +33,8 @@ char* external_movie_ext = nullptr;
 long use_external_music = FFNX_MUSIC_VGMSTREAM;
 char* external_music_path = nullptr;
 char* external_music_ext = nullptr;
-char* in_plugin_dll_name = nullptr;
+char* winamp_in_plugin = nullptr;
+char* winamp_out_plugin = nullptr;
 cfg_bool_t save_textures = cfg_bool_t(false);
 cfg_bool_t trace_all = cfg_bool_t(false);
 cfg_bool_t trace_movies = cfg_bool_t(false);
@@ -81,7 +82,8 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_INT("use_external_music", &use_external_music),
 		CFG_SIMPLE_STR("external_music_path", &external_music_path),
 		CFG_SIMPLE_STR("external_music_ext", &external_music_ext),
-		CFG_SIMPLE_STR("in_plugin_dll_name", &in_plugin_dll_name),
+		CFG_SIMPLE_STR("winamp_in_plugin", &winamp_in_plugin),
+		CFG_SIMPLE_STR("winamp_out_plugin", &winamp_out_plugin),
 		CFG_SIMPLE_BOOL("save_textures", &save_textures),
 		CFG_SIMPLE_BOOL("trace_all", &trace_all),
 		CFG_SIMPLE_BOOL("trace_movies", &trace_movies),

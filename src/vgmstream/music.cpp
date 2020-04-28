@@ -4,7 +4,7 @@ CRITICAL_SECTION mutex;
 
 #define AUDIO_BUFFER_SIZE 5
 
-IDirectSoundBuffer* vgm_sound_buffer = 0;
+IDirectSoundBuffer* vgm_sound_buffer = nullptr;
 uint vgm_sound_buffer_size;
 uint vgm_sound_write_pointer;
 
@@ -85,7 +85,7 @@ void cleanup()
 {
 	if(vgm_sound_buffer && *common_externals.directsound) IDirectSoundBuffer_Release(vgm_sound_buffer);
 
-	vgm_sound_buffer = 0;
+	vgm_sound_buffer = nullptr;
 }
 
 void load_song(char *midi, uint id)
@@ -134,7 +134,7 @@ void load_song(char *midi, uint id)
 	if(IDirectSound_CreateSoundBuffer(*common_externals.directsound, (LPCDSBUFFERDESC)&sbdesc, &vgm_sound_buffer, 0))
 	{
 		error("couldn't create sound buffer (%i, %i)\n", vgmstream[id]->channels, vgmstream[id]->sample_rate);
-		vgm_sound_buffer = 0;
+		vgm_sound_buffer = nullptr;
 
 		return;
 	}

@@ -18,11 +18,11 @@
 #include "cfg.h"
 #include <process.h>
 
-CustomOutPlugin* out = NULL;
-WinampInPlugin* in = NULL;
+AbstractOutPlugin* out = nullptr;
+WinampInPlugin* in = nullptr;
 
 CRITICAL_SECTION winamp_mutex;
-HANDLE winampRenderHandle = NULL;
+HANDLE winampRenderHandle = nullptr;
 unsigned winampRenderThreadID;
 bool winamp_stop_thread = false;
 
@@ -143,25 +143,40 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 
 void winamp_music_init()
 {
-	if (NULL != out) {
+	if (nullptr != out) {
 		delete out;
+		out = nullptr;
 	}
-	out = new CustomOutPlugin();
-	in = new WinampInPlugin(out->getModule());
+
+	if (nullptr != winamp_out_plugin) {
+		WinampOutPlugin *winamp_out = new WinampOutPlugin();
+		if (winamp_out->open(winamp_out_plugin)) {
+			out = winamp_out;
+		}
+		else {
+			error("couldn't load %s, please verify 'winamp_out_plugin' or comment it\n", winamp_out_plugin);
+		}
+	}
+
+	if (nullptr == out) {
+		out = new CustomOutPlugin();
+	}
+	
+	in = new WinampInPlugin(out);
 
 	InitializeCriticalSection(&winamp_mutex);
 
-	winampRenderHandle = (HANDLE)_beginthreadex(NULL, 0, &winamp_render_thread, NULL, 0, &winampRenderThreadID);
+	winampRenderHandle = (HANDLE)_beginthreadex(nullptr, 0, &winamp_render_thread, nullptr, 0, &winampRenderThreadID);
 
-	if (in->open(in_plugin_dll_name)) {
+	if (in->open(winamp_in_plugin)) {
 		info("Winamp music plugin loaded\n");
 	}
 	else {
-		error("couldn't load in_psf.dll\n");
+		error("couldn't load %s\n", winamp_in_plugin);
 		delete in;
-		in = NULL;
+		in = nullptr;
 		delete out;
-		out = NULL;
+		out = nullptr;
 	}
 }
 
@@ -356,11 +371,11 @@ void winamp_music_cleanup()
 
 	if (in) {
 		delete in;
-		in = NULL;
+		in = nullptr;
 	}
 
 	if (out) {
 		delete out;
-		out = NULL;
+		out = nullptr;
 	}
 }
