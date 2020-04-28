@@ -69,6 +69,7 @@ public:
 	inline WinampOutModule* getModule() {
 		return &mod;
 	}
+	int isPlaying() const;
 	// This method is not part of the winamp plugin
 	static void setTempo(int tempo);
 };

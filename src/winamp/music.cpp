@@ -16,29 +16,129 @@
 #include "music.h"
 #include "plugin.h"
 #include "cfg.h"
-
-uint current_id = 0;
-uint song_ended = true;
+#include <process.h>
 
 CustomOutPlugin* out = NULL;
 WinampInPlugin* in = NULL;
 
-int trans_step;
-int trans_counter;
-int trans_volume;
+CRITICAL_SECTION winamp_mutex;
+HANDLE winampRenderHandle = NULL;
+unsigned winampRenderThreadID;
+bool winamp_stop_thread = false;
 
-int master_volume;
-int song_volume;
+uint winamp_current_id = 0;
+uint winamp_song_ended = true;
+
+int winamp_trans_step = 0;
+int winamp_trans_counter = 0;
+int winamp_trans_volume = 0;
+
+int winamp_crossfade_time = 0;
+uint winamp_crossfade_id = 0;
+char* winamp_crossfade_midi;
+
+int winamp_master_volume = 100;
+int winamp_song_volume = 127;
 
 void winamp_apply_volume()
 {
-	trace("apply_volume %i\n", song_volume);
-
 	if (in)
 	{
-		int volume = (((song_volume * 100) / 127) * master_volume) / 100;
+		int volume = (((winamp_song_volume * 100) / 127) * winamp_master_volume) / 100;
 		in->setVolume(volume * 255 / 100);
 	}
+}
+
+void winamp_load_song(char* midi, uint id)
+{
+	char tmp[512];
+
+	if (!in)
+	{
+		return;
+	}
+
+	in->stop();
+
+	if (!id)
+	{
+		winamp_current_id = 0;
+		return;
+	}
+	
+	sprintf(tmp, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
+
+	winamp_song_ended = false;
+	winamp_current_id = id;
+
+	winamp_apply_volume();
+
+	int err = in->play(tmp);
+
+	if (0 != err) {
+		error("couldn't play music\n", err);
+	}
+}
+
+unsigned __stdcall winamp_render_thread(void* parameter)
+{
+	while (!winamp_stop_thread)
+	{
+		Sleep(50);
+
+		EnterCriticalSection(&winamp_mutex);
+
+		if (*common_externals.directsound)
+		{
+			if (winamp_trans_counter > 0)
+			{
+				winamp_song_volume += winamp_trans_step;
+
+				winamp_apply_volume();
+
+				winamp_trans_counter--;
+
+				if (!winamp_trans_counter)
+				{
+					winamp_song_volume = winamp_trans_volume;
+
+					winamp_apply_volume();
+
+					if (winamp_crossfade_midi)
+					{
+						winamp_load_song(winamp_crossfade_midi, winamp_crossfade_id);
+
+						if (winamp_crossfade_time)
+						{
+							winamp_trans_volume = 127;
+							winamp_trans_counter = winamp_crossfade_time;
+							winamp_trans_step = (winamp_trans_volume - winamp_song_volume) / winamp_crossfade_time;
+						}
+						else
+						{
+							winamp_song_volume = 127;
+							winamp_apply_volume();
+						}
+
+						winamp_crossfade_time = 0;
+						winamp_crossfade_id = 0;
+						winamp_crossfade_midi = 0;
+					}
+				}
+			}
+
+			if (out && *common_externals.directsound && !out->isPlaying())
+			{
+				winamp_song_ended = true;
+			}
+		}
+
+		LeaveCriticalSection(&winamp_mutex);
+	}
+
+	_endthreadex(0);
+
+	return 0;
 }
 
 void winamp_music_init()
@@ -48,6 +148,10 @@ void winamp_music_init()
 	}
 	out = new CustomOutPlugin();
 	in = new WinampInPlugin(out->getModule());
+
+	InitializeCriticalSection(&winamp_mutex);
+
+	winampRenderHandle = (HANDLE)_beginthreadex(NULL, 0, &winamp_render_thread, NULL, 0, &winampRenderThreadID);
 
 	if (in->open(in_plugin_dll_name)) {
 		info("Winamp music plugin loaded\n");
@@ -66,81 +170,81 @@ void winamp_play_music(char *midi, uint id)
 {
 	trace("play music: %s\n", midi);
 
-	if (in && (id != current_id || song_ended))
+	EnterCriticalSection(&winamp_mutex);
+
+	if (id != winamp_current_id || winamp_song_ended)
 	{
-		char tmp[MAX_PATH];
-		sprintf(tmp, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
-
-		song_ended = false;
-		current_id = id;
-
-		trace("play music 2: %s\n", tmp);
-
-		winamp_apply_volume();
-
-		trace("play music 3: %s\n", midi);
-
-		int err = in->play(tmp);
-
-		if (0 != err) {
-			error("couldn't play music\n", err);
-		}
+		winamp_load_song(midi, id);
 	}
+
+	LeaveCriticalSection(&winamp_mutex);
 }
 
 void winamp_stop_music()
 {
-	song_ended = true;
-
+	EnterCriticalSection(&winamp_mutex);
+	
 	if (in) {
 		in->stop();
 	}
+
+	winamp_song_ended = true;
+
+	LeaveCriticalSection(&winamp_mutex);
 }
 
 // cross fade to a new song
-void winamp_cross_fade_music(char *midi, uint id, uint time)
+void winamp_cross_fade_music(char *midi, uint id, int time)
 {
 	int fade_time = time * 2;
 
 	trace("cross fade music: %s (%i)\n", midi, time);
 
-	if (id != current_id || song_ended)
-	{
-		winamp_stop_music();
-		winamp_play_music(midi, id);
+	EnterCriticalSection(&winamp_mutex);
 
-		// TODO: real fade
-		/* if (!song_ended && fade_time)
+	if (id != winamp_current_id || winamp_song_ended)
+	{
+		if (!winamp_song_ended && fade_time)
 		{
-			trans_volume = 0;
-			trans_counter = fade_time;
-			trans_step = (trans_volume - song_volume) / fade_time;
+			winamp_trans_volume = 0;
+			winamp_trans_counter = fade_time;
+			winamp_trans_step = (winamp_trans_volume - winamp_song_volume) / fade_time;
 		}
 		else
 		{
-			trans_volume = 0;
-			trans_counter = 1;
-			trans_step = 0;
+			winamp_trans_volume = 0;
+			winamp_trans_counter = 1;
+			winamp_trans_step = 0;
 		}
 
-		crossfade_time = fade_time;
-		crossfade_id = id;
-		crossfade_midi = midi; */
+		winamp_crossfade_time = fade_time;
+		winamp_crossfade_id = id;
+		winamp_crossfade_midi = midi;
 	}
+
+	LeaveCriticalSection(&winamp_mutex);
 }
 
 void winamp_pause_music()
 {
+	EnterCriticalSection(&winamp_mutex);
+	
 	if (in) {
 		in->pause();
 	}
+
+	LeaveCriticalSection(&winamp_mutex);
 }
 
 void winamp_resume_music()
 {
+	EnterCriticalSection(&winamp_mutex);
+
 	if (in) {
 		in->unPause();
 	}
+
+	LeaveCriticalSection(&winamp_mutex);
 }
 
 // return true if music is playing, false if it isn't
@@ -152,7 +256,9 @@ bool winamp_music_status()
 	uint last_status = 0;
 	uint status;
 
-	status = !song_ended;
+	EnterCriticalSection(&winamp_mutex);
+
+	status = !winamp_song_ended;
 
 	if (!in)
 	{
@@ -160,71 +266,93 @@ bool winamp_music_status()
 		return !last_status;
 	}
 
+	LeaveCriticalSection(&winamp_mutex);
+
 	last_status = status;
 	return status;
 }
 
-void winamp_set_master_music_volume(uint volume)
+void winamp_set_master_music_volume(int volume)
 {
 	trace("set master volume: %i\n", volume);
 
-	master_volume = volume;
+	EnterCriticalSection(&winamp_mutex);
+
+	winamp_master_volume = volume;
 
 	winamp_apply_volume();
+
+	LeaveCriticalSection(&winamp_mutex);
 }
 
-void winamp_set_music_volume(uint volume)
+void winamp_set_music_volume(int volume)
 {
 	trace("set song volume: %i\n", volume);
 
-	song_volume = volume;
+	EnterCriticalSection(&winamp_mutex);
 
-	trans_volume = 0;
-	trans_counter = 0;
-	trans_step = 0;
+	winamp_song_volume = volume;
+
+	winamp_trans_volume = 0;
+	winamp_trans_counter = 0;
+	winamp_trans_step = 0;
 
 	winamp_apply_volume();
+
+	LeaveCriticalSection(&winamp_mutex);
 }
 
 // make a volume transition
-void winamp_set_music_volume_trans(uint volume, uint step)
+void winamp_set_music_volume_trans(int volume, int step)
 {
 	trace("set volume trans: %i (%i)\n", volume, step);
 
-	song_volume = volume;
-	// TODO: transition
-	winamp_apply_volume();
+	step /= 4;
 
-	/* step /= 4;
-
+	EnterCriticalSection(&winamp_mutex);
+	
 	if (step < 2)
 	{
-		trans_volume = 0;
-		trans_counter = 0;
-		trans_step = 0;
-		song_volume = volume;
+		winamp_trans_volume = 0;
+		winamp_trans_counter = 0;
+		winamp_trans_step = 0;
+		winamp_song_volume = volume;
 		winamp_apply_volume();
 	}
 	else
 	{
-		trans_volume = volume;
-		trans_counter = step;
-		trans_step = (trans_volume - song_volume) / step;
-	} */
+		winamp_trans_volume = volume;
+		winamp_trans_counter = step;
+		winamp_trans_step = (winamp_trans_volume - winamp_song_volume) / step;
+	}
+
+	LeaveCriticalSection(&winamp_mutex);
 }
 
 void winamp_set_music_tempo(unsigned char tempo)
 {
 	trace("set music tempo: %i\n", int(tempo));
 
+	EnterCriticalSection(&winamp_mutex);
+
 	if (in) {
 		in->setTempo(tempo);
 	}
+
+	EnterCriticalSection(&winamp_mutex);
 }
 
 void winamp_music_cleanup()
 {
+	winamp_stop_thread = true;
+	
 	winamp_stop_music();
+
+	WaitForSingleObject(winampRenderHandle, INFINITE);
+
+	CloseHandle(winampRenderHandle);
+
+	DeleteCriticalSection(&winamp_mutex);
 
 	if (in) {
 		delete in;
