@@ -267,6 +267,8 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	UNUSED_PARAM(bufferlenms);
 	UNUSED_PARAM(prebufferms);
 
+	info("CustomOutPlugin::Open()\n");
+
 	Close();
 
 	DSBUFFERDESC1 sbdesc;
@@ -312,11 +314,13 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 void CustomOutPlugin::Close()
 {
-	if (sound_buffer) {
-		sound_buffer->Release();
-	}
+	info("CustomOutPlugin::Close()\n");
 
-	sound_buffer = 0;
+	if (sound_buffer) {
+		IDirectSoundBuffer* buffer = sound_buffer;
+		sound_buffer = nullptr;
+		buffer->Release();
+	}
 }
 
 int CustomOutPlugin::Write(char* buffer, int len)
@@ -324,8 +328,13 @@ int CustomOutPlugin::Write(char* buffer, int len)
 	LPVOID ptr1, ptr2;
 	DWORD bytes1, bytes2;
 
+	if (nullptr == sound_buffer) {
+		return 1;
+	}
+
 	if (sound_buffer->Lock(sound_write_pointer, len, &ptr1, &bytes1, &ptr2, &bytes2, 0)) {
 		error("couldn't lock sound buffer\n");
+		return 1;
 	}
 
 	memcpy(ptr1, buffer, bytes1);
@@ -333,6 +342,7 @@ int CustomOutPlugin::Write(char* buffer, int len)
 
 	if (sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
 		error("couldn't unlock sound buffer\n");
+		return 1;
 	}
 
 	sound_write_pointer = (sound_write_pointer + bytes1 + bytes2) % sound_buffer_size;
