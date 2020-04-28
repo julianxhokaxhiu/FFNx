@@ -36,7 +36,6 @@ extern long use_external_music;
 extern char* external_music_path;
 extern char* external_music_ext;
 extern char* in_plugin_dll_name;
-extern char* out_plugin_dll_name;
 extern cfg_bool_t save_textures;
 extern cfg_bool_t trace_all;
 extern cfg_bool_t trace_movies;
