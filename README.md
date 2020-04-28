@@ -53,8 +53,8 @@ If you're curious to know it, FFNx is made with:
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
-- **Canary:** the latest snapshot of the code. Like a nightly, but untested.
-- **Latest Release:** the official release, which is tested and should be stable enough for long gameplay sessions.
+- [**Canary:**](https://github.com/julianxhokaxhiu/FFNx/releases/tag/canary) the latest snapshot of the code. Like a nightly, but untested.
+- [**Latest Release:**](https://github.com/julianxhokaxhiu/FFNx/releases/latest) the official release, which is tested and should be stable enough for long gameplay sessions.
 
 ## How to install
 In either way, in order to use this driver you MUST have a legal copy of the game. DO NOT ask for a copy unless bought legally.
