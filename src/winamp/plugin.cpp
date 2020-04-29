@@ -205,7 +205,9 @@ uint CustomOutPlugin::bytes_written = 0;
 DWORD CustomOutPlugin::start_t = 0;
 DWORD CustomOutPlugin::last_pause_t = 0;
 int CustomOutPlugin::last_pause = 0;
-int CustomOutPlugin::volume = -1;
+LONG CustomOutPlugin::volume = -1;
+LONG CustomOutPlugin::pan = 0;
+DWORD CustomOutPlugin::tempo = 0;
 WAVEFORMATEX CustomOutPlugin::sound_format = WAVEFORMATEX();
 
 CustomOutPlugin::CustomOutPlugin() :
@@ -291,6 +293,10 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	sbdesc.dwReserved = 0;
 	sbdesc.dwBufferBytes = sound_buffer_size;
 
+	if (!*common_externals.directsound) {
+		return -1;
+	}
+	
 	if ((*common_externals.directsound)->CreateSoundBuffer((LPCDSBUFFERDESC)&sbdesc, &sound_buffer, 0))
 	{
 		error("couldn't create sound buffer (%i, %i)\n", numchannels, samplerate);
@@ -300,7 +306,15 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	}
 
 	if (volume >= 0) {
-		SetVolume(volume);
+		sound_buffer->SetVolume(volume);
+	}
+
+	if (pan != 0) {
+		sound_buffer->SetPan(pan);
+	}
+	
+	if (tempo != 0) {
+		sound_buffer->SetFrequency(tempo);
 	}
 
 	if (sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
@@ -328,7 +342,7 @@ int CustomOutPlugin::Write(char* buffer, int len)
 	LPVOID ptr1, ptr2;
 	DWORD bytes1, bytes2;
 
-	if (nullptr == sound_buffer) {
+	if (nullptr == sound_buffer || !*common_externals.directsound) {
 		return 1;
 	}
 
@@ -353,11 +367,15 @@ int CustomOutPlugin::Write(char* buffer, int len)
 
 int CustomOutPlugin::CanWrite()
 {
-	if (!sound_buffer || last_pause) {
+	DWORD current_play_cursor;
+
+	if (last_pause) {
 		return 0;
 	}
-
-	DWORD current_play_cursor;
+	
+	if (!sound_buffer || last_pause || !*common_externals.directsound) {
+		return 0;
+	}
 
 	sound_buffer->GetCurrentPosition(&current_play_cursor, nullptr);
 
@@ -369,7 +387,7 @@ int CustomOutPlugin::CanWrite()
 
 int CustomOutPlugin::IsPlaying()
 {
-	if (sound_buffer) {
+	if (sound_buffer && *common_externals.directsound) {
 		DWORD ret;
 
 		if (DS_OK == sound_buffer->GetStatus(&ret)) {
@@ -384,7 +402,7 @@ int CustomOutPlugin::Pause(int pause)
 {
 	int t = last_pause;
 
-	if (sound_buffer) {
+	if (sound_buffer && *common_externals.directsound) {
 		if (0 == pause) {
 			sound_buffer->Play(0, 0, DSBPLAY_LOOPING);
 			if (last_pause_t > 0) {
@@ -408,20 +426,22 @@ void CustomOutPlugin::SetVolume(int volume)
 		return;
 	}
 
-	CustomOutPlugin::volume = volume;
+	float decibel = 20.0f * log10f((volume * 100 / 255) / 100.0f);
+	CustomOutPlugin::volume = volume ? int(decibel * 100.0f) : DSBVOLUME_MIN;
 
 	if (sound_buffer) {
-		float decibel = 20.0f * log10f((volume * 100 / 255) / 100.0f);
-		sound_buffer->SetVolume(volume ? int(decibel * 100.0f) : DSBVOLUME_MIN);
+		sound_buffer->SetVolume(CustomOutPlugin::volume);
 	}
 }
 
 void CustomOutPlugin::SetPan(int pan)
 {
+	info("Winamp OutPlugin SetPan: %i\n", CustomOutPlugin::pan);
+
+	CustomOutPlugin::pan = pan * DSBPAN_LEFT / 128;
+	
 	if (sound_buffer) {
-		LONG dstpan = pan * DSBPAN_LEFT / 128;
-		info("Winamp OutPlugin SetPan: %i\n", dstpan);
-		sound_buffer->SetPan(dstpan);
+		sound_buffer->SetPan(CustomOutPlugin::pan);
 	}
 }
 
@@ -459,10 +479,10 @@ int CustomOutPlugin::isPlaying() const
 
 void CustomOutPlugin::setTempo(int tempo)
 {
-	if (sound_buffer) {
-		int dsttempo = (sound_format.nSamplesPerSec * (tempo + 480)) / 512;
+	CustomOutPlugin::tempo = (sound_format.nSamplesPerSec * (tempo + 480)) / 512;
 
-		sound_buffer->SetFrequency(dsttempo);
+	if (sound_buffer) {
+		sound_buffer->SetFrequency(CustomOutPlugin::tempo);
 	}
 }
 

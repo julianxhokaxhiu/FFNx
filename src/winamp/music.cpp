@@ -75,8 +75,10 @@ void winamp_load_song(char* midi, uint id)
 
 	int err = in->play(tmp);
 
-	if (0 != err) {
-		error("couldn't play music\n", err);
+	if (-1 == err) {
+		error("couldn't play music (file not found)\n");
+	} else if (0 != err) {
+		error("couldn't play music (%i)\n", err);
 	}
 }
 
@@ -106,7 +108,9 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 
 					if (winamp_crossfade_midi)
 					{
-						winamp_load_song(winamp_crossfade_midi, winamp_crossfade_id);
+						if (!winamp_stop_thread) {
+							winamp_load_song(winamp_crossfade_midi, winamp_crossfade_id);
+						}
 
 						if (winamp_crossfade_time)
 						{
@@ -183,7 +187,7 @@ void winamp_music_init()
 // start playing some music, <midi> is the name of the MIDI file without the .mid extension
 void winamp_play_music(char *midi, uint id)
 {
-	trace("play music: %s\n", midi);
+	trace("[%s] play music: %s\n", getmode_cached()->name, midi);
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -213,7 +217,7 @@ void winamp_cross_fade_music(char *midi, uint id, int time)
 {
 	int fade_time = time * 2;
 
-	trace("cross fade music: %s (%i)\n", midi, time);
+	trace("[%s] cross fade music: %s (%i)\n", getmode_cached()->name, midi, time);
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -354,7 +358,7 @@ void winamp_set_music_tempo(unsigned char tempo)
 		in->setTempo(tempo);
 	}
 
-	EnterCriticalSection(&winamp_mutex);
+	LeaveCriticalSection(&winamp_mutex);
 }
 
 void winamp_music_cleanup()
@@ -363,11 +367,7 @@ void winamp_music_cleanup()
 	
 	winamp_stop_music();
 
-	WaitForSingleObject(winampRenderHandle, INFINITE);
-
-	CloseHandle(winampRenderHandle);
-
-	DeleteCriticalSection(&winamp_mutex);
+	EnterCriticalSection(&winamp_mutex);
 
 	if (in) {
 		delete in;
@@ -378,4 +378,12 @@ void winamp_music_cleanup()
 		delete out;
 		out = nullptr;
 	}
+
+	LeaveCriticalSection(&winamp_mutex);
+
+	WaitForSingleObject(winampRenderHandle, INFINITE);
+
+	CloseHandle(winampRenderHandle);
+
+	DeleteCriticalSection(&winamp_mutex);
 }

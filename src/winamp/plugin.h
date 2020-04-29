@@ -60,7 +60,9 @@ private:
 	static DWORD start_t;
 	static DWORD last_pause_t;
 	static int last_pause;
-	static int volume;
+	static LONG volume;
+	static LONG pan;
+	static DWORD tempo;
 	static WAVEFORMATEX sound_format;
 	static void Config(HWND hwndParent);
 	static void About(HWND hwndParent);
