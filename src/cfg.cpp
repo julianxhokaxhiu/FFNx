@@ -171,7 +171,13 @@ void read_cfg()
 		PathAppendA(hext_patching_path, "hext");
 	}
 
-	// Append languae to hext path
+	// Append game name
+	if (ff8)
+		PathAppendA(hext_patching_path, "ff8");
+	else
+		PathAppendA(hext_patching_path, "ff7");
+
+	// Append language to hext path
 	switch (version)
 	{
 	case VERSION_FF7_102_US:
