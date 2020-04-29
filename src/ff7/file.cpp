@@ -30,11 +30,116 @@
 #include "../log.h"
 #include "../globals.h"
 
+int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = false)
+{
+	if (wantsSteamPath && _access(in, 0) == -1)
+	{
+		if (
+			strcmp(in, "scene.bin") == 0 ||
+			strcmp(in, "camdat0.bin") == 0 ||
+			strcmp(in, "camdat1.bin") == 0 ||
+			strcmp(in, "camdat2.bin") == 0 ||
+			strcmp(in, "co.bin") == 0
+			)
+		{
+			get_data_lang_path(out);
+			PathAppendA(out, R"(battle)");
+			PathAppendA(out, in);
+
+			if (_access(out, 0) == -1)
+				return 1;
+		}
+		else
+		{
+			// Search for the last '\' character and get a pointer to the next char
+			const char* pos = strrchr(in, 92);
+
+			if (pos != NULL) pos += 1;
+
+			get_data_lang_path(out);
+
+			if (pos != NULL) PathAppendA(out, pos);
+
+			if ((_access(out, 0) == -1 || pos == NULL))
+			{
+				bool isSavegame = strstr(in, ".ff7") != NULL;
+				bool isCacheFile = strstr(in, ".P") != NULL;
+
+				// If steam edition, do one more try in the user data path
+				if (steam_edition) get_userdata_path(out, size, isSavegame);
+				else strcpy(out, "");
+
+				if (isCacheFile)
+				{
+					if (steam_edition)
+					{
+						PathAppendA(out, "cache");
+						std::filesystem::create_directories(out);
+					}
+					PathAppendA(out, in);
+				}
+				else
+				{
+					if (isSavegame) pos = strrchr(in, 47) + 1;
+					PathAppendA(out, pos);
+
+					if (_access(out, 0) == -1)
+						return 1;
+				}
+			}
+		}
+
+		return 0;
+	}
+	else
+	{
+		bool isCacheFile = strstr(in, ".P") != NULL;
+		
+		if (!isCacheFile)
+		{
+			const char* pos = strstr(in, "data");
+
+			if (strstr(in, "data") != NULL)
+			{
+				pos += 5;
+			}
+			else
+			{
+				// Search for the last '\' character and get a pointer to the next char
+				pos = strrchr(in, 92);
+
+				if (pos != NULL) pos += 1;
+			}
+
+			strcpy(out, basedir);
+			PathAppendA(out, override_path);
+			if (pos != NULL) PathAppendA(out, pos);
+
+			if (trace_all || trace_files) trace("%s: %s -> %s\n", __func__, in, out);
+
+			if (_access(out, 0) == -1)
+				return -1;
+
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
 FILE *open_lgp_file(char *filename, uint mode)
 {
+	char _filename[260]{ 0 };
 	if(trace_all || trace_files) trace("opening lgp file %s\n", filename);
 
-	return fopen(filename, "rb");
+	int redirect_status = attempt_redirection(filename, _filename, sizeof(_filename));
+
+	if (redirect_status == -1)
+	{
+		strcpy(_filename, filename);
+	}
+
+	return fopen(_filename, "rb");
 }
 
 void close_lgp_file(FILE *fd)
@@ -336,6 +441,10 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 	char mangled_name[200];
 	struct ff7_file *ret = (ff7_file*)external_calloc(sizeof(*ret), 1);
 	char _filename[260]{ 0 };
+	char _newFilename[260]{ 0 };
+	int redirect_status = 0;
+
+	if (!ret) return 0;
 
 	if(trace_all || trace_files)
 	{
@@ -343,73 +452,46 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 		else trace("open %s (mode %i)\n", filename, file_context->mode);
 	}
 
-	// Add support for Steam language directory
+	
 	if (!file_context->use_lgp)
 	{
-		if ((steam_edition || estore_edition) && _access(filename, 0) == -1)
+		// Attempt another redirection based on Steam/eStore logic
+		int redirect_status = attempt_redirection(filename, _newFilename, sizeof(_newFilename), steam_edition || estore_edition);
+
+		// File was found
+		if (redirect_status == 0)
 		{
-			if (
-				strcmp(filename, "scene.bin") == 0 ||
-				strcmp(filename, "camdat0.bin") == 0 ||
-				strcmp(filename, "camdat1.bin") == 0 ||
-				strcmp(filename, "camdat2.bin") == 0 ||
-				strcmp(filename, "co.bin") == 0
-			)
+			// Attemp override redirection on top of Steam/eStore new path
+			redirect_status = attempt_redirection(_newFilename, _filename, sizeof(_filename));
+
+			if (redirect_status == -1)
 			{
-				get_data_lang_path(_filename);
-				PathAppendA(_filename, R"(battle)");
-				PathAppendA(_filename, filename);
-
-				if (_access(_filename, 0) == -1)
-					goto error;
-			}
-			else
-			{
-				// Search for the last '\' character and get a pointer to the next char
-				const char* pos = strrchr(filename, 92);
-
-				if (pos != NULL) pos += 1;
-
-				get_data_lang_path(_filename);
-
-				if (pos != NULL) PathAppendA(_filename, pos);
-
-				if ((_access(_filename, 0) == -1 || pos == NULL))
-				{
-					bool isSavegame = strstr(filename, ".ff7") != NULL;
-					bool isCacheFile = strstr(filename, ".P") != NULL;
-
-					// If steam edition, do one more try in the user data path
-					if (steam_edition) get_userdata_path(_filename, sizeof(_filename), isSavegame);
-					else strcpy(_filename, "");
-
-					if (isCacheFile)
-					{
-						if (steam_edition)
-						{
-							PathAppendA(_filename, "cache");
-							std::filesystem::create_directories(_filename);
-						}
-						PathAppendA(_filename, filename);
-					}
-					else
-					{
-						if (isSavegame) pos = strrchr(filename, 47) + 1;
-						PathAppendA(_filename, pos);
-
-						if (_access(_filename, 0) == -1)
-							goto error;
-					}
-				}
+				// If was not found, use original redirected path
+				strcpy(_filename, _newFilename);
 			}
 		}
-		else
-			strcpy(_filename, filename);
+		// File was not found
+		else if (redirect_status == -1)
+		{
+			// Attemp override redirection on top of classic path
+			redirect_status = attempt_redirection(filename, _filename, sizeof(_filename));
+
+			if (redirect_status == -1)
+			{
+				// If was not found, use original filename
+				strcpy(_filename, filename);
+			}
+
+		}
+		// File was not found, but was required
+		else if (redirect_status == 1)
+		{
+			goto error;
+		}
 	}
 	else
+		// LGP files can be loaded safely from data, as Steam/eStore does not override them
 		strcpy(_filename, filename);
-
-	if(!ret) return 0;
 
 	ret->name = (char*)external_malloc(strlen(_filename) + 1);
 	strcpy(ret->name, _filename);

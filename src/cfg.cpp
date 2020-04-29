@@ -73,6 +73,7 @@ cfg_bool_t ff7_battle_fullscreen = cfg_bool_t(true);
 cfg_bool_t ff7_menu_fix_cursor_vcenter = cfg_bool_t(true);
 cfg_bool_t use_hext_patching = cfg_bool_t(true);
 char* hext_patching_path = nullptr;
+char* override_path = nullptr;
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -123,6 +124,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("ff7_menu_fix_cursor_vcenter", &ff7_menu_fix_cursor_vcenter),
 		CFG_SIMPLE_BOOL("use_hext_patching", &use_hext_patching),
 		CFG_SIMPLE_STR("hext_patching_path", &hext_patching_path),
+		CFG_SIMPLE_STR("override_path", &override_path),
 
 		CFG_END()
 };
@@ -164,7 +166,10 @@ void read_cfg()
 	// Internal scale of 1 is not allowed
 	if (internal_resolution_scale < 2) internal_resolution_scale = 2;
 
-	// If not set, use default
+	/*
+	* HEXT PATCHING
+	*/
+
 	if (hext_patching_path == nullptr)
 	{
 		hext_patching_path = (char*)calloc(12, sizeof(char));
@@ -216,6 +221,12 @@ void read_cfg()
 		PathAppendA(hext_patching_path, "jp");
 		break;
 	}
+
+	/*
+	* OVERRIDE PATH
+	*/
+	if (override_path == nullptr)
+		override_path = R"(override\)";
 
 #ifdef SINGLE_STEP
 	window_size_x = 0;

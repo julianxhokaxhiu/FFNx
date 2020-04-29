@@ -75,7 +75,12 @@ uint ff7_prepare_movie(char *name, uint loop, struct dddevice **dddevice, uint d
 
 	_splitpath(name, drivename, dirname, filename, NULL);
 
-	_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, external_movie_ext);
+	// Attempt override
+	_snprintf(fmvName, sizeof(fmvName), R"(%s\%smovies\%s.%s)", basedir, override_path, filename, external_movie_ext);
+
+	// If does not exist
+	if (_access(fmvName, 0) == -1)
+		_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, external_movie_ext);
 
 	ffmpeg_prepare_movie(fmvName);
 
