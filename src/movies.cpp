@@ -176,7 +176,7 @@ void ff8_prepare_movie(uint disc, uint movie)
 {
 	char fmvName[512];
 	char camName[512];
-	char dataPath[64]{"data"};
+	char dataPath[260]{0};
 	FILE *camFile;
 	uint camOffset = 0;
 
@@ -188,9 +188,12 @@ void ff8_prepare_movie(uint disc, uint movie)
 	// Unexpected cases default to current disk
 	else if (disc >= 5) {
 		disc = ff8_currentdisk - 1;
+
+		strcpy(dataPath, basedir);
+		PathAppendA(dataPath, "data");
 	}
 
-	_snprintf(fmvName, sizeof(fmvName), "%s/%s/movies/disc%02i_%02ih.%s", basedir, dataPath, disc, movie, external_movie_ext);
+	_snprintf(fmvName, sizeof(fmvName), "%s/movies/disc%02i_%02ih.%s", dataPath, disc, movie, external_movie_ext);
 	_snprintf(camName, sizeof(camName), "%s/data/movies/disc%02i_%02i.cam", basedir, disc, movie);
 
 	if(trace_all || trace_movies) trace("prepare_movie %s\n", fmvName);
