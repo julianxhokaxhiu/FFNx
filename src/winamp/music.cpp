@@ -14,12 +14,9 @@
  */
 
 #include "music.h"
-#include "plugin.h"
-#include "cfg.h"
-#include <process.h>
 
 AbstractOutPlugin* out = nullptr;
-WinampInPlugin* in = nullptr;
+AbstractInPlugin* in = nullptr;
 
 CRITICAL_SECTION winamp_mutex;
 HANDLE winampRenderHandle = nullptr;
@@ -27,6 +24,7 @@ unsigned winampRenderThreadID;
 bool winamp_stop_thread = false;
 
 uint winamp_current_id = 0;
+char* winamp_current_midi = nullptr;
 uint winamp_song_ended = true;
 
 int winamp_trans_step = 0;
@@ -40,12 +38,16 @@ char* winamp_crossfade_midi;
 int winamp_master_volume = 100;
 int winamp_song_volume = 127;
 
+uint winamp_paused_midi_id = 0;
+int winamp_paused_midi_ms = 0;
+uint winamp_current_mode = uint(-1);
+
 void winamp_apply_volume()
 {
-	if (in)
+	if (out)
 	{
 		int volume = (((winamp_song_volume * 100) / 127) * winamp_master_volume) / 100;
-		in->setVolume(volume * 255 / 100);
+		out->setVolume(volume * 255 / 100);
 	}
 }
 
@@ -57,7 +59,20 @@ void winamp_load_song(char* midi, uint id)
 	{
 		return;
 	}
+	
+	uint winamp_previous_paused_midi_id = winamp_paused_midi_id;
+	int winamp_previous_paused_midi_ms = winamp_paused_midi_ms;
+	uint winamp_previous_mode = winamp_current_mode;
+	char* winamp_previous_midi = winamp_current_midi;
+	uint mode = getmode_cached()->driver_mode;
 
+	if (winamp_current_id && ff7_needs_resume(mode, winamp_previous_mode, midi, winamp_previous_midi)) {
+		winamp_paused_midi_id = winamp_current_id;
+		winamp_paused_midi_ms = in->getOutputTime();
+
+		info("Saved midi time ms: %i\n", winamp_paused_midi_ms);
+	}
+	
 	in->stop();
 
 	if (!id)
@@ -70,8 +85,16 @@ void winamp_load_song(char* midi, uint id)
 
 	winamp_song_ended = false;
 	winamp_current_id = id;
+	winamp_current_midi = midi;
+	winamp_current_mode = mode;
 
 	winamp_apply_volume();
+
+	bool seek = winamp_previous_paused_midi_id == id && ff7_needs_resume(winamp_previous_mode, mode, winamp_previous_midi, midi);
+
+	if (seek) {
+		out->lock();
+	}
 
 	int err = in->play(tmp);
 
@@ -79,6 +102,14 @@ void winamp_load_song(char* midi, uint id)
 		error("couldn't play music (file not found)\n");
 	} else if (0 != err) {
 		error("couldn't play music (%i)\n", err);
+	}
+
+	if (seek) {
+		info("Resume midi time ms: %i\n", winamp_previous_paused_midi_ms);
+		in->setOutputTime(winamp_previous_paused_midi_ms);
+		winamp_paused_midi_id = 0;
+		winamp_paused_midi_ms = 0;
+		out->unlock();
 	}
 }
 
@@ -92,47 +123,65 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 
 		if (*common_externals.directsound)
 		{
+			bool start_next_song = false;
+
 			if (winamp_trans_counter > 0)
 			{
-				winamp_song_volume += winamp_trans_step;
-
-				winamp_apply_volume();
-
-				winamp_trans_counter--;
-
-				if (!winamp_trans_counter)
+				if (in && out && (in->getOutputTime() > 0 || out->isPlaying()))
 				{
-					winamp_song_volume = winamp_trans_volume;
+					winamp_song_volume += winamp_trans_step;
 
 					winamp_apply_volume();
 
-					if (winamp_crossfade_midi)
+					winamp_trans_counter--;
+
+					if (!winamp_trans_counter)
 					{
-						if (!winamp_stop_thread) {
-							winamp_load_song(winamp_crossfade_midi, winamp_crossfade_id);
-						}
-
-						if (winamp_crossfade_time)
-						{
-							winamp_trans_volume = 127;
-							winamp_trans_counter = winamp_crossfade_time;
-							winamp_trans_step = (winamp_trans_volume - winamp_song_volume) / winamp_crossfade_time;
-						}
-						else
-						{
-							winamp_song_volume = 127;
-							winamp_apply_volume();
-						}
-
-						winamp_crossfade_time = 0;
-						winamp_crossfade_id = 0;
-						winamp_crossfade_midi = 0;
+						start_next_song = true;
 					}
+				}
+				else
+				{
+					winamp_trans_counter = 0;
+
+					start_next_song = true;
+				}
+			}
+			
+			if (start_next_song)
+			{
+				winamp_song_volume = winamp_trans_volume;
+
+				winamp_apply_volume();
+
+				if (winamp_crossfade_midi)
+				{
+					if (!winamp_stop_thread)
+					{
+						winamp_load_song(winamp_crossfade_midi, winamp_crossfade_id);
+					}
+
+					if (winamp_crossfade_time)
+					{
+						winamp_trans_volume = 127;
+						winamp_trans_counter = winamp_crossfade_time;
+						winamp_trans_step = (winamp_trans_volume - winamp_song_volume) / winamp_crossfade_time;
+					}
+					else
+					{
+						winamp_song_volume = 127;
+						winamp_apply_volume();
+					}
+
+					winamp_crossfade_time = 0;
+					winamp_crossfade_id = 0;
+					winamp_crossfade_midi = 0;
 				}
 			}
 
-			if (out && *common_externals.directsound && !out->isPlaying())
+			if (in && *common_externals.directsound && in->getOutputTime() >= in->getLength())
 			{
+				trace("Song ended\n");
 				winamp_song_ended = true;
 			}
 		}
@@ -152,42 +201,57 @@ void winamp_music_init()
 		out = nullptr;
 	}
 
+	// Force volume for MM (out_wave fix)
+	for (int i = 0; i < waveInGetNumDevs(); ++i) {
+		waveOutSetVolume(HWAVEOUT(i), 0xFFFFFFFF);
+	}
+
+	char* out_type = "FFNx out implementation",
+		* in_type = "FFNx in implementation";
+	
 	if (nullptr != winamp_out_plugin) {
-		WinampOutPlugin *winamp_out = new WinampOutPlugin();
+		WinampOutPlugin* winamp_out = new WinampOutPlugin();
 		if (winamp_out->open(winamp_out_plugin)) {
 			out = winamp_out;
+			out_type = winamp_out_plugin;
 		}
 		else {
 			error("couldn't load %s, please verify 'winamp_out_plugin' or comment it\n", winamp_out_plugin);
+			delete winamp_out;
 		}
 	}
 
 	if (nullptr == out) {
 		out = new CustomOutPlugin();
 	}
+
+	if (nullptr != winamp_in_plugin) {
+		WinampInPlugin* winamp_in = new WinampInPlugin(out);
+		if (winamp_in->open(winamp_in_plugin)) {
+			in = winamp_in;
+			in_type = winamp_in_plugin;
+		}
+		else {
+			error("couldn't load %s, please verify 'winamp_in_plugin' or comment it\n", winamp_in_plugin);
+			delete winamp_in;
+		}
+	}
 	
-	in = new WinampInPlugin(out);
+	if (nullptr == in) {
+		in = new VgmstreamInPlugin(out);
+	}
 
 	InitializeCriticalSection(&winamp_mutex);
 
 	winampRenderHandle = (HANDLE)_beginthreadex(nullptr, 0, &winamp_render_thread, nullptr, 0, &winampRenderThreadID);
 
-	if (in->open(winamp_in_plugin)) {
-		info("Winamp music plugin loaded\n");
-	}
-	else {
-		error("couldn't load %s\n", winamp_in_plugin);
-		delete in;
-		in = nullptr;
-		delete out;
-		out = nullptr;
-	}
+	info("Winamp music plugin loaded using %s and %s\n", in_type, out_type);
 }
 
 // start playing some music, <midi> is the name of the MIDI file without the .mid extension
 void winamp_play_music(char *midi, uint id)
 {
-	trace("[%s] play music: %s\n", getmode_cached()->name, midi);
+	trace("[%s] play music: %s:%i (current=%i, ended=%i)\n", getmode_cached()->name, midi, id, winamp_current_id, winamp_song_ended);
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -201,6 +265,8 @@ void winamp_play_music(char *midi, uint id)
 
 void winamp_stop_music()
 {
+	trace("stop music\n");
+
 	EnterCriticalSection(&winamp_mutex);
 	
 	if (in) {
@@ -217,7 +283,7 @@ void winamp_cross_fade_music(char *midi, uint id, int time)
 {
 	int fade_time = time * 2;
 
-	trace("[%s] cross fade music: %s (%i)\n", getmode_cached()->name, midi, time);
+	trace("[%s] cross fade music: %s:%i (%i)\n", getmode_cached()->name, midi, id, time);
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -354,8 +420,8 @@ void winamp_set_music_tempo(unsigned char tempo)
 
 	EnterCriticalSection(&winamp_mutex);
 
-	if (in) {
-		in->setTempo(tempo);
+	if (out) {
+		out->setTempo(tempo);
 	}
 
 	LeaveCriticalSection(&winamp_mutex);

@@ -4,9 +4,14 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <dsound.h>
+#include <process.h>
 
 #include "../log.h"
 #include "../types.h"
+#include "../music.h"
+#include "../cfg.h"
+
+#include "plugin.h"
 
 void winamp_music_init();
 void winamp_play_music(char* midi, uint id);
