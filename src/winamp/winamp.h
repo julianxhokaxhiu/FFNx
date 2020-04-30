@@ -1,3 +1,5 @@
+#pragma once
+
 #include "windows.h"
 
 #define OUT_VER 0x10

@@ -1,7 +1,17 @@
 #include "plugin.h"
+
+#define _USE_MATH_DEFINES
 #include <math.h>
-#include "../common.h"
-#include "../log.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#include "in_vgmstream.h"
+
+#if defined(__cplusplus)
+}
+#endif
 
 #define AUDIO_BUFFER_SIZE 5
 
@@ -35,7 +45,12 @@ bool WinampPlugin::open(LPCWSTR libFileNameW, char* libFileNameA)
 			return true;
 		}
 
+		error("couldn't load function %s in external library (error %u)\n", procName(), GetLastError());
+
 		close();
+	}
+	else {
+		error("couldn't load external library (error %u)\n", GetLastError());
 	}
 
 	return false;
@@ -144,6 +159,33 @@ void SetInfo(int bitrate, int srate, int stereo, int synched)
 	UNUSED_PARAM(synched);
 }
 
+void AbstractOutPlugin::setVolume(int volume)
+{
+	info("AbstractOutPlugin::setVolume %i %i\n", volume, this->mod ? 1 : 0);
+	if (volume == 255) {
+		// Force volume for MM (out_wave fix)
+		for (int i = 0; i < waveInGetNumDevs(); ++i) {
+			waveOutSetVolume(HWAVEOUT(i), 0xFFFFFFFF);
+		}
+	}
+
+	if (nullptr != this->mod) {
+		this->mod->SetVolume(volume);
+	}
+}
+
+void AbstractOutPlugin::setPan(int pan)
+{
+	if (nullptr != this->mod) {
+		this->mod->SetPan(pan);
+	}
+}
+
+bool AbstractOutPlugin::isPlaying() const
+{
+	return this->mod && this->mod->IsPlaying() != 0;
+}
+
 WinampOutPlugin::WinampOutPlugin() :
 	WinampPlugin(), AbstractOutPlugin()
 {
@@ -161,6 +203,7 @@ bool WinampOutPlugin::openModule(FARPROC procAddress)
 	this->mod = f();
 
 	if (nullptr == this->mod) {
+		error("couldn't call function %s in external library\n", procName());
 		return false;
 	}
 
@@ -185,37 +228,32 @@ void WinampOutPlugin::closeModule()
 	}
 }
 
-int WinampOutPlugin::isPlaying() const
-{
-	if (nullptr != this->mod) {
-		return this->mod->IsPlaying();
-	}
-	return 0;
-}
-
 void WinampOutPlugin::setTempo(int tempo)
 {
 	error("setTempo not implemented for Winamp out plugin (%i)\n", tempo);
 }
 
-IDirectSoundBuffer* CustomOutPlugin::sound_buffer = 0;
+IDirectSoundBuffer* CustomOutPlugin::sound_buffer = nullptr;
 uint CustomOutPlugin::sound_buffer_size = 0;
 uint CustomOutPlugin::sound_write_pointer = 0;
 uint CustomOutPlugin::bytes_written = 0;
 DWORD CustomOutPlugin::start_t = 0;
 DWORD CustomOutPlugin::last_pause_t = 0;
 int CustomOutPlugin::last_pause = 0;
-LONG CustomOutPlugin::volume = -1;
+int CustomOutPlugin::offset_t = 0;
+LONG CustomOutPlugin::volume = 0;
 LONG CustomOutPlugin::pan = 0;
 DWORD CustomOutPlugin::tempo = 0;
 WAVEFORMATEX CustomOutPlugin::sound_format = WAVEFORMATEX();
+bool CustomOutPlugin::play_lock = false;
+bool CustomOutPlugin::should_play = false;
 
 CustomOutPlugin::CustomOutPlugin() :
 	AbstractOutPlugin()
 {
 	mod = new WinampOutModule();
 	mod->version = OUT_VER;
-	mod->description = "FFnX Winamp Output Plugin";
+	mod->description = "FFNx Winamp Output Plugin";
 	mod->id = 38; // DirectSound id
 	mod->hMainWindow = nullptr;
 	mod->hDllInstance = nullptr;
@@ -269,10 +307,8 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	UNUSED_PARAM(bufferlenms);
 	UNUSED_PARAM(prebufferms);
 
-	info("CustomOutPlugin::Open()\n");
-
 	Close();
-
+	
 	DSBUFFERDESC1 sbdesc;
 
 	sound_format.cbSize = sizeof(sound_format);
@@ -286,40 +322,45 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	sound_buffer_size = sound_format.nAvgBytesPerSec * AUDIO_BUFFER_SIZE;
 	sound_write_pointer = 0;
 	bytes_written = 0;
+	offset_t = 0;
 
 	sbdesc.dwSize = sizeof(sbdesc);
 	sbdesc.lpwfxFormat = &sound_format;
-	sbdesc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY;
+	sbdesc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY | DSBCAPS_GETCURRENTPOSITION2;
 	sbdesc.dwReserved = 0;
 	sbdesc.dwBufferBytes = sound_buffer_size;
 
-	if (!*common_externals.directsound) {
+	if (!*common_externals.directsound)
+	{
+		error("No directsound device\n");
+		
 		return -1;
 	}
+
+	//(*common_externals.directsound)->SetCooperativeLevel(hwnd, DSSCL_PRIORITY);
 	
 	if ((*common_externals.directsound)->CreateSoundBuffer((LPCDSBUFFERDESC)&sbdesc, &sound_buffer, 0))
 	{
 		error("couldn't create sound buffer (%i, %i)\n", numchannels, samplerate);
-		sound_buffer = 0;
+		sound_buffer = nullptr;
 
 		return -1;
 	}
 
-	if (volume >= 0) {
+	if (volume < 0) {
+		info("Buffer init set previous volume %i", volume);
 		sound_buffer->SetVolume(volume);
 	}
 
-	if (pan != 0) {
-		sound_buffer->SetPan(pan);
-	}
-	
+	sound_buffer->SetVolume(volume);
+	sound_buffer->SetPan(pan);
+
 	if (tempo != 0) {
+		info("Buffer init set previous frequency %i", tempo);
 		sound_buffer->SetFrequency(tempo);
 	}
-
-	if (sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
-		error("couldn't play sound buffer\n");
-	}
+	
+	should_play = true;
 	
 	start_t = GetTickCount();
 	
@@ -328,8 +369,6 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 void CustomOutPlugin::Close()
 {
-	info("CustomOutPlugin::Close()\n");
-
 	if (sound_buffer) {
 		IDirectSoundBuffer* buffer = sound_buffer;
 		sound_buffer = nullptr;
@@ -341,8 +380,8 @@ int CustomOutPlugin::Write(char* buffer, int len)
 {
 	LPVOID ptr1, ptr2;
 	DWORD bytes1, bytes2;
-
-	if (nullptr == sound_buffer || !*common_externals.directsound) {
+	
+	if (play_lock || nullptr == sound_buffer || !*common_externals.directsound) {
 		return 1;
 	}
 
@@ -362,6 +401,14 @@ int CustomOutPlugin::Write(char* buffer, int len)
 	sound_write_pointer = (sound_write_pointer + bytes1 + bytes2) % sound_buffer_size;
 	bytes_written += bytes1 + bytes2;
 
+	if (should_play) {
+		if (sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
+			error("couldn't play sound buffer\n");
+		}
+
+		should_play = false;
+	}
+
 	return 0;
 }
 
@@ -369,16 +416,12 @@ int CustomOutPlugin::CanWrite()
 {
 	DWORD current_play_cursor;
 
-	if (last_pause) {
-		return 0;
-	}
-	
-	if (!sound_buffer || last_pause || !*common_externals.directsound) {
+	if (play_lock || !sound_buffer || last_pause || !*common_externals.directsound) {
 		return 0;
 	}
 
 	sound_buffer->GetCurrentPosition(&current_play_cursor, nullptr);
-
+	
 	if (current_play_cursor <= sound_write_pointer) {
 		return (sound_buffer_size - sound_write_pointer) + current_play_cursor;
 	}
@@ -390,8 +433,12 @@ int CustomOutPlugin::IsPlaying()
 	if (sound_buffer && *common_externals.directsound) {
 		DWORD ret;
 
-		if (DS_OK == sound_buffer->GetStatus(&ret)) {
-			return ret & DSBSTATUS_PLAYING ? 1 : 0;
+		if (DS_OK == sound_buffer->GetStatus(&ret) && ret & DSBSTATUS_PLAYING) {
+			DWORD current_play_cursor;
+
+			sound_buffer->GetCurrentPosition(&current_play_cursor, nullptr);
+			
+			return current_play_cursor != sound_write_pointer;
 		}
 	}
 
@@ -414,8 +461,8 @@ int CustomOutPlugin::Pause(int pause)
 			last_pause_t = GetTickCount();
 			sound_buffer->Stop();
 		}
-		last_pause = pause;
 	}
+	last_pause = pause;
 
 	return t;
 }
@@ -423,7 +470,7 @@ int CustomOutPlugin::Pause(int pause)
 void CustomOutPlugin::SetVolume(int volume)
 {
 	if (volume < 0 || volume > 255) {
-		return;
+		volume = 255;
 	}
 
 	float decibel = 20.0f * log10f((volume * 100 / 255) / 100.0f);
@@ -436,10 +483,8 @@ void CustomOutPlugin::SetVolume(int volume)
 
 void CustomOutPlugin::SetPan(int pan)
 {
-	info("Winamp OutPlugin SetPan: %i\n", CustomOutPlugin::pan);
-
 	CustomOutPlugin::pan = pan * DSBPAN_LEFT / 128;
-	
+
 	if (sound_buffer) {
 		sound_buffer->SetPan(CustomOutPlugin::pan);
 	}
@@ -447,9 +492,8 @@ void CustomOutPlugin::SetPan(int pan)
 
 void CustomOutPlugin::Flush(int t)
 {
-	info("Winamp OutPlugin Flush: %i\n", t);
-	// TODO: implement seek?
 	start_t = GetTickCount() - t;
+	offset_t = t;
 }
 
 int CustomOutPlugin::GetOutputTime()
@@ -457,24 +501,20 @@ int CustomOutPlugin::GetOutputTime()
 	if (last_pause_t > 0) {
 		return last_pause_t - start_t;
 	}
+
 	return GetTickCount() - start_t;
 }
 
 int CustomOutPlugin::GetWrittenTime()
 {
 	if (0 == sound_format.nAvgBytesPerSec) {
-		return bytes_written;
+		return offset_t + bytes_written;
 	}
 
 	int written_time = bytes_written / sound_format.nAvgBytesPerSec * 1000;
 	written_time += ((bytes_written % sound_format.nAvgBytesPerSec) * 1000) / sound_format.nAvgBytesPerSec;
 
-	return written_time;
-}
-
-int CustomOutPlugin::isPlaying() const
-{
-	return CustomOutPlugin::IsPlaying();
+	return offset_t + written_time;
 }
 
 void CustomOutPlugin::setTempo(int tempo)
@@ -486,28 +526,31 @@ void CustomOutPlugin::setTempo(int tempo)
 	}
 }
 
-WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
-	WinampPlugin(), mod(nullptr), outPlugin(outPlugin)
+void CustomOutPlugin::lock()
+{
+	CustomOutPlugin::play_lock = true;
+}
+
+void CustomOutPlugin::unlock()
+{
+	CustomOutPlugin::play_lock = false;
+}
+
+AbstractInPlugin::AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod) :
+	mod(mod), outPlugin(outPlugin)
 {
 }
 
-WinampInPlugin::~WinampInPlugin()
+AbstractInPlugin::~AbstractInPlugin()
 {
-	close();
+	quitModule();
 }
 
-bool WinampInPlugin::openModule(FARPROC procAddress)
+void AbstractInPlugin::initModule(HINSTANCE dllInstance)
 {
-	winampGetInModule2 f = (winampGetInModule2)procAddress;
-	this->mod = f();
-
-	if (nullptr == this->mod) {
-		return false;
-	}
-	
 	// Set fields
 	this->mod->standard.hMainWindow = nullptr;
-	this->mod->standard.hDllInstance = getHandle();
+	this->mod->standard.hDllInstance = dllInstance;
 
 	if (nullptr != this->outPlugin) {
 		this->mod->standard.outMod = this->outPlugin->getModule();
@@ -534,11 +577,9 @@ bool WinampInPlugin::openModule(FARPROC procAddress)
 	if (nullptr != this->mod->standard.Init) {
 		this->mod->standard.Init();
 	}
-
-	return true;
 }
 
-void WinampInPlugin::closeModule()
+void AbstractInPlugin::quitModule()
 {
 	if (nullptr != this->mod) {
 		if (nullptr != this->mod->standard.Quit) {
@@ -548,7 +589,7 @@ void WinampInPlugin::closeModule()
 	}
 }
 
-int WinampInPlugin::play(const char* fn)
+int AbstractInPlugin::play(const char* fn)
 {
 	if (nullptr == this->mod->wide.Play) {
 		return -42;
@@ -566,7 +607,7 @@ int WinampInPlugin::play(const char* fn)
 	return this->mod->standard.Play(fn);
 }
 
-int WinampInPlugin::play(const wchar_t* fn)
+int AbstractInPlugin::play(const wchar_t* fn)
 {
 	if (nullptr == this->mod->wide.Play) {
 		return -42;
@@ -584,54 +625,78 @@ int WinampInPlugin::play(const wchar_t* fn)
 	return this->mod->standard.Play(mbstring);
 }
 
-void WinampInPlugin::pause()
+void AbstractInPlugin::pause()
 {
 	this->mod->standard.Pause();
 }
 
-void WinampInPlugin::unPause()
+void AbstractInPlugin::unPause()
 {
 	this->mod->standard.UnPause();
 }
 
-int WinampInPlugin::isPaused()
+int AbstractInPlugin::isPaused()
 {
 	return this->mod->standard.IsPaused();
 }
 
-void WinampInPlugin::stop()
+void AbstractInPlugin::stop()
 {
 	this->mod->standard.Stop();
 }
 
-int WinampInPlugin::getLength()
+int AbstractInPlugin::getLength()
 {
 	return this->mod->standard.GetLength();
 }
 
-int WinampInPlugin::getOutputTime()
+int AbstractInPlugin::getOutputTime()
 {
 	return this->mod->standard.GetOutputTime();
 }
 
-void WinampInPlugin::setOutputTime(int time_in_ms)
+void AbstractInPlugin::setOutputTime(int time_in_ms)
 {
 	this->mod->standard.SetOutputTime(time_in_ms);
 }
 
-void WinampInPlugin::setVolume(int volume)
+WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
+	WinampPlugin(), AbstractInPlugin(outPlugin)
 {
-	this->mod->standard.SetVolume(volume);
 }
 
-void WinampInPlugin::setPan(int pan)
+WinampInPlugin::~WinampInPlugin()
 {
-	this->mod->standard.SetPan(pan);
+	close();
 }
 
-void WinampInPlugin::setTempo(int tempo)
+bool WinampInPlugin::openModule(FARPROC procAddress)
 {
-	if (nullptr != this->outPlugin) {
-		this->outPlugin->setTempo(tempo);
+	winampGetInModule2 f = (winampGetInModule2)procAddress;
+	this->mod = f();
+
+	if (nullptr == this->mod) {
+		error("couldn't call function %s in external library\n", procName());
+		return false;
 	}
+	
+	initModule(getHandle());
+
+	return true;
+}
+
+void WinampInPlugin::closeModule()
+{
+	quitModule();
+}
+
+VgmstreamInPlugin::VgmstreamInPlugin(AbstractOutPlugin* outPlugin) :
+	AbstractInPlugin(outPlugin, in_vgmstream_module())
+{
+	initModule(nullptr);
+}
+
+VgmstreamInPlugin::~VgmstreamInPlugin()
+{
+	quitModule();
 }

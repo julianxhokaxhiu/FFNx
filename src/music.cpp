@@ -248,3 +248,18 @@ void music_cleanup()
 		break;
 	}
 }
+
+bool ff7_is_wm_theme(char* midi)
+{
+	return midi != nullptr && (strcmp(midi, "TA") == 0 || strcmp(midi, "TB") == 0 || strcmp(midi, "KITA") == 0);
+}
+
+bool ff7_needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi)
+{
+	/*
+	 * BATTLE -> FIELD or WM
+	 * FIELD  -> WM
+	 */
+	return (new_mode == MODE_WORLDMAP && !ff7_is_wm_theme(old_midi) && ff7_is_wm_theme(new_midi))
+		|| (old_mode == MODE_BATTLE || old_mode == MODE_SWIRL) && new_mode == MODE_FIELD;
+}

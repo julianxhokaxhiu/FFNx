@@ -1,7 +1,11 @@
-#include "windows.h"
-#include "winamp.h"
-#include "../types.h"
+#pragma once
+
+#include <windows.h>
 #include <DSound.h>
+#include "../common.h"
+#include "../log.h"
+#include "../types.h"
+#include "winamp.h"
 
 class WinampPlugin {
 private:
@@ -31,7 +35,12 @@ public:
 	inline WinampOutModule* getModule() const {
 		return mod;
 	}
-	virtual int isPlaying() const = 0;
+	void lock() {}
+	void unlock() {}
+	bool isPlaying() const; // returns true when output is still going or if data in buffers waiting to be written
+	// volume stuff
+	void setVolume(int volume);	// from 0 to 255.. usually just call outMod->SetVolume
+	void setPan(int pan);	    // from -127 to 127.. usually just call outMod->SetPan
 	// This method is not part of the winamp plugin
 	virtual void setTempo(int tempo) = 0;
 };
@@ -46,7 +55,6 @@ private:
 public:
 	WinampOutPlugin();
 	virtual ~WinampOutPlugin();
-	int isPlaying() const;
 	// This method is not part of the winamp plugin
 	void setTempo(int tempo);
 };
@@ -60,10 +68,13 @@ private:
 	static DWORD start_t;
 	static DWORD last_pause_t;
 	static int last_pause;
+	static int offset_t;
 	static LONG volume;
 	static LONG pan;
 	static DWORD tempo;
 	static WAVEFORMATEX sound_format;
+	static bool play_lock;
+	static bool should_play;
 	static void Config(HWND hwndParent);
 	static void About(HWND hwndParent);
 	static void Init();
@@ -82,23 +93,22 @@ private:
 public:
 	CustomOutPlugin();
 	virtual ~CustomOutPlugin();
-	int isPlaying() const;
+	void lock();
+	void unlock();
 	// This method is not part of the winamp plugin
 	void setTempo(int tempo);
 };
 
-class WinampInPlugin : public WinampPlugin {
-private:
+class AbstractInPlugin {
+protected:
 	WinampInModule* mod;
 	AbstractOutPlugin* outPlugin;
-	inline LPCSTR procName() const {
-		return "winampGetInModule2";
-	}
-	bool openModule(FARPROC procAddress);
-	void closeModule();
+
+	void initModule(HINSTANCE dllInstance);
+	void quitModule();
 public:
-	WinampInPlugin(AbstractOutPlugin* outPlugin);
-	virtual ~WinampInPlugin();
+	AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod = nullptr);
+	virtual ~AbstractInPlugin();
 
 	int play(const char* fn);
 	int play(const wchar_t* fn);
@@ -111,10 +121,22 @@ public:
 	int getLength();			// get length in ms
 	int getOutputTime();		// returns current output time in ms. (usually returns outMod->GetOutputTime()
 	void setOutputTime(int time_in_ms);	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
+};
 
-	// volume stuff
-	void setVolume(int volume);	// from 0 to 255.. usually just call outMod->SetVolume
-	void setPan(int pan);	// from -127 to 127.. usually just call outMod->SetPan
-	// This method is not part of the winamp plugin
-	void setTempo(int tempo);
+class WinampInPlugin : public WinampPlugin, public AbstractInPlugin {
+private:
+	inline LPCSTR procName() const {
+		return "winampGetInModule2";
+	}
+	bool openModule(FARPROC procAddress);
+	void closeModule();
+public:
+	WinampInPlugin(AbstractOutPlugin* outPlugin);
+	virtual ~WinampInPlugin();
+};
+
+class VgmstreamInPlugin : public AbstractInPlugin {
+public:
+	VgmstreamInPlugin(AbstractOutPlugin* outPlugin);
+	virtual ~VgmstreamInPlugin();
 };
