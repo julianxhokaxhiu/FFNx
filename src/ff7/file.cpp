@@ -51,13 +51,21 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 		}
 		else
 		{
-			// Search for the last '\' character and get a pointer to the next char
-			const char* pos = strrchr(in, 92);
+			const char* pos = strstr(in, "data");
 
-			if (pos != NULL) pos += 1;
+			if (strstr(in, "data") != NULL)
+			{
+				pos += 5;
+			}
+			else
+			{
+				// Search for the last '\' character and get a pointer to the next char
+				pos = strrchr(in, 92);
+
+				if (pos != NULL) pos += 1;
+			}
 
 			get_data_lang_path(out);
-
 			if (pos != NULL) PathAppendA(out, pos);
 
 			if ((_access(out, 0) == -1 || pos == NULL))
