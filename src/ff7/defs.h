@@ -55,6 +55,7 @@ uint get_filesize(struct ff7_file *file);
 uint tell_file(struct ff7_file *file);
 void seek_file(struct ff7_file *file, uint offset);
 char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename);
+int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = false);
 
 // graphics
 void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip);

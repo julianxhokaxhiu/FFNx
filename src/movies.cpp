@@ -28,6 +28,7 @@
 #include "log.h"
 #include "common.h"
 #include "cfg.h"
+#include "ff7/defs.h"
 #include "ffmpeg/movies.h"
 
 void movie_init()
@@ -61,6 +62,7 @@ uint ff7_prepare_movie(char *name, uint loop, struct dddevice **dddevice, uint d
 	char dirname[256];
 	char filename[128];
 	char fmvName[512];
+	char newFmvName[512];
 
 	if(trace_all || trace_movies) trace("prepare_movie %s\n", name);
 
@@ -75,14 +77,12 @@ uint ff7_prepare_movie(char *name, uint loop, struct dddevice **dddevice, uint d
 
 	_splitpath(name, drivename, dirname, filename, NULL);
 
-	// Attempt override
-	_snprintf(fmvName, sizeof(fmvName), R"(%s\%smovies\%s.%s)", basedir, override_path, filename, external_movie_ext);
+	_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, external_movie_ext);
 
-	// If does not exist
-	if (_access(fmvName, 0) == -1)
-		_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, external_movie_ext);
+	int redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName));
 
-	ffmpeg_prepare_movie(fmvName);
+	if (redirect_status == 0) ffmpeg_prepare_movie(newFmvName);
+	else ffmpeg_prepare_movie(fmvName);
 
 	ff7_externals.movie_object->global_movie_flag = 1;
 
@@ -175,6 +175,7 @@ uint ff8_movie_frames;
 void ff8_prepare_movie(uint disc, uint movie)
 {
 	char fmvName[512];
+	char newFmvName[512];
 	char camName[512];
 	char dataPath[260]{0};
 	FILE *camFile;
@@ -224,7 +225,10 @@ void ff8_prepare_movie(uint disc, uint movie)
 
 	ff8_externals.movie_object->movie_frame = 0;
 
-	ff8_movie_frames = ffmpeg_prepare_movie(fmvName);
+	int redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName));
+
+	if (redirect_status == 0) ff8_movie_frames = ffmpeg_prepare_movie(newFmvName);
+	else ff8_movie_frames = ffmpeg_prepare_movie(fmvName);
 }
 
 void ff8_release_movie_objects()
