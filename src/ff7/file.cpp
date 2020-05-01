@@ -350,7 +350,7 @@ struct lgp_file *lgp_open_file(char *filename, uint lgp_num)
 
 		if(!original_lgp_open_file(name, lgp_num, ret))
 		{
-			if(strlen(direct_mode_path) > 0) error("failed to find file %s; tried %s/%s/%s, direct/%s/%s/%s, %s/%s (LGP) (path: %s)\n", filename, direct_mode_path, lgp_names[lgp_num], name, lgp_names[lgp_num], lgp_current_dir, name, lgp_names[lgp_num], name, lgp_current_dir);
+			if(strlen(direct_mode_path) > 0) error("failed to find file %s; tried %s/%s/%s, %s/%s/%s/%s, %s/%s (LGP) (path: %s)\n", filename, direct_mode_path, lgp_names[lgp_num], name, direct_mode_path, lgp_names[lgp_num], lgp_current_dir, name, lgp_names[lgp_num], name, lgp_current_dir);
 			else error("failed to find file %s/%s (LGP) (path: %s)\n", lgp_names[lgp_num], name, lgp_current_dir);
 			external_free(ret);
 			return 0;
