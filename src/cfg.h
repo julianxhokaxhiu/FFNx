@@ -64,7 +64,6 @@ extern cfg_bool_t enable_anisotropic;
 extern cfg_bool_t skip_frames;
 extern cfg_bool_t ff7_more_debug;
 extern cfg_bool_t show_applog;
-extern cfg_bool_t direct_mode;
 extern cfg_bool_t show_missing_textures;
 extern cfg_bool_t show_error_popup;
 extern cfg_bool_t movie_sync_debug;
@@ -77,5 +76,6 @@ extern cfg_bool_t ff7_battle_fullscreen;
 extern cfg_bool_t ff7_menu_fix_cursor_vcenter;
 extern char* hext_patching_path;
 extern char* override_path;
+extern char* direct_mode_path;
 
 void read_cfg();

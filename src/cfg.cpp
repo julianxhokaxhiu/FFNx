@@ -60,7 +60,6 @@ cfg_bool_t enable_anisotropic = cfg_bool_t(true);
 cfg_bool_t skip_frames = cfg_bool_t(false);
 cfg_bool_t ff7_more_debug = cfg_bool_t(false);
 cfg_bool_t show_applog = cfg_bool_t(true);
-cfg_bool_t direct_mode = cfg_bool_t(true);
 cfg_bool_t show_missing_textures = cfg_bool_t(false);
 cfg_bool_t show_error_popup = cfg_bool_t(false);
 cfg_bool_t movie_sync_debug = cfg_bool_t(false);
@@ -73,6 +72,7 @@ cfg_bool_t ff7_battle_fullscreen = cfg_bool_t(true);
 cfg_bool_t ff7_menu_fix_cursor_vcenter = cfg_bool_t(true);
 char* hext_patching_path = nullptr;
 char* override_path = nullptr;
+char* direct_mode_path = nullptr;
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -109,7 +109,6 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("enable_anisotropic", &enable_anisotropic),
 		CFG_SIMPLE_BOOL("skip_frames", &skip_frames),
 		CFG_SIMPLE_BOOL("show_applog", &show_applog),
-		CFG_SIMPLE_BOOL("direct_mode", &direct_mode),
 		CFG_SIMPLE_BOOL("show_missing_textures", &show_missing_textures),
 		CFG_SIMPLE_BOOL("show_error_popup", &show_error_popup),
 		CFG_SIMPLE_BOOL("movie_sync_debug", &movie_sync_debug),
@@ -123,6 +122,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("ff7_menu_fix_cursor_vcenter", &ff7_menu_fix_cursor_vcenter),
 		CFG_SIMPLE_STR("hext_patching_path", &hext_patching_path),
 		CFG_SIMPLE_STR("override_path", &override_path),
+		CFG_SIMPLE_STR("direct_mode_path", &direct_mode_path),
 
 		CFG_END()
 };
@@ -224,7 +224,13 @@ void read_cfg()
 	* OVERRIDE PATH
 	*/
 	if (override_path == nullptr)
-		override_path = R"(override\)";
+		override_path = R"(override)";
+
+	/*
+	* DIRECT MODE PATH
+	*/
+	if (direct_mode_path == nullptr)
+		direct_mode_path = R"(direct)";
 
 #ifdef SINGLE_STEP
 	window_size_x = 0;
