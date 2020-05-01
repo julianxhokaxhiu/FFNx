@@ -265,9 +265,9 @@ void Renderer::printMatrix(char* name, float* mat)
     trace("%s: 3 [%f, %f, %f, %f]\n", name, mat[12], mat[13], mat[14], mat[15]);
 };
 
-bool Renderer::doesTextureFitInMemory(size_t size)
+bool Renderer::doesItFitInMemory(size_t size)
 {
-    return ((size + get_ram_size()) < textureMemoryCap);
+    return ((size + get_ram_size()) < memoryCap);
 }
 
 // PUBLIC
@@ -611,7 +611,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
 
     // If the texture we are going to create does not fit in memory, return an empty one.
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
-    if (!doesTextureFitInMemory(texInfo.storageSize))
+    if (!doesItFitInMemory(texInfo.storageSize))
     {
         ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
     }
@@ -655,47 +655,69 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
     if (file)
     {
         size_t filesize = 0;
+        bimg::ImageContainer* img = nullptr;
+        char* buffer = nullptr;
 
         fseek(file, 0, SEEK_END);
         filesize = ftell(file);
-        fseek(file, 0, SEEK_SET);
 
-        char* buffer = (char*)driver_malloc(filesize+1);
+        if (doesItFitInMemory(filesize + 1))
+        {
+            buffer = (char*)driver_malloc(filesize + 1);
+            fseek(file, 0, SEEK_SET);
+            fread(buffer, filesize, 1, file);
+        }
 
-        fread(buffer, filesize, 1, file);
         fclose(file);
 
         // ==================================
 
-        bimg::ImageContainer* img = bimg::imageParse(&defaultAllocator, buffer, filesize+1);
-
-        driver_free(buffer);
-
-        // If the texture we are going to create does not fit in memory, return an empty one.
-        // Will prevent the game from crashing, while allowing the player to not loose its progress.
-        if (!doesTextureFitInMemory(img->m_size))
+        if (buffer != nullptr)
         {
-            ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
+            // As the image unpacked may take more size that its file size,
+            // we can't predict how big it will be. Though we can catch the exception
+            // if the memory is full and continue normally the flow as the texture was not
+            // able to be loaded in memory.
+            try
+            {
+                img = bimg::imageParse(&defaultAllocator, buffer, filesize + 1);
+            }
+            catch (std::exception& ex)
+            {
+                img = nullptr;
+            }
+
+            driver_free(buffer);
         }
-        else if (gl_check_texture_dimensions(img->m_width, img->m_height, filename))
-        {
-            const bgfx::Memory* mem = bgfx::copy(img->m_data, img->m_size);
 
-            ret = bgfx::createTexture2D(
-                img->m_width,
-                img->m_height,
-                1 < img->m_numMips,
-                img->m_numLayers,
-                bgfx::TextureFormat::Enum(img->m_format),
-                BGFX_TEXTURE_NONE,
-                mem
+        if (img != nullptr)
+        {
+            // If the texture we are going to create does not fit in memory, return an empty one.
+            // Will prevent the game from crashing, while allowing the player to not loose its progress.
+            if (!doesItFitInMemory(img->m_size))
+            {
+                ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
+            }
+            else if (gl_check_texture_dimensions(img->m_width, img->m_height, filename))
+            {
+                const bgfx::Memory* mem = bgfx::copy(img->m_data, img->m_size);
+
+                ret = bgfx::createTexture2D(
+                    img->m_width,
+                    img->m_height,
+                    1 < img->m_numMips,
+                    img->m_numLayers,
+                    bgfx::TextureFormat::Enum(img->m_format),
+                    BGFX_TEXTURE_NONE,
+                    mem
                 );
 
-            *width = img->m_width;
-            *height = img->m_height;
-        }
+                *width = img->m_width;
+                *height = img->m_height;
+            }
 
-        bimg::imageFree(img);
+            bimg::imageFree(img);
+        }
     }
 
     return ret.idx;

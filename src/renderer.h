@@ -274,8 +274,8 @@ private:
 
     void printMatrix(char* name, float* mat);
 
-    size_t textureMemoryCap = 1 * 1024 * 1024 * 1024; // 1GB
-    bool doesTextureFitInMemory(size_t size);
+    size_t memoryCap = 1 * 1024 * 1024 * 1024; // 1GB
+    bool doesItFitInMemory(size_t size);
 
     bx::DefaultAllocator defaultAllocator;
     bx::FileWriter defaultWriter;
