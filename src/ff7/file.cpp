@@ -97,6 +97,8 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 			}
 		}
 
+		if (trace_all || trace_files) trace("Redirected: %s -> %s\n", in, out);
+
 		return 0;
 	}
 	else
@@ -135,10 +137,10 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 				PathAppendA(out, in);
 			}
 
-			if (trace_all || trace_files) trace("%s: %s -> %s\n", __func__, in, out);
-
 			if (_access(out, 0) == -1)
 				return -1;
+
+			if (trace_all || trace_files) trace("Redirected: %s -> %s\n", in, out);
 
 			return 0;
 		}
