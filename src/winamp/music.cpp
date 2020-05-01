@@ -25,7 +25,8 @@ bool winamp_stop_thread = false;
 
 uint winamp_current_id = 0;
 char* winamp_current_midi = nullptr;
-uint winamp_song_ended = true;
+bool winamp_song_ended = true; // Song reaches end (but it can still loop)
+bool winamp_song_paused = false;
 
 int winamp_trans_step = 0;
 int winamp_trans_counter = 0;
@@ -77,6 +78,7 @@ void winamp_load_song(char* midi, uint id)
 
 	if (!id)
 	{
+		winamp_song_ended = true;
 		winamp_current_id = 0;
 		return;
 	}
@@ -93,7 +95,7 @@ void winamp_load_song(char* midi, uint id)
 	bool seek = winamp_previous_paused_midi_id == id && ff7_needs_resume(winamp_previous_mode, mode, winamp_previous_midi, midi);
 
 	if (seek) {
-		out->lock();
+		in->pause();
 	}
 
 	int err = in->play(tmp);
@@ -109,15 +111,34 @@ void winamp_load_song(char* midi, uint id)
 		in->setOutputTime(winamp_previous_paused_midi_ms);
 		winamp_paused_midi_id = 0;
 		winamp_paused_midi_ms = 0;
-		out->unlock();
+		in->unPause();
 	}
+}
+
+ULONG(__stdcall* real_dsound_release)(IDirectSound*);
+
+ULONG __stdcall dsound_release_hook(IDirectSound* me)
+{
+	trace("directsound release\n");
+
+	EnterCriticalSection(&winamp_mutex);
+
+	return real_dsound_release(me);
 }
 
 unsigned __stdcall winamp_render_thread(void* parameter)
 {
+	const int flush_debug_at = 20;
+	// For safety we detect if output time does not change for a given amount of time
+	const int stop_silence_ms = 1000;
+	const DWORD sleep_ms = 50;
+	const int stop_silence_loop_count = stop_silence_ms / sleep_ms;
+	int silence_detected = 0;
+	int cur = 0, previous_output_time = -1;
+
 	while (!winamp_stop_thread)
 	{
-		Sleep(50);
+		Sleep(sleep_ms);
 
 		EnterCriticalSection(&winamp_mutex);
 
@@ -127,8 +148,8 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 
 			if (winamp_trans_counter > 0)
 			{
-				if (in && out && (in->getOutputTime() > 0 || out->isPlaying()))
-				{
+				//if (in && out && in->getOutputTime())
+				//{
 					winamp_song_volume += winamp_trans_step;
 
 					winamp_apply_volume();
@@ -139,13 +160,13 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 					{
 						start_next_song = true;
 					}
-				}
+				/*}
 				else
 				{
 					winamp_trans_counter = 0;
 
 					start_next_song = true;
-				}
+				}*/
 			}
 			
 			if (start_next_song)
@@ -178,12 +199,37 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 					winamp_crossfade_midi = 0;
 				}
 			}
+		}
 
-			if (in && *common_externals.directsound && in->getOutputTime() >= in->getLength())
+		if (in)
+		{
+			int output_time = in->getOutputTime();
+
+			if (output_time >= in->getLength())
 			{
-				trace("Song ended\n");
 				winamp_song_ended = true;
 			}
+
+			if (!winamp_song_paused && previous_output_time >= 0 && output_time == previous_output_time)
+			{
+				silence_detected += 1;
+			}
+
+			previous_output_time = output_time;
+
+			if (silence_detected > stop_silence_loop_count)
+			{
+				winamp_song_ended = true;
+				winamp_current_id = 0;
+				silence_detected = 0;
+			}
+		}
+
+		cur += 1;
+
+		if (cur % flush_debug_at == 0 && in)
+		{
+			trace("Output time %i, Length %i, Song Ended %i, Current Id %i\n", in->getOutputTime(), in->getLength(), winamp_song_ended, winamp_current_id);
 		}
 
 		LeaveCriticalSection(&winamp_mutex);
@@ -255,7 +301,7 @@ void winamp_play_music(char *midi, uint id)
 
 	EnterCriticalSection(&winamp_mutex);
 
-	if (id != winamp_current_id || winamp_song_ended)
+	if (id != winamp_current_id)
 	{
 		winamp_load_song(midi, id);
 	}
@@ -274,6 +320,7 @@ void winamp_stop_music()
 	}
 
 	winamp_song_ended = true;
+	winamp_current_id = 0;
 
 	LeaveCriticalSection(&winamp_mutex);
 }
@@ -287,9 +334,9 @@ void winamp_cross_fade_music(char *midi, uint id, int time)
 
 	EnterCriticalSection(&winamp_mutex);
 
-	if (id != winamp_current_id || winamp_song_ended)
+	if (id != winamp_current_id)
 	{
-		if (!winamp_song_ended && fade_time)
+		if (winamp_current_id != 0 && fade_time)
 		{
 			winamp_trans_volume = 0;
 			winamp_trans_counter = fade_time;
@@ -317,6 +364,7 @@ void winamp_pause_music()
 	if (in) {
 		in->pause();
 	}
+	winamp_song_paused = true;
 
 	LeaveCriticalSection(&winamp_mutex);
 }
@@ -328,6 +376,7 @@ void winamp_resume_music()
 	if (in) {
 		in->unPause();
 	}
+	winamp_song_paused = false;
 
 	LeaveCriticalSection(&winamp_mutex);
 }

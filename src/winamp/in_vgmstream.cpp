@@ -1164,13 +1164,6 @@ static int winampGetExtendedFileInfo_common(in_char* filename, char* metadata, c
         return 1;
     }
 
-#if 0
-    /* special case to fill WA5's unified dialog */
-    if (strcasecmp(metadata, "formatinformation") == 0) {
-        generate_format_string(...);
-    }
-#endif
-
 
     /* find requested tag */
     tag_found = 0;

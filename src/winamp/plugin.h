@@ -35,9 +35,6 @@ public:
 	inline WinampOutModule* getModule() const {
 		return mod;
 	}
-	void lock() {}
-	void unlock() {}
-	bool isPlaying() const; // returns true when output is still going or if data in buffers waiting to be written
 	// volume stuff
 	void setVolume(int volume);	// from 0 to 255.. usually just call outMod->SetVolume
 	void setPan(int pan);	    // from -127 to 127.. usually just call outMod->SetPan
@@ -62,9 +59,10 @@ public:
 class CustomOutPlugin : public AbstractOutPlugin {
 private:
 	static IDirectSoundBuffer* sound_buffer;
-	static uint sound_buffer_size;
-	static uint sound_write_pointer;
-	static uint bytes_written;
+	static DWORD sound_buffer_size;
+	static DWORD sound_write_pointer;
+	static DWORD bytes_written;
+	static DWORD prebuffer_size;
 	static DWORD start_t;
 	static DWORD last_pause_t;
 	static int last_pause;
@@ -73,8 +71,8 @@ private:
 	static LONG pan;
 	static DWORD tempo;
 	static WAVEFORMATEX sound_format;
-	static bool play_lock;
-	static bool should_play;
+	static bool play_started;
+	static bool clear_done;
 	static void Config(HWND hwndParent);
 	static void About(HWND hwndParent);
 	static void Init();
@@ -82,7 +80,9 @@ private:
 	static int Open(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms);
 	static void Close();
 	static int Write(char* buf, int len);
+	static int canWriteHelper(DWORD &current_play_cursor);
 	static int CanWrite();
+	// More likely: 'in': Hey 'out' I finished my decoding, have you finished playing?
 	static int IsPlaying();
 	static int Pause(int pause);
 	static void SetVolume(int volume);
@@ -93,8 +93,6 @@ private:
 public:
 	CustomOutPlugin();
 	virtual ~CustomOutPlugin();
-	void lock();
-	void unlock();
 	// This method is not part of the winamp plugin
 	void setTempo(int tempo);
 };
