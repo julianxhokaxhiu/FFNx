@@ -107,7 +107,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 		{
 			const char* pos = strstr(in, "data");
 
-			if (strstr(in, "data") != NULL)
+			if (pos != NULL)
 			{
 				pos += 5;
 			}
@@ -121,7 +121,19 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 
 			strcpy(out, basedir);
 			PathAppendA(out, override_path);
-			if (pos != NULL) PathAppendA(out, pos);
+			if (pos != NULL)
+				PathAppendA(out, pos);
+			else if (
+				strcmp(in, "scene.bin") == 0 ||
+				strcmp(in, "camdat0.bin") == 0 ||
+				strcmp(in, "camdat1.bin") == 0 ||
+				strcmp(in, "camdat2.bin") == 0 ||
+				strcmp(in, "co.bin") == 0
+				)
+			{
+				PathAppendA(out, R"(battle)");
+				PathAppendA(out, in);
+			}
 
 			if (trace_all || trace_files) trace("%s: %s -> %s\n", __func__, in, out);
 
