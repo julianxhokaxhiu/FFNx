@@ -24,8 +24,10 @@
 #include <string.h>
 #include "cfg.h"
 
+#define FFNX_CFG_FILE "FFNx.cfg"
+
 // configuration variables with their default values
-char *mod_path;
+char *mod_path = nullptr;
 cfg_bool_t use_external_movie = cfg_bool_t(true);
 char* external_movie_ext = nullptr;
 long use_external_music = FFNX_MUSIC_VGMSTREAM;
@@ -144,16 +146,18 @@ void read_cfg()
 {
 	cfg_t* cfg;
 
-	mod_path = _strdup("");
 	use_external_movie = cfg_bool_t(!ff8);
 
-	cfg = cfg_init(opts, 0);
+	if (_access(FFNX_CFG_FILE, 0) == 0)
+	{
+		cfg = cfg_init(opts, 0);
 
-	cfg_set_error_function(cfg, error_callback);
+		cfg_set_error_function(cfg, error_callback);
 
-	cfg_parse(cfg, "FFNx.cfg");
+		cfg_parse(cfg, FFNX_CFG_FILE);
 
-	cfg_free(cfg);
+		cfg_free(cfg);
+	}
 
 	if (ff8)
 	{
@@ -164,9 +168,11 @@ void read_cfg()
 	// Internal scale of 1 is not allowed
 	if (internal_resolution_scale < 2) internal_resolution_scale = 2;
 
-	/*
-	* HEXT PATCHING
-	*/
+	// #############
+	// SAFE DEFAULTS
+	// #############
+
+	// HEXT PATCHING
 
 	if (hext_patching_path == nullptr)
 	{
@@ -174,13 +180,11 @@ void read_cfg()
 		PathAppendA(hext_patching_path, "hext");
 	}
 
-	// Append game name
 	if (ff8)
 		PathAppendA(hext_patching_path, "ff8");
 	else
 		PathAppendA(hext_patching_path, "ff7");
 
-	// Append language to hext path
 	switch (version)
 	{
 	case VERSION_FF7_102_US:
@@ -220,17 +224,29 @@ void read_cfg()
 		break;
 	}
 
-	/*
-	* OVERRIDE PATH
-	*/
+	//OVERRIDE PATH
 	if (override_path == nullptr)
 		override_path = R"(override)";
 
-	/*
-	* DIRECT MODE PATH
-	*/
+	// DIRECT MODE PATH
 	if (direct_mode_path == nullptr)
 		direct_mode_path = R"(direct)";
+
+	// RENDERER
+	if (renderer_backend == nullptr)
+		renderer_backend = "OpenGL";
+
+	// EXTERNAL MOVIE EXTENSION
+	if (external_movie_ext == nullptr)
+		external_movie_ext = "avi";
+
+	// EXTERNAL MUSIC EXTENSION
+	if (external_music_ext == nullptr)
+		external_music_ext = "ogg";
+
+	// MOD PATH
+	if (mod_path == nullptr)
+		mod_path = "mods/Textures";
 
 #ifdef SINGLE_STEP
 	window_size_x = 0;
