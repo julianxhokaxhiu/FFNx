@@ -125,13 +125,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 			PathAppendA(out, override_path);
 			if (pos != NULL)
 				PathAppendA(out, pos);
-			else if (
-				strcmp(in, "scene.bin") == 0 ||
-				strcmp(in, "camdat0.bin") == 0 ||
-				strcmp(in, "camdat1.bin") == 0 ||
-				strcmp(in, "camdat2.bin") == 0 ||
-				strcmp(in, "co.bin") == 0
-				)
+			else
 			{
 				PathAppendA(out, R"(battle)");
 				PathAppendA(out, in);
