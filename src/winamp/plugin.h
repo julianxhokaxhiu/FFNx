@@ -65,6 +65,7 @@ private:
 	static DWORD prebuffer_size;
 	static DWORD start_t;
 	static DWORD last_pause_t;
+	static DWORD last_stop_t;
 	static int last_pause;
 	static int offset_t;
 	static LONG volume;

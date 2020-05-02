@@ -235,6 +235,7 @@ DWORD CustomOutPlugin::bytes_written = 0;
 DWORD CustomOutPlugin::prebuffer_size = 0;
 DWORD CustomOutPlugin::start_t = 0;
 DWORD CustomOutPlugin::last_pause_t = 0;
+DWORD CustomOutPlugin::last_stop_t = 0;
 int CustomOutPlugin::last_pause = 0;
 int CustomOutPlugin::offset_t = 0;
 LONG CustomOutPlugin::volume = 0;
@@ -320,12 +321,15 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	sound_write_pointer = 0;
 	bytes_written = 0;
 	offset_t = 0;
+	last_stop_t = 0;
 	play_started = false;
 	clear_done = false;
 
 	sbdesc.dwSize = sizeof(sbdesc);
 	sbdesc.lpwfxFormat = &sound_format;
-	sbdesc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY | DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_TRUEPLAYPOSITION;
+	sbdesc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY
+		| DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2
+		| DSBCAPS_TRUEPLAYPOSITION | DSBCAPS_GLOBALFOCUS;
 	sbdesc.dwReserved = 0;
 	sbdesc.dwBufferBytes = sound_buffer_size;
 
@@ -335,8 +339,12 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 		
 		return -1;
 	}
-
-	//(*common_externals.directsound)->SetCooperativeLevel(hwnd, DSSCL_PRIORITY);
+	
+	// Force Directsound priority
+	if ((*common_externals.directsound)->SetCooperativeLevel(hwnd, DSSCL_PRIORITY))
+	{
+		error("couldn't set cooperative level (%i)\n", GetLastError());
+	}
 	
 	if ((*common_externals.directsound)->CreateSoundBuffer((LPCDSBUFFERDESC)&sbdesc, &sound_buffer, 0))
 	{
@@ -347,7 +355,7 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	}
 
 	if (volume < 0) {
-		info("Buffer init set previous volume %i", volume);
+		info("Buffer init set previous volume %i\n", volume);
 		sound_buffer->SetVolume(volume);
 	}
 
@@ -355,7 +363,7 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	sound_buffer->SetPan(pan);
 
 	if (tempo != 0) {
-		info("Buffer init set previous frequency %i", tempo);
+		info("Buffer init set previous frequency %i\n", tempo);
 		sound_buffer->SetFrequency(tempo);
 	}
 	
@@ -456,8 +464,14 @@ int CustomOutPlugin::IsPlaying()
 			// It is hard to know the current accurate play time with DirectSound
 			// And the buffer is circular, so we make precautions
 			if (clear_done) {
-				return current_play_cursor < sound_write_pointer
-					|| current_play_cursor > sound_write_pointer + clear_data_size;
+				if (current_play_cursor < sound_write_pointer
+					|| current_play_cursor > sound_write_pointer + clear_data_size) {
+					return 1;
+				}
+				last_stop_t = GetTickCount();
+				sound_buffer->Stop();
+
+				return 0;
 			}
 			
 			// Clear some data after the write pointer when it is possible
@@ -468,7 +482,7 @@ int CustomOutPlugin::IsPlaying()
 				if (!sound_buffer->Lock(sound_write_pointer, clear_data_size, &ptr1, &bytes1, &ptr2, &bytes2, 0)) {
 					memset(ptr1, 0, bytes1);
 					memset(ptr2, 0, bytes2);
-					info("Clear some data");
+					trace("Clear some DirectSound buffer data\n");
 					if (sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
 						error("couldn't unlock sound buffer\n");
 					}
@@ -537,8 +551,16 @@ void CustomOutPlugin::Flush(int t)
 
 int CustomOutPlugin::GetOutputTime()
 {
+	if (!sound_buffer) {
+		return 0;
+	}
+	
 	if (last_pause_t > 0) {
 		return last_pause_t - start_t;
+	}
+
+	if (last_stop_t > 0) {
+		return last_stop_t - start_t;
 	}
 
 	return GetTickCount() - start_t;
