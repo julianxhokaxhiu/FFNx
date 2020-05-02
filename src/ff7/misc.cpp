@@ -86,3 +86,8 @@ char *kernel2_get_text(uint section_base, uint string_id, uint section_offset)
 	
 	return &section[((word *)section)[string_id]];
 }
+
+void ff7_wm_activateapp(bool hasFocus)
+{
+
+}

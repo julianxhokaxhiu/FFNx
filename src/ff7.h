@@ -1573,6 +1573,7 @@ struct ff7_externals
 	uint coaster_sub_5EE150;
 	uint cleanup_game;
 	uint cleanup_midi;
+	uint wm_activateapp;
 };
 
 uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

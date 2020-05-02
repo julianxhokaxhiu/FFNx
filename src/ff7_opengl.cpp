@@ -139,6 +139,9 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	// prevent FF7 from trying to cleanup the built-in midi player if we're going to replace it
 	if(use_external_music) replace_function(ff7_externals.cleanup_midi, noop);
 
+	// prevent FF7 from stopping the movie when the window gets unfocused
+	replace_function(ff7_externals.wm_activateapp, ff7_wm_activateapp);
+
 	// snowboard crash fix
 	memcpy(ff7_externals.snowboard_fix, snowboard_fix, sizeof(snowboard_fix));
 

@@ -64,3 +64,4 @@ ff7_externals.menu_objects =          (menu_objects *)0xF3B7D0;
 ff7_externals.magic_thread_start =            0x427938;
 ff7_externals.destroy_magic_effects = (void (*)(void))0x429332;
 ff7_externals.init_stuff =				      0x40A0A1;
+ff7_externals.wm_activateapp =                0x409D02;
