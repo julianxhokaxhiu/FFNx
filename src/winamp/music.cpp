@@ -69,7 +69,7 @@ void winamp_load_song(char* midi, uint id)
 
 	if (winamp_current_id && ff7_needs_resume(mode, winamp_previous_mode, midi, winamp_previous_midi)) {
 		winamp_paused_midi_id = winamp_current_id;
-		winamp_paused_midi_ms = in->getOutputTime();
+		winamp_paused_midi_ms = in->getOutputTime() % in->getLength();
 
 		info("Saved midi time ms: %i\n", winamp_paused_midi_ms);
 	}
@@ -148,8 +148,8 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 
 			if (winamp_trans_counter > 0)
 			{
-				//if (in && out && in->getOutputTime())
-				//{
+				if (winamp_current_id > 0)
+				{
 					winamp_song_volume += winamp_trans_step;
 
 					winamp_apply_volume();
@@ -160,13 +160,13 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 					{
 						start_next_song = true;
 					}
-				/*}
+				}
 				else
 				{
 					winamp_trans_counter = 0;
 
 					start_next_song = true;
-				}*/
+				}
 			}
 			
 			if (start_next_song)
@@ -201,13 +201,15 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 			}
 		}
 
-		if (in)
+		if (in && winamp_current_id > 0)
 		{
 			int output_time = in->getOutputTime();
 
-			if (output_time >= in->getLength())
+			if (!winamp_song_ended && output_time >= in->getLength())
 			{
 				winamp_song_ended = true;
+
+				trace("song ended at %i ms\n", output_time);
 			}
 
 			if (!winamp_song_paused && previous_output_time >= 0 && output_time == previous_output_time)
@@ -222,7 +224,12 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 				winamp_song_ended = true;
 				winamp_current_id = 0;
 				silence_detected = 0;
+
+				trace("silence detected at %i ms\n", output_time);
 			}
+		}
+		else {
+			silence_detected = 0;
 		}
 
 		cur += 1;
