@@ -1361,6 +1361,32 @@ struct ff7_game_obj
 	uint field_A9C;
 };
 
+struct ff7_gamepad_status
+{
+	uint pos_x;
+	uint pos_y;
+	uint field_30;
+	uint field_34;
+	uint field_38;
+	uint field_3C;
+	uint button1;
+	uint button2;
+	uint button3;
+	uint button4;
+	uint button5;
+	uint button6;
+	uint button7;
+	uint button8;
+	uint button9;
+	uint button10;
+	uint button11;
+	uint button12;
+	uint button13;
+	uint button14;
+	uint button15;
+	uint button16;
+};
+
 struct ff7_gfx_driver
 {
 	gfx_init *init;
@@ -1574,6 +1600,9 @@ struct ff7_externals
 	uint cleanup_game;
 	uint cleanup_midi;
 	uint wm_activateapp;
+	uint get_gamepad;
+	uint update_gamepad_status;
+	struct ff7_gamepad_status* gamepad_status;
 };
 
 uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

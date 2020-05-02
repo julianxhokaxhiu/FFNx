@@ -31,6 +31,8 @@ void kernel2_reset_counters();
 char *kernel2_add_section(uint size);
 char *kernel2_get_text(uint section_base, uint string_id, uint section_offset);
 void ff7_wm_activateapp(bool hasFocus);
+int ff7_get_gamepad();
+struct ff7_gamepad_status* ff7_update_gamepad_status();
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);

@@ -32,6 +32,7 @@
 #include "patch.h"
 #include "movies.h"
 #include "music.h"
+#include "gamepad.h"
 #include "ff7/defs.h"
 
 #include "ff7_data.h"
@@ -74,6 +75,12 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	memset_code(ff7_externals.dinput_acquire_keyboard + 0x31, 0x90, 5);
 
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
+
+	if (gamepad.CheckConnection())
+	{
+		replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
+		replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
+	}
 
 	if(ff7_more_debug) replace_function(common_externals.debug_print2, external_debug_print2);
 

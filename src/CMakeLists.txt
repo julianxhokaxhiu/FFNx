@@ -29,6 +29,7 @@ target_link_libraries(${RELEASE_NAME}
 	FFMPEG::SWScale
 	VGMSTREAM::VGMSTREAM
     STACKWALKER::STACKWALKER
+    XInput
 )
 target_compile_options(${RELEASE_NAME}
 	PRIVATE /D_CRT_SECURE_NO_WARNINGS

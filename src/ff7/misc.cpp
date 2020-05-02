@@ -28,6 +28,7 @@
 #include "../globals.h"
 #include "../cfg.h"
 #include "../log.h"
+#include "../gamepad.h"
 
 // MDEF fix
 uint get_equipment_stats(uint party_index, uint type)
@@ -90,4 +91,39 @@ char *kernel2_get_text(uint section_base, uint string_id, uint section_offset)
 void ff7_wm_activateapp(bool hasFocus)
 {
 
+}
+
+int ff7_get_gamepad()
+{
+	if (!gamepad.Refresh())
+		return FALSE;
+
+	return TRUE;
+}
+
+struct ff7_gamepad_status* ff7_update_gamepad_status()
+{
+	if (!gamepad.Refresh()) return 0;
+
+	ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
+	ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
+	ff7_externals.gamepad_status->field_30 = (gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
+	ff7_externals.gamepad_status->field_34 = (gamepad.leftStickY < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN); // DOWN
+	ff7_externals.gamepad_status->field_38 = (gamepad.leftStickX < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT); // LEFT
+	ff7_externals.gamepad_status->field_3C = (gamepad.leftStickX > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT); // RIGHT
+	ff7_externals.gamepad_status->button1 = gamepad.IsPressed(XINPUT_GAMEPAD_X); // Square
+	ff7_externals.gamepad_status->button2 = gamepad.IsPressed(XINPUT_GAMEPAD_A); // Cross
+	ff7_externals.gamepad_status->button3 = gamepad.IsPressed(XINPUT_GAMEPAD_B); // Circle
+	ff7_externals.gamepad_status->button4 = gamepad.IsPressed(XINPUT_GAMEPAD_Y); // Triangle
+	ff7_externals.gamepad_status->button5 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER); // L1
+	ff7_externals.gamepad_status->button6 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER); // R1
+	ff7_externals.gamepad_status->button7 = gamepad.leftTrigger > 0.85f;
+	ff7_externals.gamepad_status->button8 = gamepad.rightTrigger > 0.85f;
+	ff7_externals.gamepad_status->button9 = gamepad.IsPressed(XINPUT_GAMEPAD_BACK); // SELECT
+	ff7_externals.gamepad_status->button10 = gamepad.IsPressed(XINPUT_GAMEPAD_START); // START
+	ff7_externals.gamepad_status->button11 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB); // L3
+	ff7_externals.gamepad_status->button12 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB); // R3
+	ff7_externals.gamepad_status->button13 = gamepad.IsPressed(0x400); // PS Button
+    
+    return ff7_externals.gamepad_status;
 }

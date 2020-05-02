@@ -65,3 +65,6 @@ ff7_externals.magic_thread_start =            0x427938;
 ff7_externals.destroy_magic_effects = (void (*)(void))0x429332;
 ff7_externals.init_stuff =				      0x40A0A1;
 ff7_externals.wm_activateapp =                0x409D02;
+ff7_externals.get_gamepad =                   0x41F9AE;
+ff7_externals.update_gamepad_status =         0x41F7E8;
+ff7_externals.gamepad_status = (struct ff7_gamepad_status*)0x9AFC18;
