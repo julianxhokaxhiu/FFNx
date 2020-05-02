@@ -148,6 +148,17 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x16D, 5);
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x190, 5);
 
+	// #####################
+	// new timer calibration
+	// #####################
+
+	// replace rdtsc timing
+	replace_function(common_externals.get_time, qpc_get_time);
+
+	// override the timer calibration
+	QueryPerformanceFrequency((LARGE_INTEGER*)&game_object->_countspersecond);
+	game_object->countspersecond = (double)game_object->_countspersecond;
+
 	if (ff7_center_fields)
 	{
 		// vertically center fields
