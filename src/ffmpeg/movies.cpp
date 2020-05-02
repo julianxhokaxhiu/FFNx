@@ -306,6 +306,20 @@ uint ffmpeg_prepare_movie(char *name)
 
 		first_audio_packet = true;
 		ffmpeg_sound_write_pointer = 0;
+
+		if (!(steam_edition || estore_edition) && !ff8)
+		{
+			if (ffmpeg_sound_buffer && *common_externals.directsound)
+			{
+				HKEY ff7_regkey;
+				DWORD music_volume;
+				DWORD regsize = sizeof(DWORD);
+
+				RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Square Soft, Inc.\\Final Fantasy VII\\1.00\\MIDI", 0, KEY_QUERY_VALUE, &ff7_regkey);
+				RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&music_volume, &regsize);
+				IDirectSoundBuffer_SetVolume(ffmpeg_sound_buffer, (int)(20.0f * log10f(music_volume / 100.0f) * 100.0f));
+			}
+		}
 	}
 
 exit:
