@@ -306,9 +306,9 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 	Close();
 	
-	DSBUFFERDESC1 sbdesc;
+	DSBUFFERDESC1 sbdesc = DSBUFFERDESC1();
 
-	sound_format.cbSize = sizeof(sound_format);
+	sound_format.cbSize = 0;
 	sound_format.wBitsPerSample = bitspersamp;
 	sound_format.nChannels = numchannels;
 	sound_format.nSamplesPerSec = samplerate;
@@ -327,7 +327,7 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 	sbdesc.dwSize = sizeof(sbdesc);
 	sbdesc.lpwfxFormat = &sound_format;
-	sbdesc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY
+	sbdesc.dwFlags = DSBCAPS_STATIC | DSBCAPS_LOCSOFTWARE | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY
 		| DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2
 		| DSBCAPS_TRUEPLAYPOSITION | DSBCAPS_GLOBALFOCUS;
 	sbdesc.dwReserved = 0;
@@ -338,12 +338,6 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 		error("No directsound device\n");
 		
 		return -1;
-	}
-	
-	// Force Directsound priority
-	if ((*common_externals.directsound)->SetCooperativeLevel(hwnd, DSSCL_PRIORITY))
-	{
-		error("couldn't set cooperative level (%i)\n", GetLastError());
 	}
 	
 	if ((*common_externals.directsound)->CreateSoundBuffer((LPCDSBUFFERDESC)&sbdesc, &sound_buffer, 0))
