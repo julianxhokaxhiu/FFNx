@@ -74,8 +74,10 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	memset_code(ff7_externals.dinput_getstate2 + 0x7E, 0x90, 5);
 	memset_code(ff7_externals.dinput_acquire_keyboard + 0x31, 0x90, 5);
 
+	// Allow mouse cursor to be shown
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
 
+	// Enable XInput if a compatible gamepad is detected, otherwise continue with native DInput
 	if (gamepad.CheckConnection())
 	{
 		replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
@@ -168,6 +170,10 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	// override the timer calibration
 	QueryPerformanceFrequency((LARGE_INTEGER*)&game_object->_countspersecond);
 	game_object->countspersecond = (double)game_object->_countspersecond;
+
+	// #####################
+	// driver init
+	// #####################
 
 	ret = (ff7_gfx_driver*)external_calloc(1, sizeof(*ret));
 
