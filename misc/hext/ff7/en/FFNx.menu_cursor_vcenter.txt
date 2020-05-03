@@ -1,0 +1,3 @@
+# Fix Main Menu cursor position ( vcenter relative to text entry )
+715240 = 14
+71526B = 14

@@ -69,9 +69,6 @@ char *renderer_backend = nullptr;
 cfg_bool_t renderer_debug = cfg_bool_t(false);
 cfg_bool_t create_crash_dump = cfg_bool_t(false);
 char* steam_game_userdata = nullptr;
-cfg_bool_t ff7_center_fields = cfg_bool_t(true);
-cfg_bool_t ff7_battle_fullscreen = cfg_bool_t(true);
-cfg_bool_t ff7_menu_fix_cursor_vcenter = cfg_bool_t(true);
 char* hext_patching_path = nullptr;
 char* override_path = nullptr;
 char* direct_mode_path = nullptr;
@@ -119,9 +116,6 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("create_crash_dump", &create_crash_dump),
 		CFG_SIMPLE_STR("steam_game_userdata", &steam_game_userdata),
 		CFG_SIMPLE_BOOL("ff7_more_debug", &ff7_more_debug),
-		CFG_SIMPLE_BOOL("ff7_center_fields", &ff7_center_fields),
-		CFG_SIMPLE_BOOL("ff7_battle_fullscreen", &ff7_battle_fullscreen),
-		CFG_SIMPLE_BOOL("ff7_menu_fix_cursor_vcenter", &ff7_menu_fix_cursor_vcenter),
 		CFG_SIMPLE_STR("hext_patching_path", &hext_patching_path),
 		CFG_SIMPLE_STR("override_path", &override_path),
 		CFG_SIMPLE_STR("direct_mode_path", &direct_mode_path),
@@ -188,10 +182,6 @@ void read_cfg()
 	switch (version)
 	{
 	case VERSION_FF7_102_US:
-	case VERSION_FF8_12_US:
-	case VERSION_FF8_12_US_NV:
-	case VERSION_FF8_12_US_EIDOS:
-	case VERSION_FF8_12_US_EIDOS_NV:
 		if (ff7_japanese_edition)
 		{
 			PathAppendA(hext_patching_path, "ja");
@@ -202,22 +192,49 @@ void read_cfg()
 		}
 		break;
 	case VERSION_FF7_102_FR:
-	case VERSION_FF8_12_FR:
-	case VERSION_FF8_12_FR_NV:
 		PathAppendA(hext_patching_path, "fr");
 		break;
 	case VERSION_FF7_102_DE:
-	case VERSION_FF8_12_DE:
 		PathAppendA(hext_patching_path, "de");
 		break;
 	case VERSION_FF7_102_SP:
-	case VERSION_FF8_12_SP:
-	case VERSION_FF8_12_SP_NV:
 		PathAppendA(hext_patching_path, "sp");
 		break;
+	case VERSION_FF8_12_US:
+		PathAppendA(hext_patching_path, "en");
+		break;
+	case VERSION_FF8_12_US_NV:
+		PathAppendA(hext_patching_path, "en_nv");
+		break;
+	case VERSION_FF8_12_FR:
+		PathAppendA(hext_patching_path, "fr");
+		break;
+	case VERSION_FF8_12_FR_NV:
+		PathAppendA(hext_patching_path, "fr_nv");
+		break;
+	case VERSION_FF8_12_DE:
+		PathAppendA(hext_patching_path, "de");
+		break;
+	case VERSION_FF8_12_DE_NV:
+		PathAppendA(hext_patching_path, "de");
+		break;
+	case VERSION_FF8_12_SP:
+		PathAppendA(hext_patching_path, "sp");
+		break;
+	case VERSION_FF8_12_SP_NV:
+		PathAppendA(hext_patching_path, "sp_nv");
+		break;
 	case VERSION_FF8_12_IT:
-	case VERSION_FF8_12_IT_NV:
 		PathAppendA(hext_patching_path, "it");
+		break;
+	case VERSION_FF8_12_IT_NV:
+		PathAppendA(hext_patching_path, "it_nv");
+		break;
+	case VERSION_FF8_12_US_EIDOS:
+		PathAppendA(hext_patching_path, "en_eidos");
+		break;
+	case VERSION_FF8_12_US_EIDOS_NV:
+		PathAppendA(hext_patching_path, "en_eidos_nv");
 		break;
 	case VERSION_FF8_12_JP:
 		PathAppendA(hext_patching_path, "jp");

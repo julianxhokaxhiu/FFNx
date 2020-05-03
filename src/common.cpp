@@ -55,6 +55,9 @@ uint estore_edition = false;
 // global FF7 flag, check if is japanese edition ( detected as US )
 uint ff7_japanese_edition = false;
 
+// global FF7 flag, tell the engine if center fields hext patch is active
+uint ff7_center_fields = false;
+
 // window dimensions requested by the game, normally 640x480
 uint game_width;
 uint game_height;

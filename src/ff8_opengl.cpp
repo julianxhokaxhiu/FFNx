@@ -369,51 +369,6 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 	memset_code(ff8_externals.dinput_sub_4692B0 + 0x2B, 0x90, 7);
 	memset_code(ff8_externals.dinput_sub_4692B0 + 0x60, 0x90, 7);
 
-	// Fix UV coords
-	// Kudos to Maki - http://forums.qhimm.com/index.php?topic=16327.0
-	// Adapted to work on various languages
-	switch (version)
-	{
-	case VERSION_FF8_12_US:
-	case VERSION_FF8_12_US_NV:
-	case VERSION_FF8_12_US_EIDOS:
-	case VERSION_FF8_12_US_EIDOS_NV:
-		patch_code_byte(ff8_externals.uvWorldMapFix, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0xA, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x18, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x22, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x32, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x3C, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x4C, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x56, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x66, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x70, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x78, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x82, 0x00);
-		break;
-	case VERSION_FF8_12_FR:
-	case VERSION_FF8_12_FR_NV:
-	case VERSION_FF8_12_DE:
-	case VERSION_FF8_12_DE_NV:
-	case VERSION_FF8_12_SP:
-	case VERSION_FF8_12_SP_NV:
-	case VERSION_FF8_12_IT:
-	case VERSION_FF8_12_IT_NV:
-		patch_code_byte(ff8_externals.uvWorldMapFix, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0xB, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x1C, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x27, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x3A, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x45, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x58, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x63, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x76, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x81, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x8A, 0x00);
-		patch_code_byte(ff8_externals.uvWorldMapFix + 0x95, 0x00);
-		break;
-	}
-
 	ret = (ff8_gfx_driver*)external_calloc(1, sizeof(*ret));
 
 	ret->init = common_init;

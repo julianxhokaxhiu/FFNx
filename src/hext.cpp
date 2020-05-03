@@ -122,6 +122,21 @@ std::vector<char> Hext::getBytes(std::string token)
     return ret;
 }
 
+bool Hext::parseCommands(std::string token)
+{
+    if (starts_with(token, ">>"))
+    {
+        if (ends_with(token, "FF7_CENTER_FIELDS = 1"))
+        {
+            ff7_center_fields = true;
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool Hext::parseComment(std::string token)
 {
     if (isMultilineComment)
@@ -209,6 +224,9 @@ void Hext::apply(std::string filename)
 
         // Check if is a comment
         if (parseComment(line)) continue;
+
+        // Check if is a command
+        if (parseCommands(line)) continue;
 
         // Check if is a global offset
         if (parseGlobalOffset(line)) continue;

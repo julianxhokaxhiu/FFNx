@@ -1,0 +1,16 @@
+# Fix UV coords
+# Kudos to Maki - http://forums.qhimm.com/index.php?topic=16327.0
+
++55415F
+0 = 00
+B = 00
+1C = 00
+27 = 00
+3A = 00
+45 = 00
+58 = 00
+63 = 00
+76 = 00
+81 = 00
+8A = 00
+95 = 00

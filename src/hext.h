@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "globals.h"
 #include "patch.h"
 
 class Hext {
@@ -20,6 +21,7 @@ private:
 	int getAddress(std::string token);
 	std::vector<char> getBytes(std::string token);
 
+	bool parseCommands(std::string token);
 	bool parseComment(std::string token);
 	bool parseGlobalOffset(std::string token);
 	bool parseMemoryPermission(std::string token);

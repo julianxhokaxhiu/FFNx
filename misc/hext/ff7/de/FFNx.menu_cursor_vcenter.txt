@@ -1,0 +1,3 @@
+# Fix Main Menu cursor position ( vcenter relative to text entry )
+7A0490 = 14
+7A04BB = 14
