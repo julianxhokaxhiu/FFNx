@@ -273,6 +273,8 @@ void Hext::apply()
         for (const auto& entry : std::filesystem::directory_iterator(hext_patching_path))
         {
             if (entry.is_regular_file()) apply(entry.path().string());
+
+            inGlobalOffset = 0;
         }
     }
 }
