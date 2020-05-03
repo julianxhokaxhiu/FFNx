@@ -655,6 +655,7 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
     if (file)
     {
         size_t filesize = 0;
+        bimg::ImageContainer imgSize;
         bimg::ImageContainer* img = nullptr;
         char* buffer = nullptr;
 
@@ -674,17 +675,11 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
 
         if (buffer != nullptr)
         {
-            // As the image unpacked may take more size that its file size,
-            // we can't predict how big it will be. Though we can catch the exception
-            // if the memory is full and continue normally the flow as the texture was not
-            // able to be loaded in memory.
-            try
+            bimg::imageParse(imgSize, buffer, filesize + 1);
+
+            if (doesItFitInMemory(imgSize.m_size))
             {
                 img = bimg::imageParse(&defaultAllocator, buffer, filesize + 1);
-            }
-            catch (std::exception& ex)
-            {
-                img = nullptr;
             }
 
             driver_free(buffer);
@@ -692,13 +687,7 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
 
         if (img != nullptr)
         {
-            // If the texture we are going to create does not fit in memory, return an empty one.
-            // Will prevent the game from crashing, while allowing the player to not loose its progress.
-            if (!doesItFitInMemory(img->m_size))
-            {
-                ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
-            }
-            else if (gl_check_texture_dimensions(img->m_width, img->m_height, filename))
+            if (gl_check_texture_dimensions(img->m_width, img->m_height, filename))
             {
                 const bgfx::Memory* mem = bgfx::copy(img->m_data, img->m_size);
 
@@ -715,8 +704,16 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
                 *width = img->m_width;
                 *height = img->m_height;
             }
+            else
+            {
+                ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
+            }
 
             bimg::imageFree(img);
+        }
+        else
+        {
+            ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
         }
     }
 
