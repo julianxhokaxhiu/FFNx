@@ -38,6 +38,10 @@ public:
 	// volume stuff
 	void setVolume(int volume);	// from 0 to 255.. usually just call outMod->SetVolume
 	void setPan(int pan);	    // from -127 to 127.. usually just call outMod->SetPan
+	int getOutputTime() const;
+	int getWrittenTime() const;
+	void pause() const;
+	void unPause() const;
 	// This method is not part of the winamp plugin
 	virtual void setTempo(int tempo) = 0;
 };
@@ -64,22 +68,23 @@ private:
 	static DWORD bytes_written;
 	static DWORD prebuffer_size;
 	static DWORD start_t;
+	static DWORD offset_t;
+	static DWORD paused_t;
 	static DWORD last_pause_t;
 	static DWORD last_stop_t;
 	static int last_pause;
-	static int offset_t;
-	static LONG volume;
-	static LONG pan;
-	static DWORD tempo;
 	static WAVEFORMATEX sound_format;
 	static bool play_started;
 	static bool clear_done;
+	static int last_volume;
+
 	static void Config(HWND hwndParent);
 	static void About(HWND hwndParent);
 	static void Init();
 	static void Quit();
 	static int Open(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms);
 	static void Close();
+	static bool playHelper();
 	static int Write(char* buf, int len);
 	static int canWriteHelper(DWORD &current_play_cursor);
 	static int CanWrite();
