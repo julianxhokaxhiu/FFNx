@@ -88,11 +88,17 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 				}
 				else
 				{
-					if (isSavegame) pos = strrchr(in, 47) + 1;
-					PathAppendA(out, pos);
-
-					if (_access(out, 0) == -1)
-						return 1;
+					if (isSavegame)
+					{
+						pos = strrchr(in, 47) + 1;
+						PathAppendA(out, pos);
+					}
+					else
+					{
+						PathAppendA(out, pos);
+						if (_access(out, 0) == -1)
+							return 1;
+					}
 				}
 			}
 		}
