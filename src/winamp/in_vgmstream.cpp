@@ -959,7 +959,7 @@ DWORD WINAPI __stdcall decode(void* arg) {
             }
 
             /* fade near the end */
-            if (vgmstream->loop_flag && state.fade_samples > 0 && !settings.loop_forever) {
+            /* if (vgmstream->loop_flag && state.fade_samples > 0 && !settings.loop_forever) {
                 int fade_channels = state.output_channels;
                 int samples_into_fade = state.decode_pos_samples - (state.stream_length_samples - state.fade_samples);
                 if (samples_into_fade + samples_to_do > 0) {
@@ -974,7 +974,7 @@ DWORD WINAPI __stdcall decode(void* arg) {
                         }
                     }
                 }
-            }
+            } */
 
             /* output samples */
             /* input_module.SAAddPCMData((char*)sample_buffer, state.output_channels, 16, state.decode_pos_ms);
