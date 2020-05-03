@@ -34,7 +34,11 @@
 
 void music_init()
 {
-	if (use_external_music > FFNX_MUSIC_NONE && !ff8)
+	if (ff8) {
+		return;
+	}
+
+	if (use_external_music > FFNX_MUSIC_NONE && use_external_music <= FFNX_MUSIC_WINAMP)
 	{
 		replace_function(common_externals.midi_init, midi_init);
 		replace_function(common_externals.play_midi, play_midi);
@@ -60,42 +64,9 @@ void music_init()
 			break;
 		}
 	}
-
-	// directsound buffer flags update with globalfocus
-	replace_function(common_externals.create_directsound_buffer, create_directsound_buffer);
-}
-
-IDirectSoundBuffer* create_directsound_buffer(uint buffer_bytes, WAVEFORMATEX* sound_format)
-{
-	IDirectSoundBuffer* sound_buffer = nullptr;
-
-	if (!*common_externals.directsound)
-	{
-		error("No directsound device\n");
-
-		return sound_buffer;
+	else {
+		error("Unknown use_external_music value\n");
 	}
-
-	DSBUFFERDESC1 sbdesc = DSBUFFERDESC1();
-	sbdesc.dwSize = sizeof(sbdesc);
-	sbdesc.lpwfxFormat = sound_format;
-	// FFNx patch: Adding DSBCAPS_GLOBALFOCUS and DSBCAPS_TRUEPLAYPOSITION
-	sbdesc.dwFlags = DSBCAPS_STATIC | DSBCAPS_LOCSOFTWARE | DSBCAPS_CTRLFREQUENCY
-		| DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_GETCURRENTPOSITION2
-		| DSBCAPS_TRUEPLAYPOSITION | DSBCAPS_GLOBALFOCUS;
-	sbdesc.dwReserved = 0;
-	sbdesc.dwBufferBytes = buffer_bytes;
-
-	HRESULT err = (*common_externals.directsound)->CreateSoundBuffer((LPCDSBUFFERDESC)&sbdesc, &sound_buffer, 0);
-
-	if (err)
-	{
-		error("couldn't create secondary sound buffer (%X)\n", err);
-
-		return nullptr;
-	}
-
-	return sound_buffer;
 }
 
 uint midi_init(uint unknown)

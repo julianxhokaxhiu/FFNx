@@ -25,7 +25,6 @@
 #include <DSound.h>
 #include "types.h"
 
-IDirectSoundBuffer* create_directsound_buffer(uint buffer_bytes, WAVEFORMATEX* sound_format);
 void music_init();
 uint midi_init(uint unknown);
 void music_cleanup();
