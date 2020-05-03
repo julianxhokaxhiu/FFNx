@@ -59,6 +59,18 @@ inline bool ends_with(std::string const& value, std::string const& ending)
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
+inline bool replace(std::string& str, const std::string& from, const std::string& to)
+{
+    size_t start_pos = str.find(from);
+
+    if (start_pos == std::string::npos)
+        return false;
+    
+    str.replace(start_pos, from.length(), to);
+
+    return true;
+}
+
 int Hext::getAddress(std::string token)
 {
     int ret;
@@ -132,6 +144,17 @@ bool Hext::parseCommands(std::string token)
 
             return true;
         }
+    }
+
+    if (starts_with(token, "<<"))
+    {
+        replace(token, "<<", "");
+
+        trim(token);
+        
+        trace("%s\n", token.data());
+
+        return true;
     }
 
     return false;
