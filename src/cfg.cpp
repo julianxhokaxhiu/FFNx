@@ -194,7 +194,7 @@ void read_cfg()
 	case VERSION_FF8_12_US_EIDOS_NV:
 		if (ff7_japanese_edition)
 		{
-			PathAppendA(hext_patching_path, "jp");
+			PathAppendA(hext_patching_path, "ja");
 		}
 		else
 		{
