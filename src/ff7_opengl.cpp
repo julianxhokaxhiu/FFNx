@@ -138,18 +138,22 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	replace_function(ff7_externals.kernel2_get_text, kernel2_get_text);
 	patch_code_uint(ff7_externals.kernel_load_kernel2 + 0x1D, 20 * 65536);
 
+	// prevent FF7 from stopping the movie when the window gets unfocused
+	replace_function(ff7_externals.wm_activateapp, ff7_wm_activateapp);
+
+	// prevent FF7 from trying to cleanup the built-in midi player if we're going to replace it
+	if (use_external_music) replace_function(ff7_externals.cleanup_midi, noop);
+
+	// ##################################
+	// bugfixes to enhance game stability
+	// ##################################
+
 	// chocobo crash fix
 	memset_code(ff7_externals.chocobo_fix - 12, 0x90, 36);
 
 	// midi transition crash fix
 	memcpy_code(ff7_externals.midi_fix, midi_fix, sizeof(midi_fix));
 	memset_code(ff7_externals.midi_fix + sizeof(midi_fix), 0x90, 18 - sizeof(midi_fix));
-
-	// prevent FF7 from trying to cleanup the built-in midi player if we're going to replace it
-	if(use_external_music) replace_function(ff7_externals.cleanup_midi, noop);
-
-	// prevent FF7 from stopping the movie when the window gets unfocused
-	replace_function(ff7_externals.wm_activateapp, ff7_wm_activateapp);
 
 	// snowboard crash fix
 	memcpy(ff7_externals.snowboard_fix, snowboard_fix, sizeof(snowboard_fix));
