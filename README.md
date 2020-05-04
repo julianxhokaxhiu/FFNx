@@ -146,5 +146,50 @@ If you want to check what is going on behind the scene, or you may happen to hav
 ## Join us on Discord
 If you want to join our community, you can find us on Discord: https://discord.gg/N6M6pKS
 
+## Credits
+
+This project could have not been a reality if those people would have not worked on FF7 and FF8 with their deep passion and knowledge.
+FFNx makes use also of their work, and I will never be enough grateful to those people. The order is purely Alphabetical.
+
+These people are:
+- [Aali](http://forums.qhimm.com/index.php?action=profile;u=2862):
+  - for the original Driver code FFNx is based on.
+- [Chrysalis](http://forums.qhimm.com/index.php?action=profile;u=674):
+  - for the battle fullscreen hext patch
+  - for the menu cursor vertical centering in menu
+- [DLPB](https://forums.qhimm.com/index.php?action=profile;u=6439):
+  - for original Hext concept and specification that FFNx implemented as well
+  - for the field vertical centering hext patch, , which FFNx provides a default patch for
+- [ficedula](http://forums.qhimm.com/index.php?action=profile;u=68):
+  - for FF7Music which FFNx provides support for
+  - for 7h 1.x which FFNx provides support for
+- [Iros](https://forums.qhimm.com/index.php?action=profile;u=21785):
+  - for 7h 1.x which FFNx provides support for
+- [Maki](http://forums.qhimm.com/index.php?action=profile;u=23937):
+  - for FF8 UV Hext Patch in the world map, which FFNx provides a default patch for
+  - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
+- [myst6re ](http://forums.qhimm.com/index.php?action=profile;u=4778):
+  - for the great tools like Makou Reactor, Deling and many others he did which helped a lot in improving FF8 while working on the code
+  - for the great help in the code implementing the Winamp layer being present inside FFNx
+  - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF8
+- [quantumpencil](http://forums.qhimm.com/index.php?action=profile;u=23810) and [Nax](https://github.com/nax):
+  - for the original CMake files FFNx has based its work upon
+  - for all the help in getting some logics wired up in the game engine and a lot of hex addresses I would never been able to figure out myself
+- [Satsuki](http://forums.qhimm.com/index.php?action=profile;u=24647):
+  - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF7
+  - for the field vertical centering hext patch, which FFNx provides a default patch for
+  - for a lot of hex addresses I would have never been able to figure out myself otherwise
+- [Sebanisu](http://forums.qhimm.com/index.php?action=profile;u=22866):
+  - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
+  - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF8
+- [TurBoss](https://github.com/TurBoss):
+  - for 7h 1.x which FFNx provides support for
+- [unab0mb ](https://forums.qhimm.com/index.php?action=profile;u=31071):
+  - for providing quick help in integrating FFNx on top of 7h 2.x until it gets officially supported
+
+I'm sure I forgot many others through the route. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
+
 ## License
 See [LICENSE](LICENSE).
+
+All rights belong to their respective owners.
