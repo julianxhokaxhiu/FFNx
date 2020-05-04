@@ -29,23 +29,25 @@
 
 void music_init()
 {
-	if (ff8) {
-		return;
-	}
-
 	if (use_external_music > FFNX_MUSIC_NONE && use_external_music <= FFNX_MUSIC_FF7MUSIC)
 	{
-		replace_function(common_externals.midi_init, midi_init);
-		replace_function(common_externals.play_midi, play_midi);
-		replace_function(common_externals.cross_fade_midi, cross_fade_midi);
-		replace_function(common_externals.pause_midi, pause_midi);
-		replace_function(common_externals.restart_midi, restart_midi);
-		replace_function(common_externals.stop_midi, stop_midi);
-		replace_function(common_externals.midi_status, midi_status);
-		replace_function(common_externals.set_master_midi_volume, set_master_midi_volume);
-		replace_function(common_externals.set_midi_volume, set_midi_volume);
-		replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
-		replace_function(common_externals.set_midi_tempo, set_midi_tempo);
+		if (ff8) {
+			replace_function(common_externals.play_midi, ff8_play_midi);
+			replace_function(common_externals.stop_midi, stop_midi);
+		}
+		else {
+			replace_function(common_externals.midi_init, midi_init);
+			replace_function(common_externals.play_midi, play_midi);
+			replace_function(common_externals.cross_fade_midi, cross_fade_midi);
+			replace_function(common_externals.pause_midi, pause_midi);
+			replace_function(common_externals.restart_midi, restart_midi);
+			replace_function(common_externals.stop_midi, stop_midi);
+			replace_function(common_externals.midi_status, midi_status);
+			replace_function(common_externals.set_master_midi_volume, set_master_midi_volume);
+			replace_function(common_externals.set_midi_volume, set_midi_volume);
+			replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
+			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
+		}
 
 		switch (use_external_music)
 		{
@@ -70,6 +72,44 @@ uint midi_init(uint unknown)
 	*ff7_externals.midi_initialized = true;
 
 	return true;
+}
+
+uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
+{
+	// midi_name format: {num}{type}-{name}.sgt
+	char* midi_name = common_externals.get_midi_name(midi),
+		* max_midi_name;
+	char truncated_midi_name[32];
+
+	info("FF8 midi play %i %i %i %i %s\n", midi, volume, u1, u2, midi_name);
+
+	midi_name = strchr(midi_name, '-');
+	
+	if (nullptr != midi_name) {
+		midi_name += 1; // Remove "-"
+		max_midi_name = strchr(midi_name, '.');
+
+		if (nullptr != max_midi_name) {
+			size_t len = max_midi_name - midi_name;
+
+			if (len < 32) {
+				memcpy(truncated_midi_name, midi_name, len);
+				truncated_midi_name[len] = '\0';
+
+				switch (use_external_music)
+				{
+				case FFNX_MUSIC_WINAMP:
+					winamp_play_music(truncated_midi_name, midi);
+					//winamp_set_music_volume(volume);
+					break;
+				}
+			}
+		}
+	}
+
+	// TODO: set dword_1CD21A4 to 1 and current_midi_id (1CD21A8)
+
+	return 1; // Success
 }
 
 void play_midi(uint midi)

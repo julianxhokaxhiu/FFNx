@@ -22,13 +22,13 @@
 
 #pragma once
 
-#include <DSound.h>
 #include "types.h"
 
 void music_init();
 uint midi_init(uint unknown);
 void music_cleanup();
 void play_midi(uint midi);
+uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2);
 void cross_fade_midi(uint midi, uint time);
 void pause_midi();
 void restart_midi();

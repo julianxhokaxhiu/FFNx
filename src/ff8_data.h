@@ -210,6 +210,9 @@ void ff8_find_externals()
 	ff8_externals.sub_469640 = get_relative_call(ff8_externals.pubintro_init, 0xD8);
 	ff8_externals.sub_46DBF0 = get_relative_call(ff8_externals.sub_469640, 0x5D);
 	common_externals.directsound = (IDirectSound**)get_absolute_value(ff8_externals.sub_46DBF0, 0x26);
+	common_externals.play_midi = 0x46C290;
+	common_externals.stop_midi = 0x46C6A0;
+	common_externals.get_midi_name = (char* (*)(uint))0x46C840;
 
 	ff8_externals.sub_5304B0 = (void (*)())get_relative_call(common_externals.update_movie_sample, 0x3D9);
 
