@@ -2019,6 +2019,7 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	info("Original resolution %ix%i, New resolution %ix%i\n", game_width, game_height, window_size_x, window_size_y);
 
 	// perform any additional initialization that requires the rendering environment to be set up
+	if (use_external_music) music_init();
 	if(!ff8) ff7_post_init();
 	else ff8_post_init();
 

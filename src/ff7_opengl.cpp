@@ -242,5 +242,4 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 void ff7_post_init()
 {
 	movie_init();
-	if(use_external_music) music_init();
 }
