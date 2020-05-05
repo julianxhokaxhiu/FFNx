@@ -14,11 +14,10 @@
 #include <filesystem>
 #include <fstream> 
 #include <locale>
-#include <regex>
 #include <sstream>
-#include <string>
 #include <vector>
 
+#include "utils.h"
 #include "globals.h"
 #include "patch.h"
 
