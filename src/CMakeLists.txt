@@ -3,6 +3,7 @@ find_package(CONFUSE REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
+find_package(PUGIXML REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -30,6 +31,7 @@ target_link_libraries(${RELEASE_NAME}
 	VGMSTREAM::VGMSTREAM
     STACKWALKER::STACKWALKER
     XInput
+    PUGIXML::PUGIXML
 )
 target_compile_options(${RELEASE_NAME}
 	PRIVATE /D_CRT_SECURE_NO_WARNINGS

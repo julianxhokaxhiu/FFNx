@@ -26,6 +26,7 @@
 
 #include "renderer.h"
 #include "hext.h"
+#include "metadata.h"
 
 #include "types.h"
 #include "log.h"
@@ -305,6 +306,8 @@ void common_cleanup(struct game_obj *game_object)
 	unreplace_functions();
 
 	newRenderer.shutdown();
+
+	if (steam_edition) metadataPatcher.apply();
 }
 
 // unused and unnecessary
