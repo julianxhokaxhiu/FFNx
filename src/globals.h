@@ -29,9 +29,8 @@
 #include "ff8.h"
 
 #define FFNX_MUSIC_NONE 0
-#define FFNX_MUSIC_VGMSTREAM 1
+#define FFNX_MUSIC_WINAMP 1
 #define FFNX_MUSIC_FF7MUSIC 2
-#define FFNX_MUSIC_WINAMP 3
 
 extern uint version;
 extern uint steam_edition;
