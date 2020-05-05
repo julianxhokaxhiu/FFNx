@@ -150,6 +150,8 @@ void Metadata::updateFF8()
 // PUBLIC
 void Metadata::apply()
 {
+    trace("Applying required metadata.xml patch to preserve save files.\n");
+
     char metadataPath[260]{ 0 };
     std::chrono::milliseconds nowMS = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()

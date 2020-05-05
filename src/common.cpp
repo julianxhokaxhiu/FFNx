@@ -296,6 +296,8 @@ void common_cleanup(struct game_obj *game_object)
 {
 	if(trace_all) trace("dll_gfx: cleanup\n");
 
+	if (steam_edition) metadataPatcher.apply();
+
 	if (!ff8) {
 		ff7_release_movie_objects();
 		if (use_external_music) music_cleanup();
@@ -306,8 +308,6 @@ void common_cleanup(struct game_obj *game_object)
 	unreplace_functions();
 
 	newRenderer.shutdown();
-
-	if (steam_edition) metadataPatcher.apply();
 }
 
 // unused and unnecessary
