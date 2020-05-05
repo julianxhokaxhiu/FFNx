@@ -91,6 +91,7 @@ enum game_modes
 	MODE_INTRO,
 	MODE_CARDGAME,
 	MODE_UNKNOWN,
+	MODE_AFTER_BATTLE,
 };
 
 // popup lifetime in frames
@@ -208,6 +209,7 @@ struct common_externals
 	uint start;
 	uint winmain;
 	uint load_tex_file;
+	uint directsound_buffer_flags_1;
 };
 
 // heap allocation wrappers

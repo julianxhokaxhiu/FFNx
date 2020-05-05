@@ -362,7 +362,7 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 	sbdesc.dwSize = sizeof(sbdesc);
 	sbdesc.lpwfxFormat = &sound_format;
-	sbdesc.dwFlags = DSBCAPS_STATIC | DSBCAPS_LOCSOFTWARE | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY
+	sbdesc.dwFlags = DSBCAPS_STATIC | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY
 		| DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2
 		| DSBCAPS_TRUEPLAYPOSITION | DSBCAPS_GLOBALFOCUS;
 	sbdesc.dwReserved = 0;

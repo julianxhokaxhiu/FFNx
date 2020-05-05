@@ -26,17 +26,17 @@
 
 // FF8 game mode definitions
 static struct game_mode ff8_modes[] = {
-	{FF8_MODE_0,             "MODE_0",             MODE_UNKNOWN,       true },
-	{FF8_MODE_1,             "MODE_1",             MODE_UNKNOWN,       true },
+	{FF8_MODE_CREDITS,       "MODE_CREDITS",       MODE_CREDITS,       true },
+	{FF8_MODE_FIELD,         "MODE_FIELD",         MODE_FIELD,         true },
 	{FF8_MODE_WORLDMAP,      "MODE_WORLDMAP",      MODE_WORLDMAP,      true },
 	{FF8_MODE_SWIRL,         "MODE_SWIRL",         MODE_SWIRL,         true },
-	{FF8_MODE_4,             "MODE_4",             MODE_UNKNOWN,       true },
+	{FF8_MODE_AFTER_BATTLE,  "MODE_AFTER_BATTLE",  MODE_AFTER_BATTLE,  true },
 	{FF8_MODE_5,             "MODE_5",             MODE_UNKNOWN,       true },
 	{FF8_MODE_MENU,          "MODE_MENU",          MODE_MENU,          true },
 	{FF8_MODE_7,             "MODE_7",             MODE_UNKNOWN,       true },
 	{FF8_MODE_CARDGAME,      "MODE_CARDGAME",      MODE_CARDGAME,      true },
 	{FF8_MODE_9,             "MODE_9",             MODE_UNKNOWN,       true },
-	{FF8_MODE_10,            "MODE_10",            MODE_UNKNOWN,       true },
+	{FF8_MODE_TUTO,          "MODE_TUTO",          MODE_UNKNOWN,       true },
 	{FF8_MODE_11,            "MODE_11",            MODE_UNKNOWN,       true },
 	{FF8_MODE_INTRO,         "MODE_INTRO",         MODE_INTRO,         true },
 	{FF8_MODE_100,           "MODE_100",           MODE_UNKNOWN,       true },
@@ -212,7 +212,11 @@ void ff8_find_externals()
 	common_externals.directsound = (IDirectSound**)get_absolute_value(ff8_externals.sub_46DBF0, 0x26);
 	common_externals.play_midi = 0x46C290;
 	common_externals.stop_midi = 0x46C6A0;
+	common_externals.midi_status = 0x46C860;
+	common_externals.pause_midi = 0x46F2F0;
+	common_externals.restart_midi = 0x46C670;
 	common_externals.get_midi_name = (char* (*)(uint))0x46C840;
+	common_externals.directsound_buffer_flags_1 = 0x46DDE6;
 
 	ff8_externals.sub_5304B0 = (void (*)())get_relative_call(common_externals.update_movie_sample, 0x3D9);
 

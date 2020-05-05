@@ -39,4 +39,4 @@ void set_midi_volume(uint volume);
 void set_midi_volume_trans(uint volume, uint step);
 void set_midi_tempo(unsigned char tempo);
 
-bool ff7_needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi);
+bool needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi);

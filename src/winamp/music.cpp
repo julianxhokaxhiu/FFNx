@@ -70,7 +70,7 @@ void winamp_load_song(char* midi, uint id)
 	char* winamp_previous_midi = winamp_current_midi;
 	uint mode = getmode_cached()->driver_mode;
 
-	if (winamp_current_id && ff7_needs_resume(mode, winamp_previous_mode, midi, winamp_previous_midi)) {
+	if (winamp_current_id && needs_resume(mode, winamp_previous_mode, midi, winamp_previous_midi)) {
 		winamp_paused_midi_id = winamp_current_id;
 		winamp_paused_midi_ms = out->getOutputTime() % in->getLength();
 
@@ -98,7 +98,7 @@ void winamp_load_song(char* midi, uint id)
 
 	winamp_apply_volume();
 
-	bool seek = winamp_previous_paused_midi_id == id && ff7_needs_resume(winamp_previous_mode, mode, winamp_previous_midi, midi);
+	bool seek = winamp_previous_paused_midi_id == id && needs_resume(winamp_previous_mode, mode, winamp_previous_midi, midi);
 
 	if (seek) {
 		in->pause();
@@ -337,11 +337,25 @@ void winamp_play_music(char *midi, uint id)
 
 void winamp_stop_music()
 {
-	trace("stop music\n");
+	trace("[%s] stop music\n", getmode_cached()->name);
 
 	EnterCriticalSection(&winamp_mutex);
 	
 	if (in) {
+		uint mode = getmode_cached()->driver_mode;
+
+		if (ff8 && out && winamp_current_id
+				&& needs_resume(mode, winamp_current_mode, nullptr, common_externals.get_midi_name(winamp_current_id))) {
+			winamp_paused_midi_id = winamp_current_id;
+			winamp_paused_midi_ms = out->getOutputTime() % in->getLength();
+
+			if (winamp_paused_midi_ms < 0) {
+				winamp_paused_midi_ms = 0;
+			}
+
+			info("Saved midi time ms: %i\n", winamp_paused_midi_ms);
+		}
+
 		in->stop();
 	}
 	
