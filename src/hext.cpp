@@ -67,6 +67,29 @@ std::vector<char> Hext::getBytes(std::string token)
     return ret;
 }
 
+bool Hext::hasCheckpoint(std::string token)
+{
+    if (starts_with(token, "!"))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool Hext::parseCheckpoint(std::string token, std::string value)
+{
+    if (starts_with(token, "!"))
+    {
+        if (contains(token, value))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool Hext::parseCommands(std::string token)
 {
     if (starts_with(token, ">>"))
@@ -178,6 +201,12 @@ void Hext::apply(std::string filename)
     {
         if (line.empty()) continue;
 
+        // Check if delayed, if so it should not be applied
+        if (hasCheckpoint(line)) {
+            ifs.close();
+            return;
+        }
+
         // Check if is a comment
         if (parseComment(line)) continue;
 
@@ -199,15 +228,73 @@ void Hext::apply(std::string filename)
     trace("Applied Hext patch: %s\n", filename.c_str());
 }
 
-void Hext::apply()
+void Hext::applyDelayed(std::string filename, std::string checkpoint)
+{
+    std::string line;
+    std::ifstream ifs(filename);
+
+    bool matchCheckpoint = false;
+
+    while (std::getline(ifs, line))
+    {
+        if (line.empty()) continue;
+
+        // Check if is a comment
+        if (parseComment(line)) continue;
+
+        // Check if is a delayed patch.
+        if (parseCheckpoint(line, checkpoint)) {
+            matchCheckpoint = true;
+
+            continue;
+        }
+
+        if (matchCheckpoint)
+        {
+            // Check if is a command
+            if (parseCommands(line)) continue;
+
+            // Check if is a global offset
+            if (parseGlobalOffset(line)) continue;
+
+            // Check if is a memory permission range
+            if (parseMemoryPermission(line)) continue;
+
+            // Check if is a memory patch instruction
+            if (parseMemoryPatch(line)) continue;
+        }
+    }
+
+    ifs.close();
+
+    if (matchCheckpoint) trace("Applied Hext patch: %s\n", filename.c_str());
+}
+
+void Hext::applyAll(std::string checkpoint)
 {
     if (_access(hext_patching_path, 0) == 0)
     {
-        for (const auto& entry : std::filesystem::directory_iterator(hext_patching_path))
+        if (!checkpoint.empty())
         {
-            if (entry.is_regular_file()) apply(entry.path().string());
+            for (const auto& entry : std::filesystem::directory_iterator(hext_patching_path))
+            {
+                if (entry.is_regular_file()) {
+                    applyDelayed(entry.path().string(), checkpoint);
+                }
 
-            inGlobalOffset = 0;
+                inGlobalOffset = 0;
+            }
+        }
+        else
+        {
+            for (const auto& entry : std::filesystem::directory_iterator(hext_patching_path))
+            {
+                if (entry.is_regular_file()) {
+                    apply(entry.path().string());
+                }
+
+                inGlobalOffset = 0;
+            }
         }
     }
 }

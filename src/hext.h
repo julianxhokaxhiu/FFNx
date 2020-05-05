@@ -29,6 +29,8 @@ private:
 	int getAddress(std::string token);
 	std::vector<char> getBytes(std::string token);
 
+	bool hasCheckpoint(std::string token);
+	bool parseCheckpoint(std::string token, std::string value);
 	bool parseCommands(std::string token);
 	bool parseComment(std::string token);
 	bool parseGlobalOffset(std::string token);
@@ -37,7 +39,8 @@ private:
 
 public:
 	void apply(std::string filename);
-	void apply();
+	void applyDelayed(std::string filename, std::string checkpoint);
+	void applyAll(std::string checkpoint = std::string());
 };
 
 extern Hext hextPatcher;

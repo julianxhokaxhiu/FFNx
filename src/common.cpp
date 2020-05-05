@@ -2180,7 +2180,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		}
 
 		// Apply hext patching
-		hextPatcher.apply();
+		hextPatcher.applyAll();
 	}
 
 	return TRUE;

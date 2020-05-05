@@ -29,6 +29,7 @@
 #include "../ff7.h"
 #include "../log.h"
 #include "../globals.h"
+#include "../hext.h"
 
 int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = false)
 {
@@ -451,6 +452,9 @@ void close_file(struct ff7_file *file)
 		if(!file->fd->is_lgp_offset && file->fd->fd) fclose(file->fd->fd);
 		external_free(file->fd);
 	}
+
+	std::string filename(PathFindFileNameA(file->name));
+	hextPatcher.applyAll(filename);
 
 	external_free(file->name);
 	external_free(file);
