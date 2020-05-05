@@ -2020,7 +2020,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		__debugbreak();
 		*/
 
-		GetCurrentDirectoryA(BASEDIR_LENGTH, basedir);
+		GetCurrentDirectory(BASEDIR_LENGTH, basedir);
 
 		// install crash handler
 		open_applog("FFNx.log");
