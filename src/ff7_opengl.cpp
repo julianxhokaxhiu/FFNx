@@ -80,6 +80,8 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	// Enable XInput if a compatible gamepad is detected, otherwise continue with native DInput
 	if (gamepad.CheckConnection())
 	{
+		trace("Detected XInput controller.\n");
+
 		replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
 		replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
 	}
