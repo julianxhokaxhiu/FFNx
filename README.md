@@ -46,10 +46,11 @@ If you're curious to know it, FFNx is made with:
 - [CMake](https://cmake.org/) ( as make files )
 - [BGFX](https://github.com/bkaradzic/bgfx) ( as backend renderer )
 - [BIMG](https://github.com/bkaradzic/bimg) ( for custom textures )
-- [FFMpeg](https://www.ffmpeg.org/) 4.2.2 with H/W Accelleration support
+- [FFMpeg](https://www.ffmpeg.org/) with H/W Accelleration support
 - [VGMStream](https://github.com/julianxhokaxhiu/vgmstream) using FFMpeg as backend, [with loop support for Ogg files](https://github.com/julianxhokaxhiu/vgmstream/commit/249afed15176ba254c73055e8c5124b7e7cd4b95)
-- [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) 3.2.3 ( for the configuration management )
+- [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) ( for the configuration management )
 - [StackWalker](https://github.com/JochenKalmbach/StackWalker) ( for stack traces in the log file )
+- [pugixml](https://github.com/zeux/pugixml) ( for the Steam XML manifest )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
