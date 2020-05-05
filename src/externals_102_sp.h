@@ -68,4 +68,4 @@ ff7_externals.wm_activateapp =                0x409D02;
 ff7_externals.get_gamepad =                   0x41F9AE;
 ff7_externals.update_gamepad_status =         0x41F7E8;
 ff7_externals.gamepad_status = (struct ff7_gamepad_status*)0x9B0678;
-ff7_externals.directsound_buffer_flags_1 =    0x6E6DE1;
+ff7_externals.directsound_buffer_flags_1 =    0x6E6DDD;
