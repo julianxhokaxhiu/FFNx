@@ -77,11 +77,11 @@ bool Hext::hasCheckpoint(std::string token)
     return false;
 }
 
-bool Hext::parseCheckpoint(std::string token, std::string value)
+bool Hext::parseCheckpoint(std::string token, std::string checkpoint)
 {
     if (starts_with(token, "!"))
     {
-        if (contains(token, value))
+        if (contains(token, checkpoint))
         {
             return true;
         }

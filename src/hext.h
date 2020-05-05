@@ -30,7 +30,7 @@ private:
 	std::vector<char> getBytes(std::string token);
 
 	bool hasCheckpoint(std::string token);
-	bool parseCheckpoint(std::string token, std::string value);
+	bool parseCheckpoint(std::string token, std::string checkpoint);
 	bool parseCommands(std::string token);
 	bool parseComment(std::string token);
 	bool parseGlobalOffset(std::string token);

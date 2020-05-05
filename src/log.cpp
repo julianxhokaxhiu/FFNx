@@ -20,12 +20,14 @@
  * log.c - logging routines for writing to app.log
  */
 
+#include <string>
 #include <stdio.h>
 #include <windows.h>
 
 #include "types.h"
 #include "globals.h"
 #include "log.h"
+#include "hext.h"
 
 FILE *app_log;
 
@@ -119,6 +121,10 @@ void external_debug_print(const char *str)
 		popup_ttl = POPUP_TTL_MAX;
 		popup_color = text_colors[TEXTCOLOR_GRAY];
 	}
+
+	std::string msg(str);
+	msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.end());
+	hextPatcher.applyAll(msg);
 }
 
 void external_debug_print2(const char *fmt, ...)

@@ -23,7 +23,7 @@ inline void trim(std::string& s) {
     rtrim(s);
 }
 
-inline bool contains(std::string const& value, std::string token)
+inline bool contains(std::string const& value, std::string const& token)
 {
     return value.find(token) != std::string::npos;
 }
