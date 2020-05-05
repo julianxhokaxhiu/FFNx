@@ -74,7 +74,77 @@ void Metadata::updateFF7()
 
 void Metadata::updateFF8()
 {
-    // TODO
+    char currentSave[260]{ 0 };
+    BYTE dataBuffer[8 * 1024 + 8];
+    int dataSize = 0;
+    int slotNumber = 1;
+
+    // Hash existing save files
+    for (uint idx = 0; idx < 60; idx++)
+    {
+        dataSize = userID.length();
+        memset(dataBuffer, 0, sizeof(dataBuffer));
+        strcpy(currentSave, savePath);
+
+        if (idx == 30) slotNumber = 2;
+
+        // Append save file name
+        sprintf(currentSave + strlen(currentSave), R"(\slot%d_save%02i.ff8)", slotNumber, (slotNumber == 2 ? idx - 30 : idx) + 1);
+
+        if (_access(currentSave, 0) == 0)
+        {
+            FILE* file = fopen(currentSave, "rb");
+
+            fseek(file, 0, SEEK_END);
+            int fileSize = ftell(file);
+            fseek(file, 0, SEEK_SET);
+            fread(dataBuffer, 1, fileSize, file);
+            fclose(file);
+
+            memcpy(dataBuffer + fileSize, userID.data(), userID.length());
+
+            dataSize += fileSize;
+        }
+        else
+        {
+            memcpy(dataBuffer, userID.data(), userID.length());
+        }
+
+        // Hash to MD5
+        MD5 md5(dataBuffer, dataSize);
+
+        saveHash.push_back(md5.hexdigest());
+    }
+
+    // Update metadata
+    int saveNumber;
+
+    for (pugi::xml_node gamestatus : doc.children())
+    {
+        for (pugi::xml_node savefile : gamestatus.children())
+        {
+            if (strcmp(savefile.name(), "savefile") == 0)
+            {
+                if (strcmp(savefile.attribute("type").value(), "choco") == 0) continue;
+
+                saveNumber = std::atoi(savefile.attribute("num").value()) - 1;
+                slotNumber = std::atoi(savefile.attribute("slot").value());
+            }
+
+            for (pugi::xml_node child : savefile.children())
+            {
+                if (strcmp(child.name(), "timestamp") == 0)
+                {
+                    child.text().set(now.data());
+                }
+
+                if (strcmp(child.name(), "signature") == 0)
+                {
+                    child.text().set(saveHash[saveNumber + (slotNumber == 2 ? 30 : 0)].data());
+                }
+            }
+        }
+    }
 }
 
 // PUBLIC
