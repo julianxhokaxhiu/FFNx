@@ -30,7 +30,7 @@
 void music_init()
 {
 	// Add Global Focus flag to DirectSound Secondary Buffers
-	patch_code_byte(common_externals.directsound_buffer_flags_1, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
+	patch_code_byte(common_externals.directsound_buffer_flags_1 + 0x4, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
 
 	if (use_external_music > FFNX_MUSIC_NONE && use_external_music <= FFNX_MUSIC_FF7MUSIC)
 	{
@@ -104,10 +104,6 @@ uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
 
 				switch (use_external_music)
 				{
-				case FFNX_MUSIC_VGMSTREAM:
-					vgm_play_music(truncated_midi_name, midi);
-					//vgm_set_music_volume(volume);
-					break;
 				case FFNX_MUSIC_FF7MUSIC:
 					ff7music_play_music(truncated_midi_name, midi);
 					//ff7music_set_music_volume(volume);
