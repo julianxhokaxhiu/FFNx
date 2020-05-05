@@ -168,10 +168,11 @@ These people are:
 - [Maki](http://forums.qhimm.com/index.php?action=profile;u=23937):
   - for FF8 UV Hext Patch in the world map, which FFNx provides a default patch for
   - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
-- [myst6re ](http://forums.qhimm.com/index.php?action=profile;u=4778):
+- [myst6re](http://forums.qhimm.com/index.php?action=profile;u=4778):
   - for the great tools like Makou Reactor, Deling and many others he did which helped a lot in improving FF8 while working on the code
   - for the great help in the code implementing the Winamp layer being present inside FFNx
   - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF8
+  - for the Steam savegame logic in the manifest.xml for FF8
 - [quantumpencil](http://forums.qhimm.com/index.php?action=profile;u=23810) and [Nax](https://github.com/nax):
   - for the original CMake files FFNx has based its work upon
   - for all the help in getting some logics wired up in the game engine and a lot of hex addresses I would never been able to figure out myself
@@ -182,9 +183,11 @@ These people are:
 - [Sebanisu](http://forums.qhimm.com/index.php?action=profile;u=22866):
   - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
   - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF8
+- [sithlord48](http://forums.qhimm.com/index.php?action=profile;u=6501):
+  - for the Steam savegame logic in the manifest.xml for FF7
 - [TurBoss](https://github.com/TurBoss):
   - for 7h 1.x which FFNx provides support for
-- [unab0mb ](https://forums.qhimm.com/index.php?action=profile;u=31071):
+- [unab0mb](https://forums.qhimm.com/index.php?action=profile;u=31071):
   - for providing quick help in integrating FFNx on top of 7h 2.x until it gets officially supported
 
 I'm sure I forgot many others through the route. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
