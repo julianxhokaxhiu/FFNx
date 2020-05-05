@@ -193,8 +193,6 @@ void ff7_find_externals()
 
 	ff7_externals.midi_volume_control = (uint *)get_absolute_value(common_externals.midi_init, 0x706);
 	ff7_externals.midi_initialized = (uint *)get_absolute_value(common_externals.midi_init, 0x3A);
-	// Add Global Focus flag to DirectSound Secondary Buffers
-	patch_code_byte(ff7_externals.directsound_buffer_flags_1, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
 
 	ff7_externals.menu_sub_6CDA83 = get_relative_call(menu_main_loop, 0x112);
 	ff7_externals.menu_sub_6CBD43 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xAF);
