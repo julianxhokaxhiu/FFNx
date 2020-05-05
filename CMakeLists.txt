@@ -29,6 +29,7 @@ if (SUPERBUILD)
 		libconfuse
 		vgmstream
 		StackWalker
+		pugixml
 	)
 	ExternalProject_Add_Step(
 		FFNx
