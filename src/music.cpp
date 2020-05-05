@@ -29,11 +29,17 @@
 
 void music_init()
 {
+	// Add Global Focus flag to DirectSound Secondary Buffers
+	patch_code_byte(common_externals.directsound_buffer_flags_1, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
+
 	if (use_external_music > FFNX_MUSIC_NONE && use_external_music <= FFNX_MUSIC_FF7MUSIC)
 	{
 		if (ff8) {
 			replace_function(common_externals.play_midi, ff8_play_midi);
+			replace_function(common_externals.pause_midi, pause_midi);
+			replace_function(common_externals.restart_midi, restart_midi);
 			replace_function(common_externals.stop_midi, stop_midi);
+			replace_function(common_externals.midi_status, midi_status);
 		}
 		else {
 			replace_function(common_externals.midi_init, midi_init);
@@ -98,6 +104,14 @@ uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
 
 				switch (use_external_music)
 				{
+				case FFNX_MUSIC_VGMSTREAM:
+					vgm_play_music(truncated_midi_name, midi);
+					//vgm_set_music_volume(volume);
+					break;
+				case FFNX_MUSIC_FF7MUSIC:
+					ff7music_play_music(truncated_midi_name, midi);
+					//ff7music_set_music_volume(volume);
+					break;
 				case FFNX_MUSIC_WINAMP:
 					winamp_play_music(truncated_midi_name, midi);
 					//winamp_set_music_volume(volume);
@@ -255,17 +269,28 @@ void music_cleanup()
 	}
 }
 
-bool ff7_is_wm_theme(char* midi)
+bool is_wm_theme(char* midi)
 {
-	return midi != nullptr && (strcmp(midi, "TA") == 0 || strcmp(midi, "TB") == 0 || strcmp(midi, "KITA") == 0);
+	if (nullptr == midi)
+	{
+		return false;
+	}
+
+	if (ff8)
+	{
+		return strcmp(midi, "041s-field.sgt") == 0;
+	}
+	
+	return strcmp(midi, "TA") == 0 || strcmp(midi, "TB") == 0 || strcmp(midi, "KITA") == 0;
 }
 
-bool ff7_needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi)
+bool needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi)
 {
 	/*
 	 * BATTLE -> FIELD or WM
 	 * FIELD  -> WM
 	 */
-	return (new_mode == MODE_WORLDMAP && !ff7_is_wm_theme(old_midi) && ff7_is_wm_theme(new_midi))
-		|| (old_mode == MODE_BATTLE || old_mode == MODE_SWIRL) && new_mode == MODE_FIELD;
+	return ((new_mode == MODE_WORLDMAP || new_mode == MODE_AFTER_BATTLE) && !is_wm_theme(old_midi) && is_wm_theme(new_midi))
+		|| (old_mode == MODE_BATTLE || old_mode == MODE_SWIRL)
+		&& (new_mode == MODE_FIELD || new_mode == MODE_AFTER_BATTLE);
 }

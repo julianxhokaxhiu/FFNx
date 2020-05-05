@@ -28,17 +28,17 @@
 // FF7 modules, unknowns are either unused or not relevant to rendering
 enum ff8_game_modes
 {
-	FF8_MODE_0 = 0,
-	FF8_MODE_1,
+	FF8_MODE_CREDITS = 0,
+	FF8_MODE_FIELD,
 	FF8_MODE_WORLDMAP,
 	FF8_MODE_SWIRL,
-	FF8_MODE_4,
+	FF8_MODE_AFTER_BATTLE,
 	FF8_MODE_5,
 	FF8_MODE_MENU,
 	FF8_MODE_7,
 	FF8_MODE_CARDGAME,
 	FF8_MODE_9,
-	FF8_MODE_10,
+	FF8_MODE_TUTO,
 	FF8_MODE_11,
 	FF8_MODE_INTRO,
 	FF8_MODE_100 = 100,
