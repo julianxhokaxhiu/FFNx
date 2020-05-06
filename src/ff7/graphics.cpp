@@ -24,12 +24,10 @@
 #include <math.h>
 #include "../renderer.h"
 
-#include "../common.h"
 #include "../ff7.h"
 #include "../macro.h"
 #include "../log.h"
 #include "../gl.h"
-#include "../globals.h"
 
 /*
  * Most of these functions are lifted from the game with only minor changes to 

@@ -10,8 +10,6 @@
 
 #include "log.h"
 #include "md5.h"
-#include "common.h"
-#include "globals.h"
 #include "utils.h"
 
 class Metadata

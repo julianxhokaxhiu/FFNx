@@ -23,7 +23,6 @@
 #pragma once
 
 #include "common.h"
-#include "matrix.h"
 
 #define VERTEX 1
 #define LVERTEX 2

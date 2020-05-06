@@ -24,10 +24,6 @@
 #include "renderer.h"
 #include "gl.h"
 #include "patch.h"
-#include "globals.h"
-#include "log.h"
-#include "common.h"
-#include "cfg.h"
 #include "ff7/defs.h"
 #include "ffmpeg/movies.h"
 

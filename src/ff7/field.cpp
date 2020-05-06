@@ -20,10 +20,8 @@
  * ff7/field.c - replacement routines for FF7's field module
  */
 
-#include "../common.h"
 #include "../ff7.h"
 #include "../log.h"
-#include "../globals.h"
 
 /*
  * This file contains the changes necessary to support subtractive and 25%

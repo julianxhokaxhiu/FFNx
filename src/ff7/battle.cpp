@@ -20,10 +20,8 @@
  * ff7/battle.c - replacement routines for FF7's battle system
  */
 
-#include "../common.h"
 #include "../ff7.h"
 #include "../log.h"
-#include "../globals.h"
 
 void magic_thread_start(void (*func)())
 {

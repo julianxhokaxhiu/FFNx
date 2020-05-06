@@ -26,7 +26,6 @@
 #include <stdio.h>
 
 #include "common.h"
-#include "matrix.h"
 
 /*
  * Primitive types supported by the engine, mostly a 1:1 mapping to PSX GPU

@@ -28,9 +28,7 @@
 #include "../renderer.h"
 
 #include "../cfg.h"
-#include "../common.h"
 #include "../gl.h"
-#include "../globals.h"
 #include "../macro.h"
 #include "../log.h"
 #include "../matrix.h"

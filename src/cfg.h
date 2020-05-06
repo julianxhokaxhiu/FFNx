@@ -26,8 +26,6 @@
 
 #include "types.h"
 #include "log.h"
-#include "globals.h"
-#include "compile_cfg.h"
 
 extern char *mod_path;
 extern cfg_bool_t use_external_movie;
