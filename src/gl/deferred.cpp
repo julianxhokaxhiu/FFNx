@@ -22,7 +22,6 @@
 
 #include "../renderer.h"
 
-#include "../types.h"
 #include "../gl.h"
 #include "../macro.h"
 #include "../log.h"
@@ -281,3 +280,4 @@ void gl_cleanup_deferred()
 {
 	driver_free(deferred_draws);
 }
+

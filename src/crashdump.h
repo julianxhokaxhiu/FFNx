@@ -28,7 +28,6 @@
 
 #include "crashdump.h"
 #include "globals.h"
-#include "types.h"
 #include "log.h"
 
 #define STACK_MAX_NAME_LENGTH 256

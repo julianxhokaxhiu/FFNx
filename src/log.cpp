@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <windows.h>
 
-#include "types.h"
 #include "globals.h"
 #include "log.h"
 #include "hext.h"

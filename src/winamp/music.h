@@ -7,7 +7,6 @@
 #include <process.h>
 
 #include "../log.h"
-#include "../types.h"
 #include "../music.h"
 #include "../cfg.h"
 
@@ -25,3 +24,4 @@ void winamp_set_music_volume(int volume);
 void winamp_set_music_volume_trans(int volume, int frames);
 void winamp_set_music_tempo(unsigned char tempo);
 void winamp_music_cleanup();
+

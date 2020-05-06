@@ -24,7 +24,6 @@
 #include "renderer.h"
 
 #include "fake_dd.h"
-#include "types.h"
 #include "gl.h"
 #include "cfg.h"
 #include "log.h"

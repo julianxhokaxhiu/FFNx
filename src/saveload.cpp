@@ -25,7 +25,6 @@
 #include <direct.h>
 #include "renderer.h"
 
-#include "types.h"
 #include "globals.h"
 #include "log.h"
 #include "gl.h"

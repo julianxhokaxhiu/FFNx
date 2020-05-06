@@ -27,7 +27,6 @@
 
 #include "../renderer.h"
 
-#include "../types.h"
 #include "../cfg.h"
 #include "../common.h"
 #include "../gl.h"

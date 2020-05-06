@@ -23,7 +23,6 @@
 #include <windows.h>
 
 #include "music.h"
-#include "types.h"
 #include "globals.h"
 #include "cfg.h"
 #include "log.h"

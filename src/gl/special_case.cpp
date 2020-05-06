@@ -24,7 +24,6 @@
 #include <math.h>
 #include "../renderer.h"
 
-#include "../types.h"
 #include "../gl.h"
 #include "../cfg.h"
 #include "../macro.h"
