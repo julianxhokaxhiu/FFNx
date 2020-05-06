@@ -105,6 +105,7 @@ void winamp_load_song(char* midi, uint id)
 		out->pause();
 	}
 
+	in->stop();
 	int err = in->play(tmp);
 
 	if (-1 == err) {
