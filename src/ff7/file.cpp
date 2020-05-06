@@ -453,9 +453,6 @@ void close_file(struct ff7_file *file)
 		external_free(file->fd);
 	}
 
-	std::string filename(PathFindFileNameA(file->name));
-	hextPatcher.applyAll(filename);
-
 	external_free(file->name);
 	external_free(file);
 }
