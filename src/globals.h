@@ -37,6 +37,8 @@ extern uint steam_edition;
 extern uint estore_edition;
 extern uint ff7_japanese_edition;
 extern uint ff7_center_fields;
+extern DWORD ff7_sfx_volume;
+extern DWORD ff7_music_volume;
 
 #define BASEDIR_LENGTH 512
 extern char basedir[BASEDIR_LENGTH];

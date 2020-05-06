@@ -55,6 +55,10 @@ uint ff7_japanese_edition = false;
 // global FF7 flag, tell the engine if center fields hext patch is active
 uint ff7_center_fields = false;
 
+// global FF7 flag, they usually contain the values normally being written in registry
+DWORD ff7_sfx_volume = 0x64;
+DWORD ff7_music_volume = 0x64;
+
 // window dimensions requested by the game, normally 640x480
 uint game_width;
 uint game_height;
@@ -292,7 +296,22 @@ void common_cleanup(struct game_obj *game_object)
 {
 	if(trace_all) trace("dll_gfx: cleanup\n");
 
-	if (steam_edition) metadataPatcher.apply();
+	if (steam_edition) {
+		metadataPatcher.apply();
+
+		// Write ff7sound.cfg
+		char ff7soundPath[260]{ 0 };
+		get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
+		PathAppendA(ff7soundPath, "ff7sound.cfg");
+		FILE* ff7sound = fopen(ff7soundPath, "wb");
+
+		if (ff7sound)
+		{
+			fwrite(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
+			fwrite(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
+			fclose(ff7sound);
+		}
+	}
 
 	if (!ff8) {
 		ff7_release_movie_objects();
@@ -2098,6 +2117,19 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				if (strstr(basedir, "steamapps") != NULL) {
 					trace("Detected Steam edition.\n");
 					steam_edition = true;
+
+					// Read ff7sound.cfg
+					char ff7soundPath[260]{ 0 };
+					get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
+					PathAppendA(ff7soundPath, "ff7sound.cfg");
+					FILE* ff7sound = fopen(ff7soundPath, "rb");
+
+					if (ff7sound)
+					{
+						fread(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
+						fread(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
+						fclose(ff7sound);
+					}
 				}
 				// otherwise it's the eStore edition which has same exe names but installed somewhere else
 				else
@@ -2110,6 +2142,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 			}
 			else if (external_music_path == nullptr) {
+				HKEY ff7_regkey;
+				DWORD regsize = sizeof(DWORD);
+
+				RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\MIDI)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey);
+				RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&ff7_music_volume, &regsize);
+
 				external_music_path = "music/vgmstream";
 			}
 		}
@@ -2213,6 +2251,23 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegSetValueExA(HKEY hKey, LPCSTR l
 				lpData[0] = 0x64;
 		}
 	}
+	else
+	{
+		if (strcmp(lpValueName, "SFXVolume") == 0)
+		{
+			if (lpData[0] > 0x64)
+				lpData[0] = 0x64;
+
+			ff7_sfx_volume = lpData[0];
+		}
+		else if (strcmp(lpValueName, "MusicVolume") == 0)
+		{
+			if (lpData[0] > 0x64)
+				lpData[0] = 0x64;
+
+			ff7_music_volume = lpData[0];
+		}
+	}
 
 	return ERROR_SUCCESS;
 }
@@ -2267,9 +2322,13 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 	{
 		ret = 2;
 	}
-	else if (strcmp(lpValueName, "SFXVolume") == 0 || strcmp(lpValueName, "MusicVolume") == 0)
+	else if (strcmp(lpValueName, "SFXVolume") == 0)
 	{
-		lpData[0] = 0x64;
+		lpData[0] = ff7_sfx_volume;
+	}
+	else if (strcmp(lpValueName, "MusicVolume") == 0)
+	{
+		lpData[0] = ff7_music_volume;
 	}
 	// Graphics
 	else if (strcmp(lpValueName, "Driver") == 0)
