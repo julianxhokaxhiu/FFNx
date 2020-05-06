@@ -132,9 +132,10 @@ external_music_ext = akb
 
 1) Go to your 7h installation path
 2) Go to `Resources\Game Driver`
-3) Rename `7H_GameDriver.dll` to `_7H_GameDriver.dll`
-4) Install FFNx following instructions here: https://github.com/julianxhokaxhiu/FFNx#1998-eidos-release
-5) Rename `FFNx.dll` to `7H_GameDriver.dll`
+3) Rename `7H_GameDriver.dll` to `_7H_GameDriver.dll` (only rename it; this file should NOT simply be replaced with the `FFNx.dll` from step 6)
+4) Download the latest `FFNx-FF7_1998` release here: https://github.com/julianxhokaxhiu/FFNx/releases
+5) Extract the ZIP content next to `ff7.exe` file
+6) Rename `FFNx.dll` to `7H_GameDriver.dll` (do NOT add a copy in the `7H\Resources\Game Driver folder`)
 
 Click Play and enjoy!
 
