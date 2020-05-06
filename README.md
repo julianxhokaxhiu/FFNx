@@ -51,6 +51,7 @@ If you're curious to know it, FFNx is made with:
 - [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) ( for the configuration management )
 - [StackWalker](https://github.com/JochenKalmbach/StackWalker) ( for stack traces in the log file )
 - [pugixml](https://github.com/zeux/pugixml) ( for the Steam XML manifest )
+- [md5](http://www.zedwood.com/article/cpp-md5-function) ( for the Steam XML manifest )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
