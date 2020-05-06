@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "directmusic.h"
 #include "common.h"
 #include "matrix.h"
 
@@ -811,6 +812,8 @@ struct ff8_externals
 	uint worldmap_main_loop;
 	uint sub_465720;
 	uint requiredDisk;
+	IDirectMusicPerformance** directmusic_performance;
+	GUID* GUID_PerfMasterVolume;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

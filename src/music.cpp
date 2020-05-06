@@ -24,6 +24,7 @@
 
 #include "music.h"
 #include "patch.h"
+#include "directmusic.h"
 #include "ff7music/music.h"
 #include "winamp/music.h"
 
@@ -36,11 +37,12 @@ void music_init()
 	{
 		if (ff8) {
 			replace_function(common_externals.play_midi, ff8_play_midi);
-			//replace_function(common_externals.pause_midi, pause_midi);
-			//replace_function(common_externals.restart_midi, restart_midi);
-			replace_function(common_externals.stop_midi, stop_midi);
+			replace_function(common_externals.pause_midi, pause_midi);
+			replace_function(common_externals.restart_midi, restart_midi);
+			replace_function(common_externals.stop_midi, ff8_stop_midi);
 			replace_function(common_externals.midi_status, midi_status);
 			replace_function(common_externals.set_midi_volume, ff8_set_direct_volume);
+			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
 		}
 		else {
 			replace_function(common_externals.midi_init, midi_init);
@@ -85,26 +87,29 @@ char ff8_midi[32];
 
 char* ff8_midi_name(uint midi)
 {
-	// midi_name format: {num}{type}-{name}.sgt
-	char* midi_name = common_externals.get_midi_name(midi);
+	// midi_name format: {num}{type}-{name}.sgt or {name}.sgt or _Missing.sgt
+	char* midi_name = common_externals.get_midi_name(midi),
+		* truncated_name;
 
-	info("FF8 midi play %s\n", midi_name);
+	truncated_name = strchr(midi_name, '-');
 
-	midi_name = strchr(midi_name, '-');
+	if (nullptr != truncated_name) {
+		truncated_name += 1; // Remove "-"
+	}
+	else {
+		truncated_name = midi_name;
+	}
 
-	if (nullptr != midi_name) {
-		midi_name += 1; // Remove "-"
-		char* max_midi_name = strchr(midi_name, '.');
+	char* max_midi_name = strchr(truncated_name, '.');
 
-		if (nullptr != max_midi_name) {
-			size_t len = max_midi_name - midi_name;
+	if (nullptr != max_midi_name) {
+		size_t len = max_midi_name - truncated_name;
 
-			if (len < 32) {
-				memcpy(ff8_midi, midi_name, len);
-				ff8_midi[len] = '\0';
+		if (len < 32) {
+			memcpy(ff8_midi, truncated_name, len);
+			ff8_midi[len] = '\0';
 
-				return ff8_midi;
-			}
+			return ff8_midi;
 		}
 	}
 
@@ -132,8 +137,6 @@ uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
 		winamp_set_music_volume(volume);
 		break;
 	}
-
-	// TODO: set dword_1CD21A4 to 1 and current_midi_id (1CD21A8)
 
 	return 1; // Success
 }
@@ -203,6 +206,18 @@ void stop_midi()
 	}
 }
 
+uint ff8_stop_midi()
+{
+	// Stop game midi for horizon concert instruments
+	if (nullptr != *ff8_externals.directmusic_performance) {
+		(*ff8_externals.directmusic_performance)->Stop(nullptr, nullptr, 0, DMUS_SEGF_DEFAULT);
+	}
+
+	stop_midi();
+
+	return 0;
+}
+
 uint midi_status()
 {
 	switch (use_external_music)
@@ -220,7 +235,12 @@ uint midi_status()
 
 uint ff8_set_direct_volume(int volume)
 {
-	trace("set direct volume: %i\n", volume);
+	// Set game volume for horizon concert instruments
+	if (nullptr != *ff8_externals.directmusic_performance) {
+		(*ff8_externals.directmusic_performance)->SetGlobalParam(
+			*(ff8_externals.GUID_PerfMasterVolume), &volume, sizeof(volume)
+		);
+	}
 
 	if (volume == DSBVOLUME_MIN) {
 		volume = 0;
@@ -304,6 +324,20 @@ void music_cleanup()
 		winamp_music_cleanup();
 		break;
 	}
+}
+
+uint remember_playing_time()
+{
+	switch (use_external_music)
+	{
+	case FFNX_MUSIC_FF7MUSIC:
+		break;
+	case FFNX_MUSIC_WINAMP:
+		winamp_remember_playing_time();
+		break;
+	}
+
+	return 0;
 }
 
 bool is_wm_theme(char* midi)
