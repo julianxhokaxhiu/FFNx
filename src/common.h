@@ -191,6 +191,7 @@ struct common_externals
 	uint set_midi_volume;
 	uint set_midi_volume_trans;
 	uint set_midi_tempo;
+	uint remember_midi_playing_time;
 	uint draw_graphics_object;
 	char *font_info;
 	uint build_dialog_window;

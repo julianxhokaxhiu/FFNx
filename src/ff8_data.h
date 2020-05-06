@@ -211,13 +211,16 @@ void ff8_find_externals()
 	ff8_externals.sub_46DBF0 = get_relative_call(ff8_externals.sub_469640, 0x5D);
 	common_externals.directsound = (IDirectSound**)get_absolute_value(ff8_externals.sub_46DBF0, 0x26);
 	common_externals.play_midi = 0x46C290;
-	common_externals.stop_midi = 0x46C6A0;
-	common_externals.midi_status = 0x46B960;
-	//common_externals.pause_midi = 0x46F2F0;
-	//common_externals.restart_midi = 0x46C670;
+	common_externals.stop_midi = 0x46F200;
+	common_externals.midi_status = 0x46C860;
+	common_externals.pause_midi = 0x46C640;
+	common_externals.restart_midi = 0x46C670;
 	common_externals.set_midi_volume = 0x46F520;
 	common_externals.get_midi_name = (char* (*)(uint))0x46C840;
+	common_externals.remember_midi_playing_time = 0x46C880;
 	common_externals.directsound_buffer_flags_1 = 0x46DDE6;
+	ff8_externals.directmusic_performance = (IDirectMusicPerformance**)0x1CD2960;
+	ff8_externals.GUID_PerfMasterVolume = (GUID*)0xB6B840;
 
 	ff8_externals.sub_5304B0 = (void (*)())get_relative_call(common_externals.update_movie_sample, 0x3D9);
 
