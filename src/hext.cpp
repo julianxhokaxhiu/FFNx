@@ -4,7 +4,7 @@ Hext hextPatcher;
 
 // PRIVATE
 
-int Hext::getAddress(std::string token)
+int Hext::getAddress(std::string& token)
 {
     int ret;
 
@@ -40,7 +40,7 @@ int Hext::getAddress(std::string token)
     return ret + inGlobalOffset;
 }
 
-std::vector<char> Hext::getBytes(std::string token)
+std::vector<char> Hext::getBytes(std::string& token)
 {
     std::vector<char> ret;
 
@@ -67,7 +67,7 @@ std::vector<char> Hext::getBytes(std::string token)
     return ret;
 }
 
-bool Hext::hasCheckpoint(std::string token)
+bool Hext::hasCheckpoint(std::string& token)
 {
     if (starts_with(token, "!"))
     {
@@ -77,7 +77,7 @@ bool Hext::hasCheckpoint(std::string token)
     return false;
 }
 
-bool Hext::parseCheckpoint(std::string token, std::string checkpoint)
+bool Hext::parseCheckpoint(std::string& token, std::string& checkpoint)
 {
     if (starts_with(token, "!"))
     {
@@ -90,7 +90,7 @@ bool Hext::parseCheckpoint(std::string token, std::string checkpoint)
     return false;
 }
 
-bool Hext::parseCommands(std::string token)
+bool Hext::parseCommands(std::string& token)
 {
     if (starts_with(token, ">>"))
     {
@@ -116,7 +116,7 @@ bool Hext::parseCommands(std::string token)
     return false;
 }
 
-bool Hext::parseComment(std::string token)
+bool Hext::parseComment(std::string& token)
 {
     if (isMultilineComment)
     {
@@ -136,7 +136,7 @@ bool Hext::parseComment(std::string token)
     return false;
 }
 
-bool Hext::parseGlobalOffset(std::string token)
+bool Hext::parseGlobalOffset(std::string& token)
 {
     if (starts_with(token, "+"))
     {
@@ -154,7 +154,7 @@ bool Hext::parseGlobalOffset(std::string token)
     return false;
 }
 
-bool Hext::parseMemoryPermission(std::string token)
+bool Hext::parseMemoryPermission(std::string& token)
 {
     if (contains(token, ":"))
     {
@@ -172,7 +172,7 @@ bool Hext::parseMemoryPermission(std::string token)
     return false;
 }
 
-bool Hext::parseMemoryPatch(std::string token)
+bool Hext::parseMemoryPatch(std::string& token)
 {
     if (contains(token, "="))
     {
@@ -192,7 +192,7 @@ bool Hext::parseMemoryPatch(std::string token)
 
 // PUBLIC
 
-void Hext::apply(std::string filename)
+void Hext::apply(std::string& filename)
 {
     std::string line;
     std::ifstream ifs(filename);
@@ -228,7 +228,7 @@ void Hext::apply(std::string filename)
     trace("Applied Hext patch: %s\n", filename.c_str());
 }
 
-void Hext::applyDelayed(std::string filename, std::string checkpoint)
+void Hext::applyDelayed(std::string& filename, std::string& checkpoint)
 {
     std::string line;
     std::ifstream ifs(filename);
@@ -270,7 +270,7 @@ void Hext::applyDelayed(std::string filename, std::string checkpoint)
     if (matchCheckpoint) trace("Applied Hext patch: %s\n", filename.c_str());
 }
 
-void Hext::applyAll(std::string checkpoint)
+void Hext::applyAll(std::string& checkpoint)
 {
     if (_access(hext_patching_path, 0) == 0)
     {

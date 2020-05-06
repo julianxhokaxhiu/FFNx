@@ -25,21 +25,21 @@ private:
 	int inGlobalOffset;
 	bool isMultilineComment = false;
 
-	int getAddress(std::string token);
-	std::vector<char> getBytes(std::string token);
+	int getAddress(std::string& token);
+	std::vector<char> getBytes(std::string& token);
 
-	bool hasCheckpoint(std::string token);
-	bool parseCheckpoint(std::string token, std::string checkpoint);
-	bool parseCommands(std::string token);
-	bool parseComment(std::string token);
-	bool parseGlobalOffset(std::string token);
-	bool parseMemoryPermission(std::string token);
-	bool parseMemoryPatch(std::string token);
+	bool hasCheckpoint(std::string& token);
+	bool parseCheckpoint(std::string& token, std::string& checkpoint);
+	bool parseCommands(std::string& token);
+	bool parseComment(std::string& token);
+	bool parseGlobalOffset(std::string& token);
+	bool parseMemoryPermission(std::string& token);
+	bool parseMemoryPatch(std::string& token);
 
 public:
-	void apply(std::string filename);
-	void applyDelayed(std::string filename, std::string checkpoint);
-	void applyAll(std::string checkpoint = std::string());
+	void apply(std::string& filename);
+	void applyDelayed(std::string& filename, std::string& checkpoint);
+	void applyAll(std::string& checkpoint = std::string());
 };
 
 extern Hext hextPatcher;
