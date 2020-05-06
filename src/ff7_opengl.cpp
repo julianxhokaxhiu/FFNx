@@ -22,7 +22,6 @@
 
 #include "compile_cfg.h"
 
-#include "types.h"
 #include "cfg.h"
 #include "ff7.h"
 #include "common.h"

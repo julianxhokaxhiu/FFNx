@@ -22,7 +22,6 @@
 
 #include "../renderer.h"
 
-#include "../types.h"
 #include "../log.h"
 #include "../gl.h"
 #include "../common.h"

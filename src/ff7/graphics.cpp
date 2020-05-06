@@ -24,7 +24,6 @@
 #include <math.h>
 #include "../renderer.h"
 
-#include "../types.h"
 #include "../common.h"
 #include "../ff7.h"
 #include "../macro.h"

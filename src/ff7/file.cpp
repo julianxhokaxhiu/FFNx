@@ -24,7 +24,6 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "../types.h"
 #include "../common.h"
 #include "../ff7.h"
 #include "../log.h"

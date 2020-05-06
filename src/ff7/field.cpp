@@ -20,7 +20,6 @@
  * ff7/field.c - replacement routines for FF7's field module
  */
 
-#include "../types.h"
 #include "../common.h"
 #include "../ff7.h"
 #include "../log.h"

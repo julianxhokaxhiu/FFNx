@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <dsound.h>
 
-#include "types.h"
 #include "compile_cfg.h"
 #include "matrix.h"
 #include "common_imports.h"

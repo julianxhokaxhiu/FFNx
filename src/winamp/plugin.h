@@ -4,7 +4,6 @@
 #include <DSound.h>
 #include "../common.h"
 #include "../log.h"
-#include "../types.h"
 #include "winamp.h"
 
 class WinampPlugin {

@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "types.h"
 #include "cfg.h"
 #include "common.h"
 #include "globals.h"

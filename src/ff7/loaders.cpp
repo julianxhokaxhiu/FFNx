@@ -20,7 +20,6 @@
  * ff7/loaders.c - replacement routines for FF7 file loaders
  */
 
-#include "../types.h"
 #include "../common.h"
 #include "../ff7.h"
 #include "../globals.h"
@@ -249,3 +248,4 @@ error:
 	close_file(file);
 	return 0;
 }
+

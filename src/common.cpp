@@ -28,7 +28,6 @@
 #include "hext.h"
 #include "metadata.h"
 
-#include "types.h"
 #include "log.h"
 #include "crashdump.h"
 #include "macro.h"

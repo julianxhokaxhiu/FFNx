@@ -20,7 +20,6 @@
  * ff7/battle.c - replacement routines for FF7's battle system
  */
 
-#include "../types.h"
 #include "../common.h"
 #include "../ff7.h"
 #include "../log.h"

@@ -20,7 +20,6 @@
  * ff8_opengl.c - FF8 specific code and loading routine
  */
 
-#include "types.h"
 #include "globals.h"
 #include "common.h"
 #include "ff8.h"

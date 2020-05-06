@@ -21,7 +21,6 @@ extern "C" {
 
 #include "../crashdump.h"
 #include "../log.h"
-#include "../types.h"
 #include "../gl.h"
 
 void ffmpeg_movie_init();
