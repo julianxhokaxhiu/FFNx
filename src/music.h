@@ -34,6 +34,7 @@ void pause_midi();
 void restart_midi();
 void stop_midi();
 uint midi_status();
+uint ff8_set_direct_volume(int volume);
 void set_master_midi_volume(uint volume);
 void set_midi_volume(uint volume);
 void set_midi_volume_trans(uint volume, uint step);

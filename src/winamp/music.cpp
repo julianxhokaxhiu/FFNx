@@ -345,7 +345,7 @@ void winamp_stop_music()
 		uint mode = getmode_cached()->driver_mode;
 
 		if (ff8 && out && winamp_current_id
-				&& needs_resume(mode, winamp_current_mode, nullptr, common_externals.get_midi_name(winamp_current_id))) {
+				&& needs_resume(mode, winamp_current_mode, nullptr, winamp_current_midi)) {
 			winamp_paused_midi_id = winamp_current_id;
 			winamp_paused_midi_ms = out->getOutputTime() % in->getLength();
 
@@ -444,6 +444,16 @@ bool winamp_music_status()
 
 	last_status = status;
 	return status;
+}
+
+void winamp_set_direct_volume(int volume)
+{
+	trace("set direct volume: %i\n", volume);
+
+	if (out)
+	{
+		out->setVolume(volume);
+	}
 }
 
 void winamp_set_master_music_volume(int volume)
