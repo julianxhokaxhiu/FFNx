@@ -132,6 +132,7 @@ bool Hext::parseComment(std::string& token)
 
     if (starts_with(token, "#")) return true;
     if (starts_with(token, "{")) return true;
+    if (starts_with(token, ".")) return true;
 
     return false;
 }
@@ -262,6 +263,10 @@ void Hext::applyDelayed(std::string& filename, std::string& checkpoint)
 
             // Check if is a memory patch instruction
             if (parseMemoryPatch(line)) continue;
+        }
+        else
+        {
+            break;
         }
     }
 
