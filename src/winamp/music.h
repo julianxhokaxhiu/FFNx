@@ -8,7 +8,6 @@
 
 #include "../log.h"
 #include "../music.h"
-#include "../cfg.h"
 
 #include "plugin.h"
 

@@ -2,7 +2,6 @@
 
 #include <windows.h>
 #include <DSound.h>
-#include "../common.h"
 #include "../log.h"
 #include "winamp.h"
 

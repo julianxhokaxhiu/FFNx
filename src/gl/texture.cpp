@@ -24,7 +24,6 @@
 
 #include "../log.h"
 #include "../gl.h"
-#include "../common.h"
 #include "../macro.h"
 #include "../saveload.h"
 

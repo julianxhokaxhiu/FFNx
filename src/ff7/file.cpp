@@ -24,10 +24,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "../common.h"
 #include "../ff7.h"
 #include "../log.h"
-#include "../globals.h"
 #include "../hext.h"
 
 int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = false)

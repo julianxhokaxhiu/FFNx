@@ -25,10 +25,8 @@
 #include <direct.h>
 #include "renderer.h"
 
-#include "globals.h"
 #include "log.h"
 #include "gl.h"
-#include "cfg.h"
 #include "compile_cfg.h"
 #include "macro.h"
 

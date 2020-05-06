@@ -24,10 +24,7 @@
 
 #include "cfg.h"
 #include "ff7.h"
-#include "common.h"
-#include "globals.h"
 #include "gl.h"
-#include "log.h"
 #include "patch.h"
 #include "movies.h"
 #include "music.h"

@@ -23,7 +23,6 @@
 #include "globals.h"
 #include "common.h"
 #include "ff8.h"
-#include "cfg.h"
 #include "fake_dd.h"
 #include "patch.h"
 #include "log.h"

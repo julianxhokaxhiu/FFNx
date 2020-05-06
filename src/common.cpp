@@ -28,10 +28,8 @@
 #include "hext.h"
 #include "metadata.h"
 
-#include "log.h"
 #include "crashdump.h"
 #include "macro.h"
-#include "common.h"
 #include "ff7.h"
 #include "ff8.h"
 #include "patch.h"
@@ -39,7 +37,6 @@
 #include "movies.h"
 #include "music.h"
 #include "saveload.h"
-#include "matrix.h"
 
 // global FF7/FF8 flag, available after version check
 uint ff8 = false;

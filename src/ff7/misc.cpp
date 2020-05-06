@@ -22,11 +22,7 @@
 
 #include <stdint.h>
 
-#include "../types.h"
 #include "../ff7.h"
-#include "../common.h"
-#include "../globals.h"
-#include "../cfg.h"
 #include "../log.h"
 #include "../gamepad.h"
 

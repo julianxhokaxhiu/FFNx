@@ -20,9 +20,7 @@
  * ff7/loaders.c - replacement routines for FF7 file loaders
  */
 
-#include "../common.h"
 #include "../ff7.h"
-#include "../globals.h"
 #include "../log.h"
 
 #include "defs.h"

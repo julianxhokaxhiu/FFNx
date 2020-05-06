@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "globals.h"
 #include "log.h"
 
 uint replace_function(uint offset, void *func);

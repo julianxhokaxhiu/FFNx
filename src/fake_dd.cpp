@@ -25,10 +25,7 @@
 
 #include "fake_dd.h"
 #include "gl.h"
-#include "cfg.h"
 #include "log.h"
-#include "common.h"
-#include "globals.h"
 
 uint __stdcall fake_dd_blit_fast(struct ddsurface **me, uint unknown1, uint unknown2, struct ddsurface **target, LPRECT source, uint unknown3);
 uint __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIXELFORMAT pf);

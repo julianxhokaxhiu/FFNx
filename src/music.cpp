@@ -23,9 +23,6 @@
 #include <windows.h>
 
 #include "music.h"
-#include "globals.h"
-#include "cfg.h"
-#include "log.h"
 #include "patch.h"
 #include "ff7music/music.h"
 #include "winamp/music.h"

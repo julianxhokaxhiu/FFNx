@@ -18,7 +18,6 @@
 #include <vector>
 
 #include "utils.h"
-#include "globals.h"
 #include "patch.h"
 
 class Hext {
