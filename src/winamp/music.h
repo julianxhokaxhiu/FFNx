@@ -18,6 +18,7 @@ void winamp_cross_fade_music(char* midi, uint id, int time);
 void winamp_pause_music();
 void winamp_resume_music();
 bool winamp_music_status();
+void winamp_set_direct_volume(int volume);
 void winamp_set_master_music_volume(int volume);
 void winamp_set_music_volume(int volume);
 void winamp_set_music_volume_trans(int volume, int frames);
