@@ -27,6 +27,7 @@ Some of the improvements that you can find on FFNx are:
 - Movies volume will respect global sound volume on Final Fantasy VII.
 - Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins!
 - Steam savegame preservation ( you will no more loose saves created with FFNx! )
+- Steam sound configuration preservation ( configure at your pleasure and on the next run those will be inherited ) for Final Fantasy VII.
 - One single .dll file to be copied
 - Support for 7h 1.x/2.x
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
