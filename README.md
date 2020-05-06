@@ -22,6 +22,11 @@ Some of the improvements that you can find on FFNx are:
 - **Native** Vertical centering for Fields and Movies on Final Fantasy VII. No mods required.
 - **Native** Fullscreen Battle scenes on Final Fantasy VII. No mods required.
 - **Native** Menu cursor alignment in Menu scenes on Final Fantasy VII. No mods required.
+- **Native** XInput controller support ( DPad working Out-of-the-box!) for Final Fantasy VII.
+- Movies will continue to play if the window game loses focus ( in window mode ) on Final Fantasy VII.
+- Movies volume will respect global sound volume on Final Fantasy VII.
+- Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins!
+- Steam savegame preservation ( you will no more loose saves created with FFNx! )
 - One single .dll file to be copied
 - Support for 7h 1.x/2.x
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
@@ -38,6 +43,7 @@ In order to enhance the modding experience, FFNx does also provide:
 - [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
 - Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L80)
 - Support for [Ficedula FF7Music](http://ff8.fr/pub/FF7Music.zip)
+- Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0)
 
 ## Tech Stack
 If you're curious to know it, FFNx is made with:
@@ -77,7 +83,8 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 6. Enjoy!
 
 #### [2013 Steam Release](https://store.steampowered.com/app/39140/FINAL_FANTASY_VII/)
-1. Install the game using Steam Client
+0. Install the game using Steam Client
+1. Make sure you run at least your game once ( until the new game screen )
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
 3. Download the latest `FFNx-Steam` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 4. Extract the ZIP content next to your `ff7_*.exe` file ( for eg. for EN language `ff7_en.exe`)
@@ -121,7 +128,8 @@ external_music_ext = akb
 5. Enjoy!
 
 #### [2013 Steam Release](https://store.steampowered.com/app/39150/FINAL_FANTASY_VIII/)
-1. Install the game using Steam Client
+0. Install the game using Steam Client
+1. Make sure you run at least your game once ( until the new game screen )
 2. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
 3. Download the latest `FFNx-Steam` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 4. Extract the ZIP content next to your `ff8_*.exe` file ( for eg. for EN language `ff8_en.exe`)
