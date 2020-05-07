@@ -363,5 +363,6 @@ bool needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi)
 	 */
 	return ((new_mode == MODE_WORLDMAP || new_mode == MODE_AFTER_BATTLE) && !is_wm_theme(old_midi) && is_wm_theme(new_midi))
 		|| (old_mode == MODE_BATTLE || old_mode == MODE_SWIRL)
-		&& (new_mode == MODE_FIELD || new_mode == MODE_AFTER_BATTLE);
+		&& (new_mode == MODE_FIELD || new_mode == MODE_AFTER_BATTLE)
+		|| new_mode == MODE_CARDGAME;
 }
