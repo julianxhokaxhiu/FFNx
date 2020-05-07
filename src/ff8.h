@@ -786,8 +786,8 @@ struct ff8_externals
 	uint draw_movie_frame;
 	uint sub_529FF0;
 	struct ff8_movie_obj *movie_object;
-	uint sub_469640;
-	uint sub_46DBF0;
+	uint initialize_sound;
+	uint initialize_eax_directsound;
 	void (*sub_5304B0)();
 	uint *enable_framelimiter;
 	unsigned char *byte_1CE4907;
@@ -814,6 +814,25 @@ struct ff8_externals
 	uint requiredDisk;
 	IDirectMusicPerformance** directmusic_performance;
 	GUID* GUID_PerfMasterVolume;
+	uint sm_battle_sound;
+	uint sdmusicplay;
+	uint sd_music_play;
+	uint sub_46B800;
+	uint sub_46C060;
+	uint sub_46C6F0;
+	uint midi_stop;
+	uint sub_46C050;
+	uint sub_46B970;
+	uint sub_500900;
+	uint sub_501B60;
+	uint sub_46B3A0;
+	uint sub_46B3E0;
+	uint sub_4A6680;
+	uint sub_4A6660;
+	uint sub_4A3D20;
+	uint sub_4A3EE0;
+	uint sub_469C60;
+	uint sub_46DDC0;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
