@@ -351,7 +351,7 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 	}
 
 	// don't set system speaker config to stereo
-	memset_code(ff8_externals.sub_46DBF0 + 0x6D, 0x90, 34);
+	memset_code(ff8_externals.initialize_eax_directsound + 0x6D, 0x90, 34);
 
 	if(ff8_externals.nvidia_hack1) patch_code_double(ff8_externals.nvidia_hack1, 0.0);
 	if(ff8_externals.nvidia_hack2) patch_code_float(ff8_externals.nvidia_hack2, 0.0f);
