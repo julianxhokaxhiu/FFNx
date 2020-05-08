@@ -50,6 +50,8 @@ void winamp_apply_volume()
 {
 	if (out)
 	{
+		if (trace_all || trace_music) trace("set music volume %i %i\n", winamp_song_volume, winamp_master_volume);
+
 		int volume = (((winamp_song_volume * 100) / 127) * winamp_master_volume) / 100;
 		out->setVolume(volume * 255 / 100);
 	}
@@ -63,6 +65,8 @@ void winamp_load_song(char* midi, uint id)
 	{
 		return;
 	}
+
+	if (trace_all || trace_music) trace("load song %s %i\n", midi, id);
 	
 	uint winamp_previous_paused_midi_id = winamp_paused_midi_id;
 	int winamp_previous_paused_midi_ms = winamp_paused_midi_ms;
@@ -128,7 +132,7 @@ ULONG(__stdcall* real_dsound_release)(IDirectSound*);
 
 ULONG __stdcall dsound_release_hook(IDirectSound* me)
 {
-	trace("directsound release\n");
+	if (trace_all || trace_music) trace("directsound release\n");
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -273,11 +277,6 @@ void winamp_music_init()
 		out = nullptr;
 	}
 
-	// Force volume for MM (out_wave fix)
-	for (int i = 0; i < waveInGetNumDevs(); ++i) {
-		waveOutSetVolume(HWAVEOUT(i), 0xFFFFFFFF);
-	}
-
 	char* out_type = "FFNx out implementation",
 		* in_type = "FFNx in implementation";
 	
@@ -286,6 +285,11 @@ void winamp_music_init()
 		if (winamp_out->open(winamp_out_plugin)) {
 			out = winamp_out;
 			out_type = winamp_out_plugin;
+
+			// Force volume for MM (out_wave fix)
+			for (int i = 0; i < waveInGetNumDevs(); ++i) {
+				waveOutSetVolume(HWAVEOUT(i), 0xFFFFFFFF);
+			}
 		}
 		else {
 			error("couldn't load %s, please verify 'winamp_out_plugin' or comment it\n", winamp_out_plugin);
@@ -323,8 +327,8 @@ void winamp_music_init()
 // start playing some music, <midi> is the name of the MIDI file without the .mid extension
 void winamp_play_music(char *midi, uint id)
 {
-	trace("[%s] play music: %s:%i (current=%i, ended=%i)\n", getmode_cached()->name, midi, id, winamp_current_id, winamp_song_ended);
-
+	if (trace_all || trace_music) trace("[%s] play music: %s:%i (current=%i, ended=%i)\n", getmode_cached()->name, midi, id, winamp_current_id, winamp_song_ended);
+	
 	EnterCriticalSection(&winamp_mutex);
 
 	if (id != winamp_current_id || winamp_song_ended)
@@ -337,7 +341,7 @@ void winamp_play_music(char *midi, uint id)
 
 void winamp_stop_music()
 {
-	trace("[%s] stop music\n", getmode_cached()->name);
+	if (trace_all || trace_music) trace("[%s] stop music\n", getmode_cached()->name);
 
 	EnterCriticalSection(&winamp_mutex);
 	
@@ -356,7 +360,7 @@ void winamp_cross_fade_music(char *midi, uint id, int time)
 {
 	int fade_time = time * 4;
 
-	trace("[%s] cross fade music: %s:%i (%i)\n", getmode_cached()->name, midi, id, time);
+	if (trace_all || trace_music) trace("[%s] cross fade music: %s:%i (%i)\n", getmode_cached()->name, midi, id, time);
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -385,6 +389,8 @@ void winamp_cross_fade_music(char *midi, uint id, int time)
 
 void winamp_pause_music()
 {
+	if (trace_all || trace_music) trace("Pause music\n");
+
 	EnterCriticalSection(&winamp_mutex);
 	
 	if (in) {
@@ -397,6 +403,8 @@ void winamp_pause_music()
 
 void winamp_resume_music()
 {
+	if (trace_all || trace_music) trace("Resume music\n");
+
 	EnterCriticalSection(&winamp_mutex);
 
 	if (in) {
@@ -434,6 +442,8 @@ bool winamp_music_status()
 
 void winamp_set_direct_volume(int volume)
 {
+	if (trace_all || trace_music) trace("Set direct volume %i\n", volume);
+
 	if (out)
 	{
 		out->setVolume(volume);
@@ -442,7 +452,7 @@ void winamp_set_direct_volume(int volume)
 
 void winamp_set_master_music_volume(int volume)
 {
-	trace("set master volume: %i\n", volume);
+	if (trace_all || trace_music) trace("set master volume: %i\n", volume);
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -455,7 +465,7 @@ void winamp_set_master_music_volume(int volume)
 
 void winamp_set_music_volume(int volume)
 {
-	trace("set song volume: %i\n", volume);
+	if (trace_all || trace_music) trace("set song volume: %i\n", volume);
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -474,7 +484,7 @@ void winamp_set_music_volume(int volume)
 // make a volume transition
 void winamp_set_music_volume_trans(int volume, int frames)
 {
-	trace("set volume trans: %i (%i)\n", volume, frames);
+	if (trace_all || trace_music) trace("set volume trans: %i (%i)\n", volume, frames);
 
 	frames /= 2; // 60 FPS on the original game, our thread has ~30 ticks per second
 
@@ -503,7 +513,7 @@ void winamp_set_music_volume_trans(int volume, int frames)
 
 void winamp_set_music_tempo(unsigned char tempo)
 {
-	trace("set music tempo: %i\n", int(tempo));
+	if (trace_all || trace_music) trace("set music tempo: %i\n", int(tempo));
 
 	EnterCriticalSection(&winamp_mutex);
 
@@ -530,6 +540,8 @@ void winamp_remember_playing_time()
 
 void winamp_music_cleanup()
 {
+	if (trace_all || trace_music) trace("music cleanup\n");
+
 	winamp_stop_thread = true;
 	
 	winamp_stop_music();

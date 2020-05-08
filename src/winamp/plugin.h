@@ -34,7 +34,7 @@ public:
 		return mod;
 	}
 	// volume stuff
-	void setVolume(int volume);	// from 0 to 255.. usually just call outMod->SetVolume
+	virtual void setVolume(int volume);	// from 0 to 255.. usually just call outMod->SetVolume
 	void setPan(int pan);	    // from -127 to 127.. usually just call outMod->SetPan
 	int getOutputTime() const;
 	int getWrittenTime() const;
@@ -54,6 +54,7 @@ private:
 public:
 	WinampOutPlugin();
 	virtual ~WinampOutPlugin();
+	void setVolume(int volume);
 	// This method is not part of the winamp plugin
 	void setTempo(int tempo);
 };

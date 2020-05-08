@@ -38,6 +38,7 @@ extern char* winamp_out_plugin;
 extern cfg_bool_t save_textures;
 extern cfg_bool_t trace_all;
 extern cfg_bool_t trace_movies;
+extern cfg_bool_t trace_music;
 extern cfg_bool_t trace_fake_dx;
 extern cfg_bool_t trace_direct;
 extern cfg_bool_t trace_files;

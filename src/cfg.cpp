@@ -38,6 +38,7 @@ char* winamp_out_plugin = nullptr;
 cfg_bool_t save_textures = cfg_bool_t(false);
 cfg_bool_t trace_all = cfg_bool_t(false);
 cfg_bool_t trace_movies = cfg_bool_t(false);
+cfg_bool_t trace_music = cfg_bool_t(false);
 cfg_bool_t trace_fake_dx = cfg_bool_t(false);
 cfg_bool_t trace_direct = cfg_bool_t(false);
 cfg_bool_t trace_files = cfg_bool_t(false);
@@ -87,6 +88,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("save_textures", &save_textures),
 		CFG_SIMPLE_BOOL("trace_all", &trace_all),
 		CFG_SIMPLE_BOOL("trace_movies", &trace_movies),
+		CFG_SIMPLE_BOOL("trace_music", &trace_music),
 		CFG_SIMPLE_BOOL("trace_fake_dx", &trace_fake_dx),
 		CFG_SIMPLE_BOOL("trace_direct", &trace_direct),
 		CFG_SIMPLE_BOOL("trace_files", &trace_files),
