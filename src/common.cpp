@@ -2139,6 +2139,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 					estore_edition = true;
 				}
 
+				if (use_external_music == FFNX_MUSIC_NONE) use_external_music = FFNX_MUSIC_WINAMP;
 				if (external_music_path == nullptr) external_music_path = "data/music_ogg";
 
 			}
@@ -2150,6 +2151,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&ff7_music_volume, &regsize);
 
 				external_music_path = "music/vgmstream";
+				if (_access(external_music_path, 0) != -1)
+				{
+					use_external_music = FFNX_MUSIC_WINAMP;
+				}
 			}
 		}
 		else if (ff8 &&
