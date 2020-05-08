@@ -1,9 +1,13 @@
 >> FF7_CENTER_FIELDS = 1
 
+-60
+
 # Vertically center fields
-60D80C = 10
-60D96B = 08
-640C18 = E8
-640F75 = E8
-641338 = E8
-60D845 = F0
+60D86C = 10
+60D8A5 = F0
+60D9CB = 08
+
+640C78 = E8
+640FD5 = E8
+
+641398 = E8
