@@ -551,10 +551,10 @@ int CustomOutPlugin::Pause(int pause)
 				last_pause_t = 0;
 			}
 
-			if (sound_buffer && *common_externals.directsound && play_started) {
+			if (sound_buffer && *common_externals.directsound) {
 				if (trace_all || trace_music) trace("Play directsound\n");
 
-				if (sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
+				if ((!play_started && bytes_written >= prebuffer_size && !playHelper()) || sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
 					error("couldn't play sound buffer\n");
 				}
 			}
