@@ -188,7 +188,7 @@ void Renderer::reset()
     useFancyTransparency();
 };
 
-void Renderer::renderFrameBuffer()
+void Renderer::renderFrame(bool isEmpty)
 {
     /*  y0    y2
      x0 +-----+ x2
@@ -200,8 +200,6 @@ void Renderer::renderFrameBuffer()
      x1 +-----+ x3
         y1    y3
     */
-
-    uint mode = getmode_cached()->driver_mode;
 
     // 0
     float x0 = preserve_aspect ? framebufferVertexOffsetX : 0.0f;
@@ -225,10 +223,10 @@ void Renderer::renderFrameBuffer()
     float v3 = v1;
 
     struct nvertex vertices[] = {
-        {x0, y0, 1.0f, 1.0f, 0x00000000, 0, u0, v0},
-        {x1, y1, 1.0f, 1.0f, 0x00000000, 0, u1, v1},
-        {x2, y2, 1.0f, 1.0f, 0x00000000, 0, u2, v2},
-        {x3, y3, 1.0f, 1.0f, 0x00000000, 0, u3, v3},
+        {x0, y0, 1.0f, 1.0f, 0xff000000, 0, u0, v0},
+        {x1, y1, 1.0f, 1.0f, 0xff000000, 0, u1, v1},
+        {x2, y2, 1.0f, 1.0f, 0xff000000, 0, u2, v2},
+        {x3, y3, 1.0f, 1.0f, 0xff000000, 0, u3, v3},
     };
     word indices[] = {
         0, 1, 2,
@@ -243,9 +241,12 @@ void Renderer::renderFrameBuffer()
         bindVertexBuffer(vertices, 4);
         bindIndexBuffer(indices, 6);
 
-        useTexture(
-            bgfx::getTexture(backendFrameBuffer).idx
-        );
+        if (!isEmpty)
+            useTexture(
+                bgfx::getTexture(backendFrameBuffer).idx
+            );
+        else
+            useTexture(emptyTexture.idx);
 
         setBlendMode(RendererBlendMode::BLEND_DISABLED);
         setPrimitiveType();
@@ -488,6 +489,8 @@ void Renderer::draw()
     bgfx::setState(internalState.state);
 
     bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
+
+    internalState.bHasDrawBeenDone = true;
 };
 
 void Renderer::show()
@@ -495,13 +498,16 @@ void Renderer::show()
     // Reset internal state
     reset();
 
-    renderFrameBuffer();
+    // Sometimes the engine wants to submit an empty frame, but does not tell this explicitely. Try to autodetect.
+    renderFrame(!internalState.bHasDrawBeenDone);
 
     bgfx::frame();
 
     bgfx::dbgTextClear();
 
     backendViewId = 1;
+
+    bgfx::setViewMode(backendViewId, bgfx::ViewMode::Sequential);
 }
 
 void Renderer::printText(uint16_t x, uint16_t y, uint color, const char* text)
@@ -586,6 +592,8 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
 
     bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
+
+    internalState.bHasDrawBeenDone = false;
 }
 
 void Renderer::setBackgroundColor(float r, float g, float b, float a)

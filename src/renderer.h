@@ -173,6 +173,8 @@ private:
     {
         uint16_t texHandlers[3];
 
+        bool bHasDrawBeenDone = false;
+
         bool bDoAlphaTest = false;
         float alphaRef = 0.0f;
         RendererAlphaFunc alphaFunc;
@@ -270,7 +272,7 @@ private:
 
     void reset();
 
-    void renderFrameBuffer();
+    void renderFrame(bool isEmpty = false);
 
     void printMatrix(char* name, float* mat);
 
