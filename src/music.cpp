@@ -129,12 +129,12 @@ uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
 	switch (use_external_music)
 	{
 	case FFNX_MUSIC_FF7MUSIC:
-		ff7music_play_music(midi_name, midi);
 		ff7music_set_music_volume(volume);
+		ff7music_play_music(midi_name, midi);
 		break;
 	case FFNX_MUSIC_WINAMP:
-		winamp_play_music(midi_name, midi);
 		winamp_set_music_volume(volume);
+		winamp_play_music(midi_name, midi);
 		break;
 	}
 
@@ -208,6 +208,8 @@ void stop_midi()
 
 uint ff8_stop_midi()
 {
+	if (trace_all || trace_music) info("FF8 stop midi\n");
+
 	// Stop game midi for horizon concert instruments
 	if (nullptr != *ff8_externals.directmusic_performance) {
 		(*ff8_externals.directmusic_performance)->Stop(nullptr, nullptr, 0, DMUS_SEGF_DEFAULT);
@@ -235,6 +237,8 @@ uint midi_status()
 
 uint ff8_set_direct_volume(int volume)
 {
+	if (trace_all || trace_music) info("FF8 set direct volume %i\n", volume);
+
 	// Set game volume for horizon concert instruments
 	if (nullptr != *ff8_externals.directmusic_performance) {
 		(*ff8_externals.directmusic_performance)->SetGlobalParam(
@@ -362,7 +366,6 @@ bool needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi)
 	 * FIELD  -> WM
 	 */
 	return ((new_mode == MODE_WORLDMAP || new_mode == MODE_AFTER_BATTLE) && !is_wm_theme(old_midi) && is_wm_theme(new_midi))
-		|| (old_mode == MODE_BATTLE || old_mode == MODE_SWIRL)
-		&& (new_mode == MODE_FIELD || new_mode == MODE_AFTER_BATTLE)
+		|| ((old_mode == MODE_BATTLE || old_mode == MODE_SWIRL) && (new_mode == MODE_FIELD || new_mode == MODE_AFTER_BATTLE))
 		|| new_mode == MODE_CARDGAME;
 }

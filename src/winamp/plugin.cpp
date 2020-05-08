@@ -161,13 +161,6 @@ void SetInfo(int bitrate, int srate, int stereo, int synched)
 
 void AbstractOutPlugin::setVolume(int volume)
 {
-	if (volume == 255) {
-		// Force volume for MM (out_wave fix)
-		for (int i = 0; i < waveInGetNumDevs(); ++i) {
-			waveOutSetVolume(HWAVEOUT(i), 0xFFFFFFFF);
-		}
-	}
-
 	if (nullptr != this->mod) {
 		this->mod->SetVolume(volume);
 	}
@@ -252,6 +245,17 @@ void WinampOutPlugin::closeModule()
 		}
 		this->mod = nullptr;
 	}
+}
+
+void WinampOutPlugin::setVolume(int volume)
+{
+	if (volume == 255) {
+		// Force volume for MM (out_wave fix)
+		for (int i = 0; i < waveInGetNumDevs(); ++i) {
+			waveOutSetVolume(HWAVEOUT(i), 0xFFFFFFFF);
+		}
+	}
+	AbstractOutPlugin::setVolume(volume);
 }
 
 void WinampOutPlugin::setTempo(int tempo)
@@ -401,6 +405,8 @@ void CustomOutPlugin::Close()
 
 bool CustomOutPlugin::playHelper()
 {
+	if (trace_all || trace_music) trace("Play directsound\n");
+
 	if (sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
 		error("couldn't play sound buffer\n");
 		return false;
@@ -530,7 +536,10 @@ int CustomOutPlugin::Pause(int pause)
 	if (last_pause != pause) {
 		if (pause) { // Pause
 			last_pause_t = GetTickCount();
+
 			if (sound_buffer && *common_externals.directsound && play_started) {
+				if (trace_all || trace_music) trace("Stop directsound\n");
+
 				if (sound_buffer->Stop()) {
 					error("couldn't stop sound buffer\n");
 				}
@@ -543,6 +552,8 @@ int CustomOutPlugin::Pause(int pause)
 			}
 
 			if (sound_buffer && *common_externals.directsound && play_started) {
+				if (trace_all || trace_music) trace("Play directsound\n");
+
 				if (sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
 					error("couldn't play sound buffer\n");
 				}
@@ -565,8 +576,14 @@ void CustomOutPlugin::SetVolume(int volume)
 	}
 
 	if (sound_buffer) {
-		float decibel = 20.0f * log10f((volume * 100 / 255) / 100.0f);
-		sound_buffer->SetVolume(volume ? int(decibel * 100.0f) : DSBVOLUME_MIN);
+		float decibel = DSBVOLUME_MIN;
+		if (volume != 0) {
+			decibel = 2000.0f * log10f(volume / 255.0f);
+		}
+
+		if (trace_all || trace_music) trace("Set directsound attenuation %i Db\n", decibel);
+
+		sound_buffer->SetVolume(decibel);
 	}
 }
 
