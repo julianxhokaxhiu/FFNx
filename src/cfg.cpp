@@ -204,7 +204,7 @@ void read_cfg()
 		PathAppendA(hext_patching_path, "de");
 		break;
 	case VERSION_FF7_102_SP:
-		PathAppendA(hext_patching_path, "sp");
+		PathAppendA(hext_patching_path, "es");
 		break;
 	case VERSION_FF8_12_US:
 		PathAppendA(hext_patching_path, "en");
@@ -225,10 +225,10 @@ void read_cfg()
 		PathAppendA(hext_patching_path, "de");
 		break;
 	case VERSION_FF8_12_SP:
-		PathAppendA(hext_patching_path, "sp");
+		PathAppendA(hext_patching_path, "es");
 		break;
 	case VERSION_FF8_12_SP_NV:
-		PathAppendA(hext_patching_path, "sp_nv");
+		PathAppendA(hext_patching_path, "es_nv");
 		break;
 	case VERSION_FF8_12_IT:
 		PathAppendA(hext_patching_path, "it");
