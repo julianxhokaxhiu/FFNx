@@ -348,6 +348,7 @@ void common_flip(struct game_obj *game_object)
 	if (trace_all) trace("dll_gfx: flip (%i)\n", frame_counter);
 
 	VOBJ(game_obj, game_object, game_object);
+	static time_t last_gametime;
 	static struct timeb last_frame;
 	static uint fps_counters[3] = {0, 0, 0};
 	time_t last_seconds = last_frame.time;
@@ -477,6 +478,19 @@ void common_flip(struct game_obj *game_object)
 
 	current_state.texture_filter = true;
 	current_state.fb_texture = false;
+
+	// new framelimiter, not based on vsync
+	if (!ff8)
+	{
+		time_t gametime;
+		long framerate = 60;
+
+		if (mode->driver_mode == MODE_HIGHWAY || mode->driver_mode == MODE_CHOCOBO) framerate = 30;
+
+		do qpc_get_time(&gametime); while (gametime > last_gametime && gametime - last_gametime < VREF(game_object, countspersecond * (1.0 / framerate)));
+
+		last_gametime = gametime;
+	}
 
 	if(!fullscreen) ShowCursor(true);
 
@@ -1939,6 +1953,11 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 			dmScreenSettings.dmDisplayFrequency = refresh_rate;
 			dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
 		}
+	}
+
+	if (refresh_rate == 0)
+	{
+		refresh_rate = dmScreenSettings.dmDisplayFrequency;
 	}
 
 	if(fullscreen)
