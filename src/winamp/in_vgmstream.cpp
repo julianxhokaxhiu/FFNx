@@ -118,7 +118,6 @@ HANDLE decode_thread_handle = INVALID_HANDLE_VALUE;
 VGMSTREAM* vgmstream = NULL;
 in_char lastfn[PATH_LIMIT] = { 0 }; /* name of the currently playing file */
 
-winamp_settings_t defaults;
 winamp_settings_t settings;
 winamp_song_config config;
 winamp_state_t state;
@@ -134,25 +133,15 @@ short sample_buffer[SAMPLE_BUFFER_SIZE * 2 * VGMSTREAM_MAX_CHANNELS]; //todo may
 #define wa_strcmp wcscmp
 #define wa_strcpy wcscpy
 #define wa_strncpy wcsncpy
-#define wa_strcat wcscat
-#define wa_strlen wcslen
 #define wa_strchr wcschr
 #define wa_sscanf swscanf
-#define wa_snprintf _snwprintf
-#define wa_strrchr wcsrchr
-#define wa_fileinfo fileinfoW
 #define wa_L(x) L ##x
 #else
 #define wa_strcmp strcmp
 #define wa_strcpy strcpy
 #define wa_strncpy strncpy
-#define wa_strcat strcat
-#define wa_strlen strlen
 #define wa_strchr strchr
 #define wa_sscanf sscanf
-#define wa_snprintf snprintf
-#define wa_strrchr strrchr
-#define wa_fileinfo fileinfo
 #define wa_L(x) x
 #endif
 
@@ -177,39 +166,12 @@ static void wa_char_to_ichar(in_char* wdst, size_t wdstsize, const char* src) {
 #endif
 }
 
-/* copies from utf16 to utf16 (if unicode is active) */
-static void wa_wchar_to_ichar(in_char* wdst, size_t wdstsize, const in_char* src) {
-#ifdef UNICODE_INPUT_PLUGIN
-    wcscpy(wdst, src);
-#else
-    strcpy(wdst, src); //todo ???
-#endif
-}
-
-/* copies from utf16 to utf16 */
-static void wa_char_to_wchar(in_char* wdst, size_t wdstsize, const char* src) {
-#ifdef UNICODE_INPUT_PLUGIN
-    MultiByteToWideChar(CP_UTF8, 0, src, -1, wdst, wdstsize);
-#else
-    strcpy(wdst, src); //todo ???
-#endif
-}
-
 /* opens a utf16 (unicode) path */
 static FILE* wa_fopen(const in_char* wpath) {
 #ifdef UNICODE_INPUT_PLUGIN
     return _wfopen(wpath, L"rb");
 #else
     return fopen(wpath, "rb");
-#endif
-}
-
-/* dupes a utf16 (unicode) file */
-static FILE* wa_fdopen(int fd) {
-#ifdef UNICODE_INPUT_PLUGIN
-    return _wfdopen(fd, L"rb");
-#else
-    return fdopen(fd, "rb");
 #endif
 }
 
@@ -336,51 +298,6 @@ static VGMSTREAM* init_vgmstream_winamp(const in_char* fn, int stream_index) {
 /* ************************************* */
 /* IN_CONFIG                             */
 /* ************************************* */
-//todo snprintf
-/* Windows unicode, separate from Winamp's unicode flag */
-#ifdef UNICODE
-#define cfg_strncpy wcsncpy
-#define cfg_strncat wcsncat
-#define cfg_sprintf _swprintf
-#define cfg_sscanf swscanf
-#define cfg_strlen wcslen
-#define cfg_strrchr wcsrchr
-#else
-#define cfg_strncpy strncpy
-#define cfg_strncat strncat
-#define cfg_sprintf sprintf
-#define cfg_sscanf sscanf
-#define cfg_strlen strlen
-#define cfg_strrchr strrchr
-#endif
-
-/* converts from utf8 to utf16 (if unicode is active) */
-static void cfg_char_to_wchar(TCHAR* wdst, size_t wdstsize, const char* src) {
-#ifdef UNICODE
-    //int size_needed = MultiByteToWideChar(CP_UTF8,0, src,-1, NULL,0);
-    MultiByteToWideChar(CP_UTF8, 0, src, -1, wdst, wdstsize);
-#else
-    strcpy(wdst, src);
-#endif
-}
-
-/* config */
-#define CONFIG_APP_NAME  TEXT("vgmstream plugin")
-#define CONFIG_INI_NAME  TEXT("plugin.ini")
-
-#define INI_FADE_TIME           TEXT("fade_seconds")
-#define INI_FADE_DELAY          TEXT("fade_delay")
-#define INI_LOOP_COUNT          TEXT("loop_count")
-#define INI_THREAD_PRIORITY     TEXT("thread_priority")
-#define INI_LOOP_FOREVER        TEXT("loop_forever")
-#define INI_IGNORE_LOOP         TEXT("ignore_loop")
-#define INI_DISABLE_SUBSONGS    TEXT("disable_subsongs")
-#define INI_DOWNMIX_CHANNELS    TEXT("downmix_channels")
-#define INI_TAGFILE_DISABLE     TEXT("tagfile_disable")
-#define INI_EXTS_UNKNOWN_ON     TEXT("exts_unknown_on")
-#define INI_EXTS_COMMON_ON      TEXT("exts_common_on")
-#define INI_GAIN_TYPE           TEXT("gain_type")
-#define INI_CLIP_TYPE           TEXT("clip_type")
 
 int priority_values[] = {
         THREAD_PRIORITY_IDLE,
@@ -392,123 +309,21 @@ int priority_values[] = {
         THREAD_PRIORITY_TIME_CRITICAL
 };
 
-/* Winamp INI reader */
-static void ini_get_filename(TCHAR* iniFile) {
-
-    /* older winamp with single settings */
-    TCHAR* lastSlash;
-
-    GetModuleFileName(NULL, iniFile, PATH_LIMIT);
-    lastSlash = cfg_strrchr(iniFile, TEXT('\\'));
-
-    *(lastSlash + 1) = 0;
-    cfg_strncat(iniFile, TEXT("Plugins\\") CONFIG_INI_NAME, PATH_LIMIT);
+static void load_defaults(winamp_settings_t* settings) {
+    settings->thread_priority = THREAD_PRIORITY_NORMAL;
+    settings->fade_time = 10.0;
+    settings->fade_delay = 0.0;
+    settings->loop_count = 2.0;
+    settings->loop_forever = 1;
+    settings->ignore_loop = 0;
+    settings->disable_subsongs = 0;
+    settings->downmix_channels = 0;
+    settings->tagfile_disable = 0;
+    settings->exts_unknown_on = 0;
+    settings->exts_common_on = 0;
+    settings->gain_type = REPLAYGAIN_ALBUM;
+    settings->clip_type = REPLAYGAIN_TRACK;
 }
-
-
-static void ini_get_d(const char* iniFile, const char* entry, double defval, double* p_val) {
-    TCHAR buf[256];
-    TCHAR defbuf[256];
-    int consumed, res;
-
-    cfg_sprintf(defbuf, TEXT("%.2lf"), defval);
-    GetPrivateProfileString(CONFIG_APP_NAME, entry, defbuf, buf, 256, iniFile);
-    res = cfg_sscanf(buf, TEXT("%lf%n"), p_val, &consumed);
-    if (res < 1 || consumed != cfg_strlen(buf) || *p_val < 0) {
-        *p_val = defval;
-    }
-}
-static void ini_get_i(const char* iniFile, const char* entry, int defval, int* p_val, int min, int max) {
-    *p_val = GetPrivateProfileInt(CONFIG_APP_NAME, entry, defval, iniFile);
-    if (*p_val < min || *p_val > max) {
-        *p_val = defval;
-    }
-}
-static void ini_get_b(const char* iniFile, const char* entry, int defval, int* p_val) {
-    ini_get_i(iniFile, entry, defval, p_val, 0, 1);
-}
-
-static void ini_set_d(const char* iniFile, const char* entry, double val) {
-    TCHAR buf[256];
-    cfg_sprintf(buf, TEXT("%.2lf"), val);
-    WritePrivateProfileString(CONFIG_APP_NAME, entry, buf, iniFile);
-}
-static void ini_set_i(const char* iniFile, const char* entry, int val) {
-    TCHAR buf[32];
-    cfg_sprintf(buf, TEXT("%d"), val);
-    WritePrivateProfileString(CONFIG_APP_NAME, entry, buf, iniFile);
-}
-static void ini_set_b(const char* iniFile, const char* entry, int val) {
-    ini_set_i(iniFile, entry, val);
-}
-
-static void load_defaults(winamp_settings_t* defaults) {
-    defaults->thread_priority = THREAD_PRIORITY_NORMAL;
-    defaults->fade_time = 10.0;
-    defaults->fade_delay = 0.0;
-    defaults->loop_count = 2.0;
-    defaults->loop_forever = 1;
-    defaults->ignore_loop = 0;
-    defaults->disable_subsongs = 0;
-    defaults->downmix_channels = 0;
-    defaults->tagfile_disable = 0;
-    defaults->exts_unknown_on = 0;
-    defaults->exts_common_on = 0;
-    defaults->gain_type = REPLAYGAIN_ALBUM;
-    defaults->clip_type = REPLAYGAIN_TRACK;
-}
-
-static void load_config(winamp_settings_t* settings, winamp_settings_t* defaults) {
-    TCHAR inifile[PATH_LIMIT];
-
-    ini_get_filename(inifile);
-
-    ini_get_i(inifile, INI_THREAD_PRIORITY, defaults->thread_priority, &settings->thread_priority, 0, 6);
-
-    ini_get_d(inifile, INI_FADE_TIME, defaults->fade_time, &settings->fade_time);
-    ini_get_d(inifile, INI_FADE_DELAY, defaults->fade_delay, &settings->fade_delay);
-    ini_get_d(inifile, INI_LOOP_COUNT, defaults->loop_count, &settings->loop_count);
-
-    ini_get_b(inifile, INI_LOOP_FOREVER, defaults->loop_forever, &settings->loop_forever);
-    ini_get_b(inifile, INI_IGNORE_LOOP, defaults->ignore_loop, &settings->ignore_loop);
-
-    ini_get_b(inifile, INI_DISABLE_SUBSONGS, defaults->disable_subsongs, &settings->disable_subsongs);
-    ini_get_i(inifile, INI_DOWNMIX_CHANNELS, defaults->downmix_channels, &settings->downmix_channels, 0, 64);
-    ini_get_b(inifile, INI_TAGFILE_DISABLE, defaults->tagfile_disable, &settings->tagfile_disable);
-    ini_get_b(inifile, INI_EXTS_UNKNOWN_ON, defaults->exts_unknown_on, &settings->exts_unknown_on);
-    ini_get_b(inifile, INI_EXTS_COMMON_ON, defaults->exts_common_on, &settings->exts_common_on);
-
-    ini_get_i(inifile, INI_GAIN_TYPE, defaults->gain_type, (int*)&settings->gain_type, 0, 3);
-    ini_get_i(inifile, INI_CLIP_TYPE, defaults->clip_type, (int*)&settings->clip_type, 0, 3);
-
-    if (settings->loop_forever && settings->ignore_loop)
-        settings->ignore_loop = 0;
-}
-
-static void save_config(winamp_settings_t* settings) {
-    TCHAR inifile[PATH_LIMIT];
-
-    ini_get_filename(inifile);
-
-    ini_set_i(inifile, INI_THREAD_PRIORITY, settings->thread_priority);
-
-    ini_set_d(inifile, INI_FADE_TIME, settings->fade_time);
-    ini_set_d(inifile, INI_FADE_DELAY, settings->fade_delay);
-    ini_set_d(inifile, INI_LOOP_COUNT, settings->loop_count);
-
-    ini_set_b(inifile, INI_LOOP_FOREVER, settings->loop_forever);
-    ini_set_b(inifile, INI_IGNORE_LOOP, settings->ignore_loop);
-
-    ini_set_b(inifile, INI_DISABLE_SUBSONGS, settings->disable_subsongs);
-    ini_set_i(inifile, INI_DOWNMIX_CHANNELS, settings->downmix_channels);
-    ini_set_b(inifile, INI_TAGFILE_DISABLE, settings->tagfile_disable);
-    ini_set_b(inifile, INI_EXTS_UNKNOWN_ON, settings->exts_unknown_on);
-    ini_set_b(inifile, INI_EXTS_COMMON_ON, settings->exts_common_on);
-
-    ini_set_i(inifile, INI_GAIN_TYPE, settings->gain_type);
-    ini_set_i(inifile, INI_CLIP_TYPE, settings->clip_type);
-}
-
 
 /* ***************************************** */
 /* IN_VGMSTREAM UTILS                        */
@@ -711,9 +526,7 @@ void winamp_About(HWND hwndParent) {
 /* called at program init */
 void winamp_Init() {
 
-    /* get ini config */
-    load_defaults(&defaults);
-    load_config(&settings, &defaults);
+    load_defaults(&settings);
 
     /* dynamically make a list of supported extensions */
     build_extension_list(working_extension_list, EXTENSION_LIST_SIZE);
