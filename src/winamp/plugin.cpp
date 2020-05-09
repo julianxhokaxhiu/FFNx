@@ -340,6 +340,8 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	UNUSED_PARAM(bufferlenms);
 	UNUSED_PARAM(prebufferms);
 
+	if (trace_all || trace_music) trace("Open directsound %i %i %i\n", samplerate, numchannels, bitspersamp);
+
 	Close();
 	
 	DSBUFFERDESC1 sbdesc = DSBUFFERDESC1();
@@ -396,10 +398,12 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 void CustomOutPlugin::Close()
 {
+	if (trace_all || trace_music) trace("Close directsound (%i)\n", *common_externals.directsound ? 1 : 0);
+
 	if (sound_buffer) {
 		last_stop_t = GetTickCount();
 		if (sound_buffer->Stop() || sound_buffer->Release()) {
-			error("couldn't stop or release sound buffer\n");
+			error("couldn't stop or release sound buffer (%i)\n", GetLastError());
 		}
 		sound_buffer = nullptr;
 	}
