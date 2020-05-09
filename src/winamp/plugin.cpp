@@ -402,7 +402,7 @@ void CustomOutPlugin::Close()
 
 	if (sound_buffer) {
 		last_stop_t = GetTickCount();
-		if (sound_buffer->Stop() || sound_buffer->Release()) {
+		if (*common_externals.directsound && (sound_buffer->Stop() || sound_buffer->Release())) {
 			error("couldn't stop or release sound buffer (%i)\n", GetLastError());
 		}
 		sound_buffer = nullptr;
@@ -581,7 +581,7 @@ void CustomOutPlugin::SetVolume(int volume)
 		last_volume = volume;
 	}
 
-	if (sound_buffer) {
+	if (sound_buffer && *common_externals.directsound) {
 		float decibel = DSBVOLUME_MIN;
 		if (volume != 0) {
 			decibel = 2000.0f * log10f(volume / 255.0f);
@@ -595,7 +595,7 @@ void CustomOutPlugin::SetVolume(int volume)
 
 void CustomOutPlugin::SetPan(int pan)
 {
-	if (sound_buffer) {
+	if (sound_buffer && *common_externals.directsound) {
 		sound_buffer->SetPan(pan * DSBPAN_LEFT / 128);
 	}
 }
@@ -669,7 +669,7 @@ int CustomOutPlugin::GetWrittenTime()
 
 void CustomOutPlugin::setTempo(int tempo)
 {
-	if (sound_buffer) {
+	if (sound_buffer && *common_externals.directsound) {
 		sound_buffer->SetFrequency((sound_format.nSamplesPerSec * (tempo + 480)) / 512);
 	}
 }
@@ -729,7 +729,6 @@ void AbstractInPlugin::quitModule()
 
 bool AbstractInPlugin::knownExtension(const char* fn) const
 {
-	info("%s\n", fn);
 	char* extension_list = getMod()->standard.FileExtensions;
 	const char* ext = filename_extension(fn);
 
@@ -743,16 +742,12 @@ bool AbstractInPlugin::knownExtension(const char* fn) const
 			return true;
 		}
 
-		info("knownExtension %s %s\n", extension_list, ext);
-
 		extension_list += len_ext + 1;
 
 		size_t len_desc = strnlen(extension_list, 64);
 		if (len_desc == 0) {
 			break;
 		}
-
-		info("knownExtension %s\n", extension_list);
 
 		extension_list += len_desc + 1;
 	}
@@ -777,7 +772,6 @@ int AbstractInPlugin::isOurFile(const char* fn) const
 
 bool AbstractInPlugin::accept(const char* fn) const
 {
-	info("accept %s\n", fn);
 	return isOurFile(fn) != 0 || knownExtension(fn);
 }
 
