@@ -18,7 +18,7 @@
 const DWORD thread_sleep_ms = 33;
 
 AbstractOutPlugin* out = nullptr;
-AbstractInPlugin* in = nullptr;
+MultipleInPlugins* in = nullptr;
 
 CRITICAL_SECTION winamp_mutex;
 HANDLE winampRenderHandle = nullptr;
@@ -59,7 +59,7 @@ void winamp_apply_volume()
 
 void winamp_load_song(char* midi, uint id)
 {
-	char tmp[512];
+	char tmp[MAX_PATH];
 
 	if (!in || !out)
 	{
@@ -301,20 +301,25 @@ void winamp_music_init()
 		out = new CustomOutPlugin();
 	}
 
+	WinampInPlugin* winamp_in = nullptr;
+
 	if (nullptr != winamp_in_plugin) {
-		WinampInPlugin* winamp_in = new WinampInPlugin(out);
+		winamp_in = new WinampInPlugin(out);
 		if (winamp_in->open(winamp_in_plugin)) {
-			in = winamp_in;
 			in_type = winamp_in_plugin;
 		}
 		else {
 			error("couldn't load %s, please verify 'winamp_in_plugin' or comment it\n", winamp_in_plugin);
 			delete winamp_in;
+			winamp_in = nullptr;
 		}
 	}
 	
-	if (nullptr == in) {
-		in = new VgmstreamInPlugin(out);
+	if (nullptr == winamp_in) {
+		in = new MultipleInPlugins(out, new VgmstreamInPlugin(out));
+	}
+	else {
+		in = new MultipleInPlugins(out, winamp_in, new VgmstreamInPlugin(out));
 	}
 
 	InitializeCriticalSection(&winamp_mutex);
@@ -549,6 +554,10 @@ void winamp_music_cleanup()
 	EnterCriticalSection(&winamp_mutex);
 
 	if (in) {
+		delete in->getPlugin1();
+		if (in->getPlugin2()) {
+			delete in->getPlugin2();
+		}
 		delete in;
 		in = nullptr;
 	}

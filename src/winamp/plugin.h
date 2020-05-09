@@ -102,19 +102,29 @@ public:
 	void setTempo(int tempo);
 };
 
+class MultipleInPlugins;
+
 class AbstractInPlugin {
+private:
+	friend class MultipleInPlugins;
 protected:
 	WinampInModule* mod;
 	AbstractOutPlugin* outPlugin;
 
+	inline virtual WinampInModule* getMod() const {
+		return mod;
+	}
+	virtual int beforePlay(char* fna);
 	void initModule(HINSTANCE dllInstance);
 	void quitModule();
+	bool knownExtension(const char* fn) const;
+	int isOurFile(const char* fn) const;
+	bool accept(const char* fn) const;
 public:
 	AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod = nullptr);
 	virtual ~AbstractInPlugin();
-
-	int play(const char* fn);
-	int play(const wchar_t* fn);
+	
+	int play(char* fn);
 	void pause();			// pause stream
 	void unPause();			// unpause stream
 	int isPaused();			// ispaused? return 1 if paused, 0 if not
@@ -142,4 +152,26 @@ class VgmstreamInPlugin : public AbstractInPlugin {
 public:
 	VgmstreamInPlugin(AbstractOutPlugin* outPlugin);
 	virtual ~VgmstreamInPlugin();
+};
+
+class MultipleInPlugins : public AbstractInPlugin {
+private:
+	AbstractInPlugin* inPlugin1;
+	AbstractInPlugin* inPlugin2;
+	AbstractInPlugin* current;
+	WinampInModule* getMod() const;
+	int beforePlay(char* fna);
+public:
+	MultipleInPlugins(
+		AbstractOutPlugin* outPlugin,
+		AbstractInPlugin* inPlugin1,
+		AbstractInPlugin* inPlugin2 = nullptr
+	);
+	virtual ~MultipleInPlugins();
+	inline AbstractInPlugin* getPlugin1() const {
+		return inPlugin1;
+	}
+	inline AbstractInPlugin* getPlugin2() const {
+		return inPlugin2;
+	}
 };

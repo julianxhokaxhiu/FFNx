@@ -319,8 +319,8 @@ static void load_defaults(winamp_settings_t* settings) {
     settings->disable_subsongs = 0;
     settings->downmix_channels = 0;
     settings->tagfile_disable = 0;
-    settings->exts_unknown_on = 0;
-    settings->exts_common_on = 0;
+    settings->exts_unknown_on = 1;
+    settings->exts_common_on = 1;
     settings->gain_type = REPLAYGAIN_ALBUM;
     settings->clip_type = REPLAYGAIN_TRACK;
 }
@@ -538,7 +538,21 @@ void winamp_Quit() {
 
 /* called before extension checks, to allow detection of mms://, etc */
 int winamp_IsOurFile(const in_char* fn) {
-    return 1;
+    vgmstream_ctx_valid_cfg cfg = { 0 };
+    char filename_utf8[PATH_LIMIT];
+
+    wa_ichar_to_char(filename_utf8, PATH_LIMIT, fn);
+
+    cfg.skip_standard = 1; /* validated by Winamp */
+    cfg.accept_unknown = settings.exts_unknown_on;
+    cfg.accept_common = settings.exts_common_on;
+
+    /* Winamp seem to have bizarre handling of MP3 without standard names (ex song.mp3a),
+     * in that it'll try to open normally, rejected if unknown_exts_on is not set, and
+     * finally retry with "hi.mp3", accepted if exts_common_on is set. */
+
+     /* returning 0 here means it only accepts the extensions in working_extension_list */
+    return vgmstream_ctx_is_valid(filename_utf8, &cfg);
 }
 
 
