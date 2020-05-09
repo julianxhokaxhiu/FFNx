@@ -8,12 +8,14 @@ extern "C" {
 #endif
 
 #include "in_vgmstream.h"
+#include <libvgmstream/util.h>
 
 #if defined(__cplusplus)
 }
 #endif
 
 #define AUDIO_BUFFER_SIZE 5
+const char* default_extension = "ogg";
 
 WinampPlugin::WinampPlugin() : handle(nullptr)
 {
@@ -581,7 +583,7 @@ void CustomOutPlugin::SetVolume(int volume)
 			decibel = 2000.0f * log10f(volume / 255.0f);
 		}
 
-		if (trace_all || trace_music) trace("Set directsound attenuation %i Db\n", decibel);
+		if (trace_all || trace_music) trace("Set directsound attenuation %f Db\n", decibel);
 
 		sound_buffer->SetVolume(decibel);
 	}
@@ -721,75 +723,121 @@ void AbstractInPlugin::quitModule()
 	}
 }
 
-int AbstractInPlugin::play(const char* fn)
+bool AbstractInPlugin::knownExtension(const char* fn) const
 {
-	if (nullptr == this->mod->wide.Play) {
-		return -42;
+	info("%s\n", fn);
+	char* extension_list = getMod()->standard.FileExtensions;
+	const char* ext = filename_extension(fn);
+
+	while (true) {
+		size_t len_ext = strnlen(extension_list, 64);
+		if (len_ext == 0) {
+			break;
+		}
+
+		if (strcasecmp(extension_list, ext) == 0) {
+			return true;
+		}
+
+		info("knownExtension %s %s\n", extension_list, ext);
+
+		extension_list += len_ext + 1;
+
+		size_t len_desc = strnlen(extension_list, 64);
+		if (len_desc == 0) {
+			break;
+		}
+
+		info("knownExtension %s\n", extension_list);
+
+		extension_list += len_desc + 1;
 	}
 
-	if (this->mod->standard.version & IN_UNICODE == IN_UNICODE) {
+	return false;
+}
+
+int AbstractInPlugin::isOurFile(const char* fn) const
+{
+	info("isOurFile %s\n", fn);
+	if (getMod()->standard.version & IN_UNICODE == IN_UNICODE) {
 		// Convert char* to wchar_t*
 		int count = MultiByteToWideChar(CP_ACP, 0, fn, -1, nullptr, 0);
 		wchar_t wideFn[MAX_PATH * 2];
 		memset(wideFn, 0, MAX_PATH * 2);
 		MultiByteToWideChar(CP_ACP, 0, fn, -1, wideFn, count);
-		return this->mod->wide.Play(wideFn);
+		return getMod()->wide.IsOurFile(wideFn);
 	}
 
-	return this->mod->standard.Play(fn);
+	return getMod()->standard.IsOurFile(fn);
 }
 
-int AbstractInPlugin::play(const wchar_t* fn)
+bool AbstractInPlugin::accept(const char* fn) const
 {
-	if (nullptr == this->mod->wide.Play) {
+	info("accept %s\n", fn);
+	return isOurFile(fn) != 0 || knownExtension(fn);
+}
+
+int AbstractInPlugin::beforePlay(char* fna)
+{
+	if (nullptr == getMod()->wide.Play) {
 		return -42;
 	}
 
-	if (this->mod->standard.version & IN_UNICODE == IN_UNICODE) {
-		return this->mod->wide.Play(fn);
+	return 0;
+}
+
+int AbstractInPlugin::play(char* fn)
+{
+	int beforeErr = beforePlay(fn);
+	if (0 != beforeErr) {
+		return beforeErr;
 	}
 
-	// Convert wchar_t* to char*
-	char mbstring[MAX_PATH];
-	size_t size = wcstombs(mbstring, fn, MAX_PATH);
-	mbstring[size] = '\0';
+	if (getMod()->standard.version & IN_UNICODE == IN_UNICODE) {
+		// Convert char* to wchar_t*
+		int count = MultiByteToWideChar(CP_ACP, 0, fn, -1, nullptr, 0);
+		wchar_t wideFn[MAX_PATH * 2];
+		memset(wideFn, 0, MAX_PATH * 2);
+		MultiByteToWideChar(CP_ACP, 0, fn, -1, wideFn, count);
+		return getMod()->wide.Play(wideFn);
+	}
 
-	return this->mod->standard.Play(mbstring);
+	return getMod()->standard.Play(fn);
 }
 
 void AbstractInPlugin::pause()
 {
-	this->mod->standard.Pause();
+	getMod()->standard.Pause();
 }
 
 void AbstractInPlugin::unPause()
 {
-	this->mod->standard.UnPause();
+	getMod()->standard.UnPause();
 }
 
 int AbstractInPlugin::isPaused()
 {
-	return this->mod->standard.IsPaused();
+	return getMod()->standard.IsPaused();
 }
 
 void AbstractInPlugin::stop()
 {
-	this->mod->standard.Stop();
+	getMod()->standard.Stop();
 }
 
 int AbstractInPlugin::getLength()
 {
-	return this->mod->standard.GetLength();
+	return getMod()->standard.GetLength();
 }
 
 int AbstractInPlugin::getOutputTime()
 {
-	return this->mod->standard.GetOutputTime();
+	return getMod()->standard.GetOutputTime();
 }
 
 void AbstractInPlugin::setOutputTime(int time_in_ms)
 {
-	this->mod->standard.SetOutputTime(time_in_ms);
+	getMod()->standard.SetOutputTime(time_in_ms);
 }
 
 WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
@@ -831,4 +879,74 @@ VgmstreamInPlugin::VgmstreamInPlugin(AbstractOutPlugin* outPlugin) :
 VgmstreamInPlugin::~VgmstreamInPlugin()
 {
 	quitModule();
+}
+
+MultipleInPlugins::MultipleInPlugins(AbstractOutPlugin* outPlugin, AbstractInPlugin* inPlugin1, AbstractInPlugin* inPlugin2) :
+	AbstractInPlugin(outPlugin, nullptr), inPlugin1(inPlugin1), inPlugin2(inPlugin2), current(inPlugin1)
+{
+}
+
+MultipleInPlugins::~MultipleInPlugins()
+{
+}
+
+WinampInModule* MultipleInPlugins::getMod() const
+{
+	return current->getMod();
+}
+
+bool replace_extension(char* fn, const char* ext)
+{
+	char* cur = fn, *index = nullptr, *index_slash = nullptr;
+	while (*cur != '\0' && (cur - fn) < MAX_PATH) {
+		if ('.' == *cur && '\0' != *(cur + 1)) {
+			index = cur + 1;
+		} else if (('/' == *cur || '\\' == *cur) && '\0' != *(cur + 1)) {
+			index_slash = cur + 1;
+		}
+		cur += 1;
+	}
+
+	info("replace_extension %i %i\n", index, index_slash);
+
+	if (nullptr == index || (nullptr != index_slash && index_slash > index)) {
+		return false;
+	}
+
+	memset(index, 0, cur - index);
+	strcpy(index, ext);
+	info("replace_extension %s\n", fn);
+
+	return true;
+}
+
+int MultipleInPlugins::beforePlay(char* fna)
+{
+	if (nullptr != inPlugin2) {
+		// Back to default plugin
+		if (current != inPlugin1) {
+			current->stop();
+			current = inPlugin1;
+		}
+
+		info("beforePlay %s %s %s\n", fna, external_music_ext, default_extension);
+
+		// File not found
+		if (0 != _access(fna, 0)
+				&& strcasecmp(external_music_ext, default_extension) != 0) {
+			info("beforePlay %s %s %s\n", fna, external_music_ext, default_extension);
+
+			if (replace_extension(fna, default_extension)
+					&& !inPlugin1->accept(fna) && inPlugin2->accept(fna)) {
+				current = inPlugin2;
+			}
+			else {
+				return -1;
+			}
+		}
+	}
+
+	info("beforePlay %s %s %s\n", fna, external_music_ext, default_extension);
+
+	return AbstractInPlugin::beforePlay(fna);
 }
