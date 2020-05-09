@@ -56,6 +56,7 @@ void music_init()
 			replace_function(common_externals.set_midi_volume, set_midi_volume);
 			replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
 			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
+			replace_function(common_externals.directsound_release, ff7_directsound_release);
 		}
 
 		switch (use_external_music)
@@ -315,6 +316,19 @@ void set_midi_tempo(unsigned char tempo)
 		winamp_set_music_tempo(tempo);
 		break;
 	}
+}
+
+uint ff7_directsound_release()
+{
+	if (nullptr == *common_externals.directsound) {
+		return 0;
+	}
+
+	music_cleanup();
+	(*common_externals.directsound)->Release();
+	*common_externals.directsound = nullptr;
+
+	return 0;
 }
 
 void music_cleanup()
