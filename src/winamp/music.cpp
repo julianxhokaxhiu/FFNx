@@ -128,17 +128,6 @@ void winamp_load_song(char* midi, uint id)
 	}
 }
 
-ULONG(__stdcall* real_dsound_release)(IDirectSound*);
-
-ULONG __stdcall dsound_release_hook(IDirectSound* me)
-{
-	if (trace_all || trace_music) trace("directsound release\n");
-
-	EnterCriticalSection(&winamp_mutex);
-
-	return real_dsound_release(me);
-}
-
 // Apply x^3 function
 uint winamp_volume_fn()
 {
@@ -546,6 +535,11 @@ void winamp_remember_playing_time()
 void winamp_music_cleanup()
 {
 	if (trace_all || trace_music) trace("music cleanup\n");
+
+	if (winamp_stop_thread) {
+		error("Music already cleaned\n");
+		return;
+	}
 
 	winamp_stop_thread = true;
 	

@@ -316,7 +316,7 @@ void common_cleanup(struct game_obj *game_object)
 	if (!ff8) ff7_release_movie_objects();
 	if (ff8) ff8_release_movie_objects();
 
-	if (use_external_music) music_cleanup();
+	if (use_external_music && ff8) music_cleanup();
 
 	gl_cleanup_deferred();
 

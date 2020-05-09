@@ -163,6 +163,7 @@ struct common_externals
 	void *(*assert_malloc)(uint, const char *, uint);
 	void *(*assert_calloc)(uint, uint, const char *, uint);
 	IDirectSound **directsound;
+	uint directsound_release;
 	struct palette *(*create_palette_for_tex)(uint, struct tex_header *, struct texture_set *);
 	struct game_obj *(*get_game_object)();
 	struct texture_format *(*create_texture_format)();
