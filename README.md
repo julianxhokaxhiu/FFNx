@@ -17,21 +17,22 @@ Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with nativ
 Welcome to FFNx project. This is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
 Some of the improvements that you can find on FFNx are:
-- **Native** Steam support! No Game converter required.
-- **Native** eStore support! No Game converter required.
-- **Native** Vertical centering for Fields and Movies on Final Fantasy VII. No mods required.
-- **Native** Fullscreen Battle scenes on Final Fantasy VII. No mods required.
-- **Native** Menu cursor alignment in Menu scenes on Final Fantasy VII. No mods required.
-- **Native** XInput controller support ( DPad working Out-of-the-box!) for Final Fantasy VII.
-- Movies will continue to play if the window game loses focus ( in window mode ) on Final Fantasy VII.
-- Movies volume will respect global sound volume on Final Fantasy VII.
-- Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins!
-- Steam savegame preservation ( you will no more loose saves created with FFNx! )
-- Steam sound configuration preservation ( configure at your pleasure and on the next run those will be inherited ) for Final Fantasy VII.
+- FF7/FF8: High DPI support!
+- FF7/FF8: Steam support! No Game converter required.
+- FF7 eStore support! No Game converter required.
+- FF7: Vertical centering for Fields and Movies
+- FF7: Fullscreen Battle scenes
+- FF7: Menu cursor on the middle of words vertical alignment
+- FF7: XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
+- FF7: Movies will continue to play if the window game loses focus ( in window mode )
+- FF7: Movies volume will respect global sound volume
+- FF7/FF8: Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins!
+- FF7/FF8: Steam savegame preservation ( you will no more loose saves created with FFNx! )
+- FF7: Steam sound and music volume configuration preservation ( configure at your pleasure and on the next run it will be inherited )
 - One single .dll file to be copied
 - Support for 7h 1.x/2.x
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
-- In-Game music OGG files playback WITH LOOP support!
+- Default VGMStream plugin WITH LOOP support for .ogg files!
 - Four different Rendering Backends:
   - Vulkan
   - OpenGL
