@@ -188,7 +188,7 @@ void Renderer::reset()
     useFancyTransparency();
 };
 
-void Renderer::renderFrame(bool isEmpty)
+void Renderer::renderFrame()
 {
     /*  y0    y2
      x0 +-----+ x2
@@ -236,17 +236,17 @@ void Renderer::renderFrame(bool isEmpty)
     backendProgram = RendererProgram::POSTPROCESSING;
     backendViewId++;
     {
-        setClearFlags(true, true);
-
-        bindVertexBuffer(vertices, 4);
-        bindIndexBuffer(indices, 6);
-
-        if (!isEmpty)
+        if (internalState.bHasDrawBeenDone)
             useTexture(
                 bgfx::getTexture(backendFrameBuffer).idx
             );
         else
             useTexture(emptyTexture.idx);
+
+        setClearFlags(true, true);
+
+        bindVertexBuffer(vertices, 4);
+        bindIndexBuffer(indices, 6);
 
         setBlendMode(RendererBlendMode::BLEND_DISABLED);
         setPrimitiveType();
@@ -498,8 +498,7 @@ void Renderer::show()
     // Reset internal state
     reset();
 
-    // Sometimes the engine wants to submit an empty frame, but does not tell this explicitely. Try to autodetect.
-    renderFrame(!internalState.bHasDrawBeenDone);
+    renderFrame();
 
     bgfx::frame();
 

@@ -272,7 +272,7 @@ private:
 
     void reset();
 
-    void renderFrame(bool isEmpty = false);
+    void renderFrame();
 
     void printMatrix(char* name, float* mat);
 
