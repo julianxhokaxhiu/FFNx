@@ -52,8 +52,10 @@ static const char save_name[] = "\x25" "MERGENCY" "\x00\x33" "AVE" "\xFF";
 LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 {
 	static uint had_exception = false;
-	char filename[4096];
+	char savefilePath[4096];
 	uint save;
+
+	char crashdmpPath[260]{ 0 };
 
 	// give up if we crash again inside the exception handler (this function)
 	if(had_exception)
@@ -75,25 +77,12 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	// show cursor in case it was hidden
 	ShowCursor(true);
 
-	if(!ff8)
-	{
-		MessageBoxA(0, "Oops! Something very bad happened.\n\nWrote emergency save to save/crash.ff7 dir.\n\n"
-			"Please provide a copy of those files along with FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
-
-		save = true;
-	}
-	else
-	{
-		MessageBoxA(0, "Oops! Something very bad happened.\n\n"
-			"Please provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
-
-		save = false;
-	}
-
 	if (create_crash_dump)
 	{
-		// save crash dump to game directory
-		HANDLE file = CreateFile("crash.dmp", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+		if (steam_edition) get_userdata_path(crashdmpPath, sizeof(crashdmpPath), false);
+		PathAppendA(crashdmpPath, "crash.dmp");
+
+		HANDLE file = CreateFile(crashdmpPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 		HANDLE proc = GetCurrentProcess();
 		DWORD procid = GetCurrentProcessId();
 		MINIDUMP_EXCEPTION_INFORMATION mdei;
@@ -132,14 +121,22 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 
 	if(!ff8)
 	{
-		sprintf(filename, "%s/%s", basedir, "save/crash.ff7");
+		if (steam_edition)
+		{
+			get_userdata_path(savefilePath, sizeof(savefilePath), false);
+			PathAppendA(savefilePath, "crash.ff7");
+		}
+		else
+		{
+			PathAppendA(savefilePath, "save/crash.ff7");
+		}
 
 		// try to dump the current savemap from memory
 		// the savemap could be old, inconsistent or corrupted at this point
 		// avoid playing from an emergency save if at all possible!
 		if(save)
 		{
-			FILE *f = fopen(filename, "wb");
+			FILE *f = fopen(savefilePath, "wb");
 			uint magic = 0x6277371;
 			uint bitmask = 1;
 			struct savemap dummy[14];
@@ -160,6 +157,23 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	}
 
 	error("Unhandled Exception. See dumped information above.\n");
+
+	if (!ff8)
+	{
+		char msg[1024]{ 0 };
+
+		sprintf(msg, "Oops! Something very bad happened.\n\nWrote emergency save to %s dir.\n\nPlease provide a copy of those files along with FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", savefilePath);
+
+		MessageBoxA(0, msg, "Error", MB_OK);
+
+		save = true;
+	}
+	else
+	{
+		MessageBoxA(0, "Oops! Something very bad happened.\n\nPlease provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
+
+		save = false;
+	}
 
 	// let OS handle the crash
 	SetUnhandledExceptionFilter(0);
