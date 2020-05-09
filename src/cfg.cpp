@@ -263,6 +263,10 @@ void read_cfg()
 	if (external_movie_ext == nullptr)
 		external_movie_ext = "avi";
 
+	// EXTERNAL MUSIC FLAG
+	if (use_external_music > FFNX_MUSIC_FF7MUSIC)
+		use_external_music = FFNX_MUSIC_NONE;
+
 	// EXTERNAL MUSIC EXTENSION
 	if (external_music_ext == nullptr)
 		external_music_ext = "ogg";
