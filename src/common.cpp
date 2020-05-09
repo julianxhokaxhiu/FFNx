@@ -2058,6 +2058,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		__debugbreak();
 		*/
 
+		SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
 		GetCurrentDirectoryA(BASEDIR_LENGTH, basedir);
 
 		// install crash handler
