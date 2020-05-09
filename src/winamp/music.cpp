@@ -18,7 +18,7 @@
 const DWORD thread_sleep_ms = 33;
 
 AbstractOutPlugin* out = nullptr;
-MultipleInPlugins* in = nullptr;
+InPluginWithFailback* in = nullptr;
 
 CRITICAL_SECTION winamp_mutex;
 HANDLE winampRenderHandle = nullptr;
@@ -316,10 +316,10 @@ void winamp_music_init()
 	}
 	
 	if (nullptr == winamp_in) {
-		in = new MultipleInPlugins(out, new VgmstreamInPlugin(out));
+		in = new InPluginWithFailback(out, new VgmstreamInPlugin(out));
 	}
 	else {
-		in = new MultipleInPlugins(out, winamp_in, new VgmstreamInPlugin(out));
+		in = new InPluginWithFailback(out, winamp_in, new VgmstreamInPlugin(out));
 	}
 
 	InitializeCriticalSection(&winamp_mutex);

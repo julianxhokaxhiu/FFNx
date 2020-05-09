@@ -881,16 +881,16 @@ VgmstreamInPlugin::~VgmstreamInPlugin()
 	quitModule();
 }
 
-MultipleInPlugins::MultipleInPlugins(AbstractOutPlugin* outPlugin, AbstractInPlugin* inPlugin1, AbstractInPlugin* inPlugin2) :
+InPluginWithFailback::InPluginWithFailback(AbstractOutPlugin* outPlugin, AbstractInPlugin* inPlugin1, AbstractInPlugin* inPlugin2) :
 	AbstractInPlugin(outPlugin, nullptr), inPlugin1(inPlugin1), inPlugin2(inPlugin2), current(inPlugin1)
 {
 }
 
-MultipleInPlugins::~MultipleInPlugins()
+InPluginWithFailback::~InPluginWithFailback()
 {
 }
 
-WinampInModule* MultipleInPlugins::getMod() const
+WinampInModule* InPluginWithFailback::getMod() const
 {
 	return current->getMod();
 }
@@ -907,20 +907,17 @@ bool replace_extension(char* fn, const char* ext)
 		cur += 1;
 	}
 
-	info("replace_extension %i %i\n", index, index_slash);
-
 	if (nullptr == index || (nullptr != index_slash && index_slash > index)) {
 		return false;
 	}
 
 	memset(index, 0, cur - index);
 	strcpy(index, ext);
-	info("replace_extension %s\n", fn);
 
 	return true;
 }
 
-int MultipleInPlugins::beforePlay(char* fna)
+int InPluginWithFailback::beforePlay(char* fna)
 {
 	if (nullptr != inPlugin2) {
 		// Back to default plugin
@@ -929,15 +926,12 @@ int MultipleInPlugins::beforePlay(char* fna)
 			current = inPlugin1;
 		}
 
-		info("beforePlay %s %s %s\n", fna, external_music_ext, default_extension);
-
 		// File not found
 		if (0 != _access(fna, 0)
 				&& strcasecmp(external_music_ext, default_extension) != 0) {
-			info("beforePlay %s %s %s\n", fna, external_music_ext, default_extension);
-
 			if (replace_extension(fna, default_extension)
 					&& !inPlugin1->accept(fna) && inPlugin2->accept(fna)) {
+				info("Music file not found, trying with %s extension: %s\n", default_extension, fna);
 				current = inPlugin2;
 			}
 			else {
@@ -945,8 +939,6 @@ int MultipleInPlugins::beforePlay(char* fna)
 			}
 		}
 	}
-
-	info("beforePlay %s %s %s\n", fna, external_music_ext, default_extension);
 
 	return AbstractInPlugin::beforePlay(fna);
 }

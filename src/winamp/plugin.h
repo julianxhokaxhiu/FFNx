@@ -102,11 +102,11 @@ public:
 	void setTempo(int tempo);
 };
 
-class MultipleInPlugins;
+class InPluginWithFailback;
 
 class AbstractInPlugin {
 private:
-	friend class MultipleInPlugins;
+	friend class InPluginWithFailback;
 protected:
 	WinampInModule* mod;
 	AbstractOutPlugin* outPlugin;
@@ -154,7 +154,7 @@ public:
 	virtual ~VgmstreamInPlugin();
 };
 
-class MultipleInPlugins : public AbstractInPlugin {
+class InPluginWithFailback : public AbstractInPlugin {
 private:
 	AbstractInPlugin* inPlugin1;
 	AbstractInPlugin* inPlugin2;
@@ -162,12 +162,12 @@ private:
 	WinampInModule* getMod() const;
 	int beforePlay(char* fna);
 public:
-	MultipleInPlugins(
+	InPluginWithFailback(
 		AbstractOutPlugin* outPlugin,
 		AbstractInPlugin* inPlugin1,
 		AbstractInPlugin* inPlugin2 = nullptr
 	);
-	virtual ~MultipleInPlugins();
+	virtual ~InPluginWithFailback();
 	inline AbstractInPlugin* getPlugin1() const {
 		return inPlugin1;
 	}
