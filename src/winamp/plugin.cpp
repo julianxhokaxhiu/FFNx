@@ -769,7 +769,6 @@ bool AbstractInPlugin::knownExtension(const char* fn) const
 
 int AbstractInPlugin::isOurFile(const char* fn) const
 {
-	info("isOurFile %s\n", fn);
 	if (getMod()->standard.version & IN_UNICODE == IN_UNICODE) {
 		// Convert char* to wchar_t*
 		int count = MultiByteToWideChar(CP_ACP, 0, fn, -1, nullptr, 0);
@@ -851,7 +850,7 @@ void AbstractInPlugin::setOutputTime(int time_in_ms)
 }
 
 WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
-	WinampPlugin(), AbstractInPlugin(outPlugin)
+	WinampPlugin(), AbstractInPlugin(outPlugin), current_saved_time_ms(0)
 {
 }
 
@@ -880,15 +879,70 @@ void WinampInPlugin::closeModule()
 	quitModule();
 }
 
+void WinampInPlugin::duplicate()
+{
+	current_saved_time_ms = outPlugin->getOutputTime() % getLength();
+	
+	if (current_saved_time_ms < 0) {
+		current_saved_time_ms = 0;
+	}
+}
+
+int WinampInPlugin::resume(char* fn)
+{
+	if (current_saved_time_ms > 0) {
+		pause();
+		outPlugin->pause();
+	}
+
+	stop();
+	int err = play(fn);
+
+	if (current_saved_time_ms > 0) {
+		setOutputTime(current_saved_time_ms); // FIXME: can take a while
+		unPause();
+		outPlugin->unPause();
+		current_saved_time_ms = 0;
+	}
+
+	return err;
+}
+
+bool WinampInPlugin::cancelDuplicate()
+{
+	if (current_saved_time_ms > 0) {
+		current_saved_time_ms = 0;
+		return true;
+	}
+	
+	return false;
+}
+
 VgmstreamInPlugin::VgmstreamInPlugin(AbstractOutPlugin* outPlugin) :
-	AbstractInPlugin(outPlugin, in_vgmstream_module())
+	AbstractInPlugin(outPlugin, in_vgmstream_module()), inContext(in_context_vgmstream())
 {
 	initModule(nullptr);
 }
 
 VgmstreamInPlugin::~VgmstreamInPlugin()
 {
+	cancelDuplicate();
 	quitModule();
+}
+
+void VgmstreamInPlugin::duplicate()
+{
+	inContext->Duplicate();
+}
+
+int VgmstreamInPlugin::resume(char* fn)
+{
+	return inContext->Resume(fn);
+}
+
+bool VgmstreamInPlugin::cancelDuplicate()
+{
+	return inContext->CancelDuplicate();
 }
 
 InPluginWithFailback::InPluginWithFailback(AbstractOutPlugin* outPlugin, AbstractInPlugin* inPlugin1, AbstractInPlugin* inPlugin2) :
@@ -951,4 +1005,19 @@ int InPluginWithFailback::beforePlay(char* fna)
 	}
 
 	return AbstractInPlugin::beforePlay(fna);
+}
+
+void InPluginWithFailback::duplicate()
+{
+	current->duplicate();
+}
+
+int InPluginWithFailback::resume(char* fn)
+{
+	return current->resume(fn);
+}
+
+bool InPluginWithFailback::cancelDuplicate()
+{
+	return current->cancelDuplicate();
 }

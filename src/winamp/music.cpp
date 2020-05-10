@@ -44,7 +44,6 @@ int winamp_master_volume = 100;
 int winamp_song_volume = 127;
 
 uint winamp_paused_midi_id = 0;
-int winamp_paused_midi_ms = 0;
 uint winamp_current_mode = uint(-1);
 
 void winamp_apply_volume()
@@ -60,7 +59,7 @@ void winamp_apply_volume()
 
 void winamp_load_song(char* midi, uint id)
 {
-	char tmp[MAX_PATH];
+	char filename[MAX_PATH];
 
 	if (!in || !out)
 	{
@@ -70,21 +69,9 @@ void winamp_load_song(char* midi, uint id)
 	if (trace_all || trace_music) trace("load song %s %i\n", midi, id);
 	
 	uint winamp_previous_paused_midi_id = winamp_paused_midi_id;
-	int winamp_previous_paused_midi_ms = winamp_paused_midi_ms;
 	uint winamp_previous_mode = winamp_current_mode;
 	char* winamp_previous_midi = winamp_current_midi;
 	uint mode = getmode_cached()->driver_mode;
-
-	if (!ff8 && winamp_current_id && needs_resume(mode, winamp_previous_mode, midi, winamp_previous_midi)) {
-		winamp_paused_midi_id = winamp_current_id;
-		winamp_paused_midi_ms = out->getOutputTime() % in->getLength();
-
-		if (winamp_paused_midi_ms < 0) {
-			winamp_paused_midi_ms = 0;
-		}
-
-		info("Saved midi time ms: %i\n", winamp_paused_midi_ms);
-	}
 
 	if (!id)
 	{
@@ -95,7 +82,15 @@ void winamp_load_song(char* midi, uint id)
 		return;
 	}
 	
-	sprintf(tmp, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
+	sprintf(filename, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
+	
+	winamp_apply_volume();
+
+	int play_err = 0;
+	
+	if (!ff8 && winamp_current_id && needs_resume(mode, winamp_previous_mode, midi, winamp_previous_midi)) {
+		winamp_remember_playing_time();
+	}
 
 	winamp_song_ended = false;
 	winamp_song_reached_end = false;
@@ -103,31 +98,21 @@ void winamp_load_song(char* midi, uint id)
 	winamp_current_midi = midi;
 	winamp_current_mode = mode;
 
-	winamp_apply_volume();
-
-	bool seek = winamp_previous_paused_midi_id == id && needs_resume(winamp_previous_mode, mode, winamp_previous_midi, midi);
-
-	if (seek) {
-		in->pause();
-		out->pause();
-	}
-
-	in->stop();
-	int err = in->play(tmp);
-
-	if (-1 == err) {
-		error("couldn't play music (file not found)\n");
-	} else if (0 != err) {
-		error("couldn't play music (%i)\n", err);
-	}
-
-	if (seek) {
-		info("Resume midi time ms: %i\n", winamp_previous_paused_midi_ms);
-		in->setOutputTime(winamp_previous_paused_midi_ms);
+	if (winamp_previous_paused_midi_id == id
+			&& needs_resume(winamp_previous_mode, mode, winamp_previous_midi, midi)) {
+		info("Resuming midi to previous time\n");
+		play_err = in->resume(filename);
 		winamp_paused_midi_id = 0;
-		winamp_paused_midi_ms = 0;
-		in->unPause();
-		out->unPause();
+	}
+	else {
+		in->stop();
+		play_err = in->play(filename);
+	}
+	
+	if (-1 == play_err) {
+		error("couldn't play music (file not found)\n");
+	} else if (0 != play_err) {
+		error("couldn't play music (%i)\n", play_err);
 	}
 }
 
@@ -524,15 +509,10 @@ void winamp_set_music_tempo(unsigned char tempo)
 
 void winamp_remember_playing_time()
 {
-	if (out && winamp_current_id) {
+	if (in && winamp_current_id) {
+		info("Saving midi time for later use\n");
 		winamp_paused_midi_id = winamp_current_id;
-		winamp_paused_midi_ms = out->getOutputTime() % in->getLength();
-
-		if (winamp_paused_midi_ms < 0) {
-			winamp_paused_midi_ms = 0;
-		}
-
-		info("Saved midi time ms: %i\n", winamp_paused_midi_ms);
+		in->duplicate();
 	}
 }
 

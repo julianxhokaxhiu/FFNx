@@ -4,6 +4,7 @@
 #include <DSound.h>
 #include "../log.h"
 #include "winamp.h"
+#include "winamp_ext.h"
 
 class WinampPlugin {
 private:
@@ -110,7 +111,6 @@ private:
 protected:
 	WinampInModule* mod;
 	AbstractOutPlugin* outPlugin;
-
 	inline virtual WinampInModule* getMod() const {
 		return mod;
 	}
@@ -134,10 +134,16 @@ public:
 	int getLength();			// get length in ms
 	int getOutputTime();		// returns current output time in ms. (usually returns outMod->GetOutputTime()
 	void setOutputTime(int time_in_ms);	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
+
+	// Resuming (not part of standard Winamp plugin)
+	virtual void duplicate() = 0;
+	virtual int resume(char* fn) = 0;
+	virtual bool cancelDuplicate() = 0;
 };
 
 class WinampInPlugin : public WinampPlugin, public AbstractInPlugin {
 private:
+	int current_saved_time_ms;
 	inline LPCSTR procName() const {
 		return "winampGetInModule2";
 	}
@@ -146,12 +152,22 @@ private:
 public:
 	WinampInPlugin(AbstractOutPlugin* outPlugin);
 	virtual ~WinampInPlugin();
+	// Resuming (not part of standard Winamp plugin)
+	void duplicate();
+	int resume(char* fn);
+	bool cancelDuplicate();
 };
 
 class VgmstreamInPlugin : public AbstractInPlugin {
+private:
+	WinampInContext* inContext;
 public:
 	VgmstreamInPlugin(AbstractOutPlugin* outPlugin);
 	virtual ~VgmstreamInPlugin();
+	// Resuming (not part of standard Winamp plugin)
+	void duplicate();
+	int resume(char* fn);
+	bool cancelDuplicate();
 };
 
 class InPluginWithFailback : public AbstractInPlugin {
@@ -174,4 +190,8 @@ public:
 	inline AbstractInPlugin* getPlugin2() const {
 		return inPlugin2;
 	}
+	// Resuming (not part of standard Winamp plugin)
+	void duplicate();
+	int resume(char* fn);
+	bool cancelDuplicate();
 };

@@ -2,6 +2,31 @@
  * vgmstream for Winamp
  */
 
+/**
+Copyright (c) 2008-2019 Adam Gashlin, Fastelbja, Ronny Elfert, bnnm,
+                        Christopher Snowhill, NicknineTheEagle, bxaimc,
+                        Thealexbarney, CyberBotX, et al
+
+Portions Copyright (c) 2004-2008, Marko Kreen
+Portions Copyright 2001-2007  jagarl / Kazunori Ueno <jagarl@creator.club.ne.jp>
+Portions Copyright (c) 1998, Justin Frankel/Nullsoft Inc.
+Portions Copyright (C) 2006 Nullsoft, Inc.
+Portions Copyright (c) 2005-2007 Paul Hsieh
+Portions Public Domain originating with Sun Microsystems
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 #include "in_vgmstream.h"
 
 extern "C" {
@@ -43,6 +68,7 @@ extern "C" {
 
 /* plugin module (declared at the bottom of this file) */
 WinampInModuleA input_module = {};
+WinampInContext context_module = {};
 DWORD WINAPI __stdcall decode(void* arg);
 
 /* Winamp Play extension list, to accept and associate extensions in Windows */
@@ -115,12 +141,11 @@ const char* tagfile_name = "!tags.m3u";
 /* plugin state */
 HANDLE decode_thread_handle = INVALID_HANDLE_VALUE;
 
-VGMSTREAM* vgmstream = NULL;
-in_char lastfn[PATH_LIMIT] = { 0 }; /* name of the currently playing file */
+VGMSTREAM* vgmstream = NULL, *dup_vgmstream = NULL;
 
 winamp_settings_t settings;
-winamp_song_config config;
-winamp_state_t state;
+winamp_song_config config, dup_config;
+winamp_state_t state, dup_state;
 short sample_buffer[SAMPLE_BUFFER_SIZE * 2 * VGMSTREAM_MAX_CHANNELS]; //todo maybe should be dynamic
 
 
@@ -555,10 +580,33 @@ int winamp_IsOurFile(const in_char* fn) {
     return vgmstream_ctx_is_valid(filename_utf8, &cfg);
 }
 
+int winamp_Play_vgmstream() {
+    int max_latency;
+
+    /* open the output plugin */
+    max_latency = input_module.outMod->Open(vgmstream->sample_rate, state.output_channels, 16, 0, 0);
+    if (max_latency < 0) {
+        close_vgmstream(vgmstream);
+        vgmstream = NULL;
+        return 1;
+    }
+
+    /* start */
+    decode_thread_handle = CreateThread(
+        NULL,   /* handle cannot be inherited */
+        0,      /* stack size, 0=default */
+        decode, /* thread start routine */
+        NULL,   /* no parameter to start routine */
+        0,      /* run thread immediately */
+        NULL);  /* don't keep track of the thread id */
+
+    SetThreadPriority(decode_thread_handle, priority_values[settings.thread_priority]);
+
+    return 0; /* success */
+}
 
 /* request to start playing a file */
 int winamp_Play(const in_char* fn) {
-    int max_latency;
     in_char filename[PATH_LIMIT];
     int stream_index = 0;
 
@@ -593,37 +641,7 @@ int winamp_Play(const in_char* fn) {
     state.fade_samples = (int)(config.song_fade_time * vgmstream->sample_rate);
     state.volume = get_album_gain_volume(fn);
 
-
-    /* save original name */
-    wa_strncpy(lastfn, fn, PATH_LIMIT);
-
-    /* open the output plugin */
-    max_latency = input_module.outMod->Open(vgmstream->sample_rate, state.output_channels, 16, 0, 0);
-    if (max_latency < 0) {
-        close_vgmstream(vgmstream);
-        vgmstream = NULL;
-        return 1;
-    }
-
-    /* set info display */
-    input_module.SetInfo(get_vgmstream_average_bitrate(vgmstream) / 1000, vgmstream->sample_rate / 1000, state.output_channels, 1);
-
-    /* setup visualization */
-    input_module.SAVSAInit(max_latency, vgmstream->sample_rate);
-    input_module.VSASetInfo(vgmstream->sample_rate, state.output_channels);
-
-    /* start */
-    decode_thread_handle = CreateThread(
-        NULL,   /* handle cannot be inherited */
-        0,      /* stack size, 0=default */
-        decode, /* thread start routine */
-        NULL,   /* no parameter to start routine */
-        0,      /* run thread immediately */
-        NULL);  /* don't keep track of the thread id */
-
-    SetThreadPriority(decode_thread_handle, priority_values[settings.thread_priority]);
-
-    return 0; /* success */
+    return winamp_Play_vgmstream();
 }
 
 /* pause stream */
@@ -643,8 +661,7 @@ int winamp_IsPaused() {
     return state.paused;
 }
 
-/* stop (unload) stream */
-void winamp_Stop() {
+void winamp_Stop_thread() {
     if (decode_thread_handle != INVALID_HANDLE_VALUE) {
         state.decode_abort = 1;
 
@@ -656,13 +673,16 @@ void winamp_Stop() {
         CloseHandle(decode_thread_handle);
         decode_thread_handle = INVALID_HANDLE_VALUE;
     }
+}
 
+/* stop (unload) stream */
+void winamp_Stop() {
+    winamp_Stop_thread();
 
     close_vgmstream(vgmstream);
     vgmstream = NULL;
 
     input_module.outMod->Close();
-    input_module.SAVSADeInit();
 }
 
 /* get length in ms */
@@ -754,8 +774,9 @@ DWORD WINAPI __stdcall decode(void* arg) {
         }
 
         output_bytes = (samples_to_do * state.output_channels * sizeof(short));
-        if (input_module.dsp_isactive())
-            output_bytes = output_bytes * 2; /* Winamp's DSP may need double samples */
+        /* if (input_module.dsp_isactive())
+            output_bytes = output_bytes * 2; // Winamp's DSP may need double samples
+        */
 
         if (samples_to_do == 0) { /* track finished */
             input_module.outMod->CanWrite();    /* ? */
@@ -829,6 +850,62 @@ DWORD WINAPI __stdcall decode(void* arg) {
 void winamp_Config(HWND hwndParent) {
 }
 
+void winamp_Duplicate() {
+    if (dup_vgmstream) {
+        close_vgmstream(dup_vgmstream);
+        dup_vgmstream = NULL;
+    }
+
+    if (!vgmstream) {
+        return;
+    }
+
+    winamp_Stop_thread();
+
+    // Save current vgmstream
+    dup_vgmstream = vgmstream;
+    memcpy(&dup_config, &config, sizeof(config));
+    memcpy(&dup_state, &state, sizeof(state));
+    dup_state.decode_abort = 0;
+
+    vgmstream = NULL;
+
+    input_module.outMod->Close();
+
+    return;
+}
+
+int winamp_Resume(const char* fn) {
+    if (vgmstream) {
+        winamp_Stop();
+    }
+    
+    if (!dup_vgmstream) {
+        return winamp_Play(fn);
+    }
+
+    // Restore dup_vgmstream
+    vgmstream = dup_vgmstream;
+    memcpy(&config, &dup_config, sizeof(config));
+    memcpy(&state, &dup_state, sizeof(state));
+
+    dup_vgmstream = NULL;
+
+    return winamp_Play_vgmstream();
+}
+
+bool winamp_CancelDuplicate() {
+    if (!dup_vgmstream) {
+        return false;
+    }
+
+    close_vgmstream(dup_vgmstream);
+
+    dup_vgmstream = NULL;
+
+    return true;
+}
+
 /* *********************************** */
 
 /* main plugin def */
@@ -869,6 +946,19 @@ WinampInModule* in_vgmstream_module()
         };
     }
     return (WinampInModule *)&input_module;
+}
+
+WinampInContext* in_context_vgmstream()
+{
+    if (context_module.version != IN_CONTEXT_VER) {
+        context_module = {
+           IN_CONTEXT_VER,
+           winamp_Duplicate,
+           winamp_Resume,
+           winamp_CancelDuplicate
+        };
+    }
+    return (WinampInContext*)&context_module;
 }
 
 /* ************************************* */
