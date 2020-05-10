@@ -27,7 +27,8 @@ bool winamp_stop_thread = false;
 
 uint winamp_current_id = 0;
 char* winamp_current_midi = nullptr;
-bool winamp_song_ended = true; // Song reaches end (but it can still loop)
+bool winamp_song_ended = true;
+bool winamp_song_reached_end = true; // Song reaches end (but it can still loop)
 bool winamp_song_paused = false;
 
 int winamp_trans_steps = 0;
@@ -89,6 +90,7 @@ void winamp_load_song(char* midi, uint id)
 	{
 		in->stop();
 		winamp_song_ended = true;
+		winamp_song_reached_end = true;
 		winamp_current_id = 0;
 		return;
 	}
@@ -96,6 +98,7 @@ void winamp_load_song(char* midi, uint id)
 	sprintf(tmp, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
 
 	winamp_song_ended = false;
+	winamp_song_reached_end = false;
 	winamp_current_id = id;
 	winamp_current_midi = midi;
 	winamp_current_mode = mode;
@@ -203,9 +206,9 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 				int output_time = out->getOutputTime(),
 					written_time = out->getWrittenTime();
 
-				if (!winamp_song_ended && output_time >= in->getLength())
+				if (!winamp_song_reached_end && output_time >= in->getLength())
 				{
-					winamp_song_ended = true;
+					winamp_song_reached_end = true;
 				}
 
 				if (next_music_started && !winamp_song_paused
@@ -344,6 +347,7 @@ void winamp_stop_music()
 	}
 	
 	winamp_song_ended = true;
+	winamp_song_reached_end = true;
 	winamp_current_id = 0;
 
 	LeaveCriticalSection(&winamp_mutex);
@@ -420,7 +424,7 @@ bool winamp_music_status()
 
 	EnterCriticalSection(&winamp_mutex);
 
-	status = !winamp_song_ended;
+	status = !winamp_song_reached_end;
 
 	if (!in)
 	{
