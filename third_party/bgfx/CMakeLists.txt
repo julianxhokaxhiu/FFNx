@@ -1,6 +1,6 @@
 include(ExternalProject)
 
-set(BGFX_VERSION "1.3.0")
+set(BGFX_VERSION "1.4.0")
 
 set(BGFX_RELEASE "Debug")
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
