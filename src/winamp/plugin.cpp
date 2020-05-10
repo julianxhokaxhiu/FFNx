@@ -451,7 +451,7 @@ int CustomOutPlugin::Write(char* buffer, int len)
 	sound_write_pointer = (sound_write_pointer + bytes1 + bytes2) % sound_buffer_size;
 	bytes_written += bytes1 + bytes2;
 
-	//trace("Write bytes_written=%i sound_write_pointer=%i sound_buffer_size=%i\n", bytes_written, sound_write_pointer, sound_buffer_size);
+	//trace("Write bytes_written=%i sound_write_pointer=%i (sound_buffer_size=%i) len=%i bytes1=%i bytes2=%i\n", bytes_written, sound_write_pointer, sound_buffer_size, len, bytes1, bytes2);
 
 	// Do not play the song until buffering reach 'prebuffer_size' value
 	if (!last_pause && !play_started && bytes_written >= prebuffer_size
@@ -465,6 +465,12 @@ int CustomOutPlugin::Write(char* buffer, int len)
 int CustomOutPlugin::canWriteHelper(DWORD &current_play_cursor)
 {
 	sound_buffer->GetCurrentPosition(&current_play_cursor, nullptr);
+
+	//trace("Can Write current_play_cursor=%i\n", current_play_cursor);
+
+	if (play_started && current_play_cursor == sound_write_pointer) {
+		return 0;
+	}
 
 	if (current_play_cursor <= sound_write_pointer) {
 		return (sound_buffer_size - sound_write_pointer) + current_play_cursor;
@@ -520,7 +526,7 @@ int CustomOutPlugin::IsPlaying()
 		if (!sound_buffer->Lock(sound_write_pointer, clear_data_size, &ptr1, &bytes1, &ptr2, &bytes2, 0)) {
 			memset(ptr1, 0, bytes1);
 			memset(ptr2, 0, bytes2);
-				
+			
 			if (sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
 				error("couldn't unlock sound buffer\n");
 			}
@@ -596,12 +602,16 @@ void CustomOutPlugin::SetVolume(int volume)
 void CustomOutPlugin::SetPan(int pan)
 {
 	if (sound_buffer && *common_externals.directsound) {
+		if (trace_all || trace_music) trace("Set pan %i\n", pan);
+
 		sound_buffer->SetPan(pan * DSBPAN_LEFT / 128);
 	}
 }
 
 void CustomOutPlugin::Flush(int t)
 {
+	if (trace_all || trace_music) trace("Directsound flush buffer, seek to %i\n", t);
+
 	if (sound_buffer && *common_externals.directsound) {
 		if (!last_pause && play_started) {
 			sound_buffer->Stop();
@@ -670,6 +680,8 @@ int CustomOutPlugin::GetWrittenTime()
 void CustomOutPlugin::setTempo(int tempo)
 {
 	if (sound_buffer && *common_externals.directsound) {
+		if (trace_all || trace_music) trace("Set tempo %i\n", tempo);
+
 		sound_buffer->SetFrequency((sound_format.nSamplesPerSec * (tempo + 480)) / 512);
 	}
 }
