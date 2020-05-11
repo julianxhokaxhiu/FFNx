@@ -355,7 +355,7 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	sound_format.wFormatTag = WAVE_FORMAT_PCM;
 
 	sound_buffer_size = sound_format.nAvgBytesPerSec * AUDIO_BUFFER_SIZE;
-	prebuffer_size = sound_format.nAvgBytesPerSec / 2; // ~500 ms
+	prebuffer_size = sound_format.nAvgBytesPerSec / 10; // ~100 ms
 	sound_write_pointer = 0;
 	bytes_written = 0;
 
