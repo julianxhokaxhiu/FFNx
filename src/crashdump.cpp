@@ -52,10 +52,7 @@ static const char save_name[] = "\x25" "MERGENCY" "\x00\x33" "AVE" "\xFF";
 LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 {
 	static uint had_exception = false;
-	char savefilePath[4096];
-	uint save;
-
-	char crashdmpPath[260]{ 0 };
+	char filePath[260]{ 0 };
 
 	// give up if we crash again inside the exception handler (this function)
 	if(had_exception)
@@ -79,10 +76,10 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 
 	if (create_crash_dump)
 	{
-		if (steam_edition) get_userdata_path(crashdmpPath, sizeof(crashdmpPath), false);
-		PathAppendA(crashdmpPath, "crash.dmp");
+		if (steam_edition) get_userdata_path(filePath, sizeof(filePath), false);
+		PathAppendA(filePath, "crash.dmp");
 
-		HANDLE file = CreateFile(crashdmpPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+		HANDLE file = CreateFile(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 		HANDLE proc = GetCurrentProcess();
 		DWORD procid = GetCurrentProcessId();
 		MINIDUMP_EXCEPTION_INFORMATION mdei;
@@ -121,39 +118,38 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 
 	if(!ff8)
 	{
+		memset(filePath, 0, sizeof(filePath));
+
 		if (steam_edition)
 		{
-			get_userdata_path(savefilePath, sizeof(savefilePath), false);
-			PathAppendA(savefilePath, "crash.ff7");
+			get_userdata_path(filePath, sizeof(filePath), false);
+			PathAppendA(filePath, "crash.ff7");
 		}
 		else
 		{
-			PathAppendA(savefilePath, "save/crash.ff7");
+			PathAppendA(filePath, "save/crash.ff7");
 		}
 
 		// try to dump the current savemap from memory
 		// the savemap could be old, inconsistent or corrupted at this point
 		// avoid playing from an emergency save if at all possible!
-		if(save)
-		{
-			FILE *f = fopen(savefilePath, "wb");
-			uint magic = 0x6277371;
-			uint bitmask = 1;
-			struct savemap dummy[14];
+		FILE *f = fopen(filePath, "wb");
+		uint magic = 0x6277371;
+		uint bitmask = 1;
+		struct savemap dummy[14];
 
-			memset(dummy, 0, sizeof(dummy));
+		memset(dummy, 0, sizeof(dummy));
 
-			memcpy(ff7_externals.savemap->preview_location, save_name, sizeof(save_name));
+		memcpy(ff7_externals.savemap->preview_location, save_name, sizeof(save_name));
 
-			ff7_externals.savemap->checksum = ff7_checksum(&(ff7_externals.savemap->preview_level));
+		ff7_externals.savemap->checksum = ff7_checksum(&(ff7_externals.savemap->preview_level));
 
-			fwrite(&magic, 4, 1, f);
-			fwrite("", 1, 1, f);
-			fwrite(&bitmask, 4, 1, f);
-			fwrite(ff7_externals.savemap, sizeof(*ff7_externals.savemap), 1, f);
-			fwrite(dummy, sizeof(dummy), 1, f);
-			fclose(f);
-		}
+		fwrite(&magic, 4, 1, f);
+		fwrite("", 1, 1, f);
+		fwrite(&bitmask, 4, 1, f);
+		fwrite(ff7_externals.savemap, sizeof(*ff7_externals.savemap), 1, f);
+		fwrite(dummy, sizeof(dummy), 1, f);
+		fclose(f);
 	}
 
 	error("Unhandled Exception. See dumped information above.\n");
@@ -162,18 +158,12 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	{
 		char msg[1024]{ 0 };
 
-		sprintf(msg, "Oops! Something very bad happened.\n\nWrote emergency save to %s dir.\n\nPlease provide a copy of those files along with FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", savefilePath);
+		sprintf(msg, "Oops! Something very bad happened.\n\nWrote emergency save to %s dir.\n\nPlease provide a copy of those files along with FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", filePath);
 
 		MessageBoxA(0, msg, "Error", MB_OK);
-
-		save = true;
 	}
 	else
-	{
 		MessageBoxA(0, "Oops! Something very bad happened.\n\nPlease provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
-
-		save = false;
-	}
 
 	// let OS handle the crash
 	SetUnhandledExceptionFilter(0);
