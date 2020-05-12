@@ -314,18 +314,6 @@ void Renderer::init()
     if (enable_vsync)
         bgfxInit.resolution.reset |= BGFX_RESET_VSYNC;
 
-    if (enable_antialiasing > 0)
-    {
-        if (enable_antialiasing <= 2)
-            bgfxInit.resolution.reset |= BGFX_RESET_MSAA_X2;
-        else if (enable_antialiasing <= 4)
-            bgfxInit.resolution.reset |= BGFX_RESET_MSAA_X4;
-        else if (enable_antialiasing <= 8)
-            bgfxInit.resolution.reset |= BGFX_RESET_MSAA_X8;
-        else if (enable_antialiasing <= 16)
-            bgfxInit.resolution.reset |= BGFX_RESET_MSAA_X16;
-    }
-
     bgfxInit.debug = renderer_debug;
     bgfxInit.callback = &bgfxCallbacks;
 
@@ -336,6 +324,20 @@ void Renderer::init()
     // Create an empty texture
     emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
 
+    uint64_t fbFlags = BGFX_TEXTURE_RT;
+
+    if (enable_antialiasing > 0)
+    {
+        if (enable_antialiasing <= 2)
+            fbFlags = BGFX_TEXTURE_RT_MSAA_X2;
+        else if (enable_antialiasing <= 4)
+            fbFlags = BGFX_TEXTURE_RT_MSAA_X4;
+        else if (enable_antialiasing <= 8)
+            fbFlags = BGFX_TEXTURE_RT_MSAA_X8;
+        else if (enable_antialiasing <= 16)
+            fbFlags = BGFX_TEXTURE_RT_MSAA_X16;
+    }
+
     backendFrameBufferRT = {
         bgfx::createTexture2D(
             framebufferWidth,
@@ -343,7 +345,7 @@ void Renderer::init()
             false,
             1,
             bgfx::TextureFormat::RGBA8,
-            BGFX_TEXTURE_RT
+            fbFlags
         ),
         bgfx::createTexture2D(
             framebufferWidth,
@@ -351,7 +353,7 @@ void Renderer::init()
             false,
             1,
             bgfx::TextureFormat::D24S8,
-            BGFX_TEXTURE_RT
+            fbFlags
         )
     };
 
