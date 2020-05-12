@@ -28,11 +28,15 @@ public:
 class AbstractOutPlugin {
 protected:
 	WinampOutModule* mod;
+	WinampOutContext* context;
 public:
-	AbstractOutPlugin() : mod(nullptr) {}
+	AbstractOutPlugin() : mod(nullptr), context(nullptr) {}
 	virtual ~AbstractOutPlugin() {}
 	inline WinampOutModule* getModule() const {
 		return mod;
+	}
+	inline WinampOutContext* getContext() const {
+		return context;
 	}
 	// volume stuff
 	virtual void setVolume(int volume);	// from 0 to 255.. usually just call outMod->SetVolume
@@ -60,28 +64,32 @@ public:
 	void setTempo(int tempo);
 };
 
+struct CustomOutPluginState {
+	IDirectSoundBuffer* sound_buffer;
+	DWORD sound_buffer_size;
+	DWORD sound_write_pointer;
+	DWORD bytes_written;
+	DWORD prebuffer_size;
+	DWORD start_t;
+	DWORD offset_t;
+	DWORD paused_t;
+	DWORD last_pause_t;
+	DWORD last_stop_t;
+	WAVEFORMATEX sound_format;
+	bool play_started;
+	bool clear_done;
+};
+
 class CustomOutPlugin : public AbstractOutPlugin {
 private:
-	static IDirectSoundBuffer* sound_buffer;
-	static DWORD sound_buffer_size;
-	static DWORD sound_write_pointer;
-	static DWORD bytes_written;
-	static DWORD prebuffer_size;
-	static DWORD start_t;
-	static DWORD offset_t;
-	static DWORD paused_t;
-	static DWORD last_pause_t;
-	static DWORD last_stop_t;
+	static WinampOutContext static_context;
+	static CustomOutPluginState state;
+	static CustomOutPluginState dup_state;
 	static int last_pause;
-	static WAVEFORMATEX sound_format;
-	static bool play_started;
-	static bool clear_done;
 	static int last_volume;
 
-	static void Config(HWND hwndParent);
-	static void About(HWND hwndParent);
-	static void Init();
-	static void Quit();
+	static void FakeDialog(HWND hwndParent);
+	static void Noop();
 	static int Open(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms);
 	static void Close();
 	static bool playHelper();
@@ -96,6 +104,9 @@ private:
 	static void Flush(int t);
 	static int GetOutputTime();
 	static int GetWrittenTime();
+	static void Duplicate();
+	static int Resume(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms);
+	static int CancelDuplicate();
 public:
 	CustomOutPlugin();
 	virtual ~CustomOutPlugin();
@@ -107,12 +118,17 @@ class InPluginWithFailback;
 
 class AbstractInPlugin {
 private:
+	int current_saved_time_ms;
 	friend class InPluginWithFailback;
 protected:
 	WinampInModule* mod;
+	WinampInContext* context;
 	AbstractOutPlugin* outPlugin;
 	inline virtual WinampInModule* getMod() const {
 		return mod;
+	}
+	inline virtual WinampInContext* getContext() const {
+		return context;
 	}
 	virtual int beforePlay(char* fna);
 	void initModule(HINSTANCE dllInstance);
@@ -120,8 +136,10 @@ protected:
 	bool knownExtension(const char* fn) const;
 	int isOurFile(const char* fn) const;
 	bool accept(const char* fn) const;
+	bool canDuplicate() const;
 public:
-	AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod = nullptr);
+	AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod = nullptr,
+		WinampInContext* context = nullptr);
 	virtual ~AbstractInPlugin();
 	
 	int play(char* fn);
@@ -136,14 +154,13 @@ public:
 	void setOutputTime(int time_in_ms);	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
 
 	// Resuming (not part of standard Winamp plugin)
-	virtual void duplicate() = 0;
-	virtual int resume(char* fn) = 0;
-	virtual bool cancelDuplicate() = 0;
+	void duplicate();
+	int resume(char* fn);
+	bool cancelDuplicate();
 };
 
 class WinampInPlugin : public WinampPlugin, public AbstractInPlugin {
 private:
-	int current_saved_time_ms;
 	inline LPCSTR procName() const {
 		return "winampGetInModule2";
 	}
@@ -152,22 +169,12 @@ private:
 public:
 	WinampInPlugin(AbstractOutPlugin* outPlugin);
 	virtual ~WinampInPlugin();
-	// Resuming (not part of standard Winamp plugin)
-	void duplicate();
-	int resume(char* fn);
-	bool cancelDuplicate();
 };
 
 class VgmstreamInPlugin : public AbstractInPlugin {
-private:
-	WinampInContext* inContext;
 public:
 	VgmstreamInPlugin(AbstractOutPlugin* outPlugin);
 	virtual ~VgmstreamInPlugin();
-	// Resuming (not part of standard Winamp plugin)
-	void duplicate();
-	int resume(char* fn);
-	bool cancelDuplicate();
 };
 
 class InPluginWithFailback : public AbstractInPlugin {
@@ -176,6 +183,7 @@ private:
 	AbstractInPlugin* inPlugin2;
 	AbstractInPlugin* current;
 	WinampInModule* getMod() const;
+	WinampInContext* getContext() const;
 	int beforePlay(char* fna);
 public:
 	InPluginWithFailback(
@@ -190,8 +198,4 @@ public:
 	inline AbstractInPlugin* getPlugin2() const {
 		return inPlugin2;
 	}
-	// Resuming (not part of standard Winamp plugin)
-	void duplicate();
-	int resume(char* fn);
-	bool cancelDuplicate();
 };

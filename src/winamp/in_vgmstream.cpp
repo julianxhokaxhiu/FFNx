@@ -580,18 +580,7 @@ int winamp_IsOurFile(const in_char* fn) {
     return vgmstream_ctx_is_valid(filename_utf8, &cfg);
 }
 
-int winamp_Play_vgmstream() {
-    int max_latency;
-
-    /* open the output plugin */
-    max_latency = input_module.outMod->Open(vgmstream->sample_rate, state.output_channels, 16, 0, 0);
-    if (max_latency < 0) {
-        close_vgmstream(vgmstream);
-        vgmstream = NULL;
-        return 1;
-    }
-
-    /* start */
+int winamp_Start_thread() {
     decode_thread_handle = CreateThread(
         NULL,   /* handle cannot be inherited */
         0,      /* stack size, 0=default */
@@ -609,6 +598,7 @@ int winamp_Play_vgmstream() {
 int winamp_Play(const in_char* fn) {
     in_char filename[PATH_LIMIT];
     int stream_index = 0;
+    int max_latency;
 
     /* shouldn't happen */
     if (vgmstream)
@@ -641,7 +631,16 @@ int winamp_Play(const in_char* fn) {
     state.fade_samples = (int)(config.song_fade_time * vgmstream->sample_rate);
     state.volume = get_album_gain_volume(fn);
 
-    return winamp_Play_vgmstream();
+    /* open the output plugin */
+    max_latency = input_module.outMod->Open(vgmstream->sample_rate, state.output_channels, 16, 0, 0);
+    if (max_latency < 0) {
+        close_vgmstream(vgmstream);
+        vgmstream = NULL;
+        return 1;
+    }
+
+    /* start */
+    return winamp_Start_thread();
 }
 
 /* pause stream */
@@ -850,11 +849,19 @@ DWORD WINAPI __stdcall decode(void* arg) {
 void winamp_Config(HWND hwndParent) {
 }
 
-void winamp_Duplicate() {
-    if (dup_vgmstream) {
-        close_vgmstream(dup_vgmstream);
-        dup_vgmstream = NULL;
+int winamp_CancelDuplicate() {
+    if (!dup_vgmstream) {
+        return 0;
     }
+
+    close_vgmstream(dup_vgmstream);
+    dup_vgmstream = NULL;
+    
+    return context_module.outContext->CancelDuplicate();
+}
+
+void winamp_Duplicate() {
+    winamp_CancelDuplicate();
 
     if (!vgmstream) {
         return;
@@ -870,12 +877,12 @@ void winamp_Duplicate() {
 
     vgmstream = NULL;
 
-    input_module.outMod->Close();
-
-    return;
+    context_module.outContext->Duplicate();
 }
 
 int winamp_Resume(const char* fn) {
+    int max_latency;
+
     if (vgmstream) {
         winamp_Stop();
     }
@@ -891,19 +898,14 @@ int winamp_Resume(const char* fn) {
 
     dup_vgmstream = NULL;
 
-    return winamp_Play_vgmstream();
-}
-
-bool winamp_CancelDuplicate() {
-    if (!dup_vgmstream) {
-        return false;
+    max_latency = context_module.outContext->Resume(vgmstream->sample_rate, state.output_channels, 16, 0, 0);
+    if (max_latency < 0) {
+        close_vgmstream(vgmstream);
+        vgmstream = NULL;
+        return 1;
     }
 
-    close_vgmstream(dup_vgmstream);
-
-    dup_vgmstream = NULL;
-
-    return true;
+    return winamp_Start_thread();
 }
 
 /* *********************************** */
@@ -955,7 +957,8 @@ WinampInContext* in_context_vgmstream()
            IN_CONTEXT_VER,
            winamp_Duplicate,
            winamp_Resume,
-           winamp_CancelDuplicate
+           winamp_CancelDuplicate,
+           0
         };
     }
     return (WinampInContext*)&context_module;

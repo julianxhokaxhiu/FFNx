@@ -265,20 +265,10 @@ void WinampOutPlugin::setTempo(int tempo)
 	error("setTempo not implemented for Winamp out plugin (%i)\n", tempo);
 }
 
-IDirectSoundBuffer* CustomOutPlugin::sound_buffer = nullptr;
-DWORD CustomOutPlugin::sound_buffer_size = 0;
-DWORD CustomOutPlugin::sound_write_pointer = 0;
-DWORD CustomOutPlugin::bytes_written = 0;
-DWORD CustomOutPlugin::prebuffer_size = 0;
-DWORD CustomOutPlugin::start_t = 0;
-DWORD CustomOutPlugin::offset_t = 0;
-DWORD CustomOutPlugin::paused_t = 0;
-DWORD CustomOutPlugin::last_pause_t = 0;
-DWORD CustomOutPlugin::last_stop_t = 0;
+CustomOutPluginState CustomOutPlugin::state = CustomOutPluginState();
+CustomOutPluginState CustomOutPlugin::dup_state = CustomOutPluginState();
+WinampOutContext CustomOutPlugin::static_context = WinampOutContext();
 int CustomOutPlugin::last_pause = 0;
-WAVEFORMATEX CustomOutPlugin::sound_format = WAVEFORMATEX();
-bool CustomOutPlugin::play_started = false;
-bool CustomOutPlugin::clear_done = false;
 int CustomOutPlugin::last_volume = 255;
 
 CustomOutPlugin::CustomOutPlugin() :
@@ -290,10 +280,10 @@ CustomOutPlugin::CustomOutPlugin() :
 	mod->id = 38; // DirectSound id
 	mod->hMainWindow = nullptr;
 	mod->hDllInstance = nullptr;
-	mod->Config = Config;
-	mod->About = About;
-	mod->Init = Init;
-	mod->Quit = Quit;
+	mod->Config = FakeDialog;
+	mod->About = FakeDialog;
+	mod->Init = Noop;
+	mod->Quit = Noop;
 	mod->Open = Open;
 	mod->Close = Close;
 	mod->Write = Write;
@@ -305,32 +295,27 @@ CustomOutPlugin::CustomOutPlugin() :
 	mod->Flush = Flush;
 	mod->GetOutputTime = GetOutputTime;
 	mod->GetWrittenTime = GetWrittenTime;
+
+	static_context.version = OUT_CONTEXT_VER;
+	static_context.Duplicate = Duplicate;
+	static_context.Resume = Resume;
+	static_context.CancelDuplicate = CancelDuplicate;
+
+	context = &static_context;
 }
 
 CustomOutPlugin::~CustomOutPlugin()
 {
-	CustomOutPlugin::Quit();
 	delete mod;
 }
 
-void CustomOutPlugin::Config(HWND hwndParent)
+void CustomOutPlugin::FakeDialog(HWND hwndParent)
 {
 	UNUSED_PARAM(hwndParent);
 	// Nothing to do
 }
 
-void CustomOutPlugin::About(HWND hwndParent)
-{
-	UNUSED_PARAM(hwndParent);
-	// Nothing to do
-}
-
-void CustomOutPlugin::Init()
-{
-	// Nothing to do
-}
-
-void CustomOutPlugin::Quit()
+void CustomOutPlugin::Noop()
 {
 	// Nothing to do
 }
@@ -346,35 +331,35 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	
 	DSBUFFERDESC1 sbdesc = DSBUFFERDESC1();
 
-	sound_format.cbSize = 0;
-	sound_format.wBitsPerSample = bitspersamp;
-	sound_format.nChannels = numchannels;
-	sound_format.nSamplesPerSec = samplerate;
-	sound_format.nBlockAlign = sound_format.nChannels * sound_format.wBitsPerSample / 8;
-	sound_format.nAvgBytesPerSec = sound_format.nSamplesPerSec * sound_format.nBlockAlign;
-	sound_format.wFormatTag = WAVE_FORMAT_PCM;
+	state.sound_format.cbSize = 0;
+	state.sound_format.wBitsPerSample = bitspersamp;
+	state.sound_format.nChannels = numchannels;
+	state.sound_format.nSamplesPerSec = samplerate;
+	state.sound_format.nBlockAlign = state.sound_format.nChannels * state.sound_format.wBitsPerSample / 8;
+	state.sound_format.nAvgBytesPerSec = state.sound_format.nSamplesPerSec * state.sound_format.nBlockAlign;
+	state.sound_format.wFormatTag = WAVE_FORMAT_PCM;
 
-	sound_buffer_size = sound_format.nAvgBytesPerSec * AUDIO_BUFFER_SIZE;
-	prebuffer_size = sound_format.nAvgBytesPerSec / 10; // ~100 ms
-	sound_write_pointer = 0;
-	bytes_written = 0;
+	state.sound_buffer_size = state.sound_format.nAvgBytesPerSec * AUDIO_BUFFER_SIZE;
+	state.prebuffer_size = state.sound_format.nAvgBytesPerSec / 10; // ~100 ms
+	state.sound_write_pointer = 0;
+	state.bytes_written = 0;
 
-	start_t = 0;
-	offset_t = 0;
-	paused_t = 0;
-	last_stop_t = 0;
-	last_pause_t = 0;
+	state.start_t = 0;
+	state.offset_t = 0;
+	state.paused_t = 0;
+	state.last_stop_t = 0;
+	state.last_pause_t = 0;
 
-	play_started = false;
-	clear_done = false;
+	state.play_started = false;
+	state.clear_done = false;
 
 	sbdesc.dwSize = sizeof(sbdesc);
-	sbdesc.lpwfxFormat = &sound_format;
+	sbdesc.lpwfxFormat = &state.sound_format;
 	sbdesc.dwFlags = DSBCAPS_STATIC | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY
 		| DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2
 		| DSBCAPS_TRUEPLAYPOSITION | DSBCAPS_GLOBALFOCUS;
 	sbdesc.dwReserved = 0;
-	sbdesc.dwBufferBytes = sound_buffer_size;
+	sbdesc.dwBufferBytes = state.sound_buffer_size;
 
 	if (!*common_externals.directsound)
 	{
@@ -383,10 +368,10 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 		return -1;
 	}
 	
-	if ((*common_externals.directsound)->CreateSoundBuffer((LPCDSBUFFERDESC)&sbdesc, &sound_buffer, 0))
+	if ((*common_externals.directsound)->CreateSoundBuffer((LPCDSBUFFERDESC)&sbdesc, &state.sound_buffer, 0))
 	{
 		error("couldn't create sound buffer (%i, %i)\n", numchannels, samplerate);
-		sound_buffer = nullptr;
+		state.sound_buffer = nullptr;
 
 		return -1;
 	}
@@ -400,12 +385,12 @@ void CustomOutPlugin::Close()
 {
 	if (trace_all || trace_music) trace("Close directsound (%i)\n", *common_externals.directsound ? 1 : 0);
 
-	if (sound_buffer) {
-		last_stop_t = GetTickCount();
-		if (*common_externals.directsound && (sound_buffer->Stop() || sound_buffer->Release())) {
+	if (state.sound_buffer) {
+		state.last_stop_t = GetTickCount();
+		if (*common_externals.directsound && (state.sound_buffer->Stop() || state.sound_buffer->Release())) {
 			error("couldn't stop or release sound buffer (%i)\n", GetLastError());
 		}
-		sound_buffer = nullptr;
+		state.sound_buffer = nullptr;
 	}
 }
 
@@ -413,13 +398,13 @@ bool CustomOutPlugin::playHelper()
 {
 	if (trace_all || trace_music) trace("Play directsound\n");
 
-	if (sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
+	if (state.sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
 		error("couldn't play sound buffer\n");
 		return false;
 	}
 
-	start_t = GetTickCount();
-	play_started = true;
+	state.start_t = GetTickCount();
+	state.play_started = true;
 
 	return true;
 }
@@ -429,13 +414,13 @@ int CustomOutPlugin::Write(char* buffer, int len)
 	LPVOID ptr1, ptr2;
 	DWORD bytes1, bytes2;
 	
-	clear_done = false;
+	state.clear_done = false;
 	
-	if (!sound_buffer || !*common_externals.directsound) {
+	if (!state.sound_buffer || !*common_externals.directsound) {
 		return 1;
 	}
 	
-	if (sound_buffer->Lock(sound_write_pointer, len, &ptr1, &bytes1, &ptr2, &bytes2, 0)) {
+	if (state.sound_buffer->Lock(state.sound_write_pointer, len, &ptr1, &bytes1, &ptr2, &bytes2, 0)) {
 		error("couldn't lock sound buffer\n");
 		return 1;
 	}
@@ -443,18 +428,18 @@ int CustomOutPlugin::Write(char* buffer, int len)
 	memcpy(ptr1, buffer, bytes1);
 	memcpy(ptr2, buffer + bytes1, bytes2);
 
-	if (sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
+	if (state.sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
 		error("couldn't unlock sound buffer\n");
 		return 1;
 	}
 
-	sound_write_pointer = (sound_write_pointer + bytes1 + bytes2) % sound_buffer_size;
-	bytes_written += bytes1 + bytes2;
+	state.sound_write_pointer = (state.sound_write_pointer + bytes1 + bytes2) % state.sound_buffer_size;
+	state.bytes_written += bytes1 + bytes2;
 
 	//trace("Write bytes_written=%i sound_write_pointer=%i (sound_buffer_size=%i) len=%i bytes1=%i bytes2=%i\n", bytes_written, sound_write_pointer, sound_buffer_size, len, bytes1, bytes2);
 
 	// Do not play the song until buffering reach 'prebuffer_size' value
-	if (!last_pause && !play_started && bytes_written >= prebuffer_size
+	if (!last_pause && !state.play_started && state.bytes_written >= state.prebuffer_size
 			&& !playHelper()) {
 		return 1;
 	}
@@ -464,23 +449,23 @@ int CustomOutPlugin::Write(char* buffer, int len)
 
 int CustomOutPlugin::canWriteHelper(DWORD &current_play_cursor)
 {
-	sound_buffer->GetCurrentPosition(&current_play_cursor, nullptr);
+	state.sound_buffer->GetCurrentPosition(&current_play_cursor, nullptr);
 
 	//trace("Can Write current_play_cursor=%i\n", current_play_cursor);
 
-	if (play_started && current_play_cursor == sound_write_pointer) {
+	if (state.play_started && current_play_cursor == state.sound_write_pointer) {
 		return 0;
 	}
 
-	if (current_play_cursor <= sound_write_pointer) {
-		return (sound_buffer_size - sound_write_pointer) + current_play_cursor;
+	if (current_play_cursor <= state.sound_write_pointer) {
+		return (state.sound_buffer_size - state.sound_write_pointer) + current_play_cursor;
 	}
-	return current_play_cursor - sound_write_pointer;
+	return current_play_cursor - state.sound_write_pointer;
 }
 
 int CustomOutPlugin::CanWrite()
 {
-	if (!sound_buffer || !*common_externals.directsound) {
+	if (!state.sound_buffer || !*common_externals.directsound) {
 		return 0;
 	}
 
@@ -490,26 +475,26 @@ int CustomOutPlugin::CanWrite()
 
 int CustomOutPlugin::IsPlaying()
 {
-	if (last_pause || !sound_buffer || !*common_externals.directsound) {
+	if (last_pause || !state.sound_buffer || !*common_externals.directsound) {
 		return 0;
 	}
 	
 	// IsPlaying is called at the very end of decoding,
 	// if we never started the song we should do it now
 	// and we should deactivate the loop flag
-	if (!play_started && !playHelper()) {
+	if (!state.play_started && !playHelper()) {
 		return 0;
 	}
 
 	DWORD current_play_cursor;
 	const int can_write = canWriteHelper(current_play_cursor);
-	const int clear_data_size = sound_buffer_size / AUDIO_BUFFER_SIZE / 2; // ~500 ms
+	const int clear_data_size = state.sound_buffer_size / AUDIO_BUFFER_SIZE / 2; // ~500 ms
 
 	// It is hard to know the current accurate play time with DirectSound
 	// And the buffer is circular, so we make precautions
-	if (clear_done) {
-		if (current_play_cursor < sound_write_pointer
-			|| current_play_cursor > sound_write_pointer + clear_data_size) {
+	if (state.clear_done) {
+		if (current_play_cursor < state.sound_write_pointer
+			|| current_play_cursor > state.sound_write_pointer + clear_data_size) {
 			return 1;
 		}
 		
@@ -523,11 +508,11 @@ int CustomOutPlugin::IsPlaying()
 		LPVOID ptr1, ptr2;
 		DWORD bytes1, bytes2;
 
-		if (!sound_buffer->Lock(sound_write_pointer, clear_data_size, &ptr1, &bytes1, &ptr2, &bytes2, 0)) {
+		if (!state.sound_buffer->Lock(state.sound_write_pointer, clear_data_size, &ptr1, &bytes1, &ptr2, &bytes2, 0)) {
 			memset(ptr1, 0, bytes1);
 			memset(ptr2, 0, bytes2);
 			
-			if (sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
+			if (state.sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
 				error("couldn't unlock sound buffer\n");
 			}
 		}
@@ -535,7 +520,7 @@ int CustomOutPlugin::IsPlaying()
 			error("couldn't lock sound buffer\n");
 		}
 
-		clear_done = true;
+		state.clear_done = true;
 	}
 
 	return 1;
@@ -547,26 +532,27 @@ int CustomOutPlugin::Pause(int pause)
 	
 	if (last_pause != pause) {
 		if (pause) { // Pause
-			last_pause_t = GetTickCount();
+			state.last_pause_t = GetTickCount();
 
-			if (sound_buffer && *common_externals.directsound && play_started) {
+			if (state.sound_buffer && *common_externals.directsound && state.play_started) {
 				if (trace_all || trace_music) trace("Stop directsound\n");
 
-				if (sound_buffer->Stop()) {
+				if (state.sound_buffer->Stop()) {
 					error("couldn't stop sound buffer\n");
 				}
 			}
 		}
 		else {
-			if (last_pause_t > 0) { // UnPause
-				paused_t += GetTickCount() - last_pause_t; // Remove paused time
-				last_pause_t = 0;
+			if (state.last_pause_t > 0) { // UnPause
+				state.paused_t += GetTickCount() - state.last_pause_t; // Remove paused time
+				state.last_pause_t = 0;
 			}
 
-			if (sound_buffer && *common_externals.directsound) {
+			if (state.sound_buffer && *common_externals.directsound) {
 				if (trace_all || trace_music) trace("Play directsound\n");
 
-				if ((!play_started && bytes_written >= prebuffer_size && !playHelper()) || sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
+				if ((!state.play_started && state.bytes_written >= state.prebuffer_size && !playHelper())
+						|| state.sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
 					error("couldn't play sound buffer\n");
 				}
 			}
@@ -587,7 +573,7 @@ void CustomOutPlugin::SetVolume(int volume)
 		last_volume = volume;
 	}
 
-	if (sound_buffer && *common_externals.directsound) {
+	if (state.sound_buffer && *common_externals.directsound) {
 		float decibel = DSBVOLUME_MIN;
 		if (volume != 0) {
 			decibel = 2000.0f * log10f(volume / 255.0f);
@@ -595,16 +581,16 @@ void CustomOutPlugin::SetVolume(int volume)
 
 		if (trace_all || trace_music) trace("Set directsound attenuation %f Db\n", decibel);
 
-		sound_buffer->SetVolume(decibel);
+		state.sound_buffer->SetVolume(decibel);
 	}
 }
 
 void CustomOutPlugin::SetPan(int pan)
 {
-	if (sound_buffer && *common_externals.directsound) {
+	if (state.sound_buffer && *common_externals.directsound) {
 		if (trace_all || trace_music) trace("Set pan %i\n", pan);
 
-		sound_buffer->SetPan(pan * DSBPAN_LEFT / 128);
+		state.sound_buffer->SetPan(pan * DSBPAN_LEFT / 128);
 	}
 }
 
@@ -612,20 +598,20 @@ void CustomOutPlugin::Flush(int t)
 {
 	if (trace_all || trace_music) trace("Directsound flush buffer, seek to %i\n", t);
 
-	if (sound_buffer && *common_externals.directsound) {
-		if (!last_pause && play_started) {
-			sound_buffer->Stop();
+	if (state.sound_buffer && *common_externals.directsound) {
+		if (!last_pause && state.play_started) {
+			state.sound_buffer->Stop();
 		}
 
 		LPVOID ptr1, ptr2;
 		DWORD bytes1, bytes2;
 
 		// Clear the entire buffer
-		if (!sound_buffer->Lock(0, 0, &ptr1, &bytes1, &ptr2, &bytes2, DSBLOCK_ENTIREBUFFER)) {
+		if (!state.sound_buffer->Lock(0, 0, &ptr1, &bytes1, &ptr2, &bytes2, DSBLOCK_ENTIREBUFFER)) {
 			memset(ptr1, 0, bytes1);
 			memset(ptr2, 0, bytes2);
 			
-			if (sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
+			if (state.sound_buffer->Unlock(ptr1, bytes1, ptr2, bytes2)) {
 				error("couldn't unlock sound buffer\n");
 			}
 		}
@@ -633,61 +619,120 @@ void CustomOutPlugin::Flush(int t)
 			error("couldn't lock sound buffer\n");
 		}
 		
-		sound_write_pointer = 0;
-		bytes_written = 0;
-		sound_buffer->SetCurrentPosition(0);
-		play_started = false;
+		state.sound_write_pointer = 0;
+		state.bytes_written = 0;
+		state.sound_buffer->SetCurrentPosition(0);
+		state.play_started = false;
 	}
 
-	last_pause_t = 0;
-	last_stop_t = 0;
-	paused_t = 0;
-	offset_t = t;
+	state.last_pause_t = 0;
+	state.last_stop_t = 0;
+	state.paused_t = 0;
+	state.offset_t = t;
 }
 
 int CustomOutPlugin::GetOutputTime()
 {
 	DWORD t;
 	
-	if (last_pause_t > 0) {
-		t = last_pause_t;
+	if (state.last_pause_t > 0) {
+		t = state.last_pause_t;
 	}
-	else if (last_stop_t > 0) {
-		t = last_stop_t;
+	else if (state.last_stop_t > 0) {
+		t = state.last_stop_t;
 	}
-	else if (play_started) {
+	else if (state.play_started) {
 		t = GetTickCount();
 	}
 	else {
-		return offset_t;
+		return state.offset_t;
 	}
 
-	return offset_t + (t - start_t) - paused_t;
+	return state.offset_t + (t - state.start_t) - state.paused_t;
 }
 
 int CustomOutPlugin::GetWrittenTime()
 {
-	if (0 == sound_format.nAvgBytesPerSec) {
-		return offset_t + bytes_written;
+	if (0 == state.sound_format.nAvgBytesPerSec) {
+		return state.offset_t + state.bytes_written;
 	}
 
-	int written_time = bytes_written / sound_format.nAvgBytesPerSec * 1000;
-	written_time += ((bytes_written % sound_format.nAvgBytesPerSec) * 1000) / sound_format.nAvgBytesPerSec;
+	int written_time = state.bytes_written / state.sound_format.nAvgBytesPerSec * 1000;
+	written_time += ((state.bytes_written % state.sound_format.nAvgBytesPerSec) * 1000) / state.sound_format.nAvgBytesPerSec;
 
-	return offset_t + written_time;
+	return state.offset_t + written_time;
+}
+
+void CustomOutPlugin::Duplicate()
+{
+	CancelDuplicate();
+
+	if (nullptr == state.sound_buffer) {
+		return;
+	}
+
+	if (state.sound_buffer && *common_externals.directsound
+			&& state.play_started && state.sound_buffer->Stop()) {
+		error("couldn't stop sound buffer\n");
+	}
+
+	// Save current state
+	memcpy(&dup_state, &state, sizeof(state));
+	
+	state.sound_buffer = nullptr;
+}
+
+int CustomOutPlugin::Resume(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms)
+{
+	if (nullptr != state.sound_buffer) {
+		Close();
+	}
+
+	if (nullptr == dup_state.sound_buffer) {
+		return Open(samplerate, numchannels, bitspersamp, bufferlenms, prebufferms);
+	}
+
+	// Restore saved state
+	memcpy(&state, &dup_state, sizeof(state));
+
+	dup_state.sound_buffer = nullptr;
+
+	SetVolume(-1); // Set last known volume to buffer
+
+	if (state.play_started && state.sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
+		error("couldn't play sound buffer\n");
+	}
+
+	return 0;
+}
+
+int CustomOutPlugin::CancelDuplicate()
+{
+	if (nullptr == dup_state.sound_buffer) {
+		return 0;
+	}
+
+	if (*common_externals.directsound && (dup_state.sound_buffer->Stop() || dup_state.sound_buffer->Release())) {
+		error("CancelDuplicate: couldn't stop or release sound buffer (%i)\n", GetLastError());
+	}
+
+	dup_state.sound_buffer = nullptr;
+
+	return 1;
 }
 
 void CustomOutPlugin::setTempo(int tempo)
 {
-	if (sound_buffer && *common_externals.directsound) {
+	if (state.sound_buffer && *common_externals.directsound) {
 		if (trace_all || trace_music) trace("Set tempo %i\n", tempo);
 
-		sound_buffer->SetFrequency((sound_format.nSamplesPerSec * (tempo + 480)) / 512);
+		state.sound_buffer->SetFrequency((state.sound_format.nSamplesPerSec * (tempo + 480)) / 512);
 	}
 }
 
-AbstractInPlugin::AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod) :
-	mod(mod), outPlugin(outPlugin)
+AbstractInPlugin::AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod,
+		WinampInContext* context) :
+	current_saved_time_ms(0), mod(mod), context(context), outPlugin(outPlugin)
 {
 }
 
@@ -704,6 +749,10 @@ void AbstractInPlugin::initModule(HINSTANCE dllInstance)
 
 	if (nullptr != this->outPlugin) {
 		this->mod->standard.outMod = this->outPlugin->getModule();
+
+		if (nullptr != this->context) {
+			this->context->outContext = this->outPlugin->getContext();
+		}
 	}
 	else {
 		this->mod->standard.outMod = nullptr;
@@ -732,6 +781,10 @@ void AbstractInPlugin::initModule(HINSTANCE dllInstance)
 void AbstractInPlugin::quitModule()
 {
 	if (nullptr != this->mod) {
+		if (nullptr != this->context && nullptr != this->context->CancelDuplicate) {
+			this->context->CancelDuplicate();
+		}
+
 		if (nullptr != this->mod->standard.Quit) {
 			this->mod->standard.Quit();
 		}
@@ -849,8 +902,67 @@ void AbstractInPlugin::setOutputTime(int time_in_ms)
 	getMod()->standard.SetOutputTime(time_in_ms);
 }
 
+bool AbstractInPlugin::canDuplicate() const
+{
+	return getContext() && IN_CONTEXT_VER == getContext()->version
+		&& nullptr != getContext()->outContext
+		&& OUT_CONTEXT_VER == getContext()->outContext->version;
+}
+
+void AbstractInPlugin::duplicate()
+{
+	if (canDuplicate()) {
+		getContext()->Duplicate();
+	}
+	else {
+		current_saved_time_ms = outPlugin->getOutputTime() % getLength();
+
+		if (current_saved_time_ms < 0) {
+			current_saved_time_ms = 0;
+		}
+	}
+}
+
+int AbstractInPlugin::resume(char* fn)
+{
+	if (canDuplicate()) {
+		return getContext()->Resume(fn);
+	}
+
+	if (current_saved_time_ms > 0) {
+		pause();
+		outPlugin->pause();
+	}
+
+	stop();
+	int err = play(fn);
+
+	if (current_saved_time_ms > 0) {
+		setOutputTime(current_saved_time_ms); // FIXME: can take a while
+		unPause();
+		outPlugin->unPause();
+		current_saved_time_ms = 0;
+	}
+
+	return err;
+}
+
+bool AbstractInPlugin::cancelDuplicate()
+{
+	if (canDuplicate()) {
+		return getContext()->CancelDuplicate() != 0;
+	}
+
+	if (current_saved_time_ms > 0) {
+		current_saved_time_ms = 0;
+		return true;
+	}
+
+	return false;
+}
+
 WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
-	WinampPlugin(), AbstractInPlugin(outPlugin), current_saved_time_ms(0)
+	WinampPlugin(), AbstractInPlugin(outPlugin)
 {
 }
 
@@ -879,47 +991,8 @@ void WinampInPlugin::closeModule()
 	quitModule();
 }
 
-void WinampInPlugin::duplicate()
-{
-	current_saved_time_ms = outPlugin->getOutputTime() % getLength();
-	
-	if (current_saved_time_ms < 0) {
-		current_saved_time_ms = 0;
-	}
-}
-
-int WinampInPlugin::resume(char* fn)
-{
-	if (current_saved_time_ms > 0) {
-		pause();
-		outPlugin->pause();
-	}
-
-	stop();
-	int err = play(fn);
-
-	if (current_saved_time_ms > 0) {
-		setOutputTime(current_saved_time_ms); // FIXME: can take a while
-		unPause();
-		outPlugin->unPause();
-		current_saved_time_ms = 0;
-	}
-
-	return err;
-}
-
-bool WinampInPlugin::cancelDuplicate()
-{
-	if (current_saved_time_ms > 0) {
-		current_saved_time_ms = 0;
-		return true;
-	}
-	
-	return false;
-}
-
 VgmstreamInPlugin::VgmstreamInPlugin(AbstractOutPlugin* outPlugin) :
-	AbstractInPlugin(outPlugin, in_vgmstream_module()), inContext(in_context_vgmstream())
+	AbstractInPlugin(outPlugin, in_vgmstream_module(), in_context_vgmstream())
 {
 	initModule(nullptr);
 }
@@ -930,23 +1003,8 @@ VgmstreamInPlugin::~VgmstreamInPlugin()
 	quitModule();
 }
 
-void VgmstreamInPlugin::duplicate()
-{
-	inContext->Duplicate();
-}
-
-int VgmstreamInPlugin::resume(char* fn)
-{
-	return inContext->Resume(fn);
-}
-
-bool VgmstreamInPlugin::cancelDuplicate()
-{
-	return inContext->CancelDuplicate();
-}
-
 InPluginWithFailback::InPluginWithFailback(AbstractOutPlugin* outPlugin, AbstractInPlugin* inPlugin1, AbstractInPlugin* inPlugin2) :
-	AbstractInPlugin(outPlugin, nullptr), inPlugin1(inPlugin1), inPlugin2(inPlugin2), current(inPlugin1)
+	AbstractInPlugin(outPlugin), inPlugin1(inPlugin1), inPlugin2(inPlugin2), current(inPlugin1)
 {
 }
 
@@ -957,6 +1015,11 @@ InPluginWithFailback::~InPluginWithFailback()
 WinampInModule* InPluginWithFailback::getMod() const
 {
 	return current->getMod();
+}
+
+WinampInContext* InPluginWithFailback::getContext() const
+{
+	return current->getContext();
 }
 
 bool replace_extension(char* fn, const char* ext)
@@ -1005,19 +1068,4 @@ int InPluginWithFailback::beforePlay(char* fna)
 	}
 
 	return AbstractInPlugin::beforePlay(fna);
-}
-
-void InPluginWithFailback::duplicate()
-{
-	current->duplicate();
-}
-
-int InPluginWithFailback::resume(char* fn)
-{
-	return current->resume(fn);
-}
-
-bool InPluginWithFailback::cancelDuplicate()
-{
-	return current->cancelDuplicate();
 }
