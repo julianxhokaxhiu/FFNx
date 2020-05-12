@@ -61,6 +61,7 @@ extern cfg_bool_t linear_filter;
 extern cfg_bool_t transparent_dialogs;
 extern cfg_bool_t mdef_fix;
 extern cfg_bool_t fancy_transparency;
+extern long enable_antialiasing;
 extern cfg_bool_t enable_anisotropic;
 extern cfg_bool_t skip_frames;
 extern cfg_bool_t ff7_more_debug;

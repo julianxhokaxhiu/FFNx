@@ -314,6 +314,18 @@ void Renderer::init()
     if (enable_vsync)
         bgfxInit.resolution.reset |= BGFX_RESET_VSYNC;
 
+    if (enable_antialiasing > 0)
+    {
+        if (enable_antialiasing <= 2)
+            bgfxInit.resolution.reset |= BGFX_RESET_MSAA_X2;
+        else if (enable_antialiasing <= 4)
+            bgfxInit.resolution.reset |= BGFX_RESET_MSAA_X4;
+        else if (enable_antialiasing <= 8)
+            bgfxInit.resolution.reset |= BGFX_RESET_MSAA_X8;
+        else if (enable_antialiasing <= 16)
+            bgfxInit.resolution.reset |= BGFX_RESET_MSAA_X16;
+    }
+
     bgfxInit.debug = renderer_debug;
     bgfxInit.callback = &bgfxCallbacks;
 

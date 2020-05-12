@@ -61,6 +61,7 @@ cfg_bool_t linear_filter = cfg_bool_t(false);
 cfg_bool_t transparent_dialogs = cfg_bool_t(false);
 cfg_bool_t mdef_fix = cfg_bool_t(true);
 cfg_bool_t fancy_transparency = cfg_bool_t(true);
+long enable_antialiasing = 0;
 cfg_bool_t enable_anisotropic = cfg_bool_t(true);
 cfg_bool_t skip_frames = cfg_bool_t(false);
 cfg_bool_t ff7_more_debug = cfg_bool_t(false);
@@ -111,6 +112,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("transparent_dialogs", &transparent_dialogs),
 		CFG_SIMPLE_BOOL("mdef_fix", &mdef_fix),
 		CFG_SIMPLE_BOOL("fancy_transparency", &fancy_transparency),
+		CFG_SIMPLE_INT("enable_antialiasing", &enable_antialiasing),
 		CFG_SIMPLE_BOOL("enable_anisotropic", &enable_anisotropic),
 		CFG_SIMPLE_BOOL("skip_frames", &skip_frames),
 		CFG_SIMPLE_BOOL("show_applog", &show_applog),
