@@ -65,7 +65,15 @@ uint load_texture_helper(char* name, uint* width, uint* height, uint use_compres
 	uint ret = 0;
 	struct stat dummy;
 
-	if (stat(name, &dummy) == 0) ret = newRenderer.createTexture(name, width, height);
+	if (stat(name, &dummy) == 0)
+	{
+		ret = newRenderer.createTexture(name, width, height);
+
+		if (ret > 0)
+		{
+			if (trace_all || trace_loaders) trace("Using texture: %s\n", name);
+		}
+	}
 
 	return ret;
 }
