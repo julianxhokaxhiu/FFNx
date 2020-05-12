@@ -18,6 +18,7 @@ Welcome to FFNx project. This is an attempt to move forward what you were used t
 
 Some of the improvements that you can find on FFNx are:
 - FF7/FF8: High DPI support!
+- FF7/FF8: Up to 16x Anisotropic support!
 - FF7/FF8: Up to 16x Antialiasing support!
 - FF7/FF8: Steam support! No Game converter required.
 - FF7 eStore support! No Game converter required.
