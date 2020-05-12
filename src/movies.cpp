@@ -182,12 +182,15 @@ void ff8_prepare_movie(uint disc, uint movie)
 	{
 		get_data_lang_path(dataPath);
 	}
-	// Unexpected cases default to current disk
-	else if (disc >= 5) {
-		disc = ff8_currentdisk - 1;
-
+	else
+	{
 		strcpy(dataPath, basedir);
 		PathAppendA(dataPath, "data");
+	}
+
+	// Unexpected cases default to current disk
+	if (disc >= 5u) {
+		disc = ff8_currentdisk - 1;
 	}
 
 	_snprintf(fmvName, sizeof(fmvName), "%s/movies/disc%02i_%02ih.%s", dataPath, disc, movie, external_movie_ext);
