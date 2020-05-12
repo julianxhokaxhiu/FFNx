@@ -10,6 +10,7 @@
 #include "../music.h"
 
 #include "plugin.h"
+#include "out_directsound.h"
 
 void winamp_music_init();
 void winamp_play_music(char* midi, uint id);
