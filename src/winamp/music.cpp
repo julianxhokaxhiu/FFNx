@@ -57,7 +57,7 @@ void winamp_apply_volume()
 	}
 }
 
-void winamp_load_song(char* midi, uint id)
+void winamp_load_song(char* midi, uint id, bool crossfade)
 {
 	char filename[MAX_PATH];
 
@@ -175,7 +175,7 @@ unsigned __stdcall winamp_render_thread(void* parameter)
 					// Play crossfade music
 					if (winamp_crossfade_midi)
 					{
-						winamp_load_song(winamp_crossfade_midi, winamp_crossfade_id);
+						winamp_load_song(winamp_crossfade_midi, winamp_crossfade_id, true);
 
 						// Request volume fade-in (later, when the song is really played)
 						next_music_started = true;
@@ -315,7 +315,7 @@ void winamp_play_music(char *midi, uint id)
 
 	if (id != winamp_current_id || winamp_song_ended)
 	{
-		winamp_load_song(midi, id);
+		winamp_load_song(midi, id, false);
 	}
 
 	LeaveCriticalSection(&winamp_mutex);

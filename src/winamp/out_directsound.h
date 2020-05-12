@@ -29,6 +29,8 @@ private:
 	static int last_pause;
 	static int last_volume;
 
+	static bool DSoundPlay(IDirectSoundBuffer* buffer);
+	static bool DSoundStop(IDirectSoundBuffer* buffer);
 	static void FakeDialog(HWND hwndParent);
 	static void Noop();
 	static int Open(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms);
