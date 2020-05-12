@@ -21,33 +21,36 @@ Some of the improvements that you can find on FFNx are:
 - FF7/FF8: Up to 16x Anisotropic support!
 - FF7/FF8: Up to 16x Antialiasing support!
 - FF7/FF8: Steam support! No Game converter required.
-- FF7 eStore support! No Game converter required.
+- FF7/FF8: Steam savegame preservation ( you will no more loose saves created with FFNx! )
+- FF7: eStore support! No Game converter required.
+- FF7: XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
 - FF7: Vertical centering for Fields and Movies
 - FF7: Fullscreen Battle scenes
 - FF7: Menu cursor on the middle of words vertical alignment
-- FF7: XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
 - FF7: Movies will continue to play if the window game loses focus ( in window mode )
 - FF7: Movies volume will respect global sound volume
-- FF7/FF8: Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins!
-- FF7/FF8: Steam savegame preservation ( you will no more loose saves created with FFNx! )
 - FF7: Steam sound and music volume configuration preservation ( configure at your pleasure and on the next run it will be inherited )
+
+And, on top of all of this you will also find:
 - One single .dll file to be copied
-- Support for 7h 1.x/2.x
+- Support for 7h 1.x/[2.x](#how-to-install-on-7h-2x)
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
-- Default VGMStream plugin WITH LOOP support for .ogg files!
+- VGMStream built-in library WITH LOOP support for .ogg files!
 - Four different Rendering Backends:
-  - Vulkan
-  - OpenGL
-  - DirectX 11
-  - DirectX 12
+  - OpenGL ( safe default )
+  - DirectX 11 ( suggested alternative to OpenGL )
+  - DirectX 12 ( experimental! )
+  - Vulkan ( experimental! )
 
 ## Modding
 In order to enhance the modding experience, FFNx does also provide:
 - Game rendering inspection through [RenderDoc](https://renderdoc.org/)!
 - [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
-- Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L80)
+- Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L100)
+- Support for an override layer of the data directory using [override_path](misc/FFNx.cfg#L116)
 - Support for [Ficedula FF7Music](http://ff8.fr/pub/FF7Music.zip)
-- Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0)
+- Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins ( useful to play for eg. [PSF](http://www.vgmpf.com/Wiki/index.php?title=PSF) sound files )
+- Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0) patching files inside of the [hext_patching_path](misc/FFNx.cfg#L113)
 
 ## Tech Stack
 If you're curious to know it, FFNx is made with:
