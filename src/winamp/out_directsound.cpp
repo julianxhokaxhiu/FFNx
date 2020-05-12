@@ -92,7 +92,7 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 	sbdesc.dwSize = sizeof(sbdesc);
 	sbdesc.lpwfxFormat = &state.sound_format;
-	sbdesc.dwFlags = DSBCAPS_STATIC | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY
+	sbdesc.dwFlags = DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY
 		| DSBCAPS_CTRLPAN | DSBCAPS_GETCURRENTPOSITION2
 		| DSBCAPS_TRUEPLAYPOSITION | DSBCAPS_GLOBALFOCUS;
 	sbdesc.dwReserved = 0;
@@ -118,13 +118,42 @@ int CustomOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	return 0;
 }
 
+bool CustomOutPlugin::DSoundPlay(IDirectSoundBuffer* buffer)
+{
+	HRESULT res = buffer->Play(0, 0, DSBPLAY_LOOPING);
+
+	if (DSERR_BUFFERLOST == res) {
+		buffer->Restore();
+
+		res = buffer->Play(0, 0, DSBPLAY_LOOPING);
+	}
+
+	// Fix crackling
+	Sleep(10);
+	float decibel = DSBVOLUME_MIN;
+	if (last_volume != 0) {
+		decibel = 2000.0f * log10f(last_volume / 255.0f);
+	}
+	buffer->SetVolume(decibel);
+	
+	return DS_OK == res;
+}
+
+bool CustomOutPlugin::DSoundStop(IDirectSoundBuffer* buffer)
+{
+	// Fix crackling
+	buffer->SetVolume(DSBVOLUME_MIN);
+	Sleep(10);
+	return DS_OK == buffer->Stop();
+}
+
 void CustomOutPlugin::Close()
 {
 	if (trace_all || trace_music) trace("Close directsound (%i)\n", *common_externals.directsound ? 1 : 0);
 
 	if (state.sound_buffer) {
 		state.last_stop_t = GetTickCount();
-		if (*common_externals.directsound && (state.sound_buffer->Stop() || state.sound_buffer->Release())) {
+		if (*common_externals.directsound && (!DSoundStop(state.sound_buffer) || state.sound_buffer->Release())) {
 			error("couldn't stop or release sound buffer (%i)\n", GetLastError());
 		}
 		state.sound_buffer = nullptr;
@@ -135,7 +164,7 @@ bool CustomOutPlugin::playHelper()
 {
 	if (trace_all || trace_music) trace("Play directsound\n");
 
-	if (state.sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
+	if (!DSoundPlay(state.sound_buffer)) {
 		error("couldn't play sound buffer\n");
 		return false;
 	}
@@ -274,7 +303,7 @@ int CustomOutPlugin::Pause(int pause)
 			if (state.sound_buffer && *common_externals.directsound && state.play_started) {
 				if (trace_all || trace_music) trace("Stop directsound\n");
 
-				if (state.sound_buffer->Stop()) {
+				if (!DSoundStop(state.sound_buffer)) {
 					error("couldn't stop sound buffer\n");
 				}
 			}
@@ -289,7 +318,7 @@ int CustomOutPlugin::Pause(int pause)
 				if (trace_all || trace_music) trace("Play directsound\n");
 
 				if ((!state.play_started && state.bytes_written >= state.prebuffer_size && !playHelper())
-					|| state.sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
+					|| !DSoundPlay(state.sound_buffer)) {
 					error("couldn't play sound buffer\n");
 				}
 			}
@@ -337,7 +366,7 @@ void CustomOutPlugin::Flush(int t)
 
 	if (state.sound_buffer && *common_externals.directsound) {
 		if (!last_pause && state.play_started) {
-			state.sound_buffer->Stop();
+			DSoundStop(state.sound_buffer);
 		}
 
 		LPVOID ptr1, ptr2;
@@ -409,7 +438,7 @@ void CustomOutPlugin::Duplicate()
 	}
 
 	if (state.sound_buffer && *common_externals.directsound
-		&& state.play_started && state.sound_buffer->Stop()) {
+		&& state.play_started && !DSoundStop(state.sound_buffer)) {
 		error("couldn't stop sound buffer\n");
 	}
 
@@ -421,13 +450,11 @@ void CustomOutPlugin::Duplicate()
 
 int CustomOutPlugin::Resume(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms)
 {
-	if (nullptr != state.sound_buffer) {
-		Close();
-	}
-
 	if (nullptr == dup_state.sound_buffer) {
 		return Open(samplerate, numchannels, bitspersamp, bufferlenms, prebufferms);
 	}
+
+	IDirectSoundBuffer* old_sound_buffer = state.sound_buffer;
 
 	// Restore saved state
 	memcpy(&state, &dup_state, sizeof(state));
@@ -436,8 +463,13 @@ int CustomOutPlugin::Resume(int samplerate, int numchannels, int bitspersamp, in
 
 	SetVolume(-1); // Set last known volume to buffer
 
-	if (state.play_started && state.sound_buffer->Play(0, 0, DSBPLAY_LOOPING)) {
+	if (*common_externals.directsound && state.play_started && !DSoundPlay(state.sound_buffer)) {
 		error("couldn't play sound buffer\n");
+	}
+
+	if (nullptr != old_sound_buffer && *common_externals.directsound
+			&& (DSoundStop(old_sound_buffer) || old_sound_buffer->Release())) {
+		error("couldn't stop or release sound buffer (%i)\n", GetLastError());
 	}
 
 	return 0;
@@ -449,7 +481,7 @@ int CustomOutPlugin::CancelDuplicate()
 		return 0;
 	}
 
-	if (*common_externals.directsound && (dup_state.sound_buffer->Stop() || dup_state.sound_buffer->Release())) {
+	if (*common_externals.directsound && (DSoundStop(dup_state.sound_buffer) || dup_state.sound_buffer->Release())) {
 		error("CancelDuplicate: couldn't stop or release sound buffer (%i)\n", GetLastError());
 	}
 

@@ -882,13 +882,18 @@ void winamp_Duplicate() {
 
 int winamp_Resume(const char* fn) {
     int max_latency;
-
-    if (vgmstream) {
-        winamp_Stop();
-    }
     
     if (!dup_vgmstream) {
+        if (vgmstream) {
+            winamp_Stop();
+        }
+
         return winamp_Play(fn);
+    }
+
+    if (vgmstream) {
+        winamp_Stop_thread();
+        close_vgmstream(vgmstream);
     }
 
     // Restore dup_vgmstream
