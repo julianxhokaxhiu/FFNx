@@ -268,7 +268,7 @@ void Renderer::printMatrix(char* name, float* mat)
 
 bool Renderer::doesItFitInMemory(size_t size)
 {
-    return ((size + get_ram_size()) < memoryCap);
+    return size < last_ram_state.ullAvailVirtual;
 }
 
 // PUBLIC

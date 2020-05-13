@@ -38,6 +38,9 @@
 #include "music.h"
 #include "saveload.h"
 
+// global RAM status
+MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
+
 // global FF7/FF8 flag, available after version check
 uint ff8 = false;
 
@@ -354,6 +357,9 @@ void common_flip(struct game_obj *game_object)
 	time_t last_seconds = last_frame.time;
 	struct game_mode *mode = getmode_cached();
 
+	// Update RAM usage info
+	GlobalMemoryStatusEx(&last_ram_state);
+
 	// draw any z-sorted content now that we're done drawing everything else
 	gl_draw_deferred();
 
@@ -388,7 +394,7 @@ void common_flip(struct game_obj *game_object)
 #ifdef PROFILE
 			gl_draw_text(col, row++, color, 255, "Profiling: %I64u us", (time_t)((profile_total * 1000000.0) / VREF(game_object, countspersecond)));
 #endif
-			gl_draw_text(col, row++, color, 255, "RAM usage: %uMB", get_ram_size() / (1024 * 1024));
+			gl_draw_text(col, row++, color, 255, "RAM usage: %llu MB / %llu MB", (last_ram_state.ullTotalVirtual - last_ram_state.ullAvailVirtual) / (1024 * 1024), last_ram_state.ullTotalVirtual / ( 1024 * 1024 ));
 			gl_draw_text(col, row++, color, 255, "Textures: %u", stats.texture_count);
 			gl_draw_text(col, row++, color, 255, "External textures: %u", stats.external_textures);
 			gl_draw_text(col, row++, color, 255, "Texture reloads: %u", stats.texture_reloads);
@@ -423,7 +429,7 @@ void common_flip(struct game_obj *game_object)
 		if (show_stats)
 		{
 			char tmp[768];
-			sprintf_s(tmp, 768, " | RAM: %u MB | nTex: %u | nExt.Tex: %u", get_ram_size() / (1024 * 1024), stats.texture_count, stats.external_textures);
+			sprintf_s(tmp, 768, " | RAM: %llu MB / %llu MB | nTex: %u | nExt.Tex: %u", (last_ram_state.ullTotalVirtual - last_ram_state.ullAvailVirtual) / (1024 * 1024), last_ram_state.ullTotalVirtual / (1024 * 1024), stats.texture_count, stats.external_textures);
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 
@@ -1635,16 +1641,6 @@ struct tex_header *make_framebuffer_tex(uint tex_w, uint tex_h, uint x, uint y, 
 	VRASS(tex_header, fb_tex.h, h);
 
 	return VPTRCAST(tex_header, tex_header);
-}
-
-SIZE_T get_ram_size()
-{
-	PROCESS_MEMORY_COUNTERS_EX pmc;
-
-	pmc.cb = sizeof(pmc);
-
-	GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
-	return pmc.WorkingSetSize;
 }
 
 void qpc_get_time(time_t *dest)

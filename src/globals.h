@@ -32,6 +32,7 @@
 #define FFNX_MUSIC_WINAMP 1
 #define FFNX_MUSIC_FF7MUSIC 2
 
+extern MEMORYSTATUSEX last_ram_state;
 extern uint version;
 extern uint steam_edition;
 extern uint estore_edition;
