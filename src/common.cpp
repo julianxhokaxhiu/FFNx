@@ -2120,12 +2120,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		if (external_music_path != nullptr)
 		{
-			if (_access(external_music_path, 0) != -1)
-			{
-				use_external_music = FFNX_MUSIC_WINAMP;
-			}
-
-			else
+			if (_access(external_music_path, 0) == -1)
 			{
 				external_music_path == nullptr;
 			}
@@ -2177,7 +2172,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 					estore_edition = true;
 				}
 
-				if (use_external_music == FFNX_MUSIC_NONE) use_external_music = FFNX_MUSIC_WINAMP;
+				use_external_music = cfg_bool_t(true);
 				if (external_music_path == nullptr) external_music_path = "data/music_ogg";
 
 			}
@@ -2191,7 +2186,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				external_music_path = "music/vgmstream";
 				if (_access(external_music_path, 0) != -1)
 				{
-					use_external_music = FFNX_MUSIC_WINAMP;
+					use_external_music = cfg_bool_t(true);
 				}
 			}
 		}
