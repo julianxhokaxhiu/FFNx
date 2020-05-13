@@ -17,6 +17,9 @@ Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with nativ
 Welcome to FFNx project. This is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
 Some of the improvements that you can find on FFNx are:
+- FF7/FF8: [/LARGEADDRESSAWARE](https://docs.microsoft.com/en-us/cpp/build/reference/largeaddressaware-handle-large-addresses?view=vs-2019) support!
+
+  Up to 3.5GB of space available for mods ( this requires the [4GB Patch](https://ntcore.com/?page_id=371) in your ff7.exe ).
 - FF7/FF8: High DPI support!
 - FF7/FF8: Up to 16x Anisotropic support!
 - FF7/FF8: Up to 16x Antialiasing support!
