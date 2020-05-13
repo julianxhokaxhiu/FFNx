@@ -506,6 +506,8 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 		// File was not found, but was required
 		else if (redirect_status == 1)
 		{
+			strcpy(_filename, filename);
+
 			goto error;
 		}
 	}
