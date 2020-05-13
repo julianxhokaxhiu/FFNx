@@ -28,10 +28,6 @@
 #include "ff7.h"
 #include "ff8.h"
 
-#define FFNX_MUSIC_NONE 0
-#define FFNX_MUSIC_WINAMP 1
-#define FFNX_MUSIC_FF7MUSIC 2
-
 extern MEMORYSTATUSEX last_ram_state;
 extern uint version;
 extern uint steam_edition;
