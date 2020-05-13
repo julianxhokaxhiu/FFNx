@@ -48,7 +48,6 @@ In order to enhance the modding experience, FFNx does also provide:
 - [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
 - Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L100)
 - Support for an override layer of the data directory using [override_path](misc/FFNx.cfg#L116)
-- Support for [Ficedula FF7Music](http://ff8.fr/pub/FF7Music.zip)
 - Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins ( useful to play for eg. [PSF](http://www.vgmpf.com/Wiki/index.php?title=PSF) sound files )
 - Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0) patching files inside of the [hext_patching_path](misc/FFNx.cfg#L113)
 
@@ -179,7 +178,6 @@ These people are:
   - for original Hext concept and specification that FFNx implemented as well
   - for the field vertical centering hext patch, , which FFNx provides a default patch for
 - [ficedula](http://forums.qhimm.com/index.php?action=profile;u=68):
-  - for FF7Music which FFNx provides support for
   - for 7h 1.x which FFNx provides support for
 - [Iros](https://forums.qhimm.com/index.php?action=profile;u=21785):
   - for 7h 1.x which FFNx provides support for

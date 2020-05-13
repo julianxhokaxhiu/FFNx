@@ -30,7 +30,7 @@
 char *mod_path = nullptr;
 cfg_bool_t use_external_movie = cfg_bool_t(true);
 char* external_movie_ext = nullptr;
-long use_external_music = FFNX_MUSIC_NONE;
+cfg_bool_t use_external_music = cfg_bool_t(true);
 char* external_music_path = nullptr;
 char* external_music_ext = nullptr;
 char* winamp_in_plugin = nullptr;
@@ -81,7 +81,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
 		CFG_SIMPLE_BOOL("use_external_movie", &use_external_movie),
 		CFG_SIMPLE_STR("external_movie_ext", &external_movie_ext),
-		CFG_SIMPLE_INT("use_external_music", &use_external_music),
+		CFG_SIMPLE_BOOL("use_external_music", &use_external_music),
 		CFG_SIMPLE_STR("external_music_path", &external_music_path),
 		CFG_SIMPLE_STR("external_music_ext", &external_music_ext),
 		CFG_SIMPLE_STR("winamp_in_plugin", &winamp_in_plugin),
@@ -264,10 +264,6 @@ void read_cfg()
 	// EXTERNAL MOVIE EXTENSION
 	if (external_movie_ext == nullptr)
 		external_movie_ext = "avi";
-
-	// EXTERNAL MUSIC FLAG
-	if (use_external_music > FFNX_MUSIC_FF7MUSIC)
-		use_external_music = FFNX_MUSIC_NONE;
 
 	// EXTERNAL MUSIC EXTENSION
 	if (external_music_ext == nullptr)
