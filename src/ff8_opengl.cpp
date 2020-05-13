@@ -434,5 +434,5 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 
 void ff8_post_init()
 {
-	if(use_external_movie) movie_init();
+	if(enable_ffmpeg_videos) movie_init();
 }

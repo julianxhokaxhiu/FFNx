@@ -2249,7 +2249,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			patch_code_dword(offset3, (DWORD)dotemuMciSendCommandA);
 
 			// Steam edition contains movies unpacked
-			use_external_movie = cfg_bool_t(true);
+			enable_ffmpeg_videos = cfg_bool_t(true);
 		}
 
 		// Apply hext patching
