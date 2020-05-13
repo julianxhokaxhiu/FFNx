@@ -29,7 +29,7 @@
 
 extern char *mod_path;
 extern cfg_bool_t enable_ffmpeg_videos;
-extern char* external_movie_ext;
+extern char* ffmpeg_video_ext;
 extern cfg_bool_t use_external_music;
 extern char* external_music_path;
 extern char* external_music_ext;

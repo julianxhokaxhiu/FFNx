@@ -118,7 +118,7 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 7. Extract the ZIP content next to the `ff7_*.exe` files
 8. Update `FFNx.cfg` flags with these values:
 ```
-external_movie_ext = webm
+ffmpeg_video_ext = webm
 external_music_path = data/music_2
 external_music_ext = akb
 ```
