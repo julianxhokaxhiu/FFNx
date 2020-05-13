@@ -28,7 +28,7 @@
 
 // configuration variables with their default values
 char *mod_path = nullptr;
-cfg_bool_t use_external_movie = cfg_bool_t(true);
+cfg_bool_t enable_ffmpeg_videos = cfg_bool_t(true);
 char* external_movie_ext = nullptr;
 long use_external_music = FFNX_MUSIC_NONE;
 char* external_music_path = nullptr;
@@ -79,7 +79,7 @@ char* direct_mode_path = nullptr;
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
-		CFG_SIMPLE_BOOL("use_external_movie", &use_external_movie),
+		CFG_SIMPLE_BOOL("enable_ffmpeg_videos", &enable_ffmpeg_videos),
 		CFG_SIMPLE_STR("external_movie_ext", &external_movie_ext),
 		CFG_SIMPLE_INT("use_external_music", &use_external_music),
 		CFG_SIMPLE_STR("external_music_path", &external_music_path),
@@ -148,7 +148,7 @@ void read_cfg()
 {
 	cfg_t* cfg;
 
-	use_external_movie = cfg_bool_t(!ff8);
+	enable_ffmpeg_videos = cfg_bool_t(!ff8);
 
 	if (_access(FFNX_CFG_FILE, 0) == 0)
 	{
