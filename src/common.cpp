@@ -2122,6 +2122,19 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		_strlwr(parentName);
 
+		if (external_music_path != nullptr)
+		{
+			if (_access(external_music_path, 0) != -1)
+			{
+				use_external_music = FFNX_MUSIC_WINAMP;
+			}
+
+			else
+			{
+				external_music_path == nullptr;
+			}
+		}
+
 		if (!ff8 &&
 			(
 				strstr(parentName, "ff7.exe") != NULL ||
