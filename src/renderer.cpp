@@ -322,7 +322,7 @@ void Renderer::init()
     bx::mtxOrtho(internalState.backendProjMatrix, 0.0f, game_width, game_height, 0.0f, bgfxInit.type == bgfx::RendererType::OpenGL ? -1.0f : 0.0f, 1.0f, 0.0, bgfx::getCaps()->homogeneousDepth);
 
     // Create an empty texture
-    emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
+    emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_NONE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 
     uint64_t fbFlags = BGFX_TEXTURE_RT;
 
@@ -507,6 +507,20 @@ void Renderer::draw()
     bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
 
     internalState.bHasDrawBeenDone = true;
+
+    // Reset texture sampler
+    {
+        uint idxMax = 3;
+
+        for (uint idx = 0; idx < idxMax; idx++)
+        {
+            bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), emptyTexture);
+        }
+
+        bgfx::touch(0);
+
+        bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
+    }
 };
 
 void Renderer::show()
