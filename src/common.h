@@ -182,6 +182,7 @@ struct common_externals
 	uint get_time;
 	uint midi_init;
 	char *(*get_midi_name)(uint);
+	uint use_midi;
 	uint play_midi;
 	uint stop_midi;
 	uint cross_fade_midi;

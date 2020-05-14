@@ -45,6 +45,7 @@ void music_init()
 		}
 		else {
 			replace_function(common_externals.midi_init, midi_init);
+			replace_function(common_externals.use_midi, ff7_use_midi);
 			replace_function(common_externals.play_midi, play_midi);
 			replace_function(common_externals.cross_fade_midi, cross_fade_midi);
 			replace_function(common_externals.pause_midi, pause_midi);
@@ -122,6 +123,17 @@ uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
 	}
 
 	return 1; // Success
+}
+
+uint ff7_use_midi(uint midi)
+{
+	char* name = common_externals.get_midi_name(midi);
+
+	if (winamp_can_play(name)) {
+		return 1;
+	}
+
+	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
 void play_midi(uint midi)

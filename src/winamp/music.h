@@ -13,6 +13,7 @@
 #include "out_directsound.h"
 
 void winamp_music_init();
+bool winamp_can_play(char* midi);
 void winamp_play_music(char* midi, uint id);
 void winamp_stop_music();
 void winamp_cross_fade_music(char* midi, uint id, int time);
