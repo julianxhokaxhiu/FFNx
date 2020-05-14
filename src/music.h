@@ -29,7 +29,7 @@ uint midi_init(uint unknown);
 uint ff7_directsound_release();
 void music_cleanup();
 uint ff7_use_midi(uint midi);
-void play_midi(uint midi);
+void ff7_play_midi(uint midi);
 uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2);
 void cross_fade_midi(uint midi, uint time);
 void pause_midi();
