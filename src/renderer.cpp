@@ -441,9 +441,11 @@ void Renderer::draw()
                 }
                 else
                 {
-                    if (internalState.bIsMovie) flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                    if (internalState.bIsMovie) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
                     if (!internalState.bDoTextureFiltering) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+
+                    if (flags == 0) flags = UINT32_MAX;
                 }
 
                 bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), handle, flags);
@@ -646,7 +648,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
             false,
             1,
             texFormat,
-            BGFX_TEXTURE_NONE,
+            BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
             stride > 0 ? NULL : mem
         );
 
@@ -718,7 +720,7 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
                     1 < img->m_numMips,
                     img->m_numLayers,
                     bgfx::TextureFormat::Enum(img->m_format),
-                    BGFX_TEXTURE_NONE,
+                    BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
                     mem
                 );
 
