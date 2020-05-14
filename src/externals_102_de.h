@@ -71,3 +71,4 @@ ff7_externals.wm_activateapp =                0x409CF2;
 ff7_externals.get_gamepad =                   0x41F99E;
 ff7_externals.update_gamepad_status =         0x41F7D8;
 ff7_externals.gamepad_status = (struct ff7_gamepad_status*)0x9AEBE8;
+ff7_externals.music_lock_clear_fix =          0x63C030;

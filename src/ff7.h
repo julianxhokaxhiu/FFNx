@@ -1601,6 +1601,8 @@ struct ff7_externals
 	uint get_gamepad;
 	uint update_gamepad_status;
 	struct ff7_gamepad_status* gamepad_status;
+	uint music_is_locked;
+	uint music_lock_clear_fix;
 };
 
 uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

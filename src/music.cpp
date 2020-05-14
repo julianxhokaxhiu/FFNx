@@ -31,6 +31,7 @@ void music_init()
 {
 	// Add Global Focus flag to DirectSound Secondary Buffers
 	patch_code_byte(common_externals.directsound_buffer_flags_1 + 0x4, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
+	patch_code_dword(ff7_externals.music_lock_clear_fix + 2, 0xCC195C);
 
 	if (use_external_music)
 	{
@@ -46,7 +47,7 @@ void music_init()
 		else {
 			replace_function(common_externals.midi_init, midi_init);
 			replace_function(common_externals.use_midi, ff7_use_midi);
-			replace_function(common_externals.play_midi, play_midi);
+			replace_function(common_externals.play_midi, ff7_play_midi);
 			replace_function(common_externals.cross_fade_midi, cross_fade_midi);
 			replace_function(common_externals.pause_midi, pause_midi);
 			replace_function(common_externals.restart_midi, restart_midi);
@@ -116,11 +117,8 @@ uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
 		return 0; // Error
 	}
 
-	if (use_external_music)
-	{
-		winamp_set_music_volume(volume);
-		winamp_play_music(midi_name, midi);
-	}
+	winamp_set_music_volume(volume);
+	winamp_play_music(midi_name, midi);
 
 	return 1; // Success
 }
@@ -136,34 +134,29 @@ uint ff7_use_midi(uint midi)
 	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
-void play_midi(uint midi)
+void ff7_play_midi(uint midi)
 {
-	if (use_external_music)
-		winamp_play_music(common_externals.get_midi_name(midi), midi);
+	winamp_play_music(common_externals.get_midi_name(midi), midi);
 }
 
 void cross_fade_midi(uint midi, uint time)
 {
-	if (use_external_music)
-		winamp_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
+	winamp_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
 }
 
 void pause_midi()
 {
-	if (use_external_music)
-		winamp_pause_music();
+	winamp_pause_music();
 }
 
 void restart_midi()
 {
-	if (use_external_music)
-		winamp_resume_music();
+	winamp_resume_music();
 }
 
 void stop_midi()
 {
-	if (use_external_music)
-		winamp_stop_music();
+	winamp_stop_music();
 }
 
 uint ff8_stop_midi()
@@ -182,9 +175,7 @@ uint ff8_stop_midi()
 
 uint midi_status()
 {
-	if (use_external_music)
-		return winamp_music_status();
-	return 0;
+	return winamp_music_status();
 }
 
 uint ff8_set_direct_volume(int volume)
@@ -205,33 +196,28 @@ uint ff8_set_direct_volume(int volume)
 		volume = (pow(10, (volume + 2000) / 2000.0f) / 10.0f) * 255.0f;
 	}
 	
-	if (use_external_music)
-		winamp_set_direct_volume(volume);
+	winamp_set_direct_volume(volume);
 	return 1; // Success
 }
 
 void set_master_midi_volume(uint volume)
 {
-	if (use_external_music)
-		winamp_set_master_music_volume(volume);
+	winamp_set_master_music_volume(volume);
 }
 
 void set_midi_volume(uint volume)
 {
-	if (use_external_music)
-		winamp_set_music_volume(volume);
+	winamp_set_music_volume(volume);
 }
 
 void set_midi_volume_trans(uint volume, uint step)
 {
-	if (use_external_music)
-		winamp_set_music_volume_trans(volume, step);
+	winamp_set_music_volume_trans(volume, step);
 }
 
 void set_midi_tempo(unsigned char tempo)
 {
-	if (use_external_music)
-		winamp_set_music_tempo(tempo);
+	winamp_set_music_tempo(tempo);
 }
 
 uint ff7_directsound_release()
@@ -249,14 +235,12 @@ uint ff7_directsound_release()
 
 void music_cleanup()
 {
-	if (use_external_music)
-		winamp_music_cleanup();
+	winamp_music_cleanup();
 }
 
 uint remember_playing_time()
 {
-	if (use_external_music)
-		winamp_remember_playing_time();
+	winamp_remember_playing_time();
 	return 0;
 }
 
