@@ -31,6 +31,7 @@ common_externals.get_time =                   0x660310;
 common_externals.midi_init =                  0x6DE000;
 common_externals.get_midi_name = (char* (*)(uint))0x6E6950;
 common_externals.play_midi =                  0x6DE8D5;
+common_externals.use_midi =                   0x6DDF23;
 common_externals.stop_midi =                  0x6DF6AB;
 common_externals.cross_fade_midi =            0x6DF46E;
 common_externals.pause_midi =                 0x6DF5FB;

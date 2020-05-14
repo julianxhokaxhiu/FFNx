@@ -57,6 +57,11 @@ void winamp_apply_volume()
 	}
 }
 
+void build_filename(char* filename, char* midi, char* ext)
+{
+	sprintf(filename, "%s/%s/%s.%s", basedir, external_music_path, midi, ext);
+}
+
 void winamp_load_song(char* midi, uint id, bool crossfade)
 {
 	char filename[MAX_PATH];
@@ -82,7 +87,7 @@ void winamp_load_song(char* midi, uint id, bool crossfade)
 		return;
 	}
 	
-	sprintf(filename, "%s/%s/%s.%s", basedir, external_music_path, midi, external_music_ext);
+	build_filename(filename, midi, external_music_ext);
 	
 	winamp_apply_volume();
 
@@ -304,6 +309,15 @@ void winamp_music_init()
 	winampRenderHandle = (HANDLE)_beginthreadex(nullptr, 0, &winamp_render_thread, nullptr, 0, &winampRenderThreadID);
 
 	info("Winamp music plugin loaded using %s and %s\n", in_type, out_type);
+}
+
+bool winamp_can_play(char* midi)
+{
+	char filename[MAX_PATH];
+
+	build_filename(filename, midi, external_music_ext);
+
+	return _access(filename, 0) == 0;
 }
 
 // start playing some music, <midi> is the name of the MIDI file without the .mid extension
