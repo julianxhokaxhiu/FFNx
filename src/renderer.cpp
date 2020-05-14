@@ -345,7 +345,7 @@ void Renderer::init()
             false,
             1,
             bgfx::TextureFormat::RGBA8,
-            fbFlags
+            fbFlags | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
         ),
         bgfx::createTexture2D(
             framebufferWidth,
@@ -353,7 +353,7 @@ void Renderer::init()
             false,
             1,
             bgfx::TextureFormat::D24S8,
-            fbFlags
+            fbFlags | BGFX_TEXTURE_RT_WRITE_ONLY
         )
     };
 
