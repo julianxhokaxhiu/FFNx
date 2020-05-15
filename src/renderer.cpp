@@ -270,12 +270,10 @@ bool Renderer::doesItFitInMemory(size_t size)
 {
     if (size <= 0) glitch("Unexpected texture size while checking if it fits in memory.\n");
 
-    static size_t requiredSpace = (512 * 1024 * 1024);
-
     // We need to check this value as much as in real time as possible, to avoid possible crashes
     GlobalMemoryStatusEx(&last_ram_state);
 
-    return (size < last_ram_state.ullAvailVirtual) && (last_ram_state.ullAvailVirtual > requiredSpace);
+    return size < last_ram_state.ullAvailVirtual;
 }
 
 // PUBLIC
@@ -655,7 +653,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
 
     // If the texture we are going to create does not fit in memory, return an empty one.
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
-    if (doesItFitInMemory(texInfo.storageSize))
+    if (doesItFitInMemory(texInfo.storageSize) && (data != NULL))
     {
         const bgfx::Memory* mem = bgfx::copy(data, texInfo.storageSize);
 

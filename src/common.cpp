@@ -994,7 +994,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			}
 
 			// convert source data
-			convert_image_data(VREF(tex_header, image_data), image_data, w, h, tex_format, invert_alpha, color_key, palette_offset, reference_alpha);
+			if (image_data != NULL) convert_image_data(VREF(tex_header, image_data), image_data, w, h, tex_format, invert_alpha, color_key, palette_offset, reference_alpha);
 
 			// save texture to modpath if save_textures is enabled
 			if(save_textures && (uint)VREF(tex_header, file.pc_name) > 32)
