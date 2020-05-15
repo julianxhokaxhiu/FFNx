@@ -17,6 +17,7 @@ target_link_libraries(${RELEASE_NAME}
 	shlwapi
     psapi
     winmm
+    shcore
 	BGFX::BGFX
     BGFX::BIMG
     BGFX::BIMG_DECODE
