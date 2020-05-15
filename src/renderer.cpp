@@ -268,7 +268,12 @@ void Renderer::printMatrix(char* name, float* mat)
 
 bool Renderer::doesItFitInMemory(size_t size)
 {
-    return size < last_ram_state.ullAvailVirtual;
+    static size_t requiredSpace = (512 * 1024 * 1024);
+
+    // We need to check this value as much as in real time as possible, to avoid possible crashes
+    GlobalMemoryStatusEx(&last_ram_state);
+
+    return (size < last_ram_state.ullAvailVirtual) && (last_ram_state.ullAvailVirtual > requiredSpace);
 }
 
 // PUBLIC
