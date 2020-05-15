@@ -715,19 +715,14 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
 
         if (buffer != nullptr)
         {
-            bimg::imageParse(imgSize, buffer, filesize + 1);
-
-            if (doesItFitInMemory(imgSize.m_size))
-            {
-                img = bimg::imageParse(&defaultAllocator, buffer, filesize + 1);
-            }
+            img = bimg::imageParse(&defaultAllocator, buffer, filesize + 1);
 
             driver_free(buffer);
         }
 
         if (img != nullptr)
         {
-            if (gl_check_texture_dimensions(img->m_width, img->m_height, filename))
+            if (gl_check_texture_dimensions(img->m_width, img->m_height, filename) && doesItFitInMemory(img->m_size))
             {
                 const bgfx::Memory* mem = bgfx::copy(img->m_data, img->m_size);
 
