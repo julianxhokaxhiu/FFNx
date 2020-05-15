@@ -1,17 +1,22 @@
-/*
- *	This program is free software: you can redistribute it and/or modify
- *	it under the terms of the GNU Lesser General Public License as published by
- *	the Free Software Foundation, either version 3 of the License, or
- *	(at your option) any later version.
- *
- *	This program is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	GNU Lesser General Public License for more details.
- *
- *	You should have received a copy of the GNU Lesser General Public License
- *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+/****************************************************************************/
+//    Copyright (C) 2009 Aali132                                            //
+//    Copyright (C) 2018 quantumpencil                                      //
+//    Copyright (C) 2018 Maxime Bacoux                                      //
+//    Copyright (C) 2020 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2020 myst6re                                            //
+//    Copyright (C) 2020 Chris Rizzitello                                   //
+//                                                                          //
+//    This file is part of FFNx                                             //
+//                                                                          //
+//    FFNx is free software: you can redistribute it and/or modify          //
+//    it under the terms of the GNU General Public License as published by  //
+//    the Free Software Foundation, either version 3 of the License         //
+//                                                                          //
+//    FFNx is distributed in the hope that it will be useful,               //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of        //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
+//    GNU General Public License for more details.                          //
+/****************************************************************************/
 
 #include "music.h"
 

@@ -212,6 +212,6 @@ These people are:
 I'm sure I forgot many others through the route. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
 ## License
-See [LICENSE](LICENSE).
+See [COPYING.TXT](COPYING.TXT).
 
 All rights belong to their respective owners.
