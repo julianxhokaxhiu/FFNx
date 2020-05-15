@@ -639,7 +639,7 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
 
 uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool generateMips)
 {
-    bgfx::TextureHandle ret;
+    bgfx::TextureHandle ret = { 0 };
 
     bgfx::TextureFormat::Enum texFormat = bgfx::TextureFormat::R8;
     bimg::TextureFormat::Enum imgFormat = bimg::TextureFormat::R8;
