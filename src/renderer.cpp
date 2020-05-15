@@ -655,11 +655,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
 
     // If the texture we are going to create does not fit in memory, return an empty one.
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
-    if (!doesItFitInMemory(texInfo.storageSize))
-    {
-        ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
-    }
-    else
+    if (doesItFitInMemory(texInfo.storageSize))
     {
         const bgfx::Memory* mem = bgfx::copy(data, texInfo.storageSize);
 
@@ -748,16 +744,8 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
                 *width = img->m_width;
                 *height = img->m_height;
             }
-            else
-            {
-                ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
-            }
 
             bimg::imageFree(img);
-        }
-        else
-        {
-            ret = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8);
         }
     }
 
