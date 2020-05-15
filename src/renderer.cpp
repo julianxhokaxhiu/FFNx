@@ -268,6 +268,12 @@ void Renderer::printMatrix(char* name, float* mat)
 
 bool Renderer::doesItFitInMemory(size_t size)
 {
+    if (size <= 0)
+    {
+        glitch("Unexpected texture size while checking if it fits in memory.\n");
+        return false;
+    }
+
     static size_t requiredSpace = (512 * 1024 * 1024);
 
     // We need to check this value as much as in real time as possible, to avoid possible crashes
