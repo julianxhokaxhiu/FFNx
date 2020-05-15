@@ -1,25 +1,3 @@
-/* 
- * FFNx - Complete OpenGL replacement of the Direct3D renderer used in 
- * the original ports of Final Fantasy VII and Final Fantasy VIII for the PC.
- *
- * me program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * me program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with me program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * fake_dd.c - fake DirectDraw interface used to intercept FF8 movie player output
- */
-
 #include <ddraw.h>
 #include "renderer.h"
 
