@@ -79,6 +79,8 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 		replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
 		replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
 	}
+	else
+		trace("Detected DInput controller.\n");
 
 	if(ff7_more_debug) replace_function(common_externals.debug_print2, external_debug_print2);
 
