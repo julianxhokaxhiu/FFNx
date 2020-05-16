@@ -19,7 +19,6 @@
 /****************************************************************************/
 
 #include <windows.h>
-#include <shellscalingapi.h>
 #include <stdio.h>
 #include <sys/timeb.h>
 
@@ -2061,7 +2060,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		__debugbreak();
 		*/
 
-		SetProcessDpiAwareness(PROCESS_DPI_AWARENESS::PROCESS_PER_MONITOR_DPI_AWARE);
+		SetProcessDPIAware();
 
 		GetCurrentDirectoryA(BASEDIR_LENGTH, basedir);
 

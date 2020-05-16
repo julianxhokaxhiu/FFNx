@@ -17,7 +17,6 @@ target_link_libraries(${RELEASE_NAME}
 	shlwapi
     psapi
     winmm
-    shcore
 	BGFX::BGFX
     BGFX::BIMG
     BGFX::BIMG_DECODE
@@ -31,7 +30,7 @@ target_link_libraries(${RELEASE_NAME}
 	FFMPEG::SWScale
 	VGMSTREAM::VGMSTREAM
     STACKWALKER::STACKWALKER
-    XInput
+    XINPUT9_1_0
     PUGIXML::PUGIXML
 )
 target_compile_options(${RELEASE_NAME}
