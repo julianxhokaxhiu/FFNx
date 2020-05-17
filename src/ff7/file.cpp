@@ -28,28 +28,32 @@
 
 int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = false)
 {
+	std::string newIn(in);
+	
+	std::transform(newIn.begin(), newIn.end(), newIn.begin(), ::tolower);
+
 	if (wantsSteamPath && _access(in, 0) == -1)
 	{
 		if (
-			strcmp(in, "scene.bin") == 0 ||
-			strcmp(in, "camdat0.bin") == 0 ||
-			strcmp(in, "camdat1.bin") == 0 ||
-			strcmp(in, "camdat2.bin") == 0 ||
-			strcmp(in, "co.bin") == 0
+			strcmp(newIn.data(), "scene.bin") == 0 ||
+			strcmp(newIn.data(), "camdat0.bin") == 0 ||
+			strcmp(newIn.data(), "camdat1.bin") == 0 ||
+			strcmp(newIn.data(), "camdat2.bin") == 0 ||
+			strcmp(newIn.data(), "co.bin") == 0
 			)
 		{
 			get_data_lang_path(out);
 			PathAppendA(out, R"(battle)");
-			PathAppendA(out, in);
+			PathAppendA(out, newIn.data());
 
 			if (_access(out, 0) == -1)
 				return 1;
 		}
 		else
 		{
-			const char* pos = strstr(in, "data");
+			const char* pos = strstr(newIn.data(), "data");
 
-			if (strstr(in, "data") != NULL)
+			if (pos != NULL)
 			{
 				pos += 5;
 			}
@@ -66,8 +70,8 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 
 			if ((_access(out, 0) == -1 || pos == NULL))
 			{
-				bool isSavegame = strstr(in, ".ff7") != NULL;
-				bool isCacheFile = strstr(in, ".P") != NULL;
+				bool isSavegame = strstr(newIn.data(), ".ff7") != NULL;
+				bool isCacheFile = strstr(newIn.data(), ".P") != NULL;
 
 				// If steam edition, do one more try in the user data path
 				if (steam_edition) get_userdata_path(out, size, isSavegame);
@@ -80,13 +84,13 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 						PathAppendA(out, "cache");
 						std::filesystem::create_directories(out);
 					}
-					PathAppendA(out, in);
+					PathAppendA(out, newIn.data());
 				}
 				else
 				{
 					if (isSavegame)
 					{
-						pos = strrchr(in, 47) + 1;
+						pos = strrchr(newIn.data(), 47) + 1;
 						PathAppendA(out, pos);
 					}
 					else
@@ -99,17 +103,17 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 			}
 		}
 
-		if (trace_all || trace_files) trace("Redirected: %s -> %s\n", in, out);
+		if (trace_all || trace_files) trace("Redirected: %s -> %s\n", newIn.data(), out);
 
 		return 0;
 	}
 	else
 	{
-		bool isCacheFile = strstr(in, ".P") != NULL;
+		bool isCacheFile = strstr(newIn.data(), ".P") != NULL;
 		
 		if (!isCacheFile)
 		{
-			const char* pos = strstr(in, "data");
+			const char* pos = strstr(newIn.data(), "data");
 
 			if (pos != NULL)
 			{
@@ -118,7 +122,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 			else
 			{
 				// Search for the last '\' character and get a pointer to the next char
-				pos = strrchr(in, 92);
+				pos = strrchr(newIn.data(), 92);
 
 				if (pos != NULL) pos += 1;
 			}
@@ -130,13 +134,13 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 			else
 			{
 				PathAppendA(out, R"(battle)");
-				PathAppendA(out, in);
+				PathAppendA(out, newIn.data());
 			}
 
 			if (_access(out, 0) == -1)
 				return -1;
 
-			if (trace_all || trace_files) trace("Redirected: %s -> %s\n", in, out);
+			if (trace_all || trace_files) trace("Redirected: %s -> %s\n", newIn.data(), out);
 
 			return 0;
 		}
