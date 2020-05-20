@@ -18,8 +18,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "compile_cfg.h"
-
 #include "cfg.h"
 #include "ff7.h"
 #include "gl.h"

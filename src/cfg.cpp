@@ -168,6 +168,11 @@ void read_cfg()
 	// Internal scale of 1 is not allowed
 	if (internal_resolution_scale < 2) internal_resolution_scale = 2;
 
+	// Windows x or y size can't be less then 0
+	if (window_size_x < 0) window_size_x = 0;
+	if (window_size_y < 0)window_size_y = 0;
+
+
 	// #############
 	// SAFE DEFAULTS
 	// #############
@@ -270,10 +275,4 @@ void read_cfg()
 	// MOD PATH
 	if (mod_path == nullptr)
 		mod_path = "mods/Textures";
-
-#ifdef SINGLE_STEP
-	window_size_x = 0;
-	window_size_y = 0;
-	fullscreen = cfg_bool_t(false);
-#endif
 }

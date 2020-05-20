@@ -25,7 +25,6 @@
 
 #include "log.h"
 #include "gl.h"
-#include "compile_cfg.h"
 #include "macro.h"
 
 void make_path(char *name)

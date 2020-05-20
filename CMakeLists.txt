@@ -7,6 +7,22 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT
 set(_DLL_VERSION "${_DLL_VERSION}")
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+option(FORCEHEAP "Force all allication to our heap" OFF)
+if (FORCEHEAP)
+    add_definitions(-DNO_EXT_HEAP)
+endif()
+
+option(TRACEHEAP "Trace and keep count of every allocation made by this program" OFF)
+if (TRACEHEAP)
+    add_definitions(-DHEAP_DEBUG)
+endif()
+
+option(PROFILING "Enable Profiling" OFF)
+if (PROFILING)
+    add_definitions(-DPROFILE)
+endif()
+
 option(SUPERBUILD "Build the project using a superbuild" ON)
 
 if (SUPERBUILD)
