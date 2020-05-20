@@ -71,7 +71,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 			if ((_access(out, 0) == -1 || pos == NULL))
 			{
 				bool isSavegame = strstr(newIn.data(), ".ff7") != NULL;
-				bool isCacheFile = strstr(newIn.data(), ".P") != NULL;
+				bool isCacheFile = strstr(newIn.data(), ".p") != NULL;
 
 				// If steam edition, do one more try in the user data path
 				if (steam_edition) get_userdata_path(out, size, isSavegame);
