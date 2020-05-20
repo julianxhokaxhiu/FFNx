@@ -109,14 +109,14 @@ char basedir[BASEDIR_LENGTH];
 
 uint version;
 
-// global data used for profiling macros, see compile_cfg.h for more info
+// global data used for profiling macros
 #ifdef PROFILE
 time_t profile_start;
 time_t profile_end;
 time_t profile_total;
 #endif PROFILE
 
-// support code for the HEAP_DEBUG option, see compile_cfg.h for more info
+// support code for the HEAP_DEBUG option
 #ifdef HEAP_DEBUG
 uint allocs = 0;
 
@@ -150,7 +150,7 @@ void *driver_realloc(void *ptr, uint size)
 }
 #endif
 
-// support code for the NO_EXT_HEAP option, see compile_cfg.h for more info
+// support code for the NO_EXT_HEAP option
 #ifdef NO_EXT_HEAP
 
 void ext_free(void *ptr, const char *file, uint line)
@@ -466,10 +466,6 @@ void common_flip(struct game_obj *game_object)
 			else popup_ttl -= diff;
 		}
 	}
-
-#ifdef PRERELEASE
-	gl_draw_text(8, 79, text_colors[TEXTCOLOR_RED], 255, PRERELEASE_WARNING);
-#endif
 
 	// reset per-frame stats
 	stats.texture_reloads = 0;
@@ -2069,7 +2065,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		open_applog("FFNx.log");
 		SetUnhandledExceptionFilter(ExceptionHandler);
 
-		info("FFNx driver version " VERSION PRERELEASE_WARNING "\n");
+		info("FFNx driver version " VERSION "\n");
 		version = get_version();
 
 		if (version >= VERSION_FF8_12_US)

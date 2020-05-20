@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <dsound.h>
 
-#include "compile_cfg.h"
 #include "matrix.h"
 #include "common_imports.h"
 
@@ -216,7 +215,6 @@ struct common_externals
 // heap allocation wrappers
 // driver_* functions are to be used for data internal to the driver, memory which is never allocated or free'd by the game
 // external_* functions must be used for memory which could be allocated or free'd by the game
-// see compile_cfg.h for more information on preprocessor defines
 #ifndef NO_EXT_HEAP
 #define external_free(x) common_externals.assert_free(x, "", 0)
 #define external_malloc(x) common_externals.assert_malloc(x, "", 0)
@@ -243,7 +241,7 @@ void driver_free(void *ptr);
 void *driver_realloc(void *ptr, uint size);
 #endif
 
-// profiling routines, see compile_cfg.h
+// profiling routines
 #ifdef PROFILE
 #define PROFILE_START() qpc_get_time(&profile_start)
 #define PROFILE_END() { qpc_get_time(&profile_end); profile_total += profile_end - profile_start; }
