@@ -494,7 +494,8 @@ void common_flip(struct game_obj *game_object)
 			mode->driver_mode == MODE_COASTER ||
 			mode->driver_mode == MODE_SWIRL ||
 			mode->driver_mode == MODE_CREDITS ||
-			mode->driver_mode == MODE_CONDOR
+			mode->driver_mode == MODE_CONDOR ||
+			mode->driver_mode == MODE_SNOWBOARD
 		)
 			framerate = 60;
 		else if (mode->driver_mode == MODE_BATTLE) framerate = 15;
