@@ -179,80 +179,6 @@ error:
 	return 0;
 }
 
-#define TEXRELOAD_BUFFER_SIZE 64
-
-struct 
-{
-	char *image_data;
-	uint size;
-	struct ff8_texture_set *texture_set;
-} reload_buffer[TEXRELOAD_BUFFER_SIZE];
-uint reload_buffer_index;
-
-// this function is wedged into the middle of a function designed to reload a Direct3D texture
-// when the image data changes
-void texture_reload_hack(struct ff8_texture_set *texture_set)
-{
-	uint i;
-	uint size;
-	VOBJ(tex_header, tex_header, texture_set->tex_header);
-
-	size = VREF(tex_header, tex_format.width) * VREF(tex_header, tex_format.height) * VREF(tex_header, tex_format.bytesperpixel);
-
-	// a circular buffer holds the last TEXRELOAD_BUFFER_SIZE textures that went through here
-	// and their respective image data so that we can see if anything actually changed and avoid
-	// unnecessary texture reloads
-	for(i = 0; i < TEXRELOAD_BUFFER_SIZE; i++)
-	{
-		if(reload_buffer[i].texture_set == texture_set)
-		{
-			if(reload_buffer[i].size == size)
-			{
-				if(!memcmp(reload_buffer[i].image_data, VREF(tex_header, image_data), size))
-				{
-					return;
-				}
-			}
-		}
-	}
-
-	common_unload_texture((struct texture_set *)texture_set);
-	common_load_texture((struct texture_set *)texture_set, texture_set->tex_header, texture_set->texture_format);
-
-	reload_buffer[reload_buffer_index].texture_set = texture_set;
-	driver_free(reload_buffer[reload_buffer_index].image_data);
-	reload_buffer[reload_buffer_index].image_data = (char*)driver_malloc(size);
-	memcpy(reload_buffer[reload_buffer_index].image_data, VREF(tex_header, image_data), size);
-	reload_buffer[reload_buffer_index].size = size;
-	reload_buffer_index = (reload_buffer_index + 1) % TEXRELOAD_BUFFER_SIZE;
-
-	stats.texture_reloads++;
-
-	if(trace_all) trace("texture_reload_hack: 0x%x\n", texture_set);
-}
-
-void texture_reload_hack1(struct texture_page *texture_page, uint unknown1, uint unknown2)
-{
-	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->tri_gfxobj->hundred_data->texture_set;
-
-	texture_reload_hack(texture_set);
-}
-
-void texture_reload_hack2(struct texture_page *texture_page, uint unknown1, uint unknown2)
-{
-	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->sub_tri_gfxobj->hundred_data->texture_set;
-
-	texture_reload_hack(texture_set);
-}
-
-void ff8_unload_texture(struct ff8_texture_set *texture_set)
-{
-	uint i;
-
-	// remove any references to this texture
-	for(i = 0; i < TEXRELOAD_BUFFER_SIZE; i++) if(reload_buffer[i].texture_set == texture_set) reload_buffer[i].texture_set = 0;
-}
-
 void swirl_sub_56D390(uint x, uint y, uint w, uint h)
 {
 	static struct tex_header *last_tex_header = 0;
@@ -267,9 +193,6 @@ void swirl_sub_56D390(uint x, uint y, uint w, uint h)
 
 	last_tex_header = tex_header;
 }
-
-unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
-unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
 
 struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 {
@@ -353,12 +276,6 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 
 	if(ff8_externals.nvidia_hack1) patch_code_double(ff8_externals.nvidia_hack1, 0.0);
 	if(ff8_externals.nvidia_hack2) patch_code_float(ff8_externals.nvidia_hack2, 0.0f);
-
-	memcpy_code(ff8_externals.sub_4653B0 + 0xA5, texture_reload_fix1, sizeof(texture_reload_fix1));
-	replace_function(ff8_externals.sub_4653B0 + 0xA5 + sizeof(texture_reload_fix1), texture_reload_hack1);
-
-	memcpy_code(ff8_externals.sub_465720 + 0xB3, texture_reload_fix2, sizeof(texture_reload_fix2));
-	replace_function(ff8_externals.sub_465720 + 0xB3 + sizeof(texture_reload_fix2), texture_reload_hack2);
 
 	// DirectInput hack, try to reacquire on any error
 	memset_code(ff8_externals.dinput_sub_468D80 + 0x23, 0x90, 7);

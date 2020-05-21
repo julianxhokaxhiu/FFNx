@@ -834,6 +834,5 @@ struct ff8_externals
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
-void ff8_unload_texture(struct ff8_texture_set *texture_set);
 struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object);
 void ff8_post_init();

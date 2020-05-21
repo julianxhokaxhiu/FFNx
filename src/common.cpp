@@ -662,8 +662,6 @@ void common_unload_texture(struct texture_set *texture_set)
 	}
 
 	if(current_state.texture_set == VPTR(texture_set)) current_state.texture_set = 0;
-
-	if(ff8) ff8_unload_texture(VPTRCAST(ff8_texture_set, texture_set));
 }
 
 // create a texture from an area of the framebuffer, source rectangle is encoded into tex header
