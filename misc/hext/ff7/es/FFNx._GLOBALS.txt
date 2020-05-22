@@ -1,0 +1,5 @@
+# Transparency value for ALL dialogs
+# Suggested range of values: 00 - E6 ( 0% - 90%)
+# Default: BF ( 75% )
++8AFC0
+6E6C53 = BF

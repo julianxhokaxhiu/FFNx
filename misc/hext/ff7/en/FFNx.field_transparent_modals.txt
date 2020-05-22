@@ -1,0 +1,2 @@
+# Add transparency support for FIELD dialogs
+6EB022 = 90 90 90 90 90 90

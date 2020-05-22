@@ -1,0 +1,4 @@
+![BATTLE] Entering FRAME_INITIALIZE
+
+# Add transparency support for BATTLE dialogs
+6E9475 = 90 90 90 90 90 90
