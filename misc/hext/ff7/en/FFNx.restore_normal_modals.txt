@@ -1,0 +1,4 @@
+![BATTLE] Entering FRAME_QUIT
+
+# Add transparency support for BATTLE dialogs
+6E9475 = 0F 84 B3 01 00 00
