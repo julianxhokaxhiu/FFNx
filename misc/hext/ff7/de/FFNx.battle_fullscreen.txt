@@ -1,6 +1,6 @@
 # Fullscreen battle scenes
-41B51A = 70
-41B4E8 = 4C
+41B51A = E0
+41B4E8 = 00
 
 +8ABE0
 6CF639 = F4
