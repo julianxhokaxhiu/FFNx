@@ -106,8 +106,6 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	patch_code_byte(ff7_externals.field_draw_everything + 0xE2, 0x1D);
 	patch_code_byte(ff7_externals.field_draw_everything + 0x353, 0x1D);
 
-	if(transparent_dialogs) memset_code(common_externals.build_dialog_window + 0x1842, 0x90, 6);
-
 	replace_function(ff7_externals.get_equipment_stats, get_equipment_stats);
 
 	replace_function(common_externals.open_file, open_file);

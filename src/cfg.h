@@ -56,7 +56,6 @@ extern cfg_bool_t fullscreen;
 extern long refresh_rate;
 extern cfg_bool_t enable_vsync;
 extern cfg_bool_t linear_filter;
-extern cfg_bool_t transparent_dialogs;
 extern cfg_bool_t mdef_fix;
 extern cfg_bool_t fancy_transparency;
 extern long enable_antialiasing;
