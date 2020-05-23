@@ -20,6 +20,7 @@
 
 #include "../ff7.h"
 #include "../log.h"
+#include "defs.h"
 
 /*
  * This file contains the changes necessary to support subtractive and 25%
@@ -128,4 +129,41 @@ void field_layer2_pick_tiles(short x_offset, short y_offset)
 
 		ff7_externals.add_page_tile((float)x, (float)y, layer2_tiles[tile_index].z, layer2_tiles[tile_index].u, layer2_tiles[tile_index].v, layer2_tiles[tile_index].palette_index, page);
 	}
+}
+
+uint field_open_flevel_siz()
+{
+	struct lgp_file *f = lgp_open_file("flevel.siz", 1);
+
+	if (0 == f) {
+		return 0;
+	}
+
+	uint size = lgp_get_filesize(f, 1);
+	char* buffer = new char[size];
+
+	lgp_read_file(f, 1, buffer, size);
+
+	// Increase from 787 (field map count) to 1200
+	const uint max_map_count = 1200;
+	uint* uncompressed_sizes = reinterpret_cast<uint*>(buffer);
+	uint count = size / sizeof(uint);
+	uint* flevel_sizes = reinterpret_cast<uint*>(ff7_externals.field_map_infos + 0xBC);
+
+	if (count > max_map_count) {
+		count = max_map_count;
+	}
+
+	for (uint i = 0; i < count; ++i) {
+		flevel_sizes[i * 0x34] = uncompressed_sizes[i] + 4000000; // +2 MB compared to the original implementation
+	}
+
+	// Force a value if not specified by the flevel.siz
+	for (uint i = count; i < max_map_count; ++i) {
+		flevel_sizes[i * 0x34] = 4000000;
+	}
+
+	delete[] buffer;
+
+	return 1;
 }

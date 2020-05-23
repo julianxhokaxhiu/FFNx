@@ -105,6 +105,7 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	replace_function(ff7_externals.field_layer2_pick_tiles, field_layer2_pick_tiles);
 	patch_code_byte(ff7_externals.field_draw_everything + 0xE2, 0x1D);
 	patch_code_byte(ff7_externals.field_draw_everything + 0x353, 0x1D);
+	replace_function(ff7_externals.open_flevel_siz, field_open_flevel_siz);
 
 	replace_function(ff7_externals.get_equipment_stats, get_equipment_stats);
 

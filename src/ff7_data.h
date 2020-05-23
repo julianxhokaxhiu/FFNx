@@ -299,6 +299,12 @@ void ff7_find_externals()
 
 	ff7_externals.cleanup_game = get_absolute_value(ff7_externals.init_stuff, 0x350);
 	ff7_externals.cleanup_midi = get_relative_call(ff7_externals.cleanup_game, 0x72);
+
+	ff7_externals.sub_4089C5 = get_absolute_value(ff7_externals.init_stuff, 0x336);
+	ff7_externals.sub_60DF96 = get_relative_call(ff7_externals.sub_4089C5, 0x42B);
+	ff7_externals.sub_60EEB2 = get_relative_call(ff7_externals.sub_60DF96, 0x26);
+	ff7_externals.open_flevel_siz = get_relative_call(ff7_externals.sub_60EEB2, 0x79F);
+	ff7_externals.field_map_infos = get_absolute_value(ff7_externals.open_flevel_siz, 0xAF) - 0xBC;
 }
 
 void ff7_data()
