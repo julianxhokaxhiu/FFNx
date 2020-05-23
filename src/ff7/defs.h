@@ -35,6 +35,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status();
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);
 void field_layer2_pick_tiles(short x_offset, short y_offset);
+uint field_open_flevel_siz();
 
 // file
 FILE *open_lgp_file(char *filename, uint mode);
