@@ -29,7 +29,10 @@ void music_init()
 {
 	// Add Global Focus flag to DirectSound Secondary Buffers
 	patch_code_byte(common_externals.directsound_buffer_flags_1 + 0x4, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
-	patch_code_dword(ff7_externals.music_lock_clear_fix + 2, 0xCC195C);
+
+	if (!ff8) {
+		patch_code_dword(ff7_externals.music_lock_clear_fix + 2, 0xCC195C);
+	}
 
 	if (use_external_music)
 	{
