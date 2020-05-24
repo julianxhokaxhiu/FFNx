@@ -125,7 +125,6 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 	uint correct_frame = false;
 	uint instance_transform_mode;
 	struct matrix tmp_matrix;
-	uint trace_field_78 = false;
 	struct matrix *model_matrix = 0;
 
 	if(trace_all) trace("dll_gfx: field_78 0x%x\n", polygon_set);
@@ -136,7 +135,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 
 	if(!polygon_set->field_0) return;
 
-	if(trace_field_78) trace("field_78: %s (%i groups) (0x%x)\n", polygon_set->polygon_data ? polygon_set->polygon_data->pc_name : "unknown", polygon_set->numgroups, polygon_set);
+	if(trace_all) trace("field_78: %s (%i groups) (0x%x)\n", polygon_set->polygon_data ? polygon_set->polygon_data->pc_name : "unknown", polygon_set->numgroups, polygon_set);
 
 	matrix_set = polygon_set->matrix_set;
 
@@ -155,7 +154,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 		
 		if(struc_84) instance_type = struc_84->field_4;
 
-		if(trace_field_78) trace("instanced, %s, type %i, transform %i\n", correct_frame ? "correct frame" : "wrong frame", instance_type, instance_transform_mode);
+		if(trace_all) trace("instanced, %s, type %i, transform %i\n", correct_frame ? "correct frame" : "wrong frame", instance_type, instance_transform_mode);
 	}
 
 	if(polygon_set->field_2C) hundred_data = polygon_set->hundred_data;
@@ -180,7 +179,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 			else if(!game_object->field_928) defer = (hundred_data->field_8 & (BIT(V_ALPHABLEND) | BIT(V_TMAPBLEND)));
 		}
 
-		if(trace_field_78) trace("group %i: %s, %s\n", group_counter, zsort ? "zsort" : "no zsort", defer ? "deferred" : "not deferred");
+		if(trace_all) trace("group %i: %s, %s\n", group_counter, zsort ? "zsort" : "no zsort", defer ? "deferred" : "not deferred");
 
 		if(!defer) common_setrenderstate(hundred_data, (struct game_obj *)game_object);
 
@@ -192,7 +191,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 			{
 				while(struc_84)
 				{
-					if(trace_field_78) trace("drawing instance 0x%x\n", struc_84);
+					if(trace_all) trace("drawing instance 0x%x\n", struc_84);
 
 					if(instance_type == 2)
 					{
@@ -297,7 +296,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 		}
 		else
 		{
-			if(trace_field_78) trace("drawing single\n");
+			if(trace_all) trace("drawing single\n");
 
 			if(defer)
 			{
@@ -337,8 +336,6 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 
 		group_counter++;
 	}
-
-	if(trace_field_78) trace("\n");
 }
 
 struct tex_header *sub_673F5C(struct struc_91 *struc91)
