@@ -179,7 +179,7 @@ These people are:
   - for the menu cursor vertical centering in menu
 - [DLPB](https://forums.qhimm.com/index.php?action=profile;u=6439):
   - for original Hext concept and specification that FFNx implemented as well
-  - for the field vertical centering hext patch, , which FFNx provides a default patch for
+  - for the field vertical centering hext patch, which FFNx provides a default patch for
 - [ficedula](http://forums.qhimm.com/index.php?action=profile;u=68):
   - for 7h 1.x which FFNx provides support for
 - [Iros](https://forums.qhimm.com/index.php?action=profile;u=21785):

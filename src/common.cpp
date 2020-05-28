@@ -483,20 +483,9 @@ void common_flip(struct game_obj *game_object)
 	if (!ff8)
 	{
 		time_t gametime;
-		long framerate = 30;
 
-		if (
-			mode->driver_mode == MODE_MENU ||
-			mode->driver_mode == MODE_COASTER ||
-			mode->driver_mode == MODE_SWIRL ||
-			mode->driver_mode == MODE_CREDITS ||
-			mode->driver_mode == MODE_CONDOR ||
-			mode->driver_mode == MODE_SNOWBOARD
-		)
-			framerate = 60;
-		else if (mode->driver_mode == MODE_BATTLE) framerate = 15;
-
-		do qpc_get_time(&gametime); while (gametime > last_gametime && gametime - last_gametime < VREF(game_object, countspersecond * (1.0 / framerate)));
+		do qpc_get_time(&gametime);
+		while (gametime > last_gametime && gametime - last_gametime < VREF(game_object, countspersecond * (1.0 / 60)));
 
 		last_gametime = gametime;
 	}
