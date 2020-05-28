@@ -2,15 +2,9 @@ include(ExternalProject)
 
 set(STACKWALKER_VERSION "1.2.1")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(STACKWALKER_RELEASE "Release")
-else()
-    set(STACKWALKER_RELEASE "Debug")
-endif()
-
 ExternalProject_Add(
 	StackWalker
-	URL						"https://github.com/julianxhokaxhiu/StackWalkerCI/releases/download/${STACKWALKER_VERSION}/StackWalker-v${STACKWALKER_VERSION}.0_${STACKWALKER_RELEASE}.zip"
+	URL						"https://github.com/julianxhokaxhiu/StackWalkerCI/releases/download/${STACKWALKER_VERSION}/StackWalker-v${STACKWALKER_VERSION}.0_Debug.zip"
 	INSTALL_DIR				"${CMAKE_BINARY_DIR}/vendor"
 	CONFIGURE_COMMAND		""
 	BUILD_COMMAND			""
