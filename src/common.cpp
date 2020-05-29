@@ -29,12 +29,14 @@
 #include "crashdump.h"
 #include "macro.h"
 #include "ff7.h"
+#include "ff7/defs.h"
 #include "ff8.h"
 #include "patch.h"
 #include "gl.h"
 #include "movies.h"
 #include "music.h"
 #include "saveload.h"
+#include "gamepad.h"
 
 // global RAM status
 MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
@@ -108,6 +110,8 @@ struct texture_format *texture_format;
 char basedir[BASEDIR_LENGTH];
 
 uint version;
+
+bool xinput_connected = false;
 
 // global data used for profiling macros
 #ifdef PROFILE
@@ -502,6 +506,24 @@ void common_flip(struct game_obj *game_object)
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	}
+
+	// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
+	if (!xinput_connected && gamepad.CheckConnection())
+	{
+		trace("Detected XInput controller.\n");
+
+		if (ff8)
+		{
+			// Maybe one day...
+		}
+		else
+		{
+			replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
+			replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
+		}
+
+		xinput_connected = true;
 	}
 
 	frame_counter++;

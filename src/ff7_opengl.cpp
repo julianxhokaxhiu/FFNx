@@ -24,9 +24,7 @@
 #include "patch.h"
 #include "movies.h"
 #include "music.h"
-#include "gamepad.h"
 #include "ff7/defs.h"
-
 #include "ff7_data.h"
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
@@ -68,17 +66,6 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 
 	// Allow mouse cursor to be shown
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
-
-	// Enable XInput if a compatible gamepad is detected, otherwise continue with native DInput
-	if (gamepad.CheckConnection())
-	{
-		trace("Detected XInput controller.\n");
-
-		replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
-		replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
-	}
-	else
-		trace("Detected DInput controller.\n");
 
 	if(ff7_more_debug) replace_function(common_externals.debug_print2, external_debug_print2);
 
