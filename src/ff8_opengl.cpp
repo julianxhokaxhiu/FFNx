@@ -429,11 +429,6 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 	memcpy_code(ff8_externals.sub_465720 + 0xB3, texture_reload_fix2, sizeof(texture_reload_fix2));
 	replace_function(ff8_externals.sub_465720 + 0xB3 + sizeof(texture_reload_fix2), texture_reload_hack2);
 
-	// DirectInput hack, try to reacquire on any error
-	memset_code(ff8_externals.dinput_sub_468D80 + 0x23, 0x90, 7);
-	memset_code(ff8_externals.dinput_sub_4692B0 + 0x2B, 0x90, 7);
-	memset_code(ff8_externals.dinput_sub_4692B0 + 0x60, 0x90, 7);
-
 	ret = (ff8_gfx_driver*)external_calloc(1, sizeof(*ret));
 
 	ret->init = common_init;
