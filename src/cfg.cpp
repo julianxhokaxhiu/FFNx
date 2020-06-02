@@ -50,7 +50,7 @@ cfg_bool_t show_stats = cfg_bool_t(false);
 cfg_bool_t show_version = cfg_bool_t(true);
 long window_size_x = 0;
 long window_size_y = 0;
-long internal_resolution_scale = 4;
+long internal_resolution_scale = 2;
 cfg_bool_t preserve_aspect = cfg_bool_t(true);
 cfg_bool_t fullscreen = cfg_bool_t(false);
 long refresh_rate = 0;
@@ -162,9 +162,6 @@ void read_cfg()
 		// Reset some internal flags as they are not compatible with FF8
 		fancy_transparency = cfg_bool_t(false);
 	}
-
-	// Internal scale of 1 is not allowed
-	if (internal_resolution_scale < 2) internal_resolution_scale = 2;
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;

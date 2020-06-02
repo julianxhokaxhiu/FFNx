@@ -300,6 +300,8 @@ bool Renderer::doesItFitInMemory(size_t size)
 
 void Renderer::init()
 {
+    bool is16by9 = false;
+
     viewWidth = window_size_x;
     viewHeight = window_size_y;
 
@@ -318,9 +320,20 @@ void Renderer::init()
         }
     }
 
+    if ((viewWidth % game_width) > 0 || (viewHeight % game_height) > 0)
+    {
+        long scaleW = ::round(viewWidth / (float)game_width);
+        long scaleH = ::round(viewHeight / (float)game_height);
+
+        if (scaleH > scaleW) scaleW = scaleH;
+        if (scaleW > internal_resolution_scale) internal_resolution_scale = scaleW + 1;
+
+        is16by9 = true;
+    }
+
     // In order to prevent weird glitches while rendering we need to use the closest resolution to native's game one
-    framebufferWidth = (viewWidth % game_width) ? (viewWidth / game_width + 1) * game_width * (internal_resolution_scale - 1) : viewWidth;
-    framebufferHeight = (viewHeight % game_height) ? (viewHeight / game_height + 1) * game_height * (internal_resolution_scale - 1) : viewHeight;
+    framebufferWidth = is16by9 ? game_width * internal_resolution_scale : viewWidth * internal_resolution_scale;
+    framebufferHeight = is16by9 ? game_height * internal_resolution_scale : viewHeight * internal_resolution_scale;
 
     framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
     framebufferVertexOffsetX = (game_width - framebufferVertexWidth) / 2;
