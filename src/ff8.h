@@ -780,6 +780,7 @@ struct ff8_externals
 	uint sub_467D10;
 	uint dinput_sub_468D80;
 	uint dinput_sub_4692B0;
+	uint dinput_gamepad_buffer_1CD06DC;
 	uint pubintro_enter_main;
 	uint draw_movie_frame;
 	uint sub_529FF0;
@@ -837,3 +838,4 @@ void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *ga
 void ff8_unload_texture(struct ff8_texture_set *texture_set);
 struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object);
 void ff8_post_init();
+LPDIJOYSTATE2 ff8_update_gamepad_status();

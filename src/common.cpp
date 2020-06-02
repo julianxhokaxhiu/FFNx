@@ -515,7 +515,7 @@ void common_flip(struct game_obj *game_object)
 
 		if (ff8)
 		{
-			// Maybe one day...
+			replace_function(ff8_externals.dinput_sub_4692B0, ff8_update_gamepad_status);
 		}
 		else
 		{

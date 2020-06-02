@@ -199,6 +199,7 @@ void ff8_find_externals()
 
 	ff8_externals.dinput_sub_468D80 = get_relative_call(ff8_externals.sub_467D10, 0x11);
 	ff8_externals.dinput_sub_4692B0 = get_relative_call(ff8_externals.sub_467D10, 0x1B);
+	ff8_externals.dinput_gamepad_buffer_1CD06DC = get_absolute_value(ff8_externals.dinput_sub_4692B0, 0x1B);
 
 	ff8_externals.initialize_sound = get_relative_call(ff8_externals.pubintro_init, 0xD8); // sub_469640
 	ff8_externals.initialize_eax_directsound = get_relative_call(ff8_externals.initialize_sound, 0x5D); // sub_46DBF0

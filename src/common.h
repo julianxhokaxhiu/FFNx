@@ -28,6 +28,8 @@
 #include <time.h>
 #include <malloc.h>
 #include <stdio.h>
+
+#include <dinput.h>
 #include <dsound.h>
 
 #include "matrix.h"

@@ -28,7 +28,7 @@
 #include "movies.h"
 #include "gl.h"
 #include "saveload.h"
-
+#include "gamepad.h"
 #include "ff8_data.h"
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
@@ -266,6 +266,75 @@ void swirl_sub_56D390(uint x, uint y, uint w, uint h)
 	common_load_texture((*ff8_externals.swirl_texture1)->hundred_data->texture_set, tex_header, texture_format);
 
 	last_tex_header = tex_header;
+}
+
+LPDIJOYSTATE2 ff8_update_gamepad_status()
+{
+	LPDIJOYSTATE2 gamepadState = (LPDIJOYSTATE2)ff8_externals.dinput_gamepad_buffer_1CD06DC;
+	
+	gamepadState->rgdwPOV[0] = -1;
+	gamepadState->lX = 0;
+	gamepadState->lY = 0;
+	gamepadState->lRx = 0;
+	gamepadState->lRy = 0;
+
+	if (gamepad.Refresh())
+	{
+		if ((gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP))
+		{
+			gamepadState->lY = 0xFFFFFFFFFFFFFFFF;
+			gamepadState->rgdwPOV[0] = 0;
+		}
+		else if ((gamepad.leftStickY < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN))
+		{
+			gamepadState->lY = -0xFFFFFFFFFFFFFFFF;
+			gamepadState->rgdwPOV[0] = 18000;
+		}
+
+		if ((gamepad.leftStickX < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT))
+		{
+			gamepadState->lX = 0xFFFFFFFFFFFFFFFF;
+			gamepadState->rgdwPOV[0] = 27000;
+		}
+		else if ((gamepad.leftStickX > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT))
+		{
+			gamepadState->lX = -0xFFFFFFFFFFFFFFFF;
+			gamepadState->rgdwPOV[0] = 9000;
+		}
+
+		if (gamepad.rightStickY > 0.5f)
+			gamepadState->lRy = 0xFFFFFFFFFFFFFFFF;
+		else if (gamepad.rightStickY < -0.5f)
+			gamepadState->lRy = -0xFFFFFFFFFFFFFFFF;
+
+		if (gamepad.rightStickX > 0.5f)
+			gamepadState->lRx = -0xFFFFFFFFFFFFFFFF;
+		else if (gamepad.rightStickX < -0.5f)
+			gamepadState->lRx = 0xFFFFFFFFFFFFFFFF;
+
+		gamepadState->lZ = 0;
+		gamepadState->lRz = 0;
+		gamepadState->rglSlider[0] = 0;
+		gamepadState->rglSlider[1] = 0;
+		gamepadState->rgdwPOV[1] = -1;
+		gamepadState->rgdwPOV[2] = -1;
+		gamepadState->rgdwPOV[3] = -1;
+		gamepadState->rgbButtons[0] = gamepad.IsPressed(XINPUT_GAMEPAD_X) ? 0x80 : 0;
+		gamepadState->rgbButtons[1] = gamepad.IsPressed(XINPUT_GAMEPAD_A) ? 0x80 : 0;
+		gamepadState->rgbButtons[2] = gamepad.IsPressed(XINPUT_GAMEPAD_B) ? 0x80 : 0;
+		gamepadState->rgbButtons[3] = gamepad.IsPressed(XINPUT_GAMEPAD_Y) ? 0x80 : 0;
+		gamepadState->rgbButtons[4] = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER) ? 0x80 : 0;
+		gamepadState->rgbButtons[5] = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) ? 0x80 : 0;
+		gamepadState->rgbButtons[6] = gamepad.leftTrigger > 0.85f ? 0x80 : 0;
+		gamepadState->rgbButtons[7] = gamepad.rightTrigger > 0.85f ? 0x80 : 0;
+		gamepadState->rgbButtons[8] = gamepad.IsPressed(XINPUT_GAMEPAD_BACK) ? 0x80 : 0;
+		gamepadState->rgbButtons[9] = gamepad.IsPressed(XINPUT_GAMEPAD_START) ? 0x80 : 0;
+		gamepadState->rgbButtons[10] = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB) ? 0x80 : 0;
+		gamepadState->rgbButtons[11] = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) ? 0x80 : 0;
+		gamepadState->rgbButtons[12] = gamepad.IsPressed(0x400) ? 0x80 : 0;
+	}
+
+	return gamepadState;
 }
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
