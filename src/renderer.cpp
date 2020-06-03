@@ -726,7 +726,6 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
     if (file)
     {
         size_t filesize = 0;
-        bimg::ImageContainer imgSize;
         bimg::ImageContainer* img = nullptr;
         char* buffer = nullptr;
 
