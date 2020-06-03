@@ -509,21 +509,38 @@ void common_flip(struct game_obj *game_object)
 	}
 
 	// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
+	static uint xinput_fn[2]{ 0 };
 	if (!xinput_connected && gamepad.CheckConnection())
 	{
-		trace("Detected XInput controller.\n");
+		trace("XInput controller: connected.\n");
 
 		if (ff8)
 		{
-			replace_function(ff8_externals.dinput_sub_4692B0, ff8_update_gamepad_status);
+			xinput_fn[0] = replace_function(ff8_externals.dinput_sub_4692B0, ff8_update_gamepad_status);
 		}
 		else
 		{
-			replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
-			replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
+			xinput_fn[0] = replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
+			xinput_fn[1] = replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
 		}
 
 		xinput_connected = true;
+	}
+	else if (xinput_connected && !gamepad.CheckConnection())
+	{
+		trace("XInput controller: disconnected.\n");
+
+		if (ff8)
+		{
+			unreplace_function(xinput_fn[0]);
+		}
+		else
+		{
+			unreplace_function(xinput_fn[1]);
+			unreplace_function(xinput_fn[0]);
+		}
+
+		xinput_connected = false;
 	}
 
 	frame_counter++;
