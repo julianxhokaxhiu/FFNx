@@ -77,18 +77,21 @@ uint load_texture_helper(char* name, uint* width, uint* height, uint use_compres
 
 uint load_texture(char *name, uint palette_index, uint *width, uint *height, uint use_compression)
 {
-	char dds_name[sizeof(basedir) + 1024];
-	char png_name[sizeof(basedir) + 1024];
+	char filename[sizeof(basedir) + 1024];
 	uint ret;
 
-	_snprintf(dds_name, sizeof(png_name), "%s/%s/%s_%02i.dds", basedir, mod_path, name, palette_index);
-	_snprintf(png_name, sizeof(png_name), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
+	_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.dds", basedir, mod_path, name, palette_index);
 
 	// Try loading DDS
-	ret = load_texture_helper(dds_name, width, height, use_compression);
+	ret = load_texture_helper(filename, width, height, use_compression);
 	
 	// If not successfull fallback to PNG
-	if (!ret) ret = load_texture_helper(png_name, width, height, use_compression);
+	if (!ret)
+	{
+		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
+
+		ret = load_texture_helper(filename, width, height, use_compression);
+	}
 
 	if(!ret)
 	{
