@@ -62,10 +62,8 @@ uint gl_special_case(uint primitivetype, uint vertextype, struct nvertex *vertic
 	// some modpath textures have z-sort forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_zsort) && VREF(texture_set, ogl.external)) defer = true;
 
-	// z-sort by default in menu and condor battle, unnecessary sorting will be
-	// avoided by defer logic
+	// z-sort by default in menu, unnecessary sorting will be avoided by defer logic
 	if(mode == MODE_MENU) defer = true;
-	if(mode == MODE_CONDOR) defer = true;
 
 	if(!ff8)
 	{
