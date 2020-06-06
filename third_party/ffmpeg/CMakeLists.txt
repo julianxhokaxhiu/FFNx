@@ -1,6 +1,6 @@
 include(ExternalProject)
 
-set(FFMPEG_VERSION "4.2.2")
+set(FFMPEG_VERSION "4.2.3")
 
 ExternalProject_Add(
 	ffmpeg
@@ -9,6 +9,6 @@ ExternalProject_Add(
 	CONFIGURE_COMMAND	""
 	BUILD_COMMAND		""
 	INSTALL_COMMAND
-		COMMAND "${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>/installed/x86-msvc-v142-static/debug/lib" "<INSTALL_DIR>/lib"
-		COMMAND "${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>/installed/x86-msvc-v142-static/include" "<INSTALL_DIR>/include"
+		COMMAND "${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>/installed/x86-windows-static/debug/lib" "<INSTALL_DIR>/lib"
+		COMMAND "${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>/installed/x86-windows-static/include" "<INSTALL_DIR>/include"
 )
