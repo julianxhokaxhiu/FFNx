@@ -1632,7 +1632,6 @@ struct ff7_externals
 	uint field_map_infos;
 	uint sound_operation;
 	struct ff7_field_sfx_state* sound_states;
-	uint menu_sub_1;
 	uint menu_sound_slider_loop;
 	uint menu_start;
 	uint battle_clear_sound_flags;

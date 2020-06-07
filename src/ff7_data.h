@@ -204,9 +204,11 @@ void ff7_find_externals()
 
 	ff7_externals.party_member_to_char_map = (uint *)get_absolute_value(ff7_externals.menu_draw_party_member_stats, 0x14);
 
+	ff7_externals.menu_start = get_absolute_value(main_loop, 0x627);
 	ff7_externals.menu_sub_6CB56A = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xDE);
 	ff7_externals.menu_subs_call_table = (uint *)get_absolute_value(ff7_externals.menu_sub_6CB56A, 0x2EC);
 	ff7_externals.status_menu_sub = ff7_externals.menu_subs_call_table[5];
+	ff7_externals.menu_sound_slider_loop = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.draw_status_limit_level_stats = get_relative_call(ff7_externals.status_menu_sub, 0x8E);
 
 	ff7_externals.get_kernel_text = (char* (*)(uint, uint, uint))get_relative_call(ff7_externals.draw_status_limit_level_stats, 0x10C);
@@ -280,11 +282,6 @@ void ff7_find_externals()
 		
 		ff7_externals.set_default_input_settings_save = get_relative_call(ff7_externals.menu_sub_71894B, 0x188);
 	}
-
-	ff7_externals.menu_sub_1 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xDE);
-	uint temp = get_absolute_value(ff7_externals.menu_sub_1, 0x2EC);
-	ff7_externals.menu_sound_slider_loop = get_absolute_value(temp, 0x20);
-	ff7_externals.menu_start = get_absolute_value(main_loop, 0x627);
 
 	ff7_externals.keyboard_name_input = get_relative_call(ff7_externals.menu_sub_718DBE, 0x99);
  	ff7_externals.restore_input_settings = get_relative_call(ff7_externals.menu_sub_719B81, 0x80);
