@@ -89,8 +89,7 @@ deploy:
     tag: ${appveyor_repo_tag_name}
     release: ${_RELEASE_NAME}-${_RELEASE_VERSION}
     artifact: ${_RELEASE_NAME}-FF7_1998-${_RELEASE_VERSION}, ${_RELEASE_NAME}-FF8_2000-${_RELEASE_VERSION}, ${_RELEASE_NAME}-Steam-${_RELEASE_VERSION}
-    auth_token:
-      secure: SXUyBqg8+wl9fn3xHV2Br0xDH65EyPAnFwJbwcg94wIesv9osQEefC3zxu9iDTUh
+    auth_token: ${_GH_DEPLOYMENT_TOKEN}
     on:
       branch: master
       _IS_BUILD_CANARY: false
@@ -101,8 +100,7 @@ deploy:
     artifact: ${_RELEASE_NAME}-FF7_1998-${_RELEASE_VERSION}, ${_RELEASE_NAME}-FF8_2000-${_RELEASE_VERSION}, ${_RELEASE_NAME}-Steam-${_RELEASE_VERSION}
     prerelease: true
     force_update: true
-    auth_token:
-      secure: SXUyBqg8+wl9fn3xHV2Br0xDH65EyPAnFwJbwcg94wIesv9osQEefC3zxu9iDTUh
+    auth_token: ${_GH_DEPLOYMENT_TOKEN}
     on:
       branch: master
       _IS_BUILD_CANARY: true
