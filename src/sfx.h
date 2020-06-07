@@ -23,6 +23,8 @@
 #include "types.h"
 
 void sfx_init();
+uint sfx_operation_battle_swirl_stop_sound(uint type, uint param1, uint param2, uint param3, uint param4, uint param5);
+uint sfx_operation_resume_music(uint type, uint param1, uint param2, uint param3, uint param4, uint param5);
 void sfx_menu_force_channel_5_volume(uint volume, uint channel);
 void sfx_menu_play_sound_down(uint id);
 void sfx_menu_play_sound_up(uint id);
