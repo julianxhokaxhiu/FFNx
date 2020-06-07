@@ -1444,6 +1444,30 @@ struct ff7_gfx_driver
 	gfx_field_EC *field_EC;
 };
 
+struct ff7_field_sfx_state {
+	uint u1;
+	uint volume1;
+	uint volume2;
+	uint u2;
+	uint u3;
+	uint u4;
+	uint pan1;
+	uint pan2;
+	uint u5;
+	uint u6;
+	uint u7;
+	uint u8;
+	uint u9;
+	uint u10;
+	uint u11;
+	uint frequency;
+	uint sound_id;
+	IDirectSoundBuffer* buffer1;
+	IDirectSoundBuffer* buffer2;
+	uint is_looped;
+	uint u12;
+};
+
 // --------------- end of FF7 imports ---------------
 
 // memory addresses and function pointers from FF7.exe
@@ -1606,6 +1630,7 @@ struct ff7_externals
 	uint sub_60EEB2;
 	uint open_flevel_siz;
 	uint field_map_infos;
+	uint(*sound_operation)(uint, uint, uint, uint, uint, uint);
 };
 
 uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

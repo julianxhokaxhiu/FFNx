@@ -19,11 +19,14 @@
 /****************************************************************************/
 
 #include <windows.h>
+#include <DSound.h>
 
 #include "sfx.h"
 #include "patch.h"
+#include "ff7.h"
 
 uint sfx_volumes[5];
+IDirectSoundBuffer* sfx_buffers[5];
 
 void sfx_init()
 {
@@ -38,14 +41,77 @@ void sfx_init()
 		replace_call(0x74DF7F, sfx_menu_play_sound_up);
 		// Fix escape sound not played more than once
 		replace_function(0x41FA80, sfx_clear_sound_locks);
+		// On stop sound in battle swirl
+		replace_call(0x40805D, sfx_operation_battle_swirl_stop_sound);
+		// On resume music after a battle
+		replace_call(0x63BE33, sfx_operation_resume_music);
 	}
+}
+
+bool sfx_buffer_is_looped(IDirectSoundBuffer* buffer)
+{
+	if (buffer == nullptr) {
+		return false;
+	}
+
+	DWORD status;
+	buffer->GetStatus(&status);
+
+	if (status & (DSBSTATUS_LOOPING | DSBSTATUS_PLAYING)) {
+		return true;
+	}
+
+	return false;
+}
+
+uint sfx_operation_battle_swirl_stop_sound(uint type, uint param1, uint param2, uint param3, uint param4, uint param5)
+{
+	if (trace_all || trace_music) info("Battle swirl stop sound\n");
+
+	ff7_field_sfx_state* sfx_state = (ff7_field_sfx_state*)0xDBDC20;
+
+	for (int i = 0; i < 5; ++i) {
+		sfx_buffers[i] = nullptr;
+		if (sfx_buffer_is_looped(sfx_state[i].buffer1)) {
+			sfx_buffers[i] = sfx_state[i].buffer1;
+		}
+		else if (sfx_buffer_is_looped(sfx_state[i].buffer2)) {
+			sfx_buffers[i] = sfx_state[i].buffer2;
+		}
+	}
+
+	return ff7_externals.sound_operation(type, param1, param2, param3, param4, param5);
+}
+
+uint sfx_operation_resume_music(uint type, uint param1, uint param2, uint param3, uint param4, uint param5)
+{
+	if (trace_all || trace_music) info("Field resume music after battle\n");
+
+	ff7_field_sfx_state* sfx_state = (ff7_field_sfx_state*)0xDBDC20;
+
+	for (int i = 0; i < 5; ++i) {
+		if (sfx_buffers[i] != nullptr) {
+			if (sfx_state[i].buffer1 == sfx_buffers[i]) {
+				// Play sound on channel
+				((uint(*)(uint, uint, uint))(0x6E19E0))(sfx_state[i].pan1, sfx_state[i].sound_id, i + 1);
+			}
+			else if (sfx_state[i].buffer2 == sfx_buffers[i]) {
+				((uint(*)(uint, uint, uint))(0x6E19E0))(sfx_state[i].pan2, sfx_state[i].sound_id, i + 1);
+			}
+
+			sfx_buffers[i] = nullptr;
+		}
+	}
+
+	return ff7_externals.sound_operation(type, param1, param2, param3, param4, param5);
 }
 
 void sfx_remember_volumes()
 {
+	ff7_field_sfx_state* sfx_state = (ff7_field_sfx_state*)0xDBDC20;
+
 	for (int i = 0; i <= 4; ++i) {
-		uint* current_channel_volume = (uint*)0xDBDC24;
-		sfx_volumes[i] = current_channel_volume[i * 0x15];
+		sfx_volumes[i] = sfx_state[i].buffer1 != nullptr ? sfx_state[i].volume1 : sfx_state[i].volume2;
 	}
 }
 
@@ -75,8 +141,6 @@ void sfx_menu_play_sound_up(uint id)
 
 void sfx_update_volume(int modifier)
 {
-	info("sfx_update_volume\n");
-
 	// Set master sfx volume
 	int* sfx_volume = (int*)0xDC349C;
 	int* sfx_tmp_volume = (int*)0xF3AE28;
