@@ -44,8 +44,6 @@ common_externals.font_info =          (char *)0x99EB68;
 common_externals.build_dialog_window =        0x7743B0;
 common_externals.load_tex_file =              0x688C66;
 common_externals.directsound_buffer_flags_1 = 0x6E6E3D;
-common_externals.play_sfx =                   0x000000;
-common_externals.set_sfx_volume =             0x000000;
 
 ff7_externals.chocobo_fix =                   0x70B512;
 ff7_externals.midi_fix =                      0x6E0422;
@@ -72,4 +70,3 @@ ff7_externals.get_gamepad =                   0x41F99E;
 ff7_externals.update_gamepad_status =         0x41F7D8;
 ff7_externals.gamepad_status = (struct ff7_gamepad_status*)0x9AEBE8;
 ff7_externals.music_lock_clear_fix =          0x63C030;
-ff7_externals.sound_operation =               0;
