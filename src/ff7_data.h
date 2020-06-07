@@ -279,6 +279,11 @@ void ff7_find_externals()
 		ff7_externals.set_default_input_settings_save = get_relative_call(ff7_externals.menu_sub_71894B, 0x188);
 	}
 
+	ff7_externals.menu_sub_1 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xDE);
+	uint temp = get_absolute_value(ff7_externals.menu_sub_1, 0x2EC);
+	ff7_externals.menu_sound_slider_loop = get_absolute_value(temp, 0x20);
+	ff7_externals.menu_start = get_absolute_value(main_loop, 0x627);
+
 	ff7_externals.keyboard_name_input = get_relative_call(ff7_externals.menu_sub_718DBE, 0x99);
  	ff7_externals.restore_input_settings = get_relative_call(ff7_externals.menu_sub_719B81, 0x80);
  	
@@ -300,11 +305,20 @@ void ff7_find_externals()
 	ff7_externals.cleanup_game = get_absolute_value(ff7_externals.init_stuff, 0x350);
 	ff7_externals.cleanup_midi = get_relative_call(ff7_externals.cleanup_game, 0x72);
 
-	ff7_externals.sub_4089C5 = get_absolute_value(ff7_externals.init_stuff, 0x336);
-	ff7_externals.sub_60DF96 = get_relative_call(ff7_externals.sub_4089C5, 0x42B);
+	ff7_externals.sub_60DF96 = get_relative_call(ff7_externals.init_game, 0x42B);
 	ff7_externals.sub_60EEB2 = get_relative_call(ff7_externals.sub_60DF96, 0x26);
 	ff7_externals.open_flevel_siz = get_relative_call(ff7_externals.sub_60EEB2, 0x79F);
 	ff7_externals.field_map_infos = get_absolute_value(ff7_externals.open_flevel_siz, 0xAF) - 0xBC;
+
+	ff7_externals.sound_operation = get_relative_call(ff7_externals.enter_main, 0xE4);
+	common_externals.play_sfx_on_channel = get_relative_call(ff7_externals.sound_operation, 0x2AB);
+	common_externals.set_sfx_volume = (uint(*)(uint, uint))get_relative_call(ff7_externals.sound_operation, 0x3B3);
+	info("%X\n", common_externals.set_sfx_volume);
+	common_externals.play_sfx = (uint(*)(uint))get_relative_call(ff7_externals.sound_operation, 0x703);
+	ff7_externals.sound_states = (ff7_field_sfx_state*)get_absolute_value(common_externals.play_sfx_on_channel, 0x28);
+	common_externals.master_sfx_volume = (uint*)get_absolute_value(common_externals.play_sfx_on_channel, 0x342);
+
+	ff7_externals.battle_clear_sound_flags = get_relative_call(ff7_externals.battle_sub_429AC0, 0x6C);
 }
 
 void ff7_data()

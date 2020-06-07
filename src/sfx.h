@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <math.h>
+
 #include "types.h"
 
 void sfx_init();
@@ -28,5 +30,4 @@ uint sfx_operation_resume_music(uint type, uint param1, uint param2, uint param3
 void sfx_menu_force_channel_5_volume(uint volume, uint channel);
 void sfx_menu_play_sound_down(uint id);
 void sfx_menu_play_sound_up(uint id);
-void sfx_update_volume(int modifier);
 void sfx_clear_sound_locks();
