@@ -44,6 +44,8 @@ common_externals.font_info =          (char *)0x9A05F8;
 common_externals.build_dialog_window =        0x7747A0;
 common_externals.load_tex_file =              0x688C36;
 common_externals.directsound_buffer_flags_1 = 0x6E6DDD;
+common_externals.play_sfx =                   0x000000;
+common_externals.set_sfx_volume =             0x000000;
 
 ff7_externals.chocobo_fix =                   0x70B4B2;
 ff7_externals.midi_fix =                      0x6E03C2;

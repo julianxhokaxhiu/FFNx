@@ -212,6 +212,8 @@ struct common_externals
 	uint winmain;
 	uint load_tex_file;
 	uint directsound_buffer_flags_1;
+	void (*play_sfx)(uint);
+	uint (*set_sfx_volume)(uint, uint);
 };
 
 // heap allocation wrappers
