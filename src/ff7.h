@@ -1624,6 +1624,7 @@ struct ff7_externals
 	uint update_gamepad_status;
 	struct ff7_gamepad_status* gamepad_status;
 	uint music_is_locked;
+	uint field_initialize_variables;
 	uint music_lock_clear_fix;
 	uint sub_60DF96;
 	uint sub_60EEB2;
@@ -1635,6 +1636,7 @@ struct ff7_externals
 	uint menu_sound_slider_loop;
 	uint menu_start;
 	uint battle_clear_sound_flags;
+	uint swirl_sound_effect;
 };
 
 uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
