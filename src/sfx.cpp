@@ -42,9 +42,9 @@ void sfx_init()
 		// Fix escape sound not played more than once
 		replace_function(ff7_externals.battle_clear_sound_flags, sfx_clear_sound_locks);
 		// On stop sound in battle swirl
-		replace_call(0x40805D, sfx_operation_battle_swirl_stop_sound);
+		replace_call(ff7_externals.swirl_sound_effect + 0x26, sfx_operation_battle_swirl_stop_sound);
 		// On resume music after a battle
-		replace_call(0x63BE33, sfx_operation_resume_music);
+		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
 	}
 }
 

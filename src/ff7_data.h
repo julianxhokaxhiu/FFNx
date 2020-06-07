@@ -70,6 +70,7 @@ void ff7_find_externals()
 	uint worldmap_main_loop;
 	uint cdcheck_main_loop;
 	uint coaster_main_loop;
+	uint swirl_main_loop;
 	uint movie_module;
 	uint file_module;
 
@@ -91,7 +92,8 @@ void ff7_find_externals()
 	common_externals._mode = (word *)get_absolute_value(main_loop, 0x8C);
 
 	ff7_set_main_loop(MODE_GAMEOVER, get_absolute_value(main_loop, 0x1FE));
-	ff7_set_main_loop(MODE_SWIRL, get_absolute_value(main_loop, 0x25B));
+	swirl_main_loop = get_absolute_value(main_loop, 0x25B);
+	ff7_set_main_loop(MODE_SWIRL, swirl_main_loop);
 	cdcheck_main_loop = get_absolute_value(main_loop, 0x397);
 	ff7_set_main_loop(MODE_CDCHECK, cdcheck_main_loop);
 	ff7_set_main_loop(MODE_CREDITS, get_absolute_value(main_loop, 0x4CA));
@@ -313,12 +315,15 @@ void ff7_find_externals()
 	ff7_externals.sound_operation = get_relative_call(ff7_externals.enter_main, 0xE4);
 	common_externals.play_sfx_on_channel = get_relative_call(ff7_externals.sound_operation, 0x2AB);
 	common_externals.set_sfx_volume = (uint(*)(uint, uint))get_relative_call(ff7_externals.sound_operation, 0x3B3);
-	info("%X\n", common_externals.set_sfx_volume);
 	common_externals.play_sfx = (uint(*)(uint))get_relative_call(ff7_externals.sound_operation, 0x703);
 	ff7_externals.sound_states = (ff7_field_sfx_state*)get_absolute_value(common_externals.play_sfx_on_channel, 0x28);
 	common_externals.master_sfx_volume = (uint*)get_absolute_value(common_externals.play_sfx_on_channel, 0x342);
 
 	ff7_externals.battle_clear_sound_flags = get_relative_call(ff7_externals.battle_sub_429AC0, 0x6C);
+	ff7_externals.swirl_sound_effect = get_relative_call(swirl_main_loop, 0x8B);
+
+	ff7_externals.field_initialize_variables = get_relative_call(ff7_externals.field_sub_60DCED, 0x178);
+	ff7_externals.music_lock_clear_fix = ff7_externals.field_initialize_variables + 0x2B8;
 }
 
 void ff7_data()
