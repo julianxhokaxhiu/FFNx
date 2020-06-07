@@ -488,7 +488,7 @@ void winamp_set_music_volume_trans(int volume, int frames)
 {
 	if (trace_all || trace_music) trace("set volume trans: %i (%i)\n", volume, frames);
 
-	frames /= 2; // 60 FPS on the original game, our thread has ~30 ticks per second
+	// 30 frames = 1 second
 
 	EnterCriticalSection(&winamp_mutex);
 	
