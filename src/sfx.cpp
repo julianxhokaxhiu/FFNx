@@ -26,7 +26,7 @@
 #include "ff7.h"
 
 uint sfx_volumes[5];
-IDirectSoundBuffer* sfx_buffers[5];
+ff7_field_sfx_state sfx_buffers[4];
 
 void sfx_init()
 {
@@ -70,13 +70,13 @@ uint sfx_operation_battle_swirl_stop_sound(uint type, uint param1, uint param2, 
 
 	ff7_field_sfx_state* sfx_state = ff7_externals.sound_states;
 
-	for (int i = 0; i < 5; ++i) {
-		sfx_buffers[i] = nullptr;
-		if (sfx_buffer_is_looped(sfx_state[i].buffer1)) {
-			sfx_buffers[i] = sfx_state[i].buffer1;
-		}
-		else if (sfx_buffer_is_looped(sfx_state[i].buffer2)) {
-			sfx_buffers[i] = sfx_state[i].buffer2;
+	for (int i = 0; i < 4; ++i) {
+		sfx_buffers[i] = ff7_field_sfx_state();
+		sfx_buffers[i].buffer1 = nullptr;
+		sfx_buffers[i].buffer2 = nullptr;
+		// Save sfx state for looped sounds in channel 1 -> 4 (not channel 5)
+		if (sfx_buffer_is_looped(sfx_state[i].buffer1) || sfx_buffer_is_looped(sfx_state[i].buffer2)) {
+			memcpy(&sfx_buffers[i], &sfx_state[i], sizeof(ff7_field_sfx_state));
 		}
 	}
 
@@ -87,18 +87,21 @@ uint sfx_operation_resume_music(uint type, uint param1, uint param2, uint param3
 {
 	if (trace_all || trace_music) info("Field resume music after battle\n");
 
-	ff7_field_sfx_state* sfx_state = ff7_externals.sound_states;
-
-	for (int i = 0; i < 5; ++i) {
-		if (sfx_buffers[i] != nullptr) {
-			if (sfx_state[i].buffer1 == sfx_buffers[i]) {
-				((uint(*)(uint, uint, uint))common_externals.play_sfx_on_channel)(sfx_state[i].pan1, sfx_state[i].sound_id, i + 1);
+	for (int i = 0; i < 4; ++i) {
+		if (sfx_buffers[i].buffer1 != nullptr || sfx_buffers[i].buffer2 != nullptr) {
+			uint pan;
+			if (sfx_buffers[i].buffer1 != nullptr) {
+				pan = sfx_buffers[i].pan1;
 			}
-			else if (sfx_state[i].buffer2 == sfx_buffers[i]) {
-				((uint(*)(uint, uint, uint))common_externals.play_sfx_on_channel)(sfx_state[i].pan2, sfx_state[i].sound_id, i + 1);
+			else {
+				pan = sfx_buffers[i].pan2;
 			}
 
-			sfx_buffers[i] = nullptr;
+			((uint(*)(uint, uint, uint))common_externals.play_sfx_on_channel)(pan, sfx_buffers[i].sound_id, i + 1);
+
+			sfx_buffers[i] = ff7_field_sfx_state();
+			sfx_buffers[i].buffer1 = nullptr;
+			sfx_buffers[i].buffer2 = nullptr;
 		}
 	}
 
