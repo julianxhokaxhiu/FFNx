@@ -37,8 +37,8 @@ void sfx_init()
 		// On volume change in main menu initialization
 		replace_call(ff7_externals.menu_start + 0x17, sfx_menu_force_channel_5_volume);
 		// On SFX volume change in config menu
-		replace_call(ff7_externals.menu_sound_slider_loop + 0x10A5, sfx_menu_play_sound_down);
-		replace_call(ff7_externals.menu_sound_slider_loop + 0x10DA, sfx_menu_play_sound_up);
+		replace_call(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_down, sfx_menu_play_sound_down);
+		replace_call(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_up, sfx_menu_play_sound_up);
 		// Fix escape sound not played more than once
 		replace_function(ff7_externals.battle_clear_sound_flags, sfx_clear_sound_locks);
 		// On stop sound in battle swirl
