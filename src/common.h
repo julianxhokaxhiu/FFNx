@@ -29,6 +29,7 @@
 #include <malloc.h>
 #include <stdio.h>
 
+#define DIRECTINPUT_VERSION         0x0800 // DirectX >= 8 ( required by FF8 )
 #include <dinput.h>
 #include <dsound.h>
 
