@@ -30,7 +30,7 @@ uint get_frame_data_size(struct anim_header *anim_header)
 	return (anim_header->num_bones * sizeof(struct point3d) + sizeof(struct anim_frame_header)) * anim_header->num_frames;
 }
 
-// load .a file, save modpath name somewhere we can retrieve it later (unused)
+// load .a file, save modpath name somewhere we can retrieve it later
 struct anim_header *load_animation(struct file_context *file_context, char *filename)
 {
 	struct ff7_file *file = open_file(file_context, filename);
@@ -122,7 +122,7 @@ struct battle_hrc_header *read_battle_hrc(uint use_file_context, struct file_con
 	return ret;
 }
 
-// load .p file, save modpath name somewhere we can retrieve it later (unused)
+// load .p file, save modpath name somewhere we can retrieve it later
 struct polygon_data *load_p_file(struct file_context *file_context, uint create_lists, char *filename)
 {
 	struct polygon_data *ret = ff7_externals.create_polygon_data(false, 0);
