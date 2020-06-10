@@ -139,7 +139,7 @@ void sfx_update_volume(int modifier)
 	if (trace_all || trace_music) info("Update SFX volumes %d\n", modifier);
 
 	// Set master sfx volume
-	BYTE** sfx_tmp_volume = (BYTE**)(ff7_externals.menu_sound_slider_loop + 0x264);
+	BYTE** sfx_tmp_volume = (BYTE**)(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_down + 0xA);
 
 	*common_externals.master_sfx_volume = **sfx_tmp_volume + modifier;
 
