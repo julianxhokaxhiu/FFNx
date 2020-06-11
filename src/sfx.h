@@ -31,3 +31,4 @@ void sfx_menu_force_channel_5_volume(uint volume, uint channel);
 void sfx_menu_play_sound_down(uint id);
 void sfx_menu_play_sound_up(uint id);
 void sfx_clear_sound_locks();
+void sfx_fix_volume_values(char* log);

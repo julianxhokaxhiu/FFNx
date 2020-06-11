@@ -27,6 +27,7 @@
 
 uint sfx_volumes[5];
 ff7_field_sfx_state sfx_buffers[4];
+uint real_volume;
 
 void sfx_init()
 {
@@ -45,6 +46,20 @@ void sfx_init()
 		replace_call(ff7_externals.swirl_sound_effect + 0x26, sfx_operation_battle_swirl_stop_sound);
 		// On resume music after a battle
 		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
+
+		/* Set sound volume on channel changes
+		 * When this sub is called, it set two fields of sfx_state,
+		 * but with the wrong value (computed with sfx_master_volume)
+		 */
+
+		// Replace a useless "volume & 0xFF" to "real_volume <- volume; nop"
+		patch_code_byte(uint(common_externals.set_sfx_volume) + 0x48, 0xA3); // mov
+		patch_code_uint(uint(common_externals.set_sfx_volume) + 0x48 + 1, uint(&real_volume));
+		patch_code_byte(uint(common_externals.set_sfx_volume) + 0x48 + 5, 0x90); // nop
+		// Use a field of sfx_state to flag the current channel
+		patch_code_uint(uint(common_externals.set_sfx_volume) + 0x70, 0xFFFFFFFF);
+		// Replace log call to fix sfx_state volume values
+		replace_call(uint(common_externals.set_sfx_volume) + 0x183, sfx_fix_volume_values);
 	}
 }
 
@@ -116,7 +131,6 @@ void sfx_remember_volumes()
 
 	for (int i = 0; i < 5; ++i) {
 		sfx_volumes[i] = sfx_state[i].buffer1 != nullptr ? sfx_state[i].volume1 : sfx_state[i].volume2;
-		sfx_volumes[i] = floor(sfx_volumes[i] * 100 / float(*common_externals.master_sfx_volume) + 0.9f);
 
 		if (sfx_volumes[i] > 127) {
 			sfx_volumes[i] = 127;
@@ -128,6 +142,7 @@ void sfx_remember_volumes()
 
 void sfx_menu_force_channel_5_volume(uint volume, uint channel)
 {
+	if (trace_all || trace_music) info("sfx_menu_force_channel_5_volume %d\n", volume);
 	// Original call (set channel 5 volume to maximum)
 	common_externals.set_sfx_volume(volume, channel);
 	// Added by FFNx
@@ -146,6 +161,8 @@ void sfx_update_volume(int modifier)
 	// Update sfx volume in real-time for all channel
 	for (int channel = 1; channel <= 5; ++channel) {
 		common_externals.set_sfx_volume(sfx_volumes[channel - 1], channel);
+
+		if (trace_all || trace_music) info("Set SFX volume for channel #%i: %i\n", channel, sfx_volumes[channel - 1]);
 	}
 }
 
@@ -170,4 +187,21 @@ void sfx_clear_sound_locks()
 	uint** flags = (uint**)(ff7_externals.battle_clear_sound_flags + 5);
 	// The last uint wasn't reset by the original sub
 	memset((void*)*flags, 0, 5 * sizeof(uint));
+}
+
+void sfx_fix_volume_values(char* log)
+{
+	if (trace_all || trace_music) info("%s", log); // FF7 default log
+
+	ff7_field_sfx_state* sfx_state = ff7_externals.sound_states;
+
+	for (int i = 0; i < 5; ++i) {
+		if (sfx_state[i].u1 == 0xFFFFFFFF) {
+			if (trace_all || trace_music) info("SFX fix volume channel #%i: %i\n", i + 1, real_volume);
+
+			sfx_state[i].volume1 = real_volume;
+			sfx_state[i].volume2 = real_volume;
+			sfx_state[i].u1 = 0; // Back to the correct value
+		}
+	}
 }
