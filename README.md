@@ -25,14 +25,16 @@ Some of the improvements that you can find on FFNx are:
 - FF7/FF8: Up to 16x Antialiasing support!
 - FF7/FF8: Steam support! No Game converter required.
 - FF7/FF8: Steam savegame preservation ( you will no more loose saves created with FFNx! )
+- FF7/FF8: XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
 - FF7: eStore support! No Game converter required.
-- FF7: XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
 - FF7: Vertical centering for Fields and Movies
 - FF7: Fullscreen Battle scenes
 - FF7: Menu cursor on the middle of words vertical alignment
 - FF7: Movies will continue to play if the window game loses focus ( in window mode )
 - FF7: Movies volume will respect global sound volume
 - FF7: Steam sound and music volume configuration preservation ( configure at your pleasure and on the next run it will be inherited )
+- FF7: Configurable background transparency in battle dialogs ( by default set to 75% )!
+- FF7: SFX volume change will now apply in real-time, instead of you requiring to close and re-open the game.
 
 And, on top of all of this you will also find:
 - One single .dll file to be copied
@@ -67,6 +69,7 @@ If you're curious to know it, FFNx is made with:
 - [StackWalker](https://github.com/JochenKalmbach/StackWalker) ( for stack traces in the log file )
 - [pugixml](https://github.com/zeux/pugixml) ( for the Steam XML manifest )
 - [md5](http://www.zedwood.com/article/cpp-md5-function) ( for the Steam XML manifest )
+- [libpng](http://www.libpng.org/pub/png/libpng.html) ( for a better and faster PNG texture support )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
@@ -192,6 +195,7 @@ These people are:
   - for the great help in the code implementing the Winamp layer being present inside FFNx
   - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF8
   - for the Steam savegame logic in the manifest.xml for FF8
+  - for the real-time SFX volume change for FF7
 - [quantumpencil](http://forums.qhimm.com/index.php?action=profile;u=23810) and [Nax](https://github.com/nax):
   - for the original CMake files FFNx has based its work upon
   - for all the help in getting some logics wired up in the game engine and a lot of hex addresses I would never been able to figure out myself
