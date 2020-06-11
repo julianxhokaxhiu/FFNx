@@ -57,22 +57,18 @@ uint save_texture(void *data, uint width, uint height, uint palette_index, char 
 	else return true;
 }
 
-uint load_texture_helper(char* name, uint* width, uint* height, bool isPNG)
+uint load_texture_helper(char* name, uint* width, uint* height, bool useLibPng)
 {
 	uint ret = 0;
-	struct stat dummy;
 
-	if (stat(name, &dummy) == 0)
+	if (useLibPng)
+		ret = newRenderer.createTextureLibPng(name, width, height);
+	else
+		ret = newRenderer.createTexture(name, width, height);
+
+	if (ret > 0)
 	{
-		if (isPNG)
-			ret = newRenderer.createTextureLibPng(name, width, height);
-		else
-			ret = newRenderer.createTexture(name, width, height);
-
-		if (ret > 0)
-		{
-			if (trace_all || trace_loaders) trace("Using texture: %s\n", name);
-		}
+		if (trace_all || trace_loaders) trace("Using texture: %s\n", name);
 	}
 
 	return ret;
@@ -80,32 +76,51 @@ uint load_texture_helper(char* name, uint* width, uint* height, bool isPNG)
 
 uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 {
+	uint ret = 0;
 	char filename[sizeof(basedir) + 1024];
-	uint ret;
-
-	_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.dds", basedir, mod_path, name, palette_index);
-
-	// Try loading DDS
-	ret = load_texture_helper(filename, width, height, false);
 	
-	// If not successfull fallback to PNG
-	if (!ret)
+	const std::vector<std::string> exts =
 	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
+		"dds",
+		"ktx",
+		"pvr",
+		"exr",
+		"tga",
+		"jpg",
+		"png",
+	};
+	int extIdxFound = -1;
+	struct stat dummy;
 
-		ret = load_texture_helper(filename, width, height, true);
+	for (int idx = 0; idx < exts.size(); idx++)
+	{
+		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
+
+		if (stat(filename, &dummy) == 0)
+		{
+			extIdxFound = idx;
+
+			break;
+		}
+		else
+		{
+			if (trace_all || show_missing_textures) info("File not found: %s\n", filename);
+		}
 	}
+
+	
+	if (extIdxFound != -1) ret = load_texture_helper(filename, width, height, extIdxFound == (exts.size() - 1)); // PNG files needs a special treatment...
 
 	if(!ret)
 	{
 		if(palette_index != 0)
 		{
-			if(show_missing_textures) info("tried to load %s/%s/%s_%02i.(dds|png), falling back to palette 0\n", basedir, mod_path, name, palette_index);
+			if(trace_all || show_missing_textures) info("No external texture found, falling back to palette 0\n", basedir, mod_path, name, palette_index);
 			return load_texture(name, 0, width, height);
 		}
 		else
 		{
-			if(show_missing_textures) info("tried to load %s/%s/%s_%02i.(dds|png), failed\n", basedir, mod_path, name, palette_index);
+			if(trace_all || show_missing_textures) info("No external texture found, switching back to the internal one.\n", basedir, mod_path, name, palette_index);
 			return 0;
 		}
 	}
