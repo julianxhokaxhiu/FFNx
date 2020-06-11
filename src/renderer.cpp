@@ -941,6 +941,8 @@ uint Renderer::createTextureLibPng(char* filename, uint* width, uint* height)
             *width = _width;
             *height = _height;
         }
+        else
+            driver_free(data);
     }
 
     return ret.idx;
