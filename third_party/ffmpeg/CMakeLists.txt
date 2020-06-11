@@ -9,6 +9,6 @@ ExternalProject_Add(
 	CONFIGURE_COMMAND	""
 	BUILD_COMMAND		""
 	INSTALL_COMMAND
-		COMMAND "${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>/installed/x86-windows-static/debug/lib" "<INSTALL_DIR>/lib"
+		COMMAND "${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>/installed/x86-windows-static/lib" "<INSTALL_DIR>/lib"
 		COMMAND "${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>/installed/x86-windows-static/include" "<INSTALL_DIR>/include"
 )

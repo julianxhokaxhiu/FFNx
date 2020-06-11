@@ -37,6 +37,9 @@ target_compile_options(${RELEASE_NAME}
 	PRIVATE /D_CRT_SECURE_NO_WARNINGS
 	PRIVATE /DNOMINMAX
 	PRIVATE /EHsc
+    PRIVATE /std:c++latest
+    PRIVATE /w
+    PRIVATE /Ox
 )
 target_link_options(${RELEASE_NAME}
     PRIVATE /PDBALTPATH:${RELEASE_NAME}.pdb

@@ -14,13 +14,14 @@ pull_requests:
   do_not_increment_build_number: true
 
 # Build configurations
-configuration: RelWithDebInfo
+configuration: Release
 
 # Default environment variables
 environment:
   _IS_BUILD_CANARY: false
   _RELEASE_NAME: FFNx
   _RELEASE_VERSION: v0
+  _RELEASE_PATH: 
   # Use Python 3.x
   PYTHON: "C:\\Python38-x64"
   PYTHON_VERSION: "3.8.x"
@@ -32,6 +33,7 @@ before_build:
       call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat"
       set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
   - ps: |
+      $env:_RELEASE_PATH = ".dist\build\x86-" + $env:CONFIGURATION
       if ($env:APPVEYOR_REPO_TAG -eq "true" -and $env:APPVEYOR_REPO_TAG_NAME) {
         $env:APPVEYOR_BUILD_VERSION = $env:APPVEYOR_BUILD_VERSION.Substring(0,$env:APPVEYOR_BUILD_VERSION.LastIndexOf('.')) + ".0"
         $env:_RELEASE_VERSION = "v" + $env:APPVEYOR_BUILD_VERSION
@@ -43,20 +45,18 @@ before_build:
 
 build_script:
   - cmd: |
-      md .dist\build\x86-RelWithDebInfo
-      cd .dist/build/x86-RelWithDebInfo
-      cmake -G "Visual Studio 16 2019" -A Win32 -D_DLL_VERSION="%appveyor_build_version%" -DCMAKE_BUILD_TYPE="RelWithDebInfo" -DCMAKE_BINARY_DIR=".dist/build/x86-RelWithDebInfo" --config RelWithDebInfo ../../..
-      cmake --build . --config RelWithDebInfo
-      cd ../../..
+      md %_RELEASE_PATH%
+      cmake -G "Visual Studio 16 2019" -A Win32 -D_DLL_VERSION="%appveyor_build_version%" -DCMAKE_BINARY_DIR="%_RELEASE_PATH%" -S . -B %_RELEASE_PATH%
+      cmake --build %_RELEASE_PATH% --config %CONFIGURATION%
 
 after_build:
   - cmd: |
       md .dist\pkg\FF7_1998
       md .dist\pkg\FF8_2000
       md .dist\pkg\FFNx_Steam
-      cp -R .dist/build/x86-RelWithDebInfo/bin/* .dist/pkg/FF7_1998
-      cp -R .dist/build/x86-RelWithDebInfo/bin/* .dist/pkg/FF8_2000
-      cp -R .dist/build/x86-RelWithDebInfo/bin/* .dist/pkg/FFNx_Steam
+      cp -R .dist/build/x86-%CONFIGURATION%/bin/* .dist/pkg/FF7_1998
+      cp -R .dist/build/x86-%CONFIGURATION%/bin/* .dist/pkg/FF8_2000
+      cp -R .dist/build/x86-%CONFIGURATION%/bin/* .dist/pkg/FFNx_Steam
       rm .dist/pkg/FF7_1998/FF8.reg
       rm .dist/pkg/FF8_2000/FF7.reg
       rm .dist/pkg/FFNx_Steam/FF7.reg
