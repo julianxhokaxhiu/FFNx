@@ -732,13 +732,9 @@ uint load_external_texture(struct texture_set *texture_set, struct tex_header *t
 
 	if((uint)VREF(tex_header, file.pc_name) > 32)
 	{
-		uint use_compression = true;
-
 		if(trace_all || trace_loaders) trace("texture file name: %s\n", VREF(tex_header, file.pc_name));
 
-		if(!_strnicmp(VREF(tex_header, file.pc_name), "field", strlen("field") - 1)) use_compression = false;
-
-		texture = load_texture(VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), use_compression);
+		texture = load_texture(VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height));
 
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "world", strlen("world") - 1)) gl_set->force_filter = true;
 

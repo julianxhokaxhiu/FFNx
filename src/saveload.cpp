@@ -57,7 +57,7 @@ uint save_texture(void *data, uint width, uint height, uint palette_index, char 
 	else return true;
 }
 
-uint load_texture_helper(char* name, uint* width, uint* height, uint use_compression)
+uint load_texture_helper(char* name, uint* width, uint* height)
 {
 	uint ret = 0;
 	struct stat dummy;
@@ -75,7 +75,7 @@ uint load_texture_helper(char* name, uint* width, uint* height, uint use_compres
 	return ret;
 }
 
-uint load_texture(char *name, uint palette_index, uint *width, uint *height, uint use_compression)
+uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 {
 	char filename[sizeof(basedir) + 1024];
 	uint ret;
@@ -83,14 +83,14 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height, uin
 	_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.dds", basedir, mod_path, name, palette_index);
 
 	// Try loading DDS
-	ret = load_texture_helper(filename, width, height, use_compression);
+	ret = load_texture_helper(filename, width, height);
 	
 	// If not successfull fallback to PNG
 	if (!ret)
 	{
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
 
-		ret = load_texture_helper(filename, width, height, use_compression);
+		ret = load_texture_helper(filename, width, height);
 	}
 
 	if(!ret)
@@ -98,7 +98,7 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height, uin
 		if(palette_index != 0)
 		{
 			if(show_missing_textures) info("tried to load %s/%s/%s_%02i.(dds|png), falling back to palette 0\n", basedir, mod_path, name, palette_index);
-			return load_texture(name, 0, width, height, use_compression);
+			return load_texture(name, 0, width, height);
 		}
 		else
 		{
