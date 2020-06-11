@@ -57,14 +57,17 @@ uint save_texture(void *data, uint width, uint height, uint palette_index, char 
 	else return true;
 }
 
-uint load_texture_helper(char* name, uint* width, uint* height)
+uint load_texture_helper(char* name, uint* width, uint* height, bool isPNG)
 {
 	uint ret = 0;
 	struct stat dummy;
 
 	if (stat(name, &dummy) == 0)
 	{
-		ret = newRenderer.createTexture(name, width, height);
+		if (isPNG)
+			ret = newRenderer.createTextureLibPng(name, width, height);
+		else
+			ret = newRenderer.createTexture(name, width, height);
 
 		if (ret > 0)
 		{
@@ -83,14 +86,14 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 	_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.dds", basedir, mod_path, name, palette_index);
 
 	// Try loading DDS
-	ret = load_texture_helper(filename, width, height);
+	ret = load_texture_helper(filename, width, height, false);
 	
 	// If not successfull fallback to PNG
 	if (!ret)
 	{
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
 
-		ret = load_texture_helper(filename, width, height);
+		ret = load_texture_helper(filename, width, height, true);
 	}
 
 	if(!ret)

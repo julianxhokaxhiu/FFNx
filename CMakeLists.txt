@@ -45,6 +45,7 @@ if (SUPERBUILD)
 		vgmstream
 		StackWalker
 		pugixml
+		libpng
 	)
 	ExternalProject_Add_Step(
 		FFNx

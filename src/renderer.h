@@ -34,6 +34,7 @@
 #include <bimg/encode.h>
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
+#include <libpng16/png.h>
 #include "log.h"
 #include "gl.h"
 
@@ -174,6 +175,22 @@ static void RendererReleaseImageContainer(void* _ptr, void* _userData)
     BX_UNUSED(_ptr);
     bimg::ImageContainer* imageContainer = (bimg::ImageContainer*)_userData;
     bimg::imageFree(imageContainer);
+}
+
+static void RendererReleaseData(void* _ptr, void* _userData)
+{
+    BX_UNUSED(_ptr);
+    driver_free(_userData);
+}
+
+static void RendererLibPngErrorCb(png_structp png_ptr, const char* error)
+{
+    error("libpng error: %s\n", error);
+}
+
+static void RendererLibPngWarningCb(png_structp png_ptr, const char* warning)
+{
+    info("libpng warning: %s\n", warning);
 }
 
 class Renderer {
@@ -330,6 +347,7 @@ public:
 
     uint createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool generateMips = false);
     uint createTexture(char* filename, uint* width, uint* height);
+    uint createTextureLibPng(char* filename, uint* width, uint* height);
     bool saveTexture(char* filename, uint width, uint height, void* data);
     void deleteTexture(uint16_t texId);
     void useTexture(uint texId, uint slot = 0);

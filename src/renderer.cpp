@@ -775,6 +775,177 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
     return ret.idx;
 }
 
+uint Renderer::createTextureLibPng(char* filename, uint* width, uint* height)
+{
+    bgfx::TextureHandle ret = { 0 };
+
+    FILE* file = fopen(filename, "rb");
+
+    if (file)
+    {
+        png_infop info_ptr = nullptr;
+        png_structp png_ptr = nullptr;
+
+        png_uint_32 _width = 0, _height = 0;
+        png_byte color_type = 0, bit_depth = 0;
+
+        png_bytepp rowptrs = nullptr;
+        size_t rowbytes = 0;
+
+        uint8_t* data = nullptr;
+        size_t datasize = 0;
+
+        fseek(file, 0, SEEK_END);
+        datasize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)0, RendererLibPngErrorCb, RendererLibPngWarningCb);
+
+        if (!png_ptr)
+        {
+            fclose(file);
+
+            return ret.idx;
+        }
+
+        info_ptr = png_create_info_struct(png_ptr);
+
+        if (!info_ptr)
+        {
+            png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
+
+            fclose(file);
+
+            return ret.idx;
+        }
+
+        if (setjmp(png_jmpbuf(png_ptr)))
+        {
+            png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+
+            fclose(file);
+
+            return ret.idx;
+        }
+
+        png_init_io(png_ptr, file);
+
+        png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
+
+        if (!doesItFitInMemory(datasize))
+        {
+            png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+
+            fclose(file);
+
+            return ret.idx;
+        }
+
+        png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+
+        color_type = png_get_color_type(png_ptr, info_ptr);
+        bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+        _width = png_get_image_width(png_ptr, info_ptr);
+        _height = png_get_image_height(png_ptr, info_ptr);
+
+        rowptrs = png_get_rows(png_ptr, info_ptr);
+        rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+
+        datasize = rowbytes * _height;
+
+        if (!doesItFitInMemory(datasize))
+        {
+            png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+
+            fclose(file);
+
+            return ret.idx;
+        }
+
+        data = (uint8_t*)driver_calloc(datasize, sizeof(uint8_t));
+
+        for (png_uint_32 y = 0; y < _height; y++) memcpy(data + (rowbytes * y), rowptrs[y], rowbytes);
+
+        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+
+        fclose(file);
+
+        // ------------------------------------------------------------
+
+        bgfx::TextureFormat::Enum texFmt = bgfx::TextureFormat::Unknown;
+
+        switch (bit_depth)
+        {
+        case 1:
+        case 2:
+        case 4:
+            texFmt = bgfx::TextureFormat::R8;
+            break;
+        case 8:
+        {
+            switch (color_type)
+            {
+            case PNG_COLOR_TYPE_GRAY:
+                texFmt = bgfx::TextureFormat::R8;
+                break;
+            case PNG_COLOR_TYPE_GRAY_ALPHA:
+                texFmt = bgfx::TextureFormat::RG8;
+                break;
+            case PNG_COLOR_TYPE_RGB:
+                texFmt = bgfx::TextureFormat::RGB8;
+                break;
+            case PNG_COLOR_TYPE_RGBA:
+            case PNG_COLOR_TYPE_PALETTE:
+                texFmt = bgfx::TextureFormat::RGBA8;
+                break;
+            }
+            break;
+        }
+        case 16:
+        {
+            switch (color_type)
+            {
+            case PNG_COLOR_TYPE_GRAY:
+                texFmt = bgfx::TextureFormat::R16;
+                break;
+            case PNG_COLOR_TYPE_GRAY_ALPHA:
+                texFmt = bgfx::TextureFormat::RG16;
+                break;
+            case PNG_COLOR_TYPE_RGB:
+            case PNG_COLOR_TYPE_RGBA:
+                texFmt = bgfx::TextureFormat::RGBA16;
+                break;
+            case PNG_COLOR_TYPE_PALETTE:
+                break;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+
+        if (texFmt != bgfx::TextureFormat::Unknown)
+        {
+            const bgfx::Memory* mem = bgfx::makeRef(data, datasize, RendererReleaseData, data);
+
+            ret = bgfx::createTexture2D(
+                _width,
+                _height,
+                false,
+                1,
+                texFmt,
+                BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+                mem
+            );
+
+            *width = _width;
+            *height = _height;
+        }
+    }
+
+    return ret.idx;
+}
+
 bool Renderer::saveTexture(char* filename, uint width, uint height, void* data)
 {
     if (bx::open(&defaultWriter, filename, false))
