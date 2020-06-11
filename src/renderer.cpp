@@ -754,7 +754,7 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
         {
             if (gl_check_texture_dimensions(img->m_width, img->m_height, filename) && doesItFitInMemory(img->m_size))
             {
-                const bgfx::Memory* mem = bgfx::copy(img->m_data, img->m_size);
+                const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
 
                 ret = bgfx::createTexture2D(
                     img->m_width,
@@ -769,8 +769,6 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
                 *width = img->m_width;
                 *height = img->m_height;
             }
-
-            bimg::imageFree(img);
         }
     }
 

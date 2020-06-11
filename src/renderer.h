@@ -169,6 +169,13 @@ struct RendererCallbacks : public bgfx::CallbackI {
     }
 };
 
+static void RendererReleaseImageContainer(void* _ptr, void* _userData)
+{
+    BX_UNUSED(_ptr);
+    bimg::ImageContainer* imageContainer = (bimg::ImageContainer*)_userData;
+    bimg::imageFree(imageContainer);
+}
+
 class Renderer {
 private:
     // Current renderer view
