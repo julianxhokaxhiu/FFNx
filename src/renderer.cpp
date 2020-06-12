@@ -998,8 +998,10 @@ void Renderer::useTexture(uint rt, uint slot)
 
 uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
 {
+    struct game_mode* mode = getmode_cached();
+
     uint16_t newX = getInternalCoordX(x);
-    uint16_t newY = getInternalCoordY(y);
+    uint16_t newY = getInternalCoordY(ff7_center_fields && mode->driver_mode == MODE_FIELD && !ff8 ? y+8 : y);
     uint16_t newWidth = getInternalCoordX(width);
     uint16_t newHeight = getInternalCoordY(height);
 
