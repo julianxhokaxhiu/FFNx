@@ -73,6 +73,7 @@ char* steam_game_userdata = nullptr;
 char* hext_patching_path = nullptr;
 char* override_path = nullptr;
 char* direct_mode_path = nullptr;
+char* save_path = nullptr;
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -123,6 +124,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("hext_patching_path", &hext_patching_path),
 		CFG_SIMPLE_STR("override_path", &override_path),
 		CFG_SIMPLE_STR("direct_mode_path", &direct_mode_path),
+		CFG_SIMPLE_STR("save_path", &save_path),
 
 		CFG_END()
 };
