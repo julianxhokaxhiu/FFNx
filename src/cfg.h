@@ -73,5 +73,6 @@ extern char* steam_game_userdata;
 extern char* hext_patching_path;
 extern char* override_path;
 extern char* direct_mode_path;
+extern char* save_path;
 
 void read_cfg();

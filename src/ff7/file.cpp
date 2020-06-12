@@ -32,6 +32,9 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 	
 	std::transform(newIn.begin(), newIn.end(), newIn.begin(), ::tolower);
 
+	bool isSavegame = strstr(newIn.data(), ".ff7") != NULL;
+	bool isCacheFile = strstr(newIn.data(), ".p") != NULL;
+
 	if (wantsSteamPath && _access(in, 0) == -1)
 	{
 		if (
@@ -70,9 +73,6 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 
 			if ((_access(out, 0) == -1 || pos == NULL))
 			{
-				bool isSavegame = strstr(newIn.data(), ".ff7") != NULL;
-				bool isCacheFile = strstr(newIn.data(), ".p") != NULL;
-
 				// If steam edition, do one more try in the user data path
 				if (steam_edition) get_userdata_path(out, size, isSavegame);
 				else strcpy(out, "");
@@ -109,9 +109,30 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 	}
 	else
 	{
-		bool isCacheFile = strstr(newIn.data(), ".P") != NULL;
-		
-		if (!isCacheFile)
+		if (isSavegame && save_path != nullptr)
+		{
+			char* pos = strrchr(newIn.data(), 47);
+
+			// This case may happen if we have already redirected the path
+			if (strstr(newIn.data(), "save/save") == NULL)
+			{
+				// Allow the game to continue by forward the redirected path again
+				strcpy(out, newIn.data());
+			}
+			// This one means we still have to redirect it
+			else if (pos != NULL)
+			{
+				strcpy(out, basedir);
+				PathAppendA(out, save_path);
+				PathAppendA(out, ++pos);
+
+				if (trace_all || trace_files) trace("Redirected: %s -> %s\n", newIn.data(), out);
+			}
+
+			// Always return as found in order to allow non existing save files to be saved under the new redirected path
+			return 0;
+		}
+		else if (!isCacheFile)
 		{
 			const char* pos = strstr(newIn.data(), "data");
 
