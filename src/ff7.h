@@ -1638,6 +1638,8 @@ struct ff7_externals
 	uint menu_start;
 	uint battle_clear_sound_flags;
 	uint swirl_sound_effect;
+	uint opcode_akao;
+	uint opcode_akao2;
 };
 
 uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

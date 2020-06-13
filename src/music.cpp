@@ -25,11 +25,24 @@
 #include "directmusic.h"
 #include "winamp/music.h"
 
+uint music_sound_operation_fix(uint type, uint param1, uint param2, uint param3, uint param4, uint param5)
+{
+	if (trace_all || trace_music) trace("AKAO call type=%X params=(%i %i %i %i)\n", type, param1, param2, param3, param4, param5);
+
+	if (type == 0xDA) { // Assimilated to stop music (Cid speech in Highwind)
+		return ((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(0xF0, 0, 0, 0, 0, 0);
+	}
+
+	return ((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
+}
+
 void music_init()
 {
 	if (!ff8) {
 		// Fix music stop issue in FF7
 		patch_code_dword(ff7_externals.music_lock_clear_fix + 2, 0xCC195C);
+		replace_call(ff7_externals.opcode_akao + 0xEA, music_sound_operation_fix);
+		replace_call(ff7_externals.opcode_akao2 + 0xE8, music_sound_operation_fix);
 	}
 
 	if (use_external_music)
