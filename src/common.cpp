@@ -1940,8 +1940,8 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 #endif
 
 	// read original resolution
-	game_width = VREF(game_object, res_w);
-	game_height = VREF(game_object, res_h);
+	game_width = VREF(game_object, window_width);
+	game_height = VREF(game_object, window_height);
 
 	// steal window handle
 	hwnd = VREF(game_object, hwnd);
