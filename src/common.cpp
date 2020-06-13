@@ -2059,8 +2059,6 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	if (window_size_x == 0) window_size_x = game_width;
 	if (window_size_y == 0) window_size_y = game_height;
 
-	info("Original resolution %ix%i, New resolution %ix%i\n", game_width, game_height, window_size_x, window_size_y);
-
 	// perform any additional initialization that requires the rendering environment to be set up
 	music_init();
 	sfx_init();

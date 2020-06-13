@@ -338,6 +338,9 @@ void Renderer::init()
     framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
     framebufferVertexOffsetX = (game_width - framebufferVertexWidth) / 2;
 
+    // Let the user know about chosen resolutions
+    info("Original resolution %ix%i, New resolution %ix%i, Internal resolution %ix%i\n", game_width, game_height, window_size_x, window_size_y, framebufferWidth, framebufferHeight);
+
     // Init renderer
     bgfx::Init bgfxInit;
     bgfxInit.platformData.nwh = hwnd;
