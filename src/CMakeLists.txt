@@ -8,10 +8,22 @@ find_package(LIBPNG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
+if (_DLL_VERSION STREQUAL "devel" OR _DLL_VERSION MATCHES "-" )
+    set(_DLL_RCVERSION "0,0,0,0")
+else()
+    string(REPLACE "." "," _DLL_RCVERSION ${_DLL_VERSION})
+endif()
+
 # Include all the source code files
 file(GLOB_RECURSE source_files "*.cpp")
 
-add_library(${RELEASE_NAME} SHARED ${source_files})
+configure_file(
+  ../misc/version.rc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+  @ONLY
+)
+
+add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 target_include_directories(${RELEASE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src")
 target_link_libraries(${RELEASE_NAME}
 	dbghelp
@@ -36,6 +48,7 @@ target_link_libraries(${RELEASE_NAME}
     LIBPNG::LIBPNG
 )
 target_compile_options(${RELEASE_NAME}
+    PRIVATE /DVERSION="${_DLL_VERSION}"
 	PRIVATE /D_CRT_SECURE_NO_WARNINGS
 	PRIVATE /DNOMINMAX
 	PRIVATE /EHsc
@@ -47,9 +60,6 @@ target_link_options(${RELEASE_NAME}
     PRIVATE /PDBALTPATH:${RELEASE_NAME}.pdb
     PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.def
 )
-if(_DLL_VERSION)
-	target_compile_options(${RELEASE_NAME} PRIVATE /DVERSION="${_DLL_VERSION}")
-endif()
 
 # SHADER COMPILATION
 add_custom_command(
