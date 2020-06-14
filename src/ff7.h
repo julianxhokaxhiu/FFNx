@@ -1638,6 +1638,10 @@ struct ff7_externals
 	uint menu_start;
 	uint battle_clear_sound_flags;
 	uint swirl_sound_effect;
+	uint field_init_event_sub_63BCA7;
+	uint field_init_event;
+	uint execute_opcode;
+	uint *execute_opcode_table;
 	uint opcode_akao;
 	uint opcode_akao2;
 };

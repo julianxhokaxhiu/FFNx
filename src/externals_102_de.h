@@ -71,5 +71,3 @@ ff7_externals.update_gamepad_status =         0x41F7D8;
 ff7_externals.gamepad_status = (struct ff7_gamepad_status*)0x9AEBE8;
 ff7_externals.call_menu_sound_slider_loop_sfx_down = 0x10AF;
 ff7_externals.call_menu_sound_slider_loop_sfx_up = 0x10F3;
-ff7_externals.opcode_akao =                   0x6138A4;
-ff7_externals.opcode_akao2 =                  0x6138B4;
