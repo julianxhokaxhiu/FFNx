@@ -1,0 +1,49 @@
+#include <windows.h>
+
+#define VER_FILEVERSION             @_DLL_RCVERSION@
+#define VER_FILEVERSION_STR         "@_DLL_VERSION@\0"
+
+#define VER_PRODUCTVERSION          @_DLL_RCVERSION@
+#define VER_PRODUCTVERSION_STR      "@_DLL_VERSION@\0"
+
+#define VER_INTERNALNAME            "@RELEASE_NAME@"
+#define VER_PRODUCTNAME             "@RELEASE_NAME@"
+#define VER_ORIGINALFILENAME        "@RELEASE_NAME@.dll"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     VER_FILEVERSION
+PRODUCTVERSION  VER_PRODUCTVERSION
+FILEOS          VOS__WINDOWS32
+FILETYPE        VFT_DLL
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      "Julian Xhokaxhiu"
+            VALUE "FileDescription",  "Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )"
+            VALUE "FileVersion",      VER_FILEVERSION_STR
+            VALUE "InternalName",     VER_INTERNALNAME
+            VALUE "LegalCopyright",   "GPLv3"
+            VALUE "LegalTrademarks1", ""
+            VALUE "LegalTrademarks2", ""
+            VALUE "OriginalFilename", VER_ORIGINALFILENAME
+            VALUE "ProductName",      VER_PRODUCTNAME
+            VALUE "ProductVersion",   VER_PRODUCTVERSION_STR
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        /* The following line should only be modified for localized versions.     */
+        /* It consists of any number of WORD,WORD pairs, with each pair           */
+        /* describing a language,codepage combination supported by the file.      */
+        /*                                                                        */
+        /* For example, a file might have values "0x409,1252" indicating that it  */
+        /* supports English language (0x409) in the Windows ANSI codepage (1252). */
+
+        VALUE "Translation", 0x409, 1252
+
+    END
+END
