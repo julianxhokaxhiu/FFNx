@@ -167,7 +167,7 @@ If you want a more advanced experience, for example using another backend render
 If you want to check what is going on behind the scene, or you may happen to have a crash, feel free to check the `FFNx.log` file.
 
 ## Join us on Discord
-If you want to join our community, you can find us on Discord: https://discord.gg/N6M6pKS
+If you want to join our community, you can find us on Discord: https://discord.gg/Urq67Uz ( remember to hit the Red Chocobo reaction! )
 
 ## Credits
 
