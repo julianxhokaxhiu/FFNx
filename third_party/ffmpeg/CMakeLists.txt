@@ -1,6 +1,6 @@
 include(ExternalProject)
 
-set(FFMPEG_VERSION "4.2.3")
+set(FFMPEG_VERSION "4.3.0")
 
 ExternalProject_Add(
 	ffmpeg
