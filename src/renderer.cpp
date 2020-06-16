@@ -65,38 +65,62 @@ void Renderer::setCommonUniforms()
     setUniform("worldView", bgfx::UniformType::Mat4, internalState.worldViewMatrix);
 }
 
-bgfx::RendererType::Enum Renderer::getRendererType() {
-    std::string backend(renderer_backend);
+bgfx::RendererType::Enum Renderer::getUserChosenRenderer() {
     bgfx::RendererType::Enum ret;
 
+    switch (renderer_backend)
+    {
+    case RENDERER_BACKEND_AUTO:
+        ret = bgfx::RendererType::Count;
+        break;
+    case RENDERER_BACKEND_OPENGL:
+        ret = bgfx::RendererType::OpenGL;
+        break;
+    case RENDERER_BACKEND_DIRECT3D11:
+        ret = bgfx::RendererType::Direct3D11;
+        break;
+    case RENDERER_BACKEND_DIRECT3D12:
+        ret = bgfx::RendererType::Direct3D12;
+        break;
+    case RENDERER_BACKEND_VULKAN:
+        ret = bgfx::RendererType::Vulkan;
+        break;
+    default:
+        ret = bgfx::RendererType::Noop;
+        break;
+    }
+
+    return ret;
+}
+
+void Renderer::updateRendererShaderPaths()
+{
     std::string shaderSuffix;
 
-    if (backend == "Vulkan") {
-        ret = bgfx::RendererType::Vulkan;
-        shaderSuffix = ".vk";
-    }
-    else if (backend == "Direct3D12") {
-        ret = bgfx::RendererType::Direct3D12;
-        shaderSuffix = ".d3d12";
-    }
-    else if (backend == "Direct3D11") {
-        ret = bgfx::RendererType::Direct3D11;
-        shaderSuffix = ".d3d11";
-    }
-    else if (backend == "OpenGL") {
-        ret = bgfx::RendererType::OpenGL;
+    switch (bgfx::getCaps()->rendererType)
+    {
+    case bgfx::RendererType::OpenGL:
+        currentRenderer = "OpenGL";
         shaderSuffix = ".gl";
-    }
-    else {
-        ret = bgfx::RendererType::Noop;
+        break;
+    case bgfx::RendererType::Direct3D11:
+        currentRenderer = "Direct3D11";
+        shaderSuffix = ".d3d11";
+        break;
+    case bgfx::RendererType::Direct3D12:
+        currentRenderer = "Direct3D12";
+        shaderSuffix = ".d3d12";
+        break;
+    case bgfx::RendererType::Vulkan:
+        currentRenderer = "Vulkan";
+        shaderSuffix = ".vk";
+        break;
     }
 
     vertexPath += shaderSuffix + ".vert";
     fragmentPath += shaderSuffix + ".frag";
     vertexPostPath += shaderSuffix + ".vert";
     fragmentPostPath += shaderSuffix + ".frag";
-
-    return ret;
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
@@ -344,7 +368,7 @@ void Renderer::init()
     // Init renderer
     bgfx::Init bgfxInit;
     bgfxInit.platformData.nwh = hwnd;
-    bgfxInit.type = getRendererType();
+    bgfxInit.type = getUserChosenRenderer();
     bgfxInit.resolution.width = window_size_x;
     bgfxInit.resolution.height = window_size_y;
     bgfxInit.resolution.reset = BGFX_RESET_NONE;
@@ -360,7 +384,9 @@ void Renderer::init()
 
     if (!bgfx::init(bgfxInit)) exit(1);
 
-    bx::mtxOrtho(internalState.backendProjMatrix, 0.0f, game_width, game_height, 0.0f, bgfxInit.type == bgfx::RendererType::OpenGL ? -1.0f : 0.0f, 1.0f, 0.0, bgfx::getCaps()->homogeneousDepth);
+    updateRendererShaderPaths();
+
+    bx::mtxOrtho(internalState.backendProjMatrix, 0.0f, game_width, game_height, 0.0f, bgfx::getCaps()->rendererType == bgfx::RendererType::OpenGL ? -1.0f : 0.0f, 1.0f, 0.0, bgfx::getCaps()->homogeneousDepth);
 
     // Create an empty texture
     emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_NONE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);

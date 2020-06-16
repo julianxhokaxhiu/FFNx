@@ -306,7 +306,8 @@ private:
 
     uint32_t createBGRA(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     void setCommonUniforms();
-    bgfx::RendererType::Enum getRendererType();
+    bgfx::RendererType::Enum getUserChosenRenderer();
+    void updateRendererShaderPaths();
     bgfx::ShaderHandle getShader(const char* filePath);
 
     bgfx::UniformHandle getUniform(std::string uniformName, bgfx::UniformType::Enum uniformType);
@@ -326,6 +327,10 @@ private:
     bx::FileWriter defaultWriter;
 
 public:
+    std::string currentRenderer;
+
+    // ---
+
     void init();
     void shutdown();
 

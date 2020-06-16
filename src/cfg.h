@@ -25,6 +25,12 @@
 #include "types.h"
 #include "log.h"
 
+#define RENDERER_BACKEND_AUTO 0
+#define RENDERER_BACKEND_OPENGL 1
+#define RENDERER_BACKEND_DIRECT3D11 2
+#define RENDERER_BACKEND_DIRECT3D12 3
+#define RENDERER_BACKEND_VULKAN 4
+
 extern char *mod_path;
 extern cfg_bool_t enable_ffmpeg_videos;
 extern char* ffmpeg_video_ext;
@@ -66,7 +72,7 @@ extern cfg_bool_t show_applog;
 extern cfg_bool_t show_missing_textures;
 extern cfg_bool_t show_error_popup;
 extern cfg_bool_t movie_sync_debug;
-extern char *renderer_backend;
+extern long renderer_backend;
 extern cfg_bool_t renderer_debug;
 extern cfg_bool_t create_crash_dump;
 extern char* steam_game_userdata;

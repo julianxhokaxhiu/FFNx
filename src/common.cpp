@@ -378,7 +378,7 @@ void common_flip(struct game_obj *game_object)
 
 		if (show_renderer_backend)
 		{
-			gl_draw_text(col, row++, text_colors[TEXTCOLOR_GREEN], 255, "Renderer: %s", renderer_backend);
+			gl_draw_text(col, row++, text_colors[TEXTCOLOR_GREEN], 255, "Renderer: %s", newRenderer.currentRenderer.c_str());
 		}
 
 		if (show_fps)
@@ -418,7 +418,7 @@ void common_flip(struct game_obj *game_object)
 		if (show_renderer_backend)
 		{
 			char tmp[64];
-			sprintf_s(tmp, 64, " (%s)", renderer_backend);
+			sprintf_s(tmp, 64, " (%s)", newRenderer.currentRenderer.c_str());
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 

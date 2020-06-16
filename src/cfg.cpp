@@ -66,7 +66,7 @@ cfg_bool_t show_applog = cfg_bool_t(true);
 cfg_bool_t show_missing_textures = cfg_bool_t(false);
 cfg_bool_t show_error_popup = cfg_bool_t(false);
 cfg_bool_t movie_sync_debug = cfg_bool_t(false);
-char *renderer_backend = nullptr;
+long renderer_backend = RENDERER_BACKEND_AUTO;
 cfg_bool_t renderer_debug = cfg_bool_t(false);
 cfg_bool_t create_crash_dump = cfg_bool_t(false);
 char* steam_game_userdata = nullptr;
@@ -116,7 +116,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("show_missing_textures", &show_missing_textures),
 		CFG_SIMPLE_BOOL("show_error_popup", &show_error_popup),
 		CFG_SIMPLE_BOOL("movie_sync_debug", &movie_sync_debug),
-		CFG_SIMPLE_STR("renderer_backend", &renderer_backend),
+		CFG_SIMPLE_INT("renderer_backend", &renderer_backend),
 		CFG_SIMPLE_BOOL("renderer_debug", &renderer_debug),
 		CFG_SIMPLE_BOOL("create_crash_dump", &create_crash_dump),
 		CFG_SIMPLE_STR("steam_game_userdata", &steam_game_userdata),
@@ -256,10 +256,6 @@ void read_cfg()
 	// DIRECT MODE PATH
 	if (direct_mode_path == nullptr)
 		direct_mode_path = R"(direct)";
-
-	// RENDERER
-	if (renderer_backend == nullptr)
-		renderer_backend = "OpenGL";
 
 	// EXTERNAL MOVIE EXTENSION
 	if (ffmpeg_video_ext == nullptr)
