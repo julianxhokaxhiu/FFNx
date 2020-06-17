@@ -1032,16 +1032,15 @@ uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
     uint16_t newWidth = getInternalCoordX(width);
     uint16_t newHeight = getInternalCoordY(height);
 
-    uint16_t texWidth = framebufferWidth > newWidth ? newWidth : framebufferWidth;
-    uint16_t texHeight = framebufferHeight > newHeight ? newHeight : framebufferHeight;
+    uint16_t dstY = 0;
     
-    bgfx::TextureHandle ret = bgfx::createTexture2D(texWidth, texHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
+    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
 
-    if (getCaps()->originBottomLeft) newY = framebufferHeight - (newY + texHeight);
+    if (getCaps()->originBottomLeft) dstY = ::abs(framebufferHeight - (newY + newHeight));
     
     backendViewId++;
 
-    bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
+    bgfx::blit(backendViewId, ret, 0, dstY, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
     bgfx::touch(backendViewId);
     
     backendViewId++;
