@@ -2407,7 +2407,7 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 	}
 	else if (strcmp(lpValueName, "Options") == 0)
 	{
-		lpData[0] = 0x12;
+		lpData[0] = 0x0;
 	}
 	/* FF8 */
 	else if (strcmp(lpValueName, "GraphicsGUID") == 0 || strcmp(lpValueName, "SoundGUID") == 0 || strcmp(lpValueName, "MIDIGUID") == 0)
