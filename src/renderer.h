@@ -38,6 +38,11 @@
 #include "log.h"
 #include "gl.h"
 
+enum RendererInterpolationQualifier {
+    FLAT = 0,
+    SMOOTH
+};
+
 enum RendererBlendMode {
     BLEND_AVG = 0,
     BLEND_ADD,
@@ -197,7 +202,8 @@ class Renderer {
 private:
     // Current renderer view
     enum RendererProgram {
-        FRAMEBUFFER = 0,
+        FLAT = 0,
+        SMOOTH,
         POSTPROCESSING
     };
 
@@ -263,13 +269,15 @@ private:
             "tex_v",
     };
 
-    std::string vertexPath = "shaders/FFNx";
-    std::string fragmentPath = "shaders/FFNx";
+    std::string vertexPathFlat = "shaders/FFNx";
+    std::string fragmentPathFlat = "shaders/FFNx";
+    std::string vertexPathSmooth = "shaders/FFNx";
+    std::string fragmentPathSmooth = "shaders/FFNx";
     std::string vertexPostPath = "shaders/FFNx.post";
     std::string fragmentPostPath = "shaders/FFNx.post";
 
     bgfx::ViewId backendViewId;
-    RendererProgram backendProgram = RendererProgram::FRAMEBUFFER;
+    RendererProgram backendProgram = RendererProgram::SMOOTH;
 
     std::vector<bgfx::ProgramHandle> backendProgramHandles = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
 
@@ -375,6 +383,7 @@ public:
     void doAlphaTest(bool flag = false);
 
     // Internal states
+    void setInterpolationQualifier(RendererInterpolationQualifier qualifier = RendererInterpolationQualifier::SMOOTH);
     void setPrimitiveType(RendererPrimitiveType type = RendererPrimitiveType::PT_TRIANGLES);
     void setCullMode(RendererCullMode mode = RendererCullMode::DISABLED);
     void doDepthTest(bool flag = false);

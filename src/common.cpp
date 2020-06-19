@@ -1349,21 +1349,19 @@ void common_setrenderstate(struct p_hundred *hundred_data, struct game_obj *game
 		{
 			if(hundred_data->shademode == 1)
 			{
-				// TODO: OPENGL
-				//glShadeModel(GL_FLAT);
+				newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::FLAT);
 				current_state.shademode = false;
 			}
 			else if(hundred_data->shademode == 2)
 			{
-				//glShadeModel(GL_SMOOTH);
+				newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::SMOOTH);
 				current_state.shademode = true;
 			}
 			else glitch("missing shade mode %i\n", hundred_data->shademode);
 		}
-
 		else
 		{
-			//glShadeModel(GL_FLAT);
+			newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::FLAT);
 			current_state.shademode = false;
 		}
 	}

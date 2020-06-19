@@ -62,31 +62,47 @@ target_link_options(${RELEASE_NAME}
 )
 
 # SHADER COMPILATION
+
+# GAME SHADERS
+foreach(BGFX_VARYING flat smooth)
+    add_custom_command(
+        TARGET ${RELEASE_NAME}
+        POST_BUILD
+        # ensure bin directory exists
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/bin/shaders
+        # OpenGL
+        COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.${BGFX_VARYING}.gl.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --profile 120
+        COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.${BGFX_VARYING}.gl.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --profile 120
+	    # Vulkan
+        COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.${BGFX_VARYING}.vk.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform linux --profile spirv
+        COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.${BGFX_VARYING}.vk.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform linux --profile spirv
+        # Direct3D 11
+        COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.${BGFX_VARYING}.d3d11.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform windows -p ps_5_0 -O 3
+        COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.${BGFX_VARYING}.d3d11.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform windows -p vs_5_0 -O 3
+        # Direct3D 12
+        COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.${BGFX_VARYING}.d3d12.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform windows -p ps_5_0 -O 3
+        COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.${BGFX_VARYING}.d3d12.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform windows -p vs_5_0 -O 3
+    )
+endforeach()
+
+# POST SHADERS
 add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
     # ensure bin directory exists
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/bin/shaders
     # OpenGL
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.gl.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --profile 120
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.gl.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --profile 120
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.gl.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --profile 120
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.gl.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --profile 120
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.gl.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --profile 120
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.gl.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --profile 120
 	# Vulkan
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.vk.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform linux --profile spirv
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.vk.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform linux --profile spirv
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.vk.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform linux --profile spirv
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.vk.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform linux --profile spirv
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.vk.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform linux --profile spirv
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.vk.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform linux --profile spirv
     # Direct3D 11
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.d3d11.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform windows -p ps_5_0 -O 3
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.d3d11.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform windows -p vs_5_0 -O 3
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.d3d11.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform windows -p ps_5_0 -O 3
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.d3d11.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform windows -p vs_5_0 -O 3
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.d3d11.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p ps_5_0 -O 3
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.d3d11.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p vs_5_0 -O 3
     # Direct3D 12
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.d3d12.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform windows -p ps_5_0 -O 3
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.d3d12.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform windows -p vs_5_0 -O 3
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.d3d12.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform windows -p ps_5_0 -O 3
-    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.d3d12.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.def.sc --platform windows -p vs_5_0 -O 3
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.d3d12.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p ps_5_0 -O 3
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.post.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.post.d3d12.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p vs_5_0 -O 3
 )
 
 # INSTALL

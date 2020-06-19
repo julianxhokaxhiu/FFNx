@@ -117,8 +117,10 @@ void Renderer::updateRendererShaderPaths()
         break;
     }
 
-    vertexPath += shaderSuffix + ".vert";
-    fragmentPath += shaderSuffix + ".frag";
+    vertexPathFlat += ".flat" + shaderSuffix + ".vert";
+    fragmentPathFlat += ".flat" + shaderSuffix + ".frag";
+    vertexPathSmooth += ".smooth" + shaderSuffix + ".vert";
+    fragmentPathSmooth += ".smooth" + shaderSuffix + ".frag";
     vertexPostPath += shaderSuffix + ".vert";
     fragmentPostPath += shaderSuffix + ".frag";
 }
@@ -221,6 +223,7 @@ void Renderer::reset()
     setCullMode();
     setBlendMode();
     setAlphaRef();
+    setInterpolationQualifier();
     isTLVertex();
     isYUV();
     isFullRange();
@@ -299,7 +302,7 @@ void Renderer::renderFrame()
 
         setBlendMode();
     }
-    backendProgram = RendererProgram::FRAMEBUFFER;
+    backendProgram = RendererProgram::SMOOTH;
 };
 
 void Renderer::printMatrix(char* name, float* mat)
@@ -437,9 +440,15 @@ void Renderer::init()
         true
     );
 
-    backendProgramHandles[RendererProgram::FRAMEBUFFER] = bgfx::createProgram(
-        getShader(vertexPath.c_str()),
-        getShader(fragmentPath.c_str()),
+    backendProgramHandles[RendererProgram::FLAT] = bgfx::createProgram(
+        getShader(vertexPathFlat.c_str()),
+        getShader(fragmentPathFlat.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::SMOOTH] = bgfx::createProgram(
+        getShader(vertexPathSmooth.c_str()),
+        getShader(fragmentPathSmooth.c_str()),
         true
     );
 
@@ -588,6 +597,9 @@ void Renderer::draw()
 
         bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
     }
+
+    // Reset Interpolation Qualifier
+    setInterpolationQualifier();
 };
 
 void Renderer::show()
@@ -1113,6 +1125,19 @@ void Renderer::doAlphaTest(bool flag)
 {
     internalState.bDoAlphaTest = flag;
 };
+
+void Renderer::setInterpolationQualifier(RendererInterpolationQualifier qualifier)
+{
+    switch (qualifier)
+    {
+    case RendererInterpolationQualifier::FLAT:
+        backendProgram = RendererProgram::FLAT;
+        break;
+    case RendererInterpolationQualifier::SMOOTH:
+        backendProgram = RendererProgram::SMOOTH;
+        break;
+    }
+}
 
 void Renderer::setPrimitiveType(RendererPrimitiveType type)
 {
