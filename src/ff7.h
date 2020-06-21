@@ -1642,6 +1642,11 @@ struct ff7_externals
 	uint execute_opcode;
 	uint opcode_akao;
 	uint opcode_akao2;
+	uint opcode_gameover;
+	uint sfx_play_summon;
+	uint sfx_fill_buffer_from_audio_dat;
+	uint battle_summon_leviathan_loop;
+	uint battle_limit_omnislash_loop;
 };
 
 uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

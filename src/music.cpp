@@ -34,6 +34,8 @@ void music_init()
 		// Fix Cid speech music stop
 		replace_call(ff7_externals.opcode_akao + 0xEA, music_sound_operation_fix);
 		replace_call(ff7_externals.opcode_akao2 + 0xE8, music_sound_operation_fix);
+		// Fix Game Over music in field
+		common_externals.execute_opcode_table[0xFF] = uint((void *)opcode_gameover_music_fix);
 	}
 
 	if (use_external_music)
@@ -282,4 +284,13 @@ bool needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi)
 	return ((new_mode == MODE_WORLDMAP || new_mode == MODE_AFTER_BATTLE) && !is_wm_theme(old_midi) && is_wm_theme(new_midi))
 		|| ((old_mode == MODE_BATTLE || old_mode == MODE_SWIRL) && (new_mode == MODE_FIELD || new_mode == MODE_AFTER_BATTLE))
 		|| new_mode == MODE_CARDGAME;
+}
+
+uint opcode_gameover_music_fix()
+{
+	const uint stop_sounds = 0xF1;
+	((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(stop_sounds, 0, 0, 0, 0, 0);
+	const uint play_music = 0x14, midi_id = 0x3A;
+	((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(play_music, midi_id, 0, 0, 0, 0);
+	return ((uint(*)())ff7_externals.opcode_gameover)();
 }

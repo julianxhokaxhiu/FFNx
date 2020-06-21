@@ -33,3 +33,5 @@ void sfx_menu_play_sound_down(uint id);
 void sfx_menu_play_sound_up(uint id);
 void sfx_clear_sound_locks();
 void sfx_fix_volume_values(char* log);
+int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint flags);
+uint sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer);

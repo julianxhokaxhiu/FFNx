@@ -35,6 +35,7 @@ void sfx_init()
 	// Add Global Focus flag to DirectSound Secondary Buffers
 	patch_code_byte(common_externals.directsound_buffer_flags_1 + 0x4, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
 
+	// SFX Patches
 	if (!ff8) {
 		// On volume change in main menu initialization
 		replace_call(ff7_externals.menu_start + 0x17, sfx_menu_force_channel_5_volume);
@@ -47,6 +48,14 @@ void sfx_init()
 		replace_call(ff7_externals.swirl_sound_effect + 0x26, sfx_operation_battle_swirl_stop_sound);
 		// On resume music after a battle
 		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
+		// Fix volume on specific SFX
+		replace_call(ff7_externals.sfx_play_summon + 0xA2, sfx_play_battle_specific);
+		replace_call(ff7_externals.sfx_play_summon + 0xF2, sfx_play_battle_specific);
+
+		// Leviathan fix
+		patch_code_byte(ff7_externals.battle_summon_leviathan_loop + 0x3FA + 1, 0x2A);
+		// Omnislash fix
+		replace_call(ff7_externals.battle_limit_omnislash_loop + 0x5A, sfx_fix_omnislash_sound_loading);
 
 		/* Set sound volume on channel changes
 		 * When this sub is called, it set two fields of sfx_state,
@@ -54,13 +63,13 @@ void sfx_init()
 		 */
 
 		// Replace a useless "volume & 0xFF" to "real_volume <- volume; nop"
-		patch_code_byte(uint(common_externals.set_sfx_volume) + 0x48, 0xA3); // mov
-		patch_code_uint(uint(common_externals.set_sfx_volume) + 0x48 + 1, uint(&real_volume));
-		patch_code_byte(uint(common_externals.set_sfx_volume) + 0x48 + 5, 0x90); // nop
+		patch_code_byte(uint(common_externals.set_sfx_volume_on_channel) + 0x48, 0xA3); // mov
+		patch_code_uint(uint(common_externals.set_sfx_volume_on_channel) + 0x48 + 1, uint(&real_volume));
+		patch_code_byte(uint(common_externals.set_sfx_volume_on_channel) + 0x48 + 5, 0x90); // nop
 		// Use a field of sfx_state to flag the current channel
-		patch_code_uint(uint(common_externals.set_sfx_volume) + 0x70, 0xFFFFFFFF);
+		patch_code_uint(uint(common_externals.set_sfx_volume_on_channel) + 0x70, 0xFFFFFFFF);
 		// Replace log call to fix sfx_state volume values
-		replace_call(uint(common_externals.set_sfx_volume) + 0x183, sfx_fix_volume_values);
+		replace_call(uint(common_externals.set_sfx_volume_on_channel) + 0x183, sfx_fix_volume_values);
 	}
 }
 
@@ -145,7 +154,7 @@ void sfx_menu_force_channel_5_volume(uint volume, uint channel)
 {
 	if (trace_all || trace_music) info("sfx_menu_force_channel_5_volume %d\n", volume);
 	// Original call (set channel 5 volume to maximum)
-	common_externals.set_sfx_volume(volume, channel);
+	common_externals.set_sfx_volume_on_channel(volume, channel);
 	// Added by FFNx
 	sfx_remember_volumes();
 }
@@ -161,7 +170,7 @@ void sfx_update_volume(int modifier)
 
 	// Update sfx volume in real-time for all channel
 	for (int channel = 1; channel <= 5; ++channel) {
-		common_externals.set_sfx_volume(sfx_volumes[channel - 1], channel);
+		common_externals.set_sfx_volume_on_channel(sfx_volumes[channel - 1], channel);
 
 		if (trace_all || trace_music) info("Set SFX volume for channel #%i: %i\n", channel, sfx_volumes[channel - 1]);
 	}
@@ -205,4 +214,36 @@ void sfx_fix_volume_values(char* log)
 			sfx_state[i].u1 = 0; // Back to the correct value
 		}
 	}
+}
+
+int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint flags)
+{
+	if (buffer == nullptr) {
+		return 0;
+	}
+
+	// Added by FFNx: set buffer volume according to master_sfx_volume
+	unsigned char volume = 127 * (*common_externals.master_sfx_volume) / 100;
+
+	buffer->SetVolume(common_externals.dsound_volume_table[volume]);
+
+	// Original behavior
+	HRESULT res = buffer->Play(0, 0, flags);
+
+	if (DSERR_BUFFERLOST == res) {
+		res = buffer->Restore();
+
+		return -1;
+	}
+
+	return res == DS_OK;
+}
+
+uint sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer)
+{
+	// Added by FFNx: Load sound 0x188
+	((uint(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(0x188, dsound_buffer);
+
+	// Original call (load sound 0x285)
+	return ((uint(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(sound_id, dsound_buffer);
 }

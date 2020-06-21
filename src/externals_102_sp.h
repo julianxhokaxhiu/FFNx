@@ -74,3 +74,6 @@ ff7_externals.update_gamepad_status =         0x41F7E8;
 ff7_externals.gamepad_status = (struct ff7_gamepad_status*)0x9B0678;
 ff7_externals.call_menu_sound_slider_loop_sfx_down = 0x10AC;
 ff7_externals.call_menu_sound_slider_loop_sfx_up = 0x10E1;
+ff7_externals.sfx_play_summon =               0x6E580F;
+ff7_externals.battle_summon_leviathan_loop =  0x5B1785;
+ff7_externals.battle_limit_omnislash_loop =   0x46BA1B;
