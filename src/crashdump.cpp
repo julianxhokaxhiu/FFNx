@@ -158,10 +158,10 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 
 		sprintf(msg, "Oops! Something very bad happened.\n\nWrote emergency save to %s dir.\n\nPlease provide a copy of those files along with FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", filePath);
 
-		MessageBoxA(0, msg, "Error", MB_OK);
+		MessageBoxA(hwnd, msg, "Error", MB_ICONERROR | MB_OK);
 	}
 	else
-		MessageBoxA(0, "Oops! Something very bad happened.\n\nPlease provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_OK);
+		MessageBoxA(hwnd, "Oops! Something very bad happened.\n\nPlease provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_ICONERROR | MB_OK);
 
 	// let OS handle the crash
 	SetUnhandledExceptionFilter(0);
