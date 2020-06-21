@@ -132,6 +132,17 @@ bgfx::ShaderHandle Renderer::getShader(const char* filePath)
 
     FILE* file = fopen(filePath, "rb");
 
+    if (file == NULL)
+    {
+        char tmp[1024]{ 0 };
+
+        sprintf(tmp, "Oops! Something very bad happened.\n\nCould not find shader file:\n%s\n\nMake sure all the provided files are installed correctly.", filePath);
+
+        MessageBoxA(hwnd, tmp, "Error", MB_ICONERROR | MB_OK);
+
+        exit(1);
+    }
+
     fseek(file, 0, SEEK_END);
     long fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
