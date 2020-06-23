@@ -320,7 +320,6 @@ void Renderer::renderFrame()
 
         setBlendMode();
     }
-    backendProgram = RendererProgram::SMOOTH;
 };
 
 void Renderer::printMatrix(char* name, float* mat)
@@ -494,7 +493,7 @@ void Renderer::shutdown()
 
 void Renderer::draw()
 {
-    if (trace_all) trace("Renderer::%s\n", __func__);
+    if (trace_all) trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
     // Set current view rect
     if (backendProgram == RendererProgram::POSTPROCESSING)
@@ -615,9 +614,6 @@ void Renderer::draw()
 
         bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
     }
-
-    // Reset Interpolation Qualifier
-    setInterpolationQualifier();
 };
 
 void Renderer::show()

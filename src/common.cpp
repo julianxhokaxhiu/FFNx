@@ -1285,6 +1285,10 @@ void internal_set_renderstate(uint state, uint option, struct game_obj *game_obj
 			default: newRenderer.setAlphaRef(RendererAlphaFunc::LEQUAL, current_state.alpharef / 255.0f); break;
 			}
 			break;
+
+		case V_SHADEMODE:
+			current_state.shademode = option;
+
 		default:
 			break;
 	}
@@ -1343,28 +1347,7 @@ void common_setrenderstate(struct p_hundred *hundred_data, struct game_obj *game
 	if(CHECK_BIT(features, V_NOCULL)) internal_set_renderstate(V_NOCULL, CHECK_BIT(options, V_NOCULL), game_object);
 	if(CHECK_BIT(features, V_DEPTHTEST)) internal_set_renderstate(V_DEPTHTEST, CHECK_BIT(options, V_DEPTHTEST), game_object);
 	if(CHECK_BIT(features, V_DEPTHMASK)) internal_set_renderstate(V_DEPTHMASK, CHECK_BIT(options, V_DEPTHMASK), game_object);
-	if(CHECK_BIT(features, V_SHADEMODE))
-	{
-		if(CHECK_BIT(options, V_SHADEMODE) && !VREF(game_object, field_92C))
-		{
-			if(hundred_data->shademode == 1)
-			{
-				newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::FLAT);
-				current_state.shademode = false;
-			}
-			else if(hundred_data->shademode == 2)
-			{
-				newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::SMOOTH);
-				current_state.shademode = true;
-			}
-			else glitch("missing shade mode %i\n", hundred_data->shademode);
-		}
-		else
-		{
-			newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::FLAT);
-			current_state.shademode = false;
-		}
-	}
+	if(CHECK_BIT(features, V_SHADEMODE)) internal_set_renderstate(V_SHADEMODE, CHECK_BIT(options, V_SHADEMODE) && !VREF(game_object, field_92C) && hundred_data->shademode == 2, game_object);
 
 	// any bits still set in the features and options variables at this point
 	// are features that we do not currently handle

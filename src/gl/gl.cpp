@@ -102,6 +102,7 @@ void gl_draw_movie_quad_common(uint width, uint height)
 	internal_set_renderstate(V_DEPTHTEST, 0, game_object);
 	internal_set_renderstate(V_DEPTHMASK, 0, game_object);
 
+	newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::SMOOTH);
 	newRenderer.bindVertexBuffer(vertices, 4);
 	newRenderer.bindIndexBuffer(indices, 6);
 
@@ -148,8 +149,7 @@ void gl_load_state(struct driver_state *src)
 	internal_set_renderstate(V_ALPHATEST, src->alphatest, 0);
 	internal_set_renderstate(V_ALPHAFUNC, src->alphafunc, 0);
 	internal_set_renderstate(V_ALPHAREF, src->alpharef, 0);
-	// TODO: OPENGL
-	//glShadeModel(src->shademode ? GL_SMOOTH : GL_FLAT);
+	internal_set_renderstate(V_SHADEMODE, src->shademode, 0);
 	gl_set_world_matrix(&src->world_matrix);
 	gl_set_d3dprojection_matrix(&src->d3dprojection_matrix);
 }
@@ -185,6 +185,8 @@ void gl_draw_indexed_primitive(uint primitivetype, uint vertextype, struct nvert
 	}
 
 	newRenderer.useFancyTransparency(fancy_transparency);
+
+	newRenderer.setInterpolationQualifier(current_state.shademode ? RendererInterpolationQualifier::SMOOTH : RendererInterpolationQualifier::FLAT);
 
 	// handle some special cases, see special_case.c
 	if(gl_special_case(primitivetype, vertextype, vertices, vertexcount, indices, count, graphics_object, clip, mipmap))
