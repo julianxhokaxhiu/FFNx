@@ -778,7 +778,6 @@ struct ff8_externals
 	uint wm_upload_psx_vram;
 	uint check_active_window;
 	uint sub_467D10;
-	uint dinput_sub_468D80;
 	uint dinput_sub_4692B0;
 	uint dinput_gamepad_buffer_1CD06DC;
 	uint pubintro_enter_main;
