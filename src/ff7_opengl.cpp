@@ -60,9 +60,7 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 
 	// DirectInput hack, try to reacquire on any error
 	memset_code(ff7_externals.dinput_getdata2 + 0x65, 0x90, 9);
-	memset_code(ff7_externals.dinput_getstate2 + 0x3C, 0x90, 9);
-	memset_code(ff7_externals.dinput_getstate2 + 0x7E, 0x90, 5);
-	memset_code(ff7_externals.dinput_acquire_keyboard + 0x31, 0x90, 5);
+	memset_code((uint)common_externals.dinput_acquire_keyboard + 0x31, 0x90, 5);
 
 	// Allow mouse cursor to be shown
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);

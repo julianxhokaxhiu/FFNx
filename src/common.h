@@ -217,6 +217,10 @@ struct common_externals
 	uint play_sfx_on_channel;
 	uint (*set_sfx_volume)(uint, uint);
 	uint *master_sfx_volume;
+	IDirectInputDeviceA **keyboard_device;
+	uint get_keyboard_state;
+	uint *keyboard_connected;
+	int (*dinput_acquire_keyboard)();
 };
 
 // heap allocation wrappers

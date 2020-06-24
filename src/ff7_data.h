@@ -287,14 +287,16 @@ void ff7_find_externals()
  	ff7_externals.restore_input_settings = get_relative_call(ff7_externals.menu_sub_719B81, 0x80);
  	
 	ff7_externals.dinput_getdata2 = get_relative_call(ff7_externals.keyboard_name_input, 0x1C);
-	ff7_externals.dinput_getstate2 = get_relative_call(ff7_externals.keyboard_name_input, 0x6);
+	common_externals.get_keyboard_state = get_relative_call(ff7_externals.keyboard_name_input, 0x6);
 
 	ff7_externals.init_game = get_absolute_value(ff7_externals.init_stuff, 0x336);
 	ff7_externals.sub_41A1B0 = get_relative_call(ff7_externals.init_game, 0x85);
 	ff7_externals.init_directinput = get_relative_call(ff7_externals.sub_41A1B0, 0x34);
 	ff7_externals.dinput_createdevice_mouse = get_relative_call(ff7_externals.init_directinput, 0x48);
 
-	ff7_externals.dinput_acquire_keyboard = get_relative_call(ff7_externals.dinput_getstate2, 0x4F);
+	common_externals.dinput_acquire_keyboard = (int (*)())get_relative_call(common_externals.get_keyboard_state, 0x4F);
+	common_externals.keyboard_device = (IDirectInputDeviceA**)get_absolute_value(common_externals.get_keyboard_state, 0x06);
+	common_externals.keyboard_connected = (uint*)get_absolute_value(common_externals.get_keyboard_state, 0x47);
 
 	ff7_externals.sub_69C69F = (void (*)(matrix*, ff7_light*))get_relative_call(ff7_externals.draw_3d_model, 0x882);
 

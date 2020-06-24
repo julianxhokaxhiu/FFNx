@@ -1607,13 +1607,11 @@ struct ff7_externals
 	uint keyboard_name_input;
 	uint restore_input_settings;
 	uint dinput_getdata2;
-	uint dinput_getstate2;
 	uint init_stuff;
 	uint init_game;
 	uint sub_41A1B0;
 	uint init_directinput;
 	uint dinput_createdevice_mouse;
-	uint dinput_acquire_keyboard;
 	void (*sub_69C69F)(struct matrix *, struct ff7_light *);
 	uint coaster_sub_5E9051;
 	uint coaster_sub_5EE150;

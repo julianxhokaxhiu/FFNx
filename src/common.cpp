@@ -38,6 +38,7 @@
 #include "sfx.h"
 #include "saveload.h"
 #include "gamepad.h"
+#include "input.h"
 
 // global RAM status
 MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
@@ -113,6 +114,9 @@ char basedir[BASEDIR_LENGTH];
 uint version;
 
 bool xinput_connected = false;
+
+typedef LRESULT CALLBACK WindowProcType(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+WindowProcType* oldWindowProc;
 
 // global data used for profiling macros
 #ifdef PROFILE
@@ -280,6 +284,12 @@ struct game_mode *getmode_cached()
 	return last_mode;
 }
 
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	HandleInputEvents(uMsg, wParam, lParam);
+	return oldWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
 // called by the game before rendering starts, after the driver object has been
 // created, we use this opportunity to initialize our default OpenGL render
 // state
@@ -292,6 +302,10 @@ uint common_init(struct game_obj *game_object)
 	texture_format = common_externals.create_texture_format();
 	common_externals.make_pixelformat(32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000, texture_format);
 	common_externals.add_texture_format(texture_format, game_object);
+
+	// Proxy the WindowProc function so that we can intercept messages to the game window
+	oldWindowProc = (WindowProcType*)GetWindowLongA(hwnd, GWL_WNDPROC);
+	SetWindowLongA(hwnd, GWL_WNDPROC, (LONG)&WindowProc);
 
 	return true;
 }
@@ -1911,6 +1925,7 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	else
 		ret = ff8_load_driver(VPTRCAST(ff8_game_obj, game_object));
 
+	replace_function(common_externals.get_keyboard_state, &GetGameKeyState);
 	// catch all applog messages
 	replace_function(common_externals.debug_print, external_debug_print);
 

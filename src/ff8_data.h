@@ -197,9 +197,13 @@ void ff8_find_externals()
 	ff8_externals.check_active_window = get_relative_call(ff8_externals.pubintro_main_loop, 0x4);
 	ff8_externals.sub_467D10 = get_relative_call(ff8_externals.check_active_window, 0x16);
 
-	ff8_externals.dinput_sub_468D80 = get_relative_call(ff8_externals.sub_467D10, 0x11);
+	common_externals.get_keyboard_state = get_relative_call(ff8_externals.sub_467D10, 0x11);
 	ff8_externals.dinput_sub_4692B0 = get_relative_call(ff8_externals.sub_467D10, 0x1B);
 	ff8_externals.dinput_gamepad_buffer_1CD06DC = get_absolute_value(ff8_externals.dinput_sub_4692B0, 0x1B);
+
+	common_externals.dinput_acquire_keyboard = (int (*)())get_relative_call(common_externals.get_keyboard_state, 0x34);
+	common_externals.keyboard_device = (IDirectInputDeviceA**)get_absolute_value(common_externals.get_keyboard_state, 0x01);
+	common_externals.keyboard_connected = (uint*)get_absolute_value(common_externals.get_keyboard_state, 0x2C);
 
 	ff8_externals.initialize_sound = get_relative_call(ff8_externals.pubintro_init, 0xD8); // sub_469640
 	ff8_externals.initialize_eax_directsound = get_relative_call(ff8_externals.initialize_sound, 0x5D); // sub_46DBF0
