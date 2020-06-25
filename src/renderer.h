@@ -37,6 +37,7 @@
 #include <libpng16/png.h>
 #include "log.h"
 #include "gl.h"
+#include "overlay.h"
 
 enum RendererInterpolationQualifier {
     FLAT = 0,
@@ -204,7 +205,8 @@ private:
     enum RendererProgram {
         FLAT = 0,
         SMOOTH,
-        POSTPROCESSING
+        POSTPROCESSING,
+        OVERLAY
     };
 
     // Vertex data structure
@@ -275,11 +277,13 @@ private:
     std::string fragmentPathSmooth = "shaders/FFNx";
     std::string vertexPostPath = "shaders/FFNx.post";
     std::string fragmentPostPath = "shaders/FFNx.post";
+    std::string vertexOverlayPath = "shaders/FFNx.overlay";
+    std::string fragmentOverlayPath = "shaders/FFNx.overlay";
 
     bgfx::ViewId backendViewId;
     RendererProgram backendProgram = RendererProgram::SMOOTH;
 
-    std::vector<bgfx::ProgramHandle> backendProgramHandles = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
+    std::vector<bgfx::ProgramHandle> backendProgramHandles = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
 
     std::vector<bgfx::TextureHandle> backendFrameBufferRT = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
     bgfx::FrameBufferHandle backendFrameBuffer = BGFX_INVALID_HANDLE;
@@ -333,6 +337,7 @@ private:
 
     bx::DefaultAllocator defaultAllocator;
     bx::FileWriter defaultWriter;
+    Overlay overlay;
 
 public:
     std::string currentRenderer;
@@ -343,6 +348,7 @@ public:
     void shutdown();
 
     void draw();
+    void drawOverlay();
     void show();
 
     void printText(uint16_t x, uint16_t y, uint attr, const char* text);

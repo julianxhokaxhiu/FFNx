@@ -9,6 +9,11 @@ struct KeyEventArgs
 	bool isExtended;
 };
 
+struct KeyPressEventArgs
+{
+	int keyChar;
+};
+
 struct MouseEventArgs
 {
 	int button;
@@ -23,6 +28,7 @@ public:
 	virtual void MouseDown(MouseEventArgs& e) = 0;
 	virtual void MouseUp(MouseEventArgs& e) = 0;
 	virtual void MouseWheel(MouseEventArgs& e) = 0;
+	virtual void MouseMove(MouseEventArgs& e) = 0;
 };
 
 class KeyListener
@@ -30,10 +36,11 @@ class KeyListener
 public:
 	virtual void KeyUp(KeyEventArgs& e) = 0;
 	virtual void KeyDown(KeyEventArgs& e) = 0;
+	virtual void KeyPress(KeyPressEventArgs& e) = 0;
 };
 
 void SetBlockKeysFromGame(bool block);
 __declspec(dllexport) void __stdcall RegisterMouseListener(MouseListener* listener);
 __declspec(dllexport) void __stdcall RegisterKeyListener(KeyListener* listener);
-void HandleInputEvents(UINT msg, WPARAM wParam, LPARAM lParam);
+bool HandleInputEvents(UINT msg, WPARAM wParam, LPARAM lParam);
 byte* GetGameKeyState();

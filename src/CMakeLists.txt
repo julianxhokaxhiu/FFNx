@@ -88,6 +88,29 @@ foreach(BGFX_VARYING flat smooth)
     )
 endforeach()
 
+# OVERLAY SHADERS
+add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    # ensure bin directory exists
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/bin/shaders
+    # OpenGL
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.gl.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --profile 120
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.gl.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --profile 120
+	# Vulkan
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.vk.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform linux --profile spirv
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.vk.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform linux --profile spirv
+    # Direct3D 9
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.d3d9.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p ps_3_0 -O 3
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.d3d9.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p vs_3_0 -O 3
+    # Direct3D 11
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.d3d11.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p ps_5_0 -O 3
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.d3d11.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p vs_5_0 -O 3
+    # Direct3D 12
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.frag -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.d3d12.frag --type f --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p ps_5_0 -O 3
+    COMMAND ${CMAKE_INSTALL_PREFIX}/vendor/bin/shaderc -i ${CMAKE_INSTALL_PREFIX}/vendor/include -f ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.overlay.vert -o ${CMAKE_INSTALL_PREFIX}/bin/shaders/FFNx.overlay.d3d12.vert --type v --varyingdef ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.smooth.def.sc --platform windows -p vs_5_0 -O 3
+)
+
 # POST SHADERS
 add_custom_command(
     TARGET ${RELEASE_NAME}
