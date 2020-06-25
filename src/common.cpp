@@ -286,7 +286,9 @@ struct game_mode *getmode_cached()
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	HandleInputEvents(uMsg, wParam, lParam);
+	if (HandleInputEvents(uMsg, wParam, lParam))
+		return 0;
+
 	return oldWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
@@ -379,6 +381,8 @@ void common_flip(struct game_obj *game_object)
 
 	// draw any z-sorted content now that we're done drawing everything else
 	gl_draw_deferred();
+
+	newRenderer.drawOverlay();
 
 	if (fullscreen)
 	{

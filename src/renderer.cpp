@@ -130,6 +130,8 @@ void Renderer::updateRendererShaderPaths()
     fragmentPathSmooth += ".smooth" + shaderSuffix + ".frag";
     vertexPostPath += shaderSuffix + ".vert";
     fragmentPostPath += shaderSuffix + ".frag";
+    vertexOverlayPath += shaderSuffix + ".vert";
+    fragmentOverlayPath += shaderSuffix + ".frag";
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
@@ -228,6 +230,9 @@ void Renderer::destroyAll()
         if (bgfx::isValid(handle))
             bgfx::destroy(handle);
     }
+
+    if (enable_debug_ui)
+        overlay.destroy();
 };
 
 void Renderer::reset()
@@ -480,6 +485,16 @@ void Renderer::init()
 
     bgfx::frame();
 
+    if (enable_debug_ui)
+    {
+        backendProgramHandles[RendererProgram::OVERLAY] = bgfx::createProgram(
+            getShader(vertexOverlayPath.c_str()),
+            getShader(fragmentOverlayPath.c_str()),
+            true
+        );
+        overlay.init(backendProgramHandles[RendererProgram::OVERLAY], window_size_x, window_size_y);
+    }
+
     // Set defaults
     show();
 };
@@ -615,6 +630,12 @@ void Renderer::draw()
         bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
     }
 };
+
+void Renderer::drawOverlay()
+{
+    if (enable_debug_ui)
+        overlay.draw();
+}
 
 void Renderer::show()
 {

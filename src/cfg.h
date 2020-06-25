@@ -81,5 +81,7 @@ extern char* hext_patching_path;
 extern char* override_path;
 extern char* direct_mode_path;
 extern char* save_path;
+extern cfg_bool_t enable_debug_ui;
+extern long debug_ui_hotkey;
 
 void read_cfg();
