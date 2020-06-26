@@ -39,7 +39,7 @@ public:
 	virtual void KeyPress(KeyPressEventArgs& e) = 0;
 };
 
-void SetBlockKeysFromGame(bool block);
+void SetBlockKeysFromGame(bool block = false);
 __declspec(dllexport) void __stdcall RegisterMouseListener(MouseListener* listener);
 __declspec(dllexport) void __stdcall RegisterKeyListener(KeyListener* listener);
 bool HandleInputEvents(UINT msg, WPARAM wParam, LPARAM lParam);
