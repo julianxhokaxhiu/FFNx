@@ -5,6 +5,7 @@
 //    Copyright (C) 2020 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
+//    Copyright (C) 2020 John Pritchard                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -17,7 +18,6 @@
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
-
 
 #pragma once
 
