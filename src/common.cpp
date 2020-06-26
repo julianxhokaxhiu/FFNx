@@ -506,9 +506,12 @@ void common_flip(struct game_obj *game_object)
 	if (!ff8)
 	{
 		time_t gametime;
+		long framerate = 60;
+
+		if (mode->driver_mode == MODE_HIGHWAY) framerate = 30;
 
 		do qpc_get_time(&gametime);
-		while (gametime > last_gametime && gametime - last_gametime < VREF(game_object, countspersecond * (1.0 / 60)));
+		while (gametime > last_gametime && gametime - last_gametime < VREF(game_object, countspersecond * (1.0 / framerate)));
 
 		last_gametime = gametime;
 	}
