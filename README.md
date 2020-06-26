@@ -55,6 +55,7 @@ In order to enhance the modding experience, FFNx does also provide:
 - Support for an override layer of the data directory using [override_path](misc/FFNx.cfg#L116)
 - Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins ( useful to play for eg. [PSF](http://www.vgmpf.com/Wiki/index.php?title=PSF) sound files )
 - Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0) patching files inside of the [hext_patching_path](misc/FFNx.cfg#L113)
+- Debug in-game engine data through [imgui](https://github.com/ocornut/imgui) integration.
 
 ## Tech Stack
 If you're curious to know it, FFNx is made with:
@@ -70,6 +71,7 @@ If you're curious to know it, FFNx is made with:
 - [pugixml](https://github.com/zeux/pugixml) ( for the Steam XML manifest )
 - [md5](http://www.zedwood.com/article/cpp-md5-function) ( for the Steam XML manifest )
 - [libpng](http://www.libpng.org/pub/png/libpng.html) ( for a better and faster PNG texture support )
+- [imgui](https://github.com/ocornut/imgui) ( to better debug the in-game engine )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
@@ -187,6 +189,8 @@ These people are:
   - for 7h 1.x which FFNx provides support for
 - [Iros](https://forums.qhimm.com/index.php?action=profile;u=21785):
   - for 7h 1.x which FFNx provides support for
+- [JWP](http://forums.qhimm.com/index.php?action=profile;u=3772):
+  - for imgui integration within FFNx
 - [Maki](http://forums.qhimm.com/index.php?action=profile;u=23937):
   - for FF8 UV Hext Patch in the world map, which FFNx provides a default patch for
   - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
