@@ -5,6 +5,7 @@ find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
 find_package(PUGIXML REQUIRED)
 find_package(LIBPNG REQUIRED)
+find_package(IMGUI REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -46,6 +47,7 @@ target_link_libraries(${RELEASE_NAME}
     XINPUT9_1_0
     PUGIXML::PUGIXML
     LIBPNG::LIBPNG
+    IMGUI::IMGUI
 )
 target_compile_options(${RELEASE_NAME}
     PRIVATE /DVERSION="${_DLL_VERSION}"

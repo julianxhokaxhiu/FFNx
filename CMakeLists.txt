@@ -46,6 +46,7 @@ if (SUPERBUILD)
 		StackWalker
 		pugixml
 		libpng
+		imgui
 	)
 	ExternalProject_Add_Step(
 		FFNx

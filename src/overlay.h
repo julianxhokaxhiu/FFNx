@@ -1,7 +1,7 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
-#include <imgui/imgui.h>
+#include <imgui.h>
 #include "input.h"
 
 class Overlay : public MouseListener, public KeyListener {
