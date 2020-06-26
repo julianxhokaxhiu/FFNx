@@ -286,8 +286,7 @@ struct game_mode *getmode_cached()
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (HandleInputEvents(uMsg, wParam, lParam))
-		return 0;
+	HandleInputEvents(uMsg, wParam, lParam);
 
 	return oldWindowProc(hwnd, uMsg, wParam, lParam);
 }
