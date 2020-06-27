@@ -35,12 +35,16 @@ private:
 	bgfx::TextureHandle m_texture;
 	bgfx::ProgramHandle m_program;
 	bool visible = true;
+	bool field_debug_open = false;
+	bool demo_open = false;
+
 	void UpdateMousePos();
 	bool UpdateMouseCursor();
 	void Update();
 	void Render(ImDrawData* drawData);
 public:
 	bool init(bgfx::ProgramHandle program, int width, int height);
+	void drawMainWindow();
 	void draw();
 	void destroy();
 	void MouseDown(MouseEventArgs& e);

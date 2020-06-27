@@ -40,6 +40,7 @@
 #include "saveload.h"
 #include "gamepad.h"
 #include "input.h"
+#include "field.h"
 
 bool proxyWndProc = false;
 
@@ -2117,6 +2118,7 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
 
 	// perform any additional initialization that requires the rendering environment to be set up
+	field_init();
 	music_init();
 	sfx_init();
 

@@ -147,7 +147,7 @@ gfx_draw_vertices common_draw_paletted3D;
 gfx_draw_vertices common_draw_lines;
 gfx_field_EC common_field_EC;
 
-/* 
+/*
  * This structure holds memory addresses and function pointers of the original
  * engine used within this program. Not all of them are currently used for both
  * games, MIDI functions for example are only used for FF7 but they could
@@ -224,6 +224,7 @@ struct common_externals
 	int (*dinput_acquire_keyboard)();
 	uint create_window;
 	WNDPROC engine_wndproc;
+	uint* execute_opcode_table;
 };
 
 // heap allocation wrappers

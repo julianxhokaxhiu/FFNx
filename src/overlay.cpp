@@ -23,6 +23,7 @@
 #include "overlay.h"
 #include <bx/file.h>
 #include "cfg.h"
+#include "field.h"
 
 #define IMGUI_VIEW_ID 255
 
@@ -288,6 +289,27 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
     return true;
 }
 
+void Overlay::drawMainWindow() {
+    if (!ImGui::Begin("Debugging Tools", &visible, ImGuiWindowFlags_::ImGuiWindowFlags_MenuBar))
+    {
+        ImGui::End();
+        return;
+    }
+
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("Tools"))
+        {
+            ImGui::MenuItem("Field Debug", NULL, &field_debug_open);
+            ImGui::MenuItem("ImGui Demo", NULL, &demo_open);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+    ImGui::Text("Select a debug tool from the menu.");
+    ImGui::End();
+}
+
 void Overlay::draw()
 {
     Update();
@@ -295,7 +317,11 @@ void Overlay::draw()
     
     // This is a placeholder UI
     if (visible)
-        ImGui::ShowDemoWindow(&visible);
+    {
+        drawMainWindow();        
+        if (field_debug_open) field_debug(&field_debug_open);
+        if (demo_open) ImGui::ShowDemoWindow(&demo_open); // Useful to keep as GUI guide for now
+    }
     
     // Due to ShowCursor having an internal counter instead of actually using the flag set, we need to make sure that the cursor actually changes state
     if (fullscreen)
