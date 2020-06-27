@@ -327,9 +327,9 @@ void ff7_find_externals()
 	ff7_externals.field_init_event_sub_63BCA7 = get_relative_call(ff7_externals.field_initialize_variables, 0x29D);
 	ff7_externals.field_init_event = get_relative_call(ff7_externals.field_init_event_sub_63BCA7, 0x8);
 	ff7_externals.execute_opcode = get_relative_call(ff7_externals.field_init_event, 0x80);
-	ff7_externals.execute_opcode_table = (uint*)get_absolute_value(ff7_externals.execute_opcode, 0x10D);
-	ff7_externals.opcode_akao2 = ff7_externals.execute_opcode_table[0xDA];
-	ff7_externals.opcode_akao = ff7_externals.execute_opcode_table[0xF2];
+	common_externals.execute_opcode_table = (uint*)get_absolute_value(ff7_externals.execute_opcode, 0x10D);
+	ff7_externals.opcode_akao2 = common_externals.execute_opcode_table[0xDA];
+	ff7_externals.opcode_akao = common_externals.execute_opcode_table[0xF2];
 }
 
 void ff7_data()
