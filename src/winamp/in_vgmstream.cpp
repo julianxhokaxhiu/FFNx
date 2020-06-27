@@ -453,22 +453,22 @@ static void apply_config(VGMSTREAM* vgmstream, winamp_song_config* current) {
 
     /* honor suggested config, if any (defined order matters)
      * note that ignore_fade and play_forever should take priority */
-    if (vgmstream->config_loop_count) {
-        current->song_loop_count = vgmstream->config_loop_count;
+    if (vgmstream->config.loop_count) {
+        current->song_loop_count = vgmstream->config.loop_count;
     }
-    if (vgmstream->config_fade_delay) {
-        current->song_fade_delay = vgmstream->config_fade_delay;
+    if (vgmstream->config.fade_delay) {
+        current->song_fade_delay = vgmstream->config.fade_delay;
     }
-    if (vgmstream->config_fade_time) {
-        current->song_fade_time = vgmstream->config_fade_time;
+    if (vgmstream->config.fade_time) {
+        current->song_fade_time = vgmstream->config.fade_time;
     }
-    if (vgmstream->config_force_loop) {
+    if (vgmstream->config.force_loop) {
         current->song_really_force_loop = 1;
     }
-    if (vgmstream->config_ignore_loop) {
+    if (vgmstream->config.ignore_loop) {
         current->song_ignore_loop = 1;
     }
-    if (vgmstream->config_ignore_fade) {
+    if (vgmstream->config.ignore_fade) {
         current->song_ignore_fade = 1;
     }
 
