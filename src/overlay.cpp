@@ -19,13 +19,12 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "renderer.h"
 #include "overlay.h"
 #include <bx/file.h>
 #include "cfg.h"
 
 #define IMGUI_VIEW_ID 255
-
-extern HWND hwnd;
 
 // Updates the mouse position
 void Overlay::UpdateMousePos()
@@ -36,7 +35,7 @@ void Overlay::UpdateMousePos()
     if (io.WantSetMousePos)
     {
         POINT pos = { (int)io.MousePos.x, (int)io.MousePos.y };
-        ::ClientToScreen(hwnd, &pos);
+        ::ClientToScreen(newRenderer.getHWnd(), &pos);
         ::SetCursorPos(pos.x, pos.y);
     }
 
@@ -44,8 +43,8 @@ void Overlay::UpdateMousePos()
     io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
     POINT pos;
     if (HWND active_window = ::GetForegroundWindow())
-        if (active_window == hwnd || ::IsChild(active_window, hwnd))
-            if (::GetCursorPos(&pos) && ::ScreenToClient(hwnd, &pos))
+        if (active_window == newRenderer.getHWnd() || ::IsChild(active_window, newRenderer.getHWnd()))
+            if (::GetCursorPos(&pos) && ::ScreenToClient(newRenderer.getHWnd(), &pos))
                 io.MousePos = ImVec2((float)pos.x, (float)pos.y);
 }
 
@@ -93,7 +92,7 @@ void Overlay::Update()
 
     // Setup display size (every frame to accommodate for window resizing)
     RECT rect;
-    ::GetClientRect(hwnd, &rect);
+    ::GetClientRect(newRenderer.getHWnd(), &rect);
     io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
 
     // Setup time step
@@ -224,7 +223,7 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
     io.BackendPlatformName = "imgui_impl_win32";
-    io.ImeWindowHandle = hwnd;
+    io.ImeWindowHandle = newRenderer.getHWnd();
 
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array that we will update during the application lifetime.
     io.KeyMap[ImGuiKey_Tab] = VK_TAB;
@@ -326,14 +325,14 @@ void Overlay::destroy()
 void Overlay::MouseDown(MouseEventArgs& e)
 {
     if (!ImGui::IsAnyMouseDown() && ::GetCapture() == NULL)
-        ::SetCapture(hwnd);
+        ::SetCapture(newRenderer.getHWnd());
     ImGui::GetIO().MouseDown[e.button - 1] = true;
 }
 
 void Overlay::MouseUp(MouseEventArgs& e)
 {
     ImGui::GetIO().MouseDown[e.button - 1] = false;
-    if (!ImGui::IsAnyMouseDown() && ::GetCapture() == hwnd)
+    if (!ImGui::IsAnyMouseDown() && ::GetCapture() == newRenderer.getHWnd())
         ::ReleaseCapture();
 }
 

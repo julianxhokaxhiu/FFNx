@@ -73,10 +73,6 @@ uint game_height;
 uint x_offset = 0;
 uint y_offset = 0;
 
-// device context & window handles
-HDC hDC = 0;
-HWND hwnd = 0;
-
 // game-specific data, see ff7_data.h/ff8_data.h
 uint text_colors[NUM_TEXTCOLORS];
 struct game_mode modes[64];
@@ -306,8 +302,8 @@ uint common_init(struct game_obj *game_object)
 	common_externals.add_texture_format(texture_format, game_object);
 
 	// Proxy the WindowProc function so that we can intercept messages to the game window
-	oldWindowProc = (WindowProcType*)GetWindowLongA(hwnd, GWL_WNDPROC);
-	SetWindowLongA(hwnd, GWL_WNDPROC, (LONG)&WindowProc);
+	oldWindowProc = (WindowProcType*)GetWindowLongA(newRenderer.getHWnd(), GWL_WNDPROC);
+	SetWindowLongA(newRenderer.getHWnd(), GWL_WNDPROC, (LONG)&WindowProc);
 
 	return true;
 }
@@ -461,7 +457,7 @@ void common_flip(struct game_obj *game_object)
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 
-		SetWindowText(hwnd, newWindowTitle);
+		newRenderer.updateWindowTitle(newWindowTitle);
 	}
 
 	if(show_fps)
@@ -1921,7 +1917,6 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 {
 	void *ret;
 	VOBJ(game_obj, game_object, game_object);
-	DEVMODE dmScreenSettings;
 
 	// try to prevent screensavers from going off
 	SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
@@ -1946,125 +1941,18 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	game_width = VREF(game_object, window_width);
 	game_height = VREF(game_object, window_height);
 
-	// steal window handle
-	hwnd = VREF(game_object, hwnd);
-
-	// fetch current user screen settings
-	EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmScreenSettings);
-
-	if(window_size_x == 0 || window_size_y == 0)
-	{
-		if(fullscreen)
-		{
-			window_size_x = dmScreenSettings.dmPelsWidth;
-			window_size_y = dmScreenSettings.dmPelsHeight;
-		}
-		else
-		{
-			// default window mode is original resolution
-			window_size_x = game_width;
-			window_size_y = game_height;
-		}
-	}
-	else
-	{
-		if (fullscreen)
-		{
-			dmScreenSettings.dmPelsWidth = window_size_x;
-			dmScreenSettings.dmPelsHeight = window_size_y;
-			dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-		}
-
-		if(refresh_rate)
-		{
-			dmScreenSettings.dmDisplayFrequency = refresh_rate;
-			dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
-		}
-	}
-
-	if (refresh_rate == 0)
-	{
-		refresh_rate = dmScreenSettings.dmDisplayFrequency;
-	}
-
-	if(fullscreen)
-	{
-		if(ChangeDisplaySettingsEx(0, &dmScreenSettings, 0, CDS_FULLSCREEN | CDS_RESET, 0) != DISP_CHANGE_SUCCESSFUL)
-		{
-			MessageBoxA(hwnd, "Failed to set the requested fullscreen mode, reverting to original resolution window mode.\n", "Error", 0);
-			error("failed to set fullscreen mode\n");
-			fullscreen = cfg_bool_t(false);
-			window_size_x = game_width;
-			window_size_y = game_height;
-		}
-
-		MoveWindow(hwnd, 0, 0, window_size_x, window_size_y, false);
-		SetWindowText(hwnd, VREF(game_object, window_title));
-	}
-
-	if(!fullscreen)
-	{
-		RECT tmp;
-		uint w, h;
-
-		tmp.left = 0;
-		tmp.top = 0;
-		tmp.right = window_size_x;
-		tmp.bottom = window_size_y;
-
-		uint32_t initialWindowsPositionOffsetX = (dmScreenSettings.dmPelsWidth / 2) - (window_size_x / 2);
-		uint32_t initialWindowsPositionOffsetY = (dmScreenSettings.dmPelsHeight / 2) - (window_size_y / 2);
-
-		// in windowed mode we need to create our own window with the proper decorations
-		DestroyWindow(hwnd);
-
-		if(!AdjustWindowRectEx(&tmp, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, false, 0)) windows_error(0);
-
-		w = tmp.right - tmp.left;
-		h = tmp.bottom - tmp.top;
-
-		if(!(hwnd = CreateWindowEx(0, VREF(game_object, window_class), VREF(game_object, window_title), WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, initialWindowsPositionOffsetX, initialWindowsPositionOffsetY, w, h, 0, 0, VREF(game_object, hinstance), 0)))
-		{
-			error("couldn't create new window: ");
-			windows_error(0);
-		}
-
-		SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(VREF(game_object, hinstance), MAKEINTRESOURCE(101)));
-
-		ShowWindow(hwnd, SW_SHOW);
-
-		VRASS(game_object, hwnd, hwnd);
-	}
-
 	// Init renderer
-	newRenderer.init();
+	newRenderer.init(VREF(game_object, hwnd), VREF(game_object, hinstance), VREF(game_object, window_class), VREF(game_object, window_title));
+
+	VRASS(game_object, hwnd, newRenderer.getHWnd());
 
 	max_texture_size = newRenderer.getCaps()->limits.maxTextureSize;
 	info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
 
-	// aspect correction
-	if(preserve_aspect && window_size_x * 3 != window_size_y * 4)
-	{
-		if(window_size_y * 4 > window_size_x * 3)
-		{
-			y_offset = window_size_y - (window_size_x * 3) / 4;
-		}
-		else if(window_size_x * 3 > window_size_y * 4)
-		{
-			x_offset = (window_size_x - (window_size_y * 4) / 3) / 2;
-		}
-	}
-
-	/*
-	 * Default to original game resolution if none given
-	 */
-
-	if (window_size_x == 0) window_size_x = game_width;
-	if (window_size_y == 0) window_size_y = game_height;
-
 	// perform any additional initialization that requires the rendering environment to be set up
 	music_init();
 	sfx_init();
+
 	if(!ff8) ff7_post_init();
 	else ff8_post_init();
 
@@ -2119,7 +2007,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		if (!version)
 		{
 			error("no compatible version found\n");
-			MessageBoxA(hwnd, "Your ff7.exe or ff8.exe is incompatible with this driver and will exit after this message.\n"
+			MessageBoxA(NULL, "Your ff7.exe or ff8.exe is incompatible with this driver and will exit after this message.\n"
 				"Possible reasons for this error:\n"
 				" - You have the faulty \"1.4 XP Patch\" for FF7.\n"
 				" - You have FF7 retail 1.00 version (you need the 1.02 patch).\n"

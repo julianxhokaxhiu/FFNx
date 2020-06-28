@@ -26,13 +26,15 @@
 #include "log.h"
 #include "hext.h"
 
+#include "renderer.h"
+
 FILE *app_log;
 
 void open_applog(char *path)
 {
 	app_log = fopen(path, "wb");
 
-	if(!app_log) MessageBoxA(hwnd, "Failed to open log file", "Error", 0);
+	if(!app_log) MessageBoxA(newRenderer.getHWnd(), "Failed to open log file", "Error", 0);
 }
 
 void plugin_trace(const char *fmt, ...)

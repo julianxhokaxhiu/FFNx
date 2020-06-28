@@ -148,7 +148,7 @@ bgfx::ShaderHandle Renderer::getShader(const char* filePath)
 
         sprintf(tmp, "Oops! Something very bad happened.\n\nCould not find shader file:\n%s\n\nMake sure all the provided files are installed correctly.", filePath);
 
-        MessageBoxA(hwnd, tmp, "Error", MB_ICONERROR | MB_OK);
+        MessageBoxA(hWnd, tmp, "Error", MB_ICONERROR | MB_OK);
 
         exit(1);
     }
@@ -346,11 +346,115 @@ bool Renderer::doesItFitInMemory(size_t size)
     return size < last_ram_state.ullAvailVirtual;
 }
 
+void Renderer::createWindow()
+{
+    DEVMODE dmScreenSettings;
+
+    // fetch current user screen settings
+    EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmScreenSettings);
+
+    if (window_size_x == 0 || window_size_y == 0)
+    {
+        if (fullscreen)
+        {
+            window_size_x = dmScreenSettings.dmPelsWidth;
+            window_size_y = dmScreenSettings.dmPelsHeight;
+        }
+        else
+        {
+            // default window mode is original resolution
+            window_size_x = game_width;
+            window_size_y = game_height;
+        }
+    }
+    else
+    {
+        if (fullscreen)
+        {
+            dmScreenSettings.dmPelsWidth = window_size_x;
+            dmScreenSettings.dmPelsHeight = window_size_y;
+            dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+        }
+
+        if (refresh_rate)
+        {
+            dmScreenSettings.dmDisplayFrequency = refresh_rate;
+            dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+        }
+    }
+
+    if (refresh_rate == 0)
+    {
+        refresh_rate = dmScreenSettings.dmDisplayFrequency;
+    }
+
+    if (fullscreen)
+    {
+        if (ChangeDisplaySettingsEx(0, &dmScreenSettings, 0, CDS_FULLSCREEN | CDS_RESET, 0) != DISP_CHANGE_SUCCESSFUL)
+        {
+            MessageBoxA(hWnd, "Failed to set the requested fullscreen mode, reverting to original resolution window mode.\n", "Error", 0);
+            error("failed to set fullscreen mode\n");
+            fullscreen = cfg_bool_t(false);
+            window_size_x = game_width;
+            window_size_y = game_height;
+        }
+
+        MoveWindow(hWnd, 0, 0, window_size_x, window_size_y, false);
+        SetWindowText(hWnd, windowTitle);
+    }
+
+    if (!fullscreen)
+    {
+        RECT tmp;
+        uint w, h;
+
+        tmp.left = 0;
+        tmp.top = 0;
+        tmp.right = window_size_x;
+        tmp.bottom = window_size_y;
+
+        uint32_t initialWindowsPositionOffsetX = (dmScreenSettings.dmPelsWidth / 2) - (window_size_x / 2);
+        uint32_t initialWindowsPositionOffsetY = (dmScreenSettings.dmPelsHeight / 2) - (window_size_y / 2);
+
+        // in windowed mode we need to create our own window with the proper decorations
+        DestroyWindow(hWnd);
+
+        if (!AdjustWindowRectEx(&tmp, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, false, 0)) windows_error(0);
+
+        w = tmp.right - tmp.left;
+        h = tmp.bottom - tmp.top;
+
+        if (!(hWnd = CreateWindowEx(0, windowClass, windowTitle, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, initialWindowsPositionOffsetX, initialWindowsPositionOffsetY, w, h, 0, 0, hInstance, 0)))
+        {
+            error("couldn't create new window: ");
+            windows_error(0);
+        }
+
+        SendMessage(hWnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hInstance, MAKEINTRESOURCE(101)));
+
+        ShowWindow(hWnd, SW_SHOW);
+    }
+
+    /*
+     * Default to original game resolution if none given
+     */
+
+    if (window_size_x == 0) window_size_x = game_width;
+    if (window_size_y == 0) window_size_y = game_height;
+}
+
 // PUBLIC
 
-void Renderer::init()
+void Renderer::init(HWND inhWnd, HINSTANCE inhInstance, char* inwindowClass, char* inwindowTitle)
 {
     bool is16by9 = false;
+
+    hWnd = inhWnd;
+    hInstance = inhInstance;
+    windowClass = inwindowClass;
+    windowTitle = inwindowTitle;
+
+    createWindow();
 
     viewWidth = window_size_x;
     viewHeight = window_size_y;
@@ -362,11 +466,15 @@ void Renderer::init()
         {
             viewOffsetY = viewHeight - (viewWidth * 3) / 4;
             viewHeight = (viewWidth * 3) / 4;
+
+            y_offset = viewOffsetY;
         }
         else if (viewWidth * 3 > viewHeight * 4)
         {
             viewOffsetX = (viewWidth - (viewHeight * 4) / 3) / 2;
             viewWidth = (viewHeight * 4) / 3;
+
+            x_offset = viewOffsetX;
         }
     }
 
@@ -393,7 +501,7 @@ void Renderer::init()
 
     // Init renderer
     bgfx::Init bgfxInit;
-    bgfxInit.platformData.nwh = hwnd;
+    bgfxInit.platformData.nwh = hWnd;
     bgfxInit.type = getUserChosenRenderer();
     bgfxInit.resolution.width = window_size_x;
     bgfxInit.resolution.height = window_size_y;
@@ -1236,4 +1344,16 @@ uint16_t Renderer::getInternalCoordX(uint16_t inX)
 uint16_t Renderer::getInternalCoordY(uint16_t inY)
 {
     return (inY * framebufferHeight) / game_height;
+}
+
+// ---
+
+HWND Renderer::getHWnd()
+{
+    return hWnd;
+}
+
+void Renderer::updateWindowTitle(char* newTitle)
+{
+    SetWindowText(hWnd, newTitle);
 }

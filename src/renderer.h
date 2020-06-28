@@ -340,12 +340,19 @@ private:
     bx::FileWriter defaultWriter;
     Overlay overlay;
 
+    HWND hWnd = NULL;
+    HINSTANCE hInstance = NULL;
+    char* windowClass = NULL;
+    char* windowTitle = NULL;
+
+    void createWindow();
+
 public:
     std::string currentRenderer;
 
     // ---
 
-    void init();
+    void init(HWND inhWnd, HINSTANCE inhInstance, char* inwindowClass, char* inwindowTitle);
     void shutdown();
 
     void draw();
@@ -410,6 +417,11 @@ public:
     // Internal coord calculation
     uint16_t getInternalCoordX(uint16_t inX);
     uint16_t getInternalCoordY(uint16_t inY);
+
+    // ---
+
+    HWND getHWnd();
+    void updateWindowTitle(char* newTitle);
 };
 
 extern Renderer newRenderer;

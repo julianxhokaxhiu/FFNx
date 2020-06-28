@@ -55,8 +55,6 @@ extern char popup_msg[];
 extern uint popup_ttl;
 extern uint popup_color;
 
-extern HWND hwnd;
-
 extern struct game_mode modes[];
 extern uint num_modes;
 

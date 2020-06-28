@@ -21,6 +21,9 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include "renderer.h"
+
 #include "cfg.h"
 
 #define FFNX_CFG_FILE "FFNx.cfg"
@@ -144,7 +147,7 @@ void error_callback(cfg_t *cfg, const char *fmt, va_list ap)
 	error("parse error in config file\n");
 	error("%s\n", config_error_string);
 	sprintf(display_string, "You have an error in your config file, some options may not have been parsed.\n(%s)", config_error_string);
-	MessageBoxA(hwnd, display_string, "Warning", 0);
+	MessageBoxA(newRenderer.getHWnd(), display_string, "Warning", 0);
 }
 
 void read_cfg()

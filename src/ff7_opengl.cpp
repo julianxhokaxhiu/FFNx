@@ -19,6 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "renderer.h"
 #include "cfg.h"
 #include "ff7.h"
 #include "gl.h"
@@ -52,7 +53,7 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 
 	ff7_data();
 
-	if(game_width == 1280) MessageBoxA(hwnd, "Using this driver with the old high-res patch is NOT recommended, there will be glitches.", "Warning", 0);
+	if(game_width == 1280) MessageBoxA(newRenderer.getHWnd(), "Using this driver with the old high-res patch is NOT recommended, there will be glitches.", "Warning", 0);
 
 	game_object->d3d2_flag = 1;
 	game_object->nvidia_fix = 0;

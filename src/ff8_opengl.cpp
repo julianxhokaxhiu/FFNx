@@ -19,6 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "renderer.h"
 #include "globals.h"
 #include "common.h"
 #include "ff8.h"
@@ -347,7 +348,7 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 
 	if(version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
 	{
-		MessageBoxA(hwnd, "Old Eidos patch detected, please update to the newer 1.2 patch from Square.\n"
+		MessageBoxA(newRenderer.getHWnd(), "Old Eidos patch detected, please update to the newer 1.2 patch from Square.\n"
 			"The old patch may or may not work properly, it is not supported and has not been tested.", "Warning", 0);
 	}
 
