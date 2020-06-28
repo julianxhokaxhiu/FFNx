@@ -341,6 +341,8 @@ void common_cleanup(struct game_obj *game_object)
 	unreplace_functions();
 
 	newRenderer.shutdown();
+
+	SetWindowLongA(newRenderer.getHWnd(), GWL_WNDPROC, (LONG)oldWindowProc);
 }
 
 // unused and unnecessary
