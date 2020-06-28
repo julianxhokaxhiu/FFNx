@@ -32,8 +32,10 @@ set(RELEASE_NAME "FFNx")
 
 if (_DLL_VERSION STREQUAL "devel" OR _DLL_VERSION MATCHES "-" )
     set(_DLL_RCVERSION "0,0,0,0")
+    set(_DLL_RCSTRVERSION "0.0.0.0")
 else()
     string(REPLACE "." "," _DLL_RCVERSION ${_DLL_VERSION})
+    set(_DLL_RCSTRVERSION ${_DLL_VERSION})
 endif()
 
 # Include all the source code files
