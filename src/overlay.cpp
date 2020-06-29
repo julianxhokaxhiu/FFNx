@@ -35,7 +35,7 @@ void Overlay::UpdateMousePos()
     if (io.WantSetMousePos)
     {
         POINT pos = { (int)io.MousePos.x, (int)io.MousePos.y };
-        ::ClientToScreen(newRenderer.getHWnd(), &pos);
+        ::ClientToScreen(gameHwnd, &pos);
         ::SetCursorPos(pos.x, pos.y);
     }
 
@@ -43,8 +43,8 @@ void Overlay::UpdateMousePos()
     io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
     POINT pos;
     if (HWND active_window = ::GetForegroundWindow())
-        if (active_window == newRenderer.getHWnd() || ::IsChild(active_window, newRenderer.getHWnd()))
-            if (::GetCursorPos(&pos) && ::ScreenToClient(newRenderer.getHWnd(), &pos))
+        if (active_window == gameHwnd || ::IsChild(active_window, gameHwnd))
+            if (::GetCursorPos(&pos) && ::ScreenToClient(gameHwnd, &pos))
                 io.MousePos = ImVec2((float)pos.x, (float)pos.y);
 }
 
@@ -92,7 +92,7 @@ void Overlay::Update()
 
     // Setup display size (every frame to accommodate for window resizing)
     RECT rect;
-    ::GetClientRect(newRenderer.getHWnd(), &rect);
+    ::GetClientRect(gameHwnd, &rect);
     io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
 
     // Setup time step
@@ -223,7 +223,7 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
     io.BackendPlatformName = "imgui_impl_win32";
-    io.ImeWindowHandle = newRenderer.getHWnd();
+    io.ImeWindowHandle = gameHwnd;
 
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array that we will update during the application lifetime.
     io.KeyMap[ImGuiKey_Tab] = VK_TAB;
@@ -325,14 +325,14 @@ void Overlay::destroy()
 void Overlay::MouseDown(MouseEventArgs& e)
 {
     if (!ImGui::IsAnyMouseDown() && ::GetCapture() == NULL)
-        ::SetCapture(newRenderer.getHWnd());
+        ::SetCapture(gameHwnd);
     ImGui::GetIO().MouseDown[e.button - 1] = true;
 }
 
 void Overlay::MouseUp(MouseEventArgs& e)
 {
     ImGui::GetIO().MouseDown[e.button - 1] = false;
-    if (!ImGui::IsAnyMouseDown() && ::GetCapture() == newRenderer.getHWnd())
+    if (!ImGui::IsAnyMouseDown() && ::GetCapture() == gameHwnd)
         ::ReleaseCapture();
 }
 

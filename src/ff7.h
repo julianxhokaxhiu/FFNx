@@ -1180,9 +1180,9 @@ struct dll_gfx_externals
 struct ff7_game_obj
 {
 	uint unknown_0;
-	uint devicecaps_4;
-	uint devicecaps_8;
-	uint dcdepth;
+	uint dc_horzres;
+	uint dc_vertres;
+	uint dc_bitspixel;
 	uint field_10;
 	uint field_14;
 	uint field_18;

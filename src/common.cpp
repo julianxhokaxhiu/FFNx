@@ -41,6 +41,16 @@
 #include "gamepad.h"
 #include "input.h"
 
+bool proxyWndProc = false;
+
+// global game window handler
+HWND gameHwnd;
+uint32_t gameWindowOffsetX;
+uint32_t gameWindowOffsetY;
+uint32_t gameWindowWidth;
+uint32_t gameWindowHeight;
+DEVMODE dmScreenSettings;
+
 // global RAM status
 MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
 
@@ -111,9 +121,6 @@ char basedir[BASEDIR_LENGTH];
 uint version;
 
 bool xinput_connected = false;
-
-typedef LRESULT CALLBACK WindowProcType(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-WindowProcType* oldWindowProc;
 
 // global data used for profiling macros
 #ifdef PROFILE
@@ -283,9 +290,175 @@ struct game_mode *getmode_cached()
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	HandleInputEvents(uMsg, wParam, lParam);
+	if (proxyWndProc)
+	{
+		if (uMsg == WM_WINDOWPOSCHANGED)
+		{
+			WINDOWPOS* pos = (WINDOWPOS*)lParam;
+			window_size_x = pos->cx;
+			window_size_y = pos->cy;
+			newRenderer.reset();
+		}
+		else if (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN)
+		{
+			if (wParam == VK_RETURN && (HIWORD(lParam) & KF_ALTDOWN))
+			{
+				if (fullscreen)
+				{
+					// Move to window
+					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+					MoveWindow(gameHwnd, gameWindowOffsetX, gameWindowOffsetY, gameWindowWidth, gameWindowHeight, true);
 
-	return oldWindowProc(hwnd, uMsg, wParam, lParam);
+					fullscreen = cfg_bool_t(false);
+				}
+				else
+				{
+					// Move to fullscreen
+					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
+					MoveWindow(gameHwnd, 0, 0, dmScreenSettings.dmPelsWidth, dmScreenSettings.dmPelsHeight, true);
+
+					fullscreen = cfg_bool_t(true);
+				}
+
+				newRenderer.reset();
+			}
+		}
+
+		HandleInputEvents(uMsg, wParam, lParam);
+	}
+
+	return common_externals.engine_wndproc(hwnd, uMsg, wParam, lParam);
+}
+
+int common_create_window(HINSTANCE hInstance, void* game_object)
+{
+	uint ret = FALSE;
+
+	VOBJ(game_obj, game_object, game_object);
+
+	HWND hWnd;
+	HDC hdc;
+	WNDCLASSA WndClass;
+	DWORD dwStyle;
+	RECT Rect;
+
+	// fetch current user screen settings
+	EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmScreenSettings);
+
+	// read original resolution
+	game_width = VREF(game_object, window_width);
+	game_height = VREF(game_object, window_height);
+
+	// Assign a legit name to the Window
+	if (ff8)
+	{
+		VRASS(game_object, window_title, "Final Fantasy VIII");
+	}
+	else
+	{
+		VRASS(game_object, window_title, "Final Fantasy VII");
+	}
+
+	if (window_size_x == 0 || window_size_y == 0)
+	{
+		if (fullscreen)
+		{
+			window_size_x = dmScreenSettings.dmPelsWidth;
+			window_size_y = dmScreenSettings.dmPelsHeight;
+		}
+		else
+		{
+			window_size_x = game_width;
+			window_size_y = game_height;
+		}
+	}
+
+	WndClass.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS;
+	WndClass.lpfnWndProc = WindowProc;
+	WndClass.cbClsExtra = 0;
+	WndClass.cbWndExtra = 0;
+	WndClass.hInstance = hInstance;
+	WndClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(101));
+	WndClass.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+	WndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	WndClass.lpszMenuName = 0;
+	WndClass.lpszClassName = VREF(game_object, window_class);
+
+	if (RegisterClassA(&WndClass))
+	{
+		dwStyle = fullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW;
+
+		if (!fullscreen)
+		{
+			Rect.left = 0;
+			Rect.top = 0;
+			Rect.right = window_size_x;
+			Rect.bottom = window_size_y;
+			AdjustWindowRect(&Rect, dwStyle, false);
+
+			gameWindowWidth = Rect.right - Rect.left;
+			gameWindowHeight = Rect.bottom - Rect.top;
+			gameWindowOffsetX = (dmScreenSettings.dmPelsWidth / 2) - (gameWindowWidth / 2);
+			gameWindowOffsetY = (dmScreenSettings.dmPelsHeight / 2) - (gameWindowHeight / 2);
+		}
+
+		hWnd = CreateWindowExA(
+			WS_EX_APPWINDOW,
+			VREF(game_object, window_class),
+			VREF(game_object, window_title),
+			dwStyle,
+			gameWindowOffsetX,
+			gameWindowOffsetY,
+			gameWindowWidth,
+			gameWindowHeight,
+			0,
+			0,
+			hInstance,
+			0
+		);
+
+		if (fullscreen) ShowCursor(0);
+
+		VRASS(game_object, hwnd, hWnd);
+
+		gameHwnd = hWnd;
+
+		if (hWnd)
+		{
+			ret = TRUE;
+
+			ShowWindow(hWnd, SW_SHOW);
+			UpdateWindow(hWnd);
+			hdc = GetDC(hWnd);
+			if (hdc)
+			{
+				VRASS(game_object, dc_horzres, GetDeviceCaps(hdc, HORZRES));
+				VRASS(game_object, dc_vertres, GetDeviceCaps(hdc, VERTRES));
+				VRASS(game_object, dc_bitspixel, GetDeviceCaps(hdc, BITSPIXEL));
+				if (!VREF(game_object, colordepth))
+					VRASS(game_object, colordepth, VREF(game_object, dc_bitspixel));
+				ReleaseDC(hWnd, hdc);
+			}
+
+			if (ret && VREF(game_object, main_obj_9F0.init))
+			{
+				typedef int game_init(void*);
+				typedef void game_enter_main(void*);
+
+				if (((game_init*)VREF(game_object, main_obj_9F0.init))(game_object))
+				{
+					if (VREF(game_object, main_obj_9F0.enter_main))
+						((game_enter_main*)VREF(game_object, main_obj_9F0.enter_main))(game_object);
+				}
+				else
+				{
+					ret = FALSE;
+				}
+			}
+		}
+	}
+
+	return ret;
 }
 
 // called by the game before rendering starts, after the driver object has been
@@ -301,9 +474,7 @@ uint common_init(struct game_obj *game_object)
 	common_externals.make_pixelformat(32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000, texture_format);
 	common_externals.add_texture_format(texture_format, game_object);
 
-	// Proxy the WindowProc function so that we can intercept messages to the game window
-	oldWindowProc = (WindowProcType*)GetWindowLongA(newRenderer.getHWnd(), GWL_WNDPROC);
-	SetWindowLongA(newRenderer.getHWnd(), GWL_WNDPROC, (LONG)&WindowProc);
+	proxyWndProc = true;
 
 	return true;
 }
@@ -342,7 +513,7 @@ void common_cleanup(struct game_obj *game_object)
 
 	newRenderer.shutdown();
 
-	SetWindowLongA(newRenderer.getHWnd(), GWL_WNDPROC, (LONG)oldWindowProc);
+	proxyWndProc = false;
 }
 
 // unused and unnecessary
@@ -459,7 +630,7 @@ void common_flip(struct game_obj *game_object)
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 
-		newRenderer.updateWindowTitle(newWindowTitle);
+		SetWindowTextA(gameHwnd, newWindowTitle);
 	}
 
 	if(show_fps)
@@ -1939,14 +2110,8 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	replace_function((uint)common_externals.assert_calloc, ext_calloc);
 #endif
 
-	// read original resolution
-	game_width = VREF(game_object, window_width);
-	game_height = VREF(game_object, window_height);
-
 	// Init renderer
-	newRenderer.init(VREF(game_object, hwnd), VREF(game_object, hinstance), VREF(game_object, window_class), VREF(game_object, window_title));
-
-	VRASS(game_object, hwnd, newRenderer.getHWnd());
+	newRenderer.init();
 
 	max_texture_size = newRenderer.getCaps()->limits.maxTextureSize;
 	info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
@@ -2050,6 +2215,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		)
 		{
 			replace_function(ff7_externals.get_inserted_cd_sub, ff7_get_inserted_cd);
+			replace_function(common_externals.create_window, common_create_window);
 
 			if (strstr(parentName, "ff7_en.exe") != NULL ||
 				strstr(parentName, "ff7_de.exe") != NULL ||

@@ -222,6 +222,8 @@ struct common_externals
 	uint get_keyboard_state;
 	uint *keyboard_connected;
 	int (*dinput_acquire_keyboard)();
+	uint create_window;
+	WNDPROC engine_wndproc;
 };
 
 // heap allocation wrappers

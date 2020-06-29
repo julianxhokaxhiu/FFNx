@@ -53,12 +53,10 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 
 	ff7_data();
 
-	if(game_width == 1280) MessageBoxA(newRenderer.getHWnd(), "Using this driver with the old high-res patch is NOT recommended, there will be glitches.", "Warning", 0);
+	if(game_width == 1280) MessageBoxA(gameHwnd, "Using this driver with the old high-res patch is NOT recommended, there will be glitches.", "Warning", 0);
 
 	game_object->d3d2_flag = 1;
 	game_object->nvidia_fix = 0;
-
-	game_object->window_title = "Final Fantasy VII";
 
 	// DirectInput hack, try to reacquire on any error
 	memset_code(ff7_externals.dinput_getdata2 + 0x65, 0x90, 9);

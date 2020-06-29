@@ -27,6 +27,8 @@
 #include "ff7.h"
 #include "ff8.h"
 
+extern HWND gameHwnd;
+
 extern MEMORYSTATUSEX last_ram_state;
 extern uint version;
 extern uint steam_edition;
