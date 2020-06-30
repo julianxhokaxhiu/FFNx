@@ -295,8 +295,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (uMsg == WM_SIZE)
 		{
-			window_size_x = (long)(short)LOWORD(lParam);
-			window_size_y = (long)(short)HIWORD(lParam);
+			window_size_x = (long)LOWORD(lParam);
+			window_size_y = (long)HIWORD(lParam);
 			newRenderer.reset();
 		}
 		else if (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN)
@@ -386,6 +386,11 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 	{
 		dwStyle = fullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW;
 
+		// Half the possible window size if fullscreen is chosen
+		gameWindowWidth = window_size_x / 2;
+		gameWindowHeight = window_size_y / 2;
+
+		// Window mode requested, recalculate everything
 		if (!fullscreen)
 		{
 			Rect.left = 0;
@@ -405,8 +410,8 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 			VREF(game_object, window_class),
 			VREF(game_object, window_title),
 			dwStyle,
-			gameWindowOffsetX,
-			gameWindowOffsetY,
+			fullscreen ? 0 : gameWindowOffsetX,
+			fullscreen ? 0 : gameWindowOffsetY,
 			gameWindowWidth,
 			gameWindowHeight,
 			0,

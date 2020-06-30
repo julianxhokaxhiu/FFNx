@@ -337,10 +337,13 @@ private:
     bool doesItFitInMemory(size_t size);
 
     void recalcInternals();
+    void prepareFramebuffer();
 
     bx::DefaultAllocator defaultAllocator;
     bx::FileWriter defaultWriter;
     Overlay overlay;
+
+    bool resetRequested = false;
 
 public:
     std::string currentRenderer;

@@ -394,37 +394,18 @@ void Renderer::recalcInternals()
     info("Original resolution %ix%i, New resolution %ix%i, Internal resolution %ix%i\n", game_width, game_height, window_size_x, window_size_y, framebufferWidth, framebufferHeight);
 }
 
-// PUBLIC
-
-void Renderer::init()
+void Renderer::prepareFramebuffer()
 {
-    recalcInternals();
+    // If already existing, destroy
+    if (bgfx::isValid(backendFrameBuffer))
+    {
+        bgfx::destroy(backendFrameBuffer);
+        bgfx::destroy(backendFrameBufferRT[1]);
+        bgfx::destroy(backendFrameBufferRT[0]);
 
-    // Init renderer
-    bgfx::Init bgfxInit;
-    bgfxInit.platformData.nwh = gameHwnd;
-    bgfxInit.type = getUserChosenRenderer();
-    bgfxInit.resolution.width = window_size_x;
-    bgfxInit.resolution.height = window_size_y;
-    bgfxInit.resolution.reset = BGFX_RESET_NONE;
-
-    if (enable_anisotropic)
-        bgfxInit.resolution.reset |= BGFX_RESET_MAXANISOTROPY;
-
-    if (enable_vsync)
-        bgfxInit.resolution.reset |= BGFX_RESET_VSYNC;
-
-    bgfxInit.debug = renderer_debug;
-    bgfxInit.callback = &bgfxCallbacks;
-
-    if (!bgfx::init(bgfxInit)) exit(1);
-
-    updateRendererShaderPaths();
-
-    bx::mtxOrtho(internalState.backendProjMatrix, 0.0f, game_width, game_height, 0.0f, getCaps()->rendererType == bgfx::RendererType::OpenGL ? -1.0f : 0.0f, 1.0f, 0.0, getCaps()->homogeneousDepth);
-
-    // Create an empty texture
-    emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_NONE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+        backendFrameBufferRT.empty();
+        backendFrameBufferRT.shrink_to_fit();
+    }
 
     uint64_t fbFlags = BGFX_TEXTURE_RT;
 
@@ -464,6 +445,41 @@ void Renderer::init()
         backendFrameBufferRT.data(),
         true
     );
+}
+
+// PUBLIC
+
+void Renderer::init()
+{
+    recalcInternals();
+
+    // Init renderer
+    bgfx::Init bgfxInit;
+    bgfxInit.platformData.nwh = gameHwnd;
+    bgfxInit.type = getUserChosenRenderer();
+    bgfxInit.resolution.width = window_size_x;
+    bgfxInit.resolution.height = window_size_y;
+    bgfxInit.resolution.reset = BGFX_RESET_NONE;
+
+    if (enable_anisotropic)
+        bgfxInit.resolution.reset |= BGFX_RESET_MAXANISOTROPY;
+
+    if (enable_vsync)
+        bgfxInit.resolution.reset |= BGFX_RESET_VSYNC;
+
+    bgfxInit.debug = renderer_debug;
+    bgfxInit.callback = &bgfxCallbacks;
+
+    if (!bgfx::init(bgfxInit)) exit(1);
+
+    updateRendererShaderPaths();
+
+    bx::mtxOrtho(internalState.backendProjMatrix, 0.0f, game_width, game_height, 0.0f, getCaps()->rendererType == bgfx::RendererType::OpenGL ? -1.0f : 0.0f, 1.0f, 0.0, getCaps()->homogeneousDepth);
+
+    // Create an empty texture
+    emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_NONE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+
+    prepareFramebuffer();
 
     // Create Program
     backendProgramHandles[RendererProgram::POSTPROCESSING] = bgfx::createProgram(
@@ -511,9 +527,7 @@ void Renderer::init()
 
 void Renderer::reset()
 {
-    recalcInternals();
-
-    bgfx::reset(window_size_x, window_size_y);
+    resetRequested = true;
 }
 
 void Renderer::shutdown()
@@ -668,6 +682,17 @@ void Renderer::show()
     backendViewId = 1;
 
     bgfx::setViewMode(backendViewId, bgfx::ViewMode::Sequential);
+
+    if (resetRequested)
+    {
+        recalcInternals();
+
+        prepareFramebuffer();
+
+        bgfx::reset(window_size_x, window_size_y);
+
+        resetRequested = false;
+    }
 }
 
 void Renderer::printText(uint16_t x, uint16_t y, uint color, const char* text)
