@@ -2273,66 +2273,115 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				}
 			}
 		}
-		else if (ff8 &&
-			(
+		else if (ff8)
+		{
+			// Save start address for later
+			switch (version)
+			{
+			case VERSION_FF8_12_US:
+				ff8_externals.start = 0x55AC07;
+				break;
+			case VERSION_FF8_12_US_NV:
+				ff8_externals.start = 0x55ADB7;
+				break;
+			case VERSION_FF8_12_FR:
+				ff8_externals.start = 0x55B137;
+				break;
+			case VERSION_FF8_12_FR_NV:
+				ff8_externals.start = 0x55B2E7;
+				break;
+			case VERSION_FF8_12_DE:
+				ff8_externals.start = 0x55B237;
+				break;
+			case VERSION_FF8_12_DE_NV:
+				ff8_externals.start = 0x55B3E7;
+				break;
+			case VERSION_FF8_12_SP:
+				ff8_externals.start = 0x55B3D7;
+				break;
+			case VERSION_FF8_12_SP_NV:
+				ff8_externals.start = 0x55B227;
+				break;
+			case VERSION_FF8_12_IT:
+				ff8_externals.start = 0x55B367;
+				break;
+			case VERSION_FF8_12_IT_NV:
+				ff8_externals.start = 0x55B1B7;
+				break;
+			case VERSION_FF8_12_US_EIDOS:
+				ff8_externals.start = 0x55AB87;
+				break;
+			case VERSION_FF8_12_US_EIDOS_NV:
+				ff8_externals.start = 0x55AD37;
+				break;
+			case VERSION_FF8_12_JP:
+				ff8_externals.start = 0x0; // TODO
+				break;
+			}
+
+			common_externals.create_window = get_relative_call(get_relative_call(ff8_externals.start, 0xDB), 0x114);
+			common_externals.engine_wndproc = (WNDPROC)get_absolute_value(common_externals.create_window, 0x34);
+			replace_function(common_externals.create_window, common_create_window);
+
+			if (
 				strstr(parentName, "ff8_en.exe") != NULL ||
 				strstr(parentName, "ff8_fr.exe") != NULL ||
 				strstr(parentName, "ff8_de.exe") != NULL ||
 				strstr(parentName, "ff8_it.exe") != NULL ||
 				strstr(parentName, "ff8_sp.exe") != NULL ||
 				strstr(parentName, "ff8_jp.exe") != NULL
-			)
-		)
-		{
-			trace("Detected Steam edition.\n");
-
-			steam_edition = true;
-
-			DWORD offset = version == VERSION_FF8_12_JP ? 0x402320 : 0x401F60;
-			DWORD offset2; // No idea what is this required
-			DWORD offset3; // Eyes on me patch
-
-			// Calculate offset2
-			switch (version)
+				)
 			{
-			case VERSION_FF8_12_US_NV:
-				offset2 = 0xB86014;
-				offset3 = 0xB69388;
-				break;
-			case VERSION_FF8_12_FR_NV:
-			case VERSION_FF8_12_DE_NV:
-			case VERSION_FF8_12_SP_NV:
-			case VERSION_FF8_12_IT_NV:
-				offset2 = 0xB85F74;
-				offset3 = 0xB69388;
-				break;
-			case VERSION_FF8_12_JP:
-				offset2 = 0xD89654;
-				offset3 = 0x2CA3DC8;
-				break;
+				trace("Detected Steam edition.\n");
+
+				steam_edition = true;
+
+				DWORD offset = version == VERSION_FF8_12_JP ? 0x402320 : 0x401F60;
+				DWORD offset2; // No idea what is this required
+				DWORD offset3; // Eyes on me patch
+
+				// Calculate offset2
+				switch (version)
+				{
+				case VERSION_FF8_12_US_NV:
+					offset2 = 0xB86014;
+					offset3 = 0xB69388;
+					break;
+				case VERSION_FF8_12_FR_NV:
+				case VERSION_FF8_12_DE_NV:
+				case VERSION_FF8_12_SP_NV:
+				case VERSION_FF8_12_IT_NV:
+					offset2 = 0xB85F74;
+					offset3 = 0xB69388;
+					break;
+				case VERSION_FF8_12_JP:
+					offset2 = 0xD89654;
+					offset3 = 0x2CA3DC8;
+					break;
+				}
+
+				/*
+				Patch 1,2,3 are required to inject this DLL into the main process
+				Patch 4 is done as well by the official Steam driver, but no idea why.
+				*/
+				// 1
+				patch_code_int(offset, 0x000001BA);
+				patch_code_int(offset + 0x4, -0x2F793900);
+				patch_code_word(offset + 0x8, 0x000B);
+				patch_code_byte(offset + 0xA, 0x00);
+				// 2
+				patch_code_dword(offset + 0xB, (DWORD)new_dll_graphics_driver);
+				// 3
+				patch_code_int(offset + 0xF, 0x0001E0B8);
+				patch_code_word(offset + 0x13, -0x7000);
+				// 4
+				patch_code_int(offset2, ((DWORD*)offset2)[11]);
+				// 5
+				patch_code_dword(offset3, (DWORD)dotemuMciSendCommandA);
+
+				// Steam edition contains movies unpacked
+				enable_ffmpeg_videos = cfg_bool_t(true);
 			}
-
-			/*
-			Patch 1,2,3 are required to inject this DLL into the main process
-			Patch 4 is done as well by the official Steam driver, but no idea why.
-			*/
-			// 1
-			patch_code_int(offset, 0x000001BA);
-			patch_code_int(offset + 0x4, -0x2F793900);
-			patch_code_word(offset + 0x8, 0x000B);
-			patch_code_byte(offset + 0xA, 0x00);
-			// 2
-			patch_code_dword(offset + 0xB, (DWORD)new_dll_graphics_driver);
-			// 3
-			patch_code_int(offset + 0xF, 0x0001E0B8);
-			patch_code_word(offset + 0x13, -0x7000);
-			// 4
-			patch_code_int(offset2, ((DWORD*)offset2)[11]);
-			// 5
-			patch_code_dword(offset3, (DWORD)dotemuMciSendCommandA);
-
-			// Steam edition contains movies unpacked
-			enable_ffmpeg_videos = cfg_bool_t(true);
 		}
 
 		// Apply hext patching

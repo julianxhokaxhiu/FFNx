@@ -832,6 +832,7 @@ struct ff8_externals
 	uint sub_4A3EE0;
 	uint sub_469C60;
 	uint sub_46DDC0;
+	uint start;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
