@@ -293,11 +293,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (proxyWndProc)
 	{
-		if (uMsg == WM_WINDOWPOSCHANGED)
+		if (uMsg == WM_SIZE)
 		{
-			WINDOWPOS* pos = (WINDOWPOS*)lParam;
-			window_size_x = pos->cx;
-			window_size_y = pos->cy;
+			window_size_x = (long)(short)LOWORD(lParam);
+			window_size_y = (long)(short)HIWORD(lParam);
 			newRenderer.reset();
 		}
 		else if (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN)
@@ -320,8 +319,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 					fullscreen = cfg_bool_t(true);
 				}
-
-				newRenderer.reset();
 			}
 		}
 
