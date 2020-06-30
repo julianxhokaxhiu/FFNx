@@ -17,6 +17,7 @@ byte map_patch_storage[7] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // Pla
 bool map_changing = false;
 
 // FF7 only
+int (*old_message)();
 int (*old_pc)();
 byte* current_entity_id;
 byte** level_data_pointer;
@@ -62,10 +63,28 @@ int script_PC_map_change() {
 	return old_pc();
 }
 
+byte get_field_parameter(int id)
+{
+	byte* ptr4 = (byte*)(field_array_1[*current_entity_id] + field_ptr_1 + id + 1);
+	return *ptr4;
+}
+
+int message()
+{
+	int window_id = get_field_parameter(0);
+	int dialog_id = get_field_parameter(1);
+
+	return old_message();
+}
+
+
 void field_init()
 {
 	if (!ff8)
 	{
+		old_message = (int (*)())common_externals.execute_opcode_table[0x40];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x40], (DWORD)&message);
+
 		// Proxies the PC field opcode to reposition the player after a forced map change
 		old_pc = (int (*)())common_externals.execute_opcode_table[0xA0];
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA0], (DWORD)&script_PC_map_change);
