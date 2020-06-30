@@ -299,9 +299,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			window_size_y = (long)HIWORD(lParam);
 			newRenderer.reset();
 		}
-		else if (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN)
+		else if (uMsg == WM_MENUCHAR)
 		{
-			if (wParam == VK_RETURN && (HIWORD(lParam) & KF_ALTDOWN))
+			if (LOWORD(wParam) & VK_RETURN)
 			{
 				if (fullscreen)
 				{
@@ -319,6 +319,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 					fullscreen = cfg_bool_t(true);
 				}
+
+				return MAKELRESULT(0, MNC_CLOSE);
 			}
 		}
 
