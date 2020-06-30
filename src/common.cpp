@@ -337,7 +337,6 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 	HWND hWnd;
 	HDC hdc;
 	WNDCLASSA WndClass;
-	DWORD dwStyle;
 	RECT Rect;
 
 	// fetch current user screen settings
@@ -384,36 +383,38 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 
 	if (RegisterClassA(&WndClass))
 	{
-		dwStyle = fullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW;
-
-		// Half the possible window size if fullscreen is chosen
-		gameWindowWidth = window_size_x / 2;
-		gameWindowHeight = window_size_y / 2;
-
-		// Window mode requested, recalculate everything
-		if (!fullscreen)
+		// If fullscreen is the starting mode, use the native game resolution as a window size starting point
+		if (fullscreen)
 		{
-			Rect.left = 0;
-			Rect.top = 0;
+			Rect.right = game_width;
+			Rect.bottom = game_height;
+		}
+		// Otherwise if windowed mode is requested on start, use the given resolution as a starting point
+		else
+		{
 			Rect.right = window_size_x;
 			Rect.bottom = window_size_y;
-			AdjustWindowRect(&Rect, dwStyle, false);
-
-			gameWindowWidth = Rect.right - Rect.left;
-			gameWindowHeight = Rect.bottom - Rect.top;
-			gameWindowOffsetX = (dmScreenSettings.dmPelsWidth / 2) - (gameWindowWidth / 2);
-			gameWindowOffsetY = (dmScreenSettings.dmPelsHeight / 2) - (gameWindowHeight / 2);
 		}
+
+		Rect.left = 0;
+		Rect.top = 0;
+		AdjustWindowRect(&Rect, WS_OVERLAPPEDWINDOW, false);
+		gameWindowWidth = Rect.right - Rect.left;
+		gameWindowHeight = Rect.bottom - Rect.top;
+
+		// Center the window on the screen
+		gameWindowOffsetX = (dmScreenSettings.dmPelsWidth / 2) - (gameWindowWidth / 2);
+		gameWindowOffsetY = (dmScreenSettings.dmPelsHeight / 2) - (gameWindowHeight / 2);
 
 		hWnd = CreateWindowExA(
 			WS_EX_APPWINDOW,
 			VREF(game_object, window_class),
 			VREF(game_object, window_title),
-			dwStyle,
+			fullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW,
 			fullscreen ? 0 : gameWindowOffsetX,
 			fullscreen ? 0 : gameWindowOffsetY,
-			gameWindowWidth,
-			gameWindowHeight,
+			fullscreen ? window_size_x : gameWindowWidth,
+			fullscreen ? window_size_y : gameWindowHeight,
 			0,
 			0,
 			hInstance,
