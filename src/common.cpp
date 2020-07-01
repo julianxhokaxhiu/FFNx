@@ -412,7 +412,7 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 			WS_EX_APPWINDOW,
 			VREF(game_object, window_class),
 			VREF(game_object, window_title),
-			fullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW,
+			fullscreen ? WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_OVERLAPPEDWINDOW,
 			fullscreen ? 0 : gameWindowOffsetX,
 			fullscreen ? 0 : gameWindowOffsetY,
 			fullscreen ? window_size_x : gameWindowWidth,
@@ -422,8 +422,6 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 			hInstance,
 			0
 		);
-
-		if (fullscreen) ShowCursor(0);
 
 		VRASS(game_object, hwnd, hWnd);
 
@@ -691,7 +689,7 @@ void common_flip(struct game_obj *game_object)
 		last_gametime = gametime;
 	}
 
-	if(!fullscreen) ShowCursor(true);
+	ShowCursor(!fullscreen);
 
 	// fix unresponsive quit menu
 	if(!ff8 && VREF(game_object, field_A54))
