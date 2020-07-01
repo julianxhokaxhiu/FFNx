@@ -1,0 +1,73 @@
+#*****************************************************************************#
+#    Copyright (C) 2009 Aali132                                               #
+#    Copyright (C) 2018 quantumpencil                                         #
+#    Copyright (C) 2018 Maxime Bacoux                                         #
+#    Copyright (C) 2020 Julian Xhokaxhiu                                      #
+#    Copyright (C) 2020 myst6re                                               #
+#    Copyright (C) 2020 Chris Rizzitello                                      #
+#    Copyright (C) 2020 John Pritchard                                        #
+#                                                                             #
+#    This file is part of FFNx                                                #
+#                                                                             #
+#    FFNx is free software: you can redistribute it and/or modify             #
+#    it under the terms of the GNU General Public License as published by     #
+#    the Free Software Foundation, either version 3 of the License            #
+#                                                                             #
+#    FFNx is distributed in the hope that it will be useful,                  #
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of           #
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            #
+#    GNU General Public License for more details.                             #
+#*****************************************************************************#
+
+# Azure Pipeline YAML file
+
+name: 1.7.2$(Rev:.r)
+
+trigger:
+- master
+
+variables:
+  _IS_BUILD_CANARY: false
+  _RELEASE_NAME: FFNx
+  _RELEASE_VERSION: v0
+  _RELEASE_CONFIGURATION: Release
+  _BUILD_VERSION: $(Build.BuildNumber)
+  _BUILD_BRANCH: $(Build.SourceBranch)
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: PowerShell@2
+  displayName: 'Build FFNx'
+  inputs:
+    filePath: .ci\build.ps1
+- task: GitHubRelease@0
+  condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')))
+  displayName: 'Delete FFNx Release (Canary)'
+  continueOnError: true
+  inputs:
+    gitHubConnection: github_ci
+    action: delete
+    tagSource: manual
+    tag: canary
+- task: GitHubRelease@0
+  condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')))
+  displayName: 'Create FFNx Release (Canary)'
+  inputs:
+    gitHubConnection: github_ci
+    assets: .dist\*.zip
+    isPreRelease: true
+    tagSource: manual
+    tag: canary
+    title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
+    releaseNotesSource: input
+    releaseNotes: |
+      This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
+- task: GitHubRelease@0
+  condition: and(eq(variables._IS_BUILD_CANARY, 'false'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')))
+  displayName: 'Create FFNx Release (Stable)'
+  inputs:
+    gitHubConnection: github_ci
+    assets: .dist\*.zip
+    title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
