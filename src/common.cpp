@@ -50,7 +50,8 @@ uint32_t gameWindowOffsetX;
 uint32_t gameWindowOffsetY;
 uint32_t gameWindowWidth;
 uint32_t gameWindowHeight;
-DEVMODE dmScreenSettings;
+DEVMODE dmCurrentScreenSettings;
+DEVMODE dmNewScreenSettings;
 
 // global RAM status
 MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
@@ -305,6 +306,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				if (fullscreen)
 				{
+					// Bring back the original resolution
+					ChangeDisplaySettingsEx(0, &dmCurrentScreenSettings, 0, CDS_FULLSCREEN, 0);
+
 					// Move to window
 					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
 					MoveWindow(gameHwnd, gameWindowOffsetX, gameWindowOffsetY, gameWindowWidth, gameWindowHeight, true);
@@ -313,9 +317,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
+					// Bring back the user resolution
+					ChangeDisplaySettingsEx(0, &dmNewScreenSettings, 0, CDS_FULLSCREEN, 0);
+
 					// Move to fullscreen
 					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
-					MoveWindow(gameHwnd, 0, 0, dmScreenSettings.dmPelsWidth, dmScreenSettings.dmPelsHeight, true);
+					MoveWindow(gameHwnd, 0, 0, dmNewScreenSettings.dmPelsWidth, dmNewScreenSettings.dmPelsHeight, true);
 
 					fullscreen = cfg_bool_t(true);
 				}
@@ -342,7 +349,10 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 	RECT Rect;
 
 	// fetch current user screen settings
-	EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmScreenSettings);
+	EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmCurrentScreenSettings);
+
+	// store all settings so we can change only few parameters
+	dmNewScreenSettings = dmCurrentScreenSettings;
 
 	// read original resolution
 	game_width = VREF(game_object, window_width);
@@ -362,13 +372,39 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 	{
 		if (fullscreen)
 		{
-			window_size_x = dmScreenSettings.dmPelsWidth;
-			window_size_y = dmScreenSettings.dmPelsHeight;
+			window_size_x = dmCurrentScreenSettings.dmPelsWidth;
+			window_size_y = dmCurrentScreenSettings.dmPelsHeight;
 		}
 		else
 		{
 			window_size_x = game_width;
 			window_size_y = game_height;
+		}
+	}
+	else
+	{
+		// custom resolution
+		dmNewScreenSettings.dmSize = sizeof(dmNewScreenSettings);
+		dmNewScreenSettings.dmPelsWidth = window_size_x;
+		dmNewScreenSettings.dmPelsHeight = window_size_y;
+		dmNewScreenSettings.dmBitsPerPel = 32;
+		dmNewScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+
+		if (refresh_rate)
+		{
+			dmNewScreenSettings.dmDisplayFrequency = refresh_rate;
+			dmNewScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+		}
+
+		if (fullscreen)
+		{
+			if (ChangeDisplaySettingsEx(0, &dmNewScreenSettings, 0, CDS_FULLSCREEN, 0) != DISP_CHANGE_SUCCESSFUL)
+			{
+				MessageBoxA(gameHwnd, "Failed to set the requested fullscreen mode, reverting to the original resolution.\n", "Error", 0);
+				error("failed to set fullscreen mode\n");
+				window_size_x = dmCurrentScreenSettings.dmPelsWidth;
+				window_size_y = dmCurrentScreenSettings.dmPelsHeight;
+			}
 		}
 	}
 
@@ -405,8 +441,8 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 		gameWindowHeight = Rect.bottom - Rect.top;
 
 		// Center the window on the screen
-		gameWindowOffsetX = (dmScreenSettings.dmPelsWidth / 2) - (gameWindowWidth / 2);
-		gameWindowOffsetY = (dmScreenSettings.dmPelsHeight / 2) - (gameWindowHeight / 2);
+		gameWindowOffsetX = (dmCurrentScreenSettings.dmPelsWidth / 2) - (gameWindowWidth / 2);
+		gameWindowOffsetY = (dmCurrentScreenSettings.dmPelsHeight / 2) - (gameWindowHeight / 2);
 
 		hWnd = CreateWindowExA(
 			WS_EX_APPWINDOW,
