@@ -301,7 +301,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (uMsg == WM_MENUCHAR)
 		{
-			if (LOWORD(wParam) & VK_RETURN)
+			if (LOWORD(wParam) == VK_RETURN)
 			{
 				if (fullscreen)
 				{
