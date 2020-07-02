@@ -687,6 +687,9 @@ void common_flip(struct game_obj *game_object)
 		}
 
 		SetWindowTextA(gameHwnd, newWindowTitle);
+
+		// Show the cursor
+		while (ShowCursor(true) < 0);
 	}
 
 	if(show_fps)
