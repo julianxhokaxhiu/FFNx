@@ -415,9 +415,6 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 				window_size_x = dmCurrentScreenSettings.dmPelsWidth;
 				window_size_y = dmCurrentScreenSettings.dmPelsHeight;
 			}
-
-			// Hide the cursor
-			while (ShowCursor(false) >= 0);
 		}
 	}
 
@@ -479,6 +476,12 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 		if (hWnd)
 		{
 			ret = TRUE;
+
+			if (fullscreen)
+			{
+				// Hide the cursor
+				while (ShowCursor(false) >= 0);
+			}
 
 			ShowWindow(hWnd, SW_SHOW);
 			UpdateWindow(hWnd);
