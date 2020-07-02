@@ -39,12 +39,12 @@ pool:
 
 steps:
 - task: PowerShell@2
-  displayName: 'Build FFNx'
+  displayName: 'Build $(_RELEASE_NAME)'
   inputs:
     filePath: .ci\build.ps1
 - task: GitHubRelease@0
   condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')))
-  displayName: 'Delete FFNx Release (Canary)'
+  displayName: 'Delete $(_RELEASE_NAME) Release (Canary)'
   continueOnError: true
   inputs:
     gitHubConnection: github_ci
@@ -53,7 +53,7 @@ steps:
     tag: canary
 - task: GitHubRelease@0
   condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')))
-  displayName: 'Create FFNx Release (Canary)'
+  displayName: 'Create $(_RELEASE_NAME) Release (Canary)'
   inputs:
     gitHubConnection: github_ci
     assets: .dist\*.zip
@@ -66,8 +66,17 @@ steps:
       This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
 - task: GitHubRelease@0
   condition: and(eq(variables._IS_BUILD_CANARY, 'false'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')))
-  displayName: 'Create FFNx Release (Stable)'
+  displayName: 'Create $(_RELEASE_NAME) Release (Stable)'
   inputs:
     gitHubConnection: github_ci
     assets: .dist\*.zip
     title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
+- task: PowerShell@2
+  condition: not(contains(variables._BUILD_BRANCH, 'refs/pull/'))
+  displayName: 'Alert the $(_RELEASE_NAME) Release'
+  inputs:
+    filePath: .ci\alert.ps1
+  env:
+    _MAP_FFNX_TSUNAMODS: $(_FFNX_TSUNAMODS)
+    _MAP_FFNX_QHIMM_FF7: $(_FFNX_QHIMM_FF7)
+    _MAP_FFNX_QHIMM_FF8: $(_FFNX_QHIMM_FF8)
