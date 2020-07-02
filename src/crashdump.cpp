@@ -73,7 +73,7 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	had_exception = true;
 
 	// show cursor in case it was hidden
-	ShowCursor(true);
+	while (ShowCursor(true) < 0);
 
 	if (create_crash_dump)
 	{

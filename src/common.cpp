@@ -304,6 +304,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			if (LOWORD(wParam) == VK_RETURN)
 			{
+				CURSORINFO cursor{ sizeof(CURSORINFO) };
+				GetCursorInfo(&cursor);
+				bool cursorVisible = cursor.flags & CURSOR_SHOWING > 0;
+
 				if (fullscreen)
 				{
 					// Bring back the original resolution
@@ -312,6 +316,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					// Move to window
 					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
 					MoveWindow(gameHwnd, gameWindowOffsetX, gameWindowOffsetY, gameWindowWidth, gameWindowHeight, true);
+
+					// Show the cursor
+					while (ShowCursor(true) < 0);
 
 					fullscreen = cfg_bool_t(false);
 				}
@@ -323,6 +330,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					// Move to fullscreen
 					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
 					MoveWindow(gameHwnd, 0, 0, dmNewScreenSettings.dmPelsWidth, dmNewScreenSettings.dmPelsHeight, true);
+
+					// Hide the cursor
+					while (ShowCursor(false) >= 0);
 
 					fullscreen = cfg_bool_t(true);
 				}
@@ -405,6 +415,9 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 				window_size_x = dmCurrentScreenSettings.dmPelsWidth;
 				window_size_y = dmCurrentScreenSettings.dmPelsHeight;
 			}
+
+			// Hide the cursor
+			while (ShowCursor(false) >= 0);
 		}
 	}
 
@@ -724,8 +737,6 @@ void common_flip(struct game_obj *game_object)
 
 		last_gametime = gametime;
 	}
-
-	ShowCursor(!fullscreen);
 
 	// fix unresponsive quit menu
 	if(!ff8 && VREF(game_object, field_A54))

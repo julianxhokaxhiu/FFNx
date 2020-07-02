@@ -322,19 +322,6 @@ void Overlay::draw()
         if (field_debug_open) field_debug(&field_debug_open);
         if (demo_open) ImGui::ShowDemoWindow(&demo_open); // Useful to keep as GUI guide for now
     }
-    
-    // Due to ShowCursor having an internal counter instead of actually using the flag set, we need to make sure that the cursor actually changes state
-    if (fullscreen)
-    {
-        CURSORINFO cursor{ sizeof(CURSORINFO) };
-        GetCursorInfo(&cursor);
-        bool cursorVisible = cursor.flags & CURSOR_SHOWING > 0;
-
-        if (visible && !cursorVisible)
-            while (ShowCursor(true) < 1);
-        else if (!visible && cursorVisible)
-            while (ShowCursor(false) > 0);
-    }
 
     ImGui::Render();
     Render(ImGui::GetDrawData());
