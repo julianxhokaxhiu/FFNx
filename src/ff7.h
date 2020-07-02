@@ -1183,10 +1183,10 @@ struct ff7_game_obj
 	uint dc_horzres;
 	uint dc_vertres;
 	uint dc_bitspixel;
-	uint field_10;
-	uint field_14;
-	uint field_18;
-	uint field_1C;
+	uint window_pos_x;
+	uint window_pos_y;
+	uint window_size_x;
+	uint window_size_y;
 	uint field_20;
 	uint field_24;
 	uint field_28;
