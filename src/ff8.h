@@ -833,6 +833,10 @@ struct ff8_externals
 	uint sub_469C60;
 	uint sub_46DDC0;
 	uint start;
+	uint battle_main_loop;
+	uint is_window_active;
+	uint is_window_active_sub1;
+	uint is_window_active_sub2;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

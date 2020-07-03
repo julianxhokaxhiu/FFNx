@@ -51,8 +51,6 @@ void ff8_set_main_loop(uint driver_mode, uint main_loop)
 
 void ff8_find_externals()
 {
-	uint battle_main_loop;
-
 	ff8_externals.sub_401ED0 = version == VERSION_FF8_12_JP ? 0x402290 : 0x401ED0;
 	ff8_externals.pubintro_init = get_absolute_value(ff8_externals.sub_401ED0, 0x158);
 	ff8_externals.sub_467C00 = get_relative_call(ff8_externals.pubintro_init, 0xB5);
@@ -71,9 +69,12 @@ void ff8_find_externals()
 
 	ff8_set_main_loop(MODE_SWIRL, ff8_externals.swirl_main_loop);
 
-	battle_main_loop = get_absolute_value(ff8_externals.swirl_main_loop, 0x50);
+	ff8_externals.battle_main_loop = get_absolute_value(ff8_externals.swirl_main_loop, 0x50);
+	ff8_externals.is_window_active = get_relative_call(ff8_externals.battle_main_loop, 0x15B);
+	ff8_externals.is_window_active_sub1 = get_relative_call(ff8_externals.is_window_active, 0x16);
+	ff8_externals.is_window_active_sub2 = get_relative_call(ff8_externals.is_window_active, 0x1B);
 
-	ff8_set_main_loop(MODE_BATTLE, battle_main_loop);
+	ff8_set_main_loop(MODE_BATTLE, ff8_externals.battle_main_loop);
 
 	ff8_externals.sub_47CF60 = get_absolute_value(ff8_externals.main_loop, 0x340);
 	ff8_externals.sub_47CCB0 = get_relative_call(ff8_externals.sub_47CF60, 0x1B3);

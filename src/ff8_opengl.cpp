@@ -339,6 +339,16 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 	return gamepadState;
 }
 
+int ff8_is_window_active()
+{
+	typedef void voidfn();
+
+	((voidfn*)ff8_externals.is_window_active_sub1)();
+	((voidfn*)ff8_externals.is_window_active_sub2)();
+
+	return 0;
+}
+
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
 
@@ -359,6 +369,8 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 	game_object->front_surface[1] = &_fake_dd_back_surface;
 	game_object->dd2interface = &_fake_dddevice;
 	game_object->d3d2device = &_fake_d3d2device;
+
+	replace_function(ff8_externals.is_window_active, ff8_is_window_active);
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
 
