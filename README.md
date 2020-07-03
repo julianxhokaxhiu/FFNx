@@ -220,6 +220,10 @@ These people are:
 I'm sure I forgot many others through the route. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
 ## License
-See [COPYING.TXT](COPYING.TXT).
+FFNx is released under GPLv3 license, and you can get a copy of the license here: [COPYING.txt](COPYING.txt)
+
+If you paid for it, remember to ask for a refund to the person who sold you a copy. Make also sure you get a copy of the source code if you got it as a binary only.
+
+If the person who gave you a copy will refuse to give you the source code, report it here: https://www.gnu.org/licenses/gpl-violation.html
 
 All rights belong to their respective owners.
