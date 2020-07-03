@@ -2372,7 +2372,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				break;
 			}
 
-			common_externals.create_window = get_relative_call(get_relative_call(ff8_externals.start, 0xDB), 0x114);
+			common_externals.winmain = get_relative_call(ff8_externals.start, 0xDB);
+			common_externals.create_window = get_relative_call(common_externals.winmain, 0x114);
 			common_externals.engine_wndproc = (WNDPROC)get_absolute_value(common_externals.create_window, 0x34);
 			replace_function(common_externals.create_window, common_create_window);
 
