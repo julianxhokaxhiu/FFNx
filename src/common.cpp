@@ -483,7 +483,7 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 				while (ShowCursor(false) >= 0);
 			}
 
-			ShowWindow(hWnd, SW_SHOW);
+			ShowWindow(hWnd, SW_SHOWNORMAL);
 			UpdateWindow(hWnd);
 			hdc = GetDC(hWnd);
 			if (hdc)
