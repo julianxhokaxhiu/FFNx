@@ -2417,6 +2417,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				/*
 				Patch 1,2,3 are required to inject this DLL into the main process
 				Patch 4 is done as well by the official Steam driver, but no idea why.
+				Patch 5 is required by the Eyes on Me track on Disk 3
 				*/
 				// 1
 				patch_code_int(offset, 0x000001BA);
