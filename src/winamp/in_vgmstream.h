@@ -48,10 +48,51 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "plugin.h"
 
+extern "C" {
+#include <vgmstream.h>
+}
+
+/* Winamp needs at least 576 16-bit samples, stereo, doubled in case DSP effects are active */
+#define SAMPLE_BUFFER_SIZE 576
+
+ /* current song config */
+struct winamp_song_config {
+	int song_play_forever;
+	double song_loop_count;
+	double song_fade_time;
+	double song_fade_delay;
+	int song_ignore_loop;
+	int song_really_force_loop;
+	int song_ignore_fade;
+};
+
+/* current play state */
+struct winamp_state_t {
+	int paused;
+	int decode_abort;
+	int seek_needed_samples;
+	int decode_pos_ms;
+	int decode_pos_samples;
+	int stream_length_samples;
+	int fade_samples;
+	int output_channels;
+	double volume;
+};
+
 class VgmstreamInPlugin : public AbstractInPlugin {
+private:
+	HANDLE decode_thread_handle;
+	VGMSTREAM* vgmstream, *dup_vgmstream;
+	winamp_song_config config, dup_config;
+	winamp_state_t state, dup_state;
+	short sample_buffer[SAMPLE_BUFFER_SIZE * 2 * VGMSTREAM_MAX_CHANNELS];
+
+	int startThread();
+	void stopThread();
 public:
 	VgmstreamInPlugin(AbstractOutPlugin* outPlugin);
 	virtual ~VgmstreamInPlugin();
+	int decodeLoop();
 
 	bool accept(const char* fn) const;
 
@@ -71,4 +112,7 @@ public:
 	void duplicate();
 	int resume(char* fn);
 	bool cancelDuplicate();
+
+	// Looping (not part of standard Winamp plugin)
+	void setLoopingEnabled(bool enabled);
 };
