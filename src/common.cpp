@@ -2392,40 +2392,30 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 				steam_edition = true;
 
-				DWORD offset2; // No idea what is this required
-				DWORD offset3; // Eyes on me patch
+				// Steam edition contains movies unpacked
+				enable_ffmpeg_videos = cfg_bool_t(true);
 
-				// Calculate offset2
+				// Eyes on me patch
+
+				DWORD mciSendCommandA;
+
 				switch (version)
 				{
 				case VERSION_FF8_12_US_NV:
-					offset2 = 0xB86014;
-					offset3 = 0xB69388;
+					mciSendCommandA = 0xB69388;
 					break;
 				case VERSION_FF8_12_FR_NV:
 				case VERSION_FF8_12_DE_NV:
 				case VERSION_FF8_12_SP_NV:
 				case VERSION_FF8_12_IT_NV:
-					offset2 = 0xB85F74;
-					offset3 = 0xB69388;
+					mciSendCommandA = 0xB69388;
 					break;
 				case VERSION_FF8_12_JP:
-					offset2 = 0xD89654;
-					offset3 = 0x2CA3DC8;
+					mciSendCommandA = 0x2CA3DC8;
 					break;
 				}
 
-				/*
-				Patch 1 is done as well by the official Steam driver, but no idea why.
-				Patch 2 is required by the Eyes on Me track on Disk 3
-				*/
-				// 1
-				patch_code_int(offset2, ((DWORD*)offset2)[11]);
-				// 2
-				patch_code_dword(offset3, (DWORD)dotemuMciSendCommandA);
-
-				// Steam edition contains movies unpacked
-				enable_ffmpeg_videos = cfg_bool_t(true);
+				patch_code_dword(mciSendCommandA, (DWORD)dotemuMciSendCommandA);
 			}
 		}
 
