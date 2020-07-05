@@ -90,31 +90,59 @@ public:
 class InPluginWithFailback;
 
 class AbstractInPlugin {
+protected:
+	AbstractOutPlugin* outPlugin;
+public:
+	AbstractInPlugin(AbstractOutPlugin* outPlugin);
+	virtual ~AbstractInPlugin();
+
+	virtual bool accept(const char* fn) const = 0;
+
+	virtual int play(char* fn) = 0;
+	virtual void pause() = 0;			// pause stream
+	virtual void unPause() = 0;			// unpause stream
+	virtual int isPaused() = 0;			// ispaused? return 1 if paused, 0 if not
+	virtual void stop() = 0;				// stop (unload) stream
+
+	// time stuff
+	virtual int getLength() = 0;			// get length in ms
+	virtual int getOutputTime() = 0;		// returns current output time in ms. (usually returns outMod->GetOutputTime()
+	virtual void setOutputTime(int time_in_ms) = 0;	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
+
+	// Resuming (not part of standard Winamp plugin)
+	virtual bool canDuplicate() const = 0;
+	virtual void duplicate() = 0;
+	virtual int resume(char* fn) = 0;
+	virtual bool cancelDuplicate() = 0;
+};
+
+class WinampInPlugin : public WinampPlugin, public AbstractInPlugin {
 private:
 	int current_saved_time_ms;
-	friend class InPluginWithFailback;
+	inline LPCSTR procName() const {
+		return "winampGetInModule2";
+	}
+	bool openModule(FARPROC procAddress);
+	void closeModule();
 protected:
 	WinampInModule* mod;
 	WinampInContext* context;
-	AbstractOutPlugin* outPlugin;
 	inline virtual WinampInModule* getMod() const {
 		return mod;
 	}
 	inline virtual WinampInContext* getContext() const {
 		return context;
 	}
-	virtual int beforePlay(char* fna);
 	void initModule(HINSTANCE dllInstance);
 	void quitModule();
 	bool knownExtension(const char* fn) const;
 	int isOurFile(const char* fn) const;
-	bool accept(const char* fn) const;
-	bool canDuplicate() const;
 public:
-	AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod = nullptr,
-		WinampInContext* context = nullptr);
-	virtual ~AbstractInPlugin();
-	
+	WinampInPlugin(AbstractOutPlugin* outPlugin);
+	virtual ~WinampInPlugin();
+
+	bool accept(const char* fn) const;
+
 	int play(char* fn);
 	void pause();			// pause stream
 	void unPause();			// unpause stream
@@ -127,27 +155,10 @@ public:
 	void setOutputTime(int time_in_ms);	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
 
 	// Resuming (not part of standard Winamp plugin)
+	bool canDuplicate() const;
 	void duplicate();
 	int resume(char* fn);
 	bool cancelDuplicate();
-};
-
-class WinampInPlugin : public WinampPlugin, public AbstractInPlugin {
-private:
-	inline LPCSTR procName() const {
-		return "winampGetInModule2";
-	}
-	bool openModule(FARPROC procAddress);
-	void closeModule();
-public:
-	WinampInPlugin(AbstractOutPlugin* outPlugin);
-	virtual ~WinampInPlugin();
-};
-
-class VgmstreamInPlugin : public AbstractInPlugin {
-public:
-	VgmstreamInPlugin(AbstractOutPlugin* outPlugin);
-	virtual ~VgmstreamInPlugin();
 };
 
 class InPluginWithFailback : public AbstractInPlugin {
@@ -155,9 +166,6 @@ private:
 	AbstractInPlugin* inPlugin1;
 	AbstractInPlugin* inPlugin2;
 	AbstractInPlugin* current;
-	WinampInModule* getMod() const;
-	WinampInContext* getContext() const;
-	int beforePlay(char* fna);
 public:
 	InPluginWithFailback(
 		AbstractOutPlugin* outPlugin,
@@ -171,4 +179,23 @@ public:
 	inline AbstractInPlugin* getPlugin2() const {
 		return inPlugin2;
 	}
+
+	bool accept(const char* fn) const;
+
+	int play(char* fn);
+	void pause();			// pause stream
+	void unPause();			// unpause stream
+	int isPaused();			// ispaused? return 1 if paused, 0 if not
+	void stop();				// stop (unload) stream
+
+	// time stuff
+	int getLength();			// get length in ms
+	int getOutputTime();		// returns current output time in ms. (usually returns outMod->GetOutputTime()
+	void setOutputTime(int time_in_ms);	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
+
+	// Resuming (not part of standard Winamp plugin)
+	bool canDuplicate() const;
+	void duplicate();
+	int resume(char* fn);
+	bool cancelDuplicate();
 };
