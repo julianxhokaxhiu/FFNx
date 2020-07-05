@@ -114,6 +114,9 @@ public:
 	virtual void duplicate() = 0;
 	virtual int resume(char* fn) = 0;
 	virtual bool cancelDuplicate() = 0;
+
+	// Looping (not part of standard Winamp plugin)
+	virtual void setLoopingEnabled(bool enabled) = 0;
 };
 
 class WinampInPlugin : public WinampPlugin, public AbstractInPlugin {
@@ -159,6 +162,9 @@ public:
 	void duplicate();
 	int resume(char* fn);
 	bool cancelDuplicate();
+
+	// Looping (not part of standard Winamp plugin)
+	void setLoopingEnabled(bool enabled);
 };
 
 class InPluginWithFailback : public AbstractInPlugin {
@@ -198,4 +204,7 @@ public:
 	void duplicate();
 	int resume(char* fn);
 	bool cancelDuplicate();
+
+	// Looping (not part of standard Winamp plugin)
+	void setLoopingEnabled(bool enabled);
 };

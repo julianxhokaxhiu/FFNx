@@ -526,6 +526,11 @@ bool WinampInPlugin::cancelDuplicate()
 	return false;
 }
 
+void WinampInPlugin::setLoopingEnabled(bool enabled)
+{
+	UNUSED_PARAM(enabled);
+}
+
 InPluginWithFailback::InPluginWithFailback(AbstractOutPlugin* outPlugin, AbstractInPlugin* inPlugin1, AbstractInPlugin* inPlugin2) :
 	AbstractInPlugin(outPlugin), inPlugin1(inPlugin1), inPlugin2(inPlugin2), current(inPlugin1)
 {
@@ -641,4 +646,12 @@ int InPluginWithFailback::resume(char* fn)
 bool InPluginWithFailback::cancelDuplicate()
 {
 	return current->cancelDuplicate();
+}
+
+void InPluginWithFailback::setLoopingEnabled(bool enabled)
+{
+	inPlugin1->setLoopingEnabled(enabled);
+	if (inPlugin2 != nullptr) {
+		inPlugin2->setLoopingEnabled(enabled);
+	}
 }
