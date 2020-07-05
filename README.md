@@ -151,16 +151,11 @@ external_music_ext = akb
 6. Enjoy!
 
 ## How to install on 7h 2.x
-> **WARNING:** This method is NOT SUPPORTED officially by 7h team. Please use at your own risk. DO NOT approach 7h team if something is not working properly.
+Since 7h 2.2+ FFNx will be bundled by default! Just make sure you use always the latest version of 7h and you'll be good to go :)
 
-1) Go to your 7h installation path
-2) Go to `Resources\Game Driver`
-3) Rename `7H_GameDriver.dll` to `_7H_GameDriver.dll` (only rename it; this file should NOT simply be replaced with the `FFNx.dll` from step 6)
-4) Download the latest `FFNx-FF7_1998` release here: https://github.com/julianxhokaxhiu/FFNx/releases
-5) Extract the ZIP content next to `ff7.exe` file
-6) Rename `FFNx.dll` to `7H_GameDriver.dll` (do NOT add a copy in the `7H\Resources\Game Driver folder`)
+If you want to upgrade the provided FFNx release, feel free to use [these instructions](https://github.com/OatBran/7HSteamGuide#manual-7h-upgrading).
 
-Click Play and enjoy!
+> Please remember: **the 7h team WILL NOT be able to support you** if you upgrade, and **limited support** will be provided on the FFNx Discord channel instead.
 
 ## Tweak the configuration
 If you want a more advanced experience, for example using another backend renderer ( Vulkan instead of OpenGL, or DirectX 11 ) feel free to change the driver configuration file [FFNx.cfg](misc/FFNx.cfg).
