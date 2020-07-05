@@ -53,10 +53,9 @@ Remove-Item .dist\pkg\FF7_1998\FF8.reg
 Remove-Item .dist\pkg\FF8_2000\FF7.reg
 Remove-Item .dist\pkg\FFNx_Steam\FF7.reg
 Remove-Item .dist\pkg\FFNx_Steam\FF8.reg
-Remove-Item .dist\pkg\FF7_1998\eax.dll
-Remove-Item .dist\pkg\FFNx_Steam\eax.dll
 Move-Item .dist\pkg\FF7_1998\FF7.reg .dist\pkg\FF7_1998\FFNx.reg
 Move-Item .dist\pkg\FF8_2000\FF8.reg .dist\pkg\FF8_2000\FFNx.reg
+Move-Item .dist\pkg\FF8_2000\FFNx.dll .dist\pkg\FF8_2000\eax.dll
 Move-Item .dist\pkg\FFNx_Steam\FFNx.dll .dist\pkg\FFNx_Steam\AF3DN.P
 
 Compress-Archive -Path .dist\pkg\FF7_1998 -DestinationPath ".dist\${env:_RELEASE_NAME}-FF7_1998-${env:_RELEASE_VERSION}.zip"

@@ -501,6 +501,8 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 				typedef int game_init(void*);
 				typedef void game_enter_main(void*);
 
+				if (ff8) ff8_inject_driver();
+
 				if (((game_init*)VREF(game_object, main_obj_9F0.init))(game_object))
 				{
 					if (VREF(game_object, main_obj_9F0.enter_main))
@@ -2390,7 +2392,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 				steam_edition = true;
 
-				DWORD offset = version == VERSION_FF8_12_JP ? 0x402320 : 0x401F60;
 				DWORD offset2; // No idea what is this required
 				DWORD offset3; // Eyes on me patch
 
@@ -2415,23 +2416,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				}
 
 				/*
-				Patch 1,2,3 are required to inject this DLL into the main process
-				Patch 4 is done as well by the official Steam driver, but no idea why.
-				Patch 5 is required by the Eyes on Me track on Disk 3
+				Patch 1 is done as well by the official Steam driver, but no idea why.
+				Patch 2 is required by the Eyes on Me track on Disk 3
 				*/
 				// 1
-				patch_code_int(offset, 0x000001BA);
-				patch_code_int(offset + 0x4, -0x2F793900);
-				patch_code_word(offset + 0x8, 0x000B);
-				patch_code_byte(offset + 0xA, 0x00);
-				// 2
-				patch_code_dword(offset + 0xB, (DWORD)new_dll_graphics_driver);
-				// 3
-				patch_code_int(offset + 0xF, 0x0001E0B8);
-				patch_code_word(offset + 0x13, -0x7000);
-				// 4
 				patch_code_int(offset2, ((DWORD*)offset2)[11]);
-				// 5
+				// 2
 				patch_code_dword(offset3, (DWORD)dotemuMciSendCommandA);
 
 				// Steam edition contains movies unpacked
@@ -2739,6 +2729,30 @@ __declspec(dllexport) BOOL __stdcall dotemuDeleteFileA(LPCSTR lpFileName)
 		ret = DeleteFileA(lpFileName);
 
 	return ret;
+}
+
+// FF8 2000 Compatibility
+__declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(GUID* guid, LPDIRECTSOUND* directsound, IUnknown FAR* unk)
+{
+	typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(GUID*, LPDIRECTSOUND*, IUnknown FAR*);
+
+	char eax_dll[260];
+	SHGetFolderPathA(0, CSIDL_SYSTEMX86, 0, 0, eax_dll);
+	strcat(eax_dll, R"(\eax.dll)");
+
+	HMODULE hEaxDll = LoadLibraryA(eax_dll);
+	FARPROC procEaxDSoundCreate = GetProcAddress((HMODULE)hEaxDll, "EAXDirectSoundCreate");
+
+	return ((LPEAXDIRECTSOUNDCREATE)procEaxDSoundCreate)(guid, directsound, unk);
+}
+
+void ff8_inject_driver()
+{
+	// Inject our Driver into the Engine
+	common_externals.get_game_object = (struct game_obj* (*)(void))get_relative_call(common_externals.winmain, 0x5F);
+	uint game_obj_addr = (uint)common_externals.get_game_object();
+	patch_code_byte(game_obj_addr + 0xBA8, 2);
+	patch_code_dword(game_obj_addr + 0xBD0, (DWORD)new_dll_graphics_driver);
 }
 
 #if defined(__cplusplus)

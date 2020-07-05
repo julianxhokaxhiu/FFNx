@@ -288,3 +288,14 @@ void internal_set_renderstate(uint state, uint option, struct game_obj *game_obj
 
 void get_data_lang_path(PCHAR buffer);
 void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);
+
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+void ff8_inject_driver();
+
+#if defined(__cplusplus)
+}
+#endif

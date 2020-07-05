@@ -21,6 +21,8 @@
 
 LIBRARY FFNx.dll
 EXPORTS
+; Ordinal 5 is required in order to inject as eax.dll
+EAXDirectSoundCreate @5
 dotemuRegOpenKeyExA
 dotemuRegCloseKey
 dotemuRegFlushKey
@@ -31,3 +33,5 @@ dotemuCreateFileA
 dotemuGetDriveTypeA
 dotemuDeleteFileA
 new_dll_graphics_driver
+RegisterMouseListener
+RegisterKeyListener
