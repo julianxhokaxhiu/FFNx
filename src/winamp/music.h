@@ -31,6 +31,7 @@
 #include "../music.h"
 
 #include "plugin.h"
+#include "in_vgmstream.h"
 #include "out_directsound.h"
 
 void winamp_music_init();

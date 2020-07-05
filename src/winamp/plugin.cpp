@@ -25,7 +25,6 @@
 extern "C" {
 #endif
 
-#include "in_vgmstream.h"
 #include <libvgmstream/util.h>
 
 #if defined(__cplusplus)
@@ -280,18 +279,48 @@ void WinampOutPlugin::setTempo(int tempo)
 	error("setTempo not implemented for Winamp out plugin (%i)\n", tempo);
 }
 
-AbstractInPlugin::AbstractInPlugin(AbstractOutPlugin* outPlugin, WinampInModule* mod,
-		WinampInContext* context) :
-	current_saved_time_ms(0), mod(mod), context(context), outPlugin(outPlugin)
+AbstractInPlugin::AbstractInPlugin(AbstractOutPlugin* outPlugin) :
+	outPlugin(outPlugin)
 {
 }
 
 AbstractInPlugin::~AbstractInPlugin()
 {
+}
+
+WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
+	WinampPlugin(), AbstractInPlugin(outPlugin), current_saved_time_ms(0),
+	mod(nullptr), context(nullptr)
+{
+}
+
+WinampInPlugin::~WinampInPlugin()
+{
+	close();
 	quitModule();
 }
 
-void AbstractInPlugin::initModule(HINSTANCE dllInstance)
+bool WinampInPlugin::openModule(FARPROC procAddress)
+{
+	winampGetInModule2 f = (winampGetInModule2)procAddress;
+	this->mod = f();
+
+	if (nullptr == this->mod) {
+		error("couldn't call function %s in external library\n", procName());
+		return false;
+	}
+
+	initModule(getHandle());
+
+	return true;
+}
+
+void WinampInPlugin::closeModule()
+{
+	quitModule();
+}
+
+void WinampInPlugin::initModule(HINSTANCE dllInstance)
 {
 	// Set fields
 	this->mod->standard.hMainWindow = nullptr;
@@ -328,7 +357,7 @@ void AbstractInPlugin::initModule(HINSTANCE dllInstance)
 	}
 }
 
-void AbstractInPlugin::quitModule()
+void WinampInPlugin::quitModule()
 {
 	if (nullptr != this->mod) {
 		if (nullptr != this->context && nullptr != this->context->CancelDuplicate) {
@@ -342,7 +371,7 @@ void AbstractInPlugin::quitModule()
 	}
 }
 
-bool AbstractInPlugin::knownExtension(const char* fn) const
+bool WinampInPlugin::knownExtension(const char* fn) const
 {
 	char* extension_list = getMod()->standard.FileExtensions;
 	const char* ext = filename_extension(fn);
@@ -370,7 +399,7 @@ bool AbstractInPlugin::knownExtension(const char* fn) const
 	return false;
 }
 
-int AbstractInPlugin::isOurFile(const char* fn) const
+int WinampInPlugin::isOurFile(const char* fn) const
 {
 	if (getMod()->standard.version & IN_UNICODE == IN_UNICODE) {
 		// Convert char* to wchar_t*
@@ -384,27 +413,13 @@ int AbstractInPlugin::isOurFile(const char* fn) const
 	return getMod()->standard.IsOurFile(fn);
 }
 
-bool AbstractInPlugin::accept(const char* fn) const
+bool WinampInPlugin::accept(const char* fn) const
 {
 	return isOurFile(fn) != 0 || knownExtension(fn);
 }
 
-int AbstractInPlugin::beforePlay(char* fna)
+int WinampInPlugin::play(char* fn)
 {
-	if (nullptr == getMod()->wide.Play) {
-		return -42;
-	}
-
-	return 0;
-}
-
-int AbstractInPlugin::play(char* fn)
-{
-	int beforeErr = beforePlay(fn);
-	if (0 != beforeErr) {
-		return beforeErr;
-	}
-
 	if (getMod()->standard.version & IN_UNICODE == IN_UNICODE) {
 		// Convert char* to wchar_t*
 		int count = MultiByteToWideChar(CP_ACP, 0, fn, -1, nullptr, 0);
@@ -417,49 +432,49 @@ int AbstractInPlugin::play(char* fn)
 	return getMod()->standard.Play(fn);
 }
 
-void AbstractInPlugin::pause()
+void WinampInPlugin::pause()
 {
 	getMod()->standard.Pause();
 }
 
-void AbstractInPlugin::unPause()
+void WinampInPlugin::unPause()
 {
 	getMod()->standard.UnPause();
 }
 
-int AbstractInPlugin::isPaused()
+int WinampInPlugin::isPaused()
 {
 	return getMod()->standard.IsPaused();
 }
 
-void AbstractInPlugin::stop()
+void WinampInPlugin::stop()
 {
 	getMod()->standard.Stop();
 }
 
-int AbstractInPlugin::getLength()
+int WinampInPlugin::getLength()
 {
 	return getMod()->standard.GetLength();
 }
 
-int AbstractInPlugin::getOutputTime()
+int WinampInPlugin::getOutputTime()
 {
 	return getMod()->standard.GetOutputTime();
 }
 
-void AbstractInPlugin::setOutputTime(int time_in_ms)
+void WinampInPlugin::setOutputTime(int time_in_ms)
 {
 	getMod()->standard.SetOutputTime(time_in_ms);
 }
 
-bool AbstractInPlugin::canDuplicate() const
+bool WinampInPlugin::canDuplicate() const
 {
 	return getContext() && IN_CONTEXT_VER == getContext()->version
 		&& nullptr != getContext()->outContext
 		&& OUT_CONTEXT_VER == getContext()->outContext->version;
 }
 
-void AbstractInPlugin::duplicate()
+void WinampInPlugin::duplicate()
 {
 	if (canDuplicate()) {
 		getContext()->Duplicate();
@@ -473,7 +488,7 @@ void AbstractInPlugin::duplicate()
 	}
 }
 
-int AbstractInPlugin::resume(char* fn)
+int WinampInPlugin::resume(char* fn)
 {
 	if (canDuplicate()) {
 		return getContext()->Resume(fn);
@@ -497,7 +512,7 @@ int AbstractInPlugin::resume(char* fn)
 	return err;
 }
 
-bool AbstractInPlugin::cancelDuplicate()
+bool WinampInPlugin::cancelDuplicate()
 {
 	if (canDuplicate()) {
 		return getContext()->CancelDuplicate() != 0;
@@ -511,48 +526,6 @@ bool AbstractInPlugin::cancelDuplicate()
 	return false;
 }
 
-WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
-	WinampPlugin(), AbstractInPlugin(outPlugin)
-{
-}
-
-WinampInPlugin::~WinampInPlugin()
-{
-	close();
-}
-
-bool WinampInPlugin::openModule(FARPROC procAddress)
-{
-	winampGetInModule2 f = (winampGetInModule2)procAddress;
-	this->mod = f();
-
-	if (nullptr == this->mod) {
-		error("couldn't call function %s in external library\n", procName());
-		return false;
-	}
-	
-	initModule(getHandle());
-
-	return true;
-}
-
-void WinampInPlugin::closeModule()
-{
-	quitModule();
-}
-
-VgmstreamInPlugin::VgmstreamInPlugin(AbstractOutPlugin* outPlugin) :
-	AbstractInPlugin(outPlugin, in_vgmstream_module(), in_context_vgmstream())
-{
-	initModule(nullptr);
-}
-
-VgmstreamInPlugin::~VgmstreamInPlugin()
-{
-	cancelDuplicate();
-	quitModule();
-}
-
 InPluginWithFailback::InPluginWithFailback(AbstractOutPlugin* outPlugin, AbstractInPlugin* inPlugin1, AbstractInPlugin* inPlugin2) :
 	AbstractInPlugin(outPlugin), inPlugin1(inPlugin1), inPlugin2(inPlugin2), current(inPlugin1)
 {
@@ -560,16 +533,6 @@ InPluginWithFailback::InPluginWithFailback(AbstractOutPlugin* outPlugin, Abstrac
 
 InPluginWithFailback::~InPluginWithFailback()
 {
-}
-
-WinampInModule* InPluginWithFailback::getMod() const
-{
-	return current->getMod();
-}
-
-WinampInContext* InPluginWithFailback::getContext() const
-{
-	return current->getContext();
 }
 
 bool replace_extension(char* fn, const char* ext)
@@ -594,7 +557,12 @@ bool replace_extension(char* fn, const char* ext)
 	return true;
 }
 
-int InPluginWithFailback::beforePlay(char* fna)
+bool InPluginWithFailback::accept(const char* fn) const
+{
+	return inPlugin1->accept(fn) || (nullptr != inPlugin2 && inPlugin2->accept(fn));
+}
+
+int InPluginWithFailback::play(char* fn)
 {
 	if (nullptr != inPlugin2) {
 		// Back to default plugin
@@ -604,11 +572,11 @@ int InPluginWithFailback::beforePlay(char* fna)
 		}
 
 		// File not found
-		if (0 != _access(fna, 0)
-				&& strcasecmp(external_music_ext, default_extension) != 0) {
-			if (replace_extension(fna, default_extension)
-					&& !inPlugin1->accept(fna) && inPlugin2->accept(fna)) {
-				info("Music file not found, trying with %s extension: %s\n", default_extension, fna);
+		if (0 != _access(fn, 0)
+			&& strcasecmp(external_music_ext, default_extension) != 0) {
+			if (replace_extension(fn, default_extension)
+				&& !inPlugin1->accept(fn) && inPlugin2->accept(fn)) {
+				info("Music file not found, trying with %s extension: %s\n", default_extension, fn);
 				current = inPlugin2;
 			}
 			else {
@@ -617,5 +585,60 @@ int InPluginWithFailback::beforePlay(char* fna)
 		}
 	}
 
-	return AbstractInPlugin::beforePlay(fna);
+	return current->play(fn);
+}
+
+void InPluginWithFailback::pause()
+{
+	current->pause();
+}
+
+void InPluginWithFailback::unPause()
+{
+	current->unPause();
+}
+
+int InPluginWithFailback::isPaused()
+{
+	return current->isPaused();
+}
+
+void InPluginWithFailback::stop()
+{
+	current->stop();
+}
+
+int InPluginWithFailback::getLength()
+{
+	return current->getLength();
+}
+
+int InPluginWithFailback::getOutputTime()
+{
+	return current->getOutputTime();
+}
+
+void InPluginWithFailback::setOutputTime(int time_in_ms)
+{
+	current->setOutputTime(time_in_ms);
+}
+
+bool InPluginWithFailback::canDuplicate() const
+{
+	return current->canDuplicate();
+}
+
+void InPluginWithFailback::duplicate()
+{
+	current->duplicate();
+}
+
+int InPluginWithFailback::resume(char* fn)
+{
+	return current->resume(fn);
+}
+
+bool InPluginWithFailback::cancelDuplicate()
+{
+	return current->cancelDuplicate();
 }
