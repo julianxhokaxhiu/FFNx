@@ -65,8 +65,8 @@ If you're curious to know it, FFNx is made with:
 - [BGFX](https://github.com/bkaradzic/bgfx) ( as backend renderer )
 - [BIMG](https://github.com/bkaradzic/bimg) ( for custom textures )
 - [FFMpeg](https://www.ffmpeg.org/) with H/W Accelleration support
-- [VGMStream](https://github.com/julianxhokaxhiu/vgmstream) using FFMpeg as backend, [with loop support for Ogg files](https://github.com/julianxhokaxhiu/vgmstream/commit/249afed15176ba254c73055e8c5124b7e7cd4b95)
-- [libconfuse](https://github.com/julianxhokaxhiu/libconfuse) ( for the configuration management )
+- [VGMStream](https://github.com/losnoco/vgmstream) using FFMpeg as backend (with loop support!)
+- [libconfuse](https://github.com/martinh/libconfuse) ( for the configuration management )
 - [StackWalker](https://github.com/JochenKalmbach/StackWalker) ( for stack traces in the log file )
 - [pugixml](https://github.com/zeux/pugixml) ( for the Steam XML manifest )
 - [md5](http://www.zedwood.com/article/cpp-md5-function) ( for the Steam XML manifest )
