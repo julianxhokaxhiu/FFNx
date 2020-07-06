@@ -53,7 +53,7 @@ extern "C" {
 }
 
 /* Winamp needs at least 576 16-bit samples, stereo, doubled in case DSP effects are active */
-#define SAMPLE_BUFFER_SIZE 576
+constexpr auto SAMPLE_BUFFER_SIZE = 2048;
 
  /* current song config */
 struct winamp_song_config {
