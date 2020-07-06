@@ -45,6 +45,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include "in_vgmstream.h"
+#include <process.h>
 #include "../log.h"
 
 extern "C" {
@@ -210,7 +211,7 @@ int priority_values[] = {
 };
 
 static void load_defaults(winamp_settings_t* settings) {
-    settings->thread_priority = THREAD_PRIORITY_NORMAL;
+    settings->thread_priority = THREAD_PRIORITY_ABOVE_NORMAL;
     settings->fade_time = 10.0;
     settings->fade_delay = 0.0;
     settings->loop_count = 2.0;
@@ -364,7 +365,7 @@ static double get_album_gain_volume(const char* fn) {
 /* ***************************************** */
 
 /* the decode thread */
-DWORD WINAPI __stdcall decode(void* arg) {
+unsigned __stdcall decode(void* arg) {
     return static_cast<VgmstreamInPlugin*>(arg)->decodeLoop();
 }
 
@@ -513,13 +514,16 @@ VgmstreamInPlugin::~VgmstreamInPlugin()
 
 int VgmstreamInPlugin::startThread()
 {
-    decode_thread_handle = CreateThread(
+    stopThread();
+
+    decode_thread_handle = HANDLE(_beginthreadex(
         nullptr,   /* handle cannot be inherited */
         0,      /* stack size, 0=default */
-        decode, /* thread start routine */
+        &decode, /* thread start routine */
         this,   /* VgmstreamInPlugin parameter to start routine */
         0,      /* run thread immediately */
-        nullptr);  /* don't keep track of the thread id */
+        nullptr
+    ));  /* don't keep track of the thread id */
 
     SetThreadPriority(decode_thread_handle, priority_values[settings.thread_priority]);
 
@@ -596,7 +600,7 @@ int VgmstreamInPlugin::decodeLoop()
             if (!outPlugin->getModule()->IsPlaying()) {
                 return 0;
             }
-            Sleep(10);
+            Sleep(30);
         }
         else if (state.seek_needed_samples != -1) { /* seek */
             render_vgmstream(sample_buffer, samples_to_do, vgmstream);
@@ -625,7 +629,7 @@ int VgmstreamInPlugin::decodeLoop()
             state.decode_pos_ms = state.decode_pos_samples * 1000LL / vgmstream->sample_rate;
         }
         else { /* can't write right now */
-            Sleep(20);
+            Sleep(30);
         }
     }
 

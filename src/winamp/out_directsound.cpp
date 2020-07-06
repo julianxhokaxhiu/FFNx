@@ -21,7 +21,7 @@
 
 #include "out_directsound.h"
 
-#define AUDIO_BUFFER_SIZE 5
+constexpr auto AUDIO_BUFFER_SIZE = 5;
 
 CustomOutPluginState CustomOutPlugin::state = CustomOutPluginState();
 CustomOutPluginState CustomOutPlugin::dup_state = CustomOutPluginState();
