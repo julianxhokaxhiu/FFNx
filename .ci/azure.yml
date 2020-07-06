@@ -24,7 +24,12 @@
 name: 1.7.2$(Rev:.r)
 
 trigger:
-- master
+  branches:
+    include:
+    - master
+  tags:
+    include:
+    - '*'
 
 variables:
   _IS_BUILD_CANARY: false

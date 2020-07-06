@@ -26,7 +26,7 @@ if ($env:_BUILD_BRANCH -eq "refs/heads/master" -Or $env:_BUILD_BRANCH -eq "refs/
 }
 elseif ($env:_BUILD_BRANCH -like "refs/tags/*")
 {
-  $env:_BUILD_VERSION = "${env:_BUILD_VERSION.Substring(0,$env:_BUILD_VERSION.LastIndexOf('.'))}.0"
+  $env:_BUILD_VERSION = $env:_BUILD_VERSION.Substring(0,$env:_BUILD_VERSION.LastIndexOf('.')) + ".0"
 }
 $env:_RELEASE_VERSION = "v${env:_BUILD_VERSION}"
 
