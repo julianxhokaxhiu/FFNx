@@ -21,11 +21,11 @@
 
 include(ExternalProject)
 
-set(IMGUI_VERSION "1.76")
+set(IMGUI_VERSION "1.77")
 
 ExternalProject_Add(
 	imgui
-	URL                 "https://github.com/julianxhokaxhiu/imguiCI/releases/download/${IMGUI_VERSION}/imgui-v${IMGUI_VERSION}.0.zip"
+	URL                 "https://github.com/julianxhokaxhiu/imguiCI/releases/download/${IMGUI_VERSION}/imgui-v${IMGUI_VERSION}.0_Release.zip"
 	INSTALL_DIR			"${CMAKE_BINARY_DIR}/vendor"
 	CONFIGURE_COMMAND	""
 	BUILD_COMMAND		""
