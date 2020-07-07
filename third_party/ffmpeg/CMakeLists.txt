@@ -25,7 +25,7 @@ set(FFMPEG_VERSION "4.3.0")
 
 ExternalProject_Add(
 	ffmpeg
-	URL                 "https://github.com/julianxhokaxhiu/ffmpegCI/releases/download/${FFMPEG_VERSION}/ffmpeg-v${FFMPEG_VERSION}.0.zip"
+	URL                 "https://github.com/julianxhokaxhiu/ffmpegCI/releases/download/${FFMPEG_VERSION}/ffmpeg-v${FFMPEG_VERSION}.0_Release.zip"
 	INSTALL_DIR			"${CMAKE_BINARY_DIR}/vendor"
 	CONFIGURE_COMMAND	""
 	BUILD_COMMAND		""
