@@ -2727,7 +2727,7 @@ __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(GUID* guid, LPDIREC
 	typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(GUID*, LPDIRECTSOUND*, IUnknown FAR*);
 
 	char eax_dll[260];
-	SHGetFolderPathA(0, CSIDL_SYSTEMX86, 0, 0, eax_dll);
+	GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
 	strcat(eax_dll, R"(\eax.dll)");
 
 	HMODULE hEaxDll = LoadLibraryA(eax_dll);
