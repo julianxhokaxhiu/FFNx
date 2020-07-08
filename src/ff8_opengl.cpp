@@ -343,8 +343,11 @@ int ff8_is_window_active()
 {
 	typedef void voidfn();
 
-	((voidfn*)ff8_externals.is_window_active_sub1)();
-	((voidfn*)ff8_externals.is_window_active_sub2)();
+	if (gameHwnd == GetActiveWindow())
+	{
+		((voidfn*)ff8_externals.is_window_active_sub1)();
+		((voidfn*)ff8_externals.is_window_active_sub2)();
+	}
 
 	return 0;
 }
