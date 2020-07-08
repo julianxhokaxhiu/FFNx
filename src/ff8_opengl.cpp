@@ -122,11 +122,11 @@ void ff8_destroy_tex_header(struct ff8_tex_header *tex_header)
 	external_free(tex_header);
 }
 
-struct ff8_file *(*ff8_open_file)(struct file_context *file_context, char *filename);
+struct ff8_file *(*ff8_open_file)(void *file_context, char *filename);
 uint (*ff8_read_file)(uint count, void *buffer, struct ff8_file *file);
 void (*ff8_close_file)(struct ff8_file *file);
 
-struct ff8_tex_header *ff8_load_tex_file(struct file_context *file_context, char *filename)
+struct ff8_tex_header *ff8_load_tex_file(void *file_context, char *filename)
 {
 	struct ff8_tex_header *ret = (struct ff8_tex_header *)common_externals.create_tex_header();
 	struct ff8_file *file = ff8_open_file(file_context, filename);
@@ -377,7 +377,7 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 	replace_function(common_externals.destroy_tex_header, ff8_destroy_tex_header);
 	replace_function(common_externals.load_tex_file, ff8_load_tex_file);
 
-	ff8_open_file = (ff8_file* (*)(file_context*, char*))common_externals.open_file;
+	ff8_open_file = (ff8_file* (*)(void*, char*))common_externals.open_file;
 	ff8_read_file = (uint (*)(uint, void*, ff8_file*))common_externals.read_file;
 	ff8_close_file = (void (*)(ff8_file*))common_externals.close_file;
 
