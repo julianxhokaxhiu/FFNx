@@ -19,51 +19,14 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
+#include "api.h"
 
-#include <windows.h>
-#include <functional>
-#include <vector>
-
-struct KeyEventArgs
+FFNX_API void __stdcall nxRegisterMouseListener(MouseListener* listener)
 {
-	int keyValue;
-	bool isExtended;
-};
+    mouseListeners.push_back(listener);
+}
 
-struct KeyPressEventArgs
+FFNX_API void __stdcall nxRegisterKeyListener(KeyListener* listener)
 {
-	int keyChar;
-};
-
-struct MouseEventArgs
-{
-	int button;
-	int delta;
-	int x;
-	int y;
-};
-
-class MouseListener
-{
-public:
-	virtual void MouseDown(MouseEventArgs& e) = 0;
-	virtual void MouseUp(MouseEventArgs& e) = 0;
-	virtual void MouseWheel(MouseEventArgs& e) = 0;
-	virtual void MouseMove(MouseEventArgs& e) = 0;
-};
-
-class KeyListener
-{
-public:
-	virtual void KeyUp(KeyEventArgs& e) = 0;
-	virtual void KeyDown(KeyEventArgs& e) = 0;
-	virtual void KeyPress(KeyPressEventArgs& e) = 0;
-};
-
-std::vector<MouseListener*> mouseListeners;
-std::vector<KeyListener*> keyListeners;
-
-void SetBlockKeysFromGame(bool block = false);
-bool HandleInputEvents(UINT msg, WPARAM wParam, LPARAM lParam);
-byte* GetGameKeyState();
+    keyListeners.push_back(listener);
+}

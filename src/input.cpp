@@ -21,27 +21,14 @@
 
 #include <windowsx.h>
 #include <dinput.h>
-#include <vector>
 #include "input.h"
-#include "globals.h"
+#include "api.h"
 
-std::vector<MouseListener*> mouseListeners;
-std::vector<KeyListener*> keyListeners;
 byte keys[256];
 bool blockKeys = false;
 
 void SetBlockKeysFromGame(bool block) {
     blockKeys = block;
-}
-
-__declspec(dllexport) void __stdcall RegisterMouseListener(MouseListener* listener)
-{
-    mouseListeners.push_back(listener);
-}
-
-__declspec(dllexport) void __stdcall RegisterKeyListener(KeyListener* listener)
-{
-    keyListeners.push_back(listener);
 }
 
 void MouseDown(MouseEventArgs& e)

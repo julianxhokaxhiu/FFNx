@@ -24,6 +24,7 @@
 #include <bx/file.h>
 #include "cfg.h"
 #include "field.h"
+#include "api.h"
 
 #define IMGUI_VIEW_ID 255
 
@@ -283,8 +284,8 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
         .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
         .end();
 
-    RegisterMouseListener(this);
-    RegisterKeyListener(this);
+    nxRegisterMouseListener(this);
+    nxRegisterKeyListener(this);
 
     return true;
 }

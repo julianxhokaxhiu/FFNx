@@ -27,6 +27,8 @@
 #include "ff7.h"
 #include "ff8.h"
 
+#define FFNX_API __declspec(dllexport)
+
 extern HWND gameHwnd;
 
 extern MEMORYSTATUSEX last_ram_state;

@@ -21,8 +21,9 @@
 
 LIBRARY FFNx.dll
 EXPORTS
-; Ordinal 5 is required in order to inject as eax.dll
+; Required by FF8 2000 injection. Ordinal 5 is required in order to inject as eax.dll
 EAXDirectSoundCreate @5
+; Required for the Steam driver injection
 dotemuRegOpenKeyExA
 dotemuRegCloseKey
 dotemuRegFlushKey
@@ -32,6 +33,8 @@ dotemuRegQueryValueExA
 dotemuCreateFileA
 dotemuGetDriveTypeA
 dotemuDeleteFileA
+; Required by FF7 DLL load injection
 new_dll_graphics_driver
-RegisterMouseListener
-RegisterKeyListener
+; FFNx APIs
+nxRegisterMouseListener
+nxRegisterKeyListener
