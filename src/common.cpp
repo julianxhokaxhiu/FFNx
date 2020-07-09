@@ -2322,9 +2322,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&ff7_music_volume, &regsize);
 
 				external_music_path = "music/vgmstream";
-				if (_access(external_music_path, 0) != -1)
+				if (!use_external_music) // Trigger checks only if the user didn't explicitely ask for this
 				{
-					use_external_music = cfg_bool_t(true);
+					if (_access(external_music_path, 0) != -1)
+					{
+						// If the directory contains actual files turn this on otherwise prefer stock music
+						if (!PathIsDirectoryEmptyA(external_music_path))
+							use_external_music = cfg_bool_t(true);
+					}
 				}
 			}
 		}
