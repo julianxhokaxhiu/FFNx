@@ -2249,11 +2249,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		read_cfg();
 
+		// Get current process name
 		CHAR parentName[1024];
-
 		GetModuleFileNameA(NULL, parentName, sizeof(parentName));
-
 		_strlwr(parentName);
+
+		// Get our filesystem name
+		CHAR dllName[1024];
+		GetModuleFileNameA((HMODULE)hinstDLL, dllName, sizeof(dllName));
+		_strlwr(dllName);
 
 		if (external_music_path != nullptr)
 		{
@@ -2263,25 +2267,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			}
 		}
 
-		if (!ff8 &&
-			(
-				strstr(parentName, "ff7.exe") != NULL ||
-				strstr(parentName, "ff7_en.exe") != NULL ||
-				strstr(parentName, "ff7_de.exe") != NULL ||
-				strstr(parentName, "ff7_fr.exe") != NULL ||
-				strstr(parentName, "ff7_es.exe") != NULL ||
-				strstr(parentName, "ff7_ja.exe") != NULL
-			)
-		)
+		if (!ff8)
 		{
 			replace_function(ff7_externals.get_inserted_cd_sub, ff7_get_inserted_cd);
 			replace_function(common_externals.create_window, common_create_window);
 
-			if (strstr(parentName, "ff7_en.exe") != NULL ||
-				strstr(parentName, "ff7_de.exe") != NULL ||
-				strstr(parentName, "ff7_fr.exe") != NULL ||
-				strstr(parentName, "ff7_es.exe") != NULL ||
-				strstr(parentName, "ff7_ja.exe") != NULL)
+			if (strstr(dllName, "af3dn.p") != NULL)
 			{
 				ff7_japanese_edition = strstr(parentName, "ff7_ja.exe") != NULL;
 
@@ -2384,14 +2375,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			common_externals.engine_wndproc = (WNDPROC)get_absolute_value(common_externals.create_window, 0x34);
 			replace_function(common_externals.create_window, common_create_window);
 
-			if (
-				strstr(parentName, "ff8_en.exe") != NULL ||
-				strstr(parentName, "ff8_fr.exe") != NULL ||
-				strstr(parentName, "ff8_de.exe") != NULL ||
-				strstr(parentName, "ff8_it.exe") != NULL ||
-				strstr(parentName, "ff8_sp.exe") != NULL ||
-				strstr(parentName, "ff8_jp.exe") != NULL
-				)
+			if (strstr(dllName, "af3dn.p") != NULL)
 			{
 				trace("Detected Steam edition.\n");
 
