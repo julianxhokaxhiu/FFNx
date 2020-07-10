@@ -143,11 +143,32 @@ struct struc_38
 	struct ff8_graphics_object *graphics_object;
 };
 
+struct ff8_file_context
+{
+	int field_0;
+	int field_4;
+	char* field_8;
+	void (*field_C)(char*, char*);
+	void* field_10;
+};
+
+struct ff8_file_unk
+{
+	int field_0;
+	int field_4;
+	int field_8;
+};
+
 struct ff8_file
 {
-	uint field_0;
-	char *name;
-	uint field_8;
+	int field_0;
+	char* field_4;
+	int field_8;
+	struct ff8_file_context field_C;
+	int field_20;
+	int field_24;
+	struct ff8_file_unk field_28;
+	void* field_34;
 };
 
 struct ff8_indexed_vertices
