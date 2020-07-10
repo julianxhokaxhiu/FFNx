@@ -1,6 +1,18 @@
 ﻿{
   "configurations": [
     {
+      "name": "x86-RelWithDebInfo",
+      "generator": "Visual Studio 16 2019",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [ "msvc_x86_x64" ],
+      "buildRoot": "${projectDir}\\.dist\\build\\${name}",
+      "installRoot": "${projectDir}\\.dist\\install\\${name}",
+      "cmakeCommandArgs": "-DCMAKE_BUILD_TYPE=Release -D_DLL_VERSION=devel",
+      "buildCommandArgs": "-v:normal",
+      "ctestCommandArgs": "",
+      "variables": []
+    },
+    {
       "name": "x86-Release",
       "generator": "Visual Studio 16 2019",
       "configurationType": "Release",
