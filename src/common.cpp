@@ -2259,14 +2259,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		GetModuleFileNameA((HMODULE)hinstDLL, dllName, sizeof(dllName));
 		_strlwr(dllName);
 
-		if (external_music_path != nullptr)
-		{
-			if (_access(external_music_path, 0) == -1)
-			{
-				external_music_path == nullptr;
-			}
-		}
-
 		if (!ff8)
 		{
 			replace_function(ff7_externals.get_inserted_cd_sub, ff7_get_inserted_cd);
@@ -2305,7 +2297,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				if (external_music_path == nullptr) external_music_path = "data/music_ogg";
 
 			}
-			else if (external_music_path == nullptr) {
+			else
+			{
 				HKEY ff7_regkey;
 				DWORD regsize = sizeof(DWORD);
 
@@ -2313,15 +2306,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&ff7_music_volume, &regsize);
 
 				external_music_path = "music/vgmstream";
-				if (!use_external_music) // Trigger checks only if the user didn't explicitely ask for this
-				{
-					if (_access(external_music_path, 0) != -1)
-					{
-						// If the directory contains actual files turn this on otherwise prefer stock music
-						if (!PathIsDirectoryEmptyA(external_music_path))
-							use_external_music = cfg_bool_t(true);
-					}
-				}
 			}
 		}
 		else if (ff8)
