@@ -583,7 +583,17 @@ void Renderer::init()
 
     updateRendererShaderPaths();
 
-    bx::mtxOrtho(internalState.backendProjMatrix, 0.0f, game_width, game_height, 0.0f, getCaps()->rendererType == bgfx::RendererType::OpenGL ? -1.0f : 0.0f, 1.0f, 0.0, getCaps()->homogeneousDepth);
+    bx::mtxOrtho(
+        internalState.backendProjMatrix,
+        0.0f,
+        game_width,
+        game_height,
+        0.0f,
+        getCaps()->homogeneousDepth ? -1.0f : 0.0f,
+        1.0f,
+        0.0,
+        getCaps()->homogeneousDepth
+    );
 
     // Create an empty texture
     emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_NONE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
