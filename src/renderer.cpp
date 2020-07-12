@@ -22,6 +22,97 @@
 #include "renderer.h"
 
 Renderer newRenderer;
+RendererCallbacks bgfxCallbacks;
+
+// BGFX CALLBACKS
+void RendererCallbacks::fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str)
+{
+    std::string error;
+
+    switch (_code) {
+    case bgfx::Fatal::Enum::DebugCheck: error = "Debug Check";
+    case bgfx::Fatal::Enum::InvalidShader: error = "Invalid Shader";
+    case bgfx::Fatal::Enum::UnableToInitialize: error = "Unable To Initialize";
+    case bgfx::Fatal::Enum::UnableToCreateTexture: error = "Unable To Create Texture";
+    case bgfx::Fatal::Enum::DeviceLost: error = "Device Lost";
+    }
+
+    error("[%s] %s\n", error.c_str(), _str);
+}
+
+void RendererCallbacks::traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList)
+{
+    if (renderer_debug)
+    {
+        char buffer[16 * 1024];
+
+        va_list argListCopy;
+        va_copy(argListCopy, _argList);
+        vsnprintf(buffer, sizeof(buffer), _format, argListCopy);
+        va_end(argListCopy);
+
+        trace("%s", buffer);
+    }
+}
+
+uint32_t RendererCallbacks::cacheReadSize(uint64_t _id)
+{
+    char filePath[256];
+    bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
+
+    // Use cache id as filename.
+    bx::FileReader reader;
+    bx::Error err;
+    if (bx::open(&reader, filePath, &err))
+    {
+        uint32_t size = (uint32_t)bx::getSize(&reader);
+        bx::close(&reader);
+        // Return size of shader file.
+        return size;
+    }
+
+    // Return 0 if shader is not found.
+    return 0;
+}
+
+bool RendererCallbacks::cacheRead(uint64_t _id, void* _data, uint32_t _size)
+{
+    char filePath[256];
+    bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
+
+    // Use cache id as filename.
+    bx::FileReader reader;
+    bx::Error err;
+    if (bx::open(&reader, filePath, &err))
+    {
+        // Read shader.
+        uint32_t result = bx::read(&reader, _data, _size, &err);
+        bx::close(&reader);
+
+        // Make sure that read size matches requested size.
+        return result == _size;
+    }
+
+    // Shader is not found in cache, needs to be rebuilt.
+    return false;
+}
+
+void RendererCallbacks::cacheWrite(uint64_t _id, const void* _data, uint32_t _size)
+{
+    char filePath[256];
+
+    bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
+
+    // Use cache id as filename.
+    bx::FileWriter writer;
+    bx::Error err;
+    if (bx::open(&writer, filePath, false, &err))
+    {
+        // Write shader to cache location.
+        bx::write(&writer, _data, _size, &err);
+        bx::close(&writer);
+    }
+}
 
 // PRIVATE
 
@@ -133,6 +224,10 @@ void Renderer::updateRendererShaderPaths()
     fragmentPostPath += shaderSuffix + ".frag";
     vertexOverlayPath += shaderSuffix + ".vert";
     fragmentOverlayPath += shaderSuffix + ".frag";
+
+    // Update pipeline cache path for the callbacks
+    std::filesystem::create_directories(bgfxCallbacks.cachePath);
+    bgfxCallbacks.cachePath += R"(\%016I64x)" + shaderSuffix + ".bin";
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka

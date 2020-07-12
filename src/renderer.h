@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <iterator>
 #include <vector>
 #include <map>
@@ -97,86 +98,6 @@ enum RendererInternalType
     COMPRESSED_RGBA
 };
 
-struct RendererCallbacks : public bgfx::CallbackI {
-    virtual ~RendererCallbacks()
-    {
-    }
-
-    virtual void fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str) override
-    {
-        std::string error;
-
-        switch (_code) {
-        case bgfx::Fatal::Enum::DebugCheck: error = "Debug Check";
-        case bgfx::Fatal::Enum::InvalidShader: error = "Invalid Shader";
-        case bgfx::Fatal::Enum::UnableToInitialize: error = "Unable To Initialize";
-        case bgfx::Fatal::Enum::UnableToCreateTexture: error = "Unable To Create Texture";
-        case bgfx::Fatal::Enum::DeviceLost: error = "Device Lost";
-        }
-
-        error("[%s] %s\n", error.c_str(), _str);
-    }
-
-    virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override
-    {
-        if (renderer_debug)
-        {
-            char buffer[16 * 1024];
-
-            va_list argListCopy;
-            va_copy(argListCopy, _argList);
-            vsnprintf(buffer, sizeof(buffer), _format, argListCopy);
-            va_end(argListCopy);
-
-            trace("%s", buffer);
-        }
-    }
-
-    virtual void profilerBegin(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override
-    {
-    }
-
-    virtual void profilerBeginLiteral(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override
-    {
-    }
-
-    virtual void profilerEnd() override
-    {
-    }
-
-    virtual uint32_t cacheReadSize(uint64_t _id) override
-    {
-        // Shader not found
-        return 0;
-    }
-
-    virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) override
-    {
-        // Rebuild Shader
-        return false;
-    }
-
-    virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) override
-    {
-    }
-
-    virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override
-    {
-    }
-
-    virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, bool _yflip) override
-    {
-    }
-
-    virtual void captureEnd() override
-    {
-    }
-
-    virtual void captureFrame(const void* _data, uint32_t _size) override
-    {
-    }
-};
-
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
 {
     BX_UNUSED(_ptr);
@@ -199,6 +120,24 @@ static void RendererLibPngWarningCb(png_structp png_ptr, const char* warning)
 {
     info("libpng warning: %s\n", warning);
 }
+
+struct RendererCallbacks : public bgfx::CallbackI {
+    std::string cachePath = R"(shaders\cache)";
+
+    virtual ~RendererCallbacks() {};
+    virtual void fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str) override;
+    virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override;
+    virtual void profilerBegin(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override {};
+    virtual void profilerBeginLiteral(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override {};
+    virtual void profilerEnd() override {};
+    virtual uint32_t cacheReadSize(uint64_t _id) override;
+    virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) override;
+    virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) override;
+    virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override {};
+    virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, bool _yflip) override {};
+    virtual void captureEnd() override {};
+    virtual void captureFrame(const void* _data, uint32_t _size) override {};
+};
 
 class Renderer {
 private:
@@ -298,8 +237,6 @@ private:
     std::map<std::string,uint16_t> bgfxUniformHandles;
 
     RendererState internalState;
-
-    RendererCallbacks bgfxCallbacks;
 
     uint16_t viewOffsetX = 0;
     uint16_t viewOffsetY = 0;
