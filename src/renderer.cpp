@@ -313,11 +313,25 @@ void Renderer::destroyAll()
 {
     destroyUniforms();
 
+    for (auto idx : internalState.texHandlers)
+    {
+        bgfx::TextureHandle handle = { idx };
+
+        if (bgfx::isValid(handle))
+            bgfx::destroy(handle);
+    }
+
     bgfx::destroy(emptyTexture);
 
     bgfx::destroy(vertexBufferHandle);
 
     bgfx::destroy(indexBufferHandle);
+
+    for (auto handle : backendFrameBufferRT)
+    {
+        if (bgfx::isValid(handle))
+            bgfx::destroy(handle);
+    }
 
     bgfx::destroy(backendFrameBuffer);
 
@@ -1204,7 +1218,7 @@ void Renderer::useTexture(uint rt, uint slot)
     }
     else
     {
-        internalState.texHandlers[slot] = 0;
+        internalState.texHandlers[slot] = bgfx::kInvalidHandle;
         isTexture(false);
     }
 };

@@ -155,6 +155,7 @@ void ffmpeg_release_movie_objects()
 		video_buffer[i].bgra_texture = 0;
 		for (uint idx = 0; idx < 3; idx++) newRenderer.deleteTexture(video_buffer[i].yuv_textures[idx]);
 		memset(video_buffer[i].yuv_textures, 0, sizeof(video_buffer[i].yuv_textures));
+		if ( i > 0 ) newRenderer.useTexture(0, i);
 	}
 }
 
