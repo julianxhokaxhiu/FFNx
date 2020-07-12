@@ -756,7 +756,8 @@ void Renderer::draw()
 
     internalState.bHasDrawBeenDone = true;
 
-    // Reset texture sampler
+    // Reset texture sampler only for OpenGL ( required for the MSAA x2 - x16 )
+    if (getCaps()->rendererType == bgfx::RendererType::OpenGL)
     {
         uint idxMax = 3;
 
