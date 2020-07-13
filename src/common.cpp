@@ -571,7 +571,7 @@ void common_cleanup(struct game_obj *game_object)
 
 	newRenderer.shutdown();
 
-	proxyWndProc = false;
+	SetWindowLongA(gameHwnd, GWL_WNDPROC, (LONG)common_externals.engine_wndproc);
 }
 
 // unused and unnecessary
