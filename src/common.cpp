@@ -1251,7 +1251,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			if(load_external_texture(VPTRCAST(texture_set, texture_set), VPTRCAST(tex_header, tex_header))) return VPTRCAST(texture_set, texture_set);
 
 			// allocate PBO
-			image_data = (uint*)gl_get_pixel_buffer(w * h * 4);
+			image_data = (uint*)driver_malloc(w * h * 4);
 
 			if(!ff8)
 			{

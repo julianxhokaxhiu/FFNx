@@ -37,38 +37,6 @@ bool gl_check_texture_dimensions(uint width, uint height, char *source)
 		return true;
 }
 
-// create a simple texture from pixel data, if the size parameter is used it
-// will be treated as a compressed texture
-uint gl_create_texture(void *data, uint width, uint height, uint format, uint internalformat, uint size, uint generate_mipmaps)
-{
-	// TODO: HANDLE COMPRESSION
-	uint texture = newRenderer.createTexture(
-		(uint8_t*)data,
-		width,
-		height,
-		0,
-		RendererTextureType(format),
-		generate_mipmaps
-	);
-
-	return texture;
-}
-
-void *gl_get_pixel_buffer(uint size)
-{
-	return driver_malloc(size);
-}
-
-uint gl_commit_pixel_buffer_generic(void *data, uint width, uint height, uint format, uint internalformat, uint size, uint generate_mipmaps)
-{
-	return gl_create_texture(data, width, height, format, internalformat, size, generate_mipmaps);;
-}
-
-uint gl_commit_pixel_buffer(void *data, uint width, uint height, uint format, uint generate_mipmaps)
-{
-	return gl_commit_pixel_buffer_generic(data, width, height, format, RendererInternalType::RGBA8, 0, generate_mipmaps);
-}
-
 // apply OpenGL texture for a certain palette in a texture set, possibly
 // replacing an existing texture which will then be unloaded
 void gl_replace_texture(struct texture_set *texture_set, uint palette_index, uint new_texture)
@@ -87,7 +55,6 @@ void gl_replace_texture(struct texture_set *texture_set, uint palette_index, uin
 // upload texture for a texture set from raw pixel data
 void gl_upload_texture(struct texture_set *texture_set, uint palette_index, void *image_data, uint format)
 {
-	uint texture;
 	uint w, h;
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
@@ -105,9 +72,17 @@ void gl_upload_texture(struct texture_set *texture_set, uint palette_index, void
 
 	gl_check_texture_dimensions(w, h, "unknown");
 
-	texture = gl_commit_pixel_buffer(image_data, w, h, format, false);
-
-	gl_replace_texture(texture_set, palette_index, texture);
+	gl_replace_texture(
+		texture_set,
+		palette_index,
+		newRenderer.createTexture(
+			(uint8_t*)image_data,
+			w,
+			h,
+			0,
+			RendererTextureType(format)
+		)
+	);
 }
 
 // prepare texture set for rendering
