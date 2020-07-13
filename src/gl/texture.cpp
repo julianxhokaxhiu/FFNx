@@ -43,7 +43,7 @@ void gl_replace_texture(struct texture_set *texture_set, uint palette_index, uin
 {
 	VOBJ(texture_set, texture_set, texture_set);
 
-	if(VREF(texture_set, texturehandle[palette_index]) != 0)
+	if(VREF(texture_set, texturehandle[palette_index]))
 	{
 		if(VREF(texture_set, ogl.external)) glitch("oops, may have messed up an external texture\n");
 		newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
@@ -110,15 +110,7 @@ void gl_set_texture(uint texture)
 {
 	if(trace_all) trace("gl_set_texture: set texture %i\n", texture);
 
-	if (texture) {
-		newRenderer.useTexture(texture);
-		newRenderer.isTexture(true);
-	}
-	else
-	{
-		newRenderer.useTexture(0);
-		newRenderer.isTexture(false);
-	}
+	newRenderer.useTexture(texture);
 
 	current_state.texture_handle = texture;
 	current_state.texture_set = 0;

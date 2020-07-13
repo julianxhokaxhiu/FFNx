@@ -80,6 +80,7 @@ char* direct_mode_path = nullptr;
 char* save_path = nullptr;
 cfg_bool_t enable_debug_ui = cfg_bool_t(false);
 long debug_ui_hotkey = 0;
+cfg_bool_t renderer_cache = cfg_bool_t(false);
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -133,6 +134,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("save_path", &save_path),
 		CFG_SIMPLE_BOOL("enable_debug_ui", &enable_debug_ui),
 		CFG_SIMPLE_INT("debug_ui_hotkey", &debug_ui_hotkey),
+		CFG_SIMPLE_BOOL("renderer_cache", &renderer_cache),
 
 		CFG_END()
 };

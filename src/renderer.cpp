@@ -57,18 +57,21 @@ void RendererCallbacks::traceVargs(const char* _filePath, uint16_t _line, const 
 
 uint32_t RendererCallbacks::cacheReadSize(uint64_t _id)
 {
-    char filePath[256];
-    bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
-
-    // Use cache id as filename.
-    bx::FileReader reader;
-    bx::Error err;
-    if (bx::open(&reader, filePath, &err))
+    if (renderer_cache)
     {
-        uint32_t size = (uint32_t)bx::getSize(&reader);
-        bx::close(&reader);
-        // Return size of shader file.
-        return size;
+        char filePath[256];
+        bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
+
+        // Use cache id as filename.
+        bx::FileReader reader;
+        bx::Error err;
+        if (bx::open(&reader, filePath, &err))
+        {
+            uint32_t size = (uint32_t)bx::getSize(&reader);
+            bx::close(&reader);
+            // Return size of shader file.
+            return size;
+        }
     }
 
     // Return 0 if shader is not found.
@@ -77,20 +80,23 @@ uint32_t RendererCallbacks::cacheReadSize(uint64_t _id)
 
 bool RendererCallbacks::cacheRead(uint64_t _id, void* _data, uint32_t _size)
 {
-    char filePath[256];
-    bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
-
-    // Use cache id as filename.
-    bx::FileReader reader;
-    bx::Error err;
-    if (bx::open(&reader, filePath, &err))
+    if (renderer_cache)
     {
-        // Read shader.
-        uint32_t result = bx::read(&reader, _data, _size, &err);
-        bx::close(&reader);
+        char filePath[256];
+        bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
 
-        // Make sure that read size matches requested size.
-        return result == _size;
+        // Use cache id as filename.
+        bx::FileReader reader;
+        bx::Error err;
+        if (bx::open(&reader, filePath, &err))
+        {
+            // Read shader.
+            uint32_t result = bx::read(&reader, _data, _size, &err);
+            bx::close(&reader);
+
+            // Make sure that read size matches requested size.
+            return result == _size;
+        }
     }
 
     // Shader is not found in cache, needs to be rebuilt.
@@ -99,18 +105,21 @@ bool RendererCallbacks::cacheRead(uint64_t _id, void* _data, uint32_t _size)
 
 void RendererCallbacks::cacheWrite(uint64_t _id, const void* _data, uint32_t _size)
 {
-    char filePath[256];
-
-    bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
-
-    // Use cache id as filename.
-    bx::FileWriter writer;
-    bx::Error err;
-    if (bx::open(&writer, filePath, false, &err))
+    if (renderer_cache)
     {
-        // Write shader to cache location.
-        bx::write(&writer, _data, _size, &err);
-        bx::close(&writer);
+        char filePath[256];
+
+        bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
+
+        // Use cache id as filename.
+        bx::FileWriter writer;
+        bx::Error err;
+        if (bx::open(&writer, filePath, false, &err))
+        {
+            // Write shader to cache location.
+            bx::write(&writer, _data, _size, &err);
+            bx::close(&writer);
+        }
     }
 }
 
@@ -313,29 +322,19 @@ void Renderer::destroyAll()
 {
     destroyUniforms();
 
-    for (auto idx : internalState.texHandlers)
+    for (auto& handle : internalState.texHandlers)
     {
-        bgfx::TextureHandle handle = { idx };
-
         if (bgfx::isValid(handle))
             bgfx::destroy(handle);
     }
-
-    bgfx::destroy(emptyTexture);
 
     bgfx::destroy(vertexBufferHandle);
 
     bgfx::destroy(indexBufferHandle);
 
-    for (auto handle : backendFrameBufferRT)
-    {
-        if (bgfx::isValid(handle))
-            bgfx::destroy(handle);
-    }
-
     bgfx::destroy(backendFrameBuffer);
 
-    for (auto handle : backendProgramHandles)
+    for (auto& handle : backendProgramHandles)
     {
         if (bgfx::isValid(handle))
             bgfx::destroy(handle);
@@ -421,7 +420,7 @@ void Renderer::renderFrame()
                 bgfx::getTexture(backendFrameBuffer).idx
             );
         else
-            useTexture(emptyTexture.idx);
+            useTexture(0);
 
         setClearFlags(true, true);
 
@@ -507,14 +506,7 @@ void Renderer::prepareFramebuffer()
 {
     // If already existing, destroy
     if (bgfx::isValid(backendFrameBuffer))
-    {
         bgfx::destroy(backendFrameBuffer);
-        bgfx::destroy(backendFrameBufferRT[1]);
-        bgfx::destroy(backendFrameBufferRT[0]);
-
-        backendFrameBufferRT.empty();
-        backendFrameBufferRT.shrink_to_fit();
-    }
 
     uint64_t fbFlags = BGFX_TEXTURE_RT;
 
@@ -530,24 +522,23 @@ void Renderer::prepareFramebuffer()
             fbFlags = BGFX_TEXTURE_RT_MSAA_X16;
     }
 
-    backendFrameBufferRT = {
-        bgfx::createTexture2D(
-            framebufferWidth,
-            framebufferHeight,
-            false,
-            1,
-            bgfx::TextureFormat::RGBA8,
-            fbFlags | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
-        ),
-        bgfx::createTexture2D(
-            framebufferWidth,
-            framebufferHeight,
-            false,
-            1,
-            bgfx::TextureFormat::D24S8,
-            fbFlags | BGFX_TEXTURE_RT_WRITE_ONLY
-        )
-    };
+    backendFrameBufferRT[0] = bgfx::createTexture2D(
+        framebufferWidth,
+        framebufferHeight,
+        false,
+        1,
+        bgfx::TextureFormat::RGBA8,
+        fbFlags | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+    );
+
+    backendFrameBufferRT[1] = bgfx::createTexture2D(
+        framebufferWidth,
+        framebufferHeight,
+        false,
+        1,
+        bgfx::TextureFormat::D24S8,
+        fbFlags | BGFX_TEXTURE_RT_WRITE_ONLY
+    );
 
     backendFrameBuffer = bgfx::createFrameBuffer(
         backendFrameBufferRT.size(),
@@ -594,9 +585,6 @@ void Renderer::init()
         0.0,
         getCaps()->homogeneousDepth
     );
-
-    // Create an empty texture
-    emptyTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_NONE | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 
     prepareFramebuffer();
 
@@ -683,11 +671,9 @@ void Renderer::draw()
 
         for (uint idx = 0; idx < idxMax; idx++)
         {
-            uint16_t rt = internalState.texHandlers[idx];
+            bgfx::TextureHandle handle = internalState.texHandlers[idx];
 
-            bgfx::TextureHandle handle = { rt };
-
-            if (!internalState.bIsMovie && idx > 0) handle = emptyTexture;
+            if (!internalState.bIsMovie && idx > 0) handle = BGFX_INVALID_HANDLE;
 
             if (bgfx::isValid(handle))
             {
@@ -765,21 +751,6 @@ void Renderer::draw()
     bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
 
     internalState.bHasDrawBeenDone = true;
-
-    // Reset texture sampler only for OpenGL ( required for the MSAA x2 - x16 )
-    if (getCaps()->rendererType == bgfx::RendererType::OpenGL)
-    {
-        uint idxMax = 3;
-
-        for (uint idx = 0; idx < idxMax; idx++)
-        {
-            bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), emptyTexture);
-        }
-
-        bgfx::touch(0);
-
-        bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
-    }
 };
 
 void Renderer::drawOverlay()
@@ -908,7 +879,7 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
 
 uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool generateMips)
 {
-    bgfx::TextureHandle ret = { 0 };
+    bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
 
     bgfx::TextureFormat::Enum texFormat = bgfx::TextureFormat::R8;
     bimg::TextureFormat::Enum imgFormat = bimg::TextureFormat::R8;
@@ -957,7 +928,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
 
 uint Renderer::createTexture(char* filename, uint* width, uint* height)
 {
-    bgfx::TextureHandle ret = { 0 };
+    bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
 
     FILE* file = fopen(filename, "rb");
         
@@ -1015,7 +986,7 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
 
 uint Renderer::createTextureLibPng(char* filename, uint* width, uint* height)
 {
-    bgfx::TextureHandle ret = { 0 };
+    bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
 
     FILE* file = fopen(filename, "rb");
 
@@ -1220,16 +1191,16 @@ void Renderer::deleteTexture(uint16_t rt)
     }
 };
 
-void Renderer::useTexture(uint rt, uint slot)
+void Renderer::useTexture(uint16_t rt, uint slot)
 {
     if (rt > 0)
     {
-        internalState.texHandlers[slot] = rt;
+        internalState.texHandlers[slot] = { rt };
         isTexture(true);
     }
     else
     {
-        internalState.texHandlers[slot] = bgfx::kInvalidHandle;
+        internalState.texHandlers[slot] = BGFX_INVALID_HANDLE;
         isTexture(false);
     }
 };

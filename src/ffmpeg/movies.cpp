@@ -151,10 +151,18 @@ void ffmpeg_release_movie_objects()
 
 	for(i = 0; i < VIDEO_BUFFER_SIZE; i++)
 	{
+		// Cleanup BGRA textures
 		newRenderer.deleteTexture(video_buffer[i].bgra_texture);
 		video_buffer[i].bgra_texture = 0;
-		for (uint idx = 0; idx < 3; idx++) newRenderer.deleteTexture(video_buffer[i].yuv_textures[idx]);
-		memset(video_buffer[i].yuv_textures, 0, sizeof(video_buffer[i].yuv_textures));
+
+		// Cleanup YUV textures
+		for (uint idx = 0; idx < 3; idx++)
+		{
+			newRenderer.deleteTexture(video_buffer[i].yuv_textures[idx]);
+			video_buffer[i].yuv_textures[idx] = 0;
+		}
+
+		// Unset slot 1 and 2 as they are used only for YUV textures
 		if ( i > 0 ) newRenderer.useTexture(0, i);
 	}
 }
@@ -388,6 +396,9 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint num, uint buffer_in
 
 	if (upload_width > tex_width) tex_width = upload_width;
 
+	if (video_buffer[buffer_index].yuv_textures[num])
+		newRenderer.deleteTexture(video_buffer[buffer_index].yuv_textures[num]);
+
 	video_buffer[buffer_index].yuv_textures[num] = newRenderer.createTexture(
 		planes[num],
 		tex_width,
@@ -399,12 +410,6 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint num, uint buffer_in
 
 void buffer_yuv_frame(uint8_t **planes, int *strides)
 {
-	if (video_buffer[vbuffer_write].yuv_textures[0])
-	{
-		for (uint idx = 0; idx < 3; idx++)
-			newRenderer.deleteTexture(video_buffer[vbuffer_write].yuv_textures[idx]);
-	}
-	
 	upload_yuv_texture(planes, strides, 0, vbuffer_write); // Y
 	upload_yuv_texture(planes, strides, 1, vbuffer_write); // U
 	upload_yuv_texture(planes, strides, 2, vbuffer_write); // V

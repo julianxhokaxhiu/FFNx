@@ -936,10 +936,10 @@ void common_unload_texture(struct texture_set *texture_set)
 
 	for(i = 0; i < scene_stack_pointer; i++)
 	{
-		if(scene_stack[i].texture_set == VPTR(texture_set)) scene_stack[i].texture_set = 0;
+		if(scene_stack[i].texture_set == VPTR(texture_set)) scene_stack[i].texture_set = NULL;
 	}
 
-	if(current_state.texture_set == VPTR(texture_set)) current_state.texture_set = 0;
+	if(current_state.texture_set == VPTR(texture_set)) current_state.texture_set = NULL;
 
 	if(ff8) ff8_unload_texture(VPTRCAST(ff8_texture_set, texture_set));
 }

@@ -67,7 +67,7 @@ uint load_texture_helper(char* name, uint* width, uint* height, bool useLibPng)
 	else
 		ret = newRenderer.createTexture(name, width, height);
 
-	if (ret > 0)
+	if (ret)
 	{
 		if (trace_all || trace_loaders) trace("Using texture: %s\n", name);
 	}
@@ -88,7 +88,6 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 		"tga",
 		"exr",
 	};
-	int extIdxFound = -1;
 	struct stat dummy;
 
 	for (int idx = 0; idx < exts.size(); idx++)
@@ -97,7 +96,7 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 
 		if (stat(filename, &dummy) == 0)
 		{
-			extIdxFound = idx;
+			ret = load_texture_helper(filename, width, height, exts[idx] == "png");
 
 			break;
 		}
@@ -107,10 +106,7 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 		}
 	}
 
-	
-	if (extIdxFound != -1) ret = load_texture_helper(filename, width, height, exts[extIdxFound] == "png");
-
-	if(!ret)
+	if(ret)
 	{
 		if(palette_index != 0)
 		{
@@ -122,9 +118,9 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 			if(trace_all || show_missing_textures) info("No external texture found, switching back to the internal one.\n", basedir, mod_path, name, palette_index);
 			return 0;
 		}
-	}
 
-	if(trace_all) trace("Created texture: %i\n", ret);
+		if (trace_all) trace("Created texture: %u\n", ret);
+	}
 
 	return ret;
 }

@@ -163,7 +163,7 @@ private:
 
     struct RendererState
     {
-        uint16_t texHandlers[3];
+        bgfx::TextureHandle texHandlers[3];
 
         bool bHasDrawBeenDone = false;
 
@@ -231,8 +231,6 @@ private:
     bgfx::VertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;
     bgfx::IndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;
     bgfx::VertexLayout vertexLayout;
-
-    bgfx::TextureHandle emptyTexture = BGFX_INVALID_HANDLE;
 
     std::map<std::string,uint16_t> bgfxUniformHandles;
 
@@ -313,7 +311,7 @@ public:
     uint createTextureLibPng(char* filename, uint* width, uint* height);
     bool saveTexture(char* filename, uint width, uint height, void* data);
     void deleteTexture(uint16_t texId);
-    void useTexture(uint texId, uint slot = 0);
+    void useTexture(uint16_t texId, uint slot = 0);
     uint blitTexture(uint x, uint y, uint width, uint height);
 
     void isMovie(bool flag = false);
