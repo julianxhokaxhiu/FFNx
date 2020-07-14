@@ -340,6 +340,38 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				return MAKELRESULT(0, MNC_CLOSE);
 			}
 		}
+		else if (uMsg == WM_QUIT)
+		{
+			if (steam_edition) {
+				metadataPatcher.apply();
+
+				// Write ff7sound.cfg
+				char ff7soundPath[260]{ 0 };
+				get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
+				PathAppendA(ff7soundPath, "ff7sound.cfg");
+				FILE* ff7sound = fopen(ff7soundPath, "wb");
+
+				if (ff7sound)
+				{
+					fwrite(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
+					fwrite(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
+					fclose(ff7sound);
+				}
+			}
+
+			if (ff8) ff8_release_movie_objects();
+			else ff7_release_movie_objects();
+
+			if (use_external_music && ff8) music_cleanup();
+
+			gl_cleanup_deferred();
+
+			newRenderer.shutdown();
+
+			SetWindowLongA(gameHwnd, GWL_WNDPROC, (LONG)common_externals.engine_wndproc);
+
+			unreplace_functions();
+		}
 
 		HandleInputEvents(uMsg, wParam, lParam);
 	}
@@ -542,36 +574,6 @@ uint common_init(struct game_obj *game_object)
 void common_cleanup(struct game_obj *game_object)
 {
 	if(trace_all) trace("dll_gfx: cleanup\n");
-
-	if (steam_edition) {
-		metadataPatcher.apply();
-
-		// Write ff7sound.cfg
-		char ff7soundPath[260]{ 0 };
-		get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
-		PathAppendA(ff7soundPath, "ff7sound.cfg");
-		FILE* ff7sound = fopen(ff7soundPath, "wb");
-
-		if (ff7sound)
-		{
-			fwrite(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
-			fwrite(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
-			fclose(ff7sound);
-		}
-	}
-
-	if (!ff8) ff7_release_movie_objects();
-	if (ff8) ff8_release_movie_objects();
-
-	if (use_external_music && ff8) music_cleanup();
-
-	gl_cleanup_deferred();
-
-	unreplace_functions();
-
-	newRenderer.shutdown();
-
-	SetWindowLongA(gameHwnd, GWL_WNDPROC, (LONG)common_externals.engine_wndproc);
 }
 
 // unused and unnecessary
