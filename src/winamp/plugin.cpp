@@ -47,10 +47,10 @@ bool WinampPlugin::open(LPCWSTR libFileNameW, char* libFileNameA)
 {
 	close();
 	if (libFileNameW) {
-		this->handle = LoadLibraryExW(libFileNameW, nullptr, LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
+		this->handle = LoadLibraryW(libFileNameW);
 	}
 	else {
-		this->handle = LoadLibraryExA(libFileNameA, nullptr, LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
+		this->handle = LoadLibraryA(libFileNameA);
 	}
 
 	if (nullptr != this->handle)
