@@ -2307,7 +2307,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\MIDI)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey);
 				RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&ff7_music_volume, &regsize);
 
-				external_music_path = "music/vgmstream";
+				if (external_music_path == nullptr) external_music_path = "music/vgmstream";
 			}
 		}
 		else if (ff8)
