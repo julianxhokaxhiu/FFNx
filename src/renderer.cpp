@@ -879,7 +879,7 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
 
 uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool generateMips)
 {
-    bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
     bgfx::TextureFormat::Enum texFormat = bgfx::TextureFormat::R8;
     bimg::TextureFormat::Enum imgFormat = bimg::TextureFormat::R8;
@@ -928,7 +928,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
 
 uint Renderer::createTexture(char* filename, uint* width, uint* height)
 {
-    bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
     FILE* file = fopen(filename, "rb");
         
@@ -986,7 +986,7 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
 
 uint Renderer::createTextureLibPng(char* filename, uint* width, uint* height)
 {
-    bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
     FILE* file = fopen(filename, "rb");
 

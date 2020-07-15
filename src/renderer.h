@@ -41,6 +41,8 @@
 #include "gl.h"
 #include "overlay.h"
 
+#define FFNX_RENDERER_INVALID_HANDLE { 0 }
+
 enum RendererInterpolationQualifier {
     FLAT = 0,
     SMOOTH

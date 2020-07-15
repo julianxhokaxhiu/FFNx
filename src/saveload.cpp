@@ -98,15 +98,17 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 		{
 			ret = load_texture_helper(filename, width, height, exts[idx] == "png");
 
+			if (!ret && trace_all) warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
+				
 			break;
 		}
 		else
 		{
-			if (trace_all || show_missing_textures) info("File not found: %s\n", filename);
+			if (trace_all || show_missing_textures) error("%s: %s\n", __func__, filename);
 		}
 	}
 
-	if(ret)
+	if(!ret)
 	{
 		if(palette_index != 0)
 		{
@@ -118,8 +120,10 @@ uint load_texture(char *name, uint palette_index, uint *width, uint *height)
 			if(trace_all || show_missing_textures) info("No external texture found, switching back to the internal one.\n", basedir, mod_path, name, palette_index);
 			return 0;
 		}
-
-		if (trace_all) trace("Created texture: %u\n", ret);
+	}
+	else
+	{
+		if (trace_all) trace("Created texture: %u from %s\n", ret, filename);
 	}
 
 	return ret;
