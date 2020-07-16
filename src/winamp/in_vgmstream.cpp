@@ -63,15 +63,12 @@ typedef enum {
 
 /* loaded settings */
 typedef struct {
-    int thread_priority;
-
     double fade_time;
     double fade_delay;
     double loop_count;
     int ignore_loop;
     int loop_forever;
 
-    int disable_subsongs;
     int downmix_channels;
     int tagfile_disable;
     int exts_unknown_on;
@@ -200,24 +197,12 @@ static VGMSTREAM* init_vgmstream_winamp(const char* fn, int stream_index) {
 /* IN_CONFIG                             */
 /* ************************************* */
 
-int priority_values[] = {
-    THREAD_PRIORITY_IDLE,
-    THREAD_PRIORITY_LOWEST,
-    THREAD_PRIORITY_BELOW_NORMAL,
-    THREAD_PRIORITY_NORMAL,
-    THREAD_PRIORITY_ABOVE_NORMAL,
-    THREAD_PRIORITY_HIGHEST,
-    THREAD_PRIORITY_TIME_CRITICAL
-};
-
 static void load_defaults(winamp_settings_t* settings) {
-    settings->thread_priority = THREAD_PRIORITY_ABOVE_NORMAL;
     settings->fade_time = 10.0;
     settings->fade_delay = 0.0;
     settings->loop_count = 2.0;
     settings->loop_forever = 1;
     settings->ignore_loop = 0;
-    settings->disable_subsongs = 0;
     settings->downmix_channels = 0;
     settings->tagfile_disable = 0;
     settings->exts_unknown_on = 1;
@@ -525,7 +510,7 @@ int VgmstreamInPlugin::startThread()
         nullptr
     ));  /* don't keep track of the thread id */
 
-    SetThreadPriority(decode_thread_handle, priority_values[settings.thread_priority]);
+    SetThreadPriority(decode_thread_handle, THREAD_PRIORITY_ABOVE_NORMAL);
 
     return 0; /* success */
 }
