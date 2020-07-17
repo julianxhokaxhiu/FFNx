@@ -379,7 +379,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return common_externals.engine_wndproc(hwnd, uMsg, wParam, lParam);
 }
 
-int common_create_window(HINSTANCE hInstance, void* game_object)
+int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 {
 	uint32_t ret = FALSE;
 
@@ -533,7 +533,7 @@ int common_create_window(HINSTANCE hInstance, void* game_object)
 				typedef int game_init(void*);
 				typedef void game_enter_main(void*);
 
-				if (ff8) ff8_inject_driver();
+				if (ff8) ff8_inject_driver(game_object);
 
 				if (((game_init*)VREF(game_object, main_obj_9F0.init))(game_object))
 				{
@@ -2713,13 +2713,12 @@ __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(GUID* guid, LPDIREC
 	return ((LPEAXDIRECTSOUNDCREATE)procEaxDSoundCreate)(guid, directsound, unk);
 }
 
-void ff8_inject_driver()
+void ff8_inject_driver(struct game_obj* game_object)
 {
-	// Inject our Driver into the Engine
-	common_externals.get_game_object = (struct game_obj* (*)(void))get_relative_call(common_externals.winmain, 0x5F);
-	uint32_t game_obj_addr = (uint32_t)common_externals.get_game_object();
-	patch_code_byte(game_obj_addr + 0xBA8, 2);
-	patch_code_dword(game_obj_addr + 0xBD0, (DWORD)new_dll_graphics_driver);
+	VOBJ(game_obj, game_object, game_object);
+
+	VRASS(game_object, current_gfx_driver, 2);
+	VRASS(game_object, create_gfx_driver, new_dll_graphics_driver);
 }
 
 #if defined(__cplusplus)
