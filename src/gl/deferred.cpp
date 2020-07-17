@@ -25,21 +25,21 @@
 #include "../macro.h"
 #include "../log.h"
 
-uint nodefer = false;
+uint32_t nodefer = false;
 
 #define DEFERRED_MAX 1024
 
 struct deferred_draw *deferred_draws;
-uint num_deferred;
+uint32_t num_deferred;
 
 // re-order and save a draw call for later processing
-uint gl_defer_draw(uint primitivetype, uint vertextype, struct nvertex *vertices, uint vertexcount, word *indices, uint count, uint clip, uint mipmap)
+uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap)
 {
-	uint tri;
-	uint mode = getmode_cached()->driver_mode;
-	uint *tri_deferred;
+	uint32_t tri;
+	uint32_t mode = getmode_cached()->driver_mode;
+	uint32_t *tri_deferred;
 	float *tri_z;
-	uint defer_index = 0;
+	uint32_t defer_index = 0;
 
 	if (trace_all) trace("gl_defer_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
 
@@ -117,13 +117,13 @@ uint gl_defer_draw(uint primitivetype, uint vertextype, struct nvertex *vertices
 		return false;
 	}
 
-	tri_deferred = (uint*)driver_calloc(sizeof(*tri_deferred), count / 3);
+	tri_deferred = (uint32_t*)driver_calloc(sizeof(*tri_deferred), count / 3);
 	tri_z = (float*)driver_calloc(sizeof(*tri_z), count / 3);
 
 	// calculate screen space average Z coordinate for each triangle
 	for(tri = 0; tri < count / 3; tri++)
 	{
-		uint i;
+		uint32_t i;
 
 		for(i = 0; i < 3; i++)
 		{
@@ -148,9 +148,9 @@ uint gl_defer_draw(uint primitivetype, uint vertextype, struct nvertex *vertices
 	while(defer_index < count / 3)
 	{
 		float z = tri_z[defer_index];
-		uint tri_num = 0;
-		uint defer = num_deferred;
-		uint vert_index = 0;
+		uint32_t tri_num = 0;
+		uint32_t defer = num_deferred;
+		uint32_t vert_index = 0;
 
 		for(tri = 0; tri < count / 3; tri++) if(tri_z[tri] == z) tri_num++;
 
@@ -160,7 +160,7 @@ uint gl_defer_draw(uint primitivetype, uint vertextype, struct nvertex *vertices
 		deferred_draws[defer].primitivetype = primitivetype;
 		deferred_draws[defer].vertextype = vertextype;
 		deferred_draws[defer].vertexcount = tri_num * 3;
-		deferred_draws[defer].indices = (word*)driver_malloc(sizeof(*indices) * tri_num * 3);
+		deferred_draws[defer].indices = (WORD*)driver_malloc(sizeof(*indices) * tri_num * 3);
 		deferred_draws[defer].vertices = (nvertex*)driver_malloc(sizeof(*vertices) * tri_num * 3);
 		gl_save_state(&deferred_draws[defer].state);
 		deferred_draws[defer].drawn = false;
@@ -216,9 +216,9 @@ void gl_draw_deferred()
 
 	while(true)
 	{
-		uint i;
+		uint32_t i;
 		double z = -1.0;
-		uint next = -1;
+		uint32_t next = -1;
 
 		for(i = 0; i < num_deferred; i++)
 		{
@@ -262,7 +262,7 @@ void gl_draw_deferred()
 // with it and perform the necessary cleanup
 void gl_check_deferred(struct texture_set *texture_set)
 {
-	uint i;
+	uint32_t i;
 
 	for(i = 0; i < num_deferred; i++)
 	{

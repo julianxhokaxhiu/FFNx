@@ -26,9 +26,9 @@
 #include "../gamepad.h"
 
 // MDEF fix
-uint get_equipment_stats(uint party_index, uint type)
+uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
 {
-	uint character = ff7_externals.party_member_to_char_map[ff7_externals.savemap->party_members[party_index]];
+	uint32_t character = ff7_externals.party_member_to_char_map[ff7_externals.savemap->party_members[party_index]];
 
 	switch(type)
 	{
@@ -50,11 +50,11 @@ uint get_equipment_stats(uint party_index, uint type)
 }
 
 char *kernel2_sections[20];
-uint kernel2_section_counter;
+uint32_t kernel2_section_counter;
 
 void kernel2_reset_counters()
 {
-	uint i;
+	uint32_t i;
 
 	if(trace_all) trace("kernel2 reset\n");
 
@@ -63,7 +63,7 @@ void kernel2_reset_counters()
 	kernel2_section_counter = 0;
 }
 
-char *kernel2_add_section(uint size)
+char *kernel2_add_section(uint32_t size)
 {
 	char *ret = (char*)external_malloc(size);
 
@@ -74,13 +74,13 @@ char *kernel2_add_section(uint size)
 	return ret;
 }
 
-char *kernel2_get_text(uint section_base, uint string_id, uint section_offset)
+char *kernel2_get_text(uint32_t section_base, uint32_t string_id, uint32_t section_offset)
 {
 	char *section = kernel2_sections[section_base + section_offset];
 
 	if(trace_all) trace("kernel2 get text (%i+%i:%i)\n", section_base, section_offset, string_id);
 	
-	return &section[((word *)section)[string_id]];
+	return &section[((WORD *)section)[string_id]];
 }
 
 void ff7_wm_activateapp(bool hasFocus)

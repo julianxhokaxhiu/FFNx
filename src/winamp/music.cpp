@@ -31,7 +31,7 @@ HANDLE winampRenderHandle = nullptr;
 unsigned winampRenderThreadID;
 bool winamp_stop_thread = false;
 
-uint winamp_current_id = 0;
+uint32_t winamp_current_id = 0;
 char* winamp_current_midi = nullptr;
 bool winamp_song_ended = true;
 bool winamp_song_reached_end = true; // Song reaches end (but it can still loop)
@@ -43,14 +43,14 @@ int winamp_trans_target_volume = 0;
 int winamp_trans_prev_volume = 0;
 
 int winamp_crossfade_time = 0;
-uint winamp_crossfade_id = 0;
+uint32_t winamp_crossfade_id = 0;
 char* winamp_crossfade_midi;
 
 int winamp_master_volume = 100;
 int winamp_song_volume = 127;
 
-uint winamp_paused_midi_id = 0;
-uint winamp_current_mode = uint(-1);
+uint32_t winamp_paused_midi_id = 0;
+uint32_t winamp_current_mode = uint32_t(-1);
 
 void winamp_apply_volume()
 {
@@ -68,7 +68,7 @@ void build_filename(char* filename, char* midi, char* ext)
 	sprintf(filename, "%s/%s/%s.%s", basedir, external_music_path, midi, ext);
 }
 
-void winamp_load_song(char* midi, uint id, bool crossfade)
+void winamp_load_song(char* midi, uint32_t id, bool crossfade)
 {
 	char filename[MAX_PATH];
 
@@ -79,10 +79,10 @@ void winamp_load_song(char* midi, uint id, bool crossfade)
 
 	if (trace_all || trace_music) trace("load song %s %i\n", midi, id);
 	
-	uint winamp_previous_paused_midi_id = winamp_paused_midi_id;
-	uint winamp_previous_mode = winamp_current_mode;
+	uint32_t winamp_previous_paused_midi_id = winamp_paused_midi_id;
+	uint32_t winamp_previous_mode = winamp_current_mode;
 	char* winamp_previous_midi = winamp_current_midi;
-	uint mode = getmode_cached()->driver_mode;
+	uint32_t mode = getmode_cached()->driver_mode;
 
 	if (!id)
 	{
@@ -128,9 +128,9 @@ void winamp_load_song(char* midi, uint id, bool crossfade)
 }
 
 // Apply x^3 function
-uint winamp_volume_fn()
+uint32_t winamp_volume_fn()
 {
-	uint vol_min, vol_max, step;
+	uint32_t vol_min, vol_max, step;
 	if (winamp_trans_prev_volume > winamp_trans_target_volume) {
 		vol_min = winamp_trans_target_volume;
 		vol_max = winamp_trans_prev_volume;
@@ -327,7 +327,7 @@ bool winamp_can_play(char* midi)
 }
 
 // start playing some music, <midi> is the name of the MIDI file without the .mid extension
-void winamp_play_music(char *midi, uint id)
+void winamp_play_music(char *midi, uint32_t id)
 {
 	if (trace_all || trace_music) trace("[%s] play music: %s:%i (current=%i, ended=%i)\n", getmode_cached()->name, midi, id, winamp_current_id, winamp_song_ended);
 	
@@ -359,7 +359,7 @@ void winamp_stop_music()
 }
 
 // cross fade to a new song
-void winamp_cross_fade_music(char *midi, uint id, int time)
+void winamp_cross_fade_music(char *midi, uint32_t id, int time)
 {
 	int fade_time = time * 4;
 
@@ -424,8 +424,8 @@ void winamp_resume_music()
 // even if there's nothing to play because of errors/missing files you cannot return false every time
 bool winamp_music_status()
 {
-	uint last_status = 0;
-	uint status;
+	uint32_t last_status = 0;
+	uint32_t status;
 
 	EnterCriticalSection(&winamp_mutex);
 

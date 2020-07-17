@@ -32,7 +32,7 @@
 
 // helper function initializes page dst, copies texture from src and applies
 // blend_mode
-void field_load_textures_helper(struct ff7_game_obj *game_object, struct struc_3 *struc_3, uint src, uint dst, uint blend_mode)
+void field_load_textures_helper(struct ff7_game_obj *game_object, struct struc_3 *struc_3, uint32_t src, uint32_t dst, uint32_t blend_mode)
 {
 	struct ff7_tex_header *tex_header;
 
@@ -64,13 +64,13 @@ void field_load_textures_helper(struct ff7_game_obj *game_object, struct struc_3
 
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3)
 {
-	uint i;
+	uint32_t i;
 
 	ff7_externals.field_convert_type2_layers();
 
 	for(i = 0; i < 29; i++)
 	{
-		uint blend_mode = 4;
+		uint32_t blend_mode = 4;
 
 		if(!ff7_externals.field_layers[i]->present) continue;
 
@@ -103,15 +103,15 @@ void field_layer2_pick_tiles(short x_offset, short y_offset)
 {
 	int x_add = (320 - x_offset) * 2;
 	int y_add = ((ff7_center_fields ? 232 : 224) - y_offset) * 2;
-	uint i;
+	uint32_t i;
 	struct field_tile *layer2_tiles = *ff7_externals.field_layer2_tiles;
 
 	if(*ff7_externals.field_special_y_offset > 0 && y_offset <= 8) y_offset -= *ff7_externals.field_special_y_offset * 2;
 
 	for(i = 0; i < *ff7_externals.field_layer2_tiles_num; i++)
 	{
-		uint tile_index = (*ff7_externals.field_layer2_palette_sort)[i] & 0xFFFF;
-		uint page;
+		uint32_t tile_index = (*ff7_externals.field_layer2_palette_sort)[i] & 0xFFFF;
+		uint32_t page;
 		int x;
 		int y;
 
@@ -132,7 +132,7 @@ void field_layer2_pick_tiles(short x_offset, short y_offset)
 	}
 }
 
-uint field_open_flevel_siz()
+uint32_t field_open_flevel_siz()
 {
 	struct lgp_file *f = lgp_open_file("flevel.siz", 1);
 
@@ -140,27 +140,27 @@ uint field_open_flevel_siz()
 		return 0;
 	}
 
-	uint size = lgp_get_filesize(f, 1);
+	uint32_t size = lgp_get_filesize(f, 1);
 	char* buffer = new char[size];
 
 	lgp_read_file(f, 1, buffer, size);
 
 	// Increase from 787 (field map count) to 1200
-	const uint max_map_count = 1200;
-	uint* uncompressed_sizes = reinterpret_cast<uint*>(buffer);
-	uint count = size / sizeof(uint);
-	uint* flevel_sizes = reinterpret_cast<uint*>(ff7_externals.field_map_infos + 0xBC);
+	const uint32_t max_map_count = 1200;
+	uint32_t* uncompressed_sizes = reinterpret_cast<uint32_t*>(buffer);
+	uint32_t count = size / sizeof(uint32_t);
+	uint32_t* flevel_sizes = reinterpret_cast<uint32_t*>(ff7_externals.field_map_infos + 0xBC);
 
 	if (count > max_map_count) {
 		count = max_map_count;
 	}
 
-	for (uint i = 0; i < count; ++i) {
+	for (uint32_t i = 0; i < count; ++i) {
 		flevel_sizes[i * 0x34] = uncompressed_sizes[i] + 4000000; // +2 MB compared to the original implementation
 	}
 
 	// Force a value if not specified by the flevel.siz
-	for (uint i = count; i < max_map_count; ++i) {
+	for (uint32_t i = count; i < max_map_count; ++i) {
 		flevel_sizes[i * 0x34] = 4000000;
 	}
 

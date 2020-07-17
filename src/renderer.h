@@ -158,7 +158,7 @@ private:
         float y;
         float z;
         float w;
-        uint bgra;
+        uint32_t bgra;
         float u;
         float v;
     };
@@ -295,26 +295,26 @@ public:
     void drawOverlay();
     void show();
 
-    void printText(uint16_t x, uint16_t y, uint attr, const char* text);
+    void printText(uint16_t x, uint16_t y, uint32_t attr, const char* text);
 
     // ---
 
     const bgfx::Caps* getCaps();
 
-    void bindVertexBuffer(struct nvertex* inVertex, uint inCount);
-    void bindIndexBuffer(word* inIndex, uint inCount);
+    void bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount);
+    void bindIndexBuffer(WORD* inIndex, uint32_t inCount);
 
     void setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
     void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
-    uint createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool generateMips = false);
-    uint createTexture(char* filename, uint* width, uint* height);
-    uint createTextureLibPng(char* filename, uint* width, uint* height);
-    bool saveTexture(char* filename, uint width, uint height, void* data);
+    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool generateMips = false);
+    uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height);
+    uint32_t createTextureLibPng(char* filename, uint32_t* width, uint32_t* height);
+    bool saveTexture(char* filename, uint32_t width, uint32_t height, void* data);
     void deleteTexture(uint16_t texId);
-    void useTexture(uint16_t texId, uint slot = 0);
-    uint blitTexture(uint x, uint y, uint width, uint height);
+    void useTexture(uint16_t texId, uint32_t slot = 0);
+    uint32_t blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
     void isMovie(bool flag = false);
     void isTLVertex(bool flag = false);

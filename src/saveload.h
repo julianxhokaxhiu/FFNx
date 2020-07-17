@@ -21,7 +21,5 @@
 
 #pragma once
 
-#include "types.h"
-
-uint save_texture(void *data, uint width, uint height, uint palette_index, char *name);
-uint load_texture(char *name, uint palette_index, uint *width, uint *height);
+uint32_t save_texture(void *data, uint32_t width, uint32_t height, uint32_t palette_index, char *name);
+uint32_t load_texture(char *name, uint32_t palette_index, uint32_t *width, uint32_t *height);

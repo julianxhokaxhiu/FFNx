@@ -36,9 +36,9 @@
 
 void winamp_music_init();
 bool winamp_can_play(char* midi);
-void winamp_play_music(char* midi, uint id);
+void winamp_play_music(char* midi, uint32_t id);
 void winamp_stop_music();
-void winamp_cross_fade_music(char* midi, uint id, int time);
+void winamp_cross_fade_music(char* midi, uint32_t id, int time);
 void winamp_pause_music();
 void winamp_resume_music();
 bool winamp_music_status();

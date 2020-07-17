@@ -26,25 +26,25 @@
 #include "gl.h"
 #include "log.h"
 
-uint __stdcall fake_dd_blit_fast(struct ddsurface **me, uint unknown1, uint unknown2, struct ddsurface **target, LPRECT source, uint unknown3);
-uint __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIXELFORMAT pf);
-uint __stdcall fake_ddsurface_get_surface_desc(struct ddsurface **me, LPDDSURFACEDESC2 sd);
-uint __stdcall fake_ddsurface_get_dd_interface(struct ddsurface **me, struct dddevice ***dd);
-uint __stdcall fake_ddsurface_get_palette(struct ddsurface **me, void **palette);
-uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFACEDESC sd, uint flags, uint unused);
-uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest);
-uint __stdcall fake_ddsurface_islost(struct ddsurface **me);
-uint __stdcall fake_ddsurface_restore(struct ddsurface **me);
-uint __stdcall fake_dd_query_interface(struct dddevice **me, uint *iid, void **ppvobj);
-uint __stdcall fake_dd_addref(struct dddevice **me);
-uint __stdcall fake_dd_release(struct dddevice **me);
-uint __stdcall fake_dd_create_clipper(struct dddevice **me, DWORD flags, LPDIRECTDRAWCLIPPER *clipper);
-uint __stdcall fake_dd_create_palette(struct dddevice **me, LPPALETTEENTRY palette_entry, LPDIRECTDRAWPALETTE *palette, IUnknown *unused);
-uint __stdcall fake_dd_create_surface(struct dddevice **me, LPDDSURFACEDESC sd, LPDIRECTDRAWSURFACE *surface, IUnknown *unused);
-uint __stdcall fake_dd_get_caps(struct dddevice **me, LPDDCAPS halcaps, LPDDCAPS helcaps);
-uint __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDESC sd);
-uint __stdcall fake_dd_set_coop_level(struct dddevice **me, uint coop_level);
-uint __stdcall fake_d3d_get_caps(struct d3d2device **me, void *a, void *b);
+uint32_t __stdcall fake_dd_blit_fast(struct ddsurface **me, uint32_t unknown1, uint32_t unknown2, struct ddsurface **target, LPRECT source, uint32_t unknown3);
+uint32_t __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIXELFORMAT pf);
+uint32_t __stdcall fake_ddsurface_get_surface_desc(struct ddsurface **me, LPDDSURFACEDESC2 sd);
+uint32_t __stdcall fake_ddsurface_get_dd_interface(struct ddsurface **me, struct dddevice ***dd);
+uint32_t __stdcall fake_ddsurface_get_palette(struct ddsurface **me, void **palette);
+uint32_t __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFACEDESC sd, uint32_t flags, uint32_t unused);
+uint32_t __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest);
+uint32_t __stdcall fake_ddsurface_islost(struct ddsurface **me);
+uint32_t __stdcall fake_ddsurface_restore(struct ddsurface **me);
+uint32_t __stdcall fake_dd_query_interface(struct dddevice **me, uint32_t *iid, void **ppvobj);
+uint32_t __stdcall fake_dd_addref(struct dddevice **me);
+uint32_t __stdcall fake_dd_release(struct dddevice **me);
+uint32_t __stdcall fake_dd_create_clipper(struct dddevice **me, DWORD flags, LPDIRECTDRAWCLIPPER *clipper);
+uint32_t __stdcall fake_dd_create_palette(struct dddevice **me, LPPALETTEENTRY palette_entry, LPDIRECTDRAWPALETTE *palette, IUnknown *unused);
+uint32_t __stdcall fake_dd_create_surface(struct dddevice **me, LPDDSURFACEDESC sd, LPDIRECTDRAWSURFACE *surface, IUnknown *unused);
+uint32_t __stdcall fake_dd_get_caps(struct dddevice **me, LPDDCAPS halcaps, LPDDCAPS helcaps);
+uint32_t __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDESC sd);
+uint32_t __stdcall fake_dd_set_coop_level(struct dddevice **me, uint32_t coop_level);
+uint32_t __stdcall fake_d3d_get_caps(struct d3d2device **me, void *a, void *b);
 
 struct ddsurface fake_dd_surface = {
 	fake_dd_query_interface,
@@ -232,16 +232,16 @@ struct d3d2device *_fake_d3d2device = &fake_d3d2device;
 
 uint8_t* fake_dd_surface_buffer = nullptr;
 
-uint movie_texture = 0;
+uint32_t movie_texture = 0;
 
-uint __stdcall fake_dd_blit_fast(struct ddsurface **me, uint unknown1, uint unknown2, struct ddsurface **source, LPRECT src_rect, uint unknown3)
+uint32_t __stdcall fake_dd_blit_fast(struct ddsurface **me, uint32_t unknown1, uint32_t unknown2, struct ddsurface **source, LPRECT src_rect, uint32_t unknown3)
 {
 	if(trace_all || trace_fake_dx) trace("blit_fast\n");
 
 	return DD_OK;
 }
 
-uint __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIXELFORMAT pf)
+uint32_t __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIXELFORMAT pf)
 {
 	if(trace_all || trace_fake_dx) trace("get_pixelformat\n");
 
@@ -255,14 +255,14 @@ uint __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIXELFO
 	return 0;
 }
 
-uint __stdcall fake_ddsurface_get_surface_desc(struct ddsurface **me, LPDDSURFACEDESC2 sd)
+uint32_t __stdcall fake_ddsurface_get_surface_desc(struct ddsurface **me, LPDDSURFACEDESC2 sd)
 {
 	if(trace_all || trace_fake_dx) trace("get_surface_desc\n");
 
 	return 0;
 }
 
-uint __stdcall fake_ddsurface_get_dd_interface(struct ddsurface **me, struct dddevice ***dd)
+uint32_t __stdcall fake_ddsurface_get_dd_interface(struct ddsurface **me, struct dddevice ***dd)
 {
 	if(trace_all || trace_fake_dx) trace("get_dd_interface\n");
 
@@ -270,7 +270,7 @@ uint __stdcall fake_ddsurface_get_dd_interface(struct ddsurface **me, struct ddd
 	return 0;
 }
 
-uint __stdcall fake_ddsurface_get_palette(struct ddsurface **me, void **palette)
+uint32_t __stdcall fake_ddsurface_get_palette(struct ddsurface **me, void **palette)
 {
 	if(trace_all || trace_fake_dx) trace("get_palette\n");
 
@@ -279,7 +279,7 @@ uint __stdcall fake_ddsurface_get_palette(struct ddsurface **me, void **palette)
 	return DDERR_UNSUPPORTED;
 }
 
-uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFACEDESC sd, uint flags, uint unused)
+uint32_t __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFACEDESC sd, uint32_t flags, uint32_t unused)
 {
 	if(trace_all || trace_fake_dx) trace("lock\n");
 
@@ -302,7 +302,7 @@ uint __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFA
 	return DD_OK;
 }
 
-uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
+uint32_t __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 {
 	if(trace_all || trace_fake_dx) trace("unlock\n");
 
@@ -326,21 +326,21 @@ uint __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 	return DD_OK;
 }
 
-uint __stdcall fake_ddsurface_islost(struct ddsurface **me)
+uint32_t __stdcall fake_ddsurface_islost(struct ddsurface **me)
 {
 	if(trace_all || trace_fake_dx) trace("islost\n");
 
 	return DD_OK;
 }
 
-uint __stdcall fake_ddsurface_restore(struct ddsurface **me)
+uint32_t __stdcall fake_ddsurface_restore(struct ddsurface **me)
 {
 	if(trace_all || trace_fake_dx) trace("restore\n");
 
 	return DD_OK;
 }
 
-uint __stdcall fake_dd_query_interface(struct dddevice **me, uint *iid, void **ppvobj)
+uint32_t __stdcall fake_dd_query_interface(struct dddevice **me, uint32_t *iid, void **ppvobj)
 {
 	if(trace_all || trace_fake_dx) trace("query_interface: 0x%p 0x%p 0x%p 0x%p\n", iid[0], iid[1], iid[2], iid[3]);
 
@@ -359,21 +359,21 @@ uint __stdcall fake_dd_query_interface(struct dddevice **me, uint *iid, void **p
 	return E_NOINTERFACE;
 }
 
-uint __stdcall fake_dd_addref(struct dddevice **me)
+uint32_t __stdcall fake_dd_addref(struct dddevice **me)
 {
 	if(trace_all || trace_fake_dx) trace("addref\n");
 
 	return 1;
 }
 
-uint __stdcall fake_dd_release(struct dddevice **me)
+uint32_t __stdcall fake_dd_release(struct dddevice **me)
 {
 	if(trace_all || trace_fake_dx) trace("release\n");
 
 	return 0;
 }
 
-uint __stdcall fake_dd_create_clipper(struct dddevice **me, DWORD flags, LPDIRECTDRAWCLIPPER *clipper)
+uint32_t __stdcall fake_dd_create_clipper(struct dddevice **me, DWORD flags, LPDIRECTDRAWCLIPPER *clipper)
 {
 	if(trace_all || trace_fake_dx) trace("create_clipper\n");
 
@@ -384,7 +384,7 @@ uint __stdcall fake_dd_create_clipper(struct dddevice **me, DWORD flags, LPDIREC
 	return DD_OK;
 }
 
-uint __stdcall fake_dd_create_palette(struct dddevice **me, LPPALETTEENTRY palette_entry, LPDIRECTDRAWPALETTE *palette, IUnknown *unused)
+uint32_t __stdcall fake_dd_create_palette(struct dddevice **me, LPPALETTEENTRY palette_entry, LPDIRECTDRAWPALETTE *palette, IUnknown *unused)
 {
 	if(trace_all || trace_fake_dx) trace("create_palette\n");
 
@@ -395,7 +395,7 @@ uint __stdcall fake_dd_create_palette(struct dddevice **me, LPPALETTEENTRY palet
 	return DD_OK;
 }
 
-uint __stdcall fake_dd_create_surface(struct dddevice **me, LPDDSURFACEDESC sd, LPDIRECTDRAWSURFACE *surface, IUnknown *unused)
+uint32_t __stdcall fake_dd_create_surface(struct dddevice **me, LPDDSURFACEDESC sd, LPDIRECTDRAWSURFACE *surface, IUnknown *unused)
 {
 	if(trace_all || trace_fake_dx) trace("create_surface %ix%i\n", sd->dwWidth, sd->dwHeight);
 
@@ -404,7 +404,7 @@ uint __stdcall fake_dd_create_surface(struct dddevice **me, LPDDSURFACEDESC sd, 
 	return 0;
 }
 
-uint __stdcall fake_dd_get_caps(struct dddevice **me, LPDDCAPS halcaps, LPDDCAPS helcaps)
+uint32_t __stdcall fake_dd_get_caps(struct dddevice **me, LPDDCAPS halcaps, LPDDCAPS helcaps)
 {
 	if(trace_all || trace_fake_dx) trace("get_caps\n");
 
@@ -412,7 +412,7 @@ uint __stdcall fake_dd_get_caps(struct dddevice **me, LPDDCAPS halcaps, LPDDCAPS
 	return 0;
 }
 
-uint __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDESC sd)
+uint32_t __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDESC sd)
 {
 	if(trace_all || trace_fake_dx) trace("get_display_mode\n");
 
@@ -432,14 +432,14 @@ uint __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDESC sd
 	return 0;
 }
 
-uint __stdcall fake_dd_set_coop_level(struct dddevice **me, uint coop_level)
+uint32_t __stdcall fake_dd_set_coop_level(struct dddevice **me, uint32_t coop_level)
 {
 	if(trace_all || trace_fake_dx) trace("set_coop_level\n");
 
 	return 0;
 }
 
-uint __stdcall fake_d3d_get_caps(struct d3d2device **me, void *a, void *b)
+uint32_t __stdcall fake_d3d_get_caps(struct d3d2device **me, void *a, void *b)
 {
 	if(trace_all || trace_fake_dx) trace("d3d_get_caps\n");
 

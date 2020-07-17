@@ -102,11 +102,11 @@ enum game_modes
 
 struct game_mode
 {
-	uint mode;
+	uint32_t mode;
 	char *name;
-	uint driver_mode;
-	uint trace;
-	uint main_loop;
+	uint32_t driver_mode;
+	uint32_t trace;
+	uint32_t main_loop;
 };
 
 gfx_init common_init;
@@ -155,76 +155,76 @@ gfx_field_EC common_field_EC;
 
 struct common_externals
 {
-	word *_mode;
-	uint dinput_hack1;
+	WORD *_mode;
+	uint32_t dinput_hack1;
 	gfx_load_group *generic_load_group;
 	gfx_light_polygon_set *generic_light_polygon_set;
-	void *(*assert_free)(void *, const char *, uint);
-	void *(*assert_malloc)(uint, const char *, uint);
-	void *(*assert_calloc)(uint, uint, const char *, uint);
+	void *(*assert_free)(void *, const char *, uint32_t);
+	void *(*assert_malloc)(uint32_t, const char *, uint32_t);
+	void *(*assert_calloc)(uint32_t, uint32_t, const char *, uint32_t);
 	IDirectSound **directsound;
-	uint directsound_release;
-	struct palette *(*create_palette_for_tex)(uint, struct tex_header *, struct texture_set *);
+	uint32_t directsound_release;
+	struct palette *(*create_palette_for_tex)(uint32_t, struct tex_header *, struct texture_set *);
 	struct game_obj *(*get_game_object)();
 	struct texture_format *(*create_texture_format)();
 	void (*add_texture_format)(struct texture_format *, struct game_obj *);
-	void (*make_pixelformat)(uint, uint, uint, uint, uint, struct texture_format *);
+	void (*make_pixelformat)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, struct texture_format *);
 	struct texture_set *(*create_texture_set)();
-	uint debug_print;
-	uint debug_print2;
-	uint prepare_movie;
-	uint release_movie_objects;
-	uint start_movie;
-	uint update_movie_sample;
-	uint stop_movie;
-	uint get_movie_frame;
+	uint32_t debug_print;
+	uint32_t debug_print2;
+	uint32_t prepare_movie;
+	uint32_t release_movie_objects;
+	uint32_t start_movie;
+	uint32_t update_movie_sample;
+	uint32_t stop_movie;
+	uint32_t get_movie_frame;
 	struct tex_header *(*create_tex_header)();
-	uint get_time;
-	uint midi_init;
-	char *(*get_midi_name)(uint);
-	uint use_midi;
-	uint play_midi;
-	uint stop_midi;
-	uint cross_fade_midi;
-	uint pause_midi;
-	uint restart_midi;
-	uint midi_status;
-	uint set_master_midi_volume;
-	uint set_midi_volume;
-	uint set_midi_volume_trans;
-	uint set_midi_tempo;
-	uint remember_midi_playing_time;
-	uint draw_graphics_object;
+	uint32_t get_time;
+	uint32_t midi_init;
+	char *(*get_midi_name)(uint32_t);
+	uint32_t use_midi;
+	uint32_t play_midi;
+	uint32_t stop_midi;
+	uint32_t cross_fade_midi;
+	uint32_t pause_midi;
+	uint32_t restart_midi;
+	uint32_t midi_status;
+	uint32_t set_master_midi_volume;
+	uint32_t set_midi_volume;
+	uint32_t set_midi_volume_trans;
+	uint32_t set_midi_tempo;
+	uint32_t remember_midi_playing_time;
+	uint32_t draw_graphics_object;
 	char *font_info;
-	uint build_dialog_window;
-	uint write_file;
-	uint close_file;
-	uint open_file;
-	uint read_file;
-	uint __read_file;
-	uint get_filesize;
-	uint tell_file;
-	uint seek_file;
-	void *(*alloc_read_file)(uint, uint, struct file *);
-	void *(*alloc_get_file)(struct file_context *, uint *, char *);
+	uint32_t build_dialog_window;
+	uint32_t write_file;
+	uint32_t close_file;
+	uint32_t open_file;
+	uint32_t read_file;
+	uint32_t __read_file;
+	uint32_t get_filesize;
+	uint32_t tell_file;
+	uint32_t seek_file;
+	void *(*alloc_read_file)(uint32_t, uint32_t, struct file *);
+	void *(*alloc_get_file)(struct file_context *, uint32_t *, char *);
 	void (*destroy_tex)(struct tex_header *);
-	uint destroy_tex_header;
-	uint start;
-	uint winmain;
-	uint load_tex_file;
-	uint directsound_buffer_flags_1;
-	uint (*play_sfx)(uint);
-	uint play_sfx_on_channel;
-	uint (*set_sfx_volume_on_channel)(uint, uint);
-	uint *master_sfx_volume;
-	uint* dsound_volume_table;
+	uint32_t destroy_tex_header;
+	uint32_t start;
+	uint32_t winmain;
+	uint32_t load_tex_file;
+	uint32_t directsound_buffer_flags_1;
+	uint32_t (*play_sfx)(uint32_t);
+	uint32_t play_sfx_on_channel;
+	uint32_t (*set_sfx_volume_on_channel)(uint32_t, uint32_t);
+	uint32_t *master_sfx_volume;
+	uint32_t* dsound_volume_table;
 	IDirectInputDeviceA **keyboard_device;
-	uint get_keyboard_state;
-	uint *keyboard_connected;
+	uint32_t get_keyboard_state;
+	uint32_t *keyboard_connected;
 	int (*dinput_acquire_keyboard)();
-	uint create_window;
+	uint32_t create_window;
 	WNDPROC engine_wndproc;
-	uint* execute_opcode_table;
+	uint32_t* execute_opcode_table;
 };
 
 // heap allocation wrappers
@@ -235,9 +235,9 @@ struct common_externals
 #define external_malloc(x) common_externals.assert_malloc(x, "", 0)
 #define external_calloc(x, y) common_externals.assert_calloc(x, y, "", 0)
 #else
-void ext_free(void *ptr, const char *file, uint line);
-void *ext_malloc(uint size, const char *file, uint line);
-void *ext_calloc(uint size, uint num, const char *file, uint line);
+void ext_free(void *ptr, const char *file, uint32_t line);
+void *ext_malloc(uint32_t size, const char *file, uint32_t line);
+void *ext_calloc(uint32_t size, uint32_t num, const char *file, uint32_t line);
 
 #define external_free(x) ext_free(x, "", 0)
 #define external_malloc(x) ext_malloc(x, "", 0)
@@ -250,10 +250,10 @@ void *ext_calloc(uint size, uint num, const char *file, uint line);
 #define driver_free(x) free(x)
 #define driver_realloc(x, y) realloc(x, y)
 #else
-void *driver_malloc(uint size);
-void *driver_calloc(uint size, uint num);
+void *driver_malloc(uint32_t size);
+void *driver_calloc(uint32_t size, uint32_t num);
 void driver_free(void *ptr);
-void *driver_realloc(void *ptr, uint size);
+void *driver_realloc(void *ptr, uint32_t size);
 #endif
 
 // profiling routines
@@ -268,23 +268,23 @@ extern time_t profile_total;
 
 struct driver_stats
 {
-	uint texture_count;
-	uint external_textures;
-	uint ext_cache_size;
-	uint texture_reloads;
-	uint palette_writes;
-	uint palette_changes;
-	uint vertex_count;
-	uint deferred;
+	uint32_t texture_count;
+	uint32_t external_textures;
+	uint32_t ext_cache_size;
+	uint32_t texture_reloads;
+	uint32_t palette_writes;
+	uint32_t palette_changes;
+	uint32_t vertex_count;
+	uint32_t deferred;
 	time_t timer;
 };
 
 void qpc_get_time(time_t *dest);
-uint get_version();
+uint32_t get_version();
 struct game_mode *getmode();
 struct game_mode *getmode_cached();
-struct tex_header *make_framebuffer_tex(uint tex_w, uint tex_h, uint x, uint y, uint w, uint h, uint color_key);
-void internal_set_renderstate(uint state, uint option, struct game_obj *game_object);
+struct tex_header *make_framebuffer_tex(uint32_t tex_w, uint32_t tex_h, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color_key);
+void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *game_object);
 
 void get_data_lang_path(PCHAR buffer);
 void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);

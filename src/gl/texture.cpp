@@ -27,7 +27,7 @@
 #include "../saveload.h"
 
 // check to make sure we can actually load a given texture
-bool gl_check_texture_dimensions(uint width, uint height, char *source)
+bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source)
 {
 	if (width > max_texture_size || height > max_texture_size) {
 		error("Texture dimensions exceed max texture size, will not be able to load %s\n", source);
@@ -39,7 +39,7 @@ bool gl_check_texture_dimensions(uint width, uint height, char *source)
 
 // apply OpenGL texture for a certain palette in a texture set, possibly
 // replacing an existing texture which will then be unloaded
-void gl_replace_texture(struct texture_set *texture_set, uint palette_index, uint new_texture)
+void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index, uint32_t new_texture)
 {
 	VOBJ(texture_set, texture_set, texture_set);
 
@@ -53,9 +53,9 @@ void gl_replace_texture(struct texture_set *texture_set, uint palette_index, uin
 }
 
 // upload texture for a texture set from raw pixel data
-void gl_upload_texture(struct texture_set *texture_set, uint palette_index, void *image_data, uint format)
+void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, void *image_data, uint32_t format)
 {
-	uint w, h;
+	uint32_t w, h;
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
@@ -106,7 +106,7 @@ void gl_bind_texture_set(struct texture_set *_texture_set)
 
 // prepare an OpenGL texture for rendering, passing zero to this function will
 // disable texturing entirely
-void gl_set_texture(uint texture)
+void gl_set_texture(uint32_t texture)
 {
 	if(trace_all) trace("gl_set_texture: set texture %i\n", texture);
 

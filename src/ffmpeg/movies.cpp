@@ -38,15 +38,15 @@ inline double round(double x) { return floor(x + 0.5); }
 #define LAG (((now - start_time) - (timer_freq / movie_fps) * movie_frame_counter) / (timer_freq / 1000))
 
 IDirectSoundBuffer* ffmpeg_sound_buffer;
-uint ffmpeg_sound_buffer_size;
-uint ffmpeg_sound_write_pointer;
+uint32_t ffmpeg_sound_buffer_size;
+uint32_t ffmpeg_sound_write_pointer;
 
 int texture_units = 1;
 
-uint yuv_init_done = false;
-uint yuv_fast_path = false;
+uint32_t yuv_init_done = false;
+uint32_t yuv_fast_path = false;
 
-uint audio_must_be_converted = false;
+uint32_t audio_must_be_converted = false;
 
 AVFormatContext *format_ctx = 0;
 AVCodecContext *codec_ctx = 0;
@@ -60,28 +60,28 @@ SwrContext* swr_ctx = NULL;
 int videostream;
 int audiostream;
 
-uint use_bgra_texture;
+uint32_t use_bgra_texture;
 
 struct video_frame
 {
-	uint bgra_texture = 0;
-	uint yuv_textures[3] = { 0 };
+	uint32_t bgra_texture = 0;
+	uint32_t yuv_textures[3] = { 0 };
 };
 
 struct video_frame video_buffer[VIDEO_BUFFER_SIZE];
-uint vbuffer_read = 0;
-uint vbuffer_write = 0;
+uint32_t vbuffer_read = 0;
+uint32_t vbuffer_write = 0;
 
-uint movie_frame_counter = 0;
-uint movie_frames;
-uint movie_width, movie_height;
+uint32_t movie_frame_counter = 0;
+uint32_t movie_frames;
+uint32_t movie_width, movie_height;
 double movie_fps;
 double movie_duration;
 
-uint skipping_frames;
-uint skipped_frames;
+uint32_t skipping_frames;
+uint32_t skipped_frames;
 
-uint first_audio_packet;
+uint32_t first_audio_packet;
 
 time_t timer_freq;
 time_t start_time;
@@ -127,7 +127,7 @@ void ffmpeg_movie_init()
 // clean up anything we have allocated
 void ffmpeg_release_movie_objects()
 {
-	uint i;
+	uint32_t i;
 
 	if (movie_frame) av_frame_free(&movie_frame);
 	if (codec_ctx) avcodec_close(codec_ctx);
@@ -156,7 +156,7 @@ void ffmpeg_release_movie_objects()
 		video_buffer[i].bgra_texture = 0;
 
 		// Cleanup YUV textures
-		for (uint idx = 0; idx < 3; idx++)
+		for (uint32_t idx = 0; idx < 3; idx++)
 		{
 			newRenderer.deleteTexture(video_buffer[i].yuv_textures[idx]);
 			video_buffer[i].yuv_textures[idx] = 0;
@@ -168,12 +168,12 @@ void ffmpeg_release_movie_objects()
 }
 
 // prepare a movie for playback
-uint ffmpeg_prepare_movie(char *name)
+uint32_t ffmpeg_prepare_movie(char *name)
 {
-	uint i;
+	uint32_t i;
 	WAVEFORMATEX sound_format;
 	DSBUFFERDESC1 sbdesc;
-	uint ret;
+	uint32_t ret;
 
 	if(ret = avformat_open_input(&format_ctx, name, NULL, NULL))
 	{
@@ -247,7 +247,7 @@ uint ffmpeg_prepare_movie(char *name)
 	movie_height = codec_ctx->height;
 	movie_fps = 1.0 / (av_q2d(codec_ctx->time_base) * codec_ctx->ticks_per_frame);
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
-	movie_frames = (uint)round(movie_fps * movie_duration);
+	movie_frames = (uint32_t)round(movie_fps * movie_duration);
 
 	if (trace_movies)
 	{
@@ -360,9 +360,9 @@ void ffmpeg_stop_movie()
 
 void buffer_bgra_frame(uint8_t *data, int upload_stride)
 {
-	uint upload_width = upload_stride;
-	uint tex_width = movie_width;
-	uint tex_height = movie_height;
+	uint32_t upload_width = upload_stride;
+	uint32_t tex_width = movie_width;
+	uint32_t tex_height = movie_height;
 
 	if(upload_stride < 0) return;
 
@@ -380,7 +380,7 @@ void buffer_bgra_frame(uint8_t *data, int upload_stride)
 	vbuffer_write = (vbuffer_write + 1) % VIDEO_BUFFER_SIZE;
 }
 
-void draw_bgra_frame(uint buffer_index)
+void draw_bgra_frame(uint32_t buffer_index)
 {
 	newRenderer.isMovie(true);
 	newRenderer.useTexture(video_buffer[buffer_index].bgra_texture);
@@ -388,11 +388,11 @@ void draw_bgra_frame(uint buffer_index)
 	newRenderer.isMovie(false);
 }
 
-void upload_yuv_texture(uint8_t **planes, int *strides, uint num, uint buffer_index)
+void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t buffer_index)
 {
-	uint upload_width = strides[num];
-	uint tex_width = num == 0 ? movie_width : movie_width / 2;
-	uint tex_height = num == 0 ? movie_height : movie_height / 2;
+	uint32_t upload_width = strides[num];
+	uint32_t tex_width = num == 0 ? movie_width : movie_width / 2;
+	uint32_t tex_height = num == 0 ? movie_height : movie_height / 2;
 
 	if (upload_width > tex_width) tex_width = upload_width;
 
@@ -417,9 +417,9 @@ void buffer_yuv_frame(uint8_t **planes, int *strides)
 	vbuffer_write = (vbuffer_write + 1) % VIDEO_BUFFER_SIZE;
 }
 
-void draw_yuv_frame(uint buffer_index, bool full_range)
+void draw_yuv_frame(uint32_t buffer_index, bool full_range)
 {
-	for (uint idx = 0; idx < 3; idx++)
+	for (uint32_t idx = 0; idx < 3; idx++)
 		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
 
 	newRenderer.isMovie(true);
@@ -432,7 +432,7 @@ void draw_yuv_frame(uint buffer_index, bool full_range)
 }
 
 // display the next frame
-uint ffmpeg_update_movie_sample()
+uint32_t ffmpeg_update_movie_sample()
 {
 	AVPacket packet;
 	int ret;
@@ -530,8 +530,8 @@ uint ffmpeg_update_movie_sample()
 			int used_bytes;
 			DWORD playcursor;
 			DWORD writecursor;
-			uint bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
-			uint bytespersec = bytesperpacket * acodec_ctx->channels * acodec_ctx->sample_rate;
+			uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
+			uint32_t bytespersec = bytesperpacket * acodec_ctx->channels * acodec_ctx->sample_rate;
 
 			QueryPerformanceCounter((LARGE_INTEGER *)&now);
 
@@ -650,8 +650,8 @@ void ffmpeg_loop()
 }
 
 // get the current frame number
-uint ffmpeg_get_movie_frame()
+uint32_t ffmpeg_get_movie_frame()
 {
-	if(movie_fps != 15.0 && movie_fps < 100.0) return (uint)ceil(movie_frame_counter * 15.0 / movie_fps);
+	if(movie_fps != 15.0 && movie_fps < 100.0) return (uint32_t)ceil(movie_frame_counter * 15.0 / movie_fps);
 	else return movie_frame_counter;
 }

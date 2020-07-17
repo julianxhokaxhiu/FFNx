@@ -407,7 +407,7 @@ void Renderer::renderFrame()
         {x2, y2, 1.0f, 1.0f, 0xff000000, 0, u2, v2},
         {x3, y3, 1.0f, 1.0f, 0xff000000, 0, u3, v3},
     };
-    word indices[] = {
+    WORD indices[] = {
         0, 1, 2,
         1, 3, 2
     };
@@ -667,9 +667,9 @@ void Renderer::draw()
 
     // Bind texture
     {
-        uint idxMax = 3;
+        uint32_t idxMax = 3;
 
-        for (uint idx = 0; idx < idxMax; idx++)
+        for (uint32_t idx = 0; idx < idxMax; idx++)
         {
             bgfx::TextureHandle handle = internalState.texHandlers[idx];
 
@@ -786,7 +786,7 @@ void Renderer::show()
     }
 }
 
-void Renderer::printText(uint16_t x, uint16_t y, uint color, const char* text)
+void Renderer::printText(uint16_t x, uint16_t y, uint32_t color, const char* text)
 {
     bgfx::dbgTextPrintf(
         x,
@@ -801,13 +801,13 @@ const bgfx::Caps* Renderer::getCaps()
     return bgfx::getCaps();
 };
 
-void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint inCount)
+void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount)
 {
     if (bgfx::isValid(vertexBufferHandle)) bgfx::destroy(vertexBufferHandle);
 
     Vertex* vertices = new Vertex[inCount];
 
-    for (uint idx = 0; idx < inCount; idx++)
+    for (uint32_t idx = 0; idx < inCount; idx++)
     {
         vertices[idx].x = inVertex[idx]._.x;
         vertices[idx].y = inVertex[idx]._.y;
@@ -834,14 +834,14 @@ void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint inCount)
     delete[] vertices;
 };
 
-void Renderer::bindIndexBuffer(word* inIndex, uint inCount)
+void Renderer::bindIndexBuffer(WORD* inIndex, uint32_t inCount)
 {
     if (bgfx::isValid(indexBufferHandle)) bgfx::destroy(indexBufferHandle);
 
     indexBufferHandle = bgfx::createIndexBuffer(
         bgfx::copy(
             inIndex,
-            sizeof(word) * inCount
+            sizeof(WORD) * inCount
         )
     );
 
@@ -877,7 +877,7 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
     internalState.clearColorValue = createBGRA(r * 255, g * 255, b * 255, a * 255);
 }
 
-uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool generateMips)
+uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool generateMips)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
@@ -926,7 +926,7 @@ uint Renderer::createTexture(uint8_t* data, size_t width, size_t height, int str
     return ret.idx;
 };
 
-uint Renderer::createTexture(char* filename, uint* width, uint* height)
+uint32_t Renderer::createTexture(char* filename, uint32_t* width, uint32_t* height)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
@@ -984,7 +984,7 @@ uint Renderer::createTexture(char* filename, uint* width, uint* height)
     return ret.idx;
 }
 
-uint Renderer::createTextureLibPng(char* filename, uint* width, uint* height)
+uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t* height)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
@@ -1157,7 +1157,7 @@ uint Renderer::createTextureLibPng(char* filename, uint* width, uint* height)
     return ret.idx;
 }
 
-bool Renderer::saveTexture(char* filename, uint width, uint height, void* data)
+bool Renderer::saveTexture(char* filename, uint32_t width, uint32_t height, void* data)
 {
     if (bx::open(&defaultWriter, filename, false))
     {
@@ -1191,7 +1191,7 @@ void Renderer::deleteTexture(uint16_t rt)
     }
 };
 
-void Renderer::useTexture(uint16_t rt, uint slot)
+void Renderer::useTexture(uint16_t rt, uint32_t slot)
 {
     if (rt > 0)
     {
@@ -1205,7 +1205,7 @@ void Renderer::useTexture(uint16_t rt, uint slot)
     }
 };
 
-uint Renderer::blitTexture(uint x, uint y, uint width, uint height)
+uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     uint16_t newX = getInternalCoordX(x);
     uint16_t newY = getInternalCoordY(y);

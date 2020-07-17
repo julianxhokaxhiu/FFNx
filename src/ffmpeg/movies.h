@@ -48,9 +48,9 @@ extern const GUID IID_ICodecAPI = { 0x901db4c7, 0x31ce, 0x41a2, 0x85,0xdc, 0x8f,
 
 void ffmpeg_movie_init();
 void ffmpeg_release_movie_objects();
-uint ffmpeg_prepare_movie(char* name);
+uint32_t ffmpeg_prepare_movie(char* name);
 void ffmpeg_stop_movie();
-uint ffmpeg_update_movie_sample();
+uint32_t ffmpeg_update_movie_sample();
 void ffmpeg_draw_current_frame();
 void ffmpeg_loop();
-uint ffmpeg_get_movie_frame();
+uint32_t ffmpeg_get_movie_frame();

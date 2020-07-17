@@ -51,7 +51,7 @@ void movie_init()
 	ffmpeg_movie_init();
 }
 
-uint ff7_prepare_movie(char *name, uint loop, struct dddevice **dddevice, uint dd2interface)
+uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice, uint32_t dd2interface)
 {
 	char drivename[4];
 	char dirname[256];
@@ -95,7 +95,7 @@ void ff7_release_movie_objects()
 	ff7_externals.movie_object->global_movie_flag = 0;
 }
 
-uint ff7_start_movie()
+uint32_t ff7_start_movie()
 {
 	if(trace_all || trace_movies) trace("start_movie\n");
 
@@ -106,7 +106,7 @@ uint ff7_start_movie()
 	return ff7_update_movie_sample(0);
 }
 
-uint ff7_stop_movie()
+uint32_t ff7_stop_movie()
 {
 	if(trace_all || trace_movies) trace("stop_movie\n");
 
@@ -121,9 +121,9 @@ uint ff7_stop_movie()
 	return true;
 }
 
-uint ff7_update_movie_sample(LPDIRECTDRAWSURFACE surface)
+uint32_t ff7_update_movie_sample(LPDIRECTDRAWSURFACE surface)
 {
-	uint movie_end;
+	uint32_t movie_end;
 
 	ff7_externals.movie_object->movie_end = 0;
 
@@ -158,23 +158,23 @@ void draw_current_frame()
 	ffmpeg_release_movie_objects();
 }
 
-uint ff7_get_movie_frame()
+uint32_t ff7_get_movie_frame()
 {
 	if(!ff7_externals.movie_object->is_playing) return 0;
 
 	return ffmpeg_get_movie_frame();
 }
 
-uint ff8_movie_frames;
+uint32_t ff8_movie_frames;
 
-void ff8_prepare_movie(uint disc, uint movie)
+void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 {
 	char fmvName[512];
 	char newFmvName[512];
 	char camName[512];
 	char dataPath[260]{0};
 	FILE *camFile;
-	uint camOffset = 0;
+	uint32_t camOffset = 0;
 
 	// The only movie which is translated needs to be loaded from specific language path
 	if (disc == 3u && movie == 5u)
@@ -209,7 +209,7 @@ void ff8_prepare_movie(uint disc, uint movie)
 		
 		while(!feof(camFile) && !ferror(camFile))
 		{
-			uint res = fread(&ff8_externals.movie_object->camdata_buffer[camOffset], 1, 4096, camFile);
+			uint32_t res = fread(&ff8_externals.movie_object->camdata_buffer[camOffset], 1, 4096, camFile);
 
 			if(res > 0) camOffset += res;
 		}
@@ -243,7 +243,7 @@ void ff8_start_movie()
 	if(ff8_externals.movie_object->movie_intro_pak) ff8_externals.movie_object->field_2 = ff8_movie_frames;
 	else
 	{
-		ff8_externals.movie_object->field_2 = ((word *)ff8_externals.movie_object->camdata_buffer)[3];
+		ff8_externals.movie_object->field_2 = ((WORD *)ff8_externals.movie_object->camdata_buffer)[3];
 		trace("%i frames\n", ff8_externals.movie_object->field_2);
 	}
 
@@ -314,7 +314,7 @@ void ff8_update_movie_sample()
 	ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_frame];
 }
 
-uint ff8_get_movie_frame()
+uint32_t ff8_get_movie_frame()
 {
 	if(trace_all || trace_movies) trace("get_movie_frame\n");
 

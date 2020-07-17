@@ -43,10 +43,10 @@ struct driver_state current_state;
 
 int max_texture_size;
 
-extern uint nodefer;
+extern uint32_t nodefer;
 
 // draw a fullscreen quad, respect aspect ratio of source image
-void gl_draw_movie_quad_common(uint width, uint height)
+void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 {
 	struct game_obj *game_object = common_externals.get_game_object();
 	float ratio = game_width / (float)width;
@@ -92,7 +92,7 @@ void gl_draw_movie_quad_common(uint width, uint height)
 		{x2, y2, 1.0f, 1.0f, 0xffffffff, 0, u2, v2},
 		{x3, y3, 1.0f, 1.0f, 0xffffffff, 0, u3, v3},
 	};
-	word indices[] = {
+	WORD indices[] = {
 		0, 1, 2,
 		1, 3, 2
 	};
@@ -114,7 +114,7 @@ void gl_draw_movie_quad_common(uint width, uint height)
 }
 
 // draw movie frame
-void gl_draw_movie_quad(uint width, uint height)
+void gl_draw_movie_quad(uint32_t width, uint32_t height)
 {
 	struct driver_state saved_state;
 
@@ -157,20 +157,20 @@ void gl_load_state(struct driver_state *src)
 
 // draw a set of primitives with a known model->world transformation
 // interesting for real-time lighting, maps to normal rendering routine for now
-void gl_draw_with_lighting(struct indexed_primitive *ip, uint clip, struct matrix *model_matrix)
+void gl_draw_with_lighting(struct indexed_primitive *ip, uint32_t clip, struct matrix *model_matrix)
 {
 	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, ip->vertexcount, ip->indices, ip->indexcount, 0, clip, true);
 }
 
 // main rendering routine, draws a set of primitives according to the current render state
-void gl_draw_indexed_primitive(uint primitivetype, uint vertextype, struct nvertex *vertices, uint vertexcount, word *indices, uint count, struct graphics_object *graphics_object, uint clip, uint mipmap)
+void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, uint32_t clip, uint32_t mipmap)
 {
 	FILE *log;
-	uint i;
-	uint mode = getmode_cached()->driver_mode;
+	uint32_t i;
+	uint32_t mode = getmode_cached()->driver_mode;
 	// filter setting can change inside this function, we don't want that to
 	// affect the global rendering state so save & restore it
-	uint saved_texture_filter = current_state.texture_filter;
+	uint32_t saved_texture_filter = current_state.texture_filter;
 
 	// should never happen, broken 3rd-party models cause this
 	if(!count) return;
@@ -246,7 +246,7 @@ void gl_set_d3dprojection_matrix(struct matrix *matrix)
 }
 
 // apply blend mode to OpenGL state
-void gl_set_blend_func(uint blend_mode)
+void gl_set_blend_func(uint32_t blend_mode)
 {
 	if(trace_all) trace("set blend mode %i\n", blend_mode);
 
@@ -256,7 +256,7 @@ void gl_set_blend_func(uint blend_mode)
 }
 
 // draw text on screen using the game font
-uint gl_draw_text(uint x, uint y, uint color, uint alpha, char *fmt, ...)
+uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, char *fmt, ...)
 {
 	char text[4096];
 	va_list args;

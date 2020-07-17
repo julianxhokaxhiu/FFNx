@@ -44,17 +44,17 @@ void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip)
 	external_free(ip);
 }
 
-uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hundred *_hundred_data, struct p_group *_group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object)
+uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *_hundred_data, struct p_group *_group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object)
 {
 	struct indexed_primitive *ip;
 	struct p_hundred *hundred_data;
 	struct p_group *group_data;
-	uint numvert;
-	uint numpoly;
-	uint offvert;
-	uint offpoly;
-	uint offtex;
-	uint i;
+	uint32_t numvert;
+	uint32_t numpoly;
+	uint32_t offvert;
+	uint32_t offpoly;
+	uint32_t offtex;
+	uint32_t i;
 
 	if(!polygon_data) return false;
 	if(!polygon_set->indexed_primitives) return false;
@@ -76,7 +76,7 @@ uint ff7gl_load_group(uint group_num, struct matrix_set *matrix_set, struct p_hu
 	ip->vertexcount = numvert;
 	ip->indexcount = numpoly * 3;
 	ip->vertices = (nvertex*)external_calloc(sizeof(*ip->vertices), ip->vertexcount);
-	ip->indices = (word*)external_calloc(sizeof(*ip->indices), ip->indexcount);
+	ip->indices = (WORD*)external_calloc(sizeof(*ip->indices), ip->indexcount);
 
 	if(polygon_data->vertextype == 0) ip->vertextype = VERTEX;
 	else if(polygon_data->vertextype == 1) ip->vertextype = LVERTEX;
@@ -120,11 +120,11 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 	struct nvertex *vertices = NULL;
 	struct struc_84 *struc_84;
 	struct struc_186 *struc_186;
-	uint instance_type = -1;
-	uint group_counter = 0;
-	uint instanced = false;
-	uint correct_frame = false;
-	uint instance_transform_mode;
+	uint32_t instance_type = -1;
+	uint32_t group_counter = 0;
+	uint32_t instanced = false;
+	uint32_t correct_frame = false;
+	uint32_t instance_transform_mode;
 	struct matrix tmp_matrix;
 	struct matrix *model_matrix = 0;
 
@@ -163,8 +163,8 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 
 	while(group_counter < polygon_set->numgroups)
 	{
-		uint defer = false;
-		uint zsort = false;
+		uint32_t defer = false;
+		uint32_t zsort = false;
 
 		struc_84 = struc_49->struc_84;
 
@@ -350,7 +350,7 @@ struct tex_header *sub_673F5C(struct struc_91 *struc91)
 
 void draw_single_triangle(struct nvertex *vertices)
 {
-	word indices[] = {0, 1, 2};
+	WORD indices[] = {0, 1, 2};
 
 	newRenderer.bindVertexBuffer(vertices, 3);
 	newRenderer.bindIndexBuffer(indices, 3);
@@ -365,13 +365,13 @@ void sub_6B2720(struct indexed_primitive *ip)
 	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, ip->vertexcount, ip->indices, ip->indexcount, 0, true, true);
 }
 
-void draw_3d_model(uint current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
+void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
 {
 	struct anim_frame *anim_frame;
 	struct stack *matrix_stack;
 	struct matrix *root_matrix;
 	void (*root_animation_sub)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
-	void (*frame_animation_sub)(uint, struct matrix *, struct point3d *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
+	void (*frame_animation_sub)(uint32_t, struct matrix *, struct point3d *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
 
 	if(!anim_header) return;
 	if(!hrc_data) return;
@@ -461,7 +461,7 @@ void draw_3d_model(uint current_frame, struct anim_header *anim_header, struct s
 
 			if(bone_list_member->bone_type == 1)
 			{
-				uint bone_index = bone_list_member->bone_index;
+				uint32_t bone_index = bone_list_member->bone_index;
 				struct hrc_bone *bone = &hrc_data->bones[bone_index];
 				struct matrix *parent_matrix;
 				struct matrix *bone_matrix;
@@ -505,7 +505,7 @@ void draw_3d_model(uint current_frame, struct anim_header *anim_header, struct s
 
 				if(bone->rsd_array)
 				{
-					uint i;
+					uint32_t i;
 					struct rsd_array_member *rsd_array_member;
 
 					for(i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)

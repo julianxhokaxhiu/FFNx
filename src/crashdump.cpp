@@ -52,7 +52,7 @@ static const char save_name[] = "\x25" "MERGENCY" "\x00\x33" "AVE" "\xFF";
 
 LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 {
-	static uint had_exception = false;
+	static uint32_t had_exception = false;
 	char filePath[260]{ 0 };
 
 	// give up if we crash again inside the exception handler (this function)
@@ -135,8 +135,8 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 		// the savemap could be old, inconsistent or corrupted at this point
 		// avoid playing from an emergency save if at all possible!
 		FILE *f = fopen(filePath, "wb");
-		uint magic = 0x6277371;
-		uint bitmask = 1;
+		uint32_t magic = 0x6277371;
+		uint32_t bitmask = 1;
 		struct savemap dummy[14];
 
 		memset(dummy, 0, sizeof(dummy));

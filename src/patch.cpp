@@ -20,35 +20,34 @@
 /****************************************************************************/
 
 #include <windows.h>
+#include <stdint.h>
 
-#include "types.h"
+uint32_t replace_counter = 0;
+uint32_t replaced_functions[512 * 3];
 
-uint replace_counter = 0;
-uint replaced_functions[512 * 3];
-
-uint replace_function(uint offset, void *func)
+uint32_t replace_function(uint32_t offset, void *func)
 {
 	DWORD dummy;
 
 	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
 
 	replaced_functions[replace_counter++] = *(unsigned char *)offset;
-	replaced_functions[replace_counter++] = *(uint *)(offset + 1);
+	replaced_functions[replace_counter++] = *(uint32_t *)(offset + 1);
 	replaced_functions[replace_counter++] = offset;
 
 	*(unsigned char *)offset = 0xE9;
-	*(uint *)(offset + 1) = ((uint)func - offset) - 5;
+	*(uint32_t *)(offset + 1) = ((uint32_t)func - offset) - 5;
 
 	return replace_counter - 3;
 }
 
-void unreplace_function(uint func)
+void unreplace_function(uint32_t func)
 {
-	uint offset = replaced_functions[func + 2];
+	uint32_t offset = replaced_functions[func + 2];
 	DWORD dummy;
 
 	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
-	*(uint *)(offset + 1) = replaced_functions[func + 1];
+	*(uint32_t *)(offset + 1) = replaced_functions[func + 1];
 	*(unsigned char *)offset = replaced_functions[func];
 }
 
@@ -56,35 +55,35 @@ void unreplace_functions()
 {
 	while(replace_counter > 0)
 	{
-		uint offset = replaced_functions[--replace_counter];
+		uint32_t offset = replaced_functions[--replace_counter];
 		DWORD dummy;
 
 		VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
-		*(uint *)(offset + 1) = replaced_functions[--replace_counter];
+		*(uint32_t *)(offset + 1) = replaced_functions[--replace_counter];
 		*(unsigned char *)offset = replaced_functions[--replace_counter];
 	}
 }
 
-void replace_call(uint offset, void *func)
+void replace_call(uint32_t offset, void *func)
 {
 	DWORD dummy;
 
 	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
 
-	*(uint *)(offset + 1) = ((uint)func - offset) - 5;
+	*(uint32_t *)(offset + 1) = ((uint32_t)func - offset) - 5;
 }
 
-uint get_relative_call(uint base, uint offset)
+uint32_t get_relative_call(uint32_t base, uint32_t offset)
 {
-	return base + *((uint *)(base + offset + 1)) + offset + 5;
+	return base + *((uint32_t *)(base + offset + 1)) + offset + 5;
 }
 
-uint get_absolute_value(uint base, uint offset)
+uint32_t get_absolute_value(uint32_t base, uint32_t offset)
 {
-	return *((uint *)(base + offset));
+	return *((uint32_t *)(base + offset));
 }
 
-void patch_code_byte(uint offset, unsigned char r)
+void patch_code_byte(uint32_t offset, unsigned char r)
 {
 	DWORD dummy;
 
@@ -93,16 +92,16 @@ void patch_code_byte(uint offset, unsigned char r)
 	*(unsigned char *)offset = r;
 }
 
-void patch_code_word(uint offset, word r)
+void patch_code_word(uint32_t offset, WORD r)
 {
 	DWORD dummy;
 
 	VirtualProtect((void *)offset, sizeof(r), PAGE_EXECUTE_READWRITE, &dummy);
 
-	*(word *)offset = r;
+	*(WORD *)offset = r;
 }
 
-void patch_code_dword(uint offset, DWORD r)
+void patch_code_dword(uint32_t offset, DWORD r)
 {
 	DWORD dummy;
 
@@ -111,7 +110,7 @@ void patch_code_dword(uint offset, DWORD r)
 	*(DWORD*)offset = r;
 }
 
-void patch_code_int(uint offset, int r)
+void patch_code_int(uint32_t offset, int r)
 {
 	DWORD dummy;
 
@@ -120,16 +119,16 @@ void patch_code_int(uint offset, int r)
 	*(int*)offset = r;
 }
 
-void patch_code_uint(uint offset, uint r)
+void patch_code_uint(uint32_t offset, uint32_t r)
 {
 	DWORD dummy;
 
 	VirtualProtect((void *)offset, sizeof(r), PAGE_EXECUTE_READWRITE, &dummy);
 
-	*(uint *)offset = r;
+	*(uint32_t *)offset = r;
 }
 
-void patch_code_float(uint offset, float r)
+void patch_code_float(uint32_t offset, float r)
 {
 	DWORD dummy;
 
@@ -138,7 +137,7 @@ void patch_code_float(uint offset, float r)
 	*(float *)offset = r;
 }
 
-void patch_code_double(uint offset, double r)
+void patch_code_double(uint32_t offset, double r)
 {
 	DWORD dummy;
 
@@ -147,7 +146,7 @@ void patch_code_double(uint offset, double r)
 	*(double *)offset = r;
 }
 
-void memcpy_code(uint offset, void *data, uint size)
+void memcpy_code(uint32_t offset, void *data, uint32_t size)
 {
 	DWORD dummy;
 
@@ -156,7 +155,7 @@ void memcpy_code(uint offset, void *data, uint size)
 	memcpy((void *)offset, data, size);
 }
 
-void memset_code(uint offset, uint val, uint size)
+void memset_code(uint32_t offset, uint32_t val, uint32_t size)
 {
 	DWORD dummy;
 

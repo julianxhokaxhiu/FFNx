@@ -30,70 +30,70 @@
 struct driver_state
 {
 	struct texture_set *texture_set;
-	uint texture_handle;
-	uint blend_mode;
-	uint viewport[4];
-	uint fb_texture;
-	uint wireframe;
-	uint texture_filter;
-	uint cullface;
-	uint nocull;
-	uint depthtest;
-	uint depthmask;
-	uint shademode;
-	uint alphatest;
-	uint alphafunc;
-	uint alpharef;
+	uint32_t texture_handle;
+	uint32_t blend_mode;
+	uint32_t viewport[4];
+	uint32_t fb_texture;
+	uint32_t wireframe;
+	uint32_t texture_filter;
+	uint32_t cullface;
+	uint32_t nocull;
+	uint32_t depthtest;
+	uint32_t depthmask;
+	uint32_t shademode;
+	uint32_t alphatest;
+	uint32_t alphafunc;
+	uint32_t alpharef;
 	struct matrix world_matrix;
 	struct matrix d3dprojection_matrix;
 };
 
 struct deferred_draw
 {
-	uint primitivetype;
-	uint vertextype;
-	uint vertexcount;
-	uint count;
+	uint32_t primitivetype;
+	uint32_t vertextype;
+	uint32_t vertexcount;
+	uint32_t count;
 	struct nvertex *vertices;
-	word *indices;
-	uint clip;
-	uint mipmap;
+	WORD *indices;
+	uint32_t clip;
+	uint32_t mipmap;
 	struct driver_state state;
 	double z;
-	uint drawn;
+	uint32_t drawn;
 };
 
 struct gl_texture_set
 {
-	uint textures;
-	uint force_filter;
-	uint force_zsort;
+	uint32_t textures;
+	uint32_t force_filter;
+	uint32_t force_zsort;
 };
 
 extern struct matrix d3dviewport_matrix;
 
 extern struct driver_state current_state;
 
-extern uint current_program;
+extern uint32_t current_program;
 
 extern int max_texture_size;
 
-void gl_draw_movie_quad(uint width, uint height);
+void gl_draw_movie_quad(uint32_t width, uint32_t height);
 void gl_save_state(struct driver_state *dest);
 void gl_load_state(struct driver_state *src);
-uint gl_defer_draw(uint primitivetype, uint vertextype, struct nvertex *vertices, uint vertexcount, word *indices, uint count, uint clip, uint mipmap);
+uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap);
 void gl_draw_deferred();
 void gl_check_deferred(struct texture_set *texture_set);
 void gl_cleanup_deferred();
-uint gl_special_case(uint primitivetype, uint vertextype, struct nvertex *vertices, uint vertexcount, word *indices, uint count, struct graphics_object *graphics_object, uint clip, uint mipmap);
-void gl_draw_with_lighting(struct indexed_primitive *ip, uint clip, struct matrix *model_matrix);
-void gl_draw_indexed_primitive(uint, uint, struct nvertex *, uint, word *, uint, struct graphics_object *, uint clip, uint mipmap);
+uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, uint32_t clip, uint32_t mipmap);
+void gl_draw_with_lighting(struct indexed_primitive *ip, uint32_t clip, struct matrix *model_matrix);
+void gl_draw_indexed_primitive(uint32_t, uint32_t, struct nvertex *, uint32_t, WORD *, uint32_t, struct graphics_object *, uint32_t clip, uint32_t mipmap);
 void gl_set_world_matrix(struct matrix *matrix);
 void gl_set_d3dprojection_matrix(struct matrix *matrix);
-void gl_set_blend_func(uint);
-bool gl_check_texture_dimensions(uint width, uint height, char *source);
-void gl_replace_texture(struct texture_set *texture_set, uint palette_index, uint new_texture);
-void gl_upload_texture(struct texture_set *texture_set, uint palette_index, void *image_data, uint format);
+void gl_set_blend_func(uint32_t);
+bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source);
+void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index, uint32_t new_texture);
+void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, void *image_data, uint32_t format);
 void gl_bind_texture_set(struct texture_set *);
-void gl_set_texture(uint);
-uint gl_draw_text(uint x, uint y, uint color, uint alpha, char *fmt, ...);
+void gl_set_texture(uint32_t);
+uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, char *fmt, ...);

@@ -36,11 +36,11 @@
 // some way and should not be rendered normally
 // it is generally not safe to modify source data directly, a copy should be
 // made and rendered separately
-uint gl_special_case(uint primitivetype, uint vertextype, struct nvertex *vertices, uint vertexcount, word *indices, uint count, struct graphics_object *graphics_object, uint clip, uint mipmap)
+uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, uint32_t clip, uint32_t mipmap)
 {
-	uint mode = getmode_cached()->driver_mode;
+	uint32_t mode = getmode_cached()->driver_mode;
 	VOBJ(texture_set, texture_set, current_state.texture_set);
-	uint defer = false;
+	uint32_t defer = false;
 
 	if(fancy_transparency && current_state.texture_set && current_state.blend_mode == BLEND_NONE)
 	{
@@ -100,7 +100,7 @@ uint gl_special_case(uint primitivetype, uint vertextype, struct nvertex *vertic
 		{
 			VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-			if((uint)VREF(tex_header, file.pc_name) > 32)
+			if((uint32_t)VREF(tex_header, file.pc_name) > 32)
 			{
 				// avoid filtering window borders
 				if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win_c_", strlen("menu/btl_win_c_") - 1) && VREF(texture_set, palette_index) == 0) current_state.texture_filter = false;

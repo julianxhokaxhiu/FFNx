@@ -55,27 +55,27 @@ static struct game_mode ff7_modes[] = {
 	{FF7_MODE_UNKNOWN28,   "MODE_UNKNOWN28",   MODE_UNKNOWN,     true },
 };
 
-void ff7_set_main_loop(uint driver_mode, uint main_loop)
+void ff7_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 {
-	uint i;
+	uint32_t i;
 
 	for(i = 0; i < num_modes; i++) if(ff7_modes[i].driver_mode == driver_mode) ff7_modes[i].main_loop = main_loop;
 }
 
 void ff7_find_externals()
 {
-	uint main_loop = ff7_externals.cdcheck + 0xF3;
-	uint field_main_loop;
-	uint battle_main_loop;
-	uint menu_main_loop;
-	uint worldmap_main_loop;
-	uint cdcheck_main_loop;
-	uint coaster_main_loop;
-	uint swirl_main_loop;
-	uint movie_module;
-	uint file_module;
+	uint32_t main_loop = ff7_externals.cdcheck + 0xF3;
+	uint32_t field_main_loop;
+	uint32_t battle_main_loop;
+	uint32_t menu_main_loop;
+	uint32_t worldmap_main_loop;
+	uint32_t cdcheck_main_loop;
+	uint32_t coaster_main_loop;
+	uint32_t swirl_main_loop;
+	uint32_t movie_module;
+	uint32_t file_module;
 
-	if(*((uint *)main_loop) != 0x81EC8B55) unexpected("odd main loop prologue\n");
+	if(*((uint32_t *)main_loop) != 0x81EC8B55) unexpected("odd main loop prologue\n");
 
 	common_externals.update_movie_sample = get_relative_call(main_loop, 0x67);
 
@@ -90,7 +90,7 @@ void ff7_find_externals()
 
 	ff7_externals.movie_object = (struct movie_obj *)(get_absolute_value(common_externals.prepare_movie, 0x42) - 0xC);
 
-	common_externals._mode = (word *)get_absolute_value(main_loop, 0x8C);
+	common_externals._mode = (WORD*)get_absolute_value(main_loop, 0x8C);
 
 	ff7_set_main_loop(MODE_GAMEOVER, get_absolute_value(main_loop, 0x1FE));
 	swirl_main_loop = get_absolute_value(main_loop, 0x25B);
@@ -118,8 +118,8 @@ void ff7_find_externals()
 	ff7_externals.destroy_field_tiles = get_relative_call(ff7_externals.destroy_field_bk, 0x1E6);
 	ff7_externals.field_layers = (field_layer **)get_absolute_value(ff7_externals.destroy_field_tiles, 0x46);
 
-	ff7_externals.num_field_entities = (word *)(((uint)ff7_externals.field_layers) - 0xC);
-	ff7_externals.field_objects = (field_object **)(((uint)ff7_externals.field_layers) - 0x10);
+	ff7_externals.num_field_entities = (WORD *)(((uint32_t)ff7_externals.field_layers) - 0xC);
+	ff7_externals.field_objects = (field_object **)(((uint32_t)ff7_externals.field_layers) - 0x10);
 
 	ff7_externals.open_field_file = get_relative_call(field_main_loop, 0x331);
 	ff7_externals.field_file_name = (char *)get_absolute_value(ff7_externals.open_field_file, 0x77);
@@ -132,7 +132,7 @@ void ff7_find_externals()
 	ff7_externals.create_dx_sfx_something = get_relative_call(ff7_externals.graphics_render_sub_68A638, 0xD3);
 	ff7_externals.load_p_file = get_relative_call(ff7_externals.create_dx_sfx_something, 0x144);
 
-	ff7_externals.create_polygon_data = (polygon_data* (*)(uint, uint))get_relative_call(ff7_externals.load_p_file, 0x17);
+	ff7_externals.create_polygon_data = (polygon_data* (*)(uint32_t, uint32_t))get_relative_call(ff7_externals.load_p_file, 0x17);
 	ff7_externals.create_polygon_lists = (void (*)(polygon_data*))get_relative_call(ff7_externals.load_p_file, 0x35B);
 	ff7_externals.free_polygon_data = (void (*)(polygon_data*))get_relative_call(ff7_externals.load_p_file, 0x3C4);
 
@@ -143,14 +143,14 @@ void ff7_find_externals()
 	common_externals.read_file = file_module + 0x611;
 	common_externals.__read_file = file_module + 0x6A7;
 	common_externals.write_file = file_module + 0x735;
-	common_externals.alloc_read_file = (void* (*)(uint, uint, struct file*))(file_module + 0x830);
+	common_externals.alloc_read_file = (void* (*)(uint32_t, uint32_t, struct file*))(file_module + 0x830);
 	common_externals.get_filesize = file_module + 0x84B;
 	common_externals.tell_file = file_module + 0x8A1;
 	common_externals.seek_file = file_module + 0x90A;
-	common_externals.alloc_get_file = (void* (*)(file_context*, uint*, char*))(file_module + 0xA0E);
+	common_externals.alloc_get_file = (void* (*)(file_context*, uint32_t*, char*))(file_module + 0xA0E);
 
 	common_externals.destroy_tex = (void (*)(tex_header*))get_relative_call(common_externals.load_tex_file, 0x16D);
-	common_externals.destroy_tex_header = get_relative_call((uint)common_externals.destroy_tex, 0x78);
+	common_externals.destroy_tex_header = get_relative_call((uint32_t)common_externals.destroy_tex, 0x78);
 
 	ff7_externals.battle_sub_42A0E7 = get_relative_call(ff7_externals.battle_sub_429AC0, 0xA4);
 	ff7_externals.load_battle_stage = get_relative_call(ff7_externals.battle_sub_42A0E7, 0x78);
@@ -160,7 +160,7 @@ void ff7_find_externals()
 	ff7_externals.battle_regular_chdir = (void (*)(battle_chdir_struc*))get_relative_call(ff7_externals.read_battle_hrc, 0x16);
 	ff7_externals.battle_context_chdir = (void (*)(file_context*, battle_chdir_struc*))get_relative_call(ff7_externals.read_battle_hrc, 0x2B);
 	ff7_externals.swap_extension = (void (*)(char*, char*, char*))get_relative_call(ff7_externals.read_battle_hrc, 0x43);
-	ff7_externals.destroy_battle_hrc = (void (*)(uint, battle_hrc_header*))get_relative_call(ff7_externals.read_battle_hrc, 0xB3);
+	ff7_externals.destroy_battle_hrc = (void (*)(uint32_t, battle_hrc_header*))get_relative_call(ff7_externals.read_battle_hrc, 0xB3);
 	ff7_externals.battle_regular_olddir = (void (*)(battle_chdir_struc*))get_relative_call(ff7_externals.read_battle_hrc, 0xD2);
 	ff7_externals.battle_context_olddir = (void (*)(file_context*, battle_chdir_struc*))get_relative_call(ff7_externals.read_battle_hrc, 0xE7);
 
@@ -174,15 +174,15 @@ void ff7_find_externals()
 	ff7_externals.open_lgp_file = get_relative_call(ff7_externals.load_lgp, 0x1C);
 	ff7_externals.__read = get_relative_call(common_externals.read_file, 0x4A);
 
-	ff7_externals.lgp_open_file = get_relative_call((uint)common_externals.open_file, 0x234);
-	ff7_externals.lgp_seek_file = get_relative_call((uint)common_externals.open_file, 0x265);
-	ff7_externals.lgp_read = get_relative_call((uint)common_externals.read_file, 0x2E);
-	ff7_externals.lgp_get_filesize = get_relative_call((uint)ff7_externals.read_field_file, 0x71);
-	ff7_externals.lgp_read_file = get_relative_call((uint)ff7_externals.read_field_file, 0xDD);
+	ff7_externals.lgp_open_file = get_relative_call((uint32_t)common_externals.open_file, 0x234);
+	ff7_externals.lgp_seek_file = get_relative_call((uint32_t)common_externals.open_file, 0x265);
+	ff7_externals.lgp_read = get_relative_call((uint32_t)common_externals.read_file, 0x2E);
+	ff7_externals.lgp_get_filesize = get_relative_call((uint32_t)ff7_externals.read_field_file, 0x71);
+	ff7_externals.lgp_read_file = get_relative_call((uint32_t)ff7_externals.read_field_file, 0xDD);
 
 	ff7_externals.lgp_fds = (FILE **)get_absolute_value(ff7_externals.lgp_seek_file, 0x17);
 
-	ff7_externals.context_chdir = get_relative_call((uint)ff7_externals.battle_context_chdir, 0x3C);
+	ff7_externals.context_chdir = get_relative_call((uint32_t)ff7_externals.battle_context_chdir, 0x3C);
 	ff7_externals.lgp_chdir = get_relative_call(ff7_externals.context_chdir, 0x2A);
 
 	ff7_externals.lgp_lookup_tables = (lookup_table_entry **)get_absolute_value(ff7_externals.lgp_open_file, 0x194);
@@ -192,8 +192,8 @@ void ff7_find_externals()
 	ff7_externals.battle_sub_437DB0 = get_absolute_value(ff7_externals.battle_loop, 0x8D);
 	ff7_externals.sub_5CB2CC = get_relative_call(ff7_externals.battle_sub_437DB0, 0x43);
 
-	ff7_externals.midi_volume_control = (uint *)get_absolute_value(common_externals.midi_init, 0x706);
-	ff7_externals.midi_initialized = (uint *)get_absolute_value(common_externals.midi_init, 0x3A);
+	ff7_externals.midi_volume_control = (uint32_t *)get_absolute_value(common_externals.midi_init, 0x706);
+	ff7_externals.midi_initialized = (uint32_t *)get_absolute_value(common_externals.midi_init, 0x3A);
 
 	ff7_externals.menu_sub_6CDA83 = get_relative_call(menu_main_loop, 0x112);
 	ff7_externals.menu_sub_6CBD43 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xAF);
@@ -203,16 +203,16 @@ void ff7_find_externals()
 	if(version == VERSION_FF7_102_US) ff7_externals.menu_draw_party_member_stats = get_relative_call(ff7_externals.phs_menu_sub, 0x8FF);
 	else ff7_externals.menu_draw_party_member_stats = get_relative_call(ff7_externals.phs_menu_sub, 0x8F5);
 
-	ff7_externals.party_member_to_char_map = (uint *)get_absolute_value(ff7_externals.menu_draw_party_member_stats, 0x14);
+	ff7_externals.party_member_to_char_map = (uint32_t *)get_absolute_value(ff7_externals.menu_draw_party_member_stats, 0x14);
 
 	ff7_externals.menu_start = get_absolute_value(main_loop, 0x627);
 	ff7_externals.menu_sub_6CB56A = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xDE);
-	ff7_externals.menu_subs_call_table = (uint *)get_absolute_value(ff7_externals.menu_sub_6CB56A, 0x2EC);
+	ff7_externals.menu_subs_call_table = (uint32_t *)get_absolute_value(ff7_externals.menu_sub_6CB56A, 0x2EC);
 	ff7_externals.status_menu_sub = ff7_externals.menu_subs_call_table[5];
 	ff7_externals.menu_sound_slider_loop = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.draw_status_limit_level_stats = get_relative_call(ff7_externals.status_menu_sub, 0x8E);
 
-	ff7_externals.get_kernel_text = (char* (*)(uint, uint, uint))get_relative_call(ff7_externals.draw_status_limit_level_stats, 0x10C);
+	ff7_externals.get_kernel_text = (char* (*)(uint32_t, uint32_t, uint32_t))get_relative_call(ff7_externals.draw_status_limit_level_stats, 0x10C);
 
 	ff7_externals.sub_5CF282 = get_relative_call(ff7_externals.sub_5CB2CC, 0x4E);
 	ff7_externals.get_equipment_stats = get_relative_call(ff7_externals.sub_5CF282, 0x2F0);
@@ -224,24 +224,24 @@ void ff7_find_externals()
 	ff7_externals.field_draw_everything = get_relative_call(ff7_externals.field_sub_6388EE, 0x11);
 	ff7_externals.field_pick_tiles_make_vertices = get_relative_call(ff7_externals.field_draw_everything, 0xC9);
 	ff7_externals.field_layer2_pick_tiles = get_relative_call(ff7_externals.field_pick_tiles_make_vertices, 0x48);
-	ff7_externals.field_special_y_offset = (uint *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x43);
-	ff7_externals.field_layer2_tiles_num = (uint *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x8C);
-	ff7_externals.field_layer2_palette_sort = (uint **)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0xA3);
+	ff7_externals.field_special_y_offset = (uint32_t *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x43);
+	ff7_externals.field_layer2_tiles_num = (uint32_t *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x8C);
+	ff7_externals.field_layer2_palette_sort = (uint32_t **)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0xA3);
 	ff7_externals.field_layer2_tiles = (field_tile **)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0xC0);
 	ff7_externals.field_anim_state = (char *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x1A4);
-	ff7_externals.add_page_tile = (void (*)(float, float, float, float, float, uint, uint))get_relative_call(ff7_externals.field_layer2_pick_tiles, 0x327);
+	ff7_externals.add_page_tile = (void (*)(float, float, float, float, float, uint32_t, uint32_t))get_relative_call(ff7_externals.field_layer2_pick_tiles, 0x327);
 
 	ff7_externals.field_load_textures = get_relative_call(ff7_externals.field_sub_60DCED, 0x107);
 	ff7_externals.field_convert_type2_layers = (void (*)())get_relative_call(ff7_externals.field_load_textures, 0xD);
-	ff7_externals.make_struc3 = (void (*)(uint, struc_3*))get_relative_call(ff7_externals.field_load_textures, 0xAC);
+	ff7_externals.make_struc3 = (void (*)(uint32_t, struc_3*))get_relative_call(ff7_externals.field_load_textures, 0xAC);
 	ff7_externals.make_field_tex_header_pal = (void (*)(ff7_tex_header*))get_relative_call(ff7_externals.field_load_textures, 0x21F);
 	ff7_externals.make_field_tex_header = (void (*)(ff7_tex_header*))get_relative_call(ff7_externals.field_load_textures, 0x23C);
-	ff7_externals._load_texture = (ff7_graphics_object* (*)(uint, uint, struc_3*, char*, void*))get_relative_call(ff7_externals.field_load_textures, 0x2F8);
+	ff7_externals._load_texture = (ff7_graphics_object* (*)(uint32_t, uint32_t, struc_3*, char*, void*))get_relative_call(ff7_externals.field_load_textures, 0x2F8);
 
 	ff7_externals.read_field_background_data = get_relative_call(ff7_externals.field_sub_60DCED, 0x8B);
-	ff7_externals.layer2_end_page = (word *)get_absolute_value(ff7_externals.read_field_background_data, 0x788);
+	ff7_externals.layer2_end_page = (WORD *)get_absolute_value(ff7_externals.read_field_background_data, 0x788);
 
-	ff7_externals.create_d3d2_indexed_primitive = get_relative_call((uint)common_externals.generic_load_group, 0x22);
+	ff7_externals.create_d3d2_indexed_primitive = get_relative_call((uint32_t)common_externals.generic_load_group, 0x22);
 	ff7_externals.destroy_d3d2_indexed_primitive = get_relative_call(ff7_externals.create_d3d2_indexed_primitive, 0x290);
 
 	ff7_externals.enter_main = get_absolute_value(worldmap_main_loop, 0x2AE);
@@ -252,17 +252,17 @@ void ff7_find_externals()
 
 	ff7_externals.sub_4012DA = get_absolute_value(ff7_externals.kernel_init, 0x136);
 	ff7_externals.kernel2_add_section = get_relative_call(ff7_externals.sub_4012DA, 0x4D);
-	ff7_externals.kernel2_get_text = get_relative_call((uint)ff7_externals.get_kernel_text, 0xF7);
+	ff7_externals.kernel2_get_text = get_relative_call((uint32_t)ff7_externals.get_kernel_text, 0xF7);
 
 	ff7_externals.draw_3d_model = get_relative_call(ff7_externals.field_draw_everything, 0x17F);
 	ff7_externals.stack_push = (void (*)(struct stack*))get_relative_call(ff7_externals.draw_3d_model, 0x8E);
 	ff7_externals.stack_top = (void* (*)(struct stack*))get_relative_call(ff7_externals.draw_3d_model, 0x9A);
 	ff7_externals.stack_pop = (void (*)(struct stack*))get_relative_call(ff7_externals.draw_3d_model, 0x8FD);
 	ff7_externals._root_animation = (void (*)(matrix*, anim_frame*, anim_header*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xD4);
-	ff7_externals._frame_animation = (void (*)(uint, matrix*, point3d*, anim_frame*, anim_header*, hrc_bone*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xDB);
+	ff7_externals._frame_animation = (void (*)(uint32_t, matrix*, point3d*, anim_frame*, anim_header*, hrc_bone*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xDB);
 	ff7_externals.root_animation = (void (*)(matrix*, anim_frame*, anim_header*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xE7);
-	ff7_externals.frame_animation = (void (*)(uint, matrix*, point3d*, anim_frame*, anim_header*, hrc_bone*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xEE);
-	ff7_externals.model_mode = (uint *)get_absolute_value(ff7_externals.draw_3d_model, 0x2A7);
+	ff7_externals.frame_animation = (void (*)(uint32_t, matrix*, point3d*, anim_frame*, anim_header*, hrc_bone*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xEE);
+	ff7_externals.model_mode = (uint32_t *)get_absolute_value(ff7_externals.draw_3d_model, 0x2A7);
 
 	ff7_externals.name_menu_sub_6CBD32 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0x9A);
 	ff7_externals.name_menu_sub_719C08 = get_relative_call(ff7_externals.name_menu_sub_6CBD32, 0x7);
@@ -297,7 +297,7 @@ void ff7_find_externals()
 
 	common_externals.dinput_acquire_keyboard = (int (*)())get_relative_call(common_externals.get_keyboard_state, 0x4F);
 	common_externals.keyboard_device = (IDirectInputDeviceA**)get_absolute_value(common_externals.get_keyboard_state, 0x06);
-	common_externals.keyboard_connected = (uint*)get_absolute_value(common_externals.get_keyboard_state, 0x47);
+	common_externals.keyboard_connected = (uint32_t*)get_absolute_value(common_externals.get_keyboard_state, 0x47);
 
 	ff7_externals.sub_69C69F = (void (*)(matrix*, ff7_light*))get_relative_call(ff7_externals.draw_3d_model, 0x882);
 
@@ -314,12 +314,12 @@ void ff7_find_externals()
 
 	ff7_externals.sound_operation = get_relative_call(ff7_externals.enter_main, 0xE4);
 	common_externals.play_sfx_on_channel = get_relative_call(ff7_externals.sound_operation, 0x2AB);
-	common_externals.set_sfx_volume_on_channel = (uint(*)(uint, uint))get_relative_call(ff7_externals.sound_operation, 0x3B3);
-	common_externals.dsound_volume_table = (uint*)get_absolute_value(uint(common_externals.set_sfx_volume_on_channel), 0xCC);
-	common_externals.play_sfx = (uint(*)(uint))get_relative_call(ff7_externals.sound_operation, 0x703);
-	ff7_externals.sfx_fill_buffer_from_audio_dat = get_relative_call(uint(common_externals.play_sfx), 0x4D);
+	common_externals.set_sfx_volume_on_channel = (uint32_t(*)(uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x3B3);
+	common_externals.dsound_volume_table = (uint32_t*)get_absolute_value(uint32_t(common_externals.set_sfx_volume_on_channel), 0xCC);
+	common_externals.play_sfx = (uint32_t(*)(uint32_t))get_relative_call(ff7_externals.sound_operation, 0x703);
+	ff7_externals.sfx_fill_buffer_from_audio_dat = get_relative_call(uint32_t(common_externals.play_sfx), 0x4D);
 	ff7_externals.sound_states = (ff7_field_sfx_state*)get_absolute_value(common_externals.play_sfx_on_channel, 0x28);
-	common_externals.master_sfx_volume = (uint*)get_absolute_value(common_externals.play_sfx_on_channel, 0x342);
+	common_externals.master_sfx_volume = (uint32_t*)get_absolute_value(common_externals.play_sfx_on_channel, 0x342);
 
 	ff7_externals.battle_clear_sound_flags = get_relative_call(ff7_externals.battle_sub_429AC0, 0x6C);
 	ff7_externals.swirl_sound_effect = get_relative_call(swirl_main_loop, 0x8B);
@@ -330,7 +330,7 @@ void ff7_find_externals()
 	ff7_externals.field_init_event = get_relative_call(ff7_externals.field_init_event_sub_63BCA7, 0x8);
 	ff7_externals.execute_opcode = get_relative_call(ff7_externals.field_init_event, 0x80);
 
-	common_externals.execute_opcode_table = (uint*)get_absolute_value(ff7_externals.execute_opcode, 0x10D);
+	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff7_externals.execute_opcode, 0x10D);
 	ff7_externals.opcode_akao2 = common_externals.execute_opcode_table[0xDA];
 	ff7_externals.opcode_akao = common_externals.execute_opcode_table[0xF2];
 	ff7_externals.opcode_gameover = common_externals.execute_opcode_table[0xFF];

@@ -31,7 +31,7 @@ void Metadata::updateFF7()
     int dataSize = 0;
 
     // Hash existing save files
-    for (uint idx = 0; idx < 10; idx++)
+    for (uint32_t idx = 0; idx < 10; idx++)
     {
         dataSize = userID.length();
         memset(dataBuffer, 0, sizeof(dataBuffer));
@@ -101,7 +101,7 @@ void Metadata::updateFF8()
     int slotNumber = 1;
 
     // Hash existing save files
-    for (uint idx = 0; idx < 60; idx++)
+    for (uint32_t idx = 0; idx < 60; idx++)
     {
         dataSize = userID.length();
         memset(dataBuffer, 0, sizeof(dataBuffer));

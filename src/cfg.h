@@ -23,7 +23,6 @@
 
 #include <confuse.h>
 
-#include "types.h"
 #include "log.h"
 
 #define RENDERER_BACKEND_AUTO 0

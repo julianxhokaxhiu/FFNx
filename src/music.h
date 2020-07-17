@@ -21,27 +21,27 @@
 
 #pragma once
 
-#include "types.h"
+#include <stdint.h>
 
 void music_init();
-uint midi_init(uint unknown);
-uint ff7_directsound_release();
+uint32_t midi_init(uint32_t unknown);
+uint32_t ff7_directsound_release();
 void music_cleanup();
-uint ff7_use_midi(uint midi);
-void ff7_play_midi(uint midi);
-uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2);
-void cross_fade_midi(uint midi, uint time);
+uint32_t ff7_use_midi(uint32_t midi);
+void ff7_play_midi(uint32_t midi);
+uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2);
+void cross_fade_midi(uint32_t midi, uint32_t time);
 void pause_midi();
 void restart_midi();
 void stop_midi();
-uint ff8_stop_midi();
-uint midi_status();
-uint ff8_set_direct_volume(int volume);
-void set_master_midi_volume(uint volume);
-void set_midi_volume(uint volume);
-void set_midi_volume_trans(uint volume, uint step);
+uint32_t ff8_stop_midi();
+uint32_t midi_status();
+uint32_t ff8_set_direct_volume(int volume);
+void set_master_midi_volume(uint32_t volume);
+void set_midi_volume(uint32_t volume);
+void set_midi_volume_trans(uint32_t volume, uint32_t step);
 void set_midi_tempo(unsigned char tempo);
-uint remember_playing_time();
-uint music_sound_operation_fix(uint type, uint param1, uint param2, uint param3, uint param4, uint param5);
-bool needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi);
-uint opcode_gameover_music_fix();
+uint32_t remember_playing_time();
+uint32_t music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5);
+bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* new_midi);
+uint32_t opcode_gameover_music_fix();

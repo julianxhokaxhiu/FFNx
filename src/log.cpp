@@ -140,7 +140,7 @@ void external_debug_print2(const char *fmt, ...)
 	external_debug_print(tmp_str);
 }
 
-void debug_printf(const char *prefix, uint color, const char *fmt, ...)
+void debug_printf(const char *prefix, uint32_t color, const char *fmt, ...)
 {
 	va_list args;
 	char tmp_str[1024];
@@ -159,7 +159,7 @@ void debug_printf(const char *prefix, uint color, const char *fmt, ...)
 	debug_print(tmp_str2);
 }
 
-void windows_error(uint error)
+void windows_error(uint32_t error)
 {
 	char tmp_str[200];
 

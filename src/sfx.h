@@ -22,16 +22,15 @@
 #pragma once
 
 #include <math.h>
-
-#include "types.h"
+#include <stdint.h>
 
 void sfx_init();
-uint sfx_operation_battle_swirl_stop_sound(uint type, uint param1, uint param2, uint param3, uint param4, uint param5);
-uint sfx_operation_resume_music(uint type, uint param1, uint param2, uint param3, uint param4, uint param5);
-void sfx_menu_force_channel_5_volume(uint volume, uint channel);
-void sfx_menu_play_sound_down(uint id);
-void sfx_menu_play_sound_up(uint id);
+uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5);
+uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5);
+void sfx_menu_force_channel_5_volume(uint32_t volume, uint32_t channel);
+void sfx_menu_play_sound_down(uint32_t id);
+void sfx_menu_play_sound_up(uint32_t id);
 void sfx_clear_sound_locks();
 void sfx_fix_volume_values(char* log);
-int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint flags);
-uint sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer);
+int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint32_t flags);
+uint32_t sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer);

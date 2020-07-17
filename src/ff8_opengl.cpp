@@ -37,7 +37,7 @@ void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *ga
 {
 	struct matrix_set *matrix_set;
 	struct p_hundred *hundred_data = 0;
-	uint group_counter;
+	uint32_t group_counter;
 
 	if(trace_all) trace("dll_gfx: field_78\n");
 
@@ -57,8 +57,8 @@ void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *ga
 
 	while(group_counter < polygon_set->numgroups)
 	{
-		uint defer = false;
-		uint zsort = false;
+		uint32_t defer = false;
+		uint32_t zsort = false;
 
 		if(polygon_set->per_group_hundreds) hundred_data = polygon_set->hundred_data_group_array[group_counter];
 
@@ -98,7 +98,7 @@ void ff8gl_field_60(struct palette *palette, struct texture_set *texture_set)
 	if(trace_all) trace("field_60\n");
 }
 
-void ff8gl_field_84(uint unknown, struct game_obj *game_object)
+void ff8gl_field_84(uint32_t unknown, struct game_obj *game_object)
 {
 	if (trace_all) trace("field_84\n");
 }
@@ -112,7 +112,7 @@ void ff8_destroy_tex_header(struct ff8_tex_header *tex_header)
 {
 	if(!tex_header) return;
 
-	if((uint)tex_header->file.pc_name > 32) external_free(tex_header->file.pc_name);
+	if((uint32_t)tex_header->file.pc_name > 32) external_free(tex_header->file.pc_name);
 
 	external_free(tex_header->old_palette_data);
 	external_free(tex_header->palette_colorkey);
@@ -123,7 +123,7 @@ void ff8_destroy_tex_header(struct ff8_tex_header *tex_header)
 }
 
 struct ff8_file* (*ff8_open_file)(struct ff8_file_context* file_context, char* filename);
-uint(*ff8_read_file)(uint count, void* buffer, struct ff8_file* file);
+uint32_t(*ff8_read_file)(uint32_t count, void* buffer, struct ff8_file* file);
 void (*ff8_close_file)(struct ff8_file* file);
 
 /*
@@ -228,7 +228,7 @@ struct ff8_tex_header *ff8_load_tex_file(struct ff8_file_context* file_context, 
 {
 	struct ff8_tex_header *ret = (struct ff8_tex_header *)common_externals.create_tex_header();
 	struct ff8_file* file = ff8_open_file(file_context, filename);
-	uint i, len;
+	uint32_t i, len;
 
 	if(!file) goto error;
 	if(!ff8_read_file(sizeof(*ret), ret, file)) goto error;
@@ -243,7 +243,7 @@ struct ff8_tex_header *ff8_load_tex_file(struct ff8_file_context* file_context, 
 	{
 		if(ret->tex_format.use_palette)
 		{
-			ret->tex_format.palette_data = (uint*)common_externals.alloc_read_file(4, ret->tex_format.palette_size, (struct file *)file);
+			ret->tex_format.palette_data = (uint32_t*)common_externals.alloc_read_file(4, ret->tex_format.palette_size, (struct file *)file);
 			if(!ret->tex_format.palette_data) goto error;
 		}
 
@@ -284,17 +284,17 @@ error:
 struct 
 {
 	char *image_data;
-	uint size;
+	uint32_t size;
 	struct ff8_texture_set *texture_set;
 } reload_buffer[TEXRELOAD_BUFFER_SIZE];
-uint reload_buffer_index;
+uint32_t reload_buffer_index;
 
 // this function is wedged into the middle of a function designed to reload a Direct3D texture
 // when the image data changes
 void texture_reload_hack(struct ff8_texture_set *texture_set)
 {
-	uint i;
-	uint size;
+	uint32_t i;
+	uint32_t size;
 	VOBJ(tex_header, tex_header, texture_set->tex_header);
 
 	size = VREF(tex_header, tex_format.width) * VREF(tex_header, tex_format.height) * VREF(tex_header, tex_format.bytesperpixel);
@@ -331,14 +331,14 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	if(trace_all) trace("texture_reload_hack: 0x%x\n", texture_set);
 }
 
-void texture_reload_hack1(struct texture_page *texture_page, uint unknown1, uint unknown2)
+void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
 {
 	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->tri_gfxobj->hundred_data->texture_set;
 
 	texture_reload_hack(texture_set);
 }
 
-void texture_reload_hack2(struct texture_page *texture_page, uint unknown1, uint unknown2)
+void texture_reload_hack2(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
 {
 	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->sub_tri_gfxobj->hundred_data->texture_set;
 
@@ -347,13 +347,13 @@ void texture_reload_hack2(struct texture_page *texture_page, uint unknown1, uint
 
 void ff8_unload_texture(struct ff8_texture_set *texture_set)
 {
-	uint i;
+	uint32_t i;
 
 	// remove any references to this texture
 	for(i = 0; i < TEXRELOAD_BUFFER_SIZE; i++) if(reload_buffer[i].texture_set == texture_set) reload_buffer[i].texture_set = 0;
 }
 
-void swirl_sub_56D390(uint x, uint y, uint w, uint h)
+void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
 	static struct tex_header *last_tex_header = 0;
 	struct tex_header *tex_header = make_framebuffer_tex(256, 256, x, y, w, h, false);
@@ -480,7 +480,7 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 
 	//replace_function(common_externals.open_file, ff8_open_file);
 	ff8_open_file = (struct ff8_file * (*)(struct ff8_file_context*, char*))common_externals.open_file;
-	ff8_read_file = (uint (*)(uint, void*, struct ff8_file*))common_externals.read_file;
+	ff8_read_file = (uint32_t (*)(uint32_t, void*, struct ff8_file*))common_externals.read_file;
 	ff8_close_file = (void (*)(struct ff8_file*))common_externals.close_file;
 
 	memset_code(ff8_externals.movie_hack1, 0x90, 14);

@@ -35,7 +35,7 @@ void music_init()
 		replace_call(ff7_externals.opcode_akao + 0xEA, music_sound_operation_fix);
 		replace_call(ff7_externals.opcode_akao2 + 0xE8, music_sound_operation_fix);
 		// Fix Game Over music in field
-		common_externals.execute_opcode_table[0xFF] = uint((void *)opcode_gameover_music_fix);
+		common_externals.execute_opcode_table[0xFF] = uint32_t((void *)opcode_gameover_music_fix);
 	}
 
 	if (use_external_music)
@@ -68,7 +68,7 @@ void music_init()
 	}
 }
 
-uint midi_init(uint unknown)
+uint32_t midi_init(uint32_t unknown)
 {
 	// without this there will be no volume control for music in the config menu
 	*ff7_externals.midi_volume_control = true;
@@ -81,7 +81,7 @@ uint midi_init(uint unknown)
 
 char ff8_midi[32];
 
-char* ff8_midi_name(uint midi)
+char* ff8_midi_name(uint32_t midi)
 {
 	// midi_name format: {num}{type}-{name}.sgt or {name}.sgt or _Missing.sgt
 	char* midi_name = common_externals.get_midi_name(midi),
@@ -112,7 +112,7 @@ char* ff8_midi_name(uint midi)
 	return nullptr;
 }
 
-uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
+uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 {
 	info("FF8 midi play %i %i %i %i\n", midi, volume, u1, u2);
 
@@ -128,7 +128,7 @@ uint ff8_play_midi(uint midi, uint volume, uint u1, uint u2)
 	return 1; // Success
 }
 
-uint ff7_use_midi(uint midi)
+uint32_t ff7_use_midi(uint32_t midi)
 {
 	char* name = common_externals.get_midi_name(midi);
 
@@ -139,12 +139,12 @@ uint ff7_use_midi(uint midi)
 	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
-void ff7_play_midi(uint midi)
+void ff7_play_midi(uint32_t midi)
 {
 	winamp_play_music(common_externals.get_midi_name(midi), midi);
 }
 
-void cross_fade_midi(uint midi, uint time)
+void cross_fade_midi(uint32_t midi, uint32_t time)
 {
 	winamp_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
 }
@@ -164,7 +164,7 @@ void stop_midi()
 	winamp_stop_music();
 }
 
-uint ff8_stop_midi()
+uint32_t ff8_stop_midi()
 {
 	if (trace_all || trace_music) info("FF8 stop midi\n");
 
@@ -178,12 +178,12 @@ uint ff8_stop_midi()
 	return 0;
 }
 
-uint midi_status()
+uint32_t midi_status()
 {
 	return winamp_music_status();
 }
 
-uint ff8_set_direct_volume(int volume)
+uint32_t ff8_set_direct_volume(int volume)
 {
 	if (trace_all || trace_music) info("FF8 set direct volume %i\n", volume);
 
@@ -205,17 +205,17 @@ uint ff8_set_direct_volume(int volume)
 	return 1; // Success
 }
 
-void set_master_midi_volume(uint volume)
+void set_master_midi_volume(uint32_t volume)
 {
 	winamp_set_master_music_volume(volume);
 }
 
-void set_midi_volume(uint volume)
+void set_midi_volume(uint32_t volume)
 {
 	winamp_set_music_volume(volume);
 }
 
-void set_midi_volume_trans(uint volume, uint step)
+void set_midi_volume_trans(uint32_t volume, uint32_t step)
 {
 	winamp_set_music_volume_trans(volume, step);
 }
@@ -225,7 +225,7 @@ void set_midi_tempo(unsigned char tempo)
 	winamp_set_music_tempo(tempo);
 }
 
-uint ff7_directsound_release()
+uint32_t ff7_directsound_release()
 {
 	if (nullptr == *common_externals.directsound) {
 		return 0;
@@ -243,21 +243,21 @@ void music_cleanup()
 	winamp_music_cleanup();
 }
 
-uint remember_playing_time()
+uint32_t remember_playing_time()
 {
 	winamp_remember_playing_time();
 	return 0;
 }
 
-uint music_sound_operation_fix(uint type, uint param1, uint param2, uint param3, uint param4, uint param5)
+uint32_t music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
 	if (trace_all || trace_music) trace("AKAO call type=%X params=(%i %i %i %i)\n", type, param1, param2, param3, param4, param5);
 
 	if (type == 0xDA) { // Assimilated to stop music (Cid speech in Highwind)
-		return ((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(0xF0, 0, 0, 0, 0, 0);
+		return ((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(0xF0, 0, 0, 0, 0, 0);
 	}
 
-	return ((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
+	return ((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
 }
 
 bool is_wm_theme(char* midi)
@@ -275,7 +275,7 @@ bool is_wm_theme(char* midi)
 	return strcmp(midi, "TA") == 0 || strcmp(midi, "TB") == 0 || strcmp(midi, "KITA") == 0;
 }
 
-bool needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi)
+bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* new_midi)
 {
 	/*
 	 * BATTLE -> FIELD or WM
@@ -286,11 +286,11 @@ bool needs_resume(uint old_mode, uint new_mode, char* old_midi, char* new_midi)
 		|| new_mode == MODE_CARDGAME;
 }
 
-uint opcode_gameover_music_fix()
+uint32_t opcode_gameover_music_fix()
 {
-	const uint stop_sounds = 0xF1;
-	((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(stop_sounds, 0, 0, 0, 0, 0);
-	const uint play_music = 0x14, midi_id = 0x3A;
-	((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(play_music, midi_id, 0, 0, 0, 0);
-	return ((uint(*)())ff7_externals.opcode_gameover)();
+	const uint32_t stop_sounds = 0xF1;
+	((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(stop_sounds, 0, 0, 0, 0, 0);
+	const uint32_t play_music = 0x14, midi_id = 0x3A;
+	((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(play_music, midi_id, 0, 0, 0, 0);
+	return ((uint32_t(*)())ff7_externals.opcode_gameover)();
 }

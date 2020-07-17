@@ -26,9 +26,9 @@
 #include "patch.h"
 #include "ff7.h"
 
-uint sfx_volumes[5];
+uint32_t sfx_volumes[5];
 ff7_field_sfx_state sfx_buffers[4];
-uint real_volume;
+uint32_t real_volume;
 
 void sfx_init()
 {
@@ -63,13 +63,13 @@ void sfx_init()
 		 */
 
 		// Replace a useless "volume & 0xFF" to "real_volume <- volume; nop"
-		patch_code_byte(uint(common_externals.set_sfx_volume_on_channel) + 0x48, 0xA3); // mov
-		patch_code_uint(uint(common_externals.set_sfx_volume_on_channel) + 0x48 + 1, uint(&real_volume));
-		patch_code_byte(uint(common_externals.set_sfx_volume_on_channel) + 0x48 + 5, 0x90); // nop
+		patch_code_byte(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48, 0xA3); // mov
+		patch_code_uint(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48 + 1, uint32_t(&real_volume));
+		patch_code_byte(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48 + 5, 0x90); // nop
 		// Use a field of sfx_state to flag the current channel
-		patch_code_uint(uint(common_externals.set_sfx_volume_on_channel) + 0x70, 0xFFFFFFFF);
+		patch_code_uint(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x70, 0xFFFFFFFF);
 		// Replace log call to fix sfx_state volume values
-		replace_call(uint(common_externals.set_sfx_volume_on_channel) + 0x183, sfx_fix_volume_values);
+		replace_call(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x183, sfx_fix_volume_values);
 	}
 }
 
@@ -89,7 +89,7 @@ bool sfx_buffer_is_looped(IDirectSoundBuffer* buffer)
 	return false;
 }
 
-uint sfx_operation_battle_swirl_stop_sound(uint type, uint param1, uint param2, uint param3, uint param4, uint param5)
+uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
 	if (trace_all || trace_music) info("Battle swirl stop sound\n");
 
@@ -105,16 +105,16 @@ uint sfx_operation_battle_swirl_stop_sound(uint type, uint param1, uint param2, 
 		}
 	}
 
-	return ((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
+	return ((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
 }
 
-uint sfx_operation_resume_music(uint type, uint param1, uint param2, uint param3, uint param4, uint param5)
+uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
 	if (trace_all || trace_music) info("Field resume music after battle\n");
 
 	for (int i = 0; i < 4; ++i) {
 		if (sfx_buffers[i].buffer1 != nullptr || sfx_buffers[i].buffer2 != nullptr) {
-			uint pan;
+			uint32_t pan;
 			if (sfx_buffers[i].buffer1 != nullptr) {
 				pan = sfx_buffers[i].pan1;
 			}
@@ -122,7 +122,7 @@ uint sfx_operation_resume_music(uint type, uint param1, uint param2, uint param3
 				pan = sfx_buffers[i].pan2;
 			}
 
-			((uint(*)(uint, uint, uint))common_externals.play_sfx_on_channel)(pan, sfx_buffers[i].sound_id, i + 1);
+			((uint32_t(*)(uint32_t, uint32_t, uint32_t))common_externals.play_sfx_on_channel)(pan, sfx_buffers[i].sound_id, i + 1);
 
 			sfx_buffers[i] = ff7_field_sfx_state();
 			sfx_buffers[i].buffer1 = nullptr;
@@ -130,7 +130,7 @@ uint sfx_operation_resume_music(uint type, uint param1, uint param2, uint param3
 		}
 	}
 
-	return ((uint(*)(uint, uint, uint, uint, uint, uint))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
+	return ((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
 }
 
 void sfx_remember_volumes()
@@ -150,7 +150,7 @@ void sfx_remember_volumes()
 	}
 }
 
-void sfx_menu_force_channel_5_volume(uint volume, uint channel)
+void sfx_menu_force_channel_5_volume(uint32_t volume, uint32_t channel)
 {
 	if (trace_all || trace_music) info("sfx_menu_force_channel_5_volume %d\n", volume);
 	// Original call (set channel 5 volume to maximum)
@@ -176,7 +176,7 @@ void sfx_update_volume(int modifier)
 	}
 }
 
-void sfx_menu_play_sound_down(uint id)
+void sfx_menu_play_sound_down(uint32_t id)
 {
 	// Added by FFNx
 	sfx_update_volume(-1);
@@ -184,7 +184,7 @@ void sfx_menu_play_sound_down(uint id)
 	common_externals.play_sfx(id);
 }
 
-void sfx_menu_play_sound_up(uint id)
+void sfx_menu_play_sound_up(uint32_t id)
 {
 	// Added by FFNx
 	sfx_update_volume(1);
@@ -194,9 +194,9 @@ void sfx_menu_play_sound_up(uint id)
 
 void sfx_clear_sound_locks()
 {
-	uint** flags = (uint**)(ff7_externals.battle_clear_sound_flags + 5);
-	// The last uint wasn't reset by the original sub
-	memset((void*)*flags, 0, 5 * sizeof(uint));
+	uint32_t** flags = (uint32_t**)(ff7_externals.battle_clear_sound_flags + 5);
+	// The last uint32_t wasn't reset by the original sub
+	memset((void*)*flags, 0, 5 * sizeof(uint32_t));
 }
 
 void sfx_fix_volume_values(char* log)
@@ -216,7 +216,7 @@ void sfx_fix_volume_values(char* log)
 	}
 }
 
-int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint flags)
+int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint32_t flags)
 {
 	if (buffer == nullptr) {
 		return 0;
@@ -239,11 +239,11 @@ int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint flags)
 	return res == DS_OK;
 }
 
-uint sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer)
+uint32_t sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer)
 {
 	// Added by FFNx: Load sound 0x188
-	((uint(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(0x188, dsound_buffer);
+	((uint32_t(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(0x188, dsound_buffer);
 
 	// Original call (load sound 0x285)
-	return ((uint(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(sound_id, dsound_buffer);
+	return ((uint32_t(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(sound_id, dsound_buffer);
 }

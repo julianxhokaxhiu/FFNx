@@ -24,7 +24,7 @@
 
 #include "defs.h"
 
-uint get_frame_data_size(struct anim_header *anim_header)
+uint32_t get_frame_data_size(struct anim_header *anim_header)
 {
 	if(!anim_header) return 0;
 
@@ -36,9 +36,9 @@ struct anim_header *load_animation(struct file_context *file_context, char *file
 {
 	struct ff7_file *file = open_file(file_context, filename);
 	struct anim_header *ret = NULL;
-	uint size;
-	uint i;
-	uint data_pointer;
+	uint32_t size;
+	uint32_t i;
+	uint32_t data_pointer;
 
 	if(trace_all || trace_loaders)
 	{
@@ -65,7 +65,7 @@ struct anim_header *load_animation(struct file_context *file_context, char *file
 
 	ret->anim_frames = (anim_frame*)external_calloc(sizeof(struct anim_frame), ret->num_frames);
 
-	data_pointer = (uint)ret->frame_data;
+	data_pointer = (uint32_t)ret->frame_data;
 
 	for(i = 0; i < ret->num_frames; i++)
 	{
@@ -87,12 +87,12 @@ error:
 };
 
 // load battle HRC file (does not save modpath name)
-struct battle_hrc_header *read_battle_hrc(uint use_file_context, struct file_context *file_context, char *filename)
+struct battle_hrc_header *read_battle_hrc(uint32_t use_file_context, struct file_context *file_context, char *filename)
 {
 	struct battle_hrc_header *ret;
 	struct battle_chdir_struc olddir;
 	char hrc_filename[200];
-	uint size;
+	uint32_t size;
 
 	if(use_file_context) ff7_externals.battle_context_chdir(file_context, &olddir);
 	else ff7_externals.battle_regular_chdir(&olddir);
@@ -124,7 +124,7 @@ struct battle_hrc_header *read_battle_hrc(uint use_file_context, struct file_con
 }
 
 // load .p file, save modpath name somewhere we can retrieve it later
-struct polygon_data *load_p_file(struct file_context *file_context, uint create_lists, char *filename)
+struct polygon_data *load_p_file(struct file_context *file_context, uint32_t create_lists, char *filename)
 {
 	struct polygon_data *ret = ff7_externals.create_polygon_data(false, 0);
 	struct ff7_file *file = open_file(file_context, filename);
@@ -166,8 +166,8 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint create_
 	ret->normaldata = (struct point3d*)common_externals.alloc_read_file(sizeof(*ret->normaldata), ret->numnormals, (struct file *)file);
 	ret->field_48 = (struct point3d*)common_externals.alloc_read_file(sizeof(*ret->field_48), ret->field_14, (struct file *)file);
 	ret->texcoorddata = (struct texcoords*)common_externals.alloc_read_file(sizeof(*ret->texcoorddata), ret->numtexcoords, (struct file *)file);
-	ret->vertexcolordata = (uint*)common_externals.alloc_read_file(sizeof(*ret->vertexcolordata), ret->numvertcolors, (struct file *)file);
-	ret->polycolordata = (uint*)common_externals.alloc_read_file(sizeof(*ret->polycolordata), ret->numpolys, (struct file *)file);
+	ret->vertexcolordata = (uint32_t*)common_externals.alloc_read_file(sizeof(*ret->vertexcolordata), ret->numvertcolors, (struct file *)file);
+	ret->polycolordata = (uint32_t*)common_externals.alloc_read_file(sizeof(*ret->polycolordata), ret->numpolys, (struct file *)file);
 	ret->edgedata = (struct p_edge*)common_externals.alloc_read_file(sizeof(*ret->edgedata), ret->numedges, (struct file *)file);
 	ret->polydata = (struct p_polygon*)common_externals.alloc_read_file(sizeof(*ret->polydata), ret->numpolys, (struct file *)file);
 	external_free(common_externals.alloc_read_file(sizeof(struct p_polygon), ret->field_28, (struct file *)file));
@@ -175,7 +175,7 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint create_
 	ret->hundredsdata = (struct p_hundred*)common_externals.alloc_read_file(sizeof(*ret->hundredsdata), ret->numhundreds, (struct file *)file);
 	ret->groupdata = (struct p_group*)common_externals.alloc_read_file(sizeof(*ret->groupdata), ret->numgroups, (struct file *)file);
 	ret->boundingboxdata = (struct boundingbox*)common_externals.alloc_read_file(sizeof(*ret->boundingboxdata), ret->numboundingboxes, (struct file *)file);
-	if(ret->has_normindextable) ret->normindextabledata = (uint*)common_externals.alloc_read_file(sizeof(*ret->normindextabledata), ret->numverts, (struct file *)file);
+	if(ret->has_normindextable) ret->normindextabledata = (uint32_t*)common_externals.alloc_read_file(sizeof(*ret->normindextabledata), ret->numverts, (struct file *)file);
 
 	if(create_lists) ff7_externals.create_polygon_lists(ret);
 
@@ -192,7 +192,7 @@ void destroy_tex_header(struct ff7_tex_header *tex_header)
 {
 	if(!tex_header) return;
 
-	if((uint)tex_header->file.pc_name > 32) external_free(tex_header->file.pc_name);
+	if((uint32_t)tex_header->file.pc_name > 32) external_free(tex_header->file.pc_name);
 
 	external_free(tex_header->old_palette_data);
 	external_free(tex_header->palette_colorkey);
@@ -221,7 +221,7 @@ struct ff7_tex_header *load_tex_file(struct file_context *file_context, char *fi
 	{
 		if(ret->tex_format.use_palette)
 		{
-			ret->tex_format.palette_data = (uint*)common_externals.alloc_read_file(4, ret->tex_format.palette_size, (struct file *)file);
+			ret->tex_format.palette_data = (uint32_t*)common_externals.alloc_read_file(4, ret->tex_format.palette_size, (struct file *)file);
 			if(!ret->tex_format.palette_data) goto error;
 		}
 

@@ -42,9 +42,9 @@ static struct game_mode ff8_modes[] = {
 	{FF8_MODE_BATTLE,        "MODE_BATTLE",        MODE_BATTLE,        true },
 };
 
-void ff8_set_main_loop(uint driver_mode, uint main_loop)
+void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 {
-	uint i;
+	uint32_t i;
 
 	for(i = 0; i < num_modes; i++) if(ff8_modes[i].driver_mode == driver_mode) ff8_modes[i].main_loop = main_loop;
 }
@@ -84,9 +84,9 @@ void ff8_find_externals()
 
 	ff8_externals.fonts = (font_object **)get_absolute_value(ff8_externals.load_fonts, 0x16);
 
-	common_externals.assert_malloc = (void* (*)(uint, const char*, uint))get_relative_call(ff8_externals.load_fonts, 0x2A);
+	common_externals.assert_malloc = (void* (*)(uint32_t, const char*, uint32_t))get_relative_call(ff8_externals.load_fonts, 0x2A);
 
-	common_externals._mode = (word *)get_absolute_value(ff8_externals.main_loop, 0x115);
+	common_externals._mode = (WORD *)get_absolute_value(ff8_externals.main_loop, 0x115);
 
 	ff8_externals.pubintro_enter_main = get_absolute_value(ff8_externals.sub_401ED0, 0x16C);
 	common_externals.prepare_movie = get_relative_call(ff8_externals.pubintro_enter_main, 0x12);
@@ -114,15 +114,15 @@ void ff8_find_externals()
 	ff8_externals.load_texture_data = get_relative_call(ff8_externals.sub_41AC34, 0x168);
 	common_externals.load_tex_file = get_relative_call(ff8_externals.load_texture_data, 0x103);
 	common_externals.create_tex_header = (tex_header* (*)())get_relative_call(common_externals.load_tex_file, 0xD);
-	common_externals.assert_calloc = (void* (*)(uint, uint, const char*, uint))get_relative_call((uint)common_externals.create_tex_header, 0x15);
+	common_externals.assert_calloc = (void* (*)(uint32_t, uint32_t, const char*, uint32_t))get_relative_call((uint32_t)common_externals.create_tex_header, 0x15);
 	common_externals.open_file = get_relative_call(common_externals.load_tex_file, 0x27);
 	common_externals.read_file = get_relative_call(common_externals.load_tex_file, 0x49);
-	common_externals.alloc_read_file = (void* (*)(uint, uint, struct file *))get_relative_call(common_externals.load_tex_file, 0xB3);
+	common_externals.alloc_read_file = (void* (*)(uint32_t, uint32_t, struct file *))get_relative_call(common_externals.load_tex_file, 0xB3);
 	common_externals.close_file = get_relative_call(common_externals.load_tex_file, 0x15B);
 	common_externals.destroy_tex = (void (*)(tex_header*))get_relative_call(common_externals.load_tex_file, 0x16D);
-	common_externals.destroy_tex_header = get_relative_call((uint)common_externals.destroy_tex, 0x78);
-	common_externals.assert_free = (void* (*)(void*, const char*, uint))get_relative_call(common_externals.destroy_tex_header, 0x21);
-	common_externals.get_game_object = (game_obj* (*)())get_relative_call((uint)common_externals.destroy_tex, 0x6);
+	common_externals.destroy_tex_header = get_relative_call((uint32_t)common_externals.destroy_tex, 0x78);
+	common_externals.assert_free = (void* (*)(void*, const char*, uint32_t))get_relative_call(common_externals.destroy_tex_header, 0x21);
+	common_externals.get_game_object = (game_obj* (*)())get_relative_call((uint32_t)common_externals.destroy_tex, 0x6);
 
 	ff8_externals.dd_d3d_start = get_relative_call(ff8_externals.pubintro_init, 0x75);
 	ff8_externals.create_d3d_gfx_driver = get_relative_call(ff8_externals.dd_d3d_start, 0x88);
@@ -132,14 +132,14 @@ void ff8_find_externals()
 
 	ff8_externals.tim2tex = get_relative_call(ff8_externals.sub_41AC34, 0xFC);
 	ff8_externals.sub_41BC76 = get_relative_call(ff8_externals.tim2tex, 0x72);
-	common_externals.make_pixelformat = (void (*)(uint, uint, uint, uint, uint, struct texture_format*))get_relative_call(ff8_externals.sub_41BC76, 0x102);
+	common_externals.make_pixelformat = (void (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, struct texture_format*))get_relative_call(ff8_externals.sub_41BC76, 0x102);
 
 	common_externals.add_texture_format = (void (*)(struct texture_format*, game_obj*))get_relative_call(ff8_externals.sub_40BFEB, 0xBF);
 
 	ff8_externals.d3d_load_texture = get_absolute_value(ff8_externals.create_d3d_gfx_driver, 0x9D);
 	common_externals.create_texture_set = (texture_set* (*)())get_relative_call(ff8_externals.d3d_load_texture, 0x6B);
 
-	common_externals.create_palette_for_tex = (palette* (*)(uint, tex_header*, texture_set*))get_relative_call(ff8_externals.d3d_load_texture, 0x316);
+	common_externals.create_palette_for_tex = (palette* (*)(uint32_t, tex_header*, texture_set*))get_relative_call(ff8_externals.d3d_load_texture, 0x316);
 
 	ff8_externals.movie_hack1 = common_externals.update_movie_sample + 0xA5;
 	ff8_externals.movie_hack2 = common_externals.update_movie_sample + 0x1DF;
@@ -174,12 +174,12 @@ void ff8_find_externals()
 	ff8_externals.sub_4BE4D0 = get_relative_call(ff8_externals.sub_4B3410, 0x68);
 	ff8_externals.sub_4BECC0 = get_relative_call(ff8_externals.sub_4BE4D0, 0x39);
 	ff8_externals.menu_draw_text = get_relative_call(ff8_externals.sub_4BECC0, 0x127);
-	ff8_externals.get_character_width = (uint (*)(uint))get_relative_call(ff8_externals.menu_draw_text, 0x1D0);
+	ff8_externals.get_character_width = (uint32_t (*)(uint32_t))get_relative_call(ff8_externals.menu_draw_text, 0x1D0);
 
 	ff8_externals.open_lzs_image = get_relative_call(ff8_externals.load_credits_image, 0x27);
 	ff8_externals.upload_psx_vram = get_relative_call(ff8_externals.open_lzs_image, 0xB9);
-	ff8_externals.psxvram_buffer = (word *)get_absolute_value(ff8_externals.upload_psx_vram, 0x34);
-	ff8_externals.sub_464850 = (void (*)(uint, uint, uint, uint))get_relative_call(ff8_externals.upload_psx_vram, 0x8A);
+	ff8_externals.psxvram_buffer = (WORD *)get_absolute_value(ff8_externals.upload_psx_vram, 0x34);
+	ff8_externals.sub_464850 = (void (*)(uint32_t, uint32_t, uint32_t, uint32_t))get_relative_call(ff8_externals.upload_psx_vram, 0x8A);
 
 	ff8_externals.psx_texture_pages = (struc_51 *)get_absolute_value(ff8_externals.sub_464BD0, 0x10);
 
@@ -205,7 +205,7 @@ void ff8_find_externals()
 
 	common_externals.dinput_acquire_keyboard = (int (*)())get_relative_call(common_externals.get_keyboard_state, 0x34);
 	common_externals.keyboard_device = (IDirectInputDeviceA**)get_absolute_value(common_externals.get_keyboard_state, 0x01);
-	common_externals.keyboard_connected = (uint*)get_absolute_value(common_externals.get_keyboard_state, 0x2C);
+	common_externals.keyboard_connected = (uint32_t*)get_absolute_value(common_externals.get_keyboard_state, 0x2C);
 
 	ff8_externals.initialize_sound = get_relative_call(ff8_externals.pubintro_init, 0xD8); // sub_469640
 	ff8_externals.initialize_eax_directsound = get_relative_call(ff8_externals.initialize_sound, 0x5D); // sub_46DBF0
@@ -218,7 +218,7 @@ void ff8_find_externals()
 	ff8_externals.sd_music_play = get_relative_call(ff8_externals.sdmusicplay, 0x17);
 	common_externals.play_midi = get_relative_call(ff8_externals.sd_music_play, 0x20C);
 	
-	common_externals.get_midi_name = (char* (*)(uint))get_relative_call(common_externals.play_midi, 0x21C);
+	common_externals.get_midi_name = (char* (*)(uint32_t))get_relative_call(common_externals.play_midi, 0x21C);
 
 	ff8_externals.sub_46B800 = get_relative_call(ff8_externals.sm_battle_sound, 0x52);
 	ff8_externals.sub_46C060 = get_relative_call(ff8_externals.sub_46B800, 0xB);
@@ -255,7 +255,7 @@ void ff8_find_externals()
 
 	ff8_externals.sub_5304B0 = (void (*)())get_relative_call(common_externals.update_movie_sample, 0x3D9);
 
-	ff8_externals.enable_framelimiter = (uint *)get_absolute_value(common_externals.stop_movie, 0x49);
+	ff8_externals.enable_framelimiter = (uint32_t *)get_absolute_value(common_externals.stop_movie, 0x49);
 
 	ff8_externals.byte_1CE4907 = (unsigned char *)get_absolute_value(common_externals.update_movie_sample, 0x363);
 	ff8_externals.byte_1CE4901 = (unsigned char *)get_absolute_value(common_externals.update_movie_sample, 0x37D);
@@ -264,7 +264,7 @@ void ff8_find_externals()
 	ff8_externals.sub_45B310 = get_relative_call(ff8_externals.pubintro_init, 0x91);
 	ff8_externals.sub_45B460 = get_relative_call(ff8_externals.sub_45B310, 0x0);
 	ff8_externals.ssigpu_init = get_relative_call(ff8_externals.sub_45B460, 0x26);
-	ff8_externals.d3dcaps = (uint *)get_absolute_value(ff8_externals.ssigpu_init, 0x6C);
+	ff8_externals.d3dcaps = (uint32_t *)get_absolute_value(ff8_externals.ssigpu_init, 0x6C);
 
 	ff8_externals.worldmap_main_loop = get_absolute_value(ff8_externals.main_loop, 0x2D0);
 

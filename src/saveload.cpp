@@ -45,7 +45,7 @@ void make_path(char *name)
 	}
 }
 
-uint save_texture(void *data, uint width, uint height, uint palette_index, char *name)
+uint32_t save_texture(void *data, uint32_t width, uint32_t height, uint32_t palette_index, char *name)
 {
 	char filename[sizeof(basedir) + 1024];
 	struct stat dummy;
@@ -58,9 +58,9 @@ uint save_texture(void *data, uint width, uint height, uint palette_index, char 
 	else return true;
 }
 
-uint load_texture_helper(char* name, uint* width, uint* height, bool useLibPng)
+uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool useLibPng)
 {
-	uint ret = 0;
+	uint32_t ret = 0;
 
 	if (useLibPng)
 		ret = newRenderer.createTextureLibPng(name, width, height);
@@ -75,9 +75,9 @@ uint load_texture_helper(char* name, uint* width, uint* height, bool useLibPng)
 	return ret;
 }
 
-uint load_texture(char *name, uint palette_index, uint *width, uint *height)
+uint32_t load_texture(char *name, uint32_t palette_index, uint32_t *width, uint32_t *height)
 {
-	uint ret = 0;
+	uint32_t ret = 0;
 	char filename[sizeof(basedir) + 1024];
 	
 	const std::vector<std::string> exts =

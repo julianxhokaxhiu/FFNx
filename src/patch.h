@@ -23,20 +23,20 @@
 
 #include "log.h"
 
-uint replace_function(uint offset, void *func);
-void unreplace_function(uint func);
+uint32_t replace_function(uint32_t offset, void *func);
+void unreplace_function(uint32_t func);
 void unreplace_functions();
 
-void replace_call(uint offset, void *func);
+void replace_call(uint32_t offset, void *func);
 
-uint get_relative_call(uint base, uint offset);
-uint get_absolute_value(uint base, uint offset);
-void patch_code_byte(uint offset, unsigned char r);
-void patch_code_word(uint offset, word r);
-void patch_code_dword(uint offset, DWORD r);
-void patch_code_int(uint offset, int r);
-void patch_code_uint(uint offset, uint r);
-void patch_code_float(uint offset, float r);
-void patch_code_double(uint offset, double r);
-void memcpy_code(uint offset, void *data, uint size);
-void memset_code(uint offset, uint val, uint size);
+uint32_t get_relative_call(uint32_t base, uint32_t offset);
+uint32_t get_absolute_value(uint32_t base, uint32_t offset);
+void patch_code_byte(uint32_t offset, unsigned char r);
+void patch_code_word(uint32_t offset, WORD r);
+void patch_code_dword(uint32_t offset, DWORD r);
+void patch_code_int(uint32_t offset, int r);
+void patch_code_uint(uint32_t offset, uint32_t r);
+void patch_code_float(uint32_t offset, float r);
+void patch_code_double(uint32_t offset, double r);
+void memcpy_code(uint32_t offset, void *data, uint32_t size);
+void memset_code(uint32_t offset, uint32_t val, uint32_t size);

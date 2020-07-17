@@ -171,7 +171,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = 
 	return -1;
 }
 
-FILE *open_lgp_file(char *filename, uint mode)
+FILE *open_lgp_file(char *filename, uint32_t mode)
 {
 	char _filename[260]{ 0 };
 	if(trace_all || trace_files) trace("opening lgp file %s\n", filename);
@@ -219,25 +219,25 @@ char lgp_names[18][256] = {
 
 struct lgp_file
 {
-	uint is_lgp_offset;
+	uint32_t is_lgp_offset;
 	union
 	{
-		uint offset;
+		uint32_t offset;
 		FILE *fd;
 	};
-	uint resolved_conflict;
+	uint32_t resolved_conflict;
 };
 
 #define NUM_LGP_FILES 64
 
 struct lgp_file *lgp_files[NUM_LGP_FILES];
-uint lgp_files_index = 0;
+uint32_t lgp_files_index = 0;
 
 struct lgp_file *last;
 
 char lgp_current_dir[256];
 
-uint use_files_array = true;
+uint32_t use_files_array = true;
 
 int lgp_lookup_value(unsigned char c)
 {
@@ -253,9 +253,9 @@ int lgp_lookup_value(unsigned char c)
 	return c - 'a';
 }
 
-uint lgp_chdir(char *path)
+uint32_t lgp_chdir(char *path)
 {
-	uint len = strlen(path);
+	uint32_t len = strlen(path);
 
 	while(path[0] == '/' || path[0] == '\\') path++;
 	
@@ -268,18 +268,18 @@ uint lgp_chdir(char *path)
 }
 
 // original LGP open file logic, unchanged except for the LGP Tools safety net
-uint original_lgp_open_file(char *filename, uint lgp_num, struct lgp_file *ret)
+uint32_t original_lgp_open_file(char *filename, uint32_t lgp_num, struct lgp_file *ret)
 {
-	uint lookup_value1 = lgp_lookup_value(filename[0]);
-	uint lookup_value2 = lgp_lookup_value(filename[1]) + 1;
+	uint32_t lookup_value1 = lgp_lookup_value(filename[0]);
+	uint32_t lookup_value2 = lgp_lookup_value(filename[1]) + 1;
 	struct lookup_table_entry *lookup_table = ff7_externals.lgp_lookup_tables[lgp_num];
-	uint toc_offset = lookup_table[lookup_value1 * 30 + lookup_value2].toc_offset;
-	uint i;
+	uint32_t toc_offset = lookup_table[lookup_value1 * 30 + lookup_value2].toc_offset;
+	uint32_t i;
 
 	// did we find anything in the lookup table?
 	if(toc_offset)
 	{
-		uint num_files = lookup_table[lookup_value1 * 30 + lookup_value2].num_files;
+		uint32_t num_files = lookup_table[lookup_value1 * 30 + lookup_value2].num_files;
 
 		// look for our file
 		for(i = 0; i < num_files; i++)
@@ -299,7 +299,7 @@ uint original_lgp_open_file(char *filename, uint lgp_num, struct lgp_file *ret)
 				{
 					struct conflict_list *conflict = &ff7_externals.lgp_folders[lgp_num].conflicts[toc_entry->conflict - 1];
 					struct conflict_entry *conflict_entries = conflict->conflict_entries;
-					uint num_conflicts = conflict->num_conflicts;
+					uint32_t num_conflicts = conflict->num_conflicts;
 					
 					// there are multiple files with this name, look for our
 					// current directory in the conflict table
@@ -325,7 +325,7 @@ uint original_lgp_open_file(char *filename, uint lgp_num, struct lgp_file *ret)
 
 	// one last chance, the lookup table might have been broken by LGP Tools,
 	// search through the entire archive
-	for(i = 0; i < ((uint *)ff7_externals.lgp_tocs)[lgp_num * 2 + 1]; i++)
+	for(i = 0; i < ((uint32_t *)ff7_externals.lgp_tocs)[lgp_num * 2 + 1]; i++)
 	{
 		struct lgp_toc_entry *toc_entry = &ff7_externals.lgp_tocs[lgp_num * 2][i];
 
@@ -346,7 +346,7 @@ uint original_lgp_open_file(char *filename, uint lgp_num, struct lgp_file *ret)
 }
 
 // new LGP open file logic with modpath and direct mode support
-struct lgp_file *lgp_open_file(char *filename, uint lgp_num)
+struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 {
 	struct lgp_file *ret = (lgp_file*)external_calloc(sizeof(*ret), 1);
 	char tmp[512 + sizeof(basedir)];
@@ -409,7 +409,7 @@ struct lgp_file *lgp_open_file(char *filename, uint lgp_num)
  */
 
 // seek to given offset in LGP file
-uint lgp_seek_file(uint offset, uint lgp_num)
+uint32_t lgp_seek_file(uint32_t offset, uint32_t lgp_num)
 {
 	if(!ff7_externals.lgp_fds[lgp_num]) return false;
 
@@ -419,7 +419,7 @@ uint lgp_seek_file(uint offset, uint lgp_num)
 }
 
 // read straight from LGP file
-uint lgp_read(uint lgp_num, char *dest, uint size)
+uint32_t lgp_read(uint32_t lgp_num, char *dest, uint32_t size)
 {
 	if(!ff7_externals.lgp_fds[lgp_num]) return 0;
 
@@ -429,7 +429,7 @@ uint lgp_read(uint lgp_num, char *dest, uint size)
 }
 
 // read from LGP file by LGP file descriptor
-uint lgp_read_file(struct lgp_file *file, uint lgp_num, char *dest, uint size)
+uint32_t lgp_read_file(struct lgp_file *file, uint32_t lgp_num, char *dest, uint32_t size)
 {
 	if(!ff7_externals.lgp_fds[lgp_num]) return 0;
 
@@ -443,11 +443,11 @@ uint lgp_read_file(struct lgp_file *file, uint lgp_num, char *dest, uint size)
 }
 
 // retrieve the size of a file within the LGP archive
-uint lgp_get_filesize(struct lgp_file *file, uint lgp_num)
+uint32_t lgp_get_filesize(struct lgp_file *file, uint32_t lgp_num)
 {
 	if(file->is_lgp_offset)
 	{
-		uint size;
+		uint32_t size;
 
 		lgp_seek_file(file->offset + 20, lgp_num);
 		fread(&size, 4, 1, ff7_externals.lgp_fds[lgp_num]);
@@ -595,9 +595,9 @@ error:
 }
 
 // read from file handle, returns how many bytes were actually read
-uint __read_file(uint count, void *buffer, struct ff7_file *file)
+uint32_t __read_file(uint32_t count, void *buffer, struct ff7_file *file)
 {
-	uint ret = 0;
+	uint32_t ret = 0;
 
 	if(!file || !count) return false;
 
@@ -617,9 +617,9 @@ uint __read_file(uint count, void *buffer, struct ff7_file *file)
 }
 
 // read from file handle, returns true if the read succeeds
-uint read_file(uint count, void *buffer, struct ff7_file *file)
+uint32_t read_file(uint32_t count, void *buffer, struct ff7_file *file)
 {
-	uint ret = 0;
+	uint32_t ret = 0;
 
 	if(!file || !count) return false;
 
@@ -639,15 +639,15 @@ uint read_file(uint count, void *buffer, struct ff7_file *file)
 }
 
 // read directly from a file descriptor returned by the open_file function
-uint __read(FILE *file, char *buffer, uint count)
+uint32_t __read(FILE *file, char *buffer, uint32_t count)
 {
 	return fread(buffer, 1, count, file);
 }
 
 // write to file handle, returns true if the write succeeds
-uint write_file(uint count, void *buffer, struct ff7_file *file)
+uint32_t write_file(uint32_t count, void *buffer, struct ff7_file *file)
 {
-	uint ret = 0;
+	uint32_t ret = 0;
 	void *tmp = 0;
 
 	if(!file || !count) return false;
@@ -678,7 +678,7 @@ uint write_file(uint count, void *buffer, struct ff7_file *file)
 }
 
 // retrieve the size of a file from file handle
-uint get_filesize(struct ff7_file *file)
+uint32_t get_filesize(struct ff7_file *file)
 {
 	if(!file) return 0;
 
@@ -695,7 +695,7 @@ uint get_filesize(struct ff7_file *file)
 }
 
 // retrieve the current seek position from file handle
-uint tell_file(struct ff7_file *file)
+uint32_t tell_file(struct ff7_file *file)
 {
 	if(!file) return 0;
 
@@ -707,7 +707,7 @@ uint tell_file(struct ff7_file *file)
 }
 
 // seek to position in file
-void seek_file(struct ff7_file *file, uint offset)
+void seek_file(struct ff7_file *file, uint32_t offset)
 {
 	if(!file) return;
 
@@ -722,7 +722,7 @@ void seek_file(struct ff7_file *file, uint offset)
 // construct modpath name from file context, file handle and filename
 char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename)
 {
-	uint i, len;
+	uint32_t i, len;
 	char *backslash;
 	char* ret = (char*)external_malloc(1024);
 

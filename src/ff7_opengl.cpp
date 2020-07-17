@@ -30,9 +30,9 @@
 #include "ff7_data.h"
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
-word snowboard_fix[] = {0x0F, 0x10, 0x0F};
+WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
-static uint noop() { return 0; }
+static uint32_t noop() { return 0; }
 
 struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 {
@@ -60,7 +60,7 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 
 	// DirectInput hack, try to reacquire on any error
 	memset_code(ff7_externals.dinput_getdata2 + 0x65, 0x90, 9);
-	memset_code((uint)common_externals.dinput_acquire_keyboard + 0x31, 0x90, 5);
+	memset_code((uint32_t)common_externals.dinput_acquire_keyboard + 0x31, 0x90, 5);
 
 	// Allow mouse cursor to be shown
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
@@ -71,7 +71,7 @@ struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
 	// replace_function(ff7_externals.draw_3d_model, draw_3d_model);
 
 	// sub_6B27A9 hack, replace d3d code
-	memset_code((uint)ff7_externals.sub_6B27A9 + 25, 0x90, 6);
+	memset_code((uint32_t)ff7_externals.sub_6B27A9 + 25, 0x90, 6);
 	replace_function(ff7_externals.sub_6B26C0, draw_single_triangle);
 	replace_function(ff7_externals.sub_6B2720, sub_6B2720);
 
