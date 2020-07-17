@@ -1287,7 +1287,9 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 }
 
 // called by the game to indicate when a texture has switched to using another palette
-uint32_t common_palette_changed(uint32_t unknown1, uint32_t unknown2, uint32_t unknown3, struct palette *palette, struct texture_set *texture_set)
+// Either palette_entry_mul_index1 or palette_entry_mul_index2 can be filled. Not both! If palette_entry_mul_index1 has a value, then palette_entry_mul_index2 is 0, for eg.
+// If it is one or the other filled, means coming from two different points in the engine ( for FF8 at least )
+uint32_t common_palette_changed(uint32_t palette_entry_mul_index1, uint32_t palette_entries, uint32_t palette_entry_mul_index2, struct palette *palette, struct texture_set *texture_set)
 {
 	VOBJ(texture_set, texture_set, texture_set);
 
