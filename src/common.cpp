@@ -1548,11 +1548,11 @@ void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *
 }
 
 // called by the game to set a simple render state
-void common_field_64(uint32_t unknown1, uint32_t unknown2, struct game_obj *game_object)
+void common_field_64(uint32_t state, uint32_t option, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: field_64 %i %i\n", unknown1, unknown2);
+	if(trace_all) trace("dll_gfx: field_64 %i %i\n", state, option);
 
-	internal_set_renderstate(unknown1, unknown2, game_object);
+	internal_set_renderstate(state, option, game_object);
 }
 
 // called by the game to apply a set of render states
