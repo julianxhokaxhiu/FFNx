@@ -327,8 +327,6 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	reload_buffer_index = (reload_buffer_index + 1) % TEXRELOAD_BUFFER_SIZE;
 
 	stats.texture_reloads++;
-
-	if(trace_all) trace("texture_reload_hack: 0x%x\n", texture_set);
 }
 
 void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
@@ -336,6 +334,8 @@ void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, 
 	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->tri_gfxobj->hundred_data->texture_set;
 
 	texture_reload_hack(texture_set);
+
+	if (trace_all) trace("%s: texture_set 0x%x\n", __func__, texture_set);
 }
 
 void texture_reload_hack2(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
@@ -343,6 +343,8 @@ void texture_reload_hack2(struct texture_page *texture_page, uint32_t unknown1, 
 	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->sub_tri_gfxobj->hundred_data->texture_set;
 
 	texture_reload_hack(texture_set);
+
+	if (trace_all) trace("%s: texture_set 0x%x\n", __func__, texture_set);
 }
 
 void ff8_unload_texture(struct ff8_texture_set *texture_set)
