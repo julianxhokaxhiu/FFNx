@@ -279,52 +279,12 @@ error:
 	return 0;
 }
 
-#define TEXRELOAD_BUFFER_SIZE 64
-
-struct 
-{
-	char *image_data;
-	uint32_t size;
-	struct ff8_texture_set *texture_set;
-} reload_buffer[TEXRELOAD_BUFFER_SIZE];
-uint32_t reload_buffer_index;
-
 // this function is wedged into the middle of a function designed to reload a Direct3D texture
 // when the image data changes
 void texture_reload_hack(struct ff8_texture_set *texture_set)
 {
-	uint32_t i;
-	uint32_t size;
-	VOBJ(tex_header, tex_header, texture_set->tex_header);
-
-	size = VREF(tex_header, tex_format.width) * VREF(tex_header, tex_format.height) * VREF(tex_header, tex_format.bytesperpixel);
-
-	// a circular buffer holds the last TEXRELOAD_BUFFER_SIZE textures that went through here
-	// and their respective image data so that we can see if anything actually changed and avoid
-	// unnecessary texture reloads
-	for(i = 0; i < TEXRELOAD_BUFFER_SIZE; i++)
-	{
-		if(reload_buffer[i].texture_set == texture_set)
-		{
-			if(reload_buffer[i].size == size)
-			{
-				if(!memcmp(reload_buffer[i].image_data, VREF(tex_header, image_data), size))
-				{
-					return;
-				}
-			}
-		}
-	}
-
-	common_unload_texture((struct texture_set *)texture_set);
-	common_load_texture((struct texture_set *)texture_set, texture_set->tex_header, texture_set->texture_format);
-
-	reload_buffer[reload_buffer_index].texture_set = texture_set;
-	driver_free(reload_buffer[reload_buffer_index].image_data);
-	reload_buffer[reload_buffer_index].image_data = (char*)driver_malloc(size);
-	memcpy(reload_buffer[reload_buffer_index].image_data, VREF(tex_header, image_data), size);
-	reload_buffer[reload_buffer_index].size = size;
-	reload_buffer_index = (reload_buffer_index + 1) % TEXRELOAD_BUFFER_SIZE;
+	common_unload_texture((struct texture_set*)texture_set);
+	common_load_texture((struct texture_set*)texture_set, texture_set->tex_header, texture_set->texture_format);
 
 	stats.texture_reloads++;
 }
@@ -345,14 +305,6 @@ void texture_reload_hack2(struct texture_page *texture_page, uint32_t unknown1, 
 	texture_reload_hack(texture_set);
 
 	if (trace_all) trace("%s: texture_set 0x%x\n", __func__, texture_set);
-}
-
-void ff8_unload_texture(struct ff8_texture_set *texture_set)
-{
-	uint32_t i;
-
-	// remove any references to this texture
-	for(i = 0; i < TEXRELOAD_BUFFER_SIZE; i++) if(reload_buffer[i].texture_set == texture_set) reload_buffer[i].texture_set = 0;
 }
 
 void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
