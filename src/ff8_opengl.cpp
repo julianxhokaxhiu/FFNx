@@ -126,104 +126,6 @@ struct ff8_file* (*ff8_open_file)(struct ff8_file_context* file_context, char* f
 uint32_t(*ff8_read_file)(uint32_t count, void* buffer, struct ff8_file* file);
 void (*ff8_close_file)(struct ff8_file* file);
 
-/*
-// WIP! Works only on FF8 EN NV for now.
-struct ff8_file* ff8_open_file(struct ff8_file_context* file_context, char* filename)
-{
-	typedef int sub_40F50A(char*, void*, void*);
-	typedef char* sub_40A9D0(char*);
-	typedef int sub_open(const char*, int, int);
-
-	struct ff8_file* ret;
-
-	char _filename[260];
-	char file_mode_str[50];
-	int file_mode;
-	int file_permission;
-	int file_flags;
-
-	if (file_context->field_C) file_context->field_C(filename, _filename);
-
-	if (file_context->field_4)
-	{
-		ret = (struct ff8_file*)external_calloc(1, sizeof(*ret));
-		if (ret)
-		{
-			ret->field_4 = filename;
-			memcpy(&ret->field_C, file_context, sizeof(*file_context));
-			file_mode = file_context->field_0;
-			if (file_mode)
-			{
-				if (file_mode > 1 && file_mode <= 3)
-				{
-					error("ERROR: CANT CREATE/WRITE TO FILE %s; FILE SYSTEM IS READ ONLY\n", filename);
-				}
-			}
-		}
-	}
-	else
-	{
-		switch (file_context->field_0)
-		{
-		case 0:
-			file_flags = 0x8000;
-			file_permission = 0x100;
-			strcpy(file_mode_str, "READ_FILE_MODE");
-			break;
-		case 1:
-			file_flags = 0x4000;
-			file_permission = 0x100;
-			strcpy(file_mode_str, "READ_FILE_TEXT_MODE");
-			break;
-		case 2:
-			file_flags = 0x8102;
-			file_permission = 0x180;
-			strcpy(file_mode_str, "WRITE_FILE_MODE");
-			break;
-		case 3:
-			file_flags = 0x8302;
-			file_permission = 0x180;
-			strcpy(file_mode_str, "CREATE_FILE_MODE");
-			break;
-		default:
-			strcpy(file_mode_str, "UNKNOWN FILE MODE");
-			break;
-		}
-		ret = (struct ff8_file*)external_calloc(1, sizeof(*ret));
-		if (ret)
-		{
-			sprintf(_filename, "%s", filename);
-
-			if (file_context->field_10)
-			{
-				if (((sub_40F50A*)0x40F50A)(_filename, &ret->field_28, file_context->field_10))
-					ret->field_34 = file_context->field_10;
-				else
-					ret->field_8 = -1;
-			}
-			else
-			{
-				if (trace_all) trace("OPEN FILE %s (%s) => %d\n", _filename, file_mode_str, ret->field_8);
-
-				ret->field_8 = ((sub_open*)0x55D704)(_filename, file_flags, file_permission);
-			}
-
-			ret->field_0 = 1;
-			ret->field_4 = ((sub_40A9D0*)0x40A9D0)(_filename);
-			memcpy(&ret->field_C, file_context, sizeof(*file_context));
-			if (ret->field_8 == -1)
-			{
-				error("ERROR: COULD NOT OPEN FILE %s\n", filename);
-				ff8_close_file(ret);
-				ret->field_0 = 0;
-			}
-		}
-	}
-
-	return ret;
-}
-*/
-
 struct ff8_tex_header *ff8_load_tex_file(struct ff8_file_context* file_context, char *filename)
 {
 	struct ff8_tex_header *ret = (struct ff8_tex_header *)common_externals.create_tex_header();
@@ -279,8 +181,7 @@ error:
 	return 0;
 }
 
-// this function is wedged into the middle of a function designed to reload a Direct3D texture
-// when the image data changes
+// this function is wedged into the middle of a function designed to reload a Direct3D texture when the image data changes
 void texture_reload_hack(struct ff8_texture_set *texture_set)
 {
 	common_unload_texture((struct texture_set*)texture_set);
