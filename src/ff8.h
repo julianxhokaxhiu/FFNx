@@ -155,20 +155,43 @@ struct ff8_file_context
 struct ff8_file_unk
 {
 	int field_0;
+	char* filename;
+	int field_8;
+};
+
+struct ff8_file_fs
+{
+	int field_0;
 	int field_4;
 	int field_8;
+	char* filename;
+	int field_10;
+	int field_14;
+	int field_18;
+	int field_1C;
+	int field_20;
+	int field_24;
 };
 
 struct ff8_file
 {
 	int field_0;
-	char* field_4;
+	char* filename;
 	int field_8;
-	struct ff8_file_context field_C;
+	struct ff8_file_context* field_C;
 	int field_20;
 	int field_24;
-	struct ff8_file_unk field_28;
-	void* field_34;
+	struct ff8_file_unk* field_28;
+	void* file_container;
+};
+
+struct ff8_file_container
+{
+	int field_0;
+	int field_4;
+	struct ff8_file* fs_disk_file_metadata;
+	struct ff8_file_fs* fs_inside_file_metadata;
+	void* file_data_index;
 };
 
 struct ff8_indexed_vertices
@@ -380,7 +403,7 @@ struct ff8_texture_set
 struct texture_page
 {
 	uint32_t field_0;
-	uint32_t field_4;
+	struct texture_page* next_page;
 	uint32_t field_8;
 	uint32_t width;
 	uint32_t height;
