@@ -66,6 +66,7 @@ long enable_antialiasing = 0;
 cfg_bool_t enable_anisotropic = cfg_bool_t(true);
 cfg_bool_t skip_frames = cfg_bool_t(false);
 cfg_bool_t ff7_more_debug = cfg_bool_t(false);
+cfg_bool_t ff8_ssigpu_debug = cfg_bool_t(false);
 cfg_bool_t show_applog = cfg_bool_t(true);
 cfg_bool_t show_missing_textures = cfg_bool_t(false);
 cfg_bool_t show_error_popup = cfg_bool_t(false);
@@ -128,6 +129,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("create_crash_dump", &create_crash_dump),
 		CFG_SIMPLE_STR("steam_game_userdata", &steam_game_userdata),
 		CFG_SIMPLE_BOOL("ff7_more_debug", &ff7_more_debug),
+		CFG_SIMPLE_BOOL("ff8_ssigpu_debug", &ff8_ssigpu_debug),
 		CFG_SIMPLE_STR("hext_patching_path", &hext_patching_path),
 		CFG_SIMPLE_STR("override_path", &override_path),
 		CFG_SIMPLE_STR("direct_mode_path", &direct_mode_path),

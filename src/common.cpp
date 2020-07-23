@@ -799,6 +799,8 @@ void common_flip(struct game_obj *game_object)
 
 	// FF8 does not clear the screen properly in the card game module
 	if(ff8 && mode->driver_mode == MODE_CARDGAME) common_clear_all(0);
+
+	if (ff8 && ff8_ssigpu_debug) ff8_externals.refresh_vram_window();
 }
 
 // called by the game to clear an aspect of the back buffer, mostly called from

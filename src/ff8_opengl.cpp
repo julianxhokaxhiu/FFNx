@@ -326,6 +326,8 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 	game_object->dd2interface = &_fake_dddevice;
 	game_object->d3d2device = &_fake_d3d2device;
 
+	if (ff8_ssigpu_debug) ff8_externals.show_vram_window();
+
 	replace_function(ff8_externals.is_window_active, ff8_is_window_active);
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);

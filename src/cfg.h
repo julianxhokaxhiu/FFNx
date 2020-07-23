@@ -69,6 +69,7 @@ extern long enable_antialiasing;
 extern cfg_bool_t enable_anisotropic;
 extern cfg_bool_t skip_frames;
 extern cfg_bool_t ff7_more_debug;
+extern cfg_bool_t ff8_ssigpu_debug;
 extern cfg_bool_t show_applog;
 extern cfg_bool_t show_missing_textures;
 extern cfg_bool_t show_error_popup;

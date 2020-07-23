@@ -793,6 +793,7 @@ struct ff8_externals
 	uint32_t swirl_sub_56D1D0;
 	uint32_t load_credits_image;
 	uint32_t sub_52FE80;
+	uint32_t sub_53F0F0;
 	uint32_t sub_45D610;
 	uint32_t sub_45D080;
 	uint32_t sub_464BD0;
@@ -881,6 +882,8 @@ struct ff8_externals
 	uint32_t is_window_active;
 	uint32_t is_window_active_sub1;
 	uint32_t is_window_active_sub2;
+	void (*show_vram_window)();
+	void (*refresh_vram_window)();
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
