@@ -1127,7 +1127,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	uint32_t color_key = false;
 	struct texture_format *tex_format = VREFP(tex_header, tex_format);
 
-	if(trace_all) trace("dll_gfx: load_texture 0x%x\n", _texture_set);
+	if(trace_all && _texture_set != NULL) trace("dll_gfx: load_texture 0x%x\n", _texture_set);
 
 	// no existing texture set, create one
 	if(!VPTR(texture_set)) VASS(texture_set, texture_set, common_externals.create_texture_set());
