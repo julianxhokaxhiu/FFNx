@@ -19,7 +19,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <ddraw.h>
 #include "renderer.h"
 
 #include "fake_dd.h"

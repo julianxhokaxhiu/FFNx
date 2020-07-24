@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <ddraw.h>
 #include <stdio.h>
 
 #include "common.h"

@@ -21,18 +21,6 @@
 
 #pragma once
 
-#include <Shlwapi.h>
-#include <shlobj.h>
-#include <psapi.h>
-#include <mmsystem.h>
-
-#include <time.h>
-#include <malloc.h>
-#include <stdio.h>
-
-#include <dinput.h>
-#include <dsound.h>
-
 #include "matrix.h"
 #include "common_imports.h"
 

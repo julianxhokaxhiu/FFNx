@@ -21,8 +21,7 @@
 
 #pragma once
 
-#include <ddraw.h>
-#include <stdint.h>
+#include "common.h"
 
 void movie_init();
 uint32_t ff7_prepare_movie(char *, uint32_t, struct dddevice **, uint32_t);

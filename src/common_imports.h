@@ -21,7 +21,19 @@
 
 #pragma once
 
+#include <Shlwapi.h>
+#include <shlobj.h>
+#include <psapi.h>
+#include <mmsystem.h>
+
+#include <time.h>
+#include <malloc.h>
+#include <stdio.h>
 #include <stdint.h>
+
+#include <ddraw.h>
+#include <dinput.h>
+#include <dsound.h>
 
 /*
  * Render states supported by the graphics engine
