@@ -293,7 +293,7 @@ void Hext::applyDelayed(std::string& filename, std::string& checkpoint)
 
     ifs.close();
 
-    if (matchCheckpoint) trace("Applied Hext patch: %s\n", filename.c_str());
+    if (matchCheckpoint) trace("Applied delayed Hext patch: %s\n", filename.c_str());
 }
 
 void Hext::applyAll(std::string& checkpoint)
