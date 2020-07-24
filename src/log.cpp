@@ -103,26 +103,33 @@ void debug_print(const char *str)
 	fflush(app_log);
 }
 
-// filter out some less useful spammy messages
-const char ff7_filter[] = "SET VOLUME ";
-const char ff8_filter[] = "Patch ";
-
 void external_debug_print(const char *str)
 {
-	if(!ff8 && !strncmp(str, ff7_filter, sizeof(ff7_filter) - 1)) return;
-	if(ff8 && !strncmp(str, ff8_filter, sizeof(ff8_filter) - 1)) return;
+	std::string msg(str);
+	msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.end());
+	trim(msg);
 
-	if(show_applog) debug_print(str);
+	if (msg.length() == 0) return;
 
-	if(show_error_popup)
+	if (ff8)
+	{
+		if (starts_with(msg, "Patch")) return;
+	}
+	else
+	{
+		if (starts_with(msg, "SET VOLUME")) return;
+	}
+
+	msg += "\n";
+	if (show_applog) debug_print(msg.c_str());
+
+	if (show_error_popup)
 	{
 		strcpy(popup_msg, str);
 		popup_ttl = POPUP_TTL_MAX;
 		popup_color = text_colors[TEXTCOLOR_GRAY];
 	}
 
-	std::string msg(str);
-	msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.end());
 	hextPatcher.applyAll(msg);
 }
 
