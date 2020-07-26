@@ -182,30 +182,21 @@ error:
 }
 
 // this function is wedged into the middle of a function designed to reload a Direct3D texture when the image data changes
-void texture_reload_hack(struct ff8_texture_set *texture_set)
+void texture_reload_hack(struct texture_page* texture_page, uint32_t unknown1, uint32_t unknown2)
 {
-	common_unload_texture((struct texture_set*)texture_set);
-	common_load_texture((struct texture_set*)texture_set, texture_set->tex_header, texture_set->texture_format);
+	struct ff8_game_obj* game_object = (struct ff8_game_obj*)common_externals.get_game_object();
+	
+	if (game_object->field_A48)
+	{
+		struct ff8_texture_set* texture_set = (struct ff8_texture_set*)texture_page->tri_gfxobj->hundred_data->texture_set;
 
-	stats.texture_reloads++;
-}
+		common_unload_texture((struct texture_set*)texture_set);
+		common_load_texture((struct texture_set*)texture_set, texture_set->tex_header, texture_set->texture_format);
 
-void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
-{
-	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->tri_gfxobj->hundred_data->texture_set;
+		stats.texture_reloads++;
 
-	texture_reload_hack(texture_set);
-
-	if (trace_all) trace("%s: texture_set 0x%x\n", __func__, texture_set);
-}
-
-void texture_reload_hack2(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
-{
-	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->sub_tri_gfxobj->hundred_data->texture_set;
-
-	texture_reload_hack(texture_set);
-
-	if (trace_all) trace("%s: texture_set 0x%x\n", __func__, texture_set);
+		if (trace_all) trace("%s: texture_set 0x%x\n", __func__, texture_set);
+	}
 }
 
 void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
@@ -305,8 +296,7 @@ int ff8_is_window_active()
 	return 0;
 }
 
-unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
-unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
+unsigned char texture_reload_fix[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 
 struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 {
@@ -396,11 +386,8 @@ struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 	if(ff8_externals.nvidia_hack1) patch_code_double(ff8_externals.nvidia_hack1, 0.0);
 	if(ff8_externals.nvidia_hack2) patch_code_float(ff8_externals.nvidia_hack2, 0.0f);
 
-	memcpy_code(ff8_externals.sub_4653B0 + 0xA5, texture_reload_fix1, sizeof(texture_reload_fix1));
-	replace_function(ff8_externals.sub_4653B0 + 0xA5 + sizeof(texture_reload_fix1), texture_reload_hack1);
-
-	memcpy_code(ff8_externals.sub_465720 + 0xB3, texture_reload_fix2, sizeof(texture_reload_fix2));
-	replace_function(ff8_externals.sub_465720 + 0xB3 + sizeof(texture_reload_fix2), texture_reload_hack2);
+	memcpy_code(ff8_externals.sub_4653B0 + 0xA5, texture_reload_fix, sizeof(texture_reload_fix));
+	replace_function(ff8_externals.sub_4653B0 + 0xA5 + sizeof(texture_reload_fix), texture_reload_hack);
 
 	ret = (ff8_gfx_driver*)external_calloc(1, sizeof(*ret));
 
