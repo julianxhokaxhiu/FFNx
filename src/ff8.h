@@ -403,13 +403,13 @@ struct ff8_texture_set
 struct texture_page
 {
 	uint32_t field_0;
-	struct texture_page* next_page;
-	uint32_t field_8;
+	uint32_t x;
+	uint32_t y;
 	uint32_t width;
 	uint32_t height;
-	uint32_t field_14;
-	uint32_t field_18;
-	uint32_t field_1C;
+	uint32_t color_key;
+	uint32_t u;
+	uint32_t v;
 	uint32_t field_20;
 	struct ff8_graphics_object *tri_gfxobj;
 	struct ff8_graphics_object *quad_gfxobj;
@@ -423,6 +423,7 @@ struct texture_page
 	struct ff8_graphics_object *sub_quad_gfxobj;
 	struct ff8_graphics_object *mode3_tri_gfxobj;
 	struct ff8_graphics_object *mode3_quad_gfxobj;
+	uint32_t field_54;
 	struct ff8_tex_header *tex_header;
 	char *image_data;
 	uint32_t field_5C;
