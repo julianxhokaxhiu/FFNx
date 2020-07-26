@@ -1323,8 +1323,8 @@ struct ff7_game_obj
 	WNDCLASSA wndclass_struct;
 	uint32_t use_custom_dwStyle;
 	DWORD dwStyle;
-	struct main_obj main_obj_9F0;
-	struct main_obj main_obj_A0C;
+	struct main_obj engine_loop_obj;
+	struct main_obj game_loop_obj;
 	void *wm_activate;
 	uint32_t field_A2C;
 	uint32_t field_A30;

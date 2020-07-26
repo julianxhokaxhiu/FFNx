@@ -197,7 +197,7 @@ struct game_mode *getmode()
 	{
 		struct game_mode *m = &modes[i];
 
-		if(m->main_loop == (uint32_t)VREF(game_object, main_obj_A0C).main_loop && m->mode == *common_externals._mode)
+		if(m->main_loop == (uint32_t)VREF(game_object, game_loop_obj).main_loop && m->mode == *common_externals._mode)
 		{
 			if(last_mode != m->mode)
 			{
@@ -216,7 +216,7 @@ struct game_mode *getmode()
 	{
 		struct game_mode *m = &modes[i];
 
-		if(m->main_loop && m->main_loop == (uint32_t)VREF(game_object, main_obj_A0C).main_loop)
+		if(m->main_loop && m->main_loop == (uint32_t)VREF(game_object, game_loop_obj).main_loop)
 		{
 			if(last_mode != m->mode)
 			{
@@ -265,7 +265,7 @@ struct game_mode *getmode()
 
 	if(*common_externals._mode != last_mode)
 	{
-		unexpected("unknown mode (%i, 0x%x)\n", *common_externals._mode, (uint32_t)VREF(game_object, main_obj_A0C).main_loop);
+		unexpected("unknown mode (%i, 0x%x)\n", *common_externals._mode, (uint32_t)VREF(game_object, game_loop_obj).main_loop);
 		last_mode = *common_externals._mode;
 	}
 
@@ -528,17 +528,17 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				ReleaseDC(hWnd, hdc);
 			}
 
-			if (ret && VREF(game_object, main_obj_9F0.init))
+			if (ret && VREF(game_object, engine_loop_obj.init))
 			{
 				typedef int game_init(void*);
 				typedef void game_enter_main(void*);
 
 				if (ff8) ff8_inject_driver(game_object);
 
-				if (((game_init*)VREF(game_object, main_obj_9F0.init))(game_object))
+				if (((game_init*)VREF(game_object, engine_loop_obj.init))(game_object))
 				{
-					if (VREF(game_object, main_obj_9F0.enter_main))
-						((game_enter_main*)VREF(game_object, main_obj_9F0.enter_main))(game_object);
+					if (VREF(game_object, engine_loop_obj.enter_main))
+						((game_enter_main*)VREF(game_object, engine_loop_obj.enter_main))(game_object);
 				}
 				else
 				{
