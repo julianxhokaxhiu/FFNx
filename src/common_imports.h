@@ -479,8 +479,8 @@ struct palette
 	void *rgbapal;
 	void *palette_entry;
 	uint32_t ddpalette;
-	uint32_t field_34;
-	uint32_t field_38;
+	tex_header* tex_header;
+	texture_set* texture_set;
 	uint32_t field_3C;
 };
 
