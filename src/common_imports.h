@@ -469,7 +469,7 @@ struct palette
 	uint32_t field_0;
 	uint32_t palette_size;
 	uint32_t bitsperpixel;
-	uint32_t field_C;
+	uint32_t total_palettes;
 	uint32_t palette_entries;
 	uint32_t field_14;
 	uint32_t field_18;

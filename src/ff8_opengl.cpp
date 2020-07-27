@@ -33,6 +33,8 @@
 #include "gamepad.h"
 #include "ff8_data.h"
 
+unsigned char texture_reload_fix[] = { 0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00 };
+
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
 {
 	struct matrix_set *matrix_set;
@@ -182,7 +184,7 @@ error:
 }
 
 // this function is wedged into the middle of a function designed to reload a Direct3D texture when the image data changes
-void texture_reload_hack(struct texture_page* texture_page, uint32_t unknown1, uint32_t unknown2)
+void texture_reload_hack(struct texture_page* texture_page, uint32_t texture_pages_offset, uint32_t do_download)
 {
 	struct ff8_game_obj* game_object = (struct ff8_game_obj*)common_externals.get_game_object();
 	
@@ -295,8 +297,6 @@ int ff8_is_window_active()
 
 	return 0;
 }
-
-unsigned char texture_reload_fix[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 
 struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
 {

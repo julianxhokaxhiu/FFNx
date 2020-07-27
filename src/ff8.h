@@ -212,7 +212,7 @@ struct ff8_indexed_vertices
 
 struct ff8_graphics_object
 {
-	uint32_t polytype;
+	uint32_t initialized;
 	uint32_t field_4;
 	uint32_t field_8;
 	uint32_t field_10;
@@ -336,8 +336,8 @@ struct ff8_tex_header
 	unsigned char *old_palette_data;
 	uint32_t field_DC;
 	uint32_t field_E0;
-	uint32_t field_E4;
-	uint32_t field_E8;
+	uint32_t x;
+	uint32_t y;
 };
 
 struct ff8_texture_set
@@ -423,22 +423,32 @@ struct texture_page
 	struct ff8_graphics_object *sub_quad_gfxobj;
 	struct ff8_graphics_object *mode3_tri_gfxobj;
 	struct ff8_graphics_object *mode3_quad_gfxobj;
-	uint32_t field_54;
 	struct ff8_tex_header *tex_header;
 	char *image_data;
-	uint32_t field_5C;
+	struct ff8_tex_header* sub_tex_header;
+	char* sub_image_data;
 };
 
 struct struc_50
 {
-	uint32_t field_0;
-	struct texture_page texture_page;
+	uint32_t initialized;
+	struct texture_page texture_page[8];
+	uint32_t field_324;
+	uint32_t field_328;
+	uint32_t vram_needs_reload;
+	uint32_t field_330;
+	char dummy[256];
+	uint32_t vram_x;
+	uint32_t vram_y;
+	uint32_t vram_width;
+	uint32_t vram_height;
+	uint32_t vram_palette_data;
+	uint32_t field_448;
 };
 
 struct struc_51
 {
-	struct struc_50 struc_50_array[8];
-	char dummy[300];
+	struct struc_50 struc_50_array[32];
 };
 
 struct camdata
