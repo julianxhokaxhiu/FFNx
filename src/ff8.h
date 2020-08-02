@@ -212,26 +212,25 @@ struct ff8_indexed_vertices
 
 struct ff8_graphics_object
 {
-	uint32_t initialized;
+	uint32_t type;
 	uint32_t field_4;
 	uint32_t field_8;
-	uint32_t field_10;
+	uint32_t has_texture_set;
 	struct p_hundred *hundred_data;
 	struct matrix_set *matrix_set;
 	struct polygon_set *polygon_set;
-	uint32_t field_18;
-	uint32_t field_1C;
+	uint32_t is_tim_header;
 	uint32_t field_20;
+	uint32_t field_24;
 	float u_offset;
 	float v_offset;
 	void *dx_sfx_2C;
-	void *graphics_instance;
-	uint32_t field_34;
+	void *tex_info_filename_and_more;
+	uint32_t field_38;
 	uint32_t vertices_per_shape;
 	uint32_t indices_per_shape;
 	uint32_t vertex_offset;
 	uint32_t index_offset;
-	uint32_t field_48;
 	uint32_t field_4C;
 	uint32_t field_50;
 	uint32_t field_54;
@@ -248,11 +247,14 @@ struct ff8_graphics_object
 	uint32_t field_80;
 	uint32_t field_84;
 	uint32_t field_88;
+	uint32_t field_8C;
 	struct ff8_indexed_vertices *indexed_vertices;
-	gfx_polysetrenderstate *func_90;
-	gfx_draw_vertices *func_94;
+	uint32_t field_94;
+	uint32_t field_98;
+	gfx_polysetrenderstate* setrenderstate;
+	gfx_draw_vertices* draw;
 	uint32_t use_matrix_pointer;
-	struct matrix *matrix_pointer;
+	struct matrix* matrix_pointer;
 	struct matrix matrix;
 };
 

@@ -184,7 +184,7 @@ struct heap
 	uint32_t field_C;
 	uint32_t field_10;
 	uint32_t field_14;
-	uint32_t field_18;
+	int (*fn_something)(uint32_t, int);
 	uint32_t field_1C;
 	uint32_t field_20;
 	uint32_t field_24;
