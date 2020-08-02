@@ -28,6 +28,7 @@ void unreplace_function(uint32_t func);
 void unreplace_functions();
 
 void replace_call(uint32_t offset, void *func);
+uint32_t replace_call_function(uint32_t offset, void* func);
 
 uint32_t get_relative_call(uint32_t base, uint32_t offset);
 uint32_t get_absolute_value(uint32_t base, uint32_t offset);

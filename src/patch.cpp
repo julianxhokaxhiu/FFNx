@@ -73,6 +73,22 @@ void replace_call(uint32_t offset, void *func)
 	*(uint32_t *)(offset + 1) = ((uint32_t)func - offset) - 5;
 }
 
+uint32_t replace_call_function(uint32_t offset, void* func)
+{
+	DWORD dummy;
+
+	VirtualProtect((void*)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
+
+	replaced_functions[replace_counter++] = *(unsigned char*)offset;
+	replaced_functions[replace_counter++] = *(uint32_t*)(offset + 1);
+	replaced_functions[replace_counter++] = offset;
+
+	*(unsigned char*)offset = 0xE8;
+	*(uint32_t*)(offset + 1) = ((uint32_t)func - offset) - 5;
+
+	return replace_counter - 3;
+}
+
 uint32_t get_relative_call(uint32_t base, uint32_t offset)
 {
 	return base + *((uint32_t *)(base + offset + 1)) + offset + 5;
