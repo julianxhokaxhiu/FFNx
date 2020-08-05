@@ -123,7 +123,7 @@ uint32_t load_texture(char *name, uint32_t palette_index, uint32_t *width, uint3
 	}
 	else
 	{
-		if (trace_all) trace("Created texture: %u from %s\n", ret, filename);
+		if (trace_all) trace("Created external texture: %u from %s\n", ret, filename);
 	}
 
 	return ret;

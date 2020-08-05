@@ -72,17 +72,21 @@ void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, 
 
 	gl_check_texture_dimensions(w, h, "unknown");
 
+	uint32_t newTexture = newRenderer.createTexture(
+		(uint8_t*)image_data,
+		w,
+		h,
+		0,
+		RendererTextureType(format)
+	);
+
 	gl_replace_texture(
 		texture_set,
 		palette_index,
-		newRenderer.createTexture(
-			(uint8_t*)image_data,
-			w,
-			h,
-			0,
-			RendererTextureType(format)
-		)
+		newTexture
 	);
+
+	if (trace_all) trace("Created internal texture: %u\n", newTexture);
 }
 
 // prepare texture set for rendering
