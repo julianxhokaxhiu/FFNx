@@ -28,6 +28,8 @@
 #include "gl.h"
 #include "macro.h"
 
+#include "discohash.h"
+
 void make_path(char *name)
 {
 	char *next = name;
@@ -45,16 +47,24 @@ void make_path(char *name)
 	}
 }
 
-uint32_t save_texture(void *data, uint32_t width, uint32_t height, uint32_t palette_index, char *name)
+uint32_t save_texture(void *data, uint32_t width, uint32_t height, uint32_t palette_index, char *name, bool is_animated)
 {
 	char filename[sizeof(basedir) + 1024];
 	struct stat dummy;
+	uint64_t hash;
 
-	_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
+	if (is_animated)
+	{
+		BEBB4185_64(data, width * height, 0, &hash);
+
+		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.png", basedir, mod_path, name, palette_index, hash);
+	}
+	else
+		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
 
 	make_path(filename);
 
-	if(stat(filename, &dummy)) return newRenderer.saveTexture(filename, width, height, data);
+	if(stat(filename, &dummy) != 0) return newRenderer.saveTexture(filename, width, height, data);
 	else return true;
 }
 
@@ -75,10 +85,11 @@ uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool
 	return ret;
 }
 
-uint32_t load_texture(char *name, uint32_t palette_index, uint32_t *width, uint32_t *height)
+uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, bool is_animated)
 {
 	uint32_t ret = 0;
-	char filename[sizeof(basedir) + 1024];
+	char filename[sizeof(basedir) + 1024]{ 0 };
+	uint64_t hash;
 	
 	const std::vector<std::string> exts =
 	{
@@ -90,9 +101,13 @@ uint32_t load_texture(char *name, uint32_t palette_index, uint32_t *width, uint3
 	};
 	struct stat dummy;
 
+	if (is_animated) BEBB4185_64(data, dataSize, 0, &hash);
+
 	for (int idx = 0; idx < exts.size(); idx++)
 	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
+		if (is_animated) _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path, name, palette_index, hash, exts[idx].c_str());
+		
+		if (stat(filename, &dummy) != 0) _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
 
 		if (stat(filename, &dummy) == 0)
 		{
@@ -102,9 +117,15 @@ uint32_t load_texture(char *name, uint32_t palette_index, uint32_t *width, uint3
 				
 			break;
 		}
-		else
+		else if (trace_all || show_missing_textures)
 		{
-			if (trace_all || show_missing_textures) error("%s: %s\n", __func__, filename);
+			std::string errNotFound = "Could not find [ %s ].";
+
+			if (idx < exts.size()) errNotFound += "Will try again with the extension [ %s ].";
+
+			errNotFound += "\n";
+
+			warning(errNotFound.c_str(), filename, exts[idx+1].c_str());
 		}
 	}
 
@@ -113,7 +134,7 @@ uint32_t load_texture(char *name, uint32_t palette_index, uint32_t *width, uint3
 		if(palette_index != 0)
 		{
 			if(trace_all || show_missing_textures) info("No external texture found, falling back to palette 0\n", basedir, mod_path, name, palette_index);
-			return load_texture(name, 0, width, height);
+			return load_texture(data, dataSize, name, 0, width, height, false);
 		}
 		else
 		{

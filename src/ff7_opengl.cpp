@@ -34,9 +34,10 @@ WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
 static uint32_t noop() { return 0; }
 
-struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object)
+struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
 {
 	struct ff7_gfx_driver *ret;
+	struct ff7_game_obj* game_object = (struct ff7_game_obj*)_game_object;
 
 	common_externals.add_texture_format        = game_object->externals->add_texture_format;
 	common_externals.assert_calloc             = game_object->externals->assert_calloc;

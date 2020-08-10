@@ -298,9 +298,10 @@ int ff8_is_window_active()
 	return 0;
 }
 
-struct ff8_gfx_driver *ff8_load_driver(struct ff8_game_obj *game_object)
+struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 {
 	struct ff8_gfx_driver *ret;
+	struct ff8_game_obj* game_object = (struct ff8_game_obj*)_game_object;
 
 	if(version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
 	{

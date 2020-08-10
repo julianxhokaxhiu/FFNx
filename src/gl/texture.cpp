@@ -45,7 +45,7 @@ void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index,
 
 	if(VREF(texture_set, texturehandle[palette_index]))
 	{
-		if(VREF(texture_set, ogl.external)) glitch("oops, may have messed up an external texture\n");
+		if(VREF(texture_set, ogl.external) && !VREF(texture_set, ogl.gl_set->is_animated)) glitch("oops, may have messed up an external texture\n");
 		newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
 	}
 
@@ -105,7 +105,7 @@ void gl_bind_texture_set(struct texture_set *_texture_set)
 	}
 	else gl_set_texture(0);
 
-	current_state.texture_set = VPTRCAST(texture_set, texture_set);
+	current_state.texture_set = _texture_set;
 }
 
 // prepare an OpenGL texture for rendering, passing zero to this function will

@@ -1650,5 +1650,5 @@ struct ff7_externals
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
 void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
-struct ff7_gfx_driver *ff7_load_driver(struct ff7_game_obj *game_object);
+struct ff7_gfx_driver *ff7_load_driver(void *game_object);
 void ff7_post_init();

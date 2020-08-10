@@ -35,6 +35,7 @@ Some of the improvements that you can find on FFNx are:
 - FF7: Steam sound and music volume configuration preservation ( configure at your pleasure and on the next run it will be inherited )
 - FF7: Configurable background transparency in battle dialogs ( by default set to 75% )!
 - FF7: SFX volume change will now apply in real-time, instead of you requiring to close and re-open the game.
+- FF7: Support for animated textures ( like Aerith waterfall, light fading, etc. )
 
 And, on top of all of this you will also find:
 - One single .dll file to be copied
@@ -72,6 +73,7 @@ If you're curious to know it, FFNx is made with:
 - [md5](http://www.zedwood.com/article/cpp-md5-function) ( for the Steam XML manifest )
 - [libpng](http://www.libpng.org/pub/png/libpng.html) ( for a better and faster PNG texture support )
 - [imgui](https://github.com/ocornut/imgui) ( to better debug the in-game engine )
+- [discohash](https://github.com/cris691/discohash) ( to extract an hash from palette game textures data known as animated textures )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:

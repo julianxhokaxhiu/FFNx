@@ -42,6 +42,8 @@
 #include "input.h"
 #include "field.h"
 
+#include "discohash.h"
+
 bool proxyWndProc = false;
 
 // global game window handler
@@ -939,7 +941,7 @@ void common_unload_texture(struct texture_set *texture_set)
 	if(VREF(texture_set, ogl.external)) stats.external_textures--;
 
 	// remove any other references to this texture
-	gl_check_deferred(VPTRCAST(texture_set, texture_set));
+	gl_check_deferred(texture_set);
 
 	for(i = 0; i < scene_stack_pointer; i++)
 	{
@@ -975,7 +977,7 @@ uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_he
 }
 
 // load modpath texture for tex file, returns true if successful
-uint32_t load_external_texture(struct texture_set *texture_set, struct tex_header *tex_header)
+uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct texture_set *texture_set, struct tex_header *tex_header)
 {
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, tex_header);
@@ -988,7 +990,7 @@ uint32_t load_external_texture(struct texture_set *texture_set, struct tex_heade
 	{
 		if(trace_all || trace_loaders) trace("texture file name: %s\n", VREF(tex_header, file.pc_name));
 
-		texture = load_texture(VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height));
+		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set->is_animated);
 
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "world", strlen("world") - 1)) gl_set->force_filter = true;
 
@@ -1135,7 +1137,11 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	if(trace_all && _texture_set != NULL) trace("dll_gfx: load_texture 0x%x\n", _texture_set);
 
 	// no existing texture set, create one
-	if(!VPTR(texture_set)) VASS(texture_set, texture_set, common_externals.create_texture_set());
+	if (!VPTR(texture_set))
+	{
+		_texture_set = common_externals.create_texture_set();
+		VASS(texture_set, texture_set, _texture_set);
+	}
 
 	// allocate space for our private data
 	if(!VREF(texture_set, ogl.gl_set)) VRASS(texture_set, ogl.gl_set, (gl_texture_set*)external_calloc(sizeof(struct gl_texture_set), 1));
@@ -1160,17 +1166,17 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	// number of palettes has changed, reload the texture completely
 	if(VREF(texture_set, ogl.gl_set->textures) != VREF(tex_header, palettes) * 2 && !(VREF(tex_header, palettes) == 0 && VREF(texture_set, ogl.gl_set->textures) == 1))
 	{
-		common_unload_texture(VPTRCAST(texture_set, texture_set));
+		common_unload_texture(_texture_set);
 
-		return common_load_texture(VPTRCAST(texture_set, texture_set), VPTRCAST(tex_header, tex_header), texture_format);
+		return common_load_texture(_texture_set, _tex_header, texture_format);
 	}
 
 	// make sure the information in the texture set is consistent
-	VRASS(texture_set, tex_header, VPTRCAST(tex_header, tex_header));
+	VRASS(texture_set, tex_header, _tex_header);
 	VRASS(texture_set, texture_format, texture_format);
 
 	// check if this is suppposed to be a framebuffer texture, we may not have to do anything
-	if(load_framebuffer_texture(VPTRCAST(texture_set, texture_set), VPTRCAST(tex_header, tex_header))) return VPTRCAST(texture_set, texture_set);
+	if(load_framebuffer_texture(_texture_set, _tex_header)) return _texture_set;
 
 	// initialize palette index to a sane value if it hasn't been set
 	if(VREF(tex_header, palettes) > 0)
@@ -1190,11 +1196,11 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	{
 		unexpected("tried to use non-existent palette (%i, %i)\n", VREF(tex_header, palette_index), VREF(texture_set, ogl.gl_set->textures));
 		VRASS(tex_header, palette_index, 0);
-		return VPTRCAST(texture_set, texture_set);
+		return _texture_set;
 	}
 
 	// create palette structure if it doesn't exist already
-	if(VREF(tex_header, palettes) > 1 && VREF(texture_set, palette) == 0) palette = common_externals.create_palette_for_tex(texture_format->bitsperpixel, VPTRCAST(tex_header, tex_header), VPTRCAST(texture_set, texture_set));
+	if(VREF(tex_header, palettes) > 1 && VREF(texture_set, palette) == 0) palette = common_externals.create_palette_for_tex(texture_format->bitsperpixel, _tex_header, _texture_set);
 
 	if(tex_format->palettes == 0) tex_format->palettes = VREF(tex_header, palette_entries);
 
@@ -1221,7 +1227,8 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 		}
 
 		// the texture handle for the current palette is missing, convert & load it
-		if(!VREF(texture_set, texturehandle[VREF(tex_header, palette_index)]))
+		// if we are dealing with an animated palette, load it anyway even if already loaded
+		if(!VREF(texture_set, texturehandle[VREF(tex_header, palette_index)]) || VREF(texture_set, ogl.gl_set->is_animated))
 		{
 			uint32_t c = 0;
 			uint32_t w = VREF(tex_header, version) == FB_TEX_VERSION ? VREF(tex_header, fb_tex.w) : tex_format->width;
@@ -1252,9 +1259,6 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 				invert_alpha = true;
 			}
 
-			// check if this texture can be loaded from the modpath, we may not have to do any conversion
-			if(load_external_texture(VPTRCAST(texture_set, texture_set), VPTRCAST(tex_header, tex_header))) return VPTRCAST(texture_set, texture_set);
-
 			// allocate PBO
 			image_data = (uint32_t*)driver_malloc(w * h * 4);
 
@@ -1273,20 +1277,23 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			// save texture to modpath if save_textures is enabled
 			if(save_textures && (uint32_t)VREF(tex_header, file.pc_name) > 32)
 			{
-				if(!save_texture(image_data, w, h, VREF(tex_header, palette_index), VREF(tex_header, file.pc_name))) error("save_texture failed\n");
-			}
+				if(!save_texture(image_data, w, h, VREF(tex_header, palette_index), VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated))) error("save_texture failed\n");
+			}	
 
-			// commit PBO and populate texture set
-			gl_upload_texture(VPTRCAST(texture_set, texture_set), VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA);
+			// check if this texture can be loaded from the modpath, we may not have to do any conversion
+			if (!load_external_texture(image_data, w*h, _texture_set, _tex_header))
+			{
+				// commit PBO and populate texture set
+				gl_upload_texture(_texture_set, VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA);
+			}
 
 			// free the memory buffer
 			driver_free(image_data);
 		}
-		else return VPTRCAST(texture_set, texture_set);
 	}
 	else unexpected("no texture format specified or no source data\n");
 
-	return VPTRCAST(texture_set, texture_set);
+	return _texture_set;
 }
 
 // called by the game to indicate when a texture has switched to using another palette
@@ -1360,6 +1367,9 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 
 			stats.texture_reloads++;
 		}
+
+		// this texture changes in time, flag this as animated
+		VRASS(texture_set, ogl.gl_set->is_animated, true);
 	}
 	else
 	{
@@ -1394,17 +1404,6 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 
 			stats.texture_reloads++;
 		}
-	}
-
-	// modpath textures don't have palettes, these writes are ignored
-	// TODO: fancy palette cycling emulation?
-	if(VREF(texture_set, ogl.external))
-	{
-		if((uint32_t)VREF(tex_header, file.pc_name) > 32)
-		{
-			glitch_once("missed palette write to external texture %s\n", VREF(tex_header, file.pc_name));
-		}
-		else glitch_once("missed palette write to external texture\n");
 	}
 
 	stats.palette_writes++;
@@ -1690,14 +1689,14 @@ void common_field_84(uint32_t unknown, struct game_obj *game_object)
 	{
 		VRASS(polygon_set_2EC, field_0, true);
 		VRASS(polygon_set_2F0, field_0, false);
-		common_field_78(VPTRCAST(polygon_set, polygon_set_2EC), game_object);
+		common_field_78(VREF(game_object, polygon_set_2EC), game_object);
 	}
 
 	else
 	{
 		VRASS(polygon_set_2EC, field_0, false);
 		VRASS(polygon_set_2F0, field_0, true);
-		common_field_78(VPTRCAST(polygon_set, polygon_set_2F0), game_object);
+		common_field_78(VREF(game_object, polygon_set_2F0), game_object);
 	}
 }
 
@@ -1776,7 +1775,7 @@ void generic_draw_paletted(struct polygon_set *polygon_set, struct indexed_verti
 
 		VRASS(texture_set, palette_index, palette_index);
 
-		common_palette_changed(0, 0, 0, VREF(texture_set, palette), VPTRCAST(texture_set, texture_set));
+		common_palette_changed(0, 0, 0, VREF(texture_set, palette), hundred_data->texture_set);
 
 		while(var30 < count)
 		{
@@ -1879,7 +1878,9 @@ void common_field_EC(struct game_obj *game_object)
 // create a suitable tex header to be processed by the framebuffer texture loader
 struct tex_header *make_framebuffer_tex(uint32_t tex_w, uint32_t tex_h, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color_key)
 {
-	VOBJ(tex_header, tex_header, common_externals.create_tex_header());
+	struct tex_header* _header = common_externals.create_tex_header();
+
+	VOBJ(tex_header, tex_header, _header);
 
 	VRASS(tex_header, bpp, 32);
 	VRASS(tex_header, color_key, color_key);
@@ -1897,7 +1898,7 @@ struct tex_header *make_framebuffer_tex(uint32_t tex_w, uint32_t tex_h, uint32_t
 	VRASS(tex_header, fb_tex.w, w);
 	VRASS(tex_header, fb_tex.h, h);
 
-	return VPTRCAST(tex_header, tex_header);
+	return _header;
 }
 
 void qpc_get_time(time_t *dest)
@@ -2155,16 +2156,15 @@ extern "C" {
 __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 {
 	void *ret;
-	VOBJ(game_obj, game_object, game_object);
 
 	// try to prevent screensavers from going off
 	SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
 
 	// game-specific initialization
 	if(!ff8)
-		ret = ff7_load_driver(VPTRCAST(ff7_game_obj, game_object));
+		ret = ff7_load_driver(game_object);
 	else
-		ret = ff8_load_driver(VPTRCAST(ff8_game_obj, game_object));
+		ret = ff8_load_driver(game_object);
 
 	replace_function(common_externals.get_keyboard_state, &GetGameKeyState);
 	// catch all applog messages

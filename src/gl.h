@@ -68,6 +68,7 @@ struct gl_texture_set
 	uint32_t textures;
 	uint32_t force_filter;
 	uint32_t force_zsort;
+	uint32_t is_animated;
 };
 
 extern struct matrix d3dviewport_matrix;
