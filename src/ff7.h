@@ -1646,6 +1646,12 @@ struct ff7_externals
 	uint32_t sfx_fill_buffer_from_audio_dat;
 	uint32_t battle_summon_leviathan_loop;
 	uint32_t battle_limit_omnislash_loop;
+	uint32_t sub_5F4A47;
+	void (*reset_game_obj_sub_5F4971)(struct game_obj*);
+	uint32_t engine_exit_game_mode_sub_666C78;
+	void* (*sub_666C13)(struct game_obj*);
+	void* (*sub_670F9B)(void*);
+	BYTE* byte_CC0D89;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

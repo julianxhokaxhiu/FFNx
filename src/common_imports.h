@@ -502,13 +502,15 @@ typedef struct
 	char dummy[0xCC];
 } D3DDEVICEDESC;
 
+typedef void* main_obj_fn(struct game_obj*);
+
 struct main_obj
 {
-	void *init;
-	void *cleanup;
-	void *enter_main;
-	void *exit_main;
-	void *main_loop;
-	uint32_t field_14;
-	uint32_t field_18;
+	main_obj_fn *init;
+	main_obj_fn *cleanup;
+	main_obj_fn *enter_main;
+	main_obj_fn *exit_main;
+	main_obj_fn *main_loop;
+	main_obj_fn *field_14;
+	main_obj_fn *field_18;
 };

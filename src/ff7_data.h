@@ -114,6 +114,13 @@ void ff7_find_externals()
 	ff7_set_main_loop(MODE_SUBMARINE, get_absolute_value(main_loop, 0xAFD));
 	ff7_set_main_loop(MODE_SNOWBOARD, get_absolute_value(main_loop, 0xB3E));
 
+	ff7_externals.sub_5F4A47 = get_absolute_value(main_loop, 0xA13);
+	ff7_externals.reset_game_obj_sub_5F4971 = (void (*)(struct game_obj*))get_relative_call(ff7_externals.sub_5F4A47, 0x5B);
+	ff7_externals.engine_exit_game_mode_sub_666C78 = get_relative_call(common_externals.winmain, 0x217);
+	ff7_externals.sub_666C13 = (void* (*)(struct game_obj*))get_relative_call(ff7_externals.engine_exit_game_mode_sub_666C78, 0x35);
+	ff7_externals.sub_670F9B = (void* (*)(void*))get_relative_call(ff7_externals.engine_exit_game_mode_sub_666C78, 0x47);
+	ff7_externals.byte_CC0D89 = (BYTE*)get_absolute_value(main_loop, 0x71E);
+
 	ff7_externals.destroy_field_bk = get_relative_call(field_main_loop, 0x222);
 	ff7_externals.destroy_field_tiles = get_relative_call(ff7_externals.destroy_field_bk, 0x1E6);
 	ff7_externals.field_layers = (field_layer **)get_absolute_value(ff7_externals.destroy_field_tiles, 0x46);

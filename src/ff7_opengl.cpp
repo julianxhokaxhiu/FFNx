@@ -125,6 +125,9 @@ struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
 	// prevent FF7 from trying to cleanup the built-in midi player if we're going to replace it
 	if (use_external_music) replace_function(ff7_externals.cleanup_midi, noop);
 
+	// required for the soft reset
+	replace_function(ff7_externals.engine_exit_game_mode_sub_666C78, ff7_engine_exit_game_mode);
+
 	// ##################################
 	// bugfixes to enhance game stability
 	// ##################################

@@ -63,6 +63,8 @@ uint32_t ff8 = false;
 
 uint32_t ff8_currentdisk = 0;
 
+uint32_t ff7_do_reset = false;
+
 // global FF7/FF8 flag, check if is steam edition
 uint32_t steam_edition = false;
 
@@ -296,7 +298,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (proxyWndProc)
 	{
-		if (uMsg == WM_SIZE)
+		if (uMsg == WM_KEYDOWN)
+		{
+			if (!ff8)
+			{
+				if (wParam == 'R' && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) ff7_do_reset = true;
+			}
+		}
+		else if (uMsg == WM_SIZE)
 		{
 			window_size_x = (long)LOWORD(lParam);
 			window_size_y = (long)HIWORD(lParam);
@@ -532,15 +541,12 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 			if (ret && VREF(game_object, engine_loop_obj.init))
 			{
-				typedef int game_init(void*);
-				typedef void game_enter_main(void*);
-
 				if (ff8) ff8_inject_driver(game_object);
 
-				if (((game_init*)VREF(game_object, engine_loop_obj.init))(game_object))
+				if (VREF(game_object, engine_loop_obj.init)(game_object))
 				{
 					if (VREF(game_object, engine_loop_obj.enter_main))
-						((game_enter_main*)VREF(game_object, engine_loop_obj.enter_main))(game_object);
+						VREF(game_object, engine_loop_obj.enter_main)(game_object);
 				}
 				else
 				{
@@ -800,9 +806,19 @@ void common_flip(struct game_obj *game_object)
 	frame_counter++;
 
 	// FF8 does not clear the screen properly in the card game module
-	if(ff8 && mode->driver_mode == MODE_CARDGAME) common_clear_all(0);
+	if (ff8)
+	{
+		if (mode->driver_mode == MODE_CARDGAME) common_clear_all(0);
 
-	if (ff8 && ff8_ssigpu_debug) ff8_externals.refresh_vram_window();
+		if (ff8_ssigpu_debug) ff8_externals.refresh_vram_window();
+	}
+	else
+	{
+		if (ff7_do_reset)
+		{
+			ff7_externals.reset_game_obj_sub_5F4971(game_object);
+		}
+	}
 }
 
 // called by the game to clear an aspect of the back buffer, mostly called from
@@ -2269,6 +2285,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		if (!ff8)
 		{
+			common_externals.winmain = get_relative_call(common_externals.start, 0x14D);
 			replace_function(ff7_externals.get_inserted_cd_sub, ff7_get_inserted_cd);
 			replace_function(common_externals.create_window, common_create_window);
 

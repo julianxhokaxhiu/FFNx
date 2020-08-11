@@ -21,6 +21,7 @@
 
 #pragma once
 
+common_externals.start =                      0x40B6E0;
 common_externals.directsound =        (IDirectSound**)0xDE6770;
 common_externals.directsound_release =        0x74A3FE;
 common_externals.debug_print =                0x664E30;

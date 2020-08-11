@@ -98,6 +98,9 @@ int ff7_get_gamepad()
 
 struct ff7_gamepad_status* ff7_update_gamepad_status()
 {
+	bool isL2Pressed = gamepad.leftTrigger > 0.85f;
+	bool isR2Pressed = gamepad.rightTrigger > 0.85f;
+
 	if (!gamepad.Refresh()) return 0;
 
 	ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
@@ -112,13 +115,55 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 	ff7_externals.gamepad_status->button4 = gamepad.IsPressed(XINPUT_GAMEPAD_Y); // Triangle
 	ff7_externals.gamepad_status->button5 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER); // L1
 	ff7_externals.gamepad_status->button6 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER); // R1
-	ff7_externals.gamepad_status->button7 = gamepad.leftTrigger > 0.85f;
-	ff7_externals.gamepad_status->button8 = gamepad.rightTrigger > 0.85f;
+	ff7_externals.gamepad_status->button7 = isL2Pressed; // L2
+	ff7_externals.gamepad_status->button8 = isR2Pressed; // R2
 	ff7_externals.gamepad_status->button9 = gamepad.IsPressed(XINPUT_GAMEPAD_BACK); // SELECT
 	ff7_externals.gamepad_status->button10 = gamepad.IsPressed(XINPUT_GAMEPAD_START); // START
 	ff7_externals.gamepad_status->button11 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB); // L3
 	ff7_externals.gamepad_status->button12 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB); // R3
 	ff7_externals.gamepad_status->button13 = gamepad.IsPressed(0x400); // PS Button
+
+	// Soft reset on L1+L2+R1+R2+START+SELECT
+	if (
+		gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER) &&
+		gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) &&
+		isL2Pressed &&
+		isR2Pressed &&
+		gamepad.IsPressed(XINPUT_GAMEPAD_BACK) &&
+		gamepad.IsPressed(XINPUT_GAMEPAD_START)
+		)
+		ff7_do_reset = true;
     
     return ff7_externals.gamepad_status;
+}
+
+void* ff7_engine_exit_game_mode(ff7_game_obj* game_object)
+{
+	void* result;
+
+	if (game_object)
+	{
+		result = game_object;
+		if (game_object->field_924)
+		{
+			if (game_object->engine_loop_obj.exit_main)
+				game_object->engine_loop_obj.exit_main((struct game_obj*)game_object);
+
+			ff7_externals.sub_666C13((struct game_obj*)game_object);
+			result = ff7_externals.sub_670F9B(game_object->dx_sfx_something);
+
+			if (ff7_do_reset)
+			{
+				*ff7_externals.byte_CC0D89 = 26;
+
+				ff7_do_reset = false;
+			}
+
+			if (game_object->engine_loop_obj.enter_main)
+				result = game_object->engine_loop_obj.enter_main((struct game_obj*)game_object);
+
+			game_object->field_924 = 0;
+		}
+	}
+	return result;
 }
