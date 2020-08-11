@@ -36,6 +36,7 @@ Some of the improvements that you can find on FFNx are:
 - FF7: Configurable background transparency in battle dialogs ( by default set to 75% )!
 - FF7: SFX volume change will now apply in real-time, instead of you requiring to close and re-open the game.
 - FF7: Support for animated textures ( like Aerith waterfall, light fading, etc. )
+- FF7: Support for soft-reset while you're playing, like on the PSX! ( `CTRL+R` on your keyboard or `L1+L2+R1+R2+START+SELECT` on your XInput gamepad )
 
 And, on top of all of this you will also find:
 - One single .dll file to be copied
