@@ -115,7 +115,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 
 			if (stat(filename, &dummy) != 0)
 			{
-				trace("Could not find animated texture [ %s ].\n", filename);
+				if (trace_all || show_missing_textures) trace("Could not find animated texture [ %s ].\n", filename);
 
 				_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
 			}
