@@ -105,9 +105,19 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 
 	for (int idx = 0; idx < exts.size(); idx++)
 	{
-		if (is_animated) _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path, name, palette_index, hash, exts[idx].c_str());
-		
-		if (stat(filename, &dummy) != 0) _snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
+		if (is_animated)
+		{			
+			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path, name, palette_index, hash, exts[idx].c_str());
+
+			if (stat(filename, &dummy) != 0)
+			{
+				trace("Could not find animated texture [ %s ].\n", filename);
+
+				_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
+			}
+		}
+		else
+			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
 
 		if (stat(filename, &dummy) == 0)
 		{
@@ -119,13 +129,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 		}
 		else if (trace_all || show_missing_textures)
 		{
-			std::string errNotFound = "Could not find [ %s ].";
-
-			if (idx < exts.size()) errNotFound += "Will try again with the extension [ %s ].";
-
-			errNotFound += "\n";
-
-			warning(errNotFound.c_str(), filename, exts[idx+1].c_str());
+			trace("Could not find [ %s ].\n", filename);
 		}
 	}
 
