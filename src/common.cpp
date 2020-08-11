@@ -1259,9 +1259,6 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 				invert_alpha = true;
 			}
 
-			// allocate PBO
-			image_data = (uint32_t*)driver_malloc(w * h * 4);
-
 			if(!ff8)
 			{
 				// find out if color keying is enabled for this texture
@@ -1271,17 +1268,21 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 				if(VREF(tex_header, use_palette_colorkey)) color_key = VREF(tex_header, palette_colorkey[VREF(tex_header, palette_index)]);
 			}
 
+			// allocate PBO
+			uint32_t image_data_size = w * h * 4;
+			image_data = (uint32_t*)driver_malloc(image_data_size);
+
 			// convert source data
 			if (image_data != NULL) convert_image_data(VREF(tex_header, image_data), image_data, w, h, tex_format, invert_alpha, color_key, palette_offset, reference_alpha);
 
 			// save texture to modpath if save_textures is enabled
 			if(save_textures && (uint32_t)VREF(tex_header, file.pc_name) > 32)
 			{
-				if(!save_texture(image_data, w, h, VREF(tex_header, palette_index), VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated))) error("save_texture failed\n");
+				if(!save_texture(image_data, image_data_size, w, h, VREF(tex_header, palette_index), VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated))) error("save_texture failed\n");
 			}	
 
 			// check if this texture can be loaded from the modpath, we may not have to do any conversion
-			if (!load_external_texture(image_data, w*h, _texture_set, _tex_header))
+			if (!load_external_texture(image_data, image_data_size, _texture_set, _tex_header))
 			{
 				// commit PBO and populate texture set
 				gl_upload_texture(_texture_set, VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA);

@@ -47,7 +47,7 @@ void make_path(char *name)
 	}
 }
 
-uint32_t save_texture(void *data, uint32_t width, uint32_t height, uint32_t palette_index, char *name, bool is_animated)
+uint32_t save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, char *name, bool is_animated)
 {
 	char filename[sizeof(basedir) + 1024];
 	struct stat dummy;
@@ -55,7 +55,7 @@ uint32_t save_texture(void *data, uint32_t width, uint32_t height, uint32_t pale
 
 	if (is_animated)
 	{
-		BEBB4185_64(data, width * height, 0, &hash);
+		BEBB4185_64(data, dataSize, 0, &hash);
 
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.png", basedir, mod_path, name, palette_index, hash);
 	}
