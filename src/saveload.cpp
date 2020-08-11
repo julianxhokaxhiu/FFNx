@@ -47,7 +47,7 @@ void make_path(char *name)
 	}
 }
 
-uint32_t save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, char *name, bool is_animated)
+void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, char *name, bool is_animated)
 {
 	char filename[sizeof(basedir) + 1024];
 	struct stat dummy;
@@ -64,8 +64,12 @@ uint32_t save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t he
 
 	make_path(filename);
 
-	if(stat(filename, &dummy) != 0) return newRenderer.saveTexture(filename, width, height, data);
-	else return true;
+	if (stat(filename, &dummy) != 0)
+	{
+		if (!newRenderer.saveTexture(filename, width, height, data)) error("Save texture failed for the file [ %s ].\n", filename);
+	}
+	else
+		warning("Save texture skipped because the file [ %s ] already exists.\n", filename);
 }
 
 uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool useLibPng)

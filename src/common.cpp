@@ -1278,7 +1278,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			// save texture to modpath if save_textures is enabled
 			if(save_textures && (uint32_t)VREF(tex_header, file.pc_name) > 32)
 			{
-				if(!save_texture(image_data, image_data_size, w, h, VREF(tex_header, palette_index), VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated))) error("save_texture failed\n");
+				save_texture(image_data, image_data_size, w, h, VREF(tex_header, palette_index), VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated));
 			}	
 
 			// check if this texture can be loaded from the modpath, we may not have to do any conversion
