@@ -1652,6 +1652,12 @@ struct ff7_externals
 	void* (*sub_666C13)(struct game_obj*);
 	void* (*sub_670F9B)(void*);
 	BYTE* byte_CC0D89;
+	uint32_t enter_gameover;
+	uint32_t exit_gameover;
+	void* (*start_gameover)();
+	void* (*gameover_sub_6C12B1)();
+	uint32_t on_gameover_enter;
+	uint32_t on_gameover_exit;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

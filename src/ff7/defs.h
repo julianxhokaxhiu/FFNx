@@ -33,6 +33,8 @@ void ff7_wm_activateapp(bool hasFocus);
 int ff7_get_gamepad();
 struct ff7_gamepad_status* ff7_update_gamepad_status();
 void* ff7_engine_exit_game_mode(ff7_game_obj* game_object);
+void ff7_on_gameover_enter();
+void ff7_on_gameover_exit();
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);

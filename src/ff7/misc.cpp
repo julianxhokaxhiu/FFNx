@@ -154,6 +154,7 @@ void* ff7_engine_exit_game_mode(ff7_game_obj* game_object)
 
 			if (ff7_do_reset)
 			{
+				// Trigger game over
 				*ff7_externals.byte_CC0D89 = 26;
 
 				ff7_do_reset = false;
@@ -166,4 +167,26 @@ void* ff7_engine_exit_game_mode(ff7_game_obj* game_object)
 		}
 	}
 	return result;
+}
+
+void ff7_on_gameover_enter()
+{
+	// Stop current music
+	((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(/* stop_music */ 0xF0, 0, 0, 0, 0, 0);
+	// Stop current sound
+	((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(/* stop_music */ 0xF1, 0, 0, 0, 0, 0);
+	// Play the gameover music
+	((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(/* play_music */ 0x14, /* midi_id */ 0x3A, 0, 0, 0, 0);
+
+	ff7_externals.start_gameover();
+}
+
+void ff7_on_gameover_exit()
+{
+	// Stop current music
+	((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(/* stop_music */ 0xF0, 0, 0, 0, 0, 0);
+	// Stop current sound
+	((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(/* stop_music */ 0xF1, 0, 0, 0, 0, 0);
+
+	ff7_externals.gameover_sub_6C12B1();
 }

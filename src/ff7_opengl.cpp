@@ -128,6 +128,10 @@ struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
 	// required for the soft reset
 	replace_function(ff7_externals.engine_exit_game_mode_sub_666C78, ff7_engine_exit_game_mode);
 
+	// required to fix missing gameover music and broken menu sound after playing it
+	replace_call_function(ff7_externals.on_gameover_enter, ff7_on_gameover_enter);
+	replace_call_function(ff7_externals.on_gameover_exit, ff7_on_gameover_exit);
+
 	// ##################################
 	// bugfixes to enhance game stability
 	// ##################################
