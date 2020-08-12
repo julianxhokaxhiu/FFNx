@@ -1384,6 +1384,9 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 
 			stats.texture_reloads++;
 		}
+
+		// this texture changes in time, flag this as animated
+		VRASS(texture_set, ogl.gl_set->is_animated, true);
 	}
 	else
 	{
@@ -1419,9 +1422,6 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 			stats.texture_reloads++;
 		}
 	}
-
-	// this texture changes in time, flag this as animated
-	VRASS(texture_set, ogl.gl_set->is_animated, true);
 
 	stats.palette_writes++;
 
