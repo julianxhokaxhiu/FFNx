@@ -25,24 +25,6 @@
 #include "../log.h"
 #include "../gamepad.h"
 
-// SPEEDHACK
-void ff7_speedhack_incr()
-{
-	if (speedhack_current == speedhack_max) speedhack_current = 1;
-	else speedhack_current += speedhack_step;
-}
-
-void ff7_speedhack_decr()
-{
-	if (speedhack_current == 1.0) speedhack_current = speedhack_max;
-	else speedhack_current -= speedhack_step;
-}
-
-void ff7_speedhack_reset()
-{
-	speedhack_current = 1;
-}
-
 // MDEF fix
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
 {
@@ -154,14 +136,14 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		ff7_externals.gamepad_status->button7 &&
 		ff7_externals.gamepad_status->button8
 		)
-		ff7_speedhack_incr();
+		speedhack_incr();
 	// Decrease in-game speed on R3
 	else if (
 		ff7_externals.gamepad_status->dpad_down &&
 		ff7_externals.gamepad_status->button7 &&
 		ff7_externals.gamepad_status->button8
 		)
-		ff7_speedhack_decr();
+		speedhack_decr();
     
     return ff7_externals.gamepad_status;
 }

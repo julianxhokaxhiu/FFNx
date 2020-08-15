@@ -305,9 +305,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (!ff8)
 			{
 				if (wParam == 'R' && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) ff7_do_reset = true;
-				else if (wParam == VK_UP && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) ff7_speedhack_incr();
-				else if (wParam == VK_DOWN && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) ff7_speedhack_decr();
 			}
+
+			if (wParam == VK_UP && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) speedhack_incr();
+			else if (wParam == VK_DOWN && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) speedhack_decr();
 		}
 		else if (uMsg == WM_SIZE)
 		{
@@ -392,6 +393,24 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return common_externals.engine_wndproc(hwnd, uMsg, wParam, lParam);
+}
+
+// SPEEDHACK
+void speedhack_incr()
+{
+	if (speedhack_current == speedhack_max) speedhack_current = 1;
+	else speedhack_current += speedhack_step;
+}
+
+void speedhack_decr()
+{
+	if (speedhack_current == 1.0) speedhack_current = speedhack_max;
+	else speedhack_current -= speedhack_step;
+}
+
+void speedhack_reset()
+{
+	speedhack_current = 1;
 }
 
 int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
@@ -832,7 +851,7 @@ void common_flip(struct game_obj *game_object)
 	{
 		if (ff7_do_reset)
 		{
-			ff7_speedhack_reset();
+			speedhack_reset();
 
 			ff7_externals.reset_game_obj_sub_5F4971(game_object);
 		}

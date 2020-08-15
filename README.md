@@ -26,6 +26,7 @@ Some of the improvements that you can find on FFNx are:
 - FF7/FF8: Steam support! No Game converter required.
 - FF7/FF8: Steam savegame preservation ( you will no more loose saves created with FFNx! )
 - FF7/FF8: XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
+- FF7/FF8: Native speedhack support ( `Ctrl+Arrow Up/Down` to switch between multipliers or `L2+R2+DPAD UP/DOWN` on your XInput gamepad )
 - FF7: eStore support! No Game converter required.
 - FF7: Vertical centering for Fields and Movies
 - FF7: Fullscreen Battle scenes
@@ -37,7 +38,6 @@ Some of the improvements that you can find on FFNx are:
 - FF7: SFX volume change will now apply in real-time, instead of you requiring to close and re-open the game.
 - FF7: Support for animated textures ( like Aerith waterfall, light fading, etc. )
 - FF7: Support for soft-reset while you're playing, like on the PSX! ( `CTRL+R` on your keyboard or `L1+L2+R1+R2+START+SELECT` on your XInput gamepad )
-- FF7: Native speedhack support ( `Ctrl+Arrow Up/Down` to switch between multipliers or `L2+R2+DPAD UP/DOWN` on your XInput gamepad )
 
 And, on top of all of this you will also find:
 - One single .dll file to be copied

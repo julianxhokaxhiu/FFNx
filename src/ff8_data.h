@@ -51,6 +51,8 @@ void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 
 void ff8_find_externals()
 {
+	common_externals.diff_time = get_relative_call(common_externals.winmain, 0x41E);
+
 	ff8_externals.sub_401ED0 = version == VERSION_FF8_12_JP ? 0x402290 : 0x401ED0;
 	ff8_externals.pubintro_init = get_absolute_value(ff8_externals.sub_401ED0, 0x158);
 	ff8_externals.sub_467C00 = get_relative_call(ff8_externals.pubintro_init, 0xB5);

@@ -279,6 +279,10 @@ void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *
 void get_data_lang_path(PCHAR buffer);
 void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);
 
+void speedhack_incr();
+void speedhack_decr();
+void speedhack_reset();
+
 
 #if defined(__cplusplus)
 extern "C" {
