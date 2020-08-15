@@ -46,6 +46,8 @@
 
 bool proxyWndProc = false;
 
+double speedhack_current = 1;
+
 // global game window handler
 HWND gameHwnd;
 uint32_t gameWindowOffsetX;
@@ -303,6 +305,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (!ff8)
 			{
 				if (wParam == 'R' && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) ff7_do_reset = true;
+				else if (wParam == VK_UP && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) ff7_speedhack_incr();
+				else if (wParam == VK_DOWN && (::GetKeyState(VK_CONTROL) & 0x8000) != 0) ff7_speedhack_decr();
 			}
 		}
 		else if (uMsg == WM_SIZE)
@@ -642,6 +646,11 @@ void common_flip(struct game_obj *game_object)
 			gl_draw_text(col, row++, text_colors[TEXTCOLOR_YELLOW], 255, "FPS: %2i", (fps_counters[1] + fps_counters[2] + 1) / 2);
 		}
 
+		if (show_speedhack_speed)
+		{
+			gl_draw_text(col, row++, text_colors[TEXTCOLOR_LIGHT_BLUE], 255, "Current Speedhack: %2.1lfx", speedhack_current);
+		}
+
 		if (show_stats)
 		{
 			static uint32_t color = text_colors[TEXTCOLOR_PINK];
@@ -695,6 +704,13 @@ void common_flip(struct game_obj *game_object)
 		{
 			char tmp[64];
 			sprintf_s(tmp, 64, " | FPS: %2i", (fps_counters[1] + fps_counters[2] + 1) / 2);
+			strcat_s(newWindowTitle, 1024, tmp);
+		}
+
+		if (show_speedhack_speed)
+		{
+			char tmp[64];
+			sprintf_s(tmp, 64, " | Speed: %2.1lfx", speedhack_current);
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 
@@ -816,6 +832,8 @@ void common_flip(struct game_obj *game_object)
 	{
 		if (ff7_do_reset)
 		{
+			ff7_speedhack_reset();
+
 			ff7_externals.reset_game_obj_sub_5F4971(game_object);
 		}
 	}
@@ -1923,6 +1941,15 @@ void qpc_get_time(time_t *dest)
 	QueryPerformanceCounter((LARGE_INTEGER *)dest);
 
 	stats.timer = *dest;
+}
+
+int64_t qpc_diff_time(int64_t* t1, int64_t* t2, int64_t* out)
+{
+	int64_t ret = (*t1 - *t2) * speedhack_current;
+
+	*out = ret;
+
+	return ret;
 }
 
 // version check reads from a given offset in memory

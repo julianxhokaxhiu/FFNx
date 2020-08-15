@@ -25,6 +25,24 @@
 #include "../log.h"
 #include "../gamepad.h"
 
+// SPEEDHACK
+void ff7_speedhack_incr()
+{
+	if (speedhack_current == speedhack_max) speedhack_current = 1;
+	else speedhack_current += speedhack_step;
+}
+
+void ff7_speedhack_decr()
+{
+	if (speedhack_current == 1.0) speedhack_current = speedhack_max;
+	else speedhack_current -= speedhack_step;
+}
+
+void ff7_speedhack_reset()
+{
+	speedhack_current = 1;
+}
+
 // MDEF fix
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
 {
@@ -98,25 +116,22 @@ int ff7_get_gamepad()
 
 struct ff7_gamepad_status* ff7_update_gamepad_status()
 {
-	bool isL2Pressed = gamepad.leftTrigger > 0.85f;
-	bool isR2Pressed = gamepad.rightTrigger > 0.85f;
-
 	if (!gamepad.Refresh()) return 0;
 
 	ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
 	ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
-	ff7_externals.gamepad_status->field_30 = (gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
-	ff7_externals.gamepad_status->field_34 = (gamepad.leftStickY < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN); // DOWN
-	ff7_externals.gamepad_status->field_38 = (gamepad.leftStickX < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT); // LEFT
-	ff7_externals.gamepad_status->field_3C = (gamepad.leftStickX > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT); // RIGHT
+	ff7_externals.gamepad_status->dpad_up = (gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
+	ff7_externals.gamepad_status->dpad_down = (gamepad.leftStickY < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN); // DOWN
+	ff7_externals.gamepad_status->dpad_left = (gamepad.leftStickX < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT); // LEFT
+	ff7_externals.gamepad_status->dpad_right = (gamepad.leftStickX > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT); // RIGHT
 	ff7_externals.gamepad_status->button1 = gamepad.IsPressed(XINPUT_GAMEPAD_X); // Square
 	ff7_externals.gamepad_status->button2 = gamepad.IsPressed(XINPUT_GAMEPAD_A); // Cross
 	ff7_externals.gamepad_status->button3 = gamepad.IsPressed(XINPUT_GAMEPAD_B); // Circle
 	ff7_externals.gamepad_status->button4 = gamepad.IsPressed(XINPUT_GAMEPAD_Y); // Triangle
 	ff7_externals.gamepad_status->button5 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER); // L1
 	ff7_externals.gamepad_status->button6 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER); // R1
-	ff7_externals.gamepad_status->button7 = isL2Pressed; // L2
-	ff7_externals.gamepad_status->button8 = isR2Pressed; // R2
+	ff7_externals.gamepad_status->button7 = gamepad.leftTrigger > 0.85f; // L2
+	ff7_externals.gamepad_status->button8 = gamepad.rightTrigger > 0.85f; // R2
 	ff7_externals.gamepad_status->button9 = gamepad.IsPressed(XINPUT_GAMEPAD_BACK); // SELECT
 	ff7_externals.gamepad_status->button10 = gamepad.IsPressed(XINPUT_GAMEPAD_START); // START
 	ff7_externals.gamepad_status->button11 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB); // L3
@@ -125,14 +140,28 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 
 	// Soft reset on L1+L2+R1+R2+START+SELECT
 	if (
-		gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER) &&
-		gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) &&
-		isL2Pressed &&
-		isR2Pressed &&
-		gamepad.IsPressed(XINPUT_GAMEPAD_BACK) &&
-		gamepad.IsPressed(XINPUT_GAMEPAD_START)
+		ff7_externals.gamepad_status->button5 &&
+		ff7_externals.gamepad_status->button6 &&
+		ff7_externals.gamepad_status->button7 &&
+		ff7_externals.gamepad_status->button8 &&
+		ff7_externals.gamepad_status->button9 &&
+		ff7_externals.gamepad_status->button10
 		)
 		ff7_do_reset = true;
+	// Increase in-game speed on L3
+	else if (
+		ff7_externals.gamepad_status->dpad_up &&
+		ff7_externals.gamepad_status->button7 &&
+		ff7_externals.gamepad_status->button8
+		)
+		ff7_speedhack_incr();
+	// Decrease in-game speed on R3
+	else if (
+		ff7_externals.gamepad_status->dpad_down &&
+		ff7_externals.gamepad_status->button7 &&
+		ff7_externals.gamepad_status->button8
+		)
+		ff7_speedhack_decr();
     
     return ff7_externals.gamepad_status;
 }

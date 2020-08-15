@@ -103,6 +103,22 @@ void debug_print(const char *str)
 	fflush(app_log);
 }
 
+void show_popup_msg(uint8_t text_color, const char* fmt, ...)
+{
+	va_list args;
+	char tmp_str[1024];
+
+	va_start(args, fmt);
+
+	vsnprintf(tmp_str, sizeof(tmp_str), fmt, args);
+
+	va_end(args);
+
+	strcpy(popup_msg, tmp_str);
+	popup_ttl = POPUP_TTL_MAX;
+	popup_color = text_colors[text_color];
+}
+
 void external_debug_print(const char *str)
 {
 	std::string msg(str);
@@ -123,12 +139,7 @@ void external_debug_print(const char *str)
 	msg += "\n";
 	if (show_applog) debug_print(msg.c_str());
 
-	if (show_error_popup)
-	{
-		strcpy(popup_msg, str);
-		popup_ttl = POPUP_TTL_MAX;
-		popup_color = text_colors[TEXTCOLOR_GRAY];
-	}
+	if (show_error_popup) show_popup_msg(TEXTCOLOR_GRAY, str);
 
 	hextPatcher.applyAll(msg);
 }

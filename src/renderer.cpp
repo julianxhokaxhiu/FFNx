@@ -614,7 +614,7 @@ void Renderer::init()
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .end();
 
-    if (fullscreen) bgfx::setDebug(BGFX_DEBUG_TEXT);
+    bgfx::setDebug(BGFX_DEBUG_TEXT);
 
     bgfx::frame();
 

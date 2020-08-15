@@ -168,6 +168,7 @@ struct common_externals
 	uint32_t get_movie_frame;
 	struct tex_header *(*create_tex_header)();
 	uint32_t get_time;
+	uint32_t diff_time;
 	uint32_t midi_init;
 	char *(*get_midi_name)(uint32_t);
 	uint32_t use_midi;
@@ -268,6 +269,7 @@ struct driver_stats
 };
 
 void qpc_get_time(time_t *dest);
+int64_t qpc_diff_time(int64_t* t1, int64_t* t2, int64_t* out);
 uint32_t get_version();
 struct game_mode *getmode();
 struct game_mode *getmode_cached();

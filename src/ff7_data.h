@@ -348,6 +348,8 @@ void ff7_find_externals()
 	ff7_externals.gameover_sub_6C12B1 = (void* (*)())get_relative_call(ff7_externals.exit_gameover, 0x21);
 	ff7_externals.on_gameover_enter = ff7_externals.enter_gameover + 0xC6;
 	ff7_externals.on_gameover_exit = ff7_externals.exit_gameover + 0x21;
+
+	common_externals.diff_time = get_relative_call(common_externals.winmain, 0x2F6);
 }
 
 void ff7_data()

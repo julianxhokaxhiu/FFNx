@@ -46,6 +46,8 @@ void plugin_error(const char *fmt, ...);
 void external_debug_print(const char *str);
 void external_debug_print2(const char *fmt, ...);
 
+void show_popup_msg(uint8_t text_color, const char* fmt, ...);
+
 void debug_printf(const char *, uint32_t, const char *, ...);
 
 void windows_error(uint32_t error);

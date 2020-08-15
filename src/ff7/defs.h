@@ -35,6 +35,9 @@ struct ff7_gamepad_status* ff7_update_gamepad_status();
 void* ff7_engine_exit_game_mode(ff7_game_obj* game_object);
 void ff7_on_gameover_enter();
 void ff7_on_gameover_exit();
+void ff7_speedhack_incr();
+void ff7_speedhack_decr();
+void ff7_speedhack_reset();
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);

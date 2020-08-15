@@ -1361,10 +1361,10 @@ struct ff7_gamepad_status
 {
 	uint32_t pos_x;
 	uint32_t pos_y;
-	uint32_t field_30;
-	uint32_t field_34;
-	uint32_t field_38;
-	uint32_t field_3C;
+	uint32_t dpad_up;
+	uint32_t dpad_down;
+	uint32_t dpad_left;
+	uint32_t dpad_right;
 	uint32_t button1;
 	uint32_t button2;
 	uint32_t button3;
