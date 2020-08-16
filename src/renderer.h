@@ -300,6 +300,7 @@ public:
     // ---
 
     const bgfx::Caps* getCaps();
+    const bgfx::Stats* getStats();
 
     void bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount);
     void bindIndexBuffer(WORD* inIndex, uint32_t inCount);

@@ -801,6 +801,11 @@ const bgfx::Caps* Renderer::getCaps()
     return bgfx::getCaps();
 };
 
+const bgfx::Stats* Renderer::getStats()
+{
+    return bgfx::getStats();
+}
+
 void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount)
 {
     if (bgfx::isValid(vertexBufferHandle)) bgfx::destroy(vertexBufferHandle);

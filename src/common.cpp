@@ -400,12 +400,16 @@ void speedhack_incr()
 {
 	if (speedhack_current == speedhack_max) speedhack_current = 1;
 	else speedhack_current += speedhack_step;
+
+	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current);
 }
 
 void speedhack_decr()
 {
 	if (speedhack_current == 1.0) speedhack_current = speedhack_max;
 	else speedhack_current -= speedhack_step;
+
+	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current);
 }
 
 void speedhack_reset()
@@ -665,11 +669,6 @@ void common_flip(struct game_obj *game_object)
 			gl_draw_text(col, row++, text_colors[TEXTCOLOR_YELLOW], 255, "FPS: %2i", (fps_counters[1] + fps_counters[2] + 1) / 2);
 		}
 
-		if (show_speedhack_speed)
-		{
-			gl_draw_text(col, row++, text_colors[TEXTCOLOR_LIGHT_BLUE], 255, "Current Speedhack: %2.1lfx", speedhack_current);
-		}
-
 		if (show_stats)
 		{
 			static uint32_t color = text_colors[TEXTCOLOR_PINK];
@@ -726,13 +725,6 @@ void common_flip(struct game_obj *game_object)
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 
-		if (show_speedhack_speed)
-		{
-			char tmp[64];
-			sprintf_s(tmp, 64, " | Speed: %2.1lfx", speedhack_current);
-			strcat_s(newWindowTitle, 1024, tmp);
-		}
-
 		SetWindowTextA(gameHwnd, newWindowTitle);
 
 		// Show the cursor
@@ -755,7 +747,7 @@ void common_flip(struct game_obj *game_object)
 	// if there is an active popup message, display it
 	if(popup_ttl > 0)
 	{
-		if(gl_draw_text(8, 75, popup_color, (popup_ttl * 255) / POPUP_TTL_MAX, popup_msg))
+		if(gl_draw_text(4, newRenderer.getStats()->textHeight - 2, popup_color, (popup_ttl * 255) / POPUP_TTL_MAX, popup_msg))
 		{
 			uint32_t diff = (POPUP_TTL_MAX - popup_ttl) / 10;
 
