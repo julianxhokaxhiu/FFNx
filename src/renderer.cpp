@@ -415,6 +415,8 @@ void Renderer::renderFrame()
     backendProgram = RendererProgram::POSTPROCESSING;
     backendViewId++;
     {
+        bool needsToDraw = internalState.bHasDrawBeenDone;
+
         if (internalState.bHasDrawBeenDone)
             useTexture(
                 bgfx::getTexture(backendFrameBuffer).idx
@@ -430,7 +432,7 @@ void Renderer::renderFrame()
         setBlendMode(RendererBlendMode::BLEND_DISABLED);
         setPrimitiveType();
 
-        draw();
+        if (needsToDraw) draw();
 
         setBlendMode();
     }
