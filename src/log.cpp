@@ -136,12 +136,12 @@ void external_debug_print(const char *str)
 		if (starts_with(msg, "SET VOLUME")) return;
 	}
 
-	msg += "\n";
-	if (show_applog) debug_print(msg.c_str());
-
-	if (show_error_popup) show_popup_msg(TEXTCOLOR_GRAY, str);
-
 	hextPatcher.applyAll(msg);
+
+	msg += "\n";
+
+	if (show_applog) debug_print(msg.c_str());
+	if (show_error_popup) show_popup_msg(TEXTCOLOR_GRAY, str);
 }
 
 void external_debug_print2(const char *fmt, ...)
