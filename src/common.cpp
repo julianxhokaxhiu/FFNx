@@ -398,16 +398,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 // SPEEDHACK
 void speedhack_incr()
 {
-	if (speedhack_current == speedhack_max) speedhack_current = 1;
-	else speedhack_current += speedhack_step;
+	speedhack_current += speedhack_step;
+	if (speedhack_current > speedhack_max)speedhack_current = speedhack_max;
 
 	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current);
 }
 
 void speedhack_decr()
 {
-	if (speedhack_current == 1.0) speedhack_current = speedhack_max;
-	else speedhack_current -= speedhack_step;
+	speedhack_current -= speedhack_step;
+	if (speedhack_current < 1.0)speedhack_current = 1.0;
 
 	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current);
 }
