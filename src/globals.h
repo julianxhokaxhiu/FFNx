@@ -24,6 +24,7 @@
 #include <windows.h>
 
 #include "ff7.h"
+#include "ff7/defs.h"
 #include "ff8.h"
 
 #define FFNX_API __declspec(dllexport)

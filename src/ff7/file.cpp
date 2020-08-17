@@ -27,7 +27,7 @@
 #include "../log.h"
 #include "../hext.h"
 
-int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath = false)
+int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 {
 	std::string newIn(in);
 	

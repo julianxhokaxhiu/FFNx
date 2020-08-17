@@ -119,31 +119,6 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 	ff7_externals.gamepad_status->button11 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB); // L3
 	ff7_externals.gamepad_status->button12 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB); // R3
 	ff7_externals.gamepad_status->button13 = gamepad.IsPressed(0x400); // PS Button
-
-	// Soft reset on L1+L2+R1+R2+START+SELECT
-	if (
-		ff7_externals.gamepad_status->button5 &&
-		ff7_externals.gamepad_status->button6 &&
-		ff7_externals.gamepad_status->button7 &&
-		ff7_externals.gamepad_status->button8 &&
-		ff7_externals.gamepad_status->button9 &&
-		ff7_externals.gamepad_status->button10
-		)
-		ff7_do_reset = true;
-	// Increase in-game speed on L3
-	else if (
-		ff7_externals.gamepad_status->dpad_up &&
-		ff7_externals.gamepad_status->button7 &&
-		ff7_externals.gamepad_status->button8
-		)
-		speedhack_incr();
-	// Decrease in-game speed on R3
-	else if (
-		ff7_externals.gamepad_status->dpad_down &&
-		ff7_externals.gamepad_status->button7 &&
-		ff7_externals.gamepad_status->button8
-		)
-		speedhack_decr();
     
     return ff7_externals.gamepad_status;
 }

@@ -280,21 +280,6 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgbButtons[12] = gamepad.IsPressed(0x400) ? 0x80 : 0; // PS Button
 	}
 
-	// Increase in-game speed on L2+R2+DPAD UP
-	if (
-		ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 0 &&
-		ff8_externals.dinput_gamepad_state->rgbButtons[6] == 0x80 &&
-		ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
-		)
-		speedhack_incr();
-	// Decrease in-game speed on L2+R2+DPAD DOWN
-	else if (
-		ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 18000 &&
-		ff8_externals.dinput_gamepad_state->rgbButtons[6] == 0x80 &&
-		ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
-		)
-		speedhack_decr();
-
 	return ff8_externals.dinput_gamepad_state;
 }
 
