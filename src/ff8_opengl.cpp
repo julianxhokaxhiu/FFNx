@@ -218,86 +218,84 @@ void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 
 LPDIJOYSTATE2 ff8_update_gamepad_status()
 {
-	LPDIJOYSTATE2 gamepadState = (LPDIJOYSTATE2)ff8_externals.dinput_gamepad_buffer_1CD06DC;
-	
-	gamepadState->rgdwPOV[0] = -1;
-	gamepadState->lX = 0;
-	gamepadState->lY = 0;
-	gamepadState->lRx = 0;
-	gamepadState->lRy = 0;
+	ff8_externals.dinput_gamepad_state->rgdwPOV[0] = -1;
+	ff8_externals.dinput_gamepad_state->lX = 0;
+	ff8_externals.dinput_gamepad_state->lY = 0;
+	ff8_externals.dinput_gamepad_state->lRx = 0;
+	ff8_externals.dinput_gamepad_state->lRy = 0;
 
 	if (gamepad.Refresh())
 	{
 		if ((gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP))
 		{
-			gamepadState->lY = 0xFFFFFFFFFFFFFFFF;
-			gamepadState->rgdwPOV[0] = 0;
+			ff8_externals.dinput_gamepad_state->lY = 0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 0;
 		}
 		else if ((gamepad.leftStickY < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN))
 		{
-			gamepadState->lY = -0xFFFFFFFFFFFFFFFF;
-			gamepadState->rgdwPOV[0] = 18000;
+			ff8_externals.dinput_gamepad_state->lY = -0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 18000;
 		}
 
 		if ((gamepad.leftStickX < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT))
 		{
-			gamepadState->lX = 0xFFFFFFFFFFFFFFFF;
-			gamepadState->rgdwPOV[0] = 27000;
+			ff8_externals.dinput_gamepad_state->lX = 0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 27000;
 		}
 		else if ((gamepad.leftStickX > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT))
 		{
-			gamepadState->lX = -0xFFFFFFFFFFFFFFFF;
-			gamepadState->rgdwPOV[0] = 9000;
+			ff8_externals.dinput_gamepad_state->lX = -0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
 		}
 
 		if (gamepad.rightStickY > 0.5f)
-			gamepadState->lRy = 0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->lRy = 0xFFFFFFFFFFFFFFFF;
 		else if (gamepad.rightStickY < -0.5f)
-			gamepadState->lRy = -0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->lRy = -0xFFFFFFFFFFFFFFFF;
 
 		if (gamepad.rightStickX > 0.5f)
-			gamepadState->lRx = -0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->lRx = -0xFFFFFFFFFFFFFFFF;
 		else if (gamepad.rightStickX < -0.5f)
-			gamepadState->lRx = 0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->lRx = 0xFFFFFFFFFFFFFFFF;
 
-		gamepadState->lZ = 0;
-		gamepadState->lRz = 0;
-		gamepadState->rglSlider[0] = 0;
-		gamepadState->rglSlider[1] = 0;
-		gamepadState->rgdwPOV[1] = -1;
-		gamepadState->rgdwPOV[2] = -1;
-		gamepadState->rgdwPOV[3] = -1;
-		gamepadState->rgbButtons[0] = gamepad.IsPressed(XINPUT_GAMEPAD_X) ? 0x80 : 0; // Square
-		gamepadState->rgbButtons[1] = gamepad.IsPressed(XINPUT_GAMEPAD_A) ? 0x80 : 0; // Cross
-		gamepadState->rgbButtons[2] = gamepad.IsPressed(XINPUT_GAMEPAD_B) ? 0x80 : 0; // Circle
-		gamepadState->rgbButtons[3] = gamepad.IsPressed(XINPUT_GAMEPAD_Y) ? 0x80 : 0; // Triangle
-		gamepadState->rgbButtons[4] = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER) ? 0x80 : 0; // L1
-		gamepadState->rgbButtons[5] = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) ? 0x80 : 0; // R1
-		gamepadState->rgbButtons[6] = gamepad.leftTrigger > 0.85f ? 0x80 : 0; // L2
-		gamepadState->rgbButtons[7] = gamepad.rightTrigger > 0.85f ? 0x80 : 0; // R2
-		gamepadState->rgbButtons[8] = gamepad.IsPressed(XINPUT_GAMEPAD_BACK) ? 0x80 : 0; // SELECT
-		gamepadState->rgbButtons[9] = gamepad.IsPressed(XINPUT_GAMEPAD_START) ? 0x80 : 0; // START
-		gamepadState->rgbButtons[10] = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB) ? 0x80 : 0; // L3
-		gamepadState->rgbButtons[11] = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) ? 0x80 : 0; // R3
-		gamepadState->rgbButtons[12] = gamepad.IsPressed(0x400) ? 0x80 : 0; // PS Button
+		ff8_externals.dinput_gamepad_state->lZ = 0;
+		ff8_externals.dinput_gamepad_state->lRz = 0;
+		ff8_externals.dinput_gamepad_state->rglSlider[0] = 0;
+		ff8_externals.dinput_gamepad_state->rglSlider[1] = 0;
+		ff8_externals.dinput_gamepad_state->rgdwPOV[1] = -1;
+		ff8_externals.dinput_gamepad_state->rgdwPOV[2] = -1;
+		ff8_externals.dinput_gamepad_state->rgdwPOV[3] = -1;
+		ff8_externals.dinput_gamepad_state->rgbButtons[0] = gamepad.IsPressed(XINPUT_GAMEPAD_X) ? 0x80 : 0; // Square
+		ff8_externals.dinput_gamepad_state->rgbButtons[1] = gamepad.IsPressed(XINPUT_GAMEPAD_A) ? 0x80 : 0; // Cross
+		ff8_externals.dinput_gamepad_state->rgbButtons[2] = gamepad.IsPressed(XINPUT_GAMEPAD_B) ? 0x80 : 0; // Circle
+		ff8_externals.dinput_gamepad_state->rgbButtons[3] = gamepad.IsPressed(XINPUT_GAMEPAD_Y) ? 0x80 : 0; // Triangle
+		ff8_externals.dinput_gamepad_state->rgbButtons[4] = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER) ? 0x80 : 0; // L1
+		ff8_externals.dinput_gamepad_state->rgbButtons[5] = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) ? 0x80 : 0; // R1
+		ff8_externals.dinput_gamepad_state->rgbButtons[6] = gamepad.leftTrigger > 0.85f ? 0x80 : 0; // L2
+		ff8_externals.dinput_gamepad_state->rgbButtons[7] = gamepad.rightTrigger > 0.85f ? 0x80 : 0; // R2
+		ff8_externals.dinput_gamepad_state->rgbButtons[8] = gamepad.IsPressed(XINPUT_GAMEPAD_BACK) ? 0x80 : 0; // SELECT
+		ff8_externals.dinput_gamepad_state->rgbButtons[9] = gamepad.IsPressed(XINPUT_GAMEPAD_START) ? 0x80 : 0; // START
+		ff8_externals.dinput_gamepad_state->rgbButtons[10] = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB) ? 0x80 : 0; // L3
+		ff8_externals.dinput_gamepad_state->rgbButtons[11] = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) ? 0x80 : 0; // R3
+		ff8_externals.dinput_gamepad_state->rgbButtons[12] = gamepad.IsPressed(0x400) ? 0x80 : 0; // PS Button
 	}
 
 	// Increase in-game speed on L2+R2+DPAD UP
 	if (
-		gamepadState->rgdwPOV[0] == 0 &&
-		gamepadState->rgbButtons[6] == 0x80 &&
-		gamepadState->rgbButtons[7] == 0x80
+		ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 0 &&
+		ff8_externals.dinput_gamepad_state->rgbButtons[6] == 0x80 &&
+		ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
 		)
 		speedhack_incr();
 	// Decrease in-game speed on L2+R2+DPAD DOWN
 	else if (
-		gamepadState->rgdwPOV[0] == 18000 &&
-		gamepadState->rgbButtons[6] == 0x80 &&
-		gamepadState->rgbButtons[7] == 0x80
+		ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 18000 &&
+		ff8_externals.dinput_gamepad_state->rgbButtons[6] == 0x80 &&
+		ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
 		)
 		speedhack_decr();
 
-	return gamepadState;
+	return ff8_externals.dinput_gamepad_state;
 }
 
 int ff8_is_window_active()

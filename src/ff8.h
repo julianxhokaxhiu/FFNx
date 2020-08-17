@@ -838,7 +838,7 @@ struct ff8_externals
 	uint32_t check_active_window;
 	uint32_t sub_467D10;
 	uint32_t dinput_sub_4692B0;
-	uint32_t dinput_gamepad_buffer_1CD06DC;
+	LPDIJOYSTATE2 dinput_gamepad_state;
 	uint32_t pubintro_enter_main;
 	uint32_t draw_movie_frame;
 	uint32_t sub_529FF0;

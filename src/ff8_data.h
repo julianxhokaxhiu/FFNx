@@ -206,7 +206,7 @@ void ff8_find_externals()
 
 	common_externals.get_keyboard_state = get_relative_call(ff8_externals.sub_467D10, 0x11);
 	ff8_externals.dinput_sub_4692B0 = get_relative_call(ff8_externals.sub_467D10, 0x1B);
-	ff8_externals.dinput_gamepad_buffer_1CD06DC = get_absolute_value(ff8_externals.dinput_sub_4692B0, 0x1B);
+	ff8_externals.dinput_gamepad_state = (LPDIJOYSTATE2)get_absolute_value(ff8_externals.dinput_sub_4692B0, 0x1B);
 
 	common_externals.dinput_acquire_keyboard = (int (*)())get_relative_call(common_externals.get_keyboard_state, 0x34);
 	common_externals.keyboard_device = (IDirectInputDeviceA**)get_absolute_value(common_externals.get_keyboard_state, 0x01);
