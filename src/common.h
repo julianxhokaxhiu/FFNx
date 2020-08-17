@@ -282,6 +282,7 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);
 void speedhack_incr();
 void speedhack_decr();
 void speedhack_reset();
+bool speedhack_pressed;
 
 
 #if defined(__cplusplus)

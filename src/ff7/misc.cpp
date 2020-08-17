@@ -99,6 +99,7 @@ int ff7_get_gamepad()
 struct ff7_gamepad_status* ff7_update_gamepad_status()
 {
 	if (!gamepad.Refresh()) return 0;
+	
 
 	ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
 	ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
@@ -135,16 +136,27 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		ff7_externals.gamepad_status->dpad_up &&
 		ff7_externals.gamepad_status->button7 &&
 		ff7_externals.gamepad_status->button8
-		)
-		speedhack_incr();
+		) {
+		if (!speedhack_pressed) {
+			speedhack_incr();
+			speedhack_pressed = true;
+		}
+	}
 	// Decrease in-game speed on R3
 	else if (
 		ff7_externals.gamepad_status->dpad_down &&
 		ff7_externals.gamepad_status->button7 &&
 		ff7_externals.gamepad_status->button8
-		)
-		speedhack_decr();
-    
+		) {
+		if (!speedhack_pressed) {
+			speedhack_decr();
+			speedhack_pressed = true;
+		}
+	}
+	else {
+		speedhack_pressed = false;
+	}
+
     return ff7_externals.gamepad_status;
 }
 
