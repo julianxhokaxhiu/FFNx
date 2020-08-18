@@ -85,6 +85,7 @@ cfg_bool_t renderer_cache = cfg_bool_t(false);
 cfg_bool_t ff8_keep_game_running_in_background = cfg_bool_t(false);
 double speedhack_step = 0.5;
 double speedhack_max = 8.0;
+cfg_bool_t enable_animated_textures = cfg_bool_t(false);
 
 cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
@@ -143,6 +144,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("ff8_keep_game_running_in_background", &ff8_keep_game_running_in_background),
 		CFG_SIMPLE_FLOAT("speedhack_step", &speedhack_step),
 		CFG_SIMPLE_FLOAT("speedhack_max", &speedhack_max),
+		CFG_SIMPLE_BOOL("enable_animated_textures", &enable_animated_textures),
 
 		CFG_END()
 };
