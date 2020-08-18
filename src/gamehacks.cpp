@@ -52,7 +52,7 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 
 void GameHacks::processGamepadInput()
 {
-	if ((lastFrame == 0) || (frame_counter - lastFrame > 3))
+	if ((lastFrame == 0) || ((frame_counter - lastFrame) > 5))
 	{
 		if (!ff8)
 		{
