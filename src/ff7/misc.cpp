@@ -24,6 +24,7 @@
 #include "../ff7.h"
 #include "../log.h"
 #include "../gamepad.h"
+#include "../gamehacks.h"
 
 // MDEF fix
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
@@ -175,4 +176,22 @@ void ff7_on_gameover_exit()
 	((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(/* stop_music */ 0xF1, 0, 0, 0, 0, 0);
 
 	ff7_externals.gameover_sub_6C12B1();
+}
+
+BYTE ff7_toggle_battle_field()
+{
+	BYTE ret = ff7_externals.sub_60B260();
+
+	if (!gamehacks.wantsBattle()) ret = 255;
+
+	return ret;
+}
+
+BYTE ff7_toggle_battle_worldmap()
+{
+	BYTE ret = ff7_externals.sub_767C55();
+
+	if (!gamehacks.wantsBattle()) ret = 0;
+
+	return ret;
 }

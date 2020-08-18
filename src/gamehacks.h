@@ -28,17 +28,26 @@ class GameHacks
 private:
 	uint32_t lastFrame = 0;
 	double speedhack_current_speed = 1.0;
+	bool battle_wanted = true;
+
+	// SPEEDHACK
+	void resetSpeedhack();
+	void increaseSpeedhack();
+	void decreaseSpeedhack();
+
+	// BATTLE
+	void toggleBattleMode();
 
 public:
 	// GLOBALS
 	void processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam);
 	void processGamepadInput();
 
-	//SPEEDHACK
-	void resetSpeedhack();
-	void increaseSpeedhack();
-	void decreaseSpeedhack();
+	// SPEEDHACK
 	double getCurrentSpeedhack();
+
+	// BATTLE
+	bool wantsBattle();
 };
 
 extern GameHacks gamehacks;

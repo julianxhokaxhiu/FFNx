@@ -78,3 +78,7 @@ ff7_externals.call_menu_sound_slider_loop_sfx_up = 0x10DA;
 ff7_externals.sfx_play_summon =               0x6E580F;
 ff7_externals.battle_summon_leviathan_loop =  0x5B1785;
 ff7_externals.battle_limit_omnislash_loop =   0x46BA1B;
+ff7_externals.sub_60B260 = (BYTE(*)())0x60B200;
+ff7_externals.sub_767C55 = (BYTE(*)())0x704865;
+ff7_externals.field_battle_toggle = 0x60B381;
+ff7_externals.worldmap_battle_toggle = 0x704284;

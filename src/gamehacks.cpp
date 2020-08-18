@@ -23,6 +23,36 @@
 
 GameHacks gamehacks;
 
+// PRIVATE
+
+void GameHacks::resetSpeedhack()
+{
+	speedhack_current_speed = 1.0;
+}
+
+void GameHacks::increaseSpeedhack()
+{
+	if (speedhack_current_speed == speedhack_max) speedhack_current_speed = 1;
+	else speedhack_current_speed += speedhack_step;
+
+	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current_speed);
+}
+
+void GameHacks::decreaseSpeedhack()
+{
+	if (speedhack_current_speed == 1.0) speedhack_current_speed = speedhack_max;
+	else speedhack_current_speed -= speedhack_step;
+
+	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current_speed);
+}
+
+void GameHacks::toggleBattleMode()
+{
+	battle_wanted = !battle_wanted;
+
+	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Battle mode: %s", battle_wanted ? "ENABLED" : "DISABLED");
+}
+
 // PUBLIC
 
 void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
@@ -34,6 +64,9 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			switch (wParam)
 			{
+			case 'B':
+				toggleBattleMode();
+				break;
 			case 'R':
 				if (!ff8) ff7_do_reset = true;
 				resetSpeedhack();
@@ -84,6 +117,11 @@ void GameHacks::processGamepadInput()
 				ff7_externals.gamepad_status->button8
 				)
 				decreaseSpeedhack();
+			else if (
+				ff7_externals.gamepad_status->button11 &&
+				ff7_externals.gamepad_status->button12
+				)
+				toggleBattleMode();
 		}
 		else
 		{
@@ -107,28 +145,12 @@ void GameHacks::processGamepadInput()
 	}
 }
 
-void GameHacks::resetSpeedhack()
-{
-	speedhack_current_speed = 1.0;
-}
-
-void GameHacks::increaseSpeedhack()
-{
-	if (speedhack_current_speed == speedhack_max) speedhack_current_speed = 1;
-	else speedhack_current_speed += speedhack_step;
-
-	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current_speed);
-}
-
-void GameHacks::decreaseSpeedhack()
-{
-	if (speedhack_current_speed == 1.0) speedhack_current_speed = speedhack_max;
-	else speedhack_current_speed -= speedhack_step;
-
-	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current_speed);
-}
-
 double GameHacks::getCurrentSpeedhack()
 {
 	return speedhack_current_speed;
+}
+
+bool GameHacks::wantsBattle()
+{
+	return battle_wanted;
 }
