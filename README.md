@@ -26,7 +26,8 @@ Some of the improvements that you can find on FFNx are:
 - FF7/FF8: Steam support! No Game converter required.
 - FF7/FF8: Steam savegame preservation ( you will no more loose saves created with FFNx! )
 - FF7/FF8: XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
-- FF7/FF8: Native speedhack support ( `Ctrl+Arrow Up/Down` to switch between multipliers or `L2+R2+DPAD UP/DOWN` on your XInput gamepad )
+- FF7/FF8: Native speedhack support!
+- FF7/FF8: The game will continue to run when not in focus in Window mode ( FF7: always enabled, FF8: [disabled by default]((misc/FFNx.cfg#L354)) )
 - FF7: eStore support! No Game converter required.
 - FF7: Vertical centering for Fields and Movies
 - FF7: Fullscreen Battle scenes
@@ -37,7 +38,9 @@ Some of the improvements that you can find on FFNx are:
 - FF7: Configurable background transparency in battle dialogs ( by default set to 75% )!
 - FF7: SFX volume change will now apply in real-time, instead of you requiring to close and re-open the game.
 - FF7: Support for animated textures ( like Aerith waterfall, light fading, etc. )
-- FF7: Support for soft-reset while you're playing, like on the PSX! ( `CTRL+R` on your keyboard or `L1+L2+R1+R2+START+SELECT` on your XInput gamepad )
+- FF7: Support for soft-reset while you're playing, like on the PSX!
+- FF7: Support for battle toggle ( enable/disable at your own pleasure )
+- FF8: Enable the VRAM debug window while playing in order to see how the engine uploads textures
 
 And, on top of all of this you will also find:
 - One single .dll file to be copied
@@ -163,6 +166,36 @@ If you want to upgrade the provided FFNx release, feel free to use [these instru
 
 ## Tweak the configuration
 If you want a more advanced experience, for example using another backend renderer ( Vulkan instead of OpenGL, or DirectX 11 ) feel free to change the driver configuration file [FFNx.cfg](misc/FFNx.cfg).
+
+## Cheat codes
+
+FFNx comes with different cheat codes built-in which would allow you to boost or enjoy your gameplay experience.
+
+### Battle mode toggle
+
+> **Final Fantasy VII ONLY!**
+
+This cheat will allow you to disable battle encounters while in the worldmap or in field.
+
+Shortcuts:
+- Keyboard Shortcut: `CTRL + B`
+- Gamepad Shortcut: `L3 + R3`
+
+### Speedhack
+
+This cheat will allow you to boost the gameplay timing up to 8x ( by default, [you can configure this]((misc/FFNx.cfg#L200)) up to your pleasure ).
+
+Shortcuts:
+- Keyboard Shortcut: `CTRL + Arrow Up/Down`
+- Gamepad Shortcut: `L2 + R2 + Up/Down` ( DPad works too if using an XInput controller )
+
+### Soft Reset
+
+This cheat will allow you to reset the game like on PSX, by triggering the game over screen wherever you are.
+
+Shortcuts:
+- Keyboard Shortcut: `CTRL + R`
+- Gamepad Shortcut: `L1 + L2 + R1 + R2 + START + SELECT`
 
 ## Inspect logs
 If you want to check what is going on behind the scene, or you may happen to have a crash, feel free to check the `FFNx.log` file.
