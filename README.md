@@ -237,6 +237,8 @@ These people are:
   - for 7h 1.x which FFNx provides support for
 - [JWP](http://forums.qhimm.com/index.php?action=profile;u=3772):
   - for imgui integration within FFNx
+- [Kramer]()
+  - for PHS save everywhere Hext patch
 - [Maki](http://forums.qhimm.com/index.php?action=profile;u=23937):
   - for FF8 UV Hext Patch in the world map, which FFNx provides a default patch for
   - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
