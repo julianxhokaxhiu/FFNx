@@ -38,6 +38,9 @@ private:
 	// BATTLE
 	void toggleBattleMode();
 
+	// MOVIES
+	void skipMovies();
+
 public:
 	// GLOBALS
 	void processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam);

@@ -53,6 +53,17 @@ void GameHacks::toggleBattleMode()
 	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Battle mode: %s", battle_wanted ? "ENABLED" : "DISABLED");
 }
 
+void GameHacks::skipMovies()
+{
+	if (!ff8)
+	{
+		if (ff7_skip_movies())
+		{
+			show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "FMV Skipped");
+		}
+	}
+}
+
 // PUBLIC
 
 void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
@@ -70,6 +81,9 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 			case 'R':
 				if (!ff8) ff7_do_reset = true;
 				resetSpeedhack();
+				break;
+			case 'S':
+				skipMovies();
 				break;
 			case VK_UP:
 				increaseSpeedhack();
@@ -117,11 +131,18 @@ void GameHacks::processGamepadInput()
 				ff7_externals.gamepad_status->button8
 				)
 				decreaseSpeedhack();
+			// Toggle battle mode on L3+R3
 			else if (
 				ff7_externals.gamepad_status->button11 &&
 				ff7_externals.gamepad_status->button12
 				)
 				toggleBattleMode();
+			// Skip Movies on SELECT+START
+			else if (
+				ff7_externals.gamepad_status->button9 &&
+				ff7_externals.gamepad_status->button10
+				)
+				skipMovies();
 		}
 		else
 		{

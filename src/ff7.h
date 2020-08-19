@@ -1662,6 +1662,12 @@ struct ff7_externals
 	BYTE(*sub_767C55)();
 	uint32_t field_battle_toggle;
 	uint32_t worldmap_battle_toggle;
+	uint32_t enter_field;
+	uint32_t loop_field;
+	uint32_t sub_63C17F;
+	uint32_t sub_40B27B;
+	WORD* word_CC0DD4;
+	WORD* word_CC1638;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

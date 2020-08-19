@@ -195,3 +195,23 @@ BYTE ff7_toggle_battle_worldmap()
 
 	return ret;
 }
+
+bool ff7_skip_movies()
+{
+	uint32_t mode = getmode_cached()->driver_mode;
+
+	if (ff7_externals.movie_object->is_playing)
+	{
+		ff7_externals.movie_object->movie_end = 1;
+
+		if (mode == MODE_FIELD)
+		{
+			*ff7_externals.word_CC0DD4 = 5;
+			*ff7_externals.word_CC1638 = 0;
+		}
+
+		return true;
+	}
+
+	return false;
+}

@@ -350,6 +350,13 @@ void ff7_find_externals()
 	ff7_externals.on_gameover_exit = ff7_externals.exit_gameover + 0x21;
 
 	common_externals.diff_time = get_relative_call(common_externals.winmain, 0x2F6);
+
+	ff7_externals.enter_field = get_absolute_value(main_loop, 0x90D);
+	ff7_externals.loop_field = get_absolute_value(main_loop, 0x8F8);
+	ff7_externals.sub_63C17F = get_relative_call(ff7_externals.loop_field, 0x59);
+	ff7_externals.sub_40B27B = get_relative_call(ff7_externals.sub_63C17F, 0xEE);
+	ff7_externals.word_CC0DD4 = (WORD*)get_absolute_value(ff7_externals.enter_field, 0x124);
+	ff7_externals.word_CC1638 = (WORD*)get_absolute_value(ff7_externals.sub_40B27B, 0x25);
 }
 
 void ff7_data()

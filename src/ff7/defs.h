@@ -37,6 +37,7 @@ void ff7_on_gameover_enter();
 void ff7_on_gameover_exit();
 BYTE ff7_toggle_battle_field();
 BYTE ff7_toggle_battle_worldmap();
+bool ff7_skip_movies();
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);

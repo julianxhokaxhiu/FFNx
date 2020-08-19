@@ -171,6 +171,16 @@ If you want a more advanced experience, for example using another backend render
 
 FFNx comes with different cheat codes built-in which would allow you to boost or enjoy your gameplay experience.
 
+### FMV Skip
+
+> **Final Fantasy VII ONLY!**
+
+This cheat will allow you to skip movies in-game.
+
+Shortcuts:
+- Keyboard Shortcut: `CTRL + S`
+- Gamepad Shortcut: `SELECT + START`
+
 ### Battle mode toggle
 
 > **Final Fantasy VII ONLY!**
