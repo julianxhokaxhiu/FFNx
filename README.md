@@ -40,6 +40,7 @@ Some of the improvements that you can find on FFNx are:
 - FF7: Support for animated textures ( like Aerith waterfall, light fading, etc. )
 - FF7: Support for soft-reset while you're playing, like on the PSX!
 - FF7: Support for battle toggle ( enable/disable at your own pleasure )
+- FF7: Save everywhere! You are no more required to stay next to crystals in order to keep your progress.
 - FF8: Enable the VRAM debug window while playing in order to see how the engine uploads textures
 
 And, on top of all of this you will also find:
