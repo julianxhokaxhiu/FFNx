@@ -46,7 +46,7 @@ static struct game_mode ff7_modes[] = {
 	{FF7_MODE_EXIT,        "MODE_EXIT",        MODE_EXIT,        false},
 	{FF7_MODE_MAIN_MENU,   "MODE_MAIN_MENU",   MODE_MENU,        false},
 	{FF7_MODE_UNKNOWN21,   "MODE_UNKNOWN21",   MODE_UNKNOWN,     true },
-	{FF7_MODE_UNKNOWN22,   "MODE_UNKNOWN22",   MODE_UNKNOWN,     true },
+	{FF7_MODE_INTRO,       "MODE_INTRO",       MODE_INTRO,       false },
 	{FF7_MODE_SWIRL,       "MODE_SWIRL",       MODE_SWIRL,       false},
 	{FF7_MODE_UNKNOWN24,   "MODE_UNKNOWN24",   MODE_UNKNOWN,     true },
 	{FF7_MODE_UNKNOWN25,   "MODE_UNKNOWN25",   MODE_UNKNOWN,     true },
