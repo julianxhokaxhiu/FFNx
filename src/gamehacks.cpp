@@ -25,6 +25,13 @@ GameHacks gamehacks;
 
 // PRIVATE
 
+void GameHacks::toggleSpeedhack()
+{
+	speedhack_enabled = !speedhack_enabled;
+
+	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %s", speedhack_enabled ? "ENABLED" : "DISABLED");
+}
+
 void GameHacks::resetSpeedhack()
 {
 	speedhack_current_speed = 1.0;
@@ -32,6 +39,8 @@ void GameHacks::resetSpeedhack()
 
 void GameHacks::increaseSpeedhack()
 {
+	speedhack_enabled = true;
+
 	if (speedhack_current_speed == speedhack_max) speedhack_current_speed = 1;
 	else speedhack_current_speed += speedhack_step;
 
@@ -40,6 +49,8 @@ void GameHacks::increaseSpeedhack()
 
 void GameHacks::decreaseSpeedhack()
 {
+	speedhack_enabled = true;
+
 	if (speedhack_current_speed == 1.0) speedhack_current_speed = speedhack_max;
 	else speedhack_current_speed -= speedhack_step;
 
@@ -91,6 +102,10 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 			case VK_DOWN:
 				decreaseSpeedhack();
 				break;
+			case VK_LEFT:
+			case VK_RIGHT:
+				toggleSpeedhack();
+				break;
 			}
 		}
 		break;
@@ -117,20 +132,30 @@ void GameHacks::processGamepadInput()
 
 				resetSpeedhack();
 			}
-			// Increase in-game speed on L2+R2+DPAD UP
+			// Increase in-game speed on L2+R2+UP
 			else if (
 				ff7_externals.gamepad_status->dpad_up &&
 				ff7_externals.gamepad_status->button7 &&
 				ff7_externals.gamepad_status->button8
 				)
 				increaseSpeedhack();
-			// Decrease in-game speed on L2+R2+DPAD DOWN
+			// Decrease in-game speed on L2+R2+DOWN
 			else if (
 				ff7_externals.gamepad_status->dpad_down &&
 				ff7_externals.gamepad_status->button7 &&
 				ff7_externals.gamepad_status->button8
 				)
 				decreaseSpeedhack();
+			// Toggle Speedhack on L2+R2+LEFT/RIGHT
+			else if (
+				(
+					ff7_externals.gamepad_status->dpad_left ||
+					ff7_externals.gamepad_status->dpad_right
+				) &&
+				ff7_externals.gamepad_status->button7 &&
+				ff7_externals.gamepad_status->button8
+				)
+				toggleSpeedhack();
 			// Toggle battle mode on L3+R3
 			else if (
 				ff7_externals.gamepad_status->button11 &&
@@ -160,6 +185,16 @@ void GameHacks::processGamepadInput()
 				ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
 				)
 				decreaseSpeedhack();
+			// Toggle Speedhack on L2+R2+LEFT/RIGHT
+			else if (
+				(
+					ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 27000 ||
+					ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 9000
+				) &&
+				ff8_externals.dinput_gamepad_state->rgbButtons[6] == 0x80 &&
+				ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
+				)
+				toggleSpeedhack();
 		}
 
 		lastFrame = frame_counter;
@@ -168,7 +203,7 @@ void GameHacks::processGamepadInput()
 
 double GameHacks::getCurrentSpeedhack()
 {
-	return speedhack_current_speed;
+	return speedhack_enabled ? speedhack_current_speed : 1.0;
 }
 
 bool GameHacks::wantsBattle()

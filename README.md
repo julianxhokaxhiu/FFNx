@@ -199,6 +199,10 @@ Shortcuts:
 - Keyboard Shortcut: `CTRL + Arrow Up/Down`
 - Gamepad Shortcut: `L2 + R2 + Up/Down` ( DPad works too if using an XInput controller )
 
+You can toggle the speedhack (enable/disable) when you want by using these Shortcuts:
+- Keyboard Shortcut: `CTRL + Arrow Left/Right`
+- Gamepad Shortcut: `L2 + R2 + Left/Right` ( DPad works too if using an XInput controller )
+
 ### Soft Reset
 
 This cheat will allow you to reset the game like on PSX, by triggering the game over screen wherever you are.
