@@ -48,11 +48,12 @@ And, on top of all of this you will also find:
 - Support for 7h 1.x/[2.x](#how-to-install-on-7h-2x)
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
 - VGMStream built-in library WITH LOOP support for .ogg files!
-- Four different Rendering Backends:
+- Five different Rendering Backends:
   - OpenGL ( safe default )
+  - DirectX 9 ( Tech Preview: Not Recommended )
   - DirectX 11 ( suggested alternative to OpenGL )
-  - DirectX 12 ( experimental! )
-  - Vulkan ( experimental! )
+  - DirectX 12
+  - Vulkan
 
 ## Modding
 In order to enhance the modding experience, FFNx does also provide:
