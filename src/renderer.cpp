@@ -57,70 +57,18 @@ void RendererCallbacks::traceVargs(const char* _filePath, uint16_t _line, const 
 
 uint32_t RendererCallbacks::cacheReadSize(uint64_t _id)
 {
-    if (renderer_cache)
-    {
-        char filePath[256];
-        bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
-
-        // Use cache id as filename.
-        bx::FileReader reader;
-        bx::Error err;
-        if (bx::open(&reader, filePath, &err))
-        {
-            uint32_t size = (uint32_t)bx::getSize(&reader);
-            bx::close(&reader);
-            // Return size of shader file.
-            return size;
-        }
-    }
-
     // Return 0 if shader is not found.
     return 0;
 }
 
 bool RendererCallbacks::cacheRead(uint64_t _id, void* _data, uint32_t _size)
 {
-    if (renderer_cache)
-    {
-        char filePath[256];
-        bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
-
-        // Use cache id as filename.
-        bx::FileReader reader;
-        bx::Error err;
-        if (bx::open(&reader, filePath, &err))
-        {
-            // Read shader.
-            uint32_t result = bx::read(&reader, _data, _size, &err);
-            bx::close(&reader);
-
-            // Make sure that read size matches requested size.
-            return result == _size;
-        }
-    }
-
     // Shader is not found in cache, needs to be rebuilt.
     return false;
 }
 
 void RendererCallbacks::cacheWrite(uint64_t _id, const void* _data, uint32_t _size)
 {
-    if (renderer_cache)
-    {
-        char filePath[256];
-
-        bx::snprintf(filePath, sizeof(filePath), cachePath.c_str(), _id);
-
-        // Use cache id as filename.
-        bx::FileWriter writer;
-        bx::Error err;
-        if (bx::open(&writer, filePath, false, &err))
-        {
-            // Write shader to cache location.
-            bx::write(&writer, _data, _size, &err);
-            bx::close(&writer);
-        }
-    }
 }
 
 // PRIVATE

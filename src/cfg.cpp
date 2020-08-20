@@ -81,7 +81,6 @@ char* direct_mode_path = nullptr;
 char* save_path = nullptr;
 cfg_bool_t enable_debug_ui = cfg_bool_t(false);
 long debug_ui_hotkey = 0;
-cfg_bool_t renderer_cache = cfg_bool_t(false);
 cfg_bool_t ff8_keep_game_running_in_background = cfg_bool_t(false);
 double speedhack_step = 0.5;
 double speedhack_max = 8.0;
@@ -140,7 +139,6 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("save_path", &save_path),
 		CFG_SIMPLE_BOOL("enable_debug_ui", &enable_debug_ui),
 		CFG_SIMPLE_INT("debug_ui_hotkey", &debug_ui_hotkey),
-		CFG_SIMPLE_BOOL("renderer_cache", &renderer_cache),
 		CFG_SIMPLE_BOOL("ff8_keep_game_running_in_background", &ff8_keep_game_running_in_background),
 		CFG_SIMPLE_FLOAT("speedhack_step", &speedhack_step),
 		CFG_SIMPLE_FLOAT("speedhack_max", &speedhack_max),

@@ -84,7 +84,6 @@ extern char* direct_mode_path;
 extern char* save_path;
 extern cfg_bool_t enable_debug_ui;
 extern long debug_ui_hotkey;
-extern cfg_bool_t renderer_cache;
 extern cfg_bool_t ff8_keep_game_running_in_background;
 extern double speedhack_step;
 extern double speedhack_max;
