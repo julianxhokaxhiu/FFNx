@@ -23,6 +23,14 @@
 
 #include <regex>
 #include <string>
+#include <vector>
+
+// Get the size of a vector in bytes
+template<typename T>
+size_t vectorSizeOf(const typename std::vector<T>& vec)
+{
+    return sizeof(T) * vec.size();
+}
 
 // trim from start (in place)
 inline void ltrim(std::string& s) {

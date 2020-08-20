@@ -37,6 +37,7 @@
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
 #include <libpng16/png.h>
+#include "utils.h"
 #include "log.h"
 #include "gl.h"
 #include "overlay.h"
@@ -230,8 +231,12 @@ private:
     std::vector<bgfx::TextureHandle> backendFrameBufferRT = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
     bgfx::FrameBufferHandle backendFrameBuffer = BGFX_INVALID_HANDLE;
 
-    bgfx::VertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;
-    bgfx::IndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;
+    std::vector<Vertex> vertexBufferData;
+    bgfx::DynamicVertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;
+
+    std::vector<WORD> indexBufferData;
+    bgfx::DynamicIndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;
+
     bgfx::VertexLayout vertexLayout;
 
     std::map<std::string,uint16_t> bgfxUniformHandles;

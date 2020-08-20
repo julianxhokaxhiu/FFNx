@@ -768,11 +768,35 @@ void Renderer::show()
 
     renderFrame();
 
+    bgfx::update(
+        vertexBufferHandle,
+        0,
+        bgfx::copy(
+            vertexBufferData.data(),
+            vectorSizeOf(vertexBufferData)
+        )
+    );
+
+    bgfx::update(
+        indexBufferHandle,
+        0,
+        bgfx::copy(
+            indexBufferData.data(),
+            vectorSizeOf(indexBufferData)
+        )
+    );
+
     bgfx::frame();
 
     bgfx::dbgTextClear();
 
     backendViewId = 1;
+
+    vertexBufferData.clear();
+    vertexBufferData.shrink_to_fit();
+
+    indexBufferData.clear();
+    indexBufferData.shrink_to_fit();
 
     bgfx::setViewMode(backendViewId, bgfx::ViewMode::Sequential);
 
@@ -810,49 +834,41 @@ const bgfx::Stats* Renderer::getStats()
 
 void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount)
 {
-    if (bgfx::isValid(vertexBufferHandle)) bgfx::destroy(vertexBufferHandle);
+    if (!bgfx::isValid(vertexBufferHandle)) vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, vertexLayout, BGFX_BUFFER_ALLOW_RESIZE);
 
-    Vertex* vertices = new Vertex[inCount];
+    uint32_t currentOffset = vertexBufferData.size();
 
     for (uint32_t idx = 0; idx < inCount; idx++)
     {
-        vertices[idx].x = inVertex[idx]._.x;
-        vertices[idx].y = inVertex[idx]._.y;
-        vertices[idx].z = inVertex[idx]._.z;
-        vertices[idx].w = ( ::isinf(inVertex[idx].color.w) ? 1.0f : inVertex[idx].color.w );
-        vertices[idx].bgra = inVertex[idx].color.color;
-        vertices[idx].u = inVertex[idx].u;
-        vertices[idx].v = inVertex[idx].v;
+        vertexBufferData.push_back(Vertex());
 
-        if (vertex_log && idx == 0) trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertices[idx].x, vertices[idx].y, vertices[idx].z, vertices[idx].w, vertices[idx].bgra, vertices[idx].u, vertices[idx].v);
+        vertexBufferData[currentOffset + idx].x = inVertex[idx]._.x;
+        vertexBufferData[currentOffset + idx].y = inVertex[idx]._.y;
+        vertexBufferData[currentOffset + idx].z = inVertex[idx]._.z;
+        vertexBufferData[currentOffset + idx].w = ( ::isinf(inVertex[idx].color.w) ? 1.0f : inVertex[idx].color.w );
+        vertexBufferData[currentOffset + idx].bgra = inVertex[idx].color.color;
+        vertexBufferData[currentOffset + idx].u = inVertex[idx].u;
+        vertexBufferData[currentOffset + idx].v = inVertex[idx].v;
+
+        if (vertex_log && idx == 0) trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[idx].x, vertexBufferData[idx].y, vertexBufferData[idx].z, vertexBufferData[idx].w, vertexBufferData[idx].bgra, vertexBufferData[idx].u, vertexBufferData[idx].v);
         if (vertex_log && idx == 1) trace("%s: See the rest on RenderDoc.\n", __func__);
     }
 
-    vertexBufferHandle = bgfx::createVertexBuffer(
-        bgfx::copy(
-            vertices,
-            sizeof(Vertex) * inCount
-        ),
-        vertexLayout
-    );
-
-    bgfx::setVertexBuffer(0, vertexBufferHandle);
-
-    delete[] vertices;
+    bgfx::setVertexBuffer(0, vertexBufferHandle, currentOffset, inCount);
 };
 
 void Renderer::bindIndexBuffer(WORD* inIndex, uint32_t inCount)
 {
-    if (bgfx::isValid(indexBufferHandle)) bgfx::destroy(indexBufferHandle);
+    if (!bgfx::isValid(indexBufferHandle)) indexBufferHandle = bgfx::createDynamicIndexBuffer(inCount, BGFX_BUFFER_ALLOW_RESIZE);
 
-    indexBufferHandle = bgfx::createIndexBuffer(
-        bgfx::copy(
-            inIndex,
-            sizeof(WORD) * inCount
-        )
-    );
+    uint32_t currentOffset = indexBufferData.size();
 
-    bgfx::setIndexBuffer(indexBufferHandle);
+    for (uint32_t idx = 0; idx < inCount; idx++)
+    {
+        indexBufferData.push_back(inIndex[idx]);
+    }
+
+    bgfx::setIndexBuffer(indexBufferHandle, currentOffset, inCount);
 };
 
 void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
