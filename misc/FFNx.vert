@@ -49,15 +49,7 @@ void main()
     }
     else
     {
-#if BGFX_SHADER_LANGUAGE_HLSL
         pos = mul(mul(d3dViewport,mul(d3dProjection,worldView)), vec4(pos.xyz, 1.0));
-#else
-    #if BGFX_SHADER_LANGUAGE_SPIRV
-        pos = mul(vec4(pos.xyz, 1.0), transpose(d3dViewport) * transpose(d3dProjection) * transpose(worldView));
-    #else
-        pos = mul(d3dViewport * d3dProjection * worldView, vec4(pos.xyz, 1.0));
-    #endif
-#endif
 
         if (color.a > 0.5) color.a = 0.5;
     }

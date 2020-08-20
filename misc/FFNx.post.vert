@@ -24,15 +24,6 @@ $output v_color0, v_texcoord0
 
 #include <bgfx/bgfx_shader.sh>
 
-uniform mat4 d3dViewport;
-uniform mat4 d3dProjection;
-uniform mat4 worldView;
-
-uniform vec4 VSFlags;
-#define isTLVertex VSFlags.x > 0.0
-#define blendMode VSFlags.y
-#define isFBTexture VSFlags.z > 0.0
-
 void main()
 {
 	vec4 pos = a_position;

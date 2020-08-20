@@ -59,34 +59,26 @@ void main()
     {
         if (isYUV)
         {
-            const mat4 mpeg_rgb_transform = mat4(
-                +1.164, +1.164, +1.164, +0.000,
-                +0.000, -0.392, +2.017, +0.000,
-                +1.596, -0.813, +0.000, +0.000,
-                +0.000, +0.000, +0.000, +1.000
+            const mat3 mpeg_rgb_transform = mat3(
+                vec3(+1.164, +1.164, +1.164),
+                vec3(+0.000, -0.392, +2.017),
+                vec3(+1.596, -0.813, +0.000)
             );
 
-            const mat4 jpeg_rgb_transform = mat4(
-                +1.000, +1.000, +1.000, +0.000,
-                +0.000, -0.343, +1.765, +0.000,
-                +1.400, -0.711, +0.000, +0.000,
-                +0.000, +0.000, +0.000, +1.000
+            const mat3 jpeg_rgb_transform = mat3(
+                vec3(+1.000, +1.000, +1.000),
+                vec3(+0.000, -0.343, +1.765),
+                vec3(+1.400, -0.711, +0.000)
             );
 
-            vec4 yuv = vec4(
+            vec3 yuv = vec3(
                 texture2D(tex, v_texcoord0.xy).r - (1.0 / 16.0),
                 texture2D(tex_u, v_texcoord0.xy).r - 0.5,
-                texture2D(tex_v, v_texcoord0.xy).r - 0.5,
-                1.0
+                texture2D(tex_v, v_texcoord0.xy).r - 0.5
             );
 
-#if BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_HLSL
-            if (isFullRange) color = mul(yuv, jpeg_rgb_transform);
-            else color = mul(yuv, mpeg_rgb_transform);
-#else
-            if (isFullRange) color = mul(jpeg_rgb_transform, yuv);
-            else color = mul(mpeg_rgb_transform, yuv);
-#endif
+            if (isFullRange) color.rgb = instMul(jpeg_rgb_transform, yuv);
+            else color.rgb = instMul(mpeg_rgb_transform, yuv);
 
             color.a = 1.0f;
         }
