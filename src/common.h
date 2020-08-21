@@ -269,7 +269,7 @@ struct driver_stats
 };
 
 void qpc_get_time(time_t *dest);
-int64_t qpc_diff_time(int64_t* t1, int64_t* t2, int64_t* out);
+time_t qpc_diff_time(time_t* t1, time_t* t2, time_t* out);
 uint32_t get_version();
 struct game_mode *getmode();
 struct game_mode *getmode_cached();

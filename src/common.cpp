@@ -1919,9 +1919,9 @@ void qpc_get_time(time_t *dest)
 	stats.timer = *dest;
 }
 
-int64_t qpc_diff_time(int64_t* t1, int64_t* t2, int64_t* out)
+time_t qpc_diff_time(time_t* t1, time_t* t2, time_t* out)
 {
-	int64_t ret = (*t1 - *t2) * gamehacks.getCurrentSpeedhack();
+	time_t ret = (*t1 - *t2) * gamehacks.getCurrentSpeedhack();
 
 	*out = ret;
 
