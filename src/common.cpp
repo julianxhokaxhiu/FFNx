@@ -744,6 +744,8 @@ void common_flip(struct game_obj *game_object)
 
 		if (mode->driver_mode == MODE_HIGHWAY) framerate = 30.0;
 
+		framerate *= gamehacks.getCurrentSpeedhack();
+
 		do qpc_get_time(&gametime);
 		while (gametime > last_gametime && gametime - last_gametime < VREF(game_object, countspersecond * (1.0 / framerate)));
 
