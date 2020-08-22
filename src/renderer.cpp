@@ -798,7 +798,7 @@ void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount)
         vertexBufferData[currentOffset + idx].u = inVertex[idx].u;
         vertexBufferData[currentOffset + idx].v = inVertex[idx].v;
 
-        if (vertex_log && idx == 0) trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[idx].x, vertexBufferData[idx].y, vertexBufferData[idx].z, vertexBufferData[idx].w, vertexBufferData[idx].bgra, vertexBufferData[idx].u, vertexBufferData[idx].v);
+        if (vertex_log && idx == 0) trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[currentOffset + idx].x, vertexBufferData[currentOffset + idx].y, vertexBufferData[currentOffset + idx].z, vertexBufferData[currentOffset + idx].w, vertexBufferData[currentOffset + idx].bgra, vertexBufferData[currentOffset + idx].u, vertexBufferData[currentOffset + idx].v);
         if (vertex_log && idx == 1) trace("%s: See the rest on RenderDoc.\n", __func__);
     }
 
