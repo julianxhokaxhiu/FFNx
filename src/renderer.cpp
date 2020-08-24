@@ -584,7 +584,11 @@ void Renderer::init()
 
 void Renderer::reset()
 {
-    resetRequested = true;
+    recalcInternals();
+
+    prepareFramebuffer();
+
+    bgfx::reset(window_size_x, window_size_y);
 }
 
 void Renderer::shutdown()
@@ -747,17 +751,6 @@ void Renderer::show()
     indexBufferData.shrink_to_fit();
 
     bgfx::setViewMode(backendViewId, bgfx::ViewMode::Sequential);
-
-    if (resetRequested)
-    {
-        recalcInternals();
-
-        prepareFramebuffer();
-
-        bgfx::reset(window_size_x, window_size_y);
-
-        resetRequested = false;
-    }
 }
 
 void Renderer::printText(uint16_t x, uint16_t y, uint32_t color, const char* text)

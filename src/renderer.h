@@ -278,8 +278,6 @@ private:
     bx::FileWriter defaultWriter;
     Overlay overlay;
 
-    bool resetRequested = false;
-
 public:
     std::string currentRenderer;
 

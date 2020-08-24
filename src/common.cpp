@@ -53,6 +53,7 @@ uint32_t gameWindowWidth;
 uint32_t gameWindowHeight;
 DEVMODE dmCurrentScreenSettings;
 DEVMODE dmNewScreenSettings;
+bool gameWindowWasMaximized = false;
 
 // global RAM status
 MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
@@ -302,6 +303,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_SIZE:
 			window_size_x = (long)LOWORD(lParam);
 			window_size_y = (long)HIWORD(lParam);
+			
+			if (wParam == SIZE_MAXIMIZED) gameWindowWasMaximized = true;
+			else if (wParam == SIZE_RESTORED && gameWindowWasMaximized) gameWindowWasMaximized = false;
+			else break;
+		case WM_EXITSIZEMOVE:
 			newRenderer.reset();
 			break;
 		case WM_MENUCHAR:
@@ -335,6 +341,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 					fullscreen = cfg_bool_t(true);
 				}
+
+				newRenderer.reset();
 
 				return MAKELRESULT(0, MNC_CLOSE);
 			}
