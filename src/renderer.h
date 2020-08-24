@@ -223,7 +223,7 @@ private:
     std::string vertexOverlayPath = "shaders/FFNx.overlay";
     std::string fragmentOverlayPath = "shaders/FFNx.overlay";
 
-    bgfx::ViewId backendViewId;
+    bgfx::ViewId backendViewId = 0;
     RendererProgram backendProgram = RendererProgram::SMOOTH;
 
     std::vector<bgfx::ProgramHandle> backendProgramHandles = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };

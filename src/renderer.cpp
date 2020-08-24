@@ -738,7 +738,7 @@ void Renderer::show()
 
     bgfx::dbgTextClear();
 
-    backendViewId = 1;
+    backendViewId = 0;
 
     vertexBufferData.clear();
     vertexBufferData.shrink_to_fit();
