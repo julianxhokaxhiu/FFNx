@@ -41,7 +41,7 @@ void GameHacks::increaseSpeedhack()
 {
 	speedhack_enabled = true;
 
-	if (speedhack_current_speed == speedhack_max) resetSpeedhack();
+	if (speedhack_current_speed >= speedhack_max) resetSpeedhack();
 	else speedhack_current_speed += speedhack_step;
 
 	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current_speed);
@@ -51,7 +51,7 @@ void GameHacks::decreaseSpeedhack()
 {
 	speedhack_enabled = true;
 
-	if (speedhack_current_speed == 1.0) speedhack_current_speed = speedhack_max;
+	if (speedhack_current_speed <= speedhack_min) speedhack_current_speed = speedhack_max;
 	else speedhack_current_speed -= speedhack_step;
 
 	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Current Speedhack: %2.1lfx", speedhack_current_speed);
