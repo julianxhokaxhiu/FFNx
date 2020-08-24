@@ -430,13 +430,12 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 		dmNewScreenSettings.dmSize = sizeof(dmNewScreenSettings);
 		dmNewScreenSettings.dmPelsWidth = window_size_x;
 		dmNewScreenSettings.dmPelsHeight = window_size_y;
-		dmNewScreenSettings.dmBitsPerPel = 32;
-		dmNewScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+		dmNewScreenSettings.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
 
 		if (refresh_rate)
 		{
 			dmNewScreenSettings.dmDisplayFrequency = refresh_rate;
-			dmNewScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+			dmNewScreenSettings.dmFields |= DM_DISPLAYFREQUENCY;
 		}
 
 		if (fullscreen)
