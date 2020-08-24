@@ -91,14 +91,7 @@ enum RendererPrimitiveType
 enum RendererTextureType
 {
     BGRA = 0,
-    YUV,
-    DDS
-};
-
-enum RendererInternalType
-{
-    RGBA8 = 0,
-    COMPRESSED_RGBA
+    YUV
 };
 
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)

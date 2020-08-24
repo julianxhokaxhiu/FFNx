@@ -307,10 +307,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_MENUCHAR:
 			if (LOWORD(wParam) == VK_RETURN)
 			{
-				CURSORINFO cursor{ sizeof(CURSORINFO) };
-				GetCursorInfo(&cursor);
-				bool cursorVisible = cursor.flags & CURSOR_SHOWING > 0;
-
 				if (fullscreen)
 				{
 					// Bring back the original resolution
