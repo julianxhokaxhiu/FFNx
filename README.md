@@ -233,14 +233,19 @@ These people are:
 - [DLPB](https://forums.qhimm.com/index.php?action=profile;u=6439):
   - for original Hext concept and specification that FFNx implemented as well
   - for the field vertical centering hext patch, which FFNx provides a default patch for
+  - for the Soft-Reset original concept
+  - for the no battle original concept
+- [dziugo](http://forums.qhimm.com/index.php?action=profile;u=1660):
+  - for the original FMV skip concept
 - [ficedula](http://forums.qhimm.com/index.php?action=profile;u=68):
   - for 7h 1.x which FFNx provides support for
 - [Iros](https://forums.qhimm.com/index.php?action=profile;u=21785):
   - for 7h 1.x which FFNx provides support for
 - [JWP](http://forums.qhimm.com/index.php?action=profile;u=3772):
   - for imgui integration within FFNx
-- [Kramer]()
+- [Kranmer](http://forums.qhimm.com/index.php?action=profile;u=4909)
   - for PHS save everywhere Hext patch
+  - for the no battle original concept
 - [Maki](http://forums.qhimm.com/index.php?action=profile;u=23937):
   - for FF8 UV Hext Patch in the world map, which FFNx provides a default patch for
   - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
@@ -257,6 +262,7 @@ These people are:
   - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF7
   - for the field vertical centering hext patch, which FFNx provides a default patch for
   - for a lot of hex addresses I would have never been able to figure out myself otherwise
+  - for the original Speedhack concept and help in getting it natively into FFNx
 - [Sebanisu](http://forums.qhimm.com/index.php?action=profile;u=22866):
   - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
   - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF8
