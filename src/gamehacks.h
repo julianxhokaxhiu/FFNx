@@ -27,8 +27,8 @@ class GameHacks
 {
 private:
 	uint32_t lastFrame = 0;
-	bool speedhack_enabled = false;
-	double speedhack_current_speed = 1.0;
+	bool speedhack_enabled;
+	double speedhack_current_speed;
 	bool battle_wanted = true;
 
 	// SPEEDHACK
@@ -44,6 +44,8 @@ private:
 	void skipMovies();
 
 public:
+	void init();
+
 	// GLOBALS
 	void processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam);
 	void processGamepadInput();

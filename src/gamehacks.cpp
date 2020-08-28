@@ -34,7 +34,7 @@ void GameHacks::toggleSpeedhack()
 
 void GameHacks::resetSpeedhack()
 {
-	speedhack_current_speed = 1.0;
+	speedhack_current_speed = speedhack_min;
 }
 
 void GameHacks::increaseSpeedhack()
@@ -76,6 +76,13 @@ void GameHacks::skipMovies()
 }
 
 // PUBLIC
+
+void GameHacks::init()
+{
+	resetSpeedhack();
+
+	if (speedhack_current_speed > 1.0) speedhack_enabled = true;
+}
 
 void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 {

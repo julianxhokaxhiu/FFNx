@@ -2204,6 +2204,9 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	// Init renderer
 	newRenderer.init();
 
+	// Init GameHacks
+	gamehacks.init();
+
 	max_texture_size = newRenderer.getCaps()->limits.maxTextureSize;
 	info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
 
