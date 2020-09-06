@@ -27,6 +27,7 @@ find_package(STACKWALKER REQUIRED)
 find_package(PUGIXML REQUIRED)
 find_package(LIBPNG REQUIRED)
 find_package(IMGUI REQUIRED)
+find_package(SOLOUD REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -71,6 +72,7 @@ target_link_libraries(${RELEASE_NAME}
     PUGIXML::PUGIXML
     LIBPNG::LIBPNG
     IMGUI::IMGUI
+    SOLOUD::SOLOUD
 )
 target_compile_options(${RELEASE_NAME}
     PRIVATE /DDIRECTINPUT_VERSION=0x0800
