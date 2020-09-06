@@ -2173,6 +2173,29 @@ MCIERROR __stdcall dotemuMciSendCommandA(MCIDEVICEID mciId, UINT uMsg, DWORD_PTR
 	return mciSendCommandA(mciId, uMsg, dwParam1, dwParam2);
 }
 
+void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
+{
+	char msg[4 * 1024]; // 4K
+	static int print_prefix = 1;
+
+	av_log_format_line(ptr, level, fmt, vl, msg, sizeof(msg), &print_prefix);
+
+	switch (level) {
+	case AV_LOG_VERBOSE:
+	case AV_LOG_DEBUG: if (trace_movies) trace(msg); break;
+	case AV_LOG_INFO:
+	case AV_LOG_WARNING: if (trace_movies) info(msg); break;
+	case AV_LOG_ERROR:
+	case AV_LOG_FATAL:
+	case AV_LOG_PANIC: error(msg); break;
+	}
+
+	if (level <= AV_LOG_ERROR) {
+		FFNxStackWalker sw;
+		sw.ShowCallstack();
+	}
+}
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -2217,6 +2240,10 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 
 	if(!ff8) ff7_post_init();
 	else ff8_post_init();
+
+	// enable verbose logging for FFMpeg
+	av_log_set_level(AV_LOG_VERBOSE);
+	av_log_set_callback(ffmpeg_log_callback);
 
 	return ret;
 }
