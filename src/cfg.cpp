@@ -37,6 +37,8 @@ char* external_music_path = nullptr;
 char* external_music_ext = nullptr;
 char* winamp_in_plugin = nullptr;
 char* winamp_out_plugin = nullptr;
+char* external_voice_path = nullptr;
+char* external_voice_ext = nullptr;
 cfg_bool_t save_textures = cfg_bool_t(false);
 cfg_bool_t trace_all = cfg_bool_t(false);
 cfg_bool_t trace_movies = cfg_bool_t(false);
@@ -96,6 +98,8 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("external_music_ext", &external_music_ext),
 		CFG_SIMPLE_STR("winamp_in_plugin", &winamp_in_plugin),
 		CFG_SIMPLE_STR("winamp_out_plugin", &winamp_out_plugin),
+		CFG_SIMPLE_STR("external_voice_path", &external_voice_path),
+		CFG_SIMPLE_STR("external_voice_ext", &external_voice_ext),
 		CFG_SIMPLE_BOOL("save_textures", &save_textures),
 		CFG_SIMPLE_BOOL("trace_all", &trace_all),
 		CFG_SIMPLE_BOOL("trace_movies", &trace_movies),
@@ -187,7 +191,7 @@ void read_cfg()
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
-	if (window_size_y < 0)window_size_y = 0;
+	if (window_size_y < 0) window_size_y = 0;
 
 
 	// #############
@@ -284,6 +288,14 @@ void read_cfg()
 	// EXTERNAL MUSIC EXTENSION
 	if (external_music_ext == nullptr)
 		external_music_ext = "ogg";
+
+	// EXTERNAL VOICE PATH
+	if (external_voice_path == nullptr)
+		external_voice_path = "voice";
+
+	// EXTERNAL VOICE EXTENSION
+	if (external_voice_ext == nullptr)
+		external_voice_ext = "ogg";
 
 	// MOD PATH
 	if (mod_path == nullptr)

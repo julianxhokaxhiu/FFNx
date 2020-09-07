@@ -21,14 +21,15 @@
 
 #include <windows.h>
 
+#include "directmusic.h"
+#include "audio.h"
 #include "music.h"
 #include "patch.h"
-#include "directmusic.h"
-#include "winamp/music.h"
 
 void music_init()
 {
-	if (!ff8) {
+	if (!ff8)
+	{
 		// Fix music stop issue in FF7
 		patch_code_dword(ff7_externals.music_lock_clear_fix + 2, 0xCC195C);
 		// Fix Cid speech music stop
@@ -38,7 +39,8 @@ void music_init()
 
 	if (use_external_music)
 	{
-		if (ff8) {
+		if (ff8)
+		{
 			replace_function(common_externals.play_midi, ff8_play_midi);
 			replace_function(common_externals.pause_midi, pause_midi);
 			replace_function(common_externals.restart_midi, restart_midi);
@@ -47,7 +49,8 @@ void music_init()
 			replace_function(common_externals.set_midi_volume, ff8_set_direct_volume);
 			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
 		}
-		else {
+		else
+		{
 			replace_function(common_externals.midi_init, midi_init);
 			replace_function(common_externals.use_midi, ff7_use_midi);
 			replace_function(common_externals.play_midi, ff7_play_midi);
@@ -62,7 +65,6 @@ void music_init()
 			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
 			replace_function(common_externals.directsound_release, ff7_directsound_release);
 		}
-		winamp_music_init();
 	}
 }
 
@@ -120,8 +122,8 @@ uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 		return 0; // Error
 	}
 
-	winamp_set_music_volume(volume);
-	winamp_play_music(midi_name, midi);
+	nxAudioEngine.playMusic(midi, midi_name);
+	nxAudioEngine.setMusicVolume(volume);
 
 	return 1; // Success
 }
@@ -130,7 +132,7 @@ uint32_t ff7_use_midi(uint32_t midi)
 {
 	char* name = common_externals.get_midi_name(midi);
 
-	if (winamp_can_play(name)) {
+	if (nxAudioEngine.canPlayMusic(name)) {
 		return 1;
 	}
 
@@ -139,27 +141,31 @@ uint32_t ff7_use_midi(uint32_t midi)
 
 void ff7_play_midi(uint32_t midi)
 {
-	winamp_play_music(common_externals.get_midi_name(midi), midi);
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(midi));
+
+	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi));
 }
 
 void cross_fade_midi(uint32_t midi, uint32_t time)
 {
-	winamp_cross_fade_music(common_externals.get_midi_name(midi), midi, time);
+	if (trace_all || trace_music) trace("%s: midi=%s, time=%u\n", __func__, common_externals.get_midi_name(midi), time);
+
+	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi), true, time);
 }
 
 void pause_midi()
 {
-	winamp_pause_music();
+	nxAudioEngine.pauseMusic();
 }
 
 void restart_midi()
 {
-	winamp_resume_music();
+	nxAudioEngine.resumeMusic();
 }
 
 void stop_midi()
 {
-	winamp_stop_music();
+	nxAudioEngine.stopMusic();
 }
 
 uint32_t ff8_stop_midi()
@@ -178,7 +184,7 @@ uint32_t ff8_stop_midi()
 
 uint32_t midi_status()
 {
-	return winamp_music_status();
+	return nxAudioEngine.isMusicPlaying();
 }
 
 uint32_t ff8_set_direct_volume(int volume)
@@ -198,52 +204,67 @@ uint32_t ff8_set_direct_volume(int volume)
 	else {
 		volume = (pow(10, (volume + 2000) / 2000.0f) / 10.0f) * 255.0f;
 	}
+
+	nxAudioEngine.setMusicVolume(volume);
 	
-	winamp_set_direct_volume(volume);
 	return 1; // Success
 }
 
 void set_master_midi_volume(uint32_t volume)
 {
-	winamp_set_master_music_volume(volume);
+	if (trace_all || trace_music) trace("%s: volume=%u\n", __func__, volume);
+
+	nxAudioEngine.setMusicMasterVolume(float(volume));
 }
 
 void set_midi_volume(uint32_t volume)
 {
-	winamp_set_music_volume(volume);
+	if (trace_all || trace_music) trace("%s: volume=%u\n", __func__, volume);
+
+	nxAudioEngine.setMusicVolume(volume / 127.0f);
 }
 
 void set_midi_volume_trans(uint32_t volume, uint32_t step)
 {
-	winamp_set_music_volume_trans(volume, step);
+	if (trace_all || trace_music) trace("%s: volume=%u, step=%u\n", __func__, volume, step);
+
+	// TODO: Use current framerate
+	nxAudioEngine.setMusicVolume(volume / 127.0f, step / 30);
 }
 
 void set_midi_tempo(unsigned char tempo)
 {
-	winamp_set_music_tempo(tempo);
+	if (trace_all || trace_music) trace("%s: tempo=%u\n", __func__, tempo);
+
+	float speed = 1.0;
+
+	if (float(tempo) >= 0.0)
+		speed = 1.0 - 0.5 * float(tempo) / 127.0;
+	else
+		speed = float(tempo) / -128.0 + 1.0;
+
+	nxAudioEngine.setMusicSpeed(speed);
 }
 
 uint32_t ff7_directsound_release()
 {
-	if (nullptr == *common_externals.directsound) {
-		return 0;
-	}
+	if (nullptr == *common_externals.directsound) return 0;
 
 	music_cleanup();
-	(*common_externals.directsound)->Release();
-	*common_externals.directsound = nullptr;
 
 	return 0;
 }
 
 void music_cleanup()
 {
-	winamp_music_cleanup();
+	nxAudioEngine.cleanup();
 }
 
 uint32_t remember_playing_time()
 {
-	winamp_remember_playing_time();
+	// TODO
+	//winamp_remember_playing_time();
+	
 	return 0;
 }
 
@@ -282,4 +303,9 @@ bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* ne
 	return ((new_mode == MODE_WORLDMAP || new_mode == MODE_AFTER_BATTLE) && !is_wm_theme(old_midi) && is_wm_theme(new_midi))
 		|| ((old_mode == MODE_BATTLE || old_mode == MODE_SWIRL) && (new_mode == MODE_FIELD || new_mode == MODE_AFTER_BATTLE))
 		|| new_mode == MODE_CARDGAME;
+}
+
+int engine_create_dsound(int unk, LPGUID guid)
+{
+	return nxAudioEngine.init();
 }

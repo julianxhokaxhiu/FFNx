@@ -21,10 +21,10 @@
 
 #include <stdint.h>
 
-#include "../ff7.h"
-#include "../log.h"
 #include "../gamepad.h"
 #include "../gamehacks.h"
+#include "../ff7.h"
+#include "../log.h"
 
 // MDEF fix
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)

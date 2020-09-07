@@ -2326,6 +2326,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			common_externals.winmain = get_relative_call(common_externals.start, 0x14D);
 			replace_function(ff7_externals.get_inserted_cd_sub, ff7_get_inserted_cd);
 			replace_function(common_externals.create_window, common_create_window);
+			if (use_external_music) replace_function(common_externals.directsound_create, engine_create_dsound);
 
 			if (strstr(dllName, "af3dn.p") != NULL)
 			{
