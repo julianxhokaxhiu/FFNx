@@ -24,7 +24,7 @@
 #include "gl.h"
 #include "patch.h"
 #include "ff7/defs.h"
-#include "ffmpeg/movies.h"
+#include "video/movies.h"
 
 void movie_init()
 {
