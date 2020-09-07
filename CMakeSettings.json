@@ -1,9 +1,9 @@
 ﻿{
   "configurations": [
     {
-      "name": "x86-RelWithDebInfo",
+      "name": "x86-Release",
       "generator": "Visual Studio 16 2019",
-      "configurationType": "RelWithDebInfo",
+      "configurationType": "Release",
       "inheritEnvironments": [ "msvc_x86_x64" ],
       "buildRoot": "${projectDir}\\.dist\\build\\${name}",
       "installRoot": "${projectDir}\\.dist\\install\\${name}",
@@ -13,9 +13,9 @@
       "variables": []
     },
     {
-      "name": "x86-Release",
+      "name": "x86-RelWithDebInfo",
       "generator": "Visual Studio 16 2019",
-      "configurationType": "Release",
+      "configurationType": "RelWithDebInfo",
       "inheritEnvironments": [ "msvc_x86_x64" ],
       "buildRoot": "${projectDir}\\.dist\\build\\${name}",
       "installRoot": "${projectDir}\\.dist\\install\\${name}",
