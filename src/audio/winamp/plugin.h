@@ -22,8 +22,9 @@
 #pragma once
 
 #include <windows.h>
-#include <DSound.h>
-#include "../log.h"
+
+#include "../../log.h"
+
 #include "winamp.h"
 #include "winamp_ext.h"
 

@@ -39,7 +39,6 @@ extern cfg_bool_t use_external_music;
 extern char* external_music_path;
 extern char* external_music_ext;
 extern char* winamp_in_plugin;
-extern char* winamp_out_plugin;
 extern char* external_voice_path;
 extern char* external_voice_ext;
 extern cfg_bool_t save_textures;

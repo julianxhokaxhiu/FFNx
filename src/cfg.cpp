@@ -36,7 +36,6 @@ cfg_bool_t use_external_music = cfg_bool_t(false);
 char* external_music_path = nullptr;
 char* external_music_ext = nullptr;
 char* winamp_in_plugin = nullptr;
-char* winamp_out_plugin = nullptr;
 char* external_voice_path = nullptr;
 char* external_voice_ext = nullptr;
 cfg_bool_t save_textures = cfg_bool_t(false);
@@ -97,7 +96,6 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("external_music_path", &external_music_path),
 		CFG_SIMPLE_STR("external_music_ext", &external_music_ext),
 		CFG_SIMPLE_STR("winamp_in_plugin", &winamp_in_plugin),
-		CFG_SIMPLE_STR("winamp_out_plugin", &winamp_out_plugin),
 		CFG_SIMPLE_STR("external_voice_path", &external_voice_path),
 		CFG_SIMPLE_STR("external_voice_ext", &external_voice_ext),
 		CFG_SIMPLE_BOOL("save_textures", &save_textures),

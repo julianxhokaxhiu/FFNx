@@ -21,16 +21,6 @@
 
 #include "plugin.h"
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-#include <libvgmstream/util.h>
-
-#if defined(__cplusplus)
-}
-#endif
-
 const char* default_extension = "ogg";
 
 WinampPlugin::WinampPlugin() : handle(nullptr)
@@ -373,6 +363,7 @@ void WinampInPlugin::quitModule()
 
 bool WinampInPlugin::knownExtension(const char* fn) const
 {
+	/*
 	char* extension_list = getMod()->standard.FileExtensions;
 	const char* ext = filename_extension(fn);
 
@@ -395,6 +386,7 @@ bool WinampInPlugin::knownExtension(const char* fn) const
 
 		extension_list += len_desc + 1;
 	}
+	*/
 
 	return false;
 }
@@ -569,26 +561,26 @@ bool InPluginWithFailback::accept(const char* fn) const
 
 int InPluginWithFailback::play(char* fn)
 {
-	if (nullptr != inPlugin2) {
-		// Back to default plugin
-		if (current != inPlugin1) {
-			current->stop();
-			current = inPlugin1;
-		}
+	//if (nullptr != inPlugin2) {
+	//	// Back to default plugin
+	//	if (current != inPlugin1) {
+	//		current->stop();
+	//		current = inPlugin1;
+	//	}
 
-		// File not found
-		if (0 != _access(fn, 0)
-			&& strcasecmp(external_music_ext, default_extension) != 0) {
-			if (replace_extension(fn, default_extension)
-				&& !inPlugin1->accept(fn) && inPlugin2->accept(fn)) {
-				info("Music file not found, trying with %s extension: %s\n", default_extension, fn);
-				current = inPlugin2;
-			}
-			else {
-				return -1;
-			}
-		}
-	}
+	//	// File not found
+	//	if (0 != _access(fn, 0)
+	//		&& strcasecmp(external_music_ext, default_extension) != 0) {
+	//		if (replace_extension(fn, default_extension)
+	//			&& !inPlugin1->accept(fn) && inPlugin2->accept(fn)) {
+	//			info("Music file not found, trying with %s extension: %s\n", default_extension, fn);
+	//			current = inPlugin2;
+	//		}
+	//		else {
+	//			return -1;
+	//		}
+	//	}
+	//}
 
 	return current->play(fn);
 }
