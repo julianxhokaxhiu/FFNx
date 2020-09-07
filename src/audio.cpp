@@ -74,7 +74,7 @@ bool NxAudioEngine::canPlayMusic(char* name)
 
 void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_t time)
 {
-	SoLoud::WavStream* music = new SoLoud::WavStream();
+	SoLoud::VGMStream* music = new SoLoud::VGMStream();
 
 	char filename[MAX_PATH];
 
@@ -138,7 +138,7 @@ void NxAudioEngine::setMusicSpeed(float speed)
 // Voice
 void NxAudioEngine::playVoice(char* name)
 {
-	SoLoud::WavStream* voice = new SoLoud::WavStream();
+	SoLoud::VGMStream* voice = new SoLoud::VGMStream();
 
 	char filename[MAX_PATH];
 

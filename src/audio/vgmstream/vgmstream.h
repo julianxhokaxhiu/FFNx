@@ -21,49 +21,42 @@
 
 #pragma once
 
-#include <vector>
 #include <soloud/soloud.h>
-#include "audio/vgmstream/vgmstream.h"
 
-class NxAudioEngine
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#include <libvgmstream/vgmstream.h>
+
+#if defined(__cplusplus)
+}
+#endif
+
+namespace SoLoud
 {
-private:
-	SoLoud::Soloud _engine;
+	class VGMStream : public AudioSource
+	{
+	public:
+		VGMSTREAM* stream;
+		unsigned int mSampleCount;
 
-	// MUSIC
-	SoLoud::handle _musicHandle = 0xfffff000; // SoLoud Invalid Handle
+		VGMStream();
+		virtual ~VGMStream();
+		result load(const char* aFilename);
 
-	float _musicMasterVolume = 100.0f;
+		virtual AudioSourceInstance* createInstance();
+		time getLength();
+	};
 
-	void getMusicFilenameFullPath(char* _out, char* _name);
-
-	// AUDIO
-	SoLoud::handle _voiceHandle = 0xfffff000; // SoLoud Invalid Handle
-
-	float _voiceMasterVolume = 100.0f;
-
-	void getVoiceFilenameFullPath(char* _out, char* _name);
-
-public:
-	bool init();
-	void cleanup();
-
-	// Audio
-	// TODO
-
-	// Music
-	bool canPlayMusic(char* name);
-	void playMusic(uint32_t midi, char* name, bool crossfade = false, uint32_t time = 0);
-	void stopMusic();
-	void pauseMusic();
-	void resumeMusic();
-	bool isMusicPlaying();
-	void setMusicMasterVolume(float _volume);
-	void setMusicVolume(float _volume, size_t time = 0);
-	void setMusicSpeed(float speed);
-
-	// Voice
-	void playVoice(char* name);
+	class VGMStreamInstance : public AudioSourceInstance
+	{
+		VGMStream* mParent;
+		unsigned int mOffset;
+	public:
+		VGMStreamInstance(VGMStream* aParent);
+		virtual unsigned int getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
+		virtual result rewind();
+		virtual bool hasEnded();
+	};
 };
-
-extern NxAudioEngine nxAudioEngine;
