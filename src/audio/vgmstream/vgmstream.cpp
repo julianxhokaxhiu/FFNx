@@ -40,7 +40,7 @@ namespace SoLoud
 
 		for (i = 0; i < aSamplesToRead; i += SOLOUD_VGMSTREAM_NUM_SAMPLES)
 		{
-			sample_t* tmp = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels];
+			sample_t* tmp = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels]();
 			unsigned int blockSize = (aSamplesToRead - i) > SOLOUD_VGMSTREAM_NUM_SAMPLES ? SOLOUD_VGMSTREAM_NUM_SAMPLES : aSamplesToRead - i;
 			offset += (unsigned int)render_vgmstream(tmp, blockSize, mParent->stream);
 
