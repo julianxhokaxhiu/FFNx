@@ -2761,16 +2761,27 @@ __declspec(dllexport) BOOL __stdcall dotemuDeleteFileA(LPCSTR lpFileName)
 // FF8 2000 Compatibility
 __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(GUID* guid, LPDIRECTSOUND* directsound, IUnknown FAR* unk)
 {
-	typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(GUID*, LPDIRECTSOUND*, IUnknown FAR*);
+	int ret = 0;
 
-	char eax_dll[260];
-	GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
-	strcat(eax_dll, R"(\eax.dll)");
+	if (use_external_music)
+	{
+		if (!engine_create_dsound(unk, guid)) ret = 1;
+	}
+	else
+	{
+		typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(GUID*, LPDIRECTSOUND*, IUnknown FAR*);
 
-	HMODULE hEaxDll = LoadLibraryA(eax_dll);
-	FARPROC procEaxDSoundCreate = GetProcAddress((HMODULE)hEaxDll, "EAXDirectSoundCreate");
+		char eax_dll[260];
+		GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
+		strcat(eax_dll, R"(\eax.dll)");
 
-	return ((LPEAXDIRECTSOUNDCREATE)procEaxDSoundCreate)(guid, directsound, unk);
+		HMODULE hEaxDll = LoadLibraryA(eax_dll);
+		FARPROC procEaxDSoundCreate = GetProcAddress((HMODULE)hEaxDll, "EAXDirectSoundCreate");
+
+		ret = ((LPEAXDIRECTSOUNDCREATE)procEaxDSoundCreate)(guid, directsound, unk);
+	}
+
+	return ret;
 }
 
 void ff8_inject_driver(struct game_obj* game_object)

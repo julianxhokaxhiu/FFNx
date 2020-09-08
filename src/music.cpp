@@ -305,7 +305,7 @@ bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* ne
 		|| new_mode == MODE_CARDGAME;
 }
 
-int engine_create_dsound(int unk, LPGUID guid)
+int engine_create_dsound(void* unk, LPGUID guid)
 {
 	return nxAudioEngine.init();
 }

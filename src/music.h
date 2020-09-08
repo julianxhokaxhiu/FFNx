@@ -44,4 +44,4 @@ void set_midi_tempo(unsigned char tempo);
 uint32_t remember_playing_time();
 uint32_t music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5);
 bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* new_midi);
-int engine_create_dsound(int unk, LPGUID guid);
+int engine_create_dsound(void* unk, LPGUID guid);
