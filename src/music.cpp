@@ -146,11 +146,11 @@ void ff7_play_midi(uint32_t midi)
 	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi));
 }
 
-void cross_fade_midi(uint32_t midi, uint32_t time)
+void cross_fade_midi(uint32_t midi, uint32_t step)
 {
-	if (trace_all || trace_music) trace("%s: midi=%s, time=%u\n", __func__, common_externals.get_midi_name(midi), time);
+	if (trace_all || trace_music) trace("%s: midi=%s, step=%u\n", __func__, common_externals.get_midi_name(midi), step);
 
-	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi), true, time);
+	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi), true, 1);
 }
 
 void pause_midi()
