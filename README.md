@@ -81,6 +81,7 @@ If you're curious to know it, FFNx is made with:
 - [libpng](http://www.libpng.org/pub/png/libpng.html) ( for a better and faster PNG texture support )
 - [imgui](https://github.com/ocornut/imgui) ( to better debug the in-game engine )
 - [discohash](https://github.com/cris691/discohash) ( to extract an hash from palette game textures data known as animated textures )
+- [SoLoud](https://github.com/jarikomppa/soloud) ( as the audio engine used to playback audio, music or voice files )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
