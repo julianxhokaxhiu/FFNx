@@ -155,16 +155,22 @@ void cross_fade_midi(uint32_t midi, uint32_t step)
 
 void pause_midi()
 {
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
 	nxAudioEngine.pauseMusic();
 }
 
 void restart_midi()
 {
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
 	nxAudioEngine.resumeMusic();
 }
 
 void stop_midi()
 {
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
 	nxAudioEngine.stopMusic();
 }
 
@@ -184,6 +190,8 @@ uint32_t ff8_stop_midi()
 
 uint32_t midi_status()
 {
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
 	return nxAudioEngine.isMusicPlaying();
 }
 
