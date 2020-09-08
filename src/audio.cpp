@@ -104,6 +104,8 @@ void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_
 void NxAudioEngine::stopMusic()
 {
 	_engine.stop(_musicHandle);
+
+	_lastMusicName = "";
 }
 
 void NxAudioEngine::pauseMusic()
