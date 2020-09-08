@@ -112,7 +112,7 @@ void NxAudioEngine::resumeMusic()
 
 bool NxAudioEngine::isMusicPlaying()
 {
-	return true;
+	return _engine.isValidVoiceHandle(_musicHandle);
 }
 
 void NxAudioEngine::setMusicMasterVolume(float _volume)
