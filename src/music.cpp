@@ -123,7 +123,7 @@ uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 	}
 
 	nxAudioEngine.playMusic(midi, midi_name);
-	nxAudioEngine.setMusicVolume(volume);
+	nxAudioEngine.setMusicVolume(volume / 127.0f);
 
 	return 1; // Success
 }
@@ -191,21 +191,7 @@ uint32_t ff8_set_direct_volume(int volume)
 {
 	if (trace_all || trace_music) trace("%s: set direct volume %i\n", __func__, volume);
 
-	// Set game volume for horizon concert instruments
-	if (nullptr != *ff8_externals.directmusic_performance) {
-		(*ff8_externals.directmusic_performance)->SetGlobalParam(
-			*(ff8_externals.GUID_PerfMasterVolume), &volume, sizeof(volume)
-		);
-	}
-
-	if (volume == DSBVOLUME_MIN) {
-		volume = 0;
-	}
-	else {
-		volume = (pow(10, (volume + 2000) / 2000.0f) / 10.0f) * 255.0f;
-	}
-
-	nxAudioEngine.setMusicVolume(volume);
+	nxAudioEngine.setMusicVolume(volume / 127.0f);
 	
 	return 1; // Success
 }
