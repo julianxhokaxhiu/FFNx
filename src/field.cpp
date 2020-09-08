@@ -65,14 +65,18 @@ int script_PC_map_change() {
 
 byte get_field_parameter(int id)
 {
-	byte* ptr4 = (byte*)(field_array_1[*current_entity_id] + field_ptr_1 + id + 1);
+	byte* ptr4 = (byte*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
+
 	return *ptr4;
 }
 
 int message()
 {
-	int window_id = get_field_parameter(0);
-	int dialog_id = get_field_parameter(1);
+	byte window_id = get_field_parameter(0);
+	byte dialog_id = get_field_parameter(1);
+	char* field_name = strrchr(ff7_externals.field_file_name, 92) + 1;
+
+	if (trace_all) trace("OPCODE %s: field=%s,window_id=%u,dialog_id=%u\n", __func__, field_name, window_id, dialog_id);
 
 	return old_message();
 }
