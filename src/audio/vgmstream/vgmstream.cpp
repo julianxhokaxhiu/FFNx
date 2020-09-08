@@ -21,6 +21,8 @@
 
 #include "vgmstream.h"
 
+#include <sys/stat.h>
+
 namespace SoLoud
 {
 	VGMStreamInstance::VGMStreamInstance(VGMStream* aParent)
@@ -88,6 +90,10 @@ namespace SoLoud
 	{
 		if (aFilename == 0)
 			return INVALID_PARAMETER;
+
+		struct stat dummy;
+		if (stat(aFilename, &dummy) != 0)
+			return FILE_NOT_FOUND;
 
 		stop();
 
