@@ -47,6 +47,7 @@ cfg_bool_t trace_direct = cfg_bool_t(false);
 cfg_bool_t trace_files = cfg_bool_t(false);
 cfg_bool_t trace_loaders = cfg_bool_t(false);
 cfg_bool_t trace_lights = cfg_bool_t(false);
+cfg_bool_t trace_opcodes = cfg_bool_t(false);
 cfg_bool_t vertex_log = cfg_bool_t(false);
 cfg_bool_t uniform_log = cfg_bool_t(false);
 cfg_bool_t show_renderer_backend = cfg_bool_t(true);
@@ -107,6 +108,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("trace_files", &trace_files),
 		CFG_SIMPLE_BOOL("trace_loaders", &trace_loaders),
 		CFG_SIMPLE_BOOL("trace_lights", &trace_lights),
+		CFG_SIMPLE_BOOL("trace_opcodes", &trace_opcodes),
 		CFG_SIMPLE_BOOL("vertex_log", &vertex_log),
 		CFG_SIMPLE_BOOL("uniform_log", &uniform_log),
 		CFG_SIMPLE_BOOL("show_renderer_backend", &show_renderer_backend),
