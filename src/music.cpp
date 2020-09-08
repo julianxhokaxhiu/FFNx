@@ -114,7 +114,7 @@ char* ff8_midi_name(uint32_t midi)
 
 uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 {
-	info("FF8 midi play %i %i %i %i\n", midi, volume, u1, u2);
+	if (trace_all || trace_music) trace("%s: midi play %i %i %i %i\n", __func__, midi, volume, u1, u2);
 
 	char* midi_name = ff8_midi_name(midi);
 
@@ -170,7 +170,7 @@ void stop_midi()
 
 uint32_t ff8_stop_midi()
 {
-	if (trace_all || trace_music) info("FF8 stop midi\n");
+	if (trace_all || trace_music) trace("%s: stop midi\n", __func__);
 
 	// Stop game midi for horizon concert instruments
 	if (nullptr != *ff8_externals.directmusic_performance) {
@@ -189,7 +189,7 @@ uint32_t midi_status()
 
 uint32_t ff8_set_direct_volume(int volume)
 {
-	if (trace_all || trace_music) info("FF8 set direct volume %i\n", volume);
+	if (trace_all || trace_music) trace("%s: set direct volume %i\n", __func__, volume);
 
 	// Set game volume for horizon concert instruments
 	if (nullptr != *ff8_externals.directmusic_performance) {
