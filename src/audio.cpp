@@ -74,6 +74,10 @@ bool NxAudioEngine::canPlayMusic(char* name)
 
 void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_t time)
 {
+	std::string strName = name;
+
+	if (_lastMusicName == strName) return;
+
 	SoLoud::VGMStream* music = new SoLoud::VGMStream();
 
 	char filename[MAX_PATH];
@@ -93,6 +97,8 @@ void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_
 
 	_musicHandle = _engine.playBackground(*music, crossfade ? 0.0f : 1.0f);
 	if (crossfade) setMusicVolume(1.0f, time);
+
+	_lastMusicName = strName;
 }
 
 void NxAudioEngine::stopMusic()
@@ -153,6 +159,10 @@ void NxAudioEngine::setMusicSpeed(float speed)
 // Voice
 void NxAudioEngine::playVoice(char* name)
 {
+	std::string strName = name;
+
+	if (_lastVoiceName == strName) return;
+
 	SoLoud::VGMStream* voice = new SoLoud::VGMStream();
 
 	char filename[MAX_PATH];
@@ -165,4 +175,6 @@ void NxAudioEngine::playVoice(char* name)
 	if (_engine.isValidVoiceHandle(_voiceHandle)) _engine.stop(_voiceHandle);
 
 	_voiceHandle = _engine.play(*voice);
+
+	_lastVoiceName = strName;
 }

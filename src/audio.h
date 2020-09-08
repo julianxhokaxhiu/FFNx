@@ -22,6 +22,7 @@
 #pragma once
 
 #include <stack>
+#include <string>
 #include <soloud/soloud.h>
 #include "audio/vgmstream/vgmstream.h"
 
@@ -39,12 +40,16 @@ private:
 
 	std::stack<SoLoud::handle> _musicStack;
 
+	std::string _lastMusicName;
+
 	void getMusicFilenameFullPath(char* _out, char* _name);
 
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
 
 	float _voiceMasterVolume = 100.0f;
+
+	std::string _lastVoiceName;
 
 	void getVoiceFilenameFullPath(char* _out, char* _name);
 
