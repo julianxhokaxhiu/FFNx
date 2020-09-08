@@ -103,10 +103,25 @@ void NxAudioEngine::stopMusic()
 void NxAudioEngine::pauseMusic()
 {
 	_engine.setPause(_musicHandle, true);
+
+	// Save for later usage
+	_musicStack.push(_musicHandle);
+
+	// Invalidate the current handle
+	_musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
 }
 
 void NxAudioEngine::resumeMusic()
 {
+	// Whatever is currently playing, just stop it
+	// If the handle is still invalid, nothing will happen
+	_engine.stop(_musicHandle);
+
+	// Restore the last known paused music
+	_musicHandle = _musicStack.top();
+	_musicStack.pop();
+
+	// Play it again from where it was left off
 	_engine.setPause(_musicHandle, false);
 }
 

@@ -21,9 +21,11 @@
 
 #pragma once
 
-#include <vector>
+#include <stack>
 #include <soloud/soloud.h>
 #include "audio/vgmstream/vgmstream.h"
+
+#define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000;
 
 class NxAudioEngine
 {
@@ -31,14 +33,16 @@ private:
 	SoLoud::Soloud _engine;
 
 	// MUSIC
-	SoLoud::handle _musicHandle = 0xfffff000; // SoLoud Invalid Handle
+	SoLoud::handle _musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
 
 	float _musicMasterVolume = 100.0f;
 
+	std::stack<SoLoud::handle> _musicStack;
+
 	void getMusicFilenameFullPath(char* _out, char* _name);
 
-	// AUDIO
-	SoLoud::handle _voiceHandle = 0xfffff000; // SoLoud Invalid Handle
+	// VOICE
+	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
 
 	float _voiceMasterVolume = 100.0f;
 
