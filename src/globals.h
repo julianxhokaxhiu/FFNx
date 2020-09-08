@@ -84,5 +84,6 @@ extern uint32_t ff8;
 extern uint32_t ff8_currentdisk;
 
 extern uint32_t frame_counter;
+extern uint32_t frame_rate;
 
 extern double speedhack_current;

@@ -228,8 +228,7 @@ void set_midi_volume_trans(uint32_t volume, uint32_t step)
 {
 	if (trace_all || trace_music) trace("%s: volume=%u, step=%u\n", __func__, volume, step);
 
-	// TODO: Use current framerate
-	nxAudioEngine.setMusicVolume(volume / 127.0f, step / 30);
+	nxAudioEngine.setMusicVolume(volume / 127.0f, step / frame_rate);
 }
 
 void set_midi_tempo(unsigned char tempo)
