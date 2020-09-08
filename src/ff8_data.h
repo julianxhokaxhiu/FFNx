@@ -214,7 +214,7 @@ void ff8_find_externals()
 
 	ff8_externals.initialize_sound = get_relative_call(ff8_externals.pubintro_init, 0xD8); // sub_469640
 	ff8_externals.initialize_eax_directsound = get_relative_call(ff8_externals.initialize_sound, 0x5D); // sub_46DBF0
-	common_externals.directsound = (IDirectSound**)get_absolute_value(ff8_externals.initialize_eax_directsound, 0x26);
+	common_externals.directsound = (LPLPDIRECTSOUND)get_absolute_value(ff8_externals.initialize_eax_directsound, 0x26);
 
 	// Search battle sound function to find play/stop midi related methods
 	ff8_externals.sm_battle_sound = get_relative_call(ff8_externals.main_loop, 0x69D);

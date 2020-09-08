@@ -2759,7 +2759,7 @@ __declspec(dllexport) BOOL __stdcall dotemuDeleteFileA(LPCSTR lpFileName)
 }
 
 // FF8 2000 Compatibility
-__declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(GUID* guid, LPDIRECTSOUND* directsound, IUnknown FAR* unk)
+__declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(LPGUID guid, LPLPDIRECTSOUND directsound, IUnknown FAR* unk)
 {
 	int ret = 0;
 
@@ -2769,7 +2769,7 @@ __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(GUID* guid, LPDIREC
 	}
 	else
 	{
-		typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(GUID*, LPDIRECTSOUND*, IUnknown FAR*);
+		typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(LPGUID, LPLPDIRECTSOUND, IUnknown FAR*);
 
 		char eax_dll[260];
 		GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
