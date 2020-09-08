@@ -23,6 +23,8 @@
 
 #include <sys/stat.h>
 
+#define SOLOUD_VGMSTREAM_NUM_SAMPLES 512
+
 namespace SoLoud
 {
 	VGMStreamInstance::VGMStreamInstance(VGMStream* aParent)
@@ -36,10 +38,10 @@ namespace SoLoud
 		unsigned int offset = 0;
 		unsigned int i, j, k;
 
-		for (i = 0; i < aSamplesToRead; i += 512)
+		for (i = 0; i < aSamplesToRead; i += SOLOUD_VGMSTREAM_NUM_SAMPLES)
 		{
-			sample_t* tmp = new sample_t[512 * mChannels];
-			unsigned int blockSize = (aSamplesToRead - i) > 512 ? 512 : aSamplesToRead - i;
+			sample_t* tmp = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels];
+			unsigned int blockSize = (aSamplesToRead - i) > SOLOUD_VGMSTREAM_NUM_SAMPLES ? SOLOUD_VGMSTREAM_NUM_SAMPLES : aSamplesToRead - i;
 			offset += (unsigned int)render_vgmstream(tmp, blockSize, mParent->stream);
 
 			for (j = 0; j < blockSize; j++)
