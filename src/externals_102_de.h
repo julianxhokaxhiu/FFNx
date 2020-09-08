@@ -23,6 +23,7 @@
 
 common_externals.start =                      0x40B6E0;
 common_externals.directsound =        (IDirectSound**)0xDC2680;
+common_externals.directsound_create =         0x6E6C4B;
 common_externals.directsound_release =        0x6E6CDE;
 common_externals.debug_print =                0x664E00;
 common_externals.debug_print2 =               0x414EE0;
