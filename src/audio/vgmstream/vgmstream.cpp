@@ -56,6 +56,8 @@ namespace SoLoud
 
 	result VGMStreamInstance::rewind()
 	{
+		seek_vgmstream(mParent->stream, 0);
+
 		mOffset = 0;
 		mStreamPosition = 0.0f;
 		return 0;
