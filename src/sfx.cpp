@@ -91,7 +91,7 @@ bool sfx_buffer_is_looped(IDirectSoundBuffer* buffer)
 
 uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_music) info("Battle swirl stop sound\n");
+	if (trace_all || trace_music) info("%s: Battle swirl stop sound\n", __func__);
 
 	ff7_field_sfx_state* sfx_state = ff7_externals.sound_states;
 
@@ -110,7 +110,7 @@ uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, u
 
 uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_music) info("Field resume music after battle\n");
+	if (trace_all || trace_music) info("%s: Field resume music after battle\n", __func__);
 
 	for (int i = 0; i < 4; ++i) {
 		if (sfx_buffers[i].buffer1 != nullptr || sfx_buffers[i].buffer2 != nullptr) {
@@ -135,7 +135,7 @@ uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t par
 
 void sfx_remember_volumes()
 {
-	if (trace_all || trace_music) info("Remember SFX volumes (master: %i)\n", *common_externals.master_sfx_volume);
+	if (trace_all || trace_music) info("%s: Remember SFX volumes (master: %i)\n", __func__, *common_externals.master_sfx_volume);
 
 	ff7_field_sfx_state* sfx_state = ff7_externals.sound_states;
 
@@ -146,13 +146,13 @@ void sfx_remember_volumes()
 			sfx_volumes[i] = 127;
 		}
 
-		if (trace_all || trace_music) info("SFX volume channel #%i: %i\n", i, sfx_volumes[i]);
+		if (trace_all || trace_music) info("%s: SFX volume channel #%i: %i\n", __func__, i, sfx_volumes[i]);
 	}
 }
 
 void sfx_menu_force_channel_5_volume(uint32_t volume, uint32_t channel)
 {
-	if (trace_all || trace_music) info("sfx_menu_force_channel_5_volume %d\n", volume);
+	if (trace_all || trace_music) info("%s: %d\n", __func__, volume);
 	// Original call (set channel 5 volume to maximum)
 	common_externals.set_sfx_volume_on_channel(volume, channel);
 	// Added by FFNx
@@ -161,7 +161,7 @@ void sfx_menu_force_channel_5_volume(uint32_t volume, uint32_t channel)
 
 void sfx_update_volume(int modifier)
 {
-	if (trace_all || trace_music) info("Update SFX volumes %d\n", modifier);
+	if (trace_all || trace_music) info("%s: Update SFX volumes %d\n", __func__, modifier);
 
 	// Set master sfx volume
 	BYTE** sfx_tmp_volume = (BYTE**)(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_down + 0xA);
@@ -172,7 +172,7 @@ void sfx_update_volume(int modifier)
 	for (int channel = 1; channel <= 5; ++channel) {
 		common_externals.set_sfx_volume_on_channel(sfx_volumes[channel - 1], channel);
 
-		if (trace_all || trace_music) info("Set SFX volume for channel #%i: %i\n", channel, sfx_volumes[channel - 1]);
+		if (trace_all || trace_music) info("%s: Set SFX volume for channel #%i: %i\n", __func__, channel, sfx_volumes[channel - 1]);
 	}
 }
 
@@ -207,7 +207,7 @@ void sfx_fix_volume_values(char* log)
 
 	for (int i = 0; i < 5; ++i) {
 		if (sfx_state[i].u1 == 0xFFFFFFFF) {
-			if (trace_all || trace_music) info("SFX fix volume channel #%i: %i\n", i + 1, real_volume);
+			if (trace_all || trace_music) info("%s: SFX fix volume channel #%i: %i\n", __func__, i + 1, real_volume);
 
 			sfx_state[i].volume1 = real_volume;
 			sfx_state[i].volume2 = real_volume;
