@@ -68,6 +68,7 @@ public:
 	void resumeMusic();
 	bool isMusicPlaying();
 	void setMusicMasterVolume(float _volume);
+	float getMusicVolume();
 	void setMusicVolume(float _volume, size_t time = 0);
 	void setMusicSpeed(float speed);
 

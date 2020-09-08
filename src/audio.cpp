@@ -143,6 +143,11 @@ void NxAudioEngine::setMusicMasterVolume(float _volume)
 	_musicMasterVolume = _volume;
 }
 
+float NxAudioEngine::getMusicVolume()
+{
+	return _engine.getVolume(_musicHandle);
+}
+
 void NxAudioEngine::setMusicVolume(float _volume, size_t time)
 {	
 	float volume = 1.0f / ((_volume * _musicMasterVolume) / 100);
