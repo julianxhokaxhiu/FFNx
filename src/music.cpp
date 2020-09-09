@@ -127,15 +127,6 @@ void ff7_play_midi(uint32_t midi)
 	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi));
 }
 
-void cross_fade_midi(uint32_t midi, uint32_t step)
-{
-	current_midi = midi;
-
-	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, step=%u\n", __func__, midi, common_externals.get_midi_name(midi), step);
-
-	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi), true, 1);
-}
-
 void pause_midi()
 {
 	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
@@ -152,19 +143,45 @@ void restart_midi()
 
 void stop_midi()
 {
-	if (!ff8)
+	if (current_midi != UINT_MAX)
 	{
-		struct game_mode* mode = getmode_cached();
+		if (!ff8)
+		{
+			struct game_mode* mode = getmode_cached();
 
-		// Do not stop the gameover music if coming from a battle
-		if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover) return;
+			// Do not stop the gameover music if coming from a battle
+			if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover) return;
+		}
+
+		if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
+
+		nxAudioEngine.stopMusic();
+
+		current_midi = UINT_MAX;
 	}
+}
 
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
+void cross_fade_midi(uint32_t midi, uint32_t time /* seconds */)
+{
+	time = midi == 0 ? time : time / 2;
 
-	nxAudioEngine.stopMusic();
+	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, time=%us\n", __func__, midi, common_externals.get_midi_name(midi), time);
 
-	current_midi = UINT_MAX;
+	if (midi)
+	{
+		if (midi == 1)
+		{
+			midi = (current_midi == 2) + 1;
+		}
+		else if (midi == 2)
+		{
+			midi = (current_midi != 1) + 1;
+		}
+
+		nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi), true, time);
+	}
+	else
+		stop_midi();
 }
 
 uint32_t ff8_stop_midi()
@@ -265,7 +282,7 @@ uint32_t remember_playing_time()
 
 uint32_t music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_music) trace("AKAO call type=%X params=(%i %i %i %i)\n", type, param1, param2, param3, param4, param5);
+	if (trace_all) trace("AKAO call type=%X params=(%i %i %i %i)\n", type, param1, param2, param3, param4, param5);
 
 	if (type == 0xDA) { // Assimilated to stop music (Cid speech in Highwind)
 		return ((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(0xF0, 0, 0, 0, 0, 0);
