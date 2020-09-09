@@ -175,11 +175,11 @@ uint32_t midi_status()
 	return nxAudioEngine.isMusicPlaying();
 }
 
-uint32_t ff8_set_direct_volume(int volume)
+uint32_t ff8_set_midi_volume(int volume)
 {
 	if (trace_all || trace_music) trace("%s: set direct volume %i\n", __func__, volume);
 
-	nxAudioEngine.setMusicVolume(volume / 127.0f);
+	nxAudioEngine.setMusicVolume((volume + 10000.0f) / 10000.0f);
 	
 	return 1; // Success
 }
@@ -320,7 +320,7 @@ void music_init()
 			replace_function(common_externals.restart_midi, restart_midi);
 			replace_function(common_externals.stop_midi, ff8_stop_midi);
 			replace_function(common_externals.midi_status, midi_status);
-			replace_function(common_externals.set_midi_volume, ff8_set_direct_volume);
+			replace_function(common_externals.set_midi_volume, ff8_set_midi_volume);
 			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
 			replace_function(common_externals.directsound_release, directsound_release);
 			replace_function(common_externals.midi_cleanup, noop);
