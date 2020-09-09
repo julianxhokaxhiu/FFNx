@@ -238,6 +238,8 @@ void set_master_midi_volume(uint32_t volume)
 
 void set_midi_volume(uint32_t volume)
 {
+	if (volume > 127) volume = 127;
+
 	if (trace_all || trace_music) trace("%s: volume=%u\n", __func__, volume);
 
 	nxAudioEngine.setMusicVolume(volume / 127.0f);
@@ -245,16 +247,35 @@ void set_midi_volume(uint32_t volume)
 
 void set_midi_volume_trans(uint32_t volume, uint32_t step)
 {
+	if (volume > 127) volume = 127;
+
 	if (trace_all || trace_music) trace("%s: volume=%u, step=%u\n", __func__, volume, step);
 
-	if (!volume) stop_midi();
-	else if (volume > 0 && step < 10) set_midi_volume(volume);
-	else nxAudioEngine.setMusicVolume(volume / 127.0f, ( nxAudioEngine.getMusicVolume() - (volume / 127.0f) ) / (step / 60.0f));
+	if (step)
+	{
+		if (step < 10)
+		{
+			set_midi_volume(volume);
+			if (!volume) stop_midi();
+		}
+		else
+		{
+			nxAudioEngine.setMusicVolume(volume / 127.0f, (nxAudioEngine.getMusicVolume() - (volume / 127.0f)) / (step / 60.0f));
+		}
+	}
+	else if (volume)
+	{
+		set_midi_volume(volume);
+	}
+	else
+	{
+		stop_midi();
+	}
 }
 
-void set_midi_tempo(unsigned char tempo)
+void set_midi_tempo(char tempo)
 {
-	if (trace_all || trace_music) trace("%s: tempo=%u\n", __func__, tempo);
+	if (trace_all || trace_music) trace("%s: tempo=%d\n", __func__, tempo);
 
 	float speed = 1.0;
 
