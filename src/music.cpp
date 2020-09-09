@@ -219,7 +219,7 @@ uint32_t ff8_stop_midi()
 
 uint32_t midi_status()
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(current_midi));
 
 	return nxAudioEngine.isMusicPlaying();
 }
