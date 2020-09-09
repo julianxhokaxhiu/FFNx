@@ -67,59 +67,6 @@ void AbstractOutPlugin::unPause() const
 	}
 }
 
-WinampOutPlugin::WinampOutPlugin() :
-	WinampPlugin(), AbstractOutPlugin()
-{
-}
-
-WinampOutPlugin::~WinampOutPlugin()
-{
-	closeModule();
-	close();
-}
-
-bool WinampOutPlugin::openModule(FARPROC procAddress)
-{
-	winampGetOutModule f = (winampGetOutModule)procAddress;
-	this->mod = f();
-
-	if (nullptr == this->mod) {
-		error("couldn't call function %s in external library\n", procName());
-		return false;
-	}
-
-	// Set fields
-	this->mod->hMainWindow = nullptr;
-	this->mod->hDllInstance = getHandle();
-	// Initialize module
-	if (nullptr != this->mod->Init) {
-		this->mod->Init();
-	}
-
-	return true;
-}
-
-void WinampOutPlugin::closeModule()
-{
-	if (nullptr != this->mod) {
-		if (nullptr != this->mod->Quit) {
-			this->mod->Quit();
-		}
-		this->mod = nullptr;
-	}
-}
-
-void WinampOutPlugin::setVolume(int volume)
-{
-	if (volume == 255) {
-		// Force volume for MM (out_wave fix)
-		for (int i = 0; i < waveInGetNumDevs(); ++i) {
-			waveOutSetVolume(HWAVEOUT(i), 0xFFFFFFFF);
-		}
-	}
-	AbstractOutPlugin::setVolume(volume);
-}
-
 BufferOutPlugin* BufferOutPlugin::_instance = nullptr;
 
 char* BufferOutPlugin::_buffer = nullptr;

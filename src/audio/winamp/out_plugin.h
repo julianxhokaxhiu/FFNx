@@ -45,19 +45,6 @@ public:
 	void unPause() const;
 };
 
-class WinampOutPlugin : public WinampPlugin, public AbstractOutPlugin {
-private:
-	inline LPCSTR procName() const {
-		return "winampGetOutModule";
-	}
-	bool openModule(FARPROC procAddress);
-	void closeModule();
-public:
-	WinampOutPlugin();
-	virtual ~WinampOutPlugin();
-	void setVolume(int volume);
-};
-
 class BufferOutPlugin : public AbstractOutPlugin {
 private:
 	static BufferOutPlugin* _instance;
