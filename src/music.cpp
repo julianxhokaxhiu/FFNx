@@ -46,29 +46,32 @@ char ff8_midi[32];
 
 char* ff8_midi_name(uint32_t midi)
 {
-	// midi_name format: {num}{type}-{name}.sgt or {name}.sgt or _Missing.sgt
-	char* midi_name = common_externals.get_midi_name(midi),
-		* truncated_name;
+	if (midi != UINT_MAX)
+	{
+		// midi_name format: {num}{type}-{name}.sgt or {name}.sgt or _Missing.sgt
+		char* midi_name = common_externals.get_midi_name(midi),
+			* truncated_name;
 
-	truncated_name = strchr(midi_name, '-');
+		truncated_name = strchr(midi_name, '-');
 
-	if (nullptr != truncated_name) {
-		truncated_name += 1; // Remove "-"
-	}
-	else {
-		truncated_name = midi_name;
-	}
+		if (nullptr != truncated_name) {
+			truncated_name += 1; // Remove "-"
+		}
+		else {
+			truncated_name = midi_name;
+		}
 
-	char* max_midi_name = strchr(truncated_name, '.');
+		char* max_midi_name = strchr(truncated_name, '.');
 
-	if (nullptr != max_midi_name) {
-		size_t len = max_midi_name - truncated_name;
+		if (nullptr != max_midi_name) {
+			size_t len = max_midi_name - truncated_name;
 
-		if (len < 32) {
-			memcpy(ff8_midi, truncated_name, len);
-			ff8_midi[len] = '\0';
+			if (len < 32) {
+				memcpy(ff8_midi, truncated_name, len);
+				ff8_midi[len] = '\0';
 
-			return ff8_midi;
+				return ff8_midi;
+			}
 		}
 	}
 
@@ -77,13 +80,15 @@ char* ff8_midi_name(uint32_t midi)
 
 uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 {
-	if (trace_all || trace_music) trace("%s: midi play %i %i %i %i\n", __func__, midi, volume, u1, u2);
-
 	char* midi_name = ff8_midi_name(midi);
 
 	if (nullptr == midi_name) {
 		return 0; // Error
 	}
+
+	if (trace_all || trace_music) trace("%s: midi_id=%u,midi=%s,volume=%u,u1=%u,u2=%u\n", __func__, midi, midi_name, volume, u1, u2);
+
+	current_midi = midi;
 
 	nxAudioEngine.playMusic(midi, midi_name);
 	nxAudioEngine.setMusicVolume(volume / 127.0f);
@@ -133,26 +138,29 @@ void cross_fade_midi(uint32_t midi, uint32_t step)
 
 void pause_midi()
 {
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(current_midi));
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
 
 	nxAudioEngine.pauseMusic();
 }
 
 void restart_midi()
 {
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(current_midi));
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
 
 	nxAudioEngine.resumeMusic();
 }
 
 void stop_midi()
 {
-	struct game_mode* mode = getmode_cached();
+	if (!ff8)
+	{
+		struct game_mode* mode = getmode_cached();
 
-	// Do not stop the gameover music if coming from a battle
-	if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover) return;
+		// Do not stop the gameover music if coming from a battle
+		if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover) return;
+	}
 
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(current_midi));
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
 
 	nxAudioEngine.stopMusic();
 
@@ -161,8 +169,6 @@ void stop_midi()
 
 uint32_t ff8_stop_midi()
 {
-	if (trace_all || trace_music) trace("%s: stop midi\n", __func__);
-
 	stop_midi();
 
 	return 0;
@@ -170,14 +176,14 @@ uint32_t ff8_stop_midi()
 
 uint32_t midi_status()
 {
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(current_midi));
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
 
 	return nxAudioEngine.isMusicPlaying();
 }
 
 uint32_t ff8_set_midi_volume(int volume)
 {
-	if (trace_all || trace_music) trace("%s: set direct volume %i\n", __func__, volume);
+	if (trace_all || trace_music) trace("%s: set direct volume %d\n", __func__, volume);
 
 	nxAudioEngine.setMusicVolume((volume + 10000.0f) / 10000.0f);
 	
