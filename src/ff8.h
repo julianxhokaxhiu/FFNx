@@ -897,6 +897,7 @@ struct ff8_externals
 	uint32_t is_window_active_sub2;
 	void (*show_vram_window)();
 	void (*refresh_vram_window)();
+	uint32_t sub_46EB30;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

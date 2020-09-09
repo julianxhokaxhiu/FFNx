@@ -29,6 +29,8 @@
 uint32_t current_midi = UINT32_MAX;
 bool was_battle_gameover = false;
 
+void noop() {};
+
 void music_init()
 {
 	if (!ff8)
@@ -51,6 +53,8 @@ void music_init()
 			replace_function(common_externals.midi_status, midi_status);
 			replace_function(common_externals.set_midi_volume, ff8_set_direct_volume);
 			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
+			replace_function(common_externals.directsound_release, directsound_release);
+			replace_function(common_externals.midi_cleanup, noop);
 		}
 		else
 		{
@@ -66,7 +70,7 @@ void music_init()
 			replace_function(common_externals.set_midi_volume, set_midi_volume);
 			replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
 			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
-			replace_function(common_externals.directsound_release, ff7_directsound_release);
+			replace_function(common_externals.directsound_release, directsound_release);
 		}
 	}
 }
@@ -287,18 +291,11 @@ void set_midi_tempo(char tempo)
 	nxAudioEngine.setMusicSpeed(speed);
 }
 
-uint32_t ff7_directsound_release()
-{
-	if (nullptr == *common_externals.directsound) return 0;
-
-	music_cleanup();
-
-	return 0;
-}
-
-void music_cleanup()
+uint32_t directsound_release()
 {
 	nxAudioEngine.cleanup();
+
+	return 0;
 }
 
 uint32_t remember_playing_time()

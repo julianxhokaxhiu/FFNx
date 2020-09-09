@@ -171,6 +171,7 @@ struct common_externals
 	uint32_t get_time;
 	uint32_t diff_time;
 	uint32_t midi_init;
+	uint32_t midi_cleanup;
 	char *(*get_midi_name)(uint32_t);
 	uint32_t use_midi;
 	uint32_t play_midi;

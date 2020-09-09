@@ -25,8 +25,7 @@
 
 void music_init();
 uint32_t midi_init(uint32_t unknown);
-uint32_t ff7_directsound_release();
-void music_cleanup();
+uint32_t directsound_release();
 uint32_t ff7_use_midi(uint32_t midi);
 void ff7_play_midi(uint32_t midi);
 uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2);
