@@ -1616,7 +1616,6 @@ struct ff7_externals
 	uint32_t coaster_sub_5E9051;
 	uint32_t coaster_sub_5EE150;
 	uint32_t cleanup_game;
-	uint32_t cleanup_midi;
 	uint32_t wm_activateapp;
 	uint32_t get_gamepad;
 	uint32_t update_gamepad_status;

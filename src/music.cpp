@@ -29,53 +29,9 @@
 uint32_t current_midi = UINT32_MAX;
 bool was_battle_gameover = false;
 
-void noop() {};
+static uint32_t noop() { return 0; }
 
-void music_init()
-{
-	if (!ff8)
-	{
-		// Fix music stop issue in FF7
-		patch_code_dword(ff7_externals.music_lock_clear_fix + 2, 0xCC195C);
-		// Fix Cid speech music stop
-		replace_call(ff7_externals.opcode_akao + 0xEA, music_sound_operation_fix);
-		replace_call(ff7_externals.opcode_akao2 + 0xE8, music_sound_operation_fix);
-	}
-
-	if (use_external_music)
-	{
-		if (ff8)
-		{
-			replace_function(common_externals.play_midi, ff8_play_midi);
-			replace_function(common_externals.pause_midi, pause_midi);
-			replace_function(common_externals.restart_midi, restart_midi);
-			replace_function(common_externals.stop_midi, ff8_stop_midi);
-			replace_function(common_externals.midi_status, midi_status);
-			replace_function(common_externals.set_midi_volume, ff8_set_direct_volume);
-			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
-			replace_function(common_externals.directsound_release, directsound_release);
-			replace_function(common_externals.midi_cleanup, noop);
-		}
-		else
-		{
-			replace_function(common_externals.midi_init, midi_init);
-			replace_function(common_externals.use_midi, ff7_use_midi);
-			replace_function(common_externals.play_midi, ff7_play_midi);
-			replace_function(common_externals.cross_fade_midi, cross_fade_midi);
-			replace_function(common_externals.pause_midi, pause_midi);
-			replace_function(common_externals.restart_midi, restart_midi);
-			replace_function(common_externals.stop_midi, stop_midi);
-			replace_function(common_externals.midi_status, midi_status);
-			replace_function(common_externals.set_master_midi_volume, set_master_midi_volume);
-			replace_function(common_externals.set_midi_volume, set_midi_volume);
-			replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
-			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
-			replace_function(common_externals.directsound_release, directsound_release);
-		}
-	}
-}
-
-uint32_t midi_init(uint32_t unknown)
+uint32_t ff7_midi_init(uint32_t unknown)
 {
 	// without this there will be no volume control for music in the config menu
 	*ff7_externals.midi_volume_control = true;
@@ -346,4 +302,49 @@ bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* ne
 int engine_create_dsound(void* unk, LPGUID guid)
 {
 	return nxAudioEngine.init();
+}
+
+void music_init()
+{
+	if (!ff8)
+	{
+		// Fix music stop issue in FF7
+		patch_code_dword(ff7_externals.music_lock_clear_fix + 2, 0xCC195C);
+		// Fix Cid speech music stop
+		replace_call(ff7_externals.opcode_akao + 0xEA, music_sound_operation_fix);
+		replace_call(ff7_externals.opcode_akao2 + 0xE8, music_sound_operation_fix);
+	}
+
+	if (use_external_music)
+	{
+		if (ff8)
+		{
+			replace_function(common_externals.play_midi, ff8_play_midi);
+			replace_function(common_externals.pause_midi, pause_midi);
+			replace_function(common_externals.restart_midi, restart_midi);
+			replace_function(common_externals.stop_midi, ff8_stop_midi);
+			replace_function(common_externals.midi_status, midi_status);
+			replace_function(common_externals.set_midi_volume, ff8_set_direct_volume);
+			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
+			replace_function(common_externals.directsound_release, directsound_release);
+			replace_function(common_externals.midi_cleanup, noop);
+		}
+		else
+		{
+			replace_function(common_externals.midi_init, ff7_midi_init);
+			replace_function(common_externals.use_midi, ff7_use_midi);
+			replace_function(common_externals.play_midi, ff7_play_midi);
+			replace_function(common_externals.cross_fade_midi, cross_fade_midi);
+			replace_function(common_externals.pause_midi, pause_midi);
+			replace_function(common_externals.restart_midi, restart_midi);
+			replace_function(common_externals.stop_midi, stop_midi);
+			replace_function(common_externals.midi_status, midi_status);
+			replace_function(common_externals.set_master_midi_volume, set_master_midi_volume);
+			replace_function(common_externals.set_midi_volume, set_midi_volume);
+			replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
+			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
+			replace_function(common_externals.directsound_release, directsound_release);
+			replace_function(common_externals.midi_cleanup, noop);
+		}
+	}
 }

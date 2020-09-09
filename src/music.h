@@ -21,26 +21,5 @@
 
 #pragma once
 
-#include <stdint.h>
-
 void music_init();
-uint32_t midi_init(uint32_t unknown);
-uint32_t directsound_release();
-uint32_t ff7_use_midi(uint32_t midi);
-void ff7_play_midi(uint32_t midi);
-uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2);
-void cross_fade_midi(uint32_t midi, uint32_t time);
-void pause_midi();
-void restart_midi();
-void stop_midi();
-uint32_t ff8_stop_midi();
-uint32_t midi_status();
-uint32_t ff8_set_direct_volume(int volume);
-void set_master_midi_volume(uint32_t volume);
-void set_midi_volume(uint32_t volume);
-void set_midi_volume_trans(uint32_t volume, uint32_t step);
-void set_midi_tempo(char tempo);
-uint32_t remember_playing_time();
-uint32_t music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5);
-bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* new_midi);
 int engine_create_dsound(void* unk, LPGUID guid);

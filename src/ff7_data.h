@@ -312,7 +312,7 @@ void ff7_find_externals()
 	ff7_externals.coaster_sub_5EE150 = get_relative_call(ff7_externals.coaster_sub_5E9051, 0x3);
 
 	ff7_externals.cleanup_game = get_absolute_value(ff7_externals.init_stuff, 0x350);
-	ff7_externals.cleanup_midi = get_relative_call(ff7_externals.cleanup_game, 0x72);
+	common_externals.midi_cleanup = get_relative_call(ff7_externals.cleanup_game, 0x72);
 
 	ff7_externals.sub_60DF96 = get_relative_call(ff7_externals.init_game, 0x42B);
 	ff7_externals.sub_60EEB2 = get_relative_call(ff7_externals.sub_60DF96, 0x26);
