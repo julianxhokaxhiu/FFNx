@@ -45,6 +45,22 @@ bool NxAudioEngine::init()
 	if (_engine.init() == 0)
 	{
 		*common_externals.directsound = (LPDIRECTSOUND)((ma_device*)_engine.mBackendDevice)->dsound.pPlayback;
+		
+		if (nullptr != winamp_in_plugin)
+		{
+			_winampInPlugin = new WinampInPlugin(BufferOutPlugin::instance());
+
+			if (!_winampInPlugin->open(winamp_in_plugin))
+			{
+				error("couldn't load %s, please verify 'winamp_in_plugin' or comment it\n", winamp_in_plugin);
+				delete _winampInPlugin;
+				_winampInPlugin = nullptr;
+			}
+		}
+		else
+		{
+			_winampInPlugin = nullptr;
+		}
 
 		return true;
 	}
@@ -78,13 +94,33 @@ void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_
 
 	if (_lastMusicName == strName) return;
 
-	SoLoud::VGMStream* music = new SoLoud::VGMStream();
+	SoLoud::AudioSource* music = nullptr;
 
 	char filename[MAX_PATH];
 
 	getMusicFilenameFullPath(filename, name);
 
-	music->load(filename);
+	if (_winampInPlugin != nullptr) {
+		SoLoud::Winamp* winamp = new SoLoud::Winamp(_winampInPlugin, BufferOutPlugin::instance());
+		music = dynamic_cast<SoLoud::AudioSource*>(winamp);
+
+		if (winamp->load(filename) != SoLoud::SO_NO_ERROR) {
+			error("Cannot load %s with winamp\n", filename);
+			delete winamp;
+			music = nullptr;
+		}
+		else {
+			info("Winamp music plugin loaded using %s\n", winamp_in_plugin);
+		}
+	}
+
+	if (music == nullptr) {
+		SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
+		music = dynamic_cast<SoLoud::AudioSource*>(vgmstream);
+		if (vgmstream->load(filename) != SoLoud::SO_NO_ERROR) {
+			error("Cannot load %s with vgmstream\n", filename);
+		}
+	}
 
 	// Fade out or stop the previous playing music
 	if (_engine.isValidVoiceHandle(_musicHandle))

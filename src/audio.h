@@ -25,6 +25,7 @@
 #include <string>
 #include <soloud/soloud.h>
 #include "audio/vgmstream/vgmstream.h"
+#include "audio/winamp/winamp.h"
 
 #define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000;
 
@@ -32,6 +33,7 @@ class NxAudioEngine
 {
 private:
 	SoLoud::Soloud _engine;
+	WinampInPlugin* _winampInPlugin;
 
 	// MUSIC
 	SoLoud::handle _musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
