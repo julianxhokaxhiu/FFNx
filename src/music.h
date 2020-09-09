@@ -22,4 +22,3 @@
 #pragma once
 
 void music_init();
-int engine_create_dsound(void* unk, LPGUID guid);

@@ -163,11 +163,6 @@ uint32_t ff8_stop_midi()
 {
 	if (trace_all || trace_music) trace("%s: stop midi\n", __func__);
 
-	// Stop game midi for horizon concert instruments
-	if (nullptr != *ff8_externals.directmusic_performance) {
-		(*ff8_externals.directmusic_performance)->Stop(nullptr, nullptr, 0, DMUS_SEGF_DEFAULT);
-	}
-
 	stop_midi();
 
 	return 0;
@@ -299,7 +294,7 @@ bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* ne
 		|| new_mode == MODE_CARDGAME;
 }
 
-int engine_create_dsound(void* unk, LPGUID guid)
+int directsound_create(void* unk, LPGUID guid)
 {
 	return nxAudioEngine.init();
 }
@@ -319,6 +314,7 @@ void music_init()
 	{
 		if (ff8)
 		{
+			replace_function(common_externals.directsound_create, directsound_create);
 			replace_function(common_externals.play_midi, ff8_play_midi);
 			replace_function(common_externals.pause_midi, pause_midi);
 			replace_function(common_externals.restart_midi, restart_midi);
@@ -331,6 +327,7 @@ void music_init()
 		}
 		else
 		{
+			replace_function(common_externals.directsound_create, directsound_create);
 			replace_function(common_externals.midi_init, ff7_midi_init);
 			replace_function(common_externals.use_midi, ff7_use_midi);
 			replace_function(common_externals.play_midi, ff7_play_midi);

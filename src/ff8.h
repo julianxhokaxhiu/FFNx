@@ -844,7 +844,6 @@ struct ff8_externals
 	uint32_t sub_529FF0;
 	struct ff8_movie_obj *movie_object;
 	uint32_t initialize_sound;
-	uint32_t initialize_eax_directsound;
 	void (*sub_5304B0)();
 	uint32_t *enable_framelimiter;
 	unsigned char *byte_1CE4907;

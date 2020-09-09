@@ -213,8 +213,8 @@ void ff8_find_externals()
 	common_externals.keyboard_connected = (uint32_t*)get_absolute_value(common_externals.get_keyboard_state, 0x2C);
 
 	ff8_externals.initialize_sound = get_relative_call(ff8_externals.pubintro_init, 0xD8); // sub_469640
-	ff8_externals.initialize_eax_directsound = get_relative_call(ff8_externals.initialize_sound, 0x5D); // sub_46DBF0
-	common_externals.directsound = (LPLPDIRECTSOUND)get_absolute_value(ff8_externals.initialize_eax_directsound, 0x26);
+	common_externals.directsound_create = get_relative_call(ff8_externals.initialize_sound, 0x5D); // sub_46DBF0
+	common_externals.directsound = (LPLPDIRECTSOUND)get_absolute_value(common_externals.directsound_create, 0x26);
 	common_externals.directsound_release = get_relative_call(ff8_externals.initialize_sound, 0xD5);
 
 	common_externals.midi_init = get_relative_call(ff8_externals.pubintro_init, 0x130);

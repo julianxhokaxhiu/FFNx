@@ -374,8 +374,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			newRenderer.shutdown();
 
 			SetWindowLongA(gameHwnd, GWL_WNDPROC, (LONG)common_externals.engine_wndproc);
-
-			unreplace_functions();
 			break;
 		}
 
@@ -2324,7 +2322,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			common_externals.winmain = get_relative_call(common_externals.start, 0x14D);
 			replace_function(ff7_externals.get_inserted_cd_sub, ff7_get_inserted_cd);
 			replace_function(common_externals.create_window, common_create_window);
-			if (use_external_music) replace_function(common_externals.directsound_create, engine_create_dsound);
 
 			if (strstr(dllName, "af3dn.p") != NULL)
 			{
@@ -2759,27 +2756,16 @@ __declspec(dllexport) BOOL __stdcall dotemuDeleteFileA(LPCSTR lpFileName)
 // FF8 2000 Compatibility
 __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(LPGUID guid, LPLPDIRECTSOUND directsound, IUnknown FAR* unk)
 {
-	int ret = 0;
+	typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(LPGUID, LPLPDIRECTSOUND, IUnknown FAR*);
 
-	if (use_external_music)
-	{
-		if (!engine_create_dsound(unk, guid)) ret = 1;
-	}
-	else
-	{
-		typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(LPGUID, LPLPDIRECTSOUND, IUnknown FAR*);
+	char eax_dll[260];
+	GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
+	strcat(eax_dll, R"(\eax.dll)");
 
-		char eax_dll[260];
-		GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
-		strcat(eax_dll, R"(\eax.dll)");
+	HMODULE hEaxDll = LoadLibraryA(eax_dll);
+	FARPROC procEaxDSoundCreate = GetProcAddress((HMODULE)hEaxDll, "EAXDirectSoundCreate");
 
-		HMODULE hEaxDll = LoadLibraryA(eax_dll);
-		FARPROC procEaxDSoundCreate = GetProcAddress((HMODULE)hEaxDll, "EAXDirectSoundCreate");
-
-		ret = ((LPEAXDIRECTSOUNDCREATE)procEaxDSoundCreate)(guid, directsound, unk);
-	}
-
-	return ret;
+	return ((LPEAXDIRECTSOUNDCREATE)procEaxDSoundCreate)(guid, directsound, unk);
 }
 
 void ff8_inject_driver(struct game_obj* game_object)
