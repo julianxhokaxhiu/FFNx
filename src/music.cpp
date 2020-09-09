@@ -26,6 +26,9 @@
 #include "music.h"
 #include "patch.h"
 
+uint32_t current_midi = UINT32_MAX;
+bool was_battle_gameover = false;
+
 void music_init()
 {
 	if (!ff8)
@@ -141,37 +144,59 @@ uint32_t ff7_use_midi(uint32_t midi)
 
 void ff7_play_midi(uint32_t midi)
 {
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(midi));
+	struct game_mode* mode = getmode_cached();
+
+	// Avoid restarting the same music when transitioning from the battle gameover to the gameover screen
+	if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover)
+	{
+		was_battle_gameover = false;
+		return;
+	}
+
+	if (mode->driver_mode == MODE_BATTLE && midi == 58) was_battle_gameover = true;
+
+	current_midi = midi;
+
+	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s\n", __func__, midi, common_externals.get_midi_name(midi));
 
 	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi));
 }
 
 void cross_fade_midi(uint32_t midi, uint32_t step)
 {
-	if (trace_all || trace_music) trace("%s: midi=%s, step=%u\n", __func__, common_externals.get_midi_name(midi), step);
+	current_midi = midi;
+
+	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, step=%u\n", __func__, midi, common_externals.get_midi_name(midi), step);
 
 	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi), true, 1);
 }
 
 void pause_midi()
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(current_midi));
 
 	nxAudioEngine.pauseMusic();
 }
 
 void restart_midi()
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(current_midi));
 
 	nxAudioEngine.resumeMusic();
 }
 
 void stop_midi()
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	struct game_mode* mode = getmode_cached();
+
+	// Do not stop the gameover music if coming from a battle
+	if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover) return;
+
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, common_externals.get_midi_name(current_midi));
 
 	nxAudioEngine.stopMusic();
+
+	current_midi = UINT_MAX;
 }
 
 uint32_t ff8_stop_midi()
