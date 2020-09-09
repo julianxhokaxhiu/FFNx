@@ -51,10 +51,12 @@ namespace SoLoud
 
 	class VGMStreamInstance : public AudioSourceInstance
 	{
+		sample_t* mStreamBuffer;
 		VGMStream* mParent;
 		unsigned int mOffset;
 	public:
 		VGMStreamInstance(VGMStream* aParent);
+		virtual ~VGMStreamInstance();
 		virtual unsigned int getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
 		virtual result rewind();
 		virtual bool hasEnded();
