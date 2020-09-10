@@ -150,7 +150,7 @@ void BufferOutPlugin::Close()
 
 int BufferOutPlugin::Write(char* buffer, int len)
 {
-	info("BufferOutPlugin::Write %i\n", len);
+	if (trace_all) trace("BufferOutPlugin::Write %i\n", len);
 
 	// Cyclic buffer
 	if (_writePosition + len > _bufferLength) {
@@ -175,7 +175,7 @@ int BufferOutPlugin::Write(char* buffer, int len)
 
 int BufferOutPlugin::CanWrite()
 {
-	info("BufferOutPlugin::CanWrite %i / %i\n", _readPosition, _writePosition);
+	if (trace_all) trace("BufferOutPlugin::CanWrite %i / %i\n", _readPosition, _writePosition);
 
 	if (_readPosition <= _writePosition) {
 		return (_bufferLength - _writePosition) + _readPosition;
@@ -186,7 +186,7 @@ int BufferOutPlugin::CanWrite()
 
 int BufferOutPlugin::IsPlaying()
 {
-	info("BufferOutPlugin::IsPlaying\n");
+	if (trace_all || trace_music) info("BufferOutPlugin::IsPlaying\n");
 	_finishedPlaying = true;
 	return 0;
 }
