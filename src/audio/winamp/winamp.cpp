@@ -104,16 +104,19 @@ namespace SoLoud
 		stop();
 		
 		if (inPlugin->accept(aFilename)) {
+			error("This file type is not supported (%s)\n", aFilename);
 			return FILE_LOAD_FAILED;
 		}
 
-		inPlugin->play(const_cast<char *>(aFilename));
+		inPlugin->play(const_cast<char*>(aFilename));
 
 		if (outPlugin->sampleRate() < 0) {
+			error("The winamp output plugin was never opened\n");
 			return FILE_LOAD_FAILED;
 		}
 
 		if (outPlugin->bitsPerSample() != 16) {
+			error("Unsupported bits per sample value: %i\n", outPlugin->bitsPerSample());
 			return FILE_LOAD_FAILED;
 		}
 
