@@ -41,14 +41,13 @@ namespace SoLoud
 
 	unsigned int VGMStreamInstance::getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize)
 	{
-		unsigned int offset = 0;
 		unsigned int i, j, k;
 
 		for (i = 0; i < aSamplesToRead; i += SOLOUD_VGMSTREAM_NUM_SAMPLES)
 		{
 			memset(mStreamBuffer, 0, sizeof(sample_t) * SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels);
 			unsigned int blockSize = (aSamplesToRead - i) > SOLOUD_VGMSTREAM_NUM_SAMPLES ? SOLOUD_VGMSTREAM_NUM_SAMPLES : aSamplesToRead - i;
-			offset += (unsigned int)render_vgmstream(mStreamBuffer, blockSize, mParent->stream);
+			render_vgmstream(mStreamBuffer, blockSize, mParent->stream);
 
 			for (j = 0; j < blockSize; j++)
 			{
@@ -59,8 +58,9 @@ namespace SoLoud
 			}
 		}
 
-		mOffset += offset;
-		return offset;
+		mOffset = mParent->stream->current_sample;
+
+		return mOffset;
 	}
 
 	result VGMStreamInstance::rewind()
