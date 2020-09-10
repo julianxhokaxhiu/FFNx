@@ -50,8 +50,8 @@ private:
 	static BufferOutPlugin* _instance;
 	static char* _buffer;
 	static int _bufferLength;
+	static int _readPosition;
 	static int _writePosition;
-	static int _toWriteLength;
 	static bool _finishedPlaying;
 	static int _sampleRate;
 	static int _numChannels;

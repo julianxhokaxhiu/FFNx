@@ -21,6 +21,8 @@
 
 #include "out_plugin.h"
 
+constexpr auto AUDIO_BUFFER_SECONDS = 5;
+
 void AbstractOutPlugin::setVolume(int volume)
 {
 	if (nullptr != this->mod) {
@@ -71,8 +73,8 @@ BufferOutPlugin* BufferOutPlugin::_instance = nullptr;
 
 char* BufferOutPlugin::_buffer = nullptr;
 int BufferOutPlugin::_bufferLength = 0;
+int BufferOutPlugin::_readPosition = 0;
 int BufferOutPlugin::_writePosition = 0;
-int BufferOutPlugin::_toWriteLength = 0;
 
 bool BufferOutPlugin::_finishedPlaying = true;
 
@@ -85,7 +87,6 @@ BufferOutPlugin* BufferOutPlugin::instance()
 {
 	if (_instance == nullptr) {
 		_instance = new BufferOutPlugin();
-
 	}
 
 	return _instance;
@@ -119,7 +120,12 @@ int BufferOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 	Close();
 
+	_bufferLength = AUDIO_BUFFER_SECONDS * samplerate * numchannels * bitspersamp / 8;
+	_writePosition = 0;
+	_readPosition = 0;
+	_buffer = new char[_bufferLength]();
 	_finishedPlaying = false;
+
 	_sampleRate = samplerate;
 	_numChannels = numchannels;
 	_bitsPerSample = bitspersamp;
@@ -135,32 +141,52 @@ void BufferOutPlugin::Close()
 	_sampleRate = -1;
 	_numChannels = -1;
 	_bitsPerSample = -1;
+
+	if (_buffer != nullptr) {
+		delete[] _buffer;
+		_buffer = nullptr;
+	}
 }
 
 int BufferOutPlugin::Write(char* buffer, int len)
 {
-	if (_writePosition + len > _toWriteLength) {
-		return 0;
+	info("BufferOutPlugin::Write %i\n", len);
+
+	// Cyclic buffer
+	if (_writePosition + len > _bufferLength) {
+		char* ptr1, * ptr2;
+		size_t bytes1, bytes2;
+
+		ptr2 = _buffer;
+		bytes2 = _writePosition + len - _bufferLength;
+		ptr1 = _buffer + _writePosition;
+		bytes1 = len - bytes2;
+		memcpy(ptr1, buffer, bytes1);
+		memcpy(ptr2, buffer + bytes1, bytes2);
+	}
+	else {
+		memcpy(_buffer + _writePosition, buffer, len);
 	}
 
-	memcpy(_buffer + _writePosition, buffer, len);
-
-	_writePosition += len;
+	_writePosition = (_writePosition + len) % _bufferLength;
 
 	return len;
 }
 
 int BufferOutPlugin::CanWrite()
 {
-	if (_writePosition >= _toWriteLength) {
-		return 0;
+	info("BufferOutPlugin::CanWrite %i / %i\n", _readPosition, _writePosition);
+
+	if (_readPosition <= _writePosition) {
+		return (_bufferLength - _writePosition) + _readPosition;
 	}
 
-	return _toWriteLength - _writePosition;
+	return _readPosition - _writePosition;
 }
 
 int BufferOutPlugin::IsPlaying()
 {
+	info("BufferOutPlugin::IsPlaying\n");
 	_finishedPlaying = true;
 	return 0;
 }
@@ -250,22 +276,46 @@ bool BufferOutPlugin::finishedPlaying() const
 
 int BufferOutPlugin::read(char* buf, int maxLen)
 {
-	_buffer = buf;
-	_writePosition = 0;
-	_toWriteLength = maxLen;
-
 	const int sleepMs = 50;
 	const int maxWait = 5000 / sleepMs;
+	int bufCur = 0;
 
 	for (int i = 0; i < maxWait; ++i) {
-		Sleep(sleepMs);
+		if (_readPosition != _writePosition) {
+			int toRead = maxLen - bufCur;
+			int available = _readPosition < _writePosition
+				? _writePosition - _readPosition
+				: _bufferLength - _readPosition;
+			int bytes = toRead < available ? toRead : available;
 
-		if (_finishedPlaying || _writePosition >= maxLen) {
-			return _writePosition;
+			memcpy(buf + bufCur, _buffer + _readPosition, bytes);
+
+			_readPosition = (_readPosition + bytes) % _bufferLength;
+			bufCur += bytes;
+
+			if (_readPosition > _writePosition) {
+				toRead -= bytes;
+
+				if (toRead > 0) {
+					int available2 = _writePosition;
+					int bytes2 = toRead < available2 ? toRead : available2;
+
+					memcpy(buf + bufCur, _buffer, bytes2);
+
+					_readPosition = (_readPosition + bytes2) % _bufferLength;
+					bufCur += bytes2;
+				}
+			}
+
+			if (bufCur >= maxLen) {
+				return bufCur;
+			}
 		}
+		
+		Sleep(sleepMs);
 	}
 
 	error("Timeout to write sound in buffer\n");
 
-	return _writePosition;
+	return bufCur;
 }
