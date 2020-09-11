@@ -26,12 +26,38 @@
 #include "music.h"
 #include "patch.h"
 
-uint32_t current_midi = UINT32_MAX;
+uint32_t playing_midi = UINT32_MAX;
 bool was_battle_gameover = false;
 
 uint32_t midi_fadetime = 0;
+uint32_t midi_to_resume = 0;
 
 static uint32_t noop() { return 0; }
+
+bool needs_resume(uint32_t midi)
+{
+	bool ret = false;
+
+	if (ff8)
+	{
+		switch (midi)
+		{
+		case 41: // FIELD
+			ret = true;
+		}
+	}
+	else
+	{
+		switch (midi)
+		{
+		case 13: // TA
+		case 71: // KITA
+			ret = true;
+		}
+	}
+
+	return ret;
+}
 
 uint32_t ff7_midi_init(uint32_t unknown)
 {
@@ -80,25 +106,18 @@ char* ff8_midi_name(uint32_t midi)
 	return nullptr;
 }
 
-uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
+void pause_midi()
 {
-	if (current_midi != midi)
-	{
-		char* midi_name = ff8_midi_name(midi);
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(playing_midi) : common_externals.get_midi_name(playing_midi));
 
-		if (nullptr == midi_name) {
-			return 0; // Error
-		}
+	nxAudioEngine.pauseMusic();
+}
 
-		if (trace_all || trace_music) trace("%s: midi_id=%u,midi=%s,volume=%u,u1=%u,u2=%u\n", __func__, midi, midi_name, volume, u1, u2);
+void restart_midi()
+{
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(playing_midi) : common_externals.get_midi_name(playing_midi));
 
-		current_midi = midi;
-
-		nxAudioEngine.playMusic(midi_name);
-		nxAudioEngine.setMusicVolume(volume / 127.0f);
-	}
-
-	return 1; // Success
+	nxAudioEngine.resumeMusic();
 }
 
 uint32_t ff7_use_midi(uint32_t midi)
@@ -114,8 +133,9 @@ uint32_t ff7_use_midi(uint32_t midi)
 
 void ff7_play_midi(uint32_t midi)
 {
-	if (current_midi != midi)
+	if (playing_midi != midi)
 	{
+		char* midi_name = common_externals.get_midi_name(midi);
 		struct game_mode* mode = getmode_cached();
 
 		// Avoid restarting the same music when transitioning from the battle gameover to the gameover screen
@@ -127,32 +147,30 @@ void ff7_play_midi(uint32_t midi)
 
 		if (mode->driver_mode == MODE_BATTLE && midi == 58) was_battle_gameover = true;
 
-		current_midi = midi;
+		if (midi_to_resume == midi && needs_resume(midi))
+		{
+			playing_midi = midi;
+			restart_midi();
+			midi_to_resume = 0;
+		}
+		else
+		{
+			if (needs_resume(playing_midi)) pause_midi();
+			nxAudioEngine.playMusic(midi_name);
+			playing_midi = midi;
+		}
+
 		midi_fadetime = 0;
 
-		if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s\n", __func__, midi, common_externals.get_midi_name(midi));
+		if (needs_resume(playing_midi)) midi_to_resume = playing_midi;
 
-		nxAudioEngine.playMusic(common_externals.get_midi_name(midi));
+		if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s\n", __func__, playing_midi, midi_name);
 	}
-}
-
-void pause_midi()
-{
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
-
-	nxAudioEngine.pauseMusic();
-}
-
-void restart_midi()
-{
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
-
-	nxAudioEngine.resumeMusic();
 }
 
 void stop_midi()
 {
-	if (current_midi != UINT_MAX)
+	if (playing_midi != UINT_MAX)
 	{
 		if (!ff8)
 		{
@@ -162,56 +180,56 @@ void stop_midi()
 			if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover) return;
 		}
 
-		if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
+		if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(playing_midi) : common_externals.get_midi_name(playing_midi));
 
-		nxAudioEngine.stopMusic();
+		if (playing_midi == midi_to_resume) pause_midi();
+		else nxAudioEngine.stopMusic();
 
-		current_midi = UINT_MAX;
+		playing_midi = UINT_MAX;
 	}
 }
 
 void cross_fade_midi(uint32_t midi, uint32_t time /* seconds */)
 {
+	char* midi_name = common_externals.get_midi_name(midi);
+
 	midi_fadetime = midi == 0 ? time : time / 2;
 
-	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, time=%us\n", __func__, midi, common_externals.get_midi_name(midi), midi_fadetime);
-
-	if (current_midi != midi)
+	if (playing_midi != midi)
 	{
 		if (midi == 1)
 		{
-			midi = (current_midi == 2) + 1;
+			midi = (playing_midi == 2) + 1;
 		}
 		else if (midi == 2)
 		{
-			midi = (current_midi != 1) + 1;
+			midi = (playing_midi != 1) + 1;
 		}
 
-		nxAudioEngine.playMusic(common_externals.get_midi_name(midi), true, midi_fadetime);
+		if (midi_to_resume == midi && needs_resume(midi))
+		{
+			playing_midi = midi;
+			restart_midi();
+			midi_to_resume = 0;
+		}
+		else
+		{
+			if (needs_resume(playing_midi)) pause_midi();
+			nxAudioEngine.playMusic(midi_name, true, midi_fadetime);
+			playing_midi = midi;
+		}
+
+		if (needs_resume(playing_midi)) midi_to_resume = playing_midi;
 	}
-}
 
-uint32_t ff8_stop_midi()
-{
-	stop_midi();
-
-	return 0;
+	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, time=%us\n", __func__, midi, midi_name, midi_fadetime);
 }
 
 uint32_t midi_status()
 {
-	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(current_midi) : common_externals.get_midi_name(current_midi));
+	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(playing_midi) : common_externals.get_midi_name(playing_midi));
 
 	return nxAudioEngine.isMusicPlaying();
-}
-
-uint32_t ff8_set_midi_volume(int volume)
-{
-	if (trace_all || trace_music) trace("%s: set direct volume %d\n", __func__, volume);
-
-	nxAudioEngine.setMusicVolume((volume + 10000.0f) / 10000.0f);
-	
-	return 1; // Success
 }
 
 void set_master_midi_volume(uint32_t volume)
@@ -240,8 +258,9 @@ void set_midi_volume_trans(uint32_t volume, uint32_t step)
 	{
 		if (!volume)
 		{
-			nxAudioEngine.stopMusic(midi_fadetime);
-			current_midi = UINT32_MAX;
+			if (playing_midi == midi_to_resume) pause_midi();
+			else nxAudioEngine.stopMusic(midi_fadetime);
+			playing_midi = UINT32_MAX;
 		}
 		else
 		{
@@ -254,7 +273,8 @@ void set_midi_volume_trans(uint32_t volume, uint32_t step)
 	}
 	else
 	{
-		stop_midi();
+		if (playing_midi == midi_to_resume) pause_midi();
+		else stop_midi();
 	}
 }
 
@@ -274,8 +294,7 @@ void set_midi_tempo(char tempo)
 
 uint32_t remember_playing_time()
 {
-	// TODO
-	//winamp_remember_playing_time();
+	midi_to_resume = playing_midi;
 	
 	return 0;
 }
@@ -291,30 +310,41 @@ uint32_t music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t para
 	return ((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
 }
 
-bool is_wm_theme(char* midi)
+uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 {
-	if (nullptr == midi)
+	if (playing_midi != midi)
 	{
-		return false;
+		char* midi_name = ff8_midi_name(midi);
+
+		if (nullptr == midi_name) {
+			return 0; // Error
+		}
+
+		if (trace_all || trace_music) trace("%s: midi_id=%u,midi=%s,volume=%u,u1=%u,u2=%u\n", __func__, midi, midi_name, volume, u1, u2);
+
+		playing_midi = midi;
+
+		nxAudioEngine.playMusic(midi_name);
+		nxAudioEngine.setMusicVolume(volume / 127.0f);
 	}
 
-	if (ff8)
-	{
-		return strcmp(midi, "field") == 0;
-	}
-	
-	return strcmp(midi, "TA") == 0 || strcmp(midi, "TB") == 0 || strcmp(midi, "KITA") == 0;
+	return 1; // Success
 }
 
-bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* new_midi)
+uint32_t ff8_stop_midi()
 {
-	/*
-	 * BATTLE -> FIELD or WM
-	 * FIELD  -> WM
-	 */
-	return ((new_mode == MODE_WORLDMAP || new_mode == MODE_AFTER_BATTLE) && !is_wm_theme(old_midi) && is_wm_theme(new_midi))
-		|| ((old_mode == MODE_BATTLE || old_mode == MODE_SWIRL) && (new_mode == MODE_FIELD || new_mode == MODE_AFTER_BATTLE))
-		|| new_mode == MODE_CARDGAME;
+	stop_midi();
+
+	return 0;
+}
+
+uint32_t ff8_set_midi_volume(int volume)
+{
+	if (trace_all || trace_music) trace("%s: set direct volume %d\n", __func__, volume);
+
+	nxAudioEngine.setMusicVolume((volume + 10000.0f) / 10000.0f);
+
+	return 1; // Success
 }
 
 void music_init()
