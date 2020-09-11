@@ -85,11 +85,9 @@ bool NxAudioEngine::canPlayMusic(char* name)
 	return (stat(filename, &dummy) == 0);
 }
 
-void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_t time)
+void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 {
-	std::string strName = name;
-
-	if (_lastMusicName == strName) return;
+	if (_engine.isValidVoiceHandle(_musicHandle)) stopMusic(crossfade ? time : 0);
 
 	SoLoud::AudioSource* music = nullptr;
 
@@ -119,12 +117,8 @@ void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_
 		}
 	}
 
-	if (_engine.isValidVoiceHandle(_musicHandle)) stopMusic(crossfade ? time : 0);
-
 	_musicHandle = _engine.playBackground(*music, crossfade ? 0.0f : 1.0f);
 	if (crossfade) setMusicVolume(1.0f, time);
-
-	_lastMusicName = strName;
 }
 
 void NxAudioEngine::stopMusic(uint32_t time)
@@ -136,11 +130,8 @@ void NxAudioEngine::stopMusic(uint32_t time)
 	}
 	else
 	{
-		_engine.setVolume(_musicHandle, 0);
 		_engine.stop(_musicHandle);
 	}
-
-	_lastMusicName = "";
 }
 
 void NxAudioEngine::pauseMusic()
@@ -203,8 +194,6 @@ void NxAudioEngine::playVoice(char* name)
 {
 	std::string strName = name;
 
-	if (_lastVoiceName == strName) return;
-
 	SoLoud::VGMStream* voice = new SoLoud::VGMStream();
 
 	char filename[MAX_PATH];
@@ -217,6 +206,4 @@ void NxAudioEngine::playVoice(char* name)
 	if (_engine.isValidVoiceHandle(_voiceHandle)) _engine.stop(_voiceHandle);
 
 	_voiceHandle = _engine.play(*voice);
-
-	_lastVoiceName = strName;
 }
