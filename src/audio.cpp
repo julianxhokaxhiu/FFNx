@@ -70,7 +70,6 @@ bool NxAudioEngine::init()
 
 void NxAudioEngine::cleanup()
 {
-	_engine.stopAll();
 	_engine.deinit();
 	if (_winampInPlugin != nullptr) {
 		delete _winampInPlugin;
