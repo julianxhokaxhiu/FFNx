@@ -52,11 +52,13 @@ private:
 	static int _bufferLength;
 	static int _readPosition;
 	static int _writePosition;
+	static bool _clearDone;
 	static bool _finishedPlaying;
 	static int _sampleRate;
 	static int _numChannels;
 	static int _bitsPerSample;
 	static int _lastPause;
+	static CRITICAL_SECTION _mutex;
 	static void FakeDialog(HWND hwndParent);
 	static void Noop();
 	static int Open(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms);

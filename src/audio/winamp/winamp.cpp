@@ -89,10 +89,8 @@ namespace SoLoud
 	Winamp::~Winamp()
 	{
 		stop();
-
-		inPlugin->close();
-		delete inPlugin;
-		BufferOutPlugin::destroyInstance();
+		inPlugin->stop();
+		outPlugin->getModule()->Close();
 	}
 
 	result Winamp::load(const char* aFilename)

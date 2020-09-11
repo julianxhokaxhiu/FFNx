@@ -53,6 +53,9 @@ bool NxAudioEngine::init()
 				delete _winampInPlugin;
 				_winampInPlugin = nullptr;
 			}
+			else {
+				info("Winamp music plugin loaded using %s\n", winamp_in_plugin);
+			}
 		}
 		else
 		{
@@ -69,6 +72,11 @@ void NxAudioEngine::cleanup()
 {
 	_engine.stopAll();
 	_engine.deinit();
+	if (_winampInPlugin != nullptr) {
+		delete _winampInPlugin;
+		_winampInPlugin = nullptr;
+	}
+	BufferOutPlugin::destroyInstance();
 }
 
 // Audio
@@ -103,9 +111,6 @@ void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 			error("Cannot load %s with winamp\n", filename);
 			delete winamp;
 			music = nullptr;
-		}
-		else {
-			info("Winamp music plugin loaded using %s\n", winamp_in_plugin);
 		}
 	}
 

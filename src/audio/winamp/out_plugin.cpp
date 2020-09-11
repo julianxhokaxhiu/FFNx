@@ -76,12 +76,15 @@ int BufferOutPlugin::_bufferLength = 0;
 int BufferOutPlugin::_readPosition = 0;
 int BufferOutPlugin::_writePosition = 0;
 
+bool BufferOutPlugin::_clearDone = false;
 bool BufferOutPlugin::_finishedPlaying = true;
 
 int BufferOutPlugin::_sampleRate = -1;
 int BufferOutPlugin::_numChannels = -1;
 int BufferOutPlugin::_bitsPerSample = -1;
 int BufferOutPlugin::_lastPause = 0;
+
+CRITICAL_SECTION BufferOutPlugin::_mutex;
 
 BufferOutPlugin* BufferOutPlugin::instance()
 {
@@ -116,7 +119,7 @@ int BufferOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	UNUSED_PARAM(bufferlenms);
 	UNUSED_PARAM(prebufferms);
 
-	if (trace_all || trace_music) trace("Open directsound %i %i %i\n", samplerate, numchannels, bitspersamp);
+	if (trace_all || trace_music) trace("Open buffer out plugin %i %i %i\n", samplerate, numchannels, bitspersamp);
 
 	Close();
 
@@ -124,6 +127,8 @@ int BufferOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	_writePosition = 0;
 	_readPosition = 0;
 	_buffer = new char[_bufferLength]();
+
+	_clearDone = false;
 	_finishedPlaying = false;
 
 	_sampleRate = samplerate;
@@ -135,8 +140,9 @@ int BufferOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 void BufferOutPlugin::Close()
 {
-	if (trace_all || trace_music) trace("Close directsound (%i)\n", *common_externals.directsound ? 1 : 0);
+	if (trace_all || trace_music) trace("Close buffer out plugin\n");
 
+	_clearDone = true;
 	_finishedPlaying = true;
 	_sampleRate = -1;
 	_numChannels = -1;
@@ -150,7 +156,13 @@ void BufferOutPlugin::Close()
 
 int BufferOutPlugin::Write(char* buffer, int len)
 {
-	if (trace_all) trace("BufferOutPlugin::Write %i\n", len);
+	if (trace_all) trace("BufferOutPlugin::Write(%i) %i / %i\n", len, _readPosition, _writePosition);
+
+	if (_buffer == nullptr) {
+		return 1;
+	}
+
+	EnterCriticalSection(&_mutex);
 
 	// Cyclic buffer
 	if (_writePosition + len > _bufferLength) {
@@ -170,25 +182,78 @@ int BufferOutPlugin::Write(char* buffer, int len)
 
 	_writePosition = (_writePosition + len) % _bufferLength;
 
-	return len;
+	LeaveCriticalSection(&_mutex);
+
+	return 0;
 }
 
 int BufferOutPlugin::CanWrite()
 {
-	if (trace_all) trace("BufferOutPlugin::CanWrite %i / %i\n", _readPosition, _writePosition);
-
-	if (_readPosition <= _writePosition) {
-		return (_bufferLength - _writePosition) + _readPosition;
+	if (_buffer == nullptr) {
+		return 0;
 	}
 
-	return _readPosition - _writePosition;
+	const int readPosition = _readPosition;
+	if (trace_all) trace("BufferOutPlugin::CanWrite %i / %i bufferLength: %i\n", readPosition, _writePosition, _bufferLength);
+
+	if (readPosition <= _writePosition) {
+		return (_bufferLength - _writePosition) + readPosition;
+	}
+
+	return readPosition - _writePosition;
 }
 
 int BufferOutPlugin::IsPlaying()
 {
-	if (trace_all || trace_music) info("BufferOutPlugin::IsPlaying\n");
-	_finishedPlaying = true;
-	return 0;
+	if (trace_all || trace_music) trace("BufferOutPlugin::IsPlaying\n");
+
+	if (_buffer == nullptr) {
+		return 0;
+	}
+
+	const int canWrite = CanWrite();
+	const int clearDataSize = _bufferLength / AUDIO_BUFFER_SECONDS / 2; // ~500 ms
+
+	// The buffer is circular, so we make precautions
+	if (_clearDone) {
+		if (_readPosition < _writePosition
+			|| _readPosition > _writePosition + clearDataSize) {
+			return 1;
+		}
+
+		_finishedPlaying = true;
+
+		Close();
+
+		return 0;
+	}
+
+	// Clear some data after the write pointer when it is possible (to remove artifacts)
+	if (canWrite >= clearDataSize) {
+		EnterCriticalSection(&_mutex);
+
+		// Cyclic buffer
+		if (_writePosition + clearDataSize > _bufferLength) {
+			char* ptr1, * ptr2;
+			size_t bytes1, bytes2;
+
+			ptr2 = _buffer;
+			bytes2 = _writePosition + clearDataSize - _bufferLength;
+			ptr1 = _buffer + _writePosition;
+			bytes1 = clearDataSize - bytes2;
+			memset(ptr1, 0, bytes1);
+			memset(ptr2, 0, bytes2);
+		}
+		else {
+			memset(_buffer + _writePosition, 0, clearDataSize);
+		}
+
+		LeaveCriticalSection(&_mutex);
+
+		_clearDone = true;
+	}
+
+	return 1;
 }
 
 int BufferOutPlugin::Pause(int pause)
@@ -248,10 +313,13 @@ BufferOutPlugin::BufferOutPlugin()
 	mod->Flush = Flush;
 	mod->GetOutputTime = GetOutputTime;
 	mod->GetWrittenTime = GetWrittenTime;
+
+	InitializeCriticalSection(&_mutex);
 }
 
 BufferOutPlugin::~BufferOutPlugin()
 {
+	DeleteCriticalSection(&_mutex);
 }
 
 int BufferOutPlugin::sampleRate() const
@@ -281,41 +349,57 @@ int BufferOutPlugin::read(char* buf, int maxLen)
 	int bufCur = 0;
 
 	for (int i = 0; i < maxWait; ++i) {
-		if (_readPosition != _writePosition) {
+		if (trace_all) trace("BufferOutPlugin::read(%i) %i %i\n", maxLen, bufCur, _readPosition);
+
+		if (_buffer == nullptr) {
+			return bufCur;
+		}
+
+		EnterCriticalSection(&_mutex);
+
+		const int writePosition = _writePosition;
+		const int bufferLength = _bufferLength;
+
+		if (_readPosition != writePosition) {
 			int toRead = maxLen - bufCur;
-			int available = _readPosition < _writePosition
-				? _writePosition - _readPosition
-				: _bufferLength - _readPosition;
+			int available = _readPosition < writePosition
+				? writePosition - _readPosition
+				: bufferLength - _readPosition;
 			int bytes = toRead < available ? toRead : available;
 
-			memcpy(buf + bufCur, _buffer + _readPosition, bytes);
+			if (bytes > 0) {
+				memcpy(buf + bufCur, _buffer + _readPosition, bytes);
 
-			_readPosition = (_readPosition + bytes) % _bufferLength;
-			bufCur += bytes;
+				_readPosition = (_readPosition + bytes) % bufferLength;
+				bufCur += bytes;
 
-			if (_readPosition > _writePosition) {
-				toRead -= bytes;
+				if (_readPosition > writePosition) {
+					toRead -= bytes;
+					available = writePosition;
+					bytes = toRead < available ? toRead : available;
 
-				if (toRead > 0) {
-					int available2 = _writePosition;
-					int bytes2 = toRead < available2 ? toRead : available2;
+					if (bytes > 0) {
+						memcpy(buf + bufCur, _buffer, bytes);
 
-					memcpy(buf + bufCur, _buffer, bytes2);
+						_readPosition = (_readPosition + bytes) % bufferLength;
+						bufCur += bytes;
+					}
+				}
 
-					_readPosition = (_readPosition + bytes2) % _bufferLength;
-					bufCur += bytes2;
+				if (bufCur >= maxLen) {
+					LeaveCriticalSection(&_mutex);
+
+					return bufCur;
 				}
 			}
-
-			if (bufCur >= maxLen) {
-				return bufCur;
-			}
 		}
+
+		LeaveCriticalSection(&_mutex);
 		
 		Sleep(sleepMs);
 	}
 
-	error("Timeout to write sound in buffer\n");
+	error("Timeout to read sound from buffer\n");
 
 	return bufCur;
 }
