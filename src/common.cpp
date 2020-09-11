@@ -373,6 +373,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			newRenderer.shutdown();
 
+			music_cleanup();
+
 			SetWindowLongA(gameHwnd, GWL_WNDPROC, (LONG)common_externals.engine_wndproc);
 			break;
 		}

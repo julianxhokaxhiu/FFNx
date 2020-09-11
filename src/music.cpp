@@ -265,13 +265,6 @@ void set_midi_tempo(char tempo)
 	nxAudioEngine.setMusicSpeed(speed);
 }
 
-uint32_t directsound_release()
-{
-	nxAudioEngine.cleanup();
-
-	return 0;
-}
-
 uint32_t remember_playing_time()
 {
 	// TODO
@@ -317,11 +310,6 @@ bool needs_resume(uint32_t old_mode, uint32_t new_mode, char* old_midi, char* ne
 		|| new_mode == MODE_CARDGAME;
 }
 
-int directsound_create(void* unk, LPGUID guid)
-{
-	return nxAudioEngine.init();
-}
-
 void music_init()
 {
 	if (!ff8)
@@ -337,7 +325,6 @@ void music_init()
 	{
 		if (ff8)
 		{
-			replace_function(common_externals.directsound_create, directsound_create);
 			replace_function(common_externals.play_midi, ff8_play_midi);
 			replace_function(common_externals.pause_midi, pause_midi);
 			replace_function(common_externals.restart_midi, restart_midi);
@@ -345,12 +332,10 @@ void music_init()
 			replace_function(common_externals.midi_status, midi_status);
 			replace_function(common_externals.set_midi_volume, ff8_set_midi_volume);
 			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
-			replace_function(common_externals.directsound_release, directsound_release);
 			replace_function(common_externals.midi_cleanup, noop);
 		}
 		else
 		{
-			replace_function(common_externals.directsound_create, directsound_create);
 			replace_function(common_externals.midi_init, ff7_midi_init);
 			replace_function(common_externals.use_midi, ff7_use_midi);
 			replace_function(common_externals.play_midi, ff7_play_midi);
@@ -363,8 +348,14 @@ void music_init()
 			replace_function(common_externals.set_midi_volume, set_midi_volume);
 			replace_function(common_externals.set_midi_volume_trans, set_midi_volume_trans);
 			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
-			replace_function(common_externals.directsound_release, directsound_release);
 			replace_function(common_externals.midi_cleanup, noop);
 		}
+
+		nxAudioEngine.init();
 	}
+}
+
+void music_cleanup()
+{
+	nxAudioEngine.cleanup();
 }
