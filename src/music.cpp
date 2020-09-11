@@ -82,18 +82,21 @@ char* ff8_midi_name(uint32_t midi)
 
 uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 {
-	char* midi_name = ff8_midi_name(midi);
+	if (current_midi != midi)
+	{
+		char* midi_name = ff8_midi_name(midi);
 
-	if (nullptr == midi_name) {
-		return 0; // Error
+		if (nullptr == midi_name) {
+			return 0; // Error
+		}
+
+		if (trace_all || trace_music) trace("%s: midi_id=%u,midi=%s,volume=%u,u1=%u,u2=%u\n", __func__, midi, midi_name, volume, u1, u2);
+
+		current_midi = midi;
+
+		nxAudioEngine.playMusic(midi_name);
+		nxAudioEngine.setMusicVolume(volume / 127.0f);
 	}
-
-	if (trace_all || trace_music) trace("%s: midi_id=%u,midi=%s,volume=%u,u1=%u,u2=%u\n", __func__, midi, midi_name, volume, u1, u2);
-
-	current_midi = midi;
-
-	nxAudioEngine.playMusic(midi_name);
-	nxAudioEngine.setMusicVolume(volume / 127.0f);
 
 	return 1; // Success
 }
@@ -111,23 +114,26 @@ uint32_t ff7_use_midi(uint32_t midi)
 
 void ff7_play_midi(uint32_t midi)
 {
-	struct game_mode* mode = getmode_cached();
-
-	// Avoid restarting the same music when transitioning from the battle gameover to the gameover screen
-	if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover)
+	if (current_midi != midi)
 	{
-		was_battle_gameover = false;
-		return;
+		struct game_mode* mode = getmode_cached();
+
+		// Avoid restarting the same music when transitioning from the battle gameover to the gameover screen
+		if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover)
+		{
+			was_battle_gameover = false;
+			return;
+		}
+
+		if (mode->driver_mode == MODE_BATTLE && midi == 58) was_battle_gameover = true;
+
+		current_midi = midi;
+		midi_fadetime = 0;
+
+		if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s\n", __func__, midi, common_externals.get_midi_name(midi));
+
+		nxAudioEngine.playMusic(common_externals.get_midi_name(midi));
 	}
-
-	if (mode->driver_mode == MODE_BATTLE && midi == 58) was_battle_gameover = true;
-
-	current_midi = midi;
-	midi_fadetime = 0;
-
-	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s\n", __func__, midi, common_externals.get_midi_name(midi));
-
-	nxAudioEngine.playMusic(common_externals.get_midi_name(midi));
 }
 
 void pause_midi()
