@@ -324,7 +324,6 @@ struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 	replace_function(common_externals.destroy_tex_header, ff8_destroy_tex_header);
 	replace_function(common_externals.load_tex_file, ff8_load_tex_file);
 
-	//replace_function(common_externals.open_file, ff8_open_file);
 	ff8_open_file = (struct ff8_file * (*)(struct ff8_file_context*, char*))common_externals.open_file;
 	ff8_read_file = (uint32_t (*)(uint32_t, void*, struct ff8_file*))common_externals.read_file;
 	ff8_close_file = (void (*)(struct ff8_file*))common_externals.close_file;
