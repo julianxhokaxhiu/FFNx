@@ -29,6 +29,8 @@
 uint32_t current_midi = UINT32_MAX;
 bool was_battle_gameover = false;
 
+uint32_t midi_fadetime = 0;
+
 static uint32_t noop() { return 0; }
 
 uint32_t ff7_midi_init(uint32_t unknown)
@@ -90,7 +92,7 @@ uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 
 	current_midi = midi;
 
-	nxAudioEngine.playMusic(midi, midi_name);
+	nxAudioEngine.playMusic(midi_name);
 	nxAudioEngine.setMusicVolume(volume / 127.0f);
 
 	return 1; // Success
@@ -121,10 +123,11 @@ void ff7_play_midi(uint32_t midi)
 	if (mode->driver_mode == MODE_BATTLE && midi == 58) was_battle_gameover = true;
 
 	current_midi = midi;
+	midi_fadetime = 0;
 
 	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s\n", __func__, midi, common_externals.get_midi_name(midi));
 
-	nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi));
+	nxAudioEngine.playMusic(common_externals.get_midi_name(midi));
 }
 
 void pause_midi()
@@ -163,11 +166,11 @@ void stop_midi()
 
 void cross_fade_midi(uint32_t midi, uint32_t time /* seconds */)
 {
-	time = midi == 0 ? time : time / 2;
+	midi_fadetime = midi == 0 ? time : time / 2;
 
-	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, time=%us\n", __func__, midi, common_externals.get_midi_name(midi), time);
+	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, time=%us\n", __func__, midi, common_externals.get_midi_name(midi), midi_fadetime);
 
-	if (midi)
+	if (current_midi != midi)
 	{
 		if (midi == 1)
 		{
@@ -178,10 +181,8 @@ void cross_fade_midi(uint32_t midi, uint32_t time /* seconds */)
 			midi = (current_midi != 1) + 1;
 		}
 
-		nxAudioEngine.playMusic(midi, common_externals.get_midi_name(midi), true, time);
+		nxAudioEngine.playMusic(common_externals.get_midi_name(midi), true, midi_fadetime);
 	}
-	else
-		stop_midi();
 }
 
 uint32_t ff8_stop_midi()
@@ -231,19 +232,19 @@ void set_midi_volume_trans(uint32_t volume, uint32_t step)
 
 	if (step)
 	{
-		if (step < 10)
+		if (!volume)
 		{
-			set_midi_volume(volume);
-			if (!volume) stop_midi();
+			nxAudioEngine.stopMusic(midi_fadetime);
+			current_midi = UINT32_MAX;
 		}
 		else
 		{
-			nxAudioEngine.setMusicVolume(volume / 127.0f, (nxAudioEngine.getMusicVolume() - (volume / 127.0f)) / (step / 60.0f));
+			nxAudioEngine.setMusicVolume(volume / 127.0f, midi_fadetime);
 		}
 	}
 	else if (volume)
 	{
-		set_midi_volume(volume);
+		nxAudioEngine.setMusicVolume(volume / 127.0f);
 	}
 	else
 	{

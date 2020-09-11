@@ -42,16 +42,12 @@ private:
 
 	std::stack<SoLoud::handle> _musicStack;
 
-	std::string _lastMusicName;
-
 	void getMusicFilenameFullPath(char* _out, char* _name);
 
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
 
 	float _voiceMasterVolume = 100.0f;
-
-	std::string _lastVoiceName;
 
 	void getVoiceFilenameFullPath(char* _out, char* _name);
 
@@ -64,7 +60,7 @@ public:
 
 	// Music
 	bool canPlayMusic(char* name);
-	void playMusic(uint32_t midi, char* name, bool crossfade = false, uint32_t time = 0);
+	void playMusic(char* name, bool crossfade = false, uint32_t time = 0);
 	void stopMusic(uint32_t time = 0);
 	void pauseMusic();
 	void resumeMusic();
