@@ -38,21 +38,24 @@ bool needs_resume(uint32_t midi)
 {
 	bool ret = false;
 
-	if (ff8)
+	if (external_music_resume)
 	{
-		switch (midi)
+		if (ff8)
 		{
-		case 41: // FIELD
-			ret = true;
+			switch (midi)
+			{
+			case 41: // FIELD
+				ret = true;
+			}
 		}
-	}
-	else
-	{
-		switch (midi)
+		else
 		{
-		case 13: // TA
-		case 71: // KITA
-			ret = true;
+			switch (midi)
+			{
+			case 13: // TA
+			case 71: // KITA
+				ret = true;
+			}
 		}
 	}
 

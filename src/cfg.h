@@ -36,6 +36,7 @@ extern char *mod_path;
 extern cfg_bool_t enable_ffmpeg_videos;
 extern char* ffmpeg_video_ext;
 extern cfg_bool_t use_external_music;
+extern cfg_bool_t external_music_resume;
 extern char* external_music_path;
 extern char* external_music_ext;
 extern char* winamp_in_plugin;
