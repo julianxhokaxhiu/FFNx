@@ -19,7 +19,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <soloud/miniaudio.h>
 #include "audio.h"
 
 #include "log.h"
@@ -43,9 +42,7 @@ void NxAudioEngine::getVoiceFilenameFullPath(char* _out, char* _name)
 bool NxAudioEngine::init()
 {
 	if (_engine.init() == 0)
-	{
-		*common_externals.directsound = (LPDIRECTSOUND)((ma_device*)_engine.mBackendDevice)->dsound.pPlayback;
-		
+	{		
 		if (nullptr != winamp_in_plugin)
 		{
 			_winampInPlugin = new WinampInPlugin(BufferOutPlugin::instance());
