@@ -119,14 +119,7 @@ void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_
 		}
 	}
 
-	// Fade out or stop the previous playing music
-	if (_engine.isValidVoiceHandle(_musicHandle))
-	{
-		if (crossfade)
-			_engine.fadeVolume(_musicHandle, 0, time);
-		else
-			_engine.stop(_musicHandle);
-	}
+	if (_engine.isValidVoiceHandle(_musicHandle)) stopMusic(crossfade ? time : 0);
 
 	_musicHandle = _engine.playBackground(*music, crossfade ? 0.0f : 1.0f);
 	if (crossfade) setMusicVolume(1.0f, time);
@@ -134,9 +127,18 @@ void NxAudioEngine::playMusic(uint32_t midi, char* name, bool crossfade, uint32_
 	_lastMusicName = strName;
 }
 
-void NxAudioEngine::stopMusic()
+void NxAudioEngine::stopMusic(uint32_t time)
 {
-	_engine.stop(_musicHandle);
+	if (time > 0)
+	{
+		_engine.fadeVolume(_musicHandle, 0, time);
+		_engine.scheduleStop(_musicHandle, time);
+	}
+	else
+	{
+		_engine.setVolume(_musicHandle, 0);
+		_engine.stop(_musicHandle);
+	}
 
 	_lastMusicName = "";
 }

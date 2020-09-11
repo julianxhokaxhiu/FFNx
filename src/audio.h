@@ -65,7 +65,7 @@ public:
 	// Music
 	bool canPlayMusic(char* name);
 	void playMusic(uint32_t midi, char* name, bool crossfade = false, uint32_t time = 0);
-	void stopMusic();
+	void stopMusic(uint32_t time = 0);
 	void pauseMusic();
 	void resumeMusic();
 	bool isMusicPlaying();
