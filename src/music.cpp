@@ -372,7 +372,6 @@ void music_init()
 			replace_function(common_externals.midi_status, midi_status);
 			replace_function(common_externals.set_midi_volume, ff8_set_midi_volume);
 			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
-			replace_function(common_externals.midi_cleanup, noop);
 		}
 		else
 		{
@@ -390,12 +389,5 @@ void music_init()
 			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
 			replace_function(common_externals.midi_cleanup, noop);
 		}
-
-		nxAudioEngine.init();
 	}
-}
-
-void music_cleanup()
-{
-	nxAudioEngine.cleanup();
 }

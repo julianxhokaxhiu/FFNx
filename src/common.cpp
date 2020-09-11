@@ -42,6 +42,7 @@
 #include "field.h"
 #include "gamehacks.h"
 #include "discohash.h"
+#include "audio.h"
 
 bool proxyWndProc = false;
 
@@ -373,8 +374,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			newRenderer.shutdown();
 
-			music_cleanup();
-
 			SetWindowLongA(gameHwnd, GWL_WNDPROC, (LONG)common_externals.engine_wndproc);
 			break;
 		}
@@ -541,6 +540,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 				if (VREF(game_object, engine_loop_obj.init)(game_object))
 				{
+					if (use_external_music) nxAudioEngine.init();
+
 					if (VREF(game_object, engine_loop_obj.enter_main))
 						VREF(game_object, engine_loop_obj.enter_main)(game_object);
 				}
@@ -578,6 +579,8 @@ uint32_t common_init(struct game_obj *game_object)
 void common_cleanup(struct game_obj *game_object)
 {
 	if(trace_all) trace("dll_gfx: cleanup\n");
+
+	nxAudioEngine.cleanup();
 }
 
 // unused and unnecessary
