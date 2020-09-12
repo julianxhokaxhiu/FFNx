@@ -28,6 +28,7 @@ find_package(PUGIXML REQUIRED)
 find_package(LIBPNG REQUIRED)
 find_package(IMGUI REQUIRED)
 find_package(SOLOUD REQUIRED)
+find_package(OPENPSF REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -73,6 +74,9 @@ target_link_libraries(${RELEASE_NAME}
     LIBPNG::LIBPNG
     IMGUI::IMGUI
     SOLOUD::SOLOUD
+    OPENPSF::PSXCORE
+    OPENPSF::PSFLIB
+    OPENPSF::OPENPSF
 )
 target_compile_options(${RELEASE_NAME}
     PRIVATE /DDIRECTINPUT_VERSION=0x0800

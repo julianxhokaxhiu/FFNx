@@ -19,64 +19,40 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "plugin.h"
+#pragma once
 
-WinampPlugin::WinampPlugin() : handle(nullptr)
+#include <soloud/soloud.h>
+#include <stdint.h>
+#include <libopenpsf/openpsf.h>
+#include "../../log.h"
+
+namespace SoLoud
 {
-}
-
-WinampPlugin::~WinampPlugin()
-{
-	close();
-}
-
-bool WinampPlugin::open(LPCWSTR libFileNameW, char* libFileNameA)
-{
-	close();
-	if (libFileNameW) {
-		this->handle = LoadLibraryW(libFileNameW);
-	}
-	else {
-		this->handle = LoadLibraryA(libFileNameA);
-	}
-
-	if (nullptr != this->handle)
+	class OpenPsf : public AudioSource
 	{
-		FARPROC procAddress = GetProcAddress(this->handle, procName());
+	public:
+		Psf* stream;
+		unsigned int mSampleCount;
 
-		closeModule();
+		OpenPsf();
+		virtual ~OpenPsf();
+		result load(const char* aFilename);
 
-		if (nullptr != procAddress && openModule(procAddress))
-		{
-			return true;
-		}
+		virtual AudioSourceInstance* createInstance();
+		time getLength();
+	};
 
-		error("couldn't load function %s in external library (error %u)\n", procName(), GetLastError());
-
-		close();
-	}
-	else {
-		error("couldn't load external library (error %u)\n", GetLastError());
-	}
-
-	return false;
-}
-
-bool WinampPlugin::open(LPCWSTR libFileName)
-{
-	return open(libFileName, nullptr);
-}
-
-bool WinampPlugin::open(char* libFileName)
-{
-	return open(nullptr, libFileName);
-}
-
-void WinampPlugin::close()
-{
-	if (nullptr != this->handle) {
-		closeModule();
-		FreeLibrary(this->handle);
-		this->handle = nullptr;
-	}
-}
+	class OpenPsfInstance : public AudioSourceInstance
+	{
+		size_t mStreamBufferSize;
+		int16_t* mStreamBuffer;
+		OpenPsf* mParent;
+		unsigned int mOffset;
+	public:
+		OpenPsfInstance(OpenPsf* aParent);
+		virtual ~OpenPsfInstance();
+		virtual unsigned int getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
+		virtual result rewind();
+		virtual bool hasEnded();
+	};
+};
