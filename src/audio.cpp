@@ -246,7 +246,7 @@ void NxAudioEngine::setMusicSpeed(float speed)
 
 void NxAudioEngine::setMusicLooping(bool looping)
 {
-	_engine.setLooping(_musicHandle, false);
+	_engine.setLooping(_musicHandle, looping);
 }
 
 // Voice
