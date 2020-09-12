@@ -43,6 +43,7 @@
 #include "gamehacks.h"
 #include "discohash.h"
 #include "audio.h"
+#include "voice.h"
 
 bool proxyWndProc = false;
 
@@ -2238,6 +2239,7 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 	field_init();
 	music_init();
 	sfx_init();
+	voice_init();
 
 	if(!ff8) ff7_post_init();
 	else ff8_post_init();

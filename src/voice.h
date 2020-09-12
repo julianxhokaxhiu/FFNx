@@ -21,6 +21,4 @@
 
 #pragma once
 
-void field_init();
-void field_debug(bool *isOpen);
-byte get_field_parameter(int id);
+void voice_init();

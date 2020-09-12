@@ -1,11 +1,11 @@
 #include <imgui.h>
 #include <stdint.h>
 
-#include "audio.h"
-#include "field.h"
 #include "globals.h"
 #include "common.h"
 #include "patch.h"
+
+#include "field.h"
 
 WORD* current_field_id;
 WORD* previous_field_id;
@@ -18,7 +18,6 @@ byte map_patch_storage[7] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // Pla
 bool map_changing = false;
 
 // FF7 only
-int (*old_message)();
 int (*old_pc)();
 byte* current_entity_id;
 byte** level_data_pointer;
@@ -71,65 +70,10 @@ byte get_field_parameter(int id)
 	return *ptr4;
 }
 
-void play_voice(char* field_name, byte dialog_id, byte page_count)
-{
-	char name[MAX_PATH];
-
-	char page = 'a' + page_count;
-	if (page > 'z') page = 'z';
-	sprintf(name, "%s/%u%c", field_name, dialog_id, page);
-
-	if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
-		sprintf(name, "%s/%u", field_name, dialog_id);
-
-	nxAudioEngine.playVoice(name);
-}
-
-void stop_voice(uint32_t time = 0)
-{
-	nxAudioEngine.stopVoice(time);
-}
-
-int message()
-{
-	static byte message_page_count = 0;
-	static WORD message_last_opcode = 0;
-
-	byte window_id = get_field_parameter(0);
-	byte dialog_id = get_field_parameter(1);
-	byte message_current_opcode = ff7_externals.opcode_message_loop_code[24 * window_id];
-	char* field_name = strrchr(ff7_externals.field_file_name, 92) + 1;
-
-	bool is_new_dialog = (message_current_opcode == 0);
-	bool is_page_changing = (message_last_opcode == 14 && message_current_opcode == 2);
-	bool is_dialog_closing = (message_last_opcode != message_current_opcode && message_current_opcode == 7);
-	bool is_dialog_closed = (message_last_opcode == 7 && message_current_opcode == 0);
-
-	if (is_new_dialog) message_page_count = 0;
-	if (is_page_changing) message_page_count++;
-	if (is_new_dialog || is_page_changing)
-	{
-		play_voice(field_name, dialog_id, message_page_count);
-		if (trace_all || trace_opcodes) trace("opcode[%s]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", __func__, field_name, window_id, dialog_id, message_page_count);
-	}
-	else if (is_dialog_closing)
-	{
-		stop_voice();
-	}
-
-	message_last_opcode = message_current_opcode;
-
-	return old_message();
-}
-
-
 void field_init()
 {
 	if (!ff8)
 	{
-		old_message = (int (*)())ff7_externals.opcode_message;
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x40], (DWORD)&message);
-
 		// Proxies the PC field opcode to reposition the player after a forced map change
 		old_pc = (int (*)())common_externals.execute_opcode_table[0xA0];
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA0], (DWORD)&script_PC_map_change);
