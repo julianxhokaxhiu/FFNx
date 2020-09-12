@@ -94,16 +94,16 @@ int message()
 {
 	static byte message_page_count = 0;
 	static WORD message_last_opcode = 0;
-	static byte message_last_dialog_id = UCHAR_MAX;
 
 	byte window_id = get_field_parameter(0);
 	byte dialog_id = get_field_parameter(1);
 	byte message_current_opcode = ff7_externals.opcode_message_loop_code[24 * window_id];
 	char* field_name = strrchr(ff7_externals.field_file_name, 92) + 1;
 
-	bool is_new_dialog = (message_last_dialog_id != dialog_id);
-	bool is_page_changing = (message_last_opcode != message_current_opcode && message_current_opcode == 14);
+	bool is_new_dialog = (message_current_opcode == 0);
+	bool is_page_changing = (message_last_opcode == 14 && message_current_opcode == 2);
 	bool is_dialog_closing = (message_last_opcode != message_current_opcode && message_current_opcode == 7);
+	bool is_dialog_closed = (message_last_opcode == 7 && message_current_opcode == 0);
 
 	if (is_new_dialog) message_page_count = 0;
 	if (is_page_changing) message_page_count++;
@@ -117,7 +117,6 @@ int message()
 		stop_voice();
 	}
 
-	message_last_dialog_id = dialog_id;
 	message_last_opcode = message_current_opcode;
 
 	return old_message();
