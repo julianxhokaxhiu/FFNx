@@ -85,6 +85,11 @@ void play_voice(char* field_name, byte dialog_id, byte page_count)
 	nxAudioEngine.playVoice(name);
 }
 
+void stop_voice(uint32_t time = 0)
+{
+	nxAudioEngine.stopVoice(time);
+}
+
 int message()
 {
 	static byte message_page_count = 0;
@@ -98,6 +103,7 @@ int message()
 
 	bool is_new_dialog = (message_last_dialog_id != dialog_id);
 	bool is_page_changing = (message_last_opcode != message_current_opcode && message_current_opcode == 14);
+	bool is_dialog_closing = (message_last_opcode != message_current_opcode && message_current_opcode == 7);
 
 	if (is_new_dialog) message_page_count = 0;
 	if (is_page_changing) message_page_count++;
@@ -105,6 +111,10 @@ int message()
 	{
 		play_voice(field_name, dialog_id, message_page_count);
 		if (trace_all || trace_opcodes) trace("opcode[%s]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", __func__, field_name, window_id, dialog_id, message_page_count);
+	}
+	else if (is_dialog_closing)
+	{
+		stop_voice();
 	}
 
 	message_last_dialog_id = dialog_id;

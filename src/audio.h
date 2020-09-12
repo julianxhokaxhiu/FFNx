@@ -77,6 +77,7 @@ public:
 	// Voice
 	bool canPlayVoice(char* name);
 	void playVoice(char* name);
+	void stopVoice(uint32_t time = 0);
 };
 
 extern NxAudioEngine nxAudioEngine;

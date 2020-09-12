@@ -193,6 +193,8 @@ bool NxAudioEngine::isMusicPlaying()
 void NxAudioEngine::setMusicMasterVolume(float _volume)
 {
 	_musicMasterVolume = _volume;
+
+	setMusicVolume(1.0f);
 }
 
 float NxAudioEngine::getMusicVolume()
@@ -202,7 +204,7 @@ float NxAudioEngine::getMusicVolume()
 
 void NxAudioEngine::setMusicVolume(float _volume, size_t time)
 {	
-	float volume = 1.0f / ((_volume * _musicMasterVolume) / 100);
+	float volume = (_volume * _musicMasterVolume) / 100.0f;
 
 	if (time > 0)
 		_engine.fadeVolume(_musicHandle, volume, time);
@@ -247,5 +249,18 @@ void NxAudioEngine::playVoice(char* name)
 		if (_engine.isValidVoiceHandle(_voiceHandle)) _engine.stop(_voiceHandle);
 
 		_voiceHandle = _engine.play(*voice);
+	}
+}
+
+void NxAudioEngine::stopVoice(uint32_t time)
+{
+	if (time > 0)
+	{
+		_engine.fadeVolume(_voiceHandle, 0, time);
+		_engine.scheduleStop(_voiceHandle, time);
+	}
+	else
+	{
+		_engine.stop(_voiceHandle);
 	}
 }
