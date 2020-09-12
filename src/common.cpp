@@ -540,7 +540,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 				if (VREF(game_object, engine_loop_obj.init)(game_object))
 				{
-					if (use_external_music) nxAudioEngine.init();
+					nxAudioEngine.init();
 
 					if (VREF(game_object, engine_loop_obj.enter_main))
 						VREF(game_object, engine_loop_obj.enter_main)(game_object);
