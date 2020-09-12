@@ -72,11 +72,27 @@ byte get_field_parameter(int id)
 
 int message()
 {
+	static byte message_page_count = 0;
+	static WORD message_last_opcode = 0;
+	static byte message_last_dialog_id = UCHAR_MAX;
+
 	byte window_id = get_field_parameter(0);
 	byte dialog_id = get_field_parameter(1);
+	byte message_current_opcode = ff7_externals.opcode_message_loop_code[24 * window_id];
 	char* field_name = strrchr(ff7_externals.field_file_name, 92) + 1;
 
-	if (trace_all || trace_opcodes) trace("OPCODE %s: field=%s,window_id=%u,dialog_id=%u\n", __func__, field_name, window_id, dialog_id);
+	bool is_new_dialog = (message_last_dialog_id != dialog_id);
+	bool is_page_changing = (message_last_opcode != message_current_opcode && message_current_opcode == 14);
+
+	if (is_new_dialog) message_page_count = 0;
+	if (is_page_changing) message_page_count++;
+	if (is_new_dialog || is_page_changing)
+	{
+		if (trace_all || trace_opcodes) trace("opcode[%s]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", __func__, field_name, window_id, dialog_id, message_page_count);
+	}
+
+	message_last_dialog_id = dialog_id;
+	message_last_opcode = message_current_opcode;
 
 	return old_message();
 }
@@ -86,7 +102,7 @@ void field_init()
 {
 	if (!ff8)
 	{
-		old_message = (int (*)())common_externals.execute_opcode_table[0x40];
+		old_message = (int (*)())ff7_externals.opcode_message;
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x40], (DWORD)&message);
 
 		// Proxies the PC field opcode to reposition the player after a forced map change

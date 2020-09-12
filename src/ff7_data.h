@@ -341,6 +341,10 @@ void ff7_find_externals()
 	ff7_externals.opcode_akao2 = common_externals.execute_opcode_table[0xDA];
 	ff7_externals.opcode_akao = common_externals.execute_opcode_table[0xF2];
 	ff7_externals.opcode_gameover = common_externals.execute_opcode_table[0xFF];
+	ff7_externals.opcode_message = common_externals.execute_opcode_table[0x40];
+
+	ff7_externals.sub_630D50 = get_relative_call(ff7_externals.opcode_message, 0x3B);
+	ff7_externals.opcode_message_loop_code = (WORD*)get_absolute_value(ff7_externals.sub_630D50, 0x12);
 
 	ff7_externals.enter_gameover = get_absolute_value(main_loop, 0x1F7);
 	ff7_externals.exit_gameover = get_absolute_value(main_loop, 0x213);
