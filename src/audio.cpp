@@ -32,16 +32,16 @@ void NxAudioEngine::getMusicFilenameFullPath(char* _out, char* _name)
 	sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path, _name, external_music_ext);
 }
 
-bool NxAudioEngine::canPlayVoice(char* path)
-{
-	struct stat dummy;
-
-	return (stat(path, &dummy) == 0);
-}
-
 void NxAudioEngine::getVoiceFilenameFullPath(char* _out, char* _name)
 {
 	sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path, _name, external_voice_ext);
+}
+
+bool NxAudioEngine::fileExists(char* filename)
+{
+	struct stat dummy;
+
+	return (stat(filename, &dummy) == 0);
 }
 
 // PUBLIC
@@ -113,35 +113,38 @@ void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 {
 	if (_engine.isValidVoiceHandle(_musicHandle)) stopMusic(crossfade ? time : 0);
 
-	SoLoud::AudioSource* music = nullptr;
-
 	char filename[MAX_PATH];
 
 	getMusicFilenameFullPath(filename, name);
 
 	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
-	if (_winampInPlugin != nullptr) {
-		SoLoud::Winamp* winamp = new SoLoud::Winamp(_winampInPlugin, BufferOutPlugin::instance());
-		music = dynamic_cast<SoLoud::AudioSource*>(winamp);
+	if (fileExists(filename))
+	{
+		SoLoud::AudioSource* music = nullptr;
 
-		if (winamp->load(filename) != SoLoud::SO_NO_ERROR) {
-			error("Cannot load %s with winamp\n", filename);
-			delete winamp;
-			music = nullptr;
+		if (_winampInPlugin != nullptr) {
+			SoLoud::Winamp* winamp = new SoLoud::Winamp(_winampInPlugin, BufferOutPlugin::instance());
+			music = dynamic_cast<SoLoud::AudioSource*>(winamp);
+
+			if (winamp->load(filename) != SoLoud::SO_NO_ERROR) {
+				error("Cannot load %s with winamp\n", filename);
+				delete winamp;
+				music = nullptr;
+			}
 		}
-	}
 
-	if (music == nullptr) {
-		SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
-		music = dynamic_cast<SoLoud::AudioSource*>(vgmstream);
-		if (vgmstream->load(filename) != SoLoud::SO_NO_ERROR) {
-			error("Cannot load %s with vgmstream\n", filename);
+		if (music == nullptr) {
+			SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
+			music = dynamic_cast<SoLoud::AudioSource*>(vgmstream);
+			if (vgmstream->load(filename) != SoLoud::SO_NO_ERROR) {
+				error("Cannot load %s with vgmstream\n", filename);
+			}
 		}
-	}
 
-	_musicHandle = _engine.playBackground(*music, crossfade ? 0.0f : 1.0f);
-	if (crossfade) setMusicVolume(1.0f, time);
+		_musicHandle = _engine.playBackground(*music, crossfade ? 0.0f : 1.0f);
+		if (crossfade) setMusicVolume(1.0f, time);
+	}
 }
 
 void NxAudioEngine::stopMusic(uint32_t time)
@@ -213,11 +216,20 @@ void NxAudioEngine::setMusicSpeed(float speed)
 }
 
 // Voice
+bool NxAudioEngine::canPlayVoice(char* name)
+{
+	struct stat dummy;
+
+	char filename[MAX_PATH];
+
+	getVoiceFilenameFullPath(filename, name);
+
+	return (stat(filename, &dummy) == 0);
+}
+
 void NxAudioEngine::playVoice(char* name)
 {
 	std::string strName = name;
-
-	SoLoud::VGMStream* voice = new SoLoud::VGMStream();
 
 	char filename[MAX_PATH];
 
@@ -225,8 +237,10 @@ void NxAudioEngine::playVoice(char* name)
 
 	if (trace_all || trace_voice) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
-	if (canPlayVoice(filename))
+	if (fileExists(filename))
 	{
+		SoLoud::VGMStream* voice = new SoLoud::VGMStream();
+
 		voice->load(filename);
 
 		// Stop any previously playing voice

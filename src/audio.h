@@ -49,8 +49,10 @@ private:
 
 	float _voiceMasterVolume = 100.0f;
 
-	bool canPlayVoice(char* path);
 	void getVoiceFilenameFullPath(char* _out, char* _name);
+
+	// MISC
+	bool fileExists(char* filename);
 
 public:
 	bool init();
@@ -73,6 +75,7 @@ public:
 	void setMusicSpeed(float speed);
 
 	// Voice
+	bool canPlayVoice(char* name);
 	void playVoice(char* name);
 };
 
