@@ -32,6 +32,13 @@ void NxAudioEngine::getMusicFilenameFullPath(char* _out, char* _name)
 	sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path, _name, external_music_ext);
 }
 
+bool NxAudioEngine::canPlayVoice(char* path)
+{
+	struct stat dummy;
+
+	return (stat(path, &dummy) == 0);
+}
+
 void NxAudioEngine::getVoiceFilenameFullPath(char* _out, char* _name)
 {
 	sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path, _name, external_voice_ext);
@@ -111,6 +118,8 @@ void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 	char filename[MAX_PATH];
 
 	getMusicFilenameFullPath(filename, name);
+
+	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
 	if (_winampInPlugin != nullptr) {
 		SoLoud::Winamp* winamp = new SoLoud::Winamp(_winampInPlugin, BufferOutPlugin::instance());
@@ -214,10 +223,15 @@ void NxAudioEngine::playVoice(char* name)
 
 	getVoiceFilenameFullPath(filename, name);
 
-	voice->load(filename);
+	if (trace_all || trace_voice) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
-	// Stop any previously playing voice
-	if (_engine.isValidVoiceHandle(_voiceHandle)) _engine.stop(_voiceHandle);
+	if (canPlayVoice(filename))
+	{
+		voice->load(filename);
 
-	_voiceHandle = _engine.play(*voice);
+		// Stop any previously playing voice
+		if (_engine.isValidVoiceHandle(_voiceHandle)) _engine.stop(_voiceHandle);
+
+		_voiceHandle = _engine.play(*voice);
+	}
 }

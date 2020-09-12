@@ -1,6 +1,7 @@
 #include <imgui.h>
 #include <stdint.h>
 
+#include "audio.h"
 #include "field.h"
 #include "globals.h"
 #include "common.h"
@@ -70,6 +71,18 @@ byte get_field_parameter(int id)
 	return *ptr4;
 }
 
+void play_voice(char* field_name, byte dialog_id, byte page_count)
+{
+	char name[MAX_PATH];
+	char page = 'a' + page_count;
+
+	if (page > 'z') page = 'z';
+
+	sprintf(name, "%s/%u%c", field_name, dialog_id, page);
+
+	nxAudioEngine.playVoice(name);
+}
+
 int message()
 {
 	static byte message_page_count = 0;
@@ -88,6 +101,7 @@ int message()
 	if (is_page_changing) message_page_count++;
 	if (is_new_dialog || is_page_changing)
 	{
+		play_voice(field_name, dialog_id, message_page_count);
 		if (trace_all || trace_opcodes) trace("opcode[%s]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", __func__, field_name, window_id, dialog_id, message_page_count);
 	}
 
