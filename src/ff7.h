@@ -1642,6 +1642,7 @@ struct ff7_externals
 	uint32_t opcode_akao2;
 	uint32_t opcode_gameover;
 	uint32_t opcode_message;
+	uint32_t opcode_ask;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_fill_buffer_from_audio_dat;
 	uint32_t battle_summon_leviathan_loop;
@@ -1670,6 +1671,8 @@ struct ff7_externals
 	WORD* word_CC1638;
 	uint32_t sub_630D50;
 	WORD* opcode_message_loop_code;
+	uint32_t sub_6310A1;
+	WORD* opcode_ask_question_code;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
