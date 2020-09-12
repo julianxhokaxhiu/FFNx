@@ -68,6 +68,16 @@ bool NxAudioEngine::init()
 	return false;
 }
 
+void NxAudioEngine::flush()
+{
+	_engine.stopAll();
+
+	_musicStack.empty();
+	_musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
+	
+	_voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
+}
+
 void NxAudioEngine::cleanup()
 {
 	_engine.deinit();

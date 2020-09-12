@@ -53,6 +53,7 @@ private:
 
 public:
 	bool init();
+	void flush();
 	void cleanup();
 
 	// Audio

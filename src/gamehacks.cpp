@@ -20,6 +20,7 @@
 /****************************************************************************/
 
 #include "gamehacks.h"
+#include "music.h"
 
 GameHacks gamehacks;
 
@@ -99,6 +100,7 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 			case 'R':
 				if (!ff8) ff7_do_reset = true;
 				resetSpeedhack();
+				music_flush();
 				break;
 			case 'S':
 				skipMovies();
@@ -138,6 +140,7 @@ void GameHacks::processGamepadInput()
 				ff7_do_reset = true;
 
 				resetSpeedhack();
+				music_flush();
 			}
 			// Increase in-game speed on L2+R2+UP
 			else if (

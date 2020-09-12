@@ -391,3 +391,10 @@ void music_init()
 		}
 	}
 }
+
+void music_flush()
+{
+	midi_fadetime = 0;
+	midi_to_resume = 0;
+	nxAudioEngine.flush();
+}
