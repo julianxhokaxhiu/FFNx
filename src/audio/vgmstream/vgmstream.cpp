@@ -95,6 +95,8 @@ namespace SoLoud
 
 	result VGMStream::load(const char* aFilename)
 	{
+		mBaseSamplerate = 0;
+
 		if (aFilename == 0)
 			return INVALID_PARAMETER;
 
@@ -105,6 +107,10 @@ namespace SoLoud
 		stop();
 
 		stream = init_vgmstream(aFilename);
+
+		if (stream == nullptr) {
+			return FILE_LOAD_FAILED;
+		}
 
 		mBaseSamplerate = (float)stream->sample_rate;
 		mSampleCount = (unsigned int)stream->num_samples;

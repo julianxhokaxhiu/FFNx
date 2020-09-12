@@ -19,69 +19,88 @@
 #    GNU General Public License for more details.                             #
 #*****************************************************************************#
 
-cmake_minimum_required(VERSION 3.15)
-cmake_policy(SET CMP0091 NEW)
+include(FindPackageHandleStandardArgs)
 
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT /NODEFAULTLIB:MSVCRTD /NODEFAULTLIB:LIBCMTD /DEBUG:FULL /FORCE:MULTIPLE /IGNORE:4006,4075,4088,4099")
-set(_DLL_VERSION "${_DLL_VERSION}")
+if (NOT OPENPSF_FOUND)
+	find_package(ZLib REQUIRED)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+	# PSXCore
+	find_library(
+		OPENPSF_PSXCORE_LIBRARY
+		PSXCore
+		PATH_SUFFIXES
+		lib
+	)
 
-option(FORCEHEAP "Force all allocation to our heap" OFF)
-if (FORCEHEAP)
-    add_definitions(-DNO_EXT_HEAP)
-endif()
+	add_library(OPENPSF::PSXCORE STATIC IMPORTED)
 
-option(TRACEHEAP "Trace and keep count of every allocation made by this program" OFF)
-if (TRACEHEAP)
-    add_definitions(-DHEAP_DEBUG)
-endif()
+	set_target_properties(
+		OPENPSF::PSXCORE
+		PROPERTIES
+		IMPORTED_LOCATION
+		"${OPENPSF_PSXCORE_LIBRARY}"
+	)
 
-option(PROFILING "Enable Profiling" OFF)
-if (PROFILING)
-    add_definitions(-DPROFILE)
-endif()
+	# psflib
+	find_path(
+		OPENPSF_PSFLIB_INCLUDE_DIR
+		psflib.h
+		PATH_SUFFIXES
+		include
+	)
 
-option(SUPERBUILD "Build the project using a superbuild" ON)
+	find_library(
+		OPENPSF_PSFLIB_LIBRARY
+		psflib
+		PATH_SUFFIXES
+		lib
+	)
 
-if (SUPERBUILD)
-	project(SUPERBUILD)
-	set_directory_properties(PROPERTIES EP_BASE "${CMAKE_BINARY_DIR}/ep")
-	add_subdirectory(third_party)
-	include(ExternalProject)
-	ExternalProject_Add(
-		FFNx
-		SOURCE_DIR	"${CMAKE_SOURCE_DIR}"
-		CMAKE_ARGS
-			"-DSUPERBUILD=OFF"
-			"-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
-			"-DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/vendor"
-			"-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
-			"-D_DLL_VERSION=${_DLL_VERSION}"
-		DEPENDS
-		bgfx
-		ffmpeg
-		libconfuse
-		vgmstream
-		StackWalker
-		pugixml
-		libpng
-		imgui
-		soloud
+	add_library(OPENPSF::PSFLIB STATIC IMPORTED)
+
+	set_target_properties(
+		OPENPSF::PSFLIB
+		PROPERTIES
+		IMPORTED_LOCATION
+		"${OPENPSF_PSFLIB_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES
+		"${OPENPSF_PSFLIB_INCLUDE_DIR}"
+		INTERFACE_LINK_LIBRARIES
+		"ZLib::ZLib"
+	)
+
+	# OpenPSF
+	find_path(
+		OPENPSF_INCLUDE_DIR
+		openpsf.h
+		PATH_SUFFIXES
+		include/libopenpsf
+	)
+
+	find_library(
+		OPENPSF_LIBRARY
 		openpsf
+		PATH_SUFFIXES
+		lib
 	)
-	ExternalProject_Add_Step(
-		FFNx
-		reconfigure
-		COMMAND ${CMAKE_COMMAND} -E echo "Forcing a superbuild reconfigure"
-		DEPENDEES download
-		DEPENDERS configure
-		ALWAYS ON
+
+	add_library(OPENPSF::OPENPSF STATIC IMPORTED)
+
+	set_target_properties(
+		OPENPSF::OPENPSF
+		PROPERTIES
+		IMPORTED_LOCATION
+		"${OPENPSF_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES
+		"${OPENPSF_INCLUDE_DIR}"
+		INTERFACE_LINK_LIBRARIES
+		"OPENPSF::PSXCORE;OPENPSF::PSFLIB"
 	)
-	return()
+
+	find_package_handle_standard_args(OPENPSF DEFAULT_MSG
+		OPENPSF_PSXCORE_LIBRARY
+		OPENPSF_PSFLIB_LIBRARY
+		OPENPSF_LIBRARY
+		OPENPSF_INCLUDE_DIR
+	)
 endif()
-
-project(FFNx)
-add_subdirectory(src)
-

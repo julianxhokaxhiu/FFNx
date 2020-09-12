@@ -93,6 +93,35 @@ bool needs_resume(uint32_t midi)
 	return ret;
 }
 
+uint32_t ff7_no_loop_ids[11] = {
+	5, // FANFARE
+	14, // TB
+	22, // WALZ
+	48, // CANNON
+	57, // YADO
+	89, // RO
+	90, // JYRO
+	92, // RIKU
+	93, // SI
+	94, // MOGU
+	98, // ROLL
+};
+
+bool no_loop(uint32_t midi)
+{
+	if (ff8) {
+		return false; // TODO
+	}
+
+	for (int i = 0; i < 11; ++i) {
+		if (ff7_no_loop_ids[i] == midi) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 uint32_t ff7_midi_init(uint32_t unknown)
 {
 	// without this there will be no volume control for music in the config menu
@@ -193,6 +222,7 @@ void ff7_play_midi(uint32_t midi)
 		{
 			if (needs_resume(playing_midi)) pause_midi();
 			nxAudioEngine.playMusic(midi_name);
+			nxAudioEngine.setMusicLooping(!no_loop(midi));
 			playing_midi = midi;
 		}
 
@@ -264,6 +294,8 @@ void cross_fade_midi(uint32_t midi, uint32_t time /* seconds */)
 uint32_t midi_status()
 {
 	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(playing_midi) : common_externals.get_midi_name(playing_midi));
+
+	nxAudioEngine.setMusicLooping(false);
 
 	return nxAudioEngine.isMusicPlaying();
 }

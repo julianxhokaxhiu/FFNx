@@ -36,7 +36,7 @@ cfg_bool_t use_external_music = cfg_bool_t(false);
 cfg_bool_t external_music_resume = cfg_bool_t(true);
 char* external_music_path = nullptr;
 char* external_music_ext = nullptr;
-char* winamp_in_plugin = nullptr;
+char* he_bios_path = nullptr;
 char* external_voice_path = nullptr;
 char* external_voice_ext = nullptr;
 cfg_bool_t enable_voice_music_fade = cfg_bool_t(false);
@@ -102,7 +102,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_BOOL("external_music_resume", &external_music_resume),
 		CFG_SIMPLE_STR("external_music_path", &external_music_path),
 		CFG_SIMPLE_STR("external_music_ext", &external_music_ext),
-		CFG_SIMPLE_STR("winamp_in_plugin", &winamp_in_plugin),
+		CFG_SIMPLE_STR("he_bios_path", &he_bios_path),
 		CFG_SIMPLE_STR("external_voice_path", &external_voice_path),
 		CFG_SIMPLE_STR("external_voice_ext", &external_voice_ext),
 		CFG_SIMPLE_BOOL("enable_voice_music_fade", &enable_voice_music_fade),

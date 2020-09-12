@@ -48,25 +48,18 @@ bool NxAudioEngine::fileExists(char* filename)
 
 bool NxAudioEngine::init()
 {
-	if (_engine.init() == 0)
-	{		
-		if (nullptr != winamp_in_plugin)
-		{
-			_winampInPlugin = new WinampInPlugin(BufferOutPlugin::instance());
+	_openpsf_loaded = false;
 
-			if (!_winampInPlugin->open(winamp_in_plugin))
-			{
-				error("couldn't load %s, please verify 'winamp_in_plugin' or comment it\n", winamp_in_plugin);
-				delete _winampInPlugin;
-				_winampInPlugin = nullptr;
+	if (_engine.init() == 0)
+	{
+		if (he_bios_path != nullptr) {
+			if (!Psf::initialize_psx_core(he_bios_path)) {
+				error("NxAudioEngine::%s couldn't load %s, please verify 'he_bios_path' or comment it\n", __func__, he_bios_path);
 			}
 			else {
-				info("Winamp music plugin loaded using %s\n", winamp_in_plugin);
+				_openpsf_loaded = true;
+				info("NxAudioEngine::%s OpenPSF music plugin loaded using %s\n", __func__, he_bios_path);
 			}
-		}
-		else
-		{
-			_winampInPlugin = nullptr;
 		}
 
 		return true;
@@ -88,11 +81,6 @@ void NxAudioEngine::flush()
 void NxAudioEngine::cleanup()
 {
 	_engine.deinit();
-	if (_winampInPlugin != nullptr) {
-		delete _winampInPlugin;
-		_winampInPlugin = nullptr;
-	}
-	BufferOutPlugin::destroyInstance();
 }
 
 // Audio
@@ -123,22 +111,22 @@ void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 	{
 		SoLoud::AudioSource* music = nullptr;
 
-		if (_winampInPlugin != nullptr) {
-			SoLoud::Winamp* winamp = new SoLoud::Winamp(_winampInPlugin, BufferOutPlugin::instance());
-			music = dynamic_cast<SoLoud::AudioSource*>(winamp);
+		if (_openpsf_loaded) {
+			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf();
+			music = openpsf;
 
-			if (winamp->load(filename) != SoLoud::SO_NO_ERROR) {
-				error("Cannot load %s with winamp\n", filename);
-				delete winamp;
+			if (openpsf->load(filename) != SoLoud::SO_NO_ERROR) {
+				error("NxAudioEngine::%s: Cannot load %s with openpsf\n", __func__, filename);
+				delete openpsf;
 				music = nullptr;
 			}
 		}
 
 		if (music == nullptr) {
 			SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
-			music = dynamic_cast<SoLoud::AudioSource*>(vgmstream);
+			music = vgmstream;
 			if (vgmstream->load(filename) != SoLoud::SO_NO_ERROR) {
-				error("Cannot load %s with vgmstream\n", filename);
+				error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
 			}
 		}
 
@@ -242,6 +230,11 @@ void NxAudioEngine::resetMusicVolume(size_t time)
 void NxAudioEngine::setMusicSpeed(float speed)
 {
 	_engine.setRelativePlaySpeed(_musicHandle, speed);
+}
+
+void NxAudioEngine::setMusicLooping(bool looping)
+{
+	_engine.setLooping(_musicHandle, looping);
 }
 
 // Voice

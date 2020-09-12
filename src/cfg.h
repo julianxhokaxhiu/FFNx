@@ -39,7 +39,7 @@ extern cfg_bool_t use_external_music;
 extern cfg_bool_t external_music_resume;
 extern char* external_music_path;
 extern char* external_music_ext;
-extern char* winamp_in_plugin;
+extern char* he_bios_path;
 extern char* external_voice_path;
 extern char* external_voice_ext;
 extern cfg_bool_t enable_voice_music_fade;
