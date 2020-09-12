@@ -21,8 +21,6 @@
 
 #include "in_plugin.h"
 
-const char* default_extension = "ogg";
-
 void SAVSAInit(int maxlatency_in_ms, int srate)
 {
 	UNUSED_PARAM(maxlatency_in_ms);
@@ -105,18 +103,9 @@ void SetInfo(int bitrate, int srate, int stereo, int synched)
 	UNUSED_PARAM(synched);
 }
 
-AbstractInPlugin::AbstractInPlugin(AbstractOutPlugin* outPlugin) :
-	outPlugin(outPlugin)
-{
-}
-
-AbstractInPlugin::~AbstractInPlugin()
-{
-}
-
 WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
-	WinampPlugin(), AbstractInPlugin(outPlugin), current_saved_time_ms(0),
-	mod(nullptr), context(nullptr)
+	WinampPlugin(), getExtendedFileInfoProc(nullptr), outPlugin(outPlugin),
+	mod(nullptr)
 {
 }
 
@@ -154,10 +143,6 @@ void WinampInPlugin::initModule(HINSTANCE dllInstance)
 
 	if (nullptr != this->outPlugin) {
 		this->mod->standard.outMod = this->outPlugin->getModule();
-
-		if (nullptr != this->context) {
-			this->context->outContext = this->outPlugin->getContext();
-		}
 	}
 	else {
 		this->mod->standard.outMod = nullptr;
@@ -186,10 +171,6 @@ void WinampInPlugin::initModule(HINSTANCE dllInstance)
 void WinampInPlugin::quitModule()
 {
 	if (nullptr != this->mod) {
-		if (nullptr != this->context && nullptr != this->context->CancelDuplicate) {
-			this->context->CancelDuplicate();
-		}
-
 		if (nullptr != this->mod->standard.Quit) {
 			this->mod->standard.Quit();
 		}
@@ -200,7 +181,7 @@ void WinampInPlugin::quitModule()
 bool WinampInPlugin::knownExtension(const char* fn) const
 {
 	/*
-	char* extension_list = getMod()->standard.FileExtensions;
+	char* extension_list = getModule()->standard.FileExtensions;
 	const char* ext = filename_extension(fn);
 
 	while (true) {
@@ -229,16 +210,16 @@ bool WinampInPlugin::knownExtension(const char* fn) const
 
 int WinampInPlugin::isOurFile(const char* fn) const
 {
-	if (getMod()->standard.version & IN_UNICODE == IN_UNICODE) {
+	if (getModule()->standard.version & IN_UNICODE == IN_UNICODE) {
 		// Convert char* to wchar_t*
 		int count = MultiByteToWideChar(CP_ACP, 0, fn, -1, nullptr, 0);
 		wchar_t wideFn[MAX_PATH * 2];
 		memset(wideFn, 0, MAX_PATH * 2);
 		MultiByteToWideChar(CP_ACP, 0, fn, -1, wideFn, count);
-		return getMod()->wide.IsOurFile(wideFn);
+		return getModule()->wide.IsOurFile(wideFn);
 	}
 
-	return getMod()->standard.IsOurFile(fn);
+	return getModule()->standard.IsOurFile(fn);
 }
 
 bool WinampInPlugin::accept(const char* fn) const
@@ -246,115 +227,65 @@ bool WinampInPlugin::accept(const char* fn) const
 	return isOurFile(fn) != 0 || knownExtension(fn);
 }
 
-int WinampInPlugin::play(char* fn)
+int WinampInPlugin::play(const char* fn)
 {
-	if (getMod()->standard.version & IN_UNICODE == IN_UNICODE) {
+	if (getModule()->standard.version & IN_UNICODE == IN_UNICODE) {
 		// Convert char* to wchar_t*
 		int count = MultiByteToWideChar(CP_ACP, 0, fn, -1, nullptr, 0);
 		wchar_t wideFn[MAX_PATH * 2];
 		memset(wideFn, 0, MAX_PATH * 2);
 		MultiByteToWideChar(CP_ACP, 0, fn, -1, wideFn, count);
-		return getMod()->wide.Play(wideFn);
+		return getModule()->wide.Play(wideFn);
 	}
 
-	return getMod()->standard.Play(fn);
+	return getModule()->standard.Play(fn);
 }
 
 void WinampInPlugin::pause()
 {
-	getMod()->standard.Pause();
+	getModule()->standard.Pause();
 }
 
 void WinampInPlugin::unPause()
 {
-	getMod()->standard.UnPause();
+	getModule()->standard.UnPause();
 }
 
 int WinampInPlugin::isPaused()
 {
-	return getMod()->standard.IsPaused();
+	return getModule()->standard.IsPaused();
 }
 
 void WinampInPlugin::stop()
 {
-	getMod()->standard.Stop();
+	getModule()->standard.Stop();
 }
 
 int WinampInPlugin::getLength()
 {
-	return getMod()->standard.GetLength();
+	return getModule()->standard.GetLength();
 }
 
 int WinampInPlugin::getOutputTime()
 {
-	return getMod()->standard.GetOutputTime();
+	return getModule()->standard.GetOutputTime();
 }
 
 void WinampInPlugin::setOutputTime(int time_in_ms)
 {
-	getMod()->standard.SetOutputTime(time_in_ms);
+	getModule()->standard.SetOutputTime(time_in_ms);
 }
 
-bool WinampInPlugin::canDuplicate() const
+int WinampInPlugin::getTag(char* fn, char* metadata, char* ret, int retlen)
 {
-	return getContext() && IN_CONTEXT_VER == getContext()->version
-		&& nullptr != getContext()->outContext
-		&& OUT_CONTEXT_VER == getContext()->outContext->version;
-}
-
-void WinampInPlugin::duplicate()
-{
-	if (canDuplicate()) {
-		getContext()->Duplicate();
-	}
-	else {
-		current_saved_time_ms = outPlugin->getOutputTime() % getLength();
-
-		if (current_saved_time_ms < 0) {
-			current_saved_time_ms = 0;
-		}
-	}
-}
-
-int WinampInPlugin::resume(char* fn)
-{
-	if (canDuplicate()) {
-		return getContext()->Resume(fn);
+	if (getExtendedFileInfoProc == nullptr) {
+		getExtendedFileInfoProc = GetProcAddress(getHandle(), "winampGetExtendedFileInfo");
 	}
 
-	if (current_saved_time_ms > 0) {
-		pause();
-		outPlugin->pause();
+	if (getExtendedFileInfoProc != nullptr) {
+		winampGetExtendedFileInfo f = winampGetExtendedFileInfo(getExtendedFileInfoProc);
+		return f(fn, metadata, ret, retlen);
 	}
 
-	stop();
-	int err = play(fn);
-
-	if (current_saved_time_ms > 0) {
-		setOutputTime(current_saved_time_ms); // FIXME: can take a while
-		unPause();
-		outPlugin->unPause();
-		current_saved_time_ms = 0;
-	}
-
-	return err;
-}
-
-bool WinampInPlugin::cancelDuplicate()
-{
-	if (canDuplicate()) {
-		return getContext()->CancelDuplicate() != 0;
-	}
-
-	if (current_saved_time_ms > 0) {
-		current_saved_time_ms = 0;
-		return true;
-	}
-
-	return false;
-}
-
-void WinampInPlugin::setLoopingEnabled(bool enabled)
-{
-	UNUSED_PARAM(enabled);
+	return 0;
 }

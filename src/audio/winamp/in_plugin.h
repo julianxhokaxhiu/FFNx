@@ -24,41 +24,9 @@
 #include "plugin.h"
 #include "out_plugin.h"
 
-class InPluginWithFailback;
-
-class AbstractInPlugin {
-protected:
-	AbstractOutPlugin* outPlugin;
-public:
-	AbstractInPlugin(AbstractOutPlugin* outPlugin);
-	virtual ~AbstractInPlugin();
-
-	virtual bool accept(const char* fn) const = 0;
-
-	virtual int play(char* fn) = 0;
-	virtual void pause() = 0;			// pause stream
-	virtual void unPause() = 0;			// unpause stream
-	virtual int isPaused() = 0;			// ispaused? return 1 if paused, 0 if not
-	virtual void stop() = 0;				// stop (unload) stream
-
-	// time stuff
-	virtual int getLength() = 0;			// get length in ms
-	virtual int getOutputTime() = 0;		// returns current output time in ms. (usually returns outMod->GetOutputTime()
-	virtual void setOutputTime(int time_in_ms) = 0;	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
-
-	// Resuming (not part of standard Winamp plugin)
-	virtual bool canDuplicate() const = 0;
-	virtual void duplicate() = 0;
-	virtual int resume(char* fn) = 0;
-	virtual bool cancelDuplicate() = 0;
-
-	// Looping (not part of standard Winamp plugin)
-	virtual void setLoopingEnabled(bool enabled) = 0;
-};
-
-class WinampInPlugin : public WinampPlugin, public AbstractInPlugin {
+class WinampInPlugin : public WinampPlugin {
 private:
-	int current_saved_time_ms;
+	FARPROC getExtendedFileInfoProc;
 	inline LPCSTR procName() const {
 		return "winampGetInModule2";
 	}
@@ -66,12 +34,9 @@ private:
 	void closeModule();
 protected:
 	WinampInModule* mod;
-	WinampInContext* context;
-	inline virtual WinampInModule* getMod() const {
+	AbstractOutPlugin* outPlugin;
+	inline virtual WinampInModule* getModule() const {
 		return mod;
-	}
-	inline virtual WinampInContext* getContext() const {
-		return context;
 	}
 	void initModule(HINSTANCE dllInstance);
 	void quitModule();
@@ -83,7 +48,7 @@ public:
 
 	bool accept(const char* fn) const;
 
-	int play(char* fn);
+	int play(const char* fn);
 	void pause();			// pause stream
 	void unPause();			// unpause stream
 	int isPaused();			// ispaused? return 1 if paused, 0 if not
@@ -93,13 +58,7 @@ public:
 	int getLength();			// get length in ms
 	int getOutputTime();		// returns current output time in ms. (usually returns outMod->GetOutputTime()
 	void setOutputTime(int time_in_ms);	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
-
-	// Resuming (not part of standard Winamp plugin)
-	bool canDuplicate() const;
-	void duplicate();
-	int resume(char* fn);
-	bool cancelDuplicate();
-
-	// Looping (not part of standard Winamp plugin)
-	void setLoopingEnabled(bool enabled);
+	
+	// tags
+	int getTag(char* fn, char* metadata, char* ret, int retlen);
 };

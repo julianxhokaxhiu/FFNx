@@ -26,23 +26,12 @@
 class AbstractOutPlugin {
 protected:
 	WinampOutModule* mod;
-	WinampOutContext* context;
 public:
-	AbstractOutPlugin() : mod(nullptr), context(nullptr) {}
+	AbstractOutPlugin() : mod(nullptr) {}
 	virtual ~AbstractOutPlugin() {}
 	inline WinampOutModule* getModule() const {
 		return mod;
 	}
-	inline WinampOutContext* getContext() const {
-		return context;
-	}
-	// volume stuff
-	virtual void setVolume(int volume);	// from 0 to 255.. usually just call outMod->SetVolume
-	void setPan(int pan);	    // from -127 to 127.. usually just call outMod->SetPan
-	int getOutputTime() const;
-	int getWrittenTime() const;
-	void pause() const;
-	void unPause() const;
 };
 
 class BufferOutPlugin : public AbstractOutPlugin {
@@ -54,11 +43,12 @@ private:
 	static int _writePosition;
 	static bool _clearDone;
 	static bool _finishedPlaying;
+	static bool _opened;
 	static int _sampleRate;
 	static int _numChannels;
 	static int _bitsPerSample;
+	static int _bytesPerSample;
 	static int _lastPause;
-	static CRITICAL_SECTION _mutex;
 	static void FakeDialog(HWND hwndParent);
 	static void Noop();
 	static int Open(int samplerate, int numchannels, int bitspersamp, int bufferlenms, int prebufferms);

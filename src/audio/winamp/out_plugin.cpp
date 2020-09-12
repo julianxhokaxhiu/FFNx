@@ -23,52 +23,6 @@
 
 constexpr auto AUDIO_BUFFER_SECONDS = 5;
 
-void AbstractOutPlugin::setVolume(int volume)
-{
-	if (nullptr != this->mod) {
-		this->mod->SetVolume(volume);
-	}
-}
-
-void AbstractOutPlugin::setPan(int pan)
-{
-	if (nullptr != this->mod) {
-		this->mod->SetPan(pan);
-	}
-}
-
-int AbstractOutPlugin::getOutputTime() const
-{
-	if (nullptr != this->mod) {
-		return this->mod->GetOutputTime();
-	}
-
-	return 0;
-}
-
-int AbstractOutPlugin::getWrittenTime() const
-{
-	if (nullptr != this->mod) {
-		return this->mod->GetWrittenTime();
-	}
-
-	return 0;
-}
-
-void AbstractOutPlugin::pause() const
-{
-	if (nullptr != this->mod) {
-		this->mod->Pause(1);
-	}
-}
-
-void AbstractOutPlugin::unPause() const
-{
-	if (nullptr != this->mod) {
-		this->mod->Pause(0);
-	}
-}
-
 BufferOutPlugin* BufferOutPlugin::_instance = nullptr;
 
 char* BufferOutPlugin::_buffer = nullptr;
@@ -78,13 +32,13 @@ int BufferOutPlugin::_writePosition = 0;
 
 bool BufferOutPlugin::_clearDone = false;
 bool BufferOutPlugin::_finishedPlaying = true;
+bool BufferOutPlugin::_opened = false;
 
 int BufferOutPlugin::_sampleRate = -1;
 int BufferOutPlugin::_numChannels = -1;
 int BufferOutPlugin::_bitsPerSample = -1;
+int BufferOutPlugin::_bytesPerSample = -1;
 int BufferOutPlugin::_lastPause = 0;
-
-CRITICAL_SECTION BufferOutPlugin::_mutex;
 
 BufferOutPlugin* BufferOutPlugin::instance()
 {
@@ -123,10 +77,22 @@ int BufferOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 
 	Close();
 
+	int oldBufferLength = _bufferLength;
 	_bufferLength = AUDIO_BUFFER_SECONDS * samplerate * numchannels * bitspersamp / 8;
 	_writePosition = 0;
 	_readPosition = 0;
-	_buffer = new char[_bufferLength]();
+
+	if (_buffer != nullptr && oldBufferLength != _bufferLength) {
+		delete[] _buffer;
+		_buffer = nullptr;
+	}
+
+	if (_buffer == nullptr) {
+		_buffer = new char[_bufferLength]();
+	}
+	else {
+		memset(_buffer, 0, _bufferLength); // Reuse allocated buffer
+	}
 
 	_clearDone = false;
 	_finishedPlaying = false;
@@ -134,6 +100,8 @@ int BufferOutPlugin::Open(int samplerate, int numchannels, int bitspersamp, int 
 	_sampleRate = samplerate;
 	_numChannels = numchannels;
 	_bitsPerSample = bitspersamp;
+	_bytesPerSample = _numChannels * _bitsPerSample / 8;
+	_opened = true;
 
 	return 0;
 }
@@ -142,39 +110,32 @@ void BufferOutPlugin::Close()
 {
 	if (trace_all || trace_music) trace("Close buffer out plugin\n");
 
+	_opened = false;
 	_clearDone = true;
 	_finishedPlaying = true;
+
 	_sampleRate = -1;
 	_numChannels = -1;
 	_bitsPerSample = -1;
-
-	if (_buffer != nullptr) {
-		delete[] _buffer;
-		_buffer = nullptr;
-	}
+	_bytesPerSample = -1;
 }
 
 int BufferOutPlugin::Write(char* buffer, int len)
 {
 	if (trace_all) trace("BufferOutPlugin::Write(%i) %i / %i\n", len, _readPosition, _writePosition);
 
-	if (_buffer == nullptr) {
+	if (_buffer == nullptr || !_opened) {
 		return 1;
 	}
 
-	EnterCriticalSection(&_mutex);
-
 	// Cyclic buffer
 	if (_writePosition + len > _bufferLength) {
-		char* ptr1, * ptr2;
 		size_t bytes1, bytes2;
 
-		ptr2 = _buffer;
 		bytes2 = _writePosition + len - _bufferLength;
-		ptr1 = _buffer + _writePosition;
 		bytes1 = len - bytes2;
-		memcpy(ptr1, buffer, bytes1);
-		memcpy(ptr2, buffer + bytes1, bytes2);
+		memcpy(_buffer + _writePosition, buffer, bytes1);
+		memcpy(_buffer, buffer + bytes1, bytes2);
 	}
 	else {
 		memcpy(_buffer + _writePosition, buffer, len);
@@ -182,18 +143,20 @@ int BufferOutPlugin::Write(char* buffer, int len)
 
 	_writePosition = (_writePosition + len) % _bufferLength;
 
-	LeaveCriticalSection(&_mutex);
-
 	return 0;
 }
 
 int BufferOutPlugin::CanWrite()
 {
-	if (_buffer == nullptr) {
+	if (_buffer == nullptr || !_opened) {
 		return 0;
 	}
 
-	const int readPosition = _readPosition;
+	int readPosition = _readPosition - _bytesPerSample; // Do not allow to write just before the read position
+	if (readPosition < 0) {
+		readPosition = _bufferLength + readPosition;
+	}
+
 	if (trace_all) trace("BufferOutPlugin::CanWrite %i / %i bufferLength: %i\n", readPosition, _writePosition, _bufferLength);
 
 	if (readPosition <= _writePosition) {
@@ -205,9 +168,9 @@ int BufferOutPlugin::CanWrite()
 
 int BufferOutPlugin::IsPlaying()
 {
-	if (trace_all || trace_music) trace("BufferOutPlugin::IsPlaying\n");
+	if (trace_all) trace("BufferOutPlugin::IsPlaying\n");
 
-	if (_buffer == nullptr) {
+	if (_buffer == nullptr || !_opened) {
 		return 0;
 	}
 
@@ -221,8 +184,6 @@ int BufferOutPlugin::IsPlaying()
 			return 1;
 		}
 
-		_finishedPlaying = true;
-
 		Close();
 
 		return 0;
@@ -230,8 +191,6 @@ int BufferOutPlugin::IsPlaying()
 
 	// Clear some data after the write pointer when it is possible (to remove artifacts)
 	if (canWrite >= clearDataSize) {
-		EnterCriticalSection(&_mutex);
-
 		// Cyclic buffer
 		if (_writePosition + clearDataSize > _bufferLength) {
 			char* ptr1, * ptr2;
@@ -247,8 +206,6 @@ int BufferOutPlugin::IsPlaying()
 		else {
 			memset(_buffer + _writePosition, 0, clearDataSize);
 		}
-
-		LeaveCriticalSection(&_mutex);
 
 		_clearDone = true;
 	}
@@ -313,13 +270,16 @@ BufferOutPlugin::BufferOutPlugin()
 	mod->Flush = Flush;
 	mod->GetOutputTime = GetOutputTime;
 	mod->GetWrittenTime = GetWrittenTime;
-
-	InitializeCriticalSection(&_mutex);
 }
 
 BufferOutPlugin::~BufferOutPlugin()
 {
-	DeleteCriticalSection(&_mutex);
+	Close();
+
+	if (_buffer != nullptr) {
+		delete[] _buffer;
+		_buffer = nullptr;
+	}
 }
 
 int BufferOutPlugin::sampleRate() const
@@ -351,11 +311,9 @@ int BufferOutPlugin::read(char* buf, int maxLen)
 	for (int i = 0; i < maxWait; ++i) {
 		if (trace_all) trace("BufferOutPlugin::read(%i) %i %i\n", maxLen, bufCur, _readPosition);
 
-		if (_buffer == nullptr) {
+		if (_buffer == nullptr || !_opened || _finishedPlaying) {
 			return bufCur;
 		}
-
-		EnterCriticalSection(&_mutex);
 
 		const int writePosition = _writePosition;
 		const int bufferLength = _bufferLength;
@@ -387,14 +345,10 @@ int BufferOutPlugin::read(char* buf, int maxLen)
 				}
 
 				if (bufCur >= maxLen) {
-					LeaveCriticalSection(&_mutex);
-
 					return bufCur;
 				}
 			}
 		}
-
-		LeaveCriticalSection(&_mutex);
 		
 		Sleep(sleepMs);
 	}

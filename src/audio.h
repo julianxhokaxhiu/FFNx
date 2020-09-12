@@ -75,6 +75,7 @@ public:
 	void setMusicVolume(float _volume, size_t time = 0);
 	void resetMusicVolume(size_t time = 0);
 	void setMusicSpeed(float speed);
+	void setMusicLooping(bool looping);
 
 	// Voice
 	bool canPlayVoice(char* name);

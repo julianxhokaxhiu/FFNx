@@ -265,6 +265,8 @@ uint32_t midi_status()
 {
 	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, ff8 ? ff8_midi_name(playing_midi) : common_externals.get_midi_name(playing_midi));
 
+	nxAudioEngine.setMusicLooping(false);
+
 	return nxAudioEngine.isMusicPlaying();
 }
 

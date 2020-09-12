@@ -244,6 +244,11 @@ void NxAudioEngine::setMusicSpeed(float speed)
 	_engine.setRelativePlaySpeed(_musicHandle, speed);
 }
 
+void NxAudioEngine::setMusicLooping(bool looping)
+{
+	_engine.setLooping(_musicHandle, false);
+}
+
 // Voice
 bool NxAudioEngine::canPlayVoice(char* name)
 {

@@ -73,7 +73,7 @@ namespace SoLoud
 
 		mOffset = 0;
 		mStreamPosition = 0.0f;
-		return 0;
+		return SO_NO_ERROR;
 	}
 
 	bool WinampInstance::hasEnded()
@@ -100,13 +100,13 @@ namespace SoLoud
 		}
 
 		stop();
-		
+
 		if (inPlugin->accept(aFilename)) {
 			error("This file type is not supported (%s)\n", aFilename);
 			return FILE_LOAD_FAILED;
 		}
 
-		inPlugin->play(const_cast<char*>(aFilename));
+		inPlugin->play(aFilename);
 
 		if (outPlugin->sampleRate() < 0) {
 			error("The winamp output plugin was never opened\n");
@@ -120,6 +120,7 @@ namespace SoLoud
 
 		mBaseSamplerate = outPlugin->sampleRate();
 		mChannels = outPlugin->numChannels();
+
 		setLooping(true);
 
 		return SO_NO_ERROR;

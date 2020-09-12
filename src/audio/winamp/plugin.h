@@ -26,7 +26,6 @@
 #include "../../log.h"
 
 #include "include/winamp.h"
-#include "include/winamp_ext.h"
 
 #define UNUSED_PARAM(x) (void)x;
 
