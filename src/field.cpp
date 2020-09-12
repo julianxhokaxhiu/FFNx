@@ -74,11 +74,13 @@ byte get_field_parameter(int id)
 void play_voice(char* field_name, byte dialog_id, byte page_count)
 {
 	char name[MAX_PATH];
+
 	char page = 'a' + page_count;
-
 	if (page > 'z') page = 'z';
-
 	sprintf(name, "%s/%u%c", field_name, dialog_id, page);
+
+	if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
+		sprintf(name, "%s/%u", field_name, dialog_id);
 
 	nxAudioEngine.playVoice(name);
 }
