@@ -22,4 +22,3 @@
 #pragma once
 
 void music_init();
-void music_flush();

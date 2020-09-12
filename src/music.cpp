@@ -34,6 +34,37 @@ uint32_t midi_to_resume = 0;
 
 static uint32_t noop() { return 0; }
 
+void music_flush()
+{
+	midi_fadetime = 0;
+	midi_to_resume = 0;
+	nxAudioEngine.flush();
+}
+
+bool is_gameover(uint32_t midi)
+{
+	bool ret = false;
+
+	if (ff8)
+	{
+		switch (midi)
+		{
+		case 0: // Lose
+			ret = true;
+		}
+	}
+	else
+	{
+		switch (midi)
+		{
+		case 58: // OVER2
+			ret = true;
+		}
+	}
+
+	return ret;
+}
+
 bool needs_resume(uint32_t midi)
 {
 	bool ret = false;
@@ -138,6 +169,8 @@ void ff7_play_midi(uint32_t midi)
 {
 	if (playing_midi != midi)
 	{
+		if (is_gameover(midi)) music_flush();
+
 		char* midi_name = common_externals.get_midi_name(midi);
 		struct game_mode* mode = getmode_cached();
 
@@ -317,6 +350,8 @@ uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t u1, uint32_t u2)
 {
 	if (playing_midi != midi)
 	{
+		if (is_gameover(midi)) music_flush();
+
 		char* midi_name = ff8_midi_name(midi);
 
 		if (nullptr == midi_name) {
@@ -390,11 +425,4 @@ void music_init()
 			replace_function(common_externals.midi_cleanup, noop);
 		}
 	}
-}
-
-void music_flush()
-{
-	midi_fadetime = 0;
-	midi_to_resume = 0;
-	nxAudioEngine.flush();
 }
