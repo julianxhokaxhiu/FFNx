@@ -53,6 +53,7 @@ extern cfg_bool_t trace_files;
 extern cfg_bool_t trace_loaders;
 extern cfg_bool_t trace_lights;
 extern cfg_bool_t trace_opcodes;
+extern cfg_bool_t trace_voice;
 extern cfg_bool_t vertex_log;
 extern cfg_bool_t uniform_log;
 extern cfg_bool_t show_renderer_backend;
