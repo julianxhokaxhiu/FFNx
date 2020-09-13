@@ -67,7 +67,7 @@ int opcode_voice_message()
 	char* field_name = strrchr(ff7_externals.field_file_name, 92) + 1;
 
 	bool is_new_dialog = (message_current_opcode == 0);
-	bool is_page_changing = (message_last_opcode == 14 && message_current_opcode == 2);
+	bool is_page_changing = ((message_last_opcode == 14 && message_current_opcode == 2) || (message_last_opcode == 4 && message_current_opcode == 8));
 	bool is_dialog_closing = (message_last_opcode != message_current_opcode && message_current_opcode == 7);
 	bool is_dialog_closed = (message_last_opcode == 7 && message_current_opcode == 0);
 
@@ -101,7 +101,7 @@ int opcode_voice_ask(int unk)
 	char* field_name = strrchr(ff7_externals.field_file_name, 92) + 1;
 
 	bool is_new_dialog = (message_current_opcode == 0);
-	bool is_page_changing = (message_last_opcode == 14 && message_current_opcode == 2);
+	bool is_page_changing = ((message_last_opcode == 14 && message_current_opcode == 2) || (message_last_opcode == 4 && message_current_opcode == 8));
 	bool is_dialog_closing = (message_last_opcode != message_current_opcode && message_current_opcode == 7);
 	bool is_dialog_closed = (message_last_opcode == 7 && message_current_opcode == 0);
 	bool is_dialog_option_changed = (message_last_option != message_current_option);
