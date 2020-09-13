@@ -190,11 +190,26 @@ bool NxAudioEngine::isMusicPlaying()
 	return _engine.isValidVoiceHandle(_musicHandle);
 }
 
-void NxAudioEngine::setMusicMasterVolume(float _volume)
+void NxAudioEngine::setMusicMasterVolume(float _volume, size_t time)
 {
+	_previousMusicMasterVolume = _musicMasterVolume;
+
 	_musicMasterVolume = _volume;
 
-	setMusicVolume(1.0f);
+	resetMusicVolume(time);
+}
+
+void NxAudioEngine::restoreMusicMasterVolume(size_t time)
+{
+	if (_previousMusicMasterVolume != _musicMasterVolume)
+	{
+		_musicMasterVolume = _previousMusicMasterVolume;
+
+		// Set them equally so if this API is called again, nothing will happen
+		_previousMusicMasterVolume = _musicMasterVolume;
+
+		resetMusicVolume(time);
+	}
 }
 
 float NxAudioEngine::getMusicVolume()
@@ -204,7 +219,19 @@ float NxAudioEngine::getMusicVolume()
 
 void NxAudioEngine::setMusicVolume(float _volume, size_t time)
 {	
-	float volume = (_volume * _musicMasterVolume) / 100.0f;
+	_wantedMusicVolume = _volume;
+	
+	float volume = _volume * _musicMasterVolume;
+
+	if (time > 0)
+		_engine.fadeVolume(_musicHandle, volume, time);
+	else
+		_engine.setVolume(_musicHandle, volume);
+}
+
+void NxAudioEngine::resetMusicVolume(size_t time)
+{
+	float volume = _wantedMusicVolume * _musicMasterVolume;
 
 	if (time > 0)
 		_engine.fadeVolume(_musicHandle, volume, time);

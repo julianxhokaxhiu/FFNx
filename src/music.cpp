@@ -272,7 +272,7 @@ void set_master_midi_volume(uint32_t volume)
 {
 	if (trace_all || trace_music) trace("%s: volume=%u\n", __func__, volume);
 
-	nxAudioEngine.setMusicMasterVolume(float(volume));
+	nxAudioEngine.setMusicMasterVolume(volume / 100.0f);
 }
 
 void set_midi_volume(uint32_t volume)

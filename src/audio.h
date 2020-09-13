@@ -38,16 +38,16 @@ private:
 	// MUSIC
 	SoLoud::handle _musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
 
-	float _musicMasterVolume = 100.0f;
+	float _previousMusicMasterVolume = 1.0f;
+	float _musicMasterVolume = 1.0f;
 
+	float _wantedMusicVolume = 1.0f;
 	std::stack<SoLoud::handle> _musicStack;
 
 	void getMusicFilenameFullPath(char* _out, char* _name);
 
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
-
-	float _voiceMasterVolume = 100.0f;
 
 	void getVoiceFilenameFullPath(char* _out, char* _name);
 
@@ -69,9 +69,11 @@ public:
 	void pauseMusic();
 	void resumeMusic();
 	bool isMusicPlaying();
-	void setMusicMasterVolume(float _volume);
+	void setMusicMasterVolume(float _volume, size_t time = 0);
+	void restoreMusicMasterVolume(size_t time = 0);
 	float getMusicVolume();
 	void setMusicVolume(float _volume, size_t time = 0);
+	void resetMusicVolume(size_t time = 0);
 	void setMusicSpeed(float speed);
 
 	// Voice
