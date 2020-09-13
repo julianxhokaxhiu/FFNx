@@ -28,6 +28,8 @@
 int (*opcode_old_message)();
 int (*opcode_old_ask)(int);
 
+//=============================================================================
+
 void play_voice(char* field_name, byte dialog_id, byte page_count)
 {
 	char name[MAX_PATH];
@@ -56,6 +58,47 @@ void stop_voice(uint32_t time = 0)
 	nxAudioEngine.stopVoice(time);
 }
 
+//=============================================================================
+
+bool is_dialog_new(byte code)
+{
+	return (code == 0);
+}
+
+bool is_dialog_paging(byte old_code, byte new_code)
+{
+	return (
+		(old_code == 14 && new_code == 2) ||
+		(old_code == 4 && new_code == 8)
+	);
+}
+
+bool is_dialog_closing(byte old_code, byte new_code)
+{
+	return (
+		old_code != new_code && new_code == 7
+	);
+}
+
+bool is_dialog_closed(byte old_code, byte new_code)
+{
+	return (
+		old_code == 7 && new_code == 0
+	);
+}
+
+byte get_dialog_opcode(byte window_id)
+{
+	return ff7_externals.opcode_message_loop_code[24 * window_id];
+}
+
+char* get_current_field_name()
+{
+	return strrchr(ff7_externals.field_file_name, 92) + 1;
+}
+
+//=============================================================================
+
 int opcode_voice_message()
 {
 	static byte message_page_count = 0;
@@ -63,22 +106,22 @@ int opcode_voice_message()
 
 	byte window_id = get_field_parameter(0);
 	byte dialog_id = get_field_parameter(1);
-	byte message_current_opcode = ff7_externals.opcode_message_loop_code[24 * window_id];
-	char* field_name = strrchr(ff7_externals.field_file_name, 92) + 1;
+	byte message_current_opcode = get_dialog_opcode(window_id);
+	char* field_name = get_current_field_name();
 
-	bool is_new_dialog = (message_current_opcode == 0);
-	bool is_page_changing = ((message_last_opcode == 14 && message_current_opcode == 2) || (message_last_opcode == 4 && message_current_opcode == 8));
-	bool is_dialog_closing = (message_last_opcode != message_current_opcode && message_current_opcode == 7);
-	bool is_dialog_closed = (message_last_opcode == 7 && message_current_opcode == 0);
+	bool _is_dialog_new = is_dialog_new(message_current_opcode);
+	bool _is_dialog_paging = is_dialog_paging(message_last_opcode, message_current_opcode);
+	bool _is_dialog_closing = is_dialog_closing(message_last_opcode, message_current_opcode);
+	bool _is_dialog_closed = is_dialog_closed(message_last_opcode, message_current_opcode);
 
-	if (is_new_dialog) message_page_count = 0;
-	if (is_page_changing) message_page_count++;
-	if (is_new_dialog || is_page_changing)
+	if (_is_dialog_new) message_page_count = 0;
+	if (_is_dialog_paging) message_page_count++;
+	if (_is_dialog_new || _is_dialog_paging)
 	{
 		play_voice(field_name, dialog_id, message_page_count);
 		if (trace_all || trace_opcodes) trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
 	}
-	else if (is_dialog_closing)
+	else if (_is_dialog_closing)
 	{
 		stop_voice();
 	}
@@ -96,29 +139,29 @@ int opcode_voice_ask(int unk)
 
 	byte window_id = get_field_parameter(1);
 	byte dialog_id = get_field_parameter(2);
-	byte message_current_opcode = ff7_externals.opcode_message_loop_code[24 * window_id];
+	byte message_current_opcode = get_dialog_opcode(window_id);
 	byte message_current_option = (ff7_externals.opcode_ask_question_code[24 * window_id] - 6) / 16;
-	char* field_name = strrchr(ff7_externals.field_file_name, 92) + 1;
+	char* field_name = get_current_field_name();
 
-	bool is_new_dialog = (message_current_opcode == 0);
-	bool is_page_changing = ((message_last_opcode == 14 && message_current_opcode == 2) || (message_last_opcode == 4 && message_current_opcode == 8));
-	bool is_dialog_closing = (message_last_opcode != message_current_opcode && message_current_opcode == 7);
-	bool is_dialog_closed = (message_last_opcode == 7 && message_current_opcode == 0);
-	bool is_dialog_option_changed = (message_last_option != message_current_option);
+	bool _is_dialog_new = is_dialog_new(message_current_opcode);
+	bool _is_dialog_paging = is_dialog_paging(message_last_opcode, message_current_opcode);
+	bool _is_dialog_closing = is_dialog_closing(message_last_opcode, message_current_opcode);
+	bool _is_dialog_closed = is_dialog_closed(message_last_opcode, message_current_opcode);
+	bool _is_dialog_option_changed = (message_last_option != message_current_option);
 
-	if (is_new_dialog) message_page_count = 0;
-	if (is_page_changing) message_page_count++;
-	if (is_new_dialog || is_page_changing)
+	if (_is_dialog_new) message_page_count = 0;
+	if (_is_dialog_paging) message_page_count++;
+	if (_is_dialog_new || _is_dialog_paging)
 	{
 		play_voice(field_name, dialog_id, message_page_count);
 		if (trace_all || trace_opcodes) trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
 	}
-	else if (is_dialog_option_changed)
+	else if (_is_dialog_option_changed)
 	{
 		play_option(field_name, dialog_id, message_current_option);
 		if (trace_all || trace_opcodes) trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u\n", field_name, window_id, dialog_id, message_current_option);
 	}
-	else if (is_dialog_closing)
+	else if (_is_dialog_closing)
 	{
 		stop_voice();
 	}
