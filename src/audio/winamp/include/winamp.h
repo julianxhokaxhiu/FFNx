@@ -287,4 +287,5 @@ union WinampInModule {
 
 typedef WinampOutModule* (CALLBACK* winampGetOutModule)();
 typedef WinampInModule* (CALLBACK* winampGetInModule2)();
-typedef int (CALLBACK* winampGetExtendedFileInfo)(char* filename, char* metadata, char* ret, int retlen);
+typedef int (CALLBACK* winampGetExtendedFileInfo)(const char* filename, const char* metadata, char* ret, int retlen);
+typedef int (CALLBACK* winampGetExtendedFileInfoW)(const wchar_t* filename, const char* metadata, wchar_t* ret, int retlen);

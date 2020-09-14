@@ -42,6 +42,7 @@ protected:
 	void quitModule();
 	bool knownExtension(const char* fn) const;
 	int isOurFile(const char* fn) const;
+	int inPsfGetTag(const char* fn, const char* metadata, char* ret, int retlen);
 public:
 	WinampInPlugin(AbstractOutPlugin* outPlugin);
 	virtual ~WinampInPlugin();
@@ -59,6 +60,7 @@ public:
 	int getOutputTime();		// returns current output time in ms. (usually returns outMod->GetOutputTime()
 	void setOutputTime(int time_in_ms);	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
 	
+	size_t getTitle(const char* fn, char* ret, size_t max);
 	// tags
-	int getTag(char* fn, char* metadata, char* ret, int retlen);
+	int getTag(const char* fn, const char* metadata, char* ret, int retlen);
 };

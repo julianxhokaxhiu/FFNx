@@ -125,10 +125,10 @@ void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 
 		if (_winampInPlugin != nullptr) {
 			SoLoud::Winamp* winamp = new SoLoud::Winamp(_winampInPlugin, BufferOutPlugin::instance());
-			music = dynamic_cast<SoLoud::AudioSource*>(winamp);
+			music = winamp;
 
 			if (winamp->load(filename) != SoLoud::SO_NO_ERROR) {
-				error("Cannot load %s with winamp\n", filename);
+				error("NxAudioEngine::%s: Cannot load %s with winamp\n", __func__, filename);
 				delete winamp;
 				music = nullptr;
 			}
@@ -136,9 +136,9 @@ void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 
 		if (music == nullptr) {
 			SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
-			music = dynamic_cast<SoLoud::AudioSource*>(vgmstream);
+			music = vgmstream;
 			if (vgmstream->load(filename) != SoLoud::SO_NO_ERROR) {
-				error("Cannot load %s with vgmstream\n", filename);
+				error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
 			}
 		}
 

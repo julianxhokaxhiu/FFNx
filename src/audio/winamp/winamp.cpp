@@ -99,12 +99,12 @@ namespace SoLoud
 			return INVALID_PARAMETER;
 		}
 
-		stop();
-
 		if (inPlugin->accept(aFilename)) {
 			error("This file type is not supported (%s)\n", aFilename);
 			return FILE_LOAD_FAILED;
 		}
+
+		stop();
 
 		inPlugin->play(aFilename);
 
@@ -122,6 +122,12 @@ namespace SoLoud
 		mChannels = outPlugin->numChannels();
 
 		setLooping(true);
+
+		char looping[2];
+		if (inPlugin->getTag(aFilename, "looping", looping, 2)
+			&& strncmp(looping, "0", 1) == 0) {
+			setLooping(false);
+		}
 
 		return SO_NO_ERROR;
 	}

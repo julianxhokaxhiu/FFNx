@@ -112,7 +112,6 @@ WinampInPlugin::WinampInPlugin(AbstractOutPlugin* outPlugin) :
 WinampInPlugin::~WinampInPlugin()
 {
 	close();
-	quitModule();
 }
 
 bool WinampInPlugin::openModule(FARPROC procAddress)
@@ -124,6 +123,8 @@ bool WinampInPlugin::openModule(FARPROC procAddress)
 		error("couldn't call function %s in external library\n", procName());
 		return false;
 	}
+
+	getExtendedFileInfoProc = GetProcAddress(getHandle(), "winampGetExtendedFileInfo");
 
 	initModule(getHandle());
 
@@ -222,6 +223,83 @@ int WinampInPlugin::isOurFile(const char* fn) const
 	return getModule()->standard.IsOurFile(fn);
 }
 
+int WinampInPlugin::inPsfGetTag(const char* fn, const char* metadata, char* ret, int retlen)
+{
+	if (!fn || !metadata || !ret || retlen <= 0) {
+		error("inPsfGetTag invalid input\n");
+		return 0;
+	}
+
+	FILE* f = fopen(fn, "rb");
+	if (f == nullptr) {
+		error("inPsfGetTag Cannot open file %s\n", fn);
+		return 0;
+	}
+
+	char magic[4];
+	if (fread(magic, 1, 3, f) != 3) {
+		fclose(f);
+		error("inPsfGetTag Cannot read magic word %s\n", fn);
+		return 0;
+	}
+	magic[3] = '\0';
+
+	if (strncmp(magic, "PSF", 3) != 0) {
+		fclose(f);
+		return 0;
+	}
+
+	if (fseek(f, 8, SEEK_SET) != 0) {
+		fclose(f);
+		error("inPsfGetTag cannot seek to size %s\n", fn);
+		return 0;
+	}
+
+	int32_t size = 0;
+
+	if (fread(reinterpret_cast<char*>(&size), sizeof(size), 1, f) != 1) {
+		fclose(f);
+		error("inPsfGetTag Cannot read file data size %s\n", fn);
+		return 0;
+	}
+
+	if (fseek(f, size + 21, SEEK_SET) != 0) {
+		fclose(f);
+		error("inPsfGetTag cannot seek to tags %s\n", fn);
+		return 0;
+	}
+
+	char data[8192];
+	size_t r = fread(data, 1, 8192, f);
+
+	fclose(f);
+
+	data[r] = '\0';
+
+	int keyPos = 0, valuePos = 0;
+	bool found = false;
+
+	for (int i = 0; i < r; ++i) {
+		if (data[i] == '=') {
+			if (strncmp(metadata, data + keyPos, i - keyPos) == 0) {
+				found = true;
+			}
+			valuePos = i + 1;
+		}
+		else if (valuePos > keyPos && data[i] == '\n') {
+			if (found) {
+				memcpy(ret, data + valuePos, i - valuePos);
+				return 1;
+			}
+			keyPos = i + 1;
+		}
+	}
+
+	error("inPsfGetTag tag not found %s %s\n", fn, metadata);
+
+	return 0;
+}
+
 bool WinampInPlugin::accept(const char* fn) const
 {
 	return isOurFile(fn) != 0 || knownExtension(fn);
@@ -276,16 +354,34 @@ void WinampInPlugin::setOutputTime(int time_in_ms)
 	getModule()->standard.SetOutputTime(time_in_ms);
 }
 
-int WinampInPlugin::getTag(char* fn, char* metadata, char* ret, int retlen)
+size_t WinampInPlugin::getTitle(const char* fn, char* ret, size_t max)
 {
-	if (getExtendedFileInfoProc == nullptr) {
-		getExtendedFileInfoProc = GetProcAddress(getHandle(), "winampGetExtendedFileInfo");
+	char title[GETFILEINFO_TITLE_LENGTH];
+	memset(title, 0, GETFILEINFO_TITLE_LENGTH);
+	getModule()->standard.GetFileInfo(fn, title, nullptr);
+	size_t len = strnlen(title, GETFILEINFO_TITLE_LENGTH);
+	if (len == 0) {
+		return 0;
 	}
 
-	if (getExtendedFileInfoProc != nullptr) {
+	memset(ret, 0, max);
+	if (len > max - 1) {
+		len = max - 1;
+	}
+	memcpy(ret, title, len);
+
+	return len;
+}
+
+int WinampInPlugin::getTag(const char* fn, const char* metadata, char* ret, int retlen)
+{
+	return inPsfGetTag(fn, metadata, ret, retlen);
+
+	/* if (getExtendedFileInfoProc != nullptr) {
 		winampGetExtendedFileInfo f = winampGetExtendedFileInfo(getExtendedFileInfoProc);
+		// FIXME: makes the game crashes with in_psf!
 		return f(fn, metadata, ret, retlen);
 	}
 
-	return 0;
+	return 0; */
 }
