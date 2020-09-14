@@ -68,6 +68,7 @@ public:
 	void stopMusic(uint32_t time = 0);
 	void pauseMusic();
 	void resumeMusic();
+	bool canResumeMusic();
 	bool isMusicPlaying();
 	void setMusicMasterVolume(float _volume, size_t time = 0);
 	void restoreMusicMasterVolume(size_t time = 0);

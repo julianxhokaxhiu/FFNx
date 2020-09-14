@@ -234,7 +234,13 @@ void BufferOutPlugin::SetPan(int pan)
 
 void BufferOutPlugin::Flush(int t)
 {
-	UNUSED_PARAM(t);
+	if (trace_all || trace_music) trace("BufferOutPlugin flush buffer, seek to %i\n", t);
+
+	if (_buffer) {
+		memset(_buffer, 0, _bufferLength);
+		_writePosition = 0;
+		_readPosition = 0;
+	}
 }
 
 int BufferOutPlugin::GetOutputTime()

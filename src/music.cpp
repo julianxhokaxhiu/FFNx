@@ -69,7 +69,7 @@ bool needs_resume(uint32_t midi)
 {
 	bool ret = false;
 
-	if (external_music_resume)
+	if (external_music_resume && nxAudioEngine.canResumeMusic())
 	{
 		if (ff8)
 		{
@@ -91,6 +91,35 @@ bool needs_resume(uint32_t midi)
 	}
 
 	return ret;
+}
+
+uint32_t ff7_no_loop_ids[11] = {
+	5, // FANFARE
+	14, // TB
+	22, // WALZ
+	48, // CANNON
+	57, // YADO
+	89, // RO
+	90, // JYRO
+	92, // RIKU
+	93, // SI
+	94, // MOGU
+	98, // ROLL
+};
+
+bool no_loop(uint32_t midi)
+{
+	if (ff8) {
+		return false; // TODO
+	}
+
+	for (int i = 0; i < 11; ++i) {
+		if (ff7_no_loop_ids[i] == midi) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 uint32_t ff7_midi_init(uint32_t unknown)
@@ -193,6 +222,9 @@ void ff7_play_midi(uint32_t midi)
 		{
 			if (needs_resume(playing_midi)) pause_midi();
 			nxAudioEngine.playMusic(midi_name);
+			if (no_loop(midi)) {
+				nxAudioEngine.setMusicLooping(false);
+			}
 			playing_midi = midi;
 		}
 

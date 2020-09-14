@@ -124,7 +124,7 @@ bool WinampInPlugin::openModule(FARPROC procAddress)
 		return false;
 	}
 
-	getExtendedFileInfoProc = GetProcAddress(getHandle(), "winampGetExtendedFileInfo");
+	//getExtendedFileInfoProc = GetProcAddress(getHandle(), "winampGetExtendedFileInfo");
 
 	initModule(getHandle());
 
@@ -295,7 +295,7 @@ int WinampInPlugin::inPsfGetTag(const char* fn, const char* metadata, char* ret,
 		}
 	}
 
-	error("inPsfGetTag tag not found %s %s\n", fn, metadata);
+	if (trace_all || trace_music) warning("inPsfGetTag tag not found %s %s\n", fn, metadata);
 
 	return 0;
 }

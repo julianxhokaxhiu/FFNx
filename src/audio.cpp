@@ -185,6 +185,11 @@ void NxAudioEngine::resumeMusic()
 	_engine.setPause(_musicHandle, false);
 }
 
+bool NxAudioEngine::canResumeMusic()
+{
+	return _engine.getInfo(_musicHandle, 7777) != 1.0f;
+}
+
 bool NxAudioEngine::isMusicPlaying()
 {
 	return _engine.isValidVoiceHandle(_musicHandle);

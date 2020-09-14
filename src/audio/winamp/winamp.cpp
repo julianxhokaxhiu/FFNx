@@ -76,9 +76,27 @@ namespace SoLoud
 		return SO_NO_ERROR;
 	}
 
+	result WinampInstance::seek(double aSeconds, float* mScratch, unsigned int mScratchSize)
+	{
+		mParent->inPlugin->setOutputTime(aSeconds);
+		mStreamPosition = aSeconds;
+		return SO_NO_ERROR;
+	}
+
 	bool WinampInstance::hasEnded()
 	{
 		return !(mFlags & AudioSourceInstance::LOOPING) && mParent->outPlugin->finishedPlaying();
+	}
+
+	float WinampInstance::getInfo(unsigned int aInfoKey)
+	{
+		// Can resume music
+		if (aInfoKey == 7777) {
+			// Needs to Duplicate
+			return 1.0f;
+		}
+
+		return 0.0f;
 	}
 
 	Winamp::Winamp(WinampInPlugin* inPlugin, BufferOutPlugin* outPlugin) :
