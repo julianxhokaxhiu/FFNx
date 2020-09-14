@@ -32,7 +32,8 @@ int (*opcode_old_ask)(int);
 
 void begin_voice()
 {
-	nxAudioEngine.setMusicMasterVolume(0.25, 1);
+	if (enable_voice_music_fade)
+		nxAudioEngine.setMusicMasterVolume(external_voice_music_fade_volume / 100.0f, 1);
 }
 
 void play_voice(char* field_name, byte dialog_id, byte page_count)
@@ -61,7 +62,9 @@ void play_option(char* field_name, byte dialog_id, byte option_count)
 void end_voice(uint32_t time = 0)
 {
 	nxAudioEngine.stopVoice(time);
-	nxAudioEngine.restoreMusicMasterVolume(time > 0 ? time : 1);
+
+	if (enable_voice_music_fade)
+		nxAudioEngine.restoreMusicMasterVolume(time > 0 ? time : 1);
 }
 
 //=============================================================================

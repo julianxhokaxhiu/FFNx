@@ -42,6 +42,8 @@ extern char* external_music_ext;
 extern char* winamp_in_plugin;
 extern char* external_voice_path;
 extern char* external_voice_ext;
+extern cfg_bool_t enable_voice_music_fade;
+extern long external_voice_music_fade_volume;
 extern cfg_bool_t save_textures;
 extern cfg_bool_t trace_all;
 extern cfg_bool_t trace_movies;

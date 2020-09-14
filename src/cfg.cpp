@@ -39,6 +39,8 @@ char* external_music_ext = nullptr;
 char* winamp_in_plugin = nullptr;
 char* external_voice_path = nullptr;
 char* external_voice_ext = nullptr;
+cfg_bool_t enable_voice_music_fade = cfg_bool_t(false);
+long external_voice_music_fade_volume = 25;
 cfg_bool_t save_textures = cfg_bool_t(false);
 cfg_bool_t trace_all = cfg_bool_t(false);
 cfg_bool_t trace_movies = cfg_bool_t(false);
@@ -103,6 +105,8 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("winamp_in_plugin", &winamp_in_plugin),
 		CFG_SIMPLE_STR("external_voice_path", &external_voice_path),
 		CFG_SIMPLE_STR("external_voice_ext", &external_voice_ext),
+		CFG_SIMPLE_BOOL("enable_voice_music_fade", &enable_voice_music_fade),
+		CFG_SIMPLE_INT("external_voice_music_fade_volume", &external_voice_music_fade_volume),
 		CFG_SIMPLE_BOOL("save_textures", &save_textures),
 		CFG_SIMPLE_BOOL("trace_all", &trace_all),
 		CFG_SIMPLE_BOOL("trace_movies", &trace_movies),
@@ -198,6 +202,10 @@ void read_cfg()
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
 	if (window_size_y < 0) window_size_y = 0;
+
+	// Normalize voice music fade volume
+	if (external_voice_music_fade_volume < 0) external_voice_music_fade_volume = 0;
+	if (external_voice_music_fade_volume > 100) external_voice_music_fade_volume = 100;
 
 
 	// #############
