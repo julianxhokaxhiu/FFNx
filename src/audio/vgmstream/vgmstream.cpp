@@ -31,41 +31,72 @@ namespace SoLoud
 	{
 		mParent = aParent;
 		mOffset = 0;
-		mStreamBuffer = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels];
+
+		if (mParent->isStreaming)
+			mStreamBuffer = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels];
+		else
+			mStreamBuffer = nullptr;
 	}
 
 	VGMStreamInstance::~VGMStreamInstance()
 	{
-		delete[] mStreamBuffer;
+		if (mParent->isStreaming) delete[] mStreamBuffer;
 	}
 
 	unsigned int VGMStreamInstance::getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize)
 	{
-		unsigned int offset = 0;
-		unsigned int i, j, k;
+		unsigned int offset = mOffset;
 
-		for (i = 0; i < aSamplesToRead; i += SOLOUD_VGMSTREAM_NUM_SAMPLES)
+		if (mParent->isStreaming)
 		{
-			memset(mStreamBuffer, 0, sizeof(sample_t) * SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels);
-			unsigned int blockSize = (aSamplesToRead - i) > SOLOUD_VGMSTREAM_NUM_SAMPLES ? SOLOUD_VGMSTREAM_NUM_SAMPLES : aSamplesToRead - i;
-			offset += (unsigned int)render_vgmstream(mStreamBuffer, blockSize, mParent->stream);
+			unsigned int i, j, k;
 
-			for (j = 0; j < blockSize; j++)
+			for (i = 0; i < aSamplesToRead; i += SOLOUD_VGMSTREAM_NUM_SAMPLES)
 			{
-				for (k = 0; k < mChannels; k++)
+				memset(mStreamBuffer, 0, sizeof(sample_t) * SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels);
+				unsigned int copylen = (aSamplesToRead - i) > SOLOUD_VGMSTREAM_NUM_SAMPLES ? SOLOUD_VGMSTREAM_NUM_SAMPLES : aSamplesToRead - i;
+				offset += (unsigned int)render_vgmstream(mStreamBuffer, copylen, mParent->mStream);
+
+				for (j = 0; j < copylen; j++)
 				{
-					aBuffer[k * aSamplesToRead + i + j] = mStreamBuffer[j * mChannels + k] / (float)INT16_MAX;
+					for (k = 0; k < mChannels; k++)
+					{
+						aBuffer[k * aSamplesToRead + i + j] = mStreamBuffer[(j * mChannels) + k] / (float)INT16_MAX;
+					}
 				}
 			}
 		}
+		else
+		{
+			if (mParent->mData != NULL)
+			{
+				unsigned int i, j;
+				unsigned int dataleft = mParent->mSampleCount - mOffset;
+				unsigned int copylen = dataleft;
+				if (copylen > aSamplesToRead)
+					copylen = aSamplesToRead;
 
-		mOffset += offset;
+				for (j = 0; j < copylen; j++)
+				{
+					for (i = 0; i < mChannels; i++)
+					{
+						aBuffer[i * aBufferSize + j] = mParent->mData[offset + j + i] / (float)INT16_MAX;
+					}
+				}
+				
+				offset += copylen;
+			}
+			else
+				offset = 0;
+		}
+
+		mOffset = offset;
 		return offset;
 	}
 
 	result VGMStreamInstance::rewind()
 	{
-		seek_vgmstream(mParent->stream, 0);
+		if (mParent->isStreaming) reset_vgmstream(mParent->mStream);
 
 		mOffset = 0;
 		mStreamPosition = 0.0f;
@@ -84,16 +115,20 @@ namespace SoLoud
 	VGMStream::VGMStream()
 	{
 		mSampleCount = 0;
+		isStreaming = true;
 	}
 
 	VGMStream::~VGMStream()
 	{
 		stop();
 
-		close_vgmstream(stream);
+		if (isStreaming)
+			close_vgmstream(mStream);
+		else
+			delete[] mData;
 	}
 
-	result VGMStream::load(const char* aFilename)
+	result VGMStream::load(const char* aFilename, bool doStreaming)
 	{
 		mBaseSamplerate = 0;
 
@@ -106,16 +141,25 @@ namespace SoLoud
 
 		stop();
 
-		stream = init_vgmstream(aFilename);
+		isStreaming = doStreaming;
+		mStream = init_vgmstream(aFilename);
 
-		if (stream == nullptr) {
+		if (mStream == nullptr) {
 			return FILE_LOAD_FAILED;
 		}
 
-		mBaseSamplerate = (float)stream->sample_rate;
-		mSampleCount = (unsigned int)stream->num_samples;
-		mChannels = stream->channels;
-		if (stream->loop_flag) setLooping(true);
+		mBaseSamplerate = (float)mStream->sample_rate;
+		mSampleCount = (unsigned int)mStream->num_samples;
+		mChannels = mStream->channels;
+		if (mStream->loop_flag) setLooping(true);
+
+		if (!isStreaming)
+		{
+			int ret = 0;
+			mData = new sample_t[mSampleCount * mChannels]();
+			while(ret != mSampleCount) ret = render_vgmstream(mData, mSampleCount, mStream);
+			close_vgmstream(mStream);
+		}
 
 		return SO_NO_ERROR;
 	}

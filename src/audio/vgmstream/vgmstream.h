@@ -38,12 +38,15 @@ namespace SoLoud
 	class VGMStream : public AudioSource
 	{
 	public:
-		VGMSTREAM* stream;
+		VGMSTREAM* mStream;
 		unsigned int mSampleCount;
+		bool isStreaming;
+
+		sample_t* mData;
 
 		VGMStream();
 		virtual ~VGMStream();
-		result load(const char* aFilename);
+		result load(const char* aFilename, bool doStreaming = true);
 
 		virtual AudioSourceInstance* createInstance();
 		time getLength();

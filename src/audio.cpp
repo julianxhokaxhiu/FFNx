@@ -37,21 +37,30 @@ void NxAudioEngine::getVoiceFilenameFullPath(char* _out, char* _name)
 	sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path, _name, external_voice_ext);
 }
 
+void NxAudioEngine::getSFXFilenameFullPath(char* _out, int _id)
+{
+	sprintf(_out, "%s/%s/%d.%s", basedir, external_sfx_path, _id, external_sfx_ext);
+}
+
 bool NxAudioEngine::fileExists(char* filename)
 {
 	struct stat dummy;
 
-	return (stat(filename, &dummy) == 0);
+	bool ret = (stat(filename, &dummy) == 0);
+
+	if (!ret) warning("Could not find file %s\n", __func__, filename);
+
+	return ret;
 }
 
 // PUBLIC
 
 bool NxAudioEngine::init()
 {
-	_openpsf_loaded = false;
-
 	if (_engine.init() == 0)
 	{
+		_engineInitialized = true;
+
 		if (he_bios_path != nullptr) {
 			if (!Psf::initialize_psx_core(he_bios_path)) {
 				error("NxAudioEngine::%s couldn't load %s, please verify 'he_bios_path' or comment it\n", __func__, he_bios_path);
@@ -60,6 +69,16 @@ bool NxAudioEngine::init()
 				_openpsf_loaded = true;
 				info("NxAudioEngine::%s OpenPSF music plugin loaded using %s\n", __func__, he_bios_path);
 			}
+		}
+
+		_sfxVolumePerChannels.resize(10, 1.0f);
+		_sfxTempoPerChannels.resize(10, 1.0f);
+		_sfxStreams.resize(1000, nullptr);
+
+		while (!_sfxStack.empty())
+		{
+			loadSFX(_sfxStack.top());
+			_sfxStack.pop();
 		}
 
 		return true;
@@ -83,7 +102,77 @@ void NxAudioEngine::cleanup()
 	_engine.deinit();
 }
 
-// Audio
+// SFX
+bool NxAudioEngine::canPlaySFX(int id)
+{
+	struct stat dummy;
+
+	char filename[MAX_PATH];
+
+	getSFXFilenameFullPath(filename, id);
+
+	return (stat(filename, &dummy) == 0);
+}
+
+void NxAudioEngine::loadSFX(int id)
+{
+	if (_engineInitialized)
+	{
+		if (_sfxStreams[id - 1] == nullptr)
+		{
+			char filename[MAX_PATH];
+
+			getSFXFilenameFullPath(filename, id);
+
+			if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %s\n", __func__, filename);
+
+			if (fileExists(filename))
+			{
+				SoLoud::Wav* sfx = new SoLoud::Wav();
+
+				sfx->load(filename);
+
+				_sfxStreams[id - 1] = sfx;
+			}
+		}
+	}
+	else
+		_sfxStack.push(id);
+}
+
+void NxAudioEngine::unloadSFX(int id)
+{
+	if (_sfxStreams[id - 1] != nullptr)
+	{
+		delete _sfxStreams[id - 1];
+
+		_sfxStreams[id - 1] = nullptr;
+	}
+}
+
+void NxAudioEngine::playSFX(int id, int channel, float panning)
+{
+	if (_sfxStreams[id - 1] != nullptr)
+	{
+		SoLoud::handle _handle = _engine.play(
+			*_sfxStreams[id - 1],
+			_sfxVolumePerChannels[channel - 1],
+			panning
+		);
+
+		_engine.setRelativePlaySpeed(_handle, _sfxTempoPerChannels[channel - 1]);
+	}
+}
+
+void NxAudioEngine::setSFXVolume(float volume, int channel)
+{
+	_sfxVolumePerChannels[channel - 1] = volume;
+}
+
+void NxAudioEngine::setSFXSpeed(float speed, int channel)
+{
+	_sfxTempoPerChannels[channel - 1] = speed;
+}
 
 // Music
 bool NxAudioEngine::canPlayMusic(char* name)
@@ -178,11 +267,11 @@ bool NxAudioEngine::isMusicPlaying()
 	return _engine.isValidVoiceHandle(_musicHandle);
 }
 
-void NxAudioEngine::setMusicMasterVolume(float _volume, size_t time)
+void NxAudioEngine::setMusicMasterVolume(float volume, size_t time)
 {
 	_previousMusicMasterVolume = _musicMasterVolume;
 
-	_musicMasterVolume = _volume;
+	_musicMasterVolume = volume;
 
 	resetMusicVolume(time);
 }
@@ -205,16 +294,16 @@ float NxAudioEngine::getMusicVolume()
 	return _engine.getVolume(_musicHandle);
 }
 
-void NxAudioEngine::setMusicVolume(float _volume, size_t time)
+void NxAudioEngine::setMusicVolume(float volume, size_t time)
 {	
-	_wantedMusicVolume = _volume;
+	_wantedMusicVolume = volume;
 	
-	float volume = _volume * _musicMasterVolume;
+	float _volume = volume * _musicMasterVolume;
 
 	if (time > 0)
-		_engine.fadeVolume(_musicHandle, volume, time);
+		_engine.fadeVolume(_musicHandle, _volume, time);
 	else
-		_engine.setVolume(_musicHandle, volume);
+		_engine.setVolume(_musicHandle, _volume);
 }
 
 void NxAudioEngine::resetMusicVolume(size_t time)
@@ -251,8 +340,6 @@ bool NxAudioEngine::canPlayVoice(char* name)
 
 void NxAudioEngine::playVoice(char* name)
 {
-	std::string strName = name;
-
 	char filename[MAX_PATH];
 
 	getVoiceFilenameFullPath(filename, name);

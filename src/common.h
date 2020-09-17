@@ -204,6 +204,10 @@ struct common_externals
 	uint32_t winmain;
 	uint32_t load_tex_file;
 	uint32_t directsound_buffer_flags_1;
+	uint32_t sfx_init;
+	uint32_t sfx_cleanup;
+	uint32_t sfx_load;
+	uint32_t sfx_unload;
 	uint32_t (*play_sfx)(uint32_t);
 	uint32_t play_sfx_on_channel;
 	uint32_t (*set_sfx_volume_on_channel)(uint32_t, uint32_t);

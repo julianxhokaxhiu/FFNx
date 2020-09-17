@@ -52,7 +52,7 @@ struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
 	ff7_externals.sub_6A2865                   = game_object->externals->sub_6A2865;
 	common_externals.make_pixelformat          = game_object->externals->make_pixelformat;
 
-	ff7_data();
+	ff7_data(game_object);
 
 	if(game_width == 1280) MessageBoxA(gameHwnd, "Using this driver with the old high-res patch is NOT recommended, there will be glitches.", "Warning", 0);
 

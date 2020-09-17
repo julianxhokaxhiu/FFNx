@@ -19,59 +19,81 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <windows.h>
-#include <DSound.h>
-
-#include "sfx.h"
+#include "audio.h"
 #include "patch.h"
 #include "ff7.h"
+
+#include "sfx.h"
 
 uint32_t sfx_volumes[5];
 ff7_field_sfx_state sfx_buffers[4];
 uint32_t real_volume;
 
-void sfx_init()
+//=============================================================================
+
+int ff7_sfx_load(int id, int unk)
 {
-	// Add Global Focus flag to DirectSound Secondary Buffers
-	patch_code_byte(common_externals.directsound_buffer_flags_1 + 0x4, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
+	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
 
-	// SFX Patches
-	if (!ff8) {
-		// On volume change in main menu initialization
-		replace_call(ff7_externals.menu_start + 0x17, sfx_menu_force_channel_5_volume);
-		// On SFX volume change in config menu
-		replace_call(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_down, sfx_menu_play_sound_down);
-		replace_call(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_up, sfx_menu_play_sound_up);
-		// Fix escape sound not played more than once
-		replace_function(ff7_externals.battle_clear_sound_flags, sfx_clear_sound_locks);
-		// On stop sound in battle swirl
-		replace_call(ff7_externals.swirl_sound_effect + 0x26, sfx_operation_battle_swirl_stop_sound);
-		// On resume music after a battle
-		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
-		// Fix volume on specific SFX
-		replace_call(ff7_externals.sfx_play_summon + 0xA2, sfx_play_battle_specific);
-		replace_call(ff7_externals.sfx_play_summon + 0xF2, sfx_play_battle_specific);
+	if (id) nxAudioEngine.loadSFX(id);
 
-		// Leviathan fix
-		patch_code_byte(ff7_externals.battle_summon_leviathan_loop + 0x3FA + 1, 0x2A);
-		// Omnislash fix
-		replace_call(ff7_externals.battle_limit_omnislash_loop + 0x5A, sfx_fix_omnislash_sound_loading);
+	return true;
+}
 
-		/* Set sound volume on channel changes
-		 * When this sub is called, it set two fields of sfx_state,
-		 * but with the wrong value (computed with sfx_master_volume)
-		 */
+void ff7_sfx_unload(int id, int unk)
+{
+	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
 
-		// Replace a useless "volume & 0xFF" to "real_volume <- volume; nop"
-		patch_code_byte(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48, 0xA3); // mov
-		patch_code_uint(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48 + 1, uint32_t(&real_volume));
-		patch_code_byte(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48 + 5, 0x90); // nop
-		// Use a field of sfx_state to flag the current channel
-		patch_code_uint(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x70, 0xFFFFFFFF);
-		// Replace log call to fix sfx_state volume values
-		replace_call(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x183, sfx_fix_volume_values);
+	if (id) nxAudioEngine.unloadSFX(id);
+}
+
+void ff7_sfx_set_volume_on_channel(byte volume, int channel)
+{
+	if (trace_all || trace_sfx) trace("%s: volume=%d,channel=%d\n", __func__, volume, channel);
+
+	nxAudioEngine.setSFXVolume(volume / 127.0f, channel);
+}
+
+void ff7_sfx_play_on_channel(byte panning, int id, int channel)
+{
+	if (id)
+	{
+		if (trace_all || trace_sfx) trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
+
+		float _panning = (panning * 2 / 127.0f - 1.0f);
+
+		nxAudioEngine.loadSFX(id);
+		nxAudioEngine.playSFX(id, channel, _panning);
 	}
 }
+
+void ff7_sfx_play_on_channel_5(int id)
+{
+	ff7_sfx_play_on_channel(64, id, 5);
+}
+
+void ff7_sfx_load_and_play_with_tempo(int id, byte panning, byte volume, byte tempo)
+{
+	if (id)
+	{
+		if (trace_all || trace_sfx) trace("%s: id=%d,volume=%d,panning=%d,tempo=%d\n", __func__, id, volume, panning, tempo);
+
+		int _channel = 5;
+		float speed = 1.0;
+
+		if (float(tempo) >= 0.0)
+			speed = 1.0 - 0.5 * float(tempo) / 127.0;
+		else
+			speed = float(tempo) / -128.0 + 1.0;
+
+		ff7_sfx_load(id, 0);
+		ff7_sfx_set_volume_on_channel(volume, _channel);
+		nxAudioEngine.setSFXSpeed(speed, _channel);
+		ff7_sfx_play_on_channel(panning, id, _channel);
+	}
+}
+
+//=============================================================================
 
 bool sfx_buffer_is_looped(IDirectSoundBuffer* buffer)
 {
@@ -122,7 +144,10 @@ uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t par
 				pan = sfx_buffers[i].pan2;
 			}
 
-			((uint32_t(*)(uint32_t, uint32_t, uint32_t))common_externals.play_sfx_on_channel)(pan, sfx_buffers[i].sound_id, i + 1);
+			if (use_external_sfx)
+				ff7_sfx_play_on_channel(pan, sfx_buffers[i].sound_id, i + 1);
+			else
+				((uint32_t(*)(uint32_t, uint32_t, uint32_t))common_externals.play_sfx_on_channel)(pan, sfx_buffers[i].sound_id, i + 1);
 
 			sfx_buffers[i] = ff7_field_sfx_state();
 			sfx_buffers[i].buffer1 = nullptr;
@@ -154,7 +179,10 @@ void sfx_menu_force_channel_5_volume(uint32_t volume, uint32_t channel)
 {
 	if (trace_all || trace_sfx) info("%s: %d\n", __func__, volume);
 	// Original call (set channel 5 volume to maximum)
-	common_externals.set_sfx_volume_on_channel(volume, channel);
+	if (use_external_sfx)
+		ff7_sfx_set_volume_on_channel(volume, channel);
+	else
+		common_externals.set_sfx_volume_on_channel(volume, channel);
 	// Added by FFNx
 	sfx_remember_volumes();
 }
@@ -170,7 +198,10 @@ void sfx_update_volume(int modifier)
 
 	// Update sfx volume in real-time for all channel
 	for (int channel = 1; channel <= 5; ++channel) {
-		common_externals.set_sfx_volume_on_channel(sfx_volumes[channel - 1], channel);
+		if (use_external_sfx)
+			ff7_sfx_set_volume_on_channel(sfx_volumes[channel - 1], channel);
+		else
+			common_externals.set_sfx_volume_on_channel(sfx_volumes[channel - 1], channel);
 
 		if (trace_all || trace_sfx) info("%s: Set SFX volume for channel #%i: %i\n", __func__, channel, sfx_volumes[channel - 1]);
 	}
@@ -180,16 +211,24 @@ void sfx_menu_play_sound_down(uint32_t id)
 {
 	// Added by FFNx
 	sfx_update_volume(-1);
-	// Original call (curor sound)
-	common_externals.play_sfx(id);
+
+	// Original call (cursor sound)
+	if (use_external_sfx)
+		ff7_sfx_play_on_channel_5(id);
+	else
+		common_externals.play_sfx(id);
 }
 
 void sfx_menu_play_sound_up(uint32_t id)
 {
 	// Added by FFNx
 	sfx_update_volume(1);
-	// Original call (curor sound)
-	common_externals.play_sfx(id);
+
+	// Original call (cursor sound)
+	if (use_external_sfx)
+		ff7_sfx_play_on_channel_5(id);
+	else
+		common_externals.play_sfx(id);
 }
 
 void sfx_clear_sound_locks()
@@ -246,4 +285,62 @@ uint32_t sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer)
 
 	// Original call (load sound 0x285)
 	return ((uint32_t(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(sound_id, dsound_buffer);
+}
+
+//=============================================================================
+
+void sfx_init()
+{
+	// Add Global Focus flag to DirectSound Secondary Buffers
+	patch_code_byte(common_externals.directsound_buffer_flags_1 + 0x4, 0x80); // DSBCAPS_GLOBALFOCUS & 0x0000FF00
+
+	// SFX Patches
+	if (!ff8) {
+		// On volume change in main menu initialization
+		replace_call(ff7_externals.menu_start + 0x17, sfx_menu_force_channel_5_volume);
+		// On SFX volume change in config menu
+		replace_call(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_down, sfx_menu_play_sound_down);
+		replace_call(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_up, sfx_menu_play_sound_up);
+		// Fix escape sound not played more than once
+		replace_function(ff7_externals.battle_clear_sound_flags, sfx_clear_sound_locks);
+		// On stop sound in battle swirl
+		replace_call(ff7_externals.swirl_sound_effect + 0x26, sfx_operation_battle_swirl_stop_sound);
+		// On resume music after a battle
+		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
+		// Fix volume on specific SFX
+		replace_call(ff7_externals.sfx_play_summon + 0xA2, sfx_play_battle_specific);
+		replace_call(ff7_externals.sfx_play_summon + 0xF2, sfx_play_battle_specific);
+
+		// Leviathan fix
+		patch_code_byte(ff7_externals.battle_summon_leviathan_loop + 0x3FA + 1, 0x2A);
+		// Omnislash fix
+		replace_call(ff7_externals.battle_limit_omnislash_loop + 0x5A, sfx_fix_omnislash_sound_loading);
+
+		if (use_external_sfx)
+		{
+			replace_function(common_externals.sfx_load, ff7_sfx_load);
+			replace_function(common_externals.sfx_unload, ff7_sfx_unload);
+			replace_function(common_externals.play_sfx_on_channel, ff7_sfx_play_on_channel);
+			replace_function((uint32_t)common_externals.play_sfx, ff7_sfx_play_on_channel_5);
+			replace_function((uint32_t)common_externals.set_sfx_volume_on_channel, ff7_sfx_set_volume_on_channel);
+			replace_function(ff7_externals.sfx_load_and_play_with_tempo, ff7_sfx_load_and_play_with_tempo);
+		}
+		else
+		{
+			/*
+			* Set sound volume on channel changes
+			* When this sub is called, it set two fields of sfx_state,
+			* but with the wrong value (computed with sfx_master_volume)
+			*/
+
+			// Replace a useless "volume & 0xFF" to "real_volume <- volume; nop"
+			patch_code_byte(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48, 0xA3); // mov
+			patch_code_uint(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48 + 1, uint32_t(&real_volume));
+			patch_code_byte(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x48 + 5, 0x90); // nop
+			// Use a field of sfx_state to flag the current channel
+			patch_code_uint(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x70, 0xFFFFFFFF);
+			// Replace log call to fix sfx_state volume values
+			replace_call(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x183, sfx_fix_volume_values);
+		}
+	}
 }

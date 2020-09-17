@@ -23,17 +23,28 @@
 
 #include <stack>
 #include <string>
+#include <vector>
 #include <soloud/soloud.h>
+#include <soloud/soloud_wav.h>
 #include "audio/vgmstream/vgmstream.h"
 #include "audio/openpsf/openpsf.h"
 
-#define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000;
+#define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000
 
 class NxAudioEngine
 {
 private:
+	bool _engineInitialized = false;
 	SoLoud::Soloud _engine;
-	bool _openpsf_loaded;
+	bool _openpsf_loaded = false;
+
+	// SFX
+	std::stack<int> _sfxStack;
+	std::vector<float> _sfxVolumePerChannels;
+	std::vector<float> _sfxTempoPerChannels;
+	std::vector<SoLoud::Wav*> _sfxStreams;
+
+	void getSFXFilenameFullPath(char* _out, int _id);
 
 	// MUSIC
 	SoLoud::handle _musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
@@ -59,8 +70,13 @@ public:
 	void flush();
 	void cleanup();
 
-	// Audio
-	// TODO
+	// SFX
+	bool canPlaySFX(int id);
+	void loadSFX(int id);
+	void unloadSFX(int id);
+	void playSFX(int id, int channel, float panning);
+	void setSFXVolume(float volume, int channel);
+	void setSFXSpeed(float speed, int channel);
 
 	// Music
 	bool canPlayMusic(char* name);
@@ -69,10 +85,10 @@ public:
 	void pauseMusic();
 	void resumeMusic();
 	bool isMusicPlaying();
-	void setMusicMasterVolume(float _volume, size_t time = 0);
+	void setMusicMasterVolume(float volume, size_t time = 0);
 	void restoreMusicMasterVolume(size_t time = 0);
 	float getMusicVolume();
-	void setMusicVolume(float _volume, size_t time = 0);
+	void setMusicVolume(float volume, size_t time = 0);
 	void resetMusicVolume(size_t time = 0);
 	void setMusicSpeed(float speed);
 	void setMusicLooping(bool looping);

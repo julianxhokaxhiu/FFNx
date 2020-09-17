@@ -62,9 +62,11 @@ void ff7_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 	for(i = 0; i < num_modes; i++) if(ff7_modes[i].driver_mode == driver_mode) ff7_modes[i].main_loop = main_loop;
 }
 
-void ff7_find_externals()
+void ff7_find_externals(struct ff7_game_obj* game_object)
 {
-	uint32_t main_loop = ff7_externals.cdcheck + 0xF3;
+	uint32_t main_init_loop = (uint32_t)game_object->engine_loop_obj.init;
+	uint32_t main_loop = (uint32_t)game_object->engine_loop_obj.main_loop;
+	uint32_t main_cleanup_loop = (uint32_t)game_object->engine_loop_obj.cleanup;
 	uint32_t field_main_loop;
 	uint32_t battle_main_loop;
 	uint32_t menu_main_loop;
@@ -319,6 +321,11 @@ void ff7_find_externals()
 	ff7_externals.open_flevel_siz = get_relative_call(ff7_externals.sub_60EEB2, 0x79F);
 	ff7_externals.field_map_infos = get_absolute_value(ff7_externals.open_flevel_siz, 0xAF) - 0xBC;
 
+	common_externals.sfx_init = get_relative_call(main_init_loop, 0xC3);
+	ff7_externals.sfx_initialized = (uint32_t*)get_absolute_value(common_externals.sfx_init, 0x21);
+	common_externals.sfx_cleanup = get_relative_call(main_cleanup_loop, 0x64);
+	common_externals.sfx_load = get_relative_call(main_init_loop, 0xE3);
+	common_externals.sfx_unload = get_relative_call(main_cleanup_loop, 0x5C);
 	ff7_externals.sound_operation = get_relative_call(ff7_externals.enter_main, 0xE4);
 	common_externals.play_sfx_on_channel = get_relative_call(ff7_externals.sound_operation, 0x2AB);
 	common_externals.set_sfx_volume_on_channel = (uint32_t(*)(uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x3B3);
@@ -330,6 +337,7 @@ void ff7_find_externals()
 
 	ff7_externals.battle_clear_sound_flags = get_relative_call(ff7_externals.battle_sub_429AC0, 0x6C);
 	ff7_externals.swirl_sound_effect = get_relative_call(swirl_main_loop, 0x8B);
+	ff7_externals.sfx_load_and_play_with_tempo = get_relative_call(ff7_externals.swirl_sound_effect, 0x3E);
 
 	ff7_externals.field_initialize_variables = get_relative_call(ff7_externals.field_sub_60DCED, 0x178);
 	ff7_externals.music_lock_clear_fix = ff7_externals.field_initialize_variables + 0x2B8;
@@ -367,11 +375,11 @@ void ff7_find_externals()
 	ff7_externals.word_CC1638 = (WORD*)get_absolute_value(ff7_externals.sub_40B27B, 0x25);
 }
 
-void ff7_data()
+void ff7_data(struct ff7_game_obj* game_object)
 {
 	num_modes = sizeof(ff7_modes) / sizeof(ff7_modes[0]);
 
-	ff7_find_externals();
+	ff7_find_externals(game_object);
 
 	memcpy(modes, ff7_modes, sizeof(ff7_modes));
 

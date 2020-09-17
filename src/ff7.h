@@ -1643,8 +1643,10 @@ struct ff7_externals
 	uint32_t opcode_gameover;
 	uint32_t opcode_message;
 	uint32_t opcode_ask;
+	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_fill_buffer_from_audio_dat;
+	uint32_t sfx_load_and_play_with_tempo;
 	uint32_t battle_summon_leviathan_loop;
 	uint32_t battle_limit_omnislash_loop;
 	uint32_t sub_5F4A47;
