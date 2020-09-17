@@ -35,6 +35,9 @@
 extern char *mod_path;
 extern cfg_bool_t enable_ffmpeg_videos;
 extern char* ffmpeg_video_ext;
+extern cfg_bool_t use_external_sfx;
+extern char* external_sfx_path;
+extern char* external_sfx_ext;
 extern cfg_bool_t use_external_music;
 extern cfg_bool_t external_music_resume;
 extern char* external_music_path;

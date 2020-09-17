@@ -32,6 +32,9 @@
 char *mod_path = nullptr;
 cfg_bool_t enable_ffmpeg_videos = cfg_bool_t(true);
 char* ffmpeg_video_ext = nullptr;
+cfg_bool_t use_external_sfx = cfg_bool_t(false);
+char* external_sfx_path = nullptr;
+char* external_sfx_ext = nullptr;
 cfg_bool_t use_external_music = cfg_bool_t(false);
 cfg_bool_t external_music_resume = cfg_bool_t(true);
 char* external_music_path = nullptr;
@@ -98,6 +101,9 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_STR("mod_path", &mod_path),
 		CFG_SIMPLE_BOOL("enable_ffmpeg_videos", &enable_ffmpeg_videos),
 		CFG_SIMPLE_STR("ffmpeg_video_ext", &ffmpeg_video_ext),
+		CFG_SIMPLE_BOOL("use_external_sfx", &use_external_sfx),
+		CFG_SIMPLE_STR("external_sfx_path", &external_sfx_path),
+		CFG_SIMPLE_STR("external_sfx_ext", &external_sfx_ext),
 		CFG_SIMPLE_BOOL("use_external_music", &use_external_music),
 		CFG_SIMPLE_BOOL("external_music_resume", &external_music_resume),
 		CFG_SIMPLE_STR("external_music_path", &external_music_path),
@@ -298,6 +304,14 @@ void read_cfg()
 	// EXTERNAL MOVIE EXTENSION
 	if (ffmpeg_video_ext == nullptr)
 		ffmpeg_video_ext = "avi";
+
+	// EXTERNAL SFX PATH
+	if (external_sfx_path == nullptr)
+		external_sfx_path = "sfx";
+
+	// EXTERNAL SFX EXTENSION
+	if (external_sfx_ext == nullptr)
+		external_sfx_ext = "ogg";
 
 	// EXTERNAL MUSIC EXTENSION
 	if (external_music_ext == nullptr)
