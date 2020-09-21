@@ -78,6 +78,7 @@ void NxAudioEngine::flush()
 void NxAudioEngine::cleanup()
 {
 	_engine.deinit();
+	_openPsfPlugin.close();
 }
 
 // Audio
@@ -108,7 +109,7 @@ void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 	{
 		SoLoud::AudioSource* music = nullptr;
 
-		if (winamp_in_plugin != nullptr) {
+		if (_openPsfPlugin.getModule() != nullptr) {
 			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf(_openPsfPlugin.getModule());
 			music = openpsf;
 

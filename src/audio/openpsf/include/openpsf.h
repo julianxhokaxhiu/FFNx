@@ -27,6 +27,7 @@ extern "C" {
 	typedef void Psf;
 
 	struct OPENPSF {
+		bool (*initialize_psx_core)(const char* bios_path);
 		bool (*is_our_path)(const char* p_full_path, const char* p_extension);
 		Psf* (*create)();
 		Psf* (*create_with_params)(bool reverb, bool do_filter, bool suppressEndSilence, bool suppressOpeningSilence,
@@ -34,7 +35,7 @@ extern "C" {
 		void (*destroy)(Psf* self);
 		bool (*open)(Psf* self, const char* p_path, bool infinite);
 		void (*close)(Psf* self);
-		size_t(*decode)(Psf* self, float* data, unsigned int sample_count);
+		size_t (*decode)(Psf* self, int16_t* data, unsigned int sample_count);
 		bool (*seek)(Psf* self, unsigned int ms);
 		int (*get_length)(Psf* self);
 		int (*get_sample_rate)(Psf* self);
@@ -44,7 +45,7 @@ extern "C" {
 		const char* (*get_last_status)(Psf* self);
 	};
 
-	typedef OPENPSF (* get_openpsf)();
+	typedef OPENPSF* (*get_openpsf)();
 #if defined(__cplusplus)
 }
 #endif

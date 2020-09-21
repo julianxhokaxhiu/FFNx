@@ -31,11 +31,11 @@ namespace SoLoud
 	class OpenPsf : public AudioSource
 	{
 	public:
-		OPENPSF openpsf;
+		OPENPSF* openpsf;
 		Psf* stream;
 		unsigned int mSampleCount;
 
-		OpenPsf(const OPENPSF& openpsf);
+		OpenPsf(OPENPSF* openpsf);
 		virtual ~OpenPsf();
 		result load(const char* aFilename);
 
@@ -46,7 +46,7 @@ namespace SoLoud
 	class OpenPsfInstance : public AudioSourceInstance
 	{
 		size_t mStreamBufferSize;
-		float* mStreamBuffer;
+		int16_t* mStreamBuffer;
 		OpenPsf* mParent;
 		unsigned int mOffset;
 	public:

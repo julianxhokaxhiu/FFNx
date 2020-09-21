@@ -21,21 +21,17 @@
 
 #include "openpsf_plugin.h"
 
-OpenPsfPlugin::OpenPsfPlugin() : handle(nullptr)
+OpenPsfPlugin::OpenPsfPlugin() : handle(nullptr), mod(nullptr)
 {
-	trace("OpenPsfPlugin\n");
 }
 
 OpenPsfPlugin::~OpenPsfPlugin()
 {
-	trace("~OpenPsfPlugin\n");
 	close();
-	trace("/~OpenPsfPlugin\n");
 }
 
 bool OpenPsfPlugin::open(const char* libFileName)
 {
-	trace("OpenPsfPlugin::open %s\n", libFileName);
 	close();
 	this->handle = LoadLibraryA(libFileName);
 
@@ -47,8 +43,14 @@ bool OpenPsfPlugin::open(const char* libFileName)
 		{
 			get_openpsf f = (get_openpsf)procAddress;
 			mod = f();
-			trace("/OpenPsfPlugin::open ok\n");
-			return true;
+			if (nullptr != mod) {
+				if (mod->initialize_psx_core("bios.bin")) {
+					return true;
+				}
+				else {
+					error("Cannot open bios file from %s\n", "bios.bin");
+				}
+			}
 		}
 
 		error("couldn't load function get_openpsf in external library (error %u)\n", GetLastError());
@@ -59,16 +61,13 @@ bool OpenPsfPlugin::open(const char* libFileName)
 		error("couldn't load external library (error %u)\n", GetLastError());
 	}
 
-	trace("/OpenPsfPlugin::open error\n");
 	return false;
 }
 
 void OpenPsfPlugin::close()
 {
-	trace("OpenPsfPlugin::close\n");
 	if (nullptr != this->handle) {
 		FreeLibrary(this->handle);
 		this->handle = nullptr;
 	}
-	trace("/OpenPsfPlugin::close\n");
 }

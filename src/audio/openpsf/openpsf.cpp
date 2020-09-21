@@ -33,14 +33,14 @@ namespace SoLoud
 		mParent = aParent;
 		mOffset = 0;
 		mStreamBufferSize = SOLOUD_OPENPSF_NUM_SAMPLES * mChannels;
-		mStreamBuffer = new float[mStreamBufferSize];
+		mStreamBuffer = new int16_t[mStreamBufferSize];
 		trace("/OpenPsfInstance\n");
 	}
 
 	OpenPsfInstance::~OpenPsfInstance()
 	{
 		trace("~OpenPsfInstance\n");
-		//delete[] mStreamBuffer;
+		delete[] mStreamBuffer;
 		trace("/~OpenPsfInstance\n");
 	}
 
@@ -49,15 +49,16 @@ namespace SoLoud
 		trace("OpenPsfInstance::getAudio %i %i\n", aSamplesToRead, aBufferSize);
 		unsigned int offset = 0;
 		unsigned int i, j, k;
+		float scale = float(1.0f / double(0x8000));
 
 		for (i = 0; i < aSamplesToRead; i += SOLOUD_OPENPSF_NUM_SAMPLES)
 		{
-			memset(mStreamBuffer, 0, mStreamBufferSize * sizeof(float));
+			memset(mStreamBuffer, 0, sizeof(int16_t) * mStreamBufferSize);
 			unsigned int blockSize = aSamplesToRead - i > SOLOUD_OPENPSF_NUM_SAMPLES ? SOLOUD_OPENPSF_NUM_SAMPLES : aSamplesToRead - i;
-			size_t r = mParent->openpsf.decode(mParent->stream, mStreamBuffer, blockSize);
+			size_t r = mParent->openpsf->decode(mParent->stream, mStreamBuffer, blockSize);
 
 			if (r == 0) {
-				error("OpenPsfInstance::%s Decoding error: %s\n%s\n", __func__, mParent->openpsf.get_last_error(mParent->stream), mParent->openpsf.get_last_status(mParent->stream));
+				error("OpenPsfInstance::%s Decoding error: %s\n%s\n", __func__, mParent->openpsf->get_last_error(mParent->stream), mParent->openpsf->get_last_status(mParent->stream));
 				break;
 			}
 
@@ -67,7 +68,7 @@ namespace SoLoud
 			{
 				for (k = 0; k < mChannels; k++)
 				{
-					aBuffer[k * aSamplesToRead + i + j] = mStreamBuffer[j * mChannels + k];
+					aBuffer[k * aSamplesToRead + i + j] = mStreamBuffer[j * mChannels + k] * scale;
 				}
 			}
 		}
@@ -80,8 +81,7 @@ namespace SoLoud
 	result OpenPsfInstance::rewind()
 	{
 		trace("OpenPsfInstance::rewind\n");
-		return 1;
-		//mParent->openpsf.seek(mParent->stream, 0);
+		mParent->openpsf->seek(mParent->stream, 0);
 
 		mOffset = 0;
 		mStreamPosition = 0.0f;
@@ -94,20 +94,21 @@ namespace SoLoud
 		return !(mFlags & AudioSourceInstance::LOOPING) && mOffset >= mParent->mSampleCount;
 	}
 
-	OpenPsf::OpenPsf(const OPENPSF& openpsf) :
+	OpenPsf::OpenPsf(OPENPSF* openpsf) :
 		openpsf(openpsf), stream(nullptr), mSampleCount(0)
 	{
-		trace("OpenPsf %i\n", &openpsf);
+		trace("OpenPsf %i\n", openpsf);
 	}
 
 	OpenPsf::~OpenPsf()
 	{
 		trace("~OpenPsf\n");
 		stop();
+		trace("~OpenPsf 2\n");
 
-		/* if (stream != nullptr) {
-			openpsf.destroy(stream);
-		} */
+		if (stream != nullptr) {
+			openpsf->destroy(stream);
+		}
 		trace("/~OpenPsf\n");
 	}
 
@@ -127,26 +128,27 @@ namespace SoLoud
 			return FILE_NOT_FOUND;
 		}
 
-		/* if (!openpsf.is_our_path(aFilename, external_music_ext)) {
+		/* if (!openpsf->is_our_path(aFilename, external_music_ext)) {
 			error("Incompatible file extension %s\n", external_music_ext);
 			return FILE_LOAD_FAILED;
 		} */
 
 		stop();
 
-		stream = openpsf.create();
-		if (stream == nullptr || !openpsf.open(stream, aFilename, true)) {
-			error("Cannot open file %s: %s\n%s\n", aFilename, openpsf.get_last_error(stream), openpsf.get_last_status(stream));
+		stream = openpsf->create();
+		if (stream == nullptr || !openpsf->open(stream, aFilename, true)) {
+			error("Cannot open file %s: %s\n%s\n", aFilename, openpsf->get_last_error(stream), openpsf->get_last_status(stream));
 			return FILE_LOAD_FAILED;
 		}
 
-		mBaseSamplerate = 44100; // float(openpsf.get_sample_rate(stream));
-		mSampleCount = openpsf.get_length(stream) / 1000.0 * mBaseSamplerate;
-		mChannels = 2; // openpsf.get_channel_count(stream);
+		mBaseSamplerate = float(openpsf->get_sample_rate(stream));
+		mSampleCount = openpsf->get_length(stream) / 1000.0 * mBaseSamplerate;
+		mSampleCount = 0;
+		mChannels = openpsf->get_channel_count(stream);
 		setLooping(true);
 
-		/* info("Opening file %s with openPSF (samplerate: %i, length: %i, channels: %i):\n%s\n",
-			aFilename, int(mBaseSamplerate), openpsf.get_length(stream), mChannels, openpsf.get_last_status(stream)); */
+		info("Opening file %s with openPSF (samplerate: %i, length: %i, channels: %i):\n%s\n",
+			aFilename, int(mBaseSamplerate), openpsf->get_length(stream), mChannels, openpsf->get_last_status(stream));
 
 		trace("/OpenPsf::load %s OK\n", aFilename);
 		return SO_NO_ERROR;

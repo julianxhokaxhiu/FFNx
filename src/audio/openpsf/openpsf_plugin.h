@@ -32,19 +32,18 @@
 class OpenPsfPlugin {
 private:
 	HINSTANCE handle;
-	OPENPSF mod;
+	OPENPSF* mod;
+	OpenPsfPlugin(const OpenPsfPlugin& copy);
 protected:
 	inline HINSTANCE getHandle() const {
 		return handle;
 	}
 public:
 	OpenPsfPlugin();
-	OpenPsfPlugin(const OpenPsfPlugin& copy) = delete;
-	OpenPsfPlugin& operator=(const OpenPsfPlugin& copy) = delete;
 	virtual ~OpenPsfPlugin();
 	bool open(const char* libFileName);
 	void close();
-	inline OPENPSF getModule() const {
+	inline OPENPSF* getModule() const {
 		return mod;
 	}
 };
