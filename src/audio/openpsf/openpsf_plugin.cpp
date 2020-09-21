@@ -19,42 +19,56 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
+#include "openpsf_plugin.h"
 
-#include <soloud/soloud.h>
-#include "in_plugin.h"
-#include "out_plugin.h"
-
-namespace SoLoud
+OpenPsfPlugin::OpenPsfPlugin() : handle(nullptr)
 {
-	class Winamp : public AudioSource
+	trace("OpenPsfPlugin\n");
+}
+
+OpenPsfPlugin::~OpenPsfPlugin()
+{
+	trace("~OpenPsfPlugin\n");
+	close();
+	trace("/~OpenPsfPlugin\n");
+}
+
+bool OpenPsfPlugin::open(const char* libFileName)
+{
+	trace("OpenPsfPlugin::open %s\n", libFileName);
+	close();
+	this->handle = LoadLibraryA(libFileName);
+
+	if (nullptr != this->handle)
 	{
-	public:
-		BufferOutPlugin* outPlugin;
-		WinampInPlugin* inPlugin;
+		FARPROC procAddress = GetProcAddress(this->handle, "get_openpsf");
 
-		Winamp(WinampInPlugin* inPlugin, BufferOutPlugin* outPlugin);
-		virtual ~Winamp();
-		result load(const char* aFilename);
+		if (nullptr != procAddress)
+		{
+			get_openpsf f = (get_openpsf)procAddress;
+			mod = f();
+			trace("/OpenPsfPlugin::open ok\n");
+			return true;
+		}
 
-		virtual AudioSourceInstance* createInstance();
-		time getLength();
-	};
+		error("couldn't load function get_openpsf in external library (error %u)\n", GetLastError());
 
-	class WinampInstance : public AudioSourceInstance
-	{
-		Winamp* mParent;
-		unsigned int mOffset;
-		size_t mAudioBufferSize;
-		unsigned int mBytesPerSample;
-		char* mAudioBuffer;
-	public:
-		WinampInstance(Winamp* aParent);
-		virtual ~WinampInstance();
-		virtual unsigned int getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
-		virtual result rewind();
-		virtual result seek(double aSeconds, float* mScratch, unsigned int mScratchSize);
-		virtual bool hasEnded();
-		virtual float getInfo(unsigned int aInfoKey);
-	};
-};
+		close();
+	}
+	else {
+		error("couldn't load external library (error %u)\n", GetLastError());
+	}
+
+	trace("/OpenPsfPlugin::open error\n");
+	return false;
+}
+
+void OpenPsfPlugin::close()
+{
+	trace("OpenPsfPlugin::close\n");
+	if (nullptr != this->handle) {
+		FreeLibrary(this->handle);
+		this->handle = nullptr;
+	}
+	trace("/OpenPsfPlugin::close\n");
+}

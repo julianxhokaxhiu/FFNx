@@ -49,24 +49,14 @@ bool NxAudioEngine::fileExists(char* filename)
 bool NxAudioEngine::init()
 {
 	if (_engine.init() == 0)
-	{		
-		if (nullptr != winamp_in_plugin)
-		{
-			_winampInPlugin = new WinampInPlugin(BufferOutPlugin::instance());
-
-			if (!_winampInPlugin->open(winamp_in_plugin))
-			{
-				error("couldn't load %s, please verify 'winamp_in_plugin' or comment it\n", winamp_in_plugin);
-				delete _winampInPlugin;
-				_winampInPlugin = nullptr;
+	{
+		if (winamp_in_plugin != nullptr) {
+			if (!_openPsfPlugin.open(winamp_in_plugin)) {
+				error("NxAudioEngine::%s couldn't load %s, please verify 'winamp_in_plugin' or comment it\n", __func__, winamp_in_plugin);
 			}
 			else {
-				info("Winamp music plugin loaded using %s\n", winamp_in_plugin);
+				info("NxAudioEngine::%s OpenPSF music plugin loaded using %s\n", __func__, winamp_in_plugin);
 			}
-		}
-		else
-		{
-			_winampInPlugin = nullptr;
 		}
 
 		return true;
@@ -88,11 +78,6 @@ void NxAudioEngine::flush()
 void NxAudioEngine::cleanup()
 {
 	_engine.deinit();
-	if (_winampInPlugin != nullptr) {
-		delete _winampInPlugin;
-		_winampInPlugin = nullptr;
-	}
-	BufferOutPlugin::destroyInstance();
 }
 
 // Audio
@@ -123,13 +108,13 @@ void NxAudioEngine::playMusic(char* name, bool crossfade, uint32_t time)
 	{
 		SoLoud::AudioSource* music = nullptr;
 
-		if (_winampInPlugin != nullptr) {
-			SoLoud::Winamp* winamp = new SoLoud::Winamp(_winampInPlugin, BufferOutPlugin::instance());
-			music = winamp;
+		if (winamp_in_plugin != nullptr) {
+			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf(_openPsfPlugin.getModule());
+			music = openpsf;
 
-			if (winamp->load(filename) != SoLoud::SO_NO_ERROR) {
-				error("NxAudioEngine::%s: Cannot load %s with winamp\n", __func__, filename);
-				delete winamp;
+			if (openpsf->load(filename) != SoLoud::SO_NO_ERROR) {
+				error("NxAudioEngine::%s: Cannot load %s with openpsf\n", __func__, filename);
+				delete openpsf;
 				music = nullptr;
 			}
 		}
@@ -183,11 +168,6 @@ void NxAudioEngine::resumeMusic()
 
 	// Play it again from where it was left off
 	_engine.setPause(_musicHandle, false);
-}
-
-bool NxAudioEngine::canResumeMusic()
-{
-	return _engine.getInfo(_musicHandle, 7777) != 1.0f;
 }
 
 bool NxAudioEngine::isMusicPlaying()

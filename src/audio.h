@@ -25,7 +25,8 @@
 #include <string>
 #include <soloud/soloud.h>
 #include "audio/vgmstream/vgmstream.h"
-#include "audio/winamp/winamp.h"
+#include "audio/openpsf/openpsf.h"
+#include "audio/openpsf/openpsf_plugin.h"
 
 #define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000;
 
@@ -33,7 +34,7 @@ class NxAudioEngine
 {
 private:
 	SoLoud::Soloud _engine;
-	WinampInPlugin* _winampInPlugin;
+	OpenPsfPlugin _openPsfPlugin;
 
 	// MUSIC
 	SoLoud::handle _musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
@@ -68,7 +69,6 @@ public:
 	void stopMusic(uint32_t time = 0);
 	void pauseMusic();
 	void resumeMusic();
-	bool canResumeMusic();
 	bool isMusicPlaying();
 	void setMusicMasterVolume(float _volume, size_t time = 0);
 	void restoreMusicMasterVolume(size_t time = 0);

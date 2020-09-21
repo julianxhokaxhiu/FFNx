@@ -69,7 +69,7 @@ bool needs_resume(uint32_t midi)
 {
 	bool ret = false;
 
-	if (external_music_resume && nxAudioEngine.canResumeMusic())
+	if (external_music_resume)
 	{
 		if (ff8)
 		{
@@ -222,9 +222,7 @@ void ff7_play_midi(uint32_t midi)
 		{
 			if (needs_resume(playing_midi)) pause_midi();
 			nxAudioEngine.playMusic(midi_name);
-			if (no_loop(midi)) {
-				nxAudioEngine.setMusicLooping(false);
-			}
+			nxAudioEngine.setMusicLooping(!no_loop(midi));
 			playing_midi = midi;
 		}
 

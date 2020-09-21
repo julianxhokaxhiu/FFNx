@@ -19,64 +19,32 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "plugin.h"
+#pragma once
 
-WinampPlugin::WinampPlugin() : handle(nullptr)
-{
-}
+#include <windows.h>
 
-WinampPlugin::~WinampPlugin()
-{
-	close();
-}
+#include "../../log.h"
 
-bool WinampPlugin::open(LPCWSTR libFileNameW, char* libFileNameA)
-{
-	close();
-	if (libFileNameW) {
-		this->handle = LoadLibraryW(libFileNameW);
+#include "include/openpsf.h"
+
+#define UNUSED_PARAM(x) (void)x;
+
+class OpenPsfPlugin {
+private:
+	HINSTANCE handle;
+	OPENPSF mod;
+protected:
+	inline HINSTANCE getHandle() const {
+		return handle;
 	}
-	else {
-		this->handle = LoadLibraryA(libFileNameA);
+public:
+	OpenPsfPlugin();
+	OpenPsfPlugin(const OpenPsfPlugin& copy) = delete;
+	OpenPsfPlugin& operator=(const OpenPsfPlugin& copy) = delete;
+	virtual ~OpenPsfPlugin();
+	bool open(const char* libFileName);
+	void close();
+	inline OPENPSF getModule() const {
+		return mod;
 	}
-
-	if (nullptr != this->handle)
-	{
-		FARPROC procAddress = GetProcAddress(this->handle, procName());
-
-		closeModule();
-
-		if (nullptr != procAddress && openModule(procAddress))
-		{
-			return true;
-		}
-
-		error("couldn't load function %s in external library (error %u)\n", procName(), GetLastError());
-
-		close();
-	}
-	else {
-		error("couldn't load external library (error %u)\n", GetLastError());
-	}
-
-	return false;
-}
-
-bool WinampPlugin::open(LPCWSTR libFileName)
-{
-	return open(libFileName, nullptr);
-}
-
-bool WinampPlugin::open(char* libFileName)
-{
-	return open(nullptr, libFileName);
-}
-
-void WinampPlugin::close()
-{
-	if (nullptr != this->handle) {
-		closeModule();
-		FreeLibrary(this->handle);
-		this->handle = nullptr;
-	}
-}
+};

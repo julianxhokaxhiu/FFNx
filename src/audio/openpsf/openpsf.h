@@ -21,29 +21,39 @@
 
 #pragma once
 
-#include <windows.h>
-
+#include <soloud/soloud.h>
+#include <stdint.h>
+#include "include/openpsf.h"
 #include "../../log.h"
 
-#include "include/winamp.h"
+namespace SoLoud
+{
+	class OpenPsf : public AudioSource
+	{
+	public:
+		OPENPSF openpsf;
+		Psf* stream;
+		unsigned int mSampleCount;
 
-#define UNUSED_PARAM(x) (void)x;
+		OpenPsf(const OPENPSF& openpsf);
+		virtual ~OpenPsf();
+		result load(const char* aFilename);
 
-class WinampPlugin {
-private:
-	HINSTANCE handle;
-	bool open(LPCWSTR libFileNameW, char* libFileNameA);
-protected:
-	virtual LPCSTR procName() const = 0;
-	virtual bool openModule(FARPROC procAddress) = 0;
-	virtual void closeModule() = 0;
-	inline HINSTANCE getHandle() const {
-		return this->handle;
-	}
-public:
-	WinampPlugin();
-	virtual ~WinampPlugin();
-	bool open(LPCWSTR libFileName);
-	bool open(char* libFileName);
-	void close();
+		virtual AudioSourceInstance* createInstance();
+		time getLength();
+	};
+
+	class OpenPsfInstance : public AudioSourceInstance
+	{
+		size_t mStreamBufferSize;
+		float* mStreamBuffer;
+		OpenPsf* mParent;
+		unsigned int mOffset;
+	public:
+		OpenPsfInstance(OpenPsf* aParent);
+		virtual ~OpenPsfInstance();
+		virtual unsigned int getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
+		virtual result rewind();
+		virtual bool hasEnded();
+	};
 };

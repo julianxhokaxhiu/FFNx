@@ -21,46 +21,30 @@
 
 #pragma once
 
-#include "plugin.h"
-#include "out_plugin.h"
+#if defined(__cplusplus)
+extern "C" {
+#endif
+	typedef void Psf;
 
-class WinampInPlugin : public WinampPlugin {
-private:
-	FARPROC getExtendedFileInfoProc;
-	inline LPCSTR procName() const {
-		return "winampGetInModule2";
-	}
-	bool openModule(FARPROC procAddress);
-	void closeModule();
-protected:
-	WinampInModule* mod;
-	AbstractOutPlugin* outPlugin;
-	inline virtual WinampInModule* getModule() const {
-		return mod;
-	}
-	void initModule(HINSTANCE dllInstance);
-	void quitModule();
-	bool knownExtension(const char* fn) const;
-	int isOurFile(const char* fn) const;
-	int inPsfGetTag(const char* fn, const char* metadata, char* ret, int retlen);
-public:
-	WinampInPlugin(AbstractOutPlugin* outPlugin);
-	virtual ~WinampInPlugin();
+	struct OPENPSF {
+		bool (*is_our_path)(const char* p_full_path, const char* p_extension);
+		Psf* (*create)();
+		Psf* (*create_with_params)(bool reverb, bool do_filter, bool suppressEndSilence, bool suppressOpeningSilence,
+			int endSilenceSeconds);
+		void (*destroy)(Psf* self);
+		bool (*open)(Psf* self, const char* p_path, bool infinite);
+		void (*close)(Psf* self);
+		size_t(*decode)(Psf* self, float* data, unsigned int sample_count);
+		bool (*seek)(Psf* self, unsigned int ms);
+		int (*get_length)(Psf* self);
+		int (*get_sample_rate)(Psf* self);
+		int (*get_channel_count)(Psf* self);
+		int (*get_bits_per_seconds)(Psf* self);
+		const char* (*get_last_error)(Psf* self);
+		const char* (*get_last_status)(Psf* self);
+	};
 
-	bool accept(const char* fn) const;
-
-	int play(const char* fn);
-	void pause();			// pause stream
-	void unPause();			// unpause stream
-	int isPaused();			// ispaused? return 1 if paused, 0 if not
-	void stop();				// stop (unload) stream
-
-	// time stuff
-	int getLength();			// get length in ms
-	int getOutputTime();		// returns current output time in ms. (usually returns outMod->GetOutputTime()
-	void setOutputTime(int time_in_ms);	// seeks to point in stream (in ms). Usually you signal your thread to seek, which seeks and calls outMod->Flush()..
-	
-	size_t getTitle(const char* fn, char* ret, size_t max);
-	// tags
-	int getTag(const char* fn, const char* metadata, char* ret, int retlen);
-};
+	typedef OPENPSF (* get_openpsf)();
+#if defined(__cplusplus)
+}
+#endif
