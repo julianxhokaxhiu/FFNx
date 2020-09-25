@@ -348,7 +348,7 @@ void NxAudioEngine::playVoice(char* name)
 
 	if (fileExists(filename))
 	{
-		SoLoud::VGMStream* voice = new SoLoud::VGMStream();
+		SoLoud::WavStream* voice = new SoLoud::WavStream();
 
 		voice->load(filename);
 

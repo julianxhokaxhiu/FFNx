@@ -26,6 +26,7 @@
 #include <vector>
 #include <soloud/soloud.h>
 #include <soloud/soloud_wav.h>
+#include <soloud/soloud_wavstream.h>
 #include "audio/vgmstream/vgmstream.h"
 #include "audio/openpsf/openpsf.h"
 
