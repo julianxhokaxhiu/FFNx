@@ -600,7 +600,7 @@ void Renderer::shutdown()
 
 void Renderer::draw()
 {
-    if (trace_all) trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
+    if (trace_all || trace_renderer) trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
     // Set current view rect
     if (backendProgram == RendererProgram::POSTPROCESSING)
@@ -740,6 +740,8 @@ void Renderer::show()
 
     bgfx::frame();
 
+    if (trace_all || trace_renderer) trace("Renderer::%s\n", __func__);
+
     bgfx::dbgTextClear();
 
     backendViewId = 0;
@@ -822,6 +824,8 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
 
 void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
 {
+    if (trace_all || trace_renderer) trace("Renderer::%s clearColor=%d,clearDepth=%d\n", __func__, doClearColor, doClearDepth);
+
     uint16_t clearFlags = BGFX_CLEAR_NONE;
 
     if (doClearColor)
@@ -885,6 +889,8 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
                 mem,
                 stride
             );
+
+        if (trace_all || trace_renderer) trace("Renderer::%s: %u => %ux%u from data with stride %u\n", __func__, ret.idx, width, height, stride);
     }
 
     return ret.idx;
@@ -941,6 +947,8 @@ uint32_t Renderer::createTexture(char* filename, uint32_t* width, uint32_t* heig
 
                 *width = img->m_width;
                 *height = img->m_height;
+
+                if (trace_all || trace_renderer) trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
             }
         }
     }
@@ -1116,6 +1124,8 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
         }
         else
             driver_free(data);
+
+        if (trace_all || trace_renderer) trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
     }
 
     return ret.idx;
@@ -1123,6 +1133,8 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
 
 bool Renderer::saveTexture(char* filename, uint32_t width, uint32_t height, void* data)
 {
+    if (trace_all || trace_renderer) trace("Renderer::%s: %ux%u with filename %s\n", __func__, width, height, filename);
+
     if (bx::open(&defaultWriter, filename, false))
     {
         bimg::imageWritePng(
@@ -1147,16 +1159,22 @@ void Renderer::deleteTexture(uint16_t rt)
 {
     if (rt > 0)
     {
+        if (trace_all || trace_renderer) trace("Renderer::%s: %u\n", __func__, rt);
+
         bgfx::TextureHandle handle = { rt };
 
         if (bgfx::isValid(handle)) {
             bgfx::destroy(handle);
+
+            if (trace_all || trace_renderer) trace("Renderer::%s: Texture was valid and is now destroyed!\n", __func__);
         }
     }
 };
 
 void Renderer::useTexture(uint16_t rt, uint32_t slot)
 {
+    if (trace_all || trace_renderer) trace("Renderer::%s: [%u] => %u\n", __func__, slot, rt);
+
     if (rt > 0)
     {
         internalState.texHandlers[slot] = { rt };
@@ -1183,6 +1201,8 @@ uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t 
     if (getCaps()->originBottomLeft) dstY = ::abs(framebufferHeight - (newY + newHeight));
     
     backendViewId++;
+
+    if (trace_all || trace_renderer) trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
 
     bgfx::blit(backendViewId, ret, 0, dstY, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
     bgfx::touch(backendViewId);
@@ -1273,7 +1293,7 @@ void Renderer::setInterpolationQualifier(RendererInterpolationQualifier qualifie
 
 void Renderer::setPrimitiveType(RendererPrimitiveType type)
 {
-    if (trace_all) trace("%s: %u\n", __func__, type);
+    if (trace_all || trace_renderer) trace("Renderer::%s: %u\n", __func__, type);
 
     internalState.primitiveType = type;
 };

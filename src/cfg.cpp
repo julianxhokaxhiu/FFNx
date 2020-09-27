@@ -46,6 +46,7 @@ cfg_bool_t enable_voice_music_fade = cfg_bool_t(false);
 long external_voice_music_fade_volume = 25;
 cfg_bool_t save_textures = cfg_bool_t(false);
 cfg_bool_t trace_all = cfg_bool_t(false);
+cfg_bool_t trace_renderer = cfg_bool_t(false);
 cfg_bool_t trace_movies = cfg_bool_t(false);
 cfg_bool_t trace_music = cfg_bool_t(false);
 cfg_bool_t trace_sfx = cfg_bool_t(false);
@@ -115,6 +116,7 @@ cfg_opt_t opts[] = {
 		CFG_SIMPLE_INT("external_voice_music_fade_volume", &external_voice_music_fade_volume),
 		CFG_SIMPLE_BOOL("save_textures", &save_textures),
 		CFG_SIMPLE_BOOL("trace_all", &trace_all),
+		CFG_SIMPLE_BOOL("trace_renderer", &trace_renderer),
 		CFG_SIMPLE_BOOL("trace_movies", &trace_movies),
 		CFG_SIMPLE_BOOL("trace_music", &trace_music),
 		CFG_SIMPLE_BOOL("trace_sfx", &trace_sfx),

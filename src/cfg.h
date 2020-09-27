@@ -49,6 +49,7 @@ extern cfg_bool_t enable_voice_music_fade;
 extern long external_voice_music_fade_volume;
 extern cfg_bool_t save_textures;
 extern cfg_bool_t trace_all;
+extern cfg_bool_t trace_renderer;
 extern cfg_bool_t trace_movies;
 extern cfg_bool_t trace_music;
 extern cfg_bool_t trace_sfx;
