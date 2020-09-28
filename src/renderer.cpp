@@ -738,7 +738,7 @@ void Renderer::show()
         )
     );
 
-    bgfx::frame();
+    bgfx::frame(doCaptureFrame);
 
     if (trace_all || trace_renderer) trace("Renderer::%s\n", __func__);
 
@@ -763,6 +763,11 @@ void Renderer::printText(uint16_t x, uint16_t y, uint32_t color, const char* tex
         color,
         text
     );
+}
+
+void Renderer::toggleCaptureFrame()
+{
+    doCaptureFrame = !doCaptureFrame;
 }
 
 const bgfx::Caps* Renderer::getCaps()

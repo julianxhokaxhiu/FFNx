@@ -278,6 +278,8 @@ private:
     bx::FileWriter defaultWriter;
     Overlay overlay;
 
+    bool doCaptureFrame = false;
+
 public:
     std::string currentRenderer;
 
@@ -292,6 +294,7 @@ public:
     void show();
 
     void printText(uint16_t x, uint16_t y, uint32_t attr, const char* text);
+    void toggleCaptureFrame();
 
     // ---
 

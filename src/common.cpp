@@ -303,6 +303,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg)
 		{
+		case WM_KEYDOWN:
+			if ((::GetKeyState(VK_CONTROL) & 0x8000) != 0)
+			{
+				switch (wParam)
+				{
+				case VK_F11:
+					newRenderer.toggleCaptureFrame();
+					break;
+				}
+			}
+			break;
 		case WM_SIZE:
 			window_size_x = (long)LOWORD(lParam);
 			window_size_y = (long)HIWORD(lParam);
