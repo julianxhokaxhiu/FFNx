@@ -1164,14 +1164,12 @@ void Renderer::deleteTexture(uint16_t rt)
 {
     if (rt > 0)
     {
-        if (trace_all || trace_renderer) trace("Renderer::%s: %u\n", __func__, rt);
-
         bgfx::TextureHandle handle = { rt };
 
         if (bgfx::isValid(handle)) {
             bgfx::destroy(handle);
 
-            if (trace_all || trace_renderer) trace("Renderer::%s: Texture was valid and is now destroyed!\n", __func__);
+            if (trace_all || trace_renderer) trace("Renderer::%s: %u Texture was valid and is now destroyed!\n", __func__, rt);
         }
     }
 };
