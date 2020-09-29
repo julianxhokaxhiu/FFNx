@@ -73,6 +73,7 @@ bool NxAudioEngine::init()
 
 		_sfxVolumePerChannels.resize(10, 1.0f);
 		_sfxTempoPerChannels.resize(10, 1.0f);
+		_sfxChannelsHandle.resize(10, NXAUDIOENGINE_INVALID_HANDLE);
 		_sfxStreams.resize(1000, nullptr);
 
 		while (!_sfxStack.empty())
@@ -160,8 +161,20 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 			panning
 		);
 
+		_sfxChannelsHandle[channel - 1] = _handle;
+
 		_engine.setRelativePlaySpeed(_handle, _sfxTempoPerChannels[channel - 1]);
 	}
+}
+
+void NxAudioEngine::pauseSFX()
+{
+	for (auto _handle : _sfxChannelsHandle) _engine.setPause(_handle, true);
+}
+
+void NxAudioEngine::resumeSFX()
+{
+	for (auto _handle : _sfxChannelsHandle) _engine.setPause(_handle, false);
 }
 
 void NxAudioEngine::setSFXVolume(float volume, int channel)

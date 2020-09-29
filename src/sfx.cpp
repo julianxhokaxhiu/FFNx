@@ -93,6 +93,16 @@ void ff7_sfx_load_and_play_with_tempo(int id, byte panning, byte volume, byte te
 	}
 }
 
+void ff7_sfx_pause()
+{
+	nxAudioEngine.pauseSFX();
+}
+
+void ff7_sfx_resume()
+{
+	nxAudioEngine.resumeSFX();
+}
+
 //=============================================================================
 
 bool sfx_buffer_is_looped(IDirectSoundBuffer* buffer)
@@ -324,6 +334,8 @@ void sfx_init()
 			replace_function((uint32_t)common_externals.play_sfx, ff7_sfx_play_on_channel_5);
 			replace_function((uint32_t)common_externals.set_sfx_volume_on_channel, ff7_sfx_set_volume_on_channel);
 			replace_function(ff7_externals.sfx_load_and_play_with_tempo, ff7_sfx_load_and_play_with_tempo);
+			replace_function(common_externals.sfx_pause, ff7_sfx_pause);
+			replace_function(common_externals.sfx_resume, ff7_sfx_resume);
 		}
 		else
 		{

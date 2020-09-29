@@ -44,6 +44,7 @@ private:
 	std::vector<float> _sfxVolumePerChannels;
 	std::vector<float> _sfxTempoPerChannels;
 	std::vector<SoLoud::Wav*> _sfxStreams;
+	std::vector<SoLoud::handle> _sfxChannelsHandle;
 
 	void getSFXFilenameFullPath(char* _out, int _id);
 
@@ -76,6 +77,8 @@ public:
 	void loadSFX(int id);
 	void unloadSFX(int id);
 	void playSFX(int id, int channel, float panning);
+	void pauseSFX();
+	void resumeSFX();
 	void setSFXVolume(float volume, int channel);
 	void setSFXSpeed(float speed, int channel);
 
