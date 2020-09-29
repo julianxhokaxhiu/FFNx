@@ -1196,16 +1196,35 @@ uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t 
     uint16_t newY = getInternalCoordY(y);
     uint16_t newWidth = getInternalCoordX(width);
     uint16_t newHeight = getInternalCoordY(height);
+
+    uint16_t dstY = 0;
     
     bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
 
     if (trace_all || trace_renderer) trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
 
-    if (getCaps()->originBottomLeft) newY = ::abs(framebufferHeight - (newY + newHeight));
+    if (getCaps()->originBottomLeft)
+    {
+        int _newY = framebufferHeight - (newY + newHeight);
+        
+        // If the new Y is a positive value, we can use it as it is
+        if (_newY > 0)
+        {
+            newY = _newY;
+            dstY = 0;
+        }
+        // Otherwise, it means we have to copy the whole source texture
+        // but shift the result on the Y axis of the dest texture of the absolute negative difference
+        else
+        {
+            newY = 0;
+            dstY = ::abs(_newY);
+        }
+    }
     
     backendViewId++;
 
-    bgfx::blit(backendViewId, ret, 0, 0, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
+    bgfx::blit(backendViewId, ret, 0, dstY, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
     bgfx::touch(backendViewId);
     
     backendViewId++;
