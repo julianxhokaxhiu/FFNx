@@ -1285,9 +1285,11 @@ void Renderer::setInterpolationQualifier(RendererInterpolationQualifier qualifie
     {
     case RendererInterpolationQualifier::FLAT:
         backendProgram = RendererProgram::FLAT;
+        if (trace_all || trace_renderer) trace("Renderer::%s: FLAT\n", __func__);
         break;
     case RendererInterpolationQualifier::SMOOTH:
         backendProgram = RendererProgram::SMOOTH;
+        if (trace_all || trace_renderer) trace("Renderer::%s: SMOOTH\n", __func__);
         break;
     }
 }
