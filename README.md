@@ -42,6 +42,7 @@ Some of the improvements that you can find on FFNx are:
 - FF7: Support for battle toggle ( enable/disable at your own pleasure )
 - FF7: Save everywhere! You are no more required to stay next to crystals in order to keep your progress.
 - FF7: **Voice acting**! One of the first mods to make use of this will be [Echo-S](https://forum.tsunamods.com/viewtopic.php?f=65&t=9) when it will be released!
+- FF7: Support for external SFX audio effects
 - FF8: Enable the VRAM debug window while playing in order to see how the engine uploads textures
 
 And, on top of all of this you will also find:
@@ -62,7 +63,7 @@ In order to enhance the modding experience, FFNx does also provide:
 - [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
 - Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L100)
 - Support for an override layer of the data directory using [override_path](misc/FFNx.cfg#L116)
-- Support for Winamp [Input](https://winampheritage.com/plugins/Input-6) and [Output](https://winampheritage.com/plugins/Output-7) plugins ( useful to play for eg. [PSF](http://www.vgmpf.com/Wiki/index.php?title=PSF) sound files )
+- Support for MINIPSF audio files using the emulated PSX/PS2 AKAO Engine
 - Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0) patching files inside of the [hext_patching_path](misc/FFNx.cfg#L113)
 - Debug in-game engine data through [imgui](https://github.com/ocornut/imgui) integration.
 
@@ -83,6 +84,7 @@ If you're curious to know it, FFNx is made with:
 - [imgui](https://github.com/ocornut/imgui) ( to better debug the in-game engine )
 - [discohash](https://github.com/cris691/discohash) ( to extract an hash from palette game textures data known as animated textures )
 - [SoLoud](https://github.com/jarikomppa/soloud) ( as the audio engine used to playback audio, music or voice files )
+- [openpsf](https://github.com/myst6re/openpsf) ( as the MINIPSF emulation engine to playback PSX/PS2 music files )
 
 ## Canary vs Latest Release
 When you access the releases page, you will see two available download options:
@@ -262,7 +264,7 @@ These people are:
   - for the help in getting the first iterations of FFNx running on FF8 2000/2013 release
 - [myst6re](http://forums.qhimm.com/index.php?action=profile;u=4778):
   - for the great tools like Makou Reactor, Deling and many others he did which helped a lot in improving FF8 while working on the code
-  - for the great help in the code implementing the Winamp layer being present inside FFNx
+  - for the great help in the code implementing the MINIPSF emulation layer being present inside FFNx
   - for the heavy testing and lifting of a lot of bugs being catched in FFNx, for FF8
   - for the Steam savegame logic in the manifest.xml for FF8
   - for the real-time SFX volume change for FF7
