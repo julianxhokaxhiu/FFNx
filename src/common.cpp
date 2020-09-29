@@ -1631,7 +1631,7 @@ void common_setrenderstate(struct p_hundred *hundred_data, struct game_obj *game
 	if(CHECK_BIT(features, V_NOCULL)) internal_set_renderstate(V_NOCULL, CHECK_BIT(options, V_NOCULL), game_object);
 	if(CHECK_BIT(features, V_DEPTHTEST)) internal_set_renderstate(V_DEPTHTEST, CHECK_BIT(options, V_DEPTHTEST), game_object);
 	if(CHECK_BIT(features, V_DEPTHMASK)) internal_set_renderstate(V_DEPTHMASK, CHECK_BIT(options, V_DEPTHMASK), game_object);
-	if(CHECK_BIT(features, V_SHADEMODE)) internal_set_renderstate(V_SHADEMODE, CHECK_BIT(options, V_SHADEMODE) && !VREF(game_object, field_92C) && hundred_data->shademode == 2, game_object);
+	if(CHECK_BIT(features, V_SHADEMODE)) internal_set_renderstate(V_SHADEMODE, CHECK_BIT(options, V_SHADEMODE) && !VREF(game_object, field_92C) && hundred_data->shademode > 0, game_object);
 
 	// any bits still set in the features and options variables at this point
 	// are features that we do not currently handle
