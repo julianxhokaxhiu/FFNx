@@ -1027,7 +1027,7 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
             return ret.idx;
         }
 
-        png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+        png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_EXPAND, NULL);
 
         color_type = png_get_color_type(png_ptr, info_ptr);
         bit_depth = png_get_bit_depth(png_ptr, info_ptr);
@@ -1062,11 +1062,6 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
 
         switch (bit_depth)
         {
-        case 1:
-        case 2:
-        case 4:
-            texFmt = bgfx::TextureFormat::R8;
-            break;
         case 8:
         {
             switch (color_type)
