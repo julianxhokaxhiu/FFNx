@@ -107,6 +107,10 @@ void ff8_find_externals()
 	ff8_externals.sub_529FF0 = get_relative_call(ff8_externals.sub_4767B0, 0x14E);
 	common_externals.get_movie_frame = get_relative_call(ff8_externals.sub_529FF0, 0x26);
 
+	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff8_externals.sub_529FF0, 0x65A);
+	ff8_externals.opcode_dualmusic = common_externals.execute_opcode_table[0xBB];
+	ff8_externals.opcode_choicemusic = common_externals.execute_opcode_table[0x135];
+
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
 
 	common_externals.debug_print = get_relative_call(common_externals.update_movie_sample, 0x141);
@@ -220,7 +224,7 @@ void ff8_find_externals()
 
 	common_externals.midi_init = get_relative_call(ff8_externals.pubintro_init, 0x130);
 	ff8_externals.sub_46EB30 = get_relative_call(common_externals.midi_init, 0x85);
-	common_externals.midi_cleanup = get_relative_call(ff8_externals.sub_46EB30, 0x68);
+	common_externals.midi_cleanup = get_relative_call(ff8_externals.pubintro_init, 0x1B4);
 
 	// Search battle sound function to find play/stop midi related methods
 	ff8_externals.sm_battle_sound = get_relative_call(ff8_externals.main_loop, 0x69D);
@@ -229,22 +233,29 @@ void ff8_find_externals()
 	ff8_externals.sd_music_play = get_relative_call(ff8_externals.sdmusicplay, 0x17);
 	common_externals.play_midi = get_relative_call(ff8_externals.sd_music_play, 0x20C);
 
+	ff8_externals.dmusic_segment_connect_to_dls = get_relative_call(common_externals.play_midi, 0x247);
+	ff8_externals.load_midi_segment = get_relative_call(common_externals.midi_init, 0xC8);
+	ff8_externals.choice_music = get_relative_call(ff8_externals.opcode_choicemusic, 0x5D);
+	ff8_externals.load_and_play_midi_segment = get_relative_call(ff8_externals.choice_music, 0x99);
+	ff8_externals.load_midi_segment_from_id = get_relative_call(ff8_externals.choice_music, 0xD0);
+	ff8_externals.stop_midi_segments = get_relative_call(ff8_externals.load_and_play_midi_segment, 0xB);
+	ff8_externals.play_midi_segments = get_relative_call(ff8_externals.choice_music, 0x172);
+	
 	common_externals.get_midi_name = (char* (*)(uint32_t))get_relative_call(common_externals.play_midi, 0x21C);
 
 	ff8_externals.sub_46B800 = get_relative_call(ff8_externals.sm_battle_sound, 0x52);
 	ff8_externals.sub_46C060 = get_relative_call(ff8_externals.sub_46B800, 0xB);
 	ff8_externals.sub_46C6F0 = get_relative_call(ff8_externals.sub_46C060, 0x22);
+	ff8_externals.current_volume = (uint32_t*)get_absolute_value(ff8_externals.sub_46C6F0, 0x3E);
 	common_externals.set_midi_volume = get_relative_call(ff8_externals.sub_46C6F0, 0x48);
-	ff8_externals.directmusic_performance = (IDirectMusicPerformance**)get_absolute_value(common_externals.set_midi_volume, 1);
-	ff8_externals.GUID_PerfMasterVolume = (GUID*)get_absolute_value(common_externals.set_midi_volume, 0x1C + 1);
 
-	ff8_externals.midi_stop = get_relative_call(ff8_externals.sub_46C060, 0x2A);
-	common_externals.stop_midi = get_relative_call(ff8_externals.midi_stop, 0x00);
+	common_externals.stop_midi = get_relative_call(ff8_externals.sub_46C060, 0x2A);
 
 	ff8_externals.sub_46C050 = get_relative_call(ff8_externals.sm_battle_sound, 0x5C);
 	common_externals.remember_midi_playing_time = get_relative_call(ff8_externals.sub_46C050, 0x00);
 
 	ff8_externals.sub_46B970 = get_relative_call(ff8_externals.sm_battle_sound, 0x14);
+	ff8_externals.midi_segments_status = get_relative_call(ff8_externals.sub_46B970, 0xD);
 	common_externals.midi_status = get_relative_call(ff8_externals.sub_46B970, 0x14);
 
 	// Pause/Resume functions

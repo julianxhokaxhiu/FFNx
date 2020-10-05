@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "directmusic.h"
 #include "common.h"
 #include "matrix.h"
 
@@ -874,15 +873,12 @@ struct ff8_externals
 	uint32_t worldmap_main_loop;
 	uint32_t sub_465720;
 	uint32_t requiredDisk;
-	IDirectMusicPerformance** directmusic_performance;
-	GUID* GUID_PerfMasterVolume;
 	uint32_t sm_battle_sound;
 	uint32_t sdmusicplay;
 	uint32_t sd_music_play;
 	uint32_t sub_46B800;
 	uint32_t sub_46C060;
 	uint32_t sub_46C6F0;
-	uint32_t midi_stop;
 	uint32_t sub_46C050;
 	uint32_t sub_46B970;
 	uint32_t sub_500900;
@@ -903,6 +899,17 @@ struct ff8_externals
 	void (*show_vram_window)();
 	void (*refresh_vram_window)();
 	uint32_t sub_46EB30;
+	uint32_t opcode_dualmusic;
+	uint32_t opcode_choicemusic;
+	uint32_t dmusic_segment_connect_to_dls;
+	uint32_t choice_music;
+	uint32_t load_midi_segment;
+	uint32_t load_midi_segment_from_id;
+	uint32_t play_midi_segments;
+	uint32_t load_and_play_midi_segment;
+	uint32_t stop_midi_segments;
+	uint32_t midi_segments_status;
+	uint32_t* current_volume;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

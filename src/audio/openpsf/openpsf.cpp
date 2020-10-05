@@ -128,19 +128,19 @@ namespace SoLoud
 
 		stop();
 
-		stream = new Psf();
+		stream = new Psf(PsfFlags::PsfDefaults, 0);
 		if (!stream->open(aFilename, true)) {
 			error("Cannot open file %s: %s\n%s\n", aFilename, stream->get_last_error(), stream->get_last_status());
 			return FILE_LOAD_FAILED;
 		}
 
 		mBaseSamplerate = float(stream->get_sample_rate());
-		mSampleCount = stream->get_length() / 1000.0 * mBaseSamplerate;
+		mSampleCount = stream->get_sample_count();
 		mChannels = stream->get_channel_count();
 		setLooping(true);
 
-		info("Opening file %s with openPSF (samplerate: %i, length: %i, channels: %i):\n%s\n",
-			aFilename, int(mBaseSamplerate), stream->get_length(), mChannels, stream->get_last_status());
+		info("Opening file %s with openPSF (samplerate: %i, samplecount: %i, channels: %i):\n%s\n",
+			aFilename, int(mBaseSamplerate), stream->get_sample_count(), mChannels, stream->get_last_status());
 
 		return SO_NO_ERROR;
 	}
