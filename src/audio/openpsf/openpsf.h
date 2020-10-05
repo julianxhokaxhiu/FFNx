@@ -48,6 +48,7 @@ namespace SoLoud
 		int16_t* mStreamBuffer;
 		OpenPsf* mParent;
 		unsigned int mOffset;
+		bool ended;
 	public:
 		OpenPsfInstance(OpenPsf* aParent);
 		virtual ~OpenPsfInstance();
