@@ -33,6 +33,15 @@
 
 #define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000
 
+struct NxAudioEngineMusic
+{
+	NxAudioEngineMusic() :
+		handle(NXAUDIOENGINE_INVALID_HANDLE), id(0), isResumable(false) {}
+	SoLoud::handle handle;
+	uint32_t id;
+	bool isResumable;
+};
+
 class NxAudioEngine
 {
 private:
@@ -55,13 +64,16 @@ private:
 	std::vector<SoLoud::handle> _sfxChannelsHandle;
 
 	// MUSIC
-	SoLoud::handle _musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
+	NxAudioEngineMusic _music = NxAudioEngineMusic();
+	std::vector<SoLoud::handle> _musicSegmentsHandle;
+	std::stack<NxAudioEngineMusic> _musicStack;
 
 	float _previousMusicMasterVolume = 1.0f;
 	float _musicMasterVolume = 1.0f;
 
 	float _wantedMusicVolume = 1.0f;
-	std::stack<SoLoud::handle> _musicStack;
+
+	SoLoud::AudioSource* loadMusic(const char* name);
 
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
@@ -70,7 +82,7 @@ private:
 	template <class T>
 	void getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type);
 
-	bool fileExists(char* filename);
+	bool fileExists(const char* filename);
 
 	// CFG
 	std::unordered_map<NxAudioEngineLayer,toml::parse_result> nxAudioEngineConfig;
@@ -78,6 +90,12 @@ private:
 	void loadConfig();
 
 public:
+	enum PlayFlags {
+		PlayFlagsNone = 0x0,
+		PlayFlagsIsResumable = 0x1,
+		PlayFlagsDoNotPause = 0x2
+	};
+
 	bool init();
 	void flush();
 	void cleanup();
@@ -93,12 +111,14 @@ public:
 	void setSFXSpeed(float speed, int channel);
 
 	// Music
-	bool canPlayMusic(char* name);
-	void playMusic(char* name, bool crossfade = false, uint32_t time = 0);
+	bool canPlayMusic(const char* name);
+	void playMusic(const char* name, uint32_t id, uint32_t time = 0, PlayFlags flags = PlayFlagsNone);
+	void playMusics(const std::vector<std::string>& names, uint32_t id, uint32_t time = 0);
 	void stopMusic(uint32_t time = 0);
-	void pauseMusic();
-	void resumeMusic();
+	void pauseMusic(uint32_t time = 0, bool push = false);
+	void resumeMusic(uint32_t time = 0, bool pop = false);
 	bool isMusicPlaying();
+	uint32_t currentMusicId();
 	void setMusicMasterVolume(float volume, size_t time = 0);
 	void restoreMusicMasterVolume(size_t time = 0);
 	float getMusicVolume();
@@ -108,9 +128,13 @@ public:
 	void setMusicLooping(bool looping);
 
 	// Voice
-	bool canPlayVoice(char* name);
-	void playVoice(char* name);
+	bool canPlayVoice(const char* name);
+	void playVoice(const char* name);
 	void stopVoice(uint32_t time = 0);
 };
+
+NxAudioEngine::PlayFlags operator|(NxAudioEngine::PlayFlags flags, NxAudioEngine::PlayFlags other) {
+	return static_cast<NxAudioEngine::PlayFlags>(static_cast<int>(flags) | static_cast<int>(other));
+}
 
 extern NxAudioEngine nxAudioEngine;

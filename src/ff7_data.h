@@ -350,6 +350,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff7_externals.execute_opcode, 0x10D);
 	ff7_externals.opcode_akao2 = common_externals.execute_opcode_table[0xDA];
 	ff7_externals.opcode_akao = common_externals.execute_opcode_table[0xF2];
+	ff7_externals.opcode_cmusc = common_externals.execute_opcode_table[0xFD];
 	ff7_externals.opcode_gameover = common_externals.execute_opcode_table[0xFF];
 	ff7_externals.opcode_message = common_externals.execute_opcode_table[0x40];
 	ff7_externals.opcode_ask = common_externals.execute_opcode_table[0x48];
@@ -359,6 +360,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.sub_6310A1 = get_relative_call(ff7_externals.opcode_ask, 0x8E);
 	ff7_externals.opcode_ask_question_code = (WORD*)get_absolute_value(ff7_externals.sub_6310A1, 0x2FE);
+
+	ff7_externals.field_music_helper = get_relative_call(ff7_externals.opcode_cmusc, 0x5E);
 
 	ff7_externals.enter_gameover = get_absolute_value(main_loop, 0x1F7);
 	ff7_externals.exit_gameover = get_absolute_value(main_loop, 0x213);
