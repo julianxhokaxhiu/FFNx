@@ -33,7 +33,7 @@ namespace SoLoud
 		mOffset = 0;
 
 		if (mParent->isStreaming)
-			mStreamBuffer = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels];
+			mStreamBuffer = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * aParent->mChannels];
 		else
 			mStreamBuffer = nullptr;
 	}
