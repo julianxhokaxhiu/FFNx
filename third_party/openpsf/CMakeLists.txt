@@ -21,7 +21,7 @@
 
 include(ExternalProject)
 
-set(OPENPSF_VERSION "1.1.0")
+set(OPENPSF_VERSION "1.2.0")
 
 ExternalProject_Add(
 	openpsf

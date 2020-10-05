@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 
 constexpr auto SOLOUD_OPENPSF_NUM_SAMPLES = 512;
+constexpr auto SOLOUD_OPENPSF_VOLUME_SCALE = float(3.2f / double(0x8000));
 
 namespace SoLoud
 {
@@ -31,8 +32,9 @@ namespace SoLoud
 	{
 		mParent = aParent;
 		mOffset = 0;
-		mStreamBufferSize = SOLOUD_OPENPSF_NUM_SAMPLES * mChannels;
+		mStreamBufferSize = SOLOUD_OPENPSF_NUM_SAMPLES * aParent->mChannels;
 		mStreamBuffer = new int16_t[mStreamBufferSize];
+		mStreamBufferSize *= sizeof(int16_t);
 	}
 
 	OpenPsfInstance::~OpenPsfInstance()
@@ -44,11 +46,10 @@ namespace SoLoud
 	{
 		unsigned int offset = 0;
 		unsigned int i, j, k;
-		float scale = float(3.2f / double(0x8000));
 
 		for (i = 0; i < aSamplesToRead; i += SOLOUD_OPENPSF_NUM_SAMPLES)
 		{
-			memset(mStreamBuffer, 0, sizeof(int16_t) * mStreamBufferSize);
+			memset(mStreamBuffer, 0, mStreamBufferSize);
 			unsigned int blockSize = aSamplesToRead - i > SOLOUD_OPENPSF_NUM_SAMPLES ? SOLOUD_OPENPSF_NUM_SAMPLES : aSamplesToRead - i;
 			int r = mParent->stream->decode(mStreamBuffer, blockSize);
 
@@ -63,7 +64,7 @@ namespace SoLoud
 			{
 				for (k = 0; k < mChannels; k++)
 				{
-					aBuffer[k * aSamplesToRead + i + j] = mStreamBuffer[j * mChannels + k] * scale;
+					aBuffer[k * aSamplesToRead + i + j] = mStreamBuffer[j * mChannels + k] * SOLOUD_OPENPSF_VOLUME_SCALE;
 				}
 			}
 		}
@@ -75,7 +76,7 @@ namespace SoLoud
 
 	result OpenPsfInstance::rewind()
 	{
-		mParent->stream->seek(0);
+		mParent->stream->rewind();
 
 		mOffset = 0;
 		mStreamPosition = 0.0f;
