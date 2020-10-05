@@ -30,6 +30,7 @@ namespace SoLoud
 {
 	OpenPsfInstance::OpenPsfInstance(OpenPsf* aParent)
 	{
+		ended = false;
 		mParent = aParent;
 		mOffset = 0;
 		mStreamBufferSize = SOLOUD_OPENPSF_NUM_SAMPLES * aParent->mChannels;
@@ -53,7 +54,11 @@ namespace SoLoud
 			unsigned int blockSize = aSamplesToRead - i > SOLOUD_OPENPSF_NUM_SAMPLES ? SOLOUD_OPENPSF_NUM_SAMPLES : aSamplesToRead - i;
 			int r = mParent->stream->decode(mStreamBuffer, blockSize);
 
-			if (r < 0) {
+			if (r == 0) {
+				ended = true;
+				break;
+			}
+			else if (r < 0) {
 				error("OpenPsfInstance::%s Decoding error: %s\n%s\n", __func__, mParent->stream->get_last_error(), mParent->stream->get_last_status());
 				break;
 			}
@@ -78,6 +83,7 @@ namespace SoLoud
 	{
 		mParent->stream->rewind();
 
+		ended = false;
 		mOffset = 0;
 		mStreamPosition = 0.0f;
 		return 0;
@@ -85,7 +91,7 @@ namespace SoLoud
 
 	bool OpenPsfInstance::hasEnded()
 	{
-		return !(mFlags & AudioSourceInstance::LOOPING) && mOffset >= mParent->mSampleCount;
+		return !(mFlags & AudioSourceInstance::LOOPING) && (ended || mOffset >= mParent->mSampleCount);
 	}
 
 	OpenPsf::OpenPsf() :
