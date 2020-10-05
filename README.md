@@ -92,13 +92,33 @@ When you access the releases page, you will see two available download options:
 - [**Latest Release:**](https://github.com/julianxhokaxhiu/FFNx/releases/latest) the official release, which is tested and should be stable enough for long gameplay sessions.
 
 ## How to build
-In order to build FFNx you need the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/).
 
-To ease the installation you can use the provided [.vsconfig](.vsconfig) file in the repository to select the exact components required to build FFNx.
+Tested build profiles:
+- x86-Release ( default, the same used to release artifacts in this Github page )
+- x86-RelWithDebInfo ( used while developing to better debug some issues )
 
-After that, just open the repository as a folder and hit the Build button. The CMake build process will kick-in and the result artifacts will be available under the `.dist\build\[PROFILE]\bin` folder, where PROFILE can be:
-- x86-Release ( default )
-- x86-RelWithDebInfo ( used for debug purposes while working on the source code )
+Output folder: `.dist/build/[CHOSEN_PROFILE]/bin` ( eg. `.dist/build/x86-Release/bin` )
+
+### Visual Studio
+
+> **Please note:**
+>
+> By default Visual Studio will pick the **x86-Release** build configuration, but you can choose any other profile available.
+
+0) Download the the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installer
+1) Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the required components to build this project
+2) Once installed, open this repository **as a folder** in Visual Studio 2019 and click the build button.
+
+### Visual Studio Code
+
+0) **REQUIRED!** Follow up the steps to install Visual Studio, which will also install the MSVC toolchain
+1) Download and install the latest [Visual Studio Code](https://code.visualstudio.com/) release
+2) Install the following extensions:
+   - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
+   - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools
+3) Open this repository as a folder in Visual Studio code
+4) Choose as build profile in the status bar `CMake: [Release]` ( or one of the aforementioned profiles )
+5) Click the button on the status bar `Build`
 
 ## How to install
 In either way, in order to use this driver you MUST have a legal copy of the game. DO NOT ask for a copy unless bought legally.

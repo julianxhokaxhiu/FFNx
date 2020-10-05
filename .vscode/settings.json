@@ -1,0 +1,8 @@
+{
+  "cmake.buildDirectory": "${workspaceFolder}/.dist/build/x86-${buildType}",
+  "cmake.configureSettings": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "_DLL_VERSION": "devel"
+  },
+  "cmake.installPrefix": "${workspaceFolder}/.dist/install/x86-${buildType}"
+}
