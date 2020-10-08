@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
+//    Copyright (C) 2020 Marcin Gomulak                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -24,6 +25,7 @@
 #include <bx/file.h>
 #include "cfg.h"
 #include "field.h"
+#include "world.h"
 #include "api.h"
 
 #define IMGUI_VIEW_ID 255
@@ -302,6 +304,7 @@ void Overlay::drawMainWindow() {
         if (ImGui::BeginMenu("Tools"))
         {
             ImGui::MenuItem("Field Debug", NULL, &field_debug_open);
+            ImGui::MenuItem("World Debug", NULL, &world_debug_open);
             ImGui::MenuItem("ImGui Demo", NULL, &demo_open);
             ImGui::EndMenu();
         }
@@ -321,6 +324,7 @@ void Overlay::draw()
     {
         drawMainWindow();        
         if (field_debug_open) field_debug(&field_debug_open);
+        if (ff8 && world_debug_open) world_debug(&world_debug_open);
         if (demo_open) ImGui::ShowDemoWindow(&demo_open); // Useful to keep as GUI guide for now
     }
 

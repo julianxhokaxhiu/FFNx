@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
+//    Copyright (C) 2020 Marcin Gomulak                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -283,9 +284,14 @@ void ff8_find_externals()
 		ff8_externals.sub_548080 = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x579);
 
 		ff8_externals.sub_53FAC0 = get_relative_call(ff8_externals.worldmap_main_loop, 0x134);
+		ff8_externals.sub_54B460 = get_relative_call(ff8_externals.sub_53FAC0, 0x5D7);
+		ff8_externals.sub_558D70 = get_relative_call(ff8_externals.sub_54B460, 0x3F3);
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.sub_53FAC0, 0x1D5);
 		ff8_externals.sub_53BB90 = get_relative_call(ff8_externals.sub_53FAC0, 0x2D4);
+		ff8_externals.sub_53E2A0 = get_relative_call(ff8_externals.sub_53BB90, 0x327);
+		ff8_externals.sub_53E6B0 = get_relative_call(ff8_externals.sub_53E2A0, 0x36B);
+		ff8_externals.sub_4023D0 = get_relative_call(ff8_externals.sub_53BB90, 0xAB1);
 		ff8_externals.sub_53C750 = get_relative_call(ff8_externals.sub_53FAC0, 0x2DB);
 		ff8_externals.sub_54FDA0 = get_relative_call(ff8_externals.sub_53FAC0, 0x375);
 		ff8_externals.sub_54D7E0 = get_relative_call(ff8_externals.sub_53FAC0, 0x3C2);

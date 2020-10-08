@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
+//    Copyright (C) 2020 Marcin Gomulak                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -854,6 +855,9 @@ struct ff8_externals
 	uint32_t ssigpu_init;
 	uint32_t *d3dcaps;
 	uint32_t sub_53BB90;
+	uint32_t sub_53E2A0;
+	uint32_t sub_53E6B0;
+	uint32_t sub_4023D0;
 	uint32_t sub_53C750;
 	uint32_t sub_544630;
 	uint32_t sub_548080;
@@ -863,6 +867,8 @@ struct ff8_externals
 	uint32_t sub_54D7E0;
 	uint32_t sub_54FDA0;
 	uint32_t sub_53FAC0;
+	uint32_t sub_54B460;
+	uint32_t sub_558D70;
 	uint32_t sub_545EA0;
 	uint32_t sub_545F10;
 	uint32_t worldmap_main_loop;
