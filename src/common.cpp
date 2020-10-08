@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
+//    Copyright (C) 2020 Marcin Gomulak                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -40,6 +41,7 @@
 #include "gamepad.h"
 #include "input.h"
 #include "field.h"
+#include "world.h"
 #include "gamehacks.h"
 #include "discohash.h"
 #include "audio.h"
@@ -2248,6 +2250,7 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 
 	// perform any additional initialization that requires the rendering environment to be set up
 	field_init();
+	world_init();
 	music_init();
 	sfx_init();
 	voice_init();
