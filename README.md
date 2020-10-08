@@ -193,9 +193,9 @@ external_music_ext = akb
 6. Enjoy!
 
 ## How to install on 7h 2.x
-Since 7h 2.2+ FFNx will be bundled by default! Just make sure you use always the latest version of 7h and you'll be good to go :)
+Since 7h 2.3+ FFNx will be bundled by default! Just make sure you use always the latest version of 7h and you'll be good to go :)
 
-If you want to upgrade the provided FFNx release, feel free to use [these instructions](https://github.com/OatBran/7HSteamGuide#manual-7h-upgrading).
+If you want to use the latest release ( or canary release ) of FFNx, you can follow the [installation instructions](#how-to-install) and finally on 7th **make sure** to use `Play with minimal validation` available within the little arrow menu next to the play button.
 
 > Please remember: **the 7h team WILL NOT be able to support you** if you upgrade, and **limited support** will be provided on the FFNx Discord channel instead.
 
