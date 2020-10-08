@@ -70,6 +70,7 @@ if (SUPERBUILD)
 		imgui
 		soloud
 		openpsf
+		tomlplusplus
 	)
 	ExternalProject_Add_Step(
 		FFNx
