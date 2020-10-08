@@ -29,17 +29,17 @@ NxAudioEngine nxAudioEngine;
 
 void NxAudioEngine::getMusicFilenameFullPath(char* _out, char* _name)
 {
-	sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path, _name, external_music_ext);
+	sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _name, external_music_ext.c_str());
 }
 
 void NxAudioEngine::getVoiceFilenameFullPath(char* _out, char* _name)
 {
-	sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path, _name, external_voice_ext);
+	sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _name, external_voice_ext.c_str());
 }
 
 void NxAudioEngine::getSFXFilenameFullPath(char* _out, int _id)
 {
-	sprintf(_out, "%s/%s/%d.%s", basedir, external_sfx_path, _id, external_sfx_ext);
+	sprintf(_out, "%s/%s/%d.%s", basedir, external_sfx_path.c_str(), _id, external_sfx_ext.c_str());
 }
 
 bool NxAudioEngine::fileExists(char* filename)
@@ -61,13 +61,13 @@ bool NxAudioEngine::init()
 	{
 		_engineInitialized = true;
 
-		if (he_bios_path != nullptr) {
-			if (!Psf::initialize_psx_core(he_bios_path)) {
-				error("NxAudioEngine::%s couldn't load %s, please verify 'he_bios_path' or comment it\n", __func__, he_bios_path);
+		if (he_bios_path.empty()) {
+			if (!Psf::initialize_psx_core(he_bios_path.c_str())) {
+				error("NxAudioEngine::%s couldn't load %s, please verify 'he_bios_path' or comment it\n", __func__, he_bios_path.c_str());
 			}
 			else {
 				_openpsf_loaded = true;
-				info("NxAudioEngine::%s OpenPSF music plugin loaded using %s\n", __func__, he_bios_path);
+				info("NxAudioEngine::%s OpenPSF music plugin loaded using %s\n", __func__, he_bios_path.c_str());
 			}
 		}
 

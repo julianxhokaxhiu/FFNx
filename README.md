@@ -27,7 +27,7 @@ Some of the improvements that you can find on FFNx are:
 - FF7/FF8: Steam savegame preservation ( you will no more loose saves created with FFNx! )
 - FF7/FF8: XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
 - FF7/FF8: Native speedhack support!
-- FF7/FF8: The game will continue to run when not in focus in Window mode ( FF7: always enabled, FF8: [disabled by default]((misc/FFNx.cfg#L354)) )
+- FF7/FF8: The game will continue to run when not in focus in Window mode ( FF7: always enabled, FF8: [disabled by default]((misc/FFNx.toml#L354)) )
 - FF7: eStore support! No Game converter required.
 - FF7: Vertical centering for Fields and Movies
 - FF7: Fullscreen Battle scenes
@@ -61,10 +61,10 @@ And, on top of all of this you will also find:
 In order to enhance the modding experience, FFNx does also provide:
 - Game rendering inspection through [RenderDoc](https://renderdoc.org/)!
 - [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
-- Support for configurable external textures path using [mod_path](misc/FFNx.cfg#L100)
-- Support for an override layer of the data directory using [override_path](misc/FFNx.cfg#L116)
+- Support for configurable external textures path using [mod_path](misc/FFNx.toml#L100)
+- Support for an override layer of the data directory using [override_path](misc/FFNx.toml#L116)
 - Support for MINIPSF audio files using the emulated PSX/PS2 AKAO Engine
-- Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0) patching files inside of the [hext_patching_path](misc/FFNx.cfg#L113)
+- Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0) patching files inside of the [hext_patching_path](misc/FFNx.toml#L113)
 - Debug in-game engine data through [imgui](https://github.com/ocornut/imgui) integration.
 
 ## Tech Stack
@@ -76,7 +76,7 @@ If you're curious to know it, FFNx is made with:
 - [BIMG](https://github.com/bkaradzic/bimg) ( for custom textures )
 - [FFMpeg](https://www.ffmpeg.org/) with H/W Accelleration support
 - [VGMStream](https://github.com/losnoco/vgmstream) using FFMpeg as backend (with loop support!)
-- [libconfuse](https://github.com/martinh/libconfuse) ( for the configuration management )
+- [tomlplusplus](https://github.com/marzer/tomlplusplus) ( for the configuration management )
 - [StackWalker](https://github.com/JochenKalmbach/StackWalker) ( for stack traces in the log file )
 - [pugixml](https://github.com/zeux/pugixml) ( for the Steam XML manifest )
 - [md5](http://www.zedwood.com/article/cpp-md5-function) ( for the Steam XML manifest )
@@ -163,7 +163,7 @@ In either way, in order to use this driver you MUST have a legal copy of the gam
 5. In the extracted folder, go to `ff7_1.02` directory
 6. Download the latest `FFNx-Steam` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 7. Extract the ZIP content next to the `ff7_*.exe` files
-8. Update `FFNx.cfg` flags with these values:
+8. Update `FFNx.toml` flags with these values:
 ```
 ffmpeg_video_ext = webm
 external_music_path = data/music_2
@@ -200,7 +200,11 @@ If you want to upgrade the provided FFNx release, feel free to use [these instru
 > Please remember: **the 7h team WILL NOT be able to support you** if you upgrade, and **limited support** will be provided on the FFNx Discord channel instead.
 
 ## Tweak the configuration
-If you want a more advanced experience, for example using another backend renderer ( Vulkan instead of OpenGL, or DirectX 11 ) feel free to change the driver configuration file [FFNx.cfg](misc/FFNx.cfg).
+> TOML is a standard syntax!
+>
+> Feel free to checkout [Learn TOML in Y minutes](https://learnxinyminutes.com/docs/toml/) for a quick tutorial.
+
+FFNx is highly configurable! Feel free to tweak every available option within the [FFNx.toml](misc/FFNx.toml) file.
 
 ## Cheat codes
 
@@ -228,7 +232,7 @@ Shortcuts:
 
 ### Speedhack
 
-This cheat will allow you to boost the gameplay timing up to 8x ( by default, [you can configure this]((misc/FFNx.cfg#L200)) up to your pleasure ).
+This cheat will allow you to boost the gameplay timing up to 8x ( by default, [you can configure this]((misc/FFNx.toml#L200)) up to your pleasure ).
 
 Shortcuts:
 - Keyboard Shortcut: `CTRL + Arrow Up/Down`

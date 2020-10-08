@@ -57,10 +57,10 @@ void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height
 	{
 		BEBB4185_64(data, dataSize, 0, &hash);
 
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.png", basedir, mod_path, name, palette_index, hash);
+		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.png", basedir, mod_path.c_str(), name, palette_index, hash);
 	}
 	else
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path, name, palette_index);
+		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path.c_str(), name, palette_index);
 
 	make_path(filename);
 
@@ -110,18 +110,18 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	for (int idx = 0; idx < exts.size(); idx++)
 	{
 		if (is_animated)
-		{			
-			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path, name, palette_index, hash, exts[idx].c_str());
+		{
+			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path.c_str(), name, palette_index, hash, exts[idx].c_str());
 
 			if (stat(filename, &dummy) != 0)
 			{
 				if (trace_all || show_missing_textures) trace("Could not find animated texture [ %s ].\n", filename);
 
-				_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
+				_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), name, palette_index, exts[idx].c_str());
 			}
 		}
 		else
-			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path, name, palette_index, exts[idx].c_str());
+			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), name, palette_index, exts[idx].c_str());
 
 		if (stat(filename, &dummy) == 0)
 		{
@@ -141,12 +141,12 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	{
 		if(palette_index != 0)
 		{
-			if(trace_all || show_missing_textures) info("No external texture found, falling back to palette 0\n", basedir, mod_path, name, palette_index);
+			if(trace_all || show_missing_textures) info("No external texture found, falling back to palette 0\n", basedir, mod_path.c_str(), name, palette_index);
 			return load_texture(data, dataSize, name, 0, width, height, false);
 		}
 		else
 		{
-			if(trace_all || show_missing_textures) info("No external texture found, switching back to the internal one.\n", basedir, mod_path, name, palette_index);
+			if(trace_all || show_missing_textures) info("No external texture found, switching back to the internal one.\n", basedir, mod_path.c_str(), name, palette_index);
 			return 0;
 		}
 	}

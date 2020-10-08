@@ -341,7 +341,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					// Show the cursor
 					while (ShowCursor(true) < 0);
 
-					fullscreen = cfg_bool_t(false);
+					fullscreen = false;
 				}
 				else
 				{
@@ -355,7 +355,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					// Hide the cursor
 					while (ShowCursor(false) >= 0);
 
-					fullscreen = cfg_bool_t(true);
+					fullscreen = true;
 				}
 
 				newRenderer.reset();
@@ -2105,10 +2105,10 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 
 		if (isSavegameFile)
 		{
-			if (steam_game_userdata != nullptr)
+			if (!steam_game_userdata.empty())
 			{
 				// Directly use the given userdata
-				PathAppendA(buffer, steam_game_userdata);
+				PathAppendA(buffer, steam_game_userdata.c_str());
 			}
 			else
 			{
@@ -2373,8 +2373,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 					estore_edition = true;
 				}
 
-				use_external_music = cfg_bool_t(true);
-				if (external_music_path == nullptr) external_music_path = "data/music_ogg";
+				use_external_music = true;
+				if (external_music_path.empty()) external_music_path = "data/music_ogg";
 
 			}
 			else
@@ -2385,7 +2385,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\MIDI)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey);
 				RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&ff7_music_volume, &regsize);
 
-				if (external_music_path == nullptr) external_music_path = "music/vgmstream";
+				if (external_music_path.empty()) external_music_path = "music/vgmstream";
 			}
 		}
 		else if (ff8)
@@ -2446,7 +2446,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				steam_edition = true;
 
 				// Steam edition contains movies unpacked
-				enable_ffmpeg_videos = cfg_bool_t(true);
+				enable_ffmpeg_videos = true;
 
 				// Eyes on me patch
 

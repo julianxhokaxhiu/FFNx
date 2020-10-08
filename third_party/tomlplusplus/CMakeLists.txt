@@ -21,11 +21,9 @@
 
 include(ExternalProject)
 
-set(TOMLPLUSPLUS_VERSION "2.1.0")
-
 ExternalProject_Add(
 	tomlplusplus
-	URL               "https://github.com/marzer/tomlplusplus/archive/v${TOMLPLUSPLUS_VERSION}.zip"
+	URL               "https://github.com/marzer/tomlplusplus/archive/master.zip"
 	INSTALL_DIR				"${CMAKE_BINARY_DIR}/vendor"
 	CONFIGURE_COMMAND	""
 	BUILD_COMMAND			""

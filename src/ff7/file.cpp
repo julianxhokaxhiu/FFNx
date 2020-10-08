@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <string.h>
 #include <sys/stat.h>
+#include <io.h>
 
 #include "../ff7.h"
 #include "../log.h"
@@ -110,7 +111,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 	}
 	else
 	{
-		if (isSavegame && save_path != nullptr)
+		if (isSavegame && !save_path.empty())
 		{
 			char* pos = strrchr(newIn.data(), 47);
 
@@ -124,7 +125,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 			else if (pos != NULL)
 			{
 				strcpy(out, basedir);
-				PathAppendA(out, save_path);
+				PathAppendA(out, save_path.c_str());
 				PathAppendA(out, ++pos);
 
 				if (trace_all || trace_files) trace("Redirected: %s -> %s\n", newIn.data(), out);
@@ -150,7 +151,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 			}
 
 			strcpy(out, basedir);
-			PathAppendA(out, override_path);
+			PathAppendA(out, override_path.c_str());
 			if (pos != NULL)
 				PathAppendA(out, pos);
 			else
@@ -357,14 +358,14 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 
 	_splitpath(filename, 0, 0, fname, ext);
 
-	if(strlen(direct_mode_path) > 0)
+	if(!direct_mode_path.empty())
 	{
-		_snprintf(tmp, sizeof(tmp), "%s/%s/%s/%s%s", basedir, direct_mode_path, lgp_names[lgp_num], fname, ext);
+		_snprintf(tmp, sizeof(tmp), "%s/%s/%s/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], fname, ext);
 		ret->fd = fopen(tmp, "rb");
 
 		if(!ret->fd)
 		{
-			_snprintf(tmp, sizeof(tmp), "%s/%s/%s/%s/%s%s", basedir, direct_mode_path, lgp_names[lgp_num], lgp_current_dir, fname, ext);
+			_snprintf(tmp, sizeof(tmp), "%s/%s/%s/%s/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], lgp_current_dir, fname, ext);
 			ret->fd = fopen(tmp, "rb");
 			if(ret->fd) ret->resolved_conflict = true;
 		}
@@ -378,7 +379,7 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 
 		if(!original_lgp_open_file(name, lgp_num, ret))
 		{
-			if(strlen(direct_mode_path) > 0) error("failed to find file %s; tried %s/%s/%s, %s/%s/%s/%s, %s/%s (LGP) (path: %s)\n", filename, direct_mode_path, lgp_names[lgp_num], name, direct_mode_path, lgp_names[lgp_num], lgp_current_dir, name, lgp_names[lgp_num], name, lgp_current_dir);
+			if(!direct_mode_path.empty()) error("failed to find file %s; tried %s/%s/%s, %s/%s/%s/%s, %s/%s (LGP) (path: %s)\n", filename, direct_mode_path.c_str(), lgp_names[lgp_num], name, direct_mode_path.c_str(), lgp_names[lgp_num], lgp_current_dir, name, lgp_names[lgp_num], name, lgp_current_dir);
 			else error("failed to find file %s/%s (LGP) (path: %s)\n", lgp_names[lgp_num], name, lgp_current_dir);
 			external_free(ret);
 			return 0;

@@ -62,7 +62,7 @@ if (SUPERBUILD)
 		DEPENDS
 		bgfx
 		ffmpeg
-		libconfuse
+		tomlplusplus
 		vgmstream
 		StackWalker
 		pugixml
@@ -70,7 +70,6 @@ if (SUPERBUILD)
 		imgui
 		soloud
 		openpsf
-		tomlplusplus
 	)
 	ExternalProject_Add_Step(
 		FFNx

@@ -72,7 +72,7 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 
 	_splitpath(name, drivename, dirname, filename, NULL);
 
-	_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, ffmpeg_video_ext);
+	_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, ffmpeg_video_ext.c_str());
 
 	int redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName));
 
@@ -192,7 +192,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 		disc = ff8_currentdisk - 1;
 	}
 
-	_snprintf(fmvName, sizeof(fmvName), "%s/movies/disc%02i_%02ih.%s", dataPath, disc, movie, ffmpeg_video_ext);
+	_snprintf(fmvName, sizeof(fmvName), "%s/movies/disc%02i_%02ih.%s", dataPath, disc, movie, ffmpeg_video_ext.c_str());
 	_snprintf(camName, sizeof(camName), "%s/data/movies/disc%02i_%02i.cam", basedir, disc, movie);
 
 	if(trace_all || trace_movies) trace("prepare_movie %s\n", fmvName);

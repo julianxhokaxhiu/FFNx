@@ -5,8 +5,8 @@
 # Remove the initial # character to set the configuration flag.
 # -----------------------------------------------------------------------------
 # Unless options are specified, you can either disable or enable a flag.
-# Enable: yes
-# Disable: no
+# Enable: true
+# Disable: false
 ###############################################################################
 
 # =============================================================================
@@ -33,7 +33,7 @@
 #[FULLSCREEN]
 # If off, it will run in window mode.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#fullscreen = no
+#fullscreen = false
 
 #[RESOLUTION]
 # Resolution of the game.
@@ -57,11 +57,11 @@
 # Preserve original game aspect ratio of (4:3) by adding black bars on the left and right side (if needed)
 # When off the game will be stretched to fit the window's aspect ratio; Be aware the game may look wrong though.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#preserve_aspect = yes
+#preserve_aspect = true
 
 #[ENABLE VSYNC]
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_vsync = yes
+#enable_vsync = true
 
 
 #[REFRESH RATE]
@@ -75,7 +75,7 @@
 # Please note: some things look slightly better with this option on, but alot of textures just lose their detail.
 # This option only affects low-res textures, high-res replacements will still be filtered where appropriate.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#linear_filter = no
+#linear_filter = false
 
 #[ANTIALIASING]
 # Enable antialiasing filtering, this is done in the last pass when downsampling from the current supersampled rendering ( based on internal_resolution_scale logic )
@@ -92,7 +92,7 @@
 #[ANISOTROPIC]
 # Enable anisotropic filtering, for high-res textures and overall rendering
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_anisotropic = yes
+#enable_anisotropic = true
 
 #########################
 # Audio Player Options
@@ -101,7 +101,7 @@
 #[USE EXTERNAL MUSIC]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce sounds in-game.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#use_external_sfx = no
+#use_external_sfx = false
 
 #[EXTERNAL SFX PATH]
 # Path of the external sound files
@@ -110,7 +110,7 @@
 
 #[EXTERNAL SFX EXTENSION]
 # The type of file to search for. By default is ogg.
-# Supported extensions: 
+# Supported extensions:
 # - ogg, mp3, flac, wav
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #external_sfx_ext = ogg
@@ -119,12 +119,12 @@
 # This flag will enable/disable the support of an enhanced audio layer to reproduce music in-game.
 # If you leave out the default configuration FFNx will autodetect your environment and will set it to the best available option.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#use_external_music = no
+#use_external_music = false
 
 #[EXTERNAL MUSIC RESUME]
 # This flag will enable the support for music resume on known areas of the game ( for eg. World-Map ).
 # If you enable this flag, instead of starting the OST for a known area from the beginning everytime, it will resume where you left it off the last time you visited it.
-#external_music_resume = yes
+#external_music_resume = true
 
 #[EXTERNAL MUSIC PATH]
 # Path of the external music files
@@ -138,7 +138,7 @@
 
 #[EXTERNAL MUSIC EXTENSION]
 # The type of file to search for. By default is ogg.
-# Supported extensions: 
+# Supported extensions:
 # - https://github.com/losnoco/vgmstream#supported-file-types
 # - psf, psf2, minipsf, minipsf2 (PSF and PSF2) if you provide the Highly Experimental BIOS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,7 +159,7 @@
 
 #[EXTERNAL VOICE EXTENSION]
 # The type of file to search for. By default is ogg.
-# Supported extensions: 
+# Supported extensions:
 # - ogg, mp3, flac, wav
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #external_voice_ext = ogg
@@ -168,7 +168,7 @@
 # This flag will enable the music volume fade out and fade in, when a voice acting is being played back.
 # Please note this flag will take effect ONLY when "use_external_music" is enabled.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_voice_music_fade = no
+#enable_voice_music_fade = false
 
 #[EXTERNAL VOICE MUSIC FADE VOLUME]
 # This flag will set to how much the volume will be lowered down when a voice acting is going to be played back. When the voice file will be finished, the music volume will be then restored to its previous value.
@@ -183,12 +183,12 @@
 #[ENABLE FFMPEG VIDEOS]
 # This flag will enable/disable the support of FFMpeg layer to reproduce movies in-game.
 # Default Value depends on game version.
-# - FF7 1998 - yes
-# - FF7/FF8 Steam - yes
-# - FF8 2000 - no
+# - FF7 1998 - true
+# - FF7/FF8 Steam - true
+# - FF8 2000 - false
 # It is suggested to keep the default behavior unless you really know what are you doing.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_ffmpeg_videos = yes
+#enable_ffmpeg_videos = true
 
 #[FFMPEG VIDEO FILE EXTENSION]
 # The type of file that the ffmpeg layer will search for. Default is avi.
@@ -216,11 +216,11 @@
 
 # Show every failed attempt at loading a .png or .dds texture
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_missing_textures = no
+#show_missing_textures = false
 
 # Dump internal textures to PNG files in the mod_path
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#save_textures = no
+#save_textures = false
 
 # This path is where the Hext patching layer will look for txt files.
 # The path will ALWAYS have appended:
@@ -248,7 +248,7 @@
 # Enable support for animated textures.
 # WARNING: This flag MAY degrade the gameplay performance. Enable at your own risk.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_animated_textures = no
+#enable_animated_textures = false
 
 ##########################
 # DEBUGGING OPTIONS
@@ -258,7 +258,7 @@
 
 # Enable Dear ImGui overlay windows that show debug information.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_debug_ui = no
+#enable_debug_ui = false
 
 # Set hotkey to toggle the debug information windows.
 # This is specified by a virtual-key code hexadecimal value, see: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
@@ -267,95 +267,95 @@
 
 # Display the verion of FFNx in upper right corner ( when fullscreen ) or in the title bar ( when windowed )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_version = yes
+#show_version = true
 
 # Display frames per second counter in upper right corner ( when fullscreen ) or in the title bar ( when windowed )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_fps = no
+#show_fps = false
 
 # Display Rendering backend in upper right corner ( when fullscreen ) or in the title bar ( when windowed )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_renderer_backend = yes
+#show_renderer_backend = true
 
 # Display some real-time debug information
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_stats = no
+#show_stats = false
 
 # Enable logging
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_applog = yes
+#show_applog = true
 
 # Show on screen error messages ( only on fullscreen )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_error_popup = no
+#show_error_popup = false
 
 # Enable this flag if you want to see more verbose output from the backend renderer.
 # Usually useful for debug pruposes. Do not enable otherwise.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#renderer_debug = no
+#renderer_debug = false
 
 # Creates a full crashdump file if the game crashes. Useful to be analyzed with WinDbg when reporting issues.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#create_crash_dump = no
+#create_crash_dump = false
 
 # Various flags which will help in further debugging the game engine logics.
 # Some flags may not generate any output depending on the game you play.
 
 # trace_all - Dump in the logs whatever APIs is being called from the Engine in FFNx. Overrides all the others below.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_all = no
+#trace_all = false
 
 # trace_renderer - Dump in the logs only APIs that has to do with the rendering engine
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_renderer = no
+#trace_renderer = false
 
 # trace_movies - Dump in the logs only APIs that has to do with movie playback
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_movies = no
+#trace_movies = false
 
 # trace_music - Dump in the logs only APIs that has to do with music playback
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_music = no
+#trace_music = false
 
 # trace_sfx - Dump in the logs only APIs that has to do with sfx playback
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_sfx = no
+#trace_sfx = false
 
 # trace_fake_dx - Dump in the logs only APIs that has to do with directdraw emulation
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_fake_dx = no
+#trace_fake_dx = false
 
 # trace_direct - Dump in the logs only APIs that has to do with LGP loading
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_direct = no
+#trace_direct = false
 
 # trace_files - Dump in the logs only APIs that has to do with filesystem operations
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_files = no
+#trace_files = false
 
 # trace_loaders - Dump in the logs only APIs that has to do with internal textures overrides
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_loaders = no
+#trace_loaders = false
 
 # trace_opcodes - Dump in the logs only APIs that has to do with field opcodes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_opcodes = no
+#trace_opcodes = false
 
 # trace_voice - Dump in the logs only APIs that has to do with voice playback
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_voice = no
+#trace_voice = false
 
 # vertex_log - Dump in the logs current engine vertex data being passed to the GPU for drawing
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#vertex_log = no
+#vertex_log = false
 
 # uniform_log - Dump in the logs current engine uniform data being passed to the GPU shaders
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#uniform_log = no
+#uniform_log = false
 
 # Show debug info regarding movie synchronization.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#movie_sync_debug = no
+#movie_sync_debug = false
 
 ###############################################################################
 # OPTIONS ONLY FOR FF7
@@ -365,17 +365,17 @@
 
 # Include armor in magic defense calculation
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#mdef_fix = yes
+#mdef_fix = true
 
 ## ADVANCED OPTIONS - Don't fiddle with these unless you know what you're doing.
 
 # Enable alpha blending for textures without an existing blending effect
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#fancy_transparency = no
+#fancy_transparency = false
 
 # Skip movie frames if necessary.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#skip_frames = no
+#skip_frames = false
 
 ## MODDER OPTIONS - These options are mostly useful to modders and should not be enabled during normal play.
 
@@ -394,7 +394,7 @@
 
 # Dump in the logs more verbose error messages coming directly from the engine
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ff7_more_debug = no
+#ff7_more_debug = false
 
 ###############################################################################
 # OPTIONS ONLY FOR FF8
@@ -402,13 +402,13 @@
 
 ## ENHANCEMENTS
 
-# FF8 by default is used to pause the game when the window has no focus. This flag will override this behavior and will allow you to NOT pause the game and keep it running, if set to yes.
+# FF8 by default is used to pause the game when the window has false focus. This flag will override this behavior and will allow you to NOT pause the game and keep it running, if set to true.
 # This flag may be useful for streamers which may not want the game to be paused while switching the focus on another window.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ff8_keep_game_running_in_background = no
+#ff8_keep_game_running_in_background = false
 
 ## DEBUGGING OPTIONS - These options are mostly useful for developers or people reporting crashes. Please do enable them only when required.
 
 # Show the PSX SSIGPU VRAM window
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ff8_ssigpu_debug = no
+#ff8_ssigpu_debug = false
