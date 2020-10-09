@@ -98,9 +98,25 @@ bool enable_animated_textures;
 
 void read_cfg()
 {
-	auto config = toml::parse_file(FFNX_CFG_FILE);
-
 	enable_ffmpeg_videos = !ff8;
+
+	toml::parse_result config;
+
+	try
+	{
+		config = toml::parse_file(FFNX_CFG_FILE);
+	}
+	catch (const toml::parse_error &err)
+	{
+		warning("Parse error while opening the file " FFNX_CFG_FILE ". Will continue with the default settings.\n");
+		warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
+
+		char tmp[1024]{0};
+		sprintf(tmp, "%s (Line %u Column %u)\n\nWill continue with safe default settings.", err.what(), err.source().begin.line, err.source().begin.column);
+		MessageBoxA(gameHwnd, tmp, "Configuration issue detected!", MB_ICONWARNING | MB_OK);
+
+		config = toml::parse("");
+	}
 
 	// Read config values
 	mod_path = config["mod_path"].value_or("");
