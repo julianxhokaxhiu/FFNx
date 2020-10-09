@@ -20,7 +20,6 @@
 #*****************************************************************************#
 
 find_package(BGFX REQUIRED)
-find_package(CONFUSE REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
