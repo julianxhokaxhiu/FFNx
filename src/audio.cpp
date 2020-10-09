@@ -48,7 +48,7 @@ bool NxAudioEngine::fileExists(char* filename)
 
 	bool ret = (stat(filename, &dummy) == 0);
 
-	if (!ret) warning("Could not find file %s\n", __func__, filename);
+	if (!ret && (trace_all || trace_music)) warning("NxAudioEngine::%s: Could not find file %s\n", __func__, filename);
 
 	return ret;
 }
