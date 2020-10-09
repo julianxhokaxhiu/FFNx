@@ -54,16 +54,19 @@ DWORD* bCollisionEnabled;
 
 void world_init()
 {
-   cameraZoom = (WORD*)get_absolute_value(ff8_externals.sub_4023D0, 0x10);
-   playerPosX = (DWORD*)get_absolute_value(ff8_externals.sub_53BB90, 0x4C);
-   playerPosZ = playerPosX+1;
-   playerPosY = playerPosX+2;
-	collisionTriangleGroundType = (BYTE*)get_absolute_value(ff8_externals.sub_53BB90, 0x63C) + 0x26;
-	collisionTriangleTextureFlag = collisionTriangleGroundType + 1;
+	if (ff8)
+	{
+		cameraZoom = (WORD*)get_absolute_value(ff8_externals.sub_4023D0, 0x10);
+		playerPosX = (DWORD*)get_absolute_value(ff8_externals.sub_53BB90, 0x4C);
+		playerPosZ = playerPosX+1;
+		playerPosY = playerPosX+2;
+		collisionTriangleGroundType = (BYTE*)get_absolute_value(ff8_externals.sub_53BB90, 0x63C) + 0x26;
+		collisionTriangleTextureFlag = collisionTriangleGroundType + 1;
 
-	currentCollideTriangle = (DWORD*)((BYTE*)get_absolute_value(ff8_externals.sub_53C750, 0x633) + 0x1C);
+		currentCollideTriangle = (DWORD*)((BYTE*)get_absolute_value(ff8_externals.sub_53C750, 0x633) + 0x1C);
 
-	bCollisionEnabled = (DWORD*)get_absolute_value(ff8_externals.sub_53E6B0, 4);
+		bCollisionEnabled = (DWORD*)get_absolute_value(ff8_externals.sub_53E6B0, 4);
+	}
 }
 
 void world_debug(bool* isOpen)
