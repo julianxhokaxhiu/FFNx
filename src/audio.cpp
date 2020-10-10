@@ -61,7 +61,7 @@ bool NxAudioEngine::init()
 	{
 		_engineInitialized = true;
 
-		if (he_bios_path.empty()) {
+		if (!he_bios_path.empty()) {
 			if (!Psf::initialize_psx_core(he_bios_path.c_str())) {
 				error("NxAudioEngine::%s couldn't load %s, please verify 'he_bios_path' or comment it\n", __func__, he_bios_path.c_str());
 			}
