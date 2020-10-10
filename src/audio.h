@@ -24,6 +24,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <soloud/soloud.h>
 #include <soloud/soloud_wav.h>
 #include <soloud/soloud_wavstream.h>
@@ -35,6 +36,13 @@
 class NxAudioEngine
 {
 private:
+	enum NxAudioEngineLayer
+	{
+		NXAUDIOENGINE_SFX,
+		NXAUDIOENGINE_MUSIC,
+		NXAUDIOENGINE_VOICE
+	};
+
 	bool _engineInitialized = false;
 	SoLoud::Soloud _engine;
 	bool _openpsf_loaded = false;
@@ -46,8 +54,6 @@ private:
 	std::vector<SoLoud::Wav*> _sfxStreams;
 	std::vector<SoLoud::handle> _sfxChannelsHandle;
 
-	void getSFXFilenameFullPath(char* _out, int _id);
-
 	// MUSIC
 	SoLoud::handle _musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
 
@@ -57,15 +63,22 @@ private:
 	float _wantedMusicVolume = 1.0f;
 	std::stack<SoLoud::handle> _musicStack;
 
-	void getMusicFilenameFullPath(char* _out, char* _name);
-
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
 
-	void getVoiceFilenameFullPath(char* _out, char* _name);
-
 	// MISC
+	template <class T>
+	void getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type);
+
 	bool fileExists(char* filename);
+
+	// CFG
+	std::unordered_map<NxAudioEngineLayer,toml::parse_result> nxAudioEngineConfig;
+
+	void loadConfig();
+
+	template <class T>
+	T getConfig(char *key, T defValue, int id, NxAudioEngineLayer type);
 
 public:
 	bool init();
