@@ -19,9 +19,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <fstream>
-#include <toml.hpp>
-
 #include "cfg.h"
 
 #define FFNX_CFG_FILE "FFNx.toml"

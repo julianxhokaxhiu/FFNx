@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <fstream>
+#include <toml.hpp>
 #include <windows.h>
 
 #if defined(__cplusplus)
