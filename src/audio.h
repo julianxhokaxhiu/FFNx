@@ -77,9 +77,6 @@ private:
 
 	void loadConfig();
 
-	template <class T>
-	T getConfig(char *key, T defValue, int id, NxAudioEngineLayer type);
-
 public:
 	bool init();
 	void flush();

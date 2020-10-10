@@ -24,6 +24,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <random>
 
 // Get the size of a vector in bytes
 template<typename T>
@@ -97,4 +98,12 @@ inline bool replace(std::string& str, const std::string& from, const std::string
     str.replace(start_pos, from.length(), to);
 
     return true;
+}
+
+inline int getRandomInt(int min, int max)
+{
+    std::mt19937 rng(rand());
+    std::uniform_int_distribution<int> gen(min, max);
+
+    return gen(rng);
 }

@@ -172,3 +172,6 @@ install(DIRECTORY ../misc/hext DESTINATION bin OPTIONAL)
 install(FILES ../misc/${RELEASE_NAME}.toml DESTINATION bin OPTIONAL)
 install(FILES ../misc/FF7.reg DESTINATION bin OPTIONAL)
 install(FILES ../misc/FF8.reg DESTINATION bin OPTIONAL)
+# Additional cfg files
+install(DIRECTORY DESTINATION bin/sfx OPTIONAL)
+install(FILES ../misc/${RELEASE_NAME}.SFX.toml DESTINATION bin/sfx RENAME config.toml OPTIONAL)

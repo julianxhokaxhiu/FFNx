@@ -38,7 +38,6 @@
 #include <sstream>
 #include <vector>
 
-#include "utils.h"
 #include "patch.h"
 
 class Hext {

@@ -60,17 +60,6 @@ void NxAudioEngine::loadConfig()
 }
 
 template <class T>
-T NxAudioEngine::getConfig(char *key, T default_value, int id, NxAudioEngineLayer type)
-{
-	T ret;
-
-	std::string _id(id);
-	ret = nxAudioEngineConfig[type][_id][key].value_or<T>(default_value);
-
-	return ret;
-}
-
-template <class T>
 void NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type)
 {
 	switch(_type)
@@ -164,9 +153,11 @@ bool NxAudioEngine::canPlaySFX(int id)
 
 void NxAudioEngine::loadSFX(int id)
 {
+	int _curId = id - 1;
+
 	if (_engineInitialized)
 	{
-		if (_sfxStreams[id - 1] == nullptr)
+		if (_sfxStreams[_curId] == nullptr)
 		{
 			char filename[MAX_PATH];
 
@@ -180,7 +171,7 @@ void NxAudioEngine::loadSFX(int id)
 
 				sfx->load(filename);
 
-				_sfxStreams[id - 1] = sfx;
+				_sfxStreams[_curId] = sfx;
 			}
 		}
 	}
@@ -190,20 +181,39 @@ void NxAudioEngine::loadSFX(int id)
 
 void NxAudioEngine::unloadSFX(int id)
 {
-	if (_sfxStreams[id - 1] != nullptr)
-	{
-		delete _sfxStreams[id - 1];
+	int _curId = id - 1;
 
-		_sfxStreams[id - 1] = nullptr;
+	if (_sfxStreams[_curId] != nullptr)
+	{
+		delete _sfxStreams[_curId];
+
+		_sfxStreams[_curId] = nullptr;
 	}
 }
 
 void NxAudioEngine::playSFX(int id, int channel, float panning)
 {
-	if (_sfxStreams[id - 1] != nullptr)
+	int _curId = id - 1;
+
+	std::string _id = std::to_string(id);
+	if (auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id])
+	{
+		// Shuffle SFX playback, if any entry found for the current id
+		toml::array *shuffleIds = node["shuffle"].as_array();
+		if (!shuffleIds->empty() && shuffleIds->is_homogeneous(toml::node_type::integer))
+		{
+			auto _newId = shuffleIds->get(getRandomInt(0, shuffleIds->size() - 1));
+
+			_curId = _newId->value_or(id) - 1;
+		}
+	}
+
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, _curId + 1, channel, panning);
+
+	if (_sfxStreams[_curId] != nullptr)
 	{
 		SoLoud::handle _handle = _engine.play(
-			*_sfxStreams[id - 1],
+			*_sfxStreams[_curId],
 			_sfxVolumePerChannels[channel - 1],
 			panning
 		);

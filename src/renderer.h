@@ -37,7 +37,6 @@
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
 #include <libpng16/png.h>
-#include "utils.h"
 #include "log.h"
 #include "gl.h"
 #include "overlay.h"

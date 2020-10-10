@@ -31,7 +31,6 @@
 
 #include "log.h"
 #include "md5.h"
-#include "utils.h"
 
 class Metadata
 {

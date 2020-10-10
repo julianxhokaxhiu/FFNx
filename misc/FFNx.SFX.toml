@@ -1,0 +1,22 @@
+# FFNx Audio Engine config file - SFX layer
+
+### HOW TO: ###################################################################
+# Sections may be commented by default with an initial # character.
+# Remove the initial # character to set the entire sections block and its flags
+# -----------------------------------------------------------------------------
+# Syntax:
+# [ID]
+# flag = value
+# another_flag = value
+###############################################################################
+
+### SUPPORTED FLAGS: ##########################################################
+# shuffle: Shuffle an SFX ID with one of the given IDs in the array.
+###############################################################################
+
+# This entry will shuffle the SFX ID 1 ( menu cursor ) with the ID 2, 3 or 4.
+# Everytime the game engine will try to playback 1, one of the entries in the
+# array will be picked randomly.
+# -----------------------------------------------------------------------------
+#[1]
+#shuffle = [ 2, 3, 4 ]
