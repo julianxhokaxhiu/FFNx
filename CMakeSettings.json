@@ -1,4 +1,5 @@
 ﻿{
+  "_$schemaRef": "https://docs.microsoft.com/en-us/cpp/build/cmakesettings-reference?view=vs-2019",
   "configurations": [
     {
       "name": "x86-Release",
@@ -8,7 +9,7 @@
       "buildRoot": "${projectDir}\\.dist\\build\\${name}",
       "installRoot": "${projectDir}\\.dist\\install\\${name}",
       "cmakeCommandArgs": "-DCMAKE_BUILD_TYPE=Release -D_DLL_VERSION=devel",
-      "buildCommandArgs": "-v:normal",
+      "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
     },
@@ -20,7 +21,7 @@
       "buildRoot": "${projectDir}\\.dist\\build\\${name}",
       "installRoot": "${projectDir}\\.dist\\install\\${name}",
       "cmakeCommandArgs": "-DCMAKE_BUILD_TYPE=Release -D_DLL_VERSION=devel",
-      "buildCommandArgs": "-v:normal",
+      "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
     }
