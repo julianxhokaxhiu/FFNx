@@ -110,7 +110,11 @@ byte get_dialog_opcode(byte window_id)
 
 char* get_current_field_name()
 {
-	return strrchr(ff7_externals.field_file_name, 92) + 1;
+	char* ret = strrchr(ff7_externals.field_file_name, 92);
+
+	if (ret) ret += 1;
+
+	return ret;
 }
 
 //=============================================================================
