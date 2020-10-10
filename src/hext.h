@@ -33,7 +33,7 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
-#include <fstream> 
+#include <fstream>
 #include <locale>
 #include <sstream>
 #include <vector>

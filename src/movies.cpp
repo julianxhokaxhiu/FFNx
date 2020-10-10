@@ -206,7 +206,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 			error("could not load camera data from %s\n", camName);
 			return;
 		}
-		
+
 		while(!feof(camFile) && !ferror(camFile))
 		{
 			uint32_t res = fread(&ff8_externals.movie_object->camdata_buffer[camOffset], 1, 4096, camFile);
@@ -257,7 +257,7 @@ void ff8_start_movie()
 }
 
 void ff8_stop_movie()
-{	
+{
 	if(trace_all || trace_movies) trace("stop_movie\n");
 
 	ffmpeg_stop_movie();

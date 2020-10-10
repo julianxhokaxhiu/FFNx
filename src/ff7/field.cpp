@@ -52,7 +52,7 @@ void field_load_textures_helper(struct ff7_game_obj *game_object, struct struc_3
 		ff7_externals.field_layers[dst]->image_data = external_malloc(256 * 256);
 		memcpy(ff7_externals.field_layers[dst]->image_data, ff7_externals.field_layers[src]->image_data, 256 * 256);
 	}
-	
+
 	tex_header->image_data = (unsigned char*)ff7_externals.field_layers[dst]->image_data;
 
 	tex_header->file.pc_name = (char*)external_malloc(1024);

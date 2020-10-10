@@ -318,11 +318,11 @@ void Overlay::draw()
 {
     Update();
     ImGui::NewFrame();
-    
+
     // This is a placeholder UI
     if (visible)
     {
-        drawMainWindow();        
+        drawMainWindow();
         if (field_debug_open) field_debug(&field_debug_open);
         if (ff8 && world_debug_open) world_debug(&world_debug_open);
         if (demo_open) ImGui::ShowDemoWindow(&demo_open); // Useful to keep as GUI guide for now

@@ -290,7 +290,7 @@ struct game_mode *getmode_cached()
 	static uint32_t last_frame = -1;
 	static struct game_mode *last_mode;
 
-	if(frame_counter != last_frame) 
+	if(frame_counter != last_frame)
 	{
 		last_mode = getmode();
 		last_frame = frame_counter;
@@ -319,7 +319,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_SIZE:
 			window_size_x = (long)LOWORD(lParam);
 			window_size_y = (long)HIWORD(lParam);
-			
+
 			if (wParam == SIZE_MAXIMIZED) gameWindowWasMaximized = true;
 			else if (wParam == SIZE_RESTORED && gameWindowWasMaximized) gameWindowWasMaximized = false;
 			else break;
@@ -999,7 +999,7 @@ uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_he
 		VREF(tex_header, fb_tex.y),
 		VREF(tex_header, fb_tex.w),
 		VREF(tex_header, fb_tex.h)
-	);	
+	);
 
 	VRASS(texture_set, texturehandle[0], texture);
 
@@ -1142,7 +1142,7 @@ void convert_image_data(unsigned char *image_data, uint32_t *converted_image_dat
 				color = tex_format->blue_max > 0 ? ((((pixel & tex_format->blue_mask) >> tex_format->blue_shift) * 255) / tex_format->blue_max) : 0;
 				color |= (tex_format->green_max > 0 ? ((((pixel & tex_format->green_mask) >> tex_format->green_shift) * 255) / tex_format->green_max) : 0) << 8;
 				color |= (tex_format->red_max > 0 ? ((((pixel & tex_format->red_mask) >> tex_format->red_shift) * 255) / tex_format->red_max) : 0) << 16;
-				
+
 				// special case to deal with poorly converted PSX images in FF7
 				if(invert_alpha && pixel != 0x8000) color |= (tex_format->alpha_max > 0 ? (255 - ((((pixel & tex_format->alpha_mask) >> tex_format->alpha_shift) * 255) / tex_format->alpha_max)) : 255) << 24;
 				else color |= (tex_format->alpha_max > 0 ? ((((pixel & tex_format->alpha_mask) >> tex_format->alpha_shift) * 255) / tex_format->alpha_max) : 255) << 24;
@@ -1309,7 +1309,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			if(save_textures && (uint32_t)VREF(tex_header, file.pc_name) > 32)
 			{
 				save_texture(image_data, image_data_size, w, h, VREF(tex_header, palette_index), VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated));
-			}	
+			}
 
 			// check if this texture can be loaded from the modpath, we may not have to do any conversion
 			if (!load_external_texture(image_data, image_data_size, _texture_set, _tex_header))
@@ -1448,7 +1448,7 @@ struct blend_mode blend_modes[5] = {      // PSX blend mode:
 	{1, 0, 0xFF, 2, 2,    2, 2,    0, 0}, // additive blending
 	{1, 0, 0xFF, 4, 8,    2, 2,    0, 0}, // subtractive blending
 	{1, 0, 0x40, 5, 0x10, 2, 2,    0, 0}, // 25%? incoming color
-	{1, 0, 0xFF, 2, 2,    1, 1,    0, 0}, // 
+	{1, 0, 0xFF, 2, 2,    1, 1,    0, 0}, //
 };
 
 // called by the game to retrieve blend mode parameters
@@ -1518,7 +1518,7 @@ void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *
 			else newRenderer.doAlphaTest(false);
 			current_state.alphatest = option;
 			break;
-		
+
 		// cull face, does this ever change?
 		case V_CULLFACE:
 			if (option) newRenderer.setCullMode(RendererCullMode::FRONT);
@@ -1744,7 +1744,7 @@ uint32_t common_begin_scene(uint32_t unknown, struct game_obj *game_object)
 	else gl_save_state(&scene_stack[scene_stack_pointer++]);
 
 	VRASS(game_object, in_scene, VREF(game_object, in_scene) + 1);
-	
+
 	common_field_84(unknown, game_object);
 
 	return true;

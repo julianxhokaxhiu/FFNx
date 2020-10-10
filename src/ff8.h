@@ -48,11 +48,11 @@ enum ff8_game_modes
 
 /*
  * This section defines some structures used internally by the FF8 game engine.
- * 
+ *
  * Documentation for some of them can be found on the Qhimm wiki, a lot of
  * information can be gleaned from the source code to this program but in many
  * cases nothing is known except the size and general layout of the structure.
- * 
+ *
  * Variable and structure names are mostly based on what they contain rather
  * than what they are for, a lot of names may be wrong, inappropriate or
  * downright misleading. Thread with caution!

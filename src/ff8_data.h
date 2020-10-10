@@ -108,7 +108,7 @@ void ff8_find_externals()
 	common_externals.get_movie_frame = get_relative_call(ff8_externals.sub_529FF0, 0x26);
 
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
-	
+
 	common_externals.debug_print = get_relative_call(common_externals.update_movie_sample, 0x141);
 
 	ff8_externals._load_texture = get_relative_call(ff8_externals.load_fonts, 0x197);
@@ -171,7 +171,7 @@ void ff8_find_externals()
 	}
 
 	ff8_externals.menu_viewport = (sprite_viewport *)(get_absolute_value(ff8_externals.sub_4972A0, 0x12) - 0x20);
-	
+
 	ff8_externals.sub_497380 = get_relative_call(ff8_externals.sub_4A24B0, 0xAA);
 	ff8_externals.sub_4B3410 = get_relative_call(ff8_externals.sub_497380, 0xAC);
 	ff8_externals.sub_4BE4D0 = get_relative_call(ff8_externals.sub_4B3410, 0x68);
@@ -228,7 +228,7 @@ void ff8_find_externals()
 	ff8_externals.sdmusicplay = get_relative_call(ff8_externals.sm_battle_sound, 0x164);
 	ff8_externals.sd_music_play = get_relative_call(ff8_externals.sdmusicplay, 0x17);
 	common_externals.play_midi = get_relative_call(ff8_externals.sd_music_play, 0x20C);
-	
+
 	common_externals.get_midi_name = (char* (*)(uint32_t))get_relative_call(common_externals.play_midi, 0x21C);
 
 	ff8_externals.sub_46B800 = get_relative_call(ff8_externals.sm_battle_sound, 0x52);
@@ -246,7 +246,7 @@ void ff8_find_externals()
 
 	ff8_externals.sub_46B970 = get_relative_call(ff8_externals.sm_battle_sound, 0x14);
 	common_externals.midi_status = get_relative_call(ff8_externals.sub_46B970, 0x14);
-	
+
 	// Pause/Resume functions
 	ff8_externals.sub_500900 = get_relative_call(ff8_externals.sub_47CCB0, 0x98D);
 	ff8_externals.sub_501B60 = get_relative_call(ff8_externals.sub_500900, -0x2A2);

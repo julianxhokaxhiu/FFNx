@@ -89,7 +89,7 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 		{
 			if (trace_all) trace("gl_defer_draw: texture_set false\n");
 			return false;
-		} 
+		}
 		else
 		{
 			VOBJ(texture_set, texture_set, current_state.texture_set);
@@ -235,14 +235,14 @@ void gl_draw_deferred()
 		internal_set_renderstate(V_DEPTHTEST, 1, 0);
 		internal_set_renderstate(V_DEPTHMASK, 1, 0);
 
-		gl_draw_indexed_primitive(deferred_draws[next].primitivetype, 
-								  deferred_draws[next].vertextype, 
-								  deferred_draws[next].vertices, 
-								  deferred_draws[next].vertexcount, 
-								  deferred_draws[next].indices, 
-								  deferred_draws[next].count, 
-								  0, 
-								  deferred_draws[next].clip, 
+		gl_draw_indexed_primitive(deferred_draws[next].primitivetype,
+								  deferred_draws[next].vertextype,
+								  deferred_draws[next].vertices,
+								  deferred_draws[next].vertexcount,
+								  deferred_draws[next].indices,
+								  deferred_draws[next].count,
+								  0,
+								  deferred_draws[next].clip,
 								  deferred_draws[next].mipmap
 								  );
 

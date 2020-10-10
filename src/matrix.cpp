@@ -235,7 +235,7 @@ void rotate_matrix_z(float angle, struct matrix *matrix)
 
 float determinant_3x3(struct matrix *m)
 {
-	return m->_11 * m->_22 * m->_33 + m->_12 * m->_23 * m->_31 + m->_13 * m->_21 * m->_32 - 
+	return m->_11 * m->_22 * m->_33 + m->_12 * m->_23 * m->_31 + m->_13 * m->_21 * m->_32 -
 		m->_11 * m->_23 * m->_32 - m->_12 * m->_21 * m->_33 - m->_13 * m->_22 * m->_31;
 }
 

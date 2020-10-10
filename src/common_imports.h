@@ -38,7 +38,7 @@
 /*
  * Render states supported by the graphics engine
  *
- * Not all of these were implemented in the original games, even fewer are 
+ * Not all of these were implemented in the original games, even fewer are
  * actually required. Named after corresponding Direct3D states.
  */
 enum effects
@@ -106,11 +106,11 @@ typedef void (gfx_field_EC)(struct game_obj *);
 
 /*
  * This section defines some structures used internally by both game engines.
- * 
+ *
  * Documentation for some of them can be found on the Qhimm wiki, a lot of
  * information can be gleaned from the source code to this program but in many
  * cases nothing is known except the size and general layout of the structure.
- * 
+ *
  * Variable and structure names are mostly based on what they contain rather
  * than what they are for, a lot of names may be wrong, inappropriate or
  * downright misleading. Thread with caution!

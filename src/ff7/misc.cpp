@@ -80,7 +80,7 @@ char *kernel2_get_text(uint32_t section_base, uint32_t string_id, uint32_t secti
 	char *section = kernel2_sections[section_base + section_offset];
 
 	if(trace_all) trace("kernel2 get text (%i+%i:%i)\n", section_base, section_offset, string_id);
-	
+
 	return &section[((WORD *)section)[string_id]];
 }
 
@@ -120,7 +120,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 	ff7_externals.gamepad_status->button11 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB); // L3
 	ff7_externals.gamepad_status->button12 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB); // R3
 	ff7_externals.gamepad_status->button13 = gamepad.IsPressed(0x400); // PS Button
-    
+
     return ff7_externals.gamepad_status;
 }
 

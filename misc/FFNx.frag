@@ -54,7 +54,7 @@ uniform vec4 FSMiscFlags;
 void main()
 {
 	vec4 color = v_color0;
-    
+
     if (isTexture)
     {
         if (isYUV)

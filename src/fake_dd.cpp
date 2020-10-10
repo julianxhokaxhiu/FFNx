@@ -354,7 +354,7 @@ uint32_t __stdcall fake_dd_query_interface(struct dddevice **me, uint32_t *iid, 
 		*ppvobj = &_fake_dd_temp_surface;
 		return S_OK;
 	}
-	
+
 	return E_NOINTERFACE;
 }
 

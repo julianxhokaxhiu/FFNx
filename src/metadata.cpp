@@ -58,7 +58,7 @@ void Metadata::updateFF7()
         {
             memcpy(dataBuffer, userID.data(), userID.length());
         }
-        
+
         // Hash to MD5
         MD5 md5(dataBuffer, dataSize);
 
@@ -192,7 +192,7 @@ void Metadata::apply()
 
     // Load Metadata
     doc.load_file(metadataPath);
-    
+
     // Update Metadata
     if (ff8)
         updateFF8();

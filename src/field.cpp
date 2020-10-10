@@ -53,7 +53,7 @@ int script_PC_map_change() {
 		// Calculates the centroid of the walkmesh triangle
 		int x = (triangle_data[0].x + triangle_data[1].x + triangle_data[2].x) / 3;
 		int y = (triangle_data[0].y + triangle_data[1].y + triangle_data[2].y) / 3;
-		
+
 		*pending_x = x;
 		*pending_y = y;
 		*pending_triangle = target_triangle;
@@ -138,7 +138,7 @@ int map_jump_ff8(byte* entity, int arg)
 	// Restores the original field update code
 	memcpy_code(update_entities_call, map_patch_storage, 7);
 	map_changing = false;
-	
+
 	// Executes the field script to change map
 	int (**field_functions)(byte*, uint32_t) = (int (**)(byte*, uint32_t))common_externals.execute_opcode_table;
 	field_functions[0xB9](entity, 0); // KILLTIMER

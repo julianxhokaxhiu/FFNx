@@ -31,7 +31,7 @@
 int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 {
 	std::string newIn(in);
-	
+
 	std::transform(newIn.begin(), newIn.end(), newIn.begin(), ::tolower);
 
 	bool isSavegame = strstr(newIn.data(), ".ff7") != NULL;
@@ -243,14 +243,14 @@ uint32_t use_files_array = true;
 int lgp_lookup_value(unsigned char c)
 {
 	c = tolower(c);
-	
+
 	if(c == '.') return -1;
-	
+
 	if(c < 'a' && c >= '0' && c <= '9') c += 'a' - '0';
-	
+
 	if(c == '_') c = 'k';
 	if(c == '-') c = 'l';
-	
+
 	return c - 'a';
 }
 
@@ -259,7 +259,7 @@ uint32_t lgp_chdir(char *path)
 	uint32_t len = strlen(path);
 
 	while(path[0] == '/' || path[0] == '\\') path++;
-	
+
 	memcpy(lgp_current_dir, path, len + 1);
 
 	while(lgp_current_dir[len - 1] == '/' || lgp_current_dir[len - 1] == '\\') len--;
@@ -301,7 +301,7 @@ uint32_t original_lgp_open_file(char *filename, uint32_t lgp_num, struct lgp_fil
 					struct conflict_list *conflict = &ff7_externals.lgp_folders[lgp_num].conflicts[toc_entry->conflict - 1];
 					struct conflict_entry *conflict_entries = conflict->conflict_entries;
 					uint32_t num_conflicts = conflict->num_conflicts;
-					
+
 					// there are multiple files with this name, look for our
 					// current directory in the conflict table
 					for(i = 0; i < num_conflicts; i++)
@@ -403,7 +403,7 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 	return ret;
 }
 
-/* 
+/*
  * Direct LGP file access routines are used all over the place despite the nice
  * generic file interface found below in this file. Therefore we must implement
  * these in a way that works with the original code.
@@ -497,7 +497,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 		else trace("open %s (mode %i)\n", filename, file_context->mode);
 	}
 
-	
+
 	if (!file_context->use_lgp)
 	{
 		// Attempt another redirection based on Steam/eStore logic

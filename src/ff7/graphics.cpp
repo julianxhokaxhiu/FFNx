@@ -29,8 +29,8 @@
 #include "../gl.h"
 
 /*
- * Most of these functions are lifted from the game with only minor changes to 
- * replace Direct3D calls. Modifying or even attempting to understand most of 
+ * Most of these functions are lifted from the game with only minor changes to
+ * replace Direct3D calls. Modifying or even attempting to understand most of
  * this code is not recommended.
  */
 
@@ -40,7 +40,7 @@ void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip)
 
 	if(ip->vertices) external_free(ip->vertices);
 	if(ip->indices) external_free(ip->indices);
-	
+
 	external_free(ip);
 }
 
@@ -152,7 +152,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 
 		instance_transform_mode = struc_49->field_8;
 		struc_84 = struc_49->struc_84;
-		
+
 		if(struc_84) instance_type = struc_84->field_4;
 
 		if(trace_all) trace("instanced, %s, type %i, transform %i\n", correct_frame ? "correct frame" : "wrong frame", instance_type, instance_transform_mode);
@@ -311,7 +311,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 
 				struc_77->use_matrix = 0;
 				struc_77->use_matrix_pointer = 0;
-				
+
 				if(matrix_set && matrix_set->matrix_world)
 				{
 					struc_77->use_matrix = 1;

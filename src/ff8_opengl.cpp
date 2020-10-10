@@ -187,7 +187,7 @@ error:
 void texture_reload_hack(struct texture_page* texture_page, uint32_t texture_pages_offset, uint32_t do_download)
 {
 	struct ff8_game_obj* game_object = (struct ff8_game_obj*)common_externals.get_game_object();
-	
+
 	if (game_object->field_A48)
 	{
 		struct ff8_texture_set* texture_set = (struct ff8_texture_set*)texture_page->tri_gfxobj->hundred_data->texture_set;

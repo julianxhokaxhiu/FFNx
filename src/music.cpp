@@ -363,7 +363,7 @@ void set_midi_tempo(char tempo)
 uint32_t remember_playing_time()
 {
 	midi_to_resume = playing_midi;
-	
+
 	return 0;
 }
 

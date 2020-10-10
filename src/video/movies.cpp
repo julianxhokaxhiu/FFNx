@@ -117,7 +117,7 @@ void ffmpeg_release_movie_objects()
 	acodec_ctx = 0;
 	format_ctx = 0;
 	ffmpeg_sound_buffer = 0;
-	
+
 	audio_must_be_converted = false;
 
 	if(skipped_frames > 0) info("release_movie_objects: skipped %i frames\n", skipped_frames);
@@ -451,12 +451,12 @@ uint32_t ffmpeg_update_movie_sample()
 				if(skipping_frames && LAG > 0.0)
 				{
 					skipped_frames++;
-					
+
 					if(((skipped_frames - 1) & skipped_frames) == 0) glitch("update_movie_sample: video playback is lagging behind, skipping frames (frame #: %i, skipped: %i, lag: %f)\n", movie_frame_counter, skipped_frames, LAG);
 
 					if(use_bgra_texture) draw_bgra_frame(vbuffer_read);
 					else draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
-					
+
 					av_packet_unref(&packet);
 
 					break;
@@ -464,7 +464,7 @@ uint32_t ffmpeg_update_movie_sample()
 				else skipping_frames = false;
 
 				if(movie_sync_debug) info("update_movie_sample(video): DTS %f PTS %f (timebase %f) placed in video buffer at real time %f (play %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(codec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)movie_frame_counter / (double)movie_fps);
-				
+
 				if(sws_ctx)
 				{
 					uint8_t *planes[4] = { 0 };
@@ -580,7 +580,7 @@ uint32_t ffmpeg_update_movie_sample()
 				if (IDirectSoundBuffer_Play(ffmpeg_sound_buffer, 0, 0, DSBPLAY_LOOPING)) error("update_movie_sample: couldn't play sound buffer\n");
 			}
 		}
-		
+
 		first_audio_packet = false;
 	}
 
@@ -596,7 +596,7 @@ uint32_t ffmpeg_update_movie_sample()
 
 			vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
 		}
-		
+
 		if(vbuffer_write == vbuffer_read) return false;
 	}
 

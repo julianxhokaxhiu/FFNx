@@ -281,7 +281,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 		ff7_externals.menu_sub_71894B = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x2B);
 		ff7_externals.menu_sub_718DBE = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x77);
 		ff7_externals.menu_sub_719B81 = get_relative_call(ff7_externals.name_menu_sub_719C08, 0xCC);
-		
+
 		ff7_externals.set_default_input_settings_save = get_relative_call(ff7_externals.menu_sub_71894B, 0x189);
 	}
 	else
@@ -289,13 +289,13 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 		ff7_externals.menu_sub_71894B = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x2A);
 		ff7_externals.menu_sub_718DBE = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x76);
 		ff7_externals.menu_sub_719B81 = get_relative_call(ff7_externals.name_menu_sub_719C08, 0xCB);
-		
+
 		ff7_externals.set_default_input_settings_save = get_relative_call(ff7_externals.menu_sub_71894B, 0x188);
 	}
 
 	ff7_externals.keyboard_name_input = get_relative_call(ff7_externals.menu_sub_718DBE, 0x99);
  	ff7_externals.restore_input_settings = get_relative_call(ff7_externals.menu_sub_719B81, 0x80);
- 	
+
 	ff7_externals.dinput_getdata2 = get_relative_call(ff7_externals.keyboard_name_input, 0x1C);
 	common_externals.get_keyboard_state = get_relative_call(ff7_externals.keyboard_name_input, 0x6);
 

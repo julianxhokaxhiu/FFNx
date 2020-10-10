@@ -40,7 +40,7 @@ int Hext::getAddress(std::string& token)
         ss << std::hex << *ptr;
         sparts[0] = ss.str();
     }
-    
+
     for (auto &part : sparts)
     {
         iparts.push_back(
@@ -129,7 +129,7 @@ bool Hext::parseCommands(std::string& token)
         replace(token, "<<", "");
 
         trim(token);
-        
+
         trace("%s\n", token.data());
 
         return true;

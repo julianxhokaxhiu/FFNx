@@ -83,7 +83,7 @@ namespace SoLoud
 						aBuffer[i * aBufferSize + j] = mParent->mData[offset + j + i] / (float)INT16_MAX;
 					}
 				}
-				
+
 				offset += copylen;
 			}
 			else

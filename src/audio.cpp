@@ -94,7 +94,7 @@ void NxAudioEngine::flush()
 
 	_musicStack.empty();
 	_musicHandle = NXAUDIOENGINE_INVALID_HANDLE;
-	
+
 	_voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
 }
 
@@ -308,9 +308,9 @@ float NxAudioEngine::getMusicVolume()
 }
 
 void NxAudioEngine::setMusicVolume(float volume, size_t time)
-{	
+{
 	_wantedMusicVolume = volume;
-	
+
 	float _volume = volume * _musicMasterVolume;
 
 	if (time > 0)

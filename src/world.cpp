@@ -39,7 +39,7 @@
   (byte & 0x08 ? '1' : '0'), \
   (byte & 0x04 ? '1' : '0'), \
   (byte & 0x02 ? '1' : '0'), \
-  (byte & 0x01 ? '1' : '0') 
+  (byte & 0x01 ? '1' : '0')
 
 
 WORD* cameraZoom;
@@ -49,7 +49,7 @@ DWORD* playerPosY; //+1; it's dword, but later in game it's &0xFFFF
 BYTE* collisionTriangleGroundType; //0x2035D2E
 BYTE* collisionTriangleTextureFlag; //+1
 
-DWORD* currentCollideTriangle; //ESI+0x1C / 53CEE9 
+DWORD* currentCollideTriangle; //ESI+0x1C / 53CEE9
 DWORD* bCollisionEnabled;
 
 void world_init()
@@ -94,7 +94,7 @@ void world_debug(bool* isOpen)
 	ImGui::Checkbox("Enable collision", (bool*)bCollisionEnabled);
 	ImGui::Text("	Current collide triangle:");
 	ImGui::Text("Ground type: %d, texture flag: 0b%c%c%c%c%c%c%c%c", //this is cool stuff
-		*collisionTriangleGroundType, 
+		*collisionTriangleGroundType,
 		BYTE_TO_BINARY(*collisionTriangleTextureFlag)
 		);
 	ImGui::Text("triangle pointer: %08X:", *currentCollideTriangle);

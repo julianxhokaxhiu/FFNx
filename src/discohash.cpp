@@ -32,20 +32,20 @@ uint64_t *ds = (uint64_t *)disco_buf;
   //--------
   // State mix function
 
-    FORCE_INLINE uint64_t rot( uint64_t v, int n) 
+    FORCE_INLINE uint64_t rot( uint64_t v, int n)
     {
       n = n & 63U;
       if (n)
           v = (v >> n) | (v << (64-n));
-      return v; 
+      return v;
     }
 
-    FORCE_INLINE uint8_t rot8( uint8_t v, int n) 
+    FORCE_INLINE uint8_t rot8( uint8_t v, int n)
     {
       n = n & 7U;
       if (n)
           v = (v >> n) | (v << (8-n));
-      return v; 
+      return v;
     }
 
     FORCE_INLINE void mix(const int A)
@@ -55,7 +55,7 @@ uint64_t *ds = (uint64_t *)disco_buf;
       ds[A] = rot(ds[A], 23);
       ds[A] *= Q;
       //ds[A] = rot(ds[A], 23);
-      
+
       ds[B] ^= ds[A];
 
       ds[B] *= P;
@@ -65,7 +65,7 @@ uint64_t *ds = (uint64_t *)disco_buf;
     }
 
   //---------
-  // Hash round function 
+  // Hash round function
 
     FORCE_INLINE void round( const uint64_t * m64, const uint8_t * m8, int len )
     {
@@ -92,7 +92,7 @@ uint64_t *ds = (uint64_t *)disco_buf;
 
       Len = index << 3;
       sindex = index&(STATEM);
-      
+
       //#pragma omp parallel for
       for( index = Len; index < len; index++) {
         ds8[sindex] += rot8(m8[index] + index + counter8 + 1, 23);
@@ -110,7 +110,7 @@ uint64_t *ds = (uint64_t *)disco_buf;
     }
 
   //---------
-  // main hash function 
+  // main hash function
 
     void BEBB4185_64 ( const void * key, int len, unsigned seed, void * out )
     {
@@ -151,7 +151,7 @@ uint64_t *ds = (uint64_t *)disco_buf;
       h[1] = ds[3];
 
       h[0] += h[1];
-      
+
       //h[2] = ds[0];
       //h[3] = ds[1];
       //

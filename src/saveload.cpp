@@ -33,16 +33,16 @@
 void make_path(char *name)
 {
 	char *next = name;
-	
+
 	while((next = strchr(next, '/')))
 	{
 		char tmp[128];
-		
+
 		while(next[0] == '/') next++;
-		
+
 		strncpy(tmp, name, next - name);
 		tmp[next - name] = 0;
-		
+
 		_mkdir(tmp);
 	}
 }
@@ -94,7 +94,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	uint32_t ret = 0;
 	char filename[sizeof(basedir) + 1024]{ 0 };
 	uint64_t hash;
-	
+
 	const std::vector<std::string> exts =
 	{
 		"dds",
@@ -128,7 +128,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 			ret = load_texture_helper(filename, width, height, exts[idx] == "png");
 
 			if (!ret && trace_all) warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
-				
+
 			break;
 		}
 		else if (trace_all || show_missing_textures)

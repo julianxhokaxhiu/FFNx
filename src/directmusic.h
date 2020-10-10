@@ -45,7 +45,7 @@ extern "C" {
     interface IDirectMusicChordMap;
     interface IDirectMusicLoader;
     interface IDirectMusicObject;
-#ifndef __cplusplus 
+#ifndef __cplusplus
     typedef interface IDirectMusic IDirectMusic;
     typedef interface IDirectMusicTrack IDirectMusicTrack;
     typedef interface IDirectMusicPerformance IDirectMusicPerformance;
@@ -267,7 +267,7 @@ extern "C" {
     /* Fixed. wMusicValue holds final MIDI note value. This is used for drums, sound effects, and sequenced
        notes that should not be transposed by the chord or scale.
     */
-#define DMUS_PLAYMODE_FIXED             0  
+#define DMUS_PLAYMODE_FIXED             0
     /* In fixed to key, the musicvalue is again a fixed MIDI value, but it
        is transposed on top of the key root.
     */
@@ -417,7 +417,7 @@ extern "C" {
     } DMUS_CURVE_FLAGS;
 
 
-#define DMUS_CURVE_RESET    1        
+#define DMUS_CURVE_RESET    1
 
     /* Curve shapes */
     enum
