@@ -206,6 +206,22 @@ If you want to use the latest release ( or canary release ) of FFNx, you can fol
 
 FFNx is highly configurable! Feel free to tweak every available option within the [FFNx.toml](misc/FFNx.toml) file.
 
+## Audio Engine configuration
+
+The new FFNx Audio Engine is completely configurable by you! Every audio layer can now have its own `config.toml` file, which through it you can customize the Audio Engine behavior when a track is going to be played.
+
+The `config.toml` MUST BE within the relative configured `external_*_path` entry in the [FFNx.toml](misc/FFNx.toml) file.
+For example, for the SFX layer on default configuration, the file should be placed in `sfx/config.toml`.
+
+Feel free to check the example configuration included in each FFNx release.
+
+### Audio Engine Layers
+
+The current supported Audio Engine layers are:
+- [SFX](misc/FFNx.SFX.toml): in-game audio sound effects ( menu cursor sound, battle sword slash sound, etc. )
+- Music: in-game audio music ( world theme, field theme, etc. )
+- Voice: in-game audio voice acting ( dialog voice acting )
+
 ## Cheat codes
 
 FFNx comes with different cheat codes built-in which would allow you to boost or enjoy your gameplay experience.
