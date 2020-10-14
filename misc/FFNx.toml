@@ -106,14 +106,14 @@
 #[EXTERNAL SFX PATH]
 # Path of the external sound files
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_sfx_path = sfx
+#external_sfx_path = "sfx"
 
 #[EXTERNAL SFX EXTENSION]
 # The type of file to search for. By default is ogg.
 # Supported extensions:
 # - ogg, mp3, flac, wav
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_sfx_ext = ogg
+#external_sfx_ext = "ogg"
 
 #[USE EXTERNAL MUSIC]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce music in-game.
@@ -134,7 +134,7 @@
 # - FF7 eStore: data/music_ogg
 # - FF7 Steam: data/music_ogg
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_music_path =
+#external_music_path = ""
 
 #[EXTERNAL MUSIC EXTENSION]
 # The type of file to search for. By default is ogg.
@@ -150,19 +150,19 @@
 # To find one compiled BIOS: https://git.lopez-snowhill.net/chris/foo_psf
 # To generate one: https://git.lopez-snowhill.net/chris/highly_experimental
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#he_bios_path =
+#he_bios_path = ""
 
 #[EXTERNAL VOICE PATH]
 # Path of the external voice files
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_voice_path = voice
+#external_voice_path = "voice"
 
 #[EXTERNAL VOICE EXTENSION]
 # The type of file to search for. By default is ogg.
 # Supported extensions:
 # - ogg, mp3, flac, wav
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_voice_ext = ogg
+#external_voice_ext = "ogg"
 
 #[ENABLE VOICE MUSIC FADE]
 # This flag will enable the music volume fade out and fade in, when a voice acting is being played back.
@@ -193,7 +193,7 @@
 #[FFMPEG VIDEO FILE EXTENSION]
 # The type of file that the ffmpeg layer will search for. Default is avi.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ffmpeg_video_ext = avi
+#ffmpeg_video_ext = "avi"
 
 ###############################
 # MUST SET FOR VERSIONS BELOW
@@ -203,7 +203,7 @@
 # The folder name in your game Documents path ( for eg. for FF7 is "C:\Users\JohnDoe\Documents\Square Enix\FINAL FANTASY VII Steam\user_XXXXXXX")
 # Use this only if you have MORE THAN ONE user_* directories. If not, just leave this commented as the driver will autodetect the directory.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#steam_game_userdata = user_12345678
+#steam_game_userdata = "user_12345678"
 
 ########################
 ## MODDER OPTIONS
@@ -212,7 +212,7 @@
 #[TEXTURE PATH]
 # Mod directory where textures will be loaded from
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#mod_path = mods/Textures
+#mod_path = "mods/Textures"
 
 # Show every failed attempt at loading a .png or .dds texture
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -228,11 +228,11 @@
 # 2. The game language ( for eg. if ff7_en it will be "en" )
 # The resulting path will then be "<hext_patching_path>/ff7/en", if you run for eg. FF7 English
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#hext_patching_path = hext
+#hext_patching_path = "hext"
 
 # This path will define where the driver will look first, allowing you to override core game files, if needed
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#override_path = override
+#override_path = "override"
 
 #[SPEEDHACK]
 # Set the step when increasing the speedhack speed
@@ -383,12 +383,12 @@
 # For example: if FF7 is looking for aaab.rsd in char.lgp, this option will make it open direct/char/aaab.rsd first,
 # If this file doesn't exist it will look for the original in the LGP archive
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#direct_mode_path = direct
+#direct_mode_path = "direct"
 
 # This is the path where your savefiles will be read.
 # Notice that the path will be relative to your FF7 Game install directory, where usually the "save" directory is stored.
 # PLEASE NOTE: THIS IS A VALID OPTION ONLY FOR FF7 1998/eStore edition. It will NOT work on the Steam edition!
-#save_path = save
+#save_path = "save"
 
 ## DEBUGGING OPTIONS - These options are mostly useful for developers or people reporting crashes. Please do enable them only when required.
 
