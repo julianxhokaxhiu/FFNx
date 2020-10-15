@@ -132,7 +132,7 @@ void main()
 
             if (isMovie) texture_color.a = 1.0;
 
-            if (texture_color.a == 0.0) discard;
+            if (texture_color.a < 0.20) discard;
 
             if (modulateAlpha) color *= texture_color;
             else
