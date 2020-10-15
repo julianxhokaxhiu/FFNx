@@ -185,8 +185,6 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		return;
 	}
 
-	newRenderer.useFancyTransparency(fancy_transparency);
-
 	newRenderer.setInterpolationQualifier(current_state.shademode ? RendererInterpolationQualifier::SMOOTH : RendererInterpolationQualifier::FLAT);
 
 	// handle some special cases, see special_case.c

@@ -369,10 +369,6 @@
 
 ## ADVANCED OPTIONS - Don't fiddle with these unless you know what you're doing.
 
-# Enable alpha blending for textures without an existing blending effect
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#fancy_transparency = false
-
 # Skip movie frames if necessary.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #skip_frames = false

@@ -42,15 +42,6 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	VOBJ(texture_set, texture_set, current_state.texture_set);
 	uint32_t defer = false;
 
-	if(fancy_transparency && current_state.texture_set && current_state.blend_mode == BLEND_NONE)
-	{
-		// restore original blend mode for non-modpath textures
-		if (!VREF(texture_set, ogl.external))
-		{
-			newRenderer.useFancyTransparency(false);
-		}
-	}
-
 	// modpath textures rendered in 3D should always be filtered
 	if(vertextype != TLVERTEX && current_state.texture_set && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
 
@@ -118,7 +109,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		}
 	}
 
-	if(defer && fancy_transparency) return gl_defer_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap);
+	if(defer) return gl_defer_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap);
 
 	return false;
 }

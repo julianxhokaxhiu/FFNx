@@ -312,7 +312,6 @@ void Renderer::resetState()
     doModulateAlpha();
     doTextureFiltering();
     isExternalTexture();
-    useFancyTransparency();
 };
 
 void Renderer::renderFrame()
@@ -681,8 +680,7 @@ void Renderer::draw()
             break;
         case RendererBlendMode::BLEND_NONE:
             internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
-            if (internalState.bUseFancyTransparency) internalState.state |= BGFX_STATE_BLEND_FUNC_SEPARATE(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
-            else internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO);
+            internalState.state |= BGFX_STATE_BLEND_FUNC_SEPARATE(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
             break;
         }
 
@@ -1275,11 +1273,6 @@ void Renderer::doTextureFiltering(bool flag)
 void Renderer::isExternalTexture(bool flag)
 {
     internalState.bIsExternalTexture = flag;
-}
-
-void Renderer::useFancyTransparency(bool flag)
-{
-    internalState.bUseFancyTransparency = flag;
 }
 
 void Renderer::setAlphaRef(RendererAlphaFunc func, float ref)

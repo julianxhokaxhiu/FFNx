@@ -67,7 +67,6 @@ long refresh_rate;
 bool enable_vsync;
 bool linear_filter;
 bool mdef_fix;
-bool fancy_transparency;
 long enable_antialiasing;
 bool enable_anisotropic;
 bool skip_frames;
@@ -159,7 +158,6 @@ void read_cfg()
 	enable_vsync = config["enable_vsync"].value_or(true);
 	linear_filter = config["linear_filter"].value_or(false);
 	mdef_fix = config["mdef_fix"].value_or(true);
-	fancy_transparency = config["fancy_transparency"].value_or(false);
 	enable_antialiasing = config["enable_antialiasing"].value_or(0);
 	enable_anisotropic = config["enable_anisotropic"].value_or(true);
 	skip_frames = config["skip_frames"].value_or(false);
@@ -184,12 +182,6 @@ void read_cfg()
 	speedhack_max = config["speedhack_max"].value_or(8.0);
 	speedhack_min = config["speedhack_min"].value_or(1.0);
 	enable_animated_textures = config["enable_animated_textures"].value_or(false);
-
-	if (ff8)
-	{
-		// Reset some internal flags as they are not compatible with FF8
-		fancy_transparency = false;
-	}
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;

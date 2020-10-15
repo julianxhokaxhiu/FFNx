@@ -81,10 +81,6 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	}
 	else
 	{
-		if (trace_all) trace("gl_defer_draw: fancy_transparency brought us here\n");
-		// fancy_transparency brought us here, blending was not enabled for
-		// this texture originally
-
 		if (!current_state.texture_set)
 		{
 			if (trace_all) trace("gl_defer_draw: texture_set false\n");

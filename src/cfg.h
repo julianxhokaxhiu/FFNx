@@ -74,7 +74,6 @@ extern long refresh_rate;
 extern bool enable_vsync;
 extern bool linear_filter;
 extern bool mdef_fix;
-extern bool fancy_transparency;
 extern long enable_antialiasing;
 extern bool enable_anisotropic;
 extern bool skip_frames;
