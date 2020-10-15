@@ -285,7 +285,6 @@ void ff8_find_externals()
 
 		ff8_externals.sub_53FAC0 = get_relative_call(ff8_externals.worldmap_main_loop, 0x134);
 		ff8_externals.sub_54B460 = get_relative_call(ff8_externals.sub_53FAC0, 0x5D7);
-		ff8_externals.sub_558D70 = get_relative_call(ff8_externals.sub_54B460, 0x3F3);
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.sub_53FAC0, 0x1D5);
 		ff8_externals.sub_53BB90 = get_relative_call(ff8_externals.sub_53FAC0, 0x2D4);
@@ -307,9 +306,13 @@ void ff8_find_externals()
 		ff8_externals.sub_548080 = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x5A2);
 
 		ff8_externals.sub_53FAC0 = get_relative_call(ff8_externals.worldmap_main_loop, 0x137);
+		ff8_externals.sub_54B460 = get_relative_call(ff8_externals.sub_53FAC0, 0x5D9);
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.sub_53FAC0, 0x1D6);
 		ff8_externals.sub_53BB90 = get_relative_call(ff8_externals.sub_53FAC0, 0x2D5);
+		ff8_externals.sub_53E2A0 = get_relative_call(ff8_externals.sub_53BB90, 0x336);
+		ff8_externals.sub_53E6B0 = get_relative_call(ff8_externals.sub_53E2A0, 0x39A);
+		ff8_externals.sub_4023D0 = get_relative_call(ff8_externals.sub_53BB90, 0xAE5);
 		ff8_externals.sub_53C750 = get_relative_call(ff8_externals.sub_53FAC0, 0x2DC);
 		ff8_externals.sub_54FDA0 = get_relative_call(ff8_externals.sub_53FAC0, 0x376);
 		ff8_externals.sub_54D7E0 = get_relative_call(ff8_externals.sub_53FAC0, 0x3C4);
@@ -322,6 +325,8 @@ void ff8_find_externals()
 
 		ff8_externals.sub_54A0D0 = 0x54A0D0;
 	}
+
+	ff8_externals.sub_558D70 = get_relative_call(ff8_externals.sub_54B460, 0x3F3);
 
 	// Required by Steam edition
 	switch (version)
