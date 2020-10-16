@@ -2322,7 +2322,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				" - You have FF8 1.2 from Eidos (you need the newer 1.2 patch from Squaresoft).\n"
 				" - You have an unsupported translation of FF8. (US English, French, German, Spanish and Italian versions are currently supported)\n"
 				" - You have a conflicting patch applied.\n\n"
-				, "Error", 0);
+				, "Error", MB_ICONERROR | MB_OK);
 			exit(1);
 		}
 
