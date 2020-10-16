@@ -19,6 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "audio.h"
 #include "renderer.h"
 
 #include "crashdump.h"
@@ -165,6 +166,9 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	}
 	else
 		MessageBoxA(gameHwnd, "Oops! Something very bad happened.\n\nPlease provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_ICONERROR | MB_OK);
+
+	// Cleanup the audio device
+	nxAudioEngine.cleanup();
 
 	// let OS handle the crash
 	SetUnhandledExceptionFilter(0);
