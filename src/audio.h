@@ -112,7 +112,7 @@ public:
 
 	// Music
 	bool canPlayMusic(const char* name);
-	void playMusic(const char* name, uint32_t id, uint32_t time = 0, PlayFlags flags = PlayFlagsNone);
+	void playMusic(const char* name, uint32_t id, uint32_t fadetime = 0, PlayFlags flags = PlayFlagsNone, uint32_t offsetSeconds = 0);
 	void playMusics(const std::vector<std::string>& names, uint32_t id, uint32_t time = 0);
 	void stopMusic(uint32_t time = 0);
 	void pauseMusic(uint32_t time = 0, bool push = false);
