@@ -290,10 +290,10 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name)
 	return music;
 }
 
-void NxAudioEngine::playMusic(const char* name, uint32_t id, uint32_t time, PlayFlags flags)
+void NxAudioEngine::playMusic(const char* name, uint32_t id, uint32_t fadetime, PlayFlags flags, uint32_t offsetSeconds)
 {
 	if (!_musicStack.empty() && _musicStack.top().id == id) {
-		resumeMusic(time < 20 ? 20 : time, true); // Slight fade
+		resumeMusic(fadetime < 2 ? 2 : fadetime, true); // Slight fade
 		return;
 	}
 
@@ -304,21 +304,27 @@ void NxAudioEngine::playMusic(const char* name, uint32_t id, uint32_t time, Play
 		}
 
 		if (!(flags & PlayFlagsDoNotPause) && _music.isResumable) {
-			pauseMusic(time, true);
+			pauseMusic(fadetime, true);
 		}
 		else {
-			stopMusic(time);
+			stopMusic(fadetime);
 		}
 	}
 
 	SoLoud::AudioSource* music = loadMusic(name);
 
 	if (music != nullptr) {
-		_music.handle = _engine.playBackground(*music, time > 0 ? 0.0f : 1.0f);
+		_music.handle = _engine.playBackground(*music, fadetime > 0 ? 0.0f : 1.0f, offsetSeconds > 0);
 		_music.id = id;
 		_music.isResumable = flags & PlayFlagsIsResumable;
 
-		if (time > 0) setMusicVolume(1.0f, time);
+		if (offsetSeconds > 0) {
+			_engine.seek(_music.handle, offsetSeconds);
+			resumeMusic(fadetime < 2 ? 2 : fadetime); // Slight fade
+		}
+		else if (fadetime > 0) {
+			setMusicVolume(1.0f, fadetime);
+		}
 	}
 }
 
@@ -416,8 +422,6 @@ void NxAudioEngine::pauseMusic(uint32_t time, bool push)
 
 void NxAudioEngine::resumeMusic(uint32_t time, bool pop)
 {
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %d\n", __func__, _music.id, time);
-
 	if (!_musicSegmentsHandle.empty())
 	{
 		for (SoLoud::handle handle : _musicSegmentsHandle) _engine.setPause(handle, false);
@@ -432,6 +436,8 @@ void NxAudioEngine::resumeMusic(uint32_t time, bool pop)
 		// Restore the last known paused music
 		_music = _musicStack.top();
 		_musicStack.pop();
+
+		if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %d\n", __func__, _music.id, time);
 	}
 
 	// Play it again from where it was left off

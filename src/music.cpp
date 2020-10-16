@@ -28,6 +28,7 @@
 bool was_battle_gameover = false;
 bool current_music_is_field_resumable = false;
 bool next_music_channel = 0;
+uint32_t next_music_offset;
 bool next_music_is_not_multi = false;
 bool multi_music_is_playing = false;
 
@@ -242,9 +243,9 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return ret;
 }
 
-void play_midi_helper(const char* midi_name, uint32_t midi, uint32_t time = 0)
+void play_midi_helper(const char* midi_name, uint32_t midi, uint32_t fade_time = 0)
 {
-	nxAudioEngine.playMusic(midi_name, midi, time, needs_resume(midi));
+	nxAudioEngine.playMusic(midi_name, midi, fade_time, needs_resume(midi), next_music_offset);
 	nxAudioEngine.setMusicLooping(!no_loop(midi));
 
 	if (music_mode(midi) == MODE_FIELD) {
@@ -255,6 +256,7 @@ void play_midi_helper(const char* midi_name, uint32_t midi, uint32_t time = 0)
 	}
 
 	next_music_channel = 0;
+	next_music_offset = 0;
 }
 
 void ff7_play_midi(uint32_t midi)
@@ -454,6 +456,14 @@ uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t unused1, uint32_
 	return 1; // Success
 }
 
+uint32_t ff8_play_midi_at(char* midi_data, uint32_t offset)
+{
+	if (trace_all || trace_music) trace("%s: play midi at %d\n", __func__, offset);
+	next_music_offset = offset * 3;
+	((uint32_t(*)(uint32_t,char*,uint32_t))ff8_externals.sd_music_play)(0, midi_data, *ff8_externals.current_volume);
+	return 0;
+}
+
 uint32_t ff8_stop_midi()
 {
 	stop_midi();
@@ -467,7 +477,7 @@ uint32_t ff8_set_midi_volume(int db_volume)
 
 	if (trace_all || trace_music) trace("%s: set direct volume %d Db (%d)\n", __func__, db_volume, volume);
 
-	nxAudioEngine.setMusicVolume(volume / 127.0f);
+	set_midi_volume(volume);
 
 	if (multi_music_is_playing && volume == 0) {
 		nxAudioEngine.stopMusic();
@@ -561,6 +571,7 @@ void music_init()
 		if (ff8)
 		{
 			replace_function(common_externals.play_midi, ff8_play_midi);
+			replace_function(ff8_externals.sd_music_play_at, ff8_play_midi_at);
 			replace_function(common_externals.pause_midi, pause_midi);
 			replace_function(common_externals.restart_midi, restart_midi);
 			replace_function(common_externals.stop_midi, ff8_stop_midi);
@@ -582,6 +593,8 @@ void music_init()
 			replace_function(common_externals.midi_cleanup, noop);
 			/* Music channel detection */
 			replace_call(ff8_externals.opcode_dualmusic + 0x58, ff8_opcode_dualmusic_play_music);
+			/* Fix skip value (WM Ragnarok) */
+			patch_code_byte(0x543135, 7); // 7 * 3 => 21 seconds
 		}
 		else
 		{

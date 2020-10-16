@@ -110,6 +110,7 @@ void ff8_find_externals()
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff8_externals.sub_529FF0, 0x65A);
 	ff8_externals.opcode_dualmusic = common_externals.execute_opcode_table[0xBB];
 	ff8_externals.opcode_choicemusic = common_externals.execute_opcode_table[0x135];
+	ff8_externals.opcode_musicskip = common_externals.execute_opcode_table[0x144];
 
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
 
@@ -236,6 +237,7 @@ void ff8_find_externals()
 	ff8_externals.dmusic_segment_connect_to_dls = get_relative_call(common_externals.play_midi, 0x247);
 	ff8_externals.load_midi_segment = get_relative_call(common_externals.midi_init, 0xC8);
 	ff8_externals.choice_music = get_relative_call(ff8_externals.opcode_choicemusic, 0x5D);
+	ff8_externals.sd_music_play_at = get_relative_call(ff8_externals.opcode_musicskip, 0x46);
 	ff8_externals.load_and_play_midi_segment = get_relative_call(ff8_externals.choice_music, 0x99);
 	ff8_externals.load_midi_segment_from_id = get_relative_call(ff8_externals.choice_music, 0xD0);
 	ff8_externals.stop_midi_segments = get_relative_call(ff8_externals.load_and_play_midi_segment, 0xB);

@@ -876,6 +876,7 @@ struct ff8_externals
 	uint32_t sm_battle_sound;
 	uint32_t sdmusicplay;
 	uint32_t sd_music_play;
+	uint32_t sd_music_play_at;
 	uint32_t sub_46B800;
 	uint32_t sub_46C060;
 	uint32_t sub_46C6F0;
@@ -901,6 +902,7 @@ struct ff8_externals
 	uint32_t sub_46EB30;
 	uint32_t opcode_dualmusic;
 	uint32_t opcode_choicemusic;
+	uint32_t opcode_musicskip;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;
 	uint32_t load_midi_segment;
