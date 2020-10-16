@@ -94,8 +94,6 @@ bool enable_animated_textures;
 
 void read_cfg()
 {
-	enable_ffmpeg_videos = !ff8;
-
 	toml::parse_result config;
 
 	try
@@ -116,7 +114,7 @@ void read_cfg()
 
 	// Read config values
 	mod_path = config["mod_path"].value_or("");
-	enable_ffmpeg_videos = config["enable_ffmpeg_videos"].value_or(true);
+	enable_ffmpeg_videos = config["enable_ffmpeg_videos"].value_or(!ff8);
 	ffmpeg_video_ext = config["ffmpeg_video_ext"].value_or("");
 	use_external_sfx = config["use_external_sfx"].value_or(false);
 	external_sfx_path = config["external_sfx_path"].value_or("");
