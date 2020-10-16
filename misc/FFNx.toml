@@ -142,7 +142,7 @@
 # - https://github.com/losnoco/vgmstream#supported-file-types
 # - psf, psf2, minipsf, minipsf2 (PSF and PSF2) if you provide the Highly Experimental BIOS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_music_ext = ogg
+#external_music_ext = "ogg"
 
 #[EXTERNAL MUSIC HIGHLY EXPERIMENTAL BIOS]
 # This flag will enable support to PSF and PSF2 formats.
@@ -263,7 +263,8 @@
 # Set hotkey to toggle the debug information windows.
 # This is specified by a virtual-key code hexadecimal value, see: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#debug_ui_hotkey = 0x7B # VK_F12
+# Default: 0x7B ( VK_F12 )
+#debug_ui_hotkey = 0x7B
 
 # Display the verion of FFNx in upper right corner ( when fullscreen ) or in the title bar ( when windowed )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
