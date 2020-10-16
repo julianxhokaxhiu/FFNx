@@ -4,5 +4,6 @@
     "CMAKE_BUILD_TYPE": "Release",
     "_DLL_VERSION": "devel"
   },
-  "cmake.installPrefix": "${workspaceFolder}/.dist/install/x86-${buildType}"
+  "cmake.installPrefix": "${workspaceFolder}/.dist/install/x86-${buildType}",
+  "cmake.parallelJobs": 1
 }
