@@ -98,7 +98,7 @@
 # Audio Player Options
 #########################
 
-#[USE EXTERNAL MUSIC]
+#[USE EXTERNAL SFX]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce sounds in-game.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #use_external_sfx = false
