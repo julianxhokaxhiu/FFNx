@@ -193,6 +193,29 @@ void *ext_calloc(uint32_t size, uint32_t num, const char *file, uint32_t line)
 }
 #endif
 
+void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
+{
+	char msg[4 * 1024]; // 4K
+	static int print_prefix = 1;
+
+	av_log_format_line(ptr, level, fmt, vl, msg, sizeof(msg), &print_prefix);
+
+	switch (level) {
+	case AV_LOG_VERBOSE:
+	case AV_LOG_DEBUG: if (trace_movies) trace(msg); break;
+	case AV_LOG_INFO:
+	case AV_LOG_WARNING: if (trace_movies) info(msg); break;
+	case AV_LOG_ERROR:
+	case AV_LOG_FATAL:
+	case AV_LOG_PANIC: error(msg); break;
+	}
+
+	if (level <= AV_LOG_ERROR) {
+		FFNxStackWalker sw;
+		sw.ShowCallstack();
+	}
+}
+
 // figure out which game module is currently running by looking at the game's
 // own mode variable and the address of the current main function
 struct game_mode *getmode()
@@ -550,6 +573,41 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 			if (ret && VREF(game_object, engine_loop_obj.init))
 			{
+				if (ff8) ff8_init_hooks(game_object);
+				else ff7_init_hooks(game_object);
+
+				replace_function(common_externals.get_keyboard_state, &GetGameKeyState);
+				// catch all applog messages
+				replace_function(common_externals.debug_print, external_debug_print);
+
+#ifdef NO_EXT_HEAP
+				replace_function((uint32_t)common_externals.assert_free, ext_free);
+				replace_function((uint32_t)common_externals.assert_malloc, ext_malloc);
+				replace_function((uint32_t)common_externals.assert_calloc, ext_calloc);
+#endif
+
+				// Init renderer
+				newRenderer.init();
+
+				// Init GameHacks
+				gamehacks.init();
+
+				max_texture_size = newRenderer.getCaps()->limits.maxTextureSize;
+				info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
+
+				// perform any additional initialization that requires the rendering environment to be set up
+				field_init();
+				world_init();
+				music_init();
+				sfx_init();
+				voice_init();
+				if (enable_ffmpeg_videos)
+					movie_init();
+
+				// enable verbose logging for FFMpeg
+				av_log_set_level(AV_LOG_VERBOSE);
+				av_log_set_callback(ffmpeg_log_callback);
+
 				if (ff8) ff8_inject_driver(game_object);
 
 				if (VREF(game_object, engine_loop_obj.init)(game_object))
@@ -2188,29 +2246,6 @@ MCIERROR __stdcall dotemuMciSendCommandA(MCIDEVICEID mciId, UINT uMsg, DWORD_PTR
 	return mciSendCommandA(mciId, uMsg, dwParam1, dwParam2);
 }
 
-void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
-{
-	char msg[4 * 1024]; // 4K
-	static int print_prefix = 1;
-
-	av_log_format_line(ptr, level, fmt, vl, msg, sizeof(msg), &print_prefix);
-
-	switch (level) {
-	case AV_LOG_VERBOSE:
-	case AV_LOG_DEBUG: if (trace_movies) trace(msg); break;
-	case AV_LOG_INFO:
-	case AV_LOG_WARNING: if (trace_movies) info(msg); break;
-	case AV_LOG_ERROR:
-	case AV_LOG_FATAL:
-	case AV_LOG_PANIC: error(msg); break;
-	}
-
-	if (level <= AV_LOG_ERROR) {
-		FFNxStackWalker sw;
-		sw.ShowCallstack();
-	}
-}
-
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -2220,47 +2255,11 @@ __declspec(dllexport) void *new_dll_graphics_driver(void *game_object)
 {
 	void *ret;
 
-	// try to prevent screensavers from going off
-	SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
-
 	// game-specific initialization
 	if(!ff8)
 		ret = ff7_load_driver(game_object);
 	else
 		ret = ff8_load_driver(game_object);
-
-	replace_function(common_externals.get_keyboard_state, &GetGameKeyState);
-	// catch all applog messages
-	replace_function(common_externals.debug_print, external_debug_print);
-
-#ifdef NO_EXT_HEAP
-	replace_function((uint32_t)common_externals.assert_free, ext_free);
-	replace_function((uint32_t)common_externals.assert_malloc, ext_malloc);
-	replace_function((uint32_t)common_externals.assert_calloc, ext_calloc);
-#endif
-
-	// Init renderer
-	newRenderer.init();
-
-	// Init GameHacks
-	gamehacks.init();
-
-	max_texture_size = newRenderer.getCaps()->limits.maxTextureSize;
-	info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
-
-	// perform any additional initialization that requires the rendering environment to be set up
-	field_init();
-	world_init();
-	music_init();
-	sfx_init();
-	voice_init();
-
-	if(!ff8) ff7_post_init();
-	else ff8_post_init();
-
-	// enable verbose logging for FFMpeg
-	av_log_set_level(AV_LOG_VERBOSE);
-	av_log_set_callback(ffmpeg_log_callback);
 
 	return ret;
 }
@@ -2285,6 +2284,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		// install crash handler
 		open_applog("FFNx.log");
 		SetUnhandledExceptionFilter(ExceptionHandler);
+
+		// prevent screensavers
+		SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
 
 		info("FFNx driver version " VERSION "\n");
 		version = get_version();

@@ -915,6 +915,6 @@ struct ff8_externals
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
+void ff8_init_hooks(struct game_obj *_game_object);
 struct ff8_gfx_driver *ff8_load_driver(void* game_object);
-void ff8_post_init();
 LPDIJOYSTATE2 ff8_update_gamepad_status();

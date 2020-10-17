@@ -34,27 +34,27 @@ WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
 static uint32_t noop() { return 0; }
 
-struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
+void ff7_init_hooks(struct game_obj *_game_object)
 {
-	struct ff7_gfx_driver *ret;
-	struct ff7_game_obj* game_object = (struct ff7_game_obj*)_game_object;
+	struct ff7_game_obj *game_object = (struct ff7_game_obj *)_game_object;
 
-	common_externals.add_texture_format        = game_object->externals->add_texture_format;
-	common_externals.assert_calloc             = game_object->externals->assert_calloc;
-	common_externals.assert_malloc             = game_object->externals->assert_malloc;
-	common_externals.assert_free               = game_object->externals->assert_free;
-	common_externals.create_palette_for_tex    = game_object->externals->create_palette_for_tex;
-	common_externals.create_texture_format     = game_object->externals->create_texture_format;
-	common_externals.create_texture_set        = game_object->externals->create_texture_set;
+	common_externals.add_texture_format = game_object->externals->add_texture_format;
+	common_externals.assert_calloc = game_object->externals->assert_calloc;
+	common_externals.assert_malloc = game_object->externals->assert_malloc;
+	common_externals.assert_free = game_object->externals->assert_free;
+	common_externals.create_palette_for_tex = game_object->externals->create_palette_for_tex;
+	common_externals.create_texture_format = game_object->externals->create_texture_format;
+	common_externals.create_texture_set = game_object->externals->create_texture_set;
 	common_externals.generic_light_polygon_set = game_object->externals->generic_light_polygon_set;
-	common_externals.generic_load_group        = game_object->externals->generic_load_group;
-	common_externals.get_game_object           = game_object->externals->get_game_object;
-	ff7_externals.sub_6A2865                   = game_object->externals->sub_6A2865;
-	common_externals.make_pixelformat          = game_object->externals->make_pixelformat;
+	common_externals.generic_load_group = game_object->externals->generic_load_group;
+	common_externals.get_game_object = game_object->externals->get_game_object;
+	ff7_externals.sub_6A2865 = game_object->externals->sub_6A2865;
+	common_externals.make_pixelformat = game_object->externals->make_pixelformat;
 
 	ff7_data(game_object);
 
-	if(game_width == 1280) MessageBoxA(gameHwnd, "Using this driver with the old high-res patch is NOT recommended, there will be glitches.", "Warning", 0);
+	if (game_width == 1280)
+		MessageBoxA(gameHwnd, "Using this driver with the old high-res patch is NOT recommended, there will be glitches.", "Warning", 0);
 
 	game_object->d3d2_flag = 1;
 	game_object->nvidia_fix = 0;
@@ -66,7 +66,8 @@ struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
 	// Allow mouse cursor to be shown
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
 
-	if(ff7_more_debug) replace_function(common_externals.debug_print2, external_debug_print2);
+	if (ff7_more_debug)
+		replace_function(common_externals.debug_print2, external_debug_print2);
 
 	// TODO: Comment this if Chocobo's not visible in race
 	// replace_function(ff7_externals.draw_3d_model, draw_3d_model);
@@ -159,7 +160,7 @@ struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
 	replace_function(common_externals.diff_time, qpc_diff_time);
 
 	// override the timer calibration
-	QueryPerformanceFrequency((LARGE_INTEGER*)&game_object->_countspersecond);
+	QueryPerformanceFrequency((LARGE_INTEGER *)&game_object->_countspersecond);
 	game_object->countspersecond = (double)game_object->_countspersecond;
 
 	// #####################
@@ -168,12 +169,11 @@ struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
 
 	replace_call_function(ff7_externals.field_battle_toggle, ff7_toggle_battle_field);
 	replace_call_function(ff7_externals.worldmap_battle_toggle, ff7_toggle_battle_worldmap);
+}
 
-	// #####################
-	// driver init
-	// #####################
-
-	ret = (ff7_gfx_driver*)external_calloc(1, sizeof(*ret));
+struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
+{
+	struct ff7_gfx_driver *ret = (ff7_gfx_driver *)external_calloc(1, sizeof(*ret));
 
 	ret->init = common_init;
 	ret->cleanup = common_cleanup;
@@ -230,9 +230,4 @@ struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
 	ret->field_EC = common_field_EC;
 
 	return ret;
-}
-
-void ff7_post_init()
-{
-	movie_init();
 }

@@ -296,15 +296,15 @@ int ff8_is_window_active()
 	return 0;
 }
 
-struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
+void ff8_init_hooks(struct game_obj *_game_object)
 {
-	struct ff8_gfx_driver *ret;
-	struct ff8_game_obj* game_object = (struct ff8_game_obj*)_game_object;
+	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
 
-	if(version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
+	if (version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
 	{
 		MessageBoxA(gameHwnd, "Old Eidos patch detected, please update to the newer 1.2 patch from Square.\n"
-			"The old patch may or may not work properly, it is not supported and has not been tested.", "Warning", 0);
+													"The old patch may or may not work properly, it is not supported and has not been tested.",
+								"Warning", 0);
 	}
 
 	ff8_data();
@@ -315,18 +315,20 @@ struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 	game_object->dd2interface = &_fake_dddevice;
 	game_object->d3d2device = &_fake_d3d2device;
 
-	if (ff8_ssigpu_debug) ff8_externals.show_vram_window();
+	if (ff8_ssigpu_debug)
+		ff8_externals.show_vram_window();
 
-	if (ff8_keep_game_running_in_background) replace_function(ff8_externals.is_window_active, ff8_is_window_active);
+	if (ff8_keep_game_running_in_background)
+		replace_function(ff8_externals.is_window_active, ff8_is_window_active);
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
 
 	replace_function(common_externals.destroy_tex_header, ff8_destroy_tex_header);
 	replace_function(common_externals.load_tex_file, ff8_load_tex_file);
 
-	ff8_open_file = (struct ff8_file * (*)(struct ff8_file_context*, char*))common_externals.open_file;
-	ff8_read_file = (uint32_t (*)(uint32_t, void*, struct ff8_file*))common_externals.read_file;
-	ff8_close_file = (void (*)(struct ff8_file*))common_externals.close_file;
+	ff8_open_file = (struct ff8_file * (*)(struct ff8_file_context *, char *)) common_externals.open_file;
+	ff8_read_file = (uint32_t(*)(uint32_t, void *, struct ff8_file *))common_externals.read_file;
+	ff8_close_file = (void (*)(struct ff8_file *))common_externals.close_file;
 
 	memset_code(ff8_externals.movie_hack1, 0x90, 14);
 	memset_code(ff8_externals.movie_hack2, 0x90, 8);
@@ -336,13 +338,13 @@ struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 	ff8_externals.d3dcaps[2] = true;
 	ff8_externals.d3dcaps[3] = true;
 
-	if(version == VERSION_FF8_12_FR_NV || version == VERSION_FF8_12_SP_NV || version == VERSION_FF8_12_IT_NV)
+	if (version == VERSION_FF8_12_FR_NV || version == VERSION_FF8_12_SP_NV || version == VERSION_FF8_12_IT_NV)
 	{
 		unsigned char ff8fr_savefix1[] = "\xC0\xEA\x03\x8A\x41\x6D\x80\xE2"
-			                             "\x01\x24\xFE\x0A\xD0\x88\x51\x6D";
+																		 "\x01\x24\xFE\x0A\xD0\x88\x51\x6D";
 		unsigned char ff8fr_savefix2[] = "\x8A\x50\x6D\xC0\xE9\x03\x80\xE1"
-			                             "\x01\x80\xE2\xFE\x0A\xCA\x88\x48"
-										 "\x6D";
+																		 "\x01\x80\xE2\xFE\x0A\xCA\x88\x48"
+																		 "\x6D";
 
 		memcpy_code(ff8_externals.sub_53BB90 + 0x952, ff8fr_savefix1, sizeof(ff8fr_savefix1) - 1);
 		memcpy_code(ff8_externals.sub_53C750 + 0x8B0, ff8fr_savefix1, sizeof(ff8fr_savefix1) - 1);
@@ -381,16 +383,21 @@ struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 	// don't set system speaker config to stereo
 	memset_code(common_externals.directsound_create + 0x6D, 0x90, 34);
 
-	if(ff8_externals.nvidia_hack1) patch_code_double(ff8_externals.nvidia_hack1, 0.0);
-	if(ff8_externals.nvidia_hack2) patch_code_float(ff8_externals.nvidia_hack2, 0.0f);
+	if (ff8_externals.nvidia_hack1)
+		patch_code_double(ff8_externals.nvidia_hack1, 0.0);
+	if (ff8_externals.nvidia_hack2)
+		patch_code_float(ff8_externals.nvidia_hack2, 0.0f);
 
 	memcpy_code(ff8_externals.sub_4653B0 + 0xA5, texture_reload_fix, sizeof(texture_reload_fix));
 	replace_function(ff8_externals.sub_4653B0 + 0xA5 + sizeof(texture_reload_fix), texture_reload_hack);
 
 	// Add speedhack support
 	replace_function(common_externals.diff_time, qpc_diff_time);
+}
 
-	ret = (ff8_gfx_driver*)external_calloc(1, sizeof(*ret));
+struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
+{
+	struct ff8_gfx_driver *ret = (ff8_gfx_driver *)external_calloc(1, sizeof(*ret));
 
 	ret->init = common_init;
 	ret->cleanup = common_cleanup;
@@ -453,9 +460,4 @@ struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 	ret->field_EC = common_field_EC;
 
 	return ret;
-}
-
-void ff8_post_init()
-{
-	if(enable_ffmpeg_videos) movie_init();
 }
