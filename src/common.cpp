@@ -387,23 +387,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case WM_QUIT:
-			if (steam_edition) {
-				metadataPatcher.apply();
-
-				// Write ff7sound.cfg
-				char ff7soundPath[260]{ 0 };
-				get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
-				PathAppendA(ff7soundPath, "ff7sound.cfg");
-				FILE* ff7sound = fopen(ff7soundPath, "wb");
-
-				if (ff7sound)
-				{
-					fwrite(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
-					fwrite(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
-					fclose(ff7sound);
-				}
-			}
-
 			if (ff8) ff8_release_movie_objects();
 			else ff7_release_movie_objects();
 
@@ -651,6 +634,24 @@ uint32_t common_init(struct game_obj *game_object)
 void common_cleanup(struct game_obj *game_object)
 {
 	if(trace_all) trace("dll_gfx: cleanup\n");
+
+	if (steam_edition)
+	{
+		metadataPatcher.apply();
+
+		// Write ff7sound.cfg
+		char ff7soundPath[260]{0};
+		get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
+		PathAppendA(ff7soundPath, "ff7sound.cfg");
+		FILE *ff7sound = fopen(ff7soundPath, "wb");
+
+		if (ff7sound)
+		{
+			fwrite(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
+			fwrite(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
+			fclose(ff7sound);
+		}
+	}
 
 	nxAudioEngine.cleanup();
 }
