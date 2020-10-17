@@ -314,7 +314,7 @@ void NxAudioEngine::playMusic(const char* name, uint32_t id, uint32_t fadetime, 
 	SoLoud::AudioSource* music = loadMusic(name);
 
 	if (music != nullptr) {
-		_music.handle = _engine.playBackground(*music, fadetime > 0 ? 0.0f : 1.0f, offsetSeconds > 0);
+		_music.handle = _engine.playBackground(*music, fadetime > 0 ? 0.0f : _wantedMusicVolume * _musicMasterVolume, offsetSeconds > 0);
 		_music.id = id;
 		_music.isResumable = flags & PlayFlagsIsResumable;
 
@@ -323,7 +323,7 @@ void NxAudioEngine::playMusic(const char* name, uint32_t id, uint32_t fadetime, 
 			resumeMusic(fadetime < 2 ? 2 : fadetime); // Slight fade
 		}
 		else if (fadetime > 0) {
-			setMusicVolume(1.0f, fadetime);
+			setMusicVolume(_wantedMusicVolume, fadetime);
 		}
 	}
 }
@@ -344,7 +344,7 @@ void NxAudioEngine::playMusics(const std::vector<std::string>& names, uint32_t i
 	for (const std::string &name: names) {
 		SoLoud::AudioSource* music = loadMusic(name.c_str());
 		if (music != nullptr) {
-			SoLoud::handle musicHandle = _engine.playBackground(*music, 1.0f, true);
+			SoLoud::handle musicHandle = _engine.playBackground(*music, _wantedMusicVolume * _musicMasterVolume, true);
 			_musicSegmentsHandle.push_back(musicHandle);
 			_engine.addVoiceToGroup(groupHandle, musicHandle);
 		}
