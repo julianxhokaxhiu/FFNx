@@ -291,7 +291,7 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);
 extern "C" {
 #endif
 
-void ff8_inject_driver(struct game_obj* game_object);
+void ffnx_inject_driver(struct game_obj* game_object);
 
 #if defined(__cplusplus)
 }

@@ -608,7 +608,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				av_log_set_level(AV_LOG_VERBOSE);
 				av_log_set_callback(ffmpeg_log_callback);
 
-				if (ff8) ff8_inject_driver(game_object);
+				ffnx_inject_driver(game_object);
 
 				if (VREF(game_object, engine_loop_obj.init)(game_object))
 				{
@@ -2791,7 +2791,7 @@ __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(LPGUID guid, LPLPDI
 	return ((LPEAXDIRECTSOUNDCREATE)procEaxDSoundCreate)(guid, directsound, unk);
 }
 
-void ff8_inject_driver(struct game_obj* game_object)
+void ffnx_inject_driver(struct game_obj* game_object)
 {
 	VOBJ(game_obj, game_object, game_object);
 
