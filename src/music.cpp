@@ -563,9 +563,7 @@ void music_init()
 		// Fix Cid speech music stop + music channel detection (field only)
 		replace_call(ff7_externals.opcode_akao + 0xEA, ff7_music_sound_operation_fix);
 		replace_call(ff7_externals.opcode_akao2 + 0xE8, ff7_music_sound_operation_fix);
-
-		// FF7 DE Crashes as the sub at the relative point is totally different compared to EN, FR, ES. Comment this out until we figure out a better plan
-		//replace_call(ff7_externals.field_music_helper + 0x106, ff7_music_sound_operation_fix);
+		replace_call(ff7_externals.field_music_helper_sound_op_call, ff7_music_sound_operation_fix);
 	}
 
 	if (use_external_music)
