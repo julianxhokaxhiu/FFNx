@@ -1642,6 +1642,7 @@ struct ff7_externals
 	uint32_t opcode_akao2;
 	uint32_t opcode_cmusc;
 	uint32_t field_music_helper;
+	uint32_t field_music_helper_sound_op_call;
 	uint32_t opcode_gameover;
 	uint32_t opcode_message;
 	uint32_t opcode_ask;

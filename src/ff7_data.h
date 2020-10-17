@@ -362,6 +362,12 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.opcode_ask_question_code = (WORD*)get_absolute_value(ff7_externals.sub_6310A1, 0x2FE);
 
 	ff7_externals.field_music_helper = get_relative_call(ff7_externals.opcode_cmusc, 0x5E);
+	if (version == VERSION_FF7_102_DE) {
+		ff7_externals.field_music_helper_sound_op_call = ff7_externals.field_music_helper + 0x147;
+	}
+	else {
+		ff7_externals.field_music_helper_sound_op_call = ff7_externals.field_music_helper + 0x106;
+	}
 
 	ff7_externals.enter_gameover = get_absolute_value(main_loop, 0x1F7);
 	ff7_externals.exit_gameover = get_absolute_value(main_loop, 0x213);
