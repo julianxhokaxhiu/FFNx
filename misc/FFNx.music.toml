@@ -1,0 +1,30 @@
+# FFNx Audio Engine config file - Music layer
+
+### HOW TO: ###################################################################
+# Sections may be commented by default with an initial # character.
+# Remove the initial # character to set the entire sections block and its flags
+# -----------------------------------------------------------------------------
+# Syntax:
+# [MUSIC_NAME]
+# flag = value
+# another_flag = value
+###############################################################################
+
+### SUPPORTED FLAGS: ##########################################################
+# offset_seconds: Offset in seconds. Plays the music at this value instead of
+# from the begining.
+# no_intro_track: [FF8 Only] Name of the "no intro" music. When the "no intro"
+# version is detected, plays this music instead.
+# intro_seconds: [FF8 Only] Offset in seconds. When the "no intro" version is
+# detected, skips the beginning of the music.
+###############################################################################
+
+# Plays gar3 when gargade (GGU theme) is played but the "no intro" flag is set
+# -----------------------------------------------------------------------------
+[gargarde]
+no_intro_track = 'gar3'
+
+# Skip 20.5 seconds of hikutei (Ragnarok theme) if the "no intro" flag is set
+# -----------------------------------------------------------------------------
+[hikutei]
+intro_seconds = 20.5

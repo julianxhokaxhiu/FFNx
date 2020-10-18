@@ -44,6 +44,20 @@ struct NxAudioEngineMusic
 
 class NxAudioEngine
 {
+public:
+	enum PlayFlags {
+		PlayFlagsNone = 0x0,
+		PlayFlagsIsResumable = 0x1,
+		PlayFlagsDoNotPause = 0x2
+	};
+
+	struct PlayOptions
+	{
+		SoLoud::time offsetSeconds;
+		PlayFlags flags;
+		bool noIntro;
+		uint32_t fadetime;
+	};
 private:
 	enum NxAudioEngineLayer
 	{
@@ -74,6 +88,7 @@ private:
 	float _wantedMusicVolume = 1.0f;
 
 	SoLoud::AudioSource* loadMusic(const char* name);
+	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, PlayOptions *playOptions);
 
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
@@ -90,11 +105,6 @@ private:
 	void loadConfig();
 
 public:
-	enum PlayFlags {
-		PlayFlagsNone = 0x0,
-		PlayFlagsIsResumable = 0x1,
-		PlayFlagsDoNotPause = 0x2
-	};
 
 	bool init();
 	void flush();
@@ -112,13 +122,14 @@ public:
 
 	// Music
 	bool canPlayMusic(const char* name);
-	void playMusic(const char* name, uint32_t id, uint32_t fadetime = 0, PlayFlags flags = PlayFlagsNone, uint32_t offsetSeconds = 0);
-	void playMusics(const std::vector<std::string>& names, uint32_t id, uint32_t time = 0);
+	void playMusic(char* name, uint32_t id, PlayOptions& playOptions = PlayOptions());
+	void playMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions = PlayOptions());
 	void stopMusic(uint32_t time = 0);
 	void pauseMusic(uint32_t time = 0, bool push = false);
 	void resumeMusic(uint32_t time = 0, bool pop = false);
 	bool isMusicPlaying();
 	uint32_t currentMusicId();
+	SoLoud::time getMusicPlayingTime();
 	void setMusicMasterVolume(float volume, size_t time = 0);
 	void restoreMusicMasterVolume(size_t time = 0);
 	float getMusicVolume();

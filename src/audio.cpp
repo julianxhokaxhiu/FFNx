@@ -196,7 +196,8 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 	int _curId = id - 1;
 
 	std::string _id = std::to_string(id);
-	if (auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id])
+	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id];
+	if (node)
 	{
 		// Shuffle SFX playback, if any entry found for the current id
 		toml::array *shuffleIds = node["shuffle"].as_array();
@@ -290,10 +291,40 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name)
 	return music;
 }
 
-void NxAudioEngine::playMusic(const char* name, uint32_t id, uint32_t fadetime, PlayFlags flags, uint32_t offsetSeconds)
+void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, PlayOptions* playOptions)
 {
+	toml::table config = nxAudioEngineConfig[NXAUDIOENGINE_MUSIC];
+	std::optional<SoLoud::time> offset_seconds_opt = config[name]["offset_seconds"].value<SoLoud::time>();
+	std::optional<std::string> no_intro_track_opt = config[name]["no_intro_track"].value<std::string>();
+	std::optional<SoLoud::time> intro_seconds_opt = config[name]["intro_seconds"].value<SoLoud::time>();
+
+	if (playOptions->noIntro) {
+		if (no_intro_track_opt.has_value()) {
+			std::string no_intro_track = *no_intro_track_opt;
+			if (trace_all || trace_music) info("%s: replaced by no intro track %s\n", __func__, no_intro_track.c_str());
+
+			if (!no_intro_track.empty()) {
+				memcpy(name, no_intro_track.c_str(), no_intro_track.size());
+				name[no_intro_track.size()] = '\0';
+			}
+		}
+		else if (intro_seconds_opt.has_value()) {
+			playOptions->offsetSeconds = *intro_seconds_opt;
+		}
+		else {
+			info("%s: cannot play no intro track, please configure it in %s/config.toml\n", __func__, external_music_path.c_str());
+		}
+	} else if (offset_seconds_opt.has_value()) {
+		playOptions->offsetSeconds = *offset_seconds_opt;
+	}
+}
+
+void NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
+{
+	overloadPlayArgumentsFromConfig(name, &id, &playOptions);
+
 	if (!_musicStack.empty() && _musicStack.top().id == id) {
-		resumeMusic(fadetime < 2 ? 2 : fadetime, true); // Slight fade
+		resumeMusic(playOptions.fadetime < 2 ? 2 : playOptions.fadetime, true); // Slight fade
 		return;
 	}
 
@@ -303,39 +334,40 @@ void NxAudioEngine::playMusic(const char* name, uint32_t id, uint32_t fadetime, 
 			return; // Already playing
 		}
 
-		if (!(flags & PlayFlagsDoNotPause) && _music.isResumable) {
-			pauseMusic(fadetime, true);
+		if (!(playOptions.flags & PlayFlagsDoNotPause) && _music.isResumable) {
+			pauseMusic(playOptions.fadetime, true);
 		}
 		else {
-			stopMusic(fadetime);
+			stopMusic(playOptions.fadetime);
 		}
 	}
 
 	SoLoud::AudioSource* music = loadMusic(name);
 
 	if (music != nullptr) {
-		_music.handle = _engine.playBackground(*music, fadetime > 0 ? 0.0f : _wantedMusicVolume * _musicMasterVolume, offsetSeconds > 0);
+		_music.handle = _engine.playBackground(*music, playOptions.fadetime > 0 ? 0.0f : _wantedMusicVolume * _musicMasterVolume, playOptions.offsetSeconds > 0);
 		_music.id = id;
-		_music.isResumable = flags & PlayFlagsIsResumable;
+		_music.isResumable = playOptions.flags & PlayFlagsIsResumable;
 
-		if (offsetSeconds > 0) {
-			_engine.seek(_music.handle, offsetSeconds);
-			resumeMusic(fadetime < 2 ? 2 : fadetime); // Slight fade
+		if (playOptions.offsetSeconds > 0) {
+			if (trace_all || trace_music) info("%s: seek to time %d\n", __func__, playOptions.offsetSeconds);
+			_engine.seek(_music.handle, playOptions.offsetSeconds);
+			resumeMusic(playOptions.fadetime < 2 ? 2 : playOptions.fadetime); // Slight fade
 		}
-		else if (fadetime > 0) {
-			setMusicVolume(_wantedMusicVolume, fadetime);
+		else if (playOptions.fadetime > 0) {
+			setMusicVolume(_wantedMusicVolume, playOptions.fadetime);
 		}
 	}
 }
 
-void NxAudioEngine::playMusics(const std::vector<std::string>& names, uint32_t id, uint32_t time)
+void NxAudioEngine::playMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions)
 {
 	if (_music.id == id) {
 		if (trace_all || trace_music) trace("NxAudioEngine::%s: id %d is already playing\n", __func__, id);
 		return; // Already playing
 	}
 
-	stopMusic(time);
+	stopMusic(playOptions.fadetime);
 
 	SoLoud::handle groupHandle = _engine.createVoiceGroup();
 
@@ -453,6 +485,11 @@ bool NxAudioEngine::isMusicPlaying()
 uint32_t NxAudioEngine::currentMusicId()
 {
 	return _music.id;
+}
+
+SoLoud::time NxAudioEngine::getMusicPlayingTime()
+{
+	return _engine.getStreamTime(_music.handle);
 }
 
 void NxAudioEngine::setMusicMasterVolume(float volume, size_t time)
