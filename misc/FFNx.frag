@@ -45,6 +45,7 @@ uniform vec4 FSMiscFlags;
 #define isAlphaGEqual abs(FSAlphaFlags.y - 6.0) < 0.00001
 
 #define doAlphaTest FSAlphaFlags.z > 0.0
+#define isFF8 FSAlphaFlags.w > 0.0
 // ---
 #define isFullRange FSMiscFlags.x > 0.0
 #define isYUV FSMiscFlags.y > 0.0
@@ -132,7 +133,14 @@ void main()
 
             if (isMovie) texture_color.a = 1.0;
 
-            if (texture_color.a < 0.20) discard;
+            if (isFF8)
+            {
+                if (texture_color.a == 0.0) discard;
+            }
+            else
+            {
+                if (texture_color.a < 0.20) discard;
+            }
 
             if (modulateAlpha) color *= texture_color;
             else

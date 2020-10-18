@@ -109,7 +109,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		}
 	}
 
-	if(defer) return gl_defer_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap);
+	if(defer && !ff8) return gl_defer_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap);
 
 	return false;
 }
