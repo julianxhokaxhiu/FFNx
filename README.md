@@ -219,7 +219,7 @@ Feel free to check the example configuration included in each FFNx release.
 
 The current supported Audio Engine layers are:
 - [SFX](misc/FFNx.SFX.toml): in-game audio sound effects ( menu cursor sound, battle sword slash sound, etc. )
-- Music: in-game audio music ( world theme, field theme, etc. )
+- [Music](misc/FFNx.music.toml): in-game audio music ( world theme, field theme, etc. )
 - Voice: in-game audio voice acting ( dialog voice acting )
 
 ## Cheat codes

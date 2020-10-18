@@ -20,6 +20,7 @@
 /****************************************************************************/
 
 #include <windows.h>
+#include <unordered_map>
 
 #include "audio.h"
 #include "music.h"
@@ -28,7 +29,9 @@
 bool was_battle_gameover = false;
 bool current_music_is_field_resumable = false;
 bool next_music_channel = 0;
-uint32_t next_music_offset;
+bool next_music_is_skipped = false;
+bool next_music_is_maybe_skipped = false;
+std::unordered_map<uint32_t, SoLoud::time> remember_musics;
 bool next_music_is_not_multi = false;
 bool multi_music_is_playing = false;
 
@@ -243,9 +246,14 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return ret;
 }
 
-void play_midi_helper(const char* midi_name, uint32_t midi, uint32_t fade_time = 0)
+void play_midi_helper(char* midi_name, uint32_t midi, uint32_t fade_time = 0, SoLoud::time offset = 0, bool noIntro = false)
 {
-	nxAudioEngine.playMusic(midi_name, midi, fade_time, needs_resume(midi), next_music_offset);
+	NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
+	options.fadetime = fade_time;
+	options.flags = needs_resume(midi);
+	options.noIntro = noIntro;
+	options.offsetSeconds = offset;
+	nxAudioEngine.playMusic(midi_name, midi, options);
 	nxAudioEngine.setMusicLooping(!no_loop(midi));
 
 	if (music_mode(midi) == MODE_FIELD) {
@@ -256,7 +264,6 @@ void play_midi_helper(const char* midi_name, uint32_t midi, uint32_t fade_time =
 	}
 
 	next_music_channel = 0;
-	next_music_offset = 0;
 }
 
 void ff7_play_midi(uint32_t midi)
@@ -449,7 +456,26 @@ uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t unused1, uint32_
 
 		if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, volume=%u\n", __func__, midi, midi_name, volume);
 
-		play_midi_helper(midi_name, midi);
+		SoLoud::time offset = 0;
+		bool noIntro = false;
+
+		if (next_music_is_maybe_skipped && remember_musics[midi] != 0) {
+			offset = remember_musics[midi];
+			remember_musics[midi] = 0;
+			if (trace_all || trace_music) trace("%s: use remembered music %d s\n", __func__, offset);
+		}
+		else if (next_music_is_skipped) {
+			noIntro = true;
+		}
+		else if (remember_musics[midi] != 0) {
+			if (trace_all || trace_music) trace("%s: discard remembered music\n", __func__);
+			remember_musics[midi] = 0;
+		}
+
+		next_music_is_maybe_skipped = false;
+		next_music_is_skipped = false;
+
+		play_midi_helper(midi_name, midi, 0, offset, noIntro);
 		nxAudioEngine.setMusicVolume(volume / 127.0f);
 	}
 
@@ -458,9 +484,26 @@ uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t unused1, uint32_
 
 uint32_t ff8_play_midi_at(char* midi_data, uint32_t offset)
 {
+	// We don't know what offset means in seconds
 	if (trace_all || trace_music) trace("%s: play midi at %d\n", __func__, offset);
-	next_music_offset = offset * 3;
+	next_music_is_skipped = true;
 	((uint32_t(*)(uint32_t,char*,uint32_t))ff8_externals.sd_music_play)(0, midi_data, *ff8_externals.current_volume);
+	return 0;
+}
+
+uint32_t ff8_opcode_musicskip_play_midi_at(char* midi_data, uint32_t offset)
+{
+	if (trace_all || trace_music) trace("%s: music skip, play midi at %d\n", __func__, offset);
+	next_music_is_maybe_skipped = true;
+	return ff8_play_midi_at(midi_data, offset);
+}
+
+uint32_t ff8_opcode_getmusicoffset()
+{
+	if (trace_all || trace_music) trace("%s: save music %d time %f\n", __func__, nxAudioEngine.currentMusicId(), nxAudioEngine.getMusicPlayingTime());
+
+	remember_musics[nxAudioEngine.currentMusicId()] = std::fmod(nxAudioEngine.getMusicPlayingTime(), 60.0 * 2);
+
 	return 0;
 }
 
@@ -571,13 +614,17 @@ void music_init()
 		if (ff8)
 		{
 			replace_function(common_externals.play_midi, ff8_play_midi);
-			replace_function(ff8_externals.sd_music_play_at, ff8_play_midi_at);
 			replace_function(common_externals.pause_midi, pause_midi);
 			replace_function(common_externals.restart_midi, restart_midi);
 			replace_function(common_externals.stop_midi, ff8_stop_midi);
 			replace_function(common_externals.midi_status, midi_status);
 			replace_function(common_externals.set_midi_volume, ff8_set_midi_volume);
+			/* Remember time and resume music */
+			replace_function(ff8_externals.sd_music_play_at, ff8_play_midi_at);
 			replace_function(common_externals.remember_midi_playing_time, remember_playing_time);
+			replace_call(ff8_externals.opcode_musicskip + 0x46, ff8_opcode_musicskip_play_midi_at);
+			// getmusicoffset opcode is not implemented, but could be used to skip music with musicskip opcode
+			replace_call(ff8_externals.opcode_getmusicoffset, ff8_opcode_getmusicoffset);
 			/* MIDI segments */
 			// Initialization
 			replace_call(ff8_externals.opcode_choicemusic + 0x5D, ff8_opcode_choicemusic);
@@ -593,8 +640,6 @@ void music_init()
 			replace_function(common_externals.midi_cleanup, noop);
 			/* Music channel detection */
 			replace_call(ff8_externals.opcode_dualmusic + 0x58, ff8_opcode_dualmusic_play_music);
-			/* Fix skip value (WM Ragnarok) */
-			patch_code_byte(0x543135, 7); // 7 * 3 => 21 seconds
 		}
 		else
 		{

@@ -111,6 +111,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_dualmusic = common_externals.execute_opcode_table[0xBB];
 	ff8_externals.opcode_choicemusic = common_externals.execute_opcode_table[0x135];
 	ff8_externals.opcode_musicskip = common_externals.execute_opcode_table[0x144];
+	ff8_externals.opcode_getmusicoffset = common_externals.execute_opcode_table[0x16F];
 
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
 

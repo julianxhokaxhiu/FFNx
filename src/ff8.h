@@ -903,6 +903,7 @@ struct ff8_externals
 	uint32_t opcode_dualmusic;
 	uint32_t opcode_choicemusic;
 	uint32_t opcode_musicskip;
+	uint32_t opcode_getmusicoffset;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;
 	uint32_t load_midi_segment;

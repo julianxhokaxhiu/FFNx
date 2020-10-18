@@ -100,7 +100,7 @@ namespace SoLoud
 
 		mOffset = 0;
 		mStreamPosition = 0.0f;
-		return 0;
+		return SO_NO_ERROR;
 	}
 
 	bool VGMStreamInstance::hasEnded()

@@ -175,3 +175,4 @@ install(FILES ../misc/FF8.reg DESTINATION bin OPTIONAL)
 # Additional cfg files
 install(DIRECTORY DESTINATION bin/sfx OPTIONAL)
 install(FILES ../misc/${RELEASE_NAME}.SFX.toml DESTINATION bin/sfx RENAME config.toml OPTIONAL)
+install(FILES ../misc/${RELEASE_NAME}.music.toml DESTINATION bin/music/vgmstream RENAME config.toml OPTIONAL)
