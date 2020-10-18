@@ -22,19 +22,19 @@ Windows Registry Editor Version 5.00
 #*****************************************************************************#
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Square Soft, Inc\FINAL FANTASY VIII\1.00]
-"Graphics"=dword:10100021
+"Graphics"=dword:00100021
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Square Soft, Inc\FINAL FANTASY VIII\1.00]
-"Graphics"=dword:10100021
+"Graphics"=dword:00100021
 
 [HKEY_CURRENT_USER\VirtualStore\Machine\SOFTWARE\Square Soft, Inc\FINAL FANTASY VIII\1.00]
-"Graphics"=dword:10100021
+"Graphics"=dword:00100021
 
 [HKEY_CURRENT_USER\VirtualStore\Machine\SOFTWARE\Wow6432Node\Square Soft, Inc\FINAL FANTASY VIII\1.00]
-"Graphics"=dword:10100021
+"Graphics"=dword:00100021
 
 [HKEY_CLASSES_ROOT\VirtualStore\MACHINE\SOFTWARE\Wow6432Node\Square Soft, Inc\FINAL FANTASY VIII\1.00]
-"Graphics"=dword:10100021
+"Graphics"=dword:00100021
 
 [HKEY_CURRENT_USER\Software\Classes\VirtualStore\MACHINE\SOFTWARE\Wow6432Node\Square Soft, Inc\FINAL FANTASY VIII\1.00]
-"Graphics"=dword:10100021
+"Graphics"=dword:00100021
