@@ -122,6 +122,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sub_666C13 = (void* (*)(struct game_obj*))get_relative_call(ff7_externals.engine_exit_game_mode_sub_666C78, 0x35);
 	ff7_externals.sub_670F9B = (void* (*)(void*))get_relative_call(ff7_externals.engine_exit_game_mode_sub_666C78, 0x47);
 	ff7_externals.byte_CC0D89 = (BYTE*)get_absolute_value(main_loop, 0x71E);
+	ff7_externals.word_CC0828 = (WORD*)get_absolute_value(main_init_loop, 0x4A5);
 
 	ff7_externals.destroy_field_bk = get_relative_call(field_main_loop, 0x222);
 	ff7_externals.destroy_field_tiles = get_relative_call(ff7_externals.destroy_field_bk, 0x1E6);
@@ -354,6 +355,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.opcode_gameover = common_externals.execute_opcode_table[0xFF];
 	ff7_externals.opcode_message = common_externals.execute_opcode_table[0x40];
 	ff7_externals.opcode_ask = common_externals.execute_opcode_table[0x48];
+
+	ff7_externals.word_DB958A = (WORD *)get_absolute_value(common_externals.execute_opcode_table[0x23], 0x5);
 
 	ff7_externals.sub_630D50 = get_relative_call(ff7_externals.opcode_message, 0x3B);
 	ff7_externals.opcode_message_loop_code = (WORD*)get_absolute_value(ff7_externals.sub_630D50, 0x12);

@@ -141,8 +141,10 @@ void* ff7_engine_exit_game_mode(ff7_game_obj* game_object)
 
 			if (ff7_do_reset)
 			{
-				// Trigger game over
+				// Trigger game over and ensure battle mode can be retriggered
+				*ff7_externals.word_CC0828 = 0;
 				*ff7_externals.byte_CC0D89 = 26;
+				*ff7_externals.word_DB958A = 0;
 
 				ff7_do_reset = false;
 			}

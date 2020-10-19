@@ -1657,7 +1657,9 @@ struct ff7_externals
 	uint32_t engine_exit_game_mode_sub_666C78;
 	void* (*sub_666C13)(struct game_obj*);
 	void* (*sub_670F9B)(void*);
+	WORD* word_CC0828;
 	BYTE* byte_CC0D89;
+	WORD* word_DB958A;
 	uint32_t enter_gameover;
 	uint32_t exit_gameover;
 	void* (*start_gameover)();
