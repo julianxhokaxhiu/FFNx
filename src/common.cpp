@@ -890,7 +890,19 @@ void common_flip(struct game_obj *game_object)
 	}
 	else
 	{
-		if (ff7_do_reset) ff7_externals.reset_game_obj_sub_5F4971(game_object);
+		if (ff7_do_reset)
+		{
+			switch(mode->driver_mode)
+			{
+				// Skip reset on these mode(s)
+				case MODE_MENU:
+					ff7_do_reset = false;
+					break;
+				default:
+					ff7_externals.reset_game_obj_sub_5F4971(game_object);
+					break;
+			}
+		}
 	}
 }
 
