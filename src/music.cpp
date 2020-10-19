@@ -89,7 +89,7 @@ uint32_t music_mode(uint32_t midi)
 		}
 	}
 
-	return getmode_cached()->driver_mode;
+	return getmode_cached()->driver_mode == MODE_FIELD ? MODE_FIELD : MODE_EXIT;
 }
 
 NxAudioEngine::PlayFlags needs_resume(uint32_t midi)
