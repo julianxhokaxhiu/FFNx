@@ -17,6 +17,7 @@
 # version is detected, plays this music instead.
 # intro_seconds: [FF8 Only] Offset in seconds. When the "no intro" version is
 # detected, skips the beginning of the music.
+# shuffle: Shuffle an SFX ID with one of the given IDs in the array.
 ###############################################################################
 
 # Plays gar3 when gargade (GGU theme) is played but the "no intro" flag is set
@@ -28,3 +29,10 @@ no_intro_track = 'gar3'
 # -----------------------------------------------------------------------------
 [hikutei]
 intro_seconds = 20.5
+
+# This entry will shuffle 'battle' with 'battle2', 'bossbat1' and 'bossbat2'.
+# Everytime the game engine will try to playback 1, one of the entries in the
+# array will be picked randomly.
+# -----------------------------------------------------------------------------
+#[battle]
+#shuffle = [ 'battle2', 'bossbat1', 'bossbat2' ]

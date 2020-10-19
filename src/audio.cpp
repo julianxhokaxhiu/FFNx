@@ -317,6 +317,20 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Pl
 	} else if (offset_seconds_opt.has_value()) {
 		playOptions->offsetSeconds = *offset_seconds_opt;
 	}
+
+	// Name to lower case
+	for (int i = 0; name[i]; i++) {
+		name[i] = tolower(name[i]);
+	}
+	// Shuffle Music playback, if any entry found for the current music name
+	toml::array* shuffleNames = config[name]["shuffle"].as_array();
+	if (shuffleNames && !shuffleNames->empty() && shuffleNames->is_homogeneous(toml::node_type::string)) {
+		std::optional<std::string> _newName = shuffleNames->get(getRandomInt(0, shuffleNames->size() - 1))->value<std::string>();
+		if (_newName.has_value()) {
+			memcpy(name, (*_newName).c_str(), (*_newName).size());
+			name[(*_newName).size()] = '\0';
+		}
+	}
 }
 
 void NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
