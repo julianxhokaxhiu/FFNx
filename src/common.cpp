@@ -896,6 +896,8 @@ void common_flip(struct game_obj *game_object)
 			{
 				// Skip reset on these mode(s)
 				case MODE_MENU:
+				case MODE_GAMEOVER:
+				case MODE_CREDITS:
 					ff7_do_reset = false;
 					break;
 				default:
