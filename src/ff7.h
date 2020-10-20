@@ -1511,6 +1511,7 @@ struct ff7_externals
 	char *field_file_name;
 	uint32_t read_field_file;
 	uint32_t battle_loop;
+	DWORD* battle_mode;
 	uint32_t battle_sub_429AC0;
 	uint32_t battle_b3ddata_sub_428B12;
 	uint32_t graphics_render_sub_68A638;

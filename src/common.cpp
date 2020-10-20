@@ -900,6 +900,8 @@ void common_flip(struct game_obj *game_object)
 				case MODE_CREDITS:
 					ff7_do_reset = false;
 					break;
+				case MODE_BATTLE:
+					if (*ff7_externals.battle_mode < 6) break;
 				default:
 					ff7_externals.reset_game_obj_sub_5F4971(game_object);
 					break;
