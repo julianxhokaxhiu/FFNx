@@ -38,6 +38,7 @@ variables:
   _RELEASE_CONFIGURATION: Release
   _BUILD_VERSION: $(Build.BuildNumber)
   _BUILD_BRANCH: $(Build.SourceBranch)
+  _CHANGELOG_VERSION: v0
 
 pool:
   vmImage: 'windows-latest'
@@ -78,6 +79,9 @@ steps:
     gitHubConnection: github_ci
     assets: .dist\*.zip
     title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
+    releaseNotesSource: input
+    releaseNotes: |
+      See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog_$(_CHANGELOG_VERSION)
 - task: PowerShell@2
   condition: not(contains(variables._BUILD_BRANCH, 'refs/pull/'))
   displayName: 'Alert the $(_RELEASE_NAME) Release'

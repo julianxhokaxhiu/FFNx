@@ -29,6 +29,7 @@ elseif ($env:_BUILD_BRANCH -like "refs/tags/*")
   $env:_BUILD_VERSION = $env:_BUILD_VERSION.Substring(0,$env:_BUILD_VERSION.LastIndexOf('.')) + ".0"
 }
 $env:_RELEASE_VERSION = "v${env:_BUILD_VERSION}"
+$env:_CHANGELOG_VERSION = "v${$env:_BUILD_VERSION.Substring(0,$env:_BUILD_VERSION.LastIndexOf('.'))}"
 
 Write-Output "--------------------------------------------------"
 Write-Output "BUILD CONFIGURATION: $env:_RELEASE_CONFIGURATION"
@@ -38,6 +39,7 @@ Write-Output "--------------------------------------------------"
 Write-Host "##vso[task.setvariable variable=_BUILD_VERSION;]${env:_BUILD_VERSION}"
 Write-Host "##vso[task.setvariable variable=_RELEASE_VERSION;]${env:_RELEASE_VERSION}"
 Write-Host "##vso[task.setvariable variable=_IS_BUILD_CANARY;]${env:_IS_BUILD_CANARY}"
+Write-Host "##vso[task.setvariable variable=_CHANGELOG_VERSION;]${env:_CHANGELOG_VERSION}"
 
 mkdir $env:_RELEASE_PATH | Out-Null
 cmake -G "Visual Studio 16 2019" -A Win32 -D_DLL_VERSION="$env:_BUILD_VERSION" -DCMAKE_BINARY_DIR="$env:_RELEASE_PATH" -S . -B $env:_RELEASE_PATH
