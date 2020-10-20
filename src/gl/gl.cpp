@@ -196,8 +196,8 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		return;
 	}
 
-	// use mipmaps if available
-	if (current_state.texture_filter && enable_anisotropic && current_state.texture_set)
+	// If we're attaching a texture, and it is an external one, then use a better blending that considers the alpha channel
+	if (current_state.texture_set)
 	{
 		VOBJ(texture_set, texture_set, current_state.texture_set);
 

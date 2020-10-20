@@ -93,9 +93,9 @@ void Renderer::setCommonUniforms()
         (float)internalState.alphaRef,
         (float)internalState.alphaFunc,
         (float)internalState.bDoAlphaTest,
-        (float)ff8
+        NULL
     };
-    if (uniform_log) trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, isFF8 %f)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2], internalState.FSAlphaFlags[3]);
+    if (uniform_log) trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, NULL)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2]);
 
     internalState.FSMiscFlags = {
         (float)internalState.bIsMovieFullRange,
@@ -680,8 +680,8 @@ void Renderer::draw()
             break;
         case RendererBlendMode::BLEND_NONE:
             internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
-            if (ff8) internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO);
-            else internalState.state |= BGFX_STATE_BLEND_FUNC_SEPARATE(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+            if (internalState.bIsExternalTexture) internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+            else internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO);
             break;
         }
 
