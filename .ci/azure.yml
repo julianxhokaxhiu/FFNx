@@ -68,6 +68,8 @@ steps:
     title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
     releaseNotesSource: input
     releaseNotes: |
+      See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog#next
+      
       This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
 - task: GitHubRelease@0
   condition: and(eq(variables._IS_BUILD_CANARY, 'false'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')))
