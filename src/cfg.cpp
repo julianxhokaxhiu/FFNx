@@ -174,7 +174,7 @@ void read_cfg()
 	direct_mode_path = config["direct_mode_path"].value_or("");
 	save_path = config["save_path"].value_or("");
 	enable_devtools = config["enable_devtools"].value_or(false);
-	devtools_hotkey = config["devtools_hotkey"].value_or(0);
+	devtools_hotkey = config["devtools_hotkey"].value_or(VK_F12);
 	ff8_keep_game_running_in_background = config["ff8_keep_game_running_in_background"].value_or(false);
 	speedhack_step = config["speedhack_step"].value_or(0.5);
 	speedhack_max = config["speedhack_max"].value_or(8.0);
