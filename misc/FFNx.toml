@@ -397,13 +397,6 @@
 # OPTIONS ONLY FOR FF8
 ###############################################################################
 
-## ENHANCEMENTS
-
-# FF8 by default is used to pause the game when the window has false focus. This flag will override this behavior and will allow you to NOT pause the game and keep it running, if set to true.
-# This flag may be useful for streamers which may not want the game to be paused while switching the focus on another window.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ff8_keep_game_running_in_background = false
-
 ## DEBUGGING OPTIONS - These options are mostly useful for developers or people reporting crashes. Please do enable them only when required.
 
 # Show the PSX SSIGPU VRAM window

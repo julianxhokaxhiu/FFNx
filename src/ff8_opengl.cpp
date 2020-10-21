@@ -318,8 +318,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	if (ff8_ssigpu_debug)
 		ff8_externals.show_vram_window();
 
-	if (ff8_keep_game_running_in_background)
-		replace_function(ff8_externals.is_window_active, ff8_is_window_active);
+	replace_function(ff8_externals.is_window_active, ff8_is_window_active);
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
 

@@ -86,7 +86,6 @@ std::string direct_mode_path;
 std::string save_path;
 bool enable_devtools;
 long devtools_hotkey;
-bool ff8_keep_game_running_in_background;
 double speedhack_step;
 double speedhack_max;
 double speedhack_min;
@@ -175,7 +174,6 @@ void read_cfg()
 	save_path = config["save_path"].value_or("");
 	enable_devtools = config["enable_devtools"].value_or(false);
 	devtools_hotkey = config["devtools_hotkey"].value_or(VK_F12);
-	ff8_keep_game_running_in_background = config["ff8_keep_game_running_in_background"].value_or(false);
 	speedhack_step = config["speedhack_step"].value_or(0.5);
 	speedhack_max = config["speedhack_max"].value_or(8.0);
 	speedhack_min = config["speedhack_min"].value_or(1.0);

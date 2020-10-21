@@ -918,9 +918,6 @@ void common_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, 
 
 	if(trace_all) trace("dll_gfx: clear %i %i %i\n", clear_color, clear_depth, unknown);
 
-	// During battle mode the screen is cleared while it should not be when the window is not focused
-	if (ff8 && (gameHwnd != GetActiveWindow() && !ff8_keep_game_running_in_background)) return;
-
 	newRenderer.setClearFlags(
 		clear_color || mode == MODE_MENU || mode == MODE_CONDOR,
 		clear_depth

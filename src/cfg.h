@@ -93,7 +93,6 @@ extern std::string direct_mode_path;
 extern std::string save_path;
 extern bool enable_devtools;
 extern long devtools_hotkey;
-extern bool ff8_keep_game_running_in_background;
 extern double speedhack_step;
 extern double speedhack_max;
 extern double speedhack_min;
