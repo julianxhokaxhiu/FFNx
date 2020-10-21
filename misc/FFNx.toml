@@ -256,15 +256,15 @@
 # Please do enable them only when required.
 ##########################
 
-# Enable Dear ImGui overlay windows that show debug information.
+# Enable FFNx DevTools
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_debug_ui = false
+#enable_devtools = false
 
-# Set hotkey to toggle the debug information windows.
+# Set hotkey to toggle the DevTools window.
 # This is specified by a virtual-key code hexadecimal value, see: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Default: 0x7B ( VK_F12 )
-#debug_ui_hotkey = 0x7B
+#devtools_hotkey = 0x7B
 
 # Display the verion of FFNx in upper right corner ( when fullscreen ) or in the title bar ( when windowed )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~

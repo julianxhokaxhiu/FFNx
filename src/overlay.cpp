@@ -293,7 +293,7 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
 }
 
 void Overlay::drawMainWindow() {
-    if (!ImGui::Begin("Debugging Tools", &visible, ImGuiWindowFlags_::ImGuiWindowFlags_MenuBar))
+    if (!ImGui::Begin("DevTools", &visible, ImGuiWindowFlags_::ImGuiWindowFlags_MenuBar))
     {
         ImGui::End();
         return;
@@ -305,12 +305,11 @@ void Overlay::drawMainWindow() {
         {
             ImGui::MenuItem("Field Debug", NULL, &field_debug_open);
             ImGui::MenuItem("World Debug", NULL, &world_debug_open);
-            ImGui::MenuItem("ImGui Demo", NULL, &demo_open);
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
     }
-    ImGui::Text("Select a debug tool from the menu.");
+    ImGui::Text("Select a dev tool from the menu.");
     ImGui::End();
 }
 
@@ -325,7 +324,6 @@ void Overlay::draw()
         drawMainWindow();
         if (field_debug_open) field_debug(&field_debug_open);
         if (ff8 && world_debug_open) world_debug(&world_debug_open);
-        if (demo_open) ImGui::ShowDemoWindow(&demo_open); // Useful to keep as GUI guide for now
     }
 
     ImGui::Render();
@@ -366,7 +364,7 @@ void Overlay::MouseMove(MouseEventArgs& e)
 
 void Overlay::KeyUp(KeyEventArgs& e)
 {
-    if (e.keyValue == debug_ui_hotkey)
+    if (e.keyValue == devtools_hotkey)
         visible = !visible;
 
     if (e.keyValue < 256)

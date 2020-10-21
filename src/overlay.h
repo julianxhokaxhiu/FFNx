@@ -38,7 +38,6 @@ private:
 	bool visible = true;
 	bool field_debug_open = false;
 	bool world_debug_open = false;
-	bool demo_open = false;
 
 	void UpdateMousePos();
 	bool UpdateMouseCursor();

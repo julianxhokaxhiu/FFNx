@@ -288,7 +288,7 @@ void Renderer::destroyAll()
             bgfx::destroy(handle);
     }
 
-    if (enable_debug_ui)
+    if (enable_devtools)
         overlay.destroy();
 };
 
@@ -567,7 +567,7 @@ void Renderer::init()
 
     bgfx::frame();
 
-    if (enable_debug_ui)
+    if (enable_devtools)
     {
         backendProgramHandles[RendererProgram::OVERLAY] = bgfx::createProgram(
             getShader(vertexOverlayPath.c_str()),
@@ -708,7 +708,7 @@ void Renderer::draw()
 
 void Renderer::drawOverlay()
 {
-    if (enable_debug_ui)
+    if (enable_devtools)
         overlay.draw();
 }
 
