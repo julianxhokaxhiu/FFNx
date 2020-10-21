@@ -304,7 +304,7 @@ void Overlay::drawMainWindow() {
         if (ImGui::BeginMenu("Tools"))
         {
             ImGui::MenuItem("Field Debug", NULL, &field_debug_open);
-            ImGui::MenuItem("World Debug", NULL, &world_debug_open);
+            if (ff8) ImGui::MenuItem("World Debug", NULL, &world_debug_open);
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
