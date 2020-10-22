@@ -110,7 +110,7 @@ bool NxAudioEngine::init()
 		_sfxVolumePerChannels.resize(10, 1.0f);
 		_sfxTempoPerChannels.resize(10, 1.0f);
 		_sfxChannelsHandle.resize(10, NXAUDIOENGINE_INVALID_HANDLE);
-		_sfxStreams.resize(1000, nullptr);
+		_sfxStreams.resize(10000, nullptr);
 
 		while (!_sfxStack.empty())
 		{
@@ -210,6 +210,9 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 	}
 
 	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, _curId + 1, channel, panning);
+
+	// Try to load the ID if it's new to the audio engine
+	if (_sfxStreams[_curId] == nullptr) loadSFX(_curId + 1);
 
 	if (_sfxStreams[_curId] != nullptr)
 	{
