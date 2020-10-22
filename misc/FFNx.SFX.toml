@@ -11,7 +11,8 @@
 ###############################################################################
 
 ### SUPPORTED FLAGS: ##########################################################
-# shuffle: Shuffle an SFX ID with one of the given IDs in the array.
+# shuffle: Shuffle an SFX ID with one of the given IDs in the array. IDs MUST
+# be numbers ONLY and MUST NOT contain any special character like - or _
 ###############################################################################
 
 # This entry will shuffle the SFX ID 1 ( menu cursor ) with the ID 2, 3 or 4.
