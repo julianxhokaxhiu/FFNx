@@ -72,7 +72,6 @@ extern bool preserve_aspect;
 extern bool fullscreen;
 extern long refresh_rate;
 extern bool enable_vsync;
-extern bool linear_filter;
 extern bool mdef_fix;
 extern long enable_antialiasing;
 extern bool enable_anisotropic;

@@ -70,13 +70,6 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #refresh_rate = 0
 
-#[LINEAR FILTERING]
-# Allow the usage of linear filtering for textures.
-# Please note: some things look slightly better with this option on, but alot of textures just lose their detail.
-# This option only affects low-res textures, high-res replacements will still be filtered where appropriate.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#linear_filter = false
-
 #[ANTIALIASING]
 # Enable antialiasing filtering, this is done in the last pass when downsampling from the current supersampled rendering ( based on internal_resolution_scale logic )
 # Available choices are:

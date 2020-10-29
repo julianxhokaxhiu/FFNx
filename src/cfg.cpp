@@ -65,7 +65,6 @@ bool preserve_aspect;
 bool fullscreen;
 long refresh_rate;
 bool enable_vsync;
-bool linear_filter;
 bool mdef_fix;
 long enable_antialiasing;
 bool enable_anisotropic;
@@ -153,7 +152,6 @@ void read_cfg()
 	fullscreen = config["fullscreen"].value_or(false);
 	refresh_rate = config["refresh_rate"].value_or(0);
 	enable_vsync = config["enable_vsync"].value_or(true);
-	linear_filter = config["linear_filter"].value_or(false);
 	mdef_fix = config["mdef_fix"].value_or(true);
 	enable_antialiasing = config["enable_antialiasing"].value_or(0);
 	enable_anisotropic = config["enable_anisotropic"].value_or(true);

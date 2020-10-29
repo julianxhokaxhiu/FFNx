@@ -1565,7 +1565,7 @@ void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *
 
 		// texture filtering, can be disabled globally via config file
 		case V_LINEARFILTER:
-			if((option && !VREF(game_object, field_988)) && linear_filter) current_state.texture_filter = true;
+			if((option && !VREF(game_object, field_988))) current_state.texture_filter = true;
 			else current_state.texture_filter = false;
 			break;
 
