@@ -82,8 +82,8 @@ private:
 	std::vector<SoLoud::handle> _musicSegmentsHandle;
 	std::stack<NxAudioEngineMusic> _musicStack;
 
-	float _previousMusicMasterVolume = 1.0f;
-	float _musicMasterVolume = 1.0f;
+	float _previousMusicMasterVolume = -1.0f;
+	float _musicMasterVolume = -1.0f;
 
 	float _wantedMusicVolume = 1.0f;
 
@@ -133,6 +133,7 @@ public:
 	void setMusicMasterVolume(float volume, size_t time = 0);
 	void restoreMusicMasterVolume(size_t time = 0);
 	float getMusicVolume();
+	float getMusicMasterVolume();
 	void setMusicVolume(float volume, size_t time = 0);
 	void resetMusicVolume(size_t time = 0);
 	void setMusicSpeed(float speed);

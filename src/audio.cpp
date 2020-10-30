@@ -520,7 +520,7 @@ void NxAudioEngine::setMusicMasterVolume(float volume, size_t time)
 
 void NxAudioEngine::restoreMusicMasterVolume(size_t time)
 {
-	if (_previousMusicMasterVolume != _musicMasterVolume)
+	if (_previousMusicMasterVolume != _musicMasterVolume && _previousMusicMasterVolume >= 0.0f)
 	{
 		_musicMasterVolume = _previousMusicMasterVolume;
 
@@ -534,6 +534,11 @@ void NxAudioEngine::restoreMusicMasterVolume(size_t time)
 float NxAudioEngine::getMusicVolume()
 {
 	return _engine.getVolume(_music.handle);
+}
+
+float NxAudioEngine::getMusicMasterVolume()
+{
+	return _musicMasterVolume;
 }
 
 void NxAudioEngine::setMusicVolume(float volume, size_t time)

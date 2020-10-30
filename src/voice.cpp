@@ -33,7 +33,12 @@ int (*opcode_old_ask)(int);
 void begin_voice()
 {
 	if (enable_voice_music_fade)
-		nxAudioEngine.setMusicMasterVolume(external_voice_music_fade_volume / 100.0f, 1);
+	{
+		float new_master_volume = external_voice_music_fade_volume / 100.0f;
+
+		if (new_master_volume < nxAudioEngine.getMusicMasterVolume())
+			nxAudioEngine.setMusicMasterVolume(new_master_volume, 1);
+	}
 }
 
 void play_voice(char* field_name, byte dialog_id, byte page_count)
