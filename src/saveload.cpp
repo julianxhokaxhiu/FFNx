@@ -47,6 +47,19 @@ void make_path(char *name)
 	}
 }
 
+void normalize_path(char *name)
+{
+	if (ff8)
+	{
+		int idx = 0;
+		while (name[idx] != 0)
+		{
+			if (name[idx] == '\\') name[idx] = '/';
+			idx++;
+		}
+	}
+}
+
 void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, char *name, bool is_animated)
 {
 	char filename[sizeof(basedir) + 1024];
@@ -62,6 +75,8 @@ void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height
 	else
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path.c_str(), name, palette_index);
 
+	normalize_path(filename);
+
 	make_path(filename);
 
 	if (stat(filename, &dummy) != 0)
@@ -75,6 +90,8 @@ void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height
 uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool useLibPng)
 {
 	uint32_t ret = 0;
+
+	normalize_path(name);
 
 	if (useLibPng)
 		ret = newRenderer.createTextureLibPng(name, width, height);
