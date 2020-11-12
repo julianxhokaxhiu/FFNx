@@ -26,7 +26,7 @@ if (NOT VGMSTREAM_FOUND)
 
 	find_library(
 		VGMSTREAM_LIBRARY
-		vgmstream
+		libvgmstream
 		PATH_SUFFIXES
 		lib
 	)
