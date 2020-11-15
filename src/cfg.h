@@ -22,6 +22,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include "log.h"
 
 #define RENDERER_BACKEND_AUTO 0
@@ -36,14 +37,14 @@ extern bool enable_ffmpeg_videos;
 extern std::string ffmpeg_video_ext;
 extern bool use_external_sfx;
 extern std::string external_sfx_path;
-extern std::string external_sfx_ext;
+extern std::vector<std::string> external_sfx_ext;
 extern bool use_external_music;
 extern bool external_music_resume;
 extern std::string external_music_path;
-extern std::string external_music_ext;
+extern std::vector<std::string> external_music_ext;
 extern std::string he_bios_path;
 extern std::string external_voice_path;
-extern std::string external_voice_ext;
+extern std::vector<std::string> external_voice_ext;
 extern bool enable_voice_music_fade;
 extern long external_voice_music_fade_volume;
 extern bool save_textures;

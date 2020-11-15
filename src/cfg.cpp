@@ -29,14 +29,14 @@ bool enable_ffmpeg_videos;
 std::string ffmpeg_video_ext;
 bool use_external_sfx;
 std::string external_sfx_path;
-std::string external_sfx_ext;
+std::vector<std::string> external_sfx_ext;
 bool use_external_music;
 bool external_music_resume;
 std::string external_music_path;
-std::string external_music_ext;
+std::vector<std::string> external_music_ext;
 std::string he_bios_path;
 std::string external_voice_path;
-std::string external_voice_ext;
+std::vector<std::string> external_voice_ext;
 bool enable_voice_music_fade;
 long external_voice_music_fade_volume;
 bool save_textures;
@@ -90,6 +90,22 @@ double speedhack_max;
 double speedhack_min;
 bool enable_animated_textures;
 
+std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
+{
+	if (node.is_array()) {
+		toml::array* a = node.as_array();
+		if (a && a->is_homogeneous(toml::node_type::string)) {
+			std::vector<std::string> ret(a->size());
+			for (toml::array::iterator it = a->begin(); it != a->end(); ++it) {
+				ret.push_back((*it).value_or(""));
+			}
+			return ret;
+		}
+	}
+	
+	return std::vector<std::string>(1, node.value_or(""));
+}
+
 void read_cfg()
 {
 	toml::parse_result config;
@@ -116,14 +132,14 @@ void read_cfg()
 	ffmpeg_video_ext = config["ffmpeg_video_ext"].value_or("");
 	use_external_sfx = config["use_external_sfx"].value_or(false);
 	external_sfx_path = config["external_sfx_path"].value_or("");
-	external_sfx_ext = config["external_sfx_ext"].value_or("");
+	external_sfx_ext = get_string_or_array_of_strings(config["external_sfx_ext"]);
 	use_external_music = config["use_external_music"].value_or(false);
 	external_music_resume = config["external_music_resume"].value_or(true);
 	external_music_path = config["external_music_path"].value_or("");
-	external_music_ext = config["external_music_ext"].value_or("");
+	external_music_ext = get_string_or_array_of_strings(config["external_music_ext"]);
 	he_bios_path = config["he_bios_path"].value_or("");
 	external_voice_path = config["external_voice_path"].value_or("");
-	external_voice_ext = config["external_voice_ext"].value_or("");
+	external_voice_ext = get_string_or_array_of_strings(config["external_voice_ext"]);
 	enable_voice_music_fade = config["enable_voice_music_fade"].value_or(false);
 	external_voice_music_fade_volume = config["external_voice_music_fade_volume"].value_or(25);
 	save_textures = config["save_textures"].value_or(false);
@@ -281,20 +297,20 @@ void read_cfg()
 		external_sfx_path = "sfx";
 
 	// EXTERNAL SFX EXTENSION
-	if (external_sfx_ext.empty())
-		external_sfx_ext = "ogg";
+	if (external_sfx_ext.empty() || external_sfx_ext.front().empty())
+		external_sfx_ext = std::vector<std::string>(1, "ogg");
 
 	// EXTERNAL MUSIC EXTENSION
-	if (external_music_ext.empty())
-		external_music_ext = "ogg";
+	if (external_music_ext.empty() || external_music_ext.front().empty())
+		external_music_ext = std::vector<std::string>(1, "ogg");
 
 	// EXTERNAL VOICE PATH
 	if (external_voice_path.empty())
 		external_voice_path = "voice";
 
 	// EXTERNAL VOICE EXTENSION
-	if (external_voice_ext.empty())
-		external_voice_ext = "ogg";
+	if (external_voice_ext.empty() || external_voice_ext.front().empty())
+		external_voice_ext = std::vector<std::string>(1, "ogg");
 
 	// MOD PATH
 	if (mod_path.empty())

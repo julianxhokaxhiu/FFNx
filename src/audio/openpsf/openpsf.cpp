@@ -121,11 +121,6 @@ namespace SoLoud
 			return FILE_NOT_FOUND;
 		}
 
-		if (!Psf::is_our_path(aFilename, external_music_ext.c_str())) {
-			error("Incompatible file extension %s\n", external_music_ext.c_str());
-			return FILE_LOAD_FAILED;
-		}
-
 		stop();
 
 		stream = new Psf(PsfFlags::PsfDefaults, 0);

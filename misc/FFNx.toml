@@ -103,6 +103,8 @@
 
 #[EXTERNAL SFX EXTENSION]
 # The type of file to search for. By default is ogg.
+# You can use a list to specify multiple extensions, ordered by priority.
+# Example: ["ogg", "flac"]
 # Supported extensions:
 # - ogg, mp3, flac, wav
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,6 +133,8 @@
 
 #[EXTERNAL MUSIC EXTENSION]
 # The type of file to search for. By default is ogg.
+# You can use a list to specify multiple extensions, ordered by priority.
+# Example: ["minipsf", "ogg"]
 # Supported extensions:
 # - https://github.com/losnoco/vgmstream#supported-file-types
 # - psf, psf2, minipsf, minipsf2 (PSF and PSF2) if you provide the Highly Experimental BIOS
@@ -152,6 +156,8 @@
 
 #[EXTERNAL VOICE EXTENSION]
 # The type of file to search for. By default is ogg.
+# You can use a list to specify multiple extensions, ordered by priority.
+# Example: ["ogg", "flac"]
 # Supported extensions:
 # - ogg, mp3, flac, wav
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
