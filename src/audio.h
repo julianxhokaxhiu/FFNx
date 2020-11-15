@@ -94,8 +94,9 @@ private:
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
 
 	// MISC
+	// Returns false if the file does not exist
 	template <class T>
-	void getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type);
+	bool getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type);
 
 	bool fileExists(const char* filename);
 

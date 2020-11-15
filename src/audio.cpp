@@ -60,20 +60,43 @@ void NxAudioEngine::loadConfig()
 }
 
 template <class T>
-void NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type)
+bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type)
 {
+	std::vector<std::string> extensions;
+
 	switch(_type)
 	{
 		case NxAudioEngineLayer::NXAUDIOENGINE_SFX:
-			sprintf(_out, "%s/%s/%d.%s", basedir, external_sfx_path.c_str(), _key, external_sfx_ext.c_str());
+			extensions = external_sfx_ext;
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, external_music_ext.c_str());
+			extensions = external_music_ext;
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, external_voice_ext.c_str());
+			extensions = external_voice_ext;
 			break;
 	}
+
+	for (auto extension: extensions) {
+		switch (_type)
+		{
+		case NxAudioEngineLayer::NXAUDIOENGINE_SFX:
+			sprintf(_out, "%s/%s/%d.%s", basedir, external_sfx_path.c_str(), _key, extension.c_str());
+			break;
+		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
+			break;
+		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, extension.c_str());
+			break;
+		}
+
+		if (fileExists(_out)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool NxAudioEngine::fileExists(const char* filename)
@@ -142,13 +165,9 @@ void NxAudioEngine::cleanup()
 // SFX
 bool NxAudioEngine::canPlaySFX(int id)
 {
-	struct stat dummy;
-
 	char filename[MAX_PATH];
 
-	getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
-
-	return (stat(filename, &dummy) == 0);
+	return getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
 }
 
 void NxAudioEngine::loadSFX(int id)
@@ -161,11 +180,11 @@ void NxAudioEngine::loadSFX(int id)
 		{
 			char filename[MAX_PATH];
 
-			getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
+			bool exists = getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
 
 			if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
-			if (fileExists(filename))
+			if (exists)
 			{
 				SoLoud::Wav* sfx = new SoLoud::Wav();
 
@@ -251,13 +270,9 @@ void NxAudioEngine::setSFXSpeed(float speed, int channel)
 // Music
 bool NxAudioEngine::canPlayMusic(const char* name)
 {
-	struct stat dummy;
-
 	char filename[MAX_PATH];
 
-	getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
-
-	return (stat(filename, &dummy) == 0);
+	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 }
 
 SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name)
@@ -265,11 +280,11 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name)
 	SoLoud::AudioSource* music = nullptr;
 	char filename[MAX_PATH];
 
-	getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
+	bool exists = getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 
 	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
-	if (fileExists(filename))
+	if (exists)
 	{
 		if (_openpsf_loaded) {
 			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf();
@@ -589,24 +604,20 @@ void NxAudioEngine::setMusicLooping(bool looping)
 // Voice
 bool NxAudioEngine::canPlayVoice(const char* name)
 {
-	struct stat dummy;
-
 	char filename[MAX_PATH];
 
-	getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
-
-	return (stat(filename, &dummy) == 0);
+	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 }
 
 void NxAudioEngine::playVoice(const char* name)
 {
 	char filename[MAX_PATH];
 
-	getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+	bool exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 
 	if (trace_all || trace_voice) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
-	if (fileExists(filename))
+	if (exists)
 	{
 		SoLoud::WavStream* voice = new SoLoud::WavStream();
 
