@@ -95,9 +95,10 @@ std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<to
 	if (node.is_array()) {
 		toml::array* a = node.as_array();
 		if (a && a->is_homogeneous(toml::node_type::string)) {
-			std::vector<std::string> ret(a->size());
-			for (toml::array::iterator it = a->begin(); it != a->end(); ++it) {
-				ret.push_back((*it).value_or(""));
+			std::vector<std::string> ret;
+			ret.reserve(a->size());
+			for (toml::node &elem: *a) {
+				ret.push_back(elem.value_or(""));
 			}
 			return ret;
 		}
