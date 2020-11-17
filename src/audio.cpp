@@ -77,7 +77,7 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _
 			break;
 	}
 
-	for (auto extension: extensions) {
+	for (const std::string &extension: extensions) {
 		switch (_type)
 		{
 		case NxAudioEngineLayer::NXAUDIOENGINE_SFX:
