@@ -82,7 +82,7 @@ target_compile_options(${RELEASE_NAME}
 	PRIVATE /D_CRT_SECURE_NO_WARNINGS
 	PRIVATE /DNOMINMAX
 	PRIVATE /EHsc
-    PRIVATE /std:c++latest
+    PRIVATE /std:c++17
     PRIVATE /w
     PRIVATE /Ox
 )
