@@ -133,6 +133,8 @@ uint32_t version;
 
 bool xinput_connected = false;
 
+bool simulate_OK_button = false;
+
 // global data used for profiling macros
 #ifdef PROFILE
 time_t profile_start;

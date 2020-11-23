@@ -41,7 +41,7 @@ void begin_voice()
 	}
 }
 
-void play_voice(char* field_name, byte dialog_id, byte page_count)
+bool play_voice(char* field_name, byte dialog_id, byte page_count)
 {
 	char name[MAX_PATH];
 
@@ -52,7 +52,7 @@ void play_voice(char* field_name, byte dialog_id, byte page_count)
 	if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
 		sprintf(name, "%s/%u", field_name, dialog_id);
 
-	nxAudioEngine.playVoice(name);
+	return nxAudioEngine.playVoice(name);
 }
 
 void play_option(char* field_name, byte dialog_id, byte option_count)
@@ -128,6 +128,7 @@ int opcode_voice_message()
 {
 	static byte message_page_count = 0;
 	static WORD message_last_opcode = 0;
+	static bool is_voice_acting = false;
 
 	byte window_id = get_field_parameter(0);
 	byte dialog_id = get_field_parameter(1);
@@ -149,12 +150,19 @@ int opcode_voice_message()
 	}
 	if (_is_dialog_starting || _is_dialog_paging)
 	{
-		play_voice(field_name, dialog_id, message_page_count);
+		is_voice_acting = play_voice(field_name, dialog_id, message_page_count);
 		if (trace_all || trace_opcodes) trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
 	}
 	else if (_is_dialog_closing)
 	{
 		end_voice();
+	}
+
+	// Auto close the message if it was voice acted and the audio file has finished playing
+	if (is_voice_acting && !nxAudioEngine.isVoicePlaying())
+	{
+		is_voice_acting = false;
+		simulate_OK_button = true;
 	}
 
 	message_last_opcode = message_current_opcode;

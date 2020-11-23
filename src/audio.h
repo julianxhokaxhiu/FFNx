@@ -142,8 +142,9 @@ public:
 
 	// Voice
 	bool canPlayVoice(const char* name);
-	void playVoice(const char* name);
+	bool playVoice(const char* name);
 	void stopVoice(uint32_t time = 0);
+	bool isVoicePlaying();
 };
 
 NxAudioEngine::PlayFlags operator|(NxAudioEngine::PlayFlags flags, NxAudioEngine::PlayFlags other) {

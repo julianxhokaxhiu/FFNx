@@ -94,23 +94,73 @@ void ff7_wm_activateapp(bool hasFocus)
 
 int ff7_get_gamepad()
 {
-	if (xinput_connected)
+	if (simulate_OK_button)
 	{
-		if (!gamepad.Refresh())
-			return FALSE;
+		return TRUE;
+	}
+	else if (xinput_connected)
+	{
+		if (gamepad.Refresh())
+			return TRUE;
 	}
 	else
 	{
-		if ( joyGetDevCapsA(0, &dinput_joypad_caps, sizeof(dinput_joypad_caps)) )
-    	return FALSE;
+		if ( joyGetDevCapsA(0, &dinput_joypad_caps, sizeof(dinput_joypad_caps)) == JOYERR_NOERROR )
+    	return TRUE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 struct ff7_gamepad_status* ff7_update_gamepad_status()
 {
-	if (xinput_connected)
+	// Reset
+	ff7_externals.gamepad_status->pos_x = 0;
+	ff7_externals.gamepad_status->pos_y = 0;
+	ff7_externals.gamepad_status->dpad_up = 0; // UP
+	ff7_externals.gamepad_status->dpad_down = 0; // DOWN
+	ff7_externals.gamepad_status->dpad_right = 0; // RIGHT
+	ff7_externals.gamepad_status->dpad_left = 0; // LEFT
+	ff7_externals.gamepad_status->button1 = 0; // Square
+	ff7_externals.gamepad_status->button2 = 0; // Cross
+	ff7_externals.gamepad_status->button3 = 0; // Circle
+	ff7_externals.gamepad_status->button4 = 0; // Triangle
+	ff7_externals.gamepad_status->button5 = 0; // L1
+	ff7_externals.gamepad_status->button6 = 0; // R1
+	ff7_externals.gamepad_status->button7 = 0; // L2
+	ff7_externals.gamepad_status->button8 = 0; // R2
+	ff7_externals.gamepad_status->button9 = 0; // SELECT
+	ff7_externals.gamepad_status->button10 = 0; // START
+	ff7_externals.gamepad_status->button11 = 0; // L3
+	ff7_externals.gamepad_status->button12 = 0; // R3
+	ff7_externals.gamepad_status->button13 = 0; // PS Button
+
+	if (simulate_OK_button)
+	{
+		ff7_externals.gamepad_status->pos_x = 0;
+		ff7_externals.gamepad_status->pos_y = 0;
+		ff7_externals.gamepad_status->dpad_up = 0; // UP
+		ff7_externals.gamepad_status->dpad_down = 0; // DOWN
+		ff7_externals.gamepad_status->dpad_right = 0; // RIGHT
+		ff7_externals.gamepad_status->dpad_left = 0; // LEFT
+		ff7_externals.gamepad_status->button1 = 0; // Square
+		ff7_externals.gamepad_status->button2 = 0; // Cross
+		ff7_externals.gamepad_status->button3 = 1; // Circle
+		ff7_externals.gamepad_status->button4 = 0; // Triangle
+		ff7_externals.gamepad_status->button5 = 0; // L1
+		ff7_externals.gamepad_status->button6 = 0; // R1
+		ff7_externals.gamepad_status->button7 = 0; // L2
+		ff7_externals.gamepad_status->button8 = 0; // R2
+		ff7_externals.gamepad_status->button9 = 0; // SELECT
+		ff7_externals.gamepad_status->button10 = 0; // START
+		ff7_externals.gamepad_status->button11 = 0; // L3
+		ff7_externals.gamepad_status->button12 = 0; // R3
+		ff7_externals.gamepad_status->button13 = 0; // PS Button
+
+		// End simulation right here before we press this button by mistake in other windows
+		simulate_OK_button = false;
+	}
+	else if (xinput_connected)
 	{
 		if (!gamepad.Refresh()) return 0;
 
@@ -118,8 +168,8 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
 		ff7_externals.gamepad_status->dpad_up = (gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
 		ff7_externals.gamepad_status->dpad_down = (gamepad.leftStickY < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN); // DOWN
-		ff7_externals.gamepad_status->dpad_right = (gamepad.leftStickX > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT); // RIGHT
 		ff7_externals.gamepad_status->dpad_left = (gamepad.leftStickX < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT); // LEFT
+		ff7_externals.gamepad_status->dpad_right = (gamepad.leftStickX > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT); // RIGHT
 		ff7_externals.gamepad_status->button1 = gamepad.IsPressed(XINPUT_GAMEPAD_X); // Square
 		ff7_externals.gamepad_status->button2 = gamepad.IsPressed(XINPUT_GAMEPAD_A); // Cross
 		ff7_externals.gamepad_status->button3 = gamepad.IsPressed(XINPUT_GAMEPAD_B); // Circle
@@ -143,10 +193,10 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 
 		ff7_externals.gamepad_status->pos_x = dinput_joypad_info.dwXpos;
 		ff7_externals.gamepad_status->pos_y = dinput_joypad_info.dwYpos;
-		ff7_externals.gamepad_status->dpad_up = (dinput_joypad_info.dwYpos > dinput_joypad_caps.wYmax * 0.65) || dinput_joypad_info.dwPOV == 0; // UP
-		ff7_externals.gamepad_status->dpad_down = (dinput_joypad_info.dwYpos < dinput_joypad_caps.wYmax * 0.35) || dinput_joypad_info.dwPOV == 18000; // DOWN
-		ff7_externals.gamepad_status->dpad_right = (dinput_joypad_info.dwXpos > dinput_joypad_caps.wXmax * 0.65) || dinput_joypad_info.dwPOV == 9000; // RIGHT
+		ff7_externals.gamepad_status->dpad_up = (dinput_joypad_info.dwYpos < dinput_joypad_caps.wYmax * 0.35) || dinput_joypad_info.dwPOV == 0; // UP
+		ff7_externals.gamepad_status->dpad_down = (dinput_joypad_info.dwYpos > dinput_joypad_caps.wYmax * 0.65) || dinput_joypad_info.dwPOV == 18000; // DOWN
 		ff7_externals.gamepad_status->dpad_left = (dinput_joypad_info.dwXpos < dinput_joypad_caps.wXmax * 0.35) || dinput_joypad_info.dwPOV == 27000; // LEFT
+		ff7_externals.gamepad_status->dpad_right = (dinput_joypad_info.dwXpos > dinput_joypad_caps.wXmax * 0.65) || dinput_joypad_info.dwPOV == 9000; // RIGHT
 		ff7_externals.gamepad_status->button1 = dinput_joypad_info.dwButtons & 1; // Square
 		ff7_externals.gamepad_status->button2 = dinput_joypad_info.dwButtons & 2; // Cross
 		ff7_externals.gamepad_status->button3 = dinput_joypad_info.dwButtons & 4; // Circle
