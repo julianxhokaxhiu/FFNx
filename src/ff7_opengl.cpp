@@ -169,6 +169,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 	replace_call_function(ff7_externals.field_battle_toggle, ff7_toggle_battle_field);
 	replace_call_function(ff7_externals.worldmap_battle_toggle, ff7_toggle_battle_worldmap);
+
+	// #####################
+	// gamepad
+	// #####################
+	replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
+	replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
 }
 
 struct ff7_gfx_driver *ff7_load_driver(void* _game_object)
