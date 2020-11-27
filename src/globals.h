@@ -92,5 +92,8 @@ extern uint32_t frame_rate;
 
 extern double speedhack_current;
 
+extern struct tagJOYCAPSA dinput_joypad_caps;
+extern struct joyinfoex_tag dinput_joypad_info;
+
 extern bool xinput_connected;
 extern bool simulate_OK_button;

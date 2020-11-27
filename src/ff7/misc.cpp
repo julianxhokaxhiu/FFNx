@@ -26,9 +26,6 @@
 #include "../ff7.h"
 #include "../log.h"
 
-struct tagJOYCAPSA dinput_joypad_caps;
-struct joyinfoex_tag dinput_joypad_info;
-
 // MDEF fix
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
 {
@@ -210,9 +207,6 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		ff7_externals.gamepad_status->button11 = dinput_joypad_info.dwButtons & 0x400; // L3
 		ff7_externals.gamepad_status->button12 = dinput_joypad_info.dwButtons & 0x800; // R3
 		ff7_externals.gamepad_status->button13 = dinput_joypad_info.dwButtons & 0x1000; // PS Button
-		ff7_externals.gamepad_status->button14 = dinput_joypad_info.dwButtons & 0x2000; // ???
-		ff7_externals.gamepad_status->button15 = dinput_joypad_info.dwButtons & 0x4000; // ???
-		ff7_externals.gamepad_status->button16 = dinput_joypad_info.dwButtons & 0x8000; // ???
 	}
 
 	return ff7_externals.gamepad_status;
