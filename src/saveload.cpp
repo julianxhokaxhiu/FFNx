@@ -112,37 +112,29 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	char filename[sizeof(basedir) + 1024]{ 0 };
 	uint64_t hash;
 
-	const std::vector<std::string> exts =
-	{
-		"dds",
-		"png",
-		"psd",
-		"tga",
-		"exr",
-	};
 	struct stat dummy;
 
 	if (is_animated) BEBB4185_64(data, dataSize, 0, &hash);
 
-	for (int idx = 0; idx < exts.size(); idx++)
+	for (int idx = 0; idx < mod_ext.size(); idx++)
 	{
 		if (is_animated)
 		{
-			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path.c_str(), name, palette_index, hash, exts[idx].c_str());
+			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path.c_str(), name, palette_index, hash, mod_ext[idx].c_str());
 
 			if (stat(filename, &dummy) != 0)
 			{
 				if (trace_all || show_missing_textures) trace("Could not find animated texture [ %s ].\n", filename);
 
-				_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), name, palette_index, exts[idx].c_str());
+				_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), name, palette_index, mod_ext[idx].c_str());
 			}
 		}
 		else
-			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), name, palette_index, exts[idx].c_str());
+			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), name, palette_index, mod_ext[idx].c_str());
 
 		if (stat(filename, &dummy) == 0)
 		{
-			ret = load_texture_helper(filename, width, height, exts[idx] == "png");
+			ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png");
 
 			if (!ret && trace_all) warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
 

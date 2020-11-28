@@ -25,6 +25,7 @@
 
 // configuration variables with their default values
 std::string mod_path;
+std::vector<std::string> mod_ext;
 bool enable_ffmpeg_videos;
 std::string ffmpeg_video_ext;
 bool use_external_sfx;
@@ -103,7 +104,7 @@ std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<to
 			return ret;
 		}
 	}
-	
+
 	return std::vector<std::string>(1, node.value_or(""));
 }
 
@@ -129,6 +130,7 @@ void read_cfg()
 
 	// Read config values
 	mod_path = config["mod_path"].value_or("");
+	mod_ext = get_string_or_array_of_strings(config["mod_ext"]);
 	enable_ffmpeg_videos = config["enable_ffmpeg_videos"].value_or(!ff8);
 	ffmpeg_video_ext = config["ffmpeg_video_ext"].value_or("");
 	use_external_sfx = config["use_external_sfx"].value_or(false);
@@ -316,4 +318,8 @@ void read_cfg()
 	// MOD PATH
 	if (mod_path.empty())
 		mod_path = "mods/Textures";
+
+	// MOD EXTENSION
+	if (mod_ext.empty() || mod_ext.front().empty())
+		mod_ext = {"dds", "png", "psd", "tga", "exr"};
 }

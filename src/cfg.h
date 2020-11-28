@@ -33,6 +33,7 @@
 #define RENDERER_BACKEND_VULKAN 5
 
 extern std::string mod_path;
+extern std::vector<std::string> mod_ext;
 extern bool enable_ffmpeg_videos;
 extern std::string ffmpeg_video_ext;
 extern bool use_external_sfx;
