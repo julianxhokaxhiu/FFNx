@@ -48,6 +48,13 @@
  */
 #define VPTR(X) (ff8 ? (void *)ff8_ ## X : (void *)ff7_ ## X)
 
+ /*
+  * VPTRCAST - Access the raw pointer contained in an object, casting to a defined type
+  * T - object type
+  * X - object
+  */
+#define VPTRCAST(T, X) (ff8 ? (struct T *)ff8_ ## X : (struct T *)ff7_ ## X)
+
 /*
  * VASS - Assign a new pointer to an object.
  * T - object type
