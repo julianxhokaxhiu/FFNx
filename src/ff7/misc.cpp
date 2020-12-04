@@ -23,6 +23,7 @@
 
 #include "../gamepad.h"
 #include "../gamehacks.h"
+#include "../voice.h"
 #include "../ff7.h"
 #include "../log.h"
 
@@ -289,6 +290,12 @@ BYTE ff7_toggle_battle_worldmap()
 bool ff7_skip_movies()
 {
 	uint32_t mode = getmode_cached()->driver_mode;
+
+	// Prevent game acting weird or wrong if movie is skipped
+	if (strcmp(get_current_field_name(), "bugin1c") == 0)
+	{
+		return false;
+	}
 
 	if (ff7_externals.movie_object->is_playing)
 	{
