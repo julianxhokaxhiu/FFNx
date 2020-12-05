@@ -61,6 +61,7 @@ extern bool trace_loaders;
 extern bool trace_lights;
 extern bool trace_opcodes;
 extern bool trace_voice;
+extern bool trace_gamepad;
 extern bool vertex_log;
 extern bool uniform_log;
 extern bool show_renderer_backend;

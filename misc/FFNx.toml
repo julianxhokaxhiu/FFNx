@@ -351,6 +351,10 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #trace_voice = false
 
+# trace_gamepad - Dump in the logs only APIs that has to do with gamepad
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#trace_gamepad = false
+
 # vertex_log - Dump in the logs current engine vertex data being passed to the GPU for drawing
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #vertex_log = false

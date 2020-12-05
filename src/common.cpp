@@ -849,7 +849,7 @@ void common_flip(struct game_obj *game_object)
 	// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
 	if (!xinput_connected && gamepad.CheckConnection())
 	{
-		trace("XInput controller: connected.\n");
+		if (trace_all || trace_gamepad) trace("XInput controller: connected.\n");
 
 		xinput_connected = true;
 
@@ -858,7 +858,7 @@ void common_flip(struct game_obj *game_object)
 	}
 	else if (xinput_connected && !gamepad.CheckConnection())
 	{
-		trace("XInput controller: disconnected.\n");
+		if (trace_all || trace_gamepad) trace("XInput controller: disconnected.\n");
 
 		xinput_connected = false;
 	}

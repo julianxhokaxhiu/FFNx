@@ -53,6 +53,7 @@ bool trace_loaders;
 bool trace_lights;
 bool trace_opcodes;
 bool trace_voice;
+bool trace_gamepad;
 bool vertex_log;
 bool uniform_log;
 bool show_renderer_backend;
@@ -158,6 +159,7 @@ void read_cfg()
 	trace_lights = config["trace_lights"].value_or(false);
 	trace_opcodes = config["trace_opcodes"].value_or(false);
 	trace_voice = config["trace_voice"].value_or(false);
+	trace_gamepad = config["trace_gamepad"].value_or(false);
 	vertex_log = config["vertex_log"].value_or(false);
 	uniform_log = config["uniform_log"].value_or(false);
 	show_renderer_backend = config["show_renderer_backend"].value_or(true);
