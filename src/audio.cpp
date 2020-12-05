@@ -282,10 +282,10 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name)
 
 	bool exists = getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, filename);
-
 	if (exists)
 	{
+		if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, filename);
+
 		if (_openpsf_loaded) {
 			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf();
 			music = openpsf;
