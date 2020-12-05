@@ -48,6 +48,7 @@ extern const GUID IID_ICodecAPI = { 0x901db4c7, 0x31ce, 0x41a2, 0x85,0xdc, 0x8f,
 
 #define FFNX_API __declspec(dllexport)
 
+extern HINSTANCE gameHinstance;
 extern HWND gameHwnd;
 
 extern MEMORYSTATUSEX last_ram_state;
@@ -91,9 +92,6 @@ extern uint32_t frame_counter;
 extern uint32_t frame_rate;
 
 extern double speedhack_current;
-
-extern struct tagJOYCAPSA dinput_joypad_caps;
-extern struct joyinfoex_tag dinput_joypad_info;
 
 extern bool xinput_connected;
 extern bool simulate_OK_button;

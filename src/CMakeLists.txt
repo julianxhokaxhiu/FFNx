@@ -55,6 +55,8 @@ target_link_libraries(${RELEASE_NAME}
 	shlwapi
     psapi
     winmm
+    dinput8
+    dxguid
 	BGFX::BGFX
     BGFX::BIMG
     BGFX::BIMG_DECODE

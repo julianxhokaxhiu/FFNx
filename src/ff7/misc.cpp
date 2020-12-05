@@ -23,6 +23,7 @@
 
 #include "../gamepad.h"
 #include "../gamehacks.h"
+#include "../joystick.h"
 #include "../voice.h"
 #include "../ff7.h"
 #include "../log.h"
@@ -103,7 +104,7 @@ int ff7_get_gamepad()
 	}
 	else
 	{
-		if ( joyGetDevCapsA(0, &dinput_joypad_caps, sizeof(dinput_joypad_caps)) == JOYERR_NOERROR )
+		if (joystick.Refresh())
     	return TRUE;
 	}
 
@@ -113,25 +114,7 @@ int ff7_get_gamepad()
 struct ff7_gamepad_status* ff7_update_gamepad_status()
 {
 	// Reset
-	ff7_externals.gamepad_status->pos_x = 0;
-	ff7_externals.gamepad_status->pos_y = 0;
-	ff7_externals.gamepad_status->dpad_up = 0; // UP
-	ff7_externals.gamepad_status->dpad_down = 0; // DOWN
-	ff7_externals.gamepad_status->dpad_right = 0; // RIGHT
-	ff7_externals.gamepad_status->dpad_left = 0; // LEFT
-	ff7_externals.gamepad_status->button1 = 0; // Square
-	ff7_externals.gamepad_status->button2 = 0; // Cross
-	ff7_externals.gamepad_status->button3 = 0; // Circle
-	ff7_externals.gamepad_status->button4 = 0; // Triangle
-	ff7_externals.gamepad_status->button5 = 0; // L1
-	ff7_externals.gamepad_status->button6 = 0; // R1
-	ff7_externals.gamepad_status->button7 = 0; // L2
-	ff7_externals.gamepad_status->button8 = 0; // R2
-	ff7_externals.gamepad_status->button9 = 0; // SELECT
-	ff7_externals.gamepad_status->button10 = 0; // START
-	ff7_externals.gamepad_status->button11 = 0; // L3
-	ff7_externals.gamepad_status->button12 = 0; // R3
-	ff7_externals.gamepad_status->button13 = 0; // PS Button
+	ZeroMemory(ff7_externals.gamepad_status, sizeof(ff7_gamepad_status));
 
 	if (simulate_OK_button)
 	{
@@ -184,30 +167,27 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 	}
 	else
 	{
-		dinput_joypad_info.dwSize = sizeof(dinput_joypad_info);
-  	dinput_joypad_info.dwFlags = JOY_RETURNALL;
+		if (!joystick.Refresh()) return 0;
 
-		if ( joyGetPosEx(0, &dinput_joypad_info) ) return 0;
-
-		ff7_externals.gamepad_status->pos_x = dinput_joypad_info.dwXpos;
-		ff7_externals.gamepad_status->pos_y = dinput_joypad_info.dwYpos;
-		ff7_externals.gamepad_status->dpad_up = (dinput_joypad_info.dwYpos < dinput_joypad_caps.wYmax * 0.35) || dinput_joypad_info.dwPOV == 0; // UP
-		ff7_externals.gamepad_status->dpad_down = (dinput_joypad_info.dwYpos > dinput_joypad_caps.wYmax * 0.65) || dinput_joypad_info.dwPOV == 18000; // DOWN
-		ff7_externals.gamepad_status->dpad_left = (dinput_joypad_info.dwXpos < dinput_joypad_caps.wXmax * 0.35) || dinput_joypad_info.dwPOV == 27000; // LEFT
-		ff7_externals.gamepad_status->dpad_right = (dinput_joypad_info.dwXpos > dinput_joypad_caps.wXmax * 0.65) || dinput_joypad_info.dwPOV == 9000; // RIGHT
-		ff7_externals.gamepad_status->button1 = dinput_joypad_info.dwButtons & 1; // Square
-		ff7_externals.gamepad_status->button2 = dinput_joypad_info.dwButtons & 2; // Cross
-		ff7_externals.gamepad_status->button3 = dinput_joypad_info.dwButtons & 4; // Circle
-		ff7_externals.gamepad_status->button4 = dinput_joypad_info.dwButtons & 8; // Triangle
-		ff7_externals.gamepad_status->button5 = dinput_joypad_info.dwButtons & 0x10; // L1
-		ff7_externals.gamepad_status->button6 = dinput_joypad_info.dwButtons & 0x20; // R1
-		ff7_externals.gamepad_status->button7 = dinput_joypad_info.dwButtons & 0x40; // L2
-		ff7_externals.gamepad_status->button8 = dinput_joypad_info.dwButtons & 0x80; // R2
-		ff7_externals.gamepad_status->button9 = dinput_joypad_info.dwButtons & 0x100; // SELECT
-		ff7_externals.gamepad_status->button10 = dinput_joypad_info.dwButtons & 0x200; // START
-		ff7_externals.gamepad_status->button11 = dinput_joypad_info.dwButtons & 0x400; // L3
-		ff7_externals.gamepad_status->button12 = dinput_joypad_info.dwButtons & 0x800; // R3
-		ff7_externals.gamepad_status->button13 = dinput_joypad_info.dwButtons & 0x1000; // PS Button
+		ff7_externals.gamepad_status->pos_x = joystick.GetState()->lX;
+		ff7_externals.gamepad_status->pos_y = joystick.GetState()->lY;
+		ff7_externals.gamepad_status->dpad_up = (joystick.GetState()->lY < joystick.GetDeadZone(-0.5f)) || joystick.GetState()->rgdwPOV[0] == 0; // UP
+		ff7_externals.gamepad_status->dpad_down = (joystick.GetState()->lY > joystick.GetDeadZone(0.5f)) || joystick.GetState()->rgdwPOV[0] == 18000; // DOWN
+		ff7_externals.gamepad_status->dpad_left = (joystick.GetState()->lX < joystick.GetDeadZone(-0.5f)) || joystick.GetState()->rgdwPOV[0] == 27000; // LEFT
+		ff7_externals.gamepad_status->dpad_right = (joystick.GetState()->lX > joystick.GetDeadZone(0.5f)) || joystick.GetState()->rgdwPOV[0] == 9000; // RIGHT
+		ff7_externals.gamepad_status->button1 = joystick.GetState()->rgbButtons[0] & 0x80; // Square
+		ff7_externals.gamepad_status->button2 = joystick.GetState()->rgbButtons[1] & 0x80; // Cross
+		ff7_externals.gamepad_status->button3 = joystick.GetState()->rgbButtons[2] & 0x80; // Circle
+		ff7_externals.gamepad_status->button4 = joystick.GetState()->rgbButtons[3] & 0x80; // Triangle
+		ff7_externals.gamepad_status->button5 = joystick.GetState()->rgbButtons[4] & 0x80; // L1
+		ff7_externals.gamepad_status->button6 = joystick.GetState()->rgbButtons[5] & 0x80; // R1
+		ff7_externals.gamepad_status->button7 = joystick.GetState()->rgbButtons[6] & 0x80; // L2
+		ff7_externals.gamepad_status->button8 = joystick.GetState()->rgbButtons[7] & 0x80; // R2
+		ff7_externals.gamepad_status->button9 = joystick.GetState()->rgbButtons[8] & 0x80; // SELECT
+		ff7_externals.gamepad_status->button10 = joystick.GetState()->rgbButtons[9] & 0x80; // START
+		ff7_externals.gamepad_status->button11 = joystick.GetState()->rgbButtons[10] & 0x80; // L3
+		ff7_externals.gamepad_status->button12 = joystick.GetState()->rgbButtons[11] & 0x80; // R3
+		ff7_externals.gamepad_status->button13 = joystick.GetState()->rgbButtons[12] & 0x80; // PS Button
 	}
 
 	return ff7_externals.gamepad_status;

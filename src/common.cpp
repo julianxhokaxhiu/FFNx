@@ -39,6 +39,7 @@
 #include "sfx.h"
 #include "saveload.h"
 #include "gamepad.h"
+#include "joystick.h"
 #include "input.h"
 #include "field.h"
 #include "world.h"
@@ -50,6 +51,7 @@
 bool proxyWndProc = false;
 
 // global game window handler
+HINSTANCE gameHinstance;
 HWND gameHwnd;
 uint32_t gameWindowOffsetX;
 uint32_t gameWindowOffsetY;
@@ -130,9 +132,6 @@ struct texture_format *texture_format;
 char basedir[BASEDIR_LENGTH];
 
 uint32_t version;
-
-struct tagJOYCAPSA dinput_joypad_caps;
-struct joyinfoex_tag dinput_joypad_info;
 
 bool xinput_connected = false;
 
@@ -534,6 +533,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 		VRASS(game_object, hwnd, hWnd);
 
+		gameHinstance = hInstance;
 		gameHwnd = hWnd;
 
 		if (hWnd)
@@ -852,6 +852,9 @@ void common_flip(struct game_obj *game_object)
 		trace("XInput controller: connected.\n");
 
 		xinput_connected = true;
+
+		// Release any previous DirectInput attached controller, if any
+		joystick.Clean();
 	}
 	else if (xinput_connected && !gamepad.CheckConnection())
 	{
