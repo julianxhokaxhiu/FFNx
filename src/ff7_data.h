@@ -135,6 +135,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_file_name = (char *)get_absolute_value(ff7_externals.open_field_file, 0x77);
 	ff7_externals.read_field_file = get_relative_call(ff7_externals.open_field_file, 0xCF);
 
+	ff7_externals.battle_id = (WORD *)get_absolute_value(main_loop, 0x35B);
+
+	ff7_externals.battle_enter = get_absolute_value(main_loop, 0x8A1);
 	ff7_externals.battle_loop = get_relative_call(battle_main_loop, 0x1C8);
 	ff7_externals.battle_mode = (DWORD*)get_absolute_value(ff7_externals.battle_loop, 0x18);
 	ff7_externals.battle_sub_429AC0 = get_absolute_value(ff7_externals.battle_loop, 0x79);

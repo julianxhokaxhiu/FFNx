@@ -246,24 +246,30 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return ret;
 }
 
-void play_midi_helper(char* midi_name, uint32_t midi, uint32_t fade_time = 0, SoLoud::time offset = 0, bool noIntro = false)
+bool play_midi_helper(char* midi_name, uint32_t midi, uint32_t fade_time = 0, SoLoud::time offset = 0, bool noIntro = false)
 {
 	NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
 	options.fadetime = fade_time;
 	options.flags = needs_resume(midi);
 	options.noIntro = noIntro;
 	options.offsetSeconds = offset;
-	nxAudioEngine.playMusic(midi_name, midi, options);
-	nxAudioEngine.setMusicLooping(!no_loop(midi));
+	bool ret = nxAudioEngine.playMusic(midi_name, midi, options);
 
-	if (music_mode(midi) == MODE_FIELD) {
-		current_music_is_field_resumable = next_music_channel == 0;
-	}
-	else {
-		current_music_is_field_resumable = false;
+	if (ret)
+	{
+		nxAudioEngine.setMusicLooping(!no_loop(midi));
+
+		if (music_mode(midi) == MODE_FIELD) {
+			current_music_is_field_resumable = next_music_channel == 0;
+		}
+		else {
+			current_music_is_field_resumable = false;
+		}
+
+		next_music_channel = 0;
 	}
 
-	next_music_channel = 0;
+	return ret;
 }
 
 void ff7_play_midi(uint32_t midi)
@@ -285,7 +291,17 @@ void ff7_play_midi(uint32_t midi)
 
 		if (mode->driver_mode == MODE_BATTLE && midi == 58) was_battle_gameover = true;
 
-		play_midi_helper(midi_name, midi);
+		if (mode->driver_mode == MODE_SWIRL)
+		{
+			char battle_name[50];
+
+			sprintf(battle_name, "bat_%d", *ff7_externals.battle_id);
+
+			if (!play_midi_helper(battle_name, midi))
+				play_midi_helper(midi_name, midi);
+		}
+		else
+			play_midi_helper(midi_name, midi);
 
 		midi_fadetime = 0;
 

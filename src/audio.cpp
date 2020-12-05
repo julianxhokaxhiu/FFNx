@@ -351,19 +351,19 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Pl
 	}
 }
 
-void NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
+bool NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
 {
 	overloadPlayArgumentsFromConfig(name, &id, &playOptions);
 
 	if (!_musicStack.empty() && _musicStack.top().id == id) {
 		resumeMusic(playOptions.fadetime < 2 ? 2 : playOptions.fadetime, true); // Slight fade
-		return;
+		return true;
 	}
 
 	if (_engine.isValidVoiceHandle(_music.handle)) {
 		if (_music.id == id) {
 			if (trace_all || trace_music) trace("NxAudioEngine::%s: %s is already playing\n", __func__, name);
-			return; // Already playing
+			return false; // Already playing
 		}
 
 		if (!(playOptions.flags & PlayFlagsDoNotPause) && _music.isResumable) {
@@ -389,7 +389,11 @@ void NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
 		else if (playOptions.fadetime > 0) {
 			setMusicVolume(_wantedMusicVolume, playOptions.fadetime);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 void NxAudioEngine::playMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions)

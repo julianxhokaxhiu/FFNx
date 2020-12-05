@@ -123,7 +123,7 @@ public:
 
 	// Music
 	bool canPlayMusic(const char* name);
-	void playMusic(char* name, uint32_t id, PlayOptions& playOptions = PlayOptions());
+	bool playMusic(char* name, uint32_t id, PlayOptions& playOptions = PlayOptions());
 	void playMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions = PlayOptions());
 	void stopMusic(uint32_t time = 0);
 	void pauseMusic(uint32_t time = 0, bool push = false);
