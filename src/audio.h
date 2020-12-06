@@ -142,7 +142,7 @@ public:
 
 	// Voice
 	bool canPlayVoice(const char* name);
-	bool playVoice(const char* name);
+	bool playVoice(const char* name, float volume = 1.0f);
 	void stopVoice(uint32_t time = 0);
 	bool isVoicePlaying();
 };

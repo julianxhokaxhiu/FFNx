@@ -180,6 +180,7 @@ struct common_externals
 	uint32_t pause_midi;
 	uint32_t restart_midi;
 	uint32_t midi_status;
+	DWORD* master_midi_volume;
 	uint32_t set_master_midi_volume;
 	uint32_t set_midi_volume;
 	uint32_t set_midi_volume_trans;

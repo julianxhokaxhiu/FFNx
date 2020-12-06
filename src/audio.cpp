@@ -613,7 +613,7 @@ bool NxAudioEngine::canPlayVoice(const char* name)
 	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 }
 
-bool NxAudioEngine::playVoice(const char* name)
+bool NxAudioEngine::playVoice(const char* name, float volume)
 {
 	char filename[MAX_PATH];
 
@@ -630,7 +630,7 @@ bool NxAudioEngine::playVoice(const char* name)
 		// Stop any previously playing voice
 		if (_engine.isValidVoiceHandle(_voiceHandle)) _engine.stop(_voiceHandle);
 
-		_voiceHandle = _engine.play(*voice);
+		_voiceHandle = _engine.play(*voice, volume);
 
 		return _engine.isValidVoiceHandle(_voiceHandle);
 	}

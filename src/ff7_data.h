@@ -206,6 +206,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_437DB0 = get_absolute_value(ff7_externals.battle_loop, 0x8D);
 	ff7_externals.sub_5CB2CC = get_relative_call(ff7_externals.battle_sub_437DB0, 0x43);
 
+	common_externals.master_midi_volume = (DWORD *)get_absolute_value(common_externals.set_master_midi_volume, 0x46);
 	ff7_externals.midi_volume_control = (uint32_t *)get_absolute_value(common_externals.midi_init, 0x706);
 	ff7_externals.midi_initialized = (uint32_t *)get_absolute_value(common_externals.midi_init, 0x3A);
 

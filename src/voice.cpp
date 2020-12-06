@@ -28,16 +28,32 @@
 int (*opcode_old_message)();
 int (*opcode_old_ask)(int);
 
+DWORD previous_master_music_volume = 0x64; // Assume maximum by default
+void (*set_master_music_volume)(uint32_t);
+float voice_volume = 1.0f;
+
 //=============================================================================
 
 void begin_voice()
 {
 	if (enable_voice_music_fade)
 	{
-		float new_master_volume = external_voice_music_fade_volume / 100.0f;
+		if (use_external_music)
+		{
+			float new_master_volume = external_voice_music_fade_volume / 100.0f;
 
-		if (new_master_volume < nxAudioEngine.getMusicMasterVolume())
-			nxAudioEngine.setMusicMasterVolume(new_master_volume, 1);
+			if (new_master_volume < nxAudioEngine.getMusicMasterVolume())
+				nxAudioEngine.setMusicMasterVolume(new_master_volume, 1);
+		}
+		else
+		{
+			if (external_voice_music_fade_volume < *common_externals.master_midi_volume)
+			{
+				previous_master_music_volume = *common_externals.master_midi_volume;
+				set_master_music_volume(external_voice_music_fade_volume);
+				voice_volume = 2.0f + (100 - external_voice_music_fade_volume) / 100.0f;
+			}
+		}
 	}
 }
 
@@ -52,7 +68,7 @@ bool play_voice(char* field_name, byte dialog_id, byte page_count)
 	if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
 		sprintf(name, "%s/%u", field_name, dialog_id);
 
-	return nxAudioEngine.playVoice(name);
+	return nxAudioEngine.playVoice(name, voice_volume);
 }
 
 void play_option(char* field_name, byte dialog_id, byte option_count)
@@ -61,7 +77,7 @@ void play_option(char* field_name, byte dialog_id, byte option_count)
 
 	sprintf(name, "%s/%u_%u", field_name, dialog_id, option_count);
 
-	nxAudioEngine.playVoice(name);
+	nxAudioEngine.playVoice(name, voice_volume);
 }
 
 void end_voice(uint32_t time = 0)
@@ -69,7 +85,12 @@ void end_voice(uint32_t time = 0)
 	nxAudioEngine.stopVoice(time);
 
 	if (enable_voice_music_fade)
-		nxAudioEngine.restoreMusicMasterVolume(time > 0 ? time : 1);
+	{
+		if (use_external_music)
+			nxAudioEngine.restoreMusicMasterVolume(time > 0 ? time : 1);
+		else
+			set_master_music_volume(previous_master_music_volume);
+	}
 }
 
 //=============================================================================
@@ -221,6 +242,8 @@ int opcode_voice_ask(int unk)
 
 void voice_init()
 {
+	set_master_music_volume = (void (*)(uint32_t))common_externals.set_master_midi_volume;
+
 	if (!ff8)
 	{
 		opcode_old_message = (int (*)())ff7_externals.opcode_message;
