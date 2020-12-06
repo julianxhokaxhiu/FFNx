@@ -2670,7 +2670,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 			}
 		}
 	}
-	else if (strstr(lpFileName, "app.log"))
+	else if (strstr(lpFileName, "app.log") || strstr(lpFileName, "ff8input.cfg"))
 	{
 		CHAR newPath[260]{ 0 };
 
