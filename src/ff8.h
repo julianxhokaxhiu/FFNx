@@ -922,3 +922,4 @@ void ff8_unload_texture(struct ff8_texture_set *texture_set);
 void ff8_init_hooks(struct game_obj *_game_object);
 struct ff8_gfx_driver *ff8_load_driver(void* game_object);
 LPDIJOYSTATE2 ff8_update_gamepad_status();
+bool ff8_skip_movies();

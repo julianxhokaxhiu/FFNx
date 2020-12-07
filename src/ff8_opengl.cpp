@@ -430,6 +430,34 @@ int ff8_is_window_active()
 	return 0;
 }
 
+bool ff8_skip_movies()
+{
+	uint32_t mode = getmode_cached()->driver_mode;
+
+	if (ff8_externals.movie_object->movie_is_playing)
+	{
+		if (mode == MODE_FIELD)
+		{
+			ff8_externals.sub_5304B0();
+		}
+		else
+		{
+			if (enable_ffmpeg_videos)
+				ff8_stop_movie();
+			else
+			{
+				static void (*stop_movie)() = (void(*)())common_externals.stop_movie;
+
+				stop_movie();
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;

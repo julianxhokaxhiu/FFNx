@@ -72,6 +72,13 @@ void GameHacks::skipMovies()
 			show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "FMV Skipped");
 		}
 	}
+	else
+	{
+		if (ff8_skip_movies())
+		{
+			show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "FMV Skipped");
+		}
+	}
 }
 
 // PUBLIC
@@ -201,6 +208,12 @@ void GameHacks::processGamepadInput()
 				ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
 				)
 				toggleSpeedhack();
+			// Skip Movies on SELECT+START
+			else if (
+				ff8_externals.dinput_gamepad_state->rgbButtons[8] == 0x80 &&
+				ff8_externals.dinput_gamepad_state->rgbButtons[9] == 0x80
+				)
+				skipMovies();
 		}
 
 		lastFrame = frame_counter;
