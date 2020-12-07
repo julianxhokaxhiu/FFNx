@@ -792,6 +792,9 @@ struct ff8_externals
 	uint32_t sub_468BD0;
 	uint32_t pubintro_main_loop;
 	uint32_t credits_main_loop;
+	uint32_t sub_52F300;
+	DWORD* credits_loop_state;
+	DWORD* credits_counter;
 	uint32_t sub_470520;
 	uint32_t sub_4A24B0;
 	uint32_t sub_470630;

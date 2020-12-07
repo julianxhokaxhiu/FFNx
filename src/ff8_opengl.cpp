@@ -440,19 +440,25 @@ bool ff8_skip_movies()
 		{
 			ff8_externals.sub_5304B0();
 		}
-		else
+		else if (mode == MODE_CREDITS)
 		{
 			if (enable_ffmpeg_videos)
 				ff8_stop_movie();
 			else
-			{
-				static void (*stop_movie)() = (void(*)())common_externals.stop_movie;
-
-				stop_movie();
-			}
+				((void(*)())common_externals.stop_movie)();
 		}
 
 		return true;
+	}
+	else
+	{
+		if (mode == MODE_CREDITS)
+		{
+			*ff8_externals.credits_counter = 256;
+			*ff8_externals.credits_loop_state = 18;
+
+			return true;
+		}
 	}
 
 	return false;
