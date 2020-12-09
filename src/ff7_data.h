@@ -93,6 +93,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.movie_object = (struct movie_obj *)(get_absolute_value(common_externals.prepare_movie, 0x42) - 0xC);
 
 	common_externals._mode = (WORD*)get_absolute_value(main_loop, 0x8C);
+	common_externals._previous_mode = (WORD *)get_absolute_value(main_loop, 0x1D8);
 
 	ff7_set_main_loop(MODE_GAMEOVER, get_absolute_value(main_loop, 0x1FE));
 	swirl_main_loop = get_absolute_value(main_loop, 0x25B);

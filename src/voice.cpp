@@ -134,17 +134,6 @@ byte get_dialog_opcode(byte window_id)
 	return ff7_externals.opcode_message_loop_code[24 * window_id];
 }
 
-char* get_current_field_name()
-{
-	char *ret = nullptr;
-
-	if (!ff8) ret = strrchr(ff7_externals.field_file_name, 92);
-
-	if (ret) ret += 1;
-
-	return ret;
-}
-
 //=============================================================================
 
 int opcode_voice_message()

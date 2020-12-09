@@ -326,6 +326,17 @@ struct game_mode *getmode_cached()
 	return last_mode;
 }
 
+char* get_current_field_name()
+{
+	char *ret = nullptr;
+
+	if (!ff8) ret = strrchr(ff7_externals.field_file_name, 92);
+
+	if (ret) ret += 1;
+
+	return ret;
+}
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (proxyWndProc)

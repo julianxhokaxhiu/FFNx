@@ -298,7 +298,17 @@ void ff7_play_midi(uint32_t midi)
 			sprintf(battle_name, "bat_%d", *ff7_externals.battle_id);
 
 			if (!play_midi_helper(battle_name, midi))
-				play_midi_helper(midi_name, midi);
+			{
+				if (*common_externals._previous_mode == FF7_MODE_FIELD)
+				{
+					sprintf(battle_name, "bat_%s", get_current_field_name());
+
+					if (!play_midi_helper(battle_name, midi))
+						play_midi_helper(midi_name, midi);
+				}
+				else
+					play_midi_helper(midi_name, midi);
+			}
 		}
 		else
 			play_midi_helper(midi_name, midi);

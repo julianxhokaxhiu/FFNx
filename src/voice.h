@@ -21,5 +21,4 @@
 
 #pragma once
 
-char *get_current_field_name();
 void voice_init();

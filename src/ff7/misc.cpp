@@ -24,7 +24,6 @@
 #include "../gamepad.h"
 #include "../gamehacks.h"
 #include "../joystick.h"
-#include "../voice.h"
 #include "../ff7.h"
 #include "../log.h"
 

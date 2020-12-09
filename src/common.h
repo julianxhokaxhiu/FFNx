@@ -144,6 +144,7 @@ gfx_field_EC common_field_EC;
 struct common_externals
 {
 	WORD *_mode;
+	WORD *_previous_mode;
 	uint32_t dinput_hack1;
 	gfx_load_group *generic_load_group;
 	gfx_light_polygon_set *generic_light_polygon_set;
