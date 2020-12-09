@@ -21,8 +21,7 @@
 
 $downloadUrl = "https://github.com/julianxhokaxhiu/FFNx/releases/latest"
 
-if ($env:_IS_BUILD_CANARY -eq "true")
-{
+if ($env:_IS_BUILD_CANARY -eq "true") {
   $downloadUrl = "https://github.com/julianxhokaxhiu/FFNx/releases/tag/canary"
 }
 
@@ -47,6 +46,7 @@ $discordPost = @"
 }
 "@
 
-Invoke-RestMethod -Uri $env:_MAP_FFNX_TSUNAMODS -ContentType "application/json" -Method Post -Body $discordPost
 Invoke-RestMethod -Uri $env:_MAP_FFNX_QHIMM_FF7 -ContentType "application/json" -Method Post -Body $discordPost
 Invoke-RestMethod -Uri $env:_MAP_FFNX_QHIMM_FF8 -ContentType "application/json" -Method Post -Body $discordPost
+Invoke-RestMethod -Uri $env:_MAP_FFNX_TSUNAMODS_FF7 -ContentType "application/json" -Method Post -Body $discordPost
+Invoke-RestMethod -Uri $env:_MAP_FFNX_TSUNAMODS_FF8 -ContentType "application/json" -Method Post -Body $discordPost
