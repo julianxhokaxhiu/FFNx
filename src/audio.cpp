@@ -347,6 +347,8 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Pl
 		if (_newName.has_value()) {
 			memcpy(name, (*_newName).c_str(), (*_newName).size());
 			name[(*_newName).size()] = '\0';
+
+			if (trace_all || trace_music) info("%s: replaced by shuffle with %s\n", __func__, (*_newName).c_str());
 		}
 	}
 }
