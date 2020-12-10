@@ -269,14 +269,13 @@ BYTE ff7_toggle_battle_worldmap()
 bool ff7_skip_movies()
 {
 	uint32_t mode = getmode_cached()->driver_mode;
-	char* field_name = get_current_field_name();
 
 	// Prevent game acting weird or wrong if movie is skipped
 	if (
-		strcmp(field_name, "bugin1c") == 0 ||
-		strcmp(field_name, "junbin22") == 0 ||
-		strcmp(field_name, "bwhlin") == 0 ||
-		strcmp(field_name, "bwhlin2") == 0
+		*ff7_externals.field_id == 399 ||
+		*ff7_externals.field_id == 489 ||
+		*ff7_externals.field_id == 490 ||
+		*ff7_externals.field_id == 543
 	)
 	{
 		return false;
