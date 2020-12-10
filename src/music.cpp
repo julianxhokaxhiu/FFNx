@@ -291,24 +291,29 @@ void ff7_play_midi(uint32_t midi)
 
 		if (mode->driver_mode == MODE_BATTLE && midi == 58) was_battle_gameover = true;
 
-		if (mode->driver_mode == MODE_SWIRL)
+		// Attempt to customize the battle theme flow
+		if (strcmp(midi_name, "BAT") == 0)
 		{
-			char battle_name[50];
-
-			sprintf(battle_name, "bat_%d", *ff7_externals.battle_id);
-
-			if (!play_midi_helper(battle_name, midi))
+			// Do only in fields for now
+			if (*common_externals._previous_mode == FF7_MODE_FIELD && mode->driver_mode == MODE_SWIRL)
 			{
-				if (*common_externals._previous_mode == FF7_MODE_FIELD)
+				char battle_name[50];
+
+				sprintf(battle_name, "bat_%d", *ff7_externals.battle_id);
+
+				// Attempt to load theme by Battle ID
+				if (!play_midi_helper(battle_name, midi))
 				{
 					sprintf(battle_name, "bat_%s", get_current_field_name());
 
+					// Attempt to load theme by Field name
 					if (!play_midi_helper(battle_name, midi))
+						// Nothing worked, switch back to default
 						play_midi_helper(midi_name, midi);
 				}
-				else
-					play_midi_helper(midi_name, midi);
 			}
+			else
+				play_midi_helper(midi_name, midi);
 		}
 		else
 			play_midi_helper(midi_name, midi);
