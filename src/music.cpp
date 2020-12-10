@@ -315,6 +315,18 @@ void ff7_play_midi(uint32_t midi)
 			else
 				play_midi_helper(midi_name, midi);
 		}
+		// Attempt to override field music
+		else if (mode->driver_mode == MODE_FIELD)
+		{
+			char field_name[50];
+
+			sprintf(field_name, "field_%d", *ff7_externals.field_id);
+
+			// Attempt to load theme by Field ID
+			if (!play_midi_helper(field_name, midi))
+				// Nothing worked, switch back to default
+				play_midi_helper(midi_name, midi);
+		}
 		else
 			play_midi_helper(midi_name, midi);
 

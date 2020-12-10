@@ -1508,6 +1508,7 @@ struct ff7_externals
 	WORD *num_field_entities;
 	struct field_object **field_objects;
 	uint32_t open_field_file;
+	WORD *field_id;
 	char *field_file_name;
 	uint32_t read_field_file;
 	uint32_t battle_enter;
