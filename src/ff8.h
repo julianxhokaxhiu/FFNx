@@ -778,9 +778,14 @@ struct ff8_externals
 	uint32_t sub_4972A0;
 	uint32_t load_fonts;
 	uint32_t swirl_main_loop;
-	uint32_t mode1_main_loop;
+	uint32_t field_main_loop;
 	uint32_t sub_471F70;
 	uint32_t sub_4767B0;
+	uint32_t sub_4789A0;
+	uint32_t sub_47CA90;
+	int (*sub_52B3A0)();
+	uint32_t battle_trigger_field;
+	uint32_t battle_trigger_worldmap;
 	uint32_t _load_texture;
 	uint32_t sub_4076B6;
 	uint32_t sub_41AC34;
@@ -809,7 +814,6 @@ struct ff8_externals
 	uint32_t swirl_sub_56D1D0;
 	uint32_t load_credits_image;
 	uint32_t sub_52FE80;
-	uint32_t sub_53F0F0;
 	uint32_t sub_45D610;
 	uint32_t sub_45D080;
 	uint32_t sub_464BD0;
@@ -833,6 +837,7 @@ struct ff8_externals
 	uint32_t upload_mim_file;
 	char *field_filename;
 	uint32_t load_field_models;
+	uint32_t worldmap_main_loop;
 	uint32_t worldmap_enter_main;
 	uint32_t worldmap_sub_53F310;
 	uint32_t sub_545E20;
@@ -871,11 +876,11 @@ struct ff8_externals
 	uint32_t sub_54D7E0;
 	uint32_t sub_54FDA0;
 	uint32_t sub_53FAC0;
+	int (*sub_541C80)(int);
 	uint32_t sub_54B460;
 	uint32_t sub_558D70;
 	uint32_t sub_545EA0;
 	uint32_t sub_545F10;
-	uint32_t worldmap_main_loop;
 	uint32_t sub_465720;
 	uint32_t requiredDisk;
 	uint32_t sm_battle_sound;

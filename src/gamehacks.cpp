@@ -208,6 +208,12 @@ void GameHacks::processGamepadInput()
 				ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
 				)
 				toggleSpeedhack();
+			// Toggle battle mode on L3+R3
+			else if (
+				ff8_externals.dinput_gamepad_state->rgbButtons[10] &&
+				ff8_externals.dinput_gamepad_state->rgbButtons[11]
+				)
+				toggleBattleMode();
 			// Skip Movies on SELECT+START
 			else if (
 				ff8_externals.dinput_gamepad_state->rgbButtons[8] == 0x80 &&

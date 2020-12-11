@@ -32,6 +32,7 @@
 #include "saveload.h"
 #include "gamepad.h"
 #include "joystick.h"
+#include "gamehacks.h"
 #include "ff8_data.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
@@ -464,6 +465,24 @@ bool ff8_skip_movies()
 	return false;
 }
 
+int ff8_toggle_battle_field()
+{
+	int ret = 1;
+
+	if (gamehacks.wantsBattle()) ret = ff8_externals.sub_52B3A0();
+
+	return ret;
+}
+
+int ff8_toggle_battle_worldmap(int param)
+{
+	int ret = 0;
+
+	if (gamehacks.wantsBattle()) ret = ff8_externals.sub_541C80(param);
+
+	return ret;
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -567,6 +586,12 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Gamepad
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);
 	replace_function(ff8_externals.dinput_sub_4692B0, ff8_update_gamepad_status);
+
+	// #####################
+	// battle toggle
+	// #####################
+	replace_call_function(ff8_externals.battle_trigger_field, ff8_toggle_battle_field);
+	replace_call_function(ff8_externals.battle_trigger_worldmap, ff8_toggle_battle_worldmap);
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
