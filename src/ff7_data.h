@@ -340,6 +340,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	common_externals.sfx_resume = get_relative_call(ff7_externals.sound_operation, 0x6F1);
 	common_externals.play_sfx_on_channel = get_relative_call(ff7_externals.sound_operation, 0x2AB);
 	common_externals.set_sfx_volume_on_channel = (uint32_t(*)(uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x3B3);
+	common_externals.set_sfx_speed_on_channel = (uint32_t(*)(uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x5DB);
 	common_externals.dsound_volume_table = (uint32_t*)get_absolute_value(uint32_t(common_externals.set_sfx_volume_on_channel), 0xCC);
 	common_externals.play_sfx = (uint32_t(*)(uint32_t))get_relative_call(ff7_externals.sound_operation, 0x703);
 	ff7_externals.sfx_fill_buffer_from_audio_dat = get_relative_call(uint32_t(common_externals.play_sfx), 0x4D);
@@ -348,7 +349,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.battle_clear_sound_flags = get_relative_call(ff7_externals.battle_sub_429AC0, 0x6C);
 	ff7_externals.swirl_sound_effect = get_relative_call(swirl_main_loop, 0x8B);
-	ff7_externals.sfx_load_and_play_with_tempo = get_relative_call(ff7_externals.swirl_sound_effect, 0x3E);
+	ff7_externals.sfx_load_and_play_with_speed = get_relative_call(ff7_externals.swirl_sound_effect, 0x3E);
 
 	ff7_externals.field_initialize_variables = get_relative_call(ff7_externals.field_sub_60DCED, 0x178);
 	ff7_externals.music_lock_clear_fix = ff7_externals.field_initialize_variables + 0x2B8;

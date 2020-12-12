@@ -381,6 +381,7 @@ uint32_t midi_status()
 {
 	if (trace_all || trace_music) trace("%s: midi=%s\n", __func__, current_midi_name());
 
+	// When the game asks for a music status, you know that it ends eventually
 	nxAudioEngine.setMusicLooping(false);
 
 	return nxAudioEngine.isMusicPlaying();
@@ -429,17 +430,17 @@ void set_midi_volume_trans(uint32_t volume, uint32_t step)
 	}
 }
 
-void set_midi_tempo(char tempo)
+void set_midi_tempo(int8_t tempo)
 {
 	if (trace_all || trace_music) trace("%s: tempo=%d\n", __func__, tempo);
 
-	float speed = 1.0;
+	if (tempo == -128) {
+		tempo = -127; // Prevent speed to be 0 (can crash with SoLoud)
+	}
 
-	if (float(tempo) >= 0.0)
-		speed = 1.0 - 0.5 * float(tempo) / 127.0;
-	else
-		speed = float(tempo) / -128.0 + 1.0;
+	float speed = float(tempo) / 128.0f + 1.0f;
 
+	// FIXME: will change the pitch
 	nxAudioEngine.setMusicSpeed(speed);
 }
 

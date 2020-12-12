@@ -54,6 +54,17 @@ void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 	nxAudioEngine.setSFXVolume(volume / 127.0f, channel);
 }
 
+void ff7_sfx_set_speed_on_channel(byte speed, int channel)
+{
+	if (trace_all || trace_sfx) trace("%s: speed=%d,channel=%d\n", __func__, speed, channel);
+
+	if (speed == -128) {
+		speed = -127; // Prevent speed to be 0 (can crash with SoLoud)
+	}
+
+	nxAudioEngine.setSFXSpeed(float(speed) / 128.0f + 1.0f, channel);
+}
+
 void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 {
 	if (id)
@@ -72,23 +83,17 @@ void ff7_sfx_play_on_channel_5(int id)
 	ff7_sfx_play_on_channel(64, id, 5);
 }
 
-void ff7_sfx_load_and_play_with_tempo(int id, byte panning, byte volume, byte tempo)
+void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte speed)
 {
 	if (id)
 	{
-		if (trace_all || trace_sfx) trace("%s: id=%d,volume=%d,panning=%d,tempo=%d\n", __func__, id, volume, panning, tempo);
+		if (trace_all || trace_sfx) trace("%s: id=%d,volume=%d,panning=%d,speed=%d\n", __func__, id, volume, panning, speed);
 
-		int _channel = 5;
-		float speed = 1.0;
-
-		if (float(tempo) >= 0.0)
-			speed = 1.0 - 0.5 * float(tempo) / 127.0;
-		else
-			speed = float(tempo) / -128.0 + 1.0;
+		const int _channel = 5;
 
 		ff7_sfx_load(id, 0);
 		ff7_sfx_set_volume_on_channel(volume, _channel);
-		nxAudioEngine.setSFXSpeed(speed, _channel);
+		ff7_sfx_set_speed_on_channel(speed, _channel);
 		ff7_sfx_play_on_channel(panning, id, _channel);
 	}
 }
@@ -317,9 +322,6 @@ void sfx_init()
 		replace_call(ff7_externals.swirl_sound_effect + 0x26, sfx_operation_battle_swirl_stop_sound);
 		// On resume music after a battle
 		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
-		// Fix volume on specific SFX
-		replace_call(ff7_externals.sfx_play_summon + 0xA2, sfx_play_battle_specific);
-		replace_call(ff7_externals.sfx_play_summon + 0xF2, sfx_play_battle_specific);
 
 		// Leviathan fix
 		patch_code_byte(ff7_externals.battle_summon_leviathan_loop + 0x3FA + 1, 0x2A);
@@ -333,7 +335,9 @@ void sfx_init()
 			replace_function(common_externals.play_sfx_on_channel, ff7_sfx_play_on_channel);
 			replace_function((uint32_t)common_externals.play_sfx, ff7_sfx_play_on_channel_5);
 			replace_function((uint32_t)common_externals.set_sfx_volume_on_channel, ff7_sfx_set_volume_on_channel);
-			replace_function(ff7_externals.sfx_load_and_play_with_tempo, ff7_sfx_load_and_play_with_tempo);
+			replace_function((uint32_t)common_externals.set_sfx_speed_on_channel, ff7_sfx_set_speed_on_channel);
+			replace_function(ff7_externals.sfx_load_and_play_with_speed, ff7_sfx_load_and_play_with_speed);
+			replace_function(ff7_externals.sfx_play_summon, ff7_sfx_play_on_channel_5);
 			replace_function(common_externals.sfx_pause, ff7_sfx_pause);
 			replace_function(common_externals.sfx_resume, ff7_sfx_resume);
 		}
@@ -353,6 +357,10 @@ void sfx_init()
 			patch_code_uint(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x70, 0xFFFFFFFF);
 			// Replace log call to fix sfx_state volume values
 			replace_call(uint32_t(common_externals.set_sfx_volume_on_channel) + 0x183, sfx_fix_volume_values);
+
+			// Fix volume on specific SFX
+			replace_call(ff7_externals.sfx_play_summon + 0xA2, sfx_play_battle_specific);
+			replace_call(ff7_externals.sfx_play_summon + 0xF2, sfx_play_battle_specific);
 		}
 	}
 }
