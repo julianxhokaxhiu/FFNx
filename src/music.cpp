@@ -35,13 +35,10 @@ std::unordered_map<uint32_t, SoLoud::time> remember_musics;
 bool next_music_is_not_multi = false;
 bool multi_music_is_playing = false;
 
-uint32_t midi_fadetime = 0;
-
 static uint32_t noop() { return 0; }
 
 void music_flush()
 {
-	midi_fadetime = 0;
 	nxAudioEngine.flush();
 }
 
@@ -330,8 +327,6 @@ void ff7_play_midi(uint32_t midi)
 		else
 			play_midi_helper(midi_name, midi);
 
-		midi_fadetime = 0;
-
 		if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(), midi_name);
 	}
 }
@@ -354,13 +349,19 @@ void stop_midi()
 	}
 }
 
-void cross_fade_midi(uint32_t midi, uint32_t time /* seconds */)
+void cross_fade_midi(uint32_t midi, uint32_t steps)
 {
 	char* midi_name = common_externals.get_midi_name(midi);
 
-	midi_fadetime = midi == 0 ? time : time / 2;
+	/* FIXME: the game uses cross_fade_midi only in two places,
+	 * with steps = 4 everytime. In the PS version, theses transitions
+	 * last 1-2 seconds fade in / out, no more.
+	 * Therefore steps value is clearly wrong here, so the formula
+	 * to get the correct time is different than the one in set_midi_volume_trans.
+	 */
+	double time = (steps & 0xFF) / 4.0;
 
-	if (nxAudioEngine.currentMusicId() != midi)
+	if (midi != 0)
 	{
 		if (midi == 1)
 		{
@@ -371,10 +372,30 @@ void cross_fade_midi(uint32_t midi, uint32_t time /* seconds */)
 			midi = (nxAudioEngine.currentMusicId() != 1) + 1;
 		}
 
-		play_midi_helper(midi_name, midi, midi_fadetime);
+		if (nxAudioEngine.currentMusicId() != midi)
+		{
+			if (nxAudioEngine.isMusicPlaying())
+			{
+				nxAudioEngine.stopMusic(time);
+			}
+			else
+			{
+				nxAudioEngine.setMusicVolume(1.0f); // Target volume
+			}
+
+			play_midi_helper(midi_name, midi, time);
+		}
+		else
+		{
+			nxAudioEngine.setMusicVolume(1.0f, time);
+		}
+	}
+	else
+	{
+		stop_midi();
 	}
 
-	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, time=%us\n", __func__, midi, midi_name, midi_fadetime);
+	if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s, time=%fs\n", __func__, midi, midi_name, time);
 }
 
 uint32_t midi_status()
@@ -403,21 +424,23 @@ void set_midi_volume(uint32_t volume)
 	nxAudioEngine.setMusicVolume(volume / 127.0f);
 }
 
-void set_midi_volume_trans(uint32_t volume, uint32_t step)
+void set_midi_volume_trans(uint32_t volume, uint32_t steps)
 {
 	if (volume > 127) volume = 127;
 
-	if (trace_all || trace_music) trace("%s: volume=%u, step=%u\n", __func__, volume, step);
+	double time = (steps & 0xFF) / 64.0;
 
-	if (step)
+	if (trace_all || trace_music) trace("%s: volume=%u, steps=%u (=> time=%fs)\n", __func__, volume, steps, time);
+
+	if (steps)
 	{
 		if (!volume)
 		{
-			nxAudioEngine.stopMusic(midi_fadetime);
+			nxAudioEngine.stopMusic(time);
 		}
 		else
 		{
-			nxAudioEngine.setMusicVolume(volume / 127.0f, midi_fadetime);
+			nxAudioEngine.setMusicVolume(volume / 127.0f, time);
 		}
 	}
 	else if (volume)
@@ -460,9 +483,10 @@ void change_next_music_channel()
 
 uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all) trace("AKAO call type=%X params=(%i %i %i %i)\n", type, param1, param2, param3, param4, param5);
+	if (trace_all || trace_music) trace("AKAO call type=%X params=(%i %i %i %i)\n", type, param1, param2, param3, param4, param5);
 
 	next_music_channel = 0;
+	type &= 0xFF; // The game does not always set this parameter as a 32-bit integer
 
 	if (type == 0xDA) { // Assimilated to stop music (Cid speech in Highwind)
 		return ((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(0xF0, 0, 0, 0, 0, 0);
@@ -544,7 +568,7 @@ uint32_t ff8_opcode_musicskip_play_midi_at(char* midi_data, uint32_t offset)
 
 uint32_t ff8_opcode_getmusicoffset()
 {
-	if (trace_all || trace_music) trace("%s: save music %d time %f\n", __func__, nxAudioEngine.currentMusicId(), nxAudioEngine.getMusicPlayingTime());
+	if (trace_all || trace_music) trace("%s: save music %d time %fs\n", __func__, nxAudioEngine.currentMusicId(), nxAudioEngine.getMusicPlayingTime());
 
 	remember_musics[nxAudioEngine.currentMusicId()] = std::fmod(nxAudioEngine.getMusicPlayingTime(), 60.0 * 2);
 

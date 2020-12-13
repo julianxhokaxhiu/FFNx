@@ -358,7 +358,7 @@ bool NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
 	overloadPlayArgumentsFromConfig(name, &id, &playOptions);
 
 	if (!_musicStack.empty() && _musicStack.top().id == id) {
-		resumeMusic(playOptions.fadetime < 2 ? 2 : playOptions.fadetime, true); // Slight fade
+		resumeMusic(playOptions.fadetime == 0.0 ? 1.0 : playOptions.fadetime, true); // Slight fade
 		return true;
 	}
 
@@ -379,16 +379,16 @@ bool NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
 	SoLoud::AudioSource* music = loadMusic(name);
 
 	if (music != nullptr) {
-		_music.handle = _engine.playBackground(*music, playOptions.fadetime > 0 ? 0.0f : _wantedMusicVolume * _musicMasterVolume, playOptions.offsetSeconds > 0);
+		_music.handle = _engine.playBackground(*music, playOptions.fadetime > 0.0 ? 0.0f : _wantedMusicVolume * _musicMasterVolume, playOptions.offsetSeconds > 0);
 		_music.id = id;
 		_music.isResumable = playOptions.flags & PlayFlagsIsResumable;
 
 		if (playOptions.offsetSeconds > 0) {
 			if (trace_all || trace_music) info("%s: seek to time %d\n", __func__, playOptions.offsetSeconds);
 			_engine.seek(_music.handle, playOptions.offsetSeconds);
-			resumeMusic(playOptions.fadetime < 2 ? 2 : playOptions.fadetime); // Slight fade
+			resumeMusic(playOptions.fadetime == 0.0 ? 1.0 : playOptions.fadetime); // Slight fade
 		}
-		else if (playOptions.fadetime > 0) {
+		else if (playOptions.fadetime > 0.0) {
 			setMusicVolume(_wantedMusicVolume, playOptions.fadetime);
 		}
 
@@ -433,9 +433,9 @@ void NxAudioEngine::playMusics(const std::vector<std::string>& names, uint32_t i
 	_engine.destroyVoiceGroup(groupHandle);
 }
 
-void NxAudioEngine::stopMusic(uint32_t time)
+void NxAudioEngine::stopMusic(double time)
 {
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %d\n", __func__, _music.id, time);
+	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, _music.id, time);
 
 	if (!_musicSegmentsHandle.empty())
 	{
@@ -446,9 +446,9 @@ void NxAudioEngine::stopMusic(uint32_t time)
 
 	if (!_engine.isValidVoiceHandle(_music.handle)) return;
 
-	if (time > 0)
+	if (time > 0.0)
 	{
-		_engine.fadeVolume(_music.handle, 0, time);
+		_engine.fadeVolume(_music.handle, 0.0f, time);
 		_engine.scheduleStop(_music.handle, time);
 	}
 	else
@@ -457,9 +457,9 @@ void NxAudioEngine::stopMusic(uint32_t time)
 	}
 }
 
-void NxAudioEngine::pauseMusic(uint32_t time, bool push)
+void NxAudioEngine::pauseMusic(double time, bool push)
 {
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %d\n", __func__, _music.id, time);
+	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, _music.id, time);
 
 	if (!_musicSegmentsHandle.empty())
 	{
@@ -469,7 +469,7 @@ void NxAudioEngine::pauseMusic(uint32_t time, bool push)
 
 	if (!_engine.isValidVoiceHandle(_music.handle)) return;
 
-	if (time > 0)
+	if (time > 0.0)
 	{
 		_engine.fadeVolume(_music.handle, 0, time);
 		_engine.schedulePause(_music.handle, time);
@@ -490,7 +490,7 @@ void NxAudioEngine::pauseMusic(uint32_t time, bool push)
 	}
 }
 
-void NxAudioEngine::resumeMusic(uint32_t time, bool pop)
+void NxAudioEngine::resumeMusic(double time, bool pop)
 {
 	if (!_musicSegmentsHandle.empty())
 	{
@@ -501,16 +501,19 @@ void NxAudioEngine::resumeMusic(uint32_t time, bool pop)
 	if (pop) {
 		// Whatever is currently playing, just stop it
 		// If the handle is still invalid, nothing will happen
-		_engine.stop(_music.handle);
+		stopMusic(time);
 
 		// Restore the last known paused music
 		_music = _musicStack.top();
 		_musicStack.pop();
 
-		if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %d\n", __func__, _music.id, time);
+		if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, _music.id, time);
 	}
 
 	// Play it again from where it was left off
+	if (time > 0.0) {
+		_engine.setVolume(_music.handle, 0.0);
+	}
 	resetMusicVolume(time);
 	_engine.setPause(_music.handle, false);
 }
@@ -530,7 +533,7 @@ SoLoud::time NxAudioEngine::getMusicPlayingTime()
 	return _engine.getStreamTime(_music.handle);
 }
 
-void NxAudioEngine::setMusicMasterVolume(float volume, size_t time)
+void NxAudioEngine::setMusicMasterVolume(float volume, double time)
 {
 	_previousMusicMasterVolume = _musicMasterVolume;
 
@@ -539,7 +542,7 @@ void NxAudioEngine::setMusicMasterVolume(float volume, size_t time)
 	resetMusicVolume(time);
 }
 
-void NxAudioEngine::restoreMusicMasterVolume(size_t time)
+void NxAudioEngine::restoreMusicMasterVolume(double time)
 {
 	if (_previousMusicMasterVolume != _musicMasterVolume && _previousMusicMasterVolume >= 0.0f)
 	{
@@ -562,14 +565,14 @@ float NxAudioEngine::getMusicMasterVolume()
 	return _musicMasterVolume;
 }
 
-void NxAudioEngine::setMusicVolume(float volume, size_t time)
+void NxAudioEngine::setMusicVolume(float volume, double time)
 {
 	_wantedMusicVolume = volume;
 
 	resetMusicVolume(time);
 }
 
-void NxAudioEngine::resetMusicVolume(size_t time)
+void NxAudioEngine::resetMusicVolume(double time)
 {
 	float volume = _wantedMusicVolume * _musicMasterVolume;
 
@@ -579,7 +582,7 @@ void NxAudioEngine::resetMusicVolume(size_t time)
 		return;
 	}
 
-	if (time > 0)
+	if (time > 0.0)
 		_engine.fadeVolume(_music.handle, volume, time);
 	else
 		_engine.setVolume(_music.handle, volume);
@@ -640,9 +643,9 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 		return false;
 }
 
-void NxAudioEngine::stopVoice(uint32_t time)
+void NxAudioEngine::stopVoice(double time)
 {
-	if (time > 0)
+	if (time > 0.0)
 	{
 		_engine.fadeVolume(_voiceHandle, 0, time);
 		_engine.scheduleStop(_voiceHandle, time);

@@ -56,7 +56,7 @@ public:
 		SoLoud::time offsetSeconds;
 		PlayFlags flags;
 		bool noIntro;
-		uint32_t fadetime;
+		SoLoud::time fadetime;
 	};
 private:
 	enum NxAudioEngineLayer
@@ -125,25 +125,25 @@ public:
 	bool canPlayMusic(const char* name);
 	bool playMusic(char* name, uint32_t id, PlayOptions& playOptions = PlayOptions());
 	void playMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions = PlayOptions());
-	void stopMusic(uint32_t time = 0);
-	void pauseMusic(uint32_t time = 0, bool push = false);
-	void resumeMusic(uint32_t time = 0, bool pop = false);
+	void stopMusic(double time = 0);
+	void pauseMusic(double time = 0, bool push = false);
+	void resumeMusic(double time = 0, bool pop = false);
 	bool isMusicPlaying();
 	uint32_t currentMusicId();
 	SoLoud::time getMusicPlayingTime();
-	void setMusicMasterVolume(float volume, size_t time = 0);
-	void restoreMusicMasterVolume(size_t time = 0);
+	void setMusicMasterVolume(float volume, double time = 0);
+	void restoreMusicMasterVolume(double time = 0);
 	float getMusicVolume();
 	float getMusicMasterVolume();
-	void setMusicVolume(float volume, size_t time = 0);
-	void resetMusicVolume(size_t time = 0);
+	void setMusicVolume(float volume, double time = 0);
+	void resetMusicVolume(double time = 0);
 	void setMusicSpeed(float speed);
 	void setMusicLooping(bool looping);
 
 	// Voice
 	bool canPlayVoice(const char* name);
 	bool playVoice(const char* name, float volume = 1.0f);
-	void stopVoice(uint32_t time = 0);
+	void stopVoice(double time = 0);
 	bool isVoicePlaying();
 };
 
