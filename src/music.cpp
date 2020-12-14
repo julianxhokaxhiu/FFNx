@@ -34,6 +34,7 @@ bool next_music_is_maybe_skipped = false;
 std::unordered_map<uint32_t, SoLoud::time> remember_musics;
 bool next_music_is_not_multi = false;
 bool multi_music_is_playing = false;
+double next_music_fade_time = 0.0;
 
 static uint32_t noop() { return 0; }
 
@@ -503,10 +504,25 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 	return ((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(type, param1, param2, param3, param4, param5);
 }
 
-uint32_t ff8_opcode_dualmusic_play_music(uint32_t midi, uint32_t volume)
+uint32_t ff8_opcode_dualmusic_play_music(char* data, uint32_t volume)
 {
 	change_next_music_channel();
-	return ((uint32_t(*)(uint32_t, uint32_t, uint32_t))ff8_externals.sd_music_play)(1, midi, volume);
+	return ((uint32_t(*)(uint32_t, char*, uint32_t))ff8_externals.sd_music_play)(1, data, volume);
+}
+
+uint32_t ff8_cross_fade_midi(char* data, uint32_t steps, uint32_t volume)
+{
+	double time = (steps & 0xFF) / 64.0;
+
+	if (trace_all || trace_music) trace("%s: steps=%u (time=%fs), volume=%u\n", __func__, steps, time, volume);
+
+	next_music_fade_time = time;
+
+	uint32_t ret = ((uint32_t(*)(uint32_t, char*, uint32_t))ff8_externals.sd_music_play)(0, data, volume);
+
+	next_music_fade_time = 0;
+
+	return ret;
 }
 
 uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t unused1, uint32_t unused2)
@@ -543,7 +559,7 @@ uint32_t ff8_play_midi(uint32_t midi, uint32_t volume, uint32_t unused1, uint32_
 		next_music_is_maybe_skipped = false;
 		next_music_is_skipped = false;
 
-		play_midi_helper(midi_name, midi, 0, offset, noIntro);
+		play_midi_helper(midi_name, midi, next_music_fade_time, offset, noIntro);
 		nxAudioEngine.setMusicVolume(volume / 127.0f);
 	}
 
@@ -580,6 +596,15 @@ uint32_t ff8_stop_midi()
 	stop_midi();
 
 	return 0;
+}
+
+uint32_t ff8_stop_wav(uint32_t number)
+{
+	if (ff8_externals.music_channel_type[number] == 2) { // WAV type
+		ff8_externals.stop_wav(0);
+	}
+
+	return 1;
 }
 
 uint32_t ff8_set_midi_volume(int db_volume)
@@ -682,6 +707,7 @@ void music_init()
 		if (ff8)
 		{
 			replace_function(common_externals.play_midi, ff8_play_midi);
+			replace_function(common_externals.cross_fade_midi, ff8_cross_fade_midi);
 			replace_function(common_externals.pause_midi, pause_midi);
 			replace_function(common_externals.restart_midi, restart_midi);
 			replace_function(common_externals.stop_midi, ff8_stop_midi);
@@ -706,6 +732,7 @@ void music_init()
 			replace_function(common_externals.midi_init, noop);
 			replace_function(ff8_externals.dmusic_segment_connect_to_dls, noop);
 			replace_function(common_externals.midi_cleanup, noop);
+			replace_call(ff8_externals.sd_music_play + 0x1B1, ff8_stop_wav); // Removing stop midi call
 			/* Music channel detection */
 			replace_call(ff8_externals.opcode_dualmusic + 0x58, ff8_opcode_dualmusic_play_music);
 		}
