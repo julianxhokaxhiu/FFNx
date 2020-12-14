@@ -328,6 +328,8 @@ void ff8_find_externals()
 		ff8_externals.sub_545F10 = get_relative_call(ff8_externals.sub_545EA0, 0x20);
 
 		ff8_externals.sub_546100 = get_relative_call(ff8_externals.sub_545F10, 0x58);
+
+		ff8_externals.battle_trigger_worldmap = ff8_externals.sub_53FAC0 + 0x4E6;
 	}
 	else
 	{
@@ -352,9 +354,10 @@ void ff8_find_externals()
 		ff8_externals.sub_546100 = get_relative_call(ff8_externals.sub_545F10, 0x54);
 
 		ff8_externals.sub_54A0D0 = 0x54A0D0;
+
+		ff8_externals.battle_trigger_worldmap = ff8_externals.sub_53FAC0 + 0x4EA;
 	}
 
-	ff8_externals.battle_trigger_worldmap = ff8_externals.sub_53FAC0 + 0x4E6;
 	ff8_externals.sub_541C80 = (int (*)(int))get_relative_call(ff8_externals.battle_trigger_worldmap, 0);
 
 	ff8_externals.sub_558D70 = get_relative_call(ff8_externals.sub_54B460, 0x3F3);
