@@ -888,8 +888,10 @@ struct ff8_externals
 	uint32_t sd_music_play;
 	uint32_t sd_music_play_at;
 	uint32_t sub_46B800;
-	uint32_t sub_46C060;
-	uint32_t sub_46C6F0;
+	uint32_t stop_music;
+	uint32_t (*stop_wav)(uint32_t);
+	uint32_t* music_channel_type;
+	uint32_t set_volume_music;
 	uint32_t sub_46C050;
 	uint32_t sub_46B970;
 	uint32_t sub_500900;
@@ -910,6 +912,7 @@ struct ff8_externals
 	void (*show_vram_window)();
 	void (*refresh_vram_window)();
 	uint32_t sub_46EB30;
+	uint32_t opcode_crossmusic;
 	uint32_t opcode_dualmusic;
 	uint32_t opcode_choicemusic;
 	uint32_t opcode_musicskip;
