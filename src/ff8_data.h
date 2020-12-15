@@ -63,6 +63,9 @@ void ff8_find_externals()
 
 	ff8_externals.pubintro_main_loop = get_absolute_value(ff8_externals.sub_401ED0, 0x180);
 	ff8_externals.credits_main_loop = get_absolute_value(ff8_externals.pubintro_main_loop, 0x6D);
+
+	ff8_set_main_loop(MODE_CREDITS, ff8_externals.credits_main_loop);
+
 	ff8_externals.sub_52F300 = get_relative_call(ff8_externals.credits_main_loop, 0xBF);
 	ff8_externals.credits_loop_state = (DWORD*)get_absolute_value(ff8_externals.sub_52F300, 0x7);
 	ff8_externals.credits_counter = (DWORD *)get_absolute_value(ff8_externals.sub_52F300, 0x59);
