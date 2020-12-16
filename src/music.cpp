@@ -244,16 +244,65 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return ret;
 }
 
-bool play_midi_helper(char* midi_name, uint32_t midi, uint32_t fade_time = 0, SoLoud::time offset = 0, bool noIntro = false)
+void play_midi_helper(char* midi_name, uint32_t midi, uint32_t fade_time = 0, SoLoud::time offset = 0, bool noIntro = false)
 {
+	struct game_mode* mode = getmode_cached();
+
+	bool playing = false;
+
 	NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
 	options.fadetime = fade_time;
 	options.flags = needs_resume(midi);
 	options.noIntro = noIntro;
 	options.offsetSeconds = offset;
-	bool ret = nxAudioEngine.playMusic(midi_name, midi, options);
 
-	if (ret)
+	if (ff8)
+	{
+		playing = nxAudioEngine.playMusic(midi_name, midi, options);
+	}
+	else
+	{
+		// Attempt to customize the battle theme flow
+		if (strcmp(midi_name, "BAT") == 0)
+		{
+			// Do only in fields for now
+			if (*common_externals._previous_mode == FF7_MODE_FIELD && mode->driver_mode == MODE_SWIRL)
+			{
+				char battle_name[50];
+
+				sprintf(battle_name, "bat_%d", *ff7_externals.battle_id);
+
+				// Attempt to load theme by Battle ID
+				if (!(playing = nxAudioEngine.playMusic(battle_name, midi, options)))
+				{
+					sprintf(battle_name, "bat_%s", get_current_field_name());
+
+					// Attempt to load theme by Field name
+					if (!(playing = nxAudioEngine.playMusic(battle_name, midi, options)))
+						// Nothing worked, switch back to default
+						playing = nxAudioEngine.playMusic(midi_name, midi, options);
+				}
+			}
+			else
+				playing = nxAudioEngine.playMusic(midi_name, midi, options);
+		}
+		// Attempt to override field music
+		else if (mode->driver_mode == MODE_FIELD)
+		{
+			char field_name[50];
+
+			sprintf(field_name, "field_%d", *ff7_externals.field_id);
+
+			// Attempt to load theme by Field ID
+			if (!(playing = nxAudioEngine.playMusic(field_name, midi, options)))
+				// Nothing worked, switch back to default
+				playing = nxAudioEngine.playMusic(midi_name, midi, options);
+		}
+		else
+			playing = nxAudioEngine.playMusic(midi_name, midi, options);
+	}
+
+	if (playing)
 	{
 		nxAudioEngine.setMusicLooping(!no_loop(midi));
 
@@ -266,8 +315,6 @@ bool play_midi_helper(char* midi_name, uint32_t midi, uint32_t fade_time = 0, So
 
 		next_music_channel = 0;
 	}
-
-	return ret;
 }
 
 void ff7_play_midi(uint32_t midi)
@@ -289,44 +336,7 @@ void ff7_play_midi(uint32_t midi)
 
 		if (mode->driver_mode == MODE_BATTLE && midi == 58) was_battle_gameover = true;
 
-		// Attempt to customize the battle theme flow
-		if (strcmp(midi_name, "BAT") == 0)
-		{
-			// Do only in fields for now
-			if (*common_externals._previous_mode == FF7_MODE_FIELD && mode->driver_mode == MODE_SWIRL)
-			{
-				char battle_name[50];
-
-				sprintf(battle_name, "bat_%d", *ff7_externals.battle_id);
-
-				// Attempt to load theme by Battle ID
-				if (!play_midi_helper(battle_name, midi))
-				{
-					sprintf(battle_name, "bat_%s", get_current_field_name());
-
-					// Attempt to load theme by Field name
-					if (!play_midi_helper(battle_name, midi))
-						// Nothing worked, switch back to default
-						play_midi_helper(midi_name, midi);
-				}
-			}
-			else
-				play_midi_helper(midi_name, midi);
-		}
-		// Attempt to override field music
-		else if (mode->driver_mode == MODE_FIELD)
-		{
-			char field_name[50];
-
-			sprintf(field_name, "field_%d", *ff7_externals.field_id);
-
-			// Attempt to load theme by Field ID
-			if (!play_midi_helper(field_name, midi))
-				// Nothing worked, switch back to default
-				play_midi_helper(midi_name, midi);
-		}
-		else
-			play_midi_helper(midi_name, midi);
+		play_midi_helper(midi_name, midi);
 
 		if (trace_all || trace_music) trace("%s: midi_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(), midi_name);
 	}
