@@ -231,10 +231,10 @@ int opcode_voice_ask(int unk)
 
 void voice_init()
 {
-	set_master_music_volume = (void (*)(uint32_t))common_externals.set_master_midi_volume;
-
 	if (!ff8)
 	{
+		set_master_music_volume = (void (*)(uint32_t))common_externals.set_master_midi_volume;
+
 		opcode_old_message = (int (*)())ff7_externals.opcode_message;
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x40], (DWORD)&opcode_voice_message);
 

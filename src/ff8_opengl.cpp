@@ -592,6 +592,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	replace_call_function(ff8_externals.battle_trigger_field, ff8_toggle_battle_field);
 	replace_call_function(ff8_externals.battle_trigger_worldmap, ff8_toggle_battle_worldmap);
+
+	// Allow squaresoft logo skip by pressing a button
+	patch_code_byte(ff8_externals.sub_52F300 + 0x5FD, 0); // if (intro_step >= 0) ...
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)

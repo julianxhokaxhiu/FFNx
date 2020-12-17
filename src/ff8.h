@@ -885,15 +885,13 @@ struct ff8_externals
 	uint32_t requiredDisk;
 	uint32_t sm_battle_sound;
 	uint32_t sdmusicplay;
-	uint32_t sd_music_play;
+	uint32_t(*sd_music_play)(uint32_t, char*, uint32_t);
 	uint32_t sd_music_play_at;
+	uint32_t* current_music_ids;
 	uint32_t sub_46B800;
 	uint32_t stop_music;
-	uint32_t (*stop_wav)(uint32_t);
-	uint32_t* music_channel_type;
-	uint32_t set_volume_music;
+	uint32_t set_midi_volume;
 	uint32_t sub_46C050;
-	uint32_t sub_46B970;
 	uint32_t sub_500900;
 	uint32_t sub_501B60;
 	uint32_t sub_46B3A0;
@@ -911,11 +909,14 @@ struct ff8_externals
 	uint32_t is_window_active_sub2;
 	void (*show_vram_window)();
 	void (*refresh_vram_window)();
-	uint32_t sub_46EB30;
+	char* music_path;
 	uint32_t opcode_crossmusic;
 	uint32_t opcode_dualmusic;
 	uint32_t opcode_choicemusic;
+	uint32_t opcode_musicvoltrans;
+	uint32_t opcode_musicvolfade;
 	uint32_t opcode_musicskip;
+	uint32_t opcode_musicvolsync;
 	uint32_t opcode_getmusicoffset;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;
@@ -924,8 +925,9 @@ struct ff8_externals
 	uint32_t play_midi_segments;
 	uint32_t load_and_play_midi_segment;
 	uint32_t stop_midi_segments;
-	uint32_t midi_segments_status;
-	uint32_t* current_volume;
+	uint32_t sounds_cleanup;
+	uint32_t volume_update;
+	uint32_t volume_music_update;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

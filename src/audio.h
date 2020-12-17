@@ -36,10 +36,14 @@
 struct NxAudioEngineMusic
 {
 	NxAudioEngineMusic() :
-		handle(NXAUDIOENGINE_INVALID_HANDLE), id(0), isResumable(false) {}
+		handle(NXAUDIOENGINE_INVALID_HANDLE),
+		id(0),
+		isResumable(false),
+		wantedMusicVolume(1.0f) {}
 	SoLoud::handle handle;
 	uint32_t id;
 	bool isResumable;
+	float wantedMusicVolume;
 };
 
 class NxAudioEngine
@@ -53,10 +57,20 @@ public:
 
 	struct PlayOptions
 	{
+		PlayOptions() :
+			offsetSeconds(0.0),
+			flags(PlayFlagsNone),
+			noIntro(false),
+			fadetime(0.0),
+			targetVolume(-1.0f),
+			useNameAsFullPath(false)
+		{}
 		SoLoud::time offsetSeconds;
 		PlayFlags flags;
 		bool noIntro;
 		SoLoud::time fadetime;
+		float targetVolume;
+		bool useNameAsFullPath;
 	};
 private:
 	enum NxAudioEngineLayer
@@ -78,17 +92,16 @@ private:
 	std::vector<SoLoud::handle> _sfxChannelsHandle;
 
 	// MUSIC
-	NxAudioEngineMusic _music = NxAudioEngineMusic();
-	std::vector<SoLoud::handle> _musicSegmentsHandle;
-	std::stack<NxAudioEngineMusic> _musicStack;
+	NxAudioEngineMusic _musics[2];
+	std::stack<NxAudioEngineMusic> _musicStack; // For resuming
 
 	float _previousMusicMasterVolume = -1.0f;
 	float _musicMasterVolume = -1.0f;
+	SoLoud::time _lastVolumeFadeEndTime = 0.0;
 
-	float _wantedMusicVolume = 1.0f;
-
-	SoLoud::AudioSource* loadMusic(const char* name);
+	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, PlayOptions *playOptions);
+	void resetMusicVolume(int channel, double time = 0);
 
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
@@ -123,22 +136,21 @@ public:
 
 	// Music
 	bool canPlayMusic(const char* name);
-	bool playMusic(char* name, uint32_t id, PlayOptions& playOptions = PlayOptions());
-	void playMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions = PlayOptions());
-	void stopMusic(double time = 0);
-	void pauseMusic(double time = 0, bool push = false);
-	void resumeMusic(double time = 0, bool pop = false);
-	bool isMusicPlaying();
-	uint32_t currentMusicId();
-	SoLoud::time getMusicPlayingTime();
+	bool playMusic(char* name, uint32_t id, int channel, PlayOptions& playOptions = PlayOptions());
+	void playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions = PlayOptions());
+	void stopMusic(int channel, double time = 0);
+	void pauseMusic(int channel, double time = 0, bool push = false);
+	void resumeMusic(int channel, double time = 0, bool pop = false, const PlayFlags &playFlags = PlayFlags());
+	bool isMusicPlaying(int channel);
+	uint32_t currentMusicId(int channel);
 	void setMusicMasterVolume(float volume, double time = 0);
 	void restoreMusicMasterVolume(double time = 0);
-	float getMusicVolume();
+	float getMusicVolume(int channel);
+	bool isMusicVolumeFadeFinished();
 	float getMusicMasterVolume();
-	void setMusicVolume(float volume, double time = 0);
-	void resetMusicVolume(double time = 0);
-	void setMusicSpeed(float speed);
-	void setMusicLooping(bool looping);
+	void setMusicVolume(float volume, int channel, double time = 0);
+	void setMusicSpeed(float speed, int channel);
+	void setMusicLooping(bool looping, int channel);
 
 	// Voice
 	bool canPlayVoice(const char* name);
