@@ -22,6 +22,7 @@
 #include "audio.h"
 
 #include "log.h"
+#include "gamehacks.h"
 
 NxAudioEngine nxAudioEngine;
 
@@ -152,7 +153,8 @@ void NxAudioEngine::flush()
 	_engine.stopAll();
 
 	_musicStack.empty();
-	_music.handle = NXAUDIOENGINE_INVALID_HANDLE;
+	_musics[0].handle = NXAUDIOENGINE_INVALID_HANDLE;
+	_musics[1].handle = NXAUDIOENGINE_INVALID_HANDLE;
 
 	_voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
 }
@@ -275,12 +277,22 @@ bool NxAudioEngine::canPlayMusic(const char* name)
 	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 }
 
-SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name)
+SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath)
 {
 	SoLoud::AudioSource* music = nullptr;
 	char filename[MAX_PATH];
+	bool exists = false;
 
-	bool exists = getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
+	if (isFullPath)
+	{
+		exists = fileExists(name);
+		strcpy(filename, name);
+	}
+
+	if (!exists)
+	{
+		exists = getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
+	}
 
 	if (exists)
 	{
@@ -353,43 +365,53 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Pl
 	}
 }
 
-bool NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
+bool NxAudioEngine::playMusic(char* name, uint32_t id, int channel, PlayOptions& playOptions)
 {
-	overloadPlayArgumentsFromConfig(name, &id, &playOptions);
+	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
+
+	if (!playOptions.useNameAsFullPath) {
+		overloadPlayArgumentsFromConfig(name, &id, &playOptions);
+	}
 
 	if (!_musicStack.empty() && _musicStack.top().id == id) {
-		resumeMusic(playOptions.fadetime == 0.0 ? 1.0 : playOptions.fadetime, true); // Slight fade
+		resumeMusic(channel, playOptions.fadetime == 0.0 ? 1.0 : playOptions.fadetime, true, playOptions.flags); // Slight fade
 		return true;
 	}
 
-	if (_engine.isValidVoiceHandle(_music.handle)) {
-		if (_music.id == id) {
-			if (trace_all || trace_music) trace("NxAudioEngine::%s: %s is already playing\n", __func__, name);
+	NxAudioEngineMusic& music = _musics[channel];
+
+	if (_engine.isValidVoiceHandle(music.handle)) {
+		if (music.id == id) {
+			if (trace_all || trace_music) trace("NxAudioEngine::%s: %s is already playing on channel %d\n", __func__, name, channel);
 			return false; // Already playing
 		}
 
-		if (!(playOptions.flags & PlayFlagsDoNotPause) && _music.isResumable) {
-			pauseMusic(playOptions.fadetime, true);
+		if (!(playOptions.flags & PlayFlagsDoNotPause) && music.isResumable) {
+			pauseMusic(channel, playOptions.fadetime, true);
 		}
 		else {
-			stopMusic(playOptions.fadetime);
+			stopMusic(channel, playOptions.fadetime);
 		}
 	}
 
-	SoLoud::AudioSource* music = loadMusic(name);
+	SoLoud::AudioSource* audioSource = loadMusic(name, playOptions.useNameAsFullPath);
 
-	if (music != nullptr) {
-		_music.handle = _engine.playBackground(*music, playOptions.fadetime > 0.0 ? 0.0f : _wantedMusicVolume * _musicMasterVolume, playOptions.offsetSeconds > 0);
-		_music.id = id;
-		_music.isResumable = playOptions.flags & PlayFlagsIsResumable;
+	if (audioSource != nullptr) {
+		if (playOptions.targetVolume >= 0.0f) {
+			music.wantedMusicVolume = playOptions.targetVolume;
+		}
+		const float initialVolume = playOptions.fadetime > 0.0 ? 0.0f : music.wantedMusicVolume * _musicMasterVolume;
+		music.handle = _engine.playBackground(*audioSource, initialVolume, playOptions.offsetSeconds > 0);
+		music.id = id;
+		music.isResumable = playOptions.flags & PlayFlagsIsResumable;
 
 		if (playOptions.offsetSeconds > 0) {
-			if (trace_all || trace_music) info("%s: seek to time %d\n", __func__, playOptions.offsetSeconds);
-			_engine.seek(_music.handle, playOptions.offsetSeconds);
-			resumeMusic(playOptions.fadetime == 0.0 ? 1.0 : playOptions.fadetime); // Slight fade
+			if (trace_all || trace_music) info("%s: seek to time %fs\n", __func__, playOptions.offsetSeconds);
+			_engine.seek(music.handle, playOptions.offsetSeconds);
+			resumeMusic(channel, playOptions.fadetime == 0.0 ? 1.0 : playOptions.fadetime); // Slight fade
 		}
 		else if (playOptions.fadetime > 0.0) {
-			setMusicVolume(_wantedMusicVolume, playOptions.fadetime);
+			setMusicVolume(music.wantedMusicVolume, channel, playOptions.fadetime);
 		}
 
 		return true;
@@ -398,139 +420,146 @@ bool NxAudioEngine::playMusic(char* name, uint32_t id, PlayOptions& playOptions)
 	return false;
 }
 
-void NxAudioEngine::playMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions)
+void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions)
 {
-	if (_music.id == id) {
+	if (_musics[0].id == id) {
 		if (trace_all || trace_music) trace("NxAudioEngine::%s: id %d is already playing\n", __func__, id);
 		return; // Already playing
 	}
 
-	stopMusic(playOptions.fadetime);
+	if (trace_all || trace_music) trace("NxAudioEngine::%s: id %d\n", __func__, id);
+
+	stopMusic(0, playOptions.fadetime);
+	stopMusic(1, playOptions.fadetime);
 
 	SoLoud::handle groupHandle = _engine.createVoiceGroup();
 
-	if (trace_all || trace_music) trace("NxAudioEngine::%s\n", __func__);
+	if (groupHandle == 0) {
+		error("NxAudioEngine::%s: cannot allocate voice group\n", __func__);
+		return;
+	}
 
 	for (const std::string &name: names) {
-		SoLoud::AudioSource* music = loadMusic(name.c_str());
-		if (music != nullptr) {
-			SoLoud::handle musicHandle = _engine.playBackground(*music, _wantedMusicVolume * _musicMasterVolume, true);
-			_musicSegmentsHandle.push_back(musicHandle);
+		SoLoud::AudioSource* audioSource = loadMusic(name.c_str());
+		if (audioSource != nullptr) {
+			SoLoud::handle musicHandle = _engine.playBackground(*audioSource, -1.0f, true);
 			_engine.addVoiceToGroup(groupHandle, musicHandle);
 		}
 	}
 
 	if (!_engine.isVoiceGroupEmpty(groupHandle)) {
-		_music.handle = NXAUDIOENGINE_INVALID_HANDLE;
-		_music.id = id;
-		_music.isResumable = false;
-
-		_engine.setProtectVoice(groupHandle, true);
+		_musics[0].handle = groupHandle;
+		_musics[0].id = id;
+		_musics[0].isResumable = false;
+		_musics[1].handle = NXAUDIOENGINE_INVALID_HANDLE;
 		// Play synchronously
 		_engine.setPause(groupHandle, false);
 	}
-
-	_engine.destroyVoiceGroup(groupHandle);
-}
-
-void NxAudioEngine::stopMusic(double time)
-{
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, _music.id, time);
-
-	if (!_musicSegmentsHandle.empty())
-	{
-		for (SoLoud::handle handle : _musicSegmentsHandle) _engine.stop(handle);
-		_musicSegmentsHandle.clear();
-		return;
-	}
-
-	if (!_engine.isValidVoiceHandle(_music.handle)) return;
-
-	if (time > 0.0)
-	{
-		_engine.fadeVolume(_music.handle, 0.0f, time);
-		_engine.scheduleStop(_music.handle, time);
-	}
-	else
-	{
-		_engine.stop(_music.handle);
+	else {
+		_engine.destroyVoiceGroup(groupHandle);
 	}
 }
 
-void NxAudioEngine::pauseMusic(double time, bool push)
+void NxAudioEngine::stopMusic(int channel, double time)
 {
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, _music.id, time);
+	NxAudioEngineMusic& music = _musics[channel];
 
-	if (!_musicSegmentsHandle.empty())
-	{
-		for (SoLoud::handle handle : _musicSegmentsHandle) _engine.setPause(handle, true);
-		return;
-	}
-
-	if (!_engine.isValidVoiceHandle(_music.handle)) return;
+	if (trace_all || trace_music) trace("NxAudioEngine::%s: channel %d, midi %d, time %f\n", __func__, channel, music.id, time);
 
 	if (time > 0.0)
 	{
-		_engine.fadeVolume(_music.handle, 0, time);
-		_engine.schedulePause(_music.handle, time);
+		time /= gamehacks.getCurrentSpeedhack();
+		_engine.fadeVolume(music.handle, 0.0f, time);
+		_engine.scheduleStop(music.handle, time);
+		_lastVolumeFadeEndTime = _engine.mStreamTime + time;
 	}
 	else
 	{
-		_engine.setPause(_music.handle, true);
+		_engine.stop(music.handle);
 	}
 
-	if (push) {
+	if (_engine.isVoiceGroup(music.handle)) {
+		_engine.destroyVoiceGroup(music.handle);
+	}
+
+	music.id = 0;
+	music.handle = NXAUDIOENGINE_INVALID_HANDLE;
+}
+
+void NxAudioEngine::pauseMusic(int channel, double time, bool push)
+{
+	NxAudioEngineMusic& music = _musics[channel];
+
+	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, music.id, time);
+
+	if (time > 0.0)
+	{
+		time /= gamehacks.getCurrentSpeedhack();
+		_engine.fadeVolume(music.handle, 0.0f, time);
+		_engine.schedulePause(music.handle, time);
+		_lastVolumeFadeEndTime = _engine.mStreamTime + time;
+	}
+	else
+	{
+		_engine.setPause(music.handle, true);
+	}
+
+	if (push && _engine.isValidVoiceHandle(music.handle)) {
 		if (trace_all || trace_music) trace("NxAudioEngine::%s: push music onto the stack for later usage\n", __func__);
 
 		// Save for later usage
-		_musicStack.push(_music);
+		_musicStack.push(music);
 
 		// Invalidate the current handle
-		_music.handle = NXAUDIOENGINE_INVALID_HANDLE;
+		music.id = 0;
+		music.handle = NXAUDIOENGINE_INVALID_HANDLE;
 	}
 }
 
-void NxAudioEngine::resumeMusic(double time, bool pop)
+void NxAudioEngine::resumeMusic(int channel, double time, bool pop, const PlayFlags &playFlags)
 {
-	if (!_musicSegmentsHandle.empty())
-	{
-		for (SoLoud::handle handle : _musicSegmentsHandle) _engine.setPause(handle, false);
-		return;
-	}
+	NxAudioEngineMusic& music = _musics[channel];
+	time /= gamehacks.getCurrentSpeedhack();
 
 	if (pop) {
-		// Whatever is currently playing, just stop it
-		// If the handle is still invalid, nothing will happen
-		stopMusic(time);
-
 		// Restore the last known paused music
-		_music = _musicStack.top();
+		NxAudioEngineMusic lastMusic = _musicStack.top();
 		_musicStack.pop();
 
-		if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, _music.id, time);
+		if (!(playFlags & PlayFlagsDoNotPause) && music.isResumable) {
+			pauseMusic(channel, time, true);
+		}
+		else {
+			// Whatever is currently playing, just stop it
+			// If the handle is still invalid, nothing will happen
+			stopMusic(channel, time);
+		}
+
+		music = lastMusic;
 	}
+
+	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, music.id, time);
 
 	// Play it again from where it was left off
 	if (time > 0.0) {
-		_engine.setVolume(_music.handle, 0.0);
+		_engine.setVolume(music.handle, 0.0);
 	}
-	resetMusicVolume(time);
-	_engine.setPause(_music.handle, false);
+	resetMusicVolume(channel, time);
+	_engine.setPause(music.handle, false);
 }
 
-bool NxAudioEngine::isMusicPlaying()
+bool NxAudioEngine::isMusicPlaying(int channel)
 {
-	return _engine.isValidVoiceHandle(_music.handle) && !_engine.getPause(_music.handle);
+	const NxAudioEngineMusic& music = _musics[channel];
+
+	return (_engine.isValidVoiceHandle(music.handle)
+		|| _engine.isVoiceGroup(music.handle))
+		&& !_engine.getPause(music.handle);
 }
 
-uint32_t NxAudioEngine::currentMusicId()
+uint32_t NxAudioEngine::currentMusicId(int channel)
 {
-	return _music.id;
-}
-
-SoLoud::time NxAudioEngine::getMusicPlayingTime()
-{
-	return _engine.getStreamTime(_music.handle);
+	return _musics[channel].id;
 }
 
 void NxAudioEngine::setMusicMasterVolume(float volume, double time)
@@ -539,7 +568,8 @@ void NxAudioEngine::setMusicMasterVolume(float volume, double time)
 
 	_musicMasterVolume = volume;
 
-	resetMusicVolume(time);
+	resetMusicVolume(0, time);
+	resetMusicVolume(1, time);
 }
 
 void NxAudioEngine::restoreMusicMasterVolume(double time)
@@ -551,63 +581,56 @@ void NxAudioEngine::restoreMusicMasterVolume(double time)
 		// Set them equally so if this API is called again, nothing will happen
 		_previousMusicMasterVolume = _musicMasterVolume;
 
-		resetMusicVolume(time);
+		resetMusicVolume(0, time);
+		resetMusicVolume(1, time);
 	}
 }
 
-float NxAudioEngine::getMusicVolume()
+float NxAudioEngine::getMusicVolume(int channel)
 {
-	return _engine.getVolume(_music.handle);
+	return _musics[channel].wantedMusicVolume;
+}
+
+bool NxAudioEngine::isMusicVolumeFadeFinished()
+{
+	return _engine.mStreamTime >= _lastVolumeFadeEndTime;
 }
 
 float NxAudioEngine::getMusicMasterVolume()
 {
-	return _musicMasterVolume;
+	return _musicMasterVolume < 0.0f ? 1.0f : _musicMasterVolume;
 }
 
-void NxAudioEngine::setMusicVolume(float volume, double time)
+void NxAudioEngine::setMusicVolume(float volume, int channel, double time)
 {
-	_wantedMusicVolume = volume;
+	_musics[channel].wantedMusicVolume = volume;
 
-	resetMusicVolume(time);
+	resetMusicVolume(channel, time);
 }
 
-void NxAudioEngine::resetMusicVolume(double time)
+void NxAudioEngine::resetMusicVolume(int channel, double time)
 {
-	float volume = _wantedMusicVolume * _musicMasterVolume;
+	const NxAudioEngineMusic& music = _musics[channel];
+	const float volume = music.wantedMusicVolume * getMusicMasterVolume();
 
-	if (!_musicSegmentsHandle.empty())
-	{
-		for (SoLoud::handle handle : _musicSegmentsHandle) _engine.setVolume(handle, volume);
-		return;
+	if (time > 0.0) {
+		time /= gamehacks.getCurrentSpeedhack();
+		_engine.fadeVolume(music.handle, volume, time);
+		_lastVolumeFadeEndTime = _engine.mStreamTime + time;
 	}
-
-	if (time > 0.0)
-		_engine.fadeVolume(_music.handle, volume, time);
-	else
-		_engine.setVolume(_music.handle, volume);
+	else {
+		_engine.setVolume(music.handle, volume);
+	}
 }
 
-void NxAudioEngine::setMusicSpeed(float speed)
+void NxAudioEngine::setMusicSpeed(float speed, int channel)
 {
-	if (!_musicSegmentsHandle.empty())
-	{
-		for (SoLoud::handle handle : _musicSegmentsHandle) _engine.setRelativePlaySpeed(handle, speed);
-		return;
-	}
-
-	_engine.setRelativePlaySpeed(_music.handle, speed);
+	_engine.setRelativePlaySpeed(_musics[channel].handle, speed);
 }
 
-void NxAudioEngine::setMusicLooping(bool looping)
+void NxAudioEngine::setMusicLooping(bool looping, int channel)
 {
-	if (!_musicSegmentsHandle.empty())
-	{
-		for (SoLoud::handle handle : _musicSegmentsHandle) _engine.setLooping(handle, looping);
-		return;
-	}
-
-	_engine.setLooping(_music.handle, looping);
+	_engine.setLooping(_musics[channel].handle, looping);
 }
 
 // Voice
