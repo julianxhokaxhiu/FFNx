@@ -143,20 +143,20 @@ struct struc_38
 	struct ff8_graphics_object *graphics_object;
 };
 
+struct ff8_file_unk
+{
+	int field_0;
+	char* filename;
+	int field_8;
+};
+
 struct ff8_file_context
 {
 	int field_0;
 	int field_4;
 	char* field_8;
 	void (*field_C)(char*, char*);
-	void* field_10;
-};
-
-struct ff8_file_unk
-{
-	int field_0;
-	char* filename;
-	int field_8;
+	struct ff8_file_unk* field_10;
 };
 
 struct ff8_file_fs
@@ -178,11 +178,11 @@ struct ff8_file
 	int field_0;
 	char* filename;
 	int field_8;
-	struct ff8_file_context* field_C;
+	struct ff8_file_context field_C;
 	int field_20;
 	int field_24;
-	struct ff8_file_unk* field_28;
-	void* file_container;
+	struct ff8_file_unk field_28;
+	struct ff8_file_container* file_container;
 };
 
 struct ff8_file_container
