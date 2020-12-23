@@ -5,12 +5,14 @@
 
 # FFNx
 
-Next generation driver for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )
+Next generation modding platform for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )
 
 ## Introduction
+
 FFNx is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
 In general, what you can expect out of FFNx is:
+
 - One single .dll file to be copied
 - Support for 7h 1.x/2.x
 - Support for newest video and audio codecs ( WEBM, H.265, etc.)
@@ -31,13 +33,15 @@ Installation instructions, configuration and much more can be found at this addr
 
 ## Screenshots
 
-| Vanilla/Steam  |
-| :------------: |
-| ![Final Fantasy VII running on Vulkan](.screens/ff7.png) |
+|                       Vanilla/Steam                       |
+| :-------------------------------------------------------: |
+| ![Final Fantasy VII running on Vulkan](.screens/ff7.png)  |
 | ![Final Fantasy VIII running on Vulkan](.screens/ff8.png) |
 
 ## Tech Stack
+
 If you're curious to know it, FFNx is made with:
+
 - C++ code base
 - Latest MSVC available on [Visual Studio 2019 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
 - [CMake](https://cmake.org/) ( as make files )
@@ -58,6 +62,7 @@ If you're curious to know it, FFNx is made with:
 ## How to build
 
 Tested build profiles:
+
 - x86-Release ( default, the same used to release artifacts in this Github page )
 - x86-RelWithDebInfo ( used while developing to better debug some issues )
 
@@ -69,34 +74,38 @@ Output folder: `.dist/build/[CHOSEN_PROFILE]/bin` ( eg. `.dist/build/x86-Release
 >
 > By default Visual Studio will pick the **x86-Release** build configuration, but you can choose any other profile available.
 
-0) Download the the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installer
-1) Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the required components to build this project
-2) Once installed, open this repository **as a folder** in Visual Studio 2019 and click the build button.
+0. Download the the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installer
+1. Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the required components to build this project
+2. Once installed, open this repository **as a folder** in Visual Studio 2019 and click the build button.
 
 ### Visual Studio Code
 
-0) **REQUIRED!** Follow up the steps to install Visual Studio, which will also install the MSVC toolchain
-1) Download and install the latest [Visual Studio Code](https://code.visualstudio.com/) release
-2) Install the following extensions:
+0. **REQUIRED!** Follow up the steps to install Visual Studio, which will also install the MSVC toolchain
+1. Download and install the latest [Visual Studio Code](https://code.visualstudio.com/) release
+2. Install the following extensions:
    - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
    - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools
-3) Open this repository as a folder in Visual Studio code
-4) Choose as build profile in the status bar `CMake: [Release]` ( or one of the aforementioned profiles )
-5) Click the button on the status bar `Build`
+3. Open this repository as a folder in Visual Studio code
+4. Choose as build profile in the status bar `CMake: [Release]` ( or one of the aforementioned profiles )
+5. Click the button on the status bar `Build`
 
 ## Support
+
 FFNx offers multiple support channels, pick the one you prefer
 
 ### Forums
+
 - Qhimm Forum: http://forums.qhimm.com/index.php?topic=19970.0
 - Tsunamods Forum: https://forum.tsunamods.com/viewtopic.php?p=41#p41
 
 ### Discord
+
 - Qhimm FFNx-FF7 ( Final Fantasy VII only): https://discord.gg/N6M6pKS
 - Qhimm FFNx-FF8 ( Final Fantasy VIII only): https://discord.gg/u6M7DnY
 - Tsunamods FFNx: https://discord.gg/Urq67Uz ( remember to hit the Red Chocobo reaction! )
 
 ### Github
+
 - Issues: https://github.com/julianxhokaxhiu/FFNx/issues
 
 ## Credits
@@ -105,6 +114,7 @@ This project could have not been a reality if those people would have not worked
 FFNx makes use also of their work, and I will never be enough grateful to those people. The order is purely Alphabetical.
 
 These people are:
+
 - [Aali](http://forums.qhimm.com/index.php?action=profile;u=2862):
   - for the original Driver code FFNx is based on.
 - [Chrysalis](http://forums.qhimm.com/index.php?action=profile;u=674):
@@ -156,6 +166,7 @@ These people are:
 I'm sure I forgot many others through the route. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
 ## License
+
 FFNx is released under GPLv3 license, and you can get a copy of the license here: [COPYING.txt](COPYING.txt)
 
 If you paid for it, remember to ask for a refund to the person who sold you a copy. Make also sure you get a copy of the source code if you got it as a binary only.
