@@ -122,6 +122,7 @@ void ff8_find_externals()
 	common_externals.get_movie_frame = get_relative_call(ff8_externals.sub_529FF0, 0x26);
 
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff8_externals.sub_529FF0, 0x65A);
+	ff8_externals.opcode_musicload = common_externals.execute_opcode_table[0xB5];
 	ff8_externals.opcode_crossmusic = common_externals.execute_opcode_table[0xBA];
 	ff8_externals.opcode_dualmusic = common_externals.execute_opcode_table[0xBB];
 	ff8_externals.opcode_musicvoltrans = common_externals.execute_opcode_table[0xC1];
@@ -132,6 +133,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_getmusicoffset = common_externals.execute_opcode_table[0x16F];
 
 	common_externals.cross_fade_midi = get_relative_call(ff8_externals.opcode_crossmusic, 0x5C);
+	ff8_externals.music_load = get_relative_call(ff8_externals.opcode_musicload, 0x8C);
 
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
 

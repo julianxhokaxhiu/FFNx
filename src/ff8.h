@@ -910,6 +910,7 @@ struct ff8_externals
 	void (*show_vram_window)();
 	void (*refresh_vram_window)();
 	char* music_path;
+	uint32_t opcode_musicload;
 	uint32_t opcode_crossmusic;
 	uint32_t opcode_dualmusic;
 	uint32_t opcode_choicemusic;
@@ -928,6 +929,7 @@ struct ff8_externals
 	uint32_t sounds_cleanup;
 	uint32_t volume_update;
 	uint32_t volume_music_update;
+	uint32_t music_load;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
