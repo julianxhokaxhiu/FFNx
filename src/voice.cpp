@@ -30,12 +30,14 @@ int (*opcode_old_ask)(int);
 
 DWORD previous_master_music_volume = 0x64; // Assume maximum by default
 void (*set_master_music_volume)(uint32_t);
-float voice_volume = 1.0f;
+float voice_volume = -1.0f;
 
 //=============================================================================
 
 void begin_voice()
 {
+	voice_volume = 2.0f + (100 - external_voice_music_fade_volume) / 100.0f;
+
 	if (enable_voice_music_fade)
 	{
 		if (use_external_music)
@@ -51,7 +53,6 @@ void begin_voice()
 			{
 				previous_master_music_volume = *common_externals.master_midi_volume;
 				set_master_music_volume(external_voice_music_fade_volume);
-				voice_volume = 2.0f + (100 - external_voice_music_fade_volume) / 100.0f;
 			}
 		}
 	}
