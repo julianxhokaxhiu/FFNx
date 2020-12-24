@@ -365,7 +365,10 @@ void stop_music_for_channel(int channel)
 
 	nxAudioEngine.stopMusic(channel);
 
-	ff8_externals.current_music_ids[channel] = 0;
+	if (ff8)
+	{
+		ff8_externals.current_music_ids[channel] = 0;
+	}
 }
 
 void stop_music()
