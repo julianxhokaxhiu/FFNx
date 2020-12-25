@@ -108,6 +108,15 @@ namespace SoLoud
 		}
 	}
 
+	bool OpenPsf::is_our_path(const char* aFilename)
+	{
+		const char* ext = strrchr(aFilename, '.');
+		if (!ext) {
+			return true;
+		}
+		return Psf::is_our_path(aFilename, ext + 1);
+	}
+
 	result OpenPsf::load(const char* aFilename)
 	{
 		mBaseSamplerate = 0;
