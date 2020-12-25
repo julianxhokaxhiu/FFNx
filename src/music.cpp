@@ -175,7 +175,7 @@ char ff8_midi[32];
 char* ff8_format_midi_name(const char* midi_name)
 {
 	// midi_name format: {num}{type}-{name}.sgt or {name}.sgt or _Missing.sgt
-	const char* truncated_name = strchr(midi_name, '-');
+	const char* truncated_name = strrchr(midi_name, '-');
 
 	if (nullptr != truncated_name) {
 		truncated_name += 1; // Remove "-"
@@ -244,7 +244,7 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
-bool play_music(char* music_name, uint32_t music_id, int channel, NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions(), const char* fullname = nullptr)
+bool play_music(char* music_name, uint32_t music_id, int channel, NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions(), char* fullpath = nullptr)
 {
 	struct game_mode* mode = getmode_cached();
 
@@ -258,16 +258,13 @@ bool play_music(char* music_name, uint32_t music_id, int channel, NxAudioEngine:
 		{
 			playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
 		}
-		else if (fullname != nullptr)
+		else if (fullpath != nullptr)
 		{
-			char path[MAX_PATH];
-
-			sprintf(path, "%s%s", ff8_externals.music_path, fullname);
-
-			if (trace_all || trace_music) info("%s: back to wav %s\n", __func__, path);
+			if (trace_all || trace_music) info("%s: back to wav %s\n", __func__, fullpath);
 
 			options.useNameAsFullPath = true;
-			playing = nxAudioEngine.playMusic(path, music_id, channel, options);
+			strcpy(options.format, "wav");
+			playing = nxAudioEngine.playMusic(fullpath, music_id, channel, options);
 		}
 	}
 	else
@@ -590,6 +587,10 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 			options.targetVolume = volume / 127.0f;
 		}
 		play_music(music_name, music_id, channel, options);
+
+		if (music_id == 93) { // The Extreme
+			nxAudioEngine.pauseMusic(0);
+		}
 	}
 	else if (trace_all || trace_music) {
 		trace("%s: is already playing music_id=%u, channel=%d, volume=%d\n", __func__, music_id, channel, volume);
@@ -598,16 +599,30 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 	return 1; // Success
 }
 
-uint32_t ff8_play_wav(const char* filename, uint32_t volume)
+uint32_t ff8_play_wav(uint32_t zero, char* filename, uint32_t volume)
 {
-	const int channel = next_music_channel;
+	int channel = next_music_channel;
 	uint32_t music_id = ff8_externals.current_music_ids[channel];
+	bool the_extreme_intro = false;
 
-	if (nxAudioEngine.currentMusicId(channel) != music_id)
+	if (strstr(filename, "field2.fs") != nullptr) { // The Extreme Intro
+		channel = 1;
+		music_id = 111; // Arbitrary
+		the_extreme_intro = true;
+	}
+
+	if (the_extreme_intro || nxAudioEngine.currentMusicId(channel) != music_id)
 	{
 		if (is_gameover(music_id)) music_flush();
 
-		char* music_name = ff8_format_midi_name(filename);
+		char* music_name = nullptr;
+
+		if (the_extreme_intro) {
+			music_name = "lasbossintro";
+		}
+		else {
+			music_name = ff8_format_midi_name(filename);
+		}
 
 		if (nullptr == music_name) {
 			error("%s: Cannot get music name from filename %s\n", __func__, filename);

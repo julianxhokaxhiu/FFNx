@@ -63,7 +63,8 @@ public:
 			noIntro(false),
 			fadetime(0.0),
 			targetVolume(-1.0f),
-			useNameAsFullPath(false)
+			useNameAsFullPath(false),
+			format("")
 		{}
 		SoLoud::time offsetSeconds;
 		PlayFlags flags;
@@ -71,6 +72,7 @@ public:
 		SoLoud::time fadetime;
 		float targetVolume;
 		bool useNameAsFullPath;
+		char format[12];
 	};
 private:
 	enum NxAudioEngineLayer
@@ -99,7 +101,7 @@ private:
 	float _musicMasterVolume = -1.0f;
 	SoLoud::time _lastVolumeFadeEndTime = 0.0;
 
-	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false);
+	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, PlayOptions *playOptions);
 	void resetMusicVolume(int channel, double time = 0);
 

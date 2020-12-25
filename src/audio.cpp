@@ -283,7 +283,7 @@ bool NxAudioEngine::canPlayMusic(const char* name)
 	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 }
 
-SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath)
+SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format)
 {
 	SoLoud::AudioSource* music = nullptr;
 	char filename[MAX_PATH];
@@ -318,7 +318,7 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath)
 		if (music == nullptr) {
 			SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
 			music = vgmstream;
-			if (vgmstream->load(filename) != SoLoud::SO_NO_ERROR) {
+			if (vgmstream->load(filename, true, format) != SoLoud::SO_NO_ERROR) {
 				error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
 			}
 		}
@@ -400,7 +400,7 @@ bool NxAudioEngine::playMusic(char* name, uint32_t id, int channel, PlayOptions&
 		}
 	}
 
-	SoLoud::AudioSource* audioSource = loadMusic(name, playOptions.useNameAsFullPath);
+	SoLoud::AudioSource* audioSource = loadMusic(name, playOptions.useNameAsFullPath, playOptions.format);
 
 	if (audioSource != nullptr) {
 		if (playOptions.targetVolume >= 0.0f) {

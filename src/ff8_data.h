@@ -52,7 +52,9 @@ void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 
 void ff8_find_externals()
 {
+	ff8_externals.main_entry = get_relative_call(common_externals.winmain, 0x4D);
 	common_externals.diff_time = get_relative_call(common_externals.winmain, 0x41E);
+	ff8_externals.init_config = get_relative_call(ff8_externals.main_entry, 0x73);
 
 	ff8_externals.sub_401ED0 = version == VERSION_FF8_12_JP ? 0x402290 : 0x401ED0;
 	ff8_externals.pubintro_init = get_absolute_value(ff8_externals.sub_401ED0, 0x158);
@@ -73,6 +75,17 @@ void ff8_find_externals()
 	ff8_externals.sub_4A24B0 = get_absolute_value(ff8_externals.sub_470520, 0x2B);
 	ff8_externals.sub_470630 = get_absolute_value(ff8_externals.sub_4A24B0, 0xE4);
 	ff8_externals.main_loop = get_absolute_value(ff8_externals.sub_470630, 0x24);
+
+	ff8_externals.reg_get_data_drive = (uint32_t(*)(char*, DWORD))get_relative_call(ff8_externals.init_config, 0x21);
+	ff8_externals.get_disk_number = get_relative_call(ff8_externals.main_loop, 0x1A);
+	ff8_externals.disk_data_path = (char*)get_absolute_value(ff8_externals.get_disk_number, 0xF);
+
+	ff8_externals.sm_pc_read = (uint32_t(*)(char*, void*))get_relative_call(ff8_externals.main_loop, 0x9C);
+
+	ff8_externals.cdcheck_main_loop = get_absolute_value(ff8_externals.main_loop, 0xBB);
+	ff8_externals.cdcheck_sub_52F9E0 = get_relative_call(ff8_externals.cdcheck_main_loop, 0x95);
+
+	ff8_set_main_loop(MODE_CDCHECK, ff8_externals.cdcheck_main_loop);
 
 	ff8_externals.swirl_main_loop = get_absolute_value(ff8_externals.main_loop, 0x4A3);
 
@@ -263,7 +276,9 @@ void ff8_find_externals()
 	ff8_externals.sdmusicplay = get_relative_call(ff8_externals.sm_battle_sound, 0x164);
 	ff8_externals.sd_music_play = (uint32_t(*)(uint32_t, char*, uint32_t))get_relative_call(ff8_externals.sdmusicplay, 0x17);
 	ff8_externals.current_music_ids = (uint32_t*)get_absolute_value(uint32_t(ff8_externals.sd_music_play), 0x1AA);
-	common_externals.play_wav = get_relative_call(uint32_t(ff8_externals.sd_music_play), 0x1DC);
+	ff8_externals.play_wav = get_relative_call(uint32_t(ff8_externals.sd_music_play), 0x1DC);
+	common_externals.play_wav = get_relative_call(ff8_externals.play_wav, 0x73);
+
 	common_externals.play_midi = get_relative_call(uint32_t(ff8_externals.sd_music_play), 0x20C);
 
 	ff8_externals.dmusic_segment_connect_to_dls = get_relative_call(common_externals.play_midi, 0x247);

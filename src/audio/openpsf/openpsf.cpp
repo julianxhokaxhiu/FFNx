@@ -112,7 +112,7 @@ namespace SoLoud
 	{
 		const char* ext = strrchr(aFilename, '.');
 		if (!ext) {
-			return true;
+			return Psf::is_our_path(aFilename, aFilename);
 		}
 		return Psf::is_our_path(aFilename, ext + 1);
 	}

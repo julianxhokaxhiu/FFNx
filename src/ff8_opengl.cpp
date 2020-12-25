@@ -483,6 +483,42 @@ int ff8_toggle_battle_worldmap(int param)
 	return ret;
 }
 
+uint32_t ff8_retry_configured_drive(char* filename, uint8_t* data)
+{
+	int32_t res = ff8_externals.sm_pc_read(filename, data);
+
+	if (!res) {
+		char dataDrive[8];
+		char modifiedFilename[MAX_PATH];
+
+		ff8_externals.reg_get_data_drive(dataDrive, 4);
+		dataDrive[7] = '\0'; // For safety
+
+		if (trace_files || trace_all) trace("%s: filename=%s, dataDrive=%s, diskDataPath=%s\n", __func__, filename, dataDrive, ff8_externals.disk_data_path);
+
+		if (GetDriveTypeA(dataDrive) == DRIVE_CDROM) {
+			strcpy(modifiedFilename, dataDrive);
+			char* filenameNoDrive = strrchr(filename, ':');
+			if (filenameNoDrive != nullptr) {
+				strncat(modifiedFilename, filenameNoDrive + 1, MAX_PATH);
+
+				if (strncmp(modifiedFilename, filename, MAX_PATH) != 0) {
+					res = ff8_externals.sm_pc_read(modifiedFilename, data);
+
+					if (res) {
+						strncpy(ff8_externals.disk_data_path, dataDrive, 260);
+						strncat(ff8_externals.disk_data_path, "\\", 260);
+
+						if (trace_files || trace_all) trace("%s: diskDataPath changed %s\n", __func__, ff8_externals.disk_data_path);
+					}
+				}
+			}
+		}
+	}
+
+	return res;
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -595,6 +631,12 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	// Allow squaresoft logo skip by pressing a button
 	patch_code_byte(ff8_externals.sub_52F300 + 0x5FD, 0); // if (intro_step >= 0) ...
+
+	if (!steam_edition) {
+		// Look again with the DataDrive specified in the register
+		replace_call(ff8_externals.get_disk_number + 0x6E, ff8_retry_configured_drive);
+		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
+	}
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)

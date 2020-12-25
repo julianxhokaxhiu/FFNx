@@ -128,7 +128,23 @@ namespace SoLoud
 			delete[] mData;
 	}
 
-	result VGMStream::load(const char* aFilename, bool doStreaming)
+	VGMSTREAM* VGMStream::init_vgmstream_with_extension(const char* aFilename, const char* ext)
+	{
+		STREAMFILE* streamFile = open_stdio_streamfile(aFilename);
+		if (streamFile == nullptr) {
+			return nullptr;
+		}
+		// Force extension
+		streamFile = open_fakename_streamfile_f(streamFile, nullptr, ext);
+		if (streamFile == nullptr) {
+			return nullptr;
+		}
+		VGMSTREAM* stream = init_vgmstream_from_STREAMFILE(streamFile);
+		close_streamfile(streamFile);
+		return stream;
+	}
+
+	result VGMStream::load(const char* aFilename, bool doStreaming, const char* ext)
 	{
 		mBaseSamplerate = 0;
 
@@ -142,7 +158,13 @@ namespace SoLoud
 		stop();
 
 		isStreaming = doStreaming;
-		mStream = init_vgmstream(aFilename);
+
+		if (ext && ext[0] != '\0') {
+			mStream = init_vgmstream_with_extension(aFilename, ext);
+		}
+		else {
+			mStream = init_vgmstream(aFilename);
+		}
 
 		if (mStream == nullptr) {
 			return FILE_LOAD_FAILED;
