@@ -184,10 +184,10 @@ void NxAudioEngine::loadSFX(int id, bool loop)
 
 			bool exists = getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
 
-			if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %s\n", __func__, filename);
-
 			if (exists)
 			{
+				if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %s\n", __func__, filename);
+
 				SoLoud::Wav* sfx = new SoLoud::Wav();
 
 				sfx->load(filename);
@@ -203,6 +203,8 @@ void NxAudioEngine::loadSFX(int id, bool loop)
 
 void NxAudioEngine::unloadSFX(int id)
 {
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %d\n", __func__, id);
+
 	int _curId = id - 1;
 
 	if (_sfxStreams[_curId] != nullptr)
@@ -229,12 +231,12 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 
 			_curId = _newId->value_or(id) - 1;
 		}
+
+		// Try to load the new ID if it's not already cached
+		if (_sfxStreams[_curId] == nullptr) loadSFX(id);
 	}
 
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, _curId + 1, channel, panning);
-
-	// Try to load the ID if it's new to the audio engine
-	if (_sfxStreams[_curId] == nullptr) loadSFX(_curId + 1);
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, id, channel, panning);
 
 	if (_sfxStreams[_curId] != nullptr)
 	{
@@ -318,7 +320,7 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 		if (music == nullptr) {
 			SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
 			music = vgmstream;
-			if (vgmstream->load(filename, true, format) != SoLoud::SO_NO_ERROR) {
+			if (vgmstream->load(filename, format) != SoLoud::SO_NO_ERROR) {
 				error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
 			}
 		}
