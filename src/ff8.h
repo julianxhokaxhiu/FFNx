@@ -777,6 +777,14 @@ struct ff8_externals
 	uint32_t sub_534640;
 	uint32_t sub_4972A0;
 	uint32_t load_fonts;
+	uint32_t cdcheck_main_loop;
+	uint32_t cdcheck_sub_52F9E0;
+	uint32_t main_entry;
+	uint32_t init_config;
+	uint32_t (*reg_get_data_drive)(char*, DWORD);
+	uint32_t (*sm_pc_read)(char*,void*);
+	uint32_t get_disk_number;
+	char* disk_data_path;
 	uint32_t swirl_main_loop;
 	uint32_t field_main_loop;
 	uint32_t sub_471F70;
@@ -929,6 +937,7 @@ struct ff8_externals
 	uint32_t volume_update;
 	uint32_t volume_music_update;
 	uint32_t music_load;
+	uint32_t play_wav;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
