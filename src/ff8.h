@@ -840,8 +840,7 @@ struct ff8_externals
 	uint32_t worldmap_main_loop;
 	uint32_t worldmap_enter_main;
 	uint32_t worldmap_sub_53F310;
-	uint32_t sub_545E20;
-	uint32_t sub_653410;
+	uint32_t worldmap_sub_53F310_loc_53F7EE;
 	uint32_t wm_upload_psx_vram;
 	uint32_t check_active_window;
 	uint32_t sub_467D10;

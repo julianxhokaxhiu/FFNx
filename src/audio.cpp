@@ -304,7 +304,7 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath)
 	{
 		if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
-		if (_openpsf_loaded) {
+		if (_openpsf_loaded && SoLoud::OpenPsf::is_our_path(filename)) {
 			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf();
 			music = openpsf;
 

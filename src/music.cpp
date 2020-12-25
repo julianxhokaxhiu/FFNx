@@ -32,6 +32,7 @@ bool next_music_channel = 0;
 bool next_music_is_skipped = false;
 bool next_music_is_skipped_with_saved_offset = false;
 std::unordered_map<uint32_t, bool> remember_musics;
+float hold_volume_for_channel[2];
 bool next_music_is_not_multi = false;
 double next_music_fade_time = 0.0;
 bool ff8_music_intro_volume_changed = false;
@@ -39,6 +40,7 @@ bool ff8_music_intro_volume_changed = false;
 static uint32_t noop() { return 0; }
 static uint32_t noop_a1(uint32_t a1) { return 0; }
 static uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
+static uint32_t noop_a3(uint32_t a1, uint32_t a2, uint32_t a3) { return 0; }
 
 void music_flush()
 {
@@ -530,13 +532,23 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 
 uint32_t ff8_remember_playing_time()
 {
-	const int channel = 0;
+	if (trace_all || trace_music) trace("%s\n", __func__);
 
-	if (trace_all || trace_music) trace("%s: channel=%u\n", __func__, channel);
-
-	nxAudioEngine.pauseMusic(channel, 0.0, true);
+	nxAudioEngine.pauseMusic(0, 0.0, true);
+	// We never remember dualmusic, but battle and cardgame do not pause or stop channel 1 before playing the next music
+	stop_music_for_channel(1);
 
 	return 0;
+}
+
+uint32_t* ff8_load_music(uint32_t channel, uint32_t music_id, uint32_t data)
+{
+	if (trace_all || trace_music) trace("%s: channel=%u, music_id=%u, data=%u\n", __func__, channel, music_id, data);
+
+	// Do not apply volume changes for this channel between load_music and change_music/dual_music/replay_music instructions
+	hold_volume_for_channel[channel] = true;
+
+	return ((uint32_t * (*)(uint32_t, uint32_t, uint32_t))ff8_externals.music_load)(channel, music_id, data);
 }
 
 uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint32_t unused2)
@@ -574,7 +586,7 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 		NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
 		options.fadetime = next_music_fade_time;
 		options.noIntro = noIntro;
-		if (volume >= 0 && volume < 127) {
+		if (volume >= 0 && volume <= 127) {
 			options.targetVolume = volume / 127.0f;
 		}
 		play_music(music_name, music_id, channel, options);
@@ -647,6 +659,8 @@ uint32_t ff8_play_music_to_channel_0(char* midi_data)
 {
 	uint32_t channel = 0;
 
+	hold_volume_for_channel[channel] = false;
+
 	if (trace_all || trace_music) trace("%s\n", __func__);
 	// Force known volume value
 	return ff8_externals.sd_music_play(channel, midi_data, uint32_t(nxAudioEngine.getMusicVolume(channel) * 127));
@@ -664,9 +678,13 @@ uint32_t ff8_play_midi_at(char* midi_data, uint32_t offset)
 
 uint32_t ff8_opcode_musicskip_play_midi_at(char* midi_data, uint32_t offset)
 {
+	uint32_t channel = 0;
+
+	hold_volume_for_channel[channel] = false;
+
 	if (trace_all || trace_music) trace("%s: music skip, play midi at %d\n", __func__, offset);
 	next_music_is_skipped_with_saved_offset = offset & 0xFF == 0xFF; // Special offset returned by ff8_opcode_getmusicoffset()
-	uint32_t channel = ff8_play_midi_at(midi_data, offset);
+	channel = ff8_play_midi_at(midi_data, offset);
 	next_music_is_skipped_with_saved_offset = false;
 	return channel;
 }
@@ -687,9 +705,9 @@ uint32_t ff8_opcode_getmusicoffset()
 
 uint32_t set_music_volume_for_channel(int32_t channel, uint32_t volume)
 {
-	if (trace_all || trace_music) trace("%s: set volume %d for channel #%d\n", __func__, volume, channel);
+	if (trace_all || trace_music) trace("%s: channel=%d, volume=%d, hold=%d\n", __func__, channel, volume, hold_volume_for_channel[channel]);
 
-	if (channel < 0 || channel > 1) {
+	if (hold_volume_for_channel[channel] || channel < 0 || channel > 1) {
 		return 1;
 	}
 
@@ -704,22 +722,22 @@ uint32_t ff8_volume_trans(int32_t channel, uint32_t steps, uint32_t volume)
 {
 	double time = steps / 50.0;
 
-	if (trace_all || trace_music) trace("%s: channel=%d, volume=%u, steps=%u (=> time=%fs)\n", __func__, channel, volume, steps, time);
+	if (trace_all || trace_music) trace("%s: channel=%d, volume=%u, steps=%u (=> time=%fs), hold=%d\n", __func__, channel, volume, steps, time, hold_volume_for_channel[channel]);
 
-	if (channel < 0 || channel > 1) {
+	if (hold_volume_for_channel[channel] || channel < 0 || channel > 1) {
 		return 1;
 	}
 
 	if (volume > 127) volume = 127;
 
-	nxAudioEngine.setMusicVolume(volume / 127.0, channel, time);
+	nxAudioEngine.setMusicVolume(volume / 127.0f, channel, time);
 
 	return 1;
 }
 
 uint32_t ff8_volume_fade(uint32_t channel, uint32_t steps, uint32_t volume1, uint32_t volume2)
 {
-	if (trace_all || trace_music) trace("%s: channel=%d steps=%u volume1=%u, volume2=%u\n", __func__, channel, steps, volume1, volume2);
+	if (trace_all || trace_music) trace("%s: channel=%d, volume1=%u, volume2=%u, steps=%u\n", __func__, channel, volume1, volume2, steps);
 
 	set_music_volume_for_channel(channel, volume1);
 	ff8_volume_trans(channel, steps, volume2);
@@ -736,6 +754,14 @@ uint32_t ff8_volume_sync()
 	}
 
 	return 1; // Wait
+}
+
+uint32_t ff8_play_music_worldmap(char* midi_data)
+{
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
+	nxAudioEngine.setMusicVolume(0.0f, 0, 0.5); // Fadeout: 500ms
+	return ff8_cross_fade_midi(midi_data, 60, 127); // Fadein: ~1s
 }
 
 std::vector<std::string> musics;
@@ -812,13 +838,6 @@ uint32_t ff8_set_music_volume_intro_credits(uint32_t channel, uint32_t volume)
 	return 1;
 }
 
-uint32_t* ff8_load_music(uint32_t a1, uint32_t music_id, uint32_t data)
-{
-	if (trace_all || trace_music) trace("%s: a1=%u, music_id=%u, data=%u\n", __func__, a1, music_id, data);
-
-	return ((uint32_t*(*)(uint32_t, uint32_t, uint32_t))ff8_externals.music_load)(a1, music_id, data);
-}
-
 void music_init()
 {
 	if (!ff8)
@@ -863,6 +882,11 @@ void music_init()
 			// Fix intro credits volume fadeout time
 			replace_call(ff8_externals.sub_52F300 + 0x5DF, ff8_set_music_volume_intro_credits);
 			replace_call(ff8_externals.sub_52F300 + 0x5C2, noop_a1);
+			// Worldmap: Replace stop and play music by a cross fade on leaving cities
+			replace_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE + 0x2, noop_a2); // set volume to 0
+			replace_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE + 0x8, noop_a1); // stop music
+			replace_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE + 0x28, ff8_play_music_worldmap); // play music
+			replace_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE + 0x3B, noop_a3); // volume fade (channel=0, steps=60, volume=127)
 			/* Remember time and resume music */
 			replace_function(ff8_externals.sd_music_play_at, ff8_play_midi_at);
 			replace_function(common_externals.remember_midi_playing_time, ff8_remember_playing_time);
