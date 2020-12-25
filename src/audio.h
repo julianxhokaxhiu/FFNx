@@ -126,9 +126,10 @@ public:
 
 	// SFX
 	bool canPlaySFX(int id);
-	void loadSFX(int id);
+	void loadSFX(int id, bool loop = false);
 	void unloadSFX(int id);
 	void playSFX(int id, int channel, float panning);
+	void stopSFX(int channel);
 	void pauseSFX();
 	void resumeSFX();
 	void setSFXVolume(float volume, int channel);

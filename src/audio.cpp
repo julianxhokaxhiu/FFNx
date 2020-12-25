@@ -172,7 +172,7 @@ bool NxAudioEngine::canPlaySFX(int id)
 	return getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
 }
 
-void NxAudioEngine::loadSFX(int id)
+void NxAudioEngine::loadSFX(int id, bool loop)
 {
 	int _curId = id - 1;
 
@@ -191,6 +191,7 @@ void NxAudioEngine::loadSFX(int id)
 				SoLoud::Wav* sfx = new SoLoud::Wav();
 
 				sfx->load(filename);
+				sfx->setLooping(loop);
 
 				_sfxStreams[_curId] = sfx;
 			}
@@ -247,6 +248,11 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 
 		_engine.setRelativePlaySpeed(_handle, _sfxTempoPerChannels[channel - 1]);
 	}
+}
+
+void NxAudioEngine::stopSFX(int channel)
+{
+	_engine.stop(_sfxChannelsHandle[channel - 1]);
 }
 
 void NxAudioEngine::pauseSFX()

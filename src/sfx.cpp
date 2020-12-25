@@ -31,11 +31,13 @@ uint32_t real_volume;
 
 //=============================================================================
 
-int ff7_sfx_load(int id, int unk)
+int ff7_sfx_load(int id, DWORD dsound_flag)
 {
-	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
+	BYTE *shouldLoop = (BYTE *)(ff7_externals.sfx_fmt_header + (28 * (id - 1)));
 
-	if (id) nxAudioEngine.loadSFX(id);
+	if (trace_all || trace_sfx) trace("%s: id=%d,loop=%x\n", __func__, id, *shouldLoop);
+
+	if (id) nxAudioEngine.loadSFX(id, *shouldLoop);
 
 	return true;
 }
@@ -67,15 +69,17 @@ void ff7_sfx_set_speed_on_channel(byte speed, int channel)
 
 void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 {
+	if (trace_all || trace_sfx) trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
+
 	if (id)
 	{
-		if (trace_all || trace_sfx) trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
-
 		float _panning = (panning * 2 / 127.0f - 1.0f);
 
-		nxAudioEngine.loadSFX(id);
+		ff7_sfx_load(id, 0);
 		nxAudioEngine.playSFX(id, channel, _panning);
 	}
+	else
+		nxAudioEngine.stopSFX(channel);
 }
 
 void ff7_sfx_play_on_channel_5(int id)
@@ -85,17 +89,18 @@ void ff7_sfx_play_on_channel_5(int id)
 
 void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte speed)
 {
+	const int _channel = 5;
+
+	if (trace_all || trace_sfx) trace("%s: id=%d,volume=%d,panning=%d,speed=%d\n", __func__, id, volume, panning, speed);
+
 	if (id)
 	{
-		if (trace_all || trace_sfx) trace("%s: id=%d,volume=%d,panning=%d,speed=%d\n", __func__, id, volume, panning, speed);
-
-		const int _channel = 5;
-
 		ff7_sfx_load(id, 0);
 		ff7_sfx_set_volume_on_channel(volume, _channel);
 		ff7_sfx_set_speed_on_channel(speed, _channel);
-		ff7_sfx_play_on_channel(panning, id, _channel);
 	}
+
+	ff7_sfx_play_on_channel(panning, id, _channel);
 }
 
 void ff7_sfx_pause()
@@ -106,6 +111,11 @@ void ff7_sfx_pause()
 void ff7_sfx_resume()
 {
 	nxAudioEngine.resumeSFX();
+}
+
+void ff7_sfx_stop()
+{
+	for (short channel = 1; channel < 5; channel++) nxAudioEngine.stopSFX(channel);
 }
 
 //=============================================================================
@@ -340,6 +350,7 @@ void sfx_init()
 			replace_function(ff7_externals.sfx_play_summon, ff7_sfx_play_on_channel_5);
 			replace_function(common_externals.sfx_pause, ff7_sfx_pause);
 			replace_function(common_externals.sfx_resume, ff7_sfx_resume);
+			replace_function(common_externals.sfx_stop, ff7_sfx_stop);
 		}
 		else
 		{
