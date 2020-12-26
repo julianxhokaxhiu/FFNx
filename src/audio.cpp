@@ -135,7 +135,7 @@ bool NxAudioEngine::init()
 		_sfxTempoPerChannels.resize(10, 1.0f);
 		_sfxChannelsHandle.resize(10, NXAUDIOENGINE_INVALID_HANDLE);
 		_sfxStreams.resize(10000, nullptr);
-		_sfxSequentialIndexes.resize(10000, -1);
+		_sfxSequentialIndexes.resize(1000, -1);
 
 		while (!_sfxStack.empty())
 		{
@@ -195,6 +195,8 @@ void NxAudioEngine::loadSFX(int id, bool loop)
 				sfx->setLooping(loop);
 
 				_sfxStreams[_curId] = sfx;
+
+				_sfxSequentialIndexes[_curId] = -1;
 			}
 		}
 	}
