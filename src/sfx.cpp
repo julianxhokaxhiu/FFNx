@@ -28,6 +28,7 @@
 uint32_t sfx_volumes[5];
 ff7_field_sfx_state sfx_buffers[4];
 uint32_t real_volume;
+ff7_field_sfx_state* sfx_state = nullptr;
 
 //=============================================================================
 
@@ -75,6 +76,9 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 	{
 		ff7_sfx_load(id, 0);
 		nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
+
+		sfx_state[channel].pan1 = panning;
+		sfx_state[channel].sound_id = id;
 	}
 	else
 		nxAudioEngine.stopSFX(channel);
@@ -138,14 +142,12 @@ uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, u
 {
 	if (trace_all || trace_sfx) info("%s: Battle swirl stop sound\n", __func__);
 
-	ff7_field_sfx_state* sfx_state = ff7_externals.sound_states;
-
 	for (int i = 0; i < 4; ++i) {
 		sfx_buffers[i] = ff7_field_sfx_state();
 		sfx_buffers[i].buffer1 = nullptr;
 		sfx_buffers[i].buffer2 = nullptr;
 		// Save sfx state for looped sounds in channel 1 -> 4 (not channel 5)
-		if (sfx_buffer_is_looped(sfx_state[i].buffer1) || sfx_buffer_is_looped(sfx_state[i].buffer2)) {
+		if (sfx_buffer_is_looped(sfx_state[i].buffer1) || sfx_buffer_is_looped(sfx_state[i].buffer2) || use_external_sfx) {
 			memcpy(&sfx_buffers[i], &sfx_state[i], sizeof(ff7_field_sfx_state));
 		}
 	}
@@ -158,23 +160,27 @@ uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t par
 	if (trace_all || trace_sfx) info("%s: Field resume music after battle\n", __func__);
 
 	for (int i = 0; i < 4; ++i) {
-		if (sfx_buffers[i].buffer1 != nullptr || sfx_buffers[i].buffer2 != nullptr) {
-			uint32_t pan;
-			if (sfx_buffers[i].buffer1 != nullptr) {
-				pan = sfx_buffers[i].pan1;
-			}
-			else {
-				pan = sfx_buffers[i].pan2;
-			}
+		if (use_external_sfx)
+		{
+			ff7_sfx_play_on_channel(sfx_buffers[i].pan1, sfx_buffers[i].sound_id, i + 1);
+		}
+		else
+		{
+			if (sfx_buffers[i].buffer1 != nullptr || sfx_buffers[i].buffer2 != nullptr) {
+				uint32_t pan;
+				if (sfx_buffers[i].buffer1 != nullptr) {
+					pan = sfx_buffers[i].pan1;
+				}
+				else {
+					pan = sfx_buffers[i].pan2;
+				}
 
-			if (use_external_sfx)
-				ff7_sfx_play_on_channel(pan, sfx_buffers[i].sound_id, i + 1);
-			else
 				((uint32_t(*)(uint32_t, uint32_t, uint32_t))common_externals.play_sfx_on_channel)(pan, sfx_buffers[i].sound_id, i + 1);
 
-			sfx_buffers[i] = ff7_field_sfx_state();
-			sfx_buffers[i].buffer1 = nullptr;
-			sfx_buffers[i].buffer2 = nullptr;
+				sfx_buffers[i] = ff7_field_sfx_state();
+				sfx_buffers[i].buffer1 = nullptr;
+				sfx_buffers[i].buffer2 = nullptr;
+			}
 		}
 	}
 
@@ -349,6 +355,8 @@ void sfx_init()
 			replace_function(common_externals.sfx_pause, ff7_sfx_pause);
 			replace_function(common_externals.sfx_resume, ff7_sfx_resume);
 			replace_function(common_externals.sfx_stop, ff7_sfx_stop);
+
+			sfx_state = new ff7_field_sfx_state[5]{0};
 		}
 		else
 		{
@@ -370,6 +378,9 @@ void sfx_init()
 			// Fix volume on specific SFX
 			replace_call(ff7_externals.sfx_play_summon + 0xA2, sfx_play_battle_specific);
 			replace_call(ff7_externals.sfx_play_summon + 0xF2, sfx_play_battle_specific);
+
+			// Store pointer to the SFX states
+			sfx_state = ff7_externals.sound_states;
 		}
 	}
 }
