@@ -225,7 +225,7 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 	{
 		// Shuffle SFX playback, if any entry found for the current id
 		toml::array *shuffleIds = node["shuffle"].as_array();
-		if (!shuffleIds->empty() && shuffleIds->is_homogeneous(toml::node_type::integer))
+		if (shuffleIds && !shuffleIds->empty() && shuffleIds->is_homogeneous(toml::node_type::integer))
 		{
 			auto _newId = shuffleIds->get(getRandomInt(0, shuffleIds->size() - 1));
 
