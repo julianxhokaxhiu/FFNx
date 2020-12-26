@@ -221,6 +221,7 @@ void NxAudioEngine::unloadSFX(int id)
 void NxAudioEngine::playSFX(int id, int channel, float panning)
 {
 	int _curId = id - 1;
+	int shouldLoop = -1;
 
 	std::string _id = std::to_string(id);
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id];
@@ -249,6 +250,9 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 			_curId = _newId->value_or(id) - 1;
 		}
 
+		// Force loop if requested in the config
+		shouldLoop = node["loop"].value_or(-1);
+
 		// Try to load the new ID if it's not already cached
 		if (_sfxStreams[_curId] == nullptr) loadSFX(_curId + 1);
 	}
@@ -266,6 +270,8 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 		_sfxChannelsHandle[channel - 1] = _handle;
 
 		_engine.setRelativePlaySpeed(_handle, _sfxTempoPerChannels[channel - 1]);
+
+		if (shouldLoop != -1) _engine.setLooping(_handle, shouldLoop);
 	}
 }
 
