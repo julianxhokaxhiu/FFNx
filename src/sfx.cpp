@@ -74,14 +74,21 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 
 	if (id)
 	{
-		ff7_sfx_load(id, 0);
-		nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
-
-		sfx_state[channel].pan1 = panning;
-		sfx_state[channel].sound_id = id;
+		if (sfx_state[channel].sound_id != id || channel == 5)
+		{
+			ff7_sfx_load(id, 0);
+			nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
+		}
+		else if (trace_all || trace_sfx)
+			trace("%s: %d already playing on channel %d\n", __func__, id, channel);
 	}
 	else
+	{
 		nxAudioEngine.stopSFX(channel);
+	}
+
+	sfx_state[channel].pan1 = panning;
+	sfx_state[channel].sound_id = id;
 }
 
 void ff7_sfx_play_on_channel_5(int id)
