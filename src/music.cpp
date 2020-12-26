@@ -36,6 +36,8 @@ float hold_volume_for_channel[2];
 bool next_music_is_not_multi = false;
 double next_music_fade_time = 0.0;
 bool ff8_music_intro_volume_changed = false;
+char* eyes_on_me_track = "eyes_on_me";
+bool eyes_on_me_is_playing = false;
 
 static uint32_t noop() { return 0; }
 static uint32_t noop_a1(uint32_t a1) { return 0; }
@@ -244,7 +246,7 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
-bool play_music(char* music_name, uint32_t music_id, int channel, NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions(), char* fullpath = nullptr)
+bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions(), char* fullpath = nullptr)
 {
 	struct game_mode* mode = getmode_cached();
 
@@ -254,7 +256,7 @@ bool play_music(char* music_name, uint32_t music_id, int channel, NxAudioEngine:
 
 	if (ff8)
 	{
-		if (nxAudioEngine.canPlayMusic(music_name))
+		if (fullpath == nullptr || nxAudioEngine.canPlayMusic(music_name))
 		{
 			playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
 		}
@@ -332,7 +334,7 @@ void ff7_play_midi(uint32_t music_id)
 	{
 		if (is_gameover(music_id)) music_flush();
 
-		char* midi_name = common_externals.get_midi_name(music_id);
+		const char* midi_name = common_externals.get_midi_name(music_id);
 		struct game_mode* mode = getmode_cached();
 
 		// Avoid restarting the same music when transitioning from the battle gameover to the gameover screen
@@ -380,7 +382,7 @@ void stop_music()
 
 void ff7_cross_fade_midi(uint32_t music_id, uint32_t steps)
 {
-	char* midi_name = common_externals.get_midi_name(music_id);
+	const char* midi_name = common_externals.get_midi_name(music_id);
 	const int channel = 0;
 
 	/* FIXME: the game uses cross_fade_midi only in two places,
@@ -556,7 +558,7 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 	{
 		if (is_gameover(music_id)) music_flush();
 
-		char* music_name = ff8_midi_name(music_id);
+		const char* music_name = ff8_midi_name(music_id);
 
 		if (nullptr == music_name) {
 			error("%s: Cannot get music name from music_id %d\n", __func__, music_id);
@@ -779,6 +781,54 @@ uint32_t ff8_play_music_worldmap(char* midi_data)
 	return ff8_cross_fade_midi(midi_data, 60, 127); // Fadein: ~1s
 }
 
+uint32_t ff8_load_cdrom()
+{
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
+	if (eyes_on_me_is_playing) {
+		return 1;
+	}
+
+	char fullpath[MAX_PATH];
+
+	snprintf(fullpath, MAX_PATH, "%s..\\%s.wav", ff8_externals.music_path, eyes_on_me_track);
+
+	NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
+	options.targetVolume = 1.0f;
+	eyes_on_me_is_playing = play_music(eyes_on_me_track, 111, 0, options, fullpath);
+
+	if (eyes_on_me_is_playing) {
+		return 1;
+	}
+
+	// Fallback
+	return ff8_externals.load_cdrom();
+}
+
+uint32_t ff8_play_cdrom(uint32_t trackStart, uint32_t trackEnd, uint32_t unknown)
+{
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
+	if (eyes_on_me_is_playing) {
+		return 1;
+	}
+
+	return ff8_externals.play_cdrom(trackStart, trackEnd, unknown);
+}
+
+uint32_t ff8_stop_cdrom()
+{
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
+	if (eyes_on_me_is_playing) {
+		nxAudioEngine.stopMusic(0);
+		eyes_on_me_is_playing = false;
+		return 1;
+	}
+
+	return ff8_externals.stop_cdrom();
+}
+
 std::vector<std::string> musics;
 
 uint32_t ff8_opcode_choicemusic(uint32_t unused, uint32_t instruments)
@@ -792,7 +842,7 @@ uint32_t ff8_opcode_choicemusic(uint32_t unused, uint32_t instruments)
 
 uint32_t ff8_load_midi_segment(void* directsound, const char* filename)
 {
-	char* midi_name = ff8_format_midi_name(filename);
+	const char* midi_name = ff8_format_midi_name(filename);
 
 	if (next_music_is_not_multi) {
 		next_music_is_not_multi = false;
@@ -870,6 +920,7 @@ void music_init()
 		if (ff8)
 		{
 			/* Play & Stop */
+			replace_call(ff8_externals.opcode_musicload + 0x8C, ff8_load_music);
 			replace_function(common_externals.play_midi, ff8_play_midi);
 			replace_function(common_externals.play_wav, ff8_play_wav);
 			// Removing stop_midi call from sd_music_play
@@ -908,6 +959,11 @@ void music_init()
 			replace_call(ff8_externals.opcode_musicskip + 0x46, ff8_opcode_musicskip_play_midi_at);
 			// getmusicoffset opcode is not implemented, but could be used to skip music with musicskip opcode
 			replace_call(ff8_externals.opcode_getmusicoffset, ff8_opcode_getmusicoffset);
+			/* Eyes On Me */
+			replace_call(ff8_externals.load_cdrom_call, ff8_load_cdrom);
+			replace_call(ff8_externals.play_cdrom_call, ff8_play_cdrom);
+			replace_call(ff8_externals.stop_cdrom_field_call, ff8_stop_cdrom);
+			replace_call(ff8_externals.stop_cdrom_cleanup_call, ff8_stop_cdrom);
 			/* MIDI segments (Fisherman's Horizon concert instruments) */
 			// Initialization
 			replace_call(ff8_externals.opcode_choicemusic + 0x5D, ff8_opcode_choicemusic);
@@ -922,7 +978,6 @@ void music_init()
 			replace_function(ff8_externals.dmusic_segment_connect_to_dls, noop_a2);
 			replace_function(common_externals.midi_cleanup, noop);
 			replace_function(common_externals.wav_cleanup, noop);
-			replace_call(ff8_externals.opcode_musicload + 0x8C, ff8_load_music);
 		}
 		else
 		{
