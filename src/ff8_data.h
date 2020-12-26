@@ -80,6 +80,7 @@ void ff8_find_externals()
 	ff8_externals.get_disk_number = get_relative_call(ff8_externals.main_loop, 0x1A);
 	ff8_externals.disk_data_path = (char*)get_absolute_value(ff8_externals.get_disk_number, 0xF);
 
+	ff8_externals.savemap = (uint32_t**)get_absolute_value(ff8_externals.main_loop, 0x21);
 	ff8_externals.sm_pc_read = (uint32_t(*)(char*, void*))get_relative_call(ff8_externals.main_loop, 0x9C);
 
 	ff8_externals.cdcheck_main_loop = get_absolute_value(ff8_externals.main_loop, 0xBB);
