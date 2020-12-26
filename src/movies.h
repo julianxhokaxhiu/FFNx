@@ -36,4 +36,3 @@ void ff8_release_movie_objects();
 void ff8_start_movie();
 void ff8_update_movie_sample();
 void ff8_stop_movie();
-uint32_t ff8_get_movie_frame();

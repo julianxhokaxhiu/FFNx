@@ -45,7 +45,6 @@ void movie_init()
 		replace_function(common_externals.update_movie_sample, ff8_update_movie_sample);
 		replace_function(ff8_externals.draw_movie_frame, draw_current_frame);
 		replace_function(common_externals.stop_movie, ff8_stop_movie);
-		replace_function(common_externals.get_movie_frame, ff8_get_movie_frame);
 	}
 
 	ffmpeg_movie_init();
@@ -312,11 +311,4 @@ void ff8_update_movie_sample()
 	}
 
 	ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_frame];
-}
-
-uint32_t ff8_get_movie_frame()
-{
-	if(trace_all || trace_movies) trace("get_movie_frame\n");
-
-	return ff8_externals.movie_object->movie_frame;
 }
