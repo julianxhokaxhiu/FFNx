@@ -396,12 +396,16 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Pl
 	}
 }
 
-bool NxAudioEngine::playMusic(char* name, uint32_t id, int channel, PlayOptions& playOptions)
+bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, PlayOptions& playOptions)
 {
 	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
 
+	char overloadedName[64];
+
+	strncpy(overloadedName, name, 64);
+
 	if (!playOptions.useNameAsFullPath) {
-		overloadPlayArgumentsFromConfig(name, &id, &playOptions);
+		overloadPlayArgumentsFromConfig(overloadedName, &id, &playOptions);
 	}
 
 	if (!_musicStack.empty() && _musicStack.top().id == id) {

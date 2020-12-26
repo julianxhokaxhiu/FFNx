@@ -140,7 +140,7 @@ public:
 
 	// Music
 	bool canPlayMusic(const char* name);
-	bool playMusic(char* name, uint32_t id, int channel, PlayOptions& playOptions = PlayOptions());
+	bool playMusic(const char* name, uint32_t id, int channel, PlayOptions& playOptions = PlayOptions());
 	void playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions = PlayOptions());
 	void stopMusic(int channel, double time = 0);
 	void pauseMusic(int channel, double time = 0, bool push = false);

@@ -135,6 +135,7 @@ void ff8_find_externals()
 	common_externals.get_movie_frame = get_relative_call(ff8_externals.sub_529FF0, 0x26);
 
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff8_externals.sub_529FF0, 0x65A);
+	ff8_externals.opcode_spuready = common_externals.execute_opcode_table[0x56];
 	ff8_externals.opcode_musicload = common_externals.execute_opcode_table[0xB5];
 	ff8_externals.opcode_crossmusic = common_externals.execute_opcode_table[0xBA];
 	ff8_externals.opcode_dualmusic = common_externals.execute_opcode_table[0xBB];
@@ -306,6 +307,14 @@ void ff8_find_externals()
 	common_externals.remember_midi_playing_time = get_relative_call(ff8_externals.sub_46C050, 0x00);
 
 	common_externals.midi_status = get_relative_call(ff8_externals.sm_battle_sound, 0x14);
+
+	ff8_externals.load_cdrom = (uint32_t(*)())get_relative_call(ff8_externals.opcode_spuready, 0x4B);
+	ff8_externals.load_cdrom_call = ff8_externals.opcode_spuready + 0x4B;
+	ff8_externals.play_cdrom = (uint32_t(*)(uint32_t, uint32_t, uint32_t))get_relative_call(ff8_externals.opcode_spuready, 0x60);
+	ff8_externals.play_cdrom_call = ff8_externals.opcode_spuready + 0x60;
+	ff8_externals.stop_cdrom = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0xB46);
+	ff8_externals.stop_cdrom_field_call = ff8_externals.sub_4767B0 + 0xB46;
+	ff8_externals.stop_cdrom_cleanup_call = ff8_externals.pubintro_init + 0x183;
 
 	// Pause/Resume functions
 	ff8_externals.sub_500900 = get_relative_call(ff8_externals.sub_47CCB0, 0x98D);
