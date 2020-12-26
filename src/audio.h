@@ -92,6 +92,7 @@ private:
 	std::vector<float> _sfxTempoPerChannels;
 	std::vector<SoLoud::Wav*> _sfxStreams;
 	std::vector<SoLoud::handle> _sfxChannelsHandle;
+	std::vector<int> _sfxSequentialIndexes;
 
 	// MUSIC
 	NxAudioEngineMusic _musics[2];

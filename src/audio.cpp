@@ -135,6 +135,7 @@ bool NxAudioEngine::init()
 		_sfxTempoPerChannels.resize(10, 1.0f);
 		_sfxChannelsHandle.resize(10, NXAUDIOENGINE_INVALID_HANDLE);
 		_sfxStreams.resize(10000, nullptr);
+		_sfxSequentialIndexes.resize(10000, -1);
 
 		while (!_sfxStack.empty())
 		{
@@ -232,11 +233,25 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 			_curId = _newId->value_or(id) - 1;
 		}
 
+		// Sequentially playback new SFX ids, if any entry found for the current id
+		toml::array *sequentialIds = node["sequential"].as_array();
+		if (sequentialIds && !sequentialIds->empty() && sequentialIds->is_homogeneous(toml::node_type::integer))
+		{
+			if (_sfxSequentialIndexes[_curId] == -1 || _sfxSequentialIndexes[_curId] == sequentialIds->size())
+				_sfxSequentialIndexes[_curId] = 0;
+
+			auto _newId = sequentialIds->get(_sfxSequentialIndexes[_curId]);
+
+			_sfxSequentialIndexes[_curId]++;
+
+			_curId = _newId->value_or(id) - 1;
+		}
+
 		// Try to load the new ID if it's not already cached
-		if (_sfxStreams[_curId] == nullptr) loadSFX(id);
+		if (_sfxStreams[_curId] == nullptr) loadSFX(_curId + 1);
 	}
 
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, id, channel, panning);
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, _curId + 1, channel, panning);
 
 	if (_sfxStreams[_curId] != nullptr)
 	{
