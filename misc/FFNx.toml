@@ -106,7 +106,7 @@
 # You can use a list to specify multiple extensions, ordered by priority.
 # Example: ["ogg", "flac"]
 # Supported extensions:
-# - ogg, mp3, flac, wav
+# - https://github.com/losnoco/vgmstream#supported-file-types
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #external_sfx_ext = "ogg"
 
@@ -159,7 +159,7 @@
 # You can use a list to specify multiple extensions, ordered by priority.
 # Example: ["ogg", "flac"]
 # Supported extensions:
-# - ogg, mp3, flac, wav
+# - https://github.com/losnoco/vgmstream#supported-file-types
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #external_voice_ext = "ogg"
 
