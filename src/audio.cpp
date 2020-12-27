@@ -697,7 +697,7 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 
 	if (exists)
 	{
-		SoLoud::WavStream* voice = new SoLoud::WavStream();
+		SoLoud::VGMStream* voice = new SoLoud::VGMStream();
 
 		voice->load(filename);
 
