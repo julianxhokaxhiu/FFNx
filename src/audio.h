@@ -135,6 +135,7 @@ public:
 	void stopSFX(int channel);
 	void pauseSFX();
 	void resumeSFX();
+	bool isSFXPlaying(int channel);
 	void setSFXVolume(float volume, int channel);
 	void setSFXSpeed(float speed, int channel);
 

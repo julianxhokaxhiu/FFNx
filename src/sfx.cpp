@@ -32,13 +32,18 @@ ff7_field_sfx_state* sfx_state = nullptr;
 
 //=============================================================================
 
+bool ff7_should_sfx_loop(int id)
+{
+	return *(BYTE *)(ff7_externals.sfx_fmt_header + (28 * (id - 1)));
+}
+
 int ff7_sfx_load(int id, DWORD dsound_flag)
 {
-	BYTE *shouldLoop = (BYTE *)(ff7_externals.sfx_fmt_header + (28 * (id - 1)));
+	bool shouldCurrentSfxLoop = ff7_should_sfx_loop(id);
 
-	if (trace_all || trace_sfx) trace("%s: id=%d,loop=%x\n", __func__, id, *shouldLoop);
+	if (trace_all || trace_sfx) trace("%s: id=%d,loop=%x\n", __func__, id, shouldCurrentSfxLoop);
 
-	if (id) nxAudioEngine.loadSFX(id, *shouldLoop);
+	if (id) nxAudioEngine.loadSFX(id, shouldCurrentSfxLoop);
 
 	return true;
 }
@@ -72,23 +77,26 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 {
 	if (trace_all || trace_sfx) trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
 
+	ff7_field_sfx_state *currentState = &sfx_state[channel-1];
+
 	if (id)
 	{
-		if (sfx_state[channel].sound_id != id || channel == 5)
+		if (currentState->sound_id == id && !currentState->is_looped) nxAudioEngine.stopSFX(channel);
+
+		if (!currentState->is_looped)
 		{
 			ff7_sfx_load(id, 0);
 			nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
 		}
-		else if (trace_all || trace_sfx)
-			trace("%s: %d already playing on channel %d\n", __func__, id, channel);
 	}
 	else
 	{
 		nxAudioEngine.stopSFX(channel);
 	}
 
-	sfx_state[channel].pan1 = panning;
-	sfx_state[channel].sound_id = id;
+	currentState->pan1 = panning;
+	currentState->sound_id = id;
+	currentState->is_looped = ff7_should_sfx_loop(id);
 }
 
 void ff7_sfx_play_on_channel_5(int id)
@@ -153,6 +161,13 @@ uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, u
 		sfx_buffers[i] = ff7_field_sfx_state();
 		sfx_buffers[i].buffer1 = nullptr;
 		sfx_buffers[i].buffer2 = nullptr;
+
+		if (use_external_sfx)
+		{
+			// Check which SFX effects are still playing on channels before saving their state. If not, avoid playing them back.
+			if (!nxAudioEngine.isSFXPlaying(i)) sfx_state[i].sound_id = 0;
+		}
+
 		// Save sfx state for looped sounds in channel 1 -> 4 (not channel 5)
 		if (sfx_buffer_is_looped(sfx_state[i].buffer1) || sfx_buffer_is_looped(sfx_state[i].buffer2) || use_external_sfx) {
 			memcpy(&sfx_buffers[i], &sfx_state[i], sizeof(ff7_field_sfx_state));
@@ -197,8 +212,6 @@ uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t par
 void sfx_remember_volumes()
 {
 	if (trace_all || trace_sfx) info("%s: Remember SFX volumes (master: %i)\n", __func__, *common_externals.master_sfx_volume);
-
-	ff7_field_sfx_state* sfx_state = ff7_externals.sound_states;
 
 	for (int i = 0; i < 5; ++i) {
 		sfx_volumes[i] = sfx_state[i].buffer1 != nullptr ? sfx_state[i].volume1 : sfx_state[i].volume2;
@@ -277,8 +290,6 @@ void sfx_clear_sound_locks()
 void sfx_fix_volume_values(char* log)
 {
 	if (trace_all || trace_sfx) info("%s", log); // FF7 default log
-
-	ff7_field_sfx_state* sfx_state = ff7_externals.sound_states;
 
 	for (int i = 0; i < 5; ++i) {
 		if (sfx_state[i].u1 == 0xFFFFFFFF) {

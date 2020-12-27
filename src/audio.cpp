@@ -277,17 +277,28 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 
 void NxAudioEngine::stopSFX(int channel)
 {
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
+
 	_engine.stop(_sfxChannelsHandle[channel - 1]);
 }
 
 void NxAudioEngine::pauseSFX()
 {
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s\n", __func__);
+
 	for (auto _handle : _sfxChannelsHandle) _engine.setPause(_handle, true);
 }
 
 void NxAudioEngine::resumeSFX()
 {
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s\n", __func__);
+
 	for (auto _handle : _sfxChannelsHandle) _engine.setPause(_handle, false);
+}
+
+bool NxAudioEngine::isSFXPlaying(int channel)
+{
+	return (_engine.isValidVoiceHandle(_sfxChannelsHandle[channel])) && !_engine.getPause(_sfxChannelsHandle[channel]);
 }
 
 void NxAudioEngine::setSFXVolume(float volume, int channel)
