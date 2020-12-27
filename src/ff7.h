@@ -1676,7 +1676,6 @@ struct ff7_externals
 	uint32_t field_battle_toggle;
 	uint32_t worldmap_battle_toggle;
 	uint32_t enter_field;
-	uint32_t loop_field;
 	uint32_t sub_63C17F;
 	uint32_t sub_40B27B;
 	WORD* word_CC0DD4;
