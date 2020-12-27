@@ -901,8 +901,8 @@ struct ff8_externals
 	uint32_t sub_46C050;
 	uint32_t sub_500900;
 	uint32_t sub_501B60;
-	uint32_t sub_46B3A0;
-	uint32_t sub_46B3E0;
+	uint32_t pause_music_and_sfx;
+	uint32_t restart_music_and_sfx;
 	uint32_t sub_4A6680;
 	uint32_t sub_4A6660;
 	uint32_t sub_4A3D20;
@@ -947,6 +947,7 @@ struct ff8_externals
 	uint32_t stop_cdrom_field_call;
 	uint32_t stop_cdrom_cleanup_call;
 	uint32_t** savemap;
+	int32_t (*check_game_is_paused)(int32_t);
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

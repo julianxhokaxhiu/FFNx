@@ -720,6 +720,28 @@ uint32_t ff8_opcode_getmusicoffset()
 	return 0xFFFFFFFF; // Return a special offset to recognize it in ff8_opcode_musicskip_play_midi_at()
 }
 
+uint32_t ff8_field_pause_music(uint32_t a1)
+{
+	if (trace_all || trace_music) trace("%s: a1=%d\n", __func__, a1);
+
+	((uint32_t(*)(uint32_t))ff8_externals.pause_music_and_sfx)(0);
+
+	return ff8_externals.check_game_is_paused(a1);
+}
+
+uint32_t ff8_field_restart_music(uint32_t a1)
+{
+	uint32_t ret = ff8_externals.check_game_is_paused(a1);
+
+	if (ret == 0) { // Unpause
+		if (trace_all || trace_music) trace("%s: a1=%d\n", __func__, a1);
+
+		((uint32_t(*)(uint32_t))ff8_externals.restart_music_and_sfx)(0);
+	}
+
+	return ret;
+}
+
 uint32_t set_music_volume_for_channel(int32_t channel, uint32_t volume)
 {
 	if (trace_all || trace_music) trace("%s: channel=%d, volume=%d, hold=%d\n", __func__, channel, volume, hold_volume_for_channel[channel]);
@@ -930,6 +952,8 @@ void music_init()
 			replace_function(common_externals.pause_wav, noop_a1);
 			replace_function(common_externals.restart_midi, restart_music);
 			replace_function(common_externals.restart_wav, noop_a1);
+			replace_call(ff8_externals.sub_4767B0 + 0x9CC, ff8_field_pause_music);
+			replace_call(ff8_externals.field_main_loop + 0x16C, ff8_field_restart_music);
 			replace_function(ff8_externals.stop_music, stop_music_for_channel);
 			// Called by game credits
 			replace_function(common_externals.stop_midi, stop_music);
