@@ -90,7 +90,7 @@ private:
 	std::stack<int> _sfxStack;
 	std::vector<float> _sfxVolumePerChannels;
 	std::vector<float> _sfxTempoPerChannels;
-	std::vector<SoLoud::Wav*> _sfxStreams;
+	std::vector<SoLoud::VGMStream*> _sfxStreams;
 	std::vector<SoLoud::handle> _sfxChannelsHandle;
 	std::vector<int> _sfxSequentialIndexes;
 

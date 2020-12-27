@@ -189,7 +189,7 @@ void NxAudioEngine::loadSFX(int id, bool loop)
 			{
 				if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
-				SoLoud::Wav* sfx = new SoLoud::Wav();
+				SoLoud::VGMStream* sfx = new SoLoud::VGMStream();
 
 				sfx->load(filename);
 				sfx->setLooping(loop);
