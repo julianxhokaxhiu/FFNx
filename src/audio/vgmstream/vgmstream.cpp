@@ -30,8 +30,9 @@ namespace SoLoud
 	VGMStreamInstance::VGMStreamInstance(VGMStream* aParent)
 	{
 		mParent = aParent;
-		mOffset = 0;
 		mStreamBuffer = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * aParent->mChannels];
+
+		rewind();
 	}
 
 	VGMStreamInstance::~VGMStreamInstance()
