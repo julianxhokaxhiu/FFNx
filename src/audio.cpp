@@ -308,7 +308,7 @@ bool NxAudioEngine::isSFXPlaying(int channel)
 {
 	SFXOptions *options = &_sfxChannels[channel - 1];
 
-	return (_engine.isValidVoiceHandle(options->handle)) && !_engine.getPause(options->handle);
+	return _engine.isValidVoiceHandle(options->handle) && !_engine.getPause(options->handle);
 }
 
 void NxAudioEngine::setSFXVolume(int channel, float volume, double time)

@@ -23,8 +23,6 @@
 
 #include <sys/stat.h>
 
-#include "../../log.h"
-
 #define SOLOUD_VGMSTREAM_NUM_SAMPLES 512
 
 namespace SoLoud
