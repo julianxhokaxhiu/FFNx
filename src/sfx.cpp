@@ -62,6 +62,21 @@ void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 	nxAudioEngine.setSFXVolume(volume / 127.0f, channel);
 }
 
+void ff7_sfx_set_volume_trans_on_channel(byte volume, int channel, int time)
+{
+	if (trace_all || trace_sfx) trace("%s: volume=%d,channel=%d,time=%d\n", __func__, volume, channel, time);
+
+	nxAudioEngine.setSFXVolume(channel, volume / 127.0f, time / 60.0f);
+}
+
+void ff7_sfx_set_panning_on_channel(byte panning, int channel)
+{
+	if (trace_all || trace_sfx) trace("%s: panning=%d,channel=%d\n", __func__, panning, channel);
+
+	if (panning <= 127)
+		nxAudioEngine.setSFXPanning(channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
+}
+
 void ff7_sfx_set_frequency_on_channel(byte speed, int channel)
 {
 	if (trace_all || trace_sfx) trace("%s: speed=%d,channel=%d\n", __func__, speed, channel);
@@ -70,7 +85,7 @@ void ff7_sfx_set_frequency_on_channel(byte speed, int channel)
 		speed = -127; // Prevent speed to be 0 (can crash with SoLoud)
 	}
 
-	nxAudioEngine.setSFXSpeed(float(speed) / 128.0f + 1.0f, channel);
+	nxAudioEngine.setSFXSpeed(channel, float(speed) / 128.0f + 1.0f);
 }
 
 void ff7_sfx_play_on_channel(byte panning, int id, int channel)
@@ -367,6 +382,8 @@ void sfx_init()
 			replace_function(common_externals.play_sfx_on_channel, ff7_sfx_play_on_channel);
 			replace_function((uint32_t)common_externals.play_sfx, ff7_sfx_play_on_channel_5);
 			replace_function((uint32_t)common_externals.set_sfx_volume_on_channel, ff7_sfx_set_volume_on_channel);
+			replace_function((uint32_t)common_externals.set_sfx_volume_trans_on_channel, ff7_sfx_set_volume_trans_on_channel);
+			replace_function((uint32_t)common_externals.set_sfx_panning_on_channel, ff7_sfx_set_panning_on_channel);
 			replace_function((uint32_t)common_externals.set_sfx_frequency_on_channel, ff7_sfx_set_frequency_on_channel);
 			replace_function(ff7_externals.sfx_load_and_play_with_speed, ff7_sfx_load_and_play_with_speed);
 			replace_function(ff7_externals.sfx_play_summon, ff7_sfx_play_on_channel_5);
