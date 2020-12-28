@@ -222,7 +222,7 @@ struct common_externals
 	uint32_t (*play_sfx)(uint32_t);
 	uint32_t play_sfx_on_channel;
 	uint32_t (*set_sfx_volume_on_channel)(uint32_t, uint32_t);
-	uint32_t (*set_sfx_speed_on_channel)(uint32_t, uint32_t);
+	uint32_t (*set_sfx_frequency_on_channel)(uint32_t, uint32_t);
 	uint32_t *master_sfx_volume;
 	uint32_t* dsound_volume_table;
 	IDirectInputDeviceA **keyboard_device;

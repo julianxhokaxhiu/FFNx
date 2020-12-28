@@ -62,7 +62,7 @@ void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 	nxAudioEngine.setSFXVolume(volume / 127.0f, channel);
 }
 
-void ff7_sfx_set_speed_on_channel(byte speed, int channel)
+void ff7_sfx_set_frequency_on_channel(byte speed, int channel)
 {
 	if (trace_all || trace_sfx) trace("%s: speed=%d,channel=%d\n", __func__, speed, channel);
 
@@ -114,7 +114,7 @@ void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte sp
 	{
 		ff7_sfx_load(id, 0);
 		ff7_sfx_set_volume_on_channel(volume, _channel);
-		ff7_sfx_set_speed_on_channel(speed, _channel);
+		ff7_sfx_set_frequency_on_channel(speed, _channel);
 	}
 
 	ff7_sfx_play_on_channel(panning, id, _channel);
@@ -367,7 +367,7 @@ void sfx_init()
 			replace_function(common_externals.play_sfx_on_channel, ff7_sfx_play_on_channel);
 			replace_function((uint32_t)common_externals.play_sfx, ff7_sfx_play_on_channel_5);
 			replace_function((uint32_t)common_externals.set_sfx_volume_on_channel, ff7_sfx_set_volume_on_channel);
-			replace_function((uint32_t)common_externals.set_sfx_speed_on_channel, ff7_sfx_set_speed_on_channel);
+			replace_function((uint32_t)common_externals.set_sfx_frequency_on_channel, ff7_sfx_set_frequency_on_channel);
 			replace_function(ff7_externals.sfx_load_and_play_with_speed, ff7_sfx_load_and_play_with_speed);
 			replace_function(ff7_externals.sfx_play_summon, ff7_sfx_play_on_channel_5);
 			replace_function(common_externals.sfx_pause, ff7_sfx_pause);
