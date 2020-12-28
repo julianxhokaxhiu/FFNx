@@ -49,17 +49,17 @@ struct NxAudioEngineMusic
 class NxAudioEngine
 {
 public:
-	enum PlayFlags {
-		PlayFlagsNone = 0x0,
-		PlayFlagsIsResumable = 0x1,
-		PlayFlagsDoNotPause = 0x2
+	enum MusicFlags {
+		MusicFlagsNone = 0x0,
+		MusicFlagsIsResumable = 0x1,
+		MusicFlagsDoNotPause = 0x2
 	};
 
-	struct PlayOptions
+	struct MusicOptions
 	{
-		PlayOptions() :
+		MusicOptions() :
 			offsetSeconds(0.0),
-			flags(PlayFlagsNone),
+			flags(MusicFlagsNone),
 			noIntro(false),
 			fadetime(0.0),
 			targetVolume(-1.0f),
@@ -67,13 +67,30 @@ public:
 			format("")
 		{}
 		SoLoud::time offsetSeconds;
-		PlayFlags flags;
+		MusicFlags flags;
 		bool noIntro;
 		SoLoud::time fadetime;
 		float targetVolume;
 		bool useNameAsFullPath;
 		char format[12];
 	};
+
+	struct SFXOptions
+	{
+		SFXOptions() :
+			handle(NXAUDIOENGINE_INVALID_HANDLE),
+			volume(1.0f),
+			fade(0.0f),
+			tempo(1.0f),
+			pan(0.0f)
+		{}
+		SoLoud::handle handle;
+		float volume;
+		double fade;
+		float tempo;
+		float pan;
+	};
+
 private:
 	enum NxAudioEngineLayer
 	{
@@ -88,10 +105,8 @@ private:
 
 	// SFX
 	std::stack<int> _sfxStack;
-	std::vector<float> _sfxVolumePerChannels;
-	std::vector<float> _sfxTempoPerChannels;
 	std::vector<SoLoud::VGMStream*> _sfxStreams;
-	std::vector<SoLoud::handle> _sfxChannelsHandle;
+	std::map<int, SFXOptions> _sfxChannels;
 	std::vector<int> _sfxSequentialIndexes;
 
 	// MUSIC
@@ -103,8 +118,9 @@ private:
 	SoLoud::time _lastVolumeFadeEndTime = 0.0;
 
 	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr);
-	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, PlayOptions *playOptions);
+	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
 	void resetMusicVolume(int channel, double time = 0);
+	void resetSFXVolume(int channel, double time = 0);
 
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
@@ -136,16 +152,17 @@ public:
 	void pauseSFX();
 	void resumeSFX();
 	bool isSFXPlaying(int channel);
-	void setSFXVolume(float volume, int channel);
-	void setSFXSpeed(float speed, int channel);
+	void setSFXVolume(int channel, float volume, double time = 0);
+	void setSFXSpeed(int channel, float speed);
+	void setSFXPanning(int channel, float panning);
 
 	// Music
 	bool canPlayMusic(const char* name);
-	bool playMusic(const char* name, uint32_t id, int channel, PlayOptions& playOptions = PlayOptions());
-	void playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions = PlayOptions());
+	bool playMusic(const char* name, uint32_t id, int channel, MusicOptions& MusicOptions = MusicOptions());
+	void playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions& MusicOptions = MusicOptions());
 	void stopMusic(int channel, double time = 0);
 	void pauseMusic(int channel, double time = 0, bool push = false);
-	void resumeMusic(int channel, double time = 0, bool pop = false, const PlayFlags &playFlags = PlayFlags());
+	void resumeMusic(int channel, double time = 0, bool pop = false, const MusicFlags &MusicFlags = MusicFlags());
 	bool isMusicPlaying(int channel);
 	uint32_t currentMusicId(int channel);
 	void setMusicMasterVolume(float volume, double time = 0);
@@ -164,8 +181,8 @@ public:
 	bool isVoicePlaying();
 };
 
-NxAudioEngine::PlayFlags operator|(NxAudioEngine::PlayFlags flags, NxAudioEngine::PlayFlags other) {
-	return static_cast<NxAudioEngine::PlayFlags>(static_cast<int>(flags) | static_cast<int>(other));
+NxAudioEngine::MusicFlags operator|(NxAudioEngine::MusicFlags flags, NxAudioEngine::MusicFlags other) {
+	return static_cast<NxAudioEngine::MusicFlags>(static_cast<int>(flags) | static_cast<int>(other));
 }
 
 extern NxAudioEngine nxAudioEngine;

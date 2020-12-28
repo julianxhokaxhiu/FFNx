@@ -131,9 +131,7 @@ bool NxAudioEngine::init()
 			}
 		}
 
-		_sfxVolumePerChannels.resize(10, 1.0f);
-		_sfxTempoPerChannels.resize(10, 1.0f);
-		_sfxChannelsHandle.resize(10, NXAUDIOENGINE_INVALID_HANDLE);
+		for (int channel = 0; channel < 10; channel++) _sfxChannels[channel] = SFXOptions();
 		_sfxStreams.resize(10000, nullptr);
 		_sfxSequentialIndexes.resize(1000, -1);
 
@@ -261,54 +259,82 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 
 	if (_sfxStreams[_curId] != nullptr)
 	{
+		SFXOptions *options = &_sfxChannels[channel - 1];
+
 		SoLoud::handle _handle = _engine.play(
 			*_sfxStreams[_curId],
-			_sfxVolumePerChannels[channel - 1],
+			options->volume,
 			panning
 		);
 
-		_sfxChannelsHandle[channel - 1] = _handle;
+		options->handle = _handle;
 
-		_engine.setRelativePlaySpeed(_handle, _sfxTempoPerChannels[channel - 1]);
+		_engine.setRelativePlaySpeed(options->handle, options->tempo);
 
-		if (shouldLoop != -1) _engine.setLooping(_handle, shouldLoop);
+		_engine.setPan(options->handle, options->pan);
+
+		if (shouldLoop != -1) _engine.setLooping(options->handle, shouldLoop);
 	}
 }
 
 void NxAudioEngine::stopSFX(int channel)
 {
+	SFXOptions *options = &_sfxChannels[channel - 1];
+
 	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
-	_engine.stop(_sfxChannelsHandle[channel - 1]);
+	_engine.stop(options->handle);
 }
 
 void NxAudioEngine::pauseSFX()
 {
 	if (trace_all || trace_sfx) trace("NxAudioEngine::%s\n", __func__);
 
-	for (auto _handle : _sfxChannelsHandle) _engine.setPause(_handle, true);
+	for (auto it = _sfxChannels.begin(); it != _sfxChannels.end(); ++it)
+		_engine.setPause(it->second.handle, true);
 }
 
 void NxAudioEngine::resumeSFX()
 {
 	if (trace_all || trace_sfx) trace("NxAudioEngine::%s\n", __func__);
 
-	for (auto _handle : _sfxChannelsHandle) _engine.setPause(_handle, false);
+	for (auto it = _sfxChannels.begin(); it != _sfxChannels.end(); ++it)
+		_engine.setPause(it->second.handle, false);
 }
 
 bool NxAudioEngine::isSFXPlaying(int channel)
 {
-	return (_engine.isValidVoiceHandle(_sfxChannelsHandle[channel])) && !_engine.getPause(_sfxChannelsHandle[channel]);
+	SFXOptions *options = &_sfxChannels[channel - 1];
+
+	return (_engine.isValidVoiceHandle(options->handle)) && !_engine.getPause(options->handle);
 }
 
-void NxAudioEngine::setSFXVolume(float volume, int channel)
+void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 {
-	_sfxVolumePerChannels[channel - 1] = volume;
+	SFXOptions *options = &_sfxChannels[channel - 1];
+
+	options->volume = volume;
+	options->fade = time;
+
+	resetSFXVolume(channel, time);
 }
 
-void NxAudioEngine::setSFXSpeed(float speed, int channel)
+void NxAudioEngine::setSFXSpeed(int channel, float speed)
 {
-	_sfxTempoPerChannels[channel - 1] = speed;
+	SFXOptions *options = &_sfxChannels[channel - 1];
+
+	options->tempo = speed;
+
+	_engine.setRelativePlaySpeed(options->handle, options->tempo);
+}
+
+void NxAudioEngine::setSFXPanning(int channel, float panning)
+{
+	SFXOptions *options = &_sfxChannels[channel - 1];
+
+	options->pan = panning;
+
+	_engine.setPan(options->handle, options->pan);
 }
 
 // Music
@@ -363,14 +389,14 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 	return music;
 }
 
-void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, PlayOptions* playOptions)
+void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, MusicOptions* MusicOptions)
 {
 	toml::table config = nxAudioEngineConfig[NXAUDIOENGINE_MUSIC];
 	std::optional<SoLoud::time> offset_seconds_opt = config[name]["offset_seconds"].value<SoLoud::time>();
 	std::optional<std::string> no_intro_track_opt = config[name]["no_intro_track"].value<std::string>();
 	std::optional<SoLoud::time> intro_seconds_opt = config[name]["intro_seconds"].value<SoLoud::time>();
 
-	if (playOptions->noIntro) {
+	if (MusicOptions->noIntro) {
 		if (no_intro_track_opt.has_value()) {
 			std::string no_intro_track = *no_intro_track_opt;
 			if (trace_all || trace_music) info("%s: replaced by no intro track %s\n", __func__, no_intro_track.c_str());
@@ -381,13 +407,13 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Pl
 			}
 		}
 		else if (intro_seconds_opt.has_value()) {
-			playOptions->offsetSeconds = *intro_seconds_opt;
+			MusicOptions->offsetSeconds = *intro_seconds_opt;
 		}
 		else {
 			info("%s: cannot play no intro track, please configure it in %s/config.toml\n", __func__, external_music_path.c_str());
 		}
 	} else if (offset_seconds_opt.has_value()) {
-		playOptions->offsetSeconds = *offset_seconds_opt;
+		MusicOptions->offsetSeconds = *offset_seconds_opt;
 	}
 
 	// Name to lower case
@@ -407,7 +433,7 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Pl
 	}
 }
 
-bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, PlayOptions& playOptions)
+bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicOptions& MusicOptions)
 {
 	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
 
@@ -415,12 +441,12 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, PlayOp
 
 	strncpy(overloadedName, name, 64);
 
-	if (!playOptions.useNameAsFullPath) {
-		overloadPlayArgumentsFromConfig(overloadedName, &id, &playOptions);
+	if (!MusicOptions.useNameAsFullPath) {
+		overloadPlayArgumentsFromConfig(overloadedName, &id, &MusicOptions);
 	}
 
 	if (!_musicStack.empty() && _musicStack.top().id == id) {
-		resumeMusic(channel, playOptions.fadetime == 0.0 ? 1.0 : playOptions.fadetime, true, playOptions.flags); // Slight fade
+		resumeMusic(channel, MusicOptions.fadetime == 0.0 ? 1.0 : MusicOptions.fadetime, true, MusicOptions.flags); // Slight fade
 		return true;
 	}
 
@@ -432,32 +458,32 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, PlayOp
 			return false; // Already playing
 		}
 
-		if (!(playOptions.flags & PlayFlagsDoNotPause) && music.isResumable) {
-			pauseMusic(channel, playOptions.fadetime, true);
+		if (!(MusicOptions.flags & MusicFlagsDoNotPause) && music.isResumable) {
+			pauseMusic(channel, MusicOptions.fadetime, true);
 		}
 		else {
-			stopMusic(channel, playOptions.fadetime);
+			stopMusic(channel, MusicOptions.fadetime);
 		}
 	}
 
-	SoLoud::AudioSource* audioSource = loadMusic(name, playOptions.useNameAsFullPath, playOptions.format);
+	SoLoud::AudioSource* audioSource = loadMusic(name, MusicOptions.useNameAsFullPath, MusicOptions.format);
 
 	if (audioSource != nullptr) {
-		if (playOptions.targetVolume >= 0.0f) {
-			music.wantedMusicVolume = playOptions.targetVolume;
+		if (MusicOptions.targetVolume >= 0.0f) {
+			music.wantedMusicVolume = MusicOptions.targetVolume;
 		}
-		const float initialVolume = playOptions.fadetime > 0.0 ? 0.0f : music.wantedMusicVolume * _musicMasterVolume;
-		music.handle = _engine.playBackground(*audioSource, initialVolume, playOptions.offsetSeconds > 0);
+		const float initialVolume = MusicOptions.fadetime > 0.0 ? 0.0f : music.wantedMusicVolume * _musicMasterVolume;
+		music.handle = _engine.playBackground(*audioSource, initialVolume, MusicOptions.offsetSeconds > 0);
 		music.id = id;
-		music.isResumable = playOptions.flags & PlayFlagsIsResumable;
+		music.isResumable = MusicOptions.flags & MusicFlagsIsResumable;
 
-		if (playOptions.offsetSeconds > 0) {
-			if (trace_all || trace_music) info("%s: seek to time %fs\n", __func__, playOptions.offsetSeconds);
-			_engine.seek(music.handle, playOptions.offsetSeconds);
-			resumeMusic(channel, playOptions.fadetime == 0.0 ? 1.0 : playOptions.fadetime); // Slight fade
+		if (MusicOptions.offsetSeconds > 0) {
+			if (trace_all || trace_music) info("%s: seek to time %fs\n", __func__, MusicOptions.offsetSeconds);
+			_engine.seek(music.handle, MusicOptions.offsetSeconds);
+			resumeMusic(channel, MusicOptions.fadetime == 0.0 ? 1.0 : MusicOptions.fadetime); // Slight fade
 		}
-		else if (playOptions.fadetime > 0.0) {
-			setMusicVolume(music.wantedMusicVolume, channel, playOptions.fadetime);
+		else if (MusicOptions.fadetime > 0.0) {
+			setMusicVolume(music.wantedMusicVolume, channel, MusicOptions.fadetime);
 		}
 
 		return true;
@@ -466,7 +492,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, PlayOp
 	return false;
 }
 
-void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, PlayOptions& playOptions)
+void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions& MusicOptions)
 {
 	if (_musics[0].id == id) {
 		if (trace_all || trace_music) trace("NxAudioEngine::%s: id %d is already playing\n", __func__, id);
@@ -475,8 +501,8 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 
 	if (trace_all || trace_music) trace("NxAudioEngine::%s: id %d\n", __func__, id);
 
-	stopMusic(0, playOptions.fadetime);
-	stopMusic(1, playOptions.fadetime);
+	stopMusic(0, MusicOptions.fadetime);
+	stopMusic(1, MusicOptions.fadetime);
 
 	SoLoud::handle groupHandle = _engine.createVoiceGroup();
 
@@ -562,7 +588,7 @@ void NxAudioEngine::pauseMusic(int channel, double time, bool push)
 	}
 }
 
-void NxAudioEngine::resumeMusic(int channel, double time, bool pop, const PlayFlags &playFlags)
+void NxAudioEngine::resumeMusic(int channel, double time, bool pop, const MusicFlags &MusicFlags)
 {
 	NxAudioEngineMusic& music = _musics[channel];
 	time /= gamehacks.getCurrentSpeedhack();
@@ -572,7 +598,7 @@ void NxAudioEngine::resumeMusic(int channel, double time, bool pop, const PlayFl
 		NxAudioEngineMusic lastMusic = _musicStack.top();
 		_musicStack.pop();
 
-		if (!(playFlags & PlayFlagsDoNotPause) && music.isResumable) {
+		if (!(MusicFlags & MusicFlagsDoNotPause) && music.isResumable) {
 			pauseMusic(channel, time, true);
 		}
 		else {
@@ -666,6 +692,20 @@ void NxAudioEngine::resetMusicVolume(int channel, double time)
 	}
 	else {
 		_engine.setVolume(music.handle, volume);
+	}
+}
+
+void NxAudioEngine::resetSFXVolume(int channel, double time)
+{
+	SFXOptions *options = &_sfxChannels[channel - 1];
+	const float volume = options->volume;
+
+	if (time > 0.0) {
+		time /= gamehacks.getCurrentSpeedhack();
+		_engine.fadeVolume(options->handle, volume, time);
+	}
+	else {
+		_engine.setVolume(options->handle, volume);
 	}
 }
 

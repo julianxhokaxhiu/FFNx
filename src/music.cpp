@@ -96,9 +96,9 @@ uint32_t music_mode(uint32_t midi)
 	return getmode_cached()->driver_mode == MODE_FIELD ? MODE_FIELD : MODE_EXIT;
 }
 
-NxAudioEngine::PlayFlags needs_resume(uint32_t midi)
+NxAudioEngine::MusicFlags needs_resume(uint32_t midi)
 {
-	NxAudioEngine::PlayFlags ret = NxAudioEngine::PlayFlagsNone;
+	NxAudioEngine::MusicFlags ret = NxAudioEngine::MusicFlagsNone;
 
 	if (external_music_resume)
 	{
@@ -108,22 +108,22 @@ NxAudioEngine::PlayFlags needs_resume(uint32_t midi)
 		{
 		case MODE_FIELD:
 			if (next_music_channel == 0) {
-				ret = NxAudioEngine::PlayFlagsIsResumable;
+				ret = NxAudioEngine::MusicFlagsIsResumable;
 
 				// Field channels are exclusive
 				if (current_music_is_field_resumable) {
-					ret = ret | NxAudioEngine::PlayFlagsDoNotPause;
+					ret = ret | NxAudioEngine::MusicFlagsDoNotPause;
 				}
 			}
 			break;
 		case MODE_WORLDMAP:
 			if (!ff8) {
-				ret = NxAudioEngine::PlayFlagsIsResumable;
+				ret = NxAudioEngine::MusicFlagsIsResumable;
 			}
 
 			// Come from field
 			if (current_music_is_field_resumable) {
-				ret = ret | NxAudioEngine::PlayFlagsDoNotPause;
+				ret = ret | NxAudioEngine::MusicFlagsDoNotPause;
 			}
 			break;
 		}
@@ -246,7 +246,7 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
-bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions(), char* fullpath = nullptr)
+bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* fullpath = nullptr)
 {
 	struct game_mode* mode = getmode_cached();
 
@@ -406,7 +406,7 @@ void ff7_cross_fade_midi(uint32_t music_id, uint32_t steps)
 
 		if (nxAudioEngine.currentMusicId(channel) != music_id)
 		{
-			NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
+			NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 			options.fadetime = time;
 			options.targetVolume = 1.0f;
 			play_music(midi_name, music_id, channel, options);
@@ -582,7 +582,7 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 			remember_musics[music_id] = false;
 		}
 
-		NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
+		NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 		options.fadetime = next_music_fade_time;
 		options.noIntro = noIntro;
 		if (volume >= 0 && volume <= 127) {
@@ -633,7 +633,7 @@ uint32_t ff8_play_wav(uint32_t zero, char* filename, uint32_t volume)
 
 		if (trace_all || trace_music) trace("%s: music_id=%u, name=%s, channel=%d, volume=%u\n", __func__, music_id, music_name, channel, volume);
 
-		NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
+		NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 		options.fadetime = next_music_fade_time;
 		if (volume >= 0 && volume < 127) {
 			options.targetVolume = volume / 127.0f;
@@ -793,7 +793,7 @@ uint32_t ff8_load_cdrom()
 
 	snprintf(fullpath, MAX_PATH, "%s..\\%s.wav", ff8_externals.music_path, eyes_on_me_track);
 
-	NxAudioEngine::PlayOptions options = NxAudioEngine::PlayOptions();
+	NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 	options.targetVolume = 1.0f;
 	eyes_on_me_is_playing = play_music(eyes_on_me_track, 111, 0, options, fullpath);
 
