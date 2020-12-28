@@ -343,7 +343,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	common_externals.set_sfx_volume_on_channel = (uint32_t(*)(uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x3B3);
 	common_externals.set_sfx_volume_trans_on_channel = (uint32_t(*)(uint32_t, uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x437);
 	common_externals.set_sfx_panning_on_channel = (uint32_t(*)(uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x4C7);
+	common_externals.set_sfx_panning_trans_on_channel = (uint32_t(*)(uint32_t, uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x54B);
 	common_externals.set_sfx_frequency_on_channel = (uint32_t(*)(uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x5DB);
+	common_externals.set_sfx_frequency_trans_on_channel = (uint32_t(*)(uint32_t, uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x65F);
 	common_externals.dsound_volume_table = (uint32_t*)get_absolute_value(uint32_t(common_externals.set_sfx_volume_on_channel), 0xCC);
 	common_externals.play_sfx = (uint32_t(*)(uint32_t))get_relative_call(ff7_externals.sound_operation, 0x703);
 	ff7_externals.sfx_fill_buffer_from_audio_dat = get_relative_call(uint32_t(common_externals.play_sfx), 0x4D);
