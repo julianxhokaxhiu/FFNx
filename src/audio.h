@@ -80,14 +80,10 @@ public:
 		SFXOptions() :
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
 			volume(1.0f),
-			fade(0.0f),
-			tempo(1.0f),
 			loop(false)
 		{}
 		SoLoud::handle handle;
 		float volume;
-		double fade;
-		float tempo;
 		bool loop;
 	};
 
@@ -120,7 +116,6 @@ private:
 	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
 	void resetMusicVolume(int channel, double time = 0);
-	void resetSFXVolume(int channel, double time = 0);
 
 	// VOICE
 	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
@@ -153,8 +148,8 @@ public:
 	void resumeSFX();
 	bool isSFXPlaying(int channel);
 	void setSFXVolume(int channel, float volume, double time = 0);
-	void setSFXSpeed(int channel, float speed);
-	void setSFXPanning(int channel, float panning);
+	void setSFXSpeed(int channel, float speed, double time = 0);
+	void setSFXPanning(int channel, float panning, double time = 0);
 
 	// Music
 	bool canPlayMusic(const char* name);

@@ -274,8 +274,6 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 			panning
 		);
 
-		_engine.setRelativePlaySpeed(_handle, options->tempo);
-
 		options->handle = _handle;
 		options->loop = _engine.getLooping(_handle);
 	}
@@ -317,26 +315,39 @@ void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 {
 	SFXOptions *options = &_sfxChannels[channel - 1];
 
-	options->volume = volume;
-	options->fade = time;
-
-	resetSFXVolume(channel, time);
+	if (time > 0.0) {
+		time /= gamehacks.getCurrentSpeedhack();
+		_engine.fadeVolume(options->handle, volume, time);
+	}
+	else {
+		_engine.setVolume(options->handle, volume);
+	}
 }
 
-void NxAudioEngine::setSFXSpeed(int channel, float speed)
+void NxAudioEngine::setSFXSpeed(int channel, float speed, double time)
 {
 	SFXOptions *options = &_sfxChannels[channel - 1];
 
-	options->tempo = speed;
-
-	_engine.setRelativePlaySpeed(options->handle, options->tempo);
+	if (time > 0.0) {
+		time /= gamehacks.getCurrentSpeedhack();
+		_engine.fadeRelativePlaySpeed(options->handle, speed, time);
+	}
+	else {
+		_engine.setRelativePlaySpeed(options->handle, speed);
+	}
 }
 
-void NxAudioEngine::setSFXPanning(int channel, float panning)
+void NxAudioEngine::setSFXPanning(int channel, float panning, double time)
 {
 	SFXOptions *options = &_sfxChannels[channel - 1];
 
-	_engine.setPan(options->handle, panning);
+	if (time > 0.0) {
+		time /= gamehacks.getCurrentSpeedhack();
+		_engine.fadePan(options->handle, panning, time);
+	}
+	else {
+		_engine.setPan(options->handle, panning);
+	}
 }
 
 // Music
@@ -694,20 +705,6 @@ void NxAudioEngine::resetMusicVolume(int channel, double time)
 	}
 	else {
 		_engine.setVolume(music.handle, volume);
-	}
-}
-
-void NxAudioEngine::resetSFXVolume(int channel, double time)
-{
-	SFXOptions *options = &_sfxChannels[channel - 1];
-	const float volume = options->volume;
-
-	if (time > 0.0) {
-		time /= gamehacks.getCurrentSpeedhack();
-		_engine.fadeVolume(options->handle, volume, time);
-	}
-	else {
-		_engine.setVolume(options->handle, volume);
 	}
 }
 
