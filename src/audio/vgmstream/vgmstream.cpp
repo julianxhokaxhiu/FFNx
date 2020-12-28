@@ -23,6 +23,8 @@
 
 #include <sys/stat.h>
 
+#include "../../log.h"
+
 #define SOLOUD_VGMSTREAM_NUM_SAMPLES 512
 
 namespace SoLoud
@@ -137,7 +139,11 @@ namespace SoLoud
 		mBaseSamplerate = (float)mStream->sample_rate;
 		mSampleCount = (unsigned int)mStream->num_samples;
 		mChannels = mStream->channels;
+
+		// Autodetect looping from the file itself and just inform SoLoud about it
 		if (mStream->loop_flag) setLooping(true);
+		// If the file has no loop tags, but the users wants to loop, force a basic start to end loop
+		else if (mFlags & AudioSourceInstance::LOOPING) vgmstream_force_loop(mStream, true, 0, mStream->num_samples);
 
 		return SO_NO_ERROR;
 	}
