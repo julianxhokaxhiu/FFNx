@@ -644,7 +644,7 @@ bool NxAudioEngine::isMusicPlaying(int channel)
 
 uint32_t NxAudioEngine::currentMusicId(int channel)
 {
-	return _musics[channel].id;
+	return isMusicPlaying(channel) ? _musics[channel].id : 0;
 }
 
 void NxAudioEngine::setMusicMasterVolume(float volume, double time)
