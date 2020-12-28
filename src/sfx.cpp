@@ -199,7 +199,7 @@ uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, u
 		if (use_external_sfx)
 		{
 			// Check which SFX effects are still playing on channels before saving their state. If not, avoid playing them back.
-			if (!nxAudioEngine.isSFXPlaying(i)) sfx_state[i].sound_id = 0;
+			if (!nxAudioEngine.isSFXPlaying(i+1)) sfx_state[i].sound_id = 0;
 		}
 
 		// Save sfx state for looped sounds in channel 1 -> 4 (not channel 5)
