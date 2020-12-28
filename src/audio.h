@@ -82,13 +82,13 @@ public:
 			volume(1.0f),
 			fade(0.0f),
 			tempo(1.0f),
-			pan(0.0f)
+			loop(false)
 		{}
 		SoLoud::handle handle;
 		float volume;
 		double fade;
 		float tempo;
-		float pan;
+		bool loop;
 	};
 
 private:
