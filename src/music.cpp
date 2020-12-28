@@ -428,9 +428,11 @@ uint32_t music_status()
 {
 	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
 
-	// When the game asks for a music status, you know that it ends eventually
-	nxAudioEngine.setMusicLooping(false, 0);
-	nxAudioEngine.setMusicLooping(false, 1);
+	if (ff8) {
+		// When the game asks for a music status, you know that it ends eventually
+		nxAudioEngine.setMusicLooping(false, 0);
+		nxAudioEngine.setMusicLooping(false, 1);
+	}
 
 	return nxAudioEngine.isMusicPlaying(0) || nxAudioEngine.isMusicPlaying(1);
 }
