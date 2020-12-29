@@ -315,6 +315,8 @@ void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 {
 	SFXOptions *options = &_sfxChannels[channel - 1];
 
+	options->volume = volume;
+
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();
 		_engine.fadeVolume(options->handle, volume, time);
