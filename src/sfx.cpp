@@ -59,7 +59,7 @@ void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 {
 	if (trace_all || trace_sfx) trace("%s: volume=%d,channel=%d\n", __func__, volume, channel);
 
-	nxAudioEngine.setSFXVolume(volume / 127.0f, channel);
+	nxAudioEngine.setSFXVolume(channel, volume / 127.0f);
 }
 
 void ff7_sfx_set_volume_trans_on_channel(byte volume, int channel, int time)
