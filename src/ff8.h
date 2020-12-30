@@ -455,26 +455,30 @@ struct struc_51
 
 struct camdata
 {
-	uint32_t field_0;
-	uint32_t field_4;
-	uint32_t field_8;
-	uint32_t field_C;
-	uint32_t field_10;
-	uint32_t field_14;
-	uint32_t field_18;
-	uint32_t field_1C;
-	uint32_t field_20;
-	uint32_t field_24;
-	unsigned char field_28;
-	unsigned char field_29;
-	unsigned char field_2A;
-	unsigned char field_2B;
+	// EYE
+	uint32_t eye_x;
+	uint32_t eye_y;
+	uint32_t eye_z;
+	// TARGET
+	uint32_t target_x;
+	uint32_t target_y;
+	uint32_t target_z;
+	// UP
+	uint32_t up_x;
+	uint32_t up_y;
+	uint32_t up_z;
+	// ZOOM
+	uint32_t zoom;
+	// CONTROL
+	uint8_t flag;
+	// MARKER 'END'
+	char end[3];
 };
 
 struct ff8_movie_obj
 {
-	WORD movie_frame;
-	WORD field_2;
+	WORD movie_current_frame;
+	WORD movie_total_frames;
 	uint32_t movie_surface_height;
 	void *bink_struct;
 	struct camdata *camdata_start;
@@ -491,7 +495,7 @@ struct ff8_movie_obj
 	uint32_t field_4C4AC;
 	uint32_t field_4C4B0;
 	uint32_t field_4C4B4;
-	uint32_t field_4C4B8;
+	uint32_t movie_resolution;
 	uint32_t movie_file_handle;
 	uint32_t bink_copy_flags;
 };

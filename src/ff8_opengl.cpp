@@ -440,7 +440,7 @@ bool ff8_skip_movies()
 		if (mode == MODE_FIELD)
 		{
 			// Force last frame for field scripts
-			ff8_externals.movie_object->movie_frame = 0xFFFF;
+			ff8_externals.movie_object->movie_current_frame = 0xFFFF;
 			(*ff8_externals.savemap)[80 / 4] = 0xFFFF;
 			ff8_externals.sub_5304B0();
 		}

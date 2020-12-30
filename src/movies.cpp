@@ -220,7 +220,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 	ff8_externals.movie_object->camdata_start = (struct camdata *)(&ff8_externals.movie_object->camdata_buffer[8]);
 	ff8_externals.movie_object->camdata_pointer = ff8_externals.movie_object->camdata_start;
 
-	ff8_externals.movie_object->movie_frame = 0;
+	ff8_externals.movie_object->movie_current_frame = 0;
 
 	int redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName));
 
@@ -239,11 +239,11 @@ void ff8_start_movie()
 {
 	if(trace_all || trace_movies) trace("start_movie\n");
 
-	if(ff8_externals.movie_object->movie_intro_pak) ff8_externals.movie_object->field_2 = ff8_movie_frames;
+	if(ff8_externals.movie_object->movie_intro_pak) ff8_externals.movie_object->movie_total_frames = ff8_movie_frames;
 	else
 	{
-		ff8_externals.movie_object->field_2 = ((WORD *)ff8_externals.movie_object->camdata_buffer)[3];
-		trace("%i frames\n", ff8_externals.movie_object->field_2);
+		ff8_externals.movie_object->movie_total_frames = ((WORD *)ff8_externals.movie_object->camdata_buffer)[3];
+		trace("%i frames\n", ff8_externals.movie_object->movie_total_frames);
 	}
 
 	ff8_externals.movie_object->field_4C4B0 = 0;
@@ -279,11 +279,11 @@ void ff8_update_movie_sample()
 		else ff8_externals.sub_5304B0();
 	}
 
-	ff8_externals.movie_object->movie_frame = ffmpeg_get_movie_frame();
+	ff8_externals.movie_object->movie_current_frame = ffmpeg_get_movie_frame();
 
-	if(ff8_externals.movie_object->camdata_pointer->field_28 & 0x8) *ff8_externals.byte_1CE4907 = 0;
-	if(ff8_externals.movie_object->camdata_pointer->field_28 & 0x10) *ff8_externals.byte_1CE4907 = 1;
-	if(ff8_externals.movie_object->camdata_pointer->field_28 & 0x20)
+	if(ff8_externals.movie_object->camdata_pointer->flag & 0x8) *ff8_externals.byte_1CE4907 = 0;
+	if(ff8_externals.movie_object->camdata_pointer->flag & 0x10) *ff8_externals.byte_1CE4907 = 1;
+	if(ff8_externals.movie_object->camdata_pointer->flag & 0x20)
 	{
 		*ff8_externals.byte_1CE4901 = 1;
 		ff8_externals.movie_object->field_4C4B0 = 1;
@@ -294,15 +294,15 @@ void ff8_update_movie_sample()
 		ff8_externals.movie_object->field_4C4B0 = 0;
 	}
 
-	if(ff8_externals.movie_object->camdata_pointer->field_28 & 0x1)
+	if(ff8_externals.movie_object->camdata_pointer->flag & 0x1)
 	{
 		*ff8_externals.byte_1CE4901 = 1;
 		ff8_externals.movie_object->field_4C4B0 = 1;
 	}
 
-	*ff8_externals.byte_1CE490D = ff8_externals.movie_object->camdata_pointer->field_28 & 0x40;
+	*ff8_externals.byte_1CE490D = ff8_externals.movie_object->camdata_pointer->flag & 0x40;
 
-	if(ff8_externals.movie_object->movie_frame > ff8_externals.movie_object->field_2)
+	if(ff8_externals.movie_object->movie_current_frame > ff8_externals.movie_object->movie_total_frames)
 	{
 		if(ff8_externals.movie_object->movie_intro_pak) ff8_stop_movie();
 		else ff8_externals.sub_5304B0();
@@ -310,5 +310,5 @@ void ff8_update_movie_sample()
 		return;
 	}
 
-	ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_frame];
+	ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_current_frame];
 }
