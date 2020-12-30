@@ -268,6 +268,9 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 	{
 		SFXOptions *options = &_sfxChannels[channel - 1];
 
+		// Stop whatever was playing on this channel before
+		_engine.stop(options->handle);
+
 		SoLoud::handle _handle = _engine.play(
 			*_sfxStreams[_curId],
 			options->volume,
