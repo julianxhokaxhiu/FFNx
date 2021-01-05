@@ -938,6 +938,12 @@ void music_init()
 		replace_call(ff7_externals.opcode_akao2 + 0xE8, ff7_music_sound_operation_fix);
 		replace_call(ff7_externals.field_music_helper_sound_op_call, ff7_music_sound_operation_fix);
 	}
+	else
+	{
+		// Adding pause/resume music (and sfx) when pausing the game in field
+		replace_call(ff8_externals.sub_4767B0 + 0x9CC, ff8_field_pause_music);
+		replace_call(ff8_externals.field_main_loop + 0x16C, ff8_field_restart_music);
+	}
 
 	if (use_external_music)
 	{
@@ -954,8 +960,6 @@ void music_init()
 			replace_function(common_externals.pause_wav, noop_a1);
 			replace_function(common_externals.restart_midi, restart_music);
 			replace_function(common_externals.restart_wav, noop_a1);
-			replace_call(ff8_externals.sub_4767B0 + 0x9CC, ff8_field_pause_music);
-			replace_call(ff8_externals.field_main_loop + 0x16C, ff8_field_restart_music);
 			replace_function(ff8_externals.stop_music, stop_music_for_channel);
 			// Called by game credits
 			replace_function(common_externals.stop_midi, stop_music);
