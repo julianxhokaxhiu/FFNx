@@ -217,7 +217,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 	}
 	else ff8_externals.movie_object->movie_intro_pak = true;
 
-	ff8_externals.movie_object->camdata_start = (struct camdata *)(&ff8_externals.movie_object->camdata_buffer[8]);
+	ff8_externals.movie_object->camdata_start = (struct ff8_camdata *)(&ff8_externals.movie_object->camdata_buffer[8]);
 	ff8_externals.movie_object->camdata_pointer = ff8_externals.movie_object->camdata_start;
 
 	ff8_externals.movie_object->movie_current_frame = 0;

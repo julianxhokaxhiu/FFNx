@@ -453,26 +453,37 @@ struct struc_51
 	struct struc_50 struc_50_array[32];
 };
 
-struct camdata
+struct ff8_camdata
 {
 	// EYE
-	uint32_t eye_x;
-	uint32_t eye_y;
-	uint32_t eye_z;
+	int16_t eye_x;
+	int16_t eye_y;
+	int16_t eye_z;
 	// TARGET
-	uint32_t target_x;
-	uint32_t target_y;
-	uint32_t target_z;
+	int16_t target_x;
+	int16_t target_y;
+	int16_t target_z;
 	// UP
-	uint32_t up_x;
-	uint32_t up_y;
-	uint32_t up_z;
+	int16_t up_x;
+	int16_t up_y;
+	int16_t up_z;
+	// FILLER?
+	int16_t padding;
+	// POSITION
+	int32_t pos_x;
+	int32_t pos_y;
+	int32_t pos_z;
+	// PAN
+	int16_t pan_x;
+	int16_t pan_y;
 	// ZOOM
-	uint32_t zoom;
+	int16_t zoom;
+	// FILLER?
+	int16_t padding2;
 	// CONTROL
 	uint8_t flag;
 	// MARKER 'END'
-	char end[3];
+	uint8_t end[3];
 };
 
 struct ff8_movie_obj
@@ -481,12 +492,12 @@ struct ff8_movie_obj
 	WORD movie_total_frames;
 	uint32_t movie_surface_height;
 	void *bink_struct;
-	struct camdata *camdata_start;
+	struct ff8_camdata *camdata_start;
 	unsigned char camdata_buffer[312320];
 	unsigned char movie_surface_desc[0x7C];
 	void *movie_back_surface;
 	uint32_t movie_surface_x;
-	struct camdata *camdata_pointer;
+	struct ff8_camdata *camdata_pointer;
 	uint32_t movie_surface_y;
 	void *movie_dd_surface;
 	struct ff8_game_obj *movie_game_object;

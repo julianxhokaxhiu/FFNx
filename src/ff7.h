@@ -1468,6 +1468,35 @@ struct ff7_field_sfx_state {
 	uint32_t u12;
 };
 
+struct ff7_camdata
+{
+	// EYE
+	int16_t eye_x;
+	int16_t eye_y;
+	int16_t eye_z;
+	// TARGET
+	int16_t target_x;
+	int16_t target_y;
+	int16_t target_z;
+	// UP
+	int16_t up_x;
+	int16_t up_y;
+	int16_t up_z;
+	// FILLER?
+	int16_t padding;
+	// POSITION
+	int32_t pos_x;
+	int32_t pos_y;
+	int32_t pos_z;
+	// PAN
+	int16_t pan_x;
+	int16_t pan_y;
+	// ZOOM
+	int16_t zoom;
+	// FILLER?
+	int16_t padding2;
+};
+
 // --------------- end of FF7 imports ---------------
 
 // memory addresses and function pointers from FF7.exe
