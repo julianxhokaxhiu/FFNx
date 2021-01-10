@@ -353,6 +353,21 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					break;
 				}
 			}
+			else if ((::GetKeyState(VK_SHIFT) & 0x8000) != 0)
+			{
+				switch (wParam)
+				{
+				case VK_LEFT:
+				case VK_RIGHT:
+					trace("preserve_aspect: %d => %d\n", preserve_aspect, !preserve_aspect);
+
+					preserve_aspect = !preserve_aspect;
+
+					newRenderer.reset();
+
+					break;
+				}
+			}
 			break;
 		case WM_SIZE:
 			window_size_x = (long)LOWORD(lParam);
