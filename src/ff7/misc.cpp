@@ -24,6 +24,7 @@
 #include "../gamepad.h"
 #include "../gamehacks.h"
 #include "../joystick.h"
+#include "../music.h"
 #include "../ff7.h"
 #include "../log.h"
 
@@ -289,6 +290,14 @@ bool ff7_skip_movies()
 		{
 			*ff7_externals.word_CC0DD4 = 5;
 			*ff7_externals.word_CC1638 = 0;
+		}
+
+		if (*ff7_externals.field_id == 116)
+		{
+			if (use_external_music)
+				ff7_play_midi(2);
+			else
+				ff7_externals.play_midi(2);
 		}
 
 		return true;
