@@ -26,6 +26,19 @@
 #include "ff7/defs.h"
 #include "video/movies.h"
 
+// Required by > 15 FPS movies
+short movie_fps_ratio = 1;
+int (*old_mvief)();
+
+int script_MVIEF()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		*ff7_externals.current_movie_frame = (WORD)ceil(*ff7_externals.current_movie_frame * movie_fps_ratio);
+
+	return old_mvief();
+}
+// ---------------------------
+
 uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice, uint32_t dd2interface)
 {
 	char drivename[4];
@@ -55,6 +68,17 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	else ffmpeg_prepare_movie(fmvName);
 
 	ff7_externals.movie_object->global_movie_flag = 1;
+
+	// Required by > 15 FPS movies
+	movie_fps_ratio = ffmpeg_get_fps_ratio();
+	if (movie_fps_ratio > 1)
+	{
+		if (strcmp(filename, "opening") == 0)
+		{
+			*ff7_externals.opening_movie_music_start_frame = *ff7_externals.opening_movie_music_start_frame * movie_fps_ratio;
+		}
+	}
+	// ---------------------------
 
 	return true;
 }

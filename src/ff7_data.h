@@ -407,6 +407,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.sfx_stop_channel_6 = get_relative_call(common_externals.sfx_cleanup, 0x16);
 	ff7_externals.sfx_stop_channel_timer_handle = (UINT *)get_absolute_value(ff7_externals.sfx_stop_channel_6, 0x5);
+
+	ff7_externals.current_movie_frame = (WORD*)get_absolute_value(ff7_externals.sub_63C17F, 0x133);
+	ff7_externals.opening_movie_music_start_frame = (DWORD *)(ff7_externals.sub_63C17F + 0x139);
 }
 
 void ff7_data(struct ff7_game_obj* game_object)

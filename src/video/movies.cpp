@@ -626,6 +626,10 @@ void ffmpeg_loop()
 // get the current frame number
 uint32_t ffmpeg_get_movie_frame()
 {
-	if(movie_fps != 15.0 && movie_fps < 100.0) return (uint32_t)ceil(movie_frame_counter * 15.0 / movie_fps);
-	else return movie_frame_counter;
+	return movie_frame_counter;
+}
+
+short ffmpeg_get_fps_ratio()
+{
+	return ceil(movie_fps / 15.0f);
 }

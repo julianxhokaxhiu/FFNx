@@ -39,3 +39,5 @@ uint32_t ffmpeg_update_movie_sample();
 void ffmpeg_draw_current_frame();
 void ffmpeg_loop();
 uint32_t ffmpeg_get_movie_frame();
+
+short ffmpeg_get_fps_ratio();

@@ -1723,6 +1723,8 @@ struct ff7_externals
 	uint32_t sub_6310A1;
 	WORD* opcode_ask_question_code;
 	void (*play_midi)(uint32_t);
+	WORD *current_movie_frame;
+	DWORD *opening_movie_music_start_frame;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
