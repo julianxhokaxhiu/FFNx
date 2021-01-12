@@ -1499,6 +1499,12 @@ struct ff7_camdata
 
 // --------------- end of FF7 imports ---------------
 
+struct ff7_channel_6_state
+{
+	float volume;
+	float panning;
+};
+
 // memory addresses and function pointers from FF7.exe
 struct ff7_externals
 {
@@ -1684,6 +1690,7 @@ struct ff7_externals
 	uint32_t sfx_fill_buffer_from_audio_dat;
 	uint32_t sfx_load_and_play_with_speed;
 	uint32_t sfx_fmt_header;
+	DWORD *sfx_play_effects_id_channel_6;
 	uint32_t battle_summon_leviathan_loop;
 	uint32_t battle_limit_omnislash_loop;
 	uint32_t sub_5F4A47;

@@ -29,6 +29,7 @@ uint32_t sfx_volumes[5];
 ff7_field_sfx_state sfx_buffers[4];
 uint32_t real_volume;
 ff7_field_sfx_state* sfx_state = nullptr;
+ff7_channel_6_state sfx_channel_6_state;
 
 //=============================================================================
 
@@ -125,7 +126,7 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 			nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
 		}
 	}
-	else
+	else if ( channel < 6) // normally all sounds that are non-channel aware must never be stopped by the engine
 	{
 		nxAudioEngine.stopSFX(channel);
 	}
@@ -142,7 +143,7 @@ void ff7_sfx_play_on_channel_5(int id)
 
 void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte speed)
 {
-	const int _channel = 5;
+	const int _channel = 6;
 
 	if (trace_all || trace_sfx) trace("%s: id=%d,volume=%d,panning=%d,speed=%d\n", __func__, id, volume, panning, speed);
 
@@ -169,6 +170,34 @@ void ff7_sfx_resume()
 void ff7_sfx_stop()
 {
 	for (short channel = 1; channel < 5; channel++) nxAudioEngine.stopSFX(channel);
+}
+
+// Channel 6 only
+
+void ff7_sfx_set_frequency_on_channel_6(void* dsoundptr, DWORD frequency)
+{
+	// TODO: IMPLEMENT PITCH?
+}
+
+void ff7_sfx_set_panning_on_channel_6(void* dsoundptr, LONG panning)
+{
+	sfx_channel_6_state.panning = (panning / 10000.0f);
+
+	if (trace_all || trace_sfx) trace("%s: panning=%ld,calculated=%f\n", __func__, panning, sfx_channel_6_state.panning);
+}
+
+void ff7_sfx_set_volume_on_channel_6(void* dsoundptr, LONG volume)
+{
+	sfx_channel_6_state.volume = (volume / 10000.0f) + 1.0f;
+
+	if (trace_all || trace_sfx) trace("%s: volume=%ld,calculated=%f\n", __func__, volume, sfx_channel_6_state.volume);
+}
+
+void ff7_sfx_play_on_channel_6(void* dsoundptr, int unk)
+{
+	nxAudioEngine.setSFXVolume(6, sfx_channel_6_state.volume);
+	ff7_sfx_load(*ff7_externals.sfx_play_effects_id_channel_6, 0);
+	nxAudioEngine.playSFX(*ff7_externals.sfx_play_effects_id_channel_6, 6, sfx_channel_6_state.panning);
 }
 
 //=============================================================================
@@ -413,6 +442,11 @@ void sfx_init()
 			replace_function(common_externals.sfx_pause, ff7_sfx_pause);
 			replace_function(common_externals.sfx_resume, ff7_sfx_resume);
 			replace_function(common_externals.sfx_stop, ff7_sfx_stop);
+			// Replace partially some calls in ff7_sfx_play_effects
+			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x183, ff7_sfx_set_frequency_on_channel_6);
+			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x1A9, ff7_sfx_set_panning_on_channel_6);
+			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x1D9, ff7_sfx_set_volume_on_channel_6);
+			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x1E9, ff7_sfx_play_on_channel_6);
 
 			sfx_state = new ff7_field_sfx_state[5]{0};
 		}

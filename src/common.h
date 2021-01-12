@@ -220,6 +220,7 @@ struct common_externals
 	uint32_t sfx_resume;
 	uint32_t sfx_stop;
 	uint32_t (*play_sfx)(uint32_t);
+	uint32_t (*play_sfx_effects)(byte, uint32_t, uint32_t, uint32_t, uint32_t);
 	uint32_t play_sfx_on_channel;
 	uint32_t (*set_sfx_volume_on_channel)(uint32_t, uint32_t);
 	uint32_t (*set_sfx_volume_trans_on_channel)(uint32_t, uint32_t, uint32_t);
