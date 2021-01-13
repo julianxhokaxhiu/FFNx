@@ -1691,6 +1691,8 @@ struct ff7_externals
 	uint32_t sfx_load_and_play_with_speed;
 	uint32_t sfx_fmt_header;
 	DWORD *sfx_play_effects_id_channel_6;
+	uint32_t sfx_stop_channel_6;
+	UINT *sfx_stop_channel_timer_handle;
 	uint32_t battle_summon_leviathan_loop;
 	uint32_t battle_limit_omnislash_loop;
 	uint32_t sub_5F4A47;

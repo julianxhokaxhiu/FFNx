@@ -291,20 +291,22 @@ void NxAudioEngine::stopSFX(int channel)
 	_engine.stop(options->handle);
 }
 
-void NxAudioEngine::pauseSFX()
+void NxAudioEngine::pauseSFX(int channel)
 {
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s\n", __func__);
+	SFXOptions *options = &_sfxChannels[channel - 1];
 
-	for (auto it = _sfxChannels.begin(); it != _sfxChannels.end(); ++it)
-		_engine.setPause(it->second.handle, true);
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
+
+	_engine.setPause(options->handle, true);
 }
 
-void NxAudioEngine::resumeSFX()
+void NxAudioEngine::resumeSFX(int channel)
 {
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s\n", __func__);
+	SFXOptions *options = &_sfxChannels[channel - 1];
 
-	for (auto it = _sfxChannels.begin(); it != _sfxChannels.end(); ++it)
-		_engine.setPause(it->second.handle, false);
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
+
+	_engine.setPause(options->handle, false);
 }
 
 bool NxAudioEngine::isSFXPlaying(int channel)

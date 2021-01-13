@@ -49,11 +49,9 @@ int ff7_sfx_load(int id, DWORD dsound_flag)
 	return true;
 }
 
-void ff7_sfx_unload(int id, int unk)
+void ff7_sfx_unload(int id, void* unk)
 {
-	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
-
-	if (id) nxAudioEngine.unloadSFX(id);
+	//if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
 }
 
 void ff7_sfx_set_volume_on_channel(byte volume, int channel)
@@ -159,17 +157,25 @@ void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte sp
 
 void ff7_sfx_pause()
 {
-	nxAudioEngine.pauseSFX();
+	trace("%s\n", __func__);
+
+	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.pauseSFX(channel);
 }
 
 void ff7_sfx_resume()
 {
-	nxAudioEngine.resumeSFX();
+	trace("%s\n", __func__);
+
+	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.resumeSFX(channel);
 }
 
 void ff7_sfx_stop()
 {
-	for (short channel = 1; channel < 5; channel++) nxAudioEngine.stopSFX(channel);
+	trace("%s\n", __func__);
+
+	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.stopSFX(channel);
+
+	*ff7_externals.sfx_play_effects_id_channel_6 = 0;
 }
 
 // Channel 6 only
@@ -198,6 +204,15 @@ void ff7_sfx_play_on_channel_6(void* dsoundptr, int unk)
 	nxAudioEngine.setSFXVolume(6, sfx_channel_6_state.volume);
 	ff7_sfx_load(*ff7_externals.sfx_play_effects_id_channel_6, 0);
 	nxAudioEngine.playSFX(*ff7_externals.sfx_play_effects_id_channel_6, 6, sfx_channel_6_state.panning);
+}
+
+void ff7_sfx_stop_channel_6()
+{
+	nxAudioEngine.stopSFX(6);
+
+	if (*ff7_externals.sfx_stop_channel_timer_handle) timeKillEvent(*ff7_externals.sfx_stop_channel_timer_handle);
+
+	*ff7_externals.sfx_stop_channel_timer_handle = 0;
 }
 
 //=============================================================================
@@ -447,6 +462,8 @@ void sfx_init()
 			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x1A9, ff7_sfx_set_panning_on_channel_6);
 			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x1D9, ff7_sfx_set_volume_on_channel_6);
 			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x1E9, ff7_sfx_play_on_channel_6);
+			// Required to stop channel 6 effects when required by the engine
+			replace_function(ff7_externals.sfx_stop_channel_6, ff7_sfx_stop_channel_6);
 
 			sfx_state = new ff7_field_sfx_state[5]{0};
 		}

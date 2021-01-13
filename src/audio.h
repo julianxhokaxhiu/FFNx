@@ -144,8 +144,8 @@ public:
 	void unloadSFX(int id);
 	void playSFX(int id, int channel, float panning);
 	void stopSFX(int channel);
-	void pauseSFX();
-	void resumeSFX();
+	void pauseSFX(int channel);
+	void resumeSFX(int channel);
 	bool isSFXPlaying(int channel);
 	void setSFXVolume(int channel, float volume, double time = 0);
 	void setSFXSpeed(int channel, float speed, double time = 0);
