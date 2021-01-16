@@ -120,7 +120,7 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 
 	if (id)
 	{
-		if ((currentState->sound_id == id && !currentState->is_looped) || (currentState->sound_id != id)) nxAudioEngine.stopSFX(channel);
+		if (channel <= 5 && ((currentState->sound_id == id && !currentState->is_looped) || (currentState->sound_id != id))) nxAudioEngine.stopSFX(channel);
 
 		if (currentState->sound_id != id) currentState->is_looped = false;
 
