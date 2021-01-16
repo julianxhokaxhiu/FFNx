@@ -58,6 +58,8 @@ void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 {
 	if (trace_all || trace_sfx) trace("%s: volume=%d,channel=%d\n", __func__, volume, channel);
 
+	sfx_state[channel].volume1 = volume;
+
 	nxAudioEngine.setSFXVolume(channel, volume / 127.0f);
 }
 
@@ -71,6 +73,8 @@ void ff7_sfx_set_volume_trans_on_channel(byte volume, int channel, int time)
 void ff7_sfx_set_panning_on_channel(byte panning, int channel)
 {
 	if (trace_all || trace_sfx) trace("%s: panning=%d,channel=%d\n", __func__, panning, channel);
+
+	sfx_state[channel].pan1 = panning;
 
 	if (panning <= 127)
 		nxAudioEngine.setSFXPanning(channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
@@ -87,6 +91,8 @@ void ff7_sfx_set_panning_trans_on_channel(byte panning, int channel, int time)
 void ff7_sfx_set_frequency_on_channel(byte speed, int channel)
 {
 	if (trace_all || trace_sfx) trace("%s: speed=%d,channel=%d\n", __func__, speed, channel);
+
+	sfx_state[channel].frequency = speed;
 
 	if (speed == -128) {
 		speed = -127; // Prevent speed to be 0 (can crash with SoLoud)
@@ -294,7 +300,8 @@ void sfx_remember_volumes()
 	if (trace_all || trace_sfx) info("%s: Remember SFX volumes (master: %i)\n", __func__, *common_externals.master_sfx_volume);
 
 	for (int i = 0; i < 5; ++i) {
-		sfx_volumes[i] = sfx_state[i].buffer1 != nullptr ? sfx_state[i].volume1 : sfx_state[i].volume2;
+
+		sfx_volumes[i] = use_external_sfx ? sfx_state[i].volume1 : (sfx_state[i].buffer1 != nullptr ? sfx_state[i].volume1 : sfx_state[i].volume2);
 
 		if (sfx_volumes[i] > 127) {
 			sfx_volumes[i] = 127;
@@ -324,6 +331,8 @@ void sfx_update_volume(int modifier)
 	BYTE** sfx_tmp_volume = (BYTE**)(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_down + 0xA);
 
 	*common_externals.master_sfx_volume = **sfx_tmp_volume + modifier;
+
+	if (use_external_sfx) nxAudioEngine.setSFXMasterVolume(*common_externals.master_sfx_volume / 100.0f);
 
 	// Update sfx volume in real-time for all channel
 	for (int channel = 1; channel <= 5; ++channel) {
@@ -466,6 +475,7 @@ void sfx_init()
 			replace_function(ff7_externals.sfx_stop_channel_6, ff7_sfx_stop_channel_6);
 
 			sfx_state = new ff7_field_sfx_state[5]{0};
+			for (short i = 0; i < 5; i++) sfx_state[i].volume1 = 127;
 		}
 		else
 		{
