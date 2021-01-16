@@ -131,7 +131,7 @@ bool NxAudioEngine::init()
 			}
 		}
 
-		for (int channel = 0; channel < 10; channel++) _sfxChannels[channel] = SFXOptions();
+		for (int channel = 0; channel < _sfxNumChannels; channel++) _sfxChannels[channel] = SFXOptions();
 		_sfxStreams.resize(10000, nullptr);
 		_sfxSequentialIndexes.resize(1000, -1);
 
@@ -316,11 +316,21 @@ bool NxAudioEngine::isSFXPlaying(int channel)
 	return _engine.isValidVoiceHandle(options->handle) && !_engine.getPause(options->handle);
 }
 
+float NxAudioEngine::getSFXMasterVolume()
+{
+	return _sfxMasterVolume < 0.0f ? 1.0f : _sfxMasterVolume;
+}
+
+void NxAudioEngine::setSFXMasterVolume(float volume, double time)
+{
+	_sfxMasterVolume = volume;
+}
+
 void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 {
 	SFXOptions *options = &_sfxChannels[channel - 1];
 
-	options->volume = volume;
+	options->volume = volume * getSFXMasterVolume();
 
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();

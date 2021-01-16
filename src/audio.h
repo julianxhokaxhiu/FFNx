@@ -100,6 +100,8 @@ private:
 	bool _openpsf_loaded = false;
 
 	// SFX
+	short _sfxNumChannels = 10;
+	float _sfxMasterVolume = -1.0f;
 	std::stack<int> _sfxStack;
 	std::vector<SoLoud::VGMStream*> _sfxStreams;
 	std::map<int, SFXOptions> _sfxChannels;
@@ -147,6 +149,8 @@ public:
 	void pauseSFX(int channel);
 	void resumeSFX(int channel);
 	bool isSFXPlaying(int channel);
+	float getSFXMasterVolume();
+	void setSFXMasterVolume(float volume, double time = 0);
 	void setSFXVolume(int channel, float volume, double time = 0);
 	void setSFXSpeed(int channel, float speed, double time = 0);
 	void setSFXPanning(int channel, float panning, double time = 0);
