@@ -123,7 +123,7 @@ uint32_t scene_stack_pointer = 0;
 
 // global frame counter
 uint32_t frame_counter = 0;
-uint32_t frame_rate = 0;
+double frame_rate = 0;
 
 // default 32-bit BGRA texture format presented to the game
 struct texture_format *texture_format;
@@ -742,7 +742,7 @@ void common_flip(struct game_obj *game_object)
 		if (show_fps)
 		{
 			// average last two seconds and round up for our FPS counter
-			gl_draw_text(col, row++, text_colors[TEXTCOLOR_YELLOW], 255, "FPS: %2i", frame_rate);
+			gl_draw_text(col, row++, text_colors[TEXTCOLOR_YELLOW], 255, "FPS: %2.1lf", frame_rate);
 		}
 
 		if (show_stats)
@@ -797,7 +797,7 @@ void common_flip(struct game_obj *game_object)
 		if (show_fps)
 		{
 			char tmp[64];
-			sprintf_s(tmp, 64, " | FPS: %2i", frame_rate);
+			sprintf_s(tmp, 64, " | FPS: %2.1lf", frame_rate);
 			strcat_s(newWindowTitle, 1024, tmp);
 		}
 
@@ -818,6 +818,8 @@ void common_flip(struct game_obj *game_object)
 	}
 
 	frame_rate = (fps_counters[1] + fps_counters[2] + 1) / 2;
+
+	VRASS(game_object, fps, frame_rate);
 
 	// if there is an active popup message, display it
 	if(popup_ttl > 0)
