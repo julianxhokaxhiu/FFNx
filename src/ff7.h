@@ -1707,6 +1707,8 @@ struct ff7_externals
 	WORD* word_CC0828;
 	BYTE* byte_CC0D89;
 	WORD* word_DB958A;
+	BYTE* byte_CC164C;
+	WORD* word_CC0DC6;
 	uint32_t enter_gameover;
 	uint32_t exit_gameover;
 	void* (*start_gameover)();
