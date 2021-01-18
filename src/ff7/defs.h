@@ -38,6 +38,8 @@ void ff7_on_gameover_exit();
 BYTE ff7_toggle_battle_field();
 BYTE ff7_toggle_battle_worldmap();
 bool ff7_skip_movies();
+void *ff7_menu_sub_6F5C0C(uint32_t param1, uint32_t param2, uint8_t param3, uint8_t param4, uint32_t param5);
+void *ff7_menu_sub_6FAC38(uint32_t param1, uint32_t param2, uint8_t param3, uint8_t param4, uint32_t param5);
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);

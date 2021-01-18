@@ -305,3 +305,13 @@ bool ff7_skip_movies()
 
 	return false;
 }
+
+void* ff7_menu_sub_6FAC38(uint32_t param1, uint32_t param2, uint8_t param3, uint8_t param4, uint32_t param5)
+{
+	return ff7_externals.menu_sub_6FAC38(param1, param2, param3, *ff7_externals.millisecond_counter < 0x8000 ? 7 : 0, param5);
+}
+
+void* ff7_menu_sub_6F5C0C(uint32_t param1, uint32_t param2, uint8_t param3, uint8_t param4, uint32_t param5)
+{
+	return ff7_externals.menu_sub_6F5C0C(param1, param2, param3, *ff7_externals.millisecond_counter < 0x8000 ? 7 : 0, param5);
+}

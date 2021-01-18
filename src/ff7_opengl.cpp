@@ -175,6 +175,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 	replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
 	replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
+
+	//######################
+	// menu rendering fix
+	//######################
+	replace_call_function(ff7_externals.timer_menu_sub + 0x72F, ff7_menu_sub_6F5C0C);
+	replace_call_function(ff7_externals.timer_menu_sub + 0xD77, ff7_menu_sub_6FAC38);
 }
 
 struct ff7_gfx_driver *ff7_load_driver(void* _game_object)

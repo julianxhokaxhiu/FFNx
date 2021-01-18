@@ -227,9 +227,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_start = get_absolute_value(main_loop, 0x627);
 	ff7_externals.menu_sub_6CB56A = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xDE);
 	ff7_externals.menu_subs_call_table = (uint32_t *)get_absolute_value(ff7_externals.menu_sub_6CB56A, 0x2EC);
+	ff7_externals.timer_menu_sub = ff7_externals.menu_subs_call_table[0];
 	ff7_externals.status_menu_sub = ff7_externals.menu_subs_call_table[5];
 	ff7_externals.menu_sound_slider_loop = ff7_externals.menu_subs_call_table[8];
+
+	ff7_externals.millisecond_counter = (DWORD *)get_absolute_value(ff7_externals.timer_menu_sub, 0xD06);
 	ff7_externals.draw_status_limit_level_stats = get_relative_call(ff7_externals.status_menu_sub, 0x8E);
+
+	ff7_externals.menu_sub_6F5C0C = (void *(*)(uint32_t, uint32_t, uint8_t, uint8_t, uint32_t))(get_relative_call(ff7_externals.timer_menu_sub, 0x72F));
+	ff7_externals.menu_sub_6FAC38 = (void *(*)(uint32_t, uint32_t, uint8_t, uint8_t, uint32_t))(get_relative_call(ff7_externals.timer_menu_sub, 0xD77));
 
 	ff7_externals.get_kernel_text = (char* (*)(uint32_t, uint32_t, uint32_t))get_relative_call(ff7_externals.draw_status_limit_level_stats, 0x10C);
 

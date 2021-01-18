@@ -1593,9 +1593,13 @@ struct ff7_externals
 	uint32_t menu_draw_party_member_stats;
 	uint32_t *party_member_to_char_map;
 	uint32_t menu_sub_6CB56A;
+	void *(*menu_sub_6F5C0C)(uint32_t,uint32_t,uint8_t,uint8_t,uint32_t);
+	void *(*menu_sub_6FAC38)(uint32_t,uint32_t,uint8_t,uint8_t,uint32_t);
 	uint32_t *menu_subs_call_table;
 	uint32_t status_menu_sub;
 	uint32_t draw_status_limit_level_stats;
+	uint32_t timer_menu_sub;
+	DWORD *millisecond_counter;
 	char *(*get_kernel_text)(uint32_t, uint32_t, uint32_t);
 	uint32_t sub_5CF282;
 	uint32_t get_equipment_stats;
