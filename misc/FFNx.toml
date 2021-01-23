@@ -1,16 +1,5 @@
 # FFNx config file
 
-### HOW TO: ###################################################################
-# Options may be commented by default with an initial # character.
-# Remove the initial # character to set the configuration flag.
-# -----------------------------------------------------------------------------
-# Unless options are specified, you can either disable or enable a flag.
-# Enable: true
-# Disable: false
-###############################################################################
-
-# =============================================================================
-
 ###############################################################################
 # COMMON OPTIONS FOR BOTH FF7 AND FF8
 ###############################################################################
@@ -28,12 +17,12 @@
 # - 4: Direct3D12
 # - 5: Vulkan
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#renderer_backend = 0
+renderer_backend = 0
 
 #[FULLSCREEN]
 # If off, it will run in window mode.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#fullscreen = false
+fullscreen = false
 
 #[RESOLUTION]
 # Resolution of the game.
@@ -41,8 +30,8 @@
 # - Window mode will use 640x480
 # - Fullscreen mode will use your desktop resolution
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#window_size_x = 0
-#window_size_y = 0
+window_size_x = 0
+window_size_y = 0
 
 #[INTERNAL RESOLUTION SCALE]
 # The scale is in multiples of 640x480
@@ -51,24 +40,23 @@
 # This is optional for native 4:3 resolutions, but it will enhance visual quality ( like Nvidia DSR ).
 # Default = 2
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#internal_resolution_scale = 2
+internal_resolution_scale = 2
 
 #[PRESERVE ASPECT]
 # Preserve original game aspect ratio of (4:3) by adding black bars on the left and right side (if needed)
 # When off the game will be stretched to fit the window's aspect ratio; Be aware the game may look wrong though.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#preserve_aspect = true
+preserve_aspect = true
 
 #[ENABLE VSYNC]
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_vsync = true
-
+enable_vsync = true
 
 #[REFRESH RATE]
 # Screen refresh rate.
 # Default is 0 = use current screen refresh rate
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#refresh_rate = 0
+refresh_rate = 0
 
 #[ANTIALIASING]
 # Enable antialiasing filtering, this is done in the last pass when downsampling from the current supersampled rendering ( based on internal_resolution_scale logic )
@@ -80,12 +68,12 @@
 # - 16: 16x
 # If you set any value that is different than those, it will pick the higher option ( eg. if you pick 6 it will be 8, if you pick 1 it will be 2, and so on ).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_antialiasing = 0
+enable_antialiasing = 0
 
 #[ANISOTROPIC]
 # Enable anisotropic filtering, for high-res textures and overall rendering
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_anisotropic = true
+enable_anisotropic = true
 
 #########################
 # Audio Player Options
@@ -94,12 +82,12 @@
 #[USE EXTERNAL SFX]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce sounds in-game.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#use_external_sfx = false
+use_external_sfx = false
 
 #[EXTERNAL SFX PATH]
 # Path of the external sound files
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_sfx_path = "sfx"
+external_sfx_path = "sfx"
 
 #[EXTERNAL SFX EXTENSION]
 # The type of file to search for. By default is ogg.
@@ -108,18 +96,18 @@
 # Supported extensions:
 # - https://github.com/losnoco/vgmstream#supported-file-types
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_sfx_ext = "ogg"
+external_sfx_ext = "ogg"
 
 #[USE EXTERNAL MUSIC]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce music in-game.
 # If you leave out the default configuration FFNx will autodetect your environment and will set it to the best available option.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#use_external_music = false
+use_external_music = false
 
 #[EXTERNAL MUSIC RESUME]
 # This flag will enable the support for music resume on known areas of the game ( for eg. World-Map ).
 # If you enable this flag, instead of starting the OST for a known area from the beginning everytime, it will resume where you left it off the last time you visited it.
-#external_music_resume = true
+external_music_resume = true
 
 #[EXTERNAL MUSIC PATH]
 # Path of the external music files
@@ -129,7 +117,7 @@
 # - FF7 eStore: data/music_ogg
 # - FF7 Steam: data/music_ogg
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_music_path = ""
+external_music_path = ""
 
 #[EXTERNAL MUSIC EXTENSION]
 # The type of file to search for. By default is ogg.
@@ -139,7 +127,7 @@
 # - https://github.com/losnoco/vgmstream#supported-file-types
 # - psf, psf2, minipsf, minipsf2 (PSF and PSF2) if you provide the Highly Experimental BIOS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_music_ext = "ogg"
+external_music_ext = "ogg"
 
 #[EXTERNAL MUSIC HIGHLY EXPERIMENTAL BIOS]
 # This flag will enable support to PSF and PSF2 formats.
@@ -147,12 +135,12 @@
 # To find one compiled BIOS: https://git.lopez-snowhill.net/chris/foo_psf
 # To generate one: https://git.lopez-snowhill.net/chris/highly_experimental
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#he_bios_path = ""
+he_bios_path = ""
 
 #[EXTERNAL VOICE PATH]
 # Path of the external voice files
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_voice_path = "voice"
+external_voice_path = "voice"
 
 #[EXTERNAL VOICE EXTENSION]
 # The type of file to search for. By default is ogg.
@@ -161,19 +149,19 @@
 # Supported extensions:
 # - https://github.com/losnoco/vgmstream#supported-file-types
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_voice_ext = "ogg"
+external_voice_ext = "ogg"
 
 #[ENABLE VOICE MUSIC FADE]
 # This flag will enable the music volume fade out and fade in, when a voice acting is being played back.
 # Please note this flag will take effect ONLY when "use_external_music" is enabled.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_voice_music_fade = false
+enable_voice_music_fade = false
 
 #[EXTERNAL VOICE MUSIC FADE VOLUME]
 # This flag will set to how much the volume will be lowered down when a voice acting is going to be played back. When the voice file will be finished, the music volume will be then restored to its previous value.
 # Range: 0-100 ( Min = 0, Max = 100)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#external_voice_music_fade_volume = 25
+external_voice_music_fade_volume = 25
 
 ###########################
 # Video Player Options
@@ -181,18 +169,18 @@
 
 #[ENABLE FFMPEG VIDEOS]
 # This flag will enable/disable the support of FFMpeg layer to reproduce movies in-game.
-# Default Value depends on game version.
+# Default Value (-1) sets the flag, depending on the game version.
 # - FF7 1998 - true
 # - FF7/FF8 Steam - true
 # - FF8 2000 - false
 # It is suggested to keep the default behavior unless you really know what are you doing.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_ffmpeg_videos = true
+enable_ffmpeg_videos = -1
 
 #[FFMPEG VIDEO FILE EXTENSION]
 # The type of file that the ffmpeg layer will search for. Default is avi.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ffmpeg_video_ext = "avi"
+ffmpeg_video_ext = "avi"
 
 ###############################
 # MUST SET FOR VERSIONS BELOW
@@ -202,7 +190,7 @@
 # The folder name in your game Documents path ( for eg. for FF7 is "C:\Users\JohnDoe\Documents\Square Enix\FINAL FANTASY VII Steam\user_XXXXXXX")
 # Use this only if you have MORE THAN ONE user_* directories. If not, just leave this commented as the driver will autodetect the directory.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#steam_game_userdata = "user_12345678"
+steam_game_userdata = ""
 
 ########################
 ## MODDER OPTIONS
@@ -211,21 +199,21 @@
 #[TEXTURE PATH]
 # Mod directory where textures will be loaded from
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#mod_path = "mods/Textures"
+mod_path = "mods/Textures"
 
 # Mod extension
 # You can change the extension list, ordered by priority. DO NOT add new extensions, driver will become unstable.
 # Default: ["dds", "png", "psd", "tga", "exr"]
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#mod_ext = ["dds", "png", "psd", "tga", "exr"]
+mod_ext = ["dds", "png", "psd", "tga", "exr"]
 
 # Show every failed attempt at loading a .png or .dds texture
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_missing_textures = false
+show_missing_textures = false
 
 # Dump internal textures to PNG files in the mod_path
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#save_textures = false
+save_textures = false
 
 # This path is where the Hext patching layer will look for txt files.
 # The path will ALWAYS have appended:
@@ -233,27 +221,27 @@
 # 2. The game language ( for eg. if ff7_en it will be "en" )
 # The resulting path will then be "<hext_patching_path>/ff7/en", if you run for eg. FF7 English
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#hext_patching_path = "hext"
+hext_patching_path = "hext"
 
 # This path will define where the driver will look first, allowing you to override core game files, if needed
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#override_path = "override"
+override_path = "override"
 
 #[SPEEDHACK]
 # Set the step when increasing the speedhack speed
 #~~~~~~~~~~~~~~~~~~~~~~~~~~
-#speedhack_step = 0.5
+speedhack_step = 0.5
 
 # Set the limit of the speedhack multiplier
 #~~~~~~~~~~~~~~~~~~~~~~~~~~
-#speedhack_max = 8.0
-#speedhack_min = 1.0
+speedhack_max = 8.0
+speedhack_min = 1.0
 
 #[EXPERIMENTAL]
 # Enable support for animated textures.
 # WARNING: This flag MAY degrade the gameplay performance. Enable at your own risk.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_animated_textures = false
+enable_animated_textures = false
 
 ##########################
 # DEBUGGING OPTIONS
@@ -263,109 +251,109 @@
 
 # Enable FFNx DevTools
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#enable_devtools = false
+enable_devtools = false
 
 # Set hotkey to toggle the DevTools window.
 # This is specified by a virtual-key code hexadecimal value, see: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Default: 0x7B ( VK_F12 )
-#devtools_hotkey = 0x7B
+devtools_hotkey = 0x7B
 
 # Display the verion of FFNx in upper right corner ( when fullscreen ) or in the title bar ( when windowed )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_version = true
+show_version = true
 
 # Display frames per second counter in upper right corner ( when fullscreen ) or in the title bar ( when windowed )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_fps = false
+show_fps = false
 
 # Display Rendering backend in upper right corner ( when fullscreen ) or in the title bar ( when windowed )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_renderer_backend = true
+show_renderer_backend = true
 
 # Display some real-time debug information
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_stats = false
+show_stats = false
 
 # Enable logging
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_applog = true
+show_applog = true
 
 # Show on screen error messages ( only on fullscreen )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#show_error_popup = false
+show_error_popup = false
 
 # Enable this flag if you want to see more verbose output from the backend renderer.
 # Usually useful for debug pruposes. Do not enable otherwise.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#renderer_debug = false
+renderer_debug = false
 
 # Creates a full crashdump file if the game crashes. Useful to be analyzed with WinDbg when reporting issues.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#create_crash_dump = false
+create_crash_dump = false
 
 # Various flags which will help in further debugging the game engine logics.
 # Some flags may not generate any output depending on the game you play.
 
 # trace_all - Dump in the logs whatever APIs is being called from the Engine in FFNx. Overrides all the others below.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_all = false
+trace_all = false
 
 # trace_renderer - Dump in the logs only APIs that has to do with the rendering engine
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_renderer = false
+trace_renderer = false
 
 # trace_movies - Dump in the logs only APIs that has to do with movie playback
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_movies = false
+trace_movies = false
 
 # trace_music - Dump in the logs only APIs that has to do with music playback
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_music = false
+trace_music = false
 
 # trace_sfx - Dump in the logs only APIs that has to do with sfx playback
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_sfx = false
+trace_sfx = false
 
 # trace_fake_dx - Dump in the logs only APIs that has to do with directdraw emulation
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_fake_dx = false
+trace_fake_dx = false
 
 # trace_direct - Dump in the logs only APIs that has to do with LGP loading
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_direct = false
+trace_direct = false
 
 # trace_files - Dump in the logs only APIs that has to do with filesystem operations
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_files = false
+trace_files = false
 
 # trace_loaders - Dump in the logs only APIs that has to do with internal textures overrides
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_loaders = false
+trace_loaders = false
 
 # trace_opcodes - Dump in the logs only APIs that has to do with field opcodes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_opcodes = false
+trace_opcodes = false
 
 # trace_voice - Dump in the logs only APIs that has to do with voice playback
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_voice = false
+trace_voice = false
 
 # trace_gamepad - Dump in the logs only APIs that has to do with gamepad
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#trace_gamepad = false
+trace_gamepad = false
 
 # vertex_log - Dump in the logs current engine vertex data being passed to the GPU for drawing
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#vertex_log = false
+vertex_log = false
 
 # uniform_log - Dump in the logs current engine uniform data being passed to the GPU shaders
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#uniform_log = false
+uniform_log = false
 
 # Show debug info regarding movie synchronization.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#movie_sync_debug = false
+movie_sync_debug = false
 
 ###############################################################################
 # OPTIONS ONLY FOR FF7
@@ -375,13 +363,13 @@
 
 # Include armor in magic defense calculation
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#mdef_fix = true
+mdef_fix = true
 
 ## ADVANCED OPTIONS - Don't fiddle with these unless you know what you're doing.
 
 # Skip movie frames if necessary.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#skip_frames = false
+skip_frames = false
 
 ## MODDER OPTIONS - These options are mostly useful to modders and should not be enabled during normal play.
 
@@ -389,18 +377,18 @@
 # For example: if FF7 is looking for aaab.rsd in char.lgp, this option will make it open direct/char/aaab.rsd first,
 # If this file doesn't exist it will look for the original in the LGP archive
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#direct_mode_path = "direct"
+direct_mode_path = "direct"
 
 # This is the path where your savefiles will be read.
 # Notice that the path will be relative to your FF7 Game install directory, where usually the "save" directory is stored.
 # PLEASE NOTE: THIS IS A VALID OPTION ONLY FOR FF7 1998/eStore edition. It will NOT work on the Steam edition!
-#save_path = "save"
+save_path = "save"
 
 ## DEBUGGING OPTIONS - These options are mostly useful for developers or people reporting crashes. Please do enable them only when required.
 
 # Dump in the logs more verbose error messages coming directly from the engine
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ff7_more_debug = false
+ff7_more_debug = false
 
 ###############################################################################
 # OPTIONS ONLY FOR FF8
@@ -410,4 +398,4 @@
 
 # Show the PSX SSIGPU VRAM window
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#ff8_ssigpu_debug = false
+ff8_ssigpu_debug = false

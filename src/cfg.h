@@ -34,7 +34,7 @@
 
 extern std::string mod_path;
 extern std::vector<std::string> mod_ext;
-extern bool enable_ffmpeg_videos;
+extern long enable_ffmpeg_videos;
 extern std::string ffmpeg_video_ext;
 extern bool use_external_sfx;
 extern std::string external_sfx_path;

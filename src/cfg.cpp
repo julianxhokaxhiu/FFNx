@@ -26,7 +26,7 @@
 // configuration variables with their default values
 std::string mod_path;
 std::vector<std::string> mod_ext;
-bool enable_ffmpeg_videos;
+long enable_ffmpeg_videos;
 std::string ffmpeg_video_ext;
 bool use_external_sfx;
 std::string external_sfx_path;
@@ -132,7 +132,7 @@ void read_cfg()
 	// Read config values
 	mod_path = config["mod_path"].value_or("");
 	mod_ext = get_string_or_array_of_strings(config["mod_ext"]);
-	enable_ffmpeg_videos = config["enable_ffmpeg_videos"].value_or(!ff8);
+	enable_ffmpeg_videos = config["enable_ffmpeg_videos"].value_or(-1);
 	ffmpeg_video_ext = config["ffmpeg_video_ext"].value_or("");
 	use_external_sfx = config["use_external_sfx"].value_or(false);
 	external_sfx_path = config["external_sfx_path"].value_or("");
@@ -292,6 +292,10 @@ void read_cfg()
 	// DIRECT MODE PATH
 	if (direct_mode_path.empty())
 		direct_mode_path = "direct";
+
+	// EXTERNAL MOVIE FLAG
+	if (enable_ffmpeg_videos < 0)
+		enable_ffmpeg_videos = !ff8;
 
 	// EXTERNAL MOVIE EXTENSION
 	if (ffmpeg_video_ext.empty())
