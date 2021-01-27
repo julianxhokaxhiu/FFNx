@@ -2021,11 +2021,13 @@ struct tex_header *make_framebuffer_tex(uint32_t tex_w, uint32_t tex_h, uint32_t
 	return _header;
 }
 
-void qpc_get_time(time_t *dest)
+time_t qpc_get_time(time_t *dest)
 {
 	QueryPerformanceCounter((LARGE_INTEGER *)dest);
 
 	stats.timer = *dest;
+
+	return *dest;
 }
 
 time_t qpc_diff_time(time_t* t1, time_t* t2, time_t* out)

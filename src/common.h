@@ -291,7 +291,7 @@ struct driver_stats
 	time_t timer;
 };
 
-void qpc_get_time(time_t *dest);
+time_t qpc_get_time(time_t *dest);
 time_t qpc_diff_time(time_t* t1, time_t* t2, time_t* out);
 uint32_t get_version();
 struct game_mode *getmode();
