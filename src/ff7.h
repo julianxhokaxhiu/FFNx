@@ -1178,7 +1178,7 @@ struct dll_gfx_externals
 
 struct ff7_game_obj
 {
-	uint32_t unknown_0;
+	uint32_t do_quit;
 	uint32_t dc_horzres;
 	uint32_t dc_vertres;
 	uint32_t dc_bitspixel;
@@ -1336,7 +1336,7 @@ struct ff7_game_obj
 	uint32_t field_A48;
 	uint32_t field_A4C;
 	uint32_t field_A50;
-	uint32_t field_A54;
+	uint32_t gfx_reset;
 	uint32_t field_A58;
 	uint32_t field_A5C;
 	uint32_t current_gfx_driver;

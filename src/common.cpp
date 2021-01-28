@@ -863,7 +863,7 @@ void common_flip(struct game_obj *game_object)
 	}
 
 	// fix unresponsive quit menu
-	if(!ff8 && VREF(game_object, field_A54))
+	if(!ff8 && VREF(game_object, gfx_reset))
 	{
 		MSG msg;
 

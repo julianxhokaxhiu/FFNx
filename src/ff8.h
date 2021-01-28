@@ -513,7 +513,7 @@ struct ff8_movie_obj
 
 struct ff8_game_obj
 {
-	uint32_t unknown_0;
+	uint32_t do_quit;
 	uint32_t dc_horzres;
 	uint32_t dc_vertres;
 	uint32_t dc_bitspixel;
@@ -675,7 +675,7 @@ struct ff8_game_obj
 	uint32_t field_A48;
 	uint32_t field_A4C;
 	uint32_t field_A50;
-	uint32_t field_A54;
+	uint32_t gfx_reset;
 	uint32_t field_A58;
 	uint32_t field_A5C;
 	uint32_t dummy5[2];
