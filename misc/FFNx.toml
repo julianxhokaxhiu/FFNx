@@ -361,6 +361,17 @@ movie_sync_debug = false
 
 ## ENHANCEMENTS
 
+# FPS Limiter
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# This flag will overwrite the internal FPS limiter of the game.
+# Available choices are:
+# - 0: Original ( will inherit the default vanilla game behavior, some bugs may appear )
+# - 1: Default ( an hybrid mode that fixes most of the known game limiter bugs while preserving the original FPS )
+# - 2: 30 FPS ( it will bump Battle mode to 30 FPS, everything else will run in vanilla mode )
+# - 3: 60 FPS ( all the game will run in 60 FPS, use this option at your own risk )
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff7_fps_limiter = 1
+
 # Include armor in magic defense calculation
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 mdef_fix = true

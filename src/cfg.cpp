@@ -91,6 +91,7 @@ double speedhack_step;
 double speedhack_max;
 double speedhack_min;
 bool enable_animated_textures;
+long ff7_fps_limiter;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -197,6 +198,7 @@ void read_cfg()
 	speedhack_max = config["speedhack_max"].value_or(8.0);
 	speedhack_min = config["speedhack_min"].value_or(1.0);
 	enable_animated_textures = config["enable_animated_textures"].value_or(false);
+	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FF7_LIMITER_DEFAULT);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
@@ -211,7 +213,8 @@ void read_cfg()
 	// SAFE DEFAULTS
 	// #############
 
-	// HEXT PATCHING
+	if (ff7_fps_limiter < FF7_LIMITER_ORIGINAL) ff7_fps_limiter = FF7_LIMITER_ORIGINAL;
+	else if (ff7_fps_limiter > FF7_LIMITER_60FPS) ff7_fps_limiter = FF7_LIMITER_60FPS;
 
 	if (hext_patching_path.empty())
 	{

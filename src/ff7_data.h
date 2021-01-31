@@ -25,34 +25,34 @@
 
 // FF7 game mode definitions
 static struct game_mode ff7_modes[] = {
-	{FF7_MODE_FIELD,       "MODE_FIELD",       MODE_FIELD,       false},
-	{FF7_MODE_BATTLE,      "MODE_BATTLE",      MODE_BATTLE,      false},
-	{FF7_MODE_WORLDMAP,    "MODE_WORLDMAP",    MODE_WORLDMAP,    false},
-	{FF7_MODE_UNKNOWN4,    "MODE_UNKNOWN4",    MODE_UNKNOWN,     true },
-	{FF7_MODE_MENU,        "MODE_MENU",        MODE_MENU,        false},
-	{FF7_MODE_HIGHWAY,     "MODE_HIGHWAY",     MODE_HIGHWAY,     false},
-	{FF7_MODE_CHOCOBO,     "MODE_CHOCOBO",     MODE_CHOCOBO,     false},
-	{FF7_MODE_SNOWBOARD,   "MODE_SNOWBOARD",   MODE_SNOWBOARD,   false},
-	{FF7_MODE_CONDOR,      "MODE_CONDOR",      MODE_CONDOR,      false},
-	{FF7_MODE_SUBMARINE,   "MODE_SUBMARINE",   MODE_SUBMARINE,   false},
-	{FF7_MODE_COASTER,     "MODE_COASTER",     MODE_COASTER,     false},
-	{FF7_MODE_CDCHECK,     "MODE_CDCHECK",     MODE_CDCHECK,     false},
-	{FF7_MODE_UNKNOWN13,   "MODE_UNKNOWN13",   MODE_UNKNOWN,     true },
-	{FF7_MODE_SNOWBOARD2,  "MODE_SNOWBOARD2",  MODE_SNOWBOARD,   false},
-	{FF7_MODE_UNKNOWN15,   "MODE_UNKNOWN15",   MODE_UNKNOWN,     true },
-	{FF7_MODE_UNKNOWN16,   "MODE_UNKNOWN16",   MODE_UNKNOWN,     true },
-	{FF7_MODE_BATTLE_MENU, "MODE_BATTLE_MENU", MODE_MENU,        false},
-	{FF7_MODE_UNKNOWN18,   "MODE_UNKNOWN18",   MODE_UNKNOWN,     true },
-	{FF7_MODE_EXIT,        "MODE_EXIT",        MODE_EXIT,        false},
-	{FF7_MODE_MAIN_MENU,   "MODE_MAIN_MENU",   MODE_MENU,        false},
-	{FF7_MODE_UNKNOWN21,   "MODE_UNKNOWN21",   MODE_UNKNOWN,     true },
-	{FF7_MODE_INTRO,       "MODE_INTRO",       MODE_INTRO,       false },
-	{FF7_MODE_SWIRL,       "MODE_SWIRL",       MODE_SWIRL,       false},
-	{FF7_MODE_UNKNOWN24,   "MODE_UNKNOWN24",   MODE_UNKNOWN,     true },
-	{FF7_MODE_UNKNOWN25,   "MODE_UNKNOWN25",   MODE_UNKNOWN,     true },
-	{FF7_MODE_GAMEOVER,    "MODE_GAMEOVER",    MODE_GAMEOVER,    false},
-	{FF7_MODE_CREDITS,     "MODE_CREDITS",     MODE_CREDITS,     false},
-	{FF7_MODE_UNKNOWN28,   "MODE_UNKNOWN28",   MODE_UNKNOWN,     true },
+	{FF7_MODE_FIELD,       "MODE_FIELD",       MODE_FIELD,       true  },
+	{FF7_MODE_BATTLE,      "MODE_BATTLE",      MODE_BATTLE,      true  },
+	{FF7_MODE_WORLDMAP,    "MODE_WORLDMAP",    MODE_WORLDMAP,    true  },
+	{FF7_MODE_UNKNOWN4,    "MODE_UNKNOWN4",    MODE_UNKNOWN,     false },
+	{FF7_MODE_MENU,        "MODE_MENU",        MODE_MENU,        true  },
+	{FF7_MODE_HIGHWAY,     "MODE_HIGHWAY",     MODE_HIGHWAY,     true  },
+	{FF7_MODE_CHOCOBO,     "MODE_CHOCOBO",     MODE_CHOCOBO,     true  },
+	{FF7_MODE_SNOWBOARD,   "MODE_SNOWBOARD",   MODE_SNOWBOARD,   true  },
+	{FF7_MODE_CONDOR,      "MODE_CONDOR",      MODE_CONDOR,      true  },
+	{FF7_MODE_SUBMARINE,   "MODE_SUBMARINE",   MODE_SUBMARINE,   true  },
+	{FF7_MODE_COASTER,     "MODE_COASTER",     MODE_COASTER,     true  },
+	{FF7_MODE_CDCHECK,     "MODE_CDCHECK",     MODE_CDCHECK,     true  },
+	{FF7_MODE_UNKNOWN13,   "MODE_UNKNOWN13",   MODE_UNKNOWN,     false },
+	{FF7_MODE_SNOWBOARD2,  "MODE_SNOWBOARD2",  MODE_SNOWBOARD,   true  },
+	{FF7_MODE_UNKNOWN15,   "MODE_UNKNOWN15",   MODE_UNKNOWN,     false },
+	{FF7_MODE_UNKNOWN16,   "MODE_UNKNOWN16",   MODE_UNKNOWN,     false },
+	{FF7_MODE_BATTLE_MENU, "MODE_BATTLE_MENU", MODE_MENU,        true  },
+	{FF7_MODE_UNKNOWN18,   "MODE_UNKNOWN18",   MODE_UNKNOWN,     false },
+	{FF7_MODE_EXIT,        "MODE_EXIT",        MODE_EXIT,        true  },
+	{FF7_MODE_MAIN_MENU,   "MODE_MAIN_MENU",   MODE_MENU,        true  },
+	{FF7_MODE_UNKNOWN21,   "MODE_UNKNOWN21",   MODE_UNKNOWN,     false },
+	{FF7_MODE_INTRO,       "MODE_INTRO",       MODE_INTRO,       true  },
+	{FF7_MODE_SWIRL,       "MODE_SWIRL",       MODE_SWIRL,       true  },
+	{FF7_MODE_UNKNOWN24,   "MODE_UNKNOWN24",   MODE_UNKNOWN,     false },
+	{FF7_MODE_UNKNOWN25,   "MODE_UNKNOWN25",   MODE_UNKNOWN,     false },
+	{FF7_MODE_GAMEOVER,    "MODE_GAMEOVER",    MODE_GAMEOVER,    true  },
+	{FF7_MODE_CREDITS,     "MODE_CREDITS",     MODE_CREDITS,     true  },
+	{FF7_MODE_UNKNOWN28,   "MODE_UNKNOWN28",   MODE_UNKNOWN,     false },
 };
 
 void ff7_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
@@ -72,8 +72,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t menu_main_loop;
 	uint32_t worldmap_main_loop;
 	uint32_t cdcheck_main_loop;
+	uint32_t credits_main_loop;
 	uint32_t coaster_main_loop;
+	uint32_t condor_main_loop;
+	uint32_t chocobo_main_loop;
+	uint32_t highway_main_loop;
 	uint32_t swirl_main_loop;
+	uint32_t snowboard_main_loop;
+	uint32_t submarine_main_loop;
+	uint32_t gameover_main_loop;
 	uint32_t movie_module;
 	uint32_t file_module;
 
@@ -95,12 +102,14 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	common_externals._mode = (WORD*)get_absolute_value(main_loop, 0x8C);
 	common_externals._previous_mode = (WORD *)get_absolute_value(main_loop, 0x1D8);
 
-	ff7_set_main_loop(MODE_GAMEOVER, get_absolute_value(main_loop, 0x1FE));
+	gameover_main_loop = get_absolute_value(main_loop, 0x1FE);
+	ff7_set_main_loop(MODE_GAMEOVER, gameover_main_loop);
 	swirl_main_loop = get_absolute_value(main_loop, 0x25B);
 	ff7_set_main_loop(MODE_SWIRL, swirl_main_loop);
 	cdcheck_main_loop = get_absolute_value(main_loop, 0x397);
 	ff7_set_main_loop(MODE_CDCHECK, cdcheck_main_loop);
-	ff7_set_main_loop(MODE_CREDITS, get_absolute_value(main_loop, 0x4CA));
+	credits_main_loop = get_absolute_value(main_loop, 0x4CA);
+	ff7_set_main_loop(MODE_CREDITS, credits_main_loop);
 	menu_main_loop = get_absolute_value(main_loop, 0x62E);
 	ff7_set_main_loop(MODE_MENU, menu_main_loop);
 	battle_main_loop = get_absolute_value(main_loop, 0x89A);
@@ -109,13 +118,18 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_set_main_loop(MODE_FIELD, field_main_loop);
 	worldmap_main_loop = get_absolute_value(main_loop, 0x977);
 	ff7_set_main_loop(MODE_WORLDMAP, worldmap_main_loop);
-	ff7_set_main_loop(MODE_CHOCOBO, get_absolute_value(main_loop, 0x9C5));
-	ff7_set_main_loop(MODE_CONDOR, get_absolute_value(main_loop, 0xA13));
-	ff7_set_main_loop(MODE_HIGHWAY, get_absolute_value(main_loop, 0xA61));
+	chocobo_main_loop = get_absolute_value(main_loop, 0x9C5);
+	ff7_set_main_loop(MODE_CHOCOBO, chocobo_main_loop);
+	condor_main_loop = get_absolute_value(main_loop, 0xA13);
+	ff7_set_main_loop(MODE_CONDOR, condor_main_loop);
+	highway_main_loop = get_absolute_value(main_loop, 0xA61);
+	ff7_set_main_loop(MODE_HIGHWAY, highway_main_loop);
 	coaster_main_loop = get_absolute_value(main_loop, 0xAAF);
 	ff7_set_main_loop(MODE_COASTER, coaster_main_loop);
-	ff7_set_main_loop(MODE_SUBMARINE, get_absolute_value(main_loop, 0xAFD));
-	ff7_set_main_loop(MODE_SNOWBOARD, get_absolute_value(main_loop, 0xB3E));
+	submarine_main_loop = get_absolute_value(main_loop, 0xAFD);
+	ff7_set_main_loop(MODE_SUBMARINE, submarine_main_loop);
+	snowboard_main_loop = get_absolute_value(main_loop, 0xB3E);
+	ff7_set_main_loop(MODE_SNOWBOARD, snowboard_main_loop);
 
 	ff7_externals.sub_5F4A47 = get_absolute_value(main_loop, 0xA13);
 	ff7_externals.reset_game_obj_sub_5F4971 = (void (*)(struct game_obj*))get_relative_call(ff7_externals.sub_5F4A47, 0x5B);
@@ -419,6 +433,28 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.byte_CC164C = (BYTE *)get_absolute_value(main_loop, 0x32A);
 	ff7_externals.word_CC0DC6 = (WORD *)get_absolute_value(main_init_loop, 0x4BD);
+
+	ff7_externals.sub_5F5042 = get_relative_call(condor_main_loop, 0x69);
+	ff7_externals.sub_650F36 = get_relative_call(highway_main_loop, 0x53);
+	ff7_externals.sub_72381C = get_relative_call(snowboard_main_loop, 0x7D);
+	ff7_externals.sub_779E14 = get_relative_call(chocobo_main_loop, 0x70);
+
+	ff7_externals.fps_limiter_swirl = get_relative_call(swirl_main_loop, 0xDE);
+	ff7_externals.fps_limiter_battle = get_relative_call(battle_main_loop, 0x1DD);
+	ff7_externals.fps_limiter_coaster = get_relative_call(coaster_main_loop, 0x51);
+	ff7_externals.fps_limiter_condor = get_relative_call(ff7_externals.sub_5F5042, 0x5F);
+	ff7_externals.fps_limiter_field = get_relative_call(ff7_externals.field_sub_6388EE, 0x58);
+	ff7_externals.fps_limiter_highway = get_relative_call(ff7_externals.sub_650F36, 0xC3);
+	ff7_externals.fps_limiter_snowboard = get_relative_call(ff7_externals.sub_72381C, 0x14);
+	ff7_externals.fps_limiter_worldmap = get_relative_call(worldmap_main_loop, 0x1D);
+	ff7_externals.fps_limiter_chocobo = get_relative_call(ff7_externals.sub_779E14, 0x4D);
+	ff7_externals.fps_limiter_submarine = get_relative_call(submarine_main_loop, 0x98);
+	ff7_externals.fps_limiter_credits = get_relative_call(credits_main_loop, 0x1C);
+
+	ff7_externals.battle_fps_menu_multiplier = (BYTE *)battle_main_loop + 0x335;
+	ff7_externals.submarine_minigame_status = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_submarine, 0x48);
+	ff7_externals.field_limit_fps = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_field, 0x1F);
+	ff7_externals.swirl_limit_fps = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_swirl, 0x48);
 }
 
 void ff7_data(struct ff7_game_obj* game_object)

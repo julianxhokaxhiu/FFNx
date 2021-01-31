@@ -1731,6 +1731,25 @@ struct ff7_externals
 	void (*play_midi)(uint32_t);
 	WORD *current_movie_frame;
 	DWORD *opening_movie_music_start_frame;
+	uint32_t fps_limiter_swirl;
+	uint32_t fps_limiter_battle;
+	uint32_t fps_limiter_coaster;
+	uint32_t fps_limiter_condor;
+	uint32_t fps_limiter_field;
+	uint32_t fps_limiter_highway;
+	uint32_t fps_limiter_snowboard;
+	uint32_t fps_limiter_worldmap;
+	uint32_t fps_limiter_chocobo;
+	uint32_t fps_limiter_submarine;
+	uint32_t fps_limiter_credits;
+	uint32_t sub_5F5042;
+	uint32_t sub_650F36;
+	uint32_t sub_72381C;
+	uint32_t sub_779E14;
+	BYTE *battle_fps_menu_multiplier;
+	DWORD *submarine_minigame_status;
+	DWORD *field_limit_fps;
+	DWORD *swirl_limit_fps;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

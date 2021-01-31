@@ -710,7 +710,6 @@ void common_flip(struct game_obj *game_object)
 	if (trace_all) trace("dll_gfx: flip (%i)\n", frame_counter);
 
 	VOBJ(game_obj, game_object, game_object);
-	static time_t last_gametime;
 	static struct timeb last_frame;
 	static uint32_t fps_counters[3] = {0, 0, 0};
 	time_t last_seconds = last_frame.time;
@@ -846,22 +845,6 @@ void common_flip(struct game_obj *game_object)
 	current_state.texture_filter = true;
 	current_state.fb_texture = false;
 
-	// new framelimiter, not based on vsync
-	if (!ff8)
-	{
-		time_t gametime;
-		double framerate = 60.0;
-
-		if (mode->driver_mode == MODE_HIGHWAY) framerate = 30.0;
-
-		framerate *= gamehacks.getCurrentSpeedhack();
-
-		do qpc_get_time(&gametime);
-		while (gametime > last_gametime && gametime - last_gametime < VREF(game_object, countspersecond * (1.0 / framerate)));
-
-		last_gametime = gametime;
-	}
-
 	// fix unresponsive quit menu
 	if(!ff8 && VREF(game_object, gfx_reset))
 	{
@@ -922,6 +905,8 @@ void common_flip(struct game_obj *game_object)
 					break;
 			}
 		}
+
+		*ff7_externals.swirl_limit_fps = 1;
 	}
 }
 
@@ -2032,9 +2017,11 @@ time_t qpc_get_time(time_t *dest)
 
 time_t qpc_diff_time(time_t* t1, time_t* t2, time_t* out)
 {
-	time_t ret = (*t1 - *t2) * gamehacks.getCurrentSpeedhack();
+	time_t ret = *t1 - *t2;
 
-	*out = ret;
+	if (ff8) ret *= gamehacks.getCurrentSpeedhack();
+
+	if (out != NULL) *out = ret;
 
 	return ret;
 }

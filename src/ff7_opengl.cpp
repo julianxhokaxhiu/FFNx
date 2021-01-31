@@ -154,14 +154,40 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// new timer calibration
 	// #####################
 
-	// replace rdtsc timing
-	replace_function(common_externals.get_time, qpc_get_time);
 	// replace time diff
 	replace_function(common_externals.diff_time, qpc_diff_time);
 
-	// override the timer calibration
-	QueryPerformanceFrequency((LARGE_INTEGER *)&game_object->_countspersecond);
-	game_object->countspersecond = (double)game_object->_countspersecond;
+	if (ff7_fps_limiter >= FF7_LIMITER_DEFAULT)
+	{
+		// replace rdtsc timing
+		replace_function(common_externals.get_time, qpc_get_time);
+
+		// override the timer calibration
+		QueryPerformanceFrequency((LARGE_INTEGER *)&game_object->_countspersecond);
+		game_object->countspersecond = (double)game_object->_countspersecond;
+
+		replace_function(ff7_externals.fps_limiter_swirl, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_battle, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_coaster, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_condor, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_field, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_highway, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_snowboard, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_worldmap, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_chocobo, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_submarine, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_credits, ff7_limit_fps);
+
+		switch(ff7_fps_limiter)
+		{
+		case FF7_LIMITER_30FPS:
+			*ff7_externals.battle_fps_menu_multiplier /= 2;
+			break;
+		case FF7_LIMITER_60FPS:
+			*ff7_externals.battle_fps_menu_multiplier /= 4;
+			break;
+		}
+	}
 
 	// #####################
 	// battle toggle

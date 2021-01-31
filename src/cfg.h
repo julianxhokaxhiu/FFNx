@@ -32,6 +32,11 @@
 #define RENDERER_BACKEND_DIRECT3D12 4
 #define RENDERER_BACKEND_VULKAN 5
 
+#define FF7_LIMITER_ORIGINAL 0
+#define FF7_LIMITER_DEFAULT 1
+#define FF7_LIMITER_30FPS 2
+#define FF7_LIMITER_60FPS 3
+
 extern std::string mod_path;
 extern std::vector<std::string> mod_ext;
 extern long enable_ffmpeg_videos;
@@ -99,5 +104,6 @@ extern double speedhack_step;
 extern double speedhack_max;
 extern double speedhack_min;
 extern bool enable_animated_textures;
+extern long ff7_fps_limiter;
 
 void read_cfg();

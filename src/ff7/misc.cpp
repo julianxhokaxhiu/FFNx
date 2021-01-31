@@ -317,3 +317,64 @@ void* ff7_menu_sub_6F5C0C(uint32_t param1, uint32_t param2, uint8_t param3, uint
 {
 	return ff7_externals.menu_sub_6F5C0C(param1, param2, param3, *ff7_externals.millisecond_counter < 0x8000 ? 7 : 0, param5);
 }
+
+void ff7_limit_fps()
+{
+	static time_t last_gametime;
+	time_t gametime;
+	double framerate = 30.0f;
+
+	struct ff7_game_obj *game_object = (ff7_game_obj *)common_externals.get_game_object();
+	struct game_mode *mode = getmode_cached();
+
+	switch(mode->driver_mode)
+	{
+	case MODE_FIELD:
+		if (ff7_externals.movie_object->is_playing && !*ff7_externals.field_limit_fps)
+		{
+			// Some movies do not expect to be frame limited
+			qpc_get_time(&last_gametime);
+			return;
+		}
+		break;
+	case MODE_GAMEOVER:
+		// Gameover screen has nothing to limit
+		qpc_get_time(&last_gametime);
+		return;
+	}
+
+	if (ff7_fps_limiter < FF7_LIMITER_60FPS)
+	{
+		switch (mode->driver_mode)
+			{
+			case MODE_BATTLE:
+				if (ff7_fps_limiter < FF7_LIMITER_30FPS) framerate = 15.0f;
+				break;
+			case MODE_SNOWBOARD:
+			case MODE_COASTER:
+			case MODE_CONDOR:
+			case MODE_CREDITS:
+				framerate = 60.0f;
+				break;
+			}
+	}
+	else
+		framerate = 60.0f;
+
+	switch(mode->driver_mode)
+	{
+	case MODE_SUBMARINE:
+		if (*ff7_externals.submarine_minigame_status)
+			*ff7_externals.submarine_minigame_status = 0;
+		else
+			*ff7_externals.submarine_minigame_status = 1;
+		break;
+	}
+
+	framerate *= gamehacks.getCurrentSpeedhack();
+
+	do qpc_get_time(&gametime);
+	while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < ((ff7_game_obj*)common_externals.get_game_object())->countspersecond / framerate);
+
+	last_gametime = gametime;
+}
