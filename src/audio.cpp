@@ -132,14 +132,7 @@ bool NxAudioEngine::init()
 		}
 
 		for (int channel = 0; channel < _sfxNumChannels; channel++) _sfxChannels[channel] = SFXOptions();
-		_sfxStreams.resize(10000, nullptr);
 		_sfxSequentialIndexes.resize(1000, -1);
-
-		while (!_sfxStack.empty())
-		{
-			loadSFX(_sfxStack.top());
-			_sfxStack.pop();
-		}
 
 		return true;
 	}
@@ -171,65 +164,66 @@ bool NxAudioEngine::canPlaySFX(int id)
 	return getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
 }
 
-void NxAudioEngine::loadSFX(int id, bool loop)
+SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 {
 	int _curId = id - 1;
 
 	if (_engineInitialized)
 	{
-		if (_sfxStreams[_curId] == nullptr)
+		char filename[MAX_PATH];
+
+		bool exists = getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
+
+		if (exists)
 		{
-			char filename[MAX_PATH];
+			std::string _id = std::to_string(id);
+			auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id];
 
-			bool exists = getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
-
-			if (exists)
+			if (node)
 			{
-				std::string _id = std::to_string(id);
-				auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id];
+				int shouldLoop = node["loop"].value_or(-1);
 
-				if (node)
-				{
-					int shouldLoop = node["loop"].value_or(-1);
-
-					// Force loop if requested in the config
-					if (shouldLoop != -1) loop = shouldLoop;
-				}
-
-				if (trace_all || trace_sfx) trace("NxAudioEngine::%s: filename=%s,loop=%d\n", __func__, filename, loop);
-
-				SoLoud::VGMStream* sfx = new SoLoud::VGMStream();
-
-				sfx->setLooping(loop);
-				sfx->load(filename);
-
-				_sfxStreams[_curId] = sfx;
-
-				_sfxSequentialIndexes[_curId] = -1;
+				// Force loop if requested in the config
+				if (shouldLoop != -1) loop = shouldLoop;
 			}
+
+			if (trace_all || trace_sfx) trace("NxAudioEngine::%s: filename=%s,loop=%d\n", __func__, filename, loop);
+
+			SoLoud::VGMStream* sfx = new SoLoud::VGMStream();
+
+			sfx->setLooping(loop);
+			sfx->load(filename);
+
+			_sfxSequentialIndexes[_curId] = -1;
+
+			return sfx;
 		}
 	}
-	else
-		_sfxStack.push(id);
 }
 
-void NxAudioEngine::unloadSFX(int id)
+void NxAudioEngine::unloadSFX(int channel)
 {
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %d\n", __func__, id);
+	SFXOptions *options = &_sfxChannels[channel - 1];
 
-	int _curId = id - 1;
-
-	if (_sfxStreams[_curId] != nullptr)
+	if (options->stream != nullptr)
 	{
-		delete _sfxStreams[_curId];
+		delete options->stream;
 
-		_sfxStreams[_curId] = nullptr;
+		options->stream = nullptr;
 	}
 }
 
-void NxAudioEngine::playSFX(int id, int channel, float panning)
+void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
 {
+	SFXOptions *options = &_sfxChannels[channel - 1];
 	int _curId = id - 1;
+
+	// If the channel has already a stream loaded, and it's not the same sound, unload it
+	if (options->stream != nullptr && options->id != id)
+	{
+		stopSFX(channel);
+		unloadSFX(channel);
+	}
 
 	std::string _id = std::to_string(id);
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id];
@@ -257,19 +251,21 @@ void NxAudioEngine::playSFX(int id, int channel, float panning)
 
 			_curId = _newId->value_or(id) - 1;
 		}
-
-		// Try to load the new ID if it's not already cached
-		if (_sfxStreams[_curId] == nullptr) loadSFX(_curId + 1);
 	}
 
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, _curId + 1, channel, panning);
-
-	if (_sfxStreams[_curId] != nullptr)
+	// Try to load the new ID if it's not already cached
+	if (options->stream == nullptr)
 	{
-		SFXOptions *options = &_sfxChannels[channel - 1];
+		options->id = _curId + 1;
+		options->stream = loadSFX(options->id, loop);
+	}
 
+	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, options->id, channel, panning);
+
+	if (options->stream != nullptr)
+	{
 		SoLoud::handle _handle = _engine.play(
-			*_sfxStreams[_curId],
+			*options->stream,
 			options->volume,
 			panning
 		);

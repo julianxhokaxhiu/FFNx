@@ -40,11 +40,7 @@ bool ff7_should_sfx_loop(int id)
 
 int ff7_sfx_load(int id, DWORD dsound_flag)
 {
-	bool shouldCurrentSfxLoop = ff7_should_sfx_loop(id);
-
-	if (trace_all || trace_sfx) trace("%s: id=%d,loop=%x\n", __func__, id, shouldCurrentSfxLoop);
-
-	if (id) nxAudioEngine.loadSFX(id, shouldCurrentSfxLoop);
+	//if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
 
 	return true;
 }
@@ -126,8 +122,7 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 
 		if (!currentState->is_looped)
 		{
-			ff7_sfx_load(id, 0);
-			nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
+			nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f, ff7_should_sfx_loop(id));
 		}
 	}
 	else if ( channel < 6) // normally all sounds that are non-channel aware must never be stopped by the engine
@@ -153,7 +148,6 @@ void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte sp
 
 	if (id)
 	{
-		ff7_sfx_load(id, 0);
 		ff7_sfx_set_volume_on_channel(volume, _channel);
 		ff7_sfx_set_frequency_on_channel(speed, _channel);
 	}
@@ -208,7 +202,6 @@ void ff7_sfx_set_volume_on_channel_6(void* dsoundptr, LONG volume)
 void ff7_sfx_play_on_channel_6(void* dsoundptr, int unk)
 {
 	nxAudioEngine.setSFXVolume(6, sfx_channel_6_state.volume);
-	ff7_sfx_load(*ff7_externals.sfx_play_effects_id_channel_6, 0);
 	nxAudioEngine.playSFX(*ff7_externals.sfx_play_effects_id_channel_6, 6, sfx_channel_6_state.panning);
 }
 

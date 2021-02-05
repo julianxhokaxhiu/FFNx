@@ -78,10 +78,14 @@ public:
 	struct SFXOptions
 	{
 		SFXOptions() :
+			id(0),
+			stream(nullptr),
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
 			volume(1.0f),
 			loop(false)
 		{}
+		int id;
+		SoLoud::VGMStream *stream;
 		SoLoud::handle handle;
 		float volume;
 		bool loop;
@@ -102,10 +106,11 @@ private:
 	// SFX
 	short _sfxNumChannels = 10;
 	float _sfxMasterVolume = -1.0f;
-	std::stack<int> _sfxStack;
-	std::vector<SoLoud::VGMStream*> _sfxStreams;
 	std::map<int, SFXOptions> _sfxChannels;
 	std::vector<int> _sfxSequentialIndexes;
+
+	SoLoud::VGMStream* loadSFX(int id, bool loop = false);
+	void unloadSFX(int channel);
 
 	// MUSIC
 	NxAudioEngineMusic _musics[2];
@@ -142,9 +147,7 @@ public:
 
 	// SFX
 	bool canPlaySFX(int id);
-	void loadSFX(int id, bool loop = false);
-	void unloadSFX(int id);
-	void playSFX(int id, int channel, float panning);
+	void playSFX(int id, int channel, float panning, bool loop = false);
 	void stopSFX(int channel);
 	void pauseSFX(int channel);
 	void resumeSFX(int channel);
