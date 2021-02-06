@@ -1,6 +1,6 @@
 ---
 name: Bug report 🐞
-about: Create a report to help us improve. If you come here from a 7th Heaven crash, DO NOT open an issue here. Your ticket will be closed IMMEDIATELY!
+about: Create a report to help us improve. If you come here from a 7th Heaven crash, DO NOT open an issue, as it will be closed IMMEDIATELY. Consider opening a discussion thread instead!
 title: "[ GAME ] ISSUE"
 labels: bug
 assignees: ""
