@@ -40,14 +40,14 @@ bool ff7_should_sfx_loop(int id)
 
 int ff7_sfx_load(int id, DWORD dsound_flag)
 {
-	//if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
+	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
 
 	return true;
 }
 
 void ff7_sfx_unload(int id, void* unk)
 {
-	//if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
+	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
 }
 
 void ff7_sfx_set_volume_on_channel(byte volume, int channel)
@@ -157,21 +157,21 @@ void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte sp
 
 void ff7_sfx_pause()
 {
-	trace("%s\n", __func__);
+	if (trace_all || trace_sfx) trace("%s\n", __func__);
 
 	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.pauseSFX(channel);
 }
 
 void ff7_sfx_resume()
 {
-	trace("%s\n", __func__);
+	if (trace_all || trace_sfx) trace("%s\n", __func__);
 
 	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.resumeSFX(channel);
 }
 
 void ff7_sfx_stop()
 {
-	trace("%s\n", __func__);
+	if (trace_all || trace_sfx) trace("%s\n", __func__);
 
 	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.stopSFX(channel);
 
@@ -182,6 +182,8 @@ void ff7_sfx_stop()
 
 void ff7_sfx_set_frequency_on_channel_6(void* dsoundptr, DWORD frequency)
 {
+	if (trace_all || trace_sfx) trace("%s: frequency=%lu\n", __func__, frequency);
+
 	// TODO: IMPLEMENT PITCH?
 }
 
@@ -201,12 +203,16 @@ void ff7_sfx_set_volume_on_channel_6(void* dsoundptr, LONG volume)
 
 void ff7_sfx_play_on_channel_6(void* dsoundptr, int unk)
 {
+	if (trace_all || trace_sfx) trace("%s: id=%lu,panning=%f\n", __func__, *ff7_externals.sfx_play_effects_id_channel_6, sfx_channel_6_state.panning);
+
 	nxAudioEngine.setSFXVolume(6, sfx_channel_6_state.volume);
 	nxAudioEngine.playSFX(*ff7_externals.sfx_play_effects_id_channel_6, 6, sfx_channel_6_state.panning);
 }
 
 void ff7_sfx_stop_channel_6()
 {
+	if (trace_all || trace_sfx) trace("%s\n", __func__);
+
 	nxAudioEngine.stopSFX(6);
 
 	if (*ff7_externals.sfx_stop_channel_timer_handle) timeKillEvent(*ff7_externals.sfx_stop_channel_timer_handle);
