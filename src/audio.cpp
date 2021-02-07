@@ -131,7 +131,7 @@ bool NxAudioEngine::init()
 			}
 		}
 
-		for (int channel = 0; channel < _sfxNumChannels; channel++) _sfxChannels[channel] = SFXOptions();
+		for (int channel = 0; channel < _sfxTotalChannels; channel++) _sfxChannels[channel] = SFXOptions();
 		_sfxSequentialIndexes.resize(1000, -1);
 
 		return true;
@@ -201,7 +201,7 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 	}
 }
 
-void NxAudioEngine::unloadSFX(int channel)
+void NxAudioEngine::unloadSFXChannel(int channel)
 {
 	SFXOptions *options = &_sfxChannels[channel - 1];
 
@@ -213,16 +213,39 @@ void NxAudioEngine::unloadSFX(int channel)
 	}
 }
 
+void NxAudioEngine::unloadSFX(int id)
+{
+	if (_sfxEffectsHandler.count(id) > 0)
+	{
+		if (_sfxEffectsHandler[id] != nullptr)
+		{
+			delete _sfxEffectsHandler[id];
+
+			_sfxEffectsHandler.erase(id);
+		}
+	}
+}
+
 void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
 {
 	SFXOptions *options = &_sfxChannels[channel - 1];
 	int _curId = id - 1;
 
-	// If the channel has already a stream loaded, and it's not the same sound, unload it
-	if (options->stream != nullptr && options->id != id)
+	if (channel <= _sfxReusableChannels)
 	{
-		stopSFX(channel);
-		unloadSFX(channel);
+		// This channel is re-usable, which means we need to immediately unload the current SFX effect
+		if (options->stream != nullptr && options->id != id)
+		{
+			stopSFX(channel);
+			unloadSFXChannel(channel);
+		}
+	}
+	else if (channel <= _sfxTotalChannels)
+	{
+		_sfxEffectsHandler[options->id] = options->stream;
+
+		// invalidate the old channel stream in order to continue loading this new ID
+		options->stream = nullptr;
 	}
 
 	std::string _id = std::to_string(id);
@@ -358,6 +381,16 @@ void NxAudioEngine::setSFXPanning(int channel, float panning, double time)
 	else {
 		_engine.setPan(options->handle, panning);
 	}
+}
+
+void NxAudioEngine::setSFXReusableChannels(short num)
+{
+	_sfxReusableChannels = num;
+}
+
+void NxAudioEngine::setSFXTotalChannels(short num)
+{
+	_sfxTotalChannels = num;
 }
 
 // Music
