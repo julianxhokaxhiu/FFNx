@@ -43,6 +43,34 @@ typedef struct {
 	short x, y, z, res;		// short is a 2 byte signed integer
 } vertex_3s;
 
+byte get_field_parameter_byte(int id)
+{
+	byte* ptr4 = (byte*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
+
+	return *ptr4;
+}
+
+void set_field_parameter_byte(int id, byte value)
+{
+	byte* ptr4 = (byte*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
+
+	*ptr4 = value;
+}
+
+WORD get_field_parameter_word(int id)
+{
+	WORD* ptr4 = (WORD*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
+
+	return *ptr4;
+}
+
+void set_field_parameter_word(int id, WORD value)
+{
+	WORD* ptr4 = (WORD*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
+
+	*ptr4 = value;
+}
+
 int script_PC_map_change() {
 	if (map_changing)
 	{

@@ -23,12 +23,130 @@
 #include "renderer.h"
 #include "gl.h"
 #include "patch.h"
+#include "field.h"
 #include "ff7/defs.h"
 #include "video/movies.h"
 
 // Required by > 15 FPS movies
 short movie_fps_ratio = 1;
+int (*old_ofst)();
+int (*old_asped)();
+int (*old_msped)();
+int (*old_pmvie)();
+int (*old_canm1)();
+int (*old_canm2)();
+int (*old_anim1)();
+int (*old_anim2)();
+int (*old_anime1)();
+int (*old_anime2)();
+int (*old_dfanm)();
+int (*old_wait)();
 int (*old_mvief)();
+
+int script_WAIT()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+	{
+		if (
+			// Some scenes do not need this patch, it makes it worser
+			*ff7_externals.field_id != 133 &&
+			*ff7_externals.field_id != 240
+		)
+		{
+			set_field_parameter_word(0, get_field_parameter_word(0) * movie_fps_ratio);
+		}
+	}
+
+	return old_wait();
+}
+
+int script_OFST()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		set_field_parameter_word(9, get_field_parameter_word(9) * movie_fps_ratio);
+
+	return old_ofst();
+}
+
+int script_ASPED()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		set_field_parameter_word(1, get_field_parameter_word(1) / movie_fps_ratio);
+
+	return old_asped();
+}
+
+int script_MSPED()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		set_field_parameter_word(1, get_field_parameter_word(1) - (1024 / movie_fps_ratio));
+
+	return old_msped();
+}
+
+int script_CANM1()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+	{
+		set_field_parameter_word(1, get_field_parameter_word(1) * movie_fps_ratio);
+		set_field_parameter_word(2, get_field_parameter_word(2) * movie_fps_ratio);
+		set_field_parameter_byte(3, get_field_parameter_byte(3) * movie_fps_ratio);
+	}
+
+	return old_canm1();
+}
+
+int script_CANM2()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+	{
+		set_field_parameter_word(1, get_field_parameter_word(1) * movie_fps_ratio);
+		set_field_parameter_word(2, get_field_parameter_word(2) * movie_fps_ratio);
+		set_field_parameter_byte(3, get_field_parameter_byte(3) * movie_fps_ratio);
+	}
+
+	return old_canm2();
+}
+
+int script_ANIM1()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		set_field_parameter_byte(1, get_field_parameter_byte(1) * movie_fps_ratio);
+
+	return old_anim1();
+}
+
+int script_ANIM2()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		set_field_parameter_byte(1, get_field_parameter_byte(1) * movie_fps_ratio);
+
+	return old_anim2();
+}
+
+int script_ANIME1()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		set_field_parameter_byte(1, get_field_parameter_byte(1) * movie_fps_ratio);
+
+	return old_anime1();
+}
+
+int script_ANIME2()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		set_field_parameter_byte(1, get_field_parameter_byte(1) * movie_fps_ratio);
+
+	return old_anime2();
+}
+
+int script_DFANM()
+{
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		set_field_parameter_byte(1, get_field_parameter_byte(1) * movie_fps_ratio);
+
+	return old_dfanm();
+}
 
 int script_MVIEF()
 {
@@ -317,6 +435,44 @@ void movie_init()
 {
 	if(!ff8)
 	{
+		// Fix sync with movies > 15 FPS
+		old_wait = (int (*)())common_externals.execute_opcode_table[0x24];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x24], (DWORD)&script_WAIT);
+
+		old_ofst = (int (*)())common_externals.execute_opcode_table[0xC3];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xC3], (DWORD)&script_OFST);
+
+		old_asped = (int (*)())common_externals.execute_opcode_table[0xBD];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xBD], (DWORD)&script_ASPED);
+
+		old_msped = (int (*)())common_externals.execute_opcode_table[0xB2];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xB2], (DWORD)&script_MSPED);
+
+		old_mvief = (int (*)())common_externals.execute_opcode_table[0xFA];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xFA], (DWORD)&script_MVIEF);
+
+		old_canm1 = (int (*)())common_externals.execute_opcode_table[0xB1];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xB1], (DWORD)&script_CANM1);
+
+		old_canm2 = (int (*)())common_externals.execute_opcode_table[0xBC];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xBC], (DWORD)&script_CANM2);
+
+		old_anim1 = (int (*)())common_externals.execute_opcode_table[0xAF];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xAF], (DWORD)&script_ANIM1);
+
+		old_anim2 = (int (*)())common_externals.execute_opcode_table[0xBA];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xBA], (DWORD)&script_ANIM2);
+
+		old_anime1 = (int (*)())common_externals.execute_opcode_table[0xA3];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA3], (DWORD)&script_ANIME1);
+
+		old_anime2 = (int (*)())common_externals.execute_opcode_table[0xAE];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xAE], (DWORD)&script_ANIME2);
+
+		old_dfanm = (int (*)())common_externals.execute_opcode_table[0xA2];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA2], (DWORD)&script_DFANM);
+		// -----------------------------
+
 		replace_function(common_externals.prepare_movie, ff7_prepare_movie);
 		replace_function(common_externals.release_movie_objects, ff7_release_movie_objects);
 		replace_function(common_externals.start_movie, ff7_start_movie);

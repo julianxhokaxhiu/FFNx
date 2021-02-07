@@ -143,8 +143,8 @@ int opcode_voice_message()
 	static WORD message_last_opcode = 0;
 	static bool is_voice_acting = false;
 
-	byte window_id = get_field_parameter(0);
-	byte dialog_id = get_field_parameter(1);
+	byte window_id = get_field_parameter_byte(0);
+	byte dialog_id = get_field_parameter_byte(1);
 	byte message_current_opcode = get_dialog_opcode(window_id);
 	char* field_name = get_current_field_name();
 
@@ -189,8 +189,8 @@ int opcode_voice_ask(int unk)
 	static WORD message_last_opcode = 0;
 	static WORD message_last_option = 0;
 
-	byte window_id = get_field_parameter(1);
-	byte dialog_id = get_field_parameter(2);
+	byte window_id = get_field_parameter_byte(1);
+	byte dialog_id = get_field_parameter_byte(2);
 	byte message_current_opcode = get_dialog_opcode(window_id);
 	byte message_current_option = (ff7_externals.opcode_ask_question_code[24 * window_id] - 6) / 16;
 	char* field_name = get_current_field_name();

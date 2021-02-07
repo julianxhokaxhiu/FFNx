@@ -23,4 +23,7 @@
 
 void field_init();
 void field_debug(bool *isOpen);
-byte get_field_parameter(int id);
+byte get_field_parameter_byte(int id);
+void set_field_parameter_byte(int id, byte value);
+WORD get_field_parameter_word(int id);
+void set_field_parameter_word(int id, WORD value);
