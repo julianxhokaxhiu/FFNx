@@ -40,7 +40,7 @@ bool ff7_should_sfx_loop(int id)
 
 int ff7_sfx_load(int id, DWORD dsound_flag)
 {
-	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
+	//if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
 
 	return true;
 }
@@ -48,6 +48,8 @@ int ff7_sfx_load(int id, DWORD dsound_flag)
 void ff7_sfx_unload(int id, void* unk)
 {
 	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
+
+	nxAudioEngine.unloadSFX(id);
 }
 
 void ff7_sfx_set_volume_on_channel(byte volume, int channel)
@@ -475,6 +477,9 @@ void sfx_init()
 
 			sfx_state = new ff7_field_sfx_state[5]{0};
 			for (short i = 0; i < 5; i++) sfx_state[i].volume1 = 127;
+
+			nxAudioEngine.setSFXTotalChannels(6); // Allocate 6 channels in total
+			nxAudioEngine.setSFXReusableChannels(5); // The engine by default although re-uses up to 5 channels
 		}
 		else
 		{
