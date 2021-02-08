@@ -19,6 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "audio.h"
 #include "movies.h"
 #include "renderer.h"
 #include "gl.h"
@@ -42,6 +43,7 @@ int (*old_anime2)();
 int (*old_dfanm)();
 int (*old_wait)();
 int (*old_mvief)();
+int (*old_movie)();
 
 int script_WAIT()
 {
@@ -155,6 +157,13 @@ int script_MVIEF()
 
 	return old_mvief();
 }
+
+int script_MOVIE()
+{
+	nxAudioEngine.pauseAmbient();
+
+	return old_movie();
+}
 // ---------------------------
 
 uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice, uint32_t dd2interface)
@@ -249,6 +258,8 @@ uint32_t ff7_stop_movie()
 		ff7_externals.movie_object->movie_end = 0;
 
 		ffmpeg_stop_movie();
+
+		nxAudioEngine.resumeAmbient();
 	}
 
 	return true;
@@ -471,6 +482,9 @@ void movie_init()
 
 		old_dfanm = (int (*)())common_externals.execute_opcode_table[0xA2];
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA2], (DWORD)&script_DFANM);
+
+		old_movie = (int (*)())common_externals.execute_opcode_table[0xF9];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xF9], (DWORD)&script_MOVIE);
 		// -----------------------------
 
 		replace_function(common_externals.prepare_movie, ff7_prepare_movie);

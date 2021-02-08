@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 
+#include "../audio.h"
 #include "../gamepad.h"
 #include "../gamehacks.h"
 #include "../joystick.h"
@@ -377,4 +378,28 @@ void ff7_limit_fps()
 	while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < ((ff7_game_obj*)common_externals.get_game_object())->countspersecond / framerate);
 
 	last_gametime = gametime;
+}
+
+void ff7_handle_ambient_playback()
+{
+	struct game_mode *mode = getmode_cached();
+	static char filename[64]{0};
+	static WORD last_field_id = 0;
+
+  switch(mode->driver_mode)
+  {
+  case MODE_FIELD:
+		if (last_field_id != *ff7_externals.field_id)
+		{
+			last_field_id = *ff7_externals.field_id;
+
+			sprintf(filename, "field_%d", last_field_id);
+			nxAudioEngine.playAmbient(filename);
+		}
+		break;
+	default:
+		nxAudioEngine.stopAmbient();
+		last_field_id = 0;
+		break;
+  }
 }
