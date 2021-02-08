@@ -91,12 +91,31 @@ public:
 		float wantedMusicVolume;
 	};
 
+	struct NxAudioEngineVoice
+	{
+		NxAudioEngineVoice() :
+			handle(NXAUDIOENGINE_INVALID_HANDLE),
+			stream(nullptr) {}
+		SoLoud::handle handle;
+		SoLoud::VGMStream* stream;
+	};
+
+	struct NxAudioEngineAmbient
+	{
+		NxAudioEngineAmbient() :
+			handle(NXAUDIOENGINE_INVALID_HANDLE),
+			stream(nullptr) {}
+		SoLoud::handle handle;
+		SoLoud::VGMStream* stream;
+	};
+
 private:
 	enum NxAudioEngineLayer
 	{
 		NXAUDIOENGINE_SFX,
 		NXAUDIOENGINE_MUSIC,
 		NXAUDIOENGINE_VOICE,
+		NXAUDIOENGINE_AMBIENT,
 	};
 
 	bool _engineInitialized = false;
@@ -127,7 +146,10 @@ private:
 	void resetMusicVolume(int channel, double time = 0);
 
 	// VOICE
-	SoLoud::handle _voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
+	NxAudioEngineVoice _currentVoice;
+
+	// AMBIENT
+	NxAudioEngineAmbient _currentAmbient;
 
 	// MISC
 	// Returns false if the file does not exist
@@ -186,6 +208,14 @@ public:
 	bool playVoice(const char* name, float volume = 1.0f);
 	void stopVoice(double time = 0);
 	bool isVoicePlaying();
+
+	// Ambient
+	bool canPlayAmbient(const char* name);
+	bool playAmbient(const char* name, float volume = 1.0f);
+	void stopAmbient(double time = 0);
+	void pauseAmbient(double time = 0);
+	void resumeAmbient(double time = 0);
+	bool isAmbientPlaying();
 };
 
 NxAudioEngine::MusicFlags operator|(NxAudioEngine::MusicFlags flags, NxAudioEngine::MusicFlags other) {

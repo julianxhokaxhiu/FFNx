@@ -32,7 +32,7 @@ void NxAudioEngine::loadConfig()
 {
 	char _fullpath[MAX_PATH];
 
-	for (int idx = NxAudioEngineLayer::NXAUDIOENGINE_SFX; idx != NxAudioEngineLayer::NXAUDIOENGINE_VOICE; idx++)
+	for (int idx = NxAudioEngineLayer::NXAUDIOENGINE_SFX; idx != NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT; idx++)
 	{
 		NxAudioEngineLayer type = NxAudioEngineLayer(idx);
 
@@ -46,6 +46,9 @@ void NxAudioEngine::loadConfig()
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_voice_path.c_str());
+			break;
+		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
+			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_ambient_path.c_str());
 			break;
 		}
 
@@ -76,6 +79,9 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
 			extensions = external_voice_ext;
 			break;
+		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
+			extensions = external_ambient_ext;
+			break;
 	}
 
 	for (const std::string &extension: extensions) {
@@ -89,6 +95,9 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
 			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, extension.c_str());
+			break;
+		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_ambient_path.c_str(), _key, extension.c_str());
 			break;
 		}
 
@@ -106,7 +115,8 @@ bool NxAudioEngine::fileExists(const char* filename)
 
 	bool ret = (stat(filename, &dummy) == 0);
 
-	if (!ret && (trace_all || trace_music || trace_sfx || trace_voice)) warning("NxAudioEngine::%s: Could not find file %s\n", __func__, filename);
+	if (!ret && (trace_all || trace_music || trace_sfx || trace_voice || trace_ambient))
+		warning("NxAudioEngine::%s: Could not find file %s\n", __func__, filename);
 
 	return ret;
 }
@@ -148,7 +158,14 @@ void NxAudioEngine::flush()
 	_musics[0].handle = NXAUDIOENGINE_INVALID_HANDLE;
 	_musics[1].handle = NXAUDIOENGINE_INVALID_HANDLE;
 
-	_voiceHandle = NXAUDIOENGINE_INVALID_HANDLE;
+	for (int channel = 0; channel < _sfxTotalChannels; channel++)
+	{
+		_sfxChannels[channel].handle = NXAUDIOENGINE_INVALID_HANDLE;
+	}
+
+	_currentVoice.handle = NXAUDIOENGINE_INVALID_HANDLE;
+
+	_currentAmbient.handle = NXAUDIOENGINE_INVALID_HANDLE;
 }
 
 void NxAudioEngine::cleanup()
@@ -779,16 +796,21 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 
 	if (exists)
 	{
-		SoLoud::VGMStream* voice = new SoLoud::VGMStream();
-
-		voice->load(filename);
-
 		// Stop any previously playing voice
-		if (_engine.isValidVoiceHandle(_voiceHandle)) _engine.stop(_voiceHandle);
+		if (_engine.isValidVoiceHandle(_currentVoice.handle))
+		{
+			_engine.stop(_currentVoice.handle);
 
-		_voiceHandle = _engine.play(*voice, volume);
+			delete _currentVoice.stream;
+		}
 
-		return _engine.isValidVoiceHandle(_voiceHandle);
+		_currentVoice.stream = new SoLoud::VGMStream();
+
+		_currentVoice.stream->load(filename);
+
+		_currentVoice.handle = _engine.play(*_currentVoice.stream, volume);
+
+		return _engine.isValidVoiceHandle(_currentVoice.handle);
 	}
 	else
 		return false;
@@ -798,16 +820,99 @@ void NxAudioEngine::stopVoice(double time)
 {
 	if (time > 0.0)
 	{
-		_engine.fadeVolume(_voiceHandle, 0, time);
-		_engine.scheduleStop(_voiceHandle, time);
+		_engine.fadeVolume(_currentVoice.handle, 0, time);
+		_engine.scheduleStop(_currentVoice.handle, time);
 	}
 	else
 	{
-		_engine.stop(_voiceHandle);
+		_engine.stop(_currentVoice.handle);
 	}
 }
 
 bool NxAudioEngine::isVoicePlaying()
 {
-	return _engine.isValidVoiceHandle(_voiceHandle) && !_engine.getPause(_voiceHandle);
+	return _engine.isValidVoiceHandle(_currentVoice.handle) && !_engine.getPause(_currentVoice.handle);
+}
+
+// Ambient
+bool NxAudioEngine::canPlayAmbient(const char* name)
+{
+	char filename[MAX_PATH];
+
+	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+}
+
+bool NxAudioEngine::playAmbient(const char* name, float volume)
+{
+	char filename[MAX_PATH];
+
+	bool exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+
+	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: %s\n", __func__, filename);
+
+	if (exists)
+	{
+		// Stop any previously playing ambient
+		if (_engine.isValidVoiceHandle(_currentAmbient.handle))
+		{
+			_engine.stop(_currentAmbient.handle);
+
+			delete _currentAmbient.stream;
+		}
+
+		_currentAmbient.stream = new SoLoud::VGMStream();
+
+		_currentAmbient.stream->load(filename);
+
+		_currentAmbient.handle = _engine.play(*_currentAmbient.stream, volume);
+
+		return _engine.isValidVoiceHandle(_currentAmbient.handle);
+	}
+	else
+		return false;
+}
+
+void NxAudioEngine::stopAmbient(double time)
+{
+	if (time > 0.0)
+	{
+		_engine.fadeVolume(_currentAmbient.handle, 0, time);
+		_engine.scheduleStop(_currentAmbient.handle, time);
+	}
+	else
+	{
+		_engine.stop(_currentAmbient.handle);
+	}
+}
+
+void NxAudioEngine::pauseAmbient(double time)
+{
+	if (time > 0.0)
+	{
+		_engine.fadeVolume(_currentAmbient.handle, 0, time);
+		_engine.schedulePause(_currentAmbient.handle, time);
+	}
+	else
+	{
+		_engine.setPause(_currentAmbient.handle, true);
+	}
+}
+
+void NxAudioEngine::resumeAmbient(double time)
+{
+	if (time > 0.0)
+	{
+		_engine.setPause(_currentAmbient.handle, false);
+		_engine.fadeVolume(_currentAmbient.handle, 1.0f, time);
+	}
+	else
+	{
+		_engine.setVolume(_currentAmbient.handle, 1.0f);
+		_engine.setPause(_currentAmbient.handle, false);
+	}
+}
+
+bool NxAudioEngine::isAmbientPlaying()
+{
+	return _engine.isValidVoiceHandle(_currentAmbient.handle) && !_engine.getPause(_currentAmbient.handle);
 }

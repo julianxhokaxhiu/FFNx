@@ -163,6 +163,20 @@ enable_voice_music_fade = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_voice_music_fade_volume = 25
 
+#[EXTERNAL AMBIENT PATH]
+# Path of the external ambient files
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external_ambient_path = "ambient"
+
+#[EXTERNAL AMBIENT EXTENSION]
+# The type of file to search for. By default is ogg.
+# You can use a list to specify multiple extensions, ordered by priority.
+# Example: ["ogg", "flac"]
+# Supported extensions:
+# - https://github.com/losnoco/vgmstream#supported-file-types
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external_ambient_ext = "ogg"
+
 ###########################
 # Video Player Options
 ###########################

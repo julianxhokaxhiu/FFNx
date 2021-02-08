@@ -38,6 +38,8 @@ std::vector<std::string> external_music_ext;
 std::string he_bios_path;
 std::string external_voice_path;
 std::vector<std::string> external_voice_ext;
+std::string external_ambient_path;
+std::vector<std::string> external_ambient_ext;
 bool enable_voice_music_fade;
 long external_voice_music_fade_volume;
 bool save_textures;
@@ -53,6 +55,7 @@ bool trace_loaders;
 bool trace_lights;
 bool trace_opcodes;
 bool trace_voice;
+bool trace_ambient;
 bool trace_gamepad;
 bool vertex_log;
 bool uniform_log;
@@ -147,6 +150,8 @@ void read_cfg()
 	external_voice_ext = get_string_or_array_of_strings(config["external_voice_ext"]);
 	enable_voice_music_fade = config["enable_voice_music_fade"].value_or(false);
 	external_voice_music_fade_volume = config["external_voice_music_fade_volume"].value_or(25);
+	external_ambient_path = config["external_ambient_path"].value_or("");
+	external_ambient_ext = get_string_or_array_of_strings(config["external_ambient_ext"]);
 	save_textures = config["save_textures"].value_or(false);
 	trace_all = config["trace_all"].value_or(false);
 	trace_renderer = config["trace_renderer"].value_or(false);
@@ -160,6 +165,7 @@ void read_cfg()
 	trace_lights = config["trace_lights"].value_or(false);
 	trace_opcodes = config["trace_opcodes"].value_or(false);
 	trace_voice = config["trace_voice"].value_or(false);
+	trace_ambient = config["trace_ambient"].value_or(false);
 	trace_gamepad = config["trace_gamepad"].value_or(false);
 	vertex_log = config["vertex_log"].value_or(false);
 	uniform_log = config["uniform_log"].value_or(false);
@@ -323,6 +329,14 @@ void read_cfg()
 	// EXTERNAL VOICE EXTENSION
 	if (external_voice_ext.empty() || external_voice_ext.front().empty())
 		external_voice_ext = std::vector<std::string>(1, "ogg");
+
+	// EXTERNAL AMBIENT PATH
+	if (external_ambient_path.empty())
+		external_ambient_path = "ambient";
+
+	// EXTERNAL AMBIENT EXTENSION
+	if (external_ambient_ext.empty() || external_ambient_ext.front().empty())
+		external_ambient_ext = std::vector<std::string>(1, "ogg");
 
 	// MOD PATH
 	if (mod_path.empty())
