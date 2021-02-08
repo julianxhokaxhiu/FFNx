@@ -149,6 +149,7 @@ private:
 	NxAudioEngineVoice _currentVoice;
 
 	// AMBIENT
+	std::map<std::string, int> _ambientSequentialIndexes;
 	NxAudioEngineAmbient _currentAmbient;
 
 	// MISC

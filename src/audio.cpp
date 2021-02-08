@@ -32,7 +32,7 @@ void NxAudioEngine::loadConfig()
 {
 	char _fullpath[MAX_PATH];
 
-	for (int idx = NxAudioEngineLayer::NXAUDIOENGINE_SFX; idx != NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT; idx++)
+	for (int idx = NxAudioEngineLayer::NXAUDIOENGINE_SFX; idx <= NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT; idx++)
 	{
 		NxAudioEngineLayer type = NxAudioEngineLayer(idx);
 
@@ -40,15 +40,19 @@ void NxAudioEngine::loadConfig()
 		{
 		case NxAudioEngineLayer::NXAUDIOENGINE_SFX:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_sfx_path.c_str());
+			if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_music_path.c_str());
+			if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_voice_path.c_str());
+			if (trace_all || trace_voice) trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_ambient_path.c_str());
+			if (trace_all || trace_ambient) trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		}
 
@@ -845,8 +849,39 @@ bool NxAudioEngine::canPlayAmbient(const char* name)
 bool NxAudioEngine::playAmbient(const char* name, float volume)
 {
 	char filename[MAX_PATH];
+	bool exists = false;
 
-	bool exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT][name];
+	if (node)
+	{
+		// Shuffle SFX playback, if any entry found for the current id
+		toml::array *shuffleIds = node["shuffle"].as_array();
+		if (shuffleIds && !shuffleIds->empty() && shuffleIds->is_homogeneous(toml::node_type::string))
+		{
+			auto _newName = shuffleIds->get(getRandomInt(0, shuffleIds->size() - 1));
+
+			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(""), NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+		}
+
+		// Sequentially playback new SFX ids, if any entry found for the current id
+		toml::array *sequentialIds = node["sequential"].as_array();
+		if (sequentialIds && !sequentialIds->empty() && sequentialIds->is_homogeneous(toml::node_type::string))
+		{
+			// If the key doesn't exist already, add it
+			if (_ambientSequentialIndexes.count(name) == 0) _ambientSequentialIndexes[name] == NULL;
+
+			if (_ambientSequentialIndexes[name] == NULL || _ambientSequentialIndexes[name] == sequentialIds->size())
+				_ambientSequentialIndexes[name] = 0;
+
+			auto _newName = sequentialIds->get(_ambientSequentialIndexes[name]);
+
+			_ambientSequentialIndexes[name]++;
+
+			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(""), NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+		}
+	}
+	else
+		exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 
 	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
