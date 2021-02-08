@@ -353,6 +353,10 @@ trace_opcodes = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trace_voice = false
 
+# trace_ambient - Dump in the logs only APIs that has to do with ambient playback
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+trace_ambient = false
+
 # trace_gamepad - Dump in the logs only APIs that has to do with gamepad
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trace_gamepad = false
