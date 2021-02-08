@@ -153,7 +153,7 @@ int script_DFANM()
 int script_MVIEF()
 {
 	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
-		*ff7_externals.current_movie_frame = (WORD)ceil(*ff7_externals.current_movie_frame * movie_fps_ratio);
+		*ff7_externals.current_movie_frame = (WORD)ceil(*ff7_externals.current_movie_frame / movie_fps_ratio);
 
 	return old_mvief();
 }
