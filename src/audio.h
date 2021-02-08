@@ -33,19 +33,6 @@
 
 #define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000
 
-struct NxAudioEngineMusic
-{
-	NxAudioEngineMusic() :
-		handle(NXAUDIOENGINE_INVALID_HANDLE),
-		id(0),
-		isResumable(false),
-		wantedMusicVolume(1.0f) {}
-	SoLoud::handle handle;
-	uint32_t id;
-	bool isResumable;
-	float wantedMusicVolume;
-};
-
 class NxAudioEngine
 {
 public:
@@ -75,9 +62,9 @@ public:
 		char format[12];
 	};
 
-	struct SFXOptions
+	struct NxAudioEngineSFX
 	{
-		SFXOptions() :
+		NxAudioEngineSFX() :
 			id(0),
 			stream(nullptr),
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
@@ -91,12 +78,25 @@ public:
 		bool loop;
 	};
 
+	struct NxAudioEngineMusic
+	{
+		NxAudioEngineMusic() :
+			handle(NXAUDIOENGINE_INVALID_HANDLE),
+			id(0),
+			isResumable(false),
+			wantedMusicVolume(1.0f) {}
+		SoLoud::handle handle;
+		uint32_t id;
+		bool isResumable;
+		float wantedMusicVolume;
+	};
+
 private:
 	enum NxAudioEngineLayer
 	{
 		NXAUDIOENGINE_SFX,
 		NXAUDIOENGINE_MUSIC,
-		NXAUDIOENGINE_VOICE
+		NXAUDIOENGINE_VOICE,
 	};
 
 	bool _engineInitialized = false;
@@ -107,7 +107,7 @@ private:
 	short _sfxReusableChannels = 0;
 	short _sfxTotalChannels = 0;
 	float _sfxMasterVolume = -1.0f;
-	std::map<int, SFXOptions> _sfxChannels;
+	std::map<int, NxAudioEngineSFX> _sfxChannels;
 	std::vector<int> _sfxSequentialIndexes;
 	std::map<int, SoLoud::VGMStream*> _sfxEffectsHandler;
 

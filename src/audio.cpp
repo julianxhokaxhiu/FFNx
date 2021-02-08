@@ -131,7 +131,7 @@ bool NxAudioEngine::init()
 			}
 		}
 
-		for (int channel = 0; channel < _sfxTotalChannels; channel++) _sfxChannels[channel] = SFXOptions();
+		for (int channel = 0; channel < _sfxTotalChannels; channel++) _sfxChannels[channel] = NxAudioEngineSFX();
 		_sfxSequentialIndexes.resize(1000, -1);
 
 		return true;
@@ -203,7 +203,7 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 
 void NxAudioEngine::unloadSFXChannel(int channel)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	if (options->stream != nullptr)
 	{
@@ -228,7 +228,7 @@ void NxAudioEngine::unloadSFX(int id)
 
 void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 	int _curId = id - 1;
 
 	if (channel <= _sfxReusableChannels)
@@ -300,7 +300,7 @@ void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
 
 void NxAudioEngine::stopSFX(int channel)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
@@ -309,7 +309,7 @@ void NxAudioEngine::stopSFX(int channel)
 
 void NxAudioEngine::pauseSFX(int channel)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
@@ -318,7 +318,7 @@ void NxAudioEngine::pauseSFX(int channel)
 
 void NxAudioEngine::resumeSFX(int channel)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
@@ -327,7 +327,7 @@ void NxAudioEngine::resumeSFX(int channel)
 
 bool NxAudioEngine::isSFXPlaying(int channel)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	return _engine.isValidVoiceHandle(options->handle) && !_engine.getPause(options->handle);
 }
@@ -344,7 +344,7 @@ void NxAudioEngine::setSFXMasterVolume(float volume, double time)
 
 void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	options->volume = volume * getSFXMasterVolume();
 
@@ -359,7 +359,7 @@ void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 
 void NxAudioEngine::setSFXSpeed(int channel, float speed, double time)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();
@@ -372,7 +372,7 @@ void NxAudioEngine::setSFXSpeed(int channel, float speed, double time)
 
 void NxAudioEngine::setSFXPanning(int channel, float panning, double time)
 {
-	SFXOptions *options = &_sfxChannels[channel - 1];
+	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();
