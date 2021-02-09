@@ -23,7 +23,17 @@
 
 void field_init();
 void field_debug(bool *isOpen);
-byte get_field_parameter_byte(int id);
-void set_field_parameter_byte(int id, byte value);
-WORD get_field_parameter_word(int id);
-void set_field_parameter_word(int id, WORD value);
+
+template<typename T>
+T get_field_parameter(int id)
+{
+	return *(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1);
+}
+
+template<typename T>
+void set_field_parameter(int id, T value)
+{
+	*(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1) = value;
+}
+
+byte get_field_bank_value(int16_t bank);

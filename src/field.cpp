@@ -19,13 +19,10 @@ bool map_changing = false;
 
 // FF7 only
 int (*old_pc)();
-byte* current_entity_id;
 byte** level_data_pointer;
 short* pending_x;
 short* pending_y;
 short* pending_triangle;
-int* field_ptr_1; //0xCBF5E8
-WORD* field_array_1; //0xCC0CF8
 
 struct FF7SCRIPTHEADER {
 	WORD unknown1;			// Always 0x0502
@@ -43,32 +40,25 @@ typedef struct {
 	short x, y, z, res;		// short is a 2 byte signed integer
 } vertex_3s;
 
-byte get_field_parameter_byte(int id)
+byte get_field_bank_value(int16_t bank)
 {
-	byte* ptr4 = (byte*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
-
-	return *ptr4;
-}
-
-void set_field_parameter_byte(int id, byte value)
-{
-	byte* ptr4 = (byte*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
-
-	*ptr4 = value;
-}
-
-WORD get_field_parameter_word(int id)
-{
-	WORD* ptr4 = (WORD*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
-
-	return *ptr4;
-}
-
-void set_field_parameter_word(int id, WORD value)
-{
-	WORD* ptr4 = (WORD*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
-
-	*ptr4 = value;
+	switch(bank)
+	{
+	case 0:
+		return (get_field_parameter<byte>(0) >> 4) & 0xF;
+	case 1:
+		return get_field_parameter<byte>(0) & 0xF;
+	case 2:
+		return (get_field_parameter<byte>(1) >> 4) & 0xF;
+	case 3:
+		return get_field_parameter<byte>(1) & 0xF;
+	case 4:
+		return (get_field_parameter<byte>(2) >> 4) & 0xF;
+	case 5:
+		return get_field_parameter<byte>(2) & 0xF;
+	default:
+		return 0;
+	}
 }
 
 int script_PC_map_change() {
@@ -91,13 +81,6 @@ int script_PC_map_change() {
 	return old_pc();
 }
 
-byte get_field_parameter(int id)
-{
-	byte* ptr4 = (byte*)(field_array_1[*current_entity_id] + *field_ptr_1 + id + 1);
-
-	return *ptr4;
-}
-
 void field_init()
 {
 	if (!ff8)
@@ -116,7 +99,7 @@ void field_init()
 
 		level_data_pointer = (byte**)get_absolute_value(sub_630734, 0xB2); // 0xCFF594
 
-		current_entity_id = (byte*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0x06); // 0xCC0964
+		ff7_externals.current_entity_id = (byte*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0x06); // 0xCC0964
 		current_field_id = (WORD*)get_absolute_value(sub_408074, 0x41); // 0xCC15D0
 		previous_field_id = (WORD*)get_absolute_value(sub_408074, 0x4F); // 0xCC0DEC
 		update_entities_call = update_field_entities + 0x461; // 0x60CDAE
@@ -124,8 +107,8 @@ void field_init()
 		pending_x = (short*)get_absolute_value(sub_408074, 0x5D); // 0xCC0D8C
 		pending_y = pending_x + 1; // 0xCC0D8E
 		pending_triangle = pending_x + 15; // 0xCC0DAA
-		field_ptr_1 = (int*)get_absolute_value(ff7_externals.open_field_file, 0xEA); //0xCBF5E8
-		field_array_1 = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0xE); //0xCC0CF8
+		ff7_externals.field_ptr_1 = (int*)get_absolute_value(ff7_externals.open_field_file, 0xEA); //0xCBF5E8
+		ff7_externals.field_array_1 = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0xE); //0xCC0CF8
 	}
 	else
 	{
@@ -147,7 +130,7 @@ int map_jump_ff7()
 	// Restores the original field update code
 	memcpy_code(update_entities_call, map_patch_storage, 7);
 
-	byte* current_executing_code = (byte*)(field_array_1[*current_entity_id] + *field_ptr_1);
+	byte* current_executing_code = (byte*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1);
 
 	// Inject MAPJUMP coordinates
 	memset(current_executing_code, 0, 10);

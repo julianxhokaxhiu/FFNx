@@ -1750,6 +1750,13 @@ struct ff7_externals
 	DWORD *submarine_minigame_status;
 	DWORD *field_limit_fps;
 	DWORD *swirl_limit_fps;
+	int16_t (*get_bank_value)(int16_t, int16_t);
+	int8_t (*set_bank_value)(int16_t, int16_t, int16_t);
+	uint32_t sub_611BAE;
+	byte* current_entity_id;
+	int* field_ptr_1; //0xCBF5E8
+	WORD* field_array_1; //0xCC0CF8
+	WORD* wait_frames_ptr; //0xCC0900
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
