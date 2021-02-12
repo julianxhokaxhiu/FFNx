@@ -33,7 +33,6 @@ short movie_fps_ratio = 1;
 int (*old_ofst)();
 int (*old_asped)();
 int (*old_mvief)();
-int (*old_movie)();
 byte mvief_bank = 0;
 byte mvief_address = 0;
 
@@ -95,13 +94,6 @@ int script_MVIEF()
 	mvief_address = get_field_parameter<byte>(1);
 
 	return old_mvief();
-}
-
-int script_MOVIE()
-{
-	nxAudioEngine.pauseAmbient();
-
-	return old_movie();
 }
 
 uint8_t ff7_compare_ifsw()
@@ -227,6 +219,8 @@ uint32_t ff7_start_movie()
 	if(ff7_externals.movie_object->is_playing) return true;
 
 	ff7_externals.movie_object->is_playing = 1;
+
+	nxAudioEngine.pauseAmbient();
 
 	return ff7_update_movie_sample(0);
 }
@@ -438,9 +432,6 @@ void movie_init()
 
 		old_mvief = (int (*)())common_externals.execute_opcode_table[0xFA];
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xFA], (DWORD)&script_MVIEF);
-
-		old_movie = (int (*)())common_externals.execute_opcode_table[0xF9];
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xF9], (DWORD)&script_MOVIE);
 
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x24], (DWORD)&script_WAIT);
 
