@@ -398,8 +398,11 @@ void ff7_handle_ambient_playback()
 		}
 		break;
 	default:
-		nxAudioEngine.stopAmbient();
-		last_field_id = 0;
+		if (last_field_id != 0)
+		{
+			nxAudioEngine.stopAmbient();
+			last_field_id = 0;
+		}
 		break;
   }
 }
