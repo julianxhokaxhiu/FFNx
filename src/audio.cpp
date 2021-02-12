@@ -798,16 +798,16 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 
 	if (trace_all || trace_voice) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
+	// Stop any previously playing voice
+	if (_engine.isValidVoiceHandle(_currentVoice.handle))
+	{
+		_engine.stop(_currentVoice.handle);
+
+		delete _currentVoice.stream;
+	}
+
 	if (exists)
 	{
-		// Stop any previously playing voice
-		if (_engine.isValidVoiceHandle(_currentVoice.handle))
-		{
-			_engine.stop(_currentVoice.handle);
-
-			delete _currentVoice.stream;
-		}
-
 		_currentVoice.stream = new SoLoud::VGMStream();
 
 		_currentVoice.stream->load(filename);
@@ -885,16 +885,16 @@ bool NxAudioEngine::playAmbient(const char* name, float volume)
 
 	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
+	// Stop any previously playing ambient
+	if (_engine.isValidVoiceHandle(_currentAmbient.handle))
+	{
+		_engine.stop(_currentAmbient.handle);
+
+		delete _currentAmbient.stream;
+	}
+
 	if (exists)
 	{
-		// Stop any previously playing ambient
-		if (_engine.isValidVoiceHandle(_currentAmbient.handle))
-		{
-			_engine.stop(_currentAmbient.handle);
-
-			delete _currentAmbient.stream;
-		}
-
 		_currentAmbient.stream = new SoLoud::VGMStream();
 
 		_currentAmbient.stream->load(filename);
