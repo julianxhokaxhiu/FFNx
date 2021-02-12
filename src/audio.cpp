@@ -909,6 +909,8 @@ bool NxAudioEngine::playAmbient(const char* name, float volume)
 
 void NxAudioEngine::stopAmbient(double time)
 {
+	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+
 	if (time > 0.0)
 	{
 		_engine.fadeVolume(_currentAmbient.handle, 0, time);
@@ -922,6 +924,8 @@ void NxAudioEngine::stopAmbient(double time)
 
 void NxAudioEngine::pauseAmbient(double time)
 {
+	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+
 	if (time > 0.0)
 	{
 		_engine.fadeVolume(_currentAmbient.handle, 0, time);
@@ -935,6 +939,8 @@ void NxAudioEngine::pauseAmbient(double time)
 
 void NxAudioEngine::resumeAmbient(double time)
 {
+	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+
 	if (time > 0.0)
 	{
 		_engine.setPause(_currentAmbient.handle, false);
