@@ -220,6 +220,8 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 			return sfx;
 		}
 	}
+
+	return nullptr;
 }
 
 void NxAudioEngine::unloadSFXChannel(int channel)
