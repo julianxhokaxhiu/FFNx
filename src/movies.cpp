@@ -40,7 +40,7 @@ int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1) ret *= movie_fps_ratio;
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1 && !is_movie_bgfield) ret *= movie_fps_ratio;
 
 	return ret;
 }
@@ -111,7 +111,7 @@ uint8_t ff7_compare_ifsw()
 	int16_t right_value = ff7_externals.get_bank_value(2, 4);
 	byte compare_type = get_field_parameter<byte>(5);
 
-	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1 && !is_movie_bgfield)
 	{
 		byte current_mvief_bank = get_field_bank_value(0);
 		WORD current_mvief_address = get_field_parameter<WORD>(1);
