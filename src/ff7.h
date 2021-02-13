@@ -1206,7 +1206,7 @@ struct ff7_game_obj
 	uint32_t field_70;
 	void *dddevice;
 	void *dd2interface;
-	void *front_surface[3];
+	LPDIRECTDRAWSURFACE front_surface[3];
 	DDSURFACEDESC front_surface_desc[3];
 	uint32_t field_1CC;
 	uint32_t field_1D0;
