@@ -30,26 +30,26 @@
 
 // Required by > 15 FPS movies
 short movie_fps_ratio = 1;
-int (*old_ofst)();
-int (*old_asped)();
 int (*old_mvief)();
 byte mvief_bank = 0;
 byte mvief_address = 0;
 
-int script_OFST()
+int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 {
-	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
-		set_field_parameter<WORD>(9, get_field_parameter<WORD>(9) * movie_fps_ratio);
+	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	return old_ofst();
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1) ret *= movie_fps_ratio;
+
+	return ret;
 }
 
-int script_ASPED()
+int16_t script_ASPED_get_speed(int16_t bank, int16_t address)
 {
-	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
-		set_field_parameter<WORD>(1, get_field_parameter<WORD>(1) / movie_fps_ratio);
+	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	return old_asped();
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1) ret /= movie_fps_ratio;
+
+	return ret;
 }
 
 int script_WAIT()
@@ -424,16 +424,12 @@ void movie_init()
 	if(!ff8)
 	{
 		// Fix sync with movies > 15 FPS
-		old_ofst = (int (*)())common_externals.execute_opcode_table[0xC3];
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xC3], (DWORD)&script_OFST);
-
-		old_asped = (int (*)())common_externals.execute_opcode_table[0xBD];
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xBD], (DWORD)&script_ASPED);
-
 		old_mvief = (int (*)())common_externals.execute_opcode_table[0xFA];
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xFA], (DWORD)&script_MVIEF);
 
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x24], (DWORD)&script_WAIT);
+		replace_call_function(common_externals.execute_opcode_table[0xBD] + 0x1E, script_ASPED_get_speed);
+		replace_call_function(common_externals.execute_opcode_table[0xC3] + 0x46, script_OFST_get_speed);
 
 		replace_function(ff7_externals.sub_611BAE, ff7_compare_ifsw);
 		// -----------------------------
