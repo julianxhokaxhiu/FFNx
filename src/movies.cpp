@@ -29,8 +29,10 @@
 #include "video/movies.h"
 
 // Required by > 15 FPS movies
+bool is_movie_bgfield = false;
 short movie_fps_ratio = 1;
 int (*old_mvief)();
+int (*old_bgmovie)();
 byte mvief_bank = 0;
 byte mvief_address = 0;
 
@@ -47,7 +49,7 @@ int16_t script_ASPED_get_speed(int16_t bank, int16_t address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1) ret /= movie_fps_ratio;
+	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1 && !is_movie_bgfield) ret /= movie_fps_ratio;
 
 	return ret;
 }
@@ -75,7 +77,7 @@ int script_WAIT()
   {
     ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = get_field_parameter<WORD>(0);
 
-		if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1)
+		if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1 && !is_movie_bgfield)
 			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= movie_fps_ratio;
 
     ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] |= get_field_parameter<byte>(1) << 8;
@@ -94,6 +96,13 @@ int script_MVIEF()
 	mvief_address = get_field_parameter<byte>(1);
 
 	return old_mvief();
+}
+
+int script_BGMOVIE()
+{
+	is_movie_bgfield = get_field_parameter<byte>(0);
+
+	return old_bgmovie();
 }
 
 uint8_t ff7_compare_ifsw()
@@ -426,6 +435,9 @@ void movie_init()
 		// Fix sync with movies > 15 FPS
 		old_mvief = (int (*)())common_externals.execute_opcode_table[0xFA];
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xFA], (DWORD)&script_MVIEF);
+
+		old_bgmovie = (int (*)())common_externals.execute_opcode_table[0x27];
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x27], (DWORD)&script_BGMOVIE);
 
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x24], (DWORD)&script_WAIT);
 		replace_call_function(common_externals.execute_opcode_table[0xBD] + 0x1E, script_ASPED_get_speed);
