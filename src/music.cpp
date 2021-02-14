@@ -274,15 +274,14 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 		// Attempt to customize the battle theme flow
 		if (strcmp(music_name, "BAT") == 0)
 		{
-			// Do only in fields for now
-			if (*common_externals._previous_mode == FF7_MODE_FIELD && mode->driver_mode == MODE_SWIRL)
+			char battle_name[50];
+
+			sprintf(battle_name, "bat_%u", ff7_externals.modules_global_object->battle_id);
+
+			// Attempt to load theme by Battle ID
+			if (!(playing = nxAudioEngine.playMusic(battle_name, music_id, channel, options)))
 			{
-				char battle_name[50];
-
-				sprintf(battle_name, "bat_%d", *ff7_externals.battle_id);
-
-				// Attempt to load theme by Battle ID
-				if (!(playing = nxAudioEngine.playMusic(battle_name, music_id, channel, options)))
+				if (*common_externals._previous_mode == FF7_MODE_FIELD)
 				{
 					sprintf(battle_name, "bat_%s", get_current_field_name());
 
@@ -291,9 +290,10 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 						// Nothing worked, switch back to default
 						playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
 				}
+				else
+					// Not in field, switch back to default
+					playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
 			}
-			else
-				playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
 		}
 		// Attempt to override field music
 		else if (mode->driver_mode == MODE_FIELD)

@@ -152,8 +152,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_file_name = (char *)get_absolute_value(ff7_externals.open_field_file, 0x77);
 	ff7_externals.read_field_file = get_relative_call(ff7_externals.open_field_file, 0xCF);
 
-	ff7_externals.battle_id = (WORD *)get_absolute_value(main_loop, 0x35B);
-
 	ff7_externals.battle_enter = get_absolute_value(main_loop, 0x8A1);
 	ff7_externals.battle_loop = get_relative_call(battle_main_loop, 0x1C8);
 	ff7_externals.battle_mode = (DWORD*)get_absolute_value(ff7_externals.battle_loop, 0x18);
@@ -385,6 +383,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_init_event_sub_63BCA7 = get_relative_call(ff7_externals.field_initialize_variables, 0x29D);
 	ff7_externals.field_init_event = get_relative_call(ff7_externals.field_init_event_sub_63BCA7, 0x8);
 	ff7_externals.execute_opcode = get_relative_call(ff7_externals.field_init_event, 0x80);
+	ff7_externals.modules_global_object = (ff7_modules_global_object*)get_absolute_value(ff7_externals.field_init_event, 0x20);
 
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff7_externals.execute_opcode, 0x10D);
 	ff7_externals.opcode_akao2 = common_externals.execute_opcode_table[0xDA];

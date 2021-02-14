@@ -1497,6 +1497,106 @@ struct ff7_camdata
 	int16_t padding2;
 };
 
+struct ff7_modules_global_object
+{
+  uint8_t field_0;
+  uint8_t game_mode;
+  uint16_t battle_id;
+  uint16_t field_4;
+  uint16_t field_6;
+  uint16_t field_8;
+  uint16_t field_A;
+  uint16_t field_C;
+  uint16_t field_E;
+  int16_t field_10;
+  uint8_t field_12;
+  uint8_t field_13;
+  uint8_t field_14;
+  uint8_t field_15;
+  uint8_t field_16;
+  uint8_t field_17;
+  uint16_t field_18;
+  uint16_t field_1A;
+  uint8_t field_1C;
+  uint8_t field_1D;
+  uint16_t field_1E;
+  uint16_t field_20;
+  uint16_t field_22;
+  uint16_t field_24;
+  uint16_t previous_game_mode;
+  uint16_t num_models;
+  uint16_t field_2A;
+  uint16_t field_2C;
+  uint16_t field_2E;
+  uint16_t field_30;
+  uint8_t field_32;
+  uint8_t field_33;
+  uint8_t field_34;
+  uint8_t field_35;
+  uint8_t field_36;
+  uint8_t SCRLO_flag;
+  uint8_t MPDSP_flag;
+  uint8_t MVCAM_flag;
+  uint8_t BGMOVIE_flag;
+  uint8_t BTLON_flag;
+  uint8_t field_3C;
+  uint8_t field_3D;
+  uint16_t field_3E;
+  uint16_t field_40;
+  uint16_t field_42;
+  uint32_t midi_id;
+  uint32_t field_48;
+  uint16_t fade_type;
+  uint16_t fade_adjustment;
+  uint16_t fade_speed;
+  uint16_t fade_r;
+  uint16_t fade_g;
+  uint16_t fade_b;
+  uint16_t field_58;
+  uint16_t field_5A;
+  uint16_t field_5C;
+  uint16_t nfade_r;
+  uint16_t nfade_g;
+  uint16_t nfade_b;
+  uint16_t FIELD_ID;
+  uint16_t field_66;
+  uint32_t field_68;
+  uint32_t field_6C;
+  uint16_t field_70;
+  uint16_t field_72;
+  uint16_t field_74;
+  uint16_t field_76;
+  uint32_t field_78;
+  uint16_t field_7C;
+  uint32_t field_80;
+  uint16_t field_84;
+  uint16_t field_86;
+  uint16_t MOVIE_frame;
+  uint8_t field_8A;
+  uint8_t field_8B;
+  uint16_t field_8C;
+  uint16_t field_8E;
+  uint16_t field_90;
+  uint16_t field_92;
+  uint16_t field_94;
+  uint16_t field_96;
+  uint8_t field_98;
+  uint8_t field_99;
+  uint16_t field_9A;
+  uint16_t field_9C;
+  uint16_t field_9E;
+  uint16_t field_A0;
+  uint16_t field_A2;
+  uint16_t field_A4;
+  uint16_t field_A6;
+  uint16_t field_A8;
+  uint32_t field_AC;
+  uint16_t field_B0;
+  uint8_t field_B2[64];
+  uint8_t background_sprite_layer[64];
+  uint32_t field_134;
+};
+
 // --------------- end of FF7 imports ---------------
 
 struct ff7_channel_6_state
@@ -1548,7 +1648,6 @@ struct ff7_externals
 	uint32_t read_field_file;
 	uint32_t battle_enter;
 	uint32_t battle_loop;
-	WORD *battle_id;
 	DWORD *battle_mode;
 	uint32_t battle_sub_429AC0;
 	uint32_t battle_b3ddata_sub_428B12;
@@ -1757,6 +1856,7 @@ struct ff7_externals
 	int* field_ptr_1; //0xCBF5E8
 	WORD* field_array_1; //0xCC0CF8
 	WORD* wait_frames_ptr; //0xCC0900
+	ff7_modules_global_object* modules_global_object; // 0xCC0D88
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
