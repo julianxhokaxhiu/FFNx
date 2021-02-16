@@ -460,6 +460,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sub_611BAE = get_relative_call(common_externals.execute_opcode_table[0x16], 0x4);
 
 	ff7_externals.wait_frames_ptr = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x24], 0x1C);
+
+	ff7_externals.sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
+	ff7_externals.sub_767039 = (void (*)(DWORD*,DWORD*,DWORD*))get_relative_call(ff7_externals.sub_74DB8C, 0x613);
 }
 
 void ff7_data(struct ff7_game_obj* game_object)

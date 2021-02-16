@@ -531,6 +531,17 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 	return ret;
 }
 
+void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* unk3)
+{
+	ff7_externals.sub_767039(unk1, unk2, unk3);
+
+	ff7_externals.modules_global_object->battle_id = *unk3;
+
+	// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
+	stop_music_for_channel(0);
+	ff7_play_midi(7);
+}
+
 uint32_t ff8_remember_playing_time()
 {
 	if (trace_all || trace_music) trace("%s\n", __func__);
@@ -1024,6 +1035,9 @@ void music_init()
 			replace_function(common_externals.set_midi_volume_trans, ff7_volume_trans);
 			replace_function(common_externals.set_midi_tempo, set_midi_tempo);
 			replace_function(common_externals.midi_cleanup, noop);
+
+			// Allow custom worldmap battle musics
+			replace_call_function(ff7_externals.sub_74DB8C + 0x613, ff7_worldmap_play_custom_battle_music);
 		}
 	}
 }
