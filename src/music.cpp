@@ -1038,6 +1038,8 @@ void music_init()
 
 			// Allow custom worldmap battle musics
 			replace_call_function(ff7_externals.sub_74DB8C + 0x613, ff7_worldmap_play_custom_battle_music);
+			// Force channel detection (1) for battle music
+			replace_call(ff7_externals.play_battle_music_call, ff7_music_sound_operation_fix);
 		}
 	}
 }
