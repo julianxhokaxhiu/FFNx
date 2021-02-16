@@ -1859,6 +1859,7 @@ struct ff7_externals
 	ff7_modules_global_object* modules_global_object; // 0xCC0D88
 	uint32_t sub_74DB8C;
 	void (*sub_767039)(DWORD*,DWORD*,DWORD*);
+	uint32_t play_battle_music_call;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
