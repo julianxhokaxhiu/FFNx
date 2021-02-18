@@ -535,11 +535,14 @@ void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* unk3
 {
 	ff7_externals.sub_767039(unk1, unk2, unk3);
 
-	ff7_externals.modules_global_object->battle_id = *unk3;
+	if (*unk1)
+	{
+		ff7_externals.modules_global_object->battle_id = *unk3;
 
-	// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
-	stop_music_for_channel(0);
-	ff7_play_midi(7);
+		// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
+		stop_music();
+		ff7_play_midi(7);
+	}
 }
 
 uint32_t ff8_remember_playing_time()
