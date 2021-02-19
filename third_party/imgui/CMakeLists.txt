@@ -21,7 +21,7 @@
 
 include(ExternalProject)
 
-set(IMGUI_VERSION "1.79")
+set(IMGUI_VERSION "1.81")
 
 ExternalProject_Add(
 	imgui
