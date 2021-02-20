@@ -173,7 +173,11 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 
 	_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, ffmpeg_video_ext.c_str());
 
+	// Attempt to see if there's a movie in the override path
 	int redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName));
+
+	// Attempt to see if there's a dedicated Steam movie to play
+	if (redirect_status == -1) redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName), steam_edition || estore_edition);
 
 	if (redirect_status == 0) ffmpeg_prepare_movie(newFmvName);
 	else ffmpeg_prepare_movie(fmvName);
@@ -337,7 +341,11 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 
 	ff8_externals.movie_object->movie_current_frame = 0;
 
+	// Attempt to see if there's a movie in the override path
 	int redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName));
+
+	// Attempt to see if there's a dedicated Steam movie to play
+	if (redirect_status == -1) redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName), steam_edition || estore_edition);
 
 	if (redirect_status == 0) ff8_movie_frames = ffmpeg_prepare_movie(newFmvName);
 	else ff8_movie_frames = ffmpeg_prepare_movie(fmvName);
