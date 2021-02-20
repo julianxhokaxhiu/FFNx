@@ -424,6 +424,11 @@ uint32_t sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer)
 	return ((uint32_t(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(sound_id, dsound_buffer);
 }
 
+void sfx_fix_cait_sith_roulette(int sound_id)
+{
+	((uint32_t(*)(uint32_t, uint32_t, uint32_t))common_externals.play_sfx_on_channel)(64, sound_id, 4);
+}
+
 //=============================================================================
 
 void sfx_init()
@@ -449,6 +454,8 @@ void sfx_init()
 		patch_code_byte(ff7_externals.battle_summon_leviathan_loop + 0x3FA + 1, 0x2A);
 		// Omnislash fix
 		replace_call(ff7_externals.battle_limit_omnislash_loop + 0x5A, sfx_fix_omnislash_sound_loading);
+		// Cait Sith Roulette fix
+		replace_call_function(ff7_externals.battle_limit_breaks[26] + 0xC7, sfx_fix_cait_sith_roulette);
 
 		if (use_external_sfx)
 		{

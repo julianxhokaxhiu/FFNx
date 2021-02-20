@@ -156,6 +156,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_loop = get_relative_call(battle_main_loop, 0x1C8);
 	ff7_externals.battle_mode = (DWORD*)get_absolute_value(ff7_externals.battle_loop, 0x18);
 	ff7_externals.battle_sub_429AC0 = get_absolute_value(ff7_externals.battle_loop, 0x79);
+	ff7_externals.battle_sub_6CE8B3 = get_relative_call(battle_main_loop, 0x368);
+	ff7_externals.battle_sub_6DB0EE = get_relative_call(ff7_externals.battle_sub_6CE8B3, 0xD9);
+	ff7_externals.battle_limit_breaks = (uint32_t*)get_absolute_value(ff7_externals.battle_sub_6DB0EE, 0x1B4);
 	ff7_externals.battle_b3ddata_sub_428B12 = get_relative_call(ff7_externals.battle_sub_429AC0, 0x71);
 	ff7_externals.graphics_render_sub_68A638 = get_relative_call(ff7_externals.battle_b3ddata_sub_428B12, 0x10A);
 	ff7_externals.create_dx_sfx_something = get_relative_call(ff7_externals.graphics_render_sub_68A638, 0xD3);
