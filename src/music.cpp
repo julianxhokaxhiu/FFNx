@@ -38,6 +38,7 @@ double next_music_fade_time = 0.0;
 bool ff8_music_intro_volume_changed = false;
 char* eyes_on_me_track = "eyes_on_me";
 bool eyes_on_me_is_playing = false;
+uint16_t ff7_next_battle_world_id = 0;
 
 static uint32_t noop() { return 0; }
 static uint32_t noop_a1(uint32_t a1) { return 0; }
@@ -276,7 +277,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 		{
 			char battle_name[50];
 
-			sprintf(battle_name, "bat_%u", ff7_externals.modules_global_object->battle_id);
+			sprintf(battle_name, "bat_%u", ff7_next_battle_world_id);
 
 			// Attempt to load theme by Battle ID
 			if (!(playing = nxAudioEngine.playMusic(battle_name, music_id, channel, options)))
@@ -537,7 +538,7 @@ void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* unk3
 
 	if (*unk1)
 	{
-		ff7_externals.modules_global_object->battle_id = *unk3;
+		ff7_next_battle_world_id = *unk3;
 
 		// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
 		stop_music();
