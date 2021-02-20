@@ -27,6 +27,7 @@
 #include "field.h"
 #include "ff7/defs.h"
 #include "video/movies.h"
+#include "redirect.h"
 
 // Required by > 15 FPS movies
 bool is_movie_bgfield = false;
@@ -170,17 +171,11 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	ff7_externals.movie_object->field_E0 = !((struct ff7_game_obj *)common_externals.get_game_object())->field_968;
 
 	_splitpath(name, drivename, dirname, filename, NULL);
-
 	_snprintf(fmvName, sizeof(fmvName), "%s%s%s.%s", drivename, dirname, filename, ffmpeg_video_ext.c_str());
 
-	// Attempt to see if there's a movie in the override path
-	int redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName));
+	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
 
-	// Attempt to see if there's a dedicated Steam movie to play
-	if (redirect_status == -1) redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName), steam_edition || estore_edition);
-
-	if (redirect_status == 0) ffmpeg_prepare_movie(newFmvName);
-	else ffmpeg_prepare_movie(fmvName);
+	ffmpeg_prepare_movie(newFmvName);
 
 	ff7_externals.movie_object->global_movie_flag = 1;
 
@@ -287,31 +282,25 @@ uint32_t ff8_movie_frames;
 
 void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 {
-	char fmvName[512];
-	char newFmvName[512];
-	char camName[512];
-	char dataPath[260]{0};
+	char fmvName[260];
+	char camName[260];
+
+	char newFmvName[260];
+	char newCamName[260];
+
 	FILE *camFile;
 	uint32_t camOffset = 0;
-
-	// The only movie which is translated needs to be loaded from specific language path
-	if (disc == 3u && movie == 5u)
-	{
-		get_data_lang_path(dataPath);
-	}
-	else
-	{
-		strcpy(dataPath, basedir);
-		PathAppendA(dataPath, "data");
-	}
 
 	// Unexpected cases default to current disk
 	if (disc >= 5u) {
 		disc = ff8_currentdisk - 1;
 	}
 
-	_snprintf(fmvName, sizeof(fmvName), "%s/movies/disc%02i_%02ih.%s", dataPath, disc, movie, ffmpeg_video_ext.c_str());
-	_snprintf(camName, sizeof(camName), "%s/data/movies/disc%02i_%02i.cam", basedir, disc, movie);
+	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
+	_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
+
+	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
+	redirect_path_with_override(camName, newCamName, sizeof(newCamName));
 
 	if(trace_all || trace_movies) trace("prepare_movie %s\n", fmvName);
 
@@ -341,14 +330,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 
 	ff8_externals.movie_object->movie_current_frame = 0;
 
-	// Attempt to see if there's a movie in the override path
-	int redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName));
-
-	// Attempt to see if there's a dedicated Steam movie to play
-	if (redirect_status == -1) redirect_status = attempt_redirection(fmvName, newFmvName, sizeof(newFmvName), steam_edition || estore_edition);
-
-	if (redirect_status == 0) ff8_movie_frames = ffmpeg_prepare_movie(newFmvName);
-	else ff8_movie_frames = ffmpeg_prepare_movie(fmvName);
+	ff8_movie_frames = ffmpeg_prepare_movie(newFmvName);
 }
 
 void ff8_release_movie_objects()
