@@ -137,6 +137,8 @@ bool xinput_connected = false;
 
 bool simulate_OK_button = false;
 
+uint32_t noop() { return 0; }
+
 // global data used for profiling macros
 #ifdef PROFILE
 time_t profile_start;

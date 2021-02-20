@@ -40,7 +40,6 @@ char* eyes_on_me_track = "eyes_on_me";
 bool eyes_on_me_is_playing = false;
 uint16_t ff7_next_battle_world_id = 0;
 
-static uint32_t noop() { return 0; }
 static uint32_t noop_a1(uint32_t a1) { return 0; }
 static uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
 static uint32_t noop_a3(uint32_t a1, uint32_t a2, uint32_t a3) { return 0; }

@@ -32,8 +32,6 @@
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
-static uint32_t noop() { return 0; }
-
 void ff7_init_hooks(struct game_obj *_game_object)
 {
 	struct ff7_game_obj *game_object = (struct ff7_game_obj *)_game_object;
