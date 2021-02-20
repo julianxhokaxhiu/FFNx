@@ -152,9 +152,8 @@ void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte sp
 	{
 		ff7_sfx_set_volume_on_channel(volume, _channel);
 		ff7_sfx_set_frequency_on_channel(speed, _channel);
+		ff7_sfx_play_on_channel(panning, id, _channel);
 	}
-
-	ff7_sfx_play_on_channel(panning, id, _channel);
 }
 
 void ff7_sfx_pause()
