@@ -1650,9 +1650,16 @@ struct ff7_externals
 	uint32_t battle_loop;
 	DWORD *battle_mode;
 	uint32_t battle_sub_429AC0;
+	uint32_t battle_sub_42D808;
+	uint32_t battle_sub_42D992;
+	uint32_t battle_sub_42DAE5;
+	uint32_t battle_sub_427C22;
 	uint32_t battle_sub_6CE8B3;
 	uint32_t battle_sub_6DB0EE;
 	uint32_t *battle_limit_breaks;
+	uint32_t *battle_magic_funcs;
+	uint32_t comet2_sub_5A42E5;
+	uint32_t comet2_unload_sub_5A4359;
 	uint32_t battle_b3ddata_sub_428B12;
 	uint32_t graphics_render_sub_68A638;
 	uint32_t create_dx_sfx_something;

@@ -455,6 +455,8 @@ void sfx_init()
 		replace_call(ff7_externals.battle_limit_omnislash_loop + 0x5A, sfx_fix_omnislash_sound_loading);
 		// Cait Sith Roulette fix
 		replace_call_function(ff7_externals.battle_limit_breaks[26] + 0xC7, sfx_fix_cait_sith_roulette);
+		// Comet2 fix
+		patch_code_byte(ff7_externals.comet2_unload_sub_5A4359 + 0xF1, 0x5A);
 
 		if (use_external_sfx)
 		{

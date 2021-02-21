@@ -156,13 +156,21 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_loop = get_relative_call(battle_main_loop, 0x1C8);
 	ff7_externals.battle_mode = (DWORD*)get_absolute_value(ff7_externals.battle_loop, 0x18);
 	ff7_externals.battle_sub_429AC0 = get_absolute_value(ff7_externals.battle_loop, 0x79);
+	ff7_externals.battle_sub_42D808 = get_relative_call(ff7_externals.battle_sub_429AC0, 0xE7);
+	ff7_externals.battle_sub_42D992 = get_relative_call(ff7_externals.battle_sub_42D808, 0x30);
+	ff7_externals.battle_sub_42DAE5 = get_relative_call(ff7_externals.battle_sub_42D992, 0x7E);
+	ff7_externals.battle_sub_427C22 = get_relative_call(ff7_externals.battle_sub_42DAE5, 0xF);
 	ff7_externals.battle_sub_6CE8B3 = get_relative_call(battle_main_loop, 0x368);
 	ff7_externals.battle_sub_6DB0EE = get_relative_call(ff7_externals.battle_sub_6CE8B3, 0xD9);
 	ff7_externals.battle_limit_breaks = (uint32_t*)get_absolute_value(ff7_externals.battle_sub_6DB0EE, 0x1B4);
+	ff7_externals.battle_magic_funcs = (uint32_t*)get_absolute_value(ff7_externals.battle_sub_427C22, 0xBF);
 	ff7_externals.battle_b3ddata_sub_428B12 = get_relative_call(ff7_externals.battle_sub_429AC0, 0x71);
 	ff7_externals.graphics_render_sub_68A638 = get_relative_call(ff7_externals.battle_b3ddata_sub_428B12, 0x10A);
 	ff7_externals.create_dx_sfx_something = get_relative_call(ff7_externals.graphics_render_sub_68A638, 0xD3);
 	ff7_externals.load_p_file = get_relative_call(ff7_externals.create_dx_sfx_something, 0x144);
+
+	ff7_externals.comet2_sub_5A42E5 = get_relative_call(ff7_externals.battle_magic_funcs[46], 0x1A);
+	ff7_externals.comet2_unload_sub_5A4359 = get_absolute_value(ff7_externals.comet2_sub_5A42E5, 0x34);
 
 	ff7_externals.create_polygon_data = (polygon_data* (*)(uint32_t, uint32_t))get_relative_call(ff7_externals.load_p_file, 0x17);
 	ff7_externals.create_polygon_lists = (void (*)(polygon_data*))get_relative_call(ff7_externals.load_p_file, 0x35B);
