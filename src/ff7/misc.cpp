@@ -218,6 +218,9 @@ void* ff7_engine_exit_game_mode(ff7_game_obj* game_object)
 				*ff7_externals.byte_CC164C = 0;
 				*ff7_externals.word_CC0DC6 = 0;
 
+				// Fix possible weird 3D issues that may happens in movies if resetted after some of those
+				ff7_externals.modules_global_object->MVCAM_flag = 0;
+
 				ff7_do_reset = false;
 			}
 
