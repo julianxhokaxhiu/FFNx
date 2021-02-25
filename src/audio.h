@@ -36,17 +36,10 @@
 class NxAudioEngine
 {
 public:
-	enum MusicFlags {
-		MusicFlagsNone = 0x0,
-		MusicFlagsIsResumable = 0x1,
-		MusicFlagsDoNotPause = 0x2
-	};
-
 	struct MusicOptions
 	{
 		MusicOptions() :
 			offsetSeconds(0.0),
-			flags(MusicFlagsNone),
 			noIntro(false),
 			fadetime(0.0),
 			targetVolume(-1.0f),
@@ -54,7 +47,6 @@ public:
 			format("")
 		{}
 		SoLoud::time offsetSeconds;
-		MusicFlags flags;
 		bool noIntro;
 		SoLoud::time fadetime;
 		float targetVolume;
@@ -82,12 +74,14 @@ public:
 	{
 		NxAudioEngineMusic() :
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
-			id(0),
-			isResumable(false),
+			id(-1),
 			wantedMusicVolume(1.0f) {}
+		void invalidate() {
+			handle = NXAUDIOENGINE_INVALID_HANDLE;
+			id = -1;
+		}
 		SoLoud::handle handle;
-		uint32_t id;
-		bool isResumable;
+		int32_t id;
 		float wantedMusicVolume;
 	};
 
@@ -143,6 +137,9 @@ private:
 
 	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
+	void backupMusic(int channelSource);
+	void restoreMusic(int channelDest);
+	void resetMusicVolume(double time = 0);
 	void resetMusicVolume(int channel, double time = 0);
 
 	// VOICE
@@ -190,9 +187,14 @@ public:
 	bool canPlayMusic(const char* name);
 	bool playMusic(const char* name, uint32_t id, int channel, MusicOptions& MusicOptions = MusicOptions());
 	void playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions& MusicOptions = MusicOptions());
+	void swapChannels();
+	void stopMusic(double time = 0);
 	void stopMusic(int channel, double time = 0);
-	void pauseMusic(int channel, double time = 0, bool push = false);
-	void resumeMusic(int channel, double time = 0, bool pop = false, const MusicFlags &MusicFlags = MusicFlags());
+	void pauseMusic(double time = 0);
+	void pauseMusic(int channel, double time = 0, bool backup = false);
+	void resumeMusic(double time = 0);
+	void resumeMusic(int channel, double time = 0, bool restore = false);
+	bool isChannelValid(int channel);
 	bool isMusicPlaying(int channel);
 	uint32_t currentMusicId(int channel);
 	void setMusicMasterVolume(float volume, double time = 0);
@@ -218,9 +220,5 @@ public:
 	void resumeAmbient(double time = 0);
 	bool isAmbientPlaying();
 };
-
-NxAudioEngine::MusicFlags operator|(NxAudioEngine::MusicFlags flags, NxAudioEngine::MusicFlags other) {
-	return static_cast<NxAudioEngine::MusicFlags>(static_cast<int>(flags) | static_cast<int>(other));
-}
 
 extern NxAudioEngine nxAudioEngine;

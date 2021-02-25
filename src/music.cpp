@@ -27,7 +27,6 @@
 #include "patch.h"
 
 bool was_battle_gameover = false;
-bool current_music_is_field_resumable = false;
 bool next_music_channel = 0;
 bool next_music_is_skipped = false;
 bool next_music_is_skipped_with_saved_offset = false;
@@ -39,6 +38,8 @@ bool ff8_music_intro_volume_changed = false;
 char* eyes_on_me_track = "eyes_on_me";
 bool eyes_on_me_is_playing = false;
 uint16_t ff7_next_battle_world_id = 0;
+uint8_t ff7_last_akao_call_type = 0;
+uint32_t ff7_last_music_id = 0;
 
 static uint32_t noop_a1(uint32_t a1) { return 0; }
 static uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
@@ -67,65 +68,6 @@ bool is_gameover(uint32_t midi)
 		{
 		case 58: // OVER2
 			ret = true;
-		}
-	}
-
-	return ret;
-}
-
-uint32_t music_mode(uint32_t midi)
-{
-	if (ff8)
-	{
-		switch (midi)
-		{
-		case 41: // FIELD (Worldmap theme)
-			return MODE_WORLDMAP;
-		}
-	}
-	else
-	{
-		switch (midi)
-		{
-		case 13: // TA (Worldmap theme 1)
-		case 71: // KITA (Worldmap theme 2)
-			return MODE_WORLDMAP;
-		}
-	}
-
-	return getmode_cached()->driver_mode == MODE_FIELD ? MODE_FIELD : MODE_EXIT;
-}
-
-NxAudioEngine::MusicFlags needs_resume(uint32_t midi)
-{
-	NxAudioEngine::MusicFlags ret = NxAudioEngine::MusicFlagsNone;
-
-	if (external_music_resume)
-	{
-		uint32_t mode = music_mode(midi);
-
-		switch (mode)
-		{
-		case MODE_FIELD:
-			if (next_music_channel == 0) {
-				ret = NxAudioEngine::MusicFlagsIsResumable;
-
-				// Field channels are exclusive
-				if (current_music_is_field_resumable) {
-					ret = ret | NxAudioEngine::MusicFlagsDoNotPause;
-				}
-			}
-			break;
-		case MODE_WORLDMAP:
-			if (!ff8) {
-				ret = NxAudioEngine::MusicFlagsIsResumable;
-			}
-
-			// Come from field
-			if (current_music_is_field_resumable) {
-				ret = ret | NxAudioEngine::MusicFlagsDoNotPause;
-			}
-			break;
 		}
 	}
 
@@ -223,16 +165,14 @@ void pause_music()
 {
 	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
 
-	nxAudioEngine.pauseMusic(0);
-	nxAudioEngine.pauseMusic(1);
+	nxAudioEngine.pauseMusic();
 }
 
 void restart_music()
 {
 	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
 
-	nxAudioEngine.resumeMusic(0);
-	nxAudioEngine.resumeMusic(1);
+	nxAudioEngine.resumeMusic();
 }
 
 uint32_t ff7_use_midi(uint32_t midi)
@@ -248,11 +188,8 @@ uint32_t ff7_use_midi(uint32_t midi)
 
 bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* fullpath = nullptr)
 {
-	struct game_mode* mode = getmode_cached();
-
+	const struct game_mode* mode = getmode_cached();
 	bool playing = false;
-
-	options.flags = needs_resume(music_id);
 
 	if (ff8)
 	{
@@ -271,6 +208,17 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 	}
 	else
 	{
+		const uint32_t main_theme_midi_id = 13; // The Main Theme is always resumed
+
+		if (nxAudioEngine.currentMusicId(0) == main_theme_midi_id || channel == 1) {
+			// Backup current state of the music
+			nxAudioEngine.pauseMusic(0, options.fadetime == 0.0 ? 1.0 : options.fadetime, true);
+		}
+		else if (channel == 0) {
+			// Channel 1 is never resumed
+			nxAudioEngine.stopMusic(1, options.fadetime == 0.0 ? 1.0 : options.fadetime);
+		}
+
 		// Attempt to customize the battle theme flow
 		if (strcmp(music_name, "BAT") == 0)
 		{
@@ -314,13 +262,6 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 	if (playing)
 	{
 		nxAudioEngine.setMusicLooping(!no_loop(music_id), channel);
-
-		if (music_mode(music_id) == MODE_FIELD) {
-			current_music_is_field_resumable = next_music_channel == 0;
-		}
-		else {
-			current_music_is_field_resumable = false;
-		}
 	}
 
 	return playing;
@@ -328,7 +269,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 
 void ff7_play_midi(uint32_t music_id)
 {
-	const int channel = 0;
+	const int channel = next_music_channel;
 
 	if (nxAudioEngine.currentMusicId(channel) != music_id)
 	{
@@ -383,7 +324,7 @@ void stop_music()
 void ff7_cross_fade_midi(uint32_t music_id, uint32_t steps)
 {
 	const char* midi_name = common_externals.get_midi_name(music_id);
-	const int channel = 0;
+	const int channel = next_music_channel;
 
 	/* FIXME: the game uses cross_fade_midi only in two places,
 	 * with steps = 4 everytime. In the PS version, theses transitions
@@ -521,7 +462,7 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 	if (use_external_music && (type == 0x14 || type == 0x19)) {
 		const uint32_t music_id = param1;
 		if (music_id > 0 && music_id <= 0x62) {
-			if (trace_all || trace_music) trace("%s: set field music channel to 1\n", __func__);
+			if (trace_all || trace_music) trace("%s: set music channel to 1\n", __func__);
 			next_music_channel = 1;
 		}
 	}
@@ -531,17 +472,35 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 	return ret;
 }
 
-void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* unk3)
+uint32_t ff7_worldmap_music_change(uint32_t type, uint32_t music_id, uint32_t fadetime, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	ff7_externals.sub_767039(unk1, unk2, unk3);
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
+	ff7_last_akao_call_type = type;
+	ff7_last_music_id = music_id;
+
+	if (music_id == 7) { // Battle
+		if (trace_all || trace_music) trace("%s: set music channel to 1\n", __func__);
+		next_music_channel = 1;
+	}
+
+	return ff7_music_sound_operation_fix(type, music_id, fadetime, param3, param4, param5);
+}
+
+void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* battle_id)
+{
+	ff7_externals.sub_767039(unk1, unk2, battle_id);
 
 	if (*unk1)
 	{
-		ff7_next_battle_world_id = *unk3;
+		ff7_next_battle_world_id = *battle_id;
 
 		// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
 		stop_music();
-		ff7_play_midi(7);
+		// Play music
+		((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(
+			ff7_last_akao_call_type, ff7_last_music_id, 4, 0, 0, 0
+		);
 	}
 }
 
@@ -584,11 +543,15 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 		if (trace_all || trace_music) trace("%s: music_id=%u, name=%s, channel=%d, volume=%d\n", __func__, music_id, music_name, channel, volume);
 
 		SoLoud::time offset = 0;
-		bool noIntro = false;
+		bool noIntro = false, backup_channel_1_after = false;
 
 		if (next_music_is_skipped_with_saved_offset && remember_musics[music_id]) {
 			remember_musics[music_id] = false;
 			if (trace_all || trace_music) trace("%s: use remembered music time\n", __func__);
+			// Move music to channel 1
+			nxAudioEngine.swapChannels();
+			nxAudioEngine.pauseMusic(1, 1.0);
+			backup_channel_1_after = true;
 		}
 		else if (next_music_is_skipped) {
 			noIntro = true;
@@ -605,6 +568,11 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 			options.targetVolume = volume / 127.0f;
 		}
 		play_music(music_name, music_id, channel, options);
+
+		if (backup_channel_1_after) {
+			// Backup channel 1 music state
+			nxAudioEngine.pauseMusic(1, 1.0, true);
+		}
 
 		if (music_id == 93) { // The Extreme
 			nxAudioEngine.pauseMusic(0);
@@ -730,8 +698,6 @@ uint32_t ff8_opcode_getmusicoffset()
 	if (trace_all || trace_music) trace("%s: save music %d\n", __func__, musicId);
 
 	remember_musics[musicId] = true;
-	// Force current music to be pushed onto the stack
-	current_music_is_field_resumable = false;
 
 	return 0xFFFFFFFF; // Return a special offset to recognize it in ff8_opcode_musicskip_play_midi_at()
 }
@@ -1043,6 +1009,7 @@ void music_init()
 			replace_call_function(ff7_externals.sub_74DB8C + 0x613, ff7_worldmap_play_custom_battle_music);
 			// Force channel detection (1) for battle music
 			replace_call(ff7_externals.play_battle_music_call, ff7_music_sound_operation_fix);
+			replace_call(ff7_externals.wm_play_music_call, ff7_worldmap_music_change);
 		}
 	}
 }

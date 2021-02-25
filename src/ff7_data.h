@@ -475,6 +475,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
 	ff7_externals.sub_767039 = (void (*)(DWORD*,DWORD*,DWORD*))get_relative_call(ff7_externals.sub_74DB8C, 0x613);
+	ff7_externals.wm_change_music = get_relative_call(ff7_externals.sub_74DB8C, 0x2CF);
+	ff7_externals.wm_play_music_call = ff7_externals.wm_change_music + 0x5A;
 }
 
 void ff7_data(struct ff7_game_obj* game_object)
