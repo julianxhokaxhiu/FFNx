@@ -527,7 +527,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	}
 	// Same music is already playing on this channel
 	if (isMusicPlaying(channel) && currentMusicId(channel) == id) {
-		if (trace_all || trace_music) trace("NxAudioEngine::%s: %s is already playing on channel %d\n", __func__, name, channel);
+		if (trace_all || trace_music) trace("NxAudioEngine::%s: %s is already playing on channel %d\n", __func__, overloadedName, channel);
 
 		return false;
 	}
@@ -543,7 +543,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		stopMusic(channel, options.fadetime);
 	}
 
-	SoLoud::AudioSource* audioSource = loadMusic(name, options.useNameAsFullPath, options.format);
+	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format);
 
 	if (audioSource != nullptr) {
 		NxAudioEngineMusic& music = _musics[channel];
