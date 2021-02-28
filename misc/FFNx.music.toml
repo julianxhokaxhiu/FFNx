@@ -23,16 +23,16 @@
 # Plays gar3 when gargade (GGU theme) is played but the "no intro" flag is set
 # -----------------------------------------------------------------------------
 [gargarde]
-no_intro_track = 'gar3'
+no_intro_track = "gar3"
 
 # Skip 20.5 seconds of hikutei (Ragnarok theme) if the "no intro" flag is set
 # -----------------------------------------------------------------------------
 [hikutei]
 intro_seconds = 20.5
 
-# This entry will shuffle 'battle' with 'battle2', 'bossbat1' and 'bossbat2'.
+# This entry will shuffle "battle" with "battle2", "bossbat1" and "bossbat2".
 # Everytime the game engine will try to playback 1, one of the entries in the
 # array will be picked randomly.
 # -----------------------------------------------------------------------------
 #[battle]
-#shuffle = [ 'battle2', 'bossbat1', 'bossbat2' ]
+#shuffle = [ "battle2", "bossbat1", "bossbat2" ]
