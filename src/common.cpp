@@ -44,7 +44,6 @@
 #include "field.h"
 #include "world.h"
 #include "gamehacks.h"
-#include "discohash.h"
 #include "audio.h"
 #include "voice.h"
 
