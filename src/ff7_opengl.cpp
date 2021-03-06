@@ -205,6 +205,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	//######################
 	replace_call_function(ff7_externals.timer_menu_sub + 0x72F, ff7_menu_sub_6F5C0C);
 	replace_call_function(ff7_externals.timer_menu_sub + 0xD77, ff7_menu_sub_6FAC38);
+
+	//#############################
+	// steam save game preservation
+	//#############################
+	if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x1096, ff7_write_save_file);
 }
 
 struct ff7_gfx_driver *ff7_load_driver(void* _game_object)

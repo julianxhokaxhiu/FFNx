@@ -28,6 +28,7 @@
 #include "../music.h"
 #include "../ff7.h"
 #include "../log.h"
+#include "../metadata.h"
 
 // MDEF fix
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
@@ -408,4 +409,13 @@ void ff7_handle_ambient_playback()
 		}
 		break;
   }
+}
+
+BOOL ff7_write_save_file(char slot)
+{
+	BOOL ret = ff7_externals.write_save_file(slot);
+
+	metadataPatcher.apply();
+
+	return ret;
 }
