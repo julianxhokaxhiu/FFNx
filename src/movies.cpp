@@ -340,15 +340,9 @@ void ff8_release_movie_objects()
 	ffmpeg_release_movie_objects();
 }
 
-void ff8_update_movie_sample()
+int ff8_update_movie_sample()
 {
 	if(trace_all || trace_movies) trace("update_movie_sample\n");
-
-	if(!ffmpeg_update_movie_sample())
-	{
-		if(ff8_externals.movie_object->movie_intro_pak) ff8_stop_movie();
-		else ff8_externals.sub_5304B0();
-	}
 
 	ff8_externals.movie_object->movie_current_frame = ffmpeg_get_movie_frame();
 
@@ -373,18 +367,23 @@ void ff8_update_movie_sample()
 
 	*ff8_externals.byte_1CE490D = ff8_externals.movie_object->camdata_pointer->flag & 0x40;
 
-	if(ff8_externals.movie_object->movie_current_frame > ff8_externals.movie_object->movie_total_frames)
+	int ret = 0;
+
+	if (ff8_externals.movie_object->movie_current_frame <= ff8_externals.movie_object->movie_total_frames)
 	{
-		if(ff8_externals.movie_object->movie_intro_pak) ff8_stop_movie();
-		else ff8_externals.sub_5304B0();
-
-		return;
+		ffmpeg_update_movie_sample();
+		ret = (int)ff8_externals.movie_object->camdata_start;
+		ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_current_frame];
 	}
+	else if(ff8_externals.movie_object->movie_intro_pak)
+		ret = ff8_stop_movie();
+	else
+		ret = ff8_externals.sub_5304B0();
 
-	ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_current_frame];
+	return ret;
 }
 
-void ff8_start_movie()
+int ff8_start_movie()
 {
 	if(trace_all || trace_movies) trace("start_movie\n");
 
@@ -399,12 +398,12 @@ void ff8_start_movie()
 
 	*ff8_externals.enable_framelimiter = false;
 
-	ff8_update_movie_sample();
-
 	ff8_externals.movie_object->movie_is_playing = true;
+
+	return ff8_update_movie_sample();
 }
 
-void ff8_stop_movie()
+int ff8_stop_movie()
 {
 	if(trace_all || trace_movies) trace("stop_movie\n");
 
@@ -416,6 +415,16 @@ void ff8_stop_movie()
 	ff8_externals.movie_object->field_4C4B0 = 0;
 
 	*ff8_externals.enable_framelimiter = true;
+
+	int ret = (int)ff8_externals.movie_object->movie_file_handle;
+
+	if (ff8_externals.movie_object->movie_file_handle)
+	{
+		ret = CloseHandle(ff8_externals.movie_object->movie_file_handle);
+		ff8_externals.movie_object->movie_file_handle = 0;
+	}
+
+	return ret;
 }
 
 void movie_init()

@@ -507,7 +507,7 @@ struct ff8_movie_obj
 	uint32_t field_4C4B0;
 	uint32_t field_4C4B4;
 	uint32_t movie_resolution;
-	uint32_t movie_file_handle;
+	HANDLE movie_file_handle;
 	uint32_t bink_copy_flags;
 };
 
@@ -876,7 +876,7 @@ struct ff8_externals
 	uint32_t sub_529FF0;
 	struct ff8_movie_obj *movie_object;
 	uint32_t initialize_sound;
-	void (*sub_5304B0)();
+	int (*sub_5304B0)();
 	uint32_t *enable_framelimiter;
 	unsigned char *byte_1CE4907;
 	unsigned char *byte_1CE4901;

@@ -26,4 +26,4 @@
 void movie_init();
 void ff7_release_movie_objects();
 void ff8_release_movie_objects();
-void ff8_stop_movie();
+int ff8_stop_movie();

@@ -337,7 +337,7 @@ void ff8_find_externals()
 	ff8_externals.sub_46DDC0 = get_relative_call(ff8_externals.sub_469C60, 0x22A);
 	common_externals.directsound_buffer_flags_1 = ff8_externals.sub_46DDC0 + 0x34 - 2;
 
-	ff8_externals.sub_5304B0 = (void (*)())get_relative_call(common_externals.update_movie_sample, 0x3D9);
+	ff8_externals.sub_5304B0 = (int (*)())get_relative_call(common_externals.update_movie_sample, 0x3D9);
 
 	ff8_externals.enable_framelimiter = (uint32_t *)get_absolute_value(common_externals.stop_movie, 0x49);
 
