@@ -45,6 +45,7 @@
 #include "gamehacks.h"
 #include "audio.h"
 #include "voice.h"
+#include "metadata.h"
 
 bool proxyWndProc = false;
 
@@ -668,6 +669,8 @@ void common_cleanup(struct game_obj *game_object)
 
 	if (steam_edition)
 	{
+		metadataPatcher.apply();
+
 		// Write ff7sound.cfg
 		char ff7soundPath[260]{0};
 		get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
