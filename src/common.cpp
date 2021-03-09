@@ -2444,16 +2444,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				ff8_externals.start = 0x55B3E7;
 				break;
 			case VERSION_FF8_12_SP:
-				ff8_externals.start = 0x55B3D7;
-				break;
-			case VERSION_FF8_12_SP_NV:
 				ff8_externals.start = 0x55B227;
 				break;
+			case VERSION_FF8_12_SP_NV:
+				ff8_externals.start = 0x55B3D7;
+				break;
 			case VERSION_FF8_12_IT:
-				ff8_externals.start = 0x55B367;
+				ff8_externals.start = 0x55B1B7;
 				break;
 			case VERSION_FF8_12_IT_NV:
-				ff8_externals.start = 0x55B1B7;
+				ff8_externals.start = 0x55B367;
 				break;
 			case VERSION_FF8_12_US_EIDOS:
 				ff8_externals.start = 0x55AB87;
