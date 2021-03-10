@@ -26,10 +26,14 @@
 class GameHacks
 {
 private:
-	uint32_t lastFrame = 0;
 	bool speedhack_enabled;
 	double speedhack_current_speed;
 	bool battle_wanted = true;
+	uint16_t input_processed_delay = 0;
+
+	// DELAY
+	void inputProcessed();
+	bool canInputBeProcessed();
 
 	// SPEEDHACK
 	void toggleSpeedhack();
@@ -49,6 +53,7 @@ public:
 	// GLOBALS
 	void processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam);
 	void processGamepadInput();
+	bool isInputBeingProcessed(bool readonly = false);
 
 	// SPEEDHACK
 	double getCurrentSpeedhack();

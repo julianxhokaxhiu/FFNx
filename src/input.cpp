@@ -22,6 +22,7 @@
 #include <windowsx.h>
 #include <dinput.h>
 #include "input.h"
+#include "gamehacks.h"
 #include "api.h"
 
 byte keys[256];
@@ -166,7 +167,7 @@ byte* GetGameKeyState()
     IDirectInputDeviceA* keyboard_device = *common_externals.keyboard_device;
     if (keyboard_device != NULL)
     {
-        if (blockKeys)
+        if (blockKeys || gamehacks.isInputBeingProcessed())
         {
             std::memset(keys, 0, 256);
             return keys;

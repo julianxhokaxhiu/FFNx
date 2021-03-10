@@ -415,6 +415,8 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgbButtons[12] = joystick.GetState()->rgbButtons[12] & 0x80 ? 0x80 : 0; // PS Button
 	}
 
+	if (gamehacks.isInputBeingProcessed()) return 0;
+
 	return ff8_externals.dinput_gamepad_state;
 }
 

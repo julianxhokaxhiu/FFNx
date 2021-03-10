@@ -166,6 +166,9 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		ff7_externals.gamepad_status->button11 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB); // L3
 		ff7_externals.gamepad_status->button12 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB); // R3
 		ff7_externals.gamepad_status->button13 = gamepad.IsPressed(0x400); // PS Button
+
+		gamehacks.processGamepadInput();
+		if (gamehacks.isInputBeingProcessed()) return 0;
 	}
 	else
 	{
@@ -190,6 +193,9 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		ff7_externals.gamepad_status->button11 = joystick.GetState()->rgbButtons[10] & 0x80; // L3
 		ff7_externals.gamepad_status->button12 = joystick.GetState()->rgbButtons[11] & 0x80; // R3
 		ff7_externals.gamepad_status->button13 = joystick.GetState()->rgbButtons[12] & 0x80; // PS Button
+
+		gamehacks.processGamepadInput();
+		if (gamehacks.isInputBeingProcessed()) return 0;
 	}
 
 	return ff7_externals.gamepad_status;

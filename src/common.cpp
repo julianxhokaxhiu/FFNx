@@ -877,9 +877,6 @@ void common_flip(struct game_obj *game_object)
 
 	frame_counter++;
 
-	// We need to process Gamepad input on each frame
-	gamehacks.processGamepadInput();
-
 	// FF8 does not clear the screen properly in the card game module
 	if (ff8)
 	{
