@@ -243,8 +243,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_sub_701EE4 = get_relative_call(ff7_externals.menu_sub_6CBD43, 0x7);
 	ff7_externals.phs_menu_sub = get_relative_call(ff7_externals.menu_sub_701EE4, 0xE3);
 
-	if(version == VERSION_FF7_102_US) ff7_externals.menu_draw_party_member_stats = get_relative_call(ff7_externals.phs_menu_sub, 0x8FF);
-	else ff7_externals.menu_draw_party_member_stats = get_relative_call(ff7_externals.phs_menu_sub, 0x8F5);
+	switch(version)
+	{
+		case VERSION_FF7_102_US:
+			ff7_externals.menu_draw_party_member_stats = get_relative_call(ff7_externals.phs_menu_sub, 0x8FF);
+			break;
+		default:
+			ff7_externals.menu_draw_party_member_stats = get_relative_call(ff7_externals.phs_menu_sub, 0x8F5);
+			break;
+	}
 
 	ff7_externals.party_member_to_char_map = (uint32_t *)get_absolute_value(ff7_externals.menu_draw_party_member_stats, 0x14);
 
@@ -331,21 +338,22 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.name_menu_sub_6CBD32 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0x9A);
 	ff7_externals.name_menu_sub_719C08 = get_relative_call(ff7_externals.name_menu_sub_6CBD32, 0x7);
 
-	if(version == VERSION_FF7_102_FR)
+	switch(version)
 	{
-		ff7_externals.menu_sub_71894B = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x2B);
-		ff7_externals.menu_sub_718DBE = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x77);
-		ff7_externals.menu_sub_719B81 = get_relative_call(ff7_externals.name_menu_sub_719C08, 0xCC);
+		case VERSION_FF7_102_FR:
+			ff7_externals.menu_sub_71894B = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x2B);
+			ff7_externals.menu_sub_718DBE = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x77);
+			ff7_externals.menu_sub_719B81 = get_relative_call(ff7_externals.name_menu_sub_719C08, 0xCC);
 
-		ff7_externals.set_default_input_settings_save = get_relative_call(ff7_externals.menu_sub_71894B, 0x189);
-	}
-	else
-	{
-		ff7_externals.menu_sub_71894B = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x2A);
-		ff7_externals.menu_sub_718DBE = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x76);
-		ff7_externals.menu_sub_719B81 = get_relative_call(ff7_externals.name_menu_sub_719C08, 0xCB);
+			ff7_externals.set_default_input_settings_save = get_relative_call(ff7_externals.menu_sub_71894B, 0x189);
+			break;
+		default:
+			ff7_externals.menu_sub_71894B = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x2A);
+			ff7_externals.menu_sub_718DBE = get_relative_call(ff7_externals.name_menu_sub_719C08, 0x76);
+			ff7_externals.menu_sub_719B81 = get_relative_call(ff7_externals.name_menu_sub_719C08, 0xCB);
 
-		ff7_externals.set_default_input_settings_save = get_relative_call(ff7_externals.menu_sub_71894B, 0x188);
+			ff7_externals.set_default_input_settings_save = get_relative_call(ff7_externals.menu_sub_71894B, 0x188);
+			break;
 	}
 
 	ff7_externals.keyboard_name_input = get_relative_call(ff7_externals.menu_sub_718DBE, 0x99);
@@ -429,11 +437,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.opcode_ask_question_code = (WORD*)get_absolute_value(ff7_externals.sub_6310A1, 0x2FE);
 
 	ff7_externals.field_music_helper = get_relative_call(ff7_externals.opcode_cmusc, 0x5E);
-	if (version == VERSION_FF7_102_DE) {
-		ff7_externals.field_music_helper_sound_op_call = ff7_externals.field_music_helper + 0x147;
-	}
-	else {
-		ff7_externals.field_music_helper_sound_op_call = ff7_externals.field_music_helper + 0x106;
+
+	switch(version)
+	{
+		case VERSION_FF7_102_DE:
+			ff7_externals.field_music_helper_sound_op_call = ff7_externals.field_music_helper + 0x147;
+			break;
+		default:
+			ff7_externals.field_music_helper_sound_op_call = ff7_externals.field_music_helper + 0x106;
+			break;
 	}
 
 	ff7_externals.enter_gameover = get_absolute_value(main_loop, 0x1F7);
