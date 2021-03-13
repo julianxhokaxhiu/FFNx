@@ -540,7 +540,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	}
 	// Different music is playing on this channel
 	if (isChannelValid(channel)) {
-		stopMusic(channel, options.fadetime);
+		stopMusic(channel, options.fadetime == 0.0 ? 0.2 : options.fadetime);
 	}
 
 	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format);
@@ -680,6 +680,10 @@ void NxAudioEngine::pauseMusic(int channel, double time, bool backup)
 
 void NxAudioEngine::backupMusic(int channelSource)
 {
+	if (!isChannelValid(channelSource)) {
+		return;
+	}
+
 	NxAudioEngineMusic& music = _musics[channelSource];
 
 	if (trace_all || trace_music) trace("NxAudioEngine::%s: backup music %d for later usage\n", __func__, music.id);
@@ -695,7 +699,7 @@ void NxAudioEngine::backupMusic(int channelSource)
 	music.invalidate();
 }
 
-void NxAudioEngine::restoreMusic(int channelDest)
+void NxAudioEngine::restoreMusic(int channelDest, double stopTime)
 {
 	NxAudioEngineMusic& music = _musics[channelDest];
 
@@ -703,7 +707,7 @@ void NxAudioEngine::restoreMusic(int channelDest)
 		return;
 	}
 
-	stopMusic(channelDest);
+	stopMusic(channelDest, stopTime);
 
 	const NxAudioEngineMusic &backup = _musicStack.top();
 
@@ -726,7 +730,7 @@ void NxAudioEngine::resumeMusic(double time)
 void NxAudioEngine::resumeMusic(int channel, double time, bool restore)
 {
 	if (restore) {
-		restoreMusic(channel);
+		restoreMusic(channel, time);
 	}
 
 	NxAudioEngineMusic& music = _musics[channel];
