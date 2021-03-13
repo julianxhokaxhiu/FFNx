@@ -40,6 +40,7 @@ bool eyes_on_me_is_playing = false;
 uint16_t ff7_next_battle_world_id = 0;
 uint8_t ff7_last_akao_call_type = 0;
 uint32_t ff7_last_music_id = 0;
+bool next_music_is_battle = false;
 
 static uint32_t noop_a1(uint32_t a1) { return 0; }
 static uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
@@ -212,7 +213,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 
 		if (nxAudioEngine.currentMusicId(0) == main_theme_midi_id || channel == 1) {
 			// Backup current state of the music
-			nxAudioEngine.pauseMusic(0, options.fadetime == 0.0 ? 1.0 : options.fadetime, true);
+			nxAudioEngine.pauseMusic(0, options.fadetime == 0.0 ? (next_music_is_battle ? 0.2 : 1.0) : options.fadetime, true);
 		}
 		else if (channel == 0) {
 			// Channel 1 is never resumed
@@ -271,7 +272,7 @@ void ff7_play_midi(uint32_t music_id)
 {
 	const int channel = next_music_channel;
 
-	if (nxAudioEngine.currentMusicId(channel) != music_id)
+	if (nxAudioEngine.currentMusicId(0) != music_id && nxAudioEngine.currentMusicId(1) != music_id)
 	{
 		if (is_gameover(music_id)) music_flush();
 
@@ -285,7 +286,7 @@ void ff7_play_midi(uint32_t music_id)
 			return;
 		}
 
-		if (mode->driver_mode == MODE_BATTLE && music_id == 58) was_battle_gameover = true;
+		if (mode->driver_mode == MODE_BATTLE && is_gameover(music_id)) was_battle_gameover = true;
 
 		play_music(midi_name, music_id, channel);
 
@@ -472,17 +473,50 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 	return ret;
 }
 
+uint32_t ff7_battle_music(uint32_t type, uint32_t music_id, uint32_t fadetime, uint32_t param3, uint32_t param4, uint32_t param5)
+{
+	if (trace_all || trace_music) trace("%s\n", __func__);
+
+	next_music_is_battle = true;
+
+	return ff7_music_sound_operation_fix(type, music_id, fadetime, param3, param4, param5);
+}
+
+uint32_t ff7_battle_music_fanfare()
+{
+	if (trace_all || trace_music) trace("%s: set music channel to 1\n", __func__);
+
+	next_music_channel = 1;
+
+	uint32_t ret = ff7_externals.play_battle_end_music();
+
+	next_music_channel = 0;
+
+	return ret;
+}
+
 uint32_t ff7_worldmap_music_change(uint32_t type, uint32_t music_id, uint32_t fadetime, uint32_t param3, uint32_t param4, uint32_t param5)
 {
 	if (trace_all || trace_music) trace("%s\n", __func__);
 
+	if (music_id == 7) { // Battle
+		trace("%s: force music type to channel 1\n", __func__);
+
+		next_music_is_battle = true;
+
+		switch (type) {
+		case 0x10:
+			type = 0x14;
+			break;
+		case 0x18:
+			type = 0x19;
+			break;
+		}
+	}
+
+	// Backup music operation type for custom battle music call
 	ff7_last_akao_call_type = type;
 	ff7_last_music_id = music_id;
-
-	if (music_id == 7) { // Battle
-		if (trace_all || trace_music) trace("%s: set music channel to 1\n", __func__);
-		next_music_channel = 1;
-	}
 
 	return ff7_music_sound_operation_fix(type, music_id, fadetime, param3, param4, param5);
 }
@@ -498,9 +532,7 @@ void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* batt
 		// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
 		stop_music();
 		// Play music
-		((uint32_t(*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))ff7_externals.sound_operation)(
-			ff7_last_akao_call_type, ff7_last_music_id, 4, 0, 0, 0
-		);
+		ff7_music_sound_operation_fix(ff7_last_akao_call_type, ff7_last_music_id, 4, 0, 0, 0);
 	}
 }
 
@@ -1008,7 +1040,8 @@ void music_init()
 			// Allow custom worldmap battle musics
 			replace_call_function(ff7_externals.sub_74DB8C + 0x613, ff7_worldmap_play_custom_battle_music);
 			// Force channel detection (1) for battle music
-			replace_call(ff7_externals.play_battle_music_call, ff7_music_sound_operation_fix);
+			replace_call(ff7_externals.play_battle_music_call, ff7_battle_music);
+			replace_call(ff7_externals.play_battle_music_win_call, ff7_battle_music_fanfare);
 			replace_call(ff7_externals.wm_play_music_call, ff7_worldmap_music_change);
 		}
 	}
