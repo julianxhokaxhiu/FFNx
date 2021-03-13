@@ -256,7 +256,19 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_sound_slider_loop = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.menu_sub_6FEDB0 = ff7_externals.menu_subs_call_table[10];
 
-	ff7_externals.write_save_file = (BOOL (*)(char))(get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x1096));
+	switch(version)
+	{
+		case VERSION_FF7_102_US:
+			ff7_externals.write_save_file = (BOOL (*)(char))(get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x1096));
+			break;
+		case VERSION_FF7_102_DE:
+		case VERSION_FF7_102_FR:
+			ff7_externals.write_save_file = (BOOL (*)(char))(get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x10B2));
+			break;
+		case VERSION_FF7_102_SP:
+			ff7_externals.write_save_file = (BOOL (*)(char))(get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x10FE));
+			break;
+	}
 
 	ff7_externals.millisecond_counter = (DWORD *)get_absolute_value(ff7_externals.timer_menu_sub, 0xD06);
 	ff7_externals.draw_status_limit_level_stats = get_relative_call(ff7_externals.status_menu_sub, 0x8E);
