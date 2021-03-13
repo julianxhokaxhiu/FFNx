@@ -138,7 +138,7 @@ private:
 	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
 	void backupMusic(int channelSource);
-	void restoreMusic(int channelDest);
+	void restoreMusic(int channelDest, double stopTime = 0);
 	void resetMusicVolume(double time = 0);
 	void resetMusicVolume(int channel, double time = 0);
 
