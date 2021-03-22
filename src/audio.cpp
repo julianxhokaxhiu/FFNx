@@ -518,9 +518,9 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 {
 	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
 
-	char overloadedName[64];
+	char overloadedName[MAX_PATH];
 
-	strncpy(overloadedName, name, 64);
+	strncpy(overloadedName, name, MAX_PATH);
 
 	if (!options.useNameAsFullPath) {
 		overloadPlayArgumentsFromConfig(overloadedName, &id, &options);
