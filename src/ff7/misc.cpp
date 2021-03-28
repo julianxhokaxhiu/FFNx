@@ -145,7 +145,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 	}
 	else if (xinput_connected)
 	{
-		if (!gamepad.Refresh()) return 0;
+		if (!gamepad.Refresh() || !gamehacks.canInputBeProcessed()) return 0;
 
 		ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
 		ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
@@ -169,7 +169,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 	}
 	else
 	{
-		if (!joystick.Refresh()) return 0;
+		if (!joystick.Refresh() || !gamehacks.canInputBeProcessed()) return 0;
 
 		ff7_externals.gamepad_status->pos_x = joystick.GetState()->lX;
 		ff7_externals.gamepad_status->pos_y = joystick.GetState()->lY;

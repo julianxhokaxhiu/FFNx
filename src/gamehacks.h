@@ -26,7 +26,7 @@
 class GameHacks
 {
 private:
-	uint32_t lastFrame = 0;
+	uint16_t hold_input_for_frames = 0;
 	bool speedhack_enabled;
 	double speedhack_current_speed;
 	bool battle_wanted = true;
@@ -46,6 +46,10 @@ private:
 	// SOFT RESET
 	void softReset();
 
+	// INPUT VALIDATION
+	void holdInput();
+	void drawnInput();
+
 public:
 	void init();
 
@@ -58,6 +62,9 @@ public:
 
 	// BATTLE
 	bool wantsBattle();
+
+	// INPUT VALIDATION
+	bool canInputBeProcessed();
 };
 
 extern GameHacks gamehacks;
