@@ -81,6 +81,13 @@ void GameHacks::skipMovies()
 	}
 }
 
+void GameHacks::softReset()
+{
+	if (!ff8) ff7_do_reset = true;
+
+	resetSpeedhack();
+}
+
 // PUBLIC
 
 void GameHacks::init()
@@ -103,8 +110,7 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 				toggleBattleMode();
 				break;
 			case 'R':
-				if (!ff8) ff7_do_reset = true;
-				resetSpeedhack();
+				softReset();
 				break;
 			case 'S':
 				skipMovies();
@@ -140,11 +146,7 @@ void GameHacks::processGamepadInput()
 				ff7_externals.gamepad_status->button9 &&
 				ff7_externals.gamepad_status->button10
 				)
-			{
-				ff7_do_reset = true;
-
-				resetSpeedhack();
-			}
+				softReset();
 			// Increase in-game speed on L2+R2+UP
 			else if (
 				ff7_externals.gamepad_status->dpad_up &&

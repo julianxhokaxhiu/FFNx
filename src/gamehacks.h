@@ -43,6 +43,9 @@ private:
 	// MOVIES
 	void skipMovies();
 
+	// SOFT RESET
+	void softReset();
+
 public:
 	void init();
 
