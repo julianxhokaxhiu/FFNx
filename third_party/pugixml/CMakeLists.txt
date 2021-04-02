@@ -21,7 +21,7 @@
 
 include(ExternalProject)
 
-set(PUGIXML_VERSION "1.10")
+set(PUGIXML_VERSION "1.11.4")
 
 ExternalProject_Add(
 	pugixml
