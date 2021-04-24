@@ -21,7 +21,7 @@
 
 # Azure Pipeline YAML file
 
-name: 1.8.1$(Rev:.r)
+name: 1.9.0$(Rev:.r)
 
 trigger:
   branches:
