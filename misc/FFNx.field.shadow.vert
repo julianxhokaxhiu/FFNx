@@ -1,11 +1,4 @@
 /****************************************************************************/
-//    Copyright (C) 2009 Aali132                                            //
-//    Copyright (C) 2018 quantumpencil                                      //
-//    Copyright (C) 2018 Maxime Bacoux                                      //
-//    Copyright (C) 2020 myst6re                                            //
-//    Copyright (C) 2020 Chris Rizzitello                                   //
-//    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2021 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -20,23 +13,21 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
+$input a_position, a_color0
+$output v_position0, v_color0, v_shadow0
 
-void field_init();
-void field_debug(bool *isOpen);
+#include <bgfx/bgfx_shader.sh>
 
-template<typename T>
-T get_field_parameter(int id)
+uniform mat4 d3dViewport;
+uniform mat4 d3dProjection;
+uniform mat4 worldView;
+uniform mat4 lightViewProjTexMatrix;
+
+void main()
 {
-	return *(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1);
+    v_position0 = mul(worldView, vec4(a_position.xyz, 1.0));
+    v_color0 = a_color0;
+    v_shadow0 = mul(lightViewProjTexMatrix, v_position0);
+    gl_Position = mul(mul(d3dViewport, d3dProjection), v_position0);
 }
 
-template<typename T>
-void set_field_parameter(int id, T value)
-{
-	*(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1) = value;
-}
-
-byte get_field_bank_value(int16_t bank);
-
-byte* get_level_data_pointer();

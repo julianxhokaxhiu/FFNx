@@ -1,11 +1,4 @@
 /****************************************************************************/
-//    Copyright (C) 2009 Aali132                                            //
-//    Copyright (C) 2018 quantumpencil                                      //
-//    Copyright (C) 2018 Maxime Bacoux                                      //
-//    Copyright (C) 2020 myst6re                                            //
-//    Copyright (C) 2020 Chris Rizzitello                                   //
-//    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2021 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -20,23 +13,31 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
+$input a_position, a_color0, a_texcoord0, a_normal
+$output v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
 
-void field_init();
-void field_debug(bool *isOpen);
+#include <bgfx/bgfx_shader.sh>
 
-template<typename T>
-T get_field_parameter(int id)
+uniform mat4 worldView;
+uniform mat4 lightViewProjMatrix;
+
+void main()
 {
-	return *(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1);
+	vec4 pos = a_position;
+    vec4 color = a_color0;
+    vec2 coords = a_texcoord0;
+
+    color.rgba = color.bgra;
+
+    if (color.a > 0.5) color.a = 0.5;
+    else if(color.r + color.g + color.b == 0.0) 
+    {
+        color.a = -1;
+    }
+
+    pos = mul(mul(lightViewProjMatrix, worldView), vec4(pos.xyz, 1.0)); 
+
+    gl_Position = pos;
+    v_color0 = color;
+    v_texcoord0 = coords;
 }
-
-template<typename T>
-void set_field_parameter(int id, T value)
-{
-	*(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1) = value;
-}
-
-byte get_field_bank_value(int16_t bank);
-
-byte* get_level_data_pointer();

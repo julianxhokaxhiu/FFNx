@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -55,6 +56,17 @@ enum RendererBlendMode {
     BLEND_25P,
     BLEND_NONE,
     BLEND_DISABLED = 999
+};
+
+enum RendererStencilFunc {
+    STENCIL_FUNC_NONE = 0,
+    STENCIL_FUNC_ALWAYS,
+    STENCIL_FUNC_EQUAL,
+};
+
+enum RendererStencilOp {
+    STENCIL_OP_KEEP = 0,
+    STENCIL_OP_REPLACE
 };
 
 enum RendererCullMode {
@@ -140,8 +152,13 @@ private:
     enum RendererProgram {
         FLAT = 0,
         SMOOTH,
+        SHADOW_MAP,
+        LIGHTING_FLAT,
+        LIGHTING_SMOOTH,
+        FIELD_SHADOW,
         POSTPROCESSING,
-        OVERLAY
+        OVERLAY,
+        COUNT
     };
 
     // Vertex data structure
@@ -154,6 +171,9 @@ private:
         uint32_t bgra;
         float u;
         float v;
+        float nx;
+        float ny;
+        float nz;
     };
 
     struct RendererState
@@ -188,21 +208,31 @@ private:
 
         float d3dViewMatrix[16];
         float d3dProjectionMatrix[16];
+        float viewMatrix[16];
+        float invViewMatrix[16];
         float worldViewMatrix[16];
+        float normalMatrix[16];   
 
         uint32_t clearColorValue;
 
         RendererCullMode cullMode = RendererCullMode::DISABLED;
         RendererBlendMode blendMode = RendererBlendMode::BLEND_NONE;
+        RendererStencilFunc stencilFunc = RendererStencilFunc::STENCIL_FUNC_NONE;
+        RendererStencilOp stencilOpFailS = RendererStencilOp::STENCIL_OP_KEEP;
+        RendererStencilOp stencilOpFailZ = RendererStencilOp::STENCIL_OP_KEEP;
+        RendererStencilOp stencilOpPassZ = RendererStencilOp::STENCIL_OP_KEEP;
+        uint32_t stencilRef = 0;
         RendererPrimitiveType primitiveType = RendererPrimitiveType::PT_TRIANGLES;
 
         uint64_t state = BGFX_STATE_MSAA;
     };
 
-    char shaderTextureBindings[3][6] = {
+    char shaderTextureBindings[5][6] = {
             "tex", // BGRA or Y share the same binding
             "tex_u",
             "tex_v",
+            "tex_s",
+            "tex_d"
     };
 
     std::string vertexPathFlat = "shaders/FFNx";
@@ -213,14 +243,25 @@ private:
     std::string fragmentPostPath = "shaders/FFNx.post";
     std::string vertexOverlayPath = "shaders/FFNx.overlay";
     std::string fragmentOverlayPath = "shaders/FFNx.overlay";
+    std::string vertexLightingPathFlat = "shaders/FFNx.lighting";
+    std::string fragmentLightingPathFlat = "shaders/FFNx.lighting";
+    std::string vertexLightingPathSmooth = "shaders/FFNx.lighting";
+    std::string fragmentLightingPathSmooth = "shaders/FFNx.lighting";
+    std::string vertexShadowMapPath = "shaders/FFNx.shadowmap";
+    std::string fragmentShadowMapPath = "shaders/FFNx.shadowmap";
+    std::string vertexFieldShadowPath = "shaders/FFNx.field.shadow";
+    std::string fragmentFieldShadowPath = "shaders/FFNx.field.shadow";
 
-    bgfx::ViewId backendViewId = 0;
+    bgfx::ViewId backendViewId = 1;
     RendererProgram backendProgram = RendererProgram::SMOOTH;
 
-    std::vector<bgfx::ProgramHandle> backendProgramHandles = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
+    std::vector<bgfx::ProgramHandle> backendProgramHandles = std::vector<bgfx::ProgramHandle>(RendererProgram::COUNT, BGFX_INVALID_HANDLE);
 
     std::vector<bgfx::TextureHandle> backendFrameBufferRT = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
     bgfx::FrameBufferHandle backendFrameBuffer = BGFX_INVALID_HANDLE;
+
+    bgfx::TextureHandle shadowMapTexture = BGFX_INVALID_HANDLE;
+    bgfx::FrameBufferHandle shadowMapFrameBuffer = BGFX_INVALID_HANDLE;
 
     std::vector<Vertex> vertexBufferData;
     bgfx::DynamicVertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;
@@ -252,6 +293,7 @@ private:
 
     uint32_t createBGRA(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     void setCommonUniforms();
+    void setLightingUniforms();
     bgfx::RendererType::Enum getUserChosenRenderer();
     void updateRendererShaderPaths();
     bgfx::ShaderHandle getShader(const char* filePath);
@@ -285,8 +327,13 @@ public:
 
     void init();
     void reset();
+    void prepareShadowMap();
     void shutdown();
 
+    void clearShadowMap();
+    void drawToShadowMap();
+    void drawWithLighting(bool isCastShadow);
+    void drawFieldShadow();
     void draw();
     void drawOverlay();
     void show();
@@ -299,11 +346,11 @@ public:
     const bgfx::Caps* getCaps();
     const bgfx::Stats* getStats();
 
-    void bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount);
+    void bindVertexBuffer(struct nvertex* inVertex, struct point3d* normals, uint32_t inCount);
     void bindIndexBuffer(WORD* inIndex, uint32_t inCount);
 
     void setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
-    void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
+    void setClearFlags(bool doClearColor = false, bool doClearDepth = false, bool doClearStencil = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
     uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool generateMips = false);
@@ -317,6 +364,11 @@ public:
     void isMovie(bool flag = false);
     void isTLVertex(bool flag = false);
     void setBlendMode(RendererBlendMode mode = RendererBlendMode::BLEND_NONE);
+    void setStencilFunc(RendererStencilFunc func = RendererStencilFunc::STENCIL_FUNC_NONE);
+    void setStencilOp(RendererStencilOp opFailS = RendererStencilOp::STENCIL_OP_KEEP,
+                      RendererStencilOp opFailZ = RendererStencilOp::STENCIL_OP_KEEP, 
+                      RendererStencilOp opPassZ = RendererStencilOp::STENCIL_OP_KEEP);
+    void setStencilRef(uint32_t ref = 0);
     void isTexture(bool flag = false);
     void isFBTexture(bool flag = false);
     void isFullRange(bool flag = false);
@@ -343,7 +395,9 @@ public:
     void setWireframeMode(bool flag = false);
 
     // Viewport
-    void setWorldView(struct matrix* matrix);
+    void setViewMatrix(struct matrix* matrix);
+    float* getViewMatrix();
+    void setWorldViewMatrix(struct matrix* matrix);
     void setD3DViweport(struct matrix* matrix);
     void setD3DProjection(struct matrix* matrix);
 

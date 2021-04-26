@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -104,7 +105,7 @@ void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 	internal_set_renderstate(V_DEPTHMASK, 0, game_object);
 
 	newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::SMOOTH);
-	newRenderer.bindVertexBuffer(vertices, 4);
+	newRenderer.bindVertexBuffer(vertices, 0, 4);
 	newRenderer.bindIndexBuffer(indices, 6);
 
 	newRenderer.isTLVertex(true);
@@ -151,19 +152,65 @@ void gl_load_state(struct driver_state *src)
 	internal_set_renderstate(V_ALPHAFUNC, src->alphafunc, 0);
 	internal_set_renderstate(V_ALPHAREF, src->alpharef, 0);
 	internal_set_renderstate(V_SHADEMODE, src->shademode, 0);
-	gl_set_world_matrix(&src->world_matrix);
+	gl_set_worldview_matrix(&src->world_view_matrix);
 	gl_set_d3dprojection_matrix(&src->d3dprojection_matrix);
 }
 
-// draw a set of primitives with a known model->world transformation
-// interesting for real-time lighting, maps to normal rendering routine for now
-void gl_draw_with_lighting(struct indexed_primitive *ip, uint32_t clip, struct matrix *model_matrix)
+void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip)
 {
-	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, ip->vertexcount, ip->indices, ip->indexcount, 0, clip, true);
+	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, clip, true);
+}
+
+// draw a set of primitives with lighting
+void gl_draw_with_lighting(struct indexed_primitive *ip, struct boundingbox* boundingbox, uint32_t clip)
+{
+	// Calculate vertex normals by averaging adjacent triangle normals
+	// Vertex normals are calculated here because battle models dont seem to include normals
+	std::vector<struct point3d> normals;
+	for (uint32_t idx = 0; idx < ip->vertexcount; idx++)
+	{
+		// Calculate vertex adjacent triangles
+		std::vector<int> adjacentTriIndexes;
+		for (uint32_t idx2 = 0; idx2 < ip->indexcount; idx2 += 3)
+		{
+			auto t0 = ip->indices[idx2];
+			auto t1 = ip->indices[idx2 + 1];
+			auto t2 = ip->indices[idx2 + 2];
+			if (t0 == idx || t1 == idx || t2 == idx)
+			{
+				adjacentTriIndexes.push_back(idx2);
+			}
+		}
+
+		// Calculate vertex normal
+		struct point3d normal = { 0.0f, 0.0f, 0.0f };
+		for (int adjTriIndex = 0; adjTriIndex < adjacentTriIndexes.size(); ++adjTriIndex)
+		{
+			int idxPoly = adjacentTriIndexes[adjTriIndex];
+			auto v1 = ip->vertices[ip->indices[idxPoly]]._;
+			auto v2 = ip->vertices[ip->indices[idxPoly + 1]]._;
+			auto v3 = ip->vertices[ip->indices[idxPoly + 2]]._;
+
+			struct point3d e12;
+			subtract_vector(&v2, &v1, &e12);
+			struct point3d e13;
+			subtract_vector(&v3, &v1, &e13);
+			struct point3d triNormal;
+			cross_product(&e12, &e13, &triNormal);
+			normalize_vector(&triNormal);
+			add_vector(&normal, &triNormal, &normal);
+		}
+		divide_vector(&normal, adjacentTriIndexes.size(), &normal);
+		normalize_vector(&normal);
+
+		normals.push_back(normal);
+	}
+
+	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normals.data(), ip->vertexcount, ip->indices, ip->indexcount, 0, boundingbox, clip, true);
 }
 
 // main rendering routine, draws a set of primitives according to the current render state
-void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, uint32_t clip, uint32_t mipmap)
+void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, struct point3d* normals, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
 {
 	FILE *log;
 	uint32_t i;
@@ -195,6 +242,11 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		current_state.texture_filter = saved_texture_filter;
 		return;
 	}
+	else if(gl_defer_draw(primitivetype, vertextype, vertices, normals, vertexcount, indices, count, boundingbox, clip, mipmap))
+	{
+		current_state.texture_filter = saved_texture_filter;
+		return;
+	}
 
 	// If we're attaching a texture, and it is an external one, then use a better blending that considers the alpha channel
 	if (current_state.texture_set)
@@ -221,21 +273,22 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	else newRenderer.doModulateAlpha(true);
 
 	//// upload vertex data
-	newRenderer.bindVertexBuffer(vertices, vertexcount);
+	newRenderer.bindVertexBuffer(vertices, normals, vertexcount);
 	newRenderer.bindIndexBuffer(indices, count);
 	newRenderer.setPrimitiveType(RendererPrimitiveType(primitivetype));
 
-	newRenderer.draw();
+	if (!ff8 && enable_lighting) newRenderer.drawWithLighting(normals != nullptr);
+	else newRenderer.draw();
 
 	stats.vertex_count += count;
 
 	current_state.texture_filter = saved_texture_filter;
 }
 
-void gl_set_world_matrix(struct matrix *matrix)
+void gl_set_worldview_matrix(struct matrix *matrix)
 {
-	newRenderer.setWorldView(matrix);
-	memcpy(&current_state.world_matrix, matrix, sizeof(struct matrix));
+	newRenderer.setWorldViewMatrix(matrix);
+	memcpy(&current_state.world_view_matrix, matrix, sizeof(struct matrix));
 }
 
 void gl_set_d3dprojection_matrix(struct matrix *matrix)

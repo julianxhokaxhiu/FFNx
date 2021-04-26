@@ -75,6 +75,12 @@ enable_antialiasing = 0
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_anisotropic = true
 
+#[LIGHTING]
+# Enable real-time lighting. 
+# Parameters such as light direction and color can be edited on the lighting debug window in the FFNx DevTools.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_lighting = false
+
 #########################
 # Audio Player Options
 #########################

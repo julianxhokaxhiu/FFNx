@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -203,7 +204,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 							matrix = &tmp_matrix;
 						}
 
-						if(matrix && matrix_set && !zsort) gl_set_world_matrix(matrix);
+						if(matrix && matrix_set && !zsort) gl_set_worldview_matrix(matrix);
 
 						struc_186 = struc_84->struc_186;
 
@@ -211,7 +212,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 						else ff7_externals.sub_671742(zsort, hundred_data, struc_186);
 
 						if(zsort) ff7_externals.sub_665D9A(matrix, vertices, ip, hundred_data, struc_186, game_object);
-						else gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, vertices, ip->vertexcount, ip->indices, ip->indexcount, 0, polygon_set->field_4, true);
+						else gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, polygon_set->field_4, true);
 					}
 					else if(defer)
 					{
@@ -256,8 +257,8 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 							if(zsort) ff7_externals.sub_665793(matrix, 0, ip, polygon_set, hundred_data, group_data, game_object);
 							else
 							{
-								if(matrix && matrix_set) gl_set_world_matrix(matrix);
-								gl_draw_with_lighting(ip, polygon_set->field_4, model_matrix);
+								if(matrix && matrix_set) gl_set_worldview_matrix(matrix);
+								gl_draw_without_lighting(ip, polygon_set->field_4);
 							}
 						}
 					}
@@ -284,8 +285,8 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 								{
 									ff7_externals.sub_68D2B8(group_counter, polygon_set, &struc_84->struc_173);
 
-									if(matrix && matrix_set) gl_set_world_matrix(matrix);
-									gl_draw_with_lighting(ip, polygon_set->field_4, model_matrix);
+									if(matrix && matrix_set) gl_set_worldview_matrix(matrix);
+									gl_draw_without_lighting(ip, polygon_set->field_4);
 								}
 							}
 						}
@@ -325,8 +326,9 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 					if(zsort) ff7_externals.sub_665793(matrix_set->matrix_world, 0, ip, polygon_set, hundred_data, group_data, game_object);
 					else
 					{
-						if(matrix_set) gl_set_world_matrix(matrix_set->matrix_world);
-						gl_draw_with_lighting(ip, polygon_set->field_4, model_matrix);
+						if (matrix_set)	gl_set_worldview_matrix(matrix_set->matrix_world);
+						if (enable_lighting) gl_draw_with_lighting(ip, polygon_set->polygon_data->boundingboxdata, polygon_set->field_4);
+						else  gl_draw_without_lighting(ip, polygon_set->field_4);
 					}
 				}
 			}
@@ -352,7 +354,7 @@ void draw_single_triangle(struct nvertex *vertices)
 {
 	WORD indices[] = {0, 1, 2};
 
-	newRenderer.bindVertexBuffer(vertices, 3);
+	newRenderer.bindVertexBuffer(vertices, 0, 3);
 	newRenderer.bindIndexBuffer(indices, 3);
 
 	newRenderer.isTLVertex(true);
@@ -362,7 +364,7 @@ void draw_single_triangle(struct nvertex *vertices)
 
 void sub_6B2720(struct indexed_primitive *ip)
 {
-	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, ip->vertexcount, ip->indices, ip->indexcount, 0, true, true);
+	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, true, true);
 }
 
 void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)

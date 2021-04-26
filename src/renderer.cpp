@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -20,6 +21,7 @@
 /****************************************************************************/
 
 #include "renderer.h"
+#include "lighting.h"
 
 Renderer newRenderer;
 RendererCallbacks bgfxCallbacks;
@@ -112,6 +114,26 @@ void Renderer::setCommonUniforms()
     setUniform("d3dViewport", bgfx::UniformType::Mat4, internalState.d3dViewMatrix);
     setUniform("d3dProjection", bgfx::UniformType::Mat4, internalState.d3dProjectionMatrix);
     setUniform("worldView", bgfx::UniformType::Mat4, internalState.worldViewMatrix);
+    setUniform("normalMatrix", bgfx::UniformType::Mat4, internalState.normalMatrix);
+    setUniform("viewMatrix", bgfx::UniformType::Mat4, internalState.viewMatrix);
+    setUniform("invViewMatrix", bgfx::UniformType::Mat4, internalState.invViewMatrix);
+}
+
+void Renderer::setLightingUniforms()
+{
+    auto lightingState = lighting.getLightingState();
+
+    setUniform("lightDirData", bgfx::UniformType::Vec4, lightingState.lightDirData);
+    setUniform("lightData", bgfx::UniformType::Vec4, lightingState.lightData);
+    setUniform("ambientLightData", bgfx::UniformType::Vec4, lightingState.ambientLightData);
+    setUniform("shadowData", bgfx::UniformType::Vec4, lightingState.shadowData);
+    setUniform("fieldShadowData", bgfx::UniformType::Vec4, lightingState.fieldShadowData);
+    setUniform("materialData", bgfx::UniformType::Vec4, lightingState.materialData);
+    setUniform("lightingDebugData", bgfx::UniformType::Vec4, lightingState.lightingDebugData);
+
+    setUniform("lightViewProjMatrix", bgfx::UniformType::Mat4, lightingState.lightViewProjMatrix);
+    setUniform("lightViewProjTexMatrix", bgfx::UniformType::Mat4, lightingState.lightViewProjTexMatrix);
+    setUniform("lightInvViewProjTexMatrix", bgfx::UniformType::Mat4, lightingState.lightInvViewProjTexMatrix);
 }
 
 bgfx::RendererType::Enum Renderer::getUserChosenRenderer() {
@@ -181,6 +203,14 @@ void Renderer::updateRendererShaderPaths()
     fragmentPostPath += shaderSuffix + ".frag";
     vertexOverlayPath += shaderSuffix + ".vert";
     fragmentOverlayPath += shaderSuffix + ".frag";
+    vertexLightingPathFlat += ".flat" + shaderSuffix + ".vert";
+    fragmentLightingPathFlat += ".flat" + shaderSuffix + ".frag";
+    vertexLightingPathSmooth += ".smooth" + shaderSuffix + ".vert";
+    fragmentLightingPathSmooth += ".smooth" + shaderSuffix + ".frag";
+    vertexShadowMapPath += shaderSuffix + ".vert";
+    fragmentShadowMapPath += shaderSuffix + ".frag";
+    vertexFieldShadowPath += shaderSuffix + ".vert";
+    fragmentFieldShadowPath += shaderSuffix + ".frag";
 
     // Update pipeline cache path for the callbacks
     std::filesystem::create_directories(bgfxCallbacks.cachePath);
@@ -282,6 +312,8 @@ void Renderer::destroyAll()
 
     bgfx::destroy(backendFrameBuffer);
 
+    bgfx::destroy(shadowMapFrameBuffer);
+
     for (auto& handle : backendProgramHandles)
     {
         if (bgfx::isValid(handle))
@@ -312,6 +344,9 @@ void Renderer::resetState()
     doModulateAlpha();
     doTextureFiltering();
     isExternalTexture();
+    setStencilFunc();
+    setStencilOp();
+    setStencilRef();
 };
 
 void Renderer::renderFrame()
@@ -371,9 +406,9 @@ void Renderer::renderFrame()
         else
             useTexture(0);
 
-        setClearFlags(true, true);
+        setClearFlags(true, true, true);
 
-        bindVertexBuffer(vertices, 4);
+        bindVertexBuffer(vertices, 0, 4);
         bindIndexBuffer(indices, 6);
 
         setBlendMode(RendererBlendMode::BLEND_DISABLED);
@@ -537,6 +572,8 @@ void Renderer::init()
 
     prepareFramebuffer();
 
+    prepareShadowMap();
+
     // Create Program
     backendProgramHandles[RendererProgram::POSTPROCESSING] = bgfx::createProgram(
         getShader(vertexPostPath.c_str()),
@@ -556,11 +593,36 @@ void Renderer::init()
         true
     );
 
+    backendProgramHandles[RendererProgram::LIGHTING_FLAT] = bgfx::createProgram(
+        getShader(vertexLightingPathFlat.c_str()),
+        getShader(fragmentLightingPathFlat.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::LIGHTING_SMOOTH] = bgfx::createProgram(
+        getShader(vertexLightingPathSmooth.c_str()),
+        getShader(fragmentLightingPathSmooth.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::FIELD_SHADOW] = bgfx::createProgram(
+        getShader(vertexFieldShadowPath.c_str()),
+        getShader(fragmentFieldShadowPath.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::SHADOW_MAP] = bgfx::createProgram(
+        getShader(vertexShadowMapPath.c_str()),
+        getShader(fragmentShadowMapPath.c_str()),
+        true
+    );
+
     vertexLayout
         .begin()
         .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
         .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
         .end();
 
     bgfx::setDebug(BGFX_DEBUG_TEXT);
@@ -587,7 +649,31 @@ void Renderer::reset()
 
     prepareFramebuffer();
 
+    if(!ff8 && enable_lighting) prepareShadowMap();
+
     bgfx::reset(window_size_x, window_size_y);
+}
+
+void Renderer::prepareShadowMap()
+{
+    if (bgfx::isValid(shadowMapFrameBuffer))
+        bgfx::destroy(shadowMapFrameBuffer);
+
+    auto shadowMapResolution = lighting.getShadowMapResolution();
+    shadowMapTexture = bgfx::createTexture2D(
+        shadowMapResolution,
+        shadowMapResolution,
+        false,
+        1,
+        bgfx::TextureFormat::D32,
+        BGFX_TEXTURE_RT | BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP
+    );
+
+    shadowMapFrameBuffer = bgfx::createFrameBuffer(
+        1,
+        &shadowMapTexture,
+        true
+    );
 }
 
 void Renderer::shutdown()
@@ -595,6 +681,124 @@ void Renderer::shutdown()
     destroyAll();
 
     bgfx::shutdown();
+}
+
+void Renderer::clearShadowMap()
+{
+    bgfx::setViewClear(0, BGFX_CLEAR_DEPTH, internalState.clearColorValue, 1.0f, 0);
+    bgfx::touch(0);
+}
+
+void Renderer::drawToShadowMap()
+{
+    if (trace_all || trace_renderer) trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
+
+    // Lighting state
+    auto lightingState = lighting.getLightingState();
+
+    // Set view to render in the framebuffer
+    bgfx::setViewFrameBuffer(0, shadowMapFrameBuffer);
+
+    // Set current view rect
+    int shadowMapResolution = lighting.getShadowMapResolution();
+    bgfx::setViewRect(0, 0, 0, shadowMapResolution, shadowMapResolution);
+
+    // Set current view transform
+    bgfx::setViewTransform(0, lightingState.lightViewMatrix, lightingState.lightProjMatrix);
+
+    // Set uniforms
+    setLightingUniforms();
+    setCommonUniforms();
+
+    // Bind texture
+    bgfx::TextureHandle handle = internalState.texHandlers[0];
+    if (bgfx::isValid(handle))
+    {
+        uint32_t flags = 0;
+
+        if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+
+        if (flags == 0) flags = UINT32_MAX;
+
+        bgfx::setTexture(0, getUniform(shaderTextureBindings[0], bgfx::UniformType::Sampler), handle, flags);
+    }
+
+    // Set state
+    internalState.state = BGFX_STATE_DEPTH_TEST_LEQUAL | BGFX_STATE_WRITE_Z;
+
+    // Face culling
+    if (lighting.isShadowFaceCullingEnabled())
+    {
+        switch (internalState.cullMode)
+        {
+        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CCW;
+        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CW;
+        }
+    }
+    bgfx::setState(internalState.state);
+
+    bgfx::submit(0, backendProgramHandles[RendererProgram::SHADOW_MAP], 0, BGFX_DISCARD_NONE);
+};
+
+void Renderer::drawWithLighting(bool isCastShadow)
+{
+    // Draw different values to stencil buffer for background and 3D models
+    // This is used to prevent field shadows on top of character models
+    if (internalState.blendMode == BLEND_NONE)
+    {
+        if (internalState.bIsTLVertex)
+        {
+            setStencilRef(255);
+        }
+        else
+        {
+            setStencilRef(0);
+        }
+
+        setStencilFunc(RendererStencilFunc::STENCIL_FUNC_ALWAYS);
+
+        setStencilOp(RendererStencilOp::STENCIL_OP_KEEP,
+            RendererStencilOp::STENCIL_OP_KEEP,
+            RendererStencilOp::STENCIL_OP_REPLACE);
+    }
+    else
+    {
+        setStencilRef();
+        setStencilFunc();
+        setStencilOp();
+    }
+
+    // Draw to shadowmap
+    if (isCastShadow) newRenderer.drawToShadowMap();
+
+    // Set lighting program
+    backendProgram = backendProgram == SMOOTH ? LIGHTING_SMOOTH : LIGHTING_FLAT;
+
+    // Set lighting uniforms
+    setLightingUniforms();
+
+    // Bind shadow map with comparison sampler
+    bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+
+    // Draw with lighting
+    draw();
+}
+
+void Renderer::drawFieldShadow()
+{
+    backendProgram = RendererProgram::FIELD_SHADOW;
+
+    // Set lighting uniforms
+    setLightingUniforms();
+
+    // Bind shadow map with comparison sampler
+    bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+
+    // Bind shadow map for direct depth sampling
+    uint32_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+    bgfx::setTexture(4, getUniform(shaderTextureBindings[4], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), flags);
+
+    draw();
 }
 
 void Renderer::draw()
@@ -701,6 +905,53 @@ void Renderer::draw()
     }
     bgfx::setState(internalState.state);
 
+    // Set stencil state    
+    uint32_t stencilState = BGFX_STENCIL_NONE;
+    if (internalState.stencilFunc != STENCIL_FUNC_NONE)
+    {
+        switch (internalState.stencilFunc)
+        {
+        case STENCIL_FUNC_ALWAYS:
+            stencilState |= BGFX_STENCIL_TEST_ALWAYS;
+            break;
+        case STENCIL_FUNC_EQUAL:
+            stencilState |= BGFX_STENCIL_TEST_EQUAL;
+            break;
+        }
+
+        switch (internalState.stencilOpFailS)
+        {
+        case STENCIL_OP_KEEP:
+            stencilState |= BGFX_STENCIL_OP_FAIL_S_KEEP;
+            break;
+        case STENCIL_OP_REPLACE:
+            stencilState |= BGFX_STENCIL_OP_FAIL_S_REPLACE;
+            break;
+        }
+        switch (internalState.stencilOpFailZ)
+        {
+        case STENCIL_OP_KEEP:
+            stencilState |= BGFX_STENCIL_OP_FAIL_Z_KEEP;
+            break;
+        case STENCIL_OP_REPLACE:
+            stencilState |= BGFX_STENCIL_OP_FAIL_Z_REPLACE;
+            break;
+        }
+        switch (internalState.stencilOpPassZ)
+        {
+        case STENCIL_OP_KEEP:
+            stencilState |= BGFX_STENCIL_OP_PASS_Z_KEEP;
+            break;
+        case STENCIL_OP_REPLACE:
+            stencilState |= BGFX_STENCIL_OP_PASS_Z_REPLACE;
+            break;
+        }
+
+        stencilState |= BGFX_STENCIL_FUNC_RMASK(0xff);
+        stencilState |= BGFX_STENCIL_FUNC_REF(internalState.stencilRef);       
+    }
+    bgfx::setStencil(stencilState, stencilState);
+
     bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
 
     internalState.bHasDrawBeenDone = true;
@@ -743,7 +994,7 @@ void Renderer::show()
 
     bgfx::dbgTextClear();
 
-    backendViewId = 0;
+    backendViewId = 1;
 
     vertexBufferData.clear();
     vertexBufferData.shrink_to_fit();
@@ -779,7 +1030,7 @@ const bgfx::Stats* Renderer::getStats()
     return bgfx::getStats();
 }
 
-void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount)
+void Renderer::bindVertexBuffer(struct nvertex* inVertex, struct point3d* normals, uint32_t inCount)
 {
     if (!bgfx::isValid(vertexBufferHandle)) vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, vertexLayout, BGFX_BUFFER_ALLOW_RESIZE);
 
@@ -796,6 +1047,13 @@ void Renderer::bindVertexBuffer(struct nvertex* inVertex, uint32_t inCount)
         vertexBufferData[currentOffset + idx].bgra = inVertex[idx].color.color;
         vertexBufferData[currentOffset + idx].u = inVertex[idx].u;
         vertexBufferData[currentOffset + idx].v = inVertex[idx].v;
+
+        if (normals)
+        {
+            vertexBufferData[currentOffset + idx].nx = normals[idx].x;
+            vertexBufferData[currentOffset + idx].ny = normals[idx].y;
+            vertexBufferData[currentOffset + idx].nz = normals[idx].z;
+        }
 
         if (vertex_log && idx == 0) trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[currentOffset + idx].x, vertexBufferData[currentOffset + idx].y, vertexBufferData[currentOffset + idx].z, vertexBufferData[currentOffset + idx].w, vertexBufferData[currentOffset + idx].bgra, vertexBufferData[currentOffset + idx].u, vertexBufferData[currentOffset + idx].v);
         if (vertex_log && idx == 1) trace("%s: See the rest on RenderDoc.\n", __func__);
@@ -826,7 +1084,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     scissorHeight = getInternalCoordY(height);
 }
 
-void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
+void Renderer::setClearFlags(bool doClearColor, bool doClearDepth, bool doClearStencil)
 {
     if (trace_all || trace_renderer) trace("Renderer::%s clearColor=%d,clearDepth=%d\n", __func__, doClearColor, doClearDepth);
 
@@ -838,7 +1096,10 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
     if (doClearDepth)
         clearFlags |= BGFX_CLEAR_DEPTH;
 
-    bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f);
+    if (doClearStencil)
+        clearFlags |= BGFX_CLEAR_STENCIL;    
+
+    bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f, 0);
     bgfx::touch(backendViewId);
 
     internalState.bHasDrawBeenDone = false;
@@ -1220,10 +1481,10 @@ uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t 
 
     bgfx::blit(backendViewId, ret, 0, dstY, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
     bgfx::touch(backendViewId);
-    setClearFlags(false, false);
+    setClearFlags(false, false, false);
 
     backendViewId++;
-    setClearFlags(false, false);
+    setClearFlags(false, false, false);
 
     return ret.idx;
 };
@@ -1242,6 +1503,23 @@ void Renderer::setBlendMode(RendererBlendMode mode)
 {
     internalState.blendMode = mode;
 };
+
+void Renderer::setStencilFunc(RendererStencilFunc func)
+{
+    internalState.stencilFunc = func;
+}
+
+void Renderer::setStencilOp(RendererStencilOp opFailS, RendererStencilOp opFailZ, RendererStencilOp opPassZ)
+{
+    internalState.stencilOpFailS = opFailS;
+    internalState.stencilOpFailZ = opFailZ;
+    internalState.stencilOpPassZ = opPassZ;
+}
+
+void Renderer::setStencilRef(uint32_t ref)
+{
+    internalState.stencilRef = ref;
+}
 
 void Renderer::isTexture(bool flag)
 {
@@ -1336,11 +1614,38 @@ void Renderer::setWireframeMode(bool flag)
     if (flag) bgfx::setDebug(BGFX_DEBUG_WIREFRAME);
 };
 
-void Renderer::setWorldView(struct matrix *matrix)
+void Renderer::setViewMatrix(struct matrix* matrix)
+{
+    ::memcpy(internalState.viewMatrix, &matrix->m[0][0], sizeof(matrix->m));
+
+    bx::mtxInverse(internalState.invViewMatrix, internalState.viewMatrix);
+
+    if (uniform_log) printMatrix(__func__, internalState.viewMatrix);    
+};
+
+float* Renderer::getViewMatrix()
+{
+    return internalState.viewMatrix;
+}
+
+void Renderer::setWorldViewMatrix(struct matrix *matrix)
 {
     ::memcpy(internalState.worldViewMatrix, &matrix->m[0][0], sizeof(matrix->m));
 
     if (uniform_log) printMatrix(__func__, internalState.worldViewMatrix);
+
+    struct matrix transpose;
+    transpose_matrix(matrix, &transpose);
+    struct matrix invTranspose;
+    inverse_matrix(&transpose, &invTranspose);
+    invTranspose._41 = 0.0;
+    invTranspose._42 = 0.0;
+    invTranspose._43 = 0.0;
+    invTranspose._44 = 1.0;
+
+    ::memcpy(internalState.normalMatrix, &invTranspose.m[0][0], sizeof(invTranspose.m));
+
+    if (uniform_log) printMatrix(__func__, internalState.normalMatrix);
 };
 
 void Renderer::setD3DViweport(struct matrix* matrix)
