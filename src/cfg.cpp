@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -73,6 +74,7 @@ bool enable_vsync;
 bool mdef_fix;
 long enable_antialiasing;
 bool enable_anisotropic;
+bool enable_lighting;
 bool skip_frames;
 bool ff7_more_debug;
 bool ff8_ssigpu_debug;
@@ -183,6 +185,7 @@ void read_cfg()
 	mdef_fix = config["mdef_fix"].value_or(true);
 	enable_antialiasing = config["enable_antialiasing"].value_or(0);
 	enable_anisotropic = config["enable_anisotropic"].value_or(true);
+	enable_lighting = config["enable_lighting"].value_or(false);
 	skip_frames = config["skip_frames"].value_or(false);
 	ff7_more_debug = config["ff7_more_debug"].value_or(false);
 	ff8_ssigpu_debug = config["ff8_ssigpu_debug"].value_or(false);

@@ -7,6 +7,7 @@
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2020 Marcin Gomulak                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -46,6 +47,7 @@
 #include "audio.h"
 #include "voice.h"
 #include "metadata.h"
+#include "lighting.h"
 
 bool proxyWndProc = false;
 
@@ -719,8 +721,11 @@ void common_flip(struct game_obj *game_object)
 	// Update RAM usage info
 	GlobalMemoryStatusEx(&last_ram_state);
 
+	// Draw with lighting
+	if (!ff8 && enable_lighting) lighting.draw(game_object);
+
 	// draw any z-sorted content now that we're done drawing everything else
-	gl_draw_deferred();
+	gl_draw_sorted_deferred();
 
 	newRenderer.drawOverlay();
 
@@ -928,9 +933,12 @@ void common_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, 
 
 	if(trace_all) trace("dll_gfx: clear %i %i %i\n", clear_color, clear_depth, unknown);
 
+	if (!ff8 && enable_lighting) newRenderer.clearShadowMap();
+
 	newRenderer.setClearFlags(
 		clear_color || mode == MODE_MENU || mode == MODE_CONDOR,
-		clear_depth
+		clear_depth,
+		true
 	);
 }
 
@@ -1753,7 +1761,6 @@ void common_draw_deferred(struct struc_77 *struc_77, struct game_obj *game_objec
 	VOBJ(polygon_set, polygon_set, struc_77->polygon_set);
 	struct p_hundred *hundred_data = struc_77->hundred_data;
 	struct indexed_primitive *ip;
-	struct matrix *model_matrix = 0;
 
 	if(trace_all) trace("dll_gfx: draw_deferred\n");
 
@@ -1765,12 +1772,10 @@ void common_draw_deferred(struct struc_77 *struc_77, struct game_obj *game_objec
 
 	common_setrenderstate(hundred_data, game_object);
 
-	if(struc_77->use_matrix) gl_set_world_matrix(&struc_77->matrix);
-	if(struc_77->use_matrix_pointer) gl_set_world_matrix(struc_77->matrix_pointer);
+	if(struc_77->use_matrix) gl_set_worldview_matrix(&struc_77->matrix);
+	if(struc_77->use_matrix_pointer) gl_set_worldview_matrix(struc_77->matrix_pointer);
 
-	if(VREF(polygon_set, matrix_set)) model_matrix = VREF(polygon_set, matrix_set)->matrix_view;
-
-	gl_draw_with_lighting(ip, VREF(polygon_set, field_4), model_matrix);
+	gl_draw_without_lighting(ip, VREF(polygon_set, field_4));
 }
 
 // called by the game to render a graphics object, basically a wrapper for
@@ -1860,7 +1865,7 @@ void generic_draw(struct polygon_set *polygon_set, struct indexed_vertices *iv, 
 	VOBJ(polygon_set, polygon_set, polygon_set);
 	VOBJ(indexed_vertices, iv, iv);
 
-	gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, vertextype, VREF(iv, vertices), VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), VREF(polygon_set, field_4), true);
+	gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, vertextype, VREF(iv, vertices), 0,  VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), 0, VREF(polygon_set, field_4), true);
 }
 
 // helper function used to draw a set of triangles with palette data
@@ -1908,7 +1913,7 @@ void generic_draw_paletted(struct polygon_set *polygon_set, struct indexed_verti
 
 		count -= var30;
 
-		gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, vertextype, vertices, vertexcount, VREF(iv, indices), indexcount, UNSAFE_VREF(graphics_object, iv, graphics_object), VREF(polygon_set, field_4), true);
+		gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, vertextype, vertices, 0, vertexcount, VREF(iv, indices), indexcount, UNSAFE_VREF(graphics_object, iv, graphics_object), 0, VREF(polygon_set, field_4), true);
 	}
 }
 
@@ -1953,8 +1958,8 @@ void common_setrenderstate_3D(struct polygon_set *polygon_set, struct indexed_ve
 
 	common_setrenderstate(VREF(polygon_set, hundred_data), game_object);
 
-	if(VREF(graphics_object, use_matrix_pointer)) gl_set_world_matrix(VREF(graphics_object, matrix_pointer));
-	else gl_set_world_matrix(VREFP(graphics_object, matrix));
+	if(VREF(graphics_object, use_matrix_pointer)) gl_set_worldview_matrix(VREF(graphics_object, matrix_pointer));
+	else gl_set_worldview_matrix(VREFP(graphics_object, matrix));
 }
 
 // called by the game to draw a set of 3D triangles without palette data
@@ -1981,7 +1986,7 @@ void common_draw_lines(struct polygon_set *polygon_set, struct indexed_vertices 
 
 	if(trace_all) trace("dll_gfx: draw_lines\n");
 
-	gl_draw_indexed_primitive(RendererPrimitiveType::PT_LINES, TLVERTEX, VREF(iv, vertices), VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), VREF(polygon_set, field_4), true);
+	gl_draw_indexed_primitive(RendererPrimitiveType::PT_LINES, TLVERTEX, VREF(iv, vertices), 0, VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), 0, VREF(polygon_set, field_4), true);
 }
 
 // noop

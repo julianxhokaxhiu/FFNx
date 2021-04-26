@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -44,7 +45,7 @@ struct driver_state
 	uint32_t alphatest;
 	uint32_t alphafunc;
 	uint32_t alpharef;
-	struct matrix world_matrix;
+	struct matrix world_view_matrix;
 	struct matrix d3dprojection_matrix;
 };
 
@@ -54,11 +55,18 @@ struct deferred_draw
 	uint32_t vertextype;
 	uint32_t vertexcount;
 	uint32_t count;
-	struct nvertex *vertices;
+	struct nvertex* vertices;
+	struct point3d* normals;
 	WORD *indices;
+	struct boundingbox* boundingbox;
 	uint32_t clip;
 	uint32_t mipmap;
 	struct driver_state state;
+};
+
+struct deferred_sorted_draw
+{
+	deferred_draw deferred_draw;
 	double z;
 	uint32_t drawn;
 };
@@ -82,14 +90,18 @@ extern int max_texture_size;
 void gl_draw_movie_quad(uint32_t width, uint32_t height);
 void gl_save_state(struct driver_state *dest);
 void gl_load_state(struct driver_state *src);
-uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap);
+uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct point3d* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap);
+uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap);
 void gl_draw_deferred();
+struct boundingbox calculateSceneAabb();
+void gl_draw_sorted_deferred();
 void gl_check_deferred(struct texture_set *texture_set);
 void gl_cleanup_deferred();
 uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, uint32_t clip, uint32_t mipmap);
-void gl_draw_with_lighting(struct indexed_primitive *ip, uint32_t clip, struct matrix *model_matrix);
-void gl_draw_indexed_primitive(uint32_t, uint32_t, struct nvertex *, uint32_t, WORD *, uint32_t, struct graphics_object *, uint32_t clip, uint32_t mipmap);
-void gl_set_world_matrix(struct matrix *matrix);
+void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip);
+void gl_draw_with_lighting(struct indexed_primitive *ip, struct boundingbox* boundingbox, uint32_t clip);
+void gl_draw_indexed_primitive(uint32_t, uint32_t, struct nvertex *, struct point3d* normals, uint32_t, WORD *, uint32_t, struct graphics_object *, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap);
+void gl_set_worldview_matrix(struct matrix *matrix);
 void gl_set_d3dprojection_matrix(struct matrix *matrix);
 void gl_set_blend_func(uint32_t);
 bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source);

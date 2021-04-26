@@ -7,6 +7,7 @@
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2020 Marcin Gomulak                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -27,6 +28,8 @@
 #include "field.h"
 #include "world.h"
 #include "api.h"
+#include "renderer.h"
+#include "lighting_debug.h"
 
 #define IMGUI_VIEW_ID 255
 
@@ -304,6 +307,7 @@ void Overlay::drawMainWindow() {
         if (ImGui::BeginMenu("Tools"))
         {
             ImGui::MenuItem("Field Debug", NULL, &field_debug_open);
+            if (!ff8) ImGui::MenuItem("Lighting Debug", NULL, &lighting_debug_open);
             if (ff8) ImGui::MenuItem("World Debug", NULL, &world_debug_open);
             ImGui::EndMenu();
         }
@@ -323,6 +327,7 @@ void Overlay::draw()
     {
         drawMainWindow();
         if (field_debug_open) field_debug(&field_debug_open);
+        if (!ff8 && lighting_debug_open) lighting_debug(&lighting_debug_open);
         if (ff8 && world_debug_open) world_debug(&world_debug_open);
     }
 

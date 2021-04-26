@@ -1,0 +1,169 @@
+/****************************************************************************/
+//    Copyright (C) 2021 Cosmos                                             //
+//                                                                          //
+//    This file is part of FFNx                                             //
+//                                                                          //
+//    FFNx is free software: you can redistribute it and/or modify          //
+//    it under the terms of the GNU General Public License as published by  //
+//    the Free Software Foundation, either version 3 of the License         //
+//                                                                          //
+//    FFNx is distributed in the hope that it will be useful,               //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of        //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
+//    GNU General Public License for more details.                          //
+/****************************************************************************/
+
+#include "lighting_debug.h"
+#include "lighting.h"
+#include "cfg.h"
+
+#include <imgui.h>
+#include <math.h>
+
+void lighting_debug(bool* isOpen)
+{
+    if (!ImGui::Begin("Lighting Debug", isOpen, ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::End();
+        return;
+    }
+
+    bool isLightingEnabled = enable_lighting;
+    if (ImGui::Checkbox("Enable Lighting", &isLightingEnabled))
+    {
+        enable_lighting = isLightingEnabled;
+    }
+    if (ImGui::CollapsingHeader("Direct Lighting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
+    {
+        point3d lightDirVector = lighting.getWorldLightDir();
+        float lightRotation[3] = { lightDirVector.x , lightDirVector.y };
+        if (ImGui::DragFloat2("Light Rotation", lightRotation, 1.0f))
+        {
+            lightRotation[0] = std::max(0.0f, std::min(180.0f, lightRotation[0]));
+            lightRotation[1] = std::max(0.0f, std::min(360.0f, lightRotation[1]));
+            lighting.setWorldLightDir(lightRotation[0], lightRotation[1], 0.0f);
+        }
+        float lightIntensity = lighting.getLightIntensity();
+        if (ImGui::DragFloat("Intensity##0", &lightIntensity, 0.01f, 0.0f, 100.0f))
+        {
+            lighting.setLightIntensity(lightIntensity);
+        }
+        struct point3d lightColorPoint3d = lighting.getLightColor();
+        float lightColor[3] = { lightColorPoint3d.x, lightColorPoint3d.y, lightColorPoint3d.z };
+        if (ImGui::ColorEdit3("Color##0", lightColor))
+        {
+            lighting.setLightColor(lightColor[0], lightColor[1], lightColor[2]);
+        }
+    }
+    if (ImGui::CollapsingHeader("Indirect Lighting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
+    {
+        float ambientIntensity = lighting.getAmbientIntensity();
+        if (ImGui::DragFloat("Intensity##1", &ambientIntensity, 0.01f, 0.0f, 100.0f))
+        {
+            lighting.setAmbientIntensity(ambientIntensity);
+        }
+
+        struct point3d ambientLightColorPoint3d = lighting.getAmbientLightColor();
+        float ambientLightColor[3] = { ambientLightColorPoint3d.x, ambientLightColorPoint3d.y, ambientLightColorPoint3d.z };
+        if (ImGui::ColorEdit3("Color##1", ambientLightColor))
+        {
+            lighting.setAmbientLightColor(ambientLightColor[0], ambientLightColor[1], ambientLightColor[2]);
+        }
+    }
+    if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
+    {
+        float roughness = lighting.getRoughness();
+        if (ImGui::DragFloat("Roughness", &roughness, 0.01f, 0.0f, 1.0f))
+        {
+            lighting.setRoughness(roughness);
+        }
+        float metalness = lighting.getMetalness();
+        if (ImGui::DragFloat("Metalness", &metalness, 0.01f, 0.0f, 1.0f))
+        {
+            lighting.setMetalness(metalness);
+        }
+    }
+    if (ImGui::CollapsingHeader("Shadow map (common)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
+    {        
+        bool isShadowFaceCullingEnabled = lighting.isShadowFaceCullingEnabled();
+        if (ImGui::Checkbox("Face culling", &isShadowFaceCullingEnabled))
+        {
+            lighting.setShadowFaceCullingEnabled(isShadowFaceCullingEnabled);
+        }
+        int shadowMapResolution = lighting.getShadowMapResolution();
+        if (ImGui::SliderInt("Resolution", &shadowMapResolution, 512, 4096))
+        {
+            lighting.setShadowMapResolution(shadowMapResolution);
+        }
+        float shadowConstantBias = lighting.getShadowConstantBias();
+        if (ImGui::DragFloat("Constant Bias", &shadowConstantBias, 0.001f, 0.0f, 1.0f))
+        {
+            lighting.setShadowConstantBias(shadowConstantBias);
+        }
+    }
+    if (ImGui::CollapsingHeader("Battle shadow map", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
+    {
+        float shadowMapArea = lighting.getShadowMapArea();
+        if (ImGui::DragFloat("Area##0", &shadowMapArea, 10.0f, 0.0f, 100000.0f))
+        {
+            lighting.setShadowMapArea(shadowMapArea);
+        }
+        float shadowMapNearFarSize = lighting.getShadowMapNearFarSize();
+        if (ImGui::DragFloat("Near/far size##0", &shadowMapNearFarSize, 10.0f, 0.0f, 100000.0f))
+        {
+            lighting.setShadowMapNearFarSize(shadowMapNearFarSize);
+        }
+    }
+    if (ImGui::CollapsingHeader("Field shadow map", ImGuiTreeNodeFlags_DefaultOpen| ImGuiTreeNodeFlags_SpanAvailWidth))
+    {
+        float fieldShadowOcclusion = lighting.getFieldShadowOcclusion();
+        if (ImGui::DragFloat("Occlusion", &fieldShadowOcclusion, 0.01f, 0.0f, 1.0f))
+        {
+            lighting.setFieldShadowOcclusion(fieldShadowOcclusion);
+        }
+        float fieldShadowMapArea = lighting.getFieldShadowMapArea();
+        if (ImGui::DragFloat("Area##1", &fieldShadowMapArea, 10.0f, 0.0f, 100000.0f))
+        {
+            lighting.setFieldShadowMapArea(fieldShadowMapArea);
+        }
+        float fieldShadowMapNearFarSize = lighting.getFieldShadowMapNearFarSize();
+        if (ImGui::DragFloat("Near/far size##1", &fieldShadowMapNearFarSize, 10.0f, 0.0f, 100000.0f))
+        {
+            lighting.setFieldShadowMapNearFarSize(fieldShadowMapNearFarSize);
+        }        
+        float fieldShadowDistance = lighting.getFieldShadowFadeStartDistance();
+        if (ImGui::DragFloat("Fade Start Distance", &fieldShadowDistance, 1.0f, 0.0f, 1000.0f))
+        {
+            lighting.setFieldShadowFadeStartDistance(fieldShadowDistance);
+        }
+        float fieldShadowFadeRange = lighting.getFieldShadowFadeRange();
+        if (ImGui::DragFloat("Fade Range", &fieldShadowFadeRange, 1.0f, 0.0f, 1000.0f))
+        {
+            lighting.setFieldShadowFadeRange(fieldShadowFadeRange);
+        }
+        float walkMeshExtrudeSize = lighting.getWalkmeshExtrudeSize();
+        if (ImGui::DragFloat("Walkmesh extrude size", &walkMeshExtrudeSize, 0.01f, 0.0f, 100.0f))
+        {
+            lighting.setWalkmeshExtrudeSize(walkMeshExtrudeSize);
+        }
+        float offset = lighting.getWalkmeshPosOffset();
+        if (ImGui::DragFloat("Walkmesh offset", &offset, 0.01f, -100.0f, 100.0f))
+        {
+            lighting.setWalkmeshPosOffset(offset);
+        }
+    }
+    if (ImGui::CollapsingHeader("Debug", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
+    {
+        bool isHide2dEnabled = lighting.isHide2dEnabled();
+        if (ImGui::Checkbox("Hide 2D", &isHide2dEnabled))
+        {
+            lighting.setHide2dEnabled(isHide2dEnabled);
+        }
+        bool isShowWalkmeshEnabled = lighting.isShowWalkmeshEnabled();
+        if (ImGui::Checkbox("Show walkmesh", &isShowWalkmeshEnabled))
+        {
+            lighting.setShowWalkmeshEnabled(isShowWalkmeshEnabled);
+        }
+    }
+    ImGui::End();
+}

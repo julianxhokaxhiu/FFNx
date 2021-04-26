@@ -1,11 +1,4 @@
 /****************************************************************************/
-//    Copyright (C) 2009 Aali132                                            //
-//    Copyright (C) 2018 quantumpencil                                      //
-//    Copyright (C) 2018 Maxime Bacoux                                      //
-//    Copyright (C) 2020 myst6re                                            //
-//    Copyright (C) 2020 Chris Rizzitello                                   //
-//    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2021 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -22,21 +15,4 @@
 
 #pragma once
 
-void field_init();
-void field_debug(bool *isOpen);
-
-template<typename T>
-T get_field_parameter(int id)
-{
-	return *(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1);
-}
-
-template<typename T>
-void set_field_parameter(int id, T value)
-{
-	*(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1) = value;
-}
-
-byte get_field_bank_value(int16_t bank);
-
-byte* get_level_data_pointer();
+void lighting_debug(bool* isOpen);

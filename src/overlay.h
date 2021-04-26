@@ -7,6 +7,7 @@
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2020 Marcin Gomulak                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -37,6 +38,7 @@ private:
 	bgfx::ProgramHandle m_program;
 	bool visible = true;
 	bool field_debug_open = false;
+	bool lighting_debug_open = false;
 	bool world_debug_open = false;
 
 	void UpdateMousePos();
