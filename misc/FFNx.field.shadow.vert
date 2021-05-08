@@ -25,9 +25,8 @@ uniform mat4 lightViewProjTexMatrix;
 
 void main()
 {
-    v_position0 = mul(worldView, vec4(a_position.xyz, 1.0));
+    v_position0 = vec4(a_position.xyz, 1.0);
     v_color0 = a_color0;
-    v_shadow0 = mul(lightViewProjTexMatrix, v_position0);
-    gl_Position = mul(mul(d3dViewport, d3dProjection), v_position0);
+    v_shadow0 = mul(mul(lightViewProjTexMatrix, worldView), v_position0);
+    gl_Position = mul(mul(d3dViewport, mul(d3dProjection, worldView)), v_position0);
 }
-
