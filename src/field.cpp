@@ -103,6 +103,11 @@ int script_PC_map_change() {
 	return old_pc();
 }
 
+int field_calc_window_pos(int16_t WINDOW_ID, int16_t X, int16_t Y, int16_t W, int16_t H)
+{
+	return ff7_externals.sub_630C48(WINDOW_ID, X, ff7_center_fields ? Y + 8 : Y, W, H);
+}
+
 void field_init()
 {
 	if (!ff8)
@@ -110,6 +115,9 @@ void field_init()
 		// Proxies the PC field opcode to reposition the player after a forced map change
 		old_pc = (int (*)())common_externals.execute_opcode_table[0xA0];
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA0], (DWORD)&script_PC_map_change);
+
+		// Proxy the window calculation formula so we can offset windows vertically
+		replace_call_function(common_externals.execute_opcode_table[0x50] + 0x174, field_calc_window_pos);
 
 		uint32_t main_loop = ff7_externals.cdcheck + 0xF3;
 		uint32_t field_main_loop = get_absolute_value(main_loop, 0x8F8); // 0x60E5B7
