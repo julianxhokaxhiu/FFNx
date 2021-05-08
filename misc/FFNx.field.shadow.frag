@@ -16,6 +16,7 @@
 $input v_position0, v_color0, v_shadow0
 
 #include <bgfx/bgfx_shader.sh>
+#define FIELD_SHADOW 1
 #include "FFNx.pcf.sh"
 
 uniform vec4 lightingDebugData;
