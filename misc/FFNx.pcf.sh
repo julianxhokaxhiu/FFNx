@@ -29,7 +29,7 @@ float sampleShadowMap(vec2 base_uv, float u, float v, float shadowMapSizeInv, fl
     float shadowFactor = shadow2D(tex_s, shadowUv);
 
 #ifdef FIELD_SHADOW
-# if BGFX_SHADER_LANGUAGE_HLSL > 400
+#if BGFX_SHADER_LANGUAGE_HLSL > 400
     // Fade out shadows as the vertical distance between occluder and walkmesh increases
     // This is to prevent shadows being projected to multiple floors
 
