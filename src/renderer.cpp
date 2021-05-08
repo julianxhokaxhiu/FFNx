@@ -905,7 +905,7 @@ void Renderer::draw()
     }
     bgfx::setState(internalState.state);
 
-    // Set stencil state    
+    // Set stencil state
     uint32_t stencilState = BGFX_STENCIL_NONE;
     if (internalState.stencilFunc != STENCIL_FUNC_NONE)
     {
@@ -948,7 +948,7 @@ void Renderer::draw()
         }
 
         stencilState |= BGFX_STENCIL_FUNC_RMASK(0xff);
-        stencilState |= BGFX_STENCIL_FUNC_REF(internalState.stencilRef);       
+        stencilState |= BGFX_STENCIL_FUNC_REF(internalState.stencilRef);
     }
     bgfx::setStencil(stencilState, stencilState);
 
@@ -1097,7 +1097,7 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth, bool doClearS
         clearFlags |= BGFX_CLEAR_DEPTH;
 
     if (doClearStencil)
-        clearFlags |= BGFX_CLEAR_STENCIL;    
+        clearFlags |= BGFX_CLEAR_STENCIL;
 
     bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f, 0);
     bgfx::touch(backendViewId);
@@ -1620,7 +1620,7 @@ void Renderer::setViewMatrix(struct matrix* matrix)
 
     bx::mtxInverse(internalState.invViewMatrix, internalState.viewMatrix);
 
-    if (uniform_log) printMatrix(__func__, internalState.viewMatrix);    
+    if (uniform_log) printMatrix(__func__, internalState.viewMatrix);
 };
 
 float* Renderer::getViewMatrix()
