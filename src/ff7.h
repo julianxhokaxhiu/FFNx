@@ -1878,6 +1878,7 @@ struct ff7_externals
 	uint32_t wm_play_music_call;
 	uint32_t battle_fight_end;
 	uint32_t battle_fanfare_music;
+	int (*sub_630C48)(int16_t, int16_t, int16_t, int16_t, int16_t);
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
