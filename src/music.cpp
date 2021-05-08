@@ -474,7 +474,7 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 
 uint32_t ff7_battle_music(uint32_t type, uint32_t music_id, uint32_t fadetime, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) trace("%s: music_id=%d\n", __func__, music_id);
 
 	next_music_is_battle = true;
 
