@@ -314,6 +314,8 @@ private:
     void recalcInternals();
     void prepareFramebuffer();
 
+    void draw();
+
     bx::DefaultAllocator defaultAllocator;
     bx::FileWriter defaultWriter;
     Overlay overlay;
@@ -333,8 +335,8 @@ public:
     void clearShadowMap();
     void drawToShadowMap();
     void drawWithLighting(bool isCastShadow);
+    void drawWithoutLighting();
     void drawFieldShadow();
-    void draw();
     void drawOverlay();
     void show();
 

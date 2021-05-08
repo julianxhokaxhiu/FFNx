@@ -113,7 +113,7 @@ void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 	newRenderer.isTLVertex(true);
 	newRenderer.doTextureFiltering(current_state.texture_filter);
 
-	newRenderer.draw();
+	newRenderer.drawWithoutLighting();
 }
 
 // draw movie frame
@@ -280,7 +280,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	newRenderer.setPrimitiveType(RendererPrimitiveType(primitivetype));
 
 	if (!ff8 && enable_lighting) newRenderer.drawWithLighting(normals != nullptr);
-	else newRenderer.draw();
+	else newRenderer.drawWithoutLighting();
 
 	stats.vertex_count += count;
 

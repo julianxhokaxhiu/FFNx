@@ -359,7 +359,7 @@ void draw_single_triangle(struct nvertex *vertices)
 
 	newRenderer.isTLVertex(true);
 
-	newRenderer.draw();
+	newRenderer.drawWithoutLighting();
 }
 
 void sub_6B2720(struct indexed_primitive *ip)

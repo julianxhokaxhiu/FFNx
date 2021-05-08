@@ -414,7 +414,7 @@ void Renderer::renderFrame()
         setBlendMode(RendererBlendMode::BLEND_DISABLED);
         setPrimitiveType();
 
-        if (needsToDraw) draw();
+        if (needsToDraw) drawWithoutLighting();
 
         setBlendMode();
     }
@@ -530,6 +530,128 @@ void Renderer::prepareFramebuffer()
         true
     );
 }
+
+void Renderer::draw()
+{
+    if (trace_all || trace_renderer) trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
+
+    // Set current view rect
+    if (backendProgram == RendererProgram::POSTPROCESSING)
+        bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
+    else {
+        // Set view to render in the framebuffer
+        bgfx::setViewFrameBuffer(backendViewId, backendFrameBuffer);
+
+        bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
+
+        if (internalState.bDoScissorTest) bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
+    }
+
+    // Set current view transform
+    bgfx::setViewTransform(backendViewId, NULL, internalState.backendProjMatrix);
+
+    // Set state
+    {
+        internalState.state = BGFX_STATE_LINEAA | BGFX_STATE_MSAA | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
+
+        switch (internalState.cullMode)
+        {
+        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW;
+        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW;
+        }
+
+        switch (internalState.blendMode)
+        {
+        case RendererBlendMode::BLEND_AVG:
+            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
+            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+            break;
+        case RendererBlendMode::BLEND_ADD:
+            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
+            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE);
+            break;
+        case RendererBlendMode::BLEND_SUB:
+            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_REVSUB);
+            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE);
+            break;
+        case RendererBlendMode::BLEND_25P:
+            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
+            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_ONE);
+            break;
+        case RendererBlendMode::BLEND_NONE:
+            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
+            if (internalState.bIsExternalTexture) internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
+            else internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO);
+            break;
+        }
+
+        switch (internalState.primitiveType)
+        {
+        case RendererPrimitiveType::PT_LINES:
+            internalState.state |= BGFX_STATE_PT_LINES;
+            break;
+        case RendererPrimitiveType::PT_POINTS:
+            internalState.state |= BGFX_STATE_PT_POINTS;
+            break;
+        }
+
+        if (internalState.bDoDepthTest) internalState.state |= BGFX_STATE_DEPTH_TEST_LEQUAL;
+
+        if (internalState.bDoDepthWrite) internalState.state |= BGFX_STATE_WRITE_Z;
+    }
+    bgfx::setState(internalState.state);
+
+    // Set stencil state
+    uint32_t stencilState = BGFX_STENCIL_NONE;
+    if (internalState.stencilFunc != STENCIL_FUNC_NONE)
+    {
+        switch (internalState.stencilFunc)
+        {
+        case STENCIL_FUNC_ALWAYS:
+            stencilState |= BGFX_STENCIL_TEST_ALWAYS;
+            break;
+        case STENCIL_FUNC_EQUAL:
+            stencilState |= BGFX_STENCIL_TEST_EQUAL;
+            break;
+        }
+
+        switch (internalState.stencilOpFailS)
+        {
+        case STENCIL_OP_KEEP:
+            stencilState |= BGFX_STENCIL_OP_FAIL_S_KEEP;
+            break;
+        case STENCIL_OP_REPLACE:
+            stencilState |= BGFX_STENCIL_OP_FAIL_S_REPLACE;
+            break;
+        }
+        switch (internalState.stencilOpFailZ)
+        {
+        case STENCIL_OP_KEEP:
+            stencilState |= BGFX_STENCIL_OP_FAIL_Z_KEEP;
+            break;
+        case STENCIL_OP_REPLACE:
+            stencilState |= BGFX_STENCIL_OP_FAIL_Z_REPLACE;
+            break;
+        }
+        switch (internalState.stencilOpPassZ)
+        {
+        case STENCIL_OP_KEEP:
+            stencilState |= BGFX_STENCIL_OP_PASS_Z_KEEP;
+            break;
+        case STENCIL_OP_REPLACE:
+            stencilState |= BGFX_STENCIL_OP_PASS_Z_REPLACE;
+            break;
+        }
+
+        stencilState |= BGFX_STENCIL_FUNC_RMASK(0xff);
+        stencilState |= BGFX_STENCIL_FUNC_REF(internalState.stencilRef);
+    }
+    bgfx::setStencil(stencilState, stencilState);
+
+    bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
+
+    internalState.bHasDrawBeenDone = true;
+};
 
 // PUBLIC
 
@@ -706,23 +828,6 @@ void Renderer::drawToShadowMap()
     // Set current view transform
     bgfx::setViewTransform(0, lightingState.lightViewMatrix, lightingState.lightProjMatrix);
 
-    // Set uniforms
-    setLightingUniforms();
-    setCommonUniforms();
-
-    // Bind texture
-    bgfx::TextureHandle handle = internalState.texHandlers[0];
-    if (bgfx::isValid(handle))
-    {
-        uint32_t flags = 0;
-
-        if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
-
-        if (flags == 0) flags = UINT32_MAX;
-
-        bgfx::setTexture(0, getUniform(shaderTextureBindings[0], bgfx::UniformType::Sampler), handle, flags);
-    }
-
     // Set state
     internalState.state = BGFX_STATE_DEPTH_TEST_LEQUAL | BGFX_STATE_WRITE_Z;
 
@@ -768,58 +873,37 @@ void Renderer::drawWithLighting(bool isCastShadow)
         setStencilOp();
     }
 
+    // Set uniforms
+    setCommonUniforms();
+    setLightingUniforms();
+
+    // Bind texture
+    bgfx::TextureHandle handle = internalState.texHandlers[0];
+    if (bgfx::isValid(handle))
+    {
+        uint32_t flags = 0;
+
+        if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+
+        if (flags == 0) flags = UINT32_MAX;
+
+        bgfx::setTexture(0, getUniform(shaderTextureBindings[0], bgfx::UniformType::Sampler), handle, flags);
+    }
+
     // Draw to shadowmap
     if (isCastShadow) newRenderer.drawToShadowMap();
 
     // Set lighting program
     backendProgram = backendProgram == SMOOTH ? LIGHTING_SMOOTH : LIGHTING_FLAT;
 
-    // Set lighting uniforms
-    setLightingUniforms();
-
     // Bind shadow map with comparison sampler
     bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
-
-    // Draw with lighting
-    draw();
-}
-
-void Renderer::drawFieldShadow()
-{
-    backendProgram = RendererProgram::FIELD_SHADOW;
-
-    // Set lighting uniforms
-    setLightingUniforms();
-
-    // Bind shadow map with comparison sampler
-    bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
-
-    // Bind shadow map for direct depth sampling
-    uint32_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
-    bgfx::setTexture(4, getUniform(shaderTextureBindings[4], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), flags);
 
     draw();
 }
 
-void Renderer::draw()
+void Renderer::drawWithoutLighting()
 {
-    if (trace_all || trace_renderer) trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
-
-    // Set current view rect
-    if (backendProgram == RendererProgram::POSTPROCESSING)
-        bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
-    else {
-        // Set view to render in the framebuffer
-        bgfx::setViewFrameBuffer(backendViewId, backendFrameBuffer);
-
-        bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
-
-        if (internalState.bDoScissorTest) bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
-    }
-
-    // Set current view transform
-    bgfx::setViewTransform(backendViewId, NULL, internalState.backendProjMatrix);
-
     setCommonUniforms();
 
     // Bind texture
@@ -854,108 +938,26 @@ void Renderer::draw()
         }
     }
 
-    // Set state
-    {
-        internalState.state = BGFX_STATE_LINEAA | BGFX_STATE_MSAA | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
+    draw();
+}
 
-        switch (internalState.cullMode)
-        {
-        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW;
-        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW;
-        }
+void Renderer::drawFieldShadow()
+{
+    backendProgram = RendererProgram::FIELD_SHADOW;
 
-        switch (internalState.blendMode)
-        {
-        case RendererBlendMode::BLEND_AVG:
-            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
-            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
-            break;
-        case RendererBlendMode::BLEND_ADD:
-            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
-            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE);
-            break;
-        case RendererBlendMode::BLEND_SUB:
-            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_REVSUB);
-            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE);
-            break;
-        case RendererBlendMode::BLEND_25P:
-            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
-            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_ONE);
-            break;
-        case RendererBlendMode::BLEND_NONE:
-            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
-            if (internalState.bIsExternalTexture) internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
-            else internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ZERO);
-            break;
-        }
+    // Set uniforms
+    setCommonUniforms();
+    setLightingUniforms();
 
-        switch (internalState.primitiveType)
-        {
-        case RendererPrimitiveType::PT_LINES:
-            internalState.state |= BGFX_STATE_PT_LINES;
-            break;
-        case RendererPrimitiveType::PT_POINTS:
-            internalState.state |= BGFX_STATE_PT_POINTS;
-            break;
-        }
+    // Bind shadow map with comparison sampler
+    bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
 
-        if (internalState.bDoDepthTest) internalState.state |= BGFX_STATE_DEPTH_TEST_LEQUAL;
+    // Bind shadow map for direct depth sampling
+    uint32_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+    bgfx::setTexture(4, getUniform(shaderTextureBindings[4], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), flags);
 
-        if (internalState.bDoDepthWrite) internalState.state |= BGFX_STATE_WRITE_Z;
-    }
-    bgfx::setState(internalState.state);
-
-    // Set stencil state
-    uint32_t stencilState = BGFX_STENCIL_NONE;
-    if (internalState.stencilFunc != STENCIL_FUNC_NONE)
-    {
-        switch (internalState.stencilFunc)
-        {
-        case STENCIL_FUNC_ALWAYS:
-            stencilState |= BGFX_STENCIL_TEST_ALWAYS;
-            break;
-        case STENCIL_FUNC_EQUAL:
-            stencilState |= BGFX_STENCIL_TEST_EQUAL;
-            break;
-        }
-
-        switch (internalState.stencilOpFailS)
-        {
-        case STENCIL_OP_KEEP:
-            stencilState |= BGFX_STENCIL_OP_FAIL_S_KEEP;
-            break;
-        case STENCIL_OP_REPLACE:
-            stencilState |= BGFX_STENCIL_OP_FAIL_S_REPLACE;
-            break;
-        }
-        switch (internalState.stencilOpFailZ)
-        {
-        case STENCIL_OP_KEEP:
-            stencilState |= BGFX_STENCIL_OP_FAIL_Z_KEEP;
-            break;
-        case STENCIL_OP_REPLACE:
-            stencilState |= BGFX_STENCIL_OP_FAIL_Z_REPLACE;
-            break;
-        }
-        switch (internalState.stencilOpPassZ)
-        {
-        case STENCIL_OP_KEEP:
-            stencilState |= BGFX_STENCIL_OP_PASS_Z_KEEP;
-            break;
-        case STENCIL_OP_REPLACE:
-            stencilState |= BGFX_STENCIL_OP_PASS_Z_REPLACE;
-            break;
-        }
-
-        stencilState |= BGFX_STENCIL_FUNC_RMASK(0xff);
-        stencilState |= BGFX_STENCIL_FUNC_REF(internalState.stencilRef);
-    }
-    bgfx::setStencil(stencilState, stencilState);
-
-    bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
-
-    internalState.bHasDrawBeenDone = true;
-};
+    draw();
+}
 
 void Renderer::drawOverlay()
 {
