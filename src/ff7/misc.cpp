@@ -388,10 +388,19 @@ void ff7_handle_ambient_playback()
 {
 	struct game_mode *mode = getmode_cached();
 	static char filename[64]{0};
-	static WORD last_field_id = 0;
+	static WORD last_field_id = 0, last_battle_id = 0;
 
   switch(mode->driver_mode)
   {
+	case MODE_BATTLE:
+		if (last_battle_id != ff7_externals.modules_global_object->battle_id)
+		{
+			last_battle_id = ff7_externals.modules_global_object->battle_id;
+
+			sprintf(filename, "bat_%d", last_battle_id);
+			nxAudioEngine.playAmbient(filename);
+		}
+		break;
   case MODE_FIELD:
 		if (last_field_id != *ff7_externals.field_id)
 		{
@@ -402,10 +411,11 @@ void ff7_handle_ambient_playback()
 		}
 		break;
 	default:
-		if (last_field_id != 0)
+		if (last_field_id != 0 || last_battle_id != 0)
 		{
 			nxAudioEngine.stopAmbient();
 			last_field_id = 0;
+			last_battle_id = 0;
 		}
 		break;
   }
