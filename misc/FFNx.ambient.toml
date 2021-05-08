@@ -18,6 +18,12 @@
 # sequential: Sequentially playback an SFX ID with the ones provided in the
 # array. IDs MUST be numbers ONLY and MUST NOT contain any special character
 # like - or _. This flag MUST NOT be used in pair with 'shuffle'.
+# -----------------------------------------------------------------------------
+# fade_in: Fade in the track on play. The value MUST be a floating point
+# number and if 0.0 ( default ) then the track will NOT fade.
+# -----------------------------------------------------------------------------
+# fade_out: Fade out the track on stop. The value MUST be a floating point
+# number and if 0.0 ( default ) then the track will NOT fade.
 ###############################################################################
 
 # This entry will shuffle the SFX ID 1 ( menu cursor ) with the ID 2, 3 or 4.
@@ -27,3 +33,5 @@
 #[field_123]
 #shuffle = [ "field_121", "field_122", "field_124" ]
 #sequential = [ "field_121", "field_122", "field_124" ]
+#fade_in = 0.0
+#fade_out = 0.0

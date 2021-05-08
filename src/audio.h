@@ -98,9 +98,15 @@ public:
 	{
 		NxAudioEngineAmbient() :
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
-			stream(nullptr) {}
+			stream(nullptr),
+			volume(1.0f),
+			fade_in(0.0f),
+			fade_out(0.0f) {}
 		SoLoud::handle handle;
 		SoLoud::VGMStream* stream;
+		float volume;
+		double fade_in;
+		double fade_out;
 	};
 
 private:
@@ -214,7 +220,7 @@ public:
 
 	// Ambient
 	bool canPlayAmbient(const char* name);
-	bool playAmbient(const char* name, float volume = 1.0f);
+	bool playAmbient(const char* name, float volume = 1.0f, double time = 0);
 	void stopAmbient(double time = 0);
 	void pauseAmbient(double time = 0);
 	void resumeAmbient(double time = 0);

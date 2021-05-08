@@ -907,10 +907,15 @@ bool NxAudioEngine::canPlayAmbient(const char* name)
 	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 }
 
-bool NxAudioEngine::playAmbient(const char* name, float volume)
+bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 {
 	char filename[MAX_PATH];
 	bool exists = false;
+
+	// Reset state
+	_currentAmbient.fade_in = 0.0f;
+	_currentAmbient.fade_out = 0.0f;
+	_currentAmbient.volume = 1.0f;
 
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT][name];
 	if (node)
@@ -940,6 +945,22 @@ bool NxAudioEngine::playAmbient(const char* name, float volume)
 
 			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(""), NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 		}
+
+		// Fade In time for this track, if configured
+		toml::node *fadeInTime = node["fade_in"].as_floating_point();
+		if (fadeInTime)
+		{
+			_currentAmbient.fade_in = fadeInTime->value_or(0.0f);
+
+			time = _currentAmbient.fade_in;
+		}
+
+		// Fade Out time for this track, if configured
+		toml::node *fadeOutTime = node["fade_out"].as_floating_point();
+		if (fadeOutTime)
+		{
+			_currentAmbient.fade_out = fadeOutTime->value_or(0.0f);
+		}
 	}
 	else
 		exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
@@ -956,11 +977,15 @@ bool NxAudioEngine::playAmbient(const char* name, float volume)
 
 	if (exists)
 	{
+		_currentAmbient.volume = volume;
+
 		_currentAmbient.stream = new SoLoud::VGMStream();
 
 		_currentAmbient.stream->load(filename);
 
-		_currentAmbient.handle = _engine.play(*_currentAmbient.stream, volume);
+		_currentAmbient.handle = _engine.play(*_currentAmbient.stream, time > 0.0f ? 0.0f : volume, 0.0f, time > 0.0f);
+
+		if (time > 0.0f) resumeAmbient(time);
 
 		return _engine.isValidVoiceHandle(_currentAmbient.handle);
 	}
@@ -970,7 +995,13 @@ bool NxAudioEngine::playAmbient(const char* name, float volume)
 
 void NxAudioEngine::stopAmbient(double time)
 {
-	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+	if (_currentAmbient.fade_out > 0.0f)
+	{
+		time = _currentAmbient.fade_out;
+
+		if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
+	}
+	else if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
 
 	if (time > 0.0)
 	{
@@ -985,7 +1016,13 @@ void NxAudioEngine::stopAmbient(double time)
 
 void NxAudioEngine::pauseAmbient(double time)
 {
-	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+	if (_currentAmbient.fade_out > 0.0f)
+	{
+		time = _currentAmbient.fade_out;
+
+		if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
+	}
+	else if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
 
 	if (time > 0.0)
 	{
@@ -1000,16 +1037,22 @@ void NxAudioEngine::pauseAmbient(double time)
 
 void NxAudioEngine::resumeAmbient(double time)
 {
-	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+	if (_currentAmbient.fade_in > 0.0f)
+	{
+		time = _currentAmbient.fade_in;
+
+		if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
+	}
+	else if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
 
 	if (time > 0.0)
 	{
 		_engine.setPause(_currentAmbient.handle, false);
-		_engine.fadeVolume(_currentAmbient.handle, 1.0f, time);
+		_engine.fadeVolume(_currentAmbient.handle, _currentAmbient.volume, time);
 	}
 	else
 	{
-		_engine.setVolume(_currentAmbient.handle, 1.0f);
+		_engine.setVolume(_currentAmbient.handle, _currentAmbient.volume);
 		_engine.setPause(_currentAmbient.handle, false);
 	}
 }
