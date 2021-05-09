@@ -22,12 +22,12 @@ uniform vec4 materialData;
 
 #define INV_PI 0.31831
 
-vec3 fresnelSchlick(vec3 f0, float cosine) 
+vec3 fresnelSchlick(vec3 f0, float cosine)
 {
     return f0 + (1.0 - f0) * pow(1.0 - cosine, 5.0);
 }
 
-float normalDistributionGgx(vec3 N, vec3 H, float roughness) 
+float normalDistributionGgx(vec3 N, vec3 H, float roughness)
 {
     float roughness2 = roughness * roughness;
     float dotNH = max(0.0, dot(N, H));
@@ -39,7 +39,7 @@ float geometrySchlickGGX(float NdotV, float k)
 {
     float nom   = NdotV;
     float denom = NdotV * (1.0 - k) + k;
-	
+
     return nom / denom;
 }
 
@@ -49,11 +49,11 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float k)
     float NdotL = max(dot(N, L), 0.0);
     float ggx1 = geometrySchlickGGX(NdotV, k);
     float ggx2 = geometrySchlickGGX(NdotL, k);
-	
+
     return ggx1 * ggx2;
 }
 
-vec3 specularCookTorranceBrdf(vec3 F0, vec3 N, vec3 V, vec3 L, float roughness) 
+vec3 specularCookTorranceBrdf(vec3 F0, vec3 N, vec3 V, vec3 L, float roughness)
 {
     vec3 H = normalize(V + L);
     float dotNV = saturate(dot(N, V));
@@ -69,7 +69,7 @@ vec3 specularCookTorranceBrdf(vec3 F0, vec3 N, vec3 V, vec3 L, float roughness)
 // https://learnopengl.com/PBR/Theory
 vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 normal, vec3 shadowUv)
 {
-    float shadowFactor = sampleShadowMapPCF7x7(shadowUv.xyz, viewSpacePosition.xyz); 
+    float shadowFactor = sampleShadowMapPCF7x7(shadowUv.xyz, viewSpacePosition.xyz);
 
     // Ambient
     vec3 ambientLightColor = ambientLightData.rgb;
@@ -86,9 +86,9 @@ vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 normal, vec3 shadow
     // Specular
     vec3 viewDir = normalize(viewSpacePosition.xyz);
     vec3 lightDir = normalize(lightDirData.xyz);
-    float power = materialData.x;        
-    vec3 F0 = vec3(0.04, 0.04, 0.04); 
-    F0 = mix(F0, albedo, metalness);        
+    float power = materialData.x;
+    vec3 F0 = vec3(0.04, 0.04, 0.04);
+    F0 = mix(F0, albedo, metalness);
     vec3 specular = metalness * specularCookTorranceBrdf(F0, normal, viewDir, -lightDir, roughness);
 
     // Light

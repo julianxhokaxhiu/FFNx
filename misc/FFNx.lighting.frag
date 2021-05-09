@@ -143,10 +143,10 @@ void main()
             }
         }
     }
-           
+
     if(isTLVertex)
     {
-        gl_FragColor = color; 
+        gl_FragColor = color;
     }
     else
     {
@@ -155,7 +155,7 @@ void main()
 
         // Normal
         vec3 normal = normalize(v_normal0);
-            
+
         // Luminance
         vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, normal, shadowUv);
 

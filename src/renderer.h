@@ -211,7 +211,7 @@ private:
         float viewMatrix[16];
         float invViewMatrix[16];
         float worldViewMatrix[16];
-        float normalMatrix[16];   
+        float normalMatrix[16];
 
         uint32_t clearColorValue;
 
@@ -366,7 +366,7 @@ public:
     void setBlendMode(RendererBlendMode mode = RendererBlendMode::BLEND_NONE);
     void setStencilFunc(RendererStencilFunc func = RendererStencilFunc::STENCIL_FUNC_NONE);
     void setStencilOp(RendererStencilOp opFailS = RendererStencilOp::STENCIL_OP_KEEP,
-                      RendererStencilOp opFailZ = RendererStencilOp::STENCIL_OP_KEEP, 
+                      RendererStencilOp opFailZ = RendererStencilOp::STENCIL_OP_KEEP,
                       RendererStencilOp opPassZ = RendererStencilOp::STENCIL_OP_KEEP);
     void setStencilRef(uint32_t ref = 0);
     void isTexture(bool flag = false);
