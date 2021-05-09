@@ -291,7 +291,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 }
 
 // draw deferred models
-void gl_draw_deferred()
+void gl_draw_deferred(bool isDrawOpaqueOnly)
 {
 	struct driver_state saved_state;
 
@@ -304,11 +304,14 @@ void gl_draw_deferred()
 
 	nodefer = true;
 
-	stats.deferred += num_deferred;
-
 	for (int i = 0; i < num_deferred; ++i)
 	{
 		if (deferred_draws[i].vertices == nullptr)
+		{
+			continue;
+		}
+
+		if (isDrawOpaqueOnly && deferred_draws[i].state.blend_mode != 4)
 		{
 			continue;
 		}
@@ -328,6 +331,8 @@ void gl_draw_deferred()
 			deferred_draws[i].mipmap
 		);
 
+		++stats.deferred;
+
 		driver_free(deferred_draws[i].vertices);
 		deferred_draws[i].vertices = nullptr;
 		driver_free(deferred_draws[i].indices);
@@ -338,7 +343,7 @@ void gl_draw_deferred()
 		deferred_draws[i].boundingbox = nullptr;
 	}
 
-	num_deferred = 0;
+	if(!isDrawOpaqueOnly) num_deferred = 0;
 
 	nodefer = false;
 

@@ -625,14 +625,17 @@ void Lighting::draw(struct game_obj* game_object)
         }
     }
 
-    // Draw deferred models
-    gl_draw_deferred();
+    // Draw deferred opaque models
+    gl_draw_deferred(true);
 
     // Draw the walkmesh for field shadows
     if (mode->driver_mode == MODE_FIELD)
     {
         drawFieldShadow();
     }
+
+	// Draw deferred non-opaque models
+	gl_draw_deferred(false);
 };
 
 void Lighting::drawFieldShadow()
