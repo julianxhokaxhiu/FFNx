@@ -334,7 +334,7 @@ public:
     void drawToShadowMap();
     void drawWithLighting(bool isCastShadow);
     void drawFieldShadow();
-    void draw();
+    void draw(bool uniformsAlreadyAttached = false);
     void drawOverlay();
     void show();
 

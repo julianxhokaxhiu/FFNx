@@ -774,22 +774,16 @@ void Renderer::drawWithLighting(bool isCastShadow)
     // Set lighting program
     backendProgram = backendProgram == SMOOTH ? LIGHTING_SMOOTH : LIGHTING_FLAT;
 
-    // Set lighting uniforms
-    setLightingUniforms();
-
     // Bind shadow map with comparison sampler
     bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
 
     // Draw with lighting
-    draw();
+    draw(isCastShadow);
 }
 
 void Renderer::drawFieldShadow()
 {
     backendProgram = RendererProgram::FIELD_SHADOW;
-
-    // Set lighting uniforms
-    setLightingUniforms();
 
     // Bind shadow map with comparison sampler
     bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
@@ -801,7 +795,7 @@ void Renderer::drawFieldShadow()
     draw();
 }
 
-void Renderer::draw()
+void Renderer::draw(bool uniformsAlreadyAttached)
 {
     if (trace_all || trace_renderer) trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
@@ -820,7 +814,12 @@ void Renderer::draw()
     // Set current view transform
     bgfx::setViewTransform(backendViewId, NULL, internalState.backendProjMatrix);
 
-    setCommonUniforms();
+    // Skip uniform attachment as it has been done already
+    if (!uniformsAlreadyAttached)
+    {
+        setCommonUniforms();
+        setLightingUniforms();
+    }
 
     // Bind texture
     {
@@ -831,6 +830,9 @@ void Renderer::draw()
             bgfx::TextureHandle handle = internalState.texHandlers[idx];
 
             if (!internalState.bIsMovie && idx > 0) handle = BGFX_INVALID_HANDLE;
+
+            // Skip game texture uniform attachment as it has been done already
+            if (uniformsAlreadyAttached && idx == 0) handle = BGFX_INVALID_HANDLE;
 
             if (bgfx::isValid(handle))
             {
