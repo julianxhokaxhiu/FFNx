@@ -22,8 +22,8 @@
 #pragma once
 
 #include <fstream>
-#include <toml.hpp>
 #include <windows.h>
+#include <toml.hpp>
 
 #if defined(__cplusplus)
 extern "C" {
