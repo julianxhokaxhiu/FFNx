@@ -24,7 +24,7 @@ include(FindPackageHandleStandardArgs)
 if (NOT VPX_FOUND)
 	find_library(
 		VPX_LIBRARY
-		vpxmt vpxmtd
+		vpx vpxd
 		PATH_SUFFIXES
 		lib
 	)
