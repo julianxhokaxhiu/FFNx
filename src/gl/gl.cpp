@@ -181,50 +181,38 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 	if (normaldata == nullptr)
 	{
 		static std::vector<struct point3d> normals;
-		static std::vector<int> adjacentTriIndexes;
-		struct point3d normal, e12, e13, triNormal;
+		static point3d zero = { 0.0f, 0.0f, 0.0f };
+		struct point3d e12, e13, triNormal;
 
-		normals.clear();
-		normals.shrink_to_fit();
+		normals.resize(ip->vertexcount);
+		std::fill(normals.begin(), normals.end(), zero);
 
 		// Calculate vertex normals by averaging adjacent triangle normals
 		// Vertex normals are calculated here because battle models dont seem to include normals
+		for (uint32_t idx = 0; idx < ip->indexcount; idx+=3)
+		{
+			e12 = e13 = triNormal = zero;
+
+			int vId0 = ip->indices[idx];
+			int vId1 = ip->indices[idx + 1];
+			int vId2 = ip->indices[idx + 2];
+
+			auto v1 = &ip->vertices[vId0]._;
+			auto v2 = &ip->vertices[vId1]._;
+			auto v3 = &ip->vertices[vId2]._;
+
+			subtract_vector(v2, v1, &e12);
+			subtract_vector(v3, v1, &e13);
+			cross_product(&e12, &e13, &triNormal);
+
+			add_vector(&normals[vId0], &triNormal, &normals[vId0]);
+			add_vector(&normals[vId1], &triNormal, &normals[vId1]);
+			add_vector(&normals[vId2], &triNormal, &normals[vId2]);
+		}
+
 		for (uint32_t idx = 0; idx < ip->vertexcount; idx++)
 		{
-			adjacentTriIndexes.clear();
-			adjacentTriIndexes.shrink_to_fit();
-			normal = e12 = e13 = triNormal = {0.0f, 0.0f, 0.0f};
-
-			// Calculate vertex adjacent triangles
-			for (uint32_t idx2 = 0; idx2 < ip->indexcount; idx2 += 3)
-			{
-				auto t0 = ip->indices[idx2];
-				auto t1 = ip->indices[idx2 + 1];
-				auto t2 = ip->indices[idx2 + 2];
-				if (t0 == idx || t1 == idx || t2 == idx)
-				{
-					adjacentTriIndexes.push_back(idx2);
-				}
-			}
-
-			// Calculate vertex normal
-			for (int adjTriIndex = 0; adjTriIndex < adjacentTriIndexes.size(); ++adjTriIndex)
-			{
-				int idxPoly = adjacentTriIndexes[adjTriIndex];
-				auto v1 = &ip->vertices[ip->indices[idxPoly]]._;
-				auto v2 = &ip->vertices[ip->indices[idxPoly + 1]]._;
-				auto v3 = &ip->vertices[ip->indices[idxPoly + 2]]._;
-
-				subtract_vector(v2, v1, &e12);
-				subtract_vector(v3, v1, &e13);
-				cross_product(&e12, &e13, &triNormal);
-				normalize_vector(&triNormal);
-				add_vector(&normal, &triNormal, &normal);
-			}
-			divide_vector(&normal, adjacentTriIndexes.size(), &normal);
-			normalize_vector(&normal);
-
-			normals.push_back(normal);
+			normalize_vector(&normals[idx]);
 		}
 
 		normaldata = normals.data();
