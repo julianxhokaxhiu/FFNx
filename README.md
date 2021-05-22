@@ -2,6 +2,11 @@
   <img src="https://github.com/julianxhokaxhiu/FFNx/blob/master/.logo/logo_nobg.png" alt="">
   <br><strong><small>Kudos to <a href="https://www.instagram.com/aryaaiedail/">Cinzia Cancedda (aryaaiedail)</a></small></strong>
 </div>
+<hr>
+<div align="center">
+  <img src="https://github.com/julianxhokaxhiu/FFNx/blob/master/.logo/tsunamods.png" alt="">
+  <br><small>FFNx is now officially part of the <strong>Tsunamods</strong> initiative!</small>
+</div>
 
 # FFNx
 
