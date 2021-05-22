@@ -118,7 +118,7 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	if (normals)
 	{
 		deferred_draws[defer].normals = (point3d*)driver_malloc(sizeof(*normals) * vertexcount);
-		memcpy(deferred_draws[defer].normals, normals, sizeof(*normals) * vertexcount);		
+		memcpy(deferred_draws[defer].normals, normals, sizeof(*normals) * vertexcount);
 	}
 
 	num_deferred++;
@@ -374,19 +374,19 @@ struct boundingbox calculateSceneAabb()
 		if (bb)
 		{
 			struct point3d corners[8] = { {bb->min_x, bb->min_y, bb->min_z},
-									   {bb->min_x, bb->min_y, bb->max_z}, 
+									   {bb->min_x, bb->min_y, bb->max_z},
 			                           {bb->min_x, bb->max_y, bb->min_z},
 			                           {bb->min_x, bb->max_y, bb->max_z},
-			                           {bb->max_x, bb->min_y, bb->min_z}, 
-			                           {bb->max_x, bb->min_y, bb->max_z}, 
+			                           {bb->max_x, bb->min_y, bb->min_z},
+			                           {bb->max_x, bb->min_y, bb->max_z},
 			                           {bb->max_x, bb->max_y, bb->min_z},
 			                           {bb->max_x, bb->max_y, bb->max_z} };
 
-			struct matrix worldViewMatrix = deferred_draws[i].state.world_view_matrix;			
+			struct matrix worldViewMatrix = deferred_draws[i].state.world_view_matrix;
 			for (int j = 0; j < 8; ++j)
-			{			
+			{
 				struct point3d cornerViewSpace;
-				transform_point(&worldViewMatrix, &corners[j], &cornerViewSpace);			
+				transform_point(&worldViewMatrix, &corners[j], &cornerViewSpace);
 
 				sceneAabb.min_x = std::min(sceneAabb.min_x, cornerViewSpace.x);
 				sceneAabb.min_y = std::min(sceneAabb.min_y, cornerViewSpace.y);
