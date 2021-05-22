@@ -164,56 +164,69 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip)
 }
 
 // draw a set of primitives with lighting
-void gl_draw_with_lighting(struct indexed_primitive *ip, struct boundingbox* boundingbox, uint32_t clip)
+void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, uint32_t clip)
 {
-	static std::vector<struct point3d> normals;
-	static std::vector<int> adjacentTriIndexes;
-	struct point3d normal, e12, e13, triNormal;
+	static struct point3d *normaldata = nullptr;
 
-	normals.clear();
-	normals.shrink_to_fit();
-
-	// Calculate vertex normals by averaging adjacent triangle normals
-	// Vertex normals are calculated here because battle models dont seem to include normals
-	for (uint32_t idx = 0; idx < ip->vertexcount; idx++)
+	// If models do provide normal data, use it
+	if (polydata->normaldata != NULL)
 	{
-		adjacentTriIndexes.clear();
-		adjacentTriIndexes.shrink_to_fit();
-		normal = e12 = e13 = triNormal = {0.0f, 0.0f, 0.0f};
+		normaldata = polydata->normaldata;
+	}
+	// Otherwise calculate it, might be CPU intensive for complex models
+	else
+	{
+		static std::vector<struct point3d> normals;
+		static std::vector<int> adjacentTriIndexes;
+		struct point3d normal, e12, e13, triNormal;
 
-		// Calculate vertex adjacent triangles
-		for (uint32_t idx2 = 0; idx2 < ip->indexcount; idx2 += 3)
+		normals.clear();
+		normals.shrink_to_fit();
+
+		// Calculate vertex normals by averaging adjacent triangle normals
+		// Vertex normals are calculated here because battle models dont seem to include normals
+		for (uint32_t idx = 0; idx < ip->vertexcount; idx++)
 		{
-			auto t0 = ip->indices[idx2];
-			auto t1 = ip->indices[idx2 + 1];
-			auto t2 = ip->indices[idx2 + 2];
-			if (t0 == idx || t1 == idx || t2 == idx)
+			adjacentTriIndexes.clear();
+			adjacentTriIndexes.shrink_to_fit();
+			normal = e12 = e13 = triNormal = {0.0f, 0.0f, 0.0f};
+
+			// Calculate vertex adjacent triangles
+			for (uint32_t idx2 = 0; idx2 < ip->indexcount; idx2 += 3)
 			{
-				adjacentTriIndexes.push_back(idx2);
+				auto t0 = ip->indices[idx2];
+				auto t1 = ip->indices[idx2 + 1];
+				auto t2 = ip->indices[idx2 + 2];
+				if (t0 == idx || t1 == idx || t2 == idx)
+				{
+					adjacentTriIndexes.push_back(idx2);
+				}
 			}
+
+			// Calculate vertex normal
+			for (int adjTriIndex = 0; adjTriIndex < adjacentTriIndexes.size(); ++adjTriIndex)
+			{
+				int idxPoly = adjacentTriIndexes[adjTriIndex];
+				auto v1 = &ip->vertices[ip->indices[idxPoly]]._;
+				auto v2 = &ip->vertices[ip->indices[idxPoly + 1]]._;
+				auto v3 = &ip->vertices[ip->indices[idxPoly + 2]]._;
+
+				subtract_vector(v2, v1, &e12);
+				subtract_vector(v3, v1, &e13);
+				cross_product(&e12, &e13, &triNormal);
+				normalize_vector(&triNormal);
+				add_vector(&normal, &triNormal, &normal);
+			}
+			divide_vector(&normal, adjacentTriIndexes.size(), &normal);
+			normalize_vector(&normal);
+
+			normals.push_back(normal);
 		}
 
-		// Calculate vertex normal
-		for (int adjTriIndex = 0; adjTriIndex < adjacentTriIndexes.size(); ++adjTriIndex)
-		{
-			int idxPoly = adjacentTriIndexes[adjTriIndex];
-			auto v1 = &ip->vertices[ip->indices[idxPoly]]._;
-			auto v2 = &ip->vertices[ip->indices[idxPoly + 1]]._;
-			auto v3 = &ip->vertices[ip->indices[idxPoly + 2]]._;
-
-			subtract_vector(v2, v1, &e12);
-			subtract_vector(v3, v1, &e13);
-			cross_product(&e12, &e13, &triNormal);
-			normalize_vector(&triNormal);
-			add_vector(&normal, &triNormal, &normal);
-		}
-		divide_vector(&normal, adjacentTriIndexes.size(), &normal);
-		normalize_vector(&normal);
-
-		normals.push_back(normal);
+		normaldata = normals.data();
 	}
 
-	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normals.data(), ip->vertexcount, ip->indices, ip->indexcount, 0, boundingbox, clip, true);
+	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normaldata, ip->vertexcount, ip->indices, ip->indexcount, 0, polydata->boundingboxdata, clip, true);
 }
 
 // main rendering routine, draws a set of primitives according to the current render state

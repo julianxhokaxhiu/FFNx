@@ -327,7 +327,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 					else
 					{
 						if (matrix_set)	gl_set_worldview_matrix(matrix_set->matrix_world);
-						if (enable_lighting) gl_draw_with_lighting(ip, polygon_set->polygon_data->boundingboxdata, polygon_set->field_4);
+						if (enable_lighting) gl_draw_with_lighting(ip, polygon_set->polygon_data, polygon_set->field_4);
 						else  gl_draw_without_lighting(ip, polygon_set->field_4);
 					}
 				}

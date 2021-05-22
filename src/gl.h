@@ -99,7 +99,7 @@ void gl_check_deferred(struct texture_set *texture_set);
 void gl_cleanup_deferred();
 uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, uint32_t clip, uint32_t mipmap);
 void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip);
-void gl_draw_with_lighting(struct indexed_primitive *ip, struct boundingbox* boundingbox, uint32_t clip);
+void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, uint32_t clip);
 void gl_draw_indexed_primitive(uint32_t, uint32_t, struct nvertex *, struct point3d* normals, uint32_t, WORD *, uint32_t, struct graphics_object *, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap);
 void gl_set_worldview_matrix(struct matrix *matrix);
 void gl_set_d3dprojection_matrix(struct matrix *matrix);
