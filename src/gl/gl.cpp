@@ -166,13 +166,22 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip)
 // draw a set of primitives with lighting
 void gl_draw_with_lighting(struct indexed_primitive *ip, struct boundingbox* boundingbox, uint32_t clip)
 {
+	static std::vector<struct point3d> normals;
+	static std::vector<int> adjacentTriIndexes;
+	struct point3d normal, e12, e13, triNormal;
+
+	normals.clear();
+	normals.shrink_to_fit();
+
 	// Calculate vertex normals by averaging adjacent triangle normals
 	// Vertex normals are calculated here because battle models dont seem to include normals
-	std::vector<struct point3d> normals;
 	for (uint32_t idx = 0; idx < ip->vertexcount; idx++)
 	{
+		adjacentTriIndexes.clear();
+		adjacentTriIndexes.shrink_to_fit();
+		normal = e12 = e13 = triNormal = {0.0f, 0.0f, 0.0f};
+
 		// Calculate vertex adjacent triangles
-		std::vector<int> adjacentTriIndexes;
 		for (uint32_t idx2 = 0; idx2 < ip->indexcount; idx2 += 3)
 		{
 			auto t0 = ip->indices[idx2];
@@ -185,19 +194,15 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct boundingbox* bou
 		}
 
 		// Calculate vertex normal
-		struct point3d normal = { 0.0f, 0.0f, 0.0f };
 		for (int adjTriIndex = 0; adjTriIndex < adjacentTriIndexes.size(); ++adjTriIndex)
 		{
 			int idxPoly = adjacentTriIndexes[adjTriIndex];
-			auto v1 = ip->vertices[ip->indices[idxPoly]]._;
-			auto v2 = ip->vertices[ip->indices[idxPoly + 1]]._;
-			auto v3 = ip->vertices[ip->indices[idxPoly + 2]]._;
+			auto v1 = &ip->vertices[ip->indices[idxPoly]]._;
+			auto v2 = &ip->vertices[ip->indices[idxPoly + 1]]._;
+			auto v3 = &ip->vertices[ip->indices[idxPoly + 2]]._;
 
-			struct point3d e12;
-			subtract_vector(&v2, &v1, &e12);
-			struct point3d e13;
-			subtract_vector(&v3, &v1, &e13);
-			struct point3d triNormal;
+			subtract_vector(v2, v1, &e12);
+			subtract_vector(v3, v1, &e13);
 			cross_product(&e12, &e13, &triNormal);
 			normalize_vector(&triNormal);
 			add_vector(&normal, &triNormal, &normal);
