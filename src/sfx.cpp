@@ -174,7 +174,13 @@ void ff7_sfx_stop()
 {
 	if (trace_all || trace_sfx) trace("%s\n", __func__);
 
-	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.stopSFX(channel);
+	for (short channel = 1; channel <= 6; channel++)
+	{
+		nxAudioEngine.stopSFX(channel);
+
+		sfx_state[channel-1].sound_id = 0;
+		sfx_state[channel-1].is_looped = false;
+	}
 
 	*ff7_externals.sfx_play_effects_id_channel_6 = 0;
 }
