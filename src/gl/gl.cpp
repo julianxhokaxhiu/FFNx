@@ -166,15 +166,19 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip)
 // draw a set of primitives with lighting
 void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, uint32_t clip)
 {
-	static struct point3d *normaldata = nullptr;
+	static struct point3d *normaldata;
 
-	// If models do provide normal data, use it
-	if (polydata->normaldata != NULL)
+	normaldata = nullptr;
+
+	// If the user has no preference, we can try to optimize some of the flow
+	if (!prefer_lighting_cpu_calculations)
 	{
-		normaldata = polydata->normaldata;
+		// If models do provide normal data, use it
+		if (polydata->normaldata != NULL) normaldata = polydata->normaldata;
 	}
-	// Otherwise calculate it, might be CPU intensive for complex models
-	else
+
+	// If we still didn't get normalized data, we have to calculate them on the CPU
+	if (normaldata == nullptr)
 	{
 		static std::vector<struct point3d> normals;
 		static std::vector<int> adjacentTriIndexes;

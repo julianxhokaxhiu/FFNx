@@ -88,6 +88,7 @@ extern bool mdef_fix;
 extern long enable_antialiasing;
 extern bool enable_anisotropic;
 extern bool enable_lighting;
+extern bool prefer_lighting_cpu_calculations;
 extern bool skip_frames;
 extern bool ff7_more_debug;
 extern bool ff8_ssigpu_debug;

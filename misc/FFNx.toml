@@ -77,9 +77,15 @@ enable_anisotropic = true
 
 #[LIGHTING]
 # Enable real-time lighting.
-# Parameters such as light direction and color can be edited on the lighting debug window in the FFNx DevTools.
+# NOTICE: Parameters such as light direction and color can be edited on the lighting debug window in the FFNx DevTools.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_lighting = false
+
+#[PREFER LIGHTING CPU CALCULATIONS]
+# Prefer lighting CPU calculations.
+# If disabled, the driver will try to inherit models normal data first although this process might bring some artifacts visually.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+prefer_lighting_cpu_calculations = true
 
 #########################
 # Audio Player Options

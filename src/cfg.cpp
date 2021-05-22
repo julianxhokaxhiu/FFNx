@@ -75,6 +75,7 @@ bool mdef_fix;
 long enable_antialiasing;
 bool enable_anisotropic;
 bool enable_lighting;
+bool prefer_lighting_cpu_calculations;
 bool skip_frames;
 bool ff7_more_debug;
 bool ff8_ssigpu_debug;
@@ -186,6 +187,7 @@ void read_cfg()
 	enable_antialiasing = config["enable_antialiasing"].value_or(0);
 	enable_anisotropic = config["enable_anisotropic"].value_or(true);
 	enable_lighting = config["enable_lighting"].value_or(false);
+	prefer_lighting_cpu_calculations = config["prefer_lighting_cpu_calculations"].value_or(true);
 	skip_frames = config["skip_frames"].value_or(false);
 	ff7_more_debug = config["ff7_more_debug"].value_or(false);
 	ff8_ssigpu_debug = config["ff8_ssigpu_debug"].value_or(false);
