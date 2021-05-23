@@ -160,12 +160,12 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	{
 		char msg[1024]{ 0 };
 
-		sprintf(msg, "Oops! Something very bad happened.\n\nWrote emergency save to %s dir.\n\nPlease provide a copy of those files along with FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", filePath);
+		sprintf(msg, "Oops! Something very bad happened.\n\nWrote emergency save to %s dir.\n\nPlease provide a copy of those files along with FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n\nDO NOT post this crash if you're using FFNx through a mod manager. Consider approaching the Mod Manager official support channels instead!\n", filePath);
 
 		MessageBoxA(gameHwnd, msg, "Error", MB_ICONERROR | MB_OK);
 	}
 	else
-		MessageBoxA(gameHwnd, "Oops! Something very bad happened.\n\nPlease provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n", "Error", MB_ICONERROR | MB_OK);
+		MessageBoxA(gameHwnd, "Oops! Something very bad happened.\n\nPlease provide a copy of FFNx.LOG when reporting this error at https://github.com/julianxhokaxhiu/FFNx/issues.\n\nDO NOT post this crash if you're using FFNx through a mod manager. Consider approaching the Mod Manager official support channels instead!\n", "Error", MB_ICONERROR | MB_OK);
 
 	// Cleanup the audio device
 	nxAudioEngine.cleanup();
