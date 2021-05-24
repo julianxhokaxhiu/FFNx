@@ -686,6 +686,16 @@ const LightingState& Lighting::getLightingState()
     return lightingState;
 }
 
+void Lighting::setPbrTextureEnabled(bool isEnabled)
+{
+	lightingState.lightingSettings[0] = isEnabled;
+}
+
+bool Lighting::isPbrTextureEnabled()
+{
+	return lightingState.lightingSettings[0];
+}
+
 void Lighting::setWorldLightDir(float dirX, float dirY, float dirZ)
 {
     lightingState.worldLightRot.x = dirX;
@@ -766,6 +776,26 @@ void Lighting::setMetalness(float metalness)
 float Lighting::getMetalness()
 {
     return lightingState.materialData[1];
+}
+
+void Lighting::setRoughnessScale(float roughness)
+{
+	lightingState.materialData[2] = roughness;
+}
+
+float Lighting::getRoughnessScale()
+{
+	return lightingState.materialData[2];
+}
+
+void Lighting::setMetalnessScale(float metalness)
+{
+	lightingState.materialData[3] = metalness;
+}
+
+float Lighting::getMetalnessScale()
+{
+	return lightingState.materialData[3];
 }
 
 void Lighting::setShadowFaceCullingEnabled(bool isEnabled)
@@ -907,4 +937,14 @@ void Lighting::setShowWalkmeshEnabled(bool isEnabled)
 bool Lighting::isShowWalkmeshEnabled()
 {
     return lightingState.lightingDebugData[1];
+}
+
+void Lighting::setTextureDebugOutput(TextureDebugOutput output)
+{
+	lightingState.lightingDebugData[2] = output;
+}
+
+TextureDebugOutput Lighting::GetTextureDebugOutput()
+{
+	return static_cast<TextureDebugOutput>(lightingState.lightingDebugData[2]);
 }

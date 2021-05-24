@@ -77,6 +77,7 @@ struct gl_texture_set
 	uint32_t force_filter;
 	uint32_t force_zsort;
 	uint32_t is_animated;
+	uint32_t is_aspect_ratio_changed;
 };
 
 extern struct matrix d3dviewport_matrix;

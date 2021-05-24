@@ -107,9 +107,18 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, modulateAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
 
+    internalState.FSTexFlags = {
+        (float)internalState.bIsExtendedTexture,
+        NULL,
+        NULL,
+        NULL
+    };
+    if (uniform_log) trace("%s: FSTexFlags XYZW(bIsExtendedTexture %f, NULL, NULL, NULL)\n", __func__, internalState.FSTexFlags[0]);
+
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
     setUniform("FSMiscFlags", bgfx::UniformType::Vec4, internalState.FSMiscFlags.data());
+    setUniform("FSTexFlags", bgfx::UniformType::Vec4, internalState.FSTexFlags.data());
 
     setUniform("d3dViewport", bgfx::UniformType::Mat4, internalState.d3dViewMatrix);
     setUniform("d3dProjection", bgfx::UniformType::Mat4, internalState.d3dProjectionMatrix);
@@ -123,6 +132,7 @@ void Renderer::setLightingUniforms()
 {
     auto lightingState = lighting.getLightingState();
 
+    setUniform("lightingSettings", bgfx::UniformType::Vec4, lightingState.lightingSettings);
     setUniform("lightDirData", bgfx::UniformType::Vec4, lightingState.lightDirData);
     setUniform("lightData", bgfx::UniformType::Vec4, lightingState.lightData);
     setUniform("ambientLightData", bgfx::UniformType::Vec4, lightingState.ambientLightData);
@@ -344,6 +354,7 @@ void Renderer::resetState()
     doModulateAlpha();
     doTextureFiltering();
     isExternalTexture();
+    isExtendedTexture();
     setStencilFunc();
     setStencilOp();
     setStencilRef();
@@ -1556,6 +1567,11 @@ void Renderer::doTextureFiltering(bool flag)
 void Renderer::isExternalTexture(bool flag)
 {
     internalState.bIsExternalTexture = flag;
+}
+
+void Renderer::isExtendedTexture(bool flag)
+{
+    internalState.bIsExtendedTexture = flag;
 }
 
 void Renderer::setAlphaRef(RendererAlphaFunc func, float ref)

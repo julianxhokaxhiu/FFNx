@@ -1099,7 +1099,7 @@ uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_he
 }
 
 // load modpath texture for tex file, returns true if successful
-uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct texture_set *texture_set, struct tex_header *tex_header)
+uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct texture_set *texture_set, struct tex_header *tex_header, uint32_t originalWidth, uint32_t originalHeight)
 {
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, tex_header);
@@ -1125,6 +1125,17 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win", strlen("menu/btl_win") - 1)) gl_set->force_zsort = true;
 
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand_1", strlen("flevel/hand_1") - 1)) gl_set->force_filter = true;
+
+		// Check if aspect ratio has changed compared to the original textures.
+		// This is used to automatically determine whether the extended PBR textures are being used or not.
+		float originalAspectRatio = static_cast<float>(originalWidth) / static_cast<float>(originalHeight);
+		float width = static_cast<float>(VREF(texture_set, ogl.width));
+		float height = static_cast<float>(VREF(texture_set, ogl.height));
+		float aspectRatio = width / height;
+		if (std::abs(originalAspectRatio -  aspectRatio) > 0.01)
+			gl_set->is_aspect_ratio_changed = true;
+		else
+			gl_set->is_aspect_ratio_changed = false;
 	}
 
 	if(texture)
@@ -1404,7 +1415,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			}
 
 			// check if this texture can be loaded from the modpath, we may not have to do any conversion
-			if (!load_external_texture(image_data, image_data_size, _texture_set, _tex_header))
+			if (!load_external_texture(image_data, image_data_size, _texture_set, _tex_header, w, h))
 			{
 				// commit PBO and populate texture set
 				gl_upload_texture(_texture_set, VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA);

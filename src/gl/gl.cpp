@@ -266,6 +266,15 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		VOBJ(texture_set, texture_set, current_state.texture_set);
 
 		if (VREF(texture_set, ogl.external)) newRenderer.isExternalTexture(true);
+
+		if (VREF(texture_set, ogl.gl_set))
+		{
+			struct gl_texture_set* gl_set = VREF(texture_set, ogl.gl_set);
+			if (gl_set->is_aspect_ratio_changed)
+				newRenderer.isExtendedTexture(true);
+			else
+				newRenderer.isExtendedTexture(false);
+		}
 	}
 
 	// OpenGL treats texture filtering as a per-texture parameter, we need it
