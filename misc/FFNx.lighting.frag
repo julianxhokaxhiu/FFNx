@@ -13,7 +13,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
+$input v_color0, v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_position0, v_shadow0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.lighting.sh"
@@ -25,8 +25,11 @@ SAMPLER2D(tex_v, 2);
 uniform vec4 VSFlags;
 uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
+uniform vec4 FSTexFlags;
 
 uniform vec4 lightingSettings;
+uniform vec4 lightingDebugData;
+uniform vec4 materialData;
 
 #define isTLVertex VSFlags.x > 0.0
 #define isFBTexture VSFlags.z > 0.0
@@ -50,11 +53,27 @@ uniform vec4 lightingSettings;
 #define isMovie FSMiscFlags.w > 0.0
 
 // ---
-#define isLightingEnabled lightingSettings.x > 0.0
+#define isTextureExtended isTexture && FSTexFlags.x > 0.0
+
+#define textureDebugOutput lightingDebugData.z
+#define TEXTURE_DEBUG_OUTPUT_DISABLED 0
+#define TEXTURE_DEBUG_OUTPUT_COLOR 1
+#define TEXTURE_DEBUG_OUTPUT_NORMAL_MAP 2
+#define TEXTURE_DEBUG_OUTPUT_ROUGHNESS 3
+#define TEXTURE_DEBUG_OUTPUT_METALNESS 4
+
+#define isPbrTextureEnabled lightingSettings.x > 0.0
+
+float toLinear(float _rgb)
+{
+	return _rgb;//pow(abs(_rgb), 2.2);
+}
 
 void main()
 {
 	vec4 color = v_color0;
+    vec4 param = vec4(0.0, 0.0, 0.0, 0.0);
+    vec4 param2 = vec4(0.0, 0.0, 0.0, 0.0);  
 
     if (isTexture)
     {
@@ -85,7 +104,25 @@ void main()
         }
         else
         {
-            vec4 texture_color = texture2D(tex, v_texcoord0.xy);
+            vec2 color_uv = vec2(0.0, 0.0);
+            if(isTLVertex || !(isTextureExtended))
+            {
+                color_uv = v_texcoord0.xy;
+            }
+            else
+            {
+                color_uv = v_texcoord1.xy;
+                param = texture2D(tex, v_texcoord2.xy);
+                param.r = toLinear(param.r);
+                param.g = toLinear(param.g);
+                param.b = toLinear(param.b);
+                param2 = texture2D(tex, v_texcoord3.xy);
+                param2.r = toLinear(param.r);
+                param2.g = toLinear(param.g);
+                param2.b = toLinear(param.b);
+            }
+
+            vec4 texture_color = texture2D(tex, color_uv);
 
             if (doAlphaTest)
             {
@@ -150,15 +187,58 @@ void main()
     }
     else
     {
-        // Shadow UV
-        vec3 shadowUv = v_shadow0.xyz / v_shadow0.w;
+        if(textureDebugOutput == TEXTURE_DEBUG_OUTPUT_COLOR)
+        {
+            gl_FragColor = color;
+        }
+        else if(textureDebugOutput == TEXTURE_DEBUG_OUTPUT_NORMAL_MAP)
+        {
+            gl_FragColor = vec4(param.rgb, 1.0);
+        }
+        else if(textureDebugOutput == TEXTURE_DEBUG_OUTPUT_ROUGHNESS)
+        {
+            gl_FragColor = vec4(param2.r, param2.r, param2.r, 1.0);
+        }
+        else if(textureDebugOutput == TEXTURE_DEBUG_OUTPUT_METALNESS)
+        {
+            gl_FragColor = vec4(param2.g, param2.g, param2.g, 1.0);
+        }
+        else
+        {
+            // Shadow UV
+            vec3 shadowUv = v_shadow0.xyz / v_shadow0.w;
 
-        // Normal
-        vec3 normal = normalize(v_normal0);
+            // View Direction
+            vec3 viewDir = normalize(v_position0.xyz);
 
-        // Luminance
-        vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, normal, shadowUv);
+            // Normal
+            vec3 normal = normalize(v_normal0);
+            if(isTextureExtended && isPbrTextureEnabled) normal = perturb_normal(normal, -v_position0.xyz, param.rgb, v_texcoord2.xy );
 
-        gl_FragColor = vec4(luminance, color.a);
+            // Roughness
+            float roughness = materialData.x;
+            if(isTextureExtended && isPbrTextureEnabled) roughness = param2.r * materialData.z;
+            float roughnessClamped = max(0.001, roughness);
+
+            // Metalness
+            float metalness = materialData.y;
+            if(isTextureExtended && isPbrTextureEnabled) metalness = param2.g * materialData.w;
+            float metalnessClamped = min(1.0, metalness);
+
+            // Ambient Occlusion
+            float ao = 1.0;
+            if(isTextureExtended && isPbrTextureEnabled) ao = param2.b;
+
+            // Luminance
+            vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, viewDir, normal, roughnessClamped, metalnessClamped, ao, shadowUv);
+            
+            int rep = int(abs(floor(v_texcoord2.x)));
+            if(v_texcoord2.x < 0.0)
+            {
+            rep = int(abs(ceil(v_texcoord2.x)));
+            }
+            float m = mod(rep, 2);
+            gl_FragColor = vec4(luminance, color.a);
+        }
     }
 }

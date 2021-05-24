@@ -20,6 +20,15 @@
 
 #include <vector>
 
+enum TextureDebugOutput
+{
+    TEXTURE_DEBUG_OUTPUT_DISABLED = 0,
+    TEXTURE_DEBUG_OUTPUT_COLOR,
+    TEXTURE_DEBUG_OUTPUT_NORMALMAP,
+    TEXTURE_DEBUG_OUTPUT_ROUGHNESS,
+    TEXTURE_DEBUG_OUTPUT_METALNESS,
+};
+
 struct walkmeshEdge
 {
     int v0;                      // edge vertex index 0
@@ -39,10 +48,11 @@ struct LightingState
     float lightViewProjMatrix[16];
     float lightViewProjTexMatrix[16];
 
+    float lightingSettings[4] = { 1.0, 0.0, 0.0, 0.0 };
     float lightDirData[4] = { 0.3, -1.0, -0.3, 0.0 };
     float lightData[4] = { 1.0, 1.0, 1.0, 4.0 };
     float ambientLightData[4] = { 1.0, 1.0, 1.0, 2.0 };
-    float materialData[4] = { 0.3, 0.3, 0.0, 0.0 };
+    float materialData[4] = { 0.3, 0.3, 1.0, 1.0 };
     float shadowData[4] = { 0.001, 0.0, 0.0, 2048.0 };
     float fieldShadowData[4] = { 0.3, 200.0, 100.0, 0.0 };
 
@@ -91,6 +101,8 @@ public:
     const LightingState& getLightingState();
 
     // Lighting
+    void Lighting::setPbrTextureEnabled(bool isEnabled);
+    bool Lighting::isPbrTextureEnabled();
     void setWorldLightDir(float dirX, float dirY, float dirZ);
     struct point3d getWorldLightDir();
     void setLightIntensity(float intensity);
@@ -107,6 +119,10 @@ public:
     float getRoughness();
     void setMetalness(float metalness);
     float getMetalness();
+    void setRoughnessScale(float roughness);
+    float getRoughnessScale();
+    void setMetalnessScale(float metalness);
+    float getMetalnessScale();
 
     // Shadow (common)
     void setShadowFaceCullingEnabled(bool isEnabled);
@@ -143,6 +159,8 @@ public:
     bool isHide2dEnabled();
     void setShowWalkmeshEnabled(bool isEnabled);
     bool isShowWalkmeshEnabled();
+    void setTextureDebugOutput(TextureDebugOutput output);
+    TextureDebugOutput GetTextureDebugOutput();
 };
 
 extern Lighting lighting;

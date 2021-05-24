@@ -19,7 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0
+$input v_color0, v_texcoord0, v_texcoord1
 
 #include <bgfx/bgfx_shader.sh>
 
@@ -30,7 +30,9 @@ SAMPLER2D(tex_v, 2);
 uniform vec4 VSFlags;
 uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
+uniform vec4 FSTexFlags;
 
+#define isTLVertex VSFlags.x > 0.0
 #define isFBTexture VSFlags.z > 0.0
 #define isTexture VSFlags.w > 0.0
 // ---
@@ -50,6 +52,9 @@ uniform vec4 FSMiscFlags;
 #define isYUV FSMiscFlags.y > 0.0
 #define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
+
+// ---
+#define isTextureExtended FSTexFlags.x > 0.0
 
 void main()
 {
@@ -84,7 +89,13 @@ void main()
         }
         else
         {
-            vec4 texture_color = texture2D(tex, v_texcoord0.xy);
+            vec2 color_uv = vec2(0.0, 0.0);
+            if(isTLVertex || !(isTextureExtended))
+                color_uv = v_texcoord0.xy;
+            else
+                color_uv = v_texcoord1.xy;
+
+            vec4 texture_color = texture2D(tex, color_uv);
 
             if (doAlphaTest)
             {

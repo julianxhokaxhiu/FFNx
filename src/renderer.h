@@ -199,12 +199,14 @@ private:
         bool bIsMovieFullRange = false;
         bool bIsMovieYUV = false;
         bool bIsExternalTexture = false;
+        bool bIsExtendedTexture = false;
 
         float backendProjMatrix[16];
 
         std::vector<float> VSFlags;
         std::vector<float> FSAlphaFlags;
         std::vector<float> FSMiscFlags;
+        std::vector<float> FSTexFlags;
 
         float d3dViewMatrix[16];
         float d3dProjectionMatrix[16];
@@ -376,7 +378,8 @@ public:
     void doModulateAlpha(bool flag = false);
     void doTextureFiltering(bool flag = false);
     void isExternalTexture(bool flag = false);
-
+    void isExtendedTexture(bool flag = false);
+    
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);
     void doAlphaTest(bool flag = false);

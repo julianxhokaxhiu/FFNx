@@ -33,6 +33,11 @@ void lighting_debug(bool* isOpen)
     {
         enable_lighting = isLightingEnabled;
     }
+    bool isPbrTexturesEnabled = lighting.isPbrTextureEnabled();
+    if (ImGui::Checkbox("Enable PBR Textures", &isPbrTexturesEnabled))
+    {
+        lighting.setPbrTextureEnabled(isPbrTexturesEnabled);
+    }
     if (ImGui::CollapsingHeader("Direct Lighting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
     {
         point3d lightDirVector = lighting.getWorldLightDir();
@@ -81,6 +86,16 @@ void lighting_debug(bool* isOpen)
         if (ImGui::DragFloat("Metalness", &metalness, 0.01f, 0.0f, 1.0f))
         {
             lighting.setMetalness(metalness);
+        }
+        float roughnessScale = lighting.getRoughnessScale();
+        if (ImGui::DragFloat("Roughness Scale", &roughnessScale, 0.01f, 0.0f, 2.0f))
+        {
+            lighting.setRoughnessScale(roughnessScale);
+        }
+        float metalnessScale = lighting.getMetalnessScale();
+        if (ImGui::DragFloat("Metalness Scale", &metalnessScale, 0.01f, 0.0f, 2.0f))
+        {
+            lighting.setMetalnessScale(metalnessScale);
         }
     }
     if (ImGui::CollapsingHeader("Shadow map (common)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
@@ -154,6 +169,11 @@ void lighting_debug(bool* isOpen)
     }
     if (ImGui::CollapsingHeader("Debug", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
     {
+        int debugOutput = lighting.GetTextureDebugOutput();
+        if (ImGui::Combo("Texture Debug Output", &debugOutput, "Disabled\0Color\0Normal Map\0Roughness\0Metalness\0\0"))
+        {
+            lighting.setTextureDebugOutput(static_cast<TextureDebugOutput>(debugOutput));
+        }
         bool isHide2dEnabled = lighting.isHide2dEnabled();
         if (ImGui::Checkbox("Hide 2D", &isHide2dEnabled))
         {
