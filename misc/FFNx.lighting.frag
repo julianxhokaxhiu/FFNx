@@ -64,11 +64,6 @@ uniform vec4 materialData;
 
 #define isPbrTextureEnabled lightingSettings.x > 0.0
 
-float toLinear(float _rgb)
-{
-	return _rgb;//pow(abs(_rgb), 2.2);
-}
-
 void main()
 {
 	vec4 color = v_color0;
@@ -113,13 +108,7 @@ void main()
             {
                 color_uv = v_texcoord1.xy;
                 param = texture2D(tex, v_texcoord2.xy);
-                param.r = toLinear(param.r);
-                param.g = toLinear(param.g);
-                param.b = toLinear(param.b);
                 param2 = texture2D(tex, v_texcoord3.xy);
-                param2.r = toLinear(param.r);
-                param2.g = toLinear(param.g);
-                param2.b = toLinear(param.b);
             }
 
             vec4 texture_color = texture2D(tex, color_uv);
@@ -232,12 +221,6 @@ void main()
             // Luminance
             vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, viewDir, normal, roughnessClamped, metalnessClamped, ao, shadowUv);
             
-            int rep = int(abs(floor(v_texcoord2.x)));
-            if(v_texcoord2.x < 0.0)
-            {
-            rep = int(abs(ceil(v_texcoord2.x)));
-            }
-            float m = mod(rep, 2);
             gl_FragColor = vec4(luminance, color.a);
         }
     }
