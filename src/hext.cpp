@@ -130,7 +130,7 @@ bool Hext::parseCommands(std::string& token)
 
         trim(token);
 
-        trace("%s\n", token.data());
+        ffnx_trace("%s\n", token.data());
 
         return true;
     }
@@ -248,7 +248,7 @@ void Hext::apply(std::string& filename)
 
     ifs.close();
 
-    trace("Applied Hext patch: %s\n", filename.c_str());
+    ffnx_trace("Applied Hext patch: %s\n", filename.c_str());
 }
 
 void Hext::applyDelayed(std::string& filename, std::string& checkpoint)
@@ -294,7 +294,7 @@ void Hext::applyDelayed(std::string& filename, std::string& checkpoint)
 
     ifs.close();
 
-    if (matchCheckpoint) trace("Applied delayed Hext patch: %s\n", filename.c_str());
+    if (matchCheckpoint) ffnx_trace("Applied delayed Hext patch: %s\n", filename.c_str());
 }
 
 void Hext::applyAll(std::string& checkpoint)

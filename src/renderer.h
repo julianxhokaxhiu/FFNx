@@ -120,12 +120,12 @@ static void RendererReleaseData(void* _ptr, void* _userData)
 
 static void RendererLibPngErrorCb(png_structp png_ptr, const char* error)
 {
-    error("libpng error: %s\n", error);
+    ffnx_error("libpng error: %s\n", error);
 }
 
 static void RendererLibPngWarningCb(png_structp png_ptr, const char* warning)
 {
-    info("libpng warning: %s\n", warning);
+    ffnx_info("libpng warning: %s\n", warning);
 }
 
 struct RendererCallbacks : public bgfx::CallbackI {

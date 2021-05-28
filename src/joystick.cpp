@@ -84,7 +84,7 @@ BOOL Joystick::enumerateGameControllers(LPCDIDEVICEINSTANCE devInst)
       DIDEVICEINSTANCE deviceInfo;
       deviceInfo.dwSize = sizeof(DIDEVICEINSTANCE);
       gameController->GetDeviceInfo(&deviceInfo);
-      trace("Found DInput Gamepad #%d: %s\n", gameControllers.size(), deviceInfo.tszInstanceName);
+      ffnx_trace("Found DInput Gamepad #%d: %s\n", gameControllers.size(), deviceInfo.tszInstanceName);
     }
 
 		// store the game controller
@@ -123,7 +123,7 @@ bool Joystick::CheckConnection()
       DIDEVICEINSTANCE deviceInfo;
       deviceInfo.dwSize = sizeof(DIDEVICEINSTANCE);
       gameController->GetDeviceInfo(&deviceInfo);
-      trace("Using Gamepad: %s\n", deviceInfo.tszInstanceName);
+      ffnx_trace("Using Gamepad: %s\n", deviceInfo.tszInstanceName);
     }
 
     // set cooperative level

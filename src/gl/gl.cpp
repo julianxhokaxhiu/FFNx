@@ -240,7 +240,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 
 	if(vertextype > TLVERTEX)
 	{
-		unexpected_once("vertextype > TLVERTEX\n");
+		ffnx_unexpected_once("vertextype > TLVERTEX\n");
 		return;
 	}
 
@@ -320,7 +320,7 @@ void gl_set_d3dprojection_matrix(struct matrix *matrix)
 // apply blend mode to OpenGL state
 void gl_set_blend_func(uint32_t blend_mode)
 {
-	if(trace_all) trace("set blend mode %i\n", blend_mode);
+	if(trace_all) ffnx_trace("set blend mode %i\n", blend_mode);
 
 	current_state.blend_mode = blend_mode;
 

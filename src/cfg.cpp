@@ -126,8 +126,8 @@ void read_cfg()
 	}
 	catch (const toml::parse_error &err)
 	{
-		warning("Parse error while opening the file " FFNX_CFG_FILE ". Will continue with the default settings.\n");
-		warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
+		ffnx_warning("Parse error while opening the file " FFNX_CFG_FILE ". Will continue with the default settings.\n");
+		ffnx_warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
 
 		char tmp[1024]{0};
 		sprintf(tmp, "%s (Line %u Column %u)\n\nWill continue with safe default settings.", err.what(), err.source().begin.line, err.source().begin.column);

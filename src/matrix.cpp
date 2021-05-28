@@ -259,5 +259,5 @@ void inverse_matrix(struct matrix *matrix, struct matrix *dest)
 		dest->_42 = -translation.y;
 		dest->_43 = -translation.z;
 	}
-	else glitch_once("Non-uniform scaling: %f\n", det);
+	else ffnx_glitch_once("Non-uniform scaling: %f\n", det);
 }

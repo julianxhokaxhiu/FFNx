@@ -32,7 +32,7 @@
 FILE *open_lgp_file(char *filename, uint32_t mode)
 {
 	char _filename[260]{ 0 };
-	if(trace_all || trace_files) trace("opening lgp file %s\n", filename);
+	if(trace_all || trace_files) ffnx_trace("opening lgp file %s\n", filename);
 
 	int redirect_status = attempt_redirection(filename, _filename, sizeof(_filename));
 
@@ -48,7 +48,7 @@ void close_lgp_file(FILE *fd)
 {
 	if(!fd) return;
 
-	if(trace_all || trace_files) trace("closing lgp file\n");
+	if(trace_all || trace_files) ffnx_trace("closing lgp file\n");
 
 	fclose(fd);
 }
@@ -189,7 +189,7 @@ uint32_t original_lgp_open_file(char *filename, uint32_t lgp_num, struct lgp_fil
 
 		if(!_stricmp(toc_entry->name, filename))
 		{
-			glitch("broken LGP file (%s), don't use LGP Tools!\n", lgp_names[lgp_num]);
+			ffnx_glitch("broken LGP file (%s), don't use LGP Tools!\n", lgp_names[lgp_num]);
 
 			if(!toc_entry->conflict)
 			{
@@ -227,7 +227,7 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 			if(ret->fd) ret->resolved_conflict = true;
 		}
 
-		if(trace_all || trace_direct) trace("lgp_open_file: %i, %s (%s) = 0x%x\n", lgp_num, filename, lgp_current_dir, ret);
+		if(trace_all || trace_direct) ffnx_trace("lgp_open_file: %i, %s (%s) = 0x%x\n", lgp_num, filename, lgp_current_dir, ret);
 	}
 
 	if(!ret->fd)
@@ -236,8 +236,8 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 
 		if(!original_lgp_open_file(name, lgp_num, ret))
 		{
-			if(!direct_mode_path.empty()) error("failed to find file %s; tried %s/%s/%s, %s/%s/%s/%s, %s/%s (LGP) (path: %s)\n", filename, direct_mode_path.c_str(), lgp_names[lgp_num], name, direct_mode_path.c_str(), lgp_names[lgp_num], lgp_current_dir, name, lgp_names[lgp_num], name, lgp_current_dir);
-			else error("failed to find file %s/%s (LGP) (path: %s)\n", lgp_names[lgp_num], name, lgp_current_dir);
+			if(!direct_mode_path.empty()) ffnx_error("failed to find file %s; tried %s/%s/%s, %s/%s/%s/%s, %s/%s (LGP) (path: %s)\n", filename, direct_mode_path.c_str(), lgp_names[lgp_num], name, direct_mode_path.c_str(), lgp_names[lgp_num], lgp_current_dir, name, lgp_names[lgp_num], name, lgp_current_dir);
+			else ffnx_error("failed to find file %s/%s (LGP) (path: %s)\n", lgp_names[lgp_num], name, lgp_current_dir);
 			external_free(ret);
 			return 0;
 		}
@@ -349,8 +349,8 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 
 	if(trace_all || trace_files)
 	{
-		if(file_context->use_lgp) trace("open %s (LGP:%s)\n", filename, lgp_names[file_context->lgp_num]);
-		else trace("open %s (mode %i)\n", filename, file_context->mode);
+		if(file_context->use_lgp) ffnx_trace("open %s (LGP:%s)\n", filename, lgp_names[file_context->lgp_num]);
+		else ffnx_trace("open %s (mode %i)\n", filename, file_context->mode);
 	}
 
 	if (!file_context->use_lgp)
@@ -378,7 +378,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 		file_context->name_mangler(_filename, mangled_name);
 		strcpy(_filename, mangled_name);
 
-		if(trace_all || trace_files) trace("mangled name: %s\n", mangled_name);
+		if(trace_all || trace_files) ffnx_trace("mangled name: %s\n", mangled_name);
 	}
 
 	if(file_context->use_lgp)
@@ -388,14 +388,14 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 		use_files_array = true;
 		if(!ret->fd)
 		{
-			if(file_context->name_mangler) error("offset error: %s %s\n", _filename, mangled_name);
-			else error("offset error: %s\n", _filename);
+			if(file_context->name_mangler) ffnx_error("offset error: %s %s\n", _filename, mangled_name);
+			else ffnx_error("offset error: %s\n", _filename);
 			goto error;
 		}
 
 		if(!lgp_seek_file(ret->fd->offset + 24, ret->context.lgp_num))
 		{
-			error("seek error: %s\n", _filename);
+			ffnx_error("seek error: %s\n", _filename);
 			goto error;
 		}
 	}
@@ -417,7 +417,7 @@ struct ff7_file *open_file(struct file_context *file_context, char *filename)
 error:
 	// it's normal for save files to be missing, anything else is probably
 	// going to cause trouble
-	if(file_context->use_lgp || _stricmp(&_filename[strlen(_filename) - 4], ".ff7")) error("could not open file %s\n", _filename);
+	if(file_context->use_lgp || _stricmp(&_filename[strlen(_filename) - 4], ".ff7")) ffnx_error("could not open file %s\n", _filename);
 	close_file(ret);
 	return 0;
 }
@@ -429,7 +429,7 @@ uint32_t __read_file(uint32_t count, void *buffer, struct ff7_file *file)
 
 	if(!file || !count) return false;
 
-	if(trace_all || trace_files) trace("reading %i bytes from %s (ALT)\n", count, file->name);
+	if(trace_all || trace_files) ffnx_trace("reading %i bytes from %s (ALT)\n", count, file->name);
 
 	if(file->context.use_lgp) return lgp_read(file->context.lgp_num, (char*)buffer, count);
 
@@ -437,7 +437,7 @@ uint32_t __read_file(uint32_t count, void *buffer, struct ff7_file *file)
 
 	if(ferror(file->fd->fd))
 	{
-		error("could not read from file %s (%i)\n", file->name, ret);
+		ffnx_error("could not read from file %s (%i)\n", file->name, ret);
 		return -1;
 	}
 
@@ -451,7 +451,7 @@ uint32_t read_file(uint32_t count, void *buffer, struct ff7_file *file)
 
 	if(!file || !count) return false;
 
-	if(trace_all || trace_files) trace("reading %i bytes from %s\n", count, file->name);
+	if(trace_all || trace_files) ffnx_trace("reading %i bytes from %s\n", count, file->name);
 
 	if(file->context.use_lgp) return lgp_read(file->context.lgp_num, (char*)buffer, count);
 
@@ -459,7 +459,7 @@ uint32_t read_file(uint32_t count, void *buffer, struct ff7_file *file)
 
 	if(ret != count)
 	{
-		error("could not read from file %s (%i)\n", file->name, ret);
+		ffnx_error("could not read from file %s (%i)\n", file->name, ret);
 		return false;
 	}
 
@@ -482,7 +482,7 @@ uint32_t write_file(uint32_t count, void *buffer, struct ff7_file *file)
 
 	if(file->context.use_lgp) return false;
 
-	if(trace_all || trace_files) trace("writing %i bytes to %s\n", count, file->name);
+	if(trace_all || trace_files) ffnx_trace("writing %i bytes to %s\n", count, file->name);
 
 	// hack to emulate win95 style writes, a NULL buffer means we should write
 	// all zeroes
@@ -498,7 +498,7 @@ uint32_t write_file(uint32_t count, void *buffer, struct ff7_file *file)
 
 	if(ret != count)
 	{
-		error("could not write to file %s\n", file->name);
+		ffnx_error("could not write to file %s\n", file->name);
 		return false;
 	}
 
@@ -510,7 +510,7 @@ uint32_t get_filesize(struct ff7_file *file)
 {
 	if(!file) return 0;
 
-	if(trace_all || trace_files) trace("get_filesize %s\n", file->name);
+	if(trace_all || trace_files) ffnx_trace("get_filesize %s\n", file->name);
 
 	if(file->context.use_lgp) return lgp_get_filesize(file->fd, file->context.lgp_num);
 	else
@@ -527,7 +527,7 @@ uint32_t tell_file(struct ff7_file *file)
 {
 	if(!file) return 0;
 
-	if(trace_all || trace_files) trace("tell %s\n", file->name);
+	if(trace_all || trace_files) ffnx_trace("tell %s\n", file->name);
 
 	if(file->context.use_lgp) return 0;
 
@@ -539,12 +539,12 @@ void seek_file(struct ff7_file *file, uint32_t offset)
 {
 	if(!file) return;
 
-	if(trace_all || trace_files) trace("seek %s to %i\n", file->name, offset);
+	if(trace_all || trace_files) ffnx_trace("seek %s to %i\n", file->name, offset);
 
 	// it's not possible to seek within LGP archives
 	if(file->context.use_lgp) return;
 
-	if(fseek(file->fd->fd, offset, SEEK_SET)) error("could not seek file %s\n", file->name);
+	if(fseek(file->fd->fd, offset, SEEK_SET)) ffnx_error("could not seek file %s\n", file->name);
 }
 
 // construct modpath name from file context, file handle and filename

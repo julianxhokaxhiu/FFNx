@@ -30,7 +30,7 @@
 bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source)
 {
 	if (width > max_texture_size || height > max_texture_size) {
-		error("Texture dimensions exceed max texture size, will not be able to load %s\n", source);
+		ffnx_error("Texture dimensions exceed max texture size, will not be able to load %s\n", source);
 		return false;
 	}
 	else
@@ -45,7 +45,7 @@ void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index,
 
 	if(VREF(texture_set, texturehandle[palette_index]))
 	{
-		if(VREF(texture_set, ogl.external) && !VREF(texture_set, ogl.gl_set->is_animated)) glitch("oops, may have messed up an external texture\n");
+		if(VREF(texture_set, ogl.external) && !VREF(texture_set, ogl.gl_set->is_animated)) ffnx_glitch("oops, may have messed up an external texture\n");
 		newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
 	}
 
@@ -86,7 +86,7 @@ void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, 
 		newTexture
 	);
 
-	if (trace_all) trace("Created internal texture: %u\n", newTexture);
+	if (trace_all) ffnx_trace("Created internal texture: %u\n", newTexture);
 }
 
 // prepare texture set for rendering
@@ -112,7 +112,7 @@ void gl_bind_texture_set(struct texture_set *_texture_set)
 // disable texturing entirely
 void gl_set_texture(uint32_t texture)
 {
-	if(trace_all) trace("gl_set_texture: set texture %i\n", texture);
+	if(trace_all) ffnx_trace("gl_set_texture: set texture %i\n", texture);
 
 	newRenderer.useTexture(texture);
 

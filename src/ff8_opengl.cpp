@@ -44,7 +44,7 @@ void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *ga
 	struct p_hundred *hundred_data = 0;
 	uint32_t group_counter;
 
-	if(trace_all) trace("dll_gfx: field_78\n");
+	if(trace_all) ffnx_trace("dll_gfx: field_78\n");
 
 	if(!game_object->in_scene) return;
 
@@ -85,32 +85,32 @@ void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *ga
 
 void ff8gl_field_54(struct texture_set *texture_set, struct game_obj *game_object)
 {
-	if (trace_all) trace("field_54\n");
+	if (trace_all) ffnx_trace("field_54\n");
 }
 
 void ff8gl_field_58(struct texture_set *texture_set, struct game_obj *game_object)
 {
-	if (trace_all) trace("field_58\n");
+	if (trace_all) ffnx_trace("field_58\n");
 }
 
 void ff8gl_field_5C(struct texture_set *texture_set, struct game_obj *game_object)
 {
-	if (trace_all) trace("field_5C\n");
+	if (trace_all) ffnx_trace("field_5C\n");
 }
 
 void ff8gl_field_60(struct palette *palette, struct texture_set *texture_set)
 {
-	if(trace_all) trace("field_60\n");
+	if(trace_all) ffnx_trace("field_60\n");
 }
 
 void ff8gl_field_84(uint32_t unknown, struct game_obj *game_object)
 {
-	if (trace_all) trace("field_84\n");
+	if (trace_all) ffnx_trace("field_84\n");
 }
 
 void ff8gl_field_88()
 {
-	if (trace_all) trace("field_88\n");
+	if (trace_all) ffnx_trace("field_88\n");
 }
 
 void ff8_destroy_tex_header(struct ff8_tex_header *tex_header)
@@ -235,7 +235,7 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 
 	stats.texture_reloads++;
 
-	if(trace_all) trace("texture_reload_hack: 0x%x\n", texture_set);
+	if(trace_all) ffnx_trace("texture_reload_hack: 0x%x\n", texture_set);
 }
 
 void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
@@ -267,7 +267,7 @@ void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 
 	if(last_tex_header) ff8_destroy_tex_header((struct ff8_tex_header *)last_tex_header);
 
-	if(trace_all) trace("swirl_sub_56D390: (%i, %i) %ix%i 0x%x (0x%x)\n", x, y, w, h, *ff8_externals.swirl_texture1, tex_header);
+	if(trace_all) ffnx_trace("swirl_sub_56D390: (%i, %i) %ix%i 0x%x (0x%x)\n", x, y, w, h, *ff8_externals.swirl_texture1, tex_header);
 
 	common_unload_texture((*ff8_externals.swirl_texture1)->hundred_data->texture_set);
 	common_load_texture((*ff8_externals.swirl_texture1)->hundred_data->texture_set, tex_header, texture_format);
@@ -496,7 +496,7 @@ uint32_t ff8_retry_configured_drive(char* filename, uint8_t* data)
 		ff8_externals.reg_get_data_drive(dataDrive, 4);
 		dataDrive[7] = '\0'; // For safety
 
-		if (trace_files || trace_all) trace("%s: filename=%s, dataDrive=%s, diskDataPath=%s\n", __func__, filename, dataDrive, ff8_externals.disk_data_path);
+		if (trace_files || trace_all) ffnx_trace("%s: filename=%s, dataDrive=%s, diskDataPath=%s\n", __func__, filename, dataDrive, ff8_externals.disk_data_path);
 
 		if (GetDriveTypeA(dataDrive) == DRIVE_CDROM) {
 			strcpy(modifiedFilename, dataDrive);
@@ -511,7 +511,7 @@ uint32_t ff8_retry_configured_drive(char* filename, uint8_t* data)
 						strncpy(ff8_externals.disk_data_path, dataDrive, 260);
 						strncat(ff8_externals.disk_data_path, "\\", 260);
 
-						if (trace_files || trace_all) trace("%s: diskDataPath changed %s\n", __func__, ff8_externals.disk_data_path);
+						if (trace_files || trace_all) ffnx_trace("%s: diskDataPath changed %s\n", __func__, ff8_externals.disk_data_path);
 					}
 				}
 			}

@@ -25,16 +25,16 @@
 #include "common.h"
 #include "globals.h"
 
-#define glitch_once(x, ...) { static uint32_t glitch_ ## __LINE__ = false; if(!glitch_ ## __LINE__) { glitch(x, __VA_ARGS__); glitch_ ## __LINE__ = true; } }
-#define unexpected_once(x, ...) { static uint32_t unexpected_ ## __LINE__ = false; if(!unexpected_ ## __LINE__) { unexpected(x, __VA_ARGS__); unexpected_ ## __LINE__ = true; } }
+#define ffnx_error(x, ...) debug_printf("ERROR", text_colors[TEXTCOLOR_RED], (x), __VA_ARGS__)
+#define ffnx_warning(x, ...) debug_printf("WARNING", text_colors[TEXTCOLOR_YELLOW], (x), __VA_ARGS__)
+#define ffnx_info(x, ...) debug_printf("INFO", text_colors[TEXTCOLOR_WHITE], (x), __VA_ARGS__)
+#define ffnx_dump(x, ...) debug_printf("DUMP", text_colors[TEXTCOLOR_PINK], (x), __VA_ARGS__)
+#define ffnx_trace(x, ...) debug_printf("TRACE", text_colors[TEXTCOLOR_GREEN], (x), __VA_ARGS__)
+#define ffnx_glitch(x, ...) debug_printf("GLITCH", text_colors[TEXTCOLOR_GRAY], (x), __VA_ARGS__)
+#define ffnx_unexpected(x, ...) debug_printf("UNEXPECTED", text_colors[TEXTCOLOR_LIGHT_BLUE], (x), __VA_ARGS__)
 
-#define error(x, ...) debug_printf("ERROR", text_colors[TEXTCOLOR_RED], (x), __VA_ARGS__)
-#define warning(x, ...) debug_printf("WARNING", text_colors[TEXTCOLOR_YELLOW], (x), __VA_ARGS__)
-#define info(x, ...) debug_printf("INFO", text_colors[TEXTCOLOR_WHITE], (x), __VA_ARGS__)
-#define dump(x, ...) debug_printf("DUMP", text_colors[TEXTCOLOR_PINK], (x), __VA_ARGS__)
-#define trace(x, ...) debug_printf("TRACE", text_colors[TEXTCOLOR_GREEN], (x), __VA_ARGS__)
-#define glitch(x, ...) debug_printf("GLITCH", text_colors[TEXTCOLOR_GRAY], (x), __VA_ARGS__)
-#define unexpected(x, ...) debug_printf("UNEXPECTED", text_colors[TEXTCOLOR_LIGHT_BLUE], (x), __VA_ARGS__)
+#define ffnx_glitch_once(x, ...) { static uint32_t glitch_ ## __LINE__ = false; if(!glitch_ ## __LINE__) { ffnx_glitch(x, __VA_ARGS__); glitch_ ## __LINE__ = true; } }
+#define ffnx_unexpected_once(x, ...) { static uint32_t unexpected_ ## __LINE__ = false; if(!unexpected_ ## __LINE__) { ffnx_unexpected(x, __VA_ARGS__); unexpected_ ## __LINE__ = true; } }
 
 void open_applog(char *path);
 

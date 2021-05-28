@@ -88,11 +88,11 @@ time_t start_time;
 
 void ffmpeg_movie_init()
 {
-	info("FFMpeg movie player plugin loaded\n");
+	ffnx_info("FFMpeg movie player plugin loaded\n");
 
 	texture_units = newRenderer.getCaps()->limits.maxTextureSamplers;
 
-	if(texture_units < 3) info("No multitexturing, codecs with YUV output will be slow. (texture units: %i)\n", texture_units);
+	if(texture_units < 3) ffnx_info("No multitexturing, codecs with YUV output will be slow. (texture units: %i)\n", texture_units);
 	else yuv_fast_path = true;
 
 	QueryPerformanceFrequency((LARGE_INTEGER *)&timer_freq);
@@ -120,7 +120,7 @@ void ffmpeg_release_movie_objects()
 
 	audio_must_be_converted = false;
 
-	if(skipped_frames > 0) info("release_movie_objects: skipped %i frames\n", skipped_frames);
+	if(skipped_frames > 0) ffnx_info("release_movie_objects: skipped %i frames\n", skipped_frames);
 	skipped_frames = 0;
 
 	for(i = 0; i < VIDEO_BUFFER_SIZE; i++)
@@ -151,14 +151,14 @@ uint32_t ffmpeg_prepare_movie(char *name)
 
 	if(ret = avformat_open_input(&format_ctx, name, NULL, NULL))
 	{
-		error("prepare_movie: couldn't open movie file: %s\n", name);
+		ffnx_error("prepare_movie: couldn't open movie file: %s\n", name);
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
 
 	if(avformat_find_stream_info(format_ctx, NULL) < 0)
 	{
-		error("prepare_movie: couldn't find stream info\n");
+		ffnx_error("prepare_movie: couldn't find stream info\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
@@ -173,19 +173,19 @@ uint32_t ffmpeg_prepare_movie(char *name)
 
 	if(videostream == -1)
 	{
-		error("prepare_movie: no video stream found\n");
+		ffnx_error("prepare_movie: no video stream found\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
 
-	if(audiostream == -1 && trace_movies) trace("prepare_movie: no audio stream found\n");
+	if(audiostream == -1 && trace_movies) ffnx_trace("prepare_movie: no audio stream found\n");
 
 	codec_ctx = format_ctx->streams[videostream]->codec;
 
 	codec = avcodec_find_decoder(codec_ctx->codec_id);
 	if(!codec)
 	{
-		error("prepare_movie: no video codec found\n");
+		ffnx_error("prepare_movie: no video codec found\n");
 		codec_ctx = 0;
 		ffmpeg_release_movie_objects();
 		goto exit;
@@ -193,7 +193,7 @@ uint32_t ffmpeg_prepare_movie(char *name)
 
 	if(avcodec_open2(codec_ctx, codec, NULL) < 0)
 	{
-		error("prepare_movie: couldn't open video codec\n");
+		ffnx_error("prepare_movie: couldn't open video codec\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
@@ -204,14 +204,14 @@ uint32_t ffmpeg_prepare_movie(char *name)
 		acodec = avcodec_find_decoder(acodec_ctx->codec_id);
 		if(!acodec)
 		{
-			error("prepare_movie: no audio codec found\n");
+			ffnx_error("prepare_movie: no audio codec found\n");
 			ffmpeg_release_movie_objects();
 			goto exit;
 		}
 
 		if(avcodec_open2(acodec_ctx, acodec, NULL) < 0)
 		{
-			error("prepare_movie: couldn't open audio codec\n");
+			ffnx_error("prepare_movie: couldn't open audio codec\n");
 			ffmpeg_release_movie_objects();
 			goto exit;
 		}
@@ -225,14 +225,14 @@ uint32_t ffmpeg_prepare_movie(char *name)
 
 	if (trace_movies)
 	{
-		if (movie_fps < 100.0) info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames, codec_ctx->color_range);
+		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames, codec_ctx->color_range);
 		// bogus FPS value, assume the codec provides frame limiting
-		else info("prepare_movie: %s; %s/%s %ix%i, duration: %f, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_duration, codec_ctx->color_range);
+		else ffnx_info("prepare_movie: %s; %s/%s %ix%i, duration: %f, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_duration, codec_ctx->color_range);
 	}
 
 	if(movie_width > max_texture_size || movie_height > max_texture_size)
 	{
-		error("prepare_movie: movie dimensions exceed max texture size, skipping\n");
+		ffnx_error("prepare_movie: movie dimensions exceed max texture size, skipping\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
@@ -250,7 +250,7 @@ uint32_t ffmpeg_prepare_movie(char *name)
 	if(codec_ctx->pix_fmt != AV_PIX_FMT_BGRA && (codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P || !yuv_fast_path))
 	{
 		sws_ctx = sws_getContext(movie_width, movie_height, codec_ctx->pix_fmt, movie_width, movie_height, AV_PIX_FMT_BGRA, SWS_FAST_BILINEAR | SWS_ACCURATE_RND, NULL, NULL, NULL);
-		if (trace_movies) info("prepare_movie: slow output format from video codec %s; %i\n", codec->name, codec_ctx->pix_fmt);
+		if (trace_movies) ffnx_info("prepare_movie: slow output format from video codec %s; %i\n", codec->name, codec_ctx->pix_fmt);
 	}
 	else sws_ctx = 0;
 
@@ -260,9 +260,9 @@ uint32_t ffmpeg_prepare_movie(char *name)
 			audio_must_be_converted = true;
 			if (trace_movies)
 			{
-				trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_fmt: %s\n", av_get_sample_fmt_name(acodec_ctx->sample_fmt));
-				trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_rate: %d\n", acodec_ctx->sample_rate);
-				trace("prepare_movie: Audio must be converted: IN acodec_ctx->channel_layout: %u\n", acodec_ctx->channel_layout);
+				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_fmt: %s\n", av_get_sample_fmt_name(acodec_ctx->sample_fmt));
+				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_rate: %d\n", acodec_ctx->sample_rate);
+				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->channel_layout: %u\n", acodec_ctx->channel_layout);
 			}
 
 			// Prepare software conversion context
@@ -303,7 +303,7 @@ uint32_t ffmpeg_prepare_movie(char *name)
 
 		if(ret = IDirectSound_CreateSoundBuffer(*common_externals.directsound, (LPCDSBUFFERDESC)&sbdesc, &ffmpeg_sound_buffer, 0))
 		{
-			error("prepare_movie: couldn't create sound buffer (%i, %i, %i, %i)\n", acodec_ctx->sample_fmt, acodec_ctx->bit_rate, acodec_ctx->sample_rate, acodec_ctx->channels);
+			ffnx_error("prepare_movie: couldn't create sound buffer (%i, %i, %i, %i)\n", acodec_ctx->sample_fmt, acodec_ctx->bit_rate, acodec_ctx->sample_rate, acodec_ctx->channels);
 			ffmpeg_sound_buffer = 0;
 		}
 
@@ -427,7 +427,7 @@ uint32_t ffmpeg_update_movie_sample()
 
 			if (ret < 0)
 			{
-				trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
+				ffnx_trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
 			}
@@ -436,7 +436,7 @@ uint32_t ffmpeg_update_movie_sample()
 
 			if (ret == AVERROR_EOF)
 			{
-				trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
+				ffnx_trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
 			}
@@ -452,7 +452,7 @@ uint32_t ffmpeg_update_movie_sample()
 				{
 					skipped_frames++;
 
-					if(((skipped_frames - 1) & skipped_frames) == 0) glitch("update_movie_sample: video playback is lagging behind, skipping frames (frame #: %i, skipped: %i, lag: %f)\n", movie_frame_counter, skipped_frames, LAG);
+					if(((skipped_frames - 1) & skipped_frames) == 0) ffnx_glitch("update_movie_sample: video playback is lagging behind, skipping frames (frame #: %i, skipped: %i, lag: %f)\n", movie_frame_counter, skipped_frames, LAG);
 
 					if(use_bgra_texture) draw_bgra_frame(vbuffer_read);
 					else draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
@@ -463,7 +463,7 @@ uint32_t ffmpeg_update_movie_sample()
 				}
 				else skipping_frames = false;
 
-				if(movie_sync_debug) info("update_movie_sample(video): DTS %f PTS %f (timebase %f) placed in video buffer at real time %f (play %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(codec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)movie_frame_counter / (double)movie_fps);
+				if(movie_sync_debug) ffnx_info("update_movie_sample(video): DTS %f PTS %f (timebase %f) placed in video buffer at real time %f (play %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(codec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)movie_frame_counter / (double)movie_fps);
 
 				if(sws_ctx)
 				{
@@ -512,14 +512,14 @@ uint32_t ffmpeg_update_movie_sample()
 			if(movie_sync_debug)
 			{
 				IDirectSoundBuffer_GetCurrentPosition(ffmpeg_sound_buffer, &playcursor, &writecursor);
-				info("update_movie_sample(audio): DTS %f PTS %f (timebase %f) placed in sound buffer at real time %f (play %f write %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(acodec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)playcursor / (double)bytespersec, (double)ffmpeg_sound_write_pointer / (double)bytespersec);
+				ffnx_info("update_movie_sample(audio): DTS %f PTS %f (timebase %f) placed in sound buffer at real time %f (play %f write %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(acodec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)playcursor / (double)bytespersec, (double)ffmpeg_sound_write_pointer / (double)bytespersec);
 			}
 
 			ret = avcodec_send_packet(acodec_ctx, &packet);
 
 			if (ret < 0)
 			{
-				trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
+				ffnx_trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
 			}
@@ -528,7 +528,7 @@ uint32_t ffmpeg_update_movie_sample()
 
 			if (ret == AVERROR_EOF)
 			{
-				trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
+				ffnx_trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
 			}
@@ -552,10 +552,10 @@ uint32_t ffmpeg_update_movie_sample()
 					if (ffmpeg_sound_buffer) {
 						if (IDirectSoundBuffer_GetStatus(ffmpeg_sound_buffer, &DSStatus) == DS_OK) {
 							if (DSStatus != DSBSTATUS_BUFFERLOST) {
-								if (IDirectSoundBuffer_Lock(ffmpeg_sound_buffer, ffmpeg_sound_write_pointer, _size, &ptr1, &bytes1, &ptr2, &bytes2, 0)) error("update_movie_sample: couldn't lock sound buffer\n");
+								if (IDirectSoundBuffer_Lock(ffmpeg_sound_buffer, ffmpeg_sound_write_pointer, _size, &ptr1, &bytes1, &ptr2, &bytes2, 0)) ffnx_error("update_movie_sample: couldn't lock sound buffer\n");
 								memcpy(ptr1, buffer, bytes1);
 								memcpy(ptr2, &buffer[bytes1], bytes2);
-								if (IDirectSoundBuffer_Unlock(ffmpeg_sound_buffer, ptr1, bytes1, ptr2, bytes2)) error("update_movie_sample: couldn't unlock sound buffer\n");
+								if (IDirectSoundBuffer_Unlock(ffmpeg_sound_buffer, ptr1, bytes1, ptr2, bytes2)) ffnx_error("update_movie_sample: couldn't unlock sound buffer\n");
 							}
 						}
 
@@ -571,13 +571,13 @@ uint32_t ffmpeg_update_movie_sample()
 
 	if(ffmpeg_sound_buffer && first_audio_packet)
 	{
-		if(movie_sync_debug) info("audio start\n");
+		if(movie_sync_debug) ffnx_info("audio start\n");
 
 		// reset start time so video syncs up properly
 		QueryPerformanceCounter((LARGE_INTEGER *)&start_time);
 		if (IDirectSoundBuffer_GetStatus(ffmpeg_sound_buffer, &DSStatus) == DS_OK) {
 			if (DSStatus != DSBSTATUS_BUFFERLOST) {
-				if (IDirectSoundBuffer_Play(ffmpeg_sound_buffer, 0, 0, DSBPLAY_LOOPING)) error("update_movie_sample: couldn't play sound buffer\n");
+				if (IDirectSoundBuffer_Play(ffmpeg_sound_buffer, 0, 0, DSBPLAY_LOOPING)) ffnx_error("update_movie_sample: couldn't play sound buffer\n");
 			}
 		}
 

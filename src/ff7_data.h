@@ -84,7 +84,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t movie_module;
 	uint32_t file_module;
 
-	if(*((uint32_t *)main_loop) != 0x81EC8B55) unexpected("odd main loop prologue\n");
+	if(*((uint32_t *)main_loop) != 0x81EC8B55) ffnx_unexpected("odd main loop prologue\n");
 
 	common_externals.update_movie_sample = get_relative_call(main_loop, 0x67);
 

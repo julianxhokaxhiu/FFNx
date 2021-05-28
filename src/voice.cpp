@@ -164,7 +164,7 @@ int opcode_voice_message()
 	if (_is_dialog_starting || _is_dialog_paging)
 	{
 		is_voice_acting = play_voice(field_name, dialog_id, message_page_count);
-		if (trace_all || trace_opcodes) trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
+		if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
 	}
 	else if (_is_dialog_closing)
 	{
@@ -212,12 +212,12 @@ int opcode_voice_ask(int unk)
 	if (_is_dialog_starting || _is_dialog_paging)
 	{
 		play_voice(field_name, dialog_id, message_page_count);
-		if (trace_all || trace_opcodes) trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
+		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
 	}
 	else if (_is_dialog_option_changed)
 	{
 		play_option(field_name, dialog_id, message_current_option);
-		if (trace_all || trace_opcodes) trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u\n", field_name, window_id, dialog_id, message_current_option);
+		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u\n", field_name, window_id, dialog_id, message_current_option);
 	}
 	else if (_is_dialog_closing)
 	{

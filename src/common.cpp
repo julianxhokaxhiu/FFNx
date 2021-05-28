@@ -154,14 +154,14 @@ uint32_t allocs = 0;
 void *driver_malloc(uint32_t size)
 {
 	void *tmp = malloc(size);
-	trace("%i: malloc(%i) = 0x%x\n", ++allocs, size, tmp);
+	ffnx_trace("%i: malloc(%i) = 0x%x\n", ++allocs, size, tmp);
 	return tmp;
 }
 
 void *driver_calloc(uint32_t size, uint32_t num)
 {
 	void *tmp = calloc(size, num);
-	trace("%i: calloc(%i, %i) = 0x%x\n", ++allocs, size, num, tmp);
+	ffnx_trace("%i: calloc(%i, %i) = 0x%x\n", ++allocs, size, num, tmp);
 	return tmp;
 }
 
@@ -169,14 +169,14 @@ void driver_free(void *ptr)
 {
 	if(!ptr) return;
 
-	trace("%i: free(0x%x)\n", --allocs, ptr);
+	ffnx_trace("%i: free(0x%x)\n", --allocs, ptr);
 	free(ptr);
 }
 
 void *driver_realloc(void *ptr, uint32_t size)
 {
 	void *tmp = realloc(ptr, size);
-	trace("%i: realloc(0x%x, %i) = 0x%x\n", allocs, ptr, size, tmp);
+	ffnx_trace("%i: realloc(0x%x, %i) = 0x%x\n", allocs, ptr, size, tmp);
 	return tmp;
 }
 #endif
@@ -209,12 +209,12 @@ void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
 
 	switch (level) {
 	case AV_LOG_VERBOSE:
-	case AV_LOG_DEBUG: if (trace_movies) trace(msg); break;
+	case AV_LOG_DEBUG: if (trace_movies) ffnx_trace(msg); break;
 	case AV_LOG_INFO:
-	case AV_LOG_WARNING: if (trace_movies) info(msg); break;
+	case AV_LOG_WARNING: if (trace_movies) ffnx_info(msg); break;
 	case AV_LOG_ERROR:
 	case AV_LOG_FATAL:
-	case AV_LOG_PANIC: error(msg); break;
+	case AV_LOG_PANIC: ffnx_error(msg); break;
 	}
 
 	if (level <= AV_LOG_ERROR) {
@@ -240,11 +240,11 @@ struct game_mode *getmode()
 		{
 			if(last_mode != m->mode)
 			{
-				if(m->trace) trace("%s\n", m->name);
+				if(m->trace) ffnx_trace("%s\n", m->name);
 				last_mode = m->mode;
 			}
 
-			if (trace_all) trace("getmode: exact match - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
+			if (trace_all) ffnx_trace("getmode: exact match - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
 
 			return m;
 		}
@@ -271,13 +271,13 @@ struct game_mode *getmode()
 						if(_m->mode == *common_externals._mode) break;
 					}
 
-					if (trace_all) trace("getmode: mismatched mode, %s -> %s\n", _m->name, m->name);
+					if (trace_all) ffnx_trace("getmode: mismatched mode, %s -> %s\n", _m->name, m->name);
 				}
-				if(m->trace) trace("%s\n", m->name);
+				if(m->trace) ffnx_trace("%s\n", m->name);
 				last_mode = m->mode;
 			}
 
-			if (trace_all) trace("getmode: no exact match, found by main loop - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
+			if (trace_all) ffnx_trace("getmode: no exact match, found by main loop - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
 
 			return m;
 		}
@@ -292,11 +292,11 @@ struct game_mode *getmode()
 		{
 			if(last_mode != m->mode)
 			{
-				if(m->trace) trace("%s\n", m->name);
+				if(m->trace) ffnx_trace("%s\n", m->name);
 				last_mode = m->mode;
 			}
 
-			if (trace_all) trace("getmode: ignore main loop, match by mode only - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
+			if (trace_all) ffnx_trace("getmode: ignore main loop, match by mode only - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
 
 			return m;
 		}
@@ -304,7 +304,7 @@ struct game_mode *getmode()
 
 	if(*common_externals._mode != last_mode)
 	{
-		unexpected("unknown mode (%i, 0x%x)\n", *common_externals._mode, (uint32_t)VREF(game_object, game_loop_obj).main_loop);
+		ffnx_unexpected("unknown mode (%i, 0x%x)\n", *common_externals._mode, (uint32_t)VREF(game_object, game_loop_obj).main_loop);
 		last_mode = *common_externals._mode;
 	}
 
@@ -362,7 +362,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 				case VK_LEFT:
 				case VK_RIGHT:
-					trace("preserve_aspect: %d => %d\n", preserve_aspect, !preserve_aspect);
+					ffnx_trace("preserve_aspect: %d => %d\n", preserve_aspect, !preserve_aspect);
 
 					preserve_aspect = !preserve_aspect;
 
@@ -502,7 +502,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			if (ChangeDisplaySettingsEx(0, &dmNewScreenSettings, 0, CDS_FULLSCREEN, 0) != DISP_CHANGE_SUCCESSFUL)
 			{
 				MessageBoxA(gameHwnd, "Failed to set the requested fullscreen mode, reverting to the original resolution.\n", "Error", 0);
-				error("failed to set fullscreen mode\n");
+				ffnx_error("failed to set fullscreen mode\n");
 				window_size_x = dmCurrentScreenSettings.dmPelsWidth;
 				window_size_y = dmCurrentScreenSettings.dmPelsHeight;
 			}
@@ -610,7 +610,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				gamehacks.init();
 
 				max_texture_size = newRenderer.getCaps()->limits.maxTextureSize;
-				info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
+				ffnx_info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
 
 				// perform any additional initialization that requires the rendering environment to be set up
 				field_init();
@@ -650,7 +650,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 // state
 uint32_t common_init(struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: init\n");
+	if(trace_all) ffnx_trace("dll_gfx: init\n");
 
 	newRenderer.setBlendMode(RendererBlendMode::BLEND_NONE);
 
@@ -667,7 +667,7 @@ uint32_t common_init(struct game_obj *game_object)
 // doesn't crash after we're gone
 void common_cleanup(struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: cleanup\n");
+	if(trace_all) ffnx_trace("dll_gfx: cleanup\n");
 
 	if (steam_edition)
 	{
@@ -693,7 +693,7 @@ void common_cleanup(struct game_obj *game_object)
 // unused and unnecessary
 uint32_t common_lock(uint32_t surface)
 {
-	if(trace_all) trace("dll_gfx: lock %i\n", surface);
+	if(trace_all) ffnx_trace("dll_gfx: lock %i\n", surface);
 
 	return true;
 }
@@ -701,7 +701,7 @@ uint32_t common_lock(uint32_t surface)
 // unused and unnecessary
 uint32_t common_unlock(uint32_t surface)
 {
-	if(trace_all) trace("dll_gfx: unlock %i\n", surface);
+	if(trace_all) ffnx_trace("dll_gfx: unlock %i\n", surface);
 
 	return true;
 }
@@ -710,7 +710,7 @@ uint32_t common_unlock(uint32_t surface)
 // buffers
 void common_flip(struct game_obj *game_object)
 {
-	if (trace_all) trace("dll_gfx: flip (%i)\n", frame_counter);
+	if (trace_all) ffnx_trace("dll_gfx: flip (%i)\n", frame_counter);
 
 	VOBJ(game_obj, game_object, game_object);
 	static struct timeb last_frame;
@@ -866,7 +866,7 @@ void common_flip(struct game_obj *game_object)
 	// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
 	if (!xinput_connected && gamepad.CheckConnection())
 	{
-		if (trace_all || trace_gamepad) trace("XInput controller: connected.\n");
+		if (trace_all || trace_gamepad) ffnx_trace("XInput controller: connected.\n");
 
 		xinput_connected = true;
 
@@ -875,7 +875,7 @@ void common_flip(struct game_obj *game_object)
 	}
 	else if (xinput_connected && !gamepad.CheckConnection())
 	{
-		if (trace_all || trace_gamepad) trace("XInput controller: disconnected.\n");
+		if (trace_all || trace_gamepad) ffnx_trace("XInput controller: disconnected.\n");
 
 		xinput_connected = false;
 	}
@@ -931,7 +931,7 @@ void common_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, 
 {
 	uint32_t mode = getmode_cached()->driver_mode;
 
-	if(trace_all) trace("dll_gfx: clear %i %i %i\n", clear_color, clear_depth, unknown);
+	if(trace_all) ffnx_trace("dll_gfx: clear %i %i %i\n", clear_color, clear_depth, unknown);
 
 	if (!ff8 && enable_lighting) newRenderer.clearShadowMap();
 
@@ -945,7 +945,7 @@ void common_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, 
 // called by the game to clear the entire back buffer
 void common_clear_all(struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: clear_all\n");
+	if(trace_all) ffnx_trace("dll_gfx: clear_all\n");
 
 	common_clear(true, true, true, game_object);
 }
@@ -956,7 +956,7 @@ void common_setviewport(uint32_t _x, uint32_t _y, uint32_t _w, uint32_t _h, stru
 {
 	uint32_t mode = getmode_cached()->driver_mode;
 
-	if(trace_all) trace("dll_gfx: setviewport %i %i %i %i\n", _x, _y, _w, _h);
+	if(trace_all) ffnx_trace("dll_gfx: setviewport %i %i %i %i\n", _x, _y, _w, _h);
 
 	current_state.viewport[0] = _x;
 	current_state.viewport[1] = _y;
@@ -983,7 +983,7 @@ void common_setviewport(uint32_t _x, uint32_t _y, uint32_t _w, uint32_t _h, stru
 // cleared to
 void common_setbg(struct bgra_color *color, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: setbg\n");
+	if(trace_all) ffnx_trace("dll_gfx: setbg\n");
 
 	newRenderer.setBackgroundColor(
 		color->r,
@@ -1014,7 +1014,7 @@ uint32_t common_load_group(uint32_t group_num, struct matrix_set *matrix_set, st
 // called by the game to update one of the matrices in a matrix_set structure
 void common_setmatrix(uint32_t unknown, struct matrix *matrix, struct matrix_set *matrix_set, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: setmatrix\n");
+	if(trace_all) ffnx_trace("dll_gfx: setmatrix\n");
 
 	switch(unknown)
 	{
@@ -1041,7 +1041,7 @@ void common_unload_texture(struct texture_set *texture_set)
 	uint32_t i;
 	VOBJ(texture_set, texture_set, texture_set);
 
-	if(trace_all) trace("dll_gfx: unload_texture 0x%x\n", VPTR(texture_set));
+	if(trace_all) ffnx_trace("dll_gfx: unload_texture 0x%x\n", VPTR(texture_set));
 
 	if(!VPTR(texture_set)) return;
 	if(!VREF(texture_set, texturehandle)) return;
@@ -1084,7 +1084,7 @@ uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_he
 
 	if(VREF(tex_header, version) != FB_TEX_VERSION) return false;
 
-	if(trace_all) trace("load_framebuffer_texture: XY(%u,%u) %ux%u\n", VREF(tex_header, fb_tex.x), VREF(tex_header, fb_tex.y), VREF(tex_header, fb_tex.w), VREF(tex_header, fb_tex.h));
+	if(trace_all) ffnx_trace("load_framebuffer_texture: XY(%u,%u) %ux%u\n", VREF(tex_header, fb_tex.x), VREF(tex_header, fb_tex.y), VREF(tex_header, fb_tex.w), VREF(tex_header, fb_tex.h));
 
 	texture = newRenderer.blitTexture(
 		VREF(tex_header, fb_tex.x),
@@ -1110,7 +1110,7 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 
 	if((uint32_t)VREF(tex_header, file.pc_name) > 32)
 	{
-		if(trace_all || trace_loaders) trace("texture file name: %s\n", VREF(tex_header, file.pc_name));
+		if(trace_all || trace_loaders) ffnx_trace("texture file name: %s\n", VREF(tex_header, file.pc_name));
 
 		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set->is_animated);
 
@@ -1178,7 +1178,7 @@ void convert_image_data(unsigned char *image_data, uint32_t *converted_image_dat
 	{
 		if(!tex_format->use_palette)
 		{
-			glitch("unsupported texture format\n");
+			ffnx_glitch("unsupported texture format\n");
 			return;
 		}
 
@@ -1188,7 +1188,7 @@ void convert_image_data(unsigned char *image_data, uint32_t *converted_image_dat
 			{
 				if(image_data[o] > tex_format->palette_size)
 				{
-					glitch("texture conversion error\n");
+					ffnx_glitch("texture conversion error\n");
 					return;
 				}
 
@@ -1201,7 +1201,7 @@ void convert_image_data(unsigned char *image_data, uint32_t *converted_image_dat
 	{
 		if(tex_format->use_palette)
 		{
-			glitch("unsupported texture format\n");
+			ffnx_glitch("unsupported texture format\n");
 			return;
 		}
 
@@ -1228,7 +1228,7 @@ void convert_image_data(unsigned char *image_data, uint32_t *converted_image_dat
 						break;
 
 					default:
-						glitch("unsupported texture format\n");
+						ffnx_glitch("unsupported texture format\n");
 						return;
 				}
 
@@ -1267,7 +1267,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	uint32_t color_key = false;
 	struct texture_format *tex_format = VREFP(tex_header, tex_format);
 
-	if(trace_all && _texture_set != NULL) trace("dll_gfx: load_texture 0x%x\n", _texture_set);
+	if(trace_all && _texture_set != NULL) ffnx_trace("dll_gfx: load_texture 0x%x\n", _texture_set);
 
 	// no existing texture set, create one
 	if (!VPTR(texture_set))
@@ -1327,7 +1327,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 
 	if(VREF(tex_header, palette_index) >= VREF(texture_set, ogl.gl_set->textures))
 	{
-		unexpected("tried to use non-existent palette (%i, %i)\n", VREF(tex_header, palette_index), VREF(texture_set, ogl.gl_set->textures));
+		ffnx_unexpected("tried to use non-existent palette (%i, %i)\n", VREF(tex_header, palette_index), VREF(texture_set, ogl.gl_set->textures));
 		VRASS(tex_header, palette_index, 0);
 		return _texture_set;
 	}
@@ -1425,7 +1425,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			driver_free(image_data);
 		}
 	}
-	else unexpected("no texture format specified or no source data\n");
+	else ffnx_unexpected("no texture format specified or no source data\n");
 
 	return _texture_set;
 }
@@ -1437,7 +1437,7 @@ uint32_t common_palette_changed(uint32_t palette_entry_mul_index1, uint32_t pale
 {
 	VOBJ(texture_set, texture_set, texture_set);
 
-	if(trace_all) trace("dll_gfx: palette_changed 0x%x %i\n", texture_set, VREF(texture_set, palette_index));
+	if(trace_all) ffnx_trace("dll_gfx: palette_changed 0x%x %i\n", texture_set, VREF(texture_set, palette_index));
 
 	if(palette == 0 || texture_set == 0) return false;
 
@@ -1465,7 +1465,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-	if(trace_all) trace("dll_gfx: write_palette 0x%x, %i, %i, %i, 0x%x, 0x%x\n", texture_set, source_offset, dest_offset, size, source, palette->palette_entry);
+	if(trace_all) ffnx_trace("dll_gfx: write_palette 0x%x, %i, %i, %i, 0x%x, 0x%x\n", texture_set, source_offset, dest_offset, size, source, palette->palette_entry);
 
 	if(palette == 0) return false;
 
@@ -1479,11 +1479,11 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 	if(!ff8)
 	{
 		// FF7 writes to one palette at a time
-		if(palettes > 1) unexpected("multipalette write\n");
+		if(palettes > 1) ffnx_unexpected("multipalette write\n");
 
 		if(palette_index >= VREF(texture_set, ogl.gl_set->textures))
 		{
-			unexpected("palette write outside valid palette area (%i, %i)\n", palette_index, VREF(texture_set, ogl.gl_set->textures));
+			ffnx_unexpected("palette write outside valid palette area (%i, %i)\n", palette_index, VREF(texture_set, ogl.gl_set->textures));
 			return false;
 		}
 
@@ -1508,7 +1508,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 	else
 	{
 		// FF8 writes multiple palettes in one swath but it always writes whole palettes
-		if(palettes > 1 && size % VREF(tex_header, palette_entries)) unexpected("unaligned multipalette write\n");
+		if(palettes > 1 && size % VREF(tex_header, palette_entries)) ffnx_unexpected("unaligned multipalette write\n");
 
 		if(!VREF(tex_header, old_palette_data)) return false;
 
@@ -1524,7 +1524,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 
 			if(dest_offset + size > VREF(tex_header, tex_format.palette_size))
 			{
-				unexpected("palette write outside advertised palette area (0x%x + 0x%x, 0x%x)\n", dest_offset, size, VREF(tex_header, tex_format.palette_size));
+				ffnx_unexpected("palette write outside advertised palette area (0x%x + 0x%x, 0x%x)\n", dest_offset, size, VREF(tex_header, tex_format.palette_size));
 			}
 
 			// if there's anything left at this point, reload the affected textures
@@ -1558,7 +1558,7 @@ struct blend_mode blend_modes[5] = {      // PSX blend mode:
 // only z-sort and vertex alpha are really relevant to us
 struct blend_mode *common_blendmode(uint32_t unknown, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: blendmode %i\n", unknown);
+	if(trace_all) ffnx_trace("dll_gfx: blendmode %i\n", unknown);
 
 	switch(unknown)
 	{
@@ -1571,11 +1571,11 @@ struct blend_mode *common_blendmode(uint32_t unknown, struct game_obj *game_obje
 		case 3:
 			return &blend_modes[3];
 		case 4:
-			if(!ff8) unexpected("blend mode 4 requested\n");
+			if(!ff8) ffnx_unexpected("blend mode 4 requested\n");
 			return &blend_modes[4];
 	}
 
-	unexpected("invalid blendmode (%i)\n", unknown);
+	ffnx_unexpected("invalid blendmode (%i)\n", unknown);
 
 	return 0;
 }
@@ -1686,7 +1686,7 @@ void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *
 // called by the game to set a simple render state
 void common_field_64(uint32_t state, uint32_t option, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: field_64 %i %i\n", state, option);
+	if(trace_all) ffnx_trace("dll_gfx: field_64 %i %i\n", state, option);
 
 	internal_set_renderstate(state, option, game_object);
 }
@@ -1704,7 +1704,7 @@ void common_setrenderstate(struct p_hundred *hundred_data, struct game_obj *game
 	features = hundred_data->field_C;
 	options = hundred_data->field_8;
 
-	if(trace_all) trace("dll_gfx: setrenderstate 0x%x 0x%x\n", features, options);
+	if(trace_all) ffnx_trace("dll_gfx: setrenderstate 0x%x 0x%x\n", features, options);
 
 // helper macro to check if a bit is set
 // to be able to tell which bits we haven't handled, this macro will also clear
@@ -1748,7 +1748,7 @@ void common_field_74(uint32_t unknown, struct game_obj *game_object)
 {
 	VOBJ(game_obj, game_object, game_object);
 
-	if(trace_all) trace("dll_gfx: field_74\n");
+	if(trace_all) ffnx_trace("dll_gfx: field_74\n");
 
 	if(unknown > 4) return;
 
@@ -1773,7 +1773,7 @@ void common_draw_deferred(struct struc_77 *struc_77, struct game_obj *game_objec
 	struct p_hundred *hundred_data = struc_77->hundred_data;
 	struct indexed_primitive *ip;
 
-	if(trace_all) trace("dll_gfx: draw_deferred\n");
+	if(trace_all) ffnx_trace("dll_gfx: draw_deferred\n");
 
 	if(!VREF(polygon_set, indexed_primitives)) return;
 
@@ -1795,7 +1795,7 @@ void common_field_80(struct graphics_object *graphics_object, struct game_obj *g
 {
 	VOBJ(graphics_object, graphics_object, graphics_object);
 
-	if(trace_all) trace("dll_gfx: field_80\n");
+	if(trace_all) ffnx_trace("dll_gfx: field_80\n");
 
 	if(!VPTR(graphics_object)) return;
 
@@ -1810,7 +1810,7 @@ void common_field_84(uint32_t unknown, struct game_obj *game_object)
 	VOBJ(polygon_set, polygon_set_2EC, VREF(game_object, polygon_set_2EC));
 	VOBJ(polygon_set, polygon_set_2F0, VREF(game_object, polygon_set_2F0));
 
-	if(trace_all) trace("dll_gfx: field_84\n");
+	if(trace_all) ffnx_trace("dll_gfx: field_84\n");
 
 	if(!VREF(game_object, in_scene)) return;
 
@@ -1838,9 +1838,9 @@ uint32_t common_begin_scene(uint32_t unknown, struct game_obj *game_object)
 {
 	VOBJ(game_obj, game_object, game_object);
 
-	if(trace_all) trace("dll_gfx: begin_scene\n");
+	if(trace_all) ffnx_trace("dll_gfx: begin_scene\n");
 
-	if(scene_stack_pointer == sizeof(scene_stack) / sizeof(scene_stack[0])) glitch("scene stack overflow\n");
+	if(scene_stack_pointer == sizeof(scene_stack) / sizeof(scene_stack[0])) ffnx_glitch("scene stack overflow\n");
 	else gl_save_state(&scene_stack[scene_stack_pointer++]);
 
 	VRASS(game_object, in_scene, VREF(game_object, in_scene) + 1);
@@ -1856,9 +1856,9 @@ void common_end_scene(struct game_obj *game_object)
 {
 	VOBJ(game_obj, game_object, game_object);
 
-	if(trace_all) trace("dll_gfx: end_scene\n");
+	if(trace_all) ffnx_trace("dll_gfx: end_scene\n");
 
-	if(!scene_stack_pointer) glitch("scene stack underflow\n");
+	if(!scene_stack_pointer) ffnx_glitch("scene stack underflow\n");
 	else gl_load_state(&scene_stack[--scene_stack_pointer]);
 
 	if(VREF(game_object, in_scene)) VRASS(game_object, in_scene, VREF(game_object, in_scene) - 1);
@@ -1867,7 +1867,7 @@ void common_end_scene(struct game_obj *game_object)
 // noop
 void common_field_90(uint32_t unknown)
 {
-	glitch_once("dll_gfx: field_90 (not implemented)\n");
+	ffnx_glitch_once("dll_gfx: field_90 (not implemented)\n");
 }
 
 // helper function used to draw a set of triangles without palette data
@@ -1933,7 +1933,7 @@ void common_setrenderstate_2D(struct polygon_set *polygon_set, struct indexed_ve
 {
 	VOBJ(polygon_set, polygon_set, polygon_set);
 
-	if(trace_all) trace("dll_gfx: setrenderstate_2D\n");
+	if(trace_all) ffnx_trace("dll_gfx: setrenderstate_2D\n");
 
 	if(!VREF(polygon_set, field_2C)) return;
 
@@ -1943,7 +1943,7 @@ void common_setrenderstate_2D(struct polygon_set *polygon_set, struct indexed_ve
 // called by the game to draw a set of 2D triangles without palette data
 void common_draw_2D(struct polygon_set *polygon_set, struct indexed_vertices *iv, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: draw_2D\n");
+	if(trace_all) ffnx_trace("dll_gfx: draw_2D\n");
 
 	generic_draw(polygon_set, iv, game_object, TLVERTEX);
 }
@@ -1951,7 +1951,7 @@ void common_draw_2D(struct polygon_set *polygon_set, struct indexed_vertices *iv
 // called by the game to draw a set of 2D triangles with palette data
 void common_draw_paletted2D(struct polygon_set *polygon_set, struct indexed_vertices *iv, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: draw_paletted2D\n");
+	if(trace_all) ffnx_trace("dll_gfx: draw_paletted2D\n");
 
 	generic_draw_paletted(polygon_set, iv, game_object, TLVERTEX);
 }
@@ -1963,7 +1963,7 @@ void common_setrenderstate_3D(struct polygon_set *polygon_set, struct indexed_ve
 	VOBJ(indexed_vertices, iv, iv);
 	VOBJ(graphics_object, graphics_object, UNSAFE_VREF(graphics_object, iv, graphics_object));
 
-	if(trace_all) trace("dll_gfx: setrenderstate_3D\n");
+	if(trace_all) ffnx_trace("dll_gfx: setrenderstate_3D\n");
 
 	if(!VREF(polygon_set, field_2C)) return;
 
@@ -1976,7 +1976,7 @@ void common_setrenderstate_3D(struct polygon_set *polygon_set, struct indexed_ve
 // called by the game to draw a set of 3D triangles without palette data
 void common_draw_3D(struct polygon_set *polygon_set, struct indexed_vertices *iv, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: draw_3D\n");
+	if(trace_all) ffnx_trace("dll_gfx: draw_3D\n");
 
 	generic_draw(polygon_set, iv, game_object, LVERTEX);
 }
@@ -1984,7 +1984,7 @@ void common_draw_3D(struct polygon_set *polygon_set, struct indexed_vertices *iv
 // called by the game to draw a set of 3D triangles with palette data
 void common_draw_paletted3D(struct polygon_set *polygon_set, struct indexed_vertices *iv, struct game_obj *game_object)
 {
-	if(trace_all) trace("dll_gfx: draw_paletted3D\n");
+	if(trace_all) ffnx_trace("dll_gfx: draw_paletted3D\n");
 
 	generic_draw_paletted(polygon_set, iv, game_object, LVERTEX);
 }
@@ -1995,7 +1995,7 @@ void common_draw_lines(struct polygon_set *polygon_set, struct indexed_vertices 
 	VOBJ(polygon_set, polygon_set, polygon_set);
 	VOBJ(indexed_vertices, iv, iv);
 
-	if(trace_all) trace("dll_gfx: draw_lines\n");
+	if(trace_all) ffnx_trace("dll_gfx: draw_lines\n");
 
 	gl_draw_indexed_primitive(RendererPrimitiveType::PT_LINES, TLVERTEX, VREF(iv, vertices), 0, VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), 0, VREF(polygon_set, field_4), true);
 }
@@ -2003,7 +2003,7 @@ void common_draw_lines(struct polygon_set *polygon_set, struct indexed_vertices 
 // noop
 void common_field_EC(struct game_obj *game_object)
 {
-	glitch_once("dll_gfx: field_EC (not implemented)\n");
+	ffnx_glitch_once("dll_gfx: field_EC (not implemented)\n");
 }
 
 // create a suitable tex header to be processed by the framebuffer texture loader
@@ -2064,91 +2064,91 @@ uint32_t get_version()
 	uint32_t version_check1 = version_check(0x401004);
 	uint32_t version_check2 = version_check(0x401404);
 
-	trace("v1: 0x%X, v2: 0x%X\n", version_check1, version_check2);
+	ffnx_trace("v1: 0x%X, v2: 0x%X\n", version_check1, version_check2);
 
 	if(version_check1 == 0x99CE0805)
 	{
-		info("Auto-detected version: FF7 1.02 US English\n");
+		ffnx_info("Auto-detected version: FF7 1.02 US English\n");
 		return VERSION_FF7_102_US;
 	}
 	else if(version_check1 == 0x99EBF805)
 	{
-		info("Auto-detected version: FF7 1.02 French\n");
+		ffnx_info("Auto-detected version: FF7 1.02 French\n");
 		return VERSION_FF7_102_FR;
 	}
 	else if(version_check1 == 0x99DBC805)
 	{
-		info("Auto-detected version: FF7 1.02 German\n");
+		ffnx_info("Auto-detected version: FF7 1.02 German\n");
 		return VERSION_FF7_102_DE;
 	}
 	else if(version_check1 == 0x99F65805)
 	{
-		info("Auto-detected version: FF7 1.02 Spanish\n");
+		ffnx_info("Auto-detected version: FF7 1.02 Spanish\n");
 		return VERSION_FF7_102_SP;
 	}
 	else if(version_check1 == 0x3885048D && version_check2 == 0x159618)
 	{
-		info("Auto-detected version: FF8 1.2 US English\n");
+		ffnx_info("Auto-detected version: FF8 1.2 US English\n");
 		return VERSION_FF8_12_US;
 	}
 	else if(version_check1 == 0x3885048D && version_check2 == 0x1597C8)
 	{
-		info("Auto-detected version: FF8 1.2 US English (Nvidia)\n");
+		ffnx_info("Auto-detected version: FF8 1.2 US English (Nvidia)\n");
 		return VERSION_FF8_12_US_NV;
 	}
 	else if(version_check1 == 0x1085048D && version_check2 == 0x159B48)
 	{
-		info("Auto-detected version: FF8 1.2 French\n");
+		ffnx_info("Auto-detected version: FF8 1.2 French\n");
 		return VERSION_FF8_12_FR;
 	}
 	else if(version_check1 == 0x1085048D && version_check2 == 0x159CF8)
 	{
-		info("Auto-detected version: FF8 1.2 French (Nvidia)\n");
+		ffnx_info("Auto-detected version: FF8 1.2 French (Nvidia)\n");
 		return VERSION_FF8_12_FR_NV;
 	}
 	else if(version_check1 == 0xA885048D && version_check2 == 0x159C48)
 	{
-		info("Auto-detected version: FF8 1.2 German\n");
+		ffnx_info("Auto-detected version: FF8 1.2 German\n");
 		return VERSION_FF8_12_DE;
 	}
 	else if(version_check1 == 0xA885048D && version_check2 == 0x159DF8)
 	{
-		info("Auto-detected version: FF8 1.2 German (Nvidia)\n");
+		ffnx_info("Auto-detected version: FF8 1.2 German (Nvidia)\n");
 		return VERSION_FF8_12_DE_NV;
 	}
 	else if(version_check1 == 0x8085048D && version_check2 == 0x159C38)
 	{
-		info("Auto-detected version: FF8 1.2 Spanish\n");
+		ffnx_info("Auto-detected version: FF8 1.2 Spanish\n");
 		return VERSION_FF8_12_SP;
 	}
 	else if(version_check1 == 0x8085048D && version_check2 == 0x159DE8)
 	{
-		info("Auto-detected version: FF8 1.2 Spanish (Nvidia)\n");
+		ffnx_info("Auto-detected version: FF8 1.2 Spanish (Nvidia)\n");
 		return VERSION_FF8_12_SP_NV;
 	}
 	else if(version_check1 == 0xB885048D && version_check2 == 0x159BC8)
 	{
-		info("Auto-detected version: FF8 1.2 Italian\n");
+		ffnx_info("Auto-detected version: FF8 1.2 Italian\n");
 		return VERSION_FF8_12_IT;
 	}
 	else if(version_check1 == 0xB885048D && version_check2 == 0x159D78)
 	{
-		info("Auto-detected version: FF8 1.2 Italian (Nvidia)\n");
+		ffnx_info("Auto-detected version: FF8 1.2 Italian (Nvidia)\n");
 		return VERSION_FF8_12_IT_NV;
 	}
 	else if(version_check1 == 0x2885048D && version_check2 == 0x159598)
 	{
-		info("Auto-detected version: FF8 1.2 US English (Eidos Patch)\n");
+		ffnx_info("Auto-detected version: FF8 1.2 US English (Eidos Patch)\n");
 		return VERSION_FF8_12_US_EIDOS;
 	}
 	else if(version_check1 == 0x2885048D && version_check2 == 0x159748)
 	{
-		info("Auto-detected version: FF8 1.2 US English (Eidos Patch) (Nvidia)\n");
+		ffnx_info("Auto-detected version: FF8 1.2 US English (Eidos Patch) (Nvidia)\n");
 		return VERSION_FF8_12_US_EIDOS_NV;
 	}
 	else if(version_check1 == 0x1B6E9CC && version_check2 == 0x7C8DFFC9)
 	{
-		info("Auto-detected version: FF8 1.2 Japanese\n");
+		ffnx_info("Auto-detected version: FF8 1.2 Japanese\n");
 		return VERSION_FF8_12_JP;
 	}
 
@@ -2334,7 +2334,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		// prevent screensavers
 		SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
 
-		info("FFNx driver version " VERSION "\n");
+		ffnx_info("FFNx driver version " VERSION "\n");
 		version = get_version();
 
 		if (version >= VERSION_FF8_12_US)
@@ -2360,7 +2360,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		if (!version)
 		{
-			error("no compatible version found\n");
+			ffnx_error("no compatible version found\n");
 			MessageBoxA(NULL, "Your ff7.exe or ff8.exe is incompatible with this driver and will exit after this message.\n"
 				"Possible reasons for this error:\n"
 				" - You have the faulty \"1.4 XP Patch\" for FF7.\n"
@@ -2398,7 +2398,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 				// Steam edition is usually installed in this path
 				if (strstr(basedir, "steamapps") != NULL) {
-					trace("Detected Steam edition.\n");
+					ffnx_trace("Detected Steam edition.\n");
 					steam_edition = true;
 
 					// Read ff7sound.cfg
@@ -2417,7 +2417,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				// otherwise it's the eStore edition which has same exe names but installed somewhere else
 				else
 				{
-					trace("Detected eStore edition.\n");
+					ffnx_trace("Detected eStore edition.\n");
 					estore_edition = true;
 				}
 
@@ -2489,7 +2489,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 			if (strstr(dllName, "af3dn.p") != NULL)
 			{
-				trace("Detected Steam edition.\n");
+				ffnx_trace("Detected Steam edition.\n");
 
 				steam_edition = true;
 

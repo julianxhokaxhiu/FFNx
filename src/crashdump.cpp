@@ -59,12 +59,12 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 	// give up if we crash again inside the exception handler (this function)
 	if(had_exception)
 	{
-		unexpected("ExceptionHandler: crash while running another ExceptionHandler. Exiting.");
+		ffnx_unexpected("ExceptionHandler: crash while running another ExceptionHandler. Exiting.");
 		SetUnhandledExceptionFilter(0);
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
 
-	trace("*** Exception 0x%x, address 0x%x ***\n", ep->ExceptionRecord->ExceptionCode, ep->ExceptionRecord->ExceptionAddress);
+	ffnx_trace("*** Exception 0x%x, address 0x%x ***\n", ep->ExceptionRecord->ExceptionCode, ep->ExceptionRecord->ExceptionAddress);
 	FFNxStackWalker sw;
 	sw.ShowCallstack(
 		GetCurrentThread(),
@@ -113,7 +113,7 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 				NULL, GetLastError(), MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
 				buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
 
-			trace("MiniDumpWriteDump failed with error: %ls\n", buf);
+			ffnx_trace("MiniDumpWriteDump failed with error: %ls\n", buf);
 		}
 	}
 
@@ -154,7 +154,7 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 		fclose(f);
 	}
 
-	error("Unhandled Exception. See dumped information above.\n");
+	ffnx_error("Unhandled Exception. See dumped information above.\n");
 
 	if (!ff8)
 	{

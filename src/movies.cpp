@@ -159,7 +159,7 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	char fmvName[512];
 	char newFmvName[512];
 
-	if(trace_all || trace_movies) trace("prepare_movie %s\n", name);
+	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s\n", name);
 
 	ff7_externals.movie_object->loop = loop;
 	ff7_externals.movie_sub_415231(name);
@@ -206,7 +206,7 @@ retry:
 
 	if(movie_end)
 	{
-		if(trace_all || trace_movies) trace("movie end\n");
+		if(trace_all || trace_movies) ffnx_trace("movie end\n");
 		if(ff7_externals.movie_object->loop)
 		{
 			ffmpeg_loop();
@@ -222,7 +222,7 @@ retry:
 
 uint32_t ff7_start_movie()
 {
-	if(trace_all || trace_movies) trace("start_movie\n");
+	if(trace_all || trace_movies) ffnx_trace("start_movie\n");
 
 	if(ff7_externals.movie_object->is_playing) return true;
 
@@ -235,7 +235,7 @@ uint32_t ff7_start_movie()
 
 uint32_t ff7_stop_movie()
 {
-	if(trace_all || trace_movies) trace("stop_movie\n");
+	if(trace_all || trace_movies) ffnx_trace("stop_movie\n");
 
 	if(ff7_externals.movie_object->is_playing)
 	{
@@ -252,7 +252,7 @@ uint32_t ff7_stop_movie()
 
 void ff7_release_movie_objects()
 {
-	if(trace_all || trace_movies) trace("release_movie_objects\n");
+	if(trace_all || trace_movies) ffnx_trace("release_movie_objects\n");
 
 	ff7_stop_movie();
 
@@ -263,7 +263,7 @@ void ff7_release_movie_objects()
 
 void draw_current_frame()
 {
-	if (trace_all || trace_movies) trace("draw_current_frame\n");
+	if (trace_all || trace_movies) ffnx_trace("draw_current_frame\n");
 
 	ffmpeg_draw_current_frame();
 
@@ -302,7 +302,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
 	redirect_path_with_override(camName, newCamName, sizeof(newCamName));
 
-	if(trace_all || trace_movies) trace("prepare_movie %s\n", fmvName);
+	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s\n", fmvName);
 
 	if(disc != 4)
 	{
@@ -310,7 +310,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 
 		if(!camFile)
 		{
-			error("could not load camera data from %s\n", camName);
+			ffnx_error("could not load camera data from %s\n", camName);
 			return;
 		}
 
@@ -335,14 +335,14 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 
 void ff8_release_movie_objects()
 {
-	if(trace_all || trace_movies) trace("release_movie_objects\n");
+	if(trace_all || trace_movies) ffnx_trace("release_movie_objects\n");
 
 	ffmpeg_release_movie_objects();
 }
 
 int ff8_update_movie_sample()
 {
-	if(trace_all || trace_movies) trace("update_movie_sample\n");
+	if(trace_all || trace_movies) ffnx_trace("update_movie_sample\n");
 
 	ff8_externals.movie_object->movie_current_frame = ffmpeg_get_movie_frame();
 
@@ -385,13 +385,13 @@ int ff8_update_movie_sample()
 
 int ff8_start_movie()
 {
-	if(trace_all || trace_movies) trace("start_movie\n");
+	if(trace_all || trace_movies) ffnx_trace("start_movie\n");
 
 	if(ff8_externals.movie_object->movie_intro_pak) ff8_externals.movie_object->movie_total_frames = ff8_movie_frames;
 	else
 	{
 		ff8_externals.movie_object->movie_total_frames = ((WORD *)ff8_externals.movie_object->camdata_buffer)[3];
-		trace("%i frames\n", ff8_externals.movie_object->movie_total_frames);
+		ffnx_trace("%i frames\n", ff8_externals.movie_object->movie_total_frames);
 	}
 
 	ff8_externals.movie_object->field_4C4B0 = 0;
@@ -405,7 +405,7 @@ int ff8_start_movie()
 
 int ff8_stop_movie()
 {
-	if(trace_all || trace_movies) trace("stop_movie\n");
+	if(trace_all || trace_movies) ffnx_trace("stop_movie\n");
 
 	ffmpeg_stop_movie();
 

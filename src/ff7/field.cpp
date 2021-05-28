@@ -84,7 +84,7 @@ void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc
 			if(i >= 40) blend_mode = 0;
 			else if(i >= 33) blend_mode = 1;
 		}
-		else glitch("unknown field layer type %i\n", ff7_externals.field_layers[i]->type);
+		else ffnx_glitch("unknown field layer type %i\n", ff7_externals.field_layers[i]->type);
 
 		field_load_textures_helper(game_object, struc_3, i, i, blend_mode);
 

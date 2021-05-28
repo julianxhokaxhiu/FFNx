@@ -235,14 +235,14 @@ uint32_t movie_texture = 0;
 
 uint32_t __stdcall fake_dd_blit_fast(struct ddsurface **me, uint32_t unknown1, uint32_t unknown2, struct ddsurface **source, LPRECT src_rect, uint32_t unknown3)
 {
-	if(trace_all || trace_fake_dx) trace("blit_fast\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("blit_fast\n");
 
 	return DD_OK;
 }
 
 uint32_t __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIXELFORMAT pf)
 {
-	if(trace_all || trace_fake_dx) trace("get_pixelformat\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("get_pixelformat\n");
 
 	pf->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
 	pf->dwRGBBitCount = 32;
@@ -256,14 +256,14 @@ uint32_t __stdcall fake_ddsurface_get_pixelformat(struct ddsurface **me, LPDDPIX
 
 uint32_t __stdcall fake_ddsurface_get_surface_desc(struct ddsurface **me, LPDDSURFACEDESC2 sd)
 {
-	if(trace_all || trace_fake_dx) trace("get_surface_desc\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("get_surface_desc\n");
 
 	return 0;
 }
 
 uint32_t __stdcall fake_ddsurface_get_dd_interface(struct ddsurface **me, struct dddevice ***dd)
 {
-	if(trace_all || trace_fake_dx) trace("get_dd_interface\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("get_dd_interface\n");
 
 	*dd = &_fake_dddevice;
 	return 0;
@@ -271,7 +271,7 @@ uint32_t __stdcall fake_ddsurface_get_dd_interface(struct ddsurface **me, struct
 
 uint32_t __stdcall fake_ddsurface_get_palette(struct ddsurface **me, void **palette)
 {
-	if(trace_all || trace_fake_dx) trace("get_palette\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("get_palette\n");
 
 	//*palette = 0;
 
@@ -280,7 +280,7 @@ uint32_t __stdcall fake_ddsurface_get_palette(struct ddsurface **me, void **pale
 
 uint32_t __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDSURFACEDESC sd, uint32_t flags, uint32_t unused)
 {
-	if(trace_all || trace_fake_dx) trace("lock\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("lock\n");
 
 	if (fake_dd_surface_buffer == nullptr) fake_dd_surface_buffer = (uint8_t*)driver_calloc(game_width * game_height, 4);
 
@@ -303,7 +303,7 @@ uint32_t __stdcall fake_ddsurface_lock(struct ddsurface **me, LPRECT dest, LPDDS
 
 uint32_t __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 {
-	if(trace_all || trace_fake_dx) trace("unlock\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("unlock\n");
 
 	if (movie_texture) newRenderer.deleteTexture(movie_texture);
 
@@ -327,21 +327,21 @@ uint32_t __stdcall fake_ddsurface_unlock(struct ddsurface **me, LPRECT dest)
 
 uint32_t __stdcall fake_ddsurface_islost(struct ddsurface **me)
 {
-	if(trace_all || trace_fake_dx) trace("islost\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("islost\n");
 
 	return DD_OK;
 }
 
 uint32_t __stdcall fake_ddsurface_restore(struct ddsurface **me)
 {
-	if(trace_all || trace_fake_dx) trace("restore\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("restore\n");
 
 	return DD_OK;
 }
 
 uint32_t __stdcall fake_dd_query_interface(struct dddevice **me, uint32_t *iid, void **ppvobj)
 {
-	if(trace_all || trace_fake_dx) trace("query_interface: 0x%p 0x%p 0x%p 0x%p\n", iid[0], iid[1], iid[2], iid[3]);
+	if(trace_all || trace_fake_dx) ffnx_trace("query_interface: 0x%p 0x%p 0x%p 0x%p\n", iid[0], iid[1], iid[2], iid[3]);
 
 	if(iid[0] == 0x6C14DB80)
 	{
@@ -360,21 +360,21 @@ uint32_t __stdcall fake_dd_query_interface(struct dddevice **me, uint32_t *iid, 
 
 uint32_t __stdcall fake_dd_addref(struct dddevice **me)
 {
-	if(trace_all || trace_fake_dx) trace("addref\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("addref\n");
 
 	return 1;
 }
 
 uint32_t __stdcall fake_dd_release(struct dddevice **me)
 {
-	if(trace_all || trace_fake_dx) trace("release\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("release\n");
 
 	return 0;
 }
 
 uint32_t __stdcall fake_dd_create_clipper(struct dddevice **me, DWORD flags, LPDIRECTDRAWCLIPPER *clipper)
 {
-	if(trace_all || trace_fake_dx) trace("create_clipper\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("create_clipper\n");
 
 	if(clipper == 0) return DDERR_INVALIDPARAMS;
 
@@ -385,7 +385,7 @@ uint32_t __stdcall fake_dd_create_clipper(struct dddevice **me, DWORD flags, LPD
 
 uint32_t __stdcall fake_dd_create_palette(struct dddevice **me, LPPALETTEENTRY palette_entry, LPDIRECTDRAWPALETTE *palette, IUnknown *unused)
 {
-	if(trace_all || trace_fake_dx) trace("create_palette\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("create_palette\n");
 
 	if(palette == 0) return DDERR_INVALIDPARAMS;
 
@@ -396,7 +396,7 @@ uint32_t __stdcall fake_dd_create_palette(struct dddevice **me, LPPALETTEENTRY p
 
 uint32_t __stdcall fake_dd_create_surface(struct dddevice **me, LPDDSURFACEDESC sd, LPDIRECTDRAWSURFACE *surface, IUnknown *unused)
 {
-	if(trace_all || trace_fake_dx) trace("create_surface %ix%i\n", sd->dwWidth, sd->dwHeight);
+	if(trace_all || trace_fake_dx) ffnx_trace("create_surface %ix%i\n", sd->dwWidth, sd->dwHeight);
 
 	*surface = (LPDIRECTDRAWSURFACE)&_fake_dd_temp_surface;
 
@@ -405,7 +405,7 @@ uint32_t __stdcall fake_dd_create_surface(struct dddevice **me, LPDDSURFACEDESC 
 
 uint32_t __stdcall fake_dd_get_caps(struct dddevice **me, LPDDCAPS halcaps, LPDDCAPS helcaps)
 {
-	if(trace_all || trace_fake_dx) trace("get_caps\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("get_caps\n");
 
 	halcaps->dwCaps = DDCAPS_BLTSTRETCH;
 	return 0;
@@ -413,7 +413,7 @@ uint32_t __stdcall fake_dd_get_caps(struct dddevice **me, LPDDCAPS halcaps, LPDD
 
 uint32_t __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDESC sd)
 {
-	if(trace_all || trace_fake_dx) trace("get_display_mode\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("get_display_mode\n");
 
 	sd->dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT;
 
@@ -433,14 +433,14 @@ uint32_t __stdcall fake_dd_get_display_mode(struct dddevice **me, LPDDSURFACEDES
 
 uint32_t __stdcall fake_dd_set_coop_level(struct dddevice **me, uint32_t coop_level)
 {
-	if(trace_all || trace_fake_dx) trace("set_coop_level\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("set_coop_level\n");
 
 	return 0;
 }
 
 uint32_t __stdcall fake_d3d_get_caps(struct d3d2device **me, void *a, void *b)
 {
-	if(trace_all || trace_fake_dx) trace("d3d_get_caps\n");
+	if(trace_all || trace_fake_dx) ffnx_trace("d3d_get_caps\n");
 
 	memset(a, -1, 0xFC);
 	memset(b, -1, 0xFC);

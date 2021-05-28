@@ -61,7 +61,7 @@ void kernel2_reset_counters()
 {
 	uint32_t i;
 
-	if(trace_all) trace("kernel2 reset\n");
+	if(trace_all) ffnx_trace("kernel2 reset\n");
 
 	for(i = 0; i < kernel2_section_counter; i++) external_free(kernel2_sections[i]);
 
@@ -72,7 +72,7 @@ char *kernel2_add_section(uint32_t size)
 {
 	char *ret = (char*)external_malloc(size);
 
-	if(trace_all) trace("kernel2 add section %i (%i)\n", kernel2_section_counter, size);
+	if(trace_all) ffnx_trace("kernel2 add section %i (%i)\n", kernel2_section_counter, size);
 
 	kernel2_sections[kernel2_section_counter++] = ret;
 
@@ -83,7 +83,7 @@ char *kernel2_get_text(uint32_t section_base, uint32_t string_id, uint32_t secti
 {
 	char *section = kernel2_sections[section_base + section_offset];
 
-	if(trace_all) trace("kernel2 get text (%i+%i:%i)\n", section_base, section_offset, string_id);
+	if(trace_all) ffnx_trace("kernel2 get text (%i+%i:%i)\n", section_base, section_offset, string_id);
 
 	return &section[((WORD *)section)[string_id]];
 }

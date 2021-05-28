@@ -40,19 +40,19 @@ void NxAudioEngine::loadConfig()
 		{
 		case NxAudioEngineLayer::NXAUDIOENGINE_SFX:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_sfx_path.c_str());
-			if (trace_all || trace_sfx) trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
+			if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_music_path.c_str());
-			if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
+			if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_voice_path.c_str());
-			if (trace_all || trace_voice) trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
+			if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
 			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_ambient_path.c_str());
-			if (trace_all || trace_ambient) trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
+			if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		}
 
@@ -120,7 +120,7 @@ bool NxAudioEngine::fileExists(const char* filename)
 	bool ret = (stat(filename, &dummy) == 0);
 
 	if (!ret && (trace_all || trace_music || trace_sfx || trace_voice || trace_ambient))
-		warning("NxAudioEngine::%s: Could not find file %s\n", __func__, filename);
+		ffnx_warning("NxAudioEngine::%s: Could not find file %s\n", __func__, filename);
 
 	return ret;
 }
@@ -137,11 +137,11 @@ bool NxAudioEngine::init()
 
 		if (!he_bios_path.empty()) {
 			if (!Psf::initialize_psx_core(he_bios_path.c_str())) {
-				error("NxAudioEngine::%s couldn't load %s, please verify 'he_bios_path' or comment it\n", __func__, he_bios_path.c_str());
+				ffnx_error("NxAudioEngine::%s couldn't load %s, please verify 'he_bios_path' or comment it\n", __func__, he_bios_path.c_str());
 			}
 			else {
 				_openpsf_loaded = true;
-				info("NxAudioEngine::%s OpenPSF music plugin loaded using %s\n", __func__, he_bios_path.c_str());
+				ffnx_info("NxAudioEngine::%s OpenPSF music plugin loaded using %s\n", __func__, he_bios_path.c_str());
 			}
 		}
 
@@ -210,7 +210,7 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 				if (shouldLoop != -1) loop = shouldLoop;
 			}
 
-			if (trace_all || trace_sfx) trace("NxAudioEngine::%s: filename=%s,loop=%d\n", __func__, filename, loop);
+			if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: filename=%s,loop=%d\n", __func__, filename, loop);
 
 			SoLoud::VGMStream* sfx = new SoLoud::VGMStream();
 
@@ -308,7 +308,7 @@ void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
 		options->stream = loadSFX(options->id, loop);
 	}
 
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, options->id, channel, panning);
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, options->id, channel, panning);
 
 	if (options->stream != nullptr)
 	{
@@ -327,7 +327,7 @@ void NxAudioEngine::stopSFX(int channel)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
 	_engine.stop(options->handle);
 }
@@ -336,7 +336,7 @@ void NxAudioEngine::pauseSFX(int channel)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
 	_engine.setPause(options->handle, true);
 }
@@ -345,7 +345,7 @@ void NxAudioEngine::resumeSFX(int channel)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
-	if (trace_all || trace_sfx) trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
 	_engine.setPause(options->handle, false);
 }
@@ -445,14 +445,14 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 
 	if (exists)
 	{
-		if (trace_all || trace_music) trace("NxAudioEngine::%s: %s\n", __func__, filename);
+		if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
 		if (_openpsf_loaded && SoLoud::OpenPsf::is_our_path(filename)) {
 			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf();
 			music = openpsf;
 
 			if (openpsf->load(filename) != SoLoud::SO_NO_ERROR) {
-				error("NxAudioEngine::%s: Cannot load %s with openpsf\n", __func__, filename);
+				ffnx_error("NxAudioEngine::%s: Cannot load %s with openpsf\n", __func__, filename);
 				delete openpsf;
 				music = nullptr;
 			}
@@ -462,7 +462,7 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 			SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
 			music = vgmstream;
 			if (vgmstream->load(filename, format) != SoLoud::SO_NO_ERROR) {
-				error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
+				ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
 			}
 		}
 	}
@@ -480,7 +480,7 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 	if (MusicOptions->noIntro) {
 		if (no_intro_track_opt.has_value()) {
 			std::string no_intro_track = *no_intro_track_opt;
-			if (trace_all || trace_music) info("%s: replaced by no intro track %s\n", __func__, no_intro_track.c_str());
+			if (trace_all || trace_music) ffnx_info("%s: replaced by no intro track %s\n", __func__, no_intro_track.c_str());
 
 			if (!no_intro_track.empty()) {
 				memcpy(name, no_intro_track.c_str(), no_intro_track.size());
@@ -491,7 +491,7 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 			MusicOptions->offsetSeconds = *intro_seconds_opt;
 		}
 		else {
-			info("%s: cannot play no intro track, please configure it in %s/config.toml\n", __func__, external_music_path.c_str());
+			ffnx_info("%s: cannot play no intro track, please configure it in %s/config.toml\n", __func__, external_music_path.c_str());
 		}
 	} else if (offset_seconds_opt.has_value()) {
 		MusicOptions->offsetSeconds = *offset_seconds_opt;
@@ -509,14 +509,14 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 			memcpy(name, (*_newName).c_str(), (*_newName).size());
 			name[(*_newName).size()] = '\0';
 
-			if (trace_all || trace_music) info("%s: replaced by shuffle with %s\n", __func__, (*_newName).c_str());
+			if (trace_all || trace_music) ffnx_info("%s: replaced by shuffle with %s\n", __func__, (*_newName).c_str());
 		}
 	}
 }
 
 bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicOptions& options)
 {
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
 
 	char overloadedName[MAX_PATH];
 
@@ -527,7 +527,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	}
 	// Same music is already playing on this channel
 	if (isMusicPlaying(channel) && currentMusicId(channel) == id) {
-		if (trace_all || trace_music) trace("NxAudioEngine::%s: %s is already playing on channel %d\n", __func__, overloadedName, channel);
+		if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s is already playing on channel %d\n", __func__, overloadedName, channel);
 
 		return false;
 	}
@@ -556,7 +556,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		music.id = id;
 
 		if (options.offsetSeconds > 0) {
-			if (trace_all || trace_music) info("%s: seek to time %fs\n", __func__, options.offsetSeconds);
+			if (trace_all || trace_music) ffnx_info("%s: seek to time %fs\n", __func__, options.offsetSeconds);
 			_engine.seek(music.handle, options.offsetSeconds);
 			resumeMusic(channel, options.fadetime == 0.0 ? 1.0 : options.fadetime); // Slight fade
 		}
@@ -575,18 +575,18 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 	const int channel = 0;
 
 	if (_musics[channel].id == id) {
-		if (trace_all || trace_music) trace("NxAudioEngine::%s: id %d is already playing\n", __func__, id);
+		if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: id %d is already playing\n", __func__, id);
 		return; // Already playing
 	}
 
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: id %d\n", __func__, id);
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: id %d\n", __func__, id);
 
 	stopMusic(musicOptions.fadetime);
 
 	SoLoud::handle groupHandle = _engine.createVoiceGroup();
 
 	if (groupHandle == 0) {
-		error("NxAudioEngine::%s: cannot allocate voice group\n", __func__);
+		ffnx_error("NxAudioEngine::%s: cannot allocate voice group\n", __func__);
 		return;
 	}
 
@@ -627,7 +627,7 @@ void NxAudioEngine::stopMusic(int channel, double time)
 {
 	NxAudioEngineMusic& music = _musics[channel];
 
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: channel %d, midi %d, time %f\n", __func__, channel, music.id, time);
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: channel %d, midi %d, time %f\n", __func__, channel, music.id, time);
 
 	if (time > 0.0)
 	{
@@ -659,7 +659,7 @@ void NxAudioEngine::pauseMusic(int channel, double time, bool backup)
 {
 	NxAudioEngineMusic& music = _musics[channel];
 
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, music.id, time);
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, music.id, time);
 
 	if (time > 0.0)
 	{
@@ -686,7 +686,7 @@ void NxAudioEngine::backupMusic(int channelSource)
 
 	NxAudioEngineMusic& music = _musics[channelSource];
 
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: backup music %d for later usage\n", __func__, music.id);
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: backup music %d for later usage\n", __func__, music.id);
 
 	NxAudioEngineMusic backup = NxAudioEngineMusic();
 	// Save for later usage
@@ -711,7 +711,7 @@ void NxAudioEngine::restoreMusic(int channelDest, double stopTime)
 
 	const NxAudioEngineMusic &backup = _musicStack.top();
 
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: restore music %d\n", __func__, backup.id);
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: restore music %d\n", __func__, backup.id);
 
 	// Restore
 	music.id = backup.id;
@@ -737,7 +737,7 @@ void NxAudioEngine::resumeMusic(int channel, double time, bool restore)
 
 	time /= gamehacks.getCurrentSpeedhack();
 
-	if (trace_all || trace_music) trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, music.id, time);
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, music.id, time);
 
 	// Play it again from where it was left off
 	if (time > 0.0) {
@@ -857,7 +857,7 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 
 	bool exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 
-	if (trace_all || trace_voice) trace("NxAudioEngine::%s: %s\n", __func__, filename);
+	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
 	// Stop any previously playing voice
 	if (_engine.isValidVoiceHandle(_currentVoice.handle))
@@ -965,7 +965,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 	else
 		exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 
-	if (trace_all || trace_ambient) trace("NxAudioEngine::%s: %s\n", __func__, filename);
+	if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
 	// Stop any previously playing ambient
 	if (_engine.isValidVoiceHandle(_currentAmbient.handle))
@@ -999,9 +999,9 @@ void NxAudioEngine::stopAmbient(double time)
 	{
 		time = _currentAmbient.fade_out;
 
-		if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
+		if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
 	}
-	else if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+	else if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: time=%f\n", __func__, time);
 
 	if (time > 0.0)
 	{
@@ -1020,9 +1020,9 @@ void NxAudioEngine::pauseAmbient(double time)
 	{
 		time = _currentAmbient.fade_out;
 
-		if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
+		if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
 	}
-	else if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+	else if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: time=%f\n", __func__, time);
 
 	if (time > 0.0)
 	{
@@ -1041,9 +1041,9 @@ void NxAudioEngine::resumeAmbient(double time)
 	{
 		time = _currentAmbient.fade_in;
 
-		if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
+		if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: time=%f ( overridden through config.toml )\n", __func__, time);
 	}
-	else if (trace_all || trace_ambient) trace("NxAudioEngine::%s: time=%f\n", __func__, time);
+	else if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: time=%f\n", __func__, time);
 
 	if (time > 0.0)
 	{

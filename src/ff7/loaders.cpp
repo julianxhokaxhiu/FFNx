@@ -42,8 +42,8 @@ struct anim_header *load_animation(struct file_context *file_context, char *file
 
 	if(trace_all || trace_loaders)
 	{
-		if(file_context->use_lgp) trace("reading animation file: %s/%s\n", lgp_names[file_context->lgp_num], filename);
-		else trace("reading animation file: %s\n", filename);
+		if(file_context->use_lgp) ffnx_trace("reading animation file: %s/%s\n", lgp_names[file_context->lgp_num], filename);
+		else ffnx_trace("reading animation file: %s\n", filename);
 	}
 
 	if(!file) goto error;
@@ -101,8 +101,8 @@ struct battle_hrc_header *read_battle_hrc(uint32_t use_file_context, struct file
 
 	if(trace_all || trace_loaders)
 	{
-		if(file_context->use_lgp) trace("reading battle hrc file: %s/%s\n", lgp_names[file_context->lgp_num], hrc_filename);
-		else trace("reading battle hrc file: %s\n", hrc_filename);
+		if(file_context->use_lgp) ffnx_trace("reading battle hrc file: %s/%s\n", lgp_names[file_context->lgp_num], hrc_filename);
+		else ffnx_trace("reading battle hrc file: %s\n", hrc_filename);
 	}
 
 	ret = (battle_hrc_header*)common_externals.alloc_get_file(file_context, &size, hrc_filename);
@@ -131,8 +131,8 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 
 	if(trace_all || trace_loaders)
 	{
-		if(file_context->use_lgp) trace("reading p file: %s/%s\n", lgp_names[file_context->lgp_num], filename);
-		else trace("reading p file: %s\n", filename);
+		if(file_context->use_lgp) ffnx_trace("reading p file: %s/%s\n", lgp_names[file_context->lgp_num], filename);
+		else ffnx_trace("reading p file: %s\n", filename);
 	}
 
 	if(!file) goto error;
@@ -156,11 +156,11 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 
 	if(ret->version != 1)
 	{
-		error("invalid version in polygon file %s\n", filename);
+		ffnx_error("invalid version in polygon file %s\n", filename);
 		goto error;
 	}
 
-	if(ret->field_2C) unexpected("oops, missed some .p data\n");
+	if(ret->field_2C) ffnx_unexpected("oops, missed some .p data\n");
 
 	ret->vertdata = (struct point3d*)common_externals.alloc_read_file(sizeof(*ret->vertdata), ret->numverts, (struct file *)file);
 	ret->normaldata = (struct point3d*)common_externals.alloc_read_file(sizeof(*ret->normaldata), ret->numnormals, (struct file *)file);

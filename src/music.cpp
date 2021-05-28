@@ -163,14 +163,14 @@ char* current_midi_name(int channel)
 
 void pause_music()
 {
-	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
+	if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
 
 	nxAudioEngine.pauseMusic();
 }
 
 void restart_music()
 {
-	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
+	if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
 
 	nxAudioEngine.resumeMusic();
 }
@@ -199,7 +199,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 		}
 		else if (fullpath != nullptr)
 		{
-			if (trace_all || trace_music) info("%s: back to wav %s\n", __func__, fullpath);
+			if (trace_all || trace_music) ffnx_info("%s: back to wav %s\n", __func__, fullpath);
 
 			options.useNameAsFullPath = true;
 			strcpy(options.format, "wav");
@@ -289,7 +289,7 @@ void ff7_play_midi(uint32_t music_id)
 
 		play_music(midi_name, music_id, channel);
 
-		if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(channel), midi_name);
+		if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(channel), midi_name);
 	}
 }
 
@@ -303,7 +303,7 @@ void stop_music_for_channel(int channel)
 		if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover) return;
 	}
 
-	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s, channel=%d\n", __func__, nxAudioEngine.currentMusicId(channel), current_midi_name(channel), channel);
+	if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, midi=%s, channel=%d\n", __func__, nxAudioEngine.currentMusicId(channel), current_midi_name(channel), channel);
 
 	nxAudioEngine.stopMusic(channel);
 
@@ -315,7 +315,7 @@ void stop_music_for_channel(int channel)
 
 void stop_music()
 {
-	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
+	if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
 
 	stop_music_for_channel(0);
 	stop_music_for_channel(1);
@@ -362,12 +362,12 @@ void ff7_cross_fade_midi(uint32_t music_id, uint32_t steps)
 		stop_music();
 	}
 
-	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s, time=%fs\n", __func__, music_id, midi_name, time);
+	if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, midi=%s, time=%fs\n", __func__, music_id, midi_name, time);
 }
 
 uint32_t music_status()
 {
-	if (trace_all || trace_music) trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
+	if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, midi=%s\n", __func__, nxAudioEngine.currentMusicId(0), current_midi_name(0));
 
 	if (ff8) {
 		// When the game asks for a music status, you know that it ends eventually
@@ -380,7 +380,7 @@ uint32_t music_status()
 
 void set_master_midi_volume(uint32_t volume)
 {
-	if (trace_all || trace_music) trace("%s: volume=%u\n", __func__, volume);
+	if (trace_all || trace_music) ffnx_trace("%s: volume=%u\n", __func__, volume);
 
 	nxAudioEngine.setMusicMasterVolume(volume / 100.0f);
 }
@@ -391,7 +391,7 @@ void set_music_volume(uint32_t volume)
 
 	if (volume > 127) volume = 127;
 
-	if (trace_all || trace_music) trace("%s: volume=%u, channel=%u\n", __func__, volume, channel);
+	if (trace_all || trace_music) ffnx_trace("%s: volume=%u, channel=%u\n", __func__, volume, channel);
 
 	nxAudioEngine.setMusicVolume(volume / 127.0f, channel);
 }
@@ -427,7 +427,7 @@ void ff7_volume_trans(uint32_t volume, uint32_t steps)
 
 	double time = (steps & 0xFF) / 64.0;
 
-	if (trace_all || trace_music) trace("%s: volume=%u, steps=%u (=> time=%fs), channel=%u\n", __func__, volume, steps, time, channel);
+	if (trace_all || trace_music) ffnx_trace("%s: volume=%u, steps=%u (=> time=%fs), channel=%u\n", __func__, volume, steps, time, channel);
 
 	set_volume_trans(channel, volume / 127.0, time);
 }
@@ -436,7 +436,7 @@ void set_midi_tempo(int8_t tempo)
 {
 	const int channel = 0;
 
-	if (trace_all || trace_music) trace("%s: tempo=%d, channel=%u\n", __func__, tempo, channel);
+	if (trace_all || trace_music) ffnx_trace("%s: tempo=%d, channel=%u\n", __func__, tempo, channel);
 
 	if (tempo == -128) {
 		tempo = -127; // Prevent speed to be 0 (can crash with SoLoud)
@@ -450,7 +450,7 @@ void set_midi_tempo(int8_t tempo)
 
 uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_music) trace("%s: AKAO call type=%X params=(%i %i %i %i)\n", __func__, type, param1, param2, param3, param4, param5);
+	if (trace_all || trace_music) ffnx_trace("%s: AKAO call type=%X params=(%i %i %i %i)\n", __func__, type, param1, param2, param3, param4, param5);
 
 	type &= 0xFF; // The game does not always set this parameter as a 32-bit integer
 
@@ -462,7 +462,7 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 	if (use_external_music && (type == 0x14 || type == 0x19)) {
 		const uint32_t music_id = param1;
 		if (music_id > 0 && music_id <= 0x62) {
-			if (trace_all || trace_music) trace("%s: set music channel to 1\n", __func__);
+			if (trace_all || trace_music) ffnx_trace("%s: set music channel to 1\n", __func__);
 			next_music_channel = 1;
 		}
 	}
@@ -474,7 +474,7 @@ uint32_t ff7_music_sound_operation_fix(uint32_t type, uint32_t param1, uint32_t 
 
 uint32_t ff7_battle_music(uint32_t type, uint32_t music_id, uint32_t fadetime, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_music) trace("%s: music_id=%d\n", __func__, music_id);
+	if (trace_all || trace_music) ffnx_trace("%s: music_id=%d\n", __func__, music_id);
 
 	next_music_is_battle = true;
 
@@ -483,7 +483,7 @@ uint32_t ff7_battle_music(uint32_t type, uint32_t music_id, uint32_t fadetime, u
 
 uint32_t ff7_battle_music_fanfare()
 {
-	if (trace_all || trace_music) trace("%s: set music channel to 1\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s: set music channel to 1\n", __func__);
 
 	next_music_channel = 1;
 
@@ -496,10 +496,10 @@ uint32_t ff7_battle_music_fanfare()
 
 uint32_t ff7_worldmap_music_change(uint32_t type, uint32_t music_id, uint32_t fadetime, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
 	if (music_id == 7) { // Battle
-		trace("%s: force music type to channel 1\n", __func__);
+		ffnx_trace("%s: force music type to channel 1\n", __func__);
 
 		next_music_is_battle = true;
 
@@ -537,7 +537,7 @@ void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* batt
 
 uint32_t ff8_remember_playing_time()
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
 	nxAudioEngine.pauseMusic(0, 0.0, true);
 	// We never remember dualmusic, but battle and cardgame do not pause or stop channel 1 before playing the next music
@@ -548,7 +548,7 @@ uint32_t ff8_remember_playing_time()
 
 uint32_t* ff8_load_music(uint32_t channel, uint32_t music_id, uint32_t data)
 {
-	if (trace_all || trace_music) trace("%s: channel=%u, music_id=%u, data=%u\n", __func__, channel, music_id, data);
+	if (trace_all || trace_music) ffnx_trace("%s: channel=%u, music_id=%u, data=%u\n", __func__, channel, music_id, data);
 
 	// Do not apply volume changes for this channel between load_music and change_music/dual_music/replay_music instructions
 	hold_volume_for_channel[channel] = true;
@@ -567,18 +567,18 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 		const char* music_name = ff8_midi_name(music_id);
 
 		if (nullptr == music_name) {
-			error("%s: Cannot get music name from music_id %d\n", __func__, music_id);
+			ffnx_error("%s: Cannot get music name from music_id %d\n", __func__, music_id);
 			return 0; // Error
 		}
 
-		if (trace_all || trace_music) trace("%s: music_id=%u, name=%s, channel=%d, volume=%d\n", __func__, music_id, music_name, channel, volume);
+		if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, name=%s, channel=%d, volume=%d\n", __func__, music_id, music_name, channel, volume);
 
 		SoLoud::time offset = 0;
 		bool noIntro = false, backup_channel_1_after = false;
 
 		if (next_music_is_skipped_with_saved_offset && remember_musics[music_id]) {
 			remember_musics[music_id] = false;
-			if (trace_all || trace_music) trace("%s: use remembered music time\n", __func__);
+			if (trace_all || trace_music) ffnx_trace("%s: use remembered music time\n", __func__);
 			// Move music to channel 1
 			nxAudioEngine.swapChannels();
 			nxAudioEngine.pauseMusic(1, 1.0);
@@ -588,7 +588,7 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 			noIntro = true;
 		}
 		else if (remember_musics[music_id]) {
-			if (trace_all || trace_music) trace("%s: discard remembered music\n", __func__);
+			if (trace_all || trace_music) ffnx_trace("%s: discard remembered music\n", __func__);
 			remember_musics[music_id] = false;
 		}
 
@@ -610,7 +610,7 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 		}
 	}
 	else if (trace_all || trace_music) {
-		trace("%s: is already playing music_id=%u, channel=%d, volume=%d\n", __func__, music_id, channel, volume);
+		ffnx_trace("%s: is already playing music_id=%u, channel=%d, volume=%d\n", __func__, music_id, channel, volume);
 	}
 
 	return 1; // Success
@@ -642,11 +642,11 @@ uint32_t ff8_play_wav(uint32_t zero, char* filename, uint32_t volume)
 		}
 
 		if (nullptr == music_name) {
-			error("%s: Cannot get music name from filename %s\n", __func__, filename);
+			ffnx_error("%s: Cannot get music name from filename %s\n", __func__, filename);
 			return 0; // Error
 		}
 
-		if (trace_all || trace_music) trace("%s: music_id=%u, name=%s, channel=%d, volume=%u\n", __func__, music_id, music_name, channel, volume);
+		if (trace_all || trace_music) ffnx_trace("%s: music_id=%u, name=%s, channel=%d, volume=%u\n", __func__, music_id, music_name, channel, volume);
 
 		NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 		options.fadetime = next_music_fade_time;
@@ -656,7 +656,7 @@ uint32_t ff8_play_wav(uint32_t zero, char* filename, uint32_t volume)
 		play_music(music_name, music_id, channel, options, filename);
 	}
 	else if (trace_all || trace_music) {
-		trace("%s: is already playing music_id=%u, filename=%s, channel=%d, volume=%d\n", __func__, music_id, filename, channel, volume);
+		ffnx_trace("%s: is already playing music_id=%u, filename=%s, channel=%d, volume=%d\n", __func__, music_id, filename, channel, volume);
 	}
 
 	return 1; // Success
@@ -666,7 +666,7 @@ uint32_t ff8_opcode_dualmusic_play_music(char* midi_data, uint32_t volume)
 {
 	uint32_t channel = 1;
 
-	if (trace_all || trace_music) trace("%s: channel=%u, volume=%u\n", __func__, channel, volume);
+	if (trace_all || trace_music) ffnx_trace("%s: channel=%u, volume=%u\n", __func__, channel, volume);
 
 	next_music_channel = channel;
 	channel = ff8_externals.sd_music_play(channel, midi_data, volume);
@@ -679,7 +679,7 @@ uint32_t ff8_cross_fade_midi(char* midi_data, uint32_t steps, uint32_t volume)
 	uint32_t channel = 0;
 	double time = steps / 50.0;
 
-	if (trace_all || trace_music) trace("%s: steps=%u (time=%fs), volume=%u\n", __func__, steps, time, volume);
+	if (trace_all || trace_music) ffnx_trace("%s: steps=%u (time=%fs), volume=%u\n", __func__, steps, time, volume);
 
 	next_music_fade_time = time;
 	channel = ff8_externals.sd_music_play(channel, midi_data, volume);
@@ -693,7 +693,7 @@ uint32_t ff8_play_music_to_channel_0(char* midi_data)
 
 	hold_volume_for_channel[channel] = false;
 
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 	// Force known volume value
 	return ff8_externals.sd_music_play(channel, midi_data, uint32_t(nxAudioEngine.getMusicVolume(channel) * 127));
 }
@@ -701,7 +701,7 @@ uint32_t ff8_play_music_to_channel_0(char* midi_data)
 uint32_t ff8_play_midi_at(char* midi_data, uint32_t offset)
 {
 	// We don't know what offset means in seconds
-	if (trace_all || trace_music) trace("%s: play midi at %d\n", __func__, offset);
+	if (trace_all || trace_music) ffnx_trace("%s: play midi at %d\n", __func__, offset);
 	next_music_is_skipped = true;
 	uint32_t channel = ff8_play_music_to_channel_0(midi_data);
 	next_music_is_skipped = false;
@@ -714,7 +714,7 @@ uint32_t ff8_opcode_musicskip_play_midi_at(char* midi_data, uint32_t offset)
 
 	hold_volume_for_channel[channel] = false;
 
-	if (trace_all || trace_music) trace("%s: music skip, play midi at %d\n", __func__, offset);
+	if (trace_all || trace_music) ffnx_trace("%s: music skip, play midi at %d\n", __func__, offset);
 	next_music_is_skipped_with_saved_offset = offset & 0xFF == 0xFF; // Special offset returned by ff8_opcode_getmusicoffset()
 	channel = ff8_play_midi_at(midi_data, offset);
 	next_music_is_skipped_with_saved_offset = false;
@@ -726,7 +726,7 @@ uint32_t ff8_opcode_getmusicoffset()
 	const uint32_t channel = 0;
 	const uint32_t musicId = nxAudioEngine.currentMusicId(channel);
 
-	if (trace_all || trace_music) trace("%s: save music %d\n", __func__, musicId);
+	if (trace_all || trace_music) ffnx_trace("%s: save music %d\n", __func__, musicId);
 
 	remember_musics[musicId] = true;
 
@@ -735,7 +735,7 @@ uint32_t ff8_opcode_getmusicoffset()
 
 uint32_t ff8_field_pause_music(uint32_t a1)
 {
-	if (trace_all || trace_music) trace("%s: a1=%d\n", __func__, a1);
+	if (trace_all || trace_music) ffnx_trace("%s: a1=%d\n", __func__, a1);
 
 	((uint32_t(*)(uint32_t))ff8_externals.pause_music_and_sfx)(0);
 
@@ -747,7 +747,7 @@ uint32_t ff8_field_restart_music(uint32_t a1)
 	uint32_t ret = ff8_externals.check_game_is_paused(a1);
 
 	if (ret == 0) { // Unpause
-		if (trace_all || trace_music) trace("%s: a1=%d\n", __func__, a1);
+		if (trace_all || trace_music) ffnx_trace("%s: a1=%d\n", __func__, a1);
 
 		((uint32_t(*)(uint32_t))ff8_externals.restart_music_and_sfx)(0);
 	}
@@ -757,7 +757,7 @@ uint32_t ff8_field_restart_music(uint32_t a1)
 
 uint32_t set_music_volume_for_channel(int32_t channel, uint32_t volume)
 {
-	if (trace_all || trace_music) trace("%s: channel=%d, volume=%d, hold=%d\n", __func__, channel, volume, hold_volume_for_channel[channel]);
+	if (trace_all || trace_music) ffnx_trace("%s: channel=%d, volume=%d, hold=%d\n", __func__, channel, volume, hold_volume_for_channel[channel]);
 
 	if (hold_volume_for_channel[channel] || channel < 0 || channel > 1) {
 		return 1;
@@ -774,7 +774,7 @@ uint32_t ff8_volume_trans(int32_t channel, uint32_t steps, uint32_t volume)
 {
 	double time = steps / 50.0;
 
-	if (trace_all || trace_music) trace("%s: channel=%d, volume=%u, steps=%u (=> time=%fs), hold=%d\n", __func__, channel, volume, steps, time, hold_volume_for_channel[channel]);
+	if (trace_all || trace_music) ffnx_trace("%s: channel=%d, volume=%u, steps=%u (=> time=%fs), hold=%d\n", __func__, channel, volume, steps, time, hold_volume_for_channel[channel]);
 
 	if (hold_volume_for_channel[channel] || channel < 0 || channel > 1) {
 		return 1;
@@ -789,7 +789,7 @@ uint32_t ff8_volume_trans(int32_t channel, uint32_t steps, uint32_t volume)
 
 uint32_t ff8_volume_fade(uint32_t channel, uint32_t steps, uint32_t volume1, uint32_t volume2)
 {
-	if (trace_all || trace_music) trace("%s: channel=%d, volume1=%u, volume2=%u, steps=%u\n", __func__, channel, volume1, volume2, steps);
+	if (trace_all || trace_music) ffnx_trace("%s: channel=%d, volume1=%u, volume2=%u, steps=%u\n", __func__, channel, volume1, volume2, steps);
 
 	set_music_volume_for_channel(channel, volume1);
 	ff8_volume_trans(channel, steps, volume2);
@@ -799,7 +799,7 @@ uint32_t ff8_volume_fade(uint32_t channel, uint32_t steps, uint32_t volume1, uin
 
 uint32_t ff8_volume_sync()
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
 	if (nxAudioEngine.isMusicVolumeFadeFinished()) {
 		return 2; // Continue
@@ -810,7 +810,7 @@ uint32_t ff8_volume_sync()
 
 uint32_t ff8_play_music_worldmap(char* midi_data)
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
 	nxAudioEngine.setMusicVolume(0.0f, 0, 0.5); // Fadeout: 500ms
 	return ff8_cross_fade_midi(midi_data, 60, 127); // Fadein: ~1s
@@ -818,7 +818,7 @@ uint32_t ff8_play_music_worldmap(char* midi_data)
 
 uint32_t ff8_load_cdrom()
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
 	if (eyes_on_me_is_playing) {
 		return 1;
@@ -842,7 +842,7 @@ uint32_t ff8_load_cdrom()
 
 uint32_t ff8_play_cdrom(uint32_t trackStart, uint32_t trackEnd, uint32_t unknown)
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
 	if (eyes_on_me_is_playing) {
 		return 1;
@@ -853,7 +853,7 @@ uint32_t ff8_play_cdrom(uint32_t trackStart, uint32_t trackEnd, uint32_t unknown
 
 uint32_t ff8_stop_cdrom()
 {
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
 	if (eyes_on_me_is_playing) {
 		nxAudioEngine.stopMusic(0);
@@ -868,7 +868,7 @@ std::vector<std::string> musics;
 
 uint32_t ff8_opcode_choicemusic(uint32_t unused, uint32_t instruments)
 {
-	if (trace_all || trace_music) trace("%s: Clear musics\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s: Clear musics\n", __func__);
 
 	musics.clear();
 
@@ -885,7 +885,7 @@ uint32_t ff8_load_midi_segment(void* directsound, const char* filename)
 		return 1; // Success
 	}
 
-	if (trace_all || trace_music) trace("%s: load music %s (%s)\n", __func__, midi_name, filename);
+	if (trace_all || trace_music) ffnx_trace("%s: load music %s (%s)\n", __func__, midi_name, filename);
 
 	musics.push_back(midi_name);
 
@@ -896,7 +896,7 @@ uint32_t ff8_play_midi_segments()
 {
 	const int channel = 0;
 
-	if (trace_all || trace_music) trace("%s\n", __func__);
+	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
 	nxAudioEngine.playSynchronizedMusics(musics, 43);
 	nxAudioEngine.setMusicLooping(true, channel);
@@ -925,7 +925,7 @@ uint32_t ff8_set_music_volume_intro_credits(uint32_t channel, uint32_t volume)
 		return 1;
 	}
 
-	if (trace_all || trace_music) trace("%s %d %d\n", __func__, channel, volume);
+	if (trace_all || trace_music) ffnx_trace("%s %d %d\n", __func__, channel, volume);
 
 	if (nxAudioEngine.isMusicPlaying(channel)) {
 		nxAudioEngine.stopMusic(channel, 2.0);

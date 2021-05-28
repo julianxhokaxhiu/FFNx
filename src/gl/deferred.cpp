@@ -39,7 +39,7 @@ uint32_t num_sorted_deferred;
 // save a draw call for later processing
 uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct point3d* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
 {
-	if (trace_all) trace("gl_defer_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
+	if (trace_all) ffnx_trace("gl_defer_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
 
 	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
@@ -50,13 +50,13 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 
 	// global disable
 	if (nodefer) {
-		if (trace_all) trace("gl_defer_draw: nodefer true\n");
+		if (trace_all) ffnx_trace("gl_defer_draw: nodefer true\n");
 		return false;
 	}
 
 	if (num_deferred + 1 > DEFERRED_MAX)
 	{
-		if (trace_all) trace("gl_defer_draw: deferred draw queue overflow - num_deferred: %u - count: %u - DEFERRED_MAX: %u\n", num_deferred, count, DEFERRED_MAX);
+		if (trace_all) ffnx_trace("gl_defer_draw: deferred draw queue overflow - num_deferred: %u - count: %u - DEFERRED_MAX: %u\n", num_deferred, count, DEFERRED_MAX);
 		return false;
 	}
 
@@ -123,7 +123,7 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 
 	num_deferred++;
 
-	if (trace_all) trace("gl_defer_draw: return true\n");
+	if (trace_all) ffnx_trace("gl_defer_draw: return true\n");
 
 	return true;
 }
@@ -137,13 +137,13 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 	float *tri_z;
 	uint32_t defer_index = 0;
 
-	if (trace_all) trace("gl_defer_sorted_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
+	if (trace_all) ffnx_trace("gl_defer_sorted_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
 
 	if(!deferred_sorted_draws) deferred_sorted_draws = (deferred_sorted_draw*)driver_calloc(sizeof(*deferred_sorted_draws), DEFERRED_MAX);
 
 	// global disable
 	if (nodefer) {
-		if (trace_all) trace("gl_defer_sorted_draw: nodefer true\n");
+		if (trace_all) ffnx_trace("gl_defer_sorted_draw: nodefer true\n");
 		return false;
 	}
 
@@ -151,26 +151,26 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 	// cannot be re-ordered
 	if(!current_state.depthtest)
 	{
-		if (trace_all) trace("gl_defer_sorted_draw: depthtest false\n");
+		if (trace_all) ffnx_trace("gl_defer_sorted_draw: depthtest false\n");
 		return false;
 	}
 
 	// framebuffer textures should not be re-ordered
 	if(current_state.fb_texture)
 	{
-		if (trace_all) trace("gl_defer_sorted_draw: fb_texture true\n");
+		if (trace_all) ffnx_trace("gl_defer_sorted_draw: fb_texture true\n");
 		return false;
 	}
 
 	if(current_state.blend_mode != BLEND_NONE)
 	{
-		if (trace_all) trace("gl_defer_sorted_draw: blend_mode != BLEND_NONE - blend_mode: %u\n", current_state.blend_mode);
+		if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_NONE - blend_mode: %u\n", current_state.blend_mode);
 		if(current_state.blend_mode != BLEND_AVG)
 		{
-			if (trace_all) trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
 			// be conservative with non-standard blending modes
 			if (mode != MODE_MENU && mode != MODE_BATTLE) {
-				if (trace_all) trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
+				if (trace_all) ffnx_trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
 				return false;
 			}
 		}
@@ -179,7 +179,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 	{
 		if (!current_state.texture_set)
 		{
-			if (trace_all) trace("gl_defer_sorted_draw: texture_set false\n");
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set false\n");
 			return false;
 		}
 		else
@@ -187,11 +187,11 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 			VOBJ(texture_set, texture_set, current_state.texture_set);
 			VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-			if (trace_all) trace("gl_defer_sorted_draw: texture_set true for texture %s%d\n", VREF(tex_header, file.pc_name), VREF(tex_header, palette_index));
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set true for texture %s%d\n", VREF(tex_header, file.pc_name), VREF(tex_header, palette_index));
 
 			// texture format does not support alpha, re-order is not necessary
 			if (!VREF(texture_set, ogl.external) && VREF(tex_header, tex_format.alpha_bits) < 2) {
-				if (trace_all) trace("gl_defer_sorted_draw: texture format does not support alpha, re-order is not necessary\n");
+				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture format does not support alpha, re-order is not necessary\n");
 				return false;
 			}
 		}
@@ -199,13 +199,13 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 
 	// quads are used for some GUI elements, we do not need to re-order these
 	if (primitivetype != RendererPrimitiveType::PT_TRIANGLES) {
-		if (trace_all) trace("gl_defer_sorted_draw: primitivetype != TRIANGLES\n");
+		if (trace_all) ffnx_trace("gl_defer_sorted_draw: primitivetype != TRIANGLES\n");
 		return false;
 	}
 
 	if(num_sorted_deferred + count / 3 > DEFERRED_MAX)
 	{
-		if (trace_all) trace("gl_defer_sorted_draw: deferred draw queue overflow - num_sorted_deferred: %u - count: %u - DEFERRED_MAX: %u\n", num_sorted_deferred, count, DEFERRED_MAX);
+		if (trace_all) ffnx_trace("gl_defer_sorted_draw: deferred draw queue overflow - num_sorted_deferred: %u - count: %u - DEFERRED_MAX: %u\n", num_sorted_deferred, count, DEFERRED_MAX);
 		return false;
 	}
 
@@ -275,7 +275,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 			}
 		}
 
-		if(vert_index < tri_num * 3) error("deferred draw z mismatch\n");
+		if(vert_index < tri_num * 3) ffnx_error("deferred draw z mismatch\n");
 
 		num_sorted_deferred++;
 
@@ -285,7 +285,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 	driver_free(tri_deferred);
 	driver_free(tri_z);
 
-	if (trace_all) trace("gl_defer_sorted_draw: return true\n");
+	if (trace_all) ffnx_trace("gl_defer_sorted_draw: return true\n");
 
 	return true;
 }
@@ -296,7 +296,7 @@ void gl_draw_deferred(bool isDrawOpaqueOnly)
 	struct driver_state saved_state;
 
 	if (num_deferred == 0) {
-		if (trace_all) trace("gl_draw_deferred: num_deferred == 0\n");
+		if (trace_all) ffnx_trace("gl_draw_deferred: num_deferred == 0\n");
 		return;
 	}
 
@@ -408,7 +408,7 @@ void gl_draw_sorted_deferred()
 	struct driver_state saved_state;
 
 	if (num_sorted_deferred == 0) {
-		if (trace_all) trace("gl_draw_sorted_deferred: num_sorted_deferred == 0\n");
+		if (trace_all) ffnx_trace("gl_draw_sorted_deferred: num_sorted_deferred == 0\n");
 		return;
 	}
 

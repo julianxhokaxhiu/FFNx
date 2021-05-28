@@ -171,7 +171,7 @@ void Metadata::updateFF8()
 // PUBLIC
 void Metadata::apply()
 {
-    trace("Applying required metadata.xml patch to preserve save files.\n");
+    ffnx_trace("Applying required metadata.xml patch to preserve save files.\n");
 
     char metadataPath[260]{ 0 };
     std::chrono::milliseconds nowMS = std::chrono::duration_cast<std::chrono::milliseconds>(

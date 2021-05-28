@@ -102,7 +102,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 			}
 		}
 
-		if (trace_all || trace_files) trace("Redirected: %s -> %s\n", newIn.data(), out);
+		if (trace_all || trace_files) ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
 
 		return 0;
 	}
@@ -125,7 +125,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 				PathAppendA(out, save_path.c_str());
 				PathAppendA(out, ++pos);
 
-				if (trace_all || trace_files) trace("Redirected: %s -> %s\n", newIn.data(), out);
+				if (trace_all || trace_files) ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
 			}
 
 			// Always return as found in order to allow non existing save files to be saved under the new redirected path
@@ -160,7 +160,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 			if (_access(out, 0) == -1)
 				return -1;
 
-			if (trace_all || trace_files) trace("Redirected: %s -> %s\n", newIn.data(), out);
+			if (trace_all || trace_files) ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);
 
 			return 0;
 		}

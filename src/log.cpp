@@ -48,7 +48,7 @@ void plugin_trace(const char *fmt, ...)
 
 	va_end(args);
 
-	trace("%s", tmp_str);
+	ffnx_trace("%s", tmp_str);
 }
 
 void plugin_info(const char *fmt, ...)
@@ -62,7 +62,7 @@ void plugin_info(const char *fmt, ...)
 
 	va_end(args);
 
-	info("%s", tmp_str);
+	ffnx_info("%s", tmp_str);
 }
 
 void plugin_glitch(const char *fmt, ...)
@@ -76,7 +76,7 @@ void plugin_glitch(const char *fmt, ...)
 
 	va_end(args);
 
-	glitch("%s", tmp_str);
+	ffnx_glitch("%s", tmp_str);
 }
 
 void plugin_error(const char *fmt, ...)
@@ -90,7 +90,7 @@ void plugin_error(const char *fmt, ...)
 
 	va_end(args);
 
-	error("%s", tmp_str);
+	ffnx_error("%s", tmp_str);
 }
 
 void debug_print(const char *str)

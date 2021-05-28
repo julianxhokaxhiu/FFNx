@@ -81,10 +81,10 @@ void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height
 
 	if (stat(filename, &dummy) != 0)
 	{
-		if (!newRenderer.saveTexture(filename, width, height, data)) error("Save texture failed for the file [ %s ].\n", filename);
+		if (!newRenderer.saveTexture(filename, width, height, data)) ffnx_error("Save texture failed for the file [ %s ].\n", filename);
 	}
 	else
-		warning("Save texture skipped because the file [ %s ] already exists.\n", filename);
+		ffnx_warning("Save texture skipped because the file [ %s ] already exists.\n", filename);
 }
 
 uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool useLibPng)
@@ -100,7 +100,7 @@ uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool
 
 	if (ret)
 	{
-		if (trace_all || trace_loaders) trace("Using texture: %s\n", name);
+		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", name);
 	}
 
 	return ret;
@@ -124,7 +124,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 
 			if (stat(filename, &dummy) != 0)
 			{
-				if (trace_all || show_missing_textures) trace("Could not find animated texture [ %s ].\n", filename);
+				if (trace_all || show_missing_textures) ffnx_trace("Could not find animated texture [ %s ].\n", filename);
 
 				_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), name, palette_index, mod_ext[idx].c_str());
 			}
@@ -136,13 +136,13 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 		{
 			ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png");
 
-			if (!ret && trace_all) warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
+			if (!ret && trace_all) ffnx_warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
 
 			break;
 		}
 		else if (trace_all || show_missing_textures)
 		{
-			trace("Could not find [ %s ].\n", filename);
+			ffnx_trace("Could not find [ %s ].\n", filename);
 		}
 	}
 
@@ -150,18 +150,18 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	{
 		if(palette_index != 0)
 		{
-			if(trace_all || show_missing_textures) info("No external texture found, falling back to palette 0\n", basedir, mod_path.c_str(), name, palette_index);
+			if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n", basedir, mod_path.c_str(), name, palette_index);
 			return load_texture(data, dataSize, name, 0, width, height, false);
 		}
 		else
 		{
-			if(trace_all || show_missing_textures) info("No external texture found, switching back to the internal one.\n", basedir, mod_path.c_str(), name, palette_index);
+			if(trace_all || show_missing_textures) ffnx_info("No external texture found, switching back to the internal one.\n", basedir, mod_path.c_str(), name, palette_index);
 			return 0;
 		}
 	}
 	else
 	{
-		if (trace_all) trace("Created external texture: %u from %s\n", ret, filename);
+		if (trace_all) ffnx_trace("Created external texture: %u from %s\n", ret, filename);
 	}
 
 	return ret;

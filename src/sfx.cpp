@@ -40,21 +40,21 @@ bool ff7_should_sfx_loop(int id)
 
 int ff7_sfx_load(int id, DWORD dsound_flag)
 {
-	//if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
+	//if (trace_all || trace_sfx) ffnx_trace("%s: id=%d\n", __func__, id);
 
 	return true;
 }
 
 void ff7_sfx_unload(int id, void* unk)
 {
-	if (trace_all || trace_sfx) trace("%s: id=%d\n", __func__, id);
+	if (trace_all || trace_sfx) ffnx_trace("%s: id=%d\n", __func__, id);
 
 	nxAudioEngine.unloadSFX(id);
 }
 
 void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 {
-	if (trace_all || trace_sfx) trace("%s: volume=%d,channel=%d\n", __func__, volume, channel);
+	if (trace_all || trace_sfx) ffnx_trace("%s: volume=%d,channel=%d\n", __func__, volume, channel);
 
 	sfx_state[channel].volume1 = volume;
 
@@ -63,14 +63,14 @@ void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 
 void ff7_sfx_set_volume_trans_on_channel(byte volume, int channel, int time)
 {
-	if (trace_all || trace_sfx) trace("%s: volume=%d,channel=%d,time=%d\n", __func__, volume, channel, time);
+	if (trace_all || trace_sfx) ffnx_trace("%s: volume=%d,channel=%d,time=%d\n", __func__, volume, channel, time);
 
 	nxAudioEngine.setSFXVolume(channel, volume / 127.0f, time / 60.0f);
 }
 
 void ff7_sfx_set_panning_on_channel(byte panning, int channel)
 {
-	if (trace_all || trace_sfx) trace("%s: panning=%d,channel=%d\n", __func__, panning, channel);
+	if (trace_all || trace_sfx) ffnx_trace("%s: panning=%d,channel=%d\n", __func__, panning, channel);
 
 	sfx_state[channel].pan1 = panning;
 
@@ -80,7 +80,7 @@ void ff7_sfx_set_panning_on_channel(byte panning, int channel)
 
 void ff7_sfx_set_panning_trans_on_channel(byte panning, int channel, int time)
 {
-	if (trace_all || trace_sfx) trace("%s: panning=%d,channel=%d,time=%d\n", __func__, panning, channel, time);
+	if (trace_all || trace_sfx) ffnx_trace("%s: panning=%d,channel=%d,time=%d\n", __func__, panning, channel, time);
 
 	if (panning <= 127)
 		nxAudioEngine.setSFXPanning(channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f, time / 60.0f);
@@ -88,7 +88,7 @@ void ff7_sfx_set_panning_trans_on_channel(byte panning, int channel, int time)
 
 void ff7_sfx_set_frequency_on_channel(byte speed, int channel)
 {
-	if (trace_all || trace_sfx) trace("%s: speed=%d,channel=%d\n", __func__, speed, channel);
+	if (trace_all || trace_sfx) ffnx_trace("%s: speed=%d,channel=%d\n", __func__, speed, channel);
 
 	sfx_state[channel].frequency = speed;
 
@@ -101,7 +101,7 @@ void ff7_sfx_set_frequency_on_channel(byte speed, int channel)
 
 void ff7_sfx_set_frequency_trans_on_channel(byte speed, int channel, int time)
 {
-	if (trace_all || trace_sfx) trace("%s: speed=%d,channel=%d,time=%d\n", __func__, speed, channel, time);
+	if (trace_all || trace_sfx) ffnx_trace("%s: speed=%d,channel=%d,time=%d\n", __func__, speed, channel, time);
 
 	if (speed == -128) {
 		speed = -127; // Prevent speed to be 0 (can crash with SoLoud)
@@ -112,7 +112,7 @@ void ff7_sfx_set_frequency_trans_on_channel(byte speed, int channel, int time)
 
 void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 {
-	if (trace_all || trace_sfx) trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
+	if (trace_all || trace_sfx) ffnx_trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
 
 	ff7_field_sfx_state *currentState = &sfx_state[channel-1];
 
@@ -146,7 +146,7 @@ void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte sp
 {
 	const int _channel = 6;
 
-	if (trace_all || trace_sfx) trace("%s: id=%d,volume=%d,panning=%d,speed=%d\n", __func__, id, volume, panning, speed);
+	if (trace_all || trace_sfx) ffnx_trace("%s: id=%d,volume=%d,panning=%d,speed=%d\n", __func__, id, volume, panning, speed);
 
 	if (id)
 	{
@@ -158,21 +158,21 @@ void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte sp
 
 void ff7_sfx_pause()
 {
-	if (trace_all || trace_sfx) trace("%s\n", __func__);
+	if (trace_all || trace_sfx) ffnx_trace("%s\n", __func__);
 
 	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.pauseSFX(channel);
 }
 
 void ff7_sfx_resume()
 {
-	if (trace_all || trace_sfx) trace("%s\n", __func__);
+	if (trace_all || trace_sfx) ffnx_trace("%s\n", __func__);
 
 	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.resumeSFX(channel);
 }
 
 void ff7_sfx_stop()
 {
-	if (trace_all || trace_sfx) trace("%s\n", __func__);
+	if (trace_all || trace_sfx) ffnx_trace("%s\n", __func__);
 
 	for (short channel = 1; channel <= 6; channel++)
 	{
@@ -189,7 +189,7 @@ void ff7_sfx_stop()
 
 void ff7_sfx_set_frequency_on_channel_6(void* dsoundptr, DWORD frequency)
 {
-	if (trace_all || trace_sfx) trace("%s: frequency=%lu\n", __func__, frequency);
+	if (trace_all || trace_sfx) ffnx_trace("%s: frequency=%lu\n", __func__, frequency);
 
 	// TODO: IMPLEMENT PITCH?
 }
@@ -198,19 +198,19 @@ void ff7_sfx_set_panning_on_channel_6(void* dsoundptr, LONG panning)
 {
 	sfx_channel_6_state.panning = (panning / 10000.0f);
 
-	if (trace_all || trace_sfx) trace("%s: panning=%ld,calculated=%f\n", __func__, panning, sfx_channel_6_state.panning);
+	if (trace_all || trace_sfx) ffnx_trace("%s: panning=%ld,calculated=%f\n", __func__, panning, sfx_channel_6_state.panning);
 }
 
 void ff7_sfx_set_volume_on_channel_6(void* dsoundptr, LONG volume)
 {
 	sfx_channel_6_state.volume = (volume / 10000.0f) + 1.0f;
 
-	if (trace_all || trace_sfx) trace("%s: volume=%ld,calculated=%f\n", __func__, volume, sfx_channel_6_state.volume);
+	if (trace_all || trace_sfx) ffnx_trace("%s: volume=%ld,calculated=%f\n", __func__, volume, sfx_channel_6_state.volume);
 }
 
 void ff7_sfx_play_on_channel_6(void* dsoundptr, int unk)
 {
-	if (trace_all || trace_sfx) trace("%s: id=%lu,panning=%f\n", __func__, *ff7_externals.sfx_play_effects_id_channel_6, sfx_channel_6_state.panning);
+	if (trace_all || trace_sfx) ffnx_trace("%s: id=%lu,panning=%f\n", __func__, *ff7_externals.sfx_play_effects_id_channel_6, sfx_channel_6_state.panning);
 
 	nxAudioEngine.setSFXVolume(6, sfx_channel_6_state.volume);
 	nxAudioEngine.playSFX(*ff7_externals.sfx_play_effects_id_channel_6, 6, sfx_channel_6_state.panning);
@@ -218,7 +218,7 @@ void ff7_sfx_play_on_channel_6(void* dsoundptr, int unk)
 
 void ff7_sfx_stop_channel_6()
 {
-	if (trace_all || trace_sfx) trace("%s\n", __func__);
+	if (trace_all || trace_sfx) ffnx_trace("%s\n", __func__);
 
 	nxAudioEngine.stopSFX(6);
 
@@ -247,7 +247,7 @@ bool sfx_buffer_is_looped(IDirectSoundBuffer* buffer)
 
 uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_sfx) info("%s: Battle swirl stop sound\n", __func__);
+	if (trace_all || trace_sfx) ffnx_info("%s: Battle swirl stop sound\n", __func__);
 
 	for (int i = 0; i < 4; ++i) {
 		sfx_buffers[i] = ff7_field_sfx_state();
@@ -271,7 +271,7 @@ uint32_t sfx_operation_battle_swirl_stop_sound(uint32_t type, uint32_t param1, u
 
 uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4, uint32_t param5)
 {
-	if (trace_all || trace_sfx) info("%s: Field resume music after battle\n", __func__);
+	if (trace_all || trace_sfx) ffnx_info("%s: Field resume music after battle\n", __func__);
 
 	for (int i = 0; i < 4; ++i) {
 		if (use_external_sfx)
@@ -303,7 +303,7 @@ uint32_t sfx_operation_resume_music(uint32_t type, uint32_t param1, uint32_t par
 
 void sfx_remember_volumes()
 {
-	if (trace_all || trace_sfx) info("%s: Remember SFX volumes (master: %i)\n", __func__, *common_externals.master_sfx_volume);
+	if (trace_all || trace_sfx) ffnx_info("%s: Remember SFX volumes (master: %i)\n", __func__, *common_externals.master_sfx_volume);
 
 	for (int i = 0; i < 5; ++i) {
 
@@ -313,13 +313,13 @@ void sfx_remember_volumes()
 			sfx_volumes[i] = 127;
 		}
 
-		if (trace_all || trace_sfx) info("%s: SFX volume channel #%i: %i\n", __func__, i, sfx_volumes[i]);
+		if (trace_all || trace_sfx) ffnx_info("%s: SFX volume channel #%i: %i\n", __func__, i, sfx_volumes[i]);
 	}
 }
 
 void sfx_menu_force_channel_5_volume(uint32_t volume, uint32_t channel)
 {
-	if (trace_all || trace_sfx) info("%s: %d\n", __func__, volume);
+	if (trace_all || trace_sfx) ffnx_info("%s: %d\n", __func__, volume);
 	// Original call (set channel 5 volume to maximum)
 	if (use_external_sfx)
 		ff7_sfx_set_volume_on_channel(volume, channel);
@@ -331,7 +331,7 @@ void sfx_menu_force_channel_5_volume(uint32_t volume, uint32_t channel)
 
 void sfx_update_volume(int modifier)
 {
-	if (trace_all || trace_sfx) info("%s: Update SFX volumes %d\n", __func__, modifier);
+	if (trace_all || trace_sfx) ffnx_info("%s: Update SFX volumes %d\n", __func__, modifier);
 
 	// Set master sfx volume
 	BYTE** sfx_tmp_volume = (BYTE**)(ff7_externals.menu_sound_slider_loop + ff7_externals.call_menu_sound_slider_loop_sfx_down + 0xA);
@@ -347,7 +347,7 @@ void sfx_update_volume(int modifier)
 		else
 			common_externals.set_sfx_volume_on_channel(sfx_volumes[channel - 1], channel);
 
-		if (trace_all || trace_sfx) info("%s: Set SFX volume for channel #%i: %i\n", __func__, channel, sfx_volumes[channel - 1]);
+		if (trace_all || trace_sfx) ffnx_info("%s: Set SFX volume for channel #%i: %i\n", __func__, channel, sfx_volumes[channel - 1]);
 	}
 }
 
@@ -384,11 +384,11 @@ void sfx_clear_sound_locks()
 
 void sfx_fix_volume_values(char* log)
 {
-	if (trace_all || trace_sfx) info("%s", log); // FF7 default log
+	if (trace_all || trace_sfx) ffnx_info("%s", log); // FF7 default log
 
 	for (int i = 0; i < 5; ++i) {
 		if (sfx_state[i].u1 == 0xFFFFFFFF) {
-			if (trace_all || trace_sfx) info("%s: SFX fix volume channel #%i: %i\n", __func__, i + 1, real_volume);
+			if (trace_all || trace_sfx) ffnx_info("%s: SFX fix volume channel #%i: %i\n", __func__, i + 1, real_volume);
 
 			sfx_state[i].volume1 = real_volume;
 			sfx_state[i].volume2 = real_volume;

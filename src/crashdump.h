@@ -42,7 +42,7 @@ protected:
 
     virtual void OnOutput(LPCSTR szText)
     {
-        trace(szText);
+        ffnx_trace(szText);
     }
 };
 
