@@ -126,6 +126,15 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 
 	if (id)
 	{
+		for (int chdx = 1; chdx <= 5; chdx++)
+		{
+			if(sfx_state[chdx-1].sound_id == id && sfx_state[chdx-1].is_looped)
+			{
+				ff7_sfx_stop_channel(chdx);
+				return;
+			}
+		}
+
 		if (channel <= 5 && ((currentState->sound_id == id && !currentState->is_looped) || (currentState->sound_id != id))) ff7_sfx_stop_channel(channel);
 
 		if (currentState->sound_id != id) currentState->is_looped = false;
