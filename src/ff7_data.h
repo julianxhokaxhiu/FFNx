@@ -437,8 +437,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sub_630D50 = get_relative_call(ff7_externals.opcode_message, 0x3B);
 	ff7_externals.opcode_message_loop_code = (WORD*)get_absolute_value(ff7_externals.sub_630D50, 0x12);
 
-	ff7_externals.sub_6310A1 = get_relative_call(ff7_externals.opcode_ask, 0x8E);
-	ff7_externals.opcode_ask_question_code = (WORD*)get_absolute_value(ff7_externals.sub_6310A1, 0x2FE);
+	ff7_externals.sub_6310A1 = (int (*)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*))get_relative_call(ff7_externals.opcode_ask, 0x8E);
+	ff7_externals.opcode_ask_question_code = (WORD*)get_absolute_value((uint32_t)ff7_externals.sub_6310A1, 0x2FE);
 
 	ff7_externals.field_music_helper = get_relative_call(ff7_externals.opcode_cmusc, 0x5E);
 

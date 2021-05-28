@@ -1837,7 +1837,7 @@ struct ff7_externals
 	WORD* word_CC1638;
 	uint32_t sub_630D50;
 	WORD* opcode_message_loop_code;
-	uint32_t sub_6310A1;
+	int (*sub_6310A1)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*);
 	WORD* opcode_ask_question_code;
 	void (*play_midi)(uint32_t);
 	WORD *current_movie_frame;
