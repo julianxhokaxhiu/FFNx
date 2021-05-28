@@ -110,6 +110,14 @@ void ff7_sfx_set_frequency_trans_on_channel(byte speed, int channel, int time)
 	nxAudioEngine.setSFXSpeed(channel, float(speed) / 128.0f + 1.0f, time / 60.0f);
 }
 
+void ff7_sfx_stop_channel(int channel)
+{
+	nxAudioEngine.stopSFX(channel);
+
+	sfx_state[channel-1].sound_id = 0;
+	sfx_state[channel-1].is_looped = false;
+}
+
 void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
@@ -118,7 +126,7 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 
 	if (id)
 	{
-		if (channel <= 5 && ((currentState->sound_id == id && !currentState->is_looped) || (currentState->sound_id != id))) nxAudioEngine.stopSFX(channel);
+		if (channel <= 5 && ((currentState->sound_id == id && !currentState->is_looped) || (currentState->sound_id != id))) ff7_sfx_stop_channel(channel);
 
 		if (currentState->sound_id != id) currentState->is_looped = false;
 
@@ -126,15 +134,15 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 		{
 			nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f, ff7_should_sfx_loop(id));
 		}
+
+		currentState->pan1 = panning;
+		currentState->sound_id = id;
+		currentState->is_looped = ff7_should_sfx_loop(id);
 	}
 	else if ( channel < 6) // normally all sounds that are non-channel aware must never be stopped by the engine
 	{
-		nxAudioEngine.stopSFX(channel);
+		ff7_sfx_stop_channel(channel);
 	}
-
-	currentState->pan1 = panning;
-	currentState->sound_id = id;
-	currentState->is_looped = ff7_should_sfx_loop(id);
 }
 
 void ff7_sfx_play_on_channel_5(int id)
@@ -175,12 +183,7 @@ void ff7_sfx_stop()
 	if (trace_all || trace_sfx) ffnx_trace("%s\n", __func__);
 
 	for (short channel = 1; channel <= 6; channel++)
-	{
-		nxAudioEngine.stopSFX(channel);
-
-		sfx_state[channel-1].sound_id = 0;
-		sfx_state[channel-1].is_looped = false;
-	}
+		ff7_sfx_stop_channel(channel);
 
 	*ff7_externals.sfx_play_effects_id_channel_6 = 0;
 }
