@@ -114,6 +114,7 @@ void ff7_sfx_stop_channel(int channel)
 {
 	nxAudioEngine.stopSFX(channel);
 
+	sfx_state[channel-1].pan1 = 64;
 	sfx_state[channel-1].sound_id = 0;
 	sfx_state[channel-1].is_looped = false;
 }
