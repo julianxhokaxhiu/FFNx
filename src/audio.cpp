@@ -330,6 +330,10 @@ void NxAudioEngine::stopSFX(int channel)
 	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
 	_engine.stop(options->handle);
+
+	options->id = 0;
+	options->loop = false;
+	options->volume = 1.0f;
 }
 
 void NxAudioEngine::pauseSFX(int channel)
