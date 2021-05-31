@@ -1649,6 +1649,7 @@ struct ff7_externals
 	uint32_t battle_enter;
 	uint32_t battle_loop;
 	DWORD *battle_mode;
+	WORD *battle_location_id;
 	uint32_t battle_sub_429AC0;
 	uint32_t battle_sub_42D808;
 	uint32_t battle_sub_42D992;

@@ -202,6 +202,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.load_battle_stage_pc = get_relative_call(ff7_externals.load_battle_stage, 0x151);
 	ff7_externals.read_battle_hrc = get_relative_call(ff7_externals.load_battle_stage_pc, 0x25);
 
+	ff7_externals.battle_location_id = (WORD*)get_absolute_value(ff7_externals.battle_sub_42A0E7, 0x5F);
+
 	ff7_externals.battle_regular_chdir = (void (*)(battle_chdir_struc*))get_relative_call(ff7_externals.read_battle_hrc, 0x16);
 	ff7_externals.battle_context_chdir = (void (*)(file_context*, battle_chdir_struc*))get_relative_call(ff7_externals.read_battle_hrc, 0x2B);
 	ff7_externals.swap_extension = (void (*)(char*, char*, char*))get_relative_call(ff7_externals.read_battle_hrc, 0x43);
