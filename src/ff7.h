@@ -1869,7 +1869,8 @@ struct ff7_externals
 	int* field_ptr_1; //0xCBF5E8
 	WORD* field_array_1; //0xCC0CF8
 	WORD* wait_frames_ptr; //0xCC0900
-	ff7_modules_global_object* modules_global_object; // 0xCC0D88
+	WORD* field_game_moment; //0xDC08DC
+	ff7_modules_global_object *modules_global_object; // 0xCC0D88
 	uint32_t sub_74DB8C;
 	void (*sub_767039)(DWORD*,DWORD*,DWORD*);
 	uint32_t play_battle_music_call;

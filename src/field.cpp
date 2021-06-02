@@ -139,6 +139,7 @@ void field_init()
 		pending_triangle = pending_x + 15; // 0xCC0DAA
 		ff7_externals.field_ptr_1 = (int*)get_absolute_value(ff7_externals.open_field_file, 0xEA); //0xCBF5E8
 		ff7_externals.field_array_1 = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0xE); //0xCC0CF8
+		ff7_externals.field_game_moment = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x9D], 0xEA); //0xDC08DC
 	}
 	else
 	{
