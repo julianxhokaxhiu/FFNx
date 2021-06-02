@@ -963,6 +963,7 @@ struct ff8_externals
 	uint32_t stop_cdrom_cleanup_call;
 	uint32_t** savemap;
 	int32_t (*check_game_is_paused)(int32_t);
+	uint32_t sub_470250;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

@@ -17,27 +17,8 @@
 #include "renderer.h"
 #include "macro.h"
 #include "ff7.h"
-#include "ff8.h"
-#include "field.h"
 
 Lighting lighting;
-
-// Walkmesh vertex
-typedef struct {
-	short x, y, z, res;
-} vertex_3s;
-
-// Field camera axis
-typedef struct {
-	signed short x;
-	signed short y;
-	signed short z;
-} camera_axis;
-
-// Field camera translation
-typedef struct {
-	signed int v;
-} camera_translation;
 
 void Lighting::updateLightMatrices(struct boundingbox* sceneAabb)
 {
@@ -127,7 +108,7 @@ void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
 	struct matrix viewMatrix;
 	identity_matrix(&viewMatrix);
 
-	byte* level_data = get_level_data_pointer();
+	byte* level_data = *ff7_externals.field_level_data_pointer;
 	if (!level_data)
 	{
 		return;
@@ -177,7 +158,7 @@ void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
 
 void Lighting::ff7_create_walkmesh(std::vector<struct nvertex>& vertices, std::vector<WORD>& indices, std::vector<struct walkmeshEdge>& edges)
 {
-	byte* level_data = get_level_data_pointer();
+	byte* level_data = *ff7_externals.field_level_data_pointer;
 	if (!level_data)
 	{
 		return;
@@ -521,7 +502,7 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 
 struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox* sceneAabb, struct matrix* viewMatrix)
 {
-	byte* level_data = get_level_data_pointer();
+	byte* level_data = *ff7_externals.field_level_data_pointer;
 	if (!level_data)
 	{
 		return *sceneAabb;

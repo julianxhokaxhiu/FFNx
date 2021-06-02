@@ -512,6 +512,22 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.wm_play_music_call = ff7_externals.wm_change_music + 0x5A;
 
 	ff7_externals.sub_630C48 = (int (*)(int16_t, int16_t, int16_t, int16_t, int16_t))get_relative_call(common_externals.execute_opcode_table[0x50], 0x174);
+
+	ff7_externals.current_entity_id = (byte*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0x06); // 0xCC0964
+	ff7_externals.field_ptr_1 = (int*)get_absolute_value(ff7_externals.open_field_file, 0xEA); //0xCBF5E8
+	ff7_externals.field_array_1 = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0xE); //0xCC0CF8
+	ff7_externals.field_game_moment = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x9D], 0xEA); //0xDC08DC
+
+	ff7_externals.sub_408074 = get_relative_call(main_loop, 0x681);
+	ff7_externals.sub_60BB58 = get_relative_call(ff7_externals.sub_63C17F, 0x16F);
+	common_externals.update_field_entities = get_relative_call(ff7_externals.sub_60BB58, 0x3A); // 0x60C94D
+	ff7_externals.sub_630734 = get_relative_call(ff7_externals.open_field_file, 0xCF);
+
+	common_externals.current_field_id = (WORD*)get_absolute_value(ff7_externals.sub_408074, 0x41); // 0xCC15D0
+	common_externals.previous_field_id = (WORD*)get_absolute_value(ff7_externals.sub_408074, 0x4F); // 0xCC0DEC
+	common_externals.update_entities_call = common_externals.update_field_entities + 0x461; // 0x60CDAE
+
+	ff7_externals.field_level_data_pointer = (byte**)get_absolute_value(ff7_externals.sub_630734, 0xB2); // 0xCFF594
 }
 
 void ff7_data(struct ff7_game_obj* game_object)

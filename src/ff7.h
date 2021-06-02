@@ -1597,6 +1597,18 @@ struct ff7_modules_global_object
   uint32_t field_134;
 };
 
+struct ff7_field_script_header {
+	WORD unknown1;			// Always 0x0502
+	char nEntities;			// Number of entities
+	char nModels;			// Number of models
+	WORD wStringOffset;		// Offset to strings
+	WORD nAkaoOffsets;		// Specifies the number of Akao/tuto blocks/offsets
+	WORD scale;             // Scale of field. For move and talk calculation (9bit fixed point).
+	WORD blank[3];
+	char szCreator[8];      // Field creator (never shown)
+	char szName[8];			// Field name (never shown)
+};
+
 // --------------- end of FF7 imports ---------------
 
 struct ff7_channel_6_state
@@ -1881,6 +1893,10 @@ struct ff7_externals
 	uint32_t battle_fight_end;
 	uint32_t battle_fanfare_music;
 	int (*sub_630C48)(int16_t, int16_t, int16_t, int16_t, int16_t);
+	uint32_t sub_408074;
+	uint32_t sub_60BB58;
+	uint32_t sub_630734;
+	byte** field_level_data_pointer;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

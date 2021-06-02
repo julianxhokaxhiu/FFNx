@@ -176,6 +176,22 @@ struct bgra_color
 	float a;
 };
 
+typedef struct {
+	short x, y, z, res;		// short is a 2 byte signed integer
+} vertex_3s;
+
+// Field camera axis
+typedef struct {
+	signed short x;
+	signed short y;
+	signed short z;
+} camera_axis;
+
+// Field camera translation
+typedef struct {
+	signed int v;
+} camera_translation;
+
 struct heap
 {
 	struct heap *next;
