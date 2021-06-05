@@ -449,6 +449,38 @@ void sfx_fix_cait_sith_roulette(int sound_id)
 
 //=============================================================================
 
+void sfx_process_footstep()
+{
+	struct game_mode *mode = getmode_cached();
+	static time_t last_playback_time, current_playback_time;
+
+	if (!ff8)
+	{
+		if (mode->driver_mode == MODE_FIELD)
+		{
+			switch(*ff7_externals.game_current_input_key)
+			{
+			case 0x1000:
+			case 0x2000:
+			case 0x3000:
+			case 0x4000:
+			case 0x6000:
+			case 0x8000:
+			case 0x9000:
+			case 0xc000:
+				qpc_get_time(&current_playback_time);
+				if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * 0.5)
+				{
+					nxAudioEngine.playSFX(159, 7, 0.0f);
+					qpc_get_time(&last_playback_time);
+				}
+			}
+		}
+	}
+}
+
+//=============================================================================
+
 void sfx_init()
 {
 	// Add Global Focus flag to DirectSound Secondary Buffers

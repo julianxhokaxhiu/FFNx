@@ -1787,6 +1787,7 @@ struct ff7_externals
 	uint32_t get_gamepad;
 	uint32_t update_gamepad_status;
 	struct ff7_gamepad_status* gamepad_status;
+	DWORD* game_current_input_key;
 	uint32_t music_is_locked;
 	uint32_t field_initialize_variables;
 	uint32_t music_lock_clear_fix;

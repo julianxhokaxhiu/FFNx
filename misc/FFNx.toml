@@ -402,6 +402,10 @@ movie_sync_debug = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff7_fps_limiter = 1
 
+# Allow the sfx footstep sound to be played everytime you move in fields
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff7_footsteps = false
+
 # Include armor in magic defense calculation
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 mdef_fix = true

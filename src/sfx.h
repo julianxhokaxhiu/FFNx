@@ -25,3 +25,4 @@
 #include <stdint.h>
 
 void sfx_init();
+void sfx_process_footstep();
