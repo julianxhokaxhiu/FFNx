@@ -489,8 +489,21 @@ void sfx_process_footstep()
 	{
 		if (mode->driver_mode == MODE_FIELD)
 		{
-			switch(*ff7_externals.game_current_input_key)
+			float pace = 0.5f;
+
+			switch (*ff7_externals.game_current_input_key)
 			{
+			// RUNNING
+			case 0x1040:
+			case 0x2040:
+			case 0x3040:
+			case 0x4040:
+			case 0x6040:
+			case 0x8040:
+			case 0x9040:
+			case 0xc040:
+				pace = 0.35f;
+			// WALKING
 			case 0x1000:
 			case 0x2000:
 			case 0x3000:
@@ -500,12 +513,13 @@ void sfx_process_footstep()
 			case 0x9000:
 			case 0xc000:
 				qpc_get_time(&current_playback_time);
-				if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * 0.5)
+				if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
 				{
 					if (use_external_sfx) ff7_sfx_play_layered(0.0f, 159, 7);
 					else common_externals.play_sfx(159);
 					qpc_get_time(&last_playback_time);
 				}
+				break;
 			}
 		}
 	}
