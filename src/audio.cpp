@@ -251,7 +251,7 @@ void NxAudioEngine::unloadSFX(int id)
 	}
 }
 
-void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
+bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning, bool loop)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 	int _curId = id - 1;
@@ -273,8 +273,7 @@ void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
 		options->stream = nullptr;
 	}
 
-	std::string _id = std::to_string(id);
-	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id];
+	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][name];
 	if (node)
 	{
 		// Shuffle SFX playback, if any entry found for the current id
@@ -308,7 +307,7 @@ void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
 		options->stream = loadSFX(options->id, loop);
 	}
 
-	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: id=%d,channel=%d,panning:%f\n", __func__, options->id, channel, panning);
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: name=%s,id=%d,channel=%d,panning:%f\n", __func__, name, options->id, channel, panning);
 
 	if (options->stream != nullptr)
 	{
@@ -320,7 +319,11 @@ void NxAudioEngine::playSFX(int id, int channel, float panning, bool loop)
 
 		options->handle = _handle;
 		options->loop = _engine.getLooping(_handle);
+
+		return true;
 	}
+
+	return false;
 }
 
 void NxAudioEngine::stopSFX(int channel)

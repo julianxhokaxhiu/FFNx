@@ -176,7 +176,7 @@ public:
 	// SFX
 	void unloadSFX(int id);
 	bool canPlaySFX(int id);
-	void playSFX(int id, int channel, float panning, bool loop = false);
+	bool playSFX(const char* name, int id, int channel, float panning, bool loop = false);
 	void stopSFX(int channel);
 	void pauseSFX(int channel);
 	void resumeSFX(int channel);

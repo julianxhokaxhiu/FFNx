@@ -119,6 +119,37 @@ void ff7_sfx_stop_channel(int channel)
 	sfx_state[channel-1].is_looped = false;
 }
 
+bool ff7_sfx_play_layered(float panning, int id, int channel)
+{
+	const struct game_mode* mode = getmode_cached();
+	bool playing = false;
+	char track_name[64];
+
+	switch(mode->driver_mode)
+	{
+	case MODE_FIELD:
+		sprintf(track_name, "%s_%d", get_current_field_name(), id);
+		break;
+	case MODE_MENU:
+		sprintf(track_name, "menu_%d", id);
+		break;
+	case MODE_WORLDMAP:
+		sprintf(track_name, "world_%d", id);
+		break;
+	default:
+		sprintf(track_name, "%d", id);
+	}
+
+	// If any overridden layer could not be played, fallback to default
+	if (!(playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id))))
+	{
+		sprintf(track_name, "%d", id);
+		playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id));
+	}
+
+	return playing;
+}
+
 void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
@@ -142,7 +173,7 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 
 		if (!currentState->is_looped)
 		{
-			nxAudioEngine.playSFX(id, channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f, ff7_should_sfx_loop(id));
+			ff7_sfx_play_layered(panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f, id, channel);
 		}
 
 		currentState->pan1 = panning;
@@ -226,7 +257,7 @@ void ff7_sfx_play_on_channel_6(void* dsoundptr, int unk)
 	if (trace_all || trace_sfx) ffnx_trace("%s: id=%lu,panning=%f\n", __func__, *ff7_externals.sfx_play_effects_id_channel_6, sfx_channel_6_state.panning);
 
 	nxAudioEngine.setSFXVolume(6, sfx_channel_6_state.volume);
-	nxAudioEngine.playSFX(*ff7_externals.sfx_play_effects_id_channel_6, 6, sfx_channel_6_state.panning);
+	ff7_sfx_play_layered(sfx_channel_6_state.panning, *ff7_externals.sfx_play_effects_id_channel_6, 6);
 }
 
 void ff7_sfx_stop_channel_6()
@@ -471,7 +502,7 @@ void sfx_process_footstep()
 				qpc_get_time(&current_playback_time);
 				if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * 0.5)
 				{
-					nxAudioEngine.playSFX(159, 7, 0.0f);
+					ff7_sfx_play_layered(0.0f, 159, 7);
 					qpc_get_time(&last_playback_time);
 				}
 			}
