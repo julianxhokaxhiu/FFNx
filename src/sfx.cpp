@@ -502,7 +502,8 @@ void sfx_process_footstep()
 				qpc_get_time(&current_playback_time);
 				if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * 0.5)
 				{
-					ff7_sfx_play_layered(0.0f, 159, 7);
+					if (use_external_sfx) ff7_sfx_play_layered(0.0f, 159, 7);
+					else common_externals.play_sfx(159);
 					qpc_get_time(&last_playback_time);
 				}
 			}
