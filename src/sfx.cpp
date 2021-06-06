@@ -491,27 +491,19 @@ void sfx_process_footstep()
 		{
 			float pace = 0.5f;
 
-			switch (*ff7_externals.game_current_input_key)
+			ffnx_trace("Game Input Key: 0x%x\n", ff7_externals.modules_global_object->current_key_input_status);
+
+			// If running change the pace
+			if ((0x40 & ff7_externals.modules_global_object->current_key_input_status) != 0) pace = 0.35f;
+
+			// If moving, play the footstep
+			if (
+				(0x1000 & ff7_externals.modules_global_object->current_key_input_status) != 0 ||
+				(0x2000 & ff7_externals.modules_global_object->current_key_input_status) != 0 ||
+				(0x4000 & ff7_externals.modules_global_object->current_key_input_status) != 0 ||
+				(0x8000 & ff7_externals.modules_global_object->current_key_input_status) != 0
+			)
 			{
-			// RUNNING
-			case 0x1040:
-			case 0x2040:
-			case 0x3040:
-			case 0x4040:
-			case 0x6040:
-			case 0x8040:
-			case 0x9040:
-			case 0xc040:
-				pace = 0.35f;
-			// WALKING
-			case 0x1000:
-			case 0x2000:
-			case 0x3000:
-			case 0x4000:
-			case 0x6000:
-			case 0x8000:
-			case 0x9000:
-			case 0xc000:
 				qpc_get_time(&current_playback_time);
 				if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
 				{
@@ -519,7 +511,6 @@ void sfx_process_footstep()
 					else common_externals.play_sfx(159);
 					qpc_get_time(&last_playback_time);
 				}
-				break;
 			}
 		}
 	}

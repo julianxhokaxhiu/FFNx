@@ -1560,8 +1560,8 @@ struct ff7_modules_global_object
   uint16_t nfade_b;
   uint16_t FIELD_ID;
   uint16_t field_66;
-  uint32_t field_68;
-  uint32_t field_6C;
+  uint32_t current_key_input_status;
+  uint32_t previous_key_input_status;
   uint16_t field_70;
   uint16_t field_72;
   uint16_t field_74;
@@ -1787,7 +1787,6 @@ struct ff7_externals
 	uint32_t get_gamepad;
 	uint32_t update_gamepad_status;
 	struct ff7_gamepad_status* gamepad_status;
-	DWORD* game_current_input_key;
 	uint32_t music_is_locked;
 	uint32_t field_initialize_variables;
 	uint32_t music_lock_clear_fix;

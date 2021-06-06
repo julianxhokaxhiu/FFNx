@@ -370,7 +370,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.init_game = get_absolute_value(ff7_externals.init_stuff, 0x336);
 	ff7_externals.sub_41A1B0 = get_relative_call(ff7_externals.init_game, 0x85);
-	ff7_externals.game_current_input_key = (DWORD*)get_absolute_value(ff7_externals.sub_41A1B0, 0x15);
 	ff7_externals.init_directinput = get_relative_call(ff7_externals.sub_41A1B0, 0x34);
 	ff7_externals.dinput_createdevice_mouse = get_relative_call(ff7_externals.init_directinput, 0x48);
 
