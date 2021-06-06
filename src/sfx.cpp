@@ -494,7 +494,7 @@ void sfx_process_footstep()
 			ffnx_trace("Game Input Key: 0x%x\n", ff7_externals.modules_global_object->current_key_input_status);
 
 			// If running change the pace
-			if ((0x40 & ff7_externals.modules_global_object->current_key_input_status) != 0) pace = 0.35f;
+			if ((0x40 & ff7_externals.modules_global_object->current_key_input_status) != 0) pace = 0.30f;
 
 			// If moving, play the footstep
 			if (
