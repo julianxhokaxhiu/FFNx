@@ -195,8 +195,6 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		}
 	}
 
-	if (ff7_footsteps) sfx_process_footstep();
-
 	return ff7_externals.gamepad_status;
 }
 

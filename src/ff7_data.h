@@ -465,6 +465,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.enter_field = get_absolute_value(main_loop, 0x90D);
 	ff7_externals.sub_63C17F = get_relative_call(field_main_loop, 0x59);
+	ff7_externals.sub_6342C6 = get_relative_call(ff7_externals.sub_63C17F, 0x5DD);
+	ff7_externals.field_process_char_status = (int (*)(int16_t))get_relative_call(ff7_externals.sub_6342C6, 0x8BC);
 	ff7_externals.sub_40B27B = get_relative_call(ff7_externals.sub_63C17F, 0xEE);
 	ff7_externals.word_CC0DD4 = (WORD*)get_absolute_value(ff7_externals.enter_field, 0x124);
 	ff7_externals.word_CC1638 = (WORD*)get_absolute_value(ff7_externals.sub_40B27B, 0x25);

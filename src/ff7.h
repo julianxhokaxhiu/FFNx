@@ -1845,6 +1845,8 @@ struct ff7_externals
 	uint32_t worldmap_battle_toggle;
 	uint32_t enter_field;
 	uint32_t sub_63C17F;
+	uint32_t sub_6342C6;
+	int (*field_process_char_status)(int16_t unk);
 	uint32_t sub_40B27B;
 	WORD* word_CC0DD4;
 	WORD* word_CC1638;

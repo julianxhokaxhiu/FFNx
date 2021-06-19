@@ -480,38 +480,29 @@ void sfx_fix_cait_sith_roulette(int sound_id)
 
 //=============================================================================
 
-void sfx_process_footstep()
+int sfx_process_footstep(int16_t unk)
 {
-	struct game_mode *mode = getmode_cached();
 	static time_t last_playback_time, current_playback_time;
 
-	if (!ff8)
+	int ret = ff7_externals.field_process_char_status(unk);
+
+	if (ret)
 	{
-		if (mode->driver_mode == MODE_FIELD)
+		float pace = 0.5f;
+
+		// If running change the pace
+		if ((0x40 & ff7_externals.modules_global_object->current_key_input_status) != 0) pace = 0.30f;
+
+		qpc_get_time(&current_playback_time);
+		if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
 		{
-			float pace = 0.5f;
-
-			// If running change the pace
-			if ((0x40 & ff7_externals.modules_global_object->current_key_input_status) != 0) pace = 0.30f;
-
-			// If moving, play the footstep
-			if (
-				(0x1000 & ff7_externals.modules_global_object->current_key_input_status) != 0 ||
-				(0x2000 & ff7_externals.modules_global_object->current_key_input_status) != 0 ||
-				(0x4000 & ff7_externals.modules_global_object->current_key_input_status) != 0 ||
-				(0x8000 & ff7_externals.modules_global_object->current_key_input_status) != 0
-			)
-			{
-				qpc_get_time(&current_playback_time);
-				if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
-				{
-					if (use_external_sfx) ff7_sfx_play_layered(0.0f, 159, 7);
-					else common_externals.play_sfx(159);
-					qpc_get_time(&last_playback_time);
-				}
-			}
+			if (use_external_sfx) ff7_sfx_play_layered(0.0f, 159, 7);
+			else common_externals.play_sfx(159);
+			qpc_get_time(&last_playback_time);
 		}
 	}
+
+	return ret;
 }
 
 //=============================================================================
@@ -534,6 +525,9 @@ void sfx_init()
 		replace_call(ff7_externals.swirl_sound_effect + 0x26, sfx_operation_battle_swirl_stop_sound);
 		// On resume music after a battle
 		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
+
+		// Allow footsteps to be detected correctly
+		if (ff7_footsteps) replace_call(ff7_externals.sub_6342C6 + 0x8BC, sfx_process_footstep);
 
 		// Leviathan fix
 		patch_code_byte(ff7_externals.battle_summon_leviathan_loop + 0x3FA + 1, 0x2A);
