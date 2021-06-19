@@ -1460,6 +1460,8 @@ uint32_t common_palette_changed(uint32_t palette_entry_mul_index1, uint32_t pale
 // return value?
 uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *source, uint32_t dest_offset, struct palette *palette, struct texture_set *texture_set)
 {
+	struct game_mode *mode = getmode_cached();
+
 	uint32_t palette_index;
 	uint32_t palettes;
 	VOBJ(texture_set, texture_set, texture_set);
@@ -1503,7 +1505,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 		}
 
 		// this texture changes in time, flag this as animated
-		VRASS(texture_set, ogl.gl_set->is_animated, enable_animated_textures);
+		VRASS(texture_set, ogl.gl_set->is_animated, enable_animated_textures && mode->driver_mode == MODE_FIELD);
 	}
 	else
 	{
