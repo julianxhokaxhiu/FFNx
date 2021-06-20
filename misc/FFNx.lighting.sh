@@ -23,29 +23,29 @@ uniform vec4 ambientLightData;
 
 // Normal Mapping Without Precomputed Tangents
 // http://www.thetenthplanet.de/archives/1180
-mat3 cotangent_frame( vec3 N, vec3 p, vec2 uv ) 
-{ 
+mat3 cotangent_frame( vec3 N, vec3 p, vec2 uv )
+{
     // get edge vectors of the pixel triangle
-    vec3 dp1 = dFdx( p ); 
-    vec3 dp2 = dFdy( p ); 
-    vec2 duv1 = dFdx( uv ); 
+    vec3 dp1 = dFdx( p );
+    vec3 dp2 = dFdy( p );
+    vec2 duv1 = dFdx( uv );
     vec2 duv2 = dFdy( uv );
-    
+
     // solve the linear system
-    vec3 dp2perp = cross( dp2, N ); 
-    vec3 dp1perp = cross( N, dp1 ); 
+    vec3 dp2perp = cross( dp2, N );
+    vec3 dp1perp = cross( N, dp1 );
     vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
-    vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;  
-    
-    // construct a scale-invariant frame 
+    vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+    // construct a scale-invariant frame
     float invmax = inversesqrt(max( dot(T,T), dot(B,B)));
 
-    return transpose(mat3(T * invmax, B * invmax, N)); 
+    return transpose(mat3(T * invmax, B * invmax, N));
 }
 
 vec3 perturb_normal(vec3 N, vec3 V, vec3 normalmap, vec2 texcoord)
-{ 
-    // assume N, the interpolated vertex normal and 
+{
+    // assume N, the interpolated vertex normal and
     // V, the view vector (vertex to eye)
     vec3 normalMapRemapped = normalmap * 255.0/127.0 - 128.0/127.0;
 
@@ -55,7 +55,7 @@ vec3 perturb_normal(vec3 N, vec3 V, vec3 normalmap, vec2 texcoord)
     float borderCoeff_v = fract(texcoord.y);
     borderCoeff_u = borderCoeff_u < 0.5 ? borderCoeff_u : 1.0 - borderCoeff_u;
     borderCoeff_v = borderCoeff_v < 0.5 ? borderCoeff_v : 1.0 - borderCoeff_v;
-    float t_u = min(1.0, borderCoeff_u / blendRange);                
+    float t_u = min(1.0, borderCoeff_u / blendRange);
     float t_v = min(1.0, borderCoeff_v / blendRange);
     float newNormalMapX = mix(0.0, normalMapRemapped.x, smoothstep(0.0, 1.0, t_u));
     float newNormalMapY = mix(0.0, normalMapRemapped.y, smoothstep(0.0, 1.0, t_v));
@@ -64,7 +64,7 @@ vec3 perturb_normal(vec3 N, vec3 V, vec3 normalmap, vec2 texcoord)
     // Build matrix to transform from tangent to view space
     mat3 TBN = cotangent_frame(N, -V, texcoord);
 
-    return normalize(mul(TBN, normalMapRemapped)); 
+    return normalize(mul(TBN, normalMapRemapped));
 }
 
 vec3 fresnelSchlick(vec3 f0, float cosine)

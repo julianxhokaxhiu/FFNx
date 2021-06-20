@@ -80,7 +80,7 @@ void Lighting::updateLightMatrices(struct boundingbox* sceneAabb)
     bx::mtxOrtho(lightingState.lightProjMatrix, -area, area, -area, area,
         -nearFarSize, nearFarSize, 0.0f, bgfx::getCaps()->homogeneousDepth);
 
-    // Light view projection matrix 
+    // Light view projection matrix
     bx::mtxMul(lightingState.lightViewProjMatrix, lightingState.lightViewMatrix, lightingState.lightProjMatrix);
 
     // Matrix for converting from NDC to texture coordinates
@@ -589,7 +589,7 @@ void Lighting::draw(struct game_obj* game_object)
     if (mode->driver_mode == MODE_FIELD)
     {
         // Get Field view matrix
-        // TODO: When movie is playing replace with movie camera matrix			
+        // TODO: When movie is playing replace with movie camera matrix
         ff7_get_field_view_matrix(&viewMatrix);
 
         struct boundingbox fieldSceneAabb = calcFieldSceneAabb(&sceneAabb, &viewMatrix);

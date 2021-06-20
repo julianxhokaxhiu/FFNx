@@ -57,7 +57,7 @@ void main()
         v_shadow0 = mul(lightViewProjTexMatrix, v_position0);
         v_normal0 = mul(normalMatrix, vec4(a_normal, 0.0)).xyz;
         pos = mul(mul(d3dViewport, d3dProjection), v_position0);
-        
+
         if (color.a > 0.5) color.a = 0.5;
         else if(color.r + color.g + color.b == 0.0) pos = vec4_splat(0.0);
     }

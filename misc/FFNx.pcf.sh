@@ -22,7 +22,7 @@ uniform vec4 fieldShadowData;
 uniform vec4 shadowData;
 
 float sampleShadowMap(vec2 base_uv, float u, float v, float shadowMapSizeInv, float lightDepth, vec3 worldSpacePos)
-{    
+{
     vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
 
     vec3 shadowUv = vec3(uv, lightDepth);
@@ -42,13 +42,13 @@ float sampleShadowMap(vec2 base_uv, float u, float v, float shadowMapSizeInv, fl
         worldSpaceShadowPos.xyz /= worldSpaceShadowPos.w;
 
         shadowDistance = max(shadowDistance, worldSpaceShadowPos.z - worldSpacePos.z);
-    }     
+    }
 
     float shadowFadeStartDistance = fieldShadowData.y;
     float fadeRange = fieldShadowData.z;
     float fadeFactor = max(0.0, min(1.0, (shadowDistance - shadowFadeStartDistance) / fadeRange));
 
-    shadowFactor = mix(shadowFactor, 1.0, fadeFactor);   
+    shadowFactor = mix(shadowFactor, 1.0, fadeFactor);
 #endif
 #endif
 
@@ -59,7 +59,7 @@ float sampleShadowMap(vec2 base_uv, float u, float v, float shadowMapSizeInv, fl
 // https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl
 float sampleShadowMapPCF7x7(vec3 shadowPos, vec3 worldSpacePos)
 {
-    float lightDepth = shadowPos.z;    
+    float lightDepth = shadowPos.z;
     lightDepth -= shadowData.x;
 
     float shadowMapSize = shadowData.w;

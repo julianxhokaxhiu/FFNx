@@ -379,7 +379,7 @@ public:
     void doTextureFiltering(bool flag = false);
     void isExternalTexture(bool flag = false);
     void isExtendedTexture(bool flag = false);
-    
+
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);
     void doAlphaTest(bool flag = false);

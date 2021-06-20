@@ -99,7 +99,7 @@ void lighting_debug(bool* isOpen)
         }
     }
     if (ImGui::CollapsingHeader("Shadow map (common)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
-    {        
+    {
         bool isShadowFaceCullingEnabled = lighting.isShadowFaceCullingEnabled();
         if (ImGui::Checkbox("Face culling", &isShadowFaceCullingEnabled))
         {
@@ -145,7 +145,7 @@ void lighting_debug(bool* isOpen)
         if (ImGui::DragFloat("Near/far size##1", &fieldShadowMapNearFarSize, 10.0f, 0.0f, 100000.0f))
         {
             lighting.setFieldShadowMapNearFarSize(fieldShadowMapNearFarSize);
-        }        
+        }
         float fieldShadowDistance = lighting.getFieldShadowFadeStartDistance();
         if (ImGui::DragFloat("Fade Start Distance", &fieldShadowDistance, 1.0f, 0.0f, 1000.0f))
         {

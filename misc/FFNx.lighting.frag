@@ -68,7 +68,7 @@ void main()
 {
 	vec4 color = v_color0;
     vec4 param = vec4(0.0, 0.0, 0.0, 0.0);
-    vec4 param2 = vec4(0.0, 0.0, 0.0, 0.0);  
+    vec4 param2 = vec4(0.0, 0.0, 0.0, 0.0);
 
     if (isTexture)
     {
@@ -220,7 +220,7 @@ void main()
 
             // Luminance
             vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, viewDir, normal, roughnessClamped, metalnessClamped, ao, shadowUv);
-            
+
             gl_FragColor = vec4(luminance, color.a);
         }
     }

@@ -45,13 +45,13 @@ void main()
 	vec4 color = v_color0;
 
     if (isTexture)
-    {        
+    {
         vec2 color_uv = vec2(0.0, 0.0);
         if(isTextureExtended)
             color_uv = v_texcoord1.xy;
         else
             color_uv = v_texcoord0.xy;
-        
+
         vec4 texture_color = texture2D(tex, color_uv);
 
         if (doAlphaTest)
@@ -97,7 +97,7 @@ void main()
         }
 
         if (texture_color.a == 0.0) discard;
-        
+
     }
     else if(color.a < 0.0 && color.r + color.g + color.b == 0.0)
 	{

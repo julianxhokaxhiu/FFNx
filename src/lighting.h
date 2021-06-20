@@ -77,9 +77,9 @@ struct LightingState
     float walkMeshPosOffset = -11.0;
 };
 
-class Lighting 
+class Lighting
 {
-private:  
+private:
     LightingState lightingState;
 
 private:

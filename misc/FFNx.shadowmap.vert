@@ -30,12 +30,12 @@ void main()
     color.rgba = color.bgra;
 
     if (color.a > 0.5) color.a = 0.5;
-    else if(color.r + color.g + color.b == 0.0) 
+    else if(color.r + color.g + color.b == 0.0)
     {
         color.a = -1;
     }
 
-    pos = mul(mul(lightViewProjMatrix, worldView), vec4(pos.xyz, 1.0)); 
+    pos = mul(mul(lightViewProjMatrix, worldView), vec4(pos.xyz, 1.0));
 
     gl_Position = pos;
     v_color0 = color;
