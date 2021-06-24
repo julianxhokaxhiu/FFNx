@@ -531,7 +531,7 @@ void Renderer::prepareFramebuffer()
         framebufferHeight,
         false,
         1,
-        bgfx::TextureFormat::D24S8,
+        bgfx::TextureFormat::D32F,
         fbFlags | BGFX_TEXTURE_RT_WRITE_ONLY
     );
 
@@ -676,7 +676,7 @@ void Renderer::prepareShadowMap()
         shadowMapResolution,
         false,
         1,
-        bgfx::TextureFormat::D32,
+        bgfx::TextureFormat::D32F,
         BGFX_TEXTURE_RT | BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP
     );
 
@@ -753,6 +753,8 @@ void Renderer::drawToShadowMap()
 
 void Renderer::drawWithLighting(bool isCastShadow)
 {
+    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
+
     // Draw different values to stencil buffer for background and 3D models
     // This is used to prevent field shadows on top of character models
     if (internalState.blendMode == BLEND_NONE)
