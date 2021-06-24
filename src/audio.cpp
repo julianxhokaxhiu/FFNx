@@ -326,13 +326,21 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	return false;
 }
 
-void NxAudioEngine::stopSFX(int channel)
+void NxAudioEngine::stopSFX(int channel, double time)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s channel=%d\n", __func__, channel);
 
-	_engine.stop(options->handle);
+	if (time > 0.0)
+	{
+		_engine.fadeVolume(options->handle, 0.0f, time);
+		_engine.scheduleStop(options->handle, time);
+	}
+	else
+	{
+		_engine.stop(options->handle);
+	}
 
 	options->id = 0;
 	options->loop = false;

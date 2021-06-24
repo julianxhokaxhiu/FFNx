@@ -38,6 +38,15 @@ bool ff7_should_sfx_loop(int id)
 	return *(BYTE *)(ff7_externals.sfx_fmt_header + (28 * (id - 1)));
 }
 
+void ff7_sfx_stop_channel(int channel, double time = 0)
+{
+	nxAudioEngine.stopSFX(channel, time);
+
+	sfx_state[channel-1].pan1 = 64;
+	sfx_state[channel-1].sound_id = 0;
+	sfx_state[channel-1].is_looped = false;
+}
+
 int ff7_sfx_load(int id, DWORD dsound_flag)
 {
 	//if (trace_all || trace_sfx) ffnx_trace("%s: id=%d\n", __func__, id);
@@ -65,7 +74,10 @@ void ff7_sfx_set_volume_trans_on_channel(byte volume, int channel, int time)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: volume=%d,channel=%d,time=%d\n", __func__, volume, channel, time);
 
-	nxAudioEngine.setSFXVolume(channel, volume / 127.0f, time / 60.0f);
+	if (volume == 0)
+		ff7_sfx_stop_channel(channel, time / 60.0f);
+	else
+		nxAudioEngine.setSFXVolume(channel, volume / 127.0f, time / 60.0f);
 }
 
 void ff7_sfx_set_panning_on_channel(byte panning, int channel)
@@ -108,15 +120,6 @@ void ff7_sfx_set_frequency_trans_on_channel(byte speed, int channel, int time)
 	}
 
 	nxAudioEngine.setSFXSpeed(channel, float(speed) / 128.0f + 1.0f, time / 60.0f);
-}
-
-void ff7_sfx_stop_channel(int channel)
-{
-	nxAudioEngine.stopSFX(channel);
-
-	sfx_state[channel-1].pan1 = 64;
-	sfx_state[channel-1].sound_id = 0;
-	sfx_state[channel-1].is_looped = false;
 }
 
 bool ff7_sfx_play_layered(float panning, int id, int channel)
