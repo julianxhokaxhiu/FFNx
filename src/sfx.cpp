@@ -57,8 +57,6 @@ int ff7_sfx_load(int id, DWORD dsound_flag)
 void ff7_sfx_unload(int id, void* unk)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: id=%d\n", __func__, id);
-
-	nxAudioEngine.unloadSFX(id);
 }
 
 void ff7_sfx_set_volume_on_channel(byte volume, int channel)

@@ -238,19 +238,6 @@ void NxAudioEngine::unloadSFXChannel(int channel)
 	}
 }
 
-void NxAudioEngine::unloadSFX(int id)
-{
-	if (_sfxEffectsHandler.count(id) > 0)
-	{
-		if (_sfxEffectsHandler[id] != nullptr)
-		{
-			delete _sfxEffectsHandler[id];
-
-			_sfxEffectsHandler.erase(id);
-		}
-	}
-}
-
 bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning, bool loop)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
@@ -267,10 +254,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	}
 	else if (channel <= _sfxTotalChannels)
 	{
-		_sfxEffectsHandler[options->id] = options->stream;
-
-		// invalidate the old channel stream in order to continue loading this new ID
-		options->stream = nullptr;
+		unloadSFXChannel(channel);
 	}
 
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][name];
