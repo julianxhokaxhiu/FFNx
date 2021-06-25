@@ -567,7 +567,7 @@ void sfx_init()
 			sfx_state = new ff7_field_sfx_state[5]{0};
 			for (short i = 0; i < 5; i++) sfx_state[i].volume1 = 127;
 
-			nxAudioEngine.setSFXTotalChannels(6); // Allocate 6 channels in total
+			nxAudioEngine.setSFXTotalChannels(7); // Allocate 7 channels in total
 			nxAudioEngine.setSFXReusableChannels(5); // The engine by default although re-uses up to 5 channels
 		}
 		else
