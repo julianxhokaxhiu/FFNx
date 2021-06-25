@@ -21,6 +21,14 @@
 
 cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
+if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE) # Azure and multi-configuration generators don't set CMAKE_BUILD_TYPE
+	if (NOT CMAKE_BUILD_TYPE MATCHES Release AND NOT CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+		message(FATAL_ERROR "You selected `${CMAKE_BUILD_TYPE}` mode. Only `Release` and `RelWithDebInfo` are supported.\nAdd -DCMAKE_BUILD_TYPE=Release or -DCMAKE_BUILD_TYPE=RelWithDebInfo to your cmake command line.")
+	endif()
+endif()
+if (NOT DEFINED _DLL_VERSION OR NOT _DLL_VERSION)
+	message(FATAL_ERROR "_DLL_VERSION must be set to continue building with cmake. \nExample: Add -D_DLL_VERSION=devel to your cmake command line.")
+endif ()
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 set(CMAKE_SHARED_LINKER_FLAGS
