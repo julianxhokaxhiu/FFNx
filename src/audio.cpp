@@ -228,6 +228,8 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 
 void NxAudioEngine::unloadSFXChannel(int channel)
 {
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: channel=%d\n", __func__, channel);
+
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	if (options->stream != nullptr)
