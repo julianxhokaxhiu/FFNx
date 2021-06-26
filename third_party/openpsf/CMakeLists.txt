@@ -24,10 +24,10 @@ include(ExternalProject)
 set(OPENPSF_VERSION "1.3.0")
 
 ExternalProject_Add(
-	openpsf
-	URL						"https://github.com/myst6re/openpsf/releases/download/${OPENPSF_VERSION}/openpsf-${OPENPSF_VERSION}_Release_x86.zip"
-	INSTALL_DIR				"${CMAKE_BINARY_DIR}/vendor"
-	CONFIGURE_COMMAND		""
-	BUILD_COMMAND			""
-	INSTALL_COMMAND			"${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>" "<INSTALL_DIR>"
-)
+  openpsf
+  URL "https://github.com/myst6re/openpsf/releases/download/${OPENPSF_VERSION}/openpsf-${OPENPSF_VERSION}_Release_x86.zip"
+  INSTALL_DIR "${CMAKE_BINARY_DIR}/vendor"
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory "<SOURCE_DIR>"
+                  "<INSTALL_DIR>")

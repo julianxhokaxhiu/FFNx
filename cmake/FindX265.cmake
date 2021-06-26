@@ -21,33 +21,18 @@
 
 include(FindPackageHandleStandardArgs)
 
-if (NOT X265_FOUND)
-	find_library(
-		X265_LIBRARY
-		x265-static
-		PATH_SUFFIXES
-		lib
-	)
+if(NOT X265_FOUND)
+  find_library(X265_LIBRARY x265-static PATH_SUFFIXES lib)
 
-	find_path(
-		X265_INCLUDE_DIR
-		z265.h x265_config.h
-		PATH_SUFFIXES
-		include
-	)
+  find_path(X265_INCLUDE_DIR z265.h x265_config.h PATH_SUFFIXES include)
 
-	add_library(X265::X265 STATIC IMPORTED)
+  add_library(X265::X265 STATIC IMPORTED)
 
-	set_target_properties(
-		X265::X265
-		PROPERTIES
-		IMPORTED_LOCATION
-		"${X265_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES
-		"${X265_INCLUDE_DIR}"
-		INTERFACE_LINK_LIBRARIES
-		"bcrypt"
-	)
+  set_target_properties(
+    X265::X265
+    PROPERTIES IMPORTED_LOCATION "${X265_LIBRARY}"
+               INTERFACE_INCLUDE_DIRECTORIES "${X265_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "bcrypt")
 
-	find_package_handle_standard_args(X265 DEFAULT_MSG X265_LIBRARY X265_INCLUDE_DIR)
+  find_package_handle_standard_args(X265 DEFAULT_MSG X265_LIBRARY X265_INCLUDE_DIR)
 endif()

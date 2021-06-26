@@ -21,35 +21,20 @@
 
 include(FindPackageHandleStandardArgs)
 
-if (NOT VORBIS_FOUND)
-	find_package(OGG REQUIRED)
+if(NOT VORBIS_FOUND)
+  find_package(OGG REQUIRED)
 
-	find_library(
-		VORBIS_LIBRARY
-		vorbis
-		PATH_SUFFIXES
-		lib
-	)
+  find_library(VORBIS_LIBRARY vorbis PATH_SUFFIXES lib)
 
-	find_path(
-		VORBIS_INCLUDE_DIR
-		vorbis
-		PATH_SUFFIXES
-		include
-	)
+  find_path(VORBIS_INCLUDE_DIR vorbis PATH_SUFFIXES include)
 
-	add_library(VORBIS::VORBIS STATIC IMPORTED)
+  add_library(VORBIS::VORBIS STATIC IMPORTED)
 
-	set_target_properties(
-		VORBIS::VORBIS
-		PROPERTIES
-		IMPORTED_LOCATION
-		"${VORBIS_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES
-		"${VORBIS_INCLUDE_DIR}"
-		INTERFACE_LINK_LIBRARIES
-		"OGG::OGG"
-	)
+  set_target_properties(
+    VORBIS::VORBIS
+    PROPERTIES IMPORTED_LOCATION "${VORBIS_LIBRARY}"
+               INTERFACE_INCLUDE_DIRECTORIES "${VORBIS_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "OGG::OGG")
 
-	find_package_handle_standard_args(VORBIS DEFAULT_MSG VORBIS_LIBRARY VORBIS_INCLUDE_DIR)
+  find_package_handle_standard_args(VORBIS DEFAULT_MSG VORBIS_LIBRARY VORBIS_INCLUDE_DIR)
 endif()

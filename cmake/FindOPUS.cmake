@@ -21,31 +21,14 @@
 
 include(FindPackageHandleStandardArgs)
 
-if (NOT OPUS_FOUND)
-	find_library(
-		OPUS_LIBRARY
-		opus
-		PATH_SUFFIXES
-		lib
-	)
+if(NOT OPUS_FOUND)
+  find_library(OPUS_LIBRARY opus PATH_SUFFIXES lib)
 
-	find_path(
-		OPUS_INCLUDE_DIR
-		opus
-		PATH_SUFFIXES
-		include
-	)
+  find_path(OPUS_INCLUDE_DIR opus PATH_SUFFIXES include)
 
-	add_library(OPUS::OPUS STATIC IMPORTED)
+  add_library(OPUS::OPUS STATIC IMPORTED)
 
-	set_target_properties(
-		OPUS::OPUS
-		PROPERTIES
-		IMPORTED_LOCATION
-		"${OPUS_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES
-		"${OPUS_INCLUDE_DIR}"
-	)
+  set_target_properties(OPUS::OPUS PROPERTIES IMPORTED_LOCATION "${OPUS_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${OPUS_INCLUDE_DIR}")
 
-	find_package_handle_standard_args(OPUS DEFAULT_MSG OPUS_LIBRARY OPUS_INCLUDE_DIR)
+  find_package_handle_standard_args(OPUS DEFAULT_MSG OPUS_LIBRARY OPUS_INCLUDE_DIR)
 endif()

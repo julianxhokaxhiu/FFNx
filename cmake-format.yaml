@@ -1,0 +1,9 @@
+# cmake-format yaml configuration file
+
+format:
+  dangle_align: prefix
+  fractional_tab_policy: use-space
+  line_width: 150
+
+markup:
+  enable_markup: false

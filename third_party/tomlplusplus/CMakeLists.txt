@@ -22,11 +22,10 @@
 include(ExternalProject)
 
 ExternalProject_Add(
-	tomlplusplus
-	URL               "https://github.com/marzer/tomlplusplus/archive/master.zip"
-	INSTALL_DIR				"${CMAKE_BINARY_DIR}/vendor"
-	CONFIGURE_COMMAND	""
-	BUILD_COMMAND			""
-	INSTALL_COMMAND
-		COMMAND "${CMAKE_COMMAND}" -E copy "<SOURCE_DIR>/toml.hpp" "<INSTALL_DIR>/include"
-)
+  tomlplusplus
+  URL "https://github.com/marzer/tomlplusplus/archive/master.zip"
+  INSTALL_DIR "${CMAKE_BINARY_DIR}/vendor"
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND
+  COMMAND "${CMAKE_COMMAND}" -E copy "<SOURCE_DIR>/toml.hpp" "<INSTALL_DIR>/include")

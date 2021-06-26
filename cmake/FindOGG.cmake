@@ -21,31 +21,14 @@
 
 include(FindPackageHandleStandardArgs)
 
-if (NOT OGG_FOUND)
-	find_library(
-		OGG_LIBRARY
-		ogg
-		PATH_SUFFIXES
-		lib
-	)
+if(NOT OGG_FOUND)
+  find_library(OGG_LIBRARY ogg PATH_SUFFIXES lib)
 
-	find_path(
-		OGG_INCLUDE_DIR
-		ogg
-		PATH_SUFFIXES
-		include
-	)
+  find_path(OGG_INCLUDE_DIR ogg PATH_SUFFIXES include)
 
-	add_library(OGG::OGG STATIC IMPORTED)
+  add_library(OGG::OGG STATIC IMPORTED)
 
-	set_target_properties(
-		OGG::OGG
-		PROPERTIES
-		IMPORTED_LOCATION
-		"${OGG_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES
-		"${OGG_INCLUDE_DIR}"
-	)
+  set_target_properties(OGG::OGG PROPERTIES IMPORTED_LOCATION "${OGG_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${OGG_INCLUDE_DIR}")
 
-	find_package_handle_standard_args(OGG DEFAULT_MSG OGG_LIBRARY OGG_INCLUDE_DIR)
+  find_package_handle_standard_args(OGG DEFAULT_MSG OGG_LIBRARY OGG_INCLUDE_DIR)
 endif()

@@ -21,31 +21,14 @@
 
 include(FindPackageHandleStandardArgs)
 
-if (NOT SPEEX_FOUND)
-	find_library(
-		SPEEX_LIBRARY
-		libspeex
-		PATH_SUFFIXES
-		lib
-	)
+if(NOT SPEEX_FOUND)
+  find_library(SPEEX_LIBRARY libspeex PATH_SUFFIXES lib)
 
-	find_path(
-		SPEEX_INCLUDE_DIR
-		speex
-		PATH_SUFFIXES
-		include
-	)
+  find_path(SPEEX_INCLUDE_DIR speex PATH_SUFFIXES include)
 
-	add_library(SPEEX::SPEEX STATIC IMPORTED)
+  add_library(SPEEX::SPEEX STATIC IMPORTED)
 
-	set_target_properties(
-		SPEEX::SPEEX
-		PROPERTIES
-		IMPORTED_LOCATION
-		"${SPEEX_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES
-		"${SPEEX_INCLUDE_DIR}"
-	)
+  set_target_properties(SPEEX::SPEEX PROPERTIES IMPORTED_LOCATION "${SPEEX_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${SPEEX_INCLUDE_DIR}")
 
-	find_package_handle_standard_args(SPEEX DEFAULT_MSG SPEEX_LIBRARY SPEEX_INCLUDE_DIR)
+  find_package_handle_standard_args(SPEEX DEFAULT_MSG SPEEX_LIBRARY SPEEX_INCLUDE_DIR)
 endif()
