@@ -94,6 +94,14 @@ Output folder: `.dist/build/[CHOSEN_PROFILE]/bin` ( eg. `.dist/build/x86-Release
 4. Choose as build profile in the status bar `CMake: [Release]` ( or one of the aforementioned profiles )
 5. Click the button on the status bar `Build`
 
+## Auto-Formatting
+
+### CMake Files
+
+0. **REQUIRED!** Install [Python](https://www.python.org/)
+1. Install [cmake-format](https://github.com/cheshirekow/cmake_format#installation) and make sure the binary is available in your PATH environment variable
+2. **OPTIONAL!** Integrate it [in your own IDE](https://github.com/cheshirekow/cmake_format#integrations) ( eg. for Visual Studio Code use [the relative extension](https://marketplace.visualstudio.com/items?itemName=cheshirekow.cmake-format) )
+
 ## Support
 
 FFNx offers multiple support channels, pick the one you prefer
