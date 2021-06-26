@@ -5,6 +5,5 @@
     "_DLL_VERSION": "devel"
   },
   "cmake.installPrefix": "${workspaceFolder}/.dist/install/x86-${buildType}",
-  "cmake.parallelJobs": 1,
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+  "cmake.parallelJobs": 1
 }
