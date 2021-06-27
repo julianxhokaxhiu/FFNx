@@ -530,6 +530,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	common_externals.update_entities_call = common_externals.update_field_entities + 0x461; // 0x60CDAE
 
 	ff7_externals.field_level_data_pointer = (byte**)get_absolute_value(ff7_externals.sub_630734, 0xB2); // 0xCFF594
+
+	ff7_externals.sub_408116 = get_relative_call(ff7_externals.sub_63C17F, 0x2A);
+	ff7_externals.word_CC16E8 = (char *)get_absolute_value(ff7_externals.sub_408116, 0x8E);
 }
 
 void ff7_data(struct ff7_game_obj* game_object)

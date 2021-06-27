@@ -922,6 +922,8 @@ void common_flip(struct game_obj *game_object)
 		*ff7_externals.swirl_limit_fps = 1;
 
 		ff7_handle_ambient_playback();
+
+		ff7_field_triangle_id = *(int16_t *)((char *)ff7_externals.word_CC16E8 + 136 * ff7_externals.modules_global_object->field_model_id);
 	}
 }
 

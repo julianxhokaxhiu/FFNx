@@ -37,6 +37,7 @@ bool map_changing = false;
 
 // FF7 only
 int (*old_pc)();
+short ff7_field_triangle_id = 0;
 
 byte get_field_bank_value(int16_t bank)
 {
@@ -146,7 +147,7 @@ void field_debug(bool *isOpen)
 	}
 
 	ImGui::Text("Current field ID: %d", *common_externals.current_field_id);
-	if (!ff8) ImGui::Text("Current triangle ID: %d", ff7_externals.modules_global_object->field_model_triangle_id);
+	if (!ff8) ImGui::Text("Current triangle ID: %d", ff7_field_triangle_id);
 	ImGui::Text("Previous field ID: %d", *common_externals.previous_field_id);
 	ImGui::Separator();
 

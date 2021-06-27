@@ -96,5 +96,7 @@ extern double speedhack_current;
 extern bool xinput_connected;
 extern bool simulate_OK_button;
 
+extern short ff7_field_triangle_id;
+
 extern char *get_current_field_name();
 extern uint32_t noop();
