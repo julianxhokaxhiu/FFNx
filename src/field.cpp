@@ -146,6 +146,7 @@ void field_debug(bool *isOpen)
 	}
 
 	ImGui::Text("Current field ID: %d", *common_externals.current_field_id);
+	if (!ff8) ImGui::Text("Current triangle ID: %d", ff7_externals.modules_global_object->current_field_triangle_id);
 	ImGui::Text("Previous field ID: %d", *common_externals.previous_field_id);
 	ImGui::Separator();
 
