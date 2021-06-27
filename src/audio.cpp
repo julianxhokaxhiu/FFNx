@@ -855,6 +855,19 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 
 	bool exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 
+	_currentVoice.volume = volume;
+
+	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_VOICE][name];
+	if (node)
+	{
+		// Set volume for the current track
+		toml::node *trackVolume = node["volume"].as_integer();
+		if (trackVolume)
+		{
+			_currentVoice.volume = trackVolume->value_or(100) / 100.0f;
+		}
+	}
+
 	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
 	// Stop any previously playing voice
@@ -871,7 +884,7 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 
 		_currentVoice.stream->load(filename);
 
-		_currentVoice.handle = _engine.play(*_currentVoice.stream, volume);
+		_currentVoice.handle = _engine.play(*_currentVoice.stream, _currentVoice.volume);
 
 		return _engine.isValidVoiceHandle(_currentVoice.handle);
 	}

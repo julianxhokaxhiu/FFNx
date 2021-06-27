@@ -433,14 +433,6 @@ install(
   OPTIONAL)
 # Additional cfg files
 install(
-  DIRECTORY
-  DESTINATION bin/ambient
-  OPTIONAL)
-install(
-  DIRECTORY
-  DESTINATION bin/sfx
-  OPTIONAL)
-install(
   FILES ../misc/${RELEASE_NAME}.ambient.toml
   DESTINATION bin/ambient
   RENAME config.toml
@@ -453,5 +445,10 @@ install(
 install(
   FILES ../misc/${RELEASE_NAME}.music.toml
   DESTINATION bin/music/vgmstream
+  RENAME config.toml
+  OPTIONAL)
+install(
+  FILES ../misc/${RELEASE_NAME}.voice.toml
+  DESTINATION bin/voice
   RENAME config.toml
   OPTIONAL)

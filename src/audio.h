@@ -89,9 +89,11 @@ public:
 	{
 		NxAudioEngineVoice() :
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
-			stream(nullptr) {}
+			stream(nullptr),
+			volume(1.0f) {}
 		SoLoud::handle handle;
 		SoLoud::VGMStream* stream;
+		float volume;
 	};
 
 	struct NxAudioEngineAmbient
