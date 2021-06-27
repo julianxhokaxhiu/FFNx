@@ -934,7 +934,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 			// If the key doesn't exist already, add it
 			if (_ambientSequentialIndexes.count(name) == 0) _ambientSequentialIndexes[name] == NULL;
 
-			if (_ambientSequentialIndexes[name] == NULL || _ambientSequentialIndexes[name] == sequentialIds->size())
+			if (_ambientSequentialIndexes.find(name) == _ambientSequentialIndexes.end() || _ambientSequentialIndexes[name] >= sequentialIds->size())
 				_ambientSequentialIndexes[name] = 0;
 
 			auto _newName = sequentialIds->get(_ambientSequentialIndexes[name]);
