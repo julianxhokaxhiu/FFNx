@@ -37,9 +37,6 @@ bool map_changing = false;
 
 // FF7 only
 int (*old_pc)();
-short* pending_x;
-short* pending_y;
-short* pending_triangle;
 
 byte get_field_bank_value(int16_t bank)
 {
@@ -73,9 +70,9 @@ int script_PC_map_change() {
 		int x = (triangle_data[0].x + triangle_data[1].x + triangle_data[2].x) / 3;
 		int y = (triangle_data[0].y + triangle_data[1].y + triangle_data[2].y) / 3;
 
-		*pending_x = x;
-		*pending_y = y;
-		*pending_triangle = target_triangle;
+		ff7_externals.modules_global_object->current_field_pos_x = x;
+		ff7_externals.modules_global_object->current_field_pos_y = y;
+		ff7_externals.modules_global_object->current_field_triangle_id = target_triangle;
 		map_changing = false;
 	}
 
@@ -97,10 +94,6 @@ void field_init()
 
 		// Proxy the window calculation formula so we can offset windows vertically
 		replace_call_function(common_externals.execute_opcode_table[0x50] + 0x174, field_calc_window_pos);
-
-		pending_x = (short*)get_absolute_value(ff7_externals.sub_408074, 0x5D); // 0xCC0D8C
-		pending_y = pending_x + 1; // 0xCC0D8E
-		pending_triangle = pending_x + 15; // 0xCC0DAA
 	}
 }
 
