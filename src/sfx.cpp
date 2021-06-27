@@ -129,7 +129,7 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 	switch(mode->driver_mode)
 	{
 	case MODE_FIELD:
-		sprintf(track_name, "%s_%d", get_current_field_name(), id);
+		sprintf(track_name, "%s_%d_%d", get_current_field_name(), ff7_field_triangle_id, id);
 		break;
 	case MODE_MENU:
 		sprintf(track_name, "menu_%d", id);
@@ -144,8 +144,20 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 	// If any overridden layer could not be played, fallback to default
 	if (!(playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id))))
 	{
-		sprintf(track_name, "%d", id);
-		playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id));
+		if (mode->driver_mode == MODE_FIELD)
+		{
+			sprintf(track_name, "%s_%d", get_current_field_name(), id);
+			if (!(playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id))))
+			{
+				sprintf(track_name, "%d", id);
+				playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id));
+			}
+		}
+		else
+		{
+			sprintf(track_name, "%d", id);
+			playing = nxAudioEngine.playSFX(track_name, id, channel, panning, ff7_should_sfx_loop(id));
+		}
 	}
 
 	return playing;
