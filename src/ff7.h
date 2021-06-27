@@ -1502,8 +1502,8 @@ struct ff7_modules_global_object
   uint8_t field_0;
   uint8_t game_mode;
   uint16_t battle_id;
-  uint16_t current_field_pos_x;
-  uint16_t current_field_pos_y;
+  uint16_t field_model_pos_x;
+  uint16_t field_model_pos_y;
   uint16_t field_8;
   uint16_t field_A;
   uint16_t field_C;
@@ -1521,11 +1521,11 @@ struct ff7_modules_global_object
   uint8_t field_1D;
   uint16_t field_1E;
   uint16_t field_20;
-  uint16_t current_field_triangle_id;
-  uint16_t field_24;
+  uint16_t field_model_triangle_id;
+  uint16_t field_model_anim_id;
   uint16_t previous_game_mode;
   uint16_t num_models;
-  uint16_t field_2A;
+  uint16_t field_model_id;
   uint16_t field_2C;
   uint16_t field_2E;
   uint16_t field_30;
@@ -1558,7 +1558,7 @@ struct ff7_modules_global_object
   uint16_t nfade_r;
   uint16_t nfade_g;
   uint16_t nfade_b;
-  uint16_t FIELD_ID;
+  uint16_t field_id;
   uint16_t field_66;
   uint32_t current_key_input_status;
   uint32_t previous_key_input_status;

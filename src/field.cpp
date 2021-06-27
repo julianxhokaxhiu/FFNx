@@ -70,9 +70,9 @@ int script_PC_map_change() {
 		int x = (triangle_data[0].x + triangle_data[1].x + triangle_data[2].x) / 3;
 		int y = (triangle_data[0].y + triangle_data[1].y + triangle_data[2].y) / 3;
 
-		ff7_externals.modules_global_object->current_field_pos_x = x;
-		ff7_externals.modules_global_object->current_field_pos_y = y;
-		ff7_externals.modules_global_object->current_field_triangle_id = target_triangle;
+		ff7_externals.modules_global_object->field_model_pos_x = x;
+		ff7_externals.modules_global_object->field_model_pos_y = y;
+		ff7_externals.modules_global_object->field_model_triangle_id = target_triangle;
 		map_changing = false;
 	}
 
@@ -146,7 +146,7 @@ void field_debug(bool *isOpen)
 	}
 
 	ImGui::Text("Current field ID: %d", *common_externals.current_field_id);
-	if (!ff8) ImGui::Text("Current triangle ID: %d", ff7_externals.modules_global_object->current_field_triangle_id);
+	if (!ff8) ImGui::Text("Current triangle ID: %d", ff7_externals.modules_global_object->field_model_triangle_id);
 	ImGui::Text("Previous field ID: %d", *common_externals.previous_field_id);
 	ImGui::Separator();
 
