@@ -129,7 +129,7 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 	switch(mode->driver_mode)
 	{
 	case MODE_FIELD:
-		sprintf(track_name, "%s_%d_%d", get_current_field_name(), ff7_field_triangle_id, id);
+		sprintf(track_name, "%s_%d_%d", get_current_field_name(), *ff7_externals.current_triangle_id, id);
 		break;
 	case MODE_MENU:
 		sprintf(track_name, "menu_%d", id);
