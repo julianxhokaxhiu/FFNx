@@ -146,7 +146,6 @@ bool NxAudioEngine::init()
 		}
 
 		for (int channel = 0; channel < _sfxTotalChannels; channel++) _sfxChannels[channel] = NxAudioEngineSFX();
-		_sfxSequentialIndexes.resize(1000, -1);
 
 		return true;
 	}
@@ -217,8 +216,6 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 			sfx->setLooping(loop);
 			sfx->load(filename);
 
-			_sfxSequentialIndexes[_curId] = -1;
-
 			return sfx;
 		}
 	}
@@ -275,12 +272,12 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 		toml::array *sequentialIds = node["sequential"].as_array();
 		if (sequentialIds && !sequentialIds->empty() && sequentialIds->is_homogeneous(toml::node_type::integer))
 		{
-			if (_sfxSequentialIndexes[_curId] == -1 || _sfxSequentialIndexes[_curId] == sequentialIds->size())
-				_sfxSequentialIndexes[_curId] = 0;
+			if (_sfxSequentialIndexes.find(name) == _sfxSequentialIndexes.end() || _sfxSequentialIndexes[name] >= sequentialIds->size())
+				_sfxSequentialIndexes[name] = 0;
 
-			auto _newId = sequentialIds->get(_sfxSequentialIndexes[_curId]);
+			auto _newId = sequentialIds->get(_sfxSequentialIndexes[name]);
 
-			_sfxSequentialIndexes[_curId]++;
+			_sfxSequentialIndexes[name]++;
 
 			_curId = _newId->value_or(id) - 1;
 		}
