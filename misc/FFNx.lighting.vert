@@ -59,7 +59,7 @@ void main()
         pos = mul(mul(d3dViewport, d3dProjection), v_position0);
 
         if (color.a > 0.5) color.a = 0.5;
-        else if(color.r + color.g + color.b == 0.0) pos = vec4_splat(0.0);
+        else if(color.r + color.g + color.b == 0.0 && a_position.y == 0.0) pos = vec4_splat(0.0);
     }
 
     if (blendMode == 4.0) color.a = 1.0;

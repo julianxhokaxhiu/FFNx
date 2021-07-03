@@ -937,8 +937,7 @@ void common_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, 
 
 	newRenderer.setClearFlags(
 		clear_color || mode == MODE_MENU || mode == MODE_CONDOR,
-		clear_depth,
-		true
+		clear_depth
 	);
 }
 

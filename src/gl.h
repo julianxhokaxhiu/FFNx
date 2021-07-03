@@ -28,6 +28,15 @@
 #define LVERTEX 2
 #define TLVERTEX 3
 
+enum DrawOrder
+{
+	DRAW_ORDER_0 = 0,
+	DRAW_ORDER_1,
+	DRAW_ORDER_2,
+
+	DRAW_ORDER_COUNT
+};
+
 struct driver_state
 {
 	struct texture_set *texture_set;
@@ -55,6 +64,7 @@ struct deferred_draw
 	uint32_t vertextype;
 	uint32_t vertexcount;
 	uint32_t count;
+	uint32_t draworder;
 	struct nvertex* vertices;
 	struct point3d* normals;
 	WORD *indices;
@@ -93,7 +103,8 @@ void gl_save_state(struct driver_state *dest);
 void gl_load_state(struct driver_state *src);
 uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct point3d* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap);
 uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap);
-void gl_draw_deferred(bool isDrawOpaqueOnly);
+void gl_draw_deferred(DrawOrder draworder);
+void gl_set_projection_viewport_matrices();
 struct boundingbox calculateSceneAabb();
 void gl_draw_sorted_deferred();
 void gl_check_deferred(struct texture_set *texture_set);
