@@ -1,9 +1,8 @@
 {
-  "cmake.buildDirectory": "${workspaceFolder}/.dist/build/x86-${buildType}",
+  "cmake.buildDirectory": "${workspaceFolder}/.build",
   "cmake.configureSettings": {
-    "CMAKE_BUILD_TYPE": "Release",
-    "_DLL_VERSION": "devel"
-  },
-  "cmake.installPrefix": "${workspaceFolder}/.dist/install/x86-${buildType}",
-  "cmake.parallelJobs": 1
+    "_DLL_VERSION": "devel",
+    "CMAKE_BUILD_TYPE": "${buildType}",
+    "CMAKE_TOOLCHAIN_FILE": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+  }
 }

@@ -389,9 +389,12 @@ MigrationBackup/
 
 ## Custom section
 
-# Distribution directory
-.dist
+# Build directory
+.build
 
 # Clion
-#.idea/
 cmake-build*/
+
+# vcpkg
+!make.exe
+vcpkg_installed/

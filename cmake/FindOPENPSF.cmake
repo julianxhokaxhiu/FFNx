@@ -25,14 +25,16 @@ if(NOT OPENPSF_FOUND)
   find_package(ZLib REQUIRED)
 
   # PSXCore
+  find_path(OPENPSF_PSXCORE_INCLUDE_DIR highly_experimental PATH_SUFFIXES include)
+
   find_library(OPENPSF_PSXCORE_LIBRARY PSXCore PATH_SUFFIXES lib)
 
   add_library(OPENPSF::PSXCORE STATIC IMPORTED)
 
-  set_target_properties(OPENPSF::PSXCORE PROPERTIES IMPORTED_LOCATION "${OPENPSF_PSXCORE_LIBRARY}")
+  set_target_properties(OPENPSF::PSXCORE PROPERTIES IMPORTED_LOCATION "${OPENPSF_PSXCORE_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${OPENPSF_PSXCORE_INCLUDE_DIR}")
 
   # psflib
-  find_path(OPENPSF_PSFLIB_INCLUDE_DIR psflib.h PATH_SUFFIXES include)
+  find_path(OPENPSF_PSFLIB_INCLUDE_DIR psflib PATH_SUFFIXES include)
 
   find_library(OPENPSF_PSFLIB_LIBRARY psflib PATH_SUFFIXES lib)
 
@@ -45,7 +47,7 @@ if(NOT OPENPSF_FOUND)
                INTERFACE_LINK_LIBRARIES "ZLib::ZLib")
 
   # OpenPSF
-  find_path(OPENPSF_INCLUDE_DIR openpsf.h PATH_SUFFIXES include/libopenpsf)
+  find_path(OPENPSF_INCLUDE_DIR openpsf PATH_SUFFIXES include)
 
   find_library(OPENPSF_LIBRARY openpsf PATH_SUFFIXES lib)
 

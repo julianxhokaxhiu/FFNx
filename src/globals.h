@@ -23,7 +23,7 @@
 
 #include <fstream>
 #include <windows.h>
-#include <toml.hpp>
+#include <toml++/toml.h>
 
 #if defined(__cplusplus)
 extern "C" {

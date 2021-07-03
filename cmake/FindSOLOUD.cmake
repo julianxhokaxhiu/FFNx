@@ -22,9 +22,9 @@
 include(FindPackageHandleStandardArgs)
 
 if(NOT SOLOUD_FOUND)
-  find_library(SOLOUD_LIBRARY soloud_static_x86 PATH_SUFFIXES lib/soloud)
+  find_library(SOLOUD_LIBRARY soloud_static_x86 PATH_SUFFIXES lib)
 
-  find_path(SOLOUD_INCLUDE_DIR soloud PATH_SUFFIXES include)
+  find_path(SOLOUD_INCLUDE_DIR soloud.h PATH_SUFFIXES include)
 
   add_library(SOLOUD::SOLOUD STATIC IMPORTED)
 

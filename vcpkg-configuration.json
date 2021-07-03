@@ -1,0 +1,18 @@
+{
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/julianxhokaxhiu/vcpkg-repo",
+      "baseline": "87174b28f82e0b02f686568348d93446f429a346",
+      "packages": [
+        "bx",
+        "bimg",
+        "bgfx",
+        "openpsf",
+        "soloud",
+        "stackwalker",
+        "vgmstream"
+      ]
+    }
+  ]
+}
