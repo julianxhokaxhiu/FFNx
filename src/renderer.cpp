@@ -355,9 +355,6 @@ void Renderer::resetState()
     doTextureFiltering();
     isExternalTexture();
     isExtendedTexture();
-    setStencilFunc();
-    setStencilOp();
-    setStencilRef();
 };
 
 void Renderer::renderFrame()
@@ -417,7 +414,7 @@ void Renderer::renderFrame()
         else
             useTexture(0);
 
-        setClearFlags(true, true, true);
+        setClearFlags(true, true);
 
         bindVertexBuffer(vertices, 0, 4);
         bindIndexBuffer(indices, 6);
@@ -539,6 +536,15 @@ void Renderer::prepareFramebuffer()
         backendFrameBufferRT.size(),
         backendFrameBufferRT.data(),
         true
+    );
+
+    backupDepthTexture = bgfx::createTexture2D(
+        framebufferWidth,
+        framebufferHeight,
+        false,
+        1,
+        bgfx::TextureFormat::D32F,
+        fbFlags | BGFX_TEXTURE_RT_WRITE_ONLY
     );
 }
 
@@ -755,32 +761,6 @@ void Renderer::drawWithLighting(bool isCastShadow)
 {
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
-    // Draw different values to stencil buffer for background and 3D models
-    // This is used to prevent field shadows on top of character models
-    if (internalState.blendMode == BLEND_NONE)
-    {
-        if (internalState.bIsTLVertex)
-        {
-            setStencilRef(255);
-        }
-        else
-        {
-            setStencilRef(0);
-        }
-
-        setStencilFunc(RendererStencilFunc::STENCIL_FUNC_ALWAYS);
-
-        setStencilOp(RendererStencilOp::STENCIL_OP_KEEP,
-            RendererStencilOp::STENCIL_OP_KEEP,
-            RendererStencilOp::STENCIL_OP_REPLACE);
-    }
-    else
-    {
-        setStencilRef();
-        setStencilFunc();
-        setStencilOp();
-    }
-
     // Draw to shadowmap
     if (isCastShadow) newRenderer.drawToShadowMap();
 
@@ -792,6 +772,21 @@ void Renderer::drawWithLighting(bool isCastShadow)
 
     // Draw with lighting
     draw(isCastShadow);
+}
+
+void Renderer::backupDepthBuffer()
+{
+    backendViewId++;
+    bgfx::blit(backendViewId, backupDepthTexture, 0, 0, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, framebufferWidth, framebufferHeight);
+    bgfx::touch(backendViewId);
+    backendViewId++;
+}
+
+void Renderer::recoverDepthBuffer()
+{
+    backendViewId++;
+    bgfx::blit(backendViewId, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, backupDepthTexture, 0, 0, framebufferWidth, framebufferHeight);
+    bgfx::touch(backendViewId);
 }
 
 void Renderer::drawFieldShadow()
@@ -919,53 +914,6 @@ void Renderer::draw(bool uniformsAlreadyAttached)
         if (internalState.bDoDepthWrite) internalState.state |= BGFX_STATE_WRITE_Z;
     }
     bgfx::setState(internalState.state);
-
-    // Set stencil state
-    uint32_t stencilState = BGFX_STENCIL_NONE;
-    if (internalState.stencilFunc != STENCIL_FUNC_NONE)
-    {
-        switch (internalState.stencilFunc)
-        {
-        case STENCIL_FUNC_ALWAYS:
-            stencilState |= BGFX_STENCIL_TEST_ALWAYS;
-            break;
-        case STENCIL_FUNC_EQUAL:
-            stencilState |= BGFX_STENCIL_TEST_EQUAL;
-            break;
-        }
-
-        switch (internalState.stencilOpFailS)
-        {
-        case STENCIL_OP_KEEP:
-            stencilState |= BGFX_STENCIL_OP_FAIL_S_KEEP;
-            break;
-        case STENCIL_OP_REPLACE:
-            stencilState |= BGFX_STENCIL_OP_FAIL_S_REPLACE;
-            break;
-        }
-        switch (internalState.stencilOpFailZ)
-        {
-        case STENCIL_OP_KEEP:
-            stencilState |= BGFX_STENCIL_OP_FAIL_Z_KEEP;
-            break;
-        case STENCIL_OP_REPLACE:
-            stencilState |= BGFX_STENCIL_OP_FAIL_Z_REPLACE;
-            break;
-        }
-        switch (internalState.stencilOpPassZ)
-        {
-        case STENCIL_OP_KEEP:
-            stencilState |= BGFX_STENCIL_OP_PASS_Z_KEEP;
-            break;
-        case STENCIL_OP_REPLACE:
-            stencilState |= BGFX_STENCIL_OP_PASS_Z_REPLACE;
-            break;
-        }
-
-        stencilState |= BGFX_STENCIL_FUNC_RMASK(0xff);
-        stencilState |= BGFX_STENCIL_FUNC_REF(internalState.stencilRef);
-    }
-    bgfx::setStencil(stencilState, stencilState);
 
     bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
 
@@ -1099,7 +1047,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     scissorHeight = getInternalCoordY(height);
 }
 
-void Renderer::setClearFlags(bool doClearColor, bool doClearDepth, bool doClearStencil)
+void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
 {
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s clearColor=%d,clearDepth=%d\n", __func__, doClearColor, doClearDepth);
 
@@ -1111,10 +1059,7 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth, bool doClearS
     if (doClearDepth)
         clearFlags |= BGFX_CLEAR_DEPTH;
 
-    if (doClearStencil)
-        clearFlags |= BGFX_CLEAR_STENCIL;
-
-    bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f, 0);
+    bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
 
     internalState.bHasDrawBeenDone = false;
@@ -1496,10 +1441,10 @@ uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t 
 
     bgfx::blit(backendViewId, ret, 0, dstY, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
     bgfx::touch(backendViewId);
-    setClearFlags(false, false, false);
+    setClearFlags(false, false);
 
     backendViewId++;
-    setClearFlags(false, false, false);
+    setClearFlags(false, false);
 
     return ret.idx;
 };
@@ -1518,23 +1463,6 @@ void Renderer::setBlendMode(RendererBlendMode mode)
 {
     internalState.blendMode = mode;
 };
-
-void Renderer::setStencilFunc(RendererStencilFunc func)
-{
-    internalState.stencilFunc = func;
-}
-
-void Renderer::setStencilOp(RendererStencilOp opFailS, RendererStencilOp opFailZ, RendererStencilOp opPassZ)
-{
-    internalState.stencilOpFailS = opFailS;
-    internalState.stencilOpFailZ = opFailZ;
-    internalState.stencilOpPassZ = opPassZ;
-}
-
-void Renderer::setStencilRef(uint32_t ref)
-{
-    internalState.stencilRef = ref;
-}
 
 void Renderer::isTexture(bool flag)
 {

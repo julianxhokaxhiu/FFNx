@@ -58,17 +58,6 @@ enum RendererBlendMode {
     BLEND_DISABLED = 999
 };
 
-enum RendererStencilFunc {
-    STENCIL_FUNC_NONE = 0,
-    STENCIL_FUNC_ALWAYS,
-    STENCIL_FUNC_EQUAL,
-};
-
-enum RendererStencilOp {
-    STENCIL_OP_KEEP = 0,
-    STENCIL_OP_REPLACE
-};
-
 enum RendererCullMode {
     DISABLED = 0,
     FRONT,
@@ -219,11 +208,6 @@ private:
 
         RendererCullMode cullMode = RendererCullMode::DISABLED;
         RendererBlendMode blendMode = RendererBlendMode::BLEND_NONE;
-        RendererStencilFunc stencilFunc = RendererStencilFunc::STENCIL_FUNC_NONE;
-        RendererStencilOp stencilOpFailS = RendererStencilOp::STENCIL_OP_KEEP;
-        RendererStencilOp stencilOpFailZ = RendererStencilOp::STENCIL_OP_KEEP;
-        RendererStencilOp stencilOpPassZ = RendererStencilOp::STENCIL_OP_KEEP;
-        uint32_t stencilRef = 0;
         RendererPrimitiveType primitiveType = RendererPrimitiveType::PT_TRIANGLES;
 
         uint64_t state = BGFX_STATE_MSAA;
@@ -261,6 +245,8 @@ private:
 
     std::vector<bgfx::TextureHandle> backendFrameBufferRT = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
     bgfx::FrameBufferHandle backendFrameBuffer = BGFX_INVALID_HANDLE;
+
+    bgfx::TextureHandle backupDepthTexture = BGFX_INVALID_HANDLE;
 
     bgfx::TextureHandle shadowMapTexture = BGFX_INVALID_HANDLE;
     bgfx::FrameBufferHandle shadowMapFrameBuffer = BGFX_INVALID_HANDLE;
@@ -335,7 +321,9 @@ public:
     void clearShadowMap();
     void drawToShadowMap();
     void drawWithLighting(bool isCastShadow);
+    void backupDepthBuffer();
     void drawFieldShadow();
+    void recoverDepthBuffer();
     void draw(bool uniformsAlreadyAttached = false);
     void drawOverlay();
     void show();
@@ -352,7 +340,7 @@ public:
     void bindIndexBuffer(WORD* inIndex, uint32_t inCount);
 
     void setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
-    void setClearFlags(bool doClearColor = false, bool doClearDepth = false, bool doClearStencil = false);
+    void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
     uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool generateMips = false);
@@ -366,11 +354,6 @@ public:
     void isMovie(bool flag = false);
     void isTLVertex(bool flag = false);
     void setBlendMode(RendererBlendMode mode = RendererBlendMode::BLEND_NONE);
-    void setStencilFunc(RendererStencilFunc func = RendererStencilFunc::STENCIL_FUNC_NONE);
-    void setStencilOp(RendererStencilOp opFailS = RendererStencilOp::STENCIL_OP_KEEP,
-                      RendererStencilOp opFailZ = RendererStencilOp::STENCIL_OP_KEEP,
-                      RendererStencilOp opPassZ = RendererStencilOp::STENCIL_OP_KEEP);
-    void setStencilRef(uint32_t ref = 0);
     void isTexture(bool flag = false);
     void isFBTexture(bool flag = false);
     void isFullRange(bool flag = false);

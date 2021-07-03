@@ -606,21 +606,27 @@ void Lighting::draw(struct game_obj* game_object)
         }
     }
 
-    // Draw deferred opaque models
-    gl_draw_deferred(true);
+    // Draw deferred 2D opaque models
+    gl_draw_deferred(DRAW_ORDER_0);
 
     // Draw the walkmesh for field shadows
     if (mode->driver_mode == MODE_FIELD)
     {
+		gl_set_projection_viewport_matrices();
         drawFieldShadow();
     }
 
+	// Draw deferred 3D opaque models
+	gl_draw_deferred(DRAW_ORDER_1);
+
 	// Draw deferred non-opaque models
-	gl_draw_deferred(false);
+	gl_draw_deferred(DRAW_ORDER_2);
 };
 
 void Lighting::drawFieldShadow()
 {
+	newRenderer.backupDepthBuffer();
+
     std::vector<nvertex> walkMeshVertices;
     std::vector<WORD> walkMeshIndices;
     createFieldWalkmesh(walkMeshVertices, walkMeshIndices, getWalkmeshExtrudeSize());
@@ -652,14 +658,9 @@ void Lighting::drawFieldShadow()
     multiply_matrix(&worldMatrix, &viewMatrix, &worldViewMatrix);
     newRenderer.setWorldViewMatrix(&worldViewMatrix);
 
-    // Draw field shadows only on top of background
-    newRenderer.setStencilFunc(RendererStencilFunc::STENCIL_FUNC_EQUAL);
-    newRenderer.setStencilRef(255);
-    newRenderer.setStencilOp(RendererStencilOp::STENCIL_OP_KEEP,
-        RendererStencilOp::STENCIL_OP_KEEP,
-        RendererStencilOp::STENCIL_OP_KEEP);
-
     newRenderer.drawFieldShadow();
+
+	newRenderer.recoverDepthBuffer();
 }
 
 const LightingState& Lighting::getLightingState()

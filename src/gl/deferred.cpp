@@ -75,6 +75,11 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	memcpy(deferred_draws[defer].indices, indices, sizeof(*indices) * count);
 	memcpy(deferred_draws[defer].vertices, vertices, sizeof(*vertices) * vertexcount);
 
+	int draworder = DRAW_ORDER_1;
+	if (vertextype == TLVERTEX)	draworder = deferred_draws[defer].state.blend_mode != 4 ? DRAW_ORDER_2 : DRAW_ORDER_0;
+
+	deferred_draws[defer].draworder = draworder;
+
 	if (boundingbox)
 	{
 		deferred_draws[defer].boundingbox = (struct boundingbox*)driver_malloc(sizeof(struct boundingbox));
@@ -291,7 +296,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 }
 
 // draw deferred models
-void gl_draw_deferred(bool isDrawOpaqueOnly)
+void gl_draw_deferred(DrawOrder draworder)
 {
 	struct driver_state saved_state;
 
@@ -311,7 +316,7 @@ void gl_draw_deferred(bool isDrawOpaqueOnly)
 			continue;
 		}
 
-		if (isDrawOpaqueOnly && deferred_draws[i].state.blend_mode != 4)
+		if (deferred_draws[i].draworder != draworder)
 		{
 			continue;
 		}
@@ -343,9 +348,30 @@ void gl_draw_deferred(bool isDrawOpaqueOnly)
 		deferred_draws[i].boundingbox = nullptr;
 	}
 
-	if(!isDrawOpaqueOnly) num_deferred = 0;
+	if(draworder == DRAW_ORDER_COUNT - 1) num_deferred = 0;
 
 	nodefer = false;
+
+	gl_load_state(&saved_state);
+}
+
+void gl_set_projection_viewport_matrices()
+{
+	struct driver_state saved_state;
+
+	gl_save_state(&saved_state);
+
+	for (int i = 0; i < num_deferred; ++i)
+	{
+		if (deferred_draws[i].vertextype != TLVERTEX)
+		{
+			gl_load_state(&deferred_draws[i].state);
+
+			newRenderer.setD3DProjection(&current_state.d3dprojection_matrix);
+			newRenderer.setD3DViweport(&d3dviewport_matrix);
+			break;
+		}
+	}
 
 	gl_load_state(&saved_state);
 }
