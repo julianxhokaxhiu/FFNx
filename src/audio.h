@@ -25,9 +25,9 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <soloud/soloud.h>
-#include <soloud/soloud_wav.h>
-#include <soloud/soloud_wavstream.h>
+#include <soloud.h>
+#include <soloud_wav.h>
+#include <soloud_wavstream.h>
 #include "audio/vgmstream/vgmstream.h"
 #include "audio/openpsf/openpsf.h"
 

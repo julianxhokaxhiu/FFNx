@@ -22,7 +22,7 @@
 include(FindPackageHandleStandardArgs)
 
 if(NOT BGFX_FOUND)
-  find_library(BGFX_LIBRARY bgfxDebug bgfxRelease PATH_SUFFIXES lib/bgfx)
+  find_library(BGFX_LIBRARY bgfxRelease PATH_SUFFIXES lib)
 
   find_path(BGFX_INCLUDE_DIR bgfx PATH_SUFFIXES include)
 
@@ -35,7 +35,7 @@ if(NOT BGFX_FOUND)
 
   #-----------------------------------------
 
-  find_library(BX_LIBRARY bxDebug bxRelease PATH_SUFFIXES lib/bgfx)
+  find_library(BX_LIBRARY bxRelease PATH_SUFFIXES lib)
 
   find_path(BX_INCLUDE_DIR bx PATH_SUFFIXES include)
 
@@ -45,7 +45,7 @@ if(NOT BGFX_FOUND)
 
   #-----------------------------------------
 
-  find_library(BIMG_LIBRARY bimgDebug bimgRelease PATH_SUFFIXES lib/bgfx)
+  find_library(BIMG_LIBRARY bimgRelease PATH_SUFFIXES lib)
 
   find_path(BIMG_INCLUDE_DIR bimg PATH_SUFFIXES include)
 
@@ -55,7 +55,7 @@ if(NOT BGFX_FOUND)
 
   #-----------------------------------------
 
-  find_library(BIMG_DECODE_LIBRARY bimg_decodeDebug bimg_decodeRelease PATH_SUFFIXES lib/bgfx)
+  find_library(BIMG_DECODE_LIBRARY bimg_decodeRelease PATH_SUFFIXES lib)
 
   add_library(BGFX::BIMG_DECODE STATIC IMPORTED)
 
@@ -63,7 +63,7 @@ if(NOT BGFX_FOUND)
 
   #-----------------------------------------
 
-  find_library(BIMG_ENCODE_LIBRARY bimg_encodeDebug bimg_encodeRelease PATH_SUFFIXES lib/bgfx)
+  find_library(BIMG_ENCODE_LIBRARY bimg_encodeRelease PATH_SUFFIXES lib)
 
   add_library(BGFX::BIMG_ENCODE STATIC IMPORTED)
 

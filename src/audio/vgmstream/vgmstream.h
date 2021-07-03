@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <soloud/soloud.h>
+#include <soloud.h>
 
 #if defined(__cplusplus)
 extern "C" {

@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include <soloud/soloud.h>
+#include <soloud.h>
 #include <stdint.h>
-#include <libopenpsf/openpsf.h>
+#include <openpsf/openpsf.h>
 #include "../../log.h"
 
 namespace SoLoud

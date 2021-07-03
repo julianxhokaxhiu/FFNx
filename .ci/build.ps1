@@ -19,7 +19,9 @@
 #    GNU General Public License for more details.                             #
 #*****************************************************************************#
 
-$env:_RELEASE_PATH = ".dist\build\x86-${env:_RELEASE_CONFIGURATION}"
+Set-StrictMode -Version Latest
+
+$env:_RELEASE_PATH = ".build"
 if ($env:_BUILD_BRANCH -eq "refs/heads/master" -Or $env:_BUILD_BRANCH -eq "refs/tags/canary")
 {
   $env:_IS_BUILD_CANARY = "true"
@@ -31,6 +33,8 @@ elseif ($env:_BUILD_BRANCH -like "refs/tags/*")
 }
 $env:_RELEASE_VERSION = "v${env:_BUILD_VERSION}"
 
+$vcpkgRoot = "C:\vcpkg"
+
 Write-Output "--------------------------------------------------"
 Write-Output "BUILD CONFIGURATION: $env:_RELEASE_CONFIGURATION"
 Write-Output "RELEASE VERSION: $env:_RELEASE_VERSION"
@@ -41,8 +45,10 @@ Write-Host "##vso[task.setvariable variable=_RELEASE_VERSION;]${env:_RELEASE_VER
 Write-Host "##vso[task.setvariable variable=_IS_BUILD_CANARY;]${env:_IS_BUILD_CANARY}"
 Write-Host "##vso[task.setvariable variable=_CHANGELOG_VERSION;]${env:_CHANGELOG_VERSION}"
 
+git -C $vcpkgRoot pull
+
 mkdir $env:_RELEASE_PATH | Out-Null
-cmake -G "Visual Studio 16 2019" -A Win32 -D_DLL_VERSION="$env:_BUILD_VERSION" -DCMAKE_BINARY_DIR="$env:_RELEASE_PATH" -S . -B $env:_RELEASE_PATH
+cmake -G "Visual Studio 16 2019" -A Win32 -D_DLL_VERSION="$env:_BUILD_VERSION" -DCMAKE_BUILD_TYPE="$env:_RELEASE_CONFIGURATION" -DCMAKE_TOOLCHAIN_FILE="$vcpkgRoot\scripts\buildsystems\vcpkg.cmake" -S . -B $env:_RELEASE_PATH
 cmake --build $env:_RELEASE_PATH --config $env:_RELEASE_CONFIGURATION
 
 mkdir .dist\pkg\FF7_1998 | Out-Null
