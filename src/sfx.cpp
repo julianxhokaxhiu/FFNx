@@ -57,6 +57,8 @@ int ff7_sfx_load(int id, DWORD dsound_flag)
 void ff7_sfx_unload(int id, void* unk)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: id=%d\n", __func__, id);
+
+	nxAudioEngine.unloadSFX(id);
 }
 
 void ff7_sfx_set_volume_on_channel(byte volume, int channel)
@@ -581,6 +583,7 @@ void sfx_init()
 
 			nxAudioEngine.setSFXTotalChannels(7); // Allocate 7 channels in total
 			nxAudioEngine.setSFXReusableChannels(5); // The engine by default although re-uses up to 5 channels
+			nxAudioEngine.addSFXLazyUnloadChannel(6); // Channel 6 will be lazy unloaded by the game engine
 		}
 		else
 		{

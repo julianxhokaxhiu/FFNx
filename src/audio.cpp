@@ -223,6 +223,19 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 	return nullptr;
 }
 
+void NxAudioEngine::unloadSFX(int id)
+{
+	if (_sfxEffectsHandler.count(id) > 0)
+	{
+		if (_sfxEffectsHandler[id] != nullptr)
+		{
+			delete _sfxEffectsHandler[id];
+
+			_sfxEffectsHandler.erase(id);
+		}
+	}
+}
+
 void NxAudioEngine::unloadSFXChannel(int channel)
 {
 	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: channel=%d\n", __func__, channel);
@@ -242,15 +255,25 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 	int _curId = id - 1;
 
+	// If channel is known to be reusable
 	if (channel <= _sfxReusableChannels)
 	{
-		// This channel is re-usable, which means we need to immediately unload the current SFX effect
+		// Stop the current channel is already used and the track to be played is different that the one currently playing
 		if (options->stream != nullptr && options->id != id)
 		{
 			stopSFX(channel);
 			unloadSFXChannel(channel);
 		}
 	}
+	// If channel is known to lazy unload what is currently playing, save the handler for later
+	else if (std::find(_sfxLazyUnloadChannels.begin(), _sfxLazyUnloadChannels.end(), channel) != _sfxLazyUnloadChannels.end())
+	{
+		_sfxEffectsHandler[options->id] = options->stream;
+
+		// invalidate the old channel stream in order to continue loading this new ID
+		options->stream = nullptr;
+	}
+	// Otherwise just unload the channel and allow to load a new track immediately
 	else if (channel <= _sfxTotalChannels)
 	{
 		unloadSFXChannel(channel);
@@ -414,6 +437,11 @@ void NxAudioEngine::setSFXReusableChannels(short num)
 void NxAudioEngine::setSFXTotalChannels(short num)
 {
 	_sfxTotalChannels = num;
+}
+
+void NxAudioEngine::addSFXLazyUnloadChannel(int channel)
+{
+	_sfxLazyUnloadChannels.push_back(channel);
 }
 
 // Music

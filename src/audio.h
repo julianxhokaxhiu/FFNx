@@ -130,6 +130,8 @@ private:
 	float _sfxMasterVolume = -1.0f;
 	std::map<int, NxAudioEngineSFX> _sfxChannels;
 	std::map<std::string, int> _sfxSequentialIndexes;
+	std::map<int, SoLoud::VGMStream*> _sfxEffectsHandler;
+	std::vector<short> _sfxLazyUnloadChannels;
 
 	SoLoud::VGMStream* loadSFX(int id, bool loop = false);
 	void unloadSFXChannel(int channel);
@@ -175,6 +177,7 @@ public:
 	void cleanup();
 
 	// SFX
+	void unloadSFX(int id);
 	bool canPlaySFX(int id);
 	bool playSFX(const char* name, int id, int channel, float panning, bool loop = false);
 	void stopSFX(int channel, double time = 0);
@@ -188,6 +191,7 @@ public:
 	void setSFXPanning(int channel, float panning, double time = 0);
 	void setSFXReusableChannels(short num);
 	void setSFXTotalChannels(short num);
+	void addSFXLazyUnloadChannel(int channel);
 
 	// Music
 	bool canPlayMusic(const char* name);
