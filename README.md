@@ -66,12 +66,24 @@ If you're curious to know it, FFNx is made with:
 
 ## How to build
 
-Tested build profiles:
+Available build profiles:
 
 - x86-Release ( default, the same used to release artifacts in this Github page )
 - x86-RelWithDebInfo ( used while developing to better debug some issues )
 
-Output folder: `.dist/build/[CHOSEN_PROFILE]/bin` ( eg. `.dist/build/x86-Release/bin` )
+Any other build profile is **unsupported**.
+
+Once the project is build you can find the output in this path: `.build/bin`
+
+### Preparation
+
+> **Please note:**
+>
+> FFNx will now use vcpkg as a package manager to resolve dependencies. Failing to follow these steps will fail your builds.
+
+0. Clone the [vcpkg](https://vcpkg.io) project in the root folder of your `C:` drive ( `git clone https://github.com/Microsoft/vcpkg.git` )
+1. Go inside the `C:\vcpkg` folder and double click `bootstrap-vcpkg.bat`
+2. Open a `cmd` window in `C:\vcpkg` and run the following command: `vcpkg integrate install`
 
 ### Visual Studio
 
