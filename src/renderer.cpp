@@ -787,6 +787,7 @@ void Renderer::recoverDepthBuffer()
     backendViewId++;
     bgfx::blit(backendViewId, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, backupDepthTexture, 0, 0, framebufferWidth, framebufferHeight);
     bgfx::touch(backendViewId);
+    backendViewId++;
 }
 
 void Renderer::drawFieldShadow()
