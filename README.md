@@ -49,6 +49,7 @@ If you're curious to know it, FFNx is made with:
 
 - C++ code base
 - Latest MSVC available on [Visual Studio 2019 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+- [vcpkg](https://vcpkg.io/) ( as dependency manager )
 - [CMake](https://cmake.org/) ( as make files )
 - [BGFX](https://github.com/bkaradzic/bgfx) ( as backend renderer )
 - [BIMG](https://github.com/bkaradzic/bimg) ( for custom textures )
