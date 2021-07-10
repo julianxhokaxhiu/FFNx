@@ -406,7 +406,7 @@ void draw_yuv_frame(uint32_t buffer_index, bool full_range)
 }
 
 // display the next frame
-uint32_t ffmpeg_update_movie_sample()
+uint32_t ffmpeg_update_movie_sample(bool is_movie_bgfield)
 {
 	AVPacket packet;
 	int ret;
@@ -600,11 +600,15 @@ uint32_t ffmpeg_update_movie_sample()
 		if(vbuffer_write == vbuffer_read) return false;
 	}
 
-	// wait for the next frame
-	do
+	// Pure movie playback has no frame limiter, use one but only when not used as background in fields
+	if (!is_movie_bgfield)
 	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&now);
-	} while(LAG < 0.0);
+		// wait for the next frame
+		do
+		{
+			QueryPerformanceCounter((LARGE_INTEGER *)&now);
+		} while(LAG < 0.0);
+	}
 
 	// keep going
 	return true;

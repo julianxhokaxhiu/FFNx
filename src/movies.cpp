@@ -202,7 +202,7 @@ uint32_t ff7_update_movie_sample(LPDIRECTDRAWSURFACE surface)
 	if(!ff7_externals.movie_object->is_playing) return false;
 
 retry:
-	movie_end = !ffmpeg_update_movie_sample();
+	movie_end = !ffmpeg_update_movie_sample(is_movie_bgfield);
 
 	if(movie_end)
 	{
