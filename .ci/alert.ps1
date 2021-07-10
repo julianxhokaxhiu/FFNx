@@ -29,7 +29,7 @@ if ($env:_IS_BUILD_CANARY -eq "true") {
 $discordPost = @"
 {
   "username": "FFNx",
-  "avatar_url": "https://avatars3.githubusercontent.com/ml/1303",
+  "avatar_url": "https://github.com/julianxhokaxhiu/FFNx/raw/master/.logo/logo_whitebg.png",
   "content": "Release **${env:_RELEASE_VERSION}** has just been published!\n\nDownload Url: ${downloadUrl}\n\nIf you find something broken or unexpected, feel free to check existing ones first here https://github.com/julianxhokaxhiu/FFNx/issues.\nIf non existing, then report your issue here https://github.com/julianxhokaxhiu/FFNx/issues/new.\n\nThank you for using FFNx!",
   "embeds": [
     {
