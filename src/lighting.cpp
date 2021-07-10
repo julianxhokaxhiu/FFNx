@@ -606,21 +606,25 @@ void Lighting::draw(struct game_obj* game_object)
         }
     }
 
-    // Draw deferred 2D opaque models
-    gl_draw_deferred(DRAW_ORDER_0);
+	if (mode->driver_mode == MODE_FIELD)
+	{
+		// Draw deferred 2D opaque models
+		gl_draw_deferred(true, DRAW_ORDER_0);
 
-    // Draw the walkmesh for field shadows
-    if (mode->driver_mode == MODE_FIELD)
-    {
+		// Draw the walkmesh for field shadows
 		gl_set_projection_viewport_matrices();
-        drawFieldShadow();
-    }
+		drawFieldShadow();
 
-	// Draw deferred 3D opaque models
-	gl_draw_deferred(DRAW_ORDER_1);
+		// Draw deferred 3D opaque models
+		gl_draw_deferred(true, DRAW_ORDER_1);
 
-	// Draw deferred non-opaque models
-	gl_draw_deferred(DRAW_ORDER_2);
+		// Draw deferred non-opaque models
+		gl_draw_deferred(true, DRAW_ORDER_2);
+	}
+	else
+	{
+		gl_draw_deferred(false);
+	}
 };
 
 void Lighting::drawFieldShadow()

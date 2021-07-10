@@ -296,7 +296,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 }
 
 // draw deferred models
-void gl_draw_deferred(DrawOrder draworder)
+void gl_draw_deferred(bool isDrawOrderEnabled, DrawOrder draworder)
 {
 	struct driver_state saved_state;
 
@@ -316,7 +316,7 @@ void gl_draw_deferred(DrawOrder draworder)
 			continue;
 		}
 
-		if (deferred_draws[i].draworder != draworder)
+		if (isDrawOrderEnabled && deferred_draws[i].draworder != draworder)
 		{
 			continue;
 		}
@@ -348,7 +348,7 @@ void gl_draw_deferred(DrawOrder draworder)
 		deferred_draws[i].boundingbox = nullptr;
 	}
 
-	if(draworder == DRAW_ORDER_COUNT - 1) num_deferred = 0;
+	if(!isDrawOrderEnabled || draworder == DRAW_ORDER_COUNT - 1) num_deferred = 0;
 
 	nodefer = false;
 

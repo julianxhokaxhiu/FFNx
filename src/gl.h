@@ -103,7 +103,7 @@ void gl_save_state(struct driver_state *dest);
 void gl_load_state(struct driver_state *src);
 uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct point3d* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap);
 uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap);
-void gl_draw_deferred(DrawOrder draworder);
+void gl_draw_deferred(bool isDrawOrderEnabled = false, DrawOrder draworder = DRAW_ORDER_0);
 void gl_set_projection_viewport_matrices();
 struct boundingbox calculateSceneAabb();
 void gl_draw_sorted_deferred();
