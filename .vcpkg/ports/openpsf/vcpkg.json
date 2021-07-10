@@ -1,0 +1,9 @@
+{
+  "name": "openpsf",
+  "version": "1.3.0",
+  "description": "Tiny lib to stream PSF files (PlayStation Midi)",
+  "homepage": "https://github.com/myst6re/openpsf",
+  "dependencies": [
+    "zlib"
+  ]
+}

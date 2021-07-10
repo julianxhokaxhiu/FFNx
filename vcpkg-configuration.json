@@ -1,9 +1,8 @@
 {
   "registries": [
     {
-      "kind": "git",
-      "repository": "https://github.com/julianxhokaxhiu/vcpkg-repo",
-      "baseline": "2fc1dae74d48def26970927b4089f6b267618f5e",
+      "kind": "filesystem",
+      "path": ".vcpkg",
       "packages": [
         "bx",
         "bimg",

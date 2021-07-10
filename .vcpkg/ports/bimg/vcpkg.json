@@ -1,0 +1,9 @@
+{
+  "name": "bimg",
+  "version": "1.0.0",
+  "description": "Image library",
+  "homepage": "https://github.com/bkaradzic/bimg",
+  "dependencies": [
+    "bx"
+  ]
+}

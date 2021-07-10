@@ -1,0 +1,6 @@
+{
+  "name": "stackwalker",
+  "version": "1.2.1",
+  "description": "Walking the callstack in windows applications",
+  "homepage": "https://github.com/JochenKalmbach/StackWalker"
+}

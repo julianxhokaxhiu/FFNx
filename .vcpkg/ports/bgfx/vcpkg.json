@@ -1,0 +1,10 @@
+{
+  "name": "bgfx",
+  "version": "1.0.0",
+  "description": "Cross-platform, graphics API agnostic, Bring Your Own Engine/Framework style rendering library.",
+  "homepage": "https://github.com/bkaradzic/bgfx",
+  "dependencies": [
+    "bx",
+    "bimg"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "vgmstream",
+  "version": "1.0.0",
+  "description": "A library for playback of various streamed audio formats used in video games.",
+  "homepage": "https://github.com/vgmstream/vgmstream",
+  "default-features": [
+    "ffmpeg"
+  ],
+  "features": {
+    "ffmpeg": {
+      "description": "Use ffmpeg to decode audio files",
+      "dependencies": [
+        {
+          "name": "ffmpeg",
+          "default-features": false,
+          "features": [
+            "avresample",
+            "gpl"
+          ]
+        }
+      ]
+    },
+    "mpg123": {
+      "description": "Use mpg123 to decode MPEG audio files",
+      "dependencies": [
+        "mpg123"
+      ]
+    },
+    "vorbis": {
+      "description": "Use libvorbis to decode OGG audio files",
+      "dependencies": [
+        "libvorbis"
+      ]
+    }
+  }
+}
