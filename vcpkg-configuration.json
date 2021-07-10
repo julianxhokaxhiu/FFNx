@@ -3,7 +3,7 @@
     {
       "kind": "git",
       "repository": "https://github.com/julianxhokaxhiu/vcpkg-repo",
-      "baseline": "a8db3c464b28fb6f697e1b54a52555c99314c9eb",
+      "baseline": "2fc1dae74d48def26970927b4089f6b267618f5e",
       "packages": [
         "bx",
         "bimg",
