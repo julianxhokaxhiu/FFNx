@@ -35,7 +35,7 @@ void ffmpeg_movie_init();
 void ffmpeg_release_movie_objects();
 uint32_t ffmpeg_prepare_movie(char* name);
 void ffmpeg_stop_movie();
-uint32_t ffmpeg_update_movie_sample(bool is_movie_bgfield = false);
+uint32_t ffmpeg_update_movie_sample(bool use_movie_fps = true);
 void ffmpeg_draw_current_frame();
 void ffmpeg_loop();
 uint32_t ffmpeg_get_movie_frame();

@@ -202,7 +202,8 @@ uint32_t ff7_update_movie_sample(LPDIRECTDRAWSURFACE surface)
 	if(!ff7_externals.movie_object->is_playing) return false;
 
 retry:
-	movie_end = !ffmpeg_update_movie_sample(is_movie_bgfield);
+	// Use native movie fps limiter if it's not been playback in fields ( no 3d models drawn on top )
+	movie_end = !ffmpeg_update_movie_sample(!(*ff7_externals.field_limit_fps));
 
 	if(movie_end)
 	{

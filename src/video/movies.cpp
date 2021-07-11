@@ -406,7 +406,7 @@ void draw_yuv_frame(uint32_t buffer_index, bool full_range)
 }
 
 // display the next frame
-uint32_t ffmpeg_update_movie_sample(bool is_movie_bgfield)
+uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 {
 	AVPacket packet;
 	int ret;
@@ -600,8 +600,8 @@ uint32_t ffmpeg_update_movie_sample(bool is_movie_bgfield)
 		if(vbuffer_write == vbuffer_read) return false;
 	}
 
-	// Pure movie playback has no frame limiter, use one but only when not used as background in fields
-	if (!is_movie_bgfield)
+	// Pure movie playback has no frame limiter, although it is not always required. Use it only when necessary
+	if (use_movie_fps)
 	{
 		// wait for the next frame
 		do
