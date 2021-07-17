@@ -168,6 +168,7 @@ private:
     struct RendererState
     {
         bgfx::TextureHandle texHandlers[3];
+        bool bTexturesBound = false;
 
         bool bHasDrawBeenDone = false;
 
@@ -301,6 +302,8 @@ private:
 
     void recalcInternals();
     void prepareFramebuffer();
+
+    void bindTextures();
 
     bx::DefaultAllocator defaultAllocator;
     bx::FileWriter defaultWriter;

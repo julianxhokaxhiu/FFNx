@@ -548,6 +548,52 @@ void Renderer::prepareFramebuffer()
     );
 }
 
+void Renderer::bindTextures()
+{
+    if (!internalState.bTexturesBound)
+    {
+        // Bind core game textures
+        {
+            uint32_t idxMax = 3;
+
+            for (uint32_t idx = 0; idx < idxMax; idx++)
+            {
+                bgfx::TextureHandle handle = internalState.texHandlers[idx];
+
+                if (!internalState.bIsMovie && idx > 0) handle = BGFX_INVALID_HANDLE;
+
+                if (bgfx::isValid(handle))
+                {
+                    uint32_t flags = 0;
+
+                    if (backendProgram == RendererProgram::POSTPROCESSING)
+                    {
+                        flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                    }
+                    else
+                    {
+                        if (internalState.bIsMovie) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+
+                        if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+
+                        if (flags == 0) flags = UINT32_MAX;
+                    }
+
+                    bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), handle, flags);
+                }
+            }
+        }
+
+        // Override slot 3: shadow map with comparison sampler
+        bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+
+        // Override slot 4: shadow map for direct depth sampling
+        bgfx::setTexture(4, getUniform(shaderTextureBindings[4], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP);
+
+        internalState.bTexturesBound = true;
+    }
+}
+
 // PUBLIC
 
 void Renderer::init()
@@ -727,18 +773,8 @@ void Renderer::drawToShadowMap()
     setLightingUniforms();
     setCommonUniforms();
 
-    // Bind texture
-    bgfx::TextureHandle handle = internalState.texHandlers[0];
-    if (bgfx::isValid(handle))
-    {
-        uint32_t flags = 0;
-
-        if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
-
-        if (flags == 0) flags = UINT32_MAX;
-
-        bgfx::setTexture(0, getUniform(shaderTextureBindings[0], bgfx::UniformType::Sampler), handle, flags);
-    }
+    // Bind textures in pipeline
+    bindTextures();
 
     // Set state
     internalState.state = BGFX_STATE_DEPTH_TEST_LEQUAL | BGFX_STATE_WRITE_Z;
@@ -767,8 +803,8 @@ void Renderer::drawWithLighting(bool isCastShadow)
     // Set lighting program
     backendProgram = backendProgram == SMOOTH ? LIGHTING_SMOOTH : LIGHTING_FLAT;
 
-    // Bind shadow map with comparison sampler
-    bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+    // Bind textures in pipeline
+    bindTextures();
 
     // Draw with lighting
     draw(isCastShadow);
@@ -794,12 +830,8 @@ void Renderer::drawFieldShadow()
 {
     backendProgram = RendererProgram::FIELD_SHADOW;
 
-    // Bind shadow map with comparison sampler
-    bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
-
-    // Bind shadow map for direct depth sampling
-    uint32_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
-    bgfx::setTexture(4, getUniform(shaderTextureBindings[4], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), flags);
+    // Bind textures in pipeline
+    bindTextures();
 
     draw();
 }
@@ -830,40 +862,8 @@ void Renderer::draw(bool uniformsAlreadyAttached)
         setLightingUniforms();
     }
 
-    // Bind texture
-    {
-        uint32_t idxMax = 3;
-
-        for (uint32_t idx = 0; idx < idxMax; idx++)
-        {
-            bgfx::TextureHandle handle = internalState.texHandlers[idx];
-
-            if (!internalState.bIsMovie && idx > 0) handle = BGFX_INVALID_HANDLE;
-
-            // Skip game texture uniform attachment as it has been done already
-            if (uniformsAlreadyAttached && idx == 0) handle = BGFX_INVALID_HANDLE;
-
-            if (bgfx::isValid(handle))
-            {
-                uint32_t flags = 0;
-
-                if (backendProgram == RendererProgram::POSTPROCESSING)
-                {
-                    flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
-                }
-                else
-                {
-                    if (internalState.bIsMovie) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
-
-                    if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
-
-                    if (flags == 0) flags = UINT32_MAX;
-                }
-
-                bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), handle, flags);
-            }
-        }
-    }
+    // Bind textures in pipeline
+    bindTextures();
 
     // Set state
     {
@@ -919,6 +919,7 @@ void Renderer::draw(bool uniformsAlreadyAttached)
     bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
 
     internalState.bHasDrawBeenDone = true;
+    internalState.bTexturesBound = false;
 };
 
 void Renderer::drawOverlay()
