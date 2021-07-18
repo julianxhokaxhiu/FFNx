@@ -578,12 +578,9 @@ void Renderer::bindTextures()
                         }
                         break;
                     case RendererTextureSlot::TEX_S:
-                        handle = bgfx::getTexture(shadowMapFrameBuffer);
-                        break;
                     case RendererTextureSlot::TEX_D:
-                        handle = bgfx::getTexture(shadowMapFrameBuffer);
-                        flags |= BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
-                        break;
+                        // Specially handled, move on
+                        continue;
                     default:
                         break;
                 }
@@ -809,8 +806,8 @@ void Renderer::drawWithLighting(bool isCastShadow)
     // Set lighting program
     backendProgram = backendProgram == SMOOTH ? LIGHTING_SMOOTH : LIGHTING_FLAT;
 
-    // Bind textures in pipeline
-    bindTextures();
+    // Re-Bind shadow map with comparison sampler
+    bgfx::setTexture(RendererTextureSlot::TEX_S, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_S), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
 
     // Draw with lighting
     draw(isCastShadow);
@@ -836,8 +833,11 @@ void Renderer::drawFieldShadow()
 {
     backendProgram = RendererProgram::FIELD_SHADOW;
 
-    // Bind textures in pipeline
-    bindTextures();
+    // Re-Bind shadow map with comparison sampler
+    bgfx::setTexture(RendererTextureSlot::TEX_S, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_S), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+
+    // Re-Bind shadow map for direct depth sampling
+    bgfx::setTexture(RendererTextureSlot::TEX_D, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_D), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP);
 
     draw();
 }
