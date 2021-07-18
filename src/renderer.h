@@ -94,6 +94,16 @@ enum RendererTextureType
     YUV
 };
 
+enum RendererTextureSlot
+{
+    TEX_Y = 0,
+    TEX_U,
+    TEX_V,
+    TEX_S,
+    TEX_D,
+    COUNT
+};
+
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
 {
     BX_UNUSED(_ptr);
@@ -212,14 +222,6 @@ private:
         RendererPrimitiveType primitiveType = RendererPrimitiveType::PT_TRIANGLES;
 
         uint64_t state = BGFX_STATE_MSAA;
-    };
-
-    char shaderTextureBindings[5][6] = {
-            "tex", // BGRA or Y share the same binding
-            "tex_u",
-            "tex_v",
-            "tex_s",
-            "tex_d"
     };
 
     std::string vertexPathFlat = "shaders/FFNx";

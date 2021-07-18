@@ -18,9 +18,9 @@ $input v_color0, v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_position0
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.lighting.sh"
 
-SAMPLER2D(tex, 0);
-SAMPLER2D(tex_u, 1);
-SAMPLER2D(tex_v, 2);
+SAMPLER2D(tex_0, 0);
+SAMPLER2D(tex_1, 1);
+SAMPLER2D(tex_2, 2);
 
 uniform vec4 VSFlags;
 uniform vec4 FSAlphaFlags;
@@ -87,9 +87,9 @@ void main()
             );
 
             vec3 yuv = vec3(
-                texture2D(tex, v_texcoord0.xy).r - (1.0 / 16.0),
-                texture2D(tex_u, v_texcoord0.xy).r - 0.5,
-                texture2D(tex_v, v_texcoord0.xy).r - 0.5
+                texture2D(tex_0, v_texcoord0.xy).r - (1.0 / 16.0),
+                texture2D(tex_1, v_texcoord0.xy).r - 0.5,
+                texture2D(tex_2, v_texcoord0.xy).r - 0.5
             );
 
             if (isFullRange) color.rgb = instMul(jpeg_rgb_transform, yuv);
@@ -107,11 +107,11 @@ void main()
             else
             {
                 color_uv = v_texcoord1.xy;
-                param = texture2D(tex, v_texcoord2.xy);
-                param2 = texture2D(tex, v_texcoord3.xy);
+                param = texture2D(tex_0, v_texcoord2.xy);
+                param2 = texture2D(tex_0, v_texcoord3.xy);
             }
 
-            vec4 texture_color = texture2D(tex, color_uv);
+            vec4 texture_color = texture2D(tex_0, color_uv);
 
             if (doAlphaTest)
             {

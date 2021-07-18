@@ -552,11 +552,11 @@ void Renderer::bindTextures()
 {
     if (!internalState.bTexturesBound)
     {
-        // Bind core game textures
+        // slots 0-2
         {
             uint32_t idxMax = 3;
 
-            for (uint32_t idx = 0; idx < idxMax; idx++)
+            for (uint32_t idx = RendererTextureSlot::TEX_Y; idx <= RendererTextureSlot::TEX_V; idx++)
             {
                 bgfx::TextureHandle handle = internalState.texHandlers[idx];
 
@@ -579,16 +579,16 @@ void Renderer::bindTextures()
                         if (flags == 0) flags = UINT32_MAX;
                     }
 
-                    bgfx::setTexture(idx, getUniform(shaderTextureBindings[idx], bgfx::UniformType::Sampler), handle, flags);
+                    bgfx::setTexture(idx, getUniform("tex_" + std::to_string(idx), bgfx::UniformType::Sampler), handle, flags);
                 }
             }
         }
 
-        // Override slot 3: shadow map with comparison sampler
-        bgfx::setTexture(3, getUniform(shaderTextureBindings[3], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+        // slot 3: shadow map with comparison sampler
+        bgfx::setTexture(RendererTextureSlot::TEX_S, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_S), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
 
-        // Override slot 4: shadow map for direct depth sampling
-        bgfx::setTexture(4, getUniform(shaderTextureBindings[4], bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP);
+        // slot 4: shadow map for direct depth sampling
+        bgfx::setTexture(RendererTextureSlot::TEX_D, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_D), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP);
 
         internalState.bTexturesBound = true;
     }
