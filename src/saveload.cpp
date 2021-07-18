@@ -106,11 +106,12 @@ uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool
 	return ret;
 }
 
-uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, bool is_animated)
+uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set)
 {
 	uint32_t ret = 0;
 	char filename[sizeof(basedir) + 1024]{ 0 };
 	uint64_t hash;
+	bool is_animated = gl_set->is_animated;
 
 	struct stat dummy;
 
@@ -120,6 +121,13 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	{
 		if (is_animated)
 		{
+			if (gl_set->animated_textures.count(hash))
+			{
+				// We already know the texture, return its handler and move on
+				ret = gl_set->animated_textures[hash];
+				break;
+			}
+
 			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path.c_str(), name, palette_index, hash, mod_ext[idx].c_str());
 
 			if (stat(filename, &dummy) != 0)
@@ -138,6 +146,8 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 
 			if (!ret && trace_all) ffnx_warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
 
+			if (ret && is_animated ) gl_set->animated_textures[hash] = ret;
+
 			break;
 		}
 		else if (trace_all || show_missing_textures)
@@ -151,7 +161,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 		if(palette_index != 0)
 		{
 			if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n", basedir, mod_path.c_str(), name, palette_index);
-			return load_texture(data, dataSize, name, 0, width, height, false);
+			return load_texture(data, dataSize, name, 0, width, height, gl_set);
 		}
 		else
 		{
@@ -163,6 +173,8 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	{
 		if (trace_all) ffnx_trace("Created external texture: %u from %s\n", ret, filename);
 	}
+
+	if (is_animated) gl_set->current_animated_texture = hash;
 
 	return ret;
 }

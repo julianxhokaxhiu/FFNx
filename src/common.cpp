@@ -1047,10 +1047,22 @@ void common_unload_texture(struct texture_set *texture_set)
 	if(!VREF(texture_set, ogl.gl_set)) return;
 
 	for (uint32_t idx = 0; idx < VREF(texture_set, ogl.gl_set->textures); idx++)
+	{
+		if (VREF(texture_set, ogl.gl_set->is_animated))
+		{
+			// Destroy animated textures
+			for(std::map<uint64_t,uint32_t>::iterator it = VREF(texture_set, ogl.gl_set->animated_textures).begin(); it != VREF(texture_set, ogl.gl_set->animated_textures).end(); ++it) {
+				newRenderer.deleteTexture(it->second);
+			}
+			VREF(texture_set, ogl.gl_set->animated_textures).clear();
+		}
+
+		// Destroy original static texture
 		newRenderer.deleteTexture(VREF(texture_set, texturehandle[idx]));
+	}
 
 	external_free(VREF(texture_set, texturehandle));
-	external_free(VREF(texture_set, ogl.gl_set));
+	delete VREF(texture_set, ogl.gl_set);
 
 	VRASS(texture_set, texturehandle, 0);
 	VRASS(texture_set, ogl.gl_set, 0);
@@ -1111,7 +1123,7 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 	{
 		if(trace_all || trace_loaders) ffnx_trace("texture file name: %s\n", VREF(tex_header, file.pc_name));
 
-		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set->is_animated);
+		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
 
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "world", strlen("world") - 1)) gl_set->force_filter = true;
 
@@ -1139,10 +1151,13 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 
 	if(texture)
 	{
-		gl_replace_texture(texture_set, VREF(tex_header, palette_index), texture);
+		if (!gl_set->is_animated)
+		{
+			gl_replace_texture(texture_set, VREF(tex_header, palette_index), texture);
 
-		if(!VREF(texture_set, ogl.external)) stats.external_textures++;
-		VRASS(texture_set, ogl.external, true);
+			if(!VREF(texture_set, ogl.external)) stats.external_textures++;
+			VRASS(texture_set, ogl.external, true);
+		}
 
 		return true;
 	}
@@ -1276,7 +1291,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	}
 
 	// allocate space for our private data
-	if(!VREF(texture_set, ogl.gl_set)) VRASS(texture_set, ogl.gl_set, (gl_texture_set*)external_calloc(sizeof(struct gl_texture_set), 1));
+	if(!VREF(texture_set, ogl.gl_set)) VRASS(texture_set, ogl.gl_set, new gl_texture_set());
 
 	// texture handle array may not have been initialized
 	if(!VREF(texture_set, texturehandle))
