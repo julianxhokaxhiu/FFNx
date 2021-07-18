@@ -1,4 +1,10 @@
 /****************************************************************************/
+//    Copyright (C) 2009 Aali132                                            //
+//    Copyright (C) 2018 quantumpencil                                      //
+//    Copyright (C) 2018 Maxime Bacoux                                      //
+//    Copyright (C) 2020 myst6re                                            //
+//    Copyright (C) 2020 Chris Rizzitello                                   //
+//    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -13,8 +19,10 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-SAMPLER2DSHADOW(tex_s, 3);
-SAMPLER2D(tex_d, 4);
+// TEX_S
+SAMPLER2DSHADOW(tex_3, 3);
+// TEX_D
+SAMPLER2D(tex_4, 4);
 
 uniform mat4 invViewMatrix;
 uniform mat4 lightInvViewProjTexMatrix;
@@ -26,7 +34,7 @@ float sampleShadowMap(vec2 base_uv, float u, float v, float shadowMapSizeInv, fl
     vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
 
     vec3 shadowUv = vec3(uv, lightDepth);
-    float shadowFactor = shadow2D(tex_s, shadowUv);
+    float shadowFactor = shadow2D(tex_3, shadowUv);
 
 #ifdef FIELD_SHADOW
 #if BGFX_SHADER_LANGUAGE_HLSL > 400
@@ -34,7 +42,7 @@ float sampleShadowMap(vec2 base_uv, float u, float v, float shadowMapSizeInv, fl
     // This is to prevent shadows being projected to multiple floors
 
     float shadowDistance = 0.0;
-    vec4 lightDepths = textureGather(tex_d, shadowUv.xy);
+    vec4 lightDepths = textureGather(tex_4, shadowUv.xy);
     for(int i = 0; i < 4; ++i)
     {
         vec4 shadowPos = vec4(shadowUv.xy, lightDepths[i], 1.0);

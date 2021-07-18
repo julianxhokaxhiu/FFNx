@@ -137,10 +137,12 @@ void gl_save_state(struct driver_state *dest)
 // restore complete rendering state from memory
 void gl_load_state(struct driver_state *src)
 {
+	VOBJ(texture_set, texture_set, src->texture_set);
+
 	memcpy(&current_state, src, sizeof(current_state));
 
 	gl_bind_texture_set(src->texture_set);
-	gl_set_texture(src->texture_handle);
+	gl_set_texture(src->texture_handle, src->texture_set ? VREF(texture_set, ogl.gl_set) : NULL);
 	current_state.texture_set = src->texture_set;
 	common_setviewport(src->viewport[0], src->viewport[1], src->viewport[2], src->viewport[3], 0);
 	gl_set_blend_func(src->blend_mode);

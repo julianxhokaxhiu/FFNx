@@ -30,6 +30,11 @@
 
 #include "discohash.h"
 
+std::map<uint16_t, std::string> additional_textures = {
+	{RendererTextureSlot::TEX_NML, "nml"},
+	{RendererTextureSlot::TEX_PBR, "pbr"}
+};
+
 void make_path(char *name)
 {
 	char *next = name;
@@ -172,6 +177,29 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	else
 	{
 		if (trace_all) ffnx_trace("Created external texture: %u from %s\n", ret, filename);
+
+		if (!is_animated)
+		{
+			// Load additional textures
+			for (const auto& it : additional_textures)
+			{
+				for (int idx = 0; idx < mod_ext.size(); idx++)
+				{
+					_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%s.%s", basedir, mod_path.c_str(), name, palette_index, it.second.c_str(), mod_ext[idx].c_str());
+
+					if (stat(filename, &dummy) == 0)
+					{
+						if (gl_set->additional_textures.count(it.first)) newRenderer.deleteTexture(gl_set->additional_textures[it.first]);
+						gl_set->additional_textures[it.first] = load_texture_helper(filename, width, height, mod_ext[idx] == "png");
+						break;
+					}
+					else if (trace_all || show_missing_textures)
+					{
+						ffnx_trace("Could not find [ %s ].\n", filename);
+					}
+				}
+			}
+		}
 	}
 
 	if (is_animated) gl_set->current_animated_texture = hash;

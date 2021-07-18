@@ -86,10 +86,13 @@ struct gl_texture_set
 	uint32_t textures;
 	uint32_t force_filter;
 	uint32_t force_zsort;
+	uint32_t is_aspect_ratio_changed;
+	// ANIMATED TEXTURES
 	uint32_t is_animated;
 	std::map<uint64_t, uint32_t> animated_textures;
 	uint64_t current_animated_texture;
-	uint32_t is_aspect_ratio_changed;
+	// ADDITIONAL TEXTURES
+	std::map<uint16_t, uint32_t> additional_textures;
 };
 
 extern struct matrix d3dviewport_matrix;
@@ -122,5 +125,5 @@ bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source);
 void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index, uint32_t new_texture);
 void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, void *image_data, uint32_t format);
 void gl_bind_texture_set(struct texture_set *);
-void gl_set_texture(uint32_t);
+void gl_set_texture(uint32_t texture, struct gl_texture_set* gl_set);
 uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, char *fmt, ...);

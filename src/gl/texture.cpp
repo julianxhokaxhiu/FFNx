@@ -101,27 +101,34 @@ void gl_bind_texture_set(struct texture_set *_texture_set)
 		struct gl_texture_set* gl_set = VREF(texture_set, ogl.gl_set);
 
 		if (gl_set->is_animated && VREF(texture_set, ogl.external))
-		{
-			gl_set_texture(gl_set->animated_textures[gl_set->current_animated_texture]);
-		}
+			newRenderer.useTexture(gl_set->animated_textures[gl_set->current_animated_texture]);
 		else
-			gl_set_texture(VREF(texture_set, texturehandle[VREF(tex_header, palette_index)]));
+			gl_set_texture(VREF(texture_set, texturehandle[VREF(tex_header, palette_index)]), gl_set);
 
 		if(VREF(tex_header, version) == FB_TEX_VERSION) current_state.fb_texture = true;
 		else current_state.fb_texture = false;
 	}
-	else gl_set_texture(0);
+	else gl_set_texture(0, NULL);
 
 	current_state.texture_set = _texture_set;
 }
 
 // prepare an OpenGL texture for rendering, passing zero to this function will
 // disable texturing entirely
-void gl_set_texture(uint32_t texture)
+void gl_set_texture(uint32_t texture, struct gl_texture_set* gl_set)
 {
 	if(trace_all) ffnx_trace("gl_set_texture: set texture %i\n", texture);
 
 	newRenderer.useTexture(texture);
+
+	// Attach additional textures
+	for (short slot = RendererTextureSlot::TEX_NML; slot < RendererTextureSlot::COUNT; slot++)
+	{
+		if (texture > 0 && gl_set)
+			newRenderer.useTexture(gl_set->additional_textures[slot], slot);
+		else
+			newRenderer.useTexture(0, slot);
+	}
 
 	current_state.texture_handle = texture;
 	current_state.texture_set = 0;

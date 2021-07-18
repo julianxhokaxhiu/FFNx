@@ -552,43 +552,48 @@ void Renderer::bindTextures()
 {
     if (!internalState.bTexturesBound)
     {
-        // slots 0-2
+        for (uint32_t idx = RendererTextureSlot::TEX_Y; idx < RendererTextureSlot::COUNT; idx++)
         {
-            uint32_t idxMax = 3;
+            bgfx::TextureHandle handle = internalState.texHandlers[idx];
 
-            for (uint32_t idx = RendererTextureSlot::TEX_Y; idx <= RendererTextureSlot::TEX_V; idx++)
+            if (bgfx::isValid(handle))
             {
-                bgfx::TextureHandle handle = internalState.texHandlers[idx];
+                uint32_t flags = 0;
 
-                if (!internalState.bIsMovie && idx > 0) handle = BGFX_INVALID_HANDLE;
-
-                if (bgfx::isValid(handle))
+                switch(idx)
                 {
-                    uint32_t flags = 0;
+                    case RendererTextureSlot::TEX_Y:
+                    case RendererTextureSlot::TEX_U:
+                    case RendererTextureSlot::TEX_V:
+                        if (!internalState.bIsMovie && idx > RendererTextureSlot::TEX_Y) handle = BGFX_INVALID_HANDLE;
 
-                    if (backendProgram == RendererProgram::POSTPROCESSING)
-                    {
-                        flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
-                    }
-                    else
-                    {
-                        if (internalState.bIsMovie) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                        if (backendProgram == RendererProgram::POSTPROCESSING)
+                        {
+                            flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                        }
+                        else
+                        {
+                            if (internalState.bIsMovie) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
-                        if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
-
-                        if (flags == 0) flags = UINT32_MAX;
-                    }
-
-                    bgfx::setTexture(idx, getUniform("tex_" + std::to_string(idx), bgfx::UniformType::Sampler), handle, flags);
+                            if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+                        }
+                        break;
+                    case RendererTextureSlot::TEX_S:
+                        handle = bgfx::getTexture(shadowMapFrameBuffer);
+                        break;
+                    case RendererTextureSlot::TEX_D:
+                        handle = bgfx::getTexture(shadowMapFrameBuffer);
+                        flags |= BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                        break;
+                    default:
+                        break;
                 }
+
+                if (flags == 0) flags = UINT32_MAX;
+
+                bgfx::setTexture(idx, getUniform("tex_" + std::to_string(idx), bgfx::UniformType::Sampler), handle, flags);
             }
         }
-
-        // slot 3: shadow map with comparison sampler
-        bgfx::setTexture(RendererTextureSlot::TEX_S, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_S), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
-
-        // slot 4: shadow map for direct depth sampling
-        bgfx::setTexture(RendererTextureSlot::TEX_D, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_D), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP);
 
         internalState.bTexturesBound = true;
     }
@@ -618,6 +623,8 @@ void Renderer::init()
     bgfxInit.callback = &bgfxCallbacks;
 
     if (!bgfx::init(bgfxInit)) exit(1);
+
+    internalState.texHandlers.resize(RendererTextureSlot::COUNT, BGFX_INVALID_HANDLE);
 
     updateRendererShaderPaths();
 
@@ -1398,12 +1405,12 @@ void Renderer::useTexture(uint16_t rt, uint32_t slot)
     if (rt > 0)
     {
         internalState.texHandlers[slot] = { rt };
-        isTexture(true);
+        if (slot == RendererTextureSlot::TEX_Y) isTexture(true);
     }
     else
     {
         internalState.texHandlers[slot] = BGFX_INVALID_HANDLE;
-        isTexture(false);
+        if (slot == RendererTextureSlot::TEX_Y) isTexture(false);
     }
 };
 

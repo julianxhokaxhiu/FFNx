@@ -1046,20 +1046,26 @@ void common_unload_texture(struct texture_set *texture_set)
 	if(!VREF(texture_set, texturehandle)) return;
 	if(!VREF(texture_set, ogl.gl_set)) return;
 
+	struct gl_texture_set *gl_set = VREF(texture_set, ogl.gl_set);
+
+	// Destroy original static textures
 	for (uint32_t idx = 0; idx < VREF(texture_set, ogl.gl_set->textures); idx++)
 	{
-		if (VREF(texture_set, ogl.gl_set->is_animated))
-		{
-			// Destroy animated textures
-			for(std::map<uint64_t,uint32_t>::iterator it = VREF(texture_set, ogl.gl_set->animated_textures).begin(); it != VREF(texture_set, ogl.gl_set->animated_textures).end(); ++it) {
-				newRenderer.deleteTexture(it->second);
-			}
-			VREF(texture_set, ogl.gl_set->animated_textures).clear();
-		}
-
-		// Destroy original static texture
 		newRenderer.deleteTexture(VREF(texture_set, texturehandle[idx]));
 	}
+
+	// Destroy animated textures
+	if (gl_set->is_animated)
+	{
+		for(std::map<uint64_t,uint32_t>::iterator it = gl_set->animated_textures.begin(); it != gl_set->animated_textures.end(); ++it) {
+			newRenderer.deleteTexture(it->second);
+		}
+		gl_set->animated_textures.clear();
+	}
+
+	// Destroy additional textures
+	for (short slot = RendererTextureSlot::TEX_NML; slot < RendererTextureSlot::COUNT; slot++)
+		newRenderer.deleteTexture(gl_set->additional_textures[slot]);
 
 	external_free(VREF(texture_set, texturehandle));
 	delete VREF(texture_set, ogl.gl_set);
@@ -1291,7 +1297,12 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	}
 
 	// allocate space for our private data
-	if(!VREF(texture_set, ogl.gl_set)) VRASS(texture_set, ogl.gl_set, new gl_texture_set());
+	if(!VREF(texture_set, ogl.gl_set))
+	{
+		VRASS(texture_set, ogl.gl_set, new gl_texture_set());
+		for (short slot = RendererTextureSlot::TEX_NML; slot < RendererTextureSlot::COUNT; slot++)
+			VRASS(texture_set, ogl.gl_set->additional_textures[slot], 0);
+	}
 
 	// texture handle array may not have been initialized
 	if(!VREF(texture_set, texturehandle))

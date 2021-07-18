@@ -101,6 +101,8 @@ enum RendererTextureSlot
     TEX_V,
     TEX_S,
     TEX_D,
+    TEX_NML,
+    TEX_PBR,
     COUNT
 };
 
@@ -177,7 +179,7 @@ private:
 
     struct RendererState
     {
-        bgfx::TextureHandle texHandlers[3];
+        std::vector<bgfx::TextureHandle> texHandlers;
         bool bTexturesBound = false;
 
         bool bHasDrawBeenDone = false;
