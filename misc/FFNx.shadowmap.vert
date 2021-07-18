@@ -14,7 +14,7 @@
 /****************************************************************************/
 
 $input a_position, a_color0, a_texcoord0, a_normal
-$output v_color0, v_texcoord0, v_texcoord1, v_position0, v_shadow0, v_normal0
+$output v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
 
@@ -40,5 +40,4 @@ void main()
     gl_Position = pos;
     v_color0 = color;
     v_texcoord0 = coords;
-    v_texcoord1 = vec2(coords.x, (1.0 / 3.0) * coords.y);
 }

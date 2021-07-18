@@ -19,7 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0, v_texcoord1
+$input v_color0, v_texcoord0
 
 #include <bgfx/bgfx_shader.sh>
 

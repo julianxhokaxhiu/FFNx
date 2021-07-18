@@ -13,7 +13,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_position0, v_shadow0, v_normal0
+$input v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.lighting.sh"
@@ -106,9 +106,8 @@ void main()
         {
             vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
 
-            if (isNmlTextureLoaded) color_nml = texture2D(tex_5, v_texcoord2.xy);
-
-            if (isPbrTextureLoaded) color_pbr = texture2D(tex_6, v_texcoord3.xy);
+            if (isNmlTextureLoaded) color_nml = texture2D(tex_5, v_texcoord0.xy);
+            if (isPbrTextureLoaded) color_pbr = texture2D(tex_6, v_texcoord0.xy);
 
             if (doAlphaTest)
             {
@@ -199,21 +198,21 @@ void main()
 
             // Normal
             vec3 normal = normalize(v_normal0);
-            if(isNmlTextureLoaded && isPbrTextureEnabled) normal = perturb_normal(normal, -v_position0.xyz, color_nml.rgb, v_texcoord2.xy );
+            if(isPbrTextureEnabled) normal = perturb_normal(normal, -v_position0.xyz, color_nml.rgb, v_texcoord0.xy );
 
             // Roughness
             float roughness = materialData.x;
-            if(isPbrTextureLoaded && isPbrTextureEnabled) roughness = color_pbr.r * materialData.z;
+            if(isPbrTextureEnabled) roughness = color_pbr.r * materialData.z;
             float roughnessClamped = max(0.001, roughness);
 
             // Metalness
             float metalness = materialData.y;
-            if(isPbrTextureLoaded && isPbrTextureEnabled) metalness = color_pbr.g * materialData.w;
+            if(isPbrTextureEnabled) metalness = color_pbr.g * materialData.w;
             float metalnessClamped = min(1.0, metalness);
 
             // Ambient Occlusion
             float ao = 1.0;
-            if(isPbrTextureLoaded && isPbrTextureEnabled) ao = color_pbr.b;
+            if(isPbrTextureEnabled) ao = color_pbr.b;
 
             // Luminance
             vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, viewDir, normal, roughnessClamped, metalnessClamped, ao, shadowUv);

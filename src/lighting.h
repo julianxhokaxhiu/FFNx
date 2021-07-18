@@ -48,7 +48,7 @@ struct LightingState
     float lightViewProjMatrix[16];
     float lightViewProjTexMatrix[16];
 
-    float lightingSettings[4] = { 1.0, 0.0, 0.0, 0.0 };
+    float lightingSettings[4] = { 0.0, 0.0, 0.0, 0.0 };
     float lightDirData[4] = { 0.3, -1.0, -0.3, 0.0 };
     float lightData[4] = { 1.0, 1.0, 1.0, 4.0 };
     float ambientLightData[4] = { 1.0, 1.0, 1.0, 2.0 };
