@@ -108,12 +108,12 @@ void Renderer::setCommonUniforms()
     if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, modulateAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
 
     internalState.FSTexFlags = {
-        (float)internalState.bIsExtendedTexture,
-        NULL,
+        (float)(internalState.texHandlers[RendererTextureSlot::TEX_NML].idx != bgfx::kInvalidHandle),
+        (float)(internalState.texHandlers[RendererTextureSlot::TEX_PBR].idx != bgfx::kInvalidHandle),
         NULL,
         NULL
     };
-    if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(bIsExtendedTexture %f, NULL, NULL, NULL)\n", __func__, internalState.FSTexFlags[0]);
+    if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, NULL, NULL)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1]);
 
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
@@ -354,7 +354,6 @@ void Renderer::resetState()
     doModulateAlpha();
     doTextureFiltering();
     isExternalTexture();
-    isExtendedTexture();
 };
 
 void Renderer::renderFrame()
@@ -1506,11 +1505,6 @@ void Renderer::doTextureFiltering(bool flag)
 void Renderer::isExternalTexture(bool flag)
 {
     internalState.bIsExternalTexture = flag;
-}
-
-void Renderer::isExtendedTexture(bool flag)
-{
-    internalState.bIsExtendedTexture = flag;
 }
 
 void Renderer::setAlphaRef(RendererAlphaFunc func, float ref)

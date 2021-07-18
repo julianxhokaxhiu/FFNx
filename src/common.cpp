@@ -1142,17 +1142,6 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win", strlen("menu/btl_win") - 1)) gl_set->force_zsort = true;
 
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand_1", strlen("flevel/hand_1") - 1)) gl_set->force_filter = true;
-
-		// Check if aspect ratio has changed compared to the original textures.
-		// This is used to automatically determine whether the extended PBR textures are being used or not.
-		float originalAspectRatio = static_cast<float>(originalWidth) / static_cast<float>(originalHeight);
-		float width = static_cast<float>(VREF(texture_set, ogl.width));
-		float height = static_cast<float>(VREF(texture_set, ogl.height));
-		float aspectRatio = width / height;
-		if (std::abs(originalAspectRatio -  aspectRatio) > 0.01)
-			gl_set->is_aspect_ratio_changed = true;
-		else
-			gl_set->is_aspect_ratio_changed = false;
 	}
 
 	if(texture)

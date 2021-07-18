@@ -18,9 +18,14 @@ $input v_color0, v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_position0
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.lighting.sh"
 
-SAMPLER2D(tex_0, 0);
-SAMPLER2D(tex_1, 1);
-SAMPLER2D(tex_2, 2);
+// TEX_YUV
+SAMPLER2D(tex_0, 0); // Y
+SAMPLER2D(tex_1, 1); // U
+SAMPLER2D(tex_2, 2); // V
+// TEX_NML
+SAMPLER2D(tex_5, 5);
+// TEX_PBR
+SAMPLER2D(tex_6, 6);
 
 uniform vec4 VSFlags;
 uniform vec4 FSAlphaFlags;
@@ -53,8 +58,6 @@ uniform vec4 materialData;
 #define isMovie FSMiscFlags.w > 0.0
 
 // ---
-#define isTextureExtended isTexture && FSTexFlags.x > 0.0
-
 #define textureDebugOutput lightingDebugData.z
 #define TEXTURE_DEBUG_OUTPUT_DISABLED 0
 #define TEXTURE_DEBUG_OUTPUT_COLOR 1
@@ -62,7 +65,8 @@ uniform vec4 materialData;
 #define TEXTURE_DEBUG_OUTPUT_ROUGHNESS 3
 #define TEXTURE_DEBUG_OUTPUT_METALNESS 4
 
-#define isPbrTextureEnabled lightingSettings.x > 0.0
+#define isNmlTextureLoaded FSTexFlags.x > 0.0
+#define isPbrTextureLoaded FSTexFlags.y > 0.0
 
 void main()
 {
@@ -100,7 +104,7 @@ void main()
         else
         {
             vec2 color_uv = vec2(0.0, 0.0);
-            if(isTLVertex || !(isTextureExtended))
+            if(isTLVertex)
             {
                 color_uv = v_texcoord0.xy;
             }
@@ -202,21 +206,21 @@ void main()
 
             // Normal
             vec3 normal = normalize(v_normal0);
-            if(isTextureExtended && isPbrTextureEnabled) normal = perturb_normal(normal, -v_position0.xyz, param.rgb, v_texcoord2.xy );
+            if(isNmlTextureLoaded) normal = perturb_normal(normal, -v_position0.xyz, param.rgb, v_texcoord2.xy );
 
             // Roughness
             float roughness = materialData.x;
-            if(isTextureExtended && isPbrTextureEnabled) roughness = param2.r * materialData.z;
+            if(isPbrTextureLoaded) roughness = param2.r * materialData.z;
             float roughnessClamped = max(0.001, roughness);
 
             // Metalness
             float metalness = materialData.y;
-            if(isTextureExtended && isPbrTextureEnabled) metalness = param2.g * materialData.w;
+            if(isPbrTextureLoaded) metalness = param2.g * materialData.w;
             float metalnessClamped = min(1.0, metalness);
 
             // Ambient Occlusion
             float ao = 1.0;
-            if(isTextureExtended && isPbrTextureEnabled) ao = param2.b;
+            if(isPbrTextureLoaded) ao = param2.b;
 
             // Luminance
             vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, viewDir, normal, roughnessClamped, metalnessClamped, ao, shadowUv);
