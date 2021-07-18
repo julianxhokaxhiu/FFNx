@@ -351,5 +351,5 @@ void read_cfg()
 
 	// MOD EXTENSION
 	if (mod_ext.empty() || mod_ext.front().empty())
-		mod_ext = {"dds", "png", "psd", "tga", "exr"};
+		mod_ext = {"dds", "png"};
 }

@@ -229,9 +229,10 @@ mod_path = "mods/Textures"
 
 # Mod extension
 # You can change the extension list, ordered by priority. DO NOT add new extensions, driver will become unstable.
-# Default: ["dds", "png", "psd", "tga", "exr"]
+# Default: ["dds", "png"]
+# Additionally available supported extensions: [ "psd", "tga", "exr" ]
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-mod_ext = ["dds", "png", "psd", "tga", "exr"]
+mod_ext = ["dds", "png"]
 
 # Show every failed attempt at loading a .png or .dds texture
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
