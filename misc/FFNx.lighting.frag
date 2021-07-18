@@ -65,14 +65,15 @@ uniform vec4 materialData;
 #define TEXTURE_DEBUG_OUTPUT_ROUGHNESS 3
 #define TEXTURE_DEBUG_OUTPUT_METALNESS 4
 
+#define isPbrTextureEnabled lightingSettings.x > 0.0
 #define isNmlTextureLoaded FSTexFlags.x > 0.0
 #define isPbrTextureLoaded FSTexFlags.y > 0.0
 
 void main()
 {
 	vec4 color = v_color0;
-    vec4 param = vec4(0.0, 0.0, 0.0, 0.0);
-    vec4 param2 = vec4(0.0, 0.0, 0.0, 0.0);
+    vec4 color_nml = vec4(0.0, 0.0, 0.0, 0.0);
+    vec4 color_pbr = vec4(0.0, 0.0, 0.0, 0.0);
 
     if (isTexture)
     {
@@ -103,19 +104,11 @@ void main()
         }
         else
         {
-            vec2 color_uv = vec2(0.0, 0.0);
-            if(isTLVertex)
-            {
-                color_uv = v_texcoord0.xy;
-            }
-            else
-            {
-                color_uv = v_texcoord1.xy;
-                param = texture2D(tex_0, v_texcoord2.xy);
-                param2 = texture2D(tex_0, v_texcoord3.xy);
-            }
+            vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
 
-            vec4 texture_color = texture2D(tex_0, color_uv);
+            if (isNmlTextureLoaded) color_nml = texture2D(tex_5, v_texcoord2.xy);
+
+            if (isPbrTextureLoaded) color_pbr = texture2D(tex_6, v_texcoord3.xy);
 
             if (doAlphaTest)
             {
@@ -186,15 +179,15 @@ void main()
         }
         else if(textureDebugOutput == TEXTURE_DEBUG_OUTPUT_NORMAL_MAP)
         {
-            gl_FragColor = vec4(param.rgb, 1.0);
+            gl_FragColor = vec4(color_nml.rgb, 1.0);
         }
         else if(textureDebugOutput == TEXTURE_DEBUG_OUTPUT_ROUGHNESS)
         {
-            gl_FragColor = vec4(param2.r, param2.r, param2.r, 1.0);
+            gl_FragColor = vec4(color_pbr.r, color_pbr.r, color_pbr.r, 1.0);
         }
         else if(textureDebugOutput == TEXTURE_DEBUG_OUTPUT_METALNESS)
         {
-            gl_FragColor = vec4(param2.g, param2.g, param2.g, 1.0);
+            gl_FragColor = vec4(color_pbr.g, color_pbr.g, color_pbr.g, 1.0);
         }
         else
         {
@@ -206,21 +199,21 @@ void main()
 
             // Normal
             vec3 normal = normalize(v_normal0);
-            if(isNmlTextureLoaded) normal = perturb_normal(normal, -v_position0.xyz, param.rgb, v_texcoord2.xy );
+            if(isNmlTextureLoaded && isPbrTextureEnabled) normal = perturb_normal(normal, -v_position0.xyz, color_nml.rgb, v_texcoord2.xy );
 
             // Roughness
             float roughness = materialData.x;
-            if(isPbrTextureLoaded) roughness = param2.r * materialData.z;
+            if(isPbrTextureLoaded && isPbrTextureEnabled) roughness = color_pbr.r * materialData.z;
             float roughnessClamped = max(0.001, roughness);
 
             // Metalness
             float metalness = materialData.y;
-            if(isPbrTextureLoaded) metalness = param2.g * materialData.w;
+            if(isPbrTextureLoaded && isPbrTextureEnabled) metalness = color_pbr.g * materialData.w;
             float metalnessClamped = min(1.0, metalness);
 
             // Ambient Occlusion
             float ao = 1.0;
-            if(isPbrTextureLoaded) ao = param2.b;
+            if(isPbrTextureLoaded && isPbrTextureEnabled) ao = color_pbr.b;
 
             // Luminance
             vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, viewDir, normal, roughnessClamped, metalnessClamped, ao, shadowUv);

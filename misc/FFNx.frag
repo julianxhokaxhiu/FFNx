@@ -53,9 +53,6 @@ uniform vec4 FSTexFlags;
 #define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
 
-// ---
-#define isTextureExtended FSTexFlags.x > 0.0
-
 void main()
 {
 	vec4 color = v_color0;
@@ -89,13 +86,7 @@ void main()
         }
         else
         {
-            vec2 color_uv = vec2(0.0, 0.0);
-            if(isTLVertex || !(isTextureExtended))
-                color_uv = v_texcoord0.xy;
-            else
-                color_uv = v_texcoord1.xy;
-
-            vec4 texture_color = texture2D(tex_0, color_uv);
+            vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
 
             if (doAlphaTest)
             {
