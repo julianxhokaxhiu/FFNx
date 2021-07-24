@@ -149,7 +149,11 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 		{
 			ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png");
 
-			if (!ret && trace_all) ffnx_warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
+			if (trace_all)
+			{
+				if (ret) ffnx_trace("Created external texture: %u from %s\n", ret, filename);
+				else ffnx_warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
+			}
 
 			if (ret && is_animated ) gl_set->animated_textures[hash] = ret;
 
@@ -176,8 +180,6 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	}
 	else
 	{
-		if (trace_all) ffnx_trace("Created external texture: %u from %s\n", ret, filename);
-
 		if (!is_animated)
 		{
 			// Load additional textures
