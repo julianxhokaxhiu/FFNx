@@ -89,7 +89,6 @@ struct gl_texture_set
 	// ANIMATED TEXTURES
 	uint32_t is_animated;
 	std::map<uint64_t, uint32_t> animated_textures;
-	uint64_t current_animated_texture;
 	// ADDITIONAL TEXTURES
 	std::map<uint16_t, uint32_t> additional_textures;
 };

@@ -1146,13 +1146,10 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 
 	if(texture)
 	{
-		if (!gl_set->is_animated)
-		{
-			gl_replace_texture(texture_set, VREF(tex_header, palette_index), texture);
+		gl_replace_texture(texture_set, VREF(tex_header, palette_index), texture);
 
-			if(!VREF(texture_set, ogl.external)) stats.external_textures++;
-			VRASS(texture_set, ogl.external, true);
-		}
+		if(!VREF(texture_set, ogl.external)) stats.external_textures++;
+		VRASS(texture_set, ogl.external, true);
 
 		return true;
 	}

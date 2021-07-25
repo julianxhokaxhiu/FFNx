@@ -45,8 +45,8 @@ void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index,
 
 	if(VREF(texture_set, texturehandle[palette_index]))
 	{
-		if(VREF(texture_set, ogl.external) && !VREF(texture_set, ogl.gl_set->is_animated)) ffnx_glitch("oops, may have messed up an external texture\n");
-		newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
+		if (VREF(texture_set, ogl.external) && !VREF(texture_set, ogl.gl_set->is_animated)) ffnx_glitch("oops, may have messed up an external texture\n");
+		if (!VREF(texture_set, ogl.gl_set->is_animated)) newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
 	}
 
 	VRASS(texture_set, texturehandle[palette_index], new_texture);
@@ -100,10 +100,7 @@ void gl_bind_texture_set(struct texture_set *_texture_set)
 
 		struct gl_texture_set* gl_set = VREF(texture_set, ogl.gl_set);
 
-		if (gl_set->is_animated && VREF(texture_set, ogl.external))
-			gl_set_texture(gl_set->animated_textures[gl_set->current_animated_texture], NULL);
-		else
-			gl_set_texture(VREF(texture_set, texturehandle[VREF(tex_header, palette_index)]), gl_set);
+		gl_set_texture(VREF(texture_set, texturehandle[VREF(tex_header, palette_index)]), gl_set);
 
 		if(VREF(tex_header, version) == FB_TEX_VERSION) current_state.fb_texture = true;
 		else current_state.fb_texture = false;
@@ -121,13 +118,11 @@ void gl_set_texture(uint32_t texture, struct gl_texture_set* gl_set)
 
 	newRenderer.useTexture(texture);
 
-	// Attach additional textures
-	for (short slot = RendererTextureSlot::TEX_NML; slot < RendererTextureSlot::COUNT; slot++)
+	// Attach additional textures only for non-paletted static textures
+	if (gl_set && !gl_set->is_animated)
 	{
-		if (texture > 0 && gl_set)
-			newRenderer.useTexture(gl_set->additional_textures[slot], slot);
-		else
-			newRenderer.useTexture(0, slot);
+		for (short slot = RendererTextureSlot::TEX_NML; slot < RendererTextureSlot::COUNT; slot++)
+			newRenderer.useTexture(texture > 0 ? gl_set->additional_textures[slot] : 0, slot);
 	}
 
 	current_state.texture_handle = texture;

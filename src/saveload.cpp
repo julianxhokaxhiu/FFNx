@@ -204,7 +204,5 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 		}
 	}
 
-	if (is_animated) gl_set->current_animated_texture = hash;
-
 	return ret;
 }
