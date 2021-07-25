@@ -126,13 +126,6 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 	{
 		if (is_animated)
 		{
-			if (gl_set->animated_textures.count(hash))
-			{
-				// We already know the texture, return its handler and move on
-				ret = gl_set->animated_textures[hash];
-				break;
-			}
-
 			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, mod_path.c_str(), name, palette_index, hash, mod_ext[idx].c_str());
 
 			if (stat(filename, &dummy) != 0)
@@ -147,6 +140,13 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 
 		if (stat(filename, &dummy) == 0)
 		{
+			if (is_animated && gl_set->animated_textures.count(filename))
+			{
+				// We already know the texture, return its handler and move on
+				ret = gl_set->animated_textures[filename];
+				break;
+			}
+
 			ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png");
 
 			if (trace_all)
@@ -155,7 +155,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 				else ffnx_warning("External texture [%s] found but not loaded due to memory limitations.\n", filename);
 			}
 
-			if (ret && is_animated ) gl_set->animated_textures[hash] = ret;
+			if (is_animated && ret) gl_set->animated_textures[filename] = ret;
 
 			break;
 		}
