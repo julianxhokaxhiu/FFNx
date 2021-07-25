@@ -1669,6 +1669,7 @@ struct ff7_externals
 	uint32_t battle_sub_427C22;
 	uint32_t battle_sub_6CE8B3;
 	uint32_t battle_sub_6DB0EE;
+	char* is_battle_paused;
 	uint32_t *battle_limit_breaks;
 	uint32_t *battle_magic_funcs;
 	uint32_t comet2_sub_5A42E5;

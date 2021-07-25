@@ -403,6 +403,10 @@ void ff7_handle_ambient_playback()
 			sprintf(filename, "bat_%d", last_battle_id);
 			nxAudioEngine.playAmbient(filename);
 		}
+		if (*ff7_externals.is_battle_paused && nxAudioEngine.isAmbientPlaying())
+			nxAudioEngine.pauseAmbient();
+		else
+			nxAudioEngine.resumeAmbient();
 		break;
   case MODE_FIELD:
 		if (last_field_id != *ff7_externals.field_id)
