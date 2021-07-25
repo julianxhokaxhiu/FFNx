@@ -54,6 +54,7 @@ steps:
   inputs:
     filePath: .ci\build.ps1
     failOnStderr: true
+    pwsh: true
 - task: GitHubRelease@0
   condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
   displayName: 'Delete $(_RELEASE_NAME) (Canary)'

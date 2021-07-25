@@ -34,10 +34,12 @@ elseif ($env:_BUILD_BRANCH -like "refs/tags/*")
 $env:_RELEASE_VERSION = "v${env:_BUILD_VERSION}"
 
 $vcpkgRoot = "C:\vcpkg"
+$vcpkgBaseline = [string](jq --arg baseline "builtin-baseline" -r '.[$baseline]' vcpkg.json)
 
 Write-Output "--------------------------------------------------"
 Write-Output "BUILD CONFIGURATION: $env:_RELEASE_CONFIGURATION"
 Write-Output "RELEASE VERSION: $env:_RELEASE_VERSION"
+Write-Output "VCPKG BASELINE: $vcpkgBaseline"
 Write-Output "--------------------------------------------------"
 
 Write-Host "##vso[task.setvariable variable=_BUILD_VERSION;]${env:_BUILD_VERSION}"
@@ -46,6 +48,10 @@ Write-Host "##vso[task.setvariable variable=_IS_BUILD_CANARY;]${env:_IS_BUILD_CA
 Write-Host "##vso[task.setvariable variable=_CHANGELOG_VERSION;]${env:_CHANGELOG_VERSION}"
 
 git -C $vcpkgRoot pull
+git -C $vcpkgRoot checkout $vcpkgBaseline
+
+mkdir -p "C:\vcpkg\downloads\tools\yasm\1.3.0.6"
+Invoke-WebRequest -Uri "http://www.tortall.net/projects/yasm/snapshots/v1.3.0.6.g1962/yasm-1.3.0.6.g1962.exe" -SkipCertificateCheck -OutFile "C:\vcpkg\downloads\tools\yasm\1.3.0.6\yasm.exe"
 
 mkdir $env:_RELEASE_PATH | Out-Null
 cmake -G "Visual Studio 16 2019" -A Win32 -D_DLL_VERSION="$env:_BUILD_VERSION" -DCMAKE_BUILD_TYPE="$env:_RELEASE_CONFIGURATION" -DCMAKE_TOOLCHAIN_FILE="$vcpkgRoot\scripts\buildsystems\vcpkg.cmake" -S . -B $env:_RELEASE_PATH
