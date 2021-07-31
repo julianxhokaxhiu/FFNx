@@ -60,16 +60,17 @@ endif()
 
 project(FFNx)
 
+find_package(ZLIB REQUIRED)
 find_package(BGFX REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
-find_package(PUGIXML REQUIRED)
-find_package(LIBPNG REQUIRED)
-find_package(IMGUI REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
+find_package(libpng CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 find_package(SOLOUD REQUIRED)
 find_package(OPENPSF REQUIRED)
-find_package(tomlplusplus REQUIRED)
+find_package(tomlplusplus CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -87,7 +88,7 @@ file(GLOB_RECURSE source_files "${CMAKE_SOURCE_DIR}/src/*.cpp")
 configure_file(misc/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-target_include_directories(${RELEASE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src")
+target_include_directories(${RELEASE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src" ${FFMPEG_INCLUDE_DIRS})
 target_link_libraries(
   ${RELEASE_NAME}
   dbghelp
@@ -96,22 +97,19 @@ target_link_libraries(
   winmm
   dinput8
   dxguid
+  ZLIB::ZLIB
   BGFX::BGFX
   BGFX::BIMG
   BGFX::BIMG_DECODE
   BGFX::BIMG_ENCODE
   BGFX::BX
-  FFMPEG::AVUtil
-  FFMPEG::SWResample
-  FFMPEG::AVCodec
-  FFMPEG::AVFormat
-  FFMPEG::SWScale
+  ${FFMPEG_LIBRARIES}
   VGMSTREAM::VGMSTREAM
   STACKWALKER::STACKWALKER
   XINPUT9_1_0
-  PUGIXML::PUGIXML
-  LIBPNG::LIBPNG
-  IMGUI::IMGUI
+  pugixml pugixml::static pugixml::pugixml
+  png_static
+  imgui::imgui
   SOLOUD::SOLOUD
   OPENPSF::PSXCORE
   OPENPSF::PSFLIB

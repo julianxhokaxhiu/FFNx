@@ -22,8 +22,6 @@
 include(FindPackageHandleStandardArgs)
 
 if(NOT OPENPSF_FOUND)
-  find_package(ZLib REQUIRED)
-
   # PSXCore
   find_path(OPENPSF_PSXCORE_INCLUDE_DIR highly_experimental PATH_SUFFIXES include)
 
@@ -43,8 +41,7 @@ if(NOT OPENPSF_FOUND)
   set_target_properties(
     OPENPSF::PSFLIB
     PROPERTIES IMPORTED_LOCATION "${OPENPSF_PSFLIB_LIBRARY}"
-               INTERFACE_INCLUDE_DIRECTORIES "${OPENPSF_PSFLIB_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "ZLib::ZLib")
+               INTERFACE_INCLUDE_DIRECTORIES "${OPENPSF_PSFLIB_INCLUDE_DIR}")
 
   # OpenPSF
   find_path(OPENPSF_INCLUDE_DIR openpsf PATH_SUFFIXES include)
