@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.9.0",
-  "builtin-baseline": "7d2541c69cc2f9099a118de1a80f59e29c5de15d",
+  "builtin-baseline": "261c458af6e3eed5d099144aff95d2b5035f656b",
   "dependencies": [
     "bgfx",
     {
@@ -46,7 +46,7 @@
     {
       "name": "ffmpeg",
       "version": "4.4",
-      "port-version": 9
+      "port-version": 12
     },
     {
       "name": "imgui",
