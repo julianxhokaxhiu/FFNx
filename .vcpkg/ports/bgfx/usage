@@ -1,0 +1,6 @@
+To use bgfx add the following to your CMake project:
+
+    find_package(BGFX REQUIRED)
+    target_include_directories(main PRIVATE ${BGFX_INCLUDE_DIRS})
+    target_link_directories(main PRIVATE ${BGFX_LIBRARY_DIRS})
+    target_link_libraries(main PRIVATE ${BGFX_LIBRARIES})

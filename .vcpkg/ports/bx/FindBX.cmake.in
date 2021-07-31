@@ -1,0 +1,120 @@
+# Distributed under the OSI-approved BSD 3-Clause License.
+#
+#.rst:
+# FindBX
+# --------
+#
+# Find the BX libraries
+#
+# Result Variables
+# ^^^^^^^^^^^^^^^^
+#
+# The following variables will be defined:
+#
+#  ``BX_FOUND``
+#    True if BX found on the local system
+#
+#  ``BX_INCLUDE_DIRS``
+#    Location of BX header files
+#
+#  ``BX_LIBRARY_DIRS``
+#    Location of BX libraries
+#
+#  ``BX_LIBRARIES``
+#    List of the BX libraries found
+#
+#
+
+include(FindPackageHandleStandardArgs)
+include(SelectLibraryConfigurations)
+include(CMakeFindDependencyMacro)
+
+if(NOT BX_FOUND)
+
+# Compute the installation path relative to this file.
+get_filename_component(SEARCH_PATH "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+if(SEARCH_PATH STREQUAL "/")
+  set(SEARCH_PATH "")
+endif()
+
+set(BX_VERSION "@BX_VERSION@")
+
+function(append_dependencies out)
+    cmake_parse_arguments(PARSE_ARGV 1 "arg" "DEBUG" "NAMES" "")
+    if(${arg_DEBUG})
+        set(config DEBUG)
+        set(path "${CURRENT_INSTALLED_DIR}/debug/lib/")
+    else()
+        set(config RELEASE)
+        set(path "${CURRENT_INSTALLED_DIR}/lib/")
+    endif()
+    foreach(lib_name ${arg_NAMES})
+        if("${lib_name}" STREQUAL "-pthread")
+            list(APPEND ${out} "-pthread")
+        elseif("${lib_name}" STREQUAL "-pthreads")
+            list(APPEND ${out} "-pthreads")
+        elseif("${lib_name}" STREQUAL "gcc")
+            list(APPEND ${out} "-lgcc")
+        elseif("${lib_name}" STREQUAL "gcc_s")
+            list(APPEND ${out} "-lgcc_s")
+        elseif("${lib_name}" STREQUAL "stdc++")
+            list(APPEND ${out} "-lstdc++")
+        else()
+            # first look in ${path} specifically to ensure we find the right release/debug variant
+            find_library(BX_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" PATHS "${path}" NO_DEFAULT_PATH)
+            # if not found there, must be a system dependency, so look elsewhere
+            find_library(BX_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" REQUIRED)
+            list(APPEND ${out} "${BX_DEPENDENCY_${lib_name}_${config}}")
+        endif()
+    endforeach()
+    set("${out}" "${${out}}" PARENT_SCOPE)
+endfunction()
+
+macro(BX_FIND libname shortname headername)
+  if(NOT BX_${libname}_INCLUDE_DIRS)
+    find_path(BX_${libname}_INCLUDE_DIRS NAMES ${headername} PATHS ${SEARCH_PATH}/include NO_DEFAULT_PATH)
+  endif()
+  if(NOT BX_${libname}_LIBRARY)
+    find_library(BX_${libname}_LIBRARY_RELEASE NAMES ${shortname}Release PATHS ${SEARCH_PATH}/lib/ NO_DEFAULT_PATH)
+    find_library(BX_${libname}_LIBRARY_DEBUG NAMES ${shortname}Debug PATHS ${SEARCH_PATH}/debug/lib/ NO_DEFAULT_PATH)
+    get_filename_component(BX_${libname}_LIBRARY_RELEASE_DIR ${BX_${libname}_LIBRARY_RELEASE} DIRECTORY)
+    get_filename_component(BX_${libname}_LIBRARY_DEBUG_DIR ${BX_${libname}_LIBRARY_DEBUG} DIRECTORY)
+    select_library_configurations(BX_${libname})
+    set(BX_${libname}_LIBRARY ${BX_${libname}_LIBRARY} CACHE STRING "")
+  endif()
+  if (BX_${libname}_LIBRARY AND BX_${libname}_INCLUDE_DIRS)
+    set(BX_${libname}_FOUND TRUE BOOL)
+    list(APPEND BX_INCLUDE_DIRS ${BX_${libname}_INCLUDE_DIRS})
+    list(APPEND BX_LIBRARIES ${BX_${libname}_LIBRARY})
+    list(APPEND BX_LIBRARY_DIRS ${BX_${libname}_LIBRARY_RELEASE_DIR} ${BX_${libname}_LIBRARY_DEBUG_DIR})
+  endif()
+endmacro(BX_FIND)
+
+BX_FIND(bx bx bx/bx.h)
+
+if (BX_bx_FOUND)
+  list(APPEND BX_INCLUDE_DIRS "${SEARCH_PATH}/include/compat/msvc")
+  list(REMOVE_DUPLICATES BX_INCLUDE_DIRS)
+  list(REMOVE_DUPLICATES BX_LIBRARY_DIRS)
+  set(BX_bx_VERSION "@BX_VERSION@" CACHE STRING "")
+
+  append_dependencies(BX_DEPS_LIBRARY_RELEASE NAMES "@BX_DEPENDENCIES_RELEASE@")
+  append_dependencies(BX_DEPS_LIBRARY_DEBUG   NAMES "@BX_DEPENDENCIES_DEBUG@" DEBUG)
+  if(BX_DEPS_LIBRARY_RELEASE OR BX_DEPS_LIBRARY_DEBUG)
+    select_library_configurations(BX_DEPS)
+    list(APPEND BX_LIBRARIES ${BX_DEPS_LIBRARY})
+  endif()
+
+  set(BX_LIBRARY ${BX_LIBRARIES})
+
+  set(BX_FOUND TRUE CACHE BOOL "")
+  set(BX_LIBRARIES ${BX_LIBRARIES} CACHE STRING "")
+  set(BX_INCLUDE_DIRS ${BX_INCLUDE_DIRS} CACHE STRING "")
+  set(BX_LIBRARY_DIRS ${BX_LIBRARY_DIRS} CACHE STRING "")
+endif()
+
+find_package_handle_standard_args(BX REQUIRED_VARS BX_LIBRARIES BX_LIBRARY_DIRS BX_INCLUDE_DIRS)
+
+endif()

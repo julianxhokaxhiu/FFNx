@@ -133,3 +133,6 @@ else()
         )
     endforeach()
 endif()
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/FindBIMG.cmake.in ${CURRENT_PACKAGES_DIR}/share/${PORT}/FindBIMG.cmake @ONLY)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT})

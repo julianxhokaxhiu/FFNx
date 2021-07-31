@@ -1,0 +1,6 @@
+To use bimg add the following to your CMake project:
+
+    find_package(BIMG REQUIRED)
+    target_include_directories(main PRIVATE ${BIMG_INCLUDE_DIRS})
+    target_link_directories(main PRIVATE ${BIMG_LIBRARY_DIRS})
+    target_link_libraries(main PRIVATE ${BIMG_LIBRARIES})

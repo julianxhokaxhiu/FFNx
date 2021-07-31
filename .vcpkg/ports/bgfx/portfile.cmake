@@ -153,3 +153,6 @@ else()
         endforeach()
     endforeach()
 endif()
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/FindBGFX.cmake.in ${CURRENT_PACKAGES_DIR}/share/${PORT}/FindBGFX.cmake @ONLY)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT})

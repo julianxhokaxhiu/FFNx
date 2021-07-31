@@ -1,0 +1,6 @@
+To use bx add the following to your CMake project:
+
+    find_package(BX REQUIRED)
+    target_include_directories(main PRIVATE ${BX_INCLUDE_DIRS})
+    target_link_directories(main PRIVATE ${BX_LIBRARY_DIRS})
+    target_link_libraries(main PRIVATE ${BX_LIBRARIES})
