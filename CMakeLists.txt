@@ -138,7 +138,6 @@ target_compile_options(
   PRIVATE /DNOMINMAX
   PRIVATE /EHsc
   PRIVATE /std:c++17
-  PRIVATE /w
 )
 target_link_options(${RELEASE_NAME} PRIVATE /PDBALTPATH:${RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.def)
 
