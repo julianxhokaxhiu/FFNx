@@ -818,7 +818,9 @@ void Renderer::backupDepthBuffer()
     backendViewId++;
     bgfx::blit(backendViewId, backupDepthTexture, 0, 0, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, framebufferWidth, framebufferHeight);
     bgfx::touch(backendViewId);
+    setClearFlags(false, false);
     backendViewId++;
+    setClearFlags(false, false);
 }
 
 void Renderer::recoverDepthBuffer()
@@ -826,7 +828,9 @@ void Renderer::recoverDepthBuffer()
     backendViewId++;
     bgfx::blit(backendViewId, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, backupDepthTexture, 0, 0, framebufferWidth, framebufferHeight);
     bgfx::touch(backendViewId);
+    setClearFlags(false, false);
     backendViewId++;
+    setClearFlags(false, false);
 }
 
 void Renderer::drawFieldShadow()
