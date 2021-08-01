@@ -45,13 +45,24 @@ Write-Host "##vso[task.setvariable variable=_RELEASE_VERSION;]${env:_RELEASE_VER
 Write-Host "##vso[task.setvariable variable=_IS_BUILD_CANARY;]${env:_IS_BUILD_CANARY}"
 Write-Host "##vso[task.setvariable variable=_CHANGELOG_VERSION;]${env:_CHANGELOG_VERSION}"
 
+# Load vcvarsall environment for x86
+$vcvarspath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property InstallationPath
+cmd.exe /c "call `"$vcvarspath\VC\Auxiliary\Build\vcvarsall.bat`" x86 && set > %temp%\vcvars.txt"
+Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
+  if ($_ -match "^(.*?)=(.*)$") {
+    Set-Content "env:\$($matches[1])" $matches[2]
+  }
+}
+
 git -C $vcpkgRoot pull
 
-mkdir -p "C:\vcpkg\downloads\tools\yasm\1.3.0.6"
+mkdir "C:\vcpkg\downloads\tools\yasm\1.3.0.6" | Out-Null
 Invoke-WebRequest -Uri "http://www.tortall.net/projects/yasm/snapshots/v1.3.0.6.g1962/yasm-1.3.0.6.g1962.exe" -SkipCertificateCheck -OutFile "C:\vcpkg\downloads\tools\yasm\1.3.0.6\yasm.exe"
 
+vcpkg integrate install
+
 mkdir $env:_RELEASE_PATH | Out-Null
-cmake -G "Visual Studio 16 2019" -A Win32 -D_DLL_VERSION="$env:_BUILD_VERSION" -DCMAKE_BUILD_TYPE="$env:_RELEASE_CONFIGURATION" -DCMAKE_TOOLCHAIN_FILE="$vcpkgRoot\scripts\buildsystems\vcpkg.cmake" -S . -B $env:_RELEASE_PATH
+cmake -G "Visual Studio 16 2019" -T host=x86 -A win32 -D_DLL_VERSION="$env:_BUILD_VERSION" -DCMAKE_BUILD_TYPE="$env:_RELEASE_CONFIGURATION" -DCMAKE_TOOLCHAIN_FILE="$vcpkgRoot\scripts\buildsystems\vcpkg.cmake" -S . -B $env:_RELEASE_PATH
 cmake --build $env:_RELEASE_PATH --config $env:_RELEASE_CONFIGURATION
 
 if ($env:_BUILD_BRANCH -notlike "refs/pull/*")
