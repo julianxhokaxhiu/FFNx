@@ -1,0 +1,6 @@
+To use vgmstream add the following to your CMake project:
+
+    find_package(VGMSTREAM REQUIRED)
+    target_include_directories(main PRIVATE ${VGMSTREAM_INCLUDE_DIRS})
+    target_link_directories(main PRIVATE ${VGMSTREAM_LIBRARY_DIRS})
+    target_link_libraries(main PRIVATE ${VGMSTREAM_LIBRARIES})
