@@ -86,3 +86,7 @@ vcpkg_install_msbuild(
     INCLUDES_SUBPATH "include"
     ALLOW_ROOT_INCLUDES
 )
+
+# Copy cmake configuration files
+configure_file(${CMAKE_CURRENT_LIST_DIR}/FindSOLOUD.cmake.in ${CURRENT_PACKAGES_DIR}/share/${PORT}/FindSOLOUD.cmake @ONLY)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT})

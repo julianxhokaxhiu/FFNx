@@ -1,0 +1,6 @@
+To use soloud add the following to your CMake project:
+
+    find_package(SOLOUD REQUIRED)
+    target_include_directories(main PRIVATE ${SOLOUD_INCLUDE_DIRS})
+    target_link_directories(main PRIVATE ${SOLOUD_LIBRARY_DIRS})
+    target_link_libraries(main PRIVATE ${SOLOUD_LIBRARIES})

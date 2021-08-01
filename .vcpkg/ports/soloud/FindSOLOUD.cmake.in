@@ -1,0 +1,125 @@
+# Distributed under the OSI-approved BSD 3-Clause License.
+#
+#.rst:
+# FindSOLOUD
+# --------
+#
+# Find the SOLOUD libraries
+#
+# Result Variables
+# ^^^^^^^^^^^^^^^^
+#
+# The following variables will be defined:
+#
+#  ``SOLOUD_FOUND``
+#    True if SOLOUD found on the local system
+#
+#  ``SOLOUD_INCLUDE_DIRS``
+#    Location of SOLOUD header files
+#
+#  ``SOLOUD_LIBRARY_DIRS``
+#    Location of SOLOUD libraries
+#
+#  ``SOLOUD_LIBRARIES``
+#    List of the SOLOUD libraries found
+#
+#
+
+include(FindPackageHandleStandardArgs)
+include(SelectLibraryConfigurations)
+include(CMakeFindDependencyMacro)
+
+if(NOT SOLOUD_FOUND)
+
+# Compute the installation path relative to this file.
+get_filename_component(SEARCH_PATH "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+if(SEARCH_PATH STREQUAL "/")
+  set(SEARCH_PATH "")
+endif()
+
+# Compute target architecture
+set(architecture x86)
+if (CMAKE_GENERATOR_PLATFORM MATCHES Win64)
+  set(architecture x64)
+endif()
+
+set(SOLOUD_VERSION "@SOLOUD_VERSION@")
+
+function(append_dependencies out)
+    cmake_parse_arguments(PARSE_ARGV 1 "arg" "DEBUG" "NAMES" "")
+    if(${arg_DEBUG})
+        set(config DEBUG)
+        set(path "${CURRENT_INSTALLED_DIR}/debug/lib/")
+    else()
+        set(config RELEASE)
+        set(path "${CURRENT_INSTALLED_DIR}/lib/")
+    endif()
+    foreach(lib_name ${arg_NAMES})
+        if("${lib_name}" STREQUAL "-pthread")
+            list(APPEND ${out} "-pthread")
+        elseif("${lib_name}" STREQUAL "-pthreads")
+            list(APPEND ${out} "-pthreads")
+        elseif("${lib_name}" STREQUAL "gcc")
+            list(APPEND ${out} "-lgcc")
+        elseif("${lib_name}" STREQUAL "gcc_s")
+            list(APPEND ${out} "-lgcc_s")
+        elseif("${lib_name}" STREQUAL "stdc++")
+            list(APPEND ${out} "-lstdc++")
+        else()
+            # first look in ${path} specifically to ensure we find the right release/debug variant
+            find_library(SOLOUD_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" PATHS "${path}" NO_DEFAULT_PATH)
+            # if not found there, must be a system dependency, so look elsewhere
+            find_library(SOLOUD_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" REQUIRED)
+            list(APPEND ${out} "${SOLOUD_DEPENDENCY_${lib_name}_${config}}")
+        endif()
+    endforeach()
+    set("${out}" "${${out}}" PARENT_SCOPE)
+endfunction()
+
+macro(SOLOUD_FIND libname shortname headername)
+  if(NOT SOLOUD_${libname}_INCLUDE_DIRS)
+    find_path(SOLOUD_${libname}_INCLUDE_DIRS NAMES ${headername} PATHS ${SEARCH_PATH}/include NO_DEFAULT_PATH)
+  endif()
+  if(NOT SOLOUD_${libname}_LIBRARY)
+    find_library(SOLOUD_${libname}_LIBRARY_RELEASE NAMES ${shortname}_${architecture} PATHS ${SEARCH_PATH}/lib/ NO_DEFAULT_PATH)
+    find_library(SOLOUD_${libname}_LIBRARY_DEBUG NAMES ${shortname}_${architecture}_d PATHS ${SEARCH_PATH}/debug/lib/ NO_DEFAULT_PATH)
+    get_filename_component(SOLOUD_${libname}_LIBRARY_RELEASE_DIR ${SOLOUD_${libname}_LIBRARY_RELEASE} DIRECTORY)
+    get_filename_component(SOLOUD_${libname}_LIBRARY_DEBUG_DIR ${SOLOUD_${libname}_LIBRARY_DEBUG} DIRECTORY)
+    select_library_configurations(SOLOUD_${libname})
+    set(SOLOUD_${libname}_LIBRARY ${SOLOUD_${libname}_LIBRARY} CACHE STRING "")
+  endif()
+  if (SOLOUD_${libname}_LIBRARY AND SOLOUD_${libname}_INCLUDE_DIRS)
+    set(SOLOUD_${libname}_FOUND TRUE BOOL)
+    list(APPEND SOLOUD_INCLUDE_DIRS ${SOLOUD_${libname}_INCLUDE_DIRS})
+    list(APPEND SOLOUD_LIBRARIES ${SOLOUD_${libname}_LIBRARY})
+    list(APPEND SOLOUD_LIBRARY_DIRS ${SOLOUD_${libname}_LIBRARY_RELEASE_DIR} ${SOLOUD_${libname}_LIBRARY_DEBUG_DIR})
+  endif()
+endmacro(SOLOUD_FIND)
+
+SOLOUD_FIND(soloud soloud_static soloud.h)
+
+if (SOLOUD_soloud_FOUND)
+  list(REMOVE_DUPLICATES SOLOUD_INCLUDE_DIRS)
+  list(REMOVE_DUPLICATES SOLOUD_LIBRARY_DIRS)
+  set(SOLOUD_soloud_VERSION "@SOLOUD_VERSION@" CACHE STRING "")
+
+  append_dependencies(SOLOUD_DEPS_LIBRARY_RELEASE NAMES "@SOLOUD_DEPENDENCIES_RELEASE@")
+  append_dependencies(SOLOUD_DEPS_LIBRARY_DEBUG   NAMES "@SOLOUD_DEPENDENCIES_DEBUG@" DEBUG)
+  if(SOLOUD_DEPS_LIBRARY_RELEASE OR SOLOUD_DEPS_LIBRARY_DEBUG)
+    select_library_configurations(SOLOUD_DEPS)
+    list(APPEND SOLOUD_LIBRARIES ${SOLOUD_DEPS_LIBRARY})
+  endif()
+
+  set(SOLOUD_LIBRARY ${SOLOUD_LIBRARIES})
+
+  set(SOLOUD_FOUND TRUE CACHE BOOL "")
+  set(SOLOUD_LIBRARIES ${SOLOUD_LIBRARIES} CACHE STRING "")
+  set(SOLOUD_INCLUDE_DIRS ${SOLOUD_INCLUDE_DIRS} CACHE STRING "")
+  set(SOLOUD_LIBRARY_DIRS ${SOLOUD_LIBRARY_DIRS} CACHE STRING "")
+endif()
+
+find_package_handle_standard_args(SOLOUD REQUIRED_VARS SOLOUD_LIBRARIES SOLOUD_LIBRARY_DIRS SOLOUD_INCLUDE_DIRS)
+
+endif()
