@@ -1,0 +1,6 @@
+To use stackwalker add the following to your CMake project:
+
+    find_package(STACKWALKER REQUIRED)
+    target_include_directories(main PRIVATE ${STACKWALKER_INCLUDE_DIRS})
+    target_link_directories(main PRIVATE ${STACKWALKER_LIBRARY_DIRS})
+    target_link_libraries(main PRIVATE ${STACKWALKER_LIBRARIES})

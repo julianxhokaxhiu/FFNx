@@ -1,0 +1,119 @@
+# Distributed under the OSI-approved BSD 3-Clause License.
+#
+#.rst:
+# FindSTACKWALKER
+# --------
+#
+# Find the STACKWALKER libraries
+#
+# Result Variables
+# ^^^^^^^^^^^^^^^^
+#
+# The following variables will be defined:
+#
+#  ``STACKWALKER_FOUND``
+#    True if STACKWALKER found on the local system
+#
+#  ``STACKWALKER_INCLUDE_DIRS``
+#    Location of STACKWALKER header files
+#
+#  ``STACKWALKER_LIBRARY_DIRS``
+#    Location of STACKWALKER libraries
+#
+#  ``STACKWALKER_LIBRARIES``
+#    List of the STACKWALKER libraries found
+#
+#
+
+include(FindPackageHandleStandardArgs)
+include(SelectLibraryConfigurations)
+include(CMakeFindDependencyMacro)
+
+if(NOT STACKWALKER_FOUND)
+
+# Compute the installation path relative to this file.
+get_filename_component(SEARCH_PATH "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+if(SEARCH_PATH STREQUAL "/")
+  set(SEARCH_PATH "")
+endif()
+
+set(STACKWALKER_VERSION "@STACKWALKER_VERSION@")
+
+function(append_dependencies out)
+    cmake_parse_arguments(PARSE_ARGV 1 "arg" "DEBUG" "NAMES" "")
+    if(${arg_DEBUG})
+        set(config DEBUG)
+        set(path "${CURRENT_INSTALLED_DIR}/debug/lib/")
+    else()
+        set(config RELEASE)
+        set(path "${CURRENT_INSTALLED_DIR}/lib/")
+    endif()
+    foreach(lib_name ${arg_NAMES})
+        if("${lib_name}" STREQUAL "-pthread")
+            list(APPEND ${out} "-pthread")
+        elseif("${lib_name}" STREQUAL "-pthreads")
+            list(APPEND ${out} "-pthreads")
+        elseif("${lib_name}" STREQUAL "gcc")
+            list(APPEND ${out} "-lgcc")
+        elseif("${lib_name}" STREQUAL "gcc_s")
+            list(APPEND ${out} "-lgcc_s")
+        elseif("${lib_name}" STREQUAL "stdc++")
+            list(APPEND ${out} "-lstdc++")
+        else()
+            # first look in ${path} specifically to ensure we find the right release/debug variant
+            find_library(STACKWALKER_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" PATHS "${path}" NO_DEFAULT_PATH)
+            # if not found there, must be a system dependency, so look elsewhere
+            find_library(STACKWALKER_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" REQUIRED)
+            list(APPEND ${out} "${STACKWALKER_DEPENDENCY_${lib_name}_${config}}")
+        endif()
+    endforeach()
+    set("${out}" "${${out}}" PARENT_SCOPE)
+endfunction()
+
+macro(STACKWALKER_FIND libname shortname headername)
+  if(NOT STACKWALKER_${libname}_INCLUDE_DIRS)
+    find_path(STACKWALKER_${libname}_INCLUDE_DIRS NAMES ${headername} PATHS ${SEARCH_PATH}/include NO_DEFAULT_PATH)
+  endif()
+  if(NOT STACKWALKER_${libname}_LIBRARY)
+    find_library(STACKWALKER_${libname}_LIBRARY_RELEASE NAMES ${shortname} PATHS ${SEARCH_PATH}/lib/ NO_DEFAULT_PATH)
+    find_library(STACKWALKER_${libname}_LIBRARY_DEBUG NAMES ${shortname} PATHS ${SEARCH_PATH}/debug/lib/ NO_DEFAULT_PATH)
+    get_filename_component(STACKWALKER_${libname}_LIBRARY_RELEASE_DIR ${STACKWALKER_${libname}_LIBRARY_RELEASE} DIRECTORY)
+    get_filename_component(STACKWALKER_${libname}_LIBRARY_DEBUG_DIR ${STACKWALKER_${libname}_LIBRARY_DEBUG} DIRECTORY)
+    select_library_configurations(STACKWALKER_${libname})
+    set(STACKWALKER_${libname}_LIBRARY ${STACKWALKER_${libname}_LIBRARY} CACHE STRING "")
+  endif()
+  if (STACKWALKER_${libname}_LIBRARY AND STACKWALKER_${libname}_INCLUDE_DIRS)
+    set(STACKWALKER_${libname}_FOUND TRUE BOOL)
+    list(APPEND STACKWALKER_INCLUDE_DIRS ${STACKWALKER_${libname}_INCLUDE_DIRS})
+    list(APPEND STACKWALKER_LIBRARIES ${STACKWALKER_${libname}_LIBRARY})
+    list(APPEND STACKWALKER_LIBRARY_DIRS ${STACKWALKER_${libname}_LIBRARY_RELEASE_DIR} ${STACKWALKER_${libname}_LIBRARY_DEBUG_DIR})
+  endif()
+endmacro(STACKWALKER_FIND)
+
+STACKWALKER_FIND(stackwalker StackWalker StackWalker.h)
+
+if (STACKWALKER_stackwalker_FOUND)
+  list(REMOVE_DUPLICATES STACKWALKER_INCLUDE_DIRS)
+  list(REMOVE_DUPLICATES STACKWALKER_LIBRARY_DIRS)
+  set(STACKWALKER_stackwalker_VERSION "@STACKWALKER_VERSION@" CACHE STRING "")
+
+  append_dependencies(STACKWALKER_DEPS_LIBRARY_RELEASE NAMES "@STACKWALKER_DEPENDENCIES_RELEASE@")
+  append_dependencies(STACKWALKER_DEPS_LIBRARY_DEBUG   NAMES "@STACKWALKER_DEPENDENCIES_DEBUG@" DEBUG)
+  if(STACKWALKER_DEPS_LIBRARY_RELEASE OR STACKWALKER_DEPS_LIBRARY_DEBUG)
+    select_library_configurations(STACKWALKER_DEPS)
+    list(APPEND STACKWALKER_LIBRARIES ${STACKWALKER_DEPS_LIBRARY})
+  endif()
+
+  set(STACKWALKER_LIBRARY ${STACKWALKER_LIBRARIES})
+
+  set(STACKWALKER_FOUND TRUE CACHE BOOL "")
+  set(STACKWALKER_LIBRARIES ${STACKWALKER_LIBRARIES} CACHE STRING "")
+  set(STACKWALKER_INCLUDE_DIRS ${STACKWALKER_INCLUDE_DIRS} CACHE STRING "")
+  set(STACKWALKER_LIBRARY_DIRS ${STACKWALKER_LIBRARY_DIRS} CACHE STRING "")
+endif()
+
+find_package_handle_standard_args(STACKWALKER REQUIRED_VARS STACKWALKER_LIBRARIES STACKWALKER_LIBRARY_DIRS STACKWALKER_INCLUDE_DIRS)
+
+endif()
