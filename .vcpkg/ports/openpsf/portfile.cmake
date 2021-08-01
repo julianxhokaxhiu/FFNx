@@ -45,3 +45,7 @@ vcpkg_install_msbuild(
 # Copy dependencies headers
 file(INSTALL "${SOURCE_DIR}/highly_experimental/include/highly_experimental" DESTINATION "${CURRENT_PACKAGES_DIR}/include")
 file(INSTALL "${SOURCE_DIR}/psflib/include/psflib" DESTINATION "${CURRENT_PACKAGES_DIR}/include")
+
+# Copy cmake configuration files
+configure_file(${CMAKE_CURRENT_LIST_DIR}/FindOPENPSF.cmake.in ${CURRENT_PACKAGES_DIR}/share/${PORT}/FindOPENPSF.cmake @ONLY)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT})

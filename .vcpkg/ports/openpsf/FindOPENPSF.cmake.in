@@ -1,0 +1,121 @@
+# Distributed under the OSI-approved BSD 3-Clause License.
+#
+#.rst:
+# FindOPENPSF
+# --------
+#
+# Find the OPENPSF libraries
+#
+# Result Variables
+# ^^^^^^^^^^^^^^^^
+#
+# The following variables will be defined:
+#
+#  ``OPENPSF_FOUND``
+#    True if OPENPSF found on the local system
+#
+#  ``OPENPSF_INCLUDE_DIRS``
+#    Location of OPENPSF header files
+#
+#  ``OPENPSF_LIBRARY_DIRS``
+#    Location of OPENPSF libraries
+#
+#  ``OPENPSF_LIBRARIES``
+#    List of the OPENPSF libraries found
+#
+#
+
+include(FindPackageHandleStandardArgs)
+include(SelectLibraryConfigurations)
+include(CMakeFindDependencyMacro)
+
+if(NOT OPENPSF_FOUND)
+
+# Compute the installation path relative to this file.
+get_filename_component(SEARCH_PATH "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+get_filename_component(SEARCH_PATH "${SEARCH_PATH}" PATH)
+if(SEARCH_PATH STREQUAL "/")
+  set(SEARCH_PATH "")
+endif()
+
+set(OPENPSF_VERSION "@OPENPSF_VERSION@")
+
+function(append_dependencies out)
+    cmake_parse_arguments(PARSE_ARGV 1 "arg" "DEBUG" "NAMES" "")
+    if(${arg_DEBUG})
+        set(config DEBUG)
+        set(path "${CURRENT_INSTALLED_DIR}/debug/lib/")
+    else()
+        set(config RELEASE)
+        set(path "${CURRENT_INSTALLED_DIR}/lib/")
+    endif()
+    foreach(lib_name ${arg_NAMES})
+        if("${lib_name}" STREQUAL "-pthread")
+            list(APPEND ${out} "-pthread")
+        elseif("${lib_name}" STREQUAL "-pthreads")
+            list(APPEND ${out} "-pthreads")
+        elseif("${lib_name}" STREQUAL "gcc")
+            list(APPEND ${out} "-lgcc")
+        elseif("${lib_name}" STREQUAL "gcc_s")
+            list(APPEND ${out} "-lgcc_s")
+        elseif("${lib_name}" STREQUAL "stdc++")
+            list(APPEND ${out} "-lstdc++")
+        else()
+            # first look in ${path} specifically to ensure we find the right release/debug variant
+            find_library(OPENPSF_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" PATHS "${path}" NO_DEFAULT_PATH)
+            # if not found there, must be a system dependency, so look elsewhere
+            find_library(OPENPSF_DEPENDENCY_${lib_name}_${config} NAMES "${lib_name}" REQUIRED)
+            list(APPEND ${out} "${OPENPSF_DEPENDENCY_${lib_name}_${config}}")
+        endif()
+    endforeach()
+    set("${out}" "${${out}}" PARENT_SCOPE)
+endfunction()
+
+macro(OPENPSF_FIND libname shortname headername)
+  if(NOT OPENPSF_${libname}_INCLUDE_DIRS)
+    find_path(OPENPSF_${libname}_INCLUDE_DIRS NAMES ${headername} PATHS ${SEARCH_PATH}/include NO_DEFAULT_PATH)
+  endif()
+  if(NOT OPENPSF_${libname}_LIBRARY)
+    find_library(OPENPSF_${libname}_LIBRARY_RELEASE NAMES ${shortname} PATHS ${SEARCH_PATH}/lib/ NO_DEFAULT_PATH)
+    find_library(OPENPSF_${libname}_LIBRARY_DEBUG NAMES ${shortname} PATHS ${SEARCH_PATH}/debug/lib/ NO_DEFAULT_PATH)
+    get_filename_component(OPENPSF_${libname}_LIBRARY_RELEASE_DIR ${OPENPSF_${libname}_LIBRARY_RELEASE} DIRECTORY)
+    get_filename_component(OPENPSF_${libname}_LIBRARY_DEBUG_DIR ${OPENPSF_${libname}_LIBRARY_DEBUG} DIRECTORY)
+    select_library_configurations(OPENPSF_${libname})
+    set(OPENPSF_${libname}_LIBRARY ${OPENPSF_${libname}_LIBRARY} CACHE STRING "")
+  endif()
+  if (OPENPSF_${libname}_LIBRARY AND OPENPSF_${libname}_INCLUDE_DIRS)
+    set(OPENPSF_${libname}_FOUND TRUE BOOL)
+    list(APPEND OPENPSF_INCLUDE_DIRS ${OPENPSF_${libname}_INCLUDE_DIRS})
+    list(APPEND OPENPSF_LIBRARIES ${OPENPSF_${libname}_LIBRARY})
+    list(APPEND OPENPSF_LIBRARY_DIRS ${OPENPSF_${libname}_LIBRARY_RELEASE_DIR} ${OPENPSF_${libname}_LIBRARY_DEBUG_DIR})
+  endif()
+endmacro(OPENPSF_FIND)
+
+OPENPSF_FIND(PSXCore PSXCore highly_experimental/bios.h)
+OPENPSF_FIND(psflib psflib psflib/psflib.h)
+OPENPSF_FIND(openpsf openpsf openpsf/openpsf.h)
+
+if (OPENPSF_openpsf_FOUND)
+  list(REMOVE_DUPLICATES OPENPSF_INCLUDE_DIRS)
+  list(REMOVE_DUPLICATES OPENPSF_LIBRARY_DIRS)
+  set(OPENPSF_openpsf_VERSION "@OPENPSF_VERSION@" CACHE STRING "")
+
+  append_dependencies(OPENPSF_DEPS_LIBRARY_RELEASE NAMES "@OPENPSF_DEPENDENCIES_RELEASE@")
+  append_dependencies(OPENPSF_DEPS_LIBRARY_DEBUG   NAMES "@OPENPSF_DEPENDENCIES_DEBUG@" DEBUG)
+  if(OPENPSF_DEPS_LIBRARY_RELEASE OR OPENPSF_DEPS_LIBRARY_DEBUG)
+    select_library_configurations(OPENPSF_DEPS)
+    list(APPEND OPENPSF_LIBRARIES ${OPENPSF_DEPS_LIBRARY})
+  endif()
+
+  set(OPENPSF_LIBRARY ${OPENPSF_LIBRARIES})
+
+  set(OPENPSF_FOUND TRUE CACHE BOOL "")
+  set(OPENPSF_LIBRARIES ${OPENPSF_LIBRARIES} CACHE STRING "")
+  set(OPENPSF_INCLUDE_DIRS ${OPENPSF_INCLUDE_DIRS} CACHE STRING "")
+  set(OPENPSF_LIBRARY_DIRS ${OPENPSF_LIBRARY_DIRS} CACHE STRING "")
+endif()
+
+find_package_handle_standard_args(OPENPSF REQUIRED_VARS OPENPSF_LIBRARIES OPENPSF_LIBRARY_DIRS OPENPSF_INCLUDE_DIRS)
+
+endif()

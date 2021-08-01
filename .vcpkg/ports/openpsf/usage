@@ -1,0 +1,6 @@
+To use openpsf add the following to your CMake project:
+
+    find_package(OPENPSF REQUIRED)
+    target_include_directories(main PRIVATE ${OPENPSF_INCLUDE_DIRS})
+    target_link_directories(main PRIVATE ${OPENPSF_LIBRARY_DIRS})
+    target_link_libraries(main PRIVATE ${OPENPSF_LIBRARIES})
