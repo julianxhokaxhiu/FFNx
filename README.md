@@ -66,8 +66,8 @@ Available build profiles:
 
 - x86-Release ( default, the same used to release artifacts in this Github page )
 - x86-RelWithDebInfo ( used while developing to better debug some issues )
-
-Any other build profile is **unsupported**.
+- x86-MinSizeRel
+- x86-Debug ( prefer it if you want to use a debugger attached to the game )
 
 Once the project is build you can find the output in this path: `.build/bin`
 
