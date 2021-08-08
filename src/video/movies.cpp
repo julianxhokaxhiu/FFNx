@@ -135,10 +135,11 @@ void ffmpeg_release_movie_objects()
 			newRenderer.deleteTexture(video_buffer[i].yuv_textures[idx]);
 			video_buffer[i].yuv_textures[idx] = 0;
 		}
-
-		// Unset slot 1 and 2 as they are used only for YUV textures
-		if ( i > 0 ) newRenderer.useTexture(0, i);
 	}
+
+	// Unset slot U and V as they are used only for YUV textures
+	newRenderer.useTexture(0, RendererTextureSlot::TEX_U);
+	newRenderer.useTexture(0, RendererTextureSlot::TEX_V);
 }
 
 // prepare a movie for playback
