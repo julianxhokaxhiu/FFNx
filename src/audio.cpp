@@ -973,7 +973,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 		if (sequentialIds && !sequentialIds->empty() && sequentialIds->is_homogeneous(toml::node_type::string))
 		{
 			// If the key doesn't exist already, add it
-			if (_ambientSequentialIndexes.count(name) == 0) _ambientSequentialIndexes[name] == NULL;
+			if (_ambientSequentialIndexes.count(name) == 0) _ambientSequentialIndexes[name] = NULL;
 
 			if (_ambientSequentialIndexes.find(name) == _ambientSequentialIndexes.end() || _ambientSequentialIndexes[name] >= sequentialIds->size())
 				_ambientSequentialIndexes[name] = 0;
