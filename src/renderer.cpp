@@ -816,21 +816,23 @@ void Renderer::drawWithLighting(bool isCastShadow)
 void Renderer::backupDepthBuffer()
 {
     backendViewId++;
-    bgfx::blit(backendViewId, backupDepthTexture, 0, 0, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, framebufferWidth, framebufferHeight);
+    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
-    setClearFlags(false, false);
+    bgfx::blit(backendViewId, backupDepthTexture, 0, 0, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, framebufferWidth, framebufferHeight);
     backendViewId++;
-    setClearFlags(false, false);
+    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
+    bgfx::touch(backendViewId);
 }
 
 void Renderer::recoverDepthBuffer()
 {
     backendViewId++;
-    bgfx::blit(backendViewId, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, backupDepthTexture, 0, 0, framebufferWidth, framebufferHeight);
+    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
-    setClearFlags(false, false);
+    bgfx::blit(backendViewId, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, backupDepthTexture, 0, 0, framebufferWidth, framebufferHeight);
     backendViewId++;
-    setClearFlags(false, false);
+    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
+    bgfx::touch(backendViewId);
 }
 
 void Renderer::drawFieldShadow()
