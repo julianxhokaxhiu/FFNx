@@ -46,7 +46,7 @@ void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index,
 	if(VREF(texture_set, texturehandle[palette_index]))
 	{
 		if (VREF(texture_set, ogl.external) && !VREF(texture_set, ogl.gl_set->is_animated)) ffnx_glitch("oops, may have messed up an external texture\n");
-		if (!VREF(texture_set, ogl.gl_set->is_animated)) newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
+		if (!VREF(texture_set, ogl.external) || !VREF(texture_set, ogl.gl_set->is_animated)) newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
 	}
 
 	VRASS(texture_set, texturehandle[palette_index], new_texture);
