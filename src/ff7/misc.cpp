@@ -94,6 +94,107 @@ void ff7_wm_activateapp(bool hasFocus)
 
 }
 
+int ff7_get_control_direction()
+{
+	byte* level_data = *ff7_externals.field_level_data_pointer;
+
+	if (level_data != nullptr)
+	{
+		uint32_t triggers_offset = *(uint32_t*)(level_data + 0x22);
+		signed short* control_direction_data = (signed short*)(level_data + triggers_offset + 4 + 9);
+
+		return static_cast<int>(*control_direction_data);
+	}
+
+	return 0;
+}
+
+void ff7_set_control_direction(int x)
+{
+	byte* level_data = *ff7_externals.field_level_data_pointer;
+
+	if (level_data != nullptr)
+	{
+		uint32_t triggers_offset = *(uint32_t*)(level_data + 0x22);
+		signed short* control_direction_data = (signed short*)(level_data + triggers_offset + 4 + 9);
+
+		*control_direction_data = static_cast<signed short>(x);
+	}
+}
+
+void ff7_use_analogue_controls()
+{
+	static WORD last_field_id = 0;
+	static int base_control_direction = 0;
+	if (last_field_id != *ff7_externals.field_id)
+	{
+		last_field_id = *ff7_externals.field_id;
+		base_control_direction = ff7_get_control_direction();
+	}
+
+	point3d joyDir = {0.0f, 0.0f, 0.0f};
+	point3d inputDir = {0.0f, 0.0f, 0.0f};
+	if(xinput_connected)
+	{
+		joyDir = {gamepad.leftStickX, gamepad.leftStickY, 0.0f};
+
+		if(gamepad.leftStickY > 0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f)) 
+			inputDir = {0.0f, 1.0f, 0.0f};
+		else if(gamepad.leftStickY > 0.5f && gamepad.leftStickX < -0.5f) 
+			inputDir = {-0.707f, 0.707f, 0.0f};
+		else if(gamepad.leftStickY > 0.5f && gamepad.leftStickX > 0.5f) 
+			inputDir = {0.707f, 0.707f, 0.0f};
+		else if(gamepad.leftStickX < -0.5f &&!(gamepad.leftStickY > 0.5f || gamepad.leftStickY < -0.5f)) 
+			inputDir = {-1.0f, 0.0f, 0.0f};
+		else if(gamepad.leftStickX > 0.5f && !(gamepad.leftStickY > 0.5f || gamepad.leftStickY < -0.5f)) 
+			inputDir = {1.0f, 0.0f, 0.0f};		
+		else if(gamepad.leftStickY < -0.5f && gamepad.leftStickX < -0.5f) 
+			inputDir = {-0.707f, -0.707f, 0.0f};
+		else if(gamepad.leftStickY < -0.5f && gamepad.leftStickX > 0.5f) 
+			inputDir = {0.707f, -0.707f, 0.0f};
+		else if(gamepad.leftStickY < -0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f)) 
+			inputDir = {0.0f, -1.0f, 0.0f};
+	}
+	else
+	{
+		joyDir = {static_cast<float>(joystick.GetState()->lX), -static_cast<float>(joystick.GetState()->lY), 0.0f};
+
+		if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) && 
+		  !(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lX > joystick.GetDeadZone(0.5f)))
+			inputDir = {0.0f, 1.0f, 0.0f};
+		else if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) && joystick.GetState()->lX < joystick.GetDeadZone(-0.5f))
+			inputDir = {-0.707f, 0.707f, 0.0f};
+		else if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) && joystick.GetState()->lX > joystick.GetDeadZone(0.5f))
+			inputDir = {0.707f, 0.707f, 0.0f};
+		else if(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) && 
+		  !(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lY > joystick.GetDeadZone(0.5f)))
+			inputDir = {-1.0f, 0.0f, 0.0f};
+		else if(joystick.GetState()->lX > joystick.GetDeadZone(0.5f) &&
+			!(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lY > joystick.GetDeadZone(0.5f)))
+			inputDir = {1.0f, 0.0f, 0.0f};
+		else if(joystick.GetState()->lY > joystick.GetDeadZone(0.5f) && joystick.GetState()->lX < joystick.GetDeadZone(-0.5f))
+			inputDir = {-0.707f, -0.707f, 0.0f};
+		else if(joystick.GetState()->lY > joystick.GetDeadZone(0.5f) && joystick.GetState()->lX > joystick.GetDeadZone(0.5f))
+			inputDir = {0.707f, -0.707f, 0.0f};
+		else if(joystick.GetState()->lY > joystick.GetDeadZone(0.5f) &&
+			!(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lX > joystick.GetDeadZone(0.5f)))
+			inputDir = {0.0f, -1.0f, 0.0f};
+	}		
+	
+	float inputDirLength = vector_length(&inputDir);
+	if(inputDirLength > 0.0f)
+	{
+		normalize_vector(&joyDir);
+		float angle = atan2( inputDir.x*joyDir.y - inputDir.y*joyDir.x, inputDir.x*joyDir.x + inputDir.y*joyDir.y );
+		int offset = std::max(-128, std::min(128, static_cast<int>(128.0f * angle / M_PI)));
+		ff7_set_control_direction(base_control_direction + offset);
+	}
+	else
+	{
+		ff7_set_control_direction(base_control_direction);
+	}
+}
+
 int ff7_get_gamepad()
 {
 	if (simulate_OK_button)
@@ -148,6 +249,8 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 	{
 		if (gamepad.Refresh())
 		{
+			if(enable_analogue_controls) ff7_use_analogue_controls();
+			
 			ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
 			ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
 			ff7_externals.gamepad_status->dpad_up = (gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
@@ -173,6 +276,8 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 	{
 		if (joystick.Refresh())
 		{
+			if(enable_analogue_controls) ff7_use_analogue_controls();
+			
 			ff7_externals.gamepad_status->pos_x = joystick.GetState()->lX;
 			ff7_externals.gamepad_status->pos_y = joystick.GetState()->lY;
 			ff7_externals.gamepad_status->dpad_up = (joystick.GetState()->lY < joystick.GetDeadZone(-0.5f)) || joystick.GetState()->rgdwPOV[0] == 0; // UP
