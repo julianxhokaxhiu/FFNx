@@ -42,7 +42,7 @@ float sampleShadowMap(vec2 base_uv, float u, float v, float shadowMapSizeInv, fl
     // This is to prevent shadows being projected to multiple floors
 
     float shadowDistance = 0.0;
-    vec4 lightDepths = textureGather(tex_4, shadowUv.xy);
+    vec4 lightDepths = textureGather(tex_4, shadowUv.xy, 0);
     for(int i = 0; i < 4; ++i)
     {
         vec4 shadowPos = vec4(shadowUv.xy, lightDepths[i], 1.0);
