@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d8572a35..a9d9bf72 100644
+index 69627ee5..35843986 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,4 +1,5 @@
@@ -10,13 +10,13 @@ index d8572a35..a9d9bf72 100644
  enable_language(CXX)
  
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 48f39aba..dd3e34a8 100644
+index 38e949b4..991f4f51 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -45,3 +45,27 @@ target_include_directories(libvgmstream PRIVATE
- 	coding
+@@ -47,3 +47,27 @@ target_include_directories(libvgmstream PRIVATE
  	layout
- 	meta)
+ 	meta
+ 	util)
 +
 +if(MSVC)
 +	target_compile_definitions (libvgmstream PRIVATE "USE_ALLOCA")
@@ -35,9 +35,9 @@ index 48f39aba..dd3e34a8 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/plugins.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util.h DESTINATION include/libvgmstream )
++	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util/log.h DESTINATION include/libvgmstream/util )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/streamtypes.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/streamfile.h DESTINATION include/libvgmstream )
-+	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/../ext_includes/clHCA.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/g72x_state.h DESTINATION include/libvgmstream/coding )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/nwa_decoder.h DESTINATION include/libvgmstream/coding )
 +endif()
