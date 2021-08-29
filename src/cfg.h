@@ -112,5 +112,6 @@ extern double speedhack_min;
 extern bool enable_animated_textures;
 extern long ff7_fps_limiter;
 extern bool ff7_footsteps;
+extern bool enable_analogue_controls;
 
 void read_cfg();

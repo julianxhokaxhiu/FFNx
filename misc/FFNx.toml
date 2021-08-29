@@ -208,6 +208,15 @@ enable_ffmpeg_videos = -1
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ffmpeg_video_ext = "avi"
 
+###########################
+# Controller Options
+###########################
+
+#[ANALOGUE CONTROLS]
+# This flag will enable analogue joystick input for controlling the player.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_analogue_controls = false
+
 ###############################
 # MUST SET FOR VERSIONS BELOW
 # FF7 2012   FF7 STEAM
