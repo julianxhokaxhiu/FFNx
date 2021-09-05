@@ -92,16 +92,16 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _
 		switch (_type)
 		{
 		case NxAudioEngineLayer::NXAUDIOENGINE_SFX:
-			sprintf(_out, "%s/%s/%d.%s", basedir, external_sfx_path.c_str(), _key, extension.c_str());
+			sprintf(_out, "%s/%s/%d.%s", basedir, external_sfx_path.c_str(), (int)_key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), (const char*)_key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, extension.c_str());
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), (const char*)_key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_ambient_path.c_str(), _key, extension.c_str());
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_ambient_path.c_str(), (const char*)_key, extension.c_str());
 			break;
 		}
 
