@@ -57,12 +57,14 @@ public:
 	struct NxAudioEngineSFX
 	{
 		NxAudioEngineSFX() :
+			game_id(0),
 			id(0),
 			stream(nullptr),
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
 			volume(1.0f),
 			loop(false)
 		{}
+		int game_id;
 		int id;
 		SoLoud::VGMStream *stream;
 		SoLoud::handle handle;

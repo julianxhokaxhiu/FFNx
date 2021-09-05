@@ -259,7 +259,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	if (channel <= _sfxReusableChannels)
 	{
 		// Stop the current channel is already used and the track to be played is different that the one currently playing
-		if (options->stream != nullptr && options->id != id)
+		if (options->stream != nullptr && options->game_id != id)
 		{
 			stopSFX(channel);
 			unloadSFXChannel(channel);
@@ -268,7 +268,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	// If channel is known to lazy unload what is currently playing, save the handler for later
 	else if (std::find(_sfxLazyUnloadChannels.begin(), _sfxLazyUnloadChannels.end(), channel) != _sfxLazyUnloadChannels.end())
 	{
-		_sfxEffectsHandler[options->id] = options->stream;
+		_sfxEffectsHandler[options->game_id] = options->stream;
 
 		// invalidate the old channel stream in order to continue loading this new ID
 		options->stream = nullptr;
@@ -309,6 +309,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	// Try to load the new ID if it's not already cached
 	if (options->stream == nullptr)
 	{
+		options->game_id = id;
 		options->id = _curId + 1;
 		options->stream = loadSFX(options->id, loop);
 	}
