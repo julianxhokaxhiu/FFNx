@@ -259,7 +259,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	if (channel <= _sfxReusableChannels)
 	{
 		// Stop the current channel is already used and the track to be played is different that the one currently playing
-		if (options->stream != nullptr && options->game_id != id)
+		if (options->stream != nullptr && options->id != id)
 		{
 			stopSFX(channel);
 			unloadSFXChannel(channel);
