@@ -320,7 +320,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	{
 		SoLoud::handle _handle = _engine.play(
 			*options->stream,
-			options->volume,
+			options->volume * getSFXMasterVolume(),
 			panning
 		);
 
