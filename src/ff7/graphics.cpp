@@ -537,13 +537,13 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 								{
 									struct matrix tmp;
 
-									multiply_matrix(bone_matrix, &light->field_13C, &tmp);
+									multiply_matrix(bone_matrix, &light->normal_matrix, &tmp);
 
 									ff7_externals.sub_69C69F(&tmp, light);
 								}
 								else ff7_externals.sub_69C69F(bone_matrix, light);
 
-								common_externals.generic_light_polygon_set((struct polygon_set *)polygon_set, light);
+								common_externals.generic_light_polygon_set((struct polygon_set *)polygon_set, (struct light *)light);
 							}
 						}
 

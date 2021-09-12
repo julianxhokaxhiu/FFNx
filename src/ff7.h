@@ -292,7 +292,7 @@ struct ff7_light
 	struct matrix field_B8;
 	struct matrix field_F8;
 	uint32_t field_138;
-	struct matrix field_13C;
+	struct matrix normal_matrix;
 	uint32_t field_17C;
 	uint32_t field_180;
 	uint32_t field_184;
