@@ -103,6 +103,9 @@ enum RendererTextureSlot
     TEX_D,
     TEX_NML,
     TEX_PBR,
+    TEX_IBL_SPEC,
+    TEX_IBL_DIFF,
+    TEX_BRDF,
     COUNT
 };
 
@@ -255,6 +258,10 @@ private:
     bgfx::TextureHandle shadowMapTexture = BGFX_INVALID_HANDLE;
     bgfx::FrameBufferHandle shadowMapFrameBuffer = BGFX_INVALID_HANDLE;
 
+    bgfx::TextureHandle specularIblTexture = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle diffuseIblTexture = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle envBrdfTexture = BGFX_INVALID_HANDLE;
+
     std::vector<Vertex> vertexBufferData;
     bgfx::DynamicVertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;
 
@@ -322,6 +329,9 @@ public:
     void init();
     void reset();
     void prepareShadowMap();
+    void prepareSpecularIbl(char* fullpath = nullptr);
+    void prepareDiffuseIbl(char* fullpath = nullptr);
+    void prepareEnvBrdf();
     void shutdown();
 
     void clearShadowMap();
@@ -349,9 +359,10 @@ public:
     void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
-    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool generateMips = false);
-    uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height);
-    uint32_t createTextureLibPng(char* filename, uint32_t* width, uint32_t* height);
+    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true);
+    uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
+    bgfx::TextureHandle createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
+    uint32_t createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb = true);
     bool saveTexture(char* filename, uint32_t width, uint32_t height, void* data);
     void deleteTexture(uint16_t texId);
     void useTexture(uint16_t texId, uint32_t slot = 0);

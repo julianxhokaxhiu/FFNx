@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -22,6 +23,7 @@
 $input v_color0, v_texcoord0
 
 #include <bgfx/bgfx_shader.sh>
+#include "FFNx.common.sh"
 
 SAMPLER2D(tex_0, 0);
 SAMPLER2D(tex_1, 1);
@@ -55,7 +57,7 @@ uniform vec4 FSTexFlags;
 
 void main()
 {
-	vec4 color = v_color0;
+	vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
 
     if (isTexture)
     {
@@ -82,6 +84,7 @@ void main()
             if (isFullRange) color.rgb = instMul(jpeg_rgb_transform, yuv);
             else color.rgb = instMul(mpeg_rgb_transform, yuv);
 
+            color.rgb = toLinear(color.rgb);
             color.a = 1.0f;
         }
         else

@@ -20,13 +20,17 @@
 
 #include <vector>
 
-enum TextureDebugOutput
+enum DebugOutput
 {
-    TEXTURE_DEBUG_OUTPUT_DISABLED = 0,
-    TEXTURE_DEBUG_OUTPUT_COLOR,
-    TEXTURE_DEBUG_OUTPUT_NORMALMAP,
-    TEXTURE_DEBUG_OUTPUT_ROUGHNESS,
-    TEXTURE_DEBUG_OUTPUT_METALNESS,
+    DEBUG_OUTPUT_DISABLED = 0,
+    DEBUG_OUTPUT_COLOR,
+    DEBUG_OUTPUT_NORMALMAP,
+    DEBUG_OUTPUT_ROUGHNESS,
+    DEBUG_OUTPUT_METALLIC,
+    DEBUG_OUTPUT_AO,
+    DEBUG_OUTPUT_SPECULAR,
+    DEBUG_OUTPUT_IBL_SPECULAR,
+    DEBUG_OUTPUT_IBL_DIFFUSE,
 };
 
 struct walkmeshEdge
@@ -48,13 +52,15 @@ struct LightingState
     float lightViewProjMatrix[16];
     float lightViewProjTexMatrix[16];
 
-    float lightingSettings[4] = { 0.0, 0.0, 0.0, 0.0 };
+    float lightingSettings[4] = { 1.0, 1.0, 1.0, 0.0 };
     float lightDirData[4] = { 0.3, -1.0, -0.3, 0.0 };
     float lightData[4] = { 1.0, 1.0, 1.0, 4.0 };
-    float ambientLightData[4] = { 1.0, 1.0, 1.0, 2.0 };
-    float materialData[4] = { 0.3, 0.3, 1.0, 1.0 };
+    float ambientLightData[4] = { 1.0, 1.0, 1.0, 1.0 };
+    float materialData[4] = { 0.7, 0.5, 0.0, 0.0 };
+    float materialScaleData[4] = { 1.0, 1.0, 1.0, 1.0 };
     float shadowData[4] = { 0.001, 0.0, 0.0, 2048.0 };
-    float fieldShadowData[4] = { 0.3, 200.0, 100.0, 0.0 };
+    float fieldShadowData[4] = { 0.1, 200.0, 100.0, 0.0 };
+    float iblData[4] = { 1.0, 0.0, 0.0, 0.0 };
 
     float lightingDebugData[4] = { 0.0, 0.0, 0.0, 0.0 };
 
@@ -85,6 +91,8 @@ private:
 private:
     void updateLightMatrices(struct boundingbox* sceneAabb);
 
+    void ff7_load_ibl();
+
     void ff7_get_field_view_matrix(struct matrix* outViewMatrix);
     void ff7_create_walkmesh(std::vector<struct nvertex>& vertices, std::vector<WORD>& indices, std::vector<struct walkmeshEdge>& edges);
 
@@ -101,8 +109,10 @@ public:
     const LightingState& getLightingState();
 
     // Lighting
-    void Lighting::setPbrTextureEnabled(bool isEnabled);
-    bool Lighting::isPbrTextureEnabled();
+    void setPbrTextureEnabled(bool isEnabled);
+    bool isPbrTextureEnabled();
+    void setEnvironmentLightingEnabled(bool isEnabled);
+    bool isEnvironmentLightingEnabled();
     void setWorldLightDir(float dirX, float dirY, float dirZ);
     struct point3d getWorldLightDir();
     void setLightIntensity(float intensity);
@@ -113,16 +123,21 @@ public:
     float getAmbientIntensity();
     void setAmbientLightColor(float r, float g, float b);
     point3d getAmbientLightColor();
+    void setIblMipCount(int mipCount);
 
     // Material
     void setRoughness(float roughness);
     float getRoughness();
-    void setMetalness(float metalness);
-    float getMetalness();
-    void setRoughnessScale(float roughness);
+    void setMetallic(float metallic);
+    float getMetallic();
+    void setSpecular(float metallic);
+    float getSpecular();
+    void setRoughnessScale(float scale);
     float getRoughnessScale();
-    void setMetalnessScale(float metalness);
-    float getMetalnessScale();
+    void setMetallicScale(float scale);
+    float getMetallicScale();
+    void setSpecularScale(float scale);
+    float getSpecularScale();
 
     // Shadow (common)
     void setShadowFaceCullingEnabled(bool isEnabled);
@@ -159,8 +174,8 @@ public:
     bool isHide2dEnabled();
     void setShowWalkmeshEnabled(bool isEnabled);
     bool isShowWalkmeshEnabled();
-    void setTextureDebugOutput(TextureDebugOutput output);
-    TextureDebugOutput GetTextureDebugOutput();
+    void setDebugOutput(DebugOutput output);
+    DebugOutput GetDebugOutput();
 };
 
 extern Lighting lighting;

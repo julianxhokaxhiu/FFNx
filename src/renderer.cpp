@@ -110,7 +110,7 @@ void Renderer::setCommonUniforms()
     internalState.FSTexFlags = {
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_NML].idx != bgfx::kInvalidHandle),
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_PBR].idx != bgfx::kInvalidHandle),
-        NULL,
+        (float)(specularIblTexture.idx != bgfx::kInvalidHandle && diffuseIblTexture.idx != bgfx::kInvalidHandle && envBrdfTexture.idx != bgfx::kInvalidHandle),
         NULL
     };
     if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, NULL, NULL)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1]);
@@ -139,7 +139,9 @@ void Renderer::setLightingUniforms()
     setUniform("shadowData", bgfx::UniformType::Vec4, lightingState.shadowData);
     setUniform("fieldShadowData", bgfx::UniformType::Vec4, lightingState.fieldShadowData);
     setUniform("materialData", bgfx::UniformType::Vec4, lightingState.materialData);
+    setUniform("materialScaleData", bgfx::UniformType::Vec4, lightingState.materialScaleData);
     setUniform("lightingDebugData", bgfx::UniformType::Vec4, lightingState.lightingDebugData);
+    setUniform("iblData", bgfx::UniformType::Vec4, lightingState.iblData);
 
     setUniform("lightViewProjMatrix", bgfx::UniformType::Mat4, lightingState.lightViewProjMatrix);
     setUniform("lightViewProjTexMatrix", bgfx::UniformType::Mat4, lightingState.lightViewProjTexMatrix);
@@ -518,7 +520,7 @@ void Renderer::prepareFramebuffer()
         framebufferHeight,
         false,
         1,
-        bgfx::TextureFormat::RGBA8,
+        bgfx::TextureFormat::RGBA16,
         fbFlags | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
     );
 
@@ -607,7 +609,7 @@ void Renderer::init()
     bgfxInit.type = getUserChosenRenderer();
     bgfxInit.resolution.width = window_size_x;
     bgfxInit.resolution.height = window_size_y;
-    bgfxInit.resolution.reset = BGFX_RESET_NONE;
+    bgfxInit.resolution.reset = BGFX_RESET_SRGB_BACKBUFFER;
 
     if (enable_anisotropic)
         bgfxInit.resolution.reset |= BGFX_RESET_MAXANISOTROPY;
@@ -717,7 +719,7 @@ void Renderer::reset()
 
     if(!ff8 && enable_lighting) prepareShadowMap();
 
-    bgfx::reset(window_size_x, window_size_y);
+    bgfx::reset(window_size_x, window_size_y, BGFX_RESET_SRGB_BACKBUFFER);
 }
 
 void Renderer::prepareShadowMap()
@@ -740,6 +742,38 @@ void Renderer::prepareShadowMap()
         &shadowMapTexture,
         true
     );
+}
+
+void Renderer::prepareSpecularIbl(char* fullpath)
+{
+    if (bgfx::isValid(specularIblTexture))
+        bgfx::destroy(specularIblTexture);
+
+    uint32_t width, height, mipCount = 0;
+    specularIblTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    lighting.setIblMipCount(mipCount);
+}
+
+void Renderer::prepareDiffuseIbl(char* fullpath)
+{
+    if (bgfx::isValid(diffuseIblTexture))
+        bgfx::destroy(diffuseIblTexture);
+
+    uint32_t width, height, mipCount = 0;
+    diffuseIblTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+}
+
+void Renderer::prepareEnvBrdf()
+{
+    static char fullpath[MAX_PATH];
+
+    if (bgfx::isValid(envBrdfTexture))
+        bgfx::destroy(envBrdfTexture);
+
+    sprintf(fullpath, "%s/%s/envBrdf.dds", basedir, external_ibl_path.c_str());
+
+    uint32_t width, height, mipCount = 0;
+    envBrdfTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
 }
 
 void Renderer::shutdown()
@@ -808,6 +842,24 @@ void Renderer::drawWithLighting(bool isCastShadow)
 
     // Re-Bind shadow map with comparison sampler
     bgfx::setTexture(RendererTextureSlot::TEX_S, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_S), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+
+    // Bind specular IBL cubemap
+    if (bgfx::isValid(specularIblTexture))
+    {
+        bgfx::setTexture(RendererTextureSlot::TEX_IBL_SPEC, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_IBL_SPEC), bgfx::UniformType::Sampler), specularIblTexture);
+    }
+
+    // Bind diffuse IBL cubemap
+    if (bgfx::isValid(diffuseIblTexture))
+    {
+        bgfx::setTexture(RendererTextureSlot::TEX_IBL_DIFF, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_IBL_DIFF), bgfx::UniformType::Sampler), diffuseIblTexture);
+    }
+
+    // Bind environment BRDF texture
+    if (bgfx::isValid(envBrdfTexture))
+    {
+        bgfx::setTexture(RendererTextureSlot::TEX_BRDF, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_BRDF), bgfx::UniformType::Sampler), envBrdfTexture, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+    }
 
     // Draw with lighting
     draw(isCastShadow);
@@ -1084,7 +1136,7 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
     internalState.clearColorValue = createBGRA(r * 255, g * 255, b * 255, a * 255);
 }
 
-uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool generateMips)
+uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
@@ -1106,13 +1158,18 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
     {
         const bgfx::Memory* mem = bgfx::copy(data, texInfo.storageSize);
 
+        uint64_t flags = BGFX_SAMPLER_NONE;
+        
+        if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
+        else flags |= BGFX_TEXTURE_NONE;
+
         ret = bgfx::createTexture2D(
             width,
             height,
             false,
             1,
             texFormat,
-            BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+            flags,
             stride > 0 ? NULL : mem
         );
 
@@ -1135,9 +1192,15 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
     return ret.idx;
 };
 
-uint32_t Renderer::createTexture(char* filename, uint32_t* width, uint32_t* height)
+uint32_t Renderer::createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb)
 {
-    bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
+    bgfx::TextureHandle handle = createTextureHandle(filename, width, height, mipCount, isSrgb);
+    return handle.idx;
+}
+
+bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb)
+{
+    bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
 
     FILE* file = fopen(filename, "rb");
 
@@ -1172,30 +1235,50 @@ uint32_t Renderer::createTexture(char* filename, uint32_t* width, uint32_t* heig
         {
             if (gl_check_texture_dimensions(img->m_width, img->m_height, filename) && doesItFitInMemory(img->m_size))
             {
-                const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
+                uint64_t flags = BGFX_SAMPLER_NONE;
+                
+                if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
+                else flags |= BGFX_TEXTURE_NONE;
 
-                ret = bgfx::createTexture2D(
-                    img->m_width,
-                    img->m_height,
-                    1 < img->m_numMips,
-                    img->m_numLayers,
-                    bgfx::TextureFormat::Enum(img->m_format),
-                    BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
-                    mem
-                );
+                const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
+                if (img->m_cubeMap)
+                {
+                    ret = bgfx::createTextureCube(
+                        img->m_width,
+                        1 < img->m_numMips,
+                        img->m_numLayers,
+                        bgfx::TextureFormat::Enum(img->m_format),
+                        flags,
+                        mem
+                    );
+                }
+                else
+                {
+                
+                    ret = bgfx::createTexture2D(
+                        img->m_width,
+                        img->m_height,
+                        1 < img->m_numMips,
+                        img->m_numLayers,
+                        bgfx::TextureFormat::Enum(img->m_format),
+                        flags,
+                        mem
+                    );
+                }
 
                 *width = img->m_width;
                 *height = img->m_height;
+                *mipCount = img->m_numMips;
 
                 if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
             }
         }
     }
 
-    return ret.idx;
+    return ret;
 }
 
-uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t* height)
+uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
@@ -1343,13 +1426,18 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
         {
             const bgfx::Memory* mem = bgfx::makeRef(data, datasize, RendererReleaseData, data);
 
+            uint64_t flags = BGFX_SAMPLER_NONE;
+
+            if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
+            else flags |= BGFX_TEXTURE_NONE;
+
             ret = bgfx::createTexture2D(
                 _width,
                 _height,
                 false,
                 1,
                 texFmt,
-                BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE,
+                flags,
                 mem
             );
 
@@ -1428,7 +1516,7 @@ uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t 
 
     uint16_t dstY = 0;
 
-    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST);
+    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_BLIT_DST);
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
 

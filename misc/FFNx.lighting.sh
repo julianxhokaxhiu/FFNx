@@ -14,6 +14,14 @@
 /****************************************************************************/
 
 #include "FFNx.pcf.sh"
+#include "FFNx.common.sh"
+
+// Specular IBL cubemap
+SAMPLERCUBE(tex_7, 7);
+// Diffuse IBL cubemap
+SAMPLERCUBE(tex_8, 8);
+// BRDF
+SAMPLER2D(tex_9, 9);
 
 uniform vec4 lightDirData;
 uniform vec4 lightData;
@@ -67,75 +75,102 @@ vec3 perturb_normal(vec3 N, vec3 V, vec3 normalmap, vec2 texcoord)
     return normalize(mul(TBN, normalMapRemapped));
 }
 
-vec3 fresnelSchlick(vec3 f0, float cosine)
+vec3 fresnelSchlick(vec3 F0, float cosTheta)
 {
-    return f0 + (1.0 - f0) * pow(1.0 - cosine, 5.0);
+    float Fc = pow( 1 - cosTheta, 5 );	
+	return saturate( 50.0 * F0.g ) * Fc + (1 - Fc) * F0;
+}   
+
+float normalDistributionGgx(vec3 N, vec3 H, float perceptualRoughness)
+{
+    float a2     = perceptualRoughness*perceptualRoughness;
+    float NdotH  = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+	
+    float num   = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = M_PI * denom * denom;
+	
+    return num / denom;
 }
 
-float normalDistributionGgx(vec3 N, vec3 H, float roughness)
+float visiblilitySchlick(float perceptualRoughness, float NoV, float NoL)
 {
-    float roughness2 = roughness * roughness;
-    float dotNH = max(0.0, dot(N, H));
-    float a = (1.0 + (roughness2 - 1.0) * dotNH * dotNH);
-    return roughness2 * INV_PI / (a * a);
+	float k = (perceptualRoughness + 1) / 8.0;
+	float visSchlickV = NoV * (1 - k) + k;
+	float visSchlickL = NoL * (1 - k) + k;
+	return 0.25 / (visSchlickV * visSchlickL);
 }
 
-float geometrySchlickGGX(float NdotV, float k)
-{
-    float nom   = NdotV;
-    float denom = NdotV * (1.0 - k) + k;
-
-    return nom / denom;
-}
-
-float geometrySmith(vec3 N, vec3 V, vec3 L, float k)
-{
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
-    float ggx1 = geometrySchlickGGX(NdotV, k);
-    float ggx2 = geometrySchlickGGX(NdotL, k);
-
-    return ggx1 * ggx2;
-}
-
-vec3 specularCookTorranceBrdf(vec3 F0, vec3 N, vec3 V, vec3 L, float roughness)
+vec3 specularCookTorranceBrdf(vec3 F0, vec3 N, vec3 V, vec3 L, float perceptualRoughness, float roughness)
 {
     vec3 H = normalize(V + L);
-    float dotNV = saturate(dot(N, V));
+    float dotNV = saturate(dot(N, V)) + 1e-5;
     float dotNL = saturate(dot(N, L));
     float dotVH = saturate(dot(V, H));
     float d = normalDistributionGgx(N, H, roughness);
-    float g = geometrySmith(N, V, L, roughness);
+    float g = visiblilitySchlick(perceptualRoughness, dotNV, dotNL);
     vec3 f = fresnelSchlick(F0, dotVH);
-    return d  * g * f / max(0.001, 4.0 * dotNV * dotNL);
+    return d * g * f;
+}
+
+float CalcMipmapFromRoughness(float roughness, float mipCount)
+{
+	float level = 3.0 - 1.15 * log2( roughness );
+	return mipCount - 1.0 - level;
 }
 
 // Calculates luminance using Physically-Based Rendering (PBR)
 // https://learnopengl.com/PBR/Theory
-vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 viewDir, vec3 normal, float roughness, float metalness, float ao, vec3 shadowUv)
+vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 viewDir, vec3 normal, float perceptualRoughness, float roughness, float metallic, float specular, vec3 shadowUv)
 {
     float shadowFactor = sampleShadowMapPCF7x7(shadowUv.xyz, viewSpacePosition.xyz);
 
+    // Light
+    float lightIntensity = lightData.w;
+    vec3 lightColor = toLinear(lightData.rgb);
+    vec3 lightDir = normalize(lightDirData.xyz);
+    
+    vec3 F0 = mix(specular * vec3_splat(0.08), albedo, metallic);
+
+    vec3 H = normalize(viewDir + lightDir);
+    float dotVH = saturate(dot(viewDir, H));
+
+    // Diffuse
+    vec3 diffuseLuminance = (1.0 - metallic) * INV_PI * albedo;
+
+    // Specular
+    vec3 specularLuminance = specularCookTorranceBrdf(F0, normal, viewDir, lightDir, perceptualRoughness, roughness);
+
+    // Lambert cosine
+    float NdotL = max(0.0, dot(normal, lightDir));
+
+    return shadowFactor * lightIntensity * lightColor * (diffuseLuminance + specularLuminance) * NdotL;
+}
+
+vec3 CalcIblIndirectLuminance(vec3 albedo, vec3 specularIbl, vec3 diffuseIbl, vec3 V, vec3 N, float roughness, float metallic, float specular, float ao)
+{   
+    float dotNV = saturate(dot(N, V));
+    vec2 envBRDF = texture2D(tex_9, vec2(dotNV, 1.0 - roughness)).xy;
+
+    vec3 F0 = mix(specular * vec3_splat(0.08), albedo, metallic);
+    vec3 indirectSpecular = specularIbl * (F0 * envBRDF.x + envBRDF.y);
+
+    vec3 diffuse = diffuseIbl * albedo;
+    vec3 indirectDiffuse = (1.0 - metallic) * diffuse; 
+
+    vec3 ambientLightColor = toLinear(ambientLightData.rgb);
+    float ambientLightIntensity = ambientLightData.w;
+
+    return (indirectDiffuse + indirectSpecular) * ambientLightColor * ambientLightIntensity * ao;
+}
+
+vec3 CalcConstIndirectLuminance(vec3 albedo)
+{
     // Ambient
     vec3 ambientLightColor = ambientLightData.rgb;
     float ambientLightIntensity = ambientLightData.w;
     vec3 ambient = ambientLightIntensity * ambientLightColor * INV_PI * albedo.rgb;
 
-    // Diffuse
-    vec3 diffuse = (1.0 - metalness) * INV_PI * albedo;
-
-    // Specular
-    vec3 lightDir = normalize(lightDirData.xyz);
-    vec3 F0 = vec3(0.04, 0.04, 0.04);
-    F0 = mix(F0, albedo, metalness);
-    vec3 specular = metalness * specularCookTorranceBrdf(F0, normal, viewDir, -lightDir, roughness);
-
-    // Light
-    float lightIntensity = lightData.w;
-    vec3 lightColor = lightData.rgb;
-
-    // Lambert cosine
-    float NdotL = max(0.0, dot(normal, -lightDir));
-
-    return ao * ambient + shadowFactor * lightIntensity * lightColor * (diffuse + specular) * NdotL;
+    return ambient;
 }
