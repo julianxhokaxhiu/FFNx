@@ -17,6 +17,9 @@
 #include "renderer.h"
 #include "macro.h"
 #include "ff7.h"
+#include "ff8.h"
+#include "field.h"
+#include "cfg.h"
 
 Lighting lighting;
 
@@ -101,6 +104,50 @@ void Lighting::updateLightMatrices(struct boundingbox* sceneAabb)
 
     // Inverse of all light transformations above
     bx::mtxInverse(lightingState.lightInvViewProjTexMatrix, lightingState.lightViewProjTexMatrix);
+}
+
+void Lighting::ff7_load_ibl()
+{
+	struct game_mode* mode = getmode_cached();
+	static uint32_t prev_mode = -1;
+	static char filename[64]{ 0 };
+	static char specularFullpath[MAX_PATH];
+	static char diffuseFullpath[MAX_PATH];
+	static WORD last_field_id = 0, last_battle_id = 0;
+
+	switch (mode->driver_mode)
+	{
+	case MODE_BATTLE:
+		if (mode->driver_mode != prev_mode || last_battle_id != ff7_externals.modules_global_object->battle_id)
+		{
+			last_battle_id = ff7_externals.modules_global_object->battle_id;
+
+			sprintf(filename, "bat_%d", last_battle_id);
+			sprintf(specularFullpath, "%s/%s/%s_s.dds", basedir, external_ibl_path.c_str(), filename);
+			sprintf(diffuseFullpath, "%s/%s/%s_d.dds", basedir, external_ibl_path.c_str(), filename);
+
+			newRenderer.prepareSpecularIbl(specularFullpath);
+			newRenderer.prepareDiffuseIbl(diffuseFullpath);
+		}
+		break;
+	case MODE_FIELD:
+		if (mode->driver_mode != prev_mode || last_field_id != *ff7_externals.field_id)
+		{
+			last_field_id = *ff7_externals.field_id;
+
+			sprintf(filename, "field_%d", last_field_id);		
+			sprintf(specularFullpath, "%s/%s/%s_s.dds", basedir, external_ibl_path.c_str(), filename);
+			sprintf(diffuseFullpath, "%s/%s/%s_d.dds", basedir, external_ibl_path.c_str(), filename);
+
+			newRenderer.prepareSpecularIbl(specularFullpath);
+			newRenderer.prepareDiffuseIbl(diffuseFullpath);
+		}
+		break;
+	default:
+		break;
+	}
+
+	prev_mode = mode->driver_mode;
 }
 
 void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
@@ -583,6 +630,8 @@ void Lighting::draw(struct game_obj* game_object)
     VOBJ(game_obj, game_object, game_object);
     struct game_mode* mode = getmode_cached();
 
+	ff7_load_ibl();
+
     struct matrix viewMatrix;
     struct matrix* pViewMatrix = &viewMatrix;
     struct boundingbox sceneAabb = calculateSceneAabb();
@@ -682,6 +731,16 @@ bool Lighting::isPbrTextureEnabled()
 	return lightingState.lightingSettings[0];
 }
 
+void Lighting::setEnvironmentLightingEnabled(bool isEnabled)
+{
+	lightingState.lightingSettings[1] = isEnabled;
+}
+
+bool Lighting::isEnvironmentLightingEnabled()
+{
+	return lightingState.lightingSettings[1];
+}
+
 void Lighting::setWorldLightDir(float dirX, float dirY, float dirZ)
 {
     lightingState.worldLightRot.x = dirX;
@@ -744,6 +803,11 @@ point3d Lighting::getAmbientLightColor()
     return color;
 }
 
+void Lighting::setIblMipCount(int mipCount)
+{
+	lightingState.iblData[0] = mipCount;
+}
+
 void Lighting::setRoughness(float roughness)
 {
     lightingState.materialData[0] = roughness;
@@ -754,34 +818,54 @@ float Lighting::getRoughness()
     return lightingState.materialData[0];
 }
 
-void Lighting::setMetalness(float metalness)
+void Lighting::setMetallic(float metallic)
 {
-    lightingState.materialData[1] = metalness;
+    lightingState.materialData[1] = metallic;
 }
 
-float Lighting::getMetalness()
+float Lighting::getMetallic()
 {
     return lightingState.materialData[1];
 }
 
-void Lighting::setRoughnessScale(float roughness)
+void Lighting::setSpecular(float specular)
 {
-	lightingState.materialData[2] = roughness;
+	lightingState.materialData[2] = specular;
 }
 
-float Lighting::getRoughnessScale()
+float Lighting::getSpecular()
 {
 	return lightingState.materialData[2];
 }
 
-void Lighting::setMetalnessScale(float metalness)
+void Lighting::setRoughnessScale(float scale)
 {
-	lightingState.materialData[3] = metalness;
+	lightingState.materialScaleData[0] = scale;
 }
 
-float Lighting::getMetalnessScale()
+float Lighting::getRoughnessScale()
 {
-	return lightingState.materialData[3];
+	return lightingState.materialScaleData[0];
+}
+
+void Lighting::setMetallicScale(float scale)
+{
+	lightingState.materialScaleData[1] = scale;
+}
+
+float Lighting::getMetallicScale()
+{
+	return lightingState.materialScaleData[1];
+}
+
+void Lighting::setSpecularScale(float scale)
+{
+	lightingState.materialScaleData[2] = scale;
+}
+
+float Lighting::getSpecularScale()
+{
+	return lightingState.materialScaleData[2];
 }
 
 void Lighting::setShadowFaceCullingEnabled(bool isEnabled)
@@ -925,12 +1009,12 @@ bool Lighting::isShowWalkmeshEnabled()
     return lightingState.lightingDebugData[1];
 }
 
-void Lighting::setTextureDebugOutput(TextureDebugOutput output)
+void Lighting::setDebugOutput(DebugOutput output)
 {
 	lightingState.lightingDebugData[2] = output;
 }
 
-TextureDebugOutput Lighting::GetTextureDebugOutput()
+DebugOutput Lighting::GetDebugOutput()
 {
-	return static_cast<TextureDebugOutput>(lightingState.lightingDebugData[2]);
+	return static_cast<DebugOutput>(lightingState.lightingDebugData[2]);
 }

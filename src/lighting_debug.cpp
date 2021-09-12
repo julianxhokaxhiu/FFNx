@@ -38,6 +38,11 @@ void lighting_debug(bool* isOpen)
     {
         lighting.setPbrTextureEnabled(isPbrTexturesEnabled);
     }
+    bool isEnvironmentLightingEnabled = lighting.isEnvironmentLightingEnabled();
+    if (ImGui::Checkbox("Enable Environment Lighting", &isEnvironmentLightingEnabled))
+    {
+        lighting.setEnvironmentLightingEnabled(isEnvironmentLightingEnabled);
+    }
     if (ImGui::CollapsingHeader("Direct Lighting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
     {
         point3d lightDirVector = lighting.getWorldLightDir();
@@ -82,20 +87,30 @@ void lighting_debug(bool* isOpen)
         {
             lighting.setRoughness(roughness);
         }
-        float metalness = lighting.getMetalness();
-        if (ImGui::DragFloat("Metalness", &metalness, 0.01f, 0.0f, 1.0f))
+        float metallic = lighting.getMetallic();
+        if (ImGui::DragFloat("Metallic", &metallic, 0.01f, 0.0f, 1.0f))
         {
-            lighting.setMetalness(metalness);
+            lighting.setMetallic(metallic);
+        }
+        float specular = lighting.getSpecular();
+        if (ImGui::DragFloat("Specular", &specular, 0.01f, 0.0f, 1.0f))
+        {
+            lighting.setSpecular(specular);
         }
         float roughnessScale = lighting.getRoughnessScale();
         if (ImGui::DragFloat("Roughness Scale", &roughnessScale, 0.01f, 0.0f, 2.0f))
         {
             lighting.setRoughnessScale(roughnessScale);
         }
-        float metalnessScale = lighting.getMetalnessScale();
-        if (ImGui::DragFloat("Metalness Scale", &metalnessScale, 0.01f, 0.0f, 2.0f))
+        float metallicScale = lighting.getMetallicScale();
+        if (ImGui::DragFloat("Metallic Scale", &metallicScale, 0.01f, 0.0f, 2.0f))
         {
-            lighting.setMetalnessScale(metalnessScale);
+            lighting.setMetallicScale(metallicScale);
+        }
+        float specularScale = lighting.getSpecularScale();
+        if (ImGui::DragFloat("Specular Scale", &specularScale, 0.01f, 0.0f, 2.0f))
+        {
+            lighting.setSpecularScale(specularScale);
         }
     }
     if (ImGui::CollapsingHeader("Shadow map (common)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
@@ -169,10 +184,10 @@ void lighting_debug(bool* isOpen)
     }
     if (ImGui::CollapsingHeader("Debug", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
     {
-        int debugOutput = lighting.GetTextureDebugOutput();
-        if (ImGui::Combo("Texture Debug Output", &debugOutput, "Disabled\0Color\0Normal Map\0Roughness\0Metalness\0\0"))
+        int debugOutput = lighting.GetDebugOutput();
+        if (ImGui::Combo("Debug Output", &debugOutput, "Disabled\0Color\0Normal\0Roughness\0Metallic\0AO\0Specular\0IBL (Specular)\0IBL (Diffuse)\0"))
         {
-            lighting.setTextureDebugOutput(static_cast<TextureDebugOutput>(debugOutput));
+            lighting.setDebugOutput(static_cast<DebugOutput>(debugOutput));
         }
         bool isHide2dEnabled = lighting.isHide2dEnabled();
         if (ImGui::Checkbox("Hide 2D", &isHide2dEnabled))

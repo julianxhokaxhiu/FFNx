@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -92,16 +93,19 @@ void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height
 		ffnx_warning("Save texture skipped because the file [ %s ] already exists.\n", filename);
 }
 
-uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool useLibPng)
+uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool useLibPng, bool isSrgb)
 {
 	uint32_t ret = 0;
 
 	normalize_path(name);
 
 	if (useLibPng)
-		ret = newRenderer.createTextureLibPng(name, width, height);
+		ret = newRenderer.createTextureLibPng(name, width, height, isSrgb);
 	else
-		ret = newRenderer.createTexture(name, width, height);
+	{
+		uint32_t mipCount = 0;
+		ret = newRenderer.createTexture(name, width, height, &mipCount, isSrgb);
+	}
 
 	if (ret)
 	{
@@ -147,7 +151,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 				break;
 			}
 
-			ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png");
+			ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
 
 			if (trace_all)
 			{
@@ -192,7 +196,7 @@ uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palett
 					if (stat(filename, &dummy) == 0)
 					{
 						if (gl_set->additional_textures.count(it.first)) newRenderer.deleteTexture(gl_set->additional_textures[it.first]);
-						gl_set->additional_textures[it.first] = load_texture_helper(filename, width, height, mod_ext[idx] == "png");
+						gl_set->additional_textures[it.first] = load_texture_helper(filename, width, height, mod_ext[idx] == "png", false);
 						break;
 					}
 					else if (trace_all || show_missing_textures)

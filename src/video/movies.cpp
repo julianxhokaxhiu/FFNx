@@ -379,7 +379,8 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 		tex_width,
 		tex_height,
 		upload_width,
-		RendererTextureType::YUV
+		RendererTextureType::YUV,
+		false
 	);
 }
 

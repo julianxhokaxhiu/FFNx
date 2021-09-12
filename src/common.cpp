@@ -612,6 +612,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				max_texture_size = newRenderer.getCaps()->limits.maxTextureSize;
 				ffnx_info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
 
+				newRenderer.prepareEnvBrdf();
+
 				// perform any additional initialization that requires the rendering environment to be set up
 				field_init();
 				world_init();
@@ -1128,6 +1130,7 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 	VOBJ(tex_header, tex_header, tex_header);
 	uint32_t texture = 0;
 	struct gl_texture_set *gl_set = VREF(texture_set, ogl.gl_set);
+	struct texture_format* tex_format = VREFP(tex_header, tex_format);
 
 	if(save_textures) return false;
 

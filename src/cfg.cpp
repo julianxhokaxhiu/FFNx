@@ -41,6 +41,7 @@ std::string external_voice_path;
 std::vector<std::string> external_voice_ext;
 std::string external_ambient_path;
 std::vector<std::string> external_ambient_ext;
+std::string external_ibl_path;
 bool enable_voice_music_fade;
 long external_voice_music_fade_volume;
 bool save_textures;
@@ -157,6 +158,7 @@ void read_cfg()
 	external_voice_music_fade_volume = config["external_voice_music_fade_volume"].value_or(25);
 	external_ambient_path = config["external_ambient_path"].value_or("");
 	external_ambient_ext = get_string_or_array_of_strings(config["external_ambient_ext"]);
+	external_ibl_path = config["external_ibl_path"].value_or("");
 	save_textures = config["save_textures"].value_or(false);
 	trace_all = config["trace_all"].value_or(false);
 	trace_renderer = config["trace_renderer"].value_or(false);
@@ -346,6 +348,10 @@ void read_cfg()
 	// EXTERNAL AMBIENT EXTENSION
 	if (external_ambient_ext.empty() || external_ambient_ext.front().empty())
 		external_ambient_ext = std::vector<std::string>(1, "ogg");
+
+	// EXTERNAL IBL PATH
+	if (external_ibl_path.empty())
+		external_ibl_path = "lighting/ibl";
 
 	// MOD PATH
 	if (mod_path.empty())

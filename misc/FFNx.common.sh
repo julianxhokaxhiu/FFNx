@@ -1,11 +1,5 @@
 /****************************************************************************/
-//    Copyright (C) 2009 Aali132                                            //
-//    Copyright (C) 2018 quantumpencil                                      //
-//    Copyright (C) 2018 Maxime Bacoux                                      //
-//    Copyright (C) 2020 myst6re                                            //
-//    Copyright (C) 2020 Chris Rizzitello                                   //
-//    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2021 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -19,16 +13,12 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input a_position, a_texcoord0, a_color0
-$output v_color0, v_texcoord0
-
-#include <bgfx/bgfx_shader.sh>
-#include "FFNx.common.sh"
-
-void main()
+vec3 toLinear(vec3 _rgb)
 {
-	vec2 pos = 2.0*a_position.xy*u_viewTexel.xy;
-	gl_Position = vec4(pos.x - 1.0, 1.0 - pos.y, 0.0, 1.0);
-	v_texcoord0 = a_texcoord0;
-	v_color0    = vec4(toLinear(a_color0.rgb), a_color0.a);
+	return pow(abs(_rgb), vec3_splat(2.2) );
+}
+
+vec3 toGamma(vec3 _rgb)
+{
+	return pow(abs(_rgb), vec3_splat(1.0 / 2.2) );
 }

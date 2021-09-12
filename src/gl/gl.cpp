@@ -205,7 +205,7 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 
 			subtract_vector(v2, v1, &e12);
 			subtract_vector(v3, v1, &e13);
-			cross_product(&e12, &e13, &triNormal);
+			cross_product(&e13, &e12, &triNormal);
 
 			add_vector(&normals[vId0], &triNormal, &normals[vId0]);
 			add_vector(&normals[vId1], &triNormal, &normals[vId1]);
