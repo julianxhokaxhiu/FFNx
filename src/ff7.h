@@ -274,19 +274,19 @@ struct struc_106
 	uint32_t field_0;
 	uint32_t color;
 	struct point3d point;
-	struct bgra_color d3dcol;
+	struct abgr_color d3dcol;
 };
 
 struct ff7_light
 {
 	uint32_t flags;
 	uint32_t field_4;
-	struct struc_106 *struc_106_1;
-	struct struc_106 *struc_106_2;
-	struct struc_106 *struc_106_3;
-	struct bgra_color d3dcol4;
-	struct bgra_color normd3dcol4;
-	uint32_t color4;
+	struct struc_106 *color_1;
+	struct struc_106 *color_2;
+	struct struc_106 *color_3;
+	struct abgr_color global_light_color_abgr;
+	struct abgr_color global_light_color_abgr_norm;
+	uint32_t global_light_color_rgba;
 	struct matrix field_38;
 	struct matrix field_78;
 	struct matrix field_B8;

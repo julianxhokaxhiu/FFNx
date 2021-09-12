@@ -176,6 +176,14 @@ struct bgra_color
 	float a;
 };
 
+struct abgr_color
+{
+	float a;
+	float b;
+	float g;
+	float r;
+};
+
 typedef struct {
 	short x, y, z, res;		// short is a 2 byte signed integer
 } vertex_3s;
