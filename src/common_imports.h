@@ -89,7 +89,7 @@ typedef struct texture_set *(gfx_load_texture)(struct texture_set *, struct tex_
 typedef uint32_t (gfx_palette_changed)(uint32_t, uint32_t, uint32_t, struct palette *, struct texture_set *);
 typedef uint32_t (gfx_write_palette)(uint32_t, uint32_t, void *, uint32_t, struct palette *, struct texture_set *);
 typedef struct blend_mode *(gfx_blendmode)(uint32_t, struct game_obj *);
-typedef void (gfx_light_polygon_set)(struct polygon_set *, void *);
+typedef void (gfx_light_polygon_set)(struct polygon_set *, struct light *);
 typedef void (gfx_field_64)(uint32_t, uint32_t, struct game_obj *);
 typedef void (gfx_setrenderstate)(struct p_hundred *, struct game_obj *);
 typedef void (gfx_field_74)(uint32_t, struct game_obj *);

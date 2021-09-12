@@ -1034,6 +1034,12 @@ void common_setmatrix(uint32_t unknown, struct matrix *matrix, struct matrix_set
 	}
 }
 
+// called by the game to apply light information to the current polygon set
+void common_light_polygon_set(struct polygon_set *polygon_set, struct light *light)
+{
+	common_externals.generic_light_polygon_set(polygon_set, light);
+}
+
 // called by the game to unload a texture
 void common_unload_texture(struct texture_set *texture_set)
 {

@@ -109,6 +109,7 @@ gfx_setbg common_setbg;
 gfx_prepare_polygon_set common_prepare_polygon_set;
 gfx_load_group common_load_group;
 gfx_setmatrix common_setmatrix;
+gfx_light_polygon_set common_light_polygon_set;
 gfx_unload_texture common_unload_texture;
 gfx_load_texture common_load_texture;
 gfx_palette_changed common_palette_changed;

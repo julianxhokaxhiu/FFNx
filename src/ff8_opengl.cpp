@@ -666,7 +666,7 @@ struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 	ret->palette_changed = common_palette_changed;
 	ret->write_palette = common_write_palette;
 	ret->blendmode = common_blendmode;
-	ret->light_polygon_set = common_externals.generic_light_polygon_set;
+	ret->light_polygon_set = common_light_polygon_set;
 	ret->field_64 = common_field_64;
 	ret->setrenderstate = common_setrenderstate;
 	ret->_setrenderstate = common_setrenderstate;
