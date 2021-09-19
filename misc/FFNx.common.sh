@@ -15,10 +15,18 @@
 
 vec3 toLinear(vec3 _rgb)
 {
-	return pow(abs(_rgb), vec3_splat(2.2) );
+	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.04045));
+    vec3 higher = pow((_rgb.rgb + vec3_splat(0.055)) / vec3_splat(1.055), vec3_splat(2.4));
+    vec3 lower = _rgb.rgb / vec3_splat(12.92);
+
+    return mix(higher, lower, cutoff);
 }
 
 vec3 toGamma(vec3 _rgb)
 {
-	return pow(abs(_rgb), vec3_splat(1.0 / 2.2) );
+	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.0031308));
+    vec3 higher = vec3_splat(1.055) * pow(_rgb.rgb, vec3_splat(1.0/2.4)) - vec3_splat(0.055);
+    vec3 lower = _rgb.rgb * vec3_splat(12.92);
+
+    return mix(higher, lower, cutoff);
 }

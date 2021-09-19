@@ -59,7 +59,7 @@ struct LightingState
     float materialData[4] = { 0.7, 0.5, 0.0, 0.0 };
     float materialScaleData[4] = { 1.0, 1.0, 1.0, 1.0 };
     float shadowData[4] = { 0.001, 0.0, 0.0, 2048.0 };
-    float fieldShadowData[4] = { 0.1, 200.0, 100.0, 0.0 };
+    float fieldShadowData[4] = { 0.3, 200.0, 100.0, 0.0 };
     float iblData[4] = { 1.0, 0.0, 0.0, 0.0 };
 
     float lightingDebugData[4] = { 0.0, 0.0, 0.0, 0.0 };
