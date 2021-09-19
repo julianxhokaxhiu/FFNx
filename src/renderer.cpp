@@ -609,7 +609,6 @@ void Renderer::init()
     bgfxInit.type = getUserChosenRenderer();
     bgfxInit.resolution.width = window_size_x;
     bgfxInit.resolution.height = window_size_y;
-    bgfxInit.resolution.reset = BGFX_RESET_SRGB_BACKBUFFER;
 
     if (enable_anisotropic)
         bgfxInit.resolution.reset |= BGFX_RESET_MAXANISOTROPY;
@@ -719,7 +718,7 @@ void Renderer::reset()
 
     if(!ff8 && enable_lighting) prepareShadowMap();
 
-    bgfx::reset(window_size_x, window_size_y, BGFX_RESET_SRGB_BACKBUFFER);
+    bgfx::reset(window_size_x, window_size_y);
 }
 
 void Renderer::prepareShadowMap()

@@ -161,7 +161,12 @@ void main()
                 }
             }
 
-            if (isFBTexture && all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
+            if (isFBTexture)
+            {
+                if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
+
+                texture_color.rgb = toLinear(texture_color.rgb);
+            }
 
             if (isMovie) texture_color.a = 1.0;
 
@@ -274,4 +279,6 @@ void main()
             gl_FragColor = vec4(luminance + indirectLuminance, color.a);
         }
     }
+
+    gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
 }
