@@ -87,6 +87,15 @@ public:
 		float wantedMusicVolume;
 	};
 
+	struct NxAudioEngineMusicAudioSource
+	{
+		NxAudioEngineMusicAudioSource(SoLoud::handle handle, SoLoud::AudioSource* audioSource) :
+			handle(handle),
+			audioSource(audioSource) {}
+		SoLoud::handle handle;
+		SoLoud::AudioSource* audioSource;
+	};
+
 	struct NxAudioEngineVoice
 	{
 		NxAudioEngineVoice() :
@@ -141,11 +150,13 @@ private:
 	// MUSIC
 	NxAudioEngineMusic _musics[2];
 	std::stack<NxAudioEngineMusic> _musicStack; // For resuming
+	std::list<NxAudioEngineMusicAudioSource> _audioSourcesToDeleteLater;
 
 	float _previousMusicMasterVolume = -1.0f;
 	float _musicMasterVolume = -1.0f;
 	SoLoud::time _lastVolumeFadeEndTime = 0.0;
 
+	void cleanOldAudioSources();
 	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
 	void backupMusic(int channelSource);
