@@ -459,6 +459,24 @@ bool NxAudioEngine::canPlayMusic(const char* name)
 	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 }
 
+void NxAudioEngine::cleanOldAudioSources()
+{
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %d elements in the list before cleaning\n", __func__, _audioSourcesToDeleteLater.size());
+
+	std::list<NxAudioEngineMusicAudioSource>::iterator it = _audioSourcesToDeleteLater.begin();
+	while (it != _audioSourcesToDeleteLater.end()) {
+		if (!_engine.isValidVoiceHandle((*it).handle)) {
+			delete (*it).audioSource;
+			it = _audioSourcesToDeleteLater.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
+
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %d elements in the list after cleaning\n", __func__, _audioSourcesToDeleteLater.size());
+}
+
 SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format)
 {
 	SoLoud::AudioSource* music = nullptr;
@@ -479,6 +497,8 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 	if (exists)
 	{
 		if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
+
+		cleanOldAudioSources();
 
 		if (_openpsf_loaded && SoLoud::OpenPsf::is_our_path(filename)) {
 			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf();
@@ -593,6 +613,9 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		music.handle = _engine.playBackground(*audioSource, initialVolume, options.offsetSeconds > 0);
 		music.id = id;
 
+		// Keep audioSource pointer somewhere to delete it after musicHandle is stopped
+		_audioSourcesToDeleteLater.push_back(NxAudioEngineMusicAudioSource(music.handle, audioSource));
+
 		if (options.offsetSeconds > 0) {
 			if (trace_all || trace_music) ffnx_info("%s: seek to time %fs\n", __func__, options.offsetSeconds);
 			_engine.seek(music.handle, options.offsetSeconds);
@@ -630,9 +653,12 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 
 	for (const std::string &name: names) {
 		SoLoud::AudioSource* audioSource = loadMusic(name.c_str());
+
 		if (audioSource != nullptr) {
 			SoLoud::handle musicHandle = _engine.playBackground(*audioSource, -1.0f, true);
 			_engine.addVoiceToGroup(groupHandle, musicHandle);
+			// Keep audioSource pointer somewhere to delete it after musicHandle is stopped
+			_audioSourcesToDeleteLater.push_back(NxAudioEngineMusicAudioSource(musicHandle, audioSource));
 		}
 	}
 
