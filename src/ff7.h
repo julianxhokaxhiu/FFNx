@@ -1609,6 +1609,14 @@ struct ff7_field_script_header {
 	char szName[8];			// Field name (never shown)
 };
 
+struct ff7_field_ad_object {
+	int32_t field_0;
+	int32_t actor_x;
+	int32_t actor_y;
+	int32_t actor_z;
+	char buffer[384]; // to be mapped to real fields
+};
+
 // --------------- end of FF7 imports ---------------
 
 struct ff7_channel_6_state
@@ -1903,6 +1911,7 @@ struct ff7_externals
 	uint32_t sub_408116;
 	char *word_CC16E8;
 	int16_t* current_triangle_id;
+	struct ff7_field_ad_object* field_current_actor;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

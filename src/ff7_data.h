@@ -535,6 +535,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sub_408116 = get_relative_call(ff7_externals.sub_63C17F, 0x2A);
 	ff7_externals.word_CC16E8 = (char *)get_absolute_value(ff7_externals.sub_408116, 0x8E);
 	ff7_externals.current_triangle_id = (int16_t *)((char *)ff7_externals.word_CC16E8 + 136 * ff7_externals.modules_global_object->field_model_id);
+
+	ff7_externals.field_current_actor = (struct ff7_field_ad_object*)get_absolute_value(common_externals.execute_opcode_table[0xA8], 0x1C6);
 }
 
 void ff7_data(struct ff7_game_obj* game_object)
