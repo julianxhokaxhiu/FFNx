@@ -215,9 +215,9 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 
 			sfx->setLooping(loop);
 
-			if (sfx->load(filename) != SoLoud::SO_NO_ERROR)
-			{
-				ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
+			SoLoud::result res = sfx->load(filename);
+			if (res != SoLoud::SO_NO_ERROR) {
+				ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
 				delete sfx;
 				return nullptr;
 			}
@@ -484,8 +484,9 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf();
 			music = openpsf;
 
-			if (openpsf->load(filename) != SoLoud::SO_NO_ERROR) {
-				ffnx_error("NxAudioEngine::%s: Cannot load %s with openpsf\n", __func__, filename);
+			SoLoud::result res = openpsf->load(filename);
+			if (res != SoLoud::SO_NO_ERROR) {
+				ffnx_error("NxAudioEngine::%s: Cannot load %s with openpsf ( SoLoud error: %u )\n", __func__, filename, res);
 				delete openpsf;
 				music = nullptr;
 			}
@@ -494,8 +495,12 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 		if (music == nullptr) {
 			SoLoud::VGMStream* vgmstream = new SoLoud::VGMStream();
 			music = vgmstream;
-			if (vgmstream->load(filename, format) != SoLoud::SO_NO_ERROR) {
-				ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
+
+			SoLoud::result res = vgmstream->load(filename, format);
+			if (res != SoLoud::SO_NO_ERROR) {
+				ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
+				delete vgmstream;
+				music = nullptr;
 			}
 		}
 	}
@@ -919,9 +924,9 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 	{
 		_currentVoice.stream = new SoLoud::VGMStream();
 
-		if (_currentVoice.stream->load(filename) != SoLoud::SO_NO_ERROR)
-		{
-			ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
+		SoLoud::result res = _currentVoice.stream->load(filename);
+		if (res != SoLoud::SO_NO_ERROR) {
+			ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
 			delete _currentVoice.stream;
 			return false;
 		}
@@ -1036,9 +1041,9 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 
 		_currentAmbient.stream = new SoLoud::VGMStream();
 
-		if (_currentAmbient.stream->load(filename) != SoLoud::SO_NO_ERROR)
-		{
-			ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream\n", __func__, filename);
+		SoLoud::result res = _currentAmbient.stream->load(filename);
+		if (res != SoLoud::SO_NO_ERROR) {
+			ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
 			delete _currentAmbient.stream;
 			return false;
 		}
