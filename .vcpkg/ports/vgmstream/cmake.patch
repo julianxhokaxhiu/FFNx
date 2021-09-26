@@ -9,16 +9,17 @@ index 4445a951..4da6662b 100644
  enable_language(CXX)
  
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 38e949b4..991f4f51 100644
+index 38e949b4..6f7c3f80 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -47,3 +47,27 @@ target_include_directories(libvgmstream PRIVATE
+@@ -47,3 +47,28 @@ target_include_directories(libvgmstream PRIVATE
  	layout
  	meta
  	util)
 +
 +if(MSVC)
 +	target_compile_definitions (libvgmstream PRIVATE "USE_ALLOCA")
++	target_compile_options(libvgmstream PRIVATE /DVGM_DEBUG_OUTPUT)
 +endif()
 +
 +# Install library
@@ -40,3 +41,18 @@ index 38e949b4..991f4f51 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/g72x_state.h DESTINATION include/libvgmstream/coding )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/nwa_decoder.h DESTINATION include/libvgmstream/coding )
 +endif()
+diff --git a/src/coding/ffmpeg_decoder.c b/src/coding/ffmpeg_decoder.c
+index 54b09cca..58e82487 100644
+--- a/src/coding/ffmpeg_decoder.c
++++ b/src/coding/ffmpeg_decoder.c
+@@ -404,8 +404,8 @@ ffmpeg_codec_data* init_ffmpeg_header_offset_subsong(STREAMFILE* sf, uint8_t* he
+         VGM_ASSERT(stream->codecpar->trailing_padding > 0, "FFMPEG: trailing_padding %i\n", (int)stream->codecpar->trailing_padding);
+         VGM_ASSERT(stream->codecpar->seek_preroll > 0, "FFMPEG: seek_preroll %i\n", (int)stream->codecpar->seek_preroll);//seek delay: OPUS
+         VGM_ASSERT(stream->start_time > 0, "FFMPEG: start_time %i\n", (int)stream->start_time); //delay
+-        VGM_ASSERT(stream->first_discard_sample > 0, "FFMPEG: first_discard_sample %i\n", (int)stream->first_discard_sample); //padding: MP3
+-        VGM_ASSERT(stream->last_discard_sample > 0, "FFMPEG: last_discard_sample %i\n", (int)stream->last_discard_sample); //padding: MP3
++        //VGM_ASSERT(stream->first_discard_sample > 0, "FFMPEG: first_discard_sample %i\n", (int)stream->first_discard_sample); //padding: MP3
++        //VGM_ASSERT(stream->last_discard_sample > 0, "FFMPEG: last_discard_sample %i\n", (int)stream->last_discard_sample); //padding: MP3
+ #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 64, 100)
+         VGM_ASSERT(stream->skip_samples > 0, "FFMPEG: skip_samples %i\n", (int)stream->skip_samples); //delay: MP4
+         VGM_ASSERT(stream->start_skip_samples > 0, "FFMPEG: start_skip_samples %i\n", (int)stream->start_skip_samples); //delay: MP3

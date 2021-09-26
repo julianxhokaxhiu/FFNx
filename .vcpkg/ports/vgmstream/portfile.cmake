@@ -38,7 +38,6 @@ vcpkg_configure_cmake(
         -DAVCODEC_VERSION=57
         -DAVUTIL_VERSION=55
         -DSWRESAMPLE_VERSION=2
-        -DUSE_FDKAAC=OFF
         -DUSE_G719=OFF
         -DUSE_G7221=ON
         -DUSE_MAIATRAC3PLUS=OFF

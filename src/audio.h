@@ -33,6 +33,11 @@
 
 #define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000
 
+static void NxAudioEngineVgmstreamCallback(int level, const char* str)
+{
+  ffnx_info("VGMStream [L%d]: %s", level, str);
+}
+
 class NxAudioEngine
 {
 public:

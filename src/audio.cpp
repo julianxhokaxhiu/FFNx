@@ -24,6 +24,16 @@
 #include "log.h"
 #include "gamehacks.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#include <libvgmstream/vgmstream.h>
+
+#if defined(__cplusplus)
+}
+#endif
+
 NxAudioEngine nxAudioEngine;
 
 // PRIVATE
@@ -132,6 +142,9 @@ bool NxAudioEngine::init()
 	if (_engine.init() == 0)
 	{
 		_engineInitialized = true;
+
+		// 100 -> LOG_LEVEL_ALL: https://github.com/vgmstream/vgmstream/blob/4cda04d02595b381dc8cf98ec39e771c80987d18/src/util/log.c#L20
+		if (trace_all || trace_ambient || trace_sfx || trace_music || trace_voice) vgm_log_set_callback(NULL, 100, 0, NxAudioEngineVgmstreamCallback);
 
 		loadConfig();
 
