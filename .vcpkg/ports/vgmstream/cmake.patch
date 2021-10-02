@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 4445a951..4da6662b 100644
+index 22bab405..b1aa8151 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,4 +1,5 @@
@@ -42,7 +42,7 @@ index 38e949b4..6f7c3f80 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/nwa_decoder.h DESTINATION include/libvgmstream/coding )
 +endif()
 diff --git a/src/coding/ffmpeg_decoder.c b/src/coding/ffmpeg_decoder.c
-index 54b09cca..58e82487 100644
+index e363f5af..d78c60a7 100644
 --- a/src/coding/ffmpeg_decoder.c
 +++ b/src/coding/ffmpeg_decoder.c
 @@ -404,8 +404,8 @@ ffmpeg_codec_data* init_ffmpeg_header_offset_subsong(STREAMFILE* sf, uint8_t* he
@@ -56,3 +56,27 @@ index 54b09cca..58e82487 100644
  #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 64, 100)
          VGM_ASSERT(stream->skip_samples > 0, "FFMPEG: skip_samples %i\n", (int)stream->skip_samples); //delay: MP4
          VGM_ASSERT(stream->start_skip_samples > 0, "FFMPEG: start_skip_samples %i\n", (int)stream->start_skip_samples); //delay: MP3
+diff --git a/src/streamfile.c b/src/streamfile.c
+index 0e4349b9..f4ba58f9 100644
+--- a/src/streamfile.c
++++ b/src/streamfile.c
+@@ -246,8 +246,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
+     this_sf->buf = buf;
+ 
+     this_sf->name_len = strlen(filename);
+-    if (this_sf->name_len >= sizeof(this_sf->name))
++    if (this_sf->name_len >= sizeof(this_sf->name)) {
++        vgm_logi("STREAMFILE: filename length is longer than sizeof(this_sf->name).\n");
+         goto fail;
++    }
+     memcpy(this_sf->name, filename, this_sf->name_len);
+     this_sf->name[this_sf->name_len] = '\0';
+ 
+@@ -271,6 +273,7 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
+     return &this_sf->vt;
+ 
+ fail:
++    vgm_logi("STREAMFILE: could not allocate stream because of memory exhaustion.\n");
+     free(buf);
+     free(this_sf);
+     return NULL;
