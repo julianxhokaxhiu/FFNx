@@ -2345,6 +2345,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		__debugbreak();
 		*/
 
+		// Push the limit of how many files we can open at the same time to the maximum available on Windows
+		// See https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/setmaxstdio?view=msvc-160#remarks
+		_setmaxstdio(8192);
+
 		SetProcessDPIAware();
 
 		GetCurrentDirectoryA(BASEDIR_LENGTH, basedir);
