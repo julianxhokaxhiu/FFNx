@@ -27,7 +27,6 @@
     "Microsoft.Net.Component.4.5.1.TargetingPack",
     "Microsoft.Net.Component.4.6.TargetingPack",
     "Microsoft.Net.ComponentGroup.TargetingPacks.Common",
-    "Microsoft.Net.Core.Component.SDK.2.1",
     "Microsoft.VisualStudio.Component.DiagnosticTools",
     "Microsoft.VisualStudio.Component.EntityFramework",
     "Microsoft.VisualStudio.Component.Debugger.JustInTime",
