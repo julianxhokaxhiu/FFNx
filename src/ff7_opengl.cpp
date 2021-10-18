@@ -225,6 +225,43 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				break;
 		}
 	}
+	//###############################
+	// steam achievement unlock calls
+	//###############################
+	if(enable_steam_achievements)
+	{
+		replace_call_function(ff7_externals.battle_fight_end + 0x25, ff7_battle_fight_fanfare);
+		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7_load_battle_stage);
+
+		// GIL
+		replace_call_function(ff7_externals.battle_enemy_killed_sub_433BD2 + 0x2AF, ff7_battle_sub_5C7F94); 
+		replace_call_function(ff7_externals.menu_sub_6CDA83 + 0x20, ff7_menu_battle_end_sub_6C9543);
+		replace_call_function(ff7_externals.menu_shop_loop + 0x327B, ff7_get_materia_gil);
+		replace_function(ff7_externals.menu_sub_6CBCB9, ff7_menu_sub_6CBCB9);
+
+		// GAME PROGRESS
+		replace_call_function(ff7_externals.credits_main_loop + 0x211, ff7_sub_404D80);
+
+		// PHS VISIBILITY
+		replace_call_function(ff7_externals.sub_61C113 + 0x4B, ff7_sub_61C26A);
+		replace_call_function(ff7_externals.sub_61C190 + 0x41, ff7_sub_61C26A);
+		replace_call_function(ff7_externals.sub_61BE95 + 0x12C, ff7_sub_61C52A);
+		replace_call_function(ff7_externals.sub_61C812 + 0xEF, ff7_return_0_61C812);
+
+		// MATERIA GOT
+		replace_call_function(ff7_externals.menu_sub_6CC0EA + 0x43, ff7_menu_sub_6CBCF3);
+		replace_call_function(ff7_externals.menu_sub_705D16 + 0x1729, ff7_menu_sub_6CC17F);
+		replace_call_function(ff7_externals.menu_sub_705D16 + 0x1819, ff7_menu_sub_6CC17F);
+
+		// LAST LIMIT BREAK
+		replace_function(ff7_externals.menu_decrease_item_quantity, ff7_menu_decrease_item_quantity);
+
+		// GOLD CHOCOBO
+		replace_call_function(ff7_externals.menu_sub_718DBE + 0x37F, ff7_menu_sub_6CDC09);
+
+		// INITIALIZATION AT LOAD SAVE FILE
+		replace_call_function(ff7_externals.menu_sub_7212FB + 0xE9D, ff7_load_save_file);
+	}
 }
 
 struct ff7_gfx_driver *ff7_load_driver(void* _game_object)

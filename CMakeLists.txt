@@ -75,6 +75,7 @@ find_package(imgui CONFIG REQUIRED)
 find_package(SOLOUD REQUIRED)
 find_package(OPENPSF REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
+find_package(STEAMWORKSSDK CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -118,6 +119,7 @@ target_link_libraries(
   imgui::imgui
   pugixml::pugixml
   tomlplusplus::tomlplusplus
+  STEAMWORKSSDK::STEAMWORKSSDK
   ${BX_LIBRARIES}
   ${BIMG_LIBRARIES}
   ${BGFX_LIBRARIES}

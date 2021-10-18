@@ -1,0 +1,32 @@
+include(FindPackageHandleStandardArgs)
+
+if (NOT STEAMWORKSSDK_FOUND)
+	find_library(
+		STEAMWORKSSDK_LIBRARY
+		steam_api
+		PATH_SUFFIXES
+		lib
+		vendor/lib
+	)
+
+	find_path(
+		STEAMWORKSSDK_INCLUDE_DIR
+		steamworkssdk
+		PATH_SUFFIXES
+		include
+		vendor/include
+	)
+
+	add_library(STEAMWORKSSDK::STEAMWORKSSDK STATIC IMPORTED)
+
+	set_target_properties(
+		STEAMWORKSSDK::STEAMWORKSSDK
+		PROPERTIES
+		IMPORTED_LOCATION
+		"${STEAMWORKSSDK_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES
+		"${STEAMWORKSSDK_INCLUDE_DIR}"
+	)
+
+	find_package_handle_standard_args(STEAMWORKSSDK DEFAULT_MSG STEAMWORKSSDK_LIBRARY STEAMWORKSSDK_INCLUDE_DIR)
+endif()

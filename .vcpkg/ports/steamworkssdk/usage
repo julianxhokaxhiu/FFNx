@@ -1,0 +1,4 @@
+To use STEAMWORKSSDK add the following to your CMake project:
+
+    find_package(STEAMWORKSSDK REQUIRED)
+    target_link_libraries(main PRIVATE STEAMWORKSSDK::STEAMWORKSSDK)

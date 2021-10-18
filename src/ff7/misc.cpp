@@ -30,6 +30,7 @@
 #include "../log.h"
 #include "../metadata.h"
 #include "../sfx.h"
+#include "../achievement.h"
 
 // MDEF fix
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
@@ -540,4 +541,34 @@ BOOL ff7_write_save_file(char slot)
 	metadataPatcher.apply();
 
 	return ret;
+}
+
+//#########################
+// steam achievement hooks
+//#########################
+
+// Replaced this function only in credits main loop
+DWORD ff7_sub_404D80(){ // NOT TESTED
+	g_FF7SteamAchievements.unlockGameProgressAchievement(END_OF_GAME);
+
+	return ((DWORD(*)()) ff7_externals.sub_404D80)(); 
+}
+
+void ff7_sub_61C26A(int param_1){
+	((void(*)(int)) ff7_externals.sub_61C26A)(param_1);
+
+	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap->phs_visi2);
+}
+
+void ff7_sub_61C52A(){
+	((void(*)()) ff7_externals.sub_61C52A)();
+	
+	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap->phs_visi2);
+}
+
+// Does not replace a function, but a return 0; (first 5 bytes for the call and last 1 byte is RET)
+int ff7_return_0_61C812(){
+	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap->phs_visi2);
+
+	return 0;
 }

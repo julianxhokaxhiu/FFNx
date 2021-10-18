@@ -43,6 +43,12 @@
 #define VERSION_FF8_12_US_EIDOS_NV 16
 #define VERSION_FF8_12_JP          17
 
+// Steam app id of FF7 & FF8
+#define FF7_APPID 39140
+#define FF8_APPID 39150
+#define FF7_N_ACHIEVEMENTS 36
+#define FF8_N_ACHIEVEMENTS 45
+
 #define NV_VERSION (!(version & 1))
 
 // FF8 does not support BLUE text!

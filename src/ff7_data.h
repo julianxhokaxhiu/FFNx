@@ -160,7 +160,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_42D992 = get_relative_call(ff7_externals.battle_sub_42D808, 0x30);
 	ff7_externals.battle_sub_42DAE5 = get_relative_call(ff7_externals.battle_sub_42D992, 0x7E);
 	ff7_externals.battle_fight_end = get_relative_call(ff7_externals.battle_sub_42D992, 0xB7);
-	ff7_externals.battle_fanfare_music = get_relative_call(ff7_externals.battle_fight_end, 0x25);
+	ff7_externals.battle_fanfare_music = get_relative_call(ff7_externals.battle_fight_end, 0x25); 
 	ff7_externals.battle_sub_427C22 = get_relative_call(ff7_externals.battle_sub_42DAE5, 0xF);
 	ff7_externals.battle_sub_6CE8B3 = get_relative_call(battle_main_loop, 0x368);
 	ff7_externals.battle_sub_6DB0EE = get_relative_call(ff7_externals.battle_sub_6CE8B3, 0xD9);
@@ -239,6 +239,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.battle_sub_437DB0 = get_absolute_value(ff7_externals.battle_loop, 0x8D);
 	ff7_externals.sub_5CB2CC = get_relative_call(ff7_externals.battle_sub_437DB0, 0x43);
+	ff7_externals.battle_scene_id = (WORD*)get_absolute_value(ff7_externals.battle_sub_437DB0, 0x1FD);
 
 	ff7_externals.play_midi = (void (*)(uint32_t))common_externals.play_midi;
 	common_externals.master_midi_volume = (DWORD *)get_absolute_value(common_externals.set_master_midi_volume, 0x46);
@@ -524,7 +525,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sub_408074 = get_relative_call(main_loop, 0x681);
 	ff7_externals.sub_60BB58 = get_relative_call(ff7_externals.sub_63C17F, 0x16F);
 	common_externals.update_field_entities = get_relative_call(ff7_externals.sub_60BB58, 0x3A); // 0x60C94D
-	ff7_externals.sub_630734 = get_relative_call(ff7_externals.open_field_file, 0xCF);
+	ff7_externals.sub_630734 = get_relative_call(ff7_externals.open_field_file, 0xCF); // This is the same function of read_field_file already defined
 
 	common_externals.current_field_id = (WORD*)get_absolute_value(ff7_externals.sub_408074, 0x41); // 0xCC15D0
 	common_externals.previous_field_id = (WORD*)get_absolute_value(ff7_externals.sub_408074, 0x4F); // 0xCC0DEC
@@ -537,6 +538,43 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.current_triangle_id = (int16_t *)((char *)ff7_externals.word_CC16E8 + 136 * ff7_externals.modules_global_object->field_model_id);
 
 	ff7_externals.field_current_actor = (struct ff7_field_ad_object*)get_absolute_value(common_externals.execute_opcode_table[0xA8], 0x1C6);
+
+	//ff7 achievement related externals
+	uint32_t sub_434347 = get_relative_call(ff7_externals.battle_loop, 0x484);
+	uint32_t* pointer_functions_7C2980 = (uint32_t*)get_absolute_value(sub_434347, 0x19C);
+	ff7_externals.battle_enemy_killed_sub_433BD2 = pointer_functions_7C2980[0];
+	ff7_externals.battle_sub_5C7F94 = get_relative_call(ff7_externals.battle_enemy_killed_sub_433BD2, 0x2AF);
+	ff7_externals.menu_battle_end_sub_6C9543 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0x20);
+	ff7_externals.menu_battle_end_mode = (uint16_t*)get_absolute_value(ff7_externals.menu_battle_end_sub_6C9543, 0x2C);
+	uint32_t menu_sub_6CBD54 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xC1);
+	ff7_externals.menu_sub_71FF95 = get_relative_call(menu_sub_6CBD54, 0x7);
+	ff7_externals.menu_shop_loop = get_relative_call(ff7_externals.menu_sub_71FF95, 0x84);
+	ff7_externals.get_materia_gil = get_relative_call(ff7_externals.menu_shop_loop, 0x327B);
+	ff7_externals.menu_sub_6CBCB9 = get_relative_call(ff7_externals.menu_shop_loop, 0x353B);
+	
+	ff7_externals.credits_main_loop = credits_main_loop;
+	ff7_externals.sub_404D80 = get_relative_call(ff7_externals.credits_main_loop, 0x211);
+
+	uint32_t* pointer_functions_9055A0 = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x464);
+	ff7_externals.sub_61C190 = pointer_functions_9055A0[10];
+	ff7_externals.sub_61C113 = pointer_functions_9055A0[202];
+	ff7_externals.sub_61C26A = get_relative_call(ff7_externals.sub_61C113, 0x4B);
+	ff7_externals.sub_61BE95 = pointer_functions_9055A0[200];
+	ff7_externals.sub_61C52A = get_relative_call(ff7_externals.sub_61BE95, 0x12C);
+	ff7_externals.sub_61C812 = pointer_functions_9055A0[205];
+
+	ff7_externals.menu_sub_6CC0EA = get_relative_call(ff7_externals.menu_shop_loop, 0x30FE);
+	ff7_externals.menu_sub_6CBCF3 = get_relative_call(ff7_externals.menu_sub_6CC0EA, 0x43);
+	ff7_externals.menu_sub_705D16 = ff7_externals.menu_subs_call_table[4];
+	ff7_externals.menu_sub_6CC17F = get_relative_call(ff7_externals.menu_sub_705D16, 0x1729);
+
+	ff7_externals.menu_decrease_item_quantity = get_relative_call(ff7_externals.menu_shop_loop, 0x351D);
+	ff7_externals.menu_sub_6CDC09 = get_relative_call(ff7_externals.menu_sub_718DBE, 0x37F);
+
+	uint32_t menu_sub_6CBD65 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0x54);
+	uint32_t menu_sub_722393 = get_relative_call(menu_sub_6CBD65, 0x4);
+	ff7_externals.menu_sub_7212FB = get_relative_call(menu_sub_722393, 0x8B);
+	ff7_externals.load_save_file = get_relative_call(ff7_externals.menu_sub_7212FB, 0xE9D);
 }
 
 void ff7_data(struct ff7_game_obj* game_object)

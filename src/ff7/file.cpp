@@ -28,6 +28,7 @@
 #include "../log.h"
 #include "../hext.h"
 #include "../redirect.h"
+#include "../achievement.h"
 
 FILE *open_lgp_file(char *filename, uint32_t mode)
 {
@@ -574,4 +575,10 @@ char *make_pc_name(struct file_context *file_context, struct ff7_file *file, cha
 	while(backslash = strchr(ret, '\\')) *backslash = '/';
 
 	return ret;
+}
+
+int ff7_load_save_file(int param_1){
+	int returnValue = ((int(*)(int))ff7_externals.load_save_file)(param_1);
+	g_FF7SteamAchievements.initMateriaMastered(ff7_externals.savemap);
+	return returnValue;
 }

@@ -35,7 +35,8 @@
     "soloud",
     "stackwalker",
     "tomlplusplus",
-    "vgmstream"
+    "vgmstream",
+    "steamworkssdk"
   ],
   "overrides": [
     {
@@ -86,6 +87,11 @@
     {
       "name": "vgmstream",
       "version": "1.0.0",
+      "port-version": 0
+    },
+    {
+      "name": "steamworkssdk",
+      "version": "1.51.0",
       "port-version": 0
     }
   ]
