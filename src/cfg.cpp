@@ -59,6 +59,7 @@ bool trace_opcodes;
 bool trace_voice;
 bool trace_ambient;
 bool trace_gamepad;
+bool trace_achievement;
 bool vertex_log;
 bool uniform_log;
 bool show_renderer_backend;
@@ -101,6 +102,7 @@ bool enable_animated_textures;
 long ff7_fps_limiter;
 bool ff7_footsteps;
 bool enable_analogue_controls;
+bool enable_steam_achievements;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -174,6 +176,7 @@ void read_cfg()
 	trace_voice = config["trace_voice"].value_or(false);
 	trace_ambient = config["trace_ambient"].value_or(false);
 	trace_gamepad = config["trace_gamepad"].value_or(false);
+	trace_achievement = config["trace_achievement"].value_or(false);
 	vertex_log = config["vertex_log"].value_or(false);
 	uniform_log = config["uniform_log"].value_or(false);
 	show_renderer_backend = config["show_renderer_backend"].value_or(true);
@@ -216,6 +219,7 @@ void read_cfg()
 	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FF7_LIMITER_DEFAULT);
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
+	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;

@@ -1,0 +1,6 @@
+{
+  "name": "steamworkssdk",
+  "version": "1.51.0",
+  "description": "CI builds of Steamworks SDK for CMake build systems",
+  "homepage": "https://github.com/julianxhokaxhiu/SteamworksSDKCI"
+}

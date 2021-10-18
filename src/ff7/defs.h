@@ -23,6 +23,20 @@
 
 // battle
 void magic_thread_start(void (*func)());
+void ff7_battle_fight_fanfare();
+void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3);
+void ff7_battle_sub_5C7F94(int param_1, int param_2);
+void ff7_battle_sub_6DB0EE();
+
+// menu
+void ff7_menu_battle_end_sub_6C9543();
+void ff7_menu_sub_71AAA3(int param_1);
+int ff7_get_materia_gil(uint32_t materia);
+void ff7_menu_sub_6CBCB9(int param_1);
+byte ff7_menu_sub_6CBCF3(uint32_t materia_id);
+void ff7_menu_sub_6CC17F(uint32_t materia);
+uint32_t ff7_menu_decrease_item_quantity(uint32_t item_data);
+void ff7_menu_sub_6CDC09(DWORD param_1);
 
 // misc
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type);
@@ -43,6 +57,11 @@ void *ff7_menu_sub_6FAC38(uint32_t param1, uint32_t param2, uint8_t param3, uint
 void ff7_limit_fps();
 void ff7_handle_ambient_playback();
 BOOL ff7_write_save_file(char slot);
+DWORD ff7_sub_404D80();
+void ff7_sub_61C26A(int param_1);
+void ff7_sub_61C52A();
+int ff7_return_0_61C812();
+
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);
@@ -69,6 +88,7 @@ uint32_t get_filesize(struct ff7_file *file);
 uint32_t tell_file(struct ff7_file *file);
 void seek_file(struct ff7_file *file, uint32_t offset);
 char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename);
+int ff7_load_save_file(int param_1);
 
 // graphics
 void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip);

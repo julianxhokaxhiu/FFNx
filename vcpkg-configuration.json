@@ -10,7 +10,8 @@
         "openpsf",
         "soloud",
         "stackwalker",
-        "vgmstream"
+        "vgmstream",
+        "steamworkssdk"
       ]
     }
   ]

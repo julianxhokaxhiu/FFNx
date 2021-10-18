@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <sys/timeb.h>
+#include <steamworkssdk/steam_api.h>
 
 #include "renderer.h"
 #include "hext.h"
@@ -48,6 +49,7 @@
 #include "voice.h"
 #include "metadata.h"
 #include "lighting.h"
+#include "achievement.h"
 
 bool proxyWndProc = false;
 
@@ -450,6 +452,21 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	WNDCLASSA WndClass;
 	RECT Rect;
 
+	// Init Steam API
+	if(enable_steam_achievements)
+	{
+		if ( !SteamAPI_Init() )
+		{
+			MessageBoxA(gameHwnd, "Steam Error - Steam must be running to play this game with achievements (SteamAPI_Init() failed).\n", "Steam not running error", 0);
+			ffnx_error( "Steam Error - Steam must be running to play this game with achievements (SteamAPI_Init() failed).\n" );
+			return 1;
+		}
+		if (ff8)
+			g_FF8SteamAchievements.init(g_AchievementsFF8, FF8_N_ACHIEVEMENTS);
+		else
+			g_FF7SteamAchievements.init(g_AchievementsFF7, FF7_N_ACHIEVEMENTS);
+	}
+
 	// fetch current user screen settings
 	EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmCurrentScreenSettings);
 
@@ -673,6 +690,10 @@ void common_cleanup(struct game_obj *game_object)
 
 	if (steam_edition)
 	{
+		// Shutdown Steam API
+		if(enable_steam_achievements)
+			SteamAPI_Shutdown();
+
 		metadataPatcher.apply();
 
 		// Write ff7sound.cfg
@@ -925,6 +946,11 @@ void common_flip(struct game_obj *game_object)
 
 		ff7_handle_ambient_playback();
 	}
+
+	// Steamworks SDK API run callbacks
+	if(enable_steam_achievements)
+		SteamAPI_RunCallbacks();
+
 }
 
 // called by the game to clear an aspect of the back buffer, mostly called from
@@ -2279,6 +2305,17 @@ uint32_t ff7_get_inserted_cd(void) {
 		requiredCD = *(uint8_t*)(0xF3B3EC);
 		insertedCD = *(DWORD*)(0x9A2D88);
 		break;
+	}
+
+	if(enable_steam_achievements){
+		if (trace_all || trace_achievement)
+			ffnx_trace("CD inserted: %d, CD required: %d\n", insertedCD, requiredCD);
+
+		if(insertedCD == 1 && requiredCD == 2)
+			g_FF7SteamAchievements.unlockGameProgressAchievement(DEATH_OF_AERITH);
+
+		if(insertedCD == 2 && requiredCD == 2)
+			g_FF7SteamAchievements.unlockGameProgressAchievement(SHINRA_ANNIHILATED);
 	}
 
 	if (requiredCD > 0 && requiredCD <= 3) ret = requiredCD;

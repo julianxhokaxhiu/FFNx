@@ -27,6 +27,10 @@
     "openpsf": {
       "baseline": "1.3.0",
       "port-version": 0
+    },
+    "steamworkssdk": {
+      "baseline": "1.51.0",
+      "port-version": 0
     }
   }
 }

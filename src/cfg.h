@@ -72,6 +72,7 @@ extern bool trace_opcodes;
 extern bool trace_voice;
 extern bool trace_ambient;
 extern bool trace_gamepad;
+extern bool trace_achievement;
 extern bool vertex_log;
 extern bool uniform_log;
 extern bool show_renderer_backend;
@@ -114,5 +115,6 @@ extern bool enable_animated_textures;
 extern long ff7_fps_limiter;
 extern bool ff7_footsteps;
 extern bool enable_analogue_controls;
+extern bool enable_steam_achievements;
 
 void read_cfg();

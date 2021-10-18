@@ -716,9 +716,9 @@ struct savemap_char
 	char flags;
 	char field_20;
 	unsigned char level_progress_bar;
-	WORD field_22;
+	WORD learned_limit_break;
 	WORD field_24;
-	WORD field_26;
+	WORD used_n_limit_1_1;
 	WORD field_28;
 	WORD field_2A;
 	WORD hp;
@@ -729,23 +729,24 @@ struct savemap_char
 	WORD max_hp;
 	WORD max_mp;
 	uint32_t current_exp;
-	uint32_t field_40;
-	uint32_t field_44;
-	uint32_t field_48;
-	uint32_t field_4C;
-	uint32_t field_50;
-	uint32_t field_54;
-	uint32_t field_58;
-	uint32_t field_5C;
-	uint32_t field_60;
-	uint32_t field_64;
-	uint32_t field_68;
-	uint32_t field_6C;
-	uint32_t field_70;
-	uint32_t field_74;
-	uint32_t field_78;
-	uint32_t field_7C;
+	uint32_t equipped_materia[16];
 	uint32_t exp_to_next_level;
+};
+
+struct chocobo_slot
+{
+	WORD sprint_speed;
+	WORD max_sprint_speed;
+	WORD speed;
+	WORD max_speed;
+	char acceleration;
+	char cooperation;
+	char intelligence;
+	char personality;
+	char p_count;
+	char n_races_won;
+	boolean is_female;
+	char type;
 };
 
 #pragma pack(push,1)
@@ -807,12 +808,14 @@ struct savemap
 	char field_BA3;
 	char field_BA4[256];
 	char field_CA4[256];
-	char field_DA4[256];
+	char field_DA4[32]; 
+	struct chocobo_slot chocobo_slots_first[4];
+	char field_E04[160];
 	char field_EA4[256];
-	char field_FA4[256];
+	char field_FA4[224];
+	struct chocobo_slot chocobo_slots_last[2];
 	WORD phs_lock2;
-	char field_10A6;
-	char field_10A7;
+	WORD phs_visi2;
 	char field_10A8;
 	char field_10A9;
 	char field_10AA;
@@ -1670,6 +1673,7 @@ struct ff7_externals
 	uint32_t battle_loop;
 	DWORD *battle_mode;
 	WORD *battle_location_id;
+	WORD *battle_scene_id;
 	uint32_t battle_sub_429AC0;
 	uint32_t battle_sub_42D808;
 	uint32_t battle_sub_42D992;
@@ -1912,6 +1916,20 @@ struct ff7_externals
 	char *word_CC16E8;
 	int16_t* current_triangle_id;
 	struct ff7_field_ad_object* field_current_actor;
+	uint16_t* menu_battle_end_mode;
+	uint32_t* pointer_functions_7C2980;
+	uint32_t battle_enemy_killed_sub_433BD2;
+	uint32_t battle_sub_5C7F94;
+	uint32_t menu_battle_end_sub_6C9543;
+	uint32_t menu_sub_71FF95, menu_shop_loop, get_materia_gil, menu_sub_6CBCB9;
+	uint32_t credits_main_loop;
+	uint32_t sub_404D80;
+	uint32_t sub_61C190, sub_61C113, sub_61C26A, sub_61BE95, sub_61C52A, sub_61C812;
+	uint32_t menu_sub_6CC0EA, menu_sub_6CBCF3, menu_sub_705D16, menu_sub_6CC17F;
+	uint32_t menu_decrease_item_quantity;
+	uint32_t menu_sub_6CDC09;
+	uint32_t menu_sub_7212FB;
+	uint32_t load_save_file;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
