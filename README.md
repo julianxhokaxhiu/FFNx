@@ -59,6 +59,7 @@ If you're curious to know it, FFNx is made with:
 - [discohash](https://github.com/cris691/discohash) ( to extract an hash from palette game textures data known as animated textures )
 - [SoLoud](https://github.com/jarikomppa/soloud) ( as the audio engine used to playback audio, music or voice files )
 - [openpsf](https://github.com/myst6re/openpsf) ( as the MINIPSF emulation engine to playback PSX/PS2 music files )
+- [Steamworks SDK](https://github.com/julianxhokaxhiu/SteamworksSDKCI) ( used to support Steam achievements for the Steam edition of games )
 
 ## How to build
 
