@@ -13,6 +13,7 @@ vcpkg_from_github(
 )
 
 file(TO_NATIVE_PATH "${CURRENT_PACKAGES_DIR}/include/steamworkssdk" INCLUDE_PATH)
+file(TO_NATIVE_PATH "${CURRENT_PACKAGES_DIR}/tools/steamworkssdk" TOOLS_PATH)
 
 file(MAKE_DIRECTORY
     "${INCLUDE_PATH}"
@@ -25,6 +26,7 @@ file(GLOB
 
 file(COPY ${SOURCE_PATH}/steamworks_sdk/redistributable_bin/steam_api.lib DESTINATION ${CURRENT_PACKAGES_DIR}/lib)
 file(COPY ${SOURCE_PATH}/steamworks_sdk/redistributable_bin/steam_api.lib DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib)
+file(COPY ${SOURCE_PATH}/steamworks_sdk/redistributable_bin/steam_api.dll DESTINATION ${TOOLS_PATH})
 file(COPY ${HEADER_FILES} DESTINATION ${INCLUDE_PATH})
 
 # Copy cmake configuration files
