@@ -1,4 +1,11 @@
 /****************************************************************************/
+//    Copyright (C) 2009 Aali132                                            //
+//    Copyright (C) 2018 quantumpencil                                      //
+//    Copyright (C) 2018 Maxime Bacoux                                      //
+//    Copyright (C) 2020 myst6re                                            //
+//    Copyright (C) 2020 Chris Rizzitello                                   //
+//    Copyright (C) 2020 John Pritchard                                     //
+//    Copyright (C) 2021 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
