@@ -454,17 +454,23 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 	// Init Steam API
 	if(enable_steam_achievements)
-	{
-		if ( !SteamAPI_Init() )
+	{	
+		if (SteamAPI_RestartAppIfNecessary((ff8) ? FF8_APPID : FF7_APPID))
+		{
+			MessageBoxA(gameHwnd, "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n", "Steam App ID Wrong", 0);
+			ffnx_error( "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n" );
+			return 1;
+		}
+		if (!SteamAPI_Init())
 		{
 			MessageBoxA(gameHwnd, "Steam Error - Steam must be running to play this game with achievements (SteamAPI_Init() failed).\n", "Steam not running error", 0);
 			ffnx_error( "Steam Error - Steam must be running to play this game with achievements (SteamAPI_Init() failed).\n" );
 			return 1;
 		}
 		if (ff8)
-			g_FF8SteamAchievements.init(g_AchievementsFF8, FF8_N_ACHIEVEMENTS);
+			g_FF8SteamAchievements.init();
 		else
-			g_FF7SteamAchievements.init(g_AchievementsFF7, FF7_N_ACHIEVEMENTS);
+			g_FF7SteamAchievements.init();
 	}
 
 	// fetch current user screen settings
