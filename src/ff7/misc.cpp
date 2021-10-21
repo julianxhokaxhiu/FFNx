@@ -557,18 +557,18 @@ DWORD ff7_sub_404D80(){ // NOT TESTED
 void ff7_sub_61C26A(int param_1){
 	((void(*)(int)) ff7_externals.sub_61C26A)(param_1);
 
-	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap->phs_visi2);
+	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap);
 }
 
 void ff7_sub_61C52A(){
 	((void(*)()) ff7_externals.sub_61C52A)();
 	
-	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap->phs_visi2);
+	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap);
 }
 
 // Does not replace a function, but a return 0; (first 5 bytes for the call and last 1 byte is RET)
 int ff7_return_0_61C812(){
-	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap->phs_visi2);
+	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap);
 
 	return 0;
 }

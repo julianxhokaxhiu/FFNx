@@ -15,14 +15,7 @@
 
 #include <steamworkssdk/steam_api_common.h>
 #include <steamworkssdk/steam_api.h>
-#include <steamworkssdk/isteamutils.h>
-#include <steamworkssdk/isteamuserstats.h>
-#include <steamworkssdk/isteamuser.h>
 #include "log.h"
-
-#define N_CHARACTERS 9
-#define N_TYPE_MATERIA 91
-#define N_UNKNOWN_MATERIA 8
 
 #define _ACH_ID(id)           \
     {                         \
@@ -39,45 +32,88 @@ struct achievement
     int iconImage;
 };
 
-class SteamAchievements
+class SteamManager
 {
-protected:
+private:
     int appID;                    // Our current AppID
     achievement *achievementList; // Achievements data
     int nAchievements;            // The number of Achievements
     bool isInitialized;           // Have we called Request stats and received the callback?
 
 public:
-    SteamAchievements() : appID(0),
+    SteamManager() : appID(0),
                           isInitialized(false),
-                          callbackUserStatsReceived(this, &SteamAchievements::OnUserStatsReceived),
-                          callbackUserStatsStored(this, &SteamAchievements::OnUserStatsStored),
-                          callbackAchievementStored(this, &SteamAchievements::OnAchievementStored) {}
+                          callbackUserStatsReceived(this, &SteamManager::OnUserStatsReceived),
+                          callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
+                          callbackAchievementStored(this, &SteamManager::OnAchievementStored) {}
 
-    virtual void init(achievement *achievements, int nAchievements);
+    void init(achievement *achievements, int nAchievements);
 
     bool requestStats();
     bool setAchievement(int achID);
+    bool isAchieved(int achID);
+    const char* getStringAchievementID(int achID);
 
-    STEAM_CALLBACK(SteamAchievements, OnUserStatsReceived, UserStatsReceived_t, callbackUserStatsReceived);
-    STEAM_CALLBACK(SteamAchievements, OnUserStatsStored, UserStatsStored_t, callbackUserStatsStored);
-    STEAM_CALLBACK(SteamAchievements, OnAchievementStored, UserAchievementStored_t, callbackAchievementStored);
+    STEAM_CALLBACK(SteamManager, OnUserStatsReceived, UserStatsReceived_t, callbackUserStatsReceived);
+    STEAM_CALLBACK(SteamManager, OnUserStatsStored, UserStatsStored_t, callbackUserStatsStored);
+    STEAM_CALLBACK(SteamManager, OnAchievementStored, UserAchievementStored_t, callbackAchievementStored);
 };
 
-class SteamAchievementsFF7 : public SteamAchievements
+class SteamAchievementsFF7 
 {
 private:
+    static inline const int N_CHARACTERS = 9;
+    static inline const int N_TYPE_MATERIA = 91;
+    static inline const int N_UNKNOWN_MATERIA = 8;
+
+    static inline const int N_MATERIA_SLOT = 200;
+    static inline const int N_STOLEN_MATERIA_SLOT = 48;
+    static inline const int N_EQUIP_MATERIA_PER_CHARACTER = 16;
+    static inline const WORD BATTLE_SQUARE_LOCATION_ID = 0x0025;
+    static inline const WORD FIRST_LIMIT_BREAK_CODE = 0x0001;
+    static inline const WORD FOURTH_LIMIT_BREAK_CODE = 0x0200;
+    static inline const int GIL_ACHIEVEMENT_VALUE = 99999999;
+    static inline const int TOP_LEVEL_CHARACTER = 99;
+
+    static inline const int YUFFIE_INDEX = 5;
+    static inline const int CAIT_SITH_INDEX = 6;
+    static inline const int VINCENT_INDEX = 7;
+    static inline const byte YOUNG_CLOUD_ID = 0x09;
+    static inline const byte SEPHIROTH_ID = 0x0A;
+
+    static inline const byte MATERIA_EMPTY_SLOT = 0xFF;
+    static inline const int MATERIA_AP_MASTERED = 0xFFFFFF;
+    static inline const byte BAHAMUT_ZERO_MATERIA_ID = 0x58;
+    static inline const byte KOTR_MATERIA_ID = 0x59;
+
+    static inline const WORD DIAMOND_WEAPON_START = 980;
+    static inline const WORD DIAMOND_WEAPON_END = 981;
+    static inline const WORD RUBY_WEAPON_START = 982;
+    static inline const WORD RUBY_WEAPON_END = 983;
+    static inline const WORD EMERALD_WEAPON_START = 984;
+    static inline const WORD EMERALD_WEAPON_END = 987;
+    static inline const WORD ULTIMATE_WEAPON_START = 988;
+    static inline const WORD ULTIMATE_WEAPON_END = 991;
+
+    // gold chocobo from https://gamefaqs.gamespot.com/pc/130791-final-fantasy-vii/faqs/13970
+    static inline const byte GOLD_CHOCOBO_TYPE = 0x04;
+
+    SteamManager steamManager;
+
     std::vector<int> indexToFirstLimitIndex;
     std::vector<int> unknownMateriaList;
     std::vector<int> unmasterableMateriaList;
     std::vector<int> limitBreakItemsID;
     WORD previousUsedLimitNumber[N_CHARACTERS];
     bool masteredMateria[N_TYPE_MATERIA];
+
 public:
-    void init(achievement *achievements, int nAchievements) override;
+    void init();
     void initMateriaMastered(savemap *savemap);
     bool isMateriaMastered(uint32_t materia);
     bool isAllMateriaMastered(bool* masteredMateria);
+    bool isYuffieUnlocked(char yuffieRegular);
+    bool isVincentUnlocked(char vincentRegular);
     void setPreviousLimitUsedNumber(savemap_char *characters);
     void unlockBattleWonAchievement(WORD battleSceneID);
     void unlockGilAchievement(uint32_t gilAmount);
@@ -90,12 +126,13 @@ public:
     void unlockCaitSithLastLimitBreakAchievement(savemap_char *characters);
     void unlockGoldChocoboAchievement(chocobo_slot *firstFourSlots, chocobo_slot *lastTwoSlots);
     void unlockGameProgressAchievement(int achID);
-    void unlockYuffieAndVincentAchievement(WORD phsCharacterVisibility);
+    void unlockYuffieAndVincentAchievement(savemap *savemap);
 };
 
-class SteamAchievementsFF8 : public SteamAchievements
+class SteamAchievementsFF8
 {
 public:
+    void init() {}
 };
 
 enum Achievements

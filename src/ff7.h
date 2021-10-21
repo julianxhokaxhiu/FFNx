@@ -807,11 +807,15 @@ struct savemap
 	char field_BA2;
 	char field_BA3;
 	char field_BA4[256];
-	char field_CA4[256];
-	char field_DA4[32]; 
+	char field_CA4[207];
+	char yuffie_reg_mask;
+	char field_D74[48];
+	char field_DA4[32];
 	struct chocobo_slot chocobo_slots_first[4];
 	char field_E04[160];
-	char field_EA4[256];
+	char field_EA4[80];
+	char vincent_reg_mask;
+	char field_EF5[175];
 	char field_FA4[224];
 	struct chocobo_slot chocobo_slots_last[2];
 	WORD phs_lock2;

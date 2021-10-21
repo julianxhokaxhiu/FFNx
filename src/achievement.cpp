@@ -13,44 +13,16 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#define N_MATERIA_SLOT 200
-#define N_STOLEN_MATERIA_SLOT 48
-#define N_EQUIP_MATERIA_PER_CHARACTER 16
-#define BATTLE_SQUARE_LOCATION_ID 0x0025
-#define FIRST_LIMIT_BREAK_CODE 0x0001
-#define FOURTH_LIMIT_BREAK_CODE 0x0200
-#define GIL_ACHIEVEMENT_VALUE 99999999
-#define TOP_LEVEL_CHARACTER 99
-
-#define YUFFIE_INDEX 5
-#define CAIT_SITH_INDEX 6
-#define VINCENT_INDEX 7
-#define YOUNG_CLOUD_ID 0x09
-#define SEPHIROTH_ID 0x0A
-
-#define MATERIA_EMPTY_SLOT 0xFF
-#define MATERIA_AP_MASTERED 0xFFFFFF
-#define BAHAMUT_ZERO_MATERIA_ID 0x58
-#define KOTR_MATERIA_ID 0x59
-
-#define DIAMOND_WEAPON_START 980
-#define DIAMOND_WEAPON_END 981
-#define RUBY_WEAPON_START 982
-#define RUBY_WEAPON_END 983
-#define EMERALD_WEAPON_START 984
-#define EMERALD_WEAPON_END 987
-#define ULTIMATE_WEAPON_START 988
-#define ULTIMATE_WEAPON_END 991
-
-// gold chocobo from https://gamefaqs.gamespot.com/pc/130791-final-fantasy-vii/faqs/13970
-#define GOLD_CHOCOBO_TYPE 0x04
+#include <steamworkssdk/isteamutils.h>
+#include <steamworkssdk/isteamuserstats.h>
+#include <steamworkssdk/isteamuser.h>
 
 #include "achievement.h"
 
 SteamAchievementsFF7 g_FF7SteamAchievements;
 SteamAchievementsFF8 g_FF8SteamAchievements;
 
-void SteamAchievements::init(achievement *achievements, int nAchievements)
+void SteamManager::init(achievement *achievements, int nAchievements)
 {
     this->appID = SteamUtils()->GetAppID();
     this->isInitialized = false;
@@ -61,7 +33,7 @@ void SteamAchievements::init(achievement *achievements, int nAchievements)
         ffnx_trace("%s - Init steam achievements with appID: %d\n", __func__, this->appID);
 }
 
-bool SteamAchievements::requestStats()
+bool SteamManager::requestStats()
 {
     // Is Steam loaded?
     if (NULL == SteamUserStats() || NULL == SteamUser())
@@ -79,7 +51,7 @@ bool SteamAchievements::requestStats()
     return SteamUserStats()->RequestCurrentStats();
 }
 
-bool SteamAchievements::setAchievement(int achID)
+bool SteamManager::setAchievement(int achID)
 {
     if (this->isInitialized)
     {
@@ -89,16 +61,16 @@ bool SteamAchievements::setAchievement(int achID)
         // TODO reactivate when done all;
         char buffer[128];
         _snprintf(buffer, 128, "Achievement unlocked %s\n", this->achievementList[achID].chAchID);
+        
+        // RELEASE PHASE OF STEAM ACHIEVEMENTS
         //SteamUserStats()->SetAchievement(this->achievementList[achID].chAchID);
         // bool success = SteamUserStats()->StoreStats();
-        if (true) //success)
-            this->achievementList[achID].isAchieved = true;
         //return success;
 
         // TESTING PHASE OF STEAM ACHIEVEMENTS
-        if (trace_all || trace_achievement)
-            MessageBoxA(gameHwnd, buffer, "Testing achievement unlocked", 0);
-        return true;
+        this->achievementList[achID].isAchieved = true;
+        bool success = SteamUserStats()->IndicateAchievementProgress(this->achievementList[achID].chAchID, 99, 100);
+        return success;
     }
 
     if (trace_all || trace_achievement)
@@ -107,7 +79,15 @@ bool SteamAchievements::setAchievement(int achID)
     return false;
 }
 
-void SteamAchievements::OnUserStatsReceived(UserStatsReceived_t *pCallback)
+bool SteamManager::isAchieved(int achID){
+    return this->achievementList[achID].isAchieved;
+}
+
+const char* SteamManager::getStringAchievementID(int achID){
+    return this->achievementList[achID].chAchID;
+}
+
+void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
 {
     if (this->appID == pCallback->m_nGameID)
     {
@@ -147,7 +127,7 @@ void SteamAchievements::OnUserStatsReceived(UserStatsReceived_t *pCallback)
     }
 }
 
-void SteamAchievements::OnUserStatsStored(UserStatsStored_t *pCallback)
+void SteamManager::OnUserStatsStored(UserStatsStored_t *pCallback)
 {
     if (this->appID == pCallback->m_nGameID)
     {
@@ -164,7 +144,7 @@ void SteamAchievements::OnUserStatsStored(UserStatsStored_t *pCallback)
     }
 }
 
-void SteamAchievements::OnAchievementStored(UserAchievementStored_t *pCallback)
+void SteamManager::OnAchievementStored(UserAchievementStored_t *pCallback)
 {
     if (this->appID == pCallback->m_nGameID)
     {
@@ -175,9 +155,9 @@ void SteamAchievements::OnAchievementStored(UserAchievementStored_t *pCallback)
 
 // -------------------------- STEAM ACHIEVEMENTS OF FF7 ---------------------------
 
-void SteamAchievementsFF7::init(achievement *achievements, int nAchievements)
+void SteamAchievementsFF7::init()
 {
-    SteamAchievements::init(achievements, nAchievements);
+    this->steamManager.init(g_AchievementsFF7, FF7_N_ACHIEVEMENTS);
 
     this->unknownMateriaList = {0x16, 0x26, 0x2D, 0x2E, 0x2F, 0x3F, 0x42, 0x43};
     this->unmasterableMateriaList = {0x11, 0x30, 0x49, 0x5A};
@@ -205,13 +185,14 @@ void SteamAchievementsFF7::initMateriaMastered(savemap *savemap)
             masteredMateria[materia & 0xFF] = true;
         }
     }
-
-    for (int i = 0; i < N_STOLEN_MATERIA_SLOT; i++)
-    {
-        uint32_t materia = savemap->stolen_materia[i];
-        if (this->isMateriaMastered(materia))
+    if(this->isYuffieUnlocked(savemap->yuffie_reg_mask)){
+        for (int i = 0; i < N_STOLEN_MATERIA_SLOT; i++)
         {
-            masteredMateria[materia & 0xFF] = true;
+            uint32_t materia = savemap->stolen_materia[i];
+            if (this->isMateriaMastered(materia))
+            {
+                masteredMateria[materia & 0xFF] = true;
+            }
         }
     }
 
@@ -248,6 +229,16 @@ bool SteamAchievementsFF7::isAllMateriaMastered(bool *masteredMateria)
     return allTrue;
 }
 
+bool SteamAchievementsFF7::isYuffieUnlocked(char yuffieRegular){
+    // took from https://github.com/sithlord48/ff7tk/blob/master/src/data/FF7Save.cpp#L4777
+    return yuffieRegular & (1 << 0);
+}
+
+bool SteamAchievementsFF7::isVincentUnlocked(char vincentRegular){
+    // took from https://github.com/sithlord48/ff7tk/blob/master/src/data/FF7Save.cpp#L4799
+    return vincentRegular & (1 << 2);
+}
+
 void SteamAchievementsFF7::setPreviousLimitUsedNumber(savemap_char *characters)
 {
     for (int i = 0; i < N_CHARACTERS; i++)
@@ -261,27 +252,27 @@ void SteamAchievementsFF7::unlockBattleWonAchievement(WORD battleSceneID)
     if (trace_all || trace_achievement)
         ffnx_trace("%s - unlock achievement for winning battle (scene ID: %d)\n", __func__, battleSceneID);
 
-    if (!this->achievementList[WON_1ST_BATTLE].isAchieved)
-        this->setAchievement(WON_1ST_BATTLE);
+    if (!this->steamManager.isAchieved(WON_1ST_BATTLE))
+        this->steamManager.setAchievement(WON_1ST_BATTLE);
 
     if (battleSceneID >= DIAMOND_WEAPON_START && battleSceneID <= DIAMOND_WEAPON_END)
     {
-        this->setAchievement(BEAT_DIAMOND_WEAPON);
+        this->steamManager.setAchievement(BEAT_DIAMOND_WEAPON);
     }
 
     if (battleSceneID >= RUBY_WEAPON_START && battleSceneID <= RUBY_WEAPON_END)
     {
-        this->setAchievement(BEAT_RUBY_WEAPON);
+        this->steamManager.setAchievement(BEAT_RUBY_WEAPON);
     }
 
     if (battleSceneID >= EMERALD_WEAPON_START && battleSceneID <= EMERALD_WEAPON_END)
     {
-        this->setAchievement(BEAT_EMERALD_WEAPON);
+        this->steamManager.setAchievement(BEAT_EMERALD_WEAPON);
     }
 
     if (battleSceneID >= ULTIMATE_WEAPON_START && battleSceneID <= ULTIMATE_WEAPON_END)
     {
-        this->setAchievement(BEAT_ULTIMATE_WEAPON);
+        this->steamManager.setAchievement(BEAT_ULTIMATE_WEAPON);
     }
 }
 
@@ -290,8 +281,8 @@ void SteamAchievementsFF7::unlockGilAchievement(uint32_t gilAmount)
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for gil (amount: %d)\n", __func__, gilAmount);
 
-    if (!this->achievementList[GET_99999999_GILS].isAchieved && gilAmount >= GIL_ACHIEVEMENT_VALUE)
-        this->setAchievement(GET_99999999_GILS);
+    if (!this->steamManager.isAchieved(GET_99999999_GILS) && gilAmount >= GIL_ACHIEVEMENT_VALUE)
+        this->steamManager.setAchievement(GET_99999999_GILS);
 }
 
 void SteamAchievementsFF7::unlockCharacterLevelAchievement(savemap_char *characters)
@@ -299,14 +290,14 @@ void SteamAchievementsFF7::unlockCharacterLevelAchievement(savemap_char *charact
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for character level\n", __func__);
 
-    if (this->achievementList[GET_LEVEL_99_WITH_A_CHAR].isAchieved)
+    if (this->steamManager.isAchieved(GET_LEVEL_99_WITH_A_CHAR))
         return;
 
     for (int i = 0; i < N_CHARACTERS; i++)
     {
         if (characters[i].level == TOP_LEVEL_CHARACTER)
         {
-            this->setAchievement(GET_LEVEL_99_WITH_A_CHAR);
+            this->steamManager.setAchievement(GET_LEVEL_99_WITH_A_CHAR);
             return;
         }
     }
@@ -317,9 +308,9 @@ void SteamAchievementsFF7::unlockBattleSquareAchievement(WORD battleLocationID)
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for fighting in battle square (battle location id: 0x%04x)\n", __func__, battleLocationID);
 
-    if (!this->achievementList[FIGHT_IN_BATTLE_SQUARE].isAchieved && battleLocationID == BATTLE_SQUARE_LOCATION_ID)
+    if (!this->steamManager.isAchieved(FIGHT_IN_BATTLE_SQUARE) && battleLocationID == BATTLE_SQUARE_LOCATION_ID)
     {
-        this->setAchievement(FIGHT_IN_BATTLE_SQUARE);
+        this->steamManager.setAchievement(FIGHT_IN_BATTLE_SQUARE);
     }
 }
 
@@ -328,13 +319,21 @@ void SteamAchievementsFF7::unlockGotMateriaAchievement(byte materiaID)
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for getting materia (got materia ID: 0x%02x)\n", __func__, materiaID);
 
+    if(std::find(this->unmasterableMateriaList.begin(), this->unmasterableMateriaList.end(), materiaID) != this->unmasterableMateriaList.end()){
+        if(!this->steamManager.isAchieved(LEVEL_UP_MATERIA_LVL5))
+            this->steamManager.setAchievement(LEVEL_UP_MATERIA_LVL5);
+
+        if (!this->steamManager.isAchieved(MASTER_ALL_MATERIA) && this->isAllMateriaMastered(masteredMateria))
+            this->steamManager.setAchievement(MASTER_ALL_MATERIA);
+    }
+
     if (materiaID == BAHAMUT_ZERO_MATERIA_ID)
     {
-        this->setAchievement(GET_MATERIA_BAHAMUT_ZERO);
+        this->steamManager.setAchievement(GET_MATERIA_BAHAMUT_ZERO);
     }
     else if (materiaID == KOTR_MATERIA_ID)
     {
-        this->setAchievement(GET_MATERIA_KOTR);
+        this->steamManager.setAchievement(GET_MATERIA_KOTR);
     }
 }
 
@@ -355,16 +354,16 @@ void SteamAchievementsFF7::unlockMasterMateriaAchievement(savemap_char *characte
             {
                 if (trace_all || trace_achievement)
                     ffnx_trace("%s - trying to unlock achievement for mastering materia (materia id: 0x%02x)\n", __func__, materia & 0xFF);
+                
                 masteredMateria[materia & 0xFF] = true;
-
-                if (!this->achievementList[LEVEL_UP_MATERIA_LVL5].isAchieved)
-                    this->setAchievement(LEVEL_UP_MATERIA_LVL5);
+                if (!this->steamManager.isAchieved(LEVEL_UP_MATERIA_LVL5))
+                    this->steamManager.setAchievement(LEVEL_UP_MATERIA_LVL5);
             }
         }
     }
 
-    if (!this->achievementList[MASTER_ALL_MATERIA].isAchieved && this->isAllMateriaMastered(masteredMateria))
-        this->setAchievement(MASTER_ALL_MATERIA);
+    if (!this->steamManager.isAchieved(MASTER_ALL_MATERIA) && this->isAllMateriaMastered(masteredMateria))
+        this->steamManager.setAchievement(MASTER_ALL_MATERIA);
 }
 
 void SteamAchievementsFF7::unlockFirstLimitBreakAchievement(savemap_char *characters)
@@ -374,9 +373,9 @@ void SteamAchievementsFF7::unlockFirstLimitBreakAchievement(savemap_char *charac
 
     for (int i = 0; i < N_CHARACTERS; i++)
     {
-        if (!this->achievementList[USE_1ST_LIMIT_CLOUD + this->indexToFirstLimitIndex[i]].isAchieved && characters[i].used_n_limit_1_1 > this->previousUsedLimitNumber[i])
+        if (!this->steamManager.isAchieved(USE_1ST_LIMIT_CLOUD + this->indexToFirstLimitIndex[i]) && characters[i].used_n_limit_1_1 > this->previousUsedLimitNumber[i])
         {
-            this->setAchievement(USE_1ST_LIMIT_CLOUD + this->indexToFirstLimitIndex[i]);
+            this->steamManager.setAchievement(USE_1ST_LIMIT_CLOUD + this->indexToFirstLimitIndex[i]);
         }
     }
 }
@@ -386,9 +385,9 @@ void SteamAchievementsFF7::unlockCaitSithLastLimitBreakAchievement(savemap_char 
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for cait sith last limit break achievement\n", __func__);
 
-    if (!this->achievementList[GET_FOURTH_CAITSITH_LAST_LIMIT].isAchieved && characters[CAIT_SITH_INDEX].learned_limit_break > FIRST_LIMIT_BREAK_CODE)
+    if (!this->steamManager.isAchieved(GET_FOURTH_CAITSITH_LAST_LIMIT) && characters[CAIT_SITH_INDEX].learned_limit_break > FIRST_LIMIT_BREAK_CODE)
     {
-        this->setAchievement(GET_FOURTH_CAITSITH_LAST_LIMIT);
+        this->steamManager.setAchievement(GET_FOURTH_CAITSITH_LAST_LIMIT);
     }
 }
 
@@ -402,9 +401,9 @@ void SteamAchievementsFF7::unlockLastLimitBreakAchievement(WORD usedItemID)
         if (i == CAIT_SITH_INDEX) //excluding cait sith
             continue;
 
-        if (!this->achievementList[GET_FOURTH_CLOUD_LAST_LIMIT + i].isAchieved && usedItemID == this->limitBreakItemsID[i])
+        if (!this->steamManager.isAchieved(GET_FOURTH_CLOUD_LAST_LIMIT + i) && usedItemID == this->limitBreakItemsID[i])
         {
-            this->setAchievement(GET_FOURTH_CLOUD_LAST_LIMIT + i);
+            this->steamManager.setAchievement(GET_FOURTH_CLOUD_LAST_LIMIT + i);
         }
     }
 }
@@ -414,44 +413,47 @@ void SteamAchievementsFF7::unlockGoldChocoboAchievement(chocobo_slot *firstFourS
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock gold chocobo achievement\n", __func__);
 
-    if (this->achievementList[GET_GOLD_CHOCOBO].isAchieved)
+    if (this->steamManager.isAchieved(GET_GOLD_CHOCOBO))
         return;
 
     for (int i = 0; i < 4; i++)
     {
         if (firstFourSlots[i].type == GOLD_CHOCOBO_TYPE)
-            this->setAchievement(GET_GOLD_CHOCOBO);
+            this->steamManager.setAchievement(GET_GOLD_CHOCOBO);
     }
 
     for (int i = 0; i < 2; i++)
     {
         if (lastTwoSlots[i].type == GOLD_CHOCOBO_TYPE)
-            this->setAchievement(GET_GOLD_CHOCOBO);
+            this->steamManager.setAchievement(GET_GOLD_CHOCOBO);
     }
 }
 
 void SteamAchievementsFF7::unlockGameProgressAchievement(int achID)
 {
     if (trace_all || trace_achievement)
-        ffnx_trace("%s - trying to unlock game progress achievement (%s)\n", __func__, this->achievementList[achID].chAchID);
+        ffnx_trace("%s - trying to unlock game progress achievement (%s)\n", __func__, this->steamManager.getStringAchievementID(achID));
 
-    if (!(this->achievementList[achID].isAchieved) && (achID >= DEATH_OF_AERITH && achID <= END_OF_GAME))
-        this->setAchievement(achID);
+    if (!(this->steamManager.isAchieved(achID)) && (achID >= DEATH_OF_AERITH && achID <= END_OF_GAME))
+        this->steamManager.setAchievement(achID);
 }
 
-void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(WORD phsCharacterVisibility)
+void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(savemap *savemap)
 {
     if (trace_all || trace_achievement)
-        ffnx_trace("%s - trying to unlock yuffie and vincent achievement (phs visibility: %d)\n", __func__, phsCharacterVisibility);
+        ffnx_trace("%s - trying to unlock yuffie and vincent achievement (yuffie_reg: 0x%02x, vincent_reg: 0x%02x)\n", \
+                    __func__, savemap->yuffie_reg_mask, savemap->vincent_reg_mask);
 
-    if (!this->achievementList[GET_YUFFIE_IN_TEAM].isAchieved && ((phsCharacterVisibility & (WORD)(1 << YUFFIE_INDEX)) != 0))
+    // old method with phs ((phsCharacterVisibility & (WORD)(1 << YUFFIE_INDEX)) != 0) [didn't tested]
+    if (!this->steamManager.isAchieved(GET_YUFFIE_IN_TEAM) && isYuffieUnlocked(savemap->yuffie_reg_mask))
     {
-        this->setAchievement(GET_YUFFIE_IN_TEAM);
+        this->initMateriaMastered(savemap);
+        this->steamManager.setAchievement(GET_YUFFIE_IN_TEAM);
     }
 
-    if (!this->achievementList[GET_VINCENT_IN_TEAM].isAchieved && ((phsCharacterVisibility & (WORD)(1 << VINCENT_INDEX)) != 0))
+    if (!this->steamManager.isAchieved(GET_VINCENT_IN_TEAM) && isVincentUnlocked(savemap->vincent_reg_mask))
     {
-        this->setAchievement(GET_VINCENT_IN_TEAM);
+        this->steamManager.setAchievement(GET_VINCENT_IN_TEAM);
     }
 }
 
