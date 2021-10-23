@@ -242,12 +242,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// GAME PROGRESS
 		replace_call_function(ff7_externals.credits_main_loop + 0x211, ff7_sub_404D80);
 
-		// PHS VISIBILITY
-		replace_call_function(ff7_externals.sub_61C113 + 0x4B, ff7_sub_61C26A);
-		replace_call_function(ff7_externals.sub_61C190 + 0x41, ff7_sub_61C26A);
-		replace_call_function(ff7_externals.sub_61BE95 + 0x12C, ff7_sub_61C52A);
-		replace_call_function(ff7_externals.sub_61C812 + 0xEF, ff7_return_0_61C812);
-
 		// MATERIA GOT
 		replace_call_function(ff7_externals.menu_sub_6CC0EA + 0x43, ff7_menu_sub_6CBCF3);
 		replace_call_function(ff7_externals.menu_sub_705D16 + 0x1729, ff7_menu_sub_6CC17F);
@@ -256,7 +250,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// LAST LIMIT BREAK
 		replace_function(ff7_externals.menu_decrease_item_quantity, ff7_menu_decrease_item_quantity);
 
-		// GOLD CHOCOBO
+		// GOLD CHOCOBO, YUFFIE, VINCENT
 		replace_call_function(ff7_externals.menu_sub_718DBE + 0x37F, ff7_menu_sub_6CDC09);
 
 		// INITIALIZATION AT LOAD SAVE FILE

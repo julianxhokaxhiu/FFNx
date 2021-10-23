@@ -58,9 +58,6 @@ void ff7_limit_fps();
 void ff7_handle_ambient_playback();
 BOOL ff7_write_save_file(char slot);
 DWORD ff7_sub_404D80();
-void ff7_sub_61C26A(int param_1);
-void ff7_sub_61C52A();
-int ff7_return_0_61C812();
 
 
 // field

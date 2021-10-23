@@ -441,20 +441,15 @@ void SteamAchievementsFF7::unlockGameProgressAchievement(int achID)
 void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(savemap *savemap)
 {
     if (trace_all || trace_achievement)
-        ffnx_trace("%s - trying to unlock yuffie and vincent achievement (yuffie_reg: 0x%02x, vincent_reg: 0x%02x)\n", \
-                    __func__, savemap->yuffie_reg_mask, savemap->vincent_reg_mask);
+        ffnx_trace("%s - trying to unlock yuffie and vincent achievement (yuffie_reg: 0x%02x, vincent_reg: 0x%02x, phs_visi: %d)\n", \
+                    __func__, savemap->yuffie_reg_mask, savemap->vincent_reg_mask, savemap->phs_visi2);
 
     // old method with phs ((phsCharacterVisibility & (WORD)(1 << YUFFIE_INDEX)) != 0) [didn't tested]
     if (!this->steamManager.isAchieved(GET_YUFFIE_IN_TEAM) && isYuffieUnlocked(savemap->yuffie_reg_mask))
-    {
-        this->initMateriaMastered(savemap);
         this->steamManager.setAchievement(GET_YUFFIE_IN_TEAM);
-    }
 
     if (!this->steamManager.isAchieved(GET_VINCENT_IN_TEAM) && isVincentUnlocked(savemap->vincent_reg_mask))
-    {
         this->steamManager.setAchievement(GET_VINCENT_IN_TEAM);
-    }
 }
 
 // -------------------------- STEAM ACHIEVEMENTS OF FF8 ---------------------------
