@@ -555,14 +555,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.credits_main_loop = credits_main_loop;
 	ff7_externals.sub_404D80 = get_relative_call(ff7_externals.credits_main_loop, 0x211);
 
-	uint32_t* pointer_functions_9055A0 = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x464);
-	ff7_externals.sub_61C190 = pointer_functions_9055A0[10];
-	ff7_externals.sub_61C113 = pointer_functions_9055A0[202];
-	ff7_externals.sub_61C26A = get_relative_call(ff7_externals.sub_61C113, 0x4B);
-	ff7_externals.sub_61BE95 = pointer_functions_9055A0[200];
-	ff7_externals.sub_61C52A = get_relative_call(ff7_externals.sub_61BE95, 0x12C);
-	ff7_externals.sub_61C812 = pointer_functions_9055A0[205];
-
 	ff7_externals.menu_sub_6CC0EA = get_relative_call(ff7_externals.menu_shop_loop, 0x30FE);
 	ff7_externals.menu_sub_6CBCF3 = get_relative_call(ff7_externals.menu_sub_6CC0EA, 0x43);
 	ff7_externals.menu_sub_705D16 = ff7_externals.menu_subs_call_table[4];

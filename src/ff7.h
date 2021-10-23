@@ -1928,7 +1928,6 @@ struct ff7_externals
 	uint32_t menu_sub_71FF95, menu_shop_loop, get_materia_gil, menu_sub_6CBCB9;
 	uint32_t credits_main_loop;
 	uint32_t sub_404D80;
-	uint32_t sub_61C190, sub_61C113, sub_61C26A, sub_61BE95, sub_61C52A, sub_61C812;
 	uint32_t menu_sub_6CC0EA, menu_sub_6CBCF3, menu_sub_705D16, menu_sub_6CC17F;
 	uint32_t menu_decrease_item_quantity;
 	uint32_t menu_sub_6CDC09;

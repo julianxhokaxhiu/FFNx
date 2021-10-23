@@ -135,4 +135,8 @@ void ff7_menu_sub_6CDC09(DWORD param_1){ // TO BE TESTED if chocobo is put in fa
     ((void (*)(DWORD))ff7_externals.menu_sub_6CDC09)(param_1);
 
     g_FF7SteamAchievements.unlockGoldChocoboAchievement(ff7_externals.savemap->chocobo_slots_first, ff7_externals.savemap->chocobo_slots_last);
+    g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap);
+
+    g_FF7SteamAchievements.initMateriaMastered(ff7_externals.savemap);
+    g_FF7SteamAchievements.unlockMasterMateriaAchievement(ff7_externals.savemap->chars);
 }
