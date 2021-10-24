@@ -455,6 +455,11 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	// Init Steam API
 	if(enable_steam_achievements)
 	{	
+		// generate automatically steam_appid.txt file
+		std::ofstream steam_appid_file("steam_appid.txt");
+		steam_appid_file << ((ff8) ? FF8_APPID : FF7_APPID);
+		steam_appid_file.close();
+
 		if (SteamAPI_RestartAppIfNecessary((ff8) ? FF8_APPID : FF7_APPID))
 		{
 			MessageBoxA(gameHwnd, "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n", "Steam App ID Wrong", 0);
@@ -694,12 +699,12 @@ void common_cleanup(struct game_obj *game_object)
 {
 	if(trace_all) ffnx_trace("dll_gfx: cleanup\n");
 
+	// Shutdown Steam API
+	if(enable_steam_achievements)
+		SteamAPI_Shutdown();
+
 	if (steam_edition)
 	{
-		// Shutdown Steam API
-		if(enable_steam_achievements)
-			SteamAPI_Shutdown();
-
 		metadataPatcher.apply();
 
 		// Write ff7sound.cfg

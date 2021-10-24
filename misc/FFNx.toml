@@ -238,9 +238,7 @@ steam_game_userdata = ""
 
 #[STEAM ACHIEVEMENTS EXTENSION]
 # This flag will enable steam overlay and steam achievements (Steam MUST be running on background).
-# Files required: steam_api.dll (version 1.51+) and steam_appid.txt (containing only the unique number corresponding to the app id of the game)
-# FF7 appid is 39410
-# FF8 appid is 39150
+# Files required: steam_api.dll (version 1.51+) that comes together with FFNx
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_steam_achievements = false
 
