@@ -6,15 +6,15 @@
 vcpkg_from_github(OUT_SOURCE_PATH BX_SOURCE_DIR
     REPO "julianxhokaxhiu/bx"
     HEAD_REF master
-    REF e50536ac03eb404f50123d23f2c9ab2b3e4663e7
-    SHA512 4dde0c7be5000ea4f42437e629ba3a0cb55f2cc2b70fe27a033e30e11e869bda533e87aa16814beb9e349dd2970dc5e272b38fcea1d60c5c491aa79046a997fe
+    REF 5e8c84618fd8fb03454550a28fc0f2c275c4159d
+    SHA512 db4673855ae82c28d1c22bd402f542782f518a0cf700f497e8ef271ebe9e5ee25e16bd4eacc10b9ff7fdac7a34a0ecbd831dc97720c703344b0851bc7ff58f2b
 )
 
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/bimg"
     HEAD_REF master
-    REF 6693de0e50ff7e76a22d6f37251fa2dec12168cd
-    SHA512 d09ce3ed8f343771bcb442b17afb4f3c7e5f6d065c334473853fb1fb085d0c6425cd7db014df86346bd93199b524e339d066292ee1fef029203ba49999a9c77f
+    REF 9e4d2b167ffb4ecf4dba625dee59f6be7cf2587a
+    SHA512 dfb8b8e87282d520347f587eab6cb7074c71f4379d42b0e96aec8b30c57f5b320dd6f2ef2ba3b0a8807e3b022f6a9aaebf629f2629458868bcb09a9c1be24e65
 )
 
 # Move bx source inside bgfx source tree
@@ -131,6 +131,18 @@ else()
             LICENSE_SUBPATH "LICENSE"
             INCLUDES_SUBPATH "include"
         )
+    endforeach()
+    # Remove redundant files
+    foreach(a bx)
+        foreach(b Debug Release)
+            foreach(c lib pdb)
+                if(b STREQUAL Debug)
+                    file(REMOVE "${CURRENT_PACKAGES_DIR}/debug/lib/${a}${b}.${c}")
+                else()
+                    file(REMOVE "${CURRENT_PACKAGES_DIR}/lib/${a}${b}.${c}")
+                endif()
+            endforeach()
+        endforeach()
     endforeach()
 endif()
 

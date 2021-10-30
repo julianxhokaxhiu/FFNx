@@ -7,8 +7,8 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO "vgmstream/vgmstream"
     HEAD_REF master
-    REF 8a1390461535c914c1d15be855c1e8b460d6e87f
-    SHA512 9978c6447e47cc0bbabc83ac7b37d1d8a99390c2131d0c4c0106597e5ee9ce9ea00bb12ce2d3133b23df838227c20a3bb82b347311b8d82ccbdb5517a17af64c
+    REF b2e6b223236bf517261ea74d4edb0a194a4ac967
+    SHA512 332833e683febae1859e67c4f799e849ea170751ec06669cbb8623af8c5b55b681dd65f549516ca3f91d5ac085d3aa426f64c06f31a626d410d2daff55532f06
     PATCHES cmake.patch
 )
 
@@ -30,7 +30,6 @@ endif()
 
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
-    PREFER_NINJA
     OPTIONS
         -DUSE_ATRAC9=OFF
         -DUSE_CELT=OFF
