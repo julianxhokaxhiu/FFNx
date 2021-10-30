@@ -53,6 +53,7 @@ steps:
 - task: NuGetAuthenticate@0
 - task: PowerShell@2
   displayName: 'Build $(_RELEASE_NAME)'
+  timeoutInMinutes: 120
   inputs:
     filePath: .ci\build.ps1
     failOnStderr: true
