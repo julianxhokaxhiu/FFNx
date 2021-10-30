@@ -58,7 +58,7 @@ void ff7_limit_fps();
 void ff7_handle_ambient_playback();
 BOOL ff7_write_save_file(char slot);
 DWORD ff7_sub_404D80();
-
+int ff7_field_load_models_atoi(const char* str);
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);

@@ -543,16 +543,26 @@ BOOL ff7_write_save_file(char slot)
 	return ret;
 }
 
+// The function that load the model size sometimes gets a buffer that is non-null terminated, returning weird values.
+// Replace the native `atoi` call with a custom function that always uses the first 4 bytes to convert the buffer to int
+int ff7_field_load_models_atoi(const char* str)
+{
+	std::string buf(str, 4);
+
+	return std::stol(buf);
+}
+
 //#########################
 // steam achievement hooks
 //#########################
 
 // Replaced this function only in credits main loop
-DWORD ff7_sub_404D80(){ // NOT TESTED
+DWORD ff7_sub_404D80() // NOT TESTED
+{
 	if (trace_all || trace_achievement)
         ffnx_trace("%s - unlock end of game progress\n", __func__);
 
 	g_FF7SteamAchievements.unlockGameProgressAchievement(END_OF_GAME);
 
-	return ((DWORD(*)()) ff7_externals.sub_404D80)(); 
+	return ((DWORD(*)()) ff7_externals.sub_404D80)();
 }

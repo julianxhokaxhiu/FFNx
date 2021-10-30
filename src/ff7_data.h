@@ -551,7 +551,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_shop_loop = get_relative_call(ff7_externals.menu_sub_71FF95, 0x84);
 	ff7_externals.get_materia_gil = get_relative_call(ff7_externals.menu_shop_loop, 0x327B);
 	ff7_externals.menu_sub_6CBCB9 = get_relative_call(ff7_externals.menu_shop_loop, 0x353B);
-	
+
 	ff7_externals.credits_main_loop = credits_main_loop;
 	ff7_externals.sub_404D80 = get_relative_call(ff7_externals.credits_main_loop, 0x211);
 
@@ -567,6 +567,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t menu_sub_722393 = get_relative_call(menu_sub_6CBD65, 0x4);
 	ff7_externals.menu_sub_7212FB = get_relative_call(menu_sub_722393, 0x8B);
 	ff7_externals.load_save_file = get_relative_call(ff7_externals.menu_sub_7212FB, 0xE9D);
+
+	ff7_externals.field_load_models_atoi = ff7_externals.field_load_models + 0x262;
 }
 
 void ff7_data(struct ff7_game_obj* game_object)

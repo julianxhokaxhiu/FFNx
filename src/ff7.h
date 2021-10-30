@@ -1933,6 +1933,7 @@ struct ff7_externals
 	uint32_t menu_sub_6CDC09;
 	uint32_t menu_sub_7212FB;
 	uint32_t load_save_file;
+	uint32_t field_load_models_atoi;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

@@ -57,6 +57,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	game_object->d3d2_flag = 1;
 	game_object->nvidia_fix = 0;
 
+	// Load Models atoi function
+	replace_call_function(ff7_externals.field_load_models_atoi, ff7_field_load_models_atoi);
+
 	// DirectInput hack, try to reacquire on any error
 	memset_code(ff7_externals.dinput_getdata2 + 0x65, 0x90, 9);
 	memset_code((uint32_t)common_externals.dinput_acquire_keyboard + 0x31, 0x90, 5);
@@ -190,7 +193,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// battle toggle
 	// #####################
-
 	replace_call_function(ff7_externals.field_battle_toggle, ff7_toggle_battle_field);
 	replace_call_function(ff7_externals.worldmap_battle_toggle, ff7_toggle_battle_worldmap);
 
@@ -225,6 +227,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				break;
 		}
 	}
+
 	//###############################
 	// steam achievement unlock calls
 	//###############################
