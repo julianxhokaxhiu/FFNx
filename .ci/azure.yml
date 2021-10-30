@@ -24,6 +24,7 @@
 name: 1.9.0$(Rev:.r)
 
 trigger:
+  batch: true
   branches:
     include:
     - master
