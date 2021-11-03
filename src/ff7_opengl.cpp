@@ -233,6 +233,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	//###############################
 	if(enable_steam_achievements)
 	{
+		// FOR MASTER MATERIA, BATTLE WON, 1ST LIMIT BREAK
 		replace_call_function(ff7_externals.battle_fight_end + 0x25, ff7_battle_fight_fanfare);
 		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7_load_battle_stage);
 
@@ -253,8 +254,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// LAST LIMIT BREAK
 		replace_function(ff7_externals.menu_decrease_item_quantity, ff7_menu_decrease_item_quantity);
 
-		// GOLD CHOCOBO, YUFFIE, VINCENT
-		replace_call_function(ff7_externals.menu_sub_718DBE + 0x37F, ff7_menu_sub_6CDC09);
+		// GOLD CHOCOBO, YUFFIE, VINCENT: called through update_field_entities
+		replace_call_function(ff7_externals.sub_610973 + 0x14, ff7_chocobo_field_entity_60FA7D);
+		replace_call_function(ff7_externals.sub_611098 + 0x3A, ff7_character_regularly_field_entity_60FA7D);
 
 		// INITIALIZATION AT LOAD SAVE FILE
 		replace_call_function(ff7_externals.menu_sub_7212FB + 0xE9D, ff7_load_save_file);

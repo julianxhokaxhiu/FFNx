@@ -1930,7 +1930,8 @@ struct ff7_externals
 	uint32_t sub_404D80;
 	uint32_t menu_sub_6CC0EA, menu_sub_6CBCF3, menu_sub_705D16, menu_sub_6CC17F;
 	uint32_t menu_decrease_item_quantity;
-	uint32_t menu_sub_6CDC09;
+	uint32_t sub_610973, sub_611098;
+	uint32_t sub_60FA7D;
 	uint32_t menu_sub_7212FB;
 	uint32_t load_save_file;
 	uint32_t field_load_models_atoi;
