@@ -566,3 +566,22 @@ DWORD ff7_sub_404D80() // NOT TESTED
 
 	return ((DWORD(*)()) ff7_externals.sub_404D80)();
 }
+
+int ff7_load_save_file(int param_1){
+	int returnValue = ((int(*)(int))ff7_externals.load_save_file)(param_1);
+	g_FF7SteamAchievements.initStatsFromSaveFile(ff7_externals.savemap);
+	return returnValue;
+}
+
+void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3){
+	((void(*)(WORD, short, short)) ff7_externals.sub_60FA7D)(param1, param2, param3);
+	
+	if(param3 == 0x04)
+		g_FF7SteamAchievements.unlockGoldChocoboAchievement(ff7_externals.savemap->chocobo_slots_first, ff7_externals.savemap->chocobo_slots_last);	
+}
+
+void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3){
+	((void(*)(WORD, short, short)) ff7_externals.sub_60FA7D)(param1, param2, param3);
+
+	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap);
+}

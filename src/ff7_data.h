@@ -561,7 +561,12 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_sub_6CC17F = get_relative_call(ff7_externals.menu_sub_705D16, 0x1729);
 
 	ff7_externals.menu_decrease_item_quantity = get_relative_call(ff7_externals.menu_shop_loop, 0x351D);
-	ff7_externals.menu_sub_6CDC09 = get_relative_call(ff7_externals.menu_sub_718DBE, 0x37F);
+
+	uint32_t* pointer_functions_9055A0 = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x464);
+	ff7_externals.sub_610973 = pointer_functions_9055A0[128];
+	ff7_externals.sub_60FA7D = get_relative_call(ff7_externals.sub_610973, 0x14);
+	ff7_externals.sub_611098 = pointer_functions_9055A0[130];
+	ff7_externals.sub_60FA7D = get_relative_call(ff7_externals.sub_611098, 0x3A);
 
 	uint32_t menu_sub_6CBD65 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0x54);
 	uint32_t menu_sub_722393 = get_relative_call(menu_sub_6CBD65, 0x4);

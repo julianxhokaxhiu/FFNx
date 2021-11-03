@@ -576,9 +576,3 @@ char *make_pc_name(struct file_context *file_context, struct ff7_file *file, cha
 
 	return ret;
 }
-
-int ff7_load_save_file(int param_1){
-	int returnValue = ((int(*)(int))ff7_externals.load_save_file)(param_1);
-	g_FF7SteamAchievements.initMateriaMastered(ff7_externals.savemap);
-	return returnValue;
-}

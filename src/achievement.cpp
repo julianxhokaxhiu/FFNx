@@ -172,6 +172,34 @@ void SteamAchievementsFF7::init()
     this->limitBreakItemsID = {0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x1FF, 0x5D, 0x5E};
 }
 
+void SteamAchievementsFF7::initStatsFromSaveFile(savemap *savemap){
+    this->yuffieUnlocked = this->isYuffieUnlocked(savemap->yuffie_reg_mask);
+    this->vincentUnlocked = this->isVincentUnlocked(savemap->vincent_reg_mask);
+    this->caitsithLastLimitUnlocked = savemap->chars[CAIT_SITH_INDEX].learned_limit_break > FIRST_LIMIT_BREAK_CODE;
+
+    this->initMateriaMastered(savemap);
+
+    if (trace_all || trace_achievement){
+        ffnx_trace("%s - init stats from save file\n", __func__);
+        ffnx_trace("yuffie unlocked: %s\n", this->yuffieUnlocked ? "true" : "false");
+        ffnx_trace("vincent unlocked: %s\n", this->vincentUnlocked ? "true" : "false");
+        ffnx_trace("caitsith last limit unlocked: %s\n", this->caitsithLastLimitUnlocked ? "true" : "false");
+    }
+}
+
+void SteamAchievementsFF7::initCharStatsBeforeBattle(savemap_char *characters)
+{
+    for (int i = 0; i < N_CHARACTERS; i++)
+    {
+        this->previousUsedLimitNumber[i] = characters[i].used_n_limit_1_1;
+        for (int j = 0; j < N_EQUIP_MATERIA_PER_CHARACTER; j++)
+        {
+            uint32_t materia = characters[i].equipped_materia[j];
+            this->equipMasteredMateriaCharacter[i][j] = isMateriaMastered(materia);
+        }
+    }
+}
+
 void SteamAchievementsFF7::initMateriaMastered(savemap *savemap)
 {
     if (trace_all || trace_achievement)
@@ -244,14 +272,6 @@ bool SteamAchievementsFF7::isYuffieUnlocked(char yuffieRegular){
 bool SteamAchievementsFF7::isVincentUnlocked(char vincentRegular){
     // took from https://github.com/sithlord48/ff7tk/blob/master/src/data/FF7Save.cpp#L4799
     return vincentRegular & (1 << 2);
-}
-
-void SteamAchievementsFF7::setPreviousLimitUsedNumber(savemap_char *characters)
-{
-    for (int i = 0; i < N_CHARACTERS; i++)
-    {
-        this->previousUsedLimitNumber[i] = characters[i].used_n_limit_1_1;
-    }
 }
 
 void SteamAchievementsFF7::unlockBattleWonAchievement(WORD battleSceneID)
@@ -357,7 +377,7 @@ void SteamAchievementsFF7::unlockMasterMateriaAchievement(savemap_char *characte
         for (int j = 0; j < N_EQUIP_MATERIA_PER_CHARACTER; j++)
         {
             uint32_t materia = characters[i].equipped_materia[j];
-            if (this->isMateriaMastered(materia))
+            if (this->isMateriaMastered(materia) && !this->equipMasteredMateriaCharacter[i][j])
             {
                 if (trace_all || trace_achievement)
                     ffnx_trace("%s - trying to unlock achievement for mastering materia (materia id: 0x%02x)\n", __func__, materia & 0xFF);
@@ -392,9 +412,11 @@ void SteamAchievementsFF7::unlockCaitSithLastLimitBreakAchievement(savemap_char 
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for cait sith last limit break achievement\n", __func__);
 
-    if (!this->steamManager.isAchieved(GET_FOURTH_CAITSITH_LAST_LIMIT) && characters[CAIT_SITH_INDEX].learned_limit_break > FIRST_LIMIT_BREAK_CODE)
+    if (!this->steamManager.isAchieved(GET_FOURTH_CAITSITH_LAST_LIMIT) && !this->caitsithLastLimitUnlocked &&
+        characters[CAIT_SITH_INDEX].learned_limit_break > FIRST_LIMIT_BREAK_CODE)
     {
         this->steamManager.setAchievement(GET_FOURTH_CAITSITH_LAST_LIMIT);
+        this->caitsithLastLimitUnlocked = true;
     }
 }
 
@@ -405,7 +427,7 @@ void SteamAchievementsFF7::unlockLastLimitBreakAchievement(WORD usedItemID)
 
     for (int i = 0; i < N_CHARACTERS; i++)
     {
-        if (i == CAIT_SITH_INDEX) //excluding cait sith
+        if (i == CAIT_SITH_INDEX)
             continue;
 
         if (!this->steamManager.isAchieved(GET_FOURTH_CLOUD_LAST_LIMIT + i) && usedItemID == this->limitBreakItemsID[i])
@@ -451,12 +473,15 @@ void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(savemap *savemap)
         ffnx_trace("%s - trying to unlock yuffie and vincent achievement (yuffie_reg: 0x%02x, vincent_reg: 0x%02x, phs_visi: %d)\n", \
                     __func__, savemap->yuffie_reg_mask, savemap->vincent_reg_mask, savemap->phs_visi2);
 
-    // old method with phs ((phsCharacterVisibility & (WORD)(1 << YUFFIE_INDEX)) != 0) [didn't tested]
-    if (!this->steamManager.isAchieved(GET_YUFFIE_IN_TEAM) && isYuffieUnlocked(savemap->yuffie_reg_mask))
+    if (!this->steamManager.isAchieved(GET_YUFFIE_IN_TEAM) && !this->yuffieUnlocked && this->isYuffieUnlocked(savemap->yuffie_reg_mask)){
         this->steamManager.setAchievement(GET_YUFFIE_IN_TEAM);
+        this->yuffieUnlocked = true;
+    }
 
-    if (!this->steamManager.isAchieved(GET_VINCENT_IN_TEAM) && isVincentUnlocked(savemap->vincent_reg_mask))
+    if (!this->steamManager.isAchieved(GET_VINCENT_IN_TEAM) && !this->vincentUnlocked && this->isVincentUnlocked(savemap->vincent_reg_mask)){
         this->steamManager.setAchievement(GET_VINCENT_IN_TEAM);
+        this->vincentUnlocked = true;
+    }
 }
 
 // -------------------------- STEAM ACHIEVEMENTS OF FF8 ---------------------------

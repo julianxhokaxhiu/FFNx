@@ -59,6 +59,9 @@ void ff7_handle_ambient_playback();
 BOOL ff7_write_save_file(char slot);
 DWORD ff7_sub_404D80();
 int ff7_field_load_models_atoi(const char* str);
+void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3);
+void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3);
+int ff7_load_save_file(int param_1);
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);
@@ -85,7 +88,6 @@ uint32_t get_filesize(struct ff7_file *file);
 uint32_t tell_file(struct ff7_file *file);
 void seek_file(struct ff7_file *file, uint32_t offset);
 char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename);
-int ff7_load_save_file(int param_1);
 
 // graphics
 void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip);

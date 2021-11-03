@@ -102,7 +102,6 @@ private:
     static inline const WORD ULTIMATE_WEAPON_START = 988;
     static inline const WORD ULTIMATE_WEAPON_END = 991;
 
-    // gold chocobo from https://gamefaqs.gamespot.com/pc/130791-final-fantasy-vii/faqs/13970
     static inline const byte GOLD_CHOCOBO_TYPE = 0x04;
 
     SteamManager steamManager;
@@ -111,17 +110,24 @@ private:
     std::vector<int> unknownMateriaList;
     std::vector<int> unmasterableMateriaList;
     std::vector<int> limitBreakItemsID;
+    
     WORD previousUsedLimitNumber[N_CHARACTERS];
+    bool equipMasteredMateriaCharacter[N_CHARACTERS][N_EQUIP_MATERIA_PER_CHARACTER];
     bool masteredMateria[N_TYPE_MATERIA];
+    bool yuffieUnlocked;
+    bool vincentUnlocked;
+    bool caitsithLastLimitUnlocked;
+
+    bool isYuffieUnlocked(char yuffieRegular);
+    bool isVincentUnlocked(char vincentRegular);
 
 public:
     void init();
+    void initStatsFromSaveFile(savemap *savemap);
+    void initCharStatsBeforeBattle(savemap_char *characters);
     void initMateriaMastered(savemap *savemap);
     bool isMateriaMastered(uint32_t materia);
     bool isAllMateriaMastered(bool* masteredMateria);
-    bool isYuffieUnlocked(char yuffieRegular);
-    bool isVincentUnlocked(char vincentRegular);
-    void setPreviousLimitUsedNumber(savemap_char *characters);
     void unlockBattleWonAchievement(WORD battleSceneID);
     void unlockGilAchievement(uint32_t gilAmount);
     void unlockCharacterLevelAchievement(savemap_char *characters);

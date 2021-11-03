@@ -46,7 +46,7 @@ void ff7_battle_fight_fanfare()
 void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3){
 	((void(*)(int, int, int **)) ff7_externals.load_battle_stage)(param_1, battle_location_id, param_3);
 
-	g_FF7SteamAchievements.setPreviousLimitUsedNumber(ff7_externals.savemap->chars);
+	g_FF7SteamAchievements.initCharStatsBeforeBattle(ff7_externals.savemap->chars);
 	g_FF7SteamAchievements.unlockBattleSquareAchievement(battle_location_id);
 }
 
