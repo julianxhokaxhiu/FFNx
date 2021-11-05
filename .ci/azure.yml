@@ -32,6 +32,9 @@ trigger:
     include:
     - '*'
 
+pr:
+  drafts: false
+
 variables:
   _IS_BUILD_CANARY: false
   _RELEASE_NAME: FFNx
