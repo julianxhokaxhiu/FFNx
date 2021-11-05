@@ -50,56 +50,58 @@ variables:
 pool:
   vmImage: 'windows-latest'
 
-steps:
-- task: NuGetAuthenticate@0
-- task: PowerShell@2
-  displayName: 'Build $(_RELEASE_NAME)'
-  timeoutInMinutes: 120
-  inputs:
-    filePath: .ci\build.ps1
-    failOnStderr: true
-    pwsh: true
-- task: GitHubRelease@0
-  condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
-  displayName: 'Delete $(_RELEASE_NAME) (Canary)'
-  continueOnError: true
-  inputs:
-    gitHubConnection: github_ci
-    action: delete
-    tagSource: manual
-    tag: canary
-- task: GitHubRelease@0
-  condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
-  displayName: 'Create $(_RELEASE_NAME) (Canary)'
-  inputs:
-    gitHubConnection: github_ci
-    assets: .dist\*.zip
-    isPreRelease: true
-    tagSource: manual
-    tag: canary
-    title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
-    releaseNotesSource: input
-    releaseNotes: |
-      See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog#next
-      
-      This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
-- task: GitHubRelease@0
-  condition: and(eq(variables._IS_BUILD_CANARY, 'false'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
-  displayName: 'Create $(_RELEASE_NAME) (Stable)'
-  inputs:
-    gitHubConnection: github_ci
-    assets: .dist\*.zip
-    title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
-    releaseNotesSource: input
-    releaseNotes: |
-      See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog_v$(_CHANGELOG_VERSION)
-- task: PowerShell@2
-  condition: and(not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
-  displayName: 'Alert the $(_RELEASE_NAME) Release'
-  inputs:
-    filePath: .ci\alert.ps1
-  env:
-    _MAP_FFNX_TSUNAMODS_FF7: $(_FFNX_TSUNAMODS_FF7)
-    _MAP_FFNX_TSUNAMODS_FF8: $(_FFNX_TSUNAMODS_FF8)
-    _MAP_FFNX_QHIMM_FF7: $(_FFNX_QHIMM_FF7)
-    _MAP_FFNX_QHIMM_FF8: $(_FFNX_QHIMM_FF8)
+jobs:
+- job: FFNx
+  timeoutInMinutes: 240
+  steps:
+  - task: NuGetAuthenticate@0
+  - task: PowerShell@2
+    displayName: 'Build $(_RELEASE_NAME)'
+    inputs:
+      filePath: .ci\build.ps1
+      failOnStderr: true
+      pwsh: true
+  - task: GitHubRelease@0
+    condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
+    displayName: 'Delete $(_RELEASE_NAME) (Canary)'
+    continueOnError: true
+    inputs:
+      gitHubConnection: github_ci
+      action: delete
+      tagSource: manual
+      tag: canary
+  - task: GitHubRelease@0
+    condition: and(eq(variables._IS_BUILD_CANARY, 'true'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
+    displayName: 'Create $(_RELEASE_NAME) (Canary)'
+    inputs:
+      gitHubConnection: github_ci
+      assets: .dist\*.zip
+      isPreRelease: true
+      tagSource: manual
+      tag: canary
+      title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
+      releaseNotesSource: input
+      releaseNotes: |
+        See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog#next
+        
+        This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
+  - task: GitHubRelease@0
+    condition: and(eq(variables._IS_BUILD_CANARY, 'false'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
+    displayName: 'Create $(_RELEASE_NAME) (Stable)'
+    inputs:
+      gitHubConnection: github_ci
+      assets: .dist\*.zip
+      title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
+      releaseNotesSource: input
+      releaseNotes: |
+        See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog_v$(_CHANGELOG_VERSION)
+  - task: PowerShell@2
+    condition: and(not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
+    displayName: 'Alert the $(_RELEASE_NAME) Release'
+    inputs:
+      filePath: .ci\alert.ps1
+    env:
+      _MAP_FFNX_TSUNAMODS_FF7: $(_FFNX_TSUNAMODS_FF7)
+      _MAP_FFNX_TSUNAMODS_FF8: $(_FFNX_TSUNAMODS_FF8)
+      _MAP_FFNX_QHIMM_FF7: $(_FFNX_QHIMM_FF7)
+      _MAP_FFNX_QHIMM_FF8: $(_FFNX_QHIMM_FF8)
