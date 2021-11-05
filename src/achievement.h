@@ -20,7 +20,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <steamworkssdk/steam_api_common.h>
 #include <steamworkssdk/steam_api.h>
 #include "log.h"
 
