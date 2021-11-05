@@ -45,8 +45,6 @@ variables:
   _CHANGELOG_VERSION: "0"
   # VCPKG: Enable Binary Caching
   VCPKG_BINARY_SOURCES: clear;nuget,https://pkgs.dev.azure.com/julianxhokaxhiu/Github/_packaging/FFNx/nuget/v3/index.json,readwrite
-  # VCPKG: Rely only the hash of the triplet file + toolchain
-  VCPKG_FEATURE_FLAGS: -compilertracking
   # GIT: Fix reporting from stderr to stdout
   GIT_REDIRECT_STDERR: 2>&1
 
