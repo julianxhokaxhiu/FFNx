@@ -26,6 +26,8 @@
 
 #include "achievement.h"
 
+using std::string;
+
 SteamAchievementsFF7 g_FF7SteamAchievements;
 SteamAchievementsFF8 g_FF8SteamAchievements;
 
@@ -66,8 +68,6 @@ bool SteamManager::setAchievement(int achID)
             ffnx_trace("%s - Achievement %s set, Store request sent to Steam\n", __func__, this->achievementList[achID].chAchID);
 
         // TODO reactivate when done all;
-        char buffer[128];
-        _snprintf(buffer, 128, "Achievement unlocked %s\n", this->achievementList[achID].chAchID);
         
         // RELEASE PHASE OF STEAM ACHIEVEMENTS
         //SteamUserStats()->SetAchievement(this->achievementList[achID].chAchID);
@@ -175,7 +175,11 @@ void SteamAchievementsFF7::init()
 void SteamAchievementsFF7::initStatsFromSaveFile(savemap *savemap){
     this->yuffieUnlocked = this->isYuffieUnlocked(savemap->yuffie_reg_mask);
     this->vincentUnlocked = this->isVincentUnlocked(savemap->vincent_reg_mask);
-    this->caitsithLastLimitUnlocked = savemap->chars[CAIT_SITH_INDEX].learned_limit_break > FIRST_LIMIT_BREAK_CODE;
+    for (int i = 0; i < N_GOLD_CHOCOBO_FIRST_SLOTS; i++)
+        this->isGoldChocoboSlot[i] = savemap->chocobo_slots_first[i].type == GOLD_CHOCOBO_TYPE;
+
+    for (int i = 0; i < N_GOLD_CHOCOBO_LAST_SLOTS; i++)
+        this->isGoldChocoboSlot[i + N_GOLD_CHOCOBO_FIRST_SLOTS] = savemap->chocobo_slots_last[i].type == GOLD_CHOCOBO_TYPE;
 
     this->initMateriaMastered(savemap);
 
@@ -183,7 +187,6 @@ void SteamAchievementsFF7::initStatsFromSaveFile(savemap *savemap){
         ffnx_trace("%s - init stats from save file\n", __func__);
         ffnx_trace("yuffie unlocked: %s\n", this->yuffieUnlocked ? "true" : "false");
         ffnx_trace("vincent unlocked: %s\n", this->vincentUnlocked ? "true" : "false");
-        ffnx_trace("caitsith last limit unlocked: %s\n", this->caitsithLastLimitUnlocked ? "true" : "false");
     }
 }
 
@@ -197,6 +200,9 @@ void SteamAchievementsFF7::initCharStatsBeforeBattle(savemap_char *characters)
             uint32_t materia = characters[i].equipped_materia[j];
             this->equipMasteredMateriaCharacter[i][j] = isMateriaMastered(materia);
         }
+
+        if(i == CAIT_SITH_INDEX)
+            this->caitsithNumKills = characters[i].num_kills;
     }
 }
 
@@ -282,22 +288,22 @@ void SteamAchievementsFF7::unlockBattleWonAchievement(WORD battleSceneID)
     if (!this->steamManager.isAchieved(WON_1ST_BATTLE))
         this->steamManager.setAchievement(WON_1ST_BATTLE);
 
-    if (battleSceneID >= DIAMOND_WEAPON_START && battleSceneID <= DIAMOND_WEAPON_END)
+    if (!this->steamManager.isAchieved(BEAT_DIAMOND_WEAPON) && battleSceneID == DIAMOND_WEAPON_SCENE_ID)
     {
         this->steamManager.setAchievement(BEAT_DIAMOND_WEAPON);
     }
 
-    if (battleSceneID >= RUBY_WEAPON_START && battleSceneID <= RUBY_WEAPON_END)
+    if (!this->steamManager.isAchieved(BEAT_RUBY_WEAPON) && battleSceneID == RUBY_WEAPON_SCENE_ID)
     {
         this->steamManager.setAchievement(BEAT_RUBY_WEAPON);
     }
 
-    if (battleSceneID >= EMERALD_WEAPON_START && battleSceneID <= EMERALD_WEAPON_END)
+    if (!this->steamManager.isAchieved(BEAT_EMERALD_WEAPON) && battleSceneID == EMERALD_WEAPON_SCENE_ID)
     {
         this->steamManager.setAchievement(BEAT_EMERALD_WEAPON);
     }
 
-    if (battleSceneID >= ULTIMATE_WEAPON_START && battleSceneID <= ULTIMATE_WEAPON_END)
+    if (!this->steamManager.isAchieved(BEAT_ULTIMATE_WEAPON) && battleSceneID == ULTIMATE_WEAPON_SCENE_ID)
     {
         this->steamManager.setAchievement(BEAT_ULTIMATE_WEAPON);
     }
@@ -347,6 +353,7 @@ void SteamAchievementsFF7::unlockGotMateriaAchievement(byte materiaID)
         ffnx_trace("%s - trying to unlock achievement for getting materia (got materia ID: 0x%02x)\n", __func__, materiaID);
 
     if(std::find(this->unmasterableMateriaList.begin(), this->unmasterableMateriaList.end(), materiaID) != this->unmasterableMateriaList.end()){
+        masteredMateria[materiaID] = true;
         if(!this->steamManager.isAchieved(LEVEL_UP_MATERIA_LVL5))
             this->steamManager.setAchievement(LEVEL_UP_MATERIA_LVL5);
 
@@ -369,6 +376,7 @@ void SteamAchievementsFF7::unlockMasterMateriaAchievement(savemap_char *characte
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for mastering materia\n", __func__);
 
+    bool newMateriaMastered = false;
     for (int i = 0; i < N_CHARACTERS; i++)
     {
         if (characters[i].id == SEPHIROTH_ID || characters[i].id == YOUNG_CLOUD_ID)
@@ -383,28 +391,24 @@ void SteamAchievementsFF7::unlockMasterMateriaAchievement(savemap_char *characte
                     ffnx_trace("%s - trying to unlock achievement for mastering materia (materia id: 0x%02x)\n", __func__, materia & 0xFF);
                 
                 masteredMateria[materia & 0xFF] = true;
+                newMateriaMastered = true;
                 if (!this->steamManager.isAchieved(LEVEL_UP_MATERIA_LVL5))
                     this->steamManager.setAchievement(LEVEL_UP_MATERIA_LVL5);
             }
         }
     }
 
-    if (!this->steamManager.isAchieved(MASTER_ALL_MATERIA) && this->isAllMateriaMastered(masteredMateria))
+    if (!this->steamManager.isAchieved(MASTER_ALL_MATERIA) && newMateriaMastered && this->isAllMateriaMastered(masteredMateria))
         this->steamManager.setAchievement(MASTER_ALL_MATERIA);
 }
 
-void SteamAchievementsFF7::unlockFirstLimitBreakAchievement(savemap_char *characters)
+void SteamAchievementsFF7::unlockFirstLimitBreakAchievement(unsigned char characterIndex)
 {
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for first limit break achievement\n", __func__);
-
-    for (int i = 0; i < N_CHARACTERS; i++)
-    {
-        if (!this->steamManager.isAchieved(USE_1ST_LIMIT_CLOUD + this->indexToFirstLimitIndex[i]) && characters[i].used_n_limit_1_1 > this->previousUsedLimitNumber[i])
-        {
-            this->steamManager.setAchievement(USE_1ST_LIMIT_CLOUD + this->indexToFirstLimitIndex[i]);
-        }
-    }
+    
+    if (!this->steamManager.isAchieved(USE_1ST_LIMIT_CLOUD + indexToFirstLimitIndex[characterIndex]))
+        this->steamManager.setAchievement(USE_1ST_LIMIT_CLOUD + indexToFirstLimitIndex[characterIndex]);
 }
 
 void SteamAchievementsFF7::unlockCaitSithLastLimitBreakAchievement(savemap_char *characters)
@@ -412,11 +416,10 @@ void SteamAchievementsFF7::unlockCaitSithLastLimitBreakAchievement(savemap_char 
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for cait sith last limit break achievement\n", __func__);
 
-    if (!this->steamManager.isAchieved(GET_FOURTH_CAITSITH_LAST_LIMIT) && !this->caitsithLastLimitUnlocked &&
-        characters[CAIT_SITH_INDEX].learned_limit_break > FIRST_LIMIT_BREAK_CODE)
+    if (!this->steamManager.isAchieved(GET_FOURTH_CAITSITH_LAST_LIMIT) && characters[CAIT_SITH_INDEX].num_kills > this->caitsithNumKills &&
+        characters[CAIT_SITH_INDEX].num_kills == 40)
     {
         this->steamManager.setAchievement(GET_FOURTH_CAITSITH_LAST_LIMIT);
-        this->caitsithLastLimitUnlocked = true;
     }
 }
 
@@ -445,26 +448,34 @@ void SteamAchievementsFF7::unlockGoldChocoboAchievement(chocobo_slot *firstFourS
     if (this->steamManager.isAchieved(GET_GOLD_CHOCOBO))
         return;
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < N_GOLD_CHOCOBO_FIRST_SLOTS; i++)
     {
-        if (firstFourSlots[i].type == GOLD_CHOCOBO_TYPE)
+        if (!this->isGoldChocoboSlot[i] && firstFourSlots[i].type == GOLD_CHOCOBO_TYPE){
             this->steamManager.setAchievement(GET_GOLD_CHOCOBO);
+        }
     }
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < N_GOLD_CHOCOBO_LAST_SLOTS; i++)
     {
-        if (lastTwoSlots[i].type == GOLD_CHOCOBO_TYPE)
+        if (!this->isGoldChocoboSlot[i + N_GOLD_CHOCOBO_FIRST_SLOTS] && lastTwoSlots[i].type == GOLD_CHOCOBO_TYPE){
             this->steamManager.setAchievement(GET_GOLD_CHOCOBO);
+        }
     }
 }
 
-void SteamAchievementsFF7::unlockGameProgressAchievement(int achID)
+void SteamAchievementsFF7::unlockGameProgressAchievement(string movieName)
 {
     if (trace_all || trace_achievement)
-        ffnx_trace("%s - trying to unlock game progress achievement (%s)\n", __func__, this->steamManager.getStringAchievementID(achID));
+        ffnx_trace("%s - trying to unlock game progress achievement (movieName: %s)\n", __func__, movieName.c_str());
 
-    if (!(this->steamManager.isAchieved(achID)) && (achID >= DEATH_OF_AERITH && achID <= END_OF_GAME))
-        this->steamManager.setAchievement(achID);
+    if (!(this->steamManager.isAchieved(DEATH_OF_AERITH)) && movieName.compare(DEATH_OF_AERITH_MOVIE_NAME) == 0)
+        this->steamManager.setAchievement(DEATH_OF_AERITH);
+
+    if (!(this->steamManager.isAchieved(SHINRA_ANNIHILATED)) && movieName.compare(SHINRA_ANNIHILATED_MOVIE_NAME) == 0)
+        this->steamManager.setAchievement(SHINRA_ANNIHILATED);
+
+    if (!(this->steamManager.isAchieved(END_OF_GAME)) && movieName.compare(END_OF_GAME_MOVIE_NAME) == 0)
+        this->steamManager.setAchievement(END_OF_GAME);
 }
 
 void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(savemap *savemap)
@@ -475,12 +486,10 @@ void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(savemap *savemap)
 
     if (!this->steamManager.isAchieved(GET_YUFFIE_IN_TEAM) && !this->yuffieUnlocked && this->isYuffieUnlocked(savemap->yuffie_reg_mask)){
         this->steamManager.setAchievement(GET_YUFFIE_IN_TEAM);
-        this->yuffieUnlocked = true;
     }
 
     if (!this->steamManager.isAchieved(GET_VINCENT_IN_TEAM) && !this->vincentUnlocked && this->isVincentUnlocked(savemap->vincent_reg_mask)){
         this->steamManager.setAchievement(GET_VINCENT_IN_TEAM);
-        this->vincentUnlocked = true;
     }
 }
 

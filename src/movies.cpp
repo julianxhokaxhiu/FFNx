@@ -29,6 +29,7 @@
 #include "ff7/defs.h"
 #include "video/movies.h"
 #include "redirect.h"
+#include "achievement.h"
 
 // Required by > 15 FPS movies
 bool is_movie_bgfield = false;
@@ -191,6 +192,12 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	}
 	// ---------------------------
 
+	// FF7 game progress achievement
+	if(enable_steam_achievements){
+		std::string movieName(filename);
+		g_FF7SteamAchievements.unlockGameProgressAchievement(movieName);
+	}
+	
 	return true;
 }
 

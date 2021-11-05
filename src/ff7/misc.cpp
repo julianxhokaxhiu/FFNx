@@ -556,17 +556,6 @@ int ff7_field_load_models_atoi(const char* str)
 // steam achievement hooks
 //#########################
 
-// Replaced this function only in credits main loop
-DWORD ff7_sub_404D80() // NOT TESTED
-{
-	if (trace_all || trace_achievement)
-        ffnx_trace("%s - unlock end of game progress\n", __func__);
-
-	g_FF7SteamAchievements.unlockGameProgressAchievement(END_OF_GAME);
-
-	return ((DWORD(*)()) ff7_externals.sub_404D80)();
-}
-
 int ff7_load_save_file(int param_1){
 	int returnValue = ((int(*)(int))ff7_externals.load_save_file)(param_1);
 	g_FF7SteamAchievements.initStatsFromSaveFile(ff7_externals.savemap);
@@ -583,5 +572,6 @@ void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3){
 void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3){
 	((void(*)(WORD, short, short)) ff7_externals.sub_60FA7D)(param1, param2, param3);
 
-	g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap);
+	if(param3 & (1 << 0) || param3 & (1 << 2))
+		g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap);
 }

@@ -717,7 +717,7 @@ struct savemap_char
 	char field_20;
 	unsigned char level_progress_bar;
 	WORD learned_limit_break;
-	WORD field_24;
+	WORD num_kills;
 	WORD used_n_limit_1_1;
 	WORD field_28;
 	WORD field_2A;
@@ -1926,9 +1926,8 @@ struct ff7_externals
 	uint32_t battle_sub_5C7F94;
 	uint32_t menu_battle_end_sub_6C9543;
 	uint32_t menu_sub_71FF95, menu_shop_loop, get_materia_gil, menu_sub_6CBCB9;
-	uint32_t credits_main_loop;
-	uint32_t sub_404D80;
 	uint32_t menu_sub_6CC0EA, menu_sub_6CBCF3, menu_sub_705D16, menu_sub_6CC17F;
+	uint32_t battle_sub_5C930F, battle_sub_435139;
 	uint32_t menu_decrease_item_quantity;
 	uint32_t sub_610973, sub_611098;
 	uint32_t sub_60FA7D;
