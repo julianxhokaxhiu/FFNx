@@ -233,18 +233,16 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	//###############################
 	if(enable_steam_achievements)
 	{
-		// FOR MASTER MATERIA, BATTLE WON, 1ST LIMIT BREAK
-		replace_call_function(ff7_externals.battle_fight_end + 0x25, ff7_battle_fight_fanfare);
+		// BATTLE SQUARE
 		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7_load_battle_stage);
 
-		// GIL
+		// GIL, MASTER MATERIA, BATTLE WON, 1ST LIMIT BREAK
 		replace_call_function(ff7_externals.battle_enemy_killed_sub_433BD2 + 0x2AF, ff7_battle_sub_5C7F94); 
 		replace_call_function(ff7_externals.menu_sub_6CDA83 + 0x20, ff7_menu_battle_end_sub_6C9543);
 		replace_call_function(ff7_externals.menu_shop_loop + 0x327B, ff7_get_materia_gil);
 		replace_function(ff7_externals.menu_sub_6CBCB9, ff7_menu_sub_6CBCB9);
 
-		// GAME PROGRESS
-		replace_call_function(ff7_externals.credits_main_loop + 0x211, ff7_sub_404D80);
+		replace_call_function(ff7_externals.battle_sub_5C930F + 0x86, ff7_battle_sub_435139);
 
 		// MATERIA GOT
 		replace_call_function(ff7_externals.menu_sub_6CC0EA + 0x43, ff7_menu_sub_6CBCF3);

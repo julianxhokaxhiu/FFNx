@@ -23,10 +23,10 @@
 
 // battle
 void magic_thread_start(void (*func)());
-void ff7_battle_fight_fanfare();
 void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3);
 void ff7_battle_sub_5C7F94(int param_1, int param_2);
 void ff7_battle_sub_6DB0EE();
+void ff7_battle_sub_435139(int param_1, char param_2, char param_3, WORD param_4);
 
 // menu
 void ff7_menu_battle_end_sub_6C9543();
@@ -57,7 +57,6 @@ void *ff7_menu_sub_6FAC38(uint32_t param1, uint32_t param2, uint8_t param3, uint
 void ff7_limit_fps();
 void ff7_handle_ambient_playback();
 BOOL ff7_write_save_file(char slot);
-DWORD ff7_sub_404D80();
 int ff7_field_load_models_atoi(const char* str);
 void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3);
 void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3);

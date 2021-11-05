@@ -2318,17 +2318,6 @@ uint32_t ff7_get_inserted_cd(void) {
 		break;
 	}
 
-	if(enable_steam_achievements){
-		if (trace_all || trace_achievement)
-			ffnx_trace("CD inserted: %d, CD required: %d\n", insertedCD, requiredCD);
-
-		if(insertedCD == 1 && requiredCD == 2)
-			g_FF7SteamAchievements.unlockGameProgressAchievement(DEATH_OF_AERITH);
-
-		if(insertedCD == 2 && requiredCD == 2)
-			g_FF7SteamAchievements.unlockGameProgressAchievement(SHINRA_ANNIHILATED);
-	}
-
 	if (requiredCD > 0 && requiredCD <= 3) ret = requiredCD;
 
 	insertedCD = ret;

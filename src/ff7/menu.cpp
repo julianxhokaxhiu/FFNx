@@ -28,11 +28,15 @@ void ff7_menu_battle_end_sub_6C9543()
 {
     ((void (*)())ff7_externals.menu_battle_end_sub_6C9543)();
 
+    if(*ff7_externals.menu_battle_end_mode == 0){
+        if (trace_all || trace_achievement)
+            ffnx_trace("%s - trying to unlock achievement for battle won and weapons\n", __func__);
+        g_FF7SteamAchievements.unlockBattleWonAchievement(*ff7_externals.battle_scene_id);
+    }
+
     if(*ff7_externals.menu_battle_end_mode == 1){
         if (trace_all || trace_achievement)
             ffnx_trace("%s - trying to unlock achievement for first limit, cait sith, character level, and master materia\n", __func__);
-        // this could be achieved when the limit break is used, instead in this way it is achieved only after battle ending
-        g_FF7SteamAchievements.unlockFirstLimitBreakAchievement(ff7_externals.savemap->chars);
 
         g_FF7SteamAchievements.unlockCaitSithLastLimitBreakAchievement(ff7_externals.savemap->chars);
         g_FF7SteamAchievements.unlockCharacterLevelAchievement(ff7_externals.savemap->chars);
@@ -56,8 +60,9 @@ int ff7_get_materia_gil(uint32_t materia)
     return materiaGil;
 }
 
+// called when selling an item
 void ff7_menu_sub_6CBCB9(int gilObtained)
-{ // NOT TESTED
+{
     if (ff7_externals.savemap->gil + gilObtained < ff7_externals.savemap->gil)
         ff7_externals.savemap->gil = -1;
     else

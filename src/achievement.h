@@ -92,16 +92,19 @@ private:
     static inline const byte BAHAMUT_ZERO_MATERIA_ID = 0x58;
     static inline const byte KOTR_MATERIA_ID = 0x59;
 
-    static inline const WORD DIAMOND_WEAPON_START = 980;
-    static inline const WORD DIAMOND_WEAPON_END = 981;
-    static inline const WORD RUBY_WEAPON_START = 982;
-    static inline const WORD RUBY_WEAPON_END = 983;
-    static inline const WORD EMERALD_WEAPON_START = 984;
-    static inline const WORD EMERALD_WEAPON_END = 987;
-    static inline const WORD ULTIMATE_WEAPON_START = 988;
-    static inline const WORD ULTIMATE_WEAPON_END = 991;
+    // took from here https://finalfantasy.fandom.com/wiki/Diamond_Weapon_(Final_Fantasy_VII_boss)#Formations
+    static inline const WORD DIAMOND_WEAPON_SCENE_ID = 980;
+    static inline const WORD RUBY_WEAPON_SCENE_ID = 982;
+    static inline const WORD EMERALD_WEAPON_SCENE_ID = 984;
+    static inline const WORD ULTIMATE_WEAPON_SCENE_ID = 287;
 
     static inline const byte GOLD_CHOCOBO_TYPE = 0x04;
+    static inline const int N_GOLD_CHOCOBO_FIRST_SLOTS = 4;
+    static inline const int N_GOLD_CHOCOBO_LAST_SLOTS = 2;
+
+    static inline const std::string DEATH_OF_AERITH_MOVIE_NAME = "earithdd";
+    static inline const std::string SHINRA_ANNIHILATED_MOVIE_NAME = "hwindjet";
+    static inline const std::string END_OF_GAME_MOVIE_NAME = "ending3";
 
     SteamManager steamManager;
 
@@ -115,7 +118,8 @@ private:
     bool masteredMateria[N_TYPE_MATERIA];
     bool yuffieUnlocked;
     bool vincentUnlocked;
-    bool caitsithLastLimitUnlocked;
+    int caitsithNumKills;
+    bool isGoldChocoboSlot[N_GOLD_CHOCOBO_FIRST_SLOTS + N_GOLD_CHOCOBO_LAST_SLOTS];
 
     bool isYuffieUnlocked(char yuffieRegular);
     bool isVincentUnlocked(char vincentRegular);
@@ -133,11 +137,11 @@ public:
     void unlockBattleSquareAchievement(WORD battle_location_id);
     void unlockGotMateriaAchievement(byte materia_id);
     void unlockMasterMateriaAchievement(savemap_char *characters);
-    void unlockFirstLimitBreakAchievement(savemap_char *characters);
+    void unlockFirstLimitBreakAchievement(unsigned char characterIndex);
     void unlockLastLimitBreakAchievement(WORD item_id);
     void unlockCaitSithLastLimitBreakAchievement(savemap_char *characters);
     void unlockGoldChocoboAchievement(chocobo_slot *firstFourSlots, chocobo_slot *lastTwoSlots);
-    void unlockGameProgressAchievement(int achID);
+    void unlockGameProgressAchievement(std::string movieName);
     void unlockYuffieAndVincentAchievement(savemap *savemap);
 };
 
