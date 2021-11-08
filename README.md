@@ -43,7 +43,7 @@ Installation instructions, configuration and much more can be found at this addr
 If you're curious to know it, FFNx is made with:
 
 - C++ code base
-- Latest MSVC available on [Visual Studio 2019 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+- Latest MSVC available on [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
 - [vcpkg](https://vcpkg.io/) ( as dependency manager )
 - [CMake](https://cmake.org/) ( as make files )
 - [BGFX](https://github.com/bkaradzic/bgfx) ( as backend renderer )
@@ -90,7 +90,8 @@ Once the project is build you can find the output in this path: `.build/bin`
 
 0. Download the the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installer
 1. Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the required components to build this project
-2. Once installed, open this repository **as a folder** in Visual Studio 2019 and click the build button.
+2. Make sure you select the English Language pack in the language list before clicking Install
+3. Once installed, open this repository **as a folder** in Visual Studio 2022 and click the build button
 
 ### Visual Studio Code
 

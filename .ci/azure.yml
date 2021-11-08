@@ -49,7 +49,7 @@ variables:
   GIT_REDIRECT_STDERR: 2>&1
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'windows-2022'
 
 jobs:
 - job: FFNx

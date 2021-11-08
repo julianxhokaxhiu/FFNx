@@ -6,8 +6,8 @@
 vcpkg_from_github(OUT_SOURCE_PATH BX_SOURCE_DIR
     REPO "julianxhokaxhiu/bx"
     HEAD_REF master
-    REF 5e8c84618fd8fb03454550a28fc0f2c275c4159d
-    SHA512 db4673855ae82c28d1c22bd402f542782f518a0cf700f497e8ef271ebe9e5ee25e16bd4eacc10b9ff7fdac7a34a0ecbd831dc97720c703344b0851bc7ff58f2b
+    REF bb86fe843b2b82b287e9b0c8916ff52f491bb437
+    SHA512 0db3d18c34cc19dfd8e6ea80c6cdd3c554f7ca6693c5dc2cb752ed99371c8ba2921eec77957d11bea229b2e69a12be5524110c074426e6fc0ca55af9ac0ee5e9
 )
 
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
@@ -60,6 +60,8 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(GENIE_ACTION vs2017)
     elseif(VCPKG_PLATFORM_TOOLSET STREQUAL "v142")
         set(GENIE_ACTION vs2019)
+    elseif(VCPKG_PLATFORM_TOOLSET STREQUAL "v143")
+        set(GENIE_ACTION vs2022)
     else()
         message(FATAL_ERROR "Unsupported Visual Studio toolset: ${VCPKG_PLATFORM_TOOLSET}")
     endif()

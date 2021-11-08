@@ -51,6 +51,8 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(GENIE_ACTION vs2017)
     elseif(VCPKG_PLATFORM_TOOLSET STREQUAL "v142")
         set(GENIE_ACTION vs2019)
+    elseif(VCPKG_PLATFORM_TOOLSET STREQUAL "v143")
+        set(GENIE_ACTION vs2022)
     else()
         message(FATAL_ERROR "Unsupported Visual Studio toolset: ${VCPKG_PLATFORM_TOOLSET}")
     endif()
@@ -81,7 +83,7 @@ vcpkg_execute_required_process(
 
 vcpkg_install_msbuild(
     SOURCE_PATH "${SOURCE_DIR}"
-    PROJECT_SUBPATH "build/vs2019/SoLoud${SOLOUD_PROJNAME}.vcxproj"
+    PROJECT_SUBPATH "build/${GENIE_ACTION}/SoLoud${SOLOUD_PROJNAME}.vcxproj"
     LICENSE_SUBPATH "LICENSE"
     INCLUDES_SUBPATH "include"
     ALLOW_ROOT_INCLUDES
