@@ -56,6 +56,7 @@ public:
     void init(achievement *achievements, int nAchievements);
 
     bool requestStats();
+    bool showAchievementProgress(int achID, int progressValue, int maxValue);
     bool setAchievement(int achID);
     bool isAchieved(int achID);
     const char* getStringAchievementID(int achID);
@@ -68,50 +69,47 @@ public:
 class SteamAchievementsFF7 
 {
 private:
-    static inline const int N_CHARACTERS = 9;
-    static inline const int N_TYPE_MATERIA = 91;
-    static inline const int N_UNKNOWN_MATERIA = 8;
+    static inline constexpr int N_CHARACTERS = 9;
+    static inline constexpr int N_TYPE_MATERIA = 91;
+    static inline constexpr int N_UNKNOWN_MATERIA = 8;
 
-    static inline const int N_MATERIA_SLOT = 200;
-    static inline const int N_STOLEN_MATERIA_SLOT = 48;
-    static inline const int N_EQUIP_MATERIA_PER_CHARACTER = 16;
-    static inline const WORD BATTLE_SQUARE_LOCATION_ID = 0x0025;
-    static inline const WORD FIRST_LIMIT_BREAK_CODE = 0x0001;
-    static inline const WORD FOURTH_LIMIT_BREAK_CODE = 0x0200;
-    static inline const int GIL_ACHIEVEMENT_VALUE = 99999999;
-    static inline const int TOP_LEVEL_CHARACTER = 99;
+    static inline constexpr int N_MATERIA_SLOT = 200;
+    static inline constexpr int N_STOLEN_MATERIA_SLOT = 48;
+    static inline constexpr int N_EQUIP_MATERIA_PER_CHARACTER = 16;
+    static inline constexpr int GIL_ACHIEVEMENT_VALUE = 99999999;
+    static inline constexpr int TOP_LEVEL_CHARACTER = 99;
 
-    static inline const int YUFFIE_INDEX = 5;
-    static inline const int CAIT_SITH_INDEX = 6;
-    static inline const int VINCENT_INDEX = 7;
-    static inline const byte YOUNG_CLOUD_ID = 0x09;
-    static inline const byte SEPHIROTH_ID = 0x0A;
+    static inline constexpr int YUFFIE_INDEX = 5;
+    static inline constexpr int CAIT_SITH_INDEX = 6;
+    static inline constexpr int VINCENT_INDEX = 7;
+    static inline constexpr byte YOUNG_CLOUD_ID = 0x09;
+    static inline constexpr byte SEPHIROTH_ID = 0x0A;
 
-    static inline const byte MATERIA_EMPTY_SLOT = 0xFF;
-    static inline const int MATERIA_AP_MASTERED = 0xFFFFFF;
-    static inline const byte BAHAMUT_ZERO_MATERIA_ID = 0x58;
-    static inline const byte KOTR_MATERIA_ID = 0x59;
+    static inline constexpr byte MATERIA_EMPTY_SLOT = 0xFF;
+    static inline constexpr int MATERIA_AP_MASTERED = 0xFFFFFF;
+    static inline constexpr byte BAHAMUT_ZERO_MATERIA_ID = 0x58;
+    static inline constexpr byte KOTR_MATERIA_ID = 0x59;
 
     // took from here https://finalfantasy.fandom.com/wiki/Diamond_Weapon_(Final_Fantasy_VII_boss)#Formations
-    static inline const WORD DIAMOND_WEAPON_SCENE_ID = 980;
-    static inline const WORD RUBY_WEAPON_SCENE_ID = 982;
-    static inline const WORD EMERALD_WEAPON_SCENE_ID = 984;
-    static inline const WORD ULTIMATE_WEAPON_SCENE_ID = 287;
+    static inline constexpr WORD DIAMOND_WEAPON_SCENE_ID = 980;
+    static inline constexpr WORD RUBY_WEAPON_SCENE_ID = 982;
+    static inline constexpr WORD EMERALD_WEAPON_SCENE_ID = 984;
+    static inline constexpr WORD ULTIMATE_WEAPON_SCENE_ID = 287;
+    static inline constexpr WORD BATTLE_SQUARE_LOCATION_ID = 0x0025;
 
-    static inline const byte GOLD_CHOCOBO_TYPE = 0x04;
-    static inline const int N_GOLD_CHOCOBO_FIRST_SLOTS = 4;
-    static inline const int N_GOLD_CHOCOBO_LAST_SLOTS = 2;
+    static inline constexpr byte GOLD_CHOCOBO_TYPE = 0x04;
+    static inline constexpr int N_GOLD_CHOCOBO_FIRST_SLOTS = 4;
+    static inline constexpr int N_GOLD_CHOCOBO_LAST_SLOTS = 2;
 
     static inline const std::string DEATH_OF_AERITH_MOVIE_NAME = "earithdd";
     static inline const std::string SHINRA_ANNIHILATED_MOVIE_NAME = "hwindjet";
     static inline const std::string END_OF_GAME_MOVIE_NAME = "ending3";
 
-    SteamManager steamManager;
+    static inline constexpr byte unknownMateriaList[] = {0x16, 0x26, 0x2D, 0x2E, 0x2F, 0x3F, 0x42, 0x43};
+    static inline constexpr byte unmasterableMateriaList[] = {0x11, 0x30, 0x49, 0x5A};
+    static inline constexpr WORD limitBreakItemsID[] = {0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0xFFFF, 0x5D, 0x5E};
 
-    std::vector<int> indexToFirstLimitIndex;
-    std::vector<int> unknownMateriaList;
-    std::vector<int> unmasterableMateriaList;
-    std::vector<int> limitBreakItemsID;
+    SteamManager steamManager;
     
     WORD previousUsedLimitNumber[N_CHARACTERS];
     bool equipMasteredMateriaCharacter[N_CHARACTERS][N_EQUIP_MATERIA_PER_CHARACTER];
@@ -123,26 +121,27 @@ private:
 
     bool isYuffieUnlocked(char yuffieRegular);
     bool isVincentUnlocked(char vincentRegular);
+    void initMateriaMastered(const savemap& savemap);
+    bool isMateriaMastered(uint32_t materia);
+    bool isAllMateriaMastered(const bool masteredMateriaList[]);
 
 public:
     void init();
-    void initStatsFromSaveFile(savemap *savemap);
-    void initCharStatsBeforeBattle(savemap_char *characters);
-    void initMateriaMastered(savemap *savemap);
-    bool isMateriaMastered(uint32_t materia);
-    bool isAllMateriaMastered(bool* masteredMateria);
+    void initStatsFromSaveFile(const savemap& savemap);
+    void initCharStatsBeforeBattle(const savemap_char characters[]);
+    
     void unlockBattleWonAchievement(WORD battleSceneID);
     void unlockGilAchievement(uint32_t gilAmount);
-    void unlockCharacterLevelAchievement(savemap_char *characters);
-    void unlockBattleSquareAchievement(WORD battle_location_id);
-    void unlockGotMateriaAchievement(byte materia_id);
-    void unlockMasterMateriaAchievement(savemap_char *characters);
+    void unlockCharacterLevelAchievement(const savemap_char characters[]);
+    void unlockBattleSquareAchievement(WORD battleLocationID);
+    void unlockGotMateriaAchievement(byte materiaID);
+    void unlockMasterMateriaAchievement(const savemap_char characters[]);
     void unlockFirstLimitBreakAchievement(unsigned char characterIndex);
-    void unlockLastLimitBreakAchievement(WORD item_id);
-    void unlockCaitSithLastLimitBreakAchievement(savemap_char *characters);
-    void unlockGoldChocoboAchievement(chocobo_slot *firstFourSlots, chocobo_slot *lastTwoSlots);
+    void unlockLastLimitBreakAchievement(WORD itemID);
+    void unlockCaitSithLastLimitBreakAchievement(const savemap_char characters[]);
+    void unlockGoldChocoboAchievement(const chocobo_slot firstFourSlots[], const chocobo_slot lastTwoSlots[]);
     void unlockGameProgressAchievement(std::string movieName);
-    void unlockYuffieAndVincentAchievement(savemap *savemap);
+    void unlockYuffieAndVincentAchievement(char yuffieRegMask, char vincentRegMask);
 };
 
 class SteamAchievementsFF8
@@ -181,13 +180,13 @@ enum Achievements
     WON_1ST_BATTLE = 25,
     USE_1ST_LIMIT_CLOUD = 26,
     USE_1ST_LIMIT_BARRET = 27,
-    USE_1ST_LIMIT_VINCENT = 28,
+    USE_1ST_LIMIT_TIFA = 28,
     USE_1ST_LIMIT_AERITH = 29,
-    USE_1ST_LIMIT_CID = 30,
-    USE_1ST_LIMIT_TIFA = 31,
-    USE_1ST_LIMIT_YUFFIE = 32,
-    USE_1ST_LIMIT_REDXIII = 33,
-    USE_1ST_LIMIT_CAITSITH = 34,
+    USE_1ST_LIMIT_REDXIII = 30,
+    USE_1ST_LIMIT_YUFFIE = 31,
+    USE_1ST_LIMIT_CAITSITH = 32,
+    USE_1ST_LIMIT_VINCENT = 33,
+    USE_1ST_LIMIT_CID = 34,
     FIGHT_IN_BATTLE_SQUARE = 35
 };
 
@@ -269,14 +268,15 @@ achievement g_AchievementsFF7[] = {
     _ACH_ID(WON_1ST_BATTLE),
     _ACH_ID(USE_1ST_LIMIT_CLOUD),
     _ACH_ID(USE_1ST_LIMIT_BARRET),
-    _ACH_ID(USE_1ST_LIMIT_VINCENT),
-    _ACH_ID(USE_1ST_LIMIT_AERITH),
-    _ACH_ID(USE_1ST_LIMIT_CID),
     _ACH_ID(USE_1ST_LIMIT_TIFA),
-    _ACH_ID(USE_1ST_LIMIT_YUFFIE),
+    _ACH_ID(USE_1ST_LIMIT_AERITH),
     _ACH_ID(USE_1ST_LIMIT_REDXIII),
+    _ACH_ID(USE_1ST_LIMIT_YUFFIE),
     _ACH_ID(USE_1ST_LIMIT_CAITSITH),
-    _ACH_ID(FIGHT_IN_BATTLE_SQUARE)};
+    _ACH_ID(USE_1ST_LIMIT_VINCENT),
+    _ACH_ID(USE_1ST_LIMIT_CID),
+    _ACH_ID(FIGHT_IN_BATTLE_SQUARE)
+};
 
 achievement g_AchievementsFF8[] = {
     _ACH_ID(UNLOCK_GF_QUEZACOTL),
@@ -323,7 +323,8 @@ achievement g_AchievementsFF8[] = {
     _ACH_ID(DOG_TRICKS),
     _ACH_ID(TOTAL_KILLS_100),
     _ACH_ID(TOTAL_KILLS_1000),
-    _ACH_ID(TOTAL_KILLS_10000)};
+    _ACH_ID(TOTAL_KILLS_10000)
+};
 
 // Global, access to Achievements object
 extern SteamAchievementsFF7 g_FF7SteamAchievements;

@@ -237,8 +237,9 @@ steam_game_userdata = ""
 ###########################
 
 #[STEAM ACHIEVEMENTS EXTENSION]
-# This flag will enable steam overlay and steam achievements (Steam MUST be running on background).
-# Files required: steam_api.dll (version 1.51+) that comes together with FFNx
+# This flag will enable steam overlay and steam achievements (Steam MUST be running and you must be online and 
+# connected to the Internet to unlock achievement).
+# Note: incompatible with mods that change dramatically the gameplay (for example, New Threat mod), use it at your own risk
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_steam_achievements = false
 
@@ -338,6 +339,11 @@ show_error_popup = false
 # Usually useful for debug pruposes. Do not enable otherwise.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 renderer_debug = false
+
+# Enable this flag if you want to go into debug mode for steam achievements (open popup window for achievements).
+# Useful for debug purposes. Do not enable otherwise.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+steam_achievements_debug_mode = false
 
 # Creates a full crashdump file if the game crashes. Useful to be analyzed with WinDbg when reporting issues.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
