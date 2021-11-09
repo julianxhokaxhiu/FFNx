@@ -129,8 +129,7 @@ uint32_t ff7_menu_decrease_item_quantity(uint32_t item_used)
         local_c = party_item_slots[index];
         item_id = 0;
         party_item_slots[index] = 0xFFFF;
-
-        g_FF7SteamAchievements.unlockLastLimitBreakAchievement(item_used & 0x1FF);
     }
+    g_FF7SteamAchievements.unlockLastLimitBreakAchievement(item_used & 0x1FF);
     return item_id & 0xFFFF0000 | (uint32_t)local_c;
 }

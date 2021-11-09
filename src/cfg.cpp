@@ -103,6 +103,7 @@ long ff7_fps_limiter;
 bool ff7_footsteps;
 bool enable_analogue_controls;
 bool enable_steam_achievements;
+bool steam_achievements_debug_mode;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -220,6 +221,7 @@ void read_cfg()
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
 	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
+	steam_achievements_debug_mode = config["enable_steam_achievements"].value_or(false);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
