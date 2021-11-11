@@ -192,11 +192,8 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	}
 	// ---------------------------
 
-	// FF7 game progress achievement
-	if(enable_steam_achievements){
-		std::string movieName(filename);
-		g_FF7SteamAchievements.unlockGameProgressAchievement(movieName);
-	}
+	if(enable_steam_achievements)
+		g_FF7SteamAchievements.initMovieStats(std::string(filename));
 	
 	return true;
 }
@@ -223,6 +220,10 @@ retry:
 		}
 
 		ff7_externals.movie_object->movie_end = 1;
+
+		if(enable_steam_achievements)
+			g_FF7SteamAchievements.unlockGameProgressAchievement();
+
 		return true;
 	}
 

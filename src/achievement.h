@@ -48,10 +48,10 @@ private:
 
 public:
     SteamManager() : appID(0),
-                          isInitialized(false),
-                          callbackUserStatsReceived(this, &SteamManager::OnUserStatsReceived),
-                          callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
-                          callbackAchievementStored(this, &SteamManager::OnAchievementStored) {}
+                     isInitialized(false),
+                     callbackUserStatsReceived(this, &SteamManager::OnUserStatsReceived),
+                     callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
+                     callbackAchievementStored(this, &SteamManager::OnAchievementStored) {}
 
     void init(achievement *achievements, int nAchievements);
 
@@ -104,10 +104,13 @@ private:
     static inline const std::string DEATH_OF_AERITH_MOVIE_NAME = "earithdd";
     static inline const std::string SHINRA_ANNIHILATED_MOVIE_NAME = "hwindjet";
     static inline const std::string END_OF_GAME_MOVIE_NAME = "ending3";
+    static inline const std::string INVALID_MOVIE_NAME = "";
 
     static inline constexpr byte unknownMateriaList[] = {0x16, 0x26, 0x2D, 0x2E, 0x2F, 0x3F, 0x42, 0x43};
     static inline constexpr byte unmasterableMateriaList[] = {0x11, 0x30, 0x49, 0x5A};
     static inline constexpr WORD limitBreakItemsID[] = {0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0xFFFF, 0x5D, 0x5E};
+
+    
 
     SteamManager steamManager;
     
@@ -118,6 +121,7 @@ private:
     bool vincentUnlocked;
     int caitsithNumKills;
     bool isGoldChocoboSlot[N_GOLD_CHOCOBO_FIRST_SLOTS + N_GOLD_CHOCOBO_LAST_SLOTS];
+    std::string movieName;
 
     bool isYuffieUnlocked(char yuffieRegular);
     bool isVincentUnlocked(char vincentRegular);
@@ -129,6 +133,7 @@ public:
     void init();
     void initStatsFromSaveFile(const savemap& savemap);
     void initCharStatsBeforeBattle(const savemap_char characters[]);
+    void initMovieStats(const std::string movieName);
     
     void unlockBattleWonAchievement(WORD battleSceneID);
     void unlockGilAchievement(uint32_t gilAmount);
@@ -140,7 +145,7 @@ public:
     void unlockLastLimitBreakAchievement(WORD itemID);
     void unlockCaitSithLastLimitBreakAchievement(const savemap_char characters[]);
     void unlockGoldChocoboAchievement(const chocobo_slot firstFourSlots[], const chocobo_slot lastTwoSlots[]);
-    void unlockGameProgressAchievement(std::string movieName);
+    void unlockGameProgressAchievement();
     void unlockYuffieAndVincentAchievement(char yuffieRegMask, char vincentRegMask);
 };
 
