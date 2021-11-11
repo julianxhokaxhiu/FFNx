@@ -175,6 +175,7 @@ void SteamManager::OnAchievementStored(UserAchievementStored_t *pCallback)
 void SteamAchievementsFF7::init()
 {
     this->steamManager.init(g_AchievementsFF7, FF7_N_ACHIEVEMENTS);
+    this->movieName = INVALID_MOVIE_NAME;
 }
 
 void SteamAchievementsFF7::initStatsFromSaveFile(const savemap& savemap){
@@ -197,6 +198,9 @@ void SteamAchievementsFF7::initStatsFromSaveFile(const savemap& savemap){
 
 void SteamAchievementsFF7::initCharStatsBeforeBattle(const savemap_char characters[])
 {
+    if (trace_all || trace_achievement)
+        ffnx_trace("%s - initialization of character stats before battle\n", __func__);
+
     for(int i = 0; i < N_CHARACTERS; i++)
     {
         this->previousUsedLimitNumber[i] = characters[i].used_n_limit_1_1;
@@ -209,6 +213,13 @@ void SteamAchievementsFF7::initCharStatsBeforeBattle(const savemap_char characte
         if(i == CAIT_SITH_INDEX)
             this->caitsithNumKills = characters[i].num_kills;
     }
+}
+
+void SteamAchievementsFF7::initMovieStats(const string movieName){
+    if (trace_all || trace_achievement)
+        ffnx_trace("%s - the movie name initialized is: %s\n", __func__, movieName.c_str());
+
+    this->movieName = std::move(movieName);
 }
 
 void SteamAchievementsFF7::initMateriaMastered(const savemap& savemap)
@@ -476,19 +487,26 @@ void SteamAchievementsFF7::unlockGoldChocoboAchievement(const chocobo_slot first
     }
 }
 
-void SteamAchievementsFF7::unlockGameProgressAchievement(string movieName)
+void SteamAchievementsFF7::unlockGameProgressAchievement()
 {
-    if (trace_all || trace_achievement)
-        ffnx_trace("%s - trying to unlock game progress achievement (movieName: %s)\n", __func__, movieName.c_str());
+    if (this->movieName.compare(INVALID_MOVIE_NAME) == 0){
+        ffnx_error("%s - trying to unlock game progress achievement but there is no movie name initialized\n", __func__);
+        return;
+    }
 
-    if (!(this->steamManager.isAchieved(DEATH_OF_AERITH)) && movieName.compare(DEATH_OF_AERITH_MOVIE_NAME) == 0)
+    if (trace_all || trace_achievement)
+        ffnx_trace("%s - trying to unlock game progress achievement (movieName: %s)\n", __func__, this->movieName.c_str());
+
+    if (!(this->steamManager.isAchieved(DEATH_OF_AERITH)) && this->movieName.compare(DEATH_OF_AERITH_MOVIE_NAME) == 0)
         this->steamManager.setAchievement(DEATH_OF_AERITH);
 
-    if (!(this->steamManager.isAchieved(SHINRA_ANNIHILATED)) && movieName.compare(SHINRA_ANNIHILATED_MOVIE_NAME) == 0)
+    if (!(this->steamManager.isAchieved(SHINRA_ANNIHILATED)) && this->movieName.compare(SHINRA_ANNIHILATED_MOVIE_NAME) == 0)
         this->steamManager.setAchievement(SHINRA_ANNIHILATED);
 
-    if (!(this->steamManager.isAchieved(END_OF_GAME)) && movieName.compare(END_OF_GAME_MOVIE_NAME) == 0)
+    if (!(this->steamManager.isAchieved(END_OF_GAME)) && this->movieName.compare(END_OF_GAME_MOVIE_NAME) == 0)
         this->steamManager.setAchievement(END_OF_GAME);
+
+    this->movieName = INVALID_MOVIE_NAME;
 }
 
 void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(char yuffieRegMask, char vincentRegMask)
