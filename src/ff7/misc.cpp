@@ -416,9 +416,6 @@ bool ff7_skip_movies()
 				ff7_externals.play_midi(2);
 		}
 
-		if(enable_steam_achievements)
-			g_FF7SteamAchievements.unlockGameProgressAchievement();
-
 		return true;
 	}
 

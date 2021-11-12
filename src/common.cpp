@@ -2318,6 +2318,10 @@ uint32_t ff7_get_inserted_cd(void) {
 		break;
 	}
 
+	if(enable_steam_achievements)
+		if(insertedCD != requiredCD)
+			g_FF7SteamAchievements.unlockGameProgressAchievement();
+
 	if (requiredCD > 0 && requiredCD <= 3) ret = requiredCD;
 
 	insertedCD = ret;
