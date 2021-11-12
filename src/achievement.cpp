@@ -175,7 +175,7 @@ void SteamManager::OnAchievementStored(UserAchievementStored_t *pCallback)
 void SteamAchievementsFF7::init()
 {
     this->steamManager.init(g_AchievementsFF7, FF7_N_ACHIEVEMENTS);
-    this->movieName = INVALID_MOVIE_NAME;
+    this->lastSeenMovieName = INVALID_MOVIE_NAME;
 }
 
 void SteamAchievementsFF7::initStatsFromSaveFile(const savemap& savemap){
@@ -187,6 +187,7 @@ void SteamAchievementsFF7::initStatsFromSaveFile(const savemap& savemap){
     for (int i = 0; i < N_GOLD_CHOCOBO_LAST_SLOTS; i++)
         this->isGoldChocoboSlot[i + N_GOLD_CHOCOBO_FIRST_SLOTS] = savemap.chocobo_slots_last[i].type == GOLD_CHOCOBO_TYPE;
 
+    this->lastSeenMovieName = INVALID_MOVIE_NAME;
     this->initMateriaMastered(savemap);
 
     if (trace_all || trace_achievement){
@@ -219,7 +220,7 @@ void SteamAchievementsFF7::initMovieStats(const string movieName){
     if (trace_all || trace_achievement)
         ffnx_trace("%s - the movie name initialized is: %s\n", __func__, movieName.c_str());
 
-    this->movieName = std::move(movieName);
+    this->lastSeenMovieName = std::move(movieName);
 }
 
 void SteamAchievementsFF7::initMateriaMastered(const savemap& savemap)
@@ -297,6 +298,10 @@ bool SteamAchievementsFF7::isYuffieUnlocked(char yuffieRegular){
 bool SteamAchievementsFF7::isVincentUnlocked(char vincentRegular){
     // took from https://github.com/sithlord48/ff7tk/blob/master/src/data/FF7Save.cpp#L4799
     return vincentRegular & (1 << 2);
+}
+
+string SteamAchievementsFF7::getLastSeenMovieName(){
+    return this->lastSeenMovieName;
 }
 
 void SteamAchievementsFF7::unlockBattleWonAchievement(WORD battleSceneID)
@@ -489,27 +494,20 @@ void SteamAchievementsFF7::unlockGoldChocoboAchievement(const chocobo_slot first
 
 void SteamAchievementsFF7::unlockGameProgressAchievement()
 {
-    if (this->movieName.compare(INVALID_MOVIE_NAME) == 0){
-        ffnx_error("%s - trying to unlock game progress achievement but there is no movie name initialized\n", __func__);
-        return;
-    }
-
     if (trace_all || trace_achievement)
-        ffnx_trace("%s - trying to unlock game progress achievement (movieName: %s)\n", __func__, this->movieName.c_str());
+        ffnx_trace("%s - trying to unlock game progress achievement (movieName: %s)\n", __func__, this->lastSeenMovieName.c_str());
 
-    if (!(this->steamManager.isAchieved(DEATH_OF_AERITH)) && this->movieName.compare(DEATH_OF_AERITH_MOVIE_NAME) == 0)
+    if (!(this->steamManager.isAchieved(DEATH_OF_AERITH)) && this->lastSeenMovieName == DEATH_OF_AERITH_MOVIE_NAME)
         this->steamManager.setAchievement(DEATH_OF_AERITH);
 
-    if (!(this->steamManager.isAchieved(SHINRA_ANNIHILATED)) && this->movieName.compare(SHINRA_ANNIHILATED_MOVIE_NAME) == 0)
+    if (!(this->steamManager.isAchieved(SHINRA_ANNIHILATED)) && this->lastSeenMovieName == SHINRA_ANNIHILATED_MOVIE_NAME)
         this->steamManager.setAchievement(SHINRA_ANNIHILATED);
 
-    if (!(this->steamManager.isAchieved(END_OF_GAME)) && this->movieName.compare(END_OF_GAME_MOVIE_NAME) == 0)
+    if (!(this->steamManager.isAchieved(END_OF_GAME)) && this->lastSeenMovieName == END_OF_GAME_MOVIE_NAME)
         this->steamManager.setAchievement(END_OF_GAME);
-
-    this->movieName = INVALID_MOVIE_NAME;
 }
 
-void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(char yuffieRegMask, char vincentRegMask)
+void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(unsigned char yuffieRegMask, unsigned char vincentRegMask)
 {
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock yuffie and vincent achievement (yuffie_reg: 0x%02x, vincent_reg: 0x%02x)\n",
