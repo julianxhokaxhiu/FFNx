@@ -300,8 +300,8 @@ bool SteamAchievementsFF7::isVincentUnlocked(char vincentRegular){
     return vincentRegular & (1 << 2);
 }
 
-string SteamAchievementsFF7::getLastSeenMovieName(){
-    return this->lastSeenMovieName;
+bool SteamAchievementsFF7::isEndingMovie(){
+    return this->lastSeenMovieName == END_OF_GAME_MOVIE_NAME;
 }
 
 void SteamAchievementsFF7::unlockBattleWonAchievement(WORD battleSceneID)

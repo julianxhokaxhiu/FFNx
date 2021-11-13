@@ -222,7 +222,7 @@ retry:
 		ff7_externals.movie_object->movie_end = 1;
 
 		if(enable_steam_achievements)
-			if(g_FF7SteamAchievements.getLastSeenMovieName() == SteamAchievementsFF7::END_OF_GAME_MOVIE_NAME)
+			if(g_FF7SteamAchievements.isEndingMovie())
 				g_FF7SteamAchievements.unlockGameProgressAchievement();
 
 		return true;

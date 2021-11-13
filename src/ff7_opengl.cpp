@@ -242,6 +242,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.menu_shop_loop + 0x327B, ff7_get_materia_gil);
 		replace_function(ff7_externals.menu_sub_6CBCB9, ff7_menu_sub_6CBCB9);
 
+		//1ST LIMIT BREAK
 		replace_call_function(ff7_externals.battle_sub_5C930F + 0x86, ff7_battle_sub_435139);
 
 		// MATERIA GOT

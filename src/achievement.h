@@ -101,11 +101,14 @@ private:
     static inline constexpr int N_GOLD_CHOCOBO_FIRST_SLOTS = 4;
     static inline constexpr int N_GOLD_CHOCOBO_LAST_SLOTS = 2;
 
+    static inline const std::string DEATH_OF_AERITH_MOVIE_NAME = "earithdd";
+    static inline const std::string SHINRA_ANNIHILATED_MOVIE_NAME = "hwindjet";
+    static inline const std::string END_OF_GAME_MOVIE_NAME = "ending2";
+    static inline const std::string INVALID_MOVIE_NAME = "";
+
     static inline constexpr byte unknownMateriaList[] = {0x16, 0x26, 0x2D, 0x2E, 0x2F, 0x3F, 0x42, 0x43};
     static inline constexpr byte unmasterableMateriaList[] = {0x11, 0x30, 0x49, 0x5A};
     static inline constexpr WORD limitBreakItemsID[] = {0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0xFFFF, 0x5D, 0x5E};
-
-    
 
     SteamManager steamManager;
     
@@ -125,17 +128,12 @@ private:
     bool isAllMateriaMastered(const bool masteredMateriaList[]);
 
 public:
-    static inline const std::string DEATH_OF_AERITH_MOVIE_NAME = "earithdd";
-    static inline const std::string SHINRA_ANNIHILATED_MOVIE_NAME = "hwindjet";
-    static inline const std::string END_OF_GAME_MOVIE_NAME = "ending2";
-    static inline const std::string INVALID_MOVIE_NAME = "";
-
     void init();
     void initStatsFromSaveFile(const savemap& savemap);
     void initCharStatsBeforeBattle(const savemap_char characters[]);
     void initMovieStats(const std::string movieName);
 
-    std::string getLastSeenMovieName();
+    bool isEndingMovie();
     
     void unlockBattleWonAchievement(WORD battleSceneID);
     void unlockGilAchievement(uint32_t gilAmount);
