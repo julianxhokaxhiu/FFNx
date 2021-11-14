@@ -491,7 +491,7 @@ uint32_t ff7_battle_music_fanfare()
 
 	next_music_channel = 1;
 
-	uint32_t ret = ff7_externals.play_battle_end_music();
+	uint32_t ret = ff7_externals.play_battle_end_music.call();
 
 	next_music_channel = 0;
 

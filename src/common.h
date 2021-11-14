@@ -250,6 +250,27 @@ struct common_externals
 	uint32_t update_entities_call;
 };
 
+template <typename T>
+struct external_fn;
+
+template<typename R, typename... Args>
+struct external_fn<R(Args...)>{
+	uint32_t address;
+
+	operator uint32_t() const {
+		return address;
+	}
+
+	external_fn<R(Args...)>& operator=(uint32_t address){
+		this->address = address;
+		return *this;
+	}
+
+	R call(Args... args) const {
+		return (reinterpret_cast<R(*)(Args...)>(address))(std::forward<Args>(args)...);
+	}
+};
+
 // heap allocation wrappers
 // driver_* functions are to be used for data internal to the driver, memory which is never allocated or free'd by the game
 // external_* functions must be used for memory which could be allocated or free'd by the game

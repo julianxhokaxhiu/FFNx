@@ -196,7 +196,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	common_externals.destroy_tex_header = get_relative_call((uint32_t)common_externals.destroy_tex, 0x78);
 
 	ff7_externals.play_battle_music_call = main_loop + 0x300;
-	ff7_externals.play_battle_end_music = (uint32_t(*)())get_relative_call(ff7_externals.battle_fanfare_music, 0x21);
+	ff7_externals.play_battle_end_music = get_relative_call(ff7_externals.battle_fanfare_music, 0x21);
 	ff7_externals.play_battle_music_win_call = ff7_externals.battle_fanfare_music + 0x21;
 	ff7_externals.battle_sub_42A0E7 = get_relative_call(ff7_externals.battle_sub_429AC0, 0xA4);
 	ff7_externals.load_battle_stage = get_relative_call(ff7_externals.battle_sub_42A0E7, 0x78);

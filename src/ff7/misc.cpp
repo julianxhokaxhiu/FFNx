@@ -557,7 +557,7 @@ int ff7_field_load_models_atoi(const char* str)
 //#########################
 
 int ff7_load_save_file(int param_1){
-	int returnValue = ((int(*)(int))ff7_externals.load_save_file)(param_1);
+	int returnValue = ff7_externals.load_save_file.call(param_1);
 	g_FF7SteamAchievements.initStatsFromSaveFile(*ff7_externals.savemap);
 	return returnValue;
 }
