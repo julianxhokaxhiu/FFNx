@@ -221,7 +221,7 @@ void read_cfg()
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
 	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
-	steam_achievements_debug_mode = config["enable_steam_achievements"].value_or(false);
+	steam_achievements_debug_mode = config["steam_achievements_debug_mode"].value_or(false);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;

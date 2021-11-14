@@ -453,12 +453,14 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	RECT Rect;
 
 	// Init Steam API
-	if(enable_steam_achievements)
+	if(steam_edition || enable_steam_achievements)
 	{	
-		// generate automatically steam_appid.txt file
-		std::ofstream steam_appid_file("steam_appid.txt");
-		steam_appid_file << ((ff8) ? FF8_APPID : FF7_APPID);
-		steam_appid_file.close();
+		// generate automatically steam_appid.txt
+		if(!steam_edition){
+			std::ofstream steam_appid_file("steam_appid.txt");
+			steam_appid_file << ((ff8) ? FF8_APPID : FF7_APPID);
+			steam_appid_file.close();
+		}
 
 		if (SteamAPI_RestartAppIfNecessary((ff8) ? FF8_APPID : FF7_APPID))
 		{
@@ -700,7 +702,7 @@ void common_cleanup(struct game_obj *game_object)
 	if(trace_all) ffnx_trace("dll_gfx: cleanup\n");
 
 	// Shutdown Steam API
-	if(enable_steam_achievements)
+	if(steam_edition || enable_steam_achievements)
 		SteamAPI_Shutdown();
 
 	if (steam_edition)
@@ -959,7 +961,7 @@ void common_flip(struct game_obj *game_object)
 	}
 
 	// Steamworks SDK API run callbacks
-	if(enable_steam_achievements)
+	if(steam_edition || enable_steam_achievements)
 		SteamAPI_RunCallbacks();
 
 }
@@ -2318,7 +2320,7 @@ uint32_t ff7_get_inserted_cd(void) {
 		break;
 	}
 
-	if(enable_steam_achievements)
+	if(steam_edition || enable_steam_achievements)
 		if(insertedCD != requiredCD)
 			g_FF7SteamAchievements.unlockGameProgressAchievement();
 
