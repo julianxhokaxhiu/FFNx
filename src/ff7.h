@@ -535,6 +535,31 @@ struct struc_110
 	struct matrix *bone_matrices;
 };
 
+struct battle_actor_data
+{
+	uint32_t index;
+	uint32_t level;
+	uint32_t formation_entry;
+	uint32_t command_index;
+	uint32_t action_index;
+	uint32_t field_14;
+	uint32_t allowed_targets;
+	uint32_t field_1C;
+	uint32_t command_animation;
+	uint32_t attack_effect;
+	uint32_t field_28;
+	uint32_t field_2C;
+	uint32_t self_mask;
+	uint32_t mp_cost;
+	uint32_t action_accuracy;
+	uint32_t damage_calc;
+	uint32_t action_element;
+	uint32_t action_power;
+	uint32_t attack_power;
+	uint32_t action_target_mask;
+	uint32_t field_54_others[206];
+};
+
 struct battle_chdir_struc
 {
 	uint32_t sucess;
@@ -1640,7 +1665,8 @@ struct ff7_externals
 	void *snowboard_fix;
 	uint32_t cdcheck;
 	uint32_t get_inserted_cd_sub;
-	uint32_t requiredCD;
+	DWORD* insertedCD;
+	uint8_t* requiredCD;
 	struct movie_obj *movie_object;
 	void (*movie_sub_415231)(char *);
 	void (*sub_665D9A)(struct matrix *, struct nvertex *, struct indexed_primitive *, struct p_hundred *, struct struc_186 *, struct ff7_game_obj *);
@@ -1675,6 +1701,7 @@ struct ff7_externals
 	uint32_t read_field_file;
 	uint32_t battle_enter;
 	uint32_t battle_loop;
+	battle_actor_data *battle_actor_data;
 	DWORD *battle_mode;
 	WORD *battle_location_id;
 	WORD *battle_scene_id;
@@ -1925,9 +1952,10 @@ struct ff7_externals
 	uint32_t battle_enemy_killed_sub_433BD2;
 	uint32_t battle_sub_5C7F94;
 	uint32_t menu_battle_end_sub_6C9543;
-	uint32_t menu_sub_71FF95, menu_shop_loop, get_materia_gil, menu_sub_6CBCB9;
-	uint32_t menu_sub_6CC0EA, menu_sub_6CBCF3, menu_sub_705D16, menu_sub_6CC17F;
-	uint32_t battle_sub_5C930F, battle_sub_435139;
+	uint32_t menu_sub_71FF95, menu_shop_loop, get_materia_gil, opcode_increase_gil_call;
+	uint32_t opcode_add_materia_inventory_call, menu_sub_6CBCF3, menu_sub_705D16, menu_sub_6CC17F;
+	uint32_t battle_sub_42782A;
+	uint32_t battle_set_command_and_action_id;
 	uint32_t menu_decrease_item_quantity;
 	uint32_t sub_610973, sub_611098;
 	uint32_t sub_60FA7D;

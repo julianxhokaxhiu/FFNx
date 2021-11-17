@@ -558,7 +558,7 @@ int ff7_field_load_models_atoi(const char* str)
 
 int ff7_load_save_file(int param_1){
 	int returnValue = ((int(*)(int))ff7_externals.load_save_file)(param_1);
-	g_FF7SteamAchievements.initStatsFromSaveFile(*ff7_externals.savemap);
+	g_FF7SteamAchievements->initStatsFromSaveFile(*ff7_externals.savemap);
 	return returnValue;
 }
 
@@ -566,12 +566,12 @@ void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3){
 	((void(*)(WORD, short, short)) ff7_externals.sub_60FA7D)(param1, param2, param3);
 	
 	if(param3 == 0x04)
-		g_FF7SteamAchievements.unlockGoldChocoboAchievement(ff7_externals.savemap->chocobo_slots_first, ff7_externals.savemap->chocobo_slots_last);	
+		g_FF7SteamAchievements->unlockGoldChocoboAchievement(ff7_externals.savemap->chocobo_slots_first, ff7_externals.savemap->chocobo_slots_last);	
 }
 
 void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3){
 	((void(*)(WORD, short, short)) ff7_externals.sub_60FA7D)(param1, param2, param3);
 
 	if(param3 & (1 << 0) || param3 & (1 << 2))
-		g_FF7SteamAchievements.unlockYuffieAndVincentAchievement(ff7_externals.savemap->yuffie_reg_mask, ff7_externals.savemap->vincent_reg_mask);
+		g_FF7SteamAchievements->unlockYuffieAndVincentAchievement(ff7_externals.savemap->yuffie_reg_mask, ff7_externals.savemap->vincent_reg_mask);
 }

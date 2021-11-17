@@ -461,7 +461,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			steam_appid_file << ((ff8) ? FF8_APPID : FF7_APPID);
 			steam_appid_file.close();
 		}
-
+		
 		if (SteamAPI_RestartAppIfNecessary((ff8) ? FF8_APPID : FF7_APPID))
 		{
 			MessageBoxA(gameHwnd, "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n", "Steam App ID Wrong", 0);
@@ -475,9 +475,9 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			return 1;
 		}
 		if (ff8)
-			g_FF8SteamAchievements.init();
+			g_FF8SteamAchievements = std::make_unique<SteamAchievementsFF8>();
 		else
-			g_FF7SteamAchievements.init();
+			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>();
 	}
 
 	// fetch current user screen settings
@@ -2297,36 +2297,18 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 // cd check
 uint32_t ff7_get_inserted_cd(void) {
 	int ret = 1;
-	int requiredCD;
-	int insertedCD;
 
-	switch (version)
-	{
-	case VERSION_FF7_102_US:
-		requiredCD = *(uint8_t*)(0xDC0BDC);
-		insertedCD = *(DWORD*)(0x9A0538);
-		break;
-	case VERSION_FF7_102_FR:
-		requiredCD = *(uint8_t*)(0xF3A91C);
-		insertedCD = *(DWORD*)(0x9A2328);
-		break;
-	case VERSION_FF7_102_DE:
-		requiredCD = *(uint8_t*)(0xF3990C);
-		insertedCD = *(DWORD*)(0x9A12F8);
-		break;
-	case VERSION_FF7_102_SP:
-		requiredCD = *(uint8_t*)(0xF3B3EC);
-		insertedCD = *(DWORD*)(0x9A2D88);
-		break;
+	if(steam_edition || enable_steam_achievements){
+		if (trace_all || trace_achievement)
+			ffnx_trace("inserted CD: %d, requiredCD: %d\n", *ff7_externals.insertedCD, *ff7_externals.requiredCD);
+
+		if(*ff7_externals.requiredCD == *ff7_externals.insertedCD + 1)
+			g_FF7SteamAchievements->unlockGameProgressAchievement();
 	}
 
-	if(steam_edition || enable_steam_achievements)
-		if(insertedCD != requiredCD)
-			g_FF7SteamAchievements.unlockGameProgressAchievement();
+	if (*ff7_externals.requiredCD > 0 && *ff7_externals.requiredCD <= 3) ret = *ff7_externals.requiredCD;
 
-	if (requiredCD > 0 && requiredCD <= 3) ret = requiredCD;
-
-	insertedCD = ret;
+	*ff7_externals.insertedCD = ret;
 
 	return ret;
 }

@@ -38,8 +38,8 @@ void magic_thread_start(void (*func)())
 void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3){
 	((void(*)(int, int, int **)) ff7_externals.load_battle_stage)(param_1, battle_location_id, param_3);
 
-	g_FF7SteamAchievements.initCharStatsBeforeBattle(ff7_externals.savemap->chars);
-	g_FF7SteamAchievements.unlockBattleSquareAchievement(battle_location_id);
+	g_FF7SteamAchievements->initCharStatsBeforeBattle(ff7_externals.savemap->chars);
+	g_FF7SteamAchievements->unlockBattleSquareAchievement(battle_location_id);
 }
 
 void ff7_battle_sub_5C7F94(int param_1, int param_2){
@@ -47,13 +47,13 @@ void ff7_battle_sub_5C7F94(int param_1, int param_2){
 
 	if (trace_all || trace_achievement)
 		ffnx_trace("%s - trying to unlock achievement for gil\n", __func__);
-	g_FF7SteamAchievements.unlockGilAchievement(ff7_externals.savemap->gil);
+	g_FF7SteamAchievements->unlockGilAchievement(ff7_externals.savemap->gil);
 }
 
-void ff7_battle_sub_435139(int param_1, char party_member_index, char param_3, WORD param_4){
-	((void(*)(int, char, char, WORD)) ff7_externals.battle_sub_435139)(param_1, party_member_index, param_3, param_4);
+void ff7_battle_set_command_and_action_id(short command_id, short action_id){
+	ff7_externals.battle_actor_data->formation_entry = 1;
+	ff7_externals.battle_actor_data->command_index = command_id;
+	ff7_externals.battle_actor_data->action_index = action_id;
 
-	char characterID = ff7_externals.savemap->party_members[party_member_index];
-	if(ff7_externals.savemap->chars[characterID].current_limit_level == 1)
-		g_FF7SteamAchievements.unlockFirstLimitBreakAchievement(characterID);
+	g_FF7SteamAchievements->unlockFirstLimitBreakAchievement(command_id, action_id);
 }
