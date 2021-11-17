@@ -46,8 +46,6 @@
 // Steam app id of FF7 & FF8
 #define FF7_APPID 39140
 #define FF8_APPID 39150
-#define FF7_N_ACHIEVEMENTS 36
-#define FF8_N_ACHIEVEMENTS 45
 
 #define NV_VERSION (!(version & 1))
 

@@ -26,13 +26,13 @@ void magic_thread_start(void (*func)());
 void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3);
 void ff7_battle_sub_5C7F94(int param_1, int param_2);
 void ff7_battle_sub_6DB0EE();
-void ff7_battle_sub_435139(int param_1, char param_2, char param_3, WORD param_4);
+void ff7_battle_set_command_and_action_id(short command_id, short action_id);
 
 // menu
 void ff7_menu_battle_end_sub_6C9543();
 void ff7_menu_sub_71AAA3(int param_1);
 int ff7_get_materia_gil(uint32_t materia);
-void ff7_menu_sub_6CBCB9(int param_1);
+void ff7_opcode_increase_gil_call(int param_1);
 byte ff7_menu_sub_6CBCF3(uint32_t materia_id);
 void ff7_menu_sub_6CC17F(uint32_t materia);
 uint32_t ff7_menu_decrease_item_quantity(uint32_t item_data);

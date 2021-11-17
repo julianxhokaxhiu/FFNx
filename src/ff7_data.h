@@ -165,6 +165,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_6CE8B3 = get_relative_call(battle_main_loop, 0x368);
 	ff7_externals.battle_sub_6DB0EE = get_relative_call(ff7_externals.battle_sub_6CE8B3, 0xD9);
 	ff7_externals.is_battle_paused = (char*)get_absolute_value(ff7_externals.battle_sub_6CE8B3, 0xC3);
+	ff7_externals.battle_actor_data = (battle_actor_data*)get_absolute_value(ff7_externals.battle_sub_6DB0EE, 0x276);
 	ff7_externals.battle_limit_breaks = (uint32_t*)get_absolute_value(ff7_externals.battle_sub_6DB0EE, 0x1B4);
 	ff7_externals.battle_magic_funcs = (uint32_t*)get_absolute_value(ff7_externals.battle_sub_427C22, 0xBF);
 	ff7_externals.battle_b3ddata_sub_428B12 = get_relative_call(ff7_externals.battle_sub_429AC0, 0x71);
@@ -550,16 +551,14 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_sub_71FF95 = get_relative_call(menu_sub_6CBD54, 0x7);
 	ff7_externals.menu_shop_loop = get_relative_call(ff7_externals.menu_sub_71FF95, 0x84);
 	ff7_externals.get_materia_gil = get_relative_call(ff7_externals.menu_shop_loop, 0x327B);
-	ff7_externals.menu_sub_6CBCB9 = get_relative_call(ff7_externals.menu_shop_loop, 0x353B);
+	ff7_externals.opcode_increase_gil_call = get_relative_call(ff7_externals.menu_shop_loop, 0x353B);
 
-	uint32_t battle_sub_435789 = get_relative_call(ff7_externals.battle_loop, 0x3B8);
-	uint32_t battle_sub_435D81 = get_relative_call(battle_sub_435789, 0x505);
-	uint32_t* pointer_functions_8FEE48 = (uint32_t*)get_absolute_value(battle_sub_435D81, 0x80F);
-	ff7_externals.battle_sub_5C930F = pointer_functions_8FEE48[6];
-	ff7_externals.battle_sub_435139 = get_relative_call(ff7_externals.battle_sub_5C930F, 0x86);
+	uint32_t battle_sub_5BF01F = get_relative_call(ff7_externals.battle_sub_42D992, 0x12E);
+	ff7_externals.battle_sub_42782A = get_absolute_value(battle_sub_5BF01F, 0xC4);
+	ff7_externals.battle_set_command_and_action_id = get_relative_call(ff7_externals.battle_sub_42782A, 0x77);
 
-	ff7_externals.menu_sub_6CC0EA = get_relative_call(ff7_externals.menu_shop_loop, 0x30FE);
-	ff7_externals.menu_sub_6CBCF3 = get_relative_call(ff7_externals.menu_sub_6CC0EA, 0x43);
+	ff7_externals.opcode_add_materia_inventory_call = get_relative_call(ff7_externals.menu_shop_loop, 0x30FE);
+	ff7_externals.menu_sub_6CBCF3 = get_relative_call(ff7_externals.opcode_add_materia_inventory_call, 0x43);
 	ff7_externals.menu_sub_705D16 = ff7_externals.menu_subs_call_table[4];
 	ff7_externals.menu_sub_6CC17F = get_relative_call(ff7_externals.menu_sub_705D16, 0x1729);
 

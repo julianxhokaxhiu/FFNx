@@ -31,21 +31,21 @@ void ff7_menu_battle_end_sub_6C9543()
     if(*ff7_externals.menu_battle_end_mode == 0){
         if (trace_all || trace_achievement)
             ffnx_trace("%s - trying to unlock achievement for battle won and weapons\n", __func__);
-        g_FF7SteamAchievements.unlockBattleWonAchievement(*ff7_externals.battle_scene_id);
+        g_FF7SteamAchievements->unlockBattleWonAchievement(*ff7_externals.battle_scene_id);
     }
 
     if(*ff7_externals.menu_battle_end_mode == 1){
         if (trace_all || trace_achievement)
             ffnx_trace("%s - trying to unlock achievement for first limit, cait sith, character level, and master materia\n", __func__);
 
-        g_FF7SteamAchievements.unlockCaitSithLastLimitBreakAchievement(ff7_externals.savemap->chars);
-        g_FF7SteamAchievements.unlockCharacterLevelAchievement(ff7_externals.savemap->chars);
-        g_FF7SteamAchievements.unlockMasterMateriaAchievement(ff7_externals.savemap->chars);
+        g_FF7SteamAchievements->unlockCaitSithLastLimitBreakAchievement(ff7_externals.savemap->chars);
+        g_FF7SteamAchievements->unlockCharacterLevelAchievement(ff7_externals.savemap->chars);
+        g_FF7SteamAchievements->unlockMasterMateriaAchievement(ff7_externals.savemap->chars);
     }
     if(*ff7_externals.menu_battle_end_mode == 3){
         if (trace_all || trace_achievement)
             ffnx_trace("%s - trying to unlock achievement for gil\n", __func__);
-        g_FF7SteamAchievements.unlockGilAchievement(ff7_externals.savemap->gil);
+        g_FF7SteamAchievements->unlockGilAchievement(ff7_externals.savemap->gil);
     }
 }
 
@@ -56,12 +56,12 @@ int ff7_get_materia_gil(uint32_t materia)
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for gil\n", __func__);
 
-    g_FF7SteamAchievements.unlockGilAchievement(ff7_externals.savemap->gil + materiaGil);
+    g_FF7SteamAchievements->unlockGilAchievement(ff7_externals.savemap->gil + materiaGil);
     return materiaGil;
 }
 
 // called when selling an item
-void ff7_menu_sub_6CBCB9(int gilObtained)
+void ff7_opcode_increase_gil_call(int gilObtained)
 {
     if (ff7_externals.savemap->gil + gilObtained < ff7_externals.savemap->gil)
         ff7_externals.savemap->gil = -1;
@@ -71,7 +71,7 @@ void ff7_menu_sub_6CBCB9(int gilObtained)
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for gil\n", __func__);
 
-    g_FF7SteamAchievements.unlockGilAchievement(ff7_externals.savemap->gil);
+    g_FF7SteamAchievements->unlockGilAchievement(ff7_externals.savemap->gil);
 };
 
 byte ff7_menu_sub_6CBCF3(uint32_t materia_id)
@@ -81,7 +81,7 @@ byte ff7_menu_sub_6CBCF3(uint32_t materia_id)
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for getting materia\n", __func__);
 
-    g_FF7SteamAchievements.unlockGotMateriaAchievement(materia_id);
+    g_FF7SteamAchievements->unlockGotMateriaAchievement(materia_id);
 
     return returnValue;
 }
@@ -93,7 +93,7 @@ void ff7_menu_sub_6CC17F(uint32_t materia)
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for getting materia\n", __func__);
 
-    g_FF7SteamAchievements.unlockGotMateriaAchievement(materia & 0xFF);
+    g_FF7SteamAchievements->unlockGotMateriaAchievement(materia & 0xFF);
 }
 
 uint32_t ff7_menu_decrease_item_quantity(uint32_t item_used)
@@ -130,6 +130,6 @@ uint32_t ff7_menu_decrease_item_quantity(uint32_t item_used)
         item_id = 0;
         party_item_slots[index] = 0xFFFF;
     }
-    g_FF7SteamAchievements.unlockLastLimitBreakAchievement(item_used & 0x1FF);
+    g_FF7SteamAchievements->unlockLastLimitBreakAchievement(item_used & 0x1FF);
     return item_id & 0xFFFF0000 | (uint32_t)local_c;
 }

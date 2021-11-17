@@ -236,17 +236,17 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// BATTLE SQUARE
 		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7_load_battle_stage);
 
-		// GIL, MASTER MATERIA, BATTLE WON, 1ST LIMIT BREAK
+		// GIL, MASTER MATERIA, BATTLE WON
 		replace_call_function(ff7_externals.battle_enemy_killed_sub_433BD2 + 0x2AF, ff7_battle_sub_5C7F94); 
 		replace_call_function(ff7_externals.menu_sub_6CDA83 + 0x20, ff7_menu_battle_end_sub_6C9543);
 		replace_call_function(ff7_externals.menu_shop_loop + 0x327B, ff7_get_materia_gil);
-		replace_function(ff7_externals.menu_sub_6CBCB9, ff7_menu_sub_6CBCB9);
+		replace_function(ff7_externals.opcode_increase_gil_call, ff7_opcode_increase_gil_call);
 
-		//1ST LIMIT BREAK
-		replace_call_function(ff7_externals.battle_sub_5C930F + 0x86, ff7_battle_sub_435139);
+		// 1ST LIMIT BREAK
+		replace_function(ff7_externals.battle_set_command_and_action_id, ff7_battle_set_command_and_action_id);
 
 		// MATERIA GOT
-		replace_call_function(ff7_externals.menu_sub_6CC0EA + 0x43, ff7_menu_sub_6CBCF3);
+		replace_call_function(ff7_externals.opcode_add_materia_inventory_call + 0x43, ff7_menu_sub_6CBCF3);
 		replace_call_function(ff7_externals.menu_sub_705D16 + 0x1729, ff7_menu_sub_6CC17F);
 		replace_call_function(ff7_externals.menu_sub_705D16 + 0x1819, ff7_menu_sub_6CC17F);
 
