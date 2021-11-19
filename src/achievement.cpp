@@ -33,14 +33,12 @@ using std::string;
 std::unique_ptr<SteamAchievementsFF7> g_FF7SteamAchievements = nullptr;
 std::unique_ptr<SteamAchievementsFF8> g_FF8SteamAchievements = nullptr;
 
-SteamManager::SteamManager(const achievement *achievements, int nAchievements) : appID(0),
-                                                                                 isInitialized(false),
+SteamManager::SteamManager(const achievement *achievements, int nAchievements) : isInitialized(false),
                                                                                  callbackUserStatsReceived(this, &SteamManager::OnUserStatsReceived),
                                                                                  callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
                                                                                  callbackAchievementStored(this, &SteamManager::OnAchievementStored)
 {
     this->appID = SteamUtils()->GetAppID();
-    this->isInitialized = false;
     this->nAchievements = nAchievements;
     this->achievementList.insert(this->achievementList.end(), &achievements[0], &achievements[nAchievements]);
     this->requestStats();
@@ -460,7 +458,8 @@ void SteamAchievementsFF7::unlockFirstLimitBreakAchievement(short commandID, sho
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for first limit break achievement(command_id: 0x%02x, action_id: 0x%02x)\n", __func__, commandID, actionID);
 
-    if(commandID == LIMIT_COMMAND_INDEX){
+    if (commandID == LIMIT_COMMAND_INDEX)
+    {
         auto item = find(firstLimitBreakActionID.begin(), firstLimitBreakActionID.end(), actionID);
         if (item != firstLimitBreakActionID.end())
         {
@@ -477,11 +476,12 @@ void SteamAchievementsFF7::unlockCaitSithLastLimitBreakAchievement(const savemap
     if (trace_all || trace_achievement)
         ffnx_trace("%s - trying to unlock achievement for cait sith last limit break achievement (num_kills: %d)\n", __func__, characters[CAIT_SITH_INDEX].num_kills);
 
-    if (!this->steamManager->isAchieved(GET_FOURTH_CAITSITH_LAST_LIMIT) && characters[CAIT_SITH_INDEX].num_kills > this->caitsithNumKills &&
-        characters[CAIT_SITH_INDEX].num_kills == 40)
+    if (!this->steamManager->isAchieved(GET_FOURTH_CAITSITH_LAST_LIMIT) && this->caitsithNumKills >= 0 && this->caitsithNumKills < 40
+        && characters[CAIT_SITH_INDEX].num_kills >= 40)
     {
         this->steamManager->setAchievement(GET_FOURTH_CAITSITH_LAST_LIMIT);
     }
+    this->caitsithNumKills = -1;
 }
 
 void SteamAchievementsFF7::unlockLastLimitBreakAchievement(WORD usedItemID)
