@@ -540,6 +540,18 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.field_current_actor = (struct ff7_field_ad_object*)get_absolute_value(common_externals.execute_opcode_table[0xA8], 0x1C6);
 
+	// auto attack gamehacks
+	ff7_externals.handle_actor_ready = ff7_externals.battle_limit_breaks[0];
+	ff7_externals.battle_menu_state = (WORD*)get_absolute_value(ff7_externals.handle_actor_ready, 0x17B);
+	ff7_externals.set_battle_menu_state_data = get_relative_call(ff7_externals.handle_actor_ready, 0x187);
+	ff7_externals.dispatch_chosen_battle_action = get_relative_call(ff7_externals.battle_sub_6DB0EE, 0x50E);
+	ff7_externals.set_battle_targeting_data = get_relative_call(ff7_externals.battle_limit_breaks[19], 0x11A);
+	ff7_externals.issued_command_id = (byte*)get_absolute_value(ff7_externals.dispatch_chosen_battle_action, 0x12B);
+	ff7_externals.issued_action_id = (uint16_t*)get_absolute_value(ff7_externals.dispatch_chosen_battle_action, 0x122);
+	ff7_externals.issued_action_target_type = (byte*)get_absolute_value(ff7_externals.set_battle_targeting_data, 0x14E);
+	ff7_externals.issued_action_target_index = (byte*)get_absolute_value(ff7_externals.set_battle_targeting_data, 0x164);
+	// --------------------------------
+
 	//ff7 achievement related externals
 	uint32_t sub_434347 = get_relative_call(ff7_externals.battle_loop, 0x484);
 	uint32_t* pointer_functions_7C2980 = (uint32_t*)get_absolute_value(sub_434347, 0x19C);

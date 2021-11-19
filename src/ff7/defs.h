@@ -25,7 +25,7 @@
 void magic_thread_start(void (*func)());
 void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3);
 void ff7_battle_sub_5C7F94(int param_1, int param_2);
-void ff7_battle_sub_6DB0EE();
+
 void ff7_battle_set_command_and_action_id(short command_id, short action_id);
 
 // menu
@@ -37,6 +37,8 @@ byte ff7_menu_sub_6CBCF3(uint32_t materia_id);
 void ff7_menu_sub_6CC17F(uint32_t materia);
 uint32_t ff7_menu_decrease_item_quantity(uint32_t item_data);
 void ff7_menu_sub_6CDC09(DWORD param_1);
+void ff7_battle_menu_sub_6DB0EE();
+void ff7_set_battle_menu_state_data_at_full_atb(short param_1, short param_2, short menu_state);
 
 // misc
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type);

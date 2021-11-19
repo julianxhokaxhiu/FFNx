@@ -197,6 +197,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_call_function(ff7_externals.worldmap_battle_toggle, ff7_toggle_battle_worldmap);
 
 	// #####################
+	// auto attack toggle
+	// #####################
+	replace_call_function(ff7_externals.battle_sub_6CE8B3 + 0xD9, ff7_battle_menu_sub_6DB0EE);
+	replace_call_function(ff7_externals.handle_actor_ready + 0x187, ff7_set_battle_menu_state_data_at_full_atb);
+
+	// #####################
 	// gamepad
 	// #####################
 	replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);

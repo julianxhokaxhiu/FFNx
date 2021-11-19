@@ -30,6 +30,7 @@ private:
 	bool speedhack_enabled;
 	double speedhack_current_speed;
 	bool battle_wanted = true;
+	bool auto_attack_mode = false;
 
 	// SPEEDHACK
 	void toggleSpeedhack();
@@ -39,6 +40,7 @@ private:
 
 	// BATTLE
 	void toggleBattleMode();
+	void toggleAutoAttackMode();
 
 	// MOVIES
 	void skipMovies();
@@ -62,6 +64,7 @@ public:
 
 	// BATTLE
 	bool wantsBattle();
+	bool isAutoAttack();
 
 	// INPUT VALIDATION
 	bool canInputBeProcessed();
