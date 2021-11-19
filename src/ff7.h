@@ -1961,6 +1961,15 @@ struct ff7_externals
 	uint32_t sub_60FA7D;
 	uint32_t menu_sub_7212FB;
 	uint32_t load_save_file;
+	uint32_t handle_actor_ready;
+	WORD* battle_menu_state;
+	uint32_t set_battle_menu_state_data;
+	uint32_t dispatch_chosen_battle_action;
+	uint32_t set_battle_targeting_data;
+	uint16_t* issued_action_id;
+	byte* issued_command_id;
+	byte* issued_action_target_type;
+	byte* issued_action_target_index;
 	uint32_t field_load_models_atoi;
 };
 

@@ -71,6 +71,15 @@ void GameHacks::toggleBattleMode()
 	holdInput();
 }
 
+void GameHacks::toggleAutoAttackMode()
+{
+	auto_attack_mode = !auto_attack_mode;
+
+	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Auto attack mode: %s", auto_attack_mode ? "ENABLED" : "DISABLED");
+
+	holdInput();
+}
+
 void GameHacks::skipMovies()
 {
 	if (!ff8)
@@ -122,6 +131,9 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			switch (wParam)
 			{
+			case 'A':
+				toggleAutoAttackMode();
+				break;
 			case 'B':
 				toggleBattleMode();
 				break;
@@ -191,6 +203,12 @@ void GameHacks::processGamepadInput()
 			ff7_externals.gamepad_status->button12
 			)
 			toggleBattleMode();
+		// Toggle auto attack mode on L2+R3
+		else if (
+			ff7_externals.gamepad_status->button7 &&
+			ff7_externals.gamepad_status->button12
+			)
+			toggleAutoAttackMode();
 		// Skip Movies on SELECT+START
 		else if (
 			ff7_externals.gamepad_status->button9 &&
@@ -251,6 +269,11 @@ double GameHacks::getCurrentSpeedhack()
 bool GameHacks::wantsBattle()
 {
 	return battle_wanted;
+}
+
+bool GameHacks::isAutoAttack()
+{
+	return auto_attack_mode;
 }
 
 void GameHacks::holdInput()

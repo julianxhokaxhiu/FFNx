@@ -23,6 +23,7 @@
 #include "../ff7.h"
 #include "../log.h"
 #include "../achievement.h"
+#include "../gamehacks.h"
 
 void ff7_menu_battle_end_sub_6C9543()
 {
@@ -132,4 +133,28 @@ uint32_t ff7_menu_decrease_item_quantity(uint32_t item_used)
     }
     g_FF7SteamAchievements->unlockLastLimitBreakAchievement(item_used & 0x1FF);
     return item_id & 0xFFFF0000 | (uint32_t)local_c;
+}
+
+void dispatchAttackCommand(){
+    *ff7_externals.issued_command_id = 0x01;
+    *ff7_externals.issued_action_target_type = 0;
+    *ff7_externals.issued_action_target_index = 4;
+    ((void(*)())ff7_externals.dispatch_chosen_battle_action)();
+}
+
+void ff7_battle_menu_sub_6DB0EE(){
+    ((void(*)())ff7_externals.battle_sub_6DB0EE)();
+    if(gamehacks.isAutoAttack() && (*ff7_externals.battle_menu_state >= 0 && *ff7_externals.battle_menu_state < 19)){
+        dispatchAttackCommand();
+    }
+}
+
+void ff7_set_battle_menu_state_data_at_full_atb(short param_1, short param_2, short menu_state){
+    if(gamehacks.isAutoAttack())
+    {
+        dispatchAttackCommand();
+    }
+    else{
+        ((void(*)(short, short, short))ff7_externals.set_battle_menu_state_data)(param_1, param_2, menu_state);
+    }
 }
