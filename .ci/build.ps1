@@ -60,7 +60,7 @@ Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
   }
 }
 
-git -C $vcpkgRoot pull --unshallow
+git -C $vcpkgRoot pull --all
 git -C $vcpkgRoot checkout $vcpkgBaseline
 git -C $vcpkgRoot clean -fxd
 
