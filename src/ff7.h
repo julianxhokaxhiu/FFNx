@@ -560,6 +560,32 @@ struct battle_actor_data
 	uint32_t field_54_others[206];
 };
 
+#pragma pack(1)
+struct battle_camera_position{
+	WORD location_x;
+	WORD location_y;
+	WORD location_z;
+	WORD unused;
+	WORD current_position;
+	WORD frames_to_wait;
+	byte field_C;
+	byte field_D;
+};
+
+#pragma pack(1)
+struct battle_camera_fn_data{
+	WORD field_1;
+	WORD field_2; 
+	WORD field_3; 
+	WORD field_4; 
+	WORD field_5;
+	WORD field_6;
+	DWORD field_7;
+	DWORD unused_1;
+	byte index;
+	byte unused_2[19];
+};
+
 struct battle_chdir_struc
 {
 	uint32_t sucess;
@@ -1971,6 +1997,22 @@ struct ff7_externals
 	byte* issued_action_target_type;
 	byte* issued_action_target_index;
 	uint32_t field_load_models_atoi;
+	battle_camera_fn_data* battle_camera_data;
+	battle_camera_position* battle_camera_position_BE10F0;
+	battle_camera_position* battle_camera_position_BE1130;
+	uint32_t* camera_fn_array;
+	uint32_t handle_camera_functions;
+	uint32_t battle_camera_sub_5C3FD5;
+	uint32_t battle_camera_sub_5C23D1;
+	uint32_t add_fn_to_camera_fn_array;
+	uint32_t execute_camera_functions;
+	byte* battle_camera_scripts_8FEE30;
+	byte* battle_camera_scripts_8FEE2C;
+	DWORD* battle_camera_scripts_9A13BC;
+	DWORD* battle_camera_scripts_9010D0;
+	DWORD* battle_camera_scripts_901270;
+	byte* battle_camera_script_index;
+	DWORD* battle_camera_script_offset;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

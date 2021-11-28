@@ -188,6 +188,16 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			*ff7_externals.battle_fps_menu_multiplier /= 4;
 			break;
 		}
+
+		if (ff7_fps_limiter >= FF7_LIMITER_30FPS)
+		{
+			// Battle camera support for 30 fps and 60 fps battle
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x1161, ff7_add_fn_to_camera_fn_special);
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0xFED, ff7_add_fn_to_camera_fn_special);
+			replace_call_function(ff7_externals.handle_camera_functions + 0x55, ff7_execute_camera_functions);
+			replace_call_function(ff7_externals.handle_camera_functions + 0x35, ff7_battle_camera_sub_5C3FD5);
+			replace_call_function(ff7_externals.handle_camera_functions + 0x4B, ff7_battle_camera_sub_5C23D1);
+		}
 	}
 
 	// #####################
