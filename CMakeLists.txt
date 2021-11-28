@@ -30,7 +30,7 @@ if (NOT DEFINED _DLL_VERSION OR NOT _DLL_VERSION)
 endif ()
 
 set(VCPKG_DISABLE_COMPILER_TRACKING 1)
-set(VCPKG_INSTALL_OPTIONS "--clean-after-build")
+set(VCPKG_INSTALL_OPTIONS "--clean-after-build" "--x-use-aria2")
 set(VCPKG_TARGET_TRIPLET x86-windows-static)
 
 set(CMAKE_SHARED_LINKER_FLAGS
