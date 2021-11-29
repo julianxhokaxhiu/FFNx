@@ -1,14 +1,15 @@
 ﻿{
-  "_$schemaRef": "https://docs.microsoft.com/en-us/cpp/build/cmakesettings-reference?view=vs-2019",
+  "_$schemaRef": "https://docs.microsoft.com/en-us/cpp/build/cmakesettings-reference?view=msvc-170",
   "configurations": [
     {
       "name": "x86-Release",
       "generator": "Visual Studio 17 2022",
       "configurationType": "Release",
       "inheritEnvironments": [ "msvc_x86_x64" ],
+      "intelliSenseMode": "windows-msvc-x64",
       "buildRoot": "${projectDir}\\.build",
       "installRoot": "",
-      "cmakeCommandArgs": "-D_DLL_VERSION=devel -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "cmakeCommandArgs": "-A Win32 -D_DLL_VERSION=devel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
@@ -18,9 +19,10 @@
       "generator": "Visual Studio 17 2022",
       "configurationType": "RelWithDebInfo",
       "inheritEnvironments": [ "msvc_x86_x64" ],
+      "intelliSenseMode": "windows-msvc-x64",
       "buildRoot": "${projectDir}\\.build",
       "installRoot": "",
-      "cmakeCommandArgs": "-D_DLL_VERSION=devel -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "cmakeCommandArgs": "-A Win32 -D_DLL_VERSION=devel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
@@ -30,9 +32,10 @@
       "generator": "Visual Studio 17 2022",
       "configurationType": "MinSizeRel",
       "inheritEnvironments": [ "msvc_x86_x64" ],
+      "intelliSenseMode": "windows-msvc-x64",
       "buildRoot": "${projectDir}\\.build",
       "installRoot": "",
-      "cmakeCommandArgs": "-D_DLL_VERSION=devel -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "cmakeCommandArgs": "-A Win32 -D_DLL_VERSION=devel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
@@ -42,9 +45,10 @@
       "generator": "Visual Studio 17 2022",
       "configurationType": "Debug",
       "inheritEnvironments": [ "msvc_x86_x64" ],
+      "intelliSenseMode": "windows-msvc-x64",
       "buildRoot": "${projectDir}\\.build",
       "installRoot": "",
-      "cmakeCommandArgs": "-D_DLL_VERSION=devel -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "cmakeCommandArgs": "-A Win32 -D_DLL_VERSION=devel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
