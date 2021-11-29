@@ -223,10 +223,6 @@ void Renderer::updateRendererShaderPaths()
     fragmentShadowMapPath += shaderSuffix + ".frag";
     vertexFieldShadowPath += shaderSuffix + ".vert";
     fragmentFieldShadowPath += shaderSuffix + ".frag";
-
-    // Update pipeline cache path for the callbacks
-    std::filesystem::create_directories(bgfxCallbacks.cachePath);
-    bgfxCallbacks.cachePath += R"(\%016I64x)" + shaderSuffix + ".bin";
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
