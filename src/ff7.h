@@ -1942,7 +1942,7 @@ struct ff7_externals
 	uint32_t sub_650F36;
 	uint32_t sub_72381C;
 	uint32_t sub_779E14;
-	BYTE *battle_fps_menu_multiplier;
+	uint32_t battle_fps_menu_multiplier;
 	DWORD *submarine_minigame_status;
 	DWORD *field_limit_fps;
 	DWORD *swirl_limit_fps;
@@ -2006,6 +2006,8 @@ struct ff7_externals
 	uint32_t battle_camera_sub_5C23D1;
 	uint32_t add_fn_to_camera_fn_array;
 	uint32_t execute_camera_functions;
+	uint32_t battle_camera_sub_5C52F8;
+	uint32_t battle_camera_sub_5C3E6F;
 	byte* battle_camera_scripts_8FEE30;
 	byte* battle_camera_scripts_8FEE2C;
 	DWORD* battle_camera_scripts_9A13BC;
@@ -2013,6 +2015,9 @@ struct ff7_externals
 	DWORD* battle_camera_scripts_901270;
 	byte* battle_camera_script_index;
 	DWORD* battle_camera_script_offset;
+	DWORD* battle_data_C05FF4;
+	uint32_t battle_sub_430DD0;
+	uint32_t battle_sub_429D8A;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

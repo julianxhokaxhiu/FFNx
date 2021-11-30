@@ -179,24 +179,37 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_function(ff7_externals.fps_limiter_submarine, ff7_limit_fps);
 		replace_function(ff7_externals.fps_limiter_credits, ff7_limit_fps);
 
-		switch(ff7_fps_limiter)
-		{
-		case FF7_LIMITER_30FPS:
-			*ff7_externals.battle_fps_menu_multiplier /= 2;
-			break;
-		case FF7_LIMITER_60FPS:
-			*ff7_externals.battle_fps_menu_multiplier /= 4;
-			break;
-		}
-
 		if (ff7_fps_limiter >= FF7_LIMITER_30FPS)
 		{
-			// Battle camera support for 30 fps and 60 fps battle
-			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x1161, ff7_add_fn_to_camera_fn_special);
-			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0xFED, ff7_add_fn_to_camera_fn_special);
+			int frame_multiplier = (ff7_fps_limiter == FF7_LIMITER_30FPS) ? 2 : 4;
+
+			patch_code_byte(ff7_externals.battle_fps_menu_multiplier, 4 / frame_multiplier);
+
+			// Battle camera support for 30 fps and 60 fps battle 
+			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x681, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x830, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x993, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0xBDF, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0xCDA, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x40E, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x12D5, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0xE2C, ff7_add_fn_to_camera_fn_for_field_3);
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x1161, ff7_add_fn_to_camera_fn_for_field_4);
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0xFED, ff7_add_fn_to_camera_fn_for_field_4);
+			replace_call_function(ff7_externals.battle_camera_sub_5C52F8 + 0xB2, ff7_add_fn_to_camera_fn_special_multiply);
+			replace_call_function(ff7_externals.battle_camera_sub_5C3E6F + 0xBA, ff7_add_fn_to_camera_fn_special_multiply);
 			replace_call_function(ff7_externals.handle_camera_functions + 0x55, ff7_execute_camera_functions);
 			replace_call_function(ff7_externals.handle_camera_functions + 0x35, ff7_battle_camera_sub_5C3FD5);
 			replace_call_function(ff7_externals.handle_camera_functions + 0x4B, ff7_battle_camera_sub_5C23D1);
+
+			// Battle outro camera frame fix: patch DAT_009AE138 (presumably frames to wait before closing battle mode)
+			patch_code_byte(ff7_externals.battle_sub_430DD0 + 0x3DE, 0x31 * frame_multiplier);
+			patch_code_byte(ff7_externals.battle_sub_430DD0 + 0x361, 0x8 * frame_multiplier);
+			patch_code_byte(ff7_externals.battle_sub_430DD0 + 0x326, 0x1E * frame_multiplier);
+
+			// Battle intro camera frame fix: patch DAT_00BFD0F4 (presumably frames to wait before atb starts)
+			patch_code_byte(ff7_externals.battle_sub_429AC0 + 0x152, 0x3D * frame_multiplier);
+			patch_code_byte(ff7_externals.battle_sub_429D8A + 0x1D8, 0x1E * frame_multiplier);
 		}
 	}
 
