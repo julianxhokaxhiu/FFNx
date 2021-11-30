@@ -500,7 +500,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.fps_limiter_submarine = get_relative_call(submarine_main_loop, 0x98);
 	ff7_externals.fps_limiter_credits = get_relative_call(credits_main_loop, 0x1C);
 
-	ff7_externals.battle_fps_menu_multiplier = (BYTE *)battle_main_loop + 0x335;
+	ff7_externals.battle_fps_menu_multiplier = battle_main_loop + 0x335;
 	ff7_externals.submarine_minigame_status = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_submarine, 0x48);
 	ff7_externals.field_limit_fps = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_field, 0x1F);
 	ff7_externals.swirl_limit_fps = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_swirl, 0x48);
@@ -558,6 +558,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_camera_sub_5C23D1 = get_relative_call(ff7_externals.handle_camera_functions, 0x4B);
 	ff7_externals.execute_camera_functions = get_relative_call(ff7_externals.handle_camera_functions, 0x55);
 	ff7_externals.add_fn_to_camera_fn_array = get_relative_call(ff7_externals.battle_camera_sub_5C3FD5, 0xF40);
+	ff7_externals.battle_camera_sub_5C52F8 = get_relative_call(ff7_externals.battle_camera_sub_5C3FD5, 0x10A8);
+	ff7_externals.battle_camera_sub_5C3E6F = get_relative_call(ff7_externals.battle_camera_sub_5C23D1, 0x169E);
 	ff7_externals.camera_fn_array = (uint32_t*)get_absolute_value(ff7_externals.add_fn_to_camera_fn_array, 0x39);
 	ff7_externals.battle_camera_data = (battle_camera_fn_data*)get_absolute_value(ff7_externals.battle_camera_sub_5C3FD5, 0x7EC);
 	ff7_externals.battle_camera_position_BE10F0 = (battle_camera_position*)get_absolute_value(ff7_externals.battle_camera_sub_5C23D1, 0x331);
@@ -569,6 +571,10 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_camera_scripts_901270 = (DWORD*)get_absolute_value(ff7_externals.battle_camera_sub_5C3FD5, 0xDC);
 	ff7_externals.battle_camera_script_index = (byte*)get_absolute_value(ff7_externals.battle_camera_sub_5C23D1, 0xD2);
 	ff7_externals.battle_camera_script_offset = (DWORD*)get_absolute_value(ff7_externals.battle_camera_sub_5C23D1, 0x25);
+	ff7_externals.battle_data_C05FF4 = (DWORD*)get_absolute_value(ff7_externals.battle_camera_sub_5C3E6F, 0x70);
+
+	ff7_externals.battle_sub_430DD0 = get_relative_call(ff7_externals.battle_loop, 0x99E);
+	ff7_externals.battle_sub_429D8A = get_absolute_value(ff7_externals.battle_loop, 0x59);
 	// --------------------------------
 	
 	//ff7 achievement related externals
