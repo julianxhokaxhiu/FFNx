@@ -561,7 +561,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_camera_sub_5C52F8 = get_relative_call(ff7_externals.battle_camera_sub_5C3FD5, 0x10A8);
 	ff7_externals.battle_camera_sub_5C3E6F = get_relative_call(ff7_externals.battle_camera_sub_5C23D1, 0x169E);
 	ff7_externals.camera_fn_array = (uint32_t*)get_absolute_value(ff7_externals.add_fn_to_camera_fn_array, 0x39);
-	ff7_externals.battle_camera_data = (battle_camera_fn_data*)get_absolute_value(ff7_externals.battle_camera_sub_5C3FD5, 0x7EC);
+	ff7_externals.battle_camera_fn_data = (battle_camera_fn_data*)get_absolute_value(ff7_externals.add_fn_to_camera_fn_array, 0x4D);
 	ff7_externals.battle_camera_position_BE10F0 = (battle_camera_position*)get_absolute_value(ff7_externals.battle_camera_sub_5C23D1, 0x331);
 	ff7_externals.battle_camera_position_BE1130 = (battle_camera_position*)get_absolute_value(ff7_externals.battle_camera_sub_5C3FD5, 0x233);
 	ff7_externals.battle_camera_scripts_8FEE30 = (byte*)get_absolute_value(ff7_externals.battle_camera_sub_5C3FD5, 0xC1);
@@ -572,6 +572,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_camera_script_index = (byte*)get_absolute_value(ff7_externals.battle_camera_sub_5C23D1, 0xD2);
 	ff7_externals.battle_camera_script_offset = (DWORD*)get_absolute_value(ff7_externals.battle_camera_sub_5C23D1, 0x25);
 	ff7_externals.battle_data_C05FF4 = (DWORD*)get_absolute_value(ff7_externals.battle_camera_sub_5C3E6F, 0x70);
+	ff7_externals.camera_fn_index = (WORD*)get_absolute_value(ff7_externals.add_fn_to_camera_fn_array, 0x46);
+
+	ff7_externals.battle_camera_sub_5C3D0D = get_absolute_value(ff7_externals.battle_camera_sub_5C23D1, 0x5DE);
+	ff7_externals.sub_662538 = get_relative_call(ff7_externals.battle_camera_sub_5C3D0D, 0x76);
+	ff7_externals.sub_6624FD = get_relative_call(ff7_externals.battle_camera_sub_5C3D0D, 0xBB);
 
 	ff7_externals.battle_sub_430DD0 = get_relative_call(ff7_externals.battle_loop, 0x99E);
 	ff7_externals.battle_sub_429D8A = get_absolute_value(ff7_externals.battle_loop, 0x59);
