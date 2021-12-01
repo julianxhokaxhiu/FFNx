@@ -128,6 +128,38 @@ bool simulateCameraScript(byte *scriptPtr, uint16_t &currentPosition, uint16_t &
     return executedOpCodeF5;
 }
 
+void ff7_battle_camera_sub_5C3D0D()
+{
+    long long result;
+
+    int index = *ff7_externals.camera_fn_index;
+    int variationIndex = ff7_externals.battle_camera_fn_data[index].variationIndex;
+
+    if (ff7_externals.battle_camera_fn_data[index].n_frames == 1)
+        ff7_externals.battle_camera_fn_data[index].field_0 = 0xFFFF;
+
+    ff7_externals.battle_camera_fn_data[index].c_x += ff7_externals.battle_camera_fn_data[index].b_y / frameMultiplier;
+    result = ((long long(*)(int))ff7_externals.sub_662538)(ff7_externals.battle_camera_fn_data[index].c_x);
+    ff7_externals.battle_camera_position_BE10F0[variationIndex].location_x = (((int)result * (int)ff7_externals.battle_camera_fn_data[index].b_z) >> 9) + ff7_externals.battle_camera_position_BE1130[variationIndex].location_x;
+    result = ((long long(*)(int))ff7_externals.sub_6624FD)(ff7_externals.battle_camera_fn_data[index].c_x);
+    ff7_externals.battle_camera_position_BE10F0[variationIndex].location_z = (((int)result * (int)ff7_externals.battle_camera_fn_data[index].b_z) >> 9) + ff7_externals.battle_camera_position_BE1130[variationIndex].location_z;
+    ff7_externals.battle_camera_position_BE10F0[variationIndex].location_y += ff7_externals.battle_camera_fn_data[index].b_x / frameMultiplier; 
+    // TODO: In some cases, this b_x / multiplier goes to 0, fix it somehow. Maybe do something also for the others that are divided b_y and c_y
+
+    if(trace_all || trace_battle_camera)
+    {
+        ffnx_trace("new camera_position_BE1130_x: %d\n", ff7_externals.battle_camera_position_BE1130[variationIndex].location_x);
+        ffnx_trace("new camera_position_BE1130_y: %d\n", ff7_externals.battle_camera_position_BE1130[variationIndex].location_y);
+        ffnx_trace("new camera_position_BE1130_z: %d\n", ff7_externals.battle_camera_position_BE1130[variationIndex].location_z);
+        ffnx_trace("new camera_position_BE10F0_x: %d\n", ff7_externals.battle_camera_position_BE10F0[variationIndex].location_x);
+        ffnx_trace("new camera_position_BE10F0_y: %d\n", ff7_externals.battle_camera_position_BE10F0[variationIndex].location_y);
+        ffnx_trace("new camera_position_BE10F0_z: %d\n", ff7_externals.battle_camera_position_BE10F0[variationIndex].location_z);
+    }
+
+    ff7_externals.battle_camera_fn_data[index].b_z += ff7_externals.battle_camera_fn_data[index].c_y / frameMultiplier;
+    ff7_externals.battle_camera_fn_data[index].n_frames--;
+}
+
 // For the other opcodes
 int ff7_add_fn_to_camera_fn_for_field_1(uint32_t function)
 {
@@ -155,6 +187,7 @@ int ff7_add_fn_to_camera_fn_for_field_4(uint32_t function)
 // For battle_camera_sub_5C52F8 and battle_camera_sub_5C3E6F
 int ff7_add_fn_to_camera_fn_special_multiply(uint32_t function)
 {   
+    ffnx_trace("%s - function added 0x%x\n", __func__, function);
     DWORD *battle_data_C05FF4_pointer = (DWORD *)*ff7_externals.battle_data_C05FF4;
     *battle_data_C05FF4_pointer *= frameMultiplier;
     return ((int (*)(uint32_t))ff7_externals.add_fn_to_camera_fn_array)(function);
@@ -169,13 +202,13 @@ void ff7_execute_camera_functions()
             if(patchTypeCameraFunction[index] != PatchType::NONE)
                 if (trace_all || trace_battle_camera)
                     ffnx_trace("%s - function started 0x%x\n", __func__, ff7_externals.camera_fn_array[index]);
-
+            
             if(patchTypeCameraFunction[index] == PatchType::FIELD_1)
-                ff7_externals.battle_camera_data[index].field_1 *= frameMultiplier;
+                ff7_externals.battle_camera_fn_data[index].n_frames *= frameMultiplier;
             else if (patchTypeCameraFunction[index] == PatchType::FIELD_3)
-                ff7_externals.battle_camera_data[index].field_3 *= frameMultiplier;
+                ff7_externals.battle_camera_fn_data[index].b_y *= frameMultiplier;
             else if (patchTypeCameraFunction[index] == PatchType::FIELD_4)
-                ff7_externals.battle_camera_data[index].field_4 *= frameMultiplier;
+                ff7_externals.battle_camera_fn_data[index].b_z *= frameMultiplier;
             
             patchTypeCameraFunction[index] = PatchType::NONE;
         }

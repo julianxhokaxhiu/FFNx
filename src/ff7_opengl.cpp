@@ -188,11 +188,14 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			// Battle camera support for 30 fps and 60 fps battle 
 			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x681, ff7_add_fn_to_camera_fn_for_field_1);
 			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x830, ff7_add_fn_to_camera_fn_for_field_1);
-			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x993, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x993, ff7_add_fn_to_camera_fn_for_field_1); //OpCode 0xE8
 			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0xBDF, ff7_add_fn_to_camera_fn_for_field_1);
-			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0xCDA, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0xF40, ff7_add_fn_to_camera_fn_for_field_1); //OpCode 0xE0 (don't know if needed)
+			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0xCDA, ff7_add_fn_to_camera_fn_for_field_1); //OpCode 0xE6
 			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x40E, ff7_add_fn_to_camera_fn_for_field_1);
-			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x12D5, ff7_add_fn_to_camera_fn_for_field_1);
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x153B, ff7_add_fn_to_camera_fn_for_field_1); //OpCode 0xE0 (don't know if needed)
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x12D5, ff7_add_fn_to_camera_fn_for_field_1); //OpCode 0xE6
+			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x5E2, ff7_add_fn_to_camera_fn_for_field_1); //OpCode 0xF8
 			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0xE2C, ff7_add_fn_to_camera_fn_for_field_3);
 			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0x1161, ff7_add_fn_to_camera_fn_for_field_4);
 			replace_call_function(ff7_externals.battle_camera_sub_5C23D1 + 0xFED, ff7_add_fn_to_camera_fn_for_field_4);
@@ -201,6 +204,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			replace_call_function(ff7_externals.handle_camera_functions + 0x55, ff7_execute_camera_functions);
 			replace_call_function(ff7_externals.handle_camera_functions + 0x35, ff7_battle_camera_sub_5C3FD5);
 			replace_call_function(ff7_externals.handle_camera_functions + 0x4B, ff7_battle_camera_sub_5C23D1);
+			replace_function(ff7_externals.battle_camera_sub_5C3D0D, ff7_battle_camera_sub_5C3D0D);
 
 			// Battle outro camera frame fix: patch DAT_009AE138 (presumably frames to wait before closing battle mode)
 			patch_code_byte(ff7_externals.battle_sub_430DD0 + 0x3DE, 0x31 * frame_multiplier);

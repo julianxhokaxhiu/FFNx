@@ -63,6 +63,8 @@ int ff7_field_load_models_atoi(const char* str);
 void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3);
 void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3);
 int ff7_load_save_file(int param_1);
+
+// camera
 int ff7_add_fn_to_camera_fn_special_multiply(uint32_t function);
 int ff7_add_fn_to_camera_fn_for_field_1(uint32_t function);
 int ff7_add_fn_to_camera_fn_for_field_3(uint32_t function);
@@ -70,6 +72,7 @@ int ff7_add_fn_to_camera_fn_for_field_4(uint32_t function);
 void ff7_execute_camera_functions();
 void ff7_battle_camera_sub_5C3FD5(char index, DWORD param_2, short param_3);
 void ff7_battle_camera_sub_5C23D1(char index, DWORD param_2, short param_3);
+void ff7_battle_camera_sub_5C3D0D();
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);
