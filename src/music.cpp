@@ -211,13 +211,19 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 	{
 		const uint32_t main_theme_midi_id = 13; // The Main Theme is always resumed
 
-		if (nxAudioEngine.currentMusicId(0) == main_theme_midi_id || channel == 1) {
-			// Backup current state of the music
-			nxAudioEngine.pauseMusic(0, options.fadetime == 0.0 ? (next_music_is_battle ? 0.2 : 1.0) : options.fadetime, true);
+		if (external_music_sync) {
+			options.lastMusicOffset = nxAudioEngine.getMusicOffsetSeconds(0);
 		}
-		else if (channel == 0) {
-			// Channel 1 is never resumed
-			nxAudioEngine.stopMusic(1, options.fadetime == 0.0 ? 1.0 : options.fadetime);
+
+		if (external_music_resume) {
+			if (nxAudioEngine.currentMusicId(0) == main_theme_midi_id || channel == 1) {
+				// Backup current state of the music
+				nxAudioEngine.pauseMusic(0, options.fadetime == 0.0 ? (next_music_is_battle && !external_music_sync ? 0.2 : 1.0) : options.fadetime, true);
+			}
+			else if (channel == 0) {
+				// Channel 1 is never resumed
+				nxAudioEngine.stopMusic(1, options.fadetime == 0.0 ? 1.0 : options.fadetime);
+			}
 		}
 
 		// Attempt to customize the battle theme flow

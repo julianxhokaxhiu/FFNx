@@ -45,14 +45,16 @@ public:
 	{
 		MusicOptions() :
 			offsetSeconds(0.0),
+			lastMusicOffset(-1.0),
 			noIntro(false),
+			sync(false),
 			fadetime(0.0),
 			targetVolume(-1.0f),
 			useNameAsFullPath(false),
 			format("")
 		{}
-		SoLoud::time offsetSeconds;
-		bool noIntro;
+		SoLoud::time offsetSeconds, lastMusicOffset;
+		bool noIntro, sync;
 		SoLoud::time fadetime;
 		float targetVolume;
 		bool useNameAsFullPath;
@@ -162,7 +164,7 @@ private:
 	SoLoud::time _lastVolumeFadeEndTime = 0.0;
 
 	void cleanOldAudioSources();
-	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr);
+	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr, SoLoud::time *length = nullptr);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
 	void backupMusic(int channelSource);
 	void restoreMusic(int channelDest, double stopTime = 0);
@@ -225,6 +227,7 @@ public:
 	bool isChannelValid(int channel);
 	bool isMusicPlaying(int channel);
 	uint32_t currentMusicId(int channel);
+	SoLoud::time getMusicOffsetSeconds(int channel);
 	void setMusicMasterVolume(float volume, double time = 0);
 	void restoreMusicMasterVolume(double time = 0);
 	float getMusicVolume(int channel);

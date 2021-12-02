@@ -34,6 +34,7 @@ std::string external_sfx_path;
 std::vector<std::string> external_sfx_ext;
 bool use_external_music;
 bool external_music_resume;
+bool external_music_sync;
 std::string external_music_path;
 std::vector<std::string> external_music_ext;
 std::string he_bios_path;
@@ -155,6 +156,7 @@ void read_cfg()
 	external_sfx_ext = get_string_or_array_of_strings(config["external_sfx_ext"]);
 	use_external_music = config["use_external_music"].value_or(false);
 	external_music_resume = config["external_music_resume"].value_or(true);
+	external_music_sync = config["external_music_sync"].value_or(false);
 	external_music_path = config["external_music_path"].value_or("");
 	external_music_ext = get_string_or_array_of_strings(config["external_music_ext"]);
 	he_bios_path = config["he_bios_path"].value_or("");

@@ -126,6 +126,11 @@ use_external_music = false
 # If you enable this flag, instead of starting the OST for a known area from the beginning everytime, it will resume where you left it off the last time you visited it.
 external_music_resume = true
 
+#[EXTERNAL MUSIC SYNCHRONIZATION]
+# This flag will enable the support for music synchronization.
+# If you enable this flag, music mods can use the "sync" feature to start a music at the time offset of the previous playing music.
+external_music_sync = false
+
 #[EXTERNAL MUSIC PATH]
 # Path of the external music files
 # Will try to load from this path before using the default for your Version of the game
@@ -237,7 +242,7 @@ steam_game_userdata = ""
 ###########################
 
 #[STEAM ACHIEVEMENTS EXTENSION]
-# This flag will enable steam overlay and steam achievements (Steam MUST be running and you must be online and 
+# This flag will enable steam overlay and steam achievements (Steam MUST be running and you must be online and
 # connected to the Internet to unlock achievement).
 # Note: incompatible with mods that change dramatically the gameplay (for example, New Threat mod), use it at your own risk
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~

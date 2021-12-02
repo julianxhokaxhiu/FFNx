@@ -47,6 +47,7 @@ extern std::string external_sfx_path;
 extern std::vector<std::string> external_sfx_ext;
 extern bool use_external_music;
 extern bool external_music_resume;
+extern bool external_music_sync;
 extern std::string external_music_path;
 extern std::vector<std::string> external_music_ext;
 extern std::string he_bios_path;

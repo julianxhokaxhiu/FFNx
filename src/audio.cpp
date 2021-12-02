@@ -490,11 +490,15 @@ void NxAudioEngine::cleanOldAudioSources()
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %d elements in the list after cleaning\n", __func__, _audioSourcesToDeleteLater.size());
 }
 
-SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format)
+SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format, SoLoud::time *length)
 {
 	SoLoud::AudioSource* music = nullptr;
 	char filename[MAX_PATH];
 	bool exists = false;
+
+	if (length != nullptr) {
+		*length = -1;
+	}
 
 	if (isFullPath)
 	{
@@ -522,6 +526,8 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 				ffnx_error("NxAudioEngine::%s: Cannot load %s with openpsf ( SoLoud error: %u )\n", __func__, filename, res);
 				delete openpsf;
 				music = nullptr;
+			} else if (length != nullptr) {
+				*length = openpsf->getLength();
 			}
 		}
 
@@ -534,6 +540,8 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 				ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
 				delete vgmstream;
 				music = nullptr;
+			} else if (length != nullptr) {
+				*length = vgmstream->getLength();
 			}
 		}
 	}
@@ -566,6 +574,12 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 		}
 	} else if (offset_seconds_opt.has_value()) {
 		MusicOptions->offsetSeconds = *offset_seconds_opt;
+	} else {
+		std::optional<std::string> offset_special_opt = config[name]["offset_seconds"].value<std::string>();
+
+		if (offset_special_opt.has_value() && offset_special_opt->compare("sync") == 0) {
+			MusicOptions->sync = true;
+		}
 	}
 
 	// Name to lower case
@@ -614,7 +628,8 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		stopMusic(channel, options.fadetime == 0.0 ? 0.2 : options.fadetime);
 	}
 
-	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format);
+	SoLoud::time musicLength = -1;
+	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format, &musicLength);
 
 	if (audioSource != nullptr) {
 		NxAudioEngineMusic& music = _musics[channel];
@@ -629,9 +644,13 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		// Keep audioSource pointer somewhere to delete it after musicHandle is stopped
 		_audioSourcesToDeleteLater.push_back(NxAudioEngineMusicAudioSource(music.handle, audioSource));
 
-		if (options.offsetSeconds > 0) {
+		if (options.offsetSeconds > 0 || (options.sync && options.lastMusicOffset > 0)) {
 			if (trace_all || trace_music) ffnx_info("%s: seek to time %fs\n", __func__, options.offsetSeconds);
-			_engine.seek(music.handle, options.offsetSeconds);
+			SoLoud::time offsetSeconds = options.sync ? options.lastMusicOffset : options.offsetSeconds;
+			if (musicLength > 0) {
+				offsetSeconds = std::fmod(offsetSeconds, musicLength);
+			}
+			_engine.seek(music.handle, offsetSeconds);
 			resumeMusic(channel, options.fadetime == 0.0 ? 1.0 : options.fadetime); // Slight fade
 		}
 		else if (options.fadetime > 0.0) {
@@ -842,6 +861,11 @@ bool NxAudioEngine::isMusicPlaying(int channel)
 uint32_t NxAudioEngine::currentMusicId(int channel)
 {
 	return isMusicPlaying(channel) ? _musics[channel].id : 0;
+}
+
+SoLoud::time NxAudioEngine::getMusicOffsetSeconds(int channel)
+{
+	return _engine.getStreamTime(_musics[channel].handle);
 }
 
 void NxAudioEngine::setMusicMasterVolume(float volume, double time)
