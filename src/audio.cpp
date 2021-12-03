@@ -618,20 +618,21 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	}
 	// Same music is paused on this channel or in backup channel
 	bool restore = !_musicStack.empty() && _musicStack.top().id == id;
-	if ((isChannelValid(channel) && currentMusicId(channel) == id) || restore) {
+	if (!options.sync && ((isChannelValid(channel) && currentMusicId(channel) == id) || restore)) {
 		resumeMusic(channel, options.fadetime == 0.0 ? 1.0 : options.fadetime, restore); // Slight fade
 
 		return true;
-	}
-	// Different music is playing on this channel
-	if (isChannelValid(channel)) {
-		stopMusic(channel, options.fadetime == 0.0 ? 0.2 : options.fadetime);
 	}
 
 	SoLoud::time musicLength = -1;
 	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format, &musicLength);
 
 	if (audioSource != nullptr) {
+		// Different music is playing on this channel
+		if (isChannelValid(channel)) {
+			stopMusic(channel, options.fadetime == 0.0 ? 0.2 : options.fadetime);
+		}
+
 		NxAudioEngineMusic& music = _musics[channel];
 
 		if (options.targetVolume >= 0.0f) {
