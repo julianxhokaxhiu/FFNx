@@ -41,6 +41,7 @@ uint8_t ff7_last_akao_call_type = 0;
 uint32_t ff7_last_music_id = 0;
 bool next_music_is_battle = false;
 uint16_t ff7_next_battle_world_id = 0;
+SoLoud::time override_next_music_offset = -1.0;
 
 static uint32_t noop_a1(uint32_t a1) { return 0; }
 static uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
@@ -212,7 +213,8 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 		const uint32_t main_theme_midi_id = 13; // The Main Theme is always resumed
 
 		if (external_music_sync) {
-			options.lastMusicOffset = nxAudioEngine.getMusicOffsetSeconds(0);
+			options.lastMusicOffset = override_next_music_offset > 0.0 ? override_next_music_offset : nxAudioEngine.getMusicOffsetSeconds(0);
+			ffnx_info("%s: last music offset: %s %fs\n", __func__, music_name, options.lastMusicOffset);
 		}
 
 		if (external_music_resume) {
@@ -227,30 +229,40 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 		}
 
 		// Attempt to customize the battle theme flow
-		if (strcmp(music_name, "BAT") == 0)
+		if (next_music_is_battle)
 		{
 			char battle_name[50];
+			uint16_t battle_id = ff7_next_battle_world_id;
 
 			if (mode->driver_mode == MODE_FIELD)
-				sprintf(battle_name, "bat_%u", ff7_externals.modules_global_object->battle_id);
-			else
-				sprintf(battle_name, "bat_%u", ff7_next_battle_world_id);
-
-			// Attempt to load theme by Battle ID
-			if (!(playing = nxAudioEngine.playMusic(battle_name, music_id, channel, options)))
 			{
-				if (*common_externals._previous_mode == FF7_MODE_FIELD)
+				battle_id = ff7_externals.modules_global_object->battle_id;
+			}
+
+			if (battle_id > 0)
+			{
+				sprintf(battle_name, "bat_%u", battle_id);
+
+				// Attempt to load theme by Battle ID
+				playing = nxAudioEngine.playMusic(battle_name, music_id, channel, options);
+
+				if (!playing && *common_externals._previous_mode == FF7_MODE_FIELD)
 				{
 					sprintf(battle_name, "bat_%s", get_current_field_name());
 
 					// Attempt to load theme by Field name
-					if (!(playing = nxAudioEngine.playMusic(battle_name, music_id, channel, options)))
-						// Nothing worked, switch back to default
-						playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
+					playing = nxAudioEngine.playMusic(battle_name, music_id, channel, options);
 				}
-				else
-					// Not in field, switch back to default
-					playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
+			}
+			else
+			{
+				ffnx_warning("%s: Unknown battle_id\n", __func__);
+			}
+
+			if (!playing)
+			{
+				// Nothing worked, switch back to default
+				playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
 			}
 		}
 		// Attempt to override field music
@@ -261,12 +273,17 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 			sprintf(field_name, "field_%d", *ff7_externals.field_id);
 
 			// Attempt to load theme by Field ID
-			if (!(playing = nxAudioEngine.playMusic(field_name, music_id, channel, options)))
+			playing = nxAudioEngine.playMusic(field_name, music_id, channel, options);
+			if (!playing)
+			{
 				// Nothing worked, switch back to default
 				playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
+			}
 		}
 		else
+		{
 			playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
+		}
 	}
 
 	if (playing)
@@ -488,7 +505,11 @@ uint32_t ff7_battle_music(uint32_t type, uint32_t music_id, uint32_t fadetime, u
 
 	next_music_is_battle = true;
 
-	return ff7_music_sound_operation_fix(type, music_id, fadetime, param3, param4, param5);
+	uint32_t ret = ff7_music_sound_operation_fix(type, music_id, fadetime, param3, param4, param5);
+
+	next_music_is_battle = false;
+
+	return ret;
 }
 
 uint32_t ff7_battle_music_fanfare()
@@ -527,7 +548,11 @@ uint32_t ff7_worldmap_music_change(uint32_t type, uint32_t music_id, uint32_t fa
 	ff7_last_akao_call_type = type;
 	ff7_last_music_id = music_id;
 
-	return ff7_music_sound_operation_fix(type, music_id, fadetime, param3, param4, param5);
+	uint32_t ret = ff7_music_sound_operation_fix(type, music_id, fadetime, param3, param4, param5);
+
+	next_music_is_battle = false;
+
+	return ret;
 }
 
 void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* battle_id)
@@ -537,11 +562,26 @@ void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* batt
 	if (*unk1)
 	{
 		ff7_next_battle_world_id = *battle_id;
+		next_music_is_battle = true;
 
-		// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
-		stop_music();
-		// Play music
-		ff7_music_sound_operation_fix(ff7_last_akao_call_type, ff7_last_music_id, 4, 0, 0, 0);
+		char battle_name[50];
+
+		sprintf(battle_name, "bat_%u", ff7_next_battle_world_id);
+
+		if (nxAudioEngine.canPlayMusic(battle_name)) {
+			if (external_music_sync) {
+				override_next_music_offset = nxAudioEngine.getMusicOffsetSeconds(0);
+			}
+			// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
+			stop_music();
+			// Play music
+			ff7_music_sound_operation_fix(ff7_last_akao_call_type, ff7_last_music_id, 4, 0, 0, 0);
+
+			override_next_music_offset = -1.0;
+		}
+
+		ff7_next_battle_world_id = 0;
+		next_music_is_battle = false;
 	}
 }
 
