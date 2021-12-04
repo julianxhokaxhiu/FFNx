@@ -50,11 +50,11 @@ public:
 	void drawMainWindow();
 	void draw();
 	void destroy();
-	void MouseDown(MouseEventArgs& e);
-	void MouseUp(MouseEventArgs& e);
-	void MouseWheel(MouseEventArgs& e);
-	void MouseMove(MouseEventArgs& e);
-	void KeyUp(KeyEventArgs& e);
-	void KeyDown(KeyEventArgs& e);
-	void KeyPress(KeyPressEventArgs& e);
+	void MouseDown(MouseEventArgs e);
+	void MouseUp(MouseEventArgs e);
+	void MouseWheel(MouseEventArgs e);
+	void MouseMove(MouseEventArgs e);
+	void KeyUp(KeyEventArgs e);
+	void KeyDown(KeyEventArgs e);
+	void KeyPress(KeyPressEventArgs e);
 };

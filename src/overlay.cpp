@@ -343,31 +343,31 @@ void Overlay::destroy()
     ImGui::DestroyContext();
 }
 
-void Overlay::MouseDown(MouseEventArgs& e)
+void Overlay::MouseDown(MouseEventArgs e)
 {
     if (!ImGui::IsAnyMouseDown() && ::GetCapture() == NULL)
         ::SetCapture(gameHwnd);
     ImGui::GetIO().MouseDown[e.button - 1] = true;
 }
 
-void Overlay::MouseUp(MouseEventArgs& e)
+void Overlay::MouseUp(MouseEventArgs e)
 {
     ImGui::GetIO().MouseDown[e.button - 1] = false;
     if (!ImGui::IsAnyMouseDown() && ::GetCapture() == gameHwnd)
         ::ReleaseCapture();
 }
 
-void Overlay::MouseWheel(MouseEventArgs& e)
+void Overlay::MouseWheel(MouseEventArgs e)
 {
     ImGui::GetIO().MouseWheel += e.delta;
 }
 
-void Overlay::MouseMove(MouseEventArgs& e)
+void Overlay::MouseMove(MouseEventArgs e)
 {
     UpdateMouseCursor();
 }
 
-void Overlay::KeyUp(KeyEventArgs& e)
+void Overlay::KeyUp(KeyEventArgs e)
 {
     if (e.keyValue == devtools_hotkey)
         visible = !visible;
@@ -376,13 +376,13 @@ void Overlay::KeyUp(KeyEventArgs& e)
         ImGui::GetIO().KeysDown[e.keyValue] = 0;
 }
 
-void Overlay::KeyDown(KeyEventArgs& e)
+void Overlay::KeyDown(KeyEventArgs e)
 {
     if (e.keyValue < 256)
         ImGui::GetIO().KeysDown[e.keyValue] = 1;
 }
 
-void Overlay::KeyPress(KeyPressEventArgs& e)
+void Overlay::KeyPress(KeyPressEventArgs e)
 {
     if (e.keyChar > 0 && e.keyChar < 0x10000)
         ImGui::GetIO().AddInputCharacterUTF16((unsigned short)e.keyChar);

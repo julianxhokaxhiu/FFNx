@@ -32,43 +32,43 @@ void SetBlockKeysFromGame(bool block) {
     blockKeys = block;
 }
 
-void MouseDown(MouseEventArgs& e)
+void MouseDown(MouseEventArgs e)
 {
     for (MouseListener* listener : mouseListeners)
         listener->MouseDown(e);
 }
 
-void MouseUp(MouseEventArgs& e)
+void MouseUp(MouseEventArgs e)
 {
     for (MouseListener* listener : mouseListeners)
         listener->MouseUp(e);
 }
 
-void MouseWheel(MouseEventArgs& e)
+void MouseWheel(MouseEventArgs e)
 {
     for (MouseListener* listener : mouseListeners)
         listener->MouseWheel(e);
 }
 
-void MouseMove(MouseEventArgs& e)
+void MouseMove(MouseEventArgs e)
 {
     for (MouseListener* listener : mouseListeners)
         listener->MouseMove(e);
 }
 
-void KeyUp(KeyEventArgs& e)
+void KeyUp(KeyEventArgs e)
 {
     for (KeyListener* listener : keyListeners)
         listener->KeyUp(e);
 }
 
-void KeyDown(KeyEventArgs& e)
+void KeyDown(KeyEventArgs e)
 {
     for (KeyListener* listener : keyListeners)
         listener->KeyDown(e);
 }
 
-void KeyPress(KeyPressEventArgs& e)
+void KeyPress(KeyPressEventArgs e)
 {
     for (KeyListener* listener : keyListeners)
         listener->KeyPress(e);

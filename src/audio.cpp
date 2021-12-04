@@ -585,7 +585,7 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 	}
 }
 
-bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicOptions& options)
+bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicOptions options)
 {
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s (%d) on channel #%d\n", __func__, name, id, channel);
 
@@ -644,7 +644,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	return false;
 }
 
-void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions& musicOptions)
+void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions options)
 {
 	const int channel = 0;
 
@@ -655,7 +655,7 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: id %d\n", __func__, id);
 
-	stopMusic(musicOptions.fadetime);
+	stopMusic(options.fadetime);
 
 	SoLoud::handle groupHandle = _engine.createVoiceGroup();
 
