@@ -136,7 +136,9 @@ target_compile_options(
   PRIVATE /DVERSION="${_DLL_VERSION}"
   PRIVATE /D_CRT_SECURE_NO_WARNINGS
   PRIVATE /DNOMINMAX
-  PRIVATE /std:c++20
+)
+target_compile_features(${RELEASE_NAME}
+  PRIVATE cxx_std_17
 )
 target_link_options(${RELEASE_NAME} PRIVATE /PDBALTPATH:${RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.def)
 
