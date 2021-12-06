@@ -560,7 +560,6 @@ struct battle_actor_data
 	uint32_t field_54_others[206];
 };
 
-#pragma pack(1)
 struct battle_camera_position{
 	short location_x;
 	short location_y;
@@ -572,7 +571,6 @@ struct battle_camera_position{
 	byte field_D;
 };
 
-#pragma pack(1)
 struct battle_camera_fn_data{
 	WORD field_0;
 	WORD field_1;
@@ -802,8 +800,6 @@ struct chocobo_slot
 	char type;
 };
 
-#pragma pack(push,1)
-
 struct savemap
 {
 	uint32_t checksum;
@@ -999,8 +995,6 @@ struct party_member_data
 	uint32_t field_438;
 	uint32_t field_43C;
 };
-
-#pragma pack(pop)
 
 struct field_tile
 {
