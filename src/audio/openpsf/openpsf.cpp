@@ -89,6 +89,29 @@ namespace SoLoud
 		return SO_NO_ERROR;
 	}
 
+	result OpenPsfInstance::seek(double aSeconds, float *mScratch, unsigned int mScratchSize)
+	{
+		double offset = aSeconds - mStreamPosition;
+		if (offset <= 0)
+		{
+			if (rewind() != SO_NO_ERROR)
+			{
+				// can't do generic seek backwards unless we can rewind.
+				return NOT_IMPLEMENTED;
+			}
+			offset = aSeconds;
+		}
+		int samples_to_discard = int(floor(mSamplerate * offset));
+
+		while (samples_to_discard)
+		{
+			samples_to_discard -= mParent->stream->decode(nullptr, samples_to_discard);
+		}
+
+		mStreamPosition = aSeconds;
+		return SO_NO_ERROR;
+	}
+
 	bool OpenPsfInstance::hasEnded()
 	{
 		return !(mFlags & AudioSourceInstance::LOOPING) && (ended || mOffset >= mParent->mSampleCount);

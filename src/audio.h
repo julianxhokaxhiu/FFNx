@@ -45,7 +45,6 @@ public:
 	{
 		MusicOptions() :
 			offsetSeconds(0.0),
-			lastMusicOffset(-1.0),
 			noIntro(false),
 			sync(false),
 			fadetime(0.0),
@@ -53,7 +52,7 @@ public:
 			useNameAsFullPath(false),
 			format("")
 		{}
-		SoLoud::time offsetSeconds, lastMusicOffset;
+		SoLoud::time offsetSeconds;
 		bool noIntro, sync;
 		SoLoud::time fadetime;
 		float targetVolume;
@@ -84,7 +83,9 @@ public:
 		NxAudioEngineMusic() :
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
 			id(-1),
-			wantedMusicVolume(1.0f) {}
+			wantedMusicVolume(1.0f),
+			lastMusicOffset(-1.0f),
+			sync(false) {}
 		void invalidate() {
 			handle = NXAUDIOENGINE_INVALID_HANDLE;
 			id = -1;
@@ -92,6 +93,8 @@ public:
 		SoLoud::handle handle;
 		int32_t id;
 		float wantedMusicVolume;
+		SoLoud::time lastMusicOffset;
+		bool sync;
 	};
 
 	struct NxAudioEngineMusicAudioSource
@@ -164,7 +167,7 @@ private:
 	SoLoud::time _lastVolumeFadeEndTime = 0.0;
 
 	void cleanOldAudioSources();
-	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr, SoLoud::time *length = nullptr);
+	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
 	void backupMusic(int channelSource);
 	void restoreMusic(int channelDest, double stopTime = 0);
@@ -227,7 +230,6 @@ public:
 	bool isChannelValid(int channel);
 	bool isMusicPlaying(int channel);
 	uint32_t currentMusicId(int channel);
-	SoLoud::time getMusicOffsetSeconds(int channel);
 	void setMusicMasterVolume(float volume, double time = 0);
 	void restoreMusicMasterVolume(double time = 0);
 	float getMusicVolume(int channel);

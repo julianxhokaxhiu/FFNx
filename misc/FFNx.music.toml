@@ -12,8 +12,8 @@
 
 ### SUPPORTED FLAGS: ##########################################################
 # offset_seconds: Offset in seconds. Plays the music at this value instead of
-# from the begining. Set this value to "sync" to plays the music at the current
-# offset of the previous playing music.
+# from the begining. Set this value to "sync" to play the music at
+# the current offset of the previous playing music (can be slow).
 # no_intro_track: [FF8 Only] Name of the "no intro" music. When the "no intro"
 # version is detected, plays this music instead.
 # intro_seconds: [FF8 Only] Offset in seconds. When the "no intro" version is

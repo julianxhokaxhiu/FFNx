@@ -577,7 +577,7 @@ struct bcamera_fn_data{
 	WORD field_0;
 	WORD field_2;
 	WORD n_frames;
-	short field_6; 
+	short field_6;
 	short field_8;
 	short field_A;
 	short field_C;
@@ -2092,9 +2092,15 @@ struct ff7_externals
 	uint32_t opcode_smtra;
 	uint32_t opcode_akao;
 	uint32_t opcode_akao2;
+	uint32_t opcode_bmusc;
+	uint32_t opcode_fmusc;
 	uint32_t opcode_cmusc;
 	uint32_t field_music_helper;
 	uint32_t field_music_helper_sound_op_call;
+	uint32_t (*field_music_id_to_midi_id)(int16_t);
+	uint32_t field_music_id_to_midi_id_call1;
+	uint32_t field_music_id_to_midi_id_call2;
+	uint32_t field_music_id_to_midi_id_call3;
 	uint32_t opcode_gameover;
 	uint32_t opcode_message;
 	uint32_t opcode_ask;
@@ -2108,7 +2114,6 @@ struct ff7_externals
 	UINT *sfx_stop_channel_timer_handle;
 	uint32_t battle_summon_leviathan_loop;
 	uint32_t battle_limit_omnislash_loop;
-	uint32_t sub_5F4A47;
 	void (*reset_game_obj_sub_5F4971)(struct game_obj*);
 	uint32_t engine_exit_game_mode_sub_666C78;
 	void* (*sub_666C13)(struct game_obj*);
@@ -2212,7 +2217,7 @@ struct ff7_externals
 	byte* issued_action_target_type;
 	byte* issued_action_target_index;
 	uint32_t field_load_models_atoi;
-	
+
 	// battle camera script externals
 	bcamera_fn_data* camera_fn_data;
 	bcamera_position* battle_camera_position;

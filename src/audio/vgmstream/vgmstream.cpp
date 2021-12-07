@@ -73,6 +73,16 @@ namespace SoLoud
 		return SO_NO_ERROR;
 	}
 
+	result VGMStreamInstance::seek(double aSeconds, float *mScratch, unsigned int mScratchSize)
+	{
+		int seek_samples = int(floor(mSamplerate * aSeconds));
+
+		seek_vgmstream(mParent->mStream, seek_samples);
+
+		mStreamPosition = aSeconds;
+		return SO_NO_ERROR;
+	}
+
 	bool VGMStreamInstance::hasEnded()
 	{
 		if (!(mFlags & AudioSourceInstance::LOOPING) && mOffset >= mParent->mSampleCount)
