@@ -55,6 +55,7 @@ namespace SoLoud
 		virtual ~OpenPsfInstance();
 		virtual unsigned int getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize);
 		virtual result rewind();
+		virtual result seek(double aSeconds, float *mScratch, unsigned int mScratchSize);
 		virtual bool hasEnded();
 	};
 };

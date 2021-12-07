@@ -149,7 +149,10 @@ bool NxAudioEngine::init()
 		loadConfig();
 
 		if (!he_bios_path.empty()) {
-			if (!Psf::initialize_psx_core(he_bios_path.c_str())) {
+			char fullHeBiosPath[MAX_PATH];
+			sprintf(fullHeBiosPath, "%s/%s", basedir, he_bios_path.c_str());
+
+			if (!Psf::initialize_psx_core(fullHeBiosPath)) {
 				ffnx_error("NxAudioEngine::%s couldn't load %s, please verify 'he_bios_path' or comment it\n", __func__, he_bios_path.c_str());
 			}
 			else {
@@ -490,15 +493,11 @@ void NxAudioEngine::cleanOldAudioSources()
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %d elements in the list after cleaning\n", __func__, _audioSourcesToDeleteLater.size());
 }
 
-SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format, SoLoud::time *length)
+SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format)
 {
 	SoLoud::AudioSource* music = nullptr;
 	char filename[MAX_PATH];
 	bool exists = false;
-
-	if (length != nullptr) {
-		*length = -1;
-	}
 
 	if (isFullPath)
 	{
@@ -526,8 +525,6 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 				ffnx_error("NxAudioEngine::%s: Cannot load %s with openpsf ( SoLoud error: %u )\n", __func__, filename, res);
 				delete openpsf;
 				music = nullptr;
-			} else if (length != nullptr) {
-				*length = openpsf->getLength();
 			}
 		}
 
@@ -540,8 +537,6 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 				ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
 				delete vgmstream;
 				music = nullptr;
-			} else if (length != nullptr) {
-				*length = vgmstream->getLength();
 			}
 		}
 	}
@@ -549,14 +544,14 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 	return music;
 }
 
-void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, MusicOptions* MusicOptions)
+void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, MusicOptions* musicOptions)
 {
 	toml::table config = nxAudioEngineConfig[NXAUDIOENGINE_MUSIC];
 	std::optional<SoLoud::time> offset_seconds_opt = config[name]["offset_seconds"].value<SoLoud::time>();
 	std::optional<std::string> no_intro_track_opt = config[name]["no_intro_track"].value<std::string>();
 	std::optional<SoLoud::time> intro_seconds_opt = config[name]["intro_seconds"].value<SoLoud::time>();
 
-	if (MusicOptions->noIntro) {
+	if (musicOptions->noIntro) {
 		if (no_intro_track_opt.has_value()) {
 			std::string no_intro_track = *no_intro_track_opt;
 			if (trace_all || trace_music) ffnx_info("%s: replaced by no intro track %s\n", __func__, no_intro_track.c_str());
@@ -567,18 +562,18 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 			}
 		}
 		else if (intro_seconds_opt.has_value()) {
-			MusicOptions->offsetSeconds = *intro_seconds_opt;
+			musicOptions->offsetSeconds = *intro_seconds_opt;
 		}
 		else {
 			ffnx_info("%s: cannot play no intro track, please configure it in %s/config.toml\n", __func__, external_music_path.c_str());
 		}
 	} else if (offset_seconds_opt.has_value()) {
-		MusicOptions->offsetSeconds = *offset_seconds_opt;
+		musicOptions->offsetSeconds = *offset_seconds_opt;
 	} else {
 		std::optional<std::string> offset_special_opt = config[name]["offset_seconds"].value<std::string>();
 
 		if (offset_special_opt.has_value() && offset_special_opt->compare("sync") == 0) {
-			MusicOptions->sync = true;
+			musicOptions->sync = true;
 		}
 	}
 
@@ -618,14 +613,13 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 	}
 	// Same music is paused on this channel or in backup channel
 	bool restore = !_musicStack.empty() && _musicStack.top().id == id;
-	if (!options.sync && ((isChannelValid(channel) && currentMusicId(channel) == id) || restore)) {
+	if ((isChannelValid(channel) && currentMusicId(channel) == id) || restore) {
 		resumeMusic(channel, options.fadetime == 0.0 ? 1.0 : options.fadetime, restore); // Slight fade
 
 		return true;
 	}
 
-	SoLoud::time musicLength = -1;
-	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format, &musicLength);
+	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format);
 
 	if (audioSource != nullptr) {
 		// Different music is playing on this channel
@@ -634,23 +628,21 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		}
 
 		NxAudioEngineMusic& music = _musics[channel];
+		SoLoud::time offsetSeconds = options.sync ? _musics[!channel].lastMusicOffset : options.offsetSeconds;
 
 		if (options.targetVolume >= 0.0f) {
 			music.wantedMusicVolume = options.targetVolume;
 		}
-		const float initialVolume = options.fadetime > 0.0 ? 0.0f : music.wantedMusicVolume * _musicMasterVolume;
-		music.handle = _engine.playBackground(*audioSource, initialVolume, options.offsetSeconds > 0);
+		const float initialVolume = options.fadetime > 0.0 || offsetSeconds > 0.0 ? 0.0f : music.wantedMusicVolume * _musicMasterVolume;
+		music.handle = _engine.playBackground(*audioSource, initialVolume, offsetSeconds > 0.0);
 		music.id = id;
+		music.sync = options.sync;
 
 		// Keep audioSource pointer somewhere to delete it after musicHandle is stopped
 		_audioSourcesToDeleteLater.push_back(NxAudioEngineMusicAudioSource(music.handle, audioSource));
 
-		if (options.offsetSeconds > 0 || (options.sync && options.lastMusicOffset > 0)) {
-			if (trace_all || trace_music) ffnx_info("%s: seek to time %fs\n", __func__, options.offsetSeconds);
-			SoLoud::time offsetSeconds = options.sync ? options.lastMusicOffset : options.offsetSeconds;
-			if (musicLength > 0) {
-				offsetSeconds = std::fmod(offsetSeconds, musicLength);
-			}
+		if (offsetSeconds > 0.0) {
+			if (trace_all || trace_music) ffnx_info("NxAudioEngine::%s: seek to time %fs\n", __func__, offsetSeconds);
 			_engine.seek(music.handle, offsetSeconds);
 			resumeMusic(channel, options.fadetime == 0.0 ? 1.0 : options.fadetime); // Slight fade
 		}
@@ -726,6 +718,10 @@ void NxAudioEngine::stopMusic(int channel, double time)
 
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: channel %d, midi %d, time %f\n", __func__, channel, music.id, time);
 
+	if (external_music_sync) {
+		music.lastMusicOffset = _engine.getStreamTime(_musics[channel].handle);
+	}
+
 	if (time > 0.0)
 	{
 		time /= gamehacks.getCurrentSpeedhack();
@@ -755,15 +751,26 @@ void NxAudioEngine::pauseMusic(double time)
 void NxAudioEngine::pauseMusic(int channel, double time, bool backup)
 {
 	NxAudioEngineMusic& music = _musics[channel];
+	bool syncMusic = external_music_sync && backup && music.sync;
 
-	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: midi %d, time %f\n", __func__, music.id, time);
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: midi %d, time %f, sync %d\n", __func__, music.id, time, syncMusic);
+
+	if (external_music_sync) {
+		music.lastMusicOffset = _engine.getStreamTime(_musics[channel].handle);
+	}
 
 	if (time > 0.0)
 	{
 		time /= gamehacks.getCurrentSpeedhack();
 		_engine.fadeVolume(music.handle, 0.0f, time);
-		_engine.schedulePause(music.handle, time);
+		if (!syncMusic) {
+			_engine.schedulePause(music.handle, time);
+		}
 		_lastVolumeFadeEndTime = _engine.mStreamTime + time;
+	}
+	else if (syncMusic)
+	{
+		_engine.setVolume(music.handle, 0.0f);
 	}
 	else
 	{
@@ -789,6 +796,7 @@ void NxAudioEngine::backupMusic(int channelSource)
 	// Save for later usage
 	backup.id = music.id;
 	backup.handle = music.handle;
+	backup.sync = music.sync;
 
 	_musicStack.push(backup);
 
@@ -813,6 +821,7 @@ void NxAudioEngine::restoreMusic(int channelDest, double stopTime)
 	// Restore
 	music.id = backup.id;
 	music.handle = backup.handle;
+	music.sync = backup.sync;
 
 	_musicStack.pop();
 }
@@ -862,11 +871,6 @@ bool NxAudioEngine::isMusicPlaying(int channel)
 uint32_t NxAudioEngine::currentMusicId(int channel)
 {
 	return isMusicPlaying(channel) ? _musics[channel].id : 0;
-}
-
-SoLoud::time NxAudioEngine::getMusicOffsetSeconds(int channel)
-{
-	return _engine.getStreamTime(_musics[channel].handle);
 }
 
 void NxAudioEngine::setMusicMasterVolume(float volume, double time)
