@@ -185,7 +185,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 			patch_code_byte(ff7_externals.battle_fps_menu_multiplier, 4 / frame_multiplier);
 
-			// Battle camera support for 30 fps and 60 fps battle 
+			// Battle camera support for 30 fps and 60 fps battle
 			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x681, ff7_add_fn_to_camera_fn_for_field_1);
 			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x830, ff7_add_fn_to_camera_fn_for_field_1);
 			replace_call_function(ff7_externals.battle_camera_sub_5C3FD5 + 0x993, ff7_add_fn_to_camera_fn_for_field_1); //OpCode 0xE8
@@ -270,9 +270,13 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7_load_battle_stage);
 
 		// GIL, MASTER MATERIA, BATTLE WON
-		replace_call_function(ff7_externals.battle_enemy_killed_sub_433BD2 + 0x2AF, ff7_battle_sub_5C7F94); 
+		replace_call_function(ff7_externals.battle_enemy_killed_sub_433BD2 + 0x2AF, ff7_battle_sub_5C7F94);
 		replace_call_function(ff7_externals.menu_sub_6CDA83 + 0x20, ff7_menu_battle_end_sub_6C9543);
-		replace_call_function(ff7_externals.menu_shop_loop + 0x327B, ff7_get_materia_gil);
+		if (version == VERSION_FF7_102_US) {
+			replace_call_function(ff7_externals.menu_shop_loop + 0x548, ff7_get_materia_gil);
+		} else {
+			replace_call_function(ff7_externals.menu_shop_loop + 0x5C4, ff7_get_materia_gil);
+		}
 		replace_function(ff7_externals.opcode_increase_gil_call, ff7_opcode_increase_gil_call);
 
 		// 1ST LIMIT BREAK
@@ -291,7 +295,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.sub_611098 + 0x3A, ff7_character_regularly_field_entity_60FA7D);
 
 		// INITIALIZATION AT LOAD SAVE FILE
-		replace_call_function(ff7_externals.menu_sub_7212FB + 0xE9D, ff7_load_save_file);
+		if (version == VERSION_FF7_102_US) {
+			replace_call_function(ff7_externals.menu_sub_7212FB + 0xE9D, ff7_load_save_file);
+		} else {
+			replace_call_function(ff7_externals.menu_sub_7212FB + 0xEC5, ff7_load_save_file);
+		}
 	}
 }
 
