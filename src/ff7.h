@@ -1871,6 +1871,9 @@ struct ff7_externals
 	uint32_t field_init_event_sub_63BCA7;
 	uint32_t field_init_event;
 	uint32_t execute_opcode;
+	uint32_t opcode_goldu;
+	uint32_t opcode_dlitm;
+	uint32_t opcode_smtra;
 	uint32_t opcode_akao;
 	uint32_t opcode_akao2;
 	uint32_t opcode_cmusc;
