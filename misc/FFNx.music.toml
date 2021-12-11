@@ -17,8 +17,11 @@
 # no_intro_track: [FF8 Only] Name of the "no intro" music. When the "no intro"
 # version is detected, plays this music instead.
 # intro_seconds: [FF8 Only] Offset in seconds. When the "no intro" version is
+
 # detected, skips the beginning of the music.
 # shuffle: Shuffle an SFX ID with one of the given IDs in the array.
+# disabled: Set this flag to true to never play this music and act like it was
+# never triggered by the game.
 ###############################################################################
 
 # This entry will shuffle "battle" with "battle2", "bossbat1" and "bossbat2".

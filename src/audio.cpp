@@ -475,6 +475,21 @@ bool NxAudioEngine::canPlayMusic(const char* name)
 	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 }
 
+bool NxAudioEngine::isMusicDisabled(const char* name)
+{
+	char lowercaseName[MAX_PATH];
+
+	// Name to lower case
+	for (int i = 0; name[i]; i++) {
+		lowercaseName[i] = tolower(name[i]);
+	}
+
+	toml::table config = nxAudioEngineConfig[NXAUDIOENGINE_MUSIC];
+	std::optional<bool> disabled = config[lowercaseName]["disabled"].value<bool>();
+
+	return disabled.has_value() && disabled;
+}
+
 void NxAudioEngine::cleanOldAudioSources()
 {
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %d elements in the list before cleaning\n", __func__, _audioSourcesToDeleteLater.size());
@@ -546,6 +561,11 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 
 void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, MusicOptions* musicOptions)
 {
+	// Name to lower case
+	for (int i = 0; name[i]; i++) {
+		name[i] = tolower(name[i]);
+	}
+
 	toml::table config = nxAudioEngineConfig[NXAUDIOENGINE_MUSIC];
 	std::optional<SoLoud::time> offset_seconds_opt = config[name]["offset_seconds"].value<SoLoud::time>();
 	std::optional<std::string> no_intro_track_opt = config[name]["no_intro_track"].value<std::string>();
@@ -577,10 +597,6 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 		}
 	}
 
-	// Name to lower case
-	for (int i = 0; name[i]; i++) {
-		name[i] = tolower(name[i]);
-	}
 	// Shuffle Music playback, if any entry found for the current music name
 	toml::array* shuffleNames = config[name]["shuffle"].as_array();
 	if (shuffleNames && !shuffleNames->empty() && shuffleNames->is_homogeneous(toml::node_type::string)) {
