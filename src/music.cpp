@@ -41,7 +41,7 @@ uint8_t ff7_last_akao_call_type = 0;
 uint32_t ff7_last_music_id = 0;
 bool next_music_is_battle = false;
 uint16_t ff7_next_battle_world_id = 0;
-uint16_t ff7_next_field_music_relative_id = 0;
+int16_t ff7_next_field_music_relative_id = -1;
 
 static uint32_t noop_a1(uint32_t a1) { return 0; }
 static uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
@@ -193,6 +193,12 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 	const struct game_mode* mode = getmode_cached();
 	bool playing = false;
 
+	if (nxAudioEngine.isMusicDisabled(music_name)) {
+		ff7_next_field_music_relative_id = -1;
+
+		return false;
+	}
+
 	if (ff8)
 	{
 		if (fullpath == nullptr || nxAudioEngine.canPlayMusic(music_name))
@@ -259,7 +265,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 		{
 			char field_name[50];
 
-			if (ff7_next_field_music_relative_id > 0)
+			if (ff7_next_field_music_relative_id >= 0)
 			{
 				sprintf(field_name, "field_%s_%d", get_current_field_name(), ff7_next_field_music_relative_id);
 
@@ -289,7 +295,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 			playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
 		}
 
-		ff7_next_field_music_relative_id = 0;
+		ff7_next_field_music_relative_id = -1;
 	}
 
 	if (playing)

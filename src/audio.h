@@ -218,6 +218,7 @@ public:
 
 	// Music
 	bool canPlayMusic(const char* name);
+	bool isMusicDisabled(const char* name);
 	bool playMusic(const char* name, uint32_t id, int channel, MusicOptions options = MusicOptions());
 	void playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions options = MusicOptions());
 	void swapChannels();
