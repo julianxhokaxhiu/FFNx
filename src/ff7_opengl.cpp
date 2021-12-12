@@ -364,9 +364,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.battle_enemy_killed_sub_433BD2 + 0x2AF, ff7_battle_sub_5C7F94);
 		replace_call_function(ff7_externals.menu_sub_6CDA83 + 0x20, ff7_menu_battle_end_sub_6C9543);
 		if (version == VERSION_FF7_102_US) {
-			replace_call_function(ff7_externals.menu_shop_loop + 0x548, ff7_get_materia_gil);
+			replace_call_function(ff7_externals.menu_shop_loop + 0x327B, ff7_get_materia_gil);
 		} else {
-			replace_call_function(ff7_externals.menu_shop_loop + 0x5C4, ff7_get_materia_gil);
+			replace_call_function(ff7_externals.menu_shop_loop + 0x3373, ff7_get_materia_gil);
 		}
 		replace_function(ff7_externals.opcode_increase_gil_call, ff7_opcode_increase_gil_call);
 
