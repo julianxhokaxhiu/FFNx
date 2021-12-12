@@ -22,6 +22,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <array>
 
 #include "common.h"
 
@@ -560,30 +561,236 @@ struct battle_actor_data
 	uint32_t field_54_others[206];
 };
 
-struct battle_camera_position{
+struct bcamera_position{
 	short location_x;
 	short location_y;
 	short location_z;
-	WORD unused;
+	WORD unused_6;
 	WORD current_position;
 	WORD frames_to_wait;
 	byte field_C;
 	byte field_D;
 };
 
-struct battle_camera_fn_data{
+struct bcamera_fn_data{
 	WORD field_0;
-	WORD field_1;
+	WORD field_2;
 	WORD n_frames;
-	short b_x; 
-	short b_y;
-	short b_z;
-	short c_x;
-	short c_y;
-	short c_z;
-	byte unused_1[6];
-	byte variationIndex;
-	byte unused_2[15];
+	short field_6; 
+	short field_8;
+	short field_A;
+	short field_C;
+	short field_E;
+	short field_10;
+	byte unused_12[6];
+	byte field_18;
+	byte unused_19[15];
+};
+
+struct battle_model_state
+{
+    uint16_t characterID;     // BE1178, 0
+    uint16_t animScriptIndex; // BE117A, 2
+    byte actionFlags;
+    byte field_5;
+    short field_6;
+    uint16_t AnimationData; // BE1180, 8
+    uint16_t animScriptPtr; // BE1182, 0xA
+    uint16_t field_C;
+    uint16_t runningAnimIdx; // 0xE
+    uint16_t totalBones;
+    uint16_t height;
+    short field_14;
+    uint16_t initialXRotation;
+    uint16_t initialYRotation;
+    uint16_t initialZRotation;
+    uint16_t field_1C;
+    uint16_t field_1E;
+    uint16_t field_20;
+    byte animationEffect; // BE119A, 0x22
+    byte commandID;       // BE119B, 0x23
+    byte field_24;
+    byte field_25;
+    byte actorIsNotActing;
+    byte field_27;
+    byte field_28;
+    byte unkActorFlags;
+    byte field_2A;
+    byte bData0x12[16];         // 0x2B
+    byte isScriptExecuting;     // BE11B3, 0x3B
+    byte currentScriptPosition; // 0x3C
+    byte waitFrames;            // 0x3D
+    byte modelEffectFlags;      // 0x3E
+    byte field_3F;
+    uint32_t field_40;
+    uint32_t field_44;
+    uint32_t field_48;
+    uint32_t field_4C;
+    uint32_t field_50;
+    uint32_t field_54;
+    uint32_t field_58;
+    uint32_t field_5C;
+    uint32_t field_60;
+    uint32_t field_64;
+    uint32_t field_68;
+    uint32_t field_6C;
+    uint32_t field_70;
+    uint32_t field_74;
+    byte padding3[0xE6];       // 0x78
+    uint16_t restingXRotation; // BE12D8, 0x15E
+    uint16_t restingYRotation; // 0x160
+    uint16_t restingZRotation;
+    uint16_t field_164;
+    int16_t restingXPosition; // BE12DE, 0x166
+    int16_t restingYPosition;
+    int16_t restingZPosition; // 0x16A
+    uint32_t field_16C;
+    uint32_t *field_170;
+    uint32_t field_174;
+    byte padding5[0xA24];
+    uint32_t playedAnimFrames;
+    uint32_t currentPlayingFrame;
+    uint32_t tableRelativeModelAnimIdx;
+    uint32_t *modelDataPtr;
+    byte padding4[0xF18];
+    uint32_t setForLimitBreaks; // 0x1AC4
+    uint32_t field_1AC8;
+    float field_1ACC;
+    float field_1AD0;
+    float field_1AD4;
+    uint32_t padding_1AD8;
+    float field_1ADC;
+    uint32_t padding_1AE0;
+    uint32_t field_1AE4;
+    uint32_t field_1AE8;
+};
+
+struct battle_model_state_small
+{
+    uint32_t field_0;
+    uint16_t bData68[4];
+    uint16_t field_C;
+    uint16_t bData76[6];
+    uint16_t bData88[6];
+    uint16_t actorIsNotActing;
+    uint16_t field_28;
+    uint16_t field_2A;
+    uint16_t someHPCopy;
+    uint16_t field_2E;
+    uint16_t someMPCopy;
+    byte modelDataIndex; // 0x032
+    byte field_33;
+    byte innateStatusMask;
+    byte field_35;
+    byte field_36;
+    byte field_37;
+    uint16_t field_38;
+    uint16_t field_3A;
+    uint16_t field_3C;
+    uint16_t actionIdx;
+    byte field_40;
+    byte field_41;
+    byte field_42;
+    byte field_43;
+    byte field_44;
+    byte field_45;
+    byte field_46;
+    byte field_47;
+    byte field_48;
+    byte field_49;
+    byte field_4A;
+    byte field_4B;
+    byte field_4C;
+    byte field_4D;
+    byte field_4E;
+    byte field_4F;
+    byte field_50;
+    byte field_51;
+    byte field_52;
+    byte field_53;
+    byte field_54;
+    byte field_55;
+    byte field_56;
+    byte field_57;
+    byte field_58;
+    byte field_59;
+    byte field_5A;
+    byte field_5B;
+    byte field_5C;
+    byte field_5D;
+    byte field_5E;
+    byte field_5F;
+    byte field_60;
+    byte field_61;
+    byte field_62;
+    byte field_63;
+    byte field_64;
+    byte field_65;
+    byte field_66;
+    byte field_67;
+    byte field_68;
+    byte field_69;
+    byte field_6A;
+    byte field_6B;
+    byte field_6C;
+    byte field_6D;
+    byte field_6E;
+    byte field_6F;
+    byte field_70;
+    byte field_71;
+    byte field_72;
+    byte field_73;
+};
+
+struct effect100_data
+{
+    uint16_t field_0;
+    uint16_t field_2;
+    short n_frames;
+    short field_6;
+    short field_8;
+    short field_A;
+    short field_C;
+    short field_E;
+    int field_10;
+    int field_14;
+    byte field_18;
+    byte field_19;
+    byte field_1A[6];
+};
+
+struct effect60_data
+{
+    uint16_t field_0;
+    uint16_t field_2;
+    short n_frames;
+    short field_6;
+    short field_8;
+    short field_A;
+    uint16_t padding;
+    short field_E;
+    int field_10;
+    int field_14;
+    byte field_18;
+    byte field_19[7];
+};
+
+struct effect10_data
+{
+    uint16_t field_0;
+    uint16_t field_2;
+    short n_frames;
+    short field_6;
+    short field_8;
+    short field_A;
+    short field_C;
+    short field_E;
+    int field_10;
+    int field_14;
+    byte field_18;
+    byte field_19;
+    byte field_1A;
+    byte field_1B[5];
 };
 
 struct battle_chdir_struc
@@ -1996,31 +2203,128 @@ struct ff7_externals
 	byte* issued_action_target_type;
 	byte* issued_action_target_index;
 	uint32_t field_load_models_atoi;
-	battle_camera_fn_data* battle_camera_fn_data;
-	battle_camera_position* battle_camera_position_BE10F0;
-	battle_camera_position* battle_camera_position_BE1130;
+	
+	// battle camera script externals
+	bcamera_fn_data* camera_fn_data;
+	bcamera_position* battle_camera_position;
+	bcamera_position* battle_camera_focal_position;
 	uint32_t* camera_fn_array;
 	uint32_t handle_camera_functions;
-	uint32_t battle_camera_sub_5C3FD5;
-	uint32_t battle_camera_sub_5C23D1;
+	uint32_t set_camera_focal_position_scripts;
+	uint32_t set_camera_position_scripts;
 	uint32_t add_fn_to_camera_fn_array;
 	uint32_t execute_camera_functions;
 	uint32_t battle_camera_sub_5C52F8;
 	uint32_t battle_camera_sub_5C3E6F;
-	byte* battle_camera_scripts_8FEE30;
-	byte* battle_camera_scripts_8FEE2C;
-	DWORD* battle_camera_scripts_9A13BC;
-	DWORD* battle_camera_scripts_9010D0;
-	DWORD* battle_camera_scripts_901270;
+	byte* battle_camera_focal_scripts_8FEE30;
+	byte* battle_camera_position_scripts_8FEE2C;
+	DWORD* battle_camera_global_scripts_9A13BC;
+	DWORD* battle_camera_position_scripts_9010D0;
+	DWORD* battle_camera_focal_scripts_901270;
 	byte* battle_camera_script_index;
 	DWORD* battle_camera_script_offset;
 	WORD* camera_fn_index;
-	DWORD* battle_data_C05FF4;
+	WORD* camera_fn_counter;
+	uint32_t battle_camera_position_sub_5C3D0D;
+	uint32_t battle_camera_position_sub_5C557D;
+	uint32_t battle_camera_position_sub_5C5B9C;
+	uint32_t battle_camera_focal_sub_5C5F5E;
+	uint32_t battle_camera_focal_sub_5C5714;
 	uint32_t battle_sub_430DD0;
 	uint32_t battle_sub_429D8A;
-	uint32_t battle_camera_sub_5C3D0D;
-	uint32_t sub_662538;
-	uint32_t sub_6624FD;
+	uint32_t battle_sub_6E3135;
+
+	// animation script externals
+	uint32_t battle_sub_42A5EB;
+	uint32_t battle_sub_42E275;
+	uint32_t battle_sub_42E34A;
+	uint32_t battle_sub_5BD5E9;
+	uint32_t battle_sub_5C1D9A;
+	uint32_t run_animation_script;
+	uint32_t add_fn_to_effect100_fn;
+	uint32_t execute_effect100_fn;
+	uint32_t add_fn_to_effect60_fn;
+	uint32_t execute_effect60_fn;
+	uint32_t add_fn_to_effect10_fn;
+	uint32_t execute_effect10_fn;
+	uint32_t battle_enemy_death_5BBD24;
+	uint32_t battle_enemy_death_sub_5BBE32;
+	uint32_t battle_iainuki_death_5BCAAA;
+	uint32_t battle_iainuki_death_sub_5BCBB8;
+	uint32_t battle_boss_death_5BC48C;
+	uint32_t battle_boss_death_sub_5BC6ED;
+	uint32_t battle_boss_death_sub_5BC5EC;
+	uint32_t battle_boss_death_call_5BD436;
+	uint32_t battle_melting_death_5BC21F;
+	uint32_t battle_melting_death_sub_5BC32D;
+	uint32_t battle_disintegrate_2_death_5BBA82;
+	uint32_t battle_disintegrate_2_death_sub_5BBBDE;
+	uint32_t battle_morph_death_5BC812;
+	uint32_t battle_morph_death_sub_5BC920;
+	uint32_t battle_disintegrate_1_death_5BBF31;
+	uint32_t battle_disintegrate_1_death_sub_5BC04D;
+	uint32_t battle_sub_42C0A7;
+	uint32_t battle_sub_5C0E4B;
+	uint32_t battle_sub_5D4240;
+	uint32_t battle_sub_5BD96D;
+	uint32_t battle_sub_425D29;
+	uint32_t battle_sub_5BDA0F;
+	uint32_t get_n_frames_display_action_string;
+	uint32_t battle_sub_426DE3;
+	uint32_t battle_sub_426941;
+	uint32_t battle_sub_426899;
+	uint32_t battle_sub_4267F1;
+	uint32_t battle_sub_5C1C8F;
+	uint32_t battle_sub_42C66D;
+	uint32_t battle_sub_42C823;
+	uint32_t battle_move_character_to_enemy_426A26;
+	uint32_t battle_sub_42739D;
+	uint32_t battle_sub_426F58;
+	uint32_t battle_move_character_to_enemy_4270DE;
+	uint32_t battle_sub_5C18BC;
+	uint32_t battle_sub_4276B6;
+	uint32_t battle_sub_4255B7;
+	uint32_t battle_sub_425E5F;
+	uint32_t battle_sub_425520;
+	uint32_t battle_sub_5BCF9D;
+	uint32_t battle_sub_425AAD;
+	uint32_t battle_sub_427A6C;
+	uint32_t battle_sub_427AF1;
+	uint32_t battle_sub_427737;
+	uint32_t battle_sub_4277B1;
+	uint32_t battle_sub_5BCD42;
+	uint32_t battle_sub_5BD050;
+	uint32_t battle_sub_5BE4E2;
+
+	battle_model_state *g_battle_model_state;
+	battle_model_state_small *g_small_battle_model_state;
+	uint32_t* effect100_array_fn;
+	uint16_t* effect100_counter;
+	uint16_t* effect100_array_idx;
+	effect100_data* effect100_array_data;
+	uint32_t* effect60_array_fn;
+	uint16_t* effect60_counter;
+	uint16_t* effect60_array_idx;
+	effect60_data* effect60_array_data;
+	uint32_t* effect10_array_fn;
+	uint16_t* effect10_counter;
+	uint16_t* effect10_array_idx;
+	effect10_data* effect10_array_data;
+	short* effect10_array_data_8FE1F6;
+	std::array<byte*, 14> animation_script_pointers;
+	byte* g_is_effect_loading;
+	byte* g_is_battle_paused;
+	byte* g_actor_idle_scripts;
+	byte* g_script_wait_frames;
+	int** g_script_args; // 8 global values
+	byte* special_actor_id;
+	int* field_battle_BFB2E0;
+	float* field_float_battle_7B7680;
+	DWORD* field_dword_9AD1AC;
+	byte* field_byte_DC0E11;
+	byte* field_battle_byte_BF2E1C;
+	byte* field_battle_byte_BE10B4;
+	short* resting_Y_array_data;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

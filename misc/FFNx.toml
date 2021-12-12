@@ -412,6 +412,10 @@ trace_achievement = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trace_battle_camera = false
 
+# trace_battle_animation - Dump in the logs only APIs that has to do with battle animation
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+trace_battle_animation = false
+
 # vertex_log - Dump in the logs current engine vertex data being passed to the GPU for drawing
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 vertex_log = false
