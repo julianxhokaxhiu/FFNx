@@ -39,5 +39,30 @@ void patch_code_int(uint32_t offset, int r);
 void patch_code_uint(uint32_t offset, uint32_t r);
 void patch_code_float(uint32_t offset, float r);
 void patch_code_double(uint32_t offset, double r);
+
+template<typename T>
+void patch_multiply_code(uint32_t offset, int multiplier)
+{
+	DWORD dummy;
+
+	VirtualProtect((void *)offset, sizeof(T), PAGE_EXECUTE_READWRITE, &dummy);
+
+	*(T *)offset = (*(T *)offset) * (T)multiplier;
+
+    // TODO Add assertion
+}
+
+template<typename T>
+void patch_divide_code(uint32_t offset, int multiplier)
+{
+	DWORD dummy;
+
+	VirtualProtect((void *)offset, sizeof(T), PAGE_EXECUTE_READWRITE, &dummy);
+
+	*(T *)offset = (*(T *)offset) / (T)multiplier;
+
+    // TODO Add assertion
+}
+
 void memcpy_code(uint32_t offset, void *data, uint32_t size);
 void memset_code(uint32_t offset, uint32_t val, uint32_t size);
