@@ -367,8 +367,8 @@ void voice_init()
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x48], (DWORD)&opcode_voice_ask);
 		replace_call_function((uint32_t)ff7_externals.opcode_ask + 0x8E, opcode_voice_parse_options);
 
-		// Battle dialogue
-		replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
-		replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
+		// TODO: Battle dialogue
+		//replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
+		//replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
 	}
 }
