@@ -32,6 +32,14 @@ DWORD previous_master_music_volume = 0x64; // Assume maximum by default
 void (*set_master_music_volume)(uint32_t);
 float voice_volume = -1.0f;
 
+struct BattleTextAuxData{
+	bool hasStarted;
+	bool isDialogue;
+	bool isPaused;
+};
+
+std::array<BattleTextAuxData, 64> auxBattleTextData;
+
 //=============================================================================
 
 void begin_voice()
@@ -240,6 +248,112 @@ int opcode_voice_ask(int unk)
 	return ret;
 }
 
+void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_frames, WORD param_4)
+{
+	auto text_data = std::find_if(ff7_externals.battle_display_text_queue.begin(), ff7_externals.battle_display_text_queue.end(),
+								  [](const battle_text_data &data)
+								  { return data.buffer_idx == -1; });
+
+	if (text_data != ff7_externals.battle_display_text_queue.end())
+	{
+		text_data->buffer_idx = buffer_idx;
+		text_data->field_2 = param_4;
+		text_data->wait_frames = wait_frames * frame_multiplier - 1;
+		text_data->n_frames = (n_frames == 0) ? ((int (*)())ff7_externals.get_n_frames_display_action_string)() : n_frames * frame_multiplier;
+
+		int index = std::distance(ff7_externals.battle_display_text_queue.begin(), text_data);
+		auxBattleTextData[index].hasStarted = false;
+		auxBattleTextData[index].isDialogue = n_frames == 0;
+
+		if (trace_all || trace_battle_text)
+			ffnx_trace("Add text string to be displayed: (text_id: %d, field_2: %d, wait_frames: %d, n_frames: %d)\n", text_data->buffer_idx,
+					   text_data->field_2, text_data->wait_frames, text_data->n_frames);
+	}
+}
+
+void ff7_update_display_text_queue()
+{
+	*ff7_externals.field_battle_word_BF2E08 = *ff7_externals.field_battle_word_BF2E08 | 2;
+	auto &queueFront = ff7_externals.battle_display_text_queue.front();
+	auto &auxTextFront = auxBattleTextData.front();
+
+	if (queueFront.buffer_idx != -1)
+	{
+		if (queueFront.wait_frames == 0)
+		{
+			// Begin voice
+			if(auxTextFront.isDialogue){
+				if(!auxTextFront.hasStarted)
+				{
+					// TODO find the text or ID of the dialog
+					begin_voice();
+					auxTextFront.hasStarted = play_voice("colne_6", 3, 0);
+				}
+			}
+
+			if (queueFront.field_2 != 0)
+			{
+				((void (*)(uint16_t))ff7_externals.battle_sub_430D14)(0x2D7);
+				queueFront.field_2 = 0;
+			}
+
+			if (queueFront.n_frames == 0)
+			{
+				queueFront.buffer_idx = -1;
+
+				// End voice
+				if(auxTextFront.isDialogue && auxTextFront.hasStarted){
+					auxTextFront.hasStarted = false;
+					end_voice();
+				}
+
+				for (int i = 0; i < ff7_externals.battle_display_text_queue.size(); i++)
+				{
+					if (queueFront.buffer_idx == -1)
+					{
+						for (int j = 0; j < ff7_externals.battle_display_text_queue.size() - 1; j++){
+							ff7_externals.battle_display_text_queue[j] = ff7_externals.battle_display_text_queue[j + 1];
+							auxBattleTextData[j] = auxBattleTextData[j + 1];
+						}
+						*ff7_externals.field_battle_word_BF2032 = 0xFFFF;
+					}
+				}
+				
+				return;
+			}
+
+			int showText = ((int (*)())ff7_externals.battle_sub_66C3BF)();
+			if (showText)
+				((void (*)(short))ff7_externals.set_battle_text_active)(queueFront.buffer_idx);
+
+			if (*ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running)
+			{
+				// TODO Pause voice
+				return;
+			}
+
+			// Ending voice
+			if(auxTextFront.isDialogue && auxTextFront.hasStarted)
+			{
+				if (!nxAudioEngine.isVoicePlaying())
+				{
+					queueFront.n_frames = 0;
+				}
+			}
+			else
+			{
+				queueFront.n_frames--;
+			}
+			return;
+		}
+		if (!*ff7_externals.g_is_battle_paused && *ff7_externals.g_is_battle_running)
+			queueFront.wait_frames--;
+	}
+
+	((void (*)(short))ff7_externals.set_battle_text_active)(-1);
+	*ff7_externals.field_battle_word_BF2E08 = *ff7_externals.field_battle_word_BF2E08 & 0xFFFD;
+}
+
 void voice_init()
 {
 	if (!ff8)
@@ -252,5 +366,9 @@ void voice_init()
 		opcode_old_ask = (int (*)(int))ff7_externals.opcode_ask;
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x48], (DWORD)&opcode_voice_ask);
 		replace_call_function((uint32_t)ff7_externals.opcode_ask + 0x8E, opcode_voice_parse_options);
+
+		// Battle dialogue
+		replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
+		replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
 	}
 }
