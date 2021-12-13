@@ -741,6 +741,21 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_5BE4E2 = get_absolute_value(battle_sub_5BE490, 0x5);
 	// --------------------------------
 
+	// battle dialogues
+	ff7_externals.battle_sub_42CBF9 = get_relative_call(ff7_externals.battle_loop, 0x425);
+	ff7_externals.add_text_to_display_queue = get_relative_call(ff7_externals.battle_sub_42CBF9, 0x1C7);
+	ff7_externals.update_display_text_queue = get_relative_call(ff7_externals.battle_sub_42D808, 0x2B);
+	ff7_externals.set_battle_text_active = get_relative_call(ff7_externals.update_display_text_queue, 0x14A);
+	ff7_externals.battle_sub_430D14 = get_relative_call(ff7_externals.update_display_text_queue, 0x46);
+	ff7_externals.battle_sub_66C3BF = get_relative_call(ff7_externals.update_display_text_queue, 0x139);
+
+	const int TEXT_QUEUE_SIZE = 64;
+	ff7_externals.battle_display_text_queue = std::span((battle_text_data*)get_absolute_value(ff7_externals.add_text_to_display_queue, 0x25), TEXT_QUEUE_SIZE);
+	ff7_externals.g_is_battle_running = (int*)get_absolute_value(battle_main_loop, 0x247);
+	ff7_externals.field_battle_word_BF2E08 = (WORD*)get_absolute_value(ff7_externals.update_display_text_queue, 0xA);
+	ff7_externals.field_battle_word_BF2032 = (WORD*)get_absolute_value(ff7_externals.update_display_text_queue, 0x12C);
+	// --------------------------------
+
 	//ff7 achievement related externals
 	uint32_t sub_434347 = get_relative_call(ff7_externals.battle_loop, 0x484);
 	uint32_t* pointer_functions_7C2980 = (uint32_t*)get_absolute_value(sub_434347, 0x19C);

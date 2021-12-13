@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <array>
+#include <span>
 
 #include "common.h"
 
@@ -791,6 +792,14 @@ struct effect10_data
     byte field_19;
     byte field_1A;
     byte field_1B[5];
+};
+
+struct battle_text_data
+{
+	short buffer_idx;
+	byte field_2;
+	byte wait_frames;
+	short n_frames;
 };
 
 struct battle_chdir_struc
@@ -2325,6 +2334,19 @@ struct ff7_externals
 	byte* field_battle_byte_BF2E1C;
 	byte* field_battle_byte_BE10B4;
 	short* resting_Y_array_data;
+
+	// battle dialogue
+	uint32_t battle_sub_42CBF9;
+	uint32_t add_text_to_display_queue;
+	uint32_t update_display_text_queue;
+	uint32_t set_battle_text_active;
+	uint32_t battle_sub_430D14;
+	uint32_t battle_sub_66C3BF;
+
+	std::span<battle_text_data> battle_display_text_queue;
+	int* g_is_battle_running;
+	WORD* field_battle_word_BF2E08;
+	WORD* field_battle_word_BF2032;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
