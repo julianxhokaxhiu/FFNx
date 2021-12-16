@@ -32,7 +32,7 @@ void ff7_menu_battle_end_sub_6C9543()
     if(*ff7_externals.menu_battle_end_mode == 0){
         if (trace_all || trace_achievement)
             ffnx_trace("%s - trying to unlock achievement for battle won and weapons\n", __func__);
-        g_FF7SteamAchievements->unlockBattleWonAchievement(*ff7_externals.battle_scene_id);
+        g_FF7SteamAchievements->unlockBattleWonAchievement(*ff7_externals.battle_formation_id);
     }
 
     if(*ff7_externals.menu_battle_end_mode == 1){

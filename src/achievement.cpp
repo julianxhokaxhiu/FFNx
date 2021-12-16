@@ -319,30 +319,30 @@ bool SteamAchievementsFF7::isEndingMovie()
     return this->lastSeenMovieName == END_OF_GAME_MOVIE_NAME;
 }
 
-void SteamAchievementsFF7::unlockBattleWonAchievement(WORD battleSceneID)
+void SteamAchievementsFF7::unlockBattleWonAchievement(WORD formationID)
 {
     if (trace_all || trace_achievement)
-        ffnx_trace("%s - unlock achievement for winning battle (scene ID: %d)\n", __func__, battleSceneID);
+        ffnx_trace("%s - unlock achievement for winning battle (formation ID: %d)\n", __func__, formationID);
 
     if (!this->steamManager->isAchieved(WON_1ST_BATTLE))
         this->steamManager->setAchievement(WON_1ST_BATTLE);
 
-    if (!this->steamManager->isAchieved(BEAT_DIAMOND_WEAPON) && battleSceneID == DIAMOND_WEAPON_SCENE_ID)
+    if (!this->steamManager->isAchieved(BEAT_DIAMOND_WEAPON) && formationID == DIAMOND_WEAPON_FORMATION_ID)
     {
         this->steamManager->setAchievement(BEAT_DIAMOND_WEAPON);
     }
 
-    if (!this->steamManager->isAchieved(BEAT_RUBY_WEAPON) && battleSceneID == RUBY_WEAPON_SCENE_ID)
+    if (!this->steamManager->isAchieved(BEAT_RUBY_WEAPON) && formationID == RUBY_WEAPON_FORMATION_ID)
     {
         this->steamManager->setAchievement(BEAT_RUBY_WEAPON);
     }
 
-    if (!this->steamManager->isAchieved(BEAT_EMERALD_WEAPON) && battleSceneID == EMERALD_WEAPON_SCENE_ID)
+    if (!this->steamManager->isAchieved(BEAT_EMERALD_WEAPON) && formationID == EMERALD_WEAPON_FORMATION_ID)
     {
         this->steamManager->setAchievement(BEAT_EMERALD_WEAPON);
     }
 
-    if (!this->steamManager->isAchieved(BEAT_ULTIMATE_WEAPON) && battleSceneID == ULTIMATE_WEAPON_SCENE_ID)
+    if (!this->steamManager->isAchieved(BEAT_ULTIMATE_WEAPON) && formationID == ULTIMATE_WEAPON_FORMATION_ID)
     {
         this->steamManager->setAchievement(BEAT_ULTIMATE_WEAPON);
     }

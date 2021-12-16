@@ -562,6 +562,76 @@ struct battle_actor_data
 	uint32_t field_54_others[206];
 };
 
+struct battle_actor_vars
+{
+	uint32_t statusMask;		   // 0x00
+	uint32_t stateFlags;		   // 0x04
+	byte index;					   // 0x08
+	byte level;					   // 0x09
+	byte unknown0;				   // 0x0A
+	byte elementDamageMask;		   // 0x0B
+	byte characterID;			   // 0x0C
+	byte physAtk;				   // 0x0D
+	byte magAtk;				   // 0x0E
+	byte pEvade;				   // 0x0F
+	byte idleAnimScript;		   // 0x10
+	byte damageAnimID;			   // 0x11
+	byte backDamageMult;		   // 0x12
+	byte sizeScale;				   // 0x13
+	byte dexterity;				   // 0x14
+	byte luck;					   // 0x15
+	byte idleAnimHolder;		   // 0x16
+	byte lastCovered;			   // 0x17
+	uint16_t lastTargets;		   // 0x18
+	uint16_t prevAttackerMask;	   // 0x1A
+	uint16_t prevPhysAttackerMask; // 0x1C
+	uint16_t prevMagAttackerMask;  // 0x1E
+	uint16_t defense;			   // 0x20
+	uint16_t mDefense;
+	uint16_t formationID;
+	uint16_t absorbedElementsMask;
+	uint16_t currentMP;
+	uint16_t maxMP;
+	int currentHP;
+	int maxHP;
+	uint32_t unknown1;
+	uint32_t unknown2;
+	uint32_t unknown3;
+	uint32_t unknown4;
+	uint32_t initalStatusMasks;
+	uint32_t unknown5;
+	byte unknown6;
+	byte mEvade;
+	byte actorRow;
+	byte cameraData;
+	uint16_t gilStolen;
+	uint16_t itemStolen;
+	uint16_t unknown7;
+	byte missAnimScript;
+	byte APValue;
+	uint32_t gilValue;
+	uint32_t expValue;
+	byte unused8;
+	byte unused9;
+	uint16_t unused10; // This is being used for the tactical elements mod, unused in original game
+	byte unused12;
+	byte unused13;
+	byte unused14;
+	byte unused15;
+};
+
+struct battle_anim_event {
+    byte attackerID;
+    byte activeAllies;
+    byte spellEffectID;
+    byte commandIndex;
+    byte actionFlags;
+    byte animationScriptID;
+    uint16_t actionIndex;
+    uint16_t cameraData;
+    uint16_t damageEventQueueIdx;
+};
+
 struct bcamera_position{
 	short location_x;
 	short location_y;
@@ -1726,7 +1796,7 @@ struct ff7_field_sfx_state {
 	uint32_t u5;
 	uint32_t u6;
 	uint32_t u7;
-	uint32_t u8;
+	uint32_t byte;
 	uint32_t u9;
 	uint32_t u10;
 	uint32_t u11;
@@ -1942,7 +2012,7 @@ struct ff7_externals
 	battle_actor_data *battle_actor_data;
 	DWORD *battle_mode;
 	WORD *battle_location_id;
-	WORD *battle_scene_id;
+	WORD *battle_formation_id;
 	uint32_t battle_sub_429AC0;
 	uint32_t battle_sub_42D808;
 	uint32_t battle_sub_42D992;
@@ -2347,8 +2417,15 @@ struct ff7_externals
 	uint32_t set_battle_text_active;
 	uint32_t battle_sub_430D14;
 	uint32_t battle_sub_66C3BF;
+	uint32_t battle_sub_43526A;
+	uint32_t battle_sub_5C8931;
+	uint32_t run_enemy_ai_script;
+	uint32_t enqueue_script_action;
 
 	std::span<battle_text_data> battle_display_text_queue;
+	std::span<battle_actor_vars> battle_actor_vars;
+	std::span<battle_anim_event> anim_event_queue;
+	byte* anim_event_index;
 	int* g_is_battle_running;
 	WORD* field_battle_word_BF2E08;
 	WORD* field_battle_word_BF2032;
