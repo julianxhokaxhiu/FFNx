@@ -170,10 +170,10 @@ private:
     static inline constexpr byte KOTR_MATERIA_ID = 0x59;
 
     // took from here https://finalfantasy.fandom.com/wiki/Diamond_Weapon_(Final_Fantasy_VII_boss)#Formations
-    static inline constexpr WORD DIAMOND_WEAPON_SCENE_ID = 980;
-    static inline constexpr WORD RUBY_WEAPON_SCENE_ID = 982;
-    static inline constexpr WORD EMERALD_WEAPON_SCENE_ID = 984;
-    static inline constexpr WORD ULTIMATE_WEAPON_SCENE_ID = 287;
+    static inline constexpr WORD DIAMOND_WEAPON_FORMATION_ID = 980;
+    static inline constexpr WORD RUBY_WEAPON_FORMATION_ID = 982;
+    static inline constexpr WORD EMERALD_WEAPON_FORMATION_ID = 984;
+    static inline constexpr WORD ULTIMATE_WEAPON_FORMATION_ID = 287;
     static inline constexpr WORD BATTLE_SQUARE_LOCATION_ID = 0x0025;
 
     static inline constexpr byte GOLD_CHOCOBO_TYPE = 0x04;
@@ -219,7 +219,7 @@ public:
 
     bool isEndingMovie();
 
-    void unlockBattleWonAchievement(WORD battleSceneID);
+    void unlockBattleWonAchievement(WORD formationID);
     void unlockGilAchievement(uint32_t gilAmount);
     void unlockCharacterLevelAchievement(const savemap_char characters[]);
     void unlockBattleSquareAchievement(WORD battleLocationID);
