@@ -306,8 +306,9 @@ std::string get_battle_voice_filename(std::string decoded_text)
 void ff7_enqueue_script_display_string(short actor_id, byte command_index, uint16_t rel_attack_index)
 {
 	display_string_actor_queue.push(actor_id);
-	if (trace_all || trace_battle_text)
-		ffnx_trace("Push display string for actorId: %d\n", actor_id);
+
+	if (trace_all || trace_battle_text) ffnx_trace("Push display string for actorId: %d\n", actor_id);
+
 	((void (*)(short, byte, uint16_t))ff7_externals.enqueue_script_action)(actor_id, command_index, rel_attack_index);
 }
 
@@ -339,8 +340,7 @@ void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_fra
 		}
 
 		if (trace_all || trace_battle_text)
-			ffnx_trace("Add text string to be displayed: (text_id: %d, field_2: %d, wait_frames: %d, n_frames: %d)\n", text_data->buffer_idx,
-					   text_data->field_2, text_data->wait_frames, text_data->n_frames);
+			ffnx_trace("Add text string to be displayed: (text_id: %d, field_2: %d, wait_frames: %d, n_frames: %d)\n", text_data->buffer_idx, text_data->field_2, text_data->wait_frames, text_data->n_frames);
 	}
 }
 
