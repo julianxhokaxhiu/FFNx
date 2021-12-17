@@ -958,6 +958,7 @@ void common_flip(struct game_obj *game_object)
 
 		*ff7_externals.swirl_limit_fps = 1;
 
+		ff7_handle_voice_playback();
 		ff7_handle_ambient_playback();
 	}
 

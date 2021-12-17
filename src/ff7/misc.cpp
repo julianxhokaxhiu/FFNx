@@ -534,6 +534,20 @@ void ff7_handle_ambient_playback()
   }
 }
 
+void ff7_handle_voice_playback() {
+	struct game_mode *mode = getmode_cached();
+
+	switch(mode->driver_mode)
+  {
+	case MODE_BATTLE:
+		if (*ff7_externals.is_battle_paused && nxAudioEngine.isVoicePlaying())
+			nxAudioEngine.pauseVoice();
+		else
+			nxAudioEngine.resumeVoice();
+		break;
+	}
+}
+
 BOOL ff7_write_save_file(char slot)
 {
 	BOOL ret = ff7_externals.write_save_file(slot);
