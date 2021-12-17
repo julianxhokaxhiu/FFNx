@@ -244,6 +244,8 @@ public:
 	bool canPlayVoice(const char* name);
 	bool playVoice(const char* name, float volume = 1.0f);
 	void stopVoice(double time = 0);
+	void pauseVoice(double time = 0);
+	void resumeVoice(double time = 0);
 	bool isVoicePlaying();
 
 	// Ambient

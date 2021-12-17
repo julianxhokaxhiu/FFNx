@@ -1036,6 +1036,33 @@ void NxAudioEngine::stopVoice(double time)
 	}
 }
 
+void NxAudioEngine::pauseVoice(double time)
+{
+	if (time > 0.0)
+	{
+		_engine.fadeVolume(_currentVoice.handle, 0, time);
+		_engine.schedulePause(_currentVoice.handle, time);
+	}
+	else
+	{
+		_engine.setPause(_currentVoice.handle, true);
+	}
+}
+
+void NxAudioEngine::resumeVoice(double time)
+{
+	if (time > 0.0)
+	{
+		_engine.setPause(_currentVoice.handle, false);
+		_engine.fadeVolume(_currentVoice.handle, _currentVoice.volume, time);
+	}
+	else
+	{
+		_engine.setVolume(_currentVoice.handle, _currentVoice.volume);
+		_engine.setPause(_currentVoice.handle, false);
+	}
+}
+
 bool NxAudioEngine::isVoicePlaying()
 {
 	return _engine.isValidVoiceHandle(_currentVoice.handle) && !_engine.getPause(_currentVoice.handle);
