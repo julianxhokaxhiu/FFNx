@@ -367,7 +367,7 @@ void ff7_update_display_text_queue()
 						ffnx_trace("Begin voice of EnemyID: %04X for text: %s (filename: %s)\n", other_text_data_first.enemy_id, decoded_text.c_str(), filename.c_str());
 
 					begin_voice();
-					other_text_data_first.has_started = play_battle_voice(other_text_data_first.enemy_id, filename);
+					other_text_data_first.is_dialogue = other_text_data_first.has_started = play_battle_voice(other_text_data_first.enemy_id, filename);
 				}
 			}
 
