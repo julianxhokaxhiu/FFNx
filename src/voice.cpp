@@ -27,6 +27,13 @@
 
 #include <queue>
 
+struct battle_text_aux_data{
+	bool has_started;
+	bool is_dialogue;
+	bool is_paused;
+	uint16_t enemy_id;
+};
+
 int (*opcode_old_message)();
 int (*opcode_old_ask)(int);
 
@@ -34,15 +41,8 @@ DWORD previous_master_music_volume = 0x64; // Assume maximum by default
 void (*set_master_music_volume)(uint32_t);
 float voice_volume = -1.0f;
 
-struct BattleTextAuxData{
-	bool hasStarted;
-	bool isDialogue;
-	bool isPaused;
-	uint16_t enemyID;
-};
-
-std::array<BattleTextAuxData, 64> auxBattleTextData;
-std::queue<short> displayStringActorIDQueue;
+std::array<battle_text_aux_data, 64> other_battle_display_text_queue;
+std::queue<short> display_string_actor_queue;
 
 //=============================================================================
 
@@ -84,12 +84,11 @@ bool play_voice(char* field_name, byte dialog_id, byte page_count)
 	return nxAudioEngine.playVoice(name, voice_volume);
 }
 
-bool play_battle_voice(short enemyID, std::string dialog_text)
+bool play_battle_voice(short enemyID, std::string filename)
 {
 	char name[MAX_PATH];
 
-	uint32_t hash_str = std::hash<std::string>{}(dialog_text);
-	sprintf(name, "%04X/%u", enemyID, hash_str);
+	sprintf(name, "_battle/enemy_%04X/%s", enemyID, filename.c_str());
 
 	if(!nxAudioEngine.canPlayVoice(name))
 		return false;
@@ -265,34 +264,51 @@ int opcode_voice_ask(int unk)
 	return ret;
 }
 
-std::string decode_ff7_text(const char *encodedText)
+std::string decode_ff7_text(const char *encoded_text)
 {
-	std::string decodedText{};
+	std::string decoded_text{};
 	int index = 0;
-	char currentChar;
-	while (currentChar = encodedText[index++], currentChar != char(0xFF))
+	char current_char;
+	while (current_char = encoded_text[index++], current_char != char(0xFF))
 	{
-		switch (currentChar)
+		switch (current_char)
 		{
 		case 0xF8:
 			index += 2;
 			break;
 		default:
-			if (currentChar >= 0xEA)
-				ffnx_trace("special char: %c", currentChar);
-			decodedText.push_back(currentChar + 0x20);
+			if (current_char >= 0xEA)
+				ffnx_trace("special char: %c", current_char);
+			decoded_text.push_back(current_char + 0x20);
 			break;
 		}
 	}
-	return decodedText;
+	return decoded_text;
 }
 
-void ff7_enqueue_script_display_string(short actorID, byte commandIndex, uint16_t relAttackIndex)
+std::string get_battle_voice_filename(std::string decoded_text)
 {
-	displayStringActorIDQueue.push(actorID);
+	transform(decoded_text.begin(), decoded_text.end(), decoded_text.begin(), tolower);
+
+	std::string filename{};
+	for(auto current_char : decoded_text)
+	{
+		if(current_char >= 'a' && current_char <= 'z')
+			filename += current_char;
+		else if(current_char >= '0' && current_char <= '9')
+			filename += current_char;
+		else if(current_char == ' ')
+			filename += '_';
+	}
+	return filename;
+}
+
+void ff7_enqueue_script_display_string(short actor_id, byte command_index, uint16_t rel_attack_index)
+{
+	display_string_actor_queue.push(actor_id);
 	if (trace_all || trace_battle_text)
-		ffnx_trace("Push display string for actorId: %d\n", actorID);
-	((void (*)(short, byte, uint16_t))ff7_externals.enqueue_script_action)(actorID, commandIndex, relAttackIndex);
+		ffnx_trace("Push display string for actorId: %d\n", actor_id);
+	((void (*)(short, byte, uint16_t))ff7_externals.enqueue_script_action)(actor_id, command_index, rel_attack_index);
 }
 
 void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_frames, WORD param_4)
@@ -309,16 +325,16 @@ void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_fra
 		text_data->n_frames = (n_frames == 0) ? ((int (*)())ff7_externals.get_n_frames_display_action_string)() : n_frames * frame_multiplier;
 
 		int index = std::distance(ff7_externals.battle_display_text_queue.begin(), text_data);
-		int attackerID = ff7_externals.anim_event_queue[*ff7_externals.anim_event_index].attackerID;
-		if (attackerID == 10 && n_frames == 0)
+		int attacker_id = ff7_externals.anim_event_queue[*ff7_externals.anim_event_index].attackerID;
+		if (attacker_id == 10 && n_frames == 0)
 		{
-			auxBattleTextData[index].hasStarted = false;
-			auxBattleTextData[index].isDialogue = true;
-			if (!displayStringActorIDQueue.empty())
+			other_battle_display_text_queue[index].has_started = false;
+			other_battle_display_text_queue[index].is_dialogue = true;
+			if (!display_string_actor_queue.empty())
 			{
-				short actorID = displayStringActorIDQueue.front();
-				displayStringActorIDQueue.pop();
-				auxBattleTextData[index].enemyID = ff7_externals.battle_actor_vars[actorID].formationID;
+				short actor_id = display_string_actor_queue.front();
+				display_string_actor_queue.pop();
+				other_battle_display_text_queue[index].enemy_id = ff7_externals.battle_actor_vars[actor_id].formationID;
 			}
 		}
 
@@ -331,55 +347,55 @@ void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_fra
 void ff7_update_display_text_queue()
 {
 	*ff7_externals.field_battle_word_BF2E08 = *ff7_externals.field_battle_word_BF2E08 | 2;
-	auto &queueFront = ff7_externals.battle_display_text_queue.front();
-	auto &auxTextFront = auxBattleTextData.front();
+	auto &text_data_first = ff7_externals.battle_display_text_queue.front();
+	auto &other_text_data_first = other_battle_display_text_queue.front();
 
-	if (queueFront.buffer_idx != -1)
+	if (text_data_first.buffer_idx != -1)
 	{
-		if (queueFront.wait_frames == 0)
+		if (text_data_first.wait_frames == 0)
 		{
 			// Begin voice
-			if (auxTextFront.isDialogue)
+			if (other_text_data_first.is_dialogue)
 			{
-				if (!auxTextFront.hasStarted)
+				if (!other_text_data_first.has_started)
 				{
-					const char *encodedText = ff7_externals.get_kernel_text(8, queueFront.buffer_idx, 8);
-					std::string decodedText = decode_ff7_text(encodedText);
-					uint32_t hash = std::hash<std::string>{}(decodedText);
+					const char *encoded_text = ff7_externals.get_kernel_text(8, text_data_first.buffer_idx, 8);
+					std::string decoded_text = decode_ff7_text(encoded_text);
+					std::string filename = get_battle_voice_filename(decoded_text);
 
 					if (trace_all || trace_battle_text)
-						ffnx_trace("Begin voice of EnemyID: %04X for text: %s (hash: %u)\n", auxTextFront.enemyID, decodedText.c_str(), hash);
+						ffnx_trace("Begin voice of EnemyID: %04X for text: %s (filename: %s)\n", other_text_data_first.enemy_id, decoded_text.c_str(), filename.c_str());
 
 					begin_voice();
-					auxTextFront.hasStarted = play_battle_voice(auxTextFront.enemyID, decodedText);
+					other_text_data_first.has_started = play_battle_voice(other_text_data_first.enemy_id, filename);
 				}
 			}
 
-			if (queueFront.field_2 != 0)
+			if (text_data_first.field_2 != 0)
 			{
 				((void (*)(uint16_t))ff7_externals.battle_sub_430D14)(0x2D7);
-				queueFront.field_2 = 0;
+				text_data_first.field_2 = 0;
 			}
 
-			if (queueFront.n_frames == 0)
+			if (text_data_first.n_frames == 0)
 			{
-				queueFront.buffer_idx = -1;
+				text_data_first.buffer_idx = -1;
 
 				// End voice
-				if (auxTextFront.isDialogue && auxTextFront.hasStarted)
+				if (other_text_data_first.is_dialogue && other_text_data_first.has_started)
 				{
-					auxTextFront.hasStarted = false;
+					other_text_data_first.has_started = false;
 					end_voice();
 				}
 
 				for (int i = 0; i < ff7_externals.battle_display_text_queue.size(); i++)
 				{
-					if (queueFront.buffer_idx == -1)
+					if (text_data_first.buffer_idx == -1)
 					{
 						for (int j = 0; j < ff7_externals.battle_display_text_queue.size() - 1; j++)
 						{
 							ff7_externals.battle_display_text_queue[j] = ff7_externals.battle_display_text_queue[j + 1];
-							auxBattleTextData[j] = auxBattleTextData[j + 1];
+							other_battle_display_text_queue[j] = other_battle_display_text_queue[j + 1];
 						}
 						*ff7_externals.field_battle_word_BF2032 = 0xFFFF;
 					}
@@ -388,9 +404,9 @@ void ff7_update_display_text_queue()
 				return;
 			}
 
-			int showText = ((int (*)())ff7_externals.battle_sub_66C3BF)();
-			if (showText)
-				((void (*)(short))ff7_externals.set_battle_text_active)(queueFront.buffer_idx);
+			int show_text = ((int (*)())ff7_externals.battle_sub_66C3BF)();
+			if (show_text)
+				((void (*)(short))ff7_externals.set_battle_text_active)(text_data_first.buffer_idx);
 
 			if (*ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running)
 			{
@@ -399,21 +415,21 @@ void ff7_update_display_text_queue()
 			}
 
 			// Ending voice
-			if (auxTextFront.isDialogue && auxTextFront.hasStarted)
+			if (other_text_data_first.is_dialogue && other_text_data_first.has_started)
 			{
 				if (!nxAudioEngine.isVoicePlaying())
 				{
-					queueFront.n_frames = 0;
+					text_data_first.n_frames = 0;
 				}
 			}
 			else
 			{
-				queueFront.n_frames--;
+				text_data_first.n_frames--;
 			}
 			return;
 		}
 		if (!*ff7_externals.g_is_battle_paused && *ff7_externals.g_is_battle_running)
-			queueFront.wait_frames--;
+			text_data_first.wait_frames--;
 	}
 
 	((void (*)(short))ff7_externals.set_battle_text_active)(-1);
@@ -433,9 +449,8 @@ void voice_init()
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x48], (DWORD)&opcode_voice_ask);
 		replace_call_function((uint32_t)ff7_externals.opcode_ask + 0x8E, opcode_voice_parse_options);
 
-		// TODO: Battle dialogue
-		// replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
-		// replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
-		// replace_call_function(ff7_externals.run_enemy_ai_script + 0xB7F, ff7_enqueue_script_display_string);
+		replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
+		replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
+		replace_call_function(ff7_externals.run_enemy_ai_script + 0xB7F, ff7_enqueue_script_display_string);
 	}
 }
