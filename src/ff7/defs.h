@@ -58,7 +58,6 @@ void *ff7_menu_sub_6F5C0C(uint32_t param1, uint32_t param2, uint8_t param3, uint
 void *ff7_menu_sub_6FAC38(uint32_t param1, uint32_t param2, uint8_t param3, uint8_t param4, uint32_t param5);
 void ff7_limit_fps();
 void ff7_handle_ambient_playback();
-void ff7_handle_voice_playback();
 BOOL ff7_write_save_file(char slot);
 int ff7_field_load_models_atoi(const char* str);
 void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3);
