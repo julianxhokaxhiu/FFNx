@@ -366,8 +366,9 @@ void ff7_update_display_text_queue()
 					if (trace_all || trace_battle_text)
 						ffnx_trace("Begin voice of EnemyID: %04X for text: %s (filename: %s)\n", other_text_data_first.enemy_id, decoded_text.c_str(), filename.c_str());
 
-					begin_voice();
 					other_text_data_first.is_dialogue = other_text_data_first.has_started = play_battle_voice(other_text_data_first.enemy_id, filename);
+					if(other_text_data_first.has_started)
+						begin_voice();
 				}
 			}
 
@@ -410,9 +411,12 @@ void ff7_update_display_text_queue()
 
 			if (*ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running)
 			{
-				// TODO Pause voice
+				if (other_text_data_first.has_started && nxAudioEngine.isVoicePlaying())
+					nxAudioEngine.pauseVoice();
 				return;
 			}
+			else if (other_text_data_first.has_started && !nxAudioEngine.isVoicePlaying())
+				nxAudioEngine.resumeVoice();
 
 			// Ending voice
 			if (other_text_data_first.is_dialogue && other_text_data_first.has_started)
