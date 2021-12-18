@@ -932,6 +932,7 @@ struct ff8_externals
 	void (*show_vram_window)();
 	void (*refresh_vram_window)();
 	char* music_path;
+	uint32_t opcode_effectplay2;
 	uint32_t opcode_spuready;
 	uint32_t opcode_musicload;
 	uint32_t opcode_crossmusic;

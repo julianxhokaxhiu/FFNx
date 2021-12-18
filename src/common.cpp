@@ -334,9 +334,11 @@ struct game_mode *getmode_cached()
 
 char* get_current_field_name()
 {
-	char *ret = nullptr;
+	if (ff8) {
+		return common_externals.current_field_name;
+	}
 
-	if (!ff8) ret = strrchr(ff7_externals.field_file_name, 92);
+	char *ret = strrchr(ff7_externals.field_file_name, 92);
 
 	if (ret) ret += 1;
 
@@ -455,14 +457,14 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 	// Init Steam API
 	if(steam_edition || enable_steam_achievements)
-	{	
+	{
 		// generate automatically steam_appid.txt
 		if(!steam_edition){
 			std::ofstream steam_appid_file("steam_appid.txt");
 			steam_appid_file << ((ff8) ? FF8_APPID : FF7_APPID);
 			steam_appid_file.close();
 		}
-		
+
 		if (SteamAPI_RestartAppIfNecessary((ff8) ? FF8_APPID : FF7_APPID))
 		{
 			MessageBoxA(gameHwnd, "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n", "Steam App ID Wrong", 0);
