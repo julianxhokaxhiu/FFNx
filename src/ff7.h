@@ -620,6 +620,45 @@ struct battle_actor_vars
 	byte unused15;
 };
 
+struct battle_ai_context
+{
+	byte lastCommandIdx;  // 00
+	byte lastActionIdx;	  // 08
+	byte bankAccessValue; // 10
+	byte dummyByte;		  // 18
+	byte battleType;	  // 20
+	byte colorMask;		  // 30
+	byte limitLevel;	  // 38
+	byte unk3;			  // 40
+	byte unk4;			  // 48
+	byte pad;
+	uint16_t activeActorMask;	 // 50
+	uint16_t scriptOwnerMask;	 // 60
+	uint16_t actionTargetMask;	 // 70
+	uint16_t actorAlliesMask;	 // 80
+	uint16_t activeAlliesMask;	 // 90
+	uint16_t actorEnemiesMask;	 // A0
+	uint16_t activeEnemiesMask;	 // B0
+	uint16_t actorPartyMask;	 // C0
+	uint16_t enemyActorsMask;	 // D0
+	uint16_t allActorsMask;		 // E0
+	uint16_t unkMask2;			 // F0
+	uint16_t unkMask3;			 // 0x100
+	uint16_t endBattleFlags;	 // 2110
+	uint16_t lastActionElements; // 2120
+	uint16_t unkDword3;			 // 130
+	uint16_t battleFormationIdx; // 140
+	uint16_t lastAbsActionIdx;	 // 150
+	uint16_t unkBattleFlags;	 // 160
+	uint16_t specialAttackFlags; // 170
+	uint16_t unkLimitDivisor;	 // 180
+	uint16_t unkDword;			 // 190
+	uint16_t stringArgs;
+	uint16_t somethingEmerald; // 1A0
+	uint32_t partyGil;		   // 1C0
+	battle_actor_vars actor_vars[10];
+};
+
 struct battle_anim_event {
     byte attackerID;
     byte activeAllies;
@@ -2421,9 +2460,11 @@ struct ff7_externals
 	uint32_t battle_sub_5C8931;
 	uint32_t run_enemy_ai_script;
 	uint32_t enqueue_script_action;
+	uint32_t battle_sub_41B577;
+	uint32_t battle_sub_41CCB2;
 
 	std::span<battle_text_data> battle_display_text_queue;
-	std::span<battle_actor_vars> battle_actor_vars;
+	battle_ai_context *battle_context;
 	std::span<battle_anim_event> anim_event_queue;
 	byte* anim_event_index;
 	int* g_is_battle_running;

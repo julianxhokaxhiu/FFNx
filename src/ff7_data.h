@@ -757,9 +757,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_5C8931 = get_relative_call(ff7_externals.battle_sub_43526A, 0x1F0);
 	ff7_externals.run_enemy_ai_script = get_relative_call(ff7_externals.battle_sub_5C8931, 0xA0);
 	ff7_externals.enqueue_script_action = get_relative_call(ff7_externals.run_enemy_ai_script, 0xB7F);
+	ff7_externals.battle_sub_41B577 = get_relative_call(ff7_externals.battle_enter, 0x17);
+	ff7_externals.battle_sub_41CCB2 = get_relative_call(ff7_externals.battle_sub_41B577, 0xB);
 
 	ff7_externals.battle_display_text_queue = std::span((battle_text_data*)get_absolute_value(ff7_externals.add_text_to_display_queue, 0x25), 64);
-	ff7_externals.battle_actor_vars = std::span((battle_actor_vars*)get_absolute_value(ff7_externals.battle_sub_437DB0, 0x3B0), 10);
+	ff7_externals.battle_context = (battle_ai_context*)get_absolute_value(ff7_externals.battle_sub_41CCB2, 0x5F);
 	ff7_externals.anim_event_queue = std::span((battle_anim_event*)get_absolute_value(ff7_externals.battle_sub_42CBF9, 0x23), 64);
 	ff7_externals.anim_event_index = (byte*)get_absolute_value(ff7_externals.battle_sub_42CBF9, 0x19);
 	ff7_externals.g_is_battle_running = (int*)get_absolute_value(battle_main_loop, 0x247);
