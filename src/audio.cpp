@@ -571,6 +571,16 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 	std::optional<std::string> no_intro_track_opt = config[name]["no_intro_track"].value<std::string>();
 	std::optional<SoLoud::time> intro_seconds_opt = config[name]["intro_seconds"].value<SoLoud::time>();
 
+	if (offset_seconds_opt.has_value()) {
+		musicOptions->offsetSeconds = *offset_seconds_opt;
+	} else {
+		std::optional<std::string> offset_special_opt = config[name]["offset_seconds"].value<std::string>();
+
+		if (offset_special_opt.has_value() && offset_special_opt->compare("sync") == 0) {
+			musicOptions->sync = true;
+		}
+	}
+
 	if (musicOptions->noIntro) {
 		if (no_intro_track_opt.has_value()) {
 			std::string no_intro_track = *no_intro_track_opt;
@@ -586,14 +596,6 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 		}
 		else {
 			ffnx_info("%s: cannot play no intro track, please configure it in %s/config.toml\n", __func__, external_music_path.c_str());
-		}
-	} else if (offset_seconds_opt.has_value()) {
-		musicOptions->offsetSeconds = *offset_seconds_opt;
-	} else {
-		std::optional<std::string> offset_special_opt = config[name]["offset_seconds"].value<std::string>();
-
-		if (offset_special_opt.has_value() && offset_special_opt->compare("sync") == 0) {
-			musicOptions->sync = true;
 		}
 	}
 
