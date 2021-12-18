@@ -121,7 +121,7 @@ char ff8_midi[32];
 char* ff8_format_midi_name(const char* midi_name)
 {
 	// midi_name format: {num}{type}-{name}.sgt or {name}.sgt or _Missing.sgt
-	const char* truncated_name = strrchr(midi_name, '-');
+	const char* truncated_name = strchr(midi_name, '-');
 
 	if (nullptr != truncated_name) {
 		truncated_name += 1; // Remove "-"
