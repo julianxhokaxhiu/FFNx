@@ -127,6 +127,7 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 	const struct game_mode* mode = getmode_cached();
 	bool playing = false;
 	char track_name[64];
+	byte actor_id = 0xFF;
 
 	switch(mode->driver_mode)
 	{
@@ -138,6 +139,15 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 		break;
 	case MODE_WORLDMAP:
 		sprintf(track_name, "world_%d", id);
+		break;
+	case MODE_BATTLE:
+		actor_id = ff7_externals.anim_event_queue[0].attackerID;
+		if(actor_id >= 0 && actor_id <= 2)
+			sprintf(track_name, "battle_char_%02X_%d", ff7_externals.battle_context->actor_vars[actor_id].index, id);
+		else if(actor_id >= 4 && actor_id <= 9)
+			sprintf(track_name, "battle_enemy_%04X_%d", ff7_externals.battle_context->actor_vars[actor_id].formationID, id);
+		else
+			sprintf(track_name, "%d", id);
 		break;
 	default:
 		sprintf(track_name, "%d", id);
