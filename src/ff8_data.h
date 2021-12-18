@@ -137,6 +137,7 @@ void ff8_find_externals()
 	common_externals.get_movie_frame = get_relative_call(ff8_externals.sub_529FF0, 0x26);
 
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff8_externals.sub_529FF0, 0x65A);
+	ff8_externals.opcode_effectplay2 = common_externals.execute_opcode_table[0x21];
 	ff8_externals.opcode_spuready = common_externals.execute_opcode_table[0x56];
 	ff8_externals.opcode_musicload = common_externals.execute_opcode_table[0xB5];
 	ff8_externals.opcode_crossmusic = common_externals.execute_opcode_table[0xBA];
@@ -413,6 +414,7 @@ void ff8_find_externals()
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x65A);
 
 	common_externals.current_field_id = (WORD*)get_absolute_value(ff8_externals.main_loop, 0x21F); // 0x1CD2FC0
+	common_externals.current_field_name = (char*)get_absolute_value(ff8_externals.opcode_effectplay2, 0x75);
 	common_externals.previous_field_id = (WORD*)get_absolute_value(ff8_externals.sub_470250, 0x13); // 0x1CE4880
 	common_externals.update_entities_call = common_externals.update_field_entities + 0x657; // 0x52A647
 

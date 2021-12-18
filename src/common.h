@@ -244,6 +244,7 @@ struct common_externals
 	uint32_t* execute_opcode_table;
 	uint32_t update_field_entities;
 	WORD* current_field_id;
+	char* current_field_name;
 	WORD* previous_field_id;
 	uint32_t update_entities_call;
 };

@@ -438,6 +438,14 @@ bool ff8_skip_movies()
 	{
 		if (mode == MODE_FIELD)
 		{
+			// Prevent game acting weird or wrong if movie is skipped
+			if (
+				*common_externals.current_field_id == 339 // dosea_2
+			)
+			{
+				return false;
+			}
+
 			// Force last frame for field scripts
 			ff8_externals.movie_object->movie_current_frame = 0xFFFF;
 			(*ff8_externals.savemap)[80 / 4] = 0xFFFF;

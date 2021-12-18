@@ -201,17 +201,30 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 
 	if (ff8)
 	{
-		if (fullpath == nullptr || nxAudioEngine.canPlayMusic(music_name))
+		// Attempt to override field music
+		if (mode->driver_mode == MODE_FIELD)
 		{
-			playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
-		}
-		else if (fullpath != nullptr)
-		{
-			if (trace_all || trace_music) ffnx_info("%s: back to wav %s\n", __func__, fullpath);
+			char field_name[50];
 
-			options.useNameAsFullPath = true;
-			strcpy(options.format, "wav");
-			playing = nxAudioEngine.playMusic(fullpath, music_id, channel, options);
+			sprintf(field_name, "field_%s", get_current_field_name());
+
+			// Attempt to load theme by map name
+			playing = nxAudioEngine.playMusic(field_name, music_id, channel, options);
+		}
+
+		if (!playing) {
+			if (fullpath == nullptr || nxAudioEngine.canPlayMusic(music_name))
+			{
+				playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
+			}
+			else if (fullpath != nullptr)
+			{
+				if (trace_all || trace_music) ffnx_info("%s: back to wav %s\n", __func__, fullpath);
+
+				options.useNameAsFullPath = true;
+				strcpy(options.format, "wav");
+				playing = nxAudioEngine.playMusic(fullpath, music_id, channel, options);
+			}
 		}
 	}
 	else
