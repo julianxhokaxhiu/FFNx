@@ -101,7 +101,7 @@ void Metadata::updateFF8()
     int slotNumber = 1;
 
     // Hash existing save files
-    for (uint32_t idx = 0; idx < 60; idx++)
+    for (uint32_t idx = 0; idx < 61; idx++)
     {
         dataSize = userID.length();
         memset(dataBuffer, 0, sizeof(dataBuffer));
@@ -110,7 +110,11 @@ void Metadata::updateFF8()
         if (idx == 30) slotNumber = 2;
 
         // Append save file name
-        sprintf(currentSave + strlen(currentSave), R"(\slot%d_save%02i.ff8)", slotNumber, (slotNumber == 2 ? idx - 30 : idx) + 1);
+        if (idx == 60) {
+            strcpy(currentSave + strlen(currentSave), "\\chocorpg.ff8");
+        } else {
+            sprintf(currentSave + strlen(currentSave), R"(\slot%d_save%02i.ff8)", slotNumber, (slotNumber == 2 ? idx - 30 : idx) + 1);
+        }
 
         if (_access(currentSave, 0) == 0)
         {
@@ -146,10 +150,16 @@ void Metadata::updateFF8()
         {
             if (strcmp(savefile.name(), "savefile") == 0)
             {
-                if (strcmp(savefile.attribute("type").value(), "choco") == 0) continue;
-
-                saveNumber = std::atoi(savefile.attribute("num").value()) - 1;
-                slotNumber = std::atoi(savefile.attribute("slot").value());
+                if (strcmp(savefile.attribute("type").value(), "choco") == 0)
+                {
+                    saveNumber = 30;
+                    slotNumber = 2;
+                }
+                else
+                {
+                    saveNumber = std::atoi(savefile.attribute("num").value()) - 1;
+                    slotNumber = std::atoi(savefile.attribute("slot").value());
+                }
             }
 
             for (pugi::xml_node child : savefile.children())
