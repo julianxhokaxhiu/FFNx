@@ -1091,7 +1091,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT][name];
 	if (node)
 	{
-		// Shuffle SFX playback, if any entry found for the current id
+		// Shuffle Ambient playback, if any entry found for the current id
 		toml::array *shuffleIds = node["shuffle"].as_array();
 		if (shuffleIds && !shuffleIds->empty() && shuffleIds->is_homogeneous(toml::node_type::string))
 		{
@@ -1100,7 +1100,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(""), NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 		}
 
-		// Sequentially playback new SFX ids, if any entry found for the current id
+		// Sequentially playback new Ambient ids, if any entry found for the current id
 		toml::array *sequentialIds = node["sequential"].as_array();
 		if (sequentialIds && !sequentialIds->empty() && sequentialIds->is_homogeneous(toml::node_type::string))
 		{
