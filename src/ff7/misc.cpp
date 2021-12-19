@@ -511,7 +511,7 @@ void ff7_handle_ambient_playback()
 		}
 		if (*ff7_externals.is_battle_paused && nxAudioEngine.isAmbientPlaying())
 			nxAudioEngine.pauseAmbient();
-		else
+		else if (!(*ff7_externals.is_battle_paused) && !(nxAudioEngine.isAmbientPlaying()))
 			nxAudioEngine.resumeAmbient();
 		break;
   case MODE_FIELD:
