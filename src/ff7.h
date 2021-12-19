@@ -109,6 +109,36 @@ enum model_modes
 	MDL_USE_CAMERA_MATRIX     = 0x8000,
 };
 
+enum class cmd_id
+{
+	CMD_ATTACK = 0x01,
+	CMD_MAGIC = 0x02,
+	CMD_SUMMON = 0x03,
+	CMD_ITEM = 0x04,
+	CMD_STEAL = 0x05,
+	CMD_SENSE = 0x06,
+	CMD_COIN = 0x07,
+	CMD_THROW = 0x08,
+	CMD_MORPH = 0x09,
+	CMD_DEATHBLOW = 0x0A,
+	CMD_MANIPULATE = 0x0B,
+	CMD_MIME = 0x0C,
+	CMD_ENEMY_SKILL = 0x0D,
+	CMD_MUG = 0x11,
+	CMD_CHANGE = 0x12,
+	CMD_DEFEND = 0x13,
+	CMD_LIMIT = 0x14,
+	CMD_W_MAGIC = 0x15,
+	CMD_W_SUMMON = 0x16,
+	CMD_W_ITEM = 0x17,
+	CMD_SLASH_ALL = 0x18,
+	CMD_DOUBLE_CUT = 0x19,
+	CMD_FLASH = 0x1A,
+	CMD_QUAD_CUT = 0x1B,
+	CMD_ENEMY_ACTION = 0x20,
+	CMD_POISONTICK = 0x23
+};
+
 // internal structure for menu sprites (global values, may not be a structure at all)
 struct menu_objects
 {
@@ -559,7 +589,7 @@ struct battle_actor_data
 	uint32_t action_power;
 	uint32_t attack_power;
 	uint32_t action_target_mask;
-	uint32_t field_54_others[206];
+	uint32_t field_54[206];
 };
 
 struct battle_actor_vars
@@ -2309,8 +2339,8 @@ struct ff7_externals
 	uint32_t menu_battle_end_sub_6C9543;
 	uint32_t menu_sub_71FF95, menu_shop_loop, get_materia_gil, opcode_increase_gil_call;
 	uint32_t opcode_add_materia_inventory_call, menu_sub_6CBCF3, menu_sub_705D16, menu_sub_6CC17F;
-	uint32_t battle_sub_42782A;
-	uint32_t battle_set_command_and_action_id;
+	uint32_t display_battle_action_text_42782A;
+	uint32_t display_battle_action_text_sub_6D71FA;
 	uint32_t menu_decrease_item_quantity;
 	uint32_t sub_610973, sub_611098;
 	uint32_t sub_60FA7D;
@@ -2470,6 +2500,7 @@ struct ff7_externals
 	int* g_is_battle_running;
 	WORD* field_battle_word_BF2E08;
 	WORD* field_battle_word_BF2032;
+	byte* g_active_actor_id;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
