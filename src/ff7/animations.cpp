@@ -386,8 +386,10 @@ void ff7_execute_effect100_fn()
     {
         if ((ff7_externals.effect100_array_fn[fn_index] == 0) || (ff7_externals.field_dword_9AD1AC == 0))
         {
-            if (isNewEffect100Function[fn_index])
+            if (isNewEffect100Function[fn_index]){
+                ff7_externals.effect100_array_data[fn_index].field_6 *= frame_multiplier;
                 isNewEffect100Function[fn_index] = false;
+            } 
 
             if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
                 ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
@@ -396,7 +398,11 @@ void ff7_execute_effect100_fn()
         {
             if (isNewEffect100Function[fn_index])
             {
-                if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_425D29)
+                if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
+                {
+                    ff7_externals.effect100_array_data[fn_index].field_6 *= frame_multiplier;
+                }
+                else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_425D29)
                 {
                     ff7_externals.effect100_array_data[fn_index].n_frames *= frame_multiplier;
                 }
@@ -412,8 +418,7 @@ void ff7_execute_effect100_fn()
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_disintegrate_2_death_5BBA82 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_morph_death_5BC812 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_5C0E4B ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_5D4240 ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
+                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_5D4240)
                 {
                     // these are already fixed functions 
                 }
