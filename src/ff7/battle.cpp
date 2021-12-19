@@ -50,7 +50,7 @@ void ff7_battle_sub_5C7F94(int param_1, int param_2){
 	g_FF7SteamAchievements->unlockGilAchievement(ff7_externals.savemap->gil);
 }
 
-void ff7_battle_set_command_and_action_id(short command_id, short action_id){
+void ff7_display_battle_action_text_sub_6D71FA(short command_id, short action_id){
 	ff7_externals.battle_actor_data->formation_entry = 1;
 	ff7_externals.battle_actor_data->command_index = command_id;
 	ff7_externals.battle_actor_data->action_index = action_id;

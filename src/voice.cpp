@@ -33,16 +33,16 @@ enum class display_type
 {
 	NONE = 0,
 	DIALOGUE,
-	CMD_TEXT,
-	OTHERS
+	CHAR_CMD
 };
 
 struct battle_text_aux_data{
-	bool has_started;
-	display_type text_type;
-	bool is_paused;
+	bool has_started {false};
+	bool follow_voice {false};
+	display_type text_type {display_type::NONE};
+	int page_count {0};
 	uint16_t enemy_id;
-	byte command_id;
+	cmd_id command_id;
 	byte char_id;
 };
 
@@ -102,21 +102,57 @@ bool play_battle_dialogue_voice(short enemy_id, std::string tokenized_dialogue)
 
 	sprintf(name, "_battle/enemy_%04X/%s", enemy_id, tokenized_dialogue.c_str());
 
-	if(!nxAudioEngine.canPlayVoice(name))
-		return false;
+	return nxAudioEngine.playVoice(name, voice_volume);
+}
+
+bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenized_dialogue, int page_count)
+{
+	char name[MAX_PATH];
+
+	char page = 'a' + page_count;
+	if (page > 'z') page = 'z';
+	sprintf(name, "_battle/char_%02X/cmd_%02X_", char_id, command_id);
+
+	switch(command_id)
+	{
+	case cmd_id::CMD_MANIPULATE:
+		// 2 cases: manipulated, couldnt
+	case cmd_id::CMD_STEAL:
+	case cmd_id::CMD_MUG:
+		// 3 cases: nothing, couldnt, stole
+		sprintf(name + strlen(name), "%s", split(tokenized_dialogue, "_")[0].c_str());
+		break;
+	default:
+		sprintf(name + strlen(name), "%c", page);
+		break;
+	}
+
+	if(!nxAudioEngine.canPlayVoice(name) && page_count == 0)
+		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
 
 	return nxAudioEngine.playVoice(name, voice_volume);
 }
 
-bool play_battle_cmd_voice(byte char_id, byte command_id, std::string tokenized_dialogue)
+bool play_battle_action_voice(byte char_id, byte command_id, short action_id)
 {
 	char name[MAX_PATH];
 
-
-	sprintf(name, "_battle/char_%02X/cmd_%02X/%s", char_id, command_id, tokenized_dialogue.c_str());
+	sprintf(name, "_battle/char_%02X/cmd_%02X_%04X", char_id, command_id, action_id);
 
 	if(!nxAudioEngine.canPlayVoice(name))
-		return false;
+		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
+
+	return nxAudioEngine.playVoice(name, voice_volume);
+}
+
+bool play_battle_action_support_voice(byte receiving_char_id, byte talking_char_id, byte command_id, short action_id)
+{
+	char name[MAX_PATH];
+
+	sprintf(name, "_battle/char_%02X_to_%02X/cmd_%02X_%04X", talking_char_id, receiving_char_id, command_id, action_id);
+
+	if(!nxAudioEngine.canPlayVoice(name))
+		sprintf(name, "_battle/char_%02X_to_%02X/cmd_%02X", talking_char_id, receiving_char_id, command_id);
 
 	return nxAudioEngine.playVoice(name, voice_volume);
 }
@@ -140,6 +176,17 @@ void end_voice(uint32_t time = 0)
 			nxAudioEngine.restoreMusicMasterVolume(time > 0 ? time : 1);
 		else
 			set_master_music_volume(previous_master_music_volume);
+	}
+}
+
+void handle_pause_voice(bool has_voice_started, bool is_paused)
+{
+	if(has_voice_started)
+	{
+		if (is_paused && nxAudioEngine.isVoicePlaying())
+			nxAudioEngine.pauseVoice();
+		else if (!is_paused && !nxAudioEngine.isVoicePlaying())
+			nxAudioEngine.resumeVoice();
 	}
 }
 
@@ -378,10 +425,11 @@ void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_fra
 			ffnx_trace("Add text string to be displayed: (text_id: %d, field_2: %d, wait_frames: %d, n_frames: %d)\n", text_data->buffer_idx, text_data->field_2, text_data->wait_frames, text_data->n_frames);
 
 		int index = std::distance(ff7_externals.battle_display_text_queue.begin(), text_data);
-		int attacker_id = ff7_externals.anim_event_queue[*ff7_externals.anim_event_index].attackerID;
-		if (attacker_id == 10 && n_frames == 0 && buffer_idx >= 256) // if text are immediately displayed, could also use !empty() for this
+		byte attacker_id = ff7_externals.anim_event_queue[*ff7_externals.anim_event_index].attackerID;
+		if (attacker_id == 10 && n_frames == 0 && buffer_idx >= 256)
 		{
 			other_battle_display_text_queue[index].has_started = false;
+			other_battle_display_text_queue[index].follow_voice = true;
 			other_battle_display_text_queue[index].text_type = display_type::DIALOGUE;
 			if (!display_string_actor_queue.empty())
 			{
@@ -390,12 +438,25 @@ void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_fra
 				other_battle_display_text_queue[index].enemy_id = ff7_externals.battle_context->actor_vars[actor_id].formationID;
 			}
 		}
-		else if(attacker_id >= 0 && attacker_id <= 2)
+		else
 		{
+			if (attacker_id == 10)
+				attacker_id = ff7_externals.anim_event_queue[0].attackerID;
+
 			other_battle_display_text_queue[index].has_started = false;
-			other_battle_display_text_queue[index].text_type = display_type::CMD_TEXT;
-			other_battle_display_text_queue[index].command_id = ff7_externals.battle_context->lastCommandIdx;
-			other_battle_display_text_queue[index].char_id = ff7_externals.battle_context->actor_vars[attacker_id].index;
+			other_battle_display_text_queue[index].follow_voice = false;
+			other_battle_display_text_queue[index].page_count = index;
+			other_battle_display_text_queue[index].command_id = static_cast<cmd_id>(ff7_externals.battle_context->lastCommandIdx);
+
+			if (attacker_id >= 0 && attacker_id <= 2)
+			{
+				other_battle_display_text_queue[index].text_type = display_type::CHAR_CMD;
+				other_battle_display_text_queue[index].char_id = ff7_externals.battle_context->actor_vars[attacker_id].index;
+			}
+			else
+			{
+				other_battle_display_text_queue[index].text_type = display_type::NONE;
+			}
 		}
 	}
 }
@@ -427,9 +488,10 @@ void ff7_update_display_text_queue()
 						ffnx_trace("Begin voice of EnemyID: %04X for text: %s (filename: %s)\n", other_text_data_first.enemy_id, decoded_text.c_str(), tokenized_dialogue.c_str());
 					
 					break;
-				case display_type::CMD_TEXT:
+				case display_type::CHAR_CMD:
 					tokenized_dialogue = tokenize_text(decoded_text);
-					other_text_data_first.has_started = play_battle_cmd_voice(other_text_data_first.char_id, other_text_data_first.command_id, tokenized_dialogue);
+					other_text_data_first.has_started = play_battle_cmd_voice(other_text_data_first.char_id, other_text_data_first.command_id,
+																			  tokenized_dialogue, other_text_data_first.page_count);
 
 					if (trace_all || trace_battle_text)
 						ffnx_trace("Begin voice for (character ID: %d; command ID: %X) [filename: %s]\n",
@@ -442,7 +504,7 @@ void ff7_update_display_text_queue()
 
 				other_text_data_first.text_type = (!other_text_data_first.has_started) ? display_type::NONE : other_text_data_first.text_type;
 				if(other_text_data_first.has_started)
-						begin_voice();
+					begin_voice();
 			}
 
 			if (text_data_first.field_2 != 0)
@@ -482,17 +544,13 @@ void ff7_update_display_text_queue()
 			if (show_text)
 				((void (*)(short))ff7_externals.set_battle_text_active)(text_data_first.buffer_idx);
 
+			handle_pause_voice(other_text_data_first.has_started, *ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running);
+
 			if (*ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running)
-			{
-				if (other_text_data_first.has_started && nxAudioEngine.isVoicePlaying())
-					nxAudioEngine.pauseVoice();
 				return;
-			}
-			else if (other_text_data_first.has_started && !nxAudioEngine.isVoicePlaying())
-				nxAudioEngine.resumeVoice();
 
 			// Ending voice
-			if (other_text_data_first.has_started)
+			if (other_text_data_first.has_started && other_text_data_first.follow_voice)
 			{
 				if (!nxAudioEngine.isVoicePlaying())
 				{
@@ -513,6 +571,73 @@ void ff7_update_display_text_queue()
 	*ff7_externals.field_battle_word_BF2E08 = *ff7_externals.field_battle_word_BF2E08 & 0xFFFD;
 }
 
+void ff7_display_battle_action_text()
+{
+	auto &effect_data = ff7_externals.effect100_array_data[*ff7_externals.effect100_array_idx];
+	constexpr short VOICE_STARTED = -2;
+	constexpr short VOICE_NOT_STARTED = -1;
+
+	if(effect_data.field_6 <= 0)
+	{
+		// Play voice
+		if(effect_data.field_6 == 0)
+		{
+			byte actor_id = *ff7_externals.g_active_actor_id;
+			if(actor_id >= 0 && actor_id <= 2)
+			{
+				byte char_id = ff7_externals.battle_context->actor_vars[actor_id].index;
+				byte command_id = ff7_externals.g_battle_model_state[actor_id].commandID;
+				uint16_t action_id = ff7_externals.g_small_battle_model_state[actor_id].actionIdx;
+
+				int actor_playing_voice = getRandomInt(0, 2);
+				bool hasStarted = false;
+				if (actor_playing_voice == actor_id)
+					hasStarted = play_battle_action_voice(char_id, command_id, action_id);
+				else
+					hasStarted = play_battle_action_support_voice(char_id, ff7_externals.battle_context->actor_vars[actor_playing_voice].index,
+																  command_id, action_id);
+
+				if(hasStarted){
+					effect_data.field_6 = VOICE_STARTED;
+					begin_voice();
+				}
+				else
+					effect_data.field_6 = VOICE_NOT_STARTED;
+			}
+			else
+			{
+				effect_data.field_6 = VOICE_NOT_STARTED;
+			}
+		}
+
+		if(effect_data.n_frames == 0)
+		{
+			if(effect_data.field_6 = VOICE_STARTED)
+				end_voice();
+			effect_data.field_0 = 0xFFFF;
+		}
+		else
+		{
+			int show_text = ((int (*)())ff7_externals.battle_sub_66C3BF)();
+			if(show_text)
+			{
+				byte command_id = ff7_externals.g_battle_model_state[*ff7_externals.g_active_actor_id].commandID;
+				uint16_t action_id = ff7_externals.g_small_battle_model_state[*ff7_externals.g_active_actor_id].actionIdx;
+				((void(*)(short, short))ff7_externals.display_battle_action_text_sub_6D71FA)(command_id, action_id);
+				if(*ff7_externals.g_is_battle_running != 0)
+					effect_data.n_frames--;
+			}
+		}
+
+		handle_pause_voice(effect_data.field_6 == VOICE_STARTED, !*ff7_externals.g_is_battle_running);
+	}
+	else
+	{
+		if(*ff7_externals.g_is_battle_running != 0)
+			effect_data.field_6--;
+	}
+}
+
 void voice_init()
 {
 	if (!ff8)
@@ -528,6 +653,7 @@ void voice_init()
 
 		replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
 		replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
+		replace_function(ff7_externals.display_battle_action_text_42782A, ff7_display_battle_action_text);
 		replace_call_function(ff7_externals.run_enemy_ai_script + 0xB7F, ff7_enqueue_script_display_string);
 	}
 }

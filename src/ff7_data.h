@@ -707,7 +707,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_42C823 = get_absolute_value(battle_sub_42C31C, 0x198);
 
 	// display string for actor actions
-	ff7_externals.battle_sub_42782A = get_absolute_value(ff7_externals.run_animation_script, 0x4906);
+	ff7_externals.display_battle_action_text_42782A = get_absolute_value(ff7_externals.run_animation_script, 0x4906);
 	ff7_externals.get_n_frames_display_action_string = get_relative_call(ff7_externals.run_animation_script, 0x4918);
 	ff7_externals.field_byte_DC0E11 = (byte*)get_absolute_value(ff7_externals.get_n_frames_display_action_string, 0x6);
 
@@ -767,6 +767,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.g_is_battle_running = (int*)get_absolute_value(battle_main_loop, 0x247);
 	ff7_externals.field_battle_word_BF2E08 = (WORD*)get_absolute_value(ff7_externals.update_display_text_queue, 0xA);
 	ff7_externals.field_battle_word_BF2032 = (WORD*)get_absolute_value(ff7_externals.update_display_text_queue, 0x12C);
+	ff7_externals.g_active_actor_id = (byte*)get_absolute_value(ff7_externals.display_battle_action_text_42782A, 0x52);
 	// --------------------------------
 
 	//ff7 achievement related externals
@@ -787,8 +788,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.opcode_increase_gil_call = get_relative_call(ff7_externals.opcode_goldu, 0x38);
 
 	uint32_t battle_sub_5BF01F = get_relative_call(ff7_externals.battle_sub_42D992, 0x12E);
-	ff7_externals.battle_sub_42782A = get_absolute_value(battle_sub_5BF01F, 0xC4);
-	ff7_externals.battle_set_command_and_action_id = get_relative_call(ff7_externals.battle_sub_42782A, 0x77);
+	ff7_externals.display_battle_action_text_42782A = get_absolute_value(battle_sub_5BF01F, 0xC4);
+	ff7_externals.display_battle_action_text_sub_6D71FA = get_relative_call(ff7_externals.display_battle_action_text_42782A, 0x77);
 
 	ff7_externals.opcode_add_materia_inventory_call = get_relative_call(ff7_externals.opcode_smtra, 0x72);
 	ff7_externals.menu_sub_6CBCF3 = get_relative_call(ff7_externals.opcode_add_materia_inventory_call, 0x43);

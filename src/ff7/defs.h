@@ -26,7 +26,7 @@ void magic_thread_start(void (*func)());
 void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3);
 void ff7_battle_sub_5C7F94(int param_1, int param_2);
 
-void ff7_battle_set_command_and_action_id(short command_id, short action_id);
+void ff7_display_battle_action_text_sub_6D71FA(short command_id, short action_id);
 
 // menu
 void ff7_menu_battle_end_sub_6C9543();
