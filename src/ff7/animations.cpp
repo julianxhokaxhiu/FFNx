@@ -373,7 +373,7 @@ int ff7_add_fn_to_effect100_fn(uint32_t function)
     ff7_externals.effect100_array_data[idx].field_0 = *ff7_externals.effect100_array_idx;
     *ff7_externals.effect100_counter = *ff7_externals.effect100_counter + 1;
 
-    extFramesCounterEffect100[idx] = 0;
+    extFramesCounterEffect100[idx] = 1;
     useExtFramesCounterEffect100[idx] = false;
     isNewEffect100Function[idx] = true;
     return idx;
@@ -520,7 +520,7 @@ void ff7_execute_effect10_fn()
                     effect10_data.field_A /= frame_multiplier;
                     effect10_data.field_C /= frame_multiplier;
                 }
-                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_to_enemy_426A26)
+                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_426A26)
                 {
                     // Animation of moving characters from attacker to attacked
                     effect10_data.n_frames *= frame_multiplier;
@@ -528,7 +528,7 @@ void ff7_execute_effect10_fn()
                     effect10_data.field_C /= frame_multiplier;
                     effect10_data.field_E /= frame_multiplier;
                 }
-                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_42739D)
+                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_42739D)
                 {
                     // Animation of moving characters from attacker to attacked
                     effect10_data.n_frames *= frame_multiplier;
@@ -537,12 +537,12 @@ void ff7_execute_effect10_fn()
                     effect10_data.field_C /= frame_multiplier;
                     effect10_data.field_E /= frame_multiplier;
                 }
-                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_426F58)
+                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_426F58)
                 {
                     effect10_data.n_frames *= frame_multiplier;
                     // Do not modify the others, already done elsewhere
                 }
-                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_to_enemy_4270DE)
+                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_4270DE)
                 {
                     // Animation of moving characters for some limit breaks from attacker to attacked
                     effect10_data.n_frames *= frame_multiplier;
@@ -589,7 +589,7 @@ int ff7_add_fn_to_effect60_fn(uint32_t function)
     ff7_externals.effect60_array_data[idx].field_0 = *ff7_externals.effect60_array_idx;
     *ff7_externals.effect60_counter = *ff7_externals.effect60_counter + 1;
 
-    extFramesCounterEffect60[idx] = 0;
+    extFramesCounterEffect60[idx] = 1;
     useExtFramesCounterEffect60[idx] = false;
     isNewEffect60Function[idx] = true;
     return idx;
@@ -625,6 +625,7 @@ void ff7_execute_effect60_fn()
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_boss_death_sub_5BC5EC ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BCD42 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BE4E2 ||
+                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.display_battle_damage_5BB410 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5C18BC)
                 {
                     // these are already fixed functions 
@@ -651,9 +652,11 @@ void ff7_execute_effect60_fn()
                 ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
 
                 isAddFunctionDisabled = false;
-                if (extFramesCounterEffect60[fn_index] % frame_multiplier != 0)
+                if (extFramesCounterEffect60[fn_index] % frame_multiplier != 0){
+                    ff7_externals.effect60_array_data[fn_index].field_0 = data_prev.field_0;
                     ff7_externals.effect60_array_data[fn_index].field_2 = data_prev.field_2;
-
+                }
+                
                 extFramesCounterEffect60[fn_index]++;
             }
             else
@@ -740,7 +743,7 @@ void ff7_battle_disintegrate_1_death_sub_5BC04D(byte effect10_array_idx)
     }
 }
 
-void ff7_battle_sub_426F58()
+void ff7_battle_move_character_sub_426F58()
 {
     auto &fn_data = ff7_externals.effect10_array_data[*ff7_externals.effect10_array_idx];
     if (fn_data.n_frames == 0)

@@ -2421,6 +2421,7 @@ struct ff7_externals
 	uint32_t battle_sub_5D4240;
 	uint32_t battle_sub_5BD96D;
 	uint32_t battle_sub_425D29;
+	uint32_t display_battle_damage_5BB410;
 	uint32_t battle_sub_5BDA0F;
 	uint32_t get_n_frames_display_action_string;
 	uint32_t battle_sub_426DE3;
@@ -2430,10 +2431,10 @@ struct ff7_externals
 	uint32_t battle_sub_5C1C8F;
 	uint32_t battle_sub_42C66D;
 	uint32_t battle_sub_42C823;
-	uint32_t battle_move_character_to_enemy_426A26;
-	uint32_t battle_sub_42739D;
-	uint32_t battle_sub_426F58;
-	uint32_t battle_move_character_to_enemy_4270DE;
+	uint32_t battle_move_character_sub_426A26;
+	uint32_t battle_move_character_sub_42739D;
+	uint32_t battle_move_character_sub_426F58;
+	uint32_t battle_move_character_sub_4270DE;
 	uint32_t battle_sub_5C18BC;
 	uint32_t battle_sub_4276B6;
 	uint32_t battle_sub_4255B7;
