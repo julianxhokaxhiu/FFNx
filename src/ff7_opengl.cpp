@@ -31,6 +31,9 @@
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
+byte y_pos_offset_display_damage_30[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0};
+byte y_pos_offset_display_damage_60[] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8,
+										 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 void ff7_init_hooks(struct game_obj *_game_object)
 {
@@ -276,9 +279,22 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				replace_function(ff7_externals.get_n_frames_display_action_string, ff7_get_n_frames_display_action_string);
 
 				// Character movement (e.g. movement animation for attacks)
-				replace_function(ff7_externals.battle_sub_426F58, ff7_battle_sub_426F58);
+				replace_function(ff7_externals.battle_move_character_sub_426F58, ff7_battle_move_character_sub_426F58);
 
-				// Effect60 related (Show damage (0x5BB410 TODO replace function), limit break aura animation, summon aura animation, ...)
+				// Show Damage
+				patch_multiply_code<WORD>(ff7_externals.display_battle_damage_5BB410 + 0x54, frame_multiplier);
+				if(frame_multiplier == 2)
+				{
+					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x1E2, (DWORD)y_pos_offset_display_damage_30);
+					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x2D7, (DWORD)y_pos_offset_display_damage_30);
+				}
+				else if(frame_multiplier == 4)
+				{
+					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x1E2, (DWORD)y_pos_offset_display_damage_60);
+					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x2D7, (DWORD)y_pos_offset_display_damage_60);
+				}
+
+				// Effect60 related (limit break aura animation, summon aura animation, ...)
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C18BC + 0xDC, frame_multiplier);
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C1C8F + 0x55, frame_multiplier);
 

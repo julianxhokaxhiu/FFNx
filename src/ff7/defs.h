@@ -80,7 +80,7 @@ void ff7_execute_effect60_fn();
 void ff7_execute_effect10_fn();
 void ff7_boss_death_animation_5BC5EC();
 void ff7_battle_sub_5BD96D();
-void ff7_battle_sub_426F58();
+void ff7_battle_move_character_sub_426F58();
 int ff7_get_n_frames_display_action_string();
 void ff7_battle_disintegrate_1_death_sub_5BC04D(byte effect10_array_idx);
 
