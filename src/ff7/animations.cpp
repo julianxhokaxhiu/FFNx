@@ -688,22 +688,9 @@ void ff7_boss_death_animation_5BC5EC()
         if (fn_data.n_frames == (58 * frame_multiplier) || fn_data.n_frames == (64 * frame_multiplier))
             *ff7_externals.field_battle_BFB2E0 = ((uint32_t(*)(byte, byte, byte))ff7_externals.battle_boss_death_call_5BD436)(0xFA, 0xFA, 0xFA);
 
-        int sign = ((fn_data.n_frames & 1) == 0) ? -1 : 1;
-        getBattleModelState(fn_data.field_8)->restingZPosition = fn_data.field_A + sign * 0x40;
-        fn_data.n_frames--;
-    }
-}
-
-void ff7_battle_sub_5BD96D()
-{
-    auto &fn_data = ff7_externals.effect60_array_data[*ff7_externals.effect60_array_idx];
-    if (fn_data.n_frames == 0)
-    {
-        fn_data.field_0 = 0xFFFF;
-    }
-    else
-    {
-        getBattleModelState(fn_data.field_6)->field_6 += fn_data.field_2;
+        std::array<short, 8> offset_z_position {64, 32, 0, -32, -64, -32, 0, 32};
+        int index = ((fn_data.n_frames * (4 / frame_multiplier)) % offset_z_position.size());
+        getBattleModelState(fn_data.field_8)->restingZPosition = fn_data.field_A + offset_z_position[index];
         fn_data.n_frames--;
     }
 }

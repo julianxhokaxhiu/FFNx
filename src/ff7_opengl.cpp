@@ -31,9 +31,10 @@
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
-byte y_pos_offset_display_damage_30[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0};
-byte y_pos_offset_display_damage_60[] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8,
-										 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+byte y_pos_offset_display_damage_30[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2};
+//byte y_pos_offset_display_damage_60[] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 1, 0, 0};
+byte y_pos_offset_display_damage_60[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 7, 8, 8, 8, 8, 8, 7, 7, 7, 6, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0, 0, 1, 1, 0, 0, 0};
+										
 
 void ff7_init_hooks(struct game_obj *_game_object)
 {
@@ -273,7 +274,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5D4240 + 0x24, frame_multiplier);
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5D4240 + 0x57, frame_multiplier);
-				replace_function(ff7_externals.battle_sub_5BD96D, ff7_battle_sub_5BD96D);
 
 				// Display string related
 				replace_function(ff7_externals.get_n_frames_display_action_string, ff7_get_n_frames_display_action_string);
