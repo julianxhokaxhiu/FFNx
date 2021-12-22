@@ -725,6 +725,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.resting_Y_array_data = (short*)get_absolute_value(ff7_externals.battle_move_character_sub_426F58, 0x122);
 	ff7_externals.battle_move_character_sub_4270DE = get_absolute_value(ff7_externals.run_animation_script, 0x2357);
 
+	// aura animations (magic, limit breaks, enemy skill and summon)
+	ff7_externals.handle_aura_effects_425520 = get_absolute_value(ff7_externals.run_animation_script, 0x3F7A);
+	ff7_externals.run_aura_effects_5C0230 = get_relative_call(ff7_externals.handle_aura_effects_425520, 0x42);
+	ff7_externals.magic_aura_effects_5C0300 = get_absolute_value(ff7_externals.run_aura_effects_5C0230, 0x66);
+	ff7_externals.limit_break_aura_effects_5C0572 = get_absolute_value(ff7_externals.run_aura_effects_5C0230, 0x72);
+	ff7_externals.enemy_skill_aura_effects_5C06BF = get_absolute_value(ff7_externals.run_aura_effects_5C0230, 0x7E);
+	ff7_externals.handle_summon_aura_5C0850 = get_absolute_value(ff7_externals.run_aura_effects_5C0230, 0x8F);
+	ff7_externals.summon_aura_effects_5C0953 = get_absolute_value(ff7_externals.handle_summon_aura_5C0850, 0x31);
+
 	// effect 60 related
 	ff7_externals.battle_sub_5C18BC = get_absolute_value(battle_sub_5C1B81, 0x30);
 	uint32_t battle_sub_5BD847 = get_relative_call(battle_sub_5B9EC2, 0x4D);

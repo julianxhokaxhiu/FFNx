@@ -294,7 +294,32 @@ void ff7_init_hooks(struct game_obj *_game_object)
 					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x2D7, (DWORD)y_pos_offset_display_damage_60);
 				}
 
-				// Effect60 related (limit break aura animation, summon aura animation, ...)
+				// Aura animation (magic, limit break, enemy skill, summon)
+				patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x4C, 0x7 - frame_multiplier / 2);
+				patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x6A, 0xA - frame_multiplier / 2);
+				patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x88, frame_multiplier);
+				patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0xA2, 0xC - frame_multiplier / 2);
+				patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x138, frame_multiplier);
+				patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x4C, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x6E, frame_multiplier);
+				patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x7A, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x98, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0xAD, frame_multiplier);
+				patch_code_byte(ff7_externals.limit_break_aura_effects_5C0572 + 0xB0, 0x9 - frame_multiplier / 2);
+				patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x13E, frame_multiplier);
+				patch_multiply_code<DWORD>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x5C, frame_multiplier);
+				patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x64, 0x7 - frame_multiplier / 2);
+				patch_multiply_code<DWORD>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x81, frame_multiplier);
+				patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x89, 0xA - frame_multiplier / 2);
+				patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xA7, frame_multiplier);
+				patch_divide_code<int>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xB3, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xD6, frame_multiplier);
+				patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xD9, 0xC - frame_multiplier / 2);
+				patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x182, frame_multiplier);
+				patch_code_byte(ff7_externals.summon_aura_effects_5C0953 + 0x4D, 0xC - frame_multiplier / 2);
+				patch_multiply_code<byte>(ff7_externals.summon_aura_effects_5C0953 + 0x19D, frame_multiplier);
+
+				// Effect60 related
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C18BC + 0xDC, frame_multiplier);
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C1C8F + 0x55, frame_multiplier);
 
