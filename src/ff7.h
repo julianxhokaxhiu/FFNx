@@ -706,8 +706,8 @@ struct bcamera_position{
 	short location_y;
 	short location_z;
 	WORD unused_6;
-	WORD current_position;
-	WORD frames_to_wait;
+	short current_position;
+	short frames_to_wait;
 	byte field_C;
 	byte field_D;
 };
@@ -2435,6 +2435,13 @@ struct ff7_externals
 	uint32_t battle_move_character_sub_42739D;
 	uint32_t battle_move_character_sub_426F58;
 	uint32_t battle_move_character_sub_4270DE;
+	uint32_t handle_aura_effects_425520;
+	uint32_t run_aura_effects_5C0230;
+	uint32_t magic_aura_effects_5C0300;
+	uint32_t limit_break_aura_effects_5C0572;
+	uint32_t enemy_skill_aura_effects_5C06BF;
+	uint32_t handle_summon_aura_5C0850;
+	uint32_t summon_aura_effects_5C0953;
 	uint32_t battle_sub_5C18BC;
 	uint32_t battle_sub_4276B6;
 	uint32_t battle_sub_4255B7;

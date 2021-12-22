@@ -141,15 +141,19 @@ const std::unordered_map<byte, int> numArgsOpCode = {
 };
 
 const std::unordered_set<byte> endingOpCode{{0xA2, 0xA7, 0xA9, 0xB6, 0xF1}};
-std::array<bool, 100> isNewEffect100Function{};
-std::array<bool, 10> isNewEffect10Function{};
-std::array<bool, 60> isNewEffect60Function{};
 std::unordered_set<uint32_t> patchedAddress{};
 
-std::array<int, 100> extFramesCounterEffect100;
-std::array<bool, 100> useExtFramesCounterEffect100;
-std::array<int, 60> extFramesCounterEffect60;
-std::array<bool, 60> useExtFramesCounterEffect60;
+struct aux_effect_data
+{
+    bool isFirstTimeRunning;
+    bool useFrameCounter;
+    int frameCounter;
+};
+
+std::array<aux_effect_data, 100> aux_effect100_data;
+std::array<aux_effect_data, 60> aux_effect60_data;
+std::array<aux_effect_data, 10> aux_effect10_data;
+
 bool isAddFunctionDisabled = false;
 
 void patchAnimationScriptArg(byte *scriptPointer, byte position)
@@ -202,8 +206,6 @@ void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable)
 
     byte script_wait_frames = *ff7_externals.g_script_wait_frames;
 
-    if (trace_all || trace_battle_animation)
-        ffnx_trace("%s - running animation script with idx: %d for actor %d. current position: %i\n", __func__, ownerModelState.animScriptIndex, actorID, ownerModelState.currentScriptPosition);
     if (!*ff7_externals.g_is_battle_paused)
     {
         bool isScriptActive = true;
@@ -221,9 +223,6 @@ void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable)
             while (isScriptActive)
             {
                 byte currentOpCode = scriptPtr[ownerModelState.currentScriptPosition++];
-
-                if (trace_all || trace_battle_animation)
-                    ffnx_trace("opcode: 0x%x\n", currentOpCode);
 
                 switch (currentOpCode)
                 {
@@ -334,8 +333,6 @@ void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable)
                     }
                     else
                     {
-                        if (trace_all || trace_battle_animation)
-                            ffnx_trace("not existing opcode: 0x%02x\n", currentOpCode);
                         isScriptActive = false;
                     }
                     break;
@@ -373,9 +370,9 @@ int ff7_add_fn_to_effect100_fn(uint32_t function)
     ff7_externals.effect100_array_data[idx].field_0 = *ff7_externals.effect100_array_idx;
     *ff7_externals.effect100_counter = *ff7_externals.effect100_counter + 1;
 
-    extFramesCounterEffect100[idx] = 1;
-    useExtFramesCounterEffect100[idx] = false;
-    isNewEffect100Function[idx] = true;
+    aux_effect100_data[idx].frameCounter = 1;
+    aux_effect100_data[idx].useFrameCounter = false;
+    aux_effect100_data[idx].isFirstTimeRunning = true;
     return idx;
 }
 
@@ -386,9 +383,9 @@ void ff7_execute_effect100_fn()
     {
         if ((ff7_externals.effect100_array_fn[fn_index] == 0) || (ff7_externals.field_dword_9AD1AC == 0))
         {
-            if (isNewEffect100Function[fn_index]){
+            if (aux_effect100_data[fn_index].isFirstTimeRunning){
                 ff7_externals.effect100_array_data[fn_index].field_6 *= frame_multiplier;
-                isNewEffect100Function[fn_index] = false;
+                aux_effect100_data[fn_index].isFirstTimeRunning = false;
             } 
 
             if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
@@ -396,7 +393,7 @@ void ff7_execute_effect100_fn()
         }
         else
         {
-            if (isNewEffect100Function[fn_index])
+            if (aux_effect100_data[fn_index].isFirstTimeRunning)
             {
                 if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
                 {
@@ -424,13 +421,15 @@ void ff7_execute_effect100_fn()
                 }
                 else
                 {
-                    useExtFramesCounterEffect100[fn_index] = true;
+                    aux_effect100_data[fn_index].useFrameCounter = true;
                 }
 
                 if (trace_all || trace_battle_animation)
-                    ffnx_trace("%s - executing function: 0x%x\n", __func__, ff7_externals.effect100_array_fn[fn_index]);
+                    ffnx_trace("%s - executing new function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
+                               ff7_externals.effect100_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
+                               ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
-                isNewEffect100Function[fn_index] = false;
+                aux_effect100_data[fn_index].isFirstTimeRunning = false;
             }
 
             // TODO: fix other effect100 functions by calling the function each 4 frame and keep the animation going for the other 3 frames 
@@ -466,7 +465,7 @@ int ff7_add_fn_to_effect10_fn(uint32_t function)
     ff7_externals.effect10_array_data[idx].field_0 = *ff7_externals.effect10_array_idx;
     *ff7_externals.effect10_counter = *ff7_externals.effect10_counter + 1;
 
-    isNewEffect10Function[idx] = true;
+    aux_effect10_data[idx].isFirstTimeRunning = true;
     return idx;
 }
 
@@ -478,7 +477,7 @@ void ff7_execute_effect10_fn()
         auto &effect10_data = ff7_externals.effect10_array_data[fn_index];
         if (ff7_externals.effect10_array_fn[fn_index] != 0)
         {
-            if (isNewEffect10Function[fn_index])
+            if (aux_effect10_data[fn_index].isFirstTimeRunning)
             {
                 if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_426DE3)
                 {
@@ -553,9 +552,11 @@ void ff7_execute_effect10_fn()
                     effect10_data.field_14 /= frame_multiplier;
                 }
                 if (trace_all || trace_battle_animation)
-                    ffnx_trace("%s - executing function: 0x%x\n", __func__, ff7_externals.effect10_array_fn[fn_index]);
+                    ffnx_trace("%s - executing new function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
+                               ff7_externals.effect10_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
+                               ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
-                isNewEffect10Function[fn_index] = false;
+                aux_effect10_data[fn_index].isFirstTimeRunning = false;
             }
 
             ((void (*)())ff7_externals.effect10_array_fn[fn_index])();
@@ -589,9 +590,9 @@ int ff7_add_fn_to_effect60_fn(uint32_t function)
     ff7_externals.effect60_array_data[idx].field_0 = *ff7_externals.effect60_array_idx;
     *ff7_externals.effect60_counter = *ff7_externals.effect60_counter + 1;
 
-    extFramesCounterEffect60[idx] = 1;
-    useExtFramesCounterEffect60[idx] = false;
-    isNewEffect60Function[idx] = true;
+    aux_effect60_data[idx].frameCounter = 1;
+    aux_effect60_data[idx].useFrameCounter = false;
+    aux_effect60_data[idx].isFirstTimeRunning = true;
     return idx;
 }
 
@@ -602,7 +603,7 @@ void ff7_execute_effect60_fn()
     {
         if (ff7_externals.effect60_array_fn[fn_index] != 0)
         {
-            if (isNewEffect60Function[fn_index])
+            if (aux_effect60_data[fn_index].isFirstTimeRunning)
             {
                 if (ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_4276B6 ||
                     ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_4255B7 ||
@@ -626,38 +627,44 @@ void ff7_execute_effect60_fn()
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BCD42 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BE4E2 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.display_battle_damage_5BB410 ||
+                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.magic_aura_effects_5C0300 ||
+                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.limit_break_aura_effects_5C0572 ||
+                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.enemy_skill_aura_effects_5C06BF ||
+                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.summon_aura_effects_5C0953 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5C18BC)
                 {
                     // these are already fixed functions 
                 }
                 else
                 {
-                    useExtFramesCounterEffect60[fn_index] = true;
+                    aux_effect60_data[fn_index].useFrameCounter = true;
                 }
 
                 if (trace_all || trace_battle_animation)
-                    ffnx_trace("%s - executing function: 0x%x\n", __func__, ff7_externals.effect60_array_fn[fn_index]);
+                    ffnx_trace("%s - executing new function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
+                               ff7_externals.effect60_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
+                               ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
-                isNewEffect60Function[fn_index] = false;
+                aux_effect60_data[fn_index].isFirstTimeRunning = false;
             }
 
-            if (useExtFramesCounterEffect60[fn_index])
+            if (aux_effect60_data[fn_index].useFrameCounter)
             {
                 // Execute function but updates field_2 only every 4 frames. Also avoid adding new functions on the other 3 frames
                 // TODO: fixes other effect60 functions that does not use field_2 or needs other modifications
                 auto data_prev = ff7_externals.effect60_array_data[fn_index];
-                if (extFramesCounterEffect60[fn_index] % frame_multiplier != 0)
+                if (aux_effect60_data[fn_index].frameCounter % frame_multiplier != 0)
                     isAddFunctionDisabled = true;
 
                 ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
 
                 isAddFunctionDisabled = false;
-                if (extFramesCounterEffect60[fn_index] % frame_multiplier != 0){
+                if (aux_effect60_data[fn_index].frameCounter % frame_multiplier != 0){
                     ff7_externals.effect60_array_data[fn_index].field_0 = data_prev.field_0;
                     ff7_externals.effect60_array_data[fn_index].field_2 = data_prev.field_2;
                 }
                 
-                extFramesCounterEffect60[fn_index]++;
+                aux_effect60_data[fn_index].frameCounter++;
             }
             else
             {

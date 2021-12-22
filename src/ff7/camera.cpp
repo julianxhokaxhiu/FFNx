@@ -60,20 +60,14 @@ byte *getCameraScriptPointer(char variationIndex, short cameraScriptIdx, bool is
     return (byte *)(*ff7_externals.battle_camera_global_scripts_9A13BC + finalOffset);
 }
 
-bool simulateCameraScript(byte *scriptPtr, uint16_t &currentPosition, uint16_t &framesToWait, const std::unordered_map<byte, int> &numArgsOpCode,
+bool simulateCameraScript(byte *scriptPtr, short &currentPosition, short &framesToWait, const std::unordered_map<byte, int> &numArgsOpCode,
                           const std::unordered_set<byte> &endingOpCodes)
 {
-    if (trace_all || trace_battle_camera)
-        ffnx_trace("%s - START LIST OF CAMERA SCRIPT OPCODE AND ARGS\n", __func__);
-
     bool executedOpCodeF5 = false;
     bool isScriptActive = true;
     while (isScriptActive)
     {
         byte currentOpCode = scriptPtr[currentPosition++];
-
-        if (trace_all || trace_battle_camera)
-            ffnx_trace("opcode: 0x%0x\n", currentOpCode);
 
         switch (currentOpCode)
         {
@@ -86,16 +80,21 @@ bool simulateCameraScript(byte *scriptPtr, uint16_t &currentPosition, uint16_t &
             }
             break;
         case 0xF5:
-            executedOpCodeF5 = true;
-            framesToWait = scriptPtr[currentPosition++] * frame_multiplier;
+            if(scriptPtr[currentPosition] == 0xFF)
+            {
+                framesToWait = -1;
+                currentPosition++;
+            }
+            else
+            {
+                executedOpCodeF5 = true;
+                framesToWait = scriptPtr[currentPosition++] * frame_multiplier;
+            }
             break;
         case 0xFE:
             if (framesToWait == 0)
             {
                 currentOpCode = scriptPtr[currentPosition];
-
-                if (trace_all || trace_battle_camera)
-                    ffnx_trace("0xFE case: opcode 0x%0x\n", currentOpCode);
 
                 if (currentOpCode == 192)
                 {
@@ -114,15 +113,11 @@ bool simulateCameraScript(byte *scriptPtr, uint16_t &currentPosition, uint16_t &
             }
             else
             {
-                if (trace_all || trace_battle_camera)
-                    ffnx_error("%s - Strange OpCode 0x%0x in camera script\n", __func__, currentOpCode);
                 isScriptActive = false;
             }
             break;
         }
     }
-    if (trace_all || trace_battle_camera)
-        ffnx_trace("%s - END LIST OF CAMERA SCRIPT OPCODE AND ARGS\n", __func__);
 
     return executedOpCodeF5;
 }
@@ -169,7 +164,9 @@ void ff7_execute_camera_functions()
                 }
 
                 if (trace_all || trace_battle_camera)
-                    ffnx_trace("%s - executing function: 0x%x\n", __func__, ff7_externals.camera_fn_array[fn_index]);
+                    ffnx_trace("%s - executing new function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
+                               ff7_externals.camera_fn_array[fn_index], ff7_externals.anim_event_queue[0].attackerID,
+                               ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
                 isNewCameraFunction[fn_index] = false;
             }
@@ -189,14 +186,11 @@ void ff7_execute_camera_functions()
 
 void ff7_run_camera_focal_position_script(char variationIndex, DWORD param_2, short cameraScriptIdx)
 {
-    if (trace_all || trace_battle_camera)
-        ffnx_trace("%s - Parameters: %d, %d, %d\n", __func__, variationIndex, param_2, cameraScriptIdx);
-
     bcamera_position *cameraPosition = ff7_externals.battle_camera_focal_position;
 
     byte *scriptPtr = getCameraScriptPointer(variationIndex, cameraScriptIdx, true);
-    uint16_t currentPosition = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].current_position;
-    uint16_t framesToWait = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].frames_to_wait;
+    short currentPosition = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].current_position;
+    short framesToWait = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].frames_to_wait;
 
     bool executedOpCodeF5 = simulateCameraScript(scriptPtr, currentPosition, framesToWait, numArgsOpCode, endingFocalOpCodes);
 
@@ -216,14 +210,11 @@ void ff7_run_camera_focal_position_script(char variationIndex, DWORD param_2, sh
 
 void ff7_run_camera_position_script(char variationIndex, DWORD param_2, short cameraScriptIdx)
 {
-    if (trace_all || trace_battle_camera)
-        ffnx_trace("%s - Parameters: %d, %d, %d\n", __func__, variationIndex, param_2, cameraScriptIdx);
-
     bcamera_position *cameraPosition = ff7_externals.battle_camera_position;
 
     byte *scriptPtr = getCameraScriptPointer(variationIndex, cameraScriptIdx, false);
-    uint16_t currentPosition = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].current_position;
-    uint16_t framesToWait = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].frames_to_wait;
+    short currentPosition = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].current_position;
+    short framesToWait = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].frames_to_wait;
 
     bool executedOpCodeF5 = simulateCameraScript(scriptPtr, currentPosition, framesToWait, numArgsPositionOpCode, endingPositionOpCodes);
 
