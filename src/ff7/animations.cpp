@@ -507,18 +507,6 @@ void ff7_execute_effect10_fn()
                     effect10_data.n_frames *= frame_multiplier;
                     effect10_data.field_A /= frame_multiplier;
                 }
-                else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_42C66D ||
-                         ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_42C823)
-                {
-                    // 42C66D is the transparent level fade out of the character
-                    // 42C823 is the transparent level fade in of the characters
-                    // TODO: fix vanishing model bug when there is fade in and fade out in sequence
-                    effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_E /= frame_multiplier;
-                    effect10_data.field_8 /= frame_multiplier;
-                    effect10_data.field_A /= frame_multiplier;
-                    effect10_data.field_C /= frame_multiplier;
-                }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_426A26)
                 {
                     // Animation of moving characters from attacker to attacked
