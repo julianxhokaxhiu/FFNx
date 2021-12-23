@@ -2429,8 +2429,6 @@ struct ff7_externals
 	uint32_t battle_sub_426899;
 	uint32_t battle_sub_4267F1;
 	uint32_t battle_sub_5C1C8F;
-	uint32_t battle_sub_42C66D;
-	uint32_t battle_sub_42C823;
 	uint32_t battle_move_character_sub_426A26;
 	uint32_t battle_move_character_sub_42739D;
 	uint32_t battle_move_character_sub_426F58;
@@ -2456,6 +2454,7 @@ struct ff7_externals
 	uint32_t battle_sub_5BCD42;
 	uint32_t battle_sub_5BD050;
 	uint32_t battle_sub_5BE4E2;
+	uint32_t battle_sub_42A72D;
 
 	battle_model_state *g_battle_model_state;
 	battle_model_state_small *g_small_battle_model_state;

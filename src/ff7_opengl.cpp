@@ -268,18 +268,24 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				patch_multiply_code<WORD>(ff7_externals.battle_disintegrate_1_death_5BBF31 + 0x40, frame_multiplier);
 				replace_function(ff7_externals.battle_disintegrate_1_death_sub_5BC04D, ff7_battle_disintegrate_1_death_sub_5BC04D);
 
-				// Unknown (+ 2 other fixed in ff7_execute_effect100_fn)
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5C0E4B + 0x6D, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5C0E4B + 0x15B, frame_multiplier);
-
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5D4240 + 0x24, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5D4240 + 0x57, frame_multiplier);
-
 				// Display string related
 				replace_function(ff7_externals.get_n_frames_display_action_string, ff7_get_n_frames_display_action_string);
 
 				// Character movement (e.g. movement animation for attacks)
 				replace_function(ff7_externals.battle_move_character_sub_426F58, ff7_battle_move_character_sub_426F58);
+
+				// Character fade in/out (i.e. multiply g_script_wait_frames and other things)
+				patch_multiply_code<byte>(ff7_externals.battle_sub_42A72D + 0x11A, frame_multiplier);
+				patch_multiply_code<WORD>(ff7_externals.battle_sub_5D4240 + 0x24, frame_multiplier);
+				patch_multiply_code<WORD>(ff7_externals.battle_sub_5D4240 + 0x57, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.battle_sub_5D4240 + 0x6E, frame_multiplier);
+				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C18BC + 0xDC, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.battle_sub_5C18BC + 0xE4, frame_multiplier);
+				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C1C8F + 0x55, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.battle_sub_5C1C8F + 0x5D, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.battle_sub_5C0E4B + 0x75, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.battle_sub_5C0E4B + 0x6D, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.battle_sub_5C0E4B + 0x15B, frame_multiplier);
 
 				// Show Damage
 				patch_multiply_code<WORD>(ff7_externals.display_battle_damage_5BB410 + 0x54, frame_multiplier);
@@ -320,9 +326,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				patch_multiply_code<byte>(ff7_externals.summon_aura_effects_5C0953 + 0x19D, frame_multiplier);
 
 				// Effect60 related
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C18BC + 0xDC, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C1C8F + 0x55, frame_multiplier);
-
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, frame_multiplier);
 
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, frame_multiplier);
