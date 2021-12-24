@@ -334,8 +334,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x5B, frame_multiplier); 
 				patch_divide_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x6E, frame_multiplier);
-
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5BE4E2 + 0xB8, frame_multiplier);
 			}
 			//
 

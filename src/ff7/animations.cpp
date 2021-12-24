@@ -148,6 +148,7 @@ struct aux_effect_data
     bool isFirstTimeRunning;
     bool useFrameCounter;
     int frameCounter;
+    int finalFrame;
 };
 
 std::array<aux_effect_data, 100> aux_effect100_data;
@@ -373,6 +374,7 @@ int ff7_add_fn_to_effect100_fn(uint32_t function)
     aux_effect100_data[idx].frameCounter = 1;
     aux_effect100_data[idx].useFrameCounter = false;
     aux_effect100_data[idx].isFirstTimeRunning = true;
+    aux_effect100_data[idx].finalFrame = -1;
     return idx;
 }
 
@@ -432,9 +434,25 @@ void ff7_execute_effect100_fn()
                 aux_effect100_data[fn_index].isFirstTimeRunning = false;
             }
 
-            // TODO: fix other effect100 functions by calling the function each 4 frame and keep the animation going for the other 3 frames 
-            // (hack solution: exploting pause variable; while game is paused, animation are still going, or find where animations are cleaned up)
-            ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
+            if (aux_effect100_data[fn_index].useFrameCounter)
+            {
+                if(aux_effect100_data[fn_index].frameCounter % frame_multiplier == 1)
+                {
+                    ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
+                }
+                else
+                {
+                    byte was_paused = *ff7_externals.g_is_battle_paused;
+                    *ff7_externals.g_is_battle_paused = 1;
+                    ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
+                    *ff7_externals.g_is_battle_paused = was_paused;
+                }
+                aux_effect100_data[fn_index].frameCounter++;
+            }
+            else
+            {
+                ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
+            }
 
             if (ff7_externals.effect100_array_data[fn_index].field_0 == (uint16_t)-1)
             {
@@ -483,7 +501,7 @@ void ff7_execute_effect10_fn()
                 {
                     // Related to resting positions
                     effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_18 *= frame_multiplier; // probably wait frames
+                    effect10_data.field_18 *= frame_multiplier;
                     effect10_data.field_C /= frame_multiplier;
                     effect10_data.field_E /= frame_multiplier;
                     effect10_data.field_6 /= frame_multiplier;
@@ -511,7 +529,7 @@ void ff7_execute_effect10_fn()
                 {
                     // Animation of moving characters from attacker to attacked
                     effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_18 *= frame_multiplier; // probably wait frames
+                    effect10_data.field_18 *= frame_multiplier;
                     effect10_data.field_C /= frame_multiplier;
                     effect10_data.field_E /= frame_multiplier;
                 }
@@ -578,7 +596,7 @@ int ff7_add_fn_to_effect60_fn(uint32_t function)
     ff7_externals.effect60_array_data[idx].field_0 = *ff7_externals.effect60_array_idx;
     *ff7_externals.effect60_counter = *ff7_externals.effect60_counter + 1;
 
-    aux_effect60_data[idx].frameCounter = 1;
+    aux_effect60_data[idx].frameCounter = 0;
     aux_effect60_data[idx].useFrameCounter = false;
     aux_effect60_data[idx].isFirstTimeRunning = true;
     return idx;
@@ -613,7 +631,6 @@ void ff7_execute_effect60_fn()
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_425520 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_boss_death_sub_5BC5EC ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BCD42 ||
-                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BE4E2 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.display_battle_damage_5BB410 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.magic_aura_effects_5C0300 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.limit_break_aura_effects_5C0572 ||
@@ -638,8 +655,6 @@ void ff7_execute_effect60_fn()
 
             if (aux_effect60_data[fn_index].useFrameCounter)
             {
-                // Execute function but updates field_2 only every 4 frames. Also avoid adding new functions on the other 3 frames
-                // TODO: fixes other effect60 functions that does not use field_2 or needs other modifications
                 auto data_prev = ff7_externals.effect60_array_data[fn_index];
                 if (aux_effect60_data[fn_index].frameCounter % frame_multiplier != 0)
                     isAddFunctionDisabled = true;

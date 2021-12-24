@@ -2453,7 +2453,8 @@ struct ff7_externals
 	uint32_t battle_sub_4277B1;
 	uint32_t battle_sub_5BCD42;
 	uint32_t battle_sub_5BD050;
-	uint32_t battle_sub_5BE4E2;
+	uint32_t battle_smoke_move_handler_5BE4E2;
+	uint32_t battle_smoke_move_effects_5BE5A9;
 	uint32_t battle_sub_42A72D;
 
 	battle_model_state *g_battle_model_state;
