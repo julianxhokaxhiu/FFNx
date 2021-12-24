@@ -748,7 +748,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_4277B1 = get_absolute_value(ff7_externals.run_animation_script, 0x472B);
 	ff7_externals.battle_sub_5BCD42 = get_absolute_value(ff7_externals.run_animation_script, 0x66F);
 	uint32_t battle_sub_5BE490 = get_relative_call(ff7_externals.run_animation_script, 0x3E6E);
-	ff7_externals.battle_sub_5BE4E2 = get_absolute_value(battle_sub_5BE490, 0x5);
+	ff7_externals.battle_smoke_move_handler_5BE4E2 = get_absolute_value(battle_sub_5BE490, 0x5);
+	ff7_externals.battle_smoke_move_effects_5BE5A9 = get_absolute_value(ff7_externals.battle_smoke_move_handler_5BE4E2, 0x46);
 	// --------------------------------
 
 	// battle dialogues
