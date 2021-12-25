@@ -325,6 +325,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				patch_code_byte(ff7_externals.summon_aura_effects_5C0953 + 0x4D, 0xC - frame_multiplier / 2);
 				patch_multiply_code<byte>(ff7_externals.summon_aura_effects_5C0953 + 0x19D, frame_multiplier);
 
+				// Tifa limit break effects
+				patch_multiply_code<byte>(ff7_externals.tifa_limit_2_1_sub_4E48D4 + 0x1FE, frame_multiplier);
+
 				// Effect60 related
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, frame_multiplier);
 

@@ -371,7 +371,7 @@ int ff7_add_fn_to_effect100_fn(uint32_t function)
     ff7_externals.effect100_array_data[idx].field_0 = *ff7_externals.effect100_array_idx;
     *ff7_externals.effect100_counter = *ff7_externals.effect100_counter + 1;
 
-    aux_effect100_data[idx].frameCounter = 1;
+    aux_effect100_data[idx].frameCounter = 0;
     aux_effect100_data[idx].useFrameCounter = false;
     aux_effect100_data[idx].isFirstTimeRunning = true;
     aux_effect100_data[idx].finalFrame = -1;
@@ -410,6 +410,11 @@ void ff7_execute_effect100_fn()
                     ff7_externals.effect100_array_data[fn_index].field_2 /= frame_multiplier;
                     ff7_externals.effect100_array_data[fn_index].n_frames *= frame_multiplier;
                 }
+                else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.tifa_limit_1_2_sub_4E3D51 ||
+                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.tifa_limit_2_1_sub_4E48D4)
+                {
+                    ff7_externals.effect100_array_data[fn_index].field_1A *= frame_multiplier;
+                }
                 else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_enemy_death_5BBD24 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_iainuki_death_5BCAAA ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_boss_death_5BC48C ||
@@ -427,7 +432,7 @@ void ff7_execute_effect100_fn()
                 }
 
                 if (trace_all || trace_battle_animation)
-                    ffnx_trace("%s - executing new function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
+                    ffnx_trace("%s - begin function[%d]: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__, fn_index,
                                ff7_externals.effect100_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
                                ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
@@ -436,7 +441,7 @@ void ff7_execute_effect100_fn()
 
             if (aux_effect100_data[fn_index].useFrameCounter)
             {
-                if(aux_effect100_data[fn_index].frameCounter % frame_multiplier == 1)
+                if(aux_effect100_data[fn_index].frameCounter % frame_multiplier == 0)
                 {
                     ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
                 }
@@ -456,6 +461,11 @@ void ff7_execute_effect100_fn()
 
             if (ff7_externals.effect100_array_data[fn_index].field_0 == (uint16_t)-1)
             {
+                if (trace_all || trace_battle_animation)
+                    ffnx_trace("%s - end function[%d]: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__, fn_index,
+                               ff7_externals.effect100_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
+                               ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
+
                 ff7_externals.effect100_array_data[fn_index].field_0 = 0;
                 ff7_externals.effect100_array_data[fn_index].field_2 = 0;
                 ff7_externals.effect100_array_fn[fn_index] = 0;
@@ -558,7 +568,7 @@ void ff7_execute_effect10_fn()
                     effect10_data.field_14 /= frame_multiplier;
                 }
                 if (trace_all || trace_battle_animation)
-                    ffnx_trace("%s - executing new function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
+                    ffnx_trace("%s - begin function[%d]: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__, fn_index,
                                ff7_externals.effect10_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
                                ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
@@ -569,6 +579,11 @@ void ff7_execute_effect10_fn()
 
             if (effect10_data.field_0 == (uint16_t)-1)
             {
+                if (trace_all || trace_battle_animation)
+                    ffnx_trace("%s - end function[%d]: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__, fn_index,
+                               ff7_externals.effect10_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
+                               ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
+
                 effect10_data.field_0 = 0;
                 effect10_data.field_2 = 0;
                 ff7_externals.effect10_array_fn[fn_index] = 0;
@@ -646,7 +661,7 @@ void ff7_execute_effect60_fn()
                 }
 
                 if (trace_all || trace_battle_animation)
-                    ffnx_trace("%s - executing new function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
+                    ffnx_trace("%s - begin function[%d]: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__, fn_index,
                                ff7_externals.effect60_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
                                ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
@@ -655,15 +670,17 @@ void ff7_execute_effect60_fn()
 
             if (aux_effect60_data[fn_index].useFrameCounter)
             {
-                auto data_prev = ff7_externals.effect60_array_data[fn_index];
-                if (aux_effect60_data[fn_index].frameCounter % frame_multiplier != 0)
-                    isAddFunctionDisabled = true;
-
-                ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
-
-                isAddFunctionDisabled = false;
-                if (aux_effect60_data[fn_index].frameCounter % frame_multiplier != 0){
-                    ff7_externals.effect60_array_data[fn_index].field_0 = data_prev.field_0;
+                if(aux_effect60_data[fn_index].frameCounter % frame_multiplier == 0)
+                {
+                    ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
+                }
+                else
+                {
+                    auto data_prev = ff7_externals.effect60_array_data[fn_index];
+                    byte was_paused = *ff7_externals.g_is_battle_paused;
+                    *ff7_externals.g_is_battle_paused = 1;
+                    ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
+                    *ff7_externals.g_is_battle_paused = was_paused;
                     ff7_externals.effect60_array_data[fn_index].field_2 = data_prev.field_2;
                 }
                 
@@ -676,6 +693,11 @@ void ff7_execute_effect60_fn()
 
             if (ff7_externals.effect60_array_data[fn_index].field_0 == (uint16_t)-1)
             {
+                if (trace_all || trace_battle_animation)
+                    ffnx_trace("%s - end function[%d]: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__, fn_index,
+                               ff7_externals.effect60_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
+                               ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
+
                 ff7_externals.effect60_array_data[fn_index].field_0 = 0;
                 ff7_externals.effect60_array_data[fn_index].field_2 = 0;
                 ff7_externals.effect60_array_fn[fn_index] = 0;
