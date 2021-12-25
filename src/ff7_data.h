@@ -750,6 +750,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t battle_sub_5BE490 = get_relative_call(ff7_externals.run_animation_script, 0x3E6E);
 	ff7_externals.battle_smoke_move_handler_5BE4E2 = get_absolute_value(battle_sub_5BE490, 0x5);
 	ff7_externals.battle_smoke_move_effects_5BE5A9 = get_absolute_value(ff7_externals.battle_smoke_move_handler_5BE4E2, 0x46);
+
+	// Tifa limit stuff
+	uint32_t battle_sub_4E1627 = get_relative_call(ff7_externals.run_animation_script, 0x3848);
+	ff7_externals.run_tifa_limit_effects = get_relative_call(battle_sub_4E1627, 0xD);
+	ff7_externals.tifa_limit_1_2_main_4E2DF3 = get_absolute_value(ff7_externals.run_tifa_limit_effects, 0x47);
+	ff7_externals.tifa_limit_1_2_sub_4E3D51 = get_absolute_value(ff7_externals.tifa_limit_1_2_main_4E2DF3, 0x4BB);
+	ff7_externals.tifa_limit_2_1_main_4E401E = get_absolute_value(ff7_externals.run_tifa_limit_effects, 0x67);
+	ff7_externals.tifa_limit_2_1_sub_4E48D4 = get_absolute_value(ff7_externals.tifa_limit_2_1_main_4E401E, 0x41A);
+
 	// --------------------------------
 
 	// battle dialogues

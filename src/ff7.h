@@ -896,7 +896,8 @@ struct effect100_data
     int field_14;
     byte field_18;
     byte field_19;
-    byte field_1A[6];
+	short field_1A;
+    byte field_1C[4];
 };
 
 struct effect60_data
@@ -2456,6 +2457,11 @@ struct ff7_externals
 	uint32_t battle_smoke_move_handler_5BE4E2;
 	uint32_t battle_smoke_move_effects_5BE5A9;
 	uint32_t battle_sub_42A72D;
+	uint32_t run_tifa_limit_effects;
+	uint32_t tifa_limit_1_2_main_4E2DF3;
+	uint32_t tifa_limit_1_2_sub_4E3D51;
+	uint32_t tifa_limit_2_1_main_4E401E;
+	uint32_t tifa_limit_2_1_sub_4E48D4;
 
 	battle_model_state *g_battle_model_state;
 	battle_model_state_small *g_small_battle_model_state;
