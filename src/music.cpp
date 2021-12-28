@@ -301,6 +301,46 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 				}
 			}
 		}
+		else if (mode->driver_mode == MODE_CONDOR)
+		{
+			char condor_name[50];
+
+			sprintf(condor_name, "condor_%s", music_name);
+
+			playing = nxAudioEngine.playMusic(condor_name, music_id, channel, options);
+		}
+		else if (mode->driver_mode == MODE_SNOWBOARD)
+		{
+			char snowboard_name[50];
+
+			sprintf(snowboard_name, "snowboard_%s", music_name);
+
+			playing = nxAudioEngine.playMusic(snowboard_name, music_id, channel, options);
+		}
+		else if (mode->driver_mode == MODE_HIGHWAY)
+		{
+			char highway_name[50];
+
+			sprintf(highway_name, "highway_%s", music_name);
+
+			playing = nxAudioEngine.playMusic(highway_name, music_id, channel, options);
+		}
+		else if (mode->driver_mode == MODE_CHOCOBO)
+		{
+			char chocobo_name[50];
+
+			sprintf(chocobo_name, "chocobo_%s", music_name);
+
+			playing = nxAudioEngine.playMusic(chocobo_name, music_id, channel, options);
+		}
+		else if (mode->driver_mode == MODE_CREDITS)
+		{
+			char credits_name[50];
+
+			sprintf(credits_name, "credits_%s", music_name);
+
+			playing = nxAudioEngine.playMusic(credits_name, music_id, channel, options);
+		}
 
 		if (!playing)
 		{
