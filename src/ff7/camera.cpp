@@ -36,19 +36,13 @@ const std::unordered_set<byte> endingPositionOpCodes{0xEF, 0xF0, 0xF7, 0xFF};
 constexpr int CAMERA_ARRAY_SIZE = 16;
 std::array<bool, CAMERA_ARRAY_SIZE> isNewCameraFunction{};
 
-void patchOpCodeF5(bcamera_position *camera_position, char variationIndex)
+byte *getCameraScriptPointer(char variationIndex, short cameraScriptIdx, bool isCameraFocalPoint)
 {
-    camera_position[variationIndex].frames_to_wait = (camera_position[variationIndex].frames_to_wait + 1) * frame_multiplier;
-    camera_position[variationIndex].frames_to_wait--; // After 0xF5, there should "always" be an opcode 0xF4
-}
-
-byte *getCameraScriptPointer(char variationIndex, short cameraScriptIdx, bool isSub5C3FD5)
-{
-    int internalOffset = isSub5C3FD5 ? 4 : 0;
+    int internalOffset = isCameraFocalPoint ? 4 : 0;
     if (cameraScriptIdx == -1)
-        return isSub5C3FD5 ? ff7_externals.battle_camera_focal_scripts_8FEE30 : ff7_externals.battle_camera_position_scripts_8FEE2C;
+        return isCameraFocalPoint ? ff7_externals.battle_camera_focal_scripts_8FEE30 : ff7_externals.battle_camera_position_scripts_8FEE2C;
     else if (cameraScriptIdx == -2)
-        return isSub5C3FD5 ? (byte *)ff7_externals.battle_camera_focal_scripts_901270[*ff7_externals.battle_camera_script_index] : (byte *)ff7_externals.battle_camera_position_scripts_9010D0[*ff7_externals.battle_camera_script_index];
+        return isCameraFocalPoint ? (byte *)ff7_externals.battle_camera_focal_scripts_901270[*ff7_externals.battle_camera_script_index] : (byte *)ff7_externals.battle_camera_position_scripts_9010D0[*ff7_externals.battle_camera_script_index];
     else if (cameraScriptIdx == -3)
     {
         int outerOffset = variationIndex * 4 + *(int *)(*ff7_externals.battle_camera_global_scripts_9A13BC + 0x8 + internalOffset) - *ff7_externals.battle_camera_script_offset;
@@ -164,7 +158,7 @@ void ff7_execute_camera_functions()
                 }
 
                 if (trace_all || trace_battle_camera)
-                    ffnx_trace("%s - executing new function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
+                    ffnx_trace("%s - begin function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
                                ff7_externals.camera_fn_array[fn_index], ff7_externals.anim_event_queue[0].attackerID,
                                ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
@@ -197,15 +191,7 @@ void ff7_run_camera_focal_position_script(char variationIndex, DWORD param_2, sh
     ((void (*)(char, DWORD, short))ff7_externals.set_camera_focal_position_scripts)(variationIndex, param_2, cameraScriptIdx);
 
     if (executedOpCodeF5)
-        patchOpCodeF5(cameraPosition, variationIndex);
-
-    if (currentPosition != cameraPosition[variationIndex].current_position)
-        ffnx_error("%s - Camera script pointer simulation wrong! Battle camera final position does not match (simulation: %d != real: %d)\n", __func__,
-                   currentPosition, cameraPosition[variationIndex].current_position);
-
-    if (framesToWait != cameraPosition[variationIndex].frames_to_wait)
-        ffnx_error("%s - Camera script pointer simulation wrong! Battle camera final frames to wait does not match (simulation: %d != real: %d)\n", __func__,
-                   framesToWait, cameraPosition[variationIndex].frames_to_wait);
+        cameraPosition[variationIndex].frames_to_wait = framesToWait;
 }
 
 void ff7_run_camera_position_script(char variationIndex, DWORD param_2, short cameraScriptIdx)
@@ -221,13 +207,5 @@ void ff7_run_camera_position_script(char variationIndex, DWORD param_2, short ca
     ((void (*)(char, DWORD, short))ff7_externals.set_camera_position_scripts)(variationIndex, param_2, cameraScriptIdx);
 
     if (executedOpCodeF5)
-        patchOpCodeF5(cameraPosition, variationIndex);
-
-    if (currentPosition != cameraPosition[variationIndex].current_position)
-        ffnx_error("%s - Camera script pointer simulation wrong! Battle camera final position does not match (simulation: %d != real: %d)\n", __func__,
-                   currentPosition, cameraPosition[variationIndex].current_position);
-
-    if (framesToWait != cameraPosition[variationIndex].frames_to_wait)
-        ffnx_error("%s - Camera script pointer simulation wrong! Battle camera final frames to wait does not match (simulation: %d != real: %d)\n", __func__,
-                   framesToWait, cameraPosition[variationIndex].frames_to_wait);
+        cameraPosition[variationIndex].frames_to_wait = framesToWait;
 }

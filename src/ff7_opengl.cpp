@@ -33,8 +33,7 @@ unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 byte y_pos_offset_display_damage_30[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2};
 //byte y_pos_offset_display_damage_60[] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 1, 0, 0};
-byte y_pos_offset_display_damage_60[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 7, 8, 8, 8, 8, 8, 7, 7, 7, 6, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0, 0, 1, 1, 0, 0, 0};
-										
+byte y_pos_offset_display_damage_60[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 7, 8, 8, 8, 8, 8, 7, 7, 7, 6, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0, 0, 1, 1, 0, 0, 0};			
 
 void ff7_init_hooks(struct game_obj *_game_object)
 {
@@ -276,16 +275,23 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 				// Character fade in/out (i.e. multiply g_script_wait_frames and other things)
 				patch_multiply_code<byte>(ff7_externals.battle_sub_42A72D + 0x11A, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5D4240 + 0x24, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5D4240 + 0x57, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5D4240 + 0x6E, frame_multiplier);
+				patch_multiply_code<WORD>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x24, frame_multiplier);
+				patch_multiply_code<WORD>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x57, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x6E, frame_multiplier);
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C18BC + 0xDC, frame_multiplier);
 				patch_multiply_code<byte>(ff7_externals.battle_sub_5C18BC + 0xE4, frame_multiplier);
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C1C8F + 0x55, frame_multiplier);
 				patch_multiply_code<byte>(ff7_externals.battle_sub_5C1C8F + 0x5D, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5C0E4B + 0x75, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5C0E4B + 0x6D, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5C0E4B + 0x15B, frame_multiplier);
+
+				// Summons
+				patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x75, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x6D, frame_multiplier);
+				patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x15B, frame_multiplier);
+				patch_code_dword(ff7_externals.run_shiva_camera_58E60D + 0xC2D, 0x90909090);
+				patch_code_word(ff7_externals.run_shiva_camera_58E60D + 0xC31, 0x9090);
+				patch_code_dword(ff7_externals.run_ramuh_camera_597206 + 0x44, 0x000B9585);
+				patch_code_dword(ff7_externals.run_odin_gunge_camera_4A0F52 + 0xC0C, 0x90909090);
+				patch_code_word(ff7_externals.run_odin_gunge_camera_4A0F52 + 0xC10, 0x9090);
 
 				// Show Damage
 				patch_multiply_code<WORD>(ff7_externals.display_battle_damage_5BB410 + 0x54, frame_multiplier);
@@ -325,8 +331,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				patch_code_byte(ff7_externals.summon_aura_effects_5C0953 + 0x4D, 0xC - frame_multiplier / 2);
 				patch_multiply_code<byte>(ff7_externals.summon_aura_effects_5C0953 + 0x19D, frame_multiplier);
 
-				// Tifa limit break effects
+				// Limit break effects
 				patch_multiply_code<byte>(ff7_externals.tifa_limit_2_1_sub_4E48D4 + 0x1FE, frame_multiplier);
+				patch_code_dword(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xCE, 0x90909090);
+				patch_code_word(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xD2, 0x9090);
+				patch_multiply_code<byte>(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xE2, frame_multiplier);
 
 				// Effect60 related
 				patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, frame_multiplier);
