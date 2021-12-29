@@ -699,11 +699,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_5BDA0F = get_absolute_value(ff7_externals.run_animation_script, 0x240);
 
 	// character fade in/out
-	uint32_t battle_sub_5C0E39 = get_relative_call(ff7_externals.battle_sub_427C22, 0x4DE);
-	ff7_externals.battle_sub_5C0E4B = get_absolute_value(battle_sub_5C0E39, 0x4);
-	uint32_t* battle_anim_functions_8FE860 = (uint32_t*)get_absolute_value(ff7_externals.battle_sub_427C22, 0x40E);
-	ff7_externals.battle_sub_5D4240 = battle_anim_functions_8FE860[56];
-	ff7_externals.battle_sub_5BD96D = get_absolute_value(ff7_externals.battle_sub_5D4240, 0x27);
+	uint32_t* limit_effect_callback_table_8FE860 = (uint32_t*)get_absolute_value(ff7_externals.battle_sub_427C22, 0x40E);
+	ff7_externals.vincent_limit_fade_effect_sub_5D4240 = limit_effect_callback_table_8FE860[56];
+	ff7_externals.battle_sub_5BD96D = get_absolute_value(ff7_externals.vincent_limit_fade_effect_sub_5D4240, 0x27);
 	ff7_externals.battle_sub_5C1C8F = get_absolute_value(battle_sub_5C1B81, 0x3F);
 	uint32_t handle_fade_character_42C31C = get_relative_call(ff7_externals.battle_sub_5C1C8F, 0xEC);
 	ff7_externals.battle_sub_5C18BC = get_absolute_value(battle_sub_5C1B81, 0x30);
@@ -749,16 +747,37 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_5BCD42 = get_absolute_value(ff7_externals.run_animation_script, 0x66F);
 	uint32_t battle_sub_5BE490 = get_relative_call(ff7_externals.run_animation_script, 0x3E6E);
 	ff7_externals.battle_smoke_move_handler_5BE4E2 = get_absolute_value(battle_sub_5BE490, 0x5);
-	ff7_externals.battle_smoke_move_effects_5BE5A9 = get_absolute_value(ff7_externals.battle_smoke_move_handler_5BE4E2, 0x46);
 
-	// Tifa limit stuff
+	// Tifa limit breaks
 	uint32_t battle_sub_4E1627 = get_relative_call(ff7_externals.run_animation_script, 0x3848);
 	ff7_externals.run_tifa_limit_effects = get_relative_call(battle_sub_4E1627, 0xD);
-	ff7_externals.tifa_limit_1_2_main_4E2DF3 = get_absolute_value(ff7_externals.run_tifa_limit_effects, 0x47);
-	ff7_externals.tifa_limit_1_2_sub_4E3D51 = get_absolute_value(ff7_externals.tifa_limit_1_2_main_4E2DF3, 0x4BB);
-	ff7_externals.tifa_limit_2_1_main_4E401E = get_absolute_value(ff7_externals.run_tifa_limit_effects, 0x67);
-	ff7_externals.tifa_limit_2_1_sub_4E48D4 = get_absolute_value(ff7_externals.tifa_limit_2_1_main_4E401E, 0x41A);
+	uint32_t tifa_limit_1_2_main_4E2DF3 = get_absolute_value(ff7_externals.run_tifa_limit_effects, 0x47);
+	ff7_externals.tifa_limit_1_2_sub_4E3D51 = get_absolute_value(tifa_limit_1_2_main_4E2DF3, 0x4BB);
+	uint32_t tifa_limit_2_1_main_4E401E = get_absolute_value(ff7_externals.run_tifa_limit_effects, 0x67);
+	ff7_externals.tifa_limit_2_1_sub_4E48D4 = get_absolute_value(tifa_limit_2_1_main_4E401E, 0x41A);
 
+	// Aerith limit breaks
+	uint32_t aerith_limit_2_1_main_45AE80 = limit_effect_callback_table_8FE860[16];
+	uint32_t aerith_limit_2_1_sub_45AEA6 = get_relative_call(aerith_limit_2_1_main_45AE80, 0x1A);
+	uint32_t aerith_limit_2_1_sub_45AEE8 = get_absolute_value(aerith_limit_2_1_sub_45AEA6, 0xE);
+	uint32_t aerith_limit_2_1_sub_45AF39 = get_absolute_value(aerith_limit_2_1_sub_45AEE8, 0x5);
+	ff7_externals.aerith_limit_2_1_sub_45B0CF = get_absolute_value(aerith_limit_2_1_sub_45AF39, 0x4A);
+
+	// Summons
+	uint32_t battle_sub_5C0E39 = get_relative_call(ff7_externals.battle_sub_427C22, 0x4DE);
+	ff7_externals.run_summon_animations_5C0E4B = get_absolute_value(battle_sub_5C0E39, 0x4);
+	uint32_t run_summon_shiva_main_58E411 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x267);
+	uint32_t run_summon_shiva_sub_58E4D8 = get_relative_call(run_summon_shiva_main_58E411, 0xBB);
+	uint32_t run_summon_shiva_sub_58E5CD = get_relative_call(run_summon_shiva_sub_58E4D8, 0xBB);
+	ff7_externals.run_shiva_camera_58E60D = get_absolute_value(run_summon_shiva_sub_58E5CD, 0x5);
+	uint32_t run_summon_ramuh_main_596FF1 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x311);
+	uint32_t run_summon_ramuh_sub_59706F = get_relative_call(run_summon_ramuh_main_596FF1, 0x70);
+	uint32_t run_summon_ramuh_sub_5971C6 = get_relative_call(run_summon_ramuh_sub_59706F, 0x13C);
+	ff7_externals.run_ramuh_camera_597206 = get_absolute_value(run_summon_ramuh_sub_5971C6, 0x5);
+	uint32_t run_summon_odin_gunge_main_4A0AE1 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x3DD);
+	uint32_t run_summon_odin_gunge_sub_4A0B6D = get_relative_call(run_summon_odin_gunge_main_4A0AE1, 0x7F);
+	uint32_t run_summon_odin_gunge_sub_4A0F12 = get_relative_call(run_summon_odin_gunge_sub_4A0B6D, 0x1C0);
+	ff7_externals.run_odin_gunge_camera_4A0F52 = get_absolute_value(run_summon_odin_gunge_sub_4A0F12, 0x5);
 	// --------------------------------
 
 	// battle dialogues

@@ -38,8 +38,8 @@ const std::unordered_map<byte, int> numArgsOpCode = {
     {0x94, 5}, // Function added
     {0x95, 0},
     {0x96, 2}, // effect60 fn added (barret gun)
-    {0x97, 2},
-    {0x98, 1},
+    {0x97, 2}, // Run enemy death animations
+    {0x98, 1}, // Display action text
     {0x99, 6},
     {0x9A, 4},
     {0x9B, 0},
@@ -128,7 +128,7 @@ const std::unordered_map<byte, int> numArgsOpCode = {
     {0xF3, 0xFF},
     {0xF4, 0xFF},
     {0xF5, 1}, // game init enemies
-    {0xF6, 0}, // death effects
+    {0xF6, 0}, // Run normal enemy death animation effects
     {0xF7, 1}, // delay damage display effect
     {0xF8, 1}, // effect stuff
     {0xF9, 0}, // resets actor orientation
@@ -143,10 +143,17 @@ const std::unordered_map<byte, int> numArgsOpCode = {
 const std::unordered_set<byte> endingOpCode{{0xA2, 0xA7, 0xA9, 0xB6, 0xF1}};
 std::unordered_set<uint32_t> patchedAddress{};
 
+enum class interpolation_trick
+{
+    NONE = 0,
+    PAUSE_TRICK,
+    PREVIOUS_VALUE_TRICK,
+    ONLY_ONECALL_TRICK,
+};
 struct aux_effect_data
 {
     bool isFirstTimeRunning;
-    bool useFrameCounter;
+    interpolation_trick interpolationTrick;
     int frameCounter;
     int finalFrame;
 };
@@ -372,7 +379,7 @@ int ff7_add_fn_to_effect100_fn(uint32_t function)
     *ff7_externals.effect100_counter = *ff7_externals.effect100_counter + 1;
 
     aux_effect100_data[idx].frameCounter = 0;
-    aux_effect100_data[idx].useFrameCounter = false;
+    aux_effect100_data[idx].interpolationTrick = interpolation_trick::NONE;
     aux_effect100_data[idx].isFirstTimeRunning = true;
     aux_effect100_data[idx].finalFrame = -1;
     return idx;
@@ -385,10 +392,11 @@ void ff7_execute_effect100_fn()
     {
         if ((ff7_externals.effect100_array_fn[fn_index] == 0) || (ff7_externals.field_dword_9AD1AC == 0))
         {
-            if (aux_effect100_data[fn_index].isFirstTimeRunning){
+            if (aux_effect100_data[fn_index].isFirstTimeRunning)
+            {
                 ff7_externals.effect100_array_data[fn_index].field_6 *= frame_multiplier;
                 aux_effect100_data[fn_index].isFirstTimeRunning = false;
-            } 
+            }
 
             if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
                 ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
@@ -421,14 +429,14 @@ void ff7_execute_effect100_fn()
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_melting_death_5BC21F ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_disintegrate_2_death_5BBA82 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_morph_death_5BC812 ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_5C0E4B ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_5D4240)
+                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_5C0E4B ||
+                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.vincent_limit_fade_effect_sub_5D4240)
                 {
-                    // these are already fixed functions 
+                    aux_effect100_data[fn_index].interpolationTrick = interpolation_trick::NONE;
                 }
                 else
                 {
-                    aux_effect100_data[fn_index].useFrameCounter = true;
+                    aux_effect100_data[fn_index].interpolationTrick = interpolation_trick::PAUSE_TRICK;
                 }
 
                 if (trace_all || trace_battle_animation)
@@ -439,18 +447,33 @@ void ff7_execute_effect100_fn()
                 aux_effect100_data[fn_index].isFirstTimeRunning = false;
             }
 
-            if (aux_effect100_data[fn_index].useFrameCounter)
+            if (aux_effect100_data[fn_index].interpolationTrick != interpolation_trick::NONE)
             {
-                if(aux_effect100_data[fn_index].frameCounter % frame_multiplier == 0)
+                if (aux_effect100_data[fn_index].frameCounter % frame_multiplier == 0)
                 {
                     ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
                 }
                 else
                 {
                     byte was_paused = *ff7_externals.g_is_battle_paused;
-                    *ff7_externals.g_is_battle_paused = 1;
-                    ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
-                    *ff7_externals.g_is_battle_paused = was_paused;
+                    auto data_prev = ff7_externals.effect100_array_data[fn_index];
+
+                    switch (aux_effect100_data[fn_index].interpolationTrick)
+                    {
+                    case interpolation_trick::PREVIOUS_VALUE_TRICK:
+                        isAddFunctionDisabled = true;
+                        ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
+                        ff7_externals.effect100_array_data[fn_index].field_2 = data_prev.field_2;
+                        isAddFunctionDisabled = false;
+                        break;
+                    case interpolation_trick::PAUSE_TRICK:
+                        *ff7_externals.g_is_battle_paused = 1;
+                        ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
+                        *ff7_externals.g_is_battle_paused = was_paused;
+                        break;
+                    default:
+                        break;
+                    }
                 }
                 aux_effect100_data[fn_index].frameCounter++;
             }
@@ -597,12 +620,12 @@ void ff7_execute_effect10_fn()
 int ff7_add_fn_to_effect60_fn(uint32_t function)
 {
     int idx;
-    for (idx = 0; idx < 10; idx++)
+    for (idx = 0; idx < 60; idx++)
     {
         if (ff7_externals.effect60_array_fn[idx] == 0 && *ff7_externals.effect60_array_idx <= idx)
             break;
     }
-    if (idx >= 10)
+    if (idx >= 60)
         return 0xFFFF;
     if (isAddFunctionDisabled)
         return idx;
@@ -612,7 +635,7 @@ int ff7_add_fn_to_effect60_fn(uint32_t function)
     *ff7_externals.effect60_counter = *ff7_externals.effect60_counter + 1;
 
     aux_effect60_data[idx].frameCounter = 0;
-    aux_effect60_data[idx].useFrameCounter = false;
+    aux_effect60_data[idx].interpolationTrick = interpolation_trick::NONE;
     aux_effect60_data[idx].isFirstTimeRunning = true;
     return idx;
 }
@@ -653,11 +676,15 @@ void ff7_execute_effect60_fn()
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.summon_aura_effects_5C0953 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5C18BC)
                 {
-                    // these are already fixed functions 
+                    aux_effect60_data[fn_index].interpolationTrick = interpolation_trick::NONE;
+                }
+                else if(ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_smoke_move_handler_5BE4E2)
+                {
+                    aux_effect60_data[fn_index].interpolationTrick = interpolation_trick::ONLY_ONECALL_TRICK;
                 }
                 else
                 {
-                    aux_effect60_data[fn_index].useFrameCounter = true;
+                    aux_effect60_data[fn_index].interpolationTrick = interpolation_trick::PAUSE_TRICK;
                 }
 
                 if (trace_all || trace_battle_animation)
@@ -668,22 +695,35 @@ void ff7_execute_effect60_fn()
                 aux_effect60_data[fn_index].isFirstTimeRunning = false;
             }
 
-            if (aux_effect60_data[fn_index].useFrameCounter)
+            if (aux_effect60_data[fn_index].interpolationTrick != interpolation_trick::NONE)
             {
-                if(aux_effect60_data[fn_index].frameCounter % frame_multiplier == 0)
+                if (aux_effect60_data[fn_index].frameCounter % frame_multiplier == 0)
                 {
                     ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
                 }
                 else
                 {
-                    auto data_prev = ff7_externals.effect60_array_data[fn_index];
                     byte was_paused = *ff7_externals.g_is_battle_paused;
-                    *ff7_externals.g_is_battle_paused = 1;
-                    ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
-                    *ff7_externals.g_is_battle_paused = was_paused;
-                    ff7_externals.effect60_array_data[fn_index].field_2 = data_prev.field_2;
+                    auto data_prev = ff7_externals.effect60_array_data[fn_index];
+
+                    switch (aux_effect60_data[fn_index].interpolationTrick)
+                    {
+                    case interpolation_trick::PREVIOUS_VALUE_TRICK:
+                        isAddFunctionDisabled = true;
+                        ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
+                        ff7_externals.effect60_array_data[fn_index].field_2 = data_prev.field_2;
+                        isAddFunctionDisabled = false;
+                        break;
+                    case interpolation_trick::PAUSE_TRICK:
+                        *ff7_externals.g_is_battle_paused = 1;
+                        ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
+                        *ff7_externals.g_is_battle_paused = was_paused;
+                        break;
+                    default:
+                        break;
+                    }
                 }
-                
+
                 aux_effect60_data[fn_index].frameCounter++;
             }
             else
@@ -720,7 +760,7 @@ void ff7_boss_death_animation_5BC5EC()
         if (fn_data.n_frames == (58 * frame_multiplier) || fn_data.n_frames == (64 * frame_multiplier))
             *ff7_externals.field_battle_BFB2E0 = ((uint32_t(*)(byte, byte, byte))ff7_externals.battle_boss_death_call_5BD436)(0xFA, 0xFA, 0xFA);
 
-        std::array<short, 8> offset_z_position {64, 32, 0, -32, -64, -32, 0, 32};
+        std::array<short, 8> offset_z_position{64, 32, 0, -32, -64, -32, 0, 32};
         int index = ((fn_data.n_frames * (4 / frame_multiplier)) % offset_z_position.size());
         getBattleModelState(fn_data.field_8)->restingZPosition = fn_data.field_A + offset_z_position[index];
         fn_data.n_frames--;

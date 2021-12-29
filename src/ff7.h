@@ -2418,8 +2418,8 @@ struct ff7_externals
 	uint32_t battle_disintegrate_1_death_5BBF31;
 	uint32_t battle_disintegrate_1_death_sub_5BC04D;
 	uint32_t battle_sub_42C0A7;
-	uint32_t battle_sub_5C0E4B;
-	uint32_t battle_sub_5D4240;
+	uint32_t run_summon_animations_5C0E4B;
+	uint32_t vincent_limit_fade_effect_sub_5D4240;
 	uint32_t battle_sub_5BD96D;
 	uint32_t battle_sub_425D29;
 	uint32_t display_battle_damage_5BB410;
@@ -2455,13 +2455,14 @@ struct ff7_externals
 	uint32_t battle_sub_5BCD42;
 	uint32_t battle_sub_5BD050;
 	uint32_t battle_smoke_move_handler_5BE4E2;
-	uint32_t battle_smoke_move_effects_5BE5A9;
 	uint32_t battle_sub_42A72D;
 	uint32_t run_tifa_limit_effects;
-	uint32_t tifa_limit_1_2_main_4E2DF3;
 	uint32_t tifa_limit_1_2_sub_4E3D51;
-	uint32_t tifa_limit_2_1_main_4E401E;
 	uint32_t tifa_limit_2_1_sub_4E48D4;
+	uint32_t aerith_limit_2_1_sub_45B0CF;
+	uint32_t run_shiva_camera_58E60D;
+	uint32_t run_ramuh_camera_597206;
+	uint32_t run_odin_gunge_camera_4A0F52;
 
 	battle_model_state *g_battle_model_state;
 	battle_model_state_small *g_small_battle_model_state;
