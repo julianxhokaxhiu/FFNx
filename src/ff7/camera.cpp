@@ -26,6 +26,7 @@
 #include <span>
 
 #include "../ff7.h"
+#include "../patch.h"
 #include "../log.h"
 #include "../globals.h"
 
@@ -208,4 +209,21 @@ void ff7_run_camera_position_script(char variationIndex, DWORD param_2, short ca
 
     if (executedOpCodeF5)
         cameraPosition[variationIndex].frames_to_wait = framesToWait;
+}
+
+void battle_camera_hook_init()
+{
+    replace_function(ff7_externals.execute_camera_functions, ff7_execute_camera_functions);
+    replace_function(ff7_externals.add_fn_to_camera_fn_array, ff7_add_fn_to_camera_fn);
+    replace_call_function(ff7_externals.handle_camera_functions + 0x35, ff7_run_camera_focal_position_script);
+    replace_call_function(ff7_externals.handle_camera_functions + 0x4B, ff7_run_camera_position_script);
+
+    // Battle outro camera frame fix: patch DAT_009AE138 (frames to wait before closing battle mode)
+    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x3DE, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x361, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x326, frame_multiplier);
+
+    // Battle intro camera frame fix: patch DAT_00BFD0F4 (frames to wait before atb starts)
+    patch_multiply_code<byte>(ff7_externals.battle_sub_429AC0 + 0x152, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_429D8A + 0x1D8, frame_multiplier);
 }

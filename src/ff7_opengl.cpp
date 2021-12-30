@@ -30,10 +30,7 @@
 #include "ff7_data.h"
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
-WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
-byte y_pos_offset_display_damage_30[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2};
-//byte y_pos_offset_display_damage_60[] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 4, 3, 2, 1, 0, 0};
-byte y_pos_offset_display_damage_60[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 7, 8, 8, 8, 8, 8, 7, 7, 7, 6, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0, 0, 1, 1, 0, 0, 0};			
+WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};	
 
 void ff7_init_hooks(struct game_obj *_game_object)
 {
@@ -135,6 +132,14 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_call_function(ff7_externals.on_gameover_exit, ff7_on_gameover_exit);
 
 	// ##################################
+	// animation glitch fixes
+	// ##################################
+
+	// phoenix camera animation glitch
+	memset_code(ff7_externals.run_phoenix_main_loop_516297 + 0x3A5, 0x90, 49);
+    memset_code(ff7_externals.run_phoenix_main_loop_516297 + 0x3F7, 0x90, 49);
+
+	// ##################################
 	// bugfixes to enhance game stability
 	// ##################################
 
@@ -185,180 +190,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		if (ff7_fps_limiter >= FF7_LIMITER_30FPS)
 		{
 			frame_multiplier = (ff7_fps_limiter == FF7_LIMITER_30FPS) ? 2 : 4;
+			
+			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, frame_multiplier);
 
-			// ###############################
-			// Battle camera movement support
-			// ###############################
-			{
-				replace_function(ff7_externals.execute_camera_functions, ff7_execute_camera_functions);
-				replace_function(ff7_externals.add_fn_to_camera_fn_array, ff7_add_fn_to_camera_fn);
-				replace_call_function(ff7_externals.handle_camera_functions + 0x35, ff7_run_camera_focal_position_script);
-				replace_call_function(ff7_externals.handle_camera_functions + 0x4B, ff7_run_camera_position_script);
-
-				// Battle outro camera frame fix: patch DAT_009AE138 (frames to wait before closing battle mode)
-				patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x3DE, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x361, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x326, frame_multiplier);
-
-				// Battle intro camera frame fix: patch DAT_00BFD0F4 (frames to wait before atb starts)
-				patch_multiply_code<byte>(ff7_externals.battle_sub_429AC0 + 0x152, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_429D8A + 0x1D8, frame_multiplier);
-			}
-
-			// ##################
-			// Animation scripts
-			// ##################
-			{
-				replace_call_function(ff7_externals.battle_sub_42A5EB + 0xB8, ff7_run_animation_script);
-				replace_call_function(ff7_externals.battle_sub_42E275 + 0xB2, ff7_run_animation_script);
-				replace_call_function(ff7_externals.battle_sub_42E34A + 0x76, ff7_run_animation_script);
-				replace_call_function(ff7_externals.battle_sub_5BD5E9 + 0x22F, ff7_run_animation_script);
-				replace_call_function(ff7_externals.battle_sub_5C1D9A + 0x4A, ff7_run_animation_script);
-				replace_function(ff7_externals.add_fn_to_effect100_fn, ff7_add_fn_to_effect100_fn);
-				replace_function(ff7_externals.add_fn_to_effect10_fn, ff7_add_fn_to_effect10_fn);
-				replace_function(ff7_externals.add_fn_to_effect60_fn, ff7_add_fn_to_effect60_fn);
-				replace_function(ff7_externals.execute_effect100_fn, ff7_execute_effect100_fn);
-				replace_function(ff7_externals.execute_effect10_fn, ff7_execute_effect10_fn);
-				replace_function(ff7_externals.execute_effect60_fn, ff7_execute_effect60_fn);
-				
-				// Normal enemy death
-				patch_multiply_code<WORD>(ff7_externals.battle_enemy_death_5BBD24 + 0x40, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_enemy_death_sub_5BBE32 + 0xA8, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_enemy_death_sub_5BBE32 + 0xCB, frame_multiplier);
-
-				// Enemy death - iainuki
-				patch_multiply_code<WORD>(ff7_externals.battle_iainuki_death_5BCAAA + 0x40, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x9F, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0xC2, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0xE3, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x104, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x154, frame_multiplier);
-
-				// Boss death
-				patch_multiply_code<WORD>(ff7_externals.battle_boss_death_5BC48C + 0x40, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.battle_boss_death_5BC48C + 0xCF, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_boss_death_sub_5BC6ED + 0xCF, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_boss_death_sub_5BC6ED + 0xF1, frame_multiplier);
-				replace_function(ff7_externals.battle_boss_death_sub_5BC5EC, ff7_boss_death_animation_5BC5EC);
-
-				// Enemy death - melting
-				patch_multiply_code<WORD>(ff7_externals.battle_melting_death_5BC21F + 0x40, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0xAB, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_melting_death_sub_5BC32D + 0xCE, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0xEE, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0x10D, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0x12C, frame_multiplier);
-
-				// Enemy death - disintegrate 2
-				patch_multiply_code<WORD>(ff7_externals.battle_disintegrate_2_death_5BBA82 + 0x40, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_disintegrate_2_death_sub_5BBBDE + 0xB9, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_disintegrate_2_death_sub_5BBBDE + 0xDB, frame_multiplier);
-				patch_divide_code<float>((uint32_t)ff7_externals.field_float_battle_7B7680, frame_multiplier); // float value used also elsewhere
-
-				// Enemy death - morph
-				patch_multiply_code<WORD>(ff7_externals.battle_morph_death_5BC812 + 0x40, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_morph_death_sub_5BC920 + 0x9F, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0xC2, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0xE3, frame_multiplier);
-				patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0x104, frame_multiplier);
-				patch_divide_code<WORD>(ff7_externals.battle_morph_death_sub_5BC920 + 0x154, frame_multiplier);
-
-				// Enemy death - disintegrate 1 
-				patch_multiply_code<WORD>(ff7_externals.battle_disintegrate_1_death_5BBF31 + 0x40, frame_multiplier);
-				replace_function(ff7_externals.battle_disintegrate_1_death_sub_5BC04D, ff7_battle_disintegrate_1_death_sub_5BC04D);
-
-				// Display string related
-				replace_function(ff7_externals.get_n_frames_display_action_string, ff7_get_n_frames_display_action_string);
-
-				// Character movement (e.g. movement animation for attacks)
-				replace_function(ff7_externals.battle_move_character_sub_426F58, ff7_battle_move_character_sub_426F58);
-
-				// Character fade in/out (i.e. multiply g_script_wait_frames and other things)
-				patch_multiply_code<byte>(ff7_externals.battle_sub_42A72D + 0x11A, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x24, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x57, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x6E, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C18BC + 0xDC, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5C18BC + 0xE4, frame_multiplier);
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5C1C8F + 0x55, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.battle_sub_5C1C8F + 0x5D, frame_multiplier);
-
-				// Summons
-				patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x75, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x6D, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x15B, frame_multiplier);
-				patch_code_dword(ff7_externals.run_shiva_camera_58E60D + 0xC2D, 0x90909090);
-				patch_code_word(ff7_externals.run_shiva_camera_58E60D + 0xC31, 0x9090);
-				patch_code_dword(ff7_externals.run_ramuh_camera_597206 + 0x44, 0x000B9585);
-				patch_code_dword(ff7_externals.run_odin_gunge_camera_4A0F52 + 0xC0C, 0x90909090);
-				patch_code_word(ff7_externals.run_odin_gunge_camera_4A0F52 + 0xC10, 0x9090);
-
-				// Show Damage
-				patch_multiply_code<WORD>(ff7_externals.display_battle_damage_5BB410 + 0x54, frame_multiplier);
-				if(frame_multiplier == 2)
-				{
-					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x1E2, (DWORD)y_pos_offset_display_damage_30);
-					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x2D7, (DWORD)y_pos_offset_display_damage_30);
-				}
-				else if(frame_multiplier == 4)
-				{
-					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x1E2, (DWORD)y_pos_offset_display_damage_60);
-					patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x2D7, (DWORD)y_pos_offset_display_damage_60);
-				}
-
-				// Aura animation (magic, limit break, enemy skill, summon)
-				patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x4C, 0x7 - frame_multiplier / 2);
-				patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x6A, 0xA - frame_multiplier / 2);
-				patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x88, frame_multiplier);
-				patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0xA2, 0xC - frame_multiplier / 2);
-				patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x138, frame_multiplier);
-				patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x4C, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x6E, frame_multiplier);
-				patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x7A, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x98, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0xAD, frame_multiplier);
-				patch_code_byte(ff7_externals.limit_break_aura_effects_5C0572 + 0xB0, 0x9 - frame_multiplier / 2);
-				patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x13E, frame_multiplier);
-				patch_multiply_code<DWORD>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x5C, frame_multiplier);
-				patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x64, 0x7 - frame_multiplier / 2);
-				patch_multiply_code<DWORD>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x81, frame_multiplier);
-				patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x89, 0xA - frame_multiplier / 2);
-				patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xA7, frame_multiplier);
-				patch_divide_code<int>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xB3, frame_multiplier);
-				patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xD6, frame_multiplier);
-				patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xD9, 0xC - frame_multiplier / 2);
-				patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x182, frame_multiplier);
-				patch_code_byte(ff7_externals.summon_aura_effects_5C0953 + 0x4D, 0xC - frame_multiplier / 2);
-				patch_multiply_code<byte>(ff7_externals.summon_aura_effects_5C0953 + 0x19D, frame_multiplier);
-
-				// Limit break effects
-				patch_multiply_code<byte>(ff7_externals.tifa_limit_2_1_sub_4E48D4 + 0x1FE, frame_multiplier);
-				patch_code_dword(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xCE, 0x90909090);
-				patch_code_word(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xD2, 0x9090);
-				patch_multiply_code<byte>(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xE2, frame_multiplier);
-
-				// Effect60 related
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, frame_multiplier);
-
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, frame_multiplier);
-				patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x1DC, 0x2 - frame_multiplier / 2);
-				patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x203, 0x2 - frame_multiplier / 2);
-
-				patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x5B, frame_multiplier); 
-				patch_divide_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x6E, frame_multiplier);
-			}
-			//
-
-			// ########################
-			// Other battle animations
-			// ########################
-			{
-				patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, frame_multiplier);
-
-				// Tifa slots speed patch (bitwise and with 0x7 changed to 0x3)
-				patch_code_byte(ff7_externals.battle_sub_6E3135 + 0x168, 0x3);
-				patch_code_byte(ff7_externals.battle_sub_6E3135 + 0x16B, 0xCA);
-			}
+			battle_camera_hook_init();
+			battle_animations_hook_init();
 		}
 	}
 
