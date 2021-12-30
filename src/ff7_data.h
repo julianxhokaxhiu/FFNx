@@ -594,6 +594,10 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t battle_sub_6D82EA = get_relative_call(battle_sub_6D83C8, 0xE0);
 	uint32_t battle_sub_6D797C = get_relative_call(battle_sub_6D82EA, 0x59);
 	ff7_externals.battle_sub_6E3135 = get_relative_call(battle_sub_6D797C, 0x1C2);
+	ff7_externals.update_battle_camera_sub_5C20CE = get_relative_call(ff7_externals.battle_sub_42D992, 0xFB);
+	ff7_externals.set_battle_camera_sub_5C22BD = get_relative_call(ff7_externals.update_battle_camera_sub_5C20CE, 0x5A);
+	ff7_externals.g_battle_camera_position = (camera_vec3*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x17);
+	ff7_externals.g_battle_camera_focal_point = (camera_vec3*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x5E);
 	// --------------------------------
 
 	// animation 60 fps
@@ -778,6 +782,21 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t run_summon_odin_gunge_sub_4A0B6D = get_relative_call(run_summon_odin_gunge_main_4A0AE1, 0x7F);
 	uint32_t run_summon_odin_gunge_sub_4A0F12 = get_relative_call(run_summon_odin_gunge_sub_4A0B6D, 0x1C0);
 	ff7_externals.run_odin_gunge_camera_4A0F52 = get_absolute_value(run_summon_odin_gunge_sub_4A0F12, 0x5);
+	uint32_t run_summon_odin_steel_main_4A5B61 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x3BB);
+	uint32_t run_summon_odin_steel_sub_4A5BE5 = get_relative_call(run_summon_odin_steel_main_4A5B61, 0x77);
+	uint32_t run_summon_odin_steel_sub_4A8B86 = get_absolute_value(run_summon_odin_steel_sub_4A5BE5, 0xA7);
+	ff7_externals.run_summon_odin_steel_sub_4A9908 = get_absolute_value(run_summon_odin_steel_sub_4A8B86, 0x43E);
+	ff7_externals.field_odin_frames_AEEC14 = (WORD*)get_absolute_value(ff7_externals.run_summon_odin_steel_sub_4A9908, 0x316);
+	uint32_t run_summon_kotr_main_476842 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x43A);
+	ff7_externals.run_summon_kotr_sub_476857 = get_relative_call(run_summon_kotr_main_476842, 0xB);
+	ff7_externals.add_kotr_camera_fn_to_effect100_fn_476AAB = (void(*)(DWORD, DWORD, WORD))get_relative_call(ff7_externals.run_summon_kotr_sub_476857, 0x1C6);
+	ff7_externals.run_kotr_camera_476AFB = get_relative_call((uint32_t)ff7_externals.add_kotr_camera_fn_to_effect100_fn_476AAB, 0xA);
+	uint32_t run_summon_bahamut_zero_main_4835C1 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x399);
+	uint32_t run_summon_bahamut_zero_sub_483762 = get_relative_call(run_summon_bahamut_zero_main_4835C1, 0x194);
+	ff7_externals.run_bahamut_zero_main_loop_484A16 = get_absolute_value(run_summon_bahamut_zero_sub_483762, 0x5F);
+	uint32_t run_summon_phoenix_main_515101 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x2AB);
+	uint32_t run_summon_phoenix_sub_515127 = get_relative_call(run_summon_phoenix_main_515101, 0x1A);
+	ff7_externals.run_phoenix_main_loop_516297 = get_absolute_value(run_summon_phoenix_sub_515127, 0xB2);
 	// --------------------------------
 
 	// battle dialogues

@@ -65,23 +65,10 @@ void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, shor
 int ff7_load_save_file(int param_1);
 
 // camera
-int ff7_add_fn_to_camera_fn(uint32_t function);
-void ff7_execute_camera_functions();
-void ff7_run_camera_focal_position_script(char index, DWORD param_2, short param_3);
-void ff7_run_camera_position_script(char index, DWORD param_2, short param_3);
+void battle_camera_hook_init();
 
 // animation
-void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable);
-int ff7_add_fn_to_effect100_fn(uint32_t function);
-int ff7_add_fn_to_effect60_fn(uint32_t function);
-int ff7_add_fn_to_effect10_fn(uint32_t function);
-void ff7_execute_effect100_fn();
-void ff7_execute_effect60_fn();
-void ff7_execute_effect10_fn();
-void ff7_boss_death_animation_5BC5EC();
-void ff7_battle_move_character_sub_426F58();
-int ff7_get_n_frames_display_action_string();
-void ff7_battle_disintegrate_1_death_sub_5BC04D(byte effect10_array_idx);
+void battle_animations_hook_init();
 
 // field
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);

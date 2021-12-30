@@ -701,10 +701,14 @@ struct battle_anim_event {
     uint16_t damageEventQueueIdx;
 };
 
+struct camera_vec3 {
+	short x;
+	short y;
+	short z;
+};
+
 struct bcamera_position{
-	short location_x;
-	short location_y;
-	short location_z;
+	camera_vec3 point;
 	WORD unused_6;
 	short current_position;
 	short frames_to_wait;
@@ -2359,10 +2363,6 @@ struct ff7_externals
 	uint32_t field_load_models_atoi;
 
 	// battle camera script externals
-	bcamera_fn_data* camera_fn_data;
-	bcamera_position* battle_camera_position;
-	bcamera_position* battle_camera_focal_position;
-	uint32_t* camera_fn_array;
 	uint32_t handle_camera_functions;
 	uint32_t set_camera_focal_position_scripts;
 	uint32_t set_camera_position_scripts;
@@ -2370,6 +2370,20 @@ struct ff7_externals
 	uint32_t execute_camera_functions;
 	uint32_t battle_camera_sub_5C52F8;
 	uint32_t battle_camera_sub_5C3E6F;
+	uint32_t battle_camera_position_sub_5C3D0D;
+	uint32_t battle_camera_position_sub_5C557D;
+	uint32_t battle_camera_position_sub_5C5B9C;
+	uint32_t battle_camera_focal_sub_5C5F5E;
+	uint32_t battle_camera_focal_sub_5C5714;
+	uint32_t battle_sub_430DD0;
+	uint32_t battle_sub_429D8A;
+	uint32_t battle_sub_6E3135;
+	uint32_t update_battle_camera_sub_5C20CE;
+	uint32_t set_battle_camera_sub_5C22BD;
+	bcamera_fn_data* camera_fn_data;
+	bcamera_position* battle_camera_position;
+	bcamera_position* battle_camera_focal_position;
+	uint32_t* camera_fn_array;
 	byte* battle_camera_focal_scripts_8FEE30;
 	byte* battle_camera_position_scripts_8FEE2C;
 	DWORD* battle_camera_global_scripts_9A13BC;
@@ -2379,14 +2393,8 @@ struct ff7_externals
 	DWORD* battle_camera_script_offset;
 	WORD* camera_fn_index;
 	WORD* camera_fn_counter;
-	uint32_t battle_camera_position_sub_5C3D0D;
-	uint32_t battle_camera_position_sub_5C557D;
-	uint32_t battle_camera_position_sub_5C5B9C;
-	uint32_t battle_camera_focal_sub_5C5F5E;
-	uint32_t battle_camera_focal_sub_5C5714;
-	uint32_t battle_sub_430DD0;
-	uint32_t battle_sub_429D8A;
-	uint32_t battle_sub_6E3135;
+	camera_vec3* g_battle_camera_position;
+	camera_vec3* g_battle_camera_focal_point;
 
 	// animation script externals
 	uint32_t battle_sub_42A5EB;
@@ -2463,6 +2471,13 @@ struct ff7_externals
 	uint32_t run_shiva_camera_58E60D;
 	uint32_t run_ramuh_camera_597206;
 	uint32_t run_odin_gunge_camera_4A0F52;
+	uint32_t run_summon_odin_steel_sub_4A9908;
+	uint32_t run_summon_kotr_sub_476857;
+	void(*add_kotr_camera_fn_to_effect100_fn_476AAB)(DWORD, DWORD, WORD);
+	uint32_t run_kotr_camera_476AFB;
+	uint32_t run_bahamut_zero_main_loop_484A16;
+	uint32_t run_summon_phoenix_sub_515127;
+	uint32_t run_phoenix_main_loop_516297;
 
 	battle_model_state *g_battle_model_state;
 	battle_model_state_small *g_small_battle_model_state;
@@ -2493,6 +2508,7 @@ struct ff7_externals
 	byte* field_battle_byte_BF2E1C;
 	byte* field_battle_byte_BE10B4;
 	short* resting_Y_array_data;
+	WORD* field_odin_frames_AEEC14;
 
 	// battle dialogue
 	uint32_t battle_sub_42CBF9;
