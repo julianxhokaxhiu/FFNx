@@ -95,6 +95,7 @@ extern long enable_antialiasing;
 extern bool enable_anisotropic;
 extern bool enable_lighting;
 extern bool prefer_lighting_cpu_calculations;
+extern bool ff7_external_opening_music;
 extern bool skip_frames;
 extern bool ff7_more_debug;
 extern bool ff8_ssigpu_debug;

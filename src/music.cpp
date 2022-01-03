@@ -1165,6 +1165,13 @@ void music_init()
 			replace_call(ff7_externals.field_music_id_to_midi_id_call1, ff7_field_music_id_to_midi_id);
 			replace_call(ff7_externals.field_music_id_to_midi_id_call2, ff7_field_music_id_to_midi_id);
 			replace_call(ff7_externals.field_music_id_to_midi_id_call3, ff7_field_music_id_to_midi_id);
+
+			if (ff7_external_opening_music) {
+				// Disable opening music part 2 (ob)
+				replace_call(ff7_externals.opening_movie_play_midi_call, noop_a1);
+				// Reenable opening music part 1 (oa)
+				patch_code_byte(ff7_externals.field_music_helper + 0xD1 + 2, 0x00);
+			}
 		}
 	}
 }
