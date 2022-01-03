@@ -487,6 +487,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.current_movie_frame = (WORD*)get_absolute_value(ff7_externals.sub_63C17F, 0x133);
 	ff7_externals.opening_movie_music_start_frame = (DWORD *)(ff7_externals.sub_63C17F + 0x139);
+	ff7_externals.opening_movie_play_midi_call = ff7_externals.sub_63C17F + 0x145;
 
 	ff7_externals.byte_CC164C = (BYTE *)get_absolute_value(main_loop, 0x32A);
 	ff7_externals.word_CC0DC6 = (WORD *)get_absolute_value(main_init_loop, 0x4BD);

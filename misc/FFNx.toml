@@ -462,6 +462,10 @@ ff7_footsteps = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 mdef_fix = true
 
+# Play opening music via external music, the opening movie needs to be modified to not play the music
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff7_external_opening_music = false
+
 ## ADVANCED OPTIONS - Don't fiddle with these unless you know what you're doing.
 
 # Skip movie frames if necessary.

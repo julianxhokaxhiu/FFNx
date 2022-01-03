@@ -2295,6 +2295,7 @@ struct ff7_externals
 	WORD* opcode_ask_question_code;
 	void (*play_midi)(uint32_t);
 	WORD *current_movie_frame;
+	uint32_t opening_movie_play_midi_call;
 	DWORD *opening_movie_music_start_frame;
 	uint32_t fps_limiter_swirl;
 	uint32_t fps_limiter_battle;
