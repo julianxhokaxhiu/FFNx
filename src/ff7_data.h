@@ -596,8 +596,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_6E3135 = get_relative_call(battle_sub_6D797C, 0x1C2);
 	ff7_externals.update_battle_camera_sub_5C20CE = get_relative_call(ff7_externals.battle_sub_42D992, 0xFB);
 	ff7_externals.set_battle_camera_sub_5C22BD = get_relative_call(ff7_externals.update_battle_camera_sub_5C20CE, 0x5A);
+	ff7_externals.battle_camera_sub_5C22A9 = get_relative_call(ff7_externals.update_battle_camera_sub_5C20CE, 0x97);
+	ff7_externals.battle_camera_sub_5C655C = get_relative_call(ff7_externals.battle_camera_sub_5C22A9, 0x3);
+	ff7_externals.set_battle_camera_sub_5C2350 = get_relative_call(ff7_externals.battle_camera_sub_5C22A9, 0xA);
 	ff7_externals.g_battle_camera_position = (camera_vec3*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x17);
 	ff7_externals.g_battle_camera_focal_point = (camera_vec3*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x5E);
+	ff7_externals.extra_battle_camera = (special_battle_camera*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x10);
+	ff7_externals.extra_battle_camera_idx = (byte*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x6);
+	ff7_externals.battle_enter_frames_to_wait = (byte*)get_absolute_value(ff7_externals.battle_sub_429AC0, 0x14E);
+	ff7_externals.g_variation_index = (byte*)get_absolute_value(ff7_externals.update_battle_camera_sub_5C20CE, 0x6F);
 	// --------------------------------
 
 	// animation 60 fps

@@ -707,6 +707,11 @@ struct camera_vec3 {
 	short z;
 };
 
+struct special_battle_camera{
+	camera_vec3 position;
+	camera_vec3 focal_point;
+};
+
 struct bcamera_position{
 	camera_vec3 point;
 	WORD unused_6;
@@ -2380,6 +2385,9 @@ struct ff7_externals
 	uint32_t battle_sub_6E3135;
 	uint32_t update_battle_camera_sub_5C20CE;
 	uint32_t set_battle_camera_sub_5C22BD;
+	uint32_t battle_camera_sub_5C22A9;
+	uint32_t battle_camera_sub_5C655C;
+	uint32_t set_battle_camera_sub_5C2350;
 	bcamera_fn_data* camera_fn_data;
 	bcamera_position* battle_camera_position;
 	bcamera_position* battle_camera_focal_position;
@@ -2395,6 +2403,10 @@ struct ff7_externals
 	WORD* camera_fn_counter;
 	camera_vec3* g_battle_camera_position;
 	camera_vec3* g_battle_camera_focal_point;
+	special_battle_camera* extra_battle_camera;
+	byte* extra_battle_camera_idx;
+	byte* battle_enter_frames_to_wait;
+	byte* g_variation_index;
 
 	// animation script externals
 	uint32_t battle_sub_42A5EB;
