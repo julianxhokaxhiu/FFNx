@@ -211,6 +211,27 @@ void ff7_run_camera_position_script(char variationIndex, DWORD param_2, short ca
         cameraPosition[variationIndex].frames_to_wait = framesToWait;
 }
 
+void ff7_update_battle_camera(short cameraScriptIndex)
+{
+    if(cameraScriptIndex == -2 && *ff7_externals.battle_enter_frames_to_wait == 0)
+    {
+        // TODO Cosmos
+        ff7_externals.battle_camera_position[*ff7_externals.g_variation_index].point.x += 100 / frame_multiplier;
+    }
+
+    ((void(*)(short))ff7_externals.update_battle_camera_sub_5C20CE)(cameraScriptIndex);
+}
+
+void ff7_update_idle_battle_camera()
+{
+    // TODO Cosmos
+    ff7_externals.extra_battle_camera[*ff7_externals.extra_battle_camera_idx].position.x += 100 / frame_multiplier;
+    ff7_externals.battle_camera_position[3].point.x += 100 / frame_multiplier;
+
+    ((void(*)())ff7_externals.battle_camera_sub_5C655C)();
+    ((void(*)(short))ff7_externals.set_battle_camera_sub_5C2350)(3);
+}
+
 void battle_camera_hook_init()
 {
     replace_function(ff7_externals.execute_camera_functions, ff7_execute_camera_functions);

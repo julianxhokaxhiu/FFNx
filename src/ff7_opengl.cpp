@@ -216,6 +216,13 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
 	replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
 
+	// #####################
+	// control battle camera
+	// #####################
+	// TODO Cosmos
+	//replace_call_function(ff7_externals.battle_sub_42D992 + 0xFB, ff7_update_battle_camera);
+	//replace_function(ff7_externals.battle_camera_sub_5C22A9, ff7_update_idle_battle_camera);
+
 	//######################
 	// menu rendering fix
 	//######################

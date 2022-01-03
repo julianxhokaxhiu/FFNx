@@ -66,6 +66,8 @@ int ff7_load_save_file(int param_1);
 
 // camera
 void battle_camera_hook_init();
+void ff7_update_battle_camera(short cameraScriptIndex);
+void ff7_update_idle_battle_camera();
 
 // animation
 void battle_animations_hook_init();
