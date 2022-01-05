@@ -663,7 +663,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.g_is_battle_paused = (byte*)get_absolute_value(ff7_externals.run_animation_script, 0xA);
 	ff7_externals.special_actor_id = (byte*)get_absolute_value(ff7_externals.run_animation_script, 0x286B);
 	ff7_externals.g_script_wait_frames = (byte*)get_absolute_value(ff7_externals.run_animation_script, 0x27E8);
-	ff7_externals.field_dword_9AD1AC = (DWORD*)get_absolute_value(ff7_externals.execute_effect100_fn, 0x41);
 	ff7_externals.g_script_args = (int**)get_absolute_value(ff7_externals.run_animation_script, 0x3EA);
 
 	// normal enemy death
@@ -812,7 +811,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.add_text_to_display_queue = get_relative_call(ff7_externals.battle_sub_42CBF9, 0x1C7);
 	ff7_externals.update_display_text_queue = get_relative_call(ff7_externals.battle_sub_42D808, 0x2B);
 	ff7_externals.set_battle_text_active = get_relative_call(ff7_externals.update_display_text_queue, 0x14A);
-	ff7_externals.battle_sub_430D14 = get_relative_call(ff7_externals.update_display_text_queue, 0x46);
+	ff7_externals.battle_sfx_play_effect_430D14 = get_relative_call(ff7_externals.update_display_text_queue, 0x46);
 	ff7_externals.battle_sub_66C3BF = get_relative_call(ff7_externals.update_display_text_queue, 0x139);
 	ff7_externals.battle_sub_43526A = get_relative_call(ff7_externals.battle_loop, 0x475);
 	ff7_externals.battle_sub_5C8931 = get_relative_call(ff7_externals.battle_sub_43526A, 0x1F0);
@@ -825,7 +824,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_context = (battle_ai_context*)get_absolute_value(ff7_externals.battle_sub_41CCB2, 0x5F);
 	ff7_externals.anim_event_queue = std::span((battle_anim_event*)get_absolute_value(ff7_externals.battle_sub_42CBF9, 0x23), 64);
 	ff7_externals.anim_event_index = (byte*)get_absolute_value(ff7_externals.battle_sub_42CBF9, 0x19);
-	ff7_externals.g_is_battle_running = (int*)get_absolute_value(battle_main_loop, 0x247);
+	ff7_externals.g_is_battle_running_9AD1AC = (int*)get_absolute_value(battle_main_loop, 0x247);
 	ff7_externals.field_battle_word_BF2E08 = (WORD*)get_absolute_value(ff7_externals.update_display_text_queue, 0xA);
 	ff7_externals.field_battle_word_BF2032 = (WORD*)get_absolute_value(ff7_externals.update_display_text_queue, 0x12C);
 	ff7_externals.g_active_actor_id = (byte*)get_absolute_value(ff7_externals.display_battle_action_text_42782A, 0x52);

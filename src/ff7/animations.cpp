@@ -403,18 +403,7 @@ void ff7_execute_effect100_fn()
     uint16_t &fn_index = *ff7_externals.effect100_array_idx;
     for (fn_index = 0; fn_index < 100; fn_index++)
     {
-        if ((ff7_externals.effect100_array_fn[fn_index] == 0) || (ff7_externals.field_dword_9AD1AC == 0))
-        {
-            if (aux_effect100_data[fn_index].isFirstTimeRunning)
-            {
-                ff7_externals.effect100_array_data[fn_index].field_6 *= frame_multiplier;
-                aux_effect100_data[fn_index].isFirstTimeRunning = false;
-            }
-
-            if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
-                ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
-        }
-        else
+        if(ff7_externals.effect100_array_fn[fn_index] && *ff7_externals.g_is_battle_running_9AD1AC)
         {
             if (aux_effect100_data[fn_index].isFirstTimeRunning) 
             {
@@ -515,6 +504,16 @@ void ff7_execute_effect100_fn()
                 ff7_externals.effect100_array_fn[fn_index] = 0;
                 *ff7_externals.effect100_counter = *ff7_externals.effect100_counter - 1;
             }
+        }
+        else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
+        {
+            if (aux_effect100_data[fn_index].isFirstTimeRunning)
+            {
+                ff7_externals.effect100_array_data[fn_index].field_6 *= frame_multiplier;
+                aux_effect100_data[fn_index].isFirstTimeRunning = false;
+            }
+
+            ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
         }
     }
     fn_index = 0;
