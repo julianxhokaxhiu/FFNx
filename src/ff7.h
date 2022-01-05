@@ -946,9 +946,9 @@ struct effect10_data
 struct battle_text_data
 {
 	short buffer_idx;
-	byte field_2;
-	byte wait_frames;
-	short n_frames;
+	short field_2;
+	char wait_frames;
+	char n_frames;
 };
 
 struct battle_chdir_struc
@@ -2516,7 +2516,6 @@ struct ff7_externals
 	byte* special_actor_id;
 	int* field_battle_BFB2E0;
 	float* field_float_battle_7B7680;
-	DWORD* field_dword_9AD1AC;
 	byte* field_byte_DC0E11;
 	byte* field_battle_byte_BF2E1C;
 	byte* field_battle_byte_BE10B4;
@@ -2528,7 +2527,7 @@ struct ff7_externals
 	uint32_t add_text_to_display_queue;
 	uint32_t update_display_text_queue;
 	uint32_t set_battle_text_active;
-	uint32_t battle_sub_430D14;
+	uint32_t battle_sfx_play_effect_430D14;
 	uint32_t battle_sub_66C3BF;
 	uint32_t battle_sub_43526A;
 	uint32_t battle_sub_5C8931;
@@ -2541,7 +2540,7 @@ struct ff7_externals
 	battle_ai_context *battle_context;
 	std::span<battle_anim_event> anim_event_queue;
 	byte* anim_event_index;
-	int* g_is_battle_running;
+	int* g_is_battle_running_9AD1AC;
 	WORD* field_battle_word_BF2E08;
 	WORD* field_battle_word_BF2032;
 	byte* g_active_actor_id;

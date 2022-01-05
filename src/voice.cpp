@@ -509,7 +509,7 @@ void ff7_update_display_text_queue()
 
 			if (text_data_first.field_2 != 0)
 			{
-				((void (*)(uint16_t))ff7_externals.battle_sub_430D14)(0x2D7);
+				((void (*)(uint16_t))ff7_externals.battle_sfx_play_effect_430D14)(0x2D7);
 				text_data_first.field_2 = 0;
 			}
 
@@ -544,9 +544,9 @@ void ff7_update_display_text_queue()
 			if (show_text)
 				((void (*)(short))ff7_externals.set_battle_text_active)(text_data_first.buffer_idx);
 
-			handle_pause_voice(other_text_data_first.has_started, *ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running);
+			handle_pause_voice(other_text_data_first.has_started, *ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running_9AD1AC);
 
-			if (*ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running)
+			if (*ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running_9AD1AC)
 				return;
 
 			// Ending voice
@@ -563,7 +563,7 @@ void ff7_update_display_text_queue()
 			}
 			return;
 		}
-		if (!*ff7_externals.g_is_battle_paused && *ff7_externals.g_is_battle_running)
+		if (!*ff7_externals.g_is_battle_paused && *ff7_externals.g_is_battle_running_9AD1AC)
 			text_data_first.wait_frames--;
 	}
 
@@ -624,16 +624,16 @@ void ff7_display_battle_action_text()
 				byte command_id = ff7_externals.g_battle_model_state[*ff7_externals.g_active_actor_id].commandID;
 				uint16_t action_id = ff7_externals.g_small_battle_model_state[*ff7_externals.g_active_actor_id].actionIdx;
 				((void(*)(short, short))ff7_externals.display_battle_action_text_sub_6D71FA)(command_id, action_id);
-				if(*ff7_externals.g_is_battle_running != 0)
+				if(*ff7_externals.g_is_battle_running_9AD1AC != 0)
 					effect_data.n_frames--;
 			}
 		}
 
-		handle_pause_voice(effect_data.field_6 == VOICE_STARTED, !*ff7_externals.g_is_battle_running);
+		handle_pause_voice(effect_data.field_6 == VOICE_STARTED, !*ff7_externals.g_is_battle_running_9AD1AC);
 	}
 	else
 	{
-		if(*ff7_externals.g_is_battle_running != 0)
+		if(*ff7_externals.g_is_battle_running_9AD1AC != 0)
 			effect_data.field_6--;
 	}
 }
