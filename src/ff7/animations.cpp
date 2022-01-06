@@ -844,7 +844,7 @@ void ff7_battle_move_character_sub_426F58()
     }
 }
 
-void battle_animations_hook_init()
+void ff7_battle_animations_hook_init()
 {
     replace_call_function(ff7_externals.battle_sub_42A5EB + 0xB8, ff7_run_animation_script);
     replace_call_function(ff7_externals.battle_sub_42E275 + 0xB2, ff7_run_animation_script);

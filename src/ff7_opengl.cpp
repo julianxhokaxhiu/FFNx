@@ -193,8 +193,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			
 			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, frame_multiplier);
 
-			battle_camera_hook_init();
-			battle_animations_hook_init();
+			ff7_battle_camera_hook_init();
+			ff7_battle_animations_hook_init();
+			ff7_field_hook_init();
 		}
 	}
 

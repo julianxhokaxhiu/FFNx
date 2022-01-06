@@ -38,12 +38,16 @@ int (*old_mvief)();
 int (*old_bgmovie)();
 byte mvief_bank = 0;
 byte mvief_address = 0;
+constexpr int field_60fps_ratio = 2;
 
 int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1 && !is_movie_bgfield) ret *= movie_fps_ratio;
+	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield) 
+		ret *= movie_fps_ratio;
+	else if (ff7_fps_limiter == FF7_LIMITER_60FPS) 
+		ret *= field_60fps_ratio;
 
 	return ret;
 }
@@ -52,7 +56,10 @@ int16_t script_ASPED_get_speed(int16_t bank, int16_t address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1 && !is_movie_bgfield) ret /= movie_fps_ratio;
+	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield) 
+		ret /= movie_fps_ratio;
+	else if (ff7_fps_limiter == FF7_LIMITER_60FPS) 
+		ret /= field_60fps_ratio;
 
 	return ret;
 }
@@ -62,35 +69,35 @@ int script_WAIT()
 	int result = 0;
 
 	WORD frames_left = ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id];
-  if ( frames_left )
-  {
-    if ( frames_left == 1 )
-    {
-      ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = 0;
-      ff7_externals.field_array_1[*ff7_externals.current_entity_id] += 3;
-      result = 0;
-    }
-    else
-    {
-      --ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id];
-      result = 1;
-    }
-  }
-  else
-  {
-    ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = get_field_parameter<WORD>(0);
+	if (frames_left)
+	{
+		if (frames_left == 1)
+		{
+			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = 0;
+			ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 3;
+			result = 0;
+		}
+		else
+		{
+			--ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id];
+			result = 1;
+		}
+	}
+	else
+	{
+		ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = get_field_parameter<WORD>(0);
 
-		if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1 && !is_movie_bgfield)
+		if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
 			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= movie_fps_ratio;
+		else if (ff7_fps_limiter == FF7_LIMITER_60FPS)
+			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= field_60fps_ratio;
 
-    ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] |= get_field_parameter<byte>(1) << 8;
+		if (!ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id])
+			ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 3;
+		result = 1;
+	}
 
-    if ( !ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] )
-      ff7_externals.field_array_1[*ff7_externals.current_entity_id] += 3;
-    result = 1;
-  }
-
-  return result;
+	return result;
 }
 
 int script_MVIEF()

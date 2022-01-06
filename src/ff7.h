@@ -1997,6 +1997,33 @@ struct ff7_field_ad_object {
 	char buffer[384]; // to be mapped to real fields
 };
 
+struct field_event_data
+{
+	byte field_0[48];
+	byte movement_ladder_jump_steps;
+	byte field_31[12];
+	byte final_rotation;
+	byte field_3F[37];
+	char field_movement_type;
+	byte animation_id;
+	byte animation_speed_maybe;
+	byte field_67[2];
+	WORD firstFrame;
+	WORD lastFrame;
+	byte field_6C[2];
+	WORD field_direction_rel_6E;
+	byte field_70[6];
+	WORD movement_speed;
+	byte field_78[16];
+};
+
+struct field_animation_data
+{
+  byte field_0[376];
+  uint32_t* anim_frame_object;
+  byte field_179[20];
+};
+
 // --------------- end of FF7 imports ---------------
 
 struct ff7_channel_6_state
@@ -2194,8 +2221,10 @@ struct ff7_externals
 	uint32_t menu_start;
 	uint32_t battle_clear_sound_flags;
 	uint32_t swirl_sound_effect;
-	uint32_t field_init_event_sub_63BCA7;
-	uint32_t field_init_event;
+	uint32_t field_init_player_character_variables;
+	uint32_t field_init_event_wrapper_63BCA7;
+	uint32_t field_init_event_60BACF;
+	uint32_t field_init_field_objects_60BCFA;
 	uint32_t execute_opcode;
 	uint32_t opcode_goldu;
 	uint32_t opcode_dlitm;
@@ -2205,6 +2234,11 @@ struct ff7_externals
 	uint32_t opcode_bmusc;
 	uint32_t opcode_fmusc;
 	uint32_t opcode_cmusc;
+	uint32_t opcode_canm1_canm2;
+	uint32_t opcode_canim1_canim2;
+	uint32_t opcode_turngen;
+	uint32_t field_opcode_08_sub_61D4B9;
+	uint32_t field_opcode_AA_2A_sub_616476;
 	uint32_t field_music_helper;
 	uint32_t field_music_helper_sound_op_call;
 	uint32_t (*field_music_id_to_midi_id)(int16_t);
@@ -2245,7 +2279,7 @@ struct ff7_externals
 	uint32_t worldmap_battle_toggle;
 	uint32_t enter_field;
 	uint32_t sub_63C17F;
-	uint32_t sub_6342C6;
+	uint32_t field_update_model_positions_sub_6342C6;
 	int (*field_process_char_status)(int16_t unk);
 	uint32_t sub_40B27B;
 	WORD* word_CC0DD4;
@@ -2281,11 +2315,16 @@ struct ff7_externals
 	int8_t (*set_bank_value)(int16_t, int16_t, int16_t);
 	uint32_t sub_611BAE;
 	byte* current_entity_id;
-	int* field_ptr_1; //0xCBF5E8
-	WORD* field_array_1; //0xCC0CF8
+	byte** field_script_ptr; //0xCBF5E8
+	WORD* field_curr_script_position; //0xCC0CF8
+	byte* field_model_id_array; //0xCBFB70
+	field_event_data** field_event_data_ptr; // 0xCC0B60
+	field_animation_data** field_animation_data_ptr; // 0xCFF738
 	WORD* wait_frames_ptr; //0xCC0900
+	char* animation_type_array; //0xCC0980
 	WORD* field_game_moment; //0xDC08DC
 	ff7_modules_global_object *modules_global_object; // 0xCC0D88
+	ff7_modules_global_object **field_global_object_ptr; // 0xCBF9D8
 	uint32_t sub_74DB8C;
 	void (*sub_767039)(DWORD*,DWORD*,DWORD*);
 	uint32_t play_battle_music_call;
