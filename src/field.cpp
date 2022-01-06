@@ -102,7 +102,7 @@ int map_jump_ff7()
 	// Restores the original field update code
 	memcpy_code(common_externals.update_entities_call, map_patch_storage, 7);
 
-	byte* current_executing_code = (byte*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1);
+	byte* current_executing_code = get_field_parameter_address<byte>(-1);
 
 	// Inject MAPJUMP coordinates
 	memset(current_executing_code, 0, 10);

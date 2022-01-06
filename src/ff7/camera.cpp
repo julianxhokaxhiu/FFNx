@@ -232,7 +232,7 @@ void ff7_update_idle_battle_camera()
     ((void(*)(short))ff7_externals.set_battle_camera_sub_5C2350)(3);
 }
 
-void battle_camera_hook_init()
+void ff7_battle_camera_hook_init()
 {
     replace_function(ff7_externals.execute_camera_functions, ff7_execute_camera_functions);
     replace_function(ff7_externals.add_fn_to_camera_fn_array, ff7_add_fn_to_camera_fn);

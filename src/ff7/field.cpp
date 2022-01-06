@@ -21,7 +21,72 @@
 
 #include "../ff7.h"
 #include "../log.h"
+#include "../field.h"
+#include "../patch.h"
 #include "defs.h"
+#include <unordered_map>
+
+constexpr int field_60fps_ratio = 2;
+
+// model movement and animations
+constexpr byte JOIN = 0x08;
+constexpr byte SPLIT = 0x09;
+constexpr byte CANIM1 = 0xB0;
+constexpr byte CANM1 = 0xB1;
+constexpr byte CANIM2 = 0xBB;
+constexpr byte CANM2 = 0xBC;
+constexpr byte PTURA = 0x35;
+constexpr byte TURA = 0xAB;
+constexpr byte MSPED = 0xB2;
+constexpr byte MOVE = 0xA8;
+constexpr byte TURNGEN = 0xB4;
+constexpr byte TURN = 0xB5;
+constexpr byte JUMP = 0xC0;
+
+// background opcodes
+constexpr byte BGSCR = 0x2D;
+
+// camera movement and others
+constexpr byte NFADE = 0x25;
+constexpr byte FADE = 0x6B;
+constexpr byte SHAKE = 0x5E;
+constexpr byte SCRLC = 0x62;
+constexpr byte SCRLA = 0x63;
+constexpr byte SCR2DC = 0x66;
+constexpr byte SCR2DL = 0x68;
+constexpr byte SCRLP = 0x6F;
+
+enum class patch_type
+{
+	BYTE = 0,
+	WORD,
+	SHORT,
+};
+
+enum class patch_operation
+{
+	DIVISION = 0,
+	MULTIPLICATION = 1,
+};
+
+struct opcode_patch_info
+{
+	int offset;
+	patch_type var_type;
+	patch_operation operation_type;
+};
+
+std::array<uint32_t, 256> old_opcode_table;
+std::unordered_map<byte, std::vector<opcode_patch_info>> patch_config_for_opcode{
+	{JOIN, {opcode_patch_info{0, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
+	{SPLIT, {opcode_patch_info{13, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
+	{PTURA, {opcode_patch_info{1, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
+	{TURA, {opcode_patch_info{2, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
+	{NFADE, {opcode_patch_info{5, patch_type::BYTE, patch_operation::DIVISION}}},
+	{FADE, {opcode_patch_info{5, patch_type::BYTE, patch_operation::DIVISION}}},
+	{SHAKE, {opcode_patch_info{4, patch_type::BYTE, patch_operation::MULTIPLICATION}, opcode_patch_info{6, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
+	{TURN, {opcode_patch_info{4, patch_type::SHORT, patch_operation::MULTIPLICATION}}},
+};
 
 /*
  * This file contains the changes necessary to support subtractive and 25%
@@ -167,4 +232,151 @@ uint32_t field_open_flevel_siz()
 	delete[] buffer;
 
 	return 1;
+}
+
+short ff7_opcode_multiply_get_bank_value(short bank, short address)
+{
+	int16_t ret = ff7_externals.get_bank_value(bank, address);
+	ret *= field_60fps_ratio;
+	return ret;
+}
+
+short ff7_opcode_divide_get_bank_value(short bank, short address)
+{
+	int16_t ret = ff7_externals.get_bank_value(bank, address);
+	ret /= field_60fps_ratio;
+	return ret + 1;
+}
+
+void ff7_init_field_objects()
+{
+	((void(*)())ff7_externals.field_init_field_objects_60BCFA)();
+
+	// Fix movement speed related stuff
+	(*ff7_externals.field_global_object_ptr)->field_10 /= field_60fps_ratio;
+	for (int model_id = 0; model_id < (*ff7_externals.field_script_ptr)[3]; model_id++)
+	{
+		(*ff7_externals.field_event_data_ptr)[model_id].movement_speed /= field_60fps_ratio;
+		(*ff7_externals.field_event_data_ptr)[model_id].field_70[2] /= field_60fps_ratio;
+		(*ff7_externals.field_event_data_ptr)[model_id].field_70[4] /= field_60fps_ratio;
+	}
+}
+
+int opcode_script_partial_animation_wrapper()
+{
+	byte curr_opcode = get_field_parameter<byte>(-1);
+	WORD total_number_of_frames = -1;
+	byte curr_model_id = ff7_externals.field_model_id_array[*ff7_externals.current_entity_id];
+	byte speed = get_field_parameter<byte>(3);
+	WORD first_frame = 16 * get_field_parameter<byte>(1) * field_60fps_ratio / ((curr_opcode == CANIM1 || curr_opcode == CANIM2) ? speed : 1);
+	WORD last_frame = (get_field_parameter<byte>(2) * field_60fps_ratio) / speed;
+	field_event_data* event_data = *ff7_externals.field_event_data_ptr;
+	field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
+	char animation_type = ff7_externals.animation_type_array[curr_model_id];
+
+	int ret = ((int(*)())old_opcode_table[curr_opcode])();
+
+	if(curr_model_id != 255)
+	{
+		switch(animation_type)
+		{
+		case 0:
+		case 1:
+		case 3:
+			if(animation_data)
+				total_number_of_frames = animation_data[curr_model_id].anim_frame_object[2] - 1;
+
+			if(last_frame > total_number_of_frames)
+				last_frame = total_number_of_frames;
+
+			event_data[curr_model_id].firstFrame = first_frame;
+			event_data[curr_model_id].lastFrame = last_frame;
+			break;
+		default:
+			break;
+		}
+	}
+	return ret;
+}
+
+int opcode_script_TURNGEN_wrapper()
+{
+	WORD rotation_n_steps = get_field_parameter<byte>(3);
+	rotation_n_steps *= field_60fps_ratio;
+
+	// There are 7 cases in original FF7 where this condition happens (TODO: Transforming this to short is quite hard)
+	if(rotation_n_steps > 255)
+		rotation_n_steps = 0xFF;
+	
+	patch_field_parameter<byte>(3, (byte)rotation_n_steps);
+
+	return ((int(*)())ff7_externals.opcode_turngen)();
+}
+
+int opcode_script_patch_wrapper()
+{
+	byte curr_opcode = get_field_parameter<byte>(-1);
+
+	if(patch_config_for_opcode.contains(curr_opcode))
+	{
+		auto opcode_patch_config_array = patch_config_for_opcode[curr_opcode];
+		for (auto patch_config: opcode_patch_config_array)
+		{
+			switch(patch_config.var_type)
+			{
+			case patch_type::BYTE:
+				patch_generic_field_parameter<byte>(patch_config.offset, field_60fps_ratio, patch_config.operation_type == patch_operation::MULTIPLICATION);
+				break;
+			case patch_type::WORD:
+				patch_generic_field_parameter<WORD>(patch_config.offset, field_60fps_ratio, patch_config.operation_type == patch_operation::MULTIPLICATION);
+				break;
+			case patch_type::SHORT:
+				patch_generic_field_parameter<SHORT>(patch_config.offset, field_60fps_ratio, patch_config.operation_type == patch_operation::MULTIPLICATION);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	return ((int(*)())old_opcode_table[curr_opcode])();
+}
+
+void ff7_field_hook_init()
+{
+	std::copy(common_externals.execute_opcode_table, &common_externals.execute_opcode_table[0xFF], &old_opcode_table[0]);
+
+	// Model movement fps and animation (walk vs run) fix
+	replace_call_function(ff7_externals.field_init_event_60BACF + 0x39, ff7_init_field_objects);
+	patch_divide_code<int>(ff7_externals.field_opcode_08_sub_61D4B9 + 0x343, field_60fps_ratio);
+	patch_code_byte(ff7_externals.field_update_model_positions_sub_6342C6 + 0x1041, 0x2 - field_60fps_ratio / 2);
+	patch_code_byte(ff7_externals.field_update_model_positions_sub_6342C6 + 0x189A, 0x2 - field_60fps_ratio / 2);
+	replace_call_function(common_externals.execute_opcode_table[JUMP] + 0x1F1, ff7_opcode_multiply_get_bank_value);
+	patch_divide_code<int>(ff7_externals.field_update_model_positions_sub_6342C6 + 0xC89, field_60fps_ratio * 2);
+	patch_divide_code<int>(ff7_externals.field_update_model_positions_sub_6342C6 + 0xE48, field_60fps_ratio * 2);
+
+	// Background scroll fps fix
+	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x34, ff7_opcode_divide_get_bank_value);
+	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x4D, ff7_opcode_divide_get_bank_value);
+	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x68, ff7_opcode_divide_get_bank_value);
+	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x81, ff7_opcode_divide_get_bank_value);
+
+	// Camera scroll fps fix
+	replace_call_function(common_externals.execute_opcode_table[SCRLC] + 0x3B, ff7_opcode_multiply_get_bank_value);
+	replace_call_function(common_externals.execute_opcode_table[SCRLA] + 0x72, ff7_opcode_multiply_get_bank_value);
+	replace_call_function(common_externals.execute_opcode_table[SCR2DC] + 0x3C, ff7_opcode_multiply_get_bank_value);
+	replace_call_function(common_externals.execute_opcode_table[SCR2DL] + 0x3C, ff7_opcode_multiply_get_bank_value);
+	replace_call_function(common_externals.execute_opcode_table[SCRLP] + 0xA7, ff7_opcode_multiply_get_bank_value);
+
+	// Animation fps fix
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANM1], (DWORD)&opcode_script_partial_animation_wrapper);
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANM2], (DWORD)&opcode_script_partial_animation_wrapper);
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANIM1], (DWORD)&opcode_script_partial_animation_wrapper);
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANIM2], (DWORD)&opcode_script_partial_animation_wrapper);
+
+	// Others
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[TURNGEN], (DWORD)&opcode_script_TURNGEN_wrapper);
+	// Fix opcode by changing their parameters if they don't overflow (Ensure this is done at the end)
+	for (const auto &pair : patch_config_for_opcode)
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[pair.first], (DWORD)&opcode_script_patch_wrapper);
 }

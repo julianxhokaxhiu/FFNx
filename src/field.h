@@ -22,21 +22,54 @@
 
 #pragma once
 
+#include <unordered_set>
+
 void field_init();
 void field_debug(bool *isOpen);
+
+std::unordered_set<void*> fieldPatchedAddress{};
+
+template<typename T>
+T* get_field_parameter_address(int id)
+{
+	byte* scriptPtr = *ff7_externals.field_script_ptr;
+	return (T*)(&scriptPtr[ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] + id + 1]);
+}
 
 template<typename T>
 T get_field_parameter(int id)
 {
-	return *(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1);
+	return *get_field_parameter_address<T>(id);
 }
 
 template<typename T>
 void set_field_parameter(int id, T value)
 {
-	*(T*)(ff7_externals.field_array_1[*ff7_externals.current_entity_id] + *ff7_externals.field_ptr_1 + id + 1) = value;
+	byte* scriptPtr = *ff7_externals.field_script_ptr;
+	*(T*)(&scriptPtr[ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] + id + 1]) = value;
 }
 
 byte get_field_bank_value(int16_t bank);
 
 byte* get_level_data_pointer();
+
+template<typename T>
+void patch_field_parameter(int id, T value)
+{
+	T* field_parameter_address = get_field_parameter_address<T>(id);
+
+	if(!fieldPatchedAddress.contains(field_parameter_address))
+		set_field_parameter<T>(id, value);
+	
+	fieldPatchedAddress.insert(field_parameter_address);
+}
+
+template<typename T>
+void patch_generic_field_parameter(int id, byte frame_multiplier, bool is_multiplication)
+{
+	T field_parameter = get_field_parameter<T>(id);
+	if(is_multiplication)
+		patch_field_parameter<T>(id, field_parameter * frame_multiplier);
+	else
+		patch_field_parameter<T>(id, field_parameter / frame_multiplier);
+}
