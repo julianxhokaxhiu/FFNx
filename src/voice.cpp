@@ -48,6 +48,9 @@ struct battle_text_aux_data{
 
 int (*opcode_old_message)();
 int (*opcode_old_ask)(int);
+int (*opcode_old_wmode)();
+
+bool simulate_OK_allowed = true;
 
 DWORD previous_master_music_volume = 0x64; // Assume maximum by default
 void (*set_master_music_volume)(uint32_t);
@@ -233,6 +236,13 @@ byte get_dialog_opcode(byte window_id)
 
 //=============================================================================
 
+int opcode_wmode()
+{
+	simulate_OK_allowed = !get_field_parameter<byte>(2);
+
+	return opcode_old_wmode();
+}
+
 int opcode_voice_message()
 {
 	static byte message_page_count = 0;
@@ -271,7 +281,7 @@ int opcode_voice_message()
 	if (is_voice_acting && !nxAudioEngine.isVoicePlaying())
 	{
 		is_voice_acting = false;
-		simulate_OK_button = true;
+		if (simulate_OK_allowed) simulate_OK_button = true;
 	}
 
 	message_last_opcode = message_current_opcode;
@@ -650,6 +660,9 @@ void voice_init()
 		opcode_old_ask = (int (*)(int))ff7_externals.opcode_ask;
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x48], (DWORD)&opcode_voice_ask);
 		replace_call_function((uint32_t)ff7_externals.opcode_ask + 0x8E, opcode_voice_parse_options);
+
+		opcode_old_wmode = (int (*)())ff7_externals.opcode_wmode;
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x52], (DWORD)&opcode_wmode);
 
 		replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
 		replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);

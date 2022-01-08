@@ -2248,6 +2248,7 @@ struct ff7_externals
 	uint32_t opcode_gameover;
 	uint32_t opcode_message;
 	uint32_t opcode_ask;
+	uint32_t opcode_wmode;
 	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_fill_buffer_from_audio_dat;
