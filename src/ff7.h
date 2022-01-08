@@ -2367,6 +2367,8 @@ struct ff7_externals
 	byte* issued_action_target_type;
 	byte* issued_action_target_index;
 	uint32_t field_load_models_atoi;
+	uint32_t sub_6499F7;
+	DWORD* input_ok_button_status;
 
 	// battle camera script externals
 	uint32_t handle_camera_functions;

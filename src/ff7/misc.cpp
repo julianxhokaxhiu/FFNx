@@ -223,25 +223,8 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 
 	if (simulate_OK_button)
 	{
-		ff7_externals.gamepad_status->pos_x = 0;
-		ff7_externals.gamepad_status->pos_y = 0;
-		ff7_externals.gamepad_status->dpad_up = 0; // UP
-		ff7_externals.gamepad_status->dpad_down = 0; // DOWN
-		ff7_externals.gamepad_status->dpad_right = 0; // RIGHT
-		ff7_externals.gamepad_status->dpad_left = 0; // LEFT
-		ff7_externals.gamepad_status->button1 = 0; // Square
-		ff7_externals.gamepad_status->button2 = 0; // Cross
-		ff7_externals.gamepad_status->button3 = 1; // Circle
-		ff7_externals.gamepad_status->button4 = 0; // Triangle
-		ff7_externals.gamepad_status->button5 = 0; // L1
-		ff7_externals.gamepad_status->button6 = 0; // R1
-		ff7_externals.gamepad_status->button7 = 0; // L2
-		ff7_externals.gamepad_status->button8 = 0; // R2
-		ff7_externals.gamepad_status->button9 = 0; // SELECT
-		ff7_externals.gamepad_status->button10 = 0; // START
-		ff7_externals.gamepad_status->button11 = 0; // L3
-		ff7_externals.gamepad_status->button12 = 0; // R3
-		ff7_externals.gamepad_status->button13 = 0; // PS Button
+		// Flag the button OK ( no matter to what is mapped in the controller ) as pressed
+		*ff7_externals.input_ok_button_status = 1;
 
 		// End simulation right here before we press this button by mistake in other windows
 		simulate_OK_button = false;

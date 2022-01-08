@@ -563,6 +563,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.field_current_actor = (struct ff7_field_ad_object*)get_absolute_value(common_externals.execute_opcode_table[0xA8], 0x1C6);
 
+	ff7_externals.sub_6499F7 = get_relative_call(ff7_externals.sub_63C17F, 0x10C);
+	ff7_externals.input_ok_button_status = (DWORD*)get_absolute_value(ff7_externals.sub_6499F7, 0x60);
+
 	// auto attack gamehacks
 	ff7_externals.handle_actor_ready = ff7_externals.battle_limit_breaks[0];
 	ff7_externals.battle_menu_state = (WORD*)get_absolute_value(ff7_externals.handle_actor_ready, 0x17B);
