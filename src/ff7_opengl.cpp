@@ -30,7 +30,7 @@
 #include "ff7_data.h"
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
-WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};	
+WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
 void ff7_init_hooks(struct game_obj *_game_object)
 {
@@ -190,7 +190,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		if (ff7_fps_limiter >= FF7_LIMITER_30FPS)
 		{
 			frame_multiplier = (ff7_fps_limiter == FF7_LIMITER_30FPS) ? 2 : 4;
-			
+
 			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, frame_multiplier);
 
 			ff7_battle_camera_hook_init();

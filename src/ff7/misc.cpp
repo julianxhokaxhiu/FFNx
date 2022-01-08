@@ -139,35 +139,35 @@ void ff7_use_analogue_controls()
 	{
 		joyDir = {gamepad.leftStickX, gamepad.leftStickY, 0.0f};
 
-		if(gamepad.leftStickY > 0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f)) 
+		if(gamepad.leftStickY > 0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f))
 			inputDir = {0.0f, 1.0f, 0.0f};
-		else if(gamepad.leftStickY > 0.5f && gamepad.leftStickX < -0.5f) 
+		else if(gamepad.leftStickY > 0.5f && gamepad.leftStickX < -0.5f)
 			inputDir = {-0.707f, 0.707f, 0.0f};
-		else if(gamepad.leftStickY > 0.5f && gamepad.leftStickX > 0.5f) 
+		else if(gamepad.leftStickY > 0.5f && gamepad.leftStickX > 0.5f)
 			inputDir = {0.707f, 0.707f, 0.0f};
-		else if(gamepad.leftStickX < -0.5f &&!(gamepad.leftStickY > 0.5f || gamepad.leftStickY < -0.5f)) 
+		else if(gamepad.leftStickX < -0.5f &&!(gamepad.leftStickY > 0.5f || gamepad.leftStickY < -0.5f))
 			inputDir = {-1.0f, 0.0f, 0.0f};
-		else if(gamepad.leftStickX > 0.5f && !(gamepad.leftStickY > 0.5f || gamepad.leftStickY < -0.5f)) 
-			inputDir = {1.0f, 0.0f, 0.0f};		
-		else if(gamepad.leftStickY < -0.5f && gamepad.leftStickX < -0.5f) 
+		else if(gamepad.leftStickX > 0.5f && !(gamepad.leftStickY > 0.5f || gamepad.leftStickY < -0.5f))
+			inputDir = {1.0f, 0.0f, 0.0f};
+		else if(gamepad.leftStickY < -0.5f && gamepad.leftStickX < -0.5f)
 			inputDir = {-0.707f, -0.707f, 0.0f};
-		else if(gamepad.leftStickY < -0.5f && gamepad.leftStickX > 0.5f) 
+		else if(gamepad.leftStickY < -0.5f && gamepad.leftStickX > 0.5f)
 			inputDir = {0.707f, -0.707f, 0.0f};
-		else if(gamepad.leftStickY < -0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f)) 
+		else if(gamepad.leftStickY < -0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f))
 			inputDir = {0.0f, -1.0f, 0.0f};
 	}
 	else
 	{
 		joyDir = {static_cast<float>(joystick.GetState()->lX), -static_cast<float>(joystick.GetState()->lY), 0.0f};
 
-		if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) && 
+		if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) &&
 		  !(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lX > joystick.GetDeadZone(0.5f)))
 			inputDir = {0.0f, 1.0f, 0.0f};
 		else if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) && joystick.GetState()->lX < joystick.GetDeadZone(-0.5f))
 			inputDir = {-0.707f, 0.707f, 0.0f};
 		else if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) && joystick.GetState()->lX > joystick.GetDeadZone(0.5f))
 			inputDir = {0.707f, 0.707f, 0.0f};
-		else if(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) && 
+		else if(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) &&
 		  !(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lY > joystick.GetDeadZone(0.5f)))
 			inputDir = {-1.0f, 0.0f, 0.0f};
 		else if(joystick.GetState()->lX > joystick.GetDeadZone(0.5f) &&
@@ -180,8 +180,8 @@ void ff7_use_analogue_controls()
 		else if(joystick.GetState()->lY > joystick.GetDeadZone(0.5f) &&
 			!(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lX > joystick.GetDeadZone(0.5f)))
 			inputDir = {0.0f, -1.0f, 0.0f};
-	}		
-	
+	}
+
 	float inputDirLength = vector_length(&inputDir);
 	if(inputDirLength > 0.0f)
 	{
@@ -251,7 +251,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		if (gamepad.Refresh())
 		{
 			if(enable_analogue_controls) ff7_use_analogue_controls();
-			
+
 			ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
 			ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
 			ff7_externals.gamepad_status->dpad_up = (gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
@@ -278,7 +278,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		if (joystick.Refresh())
 		{
 			if(enable_analogue_controls) ff7_use_analogue_controls();
-			
+
 			ff7_externals.gamepad_status->pos_x = joystick.GetState()->lX;
 			ff7_externals.gamepad_status->pos_y = joystick.GetState()->lY;
 			ff7_externals.gamepad_status->dpad_up = (joystick.GetState()->lY < joystick.GetDeadZone(-0.5f)) || joystick.GetState()->rgdwPOV[0] == 0; // UP
@@ -564,9 +564,9 @@ int ff7_load_save_file(int param_1){
 
 void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3){
 	((void(*)(WORD, short, short)) ff7_externals.sub_60FA7D)(param1, param2, param3);
-	
+
 	if(param3 == 0x04)
-		g_FF7SteamAchievements->unlockGoldChocoboAchievement(ff7_externals.savemap->chocobo_slots_first, ff7_externals.savemap->chocobo_slots_last);	
+		g_FF7SteamAchievements->unlockGoldChocoboAchievement(ff7_externals.savemap->chocobo_slots_first, ff7_externals.savemap->chocobo_slots_last);
 }
 
 void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3){

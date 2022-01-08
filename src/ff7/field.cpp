@@ -307,7 +307,7 @@ int opcode_script_TURNGEN_wrapper()
 	// There are 7 cases in original FF7 where this condition happens (TODO: Transforming this to short is quite hard)
 	if(rotation_n_steps > 255)
 		rotation_n_steps = 0xFF;
-	
+
 	patch_field_parameter<byte>(3, (byte)rotation_n_steps);
 
 	return ((int(*)())ff7_externals.opcode_turngen)();

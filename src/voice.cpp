@@ -486,7 +486,7 @@ void ff7_update_display_text_queue()
 
 					if (trace_all || trace_battle_text)
 						ffnx_trace("Begin voice of EnemyID: %04X for text: %s (filename: %s)\n", other_text_data_first.enemy_id, decoded_text.c_str(), tokenized_dialogue.c_str());
-					
+
 					break;
 				case display_type::CHAR_CMD:
 					tokenized_dialogue = tokenize_text(decoded_text);

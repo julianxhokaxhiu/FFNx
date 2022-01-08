@@ -60,7 +60,7 @@ void patch_field_parameter(int id, T value)
 
 	if(!fieldPatchedAddress.contains(field_parameter_address))
 		set_field_parameter<T>(id, value);
-	
+
 	fieldPatchedAddress.insert(field_parameter_address);
 }
 

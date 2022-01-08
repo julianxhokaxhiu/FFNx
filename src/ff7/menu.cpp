@@ -109,13 +109,13 @@ uint32_t ff7_menu_decrease_item_quantity(uint32_t item_used)
     item_id = item_used & 0x1FF;
     item_quantity = (item_used & 0xFFFF) >> 9;
     prevIndex = item_id;
-    
+
     while (!(((WORD)party_item_slots[index] != -1) &&
             (prevIndex = (WORD)party_item_slots[index] & 0x1ff, item_id == prevIndex)))
     {
         if (index >= 320)
             return prevIndex & 0xFFFF0000 | 0xFFFF;
-        
+
         prevIndex = index;
         index = index + 1;
     }

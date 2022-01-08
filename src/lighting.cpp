@@ -142,7 +142,7 @@ void Lighting::ff7_load_ibl()
 		{
 			last_field_id = *ff7_externals.field_id;
 
-			sprintf(filename, "field_%d", last_field_id);		
+			sprintf(filename, "field_%d", last_field_id);
 			sprintf(specularFullpath, "%s/%s/%s_s.dds", basedir, external_ibl_path.c_str(), filename);
 			sprintf(diffuseFullpath, "%s/%s/%s_d.dds", basedir, external_ibl_path.c_str(), filename);
 

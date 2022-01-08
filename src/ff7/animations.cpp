@@ -391,7 +391,7 @@ int ff7_add_fn_to_effect100_fn(uint32_t function)
 void ff7_add_kotr_camera_fn_to_effect100_fn(DWORD param_1, DWORD param_2, WORD param_3)
 {
     ff7_externals.add_kotr_camera_fn_to_effect100_fn_476AAB(param_1, param_2, param_3);
-    
+
     constexpr int kotr_camera_idx = 99;
     aux_effect100_data[kotr_camera_idx].frameCounter = 0;
     aux_effect100_data[kotr_camera_idx].interpolationTrick = interpolation_trick::NONE;
@@ -405,7 +405,7 @@ void ff7_execute_effect100_fn()
     {
         if(ff7_externals.effect100_array_fn[fn_index] && *ff7_externals.g_is_battle_running_9AD1AC)
         {
-            if (aux_effect100_data[fn_index].isFirstTimeRunning) 
+            if (aux_effect100_data[fn_index].isFirstTimeRunning)
             {
                 if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
                 {
@@ -900,7 +900,7 @@ void ff7_battle_animations_hook_init()
     patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0x104, frame_multiplier);
     patch_divide_code<WORD>(ff7_externals.battle_morph_death_sub_5BC920 + 0x154, frame_multiplier);
 
-    // Enemy death - disintegrate 1 
+    // Enemy death - disintegrate 1
     patch_multiply_code<WORD>(ff7_externals.battle_disintegrate_1_death_5BBF31 + 0x40, frame_multiplier);
     replace_function(ff7_externals.battle_disintegrate_1_death_sub_5BC04D, ff7_battle_disintegrate_1_death_sub_5BC04D);
 
@@ -983,7 +983,7 @@ void ff7_battle_animations_hook_init()
     patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x1DC, 0x2 - frame_multiplier / 2);
     patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x203, 0x2 - frame_multiplier / 2);
 
-    patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x5B, frame_multiplier); 
+    patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x5B, frame_multiplier);
     patch_divide_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x6E, frame_multiplier);
 
     // Tifa slots speed patch (bitwise and with 0x7 changed to 0x3)

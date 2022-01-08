@@ -1154,7 +1154,7 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
         const bgfx::Memory* mem = bgfx::copy(data, texInfo.storageSize);
 
         uint64_t flags = BGFX_SAMPLER_NONE;
-        
+
         if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
         else flags |= BGFX_TEXTURE_NONE;
 
@@ -1231,7 +1231,7 @@ bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* widt
             if (gl_check_texture_dimensions(img->m_width, img->m_height, filename) && doesItFitInMemory(img->m_size))
             {
                 uint64_t flags = BGFX_SAMPLER_NONE;
-                
+
                 if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
                 else flags |= BGFX_TEXTURE_NONE;
 
@@ -1249,7 +1249,7 @@ bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* widt
                 }
                 else
                 {
-                
+
                     ret = bgfx::createTexture2D(
                         img->m_width,
                         img->m_height,

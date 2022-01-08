@@ -44,9 +44,9 @@ int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield) 
+	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
 		ret *= movie_fps_ratio;
-	else if (ff7_fps_limiter == FF7_LIMITER_60FPS) 
+	else if (ff7_fps_limiter == FF7_LIMITER_60FPS)
 		ret *= field_60fps_ratio;
 
 	return ret;
@@ -56,9 +56,9 @@ int16_t script_ASPED_get_speed(int16_t bank, int16_t address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield) 
+	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
 		ret /= movie_fps_ratio;
-	else if (ff7_fps_limiter == FF7_LIMITER_60FPS) 
+	else if (ff7_fps_limiter == FF7_LIMITER_60FPS)
 		ret /= field_60fps_ratio;
 
 	return ret;
@@ -201,7 +201,7 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 
 	if(steam_edition || enable_steam_achievements)
 		g_FF7SteamAchievements->initMovieStats(std::string(filename));
-	
+
 	return true;
 }
 
