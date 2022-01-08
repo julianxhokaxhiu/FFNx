@@ -844,8 +844,13 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.g_active_actor_id = (byte*)get_absolute_value(ff7_externals.display_battle_action_text_42782A, 0x52);
 	// --------------------------------
 
-	// field 60 fps
-	
+	// world 60 fps
+	ff7_externals.world_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
+	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_sub_74DB8C, 0x108);
+	ff7_externals.world_sub_7641A7 = get_relative_call(ff7_externals.world_sub_74DB8C, 0x210);
+	ff7_externals.run_world_event_scripts = get_relative_call(ff7_externals.world_sub_7641A7, 0x1D);
+	ff7_externals.run_world_event_scripts_system_operations = get_relative_call(ff7_externals.run_world_event_scripts, 0xC7);
+	ff7_externals.pop_world_script_stack = (int(*)())get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0x44);
 
 	//ff7 achievement related externals
 	uint32_t sub_434347 = get_relative_call(ff7_externals.battle_loop, 0x484);

@@ -2544,6 +2544,14 @@ struct ff7_externals
 	WORD* field_battle_word_BF2E08;
 	WORD* field_battle_word_BF2032;
 	byte* g_active_actor_id;
+
+	// world stuff
+	uint32_t world_sub_74DB8C;
+	uint32_t world_init_variables_74E1E9;
+	uint32_t world_sub_7641A7;
+	uint32_t run_world_event_scripts;
+	uint32_t run_world_event_scripts_system_operations;
+	int (*pop_world_script_stack)();
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
