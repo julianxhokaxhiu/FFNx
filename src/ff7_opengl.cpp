@@ -196,6 +196,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			ff7_battle_camera_hook_init();
 			ff7_battle_animations_hook_init();
 			ff7_field_hook_init();
+			ff7_world_hook_init();
 		}
 	}
 

@@ -78,6 +78,9 @@ void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc
 void field_layer2_pick_tiles(short x_offset, short y_offset);
 uint32_t field_open_flevel_siz();
 
+// world
+void ff7_world_hook_init();
+
 // file
 FILE *open_lgp_file(char *filename, uint32_t mode);
 void close_lgp_file(FILE *fd);
