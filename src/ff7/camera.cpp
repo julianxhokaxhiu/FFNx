@@ -7,6 +7,7 @@
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2021 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2021 Tang-Tang Zhou                                     //
+//    Copyright (C) 2021 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -19,16 +20,20 @@
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
+#include "camera.h"
 
 #include <unordered_set>
 #include <unordered_map>
 #include <utility>
 #include <span>
 
-#include "../ff7.h"
 #include "../patch.h"
 #include "../log.h"
 #include "../globals.h"
+
+#include <bx/math.h>
+
+Camera camera;
 
 const std::unordered_map<byte, int> numArgsPositionOpCode{{0xD5, 2}, {0xD6, 0}, {0xD7, 2}, {0xD8, 9}, {0xD9, 0}, {0xDA, 0}, {0xDB, 0}, {0xDC, 0}, {0xDD, 1}, {0xDE, 1}, {0xDF, 0}, {0xE0, 2}, {0xE1, 0}, {0xE2, 1}, {0xE3, 9}, {0xE4, 8}, {0xE5, 8}, {0xE6, 7}, {0xE7, 8}, {0xE9, 8}, {0xEB, 9}, {0xEF, 8}, {0xF0, 7}, {0xF1, 0}, {0xF2, 5}, {0xF3, 5}, {0xF4, -1}, {0xF5, 1}, {0xF7, 7}, {0xF8, 12}, {0xF9, 6}, {0xFE, 0}, {0xFF, -1}};
 const std::unordered_map<byte, int> numArgsOpCode{{0xD8, 9}, {0xD9, 0}, {0xDB, 0}, {0xDC, 0}, {0xDD, 1}, {0xDE, 1}, {0xDF, 0}, {0xE0, 2}, {0xE1, 0}, {0xE2, 1}, {0xE3, 9}, {0xE4, 8}, {0xE5, 8}, {0xE6, 7}, {0xE8, 8}, {0xEA, 8}, {0xEC, 9}, {0xF0, 8}, {0xF4, -1}, {0xF5, 1}, {0xF8, 7}, {0xF9, 7}, {0xFA, 6}, {0xFE, 0}, {0xFF, -1}};
@@ -213,21 +218,28 @@ void ff7_run_camera_position_script(char variationIndex, DWORD param_2, short ca
 
 void ff7_update_battle_camera(short cameraScriptIndex)
 {
-    if(cameraScriptIndex == -2 && *ff7_externals.battle_enter_frames_to_wait == 0)
-    {
-        // TODO Cosmos
-        ff7_externals.battle_camera_position[*ff7_externals.g_variation_index].point.x += 100 / frame_multiplier;
-    }
+    camera_vec3* pGlobalCameraPos = ff7_externals.g_battle_camera_position;
+    camera_vec3* pGlobalCameraFocusPos = ff7_externals.g_battle_camera_focal_point;
+    camera_vec3* pCameraPosition = &ff7_externals.battle_camera_position[*ff7_externals.g_variation_index].point;
+    camera_vec3* pFormationCameraPos = &ff7_externals.extra_battle_camera[*ff7_externals.extra_battle_camera_idx].position;
 
     ((void(*)(short))ff7_externals.update_battle_camera_sub_5C20CE)(cameraScriptIndex);
+
+    if((std::abs(pGlobalCameraPos->x - pFormationCameraPos->x) <= 1 &&
+        std::abs(pGlobalCameraPos->y - pFormationCameraPos->y) <= 1 &&
+        std::abs(pGlobalCameraPos->z - pFormationCameraPos->z) <= 1))
+    {
+        camera.controlCamera(pGlobalCameraPos, pGlobalCameraFocusPos);
+        *pFormationCameraPos = *pGlobalCameraPos;
+        *pCameraPosition = *pGlobalCameraPos;
+    }
+
+    byte battle_enter_frames_to_wait = *ff7_externals.battle_enter_frames_to_wait;
+    if(cameraScriptIndex == -3 || (cameraScriptIndex == -2 && battle_enter_frames_to_wait > 5)) camera.reset();
 }
 
 void ff7_update_idle_battle_camera()
 {
-    // TODO Cosmos
-    ff7_externals.extra_battle_camera[*ff7_externals.extra_battle_camera_idx].position.x += 100 / frame_multiplier;
-    ff7_externals.battle_camera_position[3].point.x += 100 / frame_multiplier;
-
     ((void(*)())ff7_externals.battle_camera_sub_5C655C)();
     ((void(*)(short))ff7_externals.set_battle_camera_sub_5C2350)(3);
 }
@@ -247,4 +259,112 @@ void ff7_battle_camera_hook_init()
     // Battle intro camera frame fix: patch DAT_00BFD0F4 (frames to wait before atb starts)
     patch_multiply_code<byte>(ff7_externals.battle_sub_429AC0 + 0x152, frame_multiplier);
     patch_multiply_code<byte>(ff7_externals.battle_sub_429D8A + 0x1D8, frame_multiplier);
+}
+
+void Camera::setRotationSpeed(float rotX, float rotY, float rotZ)
+{
+	rotationSpeed.x = rotX / static_cast<float>(frame_multiplier);
+	rotationSpeed.y = rotY / static_cast<float>(frame_multiplier);
+	rotationSpeed.z = rotZ / static_cast<float>(frame_multiplier);
+}
+
+void Camera::setZoomSpeed(float speed)
+{
+	zoomSpeed = speed / static_cast<float>(frame_multiplier);
+}
+
+void Camera::reset()
+{
+	rotationOffset.x = 0.0f;
+	rotationOffset.y = 0.0f;
+	zoomOffset = 0.0f;
+}
+
+void Camera::controlCamera(camera_vec3* cameraPosition, camera_vec3* cameraFocusPosition)
+{
+    static WORD last_battle_id = 0;
+    static camera_vec3 initialCameraPos;
+    static camera_vec3 initialCameraFocusPos;
+
+    if (last_battle_id != ff7_externals.modules_global_object->battle_id)
+	{
+        camera_vec3* pFormationCameraPos = &ff7_externals.extra_battle_camera[*ff7_externals.extra_battle_camera_idx].position;
+        camera_vec3* pFormationCameraFocusPos = &ff7_externals.extra_battle_camera[*ff7_externals.extra_battle_camera_idx].focal_point;
+
+		initialCameraPos.x = pFormationCameraPos->x;
+		initialCameraPos.y = pFormationCameraPos->y;
+		initialCameraPos.z = pFormationCameraPos->z;
+
+        initialCameraFocusPos.x = pFormationCameraFocusPos->x;
+        initialCameraFocusPos.y = pFormationCameraFocusPos->y;
+        initialCameraFocusPos.z = pFormationCameraFocusPos->z;
+
+		last_battle_id = ff7_externals.modules_global_object->battle_id;
+	}
+
+    bx::Vec3 cameraPos = {
+        static_cast<float>(initialCameraPos.x),
+        static_cast<float>(initialCameraPos.y),
+        static_cast<float>(initialCameraPos.z)};
+    bx::Vec3 cameraFocusPos = {
+        static_cast<float>(initialCameraFocusPos.x),
+        static_cast<float>(initialCameraFocusPos.y),
+        static_cast<float>(initialCameraFocusPos.z)};
+
+    float dist = bx::distance(cameraFocusPos, cameraPos);
+    float candidateDist = dist - (zoomOffset + zoomSpeed);
+    if(candidateDist < maxZoomDist && candidateDist > minZoomDist)
+    {
+        zoomOffset = zoomOffset + zoomSpeed;
+    }
+
+    bx::Vec3 up = { 0, 1, 0 };
+	bx::Vec3 forward =  { cameraFocusPos.x - cameraPos.x,
+			              cameraFocusPos.y - cameraPos.y,
+						  cameraFocusPos.z - cameraPos.z};
+	forward  = bx::normalize(forward);
+    bx::Vec3 right = bx::cross(forward, up);
+
+    cameraPos = bx::add(cameraPos, bx::mul(forward, zoomOffset));
+
+    float dot = bx::dot(bx::mul(forward, 1.0), up);
+    float angle = 180.0f * std::acosf(dot) / M_PI;
+    float candidateAngle = angle + rotationOffset.x + rotationSpeed.x;
+    rotationOffset.x += rotationSpeed.x;
+    if(candidateAngle < minVerticalAngle)
+        rotationOffset.x += minVerticalAngle - candidateAngle;
+    if(candidateAngle > maxVerticalAngle)
+        rotationOffset.x -= candidateAngle - maxVerticalAngle;
+
+	rotationOffset.y = std::remainder(rotationOffset.y + rotationSpeed.y, 360.0f);
+
+	auto quaternionH = bx::fromAxisAngle(up, M_PI * rotationOffset.y / 180.0f);
+	auto quaternionV = bx::fromAxisAngle(right, M_PI * rotationOffset.x / 180.0f);
+
+	auto quaternion = bx::mul(quaternionV, quaternionH);
+	quaternion = bx::normalize(quaternion);
+
+    float focusToOriginMatrix[16];
+	bx::mtxTranslate(focusToOriginMatrix, -cameraFocusPos.x, -cameraFocusPos.y, -cameraFocusPos.z);
+
+	float originToFocusMatrix[16];
+	bx::mtxTranslate(originToFocusMatrix, cameraFocusPos.x, cameraFocusPos.y, cameraFocusPos.z);
+
+	float rotMat[16];
+	bx::mtxFromQuaternion(rotMat, quaternion);
+
+	float tmp[16];
+	bx::mtxMul(tmp, focusToOriginMatrix, rotMat);
+
+	float tmp2[16];
+	bx::mtxMul(tmp2, tmp, originToFocusMatrix);
+
+	// Get new camera pos
+	float newCameraPos[4] =  { 0.0f, 0.0f, 0.0f , 1.0f};
+    float oldCameraPos[4] =  { cameraPos.x, cameraPos.y, cameraPos.z, 1.0f};
+	bx::vec4MulMtx(newCameraPos, oldCameraPos, tmp2);
+
+    cameraPosition->x = newCameraPos[0];
+    cameraPosition->y = newCameraPos[1];
+    cameraPosition->z = newCameraPos[2];
 }
