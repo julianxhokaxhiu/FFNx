@@ -107,6 +107,7 @@ bool enable_animated_textures;
 long ff7_fps_limiter;
 bool ff7_footsteps;
 bool enable_analogue_controls;
+bool enable_inverted_camera_controls;
 bool enable_steam_achievements;
 bool steam_achievements_debug_mode;
 
@@ -230,6 +231,7 @@ void read_cfg()
 	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FF7_LIMITER_DEFAULT);
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
+	enable_inverted_camera_controls = config["enable_inverted_camera_controls"].value_or(false);
 	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
 	steam_achievements_debug_mode = config["steam_achievements_debug_mode"].value_or(false);
 

@@ -223,9 +223,14 @@ ffmpeg_video_ext = "avi"
 ###########################
 
 #[ANALOGUE CONTROLS]
-# This flag will enable analogue joystick input for controlling the player.
+# This flag will enable analogue joystick input for controlling the player in fields and the camera in battles.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_analogue_controls = false
+
+#[INVERT CAMERA CONTROLS]
+# This flag will enable inverted camera vertical movement when controlling the camera in battles.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_inverted_camera_controls = false
 
 ###############################
 # MUST SET FOR VERSIONS BELOW
