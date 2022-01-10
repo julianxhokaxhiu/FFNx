@@ -58,8 +58,6 @@ int16_t script_ASPED_get_speed(int16_t bank, int16_t address)
 
 	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
 		ret /= movie_fps_ratio;
-	else if (ff7_fps_limiter == FF7_LIMITER_60FPS)
-		ret /= field_60fps_ratio;
 
 	return ret;
 }

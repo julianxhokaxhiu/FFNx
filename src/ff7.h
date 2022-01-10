@@ -1999,22 +1999,67 @@ struct ff7_field_ad_object {
 
 struct field_event_data
 {
-	byte field_0[48];
-	byte movement_ladder_jump_steps;
-	byte field_31[12];
-	byte final_rotation;
-	byte field_3F[37];
-	char field_movement_type;
-	byte animation_id;
-	byte animation_speed_maybe;
-	byte field_67[2];
-	WORD firstFrame;
-	WORD lastFrame;
-	byte field_6C[2];
-	WORD field_direction_rel_6E;
-	byte field_70[6];
+	WORD field_0;
+	WORD padding_2;
+	DWORD field_4;
+	byte field_8;
+	byte padding_9;
+	WORD field_A;
+	int model_pos_x;
+	int model_pos_y;
+	int model_pos_z;
+	int initial_pos_x;
+	int initial_pos_y;
+	int initial_pos_z;
+	byte field_24[8];
+	int field_2C;
+	__int16 movement_ladder_jump_steps;
+	__int16 movement_step_idx;
+	byte padding_34;
+	byte field_35;
+	byte rotation_value;
+	byte field_37;
+	byte rotation_value_2;
+	byte rotation_n_steps;
+	byte rotation_step_idx;
+	byte rotation_type;
+	__int16 rotation_initial;
+	__int16 rotation_final;
+	int field_40;
+	__int16 field_44;
+	__int16 field_46;
+	int field_48;
+	__int16 field_4C;
+	__int16 field_4E;
+	int field_50;
+	__int16 field_54;
+	__int16 field_56;
+	__int16 field_58;
+	__int16 field_5A;
+	char field_5C;
+	byte padding_5D;
+	byte field_5E;
+	byte field_5F;
+	byte field_60;
+	byte field_61;
+	byte field_62;
+	char movement_type;
+	char animation_id;
+	byte padding_65;
+	__int16 animation_speed;
+	__int16 firstFrame;
+	__int16 lastFrame;
+	__int16 field_6C;
+	__int16 field_direction_or_collision;
+	__int16 movement_phase_maybe_70;
+	__int16 collision_radius;
+	__int16 talk_radius;
 	WORD movement_speed;
-	byte field_78[16];
+	__int16 field_triangle_id;
+	__int16 field_7A;
+	int final_pos_x;
+	int final_pos_y;
+	int final_pos_z;
 };
 
 struct field_animation_data
@@ -2280,8 +2325,8 @@ struct ff7_externals
 	uint32_t worldmap_battle_toggle;
 	uint32_t enter_field;
 	uint32_t sub_63C17F;
-	uint32_t field_update_model_positions_sub_6342C6;
-	int (*field_process_char_status)(int16_t unk);
+	uint32_t field_update_models_positions;
+	int (*field_update_single_model_position)(short);
 	uint32_t sub_40B27B;
 	WORD* word_CC0DD4;
 	WORD* word_CC1638;
@@ -2549,11 +2594,16 @@ struct ff7_externals
 	byte* g_active_actor_id;
 
 	// world stuff
-	uint32_t world_sub_74DB8C;
+	uint32_t world_update_sub_74DB8C;
 	uint32_t world_init_variables_74E1E9;
 	uint32_t world_sub_7641A7;
 	uint32_t run_world_event_scripts;
 	uint32_t run_world_event_scripts_system_operations;
+	uint32_t world_animate_all_models;
+	uint32_t world_animate_single_model;
+	uint32_t run_world_snake_ai_script_7562FF;
+	uint32_t update_world_snake_position_7564CD;
+	void (*world_compute_delta_position_753D00)(short* values, short z_value);
 	int (*pop_world_script_stack)();
 };
 
