@@ -509,7 +509,7 @@ int sfx_process_footstep(int16_t unk)
 {
 	static time_t last_playback_time, current_playback_time;
 
-	int ret = ff7_externals.field_process_char_status(unk);
+	int ret = ff7_externals.field_update_single_model_position(unk);
 
 	if (ret)
 	{
@@ -552,7 +552,7 @@ void sfx_init()
 		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
 
 		// Allow footsteps to be detected correctly
-		if (ff7_footsteps) replace_call(ff7_externals.field_update_model_positions_sub_6342C6 + 0x8BC, sfx_process_footstep);
+		if (ff7_footsteps) replace_call(ff7_externals.field_update_models_positions + 0x8BC, sfx_process_footstep);
 
 		// Leviathan fix
 		patch_code_byte(ff7_externals.battle_summon_leviathan_loop + 0x3FA + 1, 0x2A);

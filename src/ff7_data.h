@@ -491,8 +491,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.enter_field = get_absolute_value(main_loop, 0x90D);
 	ff7_externals.sub_63C17F = get_relative_call(field_main_loop, 0x59);
-	ff7_externals.field_update_model_positions_sub_6342C6 = get_relative_call(ff7_externals.sub_63C17F, 0x5DD);
-	ff7_externals.field_process_char_status = (int (*)(int16_t))get_relative_call(ff7_externals.field_update_model_positions_sub_6342C6, 0x8BC);
+	ff7_externals.field_update_models_positions = get_relative_call(ff7_externals.sub_63C17F, 0x5DD);
+	ff7_externals.field_update_single_model_position = (int (*)(int16_t))get_relative_call(ff7_externals.field_update_models_positions, 0x8BC);
 	ff7_externals.sub_40B27B = get_relative_call(ff7_externals.sub_63C17F, 0xEE);
 	ff7_externals.word_CC0DD4 = (WORD*)get_absolute_value(ff7_externals.enter_field, 0x124);
 	ff7_externals.word_CC1638 = (WORD*)get_absolute_value(ff7_externals.sub_40B27B, 0x25);
@@ -849,12 +849,17 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	// --------------------------------
 
 	// world 60 fps
-	ff7_externals.world_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
-	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_sub_74DB8C, 0x108);
-	ff7_externals.world_sub_7641A7 = get_relative_call(ff7_externals.world_sub_74DB8C, 0x210);
+	ff7_externals.world_update_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
+	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x108);
+	ff7_externals.world_sub_7641A7 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x210);
 	ff7_externals.run_world_event_scripts = get_relative_call(ff7_externals.world_sub_7641A7, 0x1D);
 	ff7_externals.run_world_event_scripts_system_operations = get_relative_call(ff7_externals.run_world_event_scripts, 0xC7);
 	ff7_externals.pop_world_script_stack = (int(*)())get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0x44);
+	ff7_externals.world_animate_all_models = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x5A1);
+	ff7_externals.world_animate_single_model = get_relative_call(ff7_externals.world_animate_all_models, 0x20);
+	ff7_externals.run_world_snake_ai_script_7562FF = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x5AB);
+	ff7_externals.update_world_snake_position_7564CD = get_relative_call(ff7_externals.run_world_snake_ai_script_7562FF, 0x151);
+	ff7_externals.world_compute_delta_position_753D00 = (void(*)(short*, short))get_relative_call(ff7_externals.update_world_snake_position_7564CD, 0x26);
 
 	//ff7 achievement related externals
 	uint32_t sub_434347 = get_relative_call(ff7_externals.battle_loop, 0x484);
