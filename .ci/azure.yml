@@ -5,7 +5,7 @@
 #    Copyright (C) 2020 myst6re                                               #
 #    Copyright (C) 2020 Chris Rizzitello                                      #
 #    Copyright (C) 2020 John Pritchard                                        #
-#    Copyright (C) 2021 Julian Xhokaxhiu                                      #
+#    Copyright (C) 2022 Julian Xhokaxhiu                                      #
 #                                                                             #
 #    This file is part of FFNx                                                #
 #                                                                             #
@@ -84,7 +84,7 @@ jobs:
       releaseNotesSource: input
       releaseNotes: |
         See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog#next
-        
+
         This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
   - task: GitHubRelease@0
     condition: and(eq(variables._IS_BUILD_CANARY, 'false'), not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())

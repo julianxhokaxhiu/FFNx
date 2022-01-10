@@ -1,5 +1,5 @@
 /****************************************************************************/
-//    Copyright (C) 2021 Cosmos                                             //
+//    Copyright (C) 2022 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -77,20 +77,20 @@ vec3 perturb_normal(vec3 N, vec3 V, vec3 normalmap, vec2 texcoord)
 
 vec3 fresnelSchlick(vec3 F0, float cosTheta)
 {
-    float Fc = pow( 1 - cosTheta, 5 );	
+    float Fc = pow( 1 - cosTheta, 5 );
 	return saturate( 50.0 * F0.g ) * Fc + (1 - Fc) * F0;
-}   
+}
 
 float normalDistributionGgx(vec3 N, vec3 H, float perceptualRoughness)
 {
     float a2     = perceptualRoughness*perceptualRoughness;
     float NdotH  = max(dot(N, H), 0.0);
     float NdotH2 = NdotH * NdotH;
-	
+
     float num   = a2;
     float denom = (NdotH2 * (a2 - 1.0) + 1.0);
     denom = M_PI * denom * denom;
-	
+
     return num / denom;
 }
 
@@ -130,7 +130,7 @@ vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 viewDir, vec3 norma
     float lightIntensity = lightData.w;
     vec3 lightColor = toLinear(lightData.rgb);
     vec3 lightDir = normalize(lightDirData.xyz);
-    
+
     vec3 F0 = mix(specular * vec3_splat(0.08), albedo, metallic);
 
     vec3 H = normalize(viewDir + lightDir);
@@ -149,7 +149,7 @@ vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 viewDir, vec3 norma
 }
 
 vec3 CalcIblIndirectLuminance(vec3 albedo, vec3 specularIbl, vec3 diffuseIbl, vec3 V, vec3 N, float roughness, float metallic, float specular, float ao)
-{   
+{
     float dotNV = saturate(dot(N, V));
     vec2 envBRDF = texture2D(tex_9, vec2(dotNV, 1.0 - roughness)).xy;
 
@@ -157,7 +157,7 @@ vec3 CalcIblIndirectLuminance(vec3 albedo, vec3 specularIbl, vec3 diffuseIbl, ve
     vec3 indirectSpecular = specularIbl * (F0 * envBRDF.x + envBRDF.y);
 
     vec3 diffuse = diffuseIbl * albedo;
-    vec3 indirectDiffuse = (1.0 - metallic) * diffuse; 
+    vec3 indirectDiffuse = (1.0 - metallic) * diffuse;
 
     vec3 ambientLightColor = toLinear(ambientLightData.rgb);
     float ambientLightIntensity = ambientLightData.w;

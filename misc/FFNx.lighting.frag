@@ -1,5 +1,5 @@
 /****************************************************************************/
-//    Copyright (C) 2021 Cosmos                                             //
+//    Copyright (C) 2022 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -186,7 +186,7 @@ void main()
         gl_FragColor = color;
     }
     else
-    {        
+    {
         // Shadow UV
         vec3 shadowUv = v_shadow0.xyz / v_shadow0.w;
 
@@ -275,7 +275,7 @@ void main()
             gl_FragColor = vec4(diffuseIbl, 1.0);
         }
         else
-        {            
+        {
             gl_FragColor = vec4(luminance + indirectLuminance, color.a);
         }
     }
