@@ -186,7 +186,7 @@ void ff7_execute_camera_functions()
 
 void ff7_run_camera_focal_position_script(char variationIndex, DWORD param_2, short cameraScriptIdx)
 {
-    bcamera_position *cameraPosition = ff7_externals.battle_camera_focal_position;
+    bcamera_position *cameraPosition = ff7_externals.battle_camera_focal_point;
 
     byte *scriptPtr = getCameraScriptPointer(variationIndex, cameraScriptIdx, true);
     short currentPosition = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].current_position;
@@ -216,12 +216,55 @@ void ff7_run_camera_position_script(char variationIndex, DWORD param_2, short ca
         cameraPosition[variationIndex].frames_to_wait = framesToWait;
 }
 
+void ff7_compute_interpolation_to_formation_camera()
+{
+    ff7_externals.battle_camera_position[3].point = *ff7_externals.g_battle_camera_position;
+    ff7_externals.battle_camera_focal_point[3].point = *ff7_externals.g_battle_camera_focal_point;
+    int frame_steps = 2 * frame_multiplier;
+    camera_vec3 delta_position, delta_focal_point;
+    if (*ff7_externals.is_camera_moving_BFB2DC)
+    {
+        delta_position.x = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position.x - ff7_externals.battle_camera_position[3].point.x) / frame_steps;
+        if(delta_position.x == 0)
+            delta_position.x = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position.x - ff7_externals.battle_camera_position[3].point.x) % frame_steps;
+        ff7_externals.battle_camera_position[3].point.x += delta_position.x;
+
+        delta_position.y = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position.y - ff7_externals.battle_camera_position[3].point.y) / frame_steps;
+        if(delta_position.y == 0)
+            delta_position.y = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position.y - ff7_externals.battle_camera_position[3].point.y) % frame_steps;
+        ff7_externals.battle_camera_position[3].point.y += delta_position.y;
+
+        delta_position.z = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position.z - ff7_externals.battle_camera_position[3].point.z) / frame_steps;
+        if(delta_position.z == 0)
+            delta_position.z = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position.z - ff7_externals.battle_camera_position[3].point.z) % frame_steps;
+        ff7_externals.battle_camera_position[3].point.z += delta_position.z;
+
+        delta_focal_point.x = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point.x - ff7_externals.battle_camera_focal_point[3].point.x) / frame_steps;
+        if(delta_focal_point.x == 0)
+            delta_focal_point.x = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point.x - ff7_externals.battle_camera_focal_point[3].point.x) % frame_steps;
+        ff7_externals.battle_camera_focal_point[3].point.x += delta_focal_point.x;
+
+        delta_focal_point.y = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point.y - ff7_externals.battle_camera_focal_point[3].point.y) / frame_steps;
+        if(delta_focal_point.y == 0)
+            delta_focal_point.y = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point.y - ff7_externals.battle_camera_focal_point[3].point.y) % frame_steps;
+        ff7_externals.battle_camera_focal_point[3].point.y += delta_focal_point.y;
+
+        delta_focal_point.z = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point.z - ff7_externals.battle_camera_focal_point[3].point.z) / frame_steps;
+        if(delta_focal_point.z == 0)
+            delta_focal_point.z = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point.z - ff7_externals.battle_camera_focal_point[3].point.z) % frame_steps;
+        ff7_externals.battle_camera_focal_point[3].point.z += delta_focal_point.z;
+
+        if (!delta_position.x && !delta_position.y && !delta_position.z && !delta_focal_point.x && !delta_focal_point.y && !delta_focal_point.z)
+            *ff7_externals.is_camera_moving_BFB2DC = 0;
+    }
+}
+
 void ff7_update_battle_camera(short cameraScriptIndex)
 {
     camera_vec3* pGlobalCameraPos = ff7_externals.g_battle_camera_position;
     camera_vec3* pGlobalCameraFocusPos = ff7_externals.g_battle_camera_focal_point;
     camera_vec3* pCameraPosition = &ff7_externals.battle_camera_position[*ff7_externals.g_variation_index].point;
-    camera_vec3* pFormationCameraPos = &ff7_externals.extra_battle_camera[*ff7_externals.extra_battle_camera_idx].position;
+    camera_vec3* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
 
     ((void(*)(short))ff7_externals.update_battle_camera_sub_5C20CE)(cameraScriptIndex);
 
@@ -236,12 +279,6 @@ void ff7_update_battle_camera(short cameraScriptIndex)
 
     byte battle_enter_frames_to_wait = *ff7_externals.battle_enter_frames_to_wait;
     if(cameraScriptIndex == -3 || (cameraScriptIndex == -2 && battle_enter_frames_to_wait > 5)) camera.reset();
-}
-
-void ff7_update_idle_battle_camera()
-{
-    ((void(*)())ff7_externals.battle_camera_sub_5C655C)();
-    ((void(*)(short))ff7_externals.set_battle_camera_sub_5C2350)(3);
 }
 
 void ff7_battle_camera_hook_init()
@@ -259,6 +296,9 @@ void ff7_battle_camera_hook_init()
     // Battle intro camera frame fix: patch DAT_00BFD0F4 (frames to wait before atb starts)
     patch_multiply_code<byte>(ff7_externals.battle_sub_429AC0 + 0x152, frame_multiplier);
     patch_multiply_code<byte>(ff7_externals.battle_sub_429D8A + 0x1D8, frame_multiplier);
+
+    // Move camera back to formation camera FPS fix
+    replace_function(ff7_externals.compute_interpolation_to_formation_camera, ff7_compute_interpolation_to_formation_camera);
 }
 
 void Camera::setRotationSpeed(float rotX, float rotY, float rotZ)
@@ -288,8 +328,8 @@ void Camera::controlCamera(camera_vec3* cameraPosition, camera_vec3* cameraFocus
 
     if (last_battle_id != ff7_externals.modules_global_object->battle_id)
 	{
-        camera_vec3* pFormationCameraPos = &ff7_externals.extra_battle_camera[*ff7_externals.extra_battle_camera_idx].position;
-        camera_vec3* pFormationCameraFocusPos = &ff7_externals.extra_battle_camera[*ff7_externals.extra_battle_camera_idx].focal_point;
+        camera_vec3* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
+        camera_vec3* pFormationCameraFocusPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point;
 
 		initialCameraPos.x = pFormationCameraPos->x;
 		initialCameraPos.y = pFormationCameraPos->y;

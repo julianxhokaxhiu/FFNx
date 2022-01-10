@@ -2435,11 +2435,11 @@ struct ff7_externals
 	uint32_t update_battle_camera_sub_5C20CE;
 	uint32_t set_battle_camera_sub_5C22BD;
 	uint32_t battle_camera_sub_5C22A9;
-	uint32_t battle_camera_sub_5C655C;
+	uint32_t compute_interpolation_to_formation_camera;
 	uint32_t set_battle_camera_sub_5C2350;
 	bcamera_fn_data* camera_fn_data;
 	bcamera_position* battle_camera_position;
-	bcamera_position* battle_camera_focal_position;
+	bcamera_position* battle_camera_focal_point;
 	uint32_t* camera_fn_array;
 	byte* battle_camera_focal_scripts_8FEE30;
 	byte* battle_camera_position_scripts_8FEE2C;
@@ -2452,10 +2452,11 @@ struct ff7_externals
 	WORD* camera_fn_counter;
 	camera_vec3* g_battle_camera_position;
 	camera_vec3* g_battle_camera_focal_point;
-	special_battle_camera* extra_battle_camera;
-	byte* extra_battle_camera_idx;
+	special_battle_camera* formation_camera;
+	byte* curr_formation_camera_idx;
 	byte* battle_enter_frames_to_wait;
 	byte* g_variation_index;
+	byte* is_camera_moving_BFB2DC;
 
 	// animation script externals
 	uint32_t battle_sub_42A5EB;
