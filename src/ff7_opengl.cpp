@@ -223,10 +223,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// control battle camera
 	// #####################
 	if(enable_analogue_controls)
-	{
 		replace_call_function(ff7_externals.battle_sub_42D992 + 0xFB, ff7_update_battle_camera);
-		replace_function(ff7_externals.battle_camera_sub_5C22A9, ff7_update_idle_battle_camera);
-	}
 
 	//######################
 	// menu rendering fix
