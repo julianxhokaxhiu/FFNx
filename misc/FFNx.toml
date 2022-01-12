@@ -218,6 +218,11 @@ enable_ffmpeg_videos = -1
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ffmpeg_video_ext = "avi"
 
+#[EXTERNAL MOVIE AUDIO FILE EXTENSION]
+# The type of audio file to search for. Default is ogg.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external_movie_audio_ext = "ogg"
+
 ###########################
 # Controller Options
 ###########################

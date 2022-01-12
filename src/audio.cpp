@@ -96,6 +96,9 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _
 		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
 			extensions = external_ambient_ext;
 			break;
+		case NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO:
+			extensions = external_movie_audio_ext;
+			break;
 	}
 
 	for (const std::string &extension: extensions) {
@@ -112,6 +115,9 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
 			sprintf(_out, "%s/%s/%s.%s", basedir, external_ambient_path.c_str(), (const char*)_key, extension.c_str());
+			break;
+		case NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO:
+			sprintf(_out, "%s.%s", (const char*)_key, extension.c_str());
 			break;
 		}
 
@@ -1238,4 +1244,58 @@ void NxAudioEngine::resumeAmbient(double time)
 bool NxAudioEngine::isAmbientPlaying()
 {
 	return _engine.isValidVoiceHandle(_currentAmbient.handle) && !_engine.getPause(_currentAmbient.handle);
+}
+
+// Movie Audio
+bool NxAudioEngine::canPlayMovieAudio(const char* nameWithPath)
+{
+	char filename[MAX_PATH];
+
+	return getFilenameFullPath<const char*>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
+}
+
+bool NxAudioEngine::playMovieAudio(const char* nameWithPath)
+{
+	char filename[MAX_PATH];
+	bool exists = getFilenameFullPath<const char *>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
+
+	if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
+
+	// Stop any previously playing ambient
+	if (_engine.isValidVoiceHandle(_currentMovieAudio.handle))
+	{
+		_engine.stop(_currentMovieAudio.handle);
+
+		delete _currentMovieAudio.stream;
+
+		_currentMovieAudio.handle = NXAUDIOENGINE_INVALID_HANDLE;
+	}
+
+	if (exists)
+	{
+		_currentMovieAudio.stream = new SoLoud::VGMStream();
+
+		SoLoud::result res = _currentMovieAudio.stream->load(filename);
+		if (res != SoLoud::SO_NO_ERROR) {
+			ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
+			delete _currentMovieAudio.stream;
+			return false;
+		}
+
+		_currentMovieAudio.handle = _engine.play(*_currentMovieAudio.stream, 1.0f);
+
+		return _engine.isValidVoiceHandle(_currentMovieAudio.handle);
+	}
+	else
+		return false;
+}
+
+void NxAudioEngine::stopMovieAudio()
+{
+	_engine.stop(_currentMovieAudio.handle);
+}
+
+bool NxAudioEngine::isMovieAudioPlaying()
+{
+	return _engine.isValidVoiceHandle(_currentMovieAudio.handle);
 }

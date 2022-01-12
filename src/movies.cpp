@@ -39,6 +39,7 @@ int (*old_bgmovie)();
 byte mvief_bank = 0;
 byte mvief_address = 0;
 constexpr int field_60fps_ratio = 2;
+char movie_music_path[512];
 
 int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 {
@@ -182,7 +183,11 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 
 	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
 
-	ffmpeg_prepare_movie(newFmvName);
+	_splitpath(newFmvName, drivename, dirname, filename, NULL);
+	// Remove extension
+	_snprintf(movie_music_path, sizeof(movie_music_path), "%s%s%s", drivename, dirname, filename);
+
+	ffmpeg_prepare_movie(newFmvName, ! nxAudioEngine.canPlayMovieAudio(movie_music_path));
 
 	ff7_externals.movie_object->global_movie_flag = 1;
 
@@ -245,6 +250,7 @@ uint32_t ff7_start_movie()
 	ff7_externals.movie_object->is_playing = 1;
 
 	nxAudioEngine.pauseAmbient();
+	nxAudioEngine.playMovieAudio(movie_music_path);
 
 	return ff7_update_movie_sample(0);
 }
@@ -260,6 +266,7 @@ uint32_t ff7_stop_movie()
 
 		ffmpeg_stop_movie();
 
+		nxAudioEngine.stopMovieAudio();
 		nxAudioEngine.resumeAmbient();
 	}
 

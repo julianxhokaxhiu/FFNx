@@ -132,6 +132,15 @@ public:
 		double fade_out;
 	};
 
+	struct NxAudioEngineMovieAudio
+	{
+		NxAudioEngineMovieAudio() :
+			handle(NXAUDIOENGINE_INVALID_HANDLE),
+			stream(nullptr) {}
+		SoLoud::handle handle;
+		SoLoud::VGMStream* stream;
+	};
+
 private:
 	enum NxAudioEngineLayer
 	{
@@ -139,6 +148,7 @@ private:
 		NXAUDIOENGINE_MUSIC,
 		NXAUDIOENGINE_VOICE,
 		NXAUDIOENGINE_AMBIENT,
+		NXAUDIOENGINE_MOVIE_AUDIO,
 	};
 
 	bool _engineInitialized = false;
@@ -180,6 +190,9 @@ private:
 	// AMBIENT
 	std::map<std::string, int> _ambientSequentialIndexes;
 	NxAudioEngineAmbient _currentAmbient;
+
+	// MOVIE AUDIO
+	NxAudioEngineMovieAudio _currentMovieAudio;
 
 	// MISC
 	// Returns false if the file does not exist
@@ -255,6 +268,12 @@ public:
 	void pauseAmbient(double time = 0);
 	void resumeAmbient(double time = 0);
 	bool isAmbientPlaying();
+
+	// Movie Audio
+	bool canPlayMovieAudio(const char* filename);
+	bool playMovieAudio(const char* filename);
+	void stopMovieAudio();
+	bool isMovieAudioPlaying();
 };
 
 extern NxAudioEngine nxAudioEngine;
