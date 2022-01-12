@@ -143,7 +143,7 @@ void ffmpeg_release_movie_objects()
 }
 
 // prepare a movie for playback
-uint32_t ffmpeg_prepare_movie(char *name)
+uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 {
 	uint32_t i;
 	WAVEFORMATEX sound_format;
@@ -169,7 +169,7 @@ uint32_t ffmpeg_prepare_movie(char *name)
 	for(i = 0; i < format_ctx->nb_streams; i++)
 	{
 		if(format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && videostream < 0) videostream = i;
-		if(format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && audiostream < 0) audiostream = i;
+		if(with_audio && format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && audiostream < 0) audiostream = i;
 	}
 
 	if(videostream == -1)
@@ -179,7 +179,7 @@ uint32_t ffmpeg_prepare_movie(char *name)
 		goto exit;
 	}
 
-	if(audiostream == -1 && trace_movies) ffnx_trace("prepare_movie: no audio stream found\n");
+	if(with_audio && audiostream == -1 && trace_movies) ffnx_trace("prepare_movie: no audio stream found\n");
 
 	codec_ctx = format_ctx->streams[videostream]->codec;
 

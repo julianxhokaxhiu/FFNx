@@ -29,6 +29,7 @@ std::string mod_path;
 std::vector<std::string> mod_ext;
 long enable_ffmpeg_videos;
 std::string ffmpeg_video_ext;
+std::vector<std::string> external_movie_audio_ext;
 bool use_external_sfx;
 std::string external_sfx_path;
 std::vector<std::string> external_sfx_ext;
@@ -153,6 +154,7 @@ void read_cfg()
 	mod_ext = get_string_or_array_of_strings(config["mod_ext"]);
 	enable_ffmpeg_videos = config["enable_ffmpeg_videos"].value_or(-1);
 	ffmpeg_video_ext = config["ffmpeg_video_ext"].value_or("");
+	external_movie_audio_ext = get_string_or_array_of_strings(config["external_movie_audio_ext"]);
 	use_external_sfx = config["use_external_sfx"].value_or(false);
 	external_sfx_path = config["external_sfx_path"].value_or("");
 	external_sfx_ext = get_string_or_array_of_strings(config["external_sfx_ext"]);
@@ -338,6 +340,10 @@ void read_cfg()
 	// EXTERNAL MOVIE EXTENSION
 	if (ffmpeg_video_ext.empty())
 		ffmpeg_video_ext = "avi";
+
+	// EXTERNAL MOVIE AUDIO EXTENSION
+	if (external_movie_audio_ext.empty() || external_movie_audio_ext.front().empty())
+		external_movie_audio_ext = std::vector<std::string>(1, "ogg");
 
 	// EXTERNAL SFX PATH
 	if (external_sfx_path.empty())

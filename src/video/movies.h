@@ -33,7 +33,7 @@
 
 void ffmpeg_movie_init();
 void ffmpeg_release_movie_objects();
-uint32_t ffmpeg_prepare_movie(char* name);
+uint32_t ffmpeg_prepare_movie(char* name, bool with_audio = true);
 void ffmpeg_stop_movie();
 uint32_t ffmpeg_update_movie_sample(bool use_movie_fps = true);
 void ffmpeg_draw_current_frame();
