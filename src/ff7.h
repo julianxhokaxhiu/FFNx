@@ -1326,13 +1326,13 @@ struct field_tile
 {
 	short x;
 	short y;
-	float z;
+	int z;
 	WORD field_8;
 	WORD field_A;
 	WORD img_x;
 	WORD img_y;
-	float u;
-	float v;
+	int u;
+	int v;
 	WORD fx_img_x;
 	WORD fx_img_y;
 	uint32_t field_1C;
@@ -2197,12 +2197,12 @@ struct ff7_externals
 	uint32_t field_draw_everything;
 	uint32_t field_pick_tiles_make_vertices;
 	uint32_t field_layer2_pick_tiles;
-	uint32_t *field_special_y_offset;
 	uint32_t *field_layer2_tiles_num;
 	uint32_t **field_layer2_palette_sort;
 	struct field_tile **field_layer2_tiles;
-	char *field_anim_state;
-	void (*add_page_tile)(float, float, float, float, float, uint32_t, uint32_t);
+	uint32_t *field_special_y_offset;
+	uint32_t *field_bg_multiplier;
+	void (*add_page_tile)(float, float, int, int, int, uint32_t, uint32_t);
 	uint32_t field_load_textures;
 	void (*field_convert_type2_layers)();
 	void (*make_struc3)(uint32_t, struct struc_3 *);

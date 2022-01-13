@@ -303,12 +303,12 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_draw_everything = get_relative_call(ff7_externals.field_sub_6388EE, 0x11);
 	ff7_externals.field_pick_tiles_make_vertices = get_relative_call(ff7_externals.field_draw_everything, 0xC9);
 	ff7_externals.field_layer2_pick_tiles = get_relative_call(ff7_externals.field_pick_tiles_make_vertices, 0x48);
-	ff7_externals.field_special_y_offset = (uint32_t *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x43);
 	ff7_externals.field_layer2_tiles_num = (uint32_t *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x8C);
 	ff7_externals.field_layer2_palette_sort = (uint32_t **)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0xA3);
 	ff7_externals.field_layer2_tiles = (field_tile **)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0xC0);
-	ff7_externals.field_anim_state = (char *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x1A4);
-	ff7_externals.add_page_tile = (void (*)(float, float, float, float, float, uint32_t, uint32_t))get_relative_call(ff7_externals.field_layer2_pick_tiles, 0x327);
+	ff7_externals.field_special_y_offset = (uint32_t *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x43);
+	ff7_externals.field_bg_multiplier = (uint32_t *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x23);
+	ff7_externals.add_page_tile = (void (*)(float, float, int, int, int, uint32_t, uint32_t))get_relative_call(ff7_externals.field_layer2_pick_tiles, 0x327);
 
 	ff7_externals.field_load_textures = get_relative_call(ff7_externals.field_sub_60DCED, 0x107);
 	ff7_externals.field_convert_type2_layers = (void (*)())get_relative_call(ff7_externals.field_load_textures, 0xD);
