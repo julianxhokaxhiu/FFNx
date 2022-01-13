@@ -23,35 +23,33 @@
 #include "../ff7.h"
 #include "../patch.h"
 
-constexpr int world_60fps_ratio = 2;
-
 void ff7_world_snake_compute_delta_position(short* delta_position, short z_value)
 {
     ff7_externals.world_compute_delta_position_753D00(delta_position, z_value);
     if(delta_position)
     {
-        delta_position[0] /= world_60fps_ratio;
-        delta_position[1] /= world_60fps_ratio;
-        delta_position[2] /= world_60fps_ratio;
+        delta_position[0] /= common_frame_multiplier;
+        delta_position[1] /= common_frame_multiplier;
+        delta_position[2] /= common_frame_multiplier;
     }
 }
 
 int ff7_pop_world_stack_multiply_wrapper()
 {
     int ret = ff7_externals.pop_world_script_stack();
-    return ret * world_60fps_ratio;
+    return ret * common_frame_multiplier;
 }
 
 int ff7_pop_world_stack_divide_wrapper()
 {
     int ret = ff7_externals.pop_world_script_stack();
-    return ret / world_60fps_ratio;
+    return ret / common_frame_multiplier;
 }
 
 void ff7_world_hook_init()
 {
     // Movement related fix
-    patch_divide_code<DWORD>(ff7_externals.world_init_variables_74E1E9 + 0x15D, world_60fps_ratio);
+    patch_divide_code<DWORD>(ff7_externals.world_init_variables_74E1E9 + 0x15D, common_frame_multiplier);
     replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x172, ff7_pop_world_stack_divide_wrapper);
     replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x14B, ff7_pop_world_stack_divide_wrapper);
     replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x55D, ff7_pop_world_stack_divide_wrapper);

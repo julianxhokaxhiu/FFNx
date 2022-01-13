@@ -127,7 +127,8 @@ uint32_t scene_stack_pointer = 0;
 // global frame counter
 uint32_t frame_counter = 0;
 double frame_rate = 0;
-int frame_multiplier = 1;
+int battle_frame_multiplier = 1;
+int common_frame_multiplier = 1;
 
 // default 32-bit BGRA texture format presented to the game
 struct texture_format *texture_format;

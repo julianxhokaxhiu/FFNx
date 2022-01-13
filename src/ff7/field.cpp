@@ -35,8 +35,6 @@
 #include <unordered_map>
 #include <cmath>
 
-constexpr int field_60fps_ratio = 2;
-
 // model movement and animations
 constexpr byte JOIN = 0x08;
 constexpr byte SPLIT = 0x09;
@@ -241,9 +239,9 @@ int ff7_field_update_single_model_position(short model_id)
 	field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
 	int original_movement_speed = field_event_data_array[model_id].movement_speed;
 	int original_collision_radius = field_event_data_array[model_id].collision_radius;
-	field_event_data_array[model_id].movement_speed = original_movement_speed / field_60fps_ratio;
+	field_event_data_array[model_id].movement_speed = original_movement_speed / common_frame_multiplier;
 	if(original_collision_radius > 1)
-		field_event_data_array[model_id].collision_radius = original_collision_radius / field_60fps_ratio;
+		field_event_data_array[model_id].collision_radius = original_collision_radius / common_frame_multiplier;
 	int ret = ff7_externals.field_update_single_model_position(model_id);
 	field_event_data_array[model_id].movement_speed = original_movement_speed;
 	field_event_data_array[model_id].collision_radius = original_collision_radius;
@@ -253,15 +251,16 @@ int ff7_field_update_single_model_position(short model_id)
 short ff7_opcode_multiply_get_bank_value(short bank, short address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
-	ret *= field_60fps_ratio;
+	ret *= common_frame_multiplier;
 	return ret;
 }
 
 short ff7_opcode_divide_get_bank_value(short bank, short address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
-	ret /= field_60fps_ratio;
-	return ret + 1;
+	if(abs(ret) > 1)
+		ret /= common_frame_multiplier;
+	return ret;
 }
 
 int opcode_script_partial_animation_wrapper()
@@ -270,8 +269,8 @@ int opcode_script_partial_animation_wrapper()
 	WORD total_number_of_frames = -1;
 	byte curr_model_id = ff7_externals.field_model_id_array[*ff7_externals.current_entity_id];
 	byte speed = get_field_parameter<byte>(3);
-	WORD first_frame = 16 * get_field_parameter<byte>(1) * field_60fps_ratio / ((curr_opcode == CANIM1 || curr_opcode == CANIM2) ? speed : 1);
-	WORD last_frame = (get_field_parameter<byte>(2) * field_60fps_ratio) / speed;
+	WORD first_frame = 16 * get_field_parameter<byte>(1) * common_frame_multiplier / ((curr_opcode == CANIM1 || curr_opcode == CANIM2) ? speed : 1);
+	WORD last_frame = (get_field_parameter<byte>(2) * common_frame_multiplier) / speed;
 	field_event_data* event_data = *ff7_externals.field_event_data_ptr;
 	field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
 	char animation_type = ff7_externals.animation_type_array[curr_model_id];
@@ -304,7 +303,7 @@ int opcode_script_partial_animation_wrapper()
 int opcode_script_TURNGEN_wrapper()
 {
 	WORD rotation_n_steps = get_field_parameter<byte>(3);
-	rotation_n_steps *= field_60fps_ratio;
+	rotation_n_steps *= common_frame_multiplier;
 
 	// There are 7 cases in original FF7 where this condition happens (TODO: Transforming this to short is quite hard)
 	if(rotation_n_steps > 255)
@@ -327,13 +326,19 @@ int opcode_script_patch_wrapper()
 			switch(patch_config.var_type)
 			{
 			case patch_type::BYTE:
-				patch_generic_field_parameter<byte>(patch_config.offset, field_60fps_ratio, patch_config.operation_type == patch_operation::MULTIPLICATION);
+				if(patch_config.operation_type == patch_operation::DIVISION && get_field_parameter<byte>(patch_config.offset) == 1)
+					break;
+				patch_generic_field_parameter<byte>(patch_config.offset, common_frame_multiplier, patch_config.operation_type == patch_operation::MULTIPLICATION);
 				break;
 			case patch_type::WORD:
-				patch_generic_field_parameter<WORD>(patch_config.offset, field_60fps_ratio, patch_config.operation_type == patch_operation::MULTIPLICATION);
+				if(patch_config.operation_type == patch_operation::DIVISION && get_field_parameter<WORD>(patch_config.offset) == 1)
+					break;
+				patch_generic_field_parameter<WORD>(patch_config.offset, common_frame_multiplier, patch_config.operation_type == patch_operation::MULTIPLICATION);
 				break;
 			case patch_type::SHORT:
-				patch_generic_field_parameter<SHORT>(patch_config.offset, field_60fps_ratio, patch_config.operation_type == patch_operation::MULTIPLICATION);
+				if(patch_config.operation_type == patch_operation::DIVISION && abs(get_field_parameter<short>(patch_config.offset)) == 1)
+					break;
+				patch_generic_field_parameter<SHORT>(patch_config.offset, common_frame_multiplier, patch_config.operation_type == patch_operation::MULTIPLICATION);
 				break;
 			default:
 				break;
@@ -349,17 +354,17 @@ void ff7_field_hook_init()
 	std::copy(common_externals.execute_opcode_table, &common_externals.execute_opcode_table[0xFF], &old_opcode_table[0]);
 
 	// Model movement fps and animation (walk vs run) fix
-	patch_code_byte(ff7_externals.field_update_models_positions + 0x6E5, 0x9 + field_60fps_ratio / 2);
-	patch_code_byte(ff7_externals.field_update_models_positions + 0x70B, 0x9 + field_60fps_ratio / 2);
-	patch_code_byte(ff7_externals.field_update_models_positions + 0x739, 0x9 + field_60fps_ratio / 2);
-	patch_code_byte(ff7_externals.field_update_models_positions + 0x75F, 0xA + field_60fps_ratio / 2);
+	patch_code_byte(ff7_externals.field_update_models_positions + 0x6E5, 0x9 + common_frame_multiplier / 2);
+	patch_code_byte(ff7_externals.field_update_models_positions + 0x70B, 0x9 + common_frame_multiplier / 2);
+	patch_code_byte(ff7_externals.field_update_models_positions + 0x739, 0x9 + common_frame_multiplier / 2);
+	patch_code_byte(ff7_externals.field_update_models_positions + 0x75F, 0xA + common_frame_multiplier / 2);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9E8, ff7_field_update_single_model_position);
-	patch_divide_code<int>(ff7_externals.field_opcode_08_sub_61D4B9 + 0x343, field_60fps_ratio);
-	patch_code_byte(ff7_externals.field_update_models_positions + 0x1041, 0x2 - field_60fps_ratio / 2);
-	patch_code_byte(ff7_externals.field_update_models_positions + 0x189A, 0x2 - field_60fps_ratio / 2);
+	patch_divide_code<int>(ff7_externals.field_opcode_08_sub_61D4B9 + 0x343, common_frame_multiplier);
+	patch_code_byte(ff7_externals.field_update_models_positions + 0x1041, 0x2 - common_frame_multiplier / 2);
+	patch_code_byte(ff7_externals.field_update_models_positions + 0x189A, 0x2 - common_frame_multiplier / 2);
 	replace_call_function(common_externals.execute_opcode_table[JUMP] + 0x1F1, ff7_opcode_multiply_get_bank_value);
-	patch_divide_code<int>(ff7_externals.field_update_models_positions + 0xC89, field_60fps_ratio * 2);
-	patch_divide_code<int>(ff7_externals.field_update_models_positions + 0xE48, field_60fps_ratio * 2);
+	patch_divide_code<int>(ff7_externals.field_update_models_positions + 0xC89, common_frame_multiplier * 2);
+	patch_divide_code<int>(ff7_externals.field_update_models_positions + 0xE48, common_frame_multiplier * 2);
 
 	// Background scroll fps fix
 	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x34, ff7_opcode_divide_get_bank_value);

@@ -90,7 +90,8 @@ extern uint32_t ff8_currentdisk;
 
 extern uint32_t frame_counter;
 extern double frame_rate;
-extern int frame_multiplier;
+extern int battle_frame_multiplier;
+extern int common_frame_multiplier;
 
 extern double speedhack_current;
 

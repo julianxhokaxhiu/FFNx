@@ -190,14 +190,30 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 		if (ff7_fps_limiter >= FF7_LIMITER_30FPS)
 		{
-			frame_multiplier = (ff7_fps_limiter == FF7_LIMITER_30FPS) ? 2 : 4;
+			battle_frame_multiplier = (ff7_fps_limiter == FF7_LIMITER_30FPS) ? 2 : 4;
 
-			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, frame_multiplier);
+			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, battle_frame_multiplier);
 
 			ff7_battle_camera_hook_init();
 			ff7_battle_animations_hook_init();
-			ff7_field_hook_init();
-			ff7_world_hook_init();
+
+			if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+			{
+				common_frame_multiplier = 2;
+
+				ff7_field_hook_init();
+				ff7_world_hook_init();
+
+				// Swirl mode 60FPS fix
+				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x184, common_frame_multiplier); // wait frames before swirling
+				patch_multiply_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, common_frame_multiplier);
+				byte swirl_cmp_fix[7] = {0x82, 0xB9, 0x50, 0x11, 0x00, 0x00, 0x9C};
+				memcpy_code(ff7_externals.swirl_loop_sub_4026D4 + 0x10B, swirl_cmp_fix, sizeof(swirl_cmp_fix));
+				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1AB), common_frame_multiplier);
+				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1B1), common_frame_multiplier);
+				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1E4), common_frame_multiplier);
+				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1EA), common_frame_multiplier);
+			}
 		}
 	}
 

@@ -88,7 +88,7 @@ bool simulateCameraScript(byte *scriptPtr, short &currentPosition, short &frames
             else
             {
                 executedOpCodeF5 = true;
-                framesToWait = scriptPtr[currentPosition++] * frame_multiplier;
+                framesToWait = scriptPtr[currentPosition++] * battle_frame_multiplier;
             }
             break;
         case 0xFE:
@@ -153,14 +153,14 @@ void ff7_execute_camera_functions()
                     ff7_externals.camera_fn_array[fn_index] == ff7_externals.battle_camera_position_sub_5C557D ||
                     ff7_externals.camera_fn_array[fn_index] == ff7_externals.battle_camera_focal_sub_5C5714)
                 {
-                    ff7_externals.camera_fn_data[fn_index].n_frames *= frame_multiplier;
+                    ff7_externals.camera_fn_data[fn_index].n_frames *= battle_frame_multiplier;
                 }
                 else if (ff7_externals.camera_fn_array[fn_index] == ff7_externals.battle_camera_position_sub_5C3D0D)
                 {
-                    ff7_externals.camera_fn_data[fn_index].n_frames *= frame_multiplier;
-                    ff7_externals.camera_fn_data[fn_index].field_8 /= frame_multiplier;
-                    ff7_externals.camera_fn_data[fn_index].field_6 /= frame_multiplier;
-                    ff7_externals.camera_fn_data[fn_index].field_E /= frame_multiplier;
+                    ff7_externals.camera_fn_data[fn_index].n_frames *= battle_frame_multiplier;
+                    ff7_externals.camera_fn_data[fn_index].field_8 /= battle_frame_multiplier;
+                    ff7_externals.camera_fn_data[fn_index].field_6 /= battle_frame_multiplier;
+                    ff7_externals.camera_fn_data[fn_index].field_E /= battle_frame_multiplier;
                 }
 
                 if (trace_all || trace_battle_camera)
@@ -220,7 +220,7 @@ void ff7_compute_interpolation_to_formation_camera()
 {
     ff7_externals.battle_camera_position[3].point = *ff7_externals.g_battle_camera_position;
     ff7_externals.battle_camera_focal_point[3].point = *ff7_externals.g_battle_camera_focal_point;
-    int frame_steps = 2 * frame_multiplier;
+    int frame_steps = 2 * battle_frame_multiplier;
     camera_vec3 delta_position, delta_focal_point;
     if (*ff7_externals.is_camera_moving_BFB2DC)
     {
@@ -289,13 +289,13 @@ void ff7_battle_camera_hook_init()
     replace_call_function(ff7_externals.handle_camera_functions + 0x4B, ff7_run_camera_position_script);
 
     // Battle outro camera frame fix: patch DAT_009AE138 (frames to wait before closing battle mode)
-    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x3DE, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x361, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x326, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x3DE, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x361, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x326, battle_frame_multiplier);
 
     // Battle intro camera frame fix: patch DAT_00BFD0F4 (frames to wait before atb starts)
-    patch_multiply_code<byte>(ff7_externals.battle_sub_429AC0 + 0x152, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.battle_sub_429D8A + 0x1D8, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_429AC0 + 0x152, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_429D8A + 0x1D8, battle_frame_multiplier);
 
     // Move camera back to formation camera FPS fix
     replace_function(ff7_externals.compute_interpolation_to_formation_camera, ff7_compute_interpolation_to_formation_camera);
@@ -303,14 +303,14 @@ void ff7_battle_camera_hook_init()
 
 void Camera::setRotationSpeed(float rotX, float rotY, float rotZ)
 {
-	rotationSpeed.x = rotX / static_cast<float>(frame_multiplier);
-	rotationSpeed.y = rotY / static_cast<float>(frame_multiplier);
-	rotationSpeed.z = rotZ / static_cast<float>(frame_multiplier);
+	rotationSpeed.x = rotX / static_cast<float>(battle_frame_multiplier);
+	rotationSpeed.y = rotY / static_cast<float>(battle_frame_multiplier);
+	rotationSpeed.z = rotZ / static_cast<float>(battle_frame_multiplier);
 }
 
 void Camera::setZoomSpeed(float speed)
 {
-	zoomSpeed = speed / static_cast<float>(frame_multiplier);
+	zoomSpeed = speed / static_cast<float>(battle_frame_multiplier);
 }
 
 void Camera::reset()
