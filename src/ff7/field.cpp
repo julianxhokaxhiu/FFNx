@@ -19,6 +19,13 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+/*
+ * This file contains the changes necessary to support subtractive and 25%
+ * blending modes in field backgrounds. Texture pages where these blending
+ * modes are used are duplicated and the tile data modified to point to these
+ * new pages which have the correct blending mode set.
+ */
+
 #include "../ff7.h"
 #include "../log.h"
 #include "../field.h"
@@ -86,13 +93,6 @@ std::unordered_map<byte, std::vector<opcode_patch_info>> patch_config_for_opcode
 	{SHAKE, {opcode_patch_info{4, patch_type::BYTE, patch_operation::MULTIPLICATION}, opcode_patch_info{6, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
 	{TURN, {opcode_patch_info{4, patch_type::SHORT, patch_operation::MULTIPLICATION}}},
 };
-
-/*
- * This file contains the changes necessary to support subtractive and 25%
- * blending modes in field backgrounds. Texture pages where these blending
- * modes are used are duplicated and the tile data modified to point to these
- * new pages which have the correct blending mode set.
- */
 
 // helper function initializes page dst, copies texture from src and applies
 // blend_mode
@@ -165,26 +165,29 @@ void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc
 
 void field_layer2_pick_tiles(short x_offset, short y_offset)
 {
+	int field_bg_multiplier = *ff7_externals.field_bg_multiplier;
 	int x_add = (320 - x_offset) * 2;
-	int y_add = ((ff7_center_fields ? 232 : 224) - y_offset) * 2;
-	uint32_t i;
+	int y_add = ((ff7_center_fields ? 232 : 224) - y_offset) * field_bg_multiplier;
 	struct field_tile *layer2_tiles = *ff7_externals.field_layer2_tiles;
 
-	if(*ff7_externals.field_special_y_offset > 0 && y_offset <= 8) y_offset -= *ff7_externals.field_special_y_offset * 2;
+	if(*ff7_externals.field_special_y_offset > 0 && y_offset <= 8)
+		y_add -= *ff7_externals.field_special_y_offset * field_bg_multiplier;
 
-	for(i = 0; i < *ff7_externals.field_layer2_tiles_num; i++)
+	for(int i = 0; i < *ff7_externals.field_layer2_tiles_num; i++)
 	{
-		uint32_t tile_index = (*ff7_externals.field_layer2_palette_sort)[i] & 0xFFFF;
+		uint32_t tile_index = (*ff7_externals.field_layer2_palette_sort)[i];
 		uint32_t page;
 		int x;
 		int y;
 
-		if(layer2_tiles[tile_index].anim_group && !(ff7_externals.field_anim_state[layer2_tiles[tile_index].anim_group] & layer2_tiles[tile_index].anim_bitmask)) continue;
+		char anim_group = layer2_tiles[tile_index].anim_group;
+		if(anim_group && !(ff7_externals.modules_global_object->background_sprite_layer[anim_group] & layer2_tiles[tile_index].anim_bitmask))
+			continue;
 
 		layer2_tiles[tile_index].field_1040 = 1;
 
-		x = layer2_tiles[tile_index].x * 2 + x_add;
-		y = layer2_tiles[tile_index].y * 2 + y_add;
+		x = layer2_tiles[tile_index].x * field_bg_multiplier + x_add;
+		y = layer2_tiles[tile_index].y * field_bg_multiplier + y_add;
 
 		if(layer2_tiles[tile_index].use_fx_page) page = layer2_tiles[tile_index].fx_page;
 		else page = layer2_tiles[tile_index].page;
