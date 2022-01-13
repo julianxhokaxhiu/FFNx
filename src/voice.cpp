@@ -432,8 +432,8 @@ void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_fra
 	{
 		text_data->buffer_idx = buffer_idx;
 		text_data->field_2 = param_4;
-		text_data->wait_frames = wait_frames * frame_multiplier - 1;
-		text_data->n_frames = (n_frames == 0) ? ((int (*)())ff7_externals.get_n_frames_display_action_string)() : n_frames * frame_multiplier;
+		text_data->wait_frames = wait_frames * battle_frame_multiplier - 1;
+		text_data->n_frames = (n_frames == 0) ? ((int (*)())ff7_externals.get_n_frames_display_action_string)() : n_frames * battle_frame_multiplier;
 
 		if (trace_all || trace_battle_text)
 			ffnx_trace("Add text string to be displayed: (text_id: %d, field_2: %d, wait_frames: %d, n_frames: %d)\n", text_data->buffer_idx, text_data->field_2, text_data->wait_frames, text_data->n_frames);

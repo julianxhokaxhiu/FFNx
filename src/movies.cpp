@@ -38,7 +38,6 @@ int (*old_mvief)();
 int (*old_bgmovie)();
 byte mvief_bank = 0;
 byte mvief_address = 0;
-constexpr int field_60fps_ratio = 2;
 char movie_music_path[512];
 
 int16_t script_OFST_get_speed(int16_t bank, int16_t address)
@@ -48,7 +47,7 @@ int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
 		ret *= movie_fps_ratio;
 	else if (ff7_fps_limiter == FF7_LIMITER_60FPS)
-		ret *= field_60fps_ratio;
+		ret *= common_frame_multiplier;
 
 	return ret;
 }
@@ -89,7 +88,7 @@ int script_WAIT()
 		if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
 			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= movie_fps_ratio;
 		else if (ff7_fps_limiter == FF7_LIMITER_60FPS)
-			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= field_60fps_ratio;
+			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= common_frame_multiplier;
 
 		if (!ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id])
 			ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 3;

@@ -2606,6 +2606,9 @@ struct ff7_externals
 	uint32_t update_world_snake_position_7564CD;
 	void (*world_compute_delta_position_753D00)(short* values, short z_value);
 	int (*pop_world_script_stack)();
+
+	uint32_t swirl_main_loop;
+	uint32_t swirl_loop_sub_4026D4;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

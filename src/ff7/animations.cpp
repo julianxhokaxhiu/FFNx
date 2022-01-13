@@ -173,9 +173,9 @@ void patchAnimationScriptArg(byte *scriptPointer, byte position)
     if (!patchedAddress.contains((DWORD)(scriptPointer + position)))
     {
         byte beforeValue = scriptPointer[position];
-        scriptPointer[position] = scriptPointer[position] * frame_multiplier;
+        scriptPointer[position] = scriptPointer[position] * battle_frame_multiplier;
 
-        if (beforeValue >= 0x100 / frame_multiplier)
+        if (beforeValue >= 0x100 / battle_frame_multiplier)
             ffnx_error("Script arg multiplication out of bound at 0x%x: before is %d, after is %d\n", (DWORD)(scriptPointer + position),
                        beforeValue, scriptPointer[position]);
     }
@@ -409,25 +409,25 @@ void ff7_execute_effect100_fn()
             {
                 if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
                 {
-                    ff7_externals.effect100_array_data[fn_index].field_6 *= frame_multiplier;
+                    ff7_externals.effect100_array_data[fn_index].field_6 *= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_425D29)
                 {
-                    ff7_externals.effect100_array_data[fn_index].n_frames *= frame_multiplier;
+                    ff7_externals.effect100_array_data[fn_index].n_frames *= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_sub_5BDA0F)
                 {
-                    ff7_externals.effect100_array_data[fn_index].field_2 /= frame_multiplier;
-                    ff7_externals.effect100_array_data[fn_index].n_frames *= frame_multiplier;
+                    ff7_externals.effect100_array_data[fn_index].field_2 /= battle_frame_multiplier;
+                    ff7_externals.effect100_array_data[fn_index].n_frames *= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.tifa_limit_1_2_sub_4E3D51 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.tifa_limit_2_1_sub_4E48D4)
                 {
-                    ff7_externals.effect100_array_data[fn_index].field_1A *= frame_multiplier;
+                    ff7_externals.effect100_array_data[fn_index].field_1A *= battle_frame_multiplier;
                 }
                 else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_odin_steel_sub_4A9908)
                 {
-                    ff7_odin_steel_frames_AEEC14 = *ff7_externals.field_odin_frames_AEEC14 * frame_multiplier;
+                    ff7_odin_steel_frames_AEEC14 = *ff7_externals.field_odin_frames_AEEC14 * battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_enemy_death_5BBD24 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_iainuki_death_5BCAAA ||
@@ -459,7 +459,7 @@ void ff7_execute_effect100_fn()
 
             if (aux_effect100_data[fn_index].interpolationTrick != interpolation_trick::NONE)
             {
-                if (aux_effect100_data[fn_index].frameCounter % frame_multiplier == 0)
+                if (aux_effect100_data[fn_index].frameCounter % battle_frame_multiplier == 0)
                 {
                     ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
                 }
@@ -509,7 +509,7 @@ void ff7_execute_effect100_fn()
         {
             if (aux_effect100_data[fn_index].isFirstTimeRunning)
             {
-                ff7_externals.effect100_array_data[fn_index].field_6 *= frame_multiplier;
+                ff7_externals.effect100_array_data[fn_index].field_6 *= battle_frame_multiplier;
                 aux_effect100_data[fn_index].isFirstTimeRunning = false;
             }
 
@@ -553,62 +553,62 @@ void ff7_execute_effect10_fn()
                 if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_426DE3)
                 {
                     // Related to resting positions
-                    effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_18 *= frame_multiplier;
-                    effect10_data.field_C /= frame_multiplier;
-                    effect10_data.field_E /= frame_multiplier;
-                    effect10_data.field_6 /= frame_multiplier;
+                    effect10_data.n_frames *= battle_frame_multiplier;
+                    effect10_data.field_18 *= battle_frame_multiplier;
+                    effect10_data.field_C /= battle_frame_multiplier;
+                    effect10_data.field_E /= battle_frame_multiplier;
+                    effect10_data.field_6 /= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_426941)
                 {
                     // Related to resting positions
-                    effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_A /= frame_multiplier;
-                    effect10_data.field_C /= frame_multiplier;
+                    effect10_data.n_frames *= battle_frame_multiplier;
+                    effect10_data.field_A /= battle_frame_multiplier;
+                    effect10_data.field_C /= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_426899)
                 {
                     // Related to resting Y rotation
-                    effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_E /= frame_multiplier;
+                    effect10_data.n_frames *= battle_frame_multiplier;
+                    effect10_data.field_E /= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_4267F1)
                 {
                     // Related to resting Y position
-                    effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_A /= frame_multiplier;
+                    effect10_data.n_frames *= battle_frame_multiplier;
+                    effect10_data.field_A /= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_426A26)
                 {
                     // Animation of moving characters from attacker to attacked
-                    effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_18 *= frame_multiplier;
-                    effect10_data.field_C /= frame_multiplier;
-                    effect10_data.field_E /= frame_multiplier;
+                    effect10_data.n_frames *= battle_frame_multiplier;
+                    effect10_data.field_18 *= battle_frame_multiplier;
+                    effect10_data.field_C /= battle_frame_multiplier;
+                    effect10_data.field_E /= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_42739D)
                 {
                     // Animation of moving characters from attacker to attacked
-                    effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_19 *= frame_multiplier;
-                    effect10_data.field_1A *= frame_multiplier;
-                    effect10_data.field_C /= frame_multiplier;
-                    effect10_data.field_E /= frame_multiplier;
+                    effect10_data.n_frames *= battle_frame_multiplier;
+                    effect10_data.field_19 *= battle_frame_multiplier;
+                    effect10_data.field_1A *= battle_frame_multiplier;
+                    effect10_data.field_C /= battle_frame_multiplier;
+                    effect10_data.field_E /= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_426F58)
                 {
-                    effect10_data.n_frames *= frame_multiplier;
+                    effect10_data.n_frames *= battle_frame_multiplier;
                     // Do not modify the others, already done elsewhere
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_move_character_sub_4270DE)
                 {
                     // Animation of moving characters for some limit breaks from attacker to attacked
-                    effect10_data.n_frames *= frame_multiplier;
-                    effect10_data.field_19 *= frame_multiplier;
-                    effect10_data.field_1A *= frame_multiplier;
-                    effect10_data.field_C /= frame_multiplier;
-                    effect10_data.field_E /= frame_multiplier;
-                    effect10_data.field_14 /= frame_multiplier;
+                    effect10_data.n_frames *= battle_frame_multiplier;
+                    effect10_data.field_19 *= battle_frame_multiplier;
+                    effect10_data.field_1A *= battle_frame_multiplier;
+                    effect10_data.field_C /= battle_frame_multiplier;
+                    effect10_data.field_E /= battle_frame_multiplier;
+                    effect10_data.field_14 /= battle_frame_multiplier;
                 }
                 if (trace_all || trace_battle_animation)
                     ffnx_trace("%s - begin function[%d]: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__, fn_index,
@@ -676,12 +676,12 @@ void ff7_execute_effect60_fn()
                     ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_427AF1 ||
                     ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_4277B1)
                 {
-                    ff7_externals.effect60_array_data[fn_index].n_frames *= frame_multiplier;
+                    ff7_externals.effect60_array_data[fn_index].n_frames *= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BD96D)
                 {
-                    ff7_externals.effect60_array_data[fn_index].n_frames *= frame_multiplier;
-                    ff7_externals.effect60_array_data[fn_index].field_2 /= frame_multiplier;
+                    ff7_externals.effect60_array_data[fn_index].n_frames *= battle_frame_multiplier;
+                    ff7_externals.effect60_array_data[fn_index].field_2 /= battle_frame_multiplier;
                 }
                 else if (ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_425E5F ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5C1C8F ||
@@ -717,7 +717,7 @@ void ff7_execute_effect60_fn()
 
             if (aux_effect60_data[fn_index].interpolationTrick != interpolation_trick::NONE)
             {
-                if (aux_effect60_data[fn_index].frameCounter % frame_multiplier == 0)
+                if (aux_effect60_data[fn_index].frameCounter % battle_frame_multiplier == 0)
                 {
                     ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
                 }
@@ -777,11 +777,11 @@ void ff7_boss_death_animation_5BC5EC()
     }
     else
     {
-        if (fn_data.n_frames == (58 * frame_multiplier) || fn_data.n_frames == (64 * frame_multiplier))
+        if (fn_data.n_frames == (58 * battle_frame_multiplier) || fn_data.n_frames == (64 * battle_frame_multiplier))
             *ff7_externals.field_battle_BFB2E0 = ((uint32_t(*)(byte, byte, byte))ff7_externals.battle_boss_death_call_5BD436)(0xFA, 0xFA, 0xFA);
 
         std::array<short, 8> offset_z_position{64, 32, 0, -32, -64, -32, 0, 32};
-        int index = ((fn_data.n_frames * (4 / frame_multiplier)) % offset_z_position.size());
+        int index = ((fn_data.n_frames * (4 / battle_frame_multiplier)) % offset_z_position.size());
         getBattleModelState(fn_data.field_8)->restingZPosition = fn_data.field_A + offset_z_position[index];
         fn_data.n_frames--;
     }
@@ -789,8 +789,8 @@ void ff7_boss_death_animation_5BC5EC()
 
 int ff7_get_n_frames_display_action_string()
 {
-    int shiftValue = 2 - frame_multiplier / 2;
-    return ((int)*ff7_externals.field_byte_DC0E11 >> shiftValue) + 4 * frame_multiplier;
+    int shiftValue = 2 - battle_frame_multiplier / 2;
+    return ((int)*ff7_externals.field_byte_DC0E11 >> shiftValue) + 4 * battle_frame_multiplier;
 }
 
 void ff7_battle_disintegrate_1_death_sub_5BC04D(byte effect10_array_idx)
@@ -807,17 +807,17 @@ void ff7_battle_disintegrate_1_death_sub_5BC04D(byte effect10_array_idx)
     }
     else
     {
-        battle_model_state.field_14 += 0x80 / frame_multiplier;
+        battle_model_state.field_14 += 0x80 / battle_frame_multiplier;
         if (battle_model_state.field_28 > 0)
-            battle_model_state.field_28 -= 0x10 / frame_multiplier;
+            battle_model_state.field_28 -= 0x10 / battle_frame_multiplier;
 
         battle_model_state.field_1AC8 = 1;
 
         // effect10_array_data_8FE1F6 is a short array of 15 size. To avoid overflowing, divide also the index
-        battle_model_state.field_1ADC += (float)(int)ff7_externals.effect10_array_data_8FE1F6[(int)(fn_data.n_frames / frame_multiplier)] / frame_multiplier;
-        battle_model_state.field_1ACC += 22.5f / frame_multiplier;
-        battle_model_state.field_1AD0 += 22.5f / frame_multiplier;
-        battle_model_state.field_1AD4 += 22.5f / frame_multiplier;
+        battle_model_state.field_1ADC += (float)(int)ff7_externals.effect10_array_data_8FE1F6[(int)(fn_data.n_frames / battle_frame_multiplier)] / battle_frame_multiplier;
+        battle_model_state.field_1ACC += 22.5f / battle_frame_multiplier;
+        battle_model_state.field_1AD0 += 22.5f / battle_frame_multiplier;
+        battle_model_state.field_1AD4 += 22.5f / battle_frame_multiplier;
         fn_data.n_frames--;
     }
 }
@@ -834,11 +834,11 @@ void ff7_battle_move_character_sub_426F58()
         *ff7_externals.g_script_args[2] = fn_data.field_A;
         *ff7_externals.g_script_args[3] = fn_data.field_8;
         *ff7_externals.g_script_args[4] = fn_data.field_10;
-        getBattleModelState(*ff7_externals.g_script_args[3])->restingXPosition += fn_data.field_C / frame_multiplier;
-        getBattleModelState(*ff7_externals.g_script_args[3])->restingZPosition += fn_data.field_E / frame_multiplier;
+        getBattleModelState(*ff7_externals.g_script_args[3])->restingXPosition += fn_data.field_C / battle_frame_multiplier;
+        getBattleModelState(*ff7_externals.g_script_args[3])->restingZPosition += fn_data.field_E / battle_frame_multiplier;
 
-        int index = (int)(fn_data.field_18 / frame_multiplier) + *ff7_externals.g_script_args[4] * 8; // to avoid overflow
-        getBattleModelState(*ff7_externals.g_script_args[3])->restingYPosition += ff7_externals.resting_Y_array_data[index] / frame_multiplier;
+        int index = (int)(fn_data.field_18 / battle_frame_multiplier) + *ff7_externals.g_script_args[4] * 8; // to avoid overflow
+        getBattleModelState(*ff7_externals.g_script_args[3])->restingYPosition += ff7_externals.resting_Y_array_data[index] / battle_frame_multiplier;
         fn_data.field_18++;
         fn_data.n_frames--;
     }
@@ -859,49 +859,49 @@ void ff7_battle_animations_hook_init()
     replace_function(ff7_externals.execute_effect60_fn, ff7_execute_effect60_fn);
 
     // Normal enemy death
-    patch_multiply_code<WORD>(ff7_externals.battle_enemy_death_5BBD24 + 0x40, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_enemy_death_sub_5BBE32 + 0xA8, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_enemy_death_sub_5BBE32 + 0xCB, frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_enemy_death_5BBD24 + 0x40, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_enemy_death_sub_5BBE32 + 0xA8, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_enemy_death_sub_5BBE32 + 0xCB, battle_frame_multiplier);
 
     // Enemy death - iainuki
-    patch_multiply_code<WORD>(ff7_externals.battle_iainuki_death_5BCAAA + 0x40, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x9F, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0xC2, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0xE3, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x104, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x154, frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_iainuki_death_5BCAAA + 0x40, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x9F, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0xC2, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0xE3, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x104, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_iainuki_death_sub_5BCBB8 + 0x154, battle_frame_multiplier);
 
     // Boss death
-    patch_multiply_code<WORD>(ff7_externals.battle_boss_death_5BC48C + 0x40, frame_multiplier);
-    patch_multiply_code<WORD>(ff7_externals.battle_boss_death_5BC48C + 0xCF, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_boss_death_sub_5BC6ED + 0xCF, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_boss_death_sub_5BC6ED + 0xF1, frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_boss_death_5BC48C + 0x40, battle_frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_boss_death_5BC48C + 0xCF, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_boss_death_sub_5BC6ED + 0xCF, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_boss_death_sub_5BC6ED + 0xF1, battle_frame_multiplier);
     replace_function(ff7_externals.battle_boss_death_sub_5BC5EC, ff7_boss_death_animation_5BC5EC);
 
     // Enemy death - melting
-    patch_multiply_code<WORD>(ff7_externals.battle_melting_death_5BC21F + 0x40, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0xAB, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_melting_death_sub_5BC32D + 0xCE, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0xEE, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0x10D, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0x12C, frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_melting_death_5BC21F + 0x40, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0xAB, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_melting_death_sub_5BC32D + 0xCE, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0xEE, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0x10D, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_melting_death_sub_5BC32D + 0x12C, battle_frame_multiplier);
 
     // Enemy death - disintegrate 2
-    patch_multiply_code<WORD>(ff7_externals.battle_disintegrate_2_death_5BBA82 + 0x40, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_disintegrate_2_death_sub_5BBBDE + 0xB9, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_disintegrate_2_death_sub_5BBBDE + 0xDB, frame_multiplier);
-    patch_divide_code<float>((uint32_t)ff7_externals.field_float_battle_7B7680, frame_multiplier); // float value used also elsewhere
+    patch_multiply_code<WORD>(ff7_externals.battle_disintegrate_2_death_5BBA82 + 0x40, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_disintegrate_2_death_sub_5BBBDE + 0xB9, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_disintegrate_2_death_sub_5BBBDE + 0xDB, battle_frame_multiplier);
+    patch_divide_code<float>((uint32_t)ff7_externals.field_float_battle_7B7680, battle_frame_multiplier); // float value used also elsewhere
 
     // Enemy death - morph
-    patch_multiply_code<WORD>(ff7_externals.battle_morph_death_5BC812 + 0x40, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_morph_death_sub_5BC920 + 0x9F, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0xC2, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0xE3, frame_multiplier);
-    patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0x104, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_morph_death_sub_5BC920 + 0x154, frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_morph_death_5BC812 + 0x40, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_morph_death_sub_5BC920 + 0x9F, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0xC2, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0xE3, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battle_morph_death_sub_5BC920 + 0x104, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_morph_death_sub_5BC920 + 0x154, battle_frame_multiplier);
 
     // Enemy death - disintegrate 1
-    patch_multiply_code<WORD>(ff7_externals.battle_disintegrate_1_death_5BBF31 + 0x40, frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_disintegrate_1_death_5BBF31 + 0x40, battle_frame_multiplier);
     replace_function(ff7_externals.battle_disintegrate_1_death_sub_5BC04D, ff7_battle_disintegrate_1_death_sub_5BC04D);
 
     // Display string related
@@ -911,80 +911,80 @@ void ff7_battle_animations_hook_init()
     replace_function(ff7_externals.battle_move_character_sub_426F58, ff7_battle_move_character_sub_426F58);
 
     // Character fade in/out (i.e. multiply g_script_wait_frames and other things)
-    patch_multiply_code<byte>(ff7_externals.battle_sub_42A72D + 0x11A, frame_multiplier);
-    patch_multiply_code<WORD>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x24, frame_multiplier);
-    patch_multiply_code<WORD>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x57, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x6E, frame_multiplier);
-    patch_multiply_code<WORD>(ff7_externals.battle_sub_5C18BC + 0xDC, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.battle_sub_5C18BC + 0xE4, frame_multiplier);
-    patch_multiply_code<WORD>(ff7_externals.battle_sub_5C1C8F + 0x55, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.battle_sub_5C1C8F + 0x5D, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_42A72D + 0x11A, battle_frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x24, battle_frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x57, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.vincent_limit_fade_effect_sub_5D4240 + 0x6E, battle_frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_sub_5C18BC + 0xDC, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_5C18BC + 0xE4, battle_frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_sub_5C1C8F + 0x55, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battle_sub_5C1C8F + 0x5D, battle_frame_multiplier);
 
     // Summons
-    patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x75, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x6D, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x15B, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x75, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x6D, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.run_summon_animations_5C0E4B + 0x15B, battle_frame_multiplier);
     memset_code(ff7_externals.run_shiva_camera_58E60D + 0xC2D, 0x90, 6);
     patch_code_dword(ff7_externals.run_ramuh_camera_597206 + 0x44, 0x000B9585);
     memset_code(ff7_externals.run_odin_gunge_camera_4A0F52 + 0xC0C, 0x90, 6);
-    patch_multiply_code<DWORD>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x5E, frame_multiplier);
-    patch_multiply_code<DWORD>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x25D, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x265, frame_multiplier);
+    patch_multiply_code<DWORD>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x5E, battle_frame_multiplier);
+    patch_multiply_code<DWORD>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x25D, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x265, battle_frame_multiplier);
     patch_code_dword(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x316, (DWORD)&ff7_odin_steel_frames_AEEC14);
     replace_call_function(ff7_externals.run_summon_kotr_sub_476857 + 0x1C6, ff7_add_kotr_camera_fn_to_effect100_fn);
 
     // Show Damage
-    patch_multiply_code<WORD>(ff7_externals.display_battle_damage_5BB410 + 0x54, frame_multiplier);
-    if(frame_multiplier == 2)
+    patch_multiply_code<WORD>(ff7_externals.display_battle_damage_5BB410 + 0x54, battle_frame_multiplier);
+    if(battle_frame_multiplier == 2)
     {
         patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x1E2, (DWORD)y_pos_offset_display_damage_30);
         patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x2D7, (DWORD)y_pos_offset_display_damage_30);
     }
-    else if(frame_multiplier == 4)
+    else if(battle_frame_multiplier == 4)
     {
         patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x1E2, (DWORD)y_pos_offset_display_damage_60);
         patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x2D7, (DWORD)y_pos_offset_display_damage_60);
     }
 
     // Aura animation (magic, limit break, enemy skill, summon)
-    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x4C, 0x7 - frame_multiplier / 2);
-    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x6A, 0xA - frame_multiplier / 2);
-    patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x88, frame_multiplier);
-    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0xA2, 0xC - frame_multiplier / 2);
-    patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x138, frame_multiplier);
-    patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x4C, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x6E, frame_multiplier);
-    patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x7A, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x98, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0xAD, frame_multiplier);
-    patch_code_byte(ff7_externals.limit_break_aura_effects_5C0572 + 0xB0, 0x9 - frame_multiplier / 2);
-    patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x13E, frame_multiplier);
-    patch_multiply_code<DWORD>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x5C, frame_multiplier);
-    patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x64, 0x7 - frame_multiplier / 2);
-    patch_multiply_code<DWORD>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x81, frame_multiplier);
-    patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x89, 0xA - frame_multiplier / 2);
-    patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xA7, frame_multiplier);
-    patch_divide_code<int>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xB3, frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xD6, frame_multiplier);
-    patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xD9, 0xC - frame_multiplier / 2);
-    patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x182, frame_multiplier);
-    patch_code_byte(ff7_externals.summon_aura_effects_5C0953 + 0x4D, 0xC - frame_multiplier / 2);
-    patch_multiply_code<byte>(ff7_externals.summon_aura_effects_5C0953 + 0x19D, frame_multiplier);
+    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x4C, 0x7 - battle_frame_multiplier / 2);
+    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x6A, 0xA - battle_frame_multiplier / 2);
+    patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x88, battle_frame_multiplier);
+    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0xA2, 0xC - battle_frame_multiplier / 2);
+    patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x138, battle_frame_multiplier);
+    patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x4C, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x6E, battle_frame_multiplier);
+    patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x7A, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x98, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0xAD, battle_frame_multiplier);
+    patch_code_byte(ff7_externals.limit_break_aura_effects_5C0572 + 0xB0, 0x9 - battle_frame_multiplier / 2);
+    patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x13E, battle_frame_multiplier);
+    patch_multiply_code<DWORD>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x5C, battle_frame_multiplier);
+    patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x64, 0x7 - battle_frame_multiplier / 2);
+    patch_multiply_code<DWORD>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x81, battle_frame_multiplier);
+    patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x89, 0xA - battle_frame_multiplier / 2);
+    patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xA7, battle_frame_multiplier);
+    patch_divide_code<int>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xB3, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xD6, battle_frame_multiplier);
+    patch_code_byte(ff7_externals.enemy_skill_aura_effects_5C06BF + 0xD9, 0xC - battle_frame_multiplier / 2);
+    patch_multiply_code<byte>(ff7_externals.enemy_skill_aura_effects_5C06BF + 0x182, battle_frame_multiplier);
+    patch_code_byte(ff7_externals.summon_aura_effects_5C0953 + 0x4D, 0xC - battle_frame_multiplier / 2);
+    patch_multiply_code<byte>(ff7_externals.summon_aura_effects_5C0953 + 0x19D, battle_frame_multiplier);
 
     // Limit break effects
-    patch_multiply_code<byte>(ff7_externals.tifa_limit_2_1_sub_4E48D4 + 0x1FE, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.tifa_limit_2_1_sub_4E48D4 + 0x1FE, battle_frame_multiplier);
     memset_code(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xCE, 0x90, 6);
-    patch_multiply_code<byte>(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xE2, frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xE2, battle_frame_multiplier);
 
     // Effect60 related
-    patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, battle_frame_multiplier);
 
-    patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, frame_multiplier);
-    patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x1DC, 0x2 - frame_multiplier / 2);
-    patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x203, 0x2 - frame_multiplier / 2);
+    patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, battle_frame_multiplier);
+    patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x1DC, 0x2 - battle_frame_multiplier / 2);
+    patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x203, 0x2 - battle_frame_multiplier / 2);
 
-    patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x5B, frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x6E, frame_multiplier);
+    patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x5B, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x6E, battle_frame_multiplier);
 
     // Tifa slots speed patch (bitwise and with 0x7 changed to 0x3)
     patch_code_byte(ff7_externals.battle_sub_6E3135 + 0x168, 0x3);

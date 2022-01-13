@@ -862,6 +862,10 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.update_world_snake_position_7564CD = get_relative_call(ff7_externals.run_world_snake_ai_script_7562FF, 0x151);
 	ff7_externals.world_compute_delta_position_753D00 = (void(*)(short*, short))get_relative_call(ff7_externals.update_world_snake_position_7564CD, 0x26);
 
+	// swirl 60 fps
+	ff7_externals.swirl_main_loop = swirl_main_loop;
+	ff7_externals.swirl_loop_sub_4026D4 = get_relative_call(swirl_main_loop, 0xC9);
+
 	//ff7 achievement related externals
 	uint32_t sub_434347 = get_relative_call(ff7_externals.battle_loop, 0x484);
 	uint32_t* pointer_functions_7C2980 = (uint32_t*)get_absolute_value(sub_434347, 0x19C);
