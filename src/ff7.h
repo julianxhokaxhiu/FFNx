@@ -2064,9 +2064,14 @@ struct field_event_data
 
 struct field_animation_data
 {
-  byte field_0[376];
-  uint32_t* anim_frame_object;
-  byte field_179[20];
+	byte field_0[34];
+	__int16 field_22;
+	byte field_24[336];
+	WORD field_174;
+	WORD field_176;
+	uint32_t *anim_frame_object;
+	uint32_t *field_17C;
+	byte field_180[16];
 };
 
 // --------------- end of FF7 imports ---------------
@@ -2327,6 +2332,7 @@ struct ff7_externals
 	uint32_t sub_63C17F;
 	uint32_t field_update_models_positions;
 	int (*field_update_single_model_position)(short);
+	void (*field_update_model_animation_frame)(short);
 	uint32_t sub_40B27B;
 	WORD* word_CC0DD4;
 	WORD* word_CC1638;

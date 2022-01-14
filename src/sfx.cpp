@@ -505,13 +505,11 @@ void sfx_fix_cait_sith_roulette(int sound_id)
 
 //=============================================================================
 
-int sfx_process_footstep(int16_t unk)
+void sfx_process_footstep(bool is_player_moving)
 {
 	static time_t last_playback_time, current_playback_time;
 
-	int ret = ff7_externals.field_update_single_model_position(unk);
-
-	if (ret)
+	if (is_player_moving)
 	{
 		float pace = 0.5f;
 
@@ -526,8 +524,6 @@ int sfx_process_footstep(int16_t unk)
 			qpc_get_time(&last_playback_time);
 		}
 	}
-
-	return ret;
 }
 
 //=============================================================================
@@ -550,9 +546,6 @@ void sfx_init()
 		replace_call(ff7_externals.swirl_sound_effect + 0x26, sfx_operation_battle_swirl_stop_sound);
 		// On resume music after a battle
 		replace_call(ff7_externals.field_initialize_variables + 0xEB, sfx_operation_resume_music);
-
-		// Allow footsteps to be detected correctly
-		if (ff7_footsteps) replace_call(ff7_externals.field_update_models_positions + 0x8BC, sfx_process_footstep);
 
 		// Leviathan fix
 		patch_code_byte(ff7_externals.battle_summon_leviathan_loop + 0x3FA + 1, 0x2A);
