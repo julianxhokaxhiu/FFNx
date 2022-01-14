@@ -1259,7 +1259,7 @@ bool NxAudioEngine::playMovieAudio(const char* nameWithPath)
 	char filename[MAX_PATH];
 	bool exists = getFilenameFullPath<const char *>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
 
-	if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
+	if (trace_all || trace_movies) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
 	// Stop any previously playing movie audio
 	if (_engine.isValidVoiceHandle(_currentMovieAudio.handle))
