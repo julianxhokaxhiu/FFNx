@@ -200,8 +200,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 			{
 				common_frame_multiplier = 2;
-
-				ff7_field_hook_init();
 				ff7_world_hook_init();
 
 				// Swirl mode 60FPS fix
@@ -216,6 +214,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			}
 		}
 	}
+
+	// Field FPS fix (60FPS, 30FPS movies)
+	ff7_field_hook_init();
 
 	// #####################
 	// battle toggle

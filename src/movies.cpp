@@ -44,10 +44,13 @@ int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
+	if (is_overlapping_movie_playing())
 		ret *= movie_fps_ratio;
-	else if (ff7_fps_limiter == FF7_LIMITER_60FPS)
-		ret *= common_frame_multiplier;
+	else
+	{
+		if (ff7_fps_limiter == FF7_LIMITER_60FPS)
+			ret *= common_frame_multiplier;
+	}
 
 	return ret;
 }
@@ -56,8 +59,8 @@ int16_t script_ASPED_get_speed(int16_t bank, int16_t address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 
-	if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
-		ret /= movie_fps_ratio;
+	if (is_overlapping_movie_playing() && ff7_fps_limiter == FF7_LIMITER_60FPS)
+		ret /= common_frame_multiplier;
 
 	return ret;
 }
@@ -85,10 +88,13 @@ int script_WAIT()
 	{
 		ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = get_field_parameter<WORD>(0);
 
-		if (ff7_externals.movie_object->is_playing && !is_movie_bgfield)
+		if (is_overlapping_movie_playing())
 			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= movie_fps_ratio;
-		else if (ff7_fps_limiter == FF7_LIMITER_60FPS)
-			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= common_frame_multiplier;
+		else
+		{
+			if (ff7_fps_limiter == FF7_LIMITER_60FPS)
+				ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= common_frame_multiplier;
+		}
 
 		if (!ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id])
 			ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 3;
@@ -119,7 +125,7 @@ uint8_t ff7_compare_ifsw()
 	int16_t right_value = ff7_externals.get_bank_value(2, 4);
 	byte compare_type = get_field_parameter<byte>(5);
 
-	if (ff7_externals.movie_object->is_playing && movie_fps_ratio > 1 && !is_movie_bgfield)
+	if (is_overlapping_movie_playing() && movie_fps_ratio > 1)
 	{
 		byte current_mvief_bank = get_field_bank_value(0);
 		WORD current_mvief_address = get_field_parameter<WORD>(1);
@@ -229,6 +235,7 @@ retry:
 		}
 
 		ff7_externals.movie_object->movie_end = 1;
+		is_movie_bgfield = false;
 
 		if(steam_edition || enable_steam_achievements)
 			if(g_FF7SteamAchievements->isEndingMovie())
@@ -447,6 +454,11 @@ int ff8_stop_movie()
 	}
 
 	return ret;
+}
+
+bool is_overlapping_movie_playing()
+{
+	return ff7_externals.movie_object->is_playing && !is_movie_bgfield;
 }
 
 void movie_init()

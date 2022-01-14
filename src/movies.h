@@ -23,6 +23,9 @@
 
 #include "common.h"
 
+extern short movie_fps_ratio;
+
+bool is_overlapping_movie_playing();
 void movie_init();
 void ff7_release_movie_objects();
 void ff8_release_movie_objects();
