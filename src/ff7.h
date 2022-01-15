@@ -2610,6 +2610,9 @@ struct ff7_externals
 	uint32_t world_animate_single_model;
 	uint32_t run_world_snake_ai_script_7562FF;
 	uint32_t update_world_snake_position_7564CD;
+	uint32_t world_sub_767540;
+	uint32_t world_sub_767641;
+	int (*get_world_encounter_rate)();
 	void (*world_compute_delta_position_753D00)(short* values, short z_value);
 	int (*pop_world_script_stack)();
 
