@@ -46,6 +46,12 @@ int ff7_pop_world_stack_divide_wrapper()
     return ret / common_frame_multiplier;
 }
 
+int ff7_get_world_encounter_rate()
+{
+    int encounter_rate = ff7_externals.get_world_encounter_rate();
+    return encounter_rate / common_frame_multiplier;
+}
+
 void ff7_world_hook_init()
 {
     // Movement related fix
@@ -62,6 +68,9 @@ void ff7_world_hook_init()
     replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x26, ff7_world_snake_compute_delta_position);
     replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x195, ff7_world_snake_compute_delta_position);
     replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x2B4, ff7_world_snake_compute_delta_position);
+
+    // World Encounter rate fix
+    replace_call_function(ff7_externals.world_sub_767641 + 0x110, ff7_get_world_encounter_rate);
 
     // Others
     replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x8DF, ff7_pop_world_stack_multiply_wrapper);

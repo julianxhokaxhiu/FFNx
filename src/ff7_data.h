@@ -860,6 +860,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_animate_all_models = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x5A1);
 	ff7_externals.world_animate_single_model = get_relative_call(ff7_externals.world_animate_all_models, 0x20);
 	ff7_externals.run_world_snake_ai_script_7562FF = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x5AB);
+	ff7_externals.world_sub_767540 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x5BE);
+	ff7_externals.world_sub_767641 = get_relative_call(ff7_externals.world_sub_767540, 0xCB);
+	ff7_externals.get_world_encounter_rate = (int(*)())get_relative_call(ff7_externals.world_sub_767641, 0x110);
 	ff7_externals.update_world_snake_position_7564CD = get_relative_call(ff7_externals.run_world_snake_ai_script_7562FF, 0x151);
 	ff7_externals.world_compute_delta_position_753D00 = (void(*)(short*, short))get_relative_call(ff7_externals.update_world_snake_position_7564CD, 0x26);
 
