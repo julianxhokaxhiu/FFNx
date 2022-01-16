@@ -421,6 +421,15 @@ void ff7_field_update_model_animation_frame(short model_id)
 	model_event_data.animation_speed = original_animation_speed;
 }
 
+void ff7_field_evaluate_encounter_rate()
+{
+	field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
+	int original_movement_speed = field_event_data_array[*ff7_externals.field_player_model_id].movement_speed;
+	field_event_data_array[*ff7_externals.field_player_model_id].movement_speed = original_movement_speed / common_frame_multiplier;
+	ff7_externals.field_evaluate_encounter_rate_60B2C6();
+	field_event_data_array[*ff7_externals.field_player_model_id].movement_speed = original_movement_speed;
+}
+
 void ff7_field_hook_init()
 {
 	std::copy(common_externals.execute_opcode_table, &common_externals.execute_opcode_table[0xFF], &old_opcode_table[0]);
@@ -445,6 +454,9 @@ void ff7_field_hook_init()
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANM2], (DWORD)&opcode_script_partial_animation_wrapper);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANIM1], (DWORD)&opcode_script_partial_animation_wrapper);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANIM2], (DWORD)&opcode_script_partial_animation_wrapper);
+
+		// Fix encounter rate
+		replace_call_function(ff7_externals.field_update_models_positions + 0x90F, ff7_field_evaluate_encounter_rate);
 	}
 
 	// Background scroll fps fix
