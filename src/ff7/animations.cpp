@@ -27,6 +27,7 @@
 #include "../log.h"
 #include "../patch.h"
 #include "../globals.h"
+#include "animations.h"
 #include "defs.h"
 
 byte y_pos_offset_display_damage_30[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2};
@@ -148,25 +149,66 @@ const std::unordered_map<byte, int> numArgsOpCode = {
 const std::unordered_set<byte> endingOpCode{{0xA2, 0xA7, 0xA9, 0xB6, 0xF1}};
 std::unordered_set<uint32_t> patchedAddress{};
 
-enum class interpolation_trick
-{
-    NONE = 0,
-    PAUSE_TRICK,
-    PREVIOUS_VALUE_TRICK,
-    ONLY_ONECALL_TRICK,
-};
-struct aux_effect_data
-{
-    bool isFirstTimeRunning;
-    interpolation_trick interpolationTrick;
-    int frameCounter;
-};
-
-std::array<aux_effect_data, 100> aux_effect100_data;
-std::array<aux_effect_data, 60> aux_effect60_data;
-std::array<aux_effect_data, 10> aux_effect10_data;
+std::array<AuxiliaryEffectHandler, 100> aux_effect100_handler;
+std::array<AuxiliaryEffectHandler, 60> aux_effect60_handler;
+std::array<AuxiliaryEffectHandler, 10> aux_effect10_handler;
 
 bool isAddFunctionDisabled = false;
+
+AuxiliaryEffectHandler::AuxiliaryEffectHandler()
+{
+    this->isFirstTimeRunning = true;
+    this->effectDecorator = std::make_unique<NoEffectDecorator>();
+}
+
+void NoEffectDecorator::callEffectFunction(uint32_t function)
+{
+    ((void(*)())function)();
+}
+
+void OneCallEffectDecorator::callEffectFunction(uint32_t function)
+{
+    if(this->frameCounter % this->frequency == 0)
+    {
+        ((void(*)())function)();
+    }
+    this->frameCounter++;
+}
+
+void PauseEffectDecorator::callEffectFunction(uint32_t function)
+{
+    byte wasPaused = *this->isBattlePaused;
+    if(this->frameCounter % this->frequency != 0)
+    {
+        *this->isBattlePaused = 1;
+    }
+
+    ((void(*)())function)();
+
+    if(this->frameCounter % this->frequency != 0)
+    {
+        *this->isBattlePaused = wasPaused;
+    }
+    this->frameCounter++;
+}
+
+void FixCounterEffectDecorator::callEffectFunction(uint32_t function)
+{
+    uint16_t currentCounter = *this->effectCounter;
+    if(this->frameCounter % this->frequency != 0)
+    {
+        *this->isAddFunctionDisabled = true;
+    }
+
+    ((void(*)())function)();
+
+    if(this->frameCounter % this->frequency != 0)
+    {
+        *this->isAddFunctionDisabled = false;
+        *this->effectCounter = currentCounter;
+    }
+    this->frameCounter++;
+}
 
 void patchAnimationScriptArg(byte *scriptPointer, byte position)
 {
@@ -382,9 +424,7 @@ int ff7_add_fn_to_effect100_fn(uint32_t function)
     ff7_externals.effect100_array_data[idx].field_0 = *ff7_externals.effect100_array_idx;
     *ff7_externals.effect100_counter = *ff7_externals.effect100_counter + 1;
 
-    aux_effect100_data[idx].frameCounter = 0;
-    aux_effect100_data[idx].interpolationTrick = interpolation_trick::NONE;
-    aux_effect100_data[idx].isFirstTimeRunning = true;
+    aux_effect100_handler[idx] = AuxiliaryEffectHandler();
     return idx;
 }
 
@@ -393,9 +433,7 @@ void ff7_add_kotr_camera_fn_to_effect100_fn(DWORD param_1, DWORD param_2, WORD p
     ff7_externals.add_kotr_camera_fn_to_effect100_fn_476AAB(param_1, param_2, param_3);
 
     constexpr int kotr_camera_idx = 99;
-    aux_effect100_data[kotr_camera_idx].frameCounter = 0;
-    aux_effect100_data[kotr_camera_idx].interpolationTrick = interpolation_trick::NONE;
-    aux_effect100_data[kotr_camera_idx].isFirstTimeRunning = true;
+    aux_effect100_handler[kotr_camera_idx] = AuxiliaryEffectHandler();
 }
 
 void ff7_execute_effect100_fn()
@@ -405,7 +443,7 @@ void ff7_execute_effect100_fn()
     {
         if(ff7_externals.effect100_array_fn[fn_index] && *ff7_externals.g_is_battle_running_9AD1AC)
         {
-            if (aux_effect100_data[fn_index].isFirstTimeRunning)
+            if (aux_effect100_handler[fn_index].isFirstFrame())
             {
                 if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
                 {
@@ -438,15 +476,15 @@ void ff7_execute_effect100_fn()
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_5C0E4B ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.vincent_limit_fade_effect_sub_5D4240)
                 {
-                    aux_effect100_data[fn_index].interpolationTrick = interpolation_trick::NONE;
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_unique<NoEffectDecorator>());
                 }
                 else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_bahamut_zero_main_loop_484A16)
                 {
-                    aux_effect100_data[fn_index].interpolationTrick = interpolation_trick::ONLY_ONECALL_TRICK;
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_unique<OneCallEffectDecorator>(battle_frame_multiplier));
                 }
                 else
                 {
-                    aux_effect100_data[fn_index].interpolationTrick = interpolation_trick::PAUSE_TRICK;
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_unique<PauseEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
                 }
 
                 if (trace_all || trace_battle_animation)
@@ -454,43 +492,10 @@ void ff7_execute_effect100_fn()
                                ff7_externals.effect100_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
                                ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
-                aux_effect100_data[fn_index].isFirstTimeRunning = false;
+                aux_effect100_handler[fn_index].disableFirstFrame();
             }
 
-            if (aux_effect100_data[fn_index].interpolationTrick != interpolation_trick::NONE)
-            {
-                if (aux_effect100_data[fn_index].frameCounter % battle_frame_multiplier == 0)
-                {
-                    ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
-                }
-                else
-                {
-                    byte was_paused = *ff7_externals.g_is_battle_paused;
-                    auto data_prev = ff7_externals.effect100_array_data[fn_index];
-
-                    switch (aux_effect100_data[fn_index].interpolationTrick)
-                    {
-                    case interpolation_trick::PREVIOUS_VALUE_TRICK:
-                        isAddFunctionDisabled = true;
-                        ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
-                        ff7_externals.effect100_array_data[fn_index].field_2 = data_prev.field_2;
-                        isAddFunctionDisabled = false;
-                        break;
-                    case interpolation_trick::PAUSE_TRICK:
-                        *ff7_externals.g_is_battle_paused = 1;
-                        ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
-                        *ff7_externals.g_is_battle_paused = was_paused;
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                aux_effect100_data[fn_index].frameCounter++;
-            }
-            else
-            {
-                ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
-            }
+            aux_effect100_handler[fn_index].executeEffectFunction(ff7_externals.effect100_array_fn[fn_index]);
 
             if (ff7_externals.effect100_array_data[fn_index].field_0 == (uint16_t)-1)
             {
@@ -505,12 +510,12 @@ void ff7_execute_effect100_fn()
                 *ff7_externals.effect100_counter = *ff7_externals.effect100_counter - 1;
             }
         }
-        else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
+        else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A) // quite sure this is dead code
         {
-            if (aux_effect100_data[fn_index].isFirstTimeRunning)
+            if (aux_effect100_handler[fn_index].isFirstFrame())
             {
                 ff7_externals.effect100_array_data[fn_index].field_6 *= battle_frame_multiplier;
-                aux_effect100_data[fn_index].isFirstTimeRunning = false;
+                aux_effect100_handler[fn_index].disableFirstFrame();
             }
 
             ((void (*)())ff7_externals.effect100_array_fn[fn_index])();
@@ -536,7 +541,7 @@ int ff7_add_fn_to_effect10_fn(uint32_t function)
     ff7_externals.effect10_array_data[idx].field_0 = *ff7_externals.effect10_array_idx;
     *ff7_externals.effect10_counter = *ff7_externals.effect10_counter + 1;
 
-    aux_effect10_data[idx].isFirstTimeRunning = true;
+    aux_effect10_handler[idx] = AuxiliaryEffectHandler();
     return idx;
 }
 
@@ -548,7 +553,7 @@ void ff7_execute_effect10_fn()
         auto &effect10_data = ff7_externals.effect10_array_data[fn_index];
         if (ff7_externals.effect10_array_fn[fn_index] != 0)
         {
-            if (aux_effect10_data[fn_index].isFirstTimeRunning)
+            if (aux_effect10_handler[fn_index].isFirstFrame())
             {
                 if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_426DE3)
                 {
@@ -615,7 +620,7 @@ void ff7_execute_effect10_fn()
                                ff7_externals.effect10_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
                                ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
-                aux_effect10_data[fn_index].isFirstTimeRunning = false;
+                aux_effect10_handler[fn_index].disableFirstFrame();
             }
 
             ((void (*)())ff7_externals.effect10_array_fn[fn_index])();
@@ -654,9 +659,7 @@ int ff7_add_fn_to_effect60_fn(uint32_t function)
     ff7_externals.effect60_array_data[idx].field_0 = *ff7_externals.effect60_array_idx;
     *ff7_externals.effect60_counter = *ff7_externals.effect60_counter + 1;
 
-    aux_effect60_data[idx].frameCounter = 0;
-    aux_effect60_data[idx].interpolationTrick = interpolation_trick::NONE;
-    aux_effect60_data[idx].isFirstTimeRunning = true;
+    aux_effect60_handler[idx] = AuxiliaryEffectHandler();
     return idx;
 }
 
@@ -667,7 +670,7 @@ void ff7_execute_effect60_fn()
     {
         if (ff7_externals.effect60_array_fn[fn_index] != 0)
         {
-            if (aux_effect60_data[fn_index].isFirstTimeRunning)
+            if (aux_effect60_handler[fn_index].isFirstFrame())
             {
                 if (ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_4276B6 ||
                     ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_4255B7 ||
@@ -696,15 +699,15 @@ void ff7_execute_effect60_fn()
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.summon_aura_effects_5C0953 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5C18BC)
                 {
-                    aux_effect60_data[fn_index].interpolationTrick = interpolation_trick::NONE;
+                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_unique<NoEffectDecorator>());
                 }
                 else if(ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_smoke_move_handler_5BE4E2)
                 {
-                    aux_effect60_data[fn_index].interpolationTrick = interpolation_trick::ONLY_ONECALL_TRICK;
+                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_unique<OneCallEffectDecorator>(battle_frame_multiplier));
                 }
                 else
                 {
-                    aux_effect60_data[fn_index].interpolationTrick = interpolation_trick::PAUSE_TRICK;
+                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_unique<PauseEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
                 }
 
                 if (trace_all || trace_battle_animation)
@@ -712,44 +715,10 @@ void ff7_execute_effect60_fn()
                                ff7_externals.effect60_array_fn[fn_index], ff7_externals.anim_event_queue[0].attackerID,
                                ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
 
-                aux_effect60_data[fn_index].isFirstTimeRunning = false;
+                aux_effect60_handler[fn_index].disableFirstFrame();
             }
 
-            if (aux_effect60_data[fn_index].interpolationTrick != interpolation_trick::NONE)
-            {
-                if (aux_effect60_data[fn_index].frameCounter % battle_frame_multiplier == 0)
-                {
-                    ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
-                }
-                else
-                {
-                    byte was_paused = *ff7_externals.g_is_battle_paused;
-                    auto data_prev = ff7_externals.effect60_array_data[fn_index];
-
-                    switch (aux_effect60_data[fn_index].interpolationTrick)
-                    {
-                    case interpolation_trick::PREVIOUS_VALUE_TRICK:
-                        isAddFunctionDisabled = true;
-                        ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
-                        ff7_externals.effect60_array_data[fn_index].field_2 = data_prev.field_2;
-                        isAddFunctionDisabled = false;
-                        break;
-                    case interpolation_trick::PAUSE_TRICK:
-                        *ff7_externals.g_is_battle_paused = 1;
-                        ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
-                        *ff7_externals.g_is_battle_paused = was_paused;
-                        break;
-                    default:
-                        break;
-                    }
-                }
-
-                aux_effect60_data[fn_index].frameCounter++;
-            }
-            else
-            {
-                ((void (*)())ff7_externals.effect60_array_fn[fn_index])();
-            }
+            aux_effect60_handler[fn_index].executeEffectFunction(ff7_externals.effect60_array_fn[fn_index]);
 
             if (ff7_externals.effect60_array_data[fn_index].field_0 == (uint16_t)-1)
             {
