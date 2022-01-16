@@ -2333,6 +2333,8 @@ struct ff7_externals
 	uint32_t field_update_models_positions;
 	int (*field_update_single_model_position)(short);
 	void (*field_update_model_animation_frame)(short);
+	void (*field_evaluate_encounter_rate_60B2C6)();
+	short *field_player_model_id;
 	uint32_t sub_40B27B;
 	WORD* word_CC0DD4;
 	WORD* word_CC1638;
