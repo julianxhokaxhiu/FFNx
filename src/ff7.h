@@ -2546,6 +2546,7 @@ struct ff7_externals
 	uint32_t run_bahamut_zero_main_loop_484A16;
 	uint32_t run_summon_phoenix_sub_515127;
 	uint32_t run_phoenix_main_loop_516297;
+	uint32_t battle_update_3d_model_data;
 
 	battle_model_state *g_battle_model_state;
 	battle_model_state_small *g_small_battle_model_state;

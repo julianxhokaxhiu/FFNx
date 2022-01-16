@@ -815,6 +815,13 @@ void ff7_battle_move_character_sub_426F58()
 
 void ff7_battle_animations_hook_init()
 {
+    // 3d model animation
+    if(ff7_fps_limiter == FF7_LIMITER_30FPS)
+    {
+        patch_multiply_code<byte>(ff7_externals.battle_update_3d_model_data + 0x13E, battle_frame_multiplier);
+        patch_multiply_code<byte>(ff7_externals.battle_update_3d_model_data + 0x316, battle_frame_multiplier);
+    }
+
     replace_call_function(ff7_externals.battle_sub_42A5EB + 0xB8, ff7_run_animation_script);
     replace_call_function(ff7_externals.battle_sub_42E275 + 0xB2, ff7_run_animation_script);
     replace_call_function(ff7_externals.battle_sub_42E34A + 0x76, ff7_run_animation_script);

@@ -649,6 +649,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.add_fn_to_effect10_fn = get_relative_call(ff7_externals.run_animation_script, 0x825);
 	ff7_externals.execute_effect10_fn = get_relative_call(ff7_externals.battle_sub_42D992, 0x4D);
 	uint32_t battle_sub_42B66A = get_relative_call(ff7_externals.run_animation_script, 0x460A);
+	ff7_externals.battle_update_3d_model_data = get_relative_call(ff7_externals.run_animation_script, 0x623);
 
 	ff7_externals.effect100_array_data = (effect100_data*)get_absolute_value(ff7_externals.add_fn_to_effect100_fn, 0x5D);
 	ff7_externals.effect100_array_fn = (uint32_t*)get_absolute_value(ff7_externals.add_fn_to_effect100_fn, 0x48);
