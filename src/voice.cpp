@@ -554,7 +554,7 @@ void ff7_update_display_text_queue()
 				return;
 			}
 
-			int show_text = ((int (*)())ff7_externals.battle_sub_66C3BF)();
+			int show_text = (ff7_externals.battle_sub_66C3BF)();
 			if (show_text)
 				((void (*)(short))ff7_externals.set_battle_text_active)(text_data_first.buffer_idx);
 
@@ -632,7 +632,7 @@ void ff7_display_battle_action_text()
 		}
 		else
 		{
-			int show_text = ((int (*)())ff7_externals.battle_sub_66C3BF)();
+			int show_text = (ff7_externals.battle_sub_66C3BF)();
 			if(show_text)
 			{
 				byte command_id = ff7_externals.g_battle_model_state[*ff7_externals.g_active_actor_id].commandID;

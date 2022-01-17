@@ -22,6 +22,7 @@
 
 #include <unordered_set>
 #include <unordered_map>
+#include <intrin.h>
 
 #include "../ff7.h"
 #include "../log.h"
@@ -153,6 +154,7 @@ std::array<AuxiliaryEffectHandler, 100> aux_effect100_handler;
 std::array<AuxiliaryEffectHandler, 60> aux_effect60_handler;
 std::array<AuxiliaryEffectHandler, 10> aux_effect10_handler;
 
+std::shared_ptr<InterpolationEffectDecorator> currentEffectDecorator;
 bool isAddFunctionDisabled = false;
 
 AuxiliaryEffectHandler::AuxiliaryEffectHandler()
@@ -208,6 +210,118 @@ void FixCounterEffectDecorator::callEffectFunction(uint32_t function)
         *this->effectCounter = currentCounter;
     }
     this->frameCounter++;
+}
+
+InterpolationEffectDecorator::InterpolationEffectDecorator(int frequency, byte* isBattlePausedExt)
+{
+    this->frameCounter = 0;
+    this->frequency = frequency;
+    this->isBattlePaused = isBattlePausedExt;
+    this->textureCallIdx = 0;
+}
+
+uint64_t InterpolationEffectDecorator::getCantorHash(uint32_t x, uint32_t y)
+{
+    return ((x + y) * (x + y + 1)) / 2 + y;
+}
+
+void InterpolationEffectDecorator::callEffectFunction(uint32_t function)
+{
+    byte wasPaused = *this->isBattlePaused;
+    this->textureCallIdx = 0;
+
+    if(this->frameCounter % this->frequency == 0)
+    {
+        this->previousFrameDataMap.clear();
+        currentEffectDecorator = std::make_shared<InterpolationEffectDecorator>(*this);
+        this->_doInterpolation = false;
+        ((void(*)())function)();
+        this->textureNumCalls = this->textureCallIdx;
+    }
+    else
+    {
+        currentEffectDecorator = std::make_shared<InterpolationEffectDecorator>(*this);
+        this->_doInterpolation = true;
+        *this->isBattlePaused = 1;
+        ((void(*)())function)();
+        *this->isBattlePaused = wasPaused;
+    }
+
+    currentEffectDecorator = nullptr;
+    this->frameCounter++;
+}
+
+void InterpolationEffectDecorator::saveInterpolationData(interpolationable_data &&currData, uint32_t returnAddress)
+{
+    uint64_t hash = this->getCantorHash(returnAddress, this->textureCallIdx);
+    this->previousFrameDataMap[hash] = std::move(currData);
+}
+
+void InterpolationEffectDecorator::interpolateRotationMatrix(rotation_matrix* nextRotationMatrix, uint32_t returnAddress)
+{
+    uint64_t hash = this->getCantorHash(returnAddress, this->textureCallIdx);
+    if(this->previousFrameDataMap.contains(hash))
+    {
+        int interpolationStep = this->frameCounter % this->frequency;
+        const rotation_matrix &previousMatrix = this->previousFrameDataMap[hash].rot_matrix;
+        for(int i = 0; i < 3; i++)
+        {
+            for(int j = 0; j < 3; j++)
+            {
+                short diffSubMatrix = nextRotationMatrix->r3_sub_matrix[i][j] - previousMatrix.r3_sub_matrix[i][j];
+                nextRotationMatrix->r3_sub_matrix[i][j] = previousMatrix.r3_sub_matrix[i][j] + (diffSubMatrix * interpolationStep) / this->frequency;
+            }
+        }
+
+        for(int i = 0; i < 3; i++)
+        {
+            int diffPosition = nextRotationMatrix->position[i] - previousMatrix.position[i];
+            nextRotationMatrix->position[i] = previousMatrix.position[i] + (diffPosition * interpolationStep) / this->frequency;
+        }
+    }
+}
+
+void InterpolationEffectDecorator::interpolateMaterialContext(material_anim_ctx &nextMaterialCtx, uint32_t returnAddress)
+{
+    uint64_t hash = this->getCantorHash(returnAddress, this->textureCallIdx);
+    if(this->previousFrameDataMap.contains(hash))
+    {
+        int interpolationStep = this->frameCounter % this->frequency;
+        const material_anim_ctx &previousMaterialCtx = this->previousFrameDataMap[hash].material_ctx;
+        nextMaterialCtx.transparency = previousMaterialCtx.transparency + ((nextMaterialCtx.transparency - previousMaterialCtx.transparency) * interpolationStep) / this->frequency;
+        nextMaterialCtx.field_8 = previousMaterialCtx.field_8 + ((nextMaterialCtx.field_8 - previousMaterialCtx.field_8) * interpolationStep) / this->frequency;
+    }
+}
+
+void InterpolationEffectDecorator::interpolateColor(color_ui8 *nextColor, uint32_t returnAddress)
+{
+    uint64_t hash = this->getCantorHash(returnAddress, this->textureCallIdx);
+    if(this->previousFrameDataMap.contains(hash))
+    {
+        int interpolationStep = this->frameCounter % this->frequency;
+        const color_ui8 previousColor = this->previousFrameDataMap[hash].color;
+        nextColor->b = previousColor.b + ((nextColor->b - previousColor.b) * interpolationStep) / this->frequency;
+        nextColor->g = previousColor.g + ((nextColor->g - previousColor.g) * interpolationStep) / this->frequency;
+        nextColor->r = previousColor.r + ((nextColor->r - previousColor.r) * interpolationStep) / this->frequency;
+        nextColor->a = previousColor.a + ((nextColor->a - previousColor.a) * interpolationStep) / this->frequency;
+    }
+}
+
+void InterpolationEffectDecorator::interpolatePalette(palette_extra &nextPalette, uint32_t returnAddress)
+{
+    uint64_t hash = this->getCantorHash(returnAddress, this->textureCallIdx);
+    if(this->previousFrameDataMap.contains(hash))
+    {
+        int interpolationStep = this->frameCounter % this->frequency;
+        const palette_extra &previousPalette = this->previousFrameDataMap[hash].palette;
+        nextPalette.x_offset = previousPalette.x_offset + ((nextPalette.x_offset - previousPalette.x_offset) * interpolationStep) / this->frequency;
+        nextPalette.y_offset = previousPalette.y_offset + ((nextPalette.y_offset - previousPalette.y_offset) * interpolationStep) / this->frequency;
+        nextPalette.z_offset = previousPalette.z_offset + ((nextPalette.z_offset - previousPalette.z_offset) * interpolationStep) / this->frequency;
+        nextPalette.field_24 = previousPalette.field_24 + ((nextPalette.field_24 - previousPalette.field_24) * interpolationStep) / this->frequency;
+        nextPalette.z_offset_2 = previousPalette.z_offset_2 + ((nextPalette.z_offset_2 - previousPalette.z_offset_2) * interpolationStep) / this->frequency;
+        nextPalette.scroll_v = previousPalette.scroll_v + ((nextPalette.scroll_v - previousPalette.scroll_v) * interpolationStep) / this->frequency;
+        nextPalette.v_offset = previousPalette.v_offset + ((nextPalette.v_offset - previousPalette.v_offset) * interpolationStep) / this->frequency;
+    }
 }
 
 void patchAnimationScriptArg(byte *scriptPointer, byte position)
@@ -484,7 +598,7 @@ void ff7_execute_effect100_fn()
                 }
                 else
                 {
-                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_unique<PauseEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_unique<InterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
                 }
 
                 if (trace_all || trace_battle_animation)
@@ -707,7 +821,7 @@ void ff7_execute_effect60_fn()
                 }
                 else
                 {
-                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_unique<PauseEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
+                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_unique<InterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
                 }
 
                 if (trace_all || trace_battle_animation)
@@ -811,6 +925,362 @@ void ff7_battle_move_character_sub_426F58()
         fn_data.field_18++;
         fn_data.n_frames--;
     }
+}
+
+int ff7_battle_animate_material_texture(material_anim_ctx *materialCtx, int a2, int a3, int retVal)
+{
+    float field_8_float, field_8_float_shifted;
+    int alpha, only_color_no_alpha, field_C;
+    p_hundred *aux_gfx;
+    struc_173 *palette_aux;
+    color_ui8 color;
+    rotation_matrix *rot_matrix;
+    struc_84 *draw_chain;
+    ff7_game_obj *game_object;
+    ff7_polygon_set *poly_set;
+    uint32_t *materialRSD;
+
+    palette_extra &palette_extra_data = *ff7_externals.palette_extra_data_C06A00;
+
+    // Interpolation of material texture with previous frame data if available
+    if (currentEffectDecorator != nullptr)
+    {
+        uint32_t uniqueID = (uint32_t)_ReturnAddress();
+        if (!currentEffectDecorator->doInterpolation())
+        {
+            interpolationable_data currData;
+            currData.rot_matrix = *ff7_externals.get_global_model_matrix_buffer_66100D();
+            currData.material_ctx = *materialCtx;
+            currData.color = ff7_externals.get_stored_color_66101A();
+            currData.palette = *ff7_externals.palette_extra_data_C06A00;
+            currentEffectDecorator->saveInterpolationData(std::move(currData), uniqueID);
+        }
+        else
+        {
+            currentEffectDecorator->interpolateRotationMatrix(ff7_externals.get_global_model_matrix_buffer_66100D(), uniqueID);
+            currentEffectDecorator->interpolateMaterialContext(*materialCtx, uniqueID);
+            currentEffectDecorator->interpolateColor((color_ui8 *)&ff7_externals.global_game_data_90AAF0[20], uniqueID);
+            currentEffectDecorator->interpolatePalette(palette_extra_data, uniqueID);
+        }
+        currentEffectDecorator->addTextureIndex();
+    }
+    // -----------------------------------------------
+
+    if (!ff7_externals.battle_sub_66C3BF())
+    {
+        palette_extra_data.field_1C = 0;
+        palette_extra_data.field_20 = 0;
+        palette_extra_data.scroll_v = 0;
+        palette_extra_data.field_28 = 0;
+        return retVal;
+    }
+    materialRSD = materialCtx->materialRSD;
+    if (materialCtx->materialRSD)
+    {
+        if (materialRSD[1])
+        {
+            rot_matrix = ff7_externals.get_global_model_matrix_buffer_66100D();
+            game_object = (ff7_game_obj *)common_externals.get_game_object();
+            poly_set = (ff7_polygon_set*) materialRSD[1];
+            draw_chain = ff7_externals.get_draw_chain_68F860(&poly_set->field_14, poly_set->field_14.graphics_instance);
+            if (draw_chain)
+            {
+                draw_chain->field_4 = 1;
+                aux_gfx = ff7_externals.battle_sub_5D1AAA(0, poly_set);
+                palette_aux = &draw_chain->struc_173;
+                if ((materialCtx->negateColumnFlags & 0x80) != 0)
+                {
+                    alpha = ff7_externals.get_alpha_from_transparency_429343(materialCtx->transparency);
+                }
+                else if (materialCtx->transparency >= 128)
+                {
+                    alpha = 255;
+                }
+                else
+                {
+                    alpha = 2 * materialCtx->transparency;
+                }
+                color = ff7_externals.get_stored_color_66101A();
+                if (game_object->current_gfx_driver != 1)
+                {
+                    if (*(DWORD*)&color == -16777216)
+                        ff7_externals.battle_sub_68CF75(10, palette_aux);
+                    else
+                        ff7_externals.battle_sub_68CF75(9, palette_aux);
+                    draw_chain->struc_173.color = color;
+                    draw_chain->struc_173.color.a = alpha;
+                    goto ANIMATE_MATERIAL_2;
+                }
+                only_color_no_alpha = *(DWORD *)&color & 0xFFFFFF;
+                if ((materialCtx->negateColumnFlags & 0x10) != 0)
+                {
+                    if (only_color_no_alpha)
+                    {
+                        ff7_externals.battle_sub_68CF75(11, palette_aux);
+                    ANIMATE_MATERIAL_1:
+                        draw_chain->struc_173.color = color;
+                        draw_chain->struc_173.color.a = alpha;
+                    ANIMATE_MATERIAL_2:
+                        field_C = materialCtx->field_C & 0xFFFFFFDF;
+                        if (field_C && field_C < 2)
+                        {
+                            draw_chain->struc_173.setrenderstate = 1;
+                            aux_gfx = (p_hundred*)*((DWORD*)&poly_set->struc_173 + field_C);
+                        }
+                        if (palette_extra_data.field_28)
+                        {
+                            draw_chain->struc_173.setrenderstate = 1;
+                            aux_gfx = palette_extra_data.aux_gfx_ptr;
+                            palette_extra_data.field_28 = 0;
+                        }
+                        if (materialCtx->field_8)
+                        {
+                            draw_chain->struc_173.scroll_uv = 2;
+                            field_8_float = (byte)materialCtx->field_8;
+                            field_8_float_shifted = ((int)materialCtx->field_8 >> 8);
+                            draw_chain->struc_173.u_offset = field_8_float * 0.00390625;
+                            draw_chain->struc_173.v_offset = field_8_float_shifted * 0.00390625;
+                        }
+                        else
+                        {
+                            draw_chain->struc_173.scroll_uv = 1;
+                        }
+                        if (materialCtx->paletteIdx)
+                        {
+                            draw_chain->struc_173.change_palette = 1;
+                            draw_chain->struc_173.palette_index = materialCtx->paletteIdx >> 6;
+                        }
+                        else
+                        {
+                            draw_chain->struc_173.change_palette = 0;
+                            draw_chain->struc_173.palette_index = 0;
+                        }
+                        if (palette_extra_data.field_1C)
+                        {
+                            draw_chain->struc_173.add_offsets = 1;
+                            draw_chain->struc_173.x_offset = palette_extra_data.x_offset;
+                            draw_chain->struc_173.y_offset = palette_extra_data.y_offset;
+                            draw_chain->struc_173.z_offset = palette_extra_data.z_offset;
+                            palette_extra_data.field_1C = 0;
+                        }
+                        if (palette_extra_data.field_20)
+                        {
+                            draw_chain->struc_173.field_7 = palette_extra_data.field_24;
+                            draw_chain->struc_173.z_offset2 = palette_extra_data.z_offset_2;
+                            palette_extra_data.field_20 = 0;
+                        }
+                        if (palette_extra_data.scroll_v)
+                        {
+                            draw_chain->struc_173.scroll_v = palette_extra_data.scroll_v;
+                            draw_chain->struc_173.v_offset = palette_extra_data.v_offset;
+                            palette_extra_data.scroll_v = 0;
+                        }
+                        draw_chain->struc_173.hundred_data = aux_gfx;
+                        ff7_externals.create_rot_matrix_from_word_matrix_6617E9(rot_matrix, &draw_chain->matrix);
+                        if ((materialCtx->negateColumnFlags & 7) != 0)
+                        {
+                            if ( (materialCtx->negateColumnFlags & 1) != 0 )
+                            {
+                                draw_chain->matrix.m[0][0] = -draw_chain->matrix.m[0][0];
+                                draw_chain->matrix.m[0][1] = -draw_chain->matrix.m[0][1];
+                                draw_chain->matrix.m[0][2] = -draw_chain->matrix.m[0][2];
+                            }
+                            if ( (materialCtx->negateColumnFlags & 2) != 0 )
+                            {
+                                draw_chain->matrix.m[1][0] = -draw_chain->matrix.m[1][0];
+                                draw_chain->matrix.m[1][1] = -draw_chain->matrix.m[1][1];
+                                draw_chain->matrix.m[1][2] = -draw_chain->matrix.m[1][2];
+                            }
+                            if ( (materialCtx->negateColumnFlags & 4) != 0 )
+                            {
+                                draw_chain->matrix.m[2][0] = -draw_chain->matrix.m[2][0];
+                                draw_chain->matrix.m[2][1] = -draw_chain->matrix.m[2][1];
+                                draw_chain->matrix.m[2][2] = -draw_chain->matrix.m[2][2];
+                            }
+                        }
+                        return retVal;
+                    }
+                }
+                else if (only_color_no_alpha && alpha != 255)
+                {
+                    ff7_externals.battle_sub_68CF75(13, palette_aux);
+                    goto ANIMATE_MATERIAL_1;
+                }
+                ff7_externals.battle_sub_68CF75(12, palette_aux);
+                goto ANIMATE_MATERIAL_1;
+            }
+        }
+    }
+    return retVal;
+}
+
+int ff7_battle_animate_texture_spt(texture_spt_anim_ctx *texture_ctx, int a2, int a3, int retVal)
+{
+    bool flag;
+    color_ui8 color_rgba;
+    WORD texture_field_C;
+    byte blue_color;
+    byte green_color;
+    byte red_color;
+    int page_idx, tex_page_idx, palette_idx;
+    float x_left, y_top;
+    float u_right, u_left, u_left_1, u_left_2, u_scale;
+    float v_top, v_bottom, v_top_1, v_top_2, v_scale;
+    float quad_width, quad_height;
+    struc_84 *draw_chain;
+    struc_186 *drawable_state;
+    page_spt *page_spt_ptr;
+    tex_page_list *page_list;
+    rotation_matrix *rot_matrix;
+    ff7_graphics_object *drawable;
+    texture_spt *effect_spt;
+
+    // Interpolation of texture SPT with previous frame data if available
+    if (currentEffectDecorator != nullptr && currentEffectDecorator->getTextureNumCalls() == 1)
+    {
+        uint32_t uniqueID = (uint32_t)_ReturnAddress();
+        if (!currentEffectDecorator->doInterpolation())
+        {
+            interpolationable_data currData;
+            currData.rot_matrix = *ff7_externals.get_global_model_matrix_buffer_66100D();
+            currData.color = texture_ctx->color;
+            currentEffectDecorator->saveInterpolationData(std::move(currData), uniqueID);
+        }
+        else
+        {
+            currentEffectDecorator->interpolateRotationMatrix(ff7_externals.get_global_model_matrix_buffer_66100D(), uniqueID);
+            currentEffectDecorator->interpolateColor(&texture_ctx->color, uniqueID);
+        }
+        currentEffectDecorator->addTextureIndex();
+    }
+    // -----------------------------------------------
+
+    if (!ff7_externals.battle_sub_66C3BF())
+        return retVal;
+
+    rot_matrix = ff7_externals.get_global_model_matrix_buffer_66100D();
+    effect_spt = texture_ctx->effect_spt;
+    drawable = texture_ctx->effectDrawable;
+    if (texture_ctx->effect_spt && drawable && drawable->hundred_data && drawable->hundred_data->texture_set)
+    {
+        flag = (texture_ctx->field_C & 0x8000u) != 0;
+        page_idx = texture_ctx->field_C & 0x7FFF;
+        if (page_idx >= effect_spt->spt_handle_copy[1])
+            page_idx = effect_spt->spt_handle_copy[1] - 1;
+        if (page_idx >= 0 && page_idx < effect_spt->spt_handle_copy[1])
+        {
+            page_list = &effect_spt->pages[page_idx];
+            page_spt_ptr = page_list->page_spt_ptr;
+            for (int i = page_list->field_0[1]; i > 0; --i)
+            {
+                if (effect_spt->tex_page_count > 1)
+                {
+                    drawable = 0;
+                    tex_page_idx = 0;
+                    while (effect_spt->tex_page_count)
+                    {
+                        if (page_spt_ptr->field_C == effect_spt->field_10[tex_page_idx])
+                        {
+                            drawable = effect_spt->game_drawable[tex_page_idx];
+                            draw_chain = ff7_externals.get_draw_chain_671C71(drawable);
+                            goto ANIMATE_TEXTURE;
+                        }
+                        ++tex_page_idx;
+                    }
+                }
+                draw_chain = ff7_externals.get_draw_chain_671C71(drawable);
+            ANIMATE_TEXTURE:
+                if (draw_chain)
+                {
+                    if (texture_ctx->color.r < 128u)
+                        red_color = 2 * texture_ctx->color.r;
+                    else
+                        red_color = -1;
+                    if (texture_ctx->color.g < 128u)
+                        green_color = 2 * texture_ctx->color.g;
+                    else
+                        green_color = -1;
+                    if (texture_ctx->color.b < 128u)
+                        blue_color = 2 * texture_ctx->color.b;
+                    else
+                        blue_color = -1;
+                    color_rgba.r = red_color;
+                    color_rgba.g = green_color;
+                    color_rgba.b = blue_color;
+                    color_rgba.a = ((ff7_polygon_set*)drawable->polygon_set)->hundred_data->vertex_alpha;
+                    x_left = (8 * page_spt_ptr->field_4);
+                    y_top = (8 * page_spt_ptr->field_6);
+                    quad_width = (8 * (byte)page_spt_ptr->field_10);
+                    quad_height = (8 * (byte)page_spt_ptr->field_12);
+                    u_left_1 = page_spt_ptr->uScale * drawable->u_offset + drawable->u_offset / 2.0;
+                    v_top_1 = page_spt_ptr->vScale * drawable->v_offset + drawable->v_offset / 2.0;
+                    u_scale = ((byte)page_spt_ptr->field_10 - 1);
+                    v_scale = ((byte)page_spt_ptr->field_12 - 1);
+                    u_left_2 = drawable->u_offset * u_scale;
+                    v_top_2 = drawable->v_offset * v_scale;
+                    drawable_state = draw_chain->struc_186;
+                    if ((page_spt_ptr->field_0 & 1) != 0)
+                    {
+                        u_right = page_spt_ptr->uScale * drawable->u_offset + drawable->u_offset / 2.0;
+                        u_left = u_left_1 + u_left_2;
+                    }
+                    else
+                    {
+                        u_left = page_spt_ptr->uScale * drawable->u_offset + drawable->u_offset / 2.0;
+                        u_right = u_left_1 + u_left_2;
+                    }
+                    if ((page_spt_ptr->field_0 & 2) != 0)
+                    {
+                        v_bottom = page_spt_ptr->vScale * drawable->v_offset + drawable->v_offset / 2.0;
+                        v_top = v_top_1 + v_top_2;
+                    }
+                    else
+                    {
+                        v_top = page_spt_ptr->vScale * drawable->v_offset + drawable->v_offset / 2.0;
+                        v_bottom = v_top_1 + v_top_2;
+                    }
+                    drawable_state->vertices[0].x = x_left;
+                    drawable_state->vertices[0].y = y_top;
+                    drawable_state->vertices[0].z = 0.0;
+                    drawable_state->colors[0] = color_rgba;
+                    drawable_state->texcoords[0].u = u_left;
+                    drawable_state->texcoords[0].v = v_top;
+                    drawable_state->vertices[1].x = x_left;
+                    drawable_state->vertices[1].y = y_top + quad_height;
+                    drawable_state->vertices[1].z = 0.0;
+                    drawable_state->colors[1] = color_rgba;
+                    drawable_state->texcoords[1].u = u_left;
+                    drawable_state->texcoords[1].v = v_bottom;
+                    drawable_state->vertices[2].x = x_left + quad_width;
+                    drawable_state->vertices[2].y = y_top;
+                    drawable_state->vertices[2].z = 0.0;
+                    drawable_state->colors[2] = color_rgba;
+                    drawable_state->texcoords[2].u = u_right;
+                    drawable_state->texcoords[2].v = v_top;
+                    drawable_state->vertices[3].x = x_left + quad_width;
+                    drawable_state->vertices[3].y = y_top + quad_height;
+                    drawable_state->vertices[3].z = 0.0;
+                    drawable_state->colors[3] = color_rgba;
+                    drawable_state->texcoords[3].u = u_right;
+                    drawable_state->texcoords[3].v = v_bottom;
+                    if (flag)
+                    {
+                        drawable_state->palette_index = texture_ctx->field_E >> 6;
+                    }
+                    else
+                    {
+                        palette_idx = (page_spt_ptr->palette_something >> 6) - ((ff7_tex_header*)((ff7_texture_set*)(drawable->hundred_data->texture_set))->tex_header)->field_E0;
+                        if (palette_idx < 0)
+                            palette_idx = 0;
+                        drawable_state->palette_index = palette_idx;
+                    }
+                    ff7_externals.create_rot_matrix_from_word_matrix_6617E9(rot_matrix, &draw_chain->matrix);
+                }
+                ++page_spt_ptr;
+            }
+        }
+    }
+    return retVal;
 }
 
 void ff7_battle_animations_hook_init()
@@ -965,4 +1435,8 @@ void ff7_battle_animations_hook_init()
     // Tifa slots speed patch (bitwise and with 0x7 changed to 0x3)
     patch_code_byte(ff7_externals.battle_sub_6E3135 + 0x168, 0x3);
     patch_code_byte(ff7_externals.battle_sub_6E3135 + 0x16B, 0xCA);
+
+    // Texture material animation
+    replace_function(ff7_externals.battle_animate_material_texture, ff7_battle_animate_material_texture);
+    replace_function(ff7_externals.battle_animate_texture_spt, ff7_battle_animate_texture_spt);
 }

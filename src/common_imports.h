@@ -116,6 +116,34 @@ typedef void (gfx_field_EC)(struct game_obj *);
  * downright misleading. Thread with caution!
  */
 
+struct color_ui8
+{
+    byte r;
+    byte g;
+    byte b;
+    byte a;
+};
+
+struct bgra_color
+{
+	float b;
+	float g;
+	float r;
+	float a;
+};
+
+struct abgr_color
+{
+	float a;
+	float b;
+	float g;
+	float r;
+};
+
+typedef struct {
+	short x, y, z, res;		// short is a 2 byte signed integer
+} vertex_3s;
+
 struct struc_81
 {
 	uint32_t field_0;
@@ -141,15 +169,15 @@ struct struc_173
 	unsigned char setrenderstate;
 	unsigned char add_offsets;
 	unsigned char field_7;
-	uint32_t color;
+	color_ui8 color;
 	uint32_t field_C;
 	uint32_t field_10;
 	uint32_t x_offset;
 	uint32_t y_offset;
 	uint32_t z_offset;
 	uint32_t z_offset2;
-	uint32_t u_offset;
-	uint32_t v_offset;
+	float u_offset;
+	float v_offset;
 	uint32_t palette_index;
 	struct p_hundred *hundred_data;
 	unsigned char field_34[16];
@@ -167,26 +195,6 @@ struct struc_77
 	struct matrix *matrix_pointer;
 	struct struc_173 struc_173;
 };
-
-struct bgra_color
-{
-	float b;
-	float g;
-	float r;
-	float a;
-};
-
-struct abgr_color
-{
-	float a;
-	float b;
-	float g;
-	float r;
-};
-
-typedef struct {
-	short x, y, z, res;		// short is a 2 byte signed integer
-} vertex_3s;
 
 // Field camera axis
 typedef struct {
@@ -314,7 +322,7 @@ struct struc_186
 	uint32_t field_8;
 	struct point3d vertices[4];
 	struct texcoords texcoords[4];
-	uint32_t colors[4];
+	color_ui8 colors[4];
 	float w[4];
 	struct nvertex *nvertex_pointer;
 	uint32_t palette_index;
