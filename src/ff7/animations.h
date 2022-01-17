@@ -20,6 +20,22 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+enum class EffectAnimationType
+{
+    NONE = 0,
+    EFFECT10,
+    EFFECT60,
+    EFFECT100
+};
+
+struct interpolationable_data
+{
+    rotation_matrix rot_matrix;
+    material_anim_ctx material_ctx;
+    color_ui8 color;
+    palette_extra palette;
+};
+
 class EffectDecorator
 {
 public:
@@ -72,11 +88,38 @@ public:
     void callEffectFunction(uint32_t function) override;
 };
 
+class InterpolationEffectDecorator: public EffectDecorator
+{
+private:
+    int frameCounter;
+    int frequency;
+    byte* isBattlePaused;
+    std::unordered_map<uint64_t, interpolationable_data> previousFrameDataMap;
+    int textureCallIdx;
+    int textureNumCalls;
+    bool _doInterpolation;
+
+public:
+    InterpolationEffectDecorator(int frequency, byte* isBattlePausedExt);
+    void callEffectFunction(uint32_t function) override;
+    uint64_t getCantorHash(uint32_t x, uint32_t y);
+
+    inline bool doInterpolation(){return _doInterpolation;}
+    inline void addTextureIndex(){textureCallIdx++;}
+    inline int getTextureNumCalls(){return textureNumCalls;}
+
+    void saveInterpolationData(interpolationable_data &&currData, uint32_t materialAddress);
+    void interpolateRotationMatrix(rotation_matrix* nextRotationMatrix, uint32_t materialAddress);
+    void interpolateMaterialContext(material_anim_ctx &nextMaterialCtx, uint32_t materialAddress);
+    void interpolateColor(color_ui8 *color, uint32_t materialAddress);
+    void interpolatePalette(palette_extra &paletteExtraData, uint32_t materialAddress);
+};
+
 class AuxiliaryEffectHandler
 {
 private:
     bool isFirstTimeRunning;
-    std::unique_ptr<EffectDecorator> effectDecorator;
+    std::shared_ptr<EffectDecorator> effectDecorator;
 
 public:
     AuxiliaryEffectHandler();

@@ -943,6 +943,77 @@ struct effect10_data
     byte field_1B[5];
 };
 
+struct material_anim_ctx
+{
+    uint32_t *materialRSD;
+    uint32_t negateColumnFlags;
+    WORD field_8;
+    short transparency;
+    short field_C;
+    short paletteIdx;
+};
+
+struct palette_extra
+{
+    int x_offset;
+    p_hundred *aux_gfx_ptr;
+    int z_offset_2;
+    int y_offset;
+    int scroll_v;
+    int v_offset;
+    int z_offset;
+    int field_1C;
+    int field_20;
+    int field_24;
+    int field_28;
+};
+
+struct page_spt
+{
+    int field_0;
+    short field_4;
+    short field_6;
+    short uScale;
+    short vScale;
+    short field_C;
+    short palette_something;
+    short field_10;
+    short field_12;
+};
+
+struct tex_page_list
+{
+    WORD *field_0;
+    page_spt *page_spt_ptr;
+};
+
+struct texture_spt
+{
+    int *spt_handle_copy;
+    tex_page_list *pages;
+    byte *spt_handle;
+    int tex_page_count;
+    uint32_t field_10[4];
+    ff7_graphics_object *game_drawable[4];
+};
+
+struct texture_spt_anim_ctx
+{
+    texture_spt *effect_spt;
+    ff7_graphics_object *effectDrawable;
+    color_ui8 color;
+    WORD field_C;
+    WORD field_E;
+};
+
+#pragma pack(push, 1)
+struct rotation_matrix
+{
+    short r3_sub_matrix[3][3];
+    int position[3];
+};
+#pragma pack(pop)
+
 struct battle_text_data
 {
 	short buffer_idx;
@@ -2549,6 +2620,16 @@ struct ff7_externals
 	uint32_t run_summon_phoenix_sub_515127;
 	uint32_t run_phoenix_main_loop_516297;
 	uint32_t battle_update_3d_model_data;
+	uint32_t battle_animate_material_texture;
+	uint32_t battle_animate_texture_spt;
+	rotation_matrix* (*get_global_model_matrix_buffer_66100D)();
+	struc_84* (*get_draw_chain_68F860)(struc_49*, graphics_instance*);
+	p_hundred* (*battle_sub_5D1AAA)(int, ff7_polygon_set*);
+	int (*get_alpha_from_transparency_429343)(int);
+	color_ui8 (*get_stored_color_66101A)();
+	void (*battle_sub_68CF75)(char, struc_173*);
+	void (*create_rot_matrix_from_word_matrix_6617E9)(rotation_matrix*, matrix*);
+	struc_84* (*get_draw_chain_671C71)(ff7_graphics_object*);
 
 	battle_model_state *g_battle_model_state;
 	battle_model_state_small *g_small_battle_model_state;
@@ -2579,6 +2660,8 @@ struct ff7_externals
 	byte* field_battle_byte_BE10B4;
 	short* resting_Y_array_data;
 	WORD* field_odin_frames_AEEC14;
+	palette_extra* palette_extra_data_C06A00;
+	uint32_t** global_game_data_90AAF0;
 
 	// battle dialogue
 	uint32_t battle_sub_42CBF9;
@@ -2586,7 +2669,7 @@ struct ff7_externals
 	uint32_t update_display_text_queue;
 	uint32_t set_battle_text_active;
 	uint32_t battle_sfx_play_effect_430D14;
-	uint32_t battle_sub_66C3BF;
+	int (*battle_sub_66C3BF)();
 	uint32_t battle_sub_43526A;
 	uint32_t battle_sub_5C8931;
 	uint32_t run_enemy_ai_script;

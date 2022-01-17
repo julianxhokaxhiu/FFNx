@@ -827,6 +827,22 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t run_summon_phoenix_main_515101 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x2AB);
 	uint32_t run_summon_phoenix_sub_515127 = get_relative_call(run_summon_phoenix_main_515101, 0x1A);
 	ff7_externals.run_phoenix_main_loop_516297 = get_absolute_value(run_summon_phoenix_sub_515127, 0xB2);
+
+	// Texture/Material animation
+	uint32_t battle_leviathan_sub_5B2F18 = get_absolute_value(ff7_externals.battle_summon_leviathan_loop, 0x50E);
+	ff7_externals.battle_animate_material_texture = get_relative_call(battle_leviathan_sub_5B2F18, 0x19F);
+	ff7_externals.get_global_model_matrix_buffer_66100D = (rotation_matrix*(*)())get_relative_call(ff7_externals.battle_animate_material_texture, 0x5E);
+	ff7_externals.get_draw_chain_68F860 = (struc_84*(*)(struc_49*, graphics_instance*))get_relative_call(ff7_externals.battle_animate_material_texture, 0x85);
+	ff7_externals.battle_sub_5D1AAA = (p_hundred*(*)(int, ff7_polygon_set*))get_relative_call(ff7_externals.battle_animate_material_texture, 0xB3);
+	ff7_externals.get_alpha_from_transparency_429343 = (int(*)(int))get_relative_call(ff7_externals.battle_animate_material_texture, 0xDF);
+	ff7_externals.get_stored_color_66101A = (color_ui8(*)())get_relative_call(ff7_externals.battle_animate_material_texture, 0x110);
+	ff7_externals.battle_sub_68CF75 = (void(*)(char, struc_173*))get_relative_call(ff7_externals.battle_animate_material_texture, 0x1CD);
+	ff7_externals.create_rot_matrix_from_word_matrix_6617E9 = (void(*)(rotation_matrix*, matrix*))get_relative_call(ff7_externals.battle_animate_material_texture, 0x38B);
+	ff7_externals.battle_animate_texture_spt = get_relative_call(ff7_externals.summon_aura_effects_5C0953, 0x16A);
+	ff7_externals.get_draw_chain_671C71 = (struc_84*(*)(ff7_graphics_object*))get_relative_call(ff7_externals.battle_animate_texture_spt, 0x15F);
+	ff7_externals.palette_extra_data_C06A00 = (palette_extra*)get_absolute_value(ff7_externals.battle_animate_material_texture, 0x2FA);
+	ff7_externals.global_game_data_90AAF0 = (uint32_t**)get_absolute_value((uint32_t)ff7_externals.get_global_model_matrix_buffer_66100D, 0x4);
+
 	// --------------------------------
 
 	// battle dialogues
@@ -835,7 +851,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.update_display_text_queue = get_relative_call(ff7_externals.battle_sub_42D808, 0x2B);
 	ff7_externals.set_battle_text_active = get_relative_call(ff7_externals.update_display_text_queue, 0x14A);
 	ff7_externals.battle_sfx_play_effect_430D14 = get_relative_call(ff7_externals.update_display_text_queue, 0x46);
-	ff7_externals.battle_sub_66C3BF = get_relative_call(ff7_externals.update_display_text_queue, 0x139);
+	ff7_externals.battle_sub_66C3BF = (int(*)())get_relative_call(ff7_externals.update_display_text_queue, 0x139);
 	ff7_externals.battle_sub_43526A = get_relative_call(ff7_externals.battle_loop, 0x475);
 	ff7_externals.battle_sub_5C8931 = get_relative_call(ff7_externals.battle_sub_43526A, 0x1F0);
 	ff7_externals.run_enemy_ai_script = get_relative_call(ff7_externals.battle_sub_5C8931, 0xA0);
