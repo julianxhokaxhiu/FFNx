@@ -20,14 +20,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-enum class EffectAnimationType
-{
-    NONE = 0,
-    EFFECT10,
-    EFFECT60,
-    EFFECT100
-};
-
 struct interpolationable_data
 {
     rotation_matrix rot_matrix;
@@ -124,9 +116,10 @@ private:
 public:
     AuxiliaryEffectHandler();
 
+    inline std::shared_ptr<EffectDecorator> getEffectDecorator() {return effectDecorator;}
     inline bool isFirstFrame() {return isFirstTimeRunning;}
 
-    inline void setEffectDecorator(std::unique_ptr<EffectDecorator> effectDecorator) {this->effectDecorator = std::move(effectDecorator);}
+    inline void setEffectDecorator(std::shared_ptr<EffectDecorator> effectDecorator) {this->effectDecorator = std::move(effectDecorator);}
     inline void disableFirstFrame() {this->isFirstTimeRunning = false;}
     inline void executeEffectFunction(uint32_t effectFunction) {effectDecorator->callEffectFunction(effectFunction);}
 };

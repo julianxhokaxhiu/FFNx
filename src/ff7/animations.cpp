@@ -154,13 +154,13 @@ std::array<AuxiliaryEffectHandler, 100> aux_effect100_handler;
 std::array<AuxiliaryEffectHandler, 60> aux_effect60_handler;
 std::array<AuxiliaryEffectHandler, 10> aux_effect10_handler;
 
-std::shared_ptr<InterpolationEffectDecorator> currentEffectDecorator;
+std::shared_ptr<EffectDecorator> currentEffectDecorator;
 bool isAddFunctionDisabled = false;
 
 AuxiliaryEffectHandler::AuxiliaryEffectHandler()
 {
     this->isFirstTimeRunning = true;
-    this->effectDecorator = std::make_unique<NoEffectDecorator>();
+    this->effectDecorator = std::make_shared<NoEffectDecorator>();
 }
 
 void NoEffectDecorator::callEffectFunction(uint32_t function)
@@ -233,21 +233,18 @@ void InterpolationEffectDecorator::callEffectFunction(uint32_t function)
     if(this->frameCounter % this->frequency == 0)
     {
         this->previousFrameDataMap.clear();
-        currentEffectDecorator = std::make_shared<InterpolationEffectDecorator>(*this);
         this->_doInterpolation = false;
         ((void(*)())function)();
         this->textureNumCalls = this->textureCallIdx;
     }
     else
     {
-        currentEffectDecorator = std::make_shared<InterpolationEffectDecorator>(*this);
         this->_doInterpolation = true;
         *this->isBattlePaused = 1;
         ((void(*)())function)();
         *this->isBattlePaused = wasPaused;
     }
 
-    currentEffectDecorator = nullptr;
     this->frameCounter++;
 }
 
@@ -590,15 +587,15 @@ void ff7_execute_effect100_fn()
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_5C0E4B ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.vincent_limit_fade_effect_sub_5D4240)
                 {
-                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_unique<NoEffectDecorator>());
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<NoEffectDecorator>());
                 }
                 else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_bahamut_zero_main_loop_484A16)
                 {
-                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_unique<OneCallEffectDecorator>(battle_frame_multiplier));
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<OneCallEffectDecorator>(battle_frame_multiplier));
                 }
                 else
                 {
-                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_unique<InterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<InterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
                 }
 
                 if (trace_all || trace_battle_animation)
@@ -609,7 +606,9 @@ void ff7_execute_effect100_fn()
                 aux_effect100_handler[fn_index].disableFirstFrame();
             }
 
+            currentEffectDecorator = aux_effect100_handler[fn_index].getEffectDecorator();
             aux_effect100_handler[fn_index].executeEffectFunction(ff7_externals.effect100_array_fn[fn_index]);
+            currentEffectDecorator = nullptr;
 
             if (ff7_externals.effect100_array_data[fn_index].field_0 == (uint16_t)-1)
             {
@@ -813,15 +812,15 @@ void ff7_execute_effect60_fn()
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.summon_aura_effects_5C0953 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5C18BC)
                 {
-                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_unique<NoEffectDecorator>());
+                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_shared<NoEffectDecorator>());
                 }
                 else if(ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_smoke_move_handler_5BE4E2)
                 {
-                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_unique<OneCallEffectDecorator>(battle_frame_multiplier));
+                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_shared<OneCallEffectDecorator>(battle_frame_multiplier));
                 }
                 else
                 {
-                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_unique<InterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
+                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_shared<InterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
                 }
 
                 if (trace_all || trace_battle_animation)
@@ -832,7 +831,9 @@ void ff7_execute_effect60_fn()
                 aux_effect60_handler[fn_index].disableFirstFrame();
             }
 
+            currentEffectDecorator = aux_effect60_handler[fn_index].getEffectDecorator();
             aux_effect60_handler[fn_index].executeEffectFunction(ff7_externals.effect60_array_fn[fn_index]);
+            currentEffectDecorator = nullptr;
 
             if (ff7_externals.effect60_array_data[fn_index].field_0 == (uint16_t)-1)
             {
@@ -943,26 +944,27 @@ int ff7_battle_animate_material_texture(material_anim_ctx *materialCtx, int a2, 
     palette_extra &palette_extra_data = *ff7_externals.palette_extra_data_C06A00;
 
     // Interpolation of material texture with previous frame data if available
-    if (currentEffectDecorator != nullptr)
+    std::shared_ptr<InterpolationEffectDecorator> effectDecorator = std::dynamic_pointer_cast<InterpolationEffectDecorator>(currentEffectDecorator);
+    if (effectDecorator)
     {
         uint32_t uniqueID = (uint32_t)_ReturnAddress();
-        if (!currentEffectDecorator->doInterpolation())
+        if (!effectDecorator->doInterpolation())
         {
             interpolationable_data currData;
             currData.rot_matrix = *ff7_externals.get_global_model_matrix_buffer_66100D();
             currData.material_ctx = *materialCtx;
             currData.color = ff7_externals.get_stored_color_66101A();
             currData.palette = *ff7_externals.palette_extra_data_C06A00;
-            currentEffectDecorator->saveInterpolationData(std::move(currData), uniqueID);
+            effectDecorator->saveInterpolationData(std::move(currData), uniqueID);
         }
         else
         {
-            currentEffectDecorator->interpolateRotationMatrix(ff7_externals.get_global_model_matrix_buffer_66100D(), uniqueID);
-            currentEffectDecorator->interpolateMaterialContext(*materialCtx, uniqueID);
-            currentEffectDecorator->interpolateColor((color_ui8 *)&ff7_externals.global_game_data_90AAF0[20], uniqueID);
-            currentEffectDecorator->interpolatePalette(palette_extra_data, uniqueID);
+            effectDecorator->interpolateRotationMatrix(ff7_externals.get_global_model_matrix_buffer_66100D(), uniqueID);
+            effectDecorator->interpolateMaterialContext(*materialCtx, uniqueID);
+            effectDecorator->interpolateColor((color_ui8 *)&ff7_externals.global_game_data_90AAF0[20], uniqueID);
+            effectDecorator->interpolatePalette(palette_extra_data, uniqueID);
         }
-        currentEffectDecorator->addTextureIndex();
+        effectDecorator->addTextureIndex();
     }
     // -----------------------------------------------
 
@@ -1136,22 +1138,23 @@ int ff7_battle_animate_texture_spt(texture_spt_anim_ctx *texture_ctx, int a2, in
     texture_spt *effect_spt;
 
     // Interpolation of texture SPT with previous frame data if available
-    if (currentEffectDecorator != nullptr && currentEffectDecorator->getTextureNumCalls() == 1)
+    std::shared_ptr<InterpolationEffectDecorator> effectDecorator = std::dynamic_pointer_cast<InterpolationEffectDecorator>(currentEffectDecorator);
+    if (effectDecorator && effectDecorator->getTextureNumCalls() == 1)
     {
         uint32_t uniqueID = (uint32_t)_ReturnAddress();
-        if (!currentEffectDecorator->doInterpolation())
+        if (!effectDecorator->doInterpolation())
         {
             interpolationable_data currData;
             currData.rot_matrix = *ff7_externals.get_global_model_matrix_buffer_66100D();
             currData.color = texture_ctx->color;
-            currentEffectDecorator->saveInterpolationData(std::move(currData), uniqueID);
+            effectDecorator->saveInterpolationData(std::move(currData), uniqueID);
         }
         else
         {
-            currentEffectDecorator->interpolateRotationMatrix(ff7_externals.get_global_model_matrix_buffer_66100D(), uniqueID);
-            currentEffectDecorator->interpolateColor(&texture_ctx->color, uniqueID);
+            effectDecorator->interpolateRotationMatrix(ff7_externals.get_global_model_matrix_buffer_66100D(), uniqueID);
+            effectDecorator->interpolateColor(&texture_ctx->color, uniqueID);
         }
-        currentEffectDecorator->addTextureIndex();
+        effectDecorator->addTextureIndex();
     }
     // -----------------------------------------------
 
