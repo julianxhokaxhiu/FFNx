@@ -276,19 +276,75 @@ int ff7_field_update_single_model_position(short model_id)
 	int frame_multiplier = get_frame_multiplier();
 	field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
 	int original_movement_speed = field_event_data_array[model_id].movement_speed;
-	int original_collision_radius = field_event_data_array[model_id].collision_radius;
 
 	if(is_fps_running_double_than_original())
 	{
 		field_event_data_array[model_id].movement_speed = original_movement_speed / frame_multiplier;
-		if(original_collision_radius > 1)
-			field_event_data_array[model_id].collision_radius = original_collision_radius / frame_multiplier;
 	}
 
 	int ret = ff7_externals.field_update_single_model_position(model_id);
 	field_event_data_array[model_id].movement_speed = original_movement_speed;
-	field_event_data_array[model_id].collision_radius = original_collision_radius;
 	return ret;
+}
+
+int ff7_field_check_collision_with_target(field_event_data* field_event_model, short target_collision_radius)
+{
+	int frame_multiplier = get_frame_multiplier();
+	int original_movement_speed = field_event_model->movement_speed;
+
+	if(is_fps_running_double_than_original())
+	{
+		field_event_model->movement_speed = original_movement_speed / frame_multiplier;
+	}
+
+	int ret = ff7_externals.field_check_collision_with_target(field_event_model, target_collision_radius);
+	field_event_model->movement_speed = original_movement_speed;
+	return ret;
+}
+
+template <typename T>
+struct vector3
+{
+	T x;
+	T y;
+	T z;
+};
+
+int ff7_field_check_collision_with_models(short model_id, vector3<int>* raycast)
+{
+	vector3<int> distance, model_distance;
+	field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
+	int is_colliding = 0;
+	int collision_radius = field_event_data_array[model_id].collision_radius;
+	for (int i = 0; i < ff7_externals.modules_global_object->num_models; ++i)
+	{
+		if (i != model_id && !field_event_data_array[i].field_5F)
+		{
+			distance.z = (field_event_data_array[i].model_pos_z >> 12) - raycast->z;
+			if (distance.z > -127 && distance.z < 128)
+			{
+				distance.x = (field_event_data_array[i].model_pos_x - raycast->x) >> 12;
+				distance.y = (field_event_data_array[i].model_pos_y - raycast->y) >> 12;
+
+				// Divide the other model collision radius only if the two models are overlapped
+				model_distance.x = (field_event_data_array[i].model_pos_x - field_event_data_array[model_id].model_pos_x) >> 12;
+				model_distance.y = (field_event_data_array[i].model_pos_y - field_event_data_array[model_id].model_pos_y) >> 12;
+				int distance_between_models = model_distance.x * model_distance.x + model_distance.y + model_distance.y;
+				int other_collision_radius = field_event_data_array[i].collision_radius;
+				if(distance_between_models < field_event_data_array[model_id].collision_radius * field_event_data_array[model_id].collision_radius / 16)
+					other_collision_radius /= common_frame_multiplier;
+
+				int distance_collision_between_models = other_collision_radius + collision_radius;
+				if (distance_collision_between_models / 2 * (distance_collision_between_models / 2) > distance.y * distance.y + distance.x * distance.x)
+				{
+					if (model_id == *ff7_externals.field_player_model_id)
+						field_event_data_array[i].field_5E = 1;
+					is_colliding = 1;
+				}
+			}
+		}
+	}
+	return is_colliding;
 }
 
 short ff7_opcode_multiply_get_bank_value(short bank, short address)
@@ -448,6 +504,11 @@ void ff7_field_hook_init()
 		replace_call_function(common_externals.execute_opcode_table[JUMP] + 0x1F1, ff7_opcode_multiply_get_bank_value);
 		patch_divide_code<int>(ff7_externals.field_update_models_positions + 0xC89, common_frame_multiplier * 2);
 		patch_divide_code<int>(ff7_externals.field_update_models_positions + 0xE48, common_frame_multiplier * 2);
+		replace_call_function(ff7_externals.field_update_models_positions + 0x9AA, ff7_field_check_collision_with_target);
+
+		// Fix the distance threshold for softlock due to target collision detection bug
+		patch_code_byte((uint32_t)ff7_externals.field_check_collision_with_target + 0xC2, 20);
+		replace_function((uint32_t)ff7_externals.field_check_collision_with_models, ff7_field_check_collision_with_models);
 
 		// Partial animation fps fix
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANM1], (DWORD)&opcode_script_partial_animation_wrapper);

@@ -2404,6 +2404,8 @@ struct ff7_externals
 	uint32_t field_update_models_positions;
 	int (*field_update_single_model_position)(short);
 	void (*field_update_model_animation_frame)(short);
+	int (*field_check_collision_with_target)(field_event_data*, short);
+	uint32_t field_check_collision_with_models;
 	void (*field_evaluate_encounter_rate_60B2C6)();
 	short *field_player_model_id;
 	uint32_t sub_40B27B;
