@@ -1054,7 +1054,7 @@ const bgfx::Stats* Renderer::getStats()
     return bgfx::getStats();
 }
 
-void Renderer::bindVertexBuffer(struct nvertex* inVertex, struct point3d* normals, uint32_t inCount)
+void Renderer::bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normals, uint32_t inCount)
 {
     if (!bgfx::isValid(vertexBufferHandle)) vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, vertexLayout, BGFX_BUFFER_ALLOW_RESIZE);
 

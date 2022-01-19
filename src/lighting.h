@@ -48,7 +48,7 @@ struct walkmeshEdge
     int prevEdge;                // previous vertex index
     int nextEdge;	             // next vertex index
     bool isBorder;               // border edge flag
-    struct point3d perpDir;      // perpendicular direction
+    vector3<float> perpDir;      // perpendicular direction
 };
 
 struct LightingState
@@ -72,7 +72,7 @@ struct LightingState
     float lightingDebugData[4] = { 0.0, 0.0, 0.0, 0.0 };
 
     // Light Direction
-    struct point3d worldLightRot = { 60.0, 60.0, 0.0 };
+    vector3<float> worldLightRot = { 60.0, 60.0, 0.0 };
 
     // Shadowmap face culling
     bool isShadowMapFaceCullingEnabled = true;
@@ -121,15 +121,15 @@ public:
     void setEnvironmentLightingEnabled(bool isEnabled);
     bool isEnvironmentLightingEnabled();
     void setWorldLightDir(float dirX, float dirY, float dirZ);
-    struct point3d getWorldLightDir();
+    vector3<float> getWorldLightDir();
     void setLightIntensity(float intensity);
     float getLightIntensity();
     void setLightColor(float r, float g, float b);
-    point3d getLightColor();
+    vector3<float> getLightColor();
     void setAmbientIntensity(float intensity);
     float getAmbientIntensity();
     void setAmbientLightColor(float r, float g, float b);
-    point3d getAmbientLightColor();
+    vector3<float> getAmbientLightColor();
     void setIblMipCount(int mipCount);
 
     // Material

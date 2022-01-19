@@ -51,11 +51,12 @@ struct matrix
 	};
 };
 
-struct point3d
+template <typename T>
+struct vector3
 {
-	float x;
-	float y;
-	float z;
+	T x;
+	T y;
+	T z;
 };
 
 struct point4d
@@ -66,23 +67,23 @@ struct point4d
 	float w;
 };
 
-void add_vector(struct point3d *a, struct point3d *b, struct point3d *dest);
-void subtract_vector(struct point3d *a, struct point3d *b, struct point3d *dest);
-void multiply_vector(struct point3d *vector, float scalar, struct point3d *dest);
-void divide_vector(struct point3d *vector, float scalar, struct point3d *dest);
-float vector_length(struct point3d *vector);
-void normalize_vector(struct point3d *vector);
-float dot_product(struct point3d *a, struct point3d *b);
-void cross_product(struct point3d *a, struct point3d *b, struct point3d *dest);
-void transform_point(struct matrix *matrix, struct point3d *point, struct point3d *dest);
-void transform_point_w(struct matrix *matrix, struct point3d *point, struct point4d *dest);
+void add_vector(vector3<float> *a, vector3<float> *b, vector3<float> *dest);
+void subtract_vector(vector3<float> *a, vector3<float> *b, vector3<float> *dest);
+void multiply_vector(vector3<float> *vector, float scalar, vector3<float> *dest);
+void divide_vector(vector3<float> *vector, float scalar, vector3<float> *dest);
+float vector_length(vector3<float> *vector);
+void normalize_vector(vector3<float> *vector);
+float dot_product(vector3<float> *a, vector3<float> *b);
+void cross_product(vector3<float> *a, vector3<float> *b, vector3<float> *dest);
+void transform_point(struct matrix *matrix, vector3<float> *point, vector3<float> *dest);
+void transform_point_w(struct matrix *matrix, vector3<float> *point, struct point4d *dest);
 void transform_point4d(struct matrix *matrix, struct point4d *point, struct point4d *dest);
 void transpose_matrix(struct matrix *matrix, struct matrix *dest);
 void multiply_matrix(struct matrix *a, struct matrix *b, struct matrix *dest);
 void multiply_matrix_unary(struct matrix *a, struct matrix *b);
 void identity_matrix(struct matrix *matrix);
 void uniform_scaling_matrix(float scale, struct matrix *matrix);
-void scaling_matrix(struct point3d *scale, struct matrix *matrix);
+void scaling_matrix(vector3<float> *scale, struct matrix *matrix);
 void rotation_matrix_x(float angle, struct matrix *matrix);
 void rotation_matrix_y(float angle, struct matrix *matrix);
 void rotation_matrix_z(float angle, struct matrix *matrix);

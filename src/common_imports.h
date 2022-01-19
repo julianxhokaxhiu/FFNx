@@ -287,7 +287,7 @@ struct boundingbox
 
 struct nvertex
 {
-	struct point3d _;
+	vector3<float> _;
 
 	union
 	{
@@ -308,7 +308,7 @@ struct nvertex
 			uint32_t specular;
 		} color;
 
-		struct point3d normal;
+		vector3<float> normal;
 	};
 
 	float u;
@@ -320,7 +320,7 @@ struct struc_186
 	struct graphics_object *graphics_object;
 	uint32_t polytype;
 	uint32_t field_8;
-	struct point3d vertices[4];
+	vector3<float> vertices[4];
 	struct texcoords texcoords[4];
 	color_ui8 colors[4];
 	float w[4];
@@ -394,9 +394,9 @@ struct polygon_data
 	uint32_t numgroups;
 	uint32_t numboundingboxes;
 	uint32_t has_normindextable;
-	struct point3d *vertdata;
-	struct point3d *normaldata;
-	struct point3d *field_48;
+	vector3<float> *vertdata;
+	vector3<float> *normaldata;
+	vector3<float> *field_48;
 	struct texcoords *texcoorddata;
 	uint32_t *vertexcolordata;
 	uint32_t *polycolordata;

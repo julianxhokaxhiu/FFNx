@@ -338,9 +338,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.stack_top = (void* (*)(struct stack*))get_relative_call(ff7_externals.draw_3d_model, 0x9A);
 	ff7_externals.stack_pop = (void (*)(struct stack*))get_relative_call(ff7_externals.draw_3d_model, 0x8FD);
 	ff7_externals._root_animation = (void (*)(matrix*, anim_frame*, anim_header*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xD4);
-	ff7_externals._frame_animation = (void (*)(uint32_t, matrix*, point3d*, anim_frame*, anim_header*, hrc_bone*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xDB);
+	ff7_externals._frame_animation = (void (*)(uint32_t, matrix*, vector3<float>*, anim_frame*, anim_header*, hrc_bone*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xDB);
 	ff7_externals.root_animation = (void (*)(matrix*, anim_frame*, anim_header*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xE7);
-	ff7_externals.frame_animation = (void (*)(uint32_t, matrix*, point3d*, anim_frame*, anim_header*, hrc_bone*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xEE);
+	ff7_externals.frame_animation = (void (*)(uint32_t, matrix*, vector3<float>*, anim_frame*, anim_header*, hrc_bone*, hrc_data*))get_absolute_value(ff7_externals.draw_3d_model, 0xEE);
 	ff7_externals.model_mode = (uint32_t *)get_absolute_value(ff7_externals.draw_3d_model, 0x2A7);
 
 	ff7_externals.name_menu_sub_6CBD32 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0x9A);
@@ -623,9 +623,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_camera_sub_5C22A9 = get_relative_call(ff7_externals.update_battle_camera_sub_5C20CE, 0x97);
 	ff7_externals.compute_interpolation_to_formation_camera = get_relative_call(ff7_externals.battle_camera_sub_5C22A9, 0x3);
 	ff7_externals.set_battle_camera_sub_5C2350 = get_relative_call(ff7_externals.battle_camera_sub_5C22A9, 0xA);
-	ff7_externals.g_battle_camera_position = (camera_vec3*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x17);
-	ff7_externals.g_battle_camera_focal_point = (camera_vec3*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x5E);
-	ff7_externals.formation_camera = (special_battle_camera*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x10);
+	ff7_externals.g_battle_camera_position = (vector3<short>*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x17);
+	ff7_externals.g_battle_camera_focal_point = (vector3<short>*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x5E);
+	ff7_externals.formation_camera = (formation_camera*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x10);
 	ff7_externals.curr_formation_camera_idx = (byte*)get_absolute_value(ff7_externals.set_battle_camera_sub_5C22BD, 0x6);
 	ff7_externals.battle_enter_frames_to_wait = (byte*)get_absolute_value(ff7_externals.battle_sub_429AC0, 0x14E);
 	ff7_externals.g_variation_index = (byte*)get_absolute_value(ff7_externals.update_battle_camera_sub_5C20CE, 0x6F);

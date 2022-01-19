@@ -373,7 +373,7 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 	struct stack *matrix_stack;
 	struct matrix *root_matrix;
 	void (*root_animation_sub)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
-	void (*frame_animation_sub)(uint32_t, struct matrix *, struct point3d *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
+	void (*frame_animation_sub)(uint32_t, struct matrix *, vector3<float> *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
 
 	if(!anim_header) return;
 	if(!hrc_data) return;
@@ -467,11 +467,11 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 				struct hrc_bone *bone = &hrc_data->bones[bone_index];
 				struct matrix *parent_matrix;
 				struct matrix *bone_matrix;
-				struct point3d *frame_rotation;
+				vector3<float> *frame_rotation;
 				struct matrix local_matrix;
 				struct matrix eye_matrix;
 				struct matrix *matrix;
-				struct point3d dummy_point = {0.0f, 0.0f, 0.0f};
+				vector3<float> dummy_point = {0.0f, 0.0f, 0.0f};
 
 				parent_matrix = (struct matrix*)ff7_externals.stack_top(matrix_stack);
 				ff7_externals.stack_push(matrix_stack);

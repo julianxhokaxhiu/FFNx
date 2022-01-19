@@ -302,14 +302,6 @@ int ff7_field_check_collision_with_target(field_event_data* field_event_model, s
 	return ret;
 }
 
-template <typename T>
-struct vector3
-{
-	T x;
-	T y;
-	T z;
-};
-
 int ff7_field_check_collision_with_models(short model_id, vector3<int>* raycast)
 {
 	vector3<int> distance, model_distance;

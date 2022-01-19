@@ -37,7 +37,7 @@ struct deferred_sorted_draw *deferred_sorted_draws;
 uint32_t num_sorted_deferred;
 
 // save a draw call for later processing
-uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct point3d* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
+uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
 {
 	if (trace_all) ffnx_trace("gl_defer_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
 
@@ -122,7 +122,7 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 
 	if (normals)
 	{
-		deferred_draws[defer].normals = (point3d*)driver_malloc(sizeof(*normals) * vertexcount);
+		deferred_draws[defer].normals = (vector3<float>*)driver_malloc(sizeof(*normals) * vertexcount);
 		memcpy(deferred_draws[defer].normals, normals, sizeof(*normals) * vertexcount);
 	}
 
@@ -399,7 +399,7 @@ struct boundingbox calculateSceneAabb()
 		struct boundingbox* bb = deferred_draws[i].boundingbox;
 		if (bb)
 		{
-			struct point3d corners[8] = { {bb->min_x, bb->min_y, bb->min_z},
+			vector3<float> corners[8] = { {bb->min_x, bb->min_y, bb->min_z},
 									   {bb->min_x, bb->min_y, bb->max_z},
 			                           {bb->min_x, bb->max_y, bb->min_z},
 			                           {bb->min_x, bb->max_y, bb->max_z},
@@ -411,7 +411,7 @@ struct boundingbox calculateSceneAabb()
 			struct matrix worldViewMatrix = deferred_draws[i].state.world_view_matrix;
 			for (int j = 0; j < 8; ++j)
 			{
-				struct point3d cornerViewSpace;
+				vector3<float> cornerViewSpace;
 				transform_point(&worldViewMatrix, &corners[j], &cornerViewSpace);
 
 				sceneAabb.min_x = std::min(sceneAabb.min_x, cornerViewSpace.x);

@@ -221,7 +221,7 @@ void ff7_compute_interpolation_to_formation_camera()
     ff7_externals.battle_camera_position[3].point = *ff7_externals.g_battle_camera_position;
     ff7_externals.battle_camera_focal_point[3].point = *ff7_externals.g_battle_camera_focal_point;
     int frame_steps = 2 * battle_frame_multiplier;
-    camera_vec3 delta_position, delta_focal_point;
+    vector3<short> delta_position, delta_focal_point;
     if (*ff7_externals.is_camera_moving_BFB2DC)
     {
         delta_position.x = (ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position.x - ff7_externals.battle_camera_position[3].point.x) / frame_steps;
@@ -261,10 +261,10 @@ void ff7_compute_interpolation_to_formation_camera()
 
 void ff7_update_battle_camera(short cameraScriptIndex)
 {
-    camera_vec3* pGlobalCameraPos = ff7_externals.g_battle_camera_position;
-    camera_vec3* pGlobalCameraFocusPos = ff7_externals.g_battle_camera_focal_point;
-    camera_vec3* pCameraPosition = &ff7_externals.battle_camera_position[*ff7_externals.g_variation_index].point;
-    camera_vec3* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
+    vector3<short>* pGlobalCameraPos = ff7_externals.g_battle_camera_position;
+    vector3<short>* pGlobalCameraFocusPos = ff7_externals.g_battle_camera_focal_point;
+    vector3<short>* pCameraPosition = &ff7_externals.battle_camera_position[*ff7_externals.g_variation_index].point;
+    vector3<short>* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
 
     ((void(*)(short))ff7_externals.update_battle_camera_sub_5C20CE)(cameraScriptIndex);
 
@@ -320,16 +320,16 @@ void Camera::reset()
 	zoomOffset = 0.0f;
 }
 
-void Camera::controlCamera(camera_vec3* cameraPosition, camera_vec3* cameraFocusPosition)
+void Camera::controlCamera(vector3<short>* cameraPosition, vector3<short>* cameraFocusPosition)
 {
     static WORD last_battle_id = 0;
-    static camera_vec3 initialCameraPos;
-    static camera_vec3 initialCameraFocusPos;
+    static vector3<short> initialCameraPos;
+    static vector3<short> initialCameraFocusPos;
 
     if (last_battle_id != ff7_externals.modules_global_object->battle_id)
 	{
-        camera_vec3* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
-        camera_vec3* pFormationCameraFocusPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point;
+        vector3<short>* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
+        vector3<short>* pFormationCameraFocusPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point;
 
 		initialCameraPos.x = pFormationCameraPos->x;
 		initialCameraPos.y = pFormationCameraPos->y;

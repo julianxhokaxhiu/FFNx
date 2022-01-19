@@ -136,8 +136,8 @@ void ff7_use_analogue_controls()
 		base_control_direction = ff7_get_control_direction();
 	}
 
-	point3d joyDir = {0.0f, 0.0f, 0.0f};
-	point3d inputDir = {0.0f, 0.0f, 0.0f};
+	vector3<float> joyDir = {0.0f, 0.0f, 0.0f};
+	vector3<float> inputDir = {0.0f, 0.0f, 0.0f};
 	float verticalRotSpeed = 0.0f;
 	float horizontalRotSpeed = 0.0f;
 	float zoomSpeed = 0.0f;

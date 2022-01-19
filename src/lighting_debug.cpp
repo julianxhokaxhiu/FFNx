@@ -45,7 +45,7 @@ void lighting_debug(bool* isOpen)
     }
     if (ImGui::CollapsingHeader("Direct Lighting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
     {
-        point3d lightDirVector = lighting.getWorldLightDir();
+        vector3<float> lightDirVector = lighting.getWorldLightDir();
         float lightRotation[3] = { lightDirVector.x , lightDirVector.y };
         if (ImGui::DragFloat2("Light Rotation", lightRotation, 1.0f))
         {
@@ -58,7 +58,7 @@ void lighting_debug(bool* isOpen)
         {
             lighting.setLightIntensity(lightIntensity);
         }
-        struct point3d lightColorPoint3d = lighting.getLightColor();
+        vector3<float> lightColorPoint3d = lighting.getLightColor();
         float lightColor[3] = { lightColorPoint3d.x, lightColorPoint3d.y, lightColorPoint3d.z };
         if (ImGui::ColorEdit3("Color##0", lightColor))
         {
@@ -73,7 +73,7 @@ void lighting_debug(bool* isOpen)
             lighting.setAmbientIntensity(ambientIntensity);
         }
 
-        struct point3d ambientLightColorPoint3d = lighting.getAmbientLightColor();
+        vector3<float> ambientLightColorPoint3d = lighting.getAmbientLightColor();
         float ambientLightColor[3] = { ambientLightColorPoint3d.x, ambientLightColorPoint3d.y, ambientLightColorPoint3d.z };
         if (ImGui::ColorEdit3("Color##1", ambientLightColor))
         {

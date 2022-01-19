@@ -25,66 +25,66 @@
 #include "math.h"
 #include "log.h"
 
-void add_vector(struct point3d *a, struct point3d *b, struct point3d *dest)
+void add_vector(vector3<float> *a, vector3<float> *b, vector3<float> *dest)
 {
 	dest->x = a->x + b->x;
 	dest->y = a->y + b->y;
 	dest->z = a->z + b->z;
 }
 
-void subtract_vector(struct point3d *a, struct point3d *b, struct point3d *dest)
+void subtract_vector(vector3<float> *a, vector3<float> *b, vector3<float> *dest)
 {
 	dest->x = a->x - b->x;
 	dest->y = a->y - b->y;
 	dest->z = a->z - b->z;
 }
 
-void multiply_vector(struct point3d *vector, float scalar, struct point3d *dest)
+void multiply_vector(vector3<float> *vector, float scalar, vector3<float> *dest)
 {
 	dest->x = vector->x * scalar;
 	dest->y = vector->y * scalar;
 	dest->z = vector->z * scalar;
 }
 
-void divide_vector(struct point3d *vector, float scalar, struct point3d *dest)
+void divide_vector(vector3<float> *vector, float scalar, vector3<float> *dest)
 {
 	dest->x = vector->x / scalar;
 	dest->y = vector->y / scalar;
 	dest->z = vector->z / scalar;
 }
 
-float vector_length(struct point3d *vector)
+float vector_length(vector3<float> *vector)
 {
 	return sqrtf(vector->x * vector->x + vector->y * vector->y + vector->z * vector->z);
 }
 
-void normalize_vector(struct point3d *vector)
+void normalize_vector(vector3<float> *vector)
 {
 	float length = vector_length(vector);
 
 	divide_vector(vector, length, vector);
 }
 
-float dot_product(struct point3d *a, struct point3d *b)
+float dot_product(vector3<float> *a, vector3<float> *b)
 {
 	return a->x * b->x + a->y * b->y + a->z * b->z;
 }
 
-void cross_product(struct point3d *a, struct point3d *b, struct point3d *dest)
+void cross_product(vector3<float> *a, vector3<float> *b, vector3<float> *dest)
 {
 	dest->x = a->y * b->z - a->z * b->y;
 	dest->y = a->z * b->x - a->x * b->z;
 	dest->z = a->x * b->y - a->y * b->x;
 }
 
-void transform_point(struct matrix *matrix, struct point3d *point, struct point3d *dest)
+void transform_point(struct matrix *matrix, vector3<float> *point, vector3<float> *dest)
 {
 	dest->x = matrix->_11 * point->x + matrix->_21 * point->y + matrix->_31 * point->z + matrix->_41;
 	dest->y = matrix->_12 * point->x + matrix->_22 * point->y + matrix->_32 * point->z + matrix->_42;
 	dest->z = matrix->_13 * point->x + matrix->_23 * point->y + matrix->_33 * point->z + matrix->_43;
 }
 
-void transform_point_w(struct matrix *matrix, struct point3d *point, struct point4d *dest)
+void transform_point_w(struct matrix *matrix, vector3<float> *point, struct point4d *dest)
 {
 	dest->x = matrix->_11 * point->x + matrix->_21 * point->y + matrix->_31 * point->z + matrix->_41;
 	dest->y = matrix->_12 * point->x + matrix->_22 * point->y + matrix->_32 * point->z + matrix->_42;
@@ -170,7 +170,7 @@ void uniform_scaling_matrix(float scale, struct matrix *matrix)
 	matrix->_33 = scale;
 }
 
-void scaling_matrix(struct point3d *scale, struct matrix *matrix)
+void scaling_matrix(vector3<float> *scale, struct matrix *matrix)
 {
 	identity_matrix(matrix);
 
@@ -245,7 +245,7 @@ void inverse_matrix(struct matrix *matrix, struct matrix *dest)
 
 	if((det >= 0.99 && det <= 1.01) || (det <= -0.99 && det >= -1.01))
 	{
-		struct point3d translation;
+		vector3<float> translation;
 
 		transpose_matrix(matrix, dest);
 		dest->_14 = matrix->_14;
@@ -253,7 +253,7 @@ void inverse_matrix(struct matrix *matrix, struct matrix *dest)
 		dest->_34 = matrix->_34;
 		dest->_44 = matrix->_44;
 
-		transform_point(dest, (struct point3d *)&matrix->_41, &translation);
+		transform_point(dest, (vector3<float> *)&matrix->_41, &translation);
 
 		dest->_41 = -translation.x;
 		dest->_42 = -translation.y;
