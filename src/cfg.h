@@ -69,6 +69,7 @@ extern bool trace_fake_dx;
 extern bool trace_direct;
 extern bool trace_files;
 extern bool trace_loaders;
+extern bool trace_vram;
 extern bool trace_lights;
 extern bool trace_opcodes;
 extern bool trace_voice;

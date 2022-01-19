@@ -99,8 +99,8 @@ void ff8_find_externals()
 
 	ff8_set_main_loop(MODE_BATTLE, ff8_externals.battle_main_loop);
 
-	ff8_externals.sub_47CF60 = get_absolute_value(ff8_externals.main_loop, 0x340);
-	ff8_externals.sub_47CCB0 = get_relative_call(ff8_externals.sub_47CF60, 0x1B3);
+	ff8_externals.cardgame_mainloop = get_absolute_value(ff8_externals.main_loop, 0x340);
+	ff8_externals.sub_47CCB0 = get_relative_call(ff8_externals.cardgame_mainloop, 0x1B3);
 	ff8_externals.sub_534640 = get_relative_call(ff8_externals.sub_47CCB0, 0xF1);
 	ff8_externals.sub_4972A0 = get_relative_call(ff8_externals.sub_534640, 0x51);
 	ff8_externals.load_fonts = get_relative_call(ff8_externals.sub_4972A0, 0x16);
@@ -194,7 +194,7 @@ void ff8_find_externals()
 
 	ff8_externals.sub_559910 = get_relative_call(ff8_externals.swirl_main_loop, 0x1A);
 
-	ff8_externals.swirl_sub_56D1D0 = get_relative_call(ff8_externals.sub_47CF60, 0x285);
+	ff8_externals.swirl_sub_56D1D0 = get_relative_call(ff8_externals.cardgame_mainloop, 0x285);
 	ff8_externals.swirl_sub_56D390 = get_relative_call(ff8_externals.swirl_sub_56D1D0, 0x2A);
 	ff8_externals.swirl_texture1 = (ff8_graphics_object **)get_absolute_value(ff8_externals.swirl_sub_56D1D0, 0x1);
 
@@ -205,6 +205,13 @@ void ff8_find_externals()
 	ff8_externals.sub_464BD0 = get_relative_call(ff8_externals.sub_45D080, 0x208);
 	ff8_externals.sub_4653B0 = get_relative_call(ff8_externals.sub_464BD0, 0x79);
 	ff8_externals.sub_465720 = get_relative_call(ff8_externals.sub_464BD0, 0xAF);
+
+	ff8_externals.ssigpu_callbacks_1 = (uint32_t *)get_absolute_value(ff8_externals.sub_45D080, 0x21E);
+	ff8_externals.sub_462AD0 = get_relative_call(ff8_externals.ssigpu_callbacks_1[116], 0x13);
+	ff8_externals.sub_462DF0 = get_relative_call(ff8_externals.sub_462AD0, 0x62);
+	ff8_externals.ssigpu_tx_select_2_sub_465CE0 = get_relative_call(ff8_externals.sub_462DF0, 0x33);
+	ff8_externals.sub_464F70 = (int(*)(int,int,int,int,int,int,int,int,int,uint8_t*))get_relative_call(ff8_externals.ssigpu_tx_select_2_sub_465CE0, 0x281);
+	ff8_externals.sub_4675C0 = (void(*)(uint8_t*,int,uint8_t*,int,signed int,int,int))get_relative_call(uint32_t(ff8_externals.sub_464F70), 0x2C5);
 
 	ff8_externals.sub_559E40 = get_relative_call(ff8_externals.swirl_main_loop, 0x28);
 	ff8_externals.sub_559F30 = get_relative_call(ff8_externals.sub_559E40, 0xC1);
@@ -225,6 +232,7 @@ void ff8_find_externals()
 	ff8_externals.get_character_width = (uint32_t (*)(uint32_t))get_relative_call(ff8_externals.menu_draw_text, 0x1D0);
 
 	ff8_externals.open_lzs_image = get_relative_call(ff8_externals.load_credits_image, 0x27);
+	ff8_externals.credits_open_file = (uint32_t (*)(char*,char*))get_relative_call(ff8_externals.open_lzs_image, 0x72);
 	ff8_externals.upload_psx_vram = get_relative_call(ff8_externals.open_lzs_image, 0xB9);
 	ff8_externals.psxvram_buffer = (WORD *)get_absolute_value(ff8_externals.upload_psx_vram, 0x34);
 	ff8_externals.sub_464850 = (void (*)(uint32_t, uint32_t, uint32_t, uint32_t))get_relative_call(ff8_externals.upload_psx_vram, 0x8A);
