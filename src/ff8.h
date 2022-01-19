@@ -175,9 +175,9 @@ struct ff8_file_fs
 
 struct ff8_file
 {
-	int field_0;
+	int is_open;
 	char* filename;
-	int field_8;
+	int fd;
 	struct ff8_file_context field_C;
 	int field_20;
 	int field_24;
@@ -402,6 +402,18 @@ struct ff8_texture_set
 	uint32_t field_9C;
 };
 
+struct struc_color_texture {
+    uint32_t field_0;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t _padding;
+    int16_t x;
+    int16_t y;
+    int16_t w;
+    int16_t h;
+};
+
 struct texture_page
 {
 	uint32_t field_0;
@@ -410,8 +422,8 @@ struct texture_page
 	uint32_t width;
 	uint32_t height;
 	uint32_t color_key;
-	uint32_t u;
-	uint32_t v;
+	float u;
+	float v;
 	uint32_t field_20;
 	struct ff8_graphics_object *tri_gfxobj;
 	struct ff8_graphics_object *quad_gfxobj;
@@ -445,7 +457,7 @@ struct struc_50
 	uint32_t vram_width;
 	uint32_t vram_height;
 	uint32_t vram_palette_data;
-	uint32_t field_448;
+	uint32_t vram_palette_pos; // 24-bit | 6-bit
 };
 
 struct struc_51
@@ -787,7 +799,7 @@ struct ff8_externals
 	uint32_t nvidia_hack2;
 	struct sprite_viewport *menu_viewport;
 	uint32_t main_loop;
-	uint32_t sub_47CF60;
+	uint32_t cardgame_mainloop;
 	uint32_t sub_47CCB0;
 	uint32_t sub_534640;
 	uint32_t sub_4972A0;
@@ -852,6 +864,7 @@ struct ff8_externals
 	struct ff8_graphics_object **swirl_texture1;
 	uint32_t sub_48D0A0;
 	uint32_t open_lzs_image;
+	uint32_t (*credits_open_file)(char *, char *);
 	uint32_t upload_psx_vram;
 	void (*sub_464850)(uint32_t, uint32_t, uint32_t, uint32_t);
 	WORD *psxvram_buffer;
@@ -965,6 +978,12 @@ struct ff8_externals
 	uint32_t** savemap;
 	int32_t (*check_game_is_paused)(int32_t);
 	uint32_t sub_470250;
+	uint32_t *ssigpu_callbacks_1;
+	uint32_t sub_462AD0;
+	uint32_t sub_462DF0;
+	uint32_t ssigpu_tx_select_2_sub_465CE0;
+	int (*sub_464F70)(int, int, int, int, int, int, int, int, int, uint8_t *);
+	void(*sub_4675C0)(uint8_t *, int, uint8_t *, int, signed int, int, int);
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

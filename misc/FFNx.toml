@@ -428,6 +428,10 @@ trace_files = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trace_loaders = false
 
+# trace_vram - Dump in the logs only APIs that has to do with FF8 VRAM
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+trace_vram = false
+
 # trace_opcodes - Dump in the logs only APIs that has to do with field opcodes
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trace_opcodes = false

@@ -51,6 +51,8 @@
 #include "lighting.h"
 #include "achievement.h"
 
+#include "ff8/vram.h"
+
 bool proxyWndProc = false;
 
 // global game window handler
@@ -655,7 +657,13 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				sfx_init();
 				voice_init();
 				if (enable_ffmpeg_videos)
+				{
 					movie_init();
+				}
+				if (ff8)
+				{
+					vram_init();
+				}
 
 				// enable verbose logging for FFMpeg
 				av_log_set_level(AV_LOG_VERBOSE);
@@ -1127,6 +1135,7 @@ void common_unload_texture(struct texture_set *texture_set)
 	stats.texture_count--;
 
 	if(VREF(texture_set, ogl.external)) stats.external_textures--;
+	VRASS(texture_set, ogl.external, false); // texture_set can be reused (FF8)
 
 	// remove any other references to this texture
 	gl_check_deferred(texture_set);
@@ -1164,6 +1173,39 @@ uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_he
 	VRASS(texture_set, texturehandle[0], texture);
 
 	return true;
+}
+
+// Scale 32-bit BGRA image in place
+void scale_up_image_date_in_place(uint8_t *sourceAndTarget, int w, int h, int scale)
+{
+	if (scale <= 1)
+	{
+		return;
+	}
+
+	uint32_t *source = (uint32_t *)sourceAndTarget + w * h,
+		*target = (uint32_t *)sourceAndTarget + (w * scale) * (h * scale);
+
+	for (int y = 0; y < h; ++y)
+	{
+		uint32_t *source_line_start = source;
+
+		for (int i = 0; i < scale; ++i)
+		{
+			source = source_line_start;
+
+			for (int x = 0; x < w; ++x)
+			{
+				source -= 1;
+				target -= scale;
+
+				for (int i = 0; i < scale; ++i)
+				{
+					target[i] = *source;
+				}
+			}
+		}
+	}
 }
 
 // load modpath texture for tex file, returns true if successful
@@ -1205,6 +1247,34 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win", strlen("menu/btl_win") - 1)) gl_set->force_zsort = true;
 
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand_1", strlen("flevel/hand_1") - 1)) gl_set->force_filter = true;
+	}
+	else if(ff8)
+	{
+		uint8_t scale = texturePacker.getMaxScale();
+		uint8_t *image_data_scaled = (uint8_t *)image_data;
+
+		if (scale > 1)
+		{
+			uint32_t image_data_size = originalWidth * scale * originalHeight * scale * 4;
+			image_data_scaled = (uint8_t*)driver_malloc(image_data_size);
+
+			// convert source data
+			if (image_data_scaled != nullptr)
+			{
+				memcpy(image_data_scaled, image_data, dataSize);
+				scale_up_image_date_in_place(image_data_scaled, originalWidth, originalHeight, scale);
+			}
+		}
+
+		if (texturePacker.drawModdedTextures(VREF(tex_header, image_data), VREF(tex_header, palette_index), (uint32_t *)image_data_scaled, scale))
+		{
+			texture = newRenderer.createTexture(image_data_scaled, originalWidth * scale, originalHeight * scale);
+		}
+
+		if (image_data_scaled != image_data)
+		{
+			driver_free(image_data_scaled);
+		}
 	}
 
 	if(texture)

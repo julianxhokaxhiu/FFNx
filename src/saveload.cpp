@@ -73,7 +73,7 @@ void normalize_path(char *name)
 	}
 }
 
-void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, char *name, bool is_animated)
+void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated)
 {
 	char filename[sizeof(basedir) + 1024];
 	struct stat dummy;
