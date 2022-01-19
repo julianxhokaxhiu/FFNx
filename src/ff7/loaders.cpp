@@ -28,7 +28,7 @@ uint32_t get_frame_data_size(struct anim_header *anim_header)
 {
 	if(!anim_header) return 0;
 
-	return (anim_header->num_bones * sizeof(struct point3d) + sizeof(struct anim_frame_header)) * anim_header->num_frames;
+	return (anim_header->num_bones * sizeof(vector3<float>) + sizeof(struct anim_frame_header)) * anim_header->num_frames;
 }
 
 // load .a file, save modpath name somewhere we can retrieve it later
@@ -71,8 +71,8 @@ struct anim_header *load_animation(struct file_context *file_context, char *file
 	{
 		ret->anim_frames[i].header = (anim_frame_header *)data_pointer;
 		data_pointer += sizeof(struct anim_frame_header);
-		ret->anim_frames[i].data = (struct point3d *)data_pointer;
-		data_pointer += sizeof(struct point3d) * ret->num_bones;
+		ret->anim_frames[i].data = (vector3<float> *)data_pointer;
+		data_pointer += sizeof(vector3<float>) * ret->num_bones;
 	}
 
 	ret->file.pc_name = make_pc_name(file_context, file, filename);
@@ -162,9 +162,9 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 
 	if(ret->field_2C) ffnx_unexpected("oops, missed some .p data\n");
 
-	ret->vertdata = (struct point3d*)common_externals.alloc_read_file(sizeof(*ret->vertdata), ret->numverts, (struct file *)file);
-	ret->normaldata = (struct point3d*)common_externals.alloc_read_file(sizeof(*ret->normaldata), ret->numnormals, (struct file *)file);
-	ret->field_48 = (struct point3d*)common_externals.alloc_read_file(sizeof(*ret->field_48), ret->field_14, (struct file *)file);
+	ret->vertdata = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->vertdata), ret->numverts, (struct file *)file);
+	ret->normaldata = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->normaldata), ret->numnormals, (struct file *)file);
+	ret->field_48 = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->field_48), ret->field_14, (struct file *)file);
 	ret->texcoorddata = (struct texcoords*)common_externals.alloc_read_file(sizeof(*ret->texcoorddata), ret->numtexcoords, (struct file *)file);
 	ret->vertexcolordata = (uint32_t*)common_externals.alloc_read_file(sizeof(*ret->vertexcolordata), ret->numvertcolors, (struct file *)file);
 	ret->polycolordata = (uint32_t*)common_externals.alloc_read_file(sizeof(*ret->polycolordata), ret->numpolys, (struct file *)file);

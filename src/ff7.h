@@ -305,7 +305,7 @@ struct struc_106
 {
 	uint32_t field_0;
 	uint32_t color;
-	struct point3d point;
+	vector3<float> point;
 	struct abgr_color d3dcol;
 };
 
@@ -558,12 +558,12 @@ struct field_object
 struct struc_110
 {
 	uint32_t field_0;
-	struct point3d position;
-	struct point3d rotation;
-	struct point3d scale;
+	vector3<float> position;
+	vector3<float> rotation;
+	vector3<float> scale;
 	float scale_factor;
 	struct matrix matrix;
-	struct point3d *bone_positions;
+	vector3<float> *bone_positions;
 	struct matrix *bone_matrices;
 };
 
@@ -701,19 +701,13 @@ struct battle_anim_event {
     uint16_t damageEventQueueIdx;
 };
 
-struct camera_vec3 {
-	short x;
-	short y;
-	short z;
-};
-
-struct special_battle_camera{
-	camera_vec3 position;
-	camera_vec3 focal_point;
+struct formation_camera{
+	vector3<short> position;
+	vector3<short> focal_point;
 };
 
 struct bcamera_position{
-	camera_vec3 point;
+	vector3<short> point;
 	WORD unused_6;
 	short current_position;
 	short frames_to_wait;
@@ -1054,14 +1048,14 @@ struct battle_hrc_header
 
 struct anim_frame_header
 {
-	struct point3d root_rotation;
-	struct point3d root_translation;
+	vector3<float> root_rotation;
+	vector3<float> root_translation;
 };
 
 struct anim_frame
 {
 	struct anim_frame_header *header;
-	struct point3d *data;
+	vector3<float> *data;
 };
 
 struct anim_header
@@ -2301,9 +2295,9 @@ struct ff7_externals
 	void *(*stack_top)(struct stack *);
 	void (*stack_pop)(struct stack *);
 	void (*_root_animation)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
-	void (*_frame_animation)(uint32_t, struct matrix *, struct point3d *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
+	void (*_frame_animation)(uint32_t, struct matrix *, vector3<float> *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
 	void (*root_animation)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
-	void (*frame_animation)(uint32_t, struct matrix *, struct point3d *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
+	void (*frame_animation)(uint32_t, struct matrix *, vector3<float> *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
 	uint32_t *model_mode;
 	uint32_t name_menu_sub_6CBD32;
 	uint32_t name_menu_sub_719C08;
@@ -2531,9 +2525,9 @@ struct ff7_externals
 	DWORD* battle_camera_script_offset;
 	WORD* camera_fn_index;
 	WORD* camera_fn_counter;
-	camera_vec3* g_battle_camera_position;
-	camera_vec3* g_battle_camera_focal_point;
-	special_battle_camera* formation_camera;
+	vector3<short>* g_battle_camera_position;
+	vector3<short>* g_battle_camera_focal_point;
+	formation_camera* formation_camera;
 	byte* curr_formation_camera_idx;
 	byte* battle_enter_frames_to_wait;
 	byte* g_variation_index;

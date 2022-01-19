@@ -168,7 +168,7 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip)
 // draw a set of primitives with lighting
 void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, uint32_t clip)
 {
-	static struct point3d *normaldata;
+	static vector3<float> *normaldata;
 
 	normaldata = nullptr;
 
@@ -182,9 +182,9 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 	// If we still didn't get normalized data, we have to calculate them on the CPU
 	if (normaldata == nullptr)
 	{
-		static std::vector<struct point3d> normals;
-		static point3d zero = { 0.0f, 0.0f, 0.0f };
-		struct point3d e12, e13, triNormal;
+		static std::vector<vector3<float>> normals;
+		static vector3<float> zero = { 0.0f, 0.0f, 0.0f };
+		vector3<float> e12, e13, triNormal;
 
 		normals.resize(ip->vertexcount);
 		std::fill(normals.begin(), normals.end(), zero);
@@ -224,7 +224,7 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 }
 
 // main rendering routine, draws a set of primitives according to the current render state
-void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, struct point3d* normals, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
+void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, vector3<float>* normals, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
 {
 	FILE *log;
 	uint32_t i;

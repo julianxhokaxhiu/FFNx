@@ -352,7 +352,7 @@ public:
     const bgfx::Caps* getCaps();
     const bgfx::Stats* getStats();
 
-    void bindVertexBuffer(struct nvertex* inVertex, struct point3d* normals, uint32_t inCount);
+    void bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normals, uint32_t inCount);
     void bindIndexBuffer(WORD* inIndex, uint32_t inCount);
 
     void setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t height);

@@ -174,9 +174,9 @@ void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
 	camera_axis* axis_y = (camera_axis*)(level_data + camera_matrix_offset + 4 + 6);
 	camera_axis* axis_z = (camera_axis*)(level_data + camera_matrix_offset + 4 + 12);
 
-	struct point3d vx = { (float)(axis_x->x), (float)(axis_x->y), (float)(axis_x->z) };
-	struct point3d vy = { (float)(axis_y->x), (float)(axis_y->y), (float)(axis_y->z) };
-	struct point3d vz = { (float)(axis_z->x), (float)(axis_z->y), (float)(axis_z->z) };
+	vector3<float> vx = { (float)(axis_x->x), (float)(axis_x->y), (float)(axis_x->z) };
+	vector3<float> vy = { (float)(axis_y->x), (float)(axis_y->y), (float)(axis_y->z) };
+	vector3<float> vz = { (float)(axis_z->x), (float)(axis_z->y), (float)(axis_z->z) };
 
 	divide_vector(&vx, 4096.0f, &vx);
 	divide_vector(&vy, 4096.0f, &vy);
@@ -305,8 +305,8 @@ void Lighting::extractWalkmeshBorderData(std::vector<struct nvertex>& vertices, 
 	for (int i = 0; i < numEdges; ++i)
 	{
 		auto& e = edges[i];
-		struct point3d pos0 = vertices[e.v0]._;
-		struct point3d pos1 = vertices[e.v1]._;
+		vector3<float> pos0 = vertices[e.v0]._;
+		vector3<float> pos1 = vertices[e.v1]._;
 
 		bool isBorder = true;
 		for (int j = 0; j < numEdges; ++j)
@@ -317,8 +317,8 @@ void Lighting::extractWalkmeshBorderData(std::vector<struct nvertex>& vertices, 
 			}
 
 			auto& other_e = edges[j];
-			struct point3d other_pos0 = vertices[other_e.v0]._;
-			struct point3d other_pos1 = vertices[other_e.v1]._;
+			vector3<float> other_pos0 = vertices[other_e.v0]._;
+			vector3<float> other_pos1 = vertices[other_e.v1]._;
 
 			float errorMargin = 0.001f;
 			if (std::abs(pos0.x - other_pos0.x) < errorMargin && std::abs(pos0.y - other_pos0.y) < errorMargin && std::abs(pos0.z - other_pos0.z) < errorMargin &&
@@ -354,8 +354,8 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& ve
 			continue;
 		}
 
-		struct point3d pos0 = vertices[e.v0]._;
-		struct point3d pos1 = vertices[e.v1]._;
+		vector3<float> pos0 = vertices[e.v0]._;
+		vector3<float> pos1 = vertices[e.v1]._;
 
 		for (int j = 0; j < numEdges; ++j)
 		{
@@ -370,8 +370,8 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& ve
 				continue;
 			}
 
-			struct point3d other_pos0 = vertices[other_e.v0]._;
-			struct point3d other_pos1 = vertices[other_e.v1]._;
+			vector3<float> other_pos0 = vertices[other_e.v0]._;
+			vector3<float> other_pos1 = vertices[other_e.v1]._;
 
 			float errorMargin = 0.1f;;
 			if ((std::abs(pos0.x - other_pos0.x) < errorMargin && std::abs(pos0.y - other_pos0.y) < errorMargin && std::abs(pos0.z - other_pos0.z) < errorMargin) ||
@@ -386,33 +386,33 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& ve
 				e.nextEdge = j;
 			}
 
-			struct point3d pos0 = vertices[e.v0]._;
-			struct point3d pos1 = vertices[e.v1]._;
-			struct point3d ovPos = vertices[e.ov]._;
+			vector3<float> pos0 = vertices[e.v0]._;
+			vector3<float> pos1 = vertices[e.v1]._;
+			vector3<float> ovPos = vertices[e.ov]._;
 
-			struct point3d triCenter;
+			vector3<float> triCenter;
 			add_vector(&pos0, &pos1, &triCenter);
 			add_vector(&triCenter, &ovPos, &triCenter);
 			divide_vector(&triCenter, 2.0f, &triCenter);
 
-			struct point3d edgeDir0;
+			vector3<float> edgeDir0;
 			subtract_vector(&pos1, &pos0, &edgeDir0);
 			normalize_vector(&edgeDir0);
-			struct point3d edgeDir1;
+			vector3<float> edgeDir1;
 			subtract_vector(&ovPos, &pos0, &edgeDir1);
 			normalize_vector(&edgeDir1);
-			struct point3d normal;
+			vector3<float> normal;
 			cross_product(&edgeDir0, &edgeDir1, &normal);
 
-			struct point3d perpDir;
+			vector3<float> perpDir;
 			cross_product(&edgeDir0, &normal, &perpDir);
 			normalize_vector(&perpDir);
 
-			struct point3d ovDir0;
+			vector3<float> ovDir0;
 			subtract_vector(&pos0, &ovPos, &ovDir0);
 			normalize_vector(&ovDir0);
 
-			struct point3d ovDir1;
+			vector3<float> ovDir1;
 			subtract_vector(&pos1, &ovPos, &ovDir1);
 			normalize_vector(&ovDir1);
 
@@ -437,27 +437,27 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 			continue;
 		}
 
-		struct point3d pos0 = vertices[e.v0]._;
-		struct point3d pos1 = vertices[e.v1]._;
+		vector3<float> pos0 = vertices[e.v0]._;
+		vector3<float> pos1 = vertices[e.v1]._;
 
 		auto& prevEdge = edges[e.prevEdge];
 		auto& nextEdge = edges[e.nextEdge];
 
-		struct point3d capExtrudeDir0;
+		vector3<float> capExtrudeDir0;
 		add_vector(&e.perpDir, &prevEdge.perpDir, &capExtrudeDir0);
 		normalize_vector(&capExtrudeDir0);
 
-		struct point3d capExtrudeDir1;
+		vector3<float> capExtrudeDir1;
 		add_vector(&e.perpDir, &nextEdge.perpDir, &capExtrudeDir1);
 		normalize_vector(&capExtrudeDir1);
 
 		// Extrude triangle 0
-		struct point3d extrudePos0;
+		vector3<float> extrudePos0;
 		{
-			struct point3d perpDir = { capExtrudeDir0.x, capExtrudeDir0.y, capExtrudeDir0.z };
+			vector3<float> perpDir = { capExtrudeDir0.x, capExtrudeDir0.y, capExtrudeDir0.z };
 			float cos = dot_product(&e.perpDir, &capExtrudeDir0);
 
-			struct point3d extrudeOffset;
+			vector3<float> extrudeOffset;
 			multiply_vector(&perpDir, extrudeSize / cos, &extrudeOffset);
 
 			add_vector(&pos0, &extrudeOffset, &extrudePos0);
@@ -502,12 +502,12 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 		}
 
 		// Extrude triangle 1
-		struct point3d extrudePos1;
+		vector3<float> extrudePos1;
 		{
-			struct point3d perpDir = { capExtrudeDir1.x, capExtrudeDir1.y, capExtrudeDir1.z };
+			vector3<float> perpDir = { capExtrudeDir1.x, capExtrudeDir1.y, capExtrudeDir1.z };
 			float cos = dot_product(&e.perpDir, &capExtrudeDir1);
 
-			struct point3d extrudeOffset;
+			vector3<float> extrudeOffset;
 			multiply_vector(&perpDir, extrudeSize / cos, &extrudeOffset);
 
 			add_vector(&pos1, &extrudeOffset, &extrudePos1);
@@ -570,8 +570,8 @@ struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox* sceneAabb, s
 
 	WORD numTris = *(WORD*)(level_data + walkmesh_offset + 4);
 
-	struct point3d boundingMin = { FLT_MAX, FLT_MAX, FLT_MAX };
-	struct point3d boundingMax = { FLT_MIN, FLT_MIN, FLT_MIN };
+	vector3<float> boundingMin = { FLT_MAX, FLT_MAX, FLT_MAX };
+	vector3<float> boundingMax = { FLT_MIN, FLT_MIN, FLT_MIN };
 
 	// Calculates walkmesh AABB
 	for (int i = 0; i < numTris; ++i)
@@ -598,7 +598,7 @@ struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox* sceneAabb, s
 	bb.max_y = FLT_MIN;
 	bb.max_z = FLT_MIN;
 
-	struct point3d corners[8] = { {boundingMin.x, boundingMin.y, boundingMin.z},
+	vector3<float> corners[8] = { {boundingMin.x, boundingMin.y, boundingMin.z},
 								  {boundingMin.x, boundingMin.y, boundingMax.z},
 								  {boundingMin.x, boundingMax.y, boundingMin.z},
 								  {boundingMin.x, boundingMax.y, boundingMax.z},
@@ -609,7 +609,7 @@ struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox* sceneAabb, s
 
 	for (int j = 0; j < 8; ++j)
 	{
-		struct point3d cornerViewSpace;
+		vector3<float> cornerViewSpace;
 		transform_point(viewMatrix, &corners[j], &cornerViewSpace);
 
 		bb.min_x = std::min(bb.min_x, cornerViewSpace.x);
@@ -755,7 +755,7 @@ void Lighting::setWorldLightDir(float dirX, float dirY, float dirZ)
     lightingState.worldLightRot.z = dirZ;
 }
 
-struct point3d Lighting::getWorldLightDir()
+vector3<float> Lighting::getWorldLightDir()
 {
     return lightingState.worldLightRot;
 }
@@ -777,9 +777,9 @@ void Lighting::setLightColor(float r, float g, float b)
     lightingState.lightData[2] = b;
 }
 
-point3d Lighting::getLightColor()
+vector3<float> Lighting::getLightColor()
 {
-    struct point3d color = { lightingState.lightData[0],
+    vector3<float> color = { lightingState.lightData[0],
                              lightingState.lightData[1],
                              lightingState.lightData[2] };
     return color;
@@ -802,9 +802,9 @@ void Lighting::setAmbientLightColor(float r, float g, float b)
     lightingState.ambientLightData[2] = b;
 }
 
-point3d Lighting::getAmbientLightColor()
+vector3<float> Lighting::getAmbientLightColor()
 {
-    struct point3d color = { lightingState.ambientLightData[0],
+    vector3<float> color = { lightingState.ambientLightData[0],
                              lightingState.ambientLightData[1],
                              lightingState.ambientLightData[2] };
     return color;
