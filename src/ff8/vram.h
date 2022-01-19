@@ -2,10 +2,11 @@
 //    Copyright (C) 2009 Aali132                                            //
 //    Copyright (C) 2018 quantumpencil                                      //
 //    Copyright (C) 2018 Maxime Bacoux                                      //
-//    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
+//    Copyright (C) 2022 myst6re                                            //
 //    Copyright (C) 2022 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -21,5 +22,8 @@
 
 #pragma once
 
-void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated);
-uint32_t load_texture(void *data, uint32_t dataSize, char *name, uint32_t palette_index, uint32_t *width, uint32_t *height, struct gl_texture_set* gl_set);
+#include "texture_packer.h"
+
+TexturePacker texturePacker;
+
+void vram_init();

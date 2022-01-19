@@ -56,6 +56,7 @@ bool trace_fake_dx;
 bool trace_direct;
 bool trace_files;
 bool trace_loaders;
+bool trace_vram;
 bool trace_lights;
 bool trace_opcodes;
 bool trace_voice;
@@ -186,6 +187,7 @@ void read_cfg()
 	trace_direct = config["trace_direct"].value_or(false);
 	trace_files = config["trace_files"].value_or(false);
 	trace_loaders = config["trace_loaders"].value_or(false);
+	trace_vram = config["trace_vram"].value_or(false);
 	trace_lights = config["trace_lights"].value_or(false);
 	trace_opcodes = config["trace_opcodes"].value_or(false);
 	trace_voice = config["trace_voice"].value_or(false);
