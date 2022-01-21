@@ -1230,6 +1230,8 @@ struct chocobo_slot
 	char type;
 };
 
+#pragma pack(push,1)
+
 struct savemap
 {
 	uint32_t checksum;
@@ -1386,6 +1388,8 @@ struct party_member_data
 	uint32_t field_438;
 	uint32_t field_43C;
 };
+
+#pragma pack(pop)
 
 struct field_tile
 {
