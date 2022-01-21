@@ -85,18 +85,27 @@ void begin_voice()
 	}
 }
 
-bool play_voice(char* field_name, byte dialog_id, byte page_count)
+bool play_voice(char* field_name, byte window_id, byte dialog_id, byte page_count)
 {
 	char name[MAX_PATH];
 
 	char page = 'a' + page_count;
 	if (page > 'z') page = 'z';
-	sprintf(name, "%s/%u%c", field_name, dialog_id, page);
+
+	sprintf(name, "%s/%u_%u%c", field_name, window_id, dialog_id, page);
+
+	if (!nxAudioEngine.canPlayVoice(name))
+		sprintf(name, "%s/%u%c", field_name, dialog_id, page);
 
 	if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
-		sprintf(name, "%s/%u", field_name, dialog_id);
+	{
+		sprintf(name, "%s/%u_%u", field_name, window_id, dialog_id);
 
-	return nxAudioEngine.playVoice(name, voice_volume);
+		if (!nxAudioEngine.canPlayVoice(name))
+			sprintf(name, "%s/%u", field_name, dialog_id);
+	}
+
+	return nxAudioEngine.playVoice(name, window_id, voice_volume);
 }
 
 bool play_battle_dialogue_voice(short enemy_id, std::string tokenized_dialogue)
@@ -105,7 +114,7 @@ bool play_battle_dialogue_voice(short enemy_id, std::string tokenized_dialogue)
 
 	sprintf(name, "_battle/enemy_%04X/%s", enemy_id, tokenized_dialogue.c_str());
 
-	return nxAudioEngine.playVoice(name, voice_volume);
+	return nxAudioEngine.playVoice(name, 0, voice_volume);
 }
 
 bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenized_dialogue, int page_count)
@@ -133,7 +142,7 @@ bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenize
 	if(!nxAudioEngine.canPlayVoice(name) && page_count == 0)
 		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
 
-	return nxAudioEngine.playVoice(name, voice_volume);
+	return nxAudioEngine.playVoice(name, 0, voice_volume);
 }
 
 bool play_battle_action_voice(byte char_id, byte command_id, short action_id)
@@ -145,7 +154,7 @@ bool play_battle_action_voice(byte char_id, byte command_id, short action_id)
 	if(!nxAudioEngine.canPlayVoice(name))
 		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
 
-	return nxAudioEngine.playVoice(name, voice_volume);
+	return nxAudioEngine.playVoice(name, 0, voice_volume);
 }
 
 bool play_battle_action_support_voice(byte receiving_char_id, byte talking_char_id, byte command_id, short action_id)
@@ -157,21 +166,21 @@ bool play_battle_action_support_voice(byte receiving_char_id, byte talking_char_
 	if(!nxAudioEngine.canPlayVoice(name))
 		sprintf(name, "_battle/char_%02X_to_%02X/cmd_%02X", talking_char_id, receiving_char_id, command_id);
 
-	return nxAudioEngine.playVoice(name, voice_volume);
+	return nxAudioEngine.playVoice(name, 0, voice_volume);
 }
 
-void play_option(char* field_name, byte dialog_id, byte option_count)
+void play_option(char* field_name, byte window_id, byte dialog_id, byte option_count)
 {
 	char name[MAX_PATH];
 
 	sprintf(name, "%s/%u_%u", field_name, dialog_id, option_count);
 
-	nxAudioEngine.playVoice(name, voice_volume);
+	nxAudioEngine.playVoice(name, window_id, voice_volume);
 }
 
-void end_voice(uint32_t time = 0)
+void end_voice(byte window_id = 0, uint32_t time = 0)
 {
-	nxAudioEngine.stopVoice(time);
+	nxAudioEngine.stopVoice(window_id, time);
 
 	if (enable_voice_music_fade)
 	{
@@ -272,17 +281,17 @@ int opcode_voice_message()
 	}
 	if (_is_dialog_starting || _is_dialog_paging)
 	{
-		is_voice_acting = play_voice(field_name, dialog_id, message_page_count);
+		is_voice_acting = play_voice(field_name, window_id, dialog_id, message_page_count);
 		if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
 	}
 	else if (_is_dialog_closing)
 	{
-		end_voice();
+		end_voice(window_id);
 		simulate_OK_disabled[window_id] = false;
 	}
 
 	// Auto close the message if it was voice acted and the audio file has finished playing
-	if (is_voice_acting && !nxAudioEngine.isVoicePlaying())
+	if (is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
 	{
 		is_voice_acting = false;
 		if (!simulate_OK_disabled[window_id]) simulate_OK_button = true;
@@ -331,17 +340,17 @@ int opcode_voice_ask(int unk)
 	}
 	if (_is_dialog_starting || _is_dialog_paging)
 	{
-		play_voice(field_name, dialog_id, message_page_count);
+		play_voice(field_name, window_id, dialog_id, message_page_count);
 		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
 	}
 	else if (_is_dialog_option_changed)
 	{
-		play_option(field_name, dialog_id, opcode_ask_current_option);
+		play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
 		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u\n", field_name, window_id, dialog_id, opcode_ask_current_option);
 	}
 	else if (_is_dialog_closing)
 	{
-		end_voice();
+		end_voice(window_id);
 	}
 
 	message_last_option = opcode_ask_current_option;
@@ -654,6 +663,9 @@ void ff7_display_battle_action_text()
 
 void voice_init()
 {
+	// Prepare up to 10 voice slots
+	nxAudioEngine.setVoiceMaxSlots(10);
+
 	if (!ff8)
 	{
 		set_master_music_volume = (void (*)(uint32_t))common_externals.set_master_midi_volume;
