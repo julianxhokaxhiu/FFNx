@@ -185,7 +185,8 @@ private:
 	void resetMusicVolume(int channel, double time = 0);
 
 	// VOICE
-	NxAudioEngineVoice _currentVoice;
+	short _voiceMaxSlots = 0;
+	std::map<int, NxAudioEngineVoice> _currentVoice;
 
 	// AMBIENT
 	std::map<std::string, int> _ambientSequentialIndexes;
@@ -255,11 +256,12 @@ public:
 
 	// Voice
 	bool canPlayVoice(const char* name);
-	bool playVoice(const char* name, float volume = 1.0f);
-	void stopVoice(double time = 0);
-	void pauseVoice(double time = 0);
-	void resumeVoice(double time = 0);
-	bool isVoicePlaying();
+	bool playVoice(const char* name, int slot = 0, float volume = 1.0f);
+	void stopVoice(int slot = 0, double time = 0);
+	void pauseVoice(int slot = 0, double time = 0);
+	void resumeVoice(int slot = 0, double time = 0);
+	bool isVoicePlaying(int slot = 0);
+	void setVoiceMaxSlots(int slot);
 
 	// Ambient
 	bool canPlayAmbient(const char* name);

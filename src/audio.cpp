@@ -190,7 +190,10 @@ void NxAudioEngine::flush()
 		_sfxChannels[channel] = NxAudioEngineSFX();
 	}
 
-	_currentVoice = NxAudioEngineVoice();
+	for (int slot = 0; slot < _voiceMaxSlots; slot++)
+	{
+		_currentVoice[slot] = NxAudioEngineVoice();
+	}
 
 	_currentAmbient = NxAudioEngineAmbient();
 }
@@ -981,13 +984,13 @@ bool NxAudioEngine::canPlayVoice(const char* name)
 	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 }
 
-bool NxAudioEngine::playVoice(const char* name, float volume)
+bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 {
 	char filename[MAX_PATH];
 
 	bool exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 
-	_currentVoice.volume = volume;
+	_currentVoice[slot].volume = volume;
 
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_VOICE][name];
 	if (node)
@@ -996,84 +999,89 @@ bool NxAudioEngine::playVoice(const char* name, float volume)
 		toml::node *trackVolume = node["volume"].as_integer();
 		if (trackVolume)
 		{
-			_currentVoice.volume = trackVolume->value_or(100) / 100.0f;
+			_currentVoice[slot].volume = trackVolume->value_or(100) / 100.0f;
 		}
 	}
 
 	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
 	// Stop any previously playing voice
-	if (_engine.isValidVoiceHandle(_currentVoice.handle))
+	if (_engine.isValidVoiceHandle(_currentVoice[slot].handle))
 	{
-		_engine.stop(_currentVoice.handle);
+		_engine.stop(_currentVoice[slot].handle);
 
-		delete _currentVoice.stream;
+		delete _currentVoice[slot].stream;
 
-		_currentVoice.handle = NXAUDIOENGINE_INVALID_HANDLE;
+		_currentVoice[slot].handle = NXAUDIOENGINE_INVALID_HANDLE;
 	}
 
 	if (exists)
 	{
-		_currentVoice.stream = new SoLoud::VGMStream();
+		_currentVoice[slot].stream = new SoLoud::VGMStream();
 
-		SoLoud::result res = _currentVoice.stream->load(filename);
+		SoLoud::result res = _currentVoice[slot].stream->load(filename);
 		if (res != SoLoud::SO_NO_ERROR) {
 			ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
-			delete _currentVoice.stream;
+			delete _currentVoice[slot].stream;
 			return false;
 		}
 
-		_currentVoice.handle = _engine.play(*_currentVoice.stream, _currentVoice.volume);
+		_currentVoice[slot].handle = _engine.play(*_currentVoice[slot].stream, _currentVoice[slot].volume);
 
-		return _engine.isValidVoiceHandle(_currentVoice.handle);
+		return _engine.isValidVoiceHandle(_currentVoice[slot].handle);
 	}
 	else
 		return false;
 }
 
-void NxAudioEngine::stopVoice(double time)
+void NxAudioEngine::stopVoice(int slot, double time)
 {
 	if (time > 0.0)
 	{
-		_engine.fadeVolume(_currentVoice.handle, 0, time);
-		_engine.scheduleStop(_currentVoice.handle, time);
+		_engine.fadeVolume(_currentVoice[slot].handle, 0, time);
+		_engine.scheduleStop(_currentVoice[slot].handle, time);
 	}
 	else
 	{
-		_engine.stop(_currentVoice.handle);
+		_engine.stop(_currentVoice[slot].handle);
 	}
 }
 
-void NxAudioEngine::pauseVoice(double time)
+void NxAudioEngine::pauseVoice(int slot, double time)
 {
 	if (time > 0.0)
 	{
-		_engine.fadeVolume(_currentVoice.handle, 0, time);
-		_engine.schedulePause(_currentVoice.handle, time);
+		_engine.fadeVolume(_currentVoice[slot].handle, 0, time);
+		_engine.schedulePause(_currentVoice[slot].handle, time);
 	}
 	else
 	{
-		_engine.setPause(_currentVoice.handle, true);
+		_engine.setPause(_currentVoice[slot].handle, true);
 	}
 }
 
-void NxAudioEngine::resumeVoice(double time)
+void NxAudioEngine::resumeVoice(int slot, double time)
 {
 	if (time > 0.0)
 	{
-		_engine.setPause(_currentVoice.handle, false);
-		_engine.fadeVolume(_currentVoice.handle, _currentVoice.volume, time);
+		_engine.setPause(_currentVoice[slot].handle, false);
+		_engine.fadeVolume(_currentVoice[slot].handle, _currentVoice[slot].volume, time);
 	}
 	else
 	{
-		_engine.setVolume(_currentVoice.handle, _currentVoice.volume);
-		_engine.setPause(_currentVoice.handle, false);
+		_engine.setVolume(_currentVoice[slot].handle, _currentVoice[slot].volume);
+		_engine.setPause(_currentVoice[slot].handle, false);
 	}
 }
 
-bool NxAudioEngine::isVoicePlaying()
+bool NxAudioEngine::isVoicePlaying(int slot)
 {
-	return _engine.isValidVoiceHandle(_currentVoice.handle) && !_engine.getPause(_currentVoice.handle);
+	return _engine.isValidVoiceHandle(_currentVoice[slot].handle) && !_engine.getPause(_currentVoice[slot].handle);
+}
+
+void NxAudioEngine::setVoiceMaxSlots(int slot)
+{
+	_voiceMaxSlots = slot;
 }
 
 // Ambient
