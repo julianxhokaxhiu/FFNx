@@ -143,6 +143,10 @@ These people are:
 - [Chrysalis](http://forums.qhimm.com/index.php?action=profile;u=674):
   - for the battle fullscreen hext patch
   - for the menu cursor vertical centering in menu
+- [CosmosXIII](https://github.com/CosmosXIII)
+  - for the real-time light engine
+  - for the real-time camera control in battles
+  - for the analogue controls in FF7
 - [DLPB](https://forums.qhimm.com/index.php?action=profile;u=6439):
   - for original Hext concept and specification that FFNx implemented as well
   - for the field vertical centering hext patch, which FFNx provides a default patch for
@@ -185,6 +189,9 @@ These people are:
   - for 7h 1.x source code release and FFNx enablement
 - [unab0mb](https://forums.qhimm.com/index.php?action=profile;u=31071):
   - for the official integration of FFNx within 7thHeaven 2.3+
+- [tangtang95](https://github.com/tangtang95)
+  - for the 60FPS support in FF7
+  - for the Steam achievements in FF7
 
 I'm sure I forgot many others through the route. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
