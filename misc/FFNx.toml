@@ -310,6 +310,11 @@ speedhack_min = 1.0
 #~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_animated_textures = false
 
+# Disable animated textures on the fields listed below.
+# This field can be a single field name, or an array of field names.
+# NOTE: This is an actual BLACKLIST and it will have an impact ONLY when 'enable_animated_textures = true'
+disable_animated_textures_on_field = ""
+
 ##########################
 # DEBUGGING OPTIONS
 # These options are mostly useful for developers or people reporting crashes.

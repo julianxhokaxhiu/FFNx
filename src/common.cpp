@@ -1568,7 +1568,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 		}
 
 		// this texture changes in time, flag this as animated
-		VRASS(texture_set, ogl.gl_set->is_animated, enable_animated_textures && mode->driver_mode == MODE_FIELD);
+		VRASS(texture_set, ogl.gl_set->is_animated, enable_animated_textures && mode->driver_mode == MODE_FIELD && (std::find(disable_animated_textures_on_field.begin(), disable_animated_textures_on_field.end(), get_current_field_name()) == disable_animated_textures_on_field.end()));
 	}
 	else
 	{

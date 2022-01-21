@@ -105,6 +105,7 @@ double speedhack_step;
 double speedhack_max;
 double speedhack_min;
 bool enable_animated_textures;
+std::vector<std::string> disable_animated_textures_on_field;
 long ff7_fps_limiter;
 bool ff7_footsteps;
 bool enable_analogue_controls;
@@ -230,6 +231,7 @@ void read_cfg()
 	speedhack_max = config["speedhack_max"].value_or(8.0);
 	speedhack_min = config["speedhack_min"].value_or(1.0);
 	enable_animated_textures = config["enable_animated_textures"].value_or(false);
+	disable_animated_textures_on_field = get_string_or_array_of_strings(config["disable_animated_textures_on_field"]);
 	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FF7_LIMITER_DEFAULT);
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
