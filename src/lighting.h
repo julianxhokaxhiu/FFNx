@@ -24,6 +24,7 @@
 
 #include "matrix.h"
 #include "common.h"
+#include "globals.h"
 
 #include <vector>
 
@@ -75,7 +76,7 @@ struct LightingState
     vector3<float> worldLightRot = { 60.0, 60.0, 0.0 };
 
     // Shadowmap face culling
-    bool isShadowMapFaceCullingEnabled = true;
+    bool isShadowMapFaceCullingEnabled = false;
 
     // Battle shadowmap frustum parameters
     float shadowMapArea = 20000.0f;
@@ -95,7 +96,12 @@ class Lighting
 private:
     LightingState lightingState;
 
+    // Config
+    toml::parse_result config;
+
 private:
+    void loadConfig();
+    void initParamsFromConfig();
     void updateLightMatrices(struct boundingbox* sceneAabb);
 
     void ff7_load_ibl();
@@ -110,6 +116,8 @@ private:
     struct boundingbox calcFieldSceneAabb(struct boundingbox* sceneAbb, struct matrix* viewMatrix);
 
 public:
+    void init();
+
     void draw(struct game_obj* game_object);
     void drawFieldShadow();
 
@@ -131,6 +139,7 @@ public:
     void setAmbientLightColor(float r, float g, float b);
     vector3<float> getAmbientLightColor();
     void setIblMipCount(int mipCount);
+    bool isDisabledLightingTexture(const std::string& textureName);
 
     // Material
     void setRoughness(float roughness);

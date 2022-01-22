@@ -1183,6 +1183,17 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 
 		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
 
+		if (enable_lighting)
+		{
+			std::string path = VREF(tex_header, file.pc_name);
+			std::string filename = path.substr(path.find_last_of("/") + 1);
+
+			if(lighting.isDisabledLightingTexture(filename))
+			{
+				gl_set->disable_lighting = true;
+			}
+		}
+
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "world", strlen("world") - 1)) gl_set->force_filter = true;
 
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/usfont", strlen("menu/usfont") - 1))

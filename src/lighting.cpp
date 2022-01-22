@@ -30,6 +30,67 @@
 
 Lighting lighting;
 
+void Lighting::loadConfig()
+{
+	char _fullpath[MAX_PATH];
+	sprintf(_fullpath, "%s/%s/config.toml", basedir, external_lighting_path.c_str());
+
+	try
+	{
+		config = toml::parse_file(_fullpath);
+	}
+	catch (const toml::parse_error &err)
+	{
+		config = toml::parse("");
+	}
+}
+
+void Lighting::initParamsFromConfig()
+{
+   float lightRotationV = config["light_rotation_vertical"].value_or(60.0);
+   lightRotationV = std::max(0.0f, std::min(180.0f, lightRotationV));
+   float lightRotationH = config["light_rotation_horizontal"].value_or(60.0);
+   lightRotationH = std::max(0.0f, std::min(360.0f, lightRotationH));
+   lighting.setWorldLightDir(lightRotationV, lightRotationH, 0.0f);
+
+   float lightIntensity = config["light_intensity"].value_or(4.0);
+   lighting.setLightIntensity(lightIntensity);
+
+   toml::array* lightColorArray = config["light_color"].as_array();
+   if(lightColorArray != nullptr && lightColorArray->size() == 3)
+   {
+	   float r = lightColorArray->get(0)->value<float>().value_or(1.0);
+	   float g = lightColorArray->get(1)->value<float>().value_or(1.0);
+	   float b = lightColorArray->get(2)->value<float>().value_or(1.0);
+	   lighting.setLightColor(r, g, b);
+   }
+
+   float ambientLightIntensity = config["ambient_light_intensity"].value_or(1.0);
+   lighting.setAmbientIntensity(ambientLightIntensity);
+
+   toml::array* ambientLightColorArray = config["light_color"].as_array();
+   if(ambientLightColorArray != nullptr && ambientLightColorArray->size() == 3)
+   {
+	   float r = ambientLightColorArray->get(0)->value<float>().value_or(1.0);
+	   float g = ambientLightColorArray->get(1)->value<float>().value_or(1.0);
+	   float b = ambientLightColorArray->get(2)->value<float>().value_or(1.0);
+	   lighting.setAmbientLightColor(r, g, b);
+   }
+
+   float roughness = config["material_roughness"].value_or(0.7);
+   lighting.setRoughness(roughness);
+
+   float metallic = config["material_metallic"].value_or(0.5);
+   lighting.setMetallic(metallic);
+
+   float specular = config["material_specular"].value_or(0.0);
+   lighting.setSpecular(specular);
+
+   int shadowMapResolution = config["shadowmap_resolution"].value_or(2048);
+   shadowMapResolution = std::max(0, std::min(16384, shadowMapResolution));
+   lighting.setShadowMapResolution(shadowMapResolution);
+}
+
 void Lighting::updateLightMatrices(struct boundingbox* sceneAabb)
 {
     struct game_mode* mode = getmode_cached();
@@ -130,8 +191,8 @@ void Lighting::ff7_load_ibl()
 			last_battle_id = ff7_externals.modules_global_object->battle_id;
 
 			sprintf(filename, "bat_%d", last_battle_id);
-			sprintf(specularFullpath, "%s/%s/%s_s.dds", basedir, external_ibl_path.c_str(), filename);
-			sprintf(diffuseFullpath, "%s/%s/%s_d.dds", basedir, external_ibl_path.c_str(), filename);
+			sprintf(specularFullpath, "%s/%s/ibl/%s_s.dds", basedir, external_lighting_path.c_str(), filename);
+			sprintf(diffuseFullpath, "%s/%s/ibl/%s_d.dds", basedir, external_lighting_path.c_str(), filename);
 
 			newRenderer.prepareSpecularIbl(specularFullpath);
 			newRenderer.prepareDiffuseIbl(diffuseFullpath);
@@ -143,8 +204,8 @@ void Lighting::ff7_load_ibl()
 			last_field_id = *ff7_externals.field_id;
 
 			sprintf(filename, "field_%d", last_field_id);
-			sprintf(specularFullpath, "%s/%s/%s_s.dds", basedir, external_ibl_path.c_str(), filename);
-			sprintf(diffuseFullpath, "%s/%s/%s_d.dds", basedir, external_ibl_path.c_str(), filename);
+			sprintf(specularFullpath, "%s/%s/ibl/%s_s.dds", basedir, external_lighting_path.c_str(), filename);
+			sprintf(diffuseFullpath, "%s/%s/ibl/%s_d.dds", basedir, external_lighting_path.c_str(), filename);
 
 			newRenderer.prepareSpecularIbl(specularFullpath);
 			newRenderer.prepareDiffuseIbl(diffuseFullpath);
@@ -632,6 +693,12 @@ struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox* sceneAabb, s
 	return bb;
 }
 
+void Lighting::init()
+{
+	loadConfig();
+	initParamsFromConfig();
+}
+
 void Lighting::draw(struct game_obj* game_object)
 {
     VOBJ(game_obj, game_object, game_object);
@@ -813,6 +880,25 @@ vector3<float> Lighting::getAmbientLightColor()
 void Lighting::setIblMipCount(int mipCount)
 {
 	lightingState.iblData[0] = mipCount;
+}
+
+bool Lighting::isDisabledLightingTexture(const std::string& textureName)
+{
+	toml::array* disabledTextures = config["disable_lighting_textures"].as_array();
+	if (disabledTextures && !disabledTextures->empty() && disabledTextures->is_homogeneous(toml::node_type::string))
+	{
+		int count = disabledTextures->size();
+		for(int i = 0; i < count; ++i)
+		{
+			auto disabledTextureName = disabledTextures->get(i)->value<std::string>();
+			if(disabledTextureName.has_value() && textureName == disabledTextureName.value())
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void Lighting::setRoughness(float roughness)
