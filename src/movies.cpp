@@ -61,16 +61,6 @@ int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 	return ret;
 }
 
-int16_t script_ASPED_get_speed(int16_t bank, int16_t address)
-{
-	int16_t ret = ff7_externals.get_bank_value(bank, address);
-
-	if (is_overlapping_movie_playing() && ff7_fps_limiter == FF7_LIMITER_60FPS)
-		ret /= common_frame_multiplier;
-
-	return ret;
-}
-
 int script_WAIT()
 {
 	int result = 0;
@@ -484,7 +474,6 @@ void movie_init()
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x27], (DWORD)&script_BGMOVIE);
 
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x24], (DWORD)&script_WAIT);
-		replace_call_function(common_externals.execute_opcode_table[0xBD] + 0x1E, script_ASPED_get_speed);
 		replace_call_function(common_externals.execute_opcode_table[0xC3] + 0x46, script_OFST_get_speed);
 
 		replace_function(ff7_externals.sub_611BAE, ff7_compare_ifsw);
