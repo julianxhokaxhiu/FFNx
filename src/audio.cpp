@@ -196,6 +196,11 @@ void NxAudioEngine::flush()
 	}
 
 	_currentAmbient = NxAudioEngineAmbient();
+
+	for (int slot = 0; slot < _movieAudioMaxSlots; slot++)
+	{
+		_currentMovieAudio[slot] = NxAudioEngineMovieAudio();
+	}
 }
 
 void NxAudioEngine::cleanup()
@@ -1262,7 +1267,7 @@ bool NxAudioEngine::canPlayMovieAudio(const char* nameWithPath)
 	return getFilenameFullPath<const char*>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
 }
 
-bool NxAudioEngine::playMovieAudio(const char* nameWithPath)
+bool NxAudioEngine::playMovieAudio(const char* nameWithPath, int slot)
 {
 	char filename[MAX_PATH];
 	bool exists = getFilenameFullPath<const char *>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
@@ -1270,40 +1275,45 @@ bool NxAudioEngine::playMovieAudio(const char* nameWithPath)
 	if (trace_all || trace_movies) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
 	// Stop any previously playing movie audio
-	if (_engine.isValidVoiceHandle(_currentMovieAudio.handle))
+	if (_engine.isValidVoiceHandle(_currentMovieAudio[slot].handle))
 	{
-		_engine.stop(_currentMovieAudio.handle);
+		_engine.stop(_currentMovieAudio[slot].handle);
 
-		delete _currentMovieAudio.stream;
+		delete _currentMovieAudio[slot].stream;
 
-		_currentMovieAudio.handle = NXAUDIOENGINE_INVALID_HANDLE;
+		_currentMovieAudio[slot].handle = NXAUDIOENGINE_INVALID_HANDLE;
 	}
 
 	if (exists)
 	{
-		_currentMovieAudio.stream = new SoLoud::VGMStream();
+		_currentMovieAudio[slot].stream = new SoLoud::VGMStream();
 
-		SoLoud::result res = _currentMovieAudio.stream->load(filename);
+		SoLoud::result res = _currentMovieAudio[slot].stream->load(filename);
 		if (res != SoLoud::SO_NO_ERROR) {
 			ffnx_error("NxAudioEngine::%s: Cannot load %s with vgmstream ( SoLoud error: %u )\n", __func__, filename, res);
-			delete _currentMovieAudio.stream;
+			delete _currentMovieAudio[slot].stream;
 			return false;
 		}
 
-		_currentMovieAudio.handle = _engine.play(*_currentMovieAudio.stream, 1.0f);
+		_currentMovieAudio[slot].handle = _engine.play(*_currentMovieAudio[slot].stream, 1.0f);
 
-		return _engine.isValidVoiceHandle(_currentMovieAudio.handle);
+		return _engine.isValidVoiceHandle(_currentMovieAudio[slot].handle);
 	}
 	else
 		return false;
 }
 
-void NxAudioEngine::stopMovieAudio()
+void NxAudioEngine::stopMovieAudio(int slot)
 {
-	_engine.stop(_currentMovieAudio.handle);
+	_engine.stop(_currentMovieAudio[slot].handle);
 }
 
-bool NxAudioEngine::isMovieAudioPlaying()
+bool NxAudioEngine::isMovieAudioPlaying(int slot)
 {
-	return _engine.isValidVoiceHandle(_currentMovieAudio.handle);
+	return _engine.isValidVoiceHandle(_currentMovieAudio[slot].handle);
+}
+
+void NxAudioEngine::setMovieAudioMaxSlots(int slot)
+{
+	_movieAudioMaxSlots = slot;
 }

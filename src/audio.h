@@ -193,7 +193,8 @@ private:
 	NxAudioEngineAmbient _currentAmbient;
 
 	// MOVIE AUDIO
-	NxAudioEngineMovieAudio _currentMovieAudio;
+	short _movieAudioMaxSlots = 0;
+	std::map<int, NxAudioEngineMovieAudio> _currentMovieAudio;
 
 	// MISC
 	// Returns false if the file does not exist
@@ -273,9 +274,10 @@ public:
 
 	// Movie Audio
 	bool canPlayMovieAudio(const char* filename);
-	bool playMovieAudio(const char* filename);
-	void stopMovieAudio();
-	bool isMovieAudioPlaying();
+	bool playMovieAudio(const char* filename, int slot = 0);
+	void stopMovieAudio(int slot = 0);
+	bool isMovieAudioPlaying(int slot = 0);
+	void setMovieAudioMaxSlots(int slot);
 };
 
 extern NxAudioEngine nxAudioEngine;
