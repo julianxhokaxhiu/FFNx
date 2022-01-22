@@ -88,9 +88,9 @@ enable_lighting = false
 prefer_lighting_cpu_calculations = true
 
 #[EXTERNAL IBL PATH]
-# Path for external environment maps for Image Based Lighting (IBL).
+# Path for external lighting files.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-external_ibl_path = "lighting/ibl"
+external_lighting_path = "lighting"
 
 #########################
 # Audio Player Options

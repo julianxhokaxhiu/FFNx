@@ -262,12 +262,19 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		return;
 	}
 
+	bool isLightingEnabledTexture = true;
+
 	// If we're attaching a texture, and it is an external one, then use a better blending that considers the alpha channel
 	if (current_state.texture_set)
 	{
 		VOBJ(texture_set, texture_set, current_state.texture_set);
 
 		if (VREF(texture_set, ogl.external)) newRenderer.isExternalTexture(true);
+
+		if(enable_lighting && VREF(texture_set, ogl.gl_set->disable_lighting))
+		{
+			isLightingEnabledTexture = false;
+		}
 	}
 
 	// OpenGL treats texture filtering as a per-texture parameter, we need it
@@ -291,7 +298,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	newRenderer.bindIndexBuffer(indices, count);
 	newRenderer.setPrimitiveType(RendererPrimitiveType(primitivetype));
 
-	if (!ff8 && enable_lighting) newRenderer.drawWithLighting(normals != nullptr);
+	if (!ff8 && enable_lighting && isLightingEnabledTexture) newRenderer.drawWithLighting(normals != nullptr);
 	else newRenderer.draw();
 
 	stats.vertex_count += count;

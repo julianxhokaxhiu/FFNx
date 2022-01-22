@@ -702,6 +702,9 @@ void Renderer::init()
         overlay.init(backendProgramHandles[RendererProgram::OVERLAY], window_size_x, window_size_y);
     }
 
+    // Init Lighting
+    lighting.init();
+
     // Set defaults
     show();
 };
@@ -765,7 +768,7 @@ void Renderer::prepareEnvBrdf()
     if (bgfx::isValid(envBrdfTexture))
         bgfx::destroy(envBrdfTexture);
 
-    sprintf(fullpath, "%s/%s/envBrdf.dds", basedir, external_ibl_path.c_str());
+    sprintf(fullpath, "%s/%s/ibl/envBrdf.dds", basedir, external_lighting_path.c_str());
 
     uint32_t width, height, mipCount = 0;
     envBrdfTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);

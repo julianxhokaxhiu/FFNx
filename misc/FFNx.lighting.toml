@@ -1,0 +1,22 @@
+# FFNx Lighting config file
+
+### HOW TO: ###################################################################
+# Sections may be commented by default with an initial # character.
+# Remove the initial # character to set the entire sections block and its flags
+# -----------------------------------------------------------------------------
+###############################################################################
+
+### SUPPORTED FLAGS: ##########################################################
+# disable_lighting_textures : disables lighting for models using the given texture names
+###############################################################################
+
+light_rotation_vertical = 60.0
+light_rotation_horizontal = 60.0
+light_intensity = 4.0
+light_color = [ 1.0, 1.0, 1.0 ]
+ambient_light_intensity = 1.0
+material_roughness = 0.7
+material_metallic = 0.5
+material_specular = 0.0
+
+disable_lighting_textures = [ "STAGE01_T05", "STAGE02_T01", "STAGE02_T02", "STAGE03_T01", "STAGE04_T01", "STAGE05_T01", "STAGE05_T02", "STAGE06_T01", "STAGE06_T02", "STAGE07_T01", "STAGE07_T02", "STAGE08_T01", "STAGE08_T02", "STAGE19_T01", "STAGE19_T02", "STAGE19_T03", "STAGE20_T01", "STAGE20_T02", "STAGE23_T01", "STAGE23_T02", "STAGE33_T01", "STAGE33_T02", "STAGE34_T01", "STAGE34_T02", "STAGE36_T01", "STAGE36_T02", "STAGE39_T01", "STAGE40_T02", "STAGE40_T03", "STAGE44_T01", "STAGE47_T01", "STAGE47_T02", "STAGE53_T01", "STAGE58_T01", "STAGE58_T02", "STAGE59_T01", "STAGE61_T01", "STAGE61_T02", "STAGE62_T01", "STAGE62_T02", "STAGE63_T01", "STAGE63_T02", "STAGE64_T01", "STAGE64_T02", "STAGE66_T01", "STAGE66_T02", "STAGE67_T01", "STAGE67_T02", "STAGE68_T06", "STAGE69_T04", "STAGE70_T01", "STAGE70_T02", "STAGE71_T01", "STAGE71_T02", "STAGE72_T01", "STAGE72_T02", "STAGE79_T01", "STAGE80_T01", "STAGE80_T02", "STAGE81_T01", "STAGE81_T02", "STAGE84_T01", "STAGE84_T02", "STAGE84_T03", "STAGE87_T01", "STAGE87_T02", "STAGE88_T01", "STAGE88_T02", "STAGE89_T01" ]

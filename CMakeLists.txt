@@ -503,6 +503,10 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.ambient.toml
           ${CMAKE_BINARY_DIR}/bin/ambient/config.toml
+  # lighting .toml
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.lighting.toml
+          ${CMAKE_BINARY_DIR}/bin/lighting/config.toml
   # SFX .toml
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.SFX.toml
