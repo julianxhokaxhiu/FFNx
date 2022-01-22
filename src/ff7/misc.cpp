@@ -141,6 +141,7 @@ void ff7_use_analogue_controls()
 	float verticalRotSpeed = 0.0f;
 	float horizontalRotSpeed = 0.0f;
 	float zoomSpeed = 0.0f;
+	float zoomSpeedMax = 1000.0f;
 
 	float invertedCameraScale = 1.0;
 	if(enable_inverted_camera_controls) invertedCameraScale = -1.0;
@@ -168,15 +169,15 @@ void ff7_use_analogue_controls()
 			else if(gamepad.leftStickY < -0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f))
 				inputDir = {0.0f, -1.0f, 0.0f};
 
-			if(std::abs(gamepad.rightStickY) > 0.1f)
+			if(std::abs(gamepad.rightStickY) > right_analog_stick_deadzone)
 				verticalRotSpeed = invertedCameraScale * -5.0f * gamepad.rightStickY;
-			if(std::abs(gamepad.rightStickX) > 0.1)
+			if(std::abs(gamepad.rightStickX) > right_analog_stick_deadzone)
 				horizontalRotSpeed = 5.0f * gamepad.rightStickX;
 
-			if(gamepad.rightTrigger > -0.9)
-				zoomSpeed += 500.0f * (1.0 + gamepad.rightTrigger);
-			if(gamepad.leftTrigger > -0.9)
-				zoomSpeed -= 500.0f * (1.0 + gamepad.leftTrigger);
+			if(gamepad.rightTrigger > -1.0f + right_analog_trigger_deadzone)
+				zoomSpeed += zoomSpeedMax * (0.5 + 0.5f * gamepad.rightTrigger);
+			if(gamepad.leftTrigger > -1.0 + left_analog_trigger_deadzone)
+				zoomSpeed -= zoomSpeedMax * (0.5f + 0.5f * gamepad.leftTrigger);
 		}
 	}
 	else
@@ -206,16 +207,23 @@ void ff7_use_analogue_controls()
 				!(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lX > joystick.GetDeadZone(0.5f)))
 				inputDir = {0.0f, -1.0f, 0.0f};
 
-			if(std::abs(joystick.GetState()->lRz) > joystick.GetDeadZone(0.1f))
+			if(std::abs(joystick.GetState()->lRz) > joystick.GetDeadZone(right_analog_stick_deadzone))
 				verticalRotSpeed = invertedCameraScale * 5.0f * static_cast<float>(joystick.GetState()->lRz) / static_cast<float>(SHRT_MAX);
-			if(std::abs(joystick.GetState()->lZ) > joystick.GetDeadZone(0.1f))
+			if(std::abs(joystick.GetState()->lZ) > joystick.GetDeadZone(right_analog_stick_deadzone))
 				horizontalRotSpeed = 5.0f * static_cast<float>(joystick.GetState()->lZ) / static_cast<float>(SHRT_MAX);
 
-
-			if(joystick.GetState()->lRy > -static_cast<float>(SHRT_MAX) + joystick.GetDeadZone(0.1f))
-				zoomSpeed += 500.0f * (1.0 + static_cast<float>(joystick.GetState()->lRy) / static_cast<float>(SHRT_MAX)) ;
-			if(joystick.GetState()->lRx > -static_cast<float>(SHRT_MAX) + joystick.GetDeadZone(0.1f))
-				zoomSpeed -= 500.0f * (1.0 + static_cast<float>(joystick.GetState()->lRx) / static_cast<float>(SHRT_MAX)) ;
+			if(joystick.HasAnalogTriggers())
+			{
+				if(joystick.GetState()->lRy > -static_cast<float>(SHRT_MAX) + joystick.GetDeadZone(right_analog_trigger_deadzone))
+					zoomSpeed += zoomSpeedMax * (0.5f + 0.5f * static_cast<float>(joystick.GetState()->lRy) / static_cast<float>(SHRT_MAX));
+				if(joystick.GetState()->lRx > -static_cast<float>(SHRT_MAX) + joystick.GetDeadZone(left_analog_trigger_deadzone))
+					zoomSpeed -= zoomSpeedMax * (0.5f + 0.5f * static_cast<float>(joystick.GetState()->lRx) / static_cast<float>(SHRT_MAX));
+			}
+			else
+			{
+				if(joystick.GetState()->rgbButtons[7] & 0x80) zoomSpeed += zoomSpeedMax;
+				if(joystick.GetState()->rgbButtons[6] & 0x80) zoomSpeed -= zoomSpeedMax;
+			}
 		}
 	}
 

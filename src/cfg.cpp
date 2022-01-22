@@ -110,6 +110,9 @@ long ff7_fps_limiter;
 bool ff7_footsteps;
 bool enable_analogue_controls;
 bool enable_inverted_camera_controls;
+double right_analog_stick_deadzone;
+double left_analog_trigger_deadzone;
+double right_analog_trigger_deadzone;
 bool enable_steam_achievements;
 bool steam_achievements_debug_mode;
 
@@ -236,6 +239,9 @@ void read_cfg()
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
 	enable_inverted_camera_controls = config["enable_inverted_camera_controls"].value_or(false);
+	right_analog_stick_deadzone = config["right_analog_stick_deadzone"].value_or(0.1);
+	left_analog_trigger_deadzone = config["left_analog_trigger_deadzone"].value_or(0.1);
+	right_analog_trigger_deadzone = config["right_analog_trigger_deadzone"].value_or(0.1);
 	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
 	steam_achievements_debug_mode = config["steam_achievements_debug_mode"].value_or(false);
 

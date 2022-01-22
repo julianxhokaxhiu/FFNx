@@ -237,6 +237,21 @@ enable_analogue_controls = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_inverted_camera_controls = false
 
+#[RIGHT ANALOG STICK DEADZONE]
+# Sets the deadzone for the right analog stick. Values are from 0 to 1.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+right_analog_stick_deadzone = 0.1
+
+#[LEFT ANALOG TRIGGER DEADZONE]
+# Sets the deadzone for the left analog trigger. Values are from 0 to 1.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+left_analog_trigger_deadzone = 0.1
+
+#[RIGHT ANALOG TRIGGER DEADZONE]
+# Sets the deadzone for the right analog trigger. Values are from 0 to 1.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+right_analog_trigger_deadzone = 0.1
+
 ###############################
 # MUST SET FOR VERSIONS BELOW
 # FF7 2012   FF7 STEAM

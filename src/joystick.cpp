@@ -117,6 +117,12 @@ bool Joystick::CheckConnection()
 
     gameController = gameControllers.at(0);
 
+    // Get controller capabilities
+    caps.dwSize = sizeof(DIDEVCAPS);
+
+    if (FAILED(gameController->GetCapabilities(&caps)))
+      return false;
+
     if (trace_all || trace_gamepad)
     {
       // get game controller name
@@ -177,6 +183,11 @@ bool Joystick::Refresh()
     return false;
 
   return true;
+}
+
+bool Joystick::HasAnalogTriggers()
+{
+  return caps.dwAxes >=6;
 }
 
 void Joystick::Clean()
