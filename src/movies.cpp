@@ -31,6 +31,11 @@
 #include "redirect.h"
 #include "achievement.h"
 
+enum MovieAudioLayers {
+	MUSIC = 0,
+	VOICE
+};
+
 // Required by > 15 FPS movies
 bool is_movie_bgfield = false;
 short movie_fps_ratio = 1;
@@ -39,6 +44,7 @@ int (*old_bgmovie)();
 byte mvief_bank = 0;
 byte mvief_address = 0;
 char movie_music_path[512];
+char movie_voice_path[512];
 
 int16_t script_OFST_get_speed(int16_t bank, int16_t address)
 {
@@ -191,6 +197,7 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	_splitpath(newFmvName, drivename, dirname, filename, NULL);
 	// Remove extension
 	_snprintf(movie_music_path, sizeof(movie_music_path), "%s%s%s", drivename, dirname, filename);
+	_snprintf(movie_voice_path, sizeof(movie_voice_path), "%s%s%s_va", drivename, dirname, filename);
 
 	ffmpeg_prepare_movie(newFmvName, ! nxAudioEngine.canPlayMovieAudio(movie_music_path));
 
@@ -256,7 +263,8 @@ uint32_t ff7_start_movie()
 	ff7_externals.movie_object->is_playing = 1;
 
 	nxAudioEngine.pauseAmbient();
-	nxAudioEngine.playMovieAudio(movie_music_path);
+	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
+	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE);
 
 	return ff7_update_movie_sample(0);
 }
@@ -272,7 +280,8 @@ uint32_t ff7_stop_movie()
 
 		ffmpeg_stop_movie();
 
-		nxAudioEngine.stopMovieAudio();
+		nxAudioEngine.stopMovieAudio(MovieAudioLayers::MUSIC);
+		nxAudioEngine.stopMovieAudio(MovieAudioLayers::VOICE);
 		nxAudioEngine.resumeAmbient();
 	}
 
@@ -465,6 +474,8 @@ void movie_init()
 {
 	if(!ff8)
 	{
+		nxAudioEngine.setMovieAudioMaxSlots(2);
+
 		// Fix sync with movies > 15 FPS
 		old_mvief = (int (*)())common_externals.execute_opcode_table[0xFA];
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xFA], (DWORD)&script_MVIEF);
