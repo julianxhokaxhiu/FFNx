@@ -137,6 +137,7 @@ target_compile_options(
   PRIVATE /D_CRT_SECURE_NO_WARNINGS
   PRIVATE /DNOMINMAX
   PRIVATE /Zc:strictStrings-
+  PRIVATE /Qpar
 )
 target_compile_features(${RELEASE_NAME}
   PRIVATE cxx_std_20
