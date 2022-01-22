@@ -123,6 +123,9 @@ extern long ff7_fps_limiter;
 extern bool ff7_footsteps;
 extern bool enable_analogue_controls;
 extern bool enable_inverted_camera_controls;
+extern double right_analog_stick_deadzone;
+extern double left_analog_trigger_deadzone;
+extern double right_analog_trigger_deadzone;
 extern bool enable_steam_achievements;
 extern bool steam_achievements_debug_mode;
 

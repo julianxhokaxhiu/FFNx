@@ -33,6 +33,7 @@ class Joystick
 private:
   LPDIRECTINPUT8 dev = nullptr;                   // dinput interface
   LPDIRECTINPUTDEVICE8 gameController = nullptr;  // the actual joystick device
+  DIDEVCAPS caps;                                 // the device capabilities
   DIJOYSTATE2 currentState;			                  // the state of the joystick in the current frame
 
   BOOL enumerateGameControllers(LPCDIDEVICEINSTANCE devInst);
@@ -47,6 +48,7 @@ public:
   LPDIJOYSTATE2 GetState();
   bool CheckConnection();
   bool Refresh();
+  bool HasAnalogTriggers();
   void Clean();
 
   LONG GetDeadZone(float percent);
