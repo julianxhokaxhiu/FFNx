@@ -76,6 +76,7 @@ find_package(SOLOUD REQUIRED)
 find_package(OPENPSF REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
 find_package(STEAMWORKSSDK CONFIG REQUIRED)
+find_package(xxHash CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -120,6 +121,7 @@ target_link_libraries(
   pugixml::pugixml
   tomlplusplus::tomlplusplus
   STEAMWORKSSDK::STEAMWORKSSDK
+  xxHash::xxhash
   ${BX_LIBRARIES}
   ${BIMG_LIBRARIES}
   ${BGFX_LIBRARIES}
