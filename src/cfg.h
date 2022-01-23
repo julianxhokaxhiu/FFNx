@@ -119,6 +119,7 @@ extern double speedhack_max;
 extern double speedhack_min;
 extern bool enable_animated_textures;
 extern std::vector<std::string> disable_animated_textures_on_field;
+extern bool use_animated_textures_v2;
 extern long ff7_fps_limiter;
 extern bool ff7_footsteps;
 extern bool enable_analogue_controls;
