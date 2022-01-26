@@ -888,7 +888,7 @@ struct battle_model_state_small
 struct effect100_data
 {
     uint16_t field_0;
-    uint16_t field_2;
+    short field_2;
     short n_frames;
     short field_6;
     short field_8;
@@ -906,7 +906,7 @@ struct effect100_data
 struct effect60_data
 {
     uint16_t field_0;
-    uint16_t field_2;
+    short field_2;
     short n_frames;
     short field_6;
     short field_8;
@@ -922,7 +922,7 @@ struct effect60_data
 struct effect10_data
 {
     uint16_t field_0;
-    uint16_t field_2;
+    short field_2;
     short n_frames;
     short field_6;
     short field_8;
@@ -2410,6 +2410,7 @@ struct ff7_externals
 	WORD* word_CC0DD4;
 	WORD* word_CC1638;
 	uint32_t sub_630D50;
+	uint32_t sub_631945;
 	WORD* opcode_message_loop_code;
 	int (*sub_6310A1)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*);
 	WORD* opcode_ask_question_code;
@@ -2586,7 +2587,6 @@ struct ff7_externals
 	uint32_t battle_move_character_sub_4270DE;
 	uint32_t handle_aura_effects_425520;
 	uint32_t run_aura_effects_5C0230;
-	uint32_t magic_aura_effects_5C0300;
 	uint32_t limit_break_aura_effects_5C0572;
 	uint32_t enemy_skill_aura_effects_5C06BF;
 	uint32_t handle_summon_aura_5C0850;
@@ -2631,6 +2631,7 @@ struct ff7_externals
 	void (*battle_sub_68CF75)(char, struc_173*);
 	void (*create_rot_matrix_from_word_matrix_6617E9)(rotation_matrix*, matrix*);
 	struc_84* (*get_draw_chain_671C71)(ff7_graphics_object*);
+	void (*battle_sub_6CE81E)();
 
 	battle_model_state *g_battle_model_state;
 	battle_model_state_small *g_small_battle_model_state;
@@ -2699,6 +2700,9 @@ struct ff7_externals
 	uint32_t update_world_snake_position_7564CD;
 	uint32_t world_sub_767540;
 	uint32_t world_sub_767641;
+	uint32_t world_opcode_message_sub_75EE86;
+	uint32_t world_opcode_message_update_box_769050;
+	uint32_t world_opcode_message_update_text_769C02;
 	int (*get_world_encounter_rate)();
 	void (*world_compute_delta_position_753D00)(short* values, short z_value);
 	int (*pop_world_script_stack)();

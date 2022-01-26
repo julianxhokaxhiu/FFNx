@@ -806,7 +806,6 @@ void ff7_execute_effect60_fn()
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_boss_death_sub_5BC5EC ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BCD42 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.display_battle_damage_5BB410 ||
-                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.magic_aura_effects_5C0300 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.limit_break_aura_effects_5C0572 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.enemy_skill_aura_effects_5C06BF ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.summon_aura_effects_5C0953 ||
@@ -1286,6 +1285,15 @@ int ff7_battle_animate_texture_spt(texture_spt_anim_ctx *texture_ctx, int a2, in
     return retVal;
 }
 
+void ff7_battle_sub_6CE81E()
+{
+    // Gun effect uses a variable that is toggle true and false each frame in 15 FPS. With greater FPS, this should change less frequently
+    if(frame_counter % battle_frame_multiplier == 0)
+    {
+        ff7_externals.battle_sub_6CE81E();
+    }
+}
+
 void ff7_battle_animations_hook_init()
 {
     // 3d model animation
@@ -1396,11 +1404,6 @@ void ff7_battle_animations_hook_init()
     }
 
     // Aura animation (magic, limit break, enemy skill, summon)
-    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x4C, 0x7 - battle_frame_multiplier / 2);
-    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0x6A, 0xA - battle_frame_multiplier / 2);
-    patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x88, battle_frame_multiplier);
-    patch_code_byte(ff7_externals.magic_aura_effects_5C0300 + 0xA2, 0xC - battle_frame_multiplier / 2);
-    patch_multiply_code<byte>(ff7_externals.magic_aura_effects_5C0300 + 0x138, battle_frame_multiplier);
     patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x4C, battle_frame_multiplier);
     patch_multiply_code<byte>(ff7_externals.limit_break_aura_effects_5C0572 + 0x6E, battle_frame_multiplier);
     patch_divide_code<DWORD>(ff7_externals.limit_break_aura_effects_5C0572 + 0x7A, battle_frame_multiplier);
@@ -1442,4 +1445,7 @@ void ff7_battle_animations_hook_init()
     // Texture material animation
     replace_function(ff7_externals.battle_animate_material_texture, ff7_battle_animate_material_texture);
     replace_function(ff7_externals.battle_animate_texture_spt, ff7_battle_animate_texture_spt);
+
+    // Toggle variable related to gun effect
+    replace_call_function(ff7_externals.battle_sub_42D808 + 0x117, ff7_battle_sub_6CE81E);
 }

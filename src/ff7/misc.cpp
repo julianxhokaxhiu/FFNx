@@ -512,7 +512,21 @@ void ff7_limit_fps()
 		}
 	}
 	else
-		framerate = 60.0f;
+	{
+		switch (mode->driver_mode)
+		{
+		case MODE_FIELD:
+		case MODE_WORLDMAP:
+		case MODE_BATTLE:
+		case MODE_SWIRL:
+		case MODE_SNOWBOARD:
+		case MODE_COASTER:
+		case MODE_CONDOR:
+		case MODE_CREDITS:
+			framerate = 60.0f;
+			break;
+		}
+	}
 
 	switch(mode->driver_mode)
 	{

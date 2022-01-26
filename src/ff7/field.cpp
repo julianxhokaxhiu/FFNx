@@ -61,6 +61,7 @@ constexpr byte SCRLA = 0x63;
 constexpr byte SCR2DC = 0x66;
 constexpr byte SCR2DL = 0x68;
 constexpr byte SCRLP = 0x6F;
+constexpr byte VWOTF = 0x6A;
 
 enum class patch_type
 {
@@ -99,6 +100,7 @@ struct external_field_model_data
 	vector3<int> initialPosition;
 	vector3<int> finalPosition;
 	int wasNotCollidingWithTarget;
+	int updateMovementReturnValue;
 };
 
 constexpr int MAX_FIELD_MODELS = 32;
@@ -305,6 +307,7 @@ int ff7_field_update_single_model_position(short model_id)
 			external_model_data[model_id].initialPosition.y = field_event_data_array[model_id].model_pos_y;
 			external_model_data[model_id].initialPosition.z = field_event_data_array[model_id].model_pos_z;
 			ret = ff7_externals.field_update_single_model_position(model_id);
+			external_model_data[model_id].updateMovementReturnValue = ret;
 			external_model_data[model_id].finalPosition.x = field_event_data_array[model_id].model_pos_x;
 			external_model_data[model_id].finalPosition.y = field_event_data_array[model_id].model_pos_y;
 			external_model_data[model_id].finalPosition.z = field_event_data_array[model_id].model_pos_z;
@@ -315,6 +318,7 @@ int ff7_field_update_single_model_position(short model_id)
 		else
 		{
 			external_model_data[model_id].isFirstFrameMovement = true;
+			ret = external_model_data[model_id].updateMovementReturnValue;
 			field_event_data_array[model_id].model_pos_x = external_model_data[model_id].finalPosition.x;
 			field_event_data_array[model_id].model_pos_y = external_model_data[model_id].finalPosition.y;
 			field_event_data_array[model_id].model_pos_z = external_model_data[model_id].finalPosition.z;
@@ -522,8 +526,15 @@ void ff7_field_hook_init()
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANIM1], (DWORD)&opcode_script_partial_animation_wrapper);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANIM2], (DWORD)&opcode_script_partial_animation_wrapper);
 
-		// Fix encounter rate
+		// Encounter rate fix
 		replace_call_function(ff7_externals.field_update_models_positions + 0x90F, ff7_field_evaluate_encounter_rate);
+
+		// Message speed fix
+		patch_code_byte(ff7_externals.sub_631945 + 0xFD, 0x5 + common_frame_multiplier / 2);
+		patch_divide_code<byte>(ff7_externals.sub_631945 + 0x100, common_frame_multiplier);
+		patch_divide_code<WORD>(ff7_externals.sub_631945 + 0x111, common_frame_multiplier);
+		patch_code_byte(ff7_externals.sub_631945 + 0x141, 0x4 + common_frame_multiplier / 2);
+
 	}
 
 	// Background scroll fps fix
@@ -539,6 +550,7 @@ void ff7_field_hook_init()
 	replace_call_function(common_externals.execute_opcode_table[SCR2DL] + 0x3C, ff7_opcode_multiply_get_bank_value);
 	replace_call_function(common_externals.execute_opcode_table[SCRLP] + 0xA7, ff7_opcode_multiply_get_bank_value);
 	replace_call_function(common_externals.execute_opcode_table[NFADE] + 0x89, ff7_opcode_divide_get_bank_value);
+	replace_call_function(common_externals.execute_opcode_table[VWOTF] + 0xCC, ff7_opcode_multiply_get_bank_value);
 
 	// Movie model animation fps fix
 	replace_call_function(ff7_externals.field_update_models_positions + 0x68D, ff7_field_update_model_animation_frame);
