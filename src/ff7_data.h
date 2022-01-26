@@ -459,6 +459,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.word_DB958A = (WORD *)get_absolute_value(common_externals.execute_opcode_table[0x23], 0x5);
 
 	ff7_externals.sub_630D50 = get_relative_call(ff7_externals.opcode_message, 0x3B);
+	ff7_externals.sub_631945 = get_relative_call(ff7_externals.sub_630D50, 0x6D);
 	ff7_externals.opcode_message_loop_code = (WORD*)get_absolute_value(ff7_externals.sub_630D50, 0x12);
 
 	ff7_externals.sub_6310A1 = (int (*)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*))get_relative_call(ff7_externals.opcode_ask, 0x8E);
@@ -761,7 +762,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	// aura animations (magic, limit breaks, enemy skill and summon)
 	ff7_externals.handle_aura_effects_425520 = get_absolute_value(ff7_externals.run_animation_script, 0x3F7A);
 	ff7_externals.run_aura_effects_5C0230 = get_relative_call(ff7_externals.handle_aura_effects_425520, 0x42);
-	ff7_externals.magic_aura_effects_5C0300 = get_absolute_value(ff7_externals.run_aura_effects_5C0230, 0x66);
 	ff7_externals.limit_break_aura_effects_5C0572 = get_absolute_value(ff7_externals.run_aura_effects_5C0230, 0x72);
 	ff7_externals.enemy_skill_aura_effects_5C06BF = get_absolute_value(ff7_externals.run_aura_effects_5C0230, 0x7E);
 	ff7_externals.handle_summon_aura_5C0850 = get_absolute_value(ff7_externals.run_aura_effects_5C0230, 0x8F);
@@ -784,6 +784,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_5BCD42 = get_absolute_value(ff7_externals.run_animation_script, 0x66F);
 	uint32_t battle_sub_5BE490 = get_relative_call(ff7_externals.run_animation_script, 0x3E6E);
 	ff7_externals.battle_smoke_move_handler_5BE4E2 = get_absolute_value(battle_sub_5BE490, 0x5);
+	ff7_externals.battle_sub_6CE81E = (void(*)())get_relative_call(ff7_externals.battle_sub_42D808, 0x117);
 
 	// Tifa limit breaks
 	uint32_t battle_sub_4E1627 = get_relative_call(ff7_externals.run_animation_script, 0x3848);
@@ -887,6 +888,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.get_world_encounter_rate = (int(*)())get_relative_call(ff7_externals.world_sub_767641, 0x110);
 	ff7_externals.update_world_snake_position_7564CD = get_relative_call(ff7_externals.run_world_snake_ai_script_7562FF, 0x151);
 	ff7_externals.world_compute_delta_position_753D00 = (void(*)(short*, short))get_relative_call(ff7_externals.update_world_snake_position_7564CD, 0x26);
+	ff7_externals.world_opcode_message_sub_75EE86 = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xB6D);
+	ff7_externals.world_opcode_message_update_box_769050 = get_relative_call(ff7_externals.world_opcode_message_sub_75EE86, 0x2B);
+	ff7_externals.world_opcode_message_update_text_769C02 = get_relative_call(ff7_externals.world_opcode_message_update_box_769050, 0x6D);
 
 	// swirl 60 fps
 	ff7_externals.swirl_main_loop = swirl_main_loop;
