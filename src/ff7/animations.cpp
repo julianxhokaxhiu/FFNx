@@ -521,12 +521,12 @@ void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable)
 int ff7_add_fn_to_effect100_fn(uint32_t function)
 {
     int idx;
-    for (idx = 0; idx < 100; idx++)
+    for (idx = 0; idx < ff7_externals.effect100_array_fn.size(); idx++)
     {
         if (ff7_externals.effect100_array_fn[idx] == 0 && *ff7_externals.effect100_array_idx <= idx)
             break;
     }
-    if (idx >= 100)
+    if (idx >= ff7_externals.effect100_array_fn.size())
         return 0xFFFF;
     if (isAddFunctionDisabled)
         return idx;
@@ -543,14 +543,14 @@ void ff7_add_kotr_camera_fn_to_effect100_fn(DWORD param_1, DWORD param_2, WORD p
 {
     ff7_externals.add_kotr_camera_fn_to_effect100_fn_476AAB(param_1, param_2, param_3);
 
-    constexpr int kotr_camera_idx = 99;
+    int kotr_camera_idx = ff7_externals.effect100_array_fn.size() - 1;
     aux_effect100_handler[kotr_camera_idx] = AuxiliaryEffectHandler();
 }
 
 void ff7_execute_effect100_fn()
 {
     uint16_t &fn_index = *ff7_externals.effect100_array_idx;
-    for (fn_index = 0; fn_index < 100; fn_index++)
+    for (fn_index = 0; fn_index < ff7_externals.effect100_array_fn.size(); fn_index++)
     {
         if(ff7_externals.effect100_array_fn[fn_index] && *ff7_externals.g_is_battle_running_9AD1AC)
         {
@@ -623,7 +623,7 @@ void ff7_execute_effect100_fn()
                 *ff7_externals.effect100_counter = *ff7_externals.effect100_counter - 1;
             }
         }
-        else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A) // quite sure this is dead code
+        else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.display_battle_action_text_42782A)
         {
             if (aux_effect100_handler[fn_index].isFirstFrame())
             {
@@ -640,12 +640,12 @@ void ff7_execute_effect100_fn()
 int ff7_add_fn_to_effect10_fn(uint32_t function)
 {
     int idx;
-    for (idx = 0; idx < 10; idx++)
+    for (idx = 0; idx < ff7_externals.effect10_array_fn.size(); idx++)
     {
         if (ff7_externals.effect10_array_fn[idx] == 0 && *ff7_externals.effect10_array_idx <= idx)
             break;
     }
-    if (idx >= 10)
+    if (idx >= ff7_externals.effect10_array_fn.size())
         return 0xFFFF;
     if (isAddFunctionDisabled)
         return idx;
@@ -661,7 +661,7 @@ int ff7_add_fn_to_effect10_fn(uint32_t function)
 void ff7_execute_effect10_fn()
 {
     uint16_t &fn_index = *ff7_externals.effect10_array_idx;
-    for (fn_index = 0; fn_index < 10; fn_index++)
+    for (fn_index = 0; fn_index < ff7_externals.effect10_array_fn.size(); fn_index++)
     {
         auto &effect10_data = ff7_externals.effect10_array_data[fn_index];
         if (ff7_externals.effect10_array_fn[fn_index] != 0)
@@ -758,12 +758,12 @@ void ff7_execute_effect10_fn()
 int ff7_add_fn_to_effect60_fn(uint32_t function)
 {
     int idx;
-    for (idx = 0; idx < 60; idx++)
+    for (idx = 0; idx < ff7_externals.effect60_array_fn.size(); idx++)
     {
         if (ff7_externals.effect60_array_fn[idx] == 0 && *ff7_externals.effect60_array_idx <= idx)
             break;
     }
-    if (idx >= 60)
+    if (idx >= ff7_externals.effect60_array_fn.size())
         return 0xFFFF;
     if (isAddFunctionDisabled)
         return idx;
@@ -779,7 +779,7 @@ int ff7_add_fn_to_effect60_fn(uint32_t function)
 void ff7_execute_effect60_fn()
 {
     uint16_t &fn_index = *ff7_externals.effect60_array_idx;
-    for (fn_index = 0; fn_index < 60; fn_index++)
+    for (fn_index = 0; fn_index < ff7_externals.effect60_array_fn.size(); fn_index++)
     {
         if (ff7_externals.effect60_array_fn[fn_index] != 0)
         {
