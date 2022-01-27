@@ -124,11 +124,10 @@ bool simulateCameraScript(byte *scriptPtr, short &currentPosition, short &frames
 
 int ff7_add_fn_to_camera_fn(uint32_t function)
 {
-    auto cameraArray = std::span<uint32_t>(ff7_externals.camera_fn_array, CAMERA_ARRAY_SIZE);
-    auto element = std::find(cameraArray.begin(), cameraArray.end(), 0);
-    if (element != cameraArray.end())
+    auto element = std::find(ff7_externals.camera_fn_array.begin(), ff7_externals.camera_fn_array.end(), 0);
+    if (element != ff7_externals.camera_fn_array.end())
     {
-        int index = std::distance(cameraArray.begin(), element);
+        int index = std::distance(ff7_externals.camera_fn_array.begin(), element);
         ff7_externals.camera_fn_array[index] = function;
         ff7_externals.camera_fn_data[index].field_0 = *ff7_externals.camera_fn_index;
         *ff7_externals.camera_fn_counter = *ff7_externals.camera_fn_counter + 1;
@@ -186,7 +185,7 @@ void ff7_execute_camera_functions()
 
 void ff7_run_camera_focal_position_script(char variationIndex, DWORD param_2, short cameraScriptIdx)
 {
-    bcamera_position *cameraPosition = ff7_externals.battle_camera_focal_point;
+    auto cameraPosition = ff7_externals.battle_camera_focal_point;
 
     byte *scriptPtr = getCameraScriptPointer(variationIndex, cameraScriptIdx, true);
     short currentPosition = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].current_position;
@@ -202,7 +201,7 @@ void ff7_run_camera_focal_position_script(char variationIndex, DWORD param_2, sh
 
 void ff7_run_camera_position_script(char variationIndex, DWORD param_2, short cameraScriptIdx)
 {
-    bcamera_position *cameraPosition = ff7_externals.battle_camera_position;
+    auto cameraPosition = ff7_externals.battle_camera_position;
 
     byte *scriptPtr = getCameraScriptPointer(variationIndex, cameraScriptIdx, false);
     short currentPosition = (cameraPosition[variationIndex].current_position == 255) ? 0 : cameraPosition[variationIndex].current_position;

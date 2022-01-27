@@ -2207,8 +2207,8 @@ struct ff7_externals
 	uint32_t battle_sub_6CE8B3;
 	uint32_t battle_sub_6DB0EE;
 	char* is_battle_paused;
-	uint32_t *battle_limit_breaks;
-	uint32_t *battle_magic_funcs;
+	std::span<uint32_t> battle_menu_state_fn_table;
+	std::span<uint32_t> magic_effects_fn_table;
 	uint32_t comet2_sub_5A42E5;
 	uint32_t comet2_unload_sub_5A4359;
 	uint32_t battle_b3ddata_sub_428B12;
@@ -2354,8 +2354,6 @@ struct ff7_externals
 	uint32_t opcode_fmusc;
 	uint32_t opcode_cmusc;
 	uint32_t opcode_canm1_canm2;
-	uint32_t opcode_canim1_canim2;
-	uint32_t opcode_turngen;
 	uint32_t field_opcode_08_sub_61D4B9;
 	uint32_t field_opcode_AA_2A_sub_616476;
 	uint32_t field_music_helper;
@@ -2518,10 +2516,10 @@ struct ff7_externals
 	uint32_t battle_camera_sub_5C22A9;
 	uint32_t compute_interpolation_to_formation_camera;
 	uint32_t set_battle_camera_sub_5C2350;
-	bcamera_fn_data* camera_fn_data;
-	bcamera_position* battle_camera_position;
-	bcamera_position* battle_camera_focal_point;
-	uint32_t* camera_fn_array;
+	std::span<bcamera_fn_data> camera_fn_data;
+	std::span<bcamera_position> battle_camera_position;
+	std::span<bcamera_position> battle_camera_focal_point;
+	std::span<uint32_t> camera_fn_array;
 	byte* battle_camera_focal_scripts_8FEE30;
 	byte* battle_camera_position_scripts_8FEE2C;
 	DWORD* battle_camera_global_scripts_9A13BC;
@@ -2533,7 +2531,7 @@ struct ff7_externals
 	WORD* camera_fn_counter;
 	vector3<short>* g_battle_camera_position;
 	vector3<short>* g_battle_camera_focal_point;
-	formation_camera* formation_camera;
+	std::span<formation_camera> formation_camera;
 	byte* curr_formation_camera_idx;
 	byte* battle_enter_frames_to_wait;
 	byte* g_variation_index;
@@ -2632,28 +2630,27 @@ struct ff7_externals
 	void (*create_rot_matrix_from_word_matrix_6617E9)(rotation_matrix*, matrix*);
 	struc_84* (*get_draw_chain_671C71)(ff7_graphics_object*);
 	void (*battle_sub_6CE81E)();
-
-	battle_model_state *g_battle_model_state;
-	battle_model_state_small *g_small_battle_model_state;
-	uint32_t* effect100_array_fn;
+	std::span<battle_model_state> g_battle_model_state;
+	std::span<battle_model_state_small> g_small_battle_model_state;
+	std::span<uint32_t> effect100_array_fn;
+	std::span<effect100_data> effect100_array_data;
 	uint16_t* effect100_counter;
 	uint16_t* effect100_array_idx;
-	effect100_data* effect100_array_data;
-	uint32_t* effect60_array_fn;
+	std::span<uint32_t> effect60_array_fn;
+	std::span<effect60_data> effect60_array_data;
 	uint16_t* effect60_counter;
 	uint16_t* effect60_array_idx;
-	effect60_data* effect60_array_data;
-	uint32_t* effect10_array_fn;
+	std::span<uint32_t> effect10_array_fn;
+	std::span<effect10_data> effect10_array_data;
 	uint16_t* effect10_counter;
 	uint16_t* effect10_array_idx;
-	effect10_data* effect10_array_data;
 	short* effect10_array_data_8FE1F6;
 	std::array<byte*, 14> animation_script_pointers;
 	byte* g_is_effect_loading;
 	byte* g_is_battle_paused;
 	byte* g_actor_idle_scripts;
 	byte* g_script_wait_frames;
-	int** g_script_args; // 8 global values
+	std::span<int*> g_script_args;
 	byte* special_actor_id;
 	int* field_battle_BFB2E0;
 	float* field_float_battle_7B7680;
@@ -2664,6 +2661,8 @@ struct ff7_externals
 	WORD* field_odin_frames_AEEC14;
 	palette_extra* palette_extra_data_C06A00;
 	uint32_t** global_game_data_90AAF0;
+	std::span<uint32_t> limit_break_effects_fn_table;
+	std::span<uint32_t> enemy_atk_effects_fn_table;
 
 	// battle dialogue
 	uint32_t battle_sub_42CBF9;
@@ -2678,7 +2677,6 @@ struct ff7_externals
 	uint32_t enqueue_script_action;
 	uint32_t battle_sub_41B577;
 	uint32_t battle_sub_41CCB2;
-
 	std::span<battle_text_data> battle_display_text_queue;
 	battle_ai_context *battle_context;
 	std::span<battle_anim_event> anim_event_queue;
