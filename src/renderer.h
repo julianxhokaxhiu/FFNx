@@ -204,12 +204,14 @@ private:
         bool bIsMovieFullRange = false;
         bool bIsMovieYUV = false;
         bool bIsExternalTexture = false;
+        bool bIsHDR = false;
 
         float backendProjMatrix[16];
 
         std::vector<float> VSFlags;
         std::vector<float> FSAlphaFlags;
         std::vector<float> FSMiscFlags;
+        std::vector<float> FSHDRFlags;
         std::vector<float> FSTexFlags;
 
         float d3dViewMatrix[16];
@@ -320,6 +322,8 @@ private:
     Overlay overlay;
 
     bool doCaptureFrame = false;
+
+    bgfx::Init bgfxInit;
 
 public:
     std::string currentRenderer;

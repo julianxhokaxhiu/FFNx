@@ -107,17 +107,26 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isMovieFullRange %f, isMovieYUV %f, modulateAlpha %f, isMovie %f)\n", __func__, internalState.FSMiscFlags[0], internalState.FSMiscFlags[1], internalState.FSMiscFlags[2], internalState.FSMiscFlags[3]);
 
+    internalState.FSHDRFlags = {
+        (float)internalState.bIsHDR,
+        (float)hdr_max_nits,
+        NULL,
+        NULL
+    };
+    if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isHDR %f, monitorNits %f, NULL, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1]);
+
     internalState.FSTexFlags = {
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_NML].idx != bgfx::kInvalidHandle),
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_PBR].idx != bgfx::kInvalidHandle),
         (float)(specularIblTexture.idx != bgfx::kInvalidHandle && diffuseIblTexture.idx != bgfx::kInvalidHandle && envBrdfTexture.idx != bgfx::kInvalidHandle),
         NULL
     };
-    if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, NULL, NULL)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1]);
+    if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, isIblTextureLoaded %f, NULL)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1], internalState.FSTexFlags[2]);
 
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
     setUniform("FSMiscFlags", bgfx::UniformType::Vec4, internalState.FSMiscFlags.data());
+    setUniform("FSHDRFlags", bgfx::UniformType::Vec4, internalState.FSHDRFlags.data());
     setUniform("FSTexFlags", bgfx::UniformType::Vec4, internalState.FSTexFlags.data());
 
     setUniform("d3dViewport", bgfx::UniformType::Mat4, internalState.d3dViewMatrix);
@@ -600,7 +609,6 @@ void Renderer::init()
     recalcInternals();
 
     // Init renderer
-    bgfx::Init bgfxInit;
     bgfxInit.platformData.nwh = gameHwnd;
     bgfxInit.type = getUserChosenRenderer();
     bgfxInit.resolution.width = window_size_x;
@@ -616,6 +624,23 @@ void Renderer::init()
     bgfxInit.callback = &bgfxCallbacks;
 
     if (!bgfx::init(bgfxInit)) exit(1);
+
+    // If HDR support is present, make use of it
+    if (getCaps()->supported & BGFX_CAPS_HDR10)
+    {
+        internalState.bIsHDR = true;
+
+        bgfxInit.resolution.reset |= BGFX_RESET_HDR10;
+        bgfxInit.resolution.format = bgfx::TextureFormat::RGB10A2;
+
+        if (hdr_max_nits <= 0) {
+            short idx = 0;
+            while (!getCaps()->outDeviceInfo[idx].isHDR10) idx++;
+            hdr_max_nits = getCaps()->outDeviceInfo[idx].maxFullFrameLuminance;
+        }
+
+        bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.format);
+    }
 
     internalState.texHandlers.resize(RendererTextureSlot::COUNT, BGFX_INVALID_HANDLE);
 
@@ -717,7 +742,7 @@ void Renderer::reset()
 
     if(!ff8 && enable_lighting) prepareShadowMap();
 
-    bgfx::reset(window_size_x, window_size_y);
+    bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.format);
 }
 
 void Renderer::prepareShadowMap()

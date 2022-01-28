@@ -30,6 +30,7 @@ SAMPLER2D(tex_6, 6);
 uniform vec4 VSFlags;
 uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
+uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
 
 uniform vec4 lightingSettings;
@@ -58,6 +59,7 @@ uniform vec4 iblData;
 #define isYUV FSMiscFlags.y > 0.0
 #define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
+#define isHDR FSHDRFlags.x > 0.0
 
 // ---
 #define debugOutput lightingDebugData.z

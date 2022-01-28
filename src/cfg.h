@@ -130,5 +130,6 @@ extern double left_analog_trigger_deadzone;
 extern double right_analog_trigger_deadzone;
 extern bool enable_steam_achievements;
 extern bool steam_achievements_debug_mode;
+extern double hdr_max_nits;
 
 void read_cfg();
