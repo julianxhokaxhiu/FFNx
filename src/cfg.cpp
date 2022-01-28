@@ -117,6 +117,7 @@ double left_analog_trigger_deadzone;
 double right_analog_trigger_deadzone;
 bool enable_steam_achievements;
 bool steam_achievements_debug_mode;
+double hdr_max_nits;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -248,6 +249,7 @@ void read_cfg()
 	right_analog_trigger_deadzone = config["right_analog_trigger_deadzone"].value_or(0.1);
 	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
 	steam_achievements_debug_mode = config["steam_achievements_debug_mode"].value_or(false);
+	hdr_max_nits = config["hdr_max_nits"].value_or(0);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;

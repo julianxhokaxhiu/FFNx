@@ -32,6 +32,7 @@ SAMPLER2D(tex_2, 2);
 uniform vec4 VSFlags;
 uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
+uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
 
 #define isTLVertex VSFlags.x > 0.0
@@ -54,6 +55,7 @@ uniform vec4 FSTexFlags;
 #define isYUV FSMiscFlags.y > 0.0
 #define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
+#define isHDR FSHDRFlags.x > 0.0
 
 void main()
 {
@@ -85,7 +87,7 @@ void main()
             else color.rgb = instMul(mpeg_rgb_transform, yuv);
 
             color.rgb = toLinear(color.rgb);
-            color.a = 1.0f;
+            color.a = 1.0;
         }
         else
         {
@@ -153,5 +155,10 @@ void main()
         }
     }
 
-    gl_FragColor = vec4(toGamma(color.rgb), color.a);
+    if (!(isHDR)) {
+        // SDR screens require the Gamma output to properly render light scenes
+        color.rgb = toGamma(color.rgb);
+    }
+
+    gl_FragColor = color;
 }
