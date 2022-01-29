@@ -445,7 +445,7 @@ bool Renderer::doesItFitInMemory(size_t size)
 
 void Renderer::recalcInternals()
 {
-    bool is16by9 = false;
+    long scale_factor = internal_resolution_scale;
 
     viewWidth = window_size_x;
     viewHeight = window_size_y;
@@ -469,26 +469,26 @@ void Renderer::recalcInternals()
         }
     }
 
-    if ((viewWidth % game_width) > 0 || (viewHeight % game_height) > 0)
+    // If internal_resolution_scale from settings is less than one, calculate the closest fit for the output resolution, otherwise use the value directly
+    if (internal_resolution_scale < 1)
     {
         long scaleW = ::round(viewWidth / (float)game_width);
         long scaleH = ::round(viewHeight / (float)game_height);
 
         if (scaleH > scaleW) scaleW = scaleH;
-        if (scaleW > internal_resolution_scale) internal_resolution_scale = scaleW + 1;
-
-        is16by9 = true;
+        if (scaleW > internal_resolution_scale) scale_factor = scaleW;
+        if (scale_factor < 1) scale_factor = 1;
     }
 
-    // In order to prevent weird glitches while rendering we need to use the closest resolution to native's game one
-    framebufferWidth = is16by9 ? game_width * internal_resolution_scale : viewWidth * internal_resolution_scale;
-    framebufferHeight = is16by9 ? game_height * internal_resolution_scale : viewHeight * internal_resolution_scale;
+    // Use the set or calculated scaling factor to determine the width and height of the framebuffer according to the original resolution
+    framebufferWidth = game_width * scale_factor;
+    framebufferHeight = game_height * scale_factor;
 
     framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
     framebufferVertexOffsetX = (game_width - framebufferVertexWidth) / 2;
 
     // Let the user know about chosen resolutions
-    ffnx_info("Original resolution %ix%i, New resolution %ix%i, Internal resolution %ix%i\n", game_width, game_height, window_size_x, window_size_y, framebufferWidth, framebufferHeight);
+    ffnx_info("Original resolution %ix%i, Scaling factor %i, Internal resolution %ix%i, Output resolution %ix%i\n", game_width, game_height, scale_factor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
 }
 
 void Renderer::prepareFramebuffer()

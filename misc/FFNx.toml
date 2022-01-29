@@ -35,12 +35,13 @@ window_size_y = 0
 
 #[INTERNAL RESOLUTION SCALE]
 # The scale is in multiples of 640x480
-# The scale factor is used to render internally at a larger size then the display, this will then be downscaled to the games current resolution
+# The scale factor is used to multiply the internally used resolution to a given size before it is scaled to the final screen or window resolution.
 # This is required to avoid visual glitches that may happen when the game is not rendered in a 4:3 aspect ratio.
-# This is optional for native 4:3 resolutions, but it will enhance visual quality ( like Nvidia DSR ).
-# Default = 2
+# This is optional for native 4:3 resolutions, but it can enhance visual quality at values higher than the current screen or window resolution ( like Nvidia DSR ).
+# A setting of 0 will attempt to find a scale factor that most closely matches the current screen or window resolution.
+# Default = 0
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-internal_resolution_scale = 2
+internal_resolution_scale = 0
 
 #[PRESERVE ASPECT]
 # Preserve original game aspect ratio of (4:3) by adding black bars on the left and right side (if needed)
