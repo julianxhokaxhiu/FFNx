@@ -99,6 +99,9 @@ private:
     // Config
     toml::parse_result config;
 
+    std::vector<nvertex> walkMeshVertices;
+    std::vector<WORD> walkMeshIndices;
+
 private:
     void loadConfig();
     void initParamsFromConfig();
@@ -107,12 +110,12 @@ private:
     void ff7_load_ibl();
 
     void ff7_get_field_view_matrix(struct matrix* outViewMatrix);
-    void ff7_create_walkmesh(std::vector<struct nvertex>& vertices, std::vector<WORD>& indices, std::vector<struct walkmeshEdge>& edges);
+    void ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges);
 
-    void createFieldWalkmesh(std::vector<struct nvertex>& vertices, std::vector<WORD>& indices, float extrudeSize);
-    void extractWalkmeshBorderData(std::vector<struct nvertex>& vertices, std::vector<struct walkmeshEdge>& edges);
-    void createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& vertices, std::vector<struct walkmeshEdge>& edges);
-    void createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::vector<WORD>& indices, std::vector<struct walkmeshEdge>& edges, float extrudeSize);
+    void createFieldWalkmesh(float extrudeSize);
+    void extractWalkmeshBorderData(std::vector<struct walkmeshEdge>& edges);
+    void createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge>& edges);
+    void createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, float extrudeSize);
     struct boundingbox calcFieldSceneAabb(struct boundingbox* sceneAbb, struct matrix* viewMatrix);
 
 public:
