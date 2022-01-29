@@ -271,7 +271,7 @@ void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
 	memcpy(outViewMatrix, &viewMatrix, sizeof(matrix));
 }
 
-void Lighting::ff7_create_walkmesh(std::vector<struct nvertex>& vertices, std::vector<WORD>& indices, std::vector<struct walkmeshEdge>& edges)
+void Lighting::ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges)
 {
 	byte* level_data = *ff7_externals.field_level_data_pointer;
 	if (!level_data)
@@ -302,13 +302,13 @@ void Lighting::ff7_create_walkmesh(std::vector<struct nvertex>& vertices, std::v
 			vertex.u = 0.0;
 			vertex.v = 0.0;
 
-			vertices.push_back(vertex);
-			indices.push_back(indices.size());
+			walkMeshVertices.push_back(vertex);
+			walkMeshIndices.push_back(walkMeshIndices.size());
 		}
 
-		int vId0 = vertices.size() - 3;
-		int vId1 = vertices.size() - 3 + 1;
-		int vId2 = vertices.size() - 3 + 2;
+		int vId0 = walkMeshVertices.size() - 3;
+		int vId1 = walkMeshVertices.size() - 3 + 1;
+		int vId2 = walkMeshVertices.size() - 3 + 2;
 		walkmeshEdge e0;
 		e0.v0 = vId0;
 		e0.v1 = vId1;
@@ -340,34 +340,46 @@ void Lighting::ff7_create_walkmesh(std::vector<struct nvertex>& vertices, std::v
 }
 
 // creates the field walkmesh for rendering
-void Lighting::createFieldWalkmesh(std::vector<struct nvertex>& vertices, std::vector<WORD>& indices, float extrudeSize)
+void Lighting::createFieldWalkmesh(float extrudeSize)
 {
+	static WORD last_field_id = 0;
+
+	if(*ff7_externals.field_id == last_field_id)
+	{
+		return;
+	}
+
+	walkMeshVertices.clear();
+	walkMeshIndices.clear();
+
 	std::vector<struct walkmeshEdge> edges;
 
 	// Get the walkmesh triangles and edges
-	ff7_create_walkmesh(vertices, indices, edges);
+	ff7_create_walkmesh(edges);
 
 	// Detect triangle edges that are external borders of the walkmesh
 	// Border edges will be use to extrude a small area where field shadows will fade out
 	// This is done to prevent sharp discontinuities at the walkmesh borders
-	extractWalkmeshBorderData(vertices, edges);
+	extractWalkmeshBorderData( edges);
 
 	// Extract previous and next adjacent border edges
 	// Calculate extrude direction for each border edge
-	createWalkmeshBorderExtrusionData(vertices, edges);
+	createWalkmeshBorderExtrusionData(edges);
 
 	// Create triangles for the border extrusion
-	createWalkmeshBorder(vertices, indices, edges, extrudeSize);
+	createWalkmeshBorder(edges, extrudeSize);
+
+	last_field_id = *ff7_externals.field_id;
 }
 
-void Lighting::extractWalkmeshBorderData(std::vector<struct nvertex>& vertices, std::vector<struct walkmeshEdge>& edges)
+void Lighting::extractWalkmeshBorderData(std::vector<struct walkmeshEdge>& edges)
 {
 	int numEdges = edges.size();
 	for (int i = 0; i < numEdges; ++i)
 	{
 		auto& e = edges[i];
-		vector3<float> pos0 = vertices[e.v0]._;
-		vector3<float> pos1 = vertices[e.v1]._;
+		vector3<float> pos0 = walkMeshVertices[e.v0]._;
+		vector3<float> pos1 = walkMeshVertices[e.v1]._;
 
 		bool isBorder = true;
 		for (int j = 0; j < numEdges; ++j)
@@ -378,8 +390,8 @@ void Lighting::extractWalkmeshBorderData(std::vector<struct nvertex>& vertices, 
 			}
 
 			auto& other_e = edges[j];
-			vector3<float> other_pos0 = vertices[other_e.v0]._;
-			vector3<float> other_pos1 = vertices[other_e.v1]._;
+			vector3<float> other_pos0 = walkMeshVertices[other_e.v0]._;
+			vector3<float> other_pos1 = walkMeshVertices[other_e.v1]._;
 
 			float errorMargin = 0.001f;
 			if (std::abs(pos0.x - other_pos0.x) < errorMargin && std::abs(pos0.y - other_pos0.y) < errorMargin && std::abs(pos0.z - other_pos0.z) < errorMargin &&
@@ -398,13 +410,13 @@ void Lighting::extractWalkmeshBorderData(std::vector<struct nvertex>& vertices, 
 
 		if (isBorder)
 		{
-			auto& v0 = vertices[e.v0];
-			auto& v1 = vertices[e.v1];
+			auto& v0 = walkMeshVertices[e.v0];
+			auto& v1 = walkMeshVertices[e.v1];
 		}
 	}
 }
 
-void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& vertices, std::vector<struct walkmeshEdge>& edges)
+void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge>& edges)
 {
 	int numEdges = edges.size();
 	for (int i = 0; i < numEdges; ++i)
@@ -415,8 +427,8 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& ve
 			continue;
 		}
 
-		vector3<float> pos0 = vertices[e.v0]._;
-		vector3<float> pos1 = vertices[e.v1]._;
+		vector3<float> pos0 = walkMeshVertices[e.v0]._;
+		vector3<float> pos1 = walkMeshVertices[e.v1]._;
 
 		for (int j = 0; j < numEdges; ++j)
 		{
@@ -431,8 +443,8 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& ve
 				continue;
 			}
 
-			vector3<float> other_pos0 = vertices[other_e.v0]._;
-			vector3<float> other_pos1 = vertices[other_e.v1]._;
+			vector3<float> other_pos0 = walkMeshVertices[other_e.v0]._;
+			vector3<float> other_pos1 = walkMeshVertices[other_e.v1]._;
 
 			float errorMargin = 0.1f;;
 			if ((std::abs(pos0.x - other_pos0.x) < errorMargin && std::abs(pos0.y - other_pos0.y) < errorMargin && std::abs(pos0.z - other_pos0.z) < errorMargin) ||
@@ -447,9 +459,9 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& ve
 				e.nextEdge = j;
 			}
 
-			vector3<float> pos0 = vertices[e.v0]._;
-			vector3<float> pos1 = vertices[e.v1]._;
-			vector3<float> ovPos = vertices[e.ov]._;
+			vector3<float> pos0 = walkMeshVertices[e.v0]._;
+			vector3<float> pos1 = walkMeshVertices[e.v1]._;
+			vector3<float> ovPos = walkMeshVertices[e.ov]._;
 
 			vector3<float> triCenter;
 			add_vector(&pos0, &pos1, &triCenter);
@@ -487,7 +499,7 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct nvertex>& ve
 	}
 }
 
-void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::vector<WORD>& indices, std::vector<struct walkmeshEdge>& edges, float extrudeSize)
+void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, float extrudeSize)
 {
 	int numEdges = edges.size();
 	for (int i = 0; i < numEdges; ++i)
@@ -498,8 +510,8 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 			continue;
 		}
 
-		vector3<float> pos0 = vertices[e.v0]._;
-		vector3<float> pos1 = vertices[e.v1]._;
+		vector3<float> pos0 = walkMeshVertices[e.v0]._;
+		vector3<float> pos1 = walkMeshVertices[e.v1]._;
 
 		auto& prevEdge = edges[e.prevEdge];
 		auto& nextEdge = edges[e.nextEdge];
@@ -532,8 +544,8 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 			v0.color.g = 0x00;
 			v0.color.b = 0x00;
 			v0.color.a = 0xff;
-			vertices.push_back(v0);
-			indices.push_back(indices.size());
+			walkMeshVertices.push_back(v0);
+			walkMeshIndices.push_back(walkMeshIndices.size());
 
 			struct nvertex v1;
 			v1._.x = pos0.x;
@@ -545,8 +557,8 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 			v1.color.b = 0x00;
 			v1.color.a = 0xff;
 
-			vertices.push_back(v1);
-			indices.push_back(indices.size());
+			walkMeshVertices.push_back(v1);
+			walkMeshIndices.push_back(walkMeshIndices.size());
 
 			struct nvertex v2;
 			v2._.x = extrudePos0.x;
@@ -558,8 +570,8 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 			v2.color.b = 0x00;
 			v2.color.a = 0x00;
 
-			vertices.push_back(v2);
-			indices.push_back(indices.size());
+			walkMeshVertices.push_back(v2);
+			walkMeshIndices.push_back(walkMeshIndices.size());
 		}
 
 		// Extrude triangle 1
@@ -583,8 +595,8 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 			v0.color.b = 0x00;
 			v0.color.a = 0x00;
 
-			vertices.push_back(v0);
-			indices.push_back(indices.size());
+			walkMeshVertices.push_back(v0);
+			walkMeshIndices.push_back(walkMeshIndices.size());
 
 			struct nvertex v1;
 			v1._.x = pos1.x;
@@ -596,8 +608,8 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 			v1.color.b = 0x00;
 			v1.color.a = 0xff;
 
-			vertices.push_back(v1);
-			indices.push_back(indices.size());
+			walkMeshVertices.push_back(v1);
+			walkMeshIndices.push_back(walkMeshIndices.size());
 
 			struct nvertex v2;
 			v2._.x = extrudePos0.x;
@@ -609,8 +621,8 @@ void Lighting::createWalkmeshBorder(std::vector<struct nvertex>& vertices, std::
 			v2.color.b = 0x00;
 			v2.color.a = 0x00;
 
-			vertices.push_back(v2);
-			indices.push_back(indices.size());
+			walkMeshVertices.push_back(v2);
+			walkMeshIndices.push_back(walkMeshIndices.size());
 		}
 	}
 }
@@ -754,9 +766,7 @@ void Lighting::drawFieldShadow()
 {
 	newRenderer.backupDepthBuffer();
 
-    std::vector<nvertex> walkMeshVertices;
-    std::vector<WORD> walkMeshIndices;
-    createFieldWalkmesh(walkMeshVertices, walkMeshIndices, getWalkmeshExtrudeSize());
+    createFieldWalkmesh(getWalkmeshExtrudeSize());
 
     newRenderer.bindVertexBuffer(walkMeshVertices.data(), 0, walkMeshVertices.size());
     newRenderer.bindIndexBuffer(walkMeshIndices.data(), walkMeshIndices.size());
