@@ -820,6 +820,13 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t run_summon_phoenix_sub_515127 = get_relative_call(run_summon_phoenix_main_515101, 0x1A);
 	ff7_externals.run_phoenix_main_loop_516297 = get_absolute_value(run_summon_phoenix_sub_515127, 0xB2);
 
+	// Enemy attacks
+	uint32_t battle_sub_5C1484 = ff7_externals.magic_effects_fn_table[7];
+	uint32_t battle_sub_55FE60 = get_relative_call(battle_sub_5C1484, 0x33E);
+	uint32_t battle_sub_55FE9C = get_relative_call(battle_sub_55FE60, 0x12);
+	uint32_t handler_chocobuckle_sub_5609DB = get_absolute_value(battle_sub_55FE9C, 0x27);
+	ff7_externals.run_chocobuckle_main_loop_560C32 = get_absolute_value(handler_chocobuckle_sub_5609DB, 0x6F);
+
 	// Texture/Material animation
 	uint32_t battle_leviathan_sub_5B2F18 = get_absolute_value(ff7_externals.battle_summon_leviathan_loop, 0x50E);
 	ff7_externals.battle_animate_material_texture = get_relative_call(battle_leviathan_sub_5B2F18, 0x19F);

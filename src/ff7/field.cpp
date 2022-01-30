@@ -91,7 +91,6 @@ std::unordered_map<byte, std::vector<opcode_patch_info>> patch_config_for_opcode
 	{TURA, {opcode_patch_info{1, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
 	{FADE, {opcode_patch_info{5, patch_type::BYTE, patch_operation::DIVISION}}},
 	{SHAKE, {opcode_patch_info{4, patch_type::BYTE, patch_operation::MULTIPLICATION}, opcode_patch_info{6, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
-	{TURN, {opcode_patch_info{4, patch_type::SHORT, patch_operation::MULTIPLICATION}}},
 };
 
 struct external_field_model_data
@@ -417,19 +416,20 @@ int opcode_script_partial_animation_wrapper()
 	return ret;
 }
 
-int opcode_script_TURNGEN_wrapper()
+int opcode_script_TURNGEN_and_TURN_wrapper()
 {
+	byte curr_opcode = get_field_parameter<byte>(-1);
 	WORD rotation_n_steps = get_field_parameter<byte>(3);
 	rotation_n_steps *= get_frame_multiplier();
 
-	// There are 7 cases in original FF7 where this condition happens (TODO: Transforming this to short is quite hard)
+	// There are 7+1 cases in original FF7 where this condition happens (TODO: Transforming this to short is quite hard)
 	if(rotation_n_steps > 255)
-		rotation_n_steps = 0xFF;
+		rotation_n_steps = 255;
 
 	if(is_fps_running_double_than_original())
 		patch_field_parameter<byte>(3, (byte)rotation_n_steps);
 
-	return ((int(*)())ff7_externals.opcode_turngen)();
+	return ((int(*)())old_opcode_table[curr_opcode])();
 }
 
 int opcode_script_patch_wrapper()
@@ -508,7 +508,8 @@ void ff7_field_hook_init()
 	replace_call_function(ff7_externals.field_update_models_positions + 0x8BC, ff7_field_update_player_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9E8, ff7_field_update_single_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9AA, ff7_field_check_collision_with_target);
-	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[TURNGEN], (DWORD)&opcode_script_TURNGEN_wrapper);
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[TURNGEN], (DWORD)&opcode_script_TURNGEN_and_TURN_wrapper);
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[TURN], (DWORD)&opcode_script_TURNGEN_and_TURN_wrapper);
 
 	if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 	{
