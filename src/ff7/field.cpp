@@ -37,8 +37,6 @@
 #include <cmath>
 
 // model movement and animations
-constexpr byte JOIN = 0x08;
-constexpr byte SPLIT = 0x09;
 constexpr byte CANIM1 = 0xB0;
 constexpr byte CANM1 = 0xB1;
 constexpr byte CANIM2 = 0xBB;
@@ -85,8 +83,6 @@ struct opcode_patch_info
 
 std::array<uint32_t, 256> old_opcode_table;
 std::unordered_map<byte, std::vector<opcode_patch_info>> patch_config_for_opcode{
-	{JOIN, {opcode_patch_info{0, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
-	{SPLIT, {opcode_patch_info{13, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
 	{PTURA, {opcode_patch_info{1, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
 	{TURA, {opcode_patch_info{1, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
 	{FADE, {opcode_patch_info{5, patch_type::BYTE, patch_operation::DIVISION}}},
@@ -432,6 +428,16 @@ int opcode_script_TURNGEN_and_TURN_wrapper()
 	return ((int(*)())old_opcode_table[curr_opcode])();
 }
 
+void ff7_opcode_08_09_set_rotation(short model_id, byte rotation_initial, byte rotation_final)
+{
+	ff7_externals.field_opcode_08_09_set_rotation_61DB2C(model_id, rotation_initial, rotation_final);
+
+	if(ff7_externals.field_model_id_array[model_id] != 255 && is_fps_running_double_than_original())
+	{
+		(*ff7_externals.field_event_data_ptr)[model_id].rotation_n_steps *= get_frame_multiplier();
+	}
+}
+
 int opcode_script_patch_wrapper()
 {
 	byte curr_opcode = get_field_parameter<byte>(-1);
@@ -508,13 +514,15 @@ void ff7_field_hook_init()
 	replace_call_function(ff7_externals.field_update_models_positions + 0x8BC, ff7_field_update_player_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9E8, ff7_field_update_single_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9AA, ff7_field_check_collision_with_target);
+
+	// Model rotation
 	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[TURNGEN], (DWORD)&opcode_script_TURNGEN_and_TURN_wrapper);
 	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[TURN], (DWORD)&opcode_script_TURNGEN_and_TURN_wrapper);
+	replace_call_function(ff7_externals.field_opcode_08_sub_61D0D4 + 0x196, ff7_opcode_08_09_set_rotation);
 
 	if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 	{
-		// Model movement fps and animation (walk vs run) fix
-		patch_divide_code<int>(ff7_externals.field_opcode_08_sub_61D4B9 + 0x343, common_frame_multiplier);
+		// Model movement fps fix for ladder and jump
 		patch_code_byte(ff7_externals.field_update_models_positions + 0x1041, 0x2 - common_frame_multiplier / 2);
 		patch_code_byte(ff7_externals.field_update_models_positions + 0x189A, 0x2 - common_frame_multiplier / 2);
 		replace_call_function(common_externals.execute_opcode_table[JUMP] + 0x1F1, ff7_opcode_multiply_get_bank_value);

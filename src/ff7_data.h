@@ -446,8 +446,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.opcode_canm1_canm2 = common_externals.execute_opcode_table[0xB1];
 	ff7_externals.opcode_wmode = common_externals.execute_opcode_table[0x52];
 
-	uint32_t field_opcode_08_sub_61D0D4 = get_relative_call(common_externals.execute_opcode_table[0x08], 0x5A);
-	ff7_externals.field_opcode_08_sub_61D4B9 = get_relative_call(field_opcode_08_sub_61D0D4, 0x283);
+	ff7_externals.field_opcode_08_sub_61D0D4 = get_relative_call(common_externals.execute_opcode_table[0x08], 0x5A);
+	ff7_externals.field_opcode_08_09_set_rotation_61DB2C = (void(*)(short, byte, byte))get_relative_call(ff7_externals.field_opcode_08_sub_61D0D4, 0x196);
 	ff7_externals.field_opcode_AA_2A_sub_616476 = get_relative_call(common_externals.execute_opcode_table[0xAA], 0x26);
 
 	ff7_externals.field_event_data_ptr = (field_event_data**)get_absolute_value(ff7_externals.opcode_canm1_canm2, 0xC1);
