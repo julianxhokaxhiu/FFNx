@@ -157,18 +157,6 @@ bool play_battle_action_voice(byte char_id, byte command_id, short action_id)
 	return nxAudioEngine.playVoice(name, 0, voice_volume);
 }
 
-bool play_battle_action_support_voice(byte receiving_char_id, byte talking_char_id, byte command_id, short action_id)
-{
-	char name[MAX_PATH];
-
-	sprintf(name, "_battle/char_%02X_to_%02X/cmd_%02X_%04X", talking_char_id, receiving_char_id, command_id, action_id);
-
-	if(!nxAudioEngine.canPlayVoice(name))
-		sprintf(name, "_battle/char_%02X_to_%02X/cmd_%02X", talking_char_id, receiving_char_id, command_id);
-
-	return nxAudioEngine.playVoice(name, 0, voice_volume);
-}
-
 void play_option(char* field_name, byte window_id, byte dialog_id, byte option_count)
 {
 	char name[MAX_PATH];
@@ -612,18 +600,11 @@ void ff7_display_battle_action_text()
 				byte command_id = ff7_externals.g_battle_model_state[actor_id].commandID;
 				uint16_t action_id = ff7_externals.g_small_battle_model_state[actor_id].actionIdx;
 
-				int actor_playing_voice = getRandomInt(0, 2);
 				bool hasStarted = false;
-				if (actor_playing_voice == actor_id)
-					hasStarted = play_battle_action_voice(char_id, command_id, action_id);
-				else
-					hasStarted = play_battle_action_support_voice(char_id, ff7_externals.battle_context->actor_vars[actor_playing_voice].index,
-																  command_id, action_id);
+				hasStarted = play_battle_action_voice(char_id, command_id, action_id);
 
-				if(hasStarted){
+				if(hasStarted)
 					effect_data.field_6 = VOICE_STARTED;
-					begin_voice();
-				}
 				else
 					effect_data.field_6 = VOICE_NOT_STARTED;
 			}
@@ -635,8 +616,6 @@ void ff7_display_battle_action_text()
 
 		if(effect_data.n_frames == 0)
 		{
-			if(effect_data.field_6 = VOICE_STARTED)
-				end_voice();
 			effect_data.field_0 = 0xFFFF;
 		}
 		else
