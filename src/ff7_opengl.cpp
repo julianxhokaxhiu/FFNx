@@ -192,8 +192,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		{
 			battle_frame_multiplier = (ff7_fps_limiter == FF7_LIMITER_30FPS) ? 2 : 4;
 
-			// TODO: Fix menu battle FPS in another way because this introduce a softlock in Bizzarro Sephiroth battle
-			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, battle_frame_multiplier);
+			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, 2); // Works perfectly only in 30 FPS
 
 			ff7_battle_camera_hook_init();
 			ff7_battle_animations_hook_init();
@@ -228,7 +227,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// auto attack toggle
 	// #####################
-	replace_call_function(ff7_externals.battle_sub_6CE8B3 + 0xD9, ff7_battle_menu_sub_6DB0EE);
+	replace_call_function(ff7_externals.battle_menu_update_6CE8B3 + 0xD9, ff7_battle_menu_sub_6DB0EE);
 	replace_call_function(ff7_externals.handle_actor_ready + 0x187, ff7_set_battle_menu_state_data_at_full_atb);
 
 	// #####################
