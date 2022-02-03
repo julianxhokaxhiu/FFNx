@@ -1295,6 +1295,26 @@ void ff7_battle_sub_6CE81E()
     }
 }
 
+void ff7_update_battle_menu()
+{
+	((void(*)())ff7_externals.battle_menu_update_6CE8B3)();
+	if(*ff7_externals.g_do_render_menu)
+		(*ff7_externals.battle_menu_animation_idx)++;
+}
+
+void ff7_display_tifa_slots_handler()
+{
+	if(*ff7_externals.g_do_render_menu)
+		((void(*)())ff7_externals.display_tifa_slots_handler_6E3135)();
+}
+
+void ff7_display_cait_sith_slots_handler()
+{
+	if(*ff7_externals.g_do_render_menu)
+		((void(*)())ff7_externals.display_cait_sith_slots_handler_6E2170)();
+}
+
+
 void ff7_battle_animations_hook_init()
 {
     // 3d model animation
@@ -1440,8 +1460,8 @@ void ff7_battle_animations_hook_init()
     patch_divide_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x6E, battle_frame_multiplier);
 
     // Tifa slots speed patch (bitwise and with 0x7 changed to 0x3)
-    patch_code_byte(ff7_externals.battle_sub_6E3135 + 0x168, 0x3);
-    patch_code_byte(ff7_externals.battle_sub_6E3135 + 0x16B, 0xCA);
+    patch_code_byte(ff7_externals.display_tifa_slots_handler_6E3135 + 0x168, 0x3);
+    patch_code_byte(ff7_externals.display_tifa_slots_handler_6E3135 + 0x16B, 0xCA);
 
     // Texture material animation
     replace_function(ff7_externals.battle_animate_material_texture, ff7_battle_animate_material_texture);
@@ -1449,4 +1469,14 @@ void ff7_battle_animations_hook_init()
 
     // Toggle variable related to gun effect
     replace_call_function(ff7_externals.battle_sub_42D808 + 0x117, ff7_battle_sub_6CE81E);
+
+    if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+    {
+        // Fix battle speed and menu for 60 FPS only
+        patch_divide_code<int>(ff7_externals.set_battle_speed_4385CC + 0x2E, battle_frame_multiplier / 2);
+        replace_call_function(ff7_externals.battle_menu_update_call, ff7_update_battle_menu);
+        replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1BB, ff7_display_cait_sith_slots_handler);
+        replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C2, ff7_display_tifa_slots_handler);
+        memset_code(ff7_externals.battle_menu_update_6CE8B3 + 0x148, 0x90, 3);
+    }
 }

@@ -161,9 +161,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_fight_end = get_relative_call(ff7_externals.battle_sub_42D992, 0xB7);
 	ff7_externals.battle_fanfare_music = get_relative_call(ff7_externals.battle_fight_end, 0x25);
 	ff7_externals.battle_sub_427C22 = get_relative_call(ff7_externals.battle_sub_42DAE5, 0xF);
-	ff7_externals.battle_sub_6CE8B3 = get_relative_call(battle_main_loop, 0x368);
-	ff7_externals.battle_sub_6DB0EE = get_relative_call(ff7_externals.battle_sub_6CE8B3, 0xD9);
-	ff7_externals.is_battle_paused = (char*)get_absolute_value(ff7_externals.battle_sub_6CE8B3, 0xC3);
+	ff7_externals.battle_menu_update_6CE8B3 = get_relative_call(battle_main_loop, 0x368);
+	ff7_externals.battle_sub_6DB0EE = get_relative_call(ff7_externals.battle_menu_update_6CE8B3, 0xD9);
+	ff7_externals.is_battle_paused = (char*)get_absolute_value(ff7_externals.battle_menu_update_6CE8B3, 0xC3);
 	ff7_externals.battle_actor_data = (battle_actor_data*)get_absolute_value(ff7_externals.battle_sub_6DB0EE, 0x276);
 	ff7_externals.battle_menu_state_fn_table = std::span((uint32_t*)get_absolute_value(ff7_externals.battle_sub_6DB0EE, 0x1B4), 64);
 	ff7_externals.magic_effects_fn_table = std::span((uint32_t*)get_absolute_value(ff7_externals.battle_sub_427C22, 0xBF), 54);
@@ -617,10 +617,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.battle_sub_430DD0 = get_relative_call(ff7_externals.battle_loop, 0x99E);
 	ff7_externals.battle_sub_429D8A = get_absolute_value(ff7_externals.battle_loop, 0x59);
-	uint32_t battle_sub_6D83C8 = get_relative_call(ff7_externals.battle_sub_6CE8B3, 0x77);
-	uint32_t battle_sub_6D82EA = get_relative_call(battle_sub_6D83C8, 0xE0);
-	uint32_t battle_sub_6D797C = get_relative_call(battle_sub_6D82EA, 0x59);
-	ff7_externals.battle_sub_6E3135 = get_relative_call(battle_sub_6D797C, 0x1C2);
 	ff7_externals.update_battle_camera_sub_5C20CE = get_relative_call(ff7_externals.battle_sub_42D992, 0xFB);
 	ff7_externals.set_battle_camera_sub_5C22BD = get_relative_call(ff7_externals.update_battle_camera_sub_5C20CE, 0x5A);
 	ff7_externals.battle_camera_sub_5C22A9 = get_relative_call(ff7_externals.update_battle_camera_sub_5C20CE, 0x97);
@@ -841,6 +837,18 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.get_draw_chain_671C71 = (struc_84*(*)(ff7_graphics_object*))get_relative_call(ff7_externals.battle_animate_texture_spt, 0x15F);
 	ff7_externals.palette_extra_data_C06A00 = (palette_extra*)get_absolute_value(ff7_externals.battle_animate_material_texture, 0x2FA);
 	ff7_externals.global_game_data_90AAF0 = (uint32_t**)get_absolute_value((uint32_t)ff7_externals.get_global_model_matrix_buffer_66100D, 0x4);
+
+	// Battle menu
+	ff7_externals.battle_menu_update_call = battle_main_loop + 0x368;
+	uint32_t battle_sub_6D83C8 = get_relative_call(ff7_externals.battle_menu_update_6CE8B3, 0x77);
+	uint32_t battle_sub_6D82EA = get_relative_call(battle_sub_6D83C8, 0xE0);
+	ff7_externals.display_battle_menu_6D797C = get_relative_call(battle_sub_6D82EA, 0x59);
+	ff7_externals.display_cait_sith_slots_handler_6E2170 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1BB);
+	ff7_externals.display_tifa_slots_handler_6E3135 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1C2);
+	ff7_externals.battle_set_do_render_menu = get_relative_call(battle_main_loop, 0x32A);
+	ff7_externals.g_do_render_menu = (int*)get_absolute_value(ff7_externals.battle_set_do_render_menu, 0x7);
+	ff7_externals.battle_menu_animation_idx = (int*)get_absolute_value(ff7_externals.battle_menu_update_6CE8B3, 0x144);
+	ff7_externals.set_battle_speed_4385CC = get_relative_call(ff7_externals.battle_sub_437DB0, 0x17C);
 
 	ff7_externals.world_update_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
 	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x108);

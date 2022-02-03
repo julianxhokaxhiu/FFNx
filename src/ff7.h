@@ -2204,7 +2204,7 @@ struct ff7_externals
 	uint32_t battle_sub_42D992;
 	uint32_t battle_sub_42DAE5;
 	uint32_t battle_sub_427C22;
-	uint32_t battle_sub_6CE8B3;
+	uint32_t battle_menu_update_6CE8B3;
 	uint32_t battle_sub_6DB0EE;
 	char* is_battle_paused;
 	std::span<uint32_t> battle_menu_state_fn_table;
@@ -2511,7 +2511,9 @@ struct ff7_externals
 	uint32_t battle_camera_focal_sub_5C5714;
 	uint32_t battle_sub_430DD0;
 	uint32_t battle_sub_429D8A;
-	uint32_t battle_sub_6E3135;
+	uint32_t display_battle_menu_6D797C;
+	uint32_t display_cait_sith_slots_handler_6E2170;
+	uint32_t display_tifa_slots_handler_6E3135;
 	uint32_t update_battle_camera_sub_5C20CE;
 	uint32_t set_battle_camera_sub_5C22BD;
 	uint32_t battle_camera_sub_5C22A9;
@@ -2665,6 +2667,13 @@ struct ff7_externals
 	uint32_t** global_game_data_90AAF0;
 	std::span<uint32_t> limit_break_effects_fn_table;
 	std::span<uint32_t> enemy_atk_effects_fn_table;
+
+	// battle menu
+	uint32_t battle_set_do_render_menu;
+	int *g_do_render_menu;
+	uint32_t battle_menu_update_call;
+	int *battle_menu_animation_idx;
+	uint32_t set_battle_speed_4385CC;
 
 	// battle dialogue
 	uint32_t battle_sub_42CBF9;
