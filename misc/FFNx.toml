@@ -41,7 +41,7 @@ window_size_y = 0
 # A setting of 0 will attempt to find a scale factor that most closely matches the current screen or window resolution.
 # Default = 0
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-internal_resolution_scale = 0
+internal_resolution_scale = 2
 
 #[PRESERVE ASPECT]
 # Preserve original game aspect ratio of (4:3) by adding black bars on the left and right side (if needed)
