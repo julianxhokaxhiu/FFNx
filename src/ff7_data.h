@@ -641,8 +641,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t battle_sub_5B9EC2 = get_relative_call(battle_sub_42F21F, 0x38);
 	ff7_externals.battle_sub_5BD5E9 = get_relative_call(battle_sub_5B9EC2, 0x41);
 	uint32_t battle_sub_42DE61 = get_relative_call(ff7_externals.battle_sub_42D992, 0x9F);
-	uint32_t battle_sub_5C1B81 = get_absolute_value(battle_sub_42DE61, 0x17E);
-	ff7_externals.battle_sub_5C1D9A = get_relative_call(battle_sub_5C1B81, 0xA4);
+	ff7_externals.run_summon_animations_script_5C1B81 = get_absolute_value(battle_sub_42DE61, 0x17E);
+	ff7_externals.run_summon_animations_script_sub_5C1D9A = get_relative_call(ff7_externals.run_summon_animations_script_5C1B81, 0xA4);
 	ff7_externals.run_animation_script = get_relative_call(ff7_externals.battle_sub_42A5EB, 0xB8);
 	ff7_externals.add_fn_to_effect100_fn = get_relative_call(ff7_externals.run_animation_script, 0x48C2);
 	ff7_externals.execute_effect100_fn = get_relative_call(ff7_externals.battle_sub_42D992, 0x12E);
@@ -729,9 +729,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	// Character fade in/out
 	ff7_externals.vincent_limit_fade_effect_sub_5D4240 = ff7_externals.limit_break_effects_fn_table[56];
 	ff7_externals.battle_sub_5BD96D = get_absolute_value(ff7_externals.vincent_limit_fade_effect_sub_5D4240, 0x27);
-	ff7_externals.battle_sub_5C1C8F = get_absolute_value(battle_sub_5C1B81, 0x3F);
+	ff7_externals.battle_sub_5C1C8F = get_absolute_value(ff7_externals.run_summon_animations_script_5C1B81, 0x3F);
 	uint32_t handle_fade_character_42C31C = get_relative_call(ff7_externals.battle_sub_5C1C8F, 0xEC);
-	ff7_externals.battle_sub_5C18BC = get_absolute_value(battle_sub_5C1B81, 0x30);
+	ff7_externals.battle_sub_5C18BC = get_absolute_value(ff7_externals.run_summon_animations_script_5C1B81, 0x30);
 	ff7_externals.battle_sub_42A72D = get_relative_call(ff7_externals.battle_sub_429AC0, 0xD0);
 
 	// resting positions and rotations
@@ -807,6 +807,20 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_odin_frames_AEEC14 = (WORD*)get_absolute_value(ff7_externals.run_summon_odin_steel_sub_4A9908, 0x316);
 	uint32_t run_summon_kotr_main_476842 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x43A);
 	ff7_externals.run_summon_kotr_sub_476857 = get_relative_call(run_summon_kotr_main_476842, 0xB);
+	ff7_externals.run_summon_kotr_main_loop_478031 = get_absolute_value(ff7_externals.run_summon_kotr_sub_476857, 0x1AC);
+	ff7_externals.run_summon_kotr_knight_script[0] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x2D3);
+	ff7_externals.run_summon_kotr_knight_script[1] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x341);
+	ff7_externals.run_summon_kotr_knight_script[2] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x3EA);
+	ff7_externals.run_summon_kotr_knight_script[3] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x475);
+	ff7_externals.run_summon_kotr_knight_script[4] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x532);
+	ff7_externals.run_summon_kotr_knight_script[5] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x5BA);
+	ff7_externals.run_summon_kotr_knight_script[6] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x666);
+	ff7_externals.run_summon_kotr_knight_script[7] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x6F3);
+	ff7_externals.run_summon_kotr_knight_script[8] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x79D);
+	ff7_externals.run_summon_kotr_knight_script[9] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x869);
+	ff7_externals.run_summon_kotr_knight_script[10] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x934);
+	ff7_externals.run_summon_kotr_knight_script[11] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0x9CF);
+	ff7_externals.run_summon_kotr_knight_script[12] = get_absolute_value(ff7_externals.run_summon_kotr_main_loop_478031, 0xAB8);
 	ff7_externals.add_kotr_camera_fn_to_effect100_fn_476AAB = (void(*)(DWORD, DWORD, WORD))get_relative_call(ff7_externals.run_summon_kotr_sub_476857, 0x1C6);
 	ff7_externals.run_kotr_camera_476AFB = get_relative_call((uint32_t)ff7_externals.add_kotr_camera_fn_to_effect100_fn_476AAB, 0xA);
 	uint32_t run_summon_bahamut_zero_main_4835C1 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x399);

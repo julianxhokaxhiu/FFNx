@@ -2545,7 +2545,8 @@ struct ff7_externals
 	uint32_t battle_sub_42E275;
 	uint32_t battle_sub_42E34A;
 	uint32_t battle_sub_5BD5E9;
-	uint32_t battle_sub_5C1D9A;
+	uint32_t run_summon_animations_script_5C1B81;
+	uint32_t run_summon_animations_script_sub_5C1D9A;
 	uint32_t run_animation_script;
 	uint32_t add_fn_to_effect100_fn;
 	uint32_t execute_effect100_fn;
@@ -2616,6 +2617,8 @@ struct ff7_externals
 	uint32_t run_odin_gunge_camera_4A0F52;
 	uint32_t run_summon_odin_steel_sub_4A9908;
 	uint32_t run_summon_kotr_sub_476857;
+	uint32_t run_summon_kotr_main_loop_478031;
+	std::array<uint32_t, 13> run_summon_kotr_knight_script;
 	void(*add_kotr_camera_fn_to_effect100_fn_476AAB)(DWORD, DWORD, WORD);
 	uint32_t run_kotr_camera_476AFB;
 	uint32_t run_bahamut_zero_main_loop_484A16;

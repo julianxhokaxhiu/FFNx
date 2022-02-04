@@ -34,6 +34,7 @@
 byte y_pos_offset_display_damage_30[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2};
 byte y_pos_offset_display_damage_60[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 7, 8, 8, 8, 8, 8, 7, 7, 7, 6, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0, 0, 1, 1, 0, 0, 0};
 WORD ff7_odin_steel_frames_AEEC14;
+std::set<short> kotr_excluded_frames[] = {{50}, {50}, {}, {52}, {35}, {14}, {}, {26}, {71}, {51}, {56}, {56}, {112}};
 
 const std::unordered_map<byte, int> numArgsOpCode = {
     {0x8E, 0},
@@ -157,6 +158,21 @@ std::array<AuxiliaryEffectHandler, 10> aux_effect10_handler;
 std::shared_ptr<EffectDecorator> currentEffectDecorator;
 bool isAddFunctionDisabled = false;
 
+byte getActorIdleAnimScript(byte actorID)
+{
+    return ff7_externals.g_actor_idle_scripts[actorID];
+}
+
+battle_model_state *getBattleModelState(byte actorID)
+{
+    return &(ff7_externals.g_battle_model_state[actorID]);
+}
+
+battle_model_state_small *getSmallBattleModelState(byte actorID)
+{
+    return &(ff7_externals.g_small_battle_model_state[actorID]);
+}
+
 AuxiliaryEffectHandler::AuxiliaryEffectHandler()
 {
     this->isFirstTimeRunning = true;
@@ -196,7 +212,8 @@ void PauseEffectDecorator::callEffectFunction(uint32_t function)
 
 void FixCounterEffectDecorator::callEffectFunction(uint32_t function)
 {
-    uint16_t currentCounter = *this->effectCounter;
+    uint16_t currentEffectActive = *this->effectActive;
+    short currentCounter = *this->effectCounter;
     if(this->frameCounter % this->frequency != 0)
     {
         *this->isAddFunctionDisabled = true;
@@ -209,6 +226,46 @@ void FixCounterEffectDecorator::callEffectFunction(uint32_t function)
         *this->isAddFunctionDisabled = false;
         *this->effectCounter = currentCounter;
     }
+
+    // Change active status of the function only at the last repeated frame
+    if(this->frameCounter % this->frequency != this->frequency - 1)
+    {
+        *this->effectActive = currentEffectActive;
+    }
+
+    this->frameCounter++;
+}
+
+void FixCounterExceptionEffectDecorator::callEffectFunction(uint32_t function)
+{
+    uint16_t currentEffectActive = *this->effectActive;
+    short currentCounter = *this->effectCounter;
+
+    if(this->frameCounter % this->frequency == 0)
+    {
+        ((void(*)())function)();
+    }
+    else
+    {
+         *this->isAddFunctionDisabled = true;
+        if(!this->excludedFrames.contains(currentCounter)){
+            ((void(*)())function)();
+        }
+        else
+        {
+            *this->effectCounter = *this->effectCounter + 1;
+            ((void(*)())function)();
+        }
+        *this->effectCounter = currentCounter;
+        *this->isAddFunctionDisabled = false;
+    }
+
+    // Change active status of the function only at the last repeated frame
+    if(this->frameCounter % this->frequency != this->frequency - 1)
+    {
+        *this->effectActive = currentEffectActive;
+    }
+
     this->frameCounter++;
 }
 
@@ -334,21 +391,6 @@ void patchAnimationScriptArg(byte *scriptPointer, byte position)
     }
 
     patchedAddress.insert((DWORD)(scriptPointer + position));
-}
-
-byte getActorIdleAnimScript(byte actorID)
-{
-    return ff7_externals.g_actor_idle_scripts[actorID];
-}
-
-battle_model_state *getBattleModelState(byte actorID)
-{
-    return &(ff7_externals.g_battle_model_state[actorID]);
-}
-
-battle_model_state_small *getSmallBattleModelState(byte actorID)
-{
-    return &(ff7_externals.g_small_battle_model_state[actorID]);
 }
 
 byte *getAnimScriptPointer(byte **ptrToScriptTable, battle_model_state &ownerModelState)
@@ -585,6 +627,7 @@ void ff7_execute_effect100_fn()
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_disintegrate_2_death_5BBA82 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_morph_death_5BC812 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_5C0E4B ||
+                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_script_5C1B81 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.vincent_limit_fade_effect_sub_5D4240)
                 {
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<NoEffectDecorator>());
@@ -593,6 +636,13 @@ void ff7_execute_effect100_fn()
                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_chocobuckle_main_loop_560C32)
                 {
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<OneCallEffectDecorator>(battle_frame_multiplier));
+                }
+                else if(auto it = std::find(ff7_externals.run_summon_kotr_knight_script.begin(), ff7_externals.run_summon_kotr_knight_script.end(), ff7_externals.effect100_array_fn[fn_index]);
+                        it != ff7_externals.run_summon_kotr_knight_script.end())
+                {
+                    int kotr_index = std::distance(ff7_externals.run_summon_kotr_knight_script.begin(), it);
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<FixCounterExceptionEffectDecorator>(battle_frame_multiplier, &ff7_externals.effect100_array_data[fn_index].field_0,
+                                                                                                                            &ff7_externals.effect100_array_data[fn_index].field_2, &isAddFunctionDisabled, kotr_excluded_frames[kotr_index]));
                 }
                 else
                 {
@@ -1328,7 +1378,7 @@ void ff7_battle_animations_hook_init()
     replace_call_function(ff7_externals.battle_sub_42E275 + 0xB2, ff7_run_animation_script);
     replace_call_function(ff7_externals.battle_sub_42E34A + 0x76, ff7_run_animation_script);
     replace_call_function(ff7_externals.battle_sub_5BD5E9 + 0x22F, ff7_run_animation_script);
-    replace_call_function(ff7_externals.battle_sub_5C1D9A + 0x4A, ff7_run_animation_script);
+    replace_call_function(ff7_externals.run_summon_animations_script_sub_5C1D9A + 0x4A, ff7_run_animation_script);
     replace_function(ff7_externals.add_fn_to_effect100_fn, ff7_add_fn_to_effect100_fn);
     replace_function(ff7_externals.add_fn_to_effect10_fn, ff7_add_fn_to_effect10_fn);
     replace_function(ff7_externals.add_fn_to_effect60_fn, ff7_add_fn_to_effect60_fn);
