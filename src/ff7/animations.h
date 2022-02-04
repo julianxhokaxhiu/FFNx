@@ -20,6 +20,10 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#pragma once
+
+#include <set>
+
 struct interpolationable_data
 {
     rotation_matrix rot_matrix;
@@ -43,9 +47,10 @@ public:
 
 class OneCallEffectDecorator: public EffectDecorator
 {
-private:
+protected:
     int frameCounter;
     int frequency;
+    OneCallEffectDecorator() = default;
 
 public:
     OneCallEffectDecorator(int frequency): frameCounter(0), frequency(frequency) {};
@@ -54,10 +59,11 @@ public:
 
 class PauseEffectDecorator: public EffectDecorator
 {
-private:
+protected:
     int frameCounter;
     int frequency;
     byte* isBattlePaused;
+    PauseEffectDecorator() = default;
 
 public:
     PauseEffectDecorator(int frequency, byte* isBattlePausedExt): frameCounter(0), frequency(frequency), isBattlePaused(isBattlePausedExt) {};
@@ -66,26 +72,40 @@ public:
 
 class FixCounterEffectDecorator: public EffectDecorator
 {
-private:
+protected:
     int frameCounter;
     int frequency;
-    uint16_t *effectCounter;
+    uint16_t *effectActive;
+    short *effectCounter;
     bool *isAddFunctionDisabled;
+    FixCounterEffectDecorator() = default;
 
 public:
-    FixCounterEffectDecorator(int frequency, uint16_t* effectCounter, bool* isAddFunctionDisabled): frameCounter(0),
+    FixCounterEffectDecorator(int frequency, uint16_t* effectActive, short* effectCounter, bool* isAddFunctionDisabled): frameCounter(0),
                                                                                                     frequency(frequency),
+                                                                                                    effectActive(effectActive),
                                                                                                     effectCounter(effectCounter),
                                                                                                     isAddFunctionDisabled(isAddFunctionDisabled) {};
     void callEffectFunction(uint32_t function) override;
 };
 
-class InterpolationEffectDecorator: public EffectDecorator
+class FixCounterExceptionEffectDecorator: public FixCounterEffectDecorator
 {
-private:
-    int frameCounter;
-    int frequency;
-    byte* isBattlePaused;
+protected:
+    std::set<short> excludedFrames;
+
+public:
+    inline FixCounterExceptionEffectDecorator(int frequency, uint16_t* effectActive, short* effectCounter,
+                                              bool* isAddFunctionDisabled, std::set<short> excludedFrames) : FixCounterEffectDecorator(frequency, effectActive, effectCounter, isAddFunctionDisabled)
+    {
+        this->excludedFrames = excludedFrames;
+    }
+    void callEffectFunction(uint32_t function) override;
+};
+
+class InterpolationEffectDecorator: public PauseEffectDecorator
+{
+protected:
     std::unordered_map<uint64_t, interpolationable_data> previousFrameDataMap;
     int textureCallIdx;
     int textureNumCalls;
