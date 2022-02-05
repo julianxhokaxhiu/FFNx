@@ -633,6 +633,7 @@ void ff7_execute_effect100_fn()
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<NoEffectDecorator>());
                 }
                 else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_bahamut_zero_main_loop_484A16 ||
+                        ff7_externals.effect100_array_fn[fn_index] == ff7_externals.bomb_blast_black_bg_effect_537427 ||
                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_chocobuckle_main_loop_560C32)
                 {
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<OneCallEffectDecorator>(battle_frame_multiplier));
