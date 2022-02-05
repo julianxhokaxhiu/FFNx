@@ -838,6 +838,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t battle_sub_55FE9C = get_relative_call(battle_sub_55FE60, 0x12);
 	uint32_t handler_chocobuckle_sub_5609DB = get_absolute_value(battle_sub_55FE9C, 0x27);
 	ff7_externals.run_chocobuckle_main_loop_560C32 = get_absolute_value(handler_chocobuckle_sub_5609DB, 0x6F);
+	uint32_t bomb_blast_effects_5373D0 = ff7_externals.enemy_atk_effects_fn_table[67];
+	uint32_t bomb_blast_effects_sub_5373E5 = get_relative_call(bomb_blast_effects_5373D0, 0xB);
+	ff7_externals.bomb_blast_black_bg_effect_537427 = get_absolute_value(bomb_blast_effects_sub_5373E5, 0x34);
 
 	// Texture/Material animation
 	uint32_t battle_leviathan_sub_5B2F18 = get_absolute_value(ff7_externals.battle_summon_leviathan_loop, 0x50E);
