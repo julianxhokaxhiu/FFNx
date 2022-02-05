@@ -2619,6 +2619,7 @@ struct ff7_externals
 	uint32_t run_summon_phoenix_sub_515127;
 	uint32_t run_phoenix_main_loop_516297;
 	uint32_t run_chocobuckle_main_loop_560C32;
+	uint32_t bomb_blast_black_bg_effect_537427;
 	uint32_t battle_update_3d_model_data;
 	uint32_t battle_animate_material_texture;
 	uint32_t battle_animate_texture_spt;
