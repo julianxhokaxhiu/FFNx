@@ -23,6 +23,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <intrin.h>
+#include <algorithm>
 
 #include "../ff7.h"
 #include "../log.h"
@@ -149,7 +150,6 @@ const std::unordered_map<byte, int> numArgsOpCode = {
 };
 
 const std::unordered_set<byte> endingOpCode{{0xA2, 0xA7, 0xA9, 0xB6, 0xF1}};
-std::unordered_set<uint32_t> patchedAddress{};
 
 std::array<AuxiliaryEffectHandler, 100> aux_effect100_handler;
 std::array<AuxiliaryEffectHandler, 60> aux_effect60_handler;
@@ -377,21 +377,6 @@ void InterpolationEffectDecorator::interpolatePalette(palette_extra &nextPalette
     }
 }
 
-void patchAnimationScriptArg(byte *scriptPointer, byte position)
-{
-    if (!patchedAddress.contains((DWORD)(scriptPointer + position)))
-    {
-        byte beforeValue = scriptPointer[position];
-        scriptPointer[position] = scriptPointer[position] * battle_frame_multiplier;
-
-        if (beforeValue >= 0x100 / battle_frame_multiplier)
-            ffnx_error("Script arg multiplication out of bound at 0x%x: before is %d, after is %d\n", (DWORD)(scriptPointer + position),
-                       beforeValue, scriptPointer[position]);
-    }
-
-    patchedAddress.insert((DWORD)(scriptPointer + position));
-}
-
 byte *getAnimScriptPointer(byte **ptrToScriptTable, battle_model_state &ownerModelState)
 {
     byte *scriptPtr = ptrToScriptTable[ownerModelState.animScriptIndex];
@@ -411,6 +396,7 @@ void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable)
     battle_model_state_small smallModelState = *getSmallBattleModelState(actorID);
 
     byte script_wait_frames = *ff7_externals.g_script_wait_frames;
+    bool hasSetWaitFrames = false;
 
     if (!*ff7_externals.g_is_battle_paused)
     {
@@ -434,10 +420,10 @@ void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable)
                 {
                 case 0xC5:
                     ownerModelState.waitFrames = script_wait_frames;
+                    hasSetWaitFrames = true;
                     break;
                 case 0xC6:
-                    patchAnimationScriptArg(scriptPtr, ownerModelState.currentScriptPosition);
-                    script_wait_frames = scriptPtr[ownerModelState.currentScriptPosition++];
+                    script_wait_frames = std::min(scriptPtr[ownerModelState.currentScriptPosition++] * battle_frame_multiplier, 255);
                     break;
                 case 0x9E:
                     if (actorID == *ff7_externals.special_actor_id)
@@ -503,8 +489,8 @@ void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable)
                     }
                     break;
                 case 0xF4:
-                    patchAnimationScriptArg(scriptPtr, ownerModelState.currentScriptPosition);
-                    ownerModelState.waitFrames = scriptPtr[ownerModelState.currentScriptPosition++];
+                    ownerModelState.waitFrames = std::min(scriptPtr[ownerModelState.currentScriptPosition++] * battle_frame_multiplier, 255);
+                    hasSetWaitFrames = true;
                     break;
                 case 0xFE:
                     if (ownerModelState.waitFrames == 0)
@@ -550,13 +536,8 @@ void ff7_run_animation_script(byte actorID, byte **ptrToScriptTable)
     // execute original run animation script
     ((void (*)(byte, byte **))ff7_externals.run_animation_script)(actorID, ptrToScriptTable);
 
-    if (ownerModelState.currentScriptPosition != getBattleModelState(actorID)->currentScriptPosition)
-        ffnx_error("%s - Animation script pointer simulation wrong! Final position does not match (simulation: %d != real: %d)\n", __func__,
-                   ownerModelState.currentScriptPosition, getBattleModelState(actorID)->currentScriptPosition);
-
-    if (ownerModelState.waitFrames != getBattleModelState(actorID)->waitFrames)
-        ffnx_error("%s - Camera script pointer simulation wrong! Final frames to wait does not match (simulation: %d != real: %d)\n", __func__,
-                   ownerModelState.waitFrames, getBattleModelState(actorID)->waitFrames);
+    if(hasSetWaitFrames)
+        getBattleModelState(actorID)->waitFrames = ownerModelState.waitFrames;
 }
 
 int ff7_add_fn_to_effect100_fn(uint32_t function)
