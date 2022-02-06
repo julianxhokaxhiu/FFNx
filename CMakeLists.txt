@@ -115,6 +115,7 @@ target_link_libraries(
   dinput8
   dxguid
   XINPUT9_1_0
+  strmiids
   ZLIB::ZLIB
   png_static
   imgui::imgui

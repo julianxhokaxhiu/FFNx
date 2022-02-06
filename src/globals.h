@@ -29,8 +29,6 @@
 extern "C" {
 #endif
 
-extern const GUID IID_ICodecAPI = { 0x901db4c7, 0x31ce, 0x41a2, 0x85,0xdc, 0x8f,0xa0,0xbf,0x41,0xb8,0xda };
-
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
