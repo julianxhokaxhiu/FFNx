@@ -91,7 +91,7 @@ std::unordered_map<byte, std::vector<opcode_patch_info>> patch_config_for_opcode
 
 struct external_field_model_data
 {
-	bool isFirstFrameMovement;
+	int moveFrameIndex;
 	vector3<int> initialPosition;
 	vector3<int> finalPosition;
 	int wasNotCollidingWithTarget;
@@ -243,7 +243,7 @@ uint32_t field_open_flevel_siz()
 	return 1;
 }
 
-bool is_fps_running_double_than_original()
+bool is_fps_running_more_than_original()
 {
 	if(is_overlapping_movie_playing())
 		return movie_fps_ratio > 1;
@@ -263,8 +263,12 @@ void ff7_field_initialize_variables()
 {
 	((void(*)())ff7_externals.field_initialize_variables)();
 
+	// Clear hash set once a new field is loaded since the script are reloaded into memory
+	fieldPatchedAddress.clear();
+
+	// reset movement phase for all models
 	for(auto &external_data : external_model_data)
-		external_data.isFirstFrameMovement = true;
+		external_data.moveFrameIndex = 0;
 }
 
 int ff7_field_update_player_model_position(short model_id)
@@ -272,7 +276,7 @@ int ff7_field_update_player_model_position(short model_id)
 	field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
 	int original_movement_speed = field_event_data_array[model_id].movement_speed;
 	int frame_multiplier = get_frame_multiplier();
-	if(is_fps_running_double_than_original())
+	if(is_fps_running_more_than_original())
 	{
 		field_event_data_array[model_id].movement_speed = original_movement_speed / frame_multiplier;
 	}
@@ -293,11 +297,11 @@ int ff7_field_update_single_model_position(short model_id)
 	int frame_multiplier = get_frame_multiplier();
 	field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
 
-	if(is_fps_running_double_than_original())
+	if(is_fps_running_more_than_original())
 	{
-		if(external_model_data[model_id].isFirstFrameMovement)
+		int interpolationStep = external_model_data[model_id].moveFrameIndex + 1;
+		if(external_model_data[model_id].moveFrameIndex == 0)
 		{
-			external_model_data[model_id].isFirstFrameMovement = false;
 			external_model_data[model_id].initialPosition.x = field_event_data_array[model_id].model_pos_x;
 			external_model_data[model_id].initialPosition.y = field_event_data_array[model_id].model_pos_y;
 			external_model_data[model_id].initialPosition.z = field_event_data_array[model_id].model_pos_z;
@@ -306,18 +310,18 @@ int ff7_field_update_single_model_position(short model_id)
 			external_model_data[model_id].finalPosition.x = field_event_data_array[model_id].model_pos_x;
 			external_model_data[model_id].finalPosition.y = field_event_data_array[model_id].model_pos_y;
 			external_model_data[model_id].finalPosition.z = field_event_data_array[model_id].model_pos_z;
-			field_event_data_array[model_id].model_pos_x = (external_model_data[model_id].finalPosition.x + external_model_data[model_id].initialPosition.x) / frame_multiplier;
-			field_event_data_array[model_id].model_pos_y = (external_model_data[model_id].finalPosition.y + external_model_data[model_id].initialPosition.y) / frame_multiplier;
-			field_event_data_array[model_id].model_pos_z = (external_model_data[model_id].finalPosition.z + external_model_data[model_id].initialPosition.z) / frame_multiplier;
+			field_event_data_array[model_id].model_pos_x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos_y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos_z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
 		}
 		else
 		{
-			external_model_data[model_id].isFirstFrameMovement = true;
 			ret = external_model_data[model_id].updateMovementReturnValue;
-			field_event_data_array[model_id].model_pos_x = external_model_data[model_id].finalPosition.x;
-			field_event_data_array[model_id].model_pos_y = external_model_data[model_id].finalPosition.y;
-			field_event_data_array[model_id].model_pos_z = external_model_data[model_id].finalPosition.z;
+			field_event_data_array[model_id].model_pos_x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos_y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos_z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
 		}
+		external_model_data[model_id].moveFrameIndex = (external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier;
 	}
 	else
 	{
@@ -333,9 +337,9 @@ int ff7_field_check_collision_with_target(field_event_data* field_event_model, s
 	int frame_multiplier = get_frame_multiplier();
 	int model_id = std::distance(*ff7_externals.field_event_data_ptr, field_event_model);
 
-	if(is_fps_running_double_than_original())
+	if(is_fps_running_more_than_original())
 	{
-		if(external_model_data[model_id].isFirstFrameMovement)
+		if(external_model_data[model_id].moveFrameIndex == 0)
 		{
 			ret = ff7_externals.field_check_collision_with_target(field_event_model, target_collision_radius);
 			external_model_data[model_id].wasNotCollidingWithTarget = ret;
@@ -356,7 +360,7 @@ int ff7_field_check_collision_with_target(field_event_data* field_event_model, s
 short ff7_opcode_multiply_get_bank_value(short bank, short address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
-	if(is_fps_running_double_than_original())
+	if(is_fps_running_more_than_original())
 		ret *= get_frame_multiplier();
 	return ret;
 }
@@ -364,7 +368,7 @@ short ff7_opcode_multiply_get_bank_value(short bank, short address)
 short ff7_opcode_divide_get_bank_value(short bank, short address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
-	if(is_fps_running_double_than_original())
+	if(is_fps_running_more_than_original())
 	{
 		if(abs(ret) > 1)
 			ret /= get_frame_multiplier();
@@ -415,15 +419,10 @@ int opcode_script_partial_animation_wrapper()
 int opcode_script_TURNGEN_and_TURN_wrapper()
 {
 	byte curr_opcode = get_field_parameter<byte>(-1);
-	WORD rotation_n_steps = get_field_parameter<byte>(3);
-	rotation_n_steps *= get_frame_multiplier();
 
 	// There are 7+1 cases in original FF7 where this condition happens (TODO: Transforming this to short is quite hard)
-	if(rotation_n_steps > 255)
-		rotation_n_steps = 255;
-
-	if(is_fps_running_double_than_original())
-		patch_field_parameter<byte>(3, (byte)rotation_n_steps);
+	if(is_fps_running_more_than_original())
+		patch_field_parameter<byte>(3, std::min(get_field_parameter<byte>(3) * get_frame_multiplier(), 255));
 
 	return ((int(*)())old_opcode_table[curr_opcode])();
 }
@@ -432,7 +431,7 @@ void ff7_opcode_08_09_set_rotation(short model_id, byte rotation_initial, byte r
 {
 	ff7_externals.field_opcode_08_09_set_rotation_61DB2C(model_id, rotation_initial, rotation_final);
 
-	if(ff7_externals.field_model_id_array[model_id] != 255 && is_fps_running_double_than_original())
+	if(ff7_externals.field_model_id_array[model_id] != 255 && is_fps_running_more_than_original())
 	{
 		(*ff7_externals.field_event_data_ptr)[model_id].rotation_n_steps *= get_frame_multiplier();
 	}
@@ -443,7 +442,7 @@ int opcode_script_patch_wrapper()
 	byte curr_opcode = get_field_parameter<byte>(-1);
 	int frame_multiplier = get_frame_multiplier();
 
-	if(is_fps_running_double_than_original())
+	if(is_fps_running_more_than_original())
 	{
 		if(patch_config_for_opcode.contains(curr_opcode))
 		{
@@ -487,6 +486,8 @@ void ff7_field_update_model_animation_frame(short model_id)
 			model_event_data.animation_speed *= common_frame_multiplier;
 		else if(movie_fps_ratio > 1 && ff7_fps_limiter < FF7_LIMITER_60FPS)
 			model_event_data.animation_speed /= movie_fps_ratio;
+		else if(movie_fps_ratio > 2 && ff7_fps_limiter == FF7_LIMITER_60FPS)
+			model_event_data.animation_speed /= (movie_fps_ratio / 2);
 	}
 
 	ff7_externals.field_update_model_animation_frame(model_id);
