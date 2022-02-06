@@ -315,7 +315,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		{
 			if (ffmpeg_sound_buffer && *common_externals.directsound)
 			{
-				IDirectSoundBuffer_SetVolume(ffmpeg_sound_buffer, (int)(20.0f * log10f(ff7_music_volume / 100.0f) * 100.0f));
+				IDirectSoundBuffer_SetVolume(ffmpeg_sound_buffer, (int)(100.0f * ff7_music_volume - 10000.0f));
 			}
 		}
 	}
