@@ -691,6 +691,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.g_script_args = std::span((int**)get_absolute_value(ff7_externals.run_animation_script, 0x3EA), 8);
 	ff7_externals.limit_break_effects_fn_table = std::span((uint32_t*)get_absolute_value(ff7_externals.battle_sub_427C22, 0x40E), 80);
 	ff7_externals.enemy_atk_effects_fn_table = std::span((uint32_t*)get_absolute_value(ff7_externals.battle_sub_427C22, 0x4B9), 157);
+	ff7_externals.enemy_skill_effects_fn_table = std::span((uint32_t*)get_absolute_value(ff7_externals.battle_sub_427C22, 0x20A), 24);
 
 	// Enemy death animations
 	uint32_t battle_run_enemy_deaths_42567E = get_relative_call(ff7_externals.run_animation_script, 0x4869);
@@ -841,6 +842,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t bomb_blast_effects_5373D0 = ff7_externals.enemy_atk_effects_fn_table[67];
 	uint32_t bomb_blast_effects_sub_5373E5 = get_relative_call(bomb_blast_effects_5373D0, 0xB);
 	ff7_externals.bomb_blast_black_bg_effect_537427 = get_absolute_value(bomb_blast_effects_sub_5373E5, 0x34);
+	uint32_t goblin_punch_effects_572C20 = ff7_externals.enemy_skill_effects_fn_table[17];
+	uint32_t goblin_punch_effects_sub_572C3A = get_relative_call(goblin_punch_effects_572C20, 0x10);
+	uint32_t goblin_punch_handler_572CE0 = get_absolute_value(goblin_punch_effects_sub_572C3A, 0x70);
+	uint32_t goblin_punch_main_loop_572DE7 = get_absolute_value(goblin_punch_handler_572CE0, 0x21);
+	ff7_externals.goblin_punch_flash_573291 = get_absolute_value(goblin_punch_main_loop_572DE7, 0x4B);
 
 	// Texture/Material animation
 	uint32_t battle_leviathan_sub_5B2F18 = get_absolute_value(ff7_externals.battle_summon_leviathan_loop, 0x50E);
