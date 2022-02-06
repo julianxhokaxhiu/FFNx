@@ -214,15 +214,14 @@ void FixCounterEffectDecorator::callEffectFunction(uint32_t function)
 {
     uint16_t currentEffectActive = *this->effectActive;
     short currentCounter = *this->effectCounter;
-    if(this->frameCounter % this->frequency != 0)
+    if(this->frameCounter % this->frequency == 0)
+    {
+    ((void(*)())function)();
+    }
+    else
     {
         *this->isAddFunctionDisabled = true;
-    }
-
-    ((void(*)())function)();
-
-    if(this->frameCounter % this->frequency != 0)
-    {
+        ((void(*)())function)();
         *this->isAddFunctionDisabled = false;
         *this->effectCounter = currentCounter;
     }
@@ -628,6 +627,7 @@ void ff7_execute_effect100_fn()
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_morph_death_5BC812 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_5C0E4B ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_script_5C1B81 ||
+                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.goblin_punch_flash_573291 ||
                          ff7_externals.effect100_array_fn[fn_index] == ff7_externals.vincent_limit_fade_effect_sub_5D4240)
                 {
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<NoEffectDecorator>());

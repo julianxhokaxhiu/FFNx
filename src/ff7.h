@@ -2620,6 +2620,7 @@ struct ff7_externals
 	uint32_t run_phoenix_main_loop_516297;
 	uint32_t run_chocobuckle_main_loop_560C32;
 	uint32_t bomb_blast_black_bg_effect_537427;
+	uint32_t goblin_punch_flash_573291;
 	uint32_t battle_update_3d_model_data;
 	uint32_t battle_animate_material_texture;
 	uint32_t battle_animate_texture_spt;
@@ -2665,6 +2666,7 @@ struct ff7_externals
 	uint32_t** global_game_data_90AAF0;
 	std::span<uint32_t> limit_break_effects_fn_table;
 	std::span<uint32_t> enemy_atk_effects_fn_table;
+	std::span<uint32_t> enemy_skill_effects_fn_table;
 
 	// battle menu
 	uint32_t battle_set_do_render_menu;
