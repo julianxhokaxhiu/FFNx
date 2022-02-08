@@ -196,18 +196,6 @@ struct struc_77
 	struct struc_173 struc_173;
 };
 
-// Field camera axis
-typedef struct {
-	signed short x;
-	signed short y;
-	signed short z;
-} camera_axis;
-
-// Field camera translation
-typedef struct {
-	signed int v;
-} camera_translation;
-
 struct heap
 {
 	struct heap *next;
