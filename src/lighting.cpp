@@ -223,32 +223,23 @@ void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
 	struct matrix viewMatrix;
 	identity_matrix(&viewMatrix);
 
-	byte* level_data = *ff7_externals.field_level_data_pointer;
-	if (!level_data)
+	ff7_camdata* field_camera_data = *ff7_externals.field_camera_data;
+	if (!field_camera_data)
 	{
 		return;
 	}
 
-	uint32_t camera_matrix_offset = *(uint32_t*)(level_data + 0x0A);
-
-	camera_axis* axis_x = (camera_axis*)(level_data + camera_matrix_offset + 4);
-	camera_axis* axis_y = (camera_axis*)(level_data + camera_matrix_offset + 4 + 6);
-	camera_axis* axis_z = (camera_axis*)(level_data + camera_matrix_offset + 4 + 12);
-
-	vector3<float> vx = { (float)(axis_x->x), (float)(axis_x->y), (float)(axis_x->z) };
-	vector3<float> vy = { (float)(axis_y->x), (float)(axis_y->y), (float)(axis_y->z) };
-	vector3<float> vz = { (float)(axis_z->x), (float)(axis_z->y), (float)(axis_z->z) };
+	vector3<float> vx = { (float)(field_camera_data->eye.x), (float)(field_camera_data->eye.y), (float)(field_camera_data->eye.z) };
+	vector3<float> vy = { (float)(field_camera_data->target.x), (float)(field_camera_data->target.y), (float)(field_camera_data->target.z) };
+	vector3<float> vz = { (float)(field_camera_data->up.x), (float)(field_camera_data->up.y), (float)(field_camera_data->up.z) };
 
 	divide_vector(&vx, 4096.0f, &vx);
 	divide_vector(&vy, 4096.0f, &vy);
 	divide_vector(&vz, 4096.0f, &vz);
 
-	camera_translation* pOx = (camera_translation*)(level_data + camera_matrix_offset + 4 + 20);
-	camera_translation* pOy = (camera_translation*)(level_data + camera_matrix_offset + 4 + 24);
-	camera_translation* pOz = (camera_translation*)(level_data + camera_matrix_offset + 4 + 28);
-	float ox = static_cast<float>(pOx->v);
-	float oy = static_cast<float>(pOy->v);
-	float oz = static_cast<float>(pOz->v);
+	float ox = static_cast<float>(field_camera_data->position.x);
+	float oy = static_cast<float>(field_camera_data->position.y);
+	float oz = static_cast<float>(field_camera_data->position.z);
 
 	float tx = ox;
 	float ty = oy;

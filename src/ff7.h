@@ -1920,23 +1920,15 @@ struct ff7_field_sfx_state {
 struct ff7_camdata
 {
 	// EYE
-	int16_t eye_x;
-	int16_t eye_y;
-	int16_t eye_z;
+	vector3<short> eye;
 	// TARGET
-	int16_t target_x;
-	int16_t target_y;
-	int16_t target_z;
+	vector3<short> target;
 	// UP
-	int16_t up_x;
-	int16_t up_y;
-	int16_t up_z;
+	vector3<short> up;
 	// FILLER?
 	int16_t padding;
 	// POSITION
-	int32_t pos_x;
-	int32_t pos_y;
-	int32_t pos_z;
+	vector3<int> position;
 	// PAN
 	int16_t pan_x;
 	int16_t pan_y;
@@ -2405,6 +2397,8 @@ struct ff7_externals
 	uint32_t field_check_collision_with_models;
 	void (*field_evaluate_encounter_rate_60B2C6)();
 	short *field_player_model_id;
+	uint32_t field_update_camera_data;
+	ff7_camdata** field_camera_data;
 	uint32_t sub_40B27B;
 	WORD* word_CC0DD4;
 	WORD* word_CC1638;
