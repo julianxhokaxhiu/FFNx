@@ -780,13 +780,9 @@ struct battle_model_state
     uint32_t field_70;
     uint32_t field_74;
     byte padding3[0xE6];       // 0x78
-    uint16_t restingXRotation; // BE12D8, 0x15E
-    uint16_t restingYRotation; // 0x160
-    uint16_t restingZRotation;
+	vector3<uint16_t> modelRotation; // BE12D8, 0x15E
     uint16_t field_164;
-    int16_t restingXPosition; // BE12DE, 0x166
-    int16_t restingYPosition;
-    int16_t restingZPosition; // 0x16A
+	vector3<short> modelPosition; // BE12DE, 0x166
     uint32_t field_16C;
     uint32_t *field_170;
     uint32_t field_174;
@@ -2638,21 +2634,63 @@ struct ff7_externals
 	uint32_t tifa_limit_1_2_sub_4E3D51;
 	uint32_t tifa_limit_2_1_sub_4E48D4;
 	uint32_t aerith_limit_2_1_sub_45B0CF;
+	uint32_t vincent_limit_satan_slam_camera_45CF2A;
+	uint32_t barret_limit_4_1_camera_4688A2;
+	uint32_t barret_limit_4_1_model_movement_4698EF;
+	int *barret_limit_4_1_actor_id;
+	uint32_t aerith_limit_4_1_camera_473CC2;
+	uint32_t run_chocomog_movement_50B1A3;
+	uint32_t run_chocomog_camera_509B10;
+	uint32_t run_fat_chocobo_movement_509692;
+	uint32_t run_fat_chocobo_camera_507CA4;
+	uint32_t run_fat_chocobo_camera_shake_5095F5;
+	uint32_t run_shiva_movement_592538;
 	uint32_t run_shiva_camera_58E60D;
+	uint32_t run_ifrit_movement_596702;
+	uint32_t run_ifrit_camera_592A36;
 	uint32_t run_ramuh_camera_597206;
+	uint32_t run_titan_camera_59B4B0;
+	uint32_t run_odin_gunge_movement_4A584D;
 	uint32_t run_odin_gunge_camera_4A0F52;
-	uint32_t run_summon_odin_steel_sub_4A9908;
+	uint32_t run_odin_steel_movement_4A6CB8;
+	uint32_t run_odin_steel_sub_4A9908;
+	uint32_t run_odin_steel_camera_4A5D3C;
+	uint32_t run_leviathan_camera_5B0716;
+	uint32_t run_bahamut_movement_49ADEC;
+	uint32_t run_bahamut_camera_497A37;
+	uint32_t run_kujata_camera_4F9A4D;
+	uint32_t run_alexander_movement_5078D8;
+	uint32_t run_alexander_camera_501637;
+	uint32_t run_phoenix_main_loop_516297;
+	uint32_t run_phoenix_movement_518AFF;
+	uint32_t run_phoenix_camera_515238;
+	uint32_t run_bahamut_neo_movement_48D7BC;
+	uint32_t run_bahamut_neo_camera_48C75D;
+	uint32_t run_hades_camera_4B65A8;
+	uint32_t run_typhoon_camera_4D594C;
+	uint32_t run_typhoon_sub_4DA182;
+	uint32_t run_bahamut_zero_main_loop_484A16;
+	uint32_t run_bahamut_zero_movement_48BBFC;
+	uint32_t run_bahamut_zero_camera_483866;
 	uint32_t run_summon_kotr_sub_476857;
 	uint32_t run_summon_kotr_main_loop_478031;
 	std::array<uint32_t, 13> run_summon_kotr_knight_script;
 	void(*add_kotr_camera_fn_to_effect100_fn_476AAB)(DWORD, DWORD, WORD);
 	uint32_t run_kotr_camera_476AFB;
-	uint32_t run_bahamut_zero_main_loop_484A16;
-	uint32_t run_summon_phoenix_sub_515127;
-	uint32_t run_phoenix_main_loop_516297;
+	vector3<int>* (*battle_sub_661000)(int);
+	void (*battle_sub_663673)(WORD*);
+	void (*battle_sub_663707)(DWORD*);
+	void (*battle_sub_662ECC)(vector3<short>*, vector3<int>*, int*);
 	uint32_t run_chocobuckle_main_loop_560C32;
 	uint32_t bomb_blast_black_bg_effect_537427;
 	uint32_t goblin_punch_flash_573291;
+	uint32_t roulette_skill_main_loop_566287;
+	uint32_t death_sentence_main_loop_5661A0;
+	uint32_t enemy_atk_camera_sub_439EE0;
+	uint32_t enemy_atk_camera_sub_44A7D2;
+	uint32_t enemy_atk_camera_sub_44EDC0;
+	uint32_t enemy_atk_camera_sub_4522AD;
+	uint32_t enemy_atk_camera_sub_457C60;
 	uint32_t battle_update_3d_model_data;
 	uint32_t battle_animate_material_texture;
 	uint32_t battle_animate_texture_spt;
@@ -2699,6 +2737,10 @@ struct ff7_externals
 	std::span<uint32_t> limit_break_effects_fn_table;
 	std::span<uint32_t> enemy_atk_effects_fn_table;
 	std::span<uint32_t> enemy_skill_effects_fn_table;
+	byte* byte_BCC788;
+	vector3<int>** vector3_int_ptr_BCC6A8;
+	vector3<short>* battle_ifrit_model_position;
+	WORD* word_array_BCC768;
 
 	// battle menu
 	uint32_t battle_set_do_render_menu;
