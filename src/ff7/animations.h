@@ -127,6 +127,57 @@ public:
     void interpolatePalette(palette_extra &paletteExtraData, uint32_t materialAddress);
 };
 
+class ModelInterpolationEffectDecorator: public PauseEffectDecorator
+{
+protected:
+    uint16_t *effectActive;
+    int actorID;
+    int finalFrame = -1;
+    bool usePauseTrick = true;
+    int threshold = 1000;
+
+    vector3<short> previousPosition;
+    vector3<short> nextPosition;
+
+    bool isSmoothMovement(vector3<short> previous, vector3<short> next);
+
+public:
+    ModelInterpolationEffectDecorator(int frequency, byte* isBattlePausedExt, bool usePauseTrick, uint16_t* effectActive,
+                                      int actorID) : PauseEffectDecorator(frequency, isBattlePausedExt), usePauseTrick(usePauseTrick),
+                                                     effectActive(effectActive), actorID(actorID) {};
+
+    ModelInterpolationEffectDecorator(int frequency, byte* isBattlePausedExt, bool usePauseTrick, uint16_t* effectActive,
+                                      int actorID, int threshold) : PauseEffectDecorator(frequency, isBattlePausedExt), usePauseTrick(usePauseTrick),
+                                                                    effectActive(effectActive), actorID(actorID), threshold(threshold) {};
+
+    void callEffectFunction(uint32_t function) override;
+};
+
+class CameraInterpolationEffectDecorator: public PauseEffectDecorator
+{
+protected:
+    uint16_t *effectActive;
+    int finalFrame = -1;
+    int threshold = 1500;
+
+    vector3<short> previousCameraPosition;
+    vector3<short> previousCameraFocalPoint;
+    vector3<short> nextCameraPosition;
+    vector3<short> nextCameraFocalPoint;
+
+    bool isSmoothMovement(vector3<short> previous, vector3<short> next);
+
+public:
+    CameraInterpolationEffectDecorator(int frequency, byte* isBattlePausedExt, uint16_t* effectActive): PauseEffectDecorator(frequency, isBattlePausedExt),
+                                                                                                        effectActive(effectActive) {};
+
+    CameraInterpolationEffectDecorator(int frequency, byte* isBattlePausedExt, uint16_t* effectActive, int threshold): PauseEffectDecorator(frequency, isBattlePausedExt),
+                                                                                                                       effectActive(effectActive),
+                                                                                                                       threshold(threshold) {};
+
+    void callEffectFunction(uint32_t function) override;
+};
+
 class AuxiliaryEffectHandler
 {
 private:
@@ -144,3 +195,8 @@ public:
     inline void executeEffectFunction(uint32_t effectFunction) {effectDecorator->callEffectFunction(effectFunction);}
 };
 
+template <typename T>
+T interpolateValue(T previous, T next, int step, int n_steps)
+{
+    return previous + ((next - previous) * step) / n_steps;
+}

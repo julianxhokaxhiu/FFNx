@@ -35,7 +35,9 @@
 byte y_pos_offset_display_damage_30[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 8, 8, 7, 7, 6, 6, 5, 4, 3, 2};
 byte y_pos_offset_display_damage_60[] = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7, 7, 8, 8, 8, 8, 8, 7, 7, 7, 6, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0, 0, 1, 1, 0, 0, 0};
 WORD ff7_odin_steel_frames_AEEC14;
-std::set<short> kotr_excluded_frames[] = {{50}, {50}, {}, {52}, {35}, {14}, {}, {26}, {71}, {51}, {56}, {56}, {112}};
+std::map<uint32_t, std::set<short>> kotr_excluded_frames;
+std::map<uint32_t, int> camera_thresholds_by_address, model_thresholds_by_address;
+std::set<uint32_t> fixed_effect100_addresses, one_call_effect100_addresses, camera_effect100_addresses, model_effect100_addresses;
 
 const std::unordered_map<byte, int> numArgsOpCode = {
     {0x8E, 0},
@@ -216,7 +218,7 @@ void FixCounterEffectDecorator::callEffectFunction(uint32_t function)
     short currentCounter = *this->effectCounter;
     if(this->frameCounter % this->frequency == 0)
     {
-    ((void(*)())function)();
+        ((void(*)())function)();
     }
     else
     {
@@ -318,19 +320,11 @@ void InterpolationEffectDecorator::interpolateRotationMatrix(rotation_matrix* ne
         int interpolationStep = this->frameCounter % this->frequency;
         const rotation_matrix &previousMatrix = this->previousFrameDataMap[hash].rot_matrix;
         for(int i = 0; i < 3; i++)
-        {
             for(int j = 0; j < 3; j++)
-            {
-                short diffSubMatrix = nextRotationMatrix->r3_sub_matrix[i][j] - previousMatrix.r3_sub_matrix[i][j];
-                nextRotationMatrix->r3_sub_matrix[i][j] = previousMatrix.r3_sub_matrix[i][j] + (diffSubMatrix * interpolationStep) / this->frequency;
-            }
-        }
+                nextRotationMatrix->r3_sub_matrix[i][j] = interpolateValue(previousMatrix.r3_sub_matrix[i][j],nextRotationMatrix->r3_sub_matrix[i][j], interpolationStep, this->frequency);
 
         for(int i = 0; i < 3; i++)
-        {
-            int diffPosition = nextRotationMatrix->position[i] - previousMatrix.position[i];
-            nextRotationMatrix->position[i] = previousMatrix.position[i] + (diffPosition * interpolationStep) / this->frequency;
-        }
+            nextRotationMatrix->position[i] = interpolateValue(previousMatrix.position[i], nextRotationMatrix->position[i], interpolationStep, this->frequency);
     }
 }
 
@@ -341,8 +335,8 @@ void InterpolationEffectDecorator::interpolateMaterialContext(material_anim_ctx 
     {
         int interpolationStep = this->frameCounter % this->frequency;
         const material_anim_ctx &previousMaterialCtx = this->previousFrameDataMap[hash].material_ctx;
-        nextMaterialCtx.transparency = previousMaterialCtx.transparency + ((nextMaterialCtx.transparency - previousMaterialCtx.transparency) * interpolationStep) / this->frequency;
-        nextMaterialCtx.field_8 = previousMaterialCtx.field_8 + ((nextMaterialCtx.field_8 - previousMaterialCtx.field_8) * interpolationStep) / this->frequency;
+        nextMaterialCtx.transparency = interpolateValue(previousMaterialCtx.transparency, nextMaterialCtx.transparency, interpolationStep, this->frequency);
+        nextMaterialCtx.field_8 = interpolateValue(previousMaterialCtx.field_8, nextMaterialCtx.field_8, interpolationStep, this->frequency);
     }
 }
 
@@ -353,10 +347,10 @@ void InterpolationEffectDecorator::interpolateColor(color_ui8 *nextColor, uint32
     {
         int interpolationStep = this->frameCounter % this->frequency;
         const color_ui8 previousColor = this->previousFrameDataMap[hash].color;
-        nextColor->b = previousColor.b + ((nextColor->b - previousColor.b) * interpolationStep) / this->frequency;
-        nextColor->g = previousColor.g + ((nextColor->g - previousColor.g) * interpolationStep) / this->frequency;
-        nextColor->r = previousColor.r + ((nextColor->r - previousColor.r) * interpolationStep) / this->frequency;
-        nextColor->a = previousColor.a + ((nextColor->a - previousColor.a) * interpolationStep) / this->frequency;
+        nextColor->b = interpolateValue(previousColor.b, nextColor->b, interpolationStep, this->frequency);
+        nextColor->g = interpolateValue(previousColor.g, nextColor->g, interpolationStep, this->frequency);
+        nextColor->r = interpolateValue(previousColor.r, nextColor->r, interpolationStep, this->frequency);
+        nextColor->a = interpolateValue(previousColor.a, nextColor->a, interpolationStep, this->frequency);
     }
 }
 
@@ -367,14 +361,186 @@ void InterpolationEffectDecorator::interpolatePalette(palette_extra &nextPalette
     {
         int interpolationStep = this->frameCounter % this->frequency;
         const palette_extra &previousPalette = this->previousFrameDataMap[hash].palette;
-        nextPalette.x_offset = previousPalette.x_offset + ((nextPalette.x_offset - previousPalette.x_offset) * interpolationStep) / this->frequency;
-        nextPalette.y_offset = previousPalette.y_offset + ((nextPalette.y_offset - previousPalette.y_offset) * interpolationStep) / this->frequency;
-        nextPalette.z_offset = previousPalette.z_offset + ((nextPalette.z_offset - previousPalette.z_offset) * interpolationStep) / this->frequency;
-        nextPalette.field_24 = previousPalette.field_24 + ((nextPalette.field_24 - previousPalette.field_24) * interpolationStep) / this->frequency;
-        nextPalette.z_offset_2 = previousPalette.z_offset_2 + ((nextPalette.z_offset_2 - previousPalette.z_offset_2) * interpolationStep) / this->frequency;
-        nextPalette.scroll_v = previousPalette.scroll_v + ((nextPalette.scroll_v - previousPalette.scroll_v) * interpolationStep) / this->frequency;
-        nextPalette.v_offset = previousPalette.v_offset + ((nextPalette.v_offset - previousPalette.v_offset) * interpolationStep) / this->frequency;
+        nextPalette.x_offset = interpolateValue(previousPalette.x_offset, nextPalette.x_offset, interpolationStep, this->frequency);
+        nextPalette.y_offset = interpolateValue(previousPalette.y_offset, nextPalette.y_offset, interpolationStep, this->frequency);
+        nextPalette.z_offset = interpolateValue(previousPalette.z_offset, nextPalette.z_offset, interpolationStep, this->frequency);
+        nextPalette.field_24 = interpolateValue(previousPalette.field_24, nextPalette.field_24, interpolationStep, this->frequency);
+        nextPalette.z_offset_2 = interpolateValue(previousPalette.z_offset_2, nextPalette.z_offset_2, interpolationStep, this->frequency);
+        nextPalette.scroll_v = interpolateValue(previousPalette.scroll_v, nextPalette.scroll_v, interpolationStep, this->frequency);
+        nextPalette.v_offset = interpolateValue(previousPalette.v_offset, nextPalette.v_offset, interpolationStep, this->frequency);
     }
+}
+
+bool ModelInterpolationEffectDecorator::isSmoothMovement(vector3<short> previous, vector3<short> next)
+{
+    double distance = std::sqrt(std::pow(next.x - previous.x, 2) + std::pow(next.y - previous.y, 2) + std::pow(next.z - previous.z, 2));
+    return distance < this->threshold;
+}
+
+void ModelInterpolationEffectDecorator::callEffectFunction(uint32_t function)
+{
+    byte wasPaused = *this->isBattlePaused;
+    uint16_t currentEffectActive = *this->effectActive;
+
+    if(this->frameCounter == 0)
+    {
+        ((void(*)())function)();
+        this->nextPosition = ff7_externals.g_battle_model_state[this->actorID].modelPosition;
+    }
+    else
+    {
+        int interpolationStep = this->frameCounter % this->frequency;
+        if((this->frameCounter - 1) % this->frequency == 0)
+        {
+            this->previousPosition = this->nextPosition;
+            ((void(*)())function)();
+            this->nextPosition = ff7_externals.g_battle_model_state[this->actorID].modelPosition;
+
+            if(isSmoothMovement(this->previousPosition, this->nextPosition))
+            {
+                ff7_externals.g_battle_model_state[this->actorID].modelPosition.x = interpolateValue(this->previousPosition.x, this->nextPosition.x, interpolationStep, this->frequency);
+                ff7_externals.g_battle_model_state[this->actorID].modelPosition.y = interpolateValue(this->previousPosition.y, this->nextPosition.y, interpolationStep, this->frequency);
+                ff7_externals.g_battle_model_state[this->actorID].modelPosition.z = interpolateValue(this->previousPosition.z, this->nextPosition.z, interpolationStep, this->frequency);
+            }
+            else
+            {
+                ff7_externals.g_battle_model_state[this->actorID].modelPosition = this->previousPosition;
+            }
+
+            if(*this->effectActive == (uint16_t)-1 && currentEffectActive != *this->effectActive)
+            {
+                *this->effectActive = currentEffectActive;
+                this->finalFrame = this->frameCounter + this->frequency - 1;
+            }
+        }
+        else if((this->frameCounter - 1) % this->frequency == this->frequency - 1)
+        {
+            if(usePauseTrick)
+            {
+                *this->isBattlePaused = 1;
+                ((void(*)())function)();
+                *this->isBattlePaused = wasPaused;
+            }
+
+            ff7_externals.g_battle_model_state[this->actorID].modelPosition = this->nextPosition;
+        }
+        else
+        {
+            if(usePauseTrick)
+            {
+                *this->isBattlePaused = 1;
+                ((void(*)())function)();
+                *this->isBattlePaused = wasPaused;
+            }
+
+            if(isSmoothMovement(this->previousPosition, this->nextPosition))
+            {
+                ff7_externals.g_battle_model_state[this->actorID].modelPosition.x = interpolateValue(this->previousPosition.x, this->nextPosition.x, interpolationStep, this->frequency);
+                ff7_externals.g_battle_model_state[this->actorID].modelPosition.y = interpolateValue(this->previousPosition.y, this->nextPosition.y, interpolationStep, this->frequency);
+                ff7_externals.g_battle_model_state[this->actorID].modelPosition.z = interpolateValue(this->previousPosition.z, this->nextPosition.z, interpolationStep, this->frequency);
+            }
+            else
+            {
+                ff7_externals.g_battle_model_state[this->actorID].modelPosition = this->previousPosition;
+            }
+        }
+    }
+
+    if(this->finalFrame == this->frameCounter)
+    {
+        *this->effectActive = (uint16_t)-1;
+    }
+
+    this->frameCounter++;
+}
+
+bool CameraInterpolationEffectDecorator::isSmoothMovement(vector3<short> previous, vector3<short> next)
+{
+    double distance = std::sqrt(std::pow(next.x - previous.x, 2) + std::pow(next.y - previous.y, 2) + std::pow(next.z - previous.z, 2));
+    return distance < this->threshold;
+}
+
+void CameraInterpolationEffectDecorator::callEffectFunction(uint32_t function)
+{
+    byte wasPaused = *this->isBattlePaused;
+    uint16_t currentEffectActive = *this->effectActive;
+
+    if(this->frameCounter == 0)
+    {
+        ((void(*)())function)();
+        this->nextCameraPosition = *ff7_externals.g_battle_camera_position;
+        this->nextCameraFocalPoint = *ff7_externals.g_battle_camera_focal_point;
+    }
+    else
+    {
+        int interpolationStep = this->frameCounter % this->frequency;
+        if((this->frameCounter - 1) % this->frequency == 0)
+        {
+            this->previousCameraPosition = this->nextCameraPosition;
+            this->previousCameraFocalPoint = this->nextCameraFocalPoint;
+            ((void(*)())function)();
+            this->nextCameraPosition = *ff7_externals.g_battle_camera_position;
+            this->nextCameraFocalPoint = *ff7_externals.g_battle_camera_focal_point;
+
+            if(isSmoothMovement(this->previousCameraPosition, this->nextCameraPosition) && isSmoothMovement(this->previousCameraFocalPoint, this->nextCameraFocalPoint))
+            {
+                ff7_externals.g_battle_camera_position->x = interpolateValue(this->previousCameraPosition.x, this->nextCameraPosition.x, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_position->y = interpolateValue(this->previousCameraPosition.y, this->nextCameraPosition.y, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_position->z = interpolateValue(this->previousCameraPosition.z, this->nextCameraPosition.z, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_focal_point->x = interpolateValue(this->previousCameraFocalPoint.x, this->nextCameraFocalPoint.x, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_focal_point->y = interpolateValue(this->previousCameraFocalPoint.y, this->nextCameraFocalPoint.y, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_focal_point->z = interpolateValue(this->previousCameraFocalPoint.z, this->nextCameraFocalPoint.z, interpolationStep, this->frequency);
+            }
+            else
+            {
+                *ff7_externals.g_battle_camera_position = this->previousCameraPosition;
+                *ff7_externals.g_battle_camera_focal_point = this->previousCameraFocalPoint;
+            }
+
+            if(*this->effectActive == (uint16_t)-1 && currentEffectActive != *this->effectActive)
+            {
+                *this->effectActive = currentEffectActive;
+                this->finalFrame = this->frameCounter + this->frequency - 1;
+            }
+        }
+        else if((this->frameCounter - 1) % this->frequency == this->frequency - 1)
+        {
+            *this->isBattlePaused = 1;
+            ((void(*)())function)();
+            *this->isBattlePaused = wasPaused;
+
+            *ff7_externals.g_battle_camera_position = this->nextCameraPosition;
+            *ff7_externals.g_battle_camera_focal_point = this->nextCameraFocalPoint;
+        }
+        else
+        {
+            *this->isBattlePaused = 1;
+            ((void(*)())function)();
+            *this->isBattlePaused = wasPaused;
+
+            if(isSmoothMovement(this->previousCameraPosition, this->nextCameraPosition) && isSmoothMovement(this->previousCameraFocalPoint, this->nextCameraFocalPoint))
+            {
+                ff7_externals.g_battle_camera_position->x = interpolateValue(this->previousCameraPosition.x, this->nextCameraPosition.x, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_position->y = interpolateValue(this->previousCameraPosition.y, this->nextCameraPosition.y, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_position->z = interpolateValue(this->previousCameraPosition.z, this->nextCameraPosition.z, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_focal_point->x = interpolateValue(this->previousCameraFocalPoint.x, this->nextCameraFocalPoint.x, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_focal_point->y = interpolateValue(this->previousCameraFocalPoint.y, this->nextCameraFocalPoint.y, interpolationStep, this->frequency);
+                ff7_externals.g_battle_camera_focal_point->z = interpolateValue(this->previousCameraFocalPoint.z, this->nextCameraFocalPoint.z, interpolationStep, this->frequency);
+            }
+            else
+            {
+                *ff7_externals.g_battle_camera_position = this->previousCameraPosition;
+                *ff7_externals.g_battle_camera_focal_point = this->previousCameraFocalPoint;
+            }
+        }
+    }
+
+    if(this->finalFrame == this->frameCounter)
+    {
+        *this->effectActive = (uint16_t)-1;
+    }
+
+    this->frameCounter++;
 }
 
 byte *getAnimScriptPointer(byte **ptrToScriptTable, battle_model_state &ownerModelState)
@@ -596,35 +762,47 @@ void ff7_execute_effect100_fn()
                 {
                     ff7_externals.effect100_array_data[fn_index].field_1A *= battle_frame_multiplier;
                 }
-                else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_odin_steel_sub_4A9908)
+                else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_odin_steel_sub_4A9908)
                 {
                     ff7_odin_steel_frames_AEEC14 = *ff7_externals.field_odin_frames_AEEC14 * battle_frame_multiplier;
                 }
-                else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_enemy_death_5BBD24 ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_iainuki_death_5BCAAA ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_boss_death_5BC48C ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_melting_death_5BC21F ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_disintegrate_2_death_5BBA82 ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.battle_morph_death_5BC812 ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_5C0E4B ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_summon_animations_script_5C1B81 ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.goblin_punch_flash_573291 ||
-                         ff7_externals.effect100_array_fn[fn_index] == ff7_externals.vincent_limit_fade_effect_sub_5D4240)
+                else if (fixed_effect100_addresses.contains(ff7_externals.effect100_array_fn[fn_index]))
                 {
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<NoEffectDecorator>());
                 }
-                else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_bahamut_zero_main_loop_484A16 ||
-                        ff7_externals.effect100_array_fn[fn_index] == ff7_externals.bomb_blast_black_bg_effect_537427 ||
-                        ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_chocobuckle_main_loop_560C32)
+                else if (one_call_effect100_addresses.contains(ff7_externals.effect100_array_fn[fn_index]))
                 {
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<OneCallEffectDecorator>(battle_frame_multiplier));
                 }
-                else if(auto it = std::find(ff7_externals.run_summon_kotr_knight_script.begin(), ff7_externals.run_summon_kotr_knight_script.end(), ff7_externals.effect100_array_fn[fn_index]);
-                        it != ff7_externals.run_summon_kotr_knight_script.end())
+                else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_chocobuckle_main_loop_560C32)
                 {
-                    int kotr_index = std::distance(ff7_externals.run_summon_kotr_knight_script.begin(), it);
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<ModelInterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused, false,
+                                                                                                                           &ff7_externals.effect100_array_data[fn_index].field_0, 3));
+                }
+                else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.barret_limit_4_1_model_movement_4698EF)
+                {
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<ModelInterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused, false,
+                                                                                                                           &ff7_externals.effect100_array_data[fn_index].field_0, *ff7_externals.barret_limit_4_1_actor_id, 3000));
+                }
+                else if (model_effect100_addresses.contains(ff7_externals.effect100_array_fn[fn_index]))
+                {
+                    int threshold = 1000;
+                    if (model_thresholds_by_address.contains(ff7_externals.effect100_array_fn[fn_index]))
+                        threshold = model_thresholds_by_address[ff7_externals.effect100_array_fn[fn_index]];
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<ModelInterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused, true,
+                                                                                                                           &ff7_externals.effect100_array_data[fn_index].field_0, 3, threshold));
+                }
+                else if (camera_effect100_addresses.contains(ff7_externals.effect100_array_fn[fn_index]))
+                {
+                    int threshold = 1500;
+                    if (camera_thresholds_by_address.contains(ff7_externals.effect100_array_fn[fn_index]))
+                        threshold = camera_thresholds_by_address[ff7_externals.effect100_array_fn[fn_index]];
+                    aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<CameraInterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused, &ff7_externals.effect100_array_data[fn_index].field_0, threshold));
+                }
+                else if (kotr_excluded_frames.contains(ff7_externals.effect100_array_fn[fn_index]))
+                {
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<FixCounterExceptionEffectDecorator>(battle_frame_multiplier, &ff7_externals.effect100_array_data[fn_index].field_0,
-                                                                                                                            &ff7_externals.effect100_array_data[fn_index].field_2, &isAddFunctionDisabled, kotr_excluded_frames[kotr_index]));
+                                                                                                                            &ff7_externals.effect100_array_data[fn_index].field_2, &isAddFunctionDisabled, kotr_excluded_frames[ff7_externals.effect100_array_fn[fn_index]]));
                 }
                 else
                 {
@@ -850,6 +1028,10 @@ void ff7_execute_effect60_fn()
                 {
                     aux_effect60_handler[fn_index].setEffectDecorator(std::make_shared<OneCallEffectDecorator>(battle_frame_multiplier));
                 }
+                else if(ff7_externals.effect60_array_fn[fn_index] == ff7_externals.vincent_limit_satan_slam_camera_45CF2A)
+                {
+                    aux_effect60_handler[fn_index].setEffectDecorator(std::make_shared<CameraInterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused, &ff7_externals.effect60_array_data[fn_index].field_0));
+                }
                 else
                 {
                     aux_effect60_handler[fn_index].setEffectDecorator(std::make_shared<InterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused));
@@ -898,7 +1080,7 @@ void ff7_boss_death_animation_5BC5EC()
 
         std::array<short, 8> offset_z_position{64, 32, 0, -32, -64, -32, 0, 32};
         int index = ((fn_data.n_frames * (4 / battle_frame_multiplier)) % offset_z_position.size());
-        getBattleModelState(fn_data.field_8)->restingZPosition = fn_data.field_A + offset_z_position[index];
+        getBattleModelState(fn_data.field_8)->modelPosition.z = fn_data.field_A + offset_z_position[index];
         fn_data.n_frames--;
     }
 }
@@ -950,13 +1132,69 @@ void ff7_battle_move_character_sub_426F58()
         *ff7_externals.g_script_args[2] = fn_data.field_A;
         *ff7_externals.g_script_args[3] = fn_data.field_8;
         *ff7_externals.g_script_args[4] = fn_data.field_10;
-        getBattleModelState(*ff7_externals.g_script_args[3])->restingXPosition += fn_data.field_C / battle_frame_multiplier;
-        getBattleModelState(*ff7_externals.g_script_args[3])->restingZPosition += fn_data.field_E / battle_frame_multiplier;
+        getBattleModelState(*ff7_externals.g_script_args[3])->modelPosition.x += fn_data.field_C / battle_frame_multiplier;
+        getBattleModelState(*ff7_externals.g_script_args[3])->modelPosition.z += fn_data.field_E / battle_frame_multiplier;
 
         int index = (int)(fn_data.field_18 / battle_frame_multiplier) + *ff7_externals.g_script_args[4] * 8; // to avoid overflow
-        getBattleModelState(*ff7_externals.g_script_args[3])->restingYPosition += ff7_externals.resting_Y_array_data[index] / battle_frame_multiplier;
+        getBattleModelState(*ff7_externals.g_script_args[3])->modelPosition.y += ff7_externals.resting_Y_array_data[index] / battle_frame_multiplier;
         fn_data.field_18++;
         fn_data.n_frames--;
+    }
+}
+
+void ff7_ifrit_movement_596702()
+{
+    auto &effect_data = ff7_externals.effect100_array_data[*ff7_externals.effect100_array_idx];
+    vector3<short> &ifrit_position = *ff7_externals.battle_ifrit_model_position;
+
+    int frames = effect_data.field_2;
+    if((*ff7_externals.byte_BCC788 & 1) == 0)
+    {
+        *ff7_externals.byte_BCC788 |= 1u;
+        *ff7_externals.vector3_int_ptr_BCC6A8 = ff7_externals.battle_sub_661000(0);
+    }
+    std::vector<int> ifrit_og_phases = {0, 30, 131, 146, 149, 169};
+    std::vector<int> ifrit_new_phases;
+    std::transform(ifrit_og_phases.begin(), ifrit_og_phases.end(), std::back_inserter(ifrit_new_phases), [](int value){return value * battle_frame_multiplier;});
+    if(!*ff7_externals.g_is_battle_paused)
+    {
+        if(frames >= ifrit_new_phases[0] && frames < ifrit_new_phases[1])
+        {
+            int internal_frames = frames - ifrit_new_phases[0];
+            ifrit_position.y = -2000 * internal_frames / (ifrit_new_phases[1] - ifrit_new_phases[0]);
+        }
+        else if(frames >= ifrit_new_phases[2] && frames < ifrit_new_phases[3])
+        {
+            short previous_position = -2000 * (ifrit_new_phases[1] - 1) / (ifrit_new_phases[1] - ifrit_new_phases[0]);
+            int internal_frames = frames - ifrit_new_phases[2];
+            ifrit_position.y = previous_position - 150 * (internal_frames + 1) / (ifrit_new_phases[3] - ifrit_new_phases[2]);
+            ifrit_position.z -= 20 / battle_frame_multiplier;
+        }
+        else if(frames >= ifrit_new_phases[3] && frames < ifrit_new_phases[4])
+        {
+            ifrit_position.y += 1000 / battle_frame_multiplier;
+            ifrit_position.z += 2000 / battle_frame_multiplier;
+        }
+        else if(frames >= ifrit_new_phases[4] && frames < ifrit_new_phases[5])
+        {
+            int internal_frames = frames - ifrit_new_phases[4];
+            ifrit_position.x = 0;
+            ifrit_position.y = 500;
+            ifrit_position.z = 30000 * internal_frames / (ifrit_new_phases[5] - ifrit_new_phases[4]) - 5000;
+        }
+        else if(frames >= ifrit_new_phases[5])
+        {
+            effect_data.field_0 = (uint16_t)-1;
+            return;
+        }
+
+        ff7_externals.battle_sub_663673(ff7_externals.word_array_BCC768);
+        ff7_externals.battle_sub_663707((DWORD*)ff7_externals.word_array_BCC768);
+        ff7_externals.battle_sub_662ECC(ff7_externals.battle_ifrit_model_position, *ff7_externals.vector3_int_ptr_BCC6A8, &(*ff7_externals.vector3_int_ptr_BCC6A8)[1].y);
+        getBattleModelState(3)->modelPosition.x = (*ff7_externals.vector3_int_ptr_BCC6A8)->x;
+        getBattleModelState(3)->modelPosition.y = (*ff7_externals.vector3_int_ptr_BCC6A8)->y;
+        getBattleModelState(3)->modelPosition.z = (*ff7_externals.vector3_int_ptr_BCC6A8)->z;
+        effect_data.field_2++;
     }
 }
 
@@ -1437,11 +1675,12 @@ void ff7_battle_animations_hook_init()
     memset_code(ff7_externals.run_shiva_camera_58E60D + 0xC2D, 0x90, 6);
     patch_code_dword(ff7_externals.run_ramuh_camera_597206 + 0x44, 0x000B9585);
     memset_code(ff7_externals.run_odin_gunge_camera_4A0F52 + 0xC0C, 0x90, 6);
-    patch_multiply_code<DWORD>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x5E, battle_frame_multiplier);
-    patch_multiply_code<DWORD>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x25D, battle_frame_multiplier);
-    patch_multiply_code<byte>(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x265, battle_frame_multiplier);
-    patch_code_dword(ff7_externals.run_summon_odin_steel_sub_4A9908 + 0x316, (DWORD)&ff7_odin_steel_frames_AEEC14);
+    patch_multiply_code<DWORD>(ff7_externals.run_odin_steel_sub_4A9908 + 0x5E, battle_frame_multiplier);
+    patch_multiply_code<DWORD>(ff7_externals.run_odin_steel_sub_4A9908 + 0x25D, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.run_odin_steel_sub_4A9908 + 0x265, battle_frame_multiplier);
+    patch_code_dword(ff7_externals.run_odin_steel_sub_4A9908 + 0x316, (DWORD)&ff7_odin_steel_frames_AEEC14);
     replace_call_function(ff7_externals.run_summon_kotr_sub_476857 + 0x1C6, ff7_add_kotr_camera_fn_to_effect100_fn);
+    replace_function(ff7_externals.run_ifrit_movement_596702, ff7_ifrit_movement_596702);
 
     // Show Damage
     patch_multiply_code<WORD>(ff7_externals.display_battle_damage_5BB410 + 0x54, battle_frame_multiplier);
@@ -1511,4 +1750,76 @@ void ff7_battle_animations_hook_init()
         replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C2, ff7_display_tifa_slots_handler);
         memset_code(ff7_externals.battle_menu_update_6CE8B3 + 0x148, 0x90, 3);
     }
+
+    // Populate map and set data for better performance with decorators initialization
+    fixed_effect100_addresses.insert(ff7_externals.battle_enemy_death_5BBD24);
+    fixed_effect100_addresses.insert(ff7_externals.battle_iainuki_death_5BCAAA);
+    fixed_effect100_addresses.insert(ff7_externals.battle_boss_death_5BC48C);
+    fixed_effect100_addresses.insert(ff7_externals.battle_melting_death_5BC21F);
+    fixed_effect100_addresses.insert(ff7_externals.battle_disintegrate_2_death_5BBA82);
+    fixed_effect100_addresses.insert(ff7_externals.battle_morph_death_5BC812);
+    fixed_effect100_addresses.insert(ff7_externals.run_summon_animations_5C0E4B);
+    fixed_effect100_addresses.insert(ff7_externals.run_summon_animations_script_5C1B81);
+    fixed_effect100_addresses.insert(ff7_externals.goblin_punch_flash_573291);
+    fixed_effect100_addresses.insert(ff7_externals.run_ifrit_movement_596702);
+    fixed_effect100_addresses.insert(ff7_externals.vincent_limit_fade_effect_sub_5D4240);
+    one_call_effect100_addresses.insert(ff7_externals.run_bahamut_zero_main_loop_484A16);
+    one_call_effect100_addresses.insert(ff7_externals.death_sentence_main_loop_5661A0);
+    one_call_effect100_addresses.insert(ff7_externals.roulette_skill_main_loop_566287);
+    one_call_effect100_addresses.insert(ff7_externals.bomb_blast_black_bg_effect_537427);
+    model_thresholds_by_address[ff7_externals.run_alexander_movement_5078D8] = 3000;
+    camera_thresholds_by_address[ff7_externals.run_ramuh_camera_597206] = 5000;
+    camera_thresholds_by_address[ff7_externals.run_typhoon_camera_4D594C] = 5000;
+    camera_thresholds_by_address[ff7_externals.run_kotr_camera_476AFB] = 5000;
+    camera_thresholds_by_address[ff7_externals.run_kujata_camera_4F9A4D] = 5000;
+    camera_thresholds_by_address[ff7_externals.run_bahamut_zero_camera_483866] = 4000;
+    camera_thresholds_by_address[ff7_externals.barret_limit_4_1_camera_4688A2] = 4000;
+    camera_effect100_addresses.insert(ff7_externals.run_chocomog_camera_509B10);
+    camera_effect100_addresses.insert(ff7_externals.run_fat_chocobo_camera_507CA4);
+    camera_effect100_addresses.insert(ff7_externals.run_ifrit_camera_592A36);
+    camera_effect100_addresses.insert(ff7_externals.run_shiva_camera_58E60D);
+    camera_effect100_addresses.insert(ff7_externals.run_ramuh_camera_597206);
+    camera_effect100_addresses.insert(ff7_externals.run_alexander_camera_501637);
+    camera_effect100_addresses.insert(ff7_externals.run_bahamut_camera_497A37);
+    camera_effect100_addresses.insert(ff7_externals.run_phoenix_camera_515238);
+    camera_effect100_addresses.insert(ff7_externals.run_titan_camera_59B4B0);
+    camera_effect100_addresses.insert(ff7_externals.run_hades_camera_4B65A8);
+    camera_effect100_addresses.insert(ff7_externals.run_leviathan_camera_5B0716);
+    camera_effect100_addresses.insert(ff7_externals.run_odin_gunge_camera_4A0F52);
+    camera_effect100_addresses.insert(ff7_externals.run_odin_steel_camera_4A5D3C);
+    camera_effect100_addresses.insert(ff7_externals.run_bahamut_neo_camera_48C75D);
+    camera_effect100_addresses.insert(ff7_externals.run_kujata_camera_4F9A4D);
+    camera_effect100_addresses.insert(ff7_externals.run_typhoon_camera_4D594C);
+    camera_effect100_addresses.insert(ff7_externals.run_bahamut_zero_camera_483866);
+    camera_effect100_addresses.insert(ff7_externals.run_kotr_camera_476AFB);
+    camera_effect100_addresses.insert(ff7_externals.barret_limit_4_1_camera_4688A2);
+    camera_effect100_addresses.insert(ff7_externals.aerith_limit_4_1_camera_473CC2);
+    camera_effect100_addresses.insert(ff7_externals.enemy_atk_camera_sub_439EE0);
+    camera_effect100_addresses.insert(ff7_externals.enemy_atk_camera_sub_44A7D2);
+    camera_effect100_addresses.insert(ff7_externals.enemy_atk_camera_sub_44EDC0);
+    camera_effect100_addresses.insert(ff7_externals.enemy_atk_camera_sub_4522AD);
+    camera_effect100_addresses.insert(ff7_externals.enemy_atk_camera_sub_457C60);
+    model_effect100_addresses.insert(ff7_externals.run_fat_chocobo_movement_509692);
+    model_effect100_addresses.insert(ff7_externals.run_bahamut_movement_49ADEC);
+    model_effect100_addresses.insert(ff7_externals.run_bahamut_neo_movement_48D7BC);
+    model_effect100_addresses.insert(ff7_externals.run_odin_gunge_movement_4A584D);
+    model_effect100_addresses.insert(ff7_externals.run_odin_steel_movement_4A6CB8);
+    model_effect100_addresses.insert(ff7_externals.run_phoenix_movement_518AFF);
+    model_effect100_addresses.insert(ff7_externals.run_chocomog_movement_50B1A3);
+    model_effect100_addresses.insert(ff7_externals.run_bahamut_zero_movement_48BBFC);
+    model_effect100_addresses.insert(ff7_externals.run_shiva_movement_592538);
+    model_effect100_addresses.insert(ff7_externals.run_alexander_movement_5078D8);
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[0]] = {50};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[1]] = {50};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[2]] = {};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[3]] = {52};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[4]] = {35};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[5]] = {14};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[6]] = {};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[7]] = {26};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[8]] = {71};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[9]] = {51};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[10]] = {56};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[11]] = {56};
+    kotr_excluded_frames[ff7_externals.run_summon_kotr_knight_script[12]] = {112};
 }
