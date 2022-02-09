@@ -185,6 +185,7 @@ private:
 	// VOICE
 	short _voiceMaxSlots = 0;
 	std::map<int, NxAudioEngineVoice> _currentVoice;
+	std::map<std::string, int> _voiceSequentialIndexes;
 
 	// AMBIENT
 	std::map<std::string, int> _ambientSequentialIndexes;

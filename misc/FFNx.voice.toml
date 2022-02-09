@@ -17,9 +17,18 @@
 
 ### SUPPORTED FLAGS: ##########################################################
 # volume: Allow volume to be adjusted for a specific track.
+# -----------------------------------------------------------------------------
+# shuffle: Shuffle a voice track with any of the given one in the array. Each
+# item MUST be a string. This flag MUST NOT be used in pair with 'sequential'.
+# -----------------------------------------------------------------------------
+# sequential: Sequentially playback a voice track with the ones provided in the
+# array. Each item MUST be a string. This flag MUST NOT be used in pair with
+# 'shuffle'.
 ###############################################################################
 
 # This entry will set the volume to 50%
 # -----------------------------------------------------------------------------
 #[md1stin/6]
 #volume = 50
+#shuffle = [ "foo", "bar" ]
+#sequential = [ "foo", "bar" ]
