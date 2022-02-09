@@ -993,7 +993,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 {
 	char filename[MAX_PATH];
 
-	bool exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+	bool exists = false;
 
 	_currentVoice[slot].volume = volume;
 
@@ -1006,6 +1006,34 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 		{
 			_currentVoice[slot].volume = trackVolume->value_or(100) / 100.0f;
 		}
+
+		// Shuffle Voice playback, if any entry found for the current id
+		toml::array *shuffleNames = node["shuffle"].as_array();
+		if (shuffleNames && !shuffleNames->empty() && shuffleNames->is_homogeneous(toml::node_type::integer))
+		{
+			auto _newName = shuffleNames->get(getRandomInt(0, shuffleNames->size() - 1));
+
+			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(name), NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+		}
+
+		// Sequentially playback new voice items, if any entry found for the current id
+		toml::array *sequentialNames = node["sequential"].as_array();
+		if (sequentialNames && !sequentialNames->empty() && sequentialNames->is_homogeneous(toml::node_type::integer))
+		{
+			if (_voiceSequentialIndexes.find(name) == _voiceSequentialIndexes.end() || _voiceSequentialIndexes[name] >= sequentialNames->size())
+				_voiceSequentialIndexes[name] = 0;
+
+			auto _newName = sequentialNames->get(_voiceSequentialIndexes[name]);
+
+			_voiceSequentialIndexes[name]++;
+
+			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(name), NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+		}
+	}
+
+	// If none of the previous configurations worked, load the default one as last tentative
+	if (!exists) {
+		exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 	}
 
 	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
