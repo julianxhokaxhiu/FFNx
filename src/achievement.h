@@ -180,7 +180,7 @@ private:
     static inline constexpr int N_GOLD_CHOCOBO_FIRST_SLOTS = 4;
     static inline constexpr int N_GOLD_CHOCOBO_LAST_SLOTS = 2;
 
-    static inline const std::string DEATH_OF_AERITH_MOVIE_NAME = "earithdd";
+    static inline const std::string DEATH_OF_AERITH_MOVIE_NAME = "funeral";
     static inline const std::string SHINRA_ANNIHILATED_MOVIE_NAME = "hwindjet";
     static inline const std::string END_OF_GAME_MOVIE_NAME = "ending2";
     static inline const std::string INVALID_MOVIE_NAME = "";
