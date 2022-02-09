@@ -223,6 +223,12 @@ void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
 	struct matrix viewMatrix;
 	identity_matrix(&viewMatrix);
 
+	byte* level_data = *ff7_externals.field_level_data_pointer;
+	if (!level_data)
+	{
+		return;
+	}
+
 	ff7_camdata* field_camera_data = *ff7_externals.field_camera_data;
 	if (!field_camera_data)
 	{
