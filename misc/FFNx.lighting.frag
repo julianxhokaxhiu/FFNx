@@ -80,6 +80,8 @@ uniform vec4 iblData;
 #define isPbrTextureLoaded FSTexFlags.y > 0.0
 #define isIblTextureLoaded FSTexFlags.z > 0.0
 
+#define isHDR FSHDRFlags.x > 0.0
+
 void main()
 {
 	vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
@@ -282,5 +284,10 @@ void main()
         }
     }
 
-    gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
+    if (!(isHDR)) {
+        // SDR screens require the Gamma output to properly render light scenes
+        color.rgb = toGamma(color.rgb);
+    }
+
+    gl_FragColor = color;
 }
