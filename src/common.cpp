@@ -1304,9 +1304,16 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			}
 		}
 
-		if (texturePacker.drawModdedTextures(VREF(tex_header, image_data), VREF(tex_header, palette_index), (uint32_t *)image_data_scaled, scale))
+		if (image_data_scaled != nullptr && texturePacker.drawModdedTextures(VREF(tex_header, image_data), (uint32_t *)image_data_scaled, (uint32_t *)image_data, originalWidth, originalHeight, scale))
 		{
-			texture = newRenderer.createTexture(image_data_scaled, originalWidth * scale, originalHeight * scale);
+			VREF(texture_set, ogl.width) = originalWidth * scale;
+			VREF(texture_set, ogl.height) = originalHeight * scale;
+			texture = newRenderer.createTexture(image_data_scaled, VREF(texture_set, ogl.width), VREF(texture_set, ogl.height));
+		}
+		else
+		{
+			if(VREF(texture_set, ogl.external)) stats.external_textures--;
+			VRASS(texture_set, ogl.external, false);
 		}
 
 		if (image_data_scaled != nullptr && image_data_scaled != image_data)
@@ -1343,7 +1350,7 @@ _inline uint32_t pal2bgra(uint32_t pixel, uint32_t *palette, uint32_t palette_of
 }
 
 // convert an entire image from its native format to 32-bit BGRA
-void convert_image_data(unsigned char *image_data, uint32_t *converted_image_data, uint32_t w, uint32_t h, struct texture_format *tex_format, uint32_t invert_alpha, uint32_t color_key, uint32_t palette_offset, uint32_t reference_alpha)
+void convert_image_data(const unsigned char *image_data, uint32_t *converted_image_data, uint32_t w, uint32_t h, struct texture_format *tex_format, uint32_t invert_alpha, uint32_t color_key, uint32_t palette_offset, uint32_t reference_alpha)
 {
 	uint32_t i, j, o = 0, c = 0;
 
