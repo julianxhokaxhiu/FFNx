@@ -286,8 +286,6 @@ void main()
 
     if (!(isHDR)) {
         // SDR screens require the Gamma output to properly render light scenes
-        color.rgb = toGamma(color.rgb);
+        gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
     }
-
-    gl_FragColor = color;
 }
