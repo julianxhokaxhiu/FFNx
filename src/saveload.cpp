@@ -73,7 +73,7 @@ void normalize_path(char *name)
 	}
 }
 
-void save_texture(void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated)
+void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated)
 {
 	char filename[sizeof(basedir) + 1024];
 	struct stat dummy;
@@ -156,7 +156,7 @@ uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool
 	return ret;
 }
 
-uint32_t load_texture(void* data, uint32_t dataSize, char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set)
+uint32_t load_texture(const void* data, uint32_t dataSize, const char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set)
 {
 	uint32_t ret = 0;
 	char filename[sizeof(basedir) + 1024]{ 0 };

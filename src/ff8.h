@@ -442,7 +442,7 @@ struct struc_50
 {
 	uint32_t initialized;
 	struct texture_page texture_page[8];
-	uint32_t field_324;
+	uint32_t texture_page_enabled;
 	uint32_t field_328;
 	uint32_t vram_needs_reload;
 	uint32_t field_330;
@@ -967,7 +967,7 @@ struct ff8_externals
 	uint32_t upload_psx_vram;
 	void (*sub_464850)(uint32_t, uint32_t, uint32_t, uint32_t);
 	WORD *psxvram_buffer;
-	struct struc_51 *psx_texture_pages;
+	struct struc_51 *psx_texture_pages; // One per bpp (bpp 4, 8 and 16)
 	uint32_t read_field_data;
 	uint32_t upload_mim_file;
 	char *field_filename;
@@ -1082,11 +1082,16 @@ struct ff8_externals
 	int32_t (*check_game_is_paused)(int32_t);
 	uint32_t sub_470250;
 	uint32_t *ssigpu_callbacks_1;
+	uint32_t *ssigpu_callbacks_2;
 	uint32_t sub_462AD0;
 	uint32_t sub_462DF0;
 	uint32_t ssigpu_tx_select_2_sub_465CE0;
 	int (*sub_464F70)(int, int, int, int, int, int, int, int, int, uint8_t *);
-	void(*sub_4675C0)(uint8_t *, int, uint8_t *, int, signed int, int, int);
+	void(*read_vram_1)(uint8_t *, int, uint8_t *, int, signed int, int, int);
+	void(*read_vram_2_paletted)(uint8_t *, int, uint8_t *, int, signed int, int, int, uint16_t *);
+	void(*read_vram_3_paletted)(uint8_t *, uint8_t *, signed int, int, int, uint16_t *);
+	uint32_t sub_464DB0;
+	uint32_t sub_4649A0;
 	char *archive_path_prefix;
 	int(*fs_archive_search_filename)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
 	int(*ff8_fs_archive_search_filename2)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
@@ -1126,6 +1131,20 @@ struct ff8_externals
 	uint32_t open_battle_vibrate_vib;
 	uint8_t **vibrate_data_main;
 	uint8_t **vibrate_data_battle;
+	uint32_t sub_537F30;
+	uint32_t sub_5391B0;
+	uint32_t sub_534560;
+	uint32_t sub_536C30;
+	uint32_t sub_535640;
+	uint32_t sub_536C80;
+	uint32_t sub_5366D0;
+	uint32_t sub_539500;
+	uint32_t *cardgame_funcs;
+	uint8_t *cardgame_tim_texture_intro;
+	uint8_t *cardgame_tim_texture_game;
+	uint8_t *cardgame_tim_texture_cards;
+	uint8_t *cardgame_tim_texture_icons;
+	uint8_t *cardgame_tim_texture_font;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
