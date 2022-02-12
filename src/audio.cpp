@@ -1297,7 +1297,7 @@ bool NxAudioEngine::canPlayMovieAudio(const char* nameWithPath)
 	return getFilenameFullPath<const char*>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
 }
 
-bool NxAudioEngine::playMovieAudio(const char* nameWithPath, int slot)
+bool NxAudioEngine::playMovieAudio(const char* nameWithPath, int slot, float volume)
 {
 	char filename[MAX_PATH];
 	bool exists = getFilenameFullPath<const char *>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
@@ -1325,7 +1325,7 @@ bool NxAudioEngine::playMovieAudio(const char* nameWithPath, int slot)
 			return false;
 		}
 
-		_currentMovieAudio[slot].handle = _engine.play(*_currentMovieAudio[slot].stream, 1.0f);
+		_currentMovieAudio[slot].handle = _engine.play(*_currentMovieAudio[slot].stream, volume);
 
 		return _engine.isValidVoiceHandle(_currentMovieAudio[slot].handle);
 	}

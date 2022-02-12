@@ -273,7 +273,7 @@ public:
 
 	// Movie Audio
 	bool canPlayMovieAudio(const char* filename);
-	bool playMovieAudio(const char* filename, int slot = 0);
+	bool playMovieAudio(const char* filename, int slot = 0, float volume = 1.0f);
 	void stopMovieAudio(int slot = 0);
 	bool isMovieAudioPlaying(int slot = 0);
 	void setMovieAudioMaxSlots(int slot);
