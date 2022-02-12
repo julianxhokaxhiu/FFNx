@@ -169,7 +169,9 @@ void main()
             {
                 if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
-                texture_color.rgb = toLinear(texture_color.rgb);
+                if (!(isHDR)) {
+                    texture_color.rgb = toLinear(texture_color.rgb);
+                }
             }
 
             if (isMovie) texture_color.a = 1.0;

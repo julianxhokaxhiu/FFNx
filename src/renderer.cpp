@@ -525,7 +525,7 @@ void Renderer::prepareFramebuffer()
         framebufferHeight,
         false,
         1,
-        bgfx::TextureFormat::RGBA16,
+        internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16,
         fbFlags | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
     );
 
@@ -1560,7 +1560,7 @@ uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t 
 
     uint16_t dstY = 0;
 
-    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_BLIT_DST);
+    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_BLIT_DST);
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
 
