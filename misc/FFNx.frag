@@ -55,7 +55,9 @@ uniform vec4 FSTexFlags;
 #define isYUV FSMiscFlags.y > 0.0
 #define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
+
 #define isHDR FSHDRFlags.x > 0.0
+#define monitorNits FSHDRFlags.y
 
 void main()
 {

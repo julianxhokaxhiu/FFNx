@@ -59,7 +59,9 @@ uniform vec4 iblData;
 #define isYUV FSMiscFlags.y > 0.0
 #define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
+
 #define isHDR FSHDRFlags.x > 0.0
+#define monitorNits FSHDRFlags.y
 
 // ---
 #define debugOutput lightingDebugData.z
@@ -79,8 +81,6 @@ uniform vec4 iblData;
 #define isNmlTextureLoaded FSTexFlags.x > 0.0
 #define isPbrTextureLoaded FSTexFlags.y > 0.0
 #define isIblTextureLoaded FSTexFlags.z > 0.0
-
-#define isHDR FSHDRFlags.x > 0.0
 
 void main()
 {
