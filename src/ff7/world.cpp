@@ -22,6 +22,22 @@
 
 #include "../ff7.h"
 #include "../patch.h"
+#include "../sfx.h"
+
+// For worldmap footsteps
+void ff7_world_update_model_movement(int delta_position_x, int delta_position_z)
+{
+    ff7_externals.world_update_model_movement_762E87(delta_position_x, delta_position_z);
+
+    if(*ff7_externals.world_event_current_entity_ptr && (delta_position_x || delta_position_z))
+    {
+        int player_model_id = ff7_externals.world_get_player_model_id();
+        if(player_model_id >= 0 && player_model_id <= 2 || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, and Cid
+        {
+            sfx_play_wm_footstep(player_model_id, ff7_externals.world_get_player_walkmap_type());
+        }
+    }
+}
 
 void ff7_world_snake_compute_delta_position(short* delta_position, short z_value)
 {

@@ -219,6 +219,15 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	ff7_field_hook_init();
 
 	// #####################
+	// worldmap footsteps
+	// #####################
+	if(ff7_footsteps)
+	{
+		replace_call_function(ff7_externals.world_update_player_74EA48 + 0xCDF, ff7_world_update_model_movement);
+		replace_call_function(ff7_externals.world_update_player_74EA48 + 0xD17, ff7_world_update_model_movement);
+	}
+
+	// #####################
 	// battle toggle
 	// #####################
 	replace_call_function(ff7_externals.field_battle_toggle, ff7_toggle_battle_field);

@@ -2135,6 +2135,38 @@ struct field_animation_data
 	byte field_180[16];
 };
 
+struct world_event_data
+{
+	world_event_data *next_ptr;
+	world_event_data *player_data_ptr;
+	world_event_data *special_data_ptr;
+	vector3<int> position;
+	byte field_18[40];
+	short facing;
+	byte field_42[2];
+	short offset_y;
+	short curr_script_position;
+	byte field_48[2];
+	WORD walkmap_type;
+	short direction;
+	byte field_4E[2];
+	byte model_id;
+	byte animation_is_loop_mask;
+	byte model_id_special;
+	byte animation_frame_idx;
+	byte field_54;
+	byte movement_speed;
+	byte wait_frames;
+	byte is_function_running_maybe;
+	byte animation_speed;
+	byte field_59[3];
+	byte vertical_speed;
+	byte animation_id;
+	byte field_5E;
+	byte vertical_speed_2;
+	byte field_60[104];
+};
+
 // --------------- end of FF7 imports ---------------
 
 struct ff7_channel_6_state
@@ -2713,8 +2745,13 @@ struct ff7_externals
 	uint32_t world_opcode_message_update_box_769050;
 	uint32_t world_opcode_message_update_text_769C02;
 	int (*get_world_encounter_rate)();
-	void (*world_compute_delta_position_753D00)(short* values, short z_value);
+	void (*world_compute_delta_position_753D00)(short*, short);
 	int (*pop_world_script_stack)();
+	uint32_t world_update_player_74EA48;
+	int (*world_get_player_model_id)();
+	int (*world_get_player_walkmap_type)();
+	void(*world_update_model_movement_762E87)(int, int);
+	world_event_data** world_event_current_entity_ptr;
 
 	uint32_t swirl_main_loop;
 	uint32_t swirl_loop_sub_4026D4;
