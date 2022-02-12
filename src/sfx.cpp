@@ -526,6 +526,39 @@ void sfx_process_footstep(bool is_player_moving)
 	}
 }
 
+void sfx_play_wm_footstep(int player_model_id, int player_walkmap_type)
+{
+	static time_t last_playback_time, current_playback_time;
+	float pace = 0.3f;
+	constexpr int footstep_id = 159;
+	bool playing;
+
+	if(player_model_id == 4 || player_model_id == 19)
+		pace = 0.5f;
+
+	qpc_get_time(&current_playback_time);
+	if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
+	{
+		char track_name[64];
+		if (use_external_sfx)
+		{
+			sprintf(track_name, "wm_footsteps_%d_%d_%d", player_model_id, player_walkmap_type, footstep_id);
+			playing = nxAudioEngine.playSFX(track_name, footstep_id, 7, 0.0f);
+
+			if(!playing)
+			{
+				sprintf(track_name, "wm_footsteps_%d_%d", player_walkmap_type, footstep_id);
+				playing = nxAudioEngine.playSFX(track_name, footstep_id, 7, 0.0f);
+			}
+		}
+		else
+		{
+			common_externals.play_sfx(footstep_id);
+		}
+		qpc_get_time(&last_playback_time);
+	}
+}
+
 //=============================================================================
 
 void sfx_init()

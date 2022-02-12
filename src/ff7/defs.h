@@ -79,6 +79,7 @@ uint32_t field_open_flevel_siz();
 
 // world
 void ff7_world_hook_init();
+void ff7_world_update_model_movement(int delta_position_x, int delta_position_z);
 
 // file
 FILE *open_lgp_file(char *filename, uint32_t mode);

@@ -892,6 +892,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_opcode_message_sub_75EE86 = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xB6D);
 	ff7_externals.world_opcode_message_update_box_769050 = get_relative_call(ff7_externals.world_opcode_message_sub_75EE86, 0x2B);
 	ff7_externals.world_opcode_message_update_text_769C02 = get_relative_call(ff7_externals.world_opcode_message_update_box_769050, 0x6D);
+	ff7_externals.world_update_player_74EA48 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x2D7);
+	ff7_externals.world_get_player_model_id = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x1B);
+	ff7_externals.world_get_player_walkmap_type = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x7DF);
+	ff7_externals.world_update_model_movement_762E87 = (void(*)(int, int))get_relative_call(ff7_externals.world_update_player_74EA48, 0xCDF);
+	ff7_externals.world_event_current_entity_ptr = (world_event_data**)get_absolute_value((uint32_t)ff7_externals.world_update_model_movement_762E87, 0x5);
 
 	ff7_externals.swirl_main_loop = swirl_main_loop;
 	ff7_externals.swirl_loop_sub_4026D4 = get_relative_call(swirl_main_loop, 0xC9);
