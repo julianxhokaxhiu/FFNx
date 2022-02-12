@@ -302,10 +302,13 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		sbdesc.dwReserved = 0;
 		sbdesc.dwBufferBytes = ffmpeg_sound_buffer_size;
 
-		if(ret = IDirectSound_CreateSoundBuffer(*common_externals.directsound, (LPCDSBUFFERDESC)&sbdesc, &ffmpeg_sound_buffer, 0))
+		if (*common_externals.directsound)
 		{
-			ffnx_error("prepare_movie: couldn't create sound buffer (%i, %i, %i, %i)\n", acodec_ctx->sample_fmt, acodec_ctx->bit_rate, acodec_ctx->sample_rate, acodec_ctx->channels);
-			ffmpeg_sound_buffer = 0;
+			if(ret = IDirectSound_CreateSoundBuffer(*common_externals.directsound, (LPCDSBUFFERDESC)&sbdesc, &ffmpeg_sound_buffer, 0))
+			{
+				ffnx_error("prepare_movie: couldn't create sound buffer (%i, %i, %i, %i)\n", acodec_ctx->sample_fmt, acodec_ctx->bit_rate, acodec_ctx->sample_rate, acodec_ctx->channels);
+				ffmpeg_sound_buffer = 0;
+			}
 		}
 
 		first_audio_packet = true;
