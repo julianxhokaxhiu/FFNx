@@ -145,9 +145,11 @@ bool NxAudioEngine::fileExists(const char* filename)
 
 bool NxAudioEngine::init()
 {
-	if (_engine.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, SoLoud::Soloud::AUTO, SoLoud::Soloud::AUTO, 2) == 0)
+	if (_engine.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, SoLoud::Soloud::AUTO, SoLoud::Soloud::AUTO, SoLoud::Soloud::AUTO) == 0)
 	{
 		_engineInitialized = true;
+
+		ffnx_info("NxAudioEngine initialized: channels=%u,sample_rate=%u\n", _engine.getBackendChannels(), _engine.getBackendSamplerate());
 
 		// 100 -> LOG_LEVEL_ALL: https://github.com/vgmstream/vgmstream/blob/4cda04d02595b381dc8cf98ec39e771c80987d18/src/util/log.c#L20
 		if (trace_all || trace_ambient || trace_sfx || trace_music || trace_voice) vgm_log_set_callback(NULL, 100, 0, NxAudioEngineVgmstreamCallback);
