@@ -132,13 +132,21 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_call_function(ff7_externals.on_gameover_enter, ff7_on_gameover_enter);
 	replace_call_function(ff7_externals.on_gameover_exit, ff7_on_gameover_exit);
 
+	// Disable DirectSound creation when using the external SFX layer
+	if (use_external_sfx)
+	{
+		replace_function(common_externals.directsound_create, ff7_dsound_create);
+		replace_function(common_externals.directsound_release, ff7_dsound_release);
+		replace_function(common_externals.directsound_createsoundbuffer, ff7_dsound_createsoundbuffer);
+	}
+
 	// ##################################
 	// animation glitch fixes
 	// ##################################
 
 	// phoenix camera animation glitch
 	memset_code(ff7_externals.run_phoenix_main_loop_516297 + 0x3A5, 0x90, 49);
-    memset_code(ff7_externals.run_phoenix_main_loop_516297 + 0x3F7, 0x90, 49);
+  memset_code(ff7_externals.run_phoenix_main_loop_516297 + 0x3F7, 0x90, 49);
 
 	// ##################################
 	// bugfixes to enhance game stability

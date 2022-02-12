@@ -158,6 +158,7 @@ struct common_externals
 	void *(*assert_calloc)(uint32_t, uint32_t, const char *, uint32_t);
 	IDirectSound **directsound;
 	uint32_t directsound_create;
+	uint32_t directsound_createsoundbuffer;
 	uint32_t directsound_release;
 	struct palette *(*create_palette_for_tex)(uint32_t, struct tex_header *, struct texture_set *);
 	struct game_obj *(*get_game_object)();
@@ -224,6 +225,7 @@ struct common_externals
 	uint32_t sfx_pause;
 	uint32_t sfx_resume;
 	uint32_t sfx_stop;
+	uint32_t sfx_release;
 	uint32_t (*play_sfx)(uint32_t);
 	uint32_t (*play_sfx_effects)(byte, uint32_t, uint32_t, uint32_t, uint32_t);
 	uint32_t play_sfx_on_channel;

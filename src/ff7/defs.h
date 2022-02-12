@@ -116,3 +116,8 @@ struct battle_hrc_header *read_battle_hrc(uint32_t use_file_context, struct file
 struct polygon_data *load_p_file(struct file_context *file_context, uint32_t create_lists, char *filename);
 void destroy_tex_header(struct ff7_tex_header *tex_header);
 struct ff7_tex_header *load_tex_file(struct file_context *file_context, char *filename);
+
+// dsound
+int ff7_dsound_create(HWND hwnd, LPGUID guid);
+void ff7_dsound_release();
+int ff7_dsound_createsoundbuffer(const WAVEFORMATEX *waveFormatEx);

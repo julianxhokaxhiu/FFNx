@@ -33,6 +33,11 @@ ff7_channel_6_state sfx_channel_6_state;
 
 //=============================================================================
 
+void ff7_sfx_release(IDirectSoundBuffer *buffer)
+{
+	// Just do nothing
+}
+
 bool ff7_should_sfx_loop(int id)
 {
 	return *(BYTE *)(ff7_externals.sfx_fmt_header + (28 * (id - 1)));
@@ -606,6 +611,7 @@ void sfx_init()
 			replace_function(common_externals.sfx_pause, ff7_sfx_pause);
 			replace_function(common_externals.sfx_resume, ff7_sfx_resume);
 			replace_function(common_externals.sfx_stop, ff7_sfx_stop);
+			replace_function(common_externals.sfx_release, ff7_sfx_release);
 			// Replace partially some calls in ff7_sfx_play_effects
 			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x183, ff7_sfx_set_frequency_on_channel_6);
 			replace_call_function((uint32_t)common_externals.play_sfx_effects + 0x1A9, ff7_sfx_set_panning_on_channel_6);

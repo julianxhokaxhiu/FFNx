@@ -22,9 +22,6 @@
 #pragma once
 
 common_externals.start =                      0x40B6E0;
-common_externals.directsound =        (LPLPDIRECTSOUND)0xDC2680;
-common_externals.directsound_create =         0x6E6C4B;
-common_externals.directsound_release =        0x6E6CDE;
 common_externals.debug_print =                0x664E00;
 common_externals.debug_print2 =               0x414EE0;
 common_externals.create_tex_header = (tex_header * (*)(void))0x688C16;

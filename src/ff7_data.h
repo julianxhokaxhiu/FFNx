@@ -394,6 +394,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	common_externals.sfx_init = get_relative_call(main_init_loop, 0xC3);
 	ff7_externals.sfx_initialized = (uint32_t*)get_absolute_value(common_externals.sfx_init, 0x21);
+	common_externals.sfx_release = get_relative_call(common_externals.sfx_init, 0x1FC);
 	common_externals.sfx_cleanup = get_relative_call(main_cleanup_loop, 0x64);
 	common_externals.sfx_load = get_relative_call(main_init_loop, 0xE3);
 	common_externals.sfx_unload = get_relative_call(main_cleanup_loop, 0x5C);
@@ -416,6 +417,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sound_states = (ff7_field_sfx_state*)get_absolute_value(common_externals.play_sfx_on_channel, 0x28);
 	common_externals.master_sfx_volume = (uint32_t*)get_absolute_value(common_externals.play_sfx_on_channel, 0x342);
 	ff7_externals.sfx_fmt_header = (uint32_t)get_absolute_value(common_externals.play_sfx_on_channel, 0x51);
+
+	common_externals.directsound_create = get_relative_call(common_externals.sfx_init, 0x11C);
+	common_externals.directsound = (LPLPDIRECTSOUND)get_absolute_value(common_externals.directsound_create, 0x15);
+	common_externals.directsound_createsoundbuffer = get_relative_call(common_externals.sfx_init, 0x16C);
+	common_externals.directsound_release = get_relative_call(common_externals.sfx_init, 0x182);
 
 	ff7_externals.battle_clear_sound_flags = get_relative_call(ff7_externals.battle_sub_429AC0, 0x6C);
 	ff7_externals.swirl_sound_effect = get_relative_call(swirl_main_loop, 0x8B);
