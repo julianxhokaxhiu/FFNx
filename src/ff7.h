@@ -1934,6 +1934,19 @@ struct ff7_camdata
 	int16_t padding2;
 };
 
+struct ff7_shake_bg_data
+{
+	uint8_t do_shake;
+	uint8_t shake_phase;
+	char amp_index;
+	uint8_t shake_curr_value;
+	short shake_amplitude;
+	short shake_initial;
+	short shake_final;
+	short shake_n_steps;
+	short shake_idx;
+};
+
 struct ff7_modules_global_object
 {
   uint8_t field_0;
@@ -2009,28 +2022,17 @@ struct ff7_modules_global_object
   uint16_t field_84;
   uint16_t field_86;
   uint16_t MOVIE_frame;
-  uint8_t field_8A;
-  uint8_t field_8B;
-  uint16_t field_8C;
-  uint16_t field_8E;
-  uint16_t field_90;
-  uint16_t field_92;
-  uint16_t field_94;
-  uint16_t field_96;
-  uint8_t field_98;
-  uint8_t field_99;
-  uint16_t field_9A;
-  uint16_t field_9C;
-  uint16_t field_9E;
-  uint16_t field_A0;
-  uint16_t field_A2;
-  uint16_t field_A4;
-  uint16_t field_A6;
-  uint16_t field_A8;
-  uint32_t field_AC;
+  ff7_shake_bg_data shake_bg_x;
+  ff7_shake_bg_data shake_bg_y;
+  uint16_t bg2_scroll_speed_x;
+  uint16_t bg2_scroll_speed_y;
+  uint16_t bg3_scroll_speed_x;
+  uint16_t bg3_scroll_speed_y;
+  uint16_t field_AE;
   uint16_t field_B0;
   uint8_t field_B2[64];
   uint8_t background_sprite_layer[64];
+  uint16_t field_132;
   uint32_t field_134;
 };
 
@@ -2460,6 +2462,7 @@ struct ff7_externals
 	DWORD *swirl_limit_fps;
 	int16_t (*get_bank_value)(int16_t, int16_t);
 	int8_t (*set_bank_value)(int16_t, int16_t, int16_t);
+	int8_t (*get_char_bank_value)(int16_t, int16_t);
 	uint32_t sub_611BAE;
 	byte* current_entity_id;
 	byte** field_script_ptr; //0xCBF5E8

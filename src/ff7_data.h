@@ -543,6 +543,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.get_bank_value = (int16_t (*)(int16_t, int16_t))get_relative_call(common_externals.execute_opcode_table[0xF1], 0x30);
 	ff7_externals.set_bank_value = (int8_t (*)(int16_t, int16_t, int16_t))get_relative_call(common_externals.execute_opcode_table[0xFA], 0x1A);
+	ff7_externals.get_char_bank_value = (int8_t (*)(int16_t, int16_t))get_relative_call(common_externals.execute_opcode_table[0x5E], 0x41);
 	ff7_externals.sub_611BAE = get_relative_call(common_externals.execute_opcode_table[0x16], 0x4);
 
 	ff7_externals.wait_frames_ptr = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x24], 0x1C);
