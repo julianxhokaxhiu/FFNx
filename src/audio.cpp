@@ -145,7 +145,7 @@ bool NxAudioEngine::fileExists(const char* filename)
 
 bool NxAudioEngine::init()
 {
-	if (_engine.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, SoLoud::Soloud::AUTO, SoLoud::Soloud::AUTO, SoLoud::Soloud::AUTO) == 0)
+	if (_engine.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, external_audio_sample_rate, SoLoud::Soloud::AUTO, external_audio_number_of_channels) == 0)
 	{
 		_engineInitialized = true;
 

@@ -131,5 +131,7 @@ extern double right_analog_trigger_deadzone;
 extern bool enable_steam_achievements;
 extern bool steam_achievements_debug_mode;
 extern double hdr_max_nits;
+extern long external_audio_number_of_channels;
+extern long external_audio_sample_rate;
 
 void read_cfg();
