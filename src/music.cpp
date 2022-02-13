@@ -629,16 +629,10 @@ void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* batt
 		ff7_next_battle_world_id = *battle_id;
 		next_music_is_battle = true;
 
-		char battle_name[50];
-
-		sprintf(battle_name, "bat_%u", ff7_next_battle_world_id);
-
-		if (nxAudioEngine.canPlayMusic(battle_name)) {
-			// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
-			stop_music();
-			// Play music
-			ff7_music_sound_operation_fix(ff7_last_akao_call_type, ff7_last_music_id, 4, 0, 0, 0);
-		}
+		// Now we know the battle scene ID, so we can try to customize battle music in Worldmap too
+		stop_music();
+		// Play music
+		ff7_music_sound_operation_fix(ff7_last_akao_call_type, ff7_last_music_id, 4, 0, 0, 0);
 
 		ff7_next_battle_world_id = 0;
 		next_music_is_battle = false;
