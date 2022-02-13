@@ -71,7 +71,7 @@ namespace SoLoud
 		mSampleCount = sampleCount;
 		mChannels = channels;
 
-    mData = new uint8_t[mSampleCount];
+    mData = new uint8_t[mSampleCount]{ NULL };
     mPushOffset = 0;
 	}
 
