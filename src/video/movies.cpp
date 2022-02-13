@@ -19,6 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "../audio.h"
 #include "../renderer.h"
 
 #include "movies.h"
@@ -36,10 +37,6 @@
 inline double round(double x) { return floor(x + 0.5); }
 
 #define LAG (((now - start_time) - (timer_freq / movie_fps) * movie_frame_counter) / (timer_freq / 1000))
-
-IDirectSoundBuffer* ffmpeg_sound_buffer;
-uint32_t ffmpeg_sound_buffer_size;
-uint32_t ffmpeg_sound_write_pointer;
 
 int texture_units = 1;
 
@@ -81,7 +78,7 @@ double movie_duration;
 uint32_t skipping_frames;
 uint32_t skipped_frames;
 
-uint32_t first_audio_packet;
+bool first_audio_packet;
 
 time_t timer_freq;
 time_t start_time;
@@ -107,7 +104,6 @@ void ffmpeg_release_movie_objects()
 	if (codec_ctx) avcodec_close(codec_ctx);
 	if (acodec_ctx) avcodec_close(acodec_ctx);
 	if (format_ctx) avformat_close_input(&format_ctx);
-	if (ffmpeg_sound_buffer && *common_externals.directsound) IDirectSoundBuffer_Release(ffmpeg_sound_buffer);
 	if (swr_ctx) {
 		swr_close(swr_ctx);
 		swr_free(&swr_ctx);
@@ -116,7 +112,6 @@ void ffmpeg_release_movie_objects()
 	codec_ctx = 0;
 	acodec_ctx = 0;
 	format_ctx = 0;
-	ffmpeg_sound_buffer = 0;
 
 	audio_must_be_converted = false;
 
@@ -257,7 +252,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 
 	if(audiostream != -1)
 	{
-		if (acodec_ctx->sample_fmt != AV_SAMPLE_FMT_U8 && acodec_ctx->sample_fmt != AV_SAMPLE_FMT_S16) {
+		if (acodec_ctx->sample_fmt != AV_SAMPLE_FMT_U8) {
 			audio_must_be_converted = true;
 			if (trace_movies)
 			{
@@ -272,7 +267,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				NULL,
 				// OUT
 				acodec_ctx->channel_layout,
-				AV_SAMPLE_FMT_S16,
+				AV_SAMPLE_FMT_U8,
 				acodec_ctx->sample_rate,
 				// IN
 				acodec_ctx->channel_layout,
@@ -286,41 +281,13 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			swr_init(swr_ctx);
 		}
 
-		sound_format.cbSize = sizeof(sound_format);
-		sound_format.wBitsPerSample = (audio_must_be_converted ? 16 : acodec_ctx->bits_per_coded_sample);
-		sound_format.nChannels = acodec_ctx->channels;
-		sound_format.nSamplesPerSec = acodec_ctx->sample_rate;
-		sound_format.nBlockAlign = sound_format.nChannels * sound_format.wBitsPerSample / 8;
-		sound_format.nAvgBytesPerSec = sound_format.nSamplesPerSec * sound_format.nBlockAlign;
-		sound_format.wFormatTag = WAVE_FORMAT_PCM;
-
-		ffmpeg_sound_buffer_size = sound_format.nAvgBytesPerSec * AUDIO_BUFFER_SIZE;
-
-		sbdesc.dwSize = sizeof(sbdesc);
-		sbdesc.lpwfxFormat = &sound_format;
-		sbdesc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_CTRLVOLUME;
-		sbdesc.dwReserved = 0;
-		sbdesc.dwBufferBytes = ffmpeg_sound_buffer_size;
-
-		if (*common_externals.directsound)
-		{
-			if(ret = IDirectSound_CreateSoundBuffer(*common_externals.directsound, (LPCDSBUFFERDESC)&sbdesc, &ffmpeg_sound_buffer, 0))
-			{
-				ffnx_error("prepare_movie: couldn't create sound buffer (%i, %i, %i, %i)\n", acodec_ctx->sample_fmt, acodec_ctx->bit_rate, acodec_ctx->sample_rate, acodec_ctx->channels);
-				ffmpeg_sound_buffer = 0;
-			}
-		}
+		nxAudioEngine.initStream(
+			movie_duration,
+			acodec_ctx->sample_rate,
+			acodec_ctx->channels
+		);
 
 		first_audio_packet = true;
-		ffmpeg_sound_write_pointer = 0;
-
-		if (!ff8)
-		{
-			if (ffmpeg_sound_buffer && *common_externals.directsound)
-			{
-				IDirectSoundBuffer_SetVolume(ffmpeg_sound_buffer, (int)(20.0f * log10f(ff7_music_volume / 100.0f) * 100.0f));
-			}
-		}
 	}
 
 exit:
@@ -333,7 +300,7 @@ exit:
 // stop movie playback, no video updates will be requested after this so all we have to do is stop the audio
 void ffmpeg_stop_movie()
 {
-	if(ffmpeg_sound_buffer && *common_externals.directsound) IDirectSoundBuffer_Stop(ffmpeg_sound_buffer);
+	nxAudioEngine.stopStream();
 }
 
 void buffer_bgra_frame(uint8_t *data, int upload_stride)
@@ -509,16 +476,10 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 			int used_bytes;
 			DWORD playcursor;
 			DWORD writecursor;
-			uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
+			uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_U8) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
 			uint32_t bytespersec = bytesperpacket * acodec_ctx->channels * acodec_ctx->sample_rate;
 
 			QueryPerformanceCounter((LARGE_INTEGER *)&now);
-
-			if(movie_sync_debug)
-			{
-				IDirectSoundBuffer_GetCurrentPosition(ffmpeg_sound_buffer, &playcursor, &writecursor);
-				ffnx_info("update_movie_sample(audio): DTS %f PTS %f (timebase %f) placed in sound buffer at real time %f (play %f write %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(acodec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)playcursor / (double)bytespersec, (double)ffmpeg_sound_write_pointer / (double)bytespersec);
-			}
 
 			ret = avcodec_send_packet(acodec_ctx, &packet);
 
@@ -545,28 +506,13 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// Sometimes the captured frame may have no sound samples. Just skip and move forward
 				if (_size)
 				{
-					LPVOID ptr1;
-					LPVOID ptr2;
-					DWORD bytes1;
-					DWORD bytes2;
-
-					av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_S16 : acodec_ctx->sample_fmt), 0);
+					av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_U8 : acodec_ctx->sample_fmt), 0);
 					if (audio_must_be_converted) swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
 					else av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->channels, acodec_ctx->sample_fmt);
 
-					if (ffmpeg_sound_buffer) {
-						if (IDirectSoundBuffer_GetStatus(ffmpeg_sound_buffer, &DSStatus) == DS_OK) {
-							if (DSStatus != DSBSTATUS_BUFFERLOST) {
-								if (IDirectSoundBuffer_Lock(ffmpeg_sound_buffer, ffmpeg_sound_write_pointer, _size, &ptr1, &bytes1, &ptr2, &bytes2, 0)) ffnx_error("update_movie_sample: couldn't lock sound buffer\n");
-								memcpy(ptr1, buffer, bytes1);
-								memcpy(ptr2, &buffer[bytes1], bytes2);
-								if (IDirectSoundBuffer_Unlock(ffmpeg_sound_buffer, ptr1, bytes1, ptr2, bytes2)) ffnx_error("update_movie_sample: couldn't unlock sound buffer\n");
-							}
-						}
+					nxAudioEngine.pushStreamData(buffer, _size);
 
-						ffmpeg_sound_write_pointer = (ffmpeg_sound_write_pointer + bytes1 + bytes2) % ffmpeg_sound_buffer_size;
-						av_freep(&buffer);
-					}
+					av_freep(&buffer);
 				}
 			}
 		}
@@ -574,19 +520,11 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 		av_packet_unref(&packet);
 	}
 
-	if(ffmpeg_sound_buffer && first_audio_packet)
+	if (first_audio_packet)
 	{
-		if(movie_sync_debug) ffnx_info("audio start\n");
-
-		// reset start time so video syncs up properly
-		QueryPerformanceCounter((LARGE_INTEGER *)&start_time);
-		if (IDirectSoundBuffer_GetStatus(ffmpeg_sound_buffer, &DSStatus) == DS_OK) {
-			if (DSStatus != DSBSTATUS_BUFFERLOST) {
-				if (IDirectSoundBuffer_Play(ffmpeg_sound_buffer, 0, 0, DSBPLAY_LOOPING)) ffnx_error("update_movie_sample: couldn't play sound buffer\n");
-			}
-		}
-
 		first_audio_packet = false;
+
+		nxAudioEngine.playStream(ff7_music_volume / 100.0f);
 	}
 
 	movie_frame_counter++;

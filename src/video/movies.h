@@ -24,7 +24,6 @@
 #include <windows.h>
 #include <math.h>
 #include <sys/timeb.h>
-#include <dsound.h>
 #include <dbghelp.h>
 
 #include "../crashdump.h"

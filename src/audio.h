@@ -26,8 +26,9 @@
 #include <vector>
 #include <unordered_map>
 #include <soloud.h>
-#include "audio/vgmstream/vgmstream.h"
+#include "audio/memorystream/memorystream.h"
 #include "audio/openpsf/openpsf.h"
+#include "audio/vgmstream/vgmstream.h"
 
 #define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000
 
@@ -139,6 +140,15 @@ public:
 		SoLoud::VGMStream* stream;
 	};
 
+	struct NxAudioEngineStreamAudio
+	{
+		NxAudioEngineStreamAudio() :
+			handle(NXAUDIOENGINE_INVALID_HANDLE),
+			stream(nullptr) {}
+		SoLoud::handle handle;
+		SoLoud::MemoryStream* stream;
+	};
+
 private:
 	enum NxAudioEngineLayer
 	{
@@ -194,6 +204,9 @@ private:
 	// MOVIE AUDIO
 	short _movieAudioMaxSlots = 0;
 	std::map<int, NxAudioEngineMovieAudio> _currentMovieAudio;
+
+	// STREAM
+	NxAudioEngineStreamAudio _currentStream;
 
 	// MISC
 	// Returns false if the file does not exist
@@ -277,6 +290,12 @@ public:
 	void stopMovieAudio(int slot = 0);
 	bool isMovieAudioPlaying(int slot = 0);
 	void setMovieAudioMaxSlots(int slot);
+
+	// Stream Audio
+	void initStream(float duration, float sample_rate, uint32_t channels);
+	void pushStreamData(uint8_t* data, uint32_t size);
+	bool playStream(float volume = 1.0f);
+	void stopStream(double time = 0.0f);
 };
 
 extern NxAudioEngine nxAudioEngine;

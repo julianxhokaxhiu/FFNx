@@ -203,6 +203,8 @@ void NxAudioEngine::flush()
 	{
 		_currentMovieAudio[slot] = NxAudioEngineMovieAudio();
 	}
+
+	_currentStream = NxAudioEngineStreamAudio();
 }
 
 void NxAudioEngine::cleanup()
@@ -1346,4 +1348,42 @@ bool NxAudioEngine::isMovieAudioPlaying(int slot)
 void NxAudioEngine::setMovieAudioMaxSlots(int slot)
 {
 	_movieAudioMaxSlots = slot;
+}
+
+// Stream Audio
+void NxAudioEngine::initStream(float duration, float sample_rate, uint32_t channels)
+{
+	if (_currentStream.stream) delete _currentStream.stream;
+
+	_currentStream.stream = new SoLoud::MemoryStream(sample_rate, ::ceil(duration) * sample_rate * channels, channels);
+}
+
+void NxAudioEngine::pushStreamData(uint8_t* data, uint32_t size)
+{
+	if (_currentStream.stream)
+	{
+		_currentStream.stream->push(data, size);
+	}
+}
+
+bool NxAudioEngine::playStream(float volume)
+{
+	_currentStream.handle = _engine.play(*_currentStream.stream, volume);
+
+	return _engine.isValidVoiceHandle(_currentStream.handle);
+}
+
+void NxAudioEngine::stopStream(double time)
+{
+	if (time > 0.0)
+	{
+		_engine.fadeVolume(_currentStream.handle, 0, time);
+		_engine.schedulePause(_currentStream.handle, time);
+	}
+	else
+	{
+		_engine.setPause(_currentStream.handle, true);
+	}
+
+	_currentStream.handle = NXAUDIOENGINE_INVALID_HANDLE;
 }
