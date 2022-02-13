@@ -1001,7 +1001,11 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 
 	_currentVoice[slot].volume = volume;
 
-	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_VOICE][name];
+	std::string _name(name);
+	// TOML doesn't like the / char as key, replace it with - ( one of the valid accepted chars )
+	replace(_name, "/", "-");
+
+	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_VOICE][_name];
 	if (node)
 	{
 		// Set volume for the current track
