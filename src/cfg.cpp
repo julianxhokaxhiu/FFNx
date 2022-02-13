@@ -252,8 +252,8 @@ void read_cfg()
 	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
 	steam_achievements_debug_mode = config["steam_achievements_debug_mode"].value_or(false);
 	hdr_max_nits = config["hdr_max_nits"].value_or(0);
-	external_audio_number_of_channels = config["external_audio_number_of_channels"].value_or(0);
-	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(0);
+	external_audio_number_of_channels = config["external_audio_number_of_channels"].value_or(2);
+	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(44100);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
@@ -402,4 +402,15 @@ void read_cfg()
 	// MOD EXTENSION
 	if (mod_ext.empty() || mod_ext.front().empty())
 		mod_ext = {"dds", "png"};
+
+	// AUDIO NUMBER OF CHANNELS
+	if (external_audio_number_of_channels < 0)
+		external_audio_number_of_channels = 0;
+	else if (external_audio_number_of_channels % 2 != 0)
+		// Round to the previous even number
+		external_audio_number_of_channels--;
+
+	// AUDIO SAMPLE RATE
+	if (external_audio_sample_rate < 0)
+		external_audio_sample_rate = 0;
 }

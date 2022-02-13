@@ -109,14 +109,14 @@ hdr_max_nits = 0
 # The number MUST always be EVEN ( eg. 2, 4, 6, 8). If you have 5.1 set, then use 6 ( 5+1 ). If you have 7.1 set, then use 8 ( 7+1 ).
 # NOTE: 0 = Autodetect. It will use the number of channels set in your audio card and/or inherited through audio software enhancements suites.
 # WARNING: This flag WILL impact the OVERALL external audio layer ( Music, SFX, Voice, Ambient, etc.)!
-external_audio_number_of_channels = 0
+external_audio_number_of_channels = 2
 
 #[SAMPLE RATE]
 # This flag will set the sample rate you want to use.
 # The number MUST be one of the known sample rates values ( 44100, 48000, etc. )
 # NOTE: 0 = Autodetect. It will use the sample rate set in your audio card and/or inherited through audio software enhancements suites.
 # WARNING: This flag WILL impact the OVERALL external audio layer ( Music, SFX, Voice, Ambient, etc.)!
-external_audio_sample_rate = 0
+external_audio_sample_rate = 44100
 
 #[USE EXTERNAL SFX]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce sounds in-game.
