@@ -252,13 +252,14 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 
 	if(audiostream != -1)
 	{
-		if (acodec_ctx->sample_fmt != AV_SAMPLE_FMT_U8) {
+		if (acodec_ctx->sample_fmt != AV_SAMPLE_FMT_FLT) {
 			audio_must_be_converted = true;
 			if (trace_movies)
 			{
 				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_fmt: %s\n", av_get_sample_fmt_name(acodec_ctx->sample_fmt));
 				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_rate: %d\n", acodec_ctx->sample_rate);
 				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->channel_layout: %u\n", acodec_ctx->channel_layout);
+				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->channels: %u\n", acodec_ctx->channels);
 			}
 
 			// Prepare software conversion context
@@ -266,11 +267,11 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				// Create a new context
 				NULL,
 				// OUT
-				acodec_ctx->channel_layout,
-				AV_SAMPLE_FMT_U8,
+				acodec_ctx->channel_layout == 0 ? AV_CH_LAYOUT_STEREO : acodec_ctx->channel_layout,
+				AV_SAMPLE_FMT_FLT,
 				acodec_ctx->sample_rate,
 				// IN
-				acodec_ctx->channel_layout,
+				acodec_ctx->channel_layout == 0 ? AV_CH_LAYOUT_STEREO : acodec_ctx->channel_layout,
 				acodec_ctx->sample_fmt,
 				acodec_ctx->sample_rate,
 				// LOG
@@ -476,7 +477,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 			int used_bytes;
 			DWORD playcursor;
 			DWORD writecursor;
-			uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_U8) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
+			uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
 			uint32_t bytespersec = bytesperpacket * acodec_ctx->channels * acodec_ctx->sample_rate;
 
 			QueryPerformanceCounter((LARGE_INTEGER *)&now);
@@ -506,7 +507,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// Sometimes the captured frame may have no sound samples. Just skip and move forward
 				if (_size)
 				{
-					av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_U8 : acodec_ctx->sample_fmt), 0);
+					av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : acodec_ctx->sample_fmt), 0);
 					if (audio_must_be_converted) swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
 					else av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->channels, acodec_ctx->sample_fmt);
 
