@@ -86,7 +86,6 @@ std::unordered_map<byte, std::vector<opcode_patch_info>> patch_config_for_opcode
 	{PTURA, {opcode_patch_info{1, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
 	{TURA, {opcode_patch_info{1, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
 	{FADE, {opcode_patch_info{5, patch_type::BYTE, patch_operation::DIVISION}}},
-	{SHAKE, {opcode_patch_info{4, patch_type::BYTE, patch_operation::MULTIPLICATION}, opcode_patch_info{6, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
 };
 
 struct external_field_model_data
@@ -427,6 +426,40 @@ int opcode_script_TURNGEN_and_TURN_wrapper()
 	return ((int(*)())old_opcode_table[curr_opcode])();
 }
 
+int ff7_opcode_script_SHAKE()
+{
+	byte type = get_field_parameter<byte>(2);
+	auto *field_global_data_ptr = *ff7_externals.field_global_object_ptr;
+	if ( (type & 1) != 0 )
+	{
+		field_global_data_ptr->shake_bg_x.do_shake = 1;
+		field_global_data_ptr->shake_bg_x.shake_amplitude = ff7_externals.get_char_bank_value(1, 4);
+		field_global_data_ptr->shake_bg_x.shake_n_steps = ff7_externals.get_char_bank_value(2, 5);
+
+		if(is_fps_running_more_than_original())
+			field_global_data_ptr->shake_bg_x.shake_n_steps *= get_frame_multiplier();
+	}
+	else
+	{
+		field_global_data_ptr->shake_bg_x.do_shake = 0;
+	}
+	if ( (type & 2) != 0 )
+	{
+		field_global_data_ptr->shake_bg_y.do_shake = 1;
+		field_global_data_ptr->shake_bg_y.shake_amplitude = ff7_externals.get_char_bank_value(3, 6);
+		field_global_data_ptr->shake_bg_y.shake_n_steps = ff7_externals.get_char_bank_value(4, 7);
+
+		if(is_fps_running_more_than_original())
+			field_global_data_ptr->shake_bg_y.shake_n_steps *= get_frame_multiplier();
+	}
+	else
+	{
+		field_global_data_ptr->shake_bg_y.do_shake = 0;
+	}
+	ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 8;
+	return 0;
+}
+
 void ff7_opcode_08_09_set_rotation(short model_id, byte rotation_initial, byte rotation_final)
 {
 	ff7_externals.field_opcode_08_09_set_rotation_61DB2C(model_id, rotation_initial, rotation_final);
@@ -544,7 +577,6 @@ void ff7_field_hook_init()
 		patch_divide_code<byte>(ff7_externals.sub_631945 + 0x100, common_frame_multiplier);
 		patch_divide_code<WORD>(ff7_externals.sub_631945 + 0x111, common_frame_multiplier);
 		patch_code_byte(ff7_externals.sub_631945 + 0x141, 0x4 + common_frame_multiplier / 2);
-
 	}
 
 	// Background scroll fps fix
@@ -552,6 +584,7 @@ void ff7_field_hook_init()
 	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x4D, ff7_opcode_divide_get_bank_value);
 	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x68, ff7_opcode_divide_get_bank_value);
 	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x81, ff7_opcode_divide_get_bank_value);
+	replace_function(common_externals.execute_opcode_table[SHAKE], ff7_opcode_script_SHAKE);
 
 	// Camera fps fix
 	replace_call_function(common_externals.execute_opcode_table[SCRLC] + 0x3B, ff7_opcode_multiply_get_bank_value);
