@@ -31,7 +31,7 @@ namespace SoLoud
     uint32_t mPushOffset;
 	public:
 		uint32_t mSampleCount;
-		uint8_t* mData;
+		float* mData;
 
 		MemoryStream(float sampleRate, uint32_t sampleCount, uint32_t channels);
 		virtual ~MemoryStream();

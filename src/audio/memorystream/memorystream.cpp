@@ -45,7 +45,7 @@ namespace SoLoud
 			{
 				for (k = 0; k < mChannels; k++)
 				{
-					aBuffer[k * aSamplesToRead + i + j] = mParent->mData[(j * mChannels) + k + mOffset] / (float)UCHAR_MAX;
+					aBuffer[k * aSamplesToRead + i + j] = mParent->mData[mOffset + (j * mChannels) + k];
 				}
 			}
 
@@ -70,7 +70,7 @@ namespace SoLoud
 		mSampleCount = sampleCount;
 		mChannels = channels;
 
-    mData = new uint8_t[mSampleCount]{ NULL };
+    mData = new float[mSampleCount]{ NULL };
     mPushOffset = 0;
 	}
 
@@ -83,7 +83,7 @@ namespace SoLoud
 
   result MemoryStream::push(uint8_t* data, uint32_t size)
   {
-    memcpy(mData + mPushOffset, data, size);
+    memcpy((uint8_t*)mData + mPushOffset, data, size);
 
     mPushOffset += size;
 
