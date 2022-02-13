@@ -120,6 +120,7 @@ bool play_battle_dialogue_voice(short enemy_id, std::string tokenized_dialogue)
 bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenized_dialogue, int page_count)
 {
 	char name[MAX_PATH];
+	bool playing;
 
 	char page = 'a' + page_count;
 	if (page > 'z') page = 'z';
@@ -139,22 +140,32 @@ bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenize
 		break;
 	}
 
-	if(!nxAudioEngine.canPlayVoice(name) && page_count == 0)
-		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
+	playing = nxAudioEngine.playVoice(name, 0, voice_volume);
 
-	return nxAudioEngine.playVoice(name, 0, voice_volume);
+	if(!playing && page_count == 0)
+	{
+		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
+		playing = nxAudioEngine.playVoice(name, 0, voice_volume);
+	}
+
+	return playing;
 }
 
 bool play_battle_action_voice(byte char_id, byte command_id, short action_id)
 {
 	char name[MAX_PATH];
+	bool playing;
 
 	sprintf(name, "_battle/char_%02X/cmd_%02X_%04X", char_id, command_id, action_id);
+	playing = nxAudioEngine.playVoice(name, 0, voice_volume);
 
-	if(!nxAudioEngine.canPlayVoice(name))
+	if(!playing)
+	{
 		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
+		playing = nxAudioEngine.playVoice(name, 0, voice_volume);
+	}
 
-	return nxAudioEngine.playVoice(name, 0, voice_volume);
+	return playing;
 }
 
 void play_option(char* field_name, byte window_id, byte dialog_id, byte option_count)
