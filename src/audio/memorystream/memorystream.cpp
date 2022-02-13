@@ -35,25 +35,24 @@ namespace SoLoud
 
 	uint32_t MemoryStreamInstance::getAudio(float* aBuffer, uint32_t aSamplesToRead, uint32_t aBufferSize)
 	{
-		uint32_t offset = mOffset;
 		uint32_t i, j, k;
 
 		for (i = 0; i < aSamplesToRead; i += SOLOUD_MEMORYSTREAM_NUM_SAMPLES)
 		{
 			uint32_t copylen = (aSamplesToRead - i) > SOLOUD_MEMORYSTREAM_NUM_SAMPLES ? SOLOUD_MEMORYSTREAM_NUM_SAMPLES : aSamplesToRead - i;
-			offset += copylen * mChannels;
 
 			for (j = 0; j < copylen; j++)
 			{
 				for (k = 0; k < mChannels; k++)
 				{
-					aBuffer[k * aSamplesToRead + i + j] = mParent->mData[(j * mChannels) + k + offset] / (float)UCHAR_MAX;
+					aBuffer[k * aSamplesToRead + i + j] = mParent->mData[(j * mChannels) + k + mOffset] / (float)UCHAR_MAX;
 				}
 			}
+
+			mOffset += copylen * mChannels;
 		}
 
-		mOffset = offset;
-		return offset;
+		return mOffset;
 	}
 
 	bool MemoryStreamInstance::hasEnded()
