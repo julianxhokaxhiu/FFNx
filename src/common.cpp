@@ -1177,7 +1177,7 @@ uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_he
 }
 
 // Scale 32-bit BGRA image in place
-void scale_up_image_date_in_place(uint8_t *sourceAndTarget, int w, int h, int scale)
+void scale_up_image_data_in_place(uint8_t *sourceAndTarget, int w, int h, int scale)
 {
 	if (scale <= 1)
 	{
@@ -1263,7 +1263,7 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			if (image_data_scaled != nullptr)
 			{
 				memcpy(image_data_scaled, image_data, dataSize);
-				scale_up_image_date_in_place(image_data_scaled, originalWidth, originalHeight, scale);
+				scale_up_image_data_in_place(image_data_scaled, originalWidth, originalHeight, scale);
 			}
 		}
 

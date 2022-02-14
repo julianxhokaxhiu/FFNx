@@ -23,8 +23,9 @@
 
 #include "../ff8.h"
 #include "../patch.h"
+#include "../image/tim.h"
 
-char nextTextureName[MAX_PATH] = "";
+char next_texture_name[MAX_PATH] = "";
 int next_psxvram_x = -1;
 int next_psxvram_y = -1;
 int next_scale = 1;
@@ -38,11 +39,11 @@ int ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 
     if (trace_all || trace_vram) ffnx_trace("%s x=%d y=%d w=%d h=%d texture_buffer=0x%X\n", __func__, x, y, w, h, texture_buffer);
 
-    texturePacker.setTexture(nextTextureName, texture_buffer, x, y, w, h);
+    texturePacker.setTexture(next_texture_name, texture_buffer, x, y, w, h);
 
     ff8_externals.sub_464850(x, y, x + w - 1, h + y - 1);
 
-    *nextTextureName = '\0';
+    *next_texture_name = '\0';
 
     return 1;
 }
@@ -98,16 +99,34 @@ uint32_t ff8_credits_open_texture(char *fileName, char *buffer)
     if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
 
     // {name}.lzs
-    strncpy(nextTextureName, strrchr(fileName, '\\') + 1, MAX_PATH);
+    strncpy(next_texture_name, strrchr(fileName, '\\') + 1, MAX_PATH);
 
-    return ff8_externals.credits_open_file(fileName, buffer);
+    uint32_t ret = ff8_externals.credits_open_file(fileName, buffer);
+
+    if (save_textures) save_lzs(next_texture_name, (uint8_t *)buffer);
+
+    return ret;
+}
+
+void ff8_cdcheck_error_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
+{
+    if (trace_all || trace_vram) ffnx_trace("%s\n", __func__);
+
+    strncpy(next_texture_name, "discerr.lzs", MAX_PATH);
+
+    if (save_textures) save_lzs(next_texture_name, texture_buffer - 8);
+
+    ff8_upload_vram(pos_and_size, texture_buffer);
 }
 
 void vram_init()
 {
     texturePacker.setVram((uint8_t *)ff8_externals.psxvram_buffer);
 
+    // pubintro
     replace_call(ff8_externals.open_lzs_image + 0x72, ff8_credits_open_texture);
+    // cdcheck
+    replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x1DC, ff8_cdcheck_error_upload_vram);
 
     replace_function(ff8_externals.upload_psx_vram, ff8_upload_vram);
 

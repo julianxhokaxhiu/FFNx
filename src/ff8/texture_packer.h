@@ -31,7 +31,7 @@ typedef uint32_t ModdedTextureId;
 #define VRAM_WIDTH 1024
 #define VRAM_HEIGHT 512
 #define VRAM_DEPTH 2
-#define INVALID_TEXTURE 0xFFFFFFFF
+#define INVALID_TEXTURE ModdedTextureId(0xFFFFFFFF)
 #define MAX_SCALE 10
 
 class TexturePacker {
@@ -89,7 +89,7 @@ private:
             return _h;
         }
         uint8_t scale() const;
-        bool createImage();
+        bool createImage(uint8_t palette_index = 0);
         void destroyImage();
         uint32_t getColor(int scaledX, int scaledY) const;
     private:
