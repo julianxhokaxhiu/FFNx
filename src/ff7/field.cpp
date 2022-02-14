@@ -53,40 +53,12 @@ constexpr byte BGSCR = 0x2D;
 // camera movement and others
 constexpr byte NFADE = 0x25;
 constexpr byte FADE = 0x6B;
-constexpr byte SHAKE = 0x5E;
 constexpr byte SCRLC = 0x62;
 constexpr byte SCRLA = 0x63;
 constexpr byte SCR2DC = 0x66;
 constexpr byte SCR2DL = 0x68;
 constexpr byte SCRLP = 0x6F;
 constexpr byte VWOTF = 0x6A;
-
-enum class patch_type
-{
-	BYTE = 0,
-	WORD,
-	SHORT,
-};
-
-enum class patch_operation
-{
-	DIVISION = 0,
-	MULTIPLICATION = 1,
-};
-
-struct opcode_patch_info
-{
-	int offset;
-	patch_type var_type;
-	patch_operation operation_type;
-};
-
-std::array<uint32_t, 256> old_opcode_table;
-std::unordered_map<byte, std::vector<opcode_patch_info>> patch_config_for_opcode{
-	{PTURA, {opcode_patch_info{1, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
-	{TURA, {opcode_patch_info{1, patch_type::BYTE, patch_operation::MULTIPLICATION}}},
-	{FADE, {opcode_patch_info{5, patch_type::BYTE, patch_operation::DIVISION}}},
-};
 
 struct external_field_model_data
 {
@@ -99,6 +71,7 @@ struct external_field_model_data
 
 constexpr int MAX_FIELD_MODELS = 32;
 std::array<external_field_model_data, MAX_FIELD_MODELS> external_model_data;
+std::array<uint32_t, 256> original_opcode_table;
 
 // helper function initializes page dst, copies texture from src and applies
 // blend_mode
@@ -262,9 +235,6 @@ void ff7_field_initialize_variables()
 {
 	((void(*)())ff7_externals.field_initialize_variables)();
 
-	// Clear hash set once a new field is loaded since the script are reloaded into memory
-	fieldPatchedAddress.clear();
-
 	// reset movement phase for all models
 	for(auto &external_data : external_model_data)
 		external_data.moveFrameIndex = 0;
@@ -301,24 +271,20 @@ int ff7_field_update_single_model_position(short model_id)
 		int interpolationStep = external_model_data[model_id].moveFrameIndex + 1;
 		if(external_model_data[model_id].moveFrameIndex == 0)
 		{
-			external_model_data[model_id].initialPosition.x = field_event_data_array[model_id].model_pos_x;
-			external_model_data[model_id].initialPosition.y = field_event_data_array[model_id].model_pos_y;
-			external_model_data[model_id].initialPosition.z = field_event_data_array[model_id].model_pos_z;
+			external_model_data[model_id].initialPosition = field_event_data_array[model_id].model_pos;
 			ret = ff7_externals.field_update_single_model_position(model_id);
 			external_model_data[model_id].updateMovementReturnValue = ret;
-			external_model_data[model_id].finalPosition.x = field_event_data_array[model_id].model_pos_x;
-			external_model_data[model_id].finalPosition.y = field_event_data_array[model_id].model_pos_y;
-			external_model_data[model_id].finalPosition.z = field_event_data_array[model_id].model_pos_z;
-			field_event_data_array[model_id].model_pos_x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
-			field_event_data_array[model_id].model_pos_y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
-			field_event_data_array[model_id].model_pos_z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
+			external_model_data[model_id].finalPosition = field_event_data_array[model_id].model_pos;
+			field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
 		}
 		else
 		{
 			ret = external_model_data[model_id].updateMovementReturnValue;
-			field_event_data_array[model_id].model_pos_x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
-			field_event_data_array[model_id].model_pos_y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
-			field_event_data_array[model_id].model_pos_z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+			field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
 		}
 		external_model_data[model_id].moveFrameIndex = (external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier;
 	}
@@ -389,7 +355,7 @@ int opcode_script_partial_animation_wrapper()
 	field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
 	char animation_type = ff7_externals.animation_type_array[curr_model_id];
 
-	int ret = ((int(*)())old_opcode_table[curr_opcode])();
+	int ret = ((int(*)())original_opcode_table[curr_opcode])();
 
 	if(curr_model_id != 255)
 	{
@@ -413,17 +379,6 @@ int opcode_script_partial_animation_wrapper()
 	}
 
 	return ret;
-}
-
-int opcode_script_TURNGEN_and_TURN_wrapper()
-{
-	byte curr_opcode = get_field_parameter<byte>(-1);
-
-	// There are 7+1 cases in original FF7 where this condition happens (TODO: Transforming this to short is quite hard)
-	if(is_fps_running_more_than_original())
-		patch_field_parameter<byte>(3, std::min(get_field_parameter<byte>(3) * get_frame_multiplier(), 255));
-
-	return ((int(*)())old_opcode_table[curr_opcode])();
 }
 
 int ff7_opcode_script_SHAKE()
@@ -460,6 +415,205 @@ int ff7_opcode_script_SHAKE()
 	return 0;
 }
 
+int ff7_opcode_set_turn_character_data(short entity_id)
+{
+	vector3<int> current_model_position;
+	vector3<int> other_model_position;
+	byte current_entity_id = *ff7_externals.current_entity_id;
+	auto *field_event_array = *ff7_externals.field_event_data_ptr;
+	int temp_value;
+
+	if (ff7_externals.field_model_id_array[current_entity_id] == 255 || ff7_externals.field_model_id_array[entity_id] == 255)
+	{
+		ff7_externals.field_curr_script_position[current_entity_id] += 4;
+		return 0;
+	}
+	else if (field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type == 3)
+	{
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
+		ff7_externals.field_curr_script_position[current_entity_id] += 4;
+		return 0;
+	}
+	else
+	{
+		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
+		field_event_data &other_model_data = field_event_array[ff7_externals.field_model_id_array[entity_id]];
+		byte rotation_n_steps = get_field_parameter<byte>(1);
+		if(is_fps_running_more_than_original())
+		{
+			rotation_n_steps = std::min(rotation_n_steps * get_frame_multiplier(), 255);
+		}
+
+		if (!current_model_data.rotation_step_idx || current_model_data.rotation_steps_type != 2 || current_model_data.rotation_n_steps != rotation_n_steps)
+		{
+			current_model_data.rotation_initial = current_model_data.rotation_curr_value;
+			current_model_data.rotation_steps_type = 2;
+			current_model_data.rotation_n_steps = rotation_n_steps;
+
+			current_model_position.x = current_model_data.model_pos.x >> 12;
+			current_model_position.y = current_model_data.model_pos.y >> 12;
+			current_model_position.z = current_model_data.model_pos.z >> 12;
+			other_model_position.x = other_model_data.model_pos.x >> 12;
+			other_model_position.y = other_model_data.model_pos.y >> 12;
+			other_model_position.z = other_model_data.model_pos.z >> 12;
+
+			if(current_model_position.x == other_model_position.x && current_model_position.y == other_model_position.y)
+				current_model_position.x++;
+			current_model_data.rotation_final = (byte)ff7_externals.field_get_rotation_final_636515(&current_model_position, &other_model_position, &temp_value);
+			byte rotation_type = get_field_parameter<byte>(2);
+			if (rotation_type)
+			{
+				if (rotation_type == 1)
+				{
+					if (current_model_data.rotation_curr_value < current_model_data.rotation_final)
+						current_model_data.rotation_final -= 256;
+				}
+				else if (rotation_type == 2)
+				{
+					short rotation_diff = current_model_data.rotation_final - current_model_data.rotation_initial;
+					if (rotation_diff < 0)
+						rotation_diff = current_model_data.rotation_initial - current_model_data.rotation_final;
+					if (rotation_diff > 128)
+					{
+						if (current_model_data.rotation_final <= current_model_data.rotation_initial)
+							current_model_data.rotation_final += 256;
+						else
+							current_model_data.rotation_final -= 256;
+					}
+				}
+			}
+			else if (current_model_data.rotation_curr_value > current_model_data.rotation_final)
+			{
+				current_model_data.rotation_final += 256;
+			}
+		}
+		return 1;
+	}
+}
+
+int ff7_opcode_script_TURNGEN()
+{
+	byte current_entity_id = *ff7_externals.current_entity_id;
+	auto *field_event_array = *ff7_externals.field_event_data_ptr;
+
+	if (ff7_externals.field_model_id_array[current_entity_id] == 255)
+	{
+		ff7_externals.field_curr_script_position[current_entity_id] += 6;
+		return 0;
+	}
+	else if (field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type == 3)
+	{
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
+		ff7_externals.field_curr_script_position[current_entity_id] += 6;
+		return 0;
+	}
+	else
+	{
+		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
+		byte rotation_steps_type = get_field_parameter<byte>(4);
+		byte rotation_n_steps = get_field_parameter<byte>(3);
+		if(is_fps_running_more_than_original())
+		{
+			// There are 7 cases in original FF7 where it overflows if multiplied by 2 (TODO: Transforming this to short is quite hard)
+			rotation_n_steps = std::min(rotation_n_steps * get_frame_multiplier(), 255);
+		}
+
+		if (!current_model_data.rotation_step_idx || current_model_data.rotation_steps_type != rotation_steps_type || current_model_data.rotation_n_steps != rotation_n_steps)
+		{
+			current_model_data.rotation_initial = current_model_data.rotation_curr_value;
+			current_model_data.rotation_steps_type = rotation_steps_type;
+			current_model_data.rotation_n_steps = rotation_n_steps;
+			current_model_data.rotation_final = (byte)ff7_externals.get_char_bank_value(2, 2);
+			byte rotation_type = get_field_parameter<byte>(2);
+			if (rotation_type)
+			{
+				if (rotation_type == 1) // 1 = anticlockwise
+				{
+					if (current_model_data.rotation_curr_value < current_model_data.rotation_final)
+						current_model_data.rotation_final -= 256;
+				}
+				else if (rotation_type == 2) // 2 = closest
+				{
+					short rotation_diff = current_model_data.rotation_final - current_model_data.rotation_initial;
+					if (rotation_diff < 0)
+						rotation_diff = current_model_data.rotation_initial - current_model_data.rotation_final;
+					if (rotation_diff > 128)
+					{
+						if (current_model_data.rotation_final <= current_model_data.rotation_initial)
+							current_model_data.rotation_final += 256;
+						else
+							current_model_data.rotation_final -= 256;
+					}
+				}
+			}
+			else if (current_model_data.rotation_curr_value > current_model_data.rotation_final) // 0 = clockwise
+			{
+				current_model_data.rotation_final += 256;
+			}
+		}
+		return 1;
+	}
+}
+
+int ff7_opcode_script_TURN()
+{
+	byte current_entity_id = *ff7_externals.current_entity_id;
+	auto *field_event_array = *ff7_externals.field_event_data_ptr;
+
+	if (ff7_externals.field_model_id_array[current_entity_id] == 255)
+	{
+		ff7_externals.field_curr_script_position[current_entity_id] += 6;
+		return 0;
+	}
+	else if (field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type == 3)
+	{
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
+		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
+		ff7_externals.field_curr_script_position[current_entity_id] += 6;
+		return 0;
+	}
+	else
+	{
+		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
+		byte rotation_steps_type = get_field_parameter<byte>(4);
+		byte rotation_n_steps = get_field_parameter<byte>(3);
+		if(is_fps_running_more_than_original())
+		{
+			// There is one case in original FF7 where it overflows if multiplied by 2 (TODO: Transforming this to short is quite hard)
+			rotation_n_steps = std::min(rotation_n_steps * get_frame_multiplier(), 255);
+		}
+
+		short rotation_final = ff7_externals.get_bank_value(2, 2);
+		if (!current_model_data.rotation_step_idx || rotation_final != current_model_data.rotation_final ||
+		    current_model_data.rotation_steps_type != rotation_steps_type || current_model_data.rotation_n_steps != rotation_n_steps)
+		{
+			current_model_data.rotation_initial = current_model_data.rotation_curr_value;
+			current_model_data.rotation_steps_type = rotation_steps_type;
+			current_model_data.rotation_n_steps = rotation_n_steps;
+			current_model_data.rotation_final = rotation_final;
+		}
+		return 1;
+	}
+}
+
+int ff7_opcode_script_FADE_wrapper()
+{
+	int ret = ((int(*)())ff7_externals.opcode_fade)();
+
+	if(is_fps_running_more_than_original())
+	{
+		if((*ff7_externals.field_global_object_ptr)->fade_speed >= get_frame_multiplier())
+			(*ff7_externals.field_global_object_ptr)->fade_speed /= get_frame_multiplier();
+	}
+
+	return ret;
+}
+
 void ff7_opcode_08_09_set_rotation(short model_id, byte rotation_initial, byte rotation_final)
 {
 	ff7_externals.field_opcode_08_09_set_rotation_61DB2C(model_id, rotation_initial, rotation_final);
@@ -468,45 +622,6 @@ void ff7_opcode_08_09_set_rotation(short model_id, byte rotation_initial, byte r
 	{
 		(*ff7_externals.field_event_data_ptr)[model_id].rotation_n_steps *= get_frame_multiplier();
 	}
-}
-
-int opcode_script_patch_wrapper()
-{
-	byte curr_opcode = get_field_parameter<byte>(-1);
-	int frame_multiplier = get_frame_multiplier();
-
-	if(is_fps_running_more_than_original())
-	{
-		if(patch_config_for_opcode.contains(curr_opcode))
-		{
-			auto opcode_patch_config_array = patch_config_for_opcode[curr_opcode];
-			for (auto patch_config: opcode_patch_config_array)
-			{
-				switch(patch_config.var_type)
-				{
-				case patch_type::BYTE:
-					if(patch_config.operation_type == patch_operation::DIVISION && get_field_parameter<byte>(patch_config.offset) == 1)
-						break;
-					patch_generic_field_parameter<byte>(patch_config.offset, frame_multiplier, patch_config.operation_type == patch_operation::MULTIPLICATION);
-					break;
-				case patch_type::WORD:
-					if(patch_config.operation_type == patch_operation::DIVISION && get_field_parameter<WORD>(patch_config.offset) == 1)
-						break;
-					patch_generic_field_parameter<WORD>(patch_config.offset, frame_multiplier, patch_config.operation_type == patch_operation::MULTIPLICATION);
-					break;
-				case patch_type::SHORT:
-					if(patch_config.operation_type == patch_operation::DIVISION && abs(get_field_parameter<short>(patch_config.offset)) == 1)
-						break;
-					patch_generic_field_parameter<SHORT>(patch_config.offset, frame_multiplier, patch_config.operation_type == patch_operation::MULTIPLICATION);
-					break;
-				default:
-					break;
-				}
-			}
-		}
-	}
-
-	return ((int(*)())old_opcode_table[curr_opcode])();
 }
 
 void ff7_field_update_model_animation_frame(short model_id)
@@ -539,7 +654,7 @@ void ff7_field_evaluate_encounter_rate()
 
 void ff7_field_hook_init()
 {
-	std::copy(common_externals.execute_opcode_table, &common_externals.execute_opcode_table[0xFF], &old_opcode_table[0]);
+	std::copy(common_externals.execute_opcode_table, &common_externals.execute_opcode_table[0xFF], &original_opcode_table[0]);
 
 	// Init stuff
 	replace_call_function(ff7_externals.field_sub_60DCED + 0x178, ff7_field_initialize_variables);
@@ -550,9 +665,10 @@ void ff7_field_hook_init()
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9AA, ff7_field_check_collision_with_target);
 
 	// Model rotation
-	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[TURNGEN], (DWORD)&opcode_script_TURNGEN_and_TURN_wrapper);
-	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[TURN], (DWORD)&opcode_script_TURNGEN_and_TURN_wrapper);
 	replace_call_function(ff7_externals.field_opcode_08_sub_61D0D4 + 0x196, ff7_opcode_08_09_set_rotation);
+	replace_function(ff7_externals.field_opcode_turn_character_sub_616CB5, ff7_opcode_set_turn_character_data);
+	replace_function(common_externals.execute_opcode_table[TURNGEN], ff7_opcode_script_TURNGEN);
+	replace_function(common_externals.execute_opcode_table[TURN], ff7_opcode_script_TURN);
 
 	if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 	{
@@ -584,7 +700,7 @@ void ff7_field_hook_init()
 	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x4D, ff7_opcode_divide_get_bank_value);
 	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x68, ff7_opcode_divide_get_bank_value);
 	replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x81, ff7_opcode_divide_get_bank_value);
-	replace_function(common_externals.execute_opcode_table[SHAKE], ff7_opcode_script_SHAKE);
+	replace_function(ff7_externals.opcode_shake, ff7_opcode_script_SHAKE);
 
 	// Camera fps fix
 	replace_call_function(common_externals.execute_opcode_table[SCRLC] + 0x3B, ff7_opcode_multiply_get_bank_value);
@@ -594,14 +710,11 @@ void ff7_field_hook_init()
 	replace_call_function(common_externals.execute_opcode_table[SCRLP] + 0xA7, ff7_opcode_multiply_get_bank_value);
 	replace_call_function(common_externals.execute_opcode_table[NFADE] + 0x89, ff7_opcode_divide_get_bank_value);
 	replace_call_function(common_externals.execute_opcode_table[VWOTF] + 0xCC, ff7_opcode_multiply_get_bank_value);
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[FADE], (DWORD)&ff7_opcode_script_FADE_wrapper);
 
 	// Movie model animation fps fix
 	replace_call_function(ff7_externals.field_update_models_positions + 0x68D, ff7_field_update_model_animation_frame);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x919, ff7_field_update_model_animation_frame);
 	replace_call_function(ff7_externals.field_update_models_positions + 0xA2B, ff7_field_update_model_animation_frame);
 	replace_call_function(ff7_externals.field_update_models_positions + 0xE8C, ff7_field_update_model_animation_frame);
-
-	// Others: fix opcode by changing their parameters if they don't overflow (Ensure this is done at the end)
-	for (const auto &pair : patch_config_for_opcode)
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[pair.first], (DWORD)&opcode_script_patch_wrapper);
 }

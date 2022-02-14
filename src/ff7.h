@@ -1999,9 +1999,9 @@ struct ff7_modules_global_object
   uint16_t fade_type;
   uint16_t fade_adjustment;
   uint16_t fade_speed;
-  uint16_t fade_r;
-  uint16_t fade_g;
-  uint16_t fade_b;
+  short fade_r;
+  short fade_g;
+  short fade_b;
   uint16_t field_58;
   uint16_t field_5A;
   uint16_t field_5C;
@@ -2064,12 +2064,8 @@ struct field_event_data
 	byte field_8;
 	byte padding_9;
 	WORD field_A;
-	int model_pos_x;
-	int model_pos_y;
-	int model_pos_z;
-	int initial_pos_x;
-	int initial_pos_y;
-	int initial_pos_z;
+	vector3<int> model_pos;
+	vector3<int> model_initial_pos;
 	byte field_24[8];
 	int field_2C;
 	__int16 movement_ladder_jump_steps;
@@ -2078,10 +2074,10 @@ struct field_event_data
 	byte field_35;
 	byte rotation_value;
 	byte field_37;
-	byte rotation_value_2;
+	byte rotation_curr_value;
 	byte rotation_n_steps;
 	byte rotation_step_idx;
-	byte rotation_type;
+	byte rotation_steps_type;
 	__int16 rotation_initial;
 	__int16 rotation_final;
 	int field_40;
@@ -2116,9 +2112,7 @@ struct field_event_data
 	WORD movement_speed;
 	__int16 field_triangle_id;
 	__int16 field_7A;
-	int final_pos_x;
-	int final_pos_y;
-	int final_pos_z;
+	vector3<int> model_final_pos;
 };
 
 struct field_animation_data
@@ -2376,9 +2370,13 @@ struct ff7_externals
 	uint32_t opcode_fmusc;
 	uint32_t opcode_cmusc;
 	uint32_t opcode_canm1_canm2;
+	uint32_t opcode_fade;
+	uint32_t opcode_shake;
 	uint32_t field_opcode_08_sub_61D0D4;
 	void (*field_opcode_08_09_set_rotation_61DB2C)(short, byte, byte);
 	uint32_t field_opcode_AA_2A_sub_616476;
+	uint32_t field_opcode_turn_character_sub_616CB5;
+	int (*field_get_rotation_final_636515)(vector3<int>*, vector3<int>*, int*);
 	uint32_t field_music_helper;
 	uint32_t field_music_helper_sound_op_call;
 	uint32_t (*field_music_id_to_midi_id)(int16_t);
