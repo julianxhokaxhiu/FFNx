@@ -465,6 +465,20 @@ struct struc_51
 	struct struc_50 struc_50_array[32];
 };
 
+struct ff8_tim
+{
+	uint16_t img_x;
+	uint16_t img_y;
+	uint16_t img_w;
+	uint16_t img_h;
+	uint8_t *img_data;
+	uint16_t pal_x;
+	uint16_t pal_y;
+	uint16_t pal_w;
+	uint16_t pal_h;
+	uint16_t *pal_data;
+};
+
 struct ff8_camdata
 {
 	// EYE

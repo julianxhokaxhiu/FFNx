@@ -180,7 +180,7 @@ TexturePacker::Texture::Texture(
 {
 }
 
-bool TexturePacker::Texture::createImage()
+bool TexturePacker::Texture::createImage(uint8_t palette_index)
 {
 	char filename[MAX_PATH];
 
@@ -188,17 +188,12 @@ bool TexturePacker::Texture::createImage()
 
 	for (int idx = 0; idx < mod_ext.size(); idx++)
 	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s.%s", basedir, mod_path.c_str(), _name.c_str(), mod_ext[idx].c_str());
+		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), _name.c_str(), palette_index, mod_ext[idx].c_str());
 		_image = newRenderer.createImageContainer(filename, bimg::TextureFormat::BGRA8);
 
 		if (_image != nullptr)
 		{
 			if (trace_all || trace_loaders || trace_vram) ffnx_trace("Using texture: %s\n", filename);
-
-			if(save_textures)
-			{
-				save_texture(_image->m_data, _image->m_size, _image->m_width, _image->m_height, 0, _name.c_str(), false);
-			}
 
 			return true;
 		}
