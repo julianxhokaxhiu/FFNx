@@ -27,8 +27,6 @@
 void field_init();
 void field_debug(bool *isOpen);
 
-std::unordered_set<void*> fieldPatchedAddress{};
-
 template<typename T>
 T* get_field_parameter_address(int id)
 {
@@ -52,24 +50,3 @@ void set_field_parameter(int id, T value)
 byte get_field_bank_value(int16_t bank);
 
 byte* get_level_data_pointer();
-
-template<typename T>
-void patch_field_parameter(int id, T value)
-{
-	T* field_parameter_address = get_field_parameter_address<T>(id);
-
-	if(!fieldPatchedAddress.contains(field_parameter_address))
-		set_field_parameter<T>(id, value);
-
-	fieldPatchedAddress.insert(field_parameter_address);
-}
-
-template<typename T>
-void patch_generic_field_parameter(int id, byte frame_multiplier, bool is_multiplication)
-{
-	T field_parameter = get_field_parameter<T>(id);
-	if(is_multiplication)
-		patch_field_parameter<T>(id, field_parameter * frame_multiplier);
-	else
-		patch_field_parameter<T>(id, field_parameter / frame_multiplier);
-}
