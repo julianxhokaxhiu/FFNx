@@ -1003,7 +1003,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 
 	std::string _name(name);
 	// TOML doesn't like the / char as key, replace it with - ( one of the valid accepted chars )
-	replace(_name, "/", "-");
+	replaceAll(_name, '/', '-');
 
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_VOICE][_name];
 	if (node)
@@ -1017,7 +1017,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 
 		// Shuffle Voice playback, if any entry found for the current id
 		toml::array *shuffleNames = node["shuffle"].as_array();
-		if (shuffleNames && !shuffleNames->empty() && shuffleNames->is_homogeneous(toml::node_type::integer))
+		if (shuffleNames && !shuffleNames->empty() && shuffleNames->is_homogeneous(toml::node_type::string))
 		{
 			auto _newName = shuffleNames->get(getRandomInt(0, shuffleNames->size() - 1));
 
@@ -1026,7 +1026,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 
 		// Sequentially playback new voice items, if any entry found for the current id
 		toml::array *sequentialNames = node["sequential"].as_array();
-		if (sequentialNames && !sequentialNames->empty() && sequentialNames->is_homogeneous(toml::node_type::integer))
+		if (sequentialNames && !sequentialNames->empty() && sequentialNames->is_homogeneous(toml::node_type::string))
 		{
 			if (_voiceSequentialIndexes.find(name) == _voiceSequentialIndexes.end() || _voiceSequentialIndexes[name] >= sequentialNames->size())
 				_voiceSequentialIndexes[name] = 0;

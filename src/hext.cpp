@@ -126,7 +126,7 @@ bool Hext::parseCommands(std::string token)
 
     if (starts_with(token, "<<"))
     {
-        replace(token, "<<", "");
+        replaceOnce(token, "<<", "");
 
         trim(token);
 

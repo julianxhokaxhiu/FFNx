@@ -88,7 +88,7 @@ inline bool ends_with(std::string const& value, std::string const& ending)
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
-inline bool replace(std::string& str, const std::string& from, const std::string& to)
+inline bool replaceOnce(std::string& str, const std::string& from, const std::string& to)
 {
     size_t start_pos = str.find(from);
 
@@ -98,6 +98,11 @@ inline bool replace(std::string& str, const std::string& from, const std::string
     str.replace(start_pos, from.length(), to);
 
     return true;
+}
+
+inline void replaceAll(std::string& str, const char from, const char to)
+{
+    std::replace(str.begin(), str.end(), from, to);
 }
 
 inline int getRandomInt(int min, int max)

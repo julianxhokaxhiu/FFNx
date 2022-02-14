@@ -61,9 +61,14 @@ std::queue<short> display_string_actor_queue;
 
 //=============================================================================
 
-void begin_voice()
+void set_voice_volume()
 {
 	voice_volume = 2.0f + (100 - external_voice_music_fade_volume) / 100.0f;
+}
+
+void begin_voice()
+{
+	set_voice_volume();
 
 	if (enable_voice_music_fade)
 	{
@@ -187,17 +192,6 @@ void end_voice(byte window_id = 0, uint32_t time = 0)
 			nxAudioEngine.restoreMusicMasterVolume(time > 0 ? time : 1);
 		else
 			set_master_music_volume(previous_master_music_volume);
-	}
-}
-
-void handle_pause_voice(bool has_voice_started, bool is_paused)
-{
-	if(has_voice_started)
-	{
-		if (is_paused && nxAudioEngine.isVoicePlaying())
-			nxAudioEngine.pauseVoice();
-		else if (!is_paused && !nxAudioEngine.isVoicePlaying())
-			nxAudioEngine.resumeVoice();
 	}
 }
 
@@ -500,6 +494,7 @@ void ff7_update_display_text_queue()
 				std::string decoded_text = decode_ff7_text(encoded_text);
 				std::string tokenized_dialogue;
 
+				begin_voice();
 				switch (other_text_data_first.text_type)
 				{
 				case display_type::DIALOGUE:
@@ -525,8 +520,8 @@ void ff7_update_display_text_queue()
 				}
 
 				other_text_data_first.text_type = (!other_text_data_first.has_started) ? display_type::NONE : other_text_data_first.text_type;
-				if(other_text_data_first.has_started)
-					begin_voice();
+				if(!other_text_data_first.has_started)
+					end_voice();
 			}
 
 			if (text_data_first.field_2 != 0)
@@ -566,8 +561,6 @@ void ff7_update_display_text_queue()
 			if (show_text)
 				((void (*)(short))ff7_externals.set_battle_text_active)(text_data_first.buffer_idx);
 
-			handle_pause_voice(other_text_data_first.has_started, *ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running_9AD1AC);
-
 			if (*ff7_externals.g_is_battle_paused || !*ff7_externals.g_is_battle_running_9AD1AC)
 				return;
 
@@ -605,24 +598,22 @@ void ff7_display_battle_action_text()
 		if(effect_data.field_6 == 0)
 		{
 			byte actor_id = *ff7_externals.g_active_actor_id;
+			bool hasStarted = false;
 			if(actor_id >= 0 && actor_id <= 2)
 			{
 				byte char_id = ff7_externals.battle_context->actor_vars[actor_id].index;
 				byte command_id = ff7_externals.g_battle_model_state[actor_id].commandID;
 				uint16_t action_id = ff7_externals.g_small_battle_model_state[actor_id].actionIdx;
 
-				bool hasStarted = false;
-				hasStarted = play_battle_action_voice(char_id, command_id, action_id);
 
-				if(hasStarted)
-					effect_data.field_6 = VOICE_STARTED;
-				else
-					effect_data.field_6 = VOICE_NOT_STARTED;
+				set_voice_volume();
+				hasStarted = play_battle_action_voice(char_id, command_id, action_id);
 			}
+
+			if(hasStarted)
+				effect_data.field_6 = VOICE_STARTED;
 			else
-			{
 				effect_data.field_6 = VOICE_NOT_STARTED;
-			}
 		}
 
 		if(effect_data.n_frames == 0)
@@ -641,8 +632,6 @@ void ff7_display_battle_action_text()
 					effect_data.n_frames--;
 			}
 		}
-
-		handle_pause_voice(effect_data.field_6 == VOICE_STARTED, !*ff7_externals.g_is_battle_running_9AD1AC);
 	}
 	else
 	{

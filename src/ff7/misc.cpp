@@ -552,8 +552,8 @@ void ff7_handle_ambient_playback()
 	static char filename[64]{0};
 	static WORD last_field_id = 0, last_battle_id = 0;
 
-  switch(mode->driver_mode)
-  {
+	switch (mode->driver_mode)
+	{
 	case MODE_BATTLE:
 		if (last_battle_id != ff7_externals.modules_global_object->battle_id)
 		{
@@ -567,7 +567,7 @@ void ff7_handle_ambient_playback()
 		else if (!(*ff7_externals.is_battle_paused) && !(nxAudioEngine.isAmbientPlaying()))
 			nxAudioEngine.resumeAmbient();
 		break;
-  case MODE_FIELD:
+	case MODE_FIELD:
 		if (last_field_id != *ff7_externals.field_id)
 		{
 			last_field_id = *ff7_externals.field_id;
@@ -584,7 +584,22 @@ void ff7_handle_ambient_playback()
 			last_battle_id = 0;
 		}
 		break;
-  }
+	}
+}
+
+void ff7_handle_voice_playback()
+{
+	switch (getmode_cached()->driver_mode)
+	{
+	case MODE_BATTLE:
+		if (*ff7_externals.g_is_battle_paused && nxAudioEngine.isVoicePlaying())
+			nxAudioEngine.pauseVoice();
+		else if (!*ff7_externals.g_is_battle_paused && !nxAudioEngine.isVoicePlaying())
+			nxAudioEngine.resumeVoice();
+		break;
+	default:
+		break;
+	}
 }
 
 BOOL ff7_write_save_file(char slot)
