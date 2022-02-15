@@ -651,8 +651,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_42E34A = get_relative_call(battle_sub_42E3CA, 0x70);
 	uint32_t battle_sub_42DBD2 = get_relative_call(ff7_externals.battle_sub_42D992, 0x90);
 	uint32_t battle_sub_42F21F = get_relative_call(battle_sub_42DBD2, 0x37);
-	uint32_t battle_sub_5B9EC2 = get_relative_call(battle_sub_42F21F, 0x38);
-	ff7_externals.battle_sub_5BD5E9 = get_relative_call(battle_sub_5B9EC2, 0x41);
+	ff7_externals.battle_sub_5B9EC2 = get_relative_call(battle_sub_42F21F, 0x38);
+	ff7_externals.battle_sub_5BD5E9 = get_relative_call(ff7_externals.battle_sub_5B9EC2, 0x41);
 	uint32_t battle_sub_42DE61 = get_relative_call(ff7_externals.battle_sub_42D992, 0x9F);
 	ff7_externals.run_summon_animations_script_5C1B81 = get_absolute_value(battle_sub_42DE61, 0x17E);
 	ff7_externals.run_summon_animations_script_sub_5C1D9A = get_relative_call(ff7_externals.run_summon_animations_script_5C1B81, 0xA4);
@@ -941,9 +941,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	// Enemy attacks
 	uint32_t battle_sub_5C1484 = ff7_externals.magic_effects_fn_table[7];
 	uint32_t battle_sub_55FE60 = get_relative_call(battle_sub_5C1484, 0x33E);
-	uint32_t battle_sub_55FE9C = get_relative_call(battle_sub_55FE60, 0x12);
-	uint32_t handler_chocobuckle_sub_5609DB = get_absolute_value(battle_sub_55FE9C, 0x27);
+	uint32_t battle_handle_chocobuckle_and_confu_sub_55FE9C = get_relative_call(battle_sub_55FE60, 0x12);
+	uint32_t handler_chocobuckle_sub_5609DB = get_absolute_value(battle_handle_chocobuckle_and_confu_sub_55FE9C, 0x27);
+	uint32_t handler_confu_magic_sub_55FEF2 = get_absolute_value(battle_handle_chocobuckle_and_confu_sub_55FE9C, 0x36);
 	ff7_externals.run_chocobuckle_main_loop_560C32 = get_absolute_value(handler_chocobuckle_sub_5609DB, 0x6F);
+	ff7_externals.run_confu_main_loop_5600BE = get_absolute_value(handler_confu_magic_sub_55FEF2, 0x6C);
 	uint32_t bomb_blast_effects_5373D0 = ff7_externals.enemy_atk_effects_fn_table[67];
 	uint32_t bomb_blast_effects_sub_5373E5 = get_relative_call(bomb_blast_effects_5373D0, 0xB);
 	ff7_externals.bomb_blast_black_bg_effect_537427 = get_absolute_value(bomb_blast_effects_sub_5373E5, 0x34);
@@ -1006,6 +1008,12 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.g_do_render_menu = (int*)get_absolute_value(ff7_externals.battle_set_do_render_menu, 0x7);
 	ff7_externals.battle_menu_animation_idx = (int*)get_absolute_value(ff7_externals.battle_menu_update_6CE8B3, 0x144);
 	ff7_externals.set_battle_speed_4385CC = get_relative_call(ff7_externals.battle_sub_437DB0, 0x17C);
+	uint32_t battle_sub_4297B9 = get_relative_call(ff7_externals.battle_sub_42D992, 0x59);
+	uint32_t battle_sub_42952E = get_relative_call(battle_sub_4297B9, 0x10);
+	uint32_t battle_sub_42F3E8 = get_relative_call(battle_sub_42952E, 0xCD);
+	uint32_t battle_sub_5B9B30 = get_relative_call(battle_sub_42F3E8, 0x756);
+	ff7_externals.battle_handle_status_effect_anim_5BA7C0 = get_relative_call(battle_sub_5B9B30, 0xB2);
+	ff7_externals.battle_handle_player_mark_5B9C8E = get_relative_call(battle_sub_5B9B30, 0x123);
 
 	ff7_externals.world_update_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
 	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x108);
