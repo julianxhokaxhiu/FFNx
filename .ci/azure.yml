@@ -83,7 +83,7 @@ jobs:
       title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
       releaseNotesSource: input
       releaseNotes: |
-        See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog#next
+        See https://github.com/julianxhokaxhiu/FFNx/blob/master/Changelog.md#next
 
         This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
   - task: GitHubRelease@0
@@ -95,7 +95,7 @@ jobs:
       title: $(_RELEASE_NAME)-$(_RELEASE_VERSION)
       releaseNotesSource: input
       releaseNotes: |
-        See https://github.com/julianxhokaxhiu/FFNx/wiki/Changelog_v$(_CHANGELOG_VERSION)
+        See https://github.com/julianxhokaxhiu/FFNx/blob/master/Changelog.md#$(_CHANGELOG_VERSION)
   - task: PowerShell@2
     condition: and(not(contains(variables._BUILD_BRANCH, 'refs/pull/')), succeeded())
     displayName: 'Alert the $(_RELEASE_NAME) Release'
