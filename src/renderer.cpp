@@ -1268,54 +1268,48 @@ bimg::ImageContainer* Renderer::createImageContainer(const char* filename, bimg:
 bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb)
 {
     bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
+    bimg::ImageContainer* img = createImageContainer(filename);
 
-    FILE* file = fopen(filename, "rb");
-
-    if (file)
+    if (img != nullptr)
     {
-        bimg::ImageContainer* img = createImageContainer(filename);
-
-        if (img != nullptr)
+        if (gl_check_texture_dimensions(img->m_width, img->m_height, filename) && doesItFitInMemory(img->m_size))
         {
-            if (gl_check_texture_dimensions(img->m_width, img->m_height, filename) && doesItFitInMemory(img->m_size))
+            uint64_t flags = BGFX_SAMPLER_NONE;
+
+            if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
+            else flags |= BGFX_TEXTURE_NONE;
+
+            const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
+            if (img->m_cubeMap)
             {
-                uint64_t flags = BGFX_SAMPLER_NONE;
-
-                if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
-                else flags |= BGFX_TEXTURE_NONE;
-
-                const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
-                if (img->m_cubeMap)
-                {
-                    ret = bgfx::createTextureCube(
-                        img->m_width,
-                        1 < img->m_numMips,
-                        img->m_numLayers,
-                        bgfx::TextureFormat::Enum(img->m_format),
-                        flags,
-                        mem
-                    );
-                }
-                else
-                {
-
-                    ret = bgfx::createTexture2D(
-                        img->m_width,
-                        img->m_height,
-                        1 < img->m_numMips,
-                        img->m_numLayers,
-                        bgfx::TextureFormat::Enum(img->m_format),
-                        flags,
-                        mem
-                    );
-                }
-
-                *width = img->m_width;
-                *height = img->m_height;
-                *mipCount = img->m_numMips;
-
-                if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
+                ret = bgfx::createTextureCube(
+                    img->m_width,
+                    1 < img->m_numMips,
+                    img->m_numLayers,
+                    bgfx::TextureFormat::Enum(img->m_format),
+                    flags,
+                    mem
+                );
             }
+            else
+            {
+
+                ret = bgfx::createTexture2D(
+                    img->m_width,
+                    img->m_height,
+                    1 < img->m_numMips,
+                    img->m_numLayers,
+                    bgfx::TextureFormat::Enum(img->m_format),
+                    flags,
+                    mem
+                );
+            }
+
+            *width = img->m_width;
+            *height = img->m_height;
+            *mipCount = img->m_numMips;
+
+            if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
         }
     }
 
