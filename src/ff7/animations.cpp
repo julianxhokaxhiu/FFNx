@@ -777,7 +777,7 @@ void ff7_execute_effect100_fn()
                 else if (ff7_externals.effect100_array_fn[fn_index] == ff7_externals.run_chocobuckle_main_loop_560C32)
                 {
                     aux_effect100_handler[fn_index].setEffectDecorator(std::make_shared<ModelInterpolationEffectDecorator>(battle_frame_multiplier, ff7_externals.g_is_battle_paused, false,
-                                                                                                                           &ff7_externals.effect100_array_data[fn_index].field_0, 3));
+                                                                                                                           &ff7_externals.effect100_array_data[fn_index].field_0, 3, 10000));
                 }
                 else if(ff7_externals.effect100_array_fn[fn_index] == ff7_externals.barret_limit_4_1_model_movement_4698EF)
                 {
@@ -1741,6 +1741,11 @@ void ff7_battle_animations_hook_init()
     // Toggle variable related to gun effect
     replace_call_function(ff7_externals.battle_sub_42D808 + 0x117, ff7_battle_sub_6CE81E);
 
+    // Other animations (Status effects: confusion, sleep, and silence; and player mark on top of head)
+    patch_divide_code<WORD>(ff7_externals.battle_sub_5B9EC2 + 0x1CB, battle_frame_multiplier);
+    patch_code_byte(ff7_externals.battle_handle_status_effect_anim_5BA7C0 + 0x97, 0x3 + battle_frame_multiplier / 2);
+    patch_divide_code<WORD>(ff7_externals.battle_handle_player_mark_5B9C8E + 0x6A, battle_frame_multiplier);
+
     if(ff7_fps_limiter == FF7_LIMITER_60FPS)
     {
         // Fix battle speed and menu for 60 FPS only
@@ -1767,6 +1772,7 @@ void ff7_battle_animations_hook_init()
     one_call_effect100_addresses.insert(ff7_externals.death_sentence_main_loop_5661A0);
     one_call_effect100_addresses.insert(ff7_externals.roulette_skill_main_loop_566287);
     one_call_effect100_addresses.insert(ff7_externals.bomb_blast_black_bg_effect_537427);
+    one_call_effect100_addresses.insert(ff7_externals.run_confu_main_loop_5600BE);
     model_thresholds_by_address[ff7_externals.run_alexander_movement_5078D8] = 3000;
     camera_thresholds_by_address[ff7_externals.run_ramuh_camera_597206] = 5000;
     camera_thresholds_by_address[ff7_externals.run_typhoon_camera_4D594C] = 5000;

@@ -2567,6 +2567,7 @@ struct ff7_externals
 	uint32_t battle_sub_42A5EB;
 	uint32_t battle_sub_42E275;
 	uint32_t battle_sub_42E34A;
+	uint32_t battle_sub_5B9EC2;
 	uint32_t battle_sub_5BD5E9;
 	uint32_t run_summon_animations_script_5C1B81;
 	uint32_t run_summon_animations_script_sub_5C1D9A;
@@ -2683,6 +2684,7 @@ struct ff7_externals
 	void (*battle_sub_663707)(DWORD*);
 	void (*battle_sub_662ECC)(vector3<short>*, vector3<int>*, int*);
 	uint32_t run_chocobuckle_main_loop_560C32;
+	uint32_t run_confu_main_loop_5600BE;
 	uint32_t bomb_blast_black_bg_effect_537427;
 	uint32_t goblin_punch_flash_573291;
 	uint32_t roulette_skill_main_loop_566287;
@@ -2749,6 +2751,8 @@ struct ff7_externals
 	uint32_t battle_menu_update_call;
 	int *battle_menu_animation_idx;
 	uint32_t set_battle_speed_4385CC;
+	uint32_t battle_handle_player_mark_5B9C8E;
+	uint32_t battle_handle_status_effect_anim_5BA7C0;
 
 	// battle dialogue
 	uint32_t battle_sub_42CBF9;
