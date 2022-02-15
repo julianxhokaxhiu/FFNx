@@ -133,12 +133,13 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_call_function(ff7_externals.on_gameover_exit, ff7_on_gameover_exit);
 
 	// Disable DirectSound creation when using the external SFX layer
-	if (use_external_sfx)
-	{
-		replace_function(common_externals.directsound_create, ff7_dsound_create);
-		replace_function(common_externals.directsound_release, ff7_dsound_release);
-		replace_function(common_externals.directsound_createsoundbuffer, ff7_dsound_createsoundbuffer);
-	}
+	// TODO: We need to hook more functions in the engine as it causes crashes around the game the way it is now.
+	// if (use_external_sfx)
+	// {
+	// 	replace_function(common_externals.directsound_create, ff7_dsound_create);
+	// 	replace_function(common_externals.directsound_release, ff7_dsound_release);
+	// 	replace_function(common_externals.directsound_createsoundbuffer, ff7_dsound_createsoundbuffer);
+	// }
 
 	// ##################################
 	// animation glitch fixes
