@@ -11,25 +11,71 @@ Next generation modding platform for Final Fantasy VII and Final Fantasy VIII ( 
 
 FFNx is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
-In general, what you can expect out of FFNx is:
+FFNx today in a nutshell:
 
-- One single .dll file to be copied
-- Support for 7h 1.x/2.x
-- Support for newest video and audio codecs ( WEBM, H.265, etc.)
-- VGMStream built-in library WITH LOOP support for .ogg files!
-- Five different Rendering Backends:
-  - OpenGL ( safe default )
-  - DirectX 9 ( Tech Preview: Not Recommended )
-  - DirectX 11 ( suggested alternative to OpenGL )
+- An easy drag-n-drop installation experience, see [How to Install](docs/how_to_install.md)
+- It comes by default if you use 7th 2.3 or higher version
+- It supports the newest video and audio codecs ( WEBM, H.265, Ogg, etc.)
+- It enhances the gameplay experience drastically compared to the vanilla experience
+- It supports 4 stable (+ 1 experimental) rendering Backends:
+  - OpenGL
+  - DirectX 9 ( Experimental: Not Recommended )
+  - DirectX 11 ( default )
   - DirectX 12
   - Vulkan
-- ...and much more!
 
-For a more detailed feature list, feel free to check the related [Features](https://github.com/julianxhokaxhiu/FFNx/wiki/Features) wiki page.
+# Features
+
+## As a user
+
+### FF7/FF8
+
+- [/LARGEADDRESSAWARE](https://docs.microsoft.com/en-us/cpp/build/reference/largeaddressaware-handle-large-addresses?view=vs-2019) support!
+
+  Up to 3.5GB of space available for mods ( this requires the [4GB Patch](https://ntcore.com/?page_id=371) in your ff7.exe ).
+- High DPI support!
+- Up to 16x Anisotropic support!
+- Up to 16x Antialiasing support!
+- Steam support! No Game converter required.
+- Steam savegame preservation ( you will no more loose saves created with FFNx! )
+- XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
+- Native speedhack support!
+- The game will continue to run when not in focus in Window mode
+
+### FF7
+- eStore support! No Game converter required.
+- Vertical centering for Fields and Movies
+- Fullscreen Battle scenes
+- Menu cursor on the middle of words vertical alignment
+- Movies will continue to play if the window game loses focus ( in window mode )
+- Movies volume will respect global sound volume
+- Steam sound and music volume configuration preservation ( configure at your pleasure and on the next run it will be inherited )
+- Configurable background transparency in battle dialogs ( by default set to 75% )!
+- SFX volume change will now apply in real-time, instead of you requiring to close and re-open the game.
+- Support for animated textures ( like Aerith waterfall, light fading, etc. )
+- Support for soft-reset while you're playing, like on the PSX!
+- Support for battle toggle ( enable/disable at your own pleasure )
+- Save everywhere! You are no more required to stay next to crystals in order to keep your progress.
+- **Voice acting**! One of the first mods to make use of this will be [Echo-S](https://forum.tsunamods.com/viewtopic.php?f=65&t=9) when it will be released!
+- Support for external SFX audio effects
+- Support for external Ambient audio effects
+
+### FF8
+- Enable the VRAM debug window while playing in order to see how the engine uploads textures
+
+## As a modder
+
+- Game rendering inspection through [RenderDoc](https://renderdoc.org/)!
+- [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
+- Support for configurable external textures path using [mod_path](misc/FFNx.toml#L100)
+- Support for an override layer of the data directory using [override_path](misc/FFNx.toml#L116)
+- Support for MINIPSF audio files using the emulated PSX/PS2 AKAO Engine
+- Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0) patching files inside of the [hext_patching_path](misc/FFNx.toml#L113)
+- Debug in-game engine data through [imgui](https://github.com/ocornut/imgui) integration.
 
 ## Documentation
 
-Installation instructions, configuration and much more can be found at this address: https://github.com/julianxhokaxhiu/FFNx/wiki
+For a more in-depth documentation feel free to visit the [docs/](docs/) folder.
 
 ## Screenshots
 

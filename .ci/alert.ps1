@@ -34,7 +34,7 @@ $discordPost = @"
   "embeds": [
     {
       "title": "How to install",
-      "description": "Feel free to follow instructions at this link, depending on which version of the game you own: https://github.com/julianxhokaxhiu/FFNx/wiki/How-To_Install",
+      "description": "Feel free to follow instructions at this link, depending on which version of the game you own: https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/how_to_install.md",
       "color": 7506394
     },
     {
