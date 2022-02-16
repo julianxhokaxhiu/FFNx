@@ -2754,6 +2754,12 @@ struct ff7_externals
 	uint32_t battle_handle_player_mark_5B9C8E;
 	uint32_t battle_handle_status_effect_anim_5BA7C0;
 
+	//battle 3d battleground
+	uint32_t update_3d_battleground;
+	uint32_t battleground_shake_train_42F088;
+	uint32_t battleground_vertical_scrolling_42F126;
+	uint32_t battleground_midgar_flashback_rain_5BDC4F;
+
 	// battle dialogue
 	uint32_t battle_sub_42CBF9;
 	uint32_t add_text_to_display_queue;
