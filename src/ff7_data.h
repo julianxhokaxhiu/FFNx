@@ -731,6 +731,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.display_battle_action_text_42782A = get_absolute_value(ff7_externals.run_animation_script, 0x4906);
 	ff7_externals.get_n_frames_display_action_string = get_relative_call(ff7_externals.run_animation_script, 0x4918);
 	ff7_externals.field_byte_DC0E11 = (byte*)get_absolute_value(ff7_externals.get_n_frames_display_action_string, 0x6);
+	uint32_t battle_sub_4351BD = get_relative_call(ff7_externals.battle_loop, 0x47C);
+	uint32_t** battle_functions_table_7C2AC0 = (uint32_t**)get_absolute_value(battle_sub_4351BD, 0x3A);
+	ff7_externals.battle_sub_434C8B = battle_functions_table_7C2AC0[1][1];
+	uint32_t battle_sub_435789 = get_relative_call(ff7_externals.battle_loop, 0x3B8);
+	ff7_externals.battle_sub_435D81 = get_relative_call(battle_sub_435789, 0x505);
 
 	// Display battle damage
 	ff7_externals.battle_sub_425D29 = get_absolute_value(ff7_externals.run_animation_script, 0x2850);

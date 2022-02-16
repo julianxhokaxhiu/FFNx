@@ -1662,6 +1662,8 @@ void ff7_battle_animations_hook_init()
 
     // Display string related
     replace_function(ff7_externals.get_n_frames_display_action_string, ff7_get_n_frames_display_action_string);
+    patch_multiply_code<WORD>(ff7_externals.battle_sub_434C8B + 0x4F, battle_frame_multiplier); // unknown display text frame to keep
+    patch_multiply_code<WORD>(ff7_externals.battle_sub_435D81 + 0x6A8, battle_frame_multiplier); // all lucky 7s frame to keep the text
 
     // Character movement (e.g. movement animation for attacks)
     replace_function(ff7_externals.battle_move_character_sub_426F58, ff7_battle_move_character_sub_426F58);
