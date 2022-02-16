@@ -2602,6 +2602,8 @@ struct ff7_externals
 	uint32_t display_battle_damage_5BB410;
 	uint32_t battle_sub_5BDA0F;
 	uint32_t get_n_frames_display_action_string;
+	uint32_t battle_sub_434C8B;
+	uint32_t battle_sub_435D81;
 	uint32_t battle_sub_426DE3;
 	uint32_t battle_sub_426941;
 	uint32_t battle_sub_426899;
