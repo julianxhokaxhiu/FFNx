@@ -1565,6 +1565,14 @@ void ff7_battle_sub_6CE81E()
     }
 }
 
+void ff7_battleground_shake_train()
+{
+    if(frame_counter % battle_frame_multiplier == 0)
+    {
+        ((void(*)())ff7_externals.battleground_shake_train_42F088)();
+    }
+}
+
 void ff7_update_battle_menu()
 {
 	((void(*)())ff7_externals.battle_menu_update_6CE8B3)();
@@ -1740,6 +1748,30 @@ void ff7_battle_animations_hook_init()
 
     // Toggle variable related to gun effect
     replace_call_function(ff7_externals.battle_sub_42D808 + 0x117, ff7_battle_sub_6CE81E);
+
+    // 3D Battleground (mesh: horizontal, vertical, rotating, midgar flashback rain)
+    // Lifestream final battle with sephiroth cannot be interpolated, it will be left like this which is still good
+    replace_call_function(ff7_externals.update_3d_battleground + 0xBF, ff7_battleground_shake_train);
+    patch_divide_code<int>(ff7_externals.update_3d_battleground + 0x1D4, battle_frame_multiplier);
+    patch_divide_code<int>(ff7_externals.update_3d_battleground + 0x1ED, battle_frame_multiplier);
+    patch_divide_code<int>(ff7_externals.update_3d_battleground + 0x206, battle_frame_multiplier);
+    patch_divide_code<int>(ff7_externals.update_3d_battleground + 0x21C, battle_frame_multiplier);
+    patch_divide_code<int>(ff7_externals.update_3d_battleground + 0x232, battle_frame_multiplier);
+    patch_divide_code<int>(ff7_externals.update_3d_battleground + 0x24B, battle_frame_multiplier);
+    patch_divide_code<int>(ff7_externals.update_3d_battleground + 0x264, battle_frame_multiplier);
+    patch_divide_code<int>(ff7_externals.update_3d_battleground + 0x27D, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.update_3d_battleground + 0x617, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.update_3d_battleground + 0x6CE, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battleground_vertical_scrolling_42F126 + 0x10, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battleground_vertical_scrolling_42F126 + 0x22, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battleground_vertical_scrolling_42F126 + 0x42, battle_frame_multiplier);
+    patch_code_word(ff7_externals.battleground_vertical_scrolling_42F126 + 0x78, (0x1F + 1) * battle_frame_multiplier - 1);
+    patch_divide_code<WORD>(ff7_externals.update_3d_battleground + 0x881, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.update_3d_battleground + 0x8C7, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.update_3d_battleground + 0x90C, battle_frame_multiplier);
+    patch_multiply_code<byte>(ff7_externals.battleground_midgar_flashback_rain_5BDC4F + 0x44, battle_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.battleground_midgar_flashback_rain_5BDC4F + 0x71, battle_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.battleground_midgar_flashback_rain_5BDC4F + 0x156, battle_frame_multiplier);
 
     // Other animations (Status effects: confusion, sleep, and silence; and player mark on top of head)
     patch_divide_code<WORD>(ff7_externals.battle_sub_5B9EC2 + 0x1CB, battle_frame_multiplier);

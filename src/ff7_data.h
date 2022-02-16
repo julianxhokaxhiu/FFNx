@@ -1015,6 +1015,13 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_handle_status_effect_anim_5BA7C0 = get_relative_call(battle_sub_5B9B30, 0xB2);
 	ff7_externals.battle_handle_player_mark_5B9C8E = get_relative_call(battle_sub_5B9B30, 0x123);
 
+	// 3D Battleground
+	ff7_externals.update_3d_battleground = get_relative_call(ff7_externals.battle_sub_42D992, 0x4);
+	ff7_externals.battleground_shake_train_42F088 = get_relative_call(ff7_externals.update_3d_battleground, 0xBF);
+	ff7_externals.battleground_vertical_scrolling_42F126 = get_relative_call(ff7_externals.update_3d_battleground, 0x783);
+	ff7_externals.battleground_midgar_flashback_rain_5BDC4F = get_relative_call(ff7_externals.update_3d_battleground, 0x3C);
+
+	// World externals
 	ff7_externals.world_update_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
 	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x108);
 	ff7_externals.world_sub_7641A7 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x210);
@@ -1038,6 +1045,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_update_model_movement_762E87 = (void(*)(int, int))get_relative_call(ff7_externals.world_update_player_74EA48, 0xCDF);
 	ff7_externals.world_event_current_entity_ptr = (world_event_data**)get_absolute_value((uint32_t)ff7_externals.world_update_model_movement_762E87, 0x5);
 
+	// Swirl externals
 	ff7_externals.swirl_main_loop = swirl_main_loop;
 	ff7_externals.swirl_loop_sub_4026D4 = get_relative_call(swirl_main_loop, 0xC9);
 
