@@ -2152,10 +2152,10 @@ struct world_event_data
 	byte is_function_running_maybe;
 	byte animation_speed;
 	byte field_59[3];
-	byte vertical_speed;
+	char vertical_speed;
 	byte animation_id;
 	byte field_5E;
-	byte vertical_speed_2;
+	char vertical_speed_2;
 	byte field_60[104];
 };
 
@@ -2805,8 +2805,11 @@ struct ff7_externals
 	uint32_t world_update_player_74EA48;
 	int (*world_get_player_model_id)();
 	int (*world_get_player_walkmap_type)();
+	void(*world_sub_753D00)(vector3<short>*, short);
 	void(*world_update_model_movement_762E87)(int, int);
-	world_event_data** world_event_current_entity_ptr;
+	world_event_data** world_event_current_entity_ptr_E39AD8;
+	world_event_data** world_event_current_entity_ptr_E3A7CC;
+	int* is_wait_frames_zero_E39BC0;
 
 	uint32_t swirl_main_loop;
 	uint32_t swirl_loop_sub_4026D4;

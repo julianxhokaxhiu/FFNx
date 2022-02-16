@@ -24,12 +24,14 @@
 #include "../patch.h"
 #include "../sfx.h"
 
+std::map<uint32_t, bool> do_decrease_wait_frames;
+
 // For worldmap footsteps
 void ff7_world_update_model_movement(int delta_position_x, int delta_position_z)
 {
     ff7_externals.world_update_model_movement_762E87(delta_position_x, delta_position_z);
 
-    if(*ff7_externals.world_event_current_entity_ptr && (delta_position_x || delta_position_z))
+    if(*ff7_externals.world_event_current_entity_ptr_E39AD8 && (delta_position_x || delta_position_z))
     {
         int player_model_id = ff7_externals.world_get_player_model_id();
         if(player_model_id >= 0 && player_model_id <= 2 || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, and Cid
@@ -37,6 +39,13 @@ void ff7_world_update_model_movement(int delta_position_x, int delta_position_z)
             sfx_play_wm_footstep(player_model_id, ff7_externals.world_get_player_walkmap_type());
         }
     }
+}
+
+void ff7_world_init_variables(short param_1)
+{
+    do_decrease_wait_frames.clear();
+
+    ((void(*)(short))ff7_externals.world_init_variables_74E1E9)(param_1);
 }
 
 void ff7_world_snake_compute_delta_position(short* delta_position, short z_value)
@@ -48,6 +57,44 @@ void ff7_world_snake_compute_delta_position(short* delta_position, short z_value
         delta_position[1] /= common_frame_multiplier;
         delta_position[2] /= common_frame_multiplier;
     }
+}
+
+int ff7_run_world_script_system_operations(WORD opcode)
+{
+    int ret = 0;
+    if (opcode == 0x306)
+    {
+        vector3<short> delta_position;
+        if (*ff7_externals.is_wait_frames_zero_E39BC0)
+        {
+            --(*ff7_externals.world_event_current_entity_ptr_E3A7CC)->curr_script_position;
+            return 1;
+        }
+        else
+        {
+            if(do_decrease_wait_frames[(uint32_t)*ff7_externals.world_event_current_entity_ptr_E3A7CC])
+                (*ff7_externals.world_event_current_entity_ptr_E3A7CC)->wait_frames--;
+            do_decrease_wait_frames[(uint32_t)*ff7_externals.world_event_current_entity_ptr_E3A7CC] = !do_decrease_wait_frames[(uint32_t)*ff7_externals.world_event_current_entity_ptr_E3A7CC];
+
+            if ((*ff7_externals.world_event_current_entity_ptr_E3A7CC)->wait_frames)
+                (*ff7_externals.world_event_current_entity_ptr_E3A7CC)->curr_script_position--;
+            else
+                *ff7_externals.is_wait_frames_zero_E39BC0 = 1;
+            delta_position.x = 0;
+            delta_position.y = 0;
+            delta_position.z = (*ff7_externals.world_event_current_entity_ptr_E39AD8)->movement_speed << (4 * (((*ff7_externals.world_event_current_entity_ptr_E39AD8)->animation_is_loop_mask & 0x40) != 0));
+            ff7_externals.world_sub_753D00(&delta_position, (*ff7_externals.world_event_current_entity_ptr_E39AD8)->direction);
+            ff7_externals.world_update_model_movement_762E87(delta_position.x, delta_position.z);
+            (*ff7_externals.world_event_current_entity_ptr_E39AD8)->offset_y -= (*ff7_externals.world_event_current_entity_ptr_E39AD8)->vertical_speed;
+            (*ff7_externals.world_event_current_entity_ptr_E39AD8)->position.y += (*ff7_externals.world_event_current_entity_ptr_E39AD8)->vertical_speed_2;
+            return (*ff7_externals.world_event_current_entity_ptr_E3A7CC)->wait_frames != 0;
+        }
+    }
+    else
+    {
+        ret = ((int (*)(WORD))ff7_externals.run_world_event_scripts_system_operations)(opcode);
+    }
+    return ret;
 }
 
 int ff7_pop_world_stack_multiply_wrapper()
@@ -70,6 +117,9 @@ int ff7_get_world_encounter_rate()
 
 void ff7_world_hook_init()
 {
+    // World init
+    replace_call_function(ff7_externals.world_update_sub_74DB8C + 0x108, ff7_world_init_variables);
+
     // Movement related fix
     patch_divide_code<DWORD>(ff7_externals.world_init_variables_74E1E9 + 0x15D, common_frame_multiplier);
     replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x172, ff7_pop_world_stack_divide_wrapper);
@@ -94,6 +144,6 @@ void ff7_world_hook_init()
     patch_divide_code<WORD>(ff7_externals.world_opcode_message_update_text_769C02 + 0x10A, common_frame_multiplier);
     patch_code_byte(ff7_externals.world_opcode_message_update_text_769C02 + 0x13A, 0x4 + common_frame_multiplier / 2);
 
-    // Others
-    replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x8DF, ff7_pop_world_stack_multiply_wrapper);
+    // Wait frames decrease delayed
+    replace_call_function(ff7_externals.run_world_event_scripts + 0xC7, ff7_run_world_script_system_operations);
 }
