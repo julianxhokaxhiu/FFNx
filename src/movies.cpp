@@ -316,7 +316,6 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 	char newFmvName[260];
 	char newCamName[260];
 
-	FILE *camFile;
 	uint32_t camOffset = 0;
 
 	// Unexpected cases default to current disk
@@ -334,7 +333,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 
 	if(disc != 4)
 	{
-		camFile = fopen(camName, "rb");
+		FILE *camFile = fopen(camName, "rb");
 
 		if(!camFile)
 		{
@@ -348,6 +347,8 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 
 			if(res > 0) camOffset += res;
 		}
+
+		fclose(camFile);
 
 		ff8_externals.movie_object->movie_intro_pak = false;
 	}
