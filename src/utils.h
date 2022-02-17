@@ -24,6 +24,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <chrono>
 #include <random>
 
 // Get the size of a vector in bytes
@@ -105,10 +106,23 @@ inline void replaceAll(std::string& str, const char from, const char to)
     std::replace(str.begin(), str.end(), from, to);
 }
 
+// Based on https://stackoverflow.com/a/13446015
 inline int getRandomInt(int min, int max)
 {
-    std::mt19937 rng(rand());
-    std::uniform_int_distribution<int> gen(min, max);
+    std::random_device rd;
+    std::mt19937::result_type seed = rd() ^ (
+        (std::mt19937::result_type)
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()
+        ).count() +
+        (std::mt19937::result_type)
+        std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()
+        ).count()
+    );
 
-    return gen(rng);
+    std::mt19937 gen(seed);
+    std::uniform_int_distribution<unsigned> distrib(min, max);
+
+    return distrib(gen);
 }
