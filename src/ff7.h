@@ -581,7 +581,8 @@ struct battle_actor_data
 	uint32_t attack_effect;
 	uint32_t field_28;
 	uint32_t field_2C;
-	uint32_t self_mask;
+	uint32_t self_mask_1;
+	uint32_t self_mask_2;
 	uint32_t mp_cost;
 	uint32_t action_accuracy;
 	uint32_t damage_calc;
@@ -589,7 +590,7 @@ struct battle_actor_data
 	uint32_t action_power;
 	uint32_t attack_power;
 	uint32_t action_target_mask;
-	uint32_t field_54[206];
+	uint32_t field_54[131];
 };
 
 struct battle_actor_vars
