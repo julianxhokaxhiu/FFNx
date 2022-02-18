@@ -964,6 +964,12 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t death_sentence_handler_566007 = get_absolute_value(death_sentence_sub_565F9C, 0x5B);
 	ff7_externals.roulette_skill_main_loop_566287 = get_absolute_value(death_sentence_handler_566007, 0x2E);
 	ff7_externals.death_sentence_main_loop_5661A0 = get_absolute_value(death_sentence_handler_566007, 0x138);
+	uint32_t battle_sub_561C20 = get_relative_call(battle_sub_5C1484, 0x97);
+	uint32_t death_kill_sub_561C3C = get_relative_call(battle_sub_561C20, 0x10);
+	uint32_t death_kill_sub_561C87 = get_absolute_value(death_kill_sub_561C3C, 0x21);
+	uint32_t death_kill_main_loop_561FAF = get_absolute_value(death_kill_sub_561C87, 0x93);
+	ff7_externals.death_kill_sub_loop_562C60 = get_absolute_value(death_kill_main_loop_561FAF, 0x42);
+	ff7_externals.death_kill_sub_loop_5624A5 = get_absolute_value(death_kill_main_loop_561FAF, 0x5F);
 	uint32_t enemy_atk_sub_439B71 = ff7_externals.enemy_atk_effects_fn_table[143];
 	uint32_t enemy_atk_sub_439B86 = get_relative_call(enemy_atk_sub_439B71, 0xB);
 	uint32_t enemy_atk_sub_439C6B = get_relative_call(enemy_atk_sub_439B86, 0x1B);
@@ -1019,6 +1025,10 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t battle_sub_5B9B30 = get_relative_call(battle_sub_42F3E8, 0x756);
 	ff7_externals.battle_handle_status_effect_anim_5BA7C0 = get_relative_call(battle_sub_5B9B30, 0xB2);
 	ff7_externals.battle_handle_player_mark_5B9C8E = get_relative_call(battle_sub_5B9B30, 0x123);
+	ff7_externals.battle_update_targeting_info_6E6291 = get_relative_call(ff7_externals.battle_sub_6DB0EE, 0x1F9);
+	ff7_externals.battle_update_targeting_info_sub_6E59BC = get_relative_call(ff7_externals.battle_update_targeting_info_6E6291, 0x533);
+	ff7_externals.targeting_actor_id_DC3C98 = (byte*)get_absolute_value(ff7_externals.battle_update_targeting_info_6E6291, 0x684);
+	ff7_externals.targeting_actor_id_DC3C94 = (byte*)get_absolute_value(ff7_externals.battle_update_targeting_info_6E6291, 0x517);
 
 	// 3D Battleground
 	ff7_externals.update_3d_battleground = get_relative_call(ff7_externals.battle_sub_42D992, 0x4);

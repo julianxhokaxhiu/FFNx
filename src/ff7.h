@@ -2692,6 +2692,8 @@ struct ff7_externals
 	uint32_t goblin_punch_flash_573291;
 	uint32_t roulette_skill_main_loop_566287;
 	uint32_t death_sentence_main_loop_5661A0;
+	uint32_t death_kill_sub_loop_562C60;
+	uint32_t death_kill_sub_loop_5624A5;
 	uint32_t enemy_atk_camera_sub_439EE0;
 	uint32_t enemy_atk_camera_sub_44A7D2;
 	uint32_t enemy_atk_camera_sub_44EDC0;
@@ -2756,6 +2758,10 @@ struct ff7_externals
 	uint32_t set_battle_speed_4385CC;
 	uint32_t battle_handle_player_mark_5B9C8E;
 	uint32_t battle_handle_status_effect_anim_5BA7C0;
+	uint32_t battle_update_targeting_info_6E6291;
+	uint32_t battle_update_targeting_info_sub_6E59BC;
+	byte *targeting_actor_id_DC3C98;
+	byte *targeting_actor_id_DC3C94;
 
 	//battle 3d battleground
 	uint32_t update_3d_battleground;
