@@ -30,12 +30,12 @@ FFNx today in a nutshell:
 
 ### FF7/FF8
 
-- [/LARGEADDRESSAWARE](https://docs.microsoft.com/en-us/cpp/build/reference/largeaddressaware-handle-large-addresses?view=vs-2019) support!
-
-  Up to 3.5GB of space available for mods ( this requires the [4GB Patch](https://ntcore.com/?page_id=371) in your ff7.exe ).
+- [/LARGEADDRESSAWARE](https://docs.microsoft.com/en-us/cpp/build/reference/largeaddressaware-handle-large-addresses?view=vs-2019) support! Up to 3.5GB of RAM available for mods ( this requires the [4GB Patch](https://ntcore.com/?page_id=371) in your ff7.exe ).
 - High DPI support!
+- HDR support!
 - Up to 16x Anisotropic support!
 - Up to 16x Antialiasing support!
+- 5.1/7.1 Audio Output support!
 - Steam support! No Game converter required.
 - Steam savegame preservation ( you will no more loose saves created with FFNx! )
 - XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
@@ -43,6 +43,7 @@ FFNx today in a nutshell:
 - The game will continue to run when not in focus in Window mode
 
 ### FF7
+- 60 FPS!
 - eStore support! No Game converter required.
 - Vertical centering for Fields and Movies
 - Fullscreen Battle scenes
@@ -58,6 +59,12 @@ FFNx today in a nutshell:
 - **Voice acting**! One of the first mods to make use of this will be [Echo-S](https://forum.tsunamods.com/viewtopic.php?f=65&t=9) when it will be released!
 - Support for external SFX audio effects
 - Support for external Ambient audio effects
+- Support for external movie audio files ( allows multiple videos to share the same audio )
+- Support for external movie voice acting ( dedicated audio layer only for voice acting on top of movies )
+- Steam achievements! You can now unlock them while playing with FFNx
+- Real-time light engine! You can now feel the game visually like never before
+- Real-time camera control in battles
+- Analogue controls using the full axis of your left analog stick
 
 ### FF8
 - Enable the VRAM debug window while playing in order to see how the engine uploads textures
