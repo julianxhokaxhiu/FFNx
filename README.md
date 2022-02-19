@@ -55,7 +55,6 @@ FFNx today in a nutshell:
 - Support for animated textures ( like Aerith waterfall, light fading, etc. )
 - Support for soft-reset while you're playing, like on the PSX!
 - Support for battle toggle ( enable/disable at your own pleasure )
-- Save everywhere! You are no more required to stay next to crystals in order to keep your progress.
 - **Voice acting**! One of the first mods to make use of this will be [Echo-S](https://forum.tsunamods.com/viewtopic.php?f=65&t=9) when it will be released!
 - Support for external SFX audio effects
 - Support for external Ambient audio effects
