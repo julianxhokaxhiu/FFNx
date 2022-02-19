@@ -1026,9 +1026,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_handle_status_effect_anim_5BA7C0 = get_relative_call(battle_sub_5B9B30, 0xB2);
 	ff7_externals.battle_handle_player_mark_5B9C8E = get_relative_call(battle_sub_5B9B30, 0x123);
 	ff7_externals.battle_update_targeting_info_6E6291 = get_relative_call(ff7_externals.battle_sub_6DB0EE, 0x1F9);
-	ff7_externals.battle_update_targeting_info_sub_6E59BC = get_relative_call(ff7_externals.battle_update_targeting_info_6E6291, 0x533);
 	ff7_externals.targeting_actor_id_DC3C98 = (byte*)get_absolute_value(ff7_externals.battle_update_targeting_info_6E6291, 0x684);
-	ff7_externals.targeting_actor_id_DC3C94 = (byte*)get_absolute_value(ff7_externals.battle_update_targeting_info_6E6291, 0x517);
 
 	// 3D Battleground
 	ff7_externals.update_3d_battleground = get_relative_call(ff7_externals.battle_sub_42D992, 0x4);

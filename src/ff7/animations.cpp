@@ -1600,14 +1600,6 @@ void ff7_delay_battle_target_pointer_animation_type_1()
     }
 }
 
-void ff7_delay_battle_target_pointer_animation_type_2()
-{
-    if(frame_counter % battle_frame_multiplier == 0)
-    {
-        (*ff7_externals.targeting_actor_id_DC3C94)++;
-    }
-}
-
 void ff7_battle_animations_hook_init()
 {
     // 3d model animation
@@ -1812,14 +1804,6 @@ void ff7_battle_animations_hook_init()
     memset_code(ff7_externals.battle_update_targeting_info_6E6291 + 0x757, 0x90, 10);
     replace_call_function(ff7_externals.battle_update_targeting_info_6E6291 + 0x81C, ff7_delay_battle_target_pointer_animation_type_1);
     memset_code(ff7_externals.battle_update_targeting_info_6E6291 + 0x821, 0x90, 10);
-    replace_call_function(ff7_externals.battle_update_targeting_info_sub_6E59BC + 0x16C, ff7_delay_battle_target_pointer_animation_type_2);
-    memset_code(ff7_externals.battle_update_targeting_info_sub_6E59BC + 0x171, 0x90, 10);
-    replace_call_function(ff7_externals.battle_update_targeting_info_sub_6E59BC + 0x1DE, ff7_delay_battle_target_pointer_animation_type_2);
-    memset_code(ff7_externals.battle_update_targeting_info_sub_6E59BC + 0x1E3, 0x90, 10);
-    replace_call_function(ff7_externals.battle_update_targeting_info_sub_6E59BC + 0xD5, ff7_delay_battle_target_pointer_animation_type_2);
-    memset_code(ff7_externals.battle_update_targeting_info_sub_6E59BC + 0xDA, 0x90, 10);
-    replace_call_function(ff7_externals.battle_update_targeting_info_sub_6E59BC + 0x73, ff7_delay_battle_target_pointer_animation_type_2);
-    memset_code(ff7_externals.battle_update_targeting_info_sub_6E59BC + 0x78, 0x90, 10);
 
     // Populate map and set data for better performance with decorators initialization
     fixed_effect100_addresses.insert(ff7_externals.battle_enemy_death_5BBD24);

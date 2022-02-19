@@ -2759,9 +2759,7 @@ struct ff7_externals
 	uint32_t battle_handle_player_mark_5B9C8E;
 	uint32_t battle_handle_status_effect_anim_5BA7C0;
 	uint32_t battle_update_targeting_info_6E6291;
-	uint32_t battle_update_targeting_info_sub_6E59BC;
 	byte *targeting_actor_id_DC3C98;
-	byte *targeting_actor_id_DC3C94;
 
 	//battle 3d battleground
 	uint32_t update_3d_battleground;
