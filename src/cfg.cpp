@@ -63,7 +63,6 @@ bool trace_voice;
 bool trace_ambient;
 bool trace_gamepad;
 bool trace_achievement;
-bool trace_battle_camera;
 bool trace_battle_animation;
 bool trace_battle_text;
 bool vertex_log;
@@ -197,7 +196,6 @@ void read_cfg()
 	trace_ambient = config["trace_ambient"].value_or(false);
 	trace_gamepad = config["trace_gamepad"].value_or(false);
 	trace_achievement = config["trace_achievement"].value_or(false);
-	trace_battle_camera = config["trace_battle_camera"].value_or(false);
 	trace_battle_animation = config["trace_battle_animation"].value_or(false);
 	trace_battle_text = config["trace_battle_text"].value_or(false);
 	vertex_log = config["vertex_log"].value_or(false);

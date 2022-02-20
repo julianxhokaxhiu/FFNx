@@ -76,7 +76,6 @@ extern bool trace_voice;
 extern bool trace_ambient;
 extern bool trace_gamepad;
 extern bool trace_achievement;
-extern bool trace_battle_camera;
 extern bool trace_battle_animation;
 extern bool trace_battle_text;
 extern bool vertex_log;
