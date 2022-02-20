@@ -162,11 +162,6 @@ void ff7_execute_camera_functions()
                     ff7_externals.camera_fn_data[fn_index].field_E /= battle_frame_multiplier;
                 }
 
-                if (trace_all || trace_battle_camera)
-                    ffnx_trace("%s - begin function: 0x%x (actor_id: %d,last command: 0x%02X, 0x%04X)\n", __func__,
-                               ff7_externals.camera_fn_array[fn_index], ff7_externals.anim_event_queue[0].attackerID,
-                               ff7_externals.battle_context->lastCommandIdx, ff7_externals.battle_context->lastActionIdx);
-
                 isNewCameraFunction[fn_index] = false;
             }
 
