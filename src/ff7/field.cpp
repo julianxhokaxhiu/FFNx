@@ -235,9 +235,23 @@ void ff7_field_initialize_variables()
 {
 	((void(*)())ff7_externals.field_initialize_variables)();
 
-	// reset movement phase for all models
+	// reset movement frame index for all models
 	for(auto &external_data : external_model_data)
 		external_data.moveFrameIndex = 0;
+}
+
+void ff7_field_update_models_position(int key_input_status)
+{
+	((void(*)(int))ff7_externals.field_update_models_positions)(key_input_status);
+
+	// Reset movement frame index for all models if they are not using walking/running (movement type != 1)
+	for(int model_idx = 0; model_idx < (int)(*ff7_externals.field_n_models); model_idx++)
+	{
+		if((*ff7_externals.field_event_data_ptr)[model_idx].movement_type != 1)
+		{
+			external_model_data[model_idx].moveFrameIndex = 0;
+		}
+	}
 }
 
 int ff7_field_update_player_model_position(short model_id)
@@ -660,6 +674,7 @@ void ff7_field_hook_init()
 	replace_call_function(ff7_externals.field_sub_60DCED + 0x178, ff7_field_initialize_variables);
 
 	// Model movement (walk, run) fps fix + allow footstep sfx
+	replace_call_function(ff7_externals.sub_63C17F + 0x5DD, ff7_field_update_models_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x8BC, ff7_field_update_player_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9E8, ff7_field_update_single_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9AA, ff7_field_check_collision_with_target);

@@ -2426,6 +2426,7 @@ struct ff7_externals
 	uint32_t field_check_collision_with_models;
 	void (*field_evaluate_encounter_rate_60B2C6)();
 	short *field_player_model_id;
+	WORD *field_n_models;
 	uint32_t field_update_camera_data;
 	ff7_camdata** field_camera_data;
 	uint32_t sub_40B27B;
