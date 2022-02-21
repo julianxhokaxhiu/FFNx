@@ -20,6 +20,8 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <math.h>
+
 #include "../ff7.h"
 #include "../patch.h"
 #include "../sfx.h"
@@ -29,16 +31,20 @@ std::map<uint32_t, bool> do_decrease_wait_frames;
 // For worldmap footsteps
 void ff7_world_update_model_movement(int delta_position_x, int delta_position_z)
 {
-    ff7_externals.world_update_model_movement_762E87(delta_position_x, delta_position_z);
+    constexpr int distance_threshold = 10;
+    float distance = std::sqrt(std::pow(delta_position_x, 2) + std::pow(delta_position_z, 2));
 
-    if(*ff7_externals.world_event_current_entity_ptr_E39AD8 && (delta_position_x || delta_position_z))
+    // TODO: Fix footsteps when player is not moving at all. Here delta position is not clipped by collision detection (Need to find collision detection)
+    if(*ff7_externals.world_event_current_entity_ptr_E39AD8 && distance > distance_threshold)
     {
         int player_model_id = ff7_externals.world_get_player_model_id();
-        if(player_model_id >= 0 && player_model_id <= 2 || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, and Cid
+        if(player_model_id >= 0 && player_model_id <= 2 || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, Cid, and Chocobo
         {
             sfx_play_wm_footstep(player_model_id, ff7_externals.world_get_player_walkmap_type());
         }
     }
+
+    ff7_externals.world_update_model_movement_762E87(delta_position_x, delta_position_z);
 }
 
 void ff7_world_init_variables(short param_1)
