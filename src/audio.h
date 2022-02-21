@@ -296,6 +296,7 @@ public:
 	void pushStreamData(uint8_t* data, uint32_t size);
 	bool playStream(float volume = 1.0f);
 	void stopStream(double time = 0.0f);
+	bool isStreamPlaying();
 };
 
 extern NxAudioEngine nxAudioEngine;

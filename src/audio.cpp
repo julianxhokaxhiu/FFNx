@@ -1391,3 +1391,8 @@ void NxAudioEngine::stopStream(double time)
 
 	_currentStream.handle = NXAUDIOENGINE_INVALID_HANDLE;
 }
+
+bool NxAudioEngine::isStreamPlaying()
+{
+	return _engine.isValidVoiceHandle(_currentStream.handle);
+}
