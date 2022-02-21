@@ -472,14 +472,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 		if(packet.stream_index == audiostream)
 		{
-			uint8_t *buffer;
-			int buffer_size = 0;
-			int used_bytes;
-			DWORD playcursor;
-			DWORD writecursor;
-			uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
-			uint32_t bytespersec = bytesperpacket * acodec_ctx->channels * acodec_ctx->sample_rate;
-
 			QueryPerformanceCounter((LARGE_INTEGER *)&now);
 
 			ret = avcodec_send_packet(acodec_ctx, &packet);
@@ -502,11 +494,14 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 			if (ret >= 0)
 			{
-				int _size = bytesperpacket * movie_frame->nb_samples * acodec_ctx->channels;
+				uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
+				uint32_t _size = bytesperpacket * movie_frame->nb_samples * acodec_ctx->channels;
 
 				// Sometimes the captured frame may have no sound samples. Just skip and move forward
 				if (_size)
 				{
+					uint8_t *buffer;
+
 					av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : acodec_ctx->sample_fmt), 0);
 					if (audio_must_be_converted) swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
 					else av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->channels, acodec_ctx->sample_fmt);
