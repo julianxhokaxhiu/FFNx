@@ -2134,7 +2134,9 @@ struct world_event_data
 	world_event_data *player_data_ptr;
 	world_event_data *special_data_ptr;
 	vector3<int> position;
-	byte field_18[40];
+	int field_18;
+	vector3<int> prev_position;
+	byte field_28[24];
 	short facing;
 	byte field_42[2];
 	short offset_y;
@@ -2810,6 +2812,7 @@ struct ff7_externals
 	int (*pop_world_script_stack)();
 	uint32_t world_update_player_74EA48;
 	int (*world_get_player_model_id)();
+	int (*world_get_current_key_input_status)();
 	int (*world_get_player_walkmap_type)();
 	void(*world_sub_753D00)(vector3<short>*, short);
 	void(*world_update_model_movement_762E87)(int, int);
