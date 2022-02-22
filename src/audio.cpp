@@ -1372,7 +1372,8 @@ void NxAudioEngine::pushStreamData(uint8_t* data, uint32_t size)
 
 bool NxAudioEngine::playStream(float volume)
 {
-	_currentStream.handle = _engine.play(*_currentStream.stream, volume);
+	_currentStream.volume = volume;
+	_currentStream.handle = _engine.play(*_currentStream.stream, _currentStream.volume);
 
 	return _engine.isValidVoiceHandle(_currentStream.handle);
 }
@@ -1395,4 +1396,31 @@ void NxAudioEngine::stopStream(double time)
 bool NxAudioEngine::isStreamPlaying()
 {
 	return _engine.isValidVoiceHandle(_currentStream.handle);
+}
+
+void NxAudioEngine::pauseStream(double time)
+{
+	if (time > 0.0)
+	{
+		_engine.fadeVolume(_currentStream.handle, 0, time);
+		_engine.schedulePause(_currentStream.handle, time);
+	}
+	else
+	{
+		_engine.setPause(_currentStream.handle, true);
+	}
+}
+
+void NxAudioEngine::resumeStream(double time)
+{
+	if (time > 0.0)
+	{
+		_engine.setPause(_currentStream.handle, false);
+		_engine.fadeVolume(_currentStream.handle, _currentStream.volume, time);
+	}
+	else
+	{
+		_engine.setVolume(_currentStream.handle, _currentStream.volume);
+		_engine.setPause(_currentStream.handle, false);
+	}
 }

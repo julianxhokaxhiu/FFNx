@@ -144,9 +144,11 @@ public:
 	{
 		NxAudioEngineStreamAudio() :
 			handle(NXAUDIOENGINE_INVALID_HANDLE),
-			stream(nullptr) {}
+			stream(nullptr),
+			volume(1.0f) {}
 		SoLoud::handle handle;
 		SoLoud::MemoryStream* stream;
+		float volume;
 	};
 
 private:
@@ -296,6 +298,8 @@ public:
 	void pushStreamData(uint8_t* data, uint32_t size);
 	bool playStream(float volume = 1.0f);
 	void stopStream(double time = 0.0f);
+	void pauseStream(double time = 0.0f);
+	void resumeStream(double time = 0.0f);
 	bool isStreamPlaying();
 };
 
