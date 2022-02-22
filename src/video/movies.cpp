@@ -27,20 +27,8 @@
 // 10 frames
 #define VIDEO_BUFFER_SIZE 10
 
-// 20 seconds
-#define AUDIO_BUFFER_SIZE 20
-
-#define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000
-
-#define STACK_MAX_NAME_LENGTH 256
-
-inline double round(double x) { return floor(x + 0.5); }
-
 #define LAG (((now - start_time) - (timer_freq / movie_fps) * movie_frame_counter) / (timer_freq / 1000))
 
-int texture_units = 1;
-
-uint32_t yuv_init_done = false;
 uint32_t yuv_fast_path = false;
 
 uint32_t audio_must_be_converted = false;
@@ -75,9 +63,6 @@ uint32_t movie_width, movie_height;
 double movie_fps;
 double movie_duration;
 
-uint32_t skipping_frames;
-uint32_t skipped_frames;
-
 bool first_audio_packet;
 
 time_t timer_freq;
@@ -87,7 +72,7 @@ void ffmpeg_movie_init()
 {
 	ffnx_info("FFMpeg movie player plugin loaded\n");
 
-	texture_units = newRenderer.getCaps()->limits.maxTextureSamplers;
+	uint32_t texture_units = newRenderer.getCaps()->limits.maxTextureSamplers;
 
 	if(texture_units < 3) ffnx_info("No multitexturing, codecs with YUV output will be slow. (texture units: %i)\n", texture_units);
 	else yuv_fast_path = true;
@@ -114,9 +99,6 @@ void ffmpeg_release_movie_objects()
 	format_ctx = 0;
 
 	audio_must_be_converted = false;
-
-	if(skipped_frames > 0) ffnx_info("release_movie_objects: skipped %i frames\n", skipped_frames);
-	skipped_frames = 0;
 
 	for(i = 0; i < VIDEO_BUFFER_SIZE; i++)
 	{
@@ -217,7 +199,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	movie_height = codec_ctx->height;
 	movie_fps = 1.0 / (av_q2d(codec_ctx->time_base) * codec_ctx->ticks_per_frame);
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
-	movie_frames = (uint32_t)round(movie_fps * movie_duration);
+	movie_frames = (uint32_t)::round(movie_fps * movie_duration);
 
 	if (trace_movies)
 	{
@@ -293,7 +275,6 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 
 exit:
 	movie_frame_counter = 0;
-	skipped_frames = 0;
 
 	return movie_frames;
 }
