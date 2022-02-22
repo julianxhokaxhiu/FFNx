@@ -384,6 +384,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			window_size_x = (long)LOWORD(lParam);
 			window_size_y = (long)HIWORD(lParam);
 
+			nxAudioEngine.pauseStream();
+
 			if (wParam == SIZE_MAXIMIZED) gameWindowWasMaximized = true;
 			else if (wParam == SIZE_RESTORED && gameWindowWasMaximized) gameWindowWasMaximized = false;
 			else break;
@@ -423,6 +425,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 
 				newRenderer.reset();
+				nxAudioEngine.pauseStream();
 
 				return MAKELRESULT(0, MNC_CLOSE);
 			}
@@ -436,6 +439,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			newRenderer.shutdown();
 
 			SetWindowLongA(gameHwnd, GWL_WNDPROC, (LONG)common_externals.engine_wndproc);
+			break;
+		case WM_MOVING:
+			nxAudioEngine.pauseStream();
 			break;
 		}
 
