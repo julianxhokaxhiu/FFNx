@@ -21,8 +21,6 @@
 
 #include "memorystream.h"
 
-#include <sys/stat.h>
-
 #define SOLOUD_MEMORYSTREAM_NUM_SAMPLES 512
 
 namespace SoLoud
