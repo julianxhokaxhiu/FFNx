@@ -84,7 +84,6 @@ bool enable_anisotropic;
 bool enable_lighting;
 bool prefer_lighting_cpu_calculations;
 bool ff7_external_opening_music;
-bool skip_frames;
 bool ff7_more_debug;
 bool ff8_ssigpu_debug;
 bool show_applog;
@@ -217,7 +216,6 @@ void read_cfg()
 	enable_lighting = config["enable_lighting"].value_or(false);
 	prefer_lighting_cpu_calculations = config["prefer_lighting_cpu_calculations"].value_or(true);
 	ff7_external_opening_music = config["ff7_external_opening_music"].value_or(false);
-	skip_frames = config["skip_frames"].value_or(false);
 	ff7_more_debug = config["ff7_more_debug"].value_or(false);
 	ff8_ssigpu_debug = config["ff8_ssigpu_debug"].value_or(false);
 	show_applog = config["show_applog"].value_or(true);

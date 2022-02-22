@@ -418,25 +418,8 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 			{
 				QueryPerformanceCounter((LARGE_INTEGER *)&now);
 
-				// check if we are falling behind
-				if(skip_frames && movie_fps < 100.0 && LAG > 100.0) skipping_frames = true;
-
-				if(skipping_frames && LAG > 0.0)
-				{
-					skipped_frames++;
-
-					if(((skipped_frames - 1) & skipped_frames) == 0) ffnx_glitch("update_movie_sample: video playback is lagging behind, skipping frames (frame #: %i, skipped: %i, lag: %f)\n", movie_frame_counter, skipped_frames, LAG);
-
-					if(use_bgra_texture) draw_bgra_frame(vbuffer_read);
-					else draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
-
-					av_packet_unref(&packet);
-
-					break;
-				}
-				else skipping_frames = false;
-
-				if(movie_sync_debug) ffnx_info("update_movie_sample(video): DTS %f PTS %f (timebase %f) placed in video buffer at real time %f (play %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(codec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)movie_frame_counter / (double)movie_fps);
+				if(movie_sync_debug)
+					ffnx_info("update_movie_sample(video): DTS %f PTS %f (timebase %f) placed in video buffer at real time %f (play %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(codec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)movie_frame_counter / (double)movie_fps);
 
 				if(sws_ctx)
 				{

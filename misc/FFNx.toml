@@ -522,12 +522,6 @@ mdef_fix = true
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff7_external_opening_music = false
 
-## ADVANCED OPTIONS - Don't fiddle with these unless you know what you're doing.
-
-# Skip movie frames if necessary.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-skip_frames = false
-
 ## MODDER OPTIONS - These options are mostly useful to modders and should not be enabled during normal play.
 
 # This is the path where files where be read directly, instead then reading them inside the LGP archives.
