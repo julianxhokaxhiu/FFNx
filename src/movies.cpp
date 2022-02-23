@@ -36,129 +36,8 @@ enum MovieAudioLayers {
 	VOICE
 };
 
-// Required by > 15 FPS movies
-bool is_movie_bgfield = false;
-short movie_fps_ratio = 1;
-int (*old_mvief)();
-int (*old_bgmovie)();
-byte mvief_bank = 0;
-byte mvief_address = 0;
 char movie_music_path[512];
 char movie_voice_path[512];
-
-int16_t script_OFST_get_speed(int16_t bank, int16_t address)
-{
-	int16_t ret = ff7_externals.get_bank_value(bank, address);
-
-	if (is_overlapping_movie_playing())
-		ret *= movie_fps_ratio;
-	else
-	{
-		if (ff7_fps_limiter == FF7_LIMITER_60FPS)
-			ret *= common_frame_multiplier;
-	}
-
-	return ret;
-}
-
-int script_WAIT()
-{
-	int result = 0;
-
-	WORD frames_left = ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id];
-	if (frames_left)
-	{
-		if (frames_left == 1)
-		{
-			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = 0;
-			ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 3;
-			result = 0;
-		}
-		else
-		{
-			--ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id];
-			result = 1;
-		}
-	}
-	else
-	{
-		ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = get_field_parameter<WORD>(0);
-
-		if (is_overlapping_movie_playing())
-			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= movie_fps_ratio;
-		else
-		{
-			if (ff7_fps_limiter == FF7_LIMITER_60FPS)
-				ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= common_frame_multiplier;
-		}
-
-		if (!ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id])
-			ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 3;
-		result = 1;
-	}
-
-	return result;
-}
-
-int script_MVIEF()
-{
-	mvief_bank = get_field_parameter<byte>(0);
-	mvief_address = get_field_parameter<byte>(1);
-
-	return old_mvief();
-}
-
-int script_BGMOVIE()
-{
-	is_movie_bgfield = get_field_parameter<byte>(0);
-
-	return old_bgmovie();
-}
-
-uint8_t ff7_compare_ifsw()
-{
-	int16_t left_value = ff7_externals.get_bank_value(1, 2);
-	int16_t right_value = ff7_externals.get_bank_value(2, 4);
-	byte compare_type = get_field_parameter<byte>(5);
-
-	if (is_overlapping_movie_playing() && movie_fps_ratio > 1)
-	{
-		byte current_mvief_bank = get_field_bank_value(0);
-		WORD current_mvief_address = get_field_parameter<WORD>(1);
-
-		if (mvief_bank == current_mvief_bank && mvief_address == current_mvief_address)
-			right_value *= movie_fps_ratio;
-	}
-
-	switch(compare_type)
-	{
-	case 0:
-		return (left_value == right_value);
-	case 1:
-		return (left_value != right_value);
-	case 2:
-		return (left_value > right_value);
-	case 3:
-		return (left_value < right_value);
-	case 4:
-		return (left_value >= right_value);
-	case 5:
-		return (left_value <= right_value);
-	case 6:
-		return (right_value & left_value);
-	case 7:
-		return (right_value ^ left_value);
-	case 8:
-		return (right_value | left_value);
-	case 9:
-		return ((1 << right_value) & left_value);
-	case 10:
-		return ((uint8_t)((1 << right_value) & left_value) == 0);
-	default:
-		return 0;
-	}
-}
-// ---------------------------
 
 uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice, uint32_t dd2interface)
 {
@@ -466,19 +345,6 @@ void movie_init()
 	if(!ff8)
 	{
 		nxAudioEngine.setMovieAudioMaxSlots(2);
-
-		// Fix sync with movies > 15 FPS
-		old_mvief = (int (*)())common_externals.execute_opcode_table[0xFA];
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xFA], (DWORD)&script_MVIEF);
-
-		old_bgmovie = (int (*)())common_externals.execute_opcode_table[0x27];
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x27], (DWORD)&script_BGMOVIE);
-
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x24], (DWORD)&script_WAIT);
-		replace_call_function(common_externals.execute_opcode_table[0xC3] + 0x46, script_OFST_get_speed);
-
-		replace_function(ff7_externals.sub_611BAE, ff7_compare_ifsw);
-		// -----------------------------
 
 		replace_function(common_externals.prepare_movie, ff7_prepare_movie);
 		replace_function(common_externals.release_movie_objects, ff7_release_movie_objects);
