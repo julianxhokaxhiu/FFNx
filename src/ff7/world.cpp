@@ -28,19 +28,24 @@
 
 std::map<uint32_t, bool> do_decrease_wait_frames;
 
-// For worldmap footsteps
 void ff7_world_update_model_movement(int delta_position_x, int delta_position_z)
 {
-    constexpr int distance_threshold = 10;
+    int player_model_id = ff7_externals.world_get_player_model_id();
+    constexpr float distance_threshold = 10.0f;
     float distance = std::sqrt(std::pow(delta_position_x, 2) + std::pow(delta_position_z, 2));
 
-    // TODO: Fix footsteps when player is not moving at all. Here delta position is not clipped by collision detection (Need to find collision detection)
-    if(*ff7_externals.world_event_current_entity_ptr_E39AD8 && distance > distance_threshold)
+    // For Highwind sound
+    if(player_model_id == 3)
     {
-        int player_model_id = ff7_externals.world_get_player_model_id();
-        if(player_model_id >= 0 && player_model_id <= 2 || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, Cid, and Chocobo
+        sfx_process_wm_highwind((ff7_externals.world_get_current_key_input_status() & 0x20) != 0);
+    }
+    // For worldmap footsteps
+    else if(player_model_id >= 0 && player_model_id <= 2 || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, Cid, and Chocobo
+    {
+        // TODO: Fix footsteps when player is not moving at all. Here delta position is not clipped by collision detection (Need to find collision detection)
+        if(distance > distance_threshold)
         {
-            sfx_play_wm_footstep(player_model_id, ff7_externals.world_get_player_walkmap_type());
+            sfx_process_wm_footstep(player_model_id, ff7_externals.world_get_player_walkmap_type());
         }
     }
 

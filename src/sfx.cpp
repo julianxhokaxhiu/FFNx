@@ -531,7 +531,7 @@ void sfx_process_footstep(bool is_player_moving)
 	}
 }
 
-void sfx_play_wm_footstep(int player_model_id, int player_walkmap_type)
+void sfx_process_wm_footstep(int player_model_id, int player_walkmap_type)
 {
 	static time_t last_playback_time, current_playback_time;
 	float pace = 0.3f;
@@ -561,6 +561,36 @@ void sfx_play_wm_footstep(int player_model_id, int player_walkmap_type)
 			common_externals.play_sfx(footstep_id);
 		}
 		qpc_get_time(&last_playback_time);
+	}
+}
+
+void sfx_process_wm_highwind(bool is_highwind_moving)
+{
+	static bool playing = false;
+
+	constexpr int default_sfx_id = 493; // Tiny Bronco SFX
+	constexpr int default_channel = 1;
+
+	if (is_highwind_moving && !playing)
+	{
+		if (use_external_sfx)
+		{
+			char track_name[64];
+			sprintf(track_name, "sfx_highwind");
+			playing = nxAudioEngine.playSFX(track_name, default_sfx_id, default_channel, 0.0f, true);
+		}
+		else
+		{
+			common_externals.play_sfx_effects(64, default_sfx_id, 0, 0, 0);
+			playing = true;
+		}
+	}
+	else if (!is_highwind_moving && playing)
+	{
+		for(int channel = 1; channel <= 5; channel++)
+			common_externals.set_sfx_frequency_on_channel(0, channel);
+		((void(*)())common_externals.sfx_stop)();
+		playing = false;
 	}
 }
 
