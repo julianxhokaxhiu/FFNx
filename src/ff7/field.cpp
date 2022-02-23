@@ -33,7 +33,7 @@
 #include "../sfx.h"
 #include "../movies.h"
 #include "defs.h"
-#include <unordered_map>
+#include <set>
 #include <cmath>
 
 // model movement and animations
@@ -69,9 +69,43 @@ struct external_field_model_data
 	int updateMovementReturnValue;
 };
 
+struct field_bank_address
+{
+	byte bank;
+	byte address;
+
+	uint32_t getID() const
+	{
+		return bank * 256 + address;
+	}
+
+	bool operator< (const field_bank_address& f) const
+	{
+		return this->getID() < f.getID();
+	}
+
+	bool operator== (const field_bank_address& f) const
+	{
+		return this->getID() == f.getID();
+	}
+};
+
 constexpr int MAX_FIELD_MODELS = 32;
 std::array<external_field_model_data, MAX_FIELD_MODELS> external_model_data;
-std::array<uint32_t, 256> original_opcode_table;
+std::array<uint32_t, 256> original_opcode_table {0};
+std::set<field_bank_address> field_bank_address_to_be_fixed = {{14, 6}};
+field_bank_address mvief_bank_address;
+
+int call_original_opcode_function(byte opcode)
+{
+	if(original_opcode_table[opcode])
+		return ((int(*)())original_opcode_table[opcode])();
+	else
+	{
+		ffnx_error("Initialization error: original opcode table empty in position %d\n", opcode);
+		return 0;
+	}
+}
 
 // helper function initializes page dst, copies texture from src and applies
 // blend_mode
@@ -369,7 +403,7 @@ int opcode_script_partial_animation_wrapper()
 	field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
 	char animation_type = ff7_externals.animation_type_array[curr_model_id];
 
-	int ret = ((int(*)())original_opcode_table[curr_opcode])();
+	int ret = call_original_opcode_function(curr_opcode);
 
 	if(curr_model_id != 255)
 	{
@@ -615,6 +649,116 @@ int ff7_opcode_script_TURN()
 	}
 }
 
+int16_t script_OFST_get_speed(int16_t bank, int16_t address)
+{
+	int16_t ret = ff7_externals.get_bank_value(bank, address);
+
+	if(is_fps_running_more_than_original())
+		ret *= get_frame_multiplier();
+
+	return ret;
+}
+
+int script_WAIT()
+{
+	int result = 0;
+
+	WORD frames_left = ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id];
+	if (frames_left)
+	{
+		if (frames_left == 1)
+		{
+			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = 0;
+			ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 3;
+			result = 0;
+		}
+		else
+		{
+			--ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id];
+			result = 1;
+		}
+	}
+	else
+	{
+		ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] = get_field_parameter<WORD>(0);
+
+		if(is_fps_running_more_than_original())
+			ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id] *= get_frame_multiplier();
+
+		if (!ff7_externals.wait_frames_ptr[*ff7_externals.current_entity_id])
+			ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 3;
+		result = 1;
+	}
+
+	return result;
+}
+
+int script_MVIEF()
+{
+	mvief_bank_address = {get_field_parameter<byte>(0), get_field_parameter<byte>(1)};
+
+	return call_original_opcode_function(0xFA);
+}
+
+int script_BGMOVIE()
+{
+	is_movie_bgfield = get_field_parameter<byte>(0);
+
+	return call_original_opcode_function(0x27);
+}
+
+uint8_t ff7_compare_ifsw()
+{
+	int16_t left_value = ff7_externals.get_bank_value(1, 2);
+	int16_t right_value = ff7_externals.get_bank_value(2, 4);
+	byte compare_type = get_field_parameter<byte>(5);
+
+	field_bank_address current_mvief_bank_address = {get_field_bank_value(0), (byte)get_field_parameter<WORD>(1)};
+
+	// Movie fix
+	if (is_overlapping_movie_playing() && movie_fps_ratio > 1)
+	{
+		if (current_mvief_bank_address == mvief_bank_address)
+			right_value *= movie_fps_ratio;
+	}
+	else
+	{
+		if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+		{
+			if(field_bank_address_to_be_fixed.contains(current_mvief_bank_address))
+				right_value *= common_frame_multiplier;
+		}
+	}
+
+	switch(compare_type)
+	{
+	case 0:
+		return (left_value == right_value);
+	case 1:
+		return (left_value != right_value);
+	case 2:
+		return (left_value > right_value);
+	case 3:
+		return (left_value < right_value);
+	case 4:
+		return (left_value >= right_value);
+	case 5:
+		return (left_value <= right_value);
+	case 6:
+		return (right_value & left_value);
+	case 7:
+		return (right_value ^ left_value);
+	case 8:
+		return (right_value | left_value);
+	case 9:
+		return ((1 << right_value) & left_value);
+	case 10:
+		return ((uint8_t)((1 << right_value) & left_value) == 0);
+	default:
+		return 0;
+	}
+}
+
 int ff7_opcode_script_FADE_wrapper()
 {
 	int ret = ((int(*)())ff7_externals.opcode_fade)();
@@ -678,6 +822,7 @@ void ff7_field_hook_init()
 	replace_call_function(ff7_externals.field_update_models_positions + 0x8BC, ff7_field_update_player_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9E8, ff7_field_update_single_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9AA, ff7_field_check_collision_with_target);
+	replace_call_function(common_externals.execute_opcode_table[0xC3] + 0x46, script_OFST_get_speed);
 
 	// Model rotation
 	replace_call_function(ff7_externals.field_opcode_08_sub_61D0D4 + 0x196, ff7_opcode_08_09_set_rotation);
@@ -732,4 +877,12 @@ void ff7_field_hook_init()
 	replace_call_function(ff7_externals.field_update_models_positions + 0x919, ff7_field_update_model_animation_frame);
 	replace_call_function(ff7_externals.field_update_models_positions + 0xA2B, ff7_field_update_model_animation_frame);
 	replace_call_function(ff7_externals.field_update_models_positions + 0xE8C, ff7_field_update_model_animation_frame);
+
+	// Movie fps fix
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xFA], (DWORD)&script_MVIEF);
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x27], (DWORD)&script_BGMOVIE);
+
+	// Others fps fix
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x24], (DWORD)&script_WAIT);
+	replace_function(ff7_externals.sub_611BAE, ff7_compare_ifsw);
 }
