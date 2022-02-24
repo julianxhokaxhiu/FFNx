@@ -471,7 +471,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					else av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->channels, acodec_ctx->sample_fmt);
 
 					nxAudioEngine.pushStreamData(buffer, _size);
-					nxAudioEngine.resumeStream();
 
 					av_freep(&buffer);
 				}
