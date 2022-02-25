@@ -1632,7 +1632,7 @@ struct ff7_game_obj
 	uint32_t window_pos_y;
 	uint32_t window_size_x;
 	uint32_t window_size_y;
-	uint32_t field_20;
+	uint32_t window_minimized;
 	uint32_t field_24;
 	uint32_t field_28;
 	uint32_t field_2C;
