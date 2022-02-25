@@ -25,7 +25,6 @@ common_externals.start =                      0x40B6E0;
 common_externals.debug_print =                0x664E30;
 common_externals.debug_print2 =               0x414EE0;
 common_externals.create_tex_header =  (tex_header* (*)(void))0x688C46;
-common_externals.get_time =                   0x660370;
 common_externals.midi_init =                  0x741780;
 common_externals.get_midi_name =      (char* (*)(uint32_t))0x74A0D0;
 common_externals.play_midi =                  0x742055;

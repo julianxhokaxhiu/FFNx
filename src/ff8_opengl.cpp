@@ -627,7 +627,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_function(ff8_externals.sub_465720 + 0xB3 + sizeof(texture_reload_fix2), texture_reload_hack2);
 
 	// Add speedhack support
-	replace_function(common_externals.diff_time, qpc_diff_time);
+	replace_function((uint32_t)common_externals.diff_time, qpc_diff_time);
 
 	// Gamepad
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);

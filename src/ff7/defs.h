@@ -40,6 +40,7 @@ void ff7_battle_menu_sub_6DB0EE();
 void ff7_set_battle_menu_state_data_at_full_atb(short param_1, short param_2, short menu_state);
 
 // misc
+void ff7_core_game_loop();
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type);
 void kernel2_reset_counters();
 char *kernel2_add_section(uint32_t size);

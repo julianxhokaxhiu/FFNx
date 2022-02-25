@@ -35,6 +35,33 @@
 #include "../sfx.h"
 #include "../achievement.h"
 
+// CORE GAME LOOP
+void ff7_core_game_loop()
+{
+	struct ff7_game_obj *game_object = (ff7_game_obj *)common_externals.get_game_object();
+	uint64_t start_t, end_t;
+
+	common_externals.get_time(&start_t);
+
+	*(double *)&game_object->field_28 = *(double *)&game_object->field_28 + 1.0;
+	ff7_engine_exit_game_mode(game_object);
+
+	if ( !game_object->window_minimized && game_object->engine_loop_obj.main_loop )
+	{
+		game_object->engine_loop_obj.main_loop((game_obj*)game_object);
+		*(double *)&game_object->field_44 = *(double *)&game_object->field_44 + 1.0;
+	}
+
+	if ( !game_object->window_minimized )
+		common_flip((game_obj*)game_object);
+
+	if ( game_object->field_950 || game_object->window_minimized )
+		WaitMessage();
+
+	common_externals.get_time(&end_t);
+	if ( game_object->field_794 ) common_externals.diff_time(&end_t, &start_t, (uint64_t*)(game_object->field_794 + 0x98));
+}
+
 // MDEF fix
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
 {

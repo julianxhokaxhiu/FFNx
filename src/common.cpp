@@ -65,6 +65,7 @@ uint32_t gameWindowHeight;
 DEVMODE dmCurrentScreenSettings;
 DEVMODE dmNewScreenSettings;
 bool gameWindowWasMaximized = false;
+bool gameWindowMoving = false;
 
 // global RAM status
 MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
@@ -387,7 +388,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (wParam == SIZE_MAXIMIZED) gameWindowWasMaximized = true;
 			else if (wParam == SIZE_RESTORED && gameWindowWasMaximized) gameWindowWasMaximized = false;
 			else break;
+		case WM_ENTERSIZEMOVE:
+			gameWindowMoving = true;
+			break;
+		case WM_MOVE:
+			if (gameWindowMoving) {
+				if (!ff8) ff7_core_game_loop();
+			}
+			break;
 		case WM_EXITSIZEMOVE:
+			gameWindowMoving = false;
 			newRenderer.reset();
 			break;
 		case WM_MENUCHAR:

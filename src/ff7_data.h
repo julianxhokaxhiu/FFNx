@@ -86,6 +86,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	if(*((uint32_t *)main_loop) != 0x81EC8B55) ffnx_unexpected("odd main loop prologue\n");
 
+	common_externals.get_time = (uint64_t (*)(uint64_t*))get_relative_call(common_externals.winmain, 0x2BE);
+	common_externals.diff_time = (uint64_t (*)(uint64_t*,uint64_t*,uint64_t*))get_relative_call(common_externals.winmain, 0x2F6);
+
 	common_externals.update_movie_sample = get_relative_call(main_loop, 0x67);
 
 	movie_module = common_externals.update_movie_sample - 0x3039;
@@ -495,8 +498,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.gameover_sub_6C12B1 = (void* (*)())get_relative_call(ff7_externals.exit_gameover, 0x21);
 	ff7_externals.on_gameover_enter = ff7_externals.enter_gameover + 0xC6;
 	ff7_externals.on_gameover_exit = ff7_externals.exit_gameover + 0x21;
-
-	common_externals.diff_time = get_relative_call(common_externals.winmain, 0x2F6);
 
 	ff7_externals.enter_field = get_absolute_value(main_loop, 0x90D);
 	ff7_externals.sub_63C17F = get_relative_call(field_main_loop, 0x59);

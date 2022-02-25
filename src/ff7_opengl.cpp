@@ -174,12 +174,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 
 	// replace time diff
-	replace_function(common_externals.diff_time, qpc_diff_time);
+	replace_function((uint32_t)common_externals.diff_time, qpc_diff_time);
 
 	if (ff7_fps_limiter >= FF7_LIMITER_DEFAULT)
 	{
 		// replace rdtsc timing
-		replace_function(common_externals.get_time, qpc_get_time);
+		replace_function((uint32_t)common_externals.get_time, qpc_get_time);
 
 		// override the timer calibration
 		QueryPerformanceFrequency((LARGE_INTEGER *)&game_object->_countspersecond);

@@ -175,8 +175,8 @@ struct common_externals
 	uint32_t stop_movie;
 	uint32_t get_movie_frame;
 	struct tex_header *(*create_tex_header)();
-	uint32_t get_time;
-	uint32_t diff_time;
+	uint64_t (*get_time)(uint64_t*);
+	uint64_t (*diff_time)(uint64_t*,uint64_t*,uint64_t*);
 	uint32_t midi_init;
 	uint32_t midi_cleanup;
 	uint32_t wav_cleanup;
