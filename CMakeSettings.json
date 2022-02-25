@@ -9,7 +9,7 @@
       "intelliSenseMode": "windows-msvc-x64",
       "buildRoot": "${projectDir}\\.build",
       "installRoot": "",
-      "cmakeCommandArgs": "-A Win32 -D_DLL_VERSION=devel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "cmakeCommandArgs": "-D_DLL_VERSION=devel -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
@@ -22,7 +22,7 @@
       "intelliSenseMode": "windows-msvc-x64",
       "buildRoot": "${projectDir}\\.build",
       "installRoot": "",
-      "cmakeCommandArgs": "-A Win32 -D_DLL_VERSION=devel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "cmakeCommandArgs": "-D_DLL_VERSION=devel -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
@@ -35,7 +35,7 @@
       "intelliSenseMode": "windows-msvc-x64",
       "buildRoot": "${projectDir}\\.build",
       "installRoot": "",
-      "cmakeCommandArgs": "-A Win32 -D_DLL_VERSION=devel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "cmakeCommandArgs": "-D_DLL_VERSION=devel -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
@@ -48,7 +48,7 @@
       "intelliSenseMode": "windows-msvc-x64",
       "buildRoot": "${projectDir}\\.build",
       "installRoot": "",
-      "cmakeCommandArgs": "-A Win32 -D_DLL_VERSION=devel -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
+      "cmakeCommandArgs": "-D_DLL_VERSION=devel -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": []
