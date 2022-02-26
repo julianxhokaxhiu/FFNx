@@ -67,6 +67,10 @@ struct external_field_model_data
 	vector3<int> finalPosition;
 	int wasNotCollidingWithTarget;
 	int updateMovementReturnValue;
+
+	bool useExternalRotationData;
+	int rotation_steps_idx;
+	int rotation_n_steps;
 };
 
 struct field_bank_address
@@ -265,13 +269,31 @@ int get_frame_multiplier()
 		return common_frame_multiplier;
 }
 
+void reset_external_rotation_data(int model_idx)
+{
+	// For implementing higher number of steps
+	external_model_data[model_idx].useExternalRotationData = false;
+	external_model_data[model_idx].rotation_n_steps = 0;
+	external_model_data[model_idx].rotation_steps_idx = 0;
+}
+
+void set_external_rotation_data(int model_idx, int rotation_n_steps)
+{
+	// For implementing higher number of steps
+	external_model_data[model_idx].useExternalRotationData = true;
+	external_model_data[model_idx].rotation_n_steps = rotation_n_steps;
+}
+
 void ff7_field_initialize_variables()
 {
 	((void(*)())ff7_externals.field_initialize_variables)();
 
 	// reset movement frame index for all models
-	for(auto &external_data : external_model_data)
+	for(auto &external_data : external_model_data){
 		external_data.moveFrameIndex = 0;
+		external_data.useExternalRotationData = false;
+		external_data.rotation_steps_idx = 0;
+	}
 }
 
 void ff7_field_update_models_position(int key_input_status)
@@ -370,6 +392,61 @@ int ff7_field_check_collision_with_target(field_event_data* field_event_model, s
 	return ret;
 }
 
+void ff7_field_update_models_rotation_new()
+{
+	for(int model_idx = 0; model_idx < *ff7_externals.field_n_models; model_idx++)
+	{
+		auto &field_event_data = (*ff7_externals.field_event_data_ptr)[model_idx];
+		byte rotation_type = field_event_data.rotation_steps_type;
+		if(rotation_type)
+		{
+			// Allow both variables to be used. Legacy code still works. New code is used only if useExternalRotationData is set to true
+			bool canUseExternalRotationData = external_model_data[model_idx].useExternalRotationData && (external_model_data[model_idx].rotation_n_steps > 0);
+			const int rotation_n_steps = (canUseExternalRotationData) ? external_model_data[model_idx].rotation_n_steps : field_event_data.rotation_n_steps;
+			int rotation_steps_idx = (canUseExternalRotationData) ? external_model_data[model_idx].rotation_steps_idx : field_event_data.rotation_step_idx;
+
+			if(rotation_type == 1)
+			{
+				field_event_data.rotation_curr_value = ff7_externals.field_get_linear_interpolated_value(
+					field_event_data.rotation_initial,
+					field_event_data.rotation_final,
+					rotation_n_steps,
+					rotation_steps_idx
+				);
+
+				if(rotation_steps_idx == rotation_n_steps)
+					field_event_data.rotation_steps_type = 3;
+				else
+				{
+					if(external_model_data[model_idx].useExternalRotationData)
+						external_model_data[model_idx].rotation_steps_idx++;
+					else
+						field_event_data.rotation_step_idx++;
+				}
+			}
+			else if(rotation_type == 2)
+			{
+				field_event_data.rotation_curr_value = ff7_externals.field_get_smooth_interpolated_value(
+					field_event_data.rotation_initial,
+					field_event_data.rotation_final,
+					rotation_n_steps,
+					rotation_steps_idx
+				);
+
+				if(rotation_steps_idx == rotation_n_steps)
+					field_event_data.rotation_steps_type = 3;
+				else
+				{
+					if(external_model_data[model_idx].useExternalRotationData)
+						external_model_data[model_idx].rotation_steps_idx++;
+					else
+						field_event_data.rotation_step_idx++;
+				}
+			}
+		}
+	}
+}
+
 short ff7_opcode_multiply_get_bank_value(short bank, short address)
 {
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
@@ -383,7 +460,7 @@ short ff7_opcode_divide_get_bank_value(short bank, short address)
 	int16_t ret = ff7_externals.get_bank_value(bank, address);
 	if(is_fps_running_more_than_original())
 	{
-		if(abs(ret) > 1)
+		if(abs(ret) >= get_frame_multiplier())
 			ret /= get_frame_multiplier();
 	}
 	return ret;
@@ -481,24 +558,29 @@ int ff7_opcode_set_turn_character_data(short entity_id)
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
+
+		reset_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id]);
+
 		ff7_externals.field_curr_script_position[current_entity_id] += 4;
 		return 0;
 	}
 	else
 	{
 		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
-		field_event_data &other_model_data = field_event_array[ff7_externals.field_model_id_array[entity_id]];
+		const field_event_data other_model_data = field_event_array[ff7_externals.field_model_id_array[entity_id]];
 		byte rotation_n_steps = get_field_parameter<byte>(1);
-		if(is_fps_running_more_than_original())
-		{
-			rotation_n_steps = std::min(rotation_n_steps * get_frame_multiplier(), 255);
-		}
 
 		if (!current_model_data.rotation_step_idx || current_model_data.rotation_steps_type != 2 || current_model_data.rotation_n_steps != rotation_n_steps)
 		{
 			current_model_data.rotation_initial = current_model_data.rotation_curr_value;
 			current_model_data.rotation_steps_type = 2;
 			current_model_data.rotation_n_steps = rotation_n_steps;
+
+			if(is_fps_running_more_than_original())
+			{
+				current_model_data.rotation_step_idx = 1; // Change it to a value != 0 to avoid re-entering the outside if
+				set_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id], rotation_n_steps * get_frame_multiplier());
+			}
 
 			current_model_position.x = current_model_data.model_pos.x >> 12;
 			current_model_position.y = current_model_data.model_pos.y >> 12;
@@ -556,6 +638,9 @@ int ff7_opcode_script_TURNGEN()
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
+
+		reset_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id]);
+
 		ff7_externals.field_curr_script_position[current_entity_id] += 6;
 		return 0;
 	}
@@ -564,11 +649,6 @@ int ff7_opcode_script_TURNGEN()
 		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
 		byte rotation_steps_type = get_field_parameter<byte>(4);
 		byte rotation_n_steps = get_field_parameter<byte>(3);
-		if(is_fps_running_more_than_original())
-		{
-			// There are 7 cases in original FF7 where it overflows if multiplied by 2 (TODO: Transforming this to short is quite hard)
-			rotation_n_steps = std::min(rotation_n_steps * get_frame_multiplier(), 255);
-		}
 
 		if (!current_model_data.rotation_step_idx || current_model_data.rotation_steps_type != rotation_steps_type || current_model_data.rotation_n_steps != rotation_n_steps)
 		{
@@ -576,6 +656,13 @@ int ff7_opcode_script_TURNGEN()
 			current_model_data.rotation_steps_type = rotation_steps_type;
 			current_model_data.rotation_n_steps = rotation_n_steps;
 			current_model_data.rotation_final = (byte)ff7_externals.get_char_bank_value(2, 2);
+
+			if(is_fps_running_more_than_original())
+			{
+				current_model_data.rotation_step_idx = 1;
+				set_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id], rotation_n_steps * get_frame_multiplier());
+			}
+
 			byte rotation_type = get_field_parameter<byte>(2);
 			if (rotation_type)
 			{
@@ -622,6 +709,9 @@ int ff7_opcode_script_TURN()
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
 		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
+
+		reset_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id]);
+
 		ff7_externals.field_curr_script_position[current_entity_id] += 6;
 		return 0;
 	}
@@ -630,11 +720,6 @@ int ff7_opcode_script_TURN()
 		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
 		byte rotation_steps_type = get_field_parameter<byte>(4);
 		byte rotation_n_steps = get_field_parameter<byte>(3);
-		if(is_fps_running_more_than_original())
-		{
-			// There is one case in original FF7 where it overflows if multiplied by 2 (TODO: Transforming this to short is quite hard)
-			rotation_n_steps = std::min(rotation_n_steps * get_frame_multiplier(), 255);
-		}
 
 		short rotation_final = ff7_externals.get_bank_value(2, 2);
 		if (!current_model_data.rotation_step_idx || rotation_final != current_model_data.rotation_final ||
@@ -644,19 +729,15 @@ int ff7_opcode_script_TURN()
 			current_model_data.rotation_steps_type = rotation_steps_type;
 			current_model_data.rotation_n_steps = rotation_n_steps;
 			current_model_data.rotation_final = rotation_final;
+
+			if(is_fps_running_more_than_original())
+			{
+				current_model_data.rotation_step_idx = 1;
+				set_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id], rotation_n_steps * get_frame_multiplier());
+			}
 		}
 		return 1;
 	}
-}
-
-int16_t script_OFST_get_speed(int16_t bank, int16_t address)
-{
-	int16_t ret = ff7_externals.get_bank_value(bank, address);
-
-	if(is_fps_running_more_than_original())
-		ret *= get_frame_multiplier();
-
-	return ret;
 }
 
 int script_WAIT()
@@ -822,9 +903,12 @@ void ff7_field_hook_init()
 	replace_call_function(ff7_externals.field_update_models_positions + 0x8BC, ff7_field_update_player_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9E8, ff7_field_update_single_model_position);
 	replace_call_function(ff7_externals.field_update_models_positions + 0x9AA, ff7_field_check_collision_with_target);
-	replace_call_function(common_externals.execute_opcode_table[0xC3] + 0x46, script_OFST_get_speed);
+	replace_call_function(common_externals.execute_opcode_table[0xC3] + 0x46, ff7_opcode_multiply_get_bank_value);
 
 	// Model rotation
+	byte jump_to_OFST_update[] = {0xE9, 0xE6, 0x01, 0x00, 0x00};
+	replace_call_function(ff7_externals.field_update_models_positions + 0x7C, ff7_field_update_models_rotation_new);
+	memcpy_code(ff7_externals.field_update_models_positions + 0x81, jump_to_OFST_update, sizeof(jump_to_OFST_update));
 	replace_call_function(ff7_externals.field_opcode_08_sub_61D0D4 + 0x196, ff7_opcode_08_09_set_rotation);
 	replace_function(ff7_externals.field_opcode_turn_character_sub_616CB5, ff7_opcode_set_turn_character_data);
 	replace_function(common_externals.execute_opcode_table[TURNGEN], ff7_opcode_script_TURNGEN);

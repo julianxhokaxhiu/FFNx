@@ -505,7 +505,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_update_single_model_position = (int (*)(int16_t))get_relative_call(ff7_externals.field_update_models_positions, 0x8BC);
 	ff7_externals.field_update_model_animation_frame = (void (*)(int16_t))get_relative_call(ff7_externals.field_update_models_positions, 0x68D);
 	ff7_externals.field_check_collision_with_target = (int (*)(field_event_data*, short))get_relative_call(ff7_externals.field_update_models_positions, 0x9AA);
-	ff7_externals.field_check_collision_with_models = get_relative_call((uint32_t)ff7_externals.field_update_single_model_position, 0x4CF);
+	ff7_externals.field_get_linear_interpolated_value = (int (*)(int, int, int, int))get_relative_call(ff7_externals.field_update_models_positions, 0x122);
+	ff7_externals.field_get_smooth_interpolated_value = (int (*)(int, int, int, int))get_relative_call(ff7_externals.field_update_models_positions, 0x1EC);
 	ff7_externals.field_evaluate_encounter_rate_60B2C6 = (void (*)())get_relative_call(ff7_externals.field_update_models_positions, 0x90F);
 	ff7_externals.field_player_model_id = (short*)get_absolute_value(ff7_externals.field_update_models_positions, 0x45D);
 	ff7_externals.field_n_models = (WORD*)get_absolute_value(ff7_externals.field_update_models_positions, 0x25);
