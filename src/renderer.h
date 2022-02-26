@@ -383,6 +383,7 @@ public:
     void doModulateAlpha(bool flag = false);
     void doTextureFiltering(bool flag = false);
     void isExternalTexture(bool flag = false);
+    bool isHDR();
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);

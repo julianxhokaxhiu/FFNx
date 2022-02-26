@@ -1639,6 +1639,11 @@ void Renderer::isExternalTexture(bool flag)
     internalState.bIsExternalTexture = flag;
 }
 
+bool Renderer::isHDR()
+{
+    return internalState.bIsHDR;
+}
+
 void Renderer::setAlphaRef(RendererAlphaFunc func, float ref)
 {
     internalState.alphaFunc = func;
