@@ -16,19 +16,19 @@
 vec3 toLinear(vec3 _rgb)
 {
 	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.04045));
-    vec3 higher = pow((_rgb.rgb + vec3_splat(0.055)) / vec3_splat(1.055), vec3_splat(2.4));
-    vec3 lower = _rgb.rgb / vec3_splat(12.92);
+	vec3 higher = pow((_rgb.rgb + vec3_splat(0.055)) / vec3_splat(1.055), vec3_splat(2.4));
+	vec3 lower = _rgb.rgb / vec3_splat(12.92);
 
-    return mix(higher, lower, cutoff);
+	return mix(higher, lower, cutoff);
 }
 
 vec3 toGamma(vec3 _rgb)
 {
 	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.0031308));
-    vec3 higher = vec3_splat(1.055) * pow(_rgb.rgb, vec3_splat(1.0/2.4)) - vec3_splat(0.055);
-    vec3 lower = _rgb.rgb * vec3_splat(12.92);
+	vec3 higher = vec3_splat(1.055) * pow(_rgb.rgb, vec3_splat(1.0/2.4)) - vec3_splat(0.055);
+	vec3 lower = _rgb.rgb * vec3_splat(12.92);
 
-    return mix(higher, lower, cutoff);
+	return mix(higher, lower, cutoff);
 }
 
 vec3 toXyzFromSrgb(vec3 _rgb)
@@ -45,8 +45,8 @@ vec3 toRec2020FromXyz(vec3 _xyz)
 {
 	mat3 toRec2020 = mat3(
 		1.7166512, -0.3556708, -0.2533663,
-	   -0.6666844,  1.6164812,  0.0157685,
-	    0.0176399, -0.0427706,  0.9421031
+		-0.6666844,  1.6164812,  0.0157685,
+		0.0176399, -0.0427706,  0.9421031
 	);
 	return mul(toRec2020, _xyz);
 }
