@@ -26,5 +26,5 @@
 
 void sfx_process_footstep(bool is_player_moving);
 void sfx_process_wm_footstep(int player_model_id, int player_walkmap_type);
-void sfx_process_wm_highwind(bool is_highwind_motor_on);
+void sfx_process_wm_highwind(bool is_old_highwind, bool is_highwind_motor_on);
 void sfx_init();

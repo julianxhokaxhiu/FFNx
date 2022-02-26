@@ -37,10 +37,10 @@ void ff7_world_update_model_movement(int delta_position_x, int delta_position_z)
     // For Highwind sound
     if(player_model_id == 3)
     {
-        sfx_process_wm_highwind((ff7_externals.world_get_current_key_input_status() & 0x20) != 0);
+        sfx_process_wm_highwind(ff7_externals.world_has_old_highwind_766C33(), (ff7_externals.world_get_current_key_input_status() & 0x20) != 0);
     }
     // For worldmap footsteps
-    else if(player_model_id >= 0 && player_model_id <= 2 || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, Cid, and Chocobo
+    else if((player_model_id >= 0 && player_model_id <= 2) || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, Cid, and Chocobo
     {
         // TODO: Fix footsteps when player is not moving at all. Here delta position is not clipped by collision detection (Need to find collision detection)
         if(distance > distance_threshold)
@@ -129,7 +129,7 @@ int ff7_get_world_encounter_rate()
 void ff7_world_hook_init()
 {
     // World init
-    replace_call_function(ff7_externals.world_update_sub_74DB8C + 0x108, ff7_world_init_variables);
+    replace_call_function(ff7_externals.world_mode_loop_sub_74DB8C + 0x108, ff7_world_init_variables);
 
     // Movement related fix
     patch_divide_code<DWORD>(ff7_externals.world_init_variables_74E1E9 + 0x15D, common_frame_multiplier);

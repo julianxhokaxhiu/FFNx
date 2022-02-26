@@ -1038,16 +1038,16 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battleground_midgar_flashback_rain_5BDC4F = get_relative_call(ff7_externals.update_3d_battleground, 0x3C);
 
 	// World externals
-	ff7_externals.world_update_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
-	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x108);
-	ff7_externals.world_sub_7641A7 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x210);
+	ff7_externals.world_mode_loop_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
+	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x108);
+	ff7_externals.world_sub_7641A7 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x210);
 	ff7_externals.run_world_event_scripts = get_relative_call(ff7_externals.world_sub_7641A7, 0x1D);
 	ff7_externals.run_world_event_scripts_system_operations = get_relative_call(ff7_externals.run_world_event_scripts, 0xC7);
 	ff7_externals.pop_world_script_stack = (int(*)())get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0x44);
-	ff7_externals.world_animate_all_models = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x5A1);
+	ff7_externals.world_animate_all_models = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x5A1);
 	ff7_externals.world_animate_single_model = get_relative_call(ff7_externals.world_animate_all_models, 0x20);
-	ff7_externals.run_world_snake_ai_script_7562FF = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x5AB);
-	ff7_externals.world_sub_767540 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x5BE);
+	ff7_externals.run_world_snake_ai_script_7562FF = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x5AB);
+	ff7_externals.world_sub_767540 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x5BE);
 	ff7_externals.world_sub_767641 = get_relative_call(ff7_externals.world_sub_767540, 0xCB);
 	ff7_externals.get_world_encounter_rate = (int(*)())get_relative_call(ff7_externals.world_sub_767641, 0x110);
 	ff7_externals.update_world_snake_position_7564CD = get_relative_call(ff7_externals.run_world_snake_ai_script_7562FF, 0x151);
@@ -1055,12 +1055,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_opcode_message_sub_75EE86 = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xB6D);
 	ff7_externals.world_opcode_message_update_box_769050 = get_relative_call(ff7_externals.world_opcode_message_sub_75EE86, 0x2B);
 	ff7_externals.world_opcode_message_update_text_769C02 = get_relative_call(ff7_externals.world_opcode_message_update_box_769050, 0x6D);
-	ff7_externals.world_update_player_74EA48 = get_relative_call(ff7_externals.world_update_sub_74DB8C, 0x2D7);
+	ff7_externals.world_update_player_74EA48 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x2D7);
 	ff7_externals.world_get_player_model_id = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x1B);
 	ff7_externals.world_get_current_key_input_status = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x4A);
 	ff7_externals.world_get_player_walkmap_type = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x7DF);
 	ff7_externals.world_sub_753D00 = (void(*)(vector3<short>*, short))get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xDF9);
 	ff7_externals.world_update_model_movement_762E87 = (void(*)(int, int))get_relative_call(ff7_externals.world_update_player_74EA48, 0xCDF);
+	ff7_externals.world_handle_vehicle_sub_7667B2 = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0x5E7);
+	ff7_externals.world_enter_vehicle_sub_766574 = get_relative_call(ff7_externals.world_handle_vehicle_sub_7667B2, 0x65);
+	ff7_externals.world_has_old_highwind_766C33 = (bool(*)())get_relative_call(ff7_externals.world_enter_vehicle_sub_766574, 0xDE);
 	ff7_externals.world_event_current_entity_ptr_E39AD8 = (world_event_data**)get_absolute_value((uint32_t)ff7_externals.world_update_model_movement_762E87, 0x5);
 	ff7_externals.world_event_current_entity_ptr_E3A7CC = (world_event_data**)get_absolute_value(ff7_externals.run_world_event_scripts_system_operations, 0x8E6);
 	ff7_externals.is_wait_frames_zero_E39BC0 = (int*)get_absolute_value(ff7_externals.run_world_event_scripts_system_operations, 0xD46);

@@ -564,7 +564,7 @@ void sfx_process_wm_footstep(int player_model_id, int player_walkmap_type)
 	}
 }
 
-void sfx_process_wm_highwind(bool is_highwind_moving)
+void sfx_process_wm_highwind(bool is_old_highwind, bool is_highwind_moving)
 {
 	static bool playing = false;
 
@@ -576,7 +576,7 @@ void sfx_process_wm_highwind(bool is_highwind_moving)
 		if (use_external_sfx)
 		{
 			char track_name[64];
-			sprintf(track_name, "sfx_highwind");
+			sprintf(track_name, "sfx_highwind_%d", (is_old_highwind) ? 0 : 1);
 			playing = nxAudioEngine.playSFX(track_name, default_sfx_id, default_channel, 0.0f, true);
 		}
 		else
