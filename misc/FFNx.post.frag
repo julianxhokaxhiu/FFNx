@@ -37,7 +37,7 @@ void main()
 
 	if (isHDR) {
 		// change primaries from sRGB/rec709 to rec2020 and remap the white point on top of the current monitor nits value
-		color.rgb = toPqOetf(toRec2020FromXyz(toXyzFromSrgb(color.xyz)) * monitorNits);
+		color.rgb = ApplyREC2084Curve(REC709toREC2020(color.rgb) * monitorNits);
 	}
 
 	gl_FragColor = color;
