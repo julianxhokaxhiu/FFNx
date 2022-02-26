@@ -393,7 +393,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 		case WM_MOVE:
 			if (gameWindowMoving) {
-				if (!ff8) ff7_core_game_loop();
+				if (!ff8){
+					if (ff7_externals.movie_object->is_playing) ff7_core_game_loop();
+				}
 			}
 			break;
 		case WM_EXITSIZEMOVE:
