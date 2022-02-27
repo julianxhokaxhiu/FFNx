@@ -237,7 +237,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
     int brightness, contrast, saturation;
     sws_getColorspaceDetails(sws_ctx, (int**)&dummy, &srcRange, (int**)&dummy, &dstRange, &brightness, &contrast, &saturation);
     const int* coefs = sws_getCoefficients(SWS_CS_DEFAULT);
-    srcRange = movie_jpeg_range = true; // this marks that values are according to yuvj
+    dstRange = srcRange = movie_jpeg_range = true; // this marks that values are according to yuvj
     sws_setColorspaceDetails(sws_ctx, coefs, srcRange, coefs, dstRange, brightness, contrast, saturation);
 	}
 	else sws_ctx = 0;
