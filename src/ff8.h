@@ -143,55 +143,50 @@ struct struc_38
 	struct ff8_graphics_object *graphics_object;
 };
 
-struct ff8_file_unk
+struct ff8_file_fi_infos
 {
-	int field_0;
-	char* filename;
-	int field_8;
+	int pos;
+	int size;
+	int compression;
 };
 
 struct ff8_file_context
 {
-	int field_0;
+	int mode; // 0= _O_BINARY, 1= _O_TEXT, 2= _O_BINARY | _O_CREAT | _O_RDWR, 3= _O_BINARY | _O_CREAT | _O_TRUNC | _O_RDWR
 	int field_4;
 	char* field_8;
-	void (*field_C)(char*, char*);
-	struct ff8_file_unk* field_10;
+	void (*filename_callback)(const char*, char*);
+	struct ff8_file_container* file_container;
 };
 
-struct ff8_file_fs
+struct ff8_file_fl
 {
-	int field_0;
-	int field_4;
-	int field_8;
-	char* filename;
-	int field_10;
-	int field_14;
-	int field_18;
-	int field_1C;
-	int field_20;
-	int field_24;
+	int file_count;
+	char **filenames_pointers;
+	int filenames_data_size;
+	char* filenames_data;
+	int callback;
 };
 
 struct ff8_file
 {
 	int is_open;
-	char* filename;
+	const char* filename;
 	int fd;
-	struct ff8_file_context field_C;
+	struct ff8_file_context file_context;
 	int field_20;
-	int field_24;
-	struct ff8_file_unk field_28;
+	int current_pos;
+	struct ff8_file_fi_infos fi_infos;
 	struct ff8_file_container* file_container;
 };
 
 struct ff8_file_container
 {
-	int field_0;
-	int field_4;
+	int initialized;
+	int first_fi_info_position;
 	struct ff8_file* fs_disk_file_metadata;
-	struct ff8_file_fs* fs_inside_file_metadata;
-	void* file_data_index;
+	struct ff8_file_fl* fl_infos;
+	struct ff8_file_fi_infos* fi_infos;
 };
 
 struct ff8_indexed_vertices
@@ -998,6 +993,22 @@ struct ff8_externals
 	uint32_t ssigpu_tx_select_2_sub_465CE0;
 	int (*sub_464F70)(int, int, int, int, int, int, int, int, int, uint8_t *);
 	void(*sub_4675C0)(uint8_t *, int, uint8_t *, int, signed int, int, int);
+	char *archive_path_prefix;
+	int(*fs_archive_search_filename)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
+	int(*ff8_fs_archive_search_filename2)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
+	char *(*fs_archive_get_fl_filepath)(int, const ff8_file_fl *);
+	uint32_t _open;
+	int(*_sopen)(const char*, int, int, int);
+	uint32_t fopen;
+	FILE *(*_fsopen)(const char*, const char*);
+	uint32_t input_init;
+	uint32_t ff8input_cfg_read;
+	char *(*strcpy_with_malloc)(const char *);
+	uint32_t moriya_filesytem_open;
+	uint32_t moriya_filesytem_seek;
+	uint32_t moriya_filesytem_read;
+	uint32_t moriya_filesytem_close;
+	void(*free_file_container)(ff8_file_container *);
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

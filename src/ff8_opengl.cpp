@@ -34,6 +34,7 @@
 #include "joystick.h"
 #include "gamehacks.h"
 #include "ff8_data.h"
+#include "ff8/file.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -126,10 +127,6 @@ void ff8_destroy_tex_header(struct ff8_tex_header *tex_header)
 
 	external_free(tex_header);
 }
-
-struct ff8_file* (*ff8_open_file)(struct ff8_file_context* file_context, char* filename);
-uint32_t(*ff8_read_file)(uint32_t count, void* buffer, struct ff8_file* file);
-void (*ff8_close_file)(struct ff8_file* file);
 
 struct ff8_tex_header *ff8_load_tex_file(struct ff8_file_context* file_context, char *filename)
 {
@@ -558,7 +555,16 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_function(common_externals.destroy_tex_header, ff8_destroy_tex_header);
 	replace_function(common_externals.load_tex_file, ff8_load_tex_file);
 
-	ff8_open_file = (struct ff8_file * (*)(struct ff8_file_context *, char *)) common_externals.open_file;
+	replace_function(common_externals.open_file, ff8_open_file);
+	replace_call(uint32_t(ff8_externals.fs_archive_search_filename) + 0x10, ff8_fs_archive_search_filename2);
+	// Search file in temp.fs archive (field)
+	replace_call(ff8_externals.moriya_filesytem_open + 0x776, ff8_fs_archive_search_filename_sub_archive);
+	// Search file in FS archive
+	replace_call(ff8_externals.moriya_filesytem_open + 0x83C, ff8_fs_archive_search_filename_sub_archive);
+	replace_function(ff8_externals._open, ff8_open);
+	replace_function(ff8_externals.fopen, ff8_fopen);
+	replace_call(ff8_externals.moriya_filesytem_close + 0x1F, ff8_fs_archive_free_file_container_sub_archive);
+
 	ff8_read_file = (uint32_t(*)(uint32_t, void *, struct ff8_file *))common_externals.read_file;
 	ff8_close_file = (void (*)(struct ff8_file *))common_externals.close_file;
 

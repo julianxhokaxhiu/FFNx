@@ -53,12 +53,15 @@ void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 void ff8_find_externals()
 {
 	ff8_externals.main_entry = get_relative_call(common_externals.winmain, 0x4D);
+	ff8_externals.archive_path_prefix = (char *)get_absolute_value(ff8_externals.main_entry, 0x2E);
 	common_externals.diff_time = (uint64_t (*)(uint64_t*,uint64_t*,uint64_t*))get_relative_call(common_externals.winmain, 0x41E);
 	ff8_externals.init_config = get_relative_call(ff8_externals.main_entry, 0x73);
 
 	ff8_externals.sub_401ED0 = version == VERSION_FF8_12_JP ? 0x402290 : 0x401ED0;
 	ff8_externals.pubintro_init = get_absolute_value(ff8_externals.sub_401ED0, 0x158);
 	ff8_externals.sub_467C00 = get_relative_call(ff8_externals.pubintro_init, 0xB5);
+	ff8_externals.input_init = get_relative_call(ff8_externals.pubintro_init, 0xBA);
+	ff8_externals.ff8input_cfg_read = get_relative_call(ff8_externals.input_init, 0x5);
 	ff8_externals.sub_468810 = get_relative_call(ff8_externals.sub_467C00, 0x59);
 	ff8_externals.sub_468BD0 = get_relative_call(ff8_externals.sub_468810, 0x5B);
 	common_externals.dinput_hack1 = ff8_externals.sub_468BD0 + 0x64;
@@ -82,6 +85,11 @@ void ff8_find_externals()
 
 	ff8_externals.savemap = (uint32_t**)get_absolute_value(ff8_externals.main_loop, 0x21);
 	ff8_externals.sm_pc_read = (uint32_t(*)(char*, void*))get_relative_call(ff8_externals.main_loop, 0x9C);
+	ff8_externals.moriya_filesytem_open = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x21);
+	ff8_externals.moriya_filesytem_seek = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x77);
+	ff8_externals.moriya_filesytem_read = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0xB7);
+	ff8_externals.moriya_filesytem_close = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0xDD);
+	ff8_externals.free_file_container = (void(*)(ff8_file_container*))get_relative_call(ff8_externals.moriya_filesytem_close, 0x1F);
 
 	ff8_externals.cdcheck_main_loop = get_absolute_value(ff8_externals.main_loop, 0xBB);
 	ff8_externals.cdcheck_sub_52F9E0 = get_relative_call(ff8_externals.cdcheck_main_loop, 0x95);
@@ -171,6 +179,15 @@ void ff8_find_externals()
 	common_externals.destroy_tex_header = get_relative_call((uint32_t)common_externals.destroy_tex, 0x78);
 	common_externals.assert_free = (void* (*)(void*, const char*, uint32_t))get_relative_call(common_externals.destroy_tex_header, 0x21);
 	common_externals.get_game_object = (game_obj* (*)())get_relative_call((uint32_t)common_externals.destroy_tex, 0x6);
+
+	ff8_externals.fs_archive_search_filename = (int(*)(const char *, ff8_file_fi_infos *, const ff8_file_container *))get_relative_call(common_externals.open_file, 0x28D);
+	ff8_externals.ff8_fs_archive_search_filename2 = (int(*)(const char *, ff8_file_fi_infos *, const ff8_file_container *))get_relative_call(uint32_t(ff8_externals.fs_archive_search_filename), 0x10);
+	ff8_externals.fs_archive_get_fl_filepath = (char *(*)(int, const ff8_file_fl *))get_relative_call(uint32_t(ff8_externals.ff8_fs_archive_search_filename2), 0x40);
+	ff8_externals._open = get_relative_call(common_externals.open_file, 0x2CE);
+	ff8_externals._sopen = (int(*)(const char*, int, int, int))get_relative_call(ff8_externals._open, 0xE);
+	ff8_externals.fopen = get_relative_call(ff8_externals.ff8input_cfg_read, 0x33);
+	ff8_externals._fsopen = (FILE *(*)(const char*, const char*))get_relative_call(ff8_externals.fopen, 0xA);
+	ff8_externals.strcpy_with_malloc = (char*(*)(const char*))get_relative_call(common_externals.open_file, 0x2F2);
 
 	ff8_externals.dd_d3d_start = get_relative_call(ff8_externals.pubintro_init, 0x75);
 	ff8_externals.create_d3d_gfx_driver = get_relative_call(ff8_externals.dd_d3d_start, 0x88);
