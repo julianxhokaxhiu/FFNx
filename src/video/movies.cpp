@@ -29,8 +29,6 @@
 
 #define LAG (((now - start_time) - (timer_freq / movie_fps) * movie_frame_counter) / (timer_freq / 1000))
 
-uint32_t yuv_fast_path = false;
-
 uint32_t audio_must_be_converted = false;
 
 AVFormatContext *format_ctx = 0;
@@ -45,11 +43,8 @@ SwrContext* swr_ctx = NULL;
 int videostream;
 int audiostream;
 
-uint32_t use_bgra_texture;
-
 struct video_frame
 {
-	uint32_t bgra_texture = 0;
 	uint32_t yuv_textures[3] = { 0 };
 };
 
@@ -71,11 +66,6 @@ time_t start_time;
 void ffmpeg_movie_init()
 {
 	ffnx_info("FFMpeg movie player plugin loaded\n");
-
-	uint32_t texture_units = newRenderer.getCaps()->limits.maxTextureSamplers;
-
-	if(texture_units < 3) ffnx_info("No multitexturing, codecs with YUV output will be slow. (texture units: %i)\n", texture_units);
-	else yuv_fast_path = true;
 
 	QueryPerformanceFrequency((LARGE_INTEGER *)&timer_freq);
 }
@@ -102,10 +92,6 @@ void ffmpeg_release_movie_objects()
 
 	for(i = 0; i < VIDEO_BUFFER_SIZE; i++)
 	{
-		// Cleanup BGRA textures
-		newRenderer.deleteTexture(video_buffer[i].bgra_texture);
-		video_buffer[i].bgra_texture = 0;
-
 		// Cleanup YUV textures
 		for (uint32_t idx = 0; idx < 3; idx++)
 		{
@@ -219,13 +205,10 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 
 	if(sws_ctx) sws_freeContext(sws_ctx);
 
-	if(codec_ctx->pix_fmt == AV_PIX_FMT_YUV420P && yuv_fast_path) use_bgra_texture = false;
-	else use_bgra_texture = true;
-
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
-	if(codec_ctx->pix_fmt != AV_PIX_FMT_BGRA && (codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P || !yuv_fast_path))
+	if(codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P)
 	{
 		if (trace_movies)
 			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->pix_fmt: %s\n", av_pix_fmt_desc_get(codec_ctx->pix_fmt)->name);
@@ -236,7 +219,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			codec_ctx->pix_fmt,
 			movie_width,
 			movie_height,
-			AV_PIX_FMT_BGRA,
+			AV_PIX_FMT_YUV420P,
 			SWS_FAST_BILINEAR | SWS_ACCURATE_RND,
 			NULL,
 			NULL,
@@ -296,36 +279,6 @@ exit:
 void ffmpeg_stop_movie()
 {
 	nxAudioEngine.stopStream();
-}
-
-void buffer_bgra_frame(uint8_t *data, int upload_stride)
-{
-	uint32_t upload_width = upload_stride;
-	uint32_t tex_width = movie_width;
-	uint32_t tex_height = movie_height;
-
-	if(upload_stride < 0) return;
-
-	if (video_buffer[vbuffer_write].bgra_texture)
-		newRenderer.deleteTexture(video_buffer[vbuffer_write].bgra_texture);
-
-	video_buffer[vbuffer_write].bgra_texture = newRenderer.createTexture(
-		data,
-		tex_width,
-		tex_height,
-		upload_width,
-		RendererTextureType::BGRA
-	);
-
-	vbuffer_write = (vbuffer_write + 1) % VIDEO_BUFFER_SIZE;
-}
-
-void draw_bgra_frame(uint32_t buffer_index)
-{
-	newRenderer.isMovie(true);
-	newRenderer.useTexture(video_buffer[buffer_index].bgra_texture);
-	gl_draw_movie_quad(movie_width, movie_height);
-	newRenderer.isMovie(false);
 }
 
 void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t buffer_index)
@@ -420,23 +373,21 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					AVFrame* frame = av_frame_alloc();
 					frame->width = movie_width;
 					frame->height = movie_height;
-					frame->format = AV_PIX_FMT_BGRA;
+					frame->format = AV_PIX_FMT_YUV420P;
 
 					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
 
 					sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, frame->height, frame->data, frame->linesize);
-					buffer_bgra_frame(frame->data[0], frame->linesize[0]);
+					buffer_yuv_frame(frame->data, frame->linesize);
 
 					av_freep(&frame->data[0]);
 					av_frame_free(&frame);
 				}
-				else if(use_bgra_texture) buffer_bgra_frame(movie_frame->extended_data[0], movie_frame->linesize[0]);
 				else buffer_yuv_frame(movie_frame->extended_data, movie_frame->linesize);
 
 				if(vbuffer_write == vbuffer_read)
 				{
-					if(use_bgra_texture) draw_bgra_frame(vbuffer_read);
-					else draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
+					draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
 
 					vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
 
@@ -510,8 +461,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 	{
 		if(vbuffer_write != vbuffer_read)
 		{
-			if(use_bgra_texture) draw_bgra_frame(vbuffer_read);
-			else draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
+			draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
 
 			vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
 		}
@@ -536,8 +486,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 // draw the current frame, don't update anything
 void ffmpeg_draw_current_frame()
 {
-	if(use_bgra_texture) draw_bgra_frame((vbuffer_read - 1) % VIDEO_BUFFER_SIZE);
-	else draw_yuv_frame((vbuffer_read - 1) % VIDEO_BUFFER_SIZE, codec_ctx->color_range == AVCOL_RANGE_JPEG);
+	draw_yuv_frame((vbuffer_read - 1) % VIDEO_BUFFER_SIZE, codec_ctx->color_range == AVCOL_RANGE_JPEG);
 }
 
 // loop back to the beginning of the movie
