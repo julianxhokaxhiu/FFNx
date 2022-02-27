@@ -437,7 +437,7 @@ trace_sfx = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trace_fake_dx = false
 
-# trace_direct - Dump in the logs only APIs that has to do with LGP loading
+# trace_direct - Dump in the logs only APIs that has to do with Archive loading
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trace_direct = false
 
