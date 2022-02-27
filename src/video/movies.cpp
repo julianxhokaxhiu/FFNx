@@ -227,8 +227,10 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 
 	if(codec_ctx->pix_fmt != AV_PIX_FMT_BGRA && (codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P || !yuv_fast_path))
 	{
+		if (trace_movies)
+			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->pix_fmt: %s\n", av_pix_fmt_desc_get(codec_ctx->pix_fmt)->name);
+
 		sws_ctx = sws_getContext(movie_width, movie_height, codec_ctx->pix_fmt, movie_width, movie_height, AV_PIX_FMT_BGRA, SWS_FAST_BILINEAR | SWS_ACCURATE_RND, NULL, NULL, NULL);
-		if (trace_movies) ffnx_info("prepare_movie: slow output format from video codec %s; %i\n", codec->name, codec_ctx->pix_fmt);
 	}
 	else sws_ctx = 0;
 
