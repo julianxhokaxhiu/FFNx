@@ -210,7 +210,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
-	if(codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P)
+	if(codec_ctx->pix_fmt != AV_PIX_FMT_YUVJ420P)
 	{
 		if (trace_movies)
 		{
@@ -224,8 +224,8 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			codec_ctx->pix_fmt,
 			movie_width,
 			movie_height,
-			AV_PIX_FMT_YUV420P,
-			SWS_BICUBIC,
+			AV_PIX_FMT_YUVJ420P,
+			SWS_FAST_BILINEAR | SWS_ACCURATE_RND,
 			NULL,
 			NULL,
 			NULL
@@ -387,7 +387,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					AVFrame* frame = av_frame_alloc();
 					frame->width = movie_width;
 					frame->height = movie_height;
-					frame->format = AV_PIX_FMT_YUV420P;
+					frame->format = AV_PIX_FMT_YUVJ420P;
 
 					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
 
