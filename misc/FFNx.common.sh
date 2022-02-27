@@ -48,7 +48,7 @@ vec3 ApplyREC2084Curve(vec3 _color)
 	// reference PQ OETF will yield reference OOTF when
 	// displayed on  a reference monitor employing EOTF
 
-	float m1 = 2610.0 / 4096.0 / 4;
+	float m1 = 2610.0 / 4096.0 * 1.0 / 4;
 	float m2 = 2523.0 / 4096.0 * 128;
 	float c1 = 3424.0 / 4096.0;
 	float c2 = 2413.0 / 4096.0 * 32;
