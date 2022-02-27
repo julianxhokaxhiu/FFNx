@@ -230,7 +230,18 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		if (trace_movies)
 			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->pix_fmt: %s\n", av_pix_fmt_desc_get(codec_ctx->pix_fmt)->name);
 
-		sws_ctx = sws_getContext(movie_width, movie_height, codec_ctx->pix_fmt, movie_width, movie_height, AV_PIX_FMT_BGRA, SWS_FAST_BILINEAR | SWS_ACCURATE_RND, NULL, NULL, NULL);
+		sws_ctx = sws_getContext(
+			movie_width,
+			movie_height,
+			codec_ctx->pix_fmt,
+			movie_width,
+			movie_height,
+			AV_PIX_FMT_BGRA,
+			SWS_FAST_BILINEAR | SWS_ACCURATE_RND,
+			NULL,
+			NULL,
+			NULL
+		);
 	}
 	else sws_ctx = 0;
 
