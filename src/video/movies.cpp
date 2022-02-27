@@ -57,6 +57,7 @@ uint32_t movie_frames;
 uint32_t movie_width, movie_height;
 double movie_fps;
 double movie_duration;
+bool movie_jpeg_range = false;
 
 bool first_audio_packet;
 
@@ -186,6 +187,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	movie_fps = 1.0 / (av_q2d(codec_ctx->time_base) * codec_ctx->ticks_per_frame);
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
 	movie_frames = (uint32_t)::round(movie_fps * movie_duration);
+	movie_jpeg_range = codec_ctx->color_range == AVCOL_RANGE_JPEG;
 
 	if (trace_movies)
 	{
@@ -211,7 +213,10 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	if(codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P)
 	{
 		if (trace_movies)
+		{
+			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->colorspace: %s\n", av_color_space_name(codec_ctx->colorspace));
 			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->pix_fmt: %s\n", av_pix_fmt_desc_get(codec_ctx->pix_fmt)->name);
+		}
 
 		sws_ctx = sws_getContext(
 			movie_width,
@@ -220,11 +225,20 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			movie_width,
 			movie_height,
 			AV_PIX_FMT_YUV420P,
-			SWS_FAST_BILINEAR | SWS_ACCURATE_RND,
+			SWS_BICUBIC,
 			NULL,
 			NULL,
 			NULL
 		);
+
+		// change the range of input data by first reading the current color space and then setting it's range as yuvj.
+    int dummy[4];
+    int srcRange, dstRange;
+    int brightness, contrast, saturation;
+    sws_getColorspaceDetails(sws_ctx, (int**)&dummy, &srcRange, (int**)&dummy, &dstRange, &brightness, &contrast, &saturation);
+    const int* coefs = sws_getCoefficients(SWS_CS_DEFAULT);
+    srcRange = movie_jpeg_range = true; // this marks that values are according to yuvj
+    sws_setColorspaceDetails(sws_ctx, coefs, srcRange, coefs, dstRange, brightness, contrast, saturation);
 	}
 	else sws_ctx = 0;
 
@@ -284,7 +298,7 @@ void ffmpeg_stop_movie()
 void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t buffer_index)
 {
 	uint32_t upload_width = strides[num];
-	uint32_t tex_width = num == 0 ? movie_width : movie_width / 2;
+	uint32_t tex_width = num == 0 ? movie_width : movie_width / 2;;
 	uint32_t tex_height = num == 0 ? movie_height : movie_height / 2;
 
 	if (upload_width > tex_width) tex_width = upload_width;
@@ -311,14 +325,14 @@ void buffer_yuv_frame(uint8_t **planes, int *strides)
 	vbuffer_write = (vbuffer_write + 1) % VIDEO_BUFFER_SIZE;
 }
 
-void draw_yuv_frame(uint32_t buffer_index, bool full_range)
+void draw_yuv_frame(uint32_t buffer_index)
 {
 	for (uint32_t idx = 0; idx < 3; idx++)
 		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
 
 	newRenderer.isMovie(true);
 	newRenderer.isYUV(true);
-	newRenderer.isFullRange(full_range);
+	newRenderer.isFullRange(movie_jpeg_range);
 	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isFullRange(false);
 	newRenderer.isYUV(false);
@@ -387,7 +401,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 				if(vbuffer_write == vbuffer_read)
 				{
-					draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
+					draw_yuv_frame(vbuffer_read);
 
 					vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
 
@@ -461,7 +475,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 	{
 		if(vbuffer_write != vbuffer_read)
 		{
-			draw_yuv_frame(vbuffer_read, codec_ctx->color_range == AVCOL_RANGE_JPEG);
+			draw_yuv_frame(vbuffer_read);
 
 			vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
 		}
@@ -486,7 +500,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 // draw the current frame, don't update anything
 void ffmpeg_draw_current_frame()
 {
-	draw_yuv_frame((vbuffer_read - 1) % VIDEO_BUFFER_SIZE, codec_ctx->color_range == AVCOL_RANGE_JPEG);
+	draw_yuv_frame((vbuffer_read - 1) % VIDEO_BUFFER_SIZE);
 }
 
 // loop back to the beginning of the movie
