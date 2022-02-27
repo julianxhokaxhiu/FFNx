@@ -404,18 +404,18 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 				if(sws_ctx)
 				{
-					uint8_t *planes[4] = { 0 };
-					int strides[4] = { 0 };
-					uint8_t *data = (uint8_t*)driver_calloc(movie_width * movie_height, 4);
+					AVFrame* frame = av_frame_alloc();
+					frame->width = movie_width;
+					frame->height = movie_height;
+					frame->format = AV_PIX_FMT_BGRA;
 
-					planes[0] = data;
-					strides[0] = movie_width * 4;
+					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
 
-					sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, movie_height, planes, strides);
+					sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, frame->height, frame->data, frame->linesize);
+					buffer_bgra_frame(frame->data[0], frame->linesize[0]);
 
-					buffer_bgra_frame(data, movie_width * 4);
-
-					driver_free(data);
+					av_freep(&frame->data[0]);
+					av_frame_free(&frame);
 				}
 				else if(use_bgra_texture) buffer_bgra_frame(movie_frame->extended_data[0], movie_frame->linesize[0]);
 				else buffer_yuv_frame(movie_frame->extended_data, movie_frame->linesize);
