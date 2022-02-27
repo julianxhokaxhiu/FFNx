@@ -1044,7 +1044,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 		exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 	}
 
-	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
+	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: slot[%d] %s\n", __func__, slot, filename);
 
 	// Stop any previously playing voice
 	if (_engine.isValidVoiceHandle(_currentVoice[slot].handle))
