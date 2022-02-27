@@ -257,8 +257,6 @@ int opcode_wmode()
 
 int opcode_voice_message()
 {
-
-
 	byte window_id = get_field_parameter<byte>(0);
 	byte dialog_id = get_field_parameter<byte>(1);
 	byte message_current_opcode = get_dialog_opcode(window_id);
