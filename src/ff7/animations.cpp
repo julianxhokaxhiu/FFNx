@@ -1569,7 +1569,7 @@ void ff7_battleground_shake_train()
 {
     if(frame_counter % battle_frame_multiplier == 0)
     {
-        ((void(*)())ff7_externals.battleground_shake_train_42F088)();
+        ff7_externals.battleground_shake_train_42F088();
     }
 }
 
@@ -1583,16 +1583,22 @@ void ff7_update_battle_menu()
 void ff7_display_tifa_slots_handler()
 {
 	if(*ff7_externals.g_do_render_menu)
-		((void(*)())ff7_externals.display_tifa_slots_handler_6E3135)();
+		ff7_externals.display_tifa_slots_handler_6E3135();
 }
 
 void ff7_display_cait_sith_slots_handler()
 {
 	if(*ff7_externals.g_do_render_menu)
-		((void(*)())ff7_externals.display_cait_sith_slots_handler_6E2170)();
+		ff7_externals.display_cait_sith_slots_handler_6E2170();
 }
 
-void ff7_delay_battle_target_pointer_animation_type_1()
+void ff7_display_battle_arena_menu_handler()
+{
+    if(*ff7_externals.g_do_render_menu)
+		ff7_externals.display_battle_arena_menu_handler_6E384F();
+}
+
+void ff7_delay_battle_target_pointer_animation_type()
 {
     if(frame_counter % battle_frame_multiplier == 0)
     {
@@ -1748,8 +1754,8 @@ void ff7_battle_animations_hook_init()
     patch_divide_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x6E, battle_frame_multiplier);
 
     // Tifa slots speed patch (bitwise and with 0x7 changed to 0x3)
-    patch_code_byte(ff7_externals.display_tifa_slots_handler_6E3135 + 0x168, 0x3);
-    patch_code_byte(ff7_externals.display_tifa_slots_handler_6E3135 + 0x16B, 0xCA);
+    patch_code_byte((uint32_t)ff7_externals.display_tifa_slots_handler_6E3135 + 0x168, 0x3);
+    patch_code_byte((uint32_t)ff7_externals.display_tifa_slots_handler_6E3135 + 0x16B, 0xCA);
 
     // Texture material animation
     replace_function(ff7_externals.battle_animate_material_texture, ff7_battle_animate_material_texture);
@@ -1794,15 +1800,16 @@ void ff7_battle_animations_hook_init()
         replace_call_function(ff7_externals.battle_menu_update_call, ff7_update_battle_menu);
         replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1BB, ff7_display_cait_sith_slots_handler);
         replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C2, ff7_display_tifa_slots_handler);
+        replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C9, ff7_display_battle_arena_menu_handler);
         memset_code(ff7_externals.battle_menu_update_6CE8B3 + 0x148, 0x90, 3);
     }
 
     // Delay animation of battle target pointer
-    replace_call_function(ff7_externals.battle_update_targeting_info_6E6291 + 0x682, ff7_delay_battle_target_pointer_animation_type_1);
+    replace_call_function(ff7_externals.battle_update_targeting_info_6E6291 + 0x682, ff7_delay_battle_target_pointer_animation_type);
     memset_code(ff7_externals.battle_update_targeting_info_6E6291 + 0x687, 0x90, 10);
-    replace_call_function(ff7_externals.battle_update_targeting_info_6E6291 + 0x752, ff7_delay_battle_target_pointer_animation_type_1);
+    replace_call_function(ff7_externals.battle_update_targeting_info_6E6291 + 0x752, ff7_delay_battle_target_pointer_animation_type);
     memset_code(ff7_externals.battle_update_targeting_info_6E6291 + 0x757, 0x90, 10);
-    replace_call_function(ff7_externals.battle_update_targeting_info_6E6291 + 0x81C, ff7_delay_battle_target_pointer_animation_type_1);
+    replace_call_function(ff7_externals.battle_update_targeting_info_6E6291 + 0x81C, ff7_delay_battle_target_pointer_animation_type);
     memset_code(ff7_externals.battle_update_targeting_info_6E6291 + 0x821, 0x90, 10);
 
     // Populate map and set data for better performance with decorators initialization

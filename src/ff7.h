@@ -2539,9 +2539,6 @@ struct ff7_externals
 	uint32_t battle_camera_focal_sub_5C5714;
 	uint32_t battle_sub_430DD0;
 	uint32_t battle_sub_429D8A;
-	uint32_t display_battle_menu_6D797C;
-	uint32_t display_cait_sith_slots_handler_6E2170;
-	uint32_t display_tifa_slots_handler_6E3135;
 	uint32_t update_battle_camera_sub_5C20CE;
 	uint32_t set_battle_camera_sub_5C22BD;
 	uint32_t battle_camera_sub_5C22A9;
@@ -2755,6 +2752,10 @@ struct ff7_externals
 	WORD* word_array_BCC768;
 
 	// battle menu
+	uint32_t display_battle_menu_6D797C;
+	void (*display_cait_sith_slots_handler_6E2170)();
+	void (*display_tifa_slots_handler_6E3135)();
+	void (*display_battle_arena_menu_handler_6E384F)();
 	uint32_t battle_set_do_render_menu;
 	int *g_do_render_menu;
 	uint32_t battle_menu_update_call;
@@ -2767,7 +2768,7 @@ struct ff7_externals
 
 	//battle 3d battleground
 	uint32_t update_3d_battleground;
-	uint32_t battleground_shake_train_42F088;
+	void (*battleground_shake_train_42F088)();
 	uint32_t battleground_vertical_scrolling_42F126;
 	uint32_t battleground_midgar_flashback_rain_5BDC4F;
 
