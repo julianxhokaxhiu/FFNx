@@ -1397,8 +1397,8 @@ struct field_tile
 	WORD field_A;
 	WORD img_x;
 	WORD img_y;
-	int u;
-	int v;
+	float u;
+	float v;
 	WORD fx_img_x;
 	WORD fx_img_y;
 	uint32_t field_1C;
