@@ -1392,7 +1392,7 @@ struct field_tile
 {
 	short x;
 	short y;
-	int z;
+	float z;
 	WORD field_8;
 	WORD field_A;
 	WORD img_x;
@@ -2295,7 +2295,7 @@ struct ff7_externals
 	struct field_tile **field_layer2_tiles;
 	uint32_t *field_special_y_offset;
 	uint32_t *field_bg_multiplier;
-	void (*add_page_tile)(float, float, int, int, int, uint32_t, uint32_t);
+	void (*add_page_tile)(float, float, float, float, float, uint32_t, uint32_t);
 	uint32_t field_load_textures;
 	void (*field_convert_type2_layers)();
 	void (*make_struc3)(uint32_t, struct struc_3 *);
