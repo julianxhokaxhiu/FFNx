@@ -282,6 +282,7 @@ void set_external_rotation_data(int model_idx, int rotation_n_steps)
 	// For implementing higher number of steps
 	external_model_data[model_idx].useExternalRotationData = true;
 	external_model_data[model_idx].rotation_n_steps = rotation_n_steps;
+	external_model_data[model_idx].rotation_steps_idx = 0;
 }
 
 void ff7_field_initialize_variables()
@@ -418,7 +419,7 @@ void ff7_field_update_models_rotation_new()
 					field_event_data.rotation_steps_type = 3;
 				else
 				{
-					if(external_model_data[model_idx].useExternalRotationData)
+					if(canUseExternalRotationData)
 						external_model_data[model_idx].rotation_steps_idx++;
 					else
 						field_event_data.rotation_step_idx++;
@@ -437,7 +438,7 @@ void ff7_field_update_models_rotation_new()
 					field_event_data.rotation_steps_type = 3;
 				else
 				{
-					if(external_model_data[model_idx].useExternalRotationData)
+					if(canUseExternalRotationData)
 						external_model_data[model_idx].rotation_steps_idx++;
 					else
 						field_event_data.rotation_step_idx++;
