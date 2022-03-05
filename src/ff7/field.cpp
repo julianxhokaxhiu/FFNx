@@ -68,9 +68,7 @@ struct external_field_model_data
 	int wasNotCollidingWithTarget;
 	int updateMovementReturnValue;
 
-	bool useExternalRotationData;
-	int rotation_steps_idx;
-	int rotation_n_steps;
+	int rotationMoveFrameIndex;
 };
 
 struct field_bank_address
@@ -269,22 +267,6 @@ int get_frame_multiplier()
 		return common_frame_multiplier;
 }
 
-void reset_external_rotation_data(int model_idx)
-{
-	// For implementing higher number of steps
-	external_model_data[model_idx].useExternalRotationData = false;
-	external_model_data[model_idx].rotation_n_steps = 0;
-	external_model_data[model_idx].rotation_steps_idx = 0;
-}
-
-void set_external_rotation_data(int model_idx, int rotation_n_steps)
-{
-	// For implementing higher number of steps
-	external_model_data[model_idx].useExternalRotationData = true;
-	external_model_data[model_idx].rotation_n_steps = rotation_n_steps;
-	external_model_data[model_idx].rotation_steps_idx = 0;
-}
-
 void ff7_field_initialize_variables()
 {
 	((void(*)())ff7_externals.field_initialize_variables)();
@@ -292,8 +274,7 @@ void ff7_field_initialize_variables()
 	// reset movement frame index for all models
 	for(auto &external_data : external_model_data){
 		external_data.moveFrameIndex = 0;
-		external_data.useExternalRotationData = false;
-		external_data.rotation_steps_idx = 0;
+		external_data.rotationMoveFrameIndex = 0;
 	}
 }
 
@@ -301,12 +282,19 @@ void ff7_field_update_models_position(int key_input_status)
 {
 	((void(*)(int))ff7_externals.field_update_models_positions)(key_input_status);
 
-	// Reset movement frame index for all models if they are not using walking/running (movement type != 1)
 	for(int model_idx = 0; model_idx < (int)(*ff7_externals.field_n_models); model_idx++)
 	{
+		// Reset movement frame index for all models if they are not walking/running
 		if((*ff7_externals.field_event_data_ptr)[model_idx].movement_type != 1)
 		{
 			external_model_data[model_idx].moveFrameIndex = 0;
+		}
+
+		// Reset rotation movement frame index for all models if they are not rotating
+		byte rotation_type = (*ff7_externals.field_event_data_ptr)[model_idx].rotation_steps_type;
+		if(rotation_type == 0 || rotation_type == 3)
+		{
+			external_model_data[model_idx].rotationMoveFrameIndex = 0;
 		}
 	}
 }
@@ -401,10 +389,15 @@ void ff7_field_update_models_rotation_new()
 		byte rotation_type = field_event_data.rotation_steps_type;
 		if(rotation_type)
 		{
-			// Allow both variables to be used. Legacy code still works. New code is used only if useExternalRotationData is set to true
-			bool canUseExternalRotationData = external_model_data[model_idx].useExternalRotationData && (external_model_data[model_idx].rotation_n_steps > 0);
-			const int rotation_n_steps = (canUseExternalRotationData) ? external_model_data[model_idx].rotation_n_steps : field_event_data.rotation_n_steps;
-			int rotation_steps_idx = (canUseExternalRotationData) ? external_model_data[model_idx].rotation_steps_idx : field_event_data.rotation_step_idx;
+			// Legacy code still works, but when in 60FPS, the steps index and number of steps are modified
+			uint32_t rotation_n_steps = field_event_data.rotation_n_steps;
+			uint32_t rotation_steps_idx = field_event_data.rotation_step_idx;
+
+			if(is_fps_running_more_than_original())
+			{
+				rotation_n_steps *= get_frame_multiplier();
+				rotation_steps_idx = rotation_steps_idx * get_frame_multiplier() + external_model_data[model_idx].rotationMoveFrameIndex;
+			}
 
 			if(rotation_type == 1)
 			{
@@ -415,14 +408,20 @@ void ff7_field_update_models_rotation_new()
 					rotation_steps_idx
 				);
 
-				if(rotation_steps_idx == rotation_n_steps)
+				if(field_event_data.rotation_step_idx == field_event_data.rotation_n_steps)
 					field_event_data.rotation_steps_type = 3;
 				else
 				{
-					if(canUseExternalRotationData)
-						external_model_data[model_idx].rotation_steps_idx++;
+					if(is_fps_running_more_than_original())
+					{
+						external_model_data[model_idx].rotationMoveFrameIndex = (external_model_data[model_idx].rotationMoveFrameIndex + 1) % get_frame_multiplier();
+						if(external_model_data[model_idx].rotationMoveFrameIndex == 0)
+							field_event_data.rotation_step_idx++;
+					}
 					else
+					{
 						field_event_data.rotation_step_idx++;
+					}
 				}
 			}
 			else if(rotation_type == 2)
@@ -434,14 +433,20 @@ void ff7_field_update_models_rotation_new()
 					rotation_steps_idx
 				);
 
-				if(rotation_steps_idx == rotation_n_steps)
+				if(field_event_data.rotation_step_idx == field_event_data.rotation_n_steps)
 					field_event_data.rotation_steps_type = 3;
 				else
 				{
-					if(canUseExternalRotationData)
-						external_model_data[model_idx].rotation_steps_idx++;
+					if(is_fps_running_more_than_original())
+					{
+						external_model_data[model_idx].rotationMoveFrameIndex = (external_model_data[model_idx].rotationMoveFrameIndex + 1) % get_frame_multiplier();
+						if(external_model_data[model_idx].rotationMoveFrameIndex == 0)
+							field_event_data.rotation_step_idx++;
+					}
 					else
+					{
 						field_event_data.rotation_step_idx++;
+					}
 				}
 			}
 		}
@@ -539,206 +544,6 @@ int ff7_opcode_script_SHAKE()
 	}
 	ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += 8;
 	return 0;
-}
-
-int ff7_opcode_set_turn_character_data(short entity_id)
-{
-	vector3<int> current_model_position;
-	vector3<int> other_model_position;
-	byte current_entity_id = *ff7_externals.current_entity_id;
-	auto *field_event_array = *ff7_externals.field_event_data_ptr;
-	int temp_value;
-
-	if (ff7_externals.field_model_id_array[current_entity_id] == 255 || ff7_externals.field_model_id_array[entity_id] == 255)
-	{
-		ff7_externals.field_curr_script_position[current_entity_id] += 4;
-		return 0;
-	}
-	else if (field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type == 3)
-	{
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
-
-		reset_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id]);
-
-		ff7_externals.field_curr_script_position[current_entity_id] += 4;
-		return 0;
-	}
-	else
-	{
-		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
-		const field_event_data other_model_data = field_event_array[ff7_externals.field_model_id_array[entity_id]];
-		byte rotation_n_steps = get_field_parameter<byte>(1);
-
-		if (!current_model_data.rotation_step_idx || current_model_data.rotation_steps_type != 2 || current_model_data.rotation_n_steps != rotation_n_steps)
-		{
-			current_model_data.rotation_initial = current_model_data.rotation_curr_value;
-			current_model_data.rotation_steps_type = 2;
-			current_model_data.rotation_n_steps = rotation_n_steps;
-
-			if(is_fps_running_more_than_original())
-			{
-				current_model_data.rotation_step_idx = 1; // Change it to a value != 0 to avoid re-entering the outside if
-				set_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id], rotation_n_steps * get_frame_multiplier());
-			}
-
-			current_model_position.x = current_model_data.model_pos.x >> 12;
-			current_model_position.y = current_model_data.model_pos.y >> 12;
-			current_model_position.z = current_model_data.model_pos.z >> 12;
-			other_model_position.x = other_model_data.model_pos.x >> 12;
-			other_model_position.y = other_model_data.model_pos.y >> 12;
-			other_model_position.z = other_model_data.model_pos.z >> 12;
-
-			if(current_model_position.x == other_model_position.x && current_model_position.y == other_model_position.y)
-				current_model_position.x++;
-			current_model_data.rotation_final = (byte)ff7_externals.field_get_rotation_final_636515(&current_model_position, &other_model_position, &temp_value);
-			byte rotation_type = get_field_parameter<byte>(2);
-			if (rotation_type)
-			{
-				if (rotation_type == 1)
-				{
-					if (current_model_data.rotation_curr_value < current_model_data.rotation_final)
-						current_model_data.rotation_final -= 256;
-				}
-				else if (rotation_type == 2)
-				{
-					short rotation_diff = current_model_data.rotation_final - current_model_data.rotation_initial;
-					if (rotation_diff < 0)
-						rotation_diff = current_model_data.rotation_initial - current_model_data.rotation_final;
-					if (rotation_diff > 128)
-					{
-						if (current_model_data.rotation_final <= current_model_data.rotation_initial)
-							current_model_data.rotation_final += 256;
-						else
-							current_model_data.rotation_final -= 256;
-					}
-				}
-			}
-			else if (current_model_data.rotation_curr_value > current_model_data.rotation_final)
-			{
-				current_model_data.rotation_final += 256;
-			}
-		}
-		return 1;
-	}
-}
-
-int ff7_opcode_script_TURNGEN()
-{
-	byte current_entity_id = *ff7_externals.current_entity_id;
-	auto *field_event_array = *ff7_externals.field_event_data_ptr;
-
-	if (ff7_externals.field_model_id_array[current_entity_id] == 255)
-	{
-		ff7_externals.field_curr_script_position[current_entity_id] += 6;
-		return 0;
-	}
-	else if (field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type == 3)
-	{
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
-
-		reset_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id]);
-
-		ff7_externals.field_curr_script_position[current_entity_id] += 6;
-		return 0;
-	}
-	else
-	{
-		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
-		byte rotation_steps_type = get_field_parameter<byte>(4);
-		byte rotation_n_steps = get_field_parameter<byte>(3);
-
-		if (!current_model_data.rotation_step_idx || current_model_data.rotation_steps_type != rotation_steps_type || current_model_data.rotation_n_steps != rotation_n_steps)
-		{
-			current_model_data.rotation_initial = current_model_data.rotation_curr_value;
-			current_model_data.rotation_steps_type = rotation_steps_type;
-			current_model_data.rotation_n_steps = rotation_n_steps;
-			current_model_data.rotation_final = (byte)ff7_externals.get_char_bank_value(2, 2);
-
-			if(is_fps_running_more_than_original())
-			{
-				current_model_data.rotation_step_idx = 1;
-				set_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id], rotation_n_steps * get_frame_multiplier());
-			}
-
-			byte rotation_type = get_field_parameter<byte>(2);
-			if (rotation_type)
-			{
-				if (rotation_type == 1) // 1 = anticlockwise
-				{
-					if (current_model_data.rotation_curr_value < current_model_data.rotation_final)
-						current_model_data.rotation_final -= 256;
-				}
-				else if (rotation_type == 2) // 2 = closest
-				{
-					short rotation_diff = current_model_data.rotation_final - current_model_data.rotation_initial;
-					if (rotation_diff < 0)
-						rotation_diff = current_model_data.rotation_initial - current_model_data.rotation_final;
-					if (rotation_diff > 128)
-					{
-						if (current_model_data.rotation_final <= current_model_data.rotation_initial)
-							current_model_data.rotation_final += 256;
-						else
-							current_model_data.rotation_final -= 256;
-					}
-				}
-			}
-			else if (current_model_data.rotation_curr_value > current_model_data.rotation_final) // 0 = clockwise
-			{
-				current_model_data.rotation_final += 256;
-			}
-		}
-		return 1;
-	}
-}
-
-int ff7_opcode_script_TURN()
-{
-	byte current_entity_id = *ff7_externals.current_entity_id;
-	auto *field_event_array = *ff7_externals.field_event_data_ptr;
-
-	if (ff7_externals.field_model_id_array[current_entity_id] == 255)
-	{
-		ff7_externals.field_curr_script_position[current_entity_id] += 6;
-		return 0;
-	}
-	else if (field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type == 3)
-	{
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_steps_type = 0;
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_step_idx = 0;
-		field_event_array[ff7_externals.field_model_id_array[current_entity_id]].rotation_n_steps = 0;
-
-		reset_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id]);
-
-		ff7_externals.field_curr_script_position[current_entity_id] += 6;
-		return 0;
-	}
-	else
-	{
-		field_event_data &current_model_data = field_event_array[ff7_externals.field_model_id_array[current_entity_id]];
-		byte rotation_steps_type = get_field_parameter<byte>(4);
-		byte rotation_n_steps = get_field_parameter<byte>(3);
-
-		short rotation_final = ff7_externals.get_bank_value(2, 2);
-		if (!current_model_data.rotation_step_idx || rotation_final != current_model_data.rotation_final ||
-		    current_model_data.rotation_steps_type != rotation_steps_type || current_model_data.rotation_n_steps != rotation_n_steps)
-		{
-			current_model_data.rotation_initial = current_model_data.rotation_curr_value;
-			current_model_data.rotation_steps_type = rotation_steps_type;
-			current_model_data.rotation_n_steps = rotation_n_steps;
-			current_model_data.rotation_final = rotation_final;
-
-			if(is_fps_running_more_than_original())
-			{
-				current_model_data.rotation_step_idx = 1;
-				set_external_rotation_data(ff7_externals.field_model_id_array[current_entity_id], rotation_n_steps * get_frame_multiplier());
-			}
-		}
-		return 1;
-	}
 }
 
 int script_WAIT()
@@ -854,16 +659,6 @@ int ff7_opcode_script_FADE_wrapper()
 	return ret;
 }
 
-void ff7_opcode_08_09_set_rotation(short model_id, byte rotation_initial, byte rotation_final)
-{
-	ff7_externals.field_opcode_08_09_set_rotation_61DB2C(model_id, rotation_initial, rotation_final);
-
-	if(ff7_externals.field_model_id_array[model_id] != 255 && is_fps_running_more_than_original())
-	{
-		(*ff7_externals.field_event_data_ptr)[model_id].rotation_n_steps *= get_frame_multiplier();
-	}
-}
-
 void ff7_field_update_model_animation_frame(short model_id)
 {
 	field_event_data &model_event_data = (*ff7_externals.field_event_data_ptr)[model_id];
@@ -910,10 +705,6 @@ void ff7_field_hook_init()
 	byte jump_to_OFST_update[] = {0xE9, 0xE6, 0x01, 0x00, 0x00};
 	replace_call_function(ff7_externals.field_update_models_positions + 0x7C, ff7_field_update_models_rotation_new);
 	memcpy_code(ff7_externals.field_update_models_positions + 0x81, jump_to_OFST_update, sizeof(jump_to_OFST_update));
-	replace_call_function(ff7_externals.field_opcode_08_sub_61D0D4 + 0x196, ff7_opcode_08_09_set_rotation);
-	replace_function(ff7_externals.field_opcode_turn_character_sub_616CB5, ff7_opcode_set_turn_character_data);
-	replace_function(common_externals.execute_opcode_table[TURNGEN], ff7_opcode_script_TURNGEN);
-	replace_function(common_externals.execute_opcode_table[TURN], ff7_opcode_script_TURN);
 
 	if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 	{
