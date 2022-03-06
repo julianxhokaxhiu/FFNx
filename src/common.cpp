@@ -2311,6 +2311,14 @@ uint32_t get_version()
 	}
 	else if(version_check1 == 0x1B6E9CC && version_check2 == 0x7C8DFFC9)
 	{
+		uint32_t version_check3 = version_check(0x401010);
+
+		if (version_check3 == 0x24AC)
+		{
+			ffnx_info("Auto-detected version: FF8 1.2 Japanese (Nvidia)\n");
+			return VERSION_FF8_12_JP_NV;
+		}
+
 		ffnx_info("Auto-detected version: FF8 1.2 Japanese\n");
 		return VERSION_FF8_12_JP;
 	}
@@ -2631,7 +2639,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				ff8_externals.start = 0x55AD37;
 				break;
 			case VERSION_FF8_12_JP:
-				ff8_externals.start = 0x0; // TODO
+				ff8_externals.start = 0x55F487;
+				break;
+			case VERSION_FF8_12_JP_NV:
+				ff8_externals.start = 0x55F6E7;
 				break;
 			}
 
@@ -2656,8 +2667,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				switch (version)
 				{
 				case VERSION_FF8_12_US_NV:
-					mciSendCommandA = 0xB69388;
-					break;
 				case VERSION_FF8_12_FR_NV:
 				case VERSION_FF8_12_DE_NV:
 				case VERSION_FF8_12_SP_NV:

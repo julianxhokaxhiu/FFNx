@@ -337,6 +337,9 @@ void read_cfg()
 	case VERSION_FF8_12_JP:
 		hext_patching_path += "/jp";
 		break;
+	case VERSION_FF8_12_JP_NV:
+		hext_patching_path += "/jp_nv";
+		break;
 	}
 
 	//OVERRIDE PATH

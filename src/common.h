@@ -42,12 +42,14 @@
 #define VERSION_FF8_12_US_EIDOS    15
 #define VERSION_FF8_12_US_EIDOS_NV 16
 #define VERSION_FF8_12_JP          17
+#define VERSION_FF8_12_JP_NV       18
 
 // Steam app id of FF7 & FF8
 #define FF7_APPID 39140
 #define FF8_APPID 39150
 
 #define NV_VERSION (!(version & 1))
+#define JP_VERSION (version == VERSION_FF8_12_JP || version == VERSION_FF8_12_JP_NV)
 
 // FF8 does not support BLUE text!
 enum
