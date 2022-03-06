@@ -1065,7 +1065,7 @@ void music_init()
 	else
 	{
 		// Adding pause/resume music (and sfx) when pausing the game in field
-		replace_call(ff8_externals.sub_4767B0 + 0x9CC, ff8_field_pause_music);
+		replace_call(ff8_externals.sub_4767B0 + (JP_VERSION ? 0x9BF : 0x9CC), ff8_field_pause_music);
 		replace_call(ff8_externals.field_main_loop + 0x16C, ff8_field_restart_music);
 	}
 

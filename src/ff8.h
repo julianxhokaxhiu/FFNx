@@ -913,7 +913,6 @@ struct ff8_externals
 	uint32_t sub_4076B6;
 	uint32_t sub_41AC34;
 	uint32_t load_texture_data;
-	uint32_t sub_401ED0;
 	uint32_t pubintro_init;
 	uint32_t sub_467C00;
 	uint32_t sub_468810;
@@ -974,7 +973,6 @@ struct ff8_externals
 	uint32_t dinput_init_gamepad;
 	BYTE* engine_gamepad_button_pressed;
 	DWORD* engine_mapped_buttons;
-	uint32_t pubintro_enter_main;
 	uint32_t draw_movie_frame;
 	struct ff8_movie_obj *movie_object;
 	uint32_t initialize_sound;
@@ -1034,7 +1032,10 @@ struct ff8_externals
 	uint32_t opcode_effectplay2;
 	uint32_t opcode_mes;
 	uint32_t opcode_ask;
+	uint32_t opcode_movie;
+	uint32_t opcode_moviesync;
 	uint32_t opcode_spuready;
+	uint32_t opcode_movieready;
 	uint32_t opcode_musicload;
 	uint32_t opcode_crossmusic;
 	uint32_t opcode_dualmusic;

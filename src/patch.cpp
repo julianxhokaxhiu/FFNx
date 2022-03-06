@@ -36,68 +36,13 @@ uint32_t max_addr = 0;
 uint32_t replace_counter = 0;
 uint32_t replaced_functions[512 * 3];
 
-uint32_t replace_function(uint32_t offset, void *func)
+void check_is_call(const char *name, uint32_t base, uint32_t offset, uint8_t instruction)
 {
-	DWORD dummy;
-
-	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
-
-	replaced_functions[replace_counter++] = *(unsigned char *)offset;
-	replaced_functions[replace_counter++] = *(uint32_t *)(offset + 1);
-	replaced_functions[replace_counter++] = offset;
-
-	*(unsigned char *)offset = 0xE9;
-	*(uint32_t *)(offset + 1) = ((uint32_t)func - offset) - 5;
-
-	return replace_counter - 3;
-}
-
-void unreplace_function(uint32_t func)
-{
-	uint32_t offset = replaced_functions[func + 2];
-	DWORD dummy;
-
-	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
-	*(uint32_t *)(offset + 1) = replaced_functions[func + 1];
-	*(unsigned char *)offset = replaced_functions[func];
-}
-
-void unreplace_functions()
-{
-	while(replace_counter > 0)
+	if (instruction != 0xE8 && instruction != 0xE9)
 	{
-		uint32_t offset = replaced_functions[--replace_counter];
-		DWORD dummy;
-
-		VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
-		*(uint32_t *)(offset + 1) = replaced_functions[--replace_counter];
-		*(unsigned char *)offset = replaced_functions[--replace_counter];
+		// Warning to diagnose errors faster
+		ffnx_warning("%s: Unrecognized call/jmp instruction at 0x%X + 0x%X (0x%X): 0x%X\n", name, base, offset, base + offset, instruction);
 	}
-}
-
-void replace_call(uint32_t offset, void *func)
-{
-	DWORD dummy;
-
-	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
-
-	*(uint32_t *)(offset + 1) = ((uint32_t)func - offset) - 5;
-}
-
-uint32_t replace_call_function(uint32_t offset, void* func)
-{
-	DWORD dummy;
-
-	VirtualProtect((void*)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
-
-	replaced_functions[replace_counter++] = *(unsigned char*)offset;
-	replaced_functions[replace_counter++] = *(uint32_t*)(offset + 1);
-	replaced_functions[replace_counter++] = offset;
-
-	*(unsigned char*)offset = 0xE8;
-	*(uint32_t*)(offset + 1) = ((uint32_t)func - offset) - 5;
-
-	return replace_counter - 3;
 }
 
 #ifdef PATCH_COLLECT_DUPLICATES
@@ -143,15 +88,77 @@ void collect_addresses(const char *name, uint32_t base, uint32_t offset, uint32_
 }
 #endif
 
+uint32_t replace_function(uint32_t offset, void *func)
+{
+	DWORD dummy;
+
+	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
+
+	replaced_functions[replace_counter++] = *(unsigned char *)offset;
+	replaced_functions[replace_counter++] = *(uint32_t *)(offset + 1);
+	replaced_functions[replace_counter++] = offset;
+
+	*(unsigned char *)offset = 0xE9;
+	*(uint32_t *)(offset + 1) = ((uint32_t)func - offset) - 5;
+
+	return replace_counter - 3;
+}
+
+void unreplace_function(uint32_t func)
+{
+	uint32_t offset = replaced_functions[func + 2];
+	DWORD dummy;
+
+	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
+	*(uint32_t *)(offset + 1) = replaced_functions[func + 1];
+	*(unsigned char *)offset = replaced_functions[func];
+}
+
+void unreplace_functions()
+{
+	while(replace_counter > 0)
+	{
+		uint32_t offset = replaced_functions[--replace_counter];
+		DWORD dummy;
+
+		VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
+		*(uint32_t *)(offset + 1) = replaced_functions[--replace_counter];
+		*(unsigned char *)offset = replaced_functions[--replace_counter];
+	}
+}
+
+void replace_call(uint32_t offset, void *func)
+{
+	DWORD dummy;
+
+	check_is_call(__func__, offset, 0, *((uint8_t *)(offset)));
+
+	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
+
+	*(uint32_t *)(offset + 1) = ((uint32_t)func - offset) - 5;
+}
+
+uint32_t replace_call_function(uint32_t offset, void* func)
+{
+	DWORD dummy;
+
+	VirtualProtect((void*)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
+
+	replaced_functions[replace_counter++] = *(unsigned char*)offset;
+	replaced_functions[replace_counter++] = *(uint32_t*)(offset + 1);
+	replaced_functions[replace_counter++] = offset;
+
+	*(unsigned char*)offset = 0xE8;
+	*(uint32_t*)(offset + 1) = ((uint32_t)func - offset) - 5;
+
+	return replace_counter - 3;
+}
+
 uint32_t get_relative_call(uint32_t base, uint32_t offset)
 {
 	uint8_t instruction = *((uint8_t *)(base + offset));
 
-	if (instruction != 0xE8 && instruction != 0xE9)
-	{
-		// Warning to diagnose errors faster
-		ffnx_warning("%s: Unrecognized call/jmp instruction at 0x%X + 0x%X (0x%X): 0x%X\n", __func__, base, offset, base + offset, instruction);
-	}
+	check_is_call(__func__, base, offset, instruction);
 
 	uint32_t ret = base + *((uint32_t *)(base + offset + 1)) + offset + 5;
 
