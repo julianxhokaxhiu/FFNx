@@ -72,6 +72,7 @@ void ff8_find_externals()
 	ff8_set_main_loop(MODE_CREDITS, ff8_externals.credits_main_loop);
 
 	ff8_externals.sub_52F300 = get_relative_call(ff8_externals.credits_main_loop, 0xBF);
+
 	ff8_externals.credits_loop_state = (DWORD*)get_absolute_value(ff8_externals.sub_52F300, 0x7);
 	ff8_externals.credits_counter = (DWORD *)get_absolute_value(ff8_externals.sub_52F300, 0x59);
 	ff8_externals.sub_470520 = get_absolute_value(ff8_externals.credits_main_loop, 0xE2);
@@ -146,6 +147,7 @@ void ff8_find_externals()
 
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff8_externals.sub_529FF0, 0x65A);
 	ff8_externals.opcode_effectplay2 = common_externals.execute_opcode_table[0x21];
+	ff8_externals.opcode_mes = common_externals.execute_opcode_table[0x47];
 	ff8_externals.opcode_spuready = common_externals.execute_opcode_table[0x56];
 	ff8_externals.opcode_musicload = common_externals.execute_opcode_table[0xB5];
 	ff8_externals.opcode_crossmusic = common_externals.execute_opcode_table[0xBA];
@@ -442,6 +444,16 @@ void ff8_find_externals()
 	common_externals.current_field_name = (char*)get_absolute_value(ff8_externals.opcode_effectplay2, 0x75);
 	common_externals.previous_field_id = (WORD*)get_absolute_value(ff8_externals.sub_470250, 0x13); // 0x1CE4880
 	common_externals.update_entities_call = common_externals.update_field_entities + 0x657; // 0x52A647
+
+	ff8_externals.field_get_dialog_string = get_relative_call(ff8_externals.opcode_mes, 0x5D);
+	ff8_externals.set_window_object = get_relative_call(ff8_externals.opcode_mes, 0x66);
+	ff8_externals.windows = (ff8_win_obj*)get_absolute_value(ff8_externals.set_window_object, 0x11);
+
+	ff8_externals.sub_470440 = get_absolute_value(ff8_externals.credits_main_loop, 0xD2);
+	ff8_externals.sub_49ACD0 = get_relative_call(ff8_externals.sub_470440, 0x98);
+	ff8_externals.sub_4A0880 = get_relative_call(ff8_externals.sub_49ACD0, 0x58);
+	ff8_externals.sub_4A0C00 = get_absolute_value(ff8_externals.sub_4A0880, 0x33);
+	ff8_externals.show_dialog = (char(*)(int32_t, uint32_t, int16_t))get_relative_call(ff8_externals.sub_4A0C00, 0x5F);
 
 	// Required by Steam edition
 	switch (version)

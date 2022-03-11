@@ -532,6 +532,37 @@ struct ff8_movie_obj
 	uint32_t bink_copy_flags;
 };
 
+struct ff8_win_obj
+{
+	uint32_t x;
+	uint32_t y;
+	char *text_data1;
+	char *text_data2;
+	uint16_t field_10;
+	uint16_t field_12;
+	uint16_t field_14;
+	uint8_t field_16;
+	uint8_t field_17;
+	uint8_t win_id;
+	uint8_t field_19;
+	uint16_t mode1;
+	uint16_t open_close_transition;
+	uint16_t field_1E;
+	uint32_t field_20;
+	uint32_t state;
+	uint8_t field_28;
+	uint8_t ask_first_line1;
+	uint8_t ask_last_line1;
+	uint8_t ask_first_line2;
+	uint8_t ask_last_line2;
+	uint8_t field_2D;
+	uint8_t field_2E;
+	uint8_t field_2F;
+	uint32_t field_30;
+	uint32_t callback1;
+	uint32_t callback2;
+};
+
 struct ff8_game_obj
 {
 	uint32_t do_quit;
@@ -955,6 +986,7 @@ struct ff8_externals
 	void (*refresh_vram_window)();
 	char* music_path;
 	uint32_t opcode_effectplay2;
+	uint32_t opcode_mes;
 	uint32_t opcode_spuready;
 	uint32_t opcode_musicload;
 	uint32_t opcode_crossmusic;
@@ -1009,6 +1041,14 @@ struct ff8_externals
 	uint32_t moriya_filesytem_read;
 	uint32_t moriya_filesytem_close;
 	void(*free_file_container)(ff8_file_container *);
+	uint32_t field_get_dialog_string;
+	uint32_t set_window_object;
+	ff8_win_obj *windows;
+	uint32_t sub_470440;
+	uint32_t sub_49ACD0;
+	uint32_t sub_4A0880;
+	uint32_t sub_4A0C00;
+	char(*show_dialog)(int32_t, uint32_t, int16_t);
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
