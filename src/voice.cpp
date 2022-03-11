@@ -66,6 +66,8 @@ std::array<battle_text_aux_data, 64> other_battle_display_text_queue;
 std::queue<short> display_string_actor_queue;
 std::map<int, opcode_message_status> current_opcode_message_status;
 
+int current_dialog_id = -1;
+
 //=============================================================================
 
 void set_voice_volume()
@@ -643,6 +645,60 @@ void ff7_display_battle_action_text()
 	}
 }
 
+uint8_t *ff8_field_opcode_get_text(uint8_t *msd, int dialog_id)
+{
+	if (trace_all || trace_voice) ffnx_trace("%s: dialog_id=%d\n", __func__, dialog_id);
+
+	current_dialog_id = dialog_id;
+
+	return msd + *(uint32_t *)(msd + 4 * dialog_id);
+}
+
+int ff8_show_dialog(int window_id, int a2, int a3)
+{
+	ff8_win_obj *win = ff8_externals.windows + window_id;
+	int previousState = win->state;
+
+	int state = ff8_externals.show_dialog(window_id, a2, a3);
+
+	if (current_dialog_id != -1 && previousState != win->state)
+	{
+		char* field_name = get_current_field_name();
+
+		// Open dialog
+		if (previousState == 0 && win->state == 1)
+		{
+			begin_voice();
+			current_opcode_message_status[window_id].message_page_count = 0;
+			current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, current_dialog_id, current_opcode_message_status[window_id].message_page_count);
+		}
+
+		// Next page
+		if (previousState == 10 && win->state == 1)
+		{
+			current_opcode_message_status[window_id].message_page_count += 1;
+			current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, current_dialog_id, current_opcode_message_status[window_id].message_page_count);
+		}
+
+		// Close dialog
+		if (win->state == 7)
+		{
+			end_voice(window_id);
+			simulate_OK_disabled[window_id] = false;
+			current_dialog_id = -1;
+		}
+	}
+
+	// Auto close the message if it was voice acted and the audio file has finished playing
+	if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
+	{
+		current_opcode_message_status[window_id].is_voice_acting = false;
+		if (!simulate_OK_disabled[window_id]) simulate_OK_button = true;
+	}
+
+	return state;
+}
+
 void voice_init()
 {
 	// Prepare up to 10 voice slots
@@ -666,5 +722,10 @@ void voice_init()
 		replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
 		replace_function(ff7_externals.display_battle_action_text_42782A, ff7_display_battle_action_text);
 		replace_call_function(ff7_externals.run_enemy_ai_script + 0xB7F, ff7_enqueue_script_display_string);
+	}
+	else
+	{
+		replace_function(ff8_externals.field_get_dialog_string, ff8_field_opcode_get_text);
+		replace_call(ff8_externals.sub_4A0C00 + 0x5F, ff8_show_dialog);
 	}
 }
