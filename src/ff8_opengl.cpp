@@ -274,7 +274,11 @@ void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 
 int ff8_init_gamepad()
 {
-	if (xinput_connected)
+	if (simulate_OK_button)
+	{
+		return TRUE;
+	}
+	else if (xinput_connected)
 	{
 		if (gamepad.Refresh())
 			return TRUE;
@@ -409,6 +413,15 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgbButtons[10] = joystick.GetState()->rgbButtons[10] & 0x80 ? 0x80 : 0; // L3
 		ff8_externals.dinput_gamepad_state->rgbButtons[11] = joystick.GetState()->rgbButtons[11] & 0x80 ? 0x80 : 0; // R3
 		ff8_externals.dinput_gamepad_state->rgbButtons[12] = joystick.GetState()->rgbButtons[12] & 0x80 ? 0x80 : 0; // PS Button
+	}
+
+	if (simulate_OK_button)
+	{
+		// Flag the button OK as pressed
+		ff8_externals.dinput_gamepad_state->rgbButtons[1] = 0x80;
+
+		// End simulation right here before we press this button by mistake in other windows
+		simulate_OK_button = false;
 	}
 
 	return ff8_externals.dinput_gamepad_state;
@@ -637,7 +650,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	// Gamepad
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);
-	replace_function(ff8_externals.dinput_sub_4692B0, ff8_update_gamepad_status);
+	replace_function(ff8_externals.dinput_update_gamepad_status, ff8_update_gamepad_status);
 
 	// #####################
 	// battle toggle

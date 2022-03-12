@@ -145,14 +145,14 @@ FILE *ff8_fopen(const char *fileName, const char *mode)
 	{
 		if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", next_direct_file);
 
-		FILE *file = ff8_externals._fsopen(next_direct_file, mode);
+		FILE *file = ff8_externals._fsopen(next_direct_file, mode, 64);
 
 		*next_direct_file = '\0';
 
 		return file;
 	}
 
-	return ff8_externals._fsopen(fileName, mode);
+	return ff8_externals._fsopen(fileName, mode, 64);
 }
 
 ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)

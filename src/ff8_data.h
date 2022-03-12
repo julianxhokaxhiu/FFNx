@@ -186,9 +186,9 @@ void ff8_find_externals()
 	ff8_externals.ff8_fs_archive_search_filename2 = (int(*)(const char *, ff8_file_fi_infos *, const ff8_file_container *))get_relative_call(uint32_t(ff8_externals.fs_archive_search_filename), 0x10);
 	ff8_externals.fs_archive_get_fl_filepath = (char *(*)(int, const ff8_file_fl *))get_relative_call(uint32_t(ff8_externals.ff8_fs_archive_search_filename2), 0x40);
 	ff8_externals._open = get_relative_call(common_externals.open_file, 0x2CE);
-	ff8_externals._sopen = (int(*)(const char*, int, int, int))get_relative_call(ff8_externals._open, 0xE);
+	ff8_externals._sopen = (int(*)(const char*, int, int, ...))get_relative_call(ff8_externals._open, 0xE);
 	ff8_externals.fopen = get_relative_call(ff8_externals.ff8input_cfg_read, 0x33);
-	ff8_externals._fsopen = (FILE *(*)(const char*, const char*))get_relative_call(ff8_externals.fopen, 0xA);
+	ff8_externals._fsopen = (FILE *(*)(const char*, const char*, int))get_relative_call(ff8_externals.fopen, 0xA);
 	ff8_externals.strcpy_with_malloc = (char*(*)(const char*))get_relative_call(common_externals.open_file, 0x2F2);
 
 	ff8_externals.dd_d3d_start = get_relative_call(ff8_externals.pubintro_init, 0x75);
@@ -273,14 +273,17 @@ void ff8_find_externals()
 
 	ff8_externals.wm_upload_psx_vram = get_relative_call(ff8_externals.load_field_models, 0xB72);
 
-	ff8_externals.check_active_window = get_relative_call(ff8_externals.pubintro_main_loop, 0x4);
-	ff8_externals.sub_467D10 = get_relative_call(ff8_externals.check_active_window, 0x16);
+	ff8_externals.engine_eval_process_input = get_relative_call(ff8_externals.pubintro_main_loop, 0x4);
+	ff8_externals.engine_eval_keyboard_gamepad_input = get_relative_call(ff8_externals.engine_eval_process_input, 0x16);
+	ff8_externals.has_keyboard_gamepad_input = get_relative_call(ff8_externals.engine_eval_process_input, 0x1B);
+	ff8_externals.engine_gamepad_button_pressed = (BYTE*)get_absolute_value(ff8_externals.has_keyboard_gamepad_input, 0x22);
+	ff8_externals.engine_mapped_buttons = (DWORD*)get_absolute_value(ff8_externals.engine_eval_keyboard_gamepad_input, 0xB9);
 
-	common_externals.get_keyboard_state = get_relative_call(ff8_externals.sub_467D10, 0x11);
+	common_externals.get_keyboard_state = get_relative_call(ff8_externals.engine_eval_keyboard_gamepad_input, 0x11);
 	ff8_externals.dinput_init_gamepad = get_relative_call(ff8_externals.sub_468810, 0xB4);
-	ff8_externals.dinput_sub_4692B0 = get_relative_call(ff8_externals.sub_467D10, 0x1B);
-	ff8_externals.dinput_gamepad_device = (LPDIRECTINPUTDEVICE8A)get_absolute_value(ff8_externals.dinput_sub_4692B0, 0x16);
-	ff8_externals.dinput_gamepad_state = (LPDIJOYSTATE2)get_absolute_value(ff8_externals.dinput_sub_4692B0, 0x1B);
+	ff8_externals.dinput_update_gamepad_status = get_relative_call(ff8_externals.engine_eval_keyboard_gamepad_input, 0x1B);
+	ff8_externals.dinput_gamepad_device = (LPDIRECTINPUTDEVICE8A)get_absolute_value(ff8_externals.dinput_update_gamepad_status, 0x16);
+	ff8_externals.dinput_gamepad_state = (LPDIJOYSTATE2)get_absolute_value(ff8_externals.dinput_update_gamepad_status, 0x1B);
 
 	common_externals.dinput_acquire_keyboard = (int (*)())get_relative_call(common_externals.get_keyboard_state, 0x34);
 	common_externals.keyboard_device = (IDirectInputDeviceA**)get_absolute_value(common_externals.get_keyboard_state, 0x01);
