@@ -118,14 +118,14 @@ bool play_voice(char* field_name, byte window_id, byte dialog_id, byte page_coun
 	char page = 'a' + page_count;
 	if (page > 'z') page = 'z';
 
-	sprintf(name, "%s/%u_%u%c", field_name, window_id, dialog_id, page);
+	sprintf(name, "%s/w%u_%u%c", field_name, window_id, dialog_id, page);
 
 	if (!nxAudioEngine.canPlayVoice(name))
 		sprintf(name, "%s/%u%c", field_name, dialog_id, page);
 
 	if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
 	{
-		sprintf(name, "%s/%u_%u", field_name, window_id, dialog_id);
+		sprintf(name, "%s/w%u_%u", field_name, window_id, dialog_id);
 
 		if (!nxAudioEngine.canPlayVoice(name))
 			sprintf(name, "%s/%u", field_name, dialog_id);
@@ -303,7 +303,7 @@ int opcode_voice_message()
 	{
 		begin_voice();
 	}
-	if (_is_dialog_starting || _is_dialog_paging)
+	else if (_is_dialog_starting || _is_dialog_paging)
 	{
 		if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
 		current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
@@ -355,9 +355,10 @@ int opcode_voice_ask(int unk)
 
 	if (_is_dialog_opening)
 	{
+		opcode_ask_current_option = 0;
 		begin_voice();
 	}
-	if (_is_dialog_starting || _is_dialog_paging)
+	else if (_is_dialog_starting || _is_dialog_paging)
 	{
 		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
 		current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
