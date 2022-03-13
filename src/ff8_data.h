@@ -148,6 +148,7 @@ void ff8_find_externals()
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff8_externals.sub_529FF0, 0x65A);
 	ff8_externals.opcode_effectplay2 = common_externals.execute_opcode_table[0x21];
 	ff8_externals.opcode_mes = common_externals.execute_opcode_table[0x47];
+	ff8_externals.opcode_ask = common_externals.execute_opcode_table[0x4A];
 	ff8_externals.opcode_spuready = common_externals.execute_opcode_table[0x56];
 	ff8_externals.opcode_musicload = common_externals.execute_opcode_table[0xB5];
 	ff8_externals.opcode_crossmusic = common_externals.execute_opcode_table[0xBA];

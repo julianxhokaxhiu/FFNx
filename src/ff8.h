@@ -990,6 +990,7 @@ struct ff8_externals
 	char* music_path;
 	uint32_t opcode_effectplay2;
 	uint32_t opcode_mes;
+	uint32_t opcode_ask;
 	uint32_t opcode_spuready;
 	uint32_t opcode_musicload;
 	uint32_t opcode_crossmusic;
