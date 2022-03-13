@@ -77,8 +77,10 @@ void set_voice_volume()
 	voice_volume = 2.0f + (100 - external_voice_music_fade_volume) / 100.0f;
 }
 
-void begin_voice()
+void begin_voice(byte window_id = 0)
 {
+	current_opcode_message_status[window_id] = opcode_message_status();
+
 	set_voice_volume();
 
 	if (enable_voice_music_fade)
@@ -291,7 +293,6 @@ int opcode_voice_message()
 
 	if (_is_dialog_opening)
 	{
-		current_opcode_message_status[window_id].message_page_count = 0;
 		begin_voice();
 	}
 	if (_is_dialog_starting || _is_dialog_paging)
@@ -328,10 +329,6 @@ int opcode_voice_parse_options(uint8_t window_id, uint8_t dialog_id, uint8_t fir
 
 int opcode_voice_ask(int unk)
 {
-	static byte message_page_count = 0;
-	static WORD message_last_opcode = 0;
-	static WORD message_last_option = 0;
-
 	int ret = opcode_old_ask(unk);
 
 	byte window_id = get_field_parameter<byte>(1);
@@ -340,36 +337,35 @@ int opcode_voice_ask(int unk)
 	char* field_name = get_current_field_name();
 
 	bool _is_dialog_opening = is_dialog_opening(message_current_opcode);
-	bool _is_dialog_starting = is_dialog_starting(message_last_opcode, message_current_opcode);
-	bool _is_dialog_paging = is_dialog_paging(message_last_opcode, message_current_opcode);
-	bool _is_dialog_closing = is_dialog_closing(message_last_opcode, message_current_opcode);
-	bool _is_dialog_closed = is_dialog_closed(message_last_opcode, message_current_opcode);
-	bool _is_dialog_option_changed = (message_last_option != opcode_ask_current_option);
+	bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_paging = is_dialog_paging(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
 
-	if (_is_dialog_paging) message_page_count++;
+	if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
 
 	if (_is_dialog_opening)
 	{
-		message_page_count = 0;
 		begin_voice();
 	}
 	if (_is_dialog_starting || _is_dialog_paging)
 	{
-		play_voice(field_name, window_id, dialog_id, message_page_count);
-		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, message_page_count);
+		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+		current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
 	}
 	else if (_is_dialog_option_changed)
 	{
-		play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
 		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u\n", field_name, window_id, dialog_id, opcode_ask_current_option);
+		play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
 	}
 	else if (_is_dialog_closing)
 	{
 		end_voice(window_id);
 	}
 
-	message_last_option = opcode_ask_current_option;
-	message_last_opcode = message_current_opcode;
+	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
+	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
 
 	return ret;
 }
@@ -692,7 +688,6 @@ int ff8_show_dialog(int window_id, int a2, int a3)
 
 	if (_is_dialog_opening)
 	{
-		current_opcode_message_status[window_id].message_page_count = 0;
 		begin_voice();
 	}
 	else if (_is_dialog_starting || _is_dialog_paging)
@@ -719,18 +714,9 @@ int ff8_show_dialog(int window_id, int a2, int a3)
 		if (!simulate_OK_disabled[window_id]) simulate_OK_button = true;
 	}
 
-	if (_is_dialog_closed)
-	{
-		current_opcode_message_status[window_id].message_last_opcode = 0;
-		current_opcode_message_status[window_id].message_last_transition = 0;
-		current_opcode_message_status[window_id].message_last_option = 0;
-	}
-	else
-	{
-		current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
-		current_opcode_message_status[window_id].message_last_transition = message_current_transition;
-		current_opcode_message_status[window_id].message_last_option = message_current_option;
-	}
+	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
+	current_opcode_message_status[window_id].message_last_transition = message_current_transition;
+	current_opcode_message_status[window_id].message_last_option = message_current_option;
 
 	return state;
 }
