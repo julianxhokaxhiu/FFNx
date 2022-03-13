@@ -551,10 +551,10 @@ struct ff8_win_obj
 	uint32_t field_20;
 	uint32_t state;
 	uint8_t field_28;
-	uint8_t ask_first_line1;
-	uint8_t ask_last_line1;
-	uint8_t ask_first_line2;
-	uint8_t ask_last_line2;
+	uint8_t first_question;
+	uint8_t last_question;
+	uint8_t current_choice_question;
+	uint8_t field_2C;
 	uint8_t field_2D;
 	uint8_t field_2E;
 	uint8_t field_2F;
@@ -1048,6 +1048,7 @@ struct ff8_externals
 	uint32_t field_get_dialog_string;
 	uint32_t set_window_object;
 	ff8_win_obj *windows;
+	BYTE* field_dialog_current_choice;
 	uint32_t sub_470440;
 	uint32_t sub_49ACD0;
 	uint32_t sub_4A0880;
