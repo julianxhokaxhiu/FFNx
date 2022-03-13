@@ -658,6 +658,8 @@ void ff7_display_battle_action_text()
 	}
 }
 
+//=============================================================================
+
 uint8_t *ff8_field_opcode_get_text(uint8_t *msd, int dialog_id)
 {
 	if (trace_all || trace_voice) ffnx_trace("%s: dialog_id=%d\n", __func__, dialog_id);
@@ -720,6 +722,8 @@ int ff8_show_dialog(int window_id, int a2, int a3)
 
 	return state;
 }
+
+//=============================================================================
 
 void voice_init()
 {
