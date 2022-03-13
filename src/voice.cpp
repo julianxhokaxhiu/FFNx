@@ -46,7 +46,15 @@ struct battle_text_aux_data{
 	byte char_id;
 };
 
-struct opcode_message_status {
+struct opcode_message_status
+{
+	opcode_message_status() :
+		message_page_count(0),
+		message_last_opcode(0),
+		is_voice_acting(false),
+		message_last_transition(0),
+		message_last_option(0)
+	{}
 	byte message_page_count = 0;
 	WORD message_last_opcode = 0;
 	bool is_voice_acting = false;
