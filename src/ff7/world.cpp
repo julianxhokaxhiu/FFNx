@@ -28,6 +28,11 @@
 
 std::map<uint32_t, bool> do_decrease_wait_frames;
 
+bool ff7_world_has_old_highwind()
+{
+    return (*ff7_externals.insertedCD) <= 2;
+}
+
 void ff7_world_update_model_movement(int delta_position_x, int delta_position_z)
 {
     int player_model_id = ff7_externals.world_get_player_model_id();
@@ -37,7 +42,7 @@ void ff7_world_update_model_movement(int delta_position_x, int delta_position_z)
     // For Highwind sound
     if(player_model_id == 3)
     {
-        sfx_process_wm_highwind(ff7_externals.world_has_old_highwind_766C33(), (ff7_externals.world_get_current_key_input_status() & 0x20) != 0);
+        sfx_process_wm_highwind(ff7_world_has_old_highwind(), (ff7_externals.world_get_current_key_input_status() & 0x20) != 0);
     }
     // For worldmap footsteps
     else if((player_model_id >= 0 && player_model_id <= 2) || player_model_id == 4 || player_model_id == 19) // Cloud, Tifa, Cid, and Chocobo
