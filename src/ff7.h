@@ -2818,9 +2818,6 @@ struct ff7_externals
 	int (*world_get_player_walkmap_type)();
 	void(*world_sub_753D00)(vector3<short>*, short);
 	void(*world_update_model_movement_762E87)(int, int);
-	uint32_t world_handle_vehicle_sub_7667B2;
-	uint32_t world_enter_vehicle_sub_766574;
-	bool(*world_has_old_highwind_766C33)();
 	world_event_data** world_event_current_entity_ptr_E39AD8;
 	world_event_data** world_event_current_entity_ptr_E3A7CC;
 	int* is_wait_frames_zero_E39BC0;
