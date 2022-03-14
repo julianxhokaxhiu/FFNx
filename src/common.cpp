@@ -2900,19 +2900,23 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 
 		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	}
-	else if (strstr(lpFileName, R"(SAVE\)") != NULL)
+	else if (StrStrIA(lpFileName, R"(SAVE\)") != NULL) // SAVE\SLOTX\saveN or save\chocorpg
 	{
 		CHAR newPath[260]{ 0 };
 		CHAR saveFileName[50]{ 0 };
 
 		// Search for the next character pointer after "SAVE\"
-		const char* pos = strstr(lpFileName, R"(SAVE\)") + 5;
+		const char* pos = StrStrIA(lpFileName, R"(SAVE\)") + 5;
 		strcpy(saveFileName, pos);
 		_strlwr(saveFileName);
-		*(strstr(saveFileName, R"(\)")) = 95;
+		char* posSeparator = strstr(saveFileName, R"(\)");
+		if (posSeparator != NULL)
+		{
+			*posSeparator = '_';
+		}
 		strcat(saveFileName, R"(.ff8)");
 
-		get_userdata_path(newPath, 260, true);
+		get_userdata_path(newPath, sizeof(newPath), true);
 		PathAppendA(newPath, saveFileName);
 
 		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
