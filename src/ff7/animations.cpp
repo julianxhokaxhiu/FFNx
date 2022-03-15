@@ -1142,6 +1142,33 @@ void ff7_battle_move_character_sub_426F58()
     }
 }
 
+void ff7_battle_play_sfx_delayed_427737()
+{
+    constexpr byte cid_id = 0x08;
+    constexpr short cloud_sfx_attack_id = 18;
+
+    byte actor_id = ff7_externals.anim_event_queue[0].attackerID;
+    auto &fn_data = ff7_externals.effect60_array_data[*ff7_externals.effect60_array_idx];
+
+    // Disable bugged battle SFX when Cid is attacking, but SFX ID is cloud's one
+    if(ff7_externals.battle_context->actor_vars[actor_id].index == cid_id && fn_data.field_6 == cloud_sfx_attack_id)
+    {
+        fn_data.field_0 = 0xFFFF;
+    }
+    else
+    {
+        if ( fn_data.n_frames )
+        {
+            fn_data.n_frames--;
+        }
+        else
+        {
+            ff7_externals.battle_play_sfx_sound_430D32(fn_data.field_6, *ff7_externals.field_battle_byte_BE1170, 0);
+            fn_data.field_0 = 0xFFFF;
+        }
+    }
+}
+
 void ff7_ifrit_movement_596702()
 {
     auto &effect_data = ff7_externals.effect100_array_data[*ff7_externals.effect100_array_idx];
@@ -1752,6 +1779,8 @@ void ff7_battle_animations_hook_init()
 
     patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x5B, battle_frame_multiplier);
     patch_divide_code<WORD>(ff7_externals.battle_sub_5BCD42 + 0x6E, battle_frame_multiplier);
+
+    replace_function(ff7_externals.battle_sub_427737, ff7_battle_play_sfx_delayed_427737);
 
     // Tifa slots speed patch (bitwise and with 0x7 changed to 0x3)
     patch_code_byte((uint32_t)ff7_externals.display_tifa_slots_handler_6E3135 + 0x168, 0x3);

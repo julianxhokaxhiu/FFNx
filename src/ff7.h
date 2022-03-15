@@ -2636,6 +2636,7 @@ struct ff7_externals
 	uint32_t battle_sub_5BD050;
 	uint32_t battle_smoke_move_handler_5BE4E2;
 	uint32_t battle_sub_42A72D;
+	void (*battle_play_sfx_sound_430D32)(uint16_t, short, char);
 	uint32_t run_tifa_limit_effects;
 	uint32_t tifa_limit_1_2_sub_4E3D51;
 	uint32_t tifa_limit_2_1_sub_4E48D4;
@@ -2739,6 +2740,7 @@ struct ff7_externals
 	byte* field_byte_DC0E11;
 	byte* field_battle_byte_BF2E1C;
 	byte* field_battle_byte_BE10B4;
+	byte* field_battle_byte_BE1170;
 	short* resting_Y_array_data;
 	WORD* field_odin_frames_AEEC14;
 	palette_extra* palette_extra_data_C06A00;
