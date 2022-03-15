@@ -793,6 +793,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t battle_sub_5BE490 = get_relative_call(ff7_externals.run_animation_script, 0x3E6E);
 	ff7_externals.battle_smoke_move_handler_5BE4E2 = get_absolute_value(battle_sub_5BE490, 0x5);
 	ff7_externals.battle_sub_6CE81E = (void(*)())get_relative_call(ff7_externals.battle_sub_42D808, 0x117);
+	ff7_externals.battle_play_sfx_sound_430D32 = (void(*)(uint16_t, short, char))get_relative_call(ff7_externals.battle_sub_427737, 0x35);
+	ff7_externals.field_battle_byte_BE1170 = (byte*)get_absolute_value(ff7_externals.battle_sub_427737, 0x1E);
 
 	// Limit breaks
 	uint32_t battle_sub_4E1627 = get_relative_call(ff7_externals.run_animation_script, 0x3848);
