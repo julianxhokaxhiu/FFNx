@@ -52,6 +52,7 @@
 #include "achievement.h"
 
 #include "ff8/vram.h"
+#include "ff8/vibration.h"
 
 bool proxyWndProc = false;
 
@@ -677,6 +678,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				if (ff8)
 				{
 					vram_init();
+					vibration_init();
 				}
 
 				// enable verbose logging for FFMpeg

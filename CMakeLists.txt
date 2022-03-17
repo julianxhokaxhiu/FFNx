@@ -83,6 +83,7 @@ set(RELEASE_NAME "FFNx")
 if(_DLL_VERSION STREQUAL "devel" OR _DLL_VERSION MATCHES "-")
   set(_DLL_RCVERSION "0,0,0,0")
   set(_DLL_RCSTRVERSION "0.0.0.0")
+  set(PATCH_COLLECT_DUPLICATES 1)
 else()
   string(REPLACE "." "," _DLL_RCVERSION ${_DLL_VERSION})
   set(_DLL_RCSTRVERSION ${_DLL_VERSION})
@@ -142,6 +143,11 @@ target_compile_options(
   PRIVATE /Zc:strictStrings-
   PRIVATE /Qpar
 )
+if(PATCH_COLLECT_DUPLICATES)
+  target_compile_definitions(${RELEASE_NAME}
+    PRIVATE PATCH_COLLECT_DUPLICATES
+  )
+endif()
 target_compile_features(${RELEASE_NAME}
   PRIVATE cxx_std_20
 )

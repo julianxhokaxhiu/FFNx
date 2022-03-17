@@ -563,6 +563,55 @@ struct ff8_win_obj
 	uint32_t callback2;
 };
 
+struct ff8_gamepad_vibration_state_entry {
+	int8_t field_0[20];
+};
+
+struct ff8_gamepad_vibration_state {
+	uint8_t field_0;
+	uint8_t field_1;
+	uint8_t field_2;
+	uint8_t field_3;
+	uint16_t field_4;
+	uint8_t right_motor_speed;
+	uint8_t left_motor_speed;
+	uint8_t field_8;
+	uint8_t field_9;
+	uint8_t vibration_active;
+	uint8_t vibration_capable;
+	uint32_t field_C;
+	uint32_t field_10;
+	uint32_t field_14;
+	uint8_t field_18;
+	uint8_t field_19;
+	uint8_t field_1A;
+	uint8_t vibrate_option_enabled;
+	ff8_gamepad_vibration_state_entry entries[8];
+	uint32_t field_BC;
+	uint32_t field_C0;
+};
+
+struct ff8_vibrate_motor_struc
+{
+	uint8_t *data_start;
+	uint8_t *data_end;
+	int16_t counter;
+	uint16_t data_size;
+	uint8_t enabled;
+	uint8_t padding_D;
+	uint8_t padding_E;
+	uint8_t padding_F;
+};
+
+struct ff8_vibrate_struc
+{
+	ff8_vibrate_motor_struc sub_struc_left;
+	ff8_vibrate_motor_struc sub_struc_right;
+	uint16_t field_20;
+	uint8_t intensity;
+	uint8_t field_23;
+};
+
 struct ff8_game_obj
 {
 	uint32_t do_quit;
@@ -839,7 +888,6 @@ struct ff8_externals
 	uint32_t nvidia_hack2;
 	struct sprite_viewport *menu_viewport;
 	uint32_t main_loop;
-	uint32_t cardgame_mainloop;
 	uint32_t sub_47CCB0;
 	uint32_t sub_534640;
 	uint32_t sub_4972A0;
@@ -872,7 +920,6 @@ struct ff8_externals
 	uint32_t sub_468BD0;
 	uint32_t pubintro_main_loop;
 	uint32_t credits_main_loop;
-	uint32_t sub_52F300;
 	DWORD* credits_loop_state;
 	DWORD* credits_counter;
 	uint32_t sub_470520;
@@ -929,7 +976,6 @@ struct ff8_externals
 	DWORD* engine_mapped_buttons;
 	uint32_t pubintro_enter_main;
 	uint32_t draw_movie_frame;
-	uint32_t sub_529FF0;
 	struct ff8_movie_obj *movie_object;
 	uint32_t initialize_sound;
 	int (*sub_5304B0)();
@@ -982,9 +1028,6 @@ struct ff8_externals
 	uint32_t sub_46DDC0;
 	uint32_t start;
 	uint32_t battle_main_loop;
-	uint32_t is_window_active;
-	uint32_t is_window_active_sub1;
-	uint32_t is_window_active_sub2;
 	void (*show_vram_window)();
 	void (*refresh_vram_window)();
 	char* music_path;
@@ -1054,6 +1097,15 @@ struct ff8_externals
 	uint32_t sub_4A0880;
 	uint32_t sub_4A0C00;
 	char(*show_dialog)(int32_t, uint32_t, int16_t);
+	int(*pause_menu_with_vibration)(int);
+	int(*pause_menu)(int);
+	uint32_t init_pause_menu;
+	uint32_t get_vibration_capability;
+	uint32_t vibration_apply;
+	int(*get_keyon)(int, int);
+	uint32_t set_vibration;
+	ff8_gamepad_vibration_state *gamepad_vibration_states;
+	ff8_vibrate_struc *vibration_objects;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

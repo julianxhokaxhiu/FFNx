@@ -23,7 +23,7 @@
 
 Gamepad gamepad;
 
-int Gamepad::GetPort()
+int Gamepad::GetPort() const
 {
     return cId + 1;
 }
@@ -31,6 +31,11 @@ int Gamepad::GetPort()
 XINPUT_GAMEPAD* Gamepad::GetState()
 {
     return &state.Gamepad;
+}
+
+void Gamepad::SetState(const XINPUT_VIBRATION &v)
+{
+    vibration = v;
 }
 
 bool Gamepad::CheckConnection()
@@ -92,7 +97,26 @@ bool Gamepad::Refresh()
     return false;
 }
 
-bool Gamepad::IsPressed(WORD button)
+bool Gamepad::Send()
+{
+    if (cId == -1)
+        CheckConnection();
+
+    if (cId != -1)
+    {
+        if (XInputSetState(cId, &vibration) != ERROR_SUCCESS)
+        {
+            cId = -1;
+            return false;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+bool Gamepad::IsPressed(WORD button) const
 {
     return (state.Gamepad.wButtons & button) != 0;
 }

@@ -18,9 +18,20 @@
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
+#include "patch.h"
 
 #include <windows.h>
 #include <stdint.h>
+
+#include "crashdump.h"
+
+#ifdef PATCH_COLLECT_DUPLICATES
+#	include <unordered_set>
+std::unordered_set<uint32_t> offsets;
+std::unordered_set<uint32_t> addresses;
+uint32_t min_addr = 0;
+uint32_t max_addr = 0;
+#endif
 
 uint32_t replace_counter = 0;
 uint32_t replaced_functions[512 * 3];
@@ -89,13 +100,74 @@ uint32_t replace_call_function(uint32_t offset, void* func)
 	return replace_counter - 3;
 }
 
+#ifdef PATCH_COLLECT_DUPLICATES
+void check_boundaries(const char *name, uint32_t base, uint32_t offset, uint32_t address)
+{
+	if (min_addr == 0)
+	{
+		// Get EXE boundaries
+		FFNxStackWalker sw(true);
+		if (sw.LoadModules()) {
+			min_addr = sw.getBaseAddress();
+			max_addr = min_addr + sw.getSize();
+		}
+	}
+
+	if (min_addr != 0 && (base + offset < min_addr || base + offset > max_addr))
+	{
+		ffnx_warning("%s: Out of bounds offset at 0x%X + 0x%X (0x%X) (min: 0x%X, max: 0x%X)\n", name, base, offset, base + offset, min_addr, max_addr);
+	}
+
+	if (min_addr != 0 && (address < min_addr || address > max_addr))
+	{
+		ffnx_warning("%s: Out of bounds address at 0x%X + 0x%X (0x%X): 0x%X (min: 0x%X, max: 0x%X)\n", name, base, offset, base + offset, address, min_addr, max_addr);
+	}
+}
+
+void collect_addresses(const char *name, uint32_t base, uint32_t offset, uint32_t address)
+{
+	check_boundaries(name, base, offset, address);
+
+	if (offsets.contains(base + offset))
+	{
+		ffnx_warning("%s: Offset used before 0x%X + 0x%X (0x%X)\n", name, base, offset, base + offset);
+	}
+
+	if (addresses.contains(address))
+	{
+		ffnx_warning("%s: Address used before 0x%X + 0x%X (0x%X): 0x%X\n", name, base, offset, base + offset, address);
+	}
+
+	offsets.insert(base + offset);
+	addresses.insert(address);
+}
+#endif
+
 uint32_t get_relative_call(uint32_t base, uint32_t offset)
 {
-	return base + *((uint32_t *)(base + offset + 1)) + offset + 5;
+	uint8_t instruction = *((uint8_t *)(base + offset));
+
+	if (instruction != 0xE8 && instruction != 0xE9)
+	{
+		// Warning to diagnose errors faster
+		ffnx_warning("%s: Unrecognized call/jmp instruction at 0x%X + 0x%X (0x%X): 0x%X\n", __func__, base, offset, base + offset, instruction);
+	}
+
+	uint32_t ret = base + *((uint32_t *)(base + offset + 1)) + offset + 5;
+
+#ifdef PATCH_COLLECT_DUPLICATES
+	collect_addresses(__func__, base, offset, ret);
+#endif
+
+	return ret;
 }
 
 uint32_t get_absolute_value(uint32_t base, uint32_t offset)
 {
+#ifdef PATCH_COLLECT_DUPLICATES
+	collect_addresses(__func__, base, offset, *((uint32_t *)(base + offset)));
+#endif
+
 	return *((uint32_t *)(base + offset));
 }
 
