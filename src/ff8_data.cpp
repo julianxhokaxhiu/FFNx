@@ -52,10 +52,10 @@ void ff8_find_externals()
 
 	ff8_set_main_loop(MODE_CREDITS, ff8_externals.credits_main_loop);
 
-	ff8_externals.sub_52F300 = get_relative_call(ff8_externals.credits_main_loop, 0xBF);
+	ff8_externals.load_credits_image = get_relative_call(ff8_externals.credits_main_loop, 0xBF);
 
-	ff8_externals.credits_loop_state = (DWORD*)get_absolute_value(ff8_externals.sub_52F300, 0x7);
-	ff8_externals.credits_counter = (DWORD *)get_absolute_value(ff8_externals.sub_52F300, 0x59);
+	ff8_externals.credits_loop_state = (DWORD*)get_absolute_value(ff8_externals.load_credits_image, 0x7);
+	ff8_externals.credits_counter = (DWORD *)get_absolute_value(ff8_externals.load_credits_image, 0x59);
 	ff8_externals.sub_470520 = get_absolute_value(ff8_externals.credits_main_loop, 0xE2);
 	ff8_externals.sub_4A24B0 = get_absolute_value(ff8_externals.sub_470520, 0x2B);
 	ff8_externals.sub_470630 = get_absolute_value(ff8_externals.sub_4A24B0, 0xE4);
@@ -83,14 +83,10 @@ void ff8_find_externals()
 	ff8_set_main_loop(MODE_SWIRL, ff8_externals.swirl_main_loop);
 
 	ff8_externals.battle_main_loop = get_absolute_value(ff8_externals.swirl_main_loop, 0x50);
-	ff8_externals.is_window_active = get_relative_call(ff8_externals.battle_main_loop, 0x15B);
-	ff8_externals.is_window_active_sub1 = get_relative_call(ff8_externals.is_window_active, 0x16);
-	ff8_externals.is_window_active_sub2 = get_relative_call(ff8_externals.is_window_active, 0x1B);
 
 	ff8_set_main_loop(MODE_BATTLE, ff8_externals.battle_main_loop);
 
-	ff8_externals.cardgame_mainloop = get_absolute_value(ff8_externals.main_loop, 0x340);
-	ff8_externals.sub_47CCB0 = get_relative_call(ff8_externals.cardgame_mainloop, 0x1B3);
+	ff8_externals.sub_47CCB0 = get_relative_call(ff8_externals.battle_main_loop, 0x1B3);
 	ff8_externals.sub_534640 = get_relative_call(ff8_externals.sub_47CCB0, 0xF1);
 	ff8_externals.sub_4972A0 = get_relative_call(ff8_externals.sub_534640, 0x51);
 	ff8_externals.load_fonts = get_relative_call(ff8_externals.sub_4972A0, 0x16);
@@ -117,16 +113,25 @@ void ff8_find_externals()
 	ff8_externals.battle_trigger_field = ff8_externals.sub_47CA90 + 0x15;
 	ff8_externals.sub_52B3A0 = (int (*)())get_relative_call(ff8_externals.battle_trigger_field, 0);
 	ff8_externals.check_game_is_paused = (int32_t(*)(int32_t))get_relative_call(ff8_externals.field_main_loop, 0x16C);
+	ff8_externals.pause_menu = (int(*)(int))get_relative_call(uint32_t(ff8_externals.check_game_is_paused), 0x88);
+	ff8_externals.init_pause_menu = get_relative_call(uint32_t(ff8_externals.check_game_is_paused), 0xE2);
+	ff8_externals.pause_menu_with_vibration = (int(*)(int))(ff8_externals.init_pause_menu - 0x290);
+	ff8_externals.vibration_apply = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xB4);
+	ff8_externals.get_keyon = (int(*)(int, int))get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xC9);
+	ff8_externals.get_vibration_capability = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xE3);
+	ff8_externals.set_vibration = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0x26A);
+	ff8_externals.gamepad_vibration_states = (ff8_gamepad_vibration_state *)(get_absolute_value(ff8_externals.get_vibration_capability, 0xE + 3) - 0xB);
+	ff8_externals.vibration_objects = (ff8_vibrate_struc *)get_absolute_value(ff8_externals.set_vibration, 0x2 + 1);
 
 	common_externals.update_movie_sample = get_relative_call(ff8_externals.sub_4767B0, 0x5A5);
 
 	ff8_externals.draw_movie_frame = get_relative_call(ff8_externals.sub_4767B0, 0xB84);
 	common_externals.stop_movie = get_relative_call(common_externals.update_movie_sample, 0x3E2);
 
-	ff8_externals.sub_529FF0 = get_relative_call(ff8_externals.sub_4767B0, 0x14E);
-	common_externals.get_movie_frame = get_relative_call(ff8_externals.sub_529FF0, 0x26);
+	common_externals.update_field_entities = get_relative_call(ff8_externals.sub_4767B0, 0x14E);
+	common_externals.get_movie_frame = get_relative_call(common_externals.update_field_entities, 0x26);
 
-	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff8_externals.sub_529FF0, 0x65A);
+	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x65A);
 	ff8_externals.opcode_effectplay2 = common_externals.execute_opcode_table[0x21];
 	ff8_externals.opcode_mes = common_externals.execute_opcode_table[0x47];
 	ff8_externals.opcode_ask = common_externals.execute_opcode_table[0x4A];
@@ -195,11 +200,10 @@ void ff8_find_externals()
 
 	ff8_externals.sub_559910 = get_relative_call(ff8_externals.swirl_main_loop, 0x1A);
 
-	ff8_externals.swirl_sub_56D1D0 = get_relative_call(ff8_externals.cardgame_mainloop, 0x285);
+	ff8_externals.swirl_sub_56D1D0 = get_relative_call(ff8_externals.battle_main_loop, 0x285);
 	ff8_externals.swirl_sub_56D390 = get_relative_call(ff8_externals.swirl_sub_56D1D0, 0x2A);
 	ff8_externals.swirl_texture1 = (ff8_graphics_object **)get_absolute_value(ff8_externals.swirl_sub_56D1D0, 0x1);
 
-	ff8_externals.load_credits_image = get_relative_call(ff8_externals.credits_main_loop, 0xBF);
 	ff8_externals.sub_52FE80 = get_relative_call(ff8_externals.load_credits_image, 0xA4);
 	ff8_externals.sub_45D610 = get_relative_call(ff8_externals.sub_52FE80, 0x90);
 	ff8_externals.sub_45D080 = get_relative_call(ff8_externals.sub_45D610, 0x5);
@@ -422,8 +426,6 @@ void ff8_find_externals()
 	ff8_externals.sub_558D70 = get_relative_call(ff8_externals.sub_54B460, 0x3F3);
 
 	ff8_externals.sub_470250 = get_relative_call(ff8_externals.main_loop, 0x6E7); // 470250
-	common_externals.update_field_entities = get_relative_call(ff8_externals.sub_4767B0, 0x14E); // 0x529FF0
-	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x65A);
 
 	common_externals.current_field_id = (WORD*)get_absolute_value(ff8_externals.main_loop, 0x21F); // 0x1CD2FC0
 	common_externals.current_field_name = (char*)get_absolute_value(ff8_externals.opcode_effectplay2, 0x75);

@@ -35,6 +35,7 @@
 #include "gamehacks.h"
 #include "ff8_data.h"
 #include "ff8/file.h"
+#include "ff8/vibration.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -433,8 +434,8 @@ int ff8_is_window_active()
 
 	if (gameHwnd == GetActiveWindow())
 	{
-		((voidfn*)ff8_externals.is_window_active_sub1)();
-		((voidfn*)ff8_externals.is_window_active_sub2)();
+		((voidfn*)ff8_externals.engine_eval_keyboard_gamepad_input)();
+		((voidfn*)ff8_externals.has_keyboard_gamepad_input)();
 	}
 
 	return 0;
@@ -561,7 +562,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	if (ff8_ssigpu_debug)
 		ff8_externals.show_vram_window();
 
-	replace_function(ff8_externals.is_window_active, ff8_is_window_active);
+	replace_function(ff8_externals.engine_eval_process_input, ff8_is_window_active);
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
 
@@ -659,7 +660,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call_function(ff8_externals.battle_trigger_worldmap, ff8_toggle_battle_worldmap);
 
 	// Allow squaresoft logo skip by pressing a button
-	patch_code_byte(ff8_externals.sub_52F300 + 0x5FD, 0); // if (intro_step >= 0) ...
+	patch_code_byte(ff8_externals.load_credits_image + 0x5FD, 0); // if (intro_step >= 0) ...
 
 	if (!steam_edition) {
 		// Look again with the DataDrive specified in the register

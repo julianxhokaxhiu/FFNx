@@ -60,12 +60,21 @@ void world_init()
 		playerPosX = (DWORD*)get_absolute_value(ff8_externals.sub_53BB90, 0x4C);
 		playerPosZ = playerPosX+1;
 		playerPosY = playerPosX+2;
-		collisionTriangleGroundType = (BYTE*)get_absolute_value(ff8_externals.sub_53BB90, 0x63C) + 0x26;
+		BYTE *wm_struct;
+		if(version == VERSION_FF8_12_US || version == VERSION_FF8_12_US_NV || version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
+		{
+			wm_struct = (BYTE*)get_absolute_value(ff8_externals.sub_53C750, 0x633);
+			bCollisionEnabled = (DWORD*)get_absolute_value(ff8_externals.sub_53E6B0, 0x4);
+		}
+		else
+		{
+			wm_struct = (BYTE*)get_absolute_value(ff8_externals.sub_53C750, 0x649);
+			bCollisionEnabled = (DWORD*)get_absolute_value(ff8_externals.sub_53E6B0, 0x1);
+		}
+		collisionTriangleGroundType = wm_struct + 0x26;
 		collisionTriangleTextureFlag = collisionTriangleGroundType + 1;
 
-		currentCollideTriangle = (DWORD*)((BYTE*)get_absolute_value(ff8_externals.sub_53C750, 0x633) + 0x1C);
-
-		bCollisionEnabled = (DWORD*)get_absolute_value(ff8_externals.sub_53E6B0, 4);
+		currentCollideTriangle = (DWORD*)(wm_struct + 0x1C);
 	}
 }
 

@@ -1100,8 +1100,8 @@ void music_init()
 			// Called by game credits
 			replace_function(ff8_externals.set_midi_volume, set_music_volume);
 			// Fix intro credits volume fadeout time
-			replace_call(ff8_externals.sub_52F300 + 0x5DF, ff8_set_music_volume_intro_credits);
-			replace_call(ff8_externals.sub_52F300 + 0x5C2, noop_a1);
+			replace_call(ff8_externals.load_credits_image + 0x5DF, ff8_set_music_volume_intro_credits);
+			replace_call(ff8_externals.load_credits_image + 0x5C2, noop_a1);
 			// Worldmap: Replace stop and play music by a cross fade on leaving cities
 			replace_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE + 0x2, noop_a2); // set volume to 0
 			replace_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE + 0x8, noop_a1); // stop music

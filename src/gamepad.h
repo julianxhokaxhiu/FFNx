@@ -31,6 +31,7 @@ class Gamepad
 private:
     int cId;
     XINPUT_STATE state;
+    XINPUT_VIBRATION vibration;
 
     float deadzoneX;
     float deadzoneY;
@@ -46,11 +47,15 @@ public:
     float leftTrigger;
     float rightTrigger;
 
-    int  GetPort();
+    int  GetPort() const;
     XINPUT_GAMEPAD* GetState();
+    void SetState(const XINPUT_VIBRATION &vibration);
     bool CheckConnection();
+    // Get state from remote device
     bool Refresh();
-    bool IsPressed(WORD);
+    // Send vibration state to remote device
+    bool Send();
+    bool IsPressed(WORD) const;
 };
 
 extern Gamepad gamepad;
