@@ -20,7 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
+#include "ff8_data.h"
 
 #include "patch.h"
 
