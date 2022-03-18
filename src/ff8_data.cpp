@@ -24,25 +24,6 @@
 
 #include "patch.h"
 
-// FF8 game mode definitions
-static struct game_mode ff8_modes[] = {
-	{FF8_MODE_CREDITS,       "MODE_CREDITS",       MODE_CREDITS,       true },
-	{FF8_MODE_FIELD,         "MODE_FIELD",         MODE_FIELD,         true },
-	{FF8_MODE_WORLDMAP,      "MODE_WORLDMAP",      MODE_WORLDMAP,      true },
-	{FF8_MODE_SWIRL,         "MODE_SWIRL",         MODE_SWIRL,         true },
-	{FF8_MODE_AFTER_BATTLE,  "MODE_AFTER_BATTLE",  MODE_AFTER_BATTLE,  true },
-	{FF8_MODE_5,             "MODE_5",             MODE_UNKNOWN,       true },
-	{FF8_MODE_MENU,          "MODE_MENU",          MODE_MENU,          true },
-	{FF8_MODE_7,             "MODE_7",             MODE_UNKNOWN,       true },
-	{FF8_MODE_CARDGAME,      "MODE_CARDGAME",      MODE_CARDGAME,      true },
-	{FF8_MODE_9,             "MODE_9",             MODE_UNKNOWN,       true },
-	{FF8_MODE_TUTO,          "MODE_TUTO",          MODE_UNKNOWN,       true },
-	{FF8_MODE_11,            "MODE_11",            MODE_UNKNOWN,       true },
-	{FF8_MODE_INTRO,         "MODE_INTRO",         MODE_INTRO,         true },
-	{FF8_MODE_100,           "MODE_100",           MODE_UNKNOWN,       true },
-	{FF8_MODE_BATTLE,        "MODE_BATTLE",        MODE_BATTLE,        true },
-};
-
 void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 {
 	uint32_t i;
