@@ -101,6 +101,7 @@ void ff8_find_externals()
 		ff8_externals.field_main_loop = get_absolute_value(ff8_externals.main_loop, 0x144);
 		common_externals.current_field_id = (WORD*)get_absolute_value(ff8_externals.main_loop, 0x21F);
 		ff8_externals.worldmap_enter_main = get_absolute_value(ff8_externals.main_loop, 0x2C0);
+		ff8_externals.worldmap_main_loop = get_absolute_value(ff8_externals.main_loop, 0x2D0);
 		ff8_externals.battle_main_loop = get_absolute_value(ff8_externals.main_loop, 0x340);
 		// Search battle sound function to find play/stop midi related methods
 		ff8_externals.sm_battle_sound = get_relative_call(ff8_externals.main_loop, 0x487);
@@ -400,8 +401,7 @@ void ff8_find_externals()
 	ff8_externals.ssigpu_init = get_relative_call(ff8_externals.sub_45B460, 0x26);
 	ff8_externals.d3dcaps = (uint32_t *)get_absolute_value(ff8_externals.ssigpu_init, 0x6C);
 
-	if(version == VERSION_FF8_12_US || version == VERSION_FF8_12_US_NV
-		|| version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
+	if(version == VERSION_FF8_12_US || version == VERSION_FF8_12_US_NV || version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
 	{
 		ff8_externals.worldmap_sub_53F310_loc_53F7EE = ff8_externals.worldmap_sub_53F310 + 0x4DE;
 
