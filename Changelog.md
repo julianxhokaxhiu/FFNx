@@ -4,15 +4,27 @@
 
 ## Common
 
-- TBD
+- Added the ability to disable a track by name in External Music ( https://github.com/julianxhokaxhiu/FFNx/pull/318 )
 
 ## FF7
 
 - New Auto-Attack GameHack ( https://github.com/julianxhokaxhiu/FFNx/pull/314 )
+- New External Music feature: sync to start a track in sync with the previous one ( https://github.com/julianxhokaxhiu/FFNx/pull/318 )
+- Various External Music improvements, including the ability to customize a boss battle music by battle scene ID, and to customize minigame music ( https://github.com/julianxhokaxhiu/FFNx/pull/318 + https://github.com/julianxhokaxhiu/FFNx/pull/334 )
+- New special feature to play the music from the introduction via External Music, and not via the movie ( https://github.com/julianxhokaxhiu/FFNx/pull/337 )
+- New audio layer to replace audio from movies ( https://github.com/julianxhokaxhiu/FFNx/pull/343 )
 
 ## FF8
 
-- TBD
+- Added vibration feature ( https://github.com/julianxhokaxhiu/FFNx/pull/415 )
+- New voice audio layer to dub the game ( https://github.com/julianxhokaxhiu/FFNx/pull/412 )
+- Added new supported modules (intro credits and cdcheck) to replace textures with DDS or PNG files ( https://github.com/julianxhokaxhiu/FFNx/pull/375 )
+- New Direct Mode feature for FF8 ( https://github.com/julianxhokaxhiu/FFNx/pull/405 )
+- Added support for japanese 1.02 (nvidia and non-nvidia) version of the game ( https://github.com/julianxhokaxhiu/FFNx/pull/417 )
+- Fixed crash in the Chocobo World menu for the Steam version ( https://github.com/julianxhokaxhiu/FFNx/pull/414 )
+- Fixed chocobo world Cloud save signature ( https://github.com/julianxhokaxhiu/FFNx/pull/330 )
+- Various fixes for the External Music feature ( https://github.com/julianxhokaxhiu/FFNx/pull/330 )
+- Fixed crash using debug tools on non-US version of the game ( https://github.com/julianxhokaxhiu/FFNx/pull/323 )
 
 # 1.10.1
 

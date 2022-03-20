@@ -40,6 +40,7 @@ FFNx today in a nutshell:
 - Steam savegame preservation ( you will no more loose saves created with FFNx! )
 - XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
 - Native speedhack support!
+- External music to replace MIDIs support!
 - The game will continue to run when not in focus in Window mode
 
 ### FF7
@@ -67,6 +68,9 @@ FFNx today in a nutshell:
 - Analogue controls using the full axis of your left analog stick
 
 ### FF8
+- Vibration support!
+- **Voice acting**!
+- Maki's patch for Worldmap included
 - Enable the VRAM debug window while playing in order to see how the engine uploads textures
 
 ## As a modder
