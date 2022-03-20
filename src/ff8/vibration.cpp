@@ -23,16 +23,33 @@
 #include "../ff8.h"
 #include "../log.h"
 #include "../gamepad.h"
+#include "../joystick.h"
 #include "../patch.h"
 
 int previous_left = 0;
 int previous_right = 0;
+DWORD max_vibration_force = 0;
 
 int ff8_vibrate_capability(int port)
 {
+	bool ret = false;
+
 	if (trace_all) ffnx_trace("%s port=%d\n", __func__, port);
 
-	return xinput_connected && gamepad.GetPort() > 0;
+	if (xinput_connected)
+	{
+		ret = gamepad.GetPort() > 0;
+
+		if (ret) max_vibration_force = UINT16_MAX;
+	}
+	else
+	{
+		ret = joystick.CheckConnection() && joystick.HasForceFeedback();
+
+		if (ret) max_vibration_force = joystick.GetMaxVibration();
+	}
+
+	return ret;
 }
 
 int ff8_game_is_paused(int callback)
@@ -59,29 +76,29 @@ int ff8_game_is_paused(int callback)
 void apply_vibrate_calc(char port, int left, int right)
 {
 	ff8_gamepad_vibration_state *gamepad_state = ff8_externals.gamepad_vibration_states;
-	ff8_vibrate_struc *vibration_objects = ff8_externals.vibration_objects;
-	XINPUT_VIBRATION vibration = XINPUT_VIBRATION();
+	//ff8_vibrate_struc *vibration_objects = ff8_externals.vibration_objects;
 
-	int enabled = gamepad_state[port].vibrate_option_enabled;
+	if (left < 0) left = 0;
+	if (right < 0) right = 0;
 
-	if (left >= 0)
-	{
-		gamepad_state[port & 1].left_motor_speed = left;
-		vibration.wLeftMotorSpeed = left * 65535 / 255;
-	}
-	if (right >= 0)
-	{
-		gamepad_state[port & 1].right_motor_speed = right;
-		vibration.wRightMotorSpeed = right * 65535 / 255;
-	}
-	gamepad_state[port & 1].vibration_active = 1;
+	gamepad_state[port & 0x1].vibration_active = 1;
+	gamepad_state[port & 0x1].left_motor_speed = left;
+	gamepad_state[port & 0x1].right_motor_speed = right;
 
-	if (enabled == 255 && (previous_left != left || previous_right != right))
+	if (gamepad_state[port].vibrate_option_enabled == 255 && (previous_left != left || previous_right != right))
 	{
+		XINPUT_VIBRATION vibration = XINPUT_VIBRATION();
+		vibration.wLeftMotorSpeed = left * max_vibration_force / 255;
+		vibration.wRightMotorSpeed = right * max_vibration_force / 255;
+
 		if (xinput_connected)
 		{
 			gamepad.SetState(vibration);
 			gamepad.Send();
+		}
+		else
+		{
+			joystick.Vibrate(vibration.wLeftMotorSpeed, vibration.wRightMotorSpeed);
 		}
 	}
 

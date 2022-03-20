@@ -31,10 +31,12 @@
 class Joystick
 {
 private:
-  LPDIRECTINPUT8 dev = nullptr;                   // dinput interface
-  LPDIRECTINPUTDEVICE8 gameController = nullptr;  // the actual joystick device
-  DIDEVCAPS caps;                                 // the device capabilities
-  DIJOYSTATE2 currentState;			                  // the state of the joystick in the current frame
+  LPDIRECTINPUT8 dev = nullptr;                          // dinput interface
+  LPDIRECTINPUTDEVICE8 gameController = nullptr;         // the actual joystick device
+  LPDIRECTINPUTEFFECT  gameControllerEffect = nullptr;   // force feedback effect object
+  DIDEVICEOBJECTINSTANCE gameControllerInfo;             // the device object info
+  DIDEVCAPS caps;                                        // the device capabilities
+  DIJOYSTATE2 currentState;			                         // the state of the joystick in the current frame
 
   BOOL enumerateGameControllers(LPCDIDEVICEINSTANCE devInst);
   std::vector<LPDIRECTINPUTDEVICE8> gameControllers;	// a vector of all available game controllers
@@ -44,14 +46,19 @@ private:
   static BOOL CALLBACK staticEnumerateGameControllers(LPCDIDEVICEINSTANCE devInst, LPVOID pvRef);
   static BOOL CALLBACK staticSetGameControllerProperties(LPCDIDEVICEOBJECTINSTANCE devObjInst, LPVOID pvRef);
 
+  BOOL gameControllerSupportsVibration = false;
+
 public:
   LPDIJOYSTATE2 GetState();
   bool CheckConnection();
   bool Refresh();
   bool HasAnalogTriggers();
+  bool HasForceFeedback();
   void Clean();
+  void Vibrate(WORD leftMotorSpeed, WORD rightMotorSpeed);
 
   LONG GetDeadZone(float percent);
+  DWORD GetMaxVibration();
 };
 
 extern Joystick joystick;

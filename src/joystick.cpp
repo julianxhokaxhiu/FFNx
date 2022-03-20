@@ -108,9 +108,18 @@ bool Joystick::CheckConnection()
 
     gameControllers.clear();
 
-    // enumerate all available game controllers
-    if (FAILED(dev->EnumDevices(DI8DEVCLASS_GAMECTRL, &staticEnumerateGameControllers, this, DIEDFL_ATTACHEDONLY)))
+    // enumerate all available game controllers. Attempt to fetch the ones that support force feedback
+    if (FAILED(dev->EnumDevices(DI8DEVCLASS_GAMECTRL, &staticEnumerateGameControllers, this, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK)))
       return false;
+
+    // If the collection is empty it means the API call was successful but no device was found. Re-iterate without force feedback this time.
+    if (!gameControllers.empty())
+      gameControllerSupportsVibration = true;
+    else
+    {
+      if (FAILED(dev->EnumDevices(DI8DEVCLASS_GAMECTRL, &staticEnumerateGameControllers, this, DIEDFL_ATTACHEDONLY)))
+        return false;
+    }
 
     if (gameControllers.empty())
       return false;
@@ -129,7 +138,7 @@ bool Joystick::CheckConnection()
       DIDEVICEINSTANCE deviceInfo;
       deviceInfo.dwSize = sizeof(DIDEVICEINSTANCE);
       gameController->GetDeviceInfo(&deviceInfo);
-      ffnx_trace("Using Gamepad: %s\n", deviceInfo.tszInstanceName);
+      ffnx_trace("Using Gamepad: %s (Supports Force Feedback: %s)\n", deviceInfo.tszInstanceName, gameControllerSupportsVibration ? "yes" : "no");
     }
 
     // set cooperative level
@@ -143,6 +152,15 @@ bool Joystick::CheckConnection()
     // set range and dead zone of joystick axes
     if (FAILED(gameController->EnumObjects(&staticSetGameControllerProperties, gameController, DIDFT_AXIS)))
       return false;
+
+    // get game controller max force feedback supported magnitude
+    if (gameControllerSupportsVibration)
+    {
+      gameControllerInfo.dwSize = sizeof(DIDEVICEOBJECTINSTANCE);
+
+      if (FAILED(gameController->GetObjectInfo(&gameControllerInfo, DIDFT_AXIS, DIPH_BYID)))
+        return false;
+    }
   }
 
   // clean joystick states
@@ -205,6 +223,64 @@ void Joystick::Clean()
 LONG Joystick::GetDeadZone(float percent)
 {
   return SHRT_MAX * percent;
+}
+
+bool Joystick::HasForceFeedback()
+{
+  return gameControllerSupportsVibration;
+}
+
+DWORD Joystick::GetMaxVibration()
+{
+  return gameControllerSupportsVibration ? gameControllerInfo.dwFFMaxForce : 0;
+}
+
+void Joystick::Vibrate(WORD leftMotorSpeed, WORD rightMotorSpeed)
+{
+  if (gameControllerSupportsVibration)
+  {
+    DWORD      dwAxes[2] = { DIJOFS_X, DIJOFS_Y };
+    LONG       lDirection[2] = { leftMotorSpeed, rightMotorSpeed };
+
+    DIPERIODIC diPeriodic;      // type-specific parameters
+    DIENVELOPE diEnvelope;      // envelope
+    DIEFFECT   diEffect;        // general parameters
+
+    // setup the periodic structure
+    diPeriodic.dwMagnitude = DI_FFNOMINALMAX;
+    diPeriodic.lOffset = 0;
+    diPeriodic.dwPhase = 0;
+    diPeriodic.dwPeriod = (DWORD) (0.05 * DI_SECONDS);
+
+    // set the modulation envelope
+    diEnvelope.dwSize = sizeof(DIENVELOPE);
+    diEnvelope.dwAttackLevel = 0;
+    diEnvelope.dwAttackTime = (DWORD) (0.01 * DI_SECONDS);
+    diEnvelope.dwFadeLevel = 0;
+    diEnvelope.dwFadeTime = (DWORD) (3.0 * DI_SECONDS);
+
+    // set up the effect structure itself
+    diEffect.dwSize = sizeof(DIEFFECT);
+    diEffect.dwFlags = DIEFF_POLAR | DIEFF_OBJECTOFFSETS;
+    diEffect.dwDuration = (DWORD) INFINITE; // (1 * DI_SECONDS);
+
+    // set up details of effect
+    diEffect.dwSamplePeriod = 0;               // = default
+    diEffect.dwGain = DI_FFNOMINALMAX;         // no scaling
+    diEffect.dwTriggerButton = DIJOFS_BUTTON0; // connect effect to trigger button
+    diEffect.dwTriggerRepeatInterval = 0;
+    diEffect.cAxes = 2;
+    diEffect.rgdwAxes = dwAxes;
+    diEffect.rglDirection = &lDirection[0];
+    diEffect.lpEnvelope = &diEnvelope;
+    diEffect.cbTypeSpecificParams = sizeof(diPeriodic);
+    diEffect.lpvTypeSpecificParams = &diPeriodic;
+
+    // create the effect and get the interface to it
+    if (SUCCEEDED(gameController->CreateEffect(GUID_Square, &diEffect, &gameControllerEffect, NULL)))
+      // Play the effect
+      gameControllerEffect->Start(1, DIES_SOLO);
+  }
 }
 
 //-----------------------------------------------------------------------------
