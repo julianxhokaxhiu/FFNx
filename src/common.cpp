@@ -147,6 +147,9 @@ bool xinput_connected = false;
 bool simulate_OK_button = false;
 
 uint32_t noop() { return 0; }
+uint32_t noop_a1(uint32_t a1) { return 0; }
+uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
+uint32_t noop_a3(uint32_t a1, uint32_t a2, uint32_t a3) { return 0; }
 
 // global data used for profiling macros
 #ifdef PROFILE
