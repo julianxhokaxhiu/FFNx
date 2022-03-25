@@ -2049,14 +2049,6 @@ struct ff7_field_script_header {
 	char szName[8];			// Field name (never shown)
 };
 
-struct ff7_field_ad_object {
-	int32_t field_0;
-	int32_t actor_x;
-	int32_t actor_y;
-	int32_t actor_z;
-	char buffer[384]; // to be mapped to real fields
-};
-
 struct field_event_data
 {
 	WORD field_0;
@@ -2118,7 +2110,11 @@ struct field_event_data
 
 struct field_animation_data
 {
-	byte field_0[34];
+	int field_0;
+	int actor_x;
+	int actor_y;
+	int actor_z;
+	byte field_10[18];
 	__int16 field_22;
 	byte field_24[336];
 	WORD field_174;
@@ -2392,7 +2388,6 @@ struct ff7_externals
 	uint32_t opcode_wmode;
 	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
-	uint32_t sfx_fill_buffer_from_audio_dat;
 	uint32_t sfx_load_and_play_with_speed;
 	uint32_t sfx_fmt_header;
 	DWORD *sfx_play_effects_id_channel_6;
@@ -2478,7 +2473,6 @@ struct ff7_externals
 	WORD* field_game_moment; //0xDC08DC
 	ff7_modules_global_object *modules_global_object; // 0xCC0D88
 	ff7_modules_global_object **field_global_object_ptr; // 0xCBF9D8
-	uint32_t sub_74DB8C;
 	void (*sub_767039)(DWORD*,DWORD*,DWORD*);
 	uint32_t play_battle_music_call;
 	uint32_t (*play_battle_end_music)();
@@ -2490,12 +2484,10 @@ struct ff7_externals
 	int (*sub_630C48)(int16_t, int16_t, int16_t, int16_t, int16_t);
 	uint32_t sub_408074;
 	uint32_t sub_60BB58;
-	uint32_t sub_630734;
 	byte** field_level_data_pointer;
 	uint32_t sub_408116;
 	char *word_CC16E8;
 	int16_t* current_triangle_id;
-	struct ff7_field_ad_object* field_current_actor;
 	uint16_t* menu_battle_end_mode;
 	uint32_t* pointer_functions_7C2980;
 	uint32_t battle_enemy_killed_sub_433BD2;
@@ -2506,7 +2498,7 @@ struct ff7_externals
 	uint32_t display_battle_action_text_42782A;
 	uint32_t display_battle_action_text_sub_6D71FA;
 	uint32_t menu_decrease_item_quantity;
-	uint32_t sub_610973, sub_611098;
+	uint32_t opcode_setbyte, opcode_biton;
 	uint32_t sub_60FA7D;
 	uint32_t menu_sub_7212FB;
 	uint32_t load_save_file;
@@ -2625,7 +2617,6 @@ struct ff7_externals
 	uint32_t battle_sub_4276B6;
 	uint32_t battle_sub_4255B7;
 	uint32_t battle_sub_425E5F;
-	uint32_t battle_sub_425520;
 	uint32_t battle_sub_5BCF9D;
 	uint32_t battle_sub_425AAD;
 	uint32_t battle_sub_427A6C;
@@ -2740,7 +2731,6 @@ struct ff7_externals
 	byte* field_byte_DC0E11;
 	byte* field_battle_byte_BF2E1C;
 	byte* field_battle_byte_BE10B4;
-	byte* field_battle_byte_BE1170;
 	short* resting_Y_array_data;
 	WORD* field_odin_frames_AEEC14;
 	palette_extra* palette_extra_data_C06A00;
@@ -2812,7 +2802,6 @@ struct ff7_externals
 	uint32_t world_opcode_message_update_box_769050;
 	uint32_t world_opcode_message_update_text_769C02;
 	int (*get_world_encounter_rate)();
-	void (*world_compute_delta_position_753D00)(short*, short);
 	int (*pop_world_script_stack)();
 	uint32_t world_update_player_74EA48;
 	int (*world_get_player_model_id)();

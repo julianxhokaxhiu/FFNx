@@ -1013,7 +1013,7 @@ void ff7_execute_effect60_fn()
                 else if (ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_425E5F ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5C1C8F ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BCF9D ||
-                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_425520 ||
+                         ff7_externals.effect60_array_fn[fn_index] == ff7_externals.handle_aura_effects_425520 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_boss_death_sub_5BC5EC ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.battle_sub_5BCD42 ||
                          ff7_externals.effect60_array_fn[fn_index] == ff7_externals.display_battle_damage_5BB410 ||
@@ -1163,7 +1163,7 @@ void ff7_battle_play_sfx_delayed_427737()
         }
         else
         {
-            ff7_externals.battle_play_sfx_sound_430D32(fn_data.field_6, *ff7_externals.field_battle_byte_BE1170, 0);
+            ff7_externals.battle_play_sfx_sound_430D32(fn_data.field_6, *ff7_externals.g_active_actor_id, 0);
             fn_data.field_0 = 0xFFFF;
         }
     }

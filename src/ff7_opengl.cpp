@@ -313,8 +313,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_function(ff7_externals.menu_decrease_item_quantity, ff7_menu_decrease_item_quantity);
 
 		// GOLD CHOCOBO, YUFFIE, VINCENT: called through update_field_entities
-		replace_call_function(ff7_externals.sub_610973 + 0x14, ff7_chocobo_field_entity_60FA7D);
-		replace_call_function(ff7_externals.sub_611098 + 0x3A, ff7_character_regularly_field_entity_60FA7D);
+		replace_call_function(ff7_externals.opcode_setbyte + 0x14, ff7_chocobo_field_entity_60FA7D);
+		replace_call_function(ff7_externals.opcode_biton + 0x3A, ff7_character_regularly_field_entity_60FA7D);
 
 		// INITIALIZATION AT LOAD SAVE FILE
 		if (version == VERSION_FF7_102_US) {

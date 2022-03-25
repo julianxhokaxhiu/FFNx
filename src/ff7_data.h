@@ -416,7 +416,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	common_externals.play_sfx = (uint32_t(*)(uint32_t))get_relative_call(ff7_externals.sound_operation, 0x703);
 	common_externals.play_sfx_effects = (uint32_t(*)(byte, uint32_t, uint32_t, uint32_t, uint32_t))get_relative_call(ff7_externals.sound_operation, 0x327);
 	ff7_externals.sfx_play_effects_id_channel_6 = (DWORD *)get_absolute_value((uint32_t)common_externals.play_sfx_effects, 0x119);
-	ff7_externals.sfx_fill_buffer_from_audio_dat = get_relative_call(uint32_t(common_externals.play_sfx), 0x4D);
 	ff7_externals.sound_states = (ff7_field_sfx_state*)get_absolute_value(common_externals.play_sfx_on_channel, 0x28);
 	common_externals.master_sfx_volume = (uint32_t*)get_absolute_value(common_externals.play_sfx_on_channel, 0x342);
 	ff7_externals.sfx_fmt_header = (uint32_t)get_absolute_value(common_externals.play_sfx_on_channel, 0x51);
@@ -456,6 +455,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.opcode_wmode = common_externals.execute_opcode_table[0x52];
 	ff7_externals.opcode_fade = common_externals.execute_opcode_table[0x6B];
 	ff7_externals.opcode_shake = common_externals.execute_opcode_table[0x5E];
+	ff7_externals.opcode_setbyte = common_externals.execute_opcode_table[0x80];
+	ff7_externals.opcode_biton = common_externals.execute_opcode_table[0x82];
 
 	ff7_externals.field_opcode_08_sub_61D0D4 = get_relative_call(common_externals.execute_opcode_table[0x08], 0x5A);
 	ff7_externals.field_opcode_08_09_set_rotation_61DB2C = (void(*)(short, byte, byte))get_relative_call(ff7_externals.field_opcode_08_sub_61D0D4, 0x196);
@@ -555,9 +556,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.wait_frames_ptr = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x24], 0x1C);
 
-	ff7_externals.sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
-	ff7_externals.sub_767039 = (void (*)(DWORD*,DWORD*,DWORD*))get_relative_call(ff7_externals.sub_74DB8C, 0x613);
-	ff7_externals.wm_change_music = get_relative_call(ff7_externals.sub_74DB8C, 0x2CF);
+	ff7_externals.world_mode_loop_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
+	ff7_externals.sub_767039 = (void (*)(DWORD*,DWORD*,DWORD*))get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x613);
+	ff7_externals.wm_change_music = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x2CF);
 	ff7_externals.wm_play_music_call = ff7_externals.wm_change_music + 0x5A;
 
 	ff7_externals.sub_630C48 = (int (*)(int16_t, int16_t, int16_t, int16_t, int16_t))get_relative_call(common_externals.execute_opcode_table[0x50], 0x174);
@@ -570,19 +571,16 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sub_408074 = get_relative_call(main_loop, 0x681);
 	ff7_externals.sub_60BB58 = get_relative_call(ff7_externals.sub_63C17F, 0x16F);
 	common_externals.update_field_entities = get_relative_call(ff7_externals.sub_60BB58, 0x3A); // 0x60C94D
-	ff7_externals.sub_630734 = get_relative_call(ff7_externals.open_field_file, 0xCF); // This is the same function of read_field_file already defined
 
 	common_externals.current_field_id = (WORD*)get_absolute_value(ff7_externals.sub_408074, 0x41); // 0xCC15D0
 	common_externals.previous_field_id = (WORD*)get_absolute_value(ff7_externals.sub_408074, 0x4F); // 0xCC0DEC
 	common_externals.update_entities_call = common_externals.update_field_entities + 0x461; // 0x60CDAE
 
-	ff7_externals.field_level_data_pointer = (byte**)get_absolute_value(ff7_externals.sub_630734, 0xB2); // 0xCFF594
+	ff7_externals.field_level_data_pointer = (byte**)get_absolute_value(ff7_externals.read_field_file, 0xB2); // 0xCFF594
 
 	ff7_externals.sub_408116 = get_relative_call(ff7_externals.sub_63C17F, 0x2A);
 	ff7_externals.word_CC16E8 = (char *)get_absolute_value(ff7_externals.sub_408116, 0x8E);
 	ff7_externals.current_triangle_id = (int16_t *)((char *)ff7_externals.word_CC16E8 + 136 * ff7_externals.modules_global_object->field_model_id);
-
-	ff7_externals.field_current_actor = (struct ff7_field_ad_object*)get_absolute_value(common_externals.execute_opcode_table[0xA8], 0x1C6);
 
 	ff7_externals.sub_6499F7 = get_relative_call(ff7_externals.sub_63C17F, 0x10C);
 	ff7_externals.input_ok_button_status = (DWORD*)get_absolute_value(ff7_externals.sub_6499F7, 0x60);
@@ -746,7 +744,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.display_battle_damage_5BB410 = get_absolute_value(ff7_externals.battle_sub_425D29, 0x3D);
 
 	// Reduce actor size (for Mini status effect)
-	ff7_externals.battle_sub_5BDA0F = get_absolute_value(ff7_externals.run_animation_script, 0x240);
+	ff7_externals.battle_sub_42CBF9 = get_relative_call(ff7_externals.battle_loop, 0x425);
+	ff7_externals.battle_sub_5BDA0F = get_absolute_value(ff7_externals.battle_sub_42CBF9, 0x240);
 
 	// Character fade in/out
 	ff7_externals.vincent_limit_fade_effect_sub_5D4240 = ff7_externals.limit_break_effects_fn_table[56];
@@ -781,7 +780,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	// effect 60 related
 	ff7_externals.battle_sub_4276B6 = get_absolute_value(ff7_externals.run_animation_script, 0x3091);
 	ff7_externals.battle_sub_4255B7 = get_absolute_value(ff7_externals.run_animation_script, 0x390);
-	ff7_externals.battle_sub_425520 = get_absolute_value(ff7_externals.run_animation_script, 0x3F7A);
 	ff7_externals.battle_sub_5BCF9D = get_absolute_value(ff7_externals.battle_sub_429AC0, 0xDB);
 	ff7_externals.battle_sub_5BD050 = get_relative_call(ff7_externals.battle_sub_5BCF9D, 0x95);
 	ff7_externals.battle_sub_425AAD = get_absolute_value(ff7_externals.run_animation_script, 0x413);
@@ -794,7 +792,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_smoke_move_handler_5BE4E2 = get_absolute_value(battle_sub_5BE490, 0x5);
 	ff7_externals.battle_sub_6CE81E = (void(*)())get_relative_call(ff7_externals.battle_sub_42D808, 0x117);
 	ff7_externals.battle_play_sfx_sound_430D32 = (void(*)(uint16_t, short, char))get_relative_call(ff7_externals.battle_sub_427737, 0x35);
-	ff7_externals.field_battle_byte_BE1170 = (byte*)get_absolute_value(ff7_externals.battle_sub_427737, 0x1E);
 
 	// Limit breaks
 	uint32_t battle_sub_4E1627 = get_relative_call(ff7_externals.run_animation_script, 0x3848);
@@ -977,7 +974,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.death_kill_sub_loop_5624A5 = get_absolute_value(death_kill_main_loop_561FAF, 0x5F);
 	uint32_t enemy_atk_sub_439B71 = ff7_externals.enemy_atk_effects_fn_table[143];
 	uint32_t enemy_atk_sub_439B86 = get_relative_call(enemy_atk_sub_439B71, 0xB);
-	uint32_t enemy_atk_sub_439C6B = get_relative_call(enemy_atk_sub_439B86, 0x1B);
+	uint32_t enemy_atk_sub_439C6B = get_absolute_value(enemy_atk_sub_439B86, 0x1C);
 	uint32_t enemy_atk_sub_439EA0 = get_relative_call(enemy_atk_sub_439C6B, 0x214);
 	ff7_externals.enemy_atk_camera_sub_439EE0 = get_absolute_value(enemy_atk_sub_439EA0, 0x5);
 	uint32_t enemy_atk_sub_44A5A0 = ff7_externals.enemy_atk_effects_fn_table[150];
@@ -1041,7 +1038,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battleground_midgar_flashback_rain_5BDC4F = get_relative_call(ff7_externals.update_3d_battleground, 0x3C);
 
 	// World externals
-	ff7_externals.world_mode_loop_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
 	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x108);
 	ff7_externals.world_sub_7641A7 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x210);
 	ff7_externals.run_world_event_scripts = get_relative_call(ff7_externals.world_sub_7641A7, 0x1D);
@@ -1054,7 +1050,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_sub_767641 = get_relative_call(ff7_externals.world_sub_767540, 0xCB);
 	ff7_externals.get_world_encounter_rate = (int(*)())get_relative_call(ff7_externals.world_sub_767641, 0x110);
 	ff7_externals.update_world_snake_position_7564CD = get_relative_call(ff7_externals.run_world_snake_ai_script_7562FF, 0x151);
-	ff7_externals.world_compute_delta_position_753D00 = (void(*)(short*, short))get_relative_call(ff7_externals.update_world_snake_position_7564CD, 0x26);
 	ff7_externals.world_opcode_message_sub_75EE86 = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xB6D);
 	ff7_externals.world_opcode_message_update_box_769050 = get_relative_call(ff7_externals.world_opcode_message_sub_75EE86, 0x2B);
 	ff7_externals.world_opcode_message_update_text_769C02 = get_relative_call(ff7_externals.world_opcode_message_update_box_769050, 0x6D);
@@ -1075,7 +1070,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	// --------------------------------
 
 	// battle dialogues
-	ff7_externals.battle_sub_42CBF9 = get_relative_call(ff7_externals.battle_loop, 0x425);
 	ff7_externals.add_text_to_display_queue = get_relative_call(ff7_externals.battle_sub_42CBF9, 0x1C7);
 	ff7_externals.update_display_text_queue = get_relative_call(ff7_externals.battle_sub_42D808, 0x2B);
 	ff7_externals.set_battle_text_active = get_relative_call(ff7_externals.update_display_text_queue, 0x14A);
@@ -1115,8 +1109,6 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	}
 	ff7_externals.opcode_increase_gil_call = get_relative_call(ff7_externals.opcode_goldu, 0x38);
 
-	uint32_t battle_sub_5BF01F = get_relative_call(ff7_externals.battle_sub_42D992, 0x12E);
-	ff7_externals.display_battle_action_text_42782A = get_absolute_value(battle_sub_5BF01F, 0xC4);
 	ff7_externals.display_battle_action_text_sub_6D71FA = get_relative_call(ff7_externals.display_battle_action_text_42782A, 0x77);
 
 	ff7_externals.opcode_add_materia_inventory_call = get_relative_call(ff7_externals.opcode_smtra, 0x72);
@@ -1126,11 +1118,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.menu_decrease_item_quantity = get_relative_call(ff7_externals.opcode_dlitm, 0x38);
 
-	uint32_t* pointer_functions_9055A0 = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x464);
-	ff7_externals.sub_610973 = pointer_functions_9055A0[128];
-	ff7_externals.sub_60FA7D = get_relative_call(ff7_externals.sub_610973, 0x14);
-	ff7_externals.sub_611098 = pointer_functions_9055A0[130];
-	ff7_externals.sub_60FA7D = get_relative_call(ff7_externals.sub_611098, 0x3A);
+	ff7_externals.sub_60FA7D = get_relative_call(ff7_externals.opcode_setbyte, 0x14);
 
 	uint32_t menu_sub_6CBD65 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0x54);
 	uint32_t menu_sub_722393 = get_relative_call(menu_sub_6CBD65, 0x4);
