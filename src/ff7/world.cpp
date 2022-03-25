@@ -64,14 +64,14 @@ void ff7_world_init_variables(short param_1)
     ((void(*)(short))ff7_externals.world_init_variables_74E1E9)(param_1);
 }
 
-void ff7_world_snake_compute_delta_position(short* delta_position, short z_value)
+void ff7_world_snake_compute_delta_position(vector3<short>* delta_position, short z_value)
 {
-    ff7_externals.world_compute_delta_position_753D00(delta_position, z_value);
+    ff7_externals.world_sub_753D00(delta_position, z_value);
     if(delta_position)
     {
-        delta_position[0] /= common_frame_multiplier;
-        delta_position[1] /= common_frame_multiplier;
-        delta_position[2] /= common_frame_multiplier;
+        delta_position->x /= common_frame_multiplier;
+        delta_position->y /= common_frame_multiplier;
+        delta_position->z /= common_frame_multiplier;
     }
 }
 

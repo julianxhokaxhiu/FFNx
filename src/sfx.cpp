@@ -497,10 +497,10 @@ int sfx_play_battle_specific(IDirectSoundBuffer* buffer, uint32_t flags)
 uint32_t sfx_fix_omnislash_sound_loading(int sound_id, int dsound_buffer)
 {
 	// Added by FFNx: Load sound 0x188
-	((uint32_t(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(0x188, dsound_buffer);
+	((uint32_t(*)(int, int))common_externals.sfx_load)(0x188, dsound_buffer);
 
 	// Original call (load sound 0x285)
-	return ((uint32_t(*)(int, int))ff7_externals.sfx_fill_buffer_from_audio_dat)(sound_id, dsound_buffer);
+	return ((uint32_t(*)(int, int))common_externals.sfx_load)(sound_id, dsound_buffer);
 }
 
 void sfx_fix_cait_sith_roulette(int sound_id)
