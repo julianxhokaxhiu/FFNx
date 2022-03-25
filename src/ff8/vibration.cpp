@@ -25,10 +25,7 @@
 #include "../gamepad.h"
 #include "../joystick.h"
 #include "../patch.h"
-
-int previous_left = 0;
-int previous_right = 0;
-DWORD max_vibration_force = 0;
+#include "../vibration.h"
 
 int ff8_vibrate_capability(int port)
 {
@@ -36,27 +33,14 @@ int ff8_vibrate_capability(int port)
 
 	if (trace_all) ffnx_trace("%s port=%d\n", __func__, port);
 
-	if (xinput_connected)
-	{
-		ret = gamepad.GetPort() > 0;
-
-		if (ret) max_vibration_force = UINT16_MAX;
-	}
-	else
-	{
-		ret = joystick.CheckConnection() && joystick.HasForceFeedback();
-
-		if (ret) max_vibration_force = joystick.GetMaxVibration();
-	}
-
-	return ret;
+	return nxVibrationEngine.canRumble();
 }
 
 int ff8_game_is_paused(int callback)
 {
 	if (trace_all) ffnx_trace("%s callback=%p\n", __func__, callback);
 
-	if (ff8_vibrate_capability(0))
+	if (nxVibrationEngine.canRumble())
 	{
 		// Reroute to the vibrate pause menu
 		int ret = ff8_externals.pause_menu_with_vibration(callback);
@@ -73,37 +57,32 @@ int ff8_game_is_paused(int callback)
 	return ff8_externals.pause_menu(callback);
 }
 
+void vibrate(int left, int right)
+{
+	if (trace_all) ffnx_trace("%s left=%d right=%d\n", __func__, left, right);
+
+	const int port = 0;
+
+	if (ff8_externals.gamepad_vibration_states[port].vibrate_option_enabled == 255)
+	{
+		nxVibrationEngine.setLeftMotorValue(left);
+		nxVibrationEngine.setRightMotorValue(right);
+		nxVibrationEngine.rumbleUpdate();
+	}
+}
+
 void apply_vibrate_calc(char port, int left, int right)
 {
 	ff8_gamepad_vibration_state *gamepad_state = ff8_externals.gamepad_vibration_states;
-	//ff8_vibrate_struc *vibration_objects = ff8_externals.vibration_objects;
-
 	if (left < 0) left = 0;
 	if (right < 0) right = 0;
 
+	// Keep the game implementation
 	gamepad_state[port & 0x1].vibration_active = 1;
 	gamepad_state[port & 0x1].left_motor_speed = left;
 	gamepad_state[port & 0x1].right_motor_speed = right;
 
-	if (gamepad_state[port].vibrate_option_enabled == 255 && (previous_left != left || previous_right != right))
-	{
-		XINPUT_VIBRATION vibration = XINPUT_VIBRATION();
-		vibration.wLeftMotorSpeed = left * max_vibration_force / 255;
-		vibration.wRightMotorSpeed = right * max_vibration_force / 255;
-
-		if (xinput_connected)
-		{
-			gamepad.SetState(vibration);
-			gamepad.Send();
-		}
-		else
-		{
-			joystick.Vibrate(vibration.wLeftMotorSpeed, vibration.wRightMotorSpeed);
-		}
-	}
-
-	previous_left = left;
-	previous_right = right;
+	vibrate(left, right);
 }
 
 void vibration_init()
@@ -111,4 +90,5 @@ void vibration_init()
 	replace_call(uint32_t(ff8_externals.check_game_is_paused) + 0x88, ff8_game_is_paused);
 	replace_function(ff8_externals.get_vibration_capability, ff8_vibrate_capability);
 	replace_function(ff8_externals.vibration_apply, apply_vibrate_calc);
+	replace_function(ff8_externals.vibration_clear_intensity, noop_a1);
 }

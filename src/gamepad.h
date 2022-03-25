@@ -49,12 +49,11 @@ public:
 
     int  GetPort() const;
     XINPUT_GAMEPAD* GetState();
-    void SetState(const XINPUT_VIBRATION &vibration);
+    const XINPUT_VIBRATION &GetVibrationState() const;
     bool CheckConnection();
     // Get state from remote device
     bool Refresh();
-    // Send vibration state to remote device
-    bool Send();
+    bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
     bool IsPressed(WORD) const;
 };
 

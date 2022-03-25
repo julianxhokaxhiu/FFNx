@@ -33,9 +33,9 @@
 #include "gamepad.h"
 #include "joystick.h"
 #include "gamehacks.h"
+#include "vibration.h"
 #include "ff8_data.h"
 #include "ff8/file.h"
-#include "ff8/vibration.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -300,6 +300,8 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 	ff8_externals.dinput_gamepad_state->lY = 0;
 	ff8_externals.dinput_gamepad_state->lRx = 0;
 	ff8_externals.dinput_gamepad_state->lRy = 0;
+
+	nxVibrationEngine.rumbleUpdate();
 
 	if (xinput_connected)
 	{

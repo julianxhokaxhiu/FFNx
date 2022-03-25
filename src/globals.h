@@ -100,3 +100,6 @@ extern bool simulate_OK_button;
 
 extern char *get_current_field_name();
 extern uint32_t noop();
+extern uint32_t noop_a1(uint32_t a1);
+extern uint32_t noop_a2(uint32_t a1, uint32_t a2);
+extern uint32_t noop_a3(uint32_t a1, uint32_t a2, uint32_t a3);

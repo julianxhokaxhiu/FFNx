@@ -33,9 +33,31 @@ XINPUT_GAMEPAD* Gamepad::GetState()
     return &state.Gamepad;
 }
 
-void Gamepad::SetState(const XINPUT_VIBRATION &v)
+const XINPUT_VIBRATION &Gamepad::GetVibrationState() const
 {
-    vibration = v;
+    return vibration;
+}
+
+bool Gamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
+{
+    vibration.wLeftMotorSpeed = wLeftMotorSpeed;
+    vibration.wRightMotorSpeed = wRightMotorSpeed;
+
+    if (cId == -1)
+        CheckConnection();
+
+    if (cId != -1)
+    {
+        if (XInputSetState(cId, &vibration) != ERROR_SUCCESS)
+        {
+            cId = -1;
+            return false;
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 bool Gamepad::CheckConnection()
@@ -94,25 +116,6 @@ bool Gamepad::Refresh()
 
         return true;
     }
-    return false;
-}
-
-bool Gamepad::Send()
-{
-    if (cId == -1)
-        CheckConnection();
-
-    if (cId != -1)
-    {
-        if (XInputSetState(cId, &vibration) != ERROR_SUCCESS)
-        {
-            cId = -1;
-            return false;
-        }
-
-        return true;
-    }
-
     return false;
 }
 

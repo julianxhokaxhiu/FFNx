@@ -166,7 +166,7 @@ namespace SoLoud
 		mChannels = stream->get_channel_count();
 		setLooping(true);
 
-		ffnx_info("Opening file %s with openPSF (samplerate: %i, samplecount: %i, channels: %i):\n%s\n",
+		if (trace_all || trace_music) ffnx_info("Opening file %s with openPSF (samplerate: %i, samplecount: %i, channels: %i):\n%s\n",
 			aFilename, int(mBaseSamplerate), stream->get_sample_count(), mChannels, stream->get_last_status());
 
 		return SO_NO_ERROR;
