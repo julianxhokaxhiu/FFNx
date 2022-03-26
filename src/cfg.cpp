@@ -113,6 +113,7 @@ bool enable_inverted_camera_controls;
 double right_analog_stick_deadzone;
 double left_analog_trigger_deadzone;
 double right_analog_trigger_deadzone;
+std::string external_vibrate_path;
 bool enable_steam_achievements;
 bool steam_achievements_debug_mode;
 double hdr_max_nits;
@@ -245,6 +246,7 @@ void read_cfg()
 	right_analog_stick_deadzone = config["right_analog_stick_deadzone"].value_or(0.1);
 	left_analog_trigger_deadzone = config["left_analog_trigger_deadzone"].value_or(0.1);
 	right_analog_trigger_deadzone = config["right_analog_trigger_deadzone"].value_or(0.1);
+	external_vibrate_path = config["external_vibrate_path"].value_or("");
 	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
 	steam_achievements_debug_mode = config["steam_achievements_debug_mode"].value_or(false);
 	hdr_max_nits = config["hdr_max_nits"].value_or(0);
@@ -412,4 +414,13 @@ void read_cfg()
 	// AUDIO SAMPLE RATE
 	if (external_audio_sample_rate < 0)
 		external_audio_sample_rate = 0;
+
+	// EXTERNAL VIBRATE PATH
+	if (external_vibrate_path.empty())
+		external_vibrate_path = "vibrate";
+
+	if (ff8)
+		external_vibrate_path += "/ff8";
+	else
+		external_vibrate_path += "/ff7";
 }

@@ -126,6 +126,7 @@ extern bool enable_inverted_camera_controls;
 extern double right_analog_stick_deadzone;
 extern double left_analog_trigger_deadzone;
 extern double right_analog_trigger_deadzone;
+extern std::string external_vibrate_path;
 extern bool enable_steam_achievements;
 extern bool steam_achievements_debug_mode;
 extern double hdr_max_nits;
