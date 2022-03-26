@@ -93,35 +93,105 @@ const char *set_name(const char *name)
 	return strncpy(vibrateName, name, sizeof(vibrateName));
 }
 
-size_t vibrate_data_estimate_size(const uint8_t *data)
+size_t vibrate_data_size(const uint8_t *data)
 {
-	uint32_t *header = (uint32_t *)data;
+	const uint32_t *header = (const uint32_t *)data;
 	uint32_t max_pos = 0;
 
-	while (*header && header - (uint32_t *)data < 64) {
+	while (header - (const uint32_t *)data < 64) {
 		if (*header > max_pos) {
 			max_pos = *header;
 		}
 		header++;
 	}
 
-	return max_pos + 4;
+	if (max_pos == 0) {
+		return 0;
+	}
+
+	const uint16_t *it = (const uint16_t *)(data + max_pos);
+	uint16_t left_size = it[0], right_size = it[1];
+
+	return max_pos + 4 + left_size + right_size;
 }
 
-const char *vibrate_data_name(const uint8_t *data, XXH64_hash_t hash)
+const char *vibrate_data_name(const uint8_t *data)
 {
-	if (trace_all || trace_gamepad) ffnx_trace("%s: hash=0x%llX data=0x%X\n", __func__, hash, data);
+	if (trace_all || trace_gamepad) ffnx_trace("%s: data=0x%X\n", __func__, data);
 
-	size_t size = vibrate_data_estimate_size(data);
+	if (uint32_t(data) == ff8_externals.vibrate_data_world)
+	{
+		return set_name("world");
+	}
+
+	size_t size = vibrate_data_size(data);
+	if (size == 0)
+	{
+		return nullptr;
+	}
+
+	XXH64_hash_t hash = XXH3_64bits(data, size);
+
+	if (trace_all || trace_gamepad) ffnx_trace("%s: hash=0x%llX\n", __func__, hash);
 
 	switch (hash)
 	{
-	case 0x5839BE1A4D099886:
+	case 0x97ACE2EE84A94396:
 		return set_name("main");
-	case 0x5ADC96A5804D9034:
+	case 0x3A8B11844E20E005:
 		return set_name("field");
-	case 0x48B2C92616FC193D:
-		return set_name("world");
+	case 0x12ED0CB959EE1D06:
+		return set_name("battle_quezacotl");
+	case 0x5609D2CFA36FAA0A:
+		return set_name("battle_shiva");
+	case 0xCEFDFB6A96824726:
+		return set_name("battle_ifrit");
+	case 0x453F6DFFE0C9349F:
+		return set_name("battle_siren");
+	case 0xEBD9E3F6260E3959:
+		return set_name("battle_brothers");
+	case 0x9BFBB2F64D8D7481:
+		return set_name("battle_diablos");
+	case 0xBB77D755D1E18AAE:
+		return set_name("battle_carbuncle");
+	case 0x6CE5937D628A4A8C:
+		return set_name("battle_leviathan");
+	case 0x9FC2EA78F38A8DB2:
+		return set_name("battle_pandemona");
+	case 0xA0CB223A3095EF8E:
+		return set_name("battle_cerberus");
+	case 0x4618E0051D8EB26A:
+		return set_name("battle_alexander");
+	case 0x8226A772A7F38BE3:
+		return set_name("battle_helltrain");
+	case 0xB0A0606DC821934F:
+		return set_name("battle_bahamut");
+	case 0x9B9C719D7B06C9F6:
+		return set_name("battle_cactuar");
+	case 0xC5C7EEC0C8CA65F0:
+		return set_name("battle_tonberry");
+	case 0x52E0D8894C20D609:
+		return set_name("battle_eden");
+	case 0x928D553922FE8248:
+		return set_name("battle_odin");
+	case 0x79AC9002E7CD9699:
+		return set_name("battle_gilgamesh_zantetsuken");
+	case 0x50BE9269B62CFD2E:
+		return set_name("battle_gilgamesh_excalipoor");
+	case 0x182DC6DE431B0B59:
+		return set_name("battle_phoenix");
+	case 0xFCF682172921F687:
+		return set_name("battle_moomba");
+	case 0x2870C502E6C869CA:
+		return set_name("battle_minimog");
+	case 0x34A36AEB4BDB2873:
+		return set_name("battle_boko_chocofire");
+	case 0x71C550B41E196BF5:
+		return set_name("battle_boko_chocoflare");
+	case 0x58D0E469C7393C42:
+		return set_name("battle_boko_chocometeor");
+	case 0x711807BEA87AE308:
+		return set_name("battle_boko_chocobocle");
 	}
 
 	snprintf(vibrateName, sizeof(vibrateName), "%llX", hash);
@@ -135,18 +205,19 @@ int ff8_set_vibration(const uint8_t *data, int set, int intensity)
 {
 	if (trace_all || trace_gamepad) ffnx_trace("%s: set=%d intensity=%d\n", __func__, set, intensity);
 
-	size_t size = vibrate_data_estimate_size(data);
-	XXH64_hash_t hash = XXH3_64bits(data, size);
-	const char *name = vibrate_data_name(data, hash);
+	const char *name = vibrate_data_name(data);
 
-	const uint8_t *dataOverride = nxVibrationEngine.vibrateDataOverride(name);
-	if (dataOverride != nullptr)
+	if (name != nullptr)
 	{
-		data = dataOverride;
-	}
-	else if (strcmp(name, "world") == 0) {
-		// Disable vibration
-		return 0;
+		const uint8_t *dataOverride = nxVibrationEngine.vibrateDataOverride(name);
+		if (dataOverride != nullptr)
+		{
+			data = dataOverride;
+		}
+		else if (strcmp(name, "world") == 0) {
+			// Disable vibration
+			return 0;
+		}
 	}
 
 	unreplace_function(ff8_set_vibration_replace_id);
