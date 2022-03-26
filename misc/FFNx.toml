@@ -274,6 +274,11 @@ left_analog_trigger_deadzone = 0.1
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 right_analog_trigger_deadzone = 0.1
 
+#[EXTERNAL VIBRATE PATH]
+# Path of the external vibrate files
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external_vibrate_path = "vibrate"
+
 ###############################
 # MUST SET FOR VERSIONS BELOW
 # FF7 2012   FF7 STEAM

@@ -529,4 +529,12 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.voice.toml
           ${CMAKE_BINARY_DIR}/bin/voice/config.toml
+  # Vibrate field .toml
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.field.toml
+          ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/field.toml
+  # Vibrate world .toml
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.world.toml
+          ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/world.toml
 )

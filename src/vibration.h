@@ -23,6 +23,10 @@
 #pragma once
 
 #include <stdint.h>
+#include <unordered_map>
+#include <string>
+
+#include "cfg.h"
 
 constexpr int LEFT_MOTOR_DURATION_FRAMES = 5;
 constexpr int LEFT_MOTOR_MAX_VALUE = 240;
@@ -31,17 +35,22 @@ constexpr int RIGHT_MOTOR_MAX_VALUE = 128;
 class NxVibrationEngine {
 public:
 	NxVibrationEngine();
+	~NxVibrationEngine();
 	void setLeftMotorValue(uint8_t force);
 	void setRightMotorValue(uint8_t force);
 	void stopAll();
 	bool rumbleUpdate();
 	bool canRumble() const;
+	const uint8_t *vibrateDataOverride(const char *name);
 private:
 	bool hasChanged() const;
 	void updateLeftMotorValue();
+	uint8_t *createVibrateDataFromConfig(const toml::parse_result &config);
+
 	uint32_t _leftMotorStopTimeFrame;
 	uint8_t _left, _right;
 	uint8_t _currentLeft, _currentRight;
+	std::unordered_map<std::string, uint8_t *> _vibrateData;
 };
 
 extern NxVibrationEngine nxVibrationEngine;
