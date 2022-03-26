@@ -58,6 +58,7 @@ void ff8_find_externals()
 	ff8_externals.sub_468BD0 = get_relative_call(ff8_externals.sub_468810, 0x5B);
 	common_externals.dinput_hack1 = ff8_externals.sub_468BD0 + 0x64;
 
+	ff8_externals.pubintro_exit = get_absolute_value(ff8_externals.main_entry, 0x176);
 	ff8_externals.pubintro_main_loop = get_absolute_value(ff8_externals.main_entry, 0x180);
 	ff8_externals.credits_main_loop = get_absolute_value(ff8_externals.pubintro_main_loop, 0x6D);
 
@@ -166,6 +167,8 @@ void ff8_find_externals()
 	ff8_externals.gamepad_vibration_states = (ff8_gamepad_vibration_state *)(get_absolute_value(ff8_externals.get_vibration_capability, 0xE + 3) - 0xB);
 	ff8_externals.vibration_objects = (ff8_vibrate_struc *)get_absolute_value(ff8_externals.set_vibration, 0x2 + 1);
 	ff8_externals.vibration_clear_intensity = get_relative_call(ff8_externals.sub_471F70, 0x276);
+	ff8_externals.open_battle_vibrate_vib = get_relative_call(ff8_externals.pubintro_exit, 0x18);
+	ff8_externals.vibrate_data_battle = (uint8_t **)get_absolute_value(ff8_externals.open_battle_vibrate_vib, 0x6);
 
 	common_externals.get_movie_frame = get_relative_call(common_externals.update_field_entities, 0x26);
 
@@ -413,7 +416,7 @@ void ff8_find_externals()
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.sub_53FAC0, 0x1D5);
 		ff8_externals.sub_550070 = get_relative_call(ff8_externals.sub_53FAC0, 0x278);
-		ff8_externals.vibrate_data_world = get_absolute_value(ff8_externals.sub_550070, 0xA82);
+		ff8_externals.vibrate_data_world = (uint8_t *)get_absolute_value(ff8_externals.sub_550070, 0xA82);
 		ff8_externals.sub_53BB90 = get_relative_call(ff8_externals.sub_53FAC0, 0x2D4);
 		ff8_externals.sub_53E2A0 = get_relative_call(ff8_externals.sub_53BB90, 0x327);
 		ff8_externals.sub_53E6B0 = get_relative_call(ff8_externals.sub_53E2A0, 0x36B);
@@ -441,7 +444,7 @@ void ff8_find_externals()
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.sub_53FAC0, 0x1D6);
 		ff8_externals.sub_550070 = get_relative_call(ff8_externals.sub_53FAC0, 0x279);
-		ff8_externals.vibrate_data_world = get_absolute_value(ff8_externals.sub_550070, 0xAFA);
+		ff8_externals.vibrate_data_world = (uint8_t *)get_absolute_value(ff8_externals.sub_550070, 0xAFA);
 		ff8_externals.sub_53BB90 = get_relative_call(ff8_externals.sub_53FAC0, 0x2D5);
 		ff8_externals.sub_53E2A0 = get_relative_call(ff8_externals.sub_53BB90, 0x336);
 		ff8_externals.sub_53E6B0 = get_relative_call(ff8_externals.sub_53E2A0, 0x39A);

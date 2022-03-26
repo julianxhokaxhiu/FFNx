@@ -917,6 +917,7 @@ struct ff8_externals
 	uint32_t sub_467C00;
 	uint32_t sub_468810;
 	uint32_t sub_468BD0;
+	uint32_t pubintro_exit;
 	uint32_t pubintro_main_loop;
 	uint32_t credits_main_loop;
 	DWORD* credits_loop_state;
@@ -1109,7 +1110,9 @@ struct ff8_externals
 	ff8_gamepad_vibration_state *gamepad_vibration_states;
 	ff8_vibrate_struc *vibration_objects;
 	uint32_t vibration_clear_intensity;
-	uint32_t vibrate_data_world;
+	uint8_t *vibrate_data_world;
+	uint32_t open_battle_vibrate_vib;
+	uint8_t **vibrate_data_battle;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

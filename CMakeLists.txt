@@ -537,4 +537,8 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.world.toml
           ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/world.toml
+  # Vibrate battle .toml
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.battle.toml
+          ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/battle.toml
 )

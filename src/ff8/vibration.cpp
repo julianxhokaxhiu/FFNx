@@ -119,9 +119,14 @@ const char *vibrate_data_name(const uint8_t *data)
 {
 	if (trace_all || trace_gamepad) ffnx_trace("%s: data=0x%X\n", __func__, data);
 
-	if (uint32_t(data) == ff8_externals.vibrate_data_world)
+	if (data == ff8_externals.vibrate_data_world)
 	{
 		return set_name("world");
+	}
+
+	if (data == *ff8_externals.vibrate_data_battle)
+	{
+		return set_name("battle");
 	}
 
 	size_t size = vibrate_data_size(data);
@@ -192,6 +197,12 @@ const char *vibrate_data_name(const uint8_t *data)
 		return set_name("battle_boko_chocometeor");
 	case 0x711807BEA87AE308:
 		return set_name("battle_boko_chocobocle");
+	case 0x66A9AC8656CDA67E:
+		return set_name("battle_meteor");
+	case 0x8CB04A5C704B20BB:
+		return set_name("battle_apocalypse");
+	case 0xE443180422A17638:
+		return set_name("battle_ultima");
 	}
 
 	snprintf(vibrateName, sizeof(vibrateName), "%llX", hash);
