@@ -998,6 +998,7 @@ struct ff8_externals
 	uint32_t sub_54D7E0;
 	uint32_t sub_54FDA0;
 	uint32_t sub_53FAC0;
+	uint32_t sub_550070;
 	int (*sub_541C80)(int);
 	uint32_t sub_54B460;
 	uint32_t sub_558D70;
@@ -1108,6 +1109,7 @@ struct ff8_externals
 	ff8_gamepad_vibration_state *gamepad_vibration_states;
 	ff8_vibrate_struc *vibration_objects;
 	uint32_t vibration_clear_intensity;
+	uint32_t vibrate_data_world;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

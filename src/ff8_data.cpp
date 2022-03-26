@@ -412,6 +412,8 @@ void ff8_find_externals()
 		ff8_externals.sub_54B460 = get_relative_call(ff8_externals.sub_53FAC0, 0x5D7);
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.sub_53FAC0, 0x1D5);
+		ff8_externals.sub_550070 = get_relative_call(ff8_externals.sub_53FAC0, 0x278);
+		ff8_externals.vibrate_data_world = get_absolute_value(ff8_externals.sub_550070, 0xA82);
 		ff8_externals.sub_53BB90 = get_relative_call(ff8_externals.sub_53FAC0, 0x2D4);
 		ff8_externals.sub_53E2A0 = get_relative_call(ff8_externals.sub_53BB90, 0x327);
 		ff8_externals.sub_53E6B0 = get_relative_call(ff8_externals.sub_53E2A0, 0x36B);
@@ -438,6 +440,8 @@ void ff8_find_externals()
 		ff8_externals.sub_54B460 = get_relative_call(ff8_externals.sub_53FAC0, 0x5D9);
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.sub_53FAC0, 0x1D6);
+		ff8_externals.sub_550070 = get_relative_call(ff8_externals.sub_53FAC0, 0x279);
+		ff8_externals.vibrate_data_world = get_absolute_value(ff8_externals.sub_550070, 0xAFA);
 		ff8_externals.sub_53BB90 = get_relative_call(ff8_externals.sub_53FAC0, 0x2D5);
 		ff8_externals.sub_53E2A0 = get_relative_call(ff8_externals.sub_53BB90, 0x336);
 		ff8_externals.sub_53E6B0 = get_relative_call(ff8_externals.sub_53E2A0, 0x39A);
