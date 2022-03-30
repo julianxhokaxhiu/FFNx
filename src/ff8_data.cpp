@@ -33,6 +33,10 @@ void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 
 void ff8_find_externals()
 {
+	common_externals.winmain = get_relative_call(ff8_externals.start, 0xDB);
+	common_externals.create_window = get_relative_call(common_externals.winmain, 0x114);
+	common_externals.engine_wndproc = (WNDPROC)get_absolute_value(common_externals.create_window, 0x34);
+
 	ff8_externals.main_entry = get_relative_call(common_externals.winmain, 0x4D);
 
 	if (JP_VERSION)
@@ -76,6 +80,7 @@ void ff8_find_externals()
 	ff8_externals.reg_get_data_drive = (uint32_t(*)(char*, DWORD))get_relative_call(ff8_externals.init_config, 0x21);
 	ff8_externals.get_disk_number = get_relative_call(ff8_externals.main_loop, 0x1A);
 	ff8_externals.disk_data_path = (char*)get_absolute_value(ff8_externals.get_disk_number, 0xF);
+	ff8_externals.set_game_paths = (void (*)(int, char*, const char*))get_relative_call(ff8_externals.init_config, 0x3E);
 
 	ff8_externals.savemap = (uint32_t**)get_absolute_value(ff8_externals.main_loop, 0x21);
 

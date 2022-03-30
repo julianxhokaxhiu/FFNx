@@ -34,7 +34,6 @@
 #include "joystick.h"
 #include "gamehacks.h"
 #include "vibration.h"
-#include "ff8_data.h"
 #include "ff8/file.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
@@ -545,15 +544,6 @@ uint32_t ff8_retry_configured_drive(char* filename, uint8_t* data)
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
-
-	if (version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
-	{
-		MessageBoxA(gameHwnd, "Old Eidos patch detected, please update to the newer 1.2 patch from Square.\n"
-													"The old patch may or may not work properly, it is not supported and has not been tested.",
-								"Warning", 0);
-	}
-
-	ff8_data();
 
 	game_object->dddevice = &_fake_dddevice;
 	game_object->front_surface[0] = &_fake_dd_front_surface;

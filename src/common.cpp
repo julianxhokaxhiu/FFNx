@@ -28,6 +28,7 @@
 
 #include "renderer.h"
 #include "hext.h"
+#include "ff8_data.h"
 
 #include "crashdump.h"
 #include "macro.h"
@@ -50,6 +51,7 @@
 #include "metadata.h"
 #include "lighting.h"
 #include "achievement.h"
+#include "game_cfg.h"
 
 #include "ff8/vram.h"
 #include "ff8/vibration.h"
@@ -2649,10 +2651,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				break;
 			}
 
-			common_externals.winmain = get_relative_call(ff8_externals.start, 0xDB);
-			common_externals.create_window = get_relative_call(common_externals.winmain, 0x114);
-			common_externals.engine_wndproc = (WNDPROC)get_absolute_value(common_externals.create_window, 0x34);
+			if (version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
+			{
+				MessageBoxA(NULL, "Old Eidos patch detected, please update to the newer 1.2 patch from Square.\n"
+					"The old patch may or may not work properly, it is not supported and has not been tested.",
+					"Warning", 0);
+			}
+
+			ff8_data();
+
 			replace_function(common_externals.create_window, common_create_window);
+
+			game_cfg_init();
 
 			if (strstr(dllName, "af3dn.p") != NULL)
 			{
@@ -2996,7 +3006,7 @@ __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(LPGUID guid, LPLPDI
 {
 	typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(LPGUID, LPLPDIRECTSOUND, IUnknown FAR*);
 
-	char eax_dll[260];
+	char eax_dll[MAX_PATH];
 	GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
 	strcat(eax_dll, R"(\eax.dll)");
 

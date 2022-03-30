@@ -564,7 +564,16 @@ struct ff8_win_obj
 };
 
 struct ff8_gamepad_vibration_state_entry {
-	int8_t field_0[20];
+	int16_t field_0;
+	int16_t keyscan;
+	int16_t field_4;
+	int16_t field_6;
+	int16_t field_8;
+	int16_t field_A;
+	int16_t field_C;
+	int16_t field_E;
+	int16_t keyon;
+	int16_t field_12;
 };
 
 struct ff8_gamepad_vibration_state {
@@ -579,16 +588,18 @@ struct ff8_gamepad_vibration_state {
 	uint8_t field_9;
 	uint8_t vibration_active;
 	uint8_t vibration_capable;
-	uint32_t field_C;
-	uint32_t field_10;
+	uint8_t field_C[4];
+	uint8_t field_10[4];
 	uint32_t field_14;
-	uint8_t field_18;
+	uint8_t entries_offset;
 	uint8_t field_19;
 	uint8_t field_1A;
 	uint8_t vibrate_option_enabled;
 	ff8_gamepad_vibration_state_entry entries[8];
 	uint32_t field_BC;
-	uint32_t field_C0;
+	uint16_t field_C0;
+	uint8_t sound_volume; // Analog level in PSX version
+	uint8_t gamepad_options; // is_enabled | u40 | u20 | u10 | u8 | u4 | u2 | u1
 };
 
 struct ff8_vibrate_motor_struc
@@ -897,6 +908,7 @@ struct ff8_externals
 	uint32_t main_entry;
 	uint32_t init_config;
 	uint32_t (*reg_get_data_drive)(char*, DWORD);
+	void (*set_game_paths)(int, char *, const char *);
 	uint32_t (*sm_pc_read)(char*,void*);
 	uint32_t get_disk_number;
 	char* disk_data_path;

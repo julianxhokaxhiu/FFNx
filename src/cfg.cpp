@@ -119,6 +119,8 @@ bool steam_achievements_debug_mode;
 double hdr_max_nits;
 long external_audio_number_of_channels;
 long external_audio_sample_rate;
+std::string app_path;
+std::string data_drive;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -252,6 +254,8 @@ void read_cfg()
 	hdr_max_nits = config["hdr_max_nits"].value_or(0);
 	external_audio_number_of_channels = config["external_audio_number_of_channels"].value_or(2);
 	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(44100);
+	app_path = config["app_path"].value_or("");
+	data_drive = config["data_drive"].value_or("");
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
