@@ -405,6 +405,10 @@ show_stats = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 show_applog = true
 
+# Dump in the logs more verbose error messages coming directly from the engine
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+more_debug = false
+
 # Show on screen error messages ( only on fullscreen )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 show_error_popup = false
@@ -541,12 +545,6 @@ ff7_external_opening_music = false
 # Notice that the path will be relative to your FF7 Game install directory, where usually the "save" directory is stored.
 # PLEASE NOTE: THIS IS A VALID OPTION ONLY FOR FF7 1998/eStore edition. It will NOT work on the Steam edition!
 save_path = "save"
-
-## DEBUGGING OPTIONS - These options are mostly useful for developers or people reporting crashes. Please do enable them only when required.
-
-# Dump in the logs more verbose error messages coming directly from the engine
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ff7_more_debug = false
 
 ###############################################################################
 # OPTIONS ONLY FOR FF8
