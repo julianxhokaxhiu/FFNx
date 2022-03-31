@@ -68,9 +68,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// Allow mouse cursor to be shown
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
 
-	if (ff7_more_debug)
-		replace_function(common_externals.debug_print2, external_debug_print2);
-
 	// TODO: Comment this if Chocobo's not visible in race
 	// replace_function(ff7_externals.draw_3d_model, draw_3d_model);
 

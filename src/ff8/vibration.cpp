@@ -233,7 +233,7 @@ int ff8_set_vibration(const uint8_t *data, int set, int intensity)
 
 	unreplace_function(ff8_set_vibration_replace_id);
 	int ret = ((int(*)(const uint8_t*,int,int))ff8_externals.set_vibration)(data, set, intensity);
-	ff8_set_vibration_replace_id = replace_function(ff8_externals.set_vibration, ff8_set_vibration);
+	rereplace_function(ff8_set_vibration_replace_id);
 
 	return ret;
 }

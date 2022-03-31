@@ -652,6 +652,10 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				replace_function(common_externals.get_keyboard_state, &GetGameKeyState);
 				// catch all applog messages
 				replace_function(common_externals.debug_print, external_debug_print);
+				if (more_debug)
+				{
+					replace_function(common_externals.debug_print2, external_debug_print2);
+				}
 
 #ifdef NO_EXT_HEAP
 				replace_function((uint32_t)common_externals.assert_free, ext_free);
