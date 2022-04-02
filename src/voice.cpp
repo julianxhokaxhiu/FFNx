@@ -301,7 +301,7 @@ int opcode_voice_message()
 
 	if (_is_dialog_opening)
 	{
-		begin_voice();
+		begin_voice(window_id);
 	}
 	else if (_is_dialog_starting || _is_dialog_paging)
 	{
@@ -356,7 +356,7 @@ int opcode_voice_ask(int unk)
 	if (_is_dialog_opening)
 	{
 		opcode_ask_current_option = 0;
-		begin_voice();
+		begin_voice(window_id);
 	}
 	else if (_is_dialog_starting || _is_dialog_paging)
 	{
