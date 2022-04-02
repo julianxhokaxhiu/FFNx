@@ -312,6 +312,7 @@ int opcode_voice_message()
 	{
 		end_voice(window_id);
 		simulate_OK_disabled[window_id] = false;
+		current_opcode_message_status[window_id].is_voice_acting = false;
 	}
 
 	// Auto close the message if it was voice acted and the audio file has finished playing
