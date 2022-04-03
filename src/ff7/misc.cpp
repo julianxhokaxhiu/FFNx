@@ -201,10 +201,10 @@ void ff7_use_analogue_controls()
 			if(std::abs(gamepad.rightStickX) > right_analog_stick_deadzone)
 				horizontalRotSpeed = 5.0f * gamepad.rightStickX;
 
-			if(gamepad.rightTrigger > -1.0f + right_analog_trigger_deadzone)
-				zoomSpeed += zoomSpeedMax * (0.5 + 0.5f * gamepad.rightTrigger);
-			if(gamepad.leftTrigger > -1.0 + left_analog_trigger_deadzone)
-				zoomSpeed -= zoomSpeedMax * (0.5f + 0.5f * gamepad.leftTrigger);
+			if(gamepad.rightTrigger > right_analog_trigger_deadzone)
+				zoomSpeed += zoomSpeedMax * (0.5f * gamepad.rightTrigger);
+			if(gamepad.leftTrigger > left_analog_trigger_deadzone)
+				zoomSpeed -= zoomSpeedMax * (0.5f * gamepad.leftTrigger);
 		}
 	}
 	else
