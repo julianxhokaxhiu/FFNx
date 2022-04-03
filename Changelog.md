@@ -1,18 +1,47 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.10.1...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.11.0...master
+
+# 1.11.0
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.10.1...1.11.0
 
 ## Common
 
 - Added the ability to disable a track by name in External Music ( https://github.com/julianxhokaxhiu/FFNx/pull/318 )
+- Improved the internal graphics autoscaling logic to enhance visual output as well as performance ( https://github.com/julianxhokaxhiu/FFNx/pull/364 )
+- Added support for HDR mode ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L96 )
+  - **PLEASE NOTE:** HDR mode will be auto-enabled only when all these conditions apply:
+    - Using DirectX 11/DirectX 12 as backend renderer
+    - Windows has the HDR mode enabled
+    - Your GPU and monitor supports HDR
+- Added support for 5.1/7.1 audio setup
 
 ## FF7
 
+- 60 FPS mode! ( see https://github.com/julianxhokaxhiu/FFNx/issues/347 for left-over bugs )
 - New Auto-Attack GameHack ( https://github.com/julianxhokaxhiu/FFNx/pull/314 )
 - New External Music feature: sync to start a track in sync with the previous one ( https://github.com/julianxhokaxhiu/FFNx/pull/318 )
 - Various External Music improvements, including the ability to customize a boss battle music by battle scene ID, and to customize minigame music ( https://github.com/julianxhokaxhiu/FFNx/pull/318 + https://github.com/julianxhokaxhiu/FFNx/pull/334 )
 - New special feature to play the music from the introduction via External Music, and not via the movie ( https://github.com/julianxhokaxhiu/FFNx/pull/337 )
 - New audio layer to replace audio from movies ( https://github.com/julianxhokaxhiu/FFNx/pull/343 )
+- New voice acting in Battle:
+  - For generic text ( https://github.com/julianxhokaxhiu/FFNx/pull/322 )
+  - For skills, magic and items ( https://github.com/julianxhokaxhiu/FFNx/pull/331 )
+- New Battle camera control using the right analogue stick ( https://github.com/julianxhokaxhiu/FFNx/pull/340 )
+- Various graphical fixes and optimizations on the Lighting engine
+- Footsteps sound effect support in Worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/386 )
+- Highwind sound effect support in Worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/402 )
+- Fixed Ambient audio effect pause/resume logic in Battle
+- Footsteps run sound effect now works correctly indipendent of the button layout configuration from the user
+- Added support for voice acting when multiple dialogs are shown on screen
+- Various fixes on the voice acting layer:
+  - Prevent Auto-OK when the game engine does not allow user interaction on a specific dialog window
+  - The Auto-OK feature now works indipendent of the button layout configuration from the user
+- HUGE boost in performance when using animated textures even on weak CPUs
+- Removed the Save Anywhere feature as it was causing more issues than benefits
+- Movies will now continue to play while dragging the game window
+- Fix achievement unlock on End of Part 1
 
 ## FF8
 
@@ -25,6 +54,8 @@
 - Fixed chocobo world Cloud save signature ( https://github.com/julianxhokaxhiu/FFNx/pull/330 )
 - Various fixes for the External Music feature ( https://github.com/julianxhokaxhiu/FFNx/pull/330 )
 - Fixed crash using debug tools on non-US version of the game ( https://github.com/julianxhokaxhiu/FFNx/pull/323 )
+- Allow some Registry settings to be overridden via FFNx.toml ( https://github.com/julianxhokaxhiu/FFNx/pull/427 )
+- Enable support for more debug output from the game engine ( https://github.com/julianxhokaxhiu/FFNx/pull/428 )
 
 # 1.10.1
 
