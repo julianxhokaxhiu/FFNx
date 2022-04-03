@@ -232,7 +232,7 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 
 	stats.texture_reloads++;
 
-	if(trace_all) ffnx_trace("texture_reload_hack: 0x%x\n", texture_set);
+	if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: 0x%x\n", texture_set);
 }
 
 void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)

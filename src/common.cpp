@@ -1297,7 +1297,7 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			texture = newRenderer.createTexture(image_data_scaled, originalWidth * scale, originalHeight * scale);
 		}
 
-		if (image_data_scaled != image_data)
+		if (image_data_scaled != nullptr && image_data_scaled != image_data)
 		{
 			driver_free(image_data_scaled);
 		}

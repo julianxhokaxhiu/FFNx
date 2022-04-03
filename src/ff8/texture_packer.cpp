@@ -3,6 +3,7 @@
 #include "../renderer.h"
 #include "../saveload.h"
 #include "../patch.h"
+#include "file.h"
 
 #include <png.h>
 
@@ -182,25 +183,33 @@ TexturePacker::Texture::Texture(
 
 bool TexturePacker::Texture::createImage(uint8_t palette_index)
 {
-	char filename[MAX_PATH];
+	char filename[MAX_PATH], langPath[16];
 
 	if(trace_all || trace_loaders || trace_vram) ffnx_trace("texture file name (VRAM): %s\n", _name.c_str());
 
-	for (int idx = 0; idx < mod_ext.size(); idx++)
+	ff8_fs_lang_string(langPath);
+	strcat(langPath, "/");
+
+	for (int lang = 0; lang < 2; lang++)
 	{
-		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, mod_path.c_str(), _name.c_str(), palette_index, mod_ext[idx].c_str());
-		_image = newRenderer.createImageContainer(filename, bimg::TextureFormat::BGRA8);
-
-		if (_image != nullptr)
+		for (int idx = 0; idx < mod_ext.size(); idx++)
 		{
-			if (trace_all || trace_loaders || trace_vram) ffnx_trace("Using texture: %s\n", filename);
+			_snprintf(filename, sizeof(filename), "%s/%s/%s%s_%02i.%s", basedir, mod_path.c_str(), langPath, _name.c_str(), palette_index, mod_ext[idx].c_str());
+			_image = newRenderer.createImageContainer(filename, bimg::TextureFormat::BGRA8);
 
-			return true;
+			if (_image != nullptr)
+			{
+				if (trace_all || trace_loaders || trace_vram) ffnx_trace("Using texture: %s\n", filename);
+
+				return true;
+			}
+			else if (trace_all || trace_loaders || trace_vram)
+			{
+				ffnx_warning("Texture does not exist, skipping: %s\n", filename);
+			}
 		}
-		else if (trace_all || trace_loaders || trace_vram)
-		{
-			ffnx_warning("Texture does not exist, skipping: %s\n", filename);
-		}
+
+		*langPath = '\0';
 	}
 
 	return false;
