@@ -2,6 +2,8 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.11.0...master
 
+---
+
 # 1.11.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.10.1...1.11.0
@@ -57,6 +59,8 @@
 - Allow some Registry settings to be overridden via FFNx.toml ( https://github.com/julianxhokaxhiu/FFNx/pull/427 )
 - Enable support for more debug output from the game engine ( https://github.com/julianxhokaxhiu/FFNx/pull/428 )
 
+---
+
 # 1.10.1
 
 - Milestone: https://github.com/julianxhokaxhiu/FFNx/milestone/5?closed=1
@@ -69,6 +73,8 @@
 ## FF7
 
 - Achievements are now more robust, as well as enabled by default on Steam releases. You might still need to enable the [relative flag](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L244) on 1998 release.
+
+---
 
 # 1.10.0
 
@@ -104,6 +110,8 @@
 - Sometimes the game was crashing when too many audio files were opened at the same time ( https://github.com/julianxhokaxhiu/FFNx/discussions/281 )
 - Fix a crash that could happen when the external Music layer is not able to open a file ( https://github.com/julianxhokaxhiu/FFNx/pull/273 )
 - Fix a potential memory corruption issue that might happen when converting field model size values in memory. As a side effect the model would display huge when it happens ( https://github.com/julianxhokaxhiu/FFNx/issues/295 )
+
+---
 
 # 1.9.0
 
@@ -151,6 +159,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 - Everything mentioned in [FF8](#FF8)
 - `ff8input.cfg` will now be loaded from `Documents\Square Enix\FINAL FANTASY VIII Steam` inheriting the original Steam driver path
 
+---
+
 # 1.8.1
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.8.0...1.8.1
 
@@ -174,6 +184,8 @@ If you appreciate what is being done, and what has been done so far, feel free t
 **PLEASE NOTE:**
 1. This release brings a **whole new** configuration file type that is **NOT** compatible with previous releases. Please make sure you install all the provided files before starting with the new FFNx.
 2. It is HIGHLY SUGGESTED to always use the default config file. Using old config files will probably end up with unexpected behaviors.
+
+---
 
 # 1.8.0
 
@@ -331,6 +343,8 @@ If you appreciate what is being done, and what has been done so far, feel free t
 1. This release brings a **whole new** configuration file type that is **NOT** compatible with previous releases. Please make sure you install all the provided files before starting with the new FFNx.
 2. It is HIGHLY SUGGESTED to always use the default config file. Using old config files will probably end up with unexpected behaviors.
 
+---
+
 # 1.7.2
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.7.1...1.7.2
 
@@ -347,6 +361,8 @@ If you appreciate what is being done, and what has been done so far, feel free t
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 2. It is HIGHLY SUGGESTED to always use the given default config file. Using the old config will most probably end up in unexpected behaviors.
+
+---
 
 # 1.7.1
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.7.0...1.7.1
@@ -367,6 +383,8 @@ If you appreciate what is being done, and what has been done so far, feel free t
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 2. It is HIGHLY SUGGESTED to always use the given default config file. Using the old config will most probably end up in unexpected behaviors.
+
+---
 
 # 1.7.0
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.6.1...1.7.0
@@ -421,6 +439,8 @@ If you appreciate what is being done, and what has been done so far, feel free t
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 2. It is MANDATORY to use the given default config file, as this release has A LOT of NEW flags. Using the old config will most probably end up in unexpected behaviors.
 
+---
+
 # 1.6.1
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.6.0...1.6.1
 
@@ -437,6 +457,8 @@ And remember, if you like this project please consider [Sponsoring](https://gith
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 2. It is HIGHLY suggested to use the given default config file, as this released moved A LOT of flags around and gave them new options.
+
+---
 
 # 1.6.0
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.5.5...1.6.0
@@ -469,6 +491,8 @@ And remember, if you like this project please consider [Sponsoring](https://gith
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 2. It is HIGHLY suggested to use the given default config file, as this released moved A LOT of flags around and gave them new options.
 
+---
+
 # 1.5.5
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.5.4...1.5.5
 
@@ -480,6 +504,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 
+---
+
 # 1.5.4
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.5.3...1.5.4
 
@@ -490,6 +516,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
+
+---
 
 # 1.5.3
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.5.2...1.5.3
@@ -505,6 +533,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 
+---
+
 # 1.5.2
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.5.1...1.5.2
 
@@ -519,6 +549,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 
+---
+
 # 1.5.1
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.5.0...1.5.1
 
@@ -532,6 +564,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
+
+---
 
 # 1.5.0
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.4.5...1.5.0
@@ -568,6 +602,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 
+---
+
 # 1.4.5
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.4.4...1.4.5
 
@@ -582,6 +618,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 
+---
+
 # 1.4.4
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.4.3...1.4.4
 
@@ -592,6 +630,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
+
+---
 
 # 1.4.3
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.4.2...1.4.3
@@ -622,6 +662,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 
+---
+
 # 1.4.2
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.4.1...1.4.2
 
@@ -631,6 +673,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
+
+---
 
 # 1.4.1
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.4.0...1.4.1
@@ -645,6 +689,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
+
+---
 
 # 1.4.0
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.3.1...1.4.0
@@ -664,6 +710,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 
+---
+
 # 1.3.1
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.3.0...1.3.1
 
@@ -674,6 +722,8 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 **PLEASE NOTE:**
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 2. **Steam edition only:** Savegame files will still be read from the Game Installation directory and **NOT** from your Steam user profile directory.
+
+---
 
 # 1.3.0
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.2.1...1.3.0
@@ -688,10 +738,14 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 1. If you did use this driver in the past and you had to move files around, the game **will still work** but if you prefer to have a clean installation feel free to do so.
 2. **Steam edition only:** Savegame files will still be read from the Game Installation directory and **NOT** from your Steam user profile directory.
 
+---
+
 # 1.2.1
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.2.0...1.2.1
 
 - Fixed FF8 In-Game menu rendering and also modal transitions during dialogs
+
+---
 
 # 1.2.0
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.1.0...1.2.0
@@ -700,10 +754,14 @@ Full commit list since last stable release: https://github.com/julianxhokaxhiu/F
 - Added **multilanguage support** for both [Final Fantasy VII](https://github.com/julianxhokaxhiu/FFNx#final-fantasy-vii) and [Final Fantasy VIII](https://github.com/julianxhokaxhiu/FFNx#final-fantasy-viii)
 - Driver log is now named `FFNx.log` and no more `app.log`
 
+---
+
 # 1.1.0
 Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.0.0...1.1.0
 
 - Add native Steam support for FF7 ( see [installation instructions](https://github.com/julianxhokaxhiu/FFNx#steam-official-release) )
+
+---
 
 # 1.0.0
 - Initial release
