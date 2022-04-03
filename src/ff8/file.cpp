@@ -32,8 +32,12 @@ char next_direct_file[MAX_PATH] = "";
 
 size_t get_fl_prefix_size()
 {
-	char *prefix = ff8_externals.archive_path_prefix;
-	return 2 + strlen(prefix);
+	return 2 + strlen(ff8_externals.archive_path_prefix);
+}
+
+void ff8_fs_lang_string(char *data)
+{
+	strncpy(data, ff8_externals.archive_path_prefix + 10, strlen(ff8_externals.archive_path_prefix) - 10 - 1);
 }
 
 bool set_direct_path(const char *fullpath, char *output, size_t output_size)

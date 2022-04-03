@@ -35,3 +35,5 @@ FILE *ff8_fopen(const char *fileName, const char *mode);
 ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path);
 uint32_t(*ff8_read_file)(uint32_t count, void* buffer, struct ff8_file* file);
 void (*ff8_close_file)(struct ff8_file* file);
+
+void ff8_fs_lang_string(char *data);
