@@ -37,7 +37,7 @@ namespace SoLoud
 		OpenPsf();
 		virtual ~OpenPsf();
 		static bool is_our_path(const char* aFilename);
-		result load(const char* aFilename);
+		result load(const char* aFilename, bool suppressOpeningSilence = false);
 
 		virtual AudioSourceInstance* createInstance();
 		time getLength();

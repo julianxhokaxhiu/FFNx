@@ -140,7 +140,7 @@ namespace SoLoud
 		return Psf::is_our_path(aFilename, ext + 1);
 	}
 
-	result OpenPsf::load(const char* aFilename)
+	result OpenPsf::load(const char* aFilename, bool suppressOpeningSilence)
 	{
 		mBaseSamplerate = 0;
 
@@ -155,7 +155,7 @@ namespace SoLoud
 
 		stop();
 
-		stream = new Psf(PsfFlags::PsfDefaults, 0);
+		stream = new Psf(suppressOpeningSilence ? PsfFlags::SuppressOpeningSilence : PsfFlags::PsfDefaults, 0);
 		if (!stream->open(aFilename, true)) {
 			ffnx_error("Cannot open file %s: %s\n%s\n", aFilename, stream->get_last_error(), stream->get_last_status());
 			return FILE_LOAD_FAILED;

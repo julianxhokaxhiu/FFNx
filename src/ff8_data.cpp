@@ -169,6 +169,7 @@ void ff8_find_externals()
 	ff8_externals.vibration_apply = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xB4);
 	ff8_externals.get_keyon = (int(*)(int, int))get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xC9);
 	ff8_externals.get_vibration_capability = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xE3);
+	ff8_externals.vibrate_data_main = (uint8_t **)get_absolute_value(uint32_t(ff8_externals.pause_menu_with_vibration), 0x261);
 	ff8_externals.set_vibration = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0x26A);
 	ff8_externals.gamepad_vibration_states = (ff8_gamepad_vibration_state *)(get_absolute_value(ff8_externals.get_vibration_capability, 0xE + 3) - 0xB);
 	ff8_externals.vibration_objects = (ff8_vibrate_struc *)get_absolute_value(ff8_externals.set_vibration, 0x2 + 1);
