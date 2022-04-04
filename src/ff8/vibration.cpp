@@ -119,14 +119,19 @@ const char *vibrate_data_name(const uint8_t *data)
 {
 	if (trace_all || trace_gamepad) ffnx_trace("%s: data=0x%X\n", __func__, data);
 
-	if (data == ff8_externals.vibrate_data_world)
-	{
-		return set_name("world");
-	}
-
 	if (data == *ff8_externals.vibrate_data_battle)
 	{
 		return set_name("battle");
+	}
+
+	if (data == *ff8_externals.vibrate_data_main)
+	{
+		return set_name("main");
+	}
+
+	if (getmode_cached()->driver_mode == MODE_WORLDMAP)
+	{
+		return set_name("world");
 	}
 
 	size_t size = vibrate_data_size(data);
@@ -141,8 +146,6 @@ const char *vibrate_data_name(const uint8_t *data)
 
 	switch (hash)
 	{
-	case 0x97ACE2EE84A94396:
-		return set_name("main");
 	case 0x3A8B11844E20E005:
 		return set_name("field");
 	case 0x12ED0CB959EE1D06:
@@ -225,7 +228,8 @@ int ff8_set_vibration(const uint8_t *data, int set, int intensity)
 		{
 			data = dataOverride;
 		}
-		else if (strcmp(name, "world") == 0) {
+		else if (data != *ff8_externals.vibrate_data_main && getmode_cached()->driver_mode == MODE_WORLDMAP)
+		{
 			// Disable vibration
 			return 0;
 		}

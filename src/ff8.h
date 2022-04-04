@@ -1124,6 +1124,7 @@ struct ff8_externals
 	uint32_t vibration_clear_intensity;
 	uint8_t *vibrate_data_world;
 	uint32_t open_battle_vibrate_vib;
+	uint8_t **vibrate_data_main;
 	uint8_t **vibrate_data_battle;
 };
 

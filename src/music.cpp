@@ -31,7 +31,7 @@ bool next_music_channel = 0;
 bool next_music_is_skipped = false;
 bool next_music_is_skipped_with_saved_offset = false;
 std::unordered_map<uint32_t, bool> remember_musics;
-float hold_volume_for_channel[2];
+bool hold_volume_for_channel[2] = { false, false };
 bool next_music_is_not_multi = false;
 double next_music_fade_time = 0.0;
 bool ff8_music_intro_volume_changed = false;
@@ -988,9 +988,13 @@ uint32_t ff8_load_midi_segment(void* directsound, const char* filename)
 {
 	const char* midi_name = ff8_format_midi_name(filename);
 
+	hold_volume_for_channel[0] = false;
+
 	if (next_music_is_not_multi) {
 		next_music_is_not_multi = false;
-		play_music(midi_name, 43, 0);
+		NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
+		options.suppressOpeningSilence = true;
+		play_music(midi_name, 43, 0, options);
 		return 1; // Success
 	}
 

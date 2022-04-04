@@ -2537,8 +2537,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				" - You have FF7 retail 1.00 version (you need the 1.02 patch).\n"
 				" - You have an unsupported translation of FF7. (US English, French, German and Spanish versions are currently supported)\n"
 				" - You have FF8 retail 1.0 version (you need the 1.2 patch).\n"
-				" - You have FF8 1.2 from Eidos (you need the newer 1.2 patch from Squaresoft).\n"
-				" - You have an unsupported translation of FF8. (US English, French, German, Spanish and Italian versions are currently supported)\n"
+				" - You have an unsupported translation of FF8. (US English, French, German, Spanish, Italian and Japanese versions are currently supported)\n"
 				" - You have a conflicting patch applied.\n\n"
 				, "Error", MB_ICONERROR | MB_OK);
 			exit(1);
@@ -2900,7 +2899,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 		const char* pos = strrchr(lpFileName, 92) + 1;
 
 		get_userdata_path(newPath, 260, false);
-		PathAppendA(newPath, pos);
+		PathAppendA(newPath, JP_VERSION ? "ff8input_jp.cfg" : pos);
 
 		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	}

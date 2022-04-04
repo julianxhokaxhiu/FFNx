@@ -514,7 +514,7 @@ void NxAudioEngine::cleanOldAudioSources()
 
 	std::list<NxAudioEngineMusicAudioSource>::iterator it = _audioSourcesToDeleteLater.begin();
 	while (it != _audioSourcesToDeleteLater.end()) {
-		if (!_engine.isValidVoiceHandle((*it).handle)) {
+		if (!_engine.isValidVoiceHandle((*it).handle) && !_engine.isVoiceGroup((*it).handle)) {
 			delete (*it).audioSource;
 			it = _audioSourcesToDeleteLater.erase(it);
 		}
@@ -526,7 +526,7 @@ void NxAudioEngine::cleanOldAudioSources()
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %d elements in the list after cleaning\n", __func__, _audioSourcesToDeleteLater.size());
 }
 
-SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format)
+SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format, bool suppressOpeningSilence)
 {
 	SoLoud::AudioSource* music = nullptr;
 	char filename[MAX_PATH];
@@ -553,7 +553,7 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 			SoLoud::OpenPsf* openpsf = new SoLoud::OpenPsf();
 			music = openpsf;
 
-			SoLoud::result res = openpsf->load(filename);
+			SoLoud::result res = openpsf->load(filename, suppressOpeningSilence);
 			if (res != SoLoud::SO_NO_ERROR) {
 				ffnx_error("NxAudioEngine::%s: Cannot load %s with openpsf ( SoLoud error: %u )\n", __func__, filename, res);
 				delete openpsf;
@@ -655,7 +655,7 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		return true;
 	}
 
-	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format);
+	SoLoud::AudioSource* audioSource = loadMusic(overloadedName, options.useNameAsFullPath, options.format, options.suppressOpeningSilence);
 
 	if (audioSource != nullptr) {
 		// Different music is playing on this channel
@@ -716,7 +716,7 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 		SoLoud::AudioSource* audioSource = loadMusic(name.c_str());
 
 		if (audioSource != nullptr) {
-			SoLoud::handle musicHandle = _engine.playBackground(*audioSource, -1.0f, true);
+			SoLoud::handle musicHandle = _engine.playBackground(*audioSource, _musicMasterVolume, true);
 			_engine.addVoiceToGroup(groupHandle, musicHandle);
 			// Keep audioSource pointer somewhere to delete it after musicHandle is stopped
 			_audioSourcesToDeleteLater.push_back(NxAudioEngineMusicAudioSource(musicHandle, audioSource));
