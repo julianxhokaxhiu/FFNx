@@ -156,7 +156,7 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 
 	ffnx_error("Unhandled Exception. See dumped information above.\n");
 
-	MessageBoxA(gameHwnd, "Feel free to visit this link for further next steps: https://github.com/julianxhokaxhiu/FFNx/wiki/FAQ", "Unhandled Exception", MB_ICONERROR | MB_OK);
+	MessageBoxA(gameHwnd, "Feel free to visit this link to know about further next steps you can take: https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/faq.md", "Game crashed :(", MB_ICONERROR | MB_OK);
 
 	// Cleanup the audio device
 	nxAudioEngine.cleanup();
