@@ -4,10 +4,9 @@
 //    Copyright (C) 2018 Maxime Bacoux                                      //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2026 Julian Xhokaxhiu                                   //
-//    Copyright (C) 2023 Cosmos                                             //
-//    Copyright (C) 2023 Tang-Tang Zhou                                     //
+//    Copyright (C) 2022 myst6re                                            //
+//    Copyright (C) 2022 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -23,16 +22,11 @@
 
 #pragma once
 
-#include <vector>
-#include <unordered_map>
+#include <memory>
 
-struct CharaOneModel {
-	char name[6];
-	bool isMch;
-	std::vector<uint32_t> texturesData;
-	uint32_t modelId;
-};
+#include "zzz_archive.h"
 
-std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uint8_t *chara_one_data, size_t size);
-void ff8_mch_parse_model(CharaOneModel &model, const uint8_t *mch_data, size_t size);
-bool ff8_chara_one_model_save_textures(const CharaOneModel &models, const uint8_t *chara_one_model_data, const char *dirname);
+void ff8_remaster_init();
+
+extern Zzz g_FF8ZzzArchiveMain;
+extern Zzz g_FF8ZzzArchiveOther;
