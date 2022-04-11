@@ -103,7 +103,7 @@ std::wstring GetErrorMessage(unsigned long errorCode)
     return message;
 }
 
-bool isFileSigned(const wchar_t* dllPath)
+bool isFileSigned(const char* dllPath)
 {
     WINTRUST_FILE_INFO fileInfo = {};
     WINTRUST_DATA trustData = {};
@@ -112,7 +112,7 @@ bool isFileSigned(const wchar_t* dllPath)
     // Open the file with proper sharing flags
     fileInfo.cbStruct = sizeof(WINTRUST_FILE_INFO);
     fileInfo.pcwszFilePath = NULL;
-    fileInfo.hFile = CreateFileW(dllPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);;
+    fileInfo.hFile = CreateFileA(dllPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
     fileInfo.pgKnownSubject = NULL;
 
     GUID actionID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
@@ -137,12 +137,12 @@ bool isFileSigned(const wchar_t* dllPath)
     return status == ERROR_SUCCESS;
 }
 
-std::string sha1_file(const std::string& filename)
+std::string sha1_file(const char *filename)
 {
     CryptoPP::SHA1 hash;
     std::string digest;
 
-    CryptoPP::FileSource(filename.c_str(), true,
+    CryptoPP::FileSource(filename, true,
         new CryptoPP::HashFilter(hash,
             new CryptoPP::HexEncoder(
                 new CryptoPP::StringSink(digest), false)));
