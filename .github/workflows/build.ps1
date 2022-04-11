@@ -84,23 +84,38 @@ cmake --build --preset "${env:_RELEASE_CONFIGURATION}"
 # Start the packaging
 mkdir .dist\pkg\FF7_1998 | Out-Null
 mkdir .dist\pkg\FF8_2000 | Out-Null
+mkdir .dist\pkg\FF8_Remastered | Out-Null
 mkdir .dist\pkg\FFNx_Steam | Out-Null
 Copy-Item -R "$releasePath\bin\*" .dist\pkg\FF7_1998
 Copy-Item -R "$releasePath\bin\*" .dist\pkg\FF8_2000
+Copy-Item -R "$releasePath\bin\*" .dist\pkg\FF8_Remastered
 Copy-Item -R "$releasePath\bin\*" .dist\pkg\FFNx_Steam
 Remove-Item .dist\pkg\FF7_1998\FF8.reg
+Remove-Item .dist\pkg\FF7_1998\ffnx_steam_api.dll
 Remove-Item .dist\pkg\FF8_2000\FF7.reg
+Remove-Item .dist\pkg\FF8_2000\ffnx_steam_api.dll
+Remove-Item .dist\pkg\FF8_Remastered\FF7.reg
 Remove-Item .dist\pkg\FFNx_Steam\FF7.reg
 Remove-Item .dist\pkg\FFNx_Steam\FF8.reg
+Remove-Item .dist\pkg\FFNx_Steam\FFVIII_EFIGS.dll
+Remove-Item .dist\pkg\FFNx_Steam\FFVIII_JP.dll
 Remove-Item .dist\pkg\FF7_1998\AF4DN.P
+Remove-Item .dist\pkg\FF7_1998\FFVIII_EFIGS.dll
+Remove-Item .dist\pkg\FF7_1998\FFVIII_JP.dll
 Remove-Item .dist\pkg\FF8_2000\AF4DN.P
+Remove-Item .dist\pkg\FF8_2000\FFVIII_EFIGS.dll
+Remove-Item .dist\pkg\FF8_2000\FFVIII_JP.dll
+Remove-Item .dist\pkg\FF8_Remastered\AF4DN.P
 Move-Item .dist\pkg\FF7_1998\FF7.reg .dist\pkg\FF7_1998\FFNx.reg
 Move-Item .dist\pkg\FF8_2000\FF8.reg .dist\pkg\FF8_2000\FFNx.reg
+Move-Item .dist\pkg\FF8_Remastered\FF8.reg .dist\pkg\FF8_Remastered\FFNx.reg
 Move-Item .dist\pkg\FF8_2000\FFNx.dll .dist\pkg\FF8_2000\eax.dll
+Move-Item .dist\pkg\FF8_Remastered\FFNx.dll .dist\pkg\FF8_Remastered\eax.dll
 Move-Item .dist\pkg\FFNx_Steam\FFNx.dll .dist\pkg\FFNx_Steam\AF3DN.P
 
 7z a ".\.dist\${env:_RELEASE_NAME}-FF7_1998-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FF7_1998\*"
 7z a ".\.dist\${env:_RELEASE_NAME}-FF8_2000-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FF8_2000\*"
+7z a ".\.dist\${env:_RELEASE_NAME}-FF8_Remastered-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FF8_Remastered\*"
 7z a ".\.dist\${env:_RELEASE_NAME}-Steam-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FFNx_Steam\*"
 
 Remove-Item -Recurse -Force .dist\pkg

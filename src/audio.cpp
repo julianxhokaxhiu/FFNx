@@ -26,6 +26,7 @@
 #include "log.h"
 #include "gamehacks.h"
 #include "utils.h"
+#include "ff8/remaster.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -113,7 +114,11 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, const char* _key, NxAudioEng
 			sprintf(_out, "%s/%s/%s.%s", basedir, external_sfx_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
+			if (external_music_path.starts_with("zzz://")) {
+				sprintf(_out, "%s/%s.%s", external_music_path.c_str(), _key, extension.c_str());
+			} else {
+				sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
+			}
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
 			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, extension.c_str());
@@ -136,7 +141,9 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, const char* _key, NxAudioEng
 
 bool NxAudioEngine::fileExists(const char* filename)
 {
-	bool ret = ::fileExists(filename);
+	bool ret = remastered_edition && strncmp(filename, "zzz://", 6) == 0
+		? g_FF8ZzzArchiveOther.fileExists(filename + 6, strlen(filename + 6))
+		: ::fileExists(filename);
 
 	if (!ret && (trace_all || trace_music || trace_sfx || trace_voice || trace_ambient))
 		ffnx_warning("NxAudioEngine::%s: Could not find file %s\n", __func__, filename);

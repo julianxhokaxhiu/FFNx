@@ -249,7 +249,7 @@ int ff8_field_init_from_file(int unk1, int unk2, int unk3, int unk4)
 	// Loop through objects until we find the one that has a valid triangle ID
 	for(int i = 0; i < MAXBYTE; i++)
 	{
-		common_externals.current_triangle_id = (int16_t*)(*ff8_externals.game_mode_obj_1D9CF88 + 0x264 * i + 0x1FA);
+		common_externals.current_triangle_id = (int16_t*)(*(uint32_t *)ff8_externals.field_state_others + 0x264 * i + 0x1FA);
 		if (*common_externals.current_triangle_id != 0) break;
 	}
 
