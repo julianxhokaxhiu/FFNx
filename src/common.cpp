@@ -26,7 +26,6 @@
 #include <dwmapi.h>
 #include <stdio.h>
 #include <sys/timeb.h>
-#include <steamworkssdk/steam_api.h>
 #include <hwinfo/hwinfo.h>
 #include <regex>
 #include <shlwapi.h>
@@ -66,6 +65,7 @@
 #include "game_cfg.h"
 #include "exe_data.h"
 #include "utils.h"
+#include "steam.h"
 
 #include "ff7/defs.h"
 #include "ff7/widescreen.h"
@@ -79,6 +79,7 @@
 #include "ff8/uv_patch.h"
 #include "ff8/ambient.h"
 #include "ff8/file.h"
+#include "ff8/remaster.h"
 
 #include "wine.h"
 
@@ -131,6 +132,12 @@ uint32_t ff7_steam_rerelease_edition = false;
 
 // global FF7/FF8 flag, check if using the steam stock launcher
 uint32_t steam_stock_launcher = false;
+
+// global FF8 flag, check if is remastered edition
+uint32_t remastered_edition = false;
+
+// globale FF7/FF8 flag, check if it is GOG edition
+uint32_t gog_edition = false;
 
 // global FF7 flag, check if is eStore edition
 uint32_t estore_edition = false;
@@ -813,9 +820,10 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	// Init Steam API
 	if(enable_steam_achievements)
 	{
-		int app_id = ff8 ? FF8_APPID : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID);
+		int app_id = ff8 ? (remastered_edition ? FF8_REMASTERED_APPID : FF8_APPID) : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID);
 		// generate automatically steam_appid.txt
-		if(!steam_edition){
+		if(!steam_edition && !remastered_edition)
+		{
 			std::ofstream steam_appid_file("steam_appid.txt");
 			steam_appid_file << app_id;
 			steam_appid_file.close();
@@ -878,8 +886,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 		}
 		else
 		{
-			window_size_x = game_width;
-			window_size_y = game_height;
+			window_size_x = remastered_edition ? 1024 : game_width;
+			window_size_y = remastered_edition ? 768 : game_height;
 		}
 	}
 	else
@@ -1033,6 +1041,9 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 					vram_init();
 					if (ff8_fix_uv_coords_precision) uv_patch_init();
 					vibration_init();
+					if (remastered_edition) {
+						ff8_remaster_init();
+					}
 					if (widescreen_enabled)
 					{
 						*ff8_externals.current_viewport_x_dword_1A7764C = wide_viewport_x;
@@ -1655,6 +1666,31 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win", strlen("menu/btl_win") - 1)) gl_set->force_zsort = true;
 
 			if(!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand_1", strlen("flevel/hand_1") - 1)) gl_set->force_filter = true;
+		}
+		else if (*(VREF(tex_header, file.pc_name) + 512) != '\0') // has secondary hd path
+		{
+			if(trace_all || trace_loaders) ffnx_trace("texture file name (alternative): %s\n", VREF(tex_header, file.pc_name) + 512);
+
+			if (texture == 0)
+			{
+				texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palettes) > 1 ? VREF(tex_header, palette_index) | 0xC0000000 : -1, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
+			}
+
+			// Retry inside zzz archive for the remastered
+			if (remastered_edition && texture == 0)
+			{
+				char filename[MAX_PATH] = {};
+				if (VREF(tex_header, palettes) > 1
+						&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\", sizeof("cards\\") - 1) != 0
+						&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "field.fs\\field_hd_new\\wmset_014_0", sizeof("field.fs\\field_hd_new\\wmset_014_0") - 1) != 0) {
+					_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
+				} else if (VREF(tex_header, palette_index) == 0 && _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\text_1", sizeof("cards\\text_1") - 1) == 0) {
+					_snprintf(filename, sizeof(filename), "zzz://textures\\cards\\text_1_mask%s.png", VREF(tex_header, file.pc_name) + 512 + sizeof("cards\\text_1") - 1);
+				} else {
+					_snprintf(filename, sizeof(filename), "zzz://textures\\%s.png", VREF(tex_header, file.pc_name) + 512);
+				}
+				texture = newRenderer.createTextureLibPng(filename, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height));
+			}
 		}
 	}
 
@@ -2826,13 +2862,12 @@ uint32_t get_version()
 	return 0;
 }
 
-void get_data_lang_path(PCHAR buffer)
+void concat_lang_str(PCHAR buffer)
 {
-	strcpy(buffer, ff8 ? ff8_externals.app_path : basedir);
-	PathAppendA(buffer, R"(data\lang-)");
 	switch (version)
 	{
 	case VERSION_FF7_102_US:
+	case VERSION_FF8_12_US:
 	case VERSION_FF8_12_US_NV:
 	case VERSION_FF8_12_US_EIDOS_NV:
 		if (ff7_japanese_edition)
@@ -2841,24 +2876,38 @@ void get_data_lang_path(PCHAR buffer)
 			strcat(buffer, "en");
 		break;
 	case VERSION_FF7_102_FR:
+	case VERSION_FF8_12_FR:
 	case VERSION_FF8_12_FR_NV:
 		strcat(buffer, "fr");
 		break;
 	case VERSION_FF7_102_DE:
+	case VERSION_FF8_12_DE:
 	case VERSION_FF8_12_DE_NV:
 		strcat(buffer, "de");
 		break;
 	case VERSION_FF7_102_SP:
+	case VERSION_FF8_12_SP:
 	case VERSION_FF8_12_SP_NV:
 		strcat(buffer, "es");
 		break;
+	case VERSION_FF8_12_IT:
 	case VERSION_FF8_12_IT_NV:
 		strcat(buffer, "it");
 		break;
 	case VERSION_FF8_12_JP:
+	case VERSION_FF8_12_JP_NV:
 		strcat(buffer, "jp");
 		break;
 	}
+}
+
+void get_data_lang_path(PCHAR buffer, bool absolute)
+{
+	if (absolute) {
+		strcpy(buffer, ff8 ? ff8_externals.app_path : basedir);
+	}
+	PathAppendA(buffer, R"(data\lang-)");
+	concat_lang_str(buffer);
 }
 
 void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
@@ -2873,8 +2922,15 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 
 		CoTaskMemFree(outPath);
 
-		if (ff8)
-			PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VIII Steam)");
+		if (ff8) {
+			if (remastered_edition)
+			{
+				PathAppendA(buffer, R"(My Games\FINAL FANTASY VIII Remastered)");
+				PathAppendA(buffer, gog_edition ? R"(GOG)" : R"(Steam)");
+			}
+			else
+				PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VIII Steam)");
+		}
 		else
 			PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VII Steam)");
 
@@ -2884,6 +2940,34 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 			{
 				// Directly use the given userdata
 				PathAppendA(buffer, steam_game_userdata.c_str());
+			}
+			else if (remastered_edition)
+			{
+				// Find first directory with only numbers
+				for (const auto &dirEntry: std::filesystem::directory_iterator(buffer))
+				{
+					if (dirEntry.is_directory())
+					{
+						bool nonDigitFound = false;
+						const auto &filename = dirEntry.path().filename().string();
+						for (const char &c: filename)
+						{
+							if (!std::isdigit(c))
+							{
+								nonDigitFound = true;
+								break;
+							}
+						}
+
+						if (!nonDigitFound)
+						{
+							PathAppendA(buffer, filename.c_str());
+							break;
+						}
+					}
+				}
+
+				PathAppendA(buffer, R"(game_data\user\saves)");
 			}
 			else
 			{
@@ -3033,15 +3117,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			return FALSE;
 		}
 
-		bool is_genuine_steam_api = isFileSigned("steam_api.dll");
-		if (!is_genuine_steam_api) is_genuine_steam_api = sha1_file("steam_api.dll") == "03bd9f3e352553a0af41f5fe006f6249a168c243";
-		if (!is_genuine_steam_api)
-		{
-			ffnx_unexpected("Invalid steam_api.dll detected. Please ensure your FFNx installation is not corrupted or tampered by unauthorized software.\n");
-			MessageBoxA(NULL, "Invalid steam_api.dll detected. Please ensure your FFNx installation is not corrupted or tampered by unauthorized software.", "Error", MB_ICONERROR | MB_OK);
-			return FALSE;
-		}
-
 		read_cfg();
 
 		// Did user choose to enable Widescreen?
@@ -3078,7 +3153,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 						ffnx_trace("Detected Steam Rerelease edition.\n");
 					}
 					else if(fileExists("../../goggame-1698970154.info"))
+					{
+						gog_edition = true;
+
 						ffnx_trace("Detected GOG edition.\n");
+					}
 					else
 						ffnx_trace("Detected Windows Store edition.\n");
 
@@ -3204,9 +3283,34 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			replace_function(common_externals.create_window, common_create_window);
 			replace_function(ff8_externals.manage_time_engine_sub_569971, ff8_manage_time_engine);
 
-			game_cfg_init();
+			if (fileExists("FFVIII.exe"))
+			{
+				ffnx_trace("Detected Remastered edition.\n");
 
-			if (strstr(dllName, "af3dn.p") != NULL)
+				remastered_edition = true;
+
+				if(fileExists("goggame-1086370078.info"))
+				{
+					gog_edition = true;
+
+					ffnx_trace("Detected GOG edition.\n");
+				}
+				else
+				{
+					ffnx_trace("Detected Steam edition.\n");
+				}
+
+				use_external_music = true;
+				if (external_music_path.empty()) external_music_path = "data/music/dmusic/ogg";
+				// Steam edition contains movies unpacked
+				enable_ffmpeg_videos = true;
+				ff8_external_music_force_original_filenames = true; // FIXME: allow old mods?
+
+				patch_code_byte(uint32_t(ff8_externals.set_game_paths) + 0x1F0, DRIVE_NO_ROOT_DIR);
+				memcpy_code(uint32_t(ff8_externals.archive_path_prefix_field), "\\ff8\\data\\x\\field\\", sizeof("\\ff8\\data\\x\\field\\"));
+				memcpy_code(uint32_t(ff8_externals.archive_path_prefix_world), "\\ff8\\data\\x\\world\\", sizeof("\\ff8\\data\\x\\world\\"));
+			}
+			else if (strstr(dllName, "af3dn.p") != NULL)
 			{
 				ffnx_trace("Detected Steam 2013 edition.\n");
 
@@ -3253,6 +3357,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			if (external_ambient_volume < 0) external_ambient_volume = 100;
 			if (ffmpeg_video_volume < 0) ffmpeg_video_volume = 100;
 		}
+
+		game_cfg_init();
 
 		// Init metadata patcher
 		if (steam_edition) metadataPatcher.init();
@@ -3433,97 +3539,16 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 
 __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	if (ff8_fs_last_fopen_is_redirected())
+	if (!ff8_fs_last_fopen_is_redirected())
 	{
-		return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	}
+		char newPath[MAX_PATH] = {};
 
-	HANDLE ret = INVALID_HANDLE_VALUE;
-
-	if (strstr(lpFileName, "CD:") != NULL)
-	{
-		CHAR newPath[MAX_PATH]{ 0 };
-		uint8_t requiredDisk = (*ff8_externals.savemap_field)->curr_disk;
-		CHAR diskAsChar[2];
-
-		itoa(requiredDisk, diskAsChar, 10);
-
-		// Search for the last '\' character and get a pointer to the next char
-		const char* pos = strrchr(lpFileName, 92) + 1;
-
-		if (strstr(lpFileName, "DISK1") != NULL || strstr(lpFileName, "DISK2") != NULL || strstr(lpFileName, "DISK3") != NULL || strstr(lpFileName, "DISK4") != NULL)
-		{
-			PathAppendA(newPath, ff8_externals.app_path);
-			PathAppendA(newPath, R"(data\disk)");
-			PathAppendA(newPath, pos);
-
-			if (strstr(lpFileName, diskAsChar) != NULL)
-			{
-				ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-			}
+		if (ff8_steam_redirection(lpFileName, newPath)) {
+			return CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 		}
 	}
-	else if (strstr(lpFileName, "app.log") || strstr(lpFileName, "ff8input.cfg"))
-	{
-		CHAR newPath[MAX_PATH]{ 0 };
 
-		// Search for the last '\' character and get a pointer to the next char
-		const char* pos = strrchr(lpFileName, 92) + 1;
-
-		get_userdata_path(newPath, sizeof(newPath), false);
-		PathAppendA(newPath, JP_VERSION ? "ff8input_jp.cfg" : pos);
-
-		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	}
-	else if (strstr(lpFileName, "temp.fi") || strstr(lpFileName, "temp.fl") || strstr(lpFileName, "temp.fs") || strstr(lpFileName, "temp_evn.") || strstr(lpFileName, "temp_odd."))
-	{
-		CHAR newPath[MAX_PATH]{ 0 };
-
-		// Search for the last '\' character and get a pointer to the next char
-		const char* pos = strrchr(lpFileName, 92) + 1;
-
-		get_userdata_path(newPath, sizeof(newPath), false);
-		PathAppendA(newPath, pos);
-
-		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	}
-	else if (strstr(lpFileName, ".fi") != NULL || strstr(lpFileName, ".fl") != NULL || strstr(lpFileName, ".fs") != NULL)
-	{
-		CHAR newPath[MAX_PATH]{ 0 };
-
-		// Search for the last '\' character and get a pointer to the next char
-		const char* pos = strrchr(lpFileName, 92) + 1;
-
-		get_data_lang_path(newPath);
-		PathAppendA(newPath, pos);
-
-		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	}
-	else if (StrStrIA(lpFileName, R"(SAVE\)") != NULL) // SAVE\SLOTX\saveN or save\chocorpg
-	{
-		CHAR newPath[MAX_PATH]{ 0 };
-		CHAR saveFileName[50]{ 0 };
-
-		// Search for the next character pointer after "SAVE\"
-		const char* pos = StrStrIA(lpFileName, R"(SAVE\)") + 5;
-		strcpy(saveFileName, pos);
-		_strlwr(saveFileName);
-		char* posSeparator = strstr(saveFileName, R"(\)");
-		if (posSeparator != NULL)
-		{
-			*posSeparator = '_';
-		}
-		strcat(saveFileName, R"(.ff8)");
-
-		get_userdata_path(newPath, sizeof(newPath), true);
-		PathAppendA(newPath, saveFileName);
-
-		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	}
-	else
-		ret = CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-
-	return ret;
+	return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
 __declspec(dllexport) UINT __stdcall dotemuGetDriveTypeA(LPCSTR lpRootPathName)

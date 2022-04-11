@@ -158,6 +158,7 @@ long ffmpeg_video_volume;
 bool ff7_advanced_blinking;
 long display_index;
 long ff8_high_res_font;
+std::vector<std::string> ff8_disable_remastered_hd_textures;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -325,6 +326,7 @@ void read_cfg()
 	ff7_advanced_blinking = config["ff7_advanced_blinking"].value_or(false);
 	display_index = config["display_index"].value_or(-1);
 	ff8_high_res_font = config["ff8_high_res_font"].value_or(-1);
+	ff8_disable_remastered_hd_textures = get_string_or_array_of_strings(config["ff8_disable_remastered_hd_textures"]);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
@@ -525,4 +527,9 @@ void read_cfg()
 
 	// DISPLAY INDEX
 	if (display_index < 1) display_index = -1;
+}
+
+bool is_remastered_hd_textures_disabled(const std::string &module)
+{
+	return std::find(ff8_disable_remastered_hd_textures.begin(), ff8_disable_remastered_hd_textures.end(), module) != ff8_disable_remastered_hd_textures.end();
 }

@@ -27,6 +27,7 @@
 
 #include "mod.h"
 #include "file.h"
+#include "remaster.h"
 
 
 bx::DefaultAllocator TextureImage::defaultAllocator;
@@ -49,6 +50,23 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 	if (extension != nullptr && stricmp(extension + 1, "png") == 0) {
 		// Load PNG using libPNG
 		_image = loadPng(&defaultAllocator, filename, targetFormat);
+
+		// Remastered fix (Convert 768x288 to 768x384)
+		if (remastered_edition && _image != nullptr && _image->m_width == 768 && _image->m_height == 288 && _image->m_width == originalTexturePixelWidth * 3 * 2 && _image->m_height < originalTextureHeight * 3) {
+			bimg::ImageContainer *resizedImage = bimg::imageAlloc(&defaultAllocator, targetFormat, _image->m_width, 384, _image->m_depth, _image->m_numLayers, false, false);
+
+			if (resizedImage == nullptr) {
+				ffnx_error("%s: cannot resize PNG file %s\n", __func__, filename);
+				return false;
+			}
+
+			memcpy(resizedImage->m_data, _image->m_data, _image->m_size);
+			memset((uint8_t *)resizedImage->m_data + _image->m_size, 0, (resizedImage->m_height - _image->m_height) * resizedImage->m_width * 4);
+
+			destroyImage();
+			_image = resizedImage;
+		}
+
 		setLod(0);
 	} else if (extension != nullptr && stricmp(extension + 1, "dds") == 0) {
 		// Load DDS using DirectXTex
@@ -166,6 +184,12 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *fi
 
 	int scaleW = targetPixelW / sourcePixelW, scaleH = targetH / sourceH;
 
+	// Remastered textures
+	if (scaleW == scaleH * 2)
+	{
+		scaleW = scaleH;
+	}
+
 	if (scaleW != scaleH)
 	{
 		ffnx_warning("External texture size must have the same ratio as the original texture: (%d / %d) filename=%s\n", sourcePixelW, sourceH, filename);
@@ -186,6 +210,60 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *fi
 ModdedTexture::ModdedTexture(const TexturePacker::IdentifiedTexture &originalTexture, bool isInternal):
 	_originalTexture(originalTexture), _isInternal(isInternal)
 {
+}
+
+bool ModdedTexture::findExternalTexture(char *outFilename, uint8_t palette_index, bool hasPal, const char *extension, char *foundExtension) const
+{
+	if (findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+	{
+		return true;
+	}
+
+	std::string remasterName = originalTexture().remasteredName();
+	if (remasterName.empty())
+	{
+		return false;
+	}
+
+	if (findExternalTextureRemastered(remasterName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+	{
+		return true;
+	}
+
+	size_t pos = remasterName.find("field_hd_new");
+	if (pos != std::string::npos && findExternalTextureRemastered(remasterName.replace(pos, sizeof("field_hd_new"), "field_hd").c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+	{
+		return true;
+	}
+
+	if (trace_all || trace_loaders) ffnx_warning("Texture does not exist, skipping: %s\n", outFilename);
+
+	return false;
+}
+
+bool ModdedTexture::findExternalTextureRemastered(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)
+{
+	// Retry with remaster name
+	if (findExternalTexture(name, filename, palette_index, hasPal, extension, found_extension))
+	{
+		return true;
+	}
+
+	// Retry inside ZZZ archive
+	_snprintf(filename, MAX_PATH, "textures\\%s.png", name);
+
+	if (remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
+	{
+		_snprintf(filename, MAX_PATH, "zzz://textures\\%s.png", name);
+
+		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", filename);
+
+		if (found_extension != nullptr) {
+			strncpy(found_extension, "png", 3);
+		}
+
+		return true;
+	}
 }
 
 bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)
@@ -316,7 +394,7 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale)
 	char filename[MAX_PATH] = {}, *extension = nullptr, found_extension[16] = {};
 
 	for (int paletteId = 0; paletteId < modCount; ++paletteId) {
-		if (!findExternalTexture(originalTexture().name().c_str(), filename, paletteId, true, extension, found_extension))
+		if (!findExternalTexture(filename, paletteId, true, extension, found_extension))
 		{
 			continue;
 		}
@@ -490,7 +568,7 @@ bool TextureBackground::createImages(const char *extension, char *foundExtension
 
 	char filename[MAX_PATH] = {};
 
-	if (!findExternalTexture(originalTexture().name().c_str(), filename, 0, false, extension, foundExtension))
+	if (!findExternalTexture(filename, 0, false, extension, foundExtension))
 	{
 		return false;
 	}
