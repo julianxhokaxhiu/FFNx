@@ -24,6 +24,7 @@
 #include <libpng16/png.h>
 
 #include "image.h"
+#include "../ff8/remaster.h"
 #include "../common.h"
 #include "../renderer.h"
 #include "log.h"
@@ -52,19 +53,34 @@ void read_png_file(png_structp png_ptr, png_bytep data, size_t size)
 
 bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat)
 {
-    bimg::ImageContainer *ret;
-    bx::FileReader reader;
-    bx::Error err;
+    bimg::ImageContainer *ret = nullptr;
 
-    if (!bx::open(&reader, filename, &err) || !err.isOk()) {
-        return nullptr;
+    if (remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
+        Zzz::File *zzzFile = g_FF8ZzzArchiveMain.openFile(filename + 6);
+
+        if (zzzFile == nullptr) {
+            return nullptr;
+        }
+
+        if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
+
+        ret = loadPng(allocator, zzzFile, targetFormat);
+
+        Zzz::closeFile(zzzFile);
+    } else {
+        bx::FileReader reader;
+        bx::Error err;
+
+        if (!bx::open(&reader, filename, &err) || !err.isOk()) {
+            return nullptr;
+        }
+
+        if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
+
+        ret = loadPng(allocator, &reader, targetFormat);
+
+        bx::close(&reader);
     }
-
-    if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
-
-    ret = loadPng(allocator, &reader, targetFormat);
-
-    bx::close(&reader);
 
     return ret;
 }

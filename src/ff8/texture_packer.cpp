@@ -147,14 +147,16 @@ void TexturePacker::setVramTextureId(ModdedTextureId textureId, int xBpp2, int y
 	}
 }
 
-bool TexturePacker::setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette, int textureCount, bool clearOldTexture)
+bool TexturePacker::setTexture(const char *name, const char *remasteredName, const TextureInfos &texture, const TextureInfos &palette, int textureCount, bool clearOldTexture)
 {
-	bool hasNamedTexture = name != nullptr && *name != '\0';
+	bool hasNamedTexture = name != nullptr && *name != '\0',
+		hasRemasteredNamedTexture = remasteredName != nullptr && *remasteredName != '\0';
 
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s %s xBpp2=%d y=%d wBpp2=%d h=%d bpp=%d xPal=%d yPal=%d wPal=%d hPal=%d textureCount=%d clearOldTexture=%d\n", __func__,
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s %s xBpp2=%d y=%d wBpp2=%d h=%d bpp=%d xPal=%d yPal=%d wPal=%d hPal=%d textureCount=%d clearOldTexture=%d remastered=%s\n", __func__,
 		hasNamedTexture ? name : "N/A",
 		texture.x(), texture.y(), texture.w(), texture.h(), texture.bpp(),
-		palette.x(), palette.y(), palette.w(), palette.h(), textureCount, clearOldTexture);
+		palette.x(), palette.y(), palette.w(), palette.h(), textureCount, clearOldTexture,
+		hasRemasteredNamedTexture ? remasteredName : "N/A");
 
 	ModdedTextureId textureId = makeTextureId(texture.x(), texture.y());
 	setVramTextureId(textureId, texture.x(), texture.y(), texture.w(), texture.h(), clearOldTexture);
@@ -164,7 +166,7 @@ bool TexturePacker::setTexture(const char *name, const TextureInfos &texture, co
 		setVramTextureId(makeTextureId(texture.x(), texture.y(), true), palette.x(), palette.y(), palette.w(), palette.h(), clearOldTexture);
 	}
 
-	IdentifiedTexture tex(name, texture, palette);
+	IdentifiedTexture tex(name, texture, palette, remasteredName);
 
 	if (hasNamedTexture && textureCount != 0)
 	{
@@ -348,7 +350,7 @@ void TexturePacker::animateTextureByCopy(int sourceXBpp2, int sourceY, int sourc
 			{
 				dynamic_cast<TextureModStandard *>(itTarget->second.mod())->forceCurrentPalette(sourceY - it->second.palette().y());
 			}
-			else if (it->second.mod() != nullptr && it->second.mod()->canCopyRect())
+			else if (it->second.mod() != nullptr && it->second.mod()->canCopyRect() && it->second.remasteredName().empty())
 			{
 				dynamic_cast<TextureModStandard *>(it->second.mod())->copyRect(
 					sourceXBpp2, sourceY, sourceWBpp2, sourceH, targetXBpp2, targetY,
@@ -363,7 +365,7 @@ void TexturePacker::animateTextureByCopy(int sourceXBpp2, int sourceY, int sourc
 		{
 			dynamic_cast<TextureModStandard *>(it->second.mod())->forceCurrentPalette(sourceY - it->second.palette().y());
 		}
-		else
+		else if (it->second.remasteredName().empty())
 		{
 			dynamic_cast<TextureModStandard *>(it->second.mod())->copyRect(
 				sourceXBpp2, sourceY, sourceWBpp2, sourceH, targetXBpp2, targetY
@@ -785,7 +787,7 @@ TexturePacker::TiledTex::TiledTex(
 }
 
 TexturePacker::IdentifiedTexture::IdentifiedTexture() :
-	_texture(TextureInfos()), _palette(TextureInfos()), _name(""), _mod(nullptr),
+	_texture(TextureInfos()), _palette(TextureInfos()), _name(""), _remasteredName(""), _mod(nullptr),
 	_frameId(-1), _isAnimated(false)
 {
 }
@@ -793,8 +795,10 @@ TexturePacker::IdentifiedTexture::IdentifiedTexture() :
 TexturePacker::IdentifiedTexture::IdentifiedTexture(
 	const char *name,
 	const TextureInfos &texture,
-	const TextureInfos &palette
-) : _texture(texture), _palette(palette), _name(name == nullptr ? "" : name), _mod(nullptr),
+	const TextureInfos &palette,
+	const char *remasteredName
+) : _texture(texture), _palette(palette), _name(name == nullptr ? "" : name),
+	_remasteredName(remasteredName == nullptr ? "" : remasteredName), _mod(nullptr),
     _frameId(-1), _isAnimated(false)
 {
 }
