@@ -25,6 +25,8 @@
 #include "audio.h"
 #include "music.h"
 #include "patch.h"
+#include "ff8/remaster.h"
+#include "audio/vgmstream/zzzstreamfile.h"
 
 #include "ff8/engine.h"
 
@@ -218,7 +220,7 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
-bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* fullpath = nullptr)
+bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions())
 {
 	const struct game_mode* mode;
 	bool playing = false;
@@ -283,18 +285,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 		}
 
 		if (!playing) {
-			if (fullpath == nullptr || nxAudioEngine.canPlayMusic(music_name))
-			{
-				playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
-			}
-			else if (fullpath != nullptr)
-			{
-				if (trace_all || trace_music) ffnx_info("%s: back to wav %s\n", __func__, fullpath);
-
-				options.useNameAsFullPath = true;
-				strcpy(options.format, "wav");
-				playing = nxAudioEngine.playMusic(fullpath, music_id, channel, options);
-			}
+			playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
 		}
 	}
 	else
@@ -440,6 +431,41 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 	if (playing)
 	{
 		nxAudioEngine.setMusicLooping(!no_loop(music_id), channel);
+	}
+
+	return playing;
+}
+
+bool play_music_ff8(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* wav_fullpath = nullptr)
+{
+	bool playing = play_music(music_name, music_id, channel, options);
+
+	options.useNameAsFullPath = true;
+
+	if (!playing && wav_fullpath != nullptr) {
+		if (trace_all || trace_music) ffnx_info("%s: back to wav %s\n", __func__, wav_fullpath);
+
+		strcpy(options.format, "wav");
+		playing = nxAudioEngine.playMusic(wav_fullpath, music_id, channel, options);
+	}
+
+	if (!playing && remastered_edition) {
+		char file_name[MAX_PATH] = {};
+
+		if (wav_fullpath != nullptr) {
+			snprintf(file_name, sizeof(file_name), "zzz://%s", wav_fullpath);
+			strcpy(options.format, "wav");
+			playing = nxAudioEngine.playMusic(file_name, music_id, channel, options);
+		} else {
+			bool old_ff8_external_music_force_original_filenames = ff8_external_music_force_original_filenames;
+			ff8_external_music_force_original_filenames = true;
+			music_name = ff8_midi_name(music_id);
+			ff8_external_music_force_original_filenames = old_ff8_external_music_force_original_filenames;
+
+			snprintf(file_name, sizeof(file_name), "zzz://data\\music\\dmusic\\ogg\\%s.ogg", music_name);
+			strcpy(options.format, "ogg");
+			playing = nxAudioEngine.playMusic(file_name, music_id, channel, options);
+		}
 	}
 
 	return playing;
@@ -810,7 +836,7 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 		if (volume >= 0 && volume <= 127) {
 			options.targetVolume = volume / 127.0f;
 		}
-		play_music(music_name, music_id, channel, options);
+		play_music_ff8(music_name, music_id, channel, options);
 
 		if (backup_channel_1_after) {
 			// Backup channel 1 music state
@@ -871,7 +897,7 @@ uint32_t ff8_play_wav(uint32_t zero, char* filename, uint32_t volume)
 		if (volume >= 0 && volume < 127) {
 			options.targetVolume = volume / 127.0f;
 		}
-		play_music(music_name, music_id, channel, options, filename);
+		play_music_ff8(music_name, music_id, channel, options, filename);
 	}
 	else if (trace_all || trace_music) {
 		ffnx_trace("%s: is already playing music_id=%u, filename=%s, channel=%d, volume=%d\n", __func__, music_id, filename, channel, volume);
@@ -1048,7 +1074,7 @@ uint32_t ff8_load_cdrom()
 
 	NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 	options.targetVolume = 1.0f;
-	eyes_on_me_is_playing = play_music(eyes_on_me_track, 111, 0, options, fullpath);
+	eyes_on_me_is_playing = play_music_ff8(eyes_on_me_track, 111, 0, options, fullpath);
 
 	if (eyes_on_me_is_playing) {
 		return 1;
@@ -1103,7 +1129,7 @@ uint32_t ff8_load_midi_segment(void* directsound, const char* filename)
 		next_music_is_not_multi = false;
 		NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
 		options.suppressOpeningSilence = true;
-		play_music(midi_name, 43, 0, options);
+		play_music_ff8(midi_name, 43, 0, options);
 		return 1; // Success
 	}
 

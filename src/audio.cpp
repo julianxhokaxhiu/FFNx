@@ -69,16 +69,20 @@ void NxAudioEngine::loadConfig()
 			break;
 		}
 
-		try
-		{
-			nxAudioEngineConfig[type] = toml::parse_file(_fullpath);
-		}
-		catch (const toml::parse_error &err)
-		{
-			ffnx_warning("Parse error while opening the file %s. Will continue with the default settings.\n", _fullpath);
-			ffnx_warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
+		if (fileExists(_fullpath)) {
+			try
+			{
+				nxAudioEngineConfig[type] = toml::parse_file(_fullpath);
+			}
+			catch (const toml::parse_error &err)
+			{
+				ffnx_warning("Parse error while opening the file %s. Will continue with the default settings.\n", _fullpath);
+				ffnx_warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
 
-			nxAudioEngineConfig[type] = toml::parse("");
+				nxAudioEngineConfig[type] = toml::v3::ex::parse_result();
+			}
+		} else {
+			nxAudioEngineConfig[type] = toml::v3::ex::parse_result();
 		}
 	}
 }
@@ -573,7 +577,7 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 
 	if (isFullPath)
 	{
-		exists = fileExists(name);
+		exists = true;
 		strcpy(filename, name);
 	}
 

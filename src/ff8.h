@@ -1008,7 +1008,7 @@ struct ff8_gfx_driver
 
 struct ff8_field_state_common {
 	uint8_t stack_data[0x140];
-	uint32_t field_140;
+	uint32_t return_value;
 	uint32_t field_144;
 	uint32_t field_148;
 	uint32_t field_14c;
@@ -1073,6 +1073,30 @@ struct ff8_char_computed_stats {
 	uint8_t unk2[66];
 	uint8_t stat_multiplier;
 	uint8_t unk3[23];
+};
+
+struct ff8_field_state_other {
+	ff8_field_state_common common;
+	uint8_t gap1[114];
+	uint16_t current_triangle_id;
+	uint8_t gap1b[28];
+	int16_t model_id;
+	uint8_t gap2[47];
+	uint8_t pushonoff;
+	uint8_t gap3;
+	uint8_t talkonoff;
+	uint8_t throughonoff;
+	uint8_t gap4[2];
+	uint8_t baseanim1;
+	uint8_t baseanim2;
+	uint8_t baseanim3;
+	uint8_t ladderanim1;
+	uint8_t ladderanim2;
+	uint8_t ladderanim3;
+	uint8_t setpc;
+	uint8_t gap5;
+	uint8_t setgeta;
+	uint8_t gap6[12];
 };
 
 struct ff8_menu_callback {
@@ -1173,6 +1197,16 @@ struct ff8_externals
 	uint32_t (*ctrl_keyboard_actions)();
 	uint32_t get_key_state;
 	byte **keyboard_state;
+	uint32_t sub_533C30;
+	uint32_t model_vertices_scale_sub_45FE10;
+	uint16_t *camera_zoom_dword_1CA92E4;
+	int16_t *word_1CA92DE;
+	int *dword_1CA8A50;
+	int *dword_1CA92F8;
+	int16_t *dword_1CA8A10;
+	int *dword_1CA9290;
+	float *flt_1CA9234;
+	int *dword_1CA8A30;
 	uint32_t sub_4789A0;
 	char (*sub_47CA90)();
 	uint32_t field_update_seed_level_52B140;
@@ -1272,10 +1306,13 @@ struct ff8_externals
 	uint32_t read_field_data;
 	uint32_t upload_mim_file;
 	uint32_t upload_pmp_file;
+	uint32_t field_filename_concat_extension;
 	char *field_filename;
 	int (*field_scripts_init)(int, int, int, int);
 	uint8_t *field_state_background_count;
 	ff8_field_state_background **field_state_backgrounds;
+	uint8_t *field_state_other_count;
+	ff8_field_state_other **field_state_others;
 	uint32_t load_field_models;
 	uint32_t chara_one_read_file;
 	uint32_t chara_one_seek_file;
@@ -1422,6 +1459,7 @@ struct ff8_externals
 	uint32_t opcode_movie;
 	uint32_t opcode_moviesync;
 	uint32_t opcode_spuready;
+	uint32_t opcode_show;
 	uint32_t opcode_movieready;
 	uint32_t opcode_setvibrate;
 	uint32_t opcode_musicload;
@@ -1485,6 +1523,10 @@ struct ff8_externals
 	uint32_t sub_464DB0;
 	uint32_t sub_4649A0;
 	char *archive_path_prefix;
+	char *archive_path_prefix_menu;
+	char *archive_path_prefix_battle;
+	char *archive_path_prefix_field;
+	char *archive_path_prefix_world;
 	int(*fs_archive_search_filename)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
 	int(*ff8_fs_archive_search_filename2)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
 	char *(*fs_archive_get_fl_filepath)(int, const ff8_file_fl *);
@@ -1492,6 +1534,23 @@ struct ff8_externals
 	int(*_sopen)(const char*, int, int, ...);
 	uint32_t fopen;
 	FILE *(*_fsopen)(const char*, const char*, int);
+	int (*_lseek)(int,long,int);
+	int (*_lseek_lk)(int,long,int);
+	unsigned int *_io_fd_number;
+	int *_io_known_fds;
+	void (*_lock_fhandle)(int);
+	int (*_unlock_fhandle)(int);
+	int* (*_errno)();
+	unsigned long* (*__doserrno)();
+	int (*_read)(int,void*,unsigned int);
+	unsigned int (*_read_lk)(int,LPVOID,DWORD);
+	uint32_t open_and_write_to_archive;
+	uint32_t write_to_archive;
+	int (*_write)(int,void*,unsigned int);
+	int (*_write_lk)(int,LPVOID,DWORD);
+	int (*_close)(int);
+	int (*_close_lk)(int);
+	__int32 (*_filelength)(int);
 	uint32_t input_init;
 	uint32_t ff8input_cfg_read;
 	uint32_t ff8input_cfg_reset;
@@ -1583,6 +1642,7 @@ struct ff8_externals
 	uint32_t sfx_is_playing;
 	uint32_t sfx_set_panning;
 	uint16_t *sfx_sound_count;
+	uint32_t sfx_initialize_audio_data;
 	ff8_audio_fmt **sfx_audio_fmt;
 	uint32_t manage_time_engine_sub_569971;
 	int (*enable_rdtsc_sub_40AA00)(int enable);
@@ -1648,6 +1708,9 @@ struct ff8_externals
 	int* battle_magic_id;
 	uint32_t sub_571870;
 	DWORD* func_off_battle_effect_textures_50AF93;
+	uint32_t get_battle_effect_buffer_sub_571B50;
+	uint32_t get_battle_effect_buffer_size_sub_571B60;
+	uint32_t init_battle_effect_buffer_sub_571B80;
 	uint32_t sub_6C3640;
 	uint32_t sub_6C3760;
 	uint8_t **vibrate_data_summon_quezacotl;
@@ -1691,7 +1754,6 @@ struct ff8_externals
 	uint32_t scan_text_positions;
 	uint32_t fps_limiter;
 	double *time_volume_change_related_1A78BE0;
-	uint32_t* game_mode_obj_1D9CF88;
 	uint32_t field_vars_stack_1CFE9B8;
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
@@ -1721,6 +1783,7 @@ struct ff8_externals
 	int32_t *current_viewport_y_dword_1A77648;
 	int32_t *current_viewport_width_dword_1A77654;
 	int32_t *current_viewport_height_dword_1A77650;
+	void **dword_1DCB340;
 	uint32_t set_render_to_vram_current_screen_flag_before_battle;
 	uint32_t sub_472B30;
 	uint32_t sub_530810;

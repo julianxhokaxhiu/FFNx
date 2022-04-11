@@ -2050,13 +2050,13 @@ bgfx::TextureHandle Renderer::createTextureHandle(cmrc::file* file, char* filena
 uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
-    bimg::ImageMip mip;
+    bimg::ImageContainer *image = loadPng(&defaultAllocator, filename);
 
-    if (!loadPng(filename, mip)) {
+    if (image == nullptr) {
         return ret.idx;
     }
 
-    const bgfx::Memory* mem = bgfx::makeRef(mip.m_data, mip.m_size, RendererReleaseData, (void *)mip.m_data);
+    const bgfx::Memory* mem = bgfx::makeRef(image->m_data, image->m_size, RendererReleaseImageContainer, (void *)image);
 
     uint64_t flags = BGFX_SAMPLER_NONE;
 
@@ -2064,17 +2064,17 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
     else flags |= BGFX_TEXTURE_NONE;
 
     ret = bgfx::createTexture2D(
-        mip.m_width,
-        mip.m_height,
+        image->m_width,
+        image->m_height,
         false,
         1,
-        bgfx::TextureFormat::Enum(mip.m_format),
+        bgfx::TextureFormat::Enum(image->m_format),
         flags,
         mem
     );
 
-    *width = mip.m_width;
-    *height = mip.m_height;
+    *width = image->m_width;
+    *height = image->m_height;
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, *width, *height, filename);
 
