@@ -1826,6 +1826,7 @@ void ff7_battle_animations_hook_init()
     {
         // Fix battle speed and menu for 60 FPS only
         patch_divide_code<int>(ff7_externals.set_battle_speed_4385CC + 0x2E, battle_frame_multiplier / 2);
+        patch_divide_code<int>(ff7_externals.battle_set_actor_timer_data_4339C2 + 0x89, battle_frame_multiplier / 2);
         replace_call_function(ff7_externals.battle_menu_update_call, ff7_update_battle_menu);
         replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1BB, ff7_display_cait_sith_slots_handler);
         replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C2, ff7_display_tifa_slots_handler);
