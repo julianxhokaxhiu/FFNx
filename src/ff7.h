@@ -2753,6 +2753,7 @@ struct ff7_externals
 	uint32_t battle_menu_update_call;
 	int *battle_menu_animation_idx;
 	uint32_t set_battle_speed_4385CC;
+	uint32_t battle_set_actor_timer_data_4339C2;
 	uint32_t battle_handle_player_mark_5B9C8E;
 	uint32_t battle_handle_status_effect_anim_5BA7C0;
 	uint32_t battle_update_targeting_info_6E6291;

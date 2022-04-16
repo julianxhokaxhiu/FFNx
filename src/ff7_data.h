@@ -1022,6 +1022,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.g_do_render_menu = (int*)get_absolute_value(ff7_externals.battle_set_do_render_menu, 0x7);
 	ff7_externals.battle_menu_animation_idx = (int*)get_absolute_value(ff7_externals.battle_menu_update_6CE8B3, 0x144);
 	ff7_externals.set_battle_speed_4385CC = get_relative_call(ff7_externals.battle_sub_437DB0, 0x17C);
+	ff7_externals.battle_set_actor_timer_data_4339C2 = get_relative_call(ff7_externals.battle_sub_437DB0, 0x1C7);
 	uint32_t battle_sub_4297B9 = get_relative_call(ff7_externals.battle_sub_42D992, 0x59);
 	uint32_t battle_sub_42952E = get_relative_call(battle_sub_4297B9, 0x10);
 	uint32_t battle_sub_42F3E8 = get_relative_call(battle_sub_42952E, 0xCD);
