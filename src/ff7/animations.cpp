@@ -890,10 +890,14 @@ void ff7_execute_effect10_fn()
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_426941)
                 {
-                    // Related to resting positions
-                    effect10_data.n_frames *= battle_frame_multiplier;
-                    effect10_data.field_A /= battle_frame_multiplier;
-                    effect10_data.field_C /= battle_frame_multiplier;
+                    // Increment model position X and Z for n_frames
+                    // Used by Tonberry to set the position after its moving animation
+                    if(effect10_data.n_frames > 1)
+                    {
+                        effect10_data.n_frames *= battle_frame_multiplier;
+                        effect10_data.field_A /= battle_frame_multiplier;
+                        effect10_data.field_C /= battle_frame_multiplier;
+                    }
                 }
                 else if (ff7_externals.effect10_array_fn[fn_index] == ff7_externals.battle_sub_426899)
                 {
