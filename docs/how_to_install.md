@@ -92,13 +92,12 @@ external_music_ext = "akb"
 
 ## Mod Launchers
 
-### 7thHeaven 2.3.1
+### 7thHeaven 2.4.0+
 
 0. Install Final Fantasy VII using the Steam Client
-1. Download the latest 7th Heaven release here: https://github.com/tsunamods-codes/7th-Heaven/releases
-2. Extract the ZIP content in your preferred folder
-3. Launch `7th Heaven.exe` and click Play on the top left
-4. Enjoy!
+1. Download and install the latest 7th Heaven release here: https://github.com/tsunamods-codes/7th-Heaven/releases
+2. Launch `7th Heaven` and click Play on the top left
+3. Enjoy!
 
 ### SYW Steam all in one
 
