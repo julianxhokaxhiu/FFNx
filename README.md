@@ -1,3 +1,5 @@
+![License](https://img.shields.io/github/license/julianxhokaxhiu/FFNx) ![Overall Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/total?label=Overall%20Downloads) ![Latest Stable Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/latest/total?label=Latest%20Stable%20Downloads&sort=semver) ![Latest Canary Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/canary/total?label=Latest%20Canary%20Downloads) [![Build Status](https://dev.azure.com/julianxhokaxhiu/Github/_apis/build/status/julianxhokaxhiu.FFNx?branchName=master)](https://dev.azure.com/julianxhokaxhiu/Github/_build/latest?definitionId=1&branchName=master)
+
 <div align="center">
   <img src="https://github.com/julianxhokaxhiu/FFNx/blob/master/.logo/logo_nobg.png" alt="">
   <br><strong><small>Kudos to <a href="https://www.instagram.com/aryaaiedail/">Cinzia Cancedda (aryaaiedail)</a></small></strong>
