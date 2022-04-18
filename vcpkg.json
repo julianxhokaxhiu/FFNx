@@ -48,7 +48,7 @@
     {
       "name": "ffmpeg",
       "version": "4.4.1",
-      "port-version": 9
+      "port-version": 12
     },
     {
       "name": "imgui",
@@ -82,8 +82,8 @@
     },
     {
       "name": "tomlplusplus",
-      "version": "2.5.0",
-      "port-version": 3
+      "version": "3.0.1",
+      "port-version": 0
     },
     {
       "name": "vgmstream",

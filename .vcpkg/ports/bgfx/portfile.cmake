@@ -20,8 +20,8 @@ vcpkg_from_github(OUT_SOURCE_PATH BIMG_SOURCE_DIR
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/bgfx"
     HEAD_REF master
-    REF b25e200ef025ef8997947051e049d326df22549f
-    SHA512 d5217e2bebf3e511eea260478b0c0513eb8abf3f9aee986f31c60b946b4934fea757a8db7e1aca6cd3910d3259a939a8fbf0d9a064eb5721a404994c6be02e21
+    REF 5f7ef50ff92c8f957abd957f30b154715d85b885
+    SHA512 d48cb4d6c2f8f7d5e9d1bd09329a272182b8d88a5911b5aff8cca1ab8b9d9b4184c3d8153b4b6bd1f67690295f3d8a0aee38565cb6e8ee7c4660fe153c46ed7d
 )
 
 # Move bx source inside bgfx source tree

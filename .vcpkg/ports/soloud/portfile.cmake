@@ -5,8 +5,8 @@
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/soloud"
     HEAD_REF master
-    REF 76cd23f0550a8c7153c964d00fa11e48e0d80c5d
-    SHA512 cd0b28d65dc4a7aac37bd776d5812f87e1175c5c31f92dbd9ebbc4805c69d0b39c602ce0bb2821dd33aac3d579656918c355b1471dad2041d24ea601bf74308d
+    REF db307c7ef841c84c456949534be5e4b51919fbc0
+    SHA512 decd81ff2957142da8d803ad2011ef1ef34ea988bfe184a7071137b03a847f5199326067f2aec177b1d684eb1df2ac8fcf8cef6d5942e52f20a51e0b2a023565
 )
 
 # Set up GENie (custom project generator)

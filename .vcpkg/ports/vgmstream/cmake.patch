@@ -54,43 +54,6 @@ index f09d3eed..02750d86 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/nwa_decoder.h DESTINATION include/libvgmstream/coding )
 +endif()
 \ No newline at end of file
-diff --git a/src/coding/coding.h b/src/coding/coding.h
-index eac0cd88..e132f791 100644
---- a/src/coding/coding.h
-+++ b/src/coding/coding.h
-@@ -430,6 +430,15 @@ void seek_vorbis_custom(VGMSTREAM* vgmstream, int32_t num_sample);
- void free_vorbis_custom(vorbis_custom_codec_data* data);
- #endif
- 
-+typedef struct {
-+    int version;
-+    int layer;
-+    int bit_rate;
-+    int sample_rate;
-+    int frame_samples;
-+    int frame_size; /* bytes */
-+    int channels;
-+} mpeg_frame_info;
- 
- #ifdef VGM_USE_MPEG
- /* mpeg_decoder */
-@@ -482,16 +491,6 @@ void free_mpeg(mpeg_codec_data* data);
- int mpeg_get_sample_rate(mpeg_codec_data* data);
- long mpeg_bytes_to_samples(long bytes, const mpeg_codec_data* data);
- 
--typedef struct {
--    int version;
--    int layer;
--    int bit_rate;
--    int sample_rate;
--    int frame_samples;
--    int frame_size; /* bytes */
--    int channels;
--} mpeg_frame_info;
--
- int mpeg_get_frame_info(STREAMFILE* sf, off_t offset, mpeg_frame_info* info);
- #endif
- 
 diff --git a/src/streamfile.c b/src/streamfile.c
 index 0e6cb01e..d2d7b666 100644
 --- a/src/streamfile.c
