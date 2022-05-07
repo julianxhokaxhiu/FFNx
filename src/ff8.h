@@ -451,8 +451,9 @@ struct struc_50
 	uint32_t vram_y;
 	uint32_t vram_width;
 	uint32_t vram_height;
-	uint32_t vram_palette_data;
-	uint32_t vram_palette_pos; // 24-bit | 6-bit
+	uint16_t *vram_palette_data;
+	uint16_t vram_palette_pos; // 10-bit | 6-bit
+	uint16_t padding;
 };
 
 struct struc_51
@@ -975,7 +976,17 @@ struct ff8_externals
 	uint32_t worldmap_main_loop;
 	uint32_t worldmap_enter_main;
 	uint32_t worldmap_sub_53F310;
+	uint32_t worldmap_sub_53F310_call_2A9;
+	uint32_t worldmap_sub_53F310_call_30D;
 	uint32_t worldmap_sub_53F310_loc_53F7EE;
+	uint32_t worldmap_sub_5531F0;
+	int32_t (*open_file_world)(const char*, int32_t, uint32_t, void *);
+	uint32_t open_file_world_sub_52D670_texl_call1;
+	uint32_t open_file_world_sub_52D670_texl_call2;
+	uint32_t upload_psxvram_texl_pal_call1;
+	uint32_t upload_psxvram_texl_pal_call2;
+	uint32_t **worldmap_section38_position;
+	uint32_t (*worldmap_prepare_tim_for_upload)(uint8_t *, ff8_tim *);
 	uint32_t wm_upload_psx_vram;
 	uint32_t engine_eval_process_input;
 	uint32_t engine_eval_keyboard_gamepad_input;

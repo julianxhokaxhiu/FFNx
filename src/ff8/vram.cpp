@@ -31,6 +31,7 @@ int next_psxvram_x = -1;
 int next_psxvram_y = -1;
 int next_psxvram_pal_x = -1;
 int next_psxvram_pal_y = -1;
+int next_texl_id = 0;
 uint8_t next_bpp = 2;
 uint8_t next_scale = 1;
 int8_t texl_id_left = -1;
@@ -223,7 +224,7 @@ void ff8_upload_vram_triple_triad_2_texture_name(uint8_t *texture_buffer)
 		strncpy(next_texture_name, "cardgame/cards", sizeof(next_texture_name));
 		if (next_pal_data == (uint16_t *)texture_buffer)
 		{
-			if (save_textures) Tim::fromTimData(texture_buffer - 20).saveMultiPaletteGrid(next_texture_name, 28, 4, 2, true);
+			if (save_textures) Tim::fromTimData(texture_buffer - 20).saveMultiPaletteGrid(next_texture_name, 28, 4, 128, 2, true);
 		}
 		next_bpp = 1;
 	}
@@ -258,29 +259,15 @@ void ff8_upload_vram_triple_triad_2_data(int16_t *pos_and_size, uint8_t *texture
 	ff8_upload_vram(pos_and_size, texture_buffer);
 }
 
-void ff8_wm_open_pal1(int16_t *pos_and_size, uint8_t *texture_buffer)
-{
-	if (trace_all || trace_vram) ffnx_trace("%s %p\n", __func__, texture_buffer);
-
-	next_pal_data = (uint16_t *)texture_buffer;
-
-	ff8_upload_vram(pos_and_size, texture_buffer);
-
-	next_pal_data = nullptr;
-}
-
-uint32_t ff8_wm_open_texture1(uint8_t *tim_file_data, ff8_tim *tim_infos)
+uint32_t ff8_wm_section_38_prepare_texture_for_upload(uint8_t *tim_file_data, ff8_tim *tim_infos)
 {
 	uint8_t bpp = tim_file_data[4] & 0x3;
-	int *wm_section_38_textures_pos = *((int **)0x2040014);
-	int searching_value = int(tim_file_data - (uint8_t *)wm_section_38_textures_pos);
+	uint32_t *wm_section_38_textures_pos = *ff8_externals.worldmap_section38_position;
+	uint32_t searching_value = uint32_t(tim_file_data - (uint8_t *)wm_section_38_textures_pos);
 	int timId = -1;
-	int *dword_C75DB8 = (int *)0xC75DB8;
-
-	if (trace_all || trace_vram) ffnx_trace("%s C75DB8=%d\n", __func__, *dword_C75DB8);
 
 	// Find tim id relative to the start of section 38
-	for (int *cur = wm_section_38_textures_pos; *cur != 0; ++cur) {
+	for (uint32_t *cur = wm_section_38_textures_pos; *cur != 0; ++cur) {
 		if (*cur == searching_value) {
 			timId = int(cur - wm_section_38_textures_pos);
 			break;
@@ -291,117 +278,129 @@ uint32_t ff8_wm_open_texture1(uint8_t *tim_file_data, ff8_tim *tim_infos)
 
 	next_bpp = bpp;
 
-	uint32_t ret = ((uint32_t(*)(uint8_t*,ff8_tim*))0x541740)(tim_file_data, tim_infos);
+	uint32_t ret = ff8_externals.worldmap_prepare_tim_for_upload(tim_file_data, tim_infos);
 
 	next_pal_data = tim_infos->pal_data;
 
-	if (save_textures) Tim::fromTimData(tim_file_data).save(next_texture_name, 0, 0, true);
+	if (save_textures)
+	{
+		if (timId < 8)
+		{
+			Tim::fromTimData(tim_file_data).saveMultiPaletteGrid(next_texture_name, 8, 4, 0, 4, true);
+		}
+		else
+		{
+			Tim::fromTimData(tim_file_data).save(next_texture_name);
+		}
+	}
 
 	return ret;
 }
 
+void ff8_upload_vram_wm_section_38_palette(int16_t *pos_and_size, uint8_t *texture_buffer)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s %p\n", __func__, texture_buffer);
+
+	next_pal_data = (uint16_t *)texture_buffer;
+
+	ff8_upload_vram(pos_and_size, texture_buffer);
+
+	next_pal_data = nullptr;
+}
+
+int ff8_wm_open_data(const char *path, int32_t pos, uint32_t size, void *data)
+{
+	if (strstr(path, "texl.obj") != nullptr)
+	{
+		next_texl_id = pos / 0x12800;
+
+		if (trace_all || trace_vram) ffnx_trace("Next texl ID: %d\n", next_texl_id);
+	}
+
+	return ff8_externals.open_file_world(path, pos, size, data);
+}
+
 void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
-	int *dword_C75DB8 = (int *)0xC75DB8;
-	int16_t *word_203688E = (int16_t *)0x203688E;
-	int texl_id = (*dword_C75DB8 >> 8) & 0xFF;
+	snprintf(next_texture_name, MAX_PATH, "world/dat/texl/texture%d", next_texl_id);
 
-	if ((*word_203688E & 1) != 0 && (*dword_C75DB8 == 1284 || *dword_C75DB8 == 1798))
-	{
-		texl_id += 12;
-	}
+	Tim tim = Tim::fromTimData(texture_buffer - 20);
 
-	bool is_left = pos_and_size[0] == 320;
+	if (trace_all || trace_vram) ffnx_trace("%s texl_id=%d pos=(%d, %d) palPos=(%d, %d)\n", __func__, next_texl_id, tim.imageX(), tim.imageY(), tim.paletteX(), tim.paletteY());
 
-	if (is_left)
-	{
-		texl_id_left = texl_id;
-	}
-	else
-	{
-		texl_id_right = texl_id;
-	}
-
-	if (trace_all || trace_vram) ffnx_trace("%s texl_id=%d\n", __func__, texl_id);
-
-	snprintf(next_texture_name, MAX_PATH, "world/dat/texl/texture%d", texl_id);
+	if (save_textures) tim.saveMultiPaletteGrid(next_texture_name, 4, 4, 0, 4, true);
 
 	next_bpp = 1;
 
 	ff8_upload_vram(pos_and_size, texture_buffer);
 
+	if (! ff8_worldmap_internal_highres_textures)
+	{
+		return;
+	}
+
 	// Worldmap texture fix
 
-	texturePacker.clearTextureRedirections();
+	bool is_left = pos_and_size[1] == 224;
+	uint16_t oldX = 16 * (next_texl_id - 2 * ((next_texl_id / 2) & 1) + (next_texl_id & 1)), oldY = ((next_texl_id / 2) & 1) ? 384 : 256;
 
-	uint16_t oldX = 16 * (texl_id - 2 * ((texl_id / 2) & 1) + (texl_id & 1)), oldY = ((texl_id / 2) & 1) ? 384 : 256;
-
-	if (texl_id == 18 || texl_id == 19)
+	if (next_texl_id == 18 || next_texl_id == 19)
 	{
-		oldX = texl_id & 1 ? 96 : 64;
+		oldX = next_texl_id & 1 ? 96 : 64;
 		oldY = 384;
 	}
 
-	if (texl_id == 16 || texl_id == 17 || texl_id > 19)
+	uint16_t newX = 0;
+
+	if (pos_and_size[0] == 320 && pos_and_size[1] == 224)
 	{
+		newX = 256;
+	}
+	else if (pos_and_size[0] == 320 && pos_and_size[1] == 240)
+	{
+		newX = 384;
+	}
+	else if (pos_and_size[0] == 576 && pos_and_size[1] == 224)
+	{
+		newX = 512;
+	}
+	else if (pos_and_size[0] == 576 && pos_and_size[1] == 240)
+	{
+		newX = 640;
+	}
+
+	if (next_texl_id == 16 || next_texl_id == 17 || next_texl_id > 19)
+	{
+		if (trace_all || trace_vram) ffnx_warning("%s: texl id not supported %d\n", __func__, next_texl_id);
 		return; // TODO
 	}
 
-	Tim tim = Tim::fromTimData(texture_buffer - 20);
+	TexturePacker::TextureInfos oldTexture(oldX, oldY, tim.imageWidth() / 8, tim.imageHeight() / 2, 0),
+		newTexture(newX, 256, tim.imageWidth() / 2, tim.imageHeight(), tim.bpp());
 
-	TexturePacker::TextureInfos oldTexture(oldX, oldY, pos_and_size[2] / 2, pos_and_size[3] / 2, 0),
-		newTexture(tim.imageX(), tim.imageY(), pos_and_size[2], pos_and_size[3], 1),
-		oldPal, // TODO
-		newPal(tim.paletteX(), tim.paletteY(), tim.paletteWidth(), tim.paletteHeight(), 2);
+	uint32_t image_data_size = newTexture.pixelW() * newTexture.h() * 4;
+	uint32_t *image = (uint32_t*)driver_malloc(image_data_size);
 
-	texturePacker.setTextureRedirection(
-		oldTexture,
-		newTexture,
-		oldPal,
-		newPal
-	);
-}
+	if (image)
+	{
+		if (! tim.toRGBA32MultiPaletteGrid(image, 4, 4, 0, 4, true))
+		{
+			driver_free(image);
+			return;
+		}
 
-void read_psxvram_alpha1_ssigpu_select2_sub_467360(int CLUT, uint8_t *rgba, int size)
-{
-	if (trace_all || trace_vram) ffnx_trace("%s CLUT=(%d, %d) rgba=%p size=%d\n", __func__, 16 * (CLUT & 0x3F), (CLUT >> 6) & 0x1FF, rgba, size);
+		if (! texturePacker.setTextureRedirection(oldTexture, newTexture, image))
+		{
+			if (trace_all || trace_vram) ffnx_warning("%s: invalid redirection\n");
+			driver_free(image);
+		}
+	}
 
-	((void(*)(int,uint8_t*,int))0x467360)(CLUT, rgba, size);
-}
-
-void read_psxvram_alpha2_ssigpu_select2_sub_467460(uint16_t CLUT, uint8_t *rgba, int size)
-{
-	if (trace_all || trace_vram) ffnx_trace("%s CLUT=(%d, %d) rgba=%p size=%d\n", __func__, 16 * (CLUT & 0x3F), (CLUT >> 6) & 0x1FF, rgba, size);
-
-	((void(*)(uint16_t,uint8_t*,int))0x467460)(CLUT, rgba, size);
-}
-
-void ssigpu_tx_select_2_sub_465CD0_call1(uint32_t a1, uint32_t header_with_bit_depth, int16_t CLUT_pos_x6y9, int32_t *a4, int32_t *clut_pos_out, int32_t *a6)
-{
-	if (trace_all || trace_vram) ffnx_trace("%s pos=(%d, %d) %d bit_depth=%d CLUT=(%d, %d) image_flags=%X\n", __func__,
-		(header_with_bit_depth & 0xF) << 6, 16 * (header_with_bit_depth & 0x10),
-		header_with_bit_depth & 0x1F, (header_with_bit_depth >> 7) & 3,
-		16 * (CLUT_pos_x6y9 & 0x3F), (CLUT_pos_x6y9 >> 6) & 0x1FF,
-		(header_with_bit_depth >> 5) & 3);
-
-	next_psxvram_pal_x = 16 * (CLUT_pos_x6y9 & 0x3F);
-	next_psxvram_pal_y = (CLUT_pos_x6y9 >> 6) & 0x1FF;
-
-	((void(*)(uint32_t,uint32_t,int16_t,int32_t*,int32_t*,int32_t*))0x465CD0)(a1, header_with_bit_depth, CLUT_pos_x6y9, a4, clut_pos_out, a6);
-}
-
-void ssigpu_tx_select_2_sub_465CD0_call2(uint32_t a1, uint32_t header_with_bit_depth, int16_t CLUT_pos_x6y9, int32_t *a4, int32_t *clut_pos_out, int32_t *a6)
-{
-	if (trace_all || trace_vram) ffnx_trace("%s pos=(%d, %d) %d bit_depth=%d CLUT=(%d, %d) image_flags=%X\n", __func__,
-		(header_with_bit_depth & 0xF) << 6, 16 * (header_with_bit_depth & 0x10),
-		header_with_bit_depth & 0x1F, (header_with_bit_depth >> 7) & 3,
-		16 * (CLUT_pos_x6y9 & 0x3F), (CLUT_pos_x6y9 >> 6) & 0x1FF,
-		(header_with_bit_depth >> 5) & 3);
-
-	next_psxvram_pal_x = 16 * (CLUT_pos_x6y9 & 0x3F);
-	next_psxvram_pal_y = (CLUT_pos_x6y9 >> 6) & 0x1FF;
-
-	((void(*)(uint32_t,uint32_t,int16_t,int32_t*,int32_t*,int32_t*))0x465CD0)(a1, header_with_bit_depth, CLUT_pos_x6y9, a4, clut_pos_out, a6);
+	// Reload texture TODO: reload only relevant parts
+	ff8_externals.psx_texture_pages[0].struc_50_array[16].vram_needs_reload = 0xFF;
+	ff8_externals.psx_texture_pages[0].struc_50_array[17].vram_needs_reload = 0xFF;
+	ff8_externals.psx_texture_pages[0].struc_50_array[18].vram_needs_reload = 0xFF;
+	ff8_externals.psx_texture_pages[0].struc_50_array[19].vram_needs_reload = 0xFF;
 }
 
 void vram_init()
@@ -417,11 +416,13 @@ void vram_init()
 	replace_call(ff8_externals.sub_5391B0 + 0x1CC, ff8_upload_vram_triple_triad_2_palette);
 	replace_call(ff8_externals.sub_5391B0 + 0x1E1, ff8_upload_vram_triple_triad_2_data);
 	// worldmap
-	replace_call(0x53F0EC, ff8_wm_open_texture1); // Section 38
-	replace_call(0x53F165, ff8_wm_open_pal1); // Section 38
+	replace_call(ff8_externals.worldmap_sub_53F310_call_2A9, ff8_wm_section_38_prepare_texture_for_upload);
+	replace_call(ff8_externals.worldmap_sub_53F310_call_30D, ff8_upload_vram_wm_section_38_palette);
 	// wm texl project
-	replace_call(0x5533C0 + 0x2EC, ff8_wm_texl_palette_upload_vram);
-	replace_call(0x5533C0 + 0x3F0, ff8_wm_texl_palette_upload_vram);
+	replace_call(ff8_externals.upload_psxvram_texl_pal_call1, ff8_wm_texl_palette_upload_vram);
+	replace_call(ff8_externals.upload_psxvram_texl_pal_call2, ff8_wm_texl_palette_upload_vram);
+	replace_call(ff8_externals.open_file_world_sub_52D670_texl_call1, ff8_wm_open_data);
+	replace_call(ff8_externals.open_file_world_sub_52D670_texl_call2, ff8_wm_open_data);
 
 	replace_function(ff8_externals.upload_psx_vram, ff8_upload_vram);
 
@@ -448,10 +449,4 @@ void vram_init()
 
 	// Not used?
 	replace_call(ff8_externals.sub_4649A0 + 0x13F, read_vram_to_buffer_with_palette2);
-
-	/* replace_call(0x4661AC, read_psxvram_alpha1_ssigpu_select2_sub_467360);
-	replace_call(0x4661C1, read_psxvram_alpha2_ssigpu_select2_sub_467460); */
-
-	replace_call(0x461A4C, ssigpu_tx_select_2_sub_465CD0_call1);
-	replace_call(0x462E13, ssigpu_tx_select_2_sub_465CD0_call2);
 }

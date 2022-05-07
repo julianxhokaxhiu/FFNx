@@ -48,10 +48,20 @@ bool Tim::save(const char *fileName, uint8_t palX, uint8_t palY, bool withAlpha)
 	return fixed.isValid() && save(fileName, &fixed, withAlpha);
 }
 
-PaletteDetectionStrategyGrid::PaletteDetectionStrategyGrid(const Tim *const tim, uint8_t cellCols, uint8_t cellRows, uint8_t palCols) :
-	PaletteDetectionStrategy(tim), _cellCols(cellCols), _cellRows(cellRows), _palCols(palCols)
+bool Tim::toRGBA32(uint32_t *target, uint8_t palX, uint8_t palY, bool withAlpha) const
 {
-	_colorPerPal = tim->_tim.pal_w / _palCols;
+	PaletteDetectionStrategyFixed fixed(this, palX, palY);
+	return fixed.isValid() && toRGBA32(target, &fixed, withAlpha);
+}
+
+PaletteDetectionStrategyGrid::PaletteDetectionStrategyGrid(const Tim *const tim, uint8_t cellCols, uint8_t cellRows, uint16_t colorsPerPal, uint8_t palColsPerRow) :
+	PaletteDetectionStrategy(tim), _cellCols(cellCols), _cellRows(cellRows), _colorsPerPal(colorsPerPal), _palColsPerRow(palColsPerRow)
+{
+	if (_colorsPerPal == 0)
+	{
+		_colorsPerPal = tim->bpp() == 0 ? 16 : 256;
+	}
+	_palCols = tim->_tim.pal_w / _colorsPerPal;
 	_cellWidth = tim->_tim.img_w / _cellCols;
 	_cellHeight = tim->_tim.img_h / _cellRows;
 }
@@ -72,7 +82,7 @@ bool PaletteDetectionStrategyGrid::isValid() const
 
 	if (_tim->_tim.pal_h * _palCols != _cellCols * _cellRows)
 	{
-		ffnx_error("PaletteDetectionStrategyGrid::%s not enough palette for this image %d (%d) * %d\n", __func__, _palCols, _tim->_tim.pal_w, _tim->_tim.pal_h);
+		ffnx_error("PaletteDetectionStrategyGrid::%s not enough palette for this image %d (%d * %d)\n", __func__, _palCols, _tim->_tim.pal_w, _tim->_tim.pal_h);
 		return false;
 	}
 
@@ -83,7 +93,8 @@ uint32_t PaletteDetectionStrategyGrid::palOffset(uint16_t imgX, uint16_t imgY) c
 {
 	// Direction: top to bottom then left to right
 	uint16_t cellX = imgX / _cellWidth, cellY = imgY / _cellHeight;
-	uint16_t palX = (cellX % _palCols) * _colorPerPal, palY = (cellX / _palCols) * _cellRows + cellY;
+	int palId = (cellX % _palColsPerRow) + cellY * _palColsPerRow + (cellX / _palColsPerRow) * (_cellRows * _palColsPerRow);
+	uint16_t palX = (palId % _palCols) * _colorsPerPal, palY = palId / _palCols;
 
 	return palX + palY * _tim->_tim.pal_w;
 }
@@ -93,10 +104,16 @@ uint32_t PaletteDetectionStrategyGrid::palIndex() const
 	return 0;
 }
 
-bool Tim::saveMultiPaletteGrid(const char *fileName, uint8_t cellCols, uint8_t cellRows, uint8_t palCols, bool withAlpha) const
+bool Tim::saveMultiPaletteGrid(const char *fileName, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal, uint8_t palColsPerRow, bool withAlpha) const
 {
-	PaletteDetectionStrategyGrid grid(this, cellCols, cellRows, palCols);
+	PaletteDetectionStrategyGrid grid(this, cellCols, cellRows, colorsPerPal, palColsPerRow);
 	return grid.isValid() && save(fileName, &grid, withAlpha);
+}
+
+bool Tim::toRGBA32MultiPaletteGrid(uint32_t *target, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal, uint8_t palColsPerRow, bool withAlpha) const
+{
+	PaletteDetectionStrategyGrid grid(this, cellCols, cellRows, colorsPerPal, palColsPerRow);
+	return grid.isValid() && toRGBA32(target, &grid, withAlpha);
 }
 
 bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha) const
@@ -123,11 +140,11 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 		{
 			for (int x = 0; x < _tim.img_w / 2; ++x)
 			{
-				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x, y))[*img_data & 0xF], withAlpha);
+				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2, y))[*img_data & 0xF], withAlpha);
 
 				++target;
 
-				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x + 1, y))[*img_data >> 4], withAlpha);
+				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2 + 1, y))[*img_data >> 4], withAlpha);
 
 				++target;
 				++img_data;
