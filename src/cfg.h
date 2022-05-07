@@ -133,6 +133,7 @@ extern bool steam_achievements_debug_mode;
 extern double hdr_max_nits;
 extern long external_audio_number_of_channels;
 extern long external_audio_sample_rate;
+extern bool ff8_worldmap_internal_highres_textures;
 extern std::string app_path;
 extern std::string data_drive;
 

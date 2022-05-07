@@ -1288,7 +1288,7 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 	}
 	else if(ff8)
 	{
-		uint8_t scale = texturePacker.getMaxScale();
+		uint8_t scale = texturePacker.getMaxScale(VREF(tex_header, image_data));
 		uint8_t *image_data_scaled = (uint8_t *)image_data;
 
 		if (scale > 1)
@@ -1304,7 +1304,14 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			}
 		}
 
-		if (image_data_scaled != nullptr && texturePacker.drawModdedTextures(VREF(tex_header, image_data), (uint32_t *)image_data_scaled, (uint32_t *)image_data, originalWidth, originalHeight, scale))
+		TexturePacker::TextureTypes textureType = TexturePacker::NoTexture;
+
+		if (image_data_scaled != nullptr && scale > 0)
+		{
+			textureType = texturePacker.drawTextures(VREF(tex_header, image_data), tex_format, (uint32_t *)image_data_scaled, (uint32_t *)image_data, originalWidth, originalHeight, scale, VREF(tex_header, palette_index));
+		}
+
+		if (textureType != TexturePacker::NoTexture)
 		{
 			VREF(texture_set, ogl.width) = originalWidth * scale;
 			VREF(texture_set, ogl.height) = originalHeight * scale;
@@ -1319,6 +1326,13 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		if (image_data_scaled != nullptr && image_data_scaled != image_data)
 		{
 			driver_free(image_data_scaled);
+		}
+
+		if (textureType == TexturePacker::InternalTexture)
+		{
+			gl_replace_texture(texture_set, VREF(tex_header, palette_index), texture);
+
+			return true;
 		}
 	}
 
