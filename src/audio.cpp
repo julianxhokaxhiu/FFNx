@@ -1205,7 +1205,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 
 	if (exists)
 	{
-		_currentAmbient.volume = volume;
+		_currentAmbient.volume = volume * getSFXMasterVolume();
 
 		_currentAmbient.stream = new SoLoud::VGMStream();
 
@@ -1216,7 +1216,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 			return false;
 		}
 
-		_currentAmbient.handle = _engine.play(*_currentAmbient.stream, time > 0.0f ? 0.0f : volume, 0.0f, time > 0.0f);
+		_currentAmbient.handle = _engine.play(*_currentAmbient.stream, time > 0.0f ? 0.0f : _currentAmbient.volume, 0.0f, time > 0.0f);
 
 		if (time > 0.0f) resumeAmbient(time);
 
