@@ -73,6 +73,7 @@ namespace SoLoud
 		mChannels = channels;
 
     mData = new float[mSampleCount]{ NULL };
+    mPushLength = mSampleCount * sizeof(float);
     mPushOffset = 0;
 	}
 
@@ -85,6 +86,10 @@ namespace SoLoud
 
   result MemoryStream::push(uint8_t* data, uint32_t size)
   {
+    uint32_t leftSpace = mPushLength - mPushOffset;
+
+    if ( size > leftSpace ) size = leftSpace;
+
     memcpy((uint8_t*)mData + mPushOffset, data, size);
 
     mPushOffset += size;

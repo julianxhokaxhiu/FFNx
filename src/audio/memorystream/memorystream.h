@@ -29,7 +29,8 @@ namespace SoLoud
 	class MemoryStream : public AudioSource
 	{
 	public:
-    uint32_t mPushOffset;
+		uint32_t mPushLength;
+		uint32_t mPushOffset;
 		uint32_t mSampleCount;
 		float* mData;
 
