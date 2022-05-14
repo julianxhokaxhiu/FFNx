@@ -41,6 +41,7 @@ private:
 	// BATTLE
 	void toggleBattleMode();
 	void toggleAutoAttackMode();
+	void toggleMusicOnBattlePause();
 
 	// MOVIES
 	void skipMovies();

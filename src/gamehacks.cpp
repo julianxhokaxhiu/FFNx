@@ -21,6 +21,7 @@
 
 #include "gamehacks.h"
 #include "music.h"
+#include "audio.h"
 
 GameHacks gamehacks;
 
@@ -80,6 +81,18 @@ void GameHacks::toggleAutoAttackMode()
 	holdInput();
 }
 
+void GameHacks::toggleMusicOnBattlePause()
+{
+	if (!ff8) {
+		if (*ff7_externals.is_battle_paused) {
+			if (nxAudioEngine.isMusicPlaying())
+				nxAudioEngine.pauseMusic();
+			else
+				nxAudioEngine.resumeMusic();
+		}
+	}
+}
+
 void GameHacks::skipMovies()
 {
 	if (!ff8)
@@ -136,6 +149,9 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 				break;
 			case 'B':
 				toggleBattleMode();
+				break;
+			case 'M':
+				toggleMusicOnBattlePause();
 				break;
 			case 'R':
 				softReset();
