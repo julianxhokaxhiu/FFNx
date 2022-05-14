@@ -897,6 +897,15 @@ bool NxAudioEngine::isChannelValid(int channel)
 		|| _engine.isVoiceGroup(music.handle));
 }
 
+bool NxAudioEngine::isMusicPlaying()
+{
+	for (int channel = 0; channel < 2; ++channel) {
+		if (isMusicPlaying(channel)) return true;
+	}
+
+	return false;
+}
+
 bool NxAudioEngine::isMusicPlaying(int channel)
 {
 	const NxAudioEngineMusic& music = _musics[channel];

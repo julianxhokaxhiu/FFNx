@@ -258,6 +258,7 @@ public:
 	void resumeMusic(double time = 0);
 	void resumeMusic(int channel, double time = 0, bool restore = false);
 	bool isChannelValid(int channel);
+	bool isMusicPlaying();
 	bool isMusicPlaying(int channel);
 	uint32_t currentMusicId(int channel);
 	void setMusicMasterVolume(float volume, double time = 0);
