@@ -67,3 +67,11 @@ Shortcuts:
 
 - Keyboard Shortcut: `CTRL + A`
 - Gamepad Shortcut: `L2 + R3`
+
+### Toggle Music on Battle pause ( FF7 only! )
+
+This cheat will allow you to resume the music playback while battle is on pause. By pressing the key combination you will be able to toggle the playback ( pause/resume ).
+
+Shortcuts:
+
+- Keyboard Shortcut: `CTRL + M`
