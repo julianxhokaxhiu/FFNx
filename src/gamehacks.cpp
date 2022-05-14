@@ -84,7 +84,7 @@ void GameHacks::toggleAutoAttackMode()
 void GameHacks::toggleMusicOnBattlePause()
 {
 	if (!ff8) {
-		if (*ff7_externals.is_battle_paused) {
+		if (*ff7_externals.is_battle_paused && use_external_music) {
 			if (nxAudioEngine.isMusicPlaying())
 				nxAudioEngine.pauseMusic();
 			else
