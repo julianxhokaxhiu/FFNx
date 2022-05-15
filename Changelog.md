@@ -2,6 +2,24 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.11.0...master
 
+## Common
+
+- Fixed OpenGL rendering for Nvidia/Intel GPUs. AMD continues to have issues unfortunately.
+- Fixed a rare buffer-overflow while rendering movies that could lead to crashes on certain game scenes
+
+## FF7
+
+- Added a new game hack, see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md#toggle-music-on-battle-pause--ff7-only-
+- Ambient global volume is now linked to the SFX global volume
+- Misc 60 FPS bugfixes
+- XInput: Fix deadzone bug for analog triggers
+
+## FF8
+
+- Misc gamepad vibration fixes on worldmap
+- Xinput: fix controller button mapping for steam edition
+- Misc Horizon concert fixes
+
 ---
 
 # 1.11.0
