@@ -260,6 +260,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_call_function(ff7_externals.timer_menu_sub + 0x72F, ff7_menu_sub_6F5C0C);
 	replace_call_function(ff7_externals.timer_menu_sub + 0xD77, ff7_menu_sub_6FAC38);
 
+	//######################
+	// shadow lighting fix
+	//######################
+	if(enable_lighting)
+	    memset_code(ff7_externals.battle_sub_42F3E8 + 0xD7D, 0x90, 78); // Disable battle shadow draw call
+
 	//#############################
 	// steam save game preservation
 	//#############################
