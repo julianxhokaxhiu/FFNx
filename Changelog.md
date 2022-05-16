@@ -13,6 +13,7 @@
 - Ambient global volume is now linked to the SFX global volume
 - Misc 60 FPS bugfixes
 - XInput: Fix deadzone bug for analog triggers
+- Lighting: Fix field 3D models shadow glitch
 
 ## FF8
 
