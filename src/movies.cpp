@@ -133,7 +133,7 @@ uint32_t ff7_start_movie()
 
 	nxAudioEngine.pauseAmbient();
 	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC, ff7_music_volume / 100.0f);
-	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, ff7_music_volume / 100.0f);
+	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 2.0f + (ff7_music_volume / 100.0f));
 
 	return ff7_update_movie_sample(0);
 }
