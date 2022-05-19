@@ -11,6 +11,7 @@
 
 - Added a new game hack, see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md#toggle-music-on-battle-pause--ff7-only-
 - Ambient global volume is now linked to the SFX global volume
+- Movie volume is no more linked to the in-game global music volume
 - Misc 60 FPS bugfixes
 - XInput: Fix deadzone bug for analog triggers
 - Lighting: Fix field 3D models shadow glitch
