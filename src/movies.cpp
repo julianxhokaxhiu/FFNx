@@ -132,8 +132,8 @@ uint32_t ff7_start_movie()
 	ff7_externals.movie_object->is_playing = 1;
 
 	nxAudioEngine.pauseAmbient();
-	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC, ff7_music_volume / 100.0f);
-	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 2.0f + (ff7_music_volume / 100.0f));
+	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
+	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 3.0f);
 
 	return ff7_update_movie_sample(0);
 }

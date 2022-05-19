@@ -465,7 +465,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 		// reset start time so video syncs up properly
 		QueryPerformanceCounter((LARGE_INTEGER *)&start_time);
 
-		nxAudioEngine.playStream(ff7_music_volume / 100.0f);
+		nxAudioEngine.playStream();
 	}
 
 	movie_frame_counter++;
