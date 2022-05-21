@@ -33,6 +33,7 @@ std::vector<std::string> external_movie_audio_ext;
 bool use_external_sfx;
 std::string external_sfx_path;
 std::vector<std::string> external_sfx_ext;
+bool external_sfx_always_centered;
 bool use_external_music;
 bool external_music_resume;
 bool external_music_sync;
@@ -168,6 +169,7 @@ void read_cfg()
 	use_external_sfx = config["use_external_sfx"].value_or(false);
 	external_sfx_path = config["external_sfx_path"].value_or("");
 	external_sfx_ext = get_string_or_array_of_strings(config["external_sfx_ext"]);
+	external_sfx_always_centered = config["external_sfx_always_centered"].value_or(false);
 	use_external_music = config["use_external_music"].value_or(false);
 	external_music_resume = config["external_music_resume"].value_or(true);
 	external_music_sync = config["external_music_sync"].value_or(false);

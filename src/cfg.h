@@ -46,6 +46,7 @@ extern std::vector<std::string> external_movie_audio_ext;
 extern bool use_external_sfx;
 extern std::string external_sfx_path;
 extern std::vector<std::string> external_sfx_ext;
+extern bool external_sfx_always_centered;
 extern bool use_external_music;
 extern bool external_music_resume;
 extern bool external_music_sync;

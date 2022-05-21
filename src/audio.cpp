@@ -354,6 +354,13 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 		options->stream = loadSFX(options->id, loop);
 	}
 
+	if (external_sfx_always_centered)
+	{
+		panning = 0.0f;
+
+		if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: panning overridden because of external_sfx_always_centered\n", __func__);
+	}
+
 	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: name=%s,id=%d,channel=%d,panning:%f\n", __func__, name, options->id, channel, panning);
 
 	if (options->stream != nullptr)
@@ -460,6 +467,13 @@ void NxAudioEngine::setSFXSpeed(int channel, float speed, double time)
 void NxAudioEngine::setSFXPanning(int channel, float panning, double time)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
+
+	if (external_sfx_always_centered)
+	{
+		panning = 0.0f;
+
+		if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: panning overridden because of external_sfx_always_centered\n", __func__);
+	}
 
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();

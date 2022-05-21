@@ -137,6 +137,10 @@ external_sfx_path = "sfx"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_sfx_ext = "ogg"
 
+#[EXTERNAL SFX ALWAYS CENTERED]
+# This flag will force the external SFX sounds to be played always on the center position instead of inheriting the left/center/right original logic.
+external_sfx_always_centered = false
+
 #[USE EXTERNAL MUSIC]
 # This flag will enable/disable the support of an enhanced audio layer to reproduce music in-game.
 # If you leave out the default configuration FFNx will autodetect your environment and will set it to the best available option.
