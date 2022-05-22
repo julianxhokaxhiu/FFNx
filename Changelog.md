@@ -16,6 +16,7 @@
 - XInput: Fix deadzone bug for analog triggers
 - Lighting: Fix field 3D models shadow glitch
 - SFX: Allow to always centre SFX effects by using the new flag `external_sfx_always_centered`
+- Audio: Allow players to customize global Voice, Ambient and Movie volume
 
 ## FF8
 
