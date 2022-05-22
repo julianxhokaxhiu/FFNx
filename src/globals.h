@@ -59,6 +59,9 @@ extern uint32_t ff7_japanese_edition;
 extern uint32_t ff7_center_fields;
 extern DWORD ff7_sfx_volume;
 extern DWORD ff7_music_volume;
+extern DWORD ff7_ambient_volume;
+extern DWORD ff7_movie_volume;
+extern DWORD ff7_voice_volume;
 extern uint32_t ff7_do_reset;
 
 #define BASEDIR_LENGTH 512

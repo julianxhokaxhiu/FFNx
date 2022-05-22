@@ -95,6 +95,10 @@ uint32_t ff7_center_fields = false;
 // global FF7 flag, they usually contain the values normally being written in registry
 DWORD ff7_sfx_volume = 0x64;
 DWORD ff7_music_volume = 0x64;
+// SPECIAL: Added by FFNx, do not exist on vanilla
+DWORD ff7_ambient_volume = 0x64;
+DWORD ff7_movie_volume = 0x64;
+DWORD ff7_voice_volume = 0x64;
 
 // window dimensions requested by the game, normally 640x480
 uint32_t game_width;
@@ -731,6 +735,8 @@ uint32_t common_init(struct game_obj *game_object)
 	{
 		nxAudioEngine.setMusicMasterVolume(ff7_music_volume / 100.0f);
 		nxAudioEngine.setSFXMasterVolume(ff7_sfx_volume / 100.0f);
+		nxAudioEngine.setAmbientMasterVolume(ff7_ambient_volume / 100.0f);
+		nxAudioEngine.setVoiceMasterVolume(ff7_voice_volume / 100.0f);
 	}
 
 	proxyWndProc = true;
@@ -2610,6 +2616,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\Sound)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey) == ERROR_SUCCESS)
 					RegQueryValueEx(ff7_regkey, "SFXVolume", NULL, NULL, (LPBYTE)&ff7_sfx_volume, &regsize);
+
+				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey) == ERROR_SUCCESS)
+				{
+					RegQueryValueEx(ff7_regkey, "AmbientVolume", NULL, NULL, (LPBYTE)&ff7_ambient_volume, &regsize);
+					RegQueryValueEx(ff7_regkey, "MovieVolume", NULL, NULL, (LPBYTE)&ff7_movie_volume, &regsize);
+					RegQueryValueEx(ff7_regkey, "VoiceVolume", NULL, NULL, (LPBYTE)&ff7_voice_volume, &regsize);
+				}
 
 				if (external_music_path.empty()) external_music_path = "music/vgmstream";
 			}
