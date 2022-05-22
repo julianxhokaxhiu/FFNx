@@ -2617,7 +2617,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\Sound)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey) == ERROR_SUCCESS)
 					RegQueryValueEx(ff7_regkey, "SFXVolume", NULL, NULL, (LPBYTE)&ff7_sfx_volume, &regsize);
 
-				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey) == ERROR_SUCCESS)
+				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\FFNx)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey) == ERROR_SUCCESS)
 				{
 					RegQueryValueEx(ff7_regkey, "AmbientVolume", NULL, NULL, (LPBYTE)&ff7_ambient_volume, &regsize);
 					RegQueryValueEx(ff7_regkey, "MovieVolume", NULL, NULL, (LPBYTE)&ff7_movie_volume, &regsize);
