@@ -196,18 +196,22 @@ private:
 
 	// VOICE
 	short _voiceMaxSlots = 0;
+	float _voiceMasterVolume = -1.0f;
 	std::map<int, NxAudioEngineVoice> _currentVoice;
 	std::map<std::string, int> _voiceSequentialIndexes;
 
 	// AMBIENT
+	float _ambientMasterVolume = -1.0f;
 	std::map<std::string, int> _ambientSequentialIndexes;
 	NxAudioEngineAmbient _currentAmbient;
 
 	// MOVIE AUDIO
+	float _movieMasterVolume = -1.0f;
 	short _movieAudioMaxSlots = 0;
 	std::map<int, NxAudioEngineMovieAudio> _currentMovieAudio;
 
 	// STREAM
+	float _streamMasterVolume = -1.0f;
 	NxAudioEngineStreamAudio _currentStream;
 
 	// MISC
@@ -278,6 +282,8 @@ public:
 	void resumeVoice(int slot = 0, double time = 0);
 	bool isVoicePlaying(int slot = 0);
 	void setVoiceMaxSlots(int slot);
+	float getVoiceMasterVolume();
+	void setVoiceMasterVolume(float volume, double time = 0);
 
 	// Ambient
 	bool canPlayAmbient(const char* name);
@@ -286,6 +292,8 @@ public:
 	void pauseAmbient(double time = 0);
 	void resumeAmbient(double time = 0);
 	bool isAmbientPlaying();
+	float getAmbientMasterVolume();
+	void setAmbientMasterVolume(float volume, double time = 0);
 
 	// Movie Audio
 	bool canPlayMovieAudio(const char* filename);
@@ -293,6 +301,8 @@ public:
 	void stopMovieAudio(int slot = 0);
 	bool isMovieAudioPlaying(int slot = 0);
 	void setMovieAudioMaxSlots(int slot);
+	float getMovieMasterVolume();
+	void setMovieMasterVolume(float volume, double time = 0);
 
 	// Stream Audio
 	void initStream(float duration, float sample_rate, uint32_t channels);
@@ -302,6 +312,8 @@ public:
 	void pauseStream(double time = 0.0f);
 	void resumeStream(double time = 0.0f);
 	bool isStreamPlaying();
+	float getStreamMasterVolume();
+	void setStreamMasterVolume(float volume, double time = 0);
 };
 
 extern NxAudioEngine nxAudioEngine;

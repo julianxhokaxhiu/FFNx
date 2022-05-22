@@ -1022,7 +1022,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 
 	bool exists = false;
 
-	_currentVoice[slot].volume = volume;
+	_currentVoice[slot].volume = volume * getVoiceMasterVolume();
 
 	std::string _name(name);
 	// TOML doesn't like the / char as key, replace it with - ( one of the valid accepted chars )
@@ -1148,6 +1148,16 @@ void NxAudioEngine::setVoiceMaxSlots(int slot)
 	_voiceMaxSlots = slot;
 }
 
+float NxAudioEngine::getVoiceMasterVolume()
+{
+	return _voiceMasterVolume < 0.0f ? 1.0f : _voiceMasterVolume;
+}
+
+void NxAudioEngine::setVoiceMasterVolume(float volume, double time)
+{
+	_voiceMasterVolume = volume;
+}
+
 // Ambient
 bool NxAudioEngine::canPlayAmbient(const char* name)
 {
@@ -1228,7 +1238,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 
 	if (exists)
 	{
-		_currentAmbient.volume = volume * getSFXMasterVolume();
+		_currentAmbient.volume = volume * getAmbientMasterVolume();
 
 		_currentAmbient.stream = new SoLoud::VGMStream();
 
@@ -1318,6 +1328,16 @@ bool NxAudioEngine::isAmbientPlaying()
 	return _engine.isValidVoiceHandle(_currentAmbient.handle) && !_engine.getPause(_currentAmbient.handle);
 }
 
+float NxAudioEngine::getAmbientMasterVolume()
+{
+	return _ambientMasterVolume < 0.0f ? 1.0f : _ambientMasterVolume;
+}
+
+void NxAudioEngine::setAmbientMasterVolume(float volume, double time)
+{
+	_ambientMasterVolume = volume;
+}
+
 // Movie Audio
 bool NxAudioEngine::canPlayMovieAudio(const char* nameWithPath)
 {
@@ -1354,7 +1374,7 @@ bool NxAudioEngine::playMovieAudio(const char* nameWithPath, int slot, float vol
 			return false;
 		}
 
-		_currentMovieAudio[slot].handle = _engine.play(*_currentMovieAudio[slot].stream, volume);
+		_currentMovieAudio[slot].handle = _engine.play(*_currentMovieAudio[slot].stream, volume * getMovieMasterVolume());
 
 		return _engine.isValidVoiceHandle(_currentMovieAudio[slot].handle);
 	}
@@ -1377,6 +1397,16 @@ void NxAudioEngine::setMovieAudioMaxSlots(int slot)
 	_movieAudioMaxSlots = slot;
 }
 
+float NxAudioEngine::getMovieMasterVolume()
+{
+	return _movieMasterVolume < 0.0f ? 1.0f : _movieMasterVolume;
+}
+
+void NxAudioEngine::setMovieMasterVolume(float volume, double time)
+{
+	_movieMasterVolume = volume;
+}
+
 // Stream Audio
 void NxAudioEngine::initStream(float duration, float sample_rate, uint32_t channels)
 {
@@ -1395,7 +1425,7 @@ void NxAudioEngine::pushStreamData(uint8_t* data, uint32_t size)
 
 bool NxAudioEngine::playStream(float volume)
 {
-	_currentStream.volume = volume;
+	_currentStream.volume = volume * getStreamMasterVolume();
 	_currentStream.handle = _engine.play(*_currentStream.stream, _currentStream.volume);
 
 	return _engine.isValidVoiceHandle(_currentStream.handle);
@@ -1446,4 +1476,14 @@ void NxAudioEngine::resumeStream(double time)
 		_engine.setVolume(_currentStream.handle, _currentStream.volume);
 		_engine.setPause(_currentStream.handle, false);
 	}
+}
+
+float NxAudioEngine::getStreamMasterVolume()
+{
+	return _streamMasterVolume < 0.0f ? 1.0f : _streamMasterVolume;
+}
+
+void NxAudioEngine::setStreamMasterVolume(float volume, double time)
+{
+	_streamMasterVolume = volume;
 }
