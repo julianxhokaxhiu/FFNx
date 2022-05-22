@@ -727,6 +727,12 @@ uint32_t common_init(struct game_obj *game_object)
 	common_externals.make_pixelformat(32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000, texture_format);
 	common_externals.add_texture_format(texture_format, game_object);
 
+	if (!ff8)
+	{
+		nxAudioEngine.setMusicMasterVolume(ff7_music_volume / 100.0f);
+		nxAudioEngine.setSFXMasterVolume(ff7_sfx_volume / 100.0f);
+	}
+
 	proxyWndProc = true;
 
 	return true;
