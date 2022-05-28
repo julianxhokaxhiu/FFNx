@@ -6,6 +6,7 @@
 
 - Fixed OpenGL rendering for Nvidia/Intel GPUs. AMD continues to have issues unfortunately.
 - Fixed a rare buffer-overflow while rendering movies that could lead to crashes on certain game scenes
+- SFX: Add a new [`skip`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.SFX.toml#L24-L27) option in the config layer
 
 ## FF7
 
@@ -23,6 +24,8 @@
 - Misc gamepad vibration fixes on worldmap
 - Xinput: fix controller button mapping for steam edition
 - Misc Horizon concert fixes
+- Graphics: Add Triple Triad mini-game texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/444 )
+- Graphics: Allow new high quality built-in Worldmap textures to load instead of the low quality ones [by enabling the relative flag in FFNx.toml](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L561) ( https://github.com/julianxhokaxhiu/FFNx/pull/444 )
 
 ---
 
