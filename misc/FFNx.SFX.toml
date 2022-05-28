@@ -20,6 +20,11 @@
 # like - or _. This flag MUST NOT be used in pair with 'shuffle'.
 # -----------------------------------------------------------------------------
 # loop: Enable loop for the requested SFX ID
+# -----------------------------------------------------------------------------
+# skip: Enable this flag to skip playing the SFX ID and have silence instead.
+# PLEASE NOTE: this flag will "fake a match" on the engine, to ensure silent
+# playback so it will not be a "skip" in the sense of moving on to the
+# next match.
 ###############################################################################
 
 # This entry will shuffle the SFX ID 1 ( menu cursor ) with the ID 2, 3 or 4.
@@ -30,3 +35,4 @@
 #shuffle = [ 2, 3, 4 ]
 #sequential = [ 2, 3, 4 ]
 #loop = true
+#skip = false

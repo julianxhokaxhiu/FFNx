@@ -294,6 +294,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 	int _curId = id - 1;
+	bool skipPlay = false;
 
 	// If channel is known to be reusable
 	if (channel <= _sfxReusableChannels)
@@ -344,6 +345,10 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 
 			_curId = _newId->value_or(id) - 1;
 		}
+
+		// Should we skip playing the track?
+		toml::node *shouldSkip = node["skip"].as_boolean();
+		skipPlay = shouldSkip->value_or(false);
 	}
 
 	// Try to load the new ID if it's not already cached
@@ -351,7 +356,14 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	{
 		options->game_id = id;
 		options->id = _curId + 1;
-		options->stream = loadSFX(options->id, loop);
+		// Avoid loading a stream if it is meant to be skipped
+		options->stream = skipPlay ? nullptr : loadSFX(options->id, loop);
+	}
+
+	if (skipPlay)
+	{
+		// Make the game think everything went fine but instead just be silent
+		return true;
 	}
 
 	if (external_sfx_always_centered)
