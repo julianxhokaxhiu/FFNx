@@ -365,14 +365,13 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 
 	if (options->stream != nullptr)
 	{
-		SoLoud::handle _handle = _engine.play(
+		options->handle = _engine.play(
 			*options->stream,
 			options->volume * getSFXMasterVolume(),
 			panning
 		);
 
-		options->handle = _handle;
-		options->loop = _engine.getLooping(_handle);
+		options->loop = _engine.getLooping(options->handle);
 
 		return true;
 	}
