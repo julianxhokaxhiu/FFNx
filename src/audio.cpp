@@ -348,7 +348,9 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 
 		// Should we skip playing the track?
 		toml::node *shouldSkip = node["skip"].as_boolean();
-		skipPlay = shouldSkip->value_or(false);
+		if (shouldSkip && shouldSkip->is_boolean()) {
+			skipPlay = shouldSkip->value_or(false);
+		}
 	}
 
 	// Try to load the new ID if it's not already cached
