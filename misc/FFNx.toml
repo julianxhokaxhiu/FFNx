@@ -24,6 +24,11 @@ renderer_backend = 0
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 fullscreen = false
 
+#[BORDERLESS]
+# If off, it will run using the default window style.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+borderless = false
+
 #[RESOLUTION]
 # Resolution of the game.
 # Default (value = 0):

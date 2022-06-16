@@ -90,6 +90,7 @@ extern long window_size_y;
 extern long internal_resolution_scale;
 extern bool preserve_aspect;
 extern bool fullscreen;
+extern bool borderless;
 extern long refresh_rate;
 extern bool enable_vsync;
 extern bool mdef_fix;

@@ -10,6 +10,14 @@ Shortcuts:
 
 - Keyboard Shortcut: `Alt + Enter`
 
+### Borderless
+
+You can toggle the borderless mode in any moment while playing by using the related shortcuts.
+
+Shortcuts:
+
+- Keyboard Shortcut: `Shift + Enter`
+
 ### Aspect Ratio
 
 You can toggle the aspect ratio ( 4:3 or 16:9 ) in any moment while playing by using the related shortcuts.

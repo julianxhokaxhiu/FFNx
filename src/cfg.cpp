@@ -77,6 +77,7 @@ long window_size_y;
 long internal_resolution_scale;
 bool preserve_aspect;
 bool fullscreen;
+bool borderless;
 long refresh_rate;
 bool enable_vsync;
 bool mdef_fix;
@@ -214,6 +215,7 @@ void read_cfg()
 	internal_resolution_scale = config["internal_resolution_scale"].value_or(0);
 	preserve_aspect = config["preserve_aspect"].value_or(true);
 	fullscreen = config["fullscreen"].value_or(false);
+	borderless = config["borderless"].value_or(false);
 	refresh_rate = config["refresh_rate"].value_or(0);
 	enable_vsync = config["enable_vsync"].value_or(true);
 	mdef_fix = config["mdef_fix"].value_or(true);

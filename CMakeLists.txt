@@ -112,6 +112,7 @@ target_link_libraries(
   dbghelp
   shlwapi
   psapi
+  dwmapi
   winmm
   dinput8
   dxguid
