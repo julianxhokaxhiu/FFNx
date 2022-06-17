@@ -319,7 +319,7 @@ int opcode_voice_message()
 	if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
 	{
 		current_opcode_message_status[window_id].is_voice_acting = false;
-		if (!simulate_OK_disabled[window_id]) simulate_OK_button = true;
+		if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) simulate_OK_button = true;
 	}
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
@@ -723,7 +723,7 @@ int ff8_show_dialog(int window_id, int a2, int a3)
 	if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
 	{
 		current_opcode_message_status[window_id].is_voice_acting = false;
-		if (!simulate_OK_disabled[window_id]) simulate_OK_button = true;
+		if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) simulate_OK_button = true;
 	}
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;

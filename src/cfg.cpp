@@ -47,6 +47,7 @@ std::vector<std::string> external_ambient_ext;
 std::string external_lighting_path;
 bool enable_voice_music_fade;
 long external_voice_music_fade_volume;
+bool enable_voice_auto_text;
 bool save_textures;
 bool trace_all;
 bool trace_renderer;
@@ -182,6 +183,7 @@ void read_cfg()
 	external_voice_ext = get_string_or_array_of_strings(config["external_voice_ext"]);
 	enable_voice_music_fade = config["enable_voice_music_fade"].value_or(false);
 	external_voice_music_fade_volume = config["external_voice_music_fade_volume"].value_or(25);
+	enable_voice_auto_text = config["enable_voice_auto_text"].value_or(true);
 	external_ambient_path = config["external_ambient_path"].value_or("");
 	external_ambient_ext = get_string_or_array_of_strings(config["external_ambient_ext"]);
 	external_lighting_path = config["external_lighting_path"].value_or("");

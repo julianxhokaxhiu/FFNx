@@ -216,6 +216,10 @@ enable_voice_music_fade = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_voice_music_fade_volume = 25
 
+#[ENABLE VOICE AUTO TEXT]
+# This will allow you to enable or disable the Voice Auto-Text feature. When enabled the game will automatically close the dialogue as soon as the voice acting is finished for that line.
+enable_voice_auto_text = true
+
 #[EXTERNAL AMBIENT PATH]
 # Path of the external ambient files
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
