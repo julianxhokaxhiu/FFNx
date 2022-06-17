@@ -587,13 +587,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				return MAKELRESULT(0, MNC_CLOSE);
 			}
 			break;
+		case WM_CLOSE:
 		case WM_QUIT:
 			if (ff8) ff8_release_movie_objects();
 			else ff7_release_movie_objects();
 
 			gl_cleanup_deferred();
-
-			newRenderer.shutdown();
 
 			SetWindowLongA(gameHwnd, GWL_WNDPROC, (LONG)common_externals.engine_wndproc);
 			break;
@@ -911,6 +910,7 @@ void common_cleanup(struct game_obj *game_object)
 	}
 
 	nxAudioEngine.cleanup();
+	newRenderer.shutdown();
 }
 
 // unused and unnecessary
