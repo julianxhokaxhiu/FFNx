@@ -2,6 +2,12 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.12.0...master
 
+## Common
+
+- Add native Borderless support ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md#borderless and https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L30 )
+- Fix a rare crash that might happen when closing the game while using 7th Heaven
+- Voice: Allow users to enable/disable the auto-text feature ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L221 )
+
 # 1.12.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.11.0...1.12.0
