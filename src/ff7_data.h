@@ -1124,10 +1124,15 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t menu_sub_6CBD65 = get_relative_call(ff7_externals.menu_sub_6CDA83, 0x54);
 	uint32_t menu_sub_722393 = get_relative_call(menu_sub_6CBD65, 0x4);
 	ff7_externals.menu_sub_7212FB = get_relative_call(menu_sub_722393, 0x8B);
-	if (version == VERSION_FF7_102_US) {
-		ff7_externals.load_save_file = get_relative_call(ff7_externals.menu_sub_7212FB, 0xE9D);
-	} else {
-		ff7_externals.load_save_file = get_relative_call(ff7_externals.menu_sub_7212FB, 0xEC5);
+	switch(version) {
+		case VERSION_FF7_102_US:
+		case VERSION_FF7_102_SP:
+			ff7_externals.load_save_file = get_relative_call(ff7_externals.menu_sub_7212FB, 0xE9D);
+			break;
+		case VERSION_FF7_102_DE:
+		case VERSION_FF7_102_FR:
+			ff7_externals.load_save_file = get_relative_call(ff7_externals.menu_sub_7212FB, 0xEC5);
+			break;
 	}
 
 	// --------------------------------
