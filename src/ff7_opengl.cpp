@@ -88,7 +88,10 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(common_externals.load_tex_file, load_tex_file);
 
 	replace_function(ff7_externals.field_load_textures, field_load_textures);
+	replace_function(ff7_externals.field_layer1_pick_tiles, field_layer1_pick_tiles);
 	replace_function(ff7_externals.field_layer2_pick_tiles, field_layer2_pick_tiles);
+	replace_function(ff7_externals.field_layer3_pick_tiles, field_layer3_pick_tiles);
+	replace_function(ff7_externals.field_layer4_pick_tiles, field_layer4_pick_tiles);
 	patch_code_byte(ff7_externals.field_draw_everything + 0xE2, 0x1D);
 	patch_code_byte(ff7_externals.field_draw_everything + 0x353, 0x1D);
 	replace_function(ff7_externals.open_flevel_siz, field_open_flevel_siz);

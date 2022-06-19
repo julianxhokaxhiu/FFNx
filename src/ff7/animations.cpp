@@ -1219,8 +1219,8 @@ void ff7_ifrit_movement_596702()
             return;
         }
 
-        ff7_externals.battle_sub_663673(ff7_externals.word_array_BCC768);
-        ff7_externals.battle_sub_663707((DWORD*)ff7_externals.word_array_BCC768);
+        ff7_externals.engine_sub_663673(ff7_externals.word_array_BCC768);
+        ff7_externals.engine_sub_663707((DWORD*)ff7_externals.word_array_BCC768);
         ff7_externals.battle_sub_662ECC(ff7_externals.battle_ifrit_model_position, *ff7_externals.vector3_int_ptr_BCC6A8, &(*ff7_externals.vector3_int_ptr_BCC6A8)[1].y);
         getBattleModelState(3)->modelPosition.x = (*ff7_externals.vector3_int_ptr_BCC6A8)->x;
         getBattleModelState(3)->modelPosition.y = (*ff7_externals.vector3_int_ptr_BCC6A8)->y;

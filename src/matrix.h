@@ -52,6 +52,13 @@ struct matrix
 };
 
 template <typename T>
+struct vector2
+{
+	T x;
+	T y;
+};
+
+template <typename T>
 struct vector3
 {
 	T x;
