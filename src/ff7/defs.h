@@ -76,7 +76,10 @@ void ff7_battle_animations_hook_init();
 // field
 void ff7_field_hook_init();
 void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);
+void field_layer1_pick_tiles(short x_offset, short y_offset);
 void field_layer2_pick_tiles(short x_offset, short y_offset);
+void field_layer3_pick_tiles(short x_offset, short y_offset);
+void field_layer4_pick_tiles(short x_offset, short y_offset);
 uint32_t field_open_flevel_siz();
 
 // world
