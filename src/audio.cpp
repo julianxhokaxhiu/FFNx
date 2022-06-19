@@ -453,7 +453,7 @@ void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
-	options->volume = volume * getSFXMasterVolume();
+	options->volume = volume;
 
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();
