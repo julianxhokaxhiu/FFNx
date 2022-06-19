@@ -331,6 +331,8 @@ void Renderer::destroyAll()
 
     bgfx::destroy(shadowMapFrameBuffer);
 
+    bgfx::destroy(backupDepthTexture);
+
     for (auto& handle : backendProgramHandles)
     {
         if (bgfx::isValid(handle))
