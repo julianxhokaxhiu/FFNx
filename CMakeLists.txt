@@ -142,6 +142,7 @@ target_compile_options(
   PRIVATE /D_CRT_SECURE_NO_WARNINGS
   PRIVATE /DNOMINMAX
   PRIVATE /Zc:strictStrings-
+  PRIVATE /Zc:__cplusplus
   PRIVATE /Qpar
 )
 if(PATCH_COLLECT_DUPLICATES)
