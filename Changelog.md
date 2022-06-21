@@ -11,6 +11,7 @@
 ## FF7
 
 - Fixed a crash happening while loading a save game on Steam Spanish language
+- 60FPS: Implement smooth FIELD background scrolling
 
 # 1.12.0
 

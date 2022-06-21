@@ -212,11 +212,14 @@ void field_layer1_pick_tiles(short bg_position_x, short bg_position_y)
 		uint32_t tile_index = (*ff7_externals.field_layer1_palette_sort)[i];
 		layer1_tiles[tile_index].field_1044 = 1;
 
-		// Add all tiles even if they are not inside the screen space
-		tile_position.x = (initial_pos.x + field_bg_multiplier * layer1_tiles[tile_index].x);
-		tile_position.y = (initial_pos.y + field_bg_multiplier * layer1_tiles[tile_index].y);
-		ff7_externals.add_page_tile(tile_position.x, tile_position.y, 0.9997, layer1_tiles[tile_index].u,
-									layer1_tiles[tile_index].v, layer1_tiles[tile_index].palette_index, layer1_tiles[tile_index].page);
+		if(layer1_tiles[tile_index].x < bg_position.x && layer1_tiles[tile_index].x > bg_position.x - 336
+			&& layer1_tiles[tile_index].y < bg_position.y && layer1_tiles[tile_index].y > bg_position.y - 256)
+		{
+			tile_position.x = initial_pos.x + field_bg_multiplier * layer1_tiles[tile_index].x;
+			tile_position.y = initial_pos.y + field_bg_multiplier * layer1_tiles[tile_index].y;
+			ff7_externals.add_page_tile(tile_position.x, tile_position.y, 0.9997, layer1_tiles[tile_index].u,
+										layer1_tiles[tile_index].v, layer1_tiles[tile_index].palette_index, layer1_tiles[tile_index].page);
+		}
 	}
 }
 
@@ -392,7 +395,7 @@ void ff7_field_engine_sub_661B23(int field_world_x, int field_world_y)
 {
 	ff7_externals.engine_sub_661B23(field_world_x, field_world_y);
 
-	// Override field_9A8 and field_9AC values with accurate field 3d world position when possible
+	// Override field_9A8 and field_9AC values with accurate field world coordinates position when possible
 	ff7_game_obj* game_obj = (ff7_game_obj*)common_externals.get_game_object();
 	if(game_obj)
 	{
@@ -508,6 +511,7 @@ void ff7_field_update_background()
 	}
 	else
 	{
+		constexpr float MIN_STEP_INVERSE = 8.f;
 		field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
 		field_event_data* field_event_data_ptr = *ff7_externals.field_event_data_ptr;
 		vector2<float> bg_delta_position;
@@ -546,6 +550,16 @@ void ff7_field_update_background()
 		bg_layer4_pos.y = (field_triggers_header_ptr->bg4_pos_y / 16.f) + ((field_triggers_header_ptr->bg4_speed_y * bg_delta_position.y) / 256.f);
 		bg_layer4_pos.y = remainder(bg_layer4_pos.y, field_triggers_header_ptr->bg4_height);
 		bg_layer4_pos.y = bg_layer4_pos.y + 232 - ff7_externals.field_bg_offset->y - ff7_externals.modules_global_object->shake_bg_y.shake_curr_value;
+
+		// Round the position to steps of 1/MIN_STEP_INVERSE due to visual glitches between tiles
+		field_3d_world_pos.x = round(field_3d_world_pos.x * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
+		field_3d_world_pos.y = round(field_3d_world_pos.y * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
+		bg_main_layer_pos.x = round(bg_main_layer_pos.x * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
+		bg_main_layer_pos.y = round(bg_main_layer_pos.y * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
+		bg_layer3_pos.x = round(bg_layer3_pos.x * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
+		bg_layer3_pos.y = round(bg_layer3_pos.y * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
+		bg_layer4_pos.x = round(bg_layer4_pos.x * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
+		bg_layer4_pos.y = round(bg_layer4_pos.y * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
 	}
 }
 
