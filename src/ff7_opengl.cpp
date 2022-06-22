@@ -95,6 +95,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	patch_code_byte(ff7_externals.field_draw_everything + 0xE2, 0x1D);
 	patch_code_byte(ff7_externals.field_draw_everything + 0x353, 0x1D);
 	replace_function(ff7_externals.open_flevel_siz, field_open_flevel_siz);
+	replace_function(ff7_externals.field_update_scripted_bg_movement, field_update_scripted_bg_movement);
 
 	replace_function(ff7_externals.get_equipment_stats, get_equipment_stats);
 
