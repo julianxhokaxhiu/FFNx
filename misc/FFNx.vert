@@ -35,7 +35,7 @@ uniform vec4 VSFlags;
 
 void main()
 {
-	vec4 pos = a_position;
+    vec4 pos = a_position;
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
 
