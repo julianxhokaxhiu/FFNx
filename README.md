@@ -114,7 +114,6 @@ If you're curious to know it, FFNx is made with:
 - [md5](http://www.zedwood.com/article/cpp-md5-function) ( for the Steam XML manifest )
 - [libpng](http://www.libpng.org/pub/png/libpng.html) ( for a better and faster PNG texture support )
 - [imgui](https://github.com/ocornut/imgui) ( to better debug the in-game engine )
-- [discohash](https://github.com/cris691/discohash) ( to extract an hash from palette game textures data known as animated textures )
 - [xxhash](https://github.com/Cyan4973/xxHash) ( to extract an hash from palette game textures data known as animated textures )
 - [SoLoud](https://github.com/jarikomppa/soloud) ( as the audio engine used to playback audio, music or voice files )
 - [openpsf](https://github.com/myst6re/openpsf) ( as the MINIPSF emulation engine to playback PSX/PS2 music files )

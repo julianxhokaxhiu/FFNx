@@ -378,10 +378,6 @@ enable_animated_textures = false
 # NOTE: This is an actual BLACKLIST and it will have an impact ONLY when 'enable_animated_textures = true'
 disable_animated_textures_on_field = ""
 
-# Enable the usage of a new hashing algorithm for animated textures, which is faster on weak CPUs
-# WARNING: Mods MIGHT not be ready for this yet, use with caution!
-use_animated_textures_v2 = false
-
 ##########################
 # DEBUGGING OPTIONS
 # These options are mostly useful for developers or people reporting crashes.

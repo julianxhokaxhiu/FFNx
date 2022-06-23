@@ -29,7 +29,6 @@
 #include "gl.h"
 #include "macro.h"
 
-#include "discohash.h"
 #include <xxhash.h>
 
 // TEMPORARY! WILL BE REMOVED AFTER MIGRATION.
@@ -84,40 +83,6 @@ void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t 
 		char xxhash_filename[sizeof(basedir) + 1024];
 		hash = XXH3_64bits(data, dataSize);
 		_snprintf(xxhash_filename, sizeof(xxhash_filename), "%s/%s/%s_%02i_%llx.png", basedir, mod_path.c_str(), name, palette_index, hash);
-
-		// TEMPORARY! WILL BE REMOVED AFTER MIGRATION.
-		hash = 0;
-		char discohash_filename[sizeof(basedir) + 1024];
-		BEBB4185_64(data, dataSize, 0, &hash);
-		_snprintf(discohash_filename, sizeof(discohash_filename), "%s/%s/%s_%02i_%llx.png", basedir, mod_path.c_str(), name, palette_index, hash);
-
-		if (use_animated_textures_v2)
-		{
-			strcpy_s(filename, sizeof(filename), xxhash_filename);
-
-			// This part will help modders in renaming old animated textures to the new hash
-			char batch_filename[1024];
-			std::ofstream batch_file;
-			std::string banner;
-			char dirname[1024];
-
-			_splitpath(name, NULL, dirname, NULL, NULL);
-			_snprintf(batch_filename, sizeof(batch_filename), "%s/%s/%s/_upgrade_to_animated_textures_v2.bat", basedir, mod_path.c_str(), dirname);
-
-			std::filesystem::path f{ batch_filename };
-			if (!std::filesystem::exists(f)) {
-				banner =
-					"@echo off\n"
-					"Rem This file will help you migrating old animated textures files to v2.\n";
-			}
-
-			batch_file.open(batch_filename, std::ios_base::app);
-			batch_file << banner << R"(rename ")" << discohash_filename << R"(" ")" << xxhash_filename << R"(")" << std::endl;
-			// -------------------------------------------
-		}
-		else
-			strcpy_s(filename, sizeof(filename), discohash_filename);
-		// -------------------------------------------
 	}
 	else
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path.c_str(), name, palette_index);
@@ -166,10 +131,7 @@ uint32_t load_texture(const void* data, uint32_t dataSize, const char* name, uin
 	struct stat dummy;
 
 	if (is_animated) {
-		if (use_animated_textures_v2)
-			hash = XXH3_64bits(data, dataSize);
-		else
-			BEBB4185_64(data, dataSize, 0, &hash);
+		hash = XXH3_64bits(data, dataSize);
 	}
 
 	for (int idx = 0; idx < mod_ext.size(); idx++)
