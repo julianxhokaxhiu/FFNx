@@ -53,7 +53,7 @@
     {
       "name": "imgui",
       "version": "1.87",
-      "port-version": 0
+      "port-version": 1
     },
     {
       "name": "libpng",
