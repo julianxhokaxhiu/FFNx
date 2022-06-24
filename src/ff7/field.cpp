@@ -100,7 +100,7 @@ std::set<field_bank_address> field_bank_address_to_be_fixed = {{14, 6}};
 field_bank_address mvief_bank_address;
 
 constexpr float INVALID_VALUE = -1000000;
-constexpr float MIN_STEP_INVERSE = 32.f;
+constexpr float MIN_STEP_INVERSE = 10.f;
 vector2<float> field_curr_delta_world_pos, field_3d_world_pos, bg_main_layer_pos, bg_layer3_pos, bg_layer4_pos;
 
 int call_original_opcode_function(byte opcode)
