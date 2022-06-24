@@ -375,7 +375,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 		if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: panning overridden because of external_sfx_always_centered\n", __func__);
 	}
 
-	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: name=%s,id=%d,channel=%d,panning:%f\n", __func__, name, options->id, channel, panning);
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: name=%s,id=%d,channel=%d,panning=%f\n", __func__, name, options->id, channel, panning);
 
 	if (options->stream != nullptr)
 	{
@@ -457,10 +457,10 @@ void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();
-		_engine.fadeVolume(options->handle, volume, time);
+		_engine.fadeVolume(options->handle, volume * getSFXMasterVolume(), time);
 	}
 	else {
-		_engine.setVolume(options->handle, volume);
+		_engine.setVolume(options->handle, volume * getSFXMasterVolume());
 	}
 }
 
