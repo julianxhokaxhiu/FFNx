@@ -220,18 +220,18 @@ void Renderer::updateRendererShaderPaths()
     fragmentPathFlat += ".flat" + shaderSuffix + ".frag";
     vertexPathSmooth += ".smooth" + shaderSuffix + ".vert";
     fragmentPathSmooth += ".smooth" + shaderSuffix + ".frag";
-    vertexPostPath += shaderSuffix + ".vert";
-    fragmentPostPath += shaderSuffix + ".frag";
-    vertexOverlayPath += shaderSuffix + ".vert";
-    fragmentOverlayPath += shaderSuffix + ".frag";
+    vertexPostPath += ".smooth" + shaderSuffix + ".vert";
+    fragmentPostPath += ".smooth" + shaderSuffix + ".frag";
+    vertexOverlayPath += ".smooth" + shaderSuffix + ".vert";
+    fragmentOverlayPath += ".smooth" + shaderSuffix + ".frag";
     vertexLightingPathFlat += ".flat" + shaderSuffix + ".vert";
     fragmentLightingPathFlat += ".flat" + shaderSuffix + ".frag";
     vertexLightingPathSmooth += ".smooth" + shaderSuffix + ".vert";
     fragmentLightingPathSmooth += ".smooth" + shaderSuffix + ".frag";
-    vertexShadowMapPath += shaderSuffix + ".vert";
-    fragmentShadowMapPath += shaderSuffix + ".frag";
-    vertexFieldShadowPath += shaderSuffix + ".vert";
-    fragmentFieldShadowPath += shaderSuffix + ".frag";
+    vertexShadowMapPath += ".smooth" + shaderSuffix + ".vert";
+    fragmentShadowMapPath += ".smooth" + shaderSuffix + ".frag";
+    vertexFieldShadowPath += ".smooth" + shaderSuffix + ".vert";
+    fragmentFieldShadowPath += ".smooth" + shaderSuffix + ".frag";
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
