@@ -292,6 +292,8 @@ private:
     uint16_t framebufferVertexOffsetX = 0;
     uint16_t framebufferVertexWidth = 0;
 
+    uint16_t scalingFactor = 0;
+
     uint32_t createBGRA(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     void setCommonUniforms();
     void setLightingUniforms();
@@ -412,6 +414,9 @@ public:
     // Internal coord calculation
     uint16_t getInternalCoordX(uint16_t inX);
     uint16_t getInternalCoordY(uint16_t inY);
+
+    // Internal scaling factor
+    uint16_t getScalingFactor();
 };
 
 extern Renderer newRenderer;

@@ -456,7 +456,7 @@ bool Renderer::doesItFitInMemory(size_t size)
 
 void Renderer::recalcInternals()
 {
-    long scale_factor = internal_resolution_scale;
+    scalingFactor = internal_resolution_scale;
 
     viewWidth = window_size_x;
     viewHeight = window_size_y;
@@ -487,19 +487,19 @@ void Renderer::recalcInternals()
         long scaleH = ::round(viewHeight / (float)game_height);
 
         if (scaleH > scaleW) scaleW = scaleH;
-        if (scaleW > internal_resolution_scale) scale_factor = scaleW;
-        if (scale_factor < 1) scale_factor = 1;
+        if (scaleW > internal_resolution_scale) scalingFactor = scaleW;
+        if (scalingFactor < 1) scalingFactor = 1;
     }
 
     // Use the set or calculated scaling factor to determine the width and height of the framebuffer according to the original resolution
-    framebufferWidth = game_width * scale_factor;
-    framebufferHeight = game_height * scale_factor;
+    framebufferWidth = game_width * scalingFactor;
+    framebufferHeight = game_height * scalingFactor;
 
     framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
     framebufferVertexOffsetX = (game_width - framebufferVertexWidth) / 2;
 
     // Let the user know about chosen resolutions
-    ffnx_info("Original resolution %ix%i, Scaling factor %i, Internal resolution %ix%i, Output resolution %ix%i\n", game_width, game_height, scale_factor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
+    ffnx_info("Original resolution %ix%i, Scaling factor %ix, Internal resolution %ix%i, Output resolution %ix%i\n", game_width, game_height, scalingFactor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
 }
 
 void Renderer::prepareFramebuffer()
@@ -1760,4 +1760,9 @@ uint16_t Renderer::getInternalCoordX(uint16_t inX)
 uint16_t Renderer::getInternalCoordY(uint16_t inY)
 {
     return (inY * framebufferHeight) / game_height;
+}
+
+uint16_t Renderer::getScalingFactor()
+{
+    return scalingFactor;
 }
