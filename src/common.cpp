@@ -887,10 +887,6 @@ void common_cleanup(struct game_obj *game_object)
 {
 	if(trace_all) ffnx_trace("dll_gfx: cleanup\n");
 
-	// Shutdown Steam API
-	if(steam_edition || enable_steam_achievements)
-		SteamAPI_Shutdown();
-
 	if (steam_edition)
 	{
 		metadataPatcher.apply();
@@ -908,6 +904,10 @@ void common_cleanup(struct game_obj *game_object)
 			fclose(ff7sound);
 		}
 	}
+
+	// Shutdown Steam API
+	if(steam_edition || enable_steam_achievements)
+		SteamAPI_Shutdown();
 
 	nxAudioEngine.cleanup();
 	newRenderer.shutdown();
