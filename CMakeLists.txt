@@ -71,6 +71,7 @@ find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
 find_package(libpng CONFIG REQUIRED)
+find_package(mimalloc CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(SOLOUD REQUIRED)
 find_package(OPENPSF REQUIRED)
@@ -120,6 +121,7 @@ target_link_libraries(
   strmiids
   ZLIB::ZLIB
   png_static
+  mimalloc-static
   imgui::imgui
   pugixml::pugixml
   tomlplusplus::tomlplusplus

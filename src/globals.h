@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <mimalloc-new-delete.h>
 #include <fstream>
 #include <windows.h>
 #include <toml++/toml.h>
