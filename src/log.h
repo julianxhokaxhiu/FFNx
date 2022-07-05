@@ -47,6 +47,8 @@ void external_debug_print(const char *str);
 void external_debug_print2(const char *fmt, ...);
 
 void show_popup_msg(uint8_t text_color, const char* fmt, ...);
+void clear_popup_msg();
+uint32_t get_popup_time();
 
 void debug_printf(const char *, uint32_t, const char *, ...);
 

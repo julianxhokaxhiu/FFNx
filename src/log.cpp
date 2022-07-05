@@ -119,6 +119,16 @@ void show_popup_msg(uint8_t text_color, const char* fmt, ...)
 	popup_color = text_colors[text_color];
 }
 
+void clear_popup_msg()
+{
+	popup_ttl = 0;
+}
+
+uint32_t get_popup_time()
+{
+	return popup_ttl;
+}
+
 void external_debug_print(const char *str)
 {
 	std::string msg(str);

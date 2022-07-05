@@ -55,6 +55,7 @@ public:
     bool Refresh();
     bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
     bool IsPressed(WORD) const;
+    bool IsIdle();
 };
 
 extern Gamepad gamepad;

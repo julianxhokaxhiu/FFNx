@@ -123,3 +123,25 @@ bool Gamepad::IsPressed(WORD button) const
 {
     return (state.Gamepad.wButtons & button) != 0;
 }
+
+bool Gamepad::IsIdle()
+{
+  return  !(gamepad.leftStickY > 0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP)) &&
+          !(gamepad.leftStickY < -0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN)) &&
+          !(gamepad.leftStickX < -0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT)) &&
+          !(gamepad.leftStickX > 0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT)) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_X) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_A) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_B) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_Y) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER)&&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) &&
+          !(gamepad.leftTrigger > 0.85f) &&
+          !(gamepad.rightTrigger > 0.85f) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_BACK) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_START) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_START) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) &&
+          !gamepad.IsPressed(0x400);
+}

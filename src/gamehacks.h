@@ -27,6 +27,8 @@ class GameHacks
 {
 private:
 	uint16_t hold_input_for_frames = 0;
+	bool enable_hold_input = true;
+
 	bool speedhack_enabled;
 	double speedhack_current_speed;
 	bool battle_wanted = true;
@@ -69,6 +71,10 @@ public:
 
 	// INPUT VALIDATION
 	bool canInputBeProcessed();
+
+private:
+	bool isKeyboardShortcutMode = false;
+	bool isGamepadShortcutMode = false;
 };
 
 extern GameHacks gamehacks;

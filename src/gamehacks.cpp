@@ -22,6 +22,8 @@
 #include "gamehacks.h"
 #include "music.h"
 #include "audio.h"
+#include "gamepad.h"
+#include "joystick.h"
 
 GameHacks gamehacks;
 
@@ -103,6 +105,7 @@ void GameHacks::skipMovies()
 
 			holdInput();
 		}
+		else clear_popup_msg();
 	}
 	else
 	{
@@ -112,18 +115,19 @@ void GameHacks::skipMovies()
 
 			holdInput();
 		}
+		else clear_popup_msg();
 	}
 }
 
 void GameHacks::softReset()
 {
-	if (!canInputBeProcessed()) return;
-
 	if (!ff8) ff7_do_reset = true;
 
 	resetSpeedhack();
 
 	holdInput();
+
+	clear_popup_msg();
 }
 
 // PUBLIC
@@ -137,11 +141,13 @@ void GameHacks::init()
 
 void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	isKeyboardShortcutMode = false;
 	switch (msg)
 	{
 	case WM_KEYDOWN:
 		if ((::GetKeyState(VK_CONTROL) & 0x8000) != 0)
 		{
+			isKeyboardShortcutMode = true;
 			switch (wParam)
 			{
 			case 'A':
@@ -177,103 +183,137 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 
 void GameHacks::processGamepadInput()
 {
-	if (!ff8)
+	if(isGamepadShortcutMode && get_popup_time() == 0) isGamepadShortcutMode = false;
+
+	if (xinput_connected)
 	{
-		// Soft reset on L1+L2+R1+R2+START+SELECT
-		if (
-			ff7_externals.gamepad_status->button5 &&
-			ff7_externals.gamepad_status->button6 &&
-			ff7_externals.gamepad_status->button7 &&
-			ff7_externals.gamepad_status->button8 &&
-			ff7_externals.gamepad_status->button9 &&
-			ff7_externals.gamepad_status->button10
-			)
-			softReset();
-		// Increase in-game speed on L2+R2+UP
-		else if (
-			ff7_externals.gamepad_status->dpad_up &&
-			ff7_externals.gamepad_status->button7 &&
-			ff7_externals.gamepad_status->button8
-			)
-			increaseSpeedhack();
-		// Decrease in-game speed on L2+R2+DOWN
-		else if (
-			ff7_externals.gamepad_status->dpad_down &&
-			ff7_externals.gamepad_status->button7 &&
-			ff7_externals.gamepad_status->button8
-			)
-			decreaseSpeedhack();
-		// Toggle Speedhack on L2+R2+LEFT/RIGHT
-		else if (
-			(
-				ff7_externals.gamepad_status->dpad_left ||
-				ff7_externals.gamepad_status->dpad_right
-			) &&
-			ff7_externals.gamepad_status->button7 &&
-			ff7_externals.gamepad_status->button8
-			)
-			toggleSpeedhack();
-		// Toggle battle mode on L3+R3
-		else if (
-			ff7_externals.gamepad_status->button11 &&
-			ff7_externals.gamepad_status->button12
-			)
-			toggleBattleMode();
-		// Toggle auto attack mode on L2+R3
-		else if (
-			ff7_externals.gamepad_status->button7 &&
-			ff7_externals.gamepad_status->button12
-			)
-			toggleAutoAttackMode();
-		// Skip Movies on SELECT+START
-		else if (
-			ff7_externals.gamepad_status->button9 &&
-			ff7_externals.gamepad_status->button10
-			)
-			skipMovies();
-		else
-			drawnInput();
+		if (gamepad.Refresh())
+		{
+			if(gamepad.IsIdle())
+			{
+				hold_input_for_frames = 0;
+				enable_hold_input = true;
+			}
+
+			if(hold_input_for_frames > 0)
+			{
+				drawnInput();
+				return;
+			}
+
+			if (gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB)) // L2
+			{
+				isGamepadShortcutMode = !isGamepadShortcutMode;
+				if(isGamepadShortcutMode) show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Waiting for shortcut input..");
+				else clear_popup_msg();
+				holdInput();
+			}
+
+			if(!isGamepadShortcutMode) return;
+
+			// Soft reset on START+SELECT
+			if (
+				gamepad.IsPressed(XINPUT_GAMEPAD_BACK) &&
+				gamepad.IsPressed(XINPUT_GAMEPAD_START)
+				)
+				softReset();
+			// Increase in-game speed on R1
+			else if (
+				gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER)
+				)
+				increaseSpeedhack();
+			// Decrease in-game speed on L1
+			else if (
+				gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER)
+				)
+				decreaseSpeedhack();
+			// Toggle Speedhack on L2/R2
+			else if (
+				gamepad.leftTrigger > 0.85f ||
+				gamepad.rightTrigger > 0.85f
+				)
+				toggleSpeedhack();
+			// Toggle battle mode on Circle
+			else if (
+				gamepad.IsPressed(XINPUT_GAMEPAD_B)
+				)
+				toggleBattleMode();
+			// Toggle auto attack mode on Triangle
+			else if (
+				gamepad.IsPressed(XINPUT_GAMEPAD_Y)
+				)
+				toggleAutoAttackMode();
+			// Skip Movies on Square
+			else if (
+				gamepad.IsPressed(XINPUT_GAMEPAD_X)
+				)
+				skipMovies();
+		}
 	}
 	else
 	{
-		// Increase in-game speed on L2+R2+DPAD UP
-		if (
-			ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 0 &&
-			ff8_externals.dinput_gamepad_state->rgbButtons[6] == 0x80 &&
-			ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
-			)
-			increaseSpeedhack();
-		// Decrease in-game speed on L2+R2+DPAD DOWN
-		else if (
-			ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 18000 &&
-			ff8_externals.dinput_gamepad_state->rgbButtons[6] == 0x80 &&
-			ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
-			)
-			decreaseSpeedhack();
-		// Toggle Speedhack on L2+R2+LEFT/RIGHT
-		else if (
-			(
-				ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 27000 ||
-				ff8_externals.dinput_gamepad_state->rgdwPOV[0] == 9000
-			) &&
-			ff8_externals.dinput_gamepad_state->rgbButtons[6] == 0x80 &&
-			ff8_externals.dinput_gamepad_state->rgbButtons[7] == 0x80
-			)
-			toggleSpeedhack();
-		// Toggle battle mode on L3+R3
-		else if (
-			ff8_externals.dinput_gamepad_state->rgbButtons[10] &&
-			ff8_externals.dinput_gamepad_state->rgbButtons[11]
-			)
-			toggleBattleMode();
-		// Skip Movies on SELECT+START
-		else if (
-			ff8_externals.dinput_gamepad_state->rgbButtons[8] == 0x80 &&
-			ff8_externals.dinput_gamepad_state->rgbButtons[9] == 0x80
-			)
-			skipMovies();
-		else
-			drawnInput();
+		if (joystick.Refresh())
+		{
+			if(joystick.IsIdle())
+			{
+				hold_input_for_frames = 0;
+				enable_hold_input = true;
+			}
+
+			if(hold_input_for_frames > 0)
+			{
+				drawnInput();
+				return;
+			}
+
+			if (joystick.GetState()->rgbButtons[10] & 0x80) // L2
+			{
+				isGamepadShortcutMode = !isGamepadShortcutMode;
+				if(isGamepadShortcutMode) show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Waiting for shortcut input..");
+				else clear_popup_msg();
+				holdInput();
+			}
+
+			if(!isGamepadShortcutMode) return;
+
+			// Soft reset on START+SELECT
+			if (
+				(joystick.GetState()->rgbButtons[8] & 0x80) &&
+				(joystick.GetState()->rgbButtons[9] & 0x80)
+				)
+				softReset();
+			// Increase in-game speed on R1
+			else if (
+				joystick.GetState()->rgbButtons[5] & 0x80
+				)
+				increaseSpeedhack();
+			// Decrease in-game speed on L1
+			else if (
+				joystick.GetState()->rgbButtons[4] & 0x80
+				)
+				decreaseSpeedhack();
+			// Toggle Speedhack on L2/R2
+			else if (
+				(joystick.GetState()->rgbButtons[6] & 0x80) ||
+				(joystick.GetState()->rgbButtons[7] & 0x80)
+				)
+				toggleSpeedhack();
+			// Toggle battle mode on Circle
+			else if (
+				joystick.GetState()->rgbButtons[2] & 0x80
+				)
+				toggleBattleMode();
+			// Toggle auto attack mode on Triangle
+			else if (
+				joystick.GetState()->rgbButtons[3] & 0x80
+				)
+				toggleAutoAttackMode();
+			// Skip Movies on Square
+			else if (
+				joystick.GetState()->rgbButtons[0] & 0x80
+				)
+				skipMovies();
+		}
 	}
 }
 
@@ -294,7 +334,9 @@ bool GameHacks::isAutoAttack()
 
 void GameHacks::holdInput()
 {
+	if(!enable_hold_input) return;
 	hold_input_for_frames = 30; // ~1 sec
+	enable_hold_input = false;
 }
 
 void GameHacks::drawnInput()
@@ -304,5 +346,5 @@ void GameHacks::drawnInput()
 
 bool GameHacks::canInputBeProcessed()
 {
-	return hold_input_for_frames == 0;
+	return !isGamepadShortcutMode && !isKeyboardShortcutMode;
 }
