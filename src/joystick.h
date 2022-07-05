@@ -56,6 +56,7 @@ public:
   bool HasForceFeedback();
   void Clean();
   void Vibrate(WORD leftMotorSpeed, WORD rightMotorSpeed);
+  bool IsIdle();
 
   LONG GetDeadZone(float percent);
   DWORD GetMaxVibration();

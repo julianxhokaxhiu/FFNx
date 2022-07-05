@@ -283,6 +283,27 @@ void Joystick::Vibrate(WORD leftMotorSpeed, WORD rightMotorSpeed)
   }
 }
 
+bool Joystick::IsIdle()
+{
+  return  !(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) || joystick.GetState()->rgdwPOV[0] == 0) &&
+          !(joystick.GetState()->lY > joystick.GetDeadZone(0.5f) || joystick.GetState()->rgdwPOV[0] == 18000) &&
+          !(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) || joystick.GetState()->rgdwPOV[0] == 27000) &&
+          !(joystick.GetState()->lX > joystick.GetDeadZone(0.5f) || joystick.GetState()->rgdwPOV[0] == 9000) &&
+          !(joystick.GetState()->rgbButtons[0] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[1] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[2] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[3] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[4] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[5] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[6] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[7] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[8] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[9] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[10] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[11] & 0x80) &&
+          !(joystick.GetState()->rgbButtons[12] & 0x80);
+}
+
 //-----------------------------------------------------------------------------
 // Enum each PNP device using WMI and check each device ID to see if it contains
 // "IG_" (ex. "VID_045E&PID_028E&IG_00").  If it does, then it's an XInput device

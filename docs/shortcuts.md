@@ -33,7 +33,7 @@ This cheat will allow you to skip movies in-game.
 Shortcuts:
 
 - Keyboard Shortcut: `CTRL + S`
-- Gamepad Shortcut: `SELECT + START`
+- Gamepad Shortcut: `L3` THEN `SQUARE` (XInput: `LSB` THEN `X`)
 
 ### Battle mode toggle
 
@@ -42,7 +42,7 @@ This cheat will allow you to disable battle encounters while in the worldmap or 
 Shortcuts:
 
 - Keyboard Shortcut: `CTRL + B`
-- Gamepad Shortcut: `L3 + R3`
+- Gamepad Shortcut: `L3` THEN `CIRCLE` (XInput: `LSB` THEN `B`)
 
 ### Speedhack
 
@@ -51,12 +51,12 @@ This cheat will allow you to boost the gameplay timing up to 8x ( by default, [y
 Shortcuts:
 
 - Keyboard Shortcut: `CTRL + Arrow Up/Down`
-- Gamepad Shortcut: `L2 + R2 + Up/Down` ( DPad works too if using an XInput controller )
+- Gamepad Shortcut: `L3` THEN `L1/R1` (XInput: `LSB` THEN `LB/RB`)
 
 You can toggle the speedhack (enable/disable) when you want by using these Shortcuts:
 
 - Keyboard Shortcut: `CTRL + Arrow Left/Right`
-- Gamepad Shortcut: `L2 + R2 + Left/Right` ( DPad works too if using an XInput controller )
+- Gamepad Shortcut: `L3` THEN `L2/R2` (XInput: `LSB` THEN `LT/RT`)
 
 ### Soft Reset
 
@@ -65,7 +65,7 @@ This cheat will allow you to reset the game like on PSX, by triggering the game 
 Shortcuts:
 
 - Keyboard Shortcut: `CTRL + R`
-- Gamepad Shortcut: `L1 + L2 + R1 + R2 + START + SELECT`
+- Gamepad Shortcut: `L3` THEN `START + SELECT` (XInput: `LSB` THEN `BACK + START`)
 
 ### Auto-Attack ( FF7 only! )
 
@@ -74,7 +74,7 @@ This cheat will allow you to auto-attack the enemies in battle, instead of press
 Shortcuts:
 
 - Keyboard Shortcut: `CTRL + A`
-- Gamepad Shortcut: `L2 + R3`
+- Gamepad Shortcut: `L3` THEN `TRIANGLE` (XInput: `LSB` THEN `Y`)
 
 ### Toggle Music on Battle pause ( FF7 only! )
 
