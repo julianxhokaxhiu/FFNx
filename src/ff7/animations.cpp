@@ -1735,6 +1735,11 @@ void ff7_battle_animations_hook_init()
     patch_code_dword(ff7_externals.run_odin_steel_sub_4A9908 + 0x316, (DWORD)&ff7_odin_steel_frames_AEEC14);
     replace_call_function(ff7_externals.run_summon_kotr_sub_476857 + 0x1C6, ff7_add_kotr_camera_fn_to_effect100_fn);
     replace_function(ff7_externals.run_ifrit_movement_596702, ff7_ifrit_movement_596702);
+    patch_code_byte(ff7_externals.run_shiva_movement_592538 + 0x14D, 92);
+    patch_code_byte(ff7_externals.run_shiva_movement_592538 + 0x153, 91);
+    patch_code_int(ff7_externals.run_bahamut_neo_movement_48D7BC + 0x62, 206);
+    patch_code_byte(ff7_externals.run_bahamut_movement_49ADEC + 0x69, 83);
+    patch_code_byte(ff7_externals.run_odin_gunge_movement_4A584D + 0x1D0, 26);
 
     // Show Damage
     patch_multiply_code<WORD>(ff7_externals.display_battle_damage_5BB410 + 0x54, battle_frame_multiplier);
