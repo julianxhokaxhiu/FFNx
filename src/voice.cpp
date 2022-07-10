@@ -53,13 +53,15 @@ struct opcode_message_status
 		message_last_opcode(0),
 		is_voice_acting(false),
 		message_last_transition(0),
-		message_last_option(0)
+		message_last_option(0),
+		message_dialog_id(0)
 	{}
 	byte message_page_count = 0;
 	WORD message_last_opcode = 0;
 	bool is_voice_acting = false;
 	WORD message_last_transition = 0;
 	byte message_last_option = 0;
+	byte message_dialog_id = 0;
 };
 
 int (*opcode_old_message)();
@@ -435,24 +437,24 @@ int opcode_wm_ask(uint8_t window_id, uint8_t dialog_id, uint8_t first_question_i
 	bool _is_dialog_paging = is_dialog_paging(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
 	bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
 	bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
-	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
+	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != *current_question_id);
 
 	if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
 
 	if (_is_dialog_opening)
 	{
-		opcode_ask_current_option = 0;
 		begin_voice(window_id);
 	}
 	else if (_is_dialog_starting || _is_dialog_paging)
 	{
 		if (trace_all || trace_opcodes) ffnx_trace("wm_opcode[ASK]: window_id=%u,dialog_id=%u,paging_id=%u\n", window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+		current_opcode_message_status[window_id].message_dialog_id = dialog_id;
 		current_opcode_message_status[window_id].is_voice_acting = play_voice("_world", window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
 	}
 	else if (_is_dialog_option_changed)
 	{
-		if (trace_all || trace_opcodes) ffnx_trace("wm_opcode[ASK]: window_id=%u,dialog_id=%u,option_id=%u\n", window_id, dialog_id, opcode_ask_current_option);
-		play_option("_world", window_id, dialog_id, opcode_ask_current_option);
+		if (trace_all || trace_opcodes) ffnx_trace("wm_opcode[ASK]: window_id=%u,dialog_id=%u,option_id=%u\n", window_id, current_opcode_message_status[window_id].message_dialog_id, *current_question_id);
+		play_option("_world", window_id, current_opcode_message_status[window_id].message_dialog_id, *current_question_id);
 	}
 	else if (_is_dialog_closing)
 	{
@@ -460,7 +462,7 @@ int opcode_wm_ask(uint8_t window_id, uint8_t dialog_id, uint8_t first_question_i
 	}
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
-	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
+	current_opcode_message_status[window_id].message_last_option = *current_question_id;
 
 	return ret;
 }
