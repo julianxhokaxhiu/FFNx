@@ -7,10 +7,14 @@
 - Add native Borderless support ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md#borderless and https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L30 )
 - Fix a rare crash that might happen when closing the game while using 7th Heaven
 - Voice: Allow users to enable/disable the auto-text feature ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L221 )
+- Steam: Improve metadata save logic ( see https://github.com/julianxhokaxhiu/FFNx/issues/459 )
+- Shortcuts: Reworked the entire gamepad trigger logic ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md )
 
 ## FF7
 
 - 60FPS: Implement smooth FIELD background scrolling
+- 60FPS: Fix model position glitch for some summons
+- Voice: Add Worldmap voice acting support
 - Fixed a crash happening while loading a save game on Steam Spanish language
 - Fixed minor issues happening while using the new lighting engine on OpenGL ( see https://github.com/julianxhokaxhiu/FFNx/issues/448 )
 - Fixed Summon SFX effects volume to respect the master sfx volume ( see https://github.com/julianxhokaxhiu/FFNx/issues/453 )
