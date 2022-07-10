@@ -65,6 +65,8 @@ struct opcode_message_status
 int (*opcode_old_message)();
 int (*opcode_old_ask)(int);
 int (*opcode_old_wmode)();
+int (*opcode_wm_old_message)(uint8_t,uint8_t);
+int (*opcode_wm_old_ask)(uint8_t,uint8_t,uint8_t,uint8_t,WORD*);
 
 std::map<int,bool> simulate_OK_disabled;
 
@@ -274,6 +276,8 @@ byte get_dialog_opcode(byte window_id)
 
 //=============================================================================
 
+// -- FIELD --
+
 int opcode_wmode()
 {
 	byte window_id = get_field_parameter<byte>(0);
@@ -379,6 +383,89 @@ int opcode_voice_ask(int unk)
 
 	return ret;
 }
+
+// -- WORLDMAP --
+
+int opcode_wm_message(uint8_t window_id, uint8_t dialog_id) {
+	byte message_current_opcode = get_dialog_opcode(window_id);
+
+	bool _is_dialog_opening = is_dialog_opening(message_current_opcode);
+	bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_paging = is_dialog_paging(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+
+	if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
+
+	if (_is_dialog_opening)
+	{
+		begin_voice(window_id);
+	}
+	else if (_is_dialog_starting || _is_dialog_paging)
+	{
+		if (trace_all || trace_opcodes) ffnx_trace("wm_opcode[MESSAGE]: window_id=%u,dialog_id=%u,paging_id=%u\n", window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+		current_opcode_message_status[window_id].is_voice_acting = play_voice("_world", window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+	}
+	else if (_is_dialog_closing)
+	{
+		end_voice(window_id);
+		simulate_OK_disabled[window_id] = false;
+		current_opcode_message_status[window_id].is_voice_acting = false;
+	}
+
+	// Auto close the message if it was voice acted and the audio file has finished playing
+	if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
+	{
+		current_opcode_message_status[window_id].is_voice_acting = false;
+		if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) simulate_OK_button = true;
+	}
+
+	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
+
+	return opcode_wm_old_message(window_id, dialog_id);
+}
+
+int opcode_wm_ask(uint8_t window_id, uint8_t dialog_id, uint8_t first_question_id, uint8_t last_question_id, WORD *current_question_id) {
+	int ret = opcode_wm_old_ask(window_id, dialog_id, first_question_id, last_question_id, current_question_id);
+
+	byte message_current_opcode = get_dialog_opcode(window_id);
+
+	bool _is_dialog_opening = is_dialog_opening(message_current_opcode);
+	bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_paging = is_dialog_paging(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
+
+	if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
+
+	if (_is_dialog_opening)
+	{
+		opcode_ask_current_option = 0;
+		begin_voice(window_id);
+	}
+	else if (_is_dialog_starting || _is_dialog_paging)
+	{
+		if (trace_all || trace_opcodes) ffnx_trace("wm_opcode[ASK]: window_id=%u,dialog_id=%u,paging_id=%u\n", window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+		current_opcode_message_status[window_id].is_voice_acting = play_voice("_world", window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+	}
+	else if (_is_dialog_option_changed)
+	{
+		if (trace_all || trace_opcodes) ffnx_trace("wm_opcode[ASK]: window_id=%u,dialog_id=%u,option_id=%u\n", window_id, dialog_id, opcode_ask_current_option);
+		play_option("_world", window_id, dialog_id, opcode_ask_current_option);
+	}
+	else if (_is_dialog_closing)
+	{
+		end_voice(window_id);
+	}
+
+	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
+	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
+
+	return ret;
+}
+
+// -- BATTLE --
 
 std::string decode_ff7_text(const char *encoded_text)
 {
@@ -753,6 +840,14 @@ void voice_init()
 
 		opcode_old_wmode = (int (*)())ff7_externals.opcode_wmode;
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x52], (DWORD)&opcode_wmode);
+
+		opcode_wm_old_message = (int (*)(uint8_t,uint8_t))ff7_externals.world_opcode_message;
+		replace_call_function(ff7_externals.world_sub_75EE86 + 0x2B, opcode_wm_message);
+		replace_call_function(ff7_externals.world_sub_75EF46 + 0x8C, opcode_wm_message);
+
+		opcode_wm_old_ask = (int (*)(uint8_t,uint8_t,uint8_t,uint8_t,WORD*))ff7_externals.world_opcode_ask;
+		replace_call_function(ff7_externals.world_sub_75EEBB + 0x3C, opcode_wm_ask);
+		replace_call_function(ff7_externals.world_sub_75EF46 + 0xAF, opcode_wm_ask);
 
 		replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
 		replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
