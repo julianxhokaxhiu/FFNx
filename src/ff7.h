@@ -2929,14 +2929,11 @@ struct ff7_externals
 	uint32_t world_animate_single_model;
 	uint32_t run_world_snake_ai_script_7562FF;
 	uint32_t update_world_snake_position_7564CD;
-	uint32_t world_sub_75EE86;
-	uint32_t world_sub_75EEBB;
 	uint32_t world_sub_75EF46;
-	uint32_t world_sub_76420A;
-	uint32_t world_sub_764F9C;
 	uint32_t world_sub_767540;
 	uint32_t world_sub_767641;
 	uint32_t world_opcode_message_sub_75EE86;
+	uint32_t world_opcode_ask_sub_75EEBB;
 	uint32_t world_opcode_message;
 	uint32_t world_opcode_ask;
 	uint32_t world_opcode_message_update_text_769C02;

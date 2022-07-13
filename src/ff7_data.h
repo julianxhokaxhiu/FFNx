@@ -1099,15 +1099,12 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_animate_single_model = get_relative_call(ff7_externals.world_animate_all_models, 0x20);
 	ff7_externals.run_world_snake_ai_script_7562FF = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x5AB);
 	ff7_externals.world_sub_75EF46 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x44E);
-	ff7_externals.world_sub_76420A = get_relative_call(ff7_externals.world_sub_7641A7, 0x1D);
-	ff7_externals.world_sub_764F9C = get_relative_call(ff7_externals.world_sub_76420A, 0xC7);
 	ff7_externals.world_sub_767540 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x5BE);
 	ff7_externals.world_sub_767641 = get_relative_call(ff7_externals.world_sub_767540, 0xCB);
-	ff7_externals.world_sub_75EE86 = get_relative_call(ff7_externals.world_sub_764F9C, 0xB6D);
-	ff7_externals.world_sub_75EEBB = get_relative_call(ff7_externals.world_sub_764F9C, 0xBA1);
 	ff7_externals.get_world_encounter_rate = (int(*)())get_relative_call(ff7_externals.world_sub_767641, 0x110);
 	ff7_externals.update_world_snake_position_7564CD = get_relative_call(ff7_externals.run_world_snake_ai_script_7562FF, 0x151);
 	ff7_externals.world_opcode_message_sub_75EE86 = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xB6D);
+	ff7_externals.world_opcode_ask_sub_75EEBB = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xBA1);
 	ff7_externals.world_opcode_message = get_relative_call(ff7_externals.world_sub_75EF46, 0x8C);
 	ff7_externals.world_opcode_ask = get_relative_call(ff7_externals.world_sub_75EF46, 0xAF);
 	ff7_externals.world_opcode_message_update_text_769C02 = get_relative_call(ff7_externals.world_opcode_message, 0x6D);

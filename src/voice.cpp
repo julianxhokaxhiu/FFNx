@@ -844,11 +844,11 @@ void voice_init()
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x52], (DWORD)&opcode_wmode);
 
 		opcode_wm_old_message = (int (*)(uint8_t,uint8_t))ff7_externals.world_opcode_message;
-		replace_call_function(ff7_externals.world_sub_75EE86 + 0x2B, opcode_wm_message);
+		replace_call_function(ff7_externals.world_opcode_message_sub_75EE86 + 0x2B, opcode_wm_message);
 		replace_call_function(ff7_externals.world_sub_75EF46 + 0x8C, opcode_wm_message);
 
 		opcode_wm_old_ask = (int (*)(uint8_t,uint8_t,uint8_t,uint8_t,WORD*))ff7_externals.world_opcode_ask;
-		replace_call_function(ff7_externals.world_sub_75EEBB + 0x3C, opcode_wm_ask);
+		replace_call_function(ff7_externals.world_opcode_ask_sub_75EEBB + 0x3C, opcode_wm_ask);
 		replace_call_function(ff7_externals.world_sub_75EF46 + 0xAF, opcode_wm_ask);
 
 		replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
