@@ -330,12 +330,14 @@ void SteamAchievementsFF7::unlockBattleWonAchievement(WORD formationID)
         this->steamManager->setAchievement(BEAT_DIAMOND_WEAPON);
     }
 
-    if (!this->steamManager->isAchieved(BEAT_RUBY_WEAPON) && formationID == RUBY_WEAPON_FORMATION_ID)
+    if (!this->steamManager->isAchieved(BEAT_RUBY_WEAPON)
+        && find(begin(RUBY_WEAPON_FORMATION_ID), end(RUBY_WEAPON_FORMATION_ID), formationID) != end(RUBY_WEAPON_FORMATION_ID))
     {
         this->steamManager->setAchievement(BEAT_RUBY_WEAPON);
     }
 
-    if (!this->steamManager->isAchieved(BEAT_EMERALD_WEAPON) && formationID == EMERALD_WEAPON_FORMATION_ID)
+    if (!this->steamManager->isAchieved(BEAT_EMERALD_WEAPON)
+        && find(begin(EMERALD_WEAPON_FORMATION_ID), end(EMERALD_WEAPON_FORMATION_ID), formationID) != end(EMERALD_WEAPON_FORMATION_ID))
     {
         this->steamManager->setAchievement(BEAT_EMERALD_WEAPON);
     }

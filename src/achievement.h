@@ -171,8 +171,8 @@ private:
 
     // took from here https://finalfantasy.fandom.com/wiki/Diamond_Weapon_(Final_Fantasy_VII_boss)#Formations
     static inline constexpr WORD DIAMOND_WEAPON_FORMATION_ID = 980;
-    static inline constexpr WORD RUBY_WEAPON_FORMATION_ID = 982;
-    static inline constexpr WORD EMERALD_WEAPON_FORMATION_ID = 984;
+    static inline constexpr std::array<WORD, 2> RUBY_WEAPON_FORMATION_ID = {982, 983};
+    static inline constexpr std::array<WORD, 3> EMERALD_WEAPON_FORMATION_ID = {984, 985, 986};
     static inline constexpr WORD ULTIMATE_WEAPON_FORMATION_ID = 287;
     static inline constexpr WORD BATTLE_SQUARE_LOCATION_ID = 0x0025;
 
