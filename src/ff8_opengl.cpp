@@ -71,7 +71,7 @@ void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *ga
 		if(hundred_data)
 		{
 			if(game_object->field_91C && hundred_data->zsort) zsort = true;
-			else if(!game_object->field_928) defer = (hundred_data->field_8 & (BIT(V_ALPHABLEND) | BIT(V_TMAPBLEND)));
+			else if(!game_object->field_928) defer = (hundred_data->options & (BIT(V_ALPHABLEND) | BIT(V_TMAPBLEND)));
 		}
 
 		if(!defer) common_setrenderstate(hundred_data, (struct game_obj *)game_object);

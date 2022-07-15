@@ -178,7 +178,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 		if(hundred_data)
 		{
 			if(game_object->field_91C && hundred_data->zsort) zsort = true;
-			else if(!game_object->field_928) defer = (hundred_data->field_8 & (BIT(V_ALPHABLEND) | BIT(V_TMAPBLEND)));
+			else if(!game_object->field_928) defer = (hundred_data->options & (BIT(V_ALPHABLEND) | BIT(V_TMAPBLEND)));
 		}
 
 		if(trace_all) ffnx_trace("group %i: %s, %s\n", group_counter, zsort ? "zsort" : "no zsort", defer ? "deferred" : "not deferred");

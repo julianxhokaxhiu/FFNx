@@ -43,32 +43,34 @@
  */
 enum effects
 {
-	V_WIREFRAME,			// 0x1
-	V_TEXTURE,				// 0x2
-	V_LINEARFILTER,			// 0x4
-	V_PERSPECTIVE,			// 0x8
-	V_TMAPBLEND,			// 0x10
-	V_WRAP_U,				// 0x20
-	V_WRAP_V,				// 0x40
-	V_UNKNOWN80,			// 0x80
-	V_COLORKEY,				// 0x100
-	V_DITHER,				// 0x200
-	V_ALPHABLEND,			// 0x400
-	V_ALPHATEST,			// 0x800
-	V_ANTIALIAS,			// 0x1000
-	V_CULLFACE,				// 0x2000
-	V_NOCULL,				// 0x4000
-	V_DEPTHTEST,			// 0x8000
-	V_DEPTHMASK,			// 0x10000
-	V_SHADEMODE,			// 0x20000
-	V_SPECULAR,				// 0x40000
-	V_LIGHTSTATE,			// 0x80000
-	V_FOG,					// 0x100000
-	V_TEXADDR,				// 0x200000
+	V_WIREFRAME,			      // 0x1
+	V_TEXTURE,				      // 0x2
+	V_LINEARFILTER,			    // 0x4
+	V_PERSPECTIVE,			    // 0x8
+	V_TMAPBLEND,			      // 0x10
+	V_WRAP_U,				        // 0x20
+	V_WRAP_V,				        // 0x40
+	V_UNKNOWN80,			      // 0x80
+	V_COLORKEY,				      // 0x100
+	V_DITHER,				        // 0x200
+	V_ALPHABLEND,			      // 0x400
+	V_ALPHATEST,			      // 0x800
+	V_ANTIALIAS,			      // 0x1000
+	V_CULLFACE,				      // 0x2000
+	V_NOCULL,				        // 0x4000
+	V_DEPTHTEST,			      // 0x8000
+	V_DEPTHMASK,			      // 0x10000
+	V_SHADEMODE,			      // 0x20000
+	V_SPECULAR,				      // 0x40000
+	V_LIGHTSTATE,			      // 0x80000
+	V_FOG,					        // 0x100000
+	V_TEXADDR,				      // 0x200000
 	V_UNKNOWN400000,        // 0x400000
 	V_UNKNOWN800000,        // 0x800000
 	V_ALPHAFUNC,            // 0x1000000
 	V_ALPHAREF,             // 0x2000000
+	V_UNKNOWNFFFDFBFD,      // 0xFFFDFBFD
+	V_UNKNOWNFFFDFFFD,      // 0xFFFDFFFD
 };
 
 // helper definitions for all the different functions which should be provided by the graphics driver
@@ -154,7 +156,7 @@ struct struc_81
 	uint32_t field_14;
 	uint32_t field_18;
 	uint32_t field_1C;
-	uint32_t field_20;
+	uint32_t blend_mode;
 	uint32_t vertexcolor;
 	struct texture_set *texture_set;
 };
@@ -404,8 +406,8 @@ struct p_hundred
 {
 	uint32_t field_0;
 	uint32_t field_4;
-	uint32_t field_8;
-	uint32_t field_C;
+	uint32_t options;
+	uint32_t features;
 	uint32_t field_10;
 	struct texture_set *texture_set;
 	uint32_t field_18;

@@ -2037,15 +2037,13 @@ void common_field_64(uint32_t state, uint32_t option, struct game_obj *game_obje
 // called by the game to apply a set of render states
 void common_setrenderstate(struct p_hundred *hundred_data, struct game_obj *game_object)
 {
-	uint32_t features;
-	uint32_t options;
+	if(hundred_data == 0) return;
 
 	VOBJ(game_obj, game_object, game_object);
 
-	if(hundred_data == 0) return;
-
-	features = hundred_data->field_C;
-	options = hundred_data->field_8;
+	uint32_t features = hundred_data->features;
+	uint32_t options = hundred_data->options;
+	struct struc_81 *struc_81 = VREF(game_object, field_944);
 
 	if(trace_all) ffnx_trace("dll_gfx: setrenderstate 0x%x 0x%x\n", features, options);
 
@@ -2063,16 +2061,21 @@ void common_setrenderstate(struct p_hundred *hundred_data, struct game_obj *game
 	if(CHECK_BIT(features, V_DITHER)) internal_set_renderstate(V_DITHER, CHECK_BIT(options, V_DITHER), game_object);
 	if(CHECK_BIT(features, V_ALPHABLEND))
 	{
+		// Safe default
+		struc_81->blend_mode = 4;
+
 		if(CHECK_BIT(options, V_ALPHABLEND))
 		{
 			if(VREF(game_object, field_93C))
 			{
-				if(VREF(game_object, current_hundred)) gl_set_blend_func(VREF(game_object, current_hundred->blend_mode));
-				else gl_set_blend_func(BLEND_NONE);
+				if(VREF(game_object, current_hundred))
+					struc_81->blend_mode = VREF(game_object, current_hundred->blend_mode);
 			}
-			else gl_set_blend_func(hundred_data->blend_mode);
+			else
+				struc_81->blend_mode = hundred_data->blend_mode;
 		}
-		else gl_set_blend_func(BLEND_NONE);
+
+		gl_set_blend_func(struc_81->blend_mode);
 	}
 	if(CHECK_BIT(features, V_ALPHATEST)) internal_set_renderstate(V_ALPHATEST, CHECK_BIT(options, V_ALPHATEST), game_object);
 	if(CHECK_BIT(features, V_CULLFACE)) internal_set_renderstate(V_CULLFACE, CHECK_BIT(options, V_CULLFACE), game_object);
@@ -2080,6 +2083,24 @@ void common_setrenderstate(struct p_hundred *hundred_data, struct game_obj *game
 	if(CHECK_BIT(features, V_DEPTHTEST)) internal_set_renderstate(V_DEPTHTEST, CHECK_BIT(options, V_DEPTHTEST), game_object);
 	if(CHECK_BIT(features, V_DEPTHMASK)) internal_set_renderstate(V_DEPTHMASK, CHECK_BIT(options, V_DEPTHMASK), game_object);
 	if(CHECK_BIT(features, V_SHADEMODE)) internal_set_renderstate(V_SHADEMODE, CHECK_BIT(options, V_SHADEMODE) && !VREF(game_object, field_92C) && hundred_data->shademode > 0, game_object);
+	if(CHECK_BIT(features, V_UNKNOWNFFFDFFFD))
+	{
+		// Safe default
+		struc_81->blend_mode = 4;
+
+		if(CHECK_BIT(options, V_ALPHABLEND))
+		{
+			if(VREF(game_object, field_93C))
+			{
+				if(VREF(game_object, current_hundred))
+					struc_81->blend_mode = VREF(game_object, current_hundred->blend_mode);
+			}
+			else
+				struc_81->blend_mode = hundred_data->blend_mode;
+		}
+
+		gl_set_blend_func(struc_81->blend_mode);
+	}
 
 	// any bits still set in the features and options variables at this point
 	// are features that we do not currently handle
