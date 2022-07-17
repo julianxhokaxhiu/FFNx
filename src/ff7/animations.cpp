@@ -1182,7 +1182,7 @@ void ff7_ifrit_movement_596702()
     if((*ff7_externals.byte_BCC788 & 1) == 0)
     {
         *ff7_externals.byte_BCC788 |= 1u;
-        *ff7_externals.vector3_int_ptr_BCC6A8 = ff7_externals.battle_sub_661000(0);
+        *ff7_externals.ifrit_vector3_int_ptr_BCC6A8 = ff7_externals.battle_sub_661000(0);
     }
     std::vector<int> ifrit_og_phases = {0, 30, 131, 146, 149, 169};
     std::vector<int> ifrit_new_phases;
@@ -1219,12 +1219,12 @@ void ff7_ifrit_movement_596702()
             return;
         }
 
-        ff7_externals.engine_sub_663673(ff7_externals.word_array_BCC768);
-        ff7_externals.engine_sub_663707((DWORD*)ff7_externals.word_array_BCC768);
-        ff7_externals.battle_sub_662ECC(ff7_externals.battle_ifrit_model_position, *ff7_externals.vector3_int_ptr_BCC6A8, &(*ff7_externals.vector3_int_ptr_BCC6A8)[1].y);
-        getBattleModelState(3)->modelPosition.x = (*ff7_externals.vector3_int_ptr_BCC6A8)->x;
-        getBattleModelState(3)->modelPosition.y = (*ff7_externals.vector3_int_ptr_BCC6A8)->y;
-        getBattleModelState(3)->modelPosition.z = (*ff7_externals.vector3_int_ptr_BCC6A8)->z;
+        ff7_externals.engine_copy_3x3_rot_matrix_to_game_engine_663673(ff7_externals.ifrit_rot_matrix_BCC768);
+        ff7_externals.engine_set_game_engine_position_663707(ff7_externals.ifrit_rot_matrix_BCC768);
+        ff7_externals.battle_sub_662ECC(ff7_externals.battle_ifrit_model_position, *ff7_externals.ifrit_vector3_int_ptr_BCC6A8, &(*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)[1].y);
+        getBattleModelState(3)->modelPosition.x = (*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)->x;
+        getBattleModelState(3)->modelPosition.y = (*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)->y;
+        getBattleModelState(3)->modelPosition.z = (*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)->z;
         effect_data.field_2++;
     }
 }
@@ -1262,7 +1262,7 @@ int ff7_battle_animate_material_texture(material_anim_ctx *materialCtx, int a2, 
         {
             effectDecorator->interpolateRotationMatrix(ff7_externals.get_global_model_matrix_buffer_66100D(), uniqueID);
             effectDecorator->interpolateMaterialContext(*materialCtx, uniqueID);
-            effectDecorator->interpolateColor((color_ui8 *)&ff7_externals.global_game_data_90AAF0[20], uniqueID);
+            effectDecorator->interpolateColor(&(*ff7_externals.global_game_engine_data)->secondary_color, uniqueID);
             effectDecorator->interpolatePalette(palette_extra_data, uniqueID);
         }
         effectDecorator->addTextureIndex();
