@@ -325,14 +325,14 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_layer4_tiles = (field_tile **)get_absolute_value(ff7_externals.field_layer4_pick_tiles, 0xC2);
 	ff7_externals.do_draw_layer4_CFFEA4 = (int*)get_absolute_value(ff7_externals.field_layer4_pick_tiles, 0x9);
 	ff7_externals.field_layer4_flag_CFFEA8 = (int*)get_absolute_value(ff7_externals.field_layer4_pick_tiles, 0x3F3);
-	ff7_externals.field_layer_sub_C23C0F = (double(*)(ff7_field_camera*, int, int, int))get_relative_call(ff7_externals.field_layer3_pick_tiles, 0x7E);
+	ff7_externals.field_layer_sub_623C0F = (double(*)(rotation_matrix*, int, int, int))get_relative_call(ff7_externals.field_layer3_pick_tiles, 0x7E);
 	ff7_externals.field_layer_CFF1D8 = (int *)get_absolute_value(ff7_externals.field_layer4_pick_tiles, 0x264);
 	ff7_externals.field_palette_D00088 = (uint16_t *)get_absolute_value(ff7_externals.field_layer4_pick_tiles, 0x28A);
 	ff7_externals.field_special_y_offset = (uint32_t *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x43);
 	ff7_externals.field_bg_multiplier = (uint32_t *)get_absolute_value(ff7_externals.field_layer2_pick_tiles, 0x23);
 	ff7_externals.add_page_tile = (void (*)(float, float, float, float, float, uint32_t, uint32_t))get_relative_call(ff7_externals.field_layer2_pick_tiles, 0x327);
 	ff7_externals.field_triggers_header = (field_trigger_header**)get_absolute_value(ff7_externals.field_layer3_pick_tiles, 0x134);
-	ff7_externals.field_camera_CFF3D8 = (ff7_field_camera*)get_absolute_value(ff7_externals.field_layer3_pick_tiles, 0x7A);
+	ff7_externals.field_camera_rotation_matrix_CFF3D8 = (rotation_matrix*)get_absolute_value(ff7_externals.field_layer3_pick_tiles, 0x7A);
 
 	ff7_externals.field_load_textures = get_relative_call(ff7_externals.field_sub_60DCED, 0x107);
 	ff7_externals.field_convert_type2_layers = (void (*)())get_relative_call(ff7_externals.field_load_textures, 0xD);
@@ -543,10 +543,10 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.set_world_pos_based_on_player_pos_643C86 = (void(*)(vector2<short>*))get_relative_call(ff7_externals.field_update_scripted_bg_movement, 0x3D);
 	ff7_externals.field_clip_with_camera_range_6438F6 = (void(*)(vector2<short>*))get_relative_call((uint32_t)ff7_externals.field_update_background_positions, 0x2B7);
 	ff7_externals.field_layer3_clip_with_camera_range_643628 = get_relative_call((uint32_t)ff7_externals.field_update_background_positions, 0x2CA);
-	ff7_externals.engine_sub_661976 = (void (*)(int, int))get_relative_call(ff7_externals.field_sub_64314F, 0x2D);
-	ff7_externals.engine_sub_66307D = get_relative_call(ff7_externals.field_sub_64314F, 0x45);
-	ff7_externals.engine_sub_661465 = (void (*)(short*, float*))get_relative_call(ff7_externals.engine_sub_66307D, 0x23);
-	ff7_externals.engine_sub_66CF7E = (void (*)(float*, vector3<float>*, vector3<float>*))get_relative_call(ff7_externals.engine_sub_66307D, 0x37);
+	ff7_externals.engine_set_game_engine_delta_values_661976 = (void (*)(int, int))get_relative_call(ff7_externals.field_sub_64314F, 0x2D);
+	ff7_externals.engine_apply_matrix_product_66307D = get_relative_call(ff7_externals.field_sub_64314F, 0x45);
+	ff7_externals.engine_convert_psx_matrix_to_float_matrix_row_version_661465 = (void (*)(rotation_matrix*, float*))get_relative_call(ff7_externals.engine_apply_matrix_product_66307D, 0x23);
+	ff7_externals.engine_apply_matrix_product_to_vector_66CF7E = (void (*)(float*, vector3<float>*, vector3<float>*))get_relative_call(ff7_externals.engine_apply_matrix_product_66307D, 0x37);
 	ff7_externals.field_bg_offset = (vector2<int>*)get_absolute_value((uint32_t)ff7_externals.field_update_background_positions, 0x3E8);
 	ff7_externals.field_curr_delta_world_pos_x = (short*)get_absolute_value((uint32_t)ff7_externals.field_update_background_positions, 0x98F);
 	ff7_externals.field_curr_delta_world_pos_y = (short*)get_absolute_value((uint32_t)ff7_externals.field_update_background_positions, 0x9AC);
@@ -565,7 +565,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_sub_661B68 = get_relative_call(ff7_externals.field_sub_640EB7, 0x61);
 	ff7_externals.field_prev_world_pos_x = (short*)get_absolute_value((uint32_t)ff7_externals.field_sub_640EB7, 0x6);
 	ff7_externals.field_prev_world_pos_y = (short*)get_absolute_value((uint32_t)ff7_externals.field_sub_640EB7, 0x18);
-	ff7_externals.engine_sub_661B23 = (void (*)(int, int))get_relative_call(ff7_externals.field_sub_661B68, 0x1A);
+	ff7_externals.engine_set_game_engine_world_coord_661B23 = (void (*)(int, int))get_relative_call(ff7_externals.field_sub_661B68, 0x1A);
 	ff7_externals.engine_sub_67CCDE = (void (*)(float, float, float, float, float, float, float, ff7_game_obj*))get_relative_call(ff7_externals.field_sub_661B68, 0x72);
 
 	ff7_externals.sfx_stop_channel_6 = get_relative_call(common_externals.sfx_cleanup, 0x16);
@@ -988,13 +988,13 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.run_kotr_camera_476AFB = get_absolute_value((uint32_t)ff7_externals.add_kotr_camera_fn_to_effect100_fn_476AAB, 0xA);
 
 	ff7_externals.battle_sub_661000 = (vector3<int>*(*)(int))get_relative_call(ff7_externals.run_ifrit_movement_596702, 0x38);
-	ff7_externals.engine_sub_663673 = (void(*)(WORD*))get_relative_call(ff7_externals.run_ifrit_movement_596702, 0x169);
-	ff7_externals.engine_sub_663707 = (void(*)(DWORD*))get_relative_call(ff7_externals.run_ifrit_movement_596702, 0x176);
+	ff7_externals.engine_copy_3x3_rot_matrix_to_game_engine_663673 = (void(*)(rotation_matrix*))get_relative_call(ff7_externals.run_ifrit_movement_596702, 0x169);
+	ff7_externals.engine_set_game_engine_position_663707 = (void(*)(rotation_matrix*))get_relative_call(ff7_externals.run_ifrit_movement_596702, 0x176);
 	ff7_externals.battle_sub_662ECC = (void(*)(vector3<short>*, vector3<int>*, int*))get_relative_call(ff7_externals.run_ifrit_movement_596702, 0x193);
 	ff7_externals.byte_BCC788 = (byte*)get_absolute_value(ff7_externals.run_ifrit_movement_596702, 0x1C);
-	ff7_externals.vector3_int_ptr_BCC6A8 = (vector3<int>**)get_absolute_value(ff7_externals.run_ifrit_movement_596702, 0x41);
+	ff7_externals.ifrit_vector3_int_ptr_BCC6A8 = (vector3<int>**)get_absolute_value(ff7_externals.run_ifrit_movement_596702, 0x41);
 	ff7_externals.battle_ifrit_model_position = (vector3<short>*)get_absolute_value(ff7_externals.run_ifrit_movement_596702, 0x12D);
-	ff7_externals.word_array_BCC768 = (WORD*)get_absolute_value(ff7_externals.run_ifrit_movement_596702, 0x165);
+	ff7_externals.ifrit_rot_matrix_BCC768 = (rotation_matrix*)get_absolute_value(ff7_externals.run_ifrit_movement_596702, 0x165);
 
 	// Enemy attacks
 	uint32_t battle_sub_5C1484 = ff7_externals.magic_effects_fn_table[7];
@@ -1059,7 +1059,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_animate_texture_spt = get_relative_call(ff7_externals.summon_aura_effects_5C0953, 0x16A);
 	ff7_externals.get_draw_chain_671C71 = (struc_84*(*)(ff7_graphics_object*))get_relative_call(ff7_externals.battle_animate_texture_spt, 0x15F);
 	ff7_externals.palette_extra_data_C06A00 = (palette_extra*)get_absolute_value(ff7_externals.battle_animate_material_texture, 0x2FA);
-	ff7_externals.global_game_data_90AAF0 = (uint32_t**)get_absolute_value((uint32_t)ff7_externals.get_global_model_matrix_buffer_66100D, 0x4);
+	ff7_externals.global_game_engine_data = (ff7_game_engine_data**)get_absolute_value((uint32_t)ff7_externals.get_global_model_matrix_buffer_66100D, 0x4);
 
 	// Battle menu
 	ff7_externals.battle_menu_update_call = battle_main_loop + 0x368;

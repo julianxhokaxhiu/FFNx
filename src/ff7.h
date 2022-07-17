@@ -1005,6 +1005,27 @@ struct rotation_matrix
 };
 #pragma pack(pop)
 
+#pragma pack(push, 1)
+struct ff7_game_engine_data
+{
+	float scale;
+	byte field_4[4];
+	double field_8;
+	rotation_matrix rot_matrix;
+	byte field_2E[2];
+	DWORD field_30;
+	DWORD field_34;
+	float float_delta_x;
+	float float_delta_y;
+	vector2<int> world_coord;
+	int do_not_transpose;
+	color_ui8 primary_color;
+	color_ui8 secondary_color;
+	float field_54;
+	float field_58;
+};
+#pragma pack(pop)
+
 struct battle_text_data
 {
 	short buffer_idx;
@@ -2124,25 +2145,6 @@ struct field_animation_data
 	byte field_180[16];
 };
 
-struct ff7_field_camera
-{
-	int16_t eye_x;
-	int16_t eye_y;
-	int16_t eye_z;
-	int16_t target_x;
-	int16_t target_y;
-	int16_t target_z;
-	int16_t up_x;
-	int16_t up_y;
-	int16_t up_z;
-	int16_t pos_x;
-	int16_t pan_x;
-	int16_t pos_y;
-	int16_t pan_y;
-	int16_t pos_z;
-	int16_t zoom;
-};
-
 struct field_gateway
 {
 	vector3<short> v1_exit_line;
@@ -2390,9 +2392,9 @@ struct ff7_externals
 	uint32_t *field_special_y_offset;
 	uint32_t *field_bg_multiplier;
 	void (*add_page_tile)(float, float, float, float, float, uint32_t, uint32_t);
-	double (*field_layer_sub_C23C0F)(ff7_field_camera*, int, int, int);
+	double (*field_layer_sub_623C0F)(rotation_matrix*, int, int, int);
 	field_trigger_header** field_triggers_header;
-	ff7_field_camera* field_camera_CFF3D8;
+	rotation_matrix* field_camera_rotation_matrix_CFF3D8;
 	uint32_t field_load_textures;
 	void (*field_convert_type2_layers)();
 	void (*make_struc3)(uint32_t, struct struc_3 *);
@@ -2537,10 +2539,10 @@ struct ff7_externals
 	void (*set_world_pos_based_on_player_pos_643C86)(vector2<short>*);
 	void(*field_clip_with_camera_range_6438F6)(vector2<short>*);
 	uint32_t field_layer3_clip_with_camera_range_643628;
-	void (*engine_sub_661976)(int, int);
-	uint32_t engine_sub_66307D;
-	void (*engine_sub_661465)(short*, float*);
-	void (*engine_sub_66CF7E)(float*, vector3<float>*, vector3<float>*);
+	void (*engine_set_game_engine_delta_values_661976)(int, int);
+	uint32_t engine_apply_matrix_product_66307D;
+	void (*engine_convert_psx_matrix_to_float_matrix_row_version_661465)(rotation_matrix*, float*);
+	void (*engine_apply_matrix_product_to_vector_66CF7E)(float*, vector3<float>*, vector3<float>*);
 	vector2<int>* field_bg_offset;
 	short* field_curr_delta_world_pos_x;
 	short* field_curr_delta_world_pos_y;
@@ -2559,7 +2561,7 @@ struct ff7_externals
 	WORD* field_bg_flag_CC15E4;
 	uint32_t field_sub_640EB7;
 	uint32_t field_sub_661B68;
-	void (*engine_sub_661B23)(int, int);
+	void (*engine_set_game_engine_world_coord_661B23)(int, int);
 	void (*engine_sub_67CCDE)(float, float, float, float, float, float, float, ff7_game_obj*);
 	uint32_t sub_630D50;
 	uint32_t sub_631945;
@@ -2807,8 +2809,8 @@ struct ff7_externals
 	void(*add_kotr_camera_fn_to_effect100_fn_476AAB)(DWORD, DWORD, WORD);
 	uint32_t run_kotr_camera_476AFB;
 	vector3<int>* (*battle_sub_661000)(int);
-	void (*engine_sub_663673)(WORD*);
-	void (*engine_sub_663707)(DWORD*);
+	void (*engine_copy_3x3_rot_matrix_to_game_engine_663673)(rotation_matrix*);
+	void (*engine_set_game_engine_position_663707)(rotation_matrix*);
 	void (*battle_sub_662ECC)(vector3<short>*, vector3<int>*, int*);
 	uint32_t run_chocobuckle_main_loop_560C32;
 	uint32_t run_confu_main_loop_5600BE;
@@ -2865,14 +2867,14 @@ struct ff7_externals
 	short* resting_Y_array_data;
 	WORD* field_odin_frames_AEEC14;
 	palette_extra* palette_extra_data_C06A00;
-	uint32_t** global_game_data_90AAF0;
+	ff7_game_engine_data** global_game_engine_data;
 	std::span<uint32_t> limit_break_effects_fn_table;
 	std::span<uint32_t> enemy_atk_effects_fn_table;
 	std::span<uint32_t> enemy_skill_effects_fn_table;
 	byte* byte_BCC788;
-	vector3<int>** vector3_int_ptr_BCC6A8;
+	vector3<int>** ifrit_vector3_int_ptr_BCC6A8;
 	vector3<short>* battle_ifrit_model_position;
-	WORD* word_array_BCC768;
+	rotation_matrix* ifrit_rot_matrix_BCC768;
 
 	// battle menu
 	uint32_t display_battle_menu_6D797C;
