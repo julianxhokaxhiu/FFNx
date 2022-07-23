@@ -12,8 +12,10 @@
 
 ## FF7
 
-- 60FPS: Implement smooth FIELD background scrolling
+- 60FPS: Implement smooth FIELD background scrolling (3D models, tiles, cursor, and arrows)
 - 60FPS: Fix model position glitch for some summons
+- 60FPS: Fix FIELD 3D model blinking time and wait time
+- FF7 Achievement: Fix bug about Cait Sith last limit break and Emerald Weapon achievements not achievable
 - Voice: Add Worldmap voice acting support
 - Fixed a crash happening while loading a save game on Steam Spanish language
 - Fixed minor issues happening while using the new lighting engine on OpenGL ( see https://github.com/julianxhokaxhiu/FFNx/issues/448 )
