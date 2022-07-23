@@ -101,7 +101,9 @@ field_bank_address mvief_bank_address;
 
 constexpr float INVALID_VALUE = -1000000;
 constexpr float MIN_STEP_INVERSE = 10.f;
-vector2<float> field_curr_delta_world_pos, field_3d_world_pos, bg_main_layer_pos, bg_layer3_pos, bg_layer4_pos;
+vector2<float> field_curr_delta_world_pos, field_3d_world_pos;
+vector2<float> bg_main_layer_pos, bg_layer3_pos, bg_layer4_pos;
+vector2<float> cursor_position;
 
 int call_original_opcode_function(byte opcode)
 {
@@ -390,6 +392,43 @@ void field_layer4_pick_tiles(short bg_position_x, short bg_position_y)
 	}
 }
 
+void ff7_field_submit_draw_arrow(field_arrow_graphics_data* arrow_data)
+{
+	// Add delta world position lost due to non-float calculation
+	if(field_3d_world_pos.x != INVALID_VALUE && field_3d_world_pos.y != INVALID_VALUE)
+	{
+		int view_multiplier = *ff7_externals.field_bg_multiplier;
+		vector2<float> delta;
+		delta.x = field_3d_world_pos.x - *ff7_externals.field_world_pos_x * view_multiplier;
+		delta.y = field_3d_world_pos.y - *ff7_externals.field_world_pos_y * view_multiplier;
+		for(int i = 0; i < 4; i++)
+		{
+			arrow_data->vertices[i].x += delta.x;
+			arrow_data->vertices[i].y += delta.y;
+		}
+	}
+
+	ff7_externals.field_submit_draw_arrow_63A171(arrow_data);
+}
+
+void ff7_field_submit_draw_cursor(field_arrow_graphics_data* arrow_data)
+{
+	// Add delta position lost due to non-float calculation
+	if(cursor_position.x != INVALID_VALUE && cursor_position.y != INVALID_VALUE)
+	{
+		vector2<float> delta;
+		delta.x = cursor_position.x - *ff7_externals.field_cursor_pos_x;
+		delta.y = cursor_position.y - *ff7_externals.field_cursor_pos_y;
+		for(int i = 0; i < 4; i++)
+		{
+			arrow_data->vertices[i].x += delta.x;
+			arrow_data->vertices[i].y += delta.y;
+		}
+	}
+
+	ff7_externals.field_submit_draw_arrow_63A171(arrow_data);
+}
+
 void field_clip_with_camera_range_float(vector2<float>* point)
 {
 	field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
@@ -508,9 +547,9 @@ int field_apply_2D_translation_float_64314F(vector3<float> *input_vector, vector
 
 	ff7_externals.engine_copy_3x3_rot_matrix_to_game_engine_663673(ff7_externals.field_camera_rotation_matrix_CFF3D8);
 	ff7_externals.engine_set_game_engine_position_663707(ff7_externals.field_camera_rotation_matrix_CFF3D8);
-	ff7_externals.engine_set_game_engine_delta_values_661976(ff7_externals.field_vector2_CFF204->x, ff7_externals.field_vector2_CFF204->y);
+	ff7_externals.engine_set_game_engine_delta_values_661976(ff7_externals.field_viewport_xy_CFF204->x, ff7_externals.field_viewport_xy_CFF204->y);
 	ret = engine_apply_matrix_product_float_66307D(input_vector, output_vector, &dummy_1, &dummy_2);
-	ff7_externals.engine_set_game_engine_delta_values_661976(ff7_externals.field_vector2_CFF1F4->x, ff7_externals.field_vector2_CFF1F4->y);
+	ff7_externals.engine_set_game_engine_delta_values_661976(ff7_externals.field_max_half_viewport_width_height_CFF1F4->x, ff7_externals.field_max_half_viewport_width_height_CFF1F4->y);
 	return ret;
 }
 
@@ -523,8 +562,8 @@ void field_apply_player_position_2D_translation_float(vector2<float>* point, int
 	player_position.y = field_event_data_ptr[model_id].model_pos.y / 4096.f;
 	player_position.z = ff7_externals.modules_global_object->field_16 + (field_event_data_ptr[model_id].model_pos.z / 4096.f);
 	field_apply_2D_translation_float_64314F(&player_position, point);
-	point->x -= ff7_externals.field_vector2_CFF204->x;
-	point->y -= ff7_externals.field_vector2_CFF204->y;
+	point->x -= ff7_externals.field_viewport_xy_CFF204->x;
+	point->y -= ff7_externals.field_viewport_xy_CFF204->y;
 }
 
 float field_get_linear_interpolated_value_float(float initial_value, float final_value, int n_steps, int step_idx)
@@ -706,14 +745,40 @@ void set_world_and_background_positions(vector2<float> delta_position, bool use_
 	bg_layer4_pos.y = round(bg_layer4_pos.y * MIN_STEP_INVERSE) / MIN_STEP_INVERSE;
 }
 
+void compute_pointer_hand_position(vector2<float> field_3d_world_coord, int model_id)
+{
+	int view_multiplier = *ff7_externals.field_bg_multiplier;
+	field_event_data* event_data_ptr = *ff7_externals.field_event_data_ptr;
+	vector3<float> position;
+	vector2<float> cursor_delta_pos;
+
+	position.x = event_data_ptr[model_id].model_pos.x / 4096.f + event_data_ptr[model_id].offset_position_x;
+	position.y = event_data_ptr[model_id].model_pos.y / 4096.f + event_data_ptr[model_id].offset_position_y;
+	position.z = event_data_ptr[model_id].model_pos.z / 4096.f + event_data_ptr[model_id].offset_position_z + (ff7_externals.modules_global_object->field_10 << 7 >> 9);
+	field_apply_2D_translation_float_64314F(&position, &cursor_delta_pos);
+	cursor_position.x = field_3d_world_coord.x + view_multiplier * cursor_delta_pos.x + ff7_externals.field_curr_half_viewport_width_height_CFF1FC->x;
+	cursor_position.y = field_3d_world_coord.y + view_multiplier * (cursor_delta_pos.y - 8) + ff7_externals.field_curr_half_viewport_width_height_CFF1FC->y;
+
+	if(cursor_position.x > ff7_externals.field_viewport_xy_CFF204->x + 320 * view_multiplier)
+		cursor_position.x = ff7_externals.field_viewport_xy_CFF204->x + 320 * view_multiplier;
+	if(cursor_position.x < ff7_externals.field_viewport_xy_CFF204->x)
+		cursor_position.x = ff7_externals.field_viewport_xy_CFF204->x;
+	if(cursor_position.y > ff7_externals.field_viewport_xy_CFF204->y + 224 * view_multiplier)
+		cursor_position.y = ff7_externals.field_viewport_xy_CFF204->y + 224 * view_multiplier;
+	if(cursor_position.y < ff7_externals.field_viewport_xy_CFF204->y - 32)
+		cursor_position.y = ff7_externals.field_viewport_xy_CFF204->y - 32;
+}
+
 void ff7_field_update_background()
 {
 	ff7_externals.field_update_background_positions();
 
+	int player_model_id = *ff7_externals.field_player_model_id;
 	field_3d_world_pos = {INVALID_VALUE, INVALID_VALUE};
 	bg_main_layer_pos = {INVALID_VALUE, INVALID_VALUE};
 	bg_layer3_pos = {INVALID_VALUE, INVALID_VALUE};
 	bg_layer4_pos = {INVALID_VALUE, INVALID_VALUE};
+	cursor_position = {INVALID_VALUE, INVALID_VALUE};
 	if ( *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag)
 	{
 		if(ff7_externals.modules_global_object->MVCAM_flag == 1 && field_curr_delta_world_pos.x != INVALID_VALUE && field_curr_delta_world_pos.y != INVALID_VALUE)
@@ -729,16 +794,21 @@ void ff7_field_update_background()
 	{
 		if(field_curr_delta_world_pos.x != INVALID_VALUE && field_curr_delta_world_pos.y != INVALID_VALUE)
 			set_world_and_background_positions({-field_curr_delta_world_pos.x, -field_curr_delta_world_pos.y}, true);
+
+		if((*ff7_externals.field_event_data_ptr)[player_model_id].field_62)
+			compute_pointer_hand_position(field_3d_world_pos, player_model_id);
 	}
 	else
 	{
 		vector2<float> bg_delta_position;
-		field_apply_player_position_2D_translation_float(&bg_delta_position, *ff7_externals.field_player_model_id);
+		field_apply_player_position_2D_translation_float(&bg_delta_position, player_model_id);
 		field_clip_with_camera_range_float(&bg_delta_position);
 		float_sub_643628(*ff7_externals.field_triggers_header, &bg_delta_position);
 		field_curr_delta_world_pos.x = -bg_delta_position.x;
 		field_curr_delta_world_pos.y = -bg_delta_position.y;
 		set_world_and_background_positions(bg_delta_position, false);
+
+		compute_pointer_hand_position(field_3d_world_pos, player_model_id);
 	}
 }
 
@@ -804,6 +874,7 @@ void ff7_field_initialize_variables()
 	bg_layer3_pos = {INVALID_VALUE, INVALID_VALUE};
 	bg_layer4_pos = {INVALID_VALUE, INVALID_VALUE};
 	field_curr_delta_world_pos = {INVALID_VALUE, INVALID_VALUE};
+	cursor_position = {INVALID_VALUE, INVALID_VALUE};
 
 	// reset movement frame index for all models
 	for(auto &external_data : external_model_data){
@@ -1270,6 +1341,9 @@ void ff7_field_hook_init()
 		// Smooth background movement for both 30 fps mode and 60 fps mode
 		replace_call_function(ff7_externals.field_draw_everything + 0x34, ff7_field_set_world_coordinate_640EB7);
 		replace_call_function(ff7_externals.field_loop_sub_63C17F + 0x1A6, ff7_field_update_background);
+		replace_call_function(ff7_externals.compute_and_submit_draw_gateways_arrows_64DA3B + 0x357, ff7_field_submit_draw_arrow);
+		replace_call_function(ff7_externals.compute_and_submit_draw_gateways_arrows_64DA3B + 0x63C, ff7_field_submit_draw_arrow);
+		replace_call_function(ff7_externals.field_submit_draw_pointer_hand_60D572 + 0x284, ff7_field_submit_draw_cursor);
 	}
 
 	// Background scroll fps fix

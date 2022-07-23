@@ -2082,8 +2082,8 @@ struct field_event_data
 	vector3<int> model_initial_pos;
 	byte field_24[8];
 	int field_2C;
-	__int16 movement_ladder_jump_steps;
-	__int16 movement_step_idx;
+	short movement_ladder_jump_steps;
+	short movement_step_idx;
 	byte padding_34;
 	byte field_35;
 	byte rotation_value;
@@ -2092,21 +2092,24 @@ struct field_event_data
 	byte rotation_n_steps;
 	byte rotation_step_idx;
 	byte rotation_steps_type;
-	__int16 rotation_initial;
-	__int16 rotation_final;
-	int field_40;
-	__int16 field_44;
-	__int16 field_46;
-	int field_48;
-	__int16 field_4C;
-	__int16 field_4E;
-	int field_50;
-	__int16 field_54;
-	__int16 field_56;
-	__int16 field_58;
-	__int16 field_5A;
-	char field_5C;
-	byte padding_5D;
+	short rotation_initial;
+	short rotation_final;
+	short offset_position_x;
+	short field_42;
+	short offset_initial_x;
+	short offset_final_x;
+	short offset_position_y;
+	short field_4A;
+	short offset_initial_y;
+	short offset_final_y;
+	short offset_position_z;
+	short field_52;
+	short offset_initial_z;
+	short offset_final_z;
+	short offset_n_steps;
+	short offset_step_idx;
+	char offset_movement_phase;
+	byte entity_id;
 	byte field_5E;
 	byte field_5F;
 	byte field_60;
@@ -2115,17 +2118,17 @@ struct field_event_data
 	char movement_type;
 	char animation_id;
 	byte padding_65;
-	__int16 animation_speed;
-	__int16 firstFrame;
-	__int16 lastFrame;
-	__int16 field_6C;
-	__int16 field_direction_or_collision;
-	__int16 movement_phase_maybe_70;
-	__int16 collision_radius;
-	__int16 talk_radius;
+	short animation_speed;
+	short firstFrame;
+	short lastFrame;
+	short character_id;
+	short field_direction_or_collision;
+	short movement_phase;
+	short collision_radius;
+	short talk_radius;
 	WORD movement_speed;
-	__int16 field_triangle_id;
-	__int16 field_7A;
+	short field_triangle_id;
+	short field_7A;
 	vector3<int> model_final_pos;
 };
 
@@ -2204,6 +2207,15 @@ struct field_trigger_header
 	field_trigger triggers[12];
 	byte show_arrow_flag[12];
 	field_arrow arrows[12];
+};
+
+struct field_arrow_graphics_data
+{
+	ff7_graphics_object *arrow_graphics_object;
+	vector2<float> vertices[4];
+	vector2<float> texture_uv[4];
+	float z_value;
+	int n_shapes;
 };
 
 struct world_event_data
@@ -2535,6 +2547,10 @@ struct ff7_externals
 	WORD* word_CC1638;
 	uint32_t field_update_scripted_bg_movement;
 	void (*field_update_background_positions)();
+	uint32_t compute_and_submit_draw_gateways_arrows_64DA3B;
+	void (*field_submit_draw_arrow_63A171)(field_arrow_graphics_data*);
+	uint32_t field_draw_pointer_hand_60D4F3;
+	uint32_t field_submit_draw_pointer_hand_60D572;
 	uint32_t field_sub_64314F;
 	void (*set_world_pos_based_on_player_pos_643C86)(vector2<short>*);
 	void(*field_clip_with_camera_range_6438F6)(vector2<short>*);
@@ -2556,8 +2572,11 @@ struct ff7_externals
 	short* field_world_pos_y;
 	short* field_prev_world_pos_x;
 	short* field_prev_world_pos_y;
-	vector2<int>* field_vector2_CFF204;
-	vector2<int>* field_vector2_CFF1F4;
+	short* field_cursor_pos_x;
+	short* field_cursor_pos_y;
+	vector2<int>* field_viewport_xy_CFF204;
+	vector2<int>* field_max_half_viewport_width_height_CFF1F4;
+	vector2<int>* field_curr_half_viewport_width_height_CFF1FC;
 	WORD* field_bg_flag_CC15E4;
 	uint32_t field_sub_640EB7;
 	uint32_t field_sub_661B68;
