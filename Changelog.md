@@ -20,6 +20,7 @@
 - Fixed a crash happening while loading a save game on Steam Spanish language
 - Fixed minor issues happening while using the new lighting engine on OpenGL ( see https://github.com/julianxhokaxhiu/FFNx/issues/448 )
 - Fixed Summon SFX effects volume to respect the master sfx volume ( see https://github.com/julianxhokaxhiu/FFNx/issues/453 )
+- Fixed Worldmap missing FX effects ( see https://github.com/julianxhokaxhiu/FFNx/issues/465 )
 
 # 1.12.0
 

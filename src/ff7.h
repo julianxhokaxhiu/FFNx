@@ -2979,6 +2979,8 @@ struct ff7_externals
 	world_event_data** world_event_current_entity_ptr_E39AD8;
 	world_event_data** world_event_current_entity_ptr_E3A7CC;
 	int* is_wait_frames_zero_E39BC0;
+	uint32_t world_sub_75A1C6;
+	uint32_t world_sub_75A5D5;
 
 	uint32_t swirl_main_loop;
 	uint32_t swirl_loop_sub_4026D4;

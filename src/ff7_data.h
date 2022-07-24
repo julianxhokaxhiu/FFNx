@@ -1126,6 +1126,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_event_current_entity_ptr_E39AD8 = (world_event_data**)get_absolute_value((uint32_t)ff7_externals.world_update_model_movement_762E87, 0x5);
 	ff7_externals.world_event_current_entity_ptr_E3A7CC = (world_event_data**)get_absolute_value(ff7_externals.run_world_event_scripts_system_operations, 0x8E6);
 	ff7_externals.is_wait_frames_zero_E39BC0 = (int*)get_absolute_value(ff7_externals.run_world_event_scripts_system_operations, 0xD46);
+	ff7_externals.world_sub_75A1C6 = get_relative_call(ff7_externals.world_init_variables_74E1E9, 0x3A);
+	ff7_externals.world_sub_75A5D5 = get_relative_call(ff7_externals.world_sub_75A1C6, 0x61);
 
 	// Swirl externals
 	ff7_externals.swirl_main_loop = swirl_main_loop;

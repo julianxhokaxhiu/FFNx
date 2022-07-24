@@ -235,6 +235,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.world_update_player_74EA48 + 0xCDF, ff7_world_update_model_movement);
 
 	// #####################
+	// worldmap fx effects ( forest trail, ocean trail with highwind, etc. )
+	// #####################
+	patch_code_byte(ff7_externals.world_sub_75A5D5 + 0x1A3, 1);
+
+	// #####################
 	// battle toggle
 	// #####################
 	replace_call_function(ff7_externals.field_battle_toggle, ff7_toggle_battle_field);
