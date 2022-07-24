@@ -1899,11 +1899,11 @@ struct blend_mode blend_modes[5] = {      // PSX blend mode:
 
 // called by the game to retrieve blend mode parameters
 // only z-sort and vertex alpha are really relevant to us
-struct blend_mode *common_blendmode(uint32_t unknown, struct game_obj *game_object)
+struct blend_mode *common_blendmode(uint32_t blend_mode, struct game_obj *game_object)
 {
-	if(trace_all) ffnx_trace("dll_gfx: blendmode %i\n", unknown);
+	if(trace_all) ffnx_trace("dll_gfx: blendmode %i\n", blend_mode);
 
-	switch(unknown)
+	switch(blend_mode)
 	{
 		case 0:
 			return &blend_modes[0];
@@ -1918,7 +1918,7 @@ struct blend_mode *common_blendmode(uint32_t unknown, struct game_obj *game_obje
 			return &blend_modes[4];
 	}
 
-	ffnx_unexpected("invalid blendmode (%i)\n", unknown);
+	ffnx_unexpected("invalid blendmode: %u\n", blend_mode);
 
 	return 0;
 }
