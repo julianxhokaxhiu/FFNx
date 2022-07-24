@@ -70,6 +70,8 @@ struct external_field_model_data
 	int updateMovementReturnValue;
 
 	int rotationMoveFrameIndex;
+
+	int blinkFrameIndex;
 };
 
 struct field_bank_address
@@ -94,6 +96,8 @@ struct field_bank_address
 };
 
 constexpr int MAX_FIELD_MODELS = 32;
+constexpr int BLINKING_FRAMES = 4;
+
 std::array<external_field_model_data, MAX_FIELD_MODELS> external_model_data;
 std::array<uint32_t, 256> original_opcode_table {0};
 std::set<field_bank_address> field_bank_address_to_be_fixed = {{14, 6}};
@@ -880,6 +884,8 @@ void ff7_field_initialize_variables()
 	for(auto &external_data : external_model_data){
 		external_data.moveFrameIndex = 0;
 		external_data.rotationMoveFrameIndex = 0;
+
+		external_data.blinkFrameIndex = BLINKING_FRAMES;
 	}
 }
 
@@ -1054,6 +1060,25 @@ void ff7_field_update_models_rotation_new()
 					}
 				}
 			}
+		}
+	}
+}
+
+void ff7_field_blink_3d_model(field_animation_data* anim_data, field_model_blink_data* blink_data)
+{
+	ff7_externals.field_blink_3d_model_649B50(anim_data, blink_data);
+	if(blink_data->blink_mode == 2)
+	{
+		auto &field_event_data = (*ff7_externals.field_event_data_ptr)[blink_data->model_id];
+		if(external_model_data[blink_data->model_id].blinkFrameIndex > 0)
+		{
+			field_event_data.blink_wait_frames = 0;
+			external_model_data[blink_data->model_id].blinkFrameIndex--;
+		}
+		else
+		{
+			field_event_data.blink_wait_frames = 64 * common_frame_multiplier + getRandomInt(0, 32 * common_frame_multiplier);
+			external_model_data[blink_data->model_id].blinkFrameIndex = BLINKING_FRAMES;
 		}
 	}
 }
@@ -1336,6 +1361,9 @@ void ff7_field_hook_init()
 			patch_divide_code<byte>(ff7_externals.sub_631945 + 0x100, common_frame_multiplier);
 			patch_divide_code<WORD>(ff7_externals.sub_631945 + 0x111, common_frame_multiplier);
 			patch_code_byte(ff7_externals.sub_631945 + 0x141, 0x4 + common_frame_multiplier / 2);
+
+			// Model blinking: wait time and blink time
+			replace_call_function(ff7_externals.field_animate_3d_models_6392BB + 0x8A7, ff7_field_blink_3d_model);
 		}
 
 		// Smooth background movement for both 30 fps mode and 60 fps mode

@@ -2077,7 +2077,7 @@ struct field_event_data
 	DWORD field_4;
 	byte field_8;
 	byte padding_9;
-	WORD field_A;
+	WORD blink_wait_frames;
 	vector3<int> model_pos;
 	vector3<int> model_initial_pos;
 	byte field_24[8];
@@ -2216,6 +2216,14 @@ struct field_arrow_graphics_data
 	vector2<float> texture_uv[4];
 	float z_value;
 	int n_shapes;
+};
+
+struct field_model_blink_data
+{
+	byte blink_mode;
+	byte blink_mode_2;
+	char unknown;
+	char model_id;
 };
 
 struct world_event_data
@@ -2538,6 +2546,8 @@ struct ff7_externals
 	int (*field_get_linear_interpolated_value)(int, int, int, int);
 	int (*field_get_smooth_interpolated_value)(int, int, int, int);
 	void (*field_evaluate_encounter_rate_60B2C6)();
+	uint32_t field_animate_3d_models_6392BB;
+	void (*field_blink_3d_model_649B50)(field_animation_data*, field_model_blink_data*);
 	short *field_player_model_id;
 	WORD *field_n_models;
 	uint32_t field_update_camera_data;
