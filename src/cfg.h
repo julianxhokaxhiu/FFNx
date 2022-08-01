@@ -89,7 +89,7 @@ extern bool show_version;
 extern long window_size_x;
 extern long window_size_y;
 extern long internal_resolution_scale;
-extern bool preserve_aspect;
+extern long aspect_ratio;
 extern bool fullscreen;
 extern bool borderless;
 extern long refresh_rate;
