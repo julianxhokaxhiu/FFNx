@@ -88,6 +88,13 @@ enum game_modes
 	MODE_AFTER_BATTLE,
 };
 
+enum AspectRatioMode
+{
+    AR_ORIGINAL = 0,
+    AR_STRETCH,
+    AR_COUNT
+};
+
 // popup lifetime in frames
 #define POPUP_TTL_MAX 10000
 

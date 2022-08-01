@@ -379,7 +379,8 @@ void Renderer::renderFrame()
     */
 
     // 0
-    float x0 = preserve_aspect ? framebufferVertexOffsetX : 0.0f;
+    float x0 = framebufferVertexOffsetX;
+    if (aspect_ratio == AR_STRETCH) x0 = 0.0f;
     float y0 = 0.0f;
     float u0 = 0.0f;
     float v0 = getCaps()->originBottomLeft ? 1.0f : 0.0f;
@@ -389,7 +390,8 @@ void Renderer::renderFrame()
     float u1 = u0;
     float v1 = getCaps()->originBottomLeft ? 0.0f : 1.0f;
     // 2
-    float x2 = x0 + (preserve_aspect ? framebufferVertexWidth : game_width);
+    float x2 = x0 + framebufferVertexWidth;
+    if (aspect_ratio == AR_STRETCH) x2 = x0 + game_width;
     float y2 = y0;
     float u2 = 1.0f;
     float v2 = v0;
@@ -462,7 +464,7 @@ void Renderer::recalcInternals()
     viewHeight = window_size_y;
 
     // aspect correction
-    if (preserve_aspect && viewWidth * 3 != viewHeight * 4)
+    if (aspect_ratio == AR_ORIGINAL && viewWidth * 3 != viewHeight * 4)
     {
         if (viewHeight * 4 > viewWidth * 3)
         {

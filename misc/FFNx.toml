@@ -48,11 +48,13 @@ window_size_y = 0
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 internal_resolution_scale = 0
 
-#[PRESERVE ASPECT]
+#[ASPECT RATIO]
 # Preserve original game aspect ratio of (4:3) by adding black bars on the left and right side (if needed)
 # When off the game will be stretched to fit the window's aspect ratio; Be aware the game may look wrong though.
+# 0: Preserves original game aspect ratio of (4:3) by adding black bars on the left and right side (if needed)
+# 1: Stretched to fit the window's aspect ratio; Be aware the game may look wrong though.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-preserve_aspect = true
+aspect_ratio = 0
 
 #[ENABLE VSYNC]
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
