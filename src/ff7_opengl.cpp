@@ -329,10 +329,15 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.opcode_biton + 0x3A, ff7_character_regularly_field_entity_60FA7D);
 
 		// INITIALIZATION AT LOAD SAVE FILE
-		if (version == VERSION_FF7_102_US) {
-			replace_call_function(ff7_externals.menu_sub_7212FB + 0xE9D, ff7_load_save_file);
-		} else {
-			replace_call_function(ff7_externals.menu_sub_7212FB + 0xEC5, ff7_load_save_file);
+		switch(version) {
+			case VERSION_FF7_102_US:
+			case VERSION_FF7_102_SP:
+				replace_call_function(ff7_externals.menu_sub_7212FB + 0xE9D, ff7_load_save_file);
+				break;
+			case VERSION_FF7_102_DE:
+			case VERSION_FF7_102_FR:
+				replace_call_function(ff7_externals.menu_sub_7212FB + 0xEC5, ff7_load_save_file);
+				break;
 		}
 	}
 }
