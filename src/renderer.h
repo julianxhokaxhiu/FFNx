@@ -315,6 +315,7 @@ private:
     bool doesItFitInMemory(size_t size);
 
     void recalcInternals();
+    void calcBackendProjMatrix();
     void prepareFramebuffer();
 
     void bindTextures();

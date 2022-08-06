@@ -22,6 +22,7 @@
 
 #include "renderer.h"
 #include "lighting.h"
+#include "ff7/widescreen.h"
 
 Renderer newRenderer;
 RendererCallbacks bgfxCallbacks;
@@ -381,6 +382,7 @@ void Renderer::renderFrame()
     // 0
     float x0 = framebufferVertexOffsetX;
     if (aspect_ratio == AR_STRETCH) x0 = 0.0f;
+    else if (aspect_ratio == AR_WIDESCREEN) x0 = wide_viewport_x;
     float y0 = 0.0f;
     float u0 = 0.0f;
     float v0 = getCaps()->originBottomLeft ? 1.0f : 0.0f;
@@ -463,6 +465,9 @@ void Renderer::recalcInternals()
     viewWidth = window_size_x;
     viewHeight = window_size_y;
 
+    // backend projection matrix
+    calcBackendProjMatrix();
+
     // aspect correction
     if (aspect_ratio == AR_ORIGINAL && viewWidth * 3 != viewHeight * 4)
     {
@@ -494,14 +499,48 @@ void Renderer::recalcInternals()
     }
 
     // Use the set or calculated scaling factor to determine the width and height of the framebuffer according to the original resolution
-    framebufferWidth = game_width * scalingFactor;
-    framebufferHeight = game_height * scalingFactor;
+    if(aspect_ratio == AR_WIDESCREEN)
+    {
+        framebufferWidth = wide_viewport_width * scalingFactor;
+        framebufferHeight = game_height * scalingFactor;
 
-    framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
-    framebufferVertexOffsetX = (game_width - framebufferVertexWidth) / 2;
+        framebufferVertexWidth = (viewWidth * wide_viewport_width) / window_size_x;
+        framebufferVertexOffsetX = (wide_viewport_width - framebufferVertexWidth) / 2;
+    }
+    else
+    {
+        framebufferWidth = game_width * scalingFactor;
+        framebufferHeight = game_height * scalingFactor;
+
+        framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
+        framebufferVertexOffsetX = (game_width- framebufferVertexWidth) / 2;
+    }
 
     // Let the user know about chosen resolutions
     ffnx_info("Original resolution %ix%i, Scaling factor %ix, Internal resolution %ix%i, Output resolution %ix%i\n", game_width, game_height, scalingFactor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
+}
+
+void Renderer::calcBackendProjMatrix()
+{
+    float left = 0.0f;
+    float right = game_width;
+    if(aspect_ratio == AR_WIDESCREEN)
+    {
+        left = wide_viewport_x;
+        right = wide_viewport_width + wide_viewport_x;
+    }
+
+    bx::mtxOrtho(
+        internalState.backendProjMatrix,
+        left,
+        right,
+        game_height,
+        0.0f,
+        getCaps()->homogeneousDepth ? -1.0f : 0.0f,
+        1.0f,
+        0.0,
+        getCaps()->homogeneousDepth
+    );
 }
 
 void Renderer::prepareFramebuffer()
@@ -650,17 +689,7 @@ void Renderer::init()
 
     updateRendererShaderPaths();
 
-    bx::mtxOrtho(
-        internalState.backendProjMatrix,
-        0.0f,
-        game_width,
-        game_height,
-        0.0f,
-        getCaps()->homogeneousDepth ? -1.0f : 0.0f,
-        1.0f,
-        0.0,
-        getCaps()->homogeneousDepth
-    );
+    calcBackendProjMatrix();
 
     prepareFramebuffer();
 
@@ -1138,6 +1167,39 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     scissorOffsetY = getInternalCoordY(y);
     scissorWidth = getInternalCoordX(width);
     scissorHeight = getInternalCoordY(height);
+
+    if(aspect_ratio == AR_WIDESCREEN)
+    {
+        // Keep the default scissor for movies
+        bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
+        if(is_movie_playing) {
+            scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+            return;
+        }
+
+        // This removes the black bars on the top and bottom of the screen
+        if(y = 16 && height == 448)
+        {
+            scissorOffsetY = getInternalCoordY(0.0);
+            scissorHeight = getInternalCoordY(480);
+        }
+
+        // This sets a scissor offset for field with width not enough to fill the screen in 16:9
+        struct game_mode* mode = getmode_cached();
+        field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
+        if(mode->driver_mode == MODE_FIELD && *ff7_externals.field_level_data_pointer != 0)
+        {
+            int cameraRange = (field_triggers_header_ptr->camera_range.right - field_triggers_header_ptr->camera_range.left);
+            if(cameraRange < game_width / 2 + abs(wide_viewport_x))
+            {
+                scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+                return;
+            }
+        }
+
+        // This intercepts the scissor width and makes it bigger to fit widescreen
+        scissorWidth = getInternalCoordX(width + (wide_viewport_width - game_width));
+    }
 }
 
 void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
@@ -1751,12 +1813,23 @@ void Renderer::setD3DProjection(struct matrix* matrix)
 {
     ::memcpy(internalState.d3dProjectionMatrix, &matrix->m[0][0], sizeof(matrix->m));
 
+    // Modify the projection matrix to prevent stretching
+    if(aspect_ratio == AR_WIDESCREEN)
+    {
+        float widescreenScale = round(float(game_width) / wide_viewport_width * 100) / 100.f;
+        internalState.d3dProjectionMatrix[0] *= widescreenScale;
+        internalState.d3dProjectionMatrix[8] *= widescreenScale;
+    }
+
     if (uniform_log) printMatrix(__func__, internalState.d3dProjectionMatrix);
 };
 
 uint16_t Renderer::getInternalCoordX(uint16_t inX)
 {
-    return (inX * framebufferWidth) / game_width;
+    if(aspect_ratio == AR_WIDESCREEN)
+        return (inX * framebufferWidth) / (wide_viewport_width);
+    else
+        return (inX * framebufferWidth) / (game_width);
 }
 
 uint16_t Renderer::getInternalCoordY(uint16_t inY)

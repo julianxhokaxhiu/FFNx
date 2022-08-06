@@ -209,6 +209,15 @@ void patch_code_word(uint32_t offset, WORD r)
 	*(WORD *)offset = r;
 }
 
+void patch_code_short(uint32_t offset, short r)
+{
+	DWORD dummy;
+
+	VirtualProtect((void *)offset, sizeof(r), PAGE_EXECUTE_READWRITE, &dummy);
+
+	*(short *)offset = r;
+}
+
 void patch_code_dword(uint32_t offset, DWORD r)
 {
 	DWORD dummy;

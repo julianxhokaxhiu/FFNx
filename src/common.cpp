@@ -507,21 +507,21 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				switch (LOWORD(wParam))
 				{
 				case VK_LEFT:
-					if(aspect_ratio >= 0 && aspect_ratio < AR_COUNT)
+					if(aspect_ratio >= 0 && aspect_ratio < AR_COUNT - 1)
 					{
-						ffnx_trace("aspect_ratio: %d => %d\n", aspect_ratio, aspect_ratio - 1 >= 0 ? aspect_ratio - 1 : AR_COUNT - 1);
+						ffnx_trace("aspect_ratio: %d => %d\n", aspect_ratio, aspect_ratio - 1 >= 0 ? aspect_ratio - 1 : (AR_COUNT - 1) - 1);
 
-						aspect_ratio = aspect_ratio - 1 >= 0 ? aspect_ratio - 1 : AR_COUNT - 1;
+						aspect_ratio = aspect_ratio - 1 >= 0 ? aspect_ratio - 1 : (AR_COUNT - 1) - 1;
 
 						newRenderer.reset();
 					}
 					break;
 				case VK_RIGHT:
-					if(aspect_ratio >= 0 && aspect_ratio < AR_COUNT)
+					if(aspect_ratio >= 0 && aspect_ratio < AR_COUNT - 1)
 					{
-						ffnx_trace("aspect_ratio: %d => %d\n", aspect_ratio, (aspect_ratio + 1) % AR_COUNT);
+						ffnx_trace("aspect_ratio: %d => %d\n", aspect_ratio, (aspect_ratio + 1) % (AR_COUNT - 1));
 
-						aspect_ratio = (aspect_ratio + 1) % AR_COUNT;
+						aspect_ratio = (aspect_ratio + 1) % (AR_COUNT - 1);
 
 						newRenderer.reset();
 					}

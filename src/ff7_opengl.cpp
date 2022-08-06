@@ -29,6 +29,7 @@
 #include "music.h"
 #include "ff7/defs.h"
 #include "ff7_data.h"
+#include "ff7/widescreen.h"
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
@@ -95,6 +96,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	patch_code_byte(ff7_externals.field_draw_everything + 0xE2, 0x1D);
 	patch_code_byte(ff7_externals.field_draw_everything + 0x353, 0x1D);
 	replace_function(ff7_externals.open_flevel_siz, field_open_flevel_siz);
+	replace_function(ff7_externals.field_init_scripted_bg_movement, field_init_scripted_bg_movement);
 	replace_function(ff7_externals.field_update_scripted_bg_movement, field_update_scripted_bg_movement);
 
 	replace_function(ff7_externals.get_equipment_stats, get_equipment_stats);
@@ -148,7 +150,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 	// phoenix camera animation glitch
 	memset_code(ff7_externals.run_phoenix_main_loop_516297 + 0x3A5, 0x90, 49);
-  memset_code(ff7_externals.run_phoenix_main_loop_516297 + 0x3F7, 0x90, 49);
+	memset_code(ff7_externals.run_phoenix_main_loop_516297 + 0x3F7, 0x90, 49);
 
 	// ##################################
 	// bugfixes to enhance game stability
@@ -169,6 +171,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x14A, 5);
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x16D, 5);
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x190, 5);
+
+	// #####################
+	// widescreen
+	// #####################
+	if(aspect_ratio == AR_WIDESCREEN)
+		ff7_widescreen_hook_init();
 
 	// #####################
 	// new timer calibration
