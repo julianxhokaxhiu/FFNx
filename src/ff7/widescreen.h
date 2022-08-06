@@ -6,6 +6,8 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2022 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 Tang-Tang Zhou                                     //
+//    Copyright (C) 2022 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -21,52 +23,8 @@
 
 #pragma once
 
-#include "log.h"
+int wide_viewport_x = -106;
+int wide_viewport_width = 854;
+int wide_viewport_height = 480;
 
-uint32_t replace_function(uint32_t offset, void *func);
-// Can also unreplace a call_function
-void unreplace_function(uint32_t func);
-// Replace again a function unreplaced before
-void rereplace_function(uint32_t func);
-void unreplace_functions();
-
-void replace_call(uint32_t offset, void *func);
-uint32_t replace_call_function(uint32_t offset, void* func);
-
-uint32_t get_relative_call(uint32_t base, uint32_t offset);
-uint32_t get_absolute_value(uint32_t base, uint32_t offset);
-void patch_code_byte(uint32_t offset, unsigned char r);
-void patch_code_word(uint32_t offset, WORD r);
-void patch_code_short(uint32_t offset, short r);
-void patch_code_dword(uint32_t offset, DWORD r);
-void patch_code_int(uint32_t offset, int r);
-void patch_code_uint(uint32_t offset, uint32_t r);
-void patch_code_float(uint32_t offset, float r);
-void patch_code_double(uint32_t offset, double r);
-
-template<typename T>
-void patch_multiply_code(uint32_t offset, int multiplier)
-{
-	DWORD dummy;
-
-	VirtualProtect((void *)offset, sizeof(T), PAGE_EXECUTE_READWRITE, &dummy);
-
-	*(T *)offset = (*(T *)offset) * (T)multiplier;
-
-    // TODO Add assertion
-}
-
-template<typename T>
-void patch_divide_code(uint32_t offset, int multiplier)
-{
-	DWORD dummy;
-
-	VirtualProtect((void *)offset, sizeof(T), PAGE_EXECUTE_READWRITE, &dummy);
-
-	*(T *)offset = (*(T *)offset) / (T)multiplier;
-
-    // TODO Add assertion
-}
-
-void memcpy_code(uint32_t offset, void *data, uint32_t size);
-void memset_code(uint32_t offset, uint32_t val, uint32_t size);
+void ff7_widescreen_hook_init();

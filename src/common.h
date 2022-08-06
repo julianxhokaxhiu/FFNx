@@ -92,6 +92,7 @@ enum AspectRatioMode
 {
     AR_ORIGINAL = 0,
     AR_STRETCH,
+    AR_WIDESCREEN,
     AR_COUNT
 };
 

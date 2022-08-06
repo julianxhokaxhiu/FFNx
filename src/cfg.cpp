@@ -433,4 +433,7 @@ void read_cfg()
 		external_vibrate_path += "/ff8";
 	else
 		external_vibrate_path += "/ff7";
+
+	// WIDESCREEN
+	if (ff8 && aspect_ratio > AR_STRETCH) aspect_ratio = AR_ORIGINAL;
 }

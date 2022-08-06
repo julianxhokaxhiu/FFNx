@@ -1977,8 +1977,8 @@ struct ff7_modules_global_object
   uint16_t field_model_pos_x;
   uint16_t field_model_pos_y;
   uint16_t field_8;
-  uint16_t field_A;
-  uint16_t field_C;
+  short field_A;
+  short field_C;
   uint16_t field_E;
   int16_t field_10;
   uint8_t field_12;
@@ -2178,9 +2178,9 @@ struct field_arrow
 struct field_camera_range
 {
 	short left;
-	short bottom;
-	short right;
 	short top;
+	short right;
+	short bottom;
 };
 
 struct field_trigger_header
@@ -2275,6 +2275,7 @@ struct ff7_externals
 	uint32_t midi_fix;
 	void *snowboard_fix;
 	uint32_t cdcheck;
+	uint32_t cdcheck_enter_sub;
 	uint32_t get_inserted_cd_sub;
 	DWORD* insertedCD;
 	uint8_t* requiredCD;
@@ -2538,6 +2539,7 @@ struct ff7_externals
 	uint32_t field_battle_toggle;
 	uint32_t worldmap_battle_toggle;
 	uint32_t enter_field;
+	uint32_t field_init_viewport_values;
 	uint32_t field_loop_sub_63C17F;
 	uint32_t field_update_models_positions;
 	int (*field_update_single_model_position)(short);
@@ -2555,6 +2557,7 @@ struct ff7_externals
 	uint32_t sub_40B27B;
 	WORD* word_CC0DD4;
 	WORD* word_CC1638;
+	uint32_t field_init_scripted_bg_movement;
 	uint32_t field_update_scripted_bg_movement;
 	void (*field_update_background_positions)();
 	uint32_t compute_and_submit_draw_gateways_arrows_64DA3B;
@@ -2824,6 +2827,7 @@ struct ff7_externals
 	uint32_t run_phoenix_main_loop_516297;
 	uint32_t run_phoenix_movement_518AFF;
 	uint32_t run_phoenix_camera_515238;
+	uint32_t run_bahamut_neo_main_48C2A1;
 	uint32_t run_bahamut_neo_movement_48D7BC;
 	uint32_t run_bahamut_neo_camera_48C75D;
 	uint32_t run_hades_camera_4B65A8;
@@ -2981,9 +2985,42 @@ struct ff7_externals
 	int* is_wait_frames_zero_E39BC0;
 	uint32_t world_sub_75A1C6;
 	uint32_t world_sub_75A5D5;
+	uint32_t world_draw_fade_quad_75551A;
+	uint32_t world_sub_75079D;
+	uint32_t world_sub_751EFC;
+	uint32_t world_culling_bg_meshes_75F263;
+	uint32_t world_submit_draw_bg_meshes_75F68C;
+	uint32_t world_compute_skybox_data_754100;
+	uint32_t world_submit_draw_clouds_and_meteor_7547A6;
 
 	uint32_t swirl_main_loop;
 	uint32_t swirl_loop_sub_4026D4;
+	uint32_t swirl_enter_40164E;
+	uint32_t swirl_enter_sub_401810;
+
+	uint32_t field_culling_model_639252;
+	uint32_t field_sub_63AC66;
+	void (*field_sub_63AC3F)(int, int, int, int);
+	uint32_t battle_draw_quad_5BD473;
+	uint32_t battle_sub_5895E0;
+	uint32_t battle_sub_589827;
+	uint32_t battle_sub_58AC59;
+	uint32_t battle_sub_58ACB9;
+	uint32_t ifrit_sub_595A05;
+	void (*engine_draw_sub_66A47E)(int);
+	int* battle_viewport_height;
+	uint32_t neo_bahamut_main_loop_48DA7A;
+	uint32_t neo_bahamut_effect_sub_490F2A;
+	uint32_t odin_gunge_effect_sub_4A4BE6;
+	uint32_t odin_gunge_effect_sub_4A3A2E;
+	uint32_t typhoon_effect_sub_4DB15F;
+	uint32_t typhoon_sub_4D6FF8;
+	uint32_t typhoon_effect_sub_4D7044;
+	uint32_t fat_chocobo_sub_5096F3;
+	uint32_t barret_limit_3_1_sub_4700F7;
+	uint32_t shadow_flare_draw_white_bg_57747E;
+	uint32_t credits_submit_draw_fade_quad_7AA89B;
+	uint32_t menu_submit_draw_fade_quad_6CD64E;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

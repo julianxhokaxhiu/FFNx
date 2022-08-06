@@ -32,6 +32,8 @@
 #include "../patch.h"
 #include "../sfx.h"
 #include "../movies.h"
+#include "../common.h"
+#include "widescreen.h"
 #include "defs.h"
 #include <set>
 #include <cmath>
@@ -118,6 +120,13 @@ int call_original_opcode_function(byte opcode)
 		ffnx_error("Initialization error: original opcode table empty in position %d\n", opcode);
 		return 0;
 	}
+}
+
+bool is_fieldmap_wide()
+{
+	field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
+	int cameraRange = field_triggers_header_ptr->camera_range.right - field_triggers_header_ptr->camera_range.left;
+	return aspect_ratio == AR_WIDESCREEN && cameraRange >= game_width / 2 + abs(wide_viewport_x);
 }
 
 // helper function initializes page dst, copies texture from src and applies
@@ -217,14 +226,10 @@ void field_layer1_pick_tiles(short bg_position_x, short bg_position_y)
 		uint32_t tile_index = (*ff7_externals.field_layer1_palette_sort)[i];
 		layer1_tiles[tile_index].field_1044 = 1;
 
-		if(layer1_tiles[tile_index].x < bg_position.x && layer1_tiles[tile_index].x > bg_position.x - 336
-			&& layer1_tiles[tile_index].y < bg_position.y && layer1_tiles[tile_index].y > bg_position.y - 256)
-		{
-			tile_position.x = initial_pos.x + field_bg_multiplier * layer1_tiles[tile_index].x;
-			tile_position.y = initial_pos.y + field_bg_multiplier * layer1_tiles[tile_index].y;
-			ff7_externals.add_page_tile(tile_position.x, tile_position.y, 0.9997, layer1_tiles[tile_index].u,
-										layer1_tiles[tile_index].v, layer1_tiles[tile_index].palette_index, layer1_tiles[tile_index].page);
-		}
+		tile_position.x = initial_pos.x + field_bg_multiplier * layer1_tiles[tile_index].x;
+		tile_position.y = initial_pos.y + field_bg_multiplier * layer1_tiles[tile_index].y;
+		ff7_externals.add_page_tile(tile_position.x, tile_position.y, 0.9997, layer1_tiles[tile_index].u,
+									layer1_tiles[tile_index].v, layer1_tiles[tile_index].palette_index, layer1_tiles[tile_index].page);
 	}
 }
 
@@ -274,66 +279,142 @@ void field_layer2_pick_tiles(short bg_position_x, short bg_position_y)
 	}
 }
 
+void field_layer3_shift_tile_position(vector2<float>* tile_position, vector2<float>* bg_position, int layer3_width, int layer3_height)
+{
+	const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
+	const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
+	const int top_offset = 256 + (aspect_ratio == AR_WIDESCREEN ? 8 : 0);
+	const int bottom_offset = aspect_ratio == AR_WIDESCREEN ? 8 : 0;
+	const int half_width = is_fieldmap_wide() ? ceil(wide_viewport_width / 4) : 160;
+	const int half_height = aspect_ratio == AR_WIDESCREEN ? 120 : 112;
+
+	if(tile_position->x <= bg_position->x - left_offset || tile_position->x >= bg_position->x + right_offset)
+		tile_position->x += (tile_position->x >= bg_position->x - half_width) ? -layer3_width : layer3_width;
+
+	if(tile_position->y <= bg_position->y - top_offset || tile_position->y >= bg_position->y + bottom_offset)
+		tile_position->y += (tile_position->y >= bg_position->y - half_height) ? -layer3_height : layer3_height;
+}
+
 void field_layer3_pick_tiles(short bg_position_x, short bg_position_y)
 {
-	if(*ff7_externals.do_draw_layer3_CFFE3C)
+	if(!*ff7_externals.do_draw_layer3_CFFE3C)
+		return;
+
+	float z_value;
+	int field_bg_multiplier = *ff7_externals.field_bg_multiplier;
+	field_tile *layer3_tiles = *ff7_externals.field_layer3_tiles;
+	vector2<float> bg_position, initial_pos;
+
+	bg_position.x = bg_position_x;
+	bg_position.y = bg_position_y;
+	if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
 	{
-		float z_value;
-		int field_bg_multiplier = *ff7_externals.field_bg_multiplier;
-		field_tile *layer3_tiles = *ff7_externals.field_layer3_tiles;
-		vector2<float> bg_position, initial_pos;
-
-		bg_position.x = bg_position_x;
-		bg_position.y = bg_position_y;
-		if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+		if(bg_layer3_pos.x != INVALID_VALUE && bg_layer3_pos.y != INVALID_VALUE)
 		{
-			if(bg_layer3_pos.x != INVALID_VALUE && bg_layer3_pos.y != INVALID_VALUE)
-			{
-				bg_position.x = bg_layer3_pos.x;
-				bg_position.y = bg_layer3_pos.y;
-			}
+			bg_position.x = bg_layer3_pos.x;
+			bg_position.y = bg_layer3_pos.y;
 		}
-
-		initial_pos.x = (320 - bg_position.x) * field_bg_multiplier;
-		initial_pos.y = ((ff7_center_fields ? 232 : 224) - bg_position.y) * field_bg_multiplier;
-		if(ff7_externals.modules_global_object->field_B0 < 0xFFF)
-			z_value = ff7_externals.field_layer_sub_623C0F(ff7_externals.field_camera_rotation_matrix_CFF3D8, ff7_externals.modules_global_object->field_B0, 0, 0);
-		else
-			z_value = 0.9998;
-
-		for(int i = 0; i < *ff7_externals.field_layer3_tiles_num; i++)
-		{
-			uint32_t tile_index = (*ff7_externals.field_layer3_palette_sort)[i];
-			vector2<float> tile_position;
-			tile_position.x = layer3_tiles[tile_index].x;
-			tile_position.y = layer3_tiles[tile_index].y;
-
-			if(tile_position.x <= bg_position.x - 352 || tile_position.x >= bg_position.x)
-			{
-				short width = (*ff7_externals.field_triggers_header)->bg3_width;
-				tile_position.x += (tile_position.x >= bg_position.x - 160) ? -width : width;
-			}
-			if(tile_position.y <= bg_position.y - 256 || tile_position.y >= bg_position.y)
-			{
-				short height = (*ff7_externals.field_triggers_header)->bg3_height;
-				tile_position.y += (tile_position.y >= bg_position.y - 112) ? -height : height;
-			}
-
-			char anim_group = layer3_tiles[tile_index].anim_group;
-			if(anim_group && !(ff7_externals.modules_global_object->background_sprite_layer[anim_group] & layer3_tiles[tile_index].anim_bitmask))
-				continue;
-
-			layer3_tiles[tile_index].field_1040 = 1;
-			tile_position.x = tile_position.x * field_bg_multiplier + initial_pos.x;
-			tile_position.y = tile_position.y * field_bg_multiplier + initial_pos.y;
-
-			uint32_t page = (layer3_tiles[tile_index].use_fx_page) ? layer3_tiles[tile_index].fx_page : layer3_tiles[tile_index].page;
-
-			ff7_externals.add_page_tile(tile_position.x, tile_position.y, z_value, layer3_tiles[tile_index].u,
-										layer3_tiles[tile_index].v, layer3_tiles[tile_index].palette_index, page);
-		}
-		*ff7_externals.field_layer3_flag_CFFE40 = 1;
 	}
+
+	initial_pos.x = (320 - bg_position.x) * field_bg_multiplier;
+	initial_pos.y = ((ff7_center_fields ? 232 : 224) - bg_position.y) * field_bg_multiplier;
+	if(ff7_externals.modules_global_object->field_B0 < 0xFFF)
+		z_value = ff7_externals.field_layer_sub_623C0F(ff7_externals.field_camera_rotation_matrix_CFF3D8, ff7_externals.modules_global_object->field_B0, 0, 0);
+	else
+		z_value = 0.9998;
+
+	const bool do_increase_height = aspect_ratio == AR_WIDESCREEN;
+	const bool do_increase_width = is_fieldmap_wide() && (*ff7_externals.field_triggers_header)->bg3_width < ceil(wide_viewport_width / 2);
+	const int layer3_width = (*ff7_externals.field_triggers_header)->bg3_width * (do_increase_width ? 2 : 1);
+	const int layer3_height = (*ff7_externals.field_triggers_header)->bg3_height * (do_increase_height ? 2 : 1);
+	const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
+	const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
+	const int top_offset = 256 + (aspect_ratio == AR_WIDESCREEN ? 8 : 0);
+	const int bottom_offset = aspect_ratio == AR_WIDESCREEN ? 8 : 0;
+
+	for(int i = 0; i < *ff7_externals.field_layer3_tiles_num; i++)
+	{
+		uint32_t tile_index = (*ff7_externals.field_layer3_palette_sort)[i];
+		vector2<float> tile_position = {
+			static_cast<float>(layer3_tiles[tile_index].x),
+			static_cast<float>(layer3_tiles[tile_index].y)
+		};
+
+		field_layer3_shift_tile_position(&tile_position, &bg_position, layer3_width, layer3_height);
+
+		char anim_group = layer3_tiles[tile_index].anim_group;
+		if(tile_position.x <= bg_position.x - left_offset || tile_position.x >= bg_position.x + right_offset ||
+			tile_position.y <= bg_position.y - top_offset || tile_position.y >= bg_position.y + bottom_offset ||
+			(anim_group && !(ff7_externals.modules_global_object->background_sprite_layer[anim_group] & layer3_tiles[tile_index].anim_bitmask)))
+			continue;
+
+		layer3_tiles[tile_index].field_1040 = 1;
+		tile_position.x = tile_position.x * field_bg_multiplier + initial_pos.x;
+		tile_position.y = tile_position.y * field_bg_multiplier + initial_pos.y;
+
+		uint32_t page = (layer3_tiles[tile_index].use_fx_page) ? layer3_tiles[tile_index].fx_page : layer3_tiles[tile_index].page;
+
+		ff7_externals.add_page_tile(tile_position.x, tile_position.y, z_value, layer3_tiles[tile_index].u,
+									layer3_tiles[tile_index].v, layer3_tiles[tile_index].palette_index, page);
+	}
+
+	if(aspect_ratio == AR_WIDESCREEN)
+	{
+		// Apply repeat x-y for background layer 4 tiles
+		std::vector<vector2<int>> tile_offsets;
+		if(do_increase_height)
+			tile_offsets.push_back(vector2<int>{0, layer3_height /2});
+
+		if(do_increase_width){
+			tile_offsets.push_back(vector2<int>{layer3_width / 2, 0});
+			tile_offsets.push_back(vector2<int>{layer3_width / 2, layer3_height / 2});
+		}
+
+		for(vector2<int> tile_offset: tile_offsets)
+		{
+			for(int i = 0; i < *ff7_externals.field_layer3_tiles_num; i++)
+			{
+				uint32_t tile_index = (*ff7_externals.field_layer3_palette_sort)[i];
+				vector2<float> tile_position = {
+					static_cast<float>(layer3_tiles[tile_index].x + tile_offset.x),
+					static_cast<float>(layer3_tiles[tile_index].y + tile_offset.y)
+				};
+
+				field_layer3_shift_tile_position(&tile_position, &bg_position, layer3_width, layer3_height);
+
+				char anim_group = layer3_tiles[tile_index].anim_group;
+				if(tile_position.x <= bg_position.x - left_offset || tile_position.x >= bg_position.x + right_offset ||
+					tile_position.y <= bg_position.y - top_offset || tile_position.y >= bg_position.y + bottom_offset ||
+					(anim_group && !(ff7_externals.modules_global_object->background_sprite_layer[anim_group] & layer3_tiles[tile_index].anim_bitmask)))
+					continue;
+
+				layer3_tiles[tile_index].field_1040 = 1;
+				tile_position.x = tile_position.x * field_bg_multiplier + initial_pos.x;
+				tile_position.y = tile_position.y * field_bg_multiplier + initial_pos.y;
+
+				uint32_t page = (layer3_tiles[tile_index].use_fx_page) ? layer3_tiles[tile_index].fx_page : layer3_tiles[tile_index].page;
+
+				ff7_externals.add_page_tile(tile_position.x, tile_position.y, z_value, layer3_tiles[tile_index].u,
+											layer3_tiles[tile_index].v, layer3_tiles[tile_index].palette_index, page);
+			}
+		}
+	}
+	*ff7_externals.field_layer3_flag_CFFE40 = 1;
+}
+
+void field_layer4_shift_tile_position(vector2<float>* tile_position, vector2<float>* bg_position, int layer4_width, int layer4_height)
+{
+	const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
+	const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
+	const int top_offset = 256 + (aspect_ratio == AR_WIDESCREEN ? 8 : 0);
+	const int bottom_offset = aspect_ratio == AR_WIDESCREEN ? 8 : 0;
+	const int half_width = is_fieldmap_wide() ? ceil(wide_viewport_width / 4) : 160;
+
+	if(tile_position->x <= bg_position->x - left_offset || tile_position->x >= bg_position->x + right_offset)
+		tile_position->x += (tile_position->x >= bg_position->x - half_width) ? -layer4_width : layer4_width;
+
+	if(tile_position->y <= bg_position->y - top_offset || tile_position->y >= bg_position->y + bottom_offset)
+		tile_position->y += (tile_position->y >= bg_position->y + bottom_offset) ? -layer4_height : layer4_height;
 }
 
 void field_layer4_pick_tiles(short bg_position_x, short bg_position_y)
@@ -359,26 +440,29 @@ void field_layer4_pick_tiles(short bg_position_x, short bg_position_y)
 		initial_pos.y = ((ff7_center_fields ? 232 : 224) - bg_position.y) * field_bg_multiplier;
 		float z_value = ff7_externals.field_layer_sub_623C0F(ff7_externals.field_camera_rotation_matrix_CFF3D8, ff7_externals.modules_global_object->field_AE, 0, 0);
 
+		const bool do_increase_height = aspect_ratio == AR_WIDESCREEN;
+		const bool do_increase_width = is_fieldmap_wide() && (*ff7_externals.field_triggers_header)->bg4_width < ceil(wide_viewport_width / 2);
+		const int layer4_width = (*ff7_externals.field_triggers_header)->bg4_width * (do_increase_width ? 2 : 1);
+		const int layer4_height = (*ff7_externals.field_triggers_header)->bg4_height * (do_increase_height ? 2 : 1);
+		const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
+		const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
+		const int top_offset = 256 + (aspect_ratio == AR_WIDESCREEN ? 8 : 0);
+		const int bottom_offset = aspect_ratio == AR_WIDESCREEN ? 8 : 0;
+
 		for(int i = 0; i < *ff7_externals.field_layer4_tiles_num; i++)
 		{
 			uint32_t tile_index = (*ff7_externals.field_layer4_palette_sort)[i];
-			vector2<float> tile_position;
-			tile_position.x = layer4_tiles[tile_index].x;
-			tile_position.y = layer4_tiles[tile_index].y;
+			vector2<float> tile_position = {
+				static_cast<float>(layer4_tiles[tile_index].x),
+				static_cast<float>(layer4_tiles[tile_index].y)
+			};
 
-			if(tile_position.x <= bg_position.x - 352 || tile_position.x >= bg_position.x)
-			{
-				short width = (*ff7_externals.field_triggers_header)->bg4_width;
-				tile_position.x += (tile_position.x >= bg_position.x - 160) ? -width : width;
-			}
-			if(tile_position.y <= bg_position.y - 256 || tile_position.y >= bg_position.y)
-			{
-				short height = (*ff7_externals.field_triggers_header)->bg4_height;
-				tile_position.y += (tile_position.y >= bg_position.y) ? -height : height;
-			}
+			field_layer4_shift_tile_position(&tile_position, &bg_position, layer4_width, layer4_height);
 
 			char anim_group = layer4_tiles[tile_index].anim_group;
-			if(tile_position.x < bg_position.x - 352 || tile_position.x > bg_position.x || anim_group && !(ff7_externals.modules_global_object->background_sprite_layer[anim_group] & layer4_tiles[tile_index].anim_bitmask))
+			if(tile_position.x <= bg_position.x - left_offset || tile_position.x >= bg_position.x + right_offset ||
+				tile_position.y <= bg_position.y - top_offset || tile_position.y >= bg_position.y + bottom_offset ||
+				(anim_group && !(ff7_externals.modules_global_object->background_sprite_layer[anim_group] & layer4_tiles[tile_index].anim_bitmask)))
 				continue;
 
 			layer4_tiles[tile_index].field_1040 = 1;
@@ -392,6 +476,49 @@ void field_layer4_pick_tiles(short bg_position_x, short bg_position_y)
 											layer4_tiles[tile_index].v, layer4_tiles[tile_index].palette_index, page);
 			}
 		}
+
+		if(aspect_ratio == AR_WIDESCREEN)
+		{
+			// Apply repeat x-y for background layer 4 tiles
+			std::vector<vector2<int>> tile_offsets;
+			if(do_increase_height)
+				tile_offsets.push_back(vector2<int>{0, layer4_height /2});
+
+			if(do_increase_width){
+				tile_offsets.push_back(vector2<int>{layer4_width / 2, 0});
+				tile_offsets.push_back(vector2<int>{layer4_width / 2, layer4_height / 2});
+			}
+			for(vector2<int> tile_offset: tile_offsets){
+				for(int i = 0; i < *ff7_externals.field_layer4_tiles_num; i++)
+				{
+					uint32_t tile_index = (*ff7_externals.field_layer4_palette_sort)[i];
+					vector2<float> tile_position = {
+						static_cast<float>(layer4_tiles[tile_index].x + tile_offset.x),
+						static_cast<float>(layer4_tiles[tile_index].y + tile_offset.y)
+					};
+
+					field_layer4_shift_tile_position(&tile_position, &bg_position, layer4_width, layer4_height);
+
+					char anim_group = layer4_tiles[tile_index].anim_group;
+					if(tile_position.x <= bg_position.x - left_offset || tile_position.x >= bg_position.x + right_offset ||
+						tile_position.y <= bg_position.y - top_offset || tile_position.y >= bg_position.y + bottom_offset ||
+						(anim_group && !(ff7_externals.modules_global_object->background_sprite_layer[anim_group] & layer4_tiles[tile_index].anim_bitmask)))
+						continue;
+
+					layer4_tiles[tile_index].field_1040 = 1;
+					tile_position.x = tile_position.x * field_bg_multiplier + initial_pos.x;
+					tile_position.y = tile_position.y * field_bg_multiplier + initial_pos.y;
+
+					if(!*ff7_externals.field_layer_CFF1D8 || layer4_tiles[tile_index].palette_index != (*ff7_externals.field_palette_D00088) + 1)
+					{
+						uint32_t page = (layer4_tiles[tile_index].use_fx_page) ? layer4_tiles[tile_index].fx_page : layer4_tiles[tile_index].page;
+						ff7_externals.add_page_tile(tile_position.x, tile_position.y, z_value, layer4_tiles[tile_index].u,
+													layer4_tiles[tile_index].v, layer4_tiles[tile_index].palette_index, page);
+					}
+				}
+			}
+		}
+
 		*ff7_externals.field_layer4_flag_CFFEA8 = 1;
 	}
 }
@@ -433,38 +560,74 @@ void ff7_field_submit_draw_cursor(field_arrow_graphics_data* arrow_data)
 	ff7_externals.field_submit_draw_arrow_63A171(arrow_data);
 }
 
+bool ff7_field_do_draw_3d_model(short x, short y)
+{
+	if(*ff7_externals.field_bg_flag_CC15E4)
+		return 1;
+	int left_offset_x = 40 + (aspect_ratio == AR_WIDESCREEN ? abs(wide_viewport_x) - 50 : 0);
+	int right_offset_x = 400 + (aspect_ratio == AR_WIDESCREEN ? abs(wide_viewport_x) - 50 : 0);
+	return x > ff7_externals.field_viewport_xy_CFF204->x - left_offset_x && x < ff7_externals.field_viewport_xy_CFF204->x + right_offset_x &&
+		y > ff7_externals.field_viewport_xy_CFF204->y - 120 && y < ff7_externals.field_viewport_xy_CFF204->y + 460;
+}
+
+void ff7_field_set_fade_quad_size(int x, int y, int width, int height)
+{
+	if(aspect_ratio == AR_WIDESCREEN)
+	{
+		x -= abs(wide_viewport_x);
+		y -= ff7_center_fields ? 16 : 0;
+		width += (wide_viewport_width - game_width);
+		height += 32;
+	}
+	ff7_externals.field_sub_63AC3F(x, y, width, height);
+}
+
 void field_clip_with_camera_range_float(vector2<float>* point)
 {
 	field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
-	if (point->x > field_triggers_header_ptr->camera_range.right - 160)
-		point->x = field_triggers_header_ptr->camera_range.right - 160;
-	if (point->x < field_triggers_header_ptr->camera_range.left + 160)
-		point->x = field_triggers_header_ptr->camera_range.left + 160;
-	if (point->y > field_triggers_header_ptr->camera_range.top - 120)
-		point->y = field_triggers_header_ptr->camera_range.top - 120;
-	if (point->y < field_triggers_header_ptr->camera_range.bottom + 120)
-		point->y = field_triggers_header_ptr->camera_range.bottom + 120;
+	float half_width = 160;
+	if(is_fieldmap_wide())
+	{
+		int cameraRange = field_triggers_header_ptr->camera_range.right - field_triggers_header_ptr->camera_range.left;
+		half_width = ceil(wide_viewport_width / 4.f);
+	}
+
+	if (point->x > field_triggers_header_ptr->camera_range.right - half_width)
+		point->x = field_triggers_header_ptr->camera_range.right - half_width;
+	if (point->x < field_triggers_header_ptr->camera_range.left + half_width)
+		point->x = field_triggers_header_ptr->camera_range.left + half_width;
+	if (point->y > field_triggers_header_ptr->camera_range.bottom - 120)
+		point->y = field_triggers_header_ptr->camera_range.bottom - 120;
+	if (point->y < field_triggers_header_ptr->camera_range.top + 120)
+		point->y = field_triggers_header_ptr->camera_range.top + 120;
 }
 
 void float_sub_643628(field_trigger_header *trigger_header, vector2<float> *delta_position)
 {
+	float half_width = 160;
+	if(is_fieldmap_wide())
+	{
+		int cameraRange = trigger_header->camera_range.right - trigger_header->camera_range.left;
+		half_width = ceil(wide_viewport_width / 4.f);
+	}
+
 	if (trigger_header->field_14[0] == 1)
 	{
-		float diff_top_bottom = trigger_header->camera_range.top - 120 - (trigger_header->camera_range.bottom + 120);
-		float diff_right_left = trigger_header->camera_range.right - 160 - (trigger_header->camera_range.left + 160);
-		float temp_1 = -(diff_top_bottom * (trigger_header->camera_range.bottom + 120 - delta_position->y) + diff_right_left * (trigger_header->camera_range.left + 160 - delta_position->x));
+		float diff_top_bottom = trigger_header->camera_range.bottom - 120 - (trigger_header->camera_range.top + 120);
+		float diff_right_left = trigger_header->camera_range.right - half_width - (trigger_header->camera_range.left + half_width);
+		float temp_1 = -(diff_top_bottom * (trigger_header->camera_range.top + 120 - delta_position->y) + diff_right_left * (trigger_header->camera_range.left + half_width - delta_position->x));
 		float temp_square_value = (diff_top_bottom * diff_top_bottom + diff_right_left * diff_right_left) / 256.f;
-		delta_position->x = ((diff_right_left * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.left + 160;
-		delta_position->y = ((diff_top_bottom * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.bottom + 120;
+		delta_position->x = ((diff_right_left * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.left + half_width;
+		delta_position->y = ((diff_top_bottom * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.top + 120;
 	}
 	if (trigger_header->field_14[0] == 2)
 	{
-		float diff_bottom_top = trigger_header->camera_range.bottom + 120 - (trigger_header->camera_range.top - 120);
-		float diff_right_left = trigger_header->camera_range.right - 160 - (trigger_header->camera_range.left + 160);
-		float temp_1 = -((diff_bottom_top) * (trigger_header->camera_range.top - 120 - delta_position->y) + diff_right_left * (trigger_header->camera_range.left + 160 - delta_position->x));
+		float diff_bottom_top = trigger_header->camera_range.top + 120 - (trigger_header->camera_range.bottom - 120);
+		float diff_right_left = trigger_header->camera_range.right - half_width - (trigger_header->camera_range.left + half_width);
+		float temp_1 = -((diff_bottom_top) * (trigger_header->camera_range.bottom - 120 - delta_position->y) + diff_right_left * (trigger_header->camera_range.left + half_width - delta_position->x));
 		float temp_square_value = (diff_bottom_top * diff_bottom_top + diff_right_left * diff_right_left) / 256.f;
-		delta_position->x = ((diff_right_left * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.left + 160;
-		delta_position->y = ((diff_bottom_top * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.top - 120;
+		delta_position->x = ((diff_right_left * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.left + half_width;
+		delta_position->y = ((diff_bottom_top * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.bottom - 120;
 	}
 }
 
@@ -474,6 +637,26 @@ void ff7_field_clip_with_camera_range(vector2<short>* point)
 	field_clip_with_camera_range_float(&proxy_point);
 	point->x = round(proxy_point.x);
 	point->y = round(proxy_point.y);
+}
+
+void ff7_field_layer3_clip_with_camera_range(field_trigger_header* trigger_header, vector2<short>* point)
+{
+	vector2<float> proxy_point = {(float)point->x, (float)point->y};
+	float_sub_643628(*ff7_externals.field_triggers_header, &proxy_point);
+	point->x = round(proxy_point.x);
+	point->y = round(proxy_point.y);
+}
+
+void field_widescreen_width_clip_with_camera_range(vector2<short>* point)
+{
+	// This only clips backgrounds which width is enought to fill the whole screen in 16:9
+	field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
+	float half_width = ceil(wide_viewport_width / 4);
+
+	if (point->x > field_triggers_header_ptr->camera_range.right - half_width)
+		point->x = field_triggers_header_ptr->camera_range.right - half_width;
+	if (point->x < field_triggers_header_ptr->camera_range.left + half_width)
+		point->x = field_triggers_header_ptr->camera_range.left + half_width;
 }
 
 void engine_set_game_engine_world_coord_float_661B23(int field_world_x, int field_world_y)
@@ -579,6 +762,75 @@ float field_get_smooth_interpolated_value_float(float initial_value, float final
 {
 	float delta = final_value - initial_value;
 	return initial_value + delta * (0.5f + sin(-M_PI/2.f + M_PI * (step_idx / (float)n_steps)) / 2.f);
+}
+
+void field_init_scripted_bg_movement()
+{
+	vector2<short> world_pos;
+	if ( !ff7_externals.modules_global_object->world_move_status )
+	{
+		switch ( ff7_externals.modules_global_object->world_move_mode )
+		{
+		case 0:
+			*ff7_externals.field_bg_flag_CC15E4 = 0;
+			*ff7_externals.field_curr_delta_world_pos_x = 0;
+			*ff7_externals.field_curr_delta_world_pos_y = 0;
+			ff7_externals.modules_global_object->world_move_status = 2;
+			break;
+		case 1:
+			*ff7_externals.field_bg_flag_CC15E4 = 1;
+			ff7_externals.modules_global_object->world_move_status = 1;
+			break;
+		case 2:
+		case 3:
+			*ff7_externals.field_bg_flag_CC15E4 = 1;
+			*ff7_externals.scripted_world_move_n_steps = ff7_externals.modules_global_object->field_20;
+			*ff7_externals.scripted_world_move_step_index = 0;
+			world_pos = {*ff7_externals.field_curr_delta_world_pos_x, *ff7_externals.field_curr_delta_world_pos_y};
+
+			if(is_fieldmap_wide())
+				ff7_field_clip_with_camera_range(&world_pos);
+
+			*ff7_externals.scripted_world_initial_pos_x = world_pos.x;
+			*ff7_externals.scripted_world_initial_pos_y = world_pos.y;
+			ff7_externals.modules_global_object->world_move_status = 1;
+			break;
+		case 4:
+			*ff7_externals.field_bg_flag_CC15E4 = 1;
+
+			world_pos = {ff7_externals.modules_global_object->field_A, ff7_externals.modules_global_object->field_C};
+			if(is_fieldmap_wide())
+				field_widescreen_width_clip_with_camera_range(&world_pos);
+
+			*ff7_externals.field_curr_delta_world_pos_x = world_pos.x;
+			*ff7_externals.field_curr_delta_world_pos_y = world_pos.y;
+			ff7_externals.modules_global_object->world_move_status = 2;
+			break;
+		case 5:
+		case 6:
+			*ff7_externals.field_bg_flag_CC15E4 = 1;
+			*ff7_externals.scripted_world_move_n_steps = ff7_externals.modules_global_object->field_20;
+			*ff7_externals.scripted_world_move_step_index = 0;
+
+			world_pos = {*ff7_externals.field_curr_delta_world_pos_x, *ff7_externals.field_curr_delta_world_pos_y};
+			if(is_fieldmap_wide())
+				field_widescreen_width_clip_with_camera_range(&world_pos);
+
+			*ff7_externals.scripted_world_initial_pos_x = world_pos.x;
+			*ff7_externals.scripted_world_initial_pos_y = world_pos.y;
+
+			world_pos = {ff7_externals.modules_global_object->field_A, ff7_externals.modules_global_object->field_C};
+			if(is_fieldmap_wide())
+				field_widescreen_width_clip_with_camera_range(&world_pos);
+
+			*ff7_externals.scripted_world_final_pos_x = world_pos.x;
+			*ff7_externals.scripted_world_final_pos_y = world_pos.y;
+			ff7_externals.modules_global_object->world_move_status = 1;
+			break;
+		default:
+			return;
+		}
+	}
 }
 
 void field_update_scripted_bg_movement()
@@ -763,10 +1015,13 @@ void compute_pointer_hand_position(vector2<float> field_3d_world_coord, int mode
 	cursor_position.x = field_3d_world_coord.x + view_multiplier * cursor_delta_pos.x + ff7_externals.field_curr_half_viewport_width_height_CFF1FC->x;
 	cursor_position.y = field_3d_world_coord.y + view_multiplier * (cursor_delta_pos.y - 8) + ff7_externals.field_curr_half_viewport_width_height_CFF1FC->y;
 
-	if(cursor_position.x > ff7_externals.field_viewport_xy_CFF204->x + 320 * view_multiplier)
-		cursor_position.x = ff7_externals.field_viewport_xy_CFF204->x + 320 * view_multiplier;
-	if(cursor_position.x < ff7_externals.field_viewport_xy_CFF204->x)
-		cursor_position.x = ff7_externals.field_viewport_xy_CFF204->x;
+
+	int viewport_x = is_fieldmap_wide() ? wide_viewport_x : ff7_externals.field_viewport_xy_CFF204->x;
+	int viewport_width = is_fieldmap_wide() ? wide_viewport_width / 2 : 320;
+	if(cursor_position.x > viewport_x + viewport_width * view_multiplier)
+		cursor_position.x = viewport_x + viewport_width * view_multiplier;
+	if(cursor_position.x < viewport_x)
+		cursor_position.x = viewport_x;
 	if(cursor_position.y > ff7_externals.field_viewport_xy_CFF204->y + 224 * view_multiplier)
 		cursor_position.y = ff7_externals.field_viewport_xy_CFF204->y + 224 * view_multiplier;
 	if(cursor_position.y < ff7_externals.field_viewport_xy_CFF204->y - 32)

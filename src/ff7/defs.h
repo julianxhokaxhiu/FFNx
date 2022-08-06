@@ -26,6 +26,8 @@ void magic_thread_start(void (*func)());
 void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3);
 void ff7_battle_sub_5C7F94(int param_1, int param_2);
 void ff7_display_battle_action_text_sub_6D71FA(short command_id, short action_id);
+void ifrit_first_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer);
+void ifrit_second_third_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer);
 
 // menu
 void ff7_menu_battle_end_sub_6C9543();
@@ -83,7 +85,10 @@ void field_layer4_pick_tiles(short x_offset, short y_offset);
 void ff7_field_clip_with_camera_range(vector2<short>* point);
 void ff7_field_layer3_clip_with_camera_range(field_trigger_header* trigger_header, vector2<short>* point);
 uint32_t field_open_flevel_siz();
+void field_init_scripted_bg_movement();
 void field_update_scripted_bg_movement();
+bool ff7_field_do_draw_3d_model(short x, short y);
+void ff7_field_set_fade_quad_size(int x, int y, int width, int height);
 
 // world
 void ff7_world_hook_init();
