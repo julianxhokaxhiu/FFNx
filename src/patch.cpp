@@ -200,6 +200,15 @@ void patch_code_byte(uint32_t offset, unsigned char r)
 	*(unsigned char *)offset = r;
 }
 
+void patch_code_char(uint32_t offset, char r)
+{
+	DWORD dummy;
+
+	VirtualProtect((void *)offset, sizeof(r), PAGE_EXECUTE_READWRITE, &dummy);
+
+	*(char *)offset = r;
+}
+
 void patch_code_word(uint32_t offset, WORD r)
 {
 	DWORD dummy;

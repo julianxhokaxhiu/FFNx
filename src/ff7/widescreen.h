@@ -24,6 +24,7 @@
 #pragma once
 
 int wide_viewport_x = -106;
+int wide_viewport_y = 0;
 int wide_viewport_width = 854;
 int wide_viewport_height = 480;
 

@@ -591,8 +591,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.word_CC0DC6 = (WORD *)get_absolute_value(main_init_loop, 0x4BD);
 
 	ff7_externals.sub_5F5042 = get_relative_call(condor_main_loop, 0x69);
-	ff7_externals.sub_650F36 = get_relative_call(highway_main_loop, 0x53);
-	ff7_externals.sub_72381C = get_relative_call(snowboard_main_loop, 0x7D);
+	ff7_externals.highway_loop_sub_650F36 = get_relative_call(highway_main_loop, 0x53);
+	ff7_externals.snowboard_loop_sub_72381C = get_relative_call(snowboard_main_loop, 0x7D);
 	ff7_externals.sub_779E14 = get_relative_call(chocobo_main_loop, 0x70);
 
 	ff7_externals.fps_limiter_swirl = get_relative_call(swirl_main_loop, 0xDE);
@@ -600,8 +600,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.fps_limiter_coaster = get_relative_call(coaster_main_loop, 0x51);
 	ff7_externals.fps_limiter_condor = get_relative_call(ff7_externals.sub_5F5042, 0x5F);
 	ff7_externals.fps_limiter_field = get_relative_call(ff7_externals.field_sub_6388EE, 0x58);
-	ff7_externals.fps_limiter_highway = get_relative_call(ff7_externals.sub_650F36, 0xC3);
-	ff7_externals.fps_limiter_snowboard = get_relative_call(ff7_externals.sub_72381C, 0x14);
+	ff7_externals.fps_limiter_highway = get_relative_call(ff7_externals.highway_loop_sub_650F36, 0xC3);
+	ff7_externals.fps_limiter_snowboard = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0x14);
 	ff7_externals.fps_limiter_worldmap = get_relative_call(worldmap_main_loop, 0x1D);
 	ff7_externals.fps_limiter_chocobo = get_relative_call(ff7_externals.sub_779E14, 0x4D);
 	ff7_externals.fps_limiter_submarine = get_relative_call(submarine_main_loop, 0x98);
@@ -1203,6 +1203,24 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.cdcheck_enter_sub = get_absolute_value(main_loop, 0x390);
 	ff7_externals.credits_submit_draw_fade_quad_7AA89B = get_relative_call(credits_main_loop, 0xD9);
 	ff7_externals.menu_submit_draw_fade_quad_6CD64E = get_relative_call(ff7_externals.menu_battle_end_sub_6C9543, 0x104);
+	ff7_externals.highway_submit_fade_quad_659532 = get_relative_call(ff7_externals.highway_loop_sub_650F36, 0x126);
+	ff7_externals.chocobo_init_viewport_values_76D320 = get_relative_call(main_init_loop, 0x38B);
+	uint32_t chocobo_sub_77C462 = get_relative_call(chocobo_main_loop, 0x5E);
+	uint32_t chocobo_sub_77946A = get_relative_call(chocobo_sub_77C462, 0x649);
+	ff7_externals.chocobo_quads_graphics_data_97A498 = (byte*)get_absolute_value(chocobo_sub_77946A, 0x2F);
+	ff7_externals.chocobo_submit_draw_fade_quad_77B1CE = get_relative_call(chocobo_sub_77946A, 0x33);
+	ff7_externals.snowboard_draw_sky_and_mountains_72DAF0 = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0x27);
+	ff7_externals.snowboard_submit_draw_sky_quad_graphics_object_72E31F = get_relative_call(ff7_externals.snowboard_draw_sky_and_mountains_72DAF0, 0x24D);
+	ff7_externals.snowboard_sky_quad_pos_x_7B7DB8 = (float*)get_absolute_value(ff7_externals.snowboard_submit_draw_sky_quad_graphics_object_72E31F, 0x2E);
+	uint32_t snowboard_callable_submit_draw_sub_723F60 = get_absolute_value(ff7_externals.snowboard_loop_sub_72381C, 0x10E);
+	uint32_t snowboard_callable_draw_black_quad_7241E5 = get_absolute_value(snowboard_callable_submit_draw_sub_723F60, 0x15C);
+	uint32_t snowboard_submit_draw_fade_black_quad_729926 = get_relative_call(snowboard_callable_draw_black_quad_7241E5, 0x31);
+	ff7_externals.snowboard_submit_draw_black_quad_graphics_object_72DD94 = get_relative_call(snowboard_submit_draw_fade_black_quad_729926, 0xD);
+	uint32_t snowboard_callable_draw_white_quad_7240D6 = get_absolute_value(snowboard_callable_submit_draw_sub_723F60, 0x165);
+	uint32_t snowboard_submit_draw_white_fade_quad_729912 = get_relative_call(snowboard_callable_draw_white_quad_7240D6, 0x38);
+	ff7_externals.snowboard_submit_draw_white_fade_quad_graphics_object_72DD53 = get_relative_call(snowboard_submit_draw_white_fade_quad_729912, 0xD);
+	uint32_t snowboard_submit_draw_opaque_quad_72993A = get_relative_call(snowboard_callable_draw_white_quad_7240D6, 0xCC);
+	ff7_externals.snowboard_submit_draw_opaque_quad_graphics_object_72DDD5 = get_relative_call(snowboard_submit_draw_opaque_quad_72993A, 0xD);
 	// --------------------------------
 
 	// Steam achievement

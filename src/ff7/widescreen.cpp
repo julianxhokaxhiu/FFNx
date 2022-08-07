@@ -66,7 +66,7 @@ void ff7_widescreen_hook_init() {
     patch_code_dword(ff7_externals.battle_sub_5BD050 + 0x16A, (uint32_t)&wide_viewport_x);
     patch_code_dword(ff7_externals.battle_sub_5BD050 + 0x19F, (uint32_t)&wide_viewport_width);
     patch_code_dword(ff7_externals.battle_sub_5BD050 + 0x1BB, (uint32_t)&wide_viewport_x);
-    patch_code_int(ff7_externals.battle_enter + 0x1E8, 0);
+    patch_code_int(ff7_externals.battle_enter + 0x1E8, wide_viewport_y);
     patch_code_int(ff7_externals.battle_enter + 0x21A, wide_viewport_height);
     patch_code_dword(ff7_externals.battle_enter + 0x229, (uint32_t)&wide_viewport_width);
     patch_code_dword(ff7_externals.battle_enter + 0x22F, (uint32_t)&wide_viewport_x);
@@ -165,6 +165,30 @@ void ff7_widescreen_hook_init() {
     patch_code_dword(ff7_externals.credits_submit_draw_fade_quad_7AA89B + 0xE6, (uint32_t)&wide_viewport_x);
     patch_code_dword(ff7_externals.credits_submit_draw_fade_quad_7AA89B + 0x133, (uint32_t)&viewport_width_plus_x_widescreen_fix);
     patch_code_dword(ff7_externals.credits_submit_draw_fade_quad_7AA89B + 0x180, (uint32_t)&viewport_width_plus_x_widescreen_fix);
+
+    // Highway fix
+    patch_code_int(ff7_externals.highway_submit_fade_quad_659532 + 0x5F, wide_viewport_width);
+    patch_code_char(ff7_externals.highway_submit_fade_quad_659532 + 0x66, wide_viewport_x);
+
+    // Chocobo fix
+    patch_code_int(ff7_externals.chocobo_init_viewport_values_76D320 + 0x1F, wide_viewport_height);
+    patch_code_char(ff7_externals.chocobo_init_viewport_values_76D320 + 0x29, wide_viewport_y);
+    patch_code_int(ff7_externals.chocobo_init_viewport_values_76D320 + 0x62, wide_viewport_y);
+    patch_code_dword((uint32_t)ff7_externals.chocobo_submit_draw_fade_quad_77B1CE + 0x99, (uint32_t)&wide_viewport_x);
+    patch_code_int((uint32_t)ff7_externals.chocobo_quads_graphics_data_97A498 + 0x28, wide_viewport_width / 2);
+
+    // Snowboard fix
+    patch_code_int(ff7_externals.snowboard_draw_sky_and_mountains_72DAF0 + 0xCC, ceil(wide_viewport_width / 4));
+    patch_code_int(ff7_externals.snowboard_draw_sky_and_mountains_72DAF0 + 0x140, ceil(wide_viewport_width / 4));
+    patch_code_float((uint32_t)ff7_externals.snowboard_sky_quad_pos_x_7B7DB8, wide_viewport_x);
+    patch_code_int(ff7_externals.snowboard_submit_draw_sky_quad_graphics_object_72E31F + 0x173, wide_viewport_width + wide_viewport_x);
+    patch_code_int(ff7_externals.snowboard_submit_draw_sky_quad_graphics_object_72E31F + 0x225, wide_viewport_width + wide_viewport_x);
+    patch_code_int(ff7_externals.snowboard_submit_draw_black_quad_graphics_object_72DD94 + 0x27, wide_viewport_width);
+    patch_code_char(ff7_externals.snowboard_submit_draw_black_quad_graphics_object_72DD94 + 0x2E, wide_viewport_x);
+    patch_code_int(ff7_externals.snowboard_submit_draw_white_fade_quad_graphics_object_72DD53 + 0x27, wide_viewport_width);
+    patch_code_char(ff7_externals.snowboard_submit_draw_white_fade_quad_graphics_object_72DD53 + 0x2E, wide_viewport_x);
+    patch_code_int(ff7_externals.snowboard_submit_draw_opaque_quad_graphics_object_72DDD5 + 0x1F, wide_viewport_width);
+    patch_code_char(ff7_externals.snowboard_submit_draw_opaque_quad_graphics_object_72DDD5 + 0x26, wide_viewport_x);
 
     // Menu, endbattle menu, ... fixes
     patch_code_dword(ff7_externals.menu_submit_draw_fade_quad_6CD64E + 0x50, (uint32_t)&wide_viewport_x);
