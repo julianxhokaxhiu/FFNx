@@ -2596,7 +2596,11 @@ struct ff7_externals
 	void (*engine_set_game_engine_world_coord_661B23)(int, int);
 	void (*engine_sub_67CCDE)(float, float, float, float, float, float, float, ff7_game_obj*);
 	uint32_t sub_630D50;
+	uint32_t sub_631586;
 	uint32_t sub_631945;
+	char* field_entity_id_list; // 0xCC0960
+	DWORD* current_dialog_string_pointer; //0xCBF578
+	WORD* current_dialog_message_speed; // 0xCC0418
 	WORD* opcode_message_loop_code;
 	int (*sub_6310A1)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*);
 	WORD* opcode_ask_question_code;

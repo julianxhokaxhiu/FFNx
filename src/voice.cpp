@@ -54,7 +54,8 @@ struct opcode_message_status
 		is_voice_acting(false),
 		message_last_transition(0),
 		message_last_option(0),
-		message_dialog_id(0)
+		message_dialog_id(0),
+		char_id(0)
 	{}
 	byte message_page_count = 0;
 	WORD message_last_opcode = 0;
@@ -62,6 +63,7 @@ struct opcode_message_status
 	WORD message_last_transition = 0;
 	byte message_last_option = 0;
 	byte message_dialog_id = 0;
+	byte char_id = 0;
 };
 
 int (*opcode_old_message)();
@@ -280,6 +282,29 @@ byte get_dialog_opcode(byte window_id)
 
 // -- FIELD --
 
+byte get_field_dialog_char_id(byte window_id) {
+	if (ff7_externals.field_entity_id_list[window_id] != *ff7_externals.current_entity_id) return 0;
+
+	if (ff7_externals.field_entity_id_list[window_id] == 0x0) return 0;
+
+	byte id = *(byte*)ff7_externals.current_dialog_string_pointer[window_id];
+
+	switch(id) {
+		case 0xEA: // CLOUD
+		case 0xEB: // BARRET
+		case 0xEC: // TIFA
+		case 0xED: // AERITH
+		case 0xEE: // RED XIII
+		case 0xEF: // YUFFIE
+		case 0xF0: // CAIT SITH
+		case 0xF1: // VINCENT
+		case 0xF2: // CID
+			return id;
+		default:
+			return 0;
+	}
+}
+
 int opcode_wmode()
 {
 	byte window_id = get_field_parameter<byte>(0);
@@ -311,7 +336,8 @@ int opcode_voice_message()
 	}
 	else if (_is_dialog_starting || _is_dialog_paging)
 	{
-		if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+		if (_is_dialog_starting) current_opcode_message_status[window_id].char_id = get_field_dialog_char_id(window_id);
+		if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u,char=%X\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count, current_opcode_message_status[window_id].char_id);
 		current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
 	}
 	else if (_is_dialog_closing)
@@ -367,12 +393,13 @@ int opcode_voice_ask(int unk)
 	}
 	else if (_is_dialog_starting || _is_dialog_paging)
 	{
-		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+		if (_is_dialog_starting) current_opcode_message_status[window_id].char_id = get_field_dialog_char_id(window_id);
+		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u,char=%X\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count, current_opcode_message_status[window_id].char_id);
 		current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
 	}
 	else if (_is_dialog_option_changed)
 	{
-		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u\n", field_name, window_id, dialog_id, opcode_ask_current_option);
+		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u,char=%X\n", field_name, window_id, dialog_id, opcode_ask_current_option,current_opcode_message_status[window_id].char_id);
 		play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
 	}
 	else if (_is_dialog_closing)

@@ -495,8 +495,12 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.word_DB958A = (WORD *)get_absolute_value(common_externals.execute_opcode_table[0x23], 0x5);
 
 	ff7_externals.sub_630D50 = get_relative_call(ff7_externals.opcode_message, 0x3B);
+	ff7_externals.sub_631586 = get_relative_call(ff7_externals.sub_630D50, 0x39);
 	ff7_externals.sub_631945 = get_relative_call(ff7_externals.sub_630D50, 0x6D);
 	ff7_externals.opcode_message_loop_code = (WORD*)get_absolute_value(ff7_externals.sub_630D50, 0x12);
+	ff7_externals.current_dialog_string_pointer = (DWORD*)get_absolute_value(ff7_externals.sub_631586, 0x154);
+	ff7_externals.current_dialog_message_speed = (WORD*)get_absolute_value(ff7_externals.sub_631586, 0x1C1);
+	ff7_externals.field_entity_id_list = (char*)get_absolute_value(ff7_externals.sub_631586, 0x1F);
 
 	ff7_externals.sub_6310A1 = (int (*)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*))get_relative_call(ff7_externals.opcode_ask, 0x8E);
 	ff7_externals.opcode_ask_question_code = (WORD*)get_absolute_value((uint32_t)ff7_externals.sub_6310A1, 0x2FE);
