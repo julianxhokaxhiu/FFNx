@@ -2616,8 +2616,8 @@ struct ff7_externals
 	uint32_t fps_limiter_submarine;
 	uint32_t fps_limiter_credits;
 	uint32_t sub_5F5042;
-	uint32_t sub_650F36;
-	uint32_t sub_72381C;
+	uint32_t highway_loop_sub_650F36;
+	uint32_t snowboard_loop_sub_72381C;
 	uint32_t sub_779E14;
 	uint32_t battle_fps_menu_multiplier;
 	DWORD *submarine_minigame_status;
@@ -3021,6 +3021,16 @@ struct ff7_externals
 	uint32_t shadow_flare_draw_white_bg_57747E;
 	uint32_t credits_submit_draw_fade_quad_7AA89B;
 	uint32_t menu_submit_draw_fade_quad_6CD64E;
+	uint32_t highway_submit_fade_quad_659532;
+	uint32_t chocobo_init_viewport_values_76D320;
+	byte* chocobo_quads_graphics_data_97A498;
+	uint32_t chocobo_submit_draw_fade_quad_77B1CE;
+	uint32_t snowboard_draw_sky_and_mountains_72DAF0;
+	uint32_t snowboard_submit_draw_sky_quad_graphics_object_72E31F;
+	float* snowboard_sky_quad_pos_x_7B7DB8;
+	uint32_t snowboard_submit_draw_black_quad_graphics_object_72DD94;
+	uint32_t snowboard_submit_draw_white_fade_quad_graphics_object_72DD53;
+	uint32_t snowboard_submit_draw_opaque_quad_graphics_object_72DDD5;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);
