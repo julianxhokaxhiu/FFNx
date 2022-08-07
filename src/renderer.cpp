@@ -1170,9 +1170,10 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
 
     if(aspect_ratio == AR_WIDESCREEN)
     {
-        // Keep the default scissor for movies
+        // Keep the default scissor for FIELD mode movies and credits mode
+        struct game_mode* mode = getmode_cached();
         bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
-        if(is_movie_playing) {
+        if(is_movie_playing || mode->driver_mode == MODE_CREDITS) {
             scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
             return;
         }
@@ -1185,7 +1186,6 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
         }
 
         // This sets a scissor offset for field with width not enough to fill the screen in 16:9
-        struct game_mode* mode = getmode_cached();
         field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
         if(mode->driver_mode == MODE_FIELD && *ff7_externals.field_level_data_pointer != 0)
         {
