@@ -382,7 +382,6 @@ void Renderer::renderFrame()
     // 0
     float x0 = framebufferVertexOffsetX;
     if (aspect_ratio == AR_STRETCH) x0 = 0.0f;
-    else if (aspect_ratio == AR_WIDESCREEN) x0 = wide_viewport_x;
     float y0 = 0.0f;
     float u0 = 0.0f;
     float v0 = getCaps()->originBottomLeft ? 1.0f : 0.0f;
@@ -524,11 +523,11 @@ void Renderer::recalcInternals()
     // Use the set or calculated scaling factor to determine the width and height of the framebuffer according to the original resolution
     if(aspect_ratio == AR_WIDESCREEN)
     {
-        framebufferWidth = wide_viewport_width * scalingFactor;
-        framebufferHeight = game_height * scalingFactor;
+        framebufferWidth = wide_game_width * scalingFactor;
+        framebufferHeight = wide_game_height * scalingFactor;
 
-        framebufferVertexWidth = (viewWidth * wide_viewport_width) / window_size_x;
-        framebufferVertexOffsetX = (wide_viewport_width - framebufferVertexWidth) / 2;
+        framebufferVertexWidth = (viewWidth * wide_game_width) / window_size_x;
+        framebufferVertexOffsetX = (wide_game_width - framebufferVertexWidth) / 2;
     }
     else
     {
@@ -536,7 +535,7 @@ void Renderer::recalcInternals()
         framebufferHeight = game_height * scalingFactor;
 
         framebufferVertexWidth = (viewWidth * game_width) / window_size_x;
-        framebufferVertexOffsetX = (game_width- framebufferVertexWidth) / 2;
+        framebufferVertexOffsetX = (game_width - framebufferVertexWidth) / 2;
     }
 
     // Let the user know about chosen resolutions
@@ -545,19 +544,25 @@ void Renderer::recalcInternals()
 
 void Renderer::calcBackendProjMatrix()
 {
-    float left = 0.0f;
-    float right = game_width;
-    if(aspect_ratio == AR_WIDESCREEN)
-    {
-        left = wide_viewport_x;
-        right = wide_viewport_width + wide_viewport_x;
-    }
-
+    // Used by the game
     bx::mtxOrtho(
         internalState.backendProjMatrix,
-        left,
-        right,
-        game_height,
+        aspect_ratio == AR_WIDESCREEN ? wide_viewport_x : 0.0f,
+        aspect_ratio == AR_WIDESCREEN ? wide_viewport_width + wide_viewport_x : game_width,
+        aspect_ratio == AR_WIDESCREEN ? wide_game_height : game_height,
+        0.0f,
+        getCaps()->homogeneousDepth ? -1.0f : 0.0f,
+        1.0f,
+        0.0,
+        getCaps()->homogeneousDepth
+    );
+
+    // Used by postprocessing ( rendering the game framebuffer on screen)
+    bx::mtxOrtho(
+        internalState.postprocessingProjMatrix,
+        0.0f,
+        aspect_ratio == AR_WIDESCREEN ? wide_game_width : game_width,
+        aspect_ratio == AR_WIDESCREEN ? wide_game_height : game_height,
         0.0f,
         getCaps()->homogeneousDepth ? -1.0f : 0.0f,
         1.0f,
@@ -985,18 +990,25 @@ void Renderer::draw(bool uniformsAlreadyAttached)
 
     // Set current view rect
     if (backendProgram == RendererProgram::POSTPROCESSING)
+    {
         bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
-    else {
+
+        // Set current view transform
+        bgfx::setViewTransform(backendViewId, NULL, internalState.postprocessingProjMatrix);
+    }
+    else
+    {
         // Set view to render in the framebuffer
         bgfx::setViewFrameBuffer(backendViewId, backendFrameBuffer);
 
         bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
 
         if (internalState.bDoScissorTest) bgfx::setScissor(scissorOffsetX, scissorOffsetY, scissorWidth, scissorHeight);
+
+        // Set current view transform
+        bgfx::setViewTransform(backendViewId, NULL, internalState.backendProjMatrix);
     }
 
-    // Set current view transform
-    bgfx::setViewTransform(backendViewId, NULL, internalState.backendProjMatrix);
 
     // Skip uniform attachment as it has been done already
     if (!uniformsAlreadyAttached)

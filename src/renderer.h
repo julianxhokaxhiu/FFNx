@@ -207,6 +207,7 @@ private:
         bool bIsHDR = false;
 
         float backendProjMatrix[16];
+        float postprocessingProjMatrix[16];
 
         std::vector<float> VSFlags;
         std::vector<float> FSAlphaFlags;
