@@ -507,24 +507,20 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				switch (LOWORD(wParam))
 				{
 				case VK_LEFT:
-					if(aspect_ratio >= 0 && aspect_ratio < AR_COUNT - 1)
-					{
-						ffnx_trace("aspect_ratio: %d => %d\n", aspect_ratio, aspect_ratio - 1 >= 0 ? aspect_ratio - 1 : (AR_COUNT - 1) - 1);
+					aspect_ratio--;
+					if (aspect_ratio < 0) aspect_ratio = AR_COUNT - 1;
 
-						aspect_ratio = aspect_ratio - 1 >= 0 ? aspect_ratio - 1 : (AR_COUNT - 1) - 1;
+					show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Aspect Ratio Mode: %u", aspect_ratio);
 
-						newRenderer.reset();
-					}
+					newRenderer.reset();
 					break;
 				case VK_RIGHT:
-					if(aspect_ratio >= 0 && aspect_ratio < AR_COUNT - 1)
-					{
-						ffnx_trace("aspect_ratio: %d => %d\n", aspect_ratio, (aspect_ratio + 1) % (AR_COUNT - 1));
+					aspect_ratio++;
+					if (aspect_ratio > AR_COUNT - 1) aspect_ratio = AR_ORIGINAL;
 
-						aspect_ratio = (aspect_ratio + 1) % (AR_COUNT - 1);
+					show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Aspect Ratio Mode: %u", aspect_ratio);
 
-						newRenderer.reset();
-					}
+					newRenderer.reset();
 					break;
 				case VK_RETURN:
 					if (!fullscreen)
