@@ -28,4 +28,9 @@ int wide_viewport_y = 0;
 int wide_viewport_width = 854;
 int wide_viewport_height = 480;
 
+int wide_game_x = 0;
+int wide_game_y = 0;
+int wide_game_width = 960;
+int wide_game_height = 480;
+
 void ff7_widescreen_hook_init();
