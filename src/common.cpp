@@ -509,6 +509,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				case VK_LEFT:
 					aspect_ratio--;
 					if (aspect_ratio < 0) aspect_ratio = AR_COUNT - 1;
+					if (ff8 && aspect_ratio == AR_WIDESCREEN) aspect_ratio = AR_WIDESCREEN - 1;
 
 					show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Aspect Ratio Mode: %u", aspect_ratio);
 
@@ -517,6 +518,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				case VK_RIGHT:
 					aspect_ratio++;
 					if (aspect_ratio > AR_COUNT - 1) aspect_ratio = AR_ORIGINAL;
+					if (ff8 && aspect_ratio == AR_WIDESCREEN) aspect_ratio = AR_ORIGINAL;
 
 					show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Aspect Ratio Mode: %u", aspect_ratio);
 
