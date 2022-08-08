@@ -469,22 +469,45 @@ void Renderer::recalcInternals()
     calcBackendProjMatrix();
 
     // aspect correction
-    if (aspect_ratio == AR_ORIGINAL && viewWidth * 3 != viewHeight * 4)
-    {
-        if (viewHeight * 4 > viewWidth * 3)
-        {
-            viewOffsetY = viewHeight - (viewWidth * 3) / 4;
-            viewHeight = (viewWidth * 3) / 4;
+    switch(aspect_ratio){
+        case AR_ORIGINAL:
+            if (viewWidth * 3 != viewHeight * 4)
+            {
+                if (viewHeight * 4 > viewWidth * 3)
+                {
+                    viewOffsetY = viewHeight - (viewWidth * 3) / 4;
+                    viewHeight = (viewWidth * 3) / 4;
 
-            y_offset = viewOffsetY;
-        }
-        else if (viewWidth * 3 > viewHeight * 4)
-        {
-            viewOffsetX = (viewWidth - (viewHeight * 4) / 3) / 2;
-            viewWidth = (viewHeight * 4) / 3;
+                    y_offset = viewOffsetY;
+                }
+                else if (viewWidth * 3 > viewHeight * 4)
+                {
+                    viewOffsetX = (viewWidth - (viewHeight * 4) / 3) / 2;
+                    viewWidth = (viewHeight * 4) / 3;
 
-            x_offset = viewOffsetX;
-        }
+                    x_offset = viewOffsetX;
+                }
+            }
+            break;
+        case AR_WIDESCREEN:
+            if (viewWidth * 9 != viewHeight * 16)
+            {
+                if (viewHeight * 16 > viewWidth * 9)
+                {
+                    viewOffsetY = viewHeight - (viewWidth * 9) / 16;
+                    viewHeight = (viewWidth * 9) / 16;
+
+                    y_offset = viewOffsetY;
+                }
+                else if (viewWidth * 9 > viewHeight * 16)
+                {
+                    viewOffsetX = (viewWidth - (viewHeight * 16) / 9) / 2;
+                    viewWidth = (viewHeight * 16) / 9;
+
+                    x_offset = viewOffsetX;
+                }
+            }
+            break;
     }
 
     // If internal_resolution_scale from settings is less than one, calculate the closest fit for the output resolution, otherwise use the value directly
