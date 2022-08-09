@@ -75,11 +75,6 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	memcpy(deferred_draws[defer].indices, indices, sizeof(*indices) * count);
 	memcpy(deferred_draws[defer].vertices, vertices, sizeof(*vertices) * vertexcount);
 
-	int draworder = DRAW_ORDER_1;
-	if (vertextype == TLVERTEX)	draworder = deferred_draws[defer].state.blend_mode != 4 ? DRAW_ORDER_2 : DRAW_ORDER_0;
-
-	deferred_draws[defer].draworder = draworder;
-
 	if (boundingbox)
 	{
 		deferred_draws[defer].boundingbox = (struct boundingbox*)driver_malloc(sizeof(struct boundingbox));
@@ -296,9 +291,11 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 }
 
 // draw deferred models
-void gl_draw_deferred(bool isDrawOrderEnabled, DrawOrder draworder)
+void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 {
 	struct driver_state saved_state;
+
+	bool isFieldShadowDrawn = false;
 
 	if (num_deferred == 0) {
 		if (trace_all) ffnx_trace("gl_draw_deferred: num_deferred == 0\n");
@@ -316,9 +313,10 @@ void gl_draw_deferred(bool isDrawOrderEnabled, DrawOrder draworder)
 			continue;
 		}
 
-		if (isDrawOrderEnabled && deferred_draws[i].draworder != draworder)
+		if (shadow_callback != nullptr && !isFieldShadowDrawn && deferred_draws[i].vertextype != TLVERTEX)
 		{
-			continue;
+			(*shadow_callback)();
+			isFieldShadowDrawn = true;
 		}
 
 		gl_load_state(&deferred_draws[i].state);
@@ -348,7 +346,7 @@ void gl_draw_deferred(bool isDrawOrderEnabled, DrawOrder draworder)
 		deferred_draws[i].boundingbox = nullptr;
 	}
 
-	if(!isDrawOrderEnabled || draworder == DRAW_ORDER_COUNT - 1) num_deferred = 0;
+	num_deferred = 0;
 
 	nodefer = false;
 

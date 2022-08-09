@@ -112,7 +112,6 @@ private:
     void ff7_get_field_view_matrix(struct matrix* outViewMatrix);
     void ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges);
 
-    void createFieldWalkmesh(float extrudeSize);
     void extractWalkmeshBorderData(std::vector<struct walkmeshEdge>& edges);
     void createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge>& edges);
     void createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, float extrudeSize);
@@ -122,7 +121,6 @@ public:
     void init();
 
     void draw(struct game_obj* game_object);
-    void drawFieldShadow();
 
     const LightingState& getLightingState();
 
@@ -173,6 +171,7 @@ public:
     float getShadowMapNearFarSize();
 
     // Field Shadow
+    void createFieldWalkmesh(float extrudeSize);
     void setFieldShadowMapArea(float area);
     float getFieldShadowMapArea();
     void setFieldShadowMapNearFarSize(float size);
@@ -187,6 +186,8 @@ public:
     float getWalkmeshExtrudeSize();
     void setWalkmeshPosOffset(float size);
     float getWalkmeshPosOffset();
+    const std::vector<nvertex>& getWalkmeshVertices();
+    const std::vector<WORD>& getWalkmeshIndices();
 
     // Lighting Debug
     void setHide2dEnabled(bool isEnabled);
@@ -196,5 +197,7 @@ public:
     void setDebugOutput(DebugOutput output);
     DebugOutput GetDebugOutput();
 };
+
+void drawFieldShadow();
 
 extern Lighting lighting;
