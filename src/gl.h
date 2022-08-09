@@ -28,15 +28,6 @@
 #define LVERTEX 2
 #define TLVERTEX 3
 
-enum DrawOrder
-{
-	DRAW_ORDER_0 = 0,
-	DRAW_ORDER_1,
-	DRAW_ORDER_2,
-
-	DRAW_ORDER_COUNT
-};
-
 struct driver_state
 {
 	struct texture_set *texture_set;
@@ -64,7 +55,6 @@ struct deferred_draw
 	uint32_t vertextype;
 	uint32_t vertexcount;
 	uint32_t count;
-	uint32_t draworder;
 	struct nvertex* vertices;
 	vector3<float>* normals;
 	WORD *indices;
@@ -102,12 +92,14 @@ extern uint32_t current_program;
 
 extern int max_texture_size;
 
+typedef void (*draw_field_shadow_callback)(void);
+
 void gl_draw_movie_quad(uint32_t width, uint32_t height);
 void gl_save_state(struct driver_state *dest);
 void gl_load_state(struct driver_state *src);
 uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap);
 uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap);
-void gl_draw_deferred(bool isDrawOrderEnabled = false, DrawOrder draworder = DRAW_ORDER_0);
+void gl_draw_deferred(draw_field_shadow_callback shadow_callback);
 void gl_set_projection_viewport_matrices();
 struct boundingbox calculateSceneAabb();
 void gl_draw_sorted_deferred();

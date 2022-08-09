@@ -740,30 +740,22 @@ void Lighting::draw(struct game_obj* game_object)
 
 	if (mode->driver_mode == MODE_FIELD)
 	{
-		// Draw deferred 2D opaque models
-		gl_draw_deferred(true, DRAW_ORDER_0);
-
-		// Draw the walkmesh for field shadows
-		gl_set_projection_viewport_matrices();
-		drawFieldShadow();
-
-		// Draw deferred 3D opaque models
-		gl_draw_deferred(true, DRAW_ORDER_1);
-
-		// Draw deferred non-opaque models
-		gl_draw_deferred(true, DRAW_ORDER_2);
+		gl_draw_deferred(&drawFieldShadow);
 	}
 	else
 	{
-		gl_draw_deferred(false);
+		gl_draw_deferred(nullptr);
 	}
 };
 
-void Lighting::drawFieldShadow()
+void drawFieldShadow()
 {
 	newRenderer.backupDepthBuffer();
 
-    createFieldWalkmesh(getWalkmeshExtrudeSize());
+    lighting.createFieldWalkmesh(lighting.getWalkmeshExtrudeSize());
+
+	auto walkMeshVertices = lighting.getWalkmeshVertices();
+	auto walkMeshIndices = lighting.getWalkmeshIndices();
 
     newRenderer.bindVertexBuffer(walkMeshVertices.data(), 0, walkMeshVertices.size());
     newRenderer.bindIndexBuffer(walkMeshIndices.data(), walkMeshIndices.size());
@@ -781,7 +773,7 @@ void Lighting::drawFieldShadow()
     identity_matrix(&worldMatrix);
 
     // WalkMesh offset to adjust vertical position of walkmesh so that it is just under the character feets
-    worldMatrix._43 = getWalkmeshPosOffset();
+    worldMatrix._43 = lighting.getWalkmeshPosOffset();
 
     // View matrix
     struct matrix viewMatrix;
@@ -1087,6 +1079,16 @@ void Lighting::setWalkmeshPosOffset(float offset)
 float Lighting::getWalkmeshPosOffset()
 {
     return lightingState.walkMeshPosOffset;
+}
+
+const std::vector<nvertex>& Lighting::getWalkmeshVertices()
+{
+	return walkMeshVertices;
+}
+
+const std::vector<WORD>& Lighting::getWalkmeshIndices()
+{
+	return walkMeshIndices;
 }
 
 void Lighting::setHide2dEnabled(bool isEnabled)
