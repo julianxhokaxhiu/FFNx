@@ -256,8 +256,6 @@ private:
     std::vector<bgfx::TextureHandle> backendFrameBufferRT = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
     bgfx::FrameBufferHandle backendFrameBuffer = BGFX_INVALID_HANDLE;
 
-    bgfx::TextureHandle backupDepthTexture = BGFX_INVALID_HANDLE;
-
     bgfx::TextureHandle shadowMapTexture = BGFX_INVALID_HANDLE;
     bgfx::FrameBufferHandle shadowMapFrameBuffer = BGFX_INVALID_HANDLE;
 
@@ -345,9 +343,7 @@ public:
     void clearShadowMap();
     void drawToShadowMap();
     void drawWithLighting(bool isCastShadow);
-    void backupDepthBuffer();
     void drawFieldShadow();
-    void recoverDepthBuffer();
     void draw(bool uniformsAlreadyAttached = false);
     void drawOverlay();
     void show();
