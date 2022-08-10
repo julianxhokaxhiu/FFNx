@@ -750,8 +750,6 @@ void Lighting::draw(struct game_obj* game_object)
 
 void drawFieldShadow()
 {
-	newRenderer.backupDepthBuffer();
-
     lighting.createFieldWalkmesh(lighting.getWalkmeshExtrudeSize());
 
 	auto walkMeshVertices = lighting.getWalkmeshVertices();
@@ -766,7 +764,7 @@ void drawFieldShadow()
     newRenderer.setBlendMode(RendererBlendMode::BLEND_AVG);
     newRenderer.isFBTexture(false);
     newRenderer.doDepthTest(true);
-    newRenderer.doDepthWrite(true);
+    newRenderer.doDepthWrite(false);
 
     // Create a world matrix
     struct matrix worldMatrix;
@@ -785,8 +783,6 @@ void drawFieldShadow()
     newRenderer.setWorldViewMatrix(&worldViewMatrix);
 
     newRenderer.drawFieldShadow();
-
-	newRenderer.recoverDepthBuffer();
 }
 
 const LightingState& Lighting::getLightingState()

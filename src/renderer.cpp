@@ -332,8 +332,6 @@ void Renderer::destroyAll()
 
     bgfx::destroy(shadowMapFrameBuffer);
 
-    bgfx::destroy(backupDepthTexture);
-
     for (auto& handle : backendProgramHandles)
     {
         if (bgfx::isValid(handle))
@@ -606,22 +604,13 @@ void Renderer::prepareFramebuffer()
         false,
         1,
         bgfx::TextureFormat::D32F,
-        fbFlags | BGFX_TEXTURE_BLIT_DST
+        fbFlags
     );
 
     backendFrameBuffer = bgfx::createFrameBuffer(
         backendFrameBufferRT.size(),
         backendFrameBufferRT.data(),
         true
-    );
-
-    backupDepthTexture = bgfx::createTexture2D(
-        framebufferWidth,
-        framebufferHeight,
-        false,
-        1,
-        bgfx::TextureFormat::D32F,
-        fbFlags | BGFX_TEXTURE_BLIT_DST
     );
 }
 
@@ -947,28 +936,6 @@ void Renderer::drawWithLighting(bool isCastShadow)
 
     // Draw with lighting
     draw(isCastShadow);
-}
-
-void Renderer::backupDepthBuffer()
-{
-    backendViewId++;
-    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
-    bgfx::touch(backendViewId);
-    bgfx::blit(backendViewId, backupDepthTexture, 0, 0, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, framebufferWidth, framebufferHeight);
-    backendViewId++;
-    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
-    bgfx::touch(backendViewId);
-}
-
-void Renderer::recoverDepthBuffer()
-{
-    backendViewId++;
-    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
-    bgfx::touch(backendViewId);
-    bgfx::blit(backendViewId, bgfx::getTexture(backendFrameBuffer, 1), 0, 0, backupDepthTexture, 0, 0, framebufferWidth, framebufferHeight);
-    backendViewId++;
-    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
-    bgfx::touch(backendViewId);
 }
 
 void Renderer::drawFieldShadow()
