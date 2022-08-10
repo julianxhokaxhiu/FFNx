@@ -3026,9 +3026,13 @@ struct ff7_externals
 	uint32_t credits_submit_draw_fade_quad_7AA89B;
 	uint32_t menu_submit_draw_fade_quad_6CD64E;
 	uint32_t highway_submit_fade_quad_659532;
+	uint32_t chocobo_enter_76D597;
+	uint32_t chocobo_initialize_variables_76BAFD;
 	uint32_t chocobo_init_viewport_values_76D320;
-	byte* chocobo_quads_graphics_data_97A498;
 	uint32_t chocobo_submit_draw_fade_quad_77B1CE;
+	uint32_t chocobo_submit_draw_water_quad_77A7D0;
+	void(*generic_submit_quad_graphics_object_671D2A)(int, int, int, int, int, int, float, DWORD*) ;
+	byte* chocobo_fade_quad_data_97A498;
 	uint32_t snowboard_draw_sky_and_mountains_72DAF0;
 	uint32_t snowboard_submit_draw_sky_quad_graphics_object_72E31F;
 	float* snowboard_sky_quad_pos_x_7B7DB8;

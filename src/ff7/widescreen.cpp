@@ -30,6 +30,38 @@ int viewport_width_plus_x_widescreen_fix = 750;
 int swirl_framebuffer_offset_x_widescreen_fix = 106;
 int swirl_framebuffer_offset_y_widescreen_fix = 64;
 
+void ifrit_first_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer) {
+	int viewport_width_1_fix = ceil(255.f / game_width * wide_viewport_width) - 255;
+	*(short*)(wave_data_pointer + 8) += wide_viewport_x;
+	*(short*)(wave_data_pointer + 16) += wide_viewport_x + viewport_width_1_fix * 2;
+	*(short*)(wave_data_pointer + 24) += wide_viewport_x;
+	*(short*)(wave_data_pointer + 32) += wide_viewport_x + viewport_width_1_fix * 2;
+
+    ff7_externals.engine_draw_sub_66A47E(wave_data_pointer);
+}
+
+void ifrit_second_third_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer) {
+	int viewport_width_1_fix = ceil(255.f / game_width * wide_viewport_width) - 255;
+	int viewport_width_2_fix = ceil(65.f / game_width * wide_viewport_width) - 65;
+	*(short*)(wave_data_pointer + 8) += wide_viewport_x + viewport_width_1_fix * 2;
+	*(short*)(wave_data_pointer + 16) += wide_viewport_x + (viewport_width_1_fix + viewport_width_2_fix) * 2;
+	*(short*)(wave_data_pointer + 24) += wide_viewport_x + viewport_width_1_fix * 2;
+	*(short*)(wave_data_pointer + 32) += wide_viewport_x + (viewport_width_1_fix + viewport_width_2_fix) * 2;
+
+    ff7_externals.engine_draw_sub_66A47E(wave_data_pointer);
+}
+
+void ff7_widescreen_fix_chocobo_submit_quad_graphics_object(int x, int y, int width, int height, int color, int unknown, float z_value, DWORD* pointer)
+{
+	if(width == 640) // Replace only quad related to water effect
+	{
+		x = wide_viewport_x;
+		width = wide_viewport_width;
+		height = wide_viewport_height;
+	}
+	ff7_externals.generic_submit_quad_graphics_object_671D2A(x, y, width, height, color, unknown, z_value, pointer);
+}
+
 void ff7_widescreen_hook_init() {
     // Field fix
     replace_function((uint32_t)ff7_externals.field_clip_with_camera_range_6438F6, ff7_field_clip_with_camera_range);
@@ -175,7 +207,8 @@ void ff7_widescreen_hook_init() {
     patch_code_char(ff7_externals.chocobo_init_viewport_values_76D320 + 0x29, wide_viewport_y);
     patch_code_int(ff7_externals.chocobo_init_viewport_values_76D320 + 0x62, wide_viewport_y);
     patch_code_dword((uint32_t)ff7_externals.chocobo_submit_draw_fade_quad_77B1CE + 0x99, (uint32_t)&wide_viewport_x);
-    patch_code_int((uint32_t)ff7_externals.chocobo_quads_graphics_data_97A498 + 0x28, wide_viewport_width / 2);
+    patch_code_int((uint32_t)ff7_externals.chocobo_fade_quad_data_97A498 + 0x28, wide_viewport_width / 2);
+    replace_call_function(ff7_externals.chocobo_submit_draw_water_quad_77A7D0 + 0x9F, ff7_widescreen_fix_chocobo_submit_quad_graphics_object);
 
     // Snowboard fix
     patch_code_int(ff7_externals.snowboard_draw_sky_and_mountains_72DAF0 + 0xCC, ceil(wide_viewport_width / 4));
