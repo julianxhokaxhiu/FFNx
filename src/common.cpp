@@ -777,12 +777,6 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 		{
 			ret = TRUE;
 
-			if (fullscreen)
-			{
-				// Hide the cursor
-				if (!enable_devtools) while (ShowCursor(false) >= 0);
-			}
-
 			ShowWindow(hWnd, SW_SHOWNORMAL);
 			UpdateWindow(hWnd);
 			hdc = GetDC(hWnd);
@@ -850,6 +844,12 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 				if (VREF(game_object, engine_loop_obj.init)(game_object))
 				{
+					if (!fullscreen || enable_devtools)
+					{
+						// Show the cursor
+						while (ShowCursor(true) < 0);
+					}
+
 					nxAudioEngine.init();
 
 					if (borderless) toggle_borderless();
@@ -1043,9 +1043,6 @@ void common_flip(struct game_obj *game_object)
 		}
 
 		SetWindowTextA(gameHwnd, newWindowTitle);
-
-		// Show the cursor
-		while (ShowCursor(true) < 0);
 	}
 
 	fps_counters[0]++;
