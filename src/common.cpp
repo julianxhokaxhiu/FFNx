@@ -589,7 +589,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					MoveWindow(gameHwnd, 0, 0, dmNewScreenSettings.dmPelsWidth, dmNewScreenSettings.dmPelsHeight, true);
 
 					// Hide the cursor
-					while (ShowCursor(false) >= 0);
+					if (!enable_devtools) while (ShowCursor(false) >= 0);
 
 					fullscreen = true;
 					borderless = false;
@@ -780,7 +780,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			if (fullscreen)
 			{
 				// Hide the cursor
-				while (ShowCursor(false) >= 0);
+				if (!enable_devtools) while (ShowCursor(false) >= 0);
 			}
 
 			ShowWindow(hWnd, SW_SHOWNORMAL);
