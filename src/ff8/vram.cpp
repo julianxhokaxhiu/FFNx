@@ -25,6 +25,8 @@
 #include "../patch.h"
 #include "../image/tim.h"
 
+TexturePacker texturePacker;
+
 char next_texture_name[MAX_PATH] = "";
 uint16_t *next_pal_data = nullptr;
 int next_psxvram_x = -1;
