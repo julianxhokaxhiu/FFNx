@@ -158,7 +158,7 @@ target_compile_features(${RELEASE_NAME}
 target_link_options(${RELEASE_NAME} PRIVATE /PDBALTPATH:${RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.def)
 
 # SHADER COMPILATION
-set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post")
+set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.blit")
 foreach(FFNX_SHADER IN LISTS FFNX_SHADERS)
   foreach(BGFX_VARYING flat smooth)
     add_custom_command(

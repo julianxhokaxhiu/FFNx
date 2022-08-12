@@ -58,6 +58,7 @@ extern std::vector<std::string> external_voice_ext;
 extern std::string external_ambient_path;
 extern std::vector<std::string> external_ambient_ext;
 extern std::string external_lighting_path;
+extern std::string external_widescreen_path;
 extern bool enable_voice_music_fade;
 extern long external_voice_music_fade_volume;
 extern bool enable_voice_auto_text;

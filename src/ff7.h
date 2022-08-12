@@ -2415,6 +2415,7 @@ struct ff7_externals
 	uint32_t *field_bg_multiplier;
 	void (*add_page_tile)(float, float, float, float, float, uint32_t, uint32_t);
 	double (*field_layer_sub_623C0F)(rotation_matrix*, int, int, int);
+	void (*field_draw_gray_quads_644E90)();
 	field_trigger_header** field_triggers_header;
 	rotation_matrix* field_camera_rotation_matrix_CFF3D8;
 	uint32_t field_load_textures;

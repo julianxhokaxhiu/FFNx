@@ -28,6 +28,8 @@
 #include "../common.h"
 #include "../video/movies.h"
 
+#include "ff7/widescreen.h"
+
 uint32_t nodefer = false;
 
 #define DEFERRED_MAX 1024
@@ -161,7 +163,7 @@ uint32_t gl_defer_blit_framebuffer(struct texture_set *texture_set, struct tex_h
 	deferred_draws[defer].fb_texture_set = texture_set;
 	deferred_draws[defer].fb_tex_header = tex_header;
 	deferred_draws[defer].draw_call_type = DCT_BLIT;
-    lastBlitDrawCallIndex = defer;
+	lastBlitDrawCallIndex = defer;
 
 	num_deferred++;
 
@@ -234,6 +236,40 @@ uint32_t gl_defer_yuv_frame(uint32_t buffer_index)
 
 	deferred_draws[defer].movie_buffer_index = buffer_index;
 	deferred_draws[defer].draw_call_type = DCT_DRAW_MOVIE;
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_yuv_frame: return true\n");
+
+	return true;
+}
+
+uint32_t gl_defer_zoom()
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_zoom");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_zoom: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_zoom: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].draw_call_type = DCT_ZOOM;
 
 	num_deferred++;
 
@@ -436,6 +472,11 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 			draw_yuv_frame(deferred_draws[i].movie_buffer_index);
 			continue;
 		}
+		else if(deferred_draws[i].draw_call_type == DCT_ZOOM)
+		{
+			ff7_field_draw_gray_quads_sub_644E90();
+			continue;
+		}
 
 		if (deferred_draws[i].vertices == nullptr)
 		{
@@ -444,6 +485,9 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 
 		if (shadow_callback != nullptr && !isFieldShadowDrawn && deferred_draws[i].vertextype != TLVERTEX)
 		{
+			newRenderer.setD3DProjection(&current_state.d3dprojection_matrix);
+			newRenderer.setD3DViweport(&d3dviewport_matrix);
+
 			(*shadow_callback)();
 			isFieldShadowDrawn = true;
 		}
@@ -476,6 +520,7 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 	}
 
 	num_deferred = 0;
+	lastBlitDrawCallIndex = -1;
 
 	nodefer = false;
 
@@ -590,7 +635,6 @@ void gl_draw_sorted_deferred()
 	}
 
 	num_sorted_deferred = 0;
-	lastBlitDrawCallIndex = -1;
 
 	nodefer = false;
 

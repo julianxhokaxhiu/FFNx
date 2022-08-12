@@ -24,11 +24,25 @@
 #include "widescreen.h"
 #include "../patch.h"
 #include "../ff7.h"
+#include "../cfg.h"
+#include "../renderer.h"
 #include "cmath"
 
 int viewport_width_plus_x_widescreen_fix = 750;
 int swirl_framebuffer_offset_x_widescreen_fix = 106;
 int swirl_framebuffer_offset_y_widescreen_fix = 64;
+
+Widescreen widescreen;
+
+// This function should be called at each frame after drawing backgrounds and 3d models
+void ff7_field_draw_gray_quads_sub_644E90() {
+    ff7_externals.field_draw_gray_quads_644E90();
+
+    if(gl_defer_zoom()) return;
+
+    if(aspect_ratio == AR_WIDESCREEN && widescreen.getMode() == WM_ZOOM)
+        newRenderer.zoomBackendFrameBuffer();
+}
 
 void ifrit_first_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer) {
 	int viewport_width_1_fix = ceil(255.f / game_width * wide_viewport_width) - 255;
@@ -77,6 +91,8 @@ void ff7_widescreen_hook_init() {
     memset_code(ff7_externals.field_submit_draw_pointer_hand_60D572 + 0x39, 0x90, 12); // Remove useless culling cursor
     patch_code_int(ff7_externals.field_init_viewport_values + 0xBE, wide_viewport_width + wide_viewport_x - 60);
     patch_code_int(ff7_externals.field_init_viewport_values + 0xC8, 18);
+    // For zoom field maps
+    replace_call_function(ff7_externals.field_draw_everything + 0x360, ff7_field_draw_gray_quads_sub_644E90);
 
     // Swirl fix
     patch_code_dword(ff7_externals.swirl_loop_sub_4026D4 + 0x335, (uint32_t)&wide_viewport_x);
@@ -230,4 +246,59 @@ void ff7_widescreen_hook_init() {
     patch_code_dword(ff7_externals.menu_submit_draw_fade_quad_6CD64E + 0x163, (uint32_t)&wide_viewport_x);
     patch_code_dword(ff7_externals.menu_submit_draw_fade_quad_6CD64E + 0x111, (uint32_t)&wide_viewport_width);
     patch_code_dword(ff7_externals.menu_submit_draw_fade_quad_6CD64E + 0x16F, (uint32_t)&wide_viewport_width);
+}
+
+void Widescreen::loadConfig()
+{
+    char _fullpath[MAX_PATH];
+    sprintf(_fullpath, "%s/%s/config.toml", basedir, external_widescreen_path.c_str());
+
+    try
+    {
+        config = toml::parse_file(_fullpath);
+    }
+    catch (const toml::parse_error &err)
+    {
+        config = toml::parse("");
+    }
+}
+
+void Widescreen::init()
+{
+    loadConfig();
+}
+
+void Widescreen::initParamsFromConfig()
+{
+    field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
+    camera_range.left = field_triggers_header_ptr->camera_range.left;
+    camera_range.right = field_triggers_header_ptr->camera_range.right;
+    camera_range.bottom = field_triggers_header_ptr->camera_range.bottom;
+    camera_range.top = field_triggers_header_ptr->camera_range.top;
+    if(camera_range.right - camera_range.left >= 426)
+        widescreen_mode = WM_EXTEND_ONLY;
+    else
+        widescreen_mode = WM_DISABLED;
+
+    auto pName = get_current_field_name();
+    if(pName == 0) return;
+
+    std::string _name(pName);
+    auto node = config[_name];
+    if(node)
+    {
+        if(auto leftNode = node["left"]) camera_range.left = leftNode.value_or(0);
+        if(auto rightNode = node["right"]) camera_range.right = rightNode.value_or(0);
+        if(auto bottomNode = node["bottom"])camera_range.bottom = bottomNode.value_or(0);
+        if(auto topNode = node["top"]) camera_range.top = topNode.value_or(0);
+
+        if(auto modeNode = node["mode"]) widescreen_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
+
+        if(widescreen_mode == WM_ZOOM)
+        {
+            int verticalRangeOffset = 9 * (camera_range.right - camera_range.left) / 16 - 240;
+            camera_range.bottom -= verticalRangeOffset / 2;
+            camera_range.top += verticalRangeOffset / 2;
+        }
+    }
 }
