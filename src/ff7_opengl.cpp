@@ -237,6 +237,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	ff7_field_hook_init();
 
 	// #####################
+	// red XIII eye blinking
+	// #####################
+	byte ff7_redxiii_eye_fix[] = "\xEC\x79\x90\x00\x00\x00\x00\x00";
+	memcpy_code(ff7_externals.field_models_eye_blink_buffer + 0x58, ff7_redxiii_eye_fix, sizeof(ff7_redxiii_eye_fix) - 1);
+
+	// #####################
 	// worldmap footsteps
 	// #####################
 	if(ff7_footsteps)
