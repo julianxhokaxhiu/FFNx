@@ -1613,7 +1613,21 @@ void Renderer::useTexture(uint16_t rt, uint32_t slot)
     }
 };
 
-uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+uint32_t Renderer::createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+    uint16_t newX = getInternalCoordX(x);
+    uint16_t newY = getInternalCoordY(y);
+    uint16_t newWidth = getInternalCoordX(width);
+    uint16_t newHeight = getInternalCoordY(height);
+
+    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_BLIT_DST);
+
+    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
+
+    return ret.idx;
+}
+
+void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     uint16_t newX = getInternalCoordX(x);
     uint16_t newY = getInternalCoordY(y);
@@ -1622,9 +1636,7 @@ uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t 
 
     uint16_t dstY = 0;
 
-    bgfx::TextureHandle ret = bgfx::createTexture2D(newWidth, newHeight, false, 1, internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_BLIT_DST);
-
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, ret.idx, newX, newY, newWidth, newHeight);
+    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => XY(%u,%u) WH(%u,%u)\n", __func__, dest, newX, newY, newWidth, newHeight);
 
     if (getCaps()->originBottomLeft)
     {
@@ -1647,15 +1659,14 @@ uint32_t Renderer::blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t 
 
     backendViewId++;
 
-    bgfx::blit(backendViewId, ret, 0, dstY, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
+    bgfx::TextureHandle texHandle = { dest };
+    bgfx::blit(backendViewId, texHandle, 0, dstY, bgfx::getTexture(backendFrameBuffer), newX, newY, newWidth, newHeight);
     bgfx::touch(backendViewId);
     setClearFlags(false, false);
 
     backendViewId++;
     setClearFlags(false, false);
-
-    return ret.idx;
-};
+}
 
 void Renderer::isMovie(bool flag)
 {

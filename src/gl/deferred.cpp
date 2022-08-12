@@ -25,6 +25,8 @@
 #include "../gl.h"
 #include "../macro.h"
 #include "../log.h"
+#include "../common.h"
+#include "../video/movies.h"
 
 uint32_t nodefer = false;
 
@@ -36,17 +38,19 @@ uint32_t num_deferred;
 struct deferred_sorted_draw *deferred_sorted_draws;
 uint32_t num_sorted_deferred;
 
+int lastBlitDrawCallIndex = -1;
+
 // save a draw call for later processing
 uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
 {
-	if (trace_all) ffnx_trace("gl_defer_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
-
-	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
-
 	if (ff8 || !enable_lighting)
 	{
 		return false;
 	}
+
+	if (trace_all) ffnx_trace("gl_defer_draw: call with primitivetype: %u - vertextype: %u - vertexcount: %u - count: %u - clip: %d - mipmap: %d\n", primitivetype, vertextype, vertexcount, count, clip, mipmap);
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
 
 	// global disable
 	if (nodefer) {
@@ -70,6 +74,7 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	deferred_draws[defer].vertexcount = vertexcount;
 	deferred_draws[defer].indices = (WORD*)driver_malloc(sizeof(*indices) * count);
 	deferred_draws[defer].vertices = (nvertex*)driver_malloc(sizeof(*vertices) * vertexcount);
+	deferred_draws[defer].draw_call_type = DCT_DRAW;
 	gl_save_state(&deferred_draws[defer].state);
 
 	memcpy(deferred_draws[defer].indices, indices, sizeof(*indices) * count);
@@ -124,6 +129,115 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	num_deferred++;
 
 	if (trace_all) ffnx_trace("gl_defer_draw: return true\n");
+
+	return true;
+}
+
+uint32_t gl_defer_blit_framebuffer(struct texture_set *texture_set, struct tex_header *tex_header)
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_blit_framebuffer_buffer");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_draw: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_blit_framebuffer_buffer: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].fb_texture_set = texture_set;
+	deferred_draws[defer].fb_tex_header = tex_header;
+	deferred_draws[defer].draw_call_type = DCT_BLIT;
+    lastBlitDrawCallIndex = defer;
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_blit_framebuffer_buffer: return true\n");
+
+	return true;
+}
+
+uint32_t gl_defer_clear_buffer(uint32_t clear_color, uint32_t clear_depth, struct game_obj *game_object)
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_clear_buffer");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_clear_buffer: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_clear_buffer: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].clear_color = clear_color;
+	deferred_draws[defer].clear_depth = clear_depth;
+	deferred_draws[defer].game_object = game_object;
+	deferred_draws[defer].draw_call_type = DCT_CLEAR;
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_clear_buffer: return true\n");
+
+	return true;
+}
+
+uint32_t gl_defer_yuv_frame(uint32_t buffer_index)
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_yuv_frame");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_yuv_frame: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_yuv_frame: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].movie_buffer_index = buffer_index;
+	deferred_draws[defer].draw_call_type = DCT_DRAW_MOVIE;
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_yuv_frame: return true\n");
 
 	return true;
 }
@@ -308,6 +422,21 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 
 	for (int i = 0; i < num_deferred; ++i)
 	{
+		if(deferred_draws[i].draw_call_type == DCT_CLEAR)
+		{
+			common_clear(deferred_draws[i].clear_color, deferred_draws[i].clear_depth, true, deferred_draws[i].game_object);
+			continue;
+		} else if(deferred_draws[i].draw_call_type == DCT_BLIT)
+		{
+			blit_framebuffer_texture(deferred_draws[i].fb_texture_set, deferred_draws[i].fb_tex_header);
+			continue;
+		}
+		else if(deferred_draws[i].draw_call_type == DCT_DRAW_MOVIE)
+		{
+			draw_yuv_frame(deferred_draws[i].movie_buffer_index);
+			continue;
+		}
+
 		if (deferred_draws[i].vertices == nullptr)
 		{
 			continue;
@@ -324,7 +453,7 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 		gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
 			deferred_draws[i].vertextype,
 			deferred_draws[i].vertices,
-			deferred_draws[i].normals,
+			i > lastBlitDrawCallIndex ? deferred_draws[i].normals : 0,
 			deferred_draws[i].vertexcount,
 			deferred_draws[i].indices,
 			deferred_draws[i].count,
@@ -349,27 +478,6 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 	num_deferred = 0;
 
 	nodefer = false;
-
-	gl_load_state(&saved_state);
-}
-
-void gl_set_projection_viewport_matrices()
-{
-	struct driver_state saved_state;
-
-	gl_save_state(&saved_state);
-
-	for (int i = 0; i < num_deferred; ++i)
-	{
-		if (deferred_draws[i].vertextype != TLVERTEX)
-		{
-			gl_load_state(&deferred_draws[i].state);
-
-			newRenderer.setD3DProjection(&current_state.d3dprojection_matrix);
-			newRenderer.setD3DViweport(&d3dviewport_matrix);
-			break;
-		}
-	}
 
 	gl_load_state(&saved_state);
 }
@@ -482,6 +590,7 @@ void gl_draw_sorted_deferred()
 	}
 
 	num_sorted_deferred = 0;
+	lastBlitDrawCallIndex = -1;
 
 	nodefer = false;
 

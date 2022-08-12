@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2022 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -320,6 +321,8 @@ struct game_mode *getmode();
 struct game_mode *getmode_cached();
 struct tex_header *make_framebuffer_tex(uint32_t tex_w, uint32_t tex_h, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color_key);
 void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *game_object);
+uint32_t create_framebuffer_texture(struct texture_set *texture_set, struct tex_header *tex_header);
+void blit_framebuffer_texture(struct texture_set *texture_set, struct tex_header *tex_header);
 
 void get_data_lang_path(PCHAR buffer);
 void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);
