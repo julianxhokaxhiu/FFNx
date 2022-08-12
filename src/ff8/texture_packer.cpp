@@ -29,7 +29,7 @@
 TexturePacker::TexturePacker() :
 	_vram(nullptr)
 {
-	memset(_vramTextureIds, INVALID_TEXTURE, VRAM_WIDTH * VRAM_HEIGHT);
+	memset(_vramTextureIds, INVALID_TEXTURE, VRAM_WIDTH * VRAM_HEIGHT * sizeof(ModdedTextureId));
 }
 
 void TexturePacker::cleanVramTextureIds(const TextureInfos &texture)
@@ -518,6 +518,7 @@ void TexturePacker::Texture::destroyImage()
 {
 	if (_image != nullptr) {
 		bimg::imageFree(_image);
+		_image = nullptr;
 	}
 }
 

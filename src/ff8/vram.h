@@ -24,6 +24,6 @@
 
 #include "texture_packer.h"
 
-TexturePacker texturePacker;
+extern TexturePacker texturePacker;
 
 void vram_init();
