@@ -233,6 +233,8 @@ void Renderer::updateRendererShaderPaths()
     fragmentShadowMapPath += ".smooth" + shaderSuffix + ".frag";
     vertexFieldShadowPath += ".smooth" + shaderSuffix + ".vert";
     fragmentFieldShadowPath += ".smooth" + shaderSuffix + ".frag";
+    vertexBlitPath += ".flat" + shaderSuffix + ".vert";
+    fragmentBlitPath += ".flat" + shaderSuffix + ".frag";
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
@@ -755,6 +757,12 @@ void Renderer::init()
         true
     );
 
+    backendProgramHandles[RendererProgram::BLIT] = bgfx::createProgram(
+        getShader(vertexBlitPath.c_str()),
+        getShader(fragmentBlitPath.c_str()),
+        true
+    );
+
     vertexLayout
         .begin()
         .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
@@ -1170,37 +1178,50 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     scissorWidth = getInternalCoordX(width);
     scissorHeight = getInternalCoordY(height);
 
-    if(aspect_ratio == AR_WIDESCREEN)
+    if(aspect_ratio != AR_WIDESCREEN) return;
+
+    // This removes the black bars on the top and bottom of the screen
+    if(y == 16 && height == 448)
     {
-        // Keep the default scissor for FIELD mode movies and credits mode
-        struct game_mode* mode = getmode_cached();
-        bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
-        if(is_movie_playing || mode->driver_mode == MODE_CREDITS) {
-            scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
-            return;
-        }
+        scissorOffsetY = getInternalCoordY(0.0);
+        scissorHeight = getInternalCoordY(480);
+    }
 
-        // This removes the black bars on the top and bottom of the screen
-        if(y = 16 && height == 448)
-        {
-            scissorOffsetY = getInternalCoordY(0.0);
-            scissorHeight = getInternalCoordY(480);
-        }
-
-        // This sets a scissor offset for field with width not enough to fill the screen in 16:9
-        field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
-        if(mode->driver_mode == MODE_FIELD && *ff7_externals.field_level_data_pointer != 0)
-        {
-            int cameraRange = (field_triggers_header_ptr->camera_range.right - field_triggers_header_ptr->camera_range.left);
-            if(cameraRange < game_width / 2 + abs(wide_viewport_x))
+    struct game_mode* mode = getmode_cached();
+    switch(mode->driver_mode)
+    {
+        case MODE_CREDITS:
             {
+                // Keep the default scissor for credits mode
                 scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
-                return;
             }
-        }
+            break;
+        case MODE_FIELD:
+            {
+                // Keep the default scissor for movies and widescreen disabled fields
+                bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
+                if(is_movie_playing || widescreen.getMode() == WM_DISABLED)
+                {
+                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+                    return;
+                }
 
-        // This intercepts the scissor width and makes it bigger to fit widescreen
-        scissorWidth = getInternalCoordX(width + (wide_viewport_width - game_width));
+                // This changes the scissor width and makes it bigger to fit widescreen
+                if(x == 0 && width == game_width)
+                    scissorWidth = getInternalCoordX(wide_viewport_width);
+                else
+                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+            }
+            break;
+        default:
+            {
+                // This changes the scissor width and makes it bigger to fit widescreen
+                if(x == 0 && width == game_width)
+                    scissorWidth = getInternalCoordX(wide_viewport_width);
+                else if (x != 0)
+                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+            }
+            break;
     }
 }
 
@@ -1666,6 +1687,92 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
 
     backendViewId++;
     setClearFlags(false, false);
+}
+
+void Renderer::zoomBackendFrameBuffer()
+{
+    if(!internalState.bHasDrawBeenDone) return;
+
+    auto camera_range = widescreen.getCameraRange();
+    int hCameraRangeSize = camera_range.right - camera_range.left;
+    int zoomed_x = wide_viewport_width / 2 - hCameraRangeSize - 1;
+    float vOffset = 240 - 9 * (camera_range.right - camera_range.left) / 16;
+
+    uint16_t newX = getInternalCoordX(zoomed_x);
+    uint16_t newY = getInternalCoordY(vOffset);
+    uint16_t newWidth = newRenderer.getInternalCoordX(2 * hCameraRangeSize);
+    uint16_t newHeight = newRenderer.getInternalCoordY(game_height - vOffset);
+
+    uint16_t texture = newRenderer.createBlitTexture(0, vOffset, game_width, game_height- 2 * vOffset);
+
+    bgfx::TextureHandle textureHandle = { texture };
+
+    backendViewId++;
+    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
+    bgfx::touch(backendViewId);
+    bgfx::blit(backendViewId, textureHandle, 0, 0, bgfx::getTexture(backendFrameBuffer, 0), newX, newY, newWidth, newHeight);
+    backendViewId++;
+    bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
+    bgfx::touch(backendViewId);
+
+    /*  y0    y2
+     x0 +-----+ x2
+        |    /|
+        |   / |
+        |  /  |
+        | /   |
+        |/    |
+     x1 +-----+ x3
+        y1    y3
+    */
+
+    // 0
+    float x0 = wide_viewport_x;
+    float y0 = wide_viewport_y;
+    float u0 = 0.0f;
+    float v0 = getCaps()->originBottomLeft ? 1.0f : 0.0f;
+    // 1
+    float x1 = x0;
+    float y1 = wide_viewport_height;
+    float u1 = u0;
+    float v1 = getCaps()->originBottomLeft ? 0.0f : 1.0f;
+    // 2
+    float x2 = x0 + wide_viewport_width;
+    float y2 = y0;
+    float u2 = 1.0f;
+    float v2 = v0;
+    // 3
+    float x3 = x2;
+    float y3 = y1;
+    float u3 = u2;
+    float v3 = v1;
+
+    struct nvertex vertices[] = {
+        {x0, y0, 1.0f, 1.0f, 0xff000000, 0, u0, v0},
+        {x1, y1, 1.0f, 1.0f, 0xff000000, 0, u1, v1},
+        {x2, y2, 1.0f, 1.0f, 0xff000000, 0, u2, v2},
+        {x3, y3, 1.0f, 1.0f, 0xff000000, 0, u3, v3},
+    };
+    WORD indices[] = {
+        0, 1, 2,
+        1, 3, 2
+    };
+
+    backendProgram = RendererProgram::BLIT;
+
+    useTexture(texture);
+
+    bindVertexBuffer(vertices, 0, 4);
+    bindIndexBuffer(indices, 6);
+
+    doDepthTest(false);
+    setCullMode(DISABLED);
+    setBlendMode(RendererBlendMode::BLEND_DISABLED);
+    setPrimitiveType();
+
+    draw();
+
+    if (bgfx::isValid(textureHandle)) bgfx::destroy(textureHandle);
 }
 
 void Renderer::isMovie(bool flag)

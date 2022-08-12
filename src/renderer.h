@@ -162,6 +162,7 @@ private:
         FIELD_SHADOW,
         POSTPROCESSING,
         OVERLAY,
+        BLIT,
         COUNT
     };
 
@@ -247,6 +248,8 @@ private:
     std::string fragmentShadowMapPath = "shaders/FFNx.shadowmap";
     std::string vertexFieldShadowPath = "shaders/FFNx.field.shadow";
     std::string fragmentFieldShadowPath = "shaders/FFNx.field.shadow";
+    std::string vertexBlitPath = "shaders/FFNx.blit";
+    std::string fragmentBlitPath = "shaders/FFNx.blit";
 
     bgfx::ViewId backendViewId = 1;
     RendererProgram backendProgram = RendererProgram::SMOOTH;
@@ -373,6 +376,7 @@ public:
     void useTexture(uint16_t texId, uint32_t slot = 0);
     uint32_t createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     void blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+    void zoomBackendFrameBuffer();
 
     void isMovie(bool flag = false);
     void isTLVertex(bool flag = false);

@@ -338,6 +338,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.add_page_tile = (void (*)(float, float, float, float, float, uint32_t, uint32_t))get_relative_call(ff7_externals.field_layer2_pick_tiles, 0x327);
 	ff7_externals.field_triggers_header = (field_trigger_header**)get_absolute_value(ff7_externals.field_layer3_pick_tiles, 0x134);
 	ff7_externals.field_camera_rotation_matrix_CFF3D8 = (rotation_matrix*)get_absolute_value(ff7_externals.field_layer3_pick_tiles, 0x7A);
+	ff7_externals.field_draw_gray_quads_644E90 = (void(*)())get_relative_call(ff7_externals.field_draw_everything, 0x360);
 
 	ff7_externals.field_load_textures = get_relative_call(ff7_externals.field_sub_60DCED, 0x107);
 	ff7_externals.field_convert_type2_layers = (void (*)())get_relative_call(ff7_externals.field_load_textures, 0xD);
