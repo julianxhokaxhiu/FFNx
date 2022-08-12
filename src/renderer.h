@@ -371,7 +371,8 @@ public:
     bool saveTexture(const char* filename, uint32_t width, uint32_t height, const void* data);
     void deleteTexture(uint16_t texId);
     void useTexture(uint16_t texId, uint32_t slot = 0);
-    uint32_t blitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+    uint32_t createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+    void blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
     void isMovie(bool flag = false);
     void isTLVertex(bool flag = false);

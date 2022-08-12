@@ -40,3 +40,5 @@ void ffmpeg_loop();
 uint32_t ffmpeg_get_movie_frame();
 
 short ffmpeg_get_fps_ratio();
+
+void draw_yuv_frame(uint32_t buffer_index);

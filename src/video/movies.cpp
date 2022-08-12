@@ -327,6 +327,8 @@ void buffer_yuv_frame(uint8_t **planes, int *strides)
 
 void draw_yuv_frame(uint32_t buffer_index)
 {
+	if(gl_defer_yuv_frame(buffer_index)) return;
+
 	for (uint32_t idx = 0; idx < 3; idx++)
 		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
 

@@ -28,6 +28,14 @@
 #define LVERTEX 2
 #define TLVERTEX 3
 
+enum DrawCallType
+{
+	DCT_CLEAR = 0,
+	DCT_BLIT,
+	DCT_DRAW,
+	DCT_DRAW_MOVIE
+};
+
 struct driver_state
 {
 	struct texture_set *texture_set;
@@ -62,6 +70,13 @@ struct deferred_draw
 	uint32_t clip;
 	uint32_t mipmap;
 	struct driver_state state;
+	DrawCallType draw_call_type;
+	struct texture_set *fb_texture_set;
+	struct tex_header *fb_tex_header;
+	uint32_t clear_color;
+	uint32_t clear_depth;
+	struct game_obj *game_object;
+	uint32_t movie_buffer_index;
 };
 
 struct deferred_sorted_draw
@@ -99,8 +114,10 @@ void gl_save_state(struct driver_state *dest);
 void gl_load_state(struct driver_state *src);
 uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap);
 uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap);
+uint32_t gl_defer_blit_framebuffer(struct texture_set *texture_set, struct tex_header *tex_header);
+uint32_t gl_defer_clear_buffer(uint32_t clear_color, uint32_t clear_depth, struct game_obj *game_object);
+uint32_t gl_defer_yuv_frame(uint32_t buffer_index);
 void gl_draw_deferred(draw_field_shadow_callback shadow_callback);
-void gl_set_projection_viewport_matrices();
 struct boundingbox calculateSceneAabb();
 void gl_draw_sorted_deferred();
 void gl_check_deferred(struct texture_set *texture_set);

@@ -1168,6 +1168,8 @@ void common_flip(struct game_obj *game_object)
 // clear_all below
 void common_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, struct game_obj *game_object)
 {
+	if(gl_defer_clear_buffer(clear_color, clear_depth, game_object)) return;
+
 	uint32_t mode = getmode_cached()->driver_mode;
 
 	if(trace_all) ffnx_trace("dll_gfx: clear %i %i %i\n", clear_color, clear_depth, unknown);
@@ -1339,7 +1341,7 @@ void common_unload_texture(struct texture_set *texture_set)
 // create a texture from an area of the framebuffer, source rectangle is encoded into tex header
 // with our fictional version FB_TEXT_VERSION
 // return true to short-circuit texture loader
-uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_header *tex_header)
+uint32_t create_framebuffer_texture(struct texture_set *texture_set, struct tex_header *tex_header)
 {
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, tex_header);
@@ -1347,9 +1349,9 @@ uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_he
 
 	if(VREF(tex_header, version) != FB_TEX_VERSION) return false;
 
-	if(trace_all) ffnx_trace("load_framebuffer_texture: XY(%u,%u) %ux%u\n", VREF(tex_header, fb_tex.x), VREF(tex_header, fb_tex.y), VREF(tex_header, fb_tex.w), VREF(tex_header, fb_tex.h));
+	if(trace_all) ffnx_trace("create_framebuffer_texture: XY(%u,%u) %ux%u\n", VREF(tex_header, fb_tex.x), VREF(tex_header, fb_tex.y), VREF(tex_header, fb_tex.w), VREF(tex_header, fb_tex.h));
 
-	texture = newRenderer.blitTexture(
+	texture = newRenderer.createBlitTexture(
 		VREF(tex_header, fb_tex.x),
 		VREF(tex_header, fb_tex.y),
 		VREF(tex_header, fb_tex.w),
@@ -1360,6 +1362,27 @@ uint32_t load_framebuffer_texture(struct texture_set *texture_set, struct tex_he
 
 	return true;
 }
+
+void blit_framebuffer_texture(struct texture_set *texture_set, struct tex_header *tex_header)
+{
+	VOBJ(texture_set, texture_set, texture_set);
+	VOBJ(tex_header, tex_header, tex_header);
+
+	if(VREF(tex_header, version) != FB_TEX_VERSION) return;
+
+	if(gl_defer_blit_framebuffer(texture_set, tex_header)) return;
+
+	if(trace_all) ffnx_trace("load_framebuffer_texture: XY(%u,%u) %ux%u\n", VREF(tex_header, fb_tex.x), VREF(tex_header, fb_tex.y), VREF(tex_header, fb_tex.w), VREF(tex_header, fb_tex.h));
+
+	newRenderer.blitTexture(
+		VREF(texture_set, texturehandle[0]),
+		VREF(tex_header, fb_tex.x),
+		VREF(tex_header, fb_tex.y),
+		VREF(tex_header, fb_tex.w),
+		VREF(tex_header, fb_tex.h)
+	);
+}
+
 
 // Scale 32-bit BGRA image in place
 void scale_up_image_data_in_place(uint8_t *sourceAndTarget, int w, int h, int scale)
@@ -1660,7 +1683,11 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	VRASS(texture_set, texture_format, texture_format);
 
 	// check if this is suppposed to be a framebuffer texture, we may not have to do anything
-	if(load_framebuffer_texture(_texture_set, _tex_header)) return _texture_set;
+	if(create_framebuffer_texture(_texture_set, _tex_header))
+	{
+		blit_framebuffer_texture(_texture_set, _tex_header);
+		return _texture_set;
+	}
 
 	// initialize palette index to a sane value if it hasn't been set
 	if(VREF(tex_header, palettes) > 0)
@@ -2160,7 +2187,8 @@ void common_draw_deferred(struct struc_77 *struc_77, struct game_obj *game_objec
 	if(struc_77->use_matrix) gl_set_worldview_matrix(&struc_77->matrix);
 	if(struc_77->use_matrix_pointer) gl_set_worldview_matrix(struc_77->matrix_pointer);
 
-	gl_draw_without_lighting(ip, VREF(polygon_set, field_4));
+	if (!ff8 && enable_lighting) gl_draw_with_lighting(ip, VREF(polygon_set, polygon_data), VREF(polygon_set, field_4));
+	else gl_draw_without_lighting(ip, VREF(polygon_set, field_4));
 }
 
 // called by the game to render a graphics object, basically a wrapper for
