@@ -586,48 +586,58 @@ void field_clip_with_camera_range_float(vector2<float>* point)
 {
 	field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
 	float half_width = 160;
-	if(is_fieldmap_wide())
+	auto camera_range = field_triggers_header_ptr->camera_range;
+
+	if(aspect_ratio == AR_WIDESCREEN && (is_fieldmap_wide() || widescreen.getMode() == WM_ZOOM))
 	{
-		int cameraRange = field_triggers_header_ptr->camera_range.right - field_triggers_header_ptr->camera_range.left;
-		half_width = ceil(wide_viewport_width / 4.f);
+		camera_range = widescreen.getCameraRange();
+
+		// This centers the background if necessary
+		int cameraRangeSize = camera_range.right - camera_range.left;
+		half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
 	}
 
-	if (point->x > field_triggers_header_ptr->camera_range.right - half_width)
-		point->x = field_triggers_header_ptr->camera_range.right - half_width;
-	if (point->x < field_triggers_header_ptr->camera_range.left + half_width)
-		point->x = field_triggers_header_ptr->camera_range.left + half_width;
-	if (point->y > field_triggers_header_ptr->camera_range.bottom - 120)
-		point->y = field_triggers_header_ptr->camera_range.bottom - 120;
-	if (point->y < field_triggers_header_ptr->camera_range.top + 120)
-		point->y = field_triggers_header_ptr->camera_range.top + 120;
+	if (point->x > camera_range.right - half_width)
+		point->x = camera_range.right - half_width;
+	if (point->x < camera_range.left + half_width)
+		point->x = camera_range.left + half_width;
+	if (point->y > camera_range.bottom - 120)
+		point->y = camera_range.bottom - 120;
+	if (point->y < camera_range.top + 120)
+		point->y = camera_range.top + 120;
 }
 
 void float_sub_643628(field_trigger_header *trigger_header, vector2<float> *delta_position)
 {
 	float half_width = 160;
-	if(is_fieldmap_wide())
+	auto camera_range = trigger_header->camera_range;
+
+	if(aspect_ratio == AR_WIDESCREEN && (is_fieldmap_wide() || widescreen.getMode() == WM_ZOOM))
 	{
-		int cameraRange = trigger_header->camera_range.right - trigger_header->camera_range.left;
-		half_width = ceil(wide_viewport_width / 4.f);
+		camera_range = widescreen.getCameraRange();
+
+		// This centers the background if necessary
+		int cameraRangeSize = camera_range.right - camera_range.left;
+		half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
 	}
 
 	if (trigger_header->field_14[0] == 1)
 	{
-		float diff_top_bottom = trigger_header->camera_range.bottom - 120 - (trigger_header->camera_range.top + 120);
-		float diff_right_left = trigger_header->camera_range.right - half_width - (trigger_header->camera_range.left + half_width);
-		float temp_1 = -(diff_top_bottom * (trigger_header->camera_range.top + 120 - delta_position->y) + diff_right_left * (trigger_header->camera_range.left + half_width - delta_position->x));
+		float diff_top_bottom = camera_range.bottom - 120 - (camera_range.top + 120);
+		float diff_right_left = camera_range.right - half_width - (camera_range.left + half_width);
+		float temp_1 = -(diff_top_bottom * (camera_range.top + 120 - delta_position->y) + diff_right_left * (camera_range.left + half_width - delta_position->x));
 		float temp_square_value = (diff_top_bottom * diff_top_bottom + diff_right_left * diff_right_left) / 256.f;
-		delta_position->x = ((diff_right_left * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.left + half_width;
-		delta_position->y = ((diff_top_bottom * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.top + 120;
+		delta_position->x = ((diff_right_left * temp_1 / temp_square_value) / 256.f) + camera_range.left + half_width;
+		delta_position->y = ((diff_top_bottom * temp_1 / temp_square_value) / 256.f) + camera_range.top + 120;
 	}
 	if (trigger_header->field_14[0] == 2)
 	{
-		float diff_bottom_top = trigger_header->camera_range.top + 120 - (trigger_header->camera_range.bottom - 120);
-		float diff_right_left = trigger_header->camera_range.right - half_width - (trigger_header->camera_range.left + half_width);
-		float temp_1 = -((diff_bottom_top) * (trigger_header->camera_range.bottom - 120 - delta_position->y) + diff_right_left * (trigger_header->camera_range.left + half_width - delta_position->x));
+		float diff_bottom_top = camera_range.top + 120 - (camera_range.bottom - 120);
+		float diff_right_left = camera_range.right - half_width - (camera_range.left + half_width);
+		float temp_1 = -((diff_bottom_top) * (camera_range.bottom - 120 - delta_position->y) + diff_right_left * (camera_range.left + half_width - delta_position->x));
 		float temp_square_value = (diff_bottom_top * diff_bottom_top + diff_right_left * diff_right_left) / 256.f;
-		delta_position->x = ((diff_right_left * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.left + half_width;
-		delta_position->y = ((diff_bottom_top * temp_1 / temp_square_value) / 256.f) + trigger_header->camera_range.bottom - 120;
+		delta_position->x = ((diff_right_left * temp_1 / temp_square_value) / 256.f) + camera_range.left + half_width;
+		delta_position->y = ((diff_bottom_top * temp_1 / temp_square_value) / 256.f) + camera_range.bottom - 120;
 	}
 }
 
@@ -914,6 +924,20 @@ void field_update_scripted_bg_movement()
 		case 6:
 			if(*ff7_externals.scripted_world_move_n_steps)
 			{
+				field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
+				auto camera_range = field_triggers_header_ptr->camera_range;
+				if(aspect_ratio == AR_WIDESCREEN && widescreen.getMode() == WM_ZOOM)
+				{
+					camera_range = widescreen.getCameraRange();
+
+					// This centers the background for fields which width is bigger than 320 but less than what is needed to fill the whole screen in 16:9
+					if(2 * wide_viewport_x - *ff7_externals.scripted_world_final_pos_x > camera_range.right)
+						*ff7_externals.scripted_world_final_pos_x = std::min(0, static_cast<int>(2 * wide_viewport_x - camera_range.right));
+
+					if(-2 * wide_viewport_x - *ff7_externals.scripted_world_final_pos_x < camera_range.left)
+						*ff7_externals.scripted_world_final_pos_x = std::max(0, static_cast<int>(-2 * wide_viewport_x - camera_range.left));
+				}
+
 				std::function<int(int, int, int, int)> field_get_interpolated_value = ff7_externals.modules_global_object->world_move_mode == 5 ?
 					ff7_externals.field_get_linear_interpolated_value : ff7_externals.field_get_smooth_interpolated_value;
 				*ff7_externals.field_curr_delta_world_pos_x = field_get_interpolated_value(
@@ -1142,6 +1166,8 @@ void ff7_field_initialize_variables()
 
 		external_data.blinkFrameIndex = BLINKING_FRAMES;
 	}
+
+	if(aspect_ratio == AR_WIDESCREEN) widescreen.initParamsFromConfig();
 }
 
 void ff7_field_update_models_position(int key_input_status)

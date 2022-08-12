@@ -45,6 +45,7 @@ std::vector<std::string> external_voice_ext;
 std::string external_ambient_path;
 std::vector<std::string> external_ambient_ext;
 std::string external_lighting_path;
+std::string external_widescreen_path;
 bool enable_voice_music_fade;
 long external_voice_music_fade_volume;
 bool enable_voice_auto_text;
@@ -186,6 +187,7 @@ void read_cfg()
 	external_ambient_path = config["external_ambient_path"].value_or("");
 	external_ambient_ext = get_string_or_array_of_strings(config["external_ambient_ext"]);
 	external_lighting_path = config["external_lighting_path"].value_or("");
+	external_widescreen_path = config["external_widescreen_path"].value_or("");
 	save_textures = config["save_textures"].value_or(false);
 	trace_all = config["trace_all"].value_or(false);
 	trace_renderer = config["trace_renderer"].value_or(false);
@@ -405,6 +407,10 @@ void read_cfg()
 	// EXTERNAL LIGHTING PATH
 	if (external_lighting_path.empty())
 		external_lighting_path = "lighting";
+
+	// EXTERNAL WIDESCREEN PATH
+	if (external_widescreen_path.empty())
+		external_widescreen_path = "widescreen";
 
 	// MOD PATH
 	if (mod_path.empty())
