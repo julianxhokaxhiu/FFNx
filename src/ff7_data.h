@@ -496,16 +496,19 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.animation_type_array = (char*)get_absolute_value(ff7_externals.opcode_canm1_canm2, 0x5D);
 	ff7_externals.word_DB958A = (WORD *)get_absolute_value(common_externals.execute_opcode_table[0x23], 0x5);
 
-	ff7_externals.sub_630D50 = get_relative_call(ff7_externals.opcode_message, 0x3B);
-	ff7_externals.sub_631586 = get_relative_call(ff7_externals.sub_630D50, 0x39);
-	ff7_externals.sub_631945 = get_relative_call(ff7_externals.sub_630D50, 0x6D);
-	ff7_externals.opcode_message_loop_code = (WORD*)get_absolute_value(ff7_externals.sub_630D50, 0x12);
-	ff7_externals.current_dialog_string_pointer = (DWORD*)get_absolute_value(ff7_externals.sub_631586, 0x154);
-	ff7_externals.current_dialog_message_speed = (WORD*)get_absolute_value(ff7_externals.sub_631586, 0x1C1);
-	ff7_externals.field_entity_id_list = (char*)get_absolute_value(ff7_externals.sub_631586, 0x1F);
+	ff7_externals.field_opcode_message_update_loop_630D50 = get_relative_call(ff7_externals.opcode_message, 0x3B);
+	ff7_externals.field_text_box_window_create_631586 = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x39);
+	ff7_externals.field_text_box_window_opening_6317A9 = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x5A);
+	ff7_externals.field_text_box_window_paging_631945 = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x6D);
+	ff7_externals.field_text_box_window_reverse_paging_632CAA = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x80);
+	ff7_externals.field_text_box_window_closing_632EB8 = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x235);
+	ff7_externals.opcode_message_loop_code = (WORD*)get_absolute_value(ff7_externals.field_opcode_message_update_loop_630D50, 0x12);
+	ff7_externals.current_dialog_string_pointer = (DWORD*)get_absolute_value(ff7_externals.field_text_box_window_create_631586, 0x154);
+	ff7_externals.current_dialog_message_speed = (WORD*)get_absolute_value(ff7_externals.field_text_box_window_create_631586, 0x1C1);
+	ff7_externals.field_entity_id_list = (char*)get_absolute_value(ff7_externals.field_text_box_window_create_631586, 0x1F);
 
-	ff7_externals.sub_6310A1 = (int (*)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*))get_relative_call(ff7_externals.opcode_ask, 0x8E);
-	ff7_externals.opcode_ask_question_code = (WORD*)get_absolute_value((uint32_t)ff7_externals.sub_6310A1, 0x2FE);
+	ff7_externals.field_opcode_ask_update_loop_6310A1 = (int (*)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*))get_relative_call(ff7_externals.opcode_ask, 0x8E);
+	ff7_externals.opcode_ask_question_code = (WORD*)get_absolute_value((uint32_t)ff7_externals.field_opcode_ask_update_loop_6310A1, 0x2FE);
 
 	ff7_externals.field_music_helper = get_relative_call(ff7_externals.opcode_cmusc, 0x5E);
 	ff7_externals.field_music_id_to_midi_id = (uint32_t (*)(int16_t))get_relative_call(ff7_externals.field_music_helper, 0x3B);
@@ -1125,7 +1128,10 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_opcode_ask_sub_75EEBB = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xBA1);
 	ff7_externals.world_opcode_message = get_relative_call(ff7_externals.world_sub_75EF46, 0x8C);
 	ff7_externals.world_opcode_ask = get_relative_call(ff7_externals.world_sub_75EF46, 0xAF);
-	ff7_externals.world_opcode_message_update_text_769C02 = get_relative_call(ff7_externals.world_opcode_message, 0x6D);
+	ff7_externals.world_text_box_window_opening_769A66 = get_relative_call(ff7_externals.world_opcode_message, 0x5A);
+	ff7_externals.world_text_box_window_paging_769C02 = get_relative_call(ff7_externals.world_opcode_message, 0x6D);
+	ff7_externals.world_text_box_reverse_paging_76ABE9 = get_relative_call(ff7_externals.world_opcode_message, 0x80);
+	ff7_externals.world_text_box_window_closing_76ADF7 = get_relative_call(ff7_externals.world_opcode_message, 0x235);
 	ff7_externals.world_update_player_74EA48 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x2D7);
 	ff7_externals.world_get_player_model_id = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x1B);
 	ff7_externals.world_get_current_key_input_status = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x4A);
