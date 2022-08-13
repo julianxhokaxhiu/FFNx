@@ -75,24 +75,21 @@ mkdir $env:_RELEASE_PATH | Out-Null
 cmake -G "Visual Studio 17 2022" -T host=x86 -A win32 -D_DLL_VERSION="$env:_BUILD_VERSION" -DCMAKE_BUILD_TYPE="$env:_RELEASE_CONFIGURATION" -DCMAKE_TOOLCHAIN_FILE="$vcpkgRoot\scripts\buildsystems\vcpkg.cmake" -S . -B $env:_RELEASE_PATH
 cmake --build $env:_RELEASE_PATH --config $env:_RELEASE_CONFIGURATION
 
-if ($env:_BUILD_BRANCH -notlike "refs/pull/*")
-{
-  mkdir .dist\pkg\FF7_1998 | Out-Null
-  mkdir .dist\pkg\FF8_2000 | Out-Null
-  mkdir .dist\pkg\FFNx_Steam | Out-Null
-  Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FF7_1998
-  Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FF8_2000
-  Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FFNx_Steam
-  Remove-Item .dist\pkg\FF7_1998\FF8.reg
-  Remove-Item .dist\pkg\FF8_2000\FF7.reg
-  Remove-Item .dist\pkg\FFNx_Steam\FF7.reg
-  Remove-Item .dist\pkg\FFNx_Steam\FF8.reg
-  Move-Item .dist\pkg\FF7_1998\FF7.reg .dist\pkg\FF7_1998\FFNx.reg
-  Move-Item .dist\pkg\FF8_2000\FF8.reg .dist\pkg\FF8_2000\FFNx.reg
-  Move-Item .dist\pkg\FF8_2000\FFNx.dll .dist\pkg\FF8_2000\eax.dll
-  Move-Item .dist\pkg\FFNx_Steam\FFNx.dll .dist\pkg\FFNx_Steam\AF3DN.P
+mkdir .dist\pkg\FF7_1998 | Out-Null
+mkdir .dist\pkg\FF8_2000 | Out-Null
+mkdir .dist\pkg\FFNx_Steam | Out-Null
+Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FF7_1998
+Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FF8_2000
+Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FFNx_Steam
+Remove-Item .dist\pkg\FF7_1998\FF8.reg
+Remove-Item .dist\pkg\FF8_2000\FF7.reg
+Remove-Item .dist\pkg\FFNx_Steam\FF7.reg
+Remove-Item .dist\pkg\FFNx_Steam\FF8.reg
+Move-Item .dist\pkg\FF7_1998\FF7.reg .dist\pkg\FF7_1998\FFNx.reg
+Move-Item .dist\pkg\FF8_2000\FF8.reg .dist\pkg\FF8_2000\FFNx.reg
+Move-Item .dist\pkg\FF8_2000\FFNx.dll .dist\pkg\FF8_2000\eax.dll
+Move-Item .dist\pkg\FFNx_Steam\FFNx.dll .dist\pkg\FFNx_Steam\AF3DN.P
 
-  7z a ".\.dist\${env:_RELEASE_NAME}-FF7_1998-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FF7_1998\*"
-  7z a ".\.dist\${env:_RELEASE_NAME}-FF8_2000-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FF8_2000\*"
-  7z a ".\.dist\${env:_RELEASE_NAME}-Steam-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FFNx_Steam\*"
-}
+7z a ".\.dist\${env:_RELEASE_NAME}-FF7_1998-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FF7_1998\*"
+7z a ".\.dist\${env:_RELEASE_NAME}-FF8_2000-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FF8_2000\*"
+7z a ".\.dist\${env:_RELEASE_NAME}-Steam-${env:_RELEASE_VERSION}.zip" ".\.dist\pkg\FFNx_Steam\*"
