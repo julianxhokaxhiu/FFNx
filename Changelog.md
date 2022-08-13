@@ -2,6 +2,21 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.13.0...master
 
+## Common
+
+- Vulkan: Disable HDR support, brings more stability on top of AMD cards
+
+## FF7
+
+- Widescreen: 16:9 native support!
+- Lighting: Fixed minor graphical glitches happening in fields ( https://github.com/julianxhokaxhiu/FFNx/pull/475 )
+- Lighting: Fixed visual glitches happening while using Antialiasing ( https://github.com/julianxhokaxhiu/FFNx/pull/476 )
+- Lighting: Fixed various missing graphical elements through the overall game ( Titan missing floor, etc. ) ( https://github.com/julianxhokaxhiu/FFNx/pull/478 )
+
+## FF8
+
+- Fixed a crash that happened while exiting the game ( https://github.com/julianxhokaxhiu/FFNx/pull/479 )
+
 # 1.13.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.12.0...1.13.0
