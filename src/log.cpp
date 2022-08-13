@@ -28,6 +28,8 @@
 
 #include "renderer.h"
 
+#define FFNX_DEBUG_BUFFER_SIZE 4096
+
 FILE *app_log;
 
 void open_applog(char *path)
@@ -40,7 +42,7 @@ void open_applog(char *path)
 void plugin_trace(const char *fmt, ...)
 {
 	va_list args;
-	char tmp_str[1024];
+	char tmp_str[FFNX_DEBUG_BUFFER_SIZE];
 
 	va_start(args, fmt);
 
@@ -54,7 +56,7 @@ void plugin_trace(const char *fmt, ...)
 void plugin_info(const char *fmt, ...)
 {
 	va_list args;
-	char tmp_str[1024];
+	char tmp_str[FFNX_DEBUG_BUFFER_SIZE];
 
 	va_start(args, fmt);
 
@@ -68,7 +70,7 @@ void plugin_info(const char *fmt, ...)
 void plugin_glitch(const char *fmt, ...)
 {
 	va_list args;
-	char tmp_str[1024];
+	char tmp_str[FFNX_DEBUG_BUFFER_SIZE];
 
 	va_start(args, fmt);
 
@@ -82,7 +84,7 @@ void plugin_glitch(const char *fmt, ...)
 void plugin_error(const char *fmt, ...)
 {
 	va_list args;
-	char tmp_str[1024];
+	char tmp_str[FFNX_DEBUG_BUFFER_SIZE];
 
 	va_start(args, fmt);
 
@@ -95,7 +97,7 @@ void plugin_error(const char *fmt, ...)
 
 void debug_print(const char *str)
 {
-	char tmp_str[1024];
+	char tmp_str[FFNX_DEBUG_BUFFER_SIZE + 16];
 
 	sprintf(tmp_str, "[%08i] %s", frame_counter, str);
 
@@ -157,7 +159,7 @@ void external_debug_print(const char *str)
 void external_debug_print2(const char *fmt, ...)
 {
 	va_list args;
-	char tmp_str[1024];
+	char tmp_str[FFNX_DEBUG_BUFFER_SIZE];
 
 	va_start(args, fmt);
 
@@ -171,8 +173,8 @@ void external_debug_print2(const char *fmt, ...)
 void debug_printf(const char *prefix, uint32_t color, const char *fmt, ...)
 {
 	va_list args;
-	char tmp_str[1024];
-	char tmp_str2[1024];
+	char tmp_str[FFNX_DEBUG_BUFFER_SIZE];
+	char tmp_str2[FFNX_DEBUG_BUFFER_SIZE];
 
 	va_start(args, fmt);
 
