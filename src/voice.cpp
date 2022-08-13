@@ -365,7 +365,7 @@ int opcode_voice_parse_options(uint8_t window_id, uint8_t dialog_id, uint8_t fir
 {
 	opcode_ask_current_option = *current_question_id;
 
-	return ff7_externals.sub_6310A1(window_id, dialog_id, first_question_id, last_question_id, current_question_id);
+	return ff7_externals.field_opcode_ask_update_loop_6310A1(window_id, dialog_id, first_question_id, last_question_id, current_question_id);
 }
 
 int opcode_voice_ask(int unk)

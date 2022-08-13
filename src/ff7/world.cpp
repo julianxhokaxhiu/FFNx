@@ -154,11 +154,20 @@ void ff7_world_hook_init()
     // World Encounter rate fix
     replace_call_function(ff7_externals.world_sub_767641 + 0x110, ff7_get_world_encounter_rate);
 
-    // Message speed fix
-    patch_code_byte(ff7_externals.world_opcode_message_update_text_769C02 + 0xF6, 0x5 + common_frame_multiplier / 2);
-    patch_divide_code<byte>(ff7_externals.world_opcode_message_update_text_769C02 + 0xF9, common_frame_multiplier);
-    patch_divide_code<WORD>(ff7_externals.world_opcode_message_update_text_769C02 + 0x10A, common_frame_multiplier);
-    patch_code_byte(ff7_externals.world_opcode_message_update_text_769C02 + 0x13A, 0x4 + common_frame_multiplier / 2);
+    // Text box message fix
+    patch_code_byte(ff7_externals.world_text_box_window_paging_769C02 + 0xF6, 0x5 + common_frame_multiplier / 2);
+    patch_divide_code<byte>(ff7_externals.world_text_box_window_paging_769C02 + 0xF9, common_frame_multiplier);
+    patch_divide_code<WORD>(ff7_externals.world_text_box_window_paging_769C02 + 0x10A, common_frame_multiplier);
+    patch_code_byte(ff7_externals.world_text_box_window_paging_769C02 + 0x13A, 0x4 + common_frame_multiplier / 2);
+    patch_code_byte(ff7_externals.world_text_box_window_opening_769A66 + 0x3D, 0x2 + common_frame_multiplier / 2);
+    patch_code_byte(ff7_externals.world_text_box_window_opening_769A66 + 0xD2, 0x2 + common_frame_multiplier / 2);
+    patch_code_byte(ff7_externals.world_text_box_window_closing_76ADF7 + 0x67, 0x2 + common_frame_multiplier / 2);
+    patch_code_byte(ff7_externals.world_text_box_window_closing_76ADF7 + 0xC2, 0x2 + common_frame_multiplier / 2);
+    patch_divide_code<short>(ff7_externals.world_text_box_reverse_paging_76ABE9 + 0x42, common_frame_multiplier);
+    patch_divide_code<short>(ff7_externals.world_opcode_message + 0x1AC, common_frame_multiplier);
+    patch_divide_code<short>(ff7_externals.world_opcode_message + 0x2CF, common_frame_multiplier);
+    patch_divide_code<short>(ff7_externals.world_opcode_ask + 0x1AC, common_frame_multiplier);
+    patch_divide_code<byte>(ff7_externals.world_opcode_ask + 0x3CC, common_frame_multiplier);
 
     // Wait frames decrease delayed
     replace_call_function(ff7_externals.run_world_event_scripts + 0xC7, ff7_run_world_script_system_operations);

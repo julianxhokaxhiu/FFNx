@@ -12,6 +12,7 @@
 - Lighting: Fixed minor graphical glitches happening in fields ( https://github.com/julianxhokaxhiu/FFNx/pull/475 )
 - Lighting: Fixed visual glitches happening while using Antialiasing ( https://github.com/julianxhokaxhiu/FFNx/pull/476 )
 - Lighting: Fixed various missing graphical elements through the overall game ( Titan missing floor, etc. ) ( https://github.com/julianxhokaxhiu/FFNx/pull/478 )
+- 60FPS: Fix FIELD and WORLD mode text box animation speed (opening, closing, next paging)
 
 ## FF8
 

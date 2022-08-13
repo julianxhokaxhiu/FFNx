@@ -2596,14 +2596,17 @@ struct ff7_externals
 	uint32_t field_sub_661B68;
 	void (*engine_set_game_engine_world_coord_661B23)(int, int);
 	void (*engine_sub_67CCDE)(float, float, float, float, float, float, float, ff7_game_obj*);
-	uint32_t sub_630D50;
-	uint32_t sub_631586;
-	uint32_t sub_631945;
+	uint32_t field_opcode_message_update_loop_630D50;
+	uint32_t field_text_box_window_create_631586;
+	uint32_t field_text_box_window_opening_6317A9;
+	uint32_t field_text_box_window_paging_631945;
+	uint32_t field_text_box_window_reverse_paging_632CAA;
+	uint32_t field_text_box_window_closing_632EB8;
 	char* field_entity_id_list; // 0xCC0960
 	DWORD* current_dialog_string_pointer; //0xCBF578
 	WORD* current_dialog_message_speed; // 0xCC0418
 	WORD* opcode_message_loop_code;
-	int (*sub_6310A1)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*);
+	int (*field_opcode_ask_update_loop_6310A1)(uint8_t, uint8_t, uint8_t, uint8_t, WORD*);
 	WORD* opcode_ask_question_code;
 	void (*play_midi)(uint32_t);
 	WORD *current_movie_frame;
@@ -2976,7 +2979,10 @@ struct ff7_externals
 	uint32_t world_opcode_ask_sub_75EEBB;
 	uint32_t world_opcode_message;
 	uint32_t world_opcode_ask;
-	uint32_t world_opcode_message_update_text_769C02;
+	uint32_t world_text_box_window_opening_769A66;
+	uint32_t world_text_box_window_paging_769C02;
+	uint32_t world_text_box_reverse_paging_76ABE9;
+	uint32_t world_text_box_window_closing_76ADF7;
 	int (*get_world_encounter_rate)();
 	int (*pop_world_script_stack)();
 	uint32_t world_update_player_74EA48;
