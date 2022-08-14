@@ -23,7 +23,6 @@
 
 #include <sys/stat.h>
 
-constexpr auto SOLOUD_OPENPSF_NUM_SAMPLES = 512;
 constexpr auto SOLOUD_OPENPSF_VOLUME_SCALE = float(3.2f / double(0x8000));
 
 namespace SoLoud
@@ -33,7 +32,7 @@ namespace SoLoud
 		ended = false;
 		mParent = aParent;
 		mOffset = 0;
-		mStreamBufferSize = SOLOUD_OPENPSF_NUM_SAMPLES * aParent->mChannels;
+		mStreamBufferSize = SAMPLE_GRANULARITY * aParent->mChannels;
 		mStreamBuffer = new int16_t[mStreamBufferSize];
 		mStreamBufferSize *= sizeof(int16_t);
 	}
@@ -48,10 +47,10 @@ namespace SoLoud
 		unsigned int offset = 0;
 		unsigned int i, j, k;
 
-		for (i = 0; i < aSamplesToRead; i += SOLOUD_OPENPSF_NUM_SAMPLES)
+		for (i = 0; i < aSamplesToRead; i += SAMPLE_GRANULARITY)
 		{
 			memset(mStreamBuffer, 0, mStreamBufferSize);
-			unsigned int blockSize = aSamplesToRead - i > SOLOUD_OPENPSF_NUM_SAMPLES ? SOLOUD_OPENPSF_NUM_SAMPLES : aSamplesToRead - i;
+			unsigned int blockSize = aSamplesToRead - i > SAMPLE_GRANULARITY ? SAMPLE_GRANULARITY : aSamplesToRead - i;
 			int r = mParent->stream->decode(mStreamBuffer, blockSize);
 
 			if (r == 0) {

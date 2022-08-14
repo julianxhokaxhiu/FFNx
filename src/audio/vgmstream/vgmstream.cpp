@@ -23,14 +23,12 @@
 
 #include <sys/stat.h>
 
-#define SOLOUD_VGMSTREAM_NUM_SAMPLES 512
-
 namespace SoLoud
 {
 	VGMStreamInstance::VGMStreamInstance(VGMStream* aParent)
 	{
 		mParent = aParent;
-		mStreamBuffer = new sample_t[SOLOUD_VGMSTREAM_NUM_SAMPLES * aParent->mChannels];
+		mStreamBuffer = new sample_t[SAMPLE_GRANULARITY * aParent->mChannels];
 
 		rewind();
 	}
@@ -42,26 +40,28 @@ namespace SoLoud
 
 	unsigned int VGMStreamInstance::getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize)
 	{
-		unsigned int offset = mOffset;
-		unsigned int i, j, k;
+		memset(mStreamBuffer, 0, sizeof(sample_t) * SAMPLE_GRANULARITY * mChannels);
+		int sample_count = render_vgmstream(mStreamBuffer, aSamplesToRead, mParent->mStream);
 
-		for (i = 0; i < aSamplesToRead; i += SOLOUD_VGMSTREAM_NUM_SAMPLES)
+		for (int j = 0; j < sample_count; j++)
 		{
-			memset(mStreamBuffer, 0, sizeof(sample_t) * SOLOUD_VGMSTREAM_NUM_SAMPLES * mChannels);
-			unsigned int copylen = (aSamplesToRead - i) > SOLOUD_VGMSTREAM_NUM_SAMPLES ? SOLOUD_VGMSTREAM_NUM_SAMPLES : aSamplesToRead - i;
-			offset += (unsigned int)render_vgmstream(mStreamBuffer, copylen, mParent->mStream);
-
-			for (j = 0; j < copylen; j++)
+			for (unsigned int k = 0; k < mChannels; k++)
 			{
-				for (k = 0; k < mChannels; k++)
-				{
-					aBuffer[k * aSamplesToRead + i + j] = mStreamBuffer[(j * mChannels) + k] / (float)INT16_MAX;
-				}
+				aBuffer[k * aSamplesToRead + j] = mStreamBuffer[(j * mChannels) + k] / (float)INT16_MAX;
 			}
 		}
 
-		mOffset = offset;
-		return offset;
+		mOffset += sample_count;
+
+		// If the song is looping, recalculate the offset correctly
+		if (mFlags & AudioSourceInstance::LOOPING) {
+			if (mOffset >= mParent->mStream->loop_end_sample)
+			{
+				mOffset = mOffset - mParent->mSampleCount + mParent->mStream->loop_start_sample;
+			}
+		}
+
+		return sample_count;
 	}
 
 	result VGMStreamInstance::rewind()
@@ -73,7 +73,7 @@ namespace SoLoud
 		return SO_NO_ERROR;
 	}
 
-	result VGMStreamInstance::seek(double aSeconds, float *mScratch, unsigned int mScratchSize)
+	result VGMStreamInstance::seek(double aSeconds, float* mScratch, unsigned int mScratchSize)
 	{
 		int seek_samples = int(floor(mSamplerate * aSeconds));
 

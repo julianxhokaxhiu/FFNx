@@ -21,8 +21,6 @@
 
 #include "memorystream.h"
 
-#define SOLOUD_MEMORYSTREAM_NUM_SAMPLES 512
-
 namespace SoLoud
 {
 	MemoryStreamInstance::MemoryStreamInstance(MemoryStream* aParent)
@@ -33,28 +31,25 @@ namespace SoLoud
 
 	uint32_t MemoryStreamInstance::getAudio(float* aBuffer, uint32_t aSamplesToRead, uint32_t aBufferSize)
 	{
-		uint32_t i, j, k;
+		uint32_t j, k;
 		uint32_t future_offset = mOffset + (aSamplesToRead * mChannels), current_offset = mParent->mPushOffset / sizeof(float);
 
 		if (future_offset <= current_offset)
 		{
-			for (i = 0; i < aSamplesToRead; i += SOLOUD_MEMORYSTREAM_NUM_SAMPLES)
+			for (j = 0; j < aSamplesToRead; j++)
 			{
-				uint32_t copylen = (aSamplesToRead - i) > SOLOUD_MEMORYSTREAM_NUM_SAMPLES ? SOLOUD_MEMORYSTREAM_NUM_SAMPLES : aSamplesToRead - i;
-
-				for (j = 0; j < copylen; j++)
+				for (k = 0; k < mChannels; k++)
 				{
-					for (k = 0; k < mChannels; k++)
-					{
-						aBuffer[k * aSamplesToRead + i + j] = mParent->mData[mOffset + (j * mChannels) + k];
-					}
+					aBuffer[k * aSamplesToRead + j] = mParent->mData[mOffset + (j * mChannels) + k];
 				}
-
-				mOffset += copylen * mChannels;
 			}
+
+			mOffset += aSamplesToRead * mChannels;
+
+			return aSamplesToRead;
 		}
 
-		return mOffset;
+		return 0;
 	}
 
 	bool MemoryStreamInstance::hasEnded()
