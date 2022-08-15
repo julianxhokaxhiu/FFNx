@@ -4,6 +4,7 @@
 
 ## Common
 
+- Audio: Fix a minor glitch happening on long tracks that were looped ( https://github.com/julianxhokaxhiu/FFNx/issues/452 )
 - Vulkan: Disable HDR support, brings more stability on top of AMD cards
 
 ## FF7
