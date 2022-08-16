@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.13.0",
-  "builtin-baseline": "f93ba152d55e1d243160e690bc302ffe8638358e",
+  "builtin-baseline": "acc3bcf76b84ae5041c86ab55fe138ae7b8255c7",
   "dependencies": [
     "bgfx",
     {
@@ -56,17 +56,17 @@
     {
       "name": "ffmpeg",
       "version": "4.4.1",
-      "port-version": 13
+      "port-version": 15
     },
     {
       "name": "imgui",
-      "version": "1.87",
+      "version": "1.88",
       "port-version": 1
     },
     {
       "name": "libpng",
       "version": "1.6.37",
-      "port-version": 16
+      "port-version": 18
     },
     {
       "name": "mimalloc",
@@ -81,7 +81,7 @@
     {
       "name": "pugixml",
       "version": "1.12.1",
-      "port-version": 0
+      "port-version": 1
     },
     {
       "name": "soloud",
@@ -95,7 +95,7 @@
     },
     {
       "name": "tomlplusplus",
-      "version": "3.0.1",
+      "version": "3.1.0",
       "port-version": 0
     },
     {
