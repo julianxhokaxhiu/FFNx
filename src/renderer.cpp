@@ -606,7 +606,7 @@ void Renderer::prepareFramebuffer()
         false,
         1,
         bgfx::TextureFormat::D32F,
-        fbFlags
+        fbFlags | BGFX_TEXTURE_RT_WRITE_ONLY
     );
 
     backendFrameBuffer = bgfx::createFrameBuffer(
