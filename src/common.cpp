@@ -62,14 +62,26 @@
 
 bool proxyWndProc = false;
 
+namespace GameWindowState {
+	enum GameWindowState
+	{
+		CURRENT,
+		PRE_FULLSCREEN,
+		COUNT
+	};
+};
+
+struct {
+	uint32_t x;
+	uint32_t y;
+	uint32_t w;
+	uint32_t h;
+} gameWindow[GameWindowState::COUNT];
+
 // global game window handler
 RECT gameWindowRect;
 HINSTANCE gameHinstance;
 HWND gameHwnd;
-uint32_t gameWindowOffsetX;
-uint32_t gameWindowOffsetY;
-uint32_t gameWindowWidth;
-uint32_t gameWindowHeight;
 DEVMODE dmCurrentScreenSettings;
 DEVMODE dmNewScreenSettings;
 bool gameWindowWasMaximized = false;
@@ -461,33 +473,23 @@ void toggle_borderless() {
 
 	set_window_shadow();
 
-	SetWindowPos(gameHwnd, HWND_TOP, 0, 0, borderless ? window_size_x : gameWindowWidth, borderless ? window_size_y : gameWindowHeight, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+	SetWindowPos(gameHwnd, HWND_TOP, 0, 0, borderless ? window_size_x : gameWindow[GameWindowState::CURRENT].w, borderless ? window_size_y : gameWindow[GameWindowState::CURRENT].h, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
 	ShowWindow(gameHwnd, SW_SHOW);
 }
 
-void calc_window_size() {
+void calc_window_size(uint32_t width, uint32_t height) {
 	SetRectEmpty(&gameWindowRect);
 
-	// If fullscreen is the starting mode, use the native game resolution as a window size starting point
-	if (fullscreen)
-	{
-		gameWindowRect.right = game_width;
-		gameWindowRect.bottom = game_height;
-	}
-	// Otherwise if windowed mode is requested on start, use the given resolution as a starting point
-	else
-	{
-		gameWindowRect.right = window_size_x;
-		gameWindowRect.bottom = window_size_y;
-	}
+	gameWindowRect.right = width;
+	gameWindowRect.bottom = height;
 
 	AdjustWindowRect(&gameWindowRect, WS_OVERLAPPEDWINDOW, false);
-	gameWindowWidth = gameWindowRect.right - gameWindowRect.left;
-	gameWindowHeight = gameWindowRect.bottom - gameWindowRect.top;
+	gameWindow[GameWindowState::CURRENT].w = gameWindowRect.right - gameWindowRect.left;
+	gameWindow[GameWindowState::CURRENT].h = gameWindowRect.bottom - gameWindowRect.top;
 
 	// Center the window on the screen
-	gameWindowOffsetX = (dmCurrentScreenSettings.dmPelsWidth / 2) - (gameWindowWidth / 2);
-	gameWindowOffsetY = (dmCurrentScreenSettings.dmPelsHeight / 2) - (gameWindowHeight / 2);
+	gameWindow[GameWindowState::CURRENT].x = (dmCurrentScreenSettings.dmPelsWidth / 2) - (gameWindow[GameWindowState::CURRENT].w / 2);
+	gameWindow[GameWindowState::CURRENT].y = (dmCurrentScreenSettings.dmPelsHeight / 2) - (gameWindow[GameWindowState::CURRENT].h / 2);
 }
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -571,7 +573,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			window_size_x = (long)LOWORD(lParam);
 			window_size_y = (long)HIWORD(lParam);
 
-			calc_window_size();
+			calc_window_size(window_size_x, window_size_y);
 
 			if (wParam != SIZE_MINIMIZED) newRenderer.reset();
 
@@ -602,7 +604,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 					// Move to window
 					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
-					MoveWindow(gameHwnd, gameWindowOffsetX, gameWindowOffsetY, gameWindowWidth, gameWindowHeight, true);
+					MoveWindow(gameHwnd, gameWindow[GameWindowState::PRE_FULLSCREEN].x, gameWindow[GameWindowState::PRE_FULLSCREEN].y, gameWindow[GameWindowState::PRE_FULLSCREEN].w, gameWindow[GameWindowState::PRE_FULLSCREEN].h, true);
 
 					// Show the cursor
 					while (ShowCursor(true) < 0);
@@ -611,6 +613,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
+					// Save current window state
+					gameWindow[GameWindowState::PRE_FULLSCREEN] = gameWindow[GameWindowState::CURRENT];
+
 					// Bring back the user resolution
 					ChangeDisplaySettingsEx(0, &dmNewScreenSettings, 0, CDS_FULLSCREEN, 0);
 
@@ -759,17 +764,27 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 	if (RegisterClassA(&WndClass))
 	{
-		calc_window_size();
+		// If fullscreen is the starting mode, use the native game resolution as a window size starting point
+		if (fullscreen)
+		{
+			calc_window_size(game_width, game_height);
+
+			// Save current window state
+			gameWindow[GameWindowState::PRE_FULLSCREEN] = gameWindow[GameWindowState::CURRENT];
+		}
+		// Otherwise if windowed mode is requested on start, use the given resolution as a starting point
+		else
+			calc_window_size(window_size_x, window_size_y);
 
 		hWnd = CreateWindowExA(
 			WS_EX_APPWINDOW,
 			VREF(game_object, window_class),
 			VREF(game_object, window_title),
 			fullscreen ? WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_OVERLAPPEDWINDOW,
-			fullscreen ? 0 : gameWindowOffsetX,
-			fullscreen ? 0 : gameWindowOffsetY,
-			fullscreen ? window_size_x : gameWindowWidth,
-			fullscreen ? window_size_y : gameWindowHeight,
+			fullscreen ? 0 : gameWindow[GameWindowState::CURRENT].x,
+			fullscreen ? 0 : gameWindow[GameWindowState::CURRENT].y,
+			fullscreen ? window_size_x : gameWindow[GameWindowState::CURRENT].w,
+			fullscreen ? window_size_y : gameWindow[GameWindowState::CURRENT].h,
 			0,
 			0,
 			hInstance,
