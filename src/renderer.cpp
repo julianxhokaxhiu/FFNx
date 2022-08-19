@@ -1225,7 +1225,15 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
                 // This changes the scissor width and makes it bigger to fit widescreen
                 if(x == 0 && width == game_width)
                     scissorWidth = getInternalCoordX(wide_viewport_width);
-                else if (x != 0)
+                else
+                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
+            }
+            break;
+            case MODE_BATTLE:
+            {
+                if(x == 0 && width == game_width)
+                    scissorWidth = getInternalCoordX(wide_viewport_width);
+                else if(internalState.bIsTLVertex)
                     scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
             }
             break;
@@ -1234,7 +1242,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
                 // This changes the scissor width and makes it bigger to fit widescreen
                 if(x == 0 && width == game_width)
                     scissorWidth = getInternalCoordX(wide_viewport_width);
-                else if (x != 0)
+                else
                     scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
             }
             break;
@@ -1719,7 +1727,7 @@ void Renderer::zoomBackendFrameBuffer()
     uint16_t newWidth = newRenderer.getInternalCoordX(2 * hCameraRangeSize);
     uint16_t newHeight = newRenderer.getInternalCoordY(game_height - vOffset);
 
-    uint16_t texture = newRenderer.createBlitTexture(0, vOffset, game_width, game_height- 2 * vOffset);
+    uint16_t texture = newRenderer.createBlitTexture(0, vOffset, 2 * hCameraRangeSize, game_height- 2 * vOffset);
 
     bgfx::TextureHandle textureHandle = { texture };
 

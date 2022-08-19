@@ -510,6 +510,8 @@ void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, flo
 		vector3<float> pos0 = walkMeshVertices[e.v0]._;
 		vector3<float> pos1 = walkMeshVertices[e.v1]._;
 
+		if(e.prevEdge == -1 || e.nextEdge == -1) continue;
+
 		auto& prevEdge = edges[e.prevEdge];
 		auto& nextEdge = edges[e.nextEdge];
 

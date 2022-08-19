@@ -15,6 +15,7 @@
 - Lighting: Fixed various missing graphical elements through the overall game ( Titan missing floor, etc. ) ( https://github.com/julianxhokaxhiu/FFNx/pull/478 )
 - 60FPS: Fix FIELD and WORLD mode text box animation speed (opening, closing, next paging)
 - Widescreen: Added config logic and zoom implementation
+- Widescreen: Added logic to offset camera scrolling and minor other fixes
 
 ## FF8
 

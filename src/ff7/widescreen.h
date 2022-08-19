@@ -55,6 +55,9 @@ public:
     void reloadConfig();
 
     const field_camera_range& getCameraRange();
+    int getHorizontalOffset();
+    int getVerticalOffset();
+    bool isResetVerticalPos();
     WIDESCREEN_MODE getMode();
 
 private:
@@ -65,12 +68,30 @@ private:
     toml::parse_result config;
 
     field_camera_range camera_range;
+    int h_offset = 0;
+    int v_offset = 0;
+    bool is_reset_vertical_pos = false;
     WIDESCREEN_MODE widescreen_mode = WM_DISABLED;
 };
 
 inline const field_camera_range& Widescreen::getCameraRange()
 {
     return camera_range;
+}
+
+inline int Widescreen::getHorizontalOffset()
+{
+    return h_offset;
+}
+
+inline int Widescreen::getVerticalOffset()
+{
+    return v_offset;
+}
+
+inline bool Widescreen::isResetVerticalPos()
+{
+    return is_reset_vertical_pos;
 }
 
 inline WIDESCREEN_MODE Widescreen::getMode()
