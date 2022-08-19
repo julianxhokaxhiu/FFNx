@@ -5,6 +5,8 @@
 ## Common
 
 - Audio: Fix a minor glitch happening on long tracks that were looped ( https://github.com/julianxhokaxhiu/FFNx/issues/452 )
+- Borderless: Fix debug info display when using this mode
+- Borderless: Fix game aspect ratio when using borderless or switching to it on the fly
 - Vulkan: Disable HDR support, brings more stability on top of AMD cards
 
 ## FF7
