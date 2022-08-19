@@ -460,7 +460,7 @@ void toggle_borderless() {
 
 	set_window_shadow();
 
-	SetWindowPos(gameHwnd, HWND_TOP, 0, 0, gameWindowWidth, gameWindowHeight, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+	SetWindowPos(gameHwnd, HWND_TOP, 0, 0, borderless ? window_size_x : gameWindowWidth, borderless ? window_size_y : gameWindowHeight, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
 	ShowWindow(gameHwnd, SW_SHOW);
 }
 
