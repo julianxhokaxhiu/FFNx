@@ -969,7 +969,7 @@ void common_flip(struct game_obj *game_object)
 
 	newRenderer.drawOverlay();
 
-	if (fullscreen)
+	if (fullscreen || borderless)
 	{
 		static uint32_t col = 4;
 		uint32_t row = 1;
