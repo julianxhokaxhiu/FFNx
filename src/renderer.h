@@ -94,19 +94,21 @@ enum RendererTextureType
     YUV
 };
 
-enum RendererTextureSlot
-{
-    TEX_Y = 0,
-    TEX_U,
-    TEX_V,
-    TEX_S,
-    TEX_D,
-    TEX_NML,
-    TEX_PBR,
-    TEX_IBL_SPEC,
-    TEX_IBL_DIFF,
-    TEX_BRDF,
-    COUNT
+namespace RendererTextureSlot {
+    enum RendererTextureSlot
+    {
+        TEX_Y = 0,
+        TEX_U,
+        TEX_V,
+        TEX_S,
+        TEX_D,
+        TEX_NML,
+        TEX_PBR,
+        TEX_IBL_SPEC,
+        TEX_IBL_DIFF,
+        TEX_BRDF,
+        COUNT
+    };
 };
 
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
