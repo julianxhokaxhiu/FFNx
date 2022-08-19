@@ -275,10 +275,13 @@ void Widescreen::initParamsFromConfig()
     camera_range.right = field_triggers_header_ptr->camera_range.right;
     camera_range.bottom = field_triggers_header_ptr->camera_range.bottom;
     camera_range.top = field_triggers_header_ptr->camera_range.top;
-    if(camera_range.right - camera_range.left >= 426)
+    if(camera_range.right - camera_range.left >= game_width / 2 + abs(wide_viewport_x))
         widescreen_mode = WM_EXTEND_ONLY;
     else
         widescreen_mode = WM_DISABLED;
+    h_offset = 0;
+    v_offset = 0;
+    is_reset_vertical_pos = false;
 
     auto pName = get_current_field_name();
     if(pName == 0) return;
@@ -291,6 +294,9 @@ void Widescreen::initParamsFromConfig()
         if(auto rightNode = node["right"]) camera_range.right = rightNode.value_or(0);
         if(auto bottomNode = node["bottom"])camera_range.bottom = bottomNode.value_or(0);
         if(auto topNode = node["top"]) camera_range.top = topNode.value_or(0);
+        if(auto hOffsetNode = node["h_offset"]) h_offset = hOffsetNode.value_or(0);
+        if(auto vOffsetNode = node["v_offset"]) v_offset = vOffsetNode.value_or(0);
+        if(auto vResetVerticalPosNode = node["reset_vertical_pos"]) is_reset_vertical_pos = vResetVerticalPosNode.value_or(false);
 
         if(auto modeNode = node["mode"]) widescreen_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
 

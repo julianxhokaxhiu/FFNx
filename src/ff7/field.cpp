@@ -124,9 +124,7 @@ int call_original_opcode_function(byte opcode)
 
 bool is_fieldmap_wide()
 {
-	field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
-	int cameraRange = field_triggers_header_ptr->camera_range.right - field_triggers_header_ptr->camera_range.left;
-	return aspect_ratio == AR_WIDESCREEN && cameraRange >= game_width / 2 + abs(wide_viewport_x);
+	return aspect_ratio == AR_WIDESCREEN && widescreen.getMode() != WM_DISABLED;
 }
 
 // helper function initializes page dst, copies texture from src and applies
@@ -415,6 +413,11 @@ void field_layer4_shift_tile_position(vector2<float>* tile_position, vector2<flo
 
 	if(tile_position->y <= bg_position->y - top_offset || tile_position->y >= bg_position->y + bottom_offset)
 		tile_position->y += (tile_position->y >= bg_position->y + bottom_offset) ? -layer4_height : layer4_height;
+
+	if(aspect_ratio == AR_WIDESCREEN && is_fieldmap_wide())
+	{
+		tile_position->x -= widescreen.getHorizontalOffset();
+	}
 }
 
 void field_layer4_pick_tiles(short bg_position_x, short bg_position_y)
@@ -588,13 +591,17 @@ void field_clip_with_camera_range_float(vector2<float>* point)
 	float half_width = 160;
 	auto camera_range = field_triggers_header_ptr->camera_range;
 
-	if(aspect_ratio == AR_WIDESCREEN && (is_fieldmap_wide() || widescreen.getMode() == WM_ZOOM))
+	if(aspect_ratio == AR_WIDESCREEN && is_fieldmap_wide())
 	{
 		camera_range = widescreen.getCameraRange();
 
 		// This centers the background if necessary
 		int cameraRangeSize = camera_range.right - camera_range.left;
 		half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
+
+		point->x += widescreen.getHorizontalOffset();
+		if(widescreen.isResetVerticalPos()) point->y = 0;
+		point->y += widescreen.getVerticalOffset();
 	}
 
 	if (point->x > camera_range.right - half_width)
@@ -612,7 +619,7 @@ void float_sub_643628(field_trigger_header *trigger_header, vector2<float> *delt
 	float half_width = 160;
 	auto camera_range = trigger_header->camera_range;
 
-	if(aspect_ratio == AR_WIDESCREEN && (is_fieldmap_wide() || widescreen.getMode() == WM_ZOOM))
+	if(aspect_ratio == AR_WIDESCREEN && is_fieldmap_wide())
 	{
 		camera_range = widescreen.getCameraRange();
 
@@ -659,14 +666,20 @@ void ff7_field_layer3_clip_with_camera_range(field_trigger_header* trigger_heade
 
 void field_widescreen_width_clip_with_camera_range(vector2<short>* point)
 {
-	// This only clips backgrounds which width is enought to fill the whole screen in 16:9
-	field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
-	float half_width = ceil(wide_viewport_width / 4);
+	auto camera_range = widescreen.getCameraRange();
 
-	if (point->x > field_triggers_header_ptr->camera_range.right - half_width)
-		point->x = field_triggers_header_ptr->camera_range.right - half_width;
-	if (point->x < field_triggers_header_ptr->camera_range.left + half_width)
-		point->x = field_triggers_header_ptr->camera_range.left + half_width;
+	// This centers the background if necessary
+	int cameraRangeSize = camera_range.right - camera_range.left;
+	float half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
+
+	point->x += widescreen.getHorizontalOffset();
+	if(widescreen.isResetVerticalPos()) point->y = 0;
+	point->y += widescreen.getVerticalOffset();
+
+	if (point->x > camera_range.right - half_width)
+		point->x = camera_range.right - half_width;
+	if (point->x < camera_range.left + half_width)
+		point->x = camera_range.left + half_width;
 }
 
 void engine_set_game_engine_world_coord_float_661B23(int field_world_x, int field_world_y)
@@ -931,11 +944,11 @@ void field_update_scripted_bg_movement()
 					camera_range = widescreen.getCameraRange();
 
 					// This centers the background for fields which width is bigger than 320 but less than what is needed to fill the whole screen in 16:9
-					if(2 * wide_viewport_x - *ff7_externals.scripted_world_final_pos_x > camera_range.right)
-						*ff7_externals.scripted_world_final_pos_x = std::min(0, static_cast<int>(2 * wide_viewport_x - camera_range.right));
+					if(2 * std::abs(wide_viewport_x) - *ff7_externals.scripted_world_final_pos_x > camera_range.right)
+						*ff7_externals.scripted_world_final_pos_x = std::min(0, static_cast<int>(2 * std::abs(wide_viewport_x) - camera_range.right));
 
-					if(-2 * wide_viewport_x - *ff7_externals.scripted_world_final_pos_x < camera_range.left)
-						*ff7_externals.scripted_world_final_pos_x = std::max(0, static_cast<int>(-2 * wide_viewport_x - camera_range.left));
+					if(-2 * std::abs(wide_viewport_x) - *ff7_externals.scripted_world_final_pos_x < camera_range.left)
+						*ff7_externals.scripted_world_final_pos_x = std::max(0, static_cast<int>(-2 * std::abs(wide_viewport_x) - camera_range.left));
 				}
 
 				std::function<int(int, int, int, int)> field_get_interpolated_value = ff7_externals.modules_global_object->world_move_mode == 5 ?

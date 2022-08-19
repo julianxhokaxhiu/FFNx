@@ -676,6 +676,8 @@ void gl_check_deferred(struct texture_set *texture_set)
 void gl_cleanup_deferred()
 {
 	driver_free(deferred_draws);
+	deferred_draws = nullptr;
 	driver_free(deferred_sorted_draws);
+	deferred_sorted_draws = nullptr;
 }
 
