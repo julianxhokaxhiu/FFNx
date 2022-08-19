@@ -63,6 +63,7 @@
 bool proxyWndProc = false;
 
 // global game window handler
+RECT gameWindowRect;
 HINSTANCE gameHinstance;
 HWND gameHwnd;
 uint32_t gameWindowOffsetX;
@@ -413,8 +414,8 @@ LRESULT window_hit_test(HWND hwnd, POINT cursor) {
 			::GetSystemMetrics(SM_CXFRAME) + ::GetSystemMetrics(SM_CXPADDEDBORDER),
 			::GetSystemMetrics(SM_CYFRAME) + ::GetSystemMetrics(SM_CXPADDEDBORDER)
 	};
-	RECT window;
-	if (!::GetWindowRect(hwnd, &window)) {
+	SetRectEmpty(&gameWindowRect);
+	if (!::GetWindowRect(hwnd, &gameWindowRect)) {
 			return HTNOWHERE;
 	}
 
@@ -427,10 +428,10 @@ LRESULT window_hit_test(HWND hwnd, POINT cursor) {
 	};
 
 	const auto result =
-			left    * (cursor.x <  (window.left   + border.x)) |
-			right   * (cursor.x >= (window.right  - border.x)) |
-			top     * (cursor.y <  (window.top    + border.y)) |
-			bottom  * (cursor.y >= (window.bottom - border.y));
+			left    * (cursor.x <  (gameWindowRect.left   + border.x)) |
+			right   * (cursor.x >= (gameWindowRect.right  - border.x)) |
+			top     * (cursor.y <  (gameWindowRect.top    + border.y)) |
+			bottom  * (cursor.y >= (gameWindowRect.bottom - border.y));
 
 	switch (result) {
 			case left          : return HTLEFT;
@@ -462,6 +463,31 @@ void toggle_borderless() {
 
 	SetWindowPos(gameHwnd, HWND_TOP, 0, 0, borderless ? window_size_x : gameWindowWidth, borderless ? window_size_y : gameWindowHeight, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
 	ShowWindow(gameHwnd, SW_SHOW);
+}
+
+void calc_window_size() {
+	SetRectEmpty(&gameWindowRect);
+
+	// If fullscreen is the starting mode, use the native game resolution as a window size starting point
+	if (fullscreen)
+	{
+		gameWindowRect.right = game_width;
+		gameWindowRect.bottom = game_height;
+	}
+	// Otherwise if windowed mode is requested on start, use the given resolution as a starting point
+	else
+	{
+		gameWindowRect.right = window_size_x;
+		gameWindowRect.bottom = window_size_y;
+	}
+
+	AdjustWindowRect(&gameWindowRect, WS_OVERLAPPEDWINDOW, false);
+	gameWindowWidth = gameWindowRect.right - gameWindowRect.left;
+	gameWindowHeight = gameWindowRect.bottom - gameWindowRect.top;
+
+	// Center the window on the screen
+	gameWindowOffsetX = (dmCurrentScreenSettings.dmPelsWidth / 2) - (gameWindowWidth / 2);
+	gameWindowOffsetY = (dmCurrentScreenSettings.dmPelsHeight / 2) - (gameWindowHeight / 2);
 }
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -544,6 +570,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_SIZE:
 			window_size_x = (long)LOWORD(lParam);
 			window_size_y = (long)HIWORD(lParam);
+
+			calc_window_size();
 
 			if (wParam != SIZE_MINIMIZED) newRenderer.reset();
 
@@ -630,7 +658,6 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	HWND hWnd;
 	HDC hdc;
 	WNDCLASSA WndClass;
-	RECT Rect;
 
 	// Init Steam API
 	if(steam_edition || enable_steam_achievements)
@@ -732,28 +759,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 	if (RegisterClassA(&WndClass))
 	{
-		// If fullscreen is the starting mode, use the native game resolution as a window size starting point
-		if (fullscreen)
-		{
-			Rect.right = game_width;
-			Rect.bottom = game_height;
-		}
-		// Otherwise if windowed mode is requested on start, use the given resolution as a starting point
-		else
-		{
-			Rect.right = window_size_x;
-			Rect.bottom = window_size_y;
-		}
-
-		Rect.left = 0;
-		Rect.top = 0;
-		AdjustWindowRect(&Rect, WS_OVERLAPPEDWINDOW, false);
-		gameWindowWidth = Rect.right - Rect.left;
-		gameWindowHeight = Rect.bottom - Rect.top;
-
-		// Center the window on the screen
-		gameWindowOffsetX = (dmCurrentScreenSettings.dmPelsWidth / 2) - (gameWindowWidth / 2);
-		gameWindowOffsetY = (dmCurrentScreenSettings.dmPelsHeight / 2) - (gameWindowHeight / 2);
+		calc_window_size();
 
 		hWnd = CreateWindowExA(
 			WS_EX_APPWINDOW,
