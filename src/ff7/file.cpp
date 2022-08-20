@@ -219,7 +219,13 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 	if(!direct_mode_path.empty())
 	{
 		_snprintf(tmp, sizeof(tmp), "%s/%s/%s/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], fname, ext);
-		ret->fd = fopen(tmp, "rb");
+			ret->fd = fopen(tmp, "rb");
+
+		if(!ret->fd)
+		{
+			_snprintf(tmp, sizeof(tmp), "%s/%s/%s.lgp/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], fname, ext);
+			ret->fd = fopen(tmp, "rb");
+		}
 
 		if(!ret->fd)
 		{
@@ -228,7 +234,7 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 			if(ret->fd) ret->resolved_conflict = true;
 		}
 
-		if(trace_all || trace_direct) ffnx_trace("lgp_open_file: %i, %s (%s) = 0x%x\n", lgp_num, filename, lgp_current_dir, ret);
+		if(ret->fd && (trace_all || trace_direct)) ffnx_trace("lgp_open_file: %i, %s (%s) = 0x%x\n", lgp_num, filename, lgp_current_dir, ret);
 	}
 
 	if(!ret->fd)
