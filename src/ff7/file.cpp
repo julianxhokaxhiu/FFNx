@@ -248,6 +248,8 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 			external_free(ret);
 			return 0;
 		}
+
+		if(trace_all || trace_direct) ffnx_trace("lgp_open_file: %i, %s (%s) = 0x%x\n", lgp_num, filename, lgp_current_dir, ret);
 	}
 
 	last = ret;
