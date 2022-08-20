@@ -582,3 +582,100 @@ char *make_pc_name(struct file_context *file_context, struct ff7_file *file, cha
 
 	return ret;
 }
+
+/*###########################################################
+	FF7 CHUNKED FIELD FILES
+###########################################################*/
+
+#define FF7_FIELD_NUM_SECTIONS 9
+#define FF7_FIELD_OFFSET 0x2A
+
+struct {
+	uint32_t size = 0;
+	byte* data;
+} ff7_field_file_chunked[FF7_FIELD_NUM_SECTIONS];
+
+int ff7_read_field_file(char* path)
+{
+	char filepath[256];
+
+	if ( *ff7_externals.field_CFF268 ) return 1;
+
+  _splitpath(path, NULL, NULL, filepath, NULL);
+
+  lgp_file* lgp_file = lgp_open_file(filepath, 1);
+  if ( !lgp_file ) return 0;
+
+  uint32_t size = lgp_get_filesize(lgp_file, 1);
+  char* dest = (char*)driver_malloc(size);
+  char* original_field_data = (char*)driver_malloc(*ff7_externals.known_field_buffer_size);
+	if ( !ff7_externals.field_file_buffer ) return 0;
+
+  lgp_read_file(lgp_file, 1, dest, size);
+  ff7_externals.lzss_decode(dest, original_field_data);
+	if ( dest )
+  {
+    driver_free(dest);
+    dest = 0;
+  }
+
+	// Attempt to override part of the current field file with chunk files
+	char chunk_file[1024]{0};
+	int data_ptr = 0, data_len = 0;
+	FILE* fd;
+
+	for (int n = 0; n < FF7_FIELD_NUM_SECTIONS; n++)
+	{
+		_snprintf(chunk_file, sizeof(chunk_file), "%s/%s/%s.lgp/%s.chunk.%i", basedir, direct_mode_path.c_str(), lgp_names[1], filepath, n+1);
+
+		if ((fd = fopen(chunk_file, "rb")) != NULL)
+		{
+			fseek(fd, 0L, SEEK_END);
+			ff7_field_file_chunked[n].size = ftell(fd);
+			ff7_field_file_chunked[n].data = new byte[ff7_field_file_chunked[n].size];
+
+			fseek(fd, 0L, SEEK_SET);
+			fread(ff7_field_file_chunked[n].data, sizeof(byte), ff7_field_file_chunked[n].size, fd);
+
+			fclose(fd);
+		}
+		else
+		{
+			data_ptr = *(int*)(original_field_data + 0x6 + 0x4 * n);
+			data_len = *(int*)(original_field_data + data_ptr);
+
+			ff7_field_file_chunked[n].size = data_len;
+			ff7_field_file_chunked[n].data = new byte[ff7_field_file_chunked[n].size];
+
+			memcpy(ff7_field_file_chunked[n].data, original_field_data + data_ptr + 0x4, ff7_field_file_chunked[n].size);
+		}
+	}
+
+	// Allocate the new field file
+	driver_free(original_field_data);
+	*ff7_externals.field_file_buffer = (char*)external_malloc(*ff7_externals.known_field_buffer_size);
+
+	// Build the new field file
+	*(short*)(*ff7_externals.field_file_buffer) = 0x0; // 0x0
+	*(int*)(*ff7_externals.field_file_buffer + 0x2) = FF7_FIELD_NUM_SECTIONS; // 0x2
+	uint32_t offset = FF7_FIELD_OFFSET;
+	for (int n = 0; n < FF7_FIELD_NUM_SECTIONS; n++)
+	{
+		// Pointer to data section
+		ff7_externals.field_file_section_ptrs[n] = offset;
+		*(int*)(*ff7_externals.field_file_buffer + 0x6 + (0x4 * n)) = ff7_externals.field_file_section_ptrs[n];
+
+		// Length of data section
+		*(int*)(*ff7_externals.field_file_buffer + offset) = ff7_field_file_chunked[n].size;
+
+		// The data
+		offset += 0x4;
+		memcpy(*ff7_externals.field_file_buffer + offset, ff7_field_file_chunked[n].data, ff7_field_file_chunked[n].size);
+		offset += ff7_field_file_chunked[n].size;
+
+		// Cleanup
+		delete ff7_field_file_chunked[n].data;
+	}
+
+  return 1;
+}

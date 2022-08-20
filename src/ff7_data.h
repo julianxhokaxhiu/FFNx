@@ -233,6 +233,12 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.lgp_get_filesize = get_relative_call((uint32_t)ff7_externals.read_field_file, 0x71);
 	ff7_externals.lgp_read_file = get_relative_call((uint32_t)ff7_externals.read_field_file, 0xDD);
 
+	ff7_externals.lzss_decode = (int (*)(char*, char*))get_relative_call((uint32_t)ff7_externals.read_field_file, 0xF2);
+	ff7_externals.field_file_buffer = (char**)get_absolute_value((uint32_t)ff7_externals.read_field_file, 0xB2);
+	ff7_externals.field_file_section_ptrs = (DWORD*)get_absolute_value((uint32_t)ff7_externals.read_field_file, 0x187);
+	ff7_externals.known_field_buffer_size = (uint32_t*)get_absolute_value((uint32_t)ff7_externals.read_field_file, 0xA4);
+	ff7_externals.field_CFF268 = (uint32_t*)get_absolute_value((uint32_t)ff7_externals.read_field_file, 0xB);
+
 	ff7_externals.lgp_fds = (FILE **)get_absolute_value(ff7_externals.lgp_seek_file, 0x17);
 
 	ff7_externals.context_chdir = get_relative_call((uint32_t)ff7_externals.battle_context_chdir, 0x3C);

@@ -114,6 +114,7 @@ uint32_t get_filesize(struct ff7_file *file);
 uint32_t tell_file(struct ff7_file *file);
 void seek_file(struct ff7_file *file, uint32_t offset);
 char *make_pc_name(struct file_context *file_context, struct ff7_file *file, char *filename);
+int ff7_read_field_file(char* path);
 
 // graphics
 void destroy_d3d2_indexed_primitive(struct indexed_primitive *ip);

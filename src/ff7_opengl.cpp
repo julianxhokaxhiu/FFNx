@@ -125,6 +125,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(ff7_externals.kernel2_get_text, kernel2_get_text);
 	patch_code_uint(ff7_externals.kernel_load_kernel2 + 0x1D, 20 * 65536);
 
+	replace_function(ff7_externals.read_field_file, ff7_read_field_file);
+
 	// prevent FF7 from stopping the movie when the window gets unfocused
 	replace_function(ff7_externals.wm_activateapp, ff7_wm_activateapp);
 

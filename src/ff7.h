@@ -2301,6 +2301,11 @@ struct ff7_externals
 	uint32_t lgp_read;
 	uint32_t lgp_get_filesize;
 	uint32_t lgp_seek_file;
+	int (*lzss_decode)(char*, char*);
+	char** field_file_buffer;
+	DWORD* field_file_section_ptrs;
+	uint32_t* known_field_buffer_size;
+	uint32_t* field_CFF268;
 	void (*draw_character)(uint32_t, uint32_t, char *, uint32_t, float);
 	uint32_t destroy_field_bk;
 	uint32_t destroy_field_tiles;
