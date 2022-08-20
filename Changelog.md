@@ -18,6 +18,8 @@
 - 60FPS: Fix FIELD and WORLD mode text box animation speed (opening, closing, next paging)
 - Widescreen: Added config logic and zoom implementation
 - Widescreen: Added logic to offset camera scrolling and minor other fixes
+- Modding: Added support for chunked field files
+- Modding: Added support for `direct/*.lgp` direct paths
 
 ## FF8
 
