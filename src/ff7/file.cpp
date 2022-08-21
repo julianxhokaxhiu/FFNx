@@ -227,6 +227,24 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 			ret->fd = fopen(tmp, "rb");
 		}
 
+		// Try to load special language named lgp files
+		if(!ret->fd)
+		{
+			switch (lgp_num) {
+				case 4: // menu
+				case 5: // world
+				case 15: // cr
+				case 16: // disc
+					_snprintf(tmp, sizeof(tmp), "%s/%s/%s_us.lgp/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], fname, ext);
+					break;
+				case 8: // high
+				case 10: // snowboard
+					_snprintf(tmp, sizeof(tmp), "%s/%s/%s-us.lgp/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], fname, ext);
+					break;
+			}
+			ret->fd = fopen(tmp, "rb");
+		}
+
 		if(!ret->fd)
 		{
 			_snprintf(tmp, sizeof(tmp), "%s/%s/%s/%s/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], lgp_current_dir, fname, ext);
