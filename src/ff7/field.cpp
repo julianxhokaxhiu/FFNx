@@ -676,10 +676,16 @@ void field_widescreen_width_clip_with_camera_range(vector2<short>* point)
 	if(widescreen.isResetVerticalPos()) point->y = 0;
 	point->y += widescreen.getVerticalOffset();
 
+	if (widescreen.getMode() == WM_EXTEND_ONLY) return;
+
 	if (point->x > camera_range.right - half_width)
 		point->x = camera_range.right - half_width;
 	if (point->x < camera_range.left + half_width)
 		point->x = camera_range.left + half_width;
+	if (point->y > camera_range.bottom - 120)
+		point->y = camera_range.bottom - 120;
+	if (point->y < camera_range.top + 120)
+		point->y = camera_range.top + 120;
 }
 
 void engine_set_game_engine_world_coord_float_661B23(int field_world_x, int field_world_y)

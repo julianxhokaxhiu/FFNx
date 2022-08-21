@@ -26,6 +26,8 @@
 #include "../ff7.h"
 #include "../cfg.h"
 #include "../renderer.h"
+#include "../video/movies.h"
+#include "../movies.h"
 #include "cmath"
 
 int viewport_width_plus_x_widescreen_fix = 750;
@@ -40,8 +42,46 @@ void ff7_field_draw_gray_quads_sub_644E90() {
 
     if(gl_defer_zoom()) return;
 
-    if(aspect_ratio == AR_WIDESCREEN && widescreen.getMode() == WM_ZOOM)
-        newRenderer.zoomBackendFrameBuffer();
+    bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
+    int width = 0;
+    if(is_movie_playing )
+    {
+        if(widescreen.getMovieMode() == WM_ZOOM) width = 640;
+    }
+    else if(widescreen.getMode() == WM_ZOOM)
+    {
+        auto camera_range = widescreen.getCameraRange();
+        width = 2 * (camera_range.right - camera_range.left);
+    }
+
+    if(width == 0) return;
+
+    int zoomed_x = (wide_viewport_width - width) / 2;
+    float vOffset = (480 - 9 * width / 16) / 2;
+
+    uint16_t newX = newRenderer.getInternalCoordX(zoomed_x);
+    uint16_t newWidth = newRenderer.getInternalCoordX(width);
+    uint16_t newY = newRenderer.getInternalCoordY(vOffset);
+    uint16_t newHeight = newRenderer.getInternalCoordY(game_height - 2 * vOffset);
+
+    if(is_movie_playing)
+    {
+        int frame = ffmpeg_get_movie_frame();
+        auto keyPair = widescreen.getMovieKeyPair(frame);
+
+        uint16_t newY1 = newRenderer.getInternalCoordY(vOffset + keyPair.first.v_offset);
+        uint16_t newY2 = newRenderer.getInternalCoordY(vOffset + keyPair.second.v_offset);
+
+        float t = 0.0;
+        auto seqFrameCount = static_cast<float>(keyPair.second.frame - keyPair.first.frame);
+        if(seqFrameCount > 0)
+            t =  static_cast<float>(frame - keyPair.first.frame) / static_cast<float>(keyPair.second.frame - keyPair.first.frame);
+        t = std::max(std::min(t, 1.0f), 0.0f);
+        int newVOffset = std::round(std::lerp(newY1, newY2, t));
+        newY = newVOffset;
+    }
+
+    newRenderer.zoomBackendFrameBuffer(newX, newY, newWidth, newHeight);
 }
 
 void ifrit_first_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer) {
@@ -263,9 +303,25 @@ void Widescreen::loadConfig()
     }
 }
 
+void Widescreen::loadMovieConfig()
+{
+    char _fullpath[MAX_PATH];
+    sprintf(_fullpath, "%s/%s/movie_config.toml", basedir, external_widescreen_path.c_str());
+
+    try
+    {
+        movie_config = toml::parse_file(_fullpath);
+    }
+    catch (const toml::parse_error &err)
+    {
+        movie_config = toml::parse("");
+    }
+}
+
 void Widescreen::init()
 {
     loadConfig();
+    loadMovieConfig();
 }
 
 void Widescreen::initParamsFromConfig()
@@ -276,12 +332,13 @@ void Widescreen::initParamsFromConfig()
     camera_range.bottom = field_triggers_header_ptr->camera_range.bottom;
     camera_range.top = field_triggers_header_ptr->camera_range.top;
     if(camera_range.right - camera_range.left >= game_width / 2 + abs(wide_viewport_x))
-        widescreen_mode = WM_EXTEND_ONLY;
+        widescreen_mode = WM_EXTEND_WIDE;
     else
         widescreen_mode = WM_DISABLED;
     h_offset = 0;
     v_offset = 0;
     is_reset_vertical_pos = false;
+    movie_v_offset.clear();
 
     auto pName = get_current_field_name();
     if(pName == 0) return;
@@ -307,4 +364,66 @@ void Widescreen::initParamsFromConfig()
             camera_range.top += verticalRangeOffset / 2;
         }
     }
+}
+
+void Widescreen::initMovieParamsFromConfig(char *name)
+{
+    widescreen_movie_mode = WM_DISABLED;
+    movie_v_offset.clear();
+
+    if(name == 0) return;
+
+    std::string _name(name);
+    auto node = movie_config[_name];
+    if(node)
+    {
+        if(auto modeNode = node["mode"]) widescreen_movie_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
+
+        if(auto movie_v_offset_node = node["movie_v_offset"])
+        {
+            auto array = movie_v_offset_node.as_array();
+            auto size = array->size();
+            movie_v_offset.resize(size);
+            for (int i = 0; i < size; ++i)
+            {
+                auto keyframeArray = array->get(i)->as_array();
+                movie_v_offset[i].frame = keyframeArray->get(0)->value<int>().value_or(0);
+                movie_v_offset[i].v_offset = keyframeArray->get(1)->value<int>().value_or(0);
+            }
+        }
+    }
+}
+
+KeyPair Widescreen::getMovieKeyPair(int frame)
+{
+    KeyPair ret;
+
+    int keyCount = movie_v_offset.size();
+    for(int keyIndex = 0; keyIndex < keyCount; ++keyIndex)
+    {
+        auto key = movie_v_offset[keyIndex];
+        if(keyIndex == keyCount-1)
+        {
+            ret.first.frame = key.frame * movie_fps_ratio;
+            ret.first.v_offset = key.v_offset;
+            ret.second.frame = key.frame * movie_fps_ratio;
+            ret.second.v_offset = key.v_offset;
+            break;
+        }
+
+        auto nextKey = movie_v_offset[keyIndex + 1];
+        auto keyFrame = key.frame * movie_fps_ratio;
+        auto nextkeyFrame = nextKey.frame * movie_fps_ratio;
+        if(frame >= keyFrame && frame < nextkeyFrame)
+        {
+            auto nextKey = movie_v_offset[keyIndex + 1];
+            ret.first.frame = keyFrame;
+            ret.first.v_offset = key.v_offset;
+            ret.second.frame = nextkeyFrame;
+            ret.second.v_offset = nextKey.v_offset;
+            break;
+        }
+    }
+
+    return ret;
 }

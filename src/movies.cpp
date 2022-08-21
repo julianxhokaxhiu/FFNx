@@ -27,6 +27,7 @@
 #include "patch.h"
 #include "field.h"
 #include "ff7/defs.h"
+#include "ff7/widescreen.h"
 #include "video/movies.h"
 #include "redirect.h"
 #include "achievement.h"
@@ -84,6 +85,9 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 		}
 	}
 	// ---------------------------
+
+	if(aspect_ratio == AR_WIDESCREEN)
+		widescreen.initMovieParamsFromConfig(filename);
 
 	if(steam_edition || enable_steam_achievements)
 		g_FF7SteamAchievements->initMovieStats(std::string(filename));
