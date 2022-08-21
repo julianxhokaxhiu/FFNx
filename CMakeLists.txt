@@ -285,3 +285,15 @@ add_custom_command(
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.battle.toml
           ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/battle.toml
 )
+
+# CPU INFO
+add_custom_command(
+    TARGET ${RELEASE_NAME}
+    PRE_BUILD
+    # Get CPU info
+    COMMAND
+      ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/cpu-info
+    # Get CPU ISA supported instructions
+    COMMAND
+      ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/isa-info
+)

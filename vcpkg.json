@@ -45,7 +45,14 @@
     "tomlplusplus",
     "vgmstream",
     "steamworkssdk",
-    "xxhash"
+    "xxhash",
+    {
+      "name": "cpuinfo",
+      "default-features": false,
+      "features": [
+        "tools"
+      ]
+    }
   ],
   "overrides": [
     {
@@ -112,6 +119,11 @@
       "name": "xxhash",
       "version": "0.8.1",
       "port-version": 1
+    },
+    {
+      "name": "cpuinfo",
+      "version": "2022-07-19",
+      "port-version": 0
     }
   ]
 }
