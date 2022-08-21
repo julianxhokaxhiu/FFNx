@@ -1191,9 +1191,9 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
             break;
         case MODE_FIELD:
             {
-                // Keep the default scissor for movies and widescreen disabled fields
+                // Keep the default scissor for widescreen disabled movies amd fields
                 bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
-                if(is_movie_playing || widescreen.getMode() == WM_DISABLED)
+                if((is_movie_playing && widescreen.getMovieMode() == WM_DISABLED) || widescreen.getMode() == WM_DISABLED)
                 {
                     scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
                     return;
@@ -1713,28 +1713,16 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
     setClearFlags(false, false);
 }
 
-void Renderer::zoomBackendFrameBuffer()
+void Renderer::zoomBackendFrameBuffer(int x, int y, int width, int height)
 {
     if(!internalState.bHasDrawBeenDone) return;
 
-    auto camera_range = widescreen.getCameraRange();
-    int hCameraRangeSize = camera_range.right - camera_range.left;
-    int zoomed_x = wide_viewport_width / 2 - hCameraRangeSize - 1;
-    float vOffset = 240 - 9 * (camera_range.right - camera_range.left) / 16;
-
-    uint16_t newX = getInternalCoordX(zoomed_x);
-    uint16_t newY = getInternalCoordY(vOffset);
-    uint16_t newWidth = newRenderer.getInternalCoordX(2 * hCameraRangeSize);
-    uint16_t newHeight = newRenderer.getInternalCoordY(game_height - vOffset);
-
-    uint16_t texture = newRenderer.createBlitTexture(0, vOffset, 2 * hCameraRangeSize, game_height- 2 * vOffset);
-
-    bgfx::TextureHandle textureHandle = { texture };
+    bgfx::TextureHandle textureHandle = bgfx::createTexture2D(width, height, false, 1, internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16, BGFX_TEXTURE_BLIT_DST);
 
     backendViewId++;
     bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
-    bgfx::blit(backendViewId, textureHandle, 0, 0, bgfx::getTexture(backendFrameBuffer, 0), newX, newY, newWidth, newHeight);
+    bgfx::blit(backendViewId, textureHandle, 0, 0, bgfx::getTexture(backendFrameBuffer, 0), x, y, width, height);
     backendViewId++;
     bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
@@ -1784,7 +1772,7 @@ void Renderer::zoomBackendFrameBuffer()
 
     backendProgram = RendererProgram::BLIT;
 
-    useTexture(texture);
+    useTexture(textureHandle.idx);
 
     bindVertexBuffer(vertices, 0, 4);
     bindIndexBuffer(indices, 6);

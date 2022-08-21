@@ -20,6 +20,7 @@
 - Widescreen: Added logic to offset camera scrolling and minor other fixes
 - Modding: Added support for chunked field files
 - Modding: Added support for `direct/*.lgp` direct paths
+- Widescreen: Added logic for vertical offset in movies and other minor fixes
 
 ## FF8
 
