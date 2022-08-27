@@ -81,7 +81,7 @@ int script_PC_map_change() {
 
 int field_calc_window_pos(int16_t WINDOW_ID, int16_t X, int16_t Y, int16_t W, int16_t H)
 {
-	return ff7_externals.sub_630C48(WINDOW_ID, X, ff7_center_fields ? Y + 8 : Y, W, H);
+	return ff7_externals.sub_630C48(WINDOW_ID, X, ff7_field_center ? Y + 8 : Y, W, H);
 }
 
 void field_init()

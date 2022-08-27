@@ -214,7 +214,7 @@ void field_layer1_pick_tiles(short bg_position_x, short bg_position_y)
 	}
 
 	initial_pos.x = field_bg_multiplier * (320 - bg_position.x);
-	initial_pos.y = field_bg_multiplier * ((ff7_center_fields ? 232 : 224) - bg_position.y);
+	initial_pos.y = field_bg_multiplier * ((ff7_field_center ? 232 : 224) - bg_position.y);
 
 	if(*ff7_externals.field_special_y_offset > 0 && bg_position.y <= 6)
 		initial_pos.y -= field_bg_multiplier * (*ff7_externals.field_special_y_offset);
@@ -249,7 +249,7 @@ void field_layer2_pick_tiles(short bg_position_x, short bg_position_y)
 	}
 
 	initial_pos.x = (320 - bg_position.x) * field_bg_multiplier;
-	initial_pos.y = ((ff7_center_fields ? 232 : 224) - bg_position.y) * field_bg_multiplier;
+	initial_pos.y = ((ff7_field_center ? 232 : 224) - bg_position.y) * field_bg_multiplier;
 	if(*ff7_externals.field_special_y_offset > 0 && bg_position.y <= 8)
 		initial_pos.y -= (*ff7_externals.field_special_y_offset) * field_bg_multiplier;
 
@@ -315,7 +315,7 @@ void field_layer3_pick_tiles(short bg_position_x, short bg_position_y)
 	}
 
 	initial_pos.x = (320 - bg_position.x) * field_bg_multiplier;
-	initial_pos.y = ((ff7_center_fields ? 232 : 224) - bg_position.y) * field_bg_multiplier;
+	initial_pos.y = ((ff7_field_center ? 232 : 224) - bg_position.y) * field_bg_multiplier;
 	if(ff7_externals.modules_global_object->field_B0 < 0xFFF)
 		z_value = ff7_externals.field_layer_sub_623C0F(ff7_externals.field_camera_rotation_matrix_CFF3D8, ff7_externals.modules_global_object->field_B0, 0, 0);
 	else
@@ -440,7 +440,7 @@ void field_layer4_pick_tiles(short bg_position_x, short bg_position_y)
 		}
 
 		initial_pos.x = (320 - bg_position.x) * field_bg_multiplier;
-		initial_pos.y = ((ff7_center_fields ? 232 : 224) - bg_position.y) * field_bg_multiplier;
+		initial_pos.y = ((ff7_field_center ? 232 : 224) - bg_position.y) * field_bg_multiplier;
 		float z_value = ff7_externals.field_layer_sub_623C0F(ff7_externals.field_camera_rotation_matrix_CFF3D8, ff7_externals.modules_global_object->field_AE, 0, 0);
 
 		const bool do_increase_height = aspect_ratio == AR_WIDESCREEN;
@@ -578,7 +578,7 @@ void ff7_field_set_fade_quad_size(int x, int y, int width, int height)
 	if(aspect_ratio == AR_WIDESCREEN)
 	{
 		x -= abs(wide_viewport_x);
-		y -= ff7_center_fields ? 16 : 0;
+		y -= ff7_field_center ? 16 : 0;
 		width += (wide_viewport_width - game_width);
 		height += 32;
 	}

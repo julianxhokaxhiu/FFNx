@@ -106,9 +106,6 @@ uint32_t estore_edition = false;
 // global FF7 flag, check if is japanese edition ( detected as US )
 uint32_t ff7_japanese_edition = false;
 
-// global FF7 flag, tell the engine if center fields hext patch is active
-uint32_t ff7_center_fields = false;
-
 // global FF7 flag, they usually contain the values normally being written in registry
 DWORD ff7_sfx_volume = 0x64;
 DWORD ff7_music_volume = 0x64;

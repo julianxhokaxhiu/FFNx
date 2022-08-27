@@ -57,7 +57,6 @@ extern uint32_t version;
 extern uint32_t steam_edition;
 extern uint32_t estore_edition;
 extern uint32_t ff7_japanese_edition;
-extern uint32_t ff7_center_fields;
 extern DWORD ff7_sfx_volume;
 extern DWORD ff7_music_volume;
 extern DWORD ff7_ambient_volume;
