@@ -1191,7 +1191,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
             break;
         case MODE_FIELD:
             {
-                // Keep the default scissor for widescreen disabled movies amd fields
+                // Keep the default scissor for widescreen disabled movies and fields
                 bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
                 if((is_movie_playing && widescreen.getMovieMode() == WM_DISABLED) || widescreen.getMode() == WM_DISABLED)
                 {
@@ -1213,7 +1213,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
                     scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
             }
             break;
-            case MODE_SWIRL:
+        case MODE_SWIRL:
             {
                 // This removes the black bars on the top and bottom of the screen
                 if(y == 16 && height == 448)
@@ -1229,7 +1229,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
                     scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
             }
             break;
-            case MODE_BATTLE:
+        case MODE_BATTLE:
             {
                 if(x == 0 && width == game_width)
                     scissorWidth = getInternalCoordX(wide_viewport_width);

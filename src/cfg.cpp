@@ -111,6 +111,7 @@ bool enable_animated_textures;
 std::vector<std::string> disable_animated_textures_on_field;
 long ff7_fps_limiter;
 bool ff7_footsteps;
+bool ff7_field_center;
 bool enable_analogue_controls;
 bool enable_inverted_camera_controls;
 double right_analog_stick_deadzone;
@@ -250,6 +251,7 @@ void read_cfg()
 	disable_animated_textures_on_field = get_string_or_array_of_strings(config["disable_animated_textures_on_field"]);
 	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FF7_LIMITER_DEFAULT);
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
+	ff7_field_center = config["ff7_field_center"].value_or(true);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
 	enable_inverted_camera_controls = config["enable_inverted_camera_controls"].value_or(false);
 	right_analog_stick_deadzone = config["right_analog_stick_deadzone"].value_or(0.1);

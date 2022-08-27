@@ -245,6 +245,15 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	memcpy_code(ff7_externals.field_models_eye_blink_buffer + 0x58, ff7_redxiii_eye_fix, sizeof(ff7_redxiii_eye_fix) - 1);
 
 	// #####################
+	// field vertical center
+	// #####################
+	if(ff7_field_center || aspect_ratio == AR_WIDESCREEN)
+	{
+		patch_code_byte(ff7_externals.field_init_viewport_values + 0x35, 16);
+		patch_code_int(ff7_externals.field_init_viewport_values + 0x6E, 240);
+	}
+
+	// #####################
 	// worldmap footsteps
 	// #####################
 	if(ff7_footsteps)

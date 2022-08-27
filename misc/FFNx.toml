@@ -551,6 +551,13 @@ mdef_fix = true
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff7_external_opening_music = false
 
+# FIELD mode vertical center
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# This flag will center vertically the game when in FIELD mode
+# NOTE: Previously this was done via a hext file
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff7_field_center = true
+
 ## MODDER OPTIONS - These options are mostly useful to modders and should not be enabled during normal play.
 
 # This is the path where your savefiles will be read.

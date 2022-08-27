@@ -55,7 +55,7 @@ void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 	float movieWidth = ratio * width;
 	float movieOffsetY = (game_height - movieHeight) / 2.0f;
 
-	if (!ff8 && !ff7_center_fields) movieOffsetY = 0.0f;
+	if (!ff8 && !ff7_field_center) movieOffsetY = 0.0f;
 
 	/*  y0    y2
 	 x0 +-----+ x2

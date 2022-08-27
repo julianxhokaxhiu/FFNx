@@ -114,16 +114,6 @@ bool Hext::parseCheckpoint(std::string token, std::string checkpoint)
 
 bool Hext::parseCommands(std::string token)
 {
-    if (starts_with(token, ">>"))
-    {
-        if (ends_with(token, "FF7_CENTER_FIELDS = 1"))
-        {
-            ff7_center_fields = true;
-
-            return true;
-        }
-    }
-
     if (starts_with(token, "<<"))
     {
         replaceOnce(token, "<<", "");
