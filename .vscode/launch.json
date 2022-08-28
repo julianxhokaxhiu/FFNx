@@ -1,18 +1,24 @@
 {
   "configurations": [
-      {
-          "name": "Run FF7",
-          "type": "cppvsdbg",
-          "request": "launch",
-          "program": "C:\\Games\\Final Fantasy VII\\ff7.exe",
-          "cwd": "C:\\Games\\Final Fantasy VII"
-      },
-      {
-        "name": "Run FF8",
-        "type": "cppvsdbg",
-        "request": "launch",
-        "program": "C:\\Games\\Final Fantasy VIII\\ff8.exe",
-        "cwd": "C:\\Games\\Final Fantasy VIII"
+    {
+      "name": "Run FF7",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "C:\\Games\\Final Fantasy VII\\ff7.exe",
+      "cwd": "C:\\Games\\Final Fantasy VII"
+    },
+    {
+      "name": "Run FF8",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "C:\\Games\\Final Fantasy VIII\\ff8.exe",
+      "cwd": "C:\\Games\\Final Fantasy VIII"
+    },
+    {
+      "name": "Attach Process",
+      "type": "cppvsdbg",
+      "request": "attach",
+      "processId":"${command:pickProcess}"
     }
   ]
 }
