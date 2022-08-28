@@ -1404,16 +1404,18 @@ short ff7_opcode_divide_get_bank_value(short bank, short address)
 
 int opcode_script_partial_animation_wrapper()
 {
+	field_event_data* event_data = *ff7_externals.field_event_data_ptr;
+	field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
+	WORD total_number_of_frames = -1;
 	int frame_multiplier = get_frame_multiplier();
 
 	byte curr_opcode = get_field_parameter<byte>(-1);
-	WORD total_number_of_frames = -1;
 	byte curr_model_id = ff7_externals.field_model_id_array[*ff7_externals.current_entity_id];
+	byte previous_animation_id = event_data[curr_model_id].animation_id;
 	byte speed = get_field_parameter<byte>(3);
-	WORD first_frame = 16 * get_field_parameter<byte>(1) * frame_multiplier / ((curr_opcode == CANIM1 || curr_opcode == CANIM2) ? speed : 1);
-	WORD last_frame = (get_field_parameter<byte>(2) * frame_multiplier + 1) / speed;
-	field_event_data* event_data = *ff7_externals.field_event_data_ptr;
-	field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
+	short previous_current_frame = event_data[curr_model_id].currentFrame;
+	short first_frame = 16 * get_field_parameter<byte>(1) * frame_multiplier / ((curr_opcode == CANIM1 || curr_opcode == CANIM2) ? speed : 1);
+	short last_frame = (get_field_parameter<byte>(2) * frame_multiplier + 1) / speed;
 	char animation_type = ff7_externals.animation_type_array[curr_model_id];
 
 	int ret = call_original_opcode_function(curr_opcode);
@@ -1431,7 +1433,11 @@ int opcode_script_partial_animation_wrapper()
 			if(last_frame > total_number_of_frames)
 				last_frame = total_number_of_frames;
 
-			event_data[curr_model_id].firstFrame = first_frame;
+			// Since last frame is increased by 1, there might be cases where first frame is greater than previous current frame
+			if(previous_animation_id == event_data[curr_model_id].animation_id && previous_current_frame == first_frame + event_data[curr_model_id].animation_speed)
+				first_frame = previous_current_frame;
+
+			event_data[curr_model_id].currentFrame = first_frame;
 			event_data[curr_model_id].lastFrame = last_frame;
 			break;
 		default:
