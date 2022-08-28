@@ -2119,7 +2119,7 @@ struct field_event_data
 	char animation_id;
 	byte padding_65;
 	short animation_speed;
-	short firstFrame;
+	short currentFrame;
 	short lastFrame;
 	short character_id;
 	short field_direction_or_collision;
