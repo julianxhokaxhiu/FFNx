@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "field/defs.h"
+
 // battle
 void magic_thread_start(void (*func)());
 void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3);
@@ -74,21 +76,6 @@ void ff7_update_idle_battle_camera();
 
 // animation
 void ff7_battle_animations_hook_init();
-
-// field
-void ff7_field_hook_init();
-void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);
-void field_layer1_pick_tiles(short x_offset, short y_offset);
-void field_layer2_pick_tiles(short x_offset, short y_offset);
-void field_layer3_pick_tiles(short x_offset, short y_offset);
-void field_layer4_pick_tiles(short x_offset, short y_offset);
-void ff7_field_clip_with_camera_range(vector2<short>* point);
-void ff7_field_layer3_clip_with_camera_range(field_trigger_header* trigger_header, vector2<short>* point);
-uint32_t field_open_flevel_siz();
-void field_init_scripted_bg_movement();
-void field_update_scripted_bg_movement();
-bool ff7_field_do_draw_3d_model(short x, short y);
-void ff7_field_set_fade_quad_size(int x, int y, int width, int height);
 
 // world
 void ff7_world_hook_init();
