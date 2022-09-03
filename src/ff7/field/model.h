@@ -27,7 +27,8 @@
 
 #include <array>
 
-namespace ff7_field {
+namespace ff7::field
+{
     struct external_field_model_data
     {
         int moveFrameIndex;

@@ -88,16 +88,16 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(ff7_externals.load_p_file, load_p_file);
 	replace_function(common_externals.load_tex_file, load_tex_file);
 
-	replace_function(ff7_externals.field_load_textures, ff7_field::field_load_textures);
-	replace_function(ff7_externals.field_layer1_pick_tiles, ff7_field::field_layer1_pick_tiles);
-	replace_function(ff7_externals.field_layer2_pick_tiles, ff7_field::field_layer2_pick_tiles);
-	replace_function(ff7_externals.field_layer3_pick_tiles, ff7_field::field_layer3_pick_tiles);
-	replace_function(ff7_externals.field_layer4_pick_tiles, ff7_field::field_layer4_pick_tiles);
+	replace_function(ff7_externals.field_load_textures, ff7::field::field_load_textures);
+	replace_function(ff7_externals.field_layer1_pick_tiles, ff7::field::field_layer1_pick_tiles);
+	replace_function(ff7_externals.field_layer2_pick_tiles, ff7::field::field_layer2_pick_tiles);
+	replace_function(ff7_externals.field_layer3_pick_tiles, ff7::field::field_layer3_pick_tiles);
+	replace_function(ff7_externals.field_layer4_pick_tiles, ff7::field::field_layer4_pick_tiles);
 	patch_code_byte(ff7_externals.field_draw_everything + 0xE2, 0x1D);
 	patch_code_byte(ff7_externals.field_draw_everything + 0x353, 0x1D);
-	replace_function(ff7_externals.open_flevel_siz, ff7_field::field_open_flevel_siz);
-	replace_function(ff7_externals.field_init_scripted_bg_movement, ff7_field::field_init_scripted_bg_movement);
-	replace_function(ff7_externals.field_update_scripted_bg_movement, ff7_field::field_update_scripted_bg_movement);
+	replace_function(ff7_externals.open_flevel_siz, ff7::field::field_open_flevel_siz);
+	replace_function(ff7_externals.field_init_scripted_bg_movement, ff7::field::field_init_scripted_bg_movement);
+	replace_function(ff7_externals.field_update_scripted_bg_movement, ff7::field::field_update_scripted_bg_movement);
 
 	replace_function(ff7_externals.get_equipment_stats, get_equipment_stats);
 
@@ -236,7 +236,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	}
 
 	// Field FPS fix (60FPS, 30FPS movies)
-	ff7_field::ff7_field_hook_init();
+	ff7::field::ff7_field_hook_init();
 
 	// #####################
 	// red XIII eye blinking

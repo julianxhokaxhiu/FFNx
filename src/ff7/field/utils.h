@@ -26,8 +26,8 @@
 #include "../../globals.h"
 #include "../widescreen.h"
 
-namespace ff7_field {
-
+namespace ff7::field
+{
     bool is_fps_running_more_than_original()
     {
         if(is_overlapping_movie_playing())

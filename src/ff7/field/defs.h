@@ -26,7 +26,8 @@
 #include "../../common.h"
 #include "../../globals.h"
 
-namespace ff7_field {
+namespace ff7::field
+{
     void ff7_field_hook_init();
     void field_load_textures(struct ff7_game_obj *game_object, struct struc_3 *struc_3);
     void field_layer1_pick_tiles(short x_offset, short y_offset);

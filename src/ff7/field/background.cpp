@@ -32,8 +32,8 @@
 
 #include <functional>
 
-namespace ff7_field {
-
+namespace ff7::field
+{
     constexpr float MIN_STEP_INVERSE = 10.f;
 
     // ##################################################################

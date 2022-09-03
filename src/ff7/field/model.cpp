@@ -29,8 +29,8 @@
 #include "utils.h"
 #include "model.h"
 
-namespace ff7_field {
-
+namespace ff7::field
+{
     bool ff7_field_do_draw_3d_model(short x, short y)
     {
         if(*ff7_externals.field_bg_flag_CC15E4)

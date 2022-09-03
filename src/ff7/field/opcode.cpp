@@ -31,8 +31,8 @@
 
 #include <set>
 
-namespace ff7_field {
-
+namespace ff7::field
+{
     std::set<field_bank_address> field_bank_address_to_be_fixed = {{14, 6}};
     field_bank_address mvief_bank_address;
 

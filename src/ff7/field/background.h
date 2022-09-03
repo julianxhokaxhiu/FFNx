@@ -26,7 +26,8 @@
 
 #pragma once
 
-namespace ff7_field {
+namespace ff7::field
+{
     constexpr float INVALID_VALUE = -1000000;
 
     vector2<float>

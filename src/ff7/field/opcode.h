@@ -25,8 +25,8 @@
 
 #include <array>
 
-namespace ff7_field {
-
+namespace ff7::field
+{
     struct field_bank_address
     {
         byte bank;
