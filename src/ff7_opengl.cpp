@@ -118,7 +118,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(ff7_externals.lgp_get_filesize, lgp_get_filesize);
 	replace_function(ff7_externals.lgp_seek_file, lgp_seek_file);
 
-	replace_function(ff7_externals.magic_thread_start, magic_thread_start);
+	replace_function(ff7_externals.magic_thread_start, ff7::battle::magic_thread_start);
 
 	replace_function(ff7_externals.kernel2_reset_counters, kernel2_reset_counters);
 	replace_function(ff7_externals.kernel2_add_section, kernel2_add_section);
@@ -214,8 +214,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, 2); // Works perfectly only in 30 FPS
 
-			ff7_battle_camera_hook_init();
-			ff7_battle_animations_hook_init();
+			ff7::battle::camera_hook_init();
+			ff7::battle::animations_hook_init();
 
 			if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 			{
@@ -286,7 +286,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// control battle camera
 	// #####################
 	if(enable_analogue_controls)
-		replace_call_function(ff7_externals.battle_sub_42D992 + 0xFB, ff7_update_battle_camera);
+		replace_call_function(ff7_externals.battle_sub_42D992 + 0xFB, ff7::battle::update_battle_camera);
 
 	//######################
 	// menu rendering fix
@@ -326,10 +326,10 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	if(steam_edition || enable_steam_achievements)
 	{
 		// BATTLE SQUARE
-		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7_load_battle_stage);
+		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7::battle::load_battle_stage);
 
 		// GIL, MASTER MATERIA, BATTLE WON
-		replace_call_function(ff7_externals.battle_enemy_killed_sub_433BD2 + 0x2AF, ff7_battle_sub_5C7F94);
+		replace_call_function(ff7_externals.battle_enemy_killed_sub_433BD2 + 0x2AF, ff7::battle::battle_sub_5C7F94);
 		replace_call_function(ff7_externals.menu_sub_6CDA83 + 0x20, ff7_menu_battle_end_sub_6C9543);
 		if (version == VERSION_FF7_102_US) {
 			replace_call_function(ff7_externals.menu_shop_loop + 0x327B, ff7_get_materia_gil);
@@ -339,7 +339,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_function(ff7_externals.opcode_increase_gil_call, ff7_opcode_increase_gil_call);
 
 		// 1ST LIMIT BREAK
-		replace_function(ff7_externals.display_battle_action_text_sub_6D71FA, ff7_display_battle_action_text_sub_6D71FA);
+		replace_function(ff7_externals.display_battle_action_text_sub_6D71FA, ff7::battle::display_battle_action_text_sub_6D71FA);
 
 		// MATERIA GOT
 		replace_call_function(ff7_externals.opcode_add_materia_inventory_call + 0x43, ff7_menu_sub_6CBCF3);

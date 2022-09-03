@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-#include "camera.h"
+#include "battle/camera.h"
 
 #include "../audio.h"
 #include "../gamepad.h"
@@ -267,8 +267,8 @@ void ff7_use_analogue_controls()
 		ff7_set_control_direction(base_control_direction);
 	}
 
-	camera.setRotationSpeed(verticalRotSpeed, horizontalRotSpeed, 0.0f);
-	camera.setZoomSpeed(zoomSpeed);
+	ff7::battle::camera.setRotationSpeed(verticalRotSpeed, horizontalRotSpeed, 0.0f);
+	ff7::battle::camera.setZoomSpeed(zoomSpeed);
 }
 
 int ff7_get_gamepad()
