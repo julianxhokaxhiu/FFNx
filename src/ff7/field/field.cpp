@@ -37,8 +37,8 @@
 #include "enter.h"
 #include "model.h"
 
-namespace ff7_field{
-
+namespace ff7::field
+{
     // helper function initializes page dst, copies texture from src and applies
     // blend_mode
     void field_load_textures_helper(struct ff7_game_obj *game_object, struct struc_3 *struc_3, uint32_t src, uint32_t dst, uint32_t blend_mode)

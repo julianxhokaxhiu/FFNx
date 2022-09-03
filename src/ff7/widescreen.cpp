@@ -118,10 +118,10 @@ void ff7_widescreen_fix_chocobo_submit_quad_graphics_object(int x, int y, int wi
 
 void ff7_widescreen_hook_init() {
     // Field fix
-    replace_function((uint32_t)ff7_externals.field_clip_with_camera_range_6438F6, ff7_field::ff7_field_clip_with_camera_range);
-    replace_function(ff7_externals.field_layer3_clip_with_camera_range_643628, ff7_field::ff7_field_layer3_clip_with_camera_range);
-    replace_function(ff7_externals.field_culling_model_639252, ff7_field::ff7_field_do_draw_3d_model);
-    replace_call_function(ff7_externals.field_sub_63AC66 + 0xD5, ff7_field::ff7_field_set_fade_quad_size);
+    replace_function((uint32_t)ff7_externals.field_clip_with_camera_range_6438F6, ff7::field::ff7_field_clip_with_camera_range);
+    replace_function(ff7_externals.field_layer3_clip_with_camera_range_643628, ff7::field::ff7_field_layer3_clip_with_camera_range);
+    replace_function(ff7_externals.field_culling_model_639252, ff7::field::ff7_field_do_draw_3d_model);
+    replace_call_function(ff7_externals.field_sub_63AC66 + 0xD5, ff7::field::ff7_field_set_fade_quad_size);
     patch_code_dword(ff7_externals.field_submit_draw_pointer_hand_60D572 + 0x6A, (uint32_t)&wide_viewport_x);
     patch_code_dword(ff7_externals.field_submit_draw_pointer_hand_60D572 + 0x80, (uint32_t)&wide_viewport_x);
     patch_code_dword(ff7_externals.field_submit_draw_pointer_hand_60D572 + 0x94, (uint32_t)&wide_viewport_x);
