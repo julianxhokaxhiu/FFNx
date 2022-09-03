@@ -23,6 +23,7 @@
 
 #include "field/defs.h"
 #include "battle/defs.h"
+#include "world/defs.h"
 
 // menu
 void ff7_menu_battle_end_sub_6C9543();
@@ -61,10 +62,6 @@ int ff7_field_load_models_atoi(const char* str);
 void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3);
 void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3);
 int ff7_load_save_file(int param_1);
-
-// world
-void ff7_world_hook_init();
-void ff7_world_update_model_movement(int delta_position_x, int delta_position_z);
 
 // file
 FILE *open_lgp_file(char *filename, uint32_t mode);

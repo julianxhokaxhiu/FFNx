@@ -220,7 +220,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 			{
 				common_frame_multiplier = 2;
-				ff7_world_hook_init();
+				ff7::world::world_hook_init();
 
 				// Swirl mode 60FPS fix
 				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x184, common_frame_multiplier); // wait frames before swirling
@@ -257,7 +257,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// worldmap footsteps
 	// #####################
 	if(ff7_footsteps)
-		replace_call_function(ff7_externals.world_update_player_74EA48 + 0xCDF, ff7_world_update_model_movement);
+		replace_call_function(ff7_externals.world_update_player_74EA48 + 0xCDF, ff7::world::world_update_model_movement);
 
 	// #####################
 	// worldmap fx effects ( forest trail, ocean trail with highwind, etc. )
