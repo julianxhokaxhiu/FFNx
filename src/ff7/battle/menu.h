@@ -6,6 +6,8 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2022 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 Cosmos                                             //
+//    Copyright (C) 2022 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -19,42 +21,13 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "../ff7.h"
-#include "../log.h"
-#include "../achievement.h"
-#include "widescreen.h"
+#pragma once
 
-void magic_thread_start(void (*func)())
+namespace ff7::battle
 {
-	ff7_externals.destroy_magic_effects();
-
-	/*
-	 * Original function creates a separate thread but the code is not thread
-	 * safe in any way! Luckily modern PCs are fast enough to load magic
-	 * effects synchronously.
-	 */
-	func();
-}
-
-void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3){
-	((void(*)(int, int, int **)) ff7_externals.load_battle_stage)(param_1, battle_location_id, param_3);
-
-	g_FF7SteamAchievements->initCharStatsBeforeBattle(ff7_externals.savemap->chars);
-	g_FF7SteamAchievements->unlockBattleSquareAchievement(battle_location_id);
-}
-
-void ff7_battle_sub_5C7F94(int param_1, int param_2){
-	((void(*)(int, int)) ff7_externals.battle_sub_5C7F94)(param_1, param_2);
-
-	if (trace_all || trace_achievement)
-		ffnx_trace("%s - trying to unlock achievement for gil\n", __func__);
-	g_FF7SteamAchievements->unlockGilAchievement(ff7_externals.savemap->gil);
-}
-
-void ff7_display_battle_action_text_sub_6D71FA(short command_id, short action_id){
-	ff7_externals.battle_actor_data->formation_entry = 1;
-	ff7_externals.battle_actor_data->command_index = command_id;
-	ff7_externals.battle_actor_data->action_index = action_id;
-
-	g_FF7SteamAchievements->unlockFirstLimitBreakAchievement(command_id, action_id);
+    void update_battle_menu();
+    void display_tifa_slots_handler();
+    void display_cait_sith_slots_handler();
+    void display_battle_arena_menu_handler();
+    void delay_battle_target_pointer_animation_type();
 }

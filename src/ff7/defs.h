@@ -22,14 +22,7 @@
 #pragma once
 
 #include "field/defs.h"
-
-// battle
-void magic_thread_start(void (*func)());
-void ff7_load_battle_stage(int param_1, int battle_location_id, int **param_3);
-void ff7_battle_sub_5C7F94(int param_1, int param_2);
-void ff7_display_battle_action_text_sub_6D71FA(short command_id, short action_id);
-void ifrit_first_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer);
-void ifrit_second_third_wave_effect_widescreen_fix_sub_66A47E(int wave_data_pointer);
+#include "battle/defs.h"
 
 // menu
 void ff7_menu_battle_end_sub_6C9543();
@@ -68,14 +61,6 @@ int ff7_field_load_models_atoi(const char* str);
 void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3);
 void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3);
 int ff7_load_save_file(int param_1);
-
-// camera
-void ff7_battle_camera_hook_init();
-void ff7_update_battle_camera(short cameraScriptIndex);
-void ff7_update_idle_battle_camera();
-
-// animation
-void ff7_battle_animations_hook_init();
 
 // world
 void ff7_world_hook_init();
