@@ -832,6 +832,7 @@ void Renderer::prepareSpecularIbl(char* fullpath)
 
     uint32_t width, height, mipCount = 0;
     specularIblTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!specularIblTexture.idx) specularIblTexture = BGFX_INVALID_HANDLE;
     lighting.setIblMipCount(mipCount);
 }
 
@@ -842,6 +843,7 @@ void Renderer::prepareDiffuseIbl(char* fullpath)
 
     uint32_t width, height, mipCount = 0;
     diffuseIblTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!diffuseIblTexture.idx) diffuseIblTexture = BGFX_INVALID_HANDLE;
 }
 
 void Renderer::prepareEnvBrdf()
@@ -855,6 +857,7 @@ void Renderer::prepareEnvBrdf()
 
     uint32_t width, height, mipCount = 0;
     envBrdfTexture = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!envBrdfTexture.idx) envBrdfTexture = BGFX_INVALID_HANDLE;
 }
 
 void Renderer::shutdown()
