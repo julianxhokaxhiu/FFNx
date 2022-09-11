@@ -1380,7 +1380,7 @@ bimg::ImageContainer* Renderer::createImageContainer(const char* filename, bimg:
 
 bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb)
 {
-    bgfx::TextureHandle ret = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
     bimg::ImageContainer* img = createImageContainer(filename);
 
     if (img != nullptr)
