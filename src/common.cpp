@@ -1326,7 +1326,7 @@ void common_unload_texture(struct texture_set *texture_set)
 	// Destroy animated textures
 	if (gl_set->is_animated)
 	{
-		for(std::map<std::string,uint32_t>::iterator it = gl_set->animated_textures.begin(); it != gl_set->animated_textures.end(); ++it) {
+		for(std::map<uint64_t,uint32_t>::iterator it = gl_set->animated_textures.begin(); it != gl_set->animated_textures.end(); ++it) {
 			newRenderer.deleteTexture(it->second);
 		}
 		gl_set->animated_textures.clear();
