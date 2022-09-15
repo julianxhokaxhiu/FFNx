@@ -95,7 +95,7 @@ struct gl_texture_set
 	uint32_t disable_lighting;
 	// ANIMATED TEXTURES
 	uint32_t is_animated;
-	std::map<uint64_t, uint32_t> animated_textures;
+	std::map<std::string, uint32_t> animated_textures;
 	// ADDITIONAL TEXTURES
 	std::map<uint16_t, uint32_t> additional_textures;
 };
