@@ -252,7 +252,7 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 			if(ret->fd) ret->resolved_conflict = true;
 		}
 
-		if(ret->fd && (trace_all || trace_direct)) ffnx_trace("lgp_open_file: %i, %s (%s) = 0x%x\n", lgp_num, filename, lgp_current_dir, ret);
+		if(ret->fd && (trace_all || trace_direct)) ffnx_trace("lgp_open_file: %i, %s (%s) [%s] = 0x%x\n", lgp_num, filename, lgp_current_dir, tmp, ret);
 	}
 
 	if(!ret->fd)
@@ -267,7 +267,7 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 			return 0;
 		}
 
-		if(trace_all || trace_direct) ffnx_trace("lgp_open_file: %i, %s (%s) = 0x%x\n", lgp_num, filename, lgp_current_dir, ret);
+		if(trace_all || trace_direct) ffnx_trace("lgp_open_file: %i, %s (%s) [ORIGINAL] = 0x%x\n", lgp_num, filename, lgp_current_dir, ret);
 	}
 
 	last = ret;
