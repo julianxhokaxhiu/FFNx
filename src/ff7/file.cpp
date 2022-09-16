@@ -219,7 +219,7 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 	if(!direct_mode_path.empty())
 	{
 		_snprintf(tmp, sizeof(tmp), "%s/%s/%s/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], fname, ext);
-			ret->fd = fopen(tmp, "rb");
+		ret->fd = fopen(tmp, "rb");
 
 		if(!ret->fd)
 		{
