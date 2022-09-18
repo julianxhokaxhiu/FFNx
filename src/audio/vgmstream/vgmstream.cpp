@@ -75,9 +75,9 @@ namespace SoLoud
 
 	result VGMStreamInstance::seek(double aSeconds, float* mScratch, unsigned int mScratchSize)
 	{
-		int seek_samples = int(floor(mSamplerate * aSeconds));
+		mOffset = int(floor(mSamplerate * aSeconds));
 
-		seek_vgmstream(mParent->mStream, seek_samples);
+		seek_vgmstream(mParent->mStream, mOffset);
 
 		mStreamPosition = aSeconds;
 		return SO_NO_ERROR;

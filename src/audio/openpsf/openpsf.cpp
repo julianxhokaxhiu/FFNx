@@ -91,6 +91,7 @@ namespace SoLoud
 	result OpenPsfInstance::seek(double aSeconds, float *mScratch, unsigned int mScratchSize)
 	{
 		double offset = aSeconds - mStreamPosition;
+
 		if (offset <= 0)
 		{
 			if (rewind() != SO_NO_ERROR)
@@ -100,7 +101,10 @@ namespace SoLoud
 			}
 			offset = aSeconds;
 		}
+
 		int samples_to_discard = int(floor(mSamplerate * offset));
+
+		mOffset = samples_to_discard;
 
 		while (samples_to_discard)
 		{
