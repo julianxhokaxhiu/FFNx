@@ -67,6 +67,7 @@ find_package(BX REQUIRED)
 find_package(BIMG REQUIRED)
 find_package(BGFX REQUIRED)
 find_package(FFMPEG REQUIRED)
+find_package(Vorbis CONFIG REQUIRED)
 find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
@@ -127,6 +128,8 @@ target_link_libraries(
   tomlplusplus::tomlplusplus
   STEAMWORKSSDK::STEAMWORKSSDK
   xxHash::xxhash
+  Vorbis::vorbisfile
+  Vorbis::vorbis
   ${BX_LIBRARIES}
   ${BIMG_LIBRARIES}
   ${BGFX_LIBRARIES}

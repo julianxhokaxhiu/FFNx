@@ -43,7 +43,14 @@
     "soloud",
     "stackwalker",
     "tomlplusplus",
-    "vgmstream",
+    {
+      "name": "vgmstream",
+      "default-features": false,
+      "features": [
+        "ffmpeg",
+        "vorbis"
+      ]
+    },
     "steamworkssdk",
     "xxhash",
     {
