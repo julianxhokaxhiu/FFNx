@@ -35,7 +35,7 @@ ff7_channel_6_state sfx_channel_6_state;
 
 void ff7_sfx_release(IDirectSoundBuffer *buffer)
 {
-	// Just do nothing
+	if (buffer) buffer->Release();
 }
 
 bool ff7_should_sfx_loop(int id)
