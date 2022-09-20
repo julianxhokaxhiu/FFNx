@@ -5,22 +5,27 @@
 ## Common
 
 - Audio: Fix a minor glitch happening on long tracks that were looped ( https://github.com/julianxhokaxhiu/FFNx/issues/452 )
+- Audio: Fix a minor glitch happening on OGG tracks that were looped until the end of the track ( https://github.com/julianxhokaxhiu/FFNx/issues/497 )
 - Borderless: Fix debug info display when using this mode
 - Borderless: Fix game aspect ratio when using borderless or switching to it on the fly
 - Vulkan: Disable HDR support, brings more stability on top of AMD cards
 
 ## FF7
 
-- Widescreen: 16:9 native support!
+- 60FPS: Fix FIELD and WORLD mode text box animation speed (opening, closing, next paging)
+- Animated textues: Optimizations that lead to major speed improvements on old/weak CPUs ( https://github.com/julianxhokaxhiu/FFNx/pull/494 )
+- Fields: Move vertical centering [to be a flag](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L554-L559) instead of a Hext file ( https://github.com/julianxhokaxhiu/FFNx/pull/486 )
 - Lighting: Fixed minor graphical glitches happening in fields ( https://github.com/julianxhokaxhiu/FFNx/pull/475 )
 - Lighting: Fixed visual glitches happening while using Antialiasing ( https://github.com/julianxhokaxhiu/FFNx/pull/476 )
 - Lighting: Fixed various missing graphical elements through the overall game ( Titan missing floor, etc. ) ( https://github.com/julianxhokaxhiu/FFNx/pull/478 )
-- 60FPS: Fix FIELD and WORLD mode text box animation speed (opening, closing, next paging)
-- Widescreen: Added config logic and zoom implementation
-- Widescreen: Added logic to offset camera scrolling and minor other fixes
+- Lighting: Minor code optimizations that lead to major speed improvements while using this mode
 - Modding: Added support for chunked field files
 - Modding: Added support for `direct/*.lgp` direct paths
+- SFX: Fix a loop bug happening when using MIDI + External SFX combination ( https://github.com/julianxhokaxhiu/FFNx/issues/495 )
+- Widescreen: Added config logic and zoom implementation
+- Widescreen: Added logic to offset camera scrolling and minor other fixes
 - Widescreen: Added logic for vertical offset in movies and other minor fixes
+- Widescreen: 16:9 native support!
 
 ## FF8
 
