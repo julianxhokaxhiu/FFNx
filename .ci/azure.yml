@@ -56,7 +56,7 @@ jobs:
 - job: FFNx
   timeoutInMinutes: 1440
   steps:
-  - task: NuGetAuthenticate@0
+  - task: NuGetAuthenticate@1
   - task: PowerShell@2
     displayName: 'Build $(_RELEASE_NAME)'
     inputs:
