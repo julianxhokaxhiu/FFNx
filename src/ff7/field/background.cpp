@@ -500,8 +500,6 @@ namespace ff7::field
         float half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
 
         point->x += widescreen.getHorizontalOffset();
-        if(widescreen.isResetVerticalPos()) point->y = 0;
-        point->y += widescreen.getVerticalOffset();
 
         if (widescreen.getMode() == WM_EXTEND_ONLY) return;
 
@@ -509,10 +507,6 @@ namespace ff7::field
             point->x = camera_range.right - half_width;
         if (point->x < camera_range.left + half_width)
             point->x = camera_range.left + half_width;
-        if (point->y > camera_range.bottom - 120)
-            point->y = camera_range.bottom - 120;
-        if (point->y < camera_range.top + 120)
-            point->y = camera_range.top + 120;
     }
 
     void engine_set_game_engine_world_coord_float_661B23(int field_world_x, int field_world_y)
@@ -593,7 +587,7 @@ namespace ff7::field
                 world_pos = {*ff7_externals.field_curr_delta_world_pos_x, *ff7_externals.field_curr_delta_world_pos_y};
 
                 if(is_fieldmap_wide())
-                    ff7_field_clip_with_camera_range(&world_pos);
+                    field_widescreen_width_clip_with_camera_range(&world_pos);
 
                 *ff7_externals.scripted_world_initial_pos_x = world_pos.x;
                 *ff7_externals.scripted_world_initial_pos_y = world_pos.y;
