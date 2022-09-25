@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.14.0...master
 
+## FF7
+
+- Renderer: Fixed graphical glitch happening in battle when 3d models rendered in front of UI (https://github.com/julianxhokaxhiu/FFNx/issues/131)
+
 # 1.14.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.13.0...1.14.0

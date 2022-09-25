@@ -22,11 +22,20 @@
 /****************************************************************************/
 
 #include "../../globals.h"
+#include "../../renderer.h"
 
 #include "menu.h"
+#include "defs.h"
 
 namespace ff7::battle
 {
+    void battle_menu_enter()
+    {
+        *ff7_externals.g_do_render_menu = 0;
+        if(!enable_lighting)
+            newRenderer.clearDepthBuffer();
+    }
+
     void update_battle_menu()
     {
         ((void(*)())ff7_externals.battle_menu_update_6CE8B3)();

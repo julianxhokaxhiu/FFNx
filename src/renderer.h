@@ -379,6 +379,7 @@ public:
     uint32_t createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     void blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     void zoomBackendFrameBuffer(int x, int y, int width, int height);
+    void clearDepthBuffer();
 
     void isMovie(bool flag = false);
     void isTLVertex(bool flag = false);

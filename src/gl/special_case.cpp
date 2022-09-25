@@ -111,10 +111,11 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->menu_fade)) defer = true;
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->blend_window_bg)) defer = true;
 
-		if(mode == MODE_BATTLE && vertextype == TLVERTEX)
+		if(mode == MODE_BATTLE)
 		{
-			// z-sort all obvious GUI elements in battle
-			if(!(current_state.viewport[2] == 640 && (current_state.viewport[3] == 332 || current_state.viewport[3] == 480)) || vertexcount == 4) defer = true;
+			// z-sort some GUI elements in battle
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->unknown2)) defer = true; // Limit and barrier bar (necessary for ESUI)
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->unknown3)) defer = true; // Limit and barrier bar (necessary for ESUI)
 		}
 	}
 

@@ -1092,6 +1092,9 @@ void Renderer::show()
 
     bgfx::dbgTextClear();
 
+    for(int i = 1; i <= backendViewId; i++)
+        bgfx::resetView(i);
+
     backendViewId = 1;
 
     vertexBufferData.clear();
@@ -1788,6 +1791,18 @@ void Renderer::zoomBackendFrameBuffer(int x, int y, int width, int height)
     draw();
 
     if (bgfx::isValid(textureHandle)) bgfx::destroy(textureHandle);
+}
+
+void Renderer::clearDepthBuffer()
+{
+    backendViewId++;
+    bgfx::setViewMode(backendViewId, bgfx::ViewMode::Sequential);
+    bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
+    bgfx::setViewFrameBuffer(backendViewId, backendFrameBuffer);
+    bgfx::setViewClear(backendViewId, BGFX_CLEAR_DEPTH);
+    bgfx::touch(backendViewId);
+
+    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: Clearing depth\n", __func__, backendViewId);
 }
 
 void Renderer::isMovie(bool flag)
