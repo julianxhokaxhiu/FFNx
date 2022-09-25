@@ -183,7 +183,7 @@ bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenize
 	return playing;
 }
 
-bool play_battle_action_voice(byte char_id, byte command_id, short action_id)
+bool play_battle_char_action_voice(byte char_id, byte command_id, short action_id)
 {
 	char name[MAX_PATH];
 	bool playing;
@@ -194,6 +194,23 @@ bool play_battle_action_voice(byte char_id, byte command_id, short action_id)
 	if(!playing)
 	{
 		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
+		playing = nxAudioEngine.playVoice(name, 0, voice_volume);
+	}
+
+	return playing;
+}
+
+bool play_battle_enemy_action_voice(uint16_t enemy_id, byte command_id, short action_id)
+{
+	char name[MAX_PATH];
+	bool playing;
+
+	sprintf(name, "_battle/enemy_%04X/cmd_%02X_%04X", enemy_id, command_id, action_id);
+	playing = nxAudioEngine.playVoice(name, 0, voice_volume);
+
+	if(!playing)
+	{
+		sprintf(name, "_battle/enemy_%04X/cmd_%02X", enemy_id, command_id);
 		playing = nxAudioEngine.playVoice(name, 0, voice_volume);
 	}
 
@@ -749,9 +766,17 @@ void ff7_display_battle_action_text()
 				byte command_id = ff7_externals.g_battle_model_state[actor_id].commandID;
 				uint16_t action_id = ff7_externals.g_small_battle_model_state[actor_id].actionIdx;
 
+				set_voice_volume();
+				hasStarted = play_battle_char_action_voice(char_id, command_id, action_id);
+			}
+			else if(actor_id >= 4 && actor_id < 10)
+			{
+				uint16_t enemy_id = ff7_externals.battle_context->actor_vars[actor_id].formationID;
+				byte command_id = ff7_externals.g_battle_model_state[actor_id].commandID;
+				uint16_t action_id = ff7_externals.g_small_battle_model_state[actor_id].actionIdx;
 
 				set_voice_volume();
-				hasStarted = play_battle_action_voice(char_id, command_id, action_id);
+				hasStarted = play_battle_enemy_action_voice(enemy_id, command_id, action_id);
 			}
 
 			if(hasStarted)
