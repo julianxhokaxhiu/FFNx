@@ -174,6 +174,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x16D, 5);
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x190, 5);
 
+	// ##################################
+	// menu UI glitch fix
+	// ##################################
+	replace_call_function(ff7_externals.battle_set_do_render_menu_call, ff7::battle::battle_menu_enter);
+
 	// #####################
 	// widescreen
 	// #####################
