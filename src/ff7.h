@@ -2602,6 +2602,7 @@ struct ff7_externals
 	uint32_t field_sub_661B68;
 	void (*engine_set_game_engine_world_coord_661B23)(int, int);
 	void (*engine_sub_67CCDE)(float, float, float, float, float, float, float, ff7_game_obj*);
+	uint32_t field_handle_screen_fading;
 	uint32_t field_opcode_message_update_loop_630D50;
 	uint32_t field_text_box_window_create_631586;
 	uint32_t field_text_box_window_opening_6317A9;

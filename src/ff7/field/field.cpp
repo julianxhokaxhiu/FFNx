@@ -221,6 +221,11 @@ namespace ff7::field
 
                 // Model blinking: wait time and blink time
                 replace_call_function(ff7_externals.field_animate_3d_models_6392BB + 0x8A7, ff7_field_blink_3d_model);
+
+                // Fade in and fade out screen transitions
+                patch_divide_code<short>(ff7_externals.field_initialize_variables + 0x123, common_frame_multiplier);
+                patch_code_byte(ff7_externals.field_handle_screen_fading + 0x210, 25 * common_frame_multiplier);
+                patch_code_int(ff7_externals.field_handle_screen_fading + 0x240, 25 * common_frame_multiplier - 1);
             }
 
             // Smooth background movement for both 30 fps mode and 60 fps mode
@@ -237,7 +242,7 @@ namespace ff7::field
         replace_call_function(ff7_externals.field_update_models_positions + 0xA2B, ff7_field_update_model_animation_frame);
         replace_call_function(ff7_externals.field_update_models_positions + 0xE8C, ff7_field_update_model_animation_frame);
 
-            // Background scroll fps fix
+        // Background scroll fps fix
         replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x34, ff7_opcode_divide_get_bank_value);
         replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x4D, ff7_opcode_divide_get_bank_value);
         replace_call_function(common_externals.execute_opcode_table[BGSCR] + 0x68, ff7_opcode_divide_get_bank_value);

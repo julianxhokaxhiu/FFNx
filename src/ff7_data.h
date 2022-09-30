@@ -595,6 +595,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_prev_world_pos_y = (short*)get_absolute_value((uint32_t)ff7_externals.field_sub_640EB7, 0x18);
 	ff7_externals.engine_set_game_engine_world_coord_661B23 = (void (*)(int, int))get_relative_call(ff7_externals.field_sub_661B68, 0x1A);
 	ff7_externals.engine_sub_67CCDE = (void (*)(float, float, float, float, float, float, float, ff7_game_obj*))get_relative_call(ff7_externals.field_sub_661B68, 0x72);
+	ff7_externals.field_handle_screen_fading = get_relative_call(ff7_externals.field_loop_sub_63C17F, 0x634);
 
 	ff7_externals.sfx_stop_channel_6 = get_relative_call(common_externals.sfx_cleanup, 0x16);
 	ff7_externals.sfx_stop_channel_timer_handle = (UINT *)get_absolute_value(ff7_externals.sfx_stop_channel_6, 0x5);
