@@ -31,6 +31,8 @@
 #include "../ff8.h"
 #include "../saveload.h"
 
+#include "../ff7/widescreen.h"
+
 #define SAFE_GFXOBJ_CHECK(X, Y) ((X) && (X) == (struct graphics_object *)(Y))
 
 // rendering special cases, returns true if the draw call has been handled in
@@ -65,17 +67,23 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 			// stretch main menu to fullscreen if it is a modpath texture
 			if(VREF(texture_set, ogl.external) && vertexcount == 4)
 			{
-				vertices[0]._.x = 0.0f;
-				vertices[0]._.y = 0.0f;
+				float texture_ratio = VREF(texture_set, ogl.width) / (float)VREF(texture_set, ogl.height);
+				bool use_wide_vertices = abs(texture_ratio - 16/9.f) <= 0.01 && aspect_ratio == AR_WIDESCREEN;
+				float x = use_wide_vertices ? wide_viewport_x : 0.0f;
+				float y = 0.0f;
+				float width = use_wide_vertices ? wide_viewport_width : game_width;
+				float height = game_height;
+				vertices[0]._.x = x;
+				vertices[0]._.y = y;
 				vertices[0]._.z = 1.0f;
-				vertices[1]._.x = 0.0f;
-				vertices[1]._.y = (float)game_height;
+				vertices[1]._.x = x;
+				vertices[1]._.y = y + height;
 				vertices[1]._.z = 1.0f;
-				vertices[2]._.x = (float)game_width;
-				vertices[2]._.y = 0.0f;
+				vertices[2]._.x = x + width;
+				vertices[2]._.y = y;
 				vertices[2]._.z = 1.0f;
-				vertices[3]._.x = (float)game_width;
-				vertices[3]._.y = (float)game_height;
+				vertices[3]._.x = x + width;
+				vertices[3]._.y = y + height;
 				vertices[3]._.z = 1.0f;
 				vertices[0].u = 0.0f;
 				vertices[0].v = 0.0f;
