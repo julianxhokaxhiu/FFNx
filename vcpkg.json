@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.14.0",
-  "builtin-baseline": "acc3bcf76b84ae5041c86ab55fe138ae7b8255c7",
+  "builtin-baseline": "94ce0dab56f4d8ba6bd631ba59ed682b02d45c46",
   "dependencies": [
     "bgfx",
     {
@@ -70,7 +70,7 @@
     {
       "name": "ffmpeg",
       "version": "4.4.1",
-      "port-version": 15
+      "port-version": 21
     },
     {
       "name": "imgui",
@@ -80,12 +80,12 @@
     {
       "name": "libpng",
       "version": "1.6.37",
-      "port-version": 18
+      "port-version": 19
     },
     {
       "name": "mimalloc",
       "version": "2.0.6",
-      "port-version": 0
+      "port-version": 1
     },
     {
       "name": "openpsf",
