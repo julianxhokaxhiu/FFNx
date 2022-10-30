@@ -27,6 +27,7 @@
 #include "../log.h"
 #include "../common.h"
 #include "../video/movies.h"
+#include "../ff7/battle/menu.h"
 
 #include "ff7/widescreen.h"
 
@@ -273,7 +274,41 @@ uint32_t gl_defer_zoom()
 
 	num_deferred++;
 
-	if (trace_all) ffnx_trace("gl_defer_yuv_frame: return true\n");
+	if (trace_all) ffnx_trace("gl_defer_zoom: return true\n");
+
+	return true;
+}
+
+uint32_t gl_defer_battle_depth_clear()
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_battle_depth_clear");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_battle_depth_clear: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_battle_depth_clear: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].draw_call_type = DCT_BATTLE_DEPTH_CLEAR;
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_battle_depth_clear: return true\n");
 
 	return true;
 }
@@ -475,6 +510,11 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 		else if(deferred_draws[i].draw_call_type == DCT_ZOOM)
 		{
 			ff7_field_draw_gray_quads_sub_644E90();
+			continue;
+		}
+		else if(deferred_draws[i].draw_call_type == DCT_BATTLE_DEPTH_CLEAR)
+		{
+			ff7::battle::battle_depth_clear();
 			continue;
 		}
 
