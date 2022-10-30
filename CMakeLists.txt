@@ -167,6 +167,7 @@ foreach(FFNX_SHADER IN LISTS FFNX_SHADERS)
     add_custom_command(
       TARGET ${RELEASE_NAME}
       POST_BUILD
+      COMMAND echo Building ${FFNX_SHADER}.${BGFX_VARYING} vert/frag shaders...
       # ensure bin directory exists
       COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin/shaders
       # OpenGL
@@ -221,6 +222,7 @@ endforeach()
 add_custom_command(
   TARGET ${RELEASE_NAME}
   POST_BUILD
+  COMMAND echo Preparing ${RELEASE_NAME} ${_DLL_VERSION} release...
   # ensure bin directory exists
   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin
   # License
