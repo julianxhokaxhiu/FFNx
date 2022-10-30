@@ -144,12 +144,12 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 	{
 		if(palette_index != 0)
 		{
-			if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n", basedir, tex_path.c_str(), name, palette_index);
+			if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n");
 			return load_normal_texture(data, dataSize, name, 0, width, height, gl_set, tex_path);
 		}
 		else
 		{
-			if(trace_all || show_missing_textures) ffnx_info("No external texture found, switching back to the internal one.\n", basedir, tex_path.c_str(), name, palette_index);
+			if(trace_all || show_missing_textures) ffnx_info("No external texture found, switching back to the internal one.\n");
 			return 0;
 		}
 	}
@@ -230,13 +230,21 @@ uint32_t load_animated_texture(const void* data, uint32_t dataSize, const char* 
 	// Finally, if everything fails, return the one with palette index 0 or no texture
 	if(palette_index != 0)
 	{
-		if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n", basedir, tex_path.c_str(), name, palette_index);
-		return gl_set->animated_textures[texture_key] = load_animated_texture(data, dataSize, name, 0, width, height, gl_set, tex_path);
+		if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n");
+		ret = load_animated_texture(data, dataSize, name, 0, width, height, gl_set, tex_path);
+		if(ret) gl_set->animated_textures[texture_key] = ret;
+		return ret;
 	}
 	else
 	{
-		if(trace_all || show_missing_textures) ffnx_info("No external texture found, switching back to the internal one.\n", basedir, tex_path.c_str(), name, palette_index);
-		return gl_set->animated_textures[texture_key] = 0;
+		if(tex_path == mod_path) // Are we on the last lookup layer?
+		{
+			if(trace_all || show_missing_textures) ffnx_info("No external texture found, switching back to the internal one.\n");
+			gl_set->animated_textures[texture_key] = 0; // short circuit and prevent further lookups
+		}
+		else if(trace_all || show_missing_textures) ffnx_info("No external texture found.\n");
+
+		return 0;
 	}
 
 }
@@ -244,10 +252,8 @@ uint32_t load_animated_texture(const void* data, uint32_t dataSize, const char* 
 uint32_t load_texture(const void* data, uint32_t dataSize, const char* name, uint32_t palette_index, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set)
 {
 	uint32_t ret = 0;
-	char filename[sizeof(basedir) + 1024]{ 0 };
-	bool is_animated = gl_set->is_animated;
 
-	if(is_animated)
+	if(gl_set->is_animated)
 	{
 		if (!override_mod_path.empty())
 			ret = load_animated_texture(data, dataSize, name, palette_index, width, height, gl_set, override_mod_path);
