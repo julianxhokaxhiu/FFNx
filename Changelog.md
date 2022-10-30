@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.14.0...master
 
+## Common
+
+- Modding: Add an extra override layer for external textures ( https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L365 )
+
 ## FF7
 
 - 60FPS: Fix fading speed in FIELD mode screen transitions ( https://github.com/julianxhokaxhiu/FFNx/pull/503 )

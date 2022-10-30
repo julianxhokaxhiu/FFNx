@@ -360,6 +360,10 @@ direct_mode_path = "direct"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 override_path = "override"
 
+# This path will define where the driver will look for mod_path textures first, allowing you to override mod_path textures, if needed-
+# This flag is empty by default to ensure performance is not dropped.
+override_mod_path = ""
+
 #[SPEEDHACK]
 # Set the step when increasing the speedhack speed
 #~~~~~~~~~~~~~~~~~~~~~~~~~~

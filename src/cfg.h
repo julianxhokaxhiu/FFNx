@@ -113,6 +113,7 @@ extern bool create_crash_dump;
 extern std::string steam_game_userdata;
 extern std::string hext_patching_path;
 extern std::string override_path;
+extern std::string override_mod_path;
 extern std::string direct_mode_path;
 extern std::string save_path;
 extern bool enable_devtools;

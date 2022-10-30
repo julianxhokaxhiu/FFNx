@@ -100,6 +100,7 @@ bool create_crash_dump;
 std::string steam_game_userdata;
 std::string hext_patching_path;
 std::string override_path;
+std::string override_mod_path;
 std::string direct_mode_path;
 std::string save_path;
 bool enable_devtools;
@@ -240,6 +241,7 @@ void read_cfg()
 	steam_game_userdata = config["steam_game_userdata"].value_or("");
 	hext_patching_path = config["hext_patching_path"].value_or("");
 	override_path = config["override_path"].value_or("");
+	override_mod_path = config["override_mod_path"].value_or("");
 	direct_mode_path = config["direct_mode_path"].value_or("");
 	save_path = config["save_path"].value_or("");
 	enable_devtools = config["enable_devtools"].value_or(false);
