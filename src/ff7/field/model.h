@@ -55,4 +55,5 @@ namespace ff7::field
     void ff7_field_update_models_rotation_new();
     void ff7_field_blink_3d_model(field_animation_data* anim_data, field_model_blink_data* blink_data);
     void ff7_field_update_model_animation_frame(short model_id);
+    int ff7_field_models_eye_to_model(char* model_name);
 }

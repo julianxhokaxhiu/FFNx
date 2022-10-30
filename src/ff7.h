@@ -2354,6 +2354,7 @@ struct ff7_externals
 	uint32_t load_animation;
 	uint32_t field_load_animation;
 	uint32_t field_load_models;
+	uint32_t field_models_eye_to_model;
 	uint32_t field_models_eye_blink_buffer;
 	uint32_t field_sub_60DCED;
 	void (*destroy_animation)(struct anim_header *);

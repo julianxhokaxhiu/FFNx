@@ -217,6 +217,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.field_sub_60DCED = get_relative_call(field_main_loop, 0x37A);
 	ff7_externals.field_load_models = get_relative_call(ff7_externals.field_sub_60DCED, 0x168);
+	ff7_externals.field_models_eye_to_model = get_relative_call(ff7_externals.field_load_models, 0xA79);
 	ff7_externals.field_load_animation = get_relative_call(ff7_externals.field_load_models, 0x8DF);
 	ff7_externals.load_animation = get_relative_call(ff7_externals.field_load_animation, 0x16D);
 	ff7_externals.destroy_animation = (void (*)(anim_header*))get_relative_call(ff7_externals.load_animation, 0x162);

@@ -41,4 +41,5 @@ namespace ff7::field
     void field_update_scripted_bg_movement();
     bool ff7_field_do_draw_3d_model(short x, short y);
     void ff7_field_set_fade_quad_size(int x, int y, int width, int height);
+    int ff7_field_models_eye_to_model(char* model_name);
 }

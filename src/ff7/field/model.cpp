@@ -253,4 +253,32 @@ namespace ff7::field
 
         model_event_data.animation_speed = original_animation_speed;
     }
+
+    int ff7_field_models_eye_to_model(char* model_name)
+    {
+        if ( !_strcmpi(model_name, "AAAA") ) // Cloud
+            return 0;
+        if ( !_strcmpi(model_name, "ACGD") ) // Barret
+            return 3;
+        if ( !_strcmpi(model_name, "AAGB") ) // Tifa
+            return 1;
+        if ( !_strcmpi(model_name, "ADDA") ) // Red XIII
+            return 4;
+        if ( !_strcmpi(model_name, "ABDA") ) // Cid
+            return 5;
+        if ( !_strcmpi(model_name, "ABJB") ) // Yuffie
+            return 7;
+        if ( !_strcmpi(model_name, "AEBC") ) // Cait Sith
+            return 8;
+        if ( !_strcmpi(model_name, "AEHD") ) // Vincent
+            return 6;
+        if ( !_strcmpi(model_name, "AUFF") ) // Aerith
+            return 2;
+        if ( !_strcmpi(model_name, "CAHC") ) // Aerith
+            return 2;
+        if ( !_strcmpi(model_name, "FQCB") ) // Young Barret
+            return 3;
+
+        return 9; // Defaults to Cloud eye
+    }
 }

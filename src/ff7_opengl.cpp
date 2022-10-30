@@ -243,6 +243,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// Field FPS fix (60FPS, 30FPS movies)
 	ff7::field::ff7_field_hook_init();
 
+	// ##########################
+	// field eye to model mapping
+	// ##########################
+	replace_function(ff7_externals.field_models_eye_to_model, ff7::field::ff7_field_models_eye_to_model);
+
 	// #####################
 	// red XIII eye blinking
 	// #####################
