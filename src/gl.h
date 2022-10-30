@@ -34,6 +34,7 @@ enum DrawCallType
 	DCT_BLIT,
 	DCT_DRAW,
 	DCT_DRAW_MOVIE,
+	DCT_BATTLE_DEPTH_CLEAR,
 	DCT_ZOOM
 };
 
@@ -118,6 +119,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 uint32_t gl_defer_blit_framebuffer(struct texture_set *texture_set, struct tex_header *tex_header);
 uint32_t gl_defer_clear_buffer(uint32_t clear_color, uint32_t clear_depth, struct game_obj *game_object);
 uint32_t gl_defer_yuv_frame(uint32_t buffer_index);
+uint32_t gl_defer_battle_depth_clear();
 uint32_t gl_defer_zoom();
 void gl_draw_deferred(draw_field_shadow_callback shadow_callback);
 struct boundingbox calculateSceneAabb();

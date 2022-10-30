@@ -32,8 +32,14 @@ namespace ff7::battle
     void battle_menu_enter()
     {
         *ff7_externals.g_do_render_menu = 0;
-        if(!enable_lighting)
-            newRenderer.clearDepthBuffer();
+        battle_depth_clear();
+    }
+
+    void battle_depth_clear()
+    {
+        if(gl_defer_battle_depth_clear()) return;
+
+        newRenderer.clearDepthBuffer();
     }
 
     void update_battle_menu()
