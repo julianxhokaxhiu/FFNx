@@ -286,9 +286,12 @@ namespace ff7::battle
         replace_call_function(ff7_externals.handle_camera_functions + 0x4B, run_camera_position_script);
 
         // Battle outro camera frame fix: patch DAT_009AE138 (frames to wait before closing battle mode)
-        patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x3DE, battle_frame_multiplier);
-        patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x361, battle_frame_multiplier);
-        patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x326, battle_frame_multiplier);
+        patch_multiply_code<DWORD>(ff7_externals.battle_sub_430DD0 + 0x3DE, battle_frame_multiplier);
+        patch_multiply_code<DWORD>(ff7_externals.battle_sub_430DD0 + 0x361, battle_frame_multiplier);
+        patch_multiply_code<DWORD>(ff7_externals.battle_sub_430DD0 + 0x326, battle_frame_multiplier);
+
+        // Battle outro fading speed fix
+        patch_multiply_code<byte>(ff7_externals.battle_sub_430DD0 + 0x60E, battle_frame_multiplier);
 
         // Battle intro camera frame fix: patch DAT_00BFD0F4 (frames to wait before atb starts)
         patch_multiply_code<byte>(ff7_externals.battle_sub_429AC0 + 0x152, battle_frame_multiplier);
