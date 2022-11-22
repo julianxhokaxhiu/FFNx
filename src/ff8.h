@@ -624,6 +624,19 @@ struct ff8_vibrate_struc
 	uint8_t field_23;
 };
 
+struct ff8_audio_fmt
+{
+	uint32_t audio_data_length;
+	uint32_t audio_data_offset;
+	uint8_t is_looped;
+	uint8_t field_9;
+	uint8_t field_A;
+	uint8_t field_B;
+	uint32_t buffer_read_cursor;
+	uint32_t buffer_write_cursor;
+	LPWAVEFORMATEX wave_format;
+};
+
 struct ff8_game_obj
 {
 	uint32_t do_quit;
@@ -930,6 +943,7 @@ struct ff8_externals
 	uint32_t sub_467C00;
 	uint32_t sub_468810;
 	uint32_t sub_468BD0;
+	uint32_t pubintro_cleanup;
 	uint32_t pubintro_exit;
 	uint32_t pubintro_main_loop;
 	uint32_t credits_main_loop;
@@ -999,7 +1013,6 @@ struct ff8_externals
 	DWORD* engine_mapped_buttons;
 	uint32_t draw_movie_frame;
 	struct ff8_movie_obj *movie_object;
-	uint32_t initialize_sound;
 	int (*sub_5304B0)();
 	uint32_t *enable_framelimiter;
 	unsigned char *byte_1CE4907;
@@ -1043,12 +1056,7 @@ struct ff8_externals
 	uint32_t sub_501B60;
 	uint32_t pause_music_and_sfx;
 	uint32_t restart_music_and_sfx;
-	uint32_t sub_4A6680;
-	uint32_t sub_4A6660;
-	uint32_t sub_4A3D20;
-	uint32_t sub_4A3EE0;
-	uint32_t sub_469C60;
-	uint32_t sub_46DDC0;
+	uint32_t directsound_create_secondary_buffer;
 	uint32_t start;
 	uint32_t battle_main_loop;
 	void (*show_vram_window)();
@@ -1077,7 +1085,6 @@ struct ff8_externals
 	uint32_t play_midi_segments;
 	uint32_t load_and_play_midi_segment;
 	uint32_t stop_midi_segments;
-	uint32_t sounds_cleanup;
 	uint32_t volume_update;
 	uint32_t volume_music_update;
 	uint32_t music_load;
@@ -1156,6 +1163,20 @@ struct ff8_externals
 	uint8_t *cardgame_tim_texture_cards;
 	uint8_t *cardgame_tim_texture_icons;
 	uint8_t *cardgame_tim_texture_font;
+	uint32_t sfx_play_to_current_playing_channel;
+	uint32_t sfx_unload_all;
+	uint32_t sfx_pause_all;
+	uint32_t sfx_resume_all;
+	uint32_t sfx_stop_all2;
+	uint32_t sfx_stop_all;
+	void(*sfx_set_master_volume)(uint32_t);
+	int(*sfx_get_master_volume)();
+	uint32_t sfx_set_volume;
+	uint32_t sfx_current_channel_is_playing;
+	uint32_t sfx_is_playing;
+	uint32_t sfx_set_panning;
+	uint16_t *sfx_sound_count;
+	ff8_audio_fmt **sfx_audio_fmt;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

@@ -31,6 +31,8 @@ uint32_t real_volume;
 ff7_field_sfx_state* sfx_state = nullptr;
 ff7_channel_6_state sfx_channel_6_state;
 
+constexpr auto FF8_MAX_CHANNEL_NUMBER = 0x1F;
+
 //=============================================================================
 
 void ff7_sfx_release(IDirectSoundBuffer *buffer)
@@ -52,9 +54,26 @@ void ff7_sfx_stop_channel(int channel, double time = 0)
 	sfx_state[channel-1].is_looped = false;
 }
 
+void ff8_sfx_stop_channel(int channel)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d\n", __func__, channel);
+
+	if (channel <= FF8_MAX_CHANNEL_NUMBER)
+	{
+		nxAudioEngine.stopSFX(channel);
+	}
+}
+
 int ff7_sfx_load(int id, DWORD dsound_flag)
 {
 	//if (trace_all || trace_sfx) ffnx_trace("%s: id=%d\n", __func__, id);
+
+	return true;
+}
+
+unsigned int ff8_sfx_load(unsigned int channel, unsigned int id, int is_eax)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d id=%d is_eax=%d\n", __func__, channel, id, is_eax);
 
 	return true;
 }
@@ -66,6 +85,23 @@ void ff7_sfx_unload(int id, void* unk)
 	nxAudioEngine.unloadSFX(id);
 }
 
+void ff8_sfx_unload(int channel)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d\n", __func__, channel);
+
+	nxAudioEngine.unloadSFX(nxAudioEngine.getSFXIdFromChannel(channel));
+}
+
+void ff8_sfx_set_master_volume(uint32_t volume)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: volume=%d\n", __func__, volume);
+
+	if (volume <= 100) {
+		*common_externals.master_sfx_volume = volume;
+		nxAudioEngine.setSFXMasterVolume(volume / 100.0);
+	}
+}
+
 void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: volume=%d,channel=%d\n", __func__, volume, channel);
@@ -73,6 +109,16 @@ void ff7_sfx_set_volume_on_channel(byte volume, int channel)
 	sfx_state[channel].volume1 = volume;
 
 	nxAudioEngine.setSFXVolume(channel, volume / 127.0f);
+}
+
+void ff8_sfx_set_volume(uint32_t channel, uint32_t volume, int32_t time)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d, volume=%d, time=%d\n", __func__, channel, volume, time);
+
+	if (channel <= FF8_MAX_CHANNEL_NUMBER && volume <= 127)
+	{
+		nxAudioEngine.setSFXVolume(channel, volume / 127.0f, time / 60.0f);
+	}
 }
 
 void ff7_sfx_set_volume_trans_on_channel(byte volume, int channel, int time)
@@ -93,6 +139,18 @@ void ff7_sfx_set_panning_on_channel(byte panning, int channel)
 
 	if (panning <= 127)
 		nxAudioEngine.setSFXPanning(channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
+}
+
+void ff8_sfx_set_panning(uint32_t channel, uint32_t panning, int32_t time)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d, panning=%d, time=%d\n", __func__, channel, panning, time);
+
+	if (channel <= FF8_MAX_CHANNEL_NUMBER && panning <= 127)
+	{
+		// TODO: inverted panning option ((Reg.SoundOptions >> 20) & 1)
+		nxAudioEngine.setSFXPanning(channel, panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f);
+		// TODO: 3D sfx
+	}
 }
 
 void ff7_sfx_set_panning_trans_on_channel(byte panning, int channel, int time)
@@ -180,6 +238,51 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 	return playing;
 }
 
+bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
+{
+	float panningf = panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f;
+	float volumef = volume / 127.0;
+	const struct game_mode* mode = getmode_cached();
+	char track_name[64];
+
+	switch(mode->driver_mode)
+	{
+	case MODE_FIELD:
+		sprintf(track_name, "%s_%d", get_current_field_name(), id);
+		break;
+	case MODE_MENU:
+		sprintf(track_name, "menu_%d", id);
+		break;
+	case MODE_WORLDMAP:
+		sprintf(track_name, "world_%d", id);
+		break;
+	case MODE_BATTLE:
+		sprintf(track_name, "battle_%d", id);
+		break;
+	default:
+		sprintf(track_name, "%d", id);
+	}
+
+	bool loop = false;
+
+	// Get loop info from audio.fmt
+	if (id <= *ff8_externals.sfx_sound_count) {
+		loop = (*ff8_externals.sfx_audio_fmt)[id].is_looped;
+	}
+
+	// TODO: inverted panning option ((Reg.SoundOptions >> 20) & 1)
+	nxAudioEngine.setSFXVolume(channel, volumef);
+	bool playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop);
+	// If any overridden layer could not be played, fallback to default
+	if (!playing)
+	{
+		sprintf(track_name, "%d", id);
+		playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop);
+	}
+
+	return playing;
+}
+
 void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: id=%d,channel=%d,panning=%d\n", __func__, id, channel, panning);
@@ -216,6 +319,19 @@ void ff7_sfx_play_on_channel(byte panning, int id, int channel)
 	}
 }
 
+int ff8_sfx_play_channel(unsigned int channel, unsigned int id, unsigned int volume, unsigned int panning, int pitch)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d, id=%d, volume=%d, panning=%d, pitch=%d\n", __func__, channel, id, volume, panning, pitch);
+
+	if (channel > FF8_MAX_CHANNEL_NUMBER || volume > 127 || panning > 127)
+	{
+		return 0;
+	}
+
+	// pitch is always 100
+	return ff8_sfx_play_layered(channel, id, volume, panning);
+}
+
 void ff7_sfx_play_on_channel_5(int id)
 {
 	ff7_sfx_play_on_channel(64, id, 5);
@@ -235,6 +351,13 @@ void ff7_sfx_load_and_play_with_speed(int id, byte panning, byte volume, byte sp
 	}
 }
 
+bool ff8_sfx_is_playing(int channel)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d\n", __func__, channel);
+
+	return channel <= FF8_MAX_CHANNEL_NUMBER ? nxAudioEngine.isSFXPlaying(channel) : false;
+}
+
 void ff7_sfx_pause()
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s\n", __func__);
@@ -242,11 +365,31 @@ void ff7_sfx_pause()
 	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.pauseSFX(channel);
 }
 
+void ff8_sfx_pause_channel(int channel)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d\n", __func__, channel);
+
+	if (channel <= FF8_MAX_CHANNEL_NUMBER)
+	{
+		nxAudioEngine.pauseSFX(channel);
+	}
+}
+
 void ff7_sfx_resume()
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s\n", __func__);
 
 	for (short channel = 1; channel <= 6; channel++) nxAudioEngine.resumeSFX(channel);
+}
+
+void ff8_sfx_resume_channel(int channel)
+{
+	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d\n", __func__, channel);
+
+	if (channel <= FF8_MAX_CHANNEL_NUMBER)
+	{
+		nxAudioEngine.resumeSFX(channel);
+	}
 }
 
 void ff7_sfx_stop()
@@ -681,5 +824,19 @@ void sfx_init()
 			// Store pointer to the SFX states
 			sfx_state = ff7_externals.sound_states;
 		}
+	} else if (use_external_sfx) {
+		replace_function(common_externals.sfx_load, ff8_sfx_load);
+		replace_function(common_externals.sfx_unload, ff8_sfx_unload);
+		replace_function(common_externals.play_sfx_on_channel, ff8_sfx_play_channel);
+		replace_function(common_externals.sfx_stop, ff8_sfx_stop_channel);
+		replace_function(common_externals.sfx_pause, ff8_sfx_pause_channel);
+		replace_function(common_externals.sfx_resume, ff8_sfx_resume_channel);
+		replace_function(uint32_t(ff8_externals.sfx_set_master_volume), ff8_sfx_set_master_volume);
+		replace_function(ff8_externals.sfx_is_playing, ff8_sfx_is_playing);
+		replace_function(ff8_externals.sfx_set_volume, ff8_sfx_set_volume);
+		replace_function(ff8_externals.sfx_set_panning, ff8_sfx_set_panning);
+
+		nxAudioEngine.setSFXTotalChannels(FF8_MAX_CHANNEL_NUMBER + 1); // Allocate 32 channels in total
+		nxAudioEngine.setSFXReusableChannels(FF8_MAX_CHANNEL_NUMBER + 1); // The engine by default although re-uses up to 32 channels
 	}
 }
