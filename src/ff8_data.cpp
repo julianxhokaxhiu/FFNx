@@ -62,6 +62,7 @@ void ff8_find_externals()
 	ff8_externals.sub_468BD0 = get_relative_call(ff8_externals.sub_468810, 0x5B);
 	common_externals.dinput_hack1 = ff8_externals.sub_468BD0 + 0x64;
 
+	ff8_externals.pubintro_cleanup = get_absolute_value(ff8_externals.main_entry, 0x162);
 	ff8_externals.pubintro_exit = get_absolute_value(ff8_externals.main_entry, 0x176);
 	ff8_externals.pubintro_main_loop = get_absolute_value(ff8_externals.main_entry, 0x180);
 	ff8_externals.credits_main_loop = get_absolute_value(ff8_externals.pubintro_main_loop, 0x6D);
@@ -347,16 +348,16 @@ void ff8_find_externals()
 	common_externals.keyboard_device = (IDirectInputDeviceA**)get_absolute_value(common_externals.get_keyboard_state, 0x01);
 	common_externals.keyboard_connected = (uint32_t*)get_absolute_value(common_externals.get_keyboard_state, 0x2C);
 
-	ff8_externals.initialize_sound = get_relative_call(ff8_externals.pubintro_init, 0xD8); // sub_469640
-	common_externals.directsound_create = get_relative_call(ff8_externals.initialize_sound, 0x5D); // sub_46DBF0
+	common_externals.sfx_init = get_relative_call(ff8_externals.pubintro_init, 0xD8); // sub_469640
+	common_externals.directsound_create = get_relative_call(common_externals.sfx_init, 0x5D); // sub_46DBF0
 	common_externals.directsound = (LPLPDIRECTSOUND)get_absolute_value(common_externals.directsound_create, 0x26);
-	common_externals.directsound_release = get_relative_call(ff8_externals.initialize_sound, 0xD5);
+	common_externals.directsound_release = get_relative_call(common_externals.sfx_init, 0xD5);
 
 	common_externals.midi_init = get_relative_call(ff8_externals.pubintro_init, 0x130);
 	ff8_externals.music_path = (char*)get_absolute_value(ff8_externals.pubintro_init, 0x136);
-	common_externals.midi_cleanup = get_relative_call(ff8_externals.pubintro_init, 0x1B4);
-	ff8_externals.sounds_cleanup = get_relative_call(ff8_externals.pubintro_init, 0x1B9);
-	common_externals.wav_cleanup = get_relative_call(ff8_externals.sounds_cleanup, 0x0);
+	common_externals.midi_cleanup = get_relative_call(ff8_externals.pubintro_cleanup, 0x44);
+	common_externals.sfx_cleanup = get_relative_call(ff8_externals.pubintro_cleanup, 0x49);
+	common_externals.wav_cleanup = get_relative_call(common_externals.sfx_cleanup, 0x0);
 	ff8_externals.volume_update = get_relative_call(ff8_externals.field_main_loop, 0x28C);
 	ff8_externals.volume_music_update = get_relative_call(ff8_externals.volume_update, 0x6);
 
@@ -410,14 +411,32 @@ void ff8_find_externals()
 	common_externals.restart_wav = get_relative_call(ff8_externals.restart_music_and_sfx, 0xF);
 	common_externals.restart_midi = get_relative_call(ff8_externals.restart_music_and_sfx, 0x17);
 
-	// Search DirectSoundBuffer initilization
-	ff8_externals.sub_4A6680 = get_relative_call(ff8_externals.sub_47CCB0, 0xF6);
-	ff8_externals.sub_4A6660 = get_absolute_value(ff8_externals.sub_4A6680, 0x36F + 1);
-	ff8_externals.sub_4A3D20 = get_relative_call(ff8_externals.sub_4A6660, 0x00);
-	ff8_externals.sub_4A3EE0 = get_relative_call(ff8_externals.sub_4A3D20, 0x12A);
-	ff8_externals.sub_469C60 = get_relative_call(ff8_externals.sub_4A3EE0, 0x418);
-	ff8_externals.sub_46DDC0 = get_relative_call(ff8_externals.sub_469C60, 0x22A);
-	common_externals.directsound_buffer_flags_1 = ff8_externals.sub_46DDC0 + 0x34 - 2;
+	// SFX
+	ff8_externals.sfx_play_to_current_playing_channel = get_relative_call(ff8_externals.opcode_effectplay2, 0x5F);
+	common_externals.play_sfx_on_channel = get_relative_call(ff8_externals.sfx_play_to_current_playing_channel, 0x35);
+	common_externals.sfx_load = get_relative_call(common_externals.play_sfx_on_channel, 0x89);
+	ff8_externals.sfx_unload_all = get_relative_call(common_externals.sfx_cleanup, 0x5);
+	common_externals.sfx_unload = get_relative_call(ff8_externals.sfx_unload_all, 0x4);
+	ff8_externals.sfx_pause_all = get_relative_call(ff8_externals.pause_music_and_sfx, 0x1C);
+	common_externals.sfx_pause = get_relative_call(ff8_externals.sfx_pause_all, 0x1B);
+	ff8_externals.sfx_resume_all = get_relative_call(ff8_externals.restart_music_and_sfx, 0x1C);
+	common_externals.sfx_resume = get_relative_call(ff8_externals.sfx_resume_all, 0x1B);
+	ff8_externals.sfx_stop_all2 = get_relative_call(ff8_externals.sm_battle_sound, 0x18C);
+	ff8_externals.sfx_stop_all = get_relative_call(ff8_externals.sfx_stop_all2, 0x0);
+	common_externals.sfx_stop = get_relative_call(ff8_externals.sfx_stop_all, 0x1B);
+	ff8_externals.sfx_set_volume = get_relative_call(common_externals.play_sfx_on_channel, 0xA1);
+	ff8_externals.sfx_get_master_volume = (int(*)())(ff8_externals.sfx_set_volume - 0x10);
+	ff8_externals.sfx_set_master_volume = (void(*)(uint32_t))(uint32_t(ff8_externals.sfx_get_master_volume) - 0xE0);
+	common_externals.master_sfx_volume = (uint32_t *)get_absolute_value(uint32_t(ff8_externals.sfx_get_master_volume), 0x1);
+	ff8_externals.sfx_current_channel_is_playing = get_relative_call(ff8_externals.sfx_play_to_current_playing_channel, 0xB);
+	ff8_externals.sfx_is_playing = get_relative_call(ff8_externals.sfx_current_channel_is_playing - 0x88, 0x0);
+	ff8_externals.sfx_set_panning = get_relative_call(common_externals.play_sfx_on_channel, 0x115);
+	ff8_externals.sfx_audio_fmt = (ff8_audio_fmt **)get_absolute_value(common_externals.sfx_init, 0x21B);
+	ff8_externals.sfx_sound_count = (uint16_t *)get_absolute_value(common_externals.sfx_init, 0x22C);
+
+	// Search DirectSoundBuffer initialization
+	ff8_externals.directsound_create_secondary_buffer = get_relative_call(common_externals.sfx_load, 0x22A);
+	common_externals.directsound_buffer_flags_1 = ff8_externals.directsound_create_secondary_buffer + 0x34 - 2;
 
 	ff8_externals.sub_5304B0 = (int (*)())get_relative_call(common_externals.update_movie_sample, 0x3D9);
 

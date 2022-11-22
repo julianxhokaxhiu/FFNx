@@ -233,6 +233,7 @@ public:
 	void cleanup();
 
 	// SFX
+	int getSFXIdFromChannel(int channel);
 	void unloadSFX(int id);
 	bool canPlaySFX(int id);
 	bool playSFX(const char* name, int id, int channel, float panning, bool loop = false);

@@ -15,6 +15,10 @@
 - Voice: Add play voice for enemy actions during BATTLE mode ( https://github.com/julianxhokaxhiu/FFNx/pull/502 )
 - Widescreen: Allow the buster sword image on new game screen to support 16:9 ratio ( https://github.com/julianxhokaxhiu/FFNx/pull/506 )
 
+## FF8
+
+- SFX: Add external SFX audio effects for modders ( https://github.com/julianxhokaxhiu/FFNx/pull/510 )
+
 # 1.14.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.13.0...1.14.0

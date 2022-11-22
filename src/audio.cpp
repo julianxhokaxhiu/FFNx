@@ -263,6 +263,11 @@ SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
 	return nullptr;
 }
 
+int NxAudioEngine::getSFXIdFromChannel(int channel)
+{
+	return _sfxChannels[channel].game_id;
+}
+
 void NxAudioEngine::unloadSFX(int id)
 {
 	if (_sfxEffectsHandler.count(id) > 0)
