@@ -164,14 +164,7 @@ void main()
         }
     }
 
-    if(isTLVertex)
-    {
-        if(isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
-    }
-    else
-    {
-        color.rgb *= TimeColor.rgb;
-    }
+    if(isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
 
     if (!(isHDR)) {
         // SDR screens require the Gamma output to properly render light scenes
