@@ -21,30 +21,28 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "../../common.h"
-#include "../../ff7.h"
+#include "renderer.h"
 
-#pragma once
+#include "../../renderer.h"
 
-namespace ff7::field
-{
-    constexpr float INVALID_VALUE = -1000000;
+namespace ff7::world {
 
-    vector2<float>
-        field_curr_delta_world_pos,
-        field_3d_world_pos,
-        bg_main_layer_pos,
-        bg_layer3_pos,
-        bg_layer4_pos,
-        cursor_position;
+    // This draw call is the first UI call that marks the start of the first UI draw section
+    void wm0_draw_minimap_quad_graphics_object(ff7_graphics_object* quad_graphics_object, ff7_game_obj* game_object) {
+        newRenderer.setTimeFilterEnabled(false);
+        ff7_externals.engine_draw_graphics_object(quad_graphics_object, game_object);
+    }
 
-    void ff7_field_update_background();
-    void ff7_field_set_world_coordinate_640EB7();
-    void ff7_field_submit_draw_arrow(field_arrow_graphics_data* arrow_data);
-    void ff7_field_submit_draw_cursor(field_arrow_graphics_data* arrow_data);
-    void draw_gray_quads_sub_644E90();
-    bool is_position_valid(vector2<float> position) {
-        return position.x != INVALID_VALUE && position.y != INVALID_VALUE;
+    // This draw call is the first call related to world effects. It marks the end of the first UI draw section
+    void wm0_draw_world_effects_1_graphics_object(ff7_graphics_object* world_effects_1_graphics_object, ff7_game_obj* game_object) {
+        newRenderer.setTimeFilterEnabled(true);
+        ff7_externals.engine_draw_graphics_object(world_effects_1_graphics_object, game_object);
+    }
+
+    // This draw call is the UI call that marks the second UI draw section
+    void wm0_draw_minimap_points_graphics_object(ff7_graphics_object* minimap_points_graphics_object, ff7_game_obj* game_object) {
+        newRenderer.setTimeFilterEnabled(false);
+        ff7_externals.engine_draw_graphics_object(minimap_points_graphics_object, game_object);
     }
 
 }

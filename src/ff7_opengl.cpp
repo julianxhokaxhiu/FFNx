@@ -30,6 +30,7 @@
 #include "ff7/defs.h"
 #include "ff7_data.h"
 #include "ff7/widescreen.h"
+#include "ff7/time.h"
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
@@ -185,6 +186,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	if(aspect_ratio == AR_WIDESCREEN)
 		ff7_widescreen_hook_init();
 
+	ff7::time_hook_init();
+
 	// #####################
 	// new timer calibration
 	// #####################
@@ -272,7 +275,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// worldmap fx effects ( forest trail, ocean trail with highwind, etc. )
 	// #####################
-	patch_code_byte(ff7_externals.world_sub_75A5D5 + 0x1A3, 1);
+	patch_code_byte(ff7_externals.world_load_graphics_objects_75A5D5 + 0x1A3, 1);
 
 	// #####################
 	// battle toggle
@@ -309,6 +312,16 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	//######################
 	if(enable_lighting)
 	    memset_code(ff7_externals.battle_sub_42F3E8 + 0xD7D, 0x90, 78); // Disable battle shadow draw call
+
+	//######################
+	// day night time cycle
+	//######################
+	if (enable_time_cycle)
+	{
+		replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x175, ff7::world::wm0_draw_minimap_quad_graphics_object);
+        replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x1BE, ff7::world::wm0_draw_world_effects_1_graphics_object);
+        replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x208, ff7::world::wm0_draw_minimap_points_graphics_object);
+	}
 
 	//#############################
 	// steam save game preservation

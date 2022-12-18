@@ -101,6 +101,16 @@ prefer_lighting_cpu_calculations = true
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_lighting_path = "lighting"
 
+#[DAY-NIGHT TIME CYCLE]
+# Enable day-night time cycle.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_time_cycle = false
+
+#[EXTERNAL DAY NIGHT CYCLE PATH]
+# Path for external day-night time files.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external_time_cycle_path = "time"
+
 #[HDR]
 # This flag will set the Maximum Luminance nits value of your monitor/TV in order to properly correct colors when rendering.
 # By default is set to 0, which means use what has been autodetected via software.

@@ -2422,6 +2422,7 @@ struct ff7_externals
 	void (*add_page_tile)(float, float, float, float, float, uint32_t, uint32_t);
 	double (*field_layer_sub_623C0F)(rotation_matrix*, int, int, int);
 	void (*field_draw_gray_quads_644E90)();
+	void (*engine_draw_graphics_object)(ff7_graphics_object*, ff7_game_obj*);
 	field_trigger_header** field_triggers_header;
 	rotation_matrix* field_camera_rotation_matrix_CFF3D8;
 	uint32_t field_load_textures;
@@ -3004,7 +3005,9 @@ struct ff7_externals
 	world_event_data** world_event_current_entity_ptr_E3A7CC;
 	int* is_wait_frames_zero_E39BC0;
 	uint32_t world_sub_75A1C6;
-	uint32_t world_sub_75A5D5;
+	uint32_t world_load_graphics_objects_75A5D5;
+	uint32_t world_init_load_map_meshes_graphics_objects_75A283;
+	uint32_t world_wm0_overworld_draw_all_74C179;
 	uint32_t world_draw_fade_quad_75551A;
 	uint32_t world_sub_75079D;
 	uint32_t world_sub_751EFC;

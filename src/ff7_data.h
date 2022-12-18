@@ -346,6 +346,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_triggers_header = (field_trigger_header**)get_absolute_value(ff7_externals.field_layer3_pick_tiles, 0x134);
 	ff7_externals.field_camera_rotation_matrix_CFF3D8 = (rotation_matrix*)get_absolute_value(ff7_externals.field_layer3_pick_tiles, 0x7A);
 	ff7_externals.field_draw_gray_quads_644E90 = (void(*)())get_relative_call(ff7_externals.field_draw_everything, 0x360);
+	ff7_externals.engine_draw_graphics_object = (void(*)(ff7_graphics_object*, ff7_game_obj*))get_relative_call(ff7_externals.field_draw_everything, 0x1D2);
 
 	ff7_externals.field_load_textures = get_relative_call(ff7_externals.field_sub_60DCED, 0x107);
 	ff7_externals.field_convert_type2_layers = (void (*)())get_relative_call(ff7_externals.field_load_textures, 0xD);
@@ -1152,7 +1153,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_event_current_entity_ptr_E3A7CC = (world_event_data**)get_absolute_value(ff7_externals.run_world_event_scripts_system_operations, 0x8E6);
 	ff7_externals.is_wait_frames_zero_E39BC0 = (int*)get_absolute_value(ff7_externals.run_world_event_scripts_system_operations, 0xD46);
 	ff7_externals.world_sub_75A1C6 = get_relative_call(ff7_externals.world_init_variables_74E1E9, 0x3A);
-	ff7_externals.world_sub_75A5D5 = get_relative_call(ff7_externals.world_sub_75A1C6, 0x61);
+	ff7_externals.world_load_graphics_objects_75A5D5 = get_relative_call(ff7_externals.world_sub_75A1C6, 0x61);
+	ff7_externals.world_init_load_map_meshes_graphics_objects_75A283 = get_relative_call(ff7_externals.world_load_graphics_objects_75A5D5, 0x340);
+	ff7_externals.world_wm0_overworld_draw_all_74C179 = get_absolute_value(ff7_externals.world_init_load_map_meshes_graphics_objects_75A283, 0xA7);
 	ff7_externals.world_draw_fade_quad_75551A = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x554);
 	ff7_externals.world_sub_75079D = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x421);
 	ff7_externals.world_sub_751EFC = get_relative_call(ff7_externals.world_sub_75079D, 0x1FB);

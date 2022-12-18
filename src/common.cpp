@@ -56,6 +56,7 @@
 #include "game_cfg.h"
 
 #include "ff7/widescreen.h"
+#include "ff7/time.h"
 
 #include "ff8/vram.h"
 #include "ff8/vibration.h"
@@ -1139,6 +1140,9 @@ void common_flip(struct game_obj *game_object)
 
 	// We need to process Gamepad input on each frame
 	gamehacks.processGamepadInput();
+
+	// Update day night time cycle
+	if (!ff8 && enable_time_cycle) ff7::time.update();
 
 	// FF8 does not clear the screen properly in the card game module
 	if (ff8)

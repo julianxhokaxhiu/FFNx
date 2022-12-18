@@ -218,6 +218,9 @@ private:
         std::vector<float> FSHDRFlags;
         std::vector<float> FSTexFlags;
 
+        std::array<float, 4> TimeColor;
+        std::array<float, 4> TimeData;
+
         float d3dViewMatrix[16];
         float d3dProjectionMatrix[16];
         float viewMatrix[16];
@@ -423,6 +426,12 @@ public:
 
     // Internal scaling factor
     uint16_t getScalingFactor();
+
+    // Day-night time cycle
+    void setTimeColor(bx::Vec3 color);
+    void setTimeEnabled(bool flag = false);
+    void setTimeFilterEnabled(bool flag = false);
+    bool isTimeFilterEnabled();
 };
 
 extern Renderer newRenderer;

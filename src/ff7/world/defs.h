@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "renderer.h"
+
 namespace ff7::world
 {
     void world_hook_init();

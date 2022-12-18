@@ -289,6 +289,10 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.vibrate.ff8.battle.toml
           ${CMAKE_BINARY_DIR}/bin/vibrate/ff8/battle.toml
+  # time cycle .toml
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.time.toml
+          ${CMAKE_BINARY_DIR}/bin/time/config.toml
 )
 
 # CPU INFO

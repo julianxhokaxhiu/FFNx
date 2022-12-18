@@ -190,6 +190,10 @@ void main()
     if(isTLVertex)
     {
         gl_FragColor = color;
+        if(isTimeFilterEnabled)
+        {
+            gl_FragColor.rgb *= TimeColor.rgb;
+        }
     }
     else
     {
