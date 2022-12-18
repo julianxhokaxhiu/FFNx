@@ -22,6 +22,7 @@
 /****************************************************************************/
 
 #include "widescreen.h"
+#include "field/background.h"
 #include "../patch.h"
 #include "../ff7.h"
 #include "../cfg.h"
@@ -37,9 +38,8 @@ int swirl_framebuffer_offset_y_widescreen_fix = 64;
 Widescreen widescreen;
 
 // This function should be called at each frame after drawing backgrounds and 3d models
-void ff7_field_draw_gray_quads_sub_644E90() {
-    ff7_externals.field_draw_gray_quads_644E90();
-
+void Widescreen::zoomBackground()
+{
     if(gl_defer_zoom()) return;
 
     bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
@@ -132,7 +132,7 @@ void ff7_widescreen_hook_init() {
     patch_code_int(ff7_externals.field_init_viewport_values + 0xBE, wide_viewport_width + wide_viewport_x - 60);
     patch_code_int(ff7_externals.field_init_viewport_values + 0xC8, 18);
     // For zoom field maps
-    replace_call_function(ff7_externals.field_draw_everything + 0x360, ff7_field_draw_gray_quads_sub_644E90);
+    replace_call_function(ff7_externals.field_draw_everything + 0x360, ff7::field::draw_gray_quads_sub_644E90);
 
     // Swirl fix
     patch_code_dword(ff7_externals.swirl_loop_sub_4026D4 + 0x335, (uint32_t)&wide_viewport_x);

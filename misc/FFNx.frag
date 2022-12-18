@@ -34,6 +34,8 @@ uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
+uniform vec4 TimeColor;
+uniform vec4 TimeData;
 
 #define isTLVertex VSFlags.x > 0.0
 #define isFBTexture VSFlags.z > 0.0
@@ -58,6 +60,9 @@ uniform vec4 FSTexFlags;
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
+
+#define isTimeEnabled TimeData.x > 0.0
+#define isTimeFilterEnabled TimeData.x > 0.0 && TimeData.y > 0.0
 
 void main()
 {
@@ -157,6 +162,15 @@ void main()
 			    color.a = texture_color.a;
             }
         }
+    }
+
+    if(isTLVertex)
+    {
+        if(isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
+    }
+    else
+    {
+        color.rgb *= TimeColor.rgb;
     }
 
     if (!(isHDR)) {

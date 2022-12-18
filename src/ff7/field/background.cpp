@@ -26,6 +26,8 @@
 #include "../../globals.h"
 #include "../widescreen.h"
 
+#include "../../renderer.h"
+
 #include "background.h"
 #include "defs.h"
 #include "utils.h"
@@ -881,5 +883,15 @@ namespace ff7::field
 
             compute_pointer_hand_position(field_3d_world_pos, player_model_id);
         }
+    }
+
+    // This function should be called at each frame after drawing backgrounds and 3d models
+    void draw_gray_quads_sub_644E90()
+    {
+        ff7_externals.field_draw_gray_quads_644E90();
+
+        if (aspect_ratio == AR_WIDESCREEN) widescreen.zoomBackground();
+
+        newRenderer.setTimeFilterEnabled(false);
     }
 }

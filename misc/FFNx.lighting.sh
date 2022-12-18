@@ -26,6 +26,11 @@ SAMPLER2D(tex_9, 9);
 uniform vec4 lightDirData;
 uniform vec4 lightData;
 uniform vec4 ambientLightData;
+uniform vec4 TimeColor;
+uniform vec4 TimeData;
+
+#define isTimeEnabled TimeData.x > 0.0
+#define isTimeFilterEnabled TimeData.x > 0.0 && TimeData.y > 0.0
 
 #define INV_PI 0.31831
 
@@ -129,6 +134,11 @@ vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 viewDir, vec3 norma
     // Light
     float lightIntensity = lightData.w;
     vec3 lightColor = toLinear(lightData.rgb);
+    if(isTimeEnabled)
+    {
+        lightColor *= TimeColor.rgb;
+    }
+
     vec3 lightDir = normalize(lightDirData.xyz);
 
     vec3 F0 = mix(specular * vec3_splat(0.08), albedo, metallic);
@@ -169,6 +179,11 @@ vec3 CalcConstIndirectLuminance(vec3 albedo)
 {
     // Ambient
     vec3 ambientLightColor = ambientLightData.rgb;
+    if(isTimeEnabled)
+    {
+        ambientLightColor *= TimeColor.rgb;
+    }
+
     float ambientLightIntensity = ambientLightData.w;
     vec3 ambient = ambientLightIntensity * ambientLightColor * INV_PI * albedo.rgb;
 

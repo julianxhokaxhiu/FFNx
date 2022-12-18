@@ -28,8 +28,9 @@
 #include "../common.h"
 #include "../video/movies.h"
 #include "../ff7/battle/menu.h"
+#include "../ff7/widescreen.h"
 
-#include "ff7/widescreen.h"
+#include "ff7/field/background.h"
 
 uint32_t nodefer = false;
 
@@ -78,6 +79,8 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	deferred_draws[defer].indices = (WORD*)driver_malloc(sizeof(*indices) * count);
 	deferred_draws[defer].vertices = (nvertex*)driver_malloc(sizeof(*vertices) * vertexcount);
 	deferred_draws[defer].draw_call_type = DCT_DRAW;
+	if(enable_time_cycle)
+		deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
 	gl_save_state(&deferred_draws[defer].state);
 
 	memcpy(deferred_draws[defer].indices, indices, sizeof(*indices) * count);
@@ -442,6 +445,8 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 		gl_save_state(&deferred_sorted_draws[defer].deferred_draw.state);
 		deferred_sorted_draws[defer].drawn = false;
 		deferred_sorted_draws[defer].z = z;
+		if(enable_time_cycle)
+				deferred_sorted_draws[defer].deferred_draw.is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
 
 		for(tri = 0; tri < count / 3 && vert_index < tri_num * 3; tri++)
 		{
@@ -509,7 +514,7 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 		}
 		else if(deferred_draws[i].draw_call_type == DCT_ZOOM)
 		{
-			ff7_field_draw_gray_quads_sub_644E90();
+			widescreen.zoomBackground();
 			continue;
 		}
 		else if(deferred_draws[i].draw_call_type == DCT_BATTLE_DEPTH_CLEAR)
@@ -533,6 +538,9 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 		}
 
 		gl_load_state(&deferred_draws[i].state);
+
+		if(enable_time_cycle)
+			newRenderer.setTimeFilterEnabled(deferred_draws[i].is_time_filter_enabled);
 
 		gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
 			deferred_draws[i].vertextype,
@@ -655,6 +663,9 @@ void gl_draw_sorted_deferred()
 		gl_load_state(&deferred_sorted_draws[next].deferred_draw.state);
 		internal_set_renderstate(V_DEPTHTEST, 1, 0);
 		internal_set_renderstate(V_DEPTHMASK, 1, 0);
+
+		if(enable_time_cycle)
+			newRenderer.setTimeFilterEnabled(deferred_sorted_draws[next].deferred_draw.is_time_filter_enabled);
 
 		gl_draw_indexed_primitive(deferred_sorted_draws[next].deferred_draw.primitivetype,
 								  deferred_sorted_draws[next].deferred_draw.vertextype,

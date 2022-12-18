@@ -21,30 +21,13 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "../../common.h"
-#include "../../ff7.h"
-
 #pragma once
 
-namespace ff7::field
-{
-    constexpr float INVALID_VALUE = -1000000;
+#include "../../globals.h"
 
-    vector2<float>
-        field_curr_delta_world_pos,
-        field_3d_world_pos,
-        bg_main_layer_pos,
-        bg_layer3_pos,
-        bg_layer4_pos,
-        cursor_position;
+namespace ff7::world {
 
-    void ff7_field_update_background();
-    void ff7_field_set_world_coordinate_640EB7();
-    void ff7_field_submit_draw_arrow(field_arrow_graphics_data* arrow_data);
-    void ff7_field_submit_draw_cursor(field_arrow_graphics_data* arrow_data);
-    void draw_gray_quads_sub_644E90();
-    bool is_position_valid(vector2<float> position) {
-        return position.x != INVALID_VALUE && position.y != INVALID_VALUE;
-    }
-
+    void wm0_draw_minimap_quad_graphics_object(ff7_graphics_object* quad_graphics_object, ff7_game_obj* game_object);
+    void wm0_draw_world_effects_1_graphics_object(ff7_graphics_object* world_effects_1_graphics_object, ff7_game_obj* game_object);
+    void wm0_draw_minimap_points_graphics_object(ff7_graphics_object* minimap_points_graphics_object, ff7_game_obj* game_object);
 }

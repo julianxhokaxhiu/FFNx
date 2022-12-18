@@ -1,0 +1,50 @@
+# FFNx Time Cycle config file
+
+### HOW TO: ###################################################################
+# Sections may be commented by default with an initial # character.
+# Remove the initial # character to set the entire sections block and its flags
+# -----------------------------------------------------------------------------
+###############################################################################
+
+### SUPPORTED FLAGS: ##########################################################
+# sunrise_time : sunrise time in hours
+# morning_time : morning time in hours
+# midday_time : midday time in hours
+# afternoon_time : afternoon time in hours
+# night_time : night time in hours
+
+# frames_per_minute : frames per minutes
+# (e.g. 5 results in a 8 min cycle, 10 in a 16 min cycle, 15 in 24 min cycle)
+
+# morning_color : RGB filter values for the morning color
+# midday_color : RGB filter values for the midday color
+# afternoon_color : RGB filter values for the afternoon color
+# night_color : RGB filter values for the night color
+
+# options_address : address for pointer to unused game data to store time related options
+# (BIT 0: global time cycle flag, BIT 1: update timer flag, BIT 2: Outdoor field flag)
+
+# minutes_address : address for pointer to unused game data to store the minutes
+# hours_address : address for pointer to unused game data to store the hours
+# days_address : address for pointer to unused game data to store the days
+# months_address : address for pointer to unused game data to store the months
+###############################################################################
+
+#sunrise_time = 6.0
+#morning_time = 7.0
+#midday_time = 15.0
+#afternoon_time = 19.0
+#night_time = 20.0
+
+#frames_per_minute = 5
+
+#morning_color = [ 0.75, 0.5, 0.5 ]
+#midday_color = [ 1.0, 1.0, 1.0 ]
+#afternoon_color = [ 0.9, 0.4, 0.3 ]
+#night_color = [ 0.075, 0.075, 0.25 ]
+
+#options_address = "DC08E6"
+#minutes_address = "DC08E8"
+#hours_address = "DC08EB"
+#days_address = "DC08EA"
+#months_address = "DC08E9"

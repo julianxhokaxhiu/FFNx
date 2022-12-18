@@ -14,6 +14,7 @@
 - Renderer: Fixed graphical glitch happening in battle when 3d models rendered in front of UI ( https://github.com/julianxhokaxhiu/FFNx/issues/131 )
 - Voice: Add play voice for enemy actions during BATTLE mode ( https://github.com/julianxhokaxhiu/FFNx/pull/502 )
 - Widescreen: Allow the buster sword image on new game screen to support 16:9 ratio ( https://github.com/julianxhokaxhiu/FFNx/pull/506 )
+- Modding: Added day-night time cycle system that can be controled from field scripts ( https://github.com/julianxhokaxhiu/FFNx/pull/511 )
 
 ## FF8
 

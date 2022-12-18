@@ -79,6 +79,7 @@ struct deferred_draw
 	uint32_t clear_depth;
 	struct game_obj *game_object;
 	uint32_t movie_buffer_index;
+	bool is_time_filter_enabled;
 };
 
 struct deferred_sorted_draw

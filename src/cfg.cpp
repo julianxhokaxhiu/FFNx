@@ -46,6 +46,7 @@ std::string external_ambient_path;
 std::vector<std::string> external_ambient_ext;
 std::string external_lighting_path;
 std::string external_widescreen_path;
+std::string external_time_cycle_path;
 bool enable_voice_music_fade;
 long external_voice_music_fade_volume;
 bool enable_voice_auto_text;
@@ -87,6 +88,7 @@ long enable_antialiasing;
 bool enable_anisotropic;
 bool enable_lighting;
 bool prefer_lighting_cpu_calculations;
+bool enable_time_cycle;
 bool ff7_external_opening_music;
 bool more_debug;
 bool ff8_ssigpu_debug;
@@ -190,6 +192,7 @@ void read_cfg()
 	external_ambient_ext = get_string_or_array_of_strings(config["external_ambient_ext"]);
 	external_lighting_path = config["external_lighting_path"].value_or("");
 	external_widescreen_path = config["external_widescreen_path"].value_or("");
+	external_time_cycle_path = config["external_time_cycle_path"].value_or("");
 	save_textures = config["save_textures"].value_or(false);
 	trace_all = config["trace_all"].value_or(false);
 	trace_renderer = config["trace_renderer"].value_or(false);
@@ -228,6 +231,7 @@ void read_cfg()
 	enable_anisotropic = config["enable_anisotropic"].value_or(true);
 	enable_lighting = config["enable_lighting"].value_or(false);
 	prefer_lighting_cpu_calculations = config["prefer_lighting_cpu_calculations"].value_or(true);
+	enable_time_cycle = config["enable_time_cycle"].value_or(false);
 	ff7_external_opening_music = config["ff7_external_opening_music"].value_or(false);
 	more_debug = config["more_debug"].value_or(false);
 	ff8_ssigpu_debug = config["ff8_ssigpu_debug"].value_or(false);
@@ -415,6 +419,10 @@ void read_cfg()
 	// EXTERNAL WIDESCREEN PATH
 	if (external_widescreen_path.empty())
 		external_widescreen_path = "widescreen";
+
+	// EXTERNAL TIME CYCLE
+	if (external_time_cycle_path.empty())
+		external_time_cycle_path = "time";
 
 	// MOD PATH
 	if (mod_path.empty())

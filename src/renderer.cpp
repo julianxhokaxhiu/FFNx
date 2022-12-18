@@ -23,6 +23,7 @@
 #include "renderer.h"
 #include "lighting.h"
 #include "ff7/widescreen.h"
+#include "ff7/time.h"
 
 Renderer newRenderer;
 RendererCallbacks bgfxCallbacks;
@@ -129,6 +130,8 @@ void Renderer::setCommonUniforms()
     setUniform("FSMiscFlags", bgfx::UniformType::Vec4, internalState.FSMiscFlags.data());
     setUniform("FSHDRFlags", bgfx::UniformType::Vec4, internalState.FSHDRFlags.data());
     setUniform("FSTexFlags", bgfx::UniformType::Vec4, internalState.FSTexFlags.data());
+    setUniform("TimeColor", bgfx::UniformType::Vec4, internalState.TimeColor.data());
+    setUniform("TimeData", bgfx::UniformType::Vec4, internalState.TimeData.data());
 
     setUniform("d3dViewport", bgfx::UniformType::Mat4, internalState.d3dViewMatrix);
     setUniform("d3dProjection", bgfx::UniformType::Mat4, internalState.d3dProjectionMatrix);
@@ -787,6 +790,9 @@ void Renderer::init()
 
     // Init Lighting
     lighting.init();
+
+    // Init Day Night Cycle
+    ff7::time.init();
 
     // Set defaults
     show();
@@ -1990,4 +1996,26 @@ uint16_t Renderer::getInternalCoordY(uint16_t inY)
 uint16_t Renderer::getScalingFactor()
 {
     return scalingFactor;
+}
+
+void Renderer::setTimeColor(bx::Vec3 color)
+{
+    internalState.TimeColor[0] = color.x;
+    internalState.TimeColor[1] = color.y;
+    internalState.TimeColor[2] = color.z;
+}
+
+void Renderer::setTimeEnabled(bool flag)
+{
+    internalState.TimeData[0] = static_cast<float>(flag);
+}
+
+void Renderer::setTimeFilterEnabled(bool flag)
+{
+    internalState.TimeData[1] = static_cast<float>(flag);
+}
+
+bool Renderer::isTimeFilterEnabled()
+{
+    return static_cast<bool>(internalState.TimeData[1]);
 }

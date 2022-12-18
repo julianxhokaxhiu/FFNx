@@ -39,7 +39,6 @@ int wide_game_width = 854;
 int wide_game_height = 480;
 
 void ff7_widescreen_hook_init();
-void ff7_field_draw_gray_quads_sub_644E90();
 
 enum WIDESCREEN_MODE
 {
@@ -76,6 +75,8 @@ public:
 
     KeyPair getMovieKeyPair(int frame);
     WIDESCREEN_MODE getMovieMode();
+
+    void zoomBackground();
 
 private:
     void loadConfig();
