@@ -446,11 +446,12 @@ int opcode_wm_message(uint8_t window_id, uint8_t dialog_id) {
 	if (_is_dialog_opening)
 	{
 		begin_voice(window_id);
+		current_opcode_message_status[window_id].message_dialog_id = dialog_id;
 	}
 	else if (_is_dialog_starting || _is_dialog_paging)
 	{
-		if (trace_all || trace_opcodes) ffnx_trace("wm_opcode[MESSAGE]: window_id=%u,dialog_id=%u,paging_id=%u\n", window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
-		current_opcode_message_status[window_id].is_voice_acting = play_voice("_world", window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+		if (trace_all || trace_opcodes) ffnx_trace("wm_opcode[MESSAGE]: window_id=%u,dialog_id=%u,paging_id=%u\n", window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
+		current_opcode_message_status[window_id].is_voice_acting = play_voice("_world", window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
 	}
 	else if (_is_dialog_closing)
 	{
