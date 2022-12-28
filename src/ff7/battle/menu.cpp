@@ -33,6 +33,8 @@ namespace ff7::battle
     {
         *ff7_externals.g_do_render_menu = 0;
         battle_depth_clear();
+
+        if (enable_time_cycle) newRenderer.setTimeFilterEnabled(false);
     }
 
     void battle_depth_clear()

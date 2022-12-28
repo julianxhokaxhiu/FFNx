@@ -217,12 +217,7 @@ namespace ff7
         else color = nightColor;
 
         newRenderer.setTimeEnabled(true);
-
-        if(mode->driver_mode == MODE_FIELD || mode->driver_mode == MODE_WORLDMAP)
-            newRenderer.setTimeFilterEnabled(true);
-        else
-            newRenderer.setTimeFilterEnabled(false);
-
+        newRenderer.setTimeFilterEnabled(true);
         newRenderer.setTimeColor(color);
     }
 }
