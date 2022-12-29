@@ -10,6 +10,7 @@
 
 - 60FPS: Fix fading speed in FIELD mode screen transitions ( https://github.com/julianxhokaxhiu/FFNx/pull/503 )
 - 60FPS: Fix fading out speed in BATTLE mode exit screen transition
+- 60FPS: Fix Climhazzard random crash on enemies with status effects ( https://github.com/julianxhokaxhiu/FFNx/pull/516 )
 - Core: Fix Barret's eyebrow not loading ( https://github.com/julianxhokaxhiu/FFNx/issues/107 )
 - Modding: Added day-night time cycle system that can be controled from field scripts ( https://github.com/julianxhokaxhiu/FFNx/pull/511 )
 - Renderer: Fixed graphical glitch happening in battle when 3d models rendered in front of UI ( https://github.com/julianxhokaxhiu/FFNx/issues/131 )

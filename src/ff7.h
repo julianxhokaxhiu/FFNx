@@ -2814,6 +2814,7 @@ struct ff7_externals
 	uint32_t tifa_limit_1_2_sub_4E3D51;
 	uint32_t tifa_limit_2_1_sub_4E48D4;
 	uint32_t aerith_limit_2_1_sub_45B0CF;
+	uint32_t cloud_limit_2_2_sub_467256;
 	uint32_t vincent_limit_satan_slam_camera_45CF2A;
 	uint32_t barret_limit_4_1_camera_4688A2;
 	uint32_t barret_limit_4_1_model_movement_4698EF;

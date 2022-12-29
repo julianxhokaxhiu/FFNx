@@ -887,6 +887,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t aerith_limit_2_1_sub_45AEE8 = get_absolute_value(aerith_limit_2_1_sub_45AEA6, 0xE);
 	uint32_t aerith_limit_2_1_sub_45AF39 = get_absolute_value(aerith_limit_2_1_sub_45AEE8, 0x5);
 	ff7_externals.aerith_limit_2_1_sub_45B0CF = get_absolute_value(aerith_limit_2_1_sub_45AF39, 0x4A);
+	uint32_t cloud_limit_2_2_main_466A31 = ff7_externals.limit_break_effects_fn_table[3];
+	uint32_t cloud_limit_2_2_sub_466A57 = get_relative_call(cloud_limit_2_2_main_466A31, 0x1A);
+	uint32_t cloud_limit_2_2_sub_466A7A = get_absolute_value(cloud_limit_2_2_sub_466A57, 0x15);
+	uint32_t cloud_limit_2_2_sub_466CD2 = get_absolute_value(cloud_limit_2_2_sub_466A7A, 0x185);
+	ff7_externals.cloud_limit_2_2_sub_467256 = get_absolute_value(cloud_limit_2_2_sub_466CD2, 0x38C);
 	uint32_t aerith_limit_4_1_sub_473A70 = ff7_externals.limit_break_effects_fn_table[20];
 	uint32_t aerith_limit_4_1_sub_473B84 = get_relative_call(aerith_limit_4_1_sub_473A70, 0xAA);
 	uint32_t aerith_limit_4_1_sub_473C82 = get_relative_call(aerith_limit_4_1_sub_473B84, 0xB7);
