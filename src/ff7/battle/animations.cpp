@@ -1355,6 +1355,7 @@ namespace ff7::battle
         fixed_effect100_addresses.insert(ff7_externals.goblin_punch_flash_573291);
         fixed_effect100_addresses.insert(ff7_externals.run_ifrit_movement_596702);
         fixed_effect100_addresses.insert(ff7_externals.vincent_limit_fade_effect_sub_5D4240);
+        fixed_effect100_addresses.insert(ff7_externals.cloud_limit_2_2_sub_467256);
         one_call_effect100_addresses.insert(ff7_externals.run_bahamut_zero_main_loop_484A16);
         one_call_effect100_addresses.insert(ff7_externals.death_sentence_main_loop_5661A0);
         one_call_effect100_addresses.insert(ff7_externals.roulette_skill_main_loop_566287);
