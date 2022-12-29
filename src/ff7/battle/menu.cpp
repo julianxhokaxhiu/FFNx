@@ -76,4 +76,13 @@ namespace ff7::battle
             (*ff7_externals.targeting_actor_id_DC3C98)++;
         }
     }
+
+    void draw_ui_graphics_objects_wrapper(int flag, int type)
+    {
+        if (enable_time_cycle) newRenderer.setTimeFilterEnabled(false);
+
+        ff7_externals.battle_draw_call_42908C(flag, type);
+
+        if (enable_time_cycle) newRenderer.setTimeFilterEnabled(true);
+    }
 }

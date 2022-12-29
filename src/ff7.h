@@ -2932,6 +2932,9 @@ struct ff7_externals
 	void (*display_cait_sith_slots_handler_6E2170)();
 	void (*display_tifa_slots_handler_6E3135)();
 	void (*display_battle_arena_menu_handler_6E384F)();
+	uint32_t battle_draw_text_ui_graphics_objects_call;
+	uint32_t battle_draw_box_ui_graphics_objects_call;
+	void (*battle_draw_call_42908C)(int, int);
 	uint32_t battle_set_do_render_menu_call;
 	uint32_t battle_set_do_render_menu;
 	int *g_do_render_menu;
