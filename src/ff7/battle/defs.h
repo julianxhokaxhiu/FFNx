@@ -41,4 +41,5 @@ namespace ff7::battle
 
     // Menu
     void battle_menu_enter();
+    void draw_ui_graphics_objects_wrapper(int flag, int type);
 }

@@ -1105,6 +1105,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.display_cait_sith_slots_handler_6E2170 = (void(*)())get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1BB);
 	ff7_externals.display_tifa_slots_handler_6E3135 = (void(*)())get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1C2);
 	ff7_externals.display_battle_arena_menu_handler_6E384F = (void(*)())get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1C9);
+	ff7_externals.battle_draw_text_ui_graphics_objects_call = battle_main_loop + 0x289;
+	ff7_externals.battle_draw_box_ui_graphics_objects_call = battle_main_loop + 0x2CF;
+	ff7_externals.battle_draw_call_42908C = (void(*)(int, int))get_relative_call(battle_main_loop, 0x2CF);
 	ff7_externals.battle_set_do_render_menu_call = battle_main_loop + 0x32A;
 	ff7_externals.battle_set_do_render_menu = get_relative_call(battle_main_loop, 0x32A);
 	ff7_externals.g_do_render_menu = (int*)get_absolute_value(ff7_externals.battle_set_do_render_menu, 0x7);
