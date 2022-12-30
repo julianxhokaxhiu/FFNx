@@ -57,6 +57,14 @@ namespace ff7
             byte* pHours = nullptr;
             byte* pDays = nullptr;
             byte* pMonths = nullptr;
+
+            byte* pMonthChar0 = nullptr;
+            byte* pMonthChar1 = nullptr;
+            byte* pMonthChar2 = nullptr;
+
+            byte monthChar0[12];
+            byte monthChar1[12];
+            byte monthChar2[12];
     };
 
     extern Time time;
