@@ -120,6 +120,34 @@ namespace ff7
             auto str = monthsAddressStr.value();
             pMonths = (byte*)(std::strtol(str.data(), nullptr, 16));
         }
+
+        auto monthChar0AddressStr = config["month_char_0_address"].value<std::string>();
+        if(monthChar0AddressStr.has_value())
+        {
+            auto str = monthChar0AddressStr.value();
+            pMonthChar0 = (byte*)(std::strtol(str.data(), nullptr, 16));
+        }
+
+        auto monthChar1AddressStr = config["month_char_1_address"].value<std::string>();
+        if(monthChar1AddressStr.has_value())
+        {
+            auto str = monthChar1AddressStr.value();
+            pMonthChar1 = (byte*)(std::strtol(str.data(), nullptr, 16));
+        }
+
+        auto monthChar2AddressStr = config["month_char_2_address"].value<std::string>();
+        if(monthChar2AddressStr.has_value())
+        {
+            auto str = monthChar2AddressStr.value();
+            pMonthChar2 = (byte*)(std::strtol(str.data(), nullptr, 16));
+        }
+
+        for (int i = 0; i < 12; ++i)
+        {
+            monthChar0[i] = config["month_" + std::to_string(i) + "_char_0"].value_or(0);
+            monthChar1[i] = config["month_" + std::to_string(i) + "_char_1"].value_or(0);
+            monthChar2[i] = config["month_" + std::to_string(i) + "_char_2"].value_or(0);
+        }
     }
 
     void time_hook_init()
@@ -191,6 +219,13 @@ namespace ff7
         if((*pMonths) >= 12)
         {
             (*pMonths) = 0;
+        }
+
+        if(pMonthChar0 != nullptr && pMonthChar1 != nullptr && pMonthChar2 != nullptr)
+        {
+            *pMonthChar0 = monthChar0[*pMonths];
+            *pMonthChar1 = monthChar1[*pMonths];
+            *pMonthChar2 = monthChar2[*pMonths];
         }
 
         if(mode->driver_mode == MODE_FIELD ||

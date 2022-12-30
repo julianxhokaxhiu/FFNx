@@ -28,6 +28,14 @@
 # hours_address : address for pointer to unused game data to store the hours
 # days_address : address for pointer to unused game data to store the days
 # months_address : address for pointer to unused game data to store the months
+
+# month_char_0_address : address to the first character of the month string
+# month_char_1_address : address to the second character of the month string
+# month_char_2_address : address to the third character of the month string
+
+# month_x_char_0 : value of first character of month x (replace x by month index between 0 and 11)
+# month_x_char_1 : value of first character of month x (replace x by month index between 0 and 11)
+# month_x_char_2 : value of first character of month x (replace x by month index between 0 and 11)
 ###############################################################################
 
 #sunrise_time = 6.0
@@ -48,3 +56,55 @@
 #hours_address = "DC08EB"
 #days_address = "DC08EA"
 #months_address = "DC08E9"
+
+#month_char_0_address = "DC0BFC"
+#month_char_1_address = "DC0BFD"
+#month_char_2_address = "DC0BFE"
+
+#month_0_char_0 = 42
+#month_0_char_1 = 65
+#month_0_char_2 = 78
+
+#month_1_char_0 = 38
+#month_1_char_1 = 69
+#month_1_char_2 = 66
+
+#month_2_char_0 = 45
+#month_2_char_1 = 65
+#month_2_char_2 = 82
+
+#month_3_char_0 = 33
+#month_3_char_1 = 65
+#month_3_char_2 = 89
+
+#month_4_char_0 = 45
+#month_4_char_1 = 65
+#month_4_char_2 = 89
+
+#month_5_char_0 = 42
+#month_5_char_1 = 85
+#month_5_char_2 = 78
+
+#month_6_char_0 = 42
+#month_6_char_1 = 85
+#month_6_char_2 = 76
+
+#month_7_char_0 = 33
+#month_7_char_1 = 85
+#month_7_char_2 = 71
+
+#month_8_char_0 = 51
+#month_8_char_1 = 69
+#month_8_char_2 = 80
+
+#month_9_char_0 = 47
+#month_9_char_1 = 67
+#month_9_char_2 = 84
+
+#month_10_char_0 = 46
+#month_10_char_1 = 79
+#month_10_char_2 = 86
+
+#month_11_char_0 = 36
+#month_11_char_1 = 69
+#month_11_char_2 = 67
