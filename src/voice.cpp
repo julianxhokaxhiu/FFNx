@@ -387,8 +387,6 @@ int opcode_voice_parse_options(uint8_t window_id, uint8_t dialog_id, uint8_t fir
 
 int opcode_voice_ask(int unk)
 {
-	int ret = opcode_old_ask(unk);
-
 	byte window_id = get_field_parameter<byte>(1);
 	byte dialog_id = get_field_parameter<byte>(2);
 	byte message_current_opcode = get_dialog_opcode(window_id);
@@ -427,7 +425,7 @@ int opcode_voice_ask(int unk)
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
 	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
 
-	return ret;
+	return opcode_old_ask(unk);
 }
 
 // -- WORLDMAP --
@@ -473,8 +471,6 @@ int opcode_wm_message(uint8_t window_id, uint8_t dialog_id) {
 }
 
 int opcode_wm_ask(uint8_t window_id, uint8_t dialog_id, uint8_t first_question_id, uint8_t last_question_id, WORD *current_question_id) {
-	int ret = opcode_wm_old_ask(window_id, dialog_id, first_question_id, last_question_id, current_question_id);
-
 	byte message_current_opcode = get_dialog_opcode(window_id);
 
 	bool _is_dialog_opening = is_dialog_opening(message_current_opcode);
@@ -509,7 +505,7 @@ int opcode_wm_ask(uint8_t window_id, uint8_t dialog_id, uint8_t first_question_i
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
 	current_opcode_message_status[window_id].message_last_option = *current_question_id;
 
-	return ret;
+	return opcode_wm_old_ask(window_id, dialog_id, first_question_id, last_question_id, current_question_id);
 }
 
 // -- BATTLE --
