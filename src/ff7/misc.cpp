@@ -86,6 +86,7 @@ uint32_t get_equipment_stats(uint32_t party_index, uint32_t type)
 	}
 }
 
+// KERNEL2
 char *kernel2_sections[20];
 uint32_t kernel2_section_counter;
 
@@ -120,11 +121,13 @@ char *kernel2_get_text(uint32_t section_base, uint32_t string_id, uint32_t secti
 	return &section[((WORD *)section)[string_id]];
 }
 
+// WM_ACTIVATEAPP
 void ff7_wm_activateapp(bool hasFocus)
 {
 
 }
 
+// Analogue controls
 int ff7_get_control_direction()
 {
 	byte* level_data = *ff7_externals.field_level_data_pointer;
