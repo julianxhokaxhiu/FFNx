@@ -1098,8 +1098,10 @@ void Renderer::show()
 
     bgfx::dbgTextClear();
 
-    for(int i = 1; i <= backendViewId; i++)
-        bgfx::resetView(i);
+    if(!ff8 && getmode_cached()->driver_mode == MODE_BATTLE) {
+        for(int i = 0; i <= backendViewId; i++)
+            bgfx::resetView(i);
+    }
 
     backendViewId = 1;
 
