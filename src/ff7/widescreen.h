@@ -5,9 +5,9 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2022 Julian Xhokaxhiu                                   //
-//    Copyright (C) 2022 Tang-Tang Zhou                                     //
-//    Copyright (C) 2022 Cosmos                                             //
+//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2023 Tang-Tang Zhou                                     //
+//    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
