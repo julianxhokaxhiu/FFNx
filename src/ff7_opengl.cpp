@@ -186,7 +186,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	if(aspect_ratio == AR_WIDESCREEN)
 		ff7_widescreen_hook_init();
 
-	ff7::time_hook_init();
+	if (enable_time_cycle)
+		ff7::time_hook_init();
 
 	// #####################
 	// new timer calibration

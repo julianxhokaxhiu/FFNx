@@ -792,7 +792,7 @@ void Renderer::init()
     lighting.init();
 
     // Init Day Night Cycle
-    ff7::time.init();
+    if (enable_time_cycle) ff7::time.init();
 
     // Set defaults
     show();
