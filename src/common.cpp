@@ -847,6 +847,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				music_init();
 				sfx_init();
 				voice_init();
+
 				if (enable_ffmpeg_videos)
 				{
 					movie_init();
@@ -856,6 +857,12 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 					vram_init();
 					vibration_init();
 				}
+
+				// Init Day Night Cycle
+				if (!ff8 && enable_time_cycle) ff7::time.init();
+
+				// Init Lighting
+				if (!ff8 && enable_lighting) lighting.init();
 
 				if(aspect_ratio == AR_WIDESCREEN) widescreen.init();
 

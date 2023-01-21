@@ -788,12 +788,6 @@ void Renderer::init()
         overlay.init(backendProgramHandles[RendererProgram::OVERLAY], window_size_x, window_size_y);
     }
 
-    // Init Lighting
-    lighting.init();
-
-    // Init Day Night Cycle
-    if (enable_time_cycle) ff7::time.init();
-
     // Set defaults
     show();
 };
