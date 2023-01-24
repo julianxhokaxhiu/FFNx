@@ -26,11 +26,22 @@ FFNx today in a nutshell:
   - DirectX 12
   - Vulkan
 
-# Features
+## The Team
 
-## As a user
+FFNx is developed by a core team, currently composed of:
 
-### FF7/FF8
+- Julian Xhokaxhiu ( TrueOdin, Spain )
+- Tang-Tang Zhou ( vertex2995, Italy )
+- Jérôme Arzel ( myst6re, France )
+- CosmosXIII ( Cosmos, Japan )
+
+We are always open for contributions via PRs, and in case you want to join the core team feel free to approach us on Discord and we will evaluate on a case-by-case basis.
+
+## Features
+
+### As a user
+
+#### FF7/FF8
 
 - [/LARGEADDRESSAWARE](https://docs.microsoft.com/en-us/cpp/build/reference/largeaddressaware-handle-large-addresses?view=vs-2019) support! Up to 3.5GB of RAM available for mods ( this requires the [4GB Patch](https://ntcore.com/?page_id=371) in your ff7.exe ).
 - High DPI support!
@@ -45,7 +56,7 @@ FFNx today in a nutshell:
 - External music to replace MIDIs support!
 - The game will continue to run when not in focus in Window mode
 
-### FF7
+#### FF7
 - 60 FPS!
 - eStore support! No Game converter required.
 - Vertical centering for Fields and Movies
@@ -69,13 +80,13 @@ FFNx today in a nutshell:
 - Real-time camera control in battles
 - Analogue controls using the full axis of your left analog stick
 
-### FF8
+#### FF8
 - Vibration support!
 - **Voice acting**!
 - Maki's patch for Worldmap included
 - Enable the VRAM debug window while playing in order to see how the engine uploads textures
 
-## As a modder
+### As a modder
 
 - Game rendering inspection through [RenderDoc](https://renderdoc.org/)!
 - [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
