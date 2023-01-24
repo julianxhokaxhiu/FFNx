@@ -364,12 +364,13 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.enter_main = get_absolute_value(worldmap_main_loop, 0x2AE);
 
 	ff7_externals.kernel_init = get_relative_call(ff7_externals.enter_main, 0xF1);
-	ff7_externals.kernel_load_kernel2 = get_relative_call(ff7_externals.kernel_init, 0x1FD);
-	ff7_externals.kernel2_reset_counters = get_relative_call(ff7_externals.kernel_load_kernel2, 0x33);
+	ff7_externals.kernel_load_kernel2 = (void (*)(char*))get_relative_call(ff7_externals.kernel_init, 0x1FD);
+	ff7_externals.kernel2_reset_counters = get_relative_call((uint32_t)ff7_externals.kernel_load_kernel2, 0x33);
 
 	ff7_externals.sub_4012DA = get_absolute_value(ff7_externals.kernel_init, 0x136);
 	ff7_externals.kernel2_add_section = get_relative_call(ff7_externals.sub_4012DA, 0x4D);
 	ff7_externals.kernel2_get_text = get_relative_call((uint32_t)ff7_externals.get_kernel_text, 0xF7);
+	ff7_externals.kernel_1to9_sections = (char**)get_absolute_value(ff7_externals.sub_4012DA, 0x6F);
 
 	ff7_externals.draw_3d_model = get_relative_call(ff7_externals.field_draw_everything, 0x17F);
 	ff7_externals.stack_push = (void (*)(struct stack*))get_relative_call(ff7_externals.draw_3d_model, 0x8E);

@@ -2437,11 +2437,12 @@ struct ff7_externals
 	uint32_t destroy_d3d2_indexed_primitive;
 	uint32_t enter_main;
 	uint32_t kernel_init;
-	uint32_t kernel_load_kernel2;
+	void (*kernel_load_kernel2)(char* filename);
 	uint32_t kernel2_reset_counters;
 	uint32_t sub_4012DA;
 	uint32_t kernel2_add_section;
 	uint32_t kernel2_get_text;
+	char **kernel_1to9_sections;
 	uint32_t draw_3d_model;
 	void (*stack_push)(struct stack *);
 	void *(*stack_top)(struct stack *);

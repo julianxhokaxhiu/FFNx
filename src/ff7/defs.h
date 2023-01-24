@@ -25,6 +25,12 @@
 #include "battle/defs.h"
 #include "world/defs.h"
 
+// kernel
+void kernel2_reset_counters();
+char *kernel2_add_section(uint32_t size);
+char *kernel2_get_text(uint32_t section_base, uint32_t string_id, uint32_t section_offset);
+void ff7_load_kernel2_wrapper(char *filename);
+
 // menu
 void ff7_menu_battle_end_sub_6C9543();
 void ff7_menu_sub_71AAA3(int param_1);
@@ -40,9 +46,6 @@ void ff7_set_battle_menu_state_data_at_full_atb(short param_1, short param_2, sh
 // misc
 void ff7_core_game_loop();
 uint32_t get_equipment_stats(uint32_t party_index, uint32_t type);
-void kernel2_reset_counters();
-char *kernel2_add_section(uint32_t size);
-char *kernel2_get_text(uint32_t section_base, uint32_t string_id, uint32_t section_offset);
 void ff7_wm_activateapp(bool hasFocus);
 int ff7_get_gamepad();
 struct ff7_gamepad_status* ff7_update_gamepad_status();
