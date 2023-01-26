@@ -293,6 +293,11 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.time.toml
           ${CMAKE_BINARY_DIR}/bin/time/config.toml
+
+  # FFNx logo .png
+  COMMAND ${CMAKE_COMMAND} -E copy
+  ${CMAKE_CURRENT_SOURCE_DIR}/.logo/logo_nobg.png
+  ${CMAKE_BINARY_DIR}/bin/ffnx/logo.png
 )
 
 # CPU INFO

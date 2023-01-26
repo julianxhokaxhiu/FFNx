@@ -839,6 +839,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				max_texture_size = newRenderer.getCaps()->limits.maxTextureSize;
 				ffnx_info("Max texture size: %ix%i\n", max_texture_size, max_texture_size);
 
+				newRenderer.prepareFFNxLogo();
+
 				newRenderer.prepareEnvBrdf();
 
 				// perform any additional initialization that requires the rendering environment to be set up
@@ -920,6 +922,9 @@ uint32_t common_init(struct game_obj *game_object)
 	}
 
 	proxyWndProc = true;
+
+	// Small rendering loop to draw the FFNx logo before the game starts
+	drawFFNxLogo(game_object);
 
 	return true;
 }
@@ -3302,6 +3307,26 @@ void ffnx_inject_driver(struct game_obj* game_object)
 
 	VRASS(game_object, current_gfx_driver, 2);
 	VRASS(game_object, create_gfx_driver, new_dll_graphics_driver);
+}
+
+void drawFFNxLogo(struct game_obj* game_object)
+{
+	int frame_count = 180;
+	int fade_frame_count = frame_count / 3;
+	float fade = 0.0;
+	for(int i = 0; i < frame_count; ++i)
+	{
+		if(i < fade_frame_count)
+			fade =  i / static_cast<float>(fade_frame_count);
+		else if(i < 2 * fade_frame_count)
+			fade = 1.0f;
+		else
+			fade =  1.0f - (i - 2 * fade_frame_count) / static_cast<float>(fade_frame_count);
+
+		newRenderer.drawFFNxLogo(fade);
+
+		common_flip(game_object);
+	}
 }
 
 #if defined(__cplusplus)
