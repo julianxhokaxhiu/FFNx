@@ -4,8 +4,8 @@
 
 ## Common
 
+- Common: The FFNx logo will now be shown before the game starts
 - Modding: Add an extra override layer for external textures ( https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L365 )
-- Implemented FFNx logo rendering before game start
 
 ## FF7
 
