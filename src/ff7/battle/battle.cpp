@@ -61,4 +61,28 @@ namespace ff7::battle
 
 		g_FF7SteamAchievements->unlockFirstLimitBreakAchievement(command_id, action_id);
 	}
+
+	int load_scene_bin_chunk(char *filename, int offset, int size, char **out_buffer, void (*callback)(void))
+	{
+		int ret = ff7_externals.engine_load_bin_file_sub_419210(filename, offset, size, out_buffer, callback);
+
+		char chunk_file[1024]{0};
+		uint32_t chunk_size = 0;
+		FILE* fd;
+
+		_snprintf(chunk_file, sizeof(chunk_file), "%s/%s/battle/scene.bin.chunk.%i", basedir, direct_mode_path.c_str(), (offset >> 13) + 1);
+
+		if ((fd = fopen(chunk_file, "rb")) != NULL)
+		{
+			fseek(fd, 0L, SEEK_END);
+			chunk_size = ftell(fd);
+			fseek(fd, 0L, SEEK_SET);
+			fread(*out_buffer, sizeof(byte), chunk_size, fd);
+
+			ffnx_trace("scene section %i overridden with %s\n", (offset >> 13) + 1, chunk_file);
+			fclose(fd);
+		}
+
+		return ret;
+	}
 }

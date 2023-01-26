@@ -252,6 +252,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_sub_437DB0 = get_absolute_value(ff7_externals.battle_loop, 0x8D);
 	ff7_externals.sub_5CB2CC = get_relative_call(ff7_externals.battle_sub_437DB0, 0x43);
 	ff7_externals.battle_formation_id = (WORD*)get_absolute_value(ff7_externals.battle_sub_437DB0, 0x1FD);
+	ff7_externals.battle_scene_bin_sub_5D1050 = get_relative_call(ff7_externals.battle_sub_437DB0, 0x15D);
+	ff7_externals.engine_load_bin_file_sub_419210 = (int (*)(char *filename, int offset, int size, char **out_buffer, void (*callback)(void)))(get_relative_call(ff7_externals.battle_scene_bin_sub_5D1050, 0x85));
 
 	ff7_externals.play_midi = (void (*)(uint32_t))common_externals.play_midi;
 	common_externals.master_midi_volume = (DWORD *)get_absolute_value(common_externals.set_master_midi_volume, 0x46);

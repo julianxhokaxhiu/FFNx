@@ -38,6 +38,7 @@ namespace ff7::battle
     void load_battle_stage(int param_1, int battle_location_id, int **param_3);
     void battle_sub_5C7F94(int param_1, int param_2);
     void display_battle_action_text_sub_6D71FA(short command_id, short action_id);
+    int load_scene_bin_chunk(char *filename, int offset, int size, char **out_buffer, void (*callback)(void));
 
     // Menu
     void battle_menu_enter();

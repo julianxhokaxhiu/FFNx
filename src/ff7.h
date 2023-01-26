@@ -2368,6 +2368,8 @@ struct ff7_externals
 	uint32_t open_lgp_file;
 	FILE **lgp_fds;
 	uint32_t battle_sub_437DB0;
+	uint32_t battle_scene_bin_sub_5D1050;
+	int (*engine_load_bin_file_sub_419210)(char *filename, int offset, int size, char **out_buffer, void (*callback)(void));
 	uint32_t sub_5CB2CC;
 	uint32_t *midi_volume_control;
 	uint32_t *midi_initialized;

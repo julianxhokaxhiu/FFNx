@@ -15,6 +15,7 @@
 - Core: Fix Barret's eyebrow not loading ( https://github.com/julianxhokaxhiu/FFNx/issues/107 )
 - Modding: Added day-night time cycle system that can be controled from field scripts ( https://github.com/julianxhokaxhiu/FFNx/pull/511 )
 - Modding: Add support for chunked kernel.bin/kernel2.bin sections
+- Modding: Add support for chunked scene.bin sections
 - Renderer: Fixed graphical glitch happening in battle when 3d models rendered in front of UI ( https://github.com/julianxhokaxhiu/FFNx/issues/131 )
 - Voice: Add play voice for enemy actions during BATTLE mode ( https://github.com/julianxhokaxhiu/FFNx/pull/502 )
 - Voice: Fix worldmap message opcode wrong dialog id

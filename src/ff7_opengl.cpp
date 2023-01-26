@@ -126,6 +126,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(ff7_externals.kernel2_get_text, kernel2_get_text);
 	patch_code_uint((uint32_t)ff7_externals.kernel_load_kernel2 + 0x1D, 20 * 65536);
 	replace_call_function(ff7_externals.kernel_init + 0x1FD, ff7_load_kernel2_wrapper);
+	replace_call_function(ff7_externals.battle_scene_bin_sub_5D1050 + 0x85, ff7::battle::load_scene_bin_chunk);
 
 	replace_function(ff7_externals.read_field_file, ff7_read_field_file);
 
