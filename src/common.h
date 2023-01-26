@@ -333,6 +333,8 @@ extern "C" {
 
 void ffnx_inject_driver(struct game_obj* game_object);
 
+void drawFFNxLogo(struct game_obj* game_object);
+
 #if defined(__cplusplus)
 }
 #endif

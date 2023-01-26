@@ -277,6 +277,8 @@ private:
     std::vector<WORD> indexBufferData;
     bgfx::DynamicIndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;
 
+    bgfx::TextureHandle FFNxLogoHandle = BGFX_INVALID_HANDLE;
+
     bgfx::VertexLayout vertexLayout;
 
     std::map<std::string,uint16_t> bgfxUniformHandles;
@@ -342,6 +344,7 @@ public:
 
     void init();
     void reset();
+    void prepareFFNxLogo();
     void prepareShadowMap();
     void prepareSpecularIbl(char* fullpath = nullptr);
     void prepareDiffuseIbl(char* fullpath = nullptr);
@@ -354,6 +357,7 @@ public:
     void drawFieldShadow();
     void draw(bool uniformsAlreadyAttached = false);
     void drawOverlay();
+    void drawFFNxLogo(float fade);
     void show();
 
     void printText(uint16_t x, uint16_t y, uint32_t attr, const char* text);

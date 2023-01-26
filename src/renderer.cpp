@@ -803,6 +803,20 @@ void Renderer::reset()
     bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.format);
 }
 
+void Renderer::prepareFFNxLogo()
+{
+    if (bgfx::isValid(FFNxLogoHandle))
+        bgfx::destroy(FFNxLogoHandle);
+
+    static char fullpath[64]{ 0 };
+
+    sprintf(fullpath, "%s/ffnx/logo.png", basedir);
+
+    uint32_t width, height, mipCount = 0;
+    FFNxLogoHandle = createTextureHandle(fullpath, &width, &height, &mipCount, true);
+    if (!FFNxLogoHandle.idx) FFNxLogoHandle = BGFX_INVALID_HANDLE;
+}
+
 void Renderer::prepareShadowMap()
 {
     if (bgfx::isValid(shadowMapFrameBuffer))
@@ -1059,6 +1073,78 @@ void Renderer::drawOverlay()
 {
     if (enable_devtools)
         overlay.draw();
+}
+
+void Renderer::drawFFNxLogo(float fade)
+{
+    setClearFlags(true, false);
+
+	/*  y0    y2
+	 x0 +-----+ x2
+		|    /|
+		|   / |
+		|  /  |
+		| /   |
+		|/    |
+	 x1 +-----+ x3
+		y1    y3
+	*/
+
+	// 0
+	float x0 = 0.0f;
+	float y0 = 0.0f;
+	float u0 = 0.0f;
+	float v0 = 0.0f;
+	// 1
+	float x1 = x0;
+	float y1 = game_height;
+	float u1 = u0;
+	float v1 = 1.0f;
+	// 2
+	float x2 = game_width;
+	float y2 = y0;
+	float u2 = 1.0f;
+	float v2 = v0;
+	// 3
+	float x3 = x2;
+	float y3 = y1;
+	float u3 = u2;
+	float v3 = v1;
+
+	struct nvertex vertices[] = {
+		{x0, y0, 1.0f, 1.0f, 0xffffffff, 0, u0, v0},
+		{x1, y1, 1.0f, 1.0f, 0xffffffff, 0, u1, v1},
+		{x2, y2, 1.0f, 1.0f, 0xffffffff, 0, u2, v2},
+		{x3, y3, 1.0f, 1.0f, 0xffffffff, 0, u3, v3},
+	};
+
+    for(int i = 0; i < 4; ++i)
+    {
+        vertices[i].color.a = 255 * fade;
+    }
+
+	WORD indices[] = {
+		0, 1, 2,
+		1, 3, 2
+	};
+
+    bindVertexBuffer(vertices, 0, 4);
+	bindIndexBuffer(indices, 6);
+
+    resetState();
+	setPrimitiveType();
+	isTLVertex(true);
+	setCullMode(RendererCullMode::DISABLED);
+	setBlendMode(RendererBlendMode::BLEND_AVG);
+    doTextureFiltering(true);
+    isExternalTexture(true);
+	isTexture(true);
+	doDepthTest(false);
+	doDepthWrite(false);
+    doModulateAlpha(true);
+    useTexture(FFNxLogoHandle.idx);
+
+	draw();
 }
 
 void Renderer::show()
