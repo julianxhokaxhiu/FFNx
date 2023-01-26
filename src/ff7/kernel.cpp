@@ -72,7 +72,7 @@ void ff7_load_kernel2_wrapper(char *filename)
 
 	for (int n = 0; n < FF7_KERNEL_NUM_SECTIONS; n++)
 	{
-		_snprintf(chunk_file, sizeof(chunk_file), "%s/%s/kernel.bin.chunk.%i", basedir, direct_mode_path.c_str(), n+1);
+		_snprintf(chunk_file, sizeof(chunk_file), "%s/%s/kernel/kernel.bin.chunk.%i", basedir, direct_mode_path.c_str(), n+1);
 
 		if ((fd = fopen(chunk_file, "rb")) != NULL)
 		{
