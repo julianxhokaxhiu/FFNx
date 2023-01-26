@@ -79,6 +79,7 @@ find_package(OPENPSF REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
 find_package(STEAMWORKSSDK CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
+find_package(CMakeRC CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -96,6 +97,13 @@ file(GLOB_RECURSE source_files "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
 configure_file(misc/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 
+cmrc_add_resource_library(
+  ${RELEASE_NAME}-resources
+  ALIAS ${RELEASE_NAME}::rc
+  NAMESPACE ${RELEASE_NAME}
+  ${CMAKE_CURRENT_SOURCE_DIR}/.logo/logo_nobg.png
+)
+
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 target_include_directories(
   ${RELEASE_NAME}
@@ -111,6 +119,7 @@ target_include_directories(
 )
 target_link_libraries(
   ${RELEASE_NAME}
+  ${RELEASE_NAME}::rc
   dbghelp
   shlwapi
   psapi
@@ -293,11 +302,6 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.time.toml
           ${CMAKE_BINARY_DIR}/bin/time/config.toml
-
-  # FFNx logo .png
-  COMMAND ${CMAKE_COMMAND} -E copy
-  ${CMAKE_CURRENT_SOURCE_DIR}/.logo/logo_nobg.png
-  ${CMAKE_BINARY_DIR}/bin/ffnx/logo.png
 )
 
 # CPU INFO
