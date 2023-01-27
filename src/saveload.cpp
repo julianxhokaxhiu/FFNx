@@ -84,8 +84,14 @@ void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t 
 		hash = XXH3_64bits(data, dataSize);
 		_snprintf(xxhash_filename, sizeof(xxhash_filename), "%s/%s/%s_%02i_%llx.png", basedir, mod_path.c_str(), name, palette_index, hash);
 	}
-	else
+	else if (palette_index != uint32_t(-1))
+	{
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.png", basedir, mod_path.c_str(), name, palette_index);
+	}
+	else
+	{
+		_snprintf(filename, sizeof(filename), "%s/%s/%s.png", basedir, mod_path.c_str(), name);
+	}
 
 	normalize_path(filename);
 

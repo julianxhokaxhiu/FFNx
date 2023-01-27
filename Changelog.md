@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.15.0...master
 
+## Common
+
+ - Improve texture upload time by reducing allocations for color conversion
+
 ## FF7
 
 - Input: Allow Cloud to walk/run based on the left analogue stick position ( https://github.com/julianxhokaxhiu/FFNx/issues/523 )
@@ -9,6 +13,7 @@
 ## FF8
 
 - Common: Fix startup hang on launch
+- Graphics: Add Field texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/542 )
 
 # 1.15.0
 

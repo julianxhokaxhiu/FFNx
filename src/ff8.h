@@ -900,6 +900,66 @@ struct ff8_gfx_driver
 	gfx_field_EC *field_EC;
 };
 
+struct ff8_field_state_common {
+	uint8_t stack_data[0x140];
+	uint32_t field_140;
+	uint32_t field_144;
+	uint32_t field_148;
+	uint32_t field_14c;
+	uint32_t field_150;
+	uint32_t field_154;
+	uint32_t field_158;
+	uint32_t field_15c;
+	uint32_t execution_flags; // bgdraw: 0x10, bganime/rbganime: 0x980 (0x800: animation ongoing)
+	uint32_t field_164;
+	uint32_t field_168;
+	uint32_t field_16c;
+	uint32_t field_170;
+	uint8_t field_174; // has anim?
+	uint8_t field_175; // has anim mask?
+	uint16_t current_instruction_position; // field_176
+	uint32_t field_178;
+	uint32_t field_17c;
+	uint32_t field_180;
+	uint8_t stack_current_position; // field_184
+	uint8_t field_185;
+	uint8_t field_186;
+	uint8_t field_187;
+};
+
+struct ff8_field_state_background {
+	ff8_field_state_common common;
+	uint16_t bgstate; // field_188, set to -1 if off
+	uint16_t field_18a;
+	uint16_t bgparam_anim_start; // field_18c
+	uint16_t bgparam_anim_end; // field_18e
+	uint16_t bgparam_anim_speed1; // field_190
+	uint16_t bgparam_anim_speed2; // field_192
+	uint16_t bgparam_anim_flags; // field_194
+	uint16_t field_196;
+	uint32_t field_198;
+	uint16_t bgshadeloop_remember_stack_pointer; // field_19c
+	uint16_t bgshade_add_value; // field_19e
+	uint16_t field_1a0; // bgshadeloop
+	uint16_t field_1a2; // bgshadeloop
+	uint8_t field_1a4; // bgshadeloop
+	uint8_t field_1a5; // bgshadeloop
+	uint8_t field_1a6; // bgshadeloop
+	uint8_t bgshade_color1r; // field_1a7
+	uint8_t bgshade_color1g; // field_1a8
+	uint8_t bgshade_color1b; // field_1a9
+	uint8_t bgshade_color2r; // field_1aa
+	uint8_t bgshade_color2g; // field_1ab
+	uint8_t bgshade_color2b; // field_1ac
+	uint8_t bgshade_color1r_2; // field_1ad
+	uint8_t bgshade_color1g_2; // field_1ae
+	uint8_t bgshade_color1b_2; // field_1af
+	uint8_t bgshade_color2r_2; // field_1b0
+	uint8_t bgshade_color2g_2; // field_1b1
+	uint8_t bgshade_color2b_2; // field_1b2
+	uint8_t field_1b3;
+};
+
 // --------------- end of FF8 imports ---------------
 
 // memory addresses and function pointers from FF8.exe
@@ -986,7 +1046,13 @@ struct ff8_externals
 	uint32_t read_field_data;
 	uint32_t upload_mim_file;
 	char *field_filename;
+	uint32_t field_scripts_init;
+	uint8_t *field_state_background_count;
+	ff8_field_state_background **field_state_backgrounds;
 	uint32_t load_field_models;
+	uint32_t chara_one_read_file;
+	uint32_t chara_one_seek_file;
+	uint32_t chara_one_upload_texture;
 	uint32_t worldmap_main_loop;
 	uint32_t worldmap_enter_main;
 	uint32_t worldmap_sub_53F310;

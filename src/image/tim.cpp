@@ -26,10 +26,10 @@
 #include "../log.h"
 #include "../saveload.h"
 
-Tim::Tim(uint8_t bpp, const ff8_tim &tim) :
+Tim::Tim(Bpp bpp, const ff8_tim &tim) :
 	_bpp(bpp), _tim(tim)
 {
-	_tim.img_w *= 4 >> bpp;
+	_tim.img_w *= 4 >> int(bpp);
 }
 
 uint32_t PaletteDetectionStrategyFixed::palOffset(uint16_t, uint16_t) const
@@ -59,7 +59,7 @@ PaletteDetectionStrategyGrid::PaletteDetectionStrategyGrid(const Tim *const tim,
 {
 	if (_colorsPerPal == 0)
 	{
-		_colorsPerPal = tim->bpp() == 0 ? 16 : 256;
+		_colorsPerPal = tim->bpp() == Tim::Bpp4 ? 16 : 256;
 	}
 	_palCols = tim->_tim.pal_w / _colorsPerPal;
 	_cellWidth = tim->_tim.img_w / _cellCols;
@@ -68,7 +68,7 @@ PaletteDetectionStrategyGrid::PaletteDetectionStrategyGrid(const Tim *const tim,
 
 bool PaletteDetectionStrategyGrid::isValid() const
 {
-	if (_tim->_bpp >= 2)
+	if (_tim->_bpp == Tim::Bpp16)
 	{
 		ffnx_error("PaletteDetectionStrategyGrid::%s bpp should not be 2\n", __func__);
 		return false;
@@ -125,7 +125,7 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 		return false;
 	}
 
-	if (_bpp == 0)
+	if (_bpp == Bpp4)
 	{
 		if (_tim.pal_data == nullptr || paletteDetectionStrategy == nullptr)
 		{
@@ -151,7 +151,7 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 			}
 		}
 	}
-	else if (_bpp == 1)
+	else if (_bpp == Bpp8)
 	{
 		if (_tim.pal_data == nullptr || paletteDetectionStrategy == nullptr)
 		{
@@ -173,7 +173,7 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 			}
 		}
 	}
-	else if (_bpp == 2)
+	else if (_bpp == Bpp16)
 	{
 		uint16_t *img_data16 = (uint16_t *)_tim.img_data;
 
@@ -209,8 +209,7 @@ bool Tim::save(const char *fileName, PaletteDetectionStrategy *paletteDetectionS
 	{
 		if (toRGBA32(image_data, paletteDetectionStrategy, withAlpha))
 		{
-			// TODO: is animated
-			save_texture(image_data, image_data_size, _tim.img_w, _tim.img_h, paletteDetectionStrategy->palIndex(), fileName, false);
+			save_texture(image_data, image_data_size, _tim.img_w, _tim.img_h, paletteDetectionStrategy != nullptr ? paletteDetectionStrategy->palIndex() : 0, fileName, false);
 		}
 
 		driver_free(image_data);
@@ -219,15 +218,15 @@ bool Tim::save(const char *fileName, PaletteDetectionStrategy *paletteDetectionS
 	return true;
 }
 
-Tim Tim::fromLzsData(uint8_t *uncompressed_data)
+Tim Tim::fromLzsData(const uint8_t *uncompressed_data)
 {
-	uint16_t *header = (uint16_t *)uncompressed_data;
+	const uint16_t *header = (const uint16_t *)uncompressed_data;
 	ff8_tim tim_infos = ff8_tim();
 	tim_infos.img_w = header[2];
 	tim_infos.img_h = header[3];
-	tim_infos.img_data = uncompressed_data + 8;
+	tim_infos.img_data = (uint8_t *)uncompressed_data + 8;
 
-	return Tim(2, tim_infos);
+	return Tim(Bpp::Bpp16, tim_infos);
 }
 
 struct TimDataHeader {
@@ -236,9 +235,9 @@ struct TimDataHeader {
 	uint16_t w, h;
 };
 
-Tim Tim::fromTimData(uint8_t *data)
+Tim Tim::fromTimData(const uint8_t *data)
 {
-	uint8_t bpp = data[4] & 3;
+	Bpp bpp = Bpp(data[4] & 3);
 	bool hasPal = (data[4] & 8) != 0;
 	TimDataHeader palHeader = TimDataHeader();
 	ff8_tim tim_infos = ff8_tim();
@@ -257,7 +256,7 @@ Tim Tim::fromTimData(uint8_t *data)
 	TimDataHeader imgHeader = TimDataHeader();
 	memcpy(&imgHeader, data + 8 + palHeader.size, sizeof(imgHeader));
 
-	tim_infos.img_data = data + 8 + palHeader.size + sizeof(imgHeader);
+	tim_infos.img_data = (uint8_t *)data + 8 + palHeader.size + sizeof(imgHeader);
 	tim_infos.img_x = imgHeader.x;
 	tim_infos.img_y = imgHeader.y;
 	tim_infos.img_w = imgHeader.w;
@@ -268,11 +267,11 @@ Tim Tim::fromTimData(uint8_t *data)
 
 uint16_t Tim::colorsPerPal() const
 {
-	if (_bpp == 1)
+	if (_bpp == Bpp8)
 	{
 		return 256;
 	}
-	else if (_bpp == 0)
+	else if (_bpp == Bpp4)
 	{
 		return 16;
 	}
