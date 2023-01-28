@@ -20,6 +20,7 @@
 - Voice: Add play voice for enemy actions during BATTLE mode ( https://github.com/julianxhokaxhiu/FFNx/pull/502 )
 - Voice: Fix worldmap message opcode wrong dialog id
 - Voice: Fix wrong ASK opcode initialization
+- Voice: Fix auto-text behavior for Worldmap
 - Widescreen: Allow the buster sword image on new game screen to support 16:9 ratio ( https://github.com/julianxhokaxhiu/FFNx/pull/506 )
 
 ## FF8

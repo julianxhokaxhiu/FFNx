@@ -462,7 +462,7 @@ int opcode_wm_message(uint8_t window_id, uint8_t dialog_id) {
 	if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
 	{
 		current_opcode_message_status[window_id].is_voice_acting = false;
-		if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) simulate_OK_button = true;
+		if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) (*ff7_externals.field_global_object_ptr)->field_80 |= 0x20;
 	}
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
