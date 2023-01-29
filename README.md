@@ -30,10 +30,10 @@ FFNx today in a nutshell:
 
 FFNx is developed by a core team, currently composed of:
 
-- Julian Xhokaxhiu ( TrueOdin, Spain )
-- Tang-Tang Zhou ( vertex2995, Italy )
-- Jérôme Arzel ( myst6re, France )
-- CosmosXIII ( Cosmos, Japan )
+- [Julian Xhokaxhiu](https://github.com/julianxhokaxhiu) ( TrueOdin, 🇪🇸 Spain )
+- [Tang-Tang Zhou](https://github.com/tangtang95) ( vertex2995, 🇮🇹 Italy )
+- [Jérôme Arzel](https://github.com/myst6re) ( myst6re, 🇫🇷 France )
+- [CosmosXIII](https://github.com/CosmosXIII) ( Cosmos, 🇯🇵 Japan )
 
 We are always open for contributions via PRs, and in case you want to join the core team feel free to approach us on Discord and we will evaluate on a case-by-case basis.
 
