@@ -4,7 +4,7 @@
 
 ## Common
 
-- Common: The FFNx logo will now be shown before the game starts
+- Common: Introduce the FFNx logo on game start
 - Modding: Add an extra override layer for external textures ( https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L365 )
 
 ## FF7
@@ -17,6 +17,7 @@
 - Modding: Add support for chunked kernel.bin/kernel2.bin sections
 - Modding: Add support for chunked scene.bin sections
 - Renderer: Fixed graphical glitch happening in battle when 3d models rendered in front of UI ( https://github.com/julianxhokaxhiu/FFNx/issues/131 )
+- Renderer: Fix FIELD mode text box flickering rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/525 )
 - Voice: Add play voice for enemy actions during BATTLE mode ( https://github.com/julianxhokaxhiu/FFNx/pull/502 )
 - Voice: Fix worldmap message opcode wrong dialog id
 - Voice: Fix wrong ASK opcode initialization
