@@ -113,7 +113,12 @@ void main()
             if (isFullRange) color.rgb = instMul(jpeg_rgb_transform, yuv);
             else color.rgb = instMul(mpeg_rgb_transform, yuv);
 
-            color.rgb = toLinear(color.rgb);
+            if (isMovie){
+		color.rgb = toLinearSMPTE170M(color.rgb);
+	    }
+	    else {
+		color.rgb = toLinear(color.rgb);
+	    }
             color.a = 1.0f;
         }
         else
