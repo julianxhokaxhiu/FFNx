@@ -91,10 +91,17 @@ enum game_modes
 
 enum AspectRatioMode
 {
-    AR_ORIGINAL = 0,
-    AR_STRETCH,
-    AR_WIDESCREEN,
-    AR_COUNT
+	AR_ORIGINAL = 0,
+	AR_STRETCH,
+	AR_WIDESCREEN,
+	AR_COUNT
+};
+
+enum GamepadAnalogueIntent
+{
+	INTENT_NONE,
+	INTENT_WALK,
+	INTENT_RUN
 };
 
 // popup lifetime in frames

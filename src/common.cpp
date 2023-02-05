@@ -167,6 +167,8 @@ bool xinput_connected = false;
 
 bool simulate_OK_button = false;
 
+GamepadAnalogueIntent gamepad_analogue_intent = INTENT_NONE;
+
 uint32_t noop() { return 0; }
 uint32_t noop_a1(uint32_t a1) { return 0; }
 uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
