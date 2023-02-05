@@ -33,9 +33,9 @@ uint32_t audio_must_be_converted = false;
 
 AVFormatContext *format_ctx = 0;
 AVCodecContext *codec_ctx = 0;
-AVCodec *codec = 0;
+const AVCodec *codec = 0;
 AVCodecContext *acodec_ctx = 0;
-AVCodec *acodec = 0;
+const AVCodec *acodec = 0;
 AVFrame *movie_frame = 0;
 struct SwsContext *sws_ctx = 0;
 SwrContext* swr_ctx = NULL;
@@ -78,8 +78,8 @@ void ffmpeg_release_movie_objects()
 	uint32_t i;
 
 	if (movie_frame) av_frame_free(&movie_frame);
-	if (codec_ctx) avcodec_close(codec_ctx);
-	if (acodec_ctx) avcodec_close(acodec_ctx);
+	if (codec_ctx) avcodec_free_context(&codec_ctx);
+	if (acodec_ctx) avcodec_free_context(&acodec_ctx);
 	if (format_ctx) avformat_close_input(&format_ctx);
 	if (swr_ctx) {
 		swr_close(swr_ctx);
@@ -129,33 +129,24 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		goto exit;
 	}
 
-	videostream = -1;
-	audiostream = -1;
-	for(i = 0; i < format_ctx->nb_streams; i++)
-	{
-		if(format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && videostream < 0) videostream = i;
-		if(with_audio && format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && audiostream < 0) audiostream = i;
-	}
-
-	if(videostream == -1)
-	{
+	videostream = av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0);
+	if (videostream < 0) {
 		ffnx_error("prepare_movie: no video stream found\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
 
-	if(with_audio && audiostream == -1 && trace_movies) ffnx_trace("prepare_movie: no audio stream found\n");
+	audiostream = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &acodec, 0);
+	if(with_audio && audiostream < 0 && trace_movies) ffnx_trace("prepare_movie: no audio stream found\n");
 
-	codec_ctx = format_ctx->streams[videostream]->codec;
-
-	codec = avcodec_find_decoder(codec_ctx->codec_id);
-	if(!codec)
-	{
-		ffnx_error("prepare_movie: no video codec found\n");
+	codec_ctx = avcodec_alloc_context3(codec);
+	if (!codec_ctx) {
+		ffnx_error("prepare_movie: could not allocate video codec context\n");
 		codec_ctx = 0;
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
+	avcodec_parameters_to_context(codec_ctx, format_ctx->streams[videostream]->codecpar);
 
 	if(avcodec_open2(codec_ctx, codec, NULL) < 0)
 	{
@@ -164,16 +155,16 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		goto exit;
 	}
 
-	if(audiostream != -1)
+	if(audiostream >= 0)
 	{
-		acodec_ctx = format_ctx->streams[audiostream]->codec;
-		acodec = avcodec_find_decoder(acodec_ctx->codec_id);
-		if(!acodec)
-		{
-			ffnx_error("prepare_movie: no audio codec found\n");
+		acodec_ctx = avcodec_alloc_context3(acodec);
+		if (!acodec_ctx) {
+			ffnx_error("prepare_movie: could not allocate audio codec context\n");
+			codec_ctx = 0;
 			ffmpeg_release_movie_objects();
 			goto exit;
 		}
+		avcodec_parameters_to_context(acodec_ctx, format_ctx->streams[audiostream]->codecpar);
 
 		if(avcodec_open2(acodec_ctx, acodec, NULL) < 0)
 		{
@@ -185,7 +176,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 
 	movie_width = codec_ctx->width;
 	movie_height = codec_ctx->height;
-	movie_fps = 1.0 / (av_q2d(codec_ctx->time_base) * codec_ctx->ticks_per_frame);
+	movie_fps = av_q2d(av_guess_frame_rate(format_ctx, format_ctx->streams[videostream], NULL));
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
 	movie_frames = (uint32_t)::round(movie_fps * movie_duration);
 	fullrange_input = (codec_ctx->color_range == AVCOL_RANGE_JPEG);
@@ -251,7 +242,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
         sws_ctx = nullptr;
     }
 
-	if(audiostream != -1)
+	if(audiostream >= 0)
 	{
 		if (acodec_ctx->sample_fmt != AV_SAMPLE_FMT_FLT) {
 			audio_must_be_converted = true;
@@ -389,9 +380,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 			if (ret >= 0)
 			{
 				QueryPerformanceCounter((LARGE_INTEGER *)&now);
-
-				if(movie_sync_debug)
-					ffnx_info("update_movie_sample(video): DTS %f PTS %f (timebase %f) placed in video buffer at real time %f (play %f)\n", (double)packet.dts, (double)packet.pts, av_q2d(codec_ctx->time_base), (double)(now - start_time) / (double)timer_freq, (double)movie_frame_counter / (double)movie_fps);
 
 				if(sws_ctx)
 				{

@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.15.0",
-  "builtin-baseline": "e69dd972ba64840955f46704ecce6241bf607c0f",
+  "builtin-baseline": "0ba60bfef5dea4cb2599daa7ad8364e309835a68",
   "dependencies": [
     "bgfx",
     {
@@ -70,23 +70,23 @@
     },
     {
       "name": "ffmpeg",
-      "version": "4.4.1",
-      "port-version": 21
+      "version": "5.1.2",
+      "port-version": 1
     },
     {
       "name": "imgui",
-      "version": "1.88",
-      "port-version": 1
+      "version": "1.89.2",
+      "port-version": 0
     },
     {
       "name": "libpng",
-      "version": "1.6.37",
-      "port-version": 19
+      "version": "1.6.39",
+      "port-version": 0
     },
     {
       "name": "mimalloc",
-      "version": "2.0.6",
-      "port-version": 1
+      "version": "2.0.9",
+      "port-version": 0
     },
     {
       "name": "openpsf",
@@ -95,8 +95,8 @@
     },
     {
       "name": "pugixml",
-      "version": "1.12.1",
-      "port-version": 1
+      "version": "1.13.0",
+      "port-version": 0
     },
     {
       "name": "soloud",
@@ -131,7 +131,7 @@
     {
       "name": "cpuinfo",
       "version": "2022-07-19",
-      "port-version": 0
+      "port-version": 2
     },
     {
       "name": "cmakerc",

@@ -532,10 +532,6 @@ vertex_log = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 uniform_log = false
 
-# Show debug info regarding movie synchronization.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-movie_sync_debug = false
-
 ###############################################################################
 # OPTIONS ONLY FOR FF7
 ###############################################################################
