@@ -72,16 +72,18 @@ void main()
     {
         if (isYUV)
         {
+            // BT601 TV-range YUV->RGB conversion
             const mat3 mpeg_rgb_transform = mat3(
-                vec3(+1.164, +1.164, +1.164),
-                vec3(+0.000, -0.392, +2.017),
-                vec3(+1.596, -0.813, +0.000)
+                vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
+                vec3(+0.000, -25.75602 / 65.744 , +225.93 / 112.0),
+                vec3(+178.755 / 112.0, -53.447745 / 65.744 , +0.000)
             );
 
+            // BT601 full-range YUV->RGB conversion
             const mat3 jpeg_rgb_transform = mat3(
                 vec3(+1.000, +1.000, +1.000),
-                vec3(+0.000, -0.343, +1.765),
-                vec3(+1.400, -0.711, +0.000)
+                vec3(+0.000, -0.202008 / 0.587, +1.772),
+                vec3(+1.402, -0.419198 / 0.587, +0.000)
             );
 
             vec3 yuv = vec3(
@@ -99,11 +101,11 @@ void main()
             }
 
             if (isMovie){
-		color.rgb = toLinearSMPTE170M(color.rgb);
-	    }
-	    else {
-		color.rgb = toLinear(color.rgb);
-	    }
+                color.rgb = toLinearSMPTE170M(color.rgb);
+            }
+            else {
+                color.rgb = toLinear(color.rgb);
+            }
             color.a = 1.0;
         }
         else
