@@ -3323,7 +3323,8 @@ void drawFFNxLogo(struct game_obj* game_object)
 	int fade_frame_count = frame_count / 3;
 	float fade = 0.0;
 
-	qpc_get_time(&last_gametime);
+	if (!ff8) qpc_get_time(&last_gametime);
+
 	for(int i = 0; i < frame_count; ++i)
 	{
 		if(i < fade_frame_count)
@@ -3337,10 +3338,13 @@ void drawFFNxLogo(struct game_obj* game_object)
 
 		common_flip(game_object);
 
-		do qpc_get_time(&gametime);
-		while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < VREF(game_object, countspersecond) / framerate);
+		if (!ff8)
+		{
+			do qpc_get_time(&gametime);
+			while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < VREF(game_object, countspersecond) / framerate);
 
-		last_gametime = gametime;
+			last_gametime = gametime;
+		}
 	}
 }
 
