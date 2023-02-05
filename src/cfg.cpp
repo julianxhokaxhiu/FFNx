@@ -95,7 +95,6 @@ bool ff8_ssigpu_debug;
 bool show_applog;
 bool show_missing_textures;
 bool show_error_popup;
-bool movie_sync_debug;
 long renderer_backend;
 bool renderer_debug;
 bool create_crash_dump;
@@ -238,7 +237,6 @@ void read_cfg()
 	show_applog = config["show_applog"].value_or(true);
 	show_missing_textures = config["show_missing_textures"].value_or(false);
 	show_error_popup = config["show_error_popup"].value_or(false);
-	movie_sync_debug = config["movie_sync_debug"].value_or(false);
 	renderer_backend = config["renderer_backend"].value_or(RENDERER_BACKEND_AUTO);
 	renderer_debug = config["renderer_debug"].value_or(false);
 	create_crash_dump = config["create_crash_dump"].value_or(false);

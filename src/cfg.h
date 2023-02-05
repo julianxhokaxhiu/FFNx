@@ -108,7 +108,6 @@ extern bool ff8_ssigpu_debug;
 extern bool show_applog;
 extern bool show_missing_textures;
 extern bool show_error_popup;
-extern bool movie_sync_debug;
 extern long renderer_backend;
 extern bool renderer_debug;
 extern bool create_crash_dump;
