@@ -3313,6 +3313,8 @@ void ffnx_inject_driver(struct game_obj* game_object)
 
 void drawFFNxLogo(struct game_obj* game_object)
 {
+	VOBJ(game_obj, game_object, game_object);
+
 	static time_t last_gametime;
 	time_t gametime;
 	double framerate = 60.0f;
@@ -3334,7 +3336,7 @@ void drawFFNxLogo(struct game_obj* game_object)
 		common_flip(game_object);
 
 		do qpc_get_time(&gametime);
-		while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < ((ff7_game_obj*)common_externals.get_game_object())->countspersecond / framerate);
+		while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < VREF(game_object, countspersecond) / framerate);
 
 		last_gametime = gametime;
 	}
