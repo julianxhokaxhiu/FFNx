@@ -57,7 +57,8 @@ uint32_t movie_frames;
 uint32_t movie_width, movie_height;
 double movie_fps;
 double movie_duration;
-bool movie_jpeg_range = false;
+bool fullrange_input = false;
+bool okpixelformat = false;
 
 bool first_audio_packet;
 
@@ -178,7 +179,12 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	movie_fps = av_q2d(av_guess_frame_rate(format_ctx, format_ctx->streams[videostream], NULL));
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
 	movie_frames = (uint32_t)::round(movie_fps * movie_duration);
-	movie_jpeg_range = codec_ctx->color_range == AVCOL_RANGE_JPEG;
+	fullrange_input = (codec_ctx->color_range == AVCOL_RANGE_JPEG);
+    // check the pixel format
+    if (codec_ctx->pix_fmt == AV_PIX_FMT_YUVJ420P){
+        okpixelformat = true;
+        fullrange_input = true; // assume yuvj is full-range, even if the metadta is not set
+    }
 
 	if (trace_movies)
 	{
@@ -201,7 +207,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
-	if(codec_ctx->pix_fmt != AV_PIX_FMT_YUVJ420P)
+	if(!okpixelformat || !fullrange_input)
 	{
 		if (trace_movies)
 		{
@@ -223,15 +229,18 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		);
 
 		// change the range of input data by first reading the current color space and then setting it's range as yuvj.
-    int dummy[4];
-    int srcRange, dstRange;
-    int brightness, contrast, saturation;
-    sws_getColorspaceDetails(sws_ctx, (int**)&dummy, &srcRange, (int**)&dummy, &dstRange, &brightness, &contrast, &saturation);
-    const int* coefs = sws_getCoefficients(SWS_CS_DEFAULT);
-    dstRange = srcRange = movie_jpeg_range = true; // this marks that values are according to yuvj
-    sws_setColorspaceDetails(sws_ctx, coefs, srcRange, coefs, dstRange, brightness, contrast, saturation);
+        int dummy[4];
+        int srcRange, dstRange;
+        int brightness, contrast, saturation;
+        sws_getColorspaceDetails(sws_ctx, (int**)&dummy, &srcRange, (int**)&dummy, &dstRange, &brightness, &contrast, &saturation);
+        const int* coefs = sws_getCoefficients(SWS_CS_DEFAULT); // TODO: check the colorspace for something our shaders can decode, then pass through input colorspace (right now we are decoding everything as BT601)
+        srcRange = fullrange_input ? 1 : 0; // use the input color range
+        dstRange = 1; // we always want full-range output
+        sws_setColorspaceDetails(sws_ctx, coefs, srcRange, coefs, dstRange, brightness, contrast, saturation);
 	}
-	else sws_ctx = 0;
+	else {
+        sws_ctx = nullptr;
+    }
 
 	if(audiostream >= 0)
 	{
@@ -325,7 +334,7 @@ void draw_yuv_frame(uint32_t buffer_index)
 
 	newRenderer.isMovie(true);
 	newRenderer.isYUV(true);
-	newRenderer.isFullRange(movie_jpeg_range);
+	newRenderer.isFullRange(true); // this will always be true because we did a conversion!
 	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isFullRange(false);
 	newRenderer.isYUV(false);
