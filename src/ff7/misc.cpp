@@ -263,6 +263,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 {
 	// Reset
 	ZeroMemory(ff7_externals.gamepad_status, sizeof(ff7_gamepad_status));
+	gamepad_analogue_intent = INTENT_NONE;
 
 	if (simulate_OK_button)
 	{
@@ -278,10 +279,10 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		{
 			ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
 			ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
-			ff7_externals.gamepad_status->dpad_up = (gamepad.leftStickY > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
-			ff7_externals.gamepad_status->dpad_down = (gamepad.leftStickY < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN); // DOWN
-			ff7_externals.gamepad_status->dpad_left = (gamepad.leftStickX < -0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT); // LEFT
-			ff7_externals.gamepad_status->dpad_right = (gamepad.leftStickX > 0.5f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT); // RIGHT
+			ff7_externals.gamepad_status->dpad_up = (gamepad.leftStickY > 0.25f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
+			ff7_externals.gamepad_status->dpad_down = (gamepad.leftStickY < -0.25f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN); // DOWN
+			ff7_externals.gamepad_status->dpad_left = (gamepad.leftStickX < -0.25f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT); // LEFT
+			ff7_externals.gamepad_status->dpad_right = (gamepad.leftStickX > 0.25f) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT); // RIGHT
 			ff7_externals.gamepad_status->button1 = gamepad.IsPressed(XINPUT_GAMEPAD_X); // Square
 			ff7_externals.gamepad_status->button2 = gamepad.IsPressed(XINPUT_GAMEPAD_A); // Cross
 			ff7_externals.gamepad_status->button3 = gamepad.IsPressed(XINPUT_GAMEPAD_B); // Circle
@@ -300,7 +301,9 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 			ff7_externals.gamepad_status->button12 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB); // R3
 			ff7_externals.gamepad_status->button13 = gamepad.IsPressed(0x400); // PS Button
 
-
+			// Update the player intent based on the analogue movement
+			if (abs(gamepad.leftStickX) > 0.75f || abs(gamepad.leftStickY) > 0.75f) gamepad_analogue_intent = INTENT_RUN;
+			else if(abs(gamepad.leftStickX) > 0.25f || abs(gamepad.leftStickY) > 0.25f) gamepad_analogue_intent = INTENT_WALK;
 		}
 	}
 	else if (gamehacks.canInputBeProcessed())
@@ -309,10 +312,10 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		{
 			ff7_externals.gamepad_status->pos_x = joystick.GetState()->lX;
 			ff7_externals.gamepad_status->pos_y = joystick.GetState()->lY;
-			ff7_externals.gamepad_status->dpad_up = (joystick.GetState()->lY < joystick.GetDeadZone(-0.5f)) || joystick.GetState()->rgdwPOV[0] == 0; // UP
-			ff7_externals.gamepad_status->dpad_down = (joystick.GetState()->lY > joystick.GetDeadZone(0.5f)) || joystick.GetState()->rgdwPOV[0] == 18000; // DOWN
-			ff7_externals.gamepad_status->dpad_left = (joystick.GetState()->lX < joystick.GetDeadZone(-0.5f)) || joystick.GetState()->rgdwPOV[0] == 27000; // LEFT
-			ff7_externals.gamepad_status->dpad_right = (joystick.GetState()->lX > joystick.GetDeadZone(0.5f)) || joystick.GetState()->rgdwPOV[0] == 9000; // RIGHT
+			ff7_externals.gamepad_status->dpad_up = (joystick.GetState()->lY < joystick.GetDeadZone(-0.25f)) || joystick.GetState()->rgdwPOV[0] == 0; // UP
+			ff7_externals.gamepad_status->dpad_down = (joystick.GetState()->lY > joystick.GetDeadZone(0.25f)) || joystick.GetState()->rgdwPOV[0] == 18000; // DOWN
+			ff7_externals.gamepad_status->dpad_left = (joystick.GetState()->lX < joystick.GetDeadZone(-0.25f)) || joystick.GetState()->rgdwPOV[0] == 27000; // LEFT
+			ff7_externals.gamepad_status->dpad_right = (joystick.GetState()->lX > joystick.GetDeadZone(0.25f)) || joystick.GetState()->rgdwPOV[0] == 9000; // RIGHT
 			ff7_externals.gamepad_status->button1 = joystick.GetState()->rgbButtons[0] & 0x80; // Square
 			ff7_externals.gamepad_status->button2 = joystick.GetState()->rgbButtons[1] & 0x80; // Cross
 			ff7_externals.gamepad_status->button3 = joystick.GetState()->rgbButtons[2] & 0x80; // Circle
@@ -330,6 +333,21 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 			ff7_externals.gamepad_status->button11 = joystick.GetState()->rgbButtons[10] & 0x80; // L3
 			ff7_externals.gamepad_status->button12 = joystick.GetState()->rgbButtons[11] & 0x80; // R3
 			ff7_externals.gamepad_status->button13 = joystick.GetState()->rgbButtons[12] & 0x80; // PS Button
+
+			// Update the player intent based on the analogue movement
+			if (
+				(joystick.GetState()->lY < joystick.GetDeadZone(-0.75f)) ||
+				(joystick.GetState()->lY > joystick.GetDeadZone(0.75f)) ||
+				(joystick.GetState()->lX < joystick.GetDeadZone(-0.75f)) ||
+				(joystick.GetState()->lX > joystick.GetDeadZone(0.75f))
+			)
+				gamepad_analogue_intent = INTENT_RUN;
+			else if (
+				(joystick.GetState()->lY < joystick.GetDeadZone(-0.25f)) ||
+				(joystick.GetState()->lY > joystick.GetDeadZone(0.25f)) ||
+				(joystick.GetState()->lX < joystick.GetDeadZone(-0.25f)) ||
+				(joystick.GetState()->lX > joystick.GetDeadZone(0.25f))
+			) gamepad_analogue_intent = INTENT_WALK;
 		}
 	}
 

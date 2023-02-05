@@ -43,7 +43,19 @@ namespace ff7::field
 
     void ff7_field_update_models_position(int key_input_status)
     {
+        if (gamepad_analogue_intent == INTENT_RUN)
+        {
+            key_input_status |= 0x40;
+            ff7_externals.modules_global_object->current_key_input_status |= 0x40;
+        }
+
         ((void(*)(int))ff7_externals.field_update_models_positions)(key_input_status);
+
+        if (gamepad_analogue_intent == INTENT_RUN)
+        {
+            key_input_status &= ~0x40;
+            ff7_externals.modules_global_object->current_key_input_status &= ~0x40;
+        }
 
         for(int model_idx = 0; model_idx < (int)(*ff7_externals.field_n_models); model_idx++)
         {
