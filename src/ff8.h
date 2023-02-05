@@ -1177,6 +1177,8 @@ struct ff8_externals
 	uint32_t sfx_set_panning;
 	uint16_t *sfx_sound_count;
 	ff8_audio_fmt **sfx_audio_fmt;
+	uint32_t manage_time_engine_sub_569971;
+	int (*enable_rdtsc_sub_40AA00)(int enable);
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

@@ -45,6 +45,9 @@ void ff8_find_externals()
 	}
 
 	ff8_externals.archive_path_prefix = (char *)get_absolute_value(ff8_externals.main_entry, 0x2E);
+	ff8_externals.manage_time_engine_sub_569971 = get_relative_call(common_externals.winmain, 0x23);
+	ff8_externals.enable_rdtsc_sub_40AA00 = (int (*)(int))get_relative_call(ff8_externals.manage_time_engine_sub_569971, 0x21);
+	common_externals.get_time = (uint64_t (*)(uint64_t*))get_relative_call(common_externals.winmain, 0x20E);
 	common_externals.diff_time = (uint64_t (*)(uint64_t*,uint64_t*,uint64_t*))get_relative_call(common_externals.winmain, 0x41E);
 	ff8_externals.init_config = get_relative_call(ff8_externals.main_entry, 0x73);
 	ff8_externals.pubintro_init = get_absolute_value(ff8_externals.main_entry, 0x158);

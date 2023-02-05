@@ -60,6 +60,7 @@
 
 #include "ff8/vram.h"
 #include "ff8/vibration.h"
+#include "ff8/engine.h"
 
 bool proxyWndProc = false;
 
@@ -2944,6 +2945,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			ff8_data();
 
 			replace_function(common_externals.create_window, common_create_window);
+			replace_function(ff8_externals.manage_time_engine_sub_569971, ff8_manage_time_engine);
 
 			game_cfg_init();
 
@@ -3323,7 +3325,7 @@ void drawFFNxLogo(struct game_obj* game_object)
 	int fade_frame_count = frame_count / 3;
 	float fade = 0.0;
 
-	if (!ff8) qpc_get_time(&last_gametime);
+	qpc_get_time(&last_gametime);
 
 	for(int i = 0; i < frame_count; ++i)
 	{
@@ -3338,13 +3340,10 @@ void drawFFNxLogo(struct game_obj* game_object)
 
 		common_flip(game_object);
 
-		if (!ff8)
-		{
-			do qpc_get_time(&gametime);
-			while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < VREF(game_object, countspersecond) / framerate);
+		do qpc_get_time(&gametime);
+		while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < VREF(game_object, countspersecond) / framerate);
 
-			last_gametime = gametime;
-		}
+		last_gametime = gametime;
 	}
 }
 

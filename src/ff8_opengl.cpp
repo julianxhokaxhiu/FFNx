@@ -638,6 +638,13 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	memcpy_code(ff8_externals.sub_465720 + 0xB3, texture_reload_fix2, sizeof(texture_reload_fix2));
 	replace_function(ff8_externals.sub_465720 + 0xB3 + sizeof(texture_reload_fix2), texture_reload_hack2);
 
+	// replace rdtsc timing
+	replace_function((uint32_t)common_externals.get_time, qpc_get_time);
+
+	// override the timer calibration
+	QueryPerformanceFrequency((LARGE_INTEGER *)&game_object->_countspersecond);
+	game_object->countspersecond = (double)game_object->_countspersecond;
+
 	// Add speedhack support
 	replace_function((uint32_t)common_externals.diff_time, qpc_diff_time);
 
