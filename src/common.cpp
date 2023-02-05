@@ -3322,6 +3322,8 @@ void drawFFNxLogo(struct game_obj* game_object)
 	int frame_count = 180;
 	int fade_frame_count = frame_count / 3;
 	float fade = 0.0;
+
+	qpc_get_time(&last_gametime);
 	for(int i = 0; i < frame_count; ++i)
 	{
 		if(i < fade_frame_count)
