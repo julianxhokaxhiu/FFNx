@@ -85,13 +85,18 @@ void main()
             );
 
             vec3 yuv = vec3(
-                texture2D(tex_0, v_texcoord0.xy).r - (1.0 / 16.0),
+                texture2D(tex_0, v_texcoord0.xy).r,
                 texture2D(tex_1, v_texcoord0.xy).r - 0.5,
                 texture2D(tex_2, v_texcoord0.xy).r - 0.5
             );
 
-            if (isFullRange) color.rgb = instMul(jpeg_rgb_transform, yuv);
-            else color.rgb = instMul(mpeg_rgb_transform, yuv);
+            if (isFullRange){
+                color.rgb = instMul(jpeg_rgb_transform, yuv);
+            }
+            else {
+                yuv.r = yuv.r - (1.0 / 16.0);
+                color.rgb = instMul(mpeg_rgb_transform, yuv);
+            }
 
             if (isMovie){
 		color.rgb = toLinearSMPTE170M(color.rgb);
