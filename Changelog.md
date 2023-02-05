@@ -6,6 +6,10 @@
 
 - Input: Allow Cloud to walk/run based on the left analogue stick position ( https://github.com/julianxhokaxhiu/FFNx/issues/523 )
 
+## FF8
+
+- Common: Fix startup hang on launch
+
 # 1.15.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.14.0...1.15.0
