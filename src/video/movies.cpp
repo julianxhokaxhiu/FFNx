@@ -207,7 +207,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
-	if(!okpixelformat || !fullrange_input)
+	if(!okpixelformat)
 	{
 		if (trace_movies)
 		{
@@ -235,7 +235,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
         sws_getColorspaceDetails(sws_ctx, (int**)&dummy, &srcRange, (int**)&dummy, &dstRange, &brightness, &contrast, &saturation);
         const int* coefs = sws_getCoefficients(SWS_CS_DEFAULT); // TODO: check the colorspace for something our shaders can decode, then pass through input colorspace (right now we are decoding everything as BT601)
         srcRange = fullrange_input ? 1 : 0; // use the input color range
-        dstRange = 1; // we always want full-range output
+        dstRange = srcRange; // do not convert range. 
         sws_setColorspaceDetails(sws_ctx, coefs, srcRange, coefs, dstRange, brightness, contrast, saturation);
 	}
 	else {
@@ -334,8 +334,9 @@ void draw_yuv_frame(uint32_t buffer_index)
 
 	newRenderer.isMovie(true);
 	newRenderer.isYUV(true);
-	newRenderer.isFullRange(true); // this will always be true because we did a conversion!
-	gl_draw_movie_quad(movie_width, movie_height);
+	//newRenderer.isFullRange(fullrange_input); // this will always be true because we did a conversion!
+	newRenderer.isFullRange(true); // TEST
+    gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isFullRange(false);
 	newRenderer.isYUV(false);
 	newRenderer.isMovie(false);
