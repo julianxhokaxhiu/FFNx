@@ -59,6 +59,8 @@ double movie_fps;
 double movie_duration;
 bool fullrange_input = false;
 bool okpixelformat = false;
+bool okcolorspace = false;
+bool yuvjfixneeded = false;
 
 bool first_audio_packet;
 
@@ -180,10 +182,49 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
 	movie_frames = (uint32_t)::round(movie_fps * movie_duration);
 	fullrange_input = (codec_ctx->color_range == AVCOL_RANGE_JPEG);
-    // check the pixel format
-    if (codec_ctx->pix_fmt == AV_PIX_FMT_YUVJ420P){
+    
+    // some pixel formats are inherently full-range
+    // so we should treat them as such, even if the color range metadata is missing
+    switch (codec_ctx->pix_fmt){
+        case AV_PIX_FMT_YUVJ420P:
+        case AV_PIX_FMT_YUVJ411P:
+        case AV_PIX_FMT_YUVJ422P:
+        case AV_PIX_FMT_YUVJ444P:
+        case AV_PIX_FMT_YUVJ440P:
+            fullrange_input = true;
+            yuvjfixneeded = true;
+            break;
+        case AV_PIX_FMT_GRAY8:
+        case AV_PIX_FMT_YA8:
+        case AV_PIX_FMT_GRAY16LE:
+        case AV_PIX_FMT_GRAY16BE:
+        case AV_PIX_FMT_YA16BE:
+        case AV_PIX_FMT_YA16LE:
+            fullrange_input = true;
+            yuvjfixneeded = false;
+            break;
+        default:
+            yuvjfixneeded = false;
+    }
+    
+    // will we need to convert the pixel format?
+    // we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
+    // Also, we **can't** target a yuvj format because that triggers a bunch of un-asked-for color range conversions
+    if (codec_ctx->pix_fmt == AV_PIX_FMT_YUV444P){
         okpixelformat = true;
-        fullrange_input = true; // assume yuvj is full-range, even if the metadta is not set
+    }
+    
+    // will we need to convert the colorspace?
+    switch(codec_ctx->colorspace){
+        // these are all the same (bt601)
+        case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601 
+        case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601 
+        case AVCOL_SPC_BT470BG:
+        case AVCOL_SPC_SMPTE170M:
+            okcolorspace = true;
+            break;
+        default:
+            okcolorspace = false;
     }
 
 	if (trace_movies)
@@ -207,7 +248,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
-	if(!okpixelformat)
+	if(!okpixelformat || !okcolorspace /*|| !fullrange_input*/ || yuvjfixneeded) // swscale won't do color range conversions on request, so don't bother asking
 	{
 		if (trace_movies)
 		{
@@ -221,22 +262,52 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			codec_ctx->pix_fmt,
 			movie_width,
 			movie_height,
-			AV_PIX_FMT_YUVJ420P,
-			SWS_FAST_BILINEAR | SWS_ACCURATE_RND,
+			//AV_PIX_FMT_YUVJ420P,// don't use yuvj target pixformats. swscale goes crazy and does extra, un-asked-for TV->PC conversions 
+			AV_PIX_FMT_YUV444P,
+            //SWS_FAST_BILINEAR | SWS_ACCURATE_RND, // might need to go back to this if performance issues are encountered. Unlikely, I hope.
+            SWS_LANCZOS | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT,
 			NULL,
 			NULL,
 			NULL
 		);
 
-		// change the range of input data by first reading the current color space and then setting it's range as yuvj.
-        int dummy[4];
-        int srcRange, dstRange;
-        int brightness, contrast, saturation;
-        sws_getColorspaceDetails(sws_ctx, (int**)&dummy, &srcRange, (int**)&dummy, &dstRange, &brightness, &contrast, &saturation);
-        const int* coefs = sws_getCoefficients(SWS_CS_DEFAULT); // TODO: check the colorspace for something our shaders can decode, then pass through input colorspace (right now we are decoding everything as BT601)
-        srcRange = fullrange_input ? 1 : 0; // use the input color range
-        dstRange = srcRange; // do not convert range. 
-        sws_setColorspaceDetails(sws_ctx, coefs, srcRange, coefs, dstRange, brightness, contrast, saturation);
+		// if we need a colorspace conversion, set it up here
+        // this would also be the place to set up color range conversion, if it worked -- which it doens't
+        if (!okcolorspace /*|| !fullrange_input*/ || yuvjfixneeded){
+            int dummy[4];
+            int *coefs_in;
+            int srcRange, dstRange;
+            int brightness, contrast, saturation;
+            sws_getColorspaceDetails(sws_ctx, &coefs_in, &srcRange, (int**)&dummy, &dstRange, &brightness, &contrast, &saturation);
+            
+            /*
+            if (trace_movies){
+                ffnx_trace("prepare_movie: sws_getColorspaceDetails() detected srcRange %i, dstRange: %i\n", srcRange, dstRange);
+            }
+            */
+            
+            // assume unknown input colorspace is bt601
+            // (ffmpeg makes the same guess, but let's future-proof against ffmpeg's default changing someday)
+            if (codec_ctx->colorspace == AVCOL_SPC_UNSPECIFIED){
+                coefs_in = const_cast<int*>(sws_getCoefficients(SWS_CS_ITU601)); // const sucks
+            }
+            // use bt601 as output colorspace (this is what our shader can handle)
+            const int* coefs_out = sws_getCoefficients(SWS_CS_ITU601); 
+            
+            // Surprisingly, these parameters don't appear to **do** anything in most cases.
+            // It appears that whether swscale does a range conversion is controlled by pixformat and range metadata?!
+            // And it will do one regardless of whether you want it.
+            // Except, when the input format is yuvj, these parameters can be used to **prevent** an un-asked-for PC->TV conversion
+            // (They are totally ignored with 10-bit input formats, however.)
+            // Gawd... swscale is a buggy mess...
+            if (yuvjfixneeded){
+                srcRange = fullrange_input ? 1 : 0; // use the input color range
+                dstRange = srcRange; // no conversion!
+            }
+            
+            sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
+        }
+        
 	}
 	else {
         sws_ctx = nullptr;
@@ -298,8 +369,12 @@ void ffmpeg_stop_movie()
 void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t buffer_index)
 {
 	uint32_t upload_width = strides[num];
-	uint32_t tex_width = num == 0 ? movie_width : movie_width / 2;;
-	uint32_t tex_height = num == 0 ? movie_height : movie_height / 2;
+    // Use these for yuv444:
+    uint32_t tex_width = movie_width;
+	uint32_t tex_height = movie_height;
+    // Use these for yuv420:
+	//uint32_t tex_width = num == 0 ? movie_width : movie_width / 2;;
+	//uint32_t tex_height = num == 0 ? movie_height : movie_height / 2;
 
 	if (upload_width > tex_width) tex_width = upload_width;
 
@@ -334,8 +409,8 @@ void draw_yuv_frame(uint32_t buffer_index)
 
 	newRenderer.isMovie(true);
 	newRenderer.isYUV(true);
-	//newRenderer.isFullRange(fullrange_input); // this will always be true because we did a conversion!
-	newRenderer.isFullRange(true); // TEST
+	newRenderer.isFullRange(fullrange_input);
+	//newRenderer.isFullRange(true); // use this to test swscale's range conversion (or lack thereof) by forcing shader to assume full range
     gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isFullRange(false);
 	newRenderer.isYUV(false);
@@ -387,7 +462,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					AVFrame* frame = av_frame_alloc();
 					frame->width = movie_width;
 					frame->height = movie_height;
-					frame->format = AV_PIX_FMT_YUVJ420P;
+                    frame->format = AV_PIX_FMT_YUV444P;
 
 					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
 
