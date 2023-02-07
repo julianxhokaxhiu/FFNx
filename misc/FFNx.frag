@@ -73,6 +73,7 @@ void main()
         if (isYUV)
         {
             // BT601 TV-range YUV->RGB conversion
+            // (includes implict range conversion)
             const mat3 mpeg_rgb_transform = mat3(
                 vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
                 vec3(+0.000, -25.75602 / 65.744 , +225.93 / 112.0),
@@ -93,19 +94,20 @@ void main()
             );
 
             if (isFullRange){
-                color.rgb = instMul(jpeg_rgb_transform, yuv);
+                color.rgb = saturate(instMul(jpeg_rgb_transform, yuv));
             }
             else {
-                yuv.r = yuv.r - (1.0 / 16.0);
-                color.rgb = instMul(mpeg_rgb_transform, yuv);
+                yuv.r = saturate(yuv.r - (1.0 / 16.0));
+                color.rgb = saturate(instMul(mpeg_rgb_transform, yuv));
             }
 
-            if (isMovie){
-                color.rgb = toLinearSMPTE170M(color.rgb);
-            }
-            else {
-                color.rgb = toLinear(color.rgb);
-            }
+            // Don't use SMPTE170M. Upscaled movies were made using (probably) sRGB
+            //if (isMovie){
+            //    color.rgb = saturate(toLinearSMPTE170M(color.rgb));
+            //}
+            //else {
+                color.rgb = saturate(toLinear(color.rgb));
+            //}
             color.a = 1.0;
         }
         else
