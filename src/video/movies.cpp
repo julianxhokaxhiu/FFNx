@@ -62,6 +62,8 @@ bool okpixelformat = false;
 bool okcolorspace = false;
 bool yuvjfixneeded = false;
 bool use170Mgamma = false;
+bool isdeepandtv = false;
+AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV444P;
 
 bool first_audio_packet;
 
@@ -207,14 +209,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
         default:
             yuvjfixneeded = false;
     }
-    
-    // will we need to convert the pixel format?
-    // we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
-    // Also, we **can't** target a yuvj format because that triggers a bunch of un-asked-for color range conversions
-    if (codec_ctx->pix_fmt == AV_PIX_FMT_YUV444P){
-        okpixelformat = true;
-    }
-    
+        
     // will we need to convert the colorspace?
     switch(codec_ctx->colorspace){
         // these are all the same (bt601)
@@ -253,6 +248,28 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			goto exit;
     }
 
+    // Do we have an input with a bit depth greater than 8 and also TV range?
+    // In this case (only) we want to depart from our policy of avoiding swscale's automatic range conversions.
+    // Otherwise we have a bit of preventable banding/posterization since we first throw away data to reach 8 bits, then expand the range. 
+    isdeepandtv = false;
+    if (!fullrange_input && (av_pix_fmt_desc_get(codec_ctx->pix_fmt)->comp[0].depth > 8)){
+        isdeepandtv = true;
+    }
+    
+    if (isdeepandtv){
+        targetpixelformat = AV_PIX_FMT_YUVJ444P;
+    }
+    else{
+        targetpixelformat = AV_PIX_FMT_YUV444P;
+    }
+    
+    // will we need to convert the pixel format?
+    // we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
+    // Also, we generally shouldn't target a yuvj format because that triggers a bunch of un-asked-for color range conversions
+    if (codec_ctx->pix_fmt == targetpixelformat){
+        okpixelformat = true;
+    }
+    
 	if (trace_movies)
 	{
 		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames, codec_ctx->color_range);
@@ -274,7 +291,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
-	if(!okpixelformat || !okcolorspace /*|| !fullrange_input*/ || yuvjfixneeded) // swscale won't do color range conversions on request, so don't bother asking
+	if(!okpixelformat || !okcolorspace /*|| !fullrange_input*/ || yuvjfixneeded || isdeepandtv) // swscale won't do color range conversions on request, so don't bother asking
 	{
 		if (trace_movies)
 		{
@@ -289,7 +306,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			movie_width,
 			movie_height,
 			//AV_PIX_FMT_YUVJ420P,// don't use yuvj target pixformats. swscale goes crazy and does extra, un-asked-for TV->PC conversions 
-			AV_PIX_FMT_YUV444P,
+			targetpixelformat,
             //SWS_FAST_BILINEAR | SWS_ACCURATE_RND, // might need to go back to this if performance issues are encountered. Unlikely, I hope.
             SWS_LANCZOS | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT,
 			NULL,
@@ -299,7 +316,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 
 		// if we need a colorspace conversion, set it up here
         // this would also be the place to set up color range conversion, if it worked -- which it doens't
-        if (!okcolorspace /*|| !fullrange_input*/ || yuvjfixneeded){
+        if (!okcolorspace /*|| !fullrange_input*/ || yuvjfixneeded || isdeepandtv){
             int dummy[4];
             int *coefs_in;
             int srcRange, dstRange;
@@ -329,6 +346,14 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
             if (yuvjfixneeded){
                 srcRange = fullrange_input ? 1 : 0; // use the input color range
                 dstRange = srcRange; // no conversion!
+            }
+            
+            if (isdeepandtv){
+                // swscale ignores these parameters when input bit depth > 8, but let's future-proof against that getting fixed someday
+                srcRange = fullrange_input ? 1 : 0; // use the input color range
+                dstRange = 1; // to full range
+                // change our flag so the shader knows it's getting full-range
+                fullrange_input = true;
             }
             
             sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
@@ -490,7 +515,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					AVFrame* frame = av_frame_alloc();
 					frame->width = movie_width;
 					frame->height = movie_height;
-                    frame->format = AV_PIX_FMT_YUV444P;
+                    frame->format = targetpixelformat;
 
 					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
 
