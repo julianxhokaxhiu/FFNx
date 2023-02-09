@@ -52,6 +52,8 @@ uniform vec4 TimeData;
 #define isAlphaGEqual abs(FSAlphaFlags.y - 6.0) < 0.00001
 
 #define doAlphaTest FSAlphaFlags.z > 0.0
+
+#define is170MGamma FSAlphaFlags.w > 0.0
 // ---
 #define isFullRange FSMiscFlags.x > 0.0
 #define isYUV FSMiscFlags.y > 0.0
@@ -101,13 +103,13 @@ void main()
                 color.rgb = saturate(instMul(mpeg_rgb_transform, yuv));
             }
 
-            // Don't use SMPTE170M. Upscaled movies were made using (probably) sRGB
-            //if (isMovie){
-            //    color.rgb = saturate(toLinearSMPTE170M(color.rgb));
-            //}
-            //else {
+            
+            if (is170MGamma){
+                color.rgb = saturate(toLinearSMPTE170M(color.rgb));
+            }
+            else {
                 color.rgb = saturate(toLinear(color.rgb));
-            //}
+            }
             color.a = 1.0;
         }
         else
