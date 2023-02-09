@@ -61,6 +61,7 @@ bool fullrange_input = false;
 bool okpixelformat = false;
 bool okcolorspace = false;
 bool yuvjfixneeded = false;
+bool use170Mgamma = false;
 
 bool first_audio_packet;
 
@@ -225,6 +226,31 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
             break;
         default:
             okcolorspace = false;
+    }
+    
+    // what gamma should we use?
+    switch(codec_ctx->color_trc){
+        case AVCOL_TRC_IEC61966_2_1: //srgb
+        case AVCOL_TRC_UNSPECIFIED: //assume srgb
+        case AVCOL_TRC_RESERVED: //assume srgb
+        case AVCOL_TRC_RESERVED0: //assume srgb
+        case AVCOL_TRC_GAMMA22: //another alias
+            use170Mgamma = false;
+            break;
+        case AVCOL_TRC_SMPTE170M:
+        case AVCOL_TRC_BT709: // same as SMPTE170M
+        case AVCOL_TRC_IEC61966_2_4: // same as 709
+        case AVCOL_TRC_BT1361_ECG: // not quite sure on this one, but think it's the same curve
+            use170Mgamma = true;
+            if (trace_movies)
+            {
+                ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
+            }
+            break;
+        default:
+            ffnx_error("prepare_movie: unsupported transfer (inverse gamma) function\n");
+			ffmpeg_release_movie_objects();
+			goto exit;
     }
 
 	if (trace_movies)
@@ -411,10 +437,12 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.isYUV(true);
 	newRenderer.isFullRange(fullrange_input);
 	//newRenderer.isFullRange(true); // use this to test swscale's range conversion (or lack thereof) by forcing shader to assume full range
+    newRenderer.is170MGamma(use170Mgamma);
     gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isFullRange(false);
 	newRenderer.isYUV(false);
 	newRenderer.isMovie(false);
+    newRenderer.is170MGamma(false);
 }
 
 // display the next frame
