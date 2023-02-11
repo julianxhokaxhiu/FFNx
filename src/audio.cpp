@@ -1053,7 +1053,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 		toml::node *trackVolume = node["volume"].as_integer();
 		if (trackVolume)
 		{
-			_currentVoice[slot].volume = trackVolume->value_or(100) / 100.0f;
+			_currentVoice[slot].volume = (trackVolume->value_or(100) / 100.0f) * getVoiceMasterVolume();
 		}
 
 		// Shuffle Voice playback, if any entry found for the current id
