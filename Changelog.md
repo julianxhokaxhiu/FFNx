@@ -4,7 +4,8 @@
 
 ## Common
 
- - Improve texture upload time by reducing allocations for color conversion
+- Common: Improve texture upload time by reducing allocations for color conversion
+- Voice: Fix track master volume inheritance when overriding via config
 
 ## FF7
 
