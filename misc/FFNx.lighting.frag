@@ -55,7 +55,9 @@ uniform vec4 iblData;
 
 #define doAlphaTest FSAlphaFlags.z > 0.0
 
-#define is170MGamma FSAlphaFlags.w > 0.0
+#define isSRGBGamma abs(FSAlphaFlags.w - 0.0) < 0.00001
+#define is2pt2Gamma abs(FSAlphaFlags.w - 1.0) < 0.00001
+#define is170MGamma abs(FSAlphaFlags.w - 2.0) < 0.00001
 // ---
 #define isFullRange FSMiscFlags.x > 0.0
 #define isYUV FSMiscFlags.y > 0.0
@@ -123,7 +125,10 @@ void main()
                 color.rgb = saturate(instMul(mpeg_rgb_transform, yuv));
             }
 
-            if (is170MGamma){
+            if (is2pt2Gamma){
+                color.rgb = saturate(toLinear2pt2(color.rgb));
+            }
+            else if (is170MGamma){
                 color.rgb = saturate(toLinearSMPTE170M(color.rgb));
             }
             else {

@@ -31,6 +31,11 @@ vec3 toLinearSMPTE170M(vec3 _rgb)
 	return mix(higher, lower, cutoff);
 }
 
+vec3 toLinear2pt2(vec3 _rgb)
+{
+    return pow(_rgb.rgb, vec3_splat(2.2));
+}
+
 vec3 toGamma(vec3 _rgb)
 {
 	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.0031308));

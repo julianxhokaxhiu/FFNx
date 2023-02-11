@@ -95,6 +95,12 @@ enum RendererTextureType
     YUV
 };
 
+enum InverseGammaFunctionType{
+    SRGB_GAMMA = 0,
+    TWO_PT_TWO_GAMMA = 1,
+    SMPTE170M_GAMMA = 2
+};
+
 namespace RendererTextureSlot {
     enum RendererTextureSlot
     {
@@ -209,7 +215,7 @@ private:
         bool bIsMovieYUV = false;
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
-        bool bIsMovie170MGamma = false;
+        InverseGammaFunctionType bIsMovieGammaType = SRGB_GAMMA;
 
         float backendProjMatrix[16];
         float postprocessingProjMatrix[16];
@@ -403,7 +409,7 @@ public:
     void doTextureFiltering(bool flag = false);
     void isExternalTexture(bool flag = false);
     bool isHDR();
-    void is170MGamma(bool flag = false);
+    void setGammaType(InverseGammaFunctionType gtype = SRGB_GAMMA);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);

@@ -99,7 +99,7 @@ void Renderer::setCommonUniforms()
         (float)internalState.alphaRef,
         (float)internalState.alphaFunc,
         (float)internalState.bDoAlphaTest,
-        (float)internalState.bIsMovie170MGamma // this isn't an alpha flag, but FSMiscFlags is full
+        (float)internalState.bIsMovieGammaType
     };
     if (uniform_log) ffnx_trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, NULL)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2]);
 
@@ -369,7 +369,7 @@ void Renderer::resetState()
     doModulateAlpha();
     doTextureFiltering();
     isExternalTexture();
-    is170MGamma();
+    setGammaType();
 };
 
 void Renderer::renderFrame()
@@ -2026,9 +2026,9 @@ bool Renderer::isHDR()
     return internalState.bIsHDR;
 }
 
-void Renderer::is170MGamma(bool flag)
+void Renderer::setGammaType(InverseGammaFunctionType gtype)
 {
-    internalState.bIsMovie170MGamma = flag;
+    internalState.bIsMovieGammaType = gtype;
 };
 
 void Renderer::setAlphaRef(RendererAlphaFunc func, float ref)
