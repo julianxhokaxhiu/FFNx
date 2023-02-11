@@ -61,7 +61,7 @@ bool fullrange_input = false;
 bool okpixelformat = false;
 bool okcolorspace = false;
 bool yuvjfixneeded = false;
-bool use170Mgamma = false;
+InverseGammaFunctionType gammatype = SRGB_GAMMA;
 bool isdeepandtv = false;
 AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV444P;
 
@@ -226,21 +226,23 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
     // what gamma should we use?
     switch(codec_ctx->color_trc){
         case AVCOL_TRC_IEC61966_2_1: //srgb
+            gammatype = SRGB_GAMMA;
+            break;
         case AVCOL_TRC_UNSPECIFIED: //assume srgb
         case AVCOL_TRC_RESERVED: //assume srgb
         case AVCOL_TRC_RESERVED0: //assume srgb
         case AVCOL_TRC_GAMMA22: //another alias
-            use170Mgamma = false;
+            gammatype = TWO_PT_TWO_GAMMA;
+            if (trace_movies) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected\n");
             break;
         case AVCOL_TRC_SMPTE170M:
         case AVCOL_TRC_BT709: // same as SMPTE170M
-        case AVCOL_TRC_IEC61966_2_4: // same as 709
-        case AVCOL_TRC_BT1361_ECG: // not quite sure on this one, but think it's the same curve
-            use170Mgamma = true;
-            if (trace_movies)
-            {
-                ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
-            }
+        case AVCOL_TRC_BT2020_10: // same as SMPTE170M
+        case AVCOL_TRC_BT2020_12: // same as SMPTE170M
+        case AVCOL_TRC_IEC61966_2_4: // same as SMPTE170M, but is defined for negative numbers too (which we ignore)
+        case AVCOL_TRC_BT1361_ECG: // same as SMPTE170M, but is defined for negative numbers too (which we ignore)
+            gammatype = SMPTE170M_GAMMA;
+            if (trace_movies) ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
             break;
         default:
             ffnx_error("prepare_movie: unsupported transfer (inverse gamma) function\n");
@@ -462,12 +464,12 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.isYUV(true);
 	newRenderer.isFullRange(fullrange_input);
 	//newRenderer.isFullRange(true); // use this to test swscale's range conversion (or lack thereof) by forcing shader to assume full range
-    newRenderer.is170MGamma(use170Mgamma);
+    newRenderer.setGammaType(gammatype);
     gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isFullRange(false);
 	newRenderer.isYUV(false);
 	newRenderer.isMovie(false);
-    newRenderer.is170MGamma(false);
+    newRenderer.setGammaType(SRGB_GAMMA);
 }
 
 // display the next frame
