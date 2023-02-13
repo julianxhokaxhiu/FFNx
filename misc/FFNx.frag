@@ -114,6 +114,21 @@ void main()
             else {
                 color.rgb = saturate(toLinear(color.rgb));
             }
+            
+            //const mat3 ntsc1953_to_bt709_gamut_transform = mat3(
+            //    vec3(+1.507619270014, -0.027472278823352, -0.027215242024946),
+            //    vec3(-0.372358660913661, +0.934739028013924, -0.040127401726736),
+            //    vec3(-0.083339173883035, +0.067042727707057, +1.16891211218202)
+            //);
+            //color.rgb = saturate(instMul(ntsc1953_to_bt709_gamut_transform, color.rgb));
+            
+            const mat3 SMPTEC_to_bt709_gamut_transform = mat3(
+                vec3(+0.939542063773239, +0.017772223143561, -0.001621599943186),
+                vec3(+0.050181356859868, +0.965792862496904, -0.004369749659736),
+                vec3(+0.010276579366893, +0.016434914359535, +1.00599134960292)
+            );
+            color.rgb = saturate(instMul(SMPTEC_to_bt709_gamut_transform, color.rgb));
+            
             color.a = 1.0;
         }
         else
