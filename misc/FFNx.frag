@@ -105,6 +105,7 @@ void main()
                 color.rgb = saturate(instMul(mpeg_rgb_transform, yuv));
             }
 
+            // Use a different inverse gamma function depending on the FMV's metadata
             if (is2pt2Gamma){
                 color.rgb = saturate(toLinear2pt2(color.rgb));
             }
@@ -115,13 +116,11 @@ void main()
                 color.rgb = saturate(toLinear(color.rgb));
             }
             
-            //const mat3 ntsc1953_to_bt709_gamut_transform = mat3(
-            //    vec3(+1.507619270014, -0.027472278823352, -0.027215242024946),
-            //    vec3(-0.372358660913661, +0.934739028013924, -0.040127401726736),
-            //    vec3(-0.083339173883035, +0.067042727707057, +1.16891211218202)
-            //);
-            //color.rgb = saturate(instMul(ntsc1953_to_bt709_gamut_transform, color.rgb));
-            
+            // Convert gamut to BT709/SRGB.
+            // For SDR, we should do this to match the output device's gamut.
+            // For HDR, we should do this so we have BT709 input to feed to REC709toREC2020()
+            // Use of SMPTE-C as the source gamut is an educated guess:
+            // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with American TV standards of the time.
             const mat3 SMPTEC_to_bt709_gamut_transform = mat3(
                 vec3(+0.939542063773239, +0.017772223143561, -0.001621599943186),
                 vec3(+0.050181356859868, +0.965792862496904, -0.004369749659736),
