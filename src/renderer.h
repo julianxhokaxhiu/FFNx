@@ -98,7 +98,8 @@ enum RendererTextureType
 enum InverseGammaFunctionType{
     SRGB_GAMMA = 0,
     TWO_PT_TWO_GAMMA = 1,
-    SMPTE170M_GAMMA = 2
+    SMPTE170M_GAMMA = 2,
+    CUSTOM_GAMMA = 3
 };
 
 namespace RendererTextureSlot {
@@ -216,6 +217,7 @@ private:
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
         InverseGammaFunctionType bIsMovieGammaType = SRGB_GAMMA;
+        float blsMovieGamma = 2.1f;
 
         float backendProjMatrix[16];
         float postprocessingProjMatrix[16];

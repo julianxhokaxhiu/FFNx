@@ -24,6 +24,7 @@
 #include "lighting.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
+#include "cfg.h"
 
 CMRC_DECLARE(FFNx);
 
@@ -114,7 +115,7 @@ void Renderer::setCommonUniforms()
     internalState.FSHDRFlags = {
         (float)internalState.bIsHDR,
         (float)hdr_max_nits,
-        NULL,
+        (float)movie_default_gamma,
         NULL
     };
     if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isHDR %f, monitorNits %f, NULL, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1]);

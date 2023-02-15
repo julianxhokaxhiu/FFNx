@@ -58,6 +58,7 @@ uniform vec4 iblData;
 #define isSRGBGamma abs(FSAlphaFlags.w - 0.0) < 0.00001
 #define is2pt2Gamma abs(FSAlphaFlags.w - 1.0) < 0.00001
 #define is170MGamma abs(FSAlphaFlags.w - 2.0) < 0.00001
+#define isCustomGamma abs(FSAlphaFlags.w - 3.0) < 0.00001
 // ---
 #define isFullRange FSMiscFlags.x > 0.0
 #define isYUV FSMiscFlags.y > 0.0
@@ -66,6 +67,8 @@ uniform vec4 iblData;
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
+
+#define defaultMovieGamma FSHDRFlags.z
 
 // ---
 #define debugOutput lightingDebugData.z
@@ -126,7 +129,10 @@ void main()
             }
 
             // Use a different inverse gamma function depending on the FMV's metadata
-            if (is2pt2Gamma){
+            if (isCustomGamma){
+                color.rgb = saturate(pow(color.rgb, vec3_splat(defaultMovieGamma)));
+            }
+            else if (is2pt2Gamma){
                 color.rgb = saturate(toLinear2pt2(color.rgb));
             }
             else if (is170MGamma){
