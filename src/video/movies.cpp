@@ -226,12 +226,16 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
     
     // what gamma should we use?
     switch(codec_ctx->color_trc){
+        case AVCOL_TRC_UNSPECIFIED:
+        case AVCOL_TRC_RESERVED:
+        case AVCOL_TRC_RESERVED0:
+            gammatype = CUSTOM_GAMMA;
+            if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, using user-supplied value from ffnx.toml.\n");
+            break;
         case AVCOL_TRC_IEC61966_2_1: //srgb
+            if (trace_movies) ffnx_trace("prepare_movie: srgb gamma transfer function detected\n");
             gammatype = SRGB_GAMMA;
             break;
-        case AVCOL_TRC_UNSPECIFIED: //assume 2.2
-        case AVCOL_TRC_RESERVED: //assume 2.2
-        case AVCOL_TRC_RESERVED0: //assume 2.2
         case AVCOL_TRC_GAMMA22:
             gammatype = TWO_PT_TWO_GAMMA;
             if (trace_movies) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected\n");

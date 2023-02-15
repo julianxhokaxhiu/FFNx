@@ -271,6 +271,14 @@ ffmpeg_video_ext = "avi"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_movie_audio_ext = "ogg"
 
+#[MOVIE DEFAULT GAMMA]
+# What gamma to use for movies if the file's metadata doesn't specify one.
+# Larger values are darker.
+# A value of ~2.0 approximately complies with NTSC broadcast television standards of the Playstation 1 era.
+# A value between ~2.2 and ~2.4 approximates the actual behavior of typical CRT television sets from that era.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+movie_default_gamma = 2.0
+
 ###########################
 # Controller Options
 ###########################
