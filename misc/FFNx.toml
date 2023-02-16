@@ -277,7 +277,7 @@ external_movie_audio_ext = "ogg"
 # A value of ~2.0 approximately complies with NTSC broadcast television standards of the Playstation 1 era.
 # A value between ~2.2 and ~2.4 approximates the actual behavior of typical CRT television sets from that era.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-movie_default_gamma = 2.0
+movie_default_gamma = 2.2
 
 ###########################
 # Controller Options
