@@ -340,8 +340,11 @@ extern "C" {
 
 void ffnx_inject_driver(struct game_obj* game_object);
 
-void drawFFNxLogo(struct game_obj* game_object);
-
 #if defined(__cplusplus)
 }
 #endif
+
+constexpr int FFNX_LOGO_FRAME_COUNT = 180;
+
+void drawFFNxLogo(struct game_obj* game_object);
+void drawFFNxLogoFrame(struct game_obj* game_object, int frame, int frame_count);

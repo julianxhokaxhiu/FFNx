@@ -75,6 +75,9 @@ void ff8_find_externals()
 
 	ff8_externals.load_credits_image = get_relative_call(ff8_externals.credits_main_loop, 0xBF);
 
+	ff8_externals.sub_52FE80 = get_relative_call(ff8_externals.load_credits_image, 0xA4);
+	ff8_externals.input_fill_keystate = (void(*)())get_relative_call(ff8_externals.sub_52FE80, 0xC8);
+	ff8_externals.input_get_keyscan = (int(*)(int,int))get_relative_call(ff8_externals.sub_52FE80, 0xD1);
 	ff8_externals.credits_loop_state = (DWORD*)get_absolute_value(ff8_externals.load_credits_image, 0x7);
 	ff8_externals.credits_counter = (DWORD *)get_absolute_value(ff8_externals.load_credits_image, 0x59);
 	ff8_externals.sub_470520 = get_absolute_value(ff8_externals.credits_main_loop, 0xE2);
@@ -281,7 +284,6 @@ void ff8_find_externals()
 	ff8_externals.swirl_sub_56D390 = get_relative_call(ff8_externals.swirl_sub_56D1D0, 0x2A);
 	ff8_externals.swirl_texture1 = (ff8_graphics_object **)get_absolute_value(ff8_externals.swirl_sub_56D1D0, 0x1);
 
-	ff8_externals.sub_52FE80 = get_relative_call(ff8_externals.load_credits_image, 0xA4);
 	ff8_externals.sub_45D610 = get_relative_call(ff8_externals.sub_52FE80, 0x90);
 	ff8_externals.sub_45D080 = get_relative_call(ff8_externals.sub_45D610, 0x5);
 	ff8_externals.sub_464BD0 = get_relative_call(ff8_externals.sub_45D080, 0x208);

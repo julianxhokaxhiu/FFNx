@@ -932,8 +932,10 @@ uint32_t common_init(struct game_obj *game_object)
 
 	proxyWndProc = true;
 
-	// Small rendering loop to draw the FFNx logo before the game starts
-	drawFFNxLogo(game_object);
+	if (!ff8) {
+		// Small rendering loop to draw the FFNx logo before the game starts
+		drawFFNxLogo(game_object);
+	}
 
 	return true;
 }
@@ -3330,6 +3332,10 @@ void ffnx_inject_driver(struct game_obj* game_object)
 	VRASS(game_object, create_gfx_driver, new_dll_graphics_driver);
 }
 
+#if defined(__cplusplus)
+}
+#endif
+
 void drawFFNxLogo(struct game_obj* game_object)
 {
 	VOBJ(game_obj, game_object, game_object);
@@ -3338,24 +3344,13 @@ void drawFFNxLogo(struct game_obj* game_object)
 	time_t gametime;
 	double framerate = 60.0f;
 
-	int frame_count = 180;
-	int fade_frame_count = frame_count / 3;
-	float fade = 0.0;
+	int frame_count = FFNX_LOGO_FRAME_COUNT;
 
 	qpc_get_time(&last_gametime);
 
 	for(int i = 0; i < frame_count; ++i)
 	{
-		if(i < fade_frame_count)
-			fade =  i / static_cast<float>(fade_frame_count);
-		else if(i < 2 * fade_frame_count)
-			fade = 1.0f;
-		else
-			fade =  1.0f - (i - 2 * fade_frame_count) / static_cast<float>(fade_frame_count);
-
-		newRenderer.drawFFNxLogo(fade);
-
-		common_flip(game_object);
+		drawFFNxLogoFrame(game_object, i, frame_count);
 
 		do qpc_get_time(&gametime);
 		while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < VREF(game_object, countspersecond) / framerate);
@@ -3364,6 +3359,21 @@ void drawFFNxLogo(struct game_obj* game_object)
 	}
 }
 
-#if defined(__cplusplus)
+void drawFFNxLogoFrame(struct game_obj* game_object, int frame, int frame_count)
+{
+	VOBJ(game_obj, game_object, game_object);
+
+	int fade_frame_count = frame_count / 3;
+	float fade = 0.0;
+
+	if(frame < fade_frame_count)
+		fade = frame / static_cast<float>(fade_frame_count);
+	else if(frame < 2 * fade_frame_count)
+		fade = 1.0f;
+	else
+		fade = 1.0f - (frame - 2 * fade_frame_count) / static_cast<float>(fade_frame_count);
+
+	newRenderer.drawFFNxLogo(fade);
+
+	common_flip(game_object);
 }
-#endif

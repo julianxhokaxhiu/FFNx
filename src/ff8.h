@@ -1022,6 +1022,8 @@ struct ff8_externals
 	uint32_t sub_559910;
 	uint32_t swirl_sub_56D1D0;
 	uint32_t load_credits_image;
+	void (*input_fill_keystate)();
+	int (*input_get_keyscan)(int, int);
 	uint32_t sub_52FE80;
 	uint32_t sub_45D610;
 	uint32_t sub_45D080;
