@@ -469,9 +469,6 @@ void Renderer::recalcInternals()
     viewWidth = window_size_x;
     viewHeight = window_size_y;
 
-    // backend projection matrix
-    calcBackendProjMatrix();
-
     // aspect correction
     switch(aspect_ratio){
         case AR_ORIGINAL:
@@ -797,6 +794,8 @@ void Renderer::init()
 void Renderer::reset()
 {
     recalcInternals();
+
+    calcBackendProjMatrix();
 
     prepareFramebuffer();
 
