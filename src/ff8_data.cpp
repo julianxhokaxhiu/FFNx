@@ -329,7 +329,13 @@ void ff8_find_externals()
 	ff8_externals.upload_mim_file = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0x723 : 0x729);
 	ff8_externals.field_filename = (char *)get_absolute_value(ff8_externals.read_field_data, 0xF0);
 
+	ff8_externals.field_scripts_init = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0xEDC : 0xE49);
+	ff8_externals.field_state_background_count = (uint8_t *)get_absolute_value(ff8_externals.field_scripts_init, 0x2CD + 0x1);
+	ff8_externals.field_state_backgrounds = (ff8_field_state_background **)get_absolute_value(ff8_externals.field_scripts_init, 0x50B + 0x2);
 	ff8_externals.load_field_models = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0xFA2 : 0xF0F);
+	ff8_externals.chara_one_read_file = get_relative_call(ff8_externals.load_field_models, 0x15F);
+	ff8_externals.chara_one_seek_file = get_relative_call(ff8_externals.load_field_models, 0x582);
+	ff8_externals.chara_one_upload_texture = get_relative_call(ff8_externals.load_field_models, 0xB72);
 
 	ff8_externals.worldmap_sub_53F310 = get_relative_call(ff8_externals.worldmap_enter_main, 0xA7);
 

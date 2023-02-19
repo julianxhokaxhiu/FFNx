@@ -170,6 +170,12 @@ bool simulate_OK_button = false;
 
 GamepadAnalogueIntent gamepad_analogue_intent = INTENT_NONE;
 
+uint32_t *image_data_cache = nullptr;
+uint32_t image_data_size_cache = 0;
+
+uint8_t *image_data_scaled_cache = nullptr;
+uint32_t image_data_scaled_size_cache = 0;
+
 uint32_t noop() { return 0; }
 uint32_t noop_a1(uint32_t a1) { return 0; }
 uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
@@ -1506,7 +1512,16 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		if (scale > 1)
 		{
 			uint32_t image_data_size = originalWidth * scale * originalHeight * scale * 4;
-			image_data_scaled = (uint8_t*)driver_malloc(image_data_size);
+			// Allocate with cache
+			if (image_data_scaled_size_cache == 0 || image_data_size > image_data_scaled_size_cache) {
+				if (image_data_scaled_cache != nullptr) {
+					driver_free(image_data_scaled_cache);
+				}
+				image_data_scaled_cache = (uint8_t*)driver_malloc(image_data_size);
+				image_data_scaled_size_cache = image_data_size;
+			}
+
+			image_data_scaled = image_data_scaled_cache;
 
 			// convert source data
 			if (image_data_scaled != nullptr)
@@ -1533,11 +1548,6 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		{
 			if(VREF(texture_set, ogl.external)) stats.external_textures--;
 			VRASS(texture_set, ogl.external, false);
-		}
-
-		if (image_data_scaled != nullptr && image_data_scaled != image_data)
-		{
-			driver_free(image_data_scaled);
 		}
 
 		if (textureType == TexturePacker::InternalTexture)
@@ -1822,7 +1832,17 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 
 			// allocate PBO
 			uint32_t image_data_size = w * h * 4;
-			image_data = (uint32_t*)driver_malloc(image_data_size);
+
+			// Allocate with cache
+			if (image_data_size_cache == 0 || image_data_size > image_data_size_cache) {
+				if (image_data_cache != nullptr) {
+					driver_free(image_data_cache);
+				}
+				image_data_cache = (uint32_t*)driver_malloc(image_data_size);
+				image_data_size_cache = image_data_size;
+			}
+
+			image_data = image_data_cache;
 
 			// convert source data
 			if (image_data != NULL) convert_image_data(VREF(tex_header, image_data), image_data, w, h, tex_format, invert_alpha, color_key, palette_offset, reference_alpha);
@@ -1839,9 +1859,6 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 				// commit PBO and populate texture set
 				gl_upload_texture(_texture_set, VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA);
 			}
-
-			// free the memory buffer
-			driver_free(image_data);
 		}
 	}
 	else ffnx_unexpected("no texture format specified or no source data\n");

@@ -906,7 +906,7 @@ uint32_t ff8_volume_fade(uint32_t channel, uint32_t steps, uint32_t volume1, uin
 	return 1;
 }
 
-uint32_t ff8_volume_sync()
+uint32_t ff8_volume_sync(int a1)
 {
 	if (trace_all || trace_music) ffnx_trace("%s\n", __func__);
 
