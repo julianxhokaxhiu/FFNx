@@ -176,7 +176,7 @@ void read_cfg()
 	enable_ffmpeg_videos = config["enable_ffmpeg_videos"].value_or(-1);
 	ffmpeg_video_ext = config["ffmpeg_video_ext"].value_or("");
 	external_movie_audio_ext = get_string_or_array_of_strings(config["external_movie_audio_ext"]);
-    movie_default_gamma = config["movie_default_gamma"].value_or(2.2);
+	movie_default_gamma = config["movie_default_gamma"].value_or(2.2);
 	use_external_sfx = config["use_external_sfx"].value_or(false);
 	external_sfx_path = config["external_sfx_path"].value_or("");
 	external_sfx_ext = get_string_or_array_of_strings(config["external_sfx_ext"]);
