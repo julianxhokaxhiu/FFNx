@@ -207,10 +207,10 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			fullrange_input = true;
 			yuvjfixneeded = false;
 			break;
-        default:
+		default:
 			yuvjfixneeded = false;
-    }
-        
+	}
+	
 	// will we need to convert the colorspace?
 	switch(codec_ctx->colorspace){
 		// these are all the same (bt601)
@@ -223,7 +223,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		default:
 			okcolorspace = false;
 	}
-    
+	
 	// what gamma should we use?
 	switch(codec_ctx->color_trc){
 		case AVCOL_TRC_UNSPECIFIED:
@@ -236,7 +236,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			if (trace_movies) ffnx_trace("prepare_movie: srgb gamma transfer function detected\n");
 			gammatype = SRGB_GAMMA;
 			break;
-        case AVCOL_TRC_GAMMA22:
+		case AVCOL_TRC_GAMMA22:
 			gammatype = TWO_PT_TWO_GAMMA;
 			if (trace_movies) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected\n");
 			break;
@@ -254,7 +254,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			ffmpeg_release_movie_objects();
 			goto exit;
 	}
-
+	
 	// Do we have an input with a bit depth greater than 8 and also TV range?
 	// In this case (only) we want to depart from our policy of avoiding swscale's automatic range conversions.
 	// Otherwise we have a bit of preventable banding/posterization since we first throw away data to reach 8 bits, then expand the range. 
@@ -265,7 +265,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	else{
 		targetpixelformat = AV_PIX_FMT_YUV444P;
 	}
-    
+	
 	// will we need to convert the pixel format?
 	// we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
 	// Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions
