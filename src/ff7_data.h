@@ -661,7 +661,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	common_externals.previous_field_id = (WORD*)get_absolute_value(ff7_externals.sub_408074, 0x4F); // 0xCC0DEC
 	common_externals.update_entities_call = common_externals.update_field_entities + 0x461; // 0x60CDAE
 
-	ff7_externals.field_level_data_pointer = (byte**)get_absolute_value(ff7_externals.read_field_file, 0xB2); // 0xCFF594
+	ff7_externals.field_level_data_pointer = (byte**)ff7_externals.field_file_buffer; // 0xCFF594
 
 	ff7_externals.sub_408116 = get_relative_call(ff7_externals.field_loop_sub_63C17F, 0x2A);
 	ff7_externals.word_CC16E8 = (char *)get_absolute_value(ff7_externals.sub_408116, 0x8E);
@@ -1238,6 +1238,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.cdcheck_enter_sub = get_absolute_value(main_loop, 0x390);
 	ff7_externals.credits_submit_draw_fade_quad_7AA89B = get_relative_call(credits_main_loop, 0xD9);
+	ff7_externals.get_button_pressed = (int(*)(int))get_relative_call(credits_main_loop, 0x14C);
+	ff7_externals.credits_main_loop = credits_main_loop;
 	ff7_externals.menu_submit_draw_fade_quad_6CD64E = get_relative_call(ff7_externals.menu_battle_end_sub_6C9543, 0x104);
 	ff7_externals.highway_submit_fade_quad_659532 = get_relative_call(ff7_externals.highway_loop_sub_650F36, 0x126);
 	ff7_externals.chocobo_init_viewport_values_76D320 = get_relative_call(main_init_loop, 0x38B);

@@ -344,7 +344,5 @@ void ffnx_inject_driver(struct game_obj* game_object);
 }
 #endif
 
-constexpr int FFNX_LOGO_FRAME_COUNT = 180;
-
-void drawFFNxLogo(struct game_obj* game_object);
-void drawFFNxLogoFrame(struct game_obj* game_object, int frame, int frame_count);
+bool drawFFNxLogoFrame(struct game_obj* game_object);
+void stopDrawFFNxLogo();
