@@ -33,7 +33,7 @@ vec3 toLinearSMPTE170M(vec3 _rgb)
 
 vec3 toLinear2pt2(vec3 _rgb)
 {
-    return pow(_rgb.rgb, vec3_splat(2.2));
+	return pow(_rgb.rgb, vec3_splat(2.2));
 }
 
 vec3 toGamma(vec3 _rgb)
