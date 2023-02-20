@@ -1067,7 +1067,6 @@ struct ff8_externals
 	uint32_t upload_psxvram_texl_pal_call2;
 	uint32_t **worldmap_section38_position;
 	uint32_t (*worldmap_prepare_tim_for_upload)(uint8_t *, ff8_tim *);
-	uint32_t wm_upload_psx_vram;
 	uint32_t engine_eval_process_input;
 	uint32_t engine_eval_keyboard_gamepad_input;
 	uint32_t has_keyboard_gamepad_input;

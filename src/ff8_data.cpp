@@ -51,11 +51,13 @@ void ff8_find_externals()
 	common_externals.diff_time = (uint64_t (*)(uint64_t*,uint64_t*,uint64_t*))get_relative_call(common_externals.winmain, 0x41E);
 	ff8_externals.init_config = get_relative_call(ff8_externals.main_entry, 0x73);
 	ff8_externals.pubintro_init = get_absolute_value(ff8_externals.main_entry, 0x158);
+	ff8_externals.pubintro_cleanup = get_absolute_value(ff8_externals.main_entry, 0x162);
 
 	if (JP_VERSION)
 	{
 		ff8_externals.init_config = get_relative_call(ff8_externals.init_config, 0x0);
 		ff8_externals.pubintro_init = get_relative_call(ff8_externals.pubintro_init, 0x0);
+		ff8_externals.pubintro_cleanup = get_relative_call(ff8_externals.pubintro_cleanup, 0x0);
 	}
 
 	ff8_externals.sub_467C00 = get_relative_call(ff8_externals.pubintro_init, 0xB5);
@@ -65,7 +67,6 @@ void ff8_find_externals()
 	ff8_externals.sub_468BD0 = get_relative_call(ff8_externals.sub_468810, 0x5B);
 	common_externals.dinput_hack1 = ff8_externals.sub_468BD0 + 0x64;
 
-	ff8_externals.pubintro_cleanup = get_absolute_value(ff8_externals.main_entry, 0x162);
 	ff8_externals.pubintro_exit = get_absolute_value(ff8_externals.main_entry, 0x176);
 	ff8_externals.pubintro_main_loop = get_absolute_value(ff8_externals.main_entry, 0x180);
 	ff8_externals.credits_main_loop = get_absolute_value(ff8_externals.pubintro_main_loop, 0x6D);
@@ -338,8 +339,6 @@ void ff8_find_externals()
 	ff8_externals.chara_one_upload_texture = get_relative_call(ff8_externals.load_field_models, 0xB72);
 
 	ff8_externals.worldmap_sub_53F310 = get_relative_call(ff8_externals.worldmap_enter_main, 0xA7);
-
-	ff8_externals.wm_upload_psx_vram = get_relative_call(ff8_externals.load_field_models, 0xB72);
 
 	ff8_externals.engine_eval_process_input = get_relative_call(ff8_externals.pubintro_main_loop, 0x4);
 	ff8_externals.engine_eval_keyboard_gamepad_input = get_relative_call(ff8_externals.engine_eval_process_input, 0x16);
