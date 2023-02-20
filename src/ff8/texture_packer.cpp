@@ -243,6 +243,13 @@ uint8_t TexturePacker::getMaxScale(const uint8_t *texData) const
 		}
 	}
 
+	if (maxScale > MAX_SCALE)
+	{
+		ffnx_warning("External texture size cannot exceed original size * %d\n", MAX_SCALE);
+
+		return MAX_SCALE;
+	}
+
 	return maxScale;
 }
 
@@ -523,13 +530,6 @@ uint8_t TexturePacker::TextureInfos::computeScale(int sourcePixelW, int sourceH,
 		ffnx_warning("Texture redirection size must have the same ratio as the original texture: (%d / %d)\n", sourcePixelW, sourceH);
 
 		return 0;
-	}
-
-	if (scaleW > MAX_SCALE)
-	{
-		ffnx_warning("Texture redirection size cannot exceed original size * %d\n", MAX_SCALE);
-
-		return MAX_SCALE;
 	}
 
 	return scaleW;
