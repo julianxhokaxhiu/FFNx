@@ -330,6 +330,7 @@ void ff8_find_externals()
 
 	ff8_externals.read_field_data = get_relative_call(ff8_externals.sub_471F70, 0x23A);
 	ff8_externals.upload_mim_file = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0x723 : 0x729);
+	ff8_externals.upload_pmp_file = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0x80C : 0x812);
 	ff8_externals.field_filename = (char *)get_absolute_value(ff8_externals.read_field_data, 0xF0);
 
 	ff8_externals.field_scripts_init = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0xEDC : 0xE49);

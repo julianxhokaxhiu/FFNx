@@ -26,7 +26,6 @@
 
 #include <fcntl.h>
 #include <io.h>
-#include <sys/stat.h>
 
 char next_direct_file[MAX_PATH] = "";
 
@@ -93,9 +92,7 @@ int ff8_fs_archive_search_filename_sub_archive(const char *fullpath, ff8_file_fi
 
 	set_direct_path(fullpath, direct_path, sizeof(direct_path));
 
-	struct stat dummy;
-
-	if (stat(direct_path, &dummy) == 0)
+	if (fileExists(direct_path))
 	{
 		strncpy(next_direct_file, direct_path, sizeof(next_direct_file));
 
