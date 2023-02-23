@@ -145,14 +145,14 @@ void main()
             // Convert gamut to BT709/SRGB.
             // For SDR, we should do this to match the output device's gamut.
             // For HDR, we should do this so we have BT709 input to feed to REC709toREC2020()
-            // Use of SMPTE-C as the source gamut is an educated guess:
-            // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with American TV standards of the time.
-            const mat3 SMPTEC_to_bt709_gamut_transform = mat3(
-                vec3(+0.939542063773239, +0.017772223143561, -0.001621599943186),
-                vec3(+0.050181356859868, +0.965792862496904, -0.004369749659736),
-                vec3(+0.010276579366893, +0.016434914359535, +1.00599134960292)
+            // Use of NTSC-J as the source gamut is a *highly* probable guess:
+            // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
+            const mat3 NTSCJ_to_bt709_gamut_transform = mat3(
+                vec3(+1.42849423843304, -0.028230868456879, -0.026451048534459),
+                vec3(-0.343794575385404, +0.937886666562635, -0.04977408617468),
+                vec3(-0.084699613295359, +0.09034421347425, +1.07622507193376)
             );
-            color.rgb = saturate(instMul(SMPTEC_to_bt709_gamut_transform, color.rgb));
+            color.rgb = saturate(instMul(NTSCJ_to_bt709_gamut_transform, color.rgb));
             
             color.a = 1.0f;
         }
