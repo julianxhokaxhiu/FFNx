@@ -3051,6 +3051,8 @@ struct ff7_externals
 	uint32_t shadow_flare_draw_white_bg_57747E;
 	uint32_t credits_submit_draw_fade_quad_7AA89B;
 	uint32_t menu_submit_draw_fade_quad_6CD64E;
+	int (*get_button_pressed)(int);
+	uint32_t credits_main_loop;
 	uint32_t highway_submit_fade_quad_659532;
 	uint32_t chocobo_enter_76D597;
 	uint32_t chocobo_initialize_variables_76BAFD;

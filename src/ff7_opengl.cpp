@@ -35,6 +35,19 @@
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
 
+uint32_t ff7_credits_loop_gfx_begin_scene(uint32_t unknown, struct game_obj *game_object)
+{
+	if (drawFFNxLogoFrame(game_object)) {
+		if (ff7_externals.get_button_pressed(-1)) {
+			stopDrawFFNxLogo();
+		}
+
+		return 0;
+	}
+
+	return common_begin_scene(unknown, game_object);
+}
+
 void ff7_init_hooks(struct game_obj *_game_object)
 {
 	struct ff7_game_obj *game_object = (struct ff7_game_obj *)_game_object;
@@ -394,6 +407,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				break;
 		}
 	}
+
+	replace_call(ff7_externals.credits_main_loop + 0xAC, ff7_credits_loop_gfx_begin_scene);
 }
 
 struct ff7_gfx_driver *ff7_load_driver(void* _game_object)

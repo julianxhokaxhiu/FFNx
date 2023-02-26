@@ -932,9 +932,6 @@ uint32_t common_init(struct game_obj *game_object)
 
 	proxyWndProc = true;
 
-	// Small rendering loop to draw the FFNx logo before the game starts
-	drawFFNxLogo(game_object);
-
 	return true;
 }
 
@@ -3330,40 +3327,41 @@ void ffnx_inject_driver(struct game_obj* game_object)
 	VRASS(game_object, create_gfx_driver, new_dll_graphics_driver);
 }
 
-void drawFFNxLogo(struct game_obj* game_object)
-{
-	VOBJ(game_obj, game_object, game_object);
-
-	static time_t last_gametime;
-	time_t gametime;
-	double framerate = 60.0f;
-
-	int frame_count = 180;
-	int fade_frame_count = frame_count / 3;
-	float fade = 0.0;
-
-	qpc_get_time(&last_gametime);
-
-	for(int i = 0; i < frame_count; ++i)
-	{
-		if(i < fade_frame_count)
-			fade =  i / static_cast<float>(fade_frame_count);
-		else if(i < 2 * fade_frame_count)
-			fade = 1.0f;
-		else
-			fade =  1.0f - (i - 2 * fade_frame_count) / static_cast<float>(fade_frame_count);
-
-		newRenderer.drawFFNxLogo(fade);
-
-		common_flip(game_object);
-
-		do qpc_get_time(&gametime);
-		while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < VREF(game_object, countspersecond) / framerate);
-
-		last_gametime = gametime;
-	}
-}
-
 #if defined(__cplusplus)
 }
 #endif
+
+constexpr int FFNX_LOGO_FRAME_COUNT = 180;
+int ffnx_logo_current_frame = 0;
+
+bool drawFFNxLogoFrame(struct game_obj* game_object)
+{
+	if (ffnx_logo_current_frame >= FFNX_LOGO_FRAME_COUNT) {
+		return false;
+	}
+
+	VOBJ(game_obj, game_object, game_object);
+
+	int fade_frame_count = FFNX_LOGO_FRAME_COUNT / 3;
+	float fade = 0.0;
+
+	if(ffnx_logo_current_frame < fade_frame_count)
+		fade = ffnx_logo_current_frame / static_cast<float>(fade_frame_count);
+	else if(ffnx_logo_current_frame < 2 * fade_frame_count)
+		fade = 1.0f;
+	else
+		fade = 1.0f - (ffnx_logo_current_frame - 2 * fade_frame_count) / static_cast<float>(fade_frame_count);
+
+	newRenderer.drawFFNxLogo(fade);
+
+	common_flip(game_object);
+
+	ffnx_logo_current_frame++;
+
+	return true;
+}
+
+void stopDrawFFNxLogo()
+{
+	ffnx_logo_current_frame = FFNX_LOGO_FRAME_COUNT;
+}

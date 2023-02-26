@@ -541,6 +541,21 @@ uint32_t ff8_retry_configured_drive(char* filename, uint8_t* data)
 	return res;
 }
 
+uint32_t ff8_credits_main_loop_gfx_begin_scene(uint32_t unknown, struct game_obj *game_object)
+{
+	if (drawFFNxLogoFrame(game_object)) {
+		ff8_externals.input_fill_keystate();
+
+		if (((ff8_externals.input_get_keyscan(0, 0) & ff8_externals.input_get_keyscan(1, 0)) & 0xF0) != 0) {
+			stopDrawFFNxLogo();
+		}
+
+		return 0;
+	}
+
+	return common_begin_scene(unknown, game_object);
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -660,6 +675,8 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	// Allow squaresoft logo skip by pressing a button
 	patch_code_byte(ff8_externals.load_credits_image + 0x5FD, 0); // if (intro_step >= 0) ...
+	// Add FFNx Logo
+	replace_call(ff8_externals.credits_main_loop + 0x6D, ff8_credits_main_loop_gfx_begin_scene);
 
 	if (!steam_edition) {
 		// Look again with the DataDrive specified in the register
