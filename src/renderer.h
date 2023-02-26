@@ -95,11 +95,23 @@ enum RendererTextureType
     YUV
 };
 
+enum ColorMatrixType{
+    COLORMATRIX_BT601 = 0,
+    COLORMATRIX_BT709 = 1,
+    COLORMATRIX_BGR24 = 2
+};
+
+enum ColorGamutType{
+    COLORGAMUT_SRGB = 0,
+    COLORGAMUT_SMPTEC = 1,
+    COLORGAMUT_NTSCJ = 2
+};
+
 enum InverseGammaFunctionType{
-    SRGB_GAMMA = 0,
-    TWO_PT_TWO_GAMMA = 1,
-    SMPTE170M_GAMMA = 2,
-    CUSTOM_GAMMA = 3
+    GAMMAFUNCTION_SRGB = 0,
+    GAMMAFUNCTION_TWO_PT_TWO = 1,
+    GAMMAFUNCTION_SMPTE170M = 2,
+    GAMMAFUNCTION_USERSPECIFIEDCURVE = 3
 };
 
 namespace RendererTextureSlot {
@@ -216,8 +228,9 @@ private:
         bool bIsMovieYUV = false;
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
-        InverseGammaFunctionType bIsMovieGammaType = SRGB_GAMMA;
-        float blsMovieGamma = 2.1f;
+        ColorMatrixType bIsMovieColorMatrix = COLORMATRIX_BT601;
+        ColorGamutType bIsMovieColorGamut = COLORGAMUT_SRGB;
+        InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
 
         float backendProjMatrix[16];
         float postprocessingProjMatrix[16];
@@ -227,6 +240,8 @@ private:
         std::vector<float> FSMiscFlags;
         std::vector<float> FSHDRFlags;
         std::vector<float> FSTexFlags;
+        std::vector<float> FSMovieFlags;
+        
 
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
@@ -411,7 +426,9 @@ public:
     void doTextureFiltering(bool flag = false);
     void isExternalTexture(bool flag = false);
     bool isHDR();
-    void setGammaType(InverseGammaFunctionType gtype = SRGB_GAMMA);
+    void setColorMatrix(ColorMatrixType cmtype = COLORMATRIX_BT601);
+    void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
+    void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);
