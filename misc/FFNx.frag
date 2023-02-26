@@ -34,6 +34,7 @@ uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
+uniform vec4 FSMovieFlags;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
 
@@ -53,10 +54,7 @@ uniform vec4 TimeData;
 
 #define doAlphaTest FSAlphaFlags.z > 0.0
 
-#define isSRGBGamma abs(FSAlphaFlags.w - 0.0) < 0.00001
-#define is2pt2Gamma abs(FSAlphaFlags.w - 1.0) < 0.00001
-#define is170MGamma abs(FSAlphaFlags.w - 2.0) < 0.00001
-#define isCustomGamma abs(FSAlphaFlags.w - 3.0) < 0.00001
+
 // ---
 #define isFullRange FSMiscFlags.x > 0.0
 #define isYUV FSMiscFlags.y > 0.0
@@ -66,7 +64,21 @@ uniform vec4 TimeData;
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
 
-#define defaultMovieGamma FSHDRFlags.z
+
+#define isBT601ColorMatrix abs(FSMovieFlags.x - 0.0) < 0.00001
+#define isBT709ColorMatrix abs(FSMovieFlags.x - 1.0) < 0.00001
+#define isBRG24ColorMatrix abs(FSMovieFlags.x - 2.0) < 0.00001
+
+#define isSRGBColorGamut abs(FSMovieFlags.y - 0.0) < 0.00001
+#define isSMPTECColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
+#define isNTSCJColorGamut abs(FSMovieFlags.y - 2.0) < 0.00001
+
+#define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
+#define is2pt2Gamma abs(FSMovieFlags.z - 1.0) < 0.00001
+#define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
+#define isCustomGamma abs(FSMovieFlags.z - 3.0) < 0.00001
+
+#define defaultMovieGamma FSMovieFlags.w
 
 #define isTimeEnabled TimeData.x > 0.0
 #define isTimeFilterEnabled TimeData.x > 0.0 && TimeData.y > 0.0
@@ -79,33 +91,68 @@ void main()
     {
         if (isYUV)
         {
-            // BT601 TV-range YUV->RGB conversion
-            // (includes implict range conversion)
-            const mat3 mpeg_rgb_transform = mat3(
-                vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
-                vec3(+0.000, -25.75602 / 65.744 , +225.93 / 112.0),
-                vec3(+178.755 / 112.0, -53.447745 / 65.744 , +0.000)
-            );
-
-            // BT601 full-range YUV->RGB conversion
-            const mat3 jpeg_rgb_transform = mat3(
-                vec3(+1.000, +1.000, +1.000),
-                vec3(+0.000, -0.202008 / 0.587, +1.772),
-                vec3(+1.402, -0.419198 / 0.587, +0.000)
-            );
-
             vec3 yuv = vec3(
                 texture2D(tex_0, v_texcoord0.xy).r,
-                texture2D(tex_1, v_texcoord0.xy).r - 0.5,
-                texture2D(tex_2, v_texcoord0.xy).r - 0.5
+                texture2D(tex_1, v_texcoord0.xy).r,
+                texture2D(tex_2, v_texcoord0.xy).r
             );
-
-            if (isFullRange){
-                color.rgb = saturate(instMul(jpeg_rgb_transform, yuv));
+            
+            if (isBT601ColorMatrix){
+                yuv.g = yuv.g - 0.5;
+                yuv.b = yuv.b - 0.5;
+                if (isFullRange){
+                    // BT601 full-range YUV->RGB conversion
+                    const mat3 jpeg_rgb_transform = mat3(
+                        vec3(+1.000, +1.000, +1.000),
+                        vec3(+0.000, -0.202008 / 0.587, +1.772),
+                        vec3(+1.402, -0.419198 / 0.587, +0.000)
+                    );
+                    color.rgb = saturate(instMul(jpeg_rgb_transform, yuv));
+                }
+                else {
+                    yuv.r = saturate(yuv.r - (1.0 / 16.0));
+                    // BT601 TV-range YUV->RGB conversion
+                    // (includes implict range conversion)
+                    const mat3 mpeg_rgb_transform = mat3(
+                        vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
+                        vec3(+0.000, -25.75602 / 65.744 , +225.93 / 112.0),
+                        vec3(+178.755 / 112.0, -53.447745 / 65.744 , +0.000)
+                    );
+                    color.rgb = saturate(instMul(mpeg_rgb_transform, yuv));
+                }
+            
             }
+            else if (isBT709ColorMatrix){
+                yuv.g = yuv.g - 0.5;
+                yuv.b = yuv.b - 0.5;
+                if (isFullRange){
+                    // BT709 full-range YUV->RGB conversion
+                    const mat3 bt709full_rgb_transform = mat3(
+                        vec3(+1.000, +1.000, +1.000),
+                        vec3(+0.000, -0.13397432 / 0.7152, +1.8556),
+                        vec3(+1.5748, -0.33480248 / 0.7152 , +0.000)
+                    );
+                    color.rgb = saturate(instMul(bt709full_rgb_transform, yuv));
+                }
+                else {
+                    yuv.r = saturate(yuv.r - (1.0 / 16.0));
+                    // BT709 tv-range YUV->RGB conversion
+                    // (includes implict range conversion)
+                    const mat3 bt709tv_rgb_transform = mat3(
+                        vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
+                        vec3(+0.000, -17.0817258 / 80.1024 , +236.589 / 112.0),
+                        vec3(+200.787 / 112.0, -42.6873162 / 80.1024 , +0.000)
+                    );
+                    color.rgb = saturate(instMul(bt709tv_rgb_transform, yuv));
+                }
+            
+            }
+            else if (isBRG24ColorMatrix){
+                color.rgb = yuv;
+            }
+            // default should be unreachable
             else {
-                yuv.r = saturate(yuv.r - (1.0 / 16.0));
-                color.rgb = saturate(instMul(mpeg_rgb_transform, yuv));
+                color.rgb = vec3_splat(0.5);
             }
 
             // Use a different inverse gamma function depending on the FMV's metadata
@@ -125,14 +172,24 @@ void main()
             // Convert gamut to BT709/SRGB.
             // For SDR, we should do this to match the output device's gamut.
             // For HDR, we should do this so we have BT709 input to feed to REC709toREC2020()
-            // Use of NTSC-J as the source gamut is a *highly* probable guess:
+            // Use of NTSC-J as the source gamut  for the original videos and their derivatives is a *highly* probable guess:
             // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
-            const mat3 NTSCJ_to_bt709_gamut_transform = mat3(
-                vec3(+1.42849423843304, -0.028230868456879, -0.026451048534459),
-                vec3(-0.343794575385404, +0.937886666562635, -0.04977408617468),
-                vec3(-0.084699613295359, +0.09034421347425, +1.07622507193376)
-            );
-            color.rgb = saturate(instMul(NTSCJ_to_bt709_gamut_transform, color.rgb));
+            if (isNTSCJColorGamut){
+                const mat3 NTSCJ_to_bt709_gamut_transform = mat3(
+                    vec3(+1.42849423843304, -0.028230868456879, -0.026451048534459),
+                    vec3(-0.343794575385404, +0.937886666562635, -0.04977408617468),
+                    vec3(-0.084699613295359, +0.09034421347425, +1.07622507193376)
+                );
+                color.rgb = saturate(instMul(NTSCJ_to_bt709_gamut_transform, color.rgb));
+            }
+            else if (isSMPTECColorGamut){
+                const mat3 SMPTEC_to_bt709_gamut_transform = mat3(
+                    vec3(+0.939542063773239, +0.017772223143561, -0.001621599943186),
+                    vec3(+0.050181356859868, +0.965792862496904, -0.004369749659736),
+                    vec3(+0.010276579366893, +0.016434914359535, +1.00599134960292)
+                );
+                color.rgb = saturate(instMul(SMPTEC_to_bt709_gamut_transform, color.rgb));
+            }
             
             color.a = 1.0;
         }

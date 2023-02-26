@@ -100,7 +100,7 @@ void Renderer::setCommonUniforms()
         (float)internalState.alphaRef,
         (float)internalState.alphaFunc,
         (float)internalState.bDoAlphaTest,
-        (float)internalState.bIsMovieGammaType
+        NULL
     };
     if (uniform_log) ffnx_trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, NULL)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2]);
 
@@ -115,7 +115,7 @@ void Renderer::setCommonUniforms()
     internalState.FSHDRFlags = {
         (float)internalState.bIsHDR,
         (float)hdr_max_nits,
-        (float)movie_default_gamma,
+        NULL,
         NULL
     };
     if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isHDR %f, monitorNits %f, NULL, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1]);
@@ -127,12 +127,21 @@ void Renderer::setCommonUniforms()
         NULL
     };
     if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, isIblTextureLoaded %f, NULL)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1], internalState.FSTexFlags[2]);
+    
+    internalState.FSMovieFlags = {
+        (float)internalState.bIsMovieColorMatrix,
+        (float)internalState.bIsMovieColorGamut,
+        (float)internalState.bIsMovieGammaType,
+        (float)movie_default_gamma,
+    };
+    if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, gamma value %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
 
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
     setUniform("FSMiscFlags", bgfx::UniformType::Vec4, internalState.FSMiscFlags.data());
     setUniform("FSHDRFlags", bgfx::UniformType::Vec4, internalState.FSHDRFlags.data());
     setUniform("FSTexFlags", bgfx::UniformType::Vec4, internalState.FSTexFlags.data());
+    setUniform("FSMovieFlags", bgfx::UniformType::Vec4, internalState.FSMovieFlags.data());
     setUniform("TimeColor", bgfx::UniformType::Vec4, internalState.TimeColor.data());
     setUniform("TimeData", bgfx::UniformType::Vec4, internalState.TimeData.data());
 
@@ -370,6 +379,8 @@ void Renderer::resetState()
     doModulateAlpha();
     doTextureFiltering();
     isExternalTexture();
+    setColorMatrix();
+    setColorGamut();
     setGammaType();
 };
 
@@ -2025,6 +2036,14 @@ void Renderer::isExternalTexture(bool flag)
 bool Renderer::isHDR()
 {
     return internalState.bIsHDR;
+}
+
+void Renderer::setColorMatrix(ColorMatrixType cmtype){
+    internalState.bIsMovieColorMatrix = cmtype;
+}
+
+void Renderer::setColorGamut(ColorGamutType cgtype){
+    internalState.bIsMovieColorGamut = cgtype;
 }
 
 void Renderer::setGammaType(InverseGammaFunctionType gtype)
