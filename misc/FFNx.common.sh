@@ -45,13 +45,6 @@ vec3 toLinear2pt8(vec3 _rgb)
 	return pow(_rgb.rgb, vec3_splat(2.8));
 }
 
-vec3 toLinear13thMonkey(vec3 _rgb)
-{
-    // x= ((y + 0.15)^2.2 - (0.15^2.2)) / (1.15^2.2 - 0.15^2.2)
-    // https://www.13thmonkey.org/~boris/gammacorrection/
-    return (pow((_rgb.rgb + vec3_splat(0.15)), vec3_splat(2.2)) - pow(vec3_splat(0.15), vec3_splat(2.2))) / (pow(vec3_splat(1.15), vec3_splat(2.2)) - pow(vec3_splat(0.15), vec3_splat(2.2)));
-}
-
 vec3 toGamma(vec3 _rgb)
 {
 	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.0031308));
