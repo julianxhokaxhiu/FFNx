@@ -20,8 +20,7 @@
 /****************************************************************************/
 
 #include "vgmstream.h"
-
-#include <sys/stat.h>
+#include "../../utils.h"
 
 namespace SoLoud
 {
@@ -127,8 +126,7 @@ namespace SoLoud
 		if (aFilename == 0)
 			return INVALID_PARAMETER;
 
-		struct stat dummy;
-		if (stat(aFilename, &dummy) != 0)
+		if (! fileExists(aFilename))
 			return FILE_NOT_FOUND;
 
 		stop();

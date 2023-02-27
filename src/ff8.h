@@ -1047,6 +1047,7 @@ struct ff8_externals
 	struct struc_51 *psx_texture_pages; // One per bpp (bpp 4, 8 and 16)
 	uint32_t read_field_data;
 	uint32_t upload_mim_file;
+	uint32_t upload_pmp_file;
 	char *field_filename;
 	uint32_t field_scripts_init;
 	uint8_t *field_state_background_count;

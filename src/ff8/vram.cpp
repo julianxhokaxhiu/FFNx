@@ -445,7 +445,15 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 		ff8_background_save_textures(tiles, mim_texture_buffer, tex_filename);
 	}
 
-	texturePacker.setTextureBackground(tex_filename, 0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles);
+	if (!texturePacker.setTextureBackground(tex_filename, 0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles)) {
+		for (int i = 0; i < VRAM_PAGE_MIM_MAX_COUNT; ++i) {
+			snprintf(tex_filename, MAX_PATH, "field/mapdata/%.2s/%s/%s_%d", get_current_field_name(), get_current_field_name(), get_current_field_name(), i);
+
+			if (!texturePacker.setTextureBackground(tex_filename, i * TEXTURE_WIDTH_BPP16, 256, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles, i)) {
+				break;
+			}
+		}
+	}
 
 	return ret;
 }
@@ -543,6 +551,30 @@ int ff8_field_texture_upload_one(char *image_buffer, char bpp, char a3, int x, i
 	return ((int(*)(char*,char,char,int,int16_t,int,int16_t))ff8_externals.chara_one_upload_texture)(image_buffer, bpp, a3, x, y, w, h);
 }
 
+void ff8_field_effects_upload_vram1(int16_t *pos_and_size, uint8_t *texture_buffer)
+{
+	Tim::Bpp bpp = Tim::Bpp4;
+	char texture_name[MAX_PATH];
+
+	snprintf(texture_name, sizeof(texture_name), "field/mapdata/%s/%s_pmp", get_current_field_name(), get_current_field_name());
+
+	if (save_textures) {
+		ff8_tim t = ff8_tim();
+		t.pal_data = (uint16_t*)(texture_buffer - 512);
+		t.pal_w = 256;
+		t.pal_h = 1;
+		t.img_data = texture_buffer;
+		t.img_w = pos_and_size[2];
+		t.img_h = pos_and_size[3] * 2; // This upload and the next one together
+		Tim(bpp, t).save(texture_name);
+	}
+
+	ff8_upload_vram(pos_and_size, texture_buffer);
+
+	// This upload and the next one together
+	texturePacker.setTexture(texture_name, pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3] * 2, bpp, false);
+}
+
 DWORD *create_graphics_object_load_texture_call2(int a1, int a2, char *path, void *data, ff8_game_obj *game_object)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s path=%s\n", __func__, path == nullptr ? "(none)" : path);
@@ -577,15 +609,17 @@ void vram_init()
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call2, ff8_wm_texl_palette_upload_vram);
 	replace_call(ff8_externals.open_file_world_sub_52D670_texl_call1, ff8_wm_open_data);
 	replace_call(ff8_externals.open_file_world_sub_52D670_texl_call2, ff8_wm_open_data);
-	// field: mim/map
+	// field: background
 	replace_call(ff8_externals.upload_mim_file + 0x2E, ff8_field_mim_palette_upload_vram);
 	replace_call(ff8_externals.read_field_data + (JP_VERSION ? 0x990 : 0x915), ff8_field_read_map_data);
-	// field: chara.one
+	// field: characters
 	replace_call(ff8_externals.load_field_models + 0x15F, ff8_field_chara_one_read_file_header);
 	replace_call(ff8_externals.load_field_models + 0x582, ff8_field_chara_one_seek_to_model);
 	replace_call(ff8_externals.load_field_models + 0x594, ff8_field_chara_one_read_model);
 	replace_call(ff8_externals.load_field_models + 0x879, ff8_field_chara_one_read_mch);
 	replace_call(ff8_externals.load_field_models + 0xB72, ff8_field_texture_upload_one);
+	// field: effects
+	replace_call(ff8_externals.upload_pmp_file + 0x7F, ff8_field_effects_upload_vram1);
 
 	replace_function(ff8_externals.upload_psx_vram, ff8_upload_vram);
 

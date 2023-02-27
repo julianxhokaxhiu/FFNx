@@ -20,7 +20,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <sys/stat.h>
 #include <stdio.h>
 #include <direct.h>
 #include "renderer.h"
@@ -75,7 +74,6 @@ void normalize_path(char *name)
 void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated)
 {
 	char filename[sizeof(basedir) + 1024];
-	struct stat dummy;
 	uint64_t hash;
 
 	if (is_animated)
@@ -97,7 +95,7 @@ void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t 
 
 	make_path(filename);
 
-	if (stat(filename, &dummy) != 0)
+	if (! fileExists(filename))
 	{
 		if (!newRenderer.saveTexture(filename, width, height, data)) ffnx_error("Save texture failed for the file [ %s ].\n", filename);
 	}
@@ -131,7 +129,6 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 {
 	uint32_t ret = 0;
 	char filename[sizeof(basedir) + 1024]{ 0 };
-	struct stat dummy;
 
 	for (int idx = 0; idx < mod_ext.size(); idx++)
 	{
@@ -168,7 +165,7 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 			{
 				_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%s.%s", basedir, tex_path.c_str(), name, palette_index, it.second.c_str(), mod_ext[idx].c_str());
 
-				if (stat(filename, &dummy) == 0)
+				if (fileExists(filename))
 				{
 					if (gl_set->additional_textures.count(it.first)) newRenderer.deleteTexture(gl_set->additional_textures[it.first]);
 					gl_set->additional_textures[it.first] = load_texture_helper(filename, width, height, mod_ext[idx] == "png", false);

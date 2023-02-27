@@ -15,7 +15,8 @@
 
 - Common: Fix startup hang on launch
 - Common: Fix jp version crash
-- Graphics: Add Field texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/542 )
+- Graphics: Add Field texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/542 https://github.com/julianxhokaxhiu/FFNx/pull/545 )
+- Graphics: Fix wrong texture replacements in battle
 
 # 1.15.0
 

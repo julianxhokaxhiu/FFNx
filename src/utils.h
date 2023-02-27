@@ -126,3 +126,15 @@ inline int getRandomInt(int min, int max)
 
     return distrib(gen);
 }
+
+inline std::chrono::time_point<std::chrono::high_resolution_clock> highResolutionNow()
+{
+    return std::chrono::high_resolution_clock::now();
+}
+
+inline long double elapsedMicroseconds(std::chrono::time_point<std::chrono::high_resolution_clock> startTime)
+{
+    return std::chrono::duration<long double, std::micro>(highResolutionNow() - startTime).count();
+}
+
+bool fileExists(const char *filename);

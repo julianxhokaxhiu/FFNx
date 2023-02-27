@@ -131,9 +131,7 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _
 
 bool NxAudioEngine::fileExists(const char* filename)
 {
-	struct stat dummy;
-
-	bool ret = (stat(filename, &dummy) == 0);
+	bool ret = ::fileExists(filename);
 
 	if (!ret && (trace_all || trace_music || trace_sfx || trace_voice || trace_ambient))
 		ffnx_warning("NxAudioEngine::%s: Could not find file %s\n", __func__, filename);
