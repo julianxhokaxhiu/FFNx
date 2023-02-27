@@ -72,11 +72,13 @@ uniform vec4 TimeData;
 #define isSRGBColorGamut abs(FSMovieFlags.y - 0.0) < 0.00001
 #define isSMPTECColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
 #define isNTSCJColorGamut abs(FSMovieFlags.y - 2.0) < 0.00001
+#define isEBUColorGamut abs(FSMovieFlags.y - 3.0) < 0.00001
 
 #define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
 #define is2pt2Gamma abs(FSMovieFlags.z - 1.0) < 0.00001
 #define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
 #define isCustomGamma abs(FSMovieFlags.z - 3.0) < 0.00001
+#define is2pt8Gamma abs(FSMovieFlags.z - 4.0) < 0.00001
 
 #define defaultMovieGamma FSMovieFlags.w
 
@@ -157,13 +159,18 @@ void main()
 
             // Use a different inverse gamma function depending on the FMV's metadata
             if (isCustomGamma){
-                color.rgb = saturate(pow(color.rgb, vec3_splat(defaultMovieGamma)));
+                //color.rgb = saturate(pow(color.rgb, vec3_splat(defaultMovieGamma)));
+                // test
+                color.rgb = saturate(toLinear13thMonkey(color.rgb));
             }
             else if (is2pt2Gamma){
                 color.rgb = saturate(toLinear2pt2(color.rgb));
             }
             else if (is170MGamma){
                 color.rgb = saturate(toLinearSMPTE170M(color.rgb));
+            }
+            else if (is2pt8Gamma){
+                color.rgb = saturate(toLinear2pt8(color.rgb));
             }
             else {
                 color.rgb = saturate(toLinear(color.rgb));
@@ -184,11 +191,19 @@ void main()
             }
             else if (isSMPTECColorGamut){
                 const mat3 SMPTEC_to_bt709_gamut_transform = mat3(
-                    vec3(+0.939542063773239, +0.017772223143561, -0.001621599943186),
-                    vec3(+0.050181356859868, +0.965792862496904, -0.004369749659736),
-                    vec3(+0.010276579366893, +0.016434914359535, +1.00599134960292)
+                    vec3(+0.93954641805697, +0.0177731581035936, -0.0016219287899825),
+                    vec3(+0.0501790284093381, +0.965794379088605, -0.00437041275295984),
+                    vec3(+0.0102745535336914, +0.016432462807801, +1.00599234154294)
                 );
                 color.rgb = saturate(instMul(SMPTEC_to_bt709_gamut_transform, color.rgb));
+            }
+            else if (isEBUColorGamut){
+                const mat3 EBU_to_bt709_gamut_transform = mat3(
+                    vec3(+1.04404109596867, +0.000, -0.000),
+                    vec3(-0.0440410959686678, +1.0, +0.0117951493631932),
+                    vec3(+0.000, +0.000, +0.988204850636807)
+                );
+                color.rgb = saturate(instMul(EBU_to_bt709_gamut_transform, color.rgb));
             }
             
             color.a = 1.0;

@@ -305,6 +305,10 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				gammatype = GAMMAFUNCTION_SMPTE170M;
 				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
 			}
+			else if (codec_ctx->color_primaries == AVCOL_PRI_BT470BG){
+				gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
+				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, but EBU color gamut (PAL), so assuming 2.8 gamma (PAL).\n");
+			}
 			else {
 				gammatype = GAMMAFUNCTION_USERSPECIFIEDCURVE;
 				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, using user-supplied value from ffnx.toml.\n");
@@ -326,6 +330,10 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		case AVCOL_TRC_BT1361_ECG: // same as SMPTE170M, but is defined for negative numbers too (which we ignore)
 			gammatype = GAMMAFUNCTION_SMPTE170M;
 			if (trace_movies) ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
+			break;
+		case AVCOL_TRC_GAMMA28:
+			gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
+			if (trace_movies) ffnx_trace("prepare_movie: 2.8 gamma transfer function detected\n");
 			break;
 		default:
 			ffnx_error("prepare_movie: unsupported transfer (inverse gamma) function\n");
@@ -381,6 +389,10 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				colorgamut = COLORGAMUT_NTSCJ;
 				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming NTSC-J.\n");
 			}
+			break;
+		case AVCOL_PRI_BT470BG:
+			colorgamut = COLORGAMUT_EBU;
+			if (trace_movies) ffnx_trace("prepare_movie: EBU(PAL) color gamut detected.\n");
 			break;
 		default:
 			ffnx_error("prepare_movie: unsupported color gamut\n");
