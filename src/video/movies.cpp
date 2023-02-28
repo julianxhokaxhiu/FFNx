@@ -124,6 +124,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	bool yuvjfixneeded = false;
 	bool isdeepandtv = false;
 	bool islogomovie = false;
+    bool isff8steammovie = false;
 	int lastbackslashindex = -1;
 	int bytessincebackslash = 0;
 	int scanoffset = 0;
@@ -225,6 +226,19 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		}
 	}
 	
+	// Movie files from the ff8 Steam release appear to be bt709, tv-range, with gamut conversion already done, and no metadata
+	// (Not completely sure about bt709; it's hard to tell under the circumstances.)
+	if (    ff8 && 
+			((codec_ctx->height >= 720) || (codec_ctx->width >= 1280)) && // the samples I examined were 1280 x 896, but I didn't check them all to rule out some of them being cropped
+			(codec_ctx->pix_fmt == AV_PIX_FMT_YUV420P) &&
+			(codec_ctx->color_range == AVCOL_RANGE_UNSPECIFIED) &&
+			(codec_ctx->colorspace == AVCOL_SPC_UNSPECIFIED) &&
+			(codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) &&
+			(codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)
+	){
+		isff8steammovie = true;
+		if (trace_movies) ffnx_trace("prepare_movie: File %s appears to be from the FF8 Steam release. Missing metadata will be guessed accordingly.\n", name);
+	}
 	
 	movie_width = codec_ctx->width;
 	movie_height = codec_ctx->height;
@@ -258,6 +272,12 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		default:
 			yuvjfixneeded = false;
 	}
+	
+	if (isff8steammovie){
+		fullrange_input = false;
+		yuvjfixneeded = false;
+	}
+	
 	if (trace_movies) ffnx_trace("prepare_movie: color range detected as %i (0=tv, 1=pc).\n", fullrange_input);
 	
 	// will we need to convert the colorspace?
@@ -265,16 +285,23 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		// these are all the same (bt601)
 		case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601 
 		case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601 
-		case AVCOL_SPC_BT470BG:
-		case AVCOL_SPC_SMPTE170M:
 			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
 				if (trace_movies) ffnx_trace("prepare_movie: BGR24 detected.\n");
 				colormatrix = COLORMATRIX_BGR24;
+				okcolorspace = true;
+				break;
 			}
-			else {
-				if (trace_movies) ffnx_trace("prepare_movie: bt601 color matrix detected or defaulted to.\n");
-				colormatrix = COLORMATRIX_BT601;
+			else if (isff8steammovie){
+				if (trace_movies) ffnx_trace("prepare_movie: assuming bt709 color matrix because this is a FF8 Steam release movie.\n");
+				colormatrix = COLORMATRIX_BT709;
+				okcolorspace = true;
+				break;
 			}
+			// fall through to next case if we didn't already break
+		case AVCOL_SPC_BT470BG:
+		case AVCOL_SPC_SMPTE170M:
+			if (trace_movies) ffnx_trace("prepare_movie: bt601 color matrix detected or defaulted to.\n");
+			colormatrix = COLORMATRIX_BT601;
 			okcolorspace = true;
 			break;
 		case AVCOL_SPC_BT709:
@@ -381,9 +408,17 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		case AVCOL_PRI_UNSPECIFIED:
 		case AVCOL_PRI_RESERVED0:
 		case AVCOL_PRI_RESERVED:
-			if ((colormatrix == COLORMATRIX_BT709) || islogomovie){
+			if (isff8steammovie){
 				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb because bt709 matrix and/or this is a logo movie.\n");
+				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a FF8 Steam release video. (Steam already did NTSC-J to SRGB gamut conversion.)\n");
+			}
+			else if (colormatrix == COLORMATRIX_BT709){
+				colorgamut = COLORGAMUT_SRGB;
+				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because bt709 color matrix.\n");
+			}
+			else if (islogomovie){
+				colorgamut = COLORGAMUT_SRGB;
+				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a logo movie.\n");
 			}
 			else {
 				colorgamut = COLORGAMUT_NTSCJ;
