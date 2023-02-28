@@ -34,7 +34,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 	bool isSavegame = strstr(newIn.data(), ".ff7") != NULL;
 	bool isCacheFile = strstr(newIn.data(), ".p") != NULL;
 
-	if (wantsSteamPath && _access(in, 0) == -1)
+	if (wantsSteamPath && !fileExists(in))
 	{
 		if (
 			strcmp(newIn.data(), "scene.bin") == 0 ||
@@ -48,7 +48,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 			PathAppendA(out, R"(battle)");
 			PathAppendA(out, newIn.data());
 
-			if (_access(out, 0) == -1)
+			if (!fileExists(out))
 				return 1;
 		}
 		else
@@ -70,7 +70,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 			get_data_lang_path(out);
 			if (pos != NULL) PathAppendA(out, pos);
 
-			if ((_access(out, 0) == -1 || pos == NULL))
+			if ((!fileExists(out) || pos == NULL))
 			{
 				// If steam edition, do one more try in the user data path
 				if (steam_edition) get_userdata_path(out, size, isSavegame);
@@ -95,7 +95,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 					else
 					{
 						PathAppendA(out, pos);
-						if (_access(out, 0) == -1)
+						if (!fileExists(out))
 							return 1;
 					}
 				}
@@ -157,7 +157,7 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 				PathAppendA(out, newIn.data());
 			}
 
-			if (_access(out, 0) == -1)
+			if (!fileExists(out))
 				return -1;
 
 			if (trace_all || trace_files) ffnx_trace("Redirected: %s -> %s\n", newIn.data(), out);

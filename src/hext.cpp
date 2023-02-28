@@ -289,7 +289,7 @@ void Hext::applyDelayed(std::string filename, std::string checkpoint)
 
 void Hext::applyAll(std::string checkpoint)
 {
-    if (_access(hext_patching_path.c_str(), 0) == 0)
+    if (fileExists(hext_patching_path.c_str()))
     {
         if (!checkpoint.empty())
         {

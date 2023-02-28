@@ -40,7 +40,7 @@ void Metadata::updateFF7()
         // Append save file name
         sprintf(currentSave + strlen(currentSave), R"(\save%02i.ff7)", idx);
 
-        if (_access(currentSave, 0) == 0)
+        if (fileExists(currentSave))
         {
             FILE* file = fopen(currentSave, "rb");
 
@@ -116,7 +116,7 @@ void Metadata::updateFF8()
             sprintf(currentSave + strlen(currentSave), R"(\slot%d_save%02i.ff8)", slotNumber, (slotNumber == 2 ? idx - 30 : idx) + 1);
         }
 
-        if (_access(currentSave, 0) == 0)
+        if (fileExists(currentSave))
         {
             FILE* file = fopen(currentSave, "rb");
 
