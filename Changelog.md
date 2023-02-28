@@ -4,6 +4,7 @@
 
 ## Common
 
+- Common: Allow to skip the FFNx logo on button press
 - Common: Improve texture upload time by reducing allocations for color conversion
 - Voice: Fix track master volume inheritance when overriding via config
 
