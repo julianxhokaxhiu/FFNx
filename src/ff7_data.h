@@ -617,6 +617,13 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.snowboard_loop_sub_72381C = get_relative_call(snowboard_main_loop, 0x7D);
 	ff7_externals.sub_779E14 = get_relative_call(chocobo_main_loop, 0x70);
 
+	ff7_externals.condor_enter = get_absolute_value(main_loop, 0xA28);
+	ff7_externals.condor_exit = get_absolute_value(main_loop, 0xA2F);
+	ff7_externals.sub_5F7756 = get_relative_call(ff7_externals.condor_enter, 0x1B0);
+	ff7_externals.sub_5F4273 = get_relative_call(ff7_externals.sub_5F7756, 0xA2);
+	ff7_externals.sub_5F342C = get_relative_call(ff7_externals.sub_5F4273, 0xBF);
+	ff7_externals.condor_uses_lgp = (DWORD*)get_absolute_value(ff7_externals.sub_5F342C, 0x7A);
+
 	ff7_externals.fps_limiter_swirl = get_relative_call(swirl_main_loop, 0xDE);
 	ff7_externals.fps_limiter_battle = get_relative_call(battle_main_loop, 0x1DD);
 	ff7_externals.fps_limiter_coaster = get_relative_call(coaster_main_loop, 0x51);

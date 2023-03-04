@@ -107,3 +107,6 @@ struct ff7_tex_header *load_tex_file(struct file_context *file_context, char *fi
 int ff7_dsound_create(HWND hwnd, LPGUID guid);
 void ff7_dsound_release();
 int ff7_dsound_createsoundbuffer(const WAVEFORMATEX *waveFormatEx);
+
+// minigames
+void ff7_condor_fix_unit_texture_load(uint32_t unk, struc_3 *struc_3);

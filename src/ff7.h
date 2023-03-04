@@ -3067,6 +3067,14 @@ struct ff7_externals
 	uint32_t snowboard_submit_draw_black_quad_graphics_object_72DD94;
 	uint32_t snowboard_submit_draw_white_fade_quad_graphics_object_72DD53;
 	uint32_t snowboard_submit_draw_opaque_quad_graphics_object_72DDD5;
+
+	// condor
+	uint32_t condor_enter;
+	uint32_t condor_exit;
+	uint32_t sub_5F7756;
+	uint32_t sub_5F4273;
+	uint32_t sub_5F342C;
+	DWORD* condor_uses_lgp;
 };
 
 uint32_t ff7gl_load_group(uint32_t group_num, struct matrix_set *matrix_set, struct p_hundred *hundred_data, struct p_group *group_data, struct polygon_data *polygon_data, struct ff7_polygon_set *polygon_set, struct ff7_game_obj *game_object);

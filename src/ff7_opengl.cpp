@@ -190,6 +190,14 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x16D, 5);
 	patch_code_byte(ff7_externals.coaster_sub_5EE150 + 0x190, 5);
 
+	// condor minigame load unit textures fix
+	replace_call_function(ff7_externals.sub_5F342C + 0x66E, ff7_condor_fix_unit_texture_load);
+	replace_call_function(ff7_externals.sub_5F342C + 0x7B9, ff7_condor_fix_unit_texture_load);
+	replace_call_function(ff7_externals.sub_5F342C + 0x904, ff7_condor_fix_unit_texture_load);
+	replace_call_function(ff7_externals.sub_5F342C + 0x977, ff7_condor_fix_unit_texture_load);
+	replace_call_function(ff7_externals.sub_5F342C + 0x9EA, ff7_condor_fix_unit_texture_load);
+	replace_call_function(ff7_externals.sub_5F342C + 0xA35, ff7_condor_fix_unit_texture_load);
+
 	// ##################################
 	// menu UI glitch fix
 	// ##################################
