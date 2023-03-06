@@ -83,3 +83,11 @@ This cheat will allow you to resume the music playback while battle is on pause.
 Shortcuts:
 
 - Keyboard Shortcut: `CTRL + M`
+
+### Voice Auto-Text
+
+This cheat will allow you to toggle the voice auto text feature while playing the game. By pressing the key combination you will be able to toggle the auto advance of text boxes as voice line finishes to play.
+
+Shortcuts:
+
+- Keyboard Shortcut: `CTRL + T`

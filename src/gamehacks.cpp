@@ -95,6 +95,15 @@ void GameHacks::toggleMusicOnBattlePause()
 	}
 }
 
+void GameHacks::toggleAutoText()
+{
+	enable_voice_auto_text = !enable_voice_auto_text;
+
+	show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Voice auto text mode: %s", enable_voice_auto_text ? "ENABLED" : "DISABLED");
+
+	holdInput();
+}
+
 void GameHacks::skipMovies()
 {
 	if (!ff8)
@@ -164,6 +173,9 @@ void GameHacks::processKeyboardInput(UINT msg, WPARAM wParam, LPARAM lParam)
 				break;
 			case 'S':
 				skipMovies();
+				break;
+			case 'T':
+				toggleAutoText();
 				break;
 			case VK_UP:
 				increaseSpeedhack();

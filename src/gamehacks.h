@@ -55,6 +55,9 @@ private:
 	void holdInput();
 	void drawnInput();
 
+	// VOICE AUTO TEXT
+	void toggleAutoText();
+
 public:
 	void init();
 

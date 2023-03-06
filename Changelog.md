@@ -6,6 +6,7 @@
 
 - Common: Allow to skip the FFNx logo on button press
 - Common: Improve texture upload time by reducing allocations for color conversion
+- GameHacks: Add toggle for Voice auto-text feature ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md#voice-auto-text )
 - Voice: Fix track master volume inheritance when overriding via config
 
 ## FF7
