@@ -110,8 +110,8 @@ void main()
             }
             
             if (isBT601ColorMatrix){
-                yuv.g = yuv.g - 0.5;
-                yuv.b = yuv.b - 0.5;
+                yuv.g = yuv.g - (128.0/255.0);
+                yuv.b = yuv.b - (128.0/255.0);
                 if (isFullRange){
                     // BT601 full-range YUV->RGB conversion
                     const mat3 jpeg_rgb_transform = mat3(
@@ -122,7 +122,7 @@ void main()
                     color.rgb = saturate(instMul(jpeg_rgb_transform, yuv));
                 }
                 else {
-                    yuv.r = saturate(yuv.r - (1.0 / 16.0));
+                    yuv.r = saturate(yuv.r - (16.0/255.0));
                     // BT601 TV-range YUV->RGB conversion
                     // (includes implict range conversion)
                     const mat3 mpeg_rgb_transform = mat3(
@@ -135,8 +135,8 @@ void main()
             
             }
             else if (isBT709ColorMatrix){
-                yuv.g = yuv.g - 0.5;
-                yuv.b = yuv.b - 0.5;
+                yuv.g = yuv.g - (128.0/255.0);
+                yuv.b = yuv.b - (128.0/255.0);
                 if (isFullRange){
                     // BT709 full-range YUV->RGB conversion
                     const mat3 bt709full_rgb_transform = mat3(
@@ -147,7 +147,7 @@ void main()
                     color.rgb = saturate(instMul(bt709full_rgb_transform, yuv));
                 }
                 else {
-                    yuv.r = saturate(yuv.r - (1.0 / 16.0));
+                    yuv.r = saturate(yuv.r - (16.0/255.0));
                     // BT709 tv-range YUV->RGB conversion
                     // (includes implict range conversion)
                     const mat3 bt709tv_rgb_transform = mat3(
