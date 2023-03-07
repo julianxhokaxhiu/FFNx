@@ -99,6 +99,16 @@ void main()
                 texture2D(tex_2, v_texcoord0.xy).r
             );
             
+            if (!(isFullRange)){
+                // dither prior to range conversion
+                ivec2 ydimensions = textureSize(tex_0, 0);
+                ivec2 udimensions = textureSize(tex_1, 0);
+                ivec2 vdimensions = textureSize(tex_2, 0);
+                yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions);
+                // clamp back to tv range
+                yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
+            }
+            
             if (isBT601ColorMatrix){
                 yuv.g = yuv.g - 0.5;
                 yuv.b = yuv.b - 0.5;

@@ -80,3 +80,41 @@ vec3 ApplyREC2084Curve(vec3 _color)
 	vec3 Lp = pow(_color * (1.0/10000.0), vec3_splat(m1));
 	return pow((c1 + c2 * Lp) / (vec3_splat(1.0) + c3 * Lp), vec3_splat(m2));
 }
+
+// Apply Martin Roberts' quasirandom dithering below 8 bits of precision.
+// See https://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
+// pixelval: float (range 0-1) pixel color trio, assumed to have been read in from a trio of 8-bit values.
+// coords: float (range 0-1) pixel coordinates, i.e., v_texcoord0.xy
+// ydims: integer dimensions of first channel's texture
+// udims & vdims: integer dimensions of first second and third channels' textures (may differ from ydim for various yuv formats)
+vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims)
+{
+	// get integer range x,y coords for this pixel
+	// invert one axis for u and the other axis for v to decouple dither patterns across channels
+	// see https://blog.kaetemi.be/2015/04/01/practical-bayer-dithering/
+	// add 1 to avoid x=0 and y=0
+	vec3 xpos = vec3(
+		round(float(ydims.x) * coords.x)  + 1.0,
+		round(float(udims.x) * (1.0 - coords.x)) + 1.0,
+		round(float(vdims.x) * coords.x)  + 1.0
+	);
+	vec3 ypos = vec3(
+		round(float(ydims.y) * coords.y) + 1.0,
+		round(float(udims.y) * coords.y) + 1.0,
+		round(float(vdims.y) * (1.0 - coords.y)) + 1.0
+	);
+	// R series magic
+	vec3 dither = fract((xpos * vec3_splat(0.7548776662)) + (ypos * vec3_splat(0.56984029)));
+	// triangular wave function
+	// if exactly 0.5, then pass through so we don't get a 1.0
+	bvec3 smallcutoff = lessThan(dither, vec3_splat(0.5));
+	bvec3 bigcutoff = greaterThan(dither, vec3_splat(0.5));
+	dither = mix(dither, dither * vec3_splat(2.0), smallcutoff);
+	dither = mix(dither, vec3_splat(2.0) - (dither * vec3_splat(2.0)), bigcutoff);
+	// shift down by half
+	dither = dither - vec3_splat(0.5);
+	// scale down below the precision of the 8-bit input
+	dither = dither / vec3_splat(255.0);
+	// add to input
+	return saturate(pixelval + dither);
+}
