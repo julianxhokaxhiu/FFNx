@@ -122,7 +122,6 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	bool okpixelformat = false;
 	bool okcolorspace = false;
 	bool yuvjfixneeded = false;
-	bool isdeepandtv = false;
 	bool islogomovie = false;
     bool isff8steammovie = false;
 	int lastbackslashindex = -1;
@@ -371,13 +370,6 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
 		targetpixelformat = AV_PIX_FMT_BGR24;
 	}
-	// Do we have an input with a bit depth greater than 8 and also TV range?
-	// In this case (only) we want to depart from our policy of avoiding swscale's automatic range conversions.
-	// Otherwise we have a bit of preventable banding/posterization since we first throw away data to reach 8 bits, then expand the range. 
-	else if (!fullrange_input && (av_pix_fmt_desc_get(codec_ctx->pix_fmt)->comp[0].depth > 8)){
-		isdeepandtv = true;
-		targetpixelformat = AV_PIX_FMT_YUVJ444P;
-	}
 	else{
 		targetpixelformat = AV_PIX_FMT_YUV444P;
 	}
@@ -456,7 +448,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 	
-	if(!okpixelformat || !okcolorspace || yuvjfixneeded || isdeepandtv)
+	if(!okpixelformat || !okcolorspace || yuvjfixneeded)
 		// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader 
 	{
 		if (trace_movies)
@@ -480,7 +472,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		
 		// if we need a colorspace conversion, set it up here
 		// this would also be the place to set up color range conversion, if it worked -- which it doens't
-		if (!okcolorspace || yuvjfixneeded || isdeepandtv){
+		if (!okcolorspace || yuvjfixneeded){
 			int *coefs_in;
 			int *coefs_out;
 			int srcRange, dstRange;
@@ -507,15 +499,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				srcRange = fullrange_input ? 1 : 0; // use the input color range
 				dstRange = srcRange; // no conversion!
 			}
-			
-			if (isdeepandtv){
-				// swscale ignores these parameters when input bit depth > 8, but let's future-proof against that getting fixed someday
-				srcRange = fullrange_input ? 1 : 0; // use the input color range
-				dstRange = 1; // to full range
-				// change our flag so the shader knows it's getting full-range
-				fullrange_input = true;
-			}
-			
+						
 			sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 		}
 		
