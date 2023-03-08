@@ -1177,6 +1177,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_draw_fade_quad_75551A = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x554);
 	ff7_externals.world_sub_75079D = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x421);
 	ff7_externals.world_sub_751EFC = get_relative_call(ff7_externals.world_sub_75079D, 0x1FB);
+	ff7_externals.world_sub_75C02B = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x5A6);
+	ff7_externals.world_sub_75C0FD = get_relative_call(ff7_externals.world_sub_75C02B, 0x43);
+	ff7_externals.world_sub_75C283 = get_relative_call(ff7_externals.world_sub_75C0FD, 0x175);
 	ff7_externals.world_culling_bg_meshes_75F263 = get_relative_call(ff7_externals.world_sub_751EFC, 0x7C6);
 	ff7_externals.world_submit_draw_bg_meshes_75F68C = get_relative_call(ff7_externals.world_sub_751EFC, 0x7FD);
 	ff7_externals.world_compute_skybox_data_754100 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x537);

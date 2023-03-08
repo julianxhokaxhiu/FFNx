@@ -12,6 +12,7 @@
 ## FF7
 
 - Core: Fix `ERROR: COULD NOT CHANGE TO DIRECTORY` error when starting the Condor minigame
+- Graphics: Fix missing snow footsteps ( https://github.com/julianxhokaxhiu/FFNx/issues/550 )
 - Input: Allow Cloud to walk/run based on the left analogue stick position ( https://github.com/julianxhokaxhiu/FFNx/issues/523 )
 
 ## FF8

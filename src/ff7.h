@@ -3018,6 +3018,9 @@ struct ff7_externals
 	uint32_t world_draw_fade_quad_75551A;
 	uint32_t world_sub_75079D;
 	uint32_t world_sub_751EFC;
+	uint32_t world_sub_75C02B;
+	uint32_t world_sub_75C0FD;
+	uint32_t world_sub_75C283;
 	uint32_t world_culling_bg_meshes_75F263;
 	uint32_t world_submit_draw_bg_meshes_75F68C;
 	uint32_t world_compute_skybox_data_754100;
