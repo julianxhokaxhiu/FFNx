@@ -45,6 +45,18 @@ vec3 toLinear2pt8(vec3 _rgb)
 	return pow(_rgb.rgb, vec3_splat(2.8));
 }
 
+
+vec3 toLinearToelessSRGB(vec3 _rgb)
+{
+    vec3 twoPtwo = toLinear2pt2(_rgb);
+    vec3 sRGB = toLinear(_rgb);
+    bvec useSRGB = lessThan(sRGB, twoPtwo);
+    vec3 proportion = pow(_rgb / 0.39, 1.0 / 2.2);
+    vec3 merged = mix(twoPtwo, sRGB, proportion);
+    return mix(merged, sRGB, useSRGB);
+}
+
+
 vec3 toGamma(vec3 _rgb)
 {
 	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.0031308));

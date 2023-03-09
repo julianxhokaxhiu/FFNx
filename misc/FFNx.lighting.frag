@@ -191,7 +191,9 @@ void main()
 
             // Use a different inverse gamma function depending on the FMV's metadata
             if (isCustomGamma){
-                color.rgb = saturate(pow(color.rgb, vec3_splat(defaultMovieGamma)));
+                //color.rgb = saturate(pow(color.rgb, vec3_splat(defaultMovieGamma)));
+                //EXPERIMENT!
+                color.rgb = saturate(toLinearToelessSRGB(color.rgb));
             }
             else if (is2pt2Gamma){
                 color.rgb = saturate(toLinear2pt2(color.rgb));
