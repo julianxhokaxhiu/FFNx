@@ -336,8 +336,8 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, but EBU color gamut (PAL), so assuming 2.8 gamma (PAL).\n");
 			}
 			else {
-				gammatype = GAMMAFUNCTION_USERSPECIFIEDCURVE;
-				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, using user-supplied value from ffnx.toml.\n");
+				gammatype = GAMMAFUNCTION_TOELESS_SRGB;
+				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using \"toeless sRGB\" gamma curve.\n");
 			}
 			break;
 		case AVCOL_TRC_IEC61966_2_1: //srgb
