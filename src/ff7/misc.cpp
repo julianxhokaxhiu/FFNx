@@ -147,21 +147,21 @@ void ff7_use_analogue_controls()
 		{
 			joyDir = {gamepad.leftStickX, gamepad.leftStickY, 0.0f};
 
-			if(gamepad.leftStickY > 0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f))
+			if(gamepad.leftStickY > 0.25f && !(gamepad.leftStickX < -0.25f || gamepad.leftStickX > 0.25f))
 				inputDir = {0.0f, 1.0f, 0.0f};
-			else if(gamepad.leftStickY > 0.5f && gamepad.leftStickX < -0.5f)
+			else if(gamepad.leftStickY > 0.25f && gamepad.leftStickX < -0.25f)
 				inputDir = {-0.707f, 0.707f, 0.0f};
-			else if(gamepad.leftStickY > 0.5f && gamepad.leftStickX > 0.5f)
+			else if(gamepad.leftStickY > 0.25f && gamepad.leftStickX > 0.25f)
 				inputDir = {0.707f, 0.707f, 0.0f};
-			else if(gamepad.leftStickX < -0.5f &&!(gamepad.leftStickY > 0.5f || gamepad.leftStickY < -0.5f))
+			else if(gamepad.leftStickX < -0.25f &&!(gamepad.leftStickY > 0.25f || gamepad.leftStickY < -0.25f))
 				inputDir = {-1.0f, 0.0f, 0.0f};
-			else if(gamepad.leftStickX > 0.5f && !(gamepad.leftStickY > 0.5f || gamepad.leftStickY < -0.5f))
+			else if(gamepad.leftStickX > 0.25f && !(gamepad.leftStickY > 0.25f || gamepad.leftStickY < -0.25f))
 				inputDir = {1.0f, 0.0f, 0.0f};
-			else if(gamepad.leftStickY < -0.5f && gamepad.leftStickX < -0.5f)
+			else if(gamepad.leftStickY < -0.25f && gamepad.leftStickX < -0.25f)
 				inputDir = {-0.707f, -0.707f, 0.0f};
-			else if(gamepad.leftStickY < -0.5f && gamepad.leftStickX > 0.5f)
+			else if(gamepad.leftStickY < -0.25f && gamepad.leftStickX > 0.25f)
 				inputDir = {0.707f, -0.707f, 0.0f};
-			else if(gamepad.leftStickY < -0.5f && !(gamepad.leftStickX < -0.5f || gamepad.leftStickX > 0.5f))
+			else if(gamepad.leftStickY < -0.25f && !(gamepad.leftStickX < -0.25f || gamepad.leftStickX > 0.25f))
 				inputDir = {0.0f, -1.0f, 0.0f};
 
 			if(std::abs(gamepad.rightStickY) > right_analog_stick_deadzone)
@@ -181,25 +181,25 @@ void ff7_use_analogue_controls()
 		{
 			joyDir = {static_cast<float>(joystick.GetState()->lX), -static_cast<float>(joystick.GetState()->lY), 0.0f};
 
-			if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) &&
-			!(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lX > joystick.GetDeadZone(0.5f)))
+			if(joystick.GetState()->lY < joystick.GetDeadZone(-0.25f) &&
+			!(joystick.GetState()->lX < joystick.GetDeadZone(-0.25f) || joystick.GetState()->lX > joystick.GetDeadZone(0.25f)))
 				inputDir = {0.0f, 1.0f, 0.0f};
-			else if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) && joystick.GetState()->lX < joystick.GetDeadZone(-0.5f))
+			else if(joystick.GetState()->lY < joystick.GetDeadZone(-0.25f) && joystick.GetState()->lX < joystick.GetDeadZone(-0.25f))
 				inputDir = {-0.707f, 0.707f, 0.0f};
-			else if(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) && joystick.GetState()->lX > joystick.GetDeadZone(0.5f))
+			else if(joystick.GetState()->lY < joystick.GetDeadZone(-0.25f) && joystick.GetState()->lX > joystick.GetDeadZone(0.25f))
 				inputDir = {0.707f, 0.707f, 0.0f};
-			else if(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) &&
-			!(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lY > joystick.GetDeadZone(0.5f)))
+			else if(joystick.GetState()->lX < joystick.GetDeadZone(-0.25f) &&
+			!(joystick.GetState()->lY < joystick.GetDeadZone(-0.25f) || joystick.GetState()->lY > joystick.GetDeadZone(0.25f)))
 				inputDir = {-1.0f, 0.0f, 0.0f};
-			else if(joystick.GetState()->lX > joystick.GetDeadZone(0.5f) &&
-				!(joystick.GetState()->lY < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lY > joystick.GetDeadZone(0.5f)))
+			else if(joystick.GetState()->lX > joystick.GetDeadZone(0.25f) &&
+				!(joystick.GetState()->lY < joystick.GetDeadZone(-0.25f) || joystick.GetState()->lY > joystick.GetDeadZone(0.25f)))
 				inputDir = {1.0f, 0.0f, 0.0f};
-			else if(joystick.GetState()->lY > joystick.GetDeadZone(0.5f) && joystick.GetState()->lX < joystick.GetDeadZone(-0.5f))
+			else if(joystick.GetState()->lY > joystick.GetDeadZone(0.25f) && joystick.GetState()->lX < joystick.GetDeadZone(-0.25f))
 				inputDir = {-0.707f, -0.707f, 0.0f};
-			else if(joystick.GetState()->lY > joystick.GetDeadZone(0.5f) && joystick.GetState()->lX > joystick.GetDeadZone(0.5f))
+			else if(joystick.GetState()->lY > joystick.GetDeadZone(0.25f) && joystick.GetState()->lX > joystick.GetDeadZone(0.25f))
 				inputDir = {0.707f, -0.707f, 0.0f};
-			else if(joystick.GetState()->lY > joystick.GetDeadZone(0.5f) &&
-				!(joystick.GetState()->lX < joystick.GetDeadZone(-0.5f) || joystick.GetState()->lX > joystick.GetDeadZone(0.5f)))
+			else if(joystick.GetState()->lY > joystick.GetDeadZone(0.25f) &&
+				!(joystick.GetState()->lX < joystick.GetDeadZone(-0.25f) || joystick.GetState()->lX > joystick.GetDeadZone(0.25f)))
 				inputDir = {0.0f, -1.0f, 0.0f};
 
 			if(std::abs(joystick.GetState()->lRz) > joystick.GetDeadZone(right_analog_stick_deadzone))
