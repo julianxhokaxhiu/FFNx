@@ -662,7 +662,7 @@ void sfx_process_footstep(bool is_player_moving)
 		float pace = 0.5f;
 
 		// If running change the pace
-		if (*ff7_externals.input_run_button_status != 0) pace = 0.30f;
+		if (*ff7_externals.input_run_button_status != 0 || gamepad_analogue_intent == INTENT_RUN) pace = 0.30f;
 
 		qpc_get_time(&current_playback_time);
 		if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
