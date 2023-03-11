@@ -43,7 +43,6 @@ extern std::vector<std::string> mod_ext;
 extern long enable_ffmpeg_videos;
 extern std::string ffmpeg_video_ext;
 extern std::vector<std::string> external_movie_audio_ext;
-extern double movie_default_gamma;
 extern bool use_external_sfx;
 extern std::string external_sfx_path;
 extern std::vector<std::string> external_sfx_ext;

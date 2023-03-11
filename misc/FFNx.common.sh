@@ -50,8 +50,8 @@ vec3 toLinearToelessSRGB(vec3 _rgb)
 {
     vec3 twoPtwo = toLinear2pt2(_rgb);
     vec3 sRGB = toLinear(_rgb);
-    bvec useSRGB = lessThan(sRGB, twoPtwo);
-    vec3 proportion = pow(_rgb / 0.39, 1.0 / 2.2);
+    bvec3 useSRGB = lessThan(sRGB, twoPtwo);
+    vec3 proportion = pow(_rgb / vec3_splat(0.389223), vec3_splat(1.0 / 2.2));
     vec3 merged = mix(twoPtwo, sRGB, proportion);
     return mix(merged, sRGB, useSRGB);
 }

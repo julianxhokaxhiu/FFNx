@@ -78,10 +78,8 @@ uniform vec4 iblData;
 #define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
 #define is2pt2Gamma abs(FSMovieFlags.z - 1.0) < 0.00001
 #define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
-#define isCustomGamma abs(FSMovieFlags.z - 3.0) < 0.00001
+#define isToelessSRGBGamma abs(FSMovieFlags.z - 3.0) < 0.00001
 #define is2pt8Gamma abs(FSMovieFlags.z - 4.0) < 0.00001
-
-#define defaultMovieGamma FSMovieFlags.w
 
 // ---
 #define debugOutput lightingDebugData.z
@@ -190,9 +188,7 @@ void main()
             }
 
             // Use a different inverse gamma function depending on the FMV's metadata
-            if (isCustomGamma){
-                //color.rgb = saturate(pow(color.rgb, vec3_splat(defaultMovieGamma)));
-                //EXPERIMENT!
+            if (isToelessSRGBGamma){
                 color.rgb = saturate(toLinearToelessSRGB(color.rgb));
             }
             else if (is2pt2Gamma){

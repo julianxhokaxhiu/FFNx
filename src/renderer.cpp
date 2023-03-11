@@ -132,9 +132,9 @@ void Renderer::setCommonUniforms()
         (float)internalState.bIsMovieColorMatrix,
         (float)internalState.bIsMovieColorGamut,
         (float)internalState.bIsMovieGammaType,
-        (float)movie_default_gamma,
+        NULL
     };
-    if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, gamma value %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
+    if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2]);
 
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
