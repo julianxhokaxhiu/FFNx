@@ -18,3 +18,4 @@ Welcome to the FFNx documentation!
 
 - [DevTools](mods/devtools.md)
 - [Audio Engine](mods/audio_engine.md)
+- [Video Encoding Guide](video_encoding_guide.md)
