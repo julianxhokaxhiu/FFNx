@@ -70,7 +70,7 @@ We are always open for contributions via PRs, and in case you want to join the c
 - Support for animated textures (like Aerith's waterfall, light fading, etc.)
 - Support for soft-reset while you're playing, just like the PSX
 - Support for battle toggle (enable/disable at your own pleasure)
-- **Voice acting**! [Echo-S](https://forum.tsunamods.com/viewtopic.php?f=65&t=9) was the first mod to take advantage of this!
+- **Voice acting**! [Echo-S](https://www.tsunamods.com/echo-s-7/) was the first mod to take advantage of this!
 - Support for external SFX audio effects
 - Support for external ambient audio effects
 - Support for external movie audio files (allows multiple videos to share the same audio)
@@ -89,7 +89,7 @@ We are always open for contributions via PRs, and in case you want to join the c
 ### As a modder
 
 - Game rendering inspection through [RenderDoc](https://renderdoc.org/)
-- [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG support as fallback
+- [DDS Texture support](https://wiki.beyondskyrim.org/wiki/Arcane_University:DDS_Data_Format) up to BC7 format, with PNG support as fallback
 - Support for configurable external textures path using [mod_path](misc/FFNx.toml#L100)
 - Support for an override layer of the data directory using [override_path](misc/FFNx.toml#L116)
 - Support for MINIPSF audio files using the emulated PSX/PS2 AKAO Engine
@@ -109,7 +109,7 @@ For a more in-depth documentation feel free to visit the [docs/](docs/) folder.
 
 ## Tech Stack
 
-If you're curious to know, FFNx is makes use of:
+If you're curious to know, FFNx makes use of:
 
 - C++ code base
 - Latest MSVC available on [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
@@ -140,13 +140,13 @@ Available build profiles:
 - x86-MinSizeRel
 - x86-Debug (prefer it if you want to use a debugger attached to the game)
 
-Once the project is build you can find the output in this path: `.build/bin`
+Once the project is built you can find the output in this path: `.build/bin`
 
 ### Preparation
 
 > **Please note:**
 >
-> FFNx will uses vcpkg as a package manager to resolve dependencies. Failing to follow these steps will result in build failure.
+> FFNx uses vcpkg as a package manager to resolve dependencies. Failing to follow these steps will result in build errors.
 
 0. Clone the [vcpkg](https://vcpkg.io) project in the root folder of your `C:` drive (`git clone https://github.com/Microsoft/vcpkg.git`)
 1. Go inside the `C:\vcpkg` folder and double click `bootstrap-vcpkg.bat`
