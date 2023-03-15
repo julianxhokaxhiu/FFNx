@@ -7,35 +7,35 @@
 
 # FFNx
 
-Next generation modding platform for Final Fantasy VII and Final Fantasy VIII ( with native Steam 2013 release support! )
+Next generation modding platform for Final Fantasy VII and Final Fantasy VIII (with native Steam 2013 release support)
 
 ## Introduction
 
-FFNx is an attempt to move forward what you were used to know as [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
+FFNx is a continuing evolution of the [FF7_OpenGL](https://github.com/Aali132/ff7_opengl) driver, [made by Aali](http://forums.qhimm.com/index.php?topic=14922.0).
 
 FFNx today in a nutshell:
 
-- An easy drag-n-drop installation experience, see [How to Install](docs/how_to_install.md)
-- It comes by default if you use 7th 2.3 or higher version
-- It supports the newest video and audio codecs ( WEBM, H.265, Ogg, etc.)
-- It enhances the gameplay experience drastically compared to the vanilla experience
-- It supports 4 stable (+ 1 experimental) rendering Backends:
-  - OpenGL
-  - DirectX 9 ( Experimental: Not Recommended )
-  - DirectX 11 ( default )
+- Uses an easy, drag-n-drop installation experience, see [How to Install](docs/how_to_install.md)
+- Comes built-in with 7th Heaven v2.3 and higher
+- Supports the newest video and audio codecs (WEBM, H.265, Ogg, etc.)
+- Drastically enhances the gameplay experience compared to the vanilla experience
+- Provides four stable and one experimental rendering backends:
+  - DirectX 11 (default)
   - DirectX 12
   - Vulkan
-
+  - OpenGL
+  - DirectX 9 (Experimental: Not Recommended)
+  
 ## The Team
 
 FFNx is developed by a core team, currently composed of:
 
-- [Julian Xhokaxhiu](https://github.com/julianxhokaxhiu) ( TrueOdin, 🇪🇸 Spain )
-- [Tang-Tang Zhou](https://github.com/tangtang95) ( vertex2995, 🇮🇹 Italy )
-- [Jérôme Arzel](https://github.com/myst6re) ( myst6re, 🇫🇷 France )
-- [CosmosXIII](https://github.com/CosmosXIII) ( Cosmos, 🇯🇵 Japan )
+- [Julian Xhokaxhiu](https://github.com/julianxhokaxhiu) (TrueOdin, 🇪🇸 Spain)
+- [Tang-Tang Zhou](https://github.com/tangtang95) (vertex2995, 🇮🇹 Italy)
+- [Jérôme Arzel](https://github.com/myst6re) (myst6re, 🇫🇷 France)
+- [CosmosXIII](https://github.com/CosmosXIII) (Cosmos, 🇯🇵 Japan)
 
-We are always open for contributions via PRs, and in case you want to join the core team feel free to approach us on Discord and we will evaluate on a case-by-case basis.
+We are always open for contributions via PRs, and in case you want to join the core team, feel free to approach us on Discord and we will evaluate on a case-by-case basis.
 
 ## Features
 
@@ -43,58 +43,58 @@ We are always open for contributions via PRs, and in case you want to join the c
 
 #### FF7/FF8
 
-- [/LARGEADDRESSAWARE](https://docs.microsoft.com/en-us/cpp/build/reference/largeaddressaware-handle-large-addresses?view=vs-2019) support! Up to 3.5GB of RAM available for mods ( this requires the [4GB Patch](https://ntcore.com/?page_id=371) in your ff7.exe ).
-- High DPI support!
-- HDR support!
-- Up to 16x Anisotropic support!
-- Up to 16x Antialiasing support!
-- 5.1/7.1 Audio Output support!
-- Steam support! No Game converter required.
-- Steam savegame preservation ( you will no more loose saves created with FFNx! )
-- XInput controller support (Xbox 360 and compatible ones) with D-Pad working out-of-the-box!
-- Native speedhack support!
-- External music to replace MIDIs support!
-- The game will continue to run when not in focus in Window mode
+- [/LARGEADDRESSAWARE](https://docs.microsoft.com/en-us/cpp/build/reference/largeaddressaware-handle-large-addresses?view=vs-2019) support. Up to 3.5GB of RAM available for mods (this requires the [4GB Patch](https://ntcore.com/?page_id=371) in your ff7.exe).
+- High DPI support
+- HDR support
+- Up to 16x anisotropic support
+- Up to 16x antialiasing support
+- 5.1/7.1 audio output support
+- Steam support; no game converter required
+- Steam savegame preservation (you no longer lose saves created while FFNx is active)
+- XInput controller support (Xbox 360 and compatible) with D-Pad working out-of-the-box
+- Native speedhack support
+- External music loading to replace original MIDIs
+- The game continues to run within an inactive window
 
 #### FF7
-- 60 FPS!
-- eStore support! No Game converter required.
-- Vertical centering for Fields and Movies
-- Fullscreen Battle scenes
-- Menu cursor on the middle of words vertical alignment
-- Movies will continue to play if the window game loses focus ( in window mode )
-- Movies volume will respect global sound volume
-- Steam sound and music volume configuration preservation ( configure at your pleasure and on the next run it will be inherited )
-- Configurable background transparency in battle dialogs ( by default set to 75% )!
-- SFX volume change will now apply in real-time, instead of you requiring to close and re-open the game.
-- Support for animated textures ( like Aerith waterfall, light fading, etc. )
-- Support for soft-reset while you're playing, like on the PSX!
-- Support for battle toggle ( enable/disable at your own pleasure )
-- **Voice acting**! One of the first mods to make use of this will be [Echo-S](https://forum.tsunamods.com/viewtopic.php?f=65&t=9) when it will be released!
+- 60 FPS
+- eStore support! No game converter required
+- Vertical centering for fields and movies
+- Fullscreen battle scenes
+- Menu cursor vertically aligned on the center of words
+- Movies continue to play while running in an inactive window
+- Movie volume respects global sound volume
+- Steam sound and music volume configuration preservation (configure at your pleasure and on the next run it will be inherited)
+- Configurable background transparency in battle dialogs (by default set to 75%)
+- SFX volume change applies in real-time, instead of requiring a game reload
+- Support for animated textures (like Aerith's waterfall, light fading, etc.)
+- Support for soft-reset while you're playing, just like the PSX
+- Support for battle toggle (enable/disable at your own pleasure)
+- **Voice acting**! [Echo-S](https://forum.tsunamods.com/viewtopic.php?f=65&t=9) was the first mod to take advantage of this!
 - Support for external SFX audio effects
-- Support for external Ambient audio effects
-- Support for external movie audio files ( allows multiple videos to share the same audio )
-- Support for external movie voice acting ( dedicated audio layer only for voice acting on top of movies )
-- Steam achievements! You can now unlock them while playing with FFNx
-- Real-time light engine! You can now feel the game visually like never before
+- Support for external ambient audio effects
+- Support for external movie audio files (allows multiple videos to share the same audio)
+- Support for external movie voice acting (dedicated audio layer only for voice acting on top of movies)
+- Steam achievements can be unlocked while playing within FFNx
+- Real-time light engine - You can now feel the game visually like never before
 - Real-time camera control in battles
 - Analogue controls using the full axis of your left analog stick
 
 #### FF8
-- Vibration support!
-- **Voice acting**!
-- Maki's patch for Worldmap included
+- Vibration support
+- **Voice acting**
+- Maki's patch for worldmap included
 - Enable the VRAM debug window while playing in order to see how the engine uploads textures
 
 ### As a modder
 
-- Game rendering inspection through [RenderDoc](https://renderdoc.org/)!
-- [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG Texture support as fallback.
+- Game rendering inspection through [RenderDoc](https://renderdoc.org/)
+- [DDS Texture support](https://beyondskyrim.org/tutorials/the-dds-texture-format) up to BC7 format, with PNG support as fallback
 - Support for configurable external textures path using [mod_path](misc/FFNx.toml#L100)
 - Support for an override layer of the data directory using [override_path](misc/FFNx.toml#L116)
 - Support for MINIPSF audio files using the emulated PSX/PS2 AKAO Engine
 - Support for [Hext](https://forums.qhimm.com/index.php?topic=13574.0) patching files inside of the [hext_patching_path](misc/FFNx.toml#L113)
-- Debug in-game engine data through [imgui](https://github.com/ocornut/imgui) integration.
+- Debug in-game engine data through [imgui](https://github.com/ocornut/imgui) integration
 
 ## Documentation
 
@@ -109,36 +109,36 @@ For a more in-depth documentation feel free to visit the [docs/](docs/) folder.
 
 ## Tech Stack
 
-If you're curious to know it, FFNx is made with:
+If you're curious to know, FFNx is makes use of:
 
 - C++ code base
 - Latest MSVC available on [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
-- [vcpkg](https://vcpkg.io/) ( as dependency manager )
-- [CMake](https://cmake.org/) ( as make files )
-- [BGFX](https://github.com/bkaradzic/bgfx) ( as backend renderer )
-- [BIMG](https://github.com/bkaradzic/bimg) ( for custom textures )
-- [FFMpeg](https://www.ffmpeg.org/) with H/W Accelleration support
+- [vcpkg](https://vcpkg.io/) (dependency manager)
+- [CMake](https://cmake.org/) (make files)
+- [BGFX](https://github.com/bkaradzic/bgfx) (backend renderer)
+- [BIMG](https://github.com/bkaradzic/bimg) (custom textures)
+- [FFMpeg](https://www.ffmpeg.org/) with H/W accelleration support
 - [VGMStream](https://github.com/losnoco/vgmstream) using FFMpeg as backend (with loop support!)
-- [tomlplusplus](https://github.com/marzer/tomlplusplus) ( for the configuration management )
-- [StackWalker](https://github.com/JochenKalmbach/StackWalker) ( for stack traces in the log file )
-- [pugixml](https://github.com/zeux/pugixml) ( for the Steam XML manifest )
-- [md5](http://www.zedwood.com/article/cpp-md5-function) ( for the Steam XML manifest )
-- [libpng](http://www.libpng.org/pub/png/libpng.html) ( for a better and faster PNG texture support )
-- [imgui](https://github.com/ocornut/imgui) ( to better debug the in-game engine )
-- [xxhash](https://github.com/Cyan4973/xxHash) ( to extract an hash from palette game textures data known as animated textures )
-- [SoLoud](https://github.com/jarikomppa/soloud) ( as the audio engine used to playback audio, music or voice files )
-- [openpsf](https://github.com/myst6re/openpsf) ( as the MINIPSF emulation engine to playback PSX/PS2 music files )
-- [Steamworks SDK](https://github.com/julianxhokaxhiu/SteamworksSDKCI) ( used to support Steam achievements for the Steam edition of games )
-- [mimalloc](https://github.com/microsoft/mimalloc) ( mimalloc is a compact general purpose allocator with excellent performance )
+- [tomlplusplus](https://github.com/marzer/tomlplusplus) (configuration management)
+- [StackWalker](https://github.com/JochenKalmbach/StackWalker) (log file stack traces)
+- [pugixml](https://github.com/zeux/pugixml) (Steam XML manifest)
+- [md5](http://www.zedwood.com/article/cpp-md5-function) (Steam XML manifest)
+- [libpng](http://www.libpng.org/pub/png/libpng.html) (better and faster PNG texture support)
+- [imgui](https://github.com/ocornut/imgui) (better debugging of the in-game engine)
+- [xxhash](https://github.com/Cyan4973/xxHash) (fast hash extraction from paletted game texture data, aka animated textures)
+- [SoLoud](https://github.com/jarikomppa/soloud) (audio engine used to playback audio, music or voice files)
+- [openpsf](https://github.com/myst6re/openpsf) (MINIPSF emulation engine to playback PSX/PS2 music files)
+- [Steamworks SDK](https://github.com/julianxhokaxhiu/SteamworksSDKCI) (support achievements for the Steam editions of games)
+- [mimalloc](https://github.com/microsoft/mimalloc) (a compact general purpose allocator with excellent performance)
 
 ## How to build
 
 Available build profiles:
 
-- x86-Release ( default, the same used to release artifacts in this Github page )
-- x86-RelWithDebInfo ( used while developing to better debug some issues )
+- x86-Release (default, the same used to release artifacts in this Github page)
+- x86-RelWithDebInfo (used while developing to better debug some issues)
 - x86-MinSizeRel
-- x86-Debug ( prefer it if you want to use a debugger attached to the game )
+- x86-Debug (prefer it if you want to use a debugger attached to the game)
 
 Once the project is build you can find the output in this path: `.build/bin`
 
@@ -146,9 +146,9 @@ Once the project is build you can find the output in this path: `.build/bin`
 
 > **Please note:**
 >
-> FFNx will now use vcpkg as a package manager to resolve dependencies. Failing to follow these steps will fail your builds.
+> FFNx will uses vcpkg as a package manager to resolve dependencies. Failing to follow these steps will result in build failure.
 
-0. Clone the [vcpkg](https://vcpkg.io) project in the root folder of your `C:` drive ( `git clone https://github.com/Microsoft/vcpkg.git` )
+0. Clone the [vcpkg](https://vcpkg.io) project in the root folder of your `C:` drive (`git clone https://github.com/Microsoft/vcpkg.git`)
 1. Go inside the `C:\vcpkg` folder and double click `bootstrap-vcpkg.bat`
 2. Open a `cmd` window in `C:\vcpkg` and run the following command: `vcpkg integrate install`
 
@@ -159,7 +159,7 @@ Once the project is build you can find the output in this path: `.build/bin`
 > By default Visual Studio will pick the **x86-Release** build configuration, but you can choose any other profile available.
 
 0. Download the the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installer
-1. Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the required components to build this project
+1. Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the components required to build this project
 2. Make sure you select the English Language pack in the language list before clicking Install
 3. Once installed, open this repository **as a folder** in Visual Studio 2022 and click the build button
 
@@ -170,8 +170,8 @@ Once the project is build you can find the output in this path: `.build/bin`
 2. Install the following extensions:
    - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
    - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools
-3. Open this repository as a folder in Visual Studio code
-4. Choose as build profile in the status bar `CMake: [Release]` ( or one of the aforementioned profiles )
+3. Open this repository as a folder in Visual Studio Code
+4. Choose as build profile in the status bar `CMake: [Release]` (or one of the aforementioned profiles)
 5. Click the button on the status bar `Build`
 
 ## Auto-Formatting
@@ -180,7 +180,7 @@ Once the project is build you can find the output in this path: `.build/bin`
 
 0. **REQUIRED!** Install [Python](https://www.python.org/)
 1. Install [cmake-format](https://github.com/cheshirekow/cmake_format#installation) and make sure the binary is available in your PATH environment variable
-2. **OPTIONAL!** Integrate it [in your own IDE](https://github.com/cheshirekow/cmake_format#integrations) ( eg. for Visual Studio Code use [the relative extension](https://marketplace.visualstudio.com/items?itemName=cheshirekow.cmake-format) )
+2. **OPTIONAL!** Integrate it [in your own IDE](https://github.com/cheshirekow/cmake_format#integrations) (eg. for Visual Studio Code use [the relative extension](https://marketplace.visualstudio.com/items?itemName=cheshirekow.cmake-format))
 
 ## Support
 
@@ -193,9 +193,9 @@ FFNx offers multiple support channels, pick the one you prefer
 
 ### Discord
 
-- Qhimm FFNx-FF7 ( Final Fantasy VII only): https://discord.gg/N6M6pKS
-- Qhimm FFNx-FF8 ( Final Fantasy VIII only): https://discord.gg/u6M7DnY
-- Tsunamods FFNx: https://discord.gg/Urq67Uz ( remember to hit the Red Chocobo reaction! )
+- Qhimm FFNx-FF7 (Final Fantasy VII only): https://discord.gg/N6M6pKS
+- Qhimm FFNx-FF8 (Final Fantasy VIII only): https://discord.gg/u6M7DnY
+- Tsunamods FFNx: https://discord.gg/Urq67Uz (remember to hit the Red Chocobo reaction!)
 
 ### Github
 
@@ -262,15 +262,18 @@ These people are:
 - [tangtang95](https://github.com/tangtang95)
   - for the 60FPS support in FF7
   - for the Steam achievements in FF7
-
-I'm sure I forgot many others through the route. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
+- [Lord UrQuan](https://github.com/eve-atum)
+  - for finding new and inventive ways to crash our test builds
+  - for general documentation clean-up
+  
+I'm sure I forgot many others. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
 ## License
 
-FFNx is released under GPLv3 license, and you can get a copy of the license here: [COPYING.txt](COPYING.txt)
+FFNx is released under GPLv3 license. You can get a copy of the license here: [COPYING.txt](COPYING.txt)
 
-If you paid for it, remember to ask for a refund to the person who sold you a copy. Make also sure you get a copy of the source code if you got it as a binary only.
+If you paid for FFNx, remember to ask for a refund from the person who sold you a copy. Also make sure you get a copy of the source code (if it was provided as binary only).
 
-If the person who gave you a copy will refuse to give you the source code, report it here: https://www.gnu.org/licenses/gpl-violation.html
+If the person who gave you this copy refuses to give you the source code, report it here: https://www.gnu.org/licenses/gpl-violation.html
 
 All rights belong to their respective owners.
