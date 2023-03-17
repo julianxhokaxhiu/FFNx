@@ -20,8 +20,9 @@
       "binaryDir": "${sourceDir}/.build",
       "cacheVariables": {
         "_DLL_VERSION": "devel",
-        "CMAKE_TOOLCHAIN_FILE": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        }
+        "CMAKE_TOOLCHAIN_FILE": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_C_COMPILER": "cl"
+      }
     },
     {
       "name": "x86-RelWithDebInfo",
