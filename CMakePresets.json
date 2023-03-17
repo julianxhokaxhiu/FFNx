@@ -50,5 +50,11 @@
       "name": "x86-RelWithDebInfo",
       "configurePreset": "x86-RelWithDebInfo"
     }
-  ]
+  ],
+  "vendor": {
+    "microsoft.com/VisualStudioSettings/CMake/1.0": {
+      "hostOS": "Windows",
+      "intelliSenseMode": "windows-msvc-x64"
+    }
+  }
 }
