@@ -21,7 +21,8 @@
       "cacheVariables": {
         "_DLL_VERSION": "devel",
         "CMAKE_TOOLCHAIN_FILE": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_C_COMPILER": "cl"
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
@@ -48,8 +49,20 @@
   ],
   "buildPresets": [
     {
+      "name": "x86-Debug",
+      "configurePreset": "x86-Debug"
+    },
+    {
       "name": "x86-RelWithDebInfo",
       "configurePreset": "x86-RelWithDebInfo"
+    },
+    {
+      "name": "x86-MinSizeRel",
+      "configurePreset": "x86-MinSizeRel"
+    },
+    {
+      "name": "x86-Release",
+      "configurePreset": "x86-Release"
     }
   ],
   "vendor": {
