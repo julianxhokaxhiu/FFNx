@@ -1,8 +1,13 @@
 ﻿{
-  "version": 3,
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
   "configurePresets": [
     {
-      "name": "default",
+      "name": "x86-Debug",
       "generator": "Visual Studio 17 2022",
       "architecture": {
         "value": "win32",
@@ -12,39 +17,38 @@
         "value": "host=x64",
         "strategy": "set"
       },
-      "binaryDir": "${presetName}\\.build",
+      "binaryDir": "${sourceDir}/.build",
       "cacheVariables": {
         "_DLL_VERSION": "devel",
         "CMAKE_TOOLCHAIN_FILE": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
         }
     },
     {
-      "name": "x86-Release",
-      "inherits": "default",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
       "name": "x86-RelWithDebInfo",
-      "inherits": "default",
+      "inherits": "x86-Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
       "name": "x86-MinSizeRel",
-      "inherits": "default",
+      "inherits": "x86-Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "MinSizeRel"
       }
     },
     {
-      "name": "x86-Debug",
-      "inherits": "default",
+      "name": "x86-Release",
+      "inherits": "x86-Debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Release"
       }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "x86-RelWithDebInfo",
+      "configurePreset": "x86-RelWithDebInfo"
     }
   ]
 }
