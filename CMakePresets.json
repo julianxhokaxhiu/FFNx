@@ -18,8 +18,11 @@
         "value": "host=x86",
         "strategy": "set"
       },
+      "environment": {
+        "VCPKG_ROOT": "C:/vcpkg"
+      },
       "binaryDir": "${sourceDir}/.build",
-      "toolchainFile": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
         "_DLL_VERSION": "devel",
         "CMAKE_C_COMPILER": "cl"
