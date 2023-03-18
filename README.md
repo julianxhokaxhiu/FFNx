@@ -25,7 +25,7 @@ FFNx today in a nutshell:
   - Vulkan
   - OpenGL
   - DirectX 9 (Experimental: Not Recommended)
-  
+
 ## The Team
 
 FFNx is developed by a core team, currently composed of:
@@ -161,7 +161,9 @@ Once the project is built you can find the output in this path: `.build/bin`
 0. Download the the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installer
 1. Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the components required to build this project
 2. Make sure you select the English Language pack in the language list before clicking Install
-3. Once installed, open this repository **as a folder** in Visual Studio 2022 and click the build button
+3. Once installed, open this repository **as a folder** in Visual Studio
+4. Choose as preset in the status bar the one you desire
+5. Click the `Build` button
 
 ### Visual Studio Code
 
@@ -171,7 +173,7 @@ Once the project is built you can find the output in this path: `.build/bin`
    - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
    - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools
 3. Open this repository as a folder in Visual Studio Code
-4. Choose as build profile in the status bar `CMake: [Release]` (or one of the aforementioned profiles)
+4. Choose as preset in the status bar the one you desire
 5. Click the button on the status bar `Build`
 
 ## Auto-Formatting
@@ -265,7 +267,7 @@ These people are:
 - [Lord UrQuan](https://github.com/eve-atum)
   - for finding new and inventive ways to crash our test builds
   - for general documentation clean-up
-  
+
 I'm sure I forgot many others. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
 ## License

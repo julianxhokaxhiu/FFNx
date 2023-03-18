@@ -1,0 +1,89 @@
+﻿{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "value": "win32",
+        "strategy": "set"
+      },
+      "toolset": {
+        "value": "host=x86",
+        "strategy": "set"
+      },
+      "binaryDir": "${sourceDir}/.build",
+      "toolchainFile": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "_DLL_VERSION": "devel",
+        "CMAKE_C_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "x86-Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "x86-RelWithDebInfo",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "x86-MinSizeRel",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "MinSizeRel"
+      }
+    },
+    {
+      "name": "x86-Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "x86-Debug",
+      "displayName": "Default",
+      "configurePreset": "x86-Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "x86-RelWithDebInfo",
+      "displayName": "Default",
+      "configurePreset": "x86-RelWithDebInfo",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "x86-MinSizeRel",
+      "displayName": "Default",
+      "configurePreset": "x86-MinSizeRel",
+      "configuration": "MinSizeRel"
+    },
+    {
+      "name": "x86-Release",
+      "displayName": "Default",
+      "configurePreset": "x86-Release",
+      "configuration": "Release"
+    }
+  ],
+  "vendor": {
+    "microsoft.com/VisualStudioSettings/CMake/1.0": {
+      "hostOS": "Windows",
+      "intelliSenseMode": "windows-msvc-x64"
+    }
+  }
+}
