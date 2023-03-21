@@ -285,6 +285,11 @@ enable_analogue_controls = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_inverted_camera_controls = false
 
+#[LEFT ANALOG STICK DEADZONE]
+# Sets the deadzone for the left analog stick. Values are from 0 to 1.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+left_analog_stick_deadzone = 0.1
+
 #[RIGHT ANALOG STICK DEADZONE]
 # Sets the deadzone for the right analog stick. Values are from 0 to 1.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -299,6 +304,11 @@ left_analog_trigger_deadzone = 0.1
 # Sets the deadzone for the right analog trigger. Values are from 0 to 1.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 right_analog_trigger_deadzone = 0.1
+
+#[AUTO RUN]
+# This flag enables mode to walk or run depending on how much the left analog stick is tilt.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_auto_run = false
 
 #[EXTERNAL VIBRATE PATH]
 # Path of the external vibrate files
