@@ -13,13 +13,62 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+// YUV to RGB ---------------------------------------------------------
+// tv-range functions include implicit range expansion
+
+vec3 toRGB_bt601_fullrange(vec3 yuv_input)
+{
+	const mat3 jpeg_rgb_transform = mat3(
+		vec3(+1.000, +1.000, +1.000),
+		vec3(+0.000, -0.202008 / 0.587, +1.772),
+		vec3(+1.402, -0.419198 / 0.587, +0.000)
+	);
+	return saturate(instMul(jpeg_rgb_transform, yuv_input));
+}
+
+vec3 toRGB_bt601_tvrange(vec3 yuv_input)
+{
+	const mat3 mpeg_rgb_transform = mat3(
+		vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
+		vec3(+0.000, -25.75602 / 65.744 , +225.93 / 112.0),
+		vec3(+178.755 / 112.0, -53.447745 / 65.744 , +0.000)
+	);
+	return saturate(instMul(mpeg_rgb_transform, yuv_input));
+}
+
+vec3 toRGB_bt709_fullrange(vec3 yuv_input)
+{
+	const mat3 bt709full_rgb_transform = mat3(
+		vec3(+1.000, +1.000, +1.000),
+		vec3(+0.000, -0.13397432 / 0.7152, +1.8556),
+		vec3(+1.5748, -0.33480248 / 0.7152 , +0.000)
+	);
+	return saturate(instMul(bt709full_rgb_transform, yuv_input));
+}
+
+vec3 toRGB_bt709_tvrange(vec3 yuv_input)
+{
+	const mat3 bt709tv_rgb_transform = mat3(
+		vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
+		vec3(+0.000, -17.0817258 / 80.1024 , +236.589 / 112.0),
+		vec3(+200.787 / 112.0, -42.6873162 / 80.1024 , +0.000)
+	);
+	return saturate(instMul(bt709tv_rgb_transform, yuv_input));
+}
+
+
+// Gamma functions ------------------------------------------------
+
+// gamma encoded --> linear:
+
+// sRGB
 vec3 toLinear(vec3 _rgb)
 {
 	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.04045));
 	vec3 higher = pow((_rgb.rgb + vec3_splat(0.055)) / vec3_splat(1.055), vec3_splat(2.4));
 	vec3 lower = _rgb.rgb / vec3_splat(12.92);
 
-	return mix(higher, lower, cutoff);
+	return saturate(mix(higher, lower, cutoff));
 }
 
 vec3 toLinearSMPTE170M(vec3 _rgb)
@@ -28,12 +77,12 @@ vec3 toLinearSMPTE170M(vec3 _rgb)
 	vec3 higher = pow((_rgb.rgb + vec3_splat(0.099)) / vec3_splat(1.099), (vec3_splat(1.0) / vec3_splat(0.45)));
 	vec3 lower = _rgb.rgb / vec3_splat(4.5);
 
-	return mix(higher, lower, cutoff);
+	return saturate(mix(higher, lower, cutoff));
 }
 
 vec3 toLinear2pt2(vec3 _rgb)
 {
-	return pow(_rgb.rgb, vec3_splat(2.2));
+	return saturate(pow(_rgb.rgb, vec3_splat(2.2)));
 }
 
 // Microsoft says PAL uses a pure 2.8 gamma curve. See: https://learn.microsoft.com/en-us/windows/win32/api/mfobjects/ne-mfobjects-mfvideotransferfunction
@@ -42,7 +91,7 @@ vec3 toLinear2pt2(vec3 _rgb)
 // PAL switched to the SMPTE170M function in 2005 (see BT1700)
 vec3 toLinear2pt8(vec3 _rgb)
 {
-	return pow(_rgb.rgb, vec3_splat(2.8));
+	return saturate(pow(_rgb.rgb, vec3_splat(2.8)));
 }
 
 
@@ -53,32 +102,24 @@ vec3 toLinearToelessSRGB(vec3 _rgb)
     bvec3 useSRGB = lessThan(sRGB, twoPtwo);
     vec3 proportion = pow(_rgb / vec3_splat(0.389223), vec3_splat(1.0 / 2.2));
     vec3 merged = mix(twoPtwo, sRGB, proportion);
-    return mix(merged, sRGB, useSRGB);
+    return saturate(mix(merged, sRGB, useSRGB));
 }
 
+// linear --> gamma encoded:
 
+// sRGB
 vec3 toGamma(vec3 _rgb)
 {
 	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.0031308));
 	vec3 higher = vec3_splat(1.055) * pow(_rgb.rgb, vec3_splat(1.0/2.4)) - vec3_splat(0.055);
 	vec3 lower = _rgb.rgb * vec3_splat(12.92);
 
-	return mix(higher, lower, cutoff);
-}
-
-// See https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ColorSpaceUtility.hlsli#L120
-vec3 REC709toREC2020(vec3 _rgb)
-{
-	mat3 toRec2020 = mat3(
-		0.627402, 0.329292, 0.043306,
-		0.069095, 0.919544, 0.011360,
-		0.016394, 0.088028, 0.895578
-	);
-	return mul(toRec2020, _rgb);
+	return saturate(mix(higher, lower, cutoff));
 }
 
 // See https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ColorSpaceUtility.hlsli#L75
-vec3 ApplyREC2084Curve(vec3 _color)
+// max_nits should be "the brightness level that SDR 'white' is rendered at within an HDR monitor" (probably 100-200ish)
+vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 {
 	// reference PQ OETF will yield reference OOTF when
 	// displayed on  a reference monitor employing EOTF
@@ -89,9 +130,58 @@ vec3 ApplyREC2084Curve(vec3 _color)
 	float c2 = 2413.0 / 4096.0 * 32;
 	float c3 = 2392.0 / 4096.0 * 32;
 
-	vec3 Lp = pow(_color * (1.0/10000.0), vec3_splat(m1));
-	return pow((c1 + c2 * Lp) / (vec3_splat(1.0) + c3 * Lp), vec3_splat(m2));
+	vec3 Lp = pow(_color * (vec3_splat(max_nits)/vec3_splat(10000.0)), vec3_splat(m1));
+	return saturate(pow((c1 + c2 * Lp) / (vec3_splat(1.0) + c3 * Lp), vec3_splat(m2)));
 }
+
+
+// Gamut conversions ---------------------------------------------
+// These should be done using linear RGB input
+
+vec3 convertGamut_NTSCJtoSRGB(vec3 rgb_input)
+{
+	const mat3 NTSCJ_to_bt709_gamut_transform = mat3(
+		vec3(+1.42849423843304, -0.028230868456879, -0.026451048534459),
+		vec3(-0.343794575385404, +0.937886666562635, -0.04977408617468),
+		vec3(-0.084699613295359, +0.09034421347425, +1.07622507193376)
+	);
+	return saturate(instMul(NTSCJ_to_bt709_gamut_transform, rgb_input));
+}
+
+vec3 convertGamut_SMPTECtoSRGB(vec3 rgb_input)
+{
+	const mat3 SMPTEC_to_bt709_gamut_transform = mat3(
+		vec3(+0.93954641805697, +0.0177731581035936, -0.0016219287899825),
+		vec3(+0.0501790284093381, +0.965794379088605, -0.00437041275295984),
+		vec3(+0.0102745535336914, +0.016432462807801, +1.00599234154294)
+	);
+	return saturate(instMul(SMPTEC_to_bt709_gamut_transform, rgb_input));
+}
+
+vec3 convertGamut_EBUtoSRGB(vec3 rgb_input)
+{
+	const mat3 EBU_to_bt709_gamut_transform = mat3(
+		vec3(+1.04404109596867, +0.000, -0.000),
+		vec3(-0.0440410959686678, +1.0, +0.0117951493631932),
+		vec3(+0.000, +0.000, +0.988204850636807)
+	);
+	return saturate(instMul(EBU_to_bt709_gamut_transform, rgb_input));
+}
+
+// See https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ColorSpaceUtility.hlsli#L120
+vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
+{
+	mat3 toRec2020 = mat3(
+		// TODO: verify this matrix is actually correct...
+		0.627402, 0.329292, 0.043306,
+		0.069095, 0.919544, 0.011360,
+		0.016394, 0.088028, 0.895578
+	);
+	return saturate(instMul(toRec2020, rgb_input));
+}
+
+
+// Dithering ---------------------------------------------
 
 // Apply Martin Roberts' quasirandom dithering below 8 bits of precision.
 // See https://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
@@ -99,7 +189,8 @@ vec3 ApplyREC2084Curve(vec3 _color)
 // coords: float (range 0-1) pixel coordinates, i.e., v_texcoord0.xy
 // ydims: integer dimensions of first channel's texture
 // udims & vdims: integer dimensions of first second and third channels' textures (may differ from ydim for various yuv formats)
-vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims)
+// scale_divisor: step size divisor to scale the dithering to fit within. E.g., use 255.0 for dithering 8-bit values.
+vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims, float scale_divisor)
 {
 	// get integer range x,y coords for this pixel
 	// invert one axis for u and the other axis for v to decouple dither patterns across channels
@@ -125,8 +216,8 @@ vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ive
 	dither = mix(dither, vec3_splat(2.0) - (dither * vec3_splat(2.0)), bigcutoff);
 	// shift down by half
 	dither = dither - vec3_splat(0.5);
-	// scale down below the precision of the 8-bit input
-	dither = dither / vec3_splat(255.0);
+	// scale down below the specified step size
+	dither = dither / vec3_splat(scale_divisor);
 	// add to input
 	return saturate(pixelval + dither);
 }

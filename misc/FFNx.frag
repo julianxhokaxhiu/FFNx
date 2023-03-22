@@ -104,7 +104,7 @@ void main()
                 ivec2 ydimensions = textureSize(tex_0, 0);
                 ivec2 udimensions = textureSize(tex_1, 0);
                 ivec2 vdimensions = textureSize(tex_2, 0);
-                yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions);
+                yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 255.0);
                 // clamp back to tv range
                 yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
             }
@@ -114,51 +114,23 @@ void main()
                 yuv.g = yuv.g - (128.0/255.0);
                 yuv.b = yuv.b - (128.0/255.0);
                 if (isFullRange){
-                    // BT601 full-range YUV->RGB conversion
-                    const mat3 jpeg_rgb_transform = mat3(
-                        vec3(+1.000, +1.000, +1.000),
-                        vec3(+0.000, -0.202008 / 0.587, +1.772),
-                        vec3(+1.402, -0.419198 / 0.587, +0.000)
-                    );
-                    color.rgb = saturate(instMul(jpeg_rgb_transform, yuv));
+                    color.rgb = toRGB_bt601_fullrange(yuv);
                 }
                 else {
                     yuv.r = saturate(yuv.r - (16.0/255.0));
-                    // BT601 TV-range YUV->RGB conversion
-                    // (includes implict range conversion)
-                    const mat3 mpeg_rgb_transform = mat3(
-                        vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
-                        vec3(+0.000, -25.75602 / 65.744 , +225.93 / 112.0),
-                        vec3(+178.755 / 112.0, -53.447745 / 65.744 , +0.000)
-                    );
-                    color.rgb = saturate(instMul(mpeg_rgb_transform, yuv));
+                    color.rgb = toRGB_bt601_tvrange(yuv);
                 }
-            
             }
             else if (isBT709ColorMatrix){
                 yuv.g = yuv.g - (128.0/255.0);
                 yuv.b = yuv.b - (128.0/255.0);
                 if (isFullRange){
-                    // BT709 full-range YUV->RGB conversion
-                    const mat3 bt709full_rgb_transform = mat3(
-                        vec3(+1.000, +1.000, +1.000),
-                        vec3(+0.000, -0.13397432 / 0.7152, +1.8556),
-                        vec3(+1.5748, -0.33480248 / 0.7152 , +0.000)
-                    );
-                    color.rgb = saturate(instMul(bt709full_rgb_transform, yuv));
+                    color.rgb = toRGB_bt709_fullrange(yuv);
                 }
                 else {
                     yuv.r = saturate(yuv.r - (16.0/255.0));
-                    // BT709 tv-range YUV->RGB conversion
-                    // (includes implict range conversion)
-                    const mat3 bt709tv_rgb_transform = mat3(
-                        vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
-                        vec3(+0.000, -17.0817258 / 80.1024 , +236.589 / 112.0),
-                        vec3(+200.787 / 112.0, -42.6873162 / 80.1024 , +0.000)
-                    );
-                    color.rgb = saturate(instMul(bt709tv_rgb_transform, yuv));
+                    color.rgb = toRGB_bt709_tvrange(yuv);
                 }
-            
             }
             else if (isBRG24ColorMatrix){
                 color.rgb = yuv;
@@ -170,19 +142,19 @@ void main()
 
             // Use a different inverse gamma function depending on the FMV's metadata
             if (isToelessSRGBGamma){
-                color.rgb = saturate(toLinearToelessSRGB(color.rgb));
+                color.rgb = toLinearToelessSRGB(color.rgb);
             }
             else if (is2pt2Gamma){
-                color.rgb = saturate(toLinear2pt2(color.rgb));
+                color.rgb = toLinear2pt2(color.rgb);
             }
             else if (is170MGamma){
-                color.rgb = saturate(toLinearSMPTE170M(color.rgb));
+                color.rgb = toLinearSMPTE170M(color.rgb);
             }
             else if (is2pt8Gamma){
-                color.rgb = saturate(toLinear2pt8(color.rgb));
+                color.rgb = toLinear2pt8(color.rgb);
             }
             else {
-                color.rgb = saturate(toLinear(color.rgb));
+                color.rgb = toLinear(color.rgb);
             }
             
             // Convert gamut to BT709/SRGB.
@@ -191,28 +163,13 @@ void main()
             // Use of NTSC-J as the source gamut  for the original videos and their derivatives is a *highly* probable guess:
             // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
             if (isNTSCJColorGamut){
-                const mat3 NTSCJ_to_bt709_gamut_transform = mat3(
-                    vec3(+1.42849423843304, -0.028230868456879, -0.026451048534459),
-                    vec3(-0.343794575385404, +0.937886666562635, -0.04977408617468),
-                    vec3(-0.084699613295359, +0.09034421347425, +1.07622507193376)
-                );
-                color.rgb = saturate(instMul(NTSCJ_to_bt709_gamut_transform, color.rgb));
+                color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
             }
             else if (isSMPTECColorGamut){
-                const mat3 SMPTEC_to_bt709_gamut_transform = mat3(
-                    vec3(+0.93954641805697, +0.0177731581035936, -0.0016219287899825),
-                    vec3(+0.0501790284093381, +0.965794379088605, -0.00437041275295984),
-                    vec3(+0.0102745535336914, +0.016432462807801, +1.00599234154294)
-                );
-                color.rgb = saturate(instMul(SMPTEC_to_bt709_gamut_transform, color.rgb));
+                color.rgb = convertGamut_SMPTECtoSRGB(color.rgb);
             }
             else if (isEBUColorGamut){
-                const mat3 EBU_to_bt709_gamut_transform = mat3(
-                    vec3(+1.04404109596867, +0.000, -0.000),
-                    vec3(-0.0440410959686678, +1.0, +0.0117951493631932),
-                    vec3(+0.000, +0.000, +0.988204850636807)
-                );
-                color.rgb = saturate(instMul(EBU_to_bt709_gamut_transform, color.rgb));
+               color.rgb = convertGamut_EBUtoSRGB(color.rgb);
             }
             
             color.a = 1.0;
