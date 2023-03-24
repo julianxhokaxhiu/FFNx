@@ -172,10 +172,9 @@ vec3 convertGamut_EBUtoSRGB(vec3 rgb_input)
 vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
 {
 	mat3 toRec2020 = mat3(
-		// TODO: verify this matrix is actually correct...
-		0.627402, 0.329292, 0.043306,
-		0.069095, 0.919544, 0.011360,
-		0.016394, 0.088028, 0.895578
+		vec3(+0.628252390228217, +0.069018748494509, +0.016358741846493),
+		vec3(+0.329243684863216, +0.9191169021082, +0.087837787397663),
+		vec3(+0.042503924908568, +0.011864349397292, +0.895803470755843)
 	);
 	return saturate(instMul(toRec2020, rgb_input));
 }
