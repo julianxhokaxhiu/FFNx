@@ -150,7 +150,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	}
 	
 	audiostream = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &acodec, 0);
-	if(with_audio && audiostream < 0 && trace_movies) ffnx_trace("prepare_movie: no audio stream found\n");
+	if(with_audio && audiostream < 0 && (trace_movies || trace_all)) ffnx_trace("prepare_movie: no audio stream found\n");
 	
 	codec_ctx = avcodec_alloc_context3(codec);
 	if (!codec_ctx) {
@@ -221,7 +221,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			(strcmp(upperbuffer, "SQLOGO") == 0)
 		){
 			islogomovie = true;
-			if (trace_movies) ffnx_trace("prepare_movie: %s detected as logo movie; NTSC-J conversion will be supressed.\n", name);
+			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie; NTSC-J conversion will be supressed.\n", name);
 		}
 	}
 	
@@ -236,7 +236,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			(codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)
 	){
 		isff8steammovie = true;
-		if (trace_movies) ffnx_trace("prepare_movie: File %s appears to be from the FF8 Steam release. Missing metadata will be guessed accordingly.\n", name);
+		if (trace_movies  || trace_all) ffnx_trace("prepare_movie: File %s appears to be from the FF8 Steam release. Missing metadata will be guessed accordingly.\n", name);
 	}
 	
 	movie_width = codec_ctx->width;
@@ -277,7 +277,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		yuvjfixneeded = false;
 	}
 	
-	if (trace_movies) ffnx_trace("prepare_movie: color range detected as %i (0=tv, 1=pc).\n", fullrange_input);
+	if (trace_movies  || trace_all) ffnx_trace("prepare_movie: color range detected as %i (0=tv, 1=pc).\n", fullrange_input);
 	
 	// will we need to convert the colorspace?
 	switch(codec_ctx->colorspace){
@@ -285,13 +285,13 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601 
 		case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601 
 			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
-				if (trace_movies) ffnx_trace("prepare_movie: BGR24 detected.\n");
+				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
 				colormatrix = COLORMATRIX_BGR24;
 				okcolorspace = true;
 				break;
 			}
 			else if (isff8steammovie){
-				if (trace_movies) ffnx_trace("prepare_movie: assuming bt709 color matrix because this is a FF8 Steam release movie.\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: assuming bt709 color matrix because this is a FF8 Steam release movie.\n");
 				colormatrix = COLORMATRIX_BT709;
 				okcolorspace = true;
 				break;
@@ -299,17 +299,17 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			// fall through to next case if we didn't already break
 		case AVCOL_SPC_BT470BG:
 		case AVCOL_SPC_SMPTE170M:
-			if (trace_movies) ffnx_trace("prepare_movie: bt601 color matrix detected or defaulted to.\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: bt601 color matrix detected or defaulted to.\n");
 			colormatrix = COLORMATRIX_BT601;
 			okcolorspace = true;
 			break;
 		case AVCOL_SPC_BT709:
-			if (trace_movies) ffnx_trace("prepare_movie: bt709 color matrix detected.\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: bt709 color matrix detected.\n");
 			colormatrix = COLORMATRIX_BT709;
 			okcolorspace = true;
 		case AVCOL_SPC_RGB:
 			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
-				if (trace_movies) ffnx_trace("prepare_movie: BGR24 detected.\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
 				colormatrix = COLORMATRIX_BGR24;
 				okcolorspace = true;
 			}
@@ -318,7 +318,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			}
 			break;
 		default:
-			if (trace_movies) ffnx_trace("prepare_movie: unhandled color matrix detected; will use swscale to convert. Expect incorrect gamut.\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: unhandled color matrix detected; will use swscale to convert. Expect incorrect gamut.\n");
 			okcolorspace = false;
 	}
 	
@@ -329,24 +329,24 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		case AVCOL_TRC_RESERVED0:
 			if (colormatrix == COLORMATRIX_BT709){
 				gammatype = GAMMAFUNCTION_SMPTE170M;
-				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
 			}
 			else if (codec_ctx->color_primaries == AVCOL_PRI_BT470BG){
 				gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
-				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, but EBU color gamut (PAL), so assuming 2.8 gamma (PAL).\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but EBU color gamut (PAL), so assuming 2.8 gamma (PAL).\n");
 			}
 			else {
 				gammatype = GAMMAFUNCTION_TOELESS_SRGB;
-				if (trace_movies) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using \"toeless sRGB\" gamma curve.\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using \"toeless sRGB\" gamma curve.\n");
 			}
 			break;
 		case AVCOL_TRC_IEC61966_2_1: //srgb
-			if (trace_movies) ffnx_trace("prepare_movie: srgb gamma transfer function detected\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb gamma transfer function detected\n");
 			gammatype = GAMMAFUNCTION_SRGB;
 			break;
 		case AVCOL_TRC_GAMMA22:
 			gammatype = GAMMAFUNCTION_TWO_PT_TWO;
-			if (trace_movies) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected\n");
 			break;
 		case AVCOL_TRC_SMPTE170M:
 		case AVCOL_TRC_BT709: // same as SMPTE170M
@@ -355,11 +355,11 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		case AVCOL_TRC_IEC61966_2_4: // same as SMPTE170M, but is defined for negative numbers too (which we ignore)
 		case AVCOL_TRC_BT1361_ECG: // same as SMPTE170M, but is defined for negative numbers too (which we ignore)
 			gammatype = GAMMAFUNCTION_SMPTE170M;
-			if (trace_movies) ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
 			break;
 		case AVCOL_TRC_GAMMA28:
 			gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
-			if (trace_movies) ffnx_trace("prepare_movie: 2.8 gamma transfer function detected\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.8 gamma transfer function detected\n");
 			break;
 		default:
 			ffnx_error("prepare_movie: unsupported transfer (inverse gamma) function\n");
@@ -384,42 +384,42 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	switch(codec_ctx->color_primaries){
 		case AVCOL_PRI_BT709:
 			colorgamut = COLORGAMUT_SRGB;
-			if (trace_movies) ffnx_trace("prepare_movie: srgb/bt709 color gamut detected.\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb/bt709 color gamut detected.\n");
 			break;
 		case AVCOL_PRI_BT470M:
 			// Since 470m (NTSC1953) was deprecated in 1979, material in this gamut is rare and likely irrelevant to FF7/8.
 			// Assume user meant SMPTE-C (which replaced NTSC1953 in 1979).
-			if (trace_movies) ffnx_trace("prepare_movie: NTSC1953 color gamut detected. Assuming user error and using SMPTE-C instead.\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: NTSC1953 color gamut detected. Assuming user error and using SMPTE-C instead.\n");
 			// fall through to next case
 		case AVCOL_PRI_SMPTE170M:
 		case AVCOL_PRI_SMPTE240M:
 			
 			colorgamut = COLORGAMUT_SMPTEC;
-			if (trace_movies) ffnx_trace("prepare_movie: SMPTE-C color gamut detected.\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: SMPTE-C color gamut detected.\n");
 			break;
 		case AVCOL_PRI_UNSPECIFIED:
 		case AVCOL_PRI_RESERVED0:
 		case AVCOL_PRI_RESERVED:
 			if (isff8steammovie){
 				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a FF8 Steam release video. (Steam already did NTSC-J to SRGB gamut conversion.)\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a FF8 Steam release video. (Steam already did NTSC-J to SRGB gamut conversion.)\n");
 			}
 			else if (colormatrix == COLORMATRIX_BT709){
 				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because bt709 color matrix.\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because bt709 color matrix.\n");
 			}
 			else if (islogomovie){
 				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a logo movie.\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a logo movie.\n");
 			}
 			else {
 				colorgamut = COLORGAMUT_NTSCJ;
-				if (trace_movies) ffnx_trace("prepare_movie: missing color gamut metadata; assuming NTSC-J.\n");
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming NTSC-J.\n");
 			}
 			break;
 		case AVCOL_PRI_BT470BG:
 			colorgamut = COLORGAMUT_EBU;
-			if (trace_movies) ffnx_trace("prepare_movie: EBU(PAL) color gamut detected.\n");
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: EBU(PAL) color gamut detected.\n");
 			break;
 		default:
 			ffnx_error("prepare_movie: unsupported color gamut\n");
@@ -427,7 +427,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			goto exit;
 	}
 	
-	if (trace_movies)
+	if (trace_movies || trace_all)
 	{
 		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames, codec_ctx->color_range);
 		// bogus FPS value, assume the codec provides frame limiting
@@ -451,7 +451,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	if(!okpixelformat || !okcolorspace || yuvjfixneeded)
 		// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader 
 	{
-		if (trace_movies)
+		if (trace_movies || trace_all)
 		{
 			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->colorspace: %s\n", av_color_space_name(codec_ctx->colorspace));
 			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->pix_fmt: %s\n", av_pix_fmt_desc_get(codec_ctx->pix_fmt)->name);
@@ -512,7 +512,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	{
 		if (acodec_ctx->sample_fmt != AV_SAMPLE_FMT_FLT) {
 			audio_must_be_converted = true;
-			if (trace_movies)
+			if (trace_movies || trace_all)
 			{
 				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_fmt: %s\n", av_get_sample_fmt_name(acodec_ctx->sample_fmt));
 				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->sample_rate: %d\n", acodec_ctx->sample_rate);
