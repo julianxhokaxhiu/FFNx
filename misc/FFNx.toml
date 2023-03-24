@@ -112,9 +112,15 @@ enable_time_cycle = false
 external_time_cycle_path = "time"
 
 #[HDR]
-# This flag will set the Maximum Luminance nits value of your monitor/TV in order to properly correct colors when rendering.
-# By default is set to 0, which means use what has been autodetected via software.
-# NOTE: Auto-detected value MIGHT be wrong sometimes, use this flag to fix that if colors do not look properly on your own screen.
+# This flag will set the brightness level that SDR "white" is rendered at within an HDR monitor.
+# By default is set to 0, which means to attempt autodetection of the correct value for your monitor via software.
+# Autodetection may fail on some monitor models.
+# Autodetection WILL fail on Windows older than Win10 Fall Creators Update (version 1709).
+# Autodetection WILL fail on WINE (at least as of WINE version 7.22).
+# If autodetection is attempted and fails, a default value of 200 nits will be used.
+# NOTE: FFNx.log will tell you if autodetection succeeded, and what value was autodetected.
+# NOTE: The autodetected (or default) value MIGHT be wrong sometimes; use this flag if brightness does not look correct.
+# Sane values are likely in the range 100-200 nits.
 hdr_max_nits = 0
 
 #########################

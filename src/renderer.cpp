@@ -20,11 +20,21 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+// We need to set WINVER and _WIN32_WINNT to Win10 in order for DISPLAYCONFIG_SDR_WHITE_LEVEL to be defined.
+// Since the relevant functions have been defined since Win7, and we're only using a johnny-come-lately *parameter*,
+// the SDR-white-level-for-HDR autodetection code should fail gracefully with a bad parameter error on older versions of Windows.
+// In theory at least. (Not tested yet.)
+// It does fail gracefully on Wine. 
+#define WINVER 0x0A00
+#define _WIN32_WINNT 0x0A00
+
 #include "renderer.h"
 #include "lighting.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
 #include "cfg.h"
+#include <windows.h>
+#include <vector>
 
 CMRC_DECLARE(FFNx);
 
@@ -706,18 +716,123 @@ void Renderer::init()
     if (getCaps()->supported & BGFX_CAPS_HDR10)
     {
         internalState.bIsHDR = true;
+        ffnx_info("HDR monitor detected. HDR enabled.\n");
 
         bgfxInit.resolution.reset |= BGFX_RESET_HDR10;
         bgfxInit.resolution.format = bgfx::TextureFormat::RGB10A2;
 
         if (hdr_max_nits <= 0) {
-            short idx = 0;
-            while (!getCaps()->outDeviceInfo[idx].isHDR10) idx++;
-            hdr_max_nits = getCaps()->outDeviceInfo[idx].maxFullFrameLuminance;
-        }
+            ffnx_info("Attempting to autodetect SDR white level for HDR...\n");
+            // The goal here is to autodetect "the brightness level that SDR 'white' is rendered at within an HDR monitor."
+            // See: https://www.pyromuffin.com/2018/07/how-to-do-nothing-in-hdr.html
+            // See also: https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-displayconfig_sdr_white_level
+            // Autodetection may fail on some monitor models.
+            // Autodetection WILL fail on Windows older than Win10 Fall Creators Update (Version 1709) and WILL fail on WINE (at least as of WINE 7.22)
+            
+            // First, enumerate the DISPLAYCONFIG_PATH_INFO for all monitors.
+            // Code borrowed from Microsoft's example: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig#examples
+            std::vector<DISPLAYCONFIG_PATH_INFO> paths;
+            std::vector<DISPLAYCONFIG_MODE_INFO> modes;
+            UINT32 flags = QDC_ONLY_ACTIVE_PATHS; // | QDC_VIRTUAL_MODE_AWARE; // MS's example is wrong. Causes bad param error on WINE. See: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdisplayconfigbuffersizes
+            LONG monresult = ERROR_SUCCESS;
+            bool gotbuffersizes = false;
+            bool usedefaultnits = true;
+            do {
+                // Determine how many path and mode structures to allocate
+                UINT32 pathCount, modeCount;
+                monresult = GetDisplayConfigBufferSizes(flags, &pathCount, &modeCount);
+                
+                if (monresult != ERROR_SUCCESS){
+                    if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Cannot enumerate monitors. GetDisplayConfigBufferSizes() failed with error code %i.\n", monresult);
+                    break;
+                }
+                gotbuffersizes = true;
+                
+                // Allocate the path and mode arrays
+                paths.resize(pathCount);
+                modes.resize(modeCount);
+                
+                // Get all active paths and their modes
+                monresult = QueryDisplayConfig(flags, &pathCount, paths.data(), &modeCount, modes.data(), nullptr);
+                
+                // The function may have returned fewer paths/modes than estimated
+                paths.resize(pathCount);
+                modes.resize(modeCount);
+                
+                // It's possible that between the call to GetDisplayConfigBufferSizes and QueryDisplayConfig
+                // that the display state changed, so loop on the case of ERROR_INSUFFICIENT_BUFFER.
+            } while (monresult == ERROR_INSUFFICIENT_BUFFER);
+            
+            if (monresult != ERROR_SUCCESS){
+                if (gotbuffersizes){
+                    if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Cannot enumerate monitors. QueryDisplayConfig() failed with error code %i.\n", monresult);
+                }
+            }
+            else { 
+                // loop over monitors and take the SDR white level of the first HDR monitor we find.
+                int pathidx = -1;
+                for (auto& path : paths) {
+                    pathidx++;
+                                    
+                    // Check if this monitor is HDR capable and HDR enabled
+                    // Borrowed from these two examples:
+                    // https://forum.doom9.org/showthread.php?s=33dc0ad84a0997fce56710b3959e0415&p=1897630#post1897630
+                    // https://stackoverflow.com/a/66160049
+                    DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO getColorInfo = {};
+                    getColorInfo.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+                    getColorInfo.header.id = path.targetInfo.id;
+                    getColorInfo.header.adapterId = path.targetInfo.adapterId;
+                    getColorInfo.header.size = sizeof(getColorInfo);
+                    monresult = DisplayConfigGetDeviceInfo(&getColorInfo.header);
+                    if (monresult != ERROR_SUCCESS){
+                        if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR skipping monitor #%i because DisplayConfigGetDeviceInfo() DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO check failed with error code %i.\n", pathidx, monresult);
+                        continue;
+                    }
+                    if (!getColorInfo.advancedColorSupported || !getColorInfo.advancedColorEnabled){
+                        if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR determined that monitor #%i is not an HDR monitor or HDR is not enabled. Checking next monitor (if any)...\n", pathidx);
+                        continue;
+                    }
+                    
+                    // If we found an HDR monitor, then query its SDR white level
+                    // Code borrowed from Google Chrome: https://chromium.googlesource.com/chromium/src/+/c71f15ab1ace78c7efeeeda9f8552b4af9db2877/ui/display/win/screen_win.cc#112
+                    DISPLAYCONFIG_SDR_WHITE_LEVEL white_level = {};
+                    white_level.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
+                    white_level.header.id = path.targetInfo.id;
+                    white_level.header.adapterId = path.targetInfo.adapterId;
+                    white_level.header.size = sizeof(white_level);
+                    monresult = DisplayConfigGetDeviceInfo(&white_level.header);
+                    if (monresult != ERROR_SUCCESS){
+                        if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Monitor #%i appears to be an HDR monitor, but DisplayConfigGetDeviceInfo() DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL check failed with error code %i.\n", pathidx, monresult);
+                        break;
+                    }
+                    if (white_level.SDRWhiteLevel == 0){
+                        if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Monitor #%i appears to be an HDR monitor, but SDR white level is reported as 0.\n", pathidx);
+                        break;
+                    }
+                    // SDRWhiteLevel is stored in units of 2/25 nits (but with steps of 80 nits), because Microsoft.
+                    // See: https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-displayconfig_sdr_white_level
+                    hdr_max_nits = white_level.SDRWhiteLevel * 80.0 / 1000.0;
+                    ffnx_info("SDR white level for HDR successfully autodetected as %i nits.\n", (int)hdr_max_nits);
+                    usedefaultnits = false;
+                    break;
+                
+                } // end for (auto& path : paths)
+                
+            } // end else (monresult == ERROR_SUCCESS)
+            if (usedefaultnits){
+                ffnx_info("Autodetection of SDR white level for HDR failed. Assuming default value of 200 nits.\n");
+                // Google thinks 200 nits is a good default. Who are we to argue?
+                hdr_max_nits = 200.0;
+            }
+        } // end if  (hdr_max_nits <= 0)
 
         bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.format);
-    }
+    } //end if HDR
+    
+    // testing
+    {
+        
+    } // end testing scope
 
     internalState.texHandlers.resize(RendererTextureSlot::COUNT, BGFX_INVALID_HANDLE);
 
