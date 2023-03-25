@@ -7,8 +7,8 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO "vgmstream/vgmstream"
     HEAD_REF master
-    REF 8b0204f3fce845df91adc68e43669f9b660d7c63
-    SHA512 485313fffc185188a3f24aad1c19c6e70e10d331c50a4019e7b7f00a940e83e4c6b0e30301596a2b69354b52ba20a42bdc7d571bedb2c9f356a5373e38f9f9bb
+    REF r1831
+    SHA512 11d8b426f2486e8de38d9d6792626fc3c97bd60b202e17b579b18a88fdd9a27ec3b36771b58772e03547e51cdbbf2504b7849bb2ce5e2d291d8e75c9d009be30
     PATCHES cmake.patch
 )
 
@@ -40,7 +40,6 @@ vcpkg_configure_cmake(
         -DSWRESAMPLE_VERSION=2
         -DUSE_G719=OFF
         -DUSE_G7221=ON
-        -DUSE_MAIATRAC3PLUS=OFF
         -DUSE_MPEG=${USE_MPEG}
         -DUSE_VORBIS=${USE_VORBIS}
         -DBUILD_AUDACIOUS=OFF
@@ -56,6 +55,7 @@ vcpkg_install_cmake()
 
 vcpkg_copy_pdbs()
 
+file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
 file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT} RENAME copyright)
 
 # Copy cmake configuration files

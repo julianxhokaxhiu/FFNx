@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d719e16e..b8121a13 100644
+index 9b60f21c..3b0ccc56 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,4 +1,5 @@
@@ -9,24 +9,12 @@ index d719e16e..b8121a13 100644
  
  if(CMAKE_SYSTEM_NAME MATCHES Darwin)
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index f09d3eed..02750d86 100644
+index cf324909..118c1588 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -66,12 +66,37 @@ if(NOT EMSCRIPTEN)
- 		PREFIX ""
- 		OUTPUT_NAME "libvgmstream"
- 	)
--	
-+
- 	if(USE_FFMPEG AND FFMPEG_COMPILE)
- 		add_dependencies(libvgmstream_shared avcodec)
+@@ -76,3 +76,28 @@ if(NOT EMSCRIPTEN)
+ 		set_target_properties(libvgmstream_shared PROPERTIES LINK_FLAGS_RELEASE -s)
  	endif()
--	
-+
- 	setup_target(libvgmstream_shared TRUE)
--	
-+
- 	target_include_directories(libvgmstream_shared PRIVATE ${libvgmstream_includes})
  endif()
 +
 +if(MSVC)
@@ -53,7 +41,6 @@ index f09d3eed..02750d86 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/g72x_state.h DESTINATION include/libvgmstream/coding )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/nwa_decoder.h DESTINATION include/libvgmstream/coding )
 +endif()
-\ No newline at end of file
 diff --git a/src/streamfile.c b/src/streamfile.c
 index 0e6cb01e..d2d7b666 100644
 --- a/src/streamfile.c
