@@ -306,12 +306,49 @@ add_custom_command(
 
 # CPU INFO
 add_custom_command(
-    TARGET ${RELEASE_NAME}
-    PRE_BUILD
-    # Get CPU info
-    COMMAND
-      ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/cpu-info
-    # Get CPU ISA supported instructions
-    COMMAND
-      ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/isa-info
+  TARGET ${RELEASE_NAME}
+  PRE_BUILD
+  # Get CPU info
+  COMMAND
+    ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/cpu-info
+  # Get CPU ISA supported instructions
+  COMMAND
+    ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/isa-info
 )
+
+# Copy FFNx release to FF7 game path if installed
+cmake_host_system_information(RESULT FF7_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc./Final Fantasy VII" VALUE "AppPath" ERROR_VARIABLE FF7_KEY_QUERY_RES)
+if("${FF7_KEY_QUERY_RES}" STREQUAL "")
+  cmake_path(CONVERT "${FF7_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_GAME_PATH)
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_GAME_PATH}...
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF7_GAME_PATH}
+  )
+endif()
+
+# Copy FFNx release to FF8 game path if installed
+cmake_host_system_information(RESULT FF8_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc/FINAL FANTASY VIII/1.00" VALUE "AppPath" ERROR_VARIABLE FF8_KEY_QUERY_RES)
+if("${FF8_KEY_QUERY_RES}" STREQUAL "")
+  cmake_path(CONVERT "${FF8_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_GAME_PATH)
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_GAME_PATH}...
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF8_GAME_PATH}
+    # Delete previous eax.dll
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_GAME_PATH}/eax.dll
+    # Rename FFNx.dll to eax.dll
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_GAME_PATH}/FFNx.dll
+            ${FF8_GAME_PATH}/eax.dll
+  )
+endif()
