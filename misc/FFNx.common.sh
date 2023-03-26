@@ -141,9 +141,9 @@ vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 vec3 convertGamut_NTSCJtoSRGB(vec3 rgb_input)
 {
 	const mat3 NTSCJ_to_bt709_gamut_transform = mat3(
-		vec3(+1.42849423843304, -0.028230868456879, -0.026451048534459),
-		vec3(-0.343794575385404, +0.937886666562635, -0.04977408617468),
-		vec3(-0.084699613295359, +0.09034421347425, +1.07622507193376)
+		vec3(+1.34756301456925, -0.031150036968175, -0.024443490594835),
+		vec3(-0.276463760747096, +0.956512223260545, -0.048150182045316),
+		vec3(-0.071099263267176, +0.074637860817515, +1.07259361295816)
 	);
 	return saturate(instMul(NTSCJ_to_bt709_gamut_transform, rgb_input));
 }
@@ -179,6 +179,15 @@ vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
 	return saturate(instMul(toRec2020, rgb_input));
 }
 
+vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
+{
+	mat3 NTSCJtoRec2020 = mat3(
+		vec3(+0.835314787642499, +0.064086581191406, -0.00258827855966),
+		vec3(+0.139190018780176, +0.859494098117681, +0.036362217824334),
+		vec3(+0.025495200617381, +0.076419362630435, +0.966226011255509)
+	);
+	return saturate(instMul(NTSCJtoRec2020, rgb_input));
+}
 
 // Dithering ---------------------------------------------
 
