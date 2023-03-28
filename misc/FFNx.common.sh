@@ -189,6 +189,26 @@ vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 	return saturate(instMul(NTSCJtoRec2020, rgb_input));
 }
 
+vec3 convertGamut_SMPTECtoREC2020(vec3 rgb_input)
+{
+	mat3 NTSCJtoRec2020 = mat3(
+		vec3(+0.596055044600838, +0.081162684813783, +0.015478022749295),
+		vec3(+0.349321035033339, +0.891089379419002, +0.081739076199362),
+		vec3(+0.054623920365823, +0.027747935767214, +0.902782901051343)
+	);
+	return saturate(instMul(NTSCJtoRec2020, rgb_input));
+}
+
+vec3 convertGamut_EBUtoREC2020(vec3 rgb_input)
+{
+	mat3 NTSCJtoRec2020 = mat3(
+		vec3(+0.655921314038802, +0.072058409820593, +0.017079198766081),
+		vec3(+0.302076101195449, +0.916217182555354, +0.097683466215707),
+		vec3(+0.042002584765749, +0.011724407624053, +0.885237335018211)
+	);
+	return saturate(instMul(NTSCJtoRec2020, rgb_input));
+}
+
 // Dithering ---------------------------------------------
 
 // Apply Martin Roberts' quasirandom dithering below 8 bits of precision.
