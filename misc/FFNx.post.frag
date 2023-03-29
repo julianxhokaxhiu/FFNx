@@ -26,11 +26,8 @@ $input v_color0, v_texcoord0
 
 SAMPLER2D(tex_0, 0);
 
-uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 
-#define isFullRange FSMiscFlags.x > 0.0
-#define isYUV FSMiscFlags.y > 0.0
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
 
@@ -43,10 +40,8 @@ void main()
 		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
 		// d3d9 doesn't support textureSize()
 		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
-		if (!(isYUV) || isFullRange){
-			ivec2 dimensions = textureSize(tex_0, 0);
-			color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0);
-		}
+        ivec2 dimensions = textureSize(tex_0, 0);
+        color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2.0);
 		#endif
 		// change primaries from sRGB/rec709 to rec2020 and remap the white point on top of the current monitor nits value
 		color.rgb = convertGamut_SRGBtoREC2020(color.rgb); // TODO: move this during refactor
