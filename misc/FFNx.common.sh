@@ -218,21 +218,22 @@ vec3 convertGamut_EBUtoREC2020(vec3 rgb_input)
 // ydims: integer dimensions of first channel's texture
 // udims & vdims: integer dimensions of first second and third channels' textures (may differ from ydim for various yuv formats)
 // scale_divisor: step size divisor to scale the dithering to fit within. E.g., use 255.0 for dithering 8-bit values.
-vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims, float scale_divisor)
+// xyoffset: value to add to x & y coords. Should be at least 1 to avoid x=0 and y=0. Should be different if the same input is dithered twice (which happens if TV-range video is dither for range expansion, then again for HDR bit depth increase)
+vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims, float scale_divisor, float xyoffset)
 {
 	// get integer range x,y coords for this pixel
 	// invert one axis for u and the other axis for v to decouple dither patterns across channels
 	// see https://blog.kaetemi.be/2015/04/01/practical-bayer-dithering/
 	// add 1 to avoid x=0 and y=0
 	vec3 xpos = vec3(
-		round(float(ydims.x) * coords.x)  + 1.0,
-		round(float(udims.x) * (1.0 - coords.x)) + 1.0,
-		round(float(vdims.x) * coords.x)  + 1.0
+		round(float(ydims.x) * coords.x)  + xyoffset,
+		round(float(udims.x) * (1.0 - coords.x)) + xyoffset,
+		round(float(vdims.x) * coords.x)  + xyoffset
 	);
 	vec3 ypos = vec3(
-		round(float(ydims.y) * coords.y) + 1.0,
-		round(float(udims.y) * coords.y) + 1.0,
-		round(float(vdims.y) * (1.0 - coords.y)) + 1.0
+		round(float(ydims.y) * coords.y) + xyoffset,
+		round(float(udims.y) * coords.y) + xyoffset,
+		round(float(vdims.y) * (1.0 - coords.y)) + xyoffset
 	);
 	// R series magic
 	vec3 dither = fract((xpos * vec3_splat(0.7548776662)) + (ypos * vec3_splat(0.56984029)));
