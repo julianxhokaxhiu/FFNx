@@ -41,7 +41,7 @@ void main()
 		// d3d9 doesn't support textureSize()
 		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
         ivec2 dimensions = textureSize(tex_0, 0);
-        color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2.0);
+        color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
 		#endif
 		// change primaries from sRGB/rec709 to rec2020 and remap the white point on top of the current monitor nits value
 		color.rgb = convertGamut_SRGBtoREC2020(color.rgb); // TODO: move this during refactor
