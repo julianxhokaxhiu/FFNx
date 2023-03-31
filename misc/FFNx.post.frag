@@ -44,7 +44,6 @@ void main()
         color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
 		#endif
 		// change primaries from sRGB/rec709 to rec2020 and remap the white point on top of the current monitor nits value
-		color.rgb = convertGamut_SRGBtoREC2020(color.rgb); // TODO: move this during refactor
 		color.rgb = ApplyREC2084Curve(color.rgb, monitorNits);
 	}
 
