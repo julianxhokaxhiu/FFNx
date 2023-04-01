@@ -402,7 +402,7 @@ void main()
         }
         else
         {
-            indirectLuminance = CalcConstIndirectLuminance(color.rgb);
+            indirectLuminance = CalcConstIndirectLuminance(color.rgb, isHDR);
         }
 
         if(debugOutput == DEBUG_OUTPUT_COLOR)

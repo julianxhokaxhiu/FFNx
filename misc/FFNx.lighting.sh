@@ -185,11 +185,17 @@ vec3 CalcIblIndirectLuminance(vec3 albedo, vec3 specularIbl, vec3 diffuseIbl, ve
     return (indirectDiffuse + indirectSpecular) * ambientLightColor * ambientLightIntensity * ao;
 }
 
-vec3 CalcConstIndirectLuminance(vec3 albedo)
+vec3 CalcConstIndirectLuminance(vec3 albedo, bool isHDR)
 {
     // Ambient
     vec3 ambientLightColor = ambientLightData.rgb;
-    if(isTimeEnabled)
+    if (isHDR){
+        ambientLightColor = convertGamut_SRGBtoREC2020(ambientLightColor);
+        if(isTimeEnabled) {
+            ambientLightColor *= convertGamut_SRGBtoREC2020(TimeColor.rgb);
+        }
+    }
+    else if(isTimeEnabled)
     {
         ambientLightColor *= TimeColor.rgb;
     }
