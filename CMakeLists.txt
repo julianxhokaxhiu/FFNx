@@ -324,10 +324,21 @@ if("${FF7_KEY_QUERY_RES}" STREQUAL "")
     TARGET ${RELEASE_NAME}
     POST_BUILD
     COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_GAME_PATH}/FFNx.toml
+            ${FF7_GAME_PATH}/FFNx.toml.bak
     # Copy all dist files
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_BINARY_DIR}/bin
             ${FF7_GAME_PATH}
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF7_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_GAME_PATH}/FFNx.toml.bak
+            ${FF7_GAME_PATH}/FFNx.toml
   )
 endif()
 
@@ -339,6 +350,10 @@ if("${FF8_KEY_QUERY_RES}" STREQUAL "")
     TARGET ${RELEASE_NAME}
     POST_BUILD
     COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_GAME_PATH}/FFNx.toml
+            ${FF8_GAME_PATH}/FFNx.toml.bak
     # Copy all dist files
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_BINARY_DIR}/bin
@@ -350,5 +365,12 @@ if("${FF8_KEY_QUERY_RES}" STREQUAL "")
     COMMAND ${CMAKE_COMMAND} -E rename
             ${FF8_GAME_PATH}/FFNx.dll
             ${FF8_GAME_PATH}/eax.dll
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_GAME_PATH}/FFNx.toml.bak
+            ${FF8_GAME_PATH}/FFNx.toml
   )
 endif()
