@@ -30,14 +30,48 @@
 
 Lighting lighting;
 
+std::string Lighting::getConfigGroup()
+{
+	const struct game_mode *mode = getmode_cached();
+	std::string ret;
+	char *field_name = nullptr;
+
+	switch(mode->driver_mode)
+	{
+		case MODE_FIELD:
+			ret.append("field_");
+			field_name = get_current_field_name();
+			if (field_name) ret.append(field_name);
+			break;
+		case MODE_BATTLE:
+			ret.append("bat_");
+			ret.append(std::to_string(ff7_externals.modules_global_object->battle_id));
+			break;
+	}
+
+	return ret;
+}
+
+auto Lighting::getConfigEntry(char *key)
+{
+	std::string groupKey = getConfigGroup();
+
+	if (groupKey.empty())
+		return config[key];
+	else if (config.contains(groupKey))
+		return config[groupKey][key];
+	else
+		return toml::v3::node_view<toml::v3::node>();
+}
+
 void Lighting::loadConfig()
 {
-	char _fullpath[MAX_PATH];
-	sprintf(_fullpath, "%s/%s/config.toml", basedir, external_lighting_path.c_str());
-
 	try
 	{
-		config = toml::parse_file(_fullpath);
+		if (enable_devtools && fileExists(configDevToolsPath))
+			config = toml::parse_file(configDevToolsPath);
+		else
+			config = toml::parse_file(configPath);
 	}
 	catch (const toml::parse_error &err)
 	{
@@ -45,140 +79,165 @@ void Lighting::loadConfig()
 	}
 }
 
-void Lighting::initParamsFromConfig()
+void Lighting::setConfigEntry(const char *key, auto value)
 {
-   float lightRotationV = config["light_rotation_vertical"].value_or(60.0);
-   lightRotationV = std::max(0.0f, std::min(180.0f, lightRotationV));
-   float lightRotationH = config["light_rotation_horizontal"].value_or(60.0);
-   lightRotationH = std::max(0.0f, std::min(360.0f, lightRotationH));
-   lighting.setWorldLightDir(lightRotationV, lightRotationH, 0.0f);
+	std::string groupKey = getConfigGroup();
 
-   float lightIntensity = config["light_intensity"].value_or(4.0);
-   lighting.setLightIntensity(lightIntensity);
-
-   toml::array* lightColorArray = config["light_color"].as_array();
-   if(lightColorArray != nullptr && lightColorArray->size() == 3)
-   {
-	   float r = lightColorArray->get(0)->value<float>().value_or(1.0);
-	   float g = lightColorArray->get(1)->value<float>().value_or(1.0);
-	   float b = lightColorArray->get(2)->value<float>().value_or(1.0);
-	   lighting.setLightColor(r, g, b);
-   }
-
-   float ambientLightIntensity = config["ambient_light_intensity"].value_or(1.0);
-   lighting.setAmbientIntensity(ambientLightIntensity);
-
-   toml::array* ambientLightColorArray = config["light_color"].as_array();
-   if(ambientLightColorArray != nullptr && ambientLightColorArray->size() == 3)
-   {
-	   float r = ambientLightColorArray->get(0)->value<float>().value_or(1.0);
-	   float g = ambientLightColorArray->get(1)->value<float>().value_or(1.0);
-	   float b = ambientLightColorArray->get(2)->value<float>().value_or(1.0);
-	   lighting.setAmbientLightColor(r, g, b);
-   }
-
-   float roughness = config["material_roughness"].value_or(0.7);
-   lighting.setRoughness(roughness);
-
-   float metallic = config["material_metallic"].value_or(0.5);
-   lighting.setMetallic(metallic);
-
-   float specular = config["material_specular"].value_or(0.0);
-   lighting.setSpecular(specular);
-
-   int shadowMapResolution = config["shadowmap_resolution"].value_or(2048);
-   shadowMapResolution = std::max(0, std::min(16384, shadowMapResolution));
-   lighting.setShadowMapResolution(shadowMapResolution);
+	if (groupKey.empty())
+		config.insert_or_assign(key, value);
+	else if (config.contains(groupKey))
+		config[groupKey].as_table()->insert_or_assign(key, value);
+	else
+		config.insert_or_assign(groupKey, toml::table{
+																					{key, value}});
 }
 
-void Lighting::updateLightMatrices(struct boundingbox* sceneAabb)
+void Lighting::initParamsFromConfig()
 {
-    struct game_mode* mode = getmode_cached();
+	float lightRotationV = getConfigEntry("light_rotation_vertical").value_or(60.0);
+	lightRotationV = std::max(0.0f, std::min(180.0f, lightRotationV));
+	float lightRotationH = getConfigEntry("light_rotation_horizontal").value_or(60.0);
+	lightRotationH = std::max(0.0f, std::min(360.0f, lightRotationH));
+	lighting.setWorldLightDir(lightRotationV, lightRotationH, 0.0f);
 
-    float rotMatrix[16];
-    float degreeToRadian = M_PI / 180.0f;
-    bx::mtxRotateXYZ(rotMatrix, lightingState.worldLightRot.x * degreeToRadian,
-        lightingState.worldLightRot.y * degreeToRadian, lightingState.worldLightRot.z * degreeToRadian);
+	float lightIntensity = getConfigEntry("light_intensity").value_or(4.0);
+	lighting.setLightIntensity(lightIntensity);
 
-    const float forwardVector[4] = { 0.0f, 0.0f, -1.0f, 0.0 };
-    float worldSpaceLightDir[4] = { 0.0f, 0.0f, 0.0f, 0.0 };
-    bx::vec4MulMtx(worldSpaceLightDir, forwardVector, rotMatrix);
+	toml::array *lightColorArray = getConfigEntry("light_color").as_array();
+	if (lightColorArray != nullptr && lightColorArray->size() == 3)
+	{
+		float r = lightColorArray->get(0)->value<float>().value_or(1.0);
+		float g = lightColorArray->get(1)->value<float>().value_or(1.0);
+		float b = lightColorArray->get(2)->value<float>().value_or(1.0);
+		lighting.setLightColor(r, g, b);
+	}
 
-    float area = lightingState.shadowMapArea;
-    float nearFarSize = lightingState.shadowMapNearFarSize;
+	float ambientLightIntensity = getConfigEntry("ambient_light_intensity").value_or(1.0);
+	lighting.setAmbientIntensity(ambientLightIntensity);
 
-    if (mode->driver_mode == MODE_FIELD)
-    {
-        // In Field mode the z axis is the up vector so we swap y and z axis
-        float tmp = worldSpaceLightDir[1];
-        worldSpaceLightDir[1] = worldSpaceLightDir[2];
-        worldSpaceLightDir[2] = -tmp;
+	toml::array *ambientLightColorArray = getConfigEntry("ambient_light_color").as_array();
+	if (ambientLightColorArray != nullptr && ambientLightColorArray->size() == 3)
+	{
+		float r = ambientLightColorArray->get(0)->value<float>().value_or(1.0);
+		float g = ambientLightColorArray->get(1)->value<float>().value_or(1.0);
+		float b = ambientLightColorArray->get(2)->value<float>().value_or(1.0);
+		lighting.setAmbientLightColor(r, g, b);
+	}
 
-        area = lightingState.fieldShadowMapArea;
-        nearFarSize = lightingState.fieldShadowMapNearFarSize;
-    }
+	float roughness = config["material_roughness"].value_or(0.7);
+	lighting.setRoughness(roughness);
 
-    // Transform light direction into view space
-    float viewSpaceLightDir[4];
-    bx::vec4MulMtx(viewSpaceLightDir, worldSpaceLightDir, newRenderer.getViewMatrix());
+	float metallic = config["material_metallic"].value_or(0.5);
+	lighting.setMetallic(metallic);
 
-    lightingState.lightDirData[0] = viewSpaceLightDir[0];
-    lightingState.lightDirData[1] = viewSpaceLightDir[1];
-    lightingState.lightDirData[2] = viewSpaceLightDir[2];
+	float specular = config["material_specular"].value_or(0.0);
+	lighting.setSpecular(specular);
 
-    // Light view frustum pointing to scene AABB center
-    const bx::Vec3 center = {
-        0.5f * (sceneAabb->min_x + sceneAabb->max_x),
-        0.5f * (sceneAabb->min_y + sceneAabb->max_y),
-        0.5f * (sceneAabb->min_z + sceneAabb->max_z) };
+	int shadowMapResolution = config["shadowmap_resolution"].value_or(2048);
+	shadowMapResolution = std::max(0, std::min(16384, shadowMapResolution));
+	lighting.setShadowMapResolution(shadowMapResolution);
+}
 
-    const bx::Vec3 at = { center.x, center.y, center.z };
-    const bx::Vec3 eye = { center.x + viewSpaceLightDir[0],
-                           center.y + viewSpaceLightDir[1],
-                           center.z + viewSpaceLightDir[2] };
+void Lighting::updateLightMatrices(struct boundingbox *sceneAabb)
+{
+	struct game_mode *mode = getmode_cached();
 
-    bx::Vec3 up = { 0, 1, 0 };
-    const bx::Vec3 viewDir = { worldSpaceLightDir[0], worldSpaceLightDir[1], worldSpaceLightDir[2] };
-    if (bx::abs(bx::dot(viewDir, up)) > 0.999)
-    {
-        up = { 1.0, 0.0, 0.0 };
-    }
+	float rotMatrix[16];
+	float degreeToRadian = M_PI / 180.0f;
+	bx::mtxRotateXYZ(rotMatrix, lightingState.worldLightRot.x * degreeToRadian,
+									 lightingState.worldLightRot.y * degreeToRadian, lightingState.worldLightRot.z * degreeToRadian);
 
-    // Light view matrix
-    bx::mtxLookAt(lightingState.lightViewMatrix, eye, at, up);
+	const float forwardVector[4] = {0.0f, 0.0f, -1.0f, 0.0};
+	float worldSpaceLightDir[4] = {0.0f, 0.0f, 0.0f, 0.0};
+	bx::vec4MulMtx(worldSpaceLightDir, forwardVector, rotMatrix);
 
-    // Light projection matrix
-    bx::mtxOrtho(lightingState.lightProjMatrix, -area, area, -area, area,
-        -nearFarSize, nearFarSize, 0.0f, bgfx::getCaps()->homogeneousDepth);
+	float area = lightingState.shadowMapArea;
+	float nearFarSize = lightingState.shadowMapNearFarSize;
 
-    // Light view projection matrix
-    bx::mtxMul(lightingState.lightViewProjMatrix, lightingState.lightViewMatrix, lightingState.lightProjMatrix);
+	if (mode->driver_mode == MODE_FIELD)
+	{
+		// In Field mode the z axis is the up vector so we swap y and z axis
+		float tmp = worldSpaceLightDir[1];
+		worldSpaceLightDir[1] = worldSpaceLightDir[2];
+		worldSpaceLightDir[2] = -tmp;
 
-    // Matrix for converting from NDC to texture coordinates
-    const float sy = bgfx::getCaps()->originBottomLeft ? 0.5f : -0.5f;
-    const float sz = bgfx::getCaps()->homogeneousDepth ? 0.5f : 1.0f;
-    const float tz = bgfx::getCaps()->homogeneousDepth ? 0.5f : 0.0f;
-    const float mtxCrop[16] =
-    {
-        0.5f, 0.0f, 0.0f, 0.0f,
-        0.0f,   sy, 0.0f, 0.0f,
-        0.0f, 0.0f, sz,   0.0f,
-        0.5f, 0.5f, tz,   1.0f,
-    };
+		area = lightingState.fieldShadowMapArea;
+		nearFarSize = lightingState.fieldShadowMapNearFarSize;
+	}
 
-    float mtxTmp[16];
-    bx::mtxMul(mtxTmp, lightingState.lightProjMatrix, mtxCrop);
-    bx::mtxMul(lightingState.lightViewProjTexMatrix, lightingState.lightViewMatrix, mtxTmp);
+	// Transform light direction into view space
+	float viewSpaceLightDir[4];
+	bx::vec4MulMtx(viewSpaceLightDir, worldSpaceLightDir, newRenderer.getViewMatrix());
 
-    // Inverse of all light transformations above
-    bx::mtxInverse(lightingState.lightInvViewProjTexMatrix, lightingState.lightViewProjTexMatrix);
+	lightingState.lightDirData[0] = viewSpaceLightDir[0];
+	lightingState.lightDirData[1] = viewSpaceLightDir[1];
+	lightingState.lightDirData[2] = viewSpaceLightDir[2];
+
+	// Light view frustum pointing to scene AABB center
+	const bx::Vec3 center = {
+			0.5f * (sceneAabb->min_x + sceneAabb->max_x),
+			0.5f * (sceneAabb->min_y + sceneAabb->max_y),
+			0.5f * (sceneAabb->min_z + sceneAabb->max_z)};
+
+	const bx::Vec3 at = {center.x, center.y, center.z};
+	const bx::Vec3 eye = {center.x + viewSpaceLightDir[0],
+												center.y + viewSpaceLightDir[1],
+												center.z + viewSpaceLightDir[2]};
+
+	bx::Vec3 up = {0, 1, 0};
+	const bx::Vec3 viewDir = {worldSpaceLightDir[0], worldSpaceLightDir[1], worldSpaceLightDir[2]};
+	if (bx::abs(bx::dot(viewDir, up)) > 0.999)
+	{
+		up = {1.0, 0.0, 0.0};
+	}
+
+	// Light view matrix
+	bx::mtxLookAt(lightingState.lightViewMatrix, eye, at, up);
+
+	// Light projection matrix
+	bx::mtxOrtho(lightingState.lightProjMatrix, -area, area, -area, area,
+							 -nearFarSize, nearFarSize, 0.0f, bgfx::getCaps()->homogeneousDepth);
+
+	// Light view projection matrix
+	bx::mtxMul(lightingState.lightViewProjMatrix, lightingState.lightViewMatrix, lightingState.lightProjMatrix);
+
+	// Matrix for converting from NDC to texture coordinates
+	const float sy = bgfx::getCaps()->originBottomLeft ? 0.5f : -0.5f;
+	const float sz = bgfx::getCaps()->homogeneousDepth ? 0.5f : 1.0f;
+	const float tz = bgfx::getCaps()->homogeneousDepth ? 0.5f : 0.0f;
+	const float mtxCrop[16] =
+			{
+					0.5f,
+					0.0f,
+					0.0f,
+					0.0f,
+					0.0f,
+					sy,
+					0.0f,
+					0.0f,
+					0.0f,
+					0.0f,
+					sz,
+					0.0f,
+					0.5f,
+					0.5f,
+					tz,
+					1.0f,
+			};
+
+	float mtxTmp[16];
+	bx::mtxMul(mtxTmp, lightingState.lightProjMatrix, mtxCrop);
+	bx::mtxMul(lightingState.lightViewProjTexMatrix, lightingState.lightViewMatrix, mtxTmp);
+
+	// Inverse of all light transformations above
+	bx::mtxInverse(lightingState.lightInvViewProjTexMatrix, lightingState.lightViewProjTexMatrix);
 }
 
 void Lighting::ff7_load_ibl()
 {
-	struct game_mode* mode = getmode_cached();
+	struct game_mode *mode = getmode_cached();
 	static uint32_t prev_mode = -1;
-	static char filename[64]{ 0 };
+	static char filename[64]{0};
 	static char specularFullpath[MAX_PATH];
 	static char diffuseFullpath[MAX_PATH];
 	static WORD last_field_id = 0, last_battle_id = 0;
@@ -218,26 +277,26 @@ void Lighting::ff7_load_ibl()
 	prev_mode = mode->driver_mode;
 }
 
-void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
+void Lighting::ff7_get_field_view_matrix(struct matrix *outViewMatrix)
 {
 	struct matrix viewMatrix;
 	identity_matrix(&viewMatrix);
 
-	byte* level_data = *ff7_externals.field_level_data_pointer;
+	byte *level_data = *ff7_externals.field_level_data_pointer;
 	if (!level_data)
 	{
 		return;
 	}
 
-	ff7_camdata* field_camera_data = *ff7_externals.field_camera_data;
+	ff7_camdata *field_camera_data = *ff7_externals.field_camera_data;
 	if (!field_camera_data)
 	{
 		return;
 	}
 
-	vector3<float> vx = { (float)(field_camera_data->eye.x), (float)(field_camera_data->eye.y), (float)(field_camera_data->eye.z) };
-	vector3<float> vy = { (float)(field_camera_data->target.x), (float)(field_camera_data->target.y), (float)(field_camera_data->target.z) };
-	vector3<float> vz = { (float)(field_camera_data->up.x), (float)(field_camera_data->up.y), (float)(field_camera_data->up.z) };
+	vector3<float> vx = {(float)(field_camera_data->eye.x), (float)(field_camera_data->eye.y), (float)(field_camera_data->eye.z)};
+	vector3<float> vy = {(float)(field_camera_data->target.x), (float)(field_camera_data->target.y), (float)(field_camera_data->target.z)};
+	vector3<float> vz = {(float)(field_camera_data->up.x), (float)(field_camera_data->up.y), (float)(field_camera_data->up.z)};
 
 	divide_vector(&vx, 4096.0f, &vx);
 	divide_vector(&vy, 4096.0f, &vy);
@@ -268,21 +327,21 @@ void Lighting::ff7_get_field_view_matrix(struct matrix* outViewMatrix)
 	memcpy(outViewMatrix, &viewMatrix, sizeof(matrix));
 }
 
-void Lighting::ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges)
+void Lighting::ff7_create_walkmesh(std::vector<struct walkmeshEdge> &edges)
 {
-	byte* level_data = *ff7_externals.field_level_data_pointer;
+	byte *level_data = *ff7_externals.field_level_data_pointer;
 	if (!level_data)
 	{
 		return;
 	}
 
-	uint32_t walkmesh_offset = *(uint32_t*)(level_data + 0x16);
+	uint32_t walkmesh_offset = *(uint32_t *)(level_data + 0x16);
 
-	WORD numTris = *(WORD*)(level_data + walkmesh_offset + 4);
+	WORD numTris = *(WORD *)(level_data + walkmesh_offset + 4);
 
 	for (int i = 0; i < numTris; ++i)
 	{
-		vertex_3s* triangle_data = (vertex_3s*)(level_data + walkmesh_offset + 8 + 24 * i);
+		vertex_3s *triangle_data = (vertex_3s *)(level_data + walkmesh_offset + 8 + 24 * i);
 
 		for (int j = 0; j < 3; ++j)
 		{
@@ -313,7 +372,7 @@ void Lighting::ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges)
 		e0.prevEdge = -1;
 		e0.nextEdge = -1;
 		e0.isBorder = false;
-		e0.perpDir = { 0.0f, 0.0f, 0.0f };
+		e0.perpDir = {0.0f, 0.0f, 0.0f};
 		walkmeshEdge e1;
 		e1.v0 = vId1;
 		e1.v1 = vId2;
@@ -321,7 +380,7 @@ void Lighting::ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges)
 		e1.prevEdge = -1;
 		e1.nextEdge = -1;
 		e1.isBorder = false;
-		e1.perpDir = { 0.0f, 0.0f, 0.0f };
+		e1.perpDir = {0.0f, 0.0f, 0.0f};
 		walkmeshEdge e2;
 		e2.v0 = vId2;
 		e2.v1 = vId0;
@@ -329,7 +388,7 @@ void Lighting::ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges)
 		e2.prevEdge = -1;
 		e2.nextEdge = -1;
 		e2.isBorder = false;
-		e2.perpDir = { 0.0f, 0.0f, 0.0f };
+		e2.perpDir = {0.0f, 0.0f, 0.0f};
 		edges.push_back(e0);
 		edges.push_back(e1);
 		edges.push_back(e2);
@@ -341,7 +400,7 @@ void Lighting::createFieldWalkmesh(float extrudeSize)
 {
 	static WORD last_field_id = 0;
 
-	if(*ff7_externals.field_id == last_field_id)
+	if (*ff7_externals.field_id == last_field_id)
 	{
 		return;
 	}
@@ -357,7 +416,7 @@ void Lighting::createFieldWalkmesh(float extrudeSize)
 	// Detect triangle edges that are external borders of the walkmesh
 	// Border edges will be use to extrude a small area where field shadows will fade out
 	// This is done to prevent sharp discontinuities at the walkmesh borders
-	extractWalkmeshBorderData( edges);
+	extractWalkmeshBorderData(edges);
 
 	// Extract previous and next adjacent border edges
 	// Calculate extrude direction for each border edge
@@ -369,12 +428,12 @@ void Lighting::createFieldWalkmesh(float extrudeSize)
 	last_field_id = *ff7_externals.field_id;
 }
 
-void Lighting::extractWalkmeshBorderData(std::vector<struct walkmeshEdge>& edges)
+void Lighting::extractWalkmeshBorderData(std::vector<struct walkmeshEdge> &edges)
 {
 	int numEdges = edges.size();
 	for (int i = 0; i < numEdges; ++i)
 	{
-		auto& e = edges[i];
+		auto &e = edges[i];
 		vector3<float> pos0 = walkMeshVertices[e.v0]._;
 		vector3<float> pos1 = walkMeshVertices[e.v1]._;
 
@@ -386,19 +445,19 @@ void Lighting::extractWalkmeshBorderData(std::vector<struct walkmeshEdge>& edges
 				continue;
 			}
 
-			auto& other_e = edges[j];
+			auto &other_e = edges[j];
 			vector3<float> other_pos0 = walkMeshVertices[other_e.v0]._;
 			vector3<float> other_pos1 = walkMeshVertices[other_e.v1]._;
 
 			float errorMargin = 0.001f;
 			if (std::abs(pos0.x - other_pos0.x) < errorMargin && std::abs(pos0.y - other_pos0.y) < errorMargin && std::abs(pos0.z - other_pos0.z) < errorMargin &&
-				std::abs(pos1.x - other_pos1.x) < errorMargin && std::abs(pos1.y - other_pos1.y) < errorMargin && std::abs(pos1.z - other_pos1.z) < errorMargin)
+					std::abs(pos1.x - other_pos1.x) < errorMargin && std::abs(pos1.y - other_pos1.y) < errorMargin && std::abs(pos1.z - other_pos1.z) < errorMargin)
 			{
 				isBorder = false;
 			}
 
 			if (std::abs(pos1.x - other_pos0.x) < errorMargin && std::abs(pos1.y - other_pos0.y) < errorMargin && std::abs(pos1.z - other_pos0.z) < errorMargin &&
-				std::abs(pos0.x - other_pos1.x) < errorMargin && std::abs(pos0.y - other_pos1.y) < errorMargin && std::abs(pos0.z - other_pos1.z) < errorMargin)
+					std::abs(pos0.x - other_pos1.x) < errorMargin && std::abs(pos0.y - other_pos1.y) < errorMargin && std::abs(pos0.z - other_pos1.z) < errorMargin)
 			{
 				isBorder = false;
 			}
@@ -407,18 +466,18 @@ void Lighting::extractWalkmeshBorderData(std::vector<struct walkmeshEdge>& edges
 
 		if (isBorder)
 		{
-			auto& v0 = walkMeshVertices[e.v0];
-			auto& v1 = walkMeshVertices[e.v1];
+			auto &v0 = walkMeshVertices[e.v0];
+			auto &v1 = walkMeshVertices[e.v1];
 		}
 	}
 }
 
-void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge>& edges)
+void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge> &edges)
 {
 	int numEdges = edges.size();
 	for (int i = 0; i < numEdges; ++i)
 	{
-		auto& e = edges[i];
+		auto &e = edges[i];
 		if (!e.isBorder)
 		{
 			continue;
@@ -434,7 +493,7 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge
 				continue;
 			}
 
-			auto& other_e = edges[j];
+			auto &other_e = edges[j];
 			if (!other_e.isBorder)
 			{
 				continue;
@@ -443,15 +502,16 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge
 			vector3<float> other_pos0 = walkMeshVertices[other_e.v0]._;
 			vector3<float> other_pos1 = walkMeshVertices[other_e.v1]._;
 
-			float errorMargin = 0.1f;;
+			float errorMargin = 0.1f;
+			;
 			if ((std::abs(pos0.x - other_pos0.x) < errorMargin && std::abs(pos0.y - other_pos0.y) < errorMargin && std::abs(pos0.z - other_pos0.z) < errorMargin) ||
-				(std::abs(pos0.x - other_pos1.x) < errorMargin && std::abs(pos0.y - other_pos1.y) < errorMargin && std::abs(pos0.z - other_pos1.z) < errorMargin))
+					(std::abs(pos0.x - other_pos1.x) < errorMargin && std::abs(pos0.y - other_pos1.y) < errorMargin && std::abs(pos0.z - other_pos1.z) < errorMargin))
 			{
 				e.prevEdge = j;
 			}
 
 			if ((std::abs(pos1.x - other_pos0.x) < errorMargin && std::abs(pos1.y - other_pos0.y) < errorMargin && std::abs(pos1.z - other_pos0.z) < errorMargin) ||
-				(std::abs(pos1.x - other_pos1.x) < errorMargin && std::abs(pos1.y - other_pos1.y) < errorMargin && std::abs(pos1.z - other_pos1.z) < errorMargin))
+					(std::abs(pos1.x - other_pos1.x) < errorMargin && std::abs(pos1.y - other_pos1.y) < errorMargin && std::abs(pos1.z - other_pos1.z) < errorMargin))
 			{
 				e.nextEdge = j;
 			}
@@ -496,12 +556,12 @@ void Lighting::createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge
 	}
 }
 
-void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, float extrudeSize)
+void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge> &edges, float extrudeSize)
 {
 	int numEdges = edges.size();
 	for (int i = 0; i < numEdges; ++i)
 	{
-		auto& e = edges[i];
+		auto &e = edges[i];
 		if (e.isBorder == false)
 		{
 			continue;
@@ -510,10 +570,11 @@ void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, flo
 		vector3<float> pos0 = walkMeshVertices[e.v0]._;
 		vector3<float> pos1 = walkMeshVertices[e.v1]._;
 
-		if(e.prevEdge == -1 || e.nextEdge == -1) continue;
+		if (e.prevEdge == -1 || e.nextEdge == -1)
+			continue;
 
-		auto& prevEdge = edges[e.prevEdge];
-		auto& nextEdge = edges[e.nextEdge];
+		auto &prevEdge = edges[e.prevEdge];
+		auto &nextEdge = edges[e.nextEdge];
 
 		vector3<float> capExtrudeDir0;
 		add_vector(&e.perpDir, &prevEdge.perpDir, &capExtrudeDir0);
@@ -526,7 +587,7 @@ void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, flo
 		// Extrude triangle 0
 		vector3<float> extrudePos0;
 		{
-			vector3<float> perpDir = { capExtrudeDir0.x, capExtrudeDir0.y, capExtrudeDir0.z };
+			vector3<float> perpDir = {capExtrudeDir0.x, capExtrudeDir0.y, capExtrudeDir0.z};
 			float cos = dot_product(&e.perpDir, &capExtrudeDir0);
 
 			vector3<float> extrudeOffset;
@@ -576,7 +637,7 @@ void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, flo
 		// Extrude triangle 1
 		vector3<float> extrudePos1;
 		{
-			vector3<float> perpDir = { capExtrudeDir1.x, capExtrudeDir1.y, capExtrudeDir1.z };
+			vector3<float> perpDir = {capExtrudeDir1.x, capExtrudeDir1.y, capExtrudeDir1.z};
 			float cos = dot_product(&e.perpDir, &capExtrudeDir1);
 
 			vector3<float> extrudeOffset;
@@ -626,29 +687,29 @@ void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, flo
 	}
 }
 
-struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox* sceneAabb, struct matrix* viewMatrix)
+struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox *sceneAabb, struct matrix *viewMatrix)
 {
-	byte* level_data = *ff7_externals.field_level_data_pointer;
+	byte *level_data = *ff7_externals.field_level_data_pointer;
 	if (!level_data)
 	{
 		return *sceneAabb;
 	}
 
-	uint32_t walkmesh_offset = *(uint32_t*)(level_data + 0x16);
+	uint32_t walkmesh_offset = *(uint32_t *)(level_data + 0x16);
 
 	std::vector<struct nvertex> vertices;
 	std::vector<WORD> indices;
 	std::vector<struct walkmeshEdge> edges;
 
-	WORD numTris = *(WORD*)(level_data + walkmesh_offset + 4);
+	WORD numTris = *(WORD *)(level_data + walkmesh_offset + 4);
 
-	vector3<float> boundingMin = { FLT_MAX, FLT_MAX, FLT_MAX };
-	vector3<float> boundingMax = { FLT_MIN, FLT_MIN, FLT_MIN };
+	vector3<float> boundingMin = {FLT_MAX, FLT_MAX, FLT_MAX};
+	vector3<float> boundingMax = {FLT_MIN, FLT_MIN, FLT_MIN};
 
 	// Calculates walkmesh AABB
 	for (int i = 0; i < numTris; ++i)
 	{
-		vertex_3s* triangle_data = (vertex_3s*)(level_data + walkmesh_offset + 8 + 24 * i);
+		vertex_3s *triangle_data = (vertex_3s *)(level_data + walkmesh_offset + 8 + 24 * i);
 
 		for (int j = 0; j < 3; ++j)
 		{
@@ -670,14 +731,14 @@ struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox* sceneAabb, s
 	bb.max_y = FLT_MIN;
 	bb.max_z = FLT_MIN;
 
-	vector3<float> corners[8] = { {boundingMin.x, boundingMin.y, boundingMin.z},
-								  {boundingMin.x, boundingMin.y, boundingMax.z},
-								  {boundingMin.x, boundingMax.y, boundingMin.z},
-								  {boundingMin.x, boundingMax.y, boundingMax.z},
-								  {boundingMax.x, boundingMin.y, boundingMin.z},
-								  {boundingMax.x, boundingMin.y, boundingMax.z},
-								  {boundingMax.x, boundingMax.y, boundingMin.z},
-								  {boundingMax.x, boundingMax.y, boundingMax.z} };
+	vector3<float> corners[8] = {{boundingMin.x, boundingMin.y, boundingMin.z},
+															 {boundingMin.x, boundingMin.y, boundingMax.z},
+															 {boundingMin.x, boundingMax.y, boundingMin.z},
+															 {boundingMin.x, boundingMax.y, boundingMax.z},
+															 {boundingMax.x, boundingMin.y, boundingMin.z},
+															 {boundingMax.x, boundingMin.y, boundingMax.z},
+															 {boundingMax.x, boundingMax.y, boundingMin.z},
+															 {boundingMax.x, boundingMax.y, boundingMax.z}};
 
 	for (int j = 0; j < 8; ++j)
 	{
@@ -706,90 +767,114 @@ struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox* sceneAabb, s
 
 void Lighting::init()
 {
+	sprintf(configPath, "%s/%s/config.toml", basedir, external_lighting_path.c_str());
+	sprintf(configDevToolsPath, "%s/%s/config.devtools.toml", basedir, external_lighting_path.c_str());
+
+	reload();
+}
+
+void Lighting::reload()
+{
 	loadConfig();
 	initParamsFromConfig();
 }
 
-void Lighting::draw(struct game_obj* game_object)
+void Lighting::save()
 {
-    VOBJ(game_obj, game_object, game_object);
-    struct game_mode* mode = getmode_cached();
+	std::ofstream ofs(configDevToolsPath);
+	ofs << config << std::endl;
+}
+
+void Lighting::draw(struct game_obj *game_object)
+{
+	VOBJ(game_obj, game_object, game_object);
+	struct game_mode *mode = getmode_cached();
+	static WORD last_field_id = 0, last_battle_id = 0;
 
 	ff7_load_ibl();
 
-    struct matrix viewMatrix;
-    struct matrix* pViewMatrix = &viewMatrix;
-    struct boundingbox sceneAabb = calculateSceneAabb();
-    if (mode->driver_mode == MODE_FIELD)
-    {
-        // Get Field view matrix
-        // TODO: When movie is playing replace with movie camera matrix
-        ff7_get_field_view_matrix(&viewMatrix);
+	struct matrix viewMatrix;
+	struct matrix *pViewMatrix = &viewMatrix;
+	struct boundingbox sceneAabb = calculateSceneAabb();
 
-        struct boundingbox fieldSceneAabb = calcFieldSceneAabb(&sceneAabb, &viewMatrix);
-        newRenderer.setViewMatrix(&viewMatrix);
-        updateLightMatrices(&fieldSceneAabb);
-    }
-    else
-    {
-        pViewMatrix = VREF(game_object, camera_matrix);
-        if (pViewMatrix)
-        {
-            newRenderer.setViewMatrix(pViewMatrix);
-            updateLightMatrices(&sceneAabb);
-        }
-    }
+	switch(mode->driver_mode)
+	{
+		case MODE_FIELD:
+			// Refresh the configuration if we're on a new field
+			if (last_field_id != *ff7_externals.field_id)
+			{
+				last_field_id = *ff7_externals.field_id;
+				initParamsFromConfig();
+			}
 
-	if (mode->driver_mode == MODE_FIELD)
-	{
-		gl_draw_deferred(&drawFieldShadow);
-	}
-	else
-	{
-		gl_draw_deferred(nullptr);
+			// Get Field view matrix
+			// TODO: When movie is playing replace with movie camera matrix
+			ff7_get_field_view_matrix(&viewMatrix);
+
+			struct boundingbox fieldSceneAabb = calcFieldSceneAabb(&sceneAabb, &viewMatrix);
+			newRenderer.setViewMatrix(&viewMatrix);
+			updateLightMatrices(&fieldSceneAabb);
+			gl_draw_deferred(&drawFieldShadow);
+			break;
+		case MODE_BATTLE:
+			// Refresh the configuration if we're on a new battle
+			if (last_battle_id != ff7_externals.modules_global_object->battle_id)
+			{
+				last_battle_id = ff7_externals.modules_global_object->battle_id;
+				initParamsFromConfig();
+			}
+		default:
+			pViewMatrix = VREF(game_object, camera_matrix);
+			if (pViewMatrix)
+			{
+				newRenderer.setViewMatrix(pViewMatrix);
+				updateLightMatrices(&sceneAabb);
+			}
+			gl_draw_deferred(nullptr);
+			break;
 	}
 };
 
 void drawFieldShadow()
 {
-    lighting.createFieldWalkmesh(lighting.getWalkmeshExtrudeSize());
+	lighting.createFieldWalkmesh(lighting.getWalkmeshExtrudeSize());
 
 	auto walkMeshVertices = lighting.getWalkmeshVertices();
 	auto walkMeshIndices = lighting.getWalkmeshIndices();
 
-    newRenderer.bindVertexBuffer(walkMeshVertices.data(), 0, walkMeshVertices.size());
-    newRenderer.bindIndexBuffer(walkMeshIndices.data(), walkMeshIndices.size());
+	newRenderer.bindVertexBuffer(walkMeshVertices.data(), 0, walkMeshVertices.size());
+	newRenderer.bindIndexBuffer(walkMeshIndices.data(), walkMeshIndices.size());
 
-    newRenderer.setPrimitiveType();
-    newRenderer.isTLVertex(false);
-    newRenderer.setCullMode(RendererCullMode::BACK);
-    newRenderer.setBlendMode(RendererBlendMode::BLEND_AVG);
-    newRenderer.isFBTexture(false);
-    newRenderer.doDepthTest(true);
-    newRenderer.doDepthWrite(false);
+	newRenderer.setPrimitiveType();
+	newRenderer.isTLVertex(false);
+	newRenderer.setCullMode(RendererCullMode::BACK);
+	newRenderer.setBlendMode(RendererBlendMode::BLEND_AVG);
+	newRenderer.isFBTexture(false);
+	newRenderer.doDepthTest(true);
+	newRenderer.doDepthWrite(false);
 
-    // Create a world matrix
-    struct matrix worldMatrix;
-    identity_matrix(&worldMatrix);
+	// Create a world matrix
+	struct matrix worldMatrix;
+	identity_matrix(&worldMatrix);
 
-    // WalkMesh offset to adjust vertical position of walkmesh so that it is just under the character feets
-    worldMatrix._43 = lighting.getWalkmeshPosOffset();
+	// WalkMesh offset to adjust vertical position of walkmesh so that it is just under the character feets
+	worldMatrix._43 = lighting.getWalkmeshPosOffset();
 
-    // View matrix
-    struct matrix viewMatrix;
-    memcpy(&viewMatrix.m[0][0], newRenderer.getViewMatrix(), sizeof(viewMatrix.m));
+	// View matrix
+	struct matrix viewMatrix;
+	memcpy(&viewMatrix.m[0][0], newRenderer.getViewMatrix(), sizeof(viewMatrix.m));
 
-    // Create a world view matrix
-    struct matrix worldViewMatrix;
-    multiply_matrix(&worldMatrix, &viewMatrix, &worldViewMatrix);
-    newRenderer.setWorldViewMatrix(&worldViewMatrix);
+	// Create a world view matrix
+	struct matrix worldViewMatrix;
+	multiply_matrix(&worldMatrix, &viewMatrix, &worldViewMatrix);
+	newRenderer.setWorldViewMatrix(&worldViewMatrix);
 
-    newRenderer.drawFieldShadow();
+	newRenderer.drawFieldShadow();
 }
 
-const LightingState& Lighting::getLightingState()
+const LightingState &Lighting::getLightingState()
 {
-    return lightingState;
+	return lightingState;
 }
 
 void Lighting::setPbrTextureEnabled(bool isEnabled)
@@ -814,64 +899,75 @@ bool Lighting::isEnvironmentLightingEnabled()
 
 void Lighting::setWorldLightDir(float dirX, float dirY, float dirZ)
 {
-    lightingState.worldLightRot.x = dirX;
-    lightingState.worldLightRot.y = dirY;
-    lightingState.worldLightRot.z = dirZ;
+	lightingState.worldLightRot.x = dirX;
+	lightingState.worldLightRot.y = dirY;
+	lightingState.worldLightRot.z = dirZ;
+
+	setConfigEntry("light_rotation_vertical", dirX);
+	setConfigEntry("light_rotation_horizontal", dirY);
 }
 
 vector3<float> Lighting::getWorldLightDir()
 {
-    return lightingState.worldLightRot;
+	return lightingState.worldLightRot;
 }
 
 void Lighting::setLightIntensity(float intensity)
 {
-    lightingState.lightData[3] = intensity;
+	lightingState.lightData[3] = intensity;
+
+	setConfigEntry("light_intensity", intensity);
 }
 
 float Lighting::getLightIntensity()
 {
-    return lightingState.lightData[3];
+	return lightingState.lightData[3];
 }
 
 void Lighting::setLightColor(float r, float g, float b)
 {
-    lightingState.lightData[0] = r;
-    lightingState.lightData[1] = g;
-    lightingState.lightData[2] = b;
+	lightingState.lightData[0] = r;
+	lightingState.lightData[1] = g;
+	lightingState.lightData[2] = b;
+
+	setConfigEntry("light_color", toml::array(r, g, b));
 }
 
 vector3<float> Lighting::getLightColor()
 {
-    vector3<float> color = { lightingState.lightData[0],
-                             lightingState.lightData[1],
-                             lightingState.lightData[2] };
-    return color;
+	vector3<float> color = {lightingState.lightData[0],
+													lightingState.lightData[1],
+													lightingState.lightData[2]};
+	return color;
 }
 
 void Lighting::setAmbientIntensity(float intensity)
 {
-    lightingState.ambientLightData[3] = intensity;
+	lightingState.ambientLightData[3] = intensity;
+
+	setConfigEntry("ambient_light_intensity", intensity);
 }
 
 float Lighting::getAmbientIntensity()
 {
-    return lightingState.ambientLightData[3];
+	return lightingState.ambientLightData[3];
 }
 
 void Lighting::setAmbientLightColor(float r, float g, float b)
 {
-    lightingState.ambientLightData[0] = r;
-    lightingState.ambientLightData[1] = g;
-    lightingState.ambientLightData[2] = b;
+	lightingState.ambientLightData[0] = r;
+	lightingState.ambientLightData[1] = g;
+	lightingState.ambientLightData[2] = b;
+
+	setConfigEntry("ambient_light_color", toml::array(r, g, b));
 }
 
 vector3<float> Lighting::getAmbientLightColor()
 {
-    vector3<float> color = { lightingState.ambientLightData[0],
-                             lightingState.ambientLightData[1],
-                             lightingState.ambientLightData[2] };
-    return color;
+	vector3<float> color = {lightingState.ambientLightData[0],
+													lightingState.ambientLightData[1],
+													lightingState.ambientLightData[2]};
+	return color;
 }
 
 void Lighting::setIblMipCount(int mipCount)
@@ -879,16 +975,16 @@ void Lighting::setIblMipCount(int mipCount)
 	lightingState.iblData[0] = mipCount;
 }
 
-bool Lighting::isDisabledLightingTexture(const std::string& textureName)
+bool Lighting::isDisabledLightingTexture(const std::string &textureName)
 {
-	toml::array* disabledTextures = config["disable_lighting_textures"].as_array();
+	toml::array *disabledTextures = config["disable_lighting_textures"].as_array();
 	if (disabledTextures && !disabledTextures->empty() && disabledTextures->is_homogeneous(toml::node_type::string))
 	{
 		int count = disabledTextures->size();
-		for(int i = 0; i < count; ++i)
+		for (int i = 0; i < count; ++i)
 		{
 			auto disabledTextureName = disabledTextures->get(i)->value<std::string>();
-			if(disabledTextureName.has_value() && textureName == disabledTextureName.value())
+			if (disabledTextureName.has_value() && textureName == disabledTextureName.value())
 			{
 				return true;
 			}
@@ -900,22 +996,22 @@ bool Lighting::isDisabledLightingTexture(const std::string& textureName)
 
 void Lighting::setRoughness(float roughness)
 {
-    lightingState.materialData[0] = roughness;
+	lightingState.materialData[0] = roughness;
 }
 
 float Lighting::getRoughness()
 {
-    return lightingState.materialData[0];
+	return lightingState.materialData[0];
 }
 
 void Lighting::setMetallic(float metallic)
 {
-    lightingState.materialData[1] = metallic;
+	lightingState.materialData[1] = metallic;
 }
 
 float Lighting::getMetallic()
 {
-    return lightingState.materialData[1];
+	return lightingState.materialData[1];
 }
 
 void Lighting::setSpecular(float specular)
@@ -960,153 +1056,153 @@ float Lighting::getSpecularScale()
 
 void Lighting::setShadowFaceCullingEnabled(bool isEnabled)
 {
-    lightingState.isShadowMapFaceCullingEnabled = isEnabled;
+	lightingState.isShadowMapFaceCullingEnabled = isEnabled;
 }
 
 bool Lighting::isShadowFaceCullingEnabled()
 {
-    return lightingState.isShadowMapFaceCullingEnabled;
+	return lightingState.isShadowMapFaceCullingEnabled;
 }
 
 void Lighting::setShadowMapResolution(int resolution)
 {
-    lightingState.shadowData[3] = resolution;
+	lightingState.shadowData[3] = resolution;
 	newRenderer.prepareShadowMap();
 }
 
 int Lighting::getShadowMapResolution()
 {
-    return lightingState.shadowData[3];
+	return lightingState.shadowData[3];
 }
 
 void Lighting::setShadowConstantBias(float bias)
 {
-    lightingState.shadowData[0] = bias;
+	lightingState.shadowData[0] = bias;
 }
 
 float Lighting::getShadowConstantBias()
 {
-    return lightingState.shadowData[0];
+	return lightingState.shadowData[0];
 }
 
 void Lighting::setShadowMapArea(float area)
 {
-    lightingState.shadowMapArea = area;
+	lightingState.shadowMapArea = area;
 }
 
 float Lighting::getShadowMapArea()
 {
-    return lightingState.shadowMapArea;
+	return lightingState.shadowMapArea;
 }
 
 void Lighting::setShadowMapNearFarSize(float size)
 {
-    lightingState.shadowMapNearFarSize = size;
+	lightingState.shadowMapNearFarSize = size;
 }
 
 float Lighting::getShadowMapNearFarSize()
 {
-    return lightingState.shadowMapNearFarSize;
+	return lightingState.shadowMapNearFarSize;
 }
 
 void Lighting::setFieldShadowMapArea(float area)
 {
-    lightingState.fieldShadowMapArea = area;
+	lightingState.fieldShadowMapArea = area;
 }
 
 float Lighting::getFieldShadowMapArea()
 {
-    return lightingState.fieldShadowMapArea;
+	return lightingState.fieldShadowMapArea;
 }
 
 void Lighting::setFieldShadowMapNearFarSize(float size)
 {
-    lightingState.fieldShadowMapNearFarSize = size;
+	lightingState.fieldShadowMapNearFarSize = size;
 }
 
 float Lighting::getFieldShadowMapNearFarSize()
 {
-    return lightingState.fieldShadowMapNearFarSize;
+	return lightingState.fieldShadowMapNearFarSize;
 }
 
 void Lighting::setFieldShadowOcclusion(float value)
 {
-    lightingState.fieldShadowData[0] = value;
+	lightingState.fieldShadowData[0] = value;
 }
 
 float Lighting::getFieldShadowOcclusion()
 {
-    return lightingState.fieldShadowData[0];
+	return lightingState.fieldShadowData[0];
 }
 
 void Lighting::setFieldShadowFadeStartDistance(float value)
 {
-    lightingState.fieldShadowData[1] = value;
+	lightingState.fieldShadowData[1] = value;
 }
 
 float Lighting::getFieldShadowFadeStartDistance()
 {
-    return lightingState.fieldShadowData[1];
+	return lightingState.fieldShadowData[1];
 }
 
 void Lighting::setFieldShadowFadeRange(float value)
 {
-    lightingState.fieldShadowData[2] = value;
+	lightingState.fieldShadowData[2] = value;
 }
 
 float Lighting::getFieldShadowFadeRange()
 {
-    return lightingState.fieldShadowData[2];
+	return lightingState.fieldShadowData[2];
 }
 
 void Lighting::setWalkmeshExtrudeSize(float size)
 {
-    lightingState.walkMeshExtrudeSize = size;
+	lightingState.walkMeshExtrudeSize = size;
 }
 
 float Lighting::getWalkmeshExtrudeSize()
 {
-    return lightingState.walkMeshExtrudeSize;
+	return lightingState.walkMeshExtrudeSize;
 }
 
 void Lighting::setWalkmeshPosOffset(float offset)
 {
-    lightingState.walkMeshPosOffset = offset;
+	lightingState.walkMeshPosOffset = offset;
 }
 
 float Lighting::getWalkmeshPosOffset()
 {
-    return lightingState.walkMeshPosOffset;
+	return lightingState.walkMeshPosOffset;
 }
 
-const std::vector<nvertex>& Lighting::getWalkmeshVertices()
+const std::vector<nvertex> &Lighting::getWalkmeshVertices()
 {
 	return walkMeshVertices;
 }
 
-const std::vector<WORD>& Lighting::getWalkmeshIndices()
+const std::vector<WORD> &Lighting::getWalkmeshIndices()
 {
 	return walkMeshIndices;
 }
 
 void Lighting::setHide2dEnabled(bool isEnabled)
 {
-    lightingState.lightingDebugData[0] = isEnabled;
+	lightingState.lightingDebugData[0] = isEnabled;
 }
 
 bool Lighting::isHide2dEnabled()
 {
-    return lightingState.lightingDebugData[0];
+	return lightingState.lightingDebugData[0];
 }
 
 void Lighting::setShowWalkmeshEnabled(bool isEnabled)
 {
-    lightingState.lightingDebugData[1] = isEnabled;
+	lightingState.lightingDebugData[1] = isEnabled;
 }
 
 bool Lighting::isShowWalkmeshEnabled()
 {
-    return lightingState.lightingDebugData[1];
+	return lightingState.lightingDebugData[1];
 }
 
 void Lighting::setDebugOutput(DebugOutput output)

@@ -28,6 +28,22 @@ void lighting_debug(bool* isOpen)
         return;
     }
 
+    if (!enable_lighting)
+    {
+        ImGui::Text("Lighting engine not enabled.");
+		ImGui::End();
+		return;
+    }
+
+    if (!(getmode_cached()->driver_mode == MODE_FIELD || getmode_cached()->driver_mode == MODE_BATTLE))
+	{
+		ImGui::Text("Not currently on a battle/field.");
+		ImGui::End();
+		return;
+	}
+
+    ImGui::Text("Group ID: %s", lighting.getConfigGroup().c_str());
+
     bool isLightingEnabled = enable_lighting;
     if (ImGui::Checkbox("Enable Lighting", &isLightingEnabled))
     {
@@ -43,6 +59,15 @@ void lighting_debug(bool* isOpen)
     {
         lighting.setEnvironmentLightingEnabled(isEnvironmentLightingEnabled);
     }
+    ImGui::BeginGroup();
+    if (ImGui::Button("Load config from disk")) {
+        lighting.reload();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save config to disk")) {
+        lighting.save();
+    }
+    ImGui::EndGroup();
     if (ImGui::CollapsingHeader("Direct Lighting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
     {
         vector3<float> lightDirVector = lighting.getWorldLightDir();
