@@ -74,7 +74,7 @@ external_music_ext = "akb"
 #### [2000 Squaresoft Release](https://www.mobygames.com/game/windows/final-fantasy-viii)
 
 0. Install the game on this path: `C:\Games\Final Fantasy VIII`
-1. Update your game to v1.2 ( search for `ff8_1.2.zip` or `ff8_1.2G.zip` here http://forums.qhimm.com/index.php?topic=12909.msg180223#msg180223 )
+1. Update your game to v1.2 ( you can find a collection here: https://www.ff8.fr/telechargements/programmes )
 2. Download the latest `FFNx-FF8_2000` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 3. Extract the ZIP content next to `ff8.exe` file
 4. Double click on [`FFNx.reg`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FF8.reg)
