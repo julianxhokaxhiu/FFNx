@@ -214,6 +214,8 @@ void Overlay::Render(ImDrawData* drawData)
 
 bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
 {
+    mem_edit.Open = false;
+
     if (!IMGUI_CHECKVERSION())
         return false;
     if (!::QueryPerformanceFrequency((LARGE_INTEGER*)&g_TicksPerSecond))
@@ -306,6 +308,7 @@ void Overlay::drawMainWindow() {
     {
         if (ImGui::BeginMenu("Tools"))
         {
+            ImGui::MenuItem("Memory Debug", NULL, &mem_edit.Open);
             ImGui::MenuItem("Field Debug", NULL, &field_debug_open);
             if (!ff8) ImGui::MenuItem("Lighting Debug", NULL, &lighting_debug_open);
             if (ff8) ImGui::MenuItem("World Debug", NULL, &world_debug_open);
@@ -326,6 +329,11 @@ void Overlay::draw()
     if (visible)
     {
         drawMainWindow();
+        if (mem_edit.Open)
+        {
+            if (ff8) mem_edit.DrawWindow("Memory Editor", (void*)0x401000, 0xF52000 - 0x401000, 0x401000);
+            else mem_edit.DrawWindow("Memory Editor", (void*)0x401000, 0x279F000 - 0x401000, 0x401000);
+        }
         if (field_debug_open) field_debug(&field_debug_open);
         if (!ff8 && lighting_debug_open) lighting_debug(&lighting_debug_open);
         if (ff8 && world_debug_open) world_debug(&world_debug_open);
