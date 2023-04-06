@@ -127,24 +127,17 @@ float CalcMipmapFromRoughness(float roughness, float mipCount)
 
 // Calculates luminance using Physically-Based Rendering (PBR)
 // https://learnopengl.com/PBR/Theory
-vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 viewDir, vec3 normal, float perceptualRoughness, float roughness, float metallic, float specular, vec3 shadowUv, bool isHDR)
+vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 viewDir, vec3 normal, float perceptualRoughness, float roughness, float metallic, float specular, vec3 shadowUv)
 {
     float shadowFactor = sampleShadowMapPCF7x7(shadowUv.xyz, viewSpacePosition.xyz);
 
     // Light
     float lightIntensity = lightData.w;
     vec3 lightColor = toLinear(lightData.rgb);
-    if (isHDR){
-        lightColor = convertGamut_SRGBtoREC2020(lightColor);
-        if(isTimeEnabled) {
-            lightColor *= convertGamut_SRGBtoREC2020(TimeColor.rgb);
-        }
-    }
-    else if(isTimeEnabled)
+    if(isTimeEnabled)
     {
         lightColor *= TimeColor.rgb;
     }
-    
 
     vec3 lightDir = normalize(lightDirData.xyz);
 
@@ -165,7 +158,7 @@ vec3 calcLuminance(vec3 albedo, vec3 viewSpacePosition, vec3 viewDir, vec3 norma
     return shadowFactor * lightIntensity * lightColor * (diffuseLuminance + specularLuminance) * NdotL;
 }
 
-vec3 CalcIblIndirectLuminance(vec3 albedo, vec3 specularIbl, vec3 diffuseIbl, vec3 V, vec3 N, float roughness, float metallic, float specular, float ao, bool isHDR)
+vec3 CalcIblIndirectLuminance(vec3 albedo, vec3 specularIbl, vec3 diffuseIbl, vec3 V, vec3 N, float roughness, float metallic, float specular, float ao)
 {
     float dotNV = saturate(dot(N, V));
     vec2 envBRDF = texture2D(tex_9, vec2(dotNV, 1.0 - roughness)).xy;
@@ -177,9 +170,6 @@ vec3 CalcIblIndirectLuminance(vec3 albedo, vec3 specularIbl, vec3 diffuseIbl, ve
     vec3 indirectDiffuse = (1.0 - metallic) * diffuse;
 
     vec3 ambientLightColor = toLinear(ambientLightData.rgb);
-    if (isHDR){
-        ambientLightColor = convertGamut_SRGBtoREC2020(ambientLightColor);
-    }
     float ambientLightIntensity = ambientLightData.w;
 
     return (indirectDiffuse + indirectSpecular) * ambientLightColor * ambientLightIntensity * ao;
