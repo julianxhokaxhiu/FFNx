@@ -85,40 +85,8 @@ uniform vec4 TimeData;
 
 void main()
 {
-    vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
-    // when !isTexture, this is used for directly rendering polygons with solid colors or gradients
-    // when isTexture, this is used for used for multiplicative blend adjustments to textures
-    // (In the latter case, not entirely sure this should be treated as a "color" (and thus linearized and gamut converted), rather than a straight "multiplier")
+	vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
 
-    // gamut convert v_color0 if needed
-    if (isTexture){ // used for multiplicative blend adjustments to textures
-        if (isHDR){
-            if (!(isFBTexture)){ //FB needs no conversion b/c it's made up of things that were already converted
-                if (isNTSCJColorGamut){ //until such time as texture metadata is supported, this will always be false 
-                    color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
-                }
-                else {
-                     color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
-                }
-            }
-        }
-        else {
-            if (!(isFBTexture)){ //FB needs no conversion b/c it's made up of things that were already converted
-                if (isNTSCJColorGamut){ //until such time as texture metadata is supported, this will always be false 
-                    color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
-                }
-            }
-        }
-    }
-    else { // used for directly rendering polygons with solid colors or gradients
-        if (isHDR){
-            color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
-        }
-        else{
-            color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
-        }
-    }
-    
     if (isTexture)
     {
         if (isYUV)
@@ -189,35 +157,19 @@ void main()
                 color.rgb = toLinear(color.rgb);
             }
             
-            // Convert gamut
-            // For SDR, convert to sRGB(same as bt709)
-            // For HDR, convert to req2020
+            // Convert gamut to BT709/SRGB.
+            // For SDR, we should do this to match the output device's gamut.
+            // For HDR, we should do this so we have BT709 input to feed to REC709toREC2020()
             // Use of NTSC-J as the source gamut  for the original videos and their derivatives is a *highly* probable guess:
             // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
-            if (isHDR){
-                if (isNTSCJColorGamut){
-                color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
-                }
-                else if (isSMPTECColorGamut){
-                    color.rgb = convertGamut_SMPTECtoREC2020(color.rgb);
-                }
-                else if (isEBUColorGamut){
-                    color.rgb = convertGamut_EBUtoREC2020(color.rgb);
-                }
-                else {
-                    color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
-                }
+            if (isNTSCJColorGamut){
+                color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
             }
-            else {
-                if (isNTSCJColorGamut){
-                    color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
-                }
-                else if (isSMPTECColorGamut){
-                    color.rgb = convertGamut_SMPTECtoSRGB(color.rgb);
-                }
-                else if (isEBUColorGamut){
-                    color.rgb = convertGamut_EBUtoSRGB(color.rgb);
-                }
+            else if (isSMPTECColorGamut){
+                color.rgb = convertGamut_SMPTECtoSRGB(color.rgb);
+            }
+            else if (isEBUColorGamut){
+               color.rgb = convertGamut_EBUtoSRGB(color.rgb);
             }
             
             color.a = 1.0;
@@ -225,26 +177,6 @@ void main()
         else
         {
             vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
-            // used for ordinary textures and framebuffer textures.
-            // framebuffer textures are used for things like the FF7 battle swirl
-            // note: BGFX already linearized ordinary textures for us
-            
-            // gamut convert ordinary textures if needed (FB needs no conversion b/c it's made up of things that were already converted)
-            if (!(isFBTexture)){
-                if (isHDR){
-                    if (isNTSCJColorGamut){ //until such time as texture metadata is supported, this will always be false 
-                        texture_color.rgb = convertGamut_NTSCJtoREC2020(texture_color.rgb);
-                    }
-                    else {
-                        texture_color.rgb = convertGamut_SRGBtoREC2020(texture_color.rgb);
-                    }
-                }
-                else {
-                    if (isNTSCJColorGamut){ //until such time as texture metadata is supported, this will always be false 
-                        texture_color.rgb = convertGamut_NTSCJtoSRGB(texture_color.rgb);
-                    }
-                }
-            }
 
             if (doAlphaTest)
             {
@@ -310,14 +242,7 @@ void main()
         }
     }
 
-    if (isTimeFilterEnabled){
-        if (isHDR){
-             color.rgb *= convertGamut_SRGBtoREC2020(TimeColor.rgb);
-        }
-        else {
-            color.rgb *= TimeColor.rgb;
-        }
-    }
+    if (isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
 
     if (!(isHDR)) {
         // SDR screens require the Gamma output to properly render light scenes
