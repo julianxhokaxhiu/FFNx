@@ -141,5 +141,6 @@ extern long external_audio_sample_rate;
 extern bool ff8_worldmap_internal_highres_textures;
 extern std::string app_path;
 extern std::string data_drive;
+extern bool enable_ntscj_gamut_mode;
 
 void read_cfg();

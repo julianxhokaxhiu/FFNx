@@ -125,7 +125,7 @@ void Renderer::setCommonUniforms()
     internalState.FSHDRFlags = {
         (float)internalState.bIsHDR,
         (float)hdr_max_nits,
-        NULL,
+        (float)internalState.bIsOverrideGamut,
         NULL
     };
     if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isHDR %f, monitorNits %f, NULL, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1]);
@@ -142,9 +142,9 @@ void Renderer::setCommonUniforms()
         (float)internalState.bIsMovieColorMatrix,
         (float)internalState.bIsMovieColorGamut,
         (float)internalState.bIsMovieGammaType,
-        NULL
+        (float)internalState.bIsOverallColorGamut,
     };
-    if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2]);
+    if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, overall color gamut %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
 
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
@@ -391,6 +391,8 @@ void Renderer::resetState()
     isExternalTexture();
     setColorMatrix();
     setColorGamut();
+    setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB);
+    setGamutOverride();
     setGammaType();
 };
 
@@ -2159,6 +2161,15 @@ void Renderer::setColorMatrix(ColorMatrixType cmtype){
 
 void Renderer::setColorGamut(ColorGamutType cgtype){
     internalState.bIsMovieColorGamut = cgtype;
+}
+
+void Renderer::setOverallColorGamut(ColorGamutType cgtype){
+    internalState.bIsOverallColorGamut = cgtype;
+}
+
+void Renderer::setGamutOverride(bool flag)
+{
+    internalState.bIsOverrideGamut = flag;
 }
 
 void Renderer::setGammaType(InverseGammaFunctionType gtype)

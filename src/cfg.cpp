@@ -128,6 +128,7 @@ long external_audio_sample_rate;
 bool ff8_worldmap_internal_highres_textures;
 std::string app_path;
 std::string data_drive;
+bool enable_ntscj_gamut_mode;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -270,6 +271,7 @@ void read_cfg()
 	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(false);
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");
+    enable_ntscj_gamut_mode = config["enable_ntscj_gamut_mode"].value_or(false);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;

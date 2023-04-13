@@ -103,8 +103,8 @@ enum ColorMatrixType{
 
 enum ColorGamutType{
     COLORGAMUT_SRGB = 0,
-    COLORGAMUT_SMPTEC = 1,
-    COLORGAMUT_NTSCJ = 2,
+    COLORGAMUT_NTSCJ = 1,
+    COLORGAMUT_SMPTEC = 2,
     COLORGAMUT_EBU = 3
 };
 
@@ -232,6 +232,8 @@ private:
         bool bIsHDR = false;
         ColorMatrixType bIsMovieColorMatrix = COLORMATRIX_BT601;
         ColorGamutType bIsMovieColorGamut = COLORGAMUT_SRGB;
+        ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
+        bool bIsOverrideGamut = false;
         InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
 
         float backendProjMatrix[16];
@@ -430,7 +432,9 @@ public:
     bool isHDR();
     void setColorMatrix(ColorMatrixType cmtype = COLORMATRIX_BT601);
     void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
+    void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);
+    void setGamutOverride(bool flag = false);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);
