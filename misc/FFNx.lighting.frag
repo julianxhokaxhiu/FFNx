@@ -65,14 +65,15 @@ uniform vec4 iblData;
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
 
+#define doGamutOverride FSHDRFlags.z > 0.0
 
 #define isBT601ColorMatrix abs(FSMovieFlags.x - 0.0) < 0.00001
 #define isBT709ColorMatrix abs(FSMovieFlags.x - 1.0) < 0.00001
 #define isBRG24ColorMatrix abs(FSMovieFlags.x - 2.0) < 0.00001
 
 #define isSRGBColorGamut abs(FSMovieFlags.y - 0.0) < 0.00001
-#define isSMPTECColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
-#define isNTSCJColorGamut abs(FSMovieFlags.y - 2.0) < 0.00001
+#define isNTSCJColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
+#define isSMPTECColorGamut abs(FSMovieFlags.y - 2.0) < 0.00001
 #define isEBUColorGamut abs(FSMovieFlags.y - 3.0) < 0.00001
 
 #define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
@@ -80,6 +81,9 @@ uniform vec4 iblData;
 #define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
 #define isToelessSRGBGamma abs(FSMovieFlags.z - 3.0) < 0.00001
 #define is2pt8Gamma abs(FSMovieFlags.z - 4.0) < 0.00001
+
+#define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
+#define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001
 
 // ---
 #define debugOutput lightingDebugData.z
@@ -178,19 +182,35 @@ void main()
                 color.rgb = toLinear(color.rgb);
             }
             
-            // Convert gamut to BT709/SRGB.
-            // For SDR, we should do this to match the output device's gamut.
-            // For HDR, we should do this so we have BT709 input to feed to REC709toREC2020()
+            // Convert gamut to BT709/SRGB or NTSC-J, depending on what we're going to do in post.
+            // This approach has the unfortunate drawback of resulting in two gamut conversions for some inputs.
+            // But it seems to be the only way to avoid breaking stuff that has expectations about the texture colors (like animated field textures).
             // Use of NTSC-J as the source gamut  for the original videos and their derivatives is a *highly* probable guess:
             // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
-            if (isNTSCJColorGamut){
-                color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
+            if (isOverallNTSCJColorGamut){
+                // do nothing for NTSC-J
+                if (isSRGBColorGamut){
+                    color.rgb = convertGamut_SRGBtoNTSCJ(color.rgb);
+                }
+                else if (isSMPTECColorGamut){
+                    color.rgb = convertGamut_SMPTECtoNTSCJ(color.rgb);
+                }
+                else if (isEBUColorGamut){
+                    color.rgb = convertGamut_EBUtoNTSCJ(color.rgb);
+                }
             }
-            else if (isSMPTECColorGamut){
-                color.rgb = convertGamut_SMPTECtoSRGB(color.rgb);
-            }
-            else if (isEBUColorGamut){
-               color.rgb = convertGamut_EBUtoSRGB(color.rgb);
+            // overall sRGB
+            else {
+                // do nothing for sRGB
+                if (isNTSCJColorGamut){
+                    color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
+                }
+                else if (isSMPTECColorGamut){
+                    color.rgb = convertGamut_SMPTECtoSRGB(color.rgb);
+                }
+                else if (isEBUColorGamut){
+                    color.rgb = convertGamut_EBUtoSRGB(color.rgb);
+                }
             }
             
             color.a = 1.0;
@@ -250,6 +270,17 @@ void main()
 
                 if (!(isHDR)) {
                     texture_color.rgb = toLinear(texture_color.rgb);
+                }
+            }
+            // This stanza currently does nothing because there's no way to set doGamutOverride.
+            // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
+            // The roundtrip gamut conversions are lossless over the intersection of sRGB and NTSC-J, which should encompass a large majority of inputs.
+            else if (doGamutOverride){
+                if (isOverallNTSCJColorGamut){
+                    texture_color.rgb = convertGamut_SRGBtoNTSCJ(texture_color.rgb);
+                }
+                else {
+                    texture_color.rgb = convertGamut_NTSCJtoSRGB(texture_color.rgb);
                 }
             }
 

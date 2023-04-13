@@ -144,5 +144,6 @@ extern bool ff8_worldmap_internal_highres_textures;
 extern bool ff8_fix_uv_coords_precision;
 extern std::string app_path;
 extern std::string data_drive;
+extern bool enable_ntscj_gamut_mode;
 
 void read_cfg();

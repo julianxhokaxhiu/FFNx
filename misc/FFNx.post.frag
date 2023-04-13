@@ -27,9 +27,13 @@ $input v_color0, v_texcoord0
 SAMPLER2D(tex_0, 0);
 
 uniform vec4 FSHDRFlags;
+uniform vec4 FSMovieFlags;
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
+
+#define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
+#define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001
 
 void main()
 {
@@ -43,9 +47,18 @@ void main()
         ivec2 dimensions = textureSize(tex_0, 0);
         color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
 		#endif
-		// change primaries from sRGB/rec709 to rec2020 and remap the white point on top of the current monitor nits value
-		color.rgb = convertGamut_SRGBtoREC2020(color.rgb); // TODO: move this during refactor
+		if (isOverallNTSCJColorGamut){
+			color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
+		}
+		else {
+			color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
+		}
 		color.rgb = ApplyREC2084Curve(color.rgb, monitorNits);
+	}
+	else if (isOverallNTSCJColorGamut){
+		color.rgb = toLinear(color.rgb);
+		color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
+		color.rgb = toGamma(color.rgb);
 	}
 
 	gl_FragColor = color;

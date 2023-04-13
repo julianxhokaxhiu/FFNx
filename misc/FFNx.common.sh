@@ -87,14 +87,18 @@ vec3 toLinear2pt2(vec3 _rgb)
 
 // Microsoft says PAL uses a pure 2.8 gamma curve. See: https://learn.microsoft.com/en-us/windows/win32/api/mfobjects/ne-mfobjects-mfvideotransferfunction
 // ffmpeg thinks there *should* be a linear toe slope, but uses a pure curve since they cannot find any documentation for it. See: https://github.com/FFmpeg/FFmpeg/blob/master/libavfilter/vf_colorspace.c#L162
-// In any event Poynton says 2.8 is "unrealistically high" and PAL CRT units did not really behave like that
+// In any event, Poynton says 2.8 is "unrealistically high" and PAL CRT units did not really behave like that.
 // PAL switched to the SMPTE170M function in 2005 (see BT1700)
 vec3 toLinear2pt8(vec3 _rgb)
 {
 	return saturate(pow(_rgb.rgb, vec3_splat(2.8)));
 }
 
-
+// This is an unprincipled, bespoke gamma function that "looks good" with FF7 videos, while all other options are problematic:
+//      - Functions with toe slopes cause banding near black in these videos.
+//      - A pure 2.2 power function loses details in shadow to darkness.
+//      - A pure 2.0 power function blows out highlights.
+// While unmoored from any theoretical or mathematical justification, this function avoids all those problems.
 vec3 toLinearToelessSRGB(vec3 _rgb)
 {
     vec3 twoPtwo = toLinear2pt2(_rgb);
@@ -119,6 +123,7 @@ vec3 toGamma(vec3 _rgb)
 
 // See https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ColorSpaceUtility.hlsli#L75
 // max_nits should be "the brightness level that SDR 'white' is rendered at within an HDR monitor" (probably 100-200ish)
+// Google Chrome uses a default of 200 if autodetection fails.
 vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 {
 	// reference PQ OETF will yield reference OOTF when
@@ -136,8 +141,21 @@ vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 
 
 // Gamut conversions ---------------------------------------------
-// These should be done using linear RGB input
+// These functions all take a linear RGB input and produce a linear RGB output.
+// Mathematically, they are equivalent to:
+//      1. Convert linear RGB to XYZ using the source gamut's red/green/blue points
+//      2. Do a gamut conversion from the source gamut to the destination gamut
+//      3. Covert XYZ to linear RGB using the destination gamut's red/green/blue points
+// But all of that has been pre-computed into a single matrix multiply operation.
 
+// Note: sRGB is the same gamut as rec709 video.
+
+// Note: High precision values are used for the "D65" whitepoint. (x=0.312713, y=0.329016)
+
+// Note: There are (at least) three different whitepoints that are all referred to as "D93"/"9300K."
+// The one used here is 9300K+27mpcd (x=0.281, y=0.311), which is what NTSC-J television sets used.
+
+// To sRGB:
 vec3 convertGamut_NTSCJtoSRGB(vec3 rgb_input)
 {
 	const mat3 NTSCJ_to_bt709_gamut_transform = mat3(
@@ -168,6 +186,38 @@ vec3 convertGamut_EBUtoSRGB(vec3 rgb_input)
 	return saturate(instMul(EBU_to_bt709_gamut_transform, rgb_input));
 }
 
+// To NTSC-J:
+vec3 convertGamut_SRGBtoNTSCJ(vec3 rgb_input)
+{
+	const mat3 bt709_to_NTSCJ_gamut_transform = mat3(
+		vec3(+0.747740261849856, +0.022941129531242, +0.018070185951324),
+		vec3(+0.217853505133354, +1.04849963723505, +0.052033179887888),
+		vec3(+0.034406264690912, -0.071440739296512, +0.929896593506351)
+	);
+	return saturate(instMul(bt709_to_NTSCJ_gamut_transform, rgb_input));
+}
+
+vec3 convertGamut_SMPTECtoNTSCJ(vec3 rgb_input)
+{
+	const mat3 SMPTEC_to_ntscj_gamut_transform = mat3(
+		vec3(+0.706352824936913, +0.040305277693241, +0.016394346360255),
+		vec3(+0.247772200986727, +1.01409844522665, +0.047096065104848),
+		vec3(+0.045875005750482, -0.054403695450107, +0.93650954788046)
+	);
+	return saturate(instMul(SMPTEC_to_ntscj_gamut_transform, rgb_input));
+}
+
+vec3 convertGamut_EBUtoNTSCJ(vec3 rgb_input)
+{
+	const mat3 EBU_to_ntscj_gamut_transform = mat3(
+		vec3(+0.780671562481622, +0.023951482018557, +0.018866016744978),
+		vec3(+0.185328031532646, +1.04664663055712, +0.062205618306966),
+		vec3(+0.034000437659853, -0.070598085105892, +0.918928324293619)
+	);
+	return saturate(instMul(EBU_to_ntscj_gamut_transform, rgb_input));
+}
+
+// To rec2020:
 // See https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ColorSpaceUtility.hlsli#L120
 vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
 {
@@ -191,34 +241,35 @@ vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 
 vec3 convertGamut_SMPTECtoREC2020(vec3 rgb_input)
 {
-	mat3 NTSCJtoRec2020 = mat3(
+	mat3 SMPTECtoRec2020 = mat3(
 		vec3(+0.596055044600838, +0.081162684813783, +0.015478022749295),
 		vec3(+0.349321035033339, +0.891089379419002, +0.081739076199362),
 		vec3(+0.054623920365823, +0.027747935767214, +0.902782901051343)
 	);
-	return saturate(instMul(NTSCJtoRec2020, rgb_input));
+	return saturate(instMul(SMPTECtoRec2020, rgb_input));
 }
 
 vec3 convertGamut_EBUtoREC2020(vec3 rgb_input)
 {
-	mat3 NTSCJtoRec2020 = mat3(
+	mat3 EBUtoRec2020 = mat3(
 		vec3(+0.655921314038802, +0.072058409820593, +0.017079198766081),
 		vec3(+0.302076101195449, +0.916217182555354, +0.097683466215707),
 		vec3(+0.042002584765749, +0.011724407624053, +0.885237335018211)
 	);
-	return saturate(instMul(NTSCJtoRec2020, rgb_input));
+	return saturate(instMul(EBUtoRec2020, rgb_input));
 }
 
 // Dithering ---------------------------------------------
 
-// Apply Martin Roberts' quasirandom dithering below 8 bits of precision.
+// Apply Martin Roberts' quasirandom dithering scaled below a specified level of precision.
 // See https://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
-// pixelval: float (range 0-1) pixel color trio, assumed to have been read in from a trio of 8-bit values.
+// pixelval: float (range 0-1) pixel color trio.
 // coords: float (range 0-1) pixel coordinates, i.e., v_texcoord0.xy
 // ydims: integer dimensions of first channel's texture
 // udims & vdims: integer dimensions of first second and third channels' textures (may differ from ydim for various yuv formats)
 // scale_divisor: step size divisor to scale the dithering to fit within. E.g., use 255.0 for dithering 8-bit values.
-// xyoffset: value to add to x & y coords. Should be at least 1 to avoid x=0 and y=0. Should be different if the same input is dithered twice (which happens if TV-range video is dither for range expansion, then again for HDR bit depth increase)
+// xyoffset: value to add to x & y coords. Should be at least 1 to avoid x=0 and y=0. Should be different if the same input is dithered twice.
+// (This function will be used twice if TV-range video is dithered for range expansion, then again for HDR bit depth increase.)
 vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims, float scale_divisor, float xyoffset)
 {
 	// get integer range x,y coords for this pixel
