@@ -40,6 +40,9 @@ void main()
 	vec4 color = texture2D(tex_0, v_texcoord0.xy);
 
 	if (isHDR) {
+        // back to linear for gamut conversion and PQ gamma curve
+        color.rgb = toLinear(color.rgb);
+	
 		// dither, unless we already did so for a tv-range FMV
 		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
 		// d3d9 doesn't support textureSize()

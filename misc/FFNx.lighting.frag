@@ -268,9 +268,8 @@ void main()
             {
                 if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
-                if (!(isHDR)) {
-                    texture_color.rgb = toLinear(texture_color.rgb);
-                }
+                // This was previously in gamma space, so linearize again.
+                texture_color.rgb = toLinear(texture_color.rgb);
             }
             // This stanza currently does nothing because there's no way to set doGamutOverride.
             // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
@@ -400,8 +399,7 @@ void main()
         }
     }
 
-    if (!(isHDR)) {
-        // SDR screens require the Gamma output to properly render light scenes
-        gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
-    }
+    // return to gamma space so we can do alpha blending the same way FF7/8 did.
+    gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
+    
 }
