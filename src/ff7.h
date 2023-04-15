@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2023 Marcin 'Maki' Gomulak                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -3070,6 +3071,7 @@ struct ff7_externals
 	uint32_t snowboard_submit_draw_black_quad_graphics_object_72DD94;
 	uint32_t snowboard_submit_draw_white_fade_quad_graphics_object_72DD53;
 	uint32_t snowboard_submit_draw_opaque_quad_graphics_object_72DDD5;
+	uint32_t snowboard_parse_model_vertices_732159;
 
 	// condor
 	uint32_t condor_enter;
