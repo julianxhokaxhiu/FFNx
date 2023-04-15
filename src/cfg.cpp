@@ -128,6 +128,7 @@ double hdr_max_nits;
 long external_audio_number_of_channels;
 long external_audio_sample_rate;
 bool ff8_worldmap_internal_highres_textures;
+bool ff8_fix_uv_coords_precision;
 std::string app_path;
 std::string data_drive;
 
@@ -271,7 +272,8 @@ void read_cfg()
 	hdr_max_nits = config["hdr_max_nits"].value_or(0);
 	external_audio_number_of_channels = config["external_audio_number_of_channels"].value_or(2);
 	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(44100);
-	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(false);
+	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(true);
+	ff8_fix_uv_coords_precision = config["ff8_fix_uv_coords_precision"].value_or(true);
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");
 

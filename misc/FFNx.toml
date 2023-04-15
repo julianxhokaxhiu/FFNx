@@ -595,6 +595,10 @@ save_path = "save"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_worldmap_internal_highres_textures = true
 
+# Attempt to fix texturing holes by restoring full precision from the game data
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_fix_uv_coords_precision = true
+
 ## GAME INSTALLATION OPTIONS
 
 #[APP PATH]

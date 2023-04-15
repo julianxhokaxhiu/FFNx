@@ -54,6 +54,9 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	// some modpath textures have filtering forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter) && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
 
+	// Texture filtering mostly does not work well in FF8
+	if(ff8) current_state.texture_filter = false;
+
 	// some modpath textures have z-sort forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_zsort) && VREF(texture_set, ogl.external)) defer = true;
 

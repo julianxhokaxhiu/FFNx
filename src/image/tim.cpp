@@ -26,6 +26,40 @@
 #include "../log.h"
 #include "../saveload.h"
 
+TimRect::TimRect() :
+	palIndex(0), x1(0), y1(0), x2(0), y2(0)
+{
+}
+
+TimRect::TimRect(uint32_t palIndex, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) :
+	palIndex(palIndex), x1(x1), y1(y1), x2(x2), y2(y2)
+{
+}
+
+bool TimRect::match(uint32_t x, uint32_t y) const
+{
+	return x >= x1 && x <= x2 && y >= y1 && y <= y2;
+}
+
+bool TimRect::isValid() const
+{
+	return x1 != x2 || y1 != y2;
+}
+
+int operator==(const TimRect &rect, const TimRect &other)
+{
+	return rect.palIndex == other.palIndex
+		&& rect.x1 == other.x1
+		&& rect.y1 == other.y1
+		&& rect.x2 == other.x2
+		&& rect.y2 == other.y2;
+}
+
+bool operator<(const TimRect &rect, const TimRect &other)
+{
+	return ((uint64_t(rect.palIndex) << 56) | (uint64_t(rect.x1) << 28) | uint64_t(rect.y1)) < ((uint64_t(other.palIndex) << 56) | (uint64_t(other.x1) << 28) | uint64_t(other.y1));
+}
+
 Tim::Tim(Bpp bpp, const ff8_tim &tim) :
 	_bpp(bpp), _tim(tim)
 {
@@ -114,6 +148,41 @@ bool Tim::toRGBA32MultiPaletteGrid(uint32_t *target, uint8_t cellCols, uint8_t c
 {
 	PaletteDetectionStrategyGrid grid(this, cellCols, cellRows, colorsPerPal, palColsPerRow);
 	return grid.isValid() && toRGBA32(target, &grid, withAlpha);
+}
+
+
+
+PaletteDetectionStrategyTrianglesAndQuads::PaletteDetectionStrategyTrianglesAndQuads(const Tim *const tim, const std::vector<TimRect> &rectangles) :
+	PaletteDetectionStrategy(tim), _rectangles(rectangles)
+{
+}
+
+uint32_t PaletteDetectionStrategyTrianglesAndQuads::palOffset(uint16_t imgX, uint16_t imgY) const
+{
+	for (const TimRect &rectangle: _rectangles) {
+		if (rectangle.match(imgX, imgY)) {
+			return rectangle.palIndex * _tim->_tim.pal_w;
+		}
+	}
+
+	return 0;
+}
+
+uint32_t PaletteDetectionStrategyTrianglesAndQuads::palIndex() const
+{
+	return 0;
+}
+
+bool Tim::saveMultiPaletteTrianglesAndQuads(const char *fileName, const std::vector<TimRect> &rectangles, bool withAlpha) const
+{
+	PaletteDetectionStrategyTrianglesAndQuads strategy(this, rectangles);
+	return strategy.isValid() && save(fileName, &strategy, withAlpha);
+}
+
+bool Tim::toRGBA32MultiPaletteTrianglesAndQuads(uint32_t *target, const std::vector<TimRect> &rectangles, bool withAlpha) const
+{
+	PaletteDetectionStrategyTrianglesAndQuads strategy(this, rectangles);
+	return strategy.isValid() && toRGBA32(target, &strategy, withAlpha);
 }
 
 bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha) const

@@ -190,8 +190,8 @@ struct
 	char *image_data;
 	uint32_t size;
 	struct ff8_texture_set *texture_set;
-} reload_buffer[TEXRELOAD_BUFFER_SIZE];
-uint32_t reload_buffer_index;
+} reload_buffer[TEXRELOAD_BUFFER_SIZE] = {};
+uint32_t reload_buffer_index = 0;
 
 // this function is wedged into the middle of a function designed to reload a Direct3D texture
 // when the image data changes
@@ -208,15 +208,9 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	// unnecessary texture reloads
 	for(i = 0; i < TEXRELOAD_BUFFER_SIZE; i++)
 	{
-		if(reload_buffer[i].texture_set == texture_set)
+		if(reload_buffer[i].texture_set == texture_set && reload_buffer[i].size == size && memcmp(reload_buffer[i].image_data, VREF(tex_header, image_data), size) == 0)
 		{
-			if(reload_buffer[i].size == size)
-			{
-				if(!memcmp(reload_buffer[i].image_data, VREF(tex_header, image_data), size))
-				{
-					return;
-				}
-			}
+			return;
 		}
 	}
 
@@ -224,8 +218,13 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	common_load_texture((struct texture_set *)texture_set, texture_set->tex_header, texture_set->texture_format);
 
 	reload_buffer[reload_buffer_index].texture_set = texture_set;
-	driver_free(reload_buffer[reload_buffer_index].image_data);
-	reload_buffer[reload_buffer_index].image_data = (char*)driver_malloc(size);
+	if (reload_buffer[reload_buffer_index].image_data != nullptr && reload_buffer[reload_buffer_index].size != size) {
+		driver_free(reload_buffer[reload_buffer_index].image_data);
+		reload_buffer[reload_buffer_index].image_data = nullptr;
+	}
+	if (reload_buffer[reload_buffer_index].image_data == nullptr) {
+		reload_buffer[reload_buffer_index].image_data = (char*)driver_malloc(size);
+	}
 	memcpy(reload_buffer[reload_buffer_index].image_data, VREF(tex_header, image_data), size);
 	reload_buffer[reload_buffer_index].size = size;
 	reload_buffer_index = (reload_buffer_index + 1) % TEXRELOAD_BUFFER_SIZE;
