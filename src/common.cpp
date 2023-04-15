@@ -3336,6 +3336,7 @@ void drawFFNxLogo(struct game_obj* game_object)
 
 		last_gametime = gametime;
 	}
+	newRenderer.setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB); // set the gamut back to what it was before newRenderer.drawFFNxLogo() changed it
 }
 
 #if defined(__cplusplus)

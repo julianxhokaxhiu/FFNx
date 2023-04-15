@@ -1265,6 +1265,7 @@ void Renderer::drawFFNxLogo(float fade)
 	bindIndexBuffer(indices, 6);
 
     resetState();
+    setOverallColorGamut(COLORGAMUT_SRGB); // always draw the logo in sRGB mode. The old setting is restored in drawFFNxLogo() in common.cpp
 	setPrimitiveType();
 	isTLVertex(true);
 	setCullMode(RendererCullMode::DISABLED);
