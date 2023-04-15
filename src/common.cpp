@@ -3341,6 +3341,7 @@ int ffnx_logo_current_frame = 0;
 bool drawFFNxLogoFrame(struct game_obj* game_object)
 {
 	if (ffnx_logo_current_frame >= FFNX_LOGO_FRAME_COUNT) {
+		newRenderer.setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB); // set the gamut back to what it was before newRenderer.drawFFNxLogo() changed it
 		return false;
 	}
 
