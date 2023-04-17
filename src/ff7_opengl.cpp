@@ -7,6 +7,7 @@
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
+//    Copyright (C) 2023 Marcin 'Maki' Gomulak                              //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -417,6 +418,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	}
 
 	replace_call(ff7_externals.credits_main_loop + 0xAC, ff7_credits_loop_gfx_begin_scene);
+
+	//######################
+	// snowboard .P model vertices limit fix
+	//######################
+	memset_code(ff7_externals.snowboard_parse_model_vertices_732159 + 0x7E, 0x90, 6);
 }
 
 struct ff7_gfx_driver *ff7_load_driver(void* _game_object)

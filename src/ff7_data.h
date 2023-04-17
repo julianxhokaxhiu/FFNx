@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2023 Marcin 'Maki' Gomulak                              //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -1271,6 +1272,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.snowboard_submit_draw_white_fade_quad_graphics_object_72DD53 = get_relative_call(snowboard_submit_draw_white_fade_quad_729912, 0xD);
 	uint32_t snowboard_submit_draw_opaque_quad_72993A = get_relative_call(snowboard_callable_draw_white_quad_7240D6, 0xCC);
 	ff7_externals.snowboard_submit_draw_opaque_quad_graphics_object_72DDD5 = get_relative_call(snowboard_submit_draw_opaque_quad_72993A, 0xD);
+	uint32_t snowboard_sub_735220 = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0xBF);
+	uint32_t snowboard_sub_735332 = get_relative_call(snowboard_sub_735220, 0xE6);
+	ff7_externals.snowboard_parse_model_vertices_732159 = get_relative_call(snowboard_sub_735332, 0x29);
 	// --------------------------------
 
 	// Steam achievement
