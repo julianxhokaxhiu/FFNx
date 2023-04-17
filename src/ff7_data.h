@@ -6,7 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 Julian Xhokaxhiu                                   //
-//    Copyright (C) 2023 Marcin 'Maki' Gomulak                                   //
+//    Copyright (C) 2023 Marcin 'Maki' Gomulak                              //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
