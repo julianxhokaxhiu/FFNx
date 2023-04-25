@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.15.0",
-  "builtin-baseline": "69efe9cc2df0015f0bb2d37d55acde4a75c9a25b",
+  "builtin-baseline": "501db0f17ef6df184fcdbfbe0f87cde2313b6ab1",
   "dependencies": [
     "bgfx",
     {
@@ -71,7 +71,7 @@
     {
       "name": "ffmpeg",
       "version": "5.1.2",
-      "port-version": 5
+      "port-version": 6
     },
     {
       "name": "imgui",
@@ -85,7 +85,7 @@
     },
     {
       "name": "mimalloc",
-      "version": "2.0.9",
+      "version": "2.1.1",
       "port-version": 0
     },
     {
