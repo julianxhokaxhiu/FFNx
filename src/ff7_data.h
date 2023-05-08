@@ -615,7 +615,9 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.sub_5F5042 = get_relative_call(condor_main_loop, 0x69);
 	ff7_externals.highway_loop_sub_650F36 = get_relative_call(highway_main_loop, 0x53);
+	ff7_externals.snowboard_enter_sub_722C10 = get_absolute_value(main_loop, 0xB53);
 	ff7_externals.snowboard_loop_sub_72381C = get_relative_call(snowboard_main_loop, 0x7D);
+	ff7_externals.snowboard_exit_sub_722C52 = get_absolute_value(main_loop, 0xB5A);
 	ff7_externals.sub_779E14 = get_relative_call(chocobo_main_loop, 0x70);
 
 	ff7_externals.condor_enter = get_absolute_value(main_loop, 0xA28);
@@ -1272,9 +1274,16 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.snowboard_submit_draw_white_fade_quad_graphics_object_72DD53 = get_relative_call(snowboard_submit_draw_white_fade_quad_729912, 0xD);
 	uint32_t snowboard_submit_draw_opaque_quad_72993A = get_relative_call(snowboard_callable_draw_white_quad_7240D6, 0xCC);
 	ff7_externals.snowboard_submit_draw_opaque_quad_graphics_object_72DDD5 = get_relative_call(snowboard_submit_draw_opaque_quad_72993A, 0xD);
-	uint32_t snowboard_sub_735220 = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0xBF);
-	uint32_t snowboard_sub_735332 = get_relative_call(snowboard_sub_735220, 0xE6);
-	ff7_externals.snowboard_parse_model_vertices_732159 = get_relative_call(snowboard_sub_735332, 0x29);
+	ff7_externals.sub_735220 = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0xBF);
+	ff7_externals.sub_735332 = get_relative_call(ff7_externals.sub_735220, 0xE6);
+	ff7_externals.snowboard_parse_model_vertices_732159 = get_relative_call(ff7_externals.sub_735332, 0x29);
+	ff7_externals.sub_7322D6 = (char* (*)(tmd_primitive_packet*, int, int))get_relative_call(ff7_externals.snowboard_parse_model_vertices_732159, 0x10E);
+	ff7_externals.sub_732429 = (char* (*)(tmd_primitive_packet*, int, int))get_relative_call(ff7_externals.snowboard_parse_model_vertices_732159, 0x12A);
+	ff7_externals.sub_732546 = (char* (__thiscall *)(snowboard_this*, tmd_primitive_packet*, int, int))get_relative_call(ff7_externals.snowboard_parse_model_vertices_732159, 0x162);
+	ff7_externals.sub_732BB9 = (char* (*)(tmd_primitive_packet*, int, int))get_relative_call(ff7_externals.snowboard_parse_model_vertices_732159, 0x146);
+	ff7_externals.sub_733479 = (matrix* (__thiscall *)(void*, const matrix*))get_relative_call(ff7_externals.snowboard_parse_model_vertices_732159, 0x5F);
+	ff7_externals.sub_733564 = (point4d* (__thiscall *)(void*, vector3<float>*, point4d*))get_relative_call(ff7_externals.snowboard_parse_model_vertices_732159, 0xDC);
+	ff7_externals.snowboard_global_object_off_926290 = (DWORD*)get_absolute_value(ff7_externals.snowboard_parse_model_vertices_732159, 0x55);
 	// --------------------------------
 
 	// Steam achievement

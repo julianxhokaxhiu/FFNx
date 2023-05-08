@@ -268,6 +268,8 @@ These people are:
 - [Lord UrQuan](https://github.com/eve-atum)
   - for finding new and inventive ways to crash our test builds
   - for general documentation clean-up
+- [LaZar00](https://github.com/LaZar00)
+  - for the Snowboard TMD structures
 
 I'm sure I forgot many others. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 

@@ -289,3 +289,13 @@ void memset_code(uint32_t offset, uint32_t val, uint32_t size)
 
 	memset((void *)offset, val, size);
 }
+
+// From https://stackoverflow.com/a/21636483
+void* member_func_to_ptr(char i, ...)
+{
+    va_list v;
+    va_start(v,i);
+    void* ret = va_arg(v, void*);
+    va_end(v);
+    return ret;
+}

@@ -2261,6 +2261,310 @@ struct world_event_data
 	byte field_60[104];
 };
 
+// Snowboard
+
+struct tmd_3_fs_fp
+{
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+  uint8_t mode2;
+  uint16_t normal0;
+  uint16_t vertex0;
+  uint16_t vertex1;
+  uint16_t vertex2;
+};
+
+struct tmd_3_fs_gp
+{
+  uint8_t r0;
+  uint8_t g0;
+  uint8_t b0;
+  uint8_t mode2;
+  uint8_t r1;
+  uint8_t g1;
+  uint8_t b1;
+  uint8_t pad1;
+  uint8_t r2;
+  uint8_t g2;
+  uint8_t b2;
+  uint8_t pad2;
+  uint16_t normal0;
+  uint16_t vertex0;
+  uint16_t vertex1;
+  uint16_t vertex2;
+};
+
+struct tmd_3_gs_fp
+{
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+  uint8_t mode2;
+  uint16_t normal0;
+  uint16_t vertex0;
+  uint16_t normal1;
+  uint16_t vertex1;
+  uint16_t normal2;
+  uint16_t vertex2;
+};
+
+struct tmd_3_gs_gp
+{
+  uint8_t r0;
+  uint8_t g0;
+  uint8_t b0;
+  uint8_t mode2;
+  uint8_t r1;
+  uint8_t g1;
+  uint8_t b1;
+  uint8_t pad1;
+  uint8_t r2;
+  uint8_t g2;
+  uint8_t b2;
+  uint8_t pad2;
+  uint16_t normal0;
+  uint16_t vertex0;
+  uint16_t normal1;
+  uint16_t vertex1;
+  uint16_t normal2;
+  uint16_t vertex2;
+};
+
+struct tmd_3_ns_fp
+{
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+  uint8_t mode2;
+  uint16_t vertex0;
+  uint16_t vertex1;
+  uint16_t vertex2;
+  uint16_t pad;
+};
+
+struct tmd_3_ns_gp
+{
+  uint8_t r0;
+  uint8_t g0;
+  uint8_t b0;
+  uint8_t mode2;
+  uint8_t r1;
+  uint8_t g1;
+  uint8_t b1;
+  uint8_t pad1;
+  uint8_t r2;
+  uint8_t g2;
+  uint8_t b2;
+  uint8_t pad2;
+  uint16_t vertex0;
+  uint16_t vertex1;
+  uint16_t vertex2;
+  uint16_t pad;
+};
+
+struct tmd_3_tx_fs_np
+{
+  uint8_t u0;
+  uint8_t v0;
+  uint16_t cba;
+  uint8_t u1;
+  uint8_t v1;
+  uint16_t tsb;
+  uint8_t u2;
+  uint8_t v2;
+  uint16_t pad;
+  uint16_t normal;
+  uint16_t vertex0;
+  uint16_t vertex1;
+  uint16_t vertex2;
+};
+
+struct tmd_3_tx_gs_np
+{
+  uint8_t u0;
+  uint8_t v0;
+  uint16_t cba;
+  uint8_t u1;
+  uint8_t v1;
+  uint16_t tsb;
+  uint8_t u2;
+  uint8_t v2;
+  uint16_t pad;
+  uint16_t normal;
+  uint16_t vertex0;
+  uint16_t normal1;
+  uint16_t vertex1;
+  uint16_t normal2;
+  uint16_t vertex2;
+};
+
+struct tmd_3_tx_ns_fp
+{
+  uint8_t u0;
+  uint8_t v0;
+  uint16_t cba;
+  uint8_t u1;
+  uint8_t v1;
+  uint16_t tsb;
+  uint8_t u2;
+  uint8_t v2;
+  uint16_t pad1;
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+  uint8_t pad2;
+  uint16_t vertex0;
+  uint16_t vertex1;
+  uint16_t vertex2;
+  uint16_t pad;
+};
+
+struct tmd_3_tx_ns_gp
+{
+  uint8_t u0;
+  uint8_t v0;
+  uint16_t cba;
+  uint8_t u1;
+  uint8_t v1;
+  uint16_t tsb;
+  uint8_t u2;
+  uint8_t v2;
+  uint16_t pad1;
+  uint8_t r0;
+  uint8_t g0;
+  uint8_t b0;
+  uint8_t pad2;
+  uint8_t r1;
+  uint8_t g1;
+  uint8_t b1;
+  uint8_t pad3;
+  uint8_t r2;
+  uint8_t g2;
+  uint8_t b2;
+  uint8_t pad4;
+  uint16_t vertex0;
+  uint16_t vertex1;
+  uint16_t vertex2;
+  uint16_t pad;
+};
+
+struct tmd_header
+{
+  int32_t version;
+  int32_t flags;
+  int32_t nobjects;
+};
+
+struct tmd_normal
+{
+  int16_t nx;
+  int16_t ny;
+  int16_t nz;
+  int16_t pad;
+};
+
+struct tmd_primitive_header
+{
+  uint8_t olen;
+  uint8_t ilen;
+  uint8_t flag;
+  uint8_t mode;
+};
+
+struct tmd_primitive_packet
+{
+  tmd_3_fs_fp tmd3fsfp;
+  tmd_3_gs_fp tmd3gsfp;
+  tmd_3_fs_gp tmd3fsgp;
+  tmd_3_gs_gp tmd3gsgp;
+  tmd_3_tx_fs_np tmd3txfsnp;
+  tmd_3_tx_gs_np tmd3txgsnp;
+  tmd_3_ns_fp tmd3nsfp;
+  tmd_3_ns_gp tmd3nsgp;
+  tmd_3_tx_ns_fp tmd3txnsfp;
+  tmd_3_tx_ns_gp tmd3txnsgp;
+};
+
+struct tmd_vertex
+{
+  int16_t vx;
+  int16_t vy;
+  int16_t vz;
+  int16_t pad;
+};
+
+struct tmd_vertex_float
+{
+	float vx;
+	float vy;
+	float vz;
+	float pad;
+};
+
+struct tmd_object
+{
+  int32_t offsetverts;
+  int32_t nverts;
+  int32_t offsetnormals;
+  int32_t nnormals;
+  int32_t offsetprimitives;
+  int32_t nprimitives;
+  int32_t scale;
+  tmd_primitive_header *tmdprimitivelist;
+  tmd_primitive_packet *tmdprimitivelistpacket;
+  tmd_vertex *tmdvertexlist;
+  tmd_normal *tmdnormallist;
+};
+
+struct tmdmodel
+{
+  tmd_header tmdheader;
+  tmd_object *tmdobjectlist;
+};
+
+struct snowboard_this
+{
+  DWORD num_objects;
+  tmdmodel *model_data;
+  DWORD field_8;
+  DWORD field_C;
+  DWORD field_10;
+  float h_scale;
+  float v_scale;
+};
+
+struct snowboard_object
+{
+  snowboard_this *_this;
+  int actor;
+  int actor_num_tmd_blocks;
+  char *field_C;
+  char *field_10;
+  char *field_14;
+  char *field_18;
+  char *field_1C;
+  char *field_20;
+  int field_24;
+  int field_28;
+  int field_2C;
+  int field_30;
+  int field_34;
+  int field_38;
+  int field_3C;
+  int field_40;
+  int field_44;
+  int field_48;
+  int field_4C;
+  int field_50;
+  int field_54;
+  int field_58;
+  int field_5C;
+  int field_60;
+  int field_64;
+  int field_68;
+};
+
 // --------------- end of FF7 imports ---------------
 
 struct ff7_channel_6_state
@@ -2638,7 +2942,6 @@ struct ff7_externals
 	uint32_t fps_limiter_credits;
 	uint32_t sub_5F5042;
 	uint32_t highway_loop_sub_650F36;
-	uint32_t snowboard_loop_sub_72381C;
 	uint32_t sub_779E14;
 	uint32_t battle_fps_menu_multiplier;
 	DWORD *submarine_minigame_status;
@@ -3065,6 +3368,11 @@ struct ff7_externals
 	uint32_t chocobo_submit_draw_water_quad_77A7D0;
 	void(*generic_submit_quad_graphics_object_671D2A)(int, int, int, int, int, int, float, DWORD*) ;
 	byte* chocobo_fade_quad_data_97A498;
+
+	// snowboard
+	uint32_t snowboard_enter_sub_722C10;
+	uint32_t snowboard_loop_sub_72381C;
+	uint32_t snowboard_exit_sub_722C52;
 	uint32_t snowboard_draw_sky_and_mountains_72DAF0;
 	uint32_t snowboard_submit_draw_sky_quad_graphics_object_72E31F;
 	float* snowboard_sky_quad_pos_x_7B7DB8;
@@ -3072,6 +3380,15 @@ struct ff7_externals
 	uint32_t snowboard_submit_draw_white_fade_quad_graphics_object_72DD53;
 	uint32_t snowboard_submit_draw_opaque_quad_graphics_object_72DDD5;
 	uint32_t snowboard_parse_model_vertices_732159;
+	uint32_t sub_735220;
+	uint32_t sub_735332;
+	char* (*sub_7322D6)(tmd_primitive_packet*, int, int);
+	char* (*sub_732429)(tmd_primitive_packet*, int, int);
+	char* (*sub_732BB9)(tmd_primitive_packet*, int, int);
+	char* (__thiscall *sub_732546)(snowboard_this*, tmd_primitive_packet*, int, int);
+	matrix* (__thiscall *sub_733479)(void*, const matrix*);
+	point4d* (__thiscall *sub_733564)(void*, vector3<float>*, point4d*);
+	DWORD* snowboard_global_object_off_926290;
 
 	// condor
 	uint32_t condor_enter;
