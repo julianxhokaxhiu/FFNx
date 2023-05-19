@@ -13,6 +13,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+// Gamut LUT
+SAMPLER2D(tex_10, 10);
+
 // YUV to RGB ---------------------------------------------------------
 // tv-range functions include implicit range expansion
 
@@ -259,6 +262,49 @@ vec3 convertGamut_EBUtoREC2020(vec3 rgb_input)
 	return saturate(instMul(EBUtoRec2020, rgb_input));
 }
 
+
+// This is a generic 3D LUT function.
+// We're using it to do gamut conversions when a gamut compression mapping algorithm is necessary to avoid losing detail to clipping.
+// Since that's waaaay too compute heavy, we precompute it, then use a LUT.
+// Renderer::AssignGamutLUT() in renderer.cpp is in charge of making sure the correct LUT is bound.
+// Expects:
+// - coords 0,0 in the upper left corner
+// - 4096x64 dimensions
+// - linear rgb (unlike most other textures BGFX is NOT doing a linearize for us; we expect the image is linear to start with)
+// - black in the upper left corner
+// - green on the vertical axis
+// - red on the small horizontal axis
+// - blue on the large horizontal axis
+
+vec3 GamutLUT(vec3 rgb_input)
+{
+	vec3 temp = saturate(rgb_input) * vec3_splat(63.0);
+	vec3 floors = floor(temp);
+	vec3 ceils = ceil(temp);
+	vec3 ceilweights = temp - floors;
+	
+	vec3 RfGfBf = texture2D(tex_10, vec2(((floors.b * 64.0) + floors.r) / 4095.0, floors.g / 63.0)).xyz;
+	vec3 RfGfBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + floors.r) / 4095.0, floors.g / 63.0)).xyz;
+	vec3 RfGcBf = texture2D(tex_10, vec2(((floors.b * 64.0) + floors.r) / 4095.0, ceils.g / 63.0)).xyz;
+	vec3 RfGcBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + floors.r) / 4095.0, ceils.g / 63.0)).xyz;
+	vec3 RcGfBf = texture2D(tex_10, vec2(((floors.b * 64.0) + ceils.r) / 4095.0, floors.g / 63.0)).xyz;
+	vec3 RcGfBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + ceils.r) / 4095.0, floors.g / 63.0)).xyz;
+	vec3 RcGcBf = texture2D(tex_10, vec2(((floors.b * 64.0) + ceils.r) / 4095.0, ceils.g / 63.0)).xyz;
+	vec3 RcGcBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + ceils.r) / 4095.0, ceils.g / 63.0)).xyz;
+	
+	vec3 RfGf = mix(RfGfBf, RfGfBc, vec3_splat(ceilweights.b));
+	vec3 RfGc = mix(RfGcBf, RfGcBc, vec3_splat(ceilweights.b));
+	vec3 RcGf = mix(RcGfBf, RcGfBc, vec3_splat(ceilweights.b));
+	vec3 RcGc = mix(RcGcBf, RcGcBc, vec3_splat(ceilweights.b));
+	
+	vec3 Rf = mix(RfGf, RfGc, vec3_splat(ceilweights.g));
+	vec3 Rc = mix(RcGf, RcGc, vec3_splat(ceilweights.g));
+	
+	vec3 outcolor = mix(Rf, Rc, vec3_splat(ceilweights.r));
+	
+	return outcolor;
+}
+
 // Dithering ---------------------------------------------
 
 // Apply Martin Roberts' quasirandom dithering scaled below a specified level of precision.
@@ -271,7 +317,7 @@ vec3 convertGamut_EBUtoREC2020(vec3 rgb_input)
 // xyoffset: value to add to x & y coords. Should be at least 1 to avoid x=0 and y=0. Should be different if the same input is dithered twice.
 // (This function will be used twice if TV-range video is dithered for range expansion, then again for HDR bit depth increase.)
 vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims, float scale_divisor, float xyoffset)
-{
+{	
 	// get integer range x,y coords for this pixel
 	// invert one axis for u and the other axis for v to decouple dither patterns across channels
 	// see https://blog.kaetemi.be/2015/04/01/practical-bayer-dithering/
@@ -299,5 +345,12 @@ vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ive
 	// scale down below the specified step size
 	dither = dither / vec3_splat(scale_divisor);
 	// add to input
-	return saturate(pixelval + dither);
+	vec3 tempout = saturate(pixelval + dither);
+	
+	// don't dither colors so close to 0 or 1 that dithering is asymmetric
+	bvec3 highcutoff = greaterThan(pixelval, vec3_splat(1.0 - (0.5 / scale_divisor)));
+	bvec3 lowcutoff = lessThan(pixelval, vec3_splat(0.5 / scale_divisor));
+	vec3 outcolor = mix(tempout, pixelval, highcutoff);
+	outcolor = mix(outcolor, pixelval, lowcutoff);
+	return outcolor;
 }

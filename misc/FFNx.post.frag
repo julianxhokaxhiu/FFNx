@@ -60,7 +60,13 @@ void main()
 	}
 	else if (isOverallNTSCJColorGamut){
 		color.rgb = toLinear(color.rgb);
-		color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
+		//color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
+		color.rgb = GamutLUT(color.rgb);
+		// dither after the LUT operation
+		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
+        ivec2 dimensions = textureSize(tex_0, 0);
+        color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
+		#endif
 		color.rgb = toGamma(color.rgb);
 	}
 

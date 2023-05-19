@@ -169,6 +169,16 @@ void main()
             // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
             if (isOverallNTSCJColorGamut){
                 // do nothing for NTSC-J
+                if ((isSRGBColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
+                    color.rgb = GamutLUT(color.rgb);
+                    // dither after the LUT operation
+                    #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
+                    ivec2 dimensions = textureSize(tex_0, 0);
+                    color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
+                    #endif
+                }
+                // TODO: bring this back for HDR if out-of-bounds colors gets the OK
+                /*
                 if (isSRGBColorGamut){
                     color.rgb = convertGamut_SRGBtoNTSCJ(color.rgb);
                 }
@@ -177,11 +187,21 @@ void main()
                 }
                 else if (isEBUColorGamut){
                     color.rgb = convertGamut_EBUtoNTSCJ(color.rgb);
-                }
+                }*/
             }
             // overall sRGB
             else {
                 // do nothing for sRGB
+                if ((isNTSCJColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
+                    color.rgb = GamutLUT(color.rgb);
+                    // dither after the LUT operation
+                    #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
+                    ivec2 dimensions = textureSize(tex_0, 0);
+                    color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
+                    #endif
+                }
+                // TODO: bring this back for HDR if out-of-bounds colors gets the OK
+                /*
                 if (isNTSCJColorGamut){
                     color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
                 }
@@ -191,6 +211,7 @@ void main()
                 else if (isEBUColorGamut){
                     color.rgb = convertGamut_EBUtoSRGB(color.rgb);
                 }
+                */
             }
             
             color.a = 1.0;
@@ -250,14 +271,21 @@ void main()
             }
             // This stanza currently does nothing because there's no way to set doGamutOverride.
             // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
-            // The roundtrip gamut conversions are lossless over the intersection of sRGB and NTSC-J, which should encompass a large majority of inputs.
             else if (doGamutOverride){
+                texture_color.rgb = GamutLUT(texture_color.rgb);
+                #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
+                ivec2 dimensions = textureSize(tex_0, 0);
+                texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
+                #endif
+                // TODO: bring this back for HDR if given the OK for out-of-bounds colors
+                /*
                 if (isOverallNTSCJColorGamut){
                     texture_color.rgb = convertGamut_SRGBtoNTSCJ(texture_color.rgb);
                 }
                 else {
                     texture_color.rgb = convertGamut_NTSCJtoSRGB(texture_color.rgb);
                 }
+                */
             }
 
             if (isMovie) texture_color.a = 1.0;

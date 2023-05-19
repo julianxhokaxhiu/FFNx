@@ -677,6 +677,9 @@ void Renderer::bindTextures()
                     case RendererTextureSlot::TEX_D:
                         // Specially handled, move on
                         continue;
+                    case RendererTextureSlot::TEX_G_LUT:
+                        flags |= BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
+                        break;
                     default:
                         break;
                 }
@@ -689,6 +692,50 @@ void Renderer::bindTextures()
 
         internalState.bTexturesBound = true;
     }
+}
+
+void Renderer::AssignGamutLUT()
+{
+    // HDR mode doesn't need these LUTs
+    // (These LUTs do gamut compression mapping, but HDR doesn't need that.
+    // Instead we can pass around out-of-bounds values from XYZ transforms until the final conversion to rec2020 brings them in bounds.)
+    // remove this for now until CosmosXIII gives the OK
+    //if (internalState.bIsHDR) return;
+    
+    
+    // NTSCJ mode post-processing
+    if ((backendProgram == RendererProgram::POSTPROCESSING) && (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ)){
+        useTexture(GLUTHandleNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
+    }
+    // Movies and override flag
+    // Note: Override flag currently does nothing because it's never set to true anywhere
+    // The intent is to eventually have a way to say "I want to display a NTSCJ asset in sRGB mode" or "I want to display a sRGB asset in NTSCJ mode." 
+    else {
+        if (internalState.bIsOverallColorGamut == COLORGAMUT_SRGB){
+            if ((internalState.bIsMovieColorGamut == COLORGAMUT_NTSCJ) || internalState.bIsOverrideGamut){
+                useTexture(GLUTHandleNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
+            }
+            else if (internalState.bIsMovieColorGamut == COLORGAMUT_SMPTEC){
+                useTexture(GLUTHandleSMPTECtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
+            }
+            else if (internalState.bIsMovieColorGamut == COLORGAMUT_EBU){
+                useTexture(GLUTHandleEBUtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
+            }
+        }
+        else if (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ){
+            if ((internalState.bIsMovieColorGamut == COLORGAMUT_SRGB) || internalState.bIsOverrideGamut){
+                useTexture(GLUTHandleInverseNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
+            }
+            else if (internalState.bIsMovieColorGamut == COLORGAMUT_SMPTEC){
+                useTexture(GLUTHandleInverseNTSCJtoSMPTEC.idx, RendererTextureSlot::TEX_G_LUT);
+            }
+            else if (internalState.bIsMovieColorGamut == COLORGAMUT_EBU){
+                useTexture(GLUTHandleInverseNTSCJtoEBU.idx, RendererTextureSlot::TEX_G_LUT);
+            }
+        }
+            
+    }    
+    return;
 }
 
 // PUBLIC
@@ -1006,6 +1053,78 @@ void Renderer::prepareEnvBrdf()
     if (!envBrdfTexture.idx) envBrdfTexture = BGFX_INVALID_HANDLE;
 }
 
+void Renderer::prepareGamutLUTs()
+{
+    static char fullpath[MAX_PATH];
+    
+    if (bgfx::isValid(GLUTHandleNTSCJtoSRGB))
+        bgfx::destroy(GLUTHandleNTSCJtoSRGB);
+    
+    sprintf(fullpath, "%s/shaders/glut_ntscj_to_srgb.png", basedir);
+
+    uint32_t width, height, mipCount = 0;
+    GLUTHandleNTSCJtoSRGB = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleNTSCJtoSRGB.idx) GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
+    
+    
+    if (bgfx::isValid(GLUTHandleSMPTECtoSRGB))
+        bgfx::destroy(GLUTHandleSMPTECtoSRGB);
+    
+    sprintf(fullpath, "%s/shaders/glut_smptec_to_srgb.png", basedir);
+
+    width = height = mipCount = 0;
+    GLUTHandleSMPTECtoSRGB = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleSMPTECtoSRGB.idx) GLUTHandleSMPTECtoSRGB = BGFX_INVALID_HANDLE;
+    
+    
+    if (bgfx::isValid(GLUTHandleEBUtoSRGB))
+        bgfx::destroy(GLUTHandleEBUtoSRGB);
+    
+    sprintf(fullpath, "%s/shaders/glut_ebu_to_srgb.png", basedir);
+
+    width = height = mipCount = 0;
+    GLUTHandleEBUtoSRGB = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleEBUtoSRGB.idx) GLUTHandleEBUtoSRGB = BGFX_INVALID_HANDLE;
+    
+    
+    // We're using "inverse" conversions to go to NTSCJ in the hopes that the expansion involved
+    // will counteract the compression in the final NTSCJ to sRGB conversion.
+    // This isn't exactly kosher for the SMPTEC and EBU cases, but they're close enough to sRGB
+    // that doing the expansion probably gives closer to accurate results than not doing it.
+    
+    if (bgfx::isValid(GLUTHandleInverseNTSCJtoSRGB))
+        bgfx::destroy(GLUTHandleInverseNTSCJtoSRGB);
+    
+    sprintf(fullpath, "%s/shaders/glut_inverse_ntscj_to_srgb.png", basedir);
+
+    width = height = mipCount = 0;
+    GLUTHandleInverseNTSCJtoSRGB = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleInverseNTSCJtoSRGB.idx) GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
+    
+    
+    if (bgfx::isValid(GLUTHandleInverseNTSCJtoSMPTEC))
+        bgfx::destroy(GLUTHandleInverseNTSCJtoSMPTEC);
+    
+    sprintf(fullpath, "%s/shaders/glut_inverse_ntscj_to_smptec.png", basedir);
+
+    width = height = mipCount = 0;
+    GLUTHandleInverseNTSCJtoSMPTEC = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleInverseNTSCJtoSMPTEC.idx) GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
+    
+    
+    if (bgfx::isValid(GLUTHandleInverseNTSCJtoEBU))
+        bgfx::destroy(GLUTHandleInverseNTSCJtoEBU);
+    
+    sprintf(fullpath, "%s/shaders/glut_inverse_ntscj_to_ebu.png", basedir);
+
+    width = height = mipCount = 0;
+    GLUTHandleInverseNTSCJtoEBU = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleInverseNTSCJtoEBU.idx) GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
+    
+    return;
+    
+}
+
 void Renderer::shutdown()
 {
     destroyAll();
@@ -1141,6 +1260,9 @@ void Renderer::draw(bool uniformsAlreadyAttached)
         setLightingUniforms();
     }
 
+    // set up a gamut LUT if we need one
+    AssignGamutLUT();
+    
     // Bind textures in pipeline
     bindTextures();
 

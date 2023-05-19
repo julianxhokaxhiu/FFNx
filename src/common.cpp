@@ -852,6 +852,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				newRenderer.prepareFFNxLogo();
 
 				newRenderer.prepareEnvBrdf();
+                
+                newRenderer.prepareGamutLUTs();
 
 				// perform any additional initialization that requires the rendering environment to be set up
 				field_init();

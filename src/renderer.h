@@ -129,6 +129,7 @@ namespace RendererTextureSlot {
         TEX_IBL_SPEC,
         TEX_IBL_DIFF,
         TEX_BRDF,
+        TEX_G_LUT,
         COUNT
     };
 };
@@ -307,6 +308,13 @@ private:
     bgfx::DynamicIndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;
 
     bgfx::TextureHandle FFNxLogoHandle = BGFX_INVALID_HANDLE;
+    
+    bgfx::TextureHandle GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleSMPTECtoSRGB = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleEBUtoSRGB = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
 
     bgfx::VertexLayout vertexLayout;
 
@@ -357,6 +365,7 @@ private:
     void prepareFramebuffer();
 
     void bindTextures();
+    void AssignGamutLUT();
 
     bx::DefaultAllocator defaultAllocator;
     bx::FileWriter defaultWriter;
@@ -378,6 +387,7 @@ public:
     void prepareSpecularIbl(char* fullpath = nullptr);
     void prepareDiffuseIbl(char* fullpath = nullptr);
     void prepareEnvBrdf();
+    void prepareGamutLUTs();
     void shutdown();
 
     void clearShadowMap();

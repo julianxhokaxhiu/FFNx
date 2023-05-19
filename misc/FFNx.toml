@@ -131,7 +131,7 @@ hdr_max_nits = 0
 # (2) Mod assets that are upscales of the original assets.
 # (3) Mod assets made from scratch where the modder used the original assets as a color reference without doing a gamut conversion.
 # This mode is not appropriate for mod assets made from scratch that truly use the sRGB color gamut.
-# Such assets can be made suitable for this mode using this converter program: https://github.com/ChthonVII/ntscjpng
+# Such assets can be made suitable for this mode using this converter program: https://github.com/ChthonVII/gamutthingy
 enable_ntscj_gamut_mode = false
 
 #########################
