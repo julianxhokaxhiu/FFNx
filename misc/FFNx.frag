@@ -177,17 +177,7 @@ void main()
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
                     #endif
                 }
-                // TODO: bring this back for HDR if out-of-bounds colors gets the OK
-                /*
-                if (isSRGBColorGamut){
-                    color.rgb = convertGamut_SRGBtoNTSCJ(color.rgb);
-                }
-                else if (isSMPTECColorGamut){
-                    color.rgb = convertGamut_SMPTECtoNTSCJ(color.rgb);
-                }
-                else if (isEBUColorGamut){
-                    color.rgb = convertGamut_EBUtoNTSCJ(color.rgb);
-                }*/
+                // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
             // overall sRGB
             else {
@@ -200,18 +190,7 @@ void main()
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
                     #endif
                 }
-                // TODO: bring this back for HDR if out-of-bounds colors gets the OK
-                /*
-                if (isNTSCJColorGamut){
-                    color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
-                }
-                else if (isSMPTECColorGamut){
-                    color.rgb = convertGamut_SMPTECtoSRGB(color.rgb);
-                }
-                else if (isEBUColorGamut){
-                    color.rgb = convertGamut_EBUtoSRGB(color.rgb);
-                }
-                */
+                // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
             
             color.a = 1.0;
@@ -277,15 +256,7 @@ void main()
                 ivec2 dimensions = textureSize(tex_0, 0);
                 texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
                 #endif
-                // TODO: bring this back for HDR if given the OK for out-of-bounds colors
-                /*
-                if (isOverallNTSCJColorGamut){
-                    texture_color.rgb = convertGamut_SRGBtoNTSCJ(texture_color.rgb);
-                }
-                else {
-                    texture_color.rgb = convertGamut_NTSCJtoSRGB(texture_color.rgb);
-                }
-                */
+                // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
 
             if (isMovie) texture_color.a = 1.0;

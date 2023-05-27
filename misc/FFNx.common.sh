@@ -158,67 +158,8 @@ vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 // Note: There are (at least) three different whitepoints that are all referred to as "D93"/"9300K."
 // The one used here is 9300K+27mpcd (x=0.281, y=0.311), which is what NTSC-J television sets used.
 
-// To sRGB:
-vec3 convertGamut_NTSCJtoSRGB(vec3 rgb_input)
-{
-	const mat3 NTSCJ_to_bt709_gamut_transform = mat3(
-		vec3(+1.34756301456925, -0.031150036968175, -0.024443490594835),
-		vec3(-0.276463760747096, +0.956512223260545, -0.048150182045316),
-		vec3(-0.071099263267176, +0.074637860817515, +1.07259361295816)
-	);
-	return saturate(instMul(NTSCJ_to_bt709_gamut_transform, rgb_input));
-}
-
-vec3 convertGamut_SMPTECtoSRGB(vec3 rgb_input)
-{
-	const mat3 SMPTEC_to_bt709_gamut_transform = mat3(
-		vec3(+0.93954641805697, +0.0177731581035936, -0.0016219287899825),
-		vec3(+0.0501790284093381, +0.965794379088605, -0.00437041275295984),
-		vec3(+0.0102745535336914, +0.016432462807801, +1.00599234154294)
-	);
-	return saturate(instMul(SMPTEC_to_bt709_gamut_transform, rgb_input));
-}
-
-vec3 convertGamut_EBUtoSRGB(vec3 rgb_input)
-{
-	const mat3 EBU_to_bt709_gamut_transform = mat3(
-		vec3(+1.04404109596867, +0.000, -0.000),
-		vec3(-0.0440410959686678, +1.0, +0.0117951493631932),
-		vec3(+0.000, +0.000, +0.988204850636807)
-	);
-	return saturate(instMul(EBU_to_bt709_gamut_transform, rgb_input));
-}
-
-// To NTSC-J:
-vec3 convertGamut_SRGBtoNTSCJ(vec3 rgb_input)
-{
-	const mat3 bt709_to_NTSCJ_gamut_transform = mat3(
-		vec3(+0.747740261849856, +0.022941129531242, +0.018070185951324),
-		vec3(+0.217853505133354, +1.04849963723505, +0.052033179887888),
-		vec3(+0.034406264690912, -0.071440739296512, +0.929896593506351)
-	);
-	return saturate(instMul(bt709_to_NTSCJ_gamut_transform, rgb_input));
-}
-
-vec3 convertGamut_SMPTECtoNTSCJ(vec3 rgb_input)
-{
-	const mat3 SMPTEC_to_ntscj_gamut_transform = mat3(
-		vec3(+0.706352824936913, +0.040305277693241, +0.016394346360255),
-		vec3(+0.247772200986727, +1.01409844522665, +0.047096065104848),
-		vec3(+0.045875005750482, -0.054403695450107, +0.93650954788046)
-	);
-	return saturate(instMul(SMPTEC_to_ntscj_gamut_transform, rgb_input));
-}
-
-vec3 convertGamut_EBUtoNTSCJ(vec3 rgb_input)
-{
-	const mat3 EBU_to_ntscj_gamut_transform = mat3(
-		vec3(+0.780671562481622, +0.023951482018557, +0.018866016744978),
-		vec3(+0.185328031532646, +1.04664663055712, +0.062205618306966),
-		vec3(+0.034000437659853, -0.070598085105892, +0.918928324293619)
-	);
-	return saturate(instMul(EBU_to_ntscj_gamut_transform, rgb_input));
-}
+// Most of the gamut conversion matrices have been replacved with LUTs.
+// We will want to bring them back for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
 
 // To rec2020:
 // See https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ColorSpaceUtility.hlsli#L120
@@ -240,26 +181,6 @@ vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 		vec3(+0.025495200617381, +0.076419362630435, +0.966226011255509)
 	);
 	return saturate(instMul(NTSCJtoRec2020, rgb_input));
-}
-
-vec3 convertGamut_SMPTECtoREC2020(vec3 rgb_input)
-{
-	mat3 SMPTECtoRec2020 = mat3(
-		vec3(+0.596055044600838, +0.081162684813783, +0.015478022749295),
-		vec3(+0.349321035033339, +0.891089379419002, +0.081739076199362),
-		vec3(+0.054623920365823, +0.027747935767214, +0.902782901051343)
-	);
-	return saturate(instMul(SMPTECtoRec2020, rgb_input));
-}
-
-vec3 convertGamut_EBUtoREC2020(vec3 rgb_input)
-{
-	mat3 EBUtoRec2020 = mat3(
-		vec3(+0.655921314038802, +0.072058409820593, +0.017079198766081),
-		vec3(+0.302076101195449, +0.916217182555354, +0.097683466215707),
-		vec3(+0.042002584765749, +0.011724407624053, +0.885237335018211)
-	);
-	return saturate(instMul(EBUtoRec2020, rgb_input));
 }
 
 

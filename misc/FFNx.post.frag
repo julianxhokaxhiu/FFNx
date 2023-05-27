@@ -43,7 +43,6 @@ void main()
         // back to linear for gamut conversion and PQ gamma curve
         color.rgb = toLinear(color.rgb);
 	
-		// dither, unless we already did so for a tv-range FMV
 		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
 		// d3d9 doesn't support textureSize()
 		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
@@ -60,7 +59,6 @@ void main()
 	}
 	else if (isOverallNTSCJColorGamut){
 		color.rgb = toLinear(color.rgb);
-		//color.rgb = convertGamut_NTSCJtoSRGB(color.rgb);
 		color.rgb = GamutLUT(color.rgb);
 		// dither after the LUT operation
 		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV

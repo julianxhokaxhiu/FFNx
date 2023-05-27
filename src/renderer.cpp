@@ -696,10 +696,19 @@ void Renderer::bindTextures()
 
 void Renderer::AssignGamutLUT()
 {
-    // HDR mode doesn't need these LUTs
-    // (These LUTs do gamut compression mapping, but HDR doesn't need that.
-    // Instead we can pass around out-of-bounds values from XYZ transforms until the final conversion to rec2020 brings them in bounds.)
-    // remove this for now until CosmosXIII gives the OK
+    // Since HDR uses the super-wide rec2020 gamut, it doesn't need a gamut (compression) mapping algorithm,
+    // so it would be better to use the old matrix-based conversions instead of the LUTs that embody a GMA.
+    // That's what we do in post-processing.
+    // However, in two cases we have two serial conversions happening:
+    // (1) Movies where the movie's gamut isn't the same as the selected gamut mode
+    // (2) The implemented but as-yet unused internalState.bIsOverrideGamut
+    // What I'd *like* to do is to do matrix-based conversions for the first round,
+    // then *tolerate* the out-of-bounds values until post processing,
+    // then the final conversion to rec2020 will bring those values back in bounds.
+    // Unfortunately, I don't think the lighting code could tolerate out-of-bounds values.
+    // (Also, the srgb gamma function would need to be changed to avoid calling pow() on a negative input.)
+    // So, for now I'm using the LUTs for the first step for both SDR and HDR,
+    // and I'm putting this comment here in case we ever figure out how to tolerate out-of-bounds values
     //if (internalState.bIsHDR) return;
     
     
@@ -723,14 +732,29 @@ void Renderer::AssignGamutLUT()
             }
         }
         else if (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ){
-            if ((internalState.bIsMovieColorGamut == COLORGAMUT_SRGB) || internalState.bIsOverrideGamut){
-                useTexture(GLUTHandleInverseNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
+            // SDR should use the "inverse" conversions created with gamutthingy's "expand" flag, to compensate for the compression later,
+            // but HDR should not because the conversion to rec2020 doesn't involve compression
+            if (internalState.bIsHDR){
+                if ((internalState.bIsMovieColorGamut == COLORGAMUT_SRGB) || internalState.bIsOverrideGamut){
+                    useTexture(GLUTHandleSRGBtoNTSCJ.idx, RendererTextureSlot::TEX_G_LUT);
+                }
+                else if (internalState.bIsMovieColorGamut == COLORGAMUT_SMPTEC){
+                    useTexture(GLUTHandleSMPTECtoNTSCJ.idx, RendererTextureSlot::TEX_G_LUT);
+                }
+                else if (internalState.bIsMovieColorGamut == COLORGAMUT_EBU){
+                    useTexture(GLUTHandleEBUtoNTSCJ.idx, RendererTextureSlot::TEX_G_LUT);
+                }
             }
-            else if (internalState.bIsMovieColorGamut == COLORGAMUT_SMPTEC){
-                useTexture(GLUTHandleInverseNTSCJtoSMPTEC.idx, RendererTextureSlot::TEX_G_LUT);
-            }
-            else if (internalState.bIsMovieColorGamut == COLORGAMUT_EBU){
-                useTexture(GLUTHandleInverseNTSCJtoEBU.idx, RendererTextureSlot::TEX_G_LUT);
+            else{
+                if ((internalState.bIsMovieColorGamut == COLORGAMUT_SRGB) || internalState.bIsOverrideGamut){
+                    useTexture(GLUTHandleInverseNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
+                }
+                else if (internalState.bIsMovieColorGamut == COLORGAMUT_SMPTEC){
+                    useTexture(GLUTHandleInverseNTSCJtoSMPTEC.idx, RendererTextureSlot::TEX_G_LUT);
+                }
+                else if (internalState.bIsMovieColorGamut == COLORGAMUT_EBU){
+                    useTexture(GLUTHandleInverseNTSCJtoEBU.idx, RendererTextureSlot::TEX_G_LUT);
+                }
             }
         }
             
@@ -1087,10 +1111,11 @@ void Renderer::prepareGamutLUTs()
     if (!GLUTHandleEBUtoSRGB.idx) GLUTHandleEBUtoSRGB = BGFX_INVALID_HANDLE;
     
     
-    // We're using "inverse" conversions to go to NTSCJ in the hopes that the expansion involved
+    // For SDR, we're using "inverse" conversions to go to NTSCJ in the hopes that the expansion involved
     // will counteract the compression in the final NTSCJ to sRGB conversion.
     // This isn't exactly kosher for the SMPTEC and EBU cases, but they're close enough to sRGB
     // that doing the expansion probably gives closer to accurate results than not doing it.
+    // (Don't do this for HDR, as the final conversion to rec2020 had no compression.)
     
     if (bgfx::isValid(GLUTHandleInverseNTSCJtoSRGB))
         bgfx::destroy(GLUTHandleInverseNTSCJtoSRGB);
@@ -1120,6 +1145,36 @@ void Renderer::prepareGamutLUTs()
     width = height = mipCount = 0;
     GLUTHandleInverseNTSCJtoEBU = createTextureHandle(fullpath, &width, &height, &mipCount, false);
     if (!GLUTHandleInverseNTSCJtoEBU.idx) GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
+    
+    
+    if (bgfx::isValid(GLUTHandleSRGBtoNTSCJ))
+        bgfx::destroy(GLUTHandleSRGBtoNTSCJ);
+    
+    sprintf(fullpath, "%s/shaders/glut_srgb_to_ntscj.png", basedir);
+
+    width = height = mipCount = 0;
+    GLUTHandleSRGBtoNTSCJ = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleSRGBtoNTSCJ.idx) GLUTHandleSRGBtoNTSCJ = BGFX_INVALID_HANDLE;
+    
+    
+    if (bgfx::isValid(GLUTHandleSMPTECtoNTSCJ))
+        bgfx::destroy(GLUTHandleSMPTECtoNTSCJ);
+    
+    sprintf(fullpath, "%s/shaders/glut_smptec_to_ntscj.png", basedir);
+
+    width = height = mipCount = 0;
+    GLUTHandleSMPTECtoNTSCJ = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleSMPTECtoNTSCJ.idx) GLUTHandleSMPTECtoNTSCJ = BGFX_INVALID_HANDLE;
+    
+    
+    if (bgfx::isValid(GLUTHandleEBUtoNTSCJ))
+        bgfx::destroy(GLUTHandleEBUtoNTSCJ);
+    
+    sprintf(fullpath, "%s/shaders/glut_ebu_to_ntscj.png", basedir);
+
+    width = height = mipCount = 0;
+    GLUTHandleEBUtoNTSCJ = createTextureHandle(fullpath, &width, &height, &mipCount, false);
+    if (!GLUTHandleEBUtoNTSCJ.idx) GLUTHandleEBUtoNTSCJ = BGFX_INVALID_HANDLE;
     
     return;
     

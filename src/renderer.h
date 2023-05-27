@@ -315,6 +315,9 @@ private:
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleSRGBtoNTSCJ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleSMPTECtoNTSCJ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleEBUtoNTSCJ = BGFX_INVALID_HANDLE;
 
     bgfx::VertexLayout vertexLayout;
 
