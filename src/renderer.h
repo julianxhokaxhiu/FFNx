@@ -134,6 +134,18 @@ namespace RendererTextureSlot {
     };
 };
 
+enum GamutLUTIndexType{
+	INDEX_LUT_NTSCJ_TO_SRGB,
+	INDEX_LUT_SMPTEC_TO_SRGB,
+	INDEX_LUT_EBU_TO_SRGB,
+	INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
+	INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC,
+	INDEX_LUT_INVERSE_NTSCJ_TO_EBU,
+	INDEX_LUT_SRGB_TO_NTSCJ,
+	INDEX_LUT_SMPTEC_TO_NTSCJ,
+	INDEX_LUT_EBU_TO_NTSCJ    
+};
+
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
 {
     BX_UNUSED(_ptr);
@@ -391,6 +403,7 @@ public:
     void prepareDiffuseIbl(char* fullpath = nullptr);
     void prepareEnvBrdf();
     void prepareGamutLUTs();
+	void LoadGamutLUT(GamutLUTIndexType whichLUT);
     void shutdown();
 
     void clearShadowMap();
