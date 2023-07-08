@@ -98,18 +98,18 @@ vec3 toLinear2pt8(vec3 _rgb)
 }
 
 // This is an unprincipled, bespoke gamma function that "looks good" with FF7 videos, while all other options are problematic:
-//      - Functions with toe slopes cause banding near black in these videos.
-//      - A pure 2.2 power function loses details in shadow to darkness.
-//      - A pure 2.0 power function blows out highlights.
+//   - Functions with toe slopes cause banding near black in these videos.
+//   - A pure 2.2 power function loses details in shadow to darkness.
+//   - A pure 2.0 power function blows out highlights.
 // While unmoored from any theoretical or mathematical justification, this function avoids all those problems.
 vec3 toLinearToelessSRGB(vec3 _rgb)
 {
-    vec3 twoPtwo = toLinear2pt2(_rgb);
-    vec3 sRGB = toLinear(_rgb);
-    bvec3 useSRGB = lessThan(sRGB, twoPtwo);
-    vec3 proportion = pow(_rgb / vec3_splat(0.389223), vec3_splat(1.0 / 2.2));
-    vec3 merged = mix(twoPtwo, sRGB, proportion);
-    return saturate(mix(merged, sRGB, useSRGB));
+	vec3 twoPtwo = toLinear2pt2(_rgb);
+	vec3 sRGB = toLinear(_rgb);
+	bvec3 useSRGB = lessThan(sRGB, twoPtwo);
+	vec3 proportion = pow(_rgb / vec3_splat(0.389223), vec3_splat(1.0 / 2.2));
+	vec3 merged = mix(twoPtwo, sRGB, proportion);
+	return saturate(mix(merged, sRGB, useSRGB));
 }
 
 // linear --> gamma encoded:
@@ -146,9 +146,9 @@ vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 // Gamut conversions ---------------------------------------------
 // These functions all take a linear RGB input and produce a linear RGB output.
 // Mathematically, they are equivalent to:
-//      1. Convert linear RGB to XYZ using the source gamut's red/green/blue points
-//      2. Do a gamut conversion from the source gamut to the destination gamut
-//      3. Covert XYZ to linear RGB using the destination gamut's red/green/blue points
+//   1. Convert linear RGB to XYZ using the source gamut's red/green/blue points
+//   2. Do a gamut conversion from the source gamut to the destination gamut
+//   3. Covert XYZ to linear RGB using the destination gamut's red/green/blue points
 // But all of that has been pre-computed into a single matrix multiply operation.
 
 // Note: sRGB is the same gamut as rec709 video.
@@ -203,7 +203,7 @@ vec3 GamutLUT(vec3 rgb_input)
 	vec3 floors = floor(temp);
 	vec3 ceils = ceil(temp);
 	vec3 ceilweights = temp - floors;
-	
+
 	vec3 RfGfBf = texture2D(tex_10, vec2(((floors.b * 64.0) + floors.r) / 4095.0, floors.g / 63.0)).xyz;
 	vec3 RfGfBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + floors.r) / 4095.0, floors.g / 63.0)).xyz;
 	vec3 RfGcBf = texture2D(tex_10, vec2(((floors.b * 64.0) + floors.r) / 4095.0, ceils.g / 63.0)).xyz;
@@ -212,17 +212,17 @@ vec3 GamutLUT(vec3 rgb_input)
 	vec3 RcGfBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + ceils.r) / 4095.0, floors.g / 63.0)).xyz;
 	vec3 RcGcBf = texture2D(tex_10, vec2(((floors.b * 64.0) + ceils.r) / 4095.0, ceils.g / 63.0)).xyz;
 	vec3 RcGcBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + ceils.r) / 4095.0, ceils.g / 63.0)).xyz;
-	
+
 	vec3 RfGf = mix(RfGfBf, RfGfBc, vec3_splat(ceilweights.b));
 	vec3 RfGc = mix(RfGcBf, RfGcBc, vec3_splat(ceilweights.b));
 	vec3 RcGf = mix(RcGfBf, RcGfBc, vec3_splat(ceilweights.b));
 	vec3 RcGc = mix(RcGcBf, RcGcBc, vec3_splat(ceilweights.b));
-	
+
 	vec3 Rf = mix(RfGf, RfGc, vec3_splat(ceilweights.g));
 	vec3 Rc = mix(RcGf, RcGc, vec3_splat(ceilweights.g));
-	
+
 	vec3 outcolor = mix(Rf, Rc, vec3_splat(ceilweights.r));
-	
+
 	return outcolor;
 }
 
@@ -238,7 +238,7 @@ vec3 GamutLUT(vec3 rgb_input)
 // xyoffset: value to add to x & y coords. Should be at least 1 to avoid x=0 and y=0. Should be different if the same input is dithered twice.
 // (This function will be used twice if TV-range video is dithered for range expansion, then again for HDR bit depth increase.)
 vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims, float scale_divisor, float xyoffset)
-{	
+{
 	// get integer range x,y coords for this pixel
 	// invert one axis for u and the other axis for v to decouple dither patterns across channels
 	// see https://blog.kaetemi.be/2015/04/01/practical-bayer-dithering/
@@ -267,7 +267,7 @@ vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ive
 	dither = dither / vec3_splat(scale_divisor);
 	// add to input
 	vec3 tempout = saturate(pixelval + dither);
-	
+
 	// don't dither colors so close to 0 or 1 that dithering is asymmetric
 	bvec3 highcutoff = greaterThan(pixelval, vec3_splat(1.0 - (0.5 / scale_divisor)));
 	bvec3 lowcutoff = lessThan(pixelval, vec3_splat(0.5 / scale_divisor));

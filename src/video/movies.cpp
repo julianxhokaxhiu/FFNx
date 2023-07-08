@@ -73,7 +73,7 @@ time_t start_time;
 void ffmpeg_movie_init()
 {
 	ffnx_info("FFMpeg movie player plugin loaded\n");
-	
+
 	QueryPerformanceFrequency((LARGE_INTEGER *)&timer_freq);
 }
 
@@ -81,7 +81,7 @@ void ffmpeg_movie_init()
 void ffmpeg_release_movie_objects()
 {
 	uint32_t i;
-	
+
 	if (movie_frame) av_frame_free(&movie_frame);
 	if (codec_ctx) avcodec_free_context(&codec_ctx);
 	if (acodec_ctx) avcodec_free_context(&acodec_ctx);
@@ -90,13 +90,13 @@ void ffmpeg_release_movie_objects()
 		swr_close(swr_ctx);
 		swr_free(&swr_ctx);
 	}
-	
+
 	codec_ctx = 0;
 	acodec_ctx = 0;
 	format_ctx = 0;
-	
+
 	audio_must_be_converted = false;
-	
+
 	for(i = 0; i < VIDEO_BUFFER_SIZE; i++)
 	{
 		// Cleanup YUV textures
@@ -106,7 +106,7 @@ void ffmpeg_release_movie_objects()
 			video_buffer[i].yuv_textures[idx] = 0;
 		}
 	}
-	
+
 	// Unset slot U and V as they are used only for YUV textures
 	newRenderer.useTexture(0, RendererTextureSlot::TEX_U);
 	newRenderer.useTexture(0, RendererTextureSlot::TEX_V);
@@ -123,35 +123,35 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	bool okcolorspace = false;
 	bool yuvjfixneeded = false;
 	bool islogomovie = false;
-    bool isff8steammovie = false;
+	bool isff8steammovie = false;
 	int lastbackslashindex = -1;
 	int bytessincebackslash = 0;
 	int scanoffset = 0;
-	
+
 	if(ret = avformat_open_input(&format_ctx, name, NULL, NULL))
 	{
 		ffnx_error("prepare_movie: couldn't open movie file: %s\n", name);
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
-	
+
 	if(avformat_find_stream_info(format_ctx, NULL) < 0)
 	{
 		ffnx_error("prepare_movie: couldn't find stream info\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
-	
+
 	videostream = av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0);
 	if (videostream < 0) {
 		ffnx_error("prepare_movie: no video stream found\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
-	
+
 	audiostream = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &acodec, 0);
 	if(with_audio && audiostream < 0 && (trace_movies || trace_all)) ffnx_trace("prepare_movie: no audio stream found\n");
-	
+
 	codec_ctx = avcodec_alloc_context3(codec);
 	if (!codec_ctx) {
 		ffnx_error("prepare_movie: could not allocate video codec context\n");
@@ -160,14 +160,14 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		goto exit;
 	}
 	avcodec_parameters_to_context(codec_ctx, format_ctx->streams[videostream]->codecpar);
-	
+
 	if(avcodec_open2(codec_ctx, codec, NULL) < 0)
 	{
 		ffnx_error("prepare_movie: couldn't open video codec\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
-	
+
 	if(audiostream >= 0)
 	{
 		acodec_ctx = avcodec_alloc_context3(acodec);
@@ -178,7 +178,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			goto exit;
 		}
 		avcodec_parameters_to_context(acodec_ctx, format_ctx->streams[audiostream]->codecpar);
-		
+
 		if(avcodec_open2(acodec_ctx, acodec, NULL) < 0)
 		{
 			ffnx_error("prepare_movie: couldn't open audio codec\n");
@@ -186,7 +186,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			goto exit;
 		}
 	}
-	
+
 	// figure out if this is the eidos logo or square logo; they need special treatment
 	// scan till we hit 0 terminator
 	while (true){
@@ -224,10 +224,10 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie; NTSC-J conversion will be supressed.\n", name);
 		}
 	}
-	
+
 	// Movie files from the ff8 Steam release appear to be bt709, tv-range, with gamut conversion already done, and no metadata
 	// (Not completely sure about bt709; it's hard to tell under the circumstances.)
-	if (    ff8 && 
+	if (    ff8 &&
 			((codec_ctx->height >= 720) || (codec_ctx->width >= 1280)) && // the samples I examined were 1280 x 896, but I didn't check them all to rule out some of them being cropped
 			(codec_ctx->pix_fmt == AV_PIX_FMT_YUV420P) &&
 			(codec_ctx->color_range == AVCOL_RANGE_UNSPECIFIED) &&
@@ -238,14 +238,14 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		isff8steammovie = true;
 		if (trace_movies  || trace_all) ffnx_trace("prepare_movie: File %s appears to be from the FF8 Steam release. Missing metadata will be guessed accordingly.\n", name);
 	}
-	
+
 	movie_width = codec_ctx->width;
 	movie_height = codec_ctx->height;
 	movie_fps = av_q2d(av_guess_frame_rate(format_ctx, format_ctx->streams[videostream], NULL));
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
 	movie_frames = (uint32_t)::round(movie_fps * movie_duration);
 	fullrange_input = (codec_ctx->color_range == AVCOL_RANGE_JPEG);
-	
+
 	// some pixel formats are inherently full-range
 	// so we should treat them as such, even if the color range metadata is missing
 	// some of these formats also trigger an automatic color range conversion that we must suppress
@@ -271,19 +271,19 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		default:
 			yuvjfixneeded = false;
 	}
-	
+
 	if (isff8steammovie){
 		fullrange_input = false;
 		yuvjfixneeded = false;
 	}
-	
+
 	if (trace_movies  || trace_all) ffnx_trace("prepare_movie: color range detected as %i (0=tv, 1=pc).\n", fullrange_input);
-	
+
 	// will we need to convert the colorspace?
 	switch(codec_ctx->colorspace){
 		// these are all the same (bt601)
-		case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601 
-		case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601 
+		case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601
+		case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601
 			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
 				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
 				colormatrix = COLORMATRIX_BGR24;
@@ -321,7 +321,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: unhandled color matrix detected; will use swscale to convert. Expect incorrect gamut.\n");
 			okcolorspace = false;
 	}
-	
+
 	// what gamma should we use?
 	switch(codec_ctx->color_trc){
 		case AVCOL_TRC_UNSPECIFIED:
@@ -366,21 +366,21 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			ffmpeg_release_movie_objects();
 			goto exit;
 	}
-	
+
 	if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
 		targetpixelformat = AV_PIX_FMT_BGR24;
 	}
 	else{
 		targetpixelformat = AV_PIX_FMT_YUV444P;
 	}
-	
+
 	// will we need to convert the pixel format?
 	// we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
 	// Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions
 	if (codec_ctx->pix_fmt == targetpixelformat){
 		okpixelformat = true;
 	}
-	
+
 	switch(codec_ctx->color_primaries){
 		case AVCOL_PRI_BT709:
 			colorgamut = COLORGAMUT_SRGB;
@@ -393,7 +393,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			// fall through to next case
 		case AVCOL_PRI_SMPTE170M:
 		case AVCOL_PRI_SMPTE240M:
-			
+
 			colorgamut = COLORGAMUT_SMPTEC;
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: SMPTE-C color gamut detected.\n");
 			break;
@@ -426,37 +426,37 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			ffmpeg_release_movie_objects();
 			goto exit;
 	}
-	
+
 	if (trace_movies || trace_all)
 	{
 		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames, codec_ctx->color_range);
 		// bogus FPS value, assume the codec provides frame limiting
 		else ffnx_info("prepare_movie: %s; %s/%s %ix%i, duration: %f, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_duration, codec_ctx->color_range);
 	}
-	
+
 	if(movie_width > max_texture_size || movie_height > max_texture_size)
 	{
 		ffnx_error("prepare_movie: movie dimensions exceed max texture size, skipping\n");
 		ffmpeg_release_movie_objects();
 		goto exit;
 	}
-	
+
 	if(!movie_frame) movie_frame = av_frame_alloc();
-	
+
 	if(sws_ctx) sws_freeContext(sws_ctx);
-	
+
 	vbuffer_read = 0;
 	vbuffer_write = 0;
-	
+
 	if(!okpixelformat || !okcolorspace || yuvjfixneeded)
-		// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader 
+		// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader
 	{
 		if (trace_movies || trace_all)
 		{
 			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->colorspace: %s\n", av_color_space_name(codec_ctx->colorspace));
 			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->pix_fmt: %s\n", av_pix_fmt_desc_get(codec_ctx->pix_fmt)->name);
 		}
-		
+
 		sws_ctx = sws_getContext(
 			movie_width,
 			movie_height,
@@ -469,7 +469,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			NULL,
 			NULL
 		);
-		
+
 		// if we need a colorspace conversion, set it up here
 		// this would also be the place to set up color range conversion, if it worked -- which it doens't
 		if (!okcolorspace || yuvjfixneeded){
@@ -478,9 +478,9 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			int srcRange, dstRange;
 			int brightness, contrast, saturation;
 			sws_getColorspaceDetails(sws_ctx, &coefs_in, &srcRange, &coefs_out, &dstRange, &brightness, &contrast, &saturation);
-			
+
 			coefs_in = const_cast<int*>(sws_getCoefficients(codec_ctx->colorspace)); // const sucks
-			// use the same colorspace 
+			// use the same colorspace
 			if (okcolorspace){
 				coefs_out = coefs_in;
 			}
@@ -488,7 +488,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 			else {
 				coefs_out = const_cast<int*>(sws_getCoefficients(SWS_CS_ITU601)); // const sucks
 			}
-			
+
 			// Surprisingly, these parameters don't appear to **do** anything in most cases.
 			// It appears that whether swscale does a range conversion is controlled by pixformat and range metadata.
 			// And it will do one regardless of whether you want it.
@@ -499,15 +499,15 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				srcRange = fullrange_input ? 1 : 0; // use the input color range
 				dstRange = srcRange; // no conversion!
 			}
-						
+
 			sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 		}
-		
+
 	}
 	else {
 		sws_ctx = nullptr;
 	}
-	
+
 	if(audiostream >= 0)
 	{
 		if (acodec_ctx->sample_fmt != AV_SAMPLE_FMT_FLT) {
@@ -519,7 +519,7 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->channel_layout: %u\n", acodec_ctx->channel_layout);
 				ffnx_trace("prepare_movie: Audio must be converted: IN acodec_ctx->channels: %u\n", acodec_ctx->channels);
 			}
-			
+
 			// Prepare software conversion context
 			swr_ctx = swr_alloc_set_opts(
 				// Create a new context
@@ -536,22 +536,22 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 				0,
 				NULL
 			);
-			
+
 			swr_init(swr_ctx);
 		}
-		
+
 		nxAudioEngine.initStream(
 			movie_duration,
 			acodec_ctx->sample_rate,
 			acodec_ctx->channels
 		);
-		
+
 		first_audio_packet = true;
 	}
-	
+
 	exit:
 	movie_frame_counter = 0;
-	
+
 	return movie_frames;
 }
 
@@ -567,12 +567,12 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 	// Use full dimensions for chroma planes in yuv444. If yuv420, use half width and half height instead.
 	uint32_t tex_width = movie_width;
 	uint32_t tex_height = movie_height;
-	
+
 	if (upload_width > tex_width) tex_width = upload_width;
-	
+
 	if (video_buffer[buffer_index].yuv_textures[num])
 		newRenderer.deleteTexture(video_buffer[buffer_index].yuv_textures[num]);
-	
+
 	video_buffer[buffer_index].yuv_textures[num] = newRenderer.createTexture(
 		planes[num],
 		tex_width,
@@ -637,17 +637,17 @@ void buffer_yuv_frame(uint8_t **planes, int *strides)
 		upload_yuv_texture(planes, strides, 1, vbuffer_write); // U
 		upload_yuv_texture(planes, strides, 2, vbuffer_write); // V
 	}
-	
+
 	vbuffer_write = (vbuffer_write + 1) % VIDEO_BUFFER_SIZE;
 }
 
 void draw_yuv_frame(uint32_t buffer_index)
 {
 	if(gl_defer_yuv_frame(buffer_index)) return;
-	
+
 	for (uint32_t idx = 0; idx < 3; idx++)
 		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
-	
+
 	newRenderer.isMovie(true);
 	newRenderer.isYUV(true);
 	newRenderer.isFullRange(fullrange_input);
@@ -670,140 +670,140 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 	int ret;
 	time_t now;
 	DWORD DSStatus;
-	
+
 	// no playable movie loaded, skip it
 	if(!format_ctx) return false;
-	
+
 	// keep track of when we started playing this movie
 	if(movie_frame_counter == 0) QueryPerformanceCounter((LARGE_INTEGER *)&start_time);
-	
+
 	while((ret = av_read_frame(format_ctx, &packet)) >= 0)
 	{
 		if(packet.stream_index == videostream)
 		{
 			ret = avcodec_send_packet(codec_ctx, &packet);
-			
+
 			if (ret < 0)
 			{
 				ffnx_trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
 			}
-			
+
 			ret = avcodec_receive_frame(codec_ctx, movie_frame);
-			
+
 			if (ret == AVERROR_EOF)
 			{
 				ffnx_trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
 			}
-			
+
 			if (ret >= 0)
 			{
 				QueryPerformanceCounter((LARGE_INTEGER *)&now);
-				
+
 				if(sws_ctx)
 				{
 					AVFrame* frame = av_frame_alloc();
 					frame->width = movie_width;
 					frame->height = movie_height;
 					frame->format = targetpixelformat;
-					
+
 					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
-					
+
 					sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, frame->height, frame->data, frame->linesize);
 					buffer_yuv_frame(frame->data, frame->linesize);
-					
+
 					av_freep(&frame->data[0]);
 					av_frame_free(&frame);
 				}
 				else buffer_yuv_frame(movie_frame->extended_data, movie_frame->linesize);
-				
+
 				if(vbuffer_write == vbuffer_read)
 				{
 					draw_yuv_frame(vbuffer_read);
-					
+
 					vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
-					
+
 					av_packet_unref(&packet);
-					
+
 					break;
 				}
 			}
 		}
-		
+
 		if(packet.stream_index == audiostream)
 		{
 			QueryPerformanceCounter((LARGE_INTEGER *)&now);
-			
+
 			ret = avcodec_send_packet(acodec_ctx, &packet);
-			
+
 			if (ret < 0)
 			{
 				ffnx_trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
 			}
-			
+
 			ret = avcodec_receive_frame(acodec_ctx, movie_frame);
-			
+
 			if (ret == AVERROR_EOF)
 			{
 				ffnx_trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
 				av_packet_unref(&packet);
 				break;
 			}
-			
+
 			if (ret >= 0)
 			{
 				uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
 				uint32_t _size = bytesperpacket * movie_frame->nb_samples * acodec_ctx->channels;
-				
+
 				// Sometimes the captured frame may have no sound samples. Just skip and move forward
 				if (_size)
 				{
 					uint8_t *buffer;
-					
+
 					av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : acodec_ctx->sample_fmt), 0);
 					if (audio_must_be_converted) swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
 					else av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->channels, acodec_ctx->sample_fmt);
-					
+
 					nxAudioEngine.pushStreamData(buffer, _size);
-					
+
 					av_freep(&buffer);
 				}
 			}
 		}
-		
+
 		av_packet_unref(&packet);
 	}
-	
+
 	if (first_audio_packet)
 	{
 		first_audio_packet = false;
-		
+
 		// reset start time so video syncs up properly
 		QueryPerformanceCounter((LARGE_INTEGER *)&start_time);
-		
+
 		nxAudioEngine.playStream();
 	}
-	
+
 	movie_frame_counter++;
-	
+
 	// could not read any more frames, exhaust video buffer then end movie
 	if(ret < 0)
 	{
 		if(vbuffer_write != vbuffer_read)
 		{
 			draw_yuv_frame(vbuffer_read);
-			
+
 			vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
 		}
-		
+
 		if(vbuffer_write == vbuffer_read) return false;
 	}
-	
+
 	// Pure movie playback has no frame limiter, although it is not always required. Use it only when necessary
 	if (use_movie_fps)
 	{
@@ -813,7 +813,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 			QueryPerformanceCounter((LARGE_INTEGER *)&now);
 		} while(LAG < 0.0);
 	}
-	
+
 	// keep going
 	return true;
 }

@@ -40,14 +40,14 @@ void main()
 	vec4 color = texture2D(tex_0, v_texcoord0.xy);
 
 	if (isHDR) {
-        // back to linear for gamut conversion and PQ gamma curve
-        color.rgb = toLinear(color.rgb);
-	
+		// back to linear for gamut conversion and PQ gamma curve
+		color.rgb = toLinear(color.rgb);
+
 		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
 		// d3d9 doesn't support textureSize()
 		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
-        ivec2 dimensions = textureSize(tex_0, 0);
-        color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
+			ivec2 dimensions = textureSize(tex_0, 0);
+			color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
 		#endif
 		if (isOverallNTSCJColorGamut){
 			color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
@@ -62,8 +62,8 @@ void main()
 		color.rgb = GamutLUT(color.rgb);
 		// dither after the LUT operation
 		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
-        ivec2 dimensions = textureSize(tex_0, 0);
-        color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
+			ivec2 dimensions = textureSize(tex_0, 0);
+			color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
 		#endif
 		color.rgb = toGamma(color.rgb);
 	}
