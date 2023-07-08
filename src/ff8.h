@@ -1139,7 +1139,13 @@ struct ff8_externals
 	char* music_path;
 	uint32_t opcode_effectplay2;
 	uint32_t opcode_mes;
+	uint32_t opcode_ames;
+	uint32_t opcode_amesw;
+	uint32_t opcode_ramesw;
 	uint32_t opcode_ask;
+	uint32_t opcode_aask;
+	uint32_t opcode_messync;
+	uint32_t opcode_winclose;
 	uint32_t opcode_movie;
 	uint32_t opcode_moviesync;
 	uint32_t opcode_spuready;
