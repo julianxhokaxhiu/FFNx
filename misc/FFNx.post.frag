@@ -27,17 +27,45 @@ $input v_color0, v_texcoord0
 SAMPLER2D(tex_0, 0);
 
 uniform vec4 FSHDRFlags;
+uniform vec4 FSMovieFlags;
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
+
+#define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
+#define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001
 
 void main()
 {
 	vec4 color = texture2D(tex_0, v_texcoord0.xy);
 
 	if (isHDR) {
-		// change primaries from sRGB/rec709 to rec2020 and remap the white point on top of the current monitor nits value
-		color.rgb = ApplyREC2084Curve(REC709toREC2020(color.rgb) * monitorNits);
+		// back to linear for gamut conversion and PQ gamma curve
+		color.rgb = toLinear(color.rgb);
+
+		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
+		// d3d9 doesn't support textureSize()
+		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
+			ivec2 dimensions = textureSize(tex_0, 0);
+			color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
+		#endif
+		if (isOverallNTSCJColorGamut){
+			color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
+		}
+		else {
+			color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
+		}
+		color.rgb = ApplyREC2084Curve(color.rgb, monitorNits);
+	}
+	else if (isOverallNTSCJColorGamut){
+		color.rgb = toLinear(color.rgb);
+		color.rgb = GamutLUT(color.rgb);
+		// dither after the LUT operation
+		#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
+			ivec2 dimensions = textureSize(tex_0, 0);
+			color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 2160.0);
+		#endif
+		color.rgb = toGamma(color.rgb);
 	}
 
 	gl_FragColor = color;
