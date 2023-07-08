@@ -331,8 +331,8 @@ void Overlay::draw()
         drawMainWindow();
         if (mem_edit.Open)
         {
-            if (ff8) mem_edit.DrawWindow("Memory Editor", (void*)0x401000, 0xF52000 - 0x401000, 0x401000);
-            else mem_edit.DrawWindow("Memory Editor", (void*)0x401000, 0x279F000 - 0x401000, 0x401000);
+            if (!ff8) mem_edit.DrawWindow("Memory Editor", (void*)0x401000, 0xF52000 - 0x401000, 0x401000);
+            else mem_edit.DrawWindow("Memory Editor", (void*)0x401000, 0x27A0000 - 0x401000, 0x401000);
         }
         if (field_debug_open) field_debug(&field_debug_open);
         if (!ff8 && lighting_debug_open) lighting_debug(&lighting_debug_open);
