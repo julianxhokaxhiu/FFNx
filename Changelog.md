@@ -6,6 +6,7 @@
 
 - Common: Allow to skip the FFNx logo on button press
 - Common: Improve texture upload time by reducing allocations for color conversion
+- Common: Add a new NTSC color correction option ( https://github.com/julianxhokaxhiu/FFNx/issues/536 )
 - GameHacks: Add toggle for Voice auto-text feature ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md#voice-auto-text )
 - Voice: Fix track master volume inheritance when overriding via config
 
@@ -27,6 +28,7 @@
 - Graphics: Fix wrong texture replacements in battle
 - Graphics: Fix bad texture UVs in worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/564 )
 - Graphics: Disable texture filtering for external textures, as sprites can overlap or look bad in FF8
+- Voice: Reworked the field layer to behave like FF7
 
 # 1.15.0
 
