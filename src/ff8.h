@@ -1071,8 +1071,11 @@ struct ff8_externals
 	uint32_t **worldmap_section38_position;
 	uint32_t (*worldmap_prepare_tim_for_upload)(uint8_t *, ff8_tim *);
 	uint32_t engine_eval_process_input;
-	uint32_t engine_eval_keyboard_gamepad_input;
-	uint32_t has_keyboard_gamepad_input;
+	void (*engine_eval_keyboard_gamepad_input)();
+	uint32_t engine_eval_is_button_pressed;
+	uint32_t *engine_input_confirmed_buttons;
+	uint32_t *engine_input_valid_buttons;
+	void (*has_keyboard_gamepad_input)();
 	uint32_t dinput_update_gamepad_status;
 	LPDIRECTINPUTDEVICE8A dinput_gamepad_device;
 	LPDIJOYSTATE2 dinput_gamepad_state;

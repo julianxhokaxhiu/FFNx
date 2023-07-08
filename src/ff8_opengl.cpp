@@ -273,11 +273,7 @@ void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 
 int ff8_init_gamepad()
 {
-	if (simulate_OK_button)
-	{
-		return TRUE;
-	}
-	else if (xinput_connected)
+	if (xinput_connected)
 	{
 		if (gamepad.Refresh())
 			return TRUE;
@@ -416,26 +412,24 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgbButtons[12] = joystick.GetState()->rgbButtons[12] & 0x80 ? 0x80 : 0; // PS Button
 	}
 
-	if (simulate_OK_button)
-	{
-		// Flag the button OK as pressed
-		ff8_externals.dinput_gamepad_state->rgbButtons[1] = 0x80;
-
-		// End simulation right here before we press this button by mistake in other windows
-		simulate_OK_button = false;
-	}
-
 	return ff8_externals.dinput_gamepad_state;
 }
 
 int ff8_is_window_active()
 {
-	typedef void voidfn();
-
 	if (gameHwnd == GetActiveWindow())
 	{
-		((voidfn*)ff8_externals.engine_eval_keyboard_gamepad_input)();
-		((voidfn*)ff8_externals.has_keyboard_gamepad_input)();
+		ff8_externals.engine_eval_keyboard_gamepad_input();
+		ff8_externals.has_keyboard_gamepad_input();
+
+		if (simulate_OK_button)
+		{
+			// Flag the button OK as pressed
+			ff8_externals.engine_input_confirmed_buttons[1] = ff8_externals.engine_input_valid_buttons[1] = 0x40;
+
+			// End simulation right here before we press this button by mistake in other windows
+			simulate_OK_button = false;
+		}
 	}
 
 	return 0;

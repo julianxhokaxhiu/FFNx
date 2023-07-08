@@ -368,14 +368,17 @@ void ff8_find_externals()
 	ff8_externals.worldmap_sub_53F310 = get_relative_call(ff8_externals.worldmap_enter_main, 0xA7);
 
 	ff8_externals.engine_eval_process_input = get_relative_call(ff8_externals.pubintro_main_loop, 0x4);
-	ff8_externals.engine_eval_keyboard_gamepad_input = get_relative_call(ff8_externals.engine_eval_process_input, 0x16);
-	ff8_externals.has_keyboard_gamepad_input = get_relative_call(ff8_externals.engine_eval_process_input, 0x1B);
-	ff8_externals.engine_gamepad_button_pressed = (BYTE*)get_absolute_value(ff8_externals.has_keyboard_gamepad_input, 0x22);
-	ff8_externals.engine_mapped_buttons = (DWORD*)get_absolute_value(ff8_externals.engine_eval_keyboard_gamepad_input, 0xB9);
+	ff8_externals.engine_eval_keyboard_gamepad_input = (void (*)())get_relative_call(ff8_externals.engine_eval_process_input, 0x16);
+	ff8_externals.has_keyboard_gamepad_input = (void (*)())get_relative_call(ff8_externals.engine_eval_process_input, 0x1B);
+	ff8_externals.engine_eval_is_button_pressed = get_relative_call((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0x4A6);
+	ff8_externals.engine_input_confirmed_buttons = (uint32_t*)get_absolute_value(ff8_externals.engine_eval_is_button_pressed, 0x62);
+	ff8_externals.engine_input_valid_buttons = (uint32_t*)get_absolute_value(ff8_externals.engine_eval_is_button_pressed, 0x3C);
+	ff8_externals.engine_gamepad_button_pressed = (BYTE*)get_absolute_value((uint32_t)ff8_externals.has_keyboard_gamepad_input, 0x22);
+	ff8_externals.engine_mapped_buttons = (DWORD*)get_absolute_value((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0xB9);
 
-	common_externals.get_keyboard_state = get_relative_call(ff8_externals.engine_eval_keyboard_gamepad_input, 0x11);
+	common_externals.get_keyboard_state = get_relative_call((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0x11);
 	ff8_externals.dinput_init_gamepad = get_relative_call(ff8_externals.sub_468810, 0xB4);
-	ff8_externals.dinput_update_gamepad_status = get_relative_call(ff8_externals.engine_eval_keyboard_gamepad_input, 0x1B);
+	ff8_externals.dinput_update_gamepad_status = get_relative_call((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0x1B);
 	ff8_externals.dinput_gamepad_device = (LPDIRECTINPUTDEVICE8A)get_absolute_value(ff8_externals.dinput_update_gamepad_status, 0x16);
 	ff8_externals.dinput_gamepad_state = (LPDIJOYSTATE2)get_absolute_value(ff8_externals.dinput_update_gamepad_status, 0x1B);
 
