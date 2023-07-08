@@ -23,9 +23,12 @@
 
 #include "../ff8.h"
 #include "../patch.h"
+#include "../macro.h"
 #include "../image/tim.h"
 #include "field/background.h"
 #include "field/chara_one.h"
+#include "battle/stage.h"
+#include "file.h"
 
 #include <unordered_map>
 #include <vector>
@@ -52,6 +55,9 @@ int chara_one_current_pos = 0;
 uint32_t chara_one_current_model = 0;
 uint32_t chara_one_current_mch = 0;
 uint32_t chara_one_current_texture = 0;
+// Battle
+char battle_texture_name[MAX_PATH] = "";
+int battle_texture_id = 0;
 
 void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
@@ -72,14 +78,14 @@ void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 	*next_texture_name = '\0';
 }
 
-int read_vram_to_buffer_parent_call1(int a1, int structure, int x, int y, int w, int h, int bpp, int rel_pos, int a9, uint8_t *target)
+int read_vram_to_buffer_parent_call1(struc_50 *psxvram, texture_page *tex_page, int x, int y, int w, int h, int bpp, int rel_pos, int a9, uint8_t *target)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: x=%d y=%d w=%d h=%d bpp=%d rel_pos=(%d, %d) a9=%d target=%X\n", __func__, x, y, w, h, bpp, rel_pos & 0xF, rel_pos >> 4, a9, target);
 
 	next_psxvram_x = (x >> (2 - bpp)) + ((rel_pos & 0xF) << 6);
 	next_psxvram_y = y + (((rel_pos >> 4) & 1) << 8);
 
-	int ret = ff8_externals.sub_464F70(a1, structure, x, y, w, h, bpp, rel_pos, a9, target);
+	int ret = ff8_externals.sub_464F70(psxvram, tex_page, x, y, w, h, bpp, rel_pos, a9, target);
 
 	next_psxvram_x = -1;
 	next_psxvram_y = -1;
@@ -339,13 +345,9 @@ int ff8_wm_open_data(const char *path, int32_t pos, uint32_t size, void *data)
 
 void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
-	snprintf(next_texture_name, MAX_PATH, "world/dat/texl/texture%d", next_texl_id);
-
 	Tim tim = Tim::fromTimData(texture_buffer - 20);
 
 	if (trace_all || trace_vram) ffnx_trace("%s texl_id=%d pos=(%d, %d) palPos=(%d, %d)\n", __func__, next_texl_id, tim.imageX(), tim.imageY(), tim.paletteX(), tim.paletteY());
-
-	if (save_textures) tim.saveMultiPaletteGrid(next_texture_name, 4, 4, 0, 4, true);
 
 	next_bpp = Tim::Bpp8;
 
@@ -358,7 +360,6 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 
 	// Worldmap texture fix
 
-	bool is_left = pos_and_size[1] == 224;
 	uint16_t oldX = 16 * (next_texl_id - 2 * ((next_texl_id / 2) & 1) + (next_texl_id & 1)), oldY = ((next_texl_id / 2) & 1) ? 384 : 256;
 
 	if (next_texl_id == 18 || next_texl_id == 19)
@@ -406,6 +407,11 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 			return;
 		}
 
+		for (int i = 0; i < newTexture.pixelW() * newTexture.h(); ++i)
+		{
+			image[i] = (image[i] & 0xFFFFFF) | ((image[i] & 0xFF000000) == 0 ? 0 : 0x7F000000); // Force alpha
+		}
+
 		if (! texturePacker.setTextureRedirection(oldTexture, newTexture, image))
 		{
 			if (trace_all || trace_vram) ffnx_warning("%s: invalid redirection\n");
@@ -413,11 +419,18 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 		}
 	}
 
-	// Reload texture TODO: reload only relevant parts
-	ff8_externals.psx_texture_pages[0].struc_50_array[16].vram_needs_reload = 0xFF;
-	ff8_externals.psx_texture_pages[0].struc_50_array[17].vram_needs_reload = 0xFF;
-	ff8_externals.psx_texture_pages[0].struc_50_array[18].vram_needs_reload = 0xFF;
-	ff8_externals.psx_texture_pages[0].struc_50_array[19].vram_needs_reload = 0xFF;
+	int section = 16 + oldX / 64;
+	// Reload texture
+	struc_50 *stru50 = ff8_externals.psx_texture_pages[0].struc_50_array + section;
+
+	for (int page = 0; page < 8; ++page) {
+		if ((stru50->initialized >> page) & 1) {
+			ff8_texture_set *texture_set = (struct ff8_texture_set *)stru50->texture_page[page].tri_gfxobj->hundred_data->texture_set;
+
+			common_unload_texture((struct texture_set *)texture_set);
+			common_load_texture((struct texture_set *)texture_set, texture_set->tex_header, texture_set->texture_format);
+		}
+	}
 }
 
 void ff8_field_mim_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
@@ -435,14 +448,16 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 
 	uint32_t ret = ff8_externals.sm_pc_read(filename, map_data);
 
+	std::vector<Tile> tiles = ff8_background_parse_tiles(map_data);
+
 	char tex_filename[MAX_PATH] = {};
 
 	snprintf(tex_filename, MAX_PATH, "field/mapdata/%s/%s", get_current_field_name(), get_current_field_name());
 
-	std::vector<Tile> tiles = ff8_background_parse_tiles(map_data);
-
 	if (save_textures) {
 		ff8_background_save_textures(tiles, mim_texture_buffer, tex_filename);
+
+		return ret;
 	}
 
 	if (!texturePacker.setTextureBackground(tex_filename, 0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles)) {
@@ -575,18 +590,48 @@ void ff8_field_effects_upload_vram1(int16_t *pos_and_size, uint8_t *texture_buff
 	texturePacker.setTexture(texture_name, pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3] * 2, bpp, false);
 }
 
-DWORD *create_graphics_object_load_texture_call2(int a1, int a2, char *path, void *data, ff8_game_obj *game_object)
+Stage stage;
+
+int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callback)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s path=%s\n", __func__, path == nullptr ? "(none)" : path);
+	snprintf(battle_texture_name, sizeof(battle_texture_name), "battle/%s", ff8_externals.battle_filenames[fileId]);
 
-	// Optimization: when the game creates 3D objects for field background, it does upload textures, but it does not display it
-	texturePacker.disableDrawTexturesBackground(true);
+	return ((int16_t(*)(int,void*,int,int))ff8_externals.battle_open_file)(fileId, data, a3, callback);
+}
 
-	DWORD *ret = ((DWORD*(*)(int,int,char*,void*,ff8_game_obj*))ff8_externals.sub_4076B6)(a1, a2, path, data, game_object);
+size_t ff8_battle_read_file(char *fileName, void *data)
+{
+	battle_texture_id = 0;
 
-	texturePacker.disableDrawTexturesBackground(false);
+	size_t file_size = ff8_externals.sm_pc_read(fileName, data);
 
-	return ret;
+	if (save_textures && StrStrIA(fileName, ".X") != nullptr) {
+		ff8_battle_stage_parse_geometry((uint8_t *)data, file_size, stage);
+	}
+
+	return file_size;
+}
+
+void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_buffer)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, battle_texture_name);
+
+	Tim tim = Tim::fromTimData(texture_buffer - 20);
+
+	ff8_upload_vram(pos_and_size, texture_buffer);
+
+	next_bpp = tim.bpp();
+	snprintf(next_texture_name, sizeof(next_texture_name), "%s-%d", battle_texture_name, battle_texture_id);
+
+	++battle_texture_id;
+
+	if (save_textures) {
+		if (StrStrIA(battle_texture_name, ".X") != nullptr) {
+			ff8_battle_state_save_texture(stage, tim, next_texture_name);
+		} else {
+			tim.save(next_texture_name, 0, 0, false);
+		}
+	}
 }
 
 void vram_init()
@@ -620,6 +665,11 @@ void vram_init()
 	replace_call(ff8_externals.load_field_models + 0xB72, ff8_field_texture_upload_one);
 	// field: effects
 	replace_call(ff8_externals.upload_pmp_file + 0x7F, ff8_field_effects_upload_vram1);
+	// battle
+	replace_call(ff8_externals.battle_open_file_wrapper + 0x14, ff8_battle_open_and_read_file);
+	replace_call(ff8_externals.battle_open_file + 0x8E, ff8_battle_read_file);
+	replace_call(ff8_externals.battle_open_file + 0x1A2, ff8_battle_read_file);
+	replace_call(ff8_externals.battle_upload_texture_to_vram + 0x45, ff8_battle_upload_texture_palette);
 
 	replace_function(ff8_externals.upload_psx_vram, ff8_upload_vram);
 
@@ -643,8 +693,6 @@ void vram_init()
 
 	replace_call(ff8_externals.sub_464DB0 + 0xEC, read_vram_to_buffer_with_palette1);
 	replace_call(ff8_externals.sub_465720 + 0xA5, read_vram_to_buffer_with_palette1);
-
-	replace_call(ff8_externals._load_texture + 0x24E, create_graphics_object_load_texture_call2);
 
 	// Not used?
 	replace_call(ff8_externals.sub_4649A0 + 0x13F, read_vram_to_buffer_with_palette2);

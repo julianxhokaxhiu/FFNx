@@ -1091,6 +1091,14 @@ struct ff8_externals
 	uint32_t ssigpu_init;
 	uint32_t *d3dcaps;
 	uint32_t sub_53BB90;
+	uint32_t worldmap_fog_filter_polygons_in_block_1;
+	uint32_t worldmap_polygon_condition_2045C8C;
+	uint32_t worldmap_has_polygon_condition_2045C90;
+	uint32_t worldmap_sub_45DF20;
+	uint32_t sub_45E3A0;
+	uint32_t worldmap_fog_filter_polygons_in_block_2;
+	uint32_t sub_461E00;
+	uint32_t dword_1CA8848;
 	uint32_t sub_53E2A0;
 	uint32_t sub_53E6B0;
 	uint32_t sub_4023D0;
@@ -1102,7 +1110,7 @@ struct ff8_externals
 	uint32_t sub_54A0D0;
 	uint32_t sub_54D7E0;
 	uint32_t sub_54FDA0;
-	uint32_t sub_53FAC0;
+	uint32_t worldmap_with_fog_sub_53FAC0;
 	uint32_t sub_550070;
 	int (*sub_541C80)(int);
 	uint32_t sub_54B460;
@@ -1120,7 +1128,6 @@ struct ff8_externals
 	uint32_t stop_music;
 	uint32_t set_midi_volume;
 	uint32_t sub_46C050;
-	uint32_t sub_500900;
 	uint32_t sub_501B60;
 	uint32_t pause_music_and_sfx;
 	uint32_t restart_music_and_sfx;
@@ -1171,8 +1178,9 @@ struct ff8_externals
 	uint32_t *ssigpu_callbacks_2;
 	uint32_t sub_462AD0;
 	uint32_t sub_462DF0;
+	uint32_t sub_461220;
 	uint32_t ssigpu_tx_select_2_sub_465CE0;
-	int (*sub_464F70)(int, int, int, int, int, int, int, int, int, uint8_t *);
+	int (*sub_464F70)(struc_50 *, texture_page *, int, int, int, int, int, int, int, uint8_t *);
 	void(*read_vram_1)(uint8_t *, int, uint8_t *, int, signed int, int, int);
 	void(*read_vram_2_paletted)(uint8_t *, int, uint8_t *, int, signed int, int, int, uint16_t *);
 	void(*read_vram_3_paletted)(uint8_t *, uint8_t *, signed int, int, int, uint16_t *);
@@ -1247,6 +1255,19 @@ struct ff8_externals
 	ff8_audio_fmt **sfx_audio_fmt;
 	uint32_t manage_time_engine_sub_569971;
 	int (*enable_rdtsc_sub_40AA00)(int enable);
+	uint32_t loc_47D490;
+	uint32_t sub_500870;
+	uint32_t sub_500C00;
+	uint32_t sub_500CC0;
+	uint32_t sub_506C90;
+	uint32_t sub_506CF0;
+	uint32_t sub_5084B0;
+	uint32_t battle_open_file_wrapper;
+	uint32_t battle_open_file;
+	char **battle_filenames;
+	uint32_t battle_load_textures_sub_500900;
+	uint32_t loc_5005A0;
+	uint32_t battle_upload_texture_to_vram;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

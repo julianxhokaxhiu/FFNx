@@ -36,13 +36,15 @@ uint32_t max_addr = 0;
 uint32_t replace_counter = 0;
 uint32_t replaced_functions[512 * 3];
 
-void check_is_call(const char *name, uint32_t base, uint32_t offset, uint8_t instruction)
+uint8_t check_is_call(const char *name, uint32_t base, uint32_t offset, uint16_t instruction)
 {
-	if (instruction != 0xE8 && instruction != 0xE9)
+	if ((instruction & 0xFF) != 0xE8 && (instruction & 0xFF) != 0xE9 && instruction != 0x15FF)
 	{
 		// Warning to diagnose errors faster
 		ffnx_warning("%s: Unrecognized call/jmp instruction at 0x%X + 0x%X (0x%X): 0x%X\n", name, base, offset, base + offset, instruction);
 	}
+
+	return instruction == 0x15FF ? 2 : 1;
 }
 
 #ifdef PATCH_COLLECT_DUPLICATES
@@ -144,11 +146,11 @@ void replace_call(uint32_t offset, void *func)
 {
 	DWORD dummy;
 
-	check_is_call(__func__, offset, 0, *((uint8_t *)(offset)));
+	uint8_t size = check_is_call(__func__, offset, 0, *((uint16_t *)(offset)));
 
-	VirtualProtect((void *)offset, 5, PAGE_EXECUTE_READWRITE, &dummy);
+	VirtualProtect((void *)offset, size + 4, PAGE_EXECUTE_READWRITE, &dummy);
 
-	*(uint32_t *)(offset + 1) = ((uint32_t)func - offset) - 5;
+	*(uint32_t *)(offset + size) = ((uint32_t)func - offset) - (size + 4);
 }
 
 uint32_t replace_call_function(uint32_t offset, void* func)
@@ -169,11 +171,11 @@ uint32_t replace_call_function(uint32_t offset, void* func)
 
 uint32_t get_relative_call(uint32_t base, uint32_t offset)
 {
-	uint8_t instruction = *((uint8_t *)(base + offset));
+	uint16_t instruction = *((uint16_t *)(base + offset));
 
-	check_is_call(__func__, base, offset, instruction);
+	uint8_t size = check_is_call(__func__, base, offset, instruction);
 
-	uint32_t ret = base + *((uint32_t *)(base + offset + 1)) + offset + 5;
+	uint32_t ret = base + *((uint32_t *)(base + offset + size)) + offset + 4 + size;
 
 #ifdef PATCH_COLLECT_DUPLICATES
 	collect_addresses(__func__, base, offset, ret);

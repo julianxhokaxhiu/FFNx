@@ -83,7 +83,7 @@ We are always open for contributions via PRs, and in case you want to join the c
 #### FF8
 - Vibration support
 - **Voice acting**
-- Maki's patch for worldmap included
+- Various graphical patches for worldmap included
 - Enable the VRAM debug window while playing in order to see how the engine uploads textures
 
 ### As a modder
@@ -102,10 +102,11 @@ For a more in-depth documentation feel free to visit the [docs/](docs/) folder.
 
 ## Screenshots
 
-|                       Vanilla/Steam                       |
-| :-------------------------------------------------------: |
-| ![Final Fantasy VII running on Vulkan](.screens/ff7.png)  |
-| ![Final Fantasy VIII running on Vulkan](.screens/ff8.png) |
+|                       Vanilla/Steam                                                                  |
+| :--------------------------------------------------------------------------------------------------: |
+| ![Final Fantasy VII running on Vulkan](.screens/ff7.png)                                             |
+| ![Final Fantasy VIII running on Vulkan](.screens/ff8.png)                                            |
+| [![Final Fantasy VIII Worldmap graphical patches](.screens/ff8-worldmap-official-release-vs-ffnx.png)](https://imgsli.com/MTg5NjQ2) |
 
 ## Tech Stack
 

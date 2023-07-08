@@ -100,10 +100,13 @@ public:
 	void registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX = 0, int palY = 0);
 
 	void disableDrawTexturesBackground(bool disabled);
+	inline bool drawTexturesBackgroundIsDisabled() const {
+		return _disableDrawTexturesBackground;
+	}
 	TextureTypes drawTextures(const uint8_t *texData, struct texture_format *tex_format, uint32_t *target, const uint32_t *originalImageData, int originalW, int originalH, uint8_t scale, uint32_t paletteIndex);
 
 	bool saveVram(const char *fileName, Tim::Bpp bpp) const;
-	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool after);
+	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after);
 private:
 	enum TextureCategory {
 		TextureCategoryStandard,
@@ -164,9 +167,7 @@ private:
 			const std::vector<Tile> &mapTiles,
 			int textureId
 		);
-		bool createImage() {
-			return Texture::createImage(0, false);
-		}
+		bool createImage();
 		void copyRect(int sourceXBpp2, int sourceYBpp2, Tim::Bpp textureBpp, uint32_t *target, int targetX, int targetY, int targetW, uint8_t targetScale) const;
 	private:
 		virtual uint8_t computeScale() const override;
