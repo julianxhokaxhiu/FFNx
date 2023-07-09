@@ -827,6 +827,7 @@ int ff8_opcode_voice_mes(int unk)
 	int message_current_opcode = win->state;
 	char* field_name = get_current_field_name();
 
+	current_opcode_message_status[window_id].is_message_ask = false;
 	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
 
 	return ff8_opcode_old_mes(unk);
@@ -844,6 +845,7 @@ int ff8_opcode_voice_ames(int unk)
 	int message_current_opcode = win->state;
 	char* field_name = get_current_field_name();
 
+	current_opcode_message_status[window_id].is_message_ask = false;
 	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
 
 	return ff8_opcode_old_ames(unk);
@@ -861,6 +863,7 @@ int ff8_opcode_voice_amesw(int unk)
 	int message_current_opcode = win->state;
 	char* field_name = get_current_field_name();
 
+	current_opcode_message_status[window_id].is_message_ask = false;
 	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
 
 	return ff8_opcode_old_amesw(unk);
@@ -878,6 +881,7 @@ int ff8_opcode_voice_ramesw(int unk)
 	int message_current_opcode = win->state;
 	char* field_name = get_current_field_name();
 
+	current_opcode_message_status[window_id].is_message_ask = false;
 	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
 
 	return ff8_opcode_old_ramesw(unk);
@@ -888,7 +892,7 @@ int ff8_opcode_voice_ask(int unk)
 	byte idx = *(byte *)(unk + 388);
 
 	idx--; // Line of cancel option
-	idx--; // Line of default option
+	int default_option = *(DWORD *)(unk + 4 * idx--); // Line of default option
 	idx--; // Line of last option
 	idx--; // Line of first option
 	int dialog_id = *(DWORD *)(unk + 4 * idx--);
@@ -896,19 +900,14 @@ int ff8_opcode_voice_ask(int unk)
 	ff8_win_obj *win = ff8_externals.windows + window_id;
 	int message_current_opcode = win->state;
 	char* field_name = get_current_field_name();
-	opcode_ask_current_option = win->current_choice_question;
-
-	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
-
-	if (_is_dialog_option_changed)
-	{
-		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u,char=%X\n", field_name, window_id, dialog_id, opcode_ask_current_option,current_opcode_message_status[window_id].char_id);
-		play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
-	}
 
 	current_opcode_message_status[window_id].is_message_ask = true;
 	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
-	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
+
+	if (opcode_ask_current_option == 0)
+		current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option = default_option;
+	else
+		opcode_ask_current_option = win->current_choice_question;
 
 	return ff8_opcode_old_ask(unk);
 }
@@ -920,7 +919,7 @@ int ff8_opcode_voice_aask(int unk)
 	idx--; // Y Position of window
 	idx--; // X position of window
 	idx--; // Line of cancel option
-	idx--; // Line of default option
+	int default_option = *(DWORD *)(unk + 4 * idx--); // Line of default option
 	idx--; // Line of last option
 	idx--; // Line of first option
 	int dialog_id = *(DWORD *)(unk + 4 * idx--);
@@ -928,19 +927,14 @@ int ff8_opcode_voice_aask(int unk)
 	ff8_win_obj *win = ff8_externals.windows + window_id;
 	int message_current_opcode = win->state;
 	char* field_name = get_current_field_name();
-	opcode_ask_current_option = win->current_choice_question;
-
-	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
-
-	if (_is_dialog_option_changed)
-	{
-		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u,char=%X\n", field_name, window_id, dialog_id, opcode_ask_current_option,current_opcode_message_status[window_id].char_id);
-		play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
-	}
 
 	current_opcode_message_status[window_id].is_message_ask = true;
 	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
-	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
+
+	if (opcode_ask_current_option == 0)
+		current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option = default_option;
+	else
+		opcode_ask_current_option = win->current_choice_question;
 
 	return ff8_opcode_old_aask(unk);
 }
@@ -950,22 +944,25 @@ int ff8_show_dialog(int window_id, int state, int a3)
 	int dialog_id = current_opcode_message_status[window_id].message_dialog_id;
 	ff8_win_obj *win = ff8_externals.windows + window_id;
 	int message_current_opcode = win->state;
+	bool is_message_ask = current_opcode_message_status[window_id].is_message_ask;
 	char* field_name = get_current_field_name();
-
-	//ffnx_trace("ff8_show_dialog: field=%s,window_id=%u,dialog_id=%u,message_last_opcode=%u,message_current_opcode=%u,open_close_transition=%d\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_last_opcode, message_current_opcode, win->open_close_transition, win->field_1E);
 
 	bool _is_dialog_opening = is_dialog_opening(win->open_close_transition);
 	bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
 	bool _is_dialog_paging = is_dialog_paging(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
 	bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
 	bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
+	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
 
 	if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
 
 	if (_is_dialog_opening)
 	{
+		opcode_ask_current_option = 0;
 		begin_voice(window_id);
+		current_opcode_message_status[window_id].is_message_ask = is_message_ask;
 		current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+		current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
 	}
 	else if (_is_dialog_starting || _is_dialog_paging)
 	{
@@ -973,15 +970,21 @@ int ff8_show_dialog(int window_id, int state, int a3)
 		if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u,char=%X\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count, current_opcode_message_status[window_id].char_id);
 		current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
 	}
+	else if (_is_dialog_option_changed && is_message_ask)
+	{
+		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u,char=%X\n", field_name, window_id, dialog_id, opcode_ask_current_option,current_opcode_message_status[window_id].char_id);
+		play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
+	}
 	else if (_is_dialog_closing)
 	{
 		end_voice(window_id);
 		simulate_OK_disabled[window_id] = false;
 		current_opcode_message_status[window_id].is_voice_acting = false;
+		opcode_ask_current_option = 0;
 	}
 
 	// Auto close the message if it was voice acted and the audio file has finished playing
-	if (!current_opcode_message_status[window_id].is_message_ask)
+	if (!is_message_ask)
 	{
 		if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
 		{
@@ -992,6 +995,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
 	current_opcode_message_status[window_id].message_last_transition = win->open_close_transition;
+	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
 
 	return ff8_externals.show_dialog(window_id, state, a3);
 }
