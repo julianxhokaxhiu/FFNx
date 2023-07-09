@@ -1149,6 +1149,7 @@ struct ff8_externals
 	uint32_t opcode_aask;
 	uint32_t opcode_messync;
 	uint32_t opcode_winclose;
+	uint32_t opcode_mesmode;
 	uint32_t opcode_movie;
 	uint32_t opcode_moviesync;
 	uint32_t opcode_spuready;
