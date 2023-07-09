@@ -547,8 +547,8 @@ struct ff8_win_obj
 	uint8_t win_id;
 	uint8_t field_19;
 	uint16_t mode1;
-	uint16_t open_close_transition;
-	uint16_t field_1E;
+	int16_t open_close_transition;
+	int16_t field_1E;
 	uint32_t field_20;
 	uint32_t state;
 	uint8_t field_28;
