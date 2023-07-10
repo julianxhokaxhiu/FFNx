@@ -163,10 +163,10 @@ void uv_patch_init()
 	replace_call(ff8_externals.sub_53BB90 + (isUs ? 0x42D : 0x43B), worldmap_fog_filter_polygons_in_block_1);
 	replace_call(ff8_externals.sub_53BB90 + (isUs ? 0xADD : 0xB11), worldmap_fog_filter_polygons_in_block_1);
 	replace_call(ff8_externals.sub_53BB90 + (isUs ? 0x442 : 0x450), worldmap_fog_filter_polygons_in_block_2);
-	replace_call(ff8_externals.sub_53BB90 + (isUs ? 0xAFE : 0xB26), worldmap_fog_filter_polygons_in_block_2);
-	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_1 + (isUs ? 0x239 : 0x202), sub_45DF20);
+	replace_call(ff8_externals.sub_53BB90 + (isUs ? 0xAF2 : 0xB26), worldmap_fog_filter_polygons_in_block_2);
+	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_1 + (isUs ? 0x1FC : 0x202), sub_45DF20);
 	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_1 + (isUs ? 0x5C8 : 0x5DC), enrich_tex_coords_sub_45E3A0);
-	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_2 + (isUs ? 0x281 : 0x241), sub_45DF20);
+	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_2 + (isUs ? 0x242 : 0x241), sub_45DF20);
 	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_2 + (isUs ? 0x698 : 0x6CD), enrich_tex_coords_sub_45E3A0);
 	replace_call(ff8_externals.sub_461E00 + 0x50, ssigpu_sub_461220);
 	ff8_externals.ssigpu_callbacks_1[52] = uint32_t(ssigpu_callback_sub_461E00);
