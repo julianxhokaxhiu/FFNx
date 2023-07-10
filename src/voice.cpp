@@ -941,61 +941,67 @@ int ff8_opcode_voice_aask(int unk)
 
 int ff8_show_dialog(int window_id, int state, int a3)
 {
-	int dialog_id = current_opcode_message_status[window_id].message_dialog_id;
-	ff8_win_obj *win = ff8_externals.windows + window_id;
-	int message_current_opcode = win->state;
-	bool is_message_ask = current_opcode_message_status[window_id].is_message_ask;
-	char* field_name = get_current_field_name();
+	struct game_mode *mode = getmode_cached();
 
-	bool _is_dialog_opening = is_dialog_opening(win->open_close_transition);
-	bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
-	bool _is_dialog_paging = is_dialog_paging(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
-	bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
-	bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
-	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
-
-	if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
-
-	if (_is_dialog_opening)
+	// Skip voice over on Tutorials
+	if (mode->mode != FF8_MODE_TUTO)
 	{
-		opcode_ask_current_option = 0;
-		begin_voice(window_id);
-		current_opcode_message_status[window_id].is_message_ask = is_message_ask;
-		current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+		int dialog_id = current_opcode_message_status[window_id].message_dialog_id;
+		ff8_win_obj *win = ff8_externals.windows + window_id;
+		int message_current_opcode = win->state;
+		bool is_message_ask = current_opcode_message_status[window_id].is_message_ask;
+		char* field_name = get_current_field_name();
+
+		bool _is_dialog_opening = is_dialog_opening(win->open_close_transition);
+		bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
+		bool _is_dialog_paging = is_dialog_paging(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
+		bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
+		bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
+		bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
+
+		if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
+
+		if (_is_dialog_opening)
+		{
+			opcode_ask_current_option = 0;
+			begin_voice(window_id);
+			current_opcode_message_status[window_id].is_message_ask = is_message_ask;
+			current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+			current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
+		}
+		else if (_is_dialog_starting || _is_dialog_paging)
+		{
+			if (_is_dialog_starting) current_opcode_message_status[window_id].char_id = 0; // TODO
+			if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u,char=%X\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count, current_opcode_message_status[window_id].char_id);
+			current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
+		}
+		else if (_is_dialog_option_changed && is_message_ask)
+		{
+			if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u,char=%X\n", field_name, window_id, dialog_id, opcode_ask_current_option,current_opcode_message_status[window_id].char_id);
+			play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
+		}
+		else if (_is_dialog_closing)
+		{
+			end_voice(window_id);
+			simulate_OK_disabled[window_id] = false;
+			current_opcode_message_status[window_id].is_voice_acting = false;
+			opcode_ask_current_option = 0;
+		}
+
+		// Auto close the message if it was voice acted and the audio file has finished playing
+		if (!is_message_ask)
+		{
+			if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
+			{
+				current_opcode_message_status[window_id].is_voice_acting = false;
+				if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) simulate_OK_button = true;
+			}
+		}
+
+		current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
+		current_opcode_message_status[window_id].message_last_transition = win->open_close_transition;
 		current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
 	}
-	else if (_is_dialog_starting || _is_dialog_paging)
-	{
-		if (_is_dialog_starting) current_opcode_message_status[window_id].char_id = 0; // TODO
-		if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u,char=%X\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count, current_opcode_message_status[window_id].char_id);
-		current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
-	}
-	else if (_is_dialog_option_changed && is_message_ask)
-	{
-		if (trace_all || trace_opcodes) ffnx_trace("opcode[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u,char=%X\n", field_name, window_id, dialog_id, opcode_ask_current_option,current_opcode_message_status[window_id].char_id);
-		play_option(field_name, window_id, dialog_id, opcode_ask_current_option);
-	}
-	else if (_is_dialog_closing)
-	{
-		end_voice(window_id);
-		simulate_OK_disabled[window_id] = false;
-		current_opcode_message_status[window_id].is_voice_acting = false;
-		opcode_ask_current_option = 0;
-	}
-
-	// Auto close the message if it was voice acted and the audio file has finished playing
-	if (!is_message_ask)
-	{
-		if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
-		{
-			current_opcode_message_status[window_id].is_voice_acting = false;
-			if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) simulate_OK_button = true;
-		}
-	}
-
-	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
-	current_opcode_message_status[window_id].message_last_transition = win->open_close_transition;
-	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
 
 	return ff8_externals.show_dialog(window_id, state, a3);
 }
