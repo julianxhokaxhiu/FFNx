@@ -1,9 +1,0 @@
-{
-  "cmake.buildDirectory": "${workspaceFolder}/.build",
-  "cmake.configureSettings": {
-    "_DLL_VERSION": "devel",
-    "CMAKE_BUILD_TYPE": "${buildType}",
-    "CMAKE_TOOLCHAIN_FILE": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
-  },
-  "files.trimTrailingWhitespace": true
-}

@@ -23,7 +23,21 @@
 #pragma once
 
 #include <stdint.h>
+#include <vector>
 #include "../ff8.h"
+
+struct TimRect {
+	TimRect();
+	TimRect(uint32_t palIndex, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2);
+	bool match(uint32_t x, uint32_t y) const;
+	bool isValid() const;
+	uint32_t palIndex;
+	uint32_t x1, y1;
+	uint32_t x2, y2;
+};
+
+int operator==(const TimRect &rectangle, const TimRect &other);
+bool operator<(const TimRect &rectangle, const TimRect &other);
 
 inline uint32_t fromR5G5B5Color(uint16_t color, bool withAlpha = false)
 {
@@ -81,9 +95,19 @@ private:
 	uint8_t _palCols;
 };
 
+class PaletteDetectionStrategyTrianglesAndQuads : public PaletteDetectionStrategy {
+public:
+	PaletteDetectionStrategyTrianglesAndQuads(const Tim *const tim, const std::vector<TimRect> &rectangles);
+	virtual uint32_t palOffset(uint16_t imgX, uint16_t imgY) const override;
+	virtual uint32_t palIndex() const override;
+private:
+	const std::vector<TimRect> &_rectangles;
+};
+
 class Tim {
 	friend class PaletteDetectionStrategyFixed;
 	friend class PaletteDetectionStrategyGrid;
+	friend class PaletteDetectionStrategyTrianglesAndQuads;
 public:
 	enum Bpp {
 		Bpp4 = 0,
@@ -125,9 +149,17 @@ public:
 		const char *fileName, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal = 0, uint8_t palColsPerRow = 1,
 		bool withAlpha = false
 	) const;
+	bool saveMultiPaletteTrianglesAndQuads(
+		const char *fileName, const std::vector<TimRect> &rectangles,
+		bool withAlpha = false
+	) const;
 	bool toRGBA32(uint32_t *target, uint8_t palX = 0, uint8_t palY = 0, bool withAlpha = false) const;
 	bool toRGBA32MultiPaletteGrid(
 		uint32_t *target, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal = 0, uint8_t palColsPerRow = 1,
+		bool withAlpha = false
+	) const;
+	bool toRGBA32MultiPaletteTrianglesAndQuads(
+		uint32_t *target, const std::vector<TimRect> &rectangles,
 		bool withAlpha = false
 	) const;
 	static Tim fromLzsData(const uint8_t *uncompressed_data);

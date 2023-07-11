@@ -170,26 +170,32 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip)
 // draw a set of primitives with lighting
 void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, uint32_t clip)
 {
-	static vector3<float> *normaldata;
+	bool has_model_data = false;
+	static std::vector<vector3<float>> normals;
+	static vector3<float> zero = { 0.0f, 0.0f, 0.0f };
 
-	normaldata = nullptr;
+	normals.resize(ip->vertexcount);
+	std::fill(normals.begin(), normals.end(), zero);
 
-	// If the user has no preference, we can try to optimize some of the flow
+	// User wants to attempt to load model data
 	if (!prefer_lighting_cpu_calculations)
 	{
 		// If models do provide normal data, use it
-		if (polydata->normaldata != NULL) normaldata = polydata->normaldata;
+		if (polydata->normaldata != NULL)
+		{
+			for (uint32_t idx = 0; idx < ip->vertexcount; idx++)
+			{
+				normals[idx] = polydata->has_normindextable ? polydata->normaldata[polydata->normindextabledata[idx]] : polydata->normaldata[idx];
+			}
+
+			has_model_data = true;
+		}
 	}
 
-	// If we still didn't get normalized data, we have to calculate them on the CPU
-	if (normaldata == nullptr)
+	// If the previous code was not able to fetch the model normal data, we have to calculate it on the CPU
+	if (!has_model_data)
 	{
-		static std::vector<vector3<float>> normals;
-		static vector3<float> zero = { 0.0f, 0.0f, 0.0f };
 		vector3<float> e12, e13, triNormal;
-
-		normals.resize(ip->vertexcount);
-		std::fill(normals.begin(), normals.end(), zero);
 
 		// Calculate vertex normals by averaging adjacent triangle normals
 		// Vertex normals are calculated here because battle models dont seem to include normals
@@ -218,11 +224,9 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 		{
 			normalize_vector(&normals[idx]);
 		}
-
-		normaldata = normals.data();
 	}
 
-	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normaldata, ip->vertexcount, ip->indices, ip->indexcount, 0, polydata->boundingboxdata, clip, true);
+	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normals.data(), ip->vertexcount, ip->indices, ip->indexcount, 0, polydata->boundingboxdata, clip, true);
 }
 
 // main rendering routine, draws a set of primitives according to the current render state

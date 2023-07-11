@@ -6,6 +6,7 @@
 
 - Common: Allow to skip the FFNx logo on button press
 - Common: Improve texture upload time by reducing allocations for color conversion
+- Common: Add a new NTSC color correction option ( https://github.com/julianxhokaxhiu/FFNx/issues/536 )
 - GameHacks: Add toggle for Voice auto-text feature ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md#voice-auto-text )
 - Voice: Fix track master volume inheritance when overriding via config
 
@@ -13,14 +14,21 @@
 
 - Core: Fix `ERROR: COULD NOT CHANGE TO DIRECTORY` error when starting the Condor minigame
 - Graphics: Fix missing snow footsteps ( https://github.com/julianxhokaxhiu/FFNx/issues/550 )
-- Input: Allow Cloud to walk/run based on the left analogue stick position ( https://github.com/julianxhokaxhiu/FFNx/issues/523 )
+- Input: Allow Cloud to walk/run based on the left analogue stick position ( https://github.com/julianxhokaxhiu/FFNx/issues/523 + https://github.com/julianxhokaxhiu/FFNx/issues/557 )
+- Lighting: Fix model normal data inheritance
+- Modding: Allow snowboard model swapping ( https://github.com/julianxhokaxhiu/FFNx/issues/440 )
 
 ## FF8
 
 - Common: Fix startup hang on launch
 - Common: Fix jp version crash
+- Config: enable worldmap fixes by default
 - Graphics: Add Field texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/542 https://github.com/julianxhokaxhiu/FFNx/pull/545 )
+- Graphics: Add Battle texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/564 )
 - Graphics: Fix wrong texture replacements in battle
+- Graphics: Fix bad texture UVs in worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/564 )
+- Graphics: Disable texture filtering for external textures, as sprites can overlap or look bad in FF8
+- Voice: Reworked the field layer to behave like FF7
 
 # 1.15.0
 

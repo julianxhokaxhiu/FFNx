@@ -13,7 +13,6 @@
             ],
             "cStandard": "c11",
             "cppStandard": "c++20",
-            "intelliSenseMode": "windows-msvc-x64",
             "browse": {
                 "limitSymbolsToIncludedHeaders": true
             },

@@ -6,15 +6,15 @@
 vcpkg_from_github(OUT_SOURCE_PATH BX_SOURCE_DIR
     REPO "julianxhokaxhiu/bx"
     HEAD_REF master
-    REF 9b42b6f41130b7e84c82c221044ab7b9bcd9e2b2
-    SHA512 273ffdcbc9644084a93f967300e44fc72e377dc53389103a9f6fa779976993a54f4bd7db5c79a841092d16ac6d481dcfad175d9151392fcf05828ca42e619823
+    REF 0e442f6f5945b27146ed9fa0acadb7d955dbedc2
+    SHA512 69f4d77a4b2ca1e8af35ef0322362435f962dbfa20a38198de70e09c886e019a53a6948838f7ea1c5d7c2e67fea3be78263e26a8f47dfede9191f3c5f178dd3e
 )
 
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/bimg"
     HEAD_REF master
-    REF 7afa2419254fd466c013a51bdeb0bee3022619c4
-    SHA512 514deed00f8bc4106f67b777dca72d0ed0accb1ae057ad37d22a21c83ad3a85ad23d220ac0cf40b6a8006d43c308b1acfad464b51e64075aa01598731a1557df
+    REF ec02df824a763b2e2ae31e19c674ba0bc88c0695
+    SHA512 e0f26afae510244e85758ddaada83e3d6b48745b447e197bffcb972f1fd8f42269f2e9f3ee48a6d54ea99d0ad66062a6212a3604f7e61d616681b815fb8a6d8f
 )
 
 # Move bx source inside bgfx source tree
@@ -148,5 +148,6 @@ else()
     endforeach()
 endif()
 
+file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
 configure_file(${CMAKE_CURRENT_LIST_DIR}/FindBIMG.cmake.in ${CURRENT_PACKAGES_DIR}/share/${PORT}/FindBIMG.cmake @ONLY)
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT})

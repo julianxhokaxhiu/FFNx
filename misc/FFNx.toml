@@ -112,10 +112,27 @@ enable_time_cycle = false
 external_time_cycle_path = "time"
 
 #[HDR]
-# This flag will set the Maximum Luminance nits value of your monitor/TV in order to properly correct colors when rendering.
-# By default is set to 0, which means use what has been autodetected via software.
-# NOTE: Auto-detected value MIGHT be wrong sometimes, use this flag to fix that if colors do not look properly on your own screen.
+# This flag will set the brightness level that SDR "white" is rendered at within an HDR monitor.
+# By default is set to 0, which means to attempt autodetection of the correct value for your monitor via software.
+# Autodetection may fail on some monitor models.
+# Autodetection WILL fail on Windows older than Win10 Fall Creators Update (version 1709).
+# Autodetection WILL fail on WINE (at least as of WINE version 7.22).
+# If autodetection is attempted and fails, a default value of 200 nits will be used.
+# NOTE: FFNx.log will tell you if autodetection succeeded, and what value was autodetected.
+# NOTE: The autodetected (or default) value MIGHT be wrong sometimes; use this flag if brightness does not look correct.
+# Sane values are likely in the range 100-200 nits.
 hdr_max_nits = 0
+
+#[COLOR GAMUT]
+# If enabled, performs a conversion to simulate the color gamut of the 1990s Japanese television sets that FF7 and FF8 were originally designed for.
+# The resulting colors are generally brighter and more vivid.
+# This mode is appropriate for:
+# (1) Vanilla FF7/FF8.
+# (2) Mod assets that are upscales of the original assets.
+# (3) Mod assets made from scratch where the modder used the original assets as a color reference without doing a gamut conversion.
+# This mode is not appropriate for mod assets made from scratch that truly use the sRGB color gamut.
+# Such assets can be made suitable for this mode using this converter program: https://github.com/ChthonVII/gamutthingy
+enable_ntscj_gamut_mode = false
 
 #########################
 # Audio Player Options
@@ -285,6 +302,11 @@ enable_analogue_controls = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_inverted_camera_controls = false
 
+#[LEFT ANALOG STICK DEADZONE]
+# Sets the deadzone for the left analog stick. Values are from 0 to 1.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+left_analog_stick_deadzone = 0.1
+
 #[RIGHT ANALOG STICK DEADZONE]
 # Sets the deadzone for the right analog stick. Values are from 0 to 1.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -299,6 +321,11 @@ left_analog_trigger_deadzone = 0.1
 # Sets the deadzone for the right analog trigger. Values are from 0 to 1.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 right_analog_trigger_deadzone = 0.1
+
+#[AUTO RUN]
+# This flag enables mode to walk or run depending on how much the left analog stick is tilt.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_auto_run = false
 
 #[EXTERNAL VIBRATE PATH]
 # Path of the external vibrate files
@@ -584,6 +611,10 @@ save_path = "save"
 # Load higher resolution textures on worldmap
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_worldmap_internal_highres_textures = true
+
+# Attempt to fix texturing holes by restoring full precision from the game data
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_fix_uv_coords_precision = true
 
 ## GAME INSTALLATION OPTIONS
 

@@ -7,8 +7,8 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/bx"
     HEAD_REF master
-    REF 9b42b6f41130b7e84c82c221044ab7b9bcd9e2b2
-    SHA512 273ffdcbc9644084a93f967300e44fc72e377dc53389103a9f6fa779976993a54f4bd7db5c79a841092d16ac6d481dcfad175d9151392fcf05828ca42e619823
+    REF 0e442f6f5945b27146ed9fa0acadb7d955dbedc2
+    SHA512 69f4d77a4b2ca1e8af35ef0322362435f962dbfa20a38198de70e09c886e019a53a6948838f7ea1c5d7c2e67fea3be78263e26a8f47dfede9191f3c5f178dd3e
 )
 
 # Set up GENie (custom project generator)
@@ -112,5 +112,6 @@ else()
     )
 endif()
 
+file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
 configure_file(${CMAKE_CURRENT_LIST_DIR}/FindBX.cmake.in ${CURRENT_PACKAGES_DIR}/share/${PORT}/FindBX.cmake @ONLY)
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT})

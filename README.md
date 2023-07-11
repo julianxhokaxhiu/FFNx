@@ -25,7 +25,7 @@ FFNx today in a nutshell:
   - Vulkan
   - OpenGL
   - DirectX 9 (Experimental: Not Recommended)
-  
+
 ## The Team
 
 FFNx is developed by a core team, currently composed of:
@@ -83,7 +83,7 @@ We are always open for contributions via PRs, and in case you want to join the c
 #### FF8
 - Vibration support
 - **Voice acting**
-- Maki's patch for worldmap included
+- Various graphical patches for worldmap included
 - Enable the VRAM debug window while playing in order to see how the engine uploads textures
 
 ### As a modder
@@ -102,10 +102,11 @@ For a more in-depth documentation feel free to visit the [docs/](docs/) folder.
 
 ## Screenshots
 
-|                       Vanilla/Steam                       |
-| :-------------------------------------------------------: |
-| ![Final Fantasy VII running on Vulkan](.screens/ff7.png)  |
-| ![Final Fantasy VIII running on Vulkan](.screens/ff8.png) |
+|                       Vanilla/Steam                                                                  |
+| :--------------------------------------------------------------------------------------------------: |
+| ![Final Fantasy VII running on Vulkan](.screens/ff7.png)                                             |
+| ![Final Fantasy VIII running on Vulkan](.screens/ff8.png)                                            |
+| [![Final Fantasy VIII Worldmap graphical patches](.screens/ff8-worldmap-official-release-vs-ffnx.png)](https://imgsli.com/MTg5NjQ2) |
 
 ## Tech Stack
 
@@ -124,7 +125,8 @@ If you're curious to know, FFNx makes use of:
 - [pugixml](https://github.com/zeux/pugixml) (Steam XML manifest)
 - [md5](http://www.zedwood.com/article/cpp-md5-function) (Steam XML manifest)
 - [libpng](http://www.libpng.org/pub/png/libpng.html) (better and faster PNG texture support)
-- [imgui](https://github.com/ocornut/imgui) (better debugging of the in-game engine)
+- [imgui](https://github.com/ocornut/imgui) (DevTools in-game interface)
+- [imgui_club](https://github.com/ocornut/imgui_club) (imgui Memory Editor Widget)
 - [xxhash](https://github.com/Cyan4973/xxHash) (fast hash extraction from paletted game texture data, aka animated textures)
 - [SoLoud](https://github.com/jarikomppa/soloud) (audio engine used to playback audio, music or voice files)
 - [openpsf](https://github.com/myst6re/openpsf) (MINIPSF emulation engine to playback PSX/PS2 music files)
@@ -161,7 +163,9 @@ Once the project is built you can find the output in this path: `.build/bin`
 0. Download the the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installer
 1. Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the components required to build this project
 2. Make sure you select the English Language pack in the language list before clicking Install
-3. Once installed, open this repository **as a folder** in Visual Studio 2022 and click the build button
+3. Once installed, open this repository **as a folder** in Visual Studio
+4. Choose as preset in the status bar the one you desire
+5. Click the `Build` button
 
 ### Visual Studio Code
 
@@ -171,7 +175,7 @@ Once the project is built you can find the output in this path: `.build/bin`
    - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools
    - https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools
 3. Open this repository as a folder in Visual Studio Code
-4. Choose as build profile in the status bar `CMake: [Release]` (or one of the aforementioned profiles)
+4. Choose as preset in the status bar the one you desire
 5. Click the button on the status bar `Build`
 
 ## Auto-Formatting
@@ -265,7 +269,11 @@ These people are:
 - [Lord UrQuan](https://github.com/eve-atum)
   - for finding new and inventive ways to crash our test builds
   - for general documentation clean-up
-  
+- [LaZar00](https://github.com/LaZar00)
+  - for the Snowboard TMD structures
+- [ChthonVII](https://github.com/ChthonVII)
+  - for the mind-blowing amount of research needed to match the colur gamut with how Squaresoft intended things to look on 1997 displays 
+
 I'm sure I forgot many others. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
 ## License

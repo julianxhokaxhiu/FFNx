@@ -61,6 +61,7 @@
 #include "ff8/vram.h"
 #include "ff8/vibration.h"
 #include "ff8/engine.h"
+#include "ff8/uv_patch.h"
 
 bool proxyWndProc = false;
 
@@ -851,6 +852,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				newRenderer.prepareFFNxLogo();
 
 				newRenderer.prepareEnvBrdf();
+                
+				newRenderer.prepareGamutLUTs();
 
 				// perform any additional initialization that requires the rendering environment to be set up
 				field_init();
@@ -866,6 +869,9 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				if (ff8)
 				{
 					vram_init();
+					if (ff8_fix_uv_coords_precision) {
+						uv_patch_init();
+					}
 					vibration_init();
 				}
 
@@ -1764,17 +1770,17 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	if(tex_format->palettes == 0) tex_format->palettes = VREF(tex_header, palette_entries);
 
 	// convert texture data from source format and load it
-	if(texture_format != 0 && VREF(tex_header, image_data) != 0)
+	if(texture_format != 0 && VREF(tex_header, image_data) != 0 && (! ff8 || ! texturePacker.drawTexturesBackgroundIsDisabled()))
 	{
 		// detect changes in palette data for FF8, we can't trust it to notify us
-		if(ff8 && VREF(tex_header, palettes) > 0 && VREF(tex_header, version) != FB_TEX_VERSION)
+		if(ff8 && VREF(tex_header, palettes) > 0 && VREF(tex_header, version) != FB_TEX_VERSION && tex_format->bytesperpixel == 1)
 		{
 			if(!VREF(tex_header, old_palette_data))
 			{
 				VRASS(tex_header, old_palette_data, (unsigned char*)external_malloc(4 * tex_format->palette_size));
 			}
 
-			if(memcmp(VREF(tex_header, old_palette_data), tex_format->palette_data, 4 * tex_format->palette_size))
+			if(memcmp(VREF(tex_header, old_palette_data), tex_format->palette_data, 4 * tex_format->palette_size) != 0)
 			{
 				for (uint32_t idx = 0; idx < VREF(texture_set, ogl.gl_set->textures); idx++)
 					newRenderer.deleteTexture(VREF(texture_set, texturehandle[idx]));
@@ -3337,6 +3343,7 @@ int ffnx_logo_current_frame = 0;
 bool drawFFNxLogoFrame(struct game_obj* game_object)
 {
 	if (ffnx_logo_current_frame >= FFNX_LOGO_FRAME_COUNT) {
+		newRenderer.setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB); // set the gamut back to what it was before newRenderer.drawFFNxLogo() changed it
 		return false;
 	}
 

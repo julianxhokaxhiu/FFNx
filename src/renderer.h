@@ -95,6 +95,27 @@ enum RendererTextureType
     YUV
 };
 
+enum ColorMatrixType{
+    COLORMATRIX_BT601 = 0,
+    COLORMATRIX_BT709 = 1,
+    COLORMATRIX_BGR24 = 2
+};
+
+enum ColorGamutType{
+    COLORGAMUT_SRGB = 0,
+    COLORGAMUT_NTSCJ = 1,
+    COLORGAMUT_SMPTEC = 2,
+    COLORGAMUT_EBU = 3
+};
+
+enum InverseGammaFunctionType{
+    GAMMAFUNCTION_SRGB = 0,
+    GAMMAFUNCTION_TWO_PT_TWO = 1,
+    GAMMAFUNCTION_SMPTE170M = 2,
+    GAMMAFUNCTION_TOELESS_SRGB = 3,
+    GAMMAFUNCTION_TWO_PT_EIGHT = 4
+};
+
 namespace RendererTextureSlot {
     enum RendererTextureSlot
     {
@@ -108,8 +129,21 @@ namespace RendererTextureSlot {
         TEX_IBL_SPEC,
         TEX_IBL_DIFF,
         TEX_BRDF,
+        TEX_G_LUT,
         COUNT
     };
+};
+
+enum GamutLUTIndexType{
+	INDEX_LUT_NTSCJ_TO_SRGB,
+	INDEX_LUT_SMPTEC_TO_SRGB,
+	INDEX_LUT_EBU_TO_SRGB,
+	INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
+	INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC,
+	INDEX_LUT_INVERSE_NTSCJ_TO_EBU,
+	INDEX_LUT_SRGB_TO_NTSCJ,
+	INDEX_LUT_SMPTEC_TO_NTSCJ,
+	INDEX_LUT_EBU_TO_NTSCJ    
 };
 
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
@@ -209,6 +243,11 @@ private:
         bool bIsMovieYUV = false;
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
+        ColorMatrixType bIsMovieColorMatrix = COLORMATRIX_BT601;
+        ColorGamutType bIsMovieColorGamut = COLORGAMUT_SRGB;
+        ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
+        bool bIsOverrideGamut = false;
+        InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
 
         float backendProjMatrix[16];
         float postprocessingProjMatrix[16];
@@ -218,6 +257,8 @@ private:
         std::vector<float> FSMiscFlags;
         std::vector<float> FSHDRFlags;
         std::vector<float> FSTexFlags;
+        std::vector<float> FSMovieFlags;
+        
 
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
@@ -279,6 +320,16 @@ private:
     bgfx::DynamicIndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;
 
     bgfx::TextureHandle FFNxLogoHandle = BGFX_INVALID_HANDLE;
+    
+    bgfx::TextureHandle GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleSMPTECtoSRGB = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleEBUtoSRGB = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleSRGBtoNTSCJ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleSMPTECtoNTSCJ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle GLUTHandleEBUtoNTSCJ = BGFX_INVALID_HANDLE;
 
     bgfx::VertexLayout vertexLayout;
 
@@ -329,6 +380,7 @@ private:
     void prepareFramebuffer();
 
     void bindTextures();
+    void AssignGamutLUT();
 
     bx::DefaultAllocator defaultAllocator;
     bx::FileWriter defaultWriter;
@@ -350,6 +402,8 @@ public:
     void prepareSpecularIbl(char* fullpath = nullptr);
     void prepareDiffuseIbl(char* fullpath = nullptr);
     void prepareEnvBrdf();
+    void prepareGamutLUTs();
+	void LoadGamutLUT(GamutLUTIndexType whichLUT);
     void shutdown();
 
     void clearShadowMap();
@@ -402,6 +456,11 @@ public:
     void doTextureFiltering(bool flag = false);
     void isExternalTexture(bool flag = false);
     bool isHDR();
+    void setColorMatrix(ColorMatrixType cmtype = COLORMATRIX_BT601);
+    void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
+    void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
+    void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);
+    void setGamutOverride(bool flag = false);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);

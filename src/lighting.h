@@ -97,12 +97,16 @@ private:
     LightingState lightingState;
 
     // Config
+    char configPath[MAX_PATH];
+    char configDevToolsPath[MAX_PATH];
     toml::parse_result config;
 
     std::vector<nvertex> walkMeshVertices;
     std::vector<WORD> walkMeshIndices;
 
-private:
+    auto getConfigEntry(char* key);
+    void setConfigEntry(const char* key, auto value);
+
     void loadConfig();
     void initParamsFromConfig();
     void updateLightMatrices(struct boundingbox* sceneAabb);
@@ -119,10 +123,15 @@ private:
 
 public:
     void init();
+    void reload();
+    void save();
 
     void draw(struct game_obj* game_object);
 
     const LightingState& getLightingState();
+
+    // Config
+    std::string getConfigGroup();
 
     // Lighting
     void setPbrTextureEnabled(bool isEnabled);

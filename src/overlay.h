@@ -25,6 +25,7 @@
 
 #include <bgfx/bgfx.h>
 #include <imgui.h>
+#include "imgui_club/imgui_memory_editor.h"
 #include "input.h"
 
 class Overlay : public MouseListener, public KeyListener {
@@ -40,6 +41,8 @@ private:
 	bool field_debug_open = false;
 	bool lighting_debug_open = false;
 	bool world_debug_open = false;
+
+	MemoryEditor mem_edit;
 
 	void UpdateMousePos();
 	bool UpdateMouseCursor();

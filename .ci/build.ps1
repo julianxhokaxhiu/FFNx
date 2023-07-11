@@ -21,7 +21,6 @@
 
 Set-StrictMode -Version Latest
 
-$env:_RELEASE_PATH = ".build"
 if ($env:_BUILD_BRANCH -eq "refs/heads/master" -Or $env:_BUILD_BRANCH -eq "refs/tags/canary")
 {
   $env:_IS_BUILD_CANARY = "true"
@@ -39,6 +38,8 @@ $vcpkgRoot = "C:\vcpkg"
 $vcpkgBaseline = [string](jq --arg baseline "builtin-baseline" -r '.[$baseline]' vcpkg.json)
 $vcpkgOriginUrl = &"git" -C $vcpkgRoot remote get-url origin
 $vcpkgBranchName = &"git" -C $vcpkgRoot branch --show-current
+
+$releasePath = [string](jq -r '.configurePresets[0].binaryDir' CMakePresets.json).Replace('${sourceDir}/', '')
 
 Write-Output "--------------------------------------------------"
 Write-Output "BUILD CONFIGURATION: $env:_RELEASE_CONFIGURATION"
@@ -74,16 +75,15 @@ Invoke-WebRequest -Uri "http://www.tortall.net/projects/yasm/snapshots/v1.3.0.6.
 
 vcpkg integrate install
 
-mkdir $env:_RELEASE_PATH | Out-Null
-cmake -G "Visual Studio 17 2022" -T host=x86 -A win32 -D_DLL_VERSION="$env:_BUILD_VERSION" -DCMAKE_BUILD_TYPE="$env:_RELEASE_CONFIGURATION" -DCMAKE_TOOLCHAIN_FILE="$vcpkgRoot\scripts\buildsystems\vcpkg.cmake" -S . -B $env:_RELEASE_PATH
-cmake --build $env:_RELEASE_PATH --config $env:_RELEASE_CONFIGURATION
+cmake --preset "x86-${env:_RELEASE_CONFIGURATION}" -D_DLL_VERSION="$env:_BUILD_VERSION"
+cmake --build --preset "x86-${env:_RELEASE_CONFIGURATION}"
 
 mkdir .dist\pkg\FF7_1998 | Out-Null
 mkdir .dist\pkg\FF8_2000 | Out-Null
 mkdir .dist\pkg\FFNx_Steam | Out-Null
-Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FF7_1998
-Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FF8_2000
-Copy-Item -R "$env:_RELEASE_PATH\bin\*" .dist\pkg\FFNx_Steam
+Copy-Item -R "$releasePath\bin\*" .dist\pkg\FF7_1998
+Copy-Item -R "$releasePath\bin\*" .dist\pkg\FF8_2000
+Copy-Item -R "$releasePath\bin\*" .dist\pkg\FFNx_Steam
 Remove-Item .dist\pkg\FF7_1998\FF8.reg
 Remove-Item .dist\pkg\FF8_2000\FF7.reg
 Remove-Item .dist\pkg\FFNx_Steam\FF7.reg

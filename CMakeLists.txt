@@ -19,7 +19,7 @@
 #    GNU General Public License for more details.                             #
 #*****************************************************************************#
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.25)
 cmake_policy(SET CMP0091 NEW)
 
 if(NOT DEFINED CMAKE_BUILD_TYPE)
@@ -302,16 +302,104 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.time.toml
           ${CMAKE_BINARY_DIR}/bin/time/config.toml
+  # Gamut LUTS
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ntscj_to_srgb.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_smptec_to_srgb.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ebu_to_srgb.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_srgb.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_smptec.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_ebu.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_srgb_to_ntscj.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_smptec_to_ntscj.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ebu_to_ntscj.png
+          ${CMAKE_BINARY_DIR}/bin/shaders
+
 )
 
 # CPU INFO
 add_custom_command(
-    TARGET ${RELEASE_NAME}
-    PRE_BUILD
-    # Get CPU info
-    COMMAND
-      ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/cpu-info
-    # Get CPU ISA supported instructions
-    COMMAND
-      ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/isa-info
+  TARGET ${RELEASE_NAME}
+  PRE_BUILD
+  # Get CPU info
+  COMMAND
+    ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/cpu-info
+  # Get CPU ISA supported instructions
+  COMMAND
+    ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/isa-info
 )
+
+# Copy FFNx release to FF7 game path if installed
+cmake_host_system_information(RESULT FF7_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc./Final Fantasy VII" VALUE "AppPath" ERROR_VARIABLE FF7_KEY_QUERY_RES)
+if("${FF7_KEY_QUERY_RES}" STREQUAL "")
+  cmake_path(CONVERT "${FF7_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_GAME_PATH)
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_GAME_PATH}/FFNx.toml
+            ${FF7_GAME_PATH}/FFNx.toml.bak
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF7_GAME_PATH}
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF7_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_GAME_PATH}/FFNx.toml.bak
+            ${FF7_GAME_PATH}/FFNx.toml
+  )
+endif()
+
+# Copy FFNx release to FF8 game path if installed
+cmake_host_system_information(RESULT FF8_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc/FINAL FANTASY VIII/1.00" VALUE "AppPath" ERROR_VARIABLE FF8_KEY_QUERY_RES)
+if("${FF8_KEY_QUERY_RES}" STREQUAL "")
+  cmake_path(CONVERT "${FF8_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_GAME_PATH)
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_GAME_PATH}/FFNx.toml
+            ${FF8_GAME_PATH}/FFNx.toml.bak
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF8_GAME_PATH}
+    # Delete previous eax.dll
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_GAME_PATH}/eax.dll
+    # Rename FFNx.dll to eax.dll
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_GAME_PATH}/FFNx.dll
+            ${FF8_GAME_PATH}/eax.dll
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_GAME_PATH}/FFNx.toml.bak
+            ${FF8_GAME_PATH}/FFNx.toml
+  )
+endif()

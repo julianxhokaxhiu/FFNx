@@ -31,6 +31,10 @@
     "steamworkssdk": {
       "baseline": "1.23.0",
       "port-version": 0
+    },
+    "tomlplusplus": {
+      "baseline": "3.3.0",
+      "port-version": 0
     }
   }
 }

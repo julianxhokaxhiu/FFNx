@@ -50,6 +50,7 @@ std::string external_time_cycle_path;
 bool enable_voice_music_fade;
 long external_voice_music_fade_volume;
 bool enable_voice_auto_text;
+bool enable_auto_run;
 bool save_textures;
 bool trace_all;
 bool trace_renderer;
@@ -116,6 +117,7 @@ bool ff7_footsteps;
 bool ff7_field_center;
 bool enable_analogue_controls;
 bool enable_inverted_camera_controls;
+double left_analog_stick_deadzone;
 double right_analog_stick_deadzone;
 double left_analog_trigger_deadzone;
 double right_analog_trigger_deadzone;
@@ -126,8 +128,10 @@ double hdr_max_nits;
 long external_audio_number_of_channels;
 long external_audio_sample_rate;
 bool ff8_worldmap_internal_highres_textures;
+bool ff8_fix_uv_coords_precision;
 std::string app_path;
 std::string data_drive;
+bool enable_ntscj_gamut_mode;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -258,18 +262,22 @@ void read_cfg()
 	ff7_field_center = config["ff7_field_center"].value_or(true);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
 	enable_inverted_camera_controls = config["enable_inverted_camera_controls"].value_or(false);
+	left_analog_stick_deadzone = config["left_analog_stick_deadzone"].value_or(0.1);
 	right_analog_stick_deadzone = config["right_analog_stick_deadzone"].value_or(0.1);
 	left_analog_trigger_deadzone = config["left_analog_trigger_deadzone"].value_or(0.1);
 	right_analog_trigger_deadzone = config["right_analog_trigger_deadzone"].value_or(0.1);
+	enable_auto_run = config["enable_auto_run"].value_or(false);
 	external_vibrate_path = config["external_vibrate_path"].value_or("");
 	enable_steam_achievements = config["enable_steam_achievements"].value_or(false);
 	steam_achievements_debug_mode = config["steam_achievements_debug_mode"].value_or(false);
 	hdr_max_nits = config["hdr_max_nits"].value_or(0);
 	external_audio_number_of_channels = config["external_audio_number_of_channels"].value_or(2);
 	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(44100);
-	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(false);
+	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(true);
+	ff8_fix_uv_coords_precision = config["ff8_fix_uv_coords_precision"].value_or(true);
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");
+	enable_ntscj_gamut_mode = config["enable_ntscj_gamut_mode"].value_or(false);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;

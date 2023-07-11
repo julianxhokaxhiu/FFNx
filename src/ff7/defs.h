@@ -110,3 +110,4 @@ int ff7_dsound_createsoundbuffer(const WAVEFORMATEX *waveFormatEx);
 
 // minigames
 void ff7_condor_fix_unit_texture_load(uint32_t unk, struc_3 *struc_3);
+void __fastcall ff7_snowboard_parse_model_vertices(snowboard_this* _this, void* edx, const matrix *matrix, int current_obj, int obj_type, int unk);

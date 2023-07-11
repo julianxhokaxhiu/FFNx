@@ -190,8 +190,8 @@ struct
 	char *image_data;
 	uint32_t size;
 	struct ff8_texture_set *texture_set;
-} reload_buffer[TEXRELOAD_BUFFER_SIZE];
-uint32_t reload_buffer_index;
+} reload_buffer[TEXRELOAD_BUFFER_SIZE] = {};
+uint32_t reload_buffer_index = 0;
 
 // this function is wedged into the middle of a function designed to reload a Direct3D texture
 // when the image data changes
@@ -208,15 +208,9 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	// unnecessary texture reloads
 	for(i = 0; i < TEXRELOAD_BUFFER_SIZE; i++)
 	{
-		if(reload_buffer[i].texture_set == texture_set)
+		if(reload_buffer[i].texture_set == texture_set && reload_buffer[i].size == size && memcmp(reload_buffer[i].image_data, VREF(tex_header, image_data), size) == 0)
 		{
-			if(reload_buffer[i].size == size)
-			{
-				if(!memcmp(reload_buffer[i].image_data, VREF(tex_header, image_data), size))
-				{
-					return;
-				}
-			}
+			return;
 		}
 	}
 
@@ -224,8 +218,13 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	common_load_texture((struct texture_set *)texture_set, texture_set->tex_header, texture_set->texture_format);
 
 	reload_buffer[reload_buffer_index].texture_set = texture_set;
-	driver_free(reload_buffer[reload_buffer_index].image_data);
-	reload_buffer[reload_buffer_index].image_data = (char*)driver_malloc(size);
+	if (reload_buffer[reload_buffer_index].image_data != nullptr && reload_buffer[reload_buffer_index].size != size) {
+		driver_free(reload_buffer[reload_buffer_index].image_data);
+		reload_buffer[reload_buffer_index].image_data = nullptr;
+	}
+	if (reload_buffer[reload_buffer_index].image_data == nullptr) {
+		reload_buffer[reload_buffer_index].image_data = (char*)driver_malloc(size);
+	}
 	memcpy(reload_buffer[reload_buffer_index].image_data, VREF(tex_header, image_data), size);
 	reload_buffer[reload_buffer_index].size = size;
 	reload_buffer_index = (reload_buffer_index + 1) % TEXRELOAD_BUFFER_SIZE;
@@ -274,11 +273,7 @@ void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 
 int ff8_init_gamepad()
 {
-	if (simulate_OK_button)
-	{
-		return TRUE;
-	}
-	else if (xinput_connected)
+	if (xinput_connected)
 	{
 		if (gamepad.Refresh())
 			return TRUE;
@@ -417,26 +412,24 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgbButtons[12] = joystick.GetState()->rgbButtons[12] & 0x80 ? 0x80 : 0; // PS Button
 	}
 
-	if (simulate_OK_button)
-	{
-		// Flag the button OK as pressed
-		ff8_externals.dinput_gamepad_state->rgbButtons[1] = 0x80;
-
-		// End simulation right here before we press this button by mistake in other windows
-		simulate_OK_button = false;
-	}
-
 	return ff8_externals.dinput_gamepad_state;
 }
 
 int ff8_is_window_active()
 {
-	typedef void voidfn();
-
 	if (gameHwnd == GetActiveWindow())
 	{
-		((voidfn*)ff8_externals.engine_eval_keyboard_gamepad_input)();
-		((voidfn*)ff8_externals.has_keyboard_gamepad_input)();
+		ff8_externals.engine_eval_keyboard_gamepad_input();
+		ff8_externals.has_keyboard_gamepad_input();
+
+		if (simulate_OK_button)
+		{
+			// Flag the button OK as pressed
+			ff8_externals.engine_input_confirmed_buttons[1] = ff8_externals.engine_input_valid_buttons[1] = 0x40;
+
+			// End simulation right here before we press this button by mistake in other windows
+			simulate_OK_button = false;
+		}
 	}
 
 	return 0;
