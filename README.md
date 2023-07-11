@@ -271,6 +271,8 @@ These people are:
   - for general documentation clean-up
 - [LaZar00](https://github.com/LaZar00)
   - for the Snowboard TMD structures
+- [ChthonVII](https://github.com/ChthonVII)
+  - for the mind-blowing amount of research needed to match the colur gamut with how Squaresoft intended things to look on 1997 displays 
 
 I'm sure I forgot many others. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
