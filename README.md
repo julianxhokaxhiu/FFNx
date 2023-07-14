@@ -272,7 +272,7 @@ These people are:
 - [LaZar00](https://github.com/LaZar00)
   - for the Snowboard TMD structures
 - [ChthonVII](https://github.com/ChthonVII)
-  - for the mind-blowing amount of research needed to match the colur gamut with how Squaresoft intended things to look on 1997 displays 
+  - for the R&D needed to match modern display gamuts to the original PSX release 
 
 I'm sure I forgot many others. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
