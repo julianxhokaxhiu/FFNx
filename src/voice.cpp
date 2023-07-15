@@ -944,7 +944,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 	struct game_mode *mode = getmode_cached();
 
 	// Skip voice over on Tutorials
-	if (mode->mode != FF8_MODE_TUTO)
+	if (mode->driver_mode == MODE_FIELD)
 	{
 		int dialog_id = current_opcode_message_status[window_id].message_dialog_id;
 		ff8_win_obj *win = ff8_externals.windows + window_id;
