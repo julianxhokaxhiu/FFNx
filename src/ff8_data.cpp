@@ -238,6 +238,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_mesmode = common_externals.execute_opcode_table[0x106];
 	ff8_externals.opcode_ramesw = common_externals.execute_opcode_table[0x116];
 	ff8_externals.opcode_choicemusic = common_externals.execute_opcode_table[0x135];
+	ff8_externals.opcode_drawpoint = common_externals.execute_opcode_table[0x137];
 	ff8_externals.opcode_musicskip = common_externals.execute_opcode_table[0x144];
 	ff8_externals.opcode_musicvolsync = common_externals.execute_opcode_table[0x149];
 	ff8_externals.opcode_getmusicoffset = common_externals.execute_opcode_table[0x16F];
