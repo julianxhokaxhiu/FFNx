@@ -80,6 +80,18 @@ public:
 		Tim::Bpp _bpp;
 	};
 
+	struct TiledTex {
+		TiledTex();
+		TiledTex(int x, int y, Tim::Bpp bpp, int palX, int palY);
+		inline bool isValid() const {
+			return x >= 0;
+		}
+		int x, y;
+		int palX, palY;
+		Tim::Bpp bpp;
+		bool renderedOnce;
+	};
+
 	enum TextureTypes {
 		NoTexture = 0,
 		ExternalTexture = 1,
@@ -98,6 +110,7 @@ public:
 	uint8_t getMaxScale(const uint8_t *texData) const;
 	void getTextureNames(const uint8_t *texData, std::list<std::string> &names) const;
 	void registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX = 0, int palY = 0);
+	TiledTex getTiledTex(const uint8_t *texData) const;
 
 	void disableDrawTexturesBackground(bool disabled);
 	inline bool drawTexturesBackgroundIsDisabled() const {
@@ -175,14 +188,6 @@ private:
 		std::unordered_multimap<uint16_t, size_t> _tileIdsByPosition;
 		uint8_t _colsCount;
 		int _textureId;
-	};
-	struct TiledTex {
-		TiledTex();
-		TiledTex(int x, int y, Tim::Bpp bpp, int palX, int palY);
-		int x, y;
-		int palX, palY;
-		Tim::Bpp bpp;
-		bool renderedOnce;
 	};
 	struct TextureRedirection : public TextureInfos {
 		TextureRedirection();

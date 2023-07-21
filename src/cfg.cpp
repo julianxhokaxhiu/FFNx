@@ -52,6 +52,7 @@ long external_voice_music_fade_volume;
 bool enable_voice_auto_text;
 bool enable_auto_run;
 bool save_textures;
+bool save_textures_legacy;
 bool trace_all;
 bool trace_renderer;
 bool trace_movies;
@@ -197,6 +198,7 @@ void read_cfg()
 	external_widescreen_path = config["external_widescreen_path"].value_or("");
 	external_time_cycle_path = config["external_time_cycle_path"].value_or("");
 	save_textures = config["save_textures"].value_or(false);
+	save_textures_legacy = config["save_textures_legacy"].value_or(false);
 	trace_all = config["trace_all"].value_or(false);
 	trace_renderer = config["trace_renderer"].value_or(false);
 	trace_movies = config["trace_movies"].value_or(false);
@@ -342,7 +344,7 @@ void read_cfg()
 		hext_patching_path += "/de";
 		break;
 	case VERSION_FF8_12_DE_NV:
-		hext_patching_path += "/de";
+		hext_patching_path += "/de_nv";
 		break;
 	case VERSION_FF8_12_SP:
 		hext_patching_path += "/es";

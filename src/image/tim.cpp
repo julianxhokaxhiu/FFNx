@@ -224,21 +224,34 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 	{
 		if (_tim.pal_data == nullptr || paletteDetectionStrategy == nullptr)
 		{
-			ffnx_error("%s bpp 1 without palette\n", __func__);
+			uint8_t *img_data8 = (uint8_t *)_tim.img_data;
 
-			return false;
-		}
-
-		uint8_t *img_data = _tim.img_data;
-
-		for (int y = 0; y < _tim.img_h; ++y)
-		{
-			for (int x = 0; x < _tim.img_w; ++x)
+			for (int y = 0; y < _tim.img_h; ++y)
 			{
-				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x, y))[*img_data], withAlpha);
+				for (int x = 0; x < _tim.img_w; ++x)
+				{
+					// Grey color
+					*target = ((*img_data8 == 0 && withAlpha ? 0x00 : 0xffu) << 24) |
+						(*img_data8 << 16) | (*img_data8 << 8) | *img_data8;
 
-				++target;
-				++img_data;
+					++target;
+					++img_data8;
+				}
+			}
+		}
+		else
+		{
+			uint8_t *img_data = _tim.img_data;
+
+			for (int y = 0; y < _tim.img_h; ++y)
+			{
+				for (int x = 0; x < _tim.img_w; ++x)
+				{
+					*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x, y))[*img_data], withAlpha);
+
+					++target;
+					++img_data;
+				}
 			}
 		}
 	}
