@@ -143,7 +143,7 @@ enum GamutLUTIndexType{
 	INDEX_LUT_INVERSE_NTSCJ_TO_EBU,
 	INDEX_LUT_SRGB_TO_NTSCJ,
 	INDEX_LUT_SMPTEC_TO_NTSCJ,
-	INDEX_LUT_EBU_TO_NTSCJ    
+	INDEX_LUT_EBU_TO_NTSCJ
 };
 
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
@@ -258,7 +258,7 @@ private:
         std::vector<float> FSHDRFlags;
         std::vector<float> FSTexFlags;
         std::vector<float> FSMovieFlags;
-        
+
 
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
@@ -320,7 +320,7 @@ private:
     bgfx::DynamicIndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;
 
     bgfx::TextureHandle FFNxLogoHandle = BGFX_INVALID_HANDLE;
-    
+
     bgfx::TextureHandle GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleSMPTECtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleEBUtoSRGB = BGFX_INVALID_HANDLE;

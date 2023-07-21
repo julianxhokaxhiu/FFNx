@@ -132,7 +132,7 @@ void main()
                 yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
             }
 #endif
-            
+
             if (isBT601ColorMatrix){
                 yuv.g = yuv.g - (128.0/255.0);
                 yuv.b = yuv.b - (128.0/255.0);
@@ -140,10 +140,10 @@ void main()
                     color.rgb = toRGB_bt601_fullrange(yuv);
                 }
                 else {
-                    yuv.r = saturate(yuv.r - (16.0/255.0));       
+                    yuv.r = saturate(yuv.r - (16.0/255.0));
                     color.rgb = toRGB_bt601_tvrange(yuv);
                 }
-            
+
             }
             else if (isBT709ColorMatrix){
                 yuv.g = yuv.g - (128.0/255.0);
@@ -155,7 +155,7 @@ void main()
                     yuv.r = saturate(yuv.r - (16.0/255.0));
                     color.rgb = toRGB_bt709_tvrange(yuv);
                 }
-            
+
             }
             else if (isBRG24ColorMatrix){
                 color.rgb = yuv;
@@ -181,7 +181,7 @@ void main()
             else {
                 color.rgb = toLinear(color.rgb);
             }
-            
+
             // Convert gamut to BT709/SRGB or NTSC-J, depending on what we're going to do in post.
             // This approach has the unfortunate drawback of resulting in two gamut conversions for some inputs.
             // But it seems to be the only way to avoid breaking stuff that has expectations about the texture colors (like animated field textures).
@@ -212,7 +212,7 @@ void main()
                 }
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
-            
+
             color.a = 1.0;
         }
         else
@@ -400,5 +400,5 @@ void main()
 
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
     gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
-    
+
 }

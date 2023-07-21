@@ -24,7 +24,7 @@
 // Since the relevant functions have been defined since Win7, and we're only using a johnny-come-lately *parameter*,
 // the SDR-white-level-for-HDR autodetection code should fail gracefully with a bad parameter error on older versions of Windows.
 // In theory at least. (Not tested yet.)
-// It does fail gracefully on Wine. 
+// It does fail gracefully on Wine.
 #define WINVER 0x0A00
 #define _WIN32_WINNT 0x0A00
 
@@ -137,7 +137,7 @@ void Renderer::setCommonUniforms()
         NULL
     };
     if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, isIblTextureLoaded %f, NULL)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1], internalState.FSTexFlags[2]);
-    
+
     internalState.FSMovieFlags = {
         (float)internalState.bIsMovieColorMatrix,
         (float)internalState.bIsMovieColorGamut,
@@ -710,8 +710,8 @@ void Renderer::AssignGamutLUT()
 	// So, for now I'm using the LUTs for the first step for both SDR and HDR,
 	// and I'm putting this comment here in case we ever figure out how to tolerate out-of-bounds values
 	//if (internalState.bIsHDR) return;
-	
-	
+
+
 	// NTSCJ mode post-processing
 	if ((backendProgram == RendererProgram::POSTPROCESSING) && (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ)){
 		LoadGamutLUT(INDEX_LUT_NTSCJ_TO_SRGB); // load LUT if not already loaded
@@ -719,7 +719,7 @@ void Renderer::AssignGamutLUT()
 	}
 	// Movies and override flag
 	// Note: Override flag currently does nothing because it's never set to true anywhere
-	// The intent is to eventually have a way to say "I want to display a NTSCJ asset in sRGB mode" or "I want to display a sRGB asset in NTSCJ mode." 
+	// The intent is to eventually have a way to say "I want to display a NTSCJ asset in sRGB mode" or "I want to display a sRGB asset in NTSCJ mode."
 	else {
 		if (internalState.bIsOverallColorGamut == COLORGAMUT_SRGB){
 			if ((internalState.bIsMovieColorGamut == COLORGAMUT_NTSCJ) || internalState.bIsOverrideGamut){
@@ -769,8 +769,8 @@ void Renderer::AssignGamutLUT()
 				}
 			}
 		}
-		
-	}    
+
+	}
 	return;
 }
 
@@ -813,7 +813,7 @@ void Renderer::init()
             // See also: https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-displayconfig_sdr_white_level
             // Autodetection may fail on some monitor models.
             // Autodetection WILL fail on Windows older than Win10 Fall Creators Update (Version 1709) and WILL fail on WINE (at least as of WINE 7.22)
-            
+
             // First, enumerate the DISPLAYCONFIG_PATH_INFO for all monitors.
             // Code borrowed from Microsoft's example: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-querydisplayconfig#examples
             std::vector<DISPLAYCONFIG_PATH_INFO> paths;
@@ -826,39 +826,39 @@ void Renderer::init()
                 // Determine how many path and mode structures to allocate
                 UINT32 pathCount, modeCount;
                 monresult = GetDisplayConfigBufferSizes(flags, &pathCount, &modeCount);
-                
+
                 if (monresult != ERROR_SUCCESS){
                     if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Cannot enumerate monitors. GetDisplayConfigBufferSizes() failed with error code %i.\n", monresult);
                     break;
                 }
                 gotbuffersizes = true;
-                
+
                 // Allocate the path and mode arrays
                 paths.resize(pathCount);
                 modes.resize(modeCount);
-                
+
                 // Get all active paths and their modes
                 monresult = QueryDisplayConfig(flags, &pathCount, paths.data(), &modeCount, modes.data(), nullptr);
-                
+
                 // The function may have returned fewer paths/modes than estimated
                 paths.resize(pathCount);
                 modes.resize(modeCount);
-                
+
                 // It's possible that between the call to GetDisplayConfigBufferSizes and QueryDisplayConfig
                 // that the display state changed, so loop on the case of ERROR_INSUFFICIENT_BUFFER.
             } while (monresult == ERROR_INSUFFICIENT_BUFFER);
-            
+
             if (monresult != ERROR_SUCCESS){
                 if (gotbuffersizes){
                     if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR failed. Cannot enumerate monitors. QueryDisplayConfig() failed with error code %i.\n", monresult);
                 }
             }
-            else { 
+            else {
                 // loop over monitors and take the SDR white level of the first HDR monitor we find.
                 int pathidx = -1;
                 for (auto& path : paths) {
                     pathidx++;
-                                    
+
                     // Check if this monitor is HDR capable and HDR enabled
                     // Borrowed from these two examples:
                     // https://forum.doom9.org/showthread.php?s=33dc0ad84a0997fce56710b3959e0415&p=1897630#post1897630
@@ -877,7 +877,7 @@ void Renderer::init()
                         if (trace_all || trace_renderer) ffnx_trace("Renderer::init(): Autodetection of SDR white level for HDR determined that monitor #%i is not an HDR monitor or HDR is not enabled. Checking next monitor (if any)...\n", pathidx);
                         continue;
                     }
-                    
+
                     // If we found an HDR monitor, then query its SDR white level
                     // Code borrowed from Google Chrome: https://chromium.googlesource.com/chromium/src/+/c71f15ab1ace78c7efeeeda9f8552b4af9db2877/ui/display/win/screen_win.cc#112
                     DISPLAYCONFIG_SDR_WHITE_LEVEL white_level = {};
@@ -900,9 +900,9 @@ void Renderer::init()
                     ffnx_info("SDR white level for HDR successfully autodetected as %i nits.\n", (int)hdr_max_nits);
                     usedefaultnits = false;
                     break;
-                
+
                 } // end for (auto& path : paths)
-                
+
             } // end else (monresult == ERROR_SUCCESS)
             if (usedefaultnits){
                 ffnx_info("Autodetection of SDR white level for HDR failed. Assuming default value of 200 nits.\n");
@@ -1086,7 +1086,7 @@ void Renderer::prepareEnvBrdf()
 
 void Renderer::prepareGamutLUTs()
 {
-	
+
 	// flush everything (they should have all initialized to BGFX_INVALID_HANDLE, but let's be careful)
 	if (bgfx::isValid(GLUTHandleNTSCJtoSRGB))
 		bgfx::destroy(GLUTHandleNTSCJtoSRGB);
@@ -1106,7 +1106,7 @@ void Renderer::prepareGamutLUTs()
 		bgfx::destroy(GLUTHandleSMPTECtoNTSCJ);
 	if (bgfx::isValid(GLUTHandleEBUtoNTSCJ))
 		bgfx::destroy(GLUTHandleEBUtoNTSCJ);
-	
+
 	// load only the LUTs we are likely to need
 	// consult the global setting so we don't get tripped up by renderer state changing to accomodate the FFNx logo
 	if (enable_ntscj_gamut_mode){
@@ -1126,28 +1126,28 @@ void Renderer::prepareGamutLUTs()
 		}
 	}
 	// Most FF7 movies will need NTSC-J to sRGB conversion for sRGB mode
-	// (FF8 Steam edition movies were already converted) 
+	// (FF8 Steam edition movies were already converted)
 	else if(!ff8){
 		LoadGamutLUT(INDEX_LUT_NTSCJ_TO_SRGB);
 	}
-	
+
 	// Any other LUTs we end up needing will be lazy loaded by AssignGamutLUT()
-	
+
 	return;
 }
 
 void Renderer::LoadGamutLUT(GamutLUTIndexType whichLUT)
 {
-	
+
 	static char fullpath[MAX_PATH];
 	uint32_t width = 0;
 	uint32_t height = 0;
 	uint32_t mipCount = 0;
-	
+
 	// Note: It's important that the final parameter to createTextureHandle() -- isSrgb -- is false.
 	// Otherwise the sRGB gamma function will be applied to convert sRGB to linear RGB.
 	// But we don't want that because these LUTs are already in linear RGB.
-	
+
 	switch (whichLUT){
 		case INDEX_LUT_NTSCJ_TO_SRGB:
 			if (!bgfx::isValid(GLUTHandleNTSCJtoSRGB)){
@@ -1356,7 +1356,7 @@ void Renderer::draw(bool uniformsAlreadyAttached)
 
     // set up a gamut LUT if we need one
     AssignGamutLUT();
-    
+
     // Bind textures in pipeline
     bindTextures();
 
