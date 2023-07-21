@@ -951,17 +951,20 @@ void common_cleanup(struct game_obj *game_object)
 	{
 		metadataPatcher.apply();
 
-		// Write ff7sound.cfg
-		char ff7soundPath[260]{0};
-		get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
-		PathAppendA(ff7soundPath, "ff7sound.cfg");
-		FILE *ff7sound = fopen(ff7soundPath, "wb");
-
-		if (ff7sound)
+		if (!ff8)
 		{
-			fwrite(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
-			fwrite(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
-			fclose(ff7sound);
+			// Write ff7sound.cfg
+			char ff7soundPath[260]{0};
+			get_userdata_path(ff7soundPath, sizeof(ff7soundPath), false);
+			PathAppendA(ff7soundPath, "ff7sound.cfg");
+			FILE *ff7sound = fopen(ff7soundPath, "wb");
+
+			if (ff7sound)
+			{
+				fwrite(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
+				fwrite(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
+				fclose(ff7sound);
+			}
 		}
 	}
 
