@@ -834,8 +834,6 @@ void ff7_display_battle_action_text()
 
 char *ff8_field_get_dialog_string(char *msg, int dialog_id)
 {
-	if (trace_all || trace_voice) ffnx_trace("%s: dialog_id=%d\n", __func__, dialog_id);
-
 	ff8_get_field_dialog_string_id = dialog_id;
 
 	return msg + *(uint32_t *)(msg + 4 * dialog_id);
