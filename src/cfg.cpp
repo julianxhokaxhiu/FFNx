@@ -133,6 +133,11 @@ bool ff8_fix_uv_coords_precision;
 std::string app_path;
 std::string data_drive;
 bool enable_ntscj_gamut_mode;
+long external_music_volume;
+long external_sfx_volume;
+long external_voice_volume;
+long external_ambient_volume;
+long ffmpeg_video_volume;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -280,6 +285,11 @@ void read_cfg()
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");
 	enable_ntscj_gamut_mode = config["enable_ntscj_gamut_mode"].value_or(false);
+	external_music_volume = config["external_music_volume"].value_or(-1);
+	external_sfx_volume = config["external_sfx_volume"].value_or(-1);
+	external_voice_volume = config["external_voice_volume"].value_or(-1);
+	external_ambient_volume = config["external_ambient_volume"].value_or(-1);
+	ffmpeg_video_volume = config["ffmpeg_video_volume"].value_or(-1);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
@@ -462,4 +472,11 @@ void read_cfg()
 
 	// WIDESCREEN
 	if (ff8 && aspect_ratio > AR_STRETCH) aspect_ratio = AR_ORIGINAL;
+
+	// VOLUME
+	if (external_music_volume > 100) external_music_volume = 100;
+	if (external_sfx_volume > 100) external_sfx_volume = 100;
+	if (external_voice_volume > 100) external_voice_volume = 100;
+	if (external_ambient_volume > 100) external_ambient_volume = 100;
+	if (ffmpeg_video_volume > 100) ffmpeg_video_volume = 100;
 }

@@ -71,7 +71,7 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 
 	bool has_ext_audio_file = nxAudioEngine.canPlayMovieAudio(movie_music_path);
 	ffmpeg_prepare_movie(newFmvName, !has_ext_audio_file);
-	if (!has_ext_audio_file) nxAudioEngine.setStreamMasterVolume(ff7_movie_volume / 100.0f);
+	if (!has_ext_audio_file) nxAudioEngine.setStreamMasterVolume(ffmpeg_video_volume / 100.0f);
 
 	ff7_externals.movie_object->global_movie_flag = 1;
 
@@ -138,7 +138,7 @@ uint32_t ff7_start_movie()
 	ff7_externals.movie_object->is_playing = 1;
 
 	nxAudioEngine.pauseAmbient();
-	nxAudioEngine.setMovieMasterVolume(ff7_movie_volume / 100.0f);
+	nxAudioEngine.setMovieMasterVolume(ffmpeg_video_volume / 100.0f);
 	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
 	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 3.0f);
 

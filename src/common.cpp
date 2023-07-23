@@ -109,14 +109,6 @@ uint32_t estore_edition = false;
 // global FF7 flag, check if is japanese edition ( detected as US )
 uint32_t ff7_japanese_edition = false;
 
-// global FF7 flag, they usually contain the values normally being written in registry
-DWORD ff7_sfx_volume = 0x64;
-DWORD ff7_music_volume = 0x64;
-// SPECIAL: Added by FFNx, do not exist on vanilla
-DWORD ff7_ambient_volume = 0x64;
-DWORD ff7_movie_volume = 0x64;
-DWORD ff7_voice_volume = 0x64;
-
 // window dimensions requested by the game, normally 640x480
 uint32_t game_width;
 uint32_t game_height;
@@ -928,13 +920,10 @@ uint32_t common_init(struct game_obj *game_object)
 	common_externals.make_pixelformat(32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000, texture_format);
 	common_externals.add_texture_format(texture_format, game_object);
 
-	if (!ff8)
-	{
-		nxAudioEngine.setMusicMasterVolume(ff7_music_volume / 100.0f);
-		nxAudioEngine.setSFXMasterVolume(ff7_sfx_volume / 100.0f);
-		nxAudioEngine.setAmbientMasterVolume(ff7_ambient_volume / 100.0f);
-		nxAudioEngine.setVoiceMasterVolume(ff7_voice_volume / 100.0f);
-	}
+	nxAudioEngine.setMusicMasterVolume(external_music_volume / 100.0f);
+	nxAudioEngine.setSFXMasterVolume(external_sfx_volume / 100.0f);
+	nxAudioEngine.setAmbientMasterVolume(external_ambient_volume / 100.0f);
+	nxAudioEngine.setVoiceMasterVolume(external_voice_volume / 100.0f);
 
 	proxyWndProc = true;
 
@@ -961,8 +950,8 @@ void common_cleanup(struct game_obj *game_object)
 
 			if (ff7sound)
 			{
-				fwrite(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
-				fwrite(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
+				fwrite(&external_sfx_volume, sizeof(DWORD), 1, ff7sound);
+				fwrite(&external_music_volume, sizeof(DWORD), 1, ff7sound);
 				fclose(ff7sound);
 			}
 		}
@@ -2872,8 +2861,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 					if (ff7sound)
 					{
-						fread(&ff7_sfx_volume, sizeof(DWORD), 1, ff7sound);
-						fread(&ff7_music_volume, sizeof(DWORD), 1, ff7sound);
+						if (external_sfx_volume > -1) fread(&external_sfx_volume, sizeof(DWORD), 1, ff7sound);
+						if (external_sfx_volume > -1) fread(&external_music_volume, sizeof(DWORD), 1, ff7sound);
 						fclose(ff7sound);
 					}
 				}
@@ -2883,6 +2872,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 					ffnx_trace("Detected eStore edition.\n");
 					estore_edition = true;
 				}
+
+				if (external_voice_volume < 0) external_voice_volume = 100;
+				if (external_ambient_volume < 0) external_ambient_volume = 100;
+				if (ffmpeg_video_volume < 0) ffmpeg_video_volume = 100;
 
 				use_external_music = true;
 				if (external_music_path.empty()) external_music_path = "data/music_ogg";
@@ -2894,16 +2887,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				DWORD regsize = sizeof(DWORD);
 
 				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\MIDI)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey) == ERROR_SUCCESS)
-					RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&ff7_music_volume, &regsize);
+					if (external_music_volume < 0) RegQueryValueEx(ff7_regkey, "MusicVolume", NULL, NULL, (LPBYTE)&external_music_volume, &regsize);
 
 				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\Sound)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey) == ERROR_SUCCESS)
-					RegQueryValueEx(ff7_regkey, "SFXVolume", NULL, NULL, (LPBYTE)&ff7_sfx_volume, &regsize);
+					if (external_sfx_volume < 0) RegQueryValueEx(ff7_regkey, "SFXVolume", NULL, NULL, (LPBYTE)&external_sfx_volume, &regsize);
 
 				if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, R"(Software\Square Soft, Inc.\Final Fantasy VII\1.00\FFNx)", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &ff7_regkey) == ERROR_SUCCESS)
 				{
-					RegQueryValueEx(ff7_regkey, "AmbientVolume", NULL, NULL, (LPBYTE)&ff7_ambient_volume, &regsize);
-					RegQueryValueEx(ff7_regkey, "MovieVolume", NULL, NULL, (LPBYTE)&ff7_movie_volume, &regsize);
-					RegQueryValueEx(ff7_regkey, "VoiceVolume", NULL, NULL, (LPBYTE)&ff7_voice_volume, &regsize);
+					if (external_ambient_volume < 0) RegQueryValueEx(ff7_regkey, "AmbientVolume", NULL, NULL, (LPBYTE)&external_ambient_volume, &regsize);
+					if (ffmpeg_video_volume < 0) RegQueryValueEx(ff7_regkey, "MovieVolume", NULL, NULL, (LPBYTE)&ffmpeg_video_volume, &regsize);
+					if (external_voice_volume < 0) RegQueryValueEx(ff7_regkey, "VoiceVolume", NULL, NULL, (LPBYTE)&external_voice_volume, &regsize);
 				}
 
 				if (external_music_path.empty()) external_music_path = "music/vgmstream";
@@ -3001,6 +2994,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 				patch_code_dword(mciSendCommandA, (DWORD)dotemuMciSendCommandA);
 			}
+
+			if (external_music_volume < 0) external_music_volume = 100;
+			if (external_sfx_volume < 0) external_sfx_volume = 100;
+			if (external_voice_volume < 0) external_voice_volume = 100;
+			if (external_ambient_volume < 0) external_ambient_volume = 100;
+			if (ffmpeg_video_volume < 0) ffmpeg_video_volume = 100;
 		}
 
 		// Apply hext patching
@@ -3052,14 +3051,14 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegSetValueExA(HKEY hKey, LPCSTR l
 			if (lpData[0] > 0x64)
 				lpData[0] = 0x64;
 
-			ff7_sfx_volume = lpData[0];
+			external_sfx_volume = lpData[0];
 		}
 		else if (strcmp(lpValueName, "MusicVolume") == 0)
 		{
 			if (lpData[0] > 0x64)
 				lpData[0] = 0x64;
 
-			ff7_music_volume = lpData[0];
+			external_music_volume = lpData[0];
 		}
 	}
 
@@ -3118,11 +3117,11 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 	}
 	else if (strcmp(lpValueName, "SFXVolume") == 0)
 	{
-		lpData[0] = ff7_sfx_volume;
+		lpData[0] = external_sfx_volume;
 	}
 	else if (strcmp(lpValueName, "MusicVolume") == 0)
 	{
-		lpData[0] = ff7_music_volume;
+		lpData[0] = external_music_volume;
 	}
 	// Graphics
 	else if (strcmp(lpValueName, "Driver") == 0)

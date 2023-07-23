@@ -146,5 +146,10 @@ extern bool ff8_fix_uv_coords_precision;
 extern std::string app_path;
 extern std::string data_drive;
 extern bool enable_ntscj_gamut_mode;
+extern long external_music_volume;
+extern long external_sfx_volume;
+extern long external_voice_volume;
+extern long external_ambient_volume;
+extern long ffmpeg_video_volume;
 
 void read_cfg();

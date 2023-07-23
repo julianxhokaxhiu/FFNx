@@ -158,6 +158,16 @@ external_audio_sample_rate = 44100
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 use_external_sfx = false
 
+#[EXTERNAL SFX VOLUME]
+# This setting will allow you to configure the volume of the SFX layer.
+# Possible values: 0..100
+# If -1, the engine will try to detect the volume by other meanings:
+# - FF7 1998: It will attempt to use the original game registry paths
+# - FF7 Steam: It will attempt to read it from the ff7sound.cfg file
+# - FF8 2000: It will be set to 100% by default
+# - FF8 Steam: It will be set to 100% by default
+external_sfx_volume = -1
+
 #[EXTERNAL SFX PATH]
 # Path of the external sound files
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,6 +191,16 @@ external_sfx_always_centered = false
 # If you leave out the default configuration FFNx will autodetect your environment and will set it to the best available option.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 use_external_music = false
+
+#[EXTERNAL MUSIC VOLUME]
+# This setting will allow you to configure the volume of the Music layer.
+# Possible values: 0..100
+# If -1, the engine will try to detect the volume by other meanings:
+# - FF7 1998: It will attempt to use the original game registry paths
+# - FF7 Steam: It will attempt to read it from the ff7sound.cfg file
+# - FF8 2000: It will be set to 100% by default
+# - FF8 Steam: It will be set to 100% by default
+external_music_volume = -1
 
 #[EXTERNAL MUSIC RESUME]
 # This flag will enable the support for music resume on known areas of the game ( for eg. World-Map ).
@@ -234,6 +254,16 @@ external_voice_path = "voice"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_voice_ext = "ogg"
 
+#[EXTERNAL VOICE VOLUME]
+# This setting will allow you to configure the volume of the Voice layer.
+# Possible values: 0..100
+# If -1, the engine will try to detect the volume by other meanings:
+# - FF7 1998: It will attempt to use the FFNx registry paths ( also used by 7th Heaven )
+# - FF7 Steam: It will be set to 100% by default
+# - FF8 2000: It will be set to 100% by default
+# - FF8 Steam: It will be set to 100% by default
+external_voice_volume = -1
+
 #[ENABLE VOICE MUSIC FADE]
 # This flag will enable the music volume fade out and fade in, when a voice acting is being played back.
 # Please note this flag will take effect ONLY when "use_external_music" is enabled.
@@ -264,6 +294,16 @@ external_ambient_path = "ambient"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_ambient_ext = "ogg"
 
+#[EXTERNAL AMBIENT VOLUME]
+# This setting will allow you to configure the volume of the Ambient layer.
+# Possible values: 0..100
+# If -1, the engine will try to detect the volume by other meanings:
+# - FF7 1998: It will attempt to use the FFNx registry paths ( also used by 7th Heaven )
+# - FF7 Steam: It will be set to 100% by default
+# - FF8 2000: It will be set to 100% by default
+# - FF8 Steam: It will be set to 100% by default
+external_ambient_volume = -1
+
 ###########################
 # Video Player Options
 ###########################
@@ -277,6 +317,16 @@ external_ambient_ext = "ogg"
 # It is suggested to keep the default behavior unless you really know what are you doing.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_ffmpeg_videos = -1
+
+#[FFMPEG VIDEO VOLUME]
+# This setting will allow you to configure the volume of the FFMpeg Video layer.
+# Possible values: 0..100
+# If -1, the engine will try to detect the volume by other meanings:
+# - FF7 1998: It will attempt to use the FFNx registry paths ( also used by 7th Heaven )
+# - FF7 Steam: It will be set to 100% by default
+# - FF8 2000: NOT SUPPORTED!
+# - FF8 Steam: It will be set to 100% by default
+ffmpeg_video_volume = -1
 
 #[FFMPEG VIDEO FILE EXTENSION]
 # The type of file that the ffmpeg layer will search for. Default is avi.
