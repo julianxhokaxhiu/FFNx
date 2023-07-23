@@ -843,12 +843,16 @@ char *ff8_field_get_dialog_string(char *msg, int dialog_id)
 
 int ff8_opcode_voice_drawpoint(int unk)
 {
-	int ret = ff8_opcode_old_drawpoint(unk);
+	byte idx = *(byte *)(unk + 388);
 
+	int magic_id = *(DWORD *)(unk + 4 * idx--);
 	static int window_id = 6;
 	static int default_option = 2;
 	ff8_win_obj *win = ff8_externals.windows + window_id;
 
+	int ret = ff8_opcode_old_drawpoint(unk);
+
+	current_opcode_message_status[window_id].message_page_count = magic_id;
 	current_opcode_message_status[window_id].message_dialog_id = ff8_get_field_dialog_string_id;
 	current_opcode_message_status[window_id].message_kind = message_kind::DRAWPOINT;
 	current_opcode_message_status[window_id].field_name = "_drawpoint";
@@ -1004,6 +1008,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 		int message_current_opcode = win->state;
 		message_kind message_kind = current_opcode_message_status[window_id].message_kind;
 		std::string field_name = current_opcode_message_status[window_id].field_name;
+		byte message_page_count = current_opcode_message_status[window_id].message_page_count;
 
 		bool _is_dialog_opening = is_dialog_opening(win->open_close_transition);
 		bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
@@ -1023,6 +1028,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
 			current_opcode_message_status[window_id].message_kind = message_kind;
 			current_opcode_message_status[window_id].field_name = field_name;
+			if (message_kind == message_kind::DRAWPOINT) current_opcode_message_status[window_id].message_page_count = message_page_count;
 		}
 		else if (_is_dialog_starting || _is_dialog_paging)
 		{
