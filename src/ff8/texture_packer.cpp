@@ -83,7 +83,7 @@ void TexturePacker::cleanTextures(ModdedTextureId previousTextureId, bool keepMo
 
 void TexturePacker::setVramTextureId(ModdedTextureId textureId, int xBpp2, int y, int wBpp2, int h, bool keepMods)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s: textureId=%d\n", __func__, textureId);
+	if (trace_all || trace_vram) ffnx_trace("%s: textureId=%d xBpp2=%d y=%d wBpp2=%d h=%d keepMods=%d\n", __func__, textureId, xBpp2, y, wBpp2, h, keepMods);
 
 	for (int i = 0; i < h; ++i)
 	{
@@ -97,6 +97,10 @@ void TexturePacker::setVramTextureId(ModdedTextureId textureId, int xBpp2, int y
 
 			if (previousTextureId != INVALID_TEXTURE)
 			{
+				if (keepMods) {
+					continue;
+				}
+
 				cleanTextures(previousTextureId, keepMods);
 			}
 
@@ -458,6 +462,18 @@ void TexturePacker::registerTiledTex(const uint8_t *texData, int x, int y, Tim::
 	_tiledTexs[texData] = TiledTex(x, y, bpp, palX, palY);
 }
 
+TexturePacker::TiledTex TexturePacker::getTiledTex(const uint8_t *texData) const
+{
+	auto it = _tiledTexs.find(texData);
+
+	if (it != _tiledTexs.end())
+	{
+		return it->second;
+	}
+
+	return TiledTex();
+}
+
 void TexturePacker::debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after)
 {
 	uint32_t *target = new uint32_t[w * h];
@@ -781,7 +797,7 @@ uint8_t TexturePacker::TextureBackground::computeScale() const
 }
 
 TexturePacker::TiledTex::TiledTex()
- : x(0), y(0), palX(0), palY(0), bpp(Tim::Bpp4), renderedOnce(false)
+ : x(-1), y(-1), palX(0), palY(0), bpp(Tim::Bpp4), renderedOnce(false)
 {
 }
 

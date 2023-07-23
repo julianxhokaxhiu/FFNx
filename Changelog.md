@@ -22,9 +22,11 @@
 
 - Common: Fix startup hang on launch
 - Common: Fix jp version crash
+- Common: Fix ger version crash on entering worldmap
 - Config: enable worldmap fixes by default
 - Graphics: Add Field texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/542 https://github.com/julianxhokaxhiu/FFNx/pull/545 )
 - Graphics: Add Battle texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/564 )
+- Graphics: Add Worldmap texture replacement for roads and some vehicles ( https://github.com/julianxhokaxhiu/FFNx/pull/584 )
 - Graphics: Fix wrong texture replacements in battle
 - Graphics: Fix bad texture UVs in worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/564 )
 - Graphics: Disable texture filtering for external textures, as sprites can overlap or look bad in FF8

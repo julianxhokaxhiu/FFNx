@@ -377,6 +377,12 @@ show_missing_textures = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 save_textures = false
 
+# Dump internal legacy textures to PNG files in the mod_path
+# FF7: There is currently no legacy format
+# FF8: Field backgrounds will be saved in Tomberry's format, instead of FFNx one
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+save_textures_legacy = false
+
 # This path is where the Hext patching layer will look for txt files.
 # The path will ALWAYS have appended:
 # 1. The game name ( if FF7 it will be "ff7/", if FF8 will be "ff8/")

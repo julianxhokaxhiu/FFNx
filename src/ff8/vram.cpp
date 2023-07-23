@@ -282,20 +282,24 @@ void ff8_upload_vram_triple_triad_2_data(int16_t *pos_and_size, uint8_t *texture
 	ff8_upload_vram(pos_and_size, texture_buffer);
 }
 
+int search_pos_in_toc(const uint32_t *toc, uint32_t searching_value)
+{
+	// Find tim id relative to the start of section 38
+	for (const uint32_t *cur = toc; *cur != 0; ++cur) {
+		if (*cur == searching_value) {
+			return int(cur - toc);
+		}
+	}
+
+	return -1;
+}
+
 uint32_t ff8_wm_section_38_prepare_texture_for_upload(uint8_t *tim_file_data, ff8_tim *tim_infos)
 {
 	uint8_t bpp = tim_file_data[4] & 0x3;
 	uint32_t *wm_section_38_textures_pos = *ff8_externals.worldmap_section38_position;
 	uint32_t searching_value = uint32_t(tim_file_data - (uint8_t *)wm_section_38_textures_pos);
-	int timId = -1;
-
-	// Find tim id relative to the start of section 38
-	for (uint32_t *cur = wm_section_38_textures_pos; *cur != 0; ++cur) {
-		if (*cur == searching_value) {
-			timId = int(cur - wm_section_38_textures_pos);
-			break;
-		}
-	}
+	int timId = search_pos_in_toc(wm_section_38_textures_pos, searching_value);
 
 	snprintf(next_texture_name, MAX_PATH, "world/dat/wmset/section38/texture%d", timId);
 
@@ -313,7 +317,7 @@ uint32_t ff8_wm_section_38_prepare_texture_for_upload(uint8_t *tim_file_data, ff
 		}
 		else
 		{
-			Tim::fromTimData(tim_file_data).save(next_texture_name);
+			Tim::fromTimData(tim_file_data).save(next_texture_name, 0, 0, true);
 		}
 	}
 
@@ -329,6 +333,55 @@ void ff8_upload_vram_wm_section_38_palette(int16_t *pos_and_size, uint8_t *textu
 	ff8_upload_vram(pos_and_size, texture_buffer);
 
 	next_pal_data = nullptr;
+}
+
+Tim ff8_wm_set_texture_name_from_section_position(uint8_t section_number, uint32_t *section_toc, uint8_t *tim_file_data)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: tim_file_data=%p section%d_pointer=%p\n", __func__, tim_file_data, section_number, section_toc);
+
+	uint32_t searching_value = uint32_t(tim_file_data - (uint8_t *)section_toc);
+	int timId = search_pos_in_toc(section_toc, searching_value);
+
+	snprintf(next_texture_name, MAX_PATH, "world/dat/wmset/section%d/texture%d", section_number, timId);
+
+	Tim tim = Tim::fromTimData(tim_file_data);
+
+	next_bpp = tim.bpp();
+
+	return tim;
+}
+
+void ff8_wm_section_39_upload(uint8_t *tim_file_data)
+{
+	Tim tim = ff8_wm_set_texture_name_from_section_position(39, *ff8_externals.worldmap_section39_position, tim_file_data);
+
+	if (save_textures) {
+		tim.save(next_texture_name, 0, 0, true);
+	}
+
+	((void(*)(uint8_t*))ff8_externals.worldmap_sub_541970_upload_tim)(tim_file_data);
+}
+
+void ff8_wm_section_40_upload(uint8_t *tim_file_data)
+{
+	Tim tim = ff8_wm_set_texture_name_from_section_position(40, *ff8_externals.worldmap_section40_position, tim_file_data);
+
+	if (save_textures) {
+		tim.saveMultiPaletteGrid(next_texture_name, 8, 4, 0, 4, true);
+	}
+
+	((void(*)(uint8_t*))ff8_externals.worldmap_sub_541970_upload_tim)(tim_file_data);
+}
+
+void ff8_wm_section_42_upload(uint8_t *tim_file_data)
+{
+	Tim tim = ff8_wm_set_texture_name_from_section_position(42, *ff8_externals.worldmap_section42_position, tim_file_data);
+
+	if (save_textures) {
+		tim.save(next_texture_name, 0, 0, true);
+	}
+
+	((void(*)(uint8_t*))ff8_externals.worldmap_sub_541970_upload_tim)(tim_file_data);
 }
 
 int ff8_wm_open_data(const char *path, int32_t pos, uint32_t size, void *data)
@@ -352,11 +405,6 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 	next_bpp = Tim::Bpp8;
 
 	ff8_upload_vram(pos_and_size, texture_buffer);
-
-	if (! ff8_worldmap_internal_highres_textures)
-	{
-		return;
-	}
 
 	// Worldmap texture fix
 
@@ -396,6 +444,24 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 	TexturePacker::TextureInfos oldTexture(oldX, oldY, tim.imageWidth() / 8, tim.imageHeight() / 2, Tim::Bpp4),
 		newTexture(newX, 256, tim.imageWidth() / 2, tim.imageHeight(), Tim::Bpp(tim.bpp()));
 
+	// Allow to mod via texl textures
+	snprintf(next_texture_name, MAX_PATH, "world/dat/texl/texture%d", next_texl_id);
+
+	if (save_textures)
+	{
+		tim.saveMultiPaletteGrid(next_texture_name, 4, 4, 0, 4, true);
+	}
+
+	texturePacker.setTexture(next_texture_name, oldTexture.x(), oldTexture.y(), oldTexture.w(), oldTexture.h(), oldTexture.bpp(), false);
+
+	*next_texture_name = '\0';
+
+	if (! ff8_worldmap_internal_highres_textures)
+	{
+		return;
+	}
+
+	// Redirect internal texl textures
 	uint32_t image_data_size = newTexture.pixelW() * newTexture.h() * 4;
 	uint32_t *image = (uint32_t*)driver_malloc(image_data_size);
 
@@ -454,7 +520,11 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 
 	snprintf(tex_filename, MAX_PATH, "field/mapdata/%s/%s", get_current_field_name(), get_current_field_name());
 
-	if (save_textures) {
+	if (save_textures_legacy) {
+		ff8_background_save_textures_legacy(tiles, mim_texture_buffer, tex_filename);
+
+		return ret;
+	} else if (save_textures) {
 		ff8_background_save_textures(tiles, mim_texture_buffer, tex_filename);
 
 		return ret;
@@ -649,6 +719,9 @@ void vram_init()
 	// worldmap
 	replace_call(ff8_externals.worldmap_sub_53F310_call_2A9, ff8_wm_section_38_prepare_texture_for_upload);
 	replace_call(ff8_externals.worldmap_sub_53F310_call_30D, ff8_upload_vram_wm_section_38_palette);
+	replace_call(ff8_externals.worldmap_sub_53F310_call_330, ff8_wm_section_39_upload); // Rails/Roads
+	replace_call(ff8_externals.worldmap_sub_53F310_call_366, ff8_wm_section_40_upload);
+	replace_call(ff8_externals.worldmap_sub_548020 + 0x47, ff8_wm_section_42_upload); // Train/vehicles
 	// wm texl project
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call1, ff8_wm_texl_palette_upload_vram);
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call2, ff8_wm_texl_palette_upload_vram);
