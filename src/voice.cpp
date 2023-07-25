@@ -132,7 +132,7 @@ void begin_voice(byte window_id = 0)
 			if (new_master_volume < nxAudioEngine.getMusicMasterVolume())
 				nxAudioEngine.setMusicMasterVolume(new_master_volume, 1);
 		}
-		else
+		else if (!ff8)
 		{
 			if (external_voice_music_fade_volume < *common_externals.master_midi_volume)
 			{
@@ -260,7 +260,7 @@ void end_voice(byte window_id = 0, uint32_t time = 0)
 	{
 		if (use_external_music)
 			nxAudioEngine.restoreMusicMasterVolume(time > 0 ? time : 1);
-		else
+		else if (!ff8)
 			set_master_music_volume(previous_master_music_volume);
 	}
 }
