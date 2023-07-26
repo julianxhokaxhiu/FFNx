@@ -85,6 +85,7 @@ int (*opcode_old_ask)(int);
 int (*opcode_old_wmode)();
 int (*opcode_wm_old_message)(uint8_t,uint8_t);
 int (*opcode_wm_old_ask)(uint8_t,uint8_t,uint8_t,uint8_t,WORD*);
+void (*ff7_set_master_music_volume)(uint32_t);
 
 // FF8
 int (*ff8_opcode_old_mes)(int);
@@ -103,7 +104,6 @@ byte opcode_ask_current_option = UCHAR_MAX;
 std::map<int,bool> simulate_OK_disabled;
 
 DWORD previous_master_music_volume = 0x64; // Assume maximum by default
-void (*set_master_music_volume)(uint32_t);
 float voice_volume = -1.0f;
 
 std::array<battle_text_aux_data, 64> other_battle_display_text_queue;
@@ -132,12 +132,16 @@ void begin_voice(byte window_id = 0)
 			if (new_master_volume < nxAudioEngine.getMusicMasterVolume())
 				nxAudioEngine.setMusicMasterVolume(new_master_volume, 1);
 		}
-		else if (!ff8)
+		else
 		{
 			if (external_voice_music_fade_volume < *common_externals.master_midi_volume)
 			{
 				previous_master_music_volume = *common_externals.master_midi_volume;
-				set_master_music_volume(external_voice_music_fade_volume);
+
+				if (ff8)
+					ff8_externals.dmusicperf_set_volume_sub_46C6F0(floor(127 * (external_voice_music_fade_volume / 100.0f)), 0);
+				else
+					ff7_set_master_music_volume(external_voice_music_fade_volume);
 			}
 		}
 	}
@@ -260,8 +264,10 @@ void end_voice(byte window_id = 0, uint32_t time = 0)
 	{
 		if (use_external_music)
 			nxAudioEngine.restoreMusicMasterVolume(time > 0 ? time : 1);
-		else if (!ff8)
-			set_master_music_volume(previous_master_music_volume);
+		else if (ff8)
+			ff8_externals.dmusicperf_set_volume_sub_46C6F0(previous_master_music_volume, 0);
+		else
+			ff7_set_master_music_volume(previous_master_music_volume);
 	}
 }
 
@@ -1075,7 +1081,7 @@ void voice_init()
 
 	if (!ff8)
 	{
-		set_master_music_volume = (void (*)(uint32_t))common_externals.set_master_midi_volume;
+		ff7_set_master_music_volume = (void (*)(uint32_t))common_externals.set_master_midi_volume;
 
 		opcode_old_message = (int (*)())ff7_externals.opcode_message;
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x40], (DWORD)&opcode_voice_message);

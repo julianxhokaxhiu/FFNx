@@ -1137,6 +1137,7 @@ struct ff8_externals
 	uint32_t sub_46B800;
 	uint32_t stop_music;
 	uint32_t set_midi_volume;
+	BOOL (*dmusicperf_set_volume_sub_46C6F0)(uint32_t, int32_t);
 	uint32_t sub_46C050;
 	uint32_t sub_501B60;
 	uint32_t pause_music_and_sfx;
