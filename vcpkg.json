@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.15.0",
-  "builtin-baseline": "f6a5d4e8eb7476b8d7fc12a56dff300c1c986131",
+  "builtin-baseline": "16eeb024de901eb84cde966f656027beaad8b450",
   "dependencies": [
     "bgfx",
     {
@@ -135,7 +135,7 @@
     },
     {
       "name": "cmakerc",
-      "version": "2022-09-08",
+      "version": "2023-07-24",
       "port-version": 0
     }
   ]
