@@ -102,7 +102,45 @@ namespace ff7::field
         int frame_multiplier = get_frame_multiplier();
         field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
 
-        if(is_fps_running_more_than_original())
+        
+        if(is_fps_running_more_than_original() && *ff7_externals.field_id == 748)
+        {
+            // Fix softlock related to this discussion https://github.com/julianxhokaxhiu/FFNx/discussions/569. 
+            // The issue is due to the fact that when Cloud climb up, there is a mini auto movement which triggers a line making Cloud jump below.
+            // This script that makes Cloud jump below does not end well, which makes the next script overlapping with this.
+            // If the next script is to climb back up, there is a sort of race condition where the player movability is activated.
+            // Then if the player taps the DOWN button, it will go into a softlock.
+            // 
+            // This logic is very fragile (might cause other softlock), so, the solution is to write another logic only for this map
+            int interpolationStep = external_model_data[model_id].moveFrameIndex + 1;
+            if(external_model_data[model_id].moveFrameIndex == 0)
+            {
+                external_model_data[model_id].initialPosition = field_event_data_array[model_id].model_pos;
+                ret = ff7_externals.field_update_single_model_position(model_id);
+                external_model_data[model_id].updateMovementReturnValue = ret;
+                external_model_data[model_id].finalPosition = field_event_data_array[model_id].model_pos;
+                external_model_data[model_id].prevCollisionRadius = field_event_data_array[model_id].collision_radius;
+                field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+                field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+                field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
+                field_event_data_array[model_id].collision_radius = 0;
+            }
+            else
+            {
+                ret = external_model_data[model_id].updateMovementReturnValue;
+                field_event_data_array[model_id].model_pos.x = external_model_data[model_id].initialPosition.x + ((external_model_data[model_id].finalPosition.x - external_model_data[model_id].initialPosition.x) * interpolationStep) / frame_multiplier;
+                field_event_data_array[model_id].model_pos.y = external_model_data[model_id].initialPosition.y + ((external_model_data[model_id].finalPosition.y - external_model_data[model_id].initialPosition.y) * interpolationStep) / frame_multiplier;
+                field_event_data_array[model_id].model_pos.z = external_model_data[model_id].initialPosition.z + ((external_model_data[model_id].finalPosition.z - external_model_data[model_id].initialPosition.z) * interpolationStep) / frame_multiplier;
+            }
+
+            if((external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier == 0)
+            {
+                field_event_data_array[model_id].collision_radius = external_model_data[model_id].prevCollisionRadius;
+            }
+
+            external_model_data[model_id].moveFrameIndex = (external_model_data[model_id].moveFrameIndex + 1) % frame_multiplier;
+        }
+        else if(is_fps_running_more_than_original())
         {
             int interpolationStep = external_model_data[model_id].moveFrameIndex + 1;
             if(external_model_data[model_id].moveFrameIndex == 0)

@@ -36,6 +36,7 @@ namespace ff7::field
         vector3<int> finalPosition;
         int wasNotCollidingWithTarget;
         int updateMovementReturnValue;
+        int prevCollisionRadius;
 
         int rotationMoveFrameIndex;
 

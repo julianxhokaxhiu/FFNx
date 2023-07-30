@@ -42,6 +42,7 @@ namespace ff7::field
         for(auto &external_data : external_model_data){
             external_data.moveFrameIndex = 0;
             external_data.rotationMoveFrameIndex = 0;
+            external_data.prevCollisionRadius = 0;
 
             external_data.blinkFrameIndex = BLINKING_FRAMES;
         }
