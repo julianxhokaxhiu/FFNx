@@ -17,6 +17,7 @@
 - Input: Allow Cloud to walk/run based on the left analogue stick position ( https://github.com/julianxhokaxhiu/FFNx/issues/523 + https://github.com/julianxhokaxhiu/FFNx/issues/557 )
 - Lighting: Fix model normal data inheritance
 - Modding: Allow snowboard model swapping ( https://github.com/julianxhokaxhiu/FFNx/issues/440 )
+- 60FPS: Fix softlock on one of the last map (las0_5) ( https://github.com/julianxhokaxhiu/FFNx/discussions/569 )
 
 ## FF8
 
