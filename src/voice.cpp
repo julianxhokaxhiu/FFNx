@@ -97,6 +97,7 @@ int (*ff8_opcode_old_aask)(int);
 int (*ff8_opcode_old_drawpoint)(int);
 
 int ff8_get_field_dialog_string_id = -1;
+std::map<int, int> ff8_field_window_stack_count;
 
 // COMMON
 byte opcode_ask_current_option = UCHAR_MAX;
@@ -1033,6 +1034,15 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			current_opcode_message_status[window_id].message_kind = message_kind;
 			current_opcode_message_status[window_id].field_name = field_name;
 			if (message_kind == message_kind::DRAWPOINT) current_opcode_message_status[window_id].message_page_count = message_page_count;
+			if (message_kind == message_kind::MESSAGE)
+			{
+				if (ff8_field_window_stack_count.find(*common_externals.current_field_id) == ff8_field_window_stack_count.end())
+					ff8_field_window_stack_count[*common_externals.current_field_id] = 0;
+
+				ff8_field_window_stack_count[*common_externals.current_field_id]++;
+
+				if (ff8_field_window_stack_count[*common_externals.current_field_id] > 1) simulate_OK_disabled[window_id] = true;
+			}
 		}
 		else if (_is_dialog_starting || _is_dialog_paging)
 		{
@@ -1052,6 +1062,11 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			current_opcode_message_status[window_id].is_voice_acting = false;
 			opcode_ask_current_option = UCHAR_MAX;
 			ff8_get_field_dialog_string_id = -1;
+			if (message_kind == message_kind::MESSAGE)
+			{
+				if (ff8_field_window_stack_count[*common_externals.current_field_id] > 0)
+					ff8_field_window_stack_count[*common_externals.current_field_id]--;
+			}
 		}
 
 		// Auto close the message if it was voice acted and the audio file has finished playing
