@@ -1085,18 +1085,18 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 
 	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: slot[%d] %s\n", __func__, slot, filename);
 
-	// Stop any previously playing voice
-	if (_engine.isValidVoiceHandle(_currentVoice[slot].handle))
-	{
-		_engine.stop(_currentVoice[slot].handle);
-
-		delete _currentVoice[slot].stream;
-
-		_currentVoice[slot].handle = NXAUDIOENGINE_INVALID_HANDLE;
-	}
-
 	if (exists)
 	{
+		// Stop any previously playing voice
+		if (_engine.isValidVoiceHandle(_currentVoice[slot].handle))
+		{
+			_engine.stop(_currentVoice[slot].handle);
+
+			delete _currentVoice[slot].stream;
+
+			_currentVoice[slot].handle = NXAUDIOENGINE_INVALID_HANDLE;
+		}
+
 		_currentVoice[slot].stream = new SoLoud::VGMStream();
 
 		SoLoud::result res = _currentVoice[slot].stream->load(filename);
