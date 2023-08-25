@@ -7,17 +7,18 @@
 - Common: Allow to skip the FFNx logo on button press
 - Common: Improve texture upload time by reducing allocations for color conversion
 - Common: Add a new NTSC color correction option ( https://github.com/julianxhokaxhiu/FFNx/issues/536 )
+- Common: Introduce a new volume management that can be managed via the `FFNx.toml` file ([Music](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L195-L203), [SFX](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L161-L169), [Voice](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L257-L265), [Ambient](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L297-L305), [Movie](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.toml#L321-L329))
 - GameHacks: Add toggle for Voice auto-text feature ( see https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/shortcuts.md#voice-auto-text )
 - Voice: Fix track master volume inheritance when overriding via config
 
 ## FF7
 
+- 60FPS: Fix softlock on one of the last map (las0_5) ( https://github.com/julianxhokaxhiu/FFNx/discussions/569 )
 - Core: Fix `ERROR: COULD NOT CHANGE TO DIRECTORY` error when starting the Condor minigame
 - Graphics: Fix missing snow footsteps ( https://github.com/julianxhokaxhiu/FFNx/issues/550 )
 - Input: Allow Cloud to walk/run based on the left analogue stick position ( https://github.com/julianxhokaxhiu/FFNx/issues/523 + https://github.com/julianxhokaxhiu/FFNx/issues/557 )
 - Lighting: Fix model normal data inheritance
 - Modding: Allow snowboard model swapping ( https://github.com/julianxhokaxhiu/FFNx/issues/440 )
-- 60FPS: Fix softlock on one of the last map (las0_5) ( https://github.com/julianxhokaxhiu/FFNx/discussions/569 )
 
 ## FF8
 
@@ -31,7 +32,7 @@
 - Graphics: Fix wrong texture replacements in battle
 - Graphics: Fix bad texture UVs in worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/564 )
 - Graphics: Disable texture filtering for external textures, as sprites can overlap or look bad in FF8
-- Voice: Reworked the field layer to behave like FF7
+- Voice: Rework the layer to correctly support field voice acting, multiple dialogs, option dialogs, voice auto-text, music fade-out-in on voice playback, etc.
 
 # 1.15.0
 
