@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.16.0...master
 
+## FF7
+
+- Ambient: Allow ambient effects to playback in fields that use movies as background
+
 # 1.16.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.15.0...1.16.0

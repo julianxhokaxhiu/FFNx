@@ -137,7 +137,7 @@ uint32_t ff7_start_movie()
 
 	ff7_externals.movie_object->is_playing = 1;
 
-	nxAudioEngine.pauseAmbient();
+	if (!is_movie_bgfield) nxAudioEngine.pauseAmbient();
 	nxAudioEngine.setMovieMasterVolume(ffmpeg_video_volume / 100.0f);
 	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
 	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 3.0f);
@@ -158,7 +158,7 @@ uint32_t ff7_stop_movie()
 
 		nxAudioEngine.stopMovieAudio(MovieAudioLayers::MUSIC);
 		nxAudioEngine.stopMovieAudio(MovieAudioLayers::VOICE);
-		nxAudioEngine.resumeAmbient();
+		if (!is_movie_bgfield) nxAudioEngine.resumeAmbient();
 	}
 
 	return true;
