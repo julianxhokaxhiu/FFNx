@@ -5,6 +5,7 @@
 ## FF7
 
 - Ambient: Allow ambient effects to playback in fields that use movies as background
+- Renderer: Fix black color in some field maps (spipe2 for example)
 
 # 1.16.0
 

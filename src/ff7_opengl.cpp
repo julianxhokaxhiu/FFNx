@@ -291,6 +291,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		patch_code_int(ff7_externals.field_init_viewport_values + 0x6E, 240);
 	}
 
+	// ########################
+	// field direct color black
+	// ########################
+	patch_code_short(uint32_t(ff7_externals.field_convert_type2_layers) + 0xE3, 0x8000);
+
 	// #####################
 	// worldmap footsteps
 	// #####################
