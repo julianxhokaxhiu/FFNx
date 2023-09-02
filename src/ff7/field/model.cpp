@@ -308,28 +308,69 @@ namespace ff7::field
 
     int ff7_field_models_eye_to_model(char* model_name)
     {
-        if ( !_strcmpi(model_name, "AAAA") ) // Cloud
+        // Cloud
+        if ( !_strcmpi(model_name, "AAAA") )
             return 0;
-        if ( !_strcmpi(model_name, "ACGD") ) // Barret
-            return 3;
-        if ( !_strcmpi(model_name, "AAGB") ) // Tifa
+
+        // Tifa
+        if ( !_strcmpi(model_name, "AAGB") )
             return 1;
-        if ( !_strcmpi(model_name, "ADDA") ) // Red XIII
-            return 4;
-        if ( !_strcmpi(model_name, "ABDA") ) // Cid
-            return 5;
-        if ( !_strcmpi(model_name, "ABJB") ) // Yuffie
-            return 7;
-        if ( !_strcmpi(model_name, "AEBC") ) // Cait Sith
-            return 8;
-        if ( !_strcmpi(model_name, "AEHD") ) // Vincent
-            return 6;
-        if ( !_strcmpi(model_name, "AUFF") ) // Aerith
+        if ( !_strcmpi(model_name, "AXJA") )
+            return 1;
+        if ( !_strcmpi(model_name, "EQIB") )
+            return 1;
+        if ( !_strcmpi(model_name, "BIDB") )
+            return 1;
+        if ( !_strcmpi(model_name, "AGGB") )
+            return 1;
+
+        // Aerith
+        if ( !_strcmpi(model_name, "AUFF") )
             return 2;
-        if ( !_strcmpi(model_name, "CAHC") ) // Aerith
+        if ( !_strcmpi(model_name, "CAHC") )
             return 2;
-        if ( !_strcmpi(model_name, "FQCB") ) // Young Barret
+        if ( !_strcmpi(model_name, "AZBB") )
+            return 2;
+
+        // Barret
+        if ( !_strcmpi(model_name, "ACGD") )
             return 3;
+        if ( !_strcmpi(model_name, "FQCB") )
+            return 3;
+        if ( !_strcmpi(model_name, "AYFB") )
+            return 3;
+        if ( !_strcmpi(model_name, "AIBA") )
+            return 3;
+
+        // Red XIII
+        if ( !_strcmpi(model_name, "ADDA") )
+            return 4;
+        if ( !_strcmpi(model_name, "HVJF") )
+            return 4;
+
+        // Cid
+        if ( !_strcmpi(model_name, "ABDA") )
+            return 5;
+        if ( !_strcmpi(model_name, "AIHB") )
+            return 5;
+
+        // Vincent
+        if ( !_strcmpi(model_name, "AEHD") )
+            return 6;
+        if ( !_strcmpi(model_name, "BIJD") )
+            return 6;
+
+        // Yuffie
+        if ( !_strcmpi(model_name, "ABJB") )
+            return 7;
+        if ( !_strcmpi(model_name, "FEEA") )
+            return 7;
+        if ( !_strcmpi(model_name, "AHDF") )
+            return 7;
+
+        // Cait Sith
+        if ( !_strcmpi(model_name, "AEBC") )
+            return 8;
 
         return 9; // Defaults to Cloud eye
     }

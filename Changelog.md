@@ -5,7 +5,8 @@
 ## FF7
 
 - Ambient: Allow ambient effects to playback in fields that use movies as background
-- Renderer: Fix black color in some field maps (spipe2 for example)
+- Core: Add additional main models eye-to-model mapping
+- Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
 
 # 1.16.0
 
