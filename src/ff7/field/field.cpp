@@ -52,7 +52,10 @@ namespace ff7::field
         ff7_externals.field_layers[dst]->tex_header = tex_header;
 
         if(ff7_externals.field_layers[src]->type == 1) ff7_externals.make_field_tex_header_pal(tex_header);
-        if(ff7_externals.field_layers[src]->type == 2) ff7_externals.make_field_tex_header(tex_header);
+        if(ff7_externals.field_layers[src]->type == 2) {
+            ff7_externals.make_field_tex_header(tex_header);
+            tex_header->color_key = 3;
+        }
 
         struc_3->tex_header = tex_header;
 

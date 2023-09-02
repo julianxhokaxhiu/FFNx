@@ -1650,7 +1650,7 @@ void convert_image_data(const unsigned char *image_data, uint32_t *converted_ima
 				o += tex_format->bytesperpixel;
 
 				// PSX style mask bit
-				if(color_key && (pixel & ~tex_format->alpha_mask) == 0)
+				if((color_key == 1 && (pixel & ~tex_format->alpha_mask) == 0) || (color_key == 3 && pixel == 0))
 				{
 					converted_image_data[c++] = 0;
 					continue;
