@@ -200,6 +200,8 @@ bool TexturePacker::setTextureRedirection(const TextureInfos &oldTexture, const 
 
 uint8_t TexturePacker::getMaxScale(const uint8_t *texData) const
 {
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s\n", __func__);
+
 	if (_externalTextures.empty() && _backgroundTextures.empty() && _textureRedirections.empty())
 	{
 		return 1;
@@ -220,9 +222,20 @@ uint8_t TexturePacker::getMaxScale(const uint8_t *texData) const
 	{
 		int vramY = tiledTex.y + y;
 
+		if (vramY >= VRAM_HEIGHT)
+		{
+			break;
+		}
+
 		for (int x = 0; x < 64; ++x)
 		{
 			int vramX = tiledTex.x + x;
+
+			if (vramX >= VRAM_WIDTH)
+			{
+				break;
+			}
+
 			ModdedTextureId textureId = _vramTextureIds.at(vramX + vramY * VRAM_WIDTH);
 
 			if (textureId != INVALID_TEXTURE)
@@ -282,9 +295,20 @@ void TexturePacker::getTextureNames(const uint8_t *texData, std::list<std::strin
 	{
 		int vramY = tiledTex.y + y;
 
+		if (vramY >= VRAM_HEIGHT)
+		{
+			break;
+		}
+
 		for (int x = 0; x < 64; ++x)
 		{
 			int vramX = tiledTex.x + x;
+
+			if (vramX >= VRAM_WIDTH)
+			{
+				break;
+			}
+
 			ModdedTextureId textureId = _vramTextureIds.at(vramX + vramY * VRAM_WIDTH);
 
 			if (textureId != INVALID_TEXTURE)
@@ -375,7 +399,8 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(uint32_t *target, const 
 	{
 		int vramY = tiledTex.y + y;
 
-		if (vramY >= VRAM_HEIGHT) {
+		if (vramY >= VRAM_HEIGHT)
+		{
 			break;
 		}
 
@@ -383,7 +408,8 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(uint32_t *target, const 
 		{
 			int vramX = tiledTex.x + x;
 
-			if (vramX >= VRAM_WIDTH) {
+			if (vramX >= VRAM_WIDTH)
+			{
 				break;
 			}
 

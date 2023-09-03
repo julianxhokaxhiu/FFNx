@@ -664,6 +664,8 @@ Stage stage;
 
 int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callback)
 {
+	if (trace_all || trace_vram) ffnx_trace("%s: %d\n", __func__, fileId);
+
 	snprintf(battle_texture_name, sizeof(battle_texture_name), "battle/%s", ff8_externals.battle_filenames[fileId]);
 
 	return ((int16_t(*)(int,void*,int,int))ff8_externals.battle_open_file)(fileId, data, a3, callback);
@@ -671,6 +673,8 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 
 size_t ff8_battle_read_file(char *fileName, void *data)
 {
+	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
+
 	battle_texture_id = 0;
 
 	size_t file_size = ff8_externals.sm_pc_read(fileName, data);
