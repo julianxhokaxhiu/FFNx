@@ -8,6 +8,10 @@
 - Core: Add additional main models eye-to-model mapping
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
 
+## FF8
+
+- Graphics: Fix crash when using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/588 )
+
 # 1.16.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.15.0...1.16.0
