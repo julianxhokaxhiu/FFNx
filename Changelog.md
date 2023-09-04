@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.16.0...master
 
+## Common
+
+- Movie: Fix audio stream playing at the same time as the external audio
+
 ## FF7
 
 - Ambient: Allow ambient effects to playback in fields that use movies as background

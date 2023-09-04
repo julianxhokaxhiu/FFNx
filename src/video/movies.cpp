@@ -149,8 +149,13 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 		goto exit;
 	}
 
-	audiostream = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &acodec, 0);
-	if(with_audio && audiostream < 0 && (trace_movies || trace_all)) ffnx_trace("prepare_movie: no audio stream found\n");
+	if (with_audio)
+	{
+		audiostream = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &acodec, 0);
+		if(audiostream < 0 && (trace_movies || trace_all)) ffnx_trace("prepare_movie: no audio stream found\n");
+	}
+	else
+		audiostream = -1;
 
 	codec_ctx = avcodec_alloc_context3(codec);
 	if (!codec_ctx) {
