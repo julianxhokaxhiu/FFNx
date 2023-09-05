@@ -551,29 +551,29 @@ std::string decode_ff7_text(const char *encoded_text)
 		switch (current_char)
 		{
 		case 0xEB:
-            decoded_text.append("{item_name}");
-            index += 3;
-            break;
-        case 0xEC:
-            decoded_text.append("{number}");
-            index += 3;
-            break;
-        case 0xED:
-            decoded_text.append("{target_name}");
-            index += 3;
-            break;
-        case 0xEE:
-            decoded_text.append("{attack_name}");
-            index += 3;
-            break;
-        case 0xEF:
-            decoded_text.append("{special_number}");
-            index += 3;
-            break;
-        case 0xF0:
-            decoded_text.append("{target_letter}");
-            index += 3;
-            break;
+			decoded_text.append("{item_name}");
+			index += 3;
+			break;
+		case 0xEC:
+			decoded_text.append("{number}");
+			index += 3;
+			break;
+		case 0xED:
+			decoded_text.append("{target_name}");
+			index += 3;
+			break;
+		case 0xEE:
+			decoded_text.append("{attack_name}");
+			index += 3;
+			break;
+		case 0xEF:
+			decoded_text.append("{special_number}");
+			index += 3;
+			break;
+		case 0xF0:
+			decoded_text.append("{target_letter}");
+			index += 3;
+			break;
 		case 0xF8:
 			index += 2;
 			break;
