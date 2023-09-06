@@ -680,7 +680,8 @@ ff8_fix_uv_coords_precision = true
 app_path = ""
 
 #[DATA DRIVE]
-# Overrides the data drive to read disks if set. Ignored in the Steam edition. Include : but not \ (e.g. data_drive = "F:")
+# Overrides the data drive to read disks if set. Ignored in the Steam edition.
+# Example: "F:"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 data_drive = ""
 
