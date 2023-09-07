@@ -38,3 +38,9 @@ bool fileExists(const char *filename)
     // Use stat to keep compatibility with 7th Heaven
     return stat(filename, &dummy) == 0;
 }
+
+bool dirExists(const char *filename)
+{
+    // Fastest way
+    return std::filesystem::is_directory(filename);
+}

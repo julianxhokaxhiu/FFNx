@@ -68,7 +68,7 @@ public:
 			return _bpp;
 		}
 	protected:
-		static bimg::ImageContainer *createImageContainer(const char *name, uint8_t palette_index, bool hasPal);
+		static bimg::ImageContainer *createImageContainer(const char *name, uint8_t palette_index, bool hasPal, const char *extension = nullptr, char *foundExtension = nullptr);
 		static uint8_t computeScale(int sourcePixelW, int sourceH, int targetPixelW, int targetH);
 		static void copyRect(
 			const uint32_t *sourceRGBA, int sourceXBpp2, int sourceYBpp2, int sourceW, uint8_t sourceScale, Tim::Bpp sourceDepth,
@@ -104,9 +104,10 @@ public:
 	}
 	void uploadTexture(const uint8_t *texture, int x, int y, int w, int h);
 	void setTexture(const char *name, int x, int y, int w, int h, Tim::Bpp bpp, bool isPal);
-	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId = -1);
+	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId = -1, const char *extension = nullptr, char *found_extension = nullptr);
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
 	bool setTextureRedirection(const TextureInfos &oldTexture, const TextureInfos &newTexture, uint32_t *imageData);
+	void clearTextures();
 	uint8_t getMaxScale(const uint8_t *texData) const;
 	void getTextureNames(const uint8_t *texData, std::list<std::string> &names) const;
 	void registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX = 0, int palY = 0);
@@ -119,7 +120,7 @@ public:
 	TextureTypes drawTextures(const uint8_t *texData, struct texture_format *tex_format, uint32_t *target, const uint32_t *originalImageData, int originalW, int originalH, uint8_t scale, uint32_t paletteIndex);
 
 	bool saveVram(const char *fileName, Tim::Bpp bpp) const;
-	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after);
+	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after, TextureTypes textureType);
 private:
 	enum TextureCategory {
 		TextureCategoryStandard,
@@ -152,7 +153,7 @@ private:
 		inline uint8_t scale() const {
 			return _scale;
 		}
-		bool createImage(uint8_t palette_index = 0, bool has_pal = true);
+		bool createImage(uint8_t palette_index = 0, bool has_pal = true, const char *extension = nullptr, char *foundExtension = nullptr);
 		void destroyImage();
 		inline bool hasImage() const {
 			return _image != nullptr;
@@ -180,7 +181,7 @@ private:
 			const std::vector<Tile> &mapTiles,
 			int textureId
 		);
-		bool createImage();
+		bool createImage(const char *extension = nullptr, char *foundExtension = nullptr);
 		void copyRect(int sourceXBpp2, int sourceYBpp2, Tim::Bpp textureBpp, uint32_t *target, int targetX, int targetY, int targetW, uint8_t targetScale) const;
 	private:
 		virtual uint8_t computeScale() const override;

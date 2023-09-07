@@ -988,6 +988,9 @@ struct ff8_externals
 	char* disk_data_path;
 	uint32_t swirl_main_loop;
 	uint32_t field_main_loop;
+	uint32_t field_main_exit;
+	uint32_t psxvram_texture_pages_free;
+	uint32_t sub_4672C0;
 	uint32_t sub_471F70;
 	uint32_t sub_4767B0;
 	uint32_t sub_4789A0;

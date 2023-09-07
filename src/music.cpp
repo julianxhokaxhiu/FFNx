@@ -359,12 +359,33 @@ void ff7_play_midi(uint32_t music_id)
 {
 	const int channel = next_music_channel;
 
+
+	struct game_mode* mode = getmode_cached();
+
+	if (mode->driver_mode == MODE_FIELD)
+	{
+		struct matrix_set *matrix_set = ((struct ff7_polygon_set *)(((struct ff7_game_obj *)common_externals.get_game_object())->polygon_set_2EC))->matrix_set;
+
+		ffnx_info("matrix view: ");
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 4; ++j) {
+				ffnx_info("%f, ", matrix_set->matrix_view->m[i][j]);
+			}
+		}
+		ffnx_info("\nmatrix projection: ");
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 4; ++j) {
+				ffnx_info("%f, ", matrix_set->matrix_projection->m[i][j]);
+			}
+		}
+		ffnx_info("\n");
+	}
+
 	if (nxAudioEngine.currentMusicId(0) != music_id && nxAudioEngine.currentMusicId(1) != music_id)
 	{
 		if (is_gameover(music_id)) music_flush();
 
 		const char* midi_name = common_externals.get_midi_name(music_id);
-		struct game_mode* mode = getmode_cached();
 
 		// Avoid restarting the same music when transitioning from the battle gameover to the gameover screen
 		if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover)
