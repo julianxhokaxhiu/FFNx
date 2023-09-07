@@ -69,6 +69,20 @@ void patch_divide_code(uint32_t offset, int multiplier)
     // TODO Add assertion
 }
 
+template<typename T>
+void patch_multiply_code_if_as_expected(uint32_t offset, int multiplier, T expected_value)
+{
+	T current_value = *(T *)offset;
+	if (current_value == expected_value) 
+	{
+		patch_multiply_code<T>(offset, multiplier);
+	}
+	else 
+	{
+		ffnx_warning("%X: Unexpected value in offset (expected: %X, found: %X)\n", offset, expected_value, current_value);
+	}
+}
+
 void memcpy_code(uint32_t offset, void *data, uint32_t size);
 void memset_code(uint32_t offset, uint32_t val, uint32_t size);
 
