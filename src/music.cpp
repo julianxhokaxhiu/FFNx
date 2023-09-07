@@ -359,33 +359,12 @@ void ff7_play_midi(uint32_t music_id)
 {
 	const int channel = next_music_channel;
 
-
-	struct game_mode* mode = getmode_cached();
-
-	if (mode->driver_mode == MODE_FIELD)
-	{
-		struct matrix_set *matrix_set = ((struct ff7_polygon_set *)(((struct ff7_game_obj *)common_externals.get_game_object())->polygon_set_2EC))->matrix_set;
-
-		ffnx_info("matrix view: ");
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				ffnx_info("%f, ", matrix_set->matrix_view->m[i][j]);
-			}
-		}
-		ffnx_info("\nmatrix projection: ");
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				ffnx_info("%f, ", matrix_set->matrix_projection->m[i][j]);
-			}
-		}
-		ffnx_info("\n");
-	}
-
 	if (nxAudioEngine.currentMusicId(0) != music_id && nxAudioEngine.currentMusicId(1) != music_id)
 	{
 		if (is_gameover(music_id)) music_flush();
 
 		const char* midi_name = common_externals.get_midi_name(music_id);
+		struct game_mode* mode = getmode_cached();
 
 		// Avoid restarting the same music when transitioning from the battle gameover to the gameover screen
 		if (mode->driver_mode == MODE_GAMEOVER && was_battle_gameover)
@@ -1119,7 +1098,7 @@ void music_init()
 			// Not implemented by the game
 			replace_function(ff8_externals.opcode_musicvolsync, ff8_volume_sync);
 			// Called by game credits
-			replace_function(ff8_externals.set_midi_volume, set_music_volume);
+			replace_function(uint32_t(ff8_externals.dmusicperf_set_volume_sub_46C6F0), set_music_volume);
 			// Fix intro credits volume fadeout time
 			replace_call(ff8_externals.load_credits_image + 0x5DF, ff8_set_music_volume_intro_credits);
 			replace_call(ff8_externals.load_credits_image + 0x5C2, noop_a1);
