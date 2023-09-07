@@ -1332,6 +1332,7 @@ namespace ff7::battle
             replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1BB, display_cait_sith_slots_handler);
             replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C2, display_tifa_slots_handler);
             replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C9, display_battle_arena_menu_handler);
+            replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1AD, display_battle_char_status_menu_handler);
             memset_code(ff7_externals.battle_menu_update_6CE8B3 + 0x148, 0x90, 3);
         }
 

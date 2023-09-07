@@ -29,6 +29,7 @@ namespace ff7::battle
     void display_tifa_slots_handler();
     void display_cait_sith_slots_handler();
     void display_battle_arena_menu_handler();
+    void display_battle_char_status_menu_handler();
     void delay_battle_target_pointer_animation_type();
     void battle_depth_clear();
 }
