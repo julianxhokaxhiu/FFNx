@@ -151,7 +151,6 @@ bool ff8_battle_state_save_texture(const Stage &stage, const Tim &tim, const cha
         palsPerTexture[quad.tex_id & 0xF].insert((quad.pal_id >> 6) & 0xF);
     }
 
-    std::vector<uint8_t> texturesWithMultiPalette, texturesWithOnePalette;
     std::vector<TimRect> rectangles;
 
     for (const std::pair<uint8_t, std::set<uint8_t> > &pair: palsPerTexture) {
@@ -249,14 +248,10 @@ bool ff8_battle_state_save_texture(const Stage &stage, const Tim &tim, const cha
             for (const TimRect &rect: rectsMerged) {
                 rectangles.push_back(TimRect(rect.palIndex, texId * 128 + rect.x1, rect.y1, texId * 128 + rect.x2, rect.y2));
             }
-
-            texturesWithMultiPalette.push_back(texId);
-        } else {
-            texturesWithOnePalette.push_back(texId);
         }
 
         // Use first palette by default
-        rectangles.push_back(TimRect(*(pair.second.begin()), texId * 128, 0, texId * 128 + 255, 255));
+        rectangles.push_back(TimRect(*(pair.second.begin()), texId * 128, 0, texId * 128 + 128, 255));
     }
 
     tim.saveMultiPaletteTrianglesAndQuads(filename, rectangles, true);
