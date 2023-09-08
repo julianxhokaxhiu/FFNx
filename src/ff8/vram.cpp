@@ -25,6 +25,7 @@
 #include "../patch.h"
 #include "../macro.h"
 #include "../image/tim.h"
+#include "../utils.h"
 #include "field/background.h"
 #include "field/chara_one.h"
 #include "battle/stage.h"
@@ -32,6 +33,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <filesystem>
 
 TexturePacker texturePacker;
 
@@ -516,9 +518,11 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 
 	std::vector<Tile> tiles = ff8_background_parse_tiles(map_data);
 
+	char tex_directory[MAX_PATH] = {};
 	char tex_filename[MAX_PATH] = {};
 
-	snprintf(tex_filename, MAX_PATH, "field/mapdata/%s/%s", get_current_field_name(), get_current_field_name());
+	snprintf(tex_directory, sizeof(tex_directory), "field/mapdata/%s", get_current_field_name());
+	snprintf(tex_filename, sizeof(tex_filename), "%s/%s", tex_directory, get_current_field_name());
 
 	if (save_textures_legacy) {
 		ff8_background_save_textures_legacy(tiles, mim_texture_buffer, tex_filename);
@@ -530,13 +534,51 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 		return ret;
 	}
 
-	if (!texturePacker.setTextureBackground(tex_filename, 0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles)) {
-		for (int i = 0; i < VRAM_PAGE_MIM_MAX_COUNT; ++i) {
-			snprintf(tex_filename, MAX_PATH, "field/mapdata/%.2s/%s/%s_%d", get_current_field_name(), get_current_field_name(), get_current_field_name(), i);
+	char tex_abs_directory[MAX_PATH] = {};
+	snprintf(tex_abs_directory, sizeof(tex_abs_directory), "%s/%s", mod_path.c_str(), tex_directory);
+	bool has_dir = dirExists(tex_abs_directory);
 
-			if (!texturePacker.setTextureBackground(tex_filename, i * TEXTURE_WIDTH_BPP16, 256, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles, i)) {
+	if (!has_dir && (trace_all || trace_loaders || trace_vram)) {
+		ffnx_warning("Directory does not exist, fallback to Tonberry compatibility layer: %s\n", tex_abs_directory);
+	}
+
+	if (!has_dir || !texturePacker.setTextureBackground(tex_filename, 0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles)) {
+		snprintf(tex_directory, MAX_PATH, "field/mapdata/%.2s/%s", get_current_field_name(), get_current_field_name());
+		snprintf(tex_abs_directory, sizeof(tex_abs_directory), "%s/%s", mod_path.c_str(), tex_directory);
+
+		if (!dirExists(tex_abs_directory)) {
+			if (trace_all || trace_loaders || trace_vram) {
+				ffnx_warning("Directory does not exist, abort looking for field textures: %s\n", tex_abs_directory);
+			}
+
+			return ret;
+		}
+
+		char found_extension[MAX_PATH] = {};
+		char *extension = nullptr;
+		bool found_pages[VRAM_PAGE_MIM_MAX_COUNT] = {};
+
+		snprintf(tex_directory, MAX_PATH, "%s/%s", tex_directory, get_current_field_name());
+
+		// Compatibility with Tonberry, vram pages 13-25
+		for (int i = 0; i < VRAM_PAGE_MIM_MAX_COUNT; ++i) {
+			snprintf(tex_filename, MAX_PATH, "%s_%d", tex_directory, i + VRAM_PAGE_MIM_MAX_COUNT);
+
+			if (texturePacker.setTextureBackground(tex_filename, i * TEXTURE_WIDTH_BPP16, 256, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles, i, extension, found_extension)) {
+				extension = found_extension;
+				found_pages[i] = true;
+			}
+		}
+
+		// Compatibility with Tonberry, vram pages 0-12
+		for (int i = 0; i < VRAM_PAGE_MIM_MAX_COUNT; ++i) {
+			snprintf(tex_filename, MAX_PATH, "%s_%d", tex_directory, i);
+
+			if (!found_pages[i] && !texturePacker.setTextureBackground(tex_filename, i * TEXTURE_WIDTH_BPP16, 256, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles, i, extension, found_extension)) {
 				break;
 			}
+
+			extension = found_extension;
 		}
 	}
 
@@ -708,6 +750,13 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 	}
 }
 
+void clean_psxvram_pages()
+{
+	texturePacker.clearTextures();
+
+	((void(*)())ff8_externals.sub_4672C0)();
+}
+
 void vram_init()
 {
 	texturePacker.setVram((uint8_t *)ff8_externals.psxvram_buffer);
@@ -747,6 +796,9 @@ void vram_init()
 	replace_call(ff8_externals.battle_open_file + 0x8E, ff8_battle_read_file);
 	replace_call(ff8_externals.battle_open_file + 0x1A2, ff8_battle_read_file);
 	replace_call(ff8_externals.battle_upload_texture_to_vram + 0x45, ff8_battle_upload_texture_palette);
+
+	// Clear texture_packer on every module exits
+	replace_call(ff8_externals.psxvram_texture_pages_free + 0x5A, clean_psxvram_pages);
 
 	replace_function(ff8_externals.upload_psx_vram, ff8_upload_vram);
 

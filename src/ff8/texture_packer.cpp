@@ -153,14 +153,14 @@ void TexturePacker::setTexture(const char *name, int xBpp2, int y, int wBpp2, in
 	}
 }
 
-bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId)
+bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId, const char *extension, char *found_extension)
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s %s x=%d y=%d w=%d h=%d tileCount=%d bgTexId=%d\n", __func__, name, x, y, w, h, mapTiles.size(), bgTexId);
 
 	TextureBackground tex(name, x, y, w, h, mapTiles, bgTexId);
 	ModdedTextureId textureId = INVALID_TEXTURE;
 
-	if (tex.createImage())
+	if (tex.createImage(extension, found_extension))
 	{
 		textureId = makeTextureId(x, y, TextureCategoryBackground);
 	}
@@ -196,6 +196,27 @@ bool TexturePacker::setTextureRedirection(const TextureInfos &oldTexture, const 
 	}
 
 	return false;
+}
+
+void TexturePacker::clearTextures()
+{
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s\n", __func__);
+
+	_tiledTexs.clear();
+	std::fill_n(_vramTextureIds.begin(), _vramTextureIds.size(), INVALID_TEXTURE);
+
+	for (auto &texture: _externalTextures) {
+		texture.second.destroyImage();
+	}
+	for (auto &texture: _textureRedirections) {
+		texture.second.destroyImage();
+	}
+	for (auto &texture: _backgroundTextures) {
+		texture.second.destroyImage();
+	}
+	_externalTextures.clear();
+	_textureRedirections.clear();
+	_backgroundTextures.clear();
 }
 
 uint8_t TexturePacker::getMaxScale(const uint8_t *texData) const
@@ -500,7 +521,7 @@ TexturePacker::TiledTex TexturePacker::getTiledTex(const uint8_t *texData) const
 	return TiledTex();
 }
 
-void TexturePacker::debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after)
+void TexturePacker::debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after, TextureTypes textureType)
 {
 	uint32_t *target = new uint32_t[w * h];
 
@@ -510,7 +531,7 @@ void TexturePacker::debugSaveTexture(int textureId, const uint32_t *source, int 
 	}
 
 	char filename[MAX_PATH];
-	snprintf(filename, sizeof(filename), "texture-%d-%s", textureId, after ? "z-after" : "a-before");
+	snprintf(filename, sizeof(filename), "texture-%d-%s-type-%s", textureId, after ? "z-after" : "a-before", textureType == TextureTypes::ExternalTexture ? "external" : (textureType == TextureTypes::InternalTexture ? "internal" : "nomatch"));
 
 	if (trace_all || trace_vram) ffnx_trace("%s %s\n", __func__, filename);
 
@@ -558,7 +579,7 @@ TexturePacker::TextureInfos::TextureInfos(
 {
 }
 
-bimg::ImageContainer *TexturePacker::TextureInfos::createImageContainer(const char *name, uint8_t palette_index, bool hasPal)
+bimg::ImageContainer *TexturePacker::TextureInfos::createImageContainer(const char *name, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)
 {
 	char filename[MAX_PATH] = {}, langPath[16] = {};
 
@@ -573,6 +594,12 @@ bimg::ImageContainer *TexturePacker::TextureInfos::createImageContainer(const ch
 	{
 		for (size_t idx = 0; idx < mod_ext.size(); idx++)
 		{
+			// Force extension
+			if (extension && stricmp(extension, mod_ext[idx].c_str()) != 0)
+			{
+				continue;
+			}
+
 			if (hasPal) {
 				_snprintf(filename, sizeof(filename), "%s/%s/%s%s_%02i.%s", basedir, mod_path.c_str(), langPath, name, palette_index, mod_ext[idx].c_str());
 			} else {
@@ -586,6 +613,10 @@ bimg::ImageContainer *TexturePacker::TextureInfos::createImageContainer(const ch
 			if (image != nullptr)
 			{
 				if (trace_all || trace_loaders || trace_vram) ffnx_trace("Using texture: %s\n", filename);
+
+				if (found_extension != nullptr) {
+					strncpy(found_extension, mod_ext[idx].c_str(), mod_ext[idx].size());
+				}
 
 				return image;
 			}
@@ -667,9 +698,9 @@ TexturePacker::Texture::Texture(
 {
 }
 
-bool TexturePacker::Texture::createImage(uint8_t palette_index, bool has_pal)
+bool TexturePacker::Texture::createImage(uint8_t palette_index, bool has_pal, const char *extension, char *found_extension)
 {
-	_image = createImageContainer(_name.c_str(), palette_index, has_pal);
+	_image = createImageContainer(_name.c_str(), palette_index, has_pal, extension, found_extension);
 
 	if (_image == nullptr)
 	{
@@ -727,13 +758,13 @@ TexturePacker::TextureBackground::TextureBackground(
 {
 }
 
-bool TexturePacker::TextureBackground::createImage()
+bool TexturePacker::TextureBackground::createImage(const char *extension, char *foundExtension)
 {
 	size_t size = _mapTiles.size();
 
 	_colsCount = size / (TEXTURE_HEIGHT / TILE_SIZE) + int(size % (TEXTURE_HEIGHT / TILE_SIZE) != 0);
 
-	if (! Texture::createImage(0, false)) {
+	if (! Texture::createImage(0, false, extension, foundExtension)) {
 		return false;
 	}
 

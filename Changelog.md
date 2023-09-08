@@ -15,6 +15,7 @@
 ## FF8
 
 - Graphics: Fix crash when using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/588 )
+- Graphics: Fix texture glitches using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/591 )
 
 # 1.16.0
 

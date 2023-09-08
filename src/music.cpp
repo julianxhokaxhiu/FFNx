@@ -1098,7 +1098,7 @@ void music_init()
 			// Not implemented by the game
 			replace_function(ff8_externals.opcode_musicvolsync, ff8_volume_sync);
 			// Called by game credits
-			replace_function(ff8_externals.set_midi_volume, set_music_volume);
+			replace_function(uint32_t(ff8_externals.dmusicperf_set_volume_sub_46C6F0), set_music_volume);
 			// Fix intro credits volume fadeout time
 			replace_call(ff8_externals.load_credits_image + 0x5DF, ff8_set_music_volume_intro_credits);
 			replace_call(ff8_externals.load_credits_image + 0x5C2, noop_a1);
