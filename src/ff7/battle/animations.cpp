@@ -1274,7 +1274,11 @@ namespace ff7::battle
         // Effect60 related
         patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, battle_frame_multiplier);
 
-        patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, battle_frame_multiplier);
+        // Bad workaround to fix ESUI compatibility with 30fps when no widescreen mod is enabled
+        if (ff7_fps_limiter == FF7_LIMITER_60FPS || (ff7_fps_limiter == FF7_LIMITER_30FPS && aspect_ratio == AR_WIDESCREEN)) 
+        {
+            patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, battle_frame_multiplier);
+        }
         patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x1DC, 0x2 - battle_frame_multiplier / 2);
         patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x203, 0x2 - battle_frame_multiplier / 2);
 
@@ -1325,15 +1329,9 @@ namespace ff7::battle
 
         if(ff7_fps_limiter == FF7_LIMITER_60FPS)
         {
-            // Fix battle speed and menu for 60 FPS only
-            patch_divide_code<int>(ff7_externals.set_battle_speed_4385CC + 0x2E, battle_frame_multiplier / 2);
-            patch_divide_code<int>(ff7_externals.battle_set_actor_timer_data_4339C2 + 0x89, battle_frame_multiplier / 2);
-            replace_call_function(ff7_externals.battle_menu_update_call, update_battle_menu);
-            replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1BB, display_cait_sith_slots_handler);
-            replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C2, display_tifa_slots_handler);
-            replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1C9, display_battle_arena_menu_handler);
-            replace_call_function(ff7_externals.display_battle_menu_6D797C + 0x1AD, display_battle_char_status_menu_handler);
-            memset_code(ff7_externals.battle_menu_update_6CE8B3 + 0x148, 0x90, 3);
+            // Speed up window menu closing speed to fix Bizarro menu box softlock
+            patch_code_byte(ff7_externals.battle_menu_closing_window_box_6DAEF0 + 0x29, 0x2 - 1);
+            patch_code_byte(ff7_externals.battle_menu_closing_window_box_6DAEF0 + 0x72, 0x2 - 1);
         }
 
         // Delay animation of battle target pointer

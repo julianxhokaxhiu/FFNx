@@ -3236,25 +3236,19 @@ struct ff7_externals
 
 	// battle menu
 	uint32_t display_battle_menu_6D797C;
-	void (*display_cait_sith_slots_handler_6E2170)();
 	void (*display_tifa_slots_handler_6E3135)();
-	void (*display_battle_arena_menu_handler_6E384F)();
-	void (*display_battle_char_status_menu_6E1308)();
 	uint32_t battle_draw_text_ui_graphics_objects_call;
 	uint32_t battle_draw_box_ui_graphics_objects_call;
 	void (*battle_draw_call_42908C)(int, int);
 	uint32_t battle_set_do_render_menu_call;
 	uint32_t battle_set_do_render_menu;
 	int *g_do_render_menu;
-	uint32_t battle_menu_update_call;
-	int *battle_menu_animation_idx;
-	uint32_t set_battle_speed_4385CC;
-	uint32_t battle_set_actor_timer_data_4339C2;
 	uint32_t battle_sub_42F3E8;
 	uint32_t battle_handle_player_mark_5B9C8E;
 	uint32_t battle_handle_status_effect_anim_5BA7C0;
 	uint32_t battle_update_targeting_info_6E6291;
 	byte *targeting_actor_id_DC3C98;
+	uint32_t battle_menu_closing_window_box_6DAEF0;
 
 	//battle 3d battleground
 	uint32_t update_3d_battleground;

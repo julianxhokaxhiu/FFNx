@@ -44,37 +44,6 @@ namespace ff7::battle
         newRenderer.clearDepthBuffer();
     }
 
-    void update_battle_menu()
-    {
-        ((void(*)())ff7_externals.battle_menu_update_6CE8B3)();
-        if(*ff7_externals.g_do_render_menu)
-            (*ff7_externals.battle_menu_animation_idx)++;
-    }
-
-    void display_tifa_slots_handler()
-    {
-        if(*ff7_externals.g_do_render_menu)
-            ff7_externals.display_tifa_slots_handler_6E3135();
-    }
-
-    void display_cait_sith_slots_handler()
-    {
-        if(*ff7_externals.g_do_render_menu)
-            ff7_externals.display_cait_sith_slots_handler_6E2170();
-    }
-
-    void display_battle_arena_menu_handler()
-    {
-        if(*ff7_externals.g_do_render_menu)
-            ff7_externals.display_battle_arena_menu_handler_6E384F();
-    }
-
-    void display_battle_char_status_menu_handler()
-    {
-        if(*ff7_externals.g_do_render_menu)
-            ff7_externals.display_battle_char_status_menu_6E1308();
-    }
-
     void delay_battle_target_pointer_animation_type()
     {
         if(frame_counter % battle_frame_multiplier == 0)

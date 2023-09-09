@@ -245,7 +245,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		{
 			battle_frame_multiplier = (ff7_fps_limiter == FF7_LIMITER_30FPS) ? 2 : 4;
 
-			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, 2); // Works perfectly only in 30 FPS
+			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, battle_frame_multiplier); // Works perfectly only in 30 FPS
 
 			ff7::battle::camera_hook_init();
 			ff7::battle::animations_hook_init();
