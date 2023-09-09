@@ -1274,7 +1274,7 @@ namespace ff7::battle
         // Effect60 related
         patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, battle_frame_multiplier);
 
-        patch_multiply_code_if_as_expected<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, battle_frame_multiplier, 0x15);
+        patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, battle_frame_multiplier);
         patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x1DC, 0x2 - battle_frame_multiplier / 2);
         patch_code_byte(ff7_externals.battle_sub_5BD050 + 0x203, 0x2 - battle_frame_multiplier / 2);
 
