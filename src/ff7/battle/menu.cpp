@@ -69,6 +69,12 @@ namespace ff7::battle
             ff7_externals.display_battle_arena_menu_handler_6E384F();
     }
 
+    void display_battle_char_status_menu_handler()
+    {
+        if(*ff7_externals.g_do_render_menu)
+            ff7_externals.display_battle_char_status_menu_6E1308();
+    }
+
     void delay_battle_target_pointer_animation_type()
     {
         if(frame_counter % battle_frame_multiplier == 0)
