@@ -130,6 +130,7 @@ long external_audio_number_of_channels;
 long external_audio_sample_rate;
 bool ff8_worldmap_internal_highres_textures;
 bool ff8_fix_uv_coords_precision;
+bool ff8_external_music_force_original_filenames;
 std::string app_path;
 std::string data_drive;
 bool enable_ntscj_gamut_mode;
@@ -282,6 +283,7 @@ void read_cfg()
 	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(44100);
 	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(true);
 	ff8_fix_uv_coords_precision = config["ff8_fix_uv_coords_precision"].value_or(true);
+	ff8_external_music_force_original_filenames = config["ff8_external_music_force_original_filenames"].value_or(false);
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");
 	enable_ntscj_gamut_mode = config["enable_ntscj_gamut_mode"].value_or(false);

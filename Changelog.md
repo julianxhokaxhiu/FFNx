@@ -16,6 +16,7 @@
 
 - Graphics: Fix crash when using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/588 )
 - Graphics: Fix texture glitches using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/591 )
+- Music: Add `ff8_external_music_force_original_filenames` option to use original music names (eg 018s-julia.ogg) instead of just the main identifier in external music ( https://github.com/julianxhokaxhiu/FFNx/pull/594 )
 
 # 1.16.0
 

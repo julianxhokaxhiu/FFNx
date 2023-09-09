@@ -672,6 +672,12 @@ ff8_worldmap_internal_highres_textures = true
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_fix_uv_coords_precision = true
 
+# Always use original filenames when looking for external music files.
+# Example: `005s-battle.ogg` instead of `battle.ogg`.
+# Use this option if you want to use OGG files from Remastered Edition directly in external music
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_external_music_force_original_filenames = false
+
 ## GAME INSTALLATION OPTIONS
 
 #[APP PATH]
