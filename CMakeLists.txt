@@ -117,6 +117,10 @@ target_include_directories(
   PRIVATE ${STACKWALKER_INCLUDE_DIRS}
   PRIVATE ${VGMSTREAM_INCLUDE_DIRS}
 )
+target_link_directories(
+  ${RELEASE_NAME}
+  PRIVATE ${FFMPEG_LIBRARY_DIRS}
+)
 target_link_libraries(
   ${RELEASE_NAME}
   ${RELEASE_NAME}::rc
