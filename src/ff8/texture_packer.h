@@ -107,6 +107,7 @@ public:
 	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId = -1, const char *extension = nullptr, char *found_extension = nullptr);
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
 	bool setTextureRedirection(const TextureInfos &oldTexture, const TextureInfos &newTexture, uint32_t *imageData);
+	void clearTiledTexs();
 	void clearTextures();
 	uint8_t getMaxScale(const uint8_t *texData) const;
 	void getTextureNames(const uint8_t *texData, std::list<std::string> &names) const;

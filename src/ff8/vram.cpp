@@ -745,14 +745,21 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 		if (StrStrIA(battle_texture_name, ".X") != nullptr) {
 			ff8_battle_state_save_texture(stage, tim, next_texture_name);
 		} else {
-			tim.save(next_texture_name, 0, 0, false);
+			tim.save(next_texture_name, 0, 0, true);
 		}
 	}
 }
 
-void clean_psxvram_pages()
+void engine_set_init_time(double fps_adjust)
 {
 	texturePacker.clearTextures();
+
+	((void(*)(double))ff8_externals.engine_set_init_time)(fps_adjust);
+}
+
+void clean_psxvram_pages()
+{
+	texturePacker.clearTiledTexs();
 
 	((void(*)())ff8_externals.sub_4672C0)();
 }
@@ -797,6 +804,8 @@ void vram_init()
 	replace_call(ff8_externals.battle_open_file + 0x1A2, ff8_battle_read_file);
 	replace_call(ff8_externals.battle_upload_texture_to_vram + 0x45, ff8_battle_upload_texture_palette);
 
+	// Fix missing textures in battle module by clearing custom textures
+	replace_call(ff8_externals.battle_enter + 0x35, engine_set_init_time);
 	// Clear texture_packer on every module exits
 	replace_call(ff8_externals.psxvram_texture_pages_free + 0x5A, clean_psxvram_pages);
 
