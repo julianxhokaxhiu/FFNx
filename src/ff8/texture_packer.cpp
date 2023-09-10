@@ -198,11 +198,17 @@ bool TexturePacker::setTextureRedirection(const TextureInfos &oldTexture, const 
 	return false;
 }
 
-void TexturePacker::clearTextures()
+void TexturePacker::clearTiledTexs()
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s\n", __func__);
 
 	_tiledTexs.clear();
+}
+
+void TexturePacker::clearTextures()
+{
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s\n", __func__);
+
 	std::fill_n(_vramTextureIds.begin(), _vramTextureIds.size(), INVALID_TEXTURE);
 
 	for (auto &texture: _externalTextures) {
@@ -639,7 +645,7 @@ uint8_t TexturePacker::TextureInfos::computeScale(int sourcePixelW, int sourceH,
 		|| targetPixelW % sourcePixelW != 0
 		|| targetH % sourceH != 0)
 	{
-		ffnx_warning("Texture redirection size must be scaled to the original texture size\n");
+		ffnx_warning("Texture redirection size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d)\n", targetPixelW, targetH, sourcePixelW, sourceH);
 
 		return 0;
 	}
@@ -680,7 +686,9 @@ void TexturePacker::TextureInfos::copyRect(
 	{
 		for (int x = 0; x < targetRectWidth; ++x)
 		{
-			*(targetRGBA + x + y * targetW) = *(sourceRGBA + x / scaleRatio + y / scaleRatio * sourceW);
+			uint32_t color = *(sourceRGBA + x / scaleRatio + y / scaleRatio * sourceW);
+			uint32_t alpha = color & 0xFF000000;
+			*(targetRGBA + x + y * targetW) = (color & 0xFFFFFF) | (alpha == 0xFF000000 ? 0x7F000000 : 0);
 		}
 	}
 }

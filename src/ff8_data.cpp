@@ -102,6 +102,7 @@ void ff8_find_externals()
 		common_externals.current_field_id = (WORD*)get_absolute_value(ff8_externals.main_loop, 0x21F + 6);
 		ff8_externals.worldmap_enter_main = get_absolute_value(ff8_externals.main_loop, 0x2C0 + 4);
 		ff8_externals.worldmap_main_loop = get_absolute_value(ff8_externals.main_loop, 0x2D0 + 4);
+		ff8_externals.battle_enter = get_absolute_value(ff8_externals.main_loop, 0x330 + 4);
 		ff8_externals.battle_main_loop = get_absolute_value(ff8_externals.main_loop, 0x340 + 4);
 		// Search battle sound function to find play/stop midi related methods
 		ff8_externals.sm_battle_sound = get_relative_call(ff8_externals.main_loop, 0x487 + 5);
@@ -118,6 +119,7 @@ void ff8_find_externals()
 		common_externals.current_field_id = (WORD*)get_absolute_value(ff8_externals.main_loop, 0x21F);
 		ff8_externals.worldmap_enter_main = get_absolute_value(ff8_externals.main_loop, 0x2C0);
 		ff8_externals.worldmap_main_loop = get_absolute_value(ff8_externals.main_loop, 0x2D0);
+		ff8_externals.battle_enter = get_absolute_value(ff8_externals.main_loop, 0x330);
 		ff8_externals.battle_main_loop = get_absolute_value(ff8_externals.main_loop, 0x340);
 		// Search battle sound function to find play/stop midi related methods
 		ff8_externals.sm_battle_sound = get_relative_call(ff8_externals.main_loop, 0x487);
@@ -127,6 +129,7 @@ void ff8_find_externals()
 
 	ff8_externals.psxvram_texture_pages_free = get_relative_call(ff8_externals.field_main_exit, 0x58);
 	ff8_externals.sub_4672C0 = get_relative_call(ff8_externals.psxvram_texture_pages_free, 0x5A);
+	ff8_externals.engine_set_init_time = get_relative_call(ff8_externals.battle_enter, 0x35);
 
 	common_externals.debug_print2 = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x16);
 	ff8_externals.moriya_filesytem_open = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x21);

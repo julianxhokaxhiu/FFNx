@@ -990,6 +990,7 @@ struct ff8_externals
 	uint32_t field_main_loop;
 	uint32_t field_main_exit;
 	uint32_t psxvram_texture_pages_free;
+	uint32_t engine_set_init_time;
 	uint32_t sub_4672C0;
 	uint32_t sub_471F70;
 	uint32_t sub_4767B0;
@@ -1147,6 +1148,7 @@ struct ff8_externals
 	uint32_t restart_music_and_sfx;
 	uint32_t directsound_create_secondary_buffer;
 	uint32_t start;
+	uint32_t battle_enter;
 	uint32_t battle_main_loop;
 	void (*show_vram_window)();
 	void (*refresh_vram_window)();
