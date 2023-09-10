@@ -20,6 +20,7 @@
 - Graphics: Fix texture glitches using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/591 )
 - Graphics: Fix external texture blending ( https://github.com/julianxhokaxhiu/FFNx/pull/598 )
 - Music: Add `ff8_external_music_force_original_filenames` option to use original music names (eg 018s-julia.ogg) instead of just the main identifier in external music ( https://github.com/julianxhokaxhiu/FFNx/pull/594 )
+- Voice: Enable battle dialogs voice acting
 
 # 1.16.0
 

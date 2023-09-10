@@ -236,6 +236,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_spuready = common_externals.execute_opcode_table[0x56];
 	ff8_externals.opcode_amesw = common_externals.execute_opcode_table[0x64];
 	ff8_externals.opcode_ames = common_externals.execute_opcode_table[0x65];
+	ff8_externals.opcode_battle = common_externals.execute_opcode_table[0x69];
 	ff8_externals.opcode_aask = common_externals.execute_opcode_table[0x6F];
 	ff8_externals.opcode_movieready = common_externals.execute_opcode_table[0xA3];
 	ff8_externals.opcode_musicload = common_externals.execute_opcode_table[0xB5];
@@ -625,6 +626,38 @@ void ff8_find_externals()
 	ff8_externals.sub_4A0880 = get_relative_call(ff8_externals.sub_49ACD0, 0x58);
 	ff8_externals.sub_4A0C00 = get_absolute_value(ff8_externals.sub_4A0880, 0x33);
 	ff8_externals.show_dialog = (char(*)(int32_t, uint32_t, int16_t))get_relative_call(ff8_externals.sub_4A0C00, 0x5F);
+
+	ff8_externals.sub_485460 = get_relative_call(ff8_externals.sub_47CCB0, 0xB13);
+	ff8_externals.sub_485610 = get_relative_call(ff8_externals.sub_485460, 0xDC);
+	ff8_externals.sub_48D1A0 = get_absolute_value(ff8_externals.sub_485610, 0x78A);
+	ff8_externals.sub_4AD7D0 = get_relative_call(ff8_externals.sub_48D1A0, 0x44);
+	ff8_externals.sub_4AD8D0 = get_absolute_value(ff8_externals.sub_4AD7D0, 0xC8);
+	ff8_externals.sub_4AB4F0 = get_relative_call(ff8_externals.sub_4AD8D0, 0x159);
+	ff8_externals.sub_4AB190 = get_relative_call(ff8_externals.sub_4AB4F0, 0x20);
+
+	ff8_externals.sub_4A84E0 = get_relative_call(ff8_externals.battle_main_loop, 0x142);
+	ff8_externals.sub_4AD400 = get_relative_call(ff8_externals.sub_4A84E0, 0x2DB);
+	ff8_externals.sub_4BB840 = get_relative_call(ff8_externals.sub_4AD400, 0xCB);
+	ff8_externals.battle_current_active_character_id = (BYTE*)get_absolute_value(ff8_externals.sub_4BB840, 0x13);
+	ff8_externals.battle_new_active_character_id = (BYTE*)get_absolute_value(ff8_externals.sub_4BB840, 0x37);
+
+	ff8_externals.battle_encounter_id = (WORD*)get_absolute_value(ff8_externals.opcode_battle, 0x66);
+
+	ff8_externals.sub_4AB450 = get_relative_call(ff8_externals.sub_47CCB0, 0xA5F);
+	ff8_externals.battle_get_monster_name_sub_495100 = get_relative_call(ff8_externals.sub_4AB450, 0x40);
+	ff8_externals.battle_char_struct_dword_1D27B10 = (BYTE**)get_absolute_value(ff8_externals.battle_get_monster_name_sub_495100, 0xF);
+
+	ff8_externals.sub_4AA920 = get_relative_call(ff8_externals.sub_4AB190, 0xED);
+	ff8_externals.battle_get_actor_name_sub_47EAF0 = get_relative_call(ff8_externals.sub_4AA920, 0x97);
+	ff8_externals.byte_1CFF1C3 = (BYTE*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x15);
+	ff8_externals.unk_1CFDC70 = (char*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x1E);
+	ff8_externals.unk_1CFDC7C = (char*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x28);
+	ff8_externals.word_1CF75EC = (WORD*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x39);
+	ff8_externals.unk_1CFF84C = (char*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x44);
+	ff8_externals.unk_1CF3E48 = (char*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x57);
+	ff8_externals.dword_1CF3EE0 = (DWORD*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x4B);
+
+	ff8_externals.battle_current_actor_talking = (DWORD*)get_absolute_value(ff8_externals.sub_485610, 0x36E);
 
 	// Required by Steam edition
 	switch (version)
