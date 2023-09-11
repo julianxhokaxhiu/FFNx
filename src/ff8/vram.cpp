@@ -475,11 +475,6 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 			return;
 		}
 
-		for (int i = 0; i < newTexture.pixelW() * newTexture.h(); ++i)
-		{
-			image[i] = (image[i] & 0xFFFFFF) | ((image[i] & 0xFF000000) == 0 ? 0 : 0x7F000000); // Force alpha
-		}
-
 		if (! texturePacker.setTextureRedirection(oldTexture, newTexture, image))
 		{
 			if (trace_all || trace_vram) ffnx_warning("%s: invalid redirection\n");
