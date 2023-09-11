@@ -84,6 +84,10 @@ std::string ff8_decode_text(const char* encoded_text)
     if (last_char != char(NULL) && last_char < 0x20)
     {
       switch (last_char){
+        case 0x2:
+          ret.append(" ");
+          ret.append(ff8_table[current_char - 0x20]);
+          break;
         case 0x3:
           if(current_char>=0x30 && current_char<=0x3a)
             ret.append(ff8_names[index-0x30]);

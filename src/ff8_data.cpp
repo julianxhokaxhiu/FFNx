@@ -608,6 +608,13 @@ void ff8_find_externals()
 		ff8_externals.battle_trigger_worldmap = ff8_externals.worldmap_with_fog_sub_53FAC0 + 0x4EA;
 	}
 
+	ff8_externals.world_dialog_assign_text_sub_543790 = (int (*)(int,int,char*))get_relative_call(ff8_externals.sub_54D7E0, 0x72);
+	ff8_externals.worldmap_windows_idx_map = (char*)get_absolute_value((uint32_t)ff8_externals.world_dialog_assign_text_sub_543790, 0x3B);
+	ff8_externals.sub_543CB0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0xA55);
+	ff8_externals.sub_5484B0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x5C9);
+	ff8_externals.sub_54A230 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x5CF);
+	ff8_externals.sub_54E9B0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x369);
+
 	ff8_externals.sub_548080 = get_relative_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE, 0x9B);
 	ff8_externals.sub_541C80 = (int (*)(int))get_relative_call(ff8_externals.battle_trigger_worldmap, 0);
 

@@ -1125,6 +1125,12 @@ struct ff8_externals
 	uint32_t sub_54D7E0;
 	uint32_t sub_54FDA0;
 	uint32_t worldmap_with_fog_sub_53FAC0;
+	char* worldmap_windows_idx_map;
+	int (*world_dialog_assign_text_sub_543790)(int,int,char*);
+	uint32_t sub_543CB0;
+	uint32_t sub_5484B0;
+	uint32_t sub_54A230;
+	uint32_t sub_54E9B0;
 	uint32_t sub_550070;
 	int (*sub_541C80)(int);
 	uint32_t sub_54B460;

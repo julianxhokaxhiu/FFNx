@@ -75,7 +75,7 @@ struct opcode_message_status
 	bool is_voice_acting = false;
 	WORD message_last_transition = 0;
 	byte message_last_option = UCHAR_MAX;
-	byte message_dialog_id = 0;
+	int message_dialog_id = 0;
 	byte char_id = 0;
 	message_kind message_kind = message_kind::NONE;
 	std::string field_name = "";
@@ -98,7 +98,7 @@ int (*ff8_opcode_old_ask)(int);
 int (*ff8_opcode_old_aask)(int);
 int (*ff8_opcode_old_drawpoint)(int);
 
-int ff8_get_field_dialog_string_id = -1;
+int ff8_current_window_dialog_id = -1;
 std::map<int, int> ff8_field_window_stack_count;
 std::map<int, char*> ff8_battle_actor_name;
 
@@ -872,9 +872,18 @@ char* ff8_battle_get_actor_name(int idx)
 
 char *ff8_field_get_dialog_string(char *msg, int dialog_id)
 {
-	ff8_get_field_dialog_string_id = dialog_id;
+	ff8_current_window_dialog_id = dialog_id;
 
 	return msg + *(uint32_t *)(msg + 4 * dialog_id);
+}
+
+int ff8_world_dialog_assign_text(int idx, int dialog_id, char *text)
+{
+	int window_id = *(ff8_externals.worldmap_windows_idx_map + 0x10 * idx);
+
+	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+
+	return ff8_externals.world_dialog_assign_text_sub_543790(idx, dialog_id, text);
 }
 
 int ff8_opcode_voice_drawpoint(int unk)
@@ -889,11 +898,11 @@ int ff8_opcode_voice_drawpoint(int unk)
 	int ret = ff8_opcode_old_drawpoint(unk);
 
 	current_opcode_message_status[window_id].message_page_count = magic_id;
-	current_opcode_message_status[window_id].message_dialog_id = ff8_get_field_dialog_string_id;
+	current_opcode_message_status[window_id].message_dialog_id = ff8_current_window_dialog_id;
 	current_opcode_message_status[window_id].message_kind = message_kind::DRAWPOINT;
 	current_opcode_message_status[window_id].field_name = "_drawpoint";
 
-	if (ff8_get_field_dialog_string_id == 4)
+	if (ff8_current_window_dialog_id == 4)
 	{
 		if (opcode_ask_current_option == UCHAR_MAX)
 			current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option = default_option;
@@ -1047,6 +1056,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 	bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
 	bool _is_dialog_paging = is_dialog_paging(current_opcode_message_status[window_id].message_last_opcode, message_current_opcode);
 	bool _is_dialog_option_changed = (current_opcode_message_status[window_id].message_last_option != opcode_ask_current_option);
+	bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
 	bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
 	bool _is_dialog_ask = (message_kind == message_kind::ASK) || (message_kind == message_kind::DRAWPOINT);
 
@@ -1055,8 +1065,6 @@ int ff8_show_dialog(int window_id, int state, int a3)
 	// Skip voice over on Tutorials
 	if (mode->driver_mode == MODE_FIELD)
 	{
-		bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
-
 		if (_is_dialog_opening)
 		{
 			opcode_ask_current_option = UCHAR_MAX;
@@ -1093,7 +1101,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			simulate_OK_disabled[window_id] = false;
 			current_opcode_message_status[window_id].is_voice_acting = false;
 			opcode_ask_current_option = UCHAR_MAX;
-			ff8_get_field_dialog_string_id = -1;
+			ff8_current_window_dialog_id = -1;
 			if (message_kind == message_kind::MESSAGE)
 			{
 				if (ff8_field_window_stack_count[*common_externals.current_field_id] > 0)
@@ -1127,7 +1135,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			std::string actor_name = ff8_decode_text(ff8_battle_actor_name[LOBYTE(*ff8_externals.battle_current_actor_talking)]);
 			std::string tokenized_actor = tokenize_text(actor_name);
 
-			if (trace_all || trace_opcodes) ffnx_trace("[BATTLE]: Scene ID: %u, Actor: %s, Text: %s\n", *ff8_externals.battle_encounter_id, actor_name.c_str(), decoded_text.c_str());
+			if (trace_all || trace_opcodes) ffnx_trace("[BATTLE]: scene_id=%u,actor=%s,text=%s\n", *ff8_externals.battle_encounter_id, actor_name.c_str(), decoded_text.c_str());
 
 			char voice_file[MAX_PATH];
 			sprintf(voice_file, "_battle/%s/%s", tokenized_actor.c_str(), tokenized_dialogue.c_str());
@@ -1140,6 +1148,37 @@ int ff8_show_dialog(int window_id, int state, int a3)
 		}
 
 		current_opcode_message_status[window_id].message_dialog_id = win->field_30;
+	}
+	else if (mode->driver_mode == MODE_WORLDMAP)
+	{
+		if (_is_dialog_opening)
+		{
+			begin_voice(window_id);
+			current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+		}
+		else if (_is_dialog_starting)
+		{
+			if (dialog_id < 0)
+			{
+				std::string decoded_text = ff8_decode_text(win->text_data1);
+				std::string tokenized_dialogue = tokenize_text(decoded_text);
+				if (trace_all || trace_opcodes) ffnx_trace("[WORLD]: window_id=%u,text=%s\n", window_id, decoded_text.c_str());
+
+				char voice_file[MAX_PATH];
+				sprintf(voice_file, "_world/text/%s", tokenized_dialogue.c_str());
+				current_opcode_message_status[window_id].is_voice_acting = nxAudioEngine.playVoice(voice_file, 0, voice_volume);
+			}
+			else
+			{
+				if (trace_all || trace_opcodes) ffnx_trace("[WORLD]: window_id=%u,dialog_id=%d\n", window_id, current_opcode_message_status[window_id].message_dialog_id);
+				current_opcode_message_status[window_id].is_voice_acting = play_voice("_world", window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
+			}
+		}
+		else if (_is_dialog_closing)
+		{
+			end_voice(window_id);
+			current_opcode_message_status[window_id].is_voice_acting = false;
+		}
 	}
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
@@ -1185,6 +1224,7 @@ void voice_init()
 	}
 	else
 	{
+		// == Field ==
 		// All possible message and ask windows
 		ff8_opcode_old_mes = (int (*)(int))ff8_externals.opcode_mes;
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x47], (DWORD)&ff8_opcode_voice_mes);
@@ -1209,7 +1249,23 @@ void voice_init()
 
 		replace_function(ff8_externals.field_get_dialog_string, ff8_field_get_dialog_string);
 		replace_call(ff8_externals.sub_4A0C00 + 0x5F, ff8_show_dialog);
+
+		// == Battle ==
 		replace_function(ff8_externals.battle_get_monster_name_sub_495100, ff8_battle_get_monster_name);
 		replace_function(ff8_externals.battle_get_actor_name_sub_47EAF0, ff8_battle_get_actor_name);
+
+		// == World Map ==
+		replace_call_function(ff8_externals.sub_543CB0 + 0x638, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_5484B0 + 0x524, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54A230 + 0xF, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54D7E0 + 0x72, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + 0x206, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + 0x396, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + 0x3D2, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + 0x67D, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + 0x6A6, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + 0xEED, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54FDA0 + 0xAE, ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54FDA0 + 0x178, ff8_world_dialog_assign_text);
 	}
 }
