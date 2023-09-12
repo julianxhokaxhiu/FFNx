@@ -139,7 +139,7 @@ bool ff8_chara_one_model_save_textures(const CharaOneModel &model, const uint8_t
 		snprintf(name, sizeof(name), "%s/%s-%d", dirname, model.name, texture_id);
 		Tim tim = Tim::fromTimData(chara_one_model_data + texture_pointer);
 
-		if (!tim.save(name)) {
+		if (!tim.save(name, 0, 0, true)) {
 			return false;
 		}
 		++texture_id;
