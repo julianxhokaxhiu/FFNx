@@ -12,6 +12,7 @@
 - 60FPS: Refactor 60FPS battle menu fix and fix ESUI compatibility ( https://github.com/julianxhokaxhiu/FFNx/pull/597 )
 - Ambient: Allow ambient effects to playback in fields that use movies as background
 - Core: Add additional main models eye-to-model mapping
+- Lighting: Fix [`config.toml`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.lighting.toml) load/save logic
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
 
 ## FF8

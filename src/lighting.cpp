@@ -56,12 +56,13 @@ auto Lighting::getConfigEntry(char *key)
 {
 	std::string groupKey = getConfigGroup();
 
-	if (groupKey.empty())
-		return config[key];
-	else if (config.contains(groupKey))
-		return config[groupKey][key];
-	else
-		return toml::v3::node_view<toml::v3::node>();
+	if (!groupKey.empty() && config.contains(groupKey))
+	{
+		auto ret = config[groupKey][key];
+		if (ret) return ret;
+	}
+
+	return config[key];
 }
 
 void Lighting::loadConfig()
@@ -83,13 +84,15 @@ void Lighting::setConfigEntry(const char *key, auto value)
 {
 	std::string groupKey = getConfigGroup();
 
-	if (groupKey.empty())
-		config.insert_or_assign(key, value);
-	else if (config.contains(groupKey))
-		config[groupKey].as_table()->insert_or_assign(key, value);
+	if (!groupKey.empty())
+	{
+		if (config.contains(groupKey))
+			config[groupKey].as_table()->insert_or_assign(key, value);
+		else
+			config.insert_or_assign(groupKey, toml::table{ {key, value} });
+	}
 	else
-		config.insert_or_assign(groupKey, toml::table{
-																					{key, value}});
+		config.insert_or_assign(key, value);
 }
 
 void Lighting::initParamsFromConfig()
