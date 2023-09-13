@@ -1255,17 +1255,18 @@ void voice_init()
 		replace_function(ff8_externals.battle_get_actor_name_sub_47EAF0, ff8_battle_get_actor_name);
 
 		// == World Map ==
-		replace_call_function(ff8_externals.sub_543CB0 + 0x638, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_5484B0 + 0x524, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54A230 + 0xF, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54D7E0 + 0x72, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54E9B0 + 0x206, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54E9B0 + 0x396, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54E9B0 + 0x3D2, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54E9B0 + 0x67D, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54E9B0 + 0x6A6, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54E9B0 + 0xEED, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54FDA0 + 0xAE, ff8_world_dialog_assign_text);
-		replace_call_function(ff8_externals.sub_54FDA0 + 0x178, ff8_world_dialog_assign_text);
+		bool isUs = version == FF8_US_VERSION;
+		replace_call_function(ff8_externals.sub_543CB0 + (isUs ? 0x638 : 0x605), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_5484B0 + (isUs ? 0x524 : 0x4FD), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54A230 + (isUs ? 0xF : 0xD), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54D7E0 + (isUs ? 0x72 : 0x6F), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (isUs ? 0x206 : 0x20C), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (isUs ? 0x396 : 0x3A9), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (isUs ? 0x3D2 : 0x3E5), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (isUs ? 0x67D : 0x68F), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (isUs ? 0x6A6 : 0x6BC), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (isUs ? 0xEED : 0xF72), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54FDA0 + (isUs ? 0xAE : 0xAC), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_54FDA0 + (isUs ? 0x178 : 0x175), ff8_world_dialog_assign_text);
 	}
 }

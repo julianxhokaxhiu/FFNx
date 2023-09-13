@@ -61,7 +61,7 @@ void world_init()
 		playerPosZ = playerPosX+1;
 		playerPosY = playerPosX+2;
 		BYTE *wm_struct;
-		if(version == VERSION_FF8_12_US || version == VERSION_FF8_12_US_NV || version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
+		if(version == FF8_US_VERSION)
 		{
 			wm_struct = (BYTE*)get_absolute_value(ff8_externals.sub_53C750, 0x633);
 			bCollisionEnabled = (DWORD*)get_absolute_value(ff8_externals.sub_53E6B0, 0x4);

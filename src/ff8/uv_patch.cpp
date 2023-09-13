@@ -157,7 +157,7 @@ void uv_patch_init()
 	 * - And when the game uses the UVs from the SSIGPU instruction, we alter
 	 *   the computation of U and V using the forgotten bits.
 	 */
-	bool isUs = version == VERSION_FF8_12_US || version == VERSION_FF8_12_US_NV || version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV;
+	bool isUs = version == FF8_US_VERSION;
 
 	// Worldmap with Fog enabled
 	replace_call(ff8_externals.sub_53BB90 + (isUs ? 0x42D : 0x43B), worldmap_fog_filter_polygons_in_block_1);
