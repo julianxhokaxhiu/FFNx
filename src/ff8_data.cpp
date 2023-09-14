@@ -499,7 +499,7 @@ void ff8_find_externals()
 	ff8_externals.ssigpu_init = get_relative_call(ff8_externals.sub_45B460, 0x26);
 	ff8_externals.d3dcaps = (uint32_t *)get_absolute_value(ff8_externals.ssigpu_init, 0x6C);
 
-	if(version == FF8_US_VERSION)
+	if(FF8_US_VERSION)
 	{
 		ff8_externals.worldmap_section38_position = (uint32_t **)get_absolute_value(ff8_externals.worldmap_sub_53F310, 0x296);
 		ff8_externals.worldmap_section39_position = (uint32_t **)get_absolute_value(ff8_externals.worldmap_sub_53F310, 0x321);
