@@ -1834,7 +1834,7 @@ bimg::ImageContainer* Renderer::createImageContainer(cmrc::file* file, bimg::Tex
     {
         if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: convert image to format %d\n", __func__, targetFormat);
 
-        bimg::ImageContainer* converted = bimg::imageConvert(&defaultAllocator, targetFormat, *img);
+        bimg::ImageContainer* converted = bimg::imageConvert(&defaultAllocator, targetFormat, *img, false);
 
         bimg::imageFree(img);
 

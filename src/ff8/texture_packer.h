@@ -38,7 +38,7 @@ constexpr int VRAM_WIDTH = 1024;
 constexpr int VRAM_HEIGHT = 512;
 constexpr int VRAM_DEPTH = 2;
 constexpr ModdedTextureId INVALID_TEXTURE = ModdedTextureId(0xFFFFFFFF);
-constexpr int MAX_SCALE = 10;
+constexpr int MAX_SCALE = 128;
 
 class TexturePacker {
 public:

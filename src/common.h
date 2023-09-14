@@ -51,6 +51,7 @@
 
 #define NV_VERSION (!(version & 1))
 #define JP_VERSION (version == VERSION_FF8_12_JP || version == VERSION_FF8_12_JP_NV)
+#define FF8_US_VERSION (version == VERSION_FF8_12_US || version == VERSION_FF8_12_US_NV || version == VERSION_FF8_12_US_EIDOS || version == VERSION_FF8_12_US_EIDOS_NV)
 
 // FF8 does not support BLUE text!
 enum

@@ -234,14 +234,16 @@ uint8_t TexturePacker::getMaxScale(const uint8_t *texData) const
 		return 1;
 	}
 
-	if (!_tiledTexs.contains(texData))
+	auto it = _tiledTexs.find(texData);
+
+	if (it == _tiledTexs.end())
 	{
 		if (trace_all || trace_vram) ffnx_warning("TexturePacker::%s Unknown tex data\n", __func__);
 
 		return 0;
 	}
 
-	const TiledTex &tiledTex = _tiledTexs.at(texData);
+	const TiledTex &tiledTex = it->second;
 
 	uint8_t maxScale = 1;
 
@@ -289,13 +291,6 @@ uint8_t TexturePacker::getMaxScale(const uint8_t *texData) const
 				}
 			}
 		}
-	}
-
-	if (maxScale > MAX_SCALE)
-	{
-		ffnx_warning("External texture size cannot exceed original size * %d\n", MAX_SCALE);
-
-		return MAX_SCALE;
 	}
 
 	return maxScale;
@@ -659,6 +654,13 @@ uint8_t TexturePacker::TextureInfos::computeScale(int sourcePixelW, int sourceH,
 		return 0;
 	}
 
+	if (scaleW > MAX_SCALE)
+	{
+		ffnx_warning("External texture size cannot exceed \"original size * %d\" (scale=%d)\n", MAX_SCALE, scaleW);
+
+		return 0;
+	}
+
 	return scaleW;
 }
 
@@ -688,7 +690,7 @@ void TexturePacker::TextureInfos::copyRect(
 		{
 			uint32_t color = *(sourceRGBA + x / scaleRatio + y / scaleRatio * sourceW);
 			uint32_t alpha = color & 0xFF000000;
-			*(targetRGBA + x + y * targetW) = (color & 0xFFFFFF) | (alpha == 0xFF000000 ? 0x7F000000 : 0);
+			*(targetRGBA + x + y * targetW) = (color & 0xFFFFFF) | (alpha >= 0x7F000000 ? 0x7F000000 : 0);
 		}
 	}
 }
@@ -716,6 +718,12 @@ bool TexturePacker::Texture::createImage(uint8_t palette_index, bool has_pal, co
 	}
 
 	uint8_t scale = computeScale();
+
+	if (trace_all || trace_vram)
+	{
+		ffnx_info("TexturePacker::Texture::%s: width=%d height=%d offset=%d format=%d size=%d depth=%d numLayers=%d numMips=%d hasAlpha=%d scale=%d\n", __func__,
+			_image->m_width, _image->m_height, _image->m_offset, _image->m_format, _image->m_size, _image->m_depth, _image->m_numLayers, _image->m_numMips, _image->m_hasAlpha);
+	}
 
 	if (scale == 0)
 	{
@@ -746,7 +754,7 @@ void TexturePacker::Texture::copyRect(int vramXBpp2, int vramY, Tim::Bpp texture
 {
 	if (bpp() == textureBpp) {
 		TextureInfos::copyRect(
-			(const uint32_t *)_image->m_data, vramXBpp2 - x(), vramY - y(), _image->m_width, _scale, bpp(),
+			(const uint32_t *)_image->m_data + _image->m_offset, vramXBpp2 - x(), vramY - y(), _image->m_width, _scale, bpp(),
 			target, targetX, targetY, targetW, targetScale
 		);
 	}
@@ -801,7 +809,8 @@ bool TexturePacker::TextureBackground::createImage(const char *extension, char *
 void TexturePacker::TextureBackground::copyRect(int vramXBpp2, int vramY, Tim::Bpp textureBpp, uint32_t *target, int targetX, int targetY, int targetW, uint8_t targetScale) const
 {
 	const int sourceXBpp2 = vramXBpp2 - x(), sourceY = vramY - y();
-	const uint8_t textureId = _textureId >= 0 ? _textureId : sourceXBpp2 / TEXTURE_WIDTH_BPP16;
+	const bool withTextureId = _textureId >= 0;
+	const uint8_t textureId = withTextureId ? _textureId : sourceXBpp2 / TEXTURE_WIDTH_BPP16;
 	const uint16_t sourceX = (sourceXBpp2 % TEXTURE_WIDTH_BPP16) << (2 - int(textureBpp));
 	const uint16_t key = uint16_t(textureId) | (uint16_t(sourceX / TILE_SIZE) << 4) | (uint16_t(sourceY / TILE_SIZE) << 8) | (uint16_t(textureBpp) << 12);
 
@@ -810,6 +819,10 @@ void TexturePacker::TextureBackground::copyRect(int vramXBpp2, int vramY, Tim::B
 		return;
 	}
 
+	const bimg::ImageContainer *img = image();
+	const uint32_t *imgData = (const uint32_t *)img->m_data + img->m_offset;
+	uint32_t imgWidth = img->m_width;
+	uint8_t imgScale = scale();
 	bool multiMatch = _tileIdsByPosition.count(key) > 1, matched = false;
 
 	// Iterate over matching tiles
@@ -838,11 +851,11 @@ void TexturePacker::TextureBackground::copyRect(int vramXBpp2, int vramY, Tim::B
 		}
 
 		const int col = tileId % _colsCount, row = tileId / _colsCount;
-		const int srcX = _textureId >= 0 ? tile.srcX : col * TILE_SIZE, srcY = _textureId >= 0 ? tile.srcY : row * TILE_SIZE;
+		const int srcX = withTextureId ? tile.srcX : col * TILE_SIZE, srcY = withTextureId ? tile.srcY : row * TILE_SIZE;
 		const int imageXBpp2 = srcX / (4 >> int(textureBpp)) + sourceXBpp2 % (4 << int(textureBpp)), imageY = srcY + sourceY % TILE_SIZE;
 
 		TextureInfos::copyRect(
-			(const uint32_t *)image()->m_data, imageXBpp2, imageY, image()->m_width, scale(), textureBpp,
+			imgData, imageXBpp2, imageY, imgWidth, imgScale, textureBpp,
 			target, targetX, targetY, targetW, targetScale
 		);
 
