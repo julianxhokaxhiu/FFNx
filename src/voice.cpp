@@ -1135,7 +1135,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			std::string actor_name = ff8_decode_text(ff8_battle_actor_name[LOBYTE(*ff8_externals.battle_current_actor_talking)]);
 			std::string tokenized_actor = tokenize_text(actor_name);
 
-			if (trace_all || trace_opcodes) ffnx_trace("[BATTLE]: scene_id=%u,actor=%s,text=%s\n", *ff8_externals.battle_encounter_id, actor_name.c_str(), decoded_text.c_str());
+			if (trace_all || trace_opcodes || trace_battle_text) ffnx_trace("[BATTLE]: scene_id=%u,actor=%s,text=%s\n", *ff8_externals.battle_encounter_id, actor_name.c_str(), decoded_text.c_str());
 
 			char voice_file[MAX_PATH];
 			sprintf(voice_file, "_battle/%s/%s", tokenized_actor.c_str(), tokenized_dialogue.c_str());
