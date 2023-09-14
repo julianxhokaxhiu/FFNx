@@ -28,7 +28,7 @@
 
 # This entry will set the volume to 50%
 # -----------------------------------------------------------------------------
-#[md1stin/6]
+#[md1stin-6]
 #volume = 50
 #shuffle = [ "foo", "bar" ]
 #sequential = [ "foo", "bar" ]
