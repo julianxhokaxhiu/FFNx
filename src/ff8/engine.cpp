@@ -92,7 +92,7 @@ std::string ff8_decode_text(const char* encoded_text)
             break;
           case 0x3:
             if(current_char>=0x30 && current_char<=0x3a)
-              ret.append(ff8_names[index-0x30]);
+              ret.append(ff8_names[current_char-0x30]);
             else if(current_char==0x40)
               ret.append(ff8_names[11]);
             else if(current_char==0x50)
