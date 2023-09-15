@@ -24,6 +24,7 @@
 - Music: Add `ff8_external_music_force_original_filenames` option to use original music names (eg 018s-julia.ogg) instead of just the main identifier in external music ( https://github.com/julianxhokaxhiu/FFNx/pull/594 )
 - Voice: Enable battle dialogs voice acting
 - Voice: Enable worldmap voice acting
+- Voice: Enable tutorial voice acting
 
 # 1.16.0
 

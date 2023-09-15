@@ -1184,6 +1184,8 @@ struct ff8_externals
 	uint32_t opcode_getmusicoffset;
 	uint32_t opcode_drawpoint;
 	uint32_t opcode_battle;
+	uint32_t opcode_tuto;
+	BYTE* current_tutorial_id;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;
 	uint32_t load_midi_segment;

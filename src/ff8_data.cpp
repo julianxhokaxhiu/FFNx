@@ -251,6 +251,9 @@ void ff8_find_externals()
 	ff8_externals.opcode_musicskip = common_externals.execute_opcode_table[0x144];
 	ff8_externals.opcode_musicvolsync = common_externals.execute_opcode_table[0x149];
 	ff8_externals.opcode_getmusicoffset = common_externals.execute_opcode_table[0x16F];
+	ff8_externals.opcode_tuto = common_externals.execute_opcode_table[0x177];
+
+	ff8_externals.current_tutorial_id = (BYTE*)get_absolute_value(ff8_externals.opcode_tuto, 0x2A);
 
 	common_externals.cross_fade_midi = get_relative_call(ff8_externals.opcode_crossmusic, 0x5C);
 	ff8_externals.music_load = get_relative_call(ff8_externals.opcode_musicload, 0x8C);

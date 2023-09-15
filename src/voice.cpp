@@ -1180,6 +1180,41 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			current_opcode_message_status[window_id].is_voice_acting = false;
 		}
 	}
+	else if (mode->mode == FF8_MODE_TUTO)
+	{
+		bool _has_dialog_text_changed = win->field_30 != current_opcode_message_status[window_id].message_dialog_id;
+		bool _is_dialog_closing = is_dialog_closing(current_opcode_message_status[window_id].message_last_transition, message_current_opcode);
+
+		if (_is_dialog_opening)
+		{
+			begin_voice(window_id);
+		}
+		else if (_is_dialog_starting || _has_dialog_text_changed)
+		{
+			std::string decoded_text = ff8_decode_text(win->text_data1);
+			std::string tokenized_dialogue = tokenize_text(decoded_text);
+
+			if (trace_all || trace_opcodes || trace_battle_text) ffnx_trace("[TUTO]: id=%u,text=%s\n", *ff8_externals.current_tutorial_id, decoded_text.c_str());
+
+			char voice_file[MAX_PATH];
+			sprintf(voice_file, "_tuto/%04u/%s", *ff8_externals.current_tutorial_id, tokenized_dialogue.c_str());
+			current_opcode_message_status[window_id].is_voice_acting = nxAudioEngine.playVoice(voice_file, 0, voice_volume);
+		}
+		else if (_is_dialog_closing)
+		{
+			end_voice(window_id);
+			simulate_OK_disabled[window_id] = false;
+			current_opcode_message_status[window_id].is_voice_acting = false;
+		}
+
+		current_opcode_message_status[window_id].message_dialog_id = win->field_30;
+
+		if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
+		{
+			current_opcode_message_status[window_id].is_voice_acting = false;
+			if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) simulate_OK_button = true;
+		}
+	}
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
 	current_opcode_message_status[window_id].message_last_transition = win->open_close_transition;
