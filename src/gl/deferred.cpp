@@ -530,7 +530,7 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 
 		if (shadow_callback != nullptr && !isFieldShadowDrawn && deferred_draws[i].vertextype != TLVERTEX)
 		{
-			newRenderer.setD3DProjection(&current_state.d3dprojection_matrix);
+			newRenderer.setD3DProjection(&deferred_draws[i].state.d3dprojection_matrix);
 			newRenderer.setD3DViweport(&d3dviewport_matrix);
 
 			(*shadow_callback)();
