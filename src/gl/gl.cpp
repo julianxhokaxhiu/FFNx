@@ -304,7 +304,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	newRenderer.bindIndexBuffer(indices, count);
 	newRenderer.setPrimitiveType(RendererPrimitiveType(primitivetype));
 
-	if (!ff8 && enable_lighting && isLightingEnabledTexture) newRenderer.drawWithLighting(normals != nullptr);
+	if (!ff8 && enable_lighting && normals != nullptr && isLightingEnabledTexture) newRenderer.drawWithLighting(true);
 	else newRenderer.draw();
 
 	stats.vertex_count += count;
