@@ -16,6 +16,7 @@
 - Lighting: Fix Bahamut Zero and Supernova not displaying correctly when lighting enabled
 - Lighting: Fix field shadows not displaying during FMV movies
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
+- Voice: Enable tutorial voice acting
 
 ## FF8
 

@@ -87,6 +87,7 @@ int (*opcode_old_ask)(int);
 int (*opcode_old_wmode)();
 int (*opcode_wm_old_message)(uint8_t,uint8_t);
 int (*opcode_wm_old_ask)(uint8_t,uint8_t,uint8_t,uint8_t,WORD*);
+int (*opcode_old_tutor)();
 void (*ff7_set_master_music_volume)(uint32_t);
 
 // FF8
@@ -410,6 +411,15 @@ int opcode_voice_message()
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
 
 	return opcode_old_message();
+}
+
+int opcode_voice_tutor()
+{
+	static const int window_id = 0;
+
+	current_opcode_message_status[window_id].message_dialog_id = get_field_parameter<byte>(0);
+
+	return opcode_old_tutor();
 }
 
 int opcode_voice_parse_options(uint8_t window_id, uint8_t dialog_id, uint8_t first_question_id, uint8_t last_question_id, WORD *current_question_id)
@@ -840,6 +850,54 @@ void ff7_display_battle_action_text()
 	}
 }
 
+// -- MENU --
+
+int ff7_menu_tutorial_render()
+{
+	static const int window_id = 0;
+	int dialog_id = current_opcode_message_status[window_id].message_dialog_id;
+
+	byte message_current_opcode = *ff7_externals.menu_tutorial_window_state;
+
+	bool _is_dialog_opening = (current_opcode_message_status[window_id].message_last_opcode == 0 && message_current_opcode == 1);
+	bool _is_dialog_starting = (current_opcode_message_status[window_id].message_last_opcode == 1 && message_current_opcode == 2);
+	bool _is_dialog_closing = (current_opcode_message_status[window_id].message_last_opcode == 3 && message_current_opcode == 0);
+
+	if (_is_dialog_opening)
+	{
+		begin_voice(window_id);
+		current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+	}
+	else if (_is_dialog_starting)
+	{
+		std::string decoded_text = decode_ff7_text((char*)*ff7_externals.menu_tutorial_window_text_ptr);
+		std::string tokenized_dialogue = tokenize_text(decoded_text);
+
+		if (trace_all || trace_opcodes) ffnx_trace("[TUTOR]: id=%d,text=%s\n", dialog_id, decoded_text.c_str());
+
+		char voice_file[MAX_PATH];
+		sprintf(voice_file, "_tutor/%04u/%s", dialog_id, tokenized_dialogue.c_str());
+		current_opcode_message_status[window_id].is_voice_acting = nxAudioEngine.playVoice(voice_file, 0, voice_volume);
+	}
+	else if (_is_dialog_closing)
+	{
+		end_voice(window_id);
+		simulate_OK_disabled[window_id] = false;
+		current_opcode_message_status[window_id].is_voice_acting = false;
+	}
+
+	// Auto close the message if it was voice acted and the audio file has finished playing
+	if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
+	{
+		current_opcode_message_status[window_id].is_voice_acting = false;
+		if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) (*ff7_externals.field_global_object_ptr)->field_80 |= 0x20;
+	}
+
+	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
+
+	return ff7_externals.menu_tutorial_sub_6C49FD();
+}
+
 //=============================================================================
 
 char* ff8_battle_get_monster_name(int idx)
@@ -1252,10 +1310,14 @@ void voice_init()
 		replace_call_function(ff7_externals.world_opcode_ask_sub_75EEBB + 0x3C, opcode_wm_ask);
 		replace_call_function(ff7_externals.world_sub_75EF46 + 0xAF, opcode_wm_ask);
 
+		opcode_old_tutor = (int (*)())ff7_externals.opcode_tutor;
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x21], (DWORD)&opcode_voice_tutor);
+
 		replace_function(ff7_externals.add_text_to_display_queue, ff7_add_text_to_display_queue);
 		replace_function(ff7_externals.update_display_text_queue, ff7_update_display_text_queue);
 		replace_function(ff7_externals.display_battle_action_text_42782A, ff7_display_battle_action_text);
 		replace_call_function(ff7_externals.run_enemy_ai_script + 0xB7F, ff7_enqueue_script_display_string);
+		replace_call_function(ff7_externals.menu_sub_6CB56A + 0x2B7, ff7_menu_tutorial_render);
 	}
 	else
 	{

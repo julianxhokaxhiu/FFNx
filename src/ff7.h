@@ -2690,6 +2690,9 @@ struct ff7_externals
 	void *(*menu_sub_6FAC38)(uint32_t,uint32_t,uint8_t,uint8_t,uint32_t);
 	BOOL (*write_save_file)(char);
 	uint32_t *menu_subs_call_table;
+	int (*menu_tutorial_sub_6C49FD)();
+	BYTE* menu_tutorial_window_state;
+	DWORD* menu_tutorial_window_text_ptr;
 	uint32_t status_menu_sub;
 	uint32_t draw_status_limit_level_stats;
 	uint32_t timer_menu_sub;
@@ -2827,6 +2830,7 @@ struct ff7_externals
 	uint32_t opcode_message;
 	uint32_t opcode_ask;
 	uint32_t opcode_wmode;
+	uint32_t opcode_tutor;
 	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_load_and_play_with_speed;

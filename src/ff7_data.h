@@ -282,10 +282,14 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_start = get_absolute_value(main_loop, 0x627);
 	ff7_externals.menu_sub_6CB56A = get_relative_call(ff7_externals.menu_sub_6CDA83, 0xDE);
 	ff7_externals.menu_subs_call_table = (uint32_t *)get_absolute_value(ff7_externals.menu_sub_6CB56A, 0x2EC);
+	ff7_externals.menu_tutorial_sub_6C49FD = (int (*)())get_relative_call(ff7_externals.menu_sub_6CB56A, 0x2B7);
 	ff7_externals.timer_menu_sub = ff7_externals.menu_subs_call_table[0];
 	ff7_externals.status_menu_sub = ff7_externals.menu_subs_call_table[5];
 	ff7_externals.menu_sound_slider_loop = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.menu_sub_6FEDB0 = ff7_externals.menu_subs_call_table[10];
+
+	ff7_externals.menu_tutorial_window_state = (BYTE*)get_absolute_value((uint32_t)ff7_externals.menu_tutorial_sub_6C49FD, 0x9);
+	ff7_externals.menu_tutorial_window_text_ptr = (DWORD*)get_absolute_value((uint32_t)ff7_externals.menu_tutorial_sub_6C49FD, 0x18);
 
 	switch(version)
 	{
@@ -479,6 +483,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_global_object_ptr = (ff7_modules_global_object**)get_absolute_value(ff7_externals.field_init_event_60BACF, 0x1C);
 
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(ff7_externals.execute_opcode, 0x10D);
+	ff7_externals.opcode_tutor = common_externals.execute_opcode_table[0x21];
 	ff7_externals.opcode_goldu = common_externals.execute_opcode_table[0x39];
 	ff7_externals.opcode_dlitm = common_externals.execute_opcode_table[0x59];
 	ff7_externals.opcode_smtra = common_externals.execute_opcode_table[0x5B];
