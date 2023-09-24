@@ -19,19 +19,34 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input a_position, a_color0, a_texcoord0
-$output v_color0, v_texcoord0
+$input a_position, a_color0, a_texcoord0, a_normal
+$output v_color0, v_texcoord0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
+#include "FFNx.common.sh"
 
 uniform mat4 d3dViewport;
 uniform mat4 d3dProjection;
 uniform mat4 worldView;
+uniform mat4 normalMatrix;
+uniform mat4 invViewMatrix;
+uniform vec4 gameLightingFlags;
+uniform vec4 gameGlobalLightColor;
+uniform vec4 gameLightColor1;
+uniform vec4 gameLightColor2;
+uniform vec4 gameLightColor3;
+uniform vec4 gameLightDir1;
+uniform vec4 gameLightDir2;
+uniform vec4 gameLightDir3;
+uniform vec4 gameScriptedLightColor;
 
 uniform vec4 VSFlags;
 #define isTLVertex VSFlags.x > 0.0
 #define blendMode VSFlags.y
 #define isFBTexture VSFlags.z > 0.0
+
+#define gameLightingMode gameLightingFlags.x
+#define GAME_LIGHTING_PER_VERTEX 1
 
 void main()
 {
@@ -39,7 +54,7 @@ void main()
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
 
-    color.rgba = color.bgra;
+    color.rgb = color.bgr;
 
     if (isTLVertex)
     {
@@ -50,6 +65,21 @@ void main()
     else
     {
         pos = mul(mul(d3dViewport,mul(d3dProjection,worldView)), vec4(pos.xyz, 1.0));
+        v_normal0 = mul(normalMatrix, vec4(a_normal, 0.0)).xyz;
+
+        // In this default shader, lighting is applied in gamma space so that it does better match the original lighting
+        if (gameLightingMode == GAME_LIGHTING_PER_VERTEX)
+        {
+            vec3 worldNormal = mul(invViewMatrix, vec4(v_normal0, 0)).xyz;
+            float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
+            float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
+            float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
+            vec3 light1Ambient = gameLightColor1.rgb * dotLight1 * dotLight1;
+            vec3 light2Ambient = gameLightColor2.rgb * dotLight2 * dotLight2;
+            vec3 light3Ambient = gameLightColor3.rgb * dotLight3 * dotLight3;
+            vec3 lightAmbient = gameScriptedLightColor.rgb * (gameGlobalLightColor.rgb + light1Ambient + light2Ambient + light3Ambient);
+            color.rgb *= gameGlobalLightColor.w * lightAmbient;
+        }
 
         if (color.a > 0.5) color.a = 0.5;
     }

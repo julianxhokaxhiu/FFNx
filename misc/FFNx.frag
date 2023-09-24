@@ -20,7 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0
+$input v_color0, v_texcoord0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.common.sh"
@@ -28,6 +28,8 @@ $input v_color0, v_texcoord0
 SAMPLER2D(tex_0, 0);
 SAMPLER2D(tex_1, 1);
 SAMPLER2D(tex_2, 2);
+
+uniform mat4 invViewMatrix;
 
 uniform vec4 VSFlags;
 uniform vec4 FSAlphaFlags;
@@ -37,6 +39,15 @@ uniform vec4 FSTexFlags;
 uniform vec4 FSMovieFlags;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
+uniform vec4 gameLightingFlags;
+uniform vec4 gameGlobalLightColor;
+uniform vec4 gameLightColor1;
+uniform vec4 gameLightColor2;
+uniform vec4 gameLightColor3;
+uniform vec4 gameLightDir1;
+uniform vec4 gameLightDir2;
+uniform vec4 gameLightDir3;
+uniform vec4 gameScriptedLightColor;
 
 #define isTLVertex VSFlags.x > 0.0
 #define isFBTexture VSFlags.z > 0.0
@@ -88,9 +99,12 @@ uniform vec4 TimeData;
 #define isTimeEnabled TimeData.x > 0.0
 #define isTimeFilterEnabled TimeData.x > 0.0 && TimeData.y > 0.0
 
+#define gameLightingMode gameLightingFlags.x
+#define GAME_LIGHTING_PER_PIXEL 2
+
 void main()
 {
-	vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
+    vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
 
     if (isTexture)
     {
@@ -274,10 +288,23 @@ void main()
 
     if (isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
 
-
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
     color.rgb = toGamma(color.rgb);
 
-
+    // In this default shader, lighting is applied in gamma space so that it does better match the original lighting
+    if (gameLightingMode == GAME_LIGHTING_PER_PIXEL)
+    {
+        vec3 normal = normalize(v_normal0);
+        vec3 worldNormal = mul(invViewMatrix, vec4(normal, 0)).xyz;
+        float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
+        float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
+        float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
+        vec3 light1Ambient = gameLightColor1.rgb * dotLight1 * dotLight1;
+        vec3 light2Ambient = gameLightColor2.rgb * dotLight2 * dotLight2;
+        vec3 light3Ambient = gameLightColor3.rgb * dotLight3 * dotLight3;
+        vec3 lightAmbient = gameScriptedLightColor.rgb * (gameGlobalLightColor.rgb + light1Ambient + light2Ambient + light3Ambient);
+        color.rgb *= gameGlobalLightColor.w * lightAmbient;
+    }
+    
     gl_FragColor = color;
 }

@@ -307,7 +307,7 @@ struct struc_106
 	uint32_t field_0;
 	uint32_t color;
 	vector3<float> point;
-	struct abgr_color d3dcol;
+	struct bgra_color d3dcol;
 };
 
 struct ff7_light
@@ -317,8 +317,8 @@ struct ff7_light
 	struct struc_106 *color_1;
 	struct struc_106 *color_2;
 	struct struc_106 *color_3;
-	struct abgr_color global_light_color_abgr;
-	struct abgr_color global_light_color_abgr_norm;
+	struct bgra_color global_light_color_abgr;
+	struct bgra_color global_light_color_abgr_norm;
 	uint32_t global_light_color_rgba;
 	struct matrix field_38;
 	struct matrix field_78;
@@ -338,7 +338,7 @@ struct ff7_light
 	uint32_t field_1A0;
 	uint32_t field_1A4[256];
 	uint32_t field_5A4;
-	uint32_t color;
+	bgra_color_ui8 color;
 };
 
 struct ff7_polygon_set
@@ -2870,6 +2870,7 @@ struct ff7_externals
 	int (*field_get_smooth_interpolated_value)(int, int, int, int);
 	void (*field_evaluate_encounter_rate_60B2C6)();
 	uint32_t field_animate_3d_models_6392BB;
+	uint32_t field_apply_kawai_op_64A070;
 	void (*field_blink_3d_model_649B50)(field_animation_data*, field_model_blink_data*);
 	short *field_player_model_id;
 	WORD *field_n_models;

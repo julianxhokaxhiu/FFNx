@@ -95,6 +95,8 @@ struct tex_header *sub_673F5C(struct struc_91 *struc91);
 void draw_single_triangle(struct nvertex *vertices);
 void sub_6B2720(struct indexed_primitive *ip);
 void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object);
+void fill_light_data(struct light_data* pOutLightData, struct ff7_polygon_set *polygon_set);
+void update_view_matrix(struct ff7_game_obj *game_object);
 
 // loaders
 struct anim_header *load_animation(struct file_context *file_context, char *filename);

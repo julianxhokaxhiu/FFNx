@@ -28,19 +28,12 @@ void lighting_debug(bool* isOpen)
         return;
     }
 
-    if (!enable_lighting)
-    {
-        ImGui::Text("Lighting engine not enabled.");
-		ImGui::End();
-		return;
-    }
-
-    if (!(getmode_cached()->driver_mode == MODE_FIELD || getmode_cached()->driver_mode == MODE_BATTLE))
+    /*if (!(getmode_cached()->driver_mode == MODE_FIELD || getmode_cached()->driver_mode == MODE_BATTLE))
 	{
 		ImGui::Text("Not currently on a battle/field.");
 		ImGui::End();
 		return;
-	}
+	}*/
 
     ImGui::Text("Group ID: %s", lighting.getConfigGroup().c_str());
 
@@ -58,6 +51,11 @@ void lighting_debug(bool* isOpen)
     if (ImGui::Checkbox("Enable Environment Lighting", &isEnvironmentLightingEnabled))
     {
         lighting.setEnvironmentLightingEnabled(isEnvironmentLightingEnabled);
+    }
+    int gameLightingMode = game_lighting;
+    if (ImGui::Combo("Game Lighting", &gameLightingMode, "Original (CPU)\0Per-Vertex (GPU)\0Per-Pixel (GPU)\0"))
+    {
+        game_lighting = gameLightingMode;
     }
     ImGui::BeginGroup();
     if (ImGui::Button("Load config from disk")) {

@@ -19,7 +19,7 @@ ambient_light_intensity = 1.0
 ambient_light_color = [ 1.0, 1.0, 1.0 ]
 material_roughness = 0.7
 material_metallic = 0.5
-material_specular = 0.0
+material_specular = 0.2
 
 disable_lighting_textures = [
   "STAGE01_T05", "STAGE02_T01", "STAGE02_T02", "STAGE03_T01", "STAGE04_T01",

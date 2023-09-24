@@ -45,7 +45,7 @@ uint32_t num_sorted_deferred;
 int lastBlitDrawCallIndex = -1;
 
 // save a draw call for later processing
-uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
+uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, struct light_data* lightdata, uint32_t clip, uint32_t mipmap)
 {
 	if (ff8 || !enable_lighting)
 	{
@@ -130,6 +130,12 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	{
 		deferred_draws[defer].normals = (vector3<float>*)driver_malloc(sizeof(*normals) * vertexcount);
 		memcpy(deferred_draws[defer].normals, normals, sizeof(*normals) * vertexcount);
+	}
+
+	if(lightdata) 
+	{
+		deferred_draws[defer].lightdata = (struct light_data*)driver_malloc(sizeof(struct light_data));
+		memcpy(deferred_draws[defer].lightdata, lightdata, sizeof(struct light_data));
 	}
 
 	num_deferred++;
@@ -551,6 +557,7 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 			deferred_draws[i].count,
 			0,
 			deferred_draws[i].boundingbox,
+			deferred_draws[i].lightdata,
 			deferred_draws[i].clip,
 			deferred_draws[i].mipmap
 		);
@@ -565,6 +572,8 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 		deferred_draws[i].normals = nullptr;
 		driver_free(deferred_draws[i].boundingbox);
 		deferred_draws[i].boundingbox = nullptr;
+		driver_free(deferred_draws[i].lightdata);
+		deferred_draws[i].lightdata = nullptr;
 	}
 
 	num_deferred = 0;
@@ -676,6 +685,7 @@ void gl_draw_sorted_deferred()
 								  deferred_sorted_draws[next].deferred_draw.count,
 								  0,
 								  0,
+								  0,
 								  deferred_sorted_draws[next].deferred_draw.clip,
 								  deferred_sorted_draws[next].deferred_draw.mipmap
 								  );
@@ -710,6 +720,8 @@ void gl_check_deferred(struct texture_set *texture_set)
 			deferred_draws[i].normals = nullptr;
 			driver_free(deferred_draws[i].boundingbox);
 			deferred_draws[i].boundingbox = nullptr;
+			driver_free(deferred_draws[i].lightdata);
+			deferred_draws[i].lightdata = nullptr;
 		}
 	}
 

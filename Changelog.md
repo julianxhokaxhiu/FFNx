@@ -15,6 +15,7 @@
 - Lighting: Fix [`config.toml`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.lighting.toml) load/save logic
 - Lighting: Fix Bahamut Zero and Supernova not displaying correctly when lighting enabled
 - Lighting: Fix field shadows not displaying during FMV movies
+- Lighting: Implemented GPU-based original game lighting that better matches PSX version
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
 - Voice: Enable tutorial voice acting
 

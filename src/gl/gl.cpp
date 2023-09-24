@@ -26,6 +26,7 @@
 #include <algorithm>
 
 #include "../renderer.h"
+#include "../lighting.h"
 
 #include "../cfg.h"
 #include "../gl.h"
@@ -162,17 +163,11 @@ void gl_load_state(struct driver_state *src)
 	gl_set_d3dprojection_matrix(&src->d3dprojection_matrix);
 }
 
-void gl_draw_without_lighting(struct indexed_primitive* ip, uint32_t clip)
-{
-	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, clip, true);
-}
-
-// draw a set of primitives with lighting
-void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, uint32_t clip)
+void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_primitive* ip, struct polygon_data *polydata, struct light_data* lightdata)
 {
 	bool has_model_data = false;
-	static std::vector<vector3<float>> normals;
 	static vector3<float> zero = { 0.0f, 0.0f, 0.0f };
+	auto& normals = *pNormals;
 
 	normals.resize(ip->vertexcount);
 	std::fill(normals.begin(), normals.end(), zero);
@@ -225,12 +220,32 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 			normalize_vector(&normals[idx]);
 		}
 	}
+}
 
-	gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normals.data(), ip->vertexcount, ip->indices, ip->indexcount, 0, polydata->boundingboxdata, clip, true);
+void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
+{
+	static std::vector<vector3<float>> normals;
+	if (!ff8 && lightdata != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL) 
+	{
+		gl_calculate_normals(&normals, ip, polydata, lightdata);
+		gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normals.data(), ip->vertexcount, ip->indices, ip->indexcount, 0, 0, lightdata, clip, true);
+	} else gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, nullptr, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, lightdata, clip, true);
+}
+
+// draw a set of primitives with lighting
+void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
+{
+	static std::vector<vector3<float>> normals;
+	if (!ff8)
+	{ 
+		gl_calculate_normals(&normals, ip, polydata, lightdata);
+		gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normals.data(), ip->vertexcount, ip->indices, ip->indexcount, 0, polydata->boundingboxdata, lightdata, clip, true);
+	}
+	else gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, nullptr, ip->vertexcount, ip->indices, ip->indexcount, 0, polydata->boundingboxdata, lightdata, clip, true);
 }
 
 // main rendering routine, draws a set of primitives according to the current render state
-void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, vector3<float>* normals, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, struct boundingbox* boundingbox, uint32_t clip, uint32_t mipmap)
+void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, struct vector3<float>* normals, uint32_t vertexcount, WORD *indices, uint32_t count, struct graphics_object *graphics_object, struct boundingbox* boundingbox, struct light_data* lightdata, uint32_t clip, uint32_t mipmap)
 {
 	FILE *log;
 	uint32_t i;
@@ -262,7 +277,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		current_state.texture_filter = saved_texture_filter;
 		return;
 	}
-	else if(gl_defer_draw(primitivetype, vertextype, vertices, normals, vertexcount, indices, count, boundingbox, clip, mipmap))
+	else if(gl_defer_draw(primitivetype, vertextype, vertices, normals, vertexcount, indices, count, boundingbox, lightdata, clip, mipmap))
 	{
 		current_state.texture_filter = saved_texture_filter;
 		return;
@@ -304,7 +319,15 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	newRenderer.bindIndexBuffer(indices, count);
 	newRenderer.setPrimitiveType(RendererPrimitiveType(primitivetype));
 
-	if (!ff8 && enable_lighting && normals != nullptr && isLightingEnabledTexture) newRenderer.drawWithLighting(true);
+	if(!ff8 && lightdata != nullptr && normals != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL) 
+	{
+		newRenderer.setGameLightData(lightdata);
+	} else newRenderer.setGameLightData(nullptr);
+
+	if (!ff8 && enable_lighting && normals != nullptr && isLightingEnabledTexture) 
+	{
+		newRenderer.drawWithLighting(true);
+	}
 	else newRenderer.draw();
 
 	stats.vertex_count += count;

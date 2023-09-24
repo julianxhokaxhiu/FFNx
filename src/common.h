@@ -120,6 +120,18 @@ struct game_mode
 	uint32_t main_loop;
 };
 
+struct light_data
+{
+	bgra_color global_light_color;
+	vector3<float> light_dir_1;
+	bgra_color light_color_1;
+	vector3<float> light_dir_2;
+	bgra_color light_color_2;
+	vector3<float> light_dir_3;
+	bgra_color light_color_3;
+	bgra_color scripted_light_color;
+};
+
 gfx_init common_init;
 gfx_cleanup common_cleanup;
 gfx_lock common_lock;

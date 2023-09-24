@@ -356,6 +356,15 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x208, ff7::world::wm0_draw_minimap_points_graphics_object);
 	}
 
+	if (game_lighting != GAME_LIGHTING_ORIGINAL)
+	{
+		// Disables unnecesary lighting in Chocobos applied throught the KAWAI op
+		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x864, 0x90, 5);	
+		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x2E4, 0x90, 5);
+		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x3A3, 0x90, 5);
+		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x23C, 0x90, 5);
+	}
+
 	//#############################
 	// steam save game preservation
 	//#############################

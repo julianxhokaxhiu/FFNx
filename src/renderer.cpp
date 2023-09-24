@@ -146,6 +146,13 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, overall color gamut %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
 
+    internalState.gameLightingFlags = {
+        (float)game_lighting,
+        NULL,
+        NULL,
+        NULL,
+    };
+
     setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
     setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
     setUniform("FSMiscFlags", bgfx::UniformType::Vec4, internalState.FSMiscFlags.data());
@@ -161,6 +168,16 @@ void Renderer::setCommonUniforms()
     setUniform("normalMatrix", bgfx::UniformType::Mat4, internalState.normalMatrix);
     setUniform("viewMatrix", bgfx::UniformType::Mat4, internalState.viewMatrix);
     setUniform("invViewMatrix", bgfx::UniformType::Mat4, internalState.invViewMatrix);
+
+    setUniform("gameLightingFlags", bgfx::UniformType::Vec4, internalState.gameLightingFlags.data());
+    setUniform("gameGlobalLightColor", bgfx::UniformType::Vec4, internalState.gameGlobalLightColor);
+    setUniform("gameLightColor1", bgfx::UniformType::Vec4, internalState.gameLightColor1);
+    setUniform("gameLightColor2", bgfx::UniformType::Vec4, internalState.gameLightColor2);
+    setUniform("gameLightColor3", bgfx::UniformType::Vec4, internalState.gameLightColor3);
+    setUniform("gameLightDir1", bgfx::UniformType::Vec4, internalState.gameLightDir1);
+    setUniform("gameLightDir2", bgfx::UniformType::Vec4, internalState.gameLightDir2);
+    setUniform("gameLightDir3", bgfx::UniformType::Vec4, internalState.gameLightDir3);
+    setUniform("gameScriptedLightColor", bgfx::UniformType::Vec4, internalState.gameScriptedLightColor);
 }
 
 void Renderer::setLightingUniforms()
@@ -394,6 +411,9 @@ void Renderer::resetState()
     setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB);
     setGamutOverride();
     setGammaType();
+    setGameLightData();
+
+    resetViewMatrixFlag();
 };
 
 void Renderer::renderFrame()
@@ -2449,7 +2469,7 @@ void Renderer::doScissorTest(bool flag)
 void Renderer::setWireframeMode(bool flag)
 {
     if (flag) bgfx::setDebug(BGFX_DEBUG_WIREFRAME);
-};
+}
 
 void Renderer::setViewMatrix(struct matrix* matrix)
 {
@@ -2457,12 +2477,24 @@ void Renderer::setViewMatrix(struct matrix* matrix)
 
     bx::mtxInverse(internalState.invViewMatrix, internalState.viewMatrix);
 
+    internalState.isViewMatrixSet = true;
+
     if (uniform_log) printMatrix(__func__, internalState.viewMatrix);
-};
+}
 
 float* Renderer::getViewMatrix()
 {
     return internalState.viewMatrix;
+}
+
+ bool Renderer::isViewMatrixSet()
+ {
+    return internalState.isViewMatrixSet;
+ }
+
+void Renderer::resetViewMatrixFlag()
+{
+    internalState.isViewMatrixSet = false;
 }
 
 void Renderer::setWorldViewMatrix(struct matrix *matrix)
@@ -2545,4 +2577,103 @@ void Renderer::setTimeFilterEnabled(bool flag)
 bool Renderer::isTimeFilterEnabled()
 {
     return static_cast<bool>(internalState.TimeData[1]);
+}
+
+void Renderer::setGameLightData(light_data* lightdata)
+{
+    struct game_mode* mode = getmode_cached();
+
+    if (lightdata != nullptr)
+    {
+        internalState.gameGlobalLightColor[0] = lightdata->global_light_color.r;
+        internalState.gameGlobalLightColor[1] = lightdata->global_light_color.g;
+        internalState.gameGlobalLightColor[2] = lightdata->global_light_color.b;
+        internalState.gameGlobalLightColor[3] = enable_lighting ? 3.0f : 1.15f;
+
+        internalState.gameLightColor1[0] = lightdata->light_color_1.r;
+        internalState.gameLightColor1[1] = lightdata->light_color_1.g;
+        internalState.gameLightColor1[2] = lightdata->light_color_1.b;
+        internalState.gameLightColor1[3] = 1.0;
+
+        internalState.gameLightColor2[0] = lightdata->light_color_2.r;
+        internalState.gameLightColor2[1] = lightdata->light_color_2.g;
+        internalState.gameLightColor2[2] = lightdata->light_color_2.b;
+        internalState.gameLightColor2[3] = 1.0;
+
+        internalState.gameLightColor3[0] = lightdata->light_color_3.r;
+        internalState.gameLightColor3[1] = lightdata->light_color_3.g;
+        internalState.gameLightColor3[2] = lightdata->light_color_3.b;
+        internalState.gameLightColor3[3] = 1.0;
+
+        if (mode->driver_mode == MODE_WORLDMAP)
+        {           
+            internalState.gameLightDir1[0] = lightdata->light_dir_1.x;
+            internalState.gameLightDir1[1] = lightdata->light_dir_1.z;
+            internalState.gameLightDir1[2] = lightdata->light_dir_1.y;
+
+            internalState.gameLightDir2[0] = lightdata->light_dir_2.x;
+            internalState.gameLightDir2[1] = lightdata->light_dir_2.z;
+            internalState.gameLightDir2[2] = lightdata->light_dir_2.y;
+
+            internalState.gameLightDir3[0] = lightdata->light_dir_3.x;
+            internalState.gameLightDir3[1] = lightdata->light_dir_3.z;
+            internalState.gameLightDir3[2] = lightdata->light_dir_3.y;
+        }
+        else 
+        {
+            internalState.gameLightDir1[0] = -lightdata->light_dir_1.x;
+            internalState.gameLightDir1[1] = -lightdata->light_dir_1.y;
+            internalState.gameLightDir1[2] = -lightdata->light_dir_1.z;
+
+            internalState.gameLightDir2[0] = -lightdata->light_dir_2.x;
+            internalState.gameLightDir2[1] = -lightdata->light_dir_2.y;
+            internalState.gameLightDir2[2] = -lightdata->light_dir_2.z;
+
+            internalState.gameLightDir3[0] = -lightdata->light_dir_3.x;
+            internalState.gameLightDir3[1] = -lightdata->light_dir_3.y;
+            internalState.gameLightDir3[2] = -lightdata->light_dir_3.z;
+        }
+
+        internalState.gameScriptedLightColor[0] = lightdata->scripted_light_color.r;
+        internalState.gameScriptedLightColor[1] = lightdata->scripted_light_color.g;
+        internalState.gameScriptedLightColor[2] = lightdata->scripted_light_color.b;
+    }
+    else
+    {
+        internalState.gameGlobalLightColor[0] = 1.0;
+        internalState.gameGlobalLightColor[1] = 1.0;
+        internalState.gameGlobalLightColor[2] = 1.0;
+        internalState.gameGlobalLightColor[3] = 1;
+
+        internalState.gameLightColor1[0] = 0;
+        internalState.gameLightColor1[1] = 0;
+        internalState.gameLightColor1[2] = 0;
+        internalState.gameLightColor1[3] = 0;
+
+        internalState.gameLightColor2[0] = 0;
+        internalState.gameLightColor2[1] = 0;
+        internalState.gameLightColor2[2] = 0;
+        internalState.gameLightColor2[3] = 0;
+
+        internalState.gameLightColor3[0] = 0;
+        internalState.gameLightColor3[1] = 0;
+        internalState.gameLightColor3[2] = 0;
+        internalState.gameLightColor3[3] = 0;
+
+        internalState.gameLightDir1[0] = 0;
+        internalState.gameLightDir1[1] = 0;
+        internalState.gameLightDir1[2] = 0;
+
+        internalState.gameLightDir2[0] = 0;
+        internalState.gameLightDir2[1] = 0;
+        internalState.gameLightDir2[2] = 0;
+
+        internalState.gameLightDir3[0] = 0;
+        internalState.gameLightDir3[1] = 0;
+        internalState.gameLightDir3[2] = 0;
+
+        internalState.gameScriptedLightColor[0] = 1.0;
+        internalState.gameScriptedLightColor[1] = 1.0;
+        internalState.gameScriptedLightColor[2] = 1.0;
+    }
 }

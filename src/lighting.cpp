@@ -133,7 +133,7 @@ void Lighting::initParamsFromConfig()
 	float metallic = config["material_metallic"].value_or(0.5);
 	lighting.setMetallic(metallic);
 
-	float specular = config["material_specular"].value_or(0.0);
+	float specular = config["material_specular"].value_or(0.2);
 	lighting.setSpecular(specular);
 
 	int shadowMapResolution = config["shadowmap_resolution"].value_or(2048);
@@ -278,56 +278,6 @@ void Lighting::ff7_load_ibl()
 	}
 
 	prev_mode = mode->driver_mode;
-}
-
-void Lighting::ff7_get_field_view_matrix(struct matrix *outViewMatrix)
-{
-	struct matrix viewMatrix;
-	identity_matrix(&viewMatrix);
-
-	byte *level_data = *ff7_externals.field_level_data_pointer;
-	if (!level_data)
-	{
-		return;
-	}
-
-	ff7_camdata *field_camera_data = *ff7_externals.field_camera_data;
-	if (!field_camera_data)
-	{
-		return;
-	}
-
-	vector3<float> vx = {(float)(field_camera_data->eye.x), (float)(field_camera_data->eye.y), (float)(field_camera_data->eye.z)};
-	vector3<float> vy = {(float)(field_camera_data->target.x), (float)(field_camera_data->target.y), (float)(field_camera_data->target.z)};
-	vector3<float> vz = {(float)(field_camera_data->up.x), (float)(field_camera_data->up.y), (float)(field_camera_data->up.z)};
-
-	divide_vector(&vx, 4096.0f, &vx);
-	divide_vector(&vy, 4096.0f, &vy);
-	divide_vector(&vz, 4096.0f, &vz);
-
-	float ox = static_cast<float>(field_camera_data->position.x);
-	float oy = static_cast<float>(field_camera_data->position.y);
-	float oz = static_cast<float>(field_camera_data->position.z);
-
-	float tx = ox;
-	float ty = oy;
-	float tz = oz;
-
-	viewMatrix._11 = vx.x;
-	viewMatrix._21 = vx.y;
-	viewMatrix._31 = vx.z;
-	viewMatrix._12 = vy.x;
-	viewMatrix._22 = vy.y;
-	viewMatrix._32 = vy.z;
-	viewMatrix._13 = vz.x;
-	viewMatrix._23 = vz.y;
-	viewMatrix._33 = vz.z;
-	viewMatrix._41 = tx;
-	viewMatrix._42 = ty;
-	viewMatrix._43 = tz;
-	viewMatrix._44 = 1.0;
-
-	memcpy(outViewMatrix, &viewMatrix, sizeof(matrix));
 }
 
 void Lighting::ff7_create_walkmesh(std::vector<struct walkmeshEdge> &edges)
@@ -690,7 +640,7 @@ void Lighting::createWalkmeshBorder(std::vector<struct walkmeshEdge> &edges, flo
 	}
 }
 
-struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox *sceneAabb, struct matrix *viewMatrix)
+struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox *sceneAabb)
 {
 	byte *level_data = *ff7_externals.field_level_data_pointer;
 	if (!level_data)
@@ -746,7 +696,9 @@ struct boundingbox Lighting::calcFieldSceneAabb(struct boundingbox *sceneAabb, s
 	for (int j = 0; j < 8; ++j)
 	{
 		vector3<float> cornerViewSpace;
-		transform_point(viewMatrix, &corners[j], &cornerViewSpace);
+		struct matrix viewMatrix;
+		::memcpy(&viewMatrix.m[0][0], newRenderer.getViewMatrix(), sizeof(viewMatrix.m));
+		transform_point(&viewMatrix, &corners[j], &cornerViewSpace);
 
 		bb.min_x = std::min(bb.min_x, cornerViewSpace.x);
 		bb.min_y = std::min(bb.min_y, cornerViewSpace.y);
@@ -796,8 +748,6 @@ void Lighting::draw(struct game_obj *game_object)
 
 	ff7_load_ibl();
 
-	struct matrix viewMatrix;
-	struct matrix *pViewMatrix = &viewMatrix;
 	struct boundingbox sceneAabb = calculateSceneAabb();
 
 	switch(mode->driver_mode)
@@ -810,12 +760,7 @@ void Lighting::draw(struct game_obj *game_object)
 				initParamsFromConfig();
 			}
 
-			// Get Field view matrix
-			// TODO: When movie is playing replace with movie camera matrix
-			ff7_get_field_view_matrix(&viewMatrix);
-
-			struct boundingbox fieldSceneAabb = calcFieldSceneAabb(&sceneAabb, &viewMatrix);
-			newRenderer.setViewMatrix(&viewMatrix);
+			struct boundingbox fieldSceneAabb = calcFieldSceneAabb(&sceneAabb);
 			updateLightMatrices(&fieldSceneAabb);
 			gl_draw_deferred(&drawFieldShadow);
 			break;
@@ -827,16 +772,11 @@ void Lighting::draw(struct game_obj *game_object)
 				initParamsFromConfig();
 			}
 		default:
-			pViewMatrix = VREF(game_object, camera_matrix);
-			if (pViewMatrix)
-			{
-				newRenderer.setViewMatrix(pViewMatrix);
-				updateLightMatrices(&sceneAabb);
-			}
+			updateLightMatrices(&sceneAabb);
 			gl_draw_deferred(nullptr);
 			break;
 	}
-};
+}
 
 void drawFieldShadow()
 {
