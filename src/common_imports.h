@@ -126,6 +126,14 @@ struct color_ui8
     byte a;
 };
 
+struct bgra_color_ui8
+{
+    byte b;
+    byte g;
+    byte r;
+    byte a;
+};
+
 struct bgra_color
 {
 	float b;
@@ -134,12 +142,12 @@ struct bgra_color
 	float a;
 };
 
-struct abgr_color
+struct rgba_color
 {
-	float a;
-	float b;
-	float g;
 	float r;
+	float g;
+	float b;
+	float a;
 };
 
 typedef struct {

@@ -259,9 +259,18 @@ private:
         std::vector<float> FSTexFlags;
         std::vector<float> FSMovieFlags;
 
-
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
+
+        std::array<float, 4> gameLightingFlags;
+        float gameGlobalLightColor[4] = { 0.0, 0.0, 0.0, 0.0 };
+        float gameLightDir1[4] = { 0.0, 0.0, 0.0, 0.0 };
+        float gameLightColor1[4] = { 0.0, 0.0, 0.0, 0.0 };
+        float gameLightDir2[4] = { 0.0, 0.0, 0.0, 0.0 };
+        float gameLightColor2[4] = { 0.0, 0.0, 0.0, 0.0 };
+        float gameLightDir3[4] = { 0.0, 0.0, 0.0, 0.0 };
+        float gameLightColor3[4] = { 0.0, 0.0, 0.0, 0.0 };
+        float gameScriptedLightColor[4] = { 0.0, 0.0, 0.0, 0.0 };
 
         float d3dViewMatrix[16];
         float d3dProjectionMatrix[16];
@@ -277,6 +286,8 @@ private:
         RendererPrimitiveType primitiveType = RendererPrimitiveType::PT_TRIANGLES;
 
         uint64_t state = BGFX_STATE_MSAA;
+
+        bool isViewMatrixSet = false;
     };
 
     std::string vertexPathFlat = "shaders/FFNx";
@@ -482,6 +493,8 @@ public:
     // Viewport
     void setViewMatrix(struct matrix* matrix);
     float* getViewMatrix();
+    bool isViewMatrixSet();
+    void resetViewMatrixFlag();
     void setWorldViewMatrix(struct matrix* matrix);
     void setD3DViweport(struct matrix* matrix);
     void setD3DProjection(struct matrix* matrix);
@@ -498,6 +511,9 @@ public:
     void setTimeEnabled(bool flag = false);
     void setTimeFilterEnabled(bool flag = false);
     bool isTimeFilterEnabled();
+
+    // Game lighting
+    void setGameLightData(light_data* lightdata = nullptr);
 };
 
 extern Renderer newRenderer;

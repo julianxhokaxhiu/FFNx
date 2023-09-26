@@ -178,7 +178,7 @@ vec3 CalcIblIndirectLuminance(vec3 albedo, vec3 specularIbl, vec3 diffuseIbl, ve
 vec3 CalcConstIndirectLuminance(vec3 albedo)
 {
     // Ambient
-    vec3 ambientLightColor = ambientLightData.rgb;
+    vec3 ambientLightColor = toLinear(ambientLightData.rgb);
     if(isTimeEnabled)
     {
         ambientLightColor *= TimeColor.rgb;

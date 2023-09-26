@@ -212,7 +212,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 						else ff7_externals.sub_671742(zsort, hundred_data, struc_186);
 
 						if(zsort) ff7_externals.sub_665D9A(matrix, vertices, ip, hundred_data, struc_186, game_object);
-						else gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, polygon_set->field_4, true);
+						else gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, polygon_set->field_4, true);
 					}
 					else if(defer)
 					{
@@ -258,7 +258,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 							else
 							{
 								if(matrix && matrix_set) gl_set_worldview_matrix(matrix);
-								gl_draw_without_lighting(ip, polygon_set->field_4);
+								gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
 							}
 						}
 					}
@@ -286,7 +286,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 									ff7_externals.sub_68D2B8(group_counter, polygon_set, &struc_84->struc_173);
 
 									if(matrix && matrix_set) gl_set_worldview_matrix(matrix);
-									gl_draw_without_lighting(ip, polygon_set->field_4);
+									gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
 								}
 							}
 						}
@@ -327,8 +327,25 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 					else
 					{
 						if (matrix_set)	gl_set_worldview_matrix(matrix_set->matrix_world);
-						if (enable_lighting) gl_draw_with_lighting(ip, polygon_set->polygon_data, polygon_set->field_4);
-						else  gl_draw_without_lighting(ip, polygon_set->field_4);
+						if (enable_lighting)
+						{					
+							update_view_matrix(game_object);		
+							if(polygon_set->light != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
+							{
+								struct light_data lightData;
+								fill_light_data(&lightData, polygon_set);
+								gl_draw_with_lighting(ip, polygon_set->polygon_data, &lightData, polygon_set->field_4);
+							} else 	gl_draw_with_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);						
+						} else 
+						{
+							if(polygon_set->light != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
+							{
+								struct light_data lightData;
+								fill_light_data(&lightData, polygon_set);
+								update_view_matrix(game_object);
+								gl_draw_without_lighting(ip, polygon_set->polygon_data, &lightData, polygon_set->field_4);
+							} else gl_draw_without_lighting(ip, polygon_set->polygon_data, nullptr, polygon_set->field_4);
+						}
 					}
 				}
 			}
@@ -364,7 +381,7 @@ void draw_single_triangle(struct nvertex *vertices)
 
 void sub_6B2720(struct indexed_primitive *ip)
 {
-	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, true, true);
+	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, true, true);
 }
 
 void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
@@ -557,3 +574,99 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 
 	ff7_externals.stack_pop(matrix_stack);
 }
+
+void fill_light_data(struct light_data* lightData, struct ff7_polygon_set *polygon_set)
+{
+	lightData->global_light_color = polygon_set->light->global_light_color_abgr_norm;
+	lightData->light_dir_1 = polygon_set->light->color_1->point;
+	lightData->light_color_1 = polygon_set->light->color_1->d3dcol;
+	lightData->light_dir_2 = polygon_set->light->color_2->point;
+	lightData->light_color_2 = polygon_set->light->color_2->d3dcol;
+	lightData->light_dir_3 = polygon_set->light->color_3->point;
+	lightData->light_color_3 = polygon_set->light->color_3->d3dcol;
+
+	lightData->scripted_light_color = {1.0, 1.0, 1.0, 1.0};
+
+	if ((polygon_set->light->flags & 4) != 0)
+	{
+		lightData->scripted_light_color.r = polygon_set->light->color.r / 255.0f;
+		lightData->scripted_light_color.g = polygon_set->light->color.g / 255.0f;
+		lightData->scripted_light_color.b = polygon_set->light->color.b / 255.0f;
+	}
+}
+
+void ff7_get_field_view_matrix(struct matrix *outViewMatrix)
+{
+	struct matrix viewMatrix;
+	identity_matrix(&viewMatrix);
+
+	byte *level_data = *ff7_externals.field_level_data_pointer;
+	if (!level_data)
+	{
+		return;
+	}
+
+	ff7_camdata *field_camera_data = *ff7_externals.field_camera_data;
+	if (!field_camera_data)
+	{
+		return;
+	}
+
+	vector3<float> vx = {(float)(field_camera_data->eye.x), (float)(field_camera_data->eye.y), (float)(field_camera_data->eye.z)};
+	vector3<float> vy = {(float)(field_camera_data->target.x), (float)(field_camera_data->target.y), (float)(field_camera_data->target.z)};
+	vector3<float> vz = {(float)(field_camera_data->up.x), (float)(field_camera_data->up.y), (float)(field_camera_data->up.z)};
+
+	divide_vector(&vx, 4096.0f, &vx);
+	divide_vector(&vy, 4096.0f, &vy);
+	divide_vector(&vz, 4096.0f, &vz);
+
+	float ox = static_cast<float>(field_camera_data->position.x);
+	float oy = static_cast<float>(field_camera_data->position.y);
+	float oz = static_cast<float>(field_camera_data->position.z);
+
+	float tx = ox;
+	float ty = oy;
+	float tz = oz;
+
+	viewMatrix._11 = vx.x;
+	viewMatrix._21 = vx.y;
+	viewMatrix._31 = vx.z;
+	viewMatrix._12 = vy.x;
+	viewMatrix._22 = vy.y;
+	viewMatrix._32 = vy.z;
+	viewMatrix._13 = vz.x;
+	viewMatrix._23 = vz.y;
+	viewMatrix._33 = vz.z;
+	viewMatrix._41 = tx;
+	viewMatrix._42 = ty;
+	viewMatrix._43 = tz;
+	viewMatrix._44 = 1.0;
+
+	memcpy(outViewMatrix, &viewMatrix, sizeof(matrix));
+}
+
+void update_view_matrix(struct ff7_game_obj *game_object)
+{
+	if (newRenderer.isViewMatrixSet()) return;
+
+	struct game_mode *mode = getmode_cached();
+
+	struct matrix viewMatrix;
+	struct matrix *pViewMatrix = &viewMatrix;
+
+	switch(mode->driver_mode)
+	{
+		case MODE_FIELD:
+			// Get Field view matrix
+			ff7_get_field_view_matrix(&viewMatrix);
+			newRenderer.setViewMatrix(&viewMatrix);
+			break;
+		default:
+			pViewMatrix = game_object->camera_matrix;
+			if (pViewMatrix)
+			{
+				newRenderer.setViewMatrix(pViewMatrix);
+			}
+			break;
+	}
+};

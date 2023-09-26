@@ -38,6 +38,10 @@
 #define FF7_LIMITER_30FPS 2
 #define FF7_LIMITER_60FPS 3
 
+#define GAME_LIGHTING_ORIGINAL 0
+#define GAME_LIGHTING_PER_VERTEX 1
+#define GAME_LIGHTING_PER_PIXEL 2
+
 extern std::string mod_path;
 extern std::vector<std::string> mod_ext;
 extern long enable_ffmpeg_videos;
@@ -102,6 +106,7 @@ extern long enable_antialiasing;
 extern bool enable_anisotropic;
 extern bool enable_lighting;
 extern bool prefer_lighting_cpu_calculations;
+extern long game_lighting;
 extern bool enable_time_cycle;
 extern bool ff7_external_opening_music;
 extern bool more_debug;

@@ -39,6 +39,15 @@ uniform vec4 lightingDebugData;
 uniform vec4 materialData;
 uniform vec4 materialScaleData;
 uniform vec4 iblData;
+uniform vec4 gameLightingFlags;
+uniform vec4 gameGlobalLightColor;
+uniform vec4 gameLightColor1;
+uniform vec4 gameLightColor2;
+uniform vec4 gameLightColor3;
+uniform vec4 gameLightDir1;
+uniform vec4 gameLightDir2;
+uniform vec4 gameLightDir3;
+uniform vec4 gameScriptedLightColor;
 
 #define isTLVertex VSFlags.x > 0.0
 #define isFBTexture VSFlags.z > 0.0
@@ -104,9 +113,12 @@ uniform vec4 iblData;
 #define isPbrTextureLoaded FSTexFlags.y > 0.0
 #define isIblTextureLoaded FSTexFlags.z > 0.0
 
+#define gameLightingMode gameLightingFlags.x
+#define GAME_LIGHTING_PER_PIXEL 2
+
 void main()
 {
-	vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
+    vec4 color = v_color0;
     vec4 color_nml = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 color_pbr = vec4(0.0, 0.0, 0.0, 0.0);
 
@@ -295,6 +307,7 @@ void main()
         }
     }
 
+    vec3 normal = vec3(0.0, 0.0, 0.0);
     if(isTLVertex)
     {
         gl_FragColor = color;
@@ -312,7 +325,7 @@ void main()
         vec3 viewDir = normalize(-v_position0.xyz);
 
         // Normal
-        vec3 normal = normalize(v_normal0);
+        normal = normalize(v_normal0);
         if(isNmlTextureLoaded && isPbrTextureEnabled) normal = perturb_normal(normal, v_position0.xyz, color_nml.rgb, v_texcoord0.xy );
 
         // Roughness
@@ -398,7 +411,19 @@ void main()
         }
     }
 
+    if(!(isTLVertex) && gameLightingMode == GAME_LIGHTING_PER_PIXEL && debugOutput == DEBUG_OUTPUT_DISABLED)
+    {
+        vec3 worldNormal = mul(invViewMatrix, vec4(normal, 0)).xyz;
+        float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
+        float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
+        float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
+        vec3 light1Ambient = toLinear(gameLightColor1.rgb) * dotLight1 * dotLight1;
+        vec3 light2Ambient = toLinear(gameLightColor2.rgb) * dotLight2 * dotLight2;
+        vec3 light3Ambient = toLinear(gameLightColor3.rgb) * dotLight3 * dotLight3;
+        vec3 lightAmbient = toLinear(gameScriptedLightColor.rgb) * (toLinear(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
+        gl_FragColor.rgb *= gameGlobalLightColor.w * lightAmbient;
+    }
+
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
     gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
-
 }

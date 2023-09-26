@@ -85,7 +85,7 @@ enable_antialiasing = 0
 enable_anisotropic = true
 
 #[LIGHTING]
-# Enable real-time lighting.
+# Enable advanced lighting mode with real-time shadows.
 # NOTICE: Parameters such as light direction and color can be edited on the lighting debug window in the FFNx DevTools.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_lighting = false
@@ -95,6 +95,17 @@ enable_lighting = false
 # If disabled, the driver will try to inherit models normal data first although this process might bring some artifacts visually.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 prefer_lighting_cpu_calculations = true
+
+#[GAME LIGHTING]
+# This flag sets the method used to calculate the original game lighting.
+# Available choices are:
+# - 0: Original ( will inherit the default original CPU-based lighting of the PC version )
+# - 1: Per-Vertex ( will calculate lighting in the GPU per-vertex and closely match the look of the PSX version )
+# - 2: Per-Pixel ( same as above but calculates lighting per-pixel for a smoother result )
+# This flag only works with FF7 and will be set automatically to Original mode for FF8.
+# This option is automatically set to Per-Vertex mode when advanced lighting is enabled.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+game_lighting = 1
 
 #[EXTERNAL IBL PATH]
 # Path for external lighting files.

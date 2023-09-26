@@ -1320,7 +1320,7 @@ void common_setmatrix(uint32_t unknown, struct matrix *matrix, struct matrix_set
 // called by the game to apply light information to the current polygon set
 void common_light_polygon_set(struct polygon_set *polygon_set, struct light *light)
 {
-	common_externals.generic_light_polygon_set(polygon_set, light);
+	if(ff8 || game_lighting == GAME_LIGHTING_ORIGINAL) common_externals.generic_light_polygon_set(polygon_set, light);
 }
 
 // called by the game to unload a texture
@@ -2242,8 +2242,8 @@ void common_draw_deferred(struct struc_77 *struc_77, struct game_obj *game_objec
 	if(struc_77->use_matrix) gl_set_worldview_matrix(&struc_77->matrix);
 	if(struc_77->use_matrix_pointer) gl_set_worldview_matrix(struc_77->matrix_pointer);
 
-	if (!ff8 && enable_lighting) gl_draw_with_lighting(ip, VREF(polygon_set, polygon_data), VREF(polygon_set, field_4));
-	else gl_draw_without_lighting(ip, VREF(polygon_set, field_4));
+	if (!ff8 && enable_lighting) gl_draw_with_lighting(ip, VREF(polygon_set, polygon_data), nullptr, VREF(polygon_set, field_4));
+	else gl_draw_without_lighting(ip, VREF(polygon_set, polygon_data), nullptr, VREF(polygon_set, field_4));
 }
 
 // called by the game to render a graphics object, basically a wrapper for
@@ -2333,7 +2333,7 @@ void generic_draw(struct polygon_set *polygon_set, struct indexed_vertices *iv, 
 	VOBJ(polygon_set, polygon_set, polygon_set);
 	VOBJ(indexed_vertices, iv, iv);
 
-	gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, vertextype, VREF(iv, vertices), 0,  VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), 0, VREF(polygon_set, field_4), true);
+	gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, vertextype, VREF(iv, vertices), 0,  VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), 0, 0, VREF(polygon_set, field_4), true);
 }
 
 // helper function used to draw a set of triangles with palette data
@@ -2381,7 +2381,7 @@ void generic_draw_paletted(struct polygon_set *polygon_set, struct indexed_verti
 
 		count -= var30;
 
-		gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, vertextype, vertices, 0, vertexcount, VREF(iv, indices), indexcount, UNSAFE_VREF(graphics_object, iv, graphics_object), 0, VREF(polygon_set, field_4), true);
+		gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, vertextype, vertices, 0, vertexcount, VREF(iv, indices), indexcount, UNSAFE_VREF(graphics_object, iv, graphics_object), 0, 0, VREF(polygon_set, field_4), true);
 	}
 }
 
@@ -2454,7 +2454,7 @@ void common_draw_lines(struct polygon_set *polygon_set, struct indexed_vertices 
 
 	if(trace_all) ffnx_trace("dll_gfx: draw_lines\n");
 
-	gl_draw_indexed_primitive(RendererPrimitiveType::PT_LINES, TLVERTEX, VREF(iv, vertices), 0, VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), 0, VREF(polygon_set, field_4), true);
+	gl_draw_indexed_primitive(RendererPrimitiveType::PT_LINES, TLVERTEX, VREF(iv, vertices), 0, VREF(iv, vertexcount), VREF(iv, indices), VREF(iv, indexcount), UNSAFE_VREF(graphics_object, iv, graphics_object), 0, 0, VREF(polygon_set, field_4), true);
 }
 
 // noop

@@ -90,6 +90,7 @@ long enable_antialiasing;
 bool enable_anisotropic;
 bool enable_lighting;
 bool prefer_lighting_cpu_calculations;
+long game_lighting;
 bool enable_time_cycle;
 bool ff7_external_opening_music;
 bool more_debug;
@@ -242,6 +243,7 @@ void read_cfg()
 	enable_anisotropic = config["enable_anisotropic"].value_or(true);
 	enable_lighting = config["enable_lighting"].value_or(false);
 	prefer_lighting_cpu_calculations = config["prefer_lighting_cpu_calculations"].value_or(true);
+	game_lighting = config["game_lighting"].value_or(GAME_LIGHTING_PER_VERTEX);
 	enable_time_cycle = config["enable_time_cycle"].value_or(false);
 	ff7_external_opening_music = config["ff7_external_opening_music"].value_or(false);
 	more_debug = config["more_debug"].value_or(false);
@@ -481,4 +483,8 @@ void read_cfg()
 	if (external_voice_volume > 100) external_voice_volume = 100;
 	if (external_ambient_volume > 100) external_ambient_volume = 100;
 	if (ffmpeg_video_volume > 100) ffmpeg_video_volume = 100;
+
+	// GAME LIGHTING
+	if (ff8) game_lighting = GAME_LIGHTING_ORIGINAL;
+	else if (enable_lighting) game_lighting = GAME_LIGHTING_PER_PIXEL;
 }

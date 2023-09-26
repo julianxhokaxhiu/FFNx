@@ -64,7 +64,7 @@ struct LightingState
     float lightDirData[4] = { 0.3, -1.0, -0.3, 0.0 };
     float lightData[4] = { 1.0, 1.0, 1.0, 4.0 };
     float ambientLightData[4] = { 1.0, 1.0, 1.0, 1.0 };
-    float materialData[4] = { 0.7, 0.5, 0.0, 0.0 };
+    float materialData[4] = { 0.7, 0.5, 0.2, 0.0 };
     float materialScaleData[4] = { 1.0, 1.0, 1.0, 1.0 };
     float shadowData[4] = { 0.001, 0.0, 0.0, 2048.0 };
     float fieldShadowData[4] = { 0.3, 200.0, 100.0, 0.0 };
@@ -113,13 +113,12 @@ private:
 
     void ff7_load_ibl();
 
-    void ff7_get_field_view_matrix(struct matrix* outViewMatrix);
     void ff7_create_walkmesh(std::vector<struct walkmeshEdge>& edges);
 
     void extractWalkmeshBorderData(std::vector<struct walkmeshEdge>& edges);
     void createWalkmeshBorderExtrusionData(std::vector<struct walkmeshEdge>& edges);
     void createWalkmeshBorder(std::vector<struct walkmeshEdge>& edges, float extrudeSize);
-    struct boundingbox calcFieldSceneAabb(struct boundingbox* sceneAbb, struct matrix* viewMatrix);
+    struct boundingbox calcFieldSceneAabb(struct boundingbox* sceneAbb);
 
 public:
     void init();
