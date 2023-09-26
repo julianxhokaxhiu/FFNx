@@ -18,6 +18,7 @@
 - Lighting: Implemented GPU-based original game lighting that better matches PSX version
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
 - Voice: Enable tutorial voice acting
+- Widescreen: Added experimental support for 16:10 aspect ratio
 
 ## FF8
 

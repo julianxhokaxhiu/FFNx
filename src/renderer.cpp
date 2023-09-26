@@ -798,6 +798,12 @@ void Renderer::AssignGamutLUT()
 
 void Renderer::init()
 {
+    if (widescreen_ar == WIDE_16X10)
+    {
+        wide_viewport_x = -64;
+        wide_viewport_width = 768;
+        wide_game_width = 768;
+    }
     recalcInternals();
 
     // Init renderer

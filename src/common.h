@@ -98,6 +98,12 @@ enum AspectRatioMode
 	AR_COUNT
 };
 
+enum WidescreenAspectRatio
+{
+  WIDE_16X9 = 0,
+  WIDE_16X10
+};
+
 enum GamepadAnalogueIntent
 {
 	INTENT_NONE,
