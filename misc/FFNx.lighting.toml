@@ -38,3 +38,139 @@ disable_lighting_textures = [
   "STAGE84_T03", "STAGE87_T01", "STAGE87_T02", "STAGE88_T01", "STAGE88_T02",
   "STAGE89_T01"
 ]
+
+[field_ancnt1]
+shadowmap_fade_start_distance = 200.0
+
+[field_anfrst_3]
+shadowmap_fade_start_distance = 200.0
+
+[field_blin66_5]
+shadowmap_fade_start_distance = 200.0
+
+[field_blin68_1]
+shadowmap_fade_start_distance = 100.0
+
+[field_blinst_1]
+shadowmap_fade_start_distance = 200.0
+
+[field_blinst_2]
+shadowmap_fade_start_distance = 200.0
+
+[field_blinst_3]
+shadowmap_fade_start_distance = 200.0
+
+[field_blue_1]
+shadowmap_area = 6000.0
+
+[field_convil_1]
+shadowmap_fade_start_distance = 200.0
+
+[field_cos_btm]
+shadowmap_fade_start_distance = 200.0
+
+[field_cos_top]
+shadowmap_fade_start_distance = 200.0
+
+[field_del1]
+shadowmap_area = 3500.0
+
+[field_del12]
+shadowmap_area = 3500.0
+
+[field_del2]
+shadowmap_fade_start_distance = 100.0
+
+[field_fship_4]
+shadowmap_fade_start_distance = 200.0
+
+[field_fship_42]
+shadowmap_fade_start_distance = 200.0
+
+[field_gaia_2]
+shadowmap_fade_start_distance = 200.0
+
+[field_gaiafoot]
+shadowmap_area = 3500.0
+
+[field_gaiin_1]
+shadowmap_fade_range = 100.0
+shadowmap_fade_start_distance = 100.0
+
+[field_gnmkf]
+shadowmap_area = 3800.0
+
+[field_holu_2]
+shadowmap_fade_start_distance = 100.0
+
+[field_junair]
+shadowmap_area = 3600.0
+
+[field_junonr1]
+shadowmap_area = 4000.0
+
+[field_las0_1]
+shadowmap_fade_start_distance = 200.0
+
+[field_las1_2]
+shadowmap_fade_start_distance = 200.0
+
+[field_losin1]
+shadowmap_fade_start_distance = 100.0
+
+[field_losin2]
+shadowmap_fade_start_distance = 200.0
+
+[field_losin3]
+shadowmap_fade_start_distance = 100.0
+
+[field_loslake1]
+shadowmap_fade_start_distance = 200.0
+
+[field_lost1]
+shadowmap_area = 3100.0
+
+[field_md8_32]
+shadowmap_fade_start_distance = 200.0
+
+[field_md8_b1]
+shadowmap_fade_start_distance = 200.0
+
+[field_md8_b2]
+shadowmap_fade_start_distance = 200.0
+
+[field_mds7st32]
+shadowmap_area = 3500.0
+
+[field_mtcrl_3]
+shadowmap_fade_start_distance = 200.0
+
+[field_mtcrl_9]
+shadowmap_area = 5100.0
+
+[field_rcktbas1]
+shadowmap_fade_start_distance = 200.0
+
+[field_sandun_1]
+shadowmap_fade_start_distance = 200.0
+
+[field_sango1]
+shadowmap_fade_start_distance = 100.0
+
+[field_sango2]
+shadowmap_area = 6000.0
+
+[field_sango3]
+shadowmap_fade_start_distance = 200.0
+
+[field_shpin_2]
+shadowmap_fade_start_distance = 200.0
+
+[field_shpin_22]
+shadowmap_fade_start_distance = 200.0
+
+[field_sinin3]
+shadowmap_fade_start_distance = 200.0
+
+[field_trnad_3]
+shadowmap_area = 3750.0

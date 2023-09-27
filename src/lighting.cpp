@@ -80,23 +80,10 @@ void Lighting::loadConfig()
 	}
 }
 
-void Lighting::setConfigEntry(const char *key, auto value)
-{
-	std::string groupKey = getConfigGroup();
-
-	if (!groupKey.empty())
-	{
-		if (config.contains(groupKey))
-			config[groupKey].as_table()->insert_or_assign(key, value);
-		else
-			config.insert_or_assign(groupKey, toml::table{ {key, value} });
-	}
-	else
-		config.insert_or_assign(key, value);
-}
-
 void Lighting::initParamsFromConfig()
 {
+	struct game_mode *mode = getmode_cached();
+
 	float lightRotationV = getConfigEntry("light_rotation_vertical").value_or(60.0);
 	lightRotationV = std::max(0.0f, std::min(180.0f, lightRotationV));
 	float lightRotationH = getConfigEntry("light_rotation_horizontal").value_or(60.0);
@@ -139,6 +126,24 @@ void Lighting::initParamsFromConfig()
 	int shadowMapResolution = config["shadowmap_resolution"].value_or(2048);
 	shadowMapResolution = std::max(0, std::min(16384, shadowMapResolution));
 	lighting.setShadowMapResolution(shadowMapResolution);
+
+	if (mode->driver_mode == MODE_FIELD)
+	{
+		float occlusion = getConfigEntry("shadowmap_occlusion").value_or(0.3);
+		lighting.setFieldShadowOcclusion(occlusion);
+
+		float area = getConfigEntry("shadowmap_area").value_or(3000.0);
+		lighting.setFieldShadowMapArea(area);
+
+		float nearFarSize = getConfigEntry("shadowmap_near_far_size").value_or(3000.0);
+		lighting.setFieldShadowMapNearFarSize(nearFarSize);
+
+		float fadeStartDistance = getConfigEntry("shadowmap_fade_start_distance").value_or(1000.0);
+		lighting.setFieldShadowFadeStartDistance(fadeStartDistance);
+
+		float fadeStartRange = getConfigEntry("shadowmap_fade_range").value_or(100.0);
+		lighting.setFieldShadowFadeRange(fadeStartRange);
+	}
 }
 
 void Lighting::updateLightMatrices(struct boundingbox *sceneAabb)
@@ -845,9 +850,6 @@ void Lighting::setWorldLightDir(float dirX, float dirY, float dirZ)
 	lightingState.worldLightRot.x = dirX;
 	lightingState.worldLightRot.y = dirY;
 	lightingState.worldLightRot.z = dirZ;
-
-	setConfigEntry("light_rotation_vertical", dirX);
-	setConfigEntry("light_rotation_horizontal", dirY);
 }
 
 vector3<float> Lighting::getWorldLightDir()
@@ -858,8 +860,6 @@ vector3<float> Lighting::getWorldLightDir()
 void Lighting::setLightIntensity(float intensity)
 {
 	lightingState.lightData[3] = intensity;
-
-	setConfigEntry("light_intensity", intensity);
 }
 
 float Lighting::getLightIntensity()
@@ -872,8 +872,6 @@ void Lighting::setLightColor(float r, float g, float b)
 	lightingState.lightData[0] = r;
 	lightingState.lightData[1] = g;
 	lightingState.lightData[2] = b;
-
-	setConfigEntry("light_color", toml::array(r, g, b));
 }
 
 vector3<float> Lighting::getLightColor()
@@ -887,8 +885,6 @@ vector3<float> Lighting::getLightColor()
 void Lighting::setAmbientIntensity(float intensity)
 {
 	lightingState.ambientLightData[3] = intensity;
-
-	setConfigEntry("ambient_light_intensity", intensity);
 }
 
 float Lighting::getAmbientIntensity()
@@ -901,8 +897,6 @@ void Lighting::setAmbientLightColor(float r, float g, float b)
 	lightingState.ambientLightData[0] = r;
 	lightingState.ambientLightData[1] = g;
 	lightingState.ambientLightData[2] = b;
-
-	setConfigEntry("ambient_light_color", toml::array(r, g, b));
 }
 
 vector3<float> Lighting::getAmbientLightColor()
