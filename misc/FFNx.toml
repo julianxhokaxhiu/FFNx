@@ -58,8 +58,11 @@ internal_resolution_scale = 0
 aspect_ratio = 0
 
 #[WIDESCREEN AR]
-# 0: 16:9 aspect ratio
-# 1: 16:10 aspect ratio
+# When aspect ratio is set to widescreen, we can choose between 16:9 and 16:10.
+# This setting will be ignored if the above aspect_ratio is not set to widescreen.
+# Note that 16:10 will require additional mod support so some UI elements may be clipped from view.
+# 0: Default widescreen 16:9 aspect ratio
+# 1: New 16:10 aspect ratio which crops the left and right edges of the image so that it can stretch to fill a 16:10 screen.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 widescreen_ar = 0
 
