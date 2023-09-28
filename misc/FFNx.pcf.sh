@@ -34,6 +34,8 @@ float sampleShadowMap(vec2 base_uv, float u, float v, float shadowMapSizeInv, fl
     vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
 
     vec3 shadowUv = vec3(uv, lightDepth);
+    if(shadowUv.x < 0.0 || shadowUv.x > 1.0 || shadowUv.y < 0.0 || shadowUv.y > 1.0 || lightDepth < 0.0 || lightDepth > 1.0) return 1.0;
+
     float shadowFactor = shadow2D(tex_3, shadowUv);
 
 #ifdef FIELD_SHADOW

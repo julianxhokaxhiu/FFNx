@@ -75,17 +75,21 @@ void lighting_debug(bool* isOpen)
             lightRotation[0] = std::max(0.0f, std::min(180.0f, lightRotation[0]));
             lightRotation[1] = std::max(0.0f, std::min(360.0f, lightRotation[1]));
             lighting.setWorldLightDir(lightRotation[0], lightRotation[1], 0.0f);
+            lighting.setConfigEntry("light_rotation_vertical", lightRotation[0]);
+	        lighting.setConfigEntry("light_rotation_horizontal", lightRotation[1]);
         }
         float lightIntensity = lighting.getLightIntensity();
         if (ImGui::DragFloat("Intensity##0", &lightIntensity, 0.01f, 0.0f, 100.0f))
         {
-            lighting.setLightIntensity(lightIntensity);
+            lighting.setLightIntensity(lightIntensity);            
+            lighting.setConfigEntry("light_intensity", lightIntensity);
         }
         vector3<float> lightColorPoint3d = lighting.getLightColor();
         float lightColor[3] = { lightColorPoint3d.x, lightColorPoint3d.y, lightColorPoint3d.z };
         if (ImGui::ColorEdit3("Color##0", lightColor))
         {
             lighting.setLightColor(lightColor[0], lightColor[1], lightColor[2]);
+            lighting.setConfigEntry("light_color", toml::array(lightColor[0], lightColor[1], lightColor[2]));
         }
     }
     if (ImGui::CollapsingHeader("Indirect Lighting", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
@@ -94,6 +98,7 @@ void lighting_debug(bool* isOpen)
         if (ImGui::DragFloat("Intensity##1", &ambientIntensity, 0.01f, 0.0f, 100.0f))
         {
             lighting.setAmbientIntensity(ambientIntensity);
+            lighting.setConfigEntry("ambient_light_intensity", ambientIntensity);
         }
 
         vector3<float> ambientLightColorPoint3d = lighting.getAmbientLightColor();
@@ -101,6 +106,7 @@ void lighting_debug(bool* isOpen)
         if (ImGui::ColorEdit3("Color##1", ambientLightColor))
         {
             lighting.setAmbientLightColor(ambientLightColor[0], ambientLightColor[1], ambientLightColor[2]);
+            lighting.setConfigEntry("ambient_light_color", toml::array(ambientLightColor[0], ambientLightColor[1], ambientLightColor[2]));
         }
     }
     if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth))
@@ -173,26 +179,31 @@ void lighting_debug(bool* isOpen)
         if (ImGui::DragFloat("Occlusion", &fieldShadowOcclusion, 0.01f, 0.0f, 1.0f))
         {
             lighting.setFieldShadowOcclusion(fieldShadowOcclusion);
+            lighting.setConfigEntry("shadowmap_occlusion", fieldShadowOcclusion);
         }
         float fieldShadowMapArea = lighting.getFieldShadowMapArea();
         if (ImGui::DragFloat("Area##1", &fieldShadowMapArea, 10.0f, 0.0f, 100000.0f))
         {
             lighting.setFieldShadowMapArea(fieldShadowMapArea);
+            lighting.setConfigEntry("shadowmap_area", fieldShadowMapArea);
         }
         float fieldShadowMapNearFarSize = lighting.getFieldShadowMapNearFarSize();
         if (ImGui::DragFloat("Near/far size##1", &fieldShadowMapNearFarSize, 10.0f, 0.0f, 100000.0f))
         {
             lighting.setFieldShadowMapNearFarSize(fieldShadowMapNearFarSize);
+            lighting.setConfigEntry("shadowmap_near_far_size", fieldShadowMapNearFarSize);
         }
         float fieldShadowDistance = lighting.getFieldShadowFadeStartDistance();
         if (ImGui::DragFloat("Fade Start Distance", &fieldShadowDistance, 1.0f, 0.0f, 1000.0f))
         {
             lighting.setFieldShadowFadeStartDistance(fieldShadowDistance);
+            lighting.setConfigEntry("shadowmap_fade_start_distance", fieldShadowDistance);
         }
         float fieldShadowFadeRange = lighting.getFieldShadowFadeRange();
         if (ImGui::DragFloat("Fade Range", &fieldShadowFadeRange, 1.0f, 0.0f, 1000.0f))
         {
             lighting.setFieldShadowFadeRange(fieldShadowFadeRange);
+            lighting.setConfigEntry("shadowmap_fade_range", fieldShadowDistance);
         }
         float walkMeshExtrudeSize = lighting.getWalkmeshExtrudeSize();
         if (ImGui::DragFloat("Walkmesh extrude size", &walkMeshExtrudeSize, 0.01f, 0.0f, 100.0f))
