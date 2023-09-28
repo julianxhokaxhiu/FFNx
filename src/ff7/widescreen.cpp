@@ -324,9 +324,11 @@ void Widescreen::init()
     loadMovieConfig();
     if (widescreen_ar == WIDE_16X10)
     {
-        wide_viewport_x = wide_16x10_viewport_x;
-        wide_viewport_width = wide_16x10_viewport_width;
-        wide_game_width = wide_16x10_game_width;
+        wide_viewport_x = -64;
+        wide_viewport_width = 768;
+        wide_game_width = 768;
+        viewport_width_plus_x_widescreen_fix = 704;
+        swirl_framebuffer_offset_x_widescreen_fix = 64;
     }
 }
 
