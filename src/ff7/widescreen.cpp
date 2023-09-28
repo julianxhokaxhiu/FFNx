@@ -322,6 +322,12 @@ void Widescreen::init()
 {
     loadConfig();
     loadMovieConfig();
+    if (widescreen_ar == WIDE_16X10)
+    {
+        wide_viewport_x = wide_16x10_viewport_x;
+        wide_viewport_width = wide_16x10_viewport_width;
+        wide_game_width = wide_16x10_game_width;
+    }
 }
 
 void Widescreen::initParamsFromConfig()

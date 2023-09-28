@@ -832,6 +832,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				replace_function((uint32_t)common_externals.assert_calloc, ext_calloc);
 #endif
 
+        if (aspect_ratio == AR_WIDESCREEN) widescreen.init();
+
 				// Init renderer
 				newRenderer.init();
 
@@ -872,8 +874,6 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 				// Init Lighting
 				if (!ff8 && enable_lighting) lighting.init();
-
-				if(aspect_ratio == AR_WIDESCREEN) widescreen.init();
 
 				// enable verbose logging for FFMpeg
 				av_log_set_level(AV_LOG_VERBOSE);
