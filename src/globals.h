@@ -66,6 +66,7 @@ extern uint32_t game_width;
 extern uint32_t game_height;
 extern uint32_t x_offset;
 extern uint32_t y_offset;
+extern uint32_t widescreen_enabled;
 
 extern struct texture_format *texture_format;
 

@@ -117,6 +117,9 @@ uint32_t game_height;
 uint32_t x_offset = 0;
 uint32_t y_offset = 0;
 
+// widescreen mode enabled
+uint32_t widescreen_enabled = false;
+
 // game-specific data, see ff7_data.h/ff8_data.h
 uint32_t text_colors[NUM_TEXTCOLORS];
 struct game_mode modes[64];
@@ -656,8 +659,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 {
-	widescreen_enabled = (aspect_ratio == AR_WIDESCREEN_16X9 || aspect_ratio == AR_WIDESCREEN_16X10);
-
 	uint32_t ret = FALSE;
 
 	VOBJ(game_obj, game_object, game_object);
@@ -2831,6 +2832,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		}
 
 		read_cfg();
+
+		// Did user choose to enable Widescreen?
+		widescreen_enabled = (aspect_ratio == AR_WIDESCREEN_16X9 || aspect_ratio == AR_WIDESCREEN_16X10);
 
 		// Get current process name
 		CHAR parentName[1024];

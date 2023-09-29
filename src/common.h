@@ -360,4 +360,3 @@ void ffnx_inject_driver(struct game_obj* game_object);
 
 bool drawFFNxLogoFrame(struct game_obj* game_object);
 void stopDrawFFNxLogo();
-bool widescreen_enabled;
