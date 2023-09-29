@@ -322,6 +322,14 @@ void Widescreen::init()
 {
     loadConfig();
     loadMovieConfig();
+    if (aspect_ratio == AR_WIDESCREEN_16X10)
+    {
+        wide_viewport_x = -64;
+        wide_viewport_width = 768;
+        wide_game_width = 768;
+        viewport_width_plus_x_widescreen_fix = 704;
+        swirl_framebuffer_offset_x_widescreen_fix = 64;
+    }
 }
 
 void Widescreen::initParamsFromConfig()

@@ -46,7 +46,7 @@ namespace ff7::field
 
     bool is_fieldmap_wide()
     {
-        return aspect_ratio == AR_WIDESCREEN && widescreen.getMode() != WM_DISABLED;
+        return widescreen_enabled && widescreen.getMode() != WM_DISABLED;
     }
 
     float field_get_linear_interpolated_value_float(float initial_value, float final_value, int n_steps, int step_idx)

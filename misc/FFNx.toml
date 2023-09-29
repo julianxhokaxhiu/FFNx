@@ -54,6 +54,7 @@ internal_resolution_scale = 0
 # 0: Preserves original game aspect ratio of (4:3) by adding black bars on the left and right side (if needed)
 # 1: Stretched to fit the window's aspect ratio; Be aware the game may look wrong though.
 # 2: New 16:9 aspect ratio mode without stretching the image. Fields that lack horizontal scrolling will show black bars on the left and right side.
+# 3: New 16:10 aspect ratio which crops the left and right edges of the image so that it can stretch to fill a 16:10 screen.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 aspect_ratio = 0
 

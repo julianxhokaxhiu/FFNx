@@ -117,6 +117,9 @@ uint32_t game_height;
 uint32_t x_offset = 0;
 uint32_t y_offset = 0;
 
+// widescreen mode enabled
+uint32_t widescreen_enabled = false;
+
 // game-specific data, see ff7_data.h/ff8_data.h
 uint32_t text_colors[NUM_TEXTCOLORS];
 struct game_mode modes[64];
@@ -537,10 +540,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				switch (LOWORD(wParam))
 				{
 				case VK_LEFT:
-					if (aspect_ratio != AR_WIDESCREEN)
+					if (!widescreen_enabled)
 					{
 						aspect_ratio--;
-						if (aspect_ratio < 0) aspect_ratio = AR_WIDESCREEN - 1;
+						if (aspect_ratio < 0) aspect_ratio = AR_STRETCH;
 
 						show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Aspect Ratio Mode: %u", aspect_ratio);
 
@@ -548,10 +551,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					}
 					break;
 				case VK_RIGHT:
-					if (aspect_ratio != AR_WIDESCREEN)
+					if (!widescreen_enabled)
 					{
 						aspect_ratio++;
-						if (aspect_ratio == AR_WIDESCREEN || aspect_ratio > AR_COUNT - 1) aspect_ratio = AR_ORIGINAL;
+						if (aspect_ratio > AR_STRETCH) aspect_ratio = AR_ORIGINAL;
 
 						show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Aspect Ratio Mode: %u", aspect_ratio);
 
@@ -832,6 +835,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				replace_function((uint32_t)common_externals.assert_calloc, ext_calloc);
 #endif
 
+				if (widescreen_enabled) widescreen.init();
+
 				// Init renderer
 				newRenderer.init();
 
@@ -872,8 +877,6 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 				// Init Lighting
 				if (!ff8 && enable_lighting) lighting.init();
-
-				if(aspect_ratio == AR_WIDESCREEN) widescreen.init();
 
 				// enable verbose logging for FFMpeg
 				av_log_set_level(AV_LOG_VERBOSE);
@@ -2829,6 +2832,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		}
 
 		read_cfg();
+
+		// Did user choose to enable Widescreen?
+		widescreen_enabled = (aspect_ratio == AR_WIDESCREEN_16X9 || aspect_ratio == AR_WIDESCREEN_16X10);
 
 		// Get current process name
 		CHAR parentName[1024];

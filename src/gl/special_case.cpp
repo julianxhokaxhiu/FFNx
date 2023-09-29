@@ -71,7 +71,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 			if(VREF(texture_set, ogl.external) && vertexcount == 4)
 			{
 				float texture_ratio = VREF(texture_set, ogl.width) / (float)VREF(texture_set, ogl.height);
-				bool use_wide_vertices = abs(texture_ratio - 16/9.f) <= 0.01 && aspect_ratio == AR_WIDESCREEN;
+				bool use_wide_vertices = abs(texture_ratio - 16 / (aspect_ratio == AR_WIDESCREEN_16X10 ? 10.f : 9.f)) <= 0.01 && widescreen_enabled;
 				float x = use_wide_vertices ? wide_viewport_x : 0.0f;
 				float y = 0.0f;
 				float width = use_wide_vertices ? wide_viewport_width : game_width;

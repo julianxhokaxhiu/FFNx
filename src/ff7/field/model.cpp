@@ -35,8 +35,8 @@ namespace ff7::field
     {
         if(*ff7_externals.field_bg_flag_CC15E4)
             return 1;
-        int left_offset_x = 40 + (aspect_ratio == AR_WIDESCREEN ? abs(wide_viewport_x) - 50 : 0);
-        int right_offset_x = 400 + (aspect_ratio == AR_WIDESCREEN ? abs(wide_viewport_x) - 50 : 0);
+        int left_offset_x = 40 + (widescreen_enabled ? abs(wide_viewport_x) - 50 : 0);
+        int right_offset_x = 400 + (widescreen_enabled ? abs(wide_viewport_x) - 50 : 0);
         return x > ff7_externals.field_viewport_xy_CFF204->x - left_offset_x && x < ff7_externals.field_viewport_xy_CFF204->x + right_offset_x &&
             y > ff7_externals.field_viewport_xy_CFF204->y - 120 && y < ff7_externals.field_viewport_xy_CFF204->y + 460;
     }

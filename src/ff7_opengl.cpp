@@ -207,7 +207,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// widescreen
 	// #####################
-	if(aspect_ratio == AR_WIDESCREEN)
+	if(widescreen_enabled)
 		ff7_widescreen_hook_init();
 
 	if (enable_time_cycle)
@@ -285,7 +285,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// field vertical center
 	// #####################
-	if(ff7_field_center || aspect_ratio == AR_WIDESCREEN)
+	if(ff7_field_center || widescreen_enabled)
 	{
 		patch_code_byte(ff7_externals.field_init_viewport_values + 0x35, 16);
 		patch_code_int(ff7_externals.field_init_viewport_values + 0x6E, 240);
