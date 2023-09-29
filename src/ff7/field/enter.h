@@ -47,6 +47,6 @@ namespace ff7::field
             external_data.blinkFrameIndex = BLINKING_FRAMES;
         }
 
-        if(aspect_ratio == AR_WIDESCREEN) widescreen.initParamsFromConfig();
+        if(widescreen_enabled) widescreen.initParamsFromConfig();
     }
 }

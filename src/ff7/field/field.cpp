@@ -150,7 +150,7 @@ namespace ff7::field
 
     void ff7_field_set_fade_quad_size(int x, int y, int width, int height)
     {
-        if(aspect_ratio == AR_WIDESCREEN)
+        if(widescreen_enabled)
         {
             x -= abs(wide_viewport_x);
             y -= ff7_field_center ? 16 : 0;

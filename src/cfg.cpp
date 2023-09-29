@@ -81,7 +81,6 @@ long window_size_x;
 long window_size_y;
 long internal_resolution_scale;
 long aspect_ratio;
-long widescreen_ar;
 bool fullscreen;
 bool borderless;
 long refresh_rate;
@@ -235,7 +234,6 @@ void read_cfg()
 	window_size_y = config["window_size_y"].value_or(0);
 	internal_resolution_scale = config["internal_resolution_scale"].value_or(0);
 	aspect_ratio = config["aspect_ratio"].value_or(0);
-  widescreen_ar = config["widescreen_ar"].value_or(0);
 	fullscreen = config["fullscreen"].value_or(false);
 	borderless = config["borderless"].value_or(false);
 	refresh_rate = config["refresh_rate"].value_or(0);

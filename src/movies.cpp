@@ -86,7 +86,7 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	}
 	// ---------------------------
 
-	if(aspect_ratio == AR_WIDESCREEN)
+	if(widescreen_enabled)
 		widescreen.initMovieParamsFromConfig(filename);
 
 	if(steam_edition || enable_steam_achievements)

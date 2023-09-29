@@ -322,7 +322,7 @@ void Widescreen::init()
 {
     loadConfig();
     loadMovieConfig();
-    if (widescreen_ar == WIDE_16X10)
+    if (aspect_ratio == AR_WIDESCREEN_16X10)
     {
         wide_viewport_x = -64;
         wide_viewport_width = 768;

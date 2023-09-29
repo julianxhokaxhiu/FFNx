@@ -537,10 +537,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				switch (LOWORD(wParam))
 				{
 				case VK_LEFT:
-					if (aspect_ratio != AR_WIDESCREEN)
+					if (!widescreen_enabled)
 					{
 						aspect_ratio--;
-						if (aspect_ratio < 0) aspect_ratio = AR_WIDESCREEN - 1;
+						if (aspect_ratio < 0) aspect_ratio = AR_STRETCH;
 
 						show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Aspect Ratio Mode: %u", aspect_ratio);
 
@@ -548,10 +548,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					}
 					break;
 				case VK_RIGHT:
-					if (aspect_ratio != AR_WIDESCREEN)
+					if (!widescreen_enabled)
 					{
 						aspect_ratio++;
-						if (aspect_ratio == AR_WIDESCREEN || aspect_ratio > AR_COUNT - 1) aspect_ratio = AR_ORIGINAL;
+						if (aspect_ratio > AR_STRETCH) aspect_ratio = AR_ORIGINAL;
 
 						show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Aspect Ratio Mode: %u", aspect_ratio);
 
@@ -656,6 +656,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 {
+	widescreen_enabled = (aspect_ratio == AR_WIDESCREEN_16X9 || aspect_ratio == AR_WIDESCREEN_16X10);
+
 	uint32_t ret = FALSE;
 
 	VOBJ(game_obj, game_object, game_object);
@@ -832,7 +834,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				replace_function((uint32_t)common_externals.assert_calloc, ext_calloc);
 #endif
 
-        if (aspect_ratio == AR_WIDESCREEN) widescreen.init();
+				if (widescreen_enabled) widescreen.init();
 
 				// Init renderer
 				newRenderer.init();

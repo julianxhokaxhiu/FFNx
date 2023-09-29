@@ -94,14 +94,9 @@ enum AspectRatioMode
 {
 	AR_ORIGINAL = 0,
 	AR_STRETCH,
-	AR_WIDESCREEN,
+	AR_WIDESCREEN_16X9,
+	AR_WIDESCREEN_16X10,
 	AR_COUNT
-};
-
-enum WidescreenAspectRatio
-{
-  WIDE_16X9 = 0,
-  WIDE_16X10
 };
 
 enum GamepadAnalogueIntent
@@ -365,3 +360,4 @@ void ffnx_inject_driver(struct game_obj* game_object);
 
 bool drawFFNxLogoFrame(struct game_obj* game_object);
 void stopDrawFFNxLogo();
+bool widescreen_enabled;

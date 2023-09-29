@@ -535,7 +535,7 @@ void Renderer::recalcInternals()
                 }
             }
             break;
-        case AR_WIDESCREEN:
+        case AR_WIDESCREEN_16X9:
             if (viewWidth * 9 != viewHeight * 16)
             {
                 if (viewHeight * 16 > viewWidth * 9)
@@ -549,6 +549,25 @@ void Renderer::recalcInternals()
                 {
                     viewOffsetX = (viewWidth - (viewHeight * 16) / 9) / 2;
                     viewWidth = (viewHeight * 16) / 9;
+
+                    x_offset = viewOffsetX;
+                }
+            }
+            break;
+        case AR_WIDESCREEN_16X10:
+            if (viewWidth * 10 != viewHeight * 16)
+            {
+                if (viewHeight * 16 > viewWidth * 10)
+                {
+                    viewOffsetY = viewHeight - (viewWidth * 10) / 16;
+                    viewHeight = (viewWidth * 10) / 16;
+
+                    y_offset = viewOffsetY;
+                }
+                else if (viewWidth * 10 > viewHeight * 16)
+                {
+                    viewOffsetX = (viewWidth - (viewHeight * 16) / 10) / 2;
+                    viewWidth = (viewHeight * 16) / 10;
 
                     x_offset = viewOffsetX;
                 }
@@ -568,7 +587,7 @@ void Renderer::recalcInternals()
     }
 
     // Use the set or calculated scaling factor to determine the width and height of the framebuffer according to the original resolution
-    if(aspect_ratio == AR_WIDESCREEN)
+    if(widescreen_enabled)
     {
         framebufferWidth = wide_game_width * scalingFactor;
         framebufferHeight = wide_game_height * scalingFactor;
@@ -594,9 +613,9 @@ void Renderer::calcBackendProjMatrix()
     // Used by the game
     bx::mtxOrtho(
         internalState.backendProjMatrix,
-        aspect_ratio == AR_WIDESCREEN ? wide_viewport_x : 0.0f,
-        aspect_ratio == AR_WIDESCREEN ? wide_viewport_width + wide_viewport_x : game_width,
-        aspect_ratio == AR_WIDESCREEN ? wide_game_height : game_height,
+        widescreen_enabled ? wide_viewport_x : 0.0f,
+        widescreen_enabled ? wide_viewport_width + wide_viewport_x : game_width,
+        widescreen_enabled ? wide_game_height : game_height,
         0.0f,
         getCaps()->homogeneousDepth ? -1.0f : 0.0f,
         1.0f,
@@ -608,8 +627,8 @@ void Renderer::calcBackendProjMatrix()
     bx::mtxOrtho(
         internalState.postprocessingProjMatrix,
         0.0f,
-        aspect_ratio == AR_WIDESCREEN ? wide_game_width : game_width,
-        aspect_ratio == AR_WIDESCREEN ? wide_game_height : game_height,
+        widescreen_enabled ? wide_game_width : game_width,
+        widescreen_enabled ? wide_game_height : game_height,
         0.0f,
         getCaps()->homogeneousDepth ? -1.0f : 0.0f,
         1.0f,
@@ -1641,7 +1660,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     scissorWidth = getInternalCoordX(width);
     scissorHeight = getInternalCoordY(height);
 
-    if(aspect_ratio != AR_WIDESCREEN) return;
+    if(!widescreen_enabled) return;
 
     struct game_mode* mode = getmode_cached();
     switch(mode->driver_mode)
@@ -2529,7 +2548,7 @@ void Renderer::setD3DProjection(struct matrix* matrix)
     ::memcpy(internalState.d3dProjectionMatrix, &matrix->m[0][0], sizeof(matrix->m));
 
     // Modify the projection matrix to prevent stretching
-    if(aspect_ratio == AR_WIDESCREEN)
+    if(widescreen_enabled)
     {
         float widescreenScale = round(float(game_width) / wide_viewport_width * 100) / 100.f;
         internalState.d3dProjectionMatrix[0] *= widescreenScale;
@@ -2541,7 +2560,7 @@ void Renderer::setD3DProjection(struct matrix* matrix)
 
 uint16_t Renderer::getInternalCoordX(uint16_t inX)
 {
-    if(aspect_ratio == AR_WIDESCREEN)
+    if(widescreen_enabled)
         return (inX * framebufferWidth) / (wide_viewport_width);
     else
         return (inX * framebufferWidth) / (game_width);

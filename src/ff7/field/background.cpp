@@ -127,10 +127,10 @@ namespace ff7::field
     {
         const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
         const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
-        const int top_offset = 256 + (aspect_ratio == AR_WIDESCREEN ? 8 : 0);
-        const int bottom_offset = aspect_ratio == AR_WIDESCREEN ? 8 : 0;
+        const int top_offset = 256 + (widescreen_enabled ? 8 : 0);
+        const int bottom_offset = widescreen_enabled ? 8 : 0;
         const int half_width = is_fieldmap_wide() ? ceil(wide_viewport_width / 4) : 160;
-        const int half_height = aspect_ratio == AR_WIDESCREEN ? 120 : 112;
+        const int half_height = widescreen_enabled ? 120 : 112;
 
         if(tile_position->x <= bg_position->x - left_offset || tile_position->x >= bg_position->x + right_offset)
             tile_position->x += (tile_position->x >= bg_position->x - half_width) ? -layer3_width : layer3_width;
@@ -167,14 +167,14 @@ namespace ff7::field
         else
             z_value = 0.9998;
 
-        const bool do_increase_height = aspect_ratio == AR_WIDESCREEN;
+        const bool do_increase_height = widescreen_enabled;
         const bool do_increase_width = is_fieldmap_wide() && (*ff7_externals.field_triggers_header)->bg3_width < ceil(wide_viewport_width / 2);
         const int layer3_width = (*ff7_externals.field_triggers_header)->bg3_width * (do_increase_width ? 2 : 1);
         const int layer3_height = (*ff7_externals.field_triggers_header)->bg3_height * (do_increase_height ? 2 : 1);
         const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
         const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
-        const int top_offset = 256 + (aspect_ratio == AR_WIDESCREEN ? 8 : 0);
-        const int bottom_offset = aspect_ratio == AR_WIDESCREEN ? 8 : 0;
+        const int top_offset = 256 + (widescreen_enabled ? 8 : 0);
+        const int bottom_offset = widescreen_enabled ? 8 : 0;
 
         for(int i = 0; i < *ff7_externals.field_layer3_tiles_num; i++)
         {
@@ -202,7 +202,7 @@ namespace ff7::field
                                         layer3_tiles[tile_index].v, layer3_tiles[tile_index].palette_index, page);
         }
 
-        if(aspect_ratio == AR_WIDESCREEN)
+        if(widescreen_enabled)
         {
             // Apply repeat x-y for background layer 4 tiles
             std::vector<vector2<int>> tile_offsets;
@@ -250,8 +250,8 @@ namespace ff7::field
     {
         const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
         const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
-        const int top_offset = 256 + (aspect_ratio == AR_WIDESCREEN ? 8 : 0);
-        const int bottom_offset = aspect_ratio == AR_WIDESCREEN ? 8 : 0;
+        const int top_offset = 256 + (widescreen_enabled ? 8 : 0);
+        const int bottom_offset = widescreen_enabled ? 8 : 0;
         const int half_width = is_fieldmap_wide() ? ceil(wide_viewport_width / 4) : 160;
 
         if(tile_position->x <= bg_position->x - left_offset || tile_position->x >= bg_position->x + right_offset)
@@ -260,7 +260,7 @@ namespace ff7::field
         if(tile_position->y <= bg_position->y - top_offset || tile_position->y >= bg_position->y + bottom_offset)
             tile_position->y += (tile_position->y >= bg_position->y + bottom_offset) ? -layer4_height : layer4_height;
 
-        if(aspect_ratio == AR_WIDESCREEN && is_fieldmap_wide())
+        if(widescreen_enabled && is_fieldmap_wide())
         {
             tile_position->x -= widescreen.getHorizontalOffset();
         }
@@ -289,14 +289,14 @@ namespace ff7::field
             initial_pos.y = ((ff7_field_center ? 232 : 224) - bg_position.y) * field_bg_multiplier;
             float z_value = ff7_externals.field_layer_sub_623C0F(ff7_externals.field_camera_rotation_matrix_CFF3D8, ff7_externals.modules_global_object->field_AE, 0, 0);
 
-            const bool do_increase_height = aspect_ratio == AR_WIDESCREEN;
+            const bool do_increase_height = widescreen_enabled;
             const bool do_increase_width = is_fieldmap_wide() && (*ff7_externals.field_triggers_header)->bg4_width < ceil(wide_viewport_width / 2);
             const int layer4_width = (*ff7_externals.field_triggers_header)->bg4_width * (do_increase_width ? 2 : 1);
             const int layer4_height = (*ff7_externals.field_triggers_header)->bg4_height * (do_increase_height ? 2 : 1);
             const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
             const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
-            const int top_offset = 256 + (aspect_ratio == AR_WIDESCREEN ? 8 : 0);
-            const int bottom_offset = aspect_ratio == AR_WIDESCREEN ? 8 : 0;
+            const int top_offset = 256 + (widescreen_enabled ? 8 : 0);
+            const int bottom_offset = widescreen_enabled ? 8 : 0;
 
             for(int i = 0; i < *ff7_externals.field_layer4_tiles_num; i++)
             {
@@ -326,7 +326,7 @@ namespace ff7::field
                 }
             }
 
-            if(aspect_ratio == AR_WIDESCREEN)
+            if(widescreen_enabled)
             {
                 // Apply repeat x-y for background layer 4 tiles
                 std::vector<vector2<int>> tile_offsets;
@@ -420,7 +420,7 @@ namespace ff7::field
         float half_width = 160;
         auto camera_range = field_triggers_header_ptr->camera_range;
 
-        if(aspect_ratio == AR_WIDESCREEN && is_fieldmap_wide())
+        if(widescreen_enabled && is_fieldmap_wide())
         {
             camera_range = widescreen.getCameraRange();
 
@@ -448,7 +448,7 @@ namespace ff7::field
         float half_width = 160;
         auto camera_range = trigger_header->camera_range;
 
-        if(aspect_ratio == AR_WIDESCREEN && is_fieldmap_wide())
+        if(widescreen_enabled && is_fieldmap_wide())
         {
             camera_range = widescreen.getCameraRange();
 
@@ -716,7 +716,7 @@ namespace ff7::field
                 {
                     field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
                     auto camera_range = field_triggers_header_ptr->camera_range;
-                    if(aspect_ratio == AR_WIDESCREEN && widescreen.getMode() == WM_ZOOM)
+                    if(widescreen_enabled && widescreen.getMode() == WM_ZOOM)
                     {
                         camera_range = widescreen.getCameraRange();
 
@@ -890,7 +890,7 @@ namespace ff7::field
     {
         ff7_externals.field_draw_gray_quads_644E90();
 
-        if (aspect_ratio == AR_WIDESCREEN) widescreen.zoomBackground();
+        if (widescreen_enabled) widescreen.zoomBackground();
 
         newRenderer.setTimeFilterEnabled(false);
     }
