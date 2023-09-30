@@ -1102,6 +1102,16 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t enemy_atk_sub_457B4C = get_relative_call(enemy_atk_sub_457B20, 0x22);
 	uint32_t enemy_atk_sub_457C20 = get_relative_call(enemy_atk_sub_457B4C, 0xB4);
 	ff7_externals.enemy_atk_camera_sub_457C60 = get_absolute_value(enemy_atk_sub_457C20, 0x5);
+	ff7_externals.pollensalta_cold_breath_atk_enter_sub_5474F0 = ff7_externals.enemy_atk_effects_fn_table[59];
+	uint32_t pollensalta_cold_breath_atk_main_sub_547595 = get_relative_call(ff7_externals.pollensalta_cold_breath_atk_enter_sub_5474F0, 0x99);
+	uint32_t pollensalta_cold_breath_atk_callback_sub_5455E7 = get_absolute_value(pollensalta_cold_breath_atk_main_sub_547595, 0x4);
+	ff7_externals.pollensalta_cold_breath_atk_main_loop_5476B0 = get_absolute_value(pollensalta_cold_breath_atk_callback_sub_5455E7, 0x7);
+	ff7_externals.pollensalta_cold_breath_atk_draw_bg_effect_547B94 = get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_main_loop_5476B0, 0x16F);
+	ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56 = get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_main_loop_5476B0, 0x39);
+	ff7_externals.pollensalta_cold_breath_atk_draw_white_dots_547E75 = (void(*)(short))get_relative_call(ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56, 0x20);
+	ff7_externals.pollensalta_cold_breath_white_dots_pos = std::span((vector4<short>*) get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56, 0x79), 400);
+	ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar = (short*) get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56, 0x1B);
+	ff7_externals.pollensalta_cold_breath_bg_texture_ctx = get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_draw_bg_effect_547B94, 0x2A);	
 
 	// Texture/Material animation
 	uint32_t battle_leviathan_sub_5B2F18 = get_absolute_value(ff7_externals.battle_summon_leviathan_loop, 0x50E);

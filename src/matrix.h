@@ -66,6 +66,15 @@ struct vector3
 	T z;
 };
 
+template <typename T>
+struct vector4
+{
+	T x;
+	T y;
+	T z;
+	T w;
+};
+
 struct point4d
 {
 	float x;

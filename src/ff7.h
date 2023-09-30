@@ -3240,6 +3240,14 @@ struct ff7_externals
 	vector3<int>** ifrit_vector3_int_ptr_BCC6A8;
 	vector3<short>* battle_ifrit_model_position;
 	rotation_matrix* ifrit_rot_matrix_BCC768;
+	uint32_t pollensalta_cold_breath_atk_enter_sub_5474F0;
+	uint32_t pollensalta_cold_breath_atk_main_loop_5476B0;
+	uint32_t pollensalta_cold_breath_atk_draw_bg_effect_547B94;
+	uint32_t pollensalta_cold_breath_atk_white_dot_effect_547D56;
+	void (*pollensalta_cold_breath_atk_draw_white_dots_547E75)(short);
+	std::span<vector4<short>> pollensalta_cold_breath_white_dots_pos;
+	short* pollensalta_cold_breath_white_dot_rgb_scalar;
+	uint32_t pollensalta_cold_breath_bg_texture_ctx;
 
 	// battle menu
 	uint32_t display_battle_menu_6D797C;
