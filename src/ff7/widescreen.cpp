@@ -198,6 +198,15 @@ void ff7_widescreen_hook_init() {
     patch_code_dword(ff7_externals.barret_limit_3_1_sub_4700F7 + 0x36, (uint32_t)&wide_viewport_width);
     patch_code_dword(ff7_externals.fat_chocobo_sub_5096F3 + 0x4A, (uint32_t)&wide_viewport_x);
     patch_code_dword(ff7_externals.fat_chocobo_sub_5096F3 + 0x5F, (uint32_t)&wide_viewport_width);
+    // Makes bahamut small stars background to 512x512 quad size and a different positioning of the 6 image patches
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x20F, -512);
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x23F, 1024);
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x26F, 512);
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x29E, 512);
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x2CE, 512);
+    patch_code_short(ff7_externals.bahamut_zero_bg_star_graphics_data_7F6748 + 0x8, 512);
+    patch_code_short(ff7_externals.bahamut_zero_bg_star_graphics_data_7F6748 + 0xA, 512);
+
     // Battle fading animation fix
     patch_code_short(ff7_externals.battle_sub_5BCF9D + 0x3A, 30);
     patch_code_byte(ff7_externals.battle_sub_5BCF9D + 0x69, 120);

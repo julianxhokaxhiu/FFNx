@@ -1023,6 +1023,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.run_bahamut_zero_main_loop_484A16 = get_absolute_value(run_bahamut_zero_sub_483762, 0x5F);
 	ff7_externals.run_bahamut_zero_movement_48BBFC = get_absolute_value(run_bahamut_zero_sub_483762, 0x6C);
 	ff7_externals.run_bahamut_zero_camera_483866 = get_absolute_value(run_bahamut_zero_camera_handler_483826, 0x5);
+	ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA = get_absolute_value(ff7_externals.run_bahamut_zero_main_loop_484A16, 0x2E8);
+	ff7_externals.bahamut_zero_bg_star_graphics_data_7F6748 = get_absolute_value(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA, 0x1BC);
 	uint32_t run_summon_kotr_main_476842 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x43A);
 	ff7_externals.run_summon_kotr_sub_476857 = get_relative_call(run_summon_kotr_main_476842, 0xB);
 	ff7_externals.run_summon_kotr_main_loop_478031 = get_absolute_value(ff7_externals.run_summon_kotr_sub_476857, 0x1AC);
