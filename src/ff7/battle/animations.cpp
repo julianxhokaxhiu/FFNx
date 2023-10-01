@@ -1068,7 +1068,8 @@ namespace ff7::battle
                             v_bottom = v_top_1 + v_top_2;
                         }
 
-                        // Pollensalta cold breath bg widescreen fix
+                        // Temporary fix for Pollensalta cold breath bg widescreen fix 
+                        // (The correct solution should be to edit the file `magic/ff7/data/battle/special/hubuki/kemu.s` to edit the texture page)
                         if(widescreen_enabled && (uint32_t)texture_ctx == ff7_externals.pollensalta_cold_breath_bg_texture_ctx)
                         {
                             float widescreen_multiplier = ((float)wide_viewport_width / (float)wide_viewport_height) / (4 / 3.f);
