@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 9b60f21c..3b0ccc56 100644
+index f34fe127..539deb44 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,4 +1,5 @@
@@ -9,10 +9,10 @@ index 9b60f21c..3b0ccc56 100644
  
  if(CMAKE_SYSTEM_NAME MATCHES Darwin)
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index cf324909..118c1588 100644
+index 675eb364..57a3a35e 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -76,3 +76,28 @@ if(NOT EMSCRIPTEN)
+@@ -84,3 +84,30 @@ if(NOT EMSCRIPTEN)
  		set_target_properties(libvgmstream_shared PROPERTIES LINK_FLAGS_RELEASE -s)
  	endif()
  endif()
@@ -32,20 +32,22 @@ index cf324909..118c1588 100644
 +if(NOT SKIP_INSTALL_HEADERS)
 +	# Install headers
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/vgmstream.h DESTINATION include/libvgmstream )
-+	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/plugins.h DESTINATION include/libvgmstream )
-+	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util.h DESTINATION include/libvgmstream )
++	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/vgmstream_types.h DESTINATION include/libvgmstream )
++	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/base/plugins.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util/log.h DESTINATION include/libvgmstream/util )
++	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util/reader_get.h DESTINATION include/libvgmstream/util )
++	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util/reader_put.h DESTINATION include/libvgmstream/util )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/streamtypes.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/streamfile.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/g72x_state.h DESTINATION include/libvgmstream/coding )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/nwa_decoder.h DESTINATION include/libvgmstream/coding )
 +endif()
 diff --git a/src/streamfile.c b/src/streamfile.c
-index 0e6cb01e..d2d7b666 100644
+index 8566febf..8ceaa561 100644
 --- a/src/streamfile.c
 +++ b/src/streamfile.c
-@@ -263,8 +263,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
+@@ -260,8 +260,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
      this_sf->buf = buf;
  
      this_sf->name_len = strlen(filename);
@@ -57,7 +59,7 @@ index 0e6cb01e..d2d7b666 100644
      memcpy(this_sf->name, filename, this_sf->name_len);
      this_sf->name[this_sf->name_len] = '\0';
  
-@@ -304,6 +306,7 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
+@@ -301,6 +303,7 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
      return &this_sf->vt;
  
  fail:

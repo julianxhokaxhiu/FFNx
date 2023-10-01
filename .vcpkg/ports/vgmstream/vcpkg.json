@@ -4,7 +4,9 @@
   "description": "A library for playback of various streamed audio formats used in video games.",
   "homepage": "https://github.com/vgmstream/vgmstream",
   "default-features": [
-    "ffmpeg"
+    "ffmpeg",
+    "mpg123",
+    "vorbis"
   ],
   "features": {
     "ffmpeg": {

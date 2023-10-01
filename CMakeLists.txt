@@ -67,6 +67,7 @@ find_package(BX REQUIRED)
 find_package(BIMG REQUIRED)
 find_package(BGFX REQUIRED)
 find_package(FFMPEG REQUIRED)
+find_package(MPG123 REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
 find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
@@ -143,6 +144,7 @@ target_link_libraries(
   xxHash::xxhash
   Vorbis::vorbisfile
   Vorbis::vorbis
+  MPG123::libmpg123
   ${BX_LIBRARIES}
   ${BIMG_LIBRARIES}
   ${BGFX_LIBRARIES}
