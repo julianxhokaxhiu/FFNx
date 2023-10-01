@@ -3248,6 +3248,7 @@ struct ff7_externals
 	std::span<vector4<short>> pollensalta_cold_breath_white_dots_pos;
 	short* pollensalta_cold_breath_white_dot_rgb_scalar;
 	uint32_t pollensalta_cold_breath_bg_texture_ctx;
+	uint32_t pandora_box_skill_draw_bg_flash_effect_568371;
 
 	// battle menu
 	uint32_t display_battle_menu_6D797C;
