@@ -123,7 +123,7 @@ void pollensalta_cold_breath_atk_white_dot_effect()
             ff7_externals.pollensalta_cold_breath_white_dots_pos[i].y = (offset + ff7_externals.pollensalta_cold_breath_white_dots_pos[i].y) % wide_viewport_height;
         }
 
-        if(effect_data->field_2 < 8)
+        if (effect_data->field_2 < 8)
             *ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar += 1;
         if (effect_data->field_2 > 42)
             *ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar -= 1;
