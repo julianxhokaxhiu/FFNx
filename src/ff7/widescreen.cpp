@@ -198,6 +198,7 @@ void ff7_widescreen_hook_init() {
     patch_code_int(ff7_externals.pollensalta_cold_breath_atk_enter_sub_5474F0 + 0x8D, wide_viewport_height);
     patch_code_short(ff7_externals.pollensalta_cold_breath_atk_main_loop_5476B0 + 0x191, wide_viewport_x - 200);
     patch_code_dword(ff7_externals.pollensalta_cold_breath_atk_main_loop_5476B0 + 0x39, (uint32_t)&pollensalta_cold_breath_atk_white_dot_effect);
+    patch_code_int(ff7_externals.pandora_box_skill_draw_bg_flash_effect_568371 + 0x3D, wide_viewport_x - 170);
 
     // Battle summon fix
     replace_call_function(ff7_externals.ifrit_sub_595A05 + 0x930, ifrit_first_wave_effect_widescreen_fix_sub_66A47E);

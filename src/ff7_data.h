@@ -1112,6 +1112,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.pollensalta_cold_breath_white_dots_pos = std::span((vector4<short>*) get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56, 0x79), 400);
 	ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar = (short*) get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56, 0x1B);
 	ff7_externals.pollensalta_cold_breath_bg_texture_ctx = get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_draw_bg_effect_547B94, 0x2A);	
+	uint32_t pandora_box_skill_enter_5667E1 = ff7_externals.enemy_skill_effects_fn_table[23];
+	uint32_t pandora_box_skill_main_566806 = get_relative_call(pandora_box_skill_enter_5667E1, 0x1A);
+	uint32_t pandora_box_skill_sub_566871 = get_absolute_value(pandora_box_skill_main_566806, 0x30);
+	uint32_t pandora_box_skill_main_loop_566E61 = get_absolute_value(pandora_box_skill_sub_566871, 0x1F);
+	ff7_externals.pandora_box_skill_draw_bg_flash_effect_568371 = get_absolute_value(pandora_box_skill_main_loop_566E61, 0x162);
 
 	// Texture/Material animation
 	uint32_t battle_leviathan_sub_5B2F18 = get_absolute_value(ff7_externals.battle_summon_leviathan_loop, 0x50E);
