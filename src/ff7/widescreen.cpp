@@ -105,6 +105,34 @@ void ifrit_second_third_wave_effect_widescreen_fix_sub_66A47E(int wave_data_poin
     ff7_externals.engine_draw_sub_66A47E(wave_data_pointer);
 }
 
+void pollensalta_cold_breath_atk_white_dot_effect() 
+{
+    effect100_data* effect_data = &ff7_externals.effect100_array_data[*ff7_externals.effect100_array_idx];
+    ff7_externals.pollensalta_cold_breath_atk_draw_white_dots_547E75(*ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar);
+    if (!*ff7_externals.g_is_battle_paused) 
+    {
+        for (int i = 0; i < 400; i++)
+        {
+            short offset = 2 * (i % 2) + 2;
+            ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x = (offset + ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x);
+            if (ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x < wide_viewport_x) 
+                ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x = ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x + wide_viewport_width;
+            if (ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x > wide_viewport_width + wide_viewport_x)
+                ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x = ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x - wide_viewport_width;
+
+            ff7_externals.pollensalta_cold_breath_white_dots_pos[i].y = (offset + ff7_externals.pollensalta_cold_breath_white_dots_pos[i].y) % wide_viewport_height;
+        }
+
+        if (effect_data->field_2 < 8)
+            *ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar += 1;
+        if (effect_data->field_2 > 42)
+            *ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar -= 1;
+        if (++effect_data->field_2 == 50)
+            effect_data->field_0 = 0xFFFF;
+        
+    }
+}
+
 void ff7_widescreen_fix_chocobo_submit_quad_graphics_object(int x, int y, int width, int height, int color, int unknown, float z_value, DWORD* pointer)
 {
 	if(width == 640) // Replace only quad related to water effect
@@ -166,6 +194,11 @@ void ff7_widescreen_hook_init() {
     patch_code_dword(ff7_externals.display_battle_damage_5BB410 + 0x24C, (uint32_t)&wide_viewport_x);
     patch_code_int(ff7_externals.shadow_flare_draw_white_bg_57747E + 0x18, wide_viewport_x);
     patch_code_int(ff7_externals.shadow_flare_draw_white_bg_57747E + 0x1F, wide_viewport_width / 2);
+    patch_code_int(ff7_externals.pollensalta_cold_breath_atk_enter_sub_5474F0 + 0x83, wide_viewport_width);
+    patch_code_int(ff7_externals.pollensalta_cold_breath_atk_enter_sub_5474F0 + 0x8D, wide_viewport_height);
+    patch_code_short(ff7_externals.pollensalta_cold_breath_atk_main_loop_5476B0 + 0x191, wide_viewport_x - 200);
+    patch_code_dword(ff7_externals.pollensalta_cold_breath_atk_main_loop_5476B0 + 0x39, (uint32_t)&pollensalta_cold_breath_atk_white_dot_effect);
+
     // Battle summon fix
     replace_call_function(ff7_externals.ifrit_sub_595A05 + 0x930, ifrit_first_wave_effect_widescreen_fix_sub_66A47E);
     replace_call_function(ff7_externals.ifrit_sub_595A05 + 0xAEC, ifrit_second_third_wave_effect_widescreen_fix_sub_66A47E);
@@ -198,6 +231,15 @@ void ff7_widescreen_hook_init() {
     patch_code_dword(ff7_externals.barret_limit_3_1_sub_4700F7 + 0x36, (uint32_t)&wide_viewport_width);
     patch_code_dword(ff7_externals.fat_chocobo_sub_5096F3 + 0x4A, (uint32_t)&wide_viewport_x);
     patch_code_dword(ff7_externals.fat_chocobo_sub_5096F3 + 0x5F, (uint32_t)&wide_viewport_width);
+    // Makes bahamut small stars background to 512x512 quad size and a different positioning of the 6 image patches
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x20F, -512);
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x23F, 1024);
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x26F, 512);
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x29E, 512);
+    patch_code_short(ff7_externals.bahamut_zero_draw_bg_effect_sub_4859AA + 0x2CE, 512);
+    patch_code_short(ff7_externals.bahamut_zero_bg_star_graphics_data_7F6748 + 0x8, 512);
+    patch_code_short(ff7_externals.bahamut_zero_bg_star_graphics_data_7F6748 + 0xA, 512);
+
     // Battle fading animation fix
     patch_code_short(ff7_externals.battle_sub_5BCF9D + 0x3A, 30);
     patch_code_byte(ff7_externals.battle_sub_5BCF9D + 0x69, 120);
