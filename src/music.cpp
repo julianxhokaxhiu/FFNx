@@ -362,7 +362,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 
 void ff7_play_midi(uint32_t music_id)
 {
-	const int channel = next_music_channel;
+	const int channel = external_music_resume ? next_music_channel : 0;
 
 	if (nxAudioEngine.currentMusicId(0) != music_id && nxAudioEngine.currentMusicId(1) != music_id)
 	{
@@ -417,7 +417,7 @@ void stop_music()
 void ff7_cross_fade_midi(uint32_t music_id, uint32_t steps)
 {
 	const char* midi_name = common_externals.get_midi_name(music_id);
-	const int channel = next_music_channel;
+	const int channel = external_music_resume ? next_music_channel : 0;
 
 	/* FIXME: the game uses cross_fade_midi only in two places,
 	 * with steps = 4 everytime. In the PS version, theses transitions

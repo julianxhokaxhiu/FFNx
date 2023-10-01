@@ -17,6 +17,7 @@
 - Lighting: Fix field shadows not displaying during FMV movies
 - Lighting: Implemented GPU-based original game lighting that better matches PSX version
 - Lighting: Fixed minor shadow visual glitches occurring in some fields
+- Music: Fix overlapping external music tracks when `external_music_resume = false`
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
 - Voice: Enable tutorial voice acting
 - Widescreen: Added experimental support for 16:10 aspect ratio
