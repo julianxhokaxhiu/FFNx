@@ -61,7 +61,7 @@ std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uin
 		CharaOneModel model = CharaOneModel();
 
 		if (flag >> 24 != 0xd0) { // NPCs (not main characters)
-			uint32_t timOffset;
+			uint32_t tim_offset;
 
 			if (trace_all) ffnx_info("%s: %d %d %d\n", __func__, i, int(cur - chara_one_data), size);
 
@@ -70,14 +70,14 @@ std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uin
 			}
 
 			while (cur - chara_one_data < size) {
-				memcpy(&timOffset, cur, 4);
+				memcpy(&tim_offset, cur, 4);
 				cur += 4;
 
-				if (timOffset == 0xFFFFFFFF) {
+				if (tim_offset == 0xFFFFFFFF) {
 					break;
 				}
 
-				model.texturesData.push_back(timOffset & 0xFFFFFF);
+				model.texturesData.push_back(tim_offset & 0xFFFFFF);
 			}
 		} else {
 			model.isMch = true;
