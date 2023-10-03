@@ -1059,6 +1059,8 @@ struct ff8_externals
 	uint32_t load_field_models;
 	uint32_t chara_one_read_file;
 	uint32_t chara_one_seek_file;
+	uint32_t chara_one_set_data_start;
+	uint8_t **chara_one_data_start;
 	uint32_t chara_one_upload_texture;
 	uint32_t worldmap_main_loop;
 	uint32_t worldmap_enter_main;
@@ -1071,6 +1073,8 @@ struct ff8_externals
 	uint32_t worldmap_sub_541970_upload_tim;
 	uint32_t worldmap_sub_548020;
 	uint32_t worldmap_sub_5531F0;
+	uint32_t worldmap_sub_545E20;
+	uint32_t worldmap_chara_one;
 	int32_t (*open_file_world)(const char*, int32_t, uint32_t, void *);
 	uint32_t open_file_world_sub_52D670_texl_call1;
 	uint32_t open_file_world_sub_52D670_texl_call2;

@@ -377,6 +377,8 @@ void ff8_find_externals()
 	ff8_externals.load_field_models = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0xFA2 : 0xF0F);
 	ff8_externals.chara_one_read_file = get_relative_call(ff8_externals.load_field_models, 0x15F);
 	ff8_externals.chara_one_seek_file = get_relative_call(ff8_externals.load_field_models, 0x582);
+	ff8_externals.chara_one_set_data_start = get_relative_call(ff8_externals.load_field_models, 0xAFF);
+	ff8_externals.chara_one_data_start = (uint8_t **)get_absolute_value(ff8_externals.chara_one_set_data_start, 0x5);
 	ff8_externals.chara_one_upload_texture = get_relative_call(ff8_externals.load_field_models, 0xB72);
 
 	ff8_externals.worldmap_sub_53F310 = get_relative_call(ff8_externals.worldmap_enter_main, 0xA7);
@@ -516,6 +518,8 @@ void ff8_find_externals()
 		ff8_externals.worldmap_sub_53F310_call_366 = ff8_externals.worldmap_sub_53F310 + 0x366;
 		ff8_externals.worldmap_sub_53F310_loc_53F7EE = ff8_externals.worldmap_sub_53F310 + 0x4DE;
 		ff8_externals.worldmap_sub_541970_upload_tim = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x330);
+		ff8_externals.worldmap_sub_545E20 = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x60C);
+		ff8_externals.worldmap_chara_one = get_relative_call(ff8_externals.worldmap_sub_545E20, 0x68);
 		ff8_externals.worldmap_sub_5531F0 = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x614);
 		ff8_externals.open_file_world = (int32_t(*)(const char*, int32_t, uint32_t, void *))get_relative_call(ff8_externals.worldmap_sub_5531F0, 0x395);
 		ff8_externals.open_file_world_sub_52D670_texl_call1 = ff8_externals.worldmap_sub_5531F0 + 0x395;
@@ -572,6 +576,8 @@ void ff8_find_externals()
 		ff8_externals.worldmap_sub_53F310_call_366 = ff8_externals.worldmap_sub_53F310 + 0x382;
 		ff8_externals.worldmap_sub_53F310_loc_53F7EE = ff8_externals.worldmap_sub_53F310 + 0x507;
 		ff8_externals.worldmap_sub_541970_upload_tim = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x34C);
+		ff8_externals.worldmap_sub_545E20 = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x635);
+		ff8_externals.worldmap_chara_one = get_relative_call(ff8_externals.worldmap_sub_545E20, 0x6B);
 		ff8_externals.worldmap_sub_5531F0 = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x63D);
 		ff8_externals.open_file_world = (int32_t(*)(const char*, int32_t, uint32_t, void *))get_relative_call(ff8_externals.worldmap_sub_5531F0, 0x38F);
 		ff8_externals.open_file_world_sub_52D670_texl_call1 = ff8_externals.worldmap_sub_5531F0 + 0x38F;

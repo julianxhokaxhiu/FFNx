@@ -28,6 +28,7 @@
 #include "../utils.h"
 #include "field/background.h"
 #include "field/chara_one.h"
+#include "world/chara_one.h"
 #include "battle/stage.h"
 #include "file.h"
 
@@ -57,6 +58,9 @@ int chara_one_current_pos = 0;
 uint32_t chara_one_current_model = 0;
 uint32_t chara_one_current_mch = 0;
 uint32_t chara_one_current_texture = 0;
+// World
+std::vector<CharaOneModelTextures> chara_one_world_texture_offsets;
+uint8_t *chara_one_world_data;
 // Battle
 char battle_texture_name[MAX_PATH] = "";
 int battle_texture_id = 0;
@@ -384,6 +388,48 @@ void ff8_wm_section_42_upload(uint8_t *tim_file_data)
 	}
 
 	((void(*)(uint8_t*))ff8_externals.worldmap_sub_541970_upload_tim)(tim_file_data);
+}
+
+int ff8_wm_chara_one_read_file(int fd, uint8_t *data, size_t size)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s\n", __func__);
+
+	int read = ((int(*)(int, uint8_t *, size_t))ff8_externals.chara_one_read_file)(fd, data, size);
+
+	chara_one_world_texture_offsets = ff8_world_chara_one_parse_models(data, read);
+	chara_one_world_data = data;
+
+	if (save_textures) {
+		char filename[MAX_PATH];
+		snprintf(filename, sizeof(filename), "world/esk/chara_one/");
+		ff8_world_chara_one_model_save_textures(chara_one_world_texture_offsets, data, filename);
+	}
+
+	return read;
+}
+
+int ff8_wm_chara_one_upload_texture_2(char *image_buffer, char bpp, char a3, int x, int16_t y, int w, int16_t h)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s\n", __func__);
+
+	int chara_one_offset = int(*(ff8_externals.chara_one_data_start) - chara_one_world_data);
+	int model_id = 0;
+	for (const CharaOneModelTextures &textures: chara_one_world_texture_offsets) {
+		int texture_id = 0;
+		for (const uint32_t texture_offset: textures) {
+			if (texture_offset == chara_one_offset) {
+				next_bpp = Tim::Bpp(bpp);
+				snprintf(next_texture_name, MAX_PATH, "world/esk/chara_one/model%d-%d", model_id, texture_id);
+
+				return ((int(*)(char *, char, char, int, __int16, int, __int16))ff8_externals.chara_one_upload_texture)(image_buffer, bpp, a3, x, y, w, h);
+			}
+			++texture_id;
+		}
+
+		++model_id;
+	}
+
+	return ((int(*)(char *, char, char, int, __int16, int, __int16))ff8_externals.chara_one_upload_texture)(image_buffer, bpp, a3, x, y, w, h);
 }
 
 int ff8_wm_open_data(const char *path, int32_t pos, uint32_t size, void *data)
@@ -777,6 +823,8 @@ void vram_init()
 	replace_call(ff8_externals.worldmap_sub_53F310_call_330, ff8_wm_section_39_upload); // Rails/Roads
 	replace_call(ff8_externals.worldmap_sub_53F310_call_366, ff8_wm_section_40_upload);
 	replace_call(ff8_externals.worldmap_sub_548020 + 0x47, ff8_wm_section_42_upload); // Train/vehicles
+	replace_call(ff8_externals.worldmap_chara_one + 0xCC, ff8_wm_chara_one_read_file);
+	replace_call(ff8_externals.worldmap_chara_one + 0x4D1, ff8_wm_chara_one_upload_texture_2); // Characters/Chocobos/Ragnarok
 	// wm texl project
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call1, ff8_wm_texl_palette_upload_vram);
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call2, ff8_wm_texl_palette_upload_vram);
