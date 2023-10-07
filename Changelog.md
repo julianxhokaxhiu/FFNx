@@ -23,6 +23,7 @@
 - Widescreen: Added experimental support for 16:10 aspect ratio
 - Widescreen: Fix Pollensalta attack (only when also using 30/60FPS mode since it is a temporary fix) and Bahamut Zero summon background
 - Widescreen: Fix Pandora Box white background position
+- Voice: Fix auto-text sometimes not working on certain fields after long gameplay sessions
 
 ## FF8
 

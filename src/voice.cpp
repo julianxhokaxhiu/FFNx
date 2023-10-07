@@ -359,6 +359,26 @@ byte get_field_dialog_char_id(byte window_id) {
 	}
 }
 
+void ff7_handle_wmode_reset()
+{
+	struct game_mode *mode = getmode_cached();
+	static WORD last_field_id = 0;
+	uint32_t last_driver_mode = 0;
+
+	if (last_field_id != *ff7_externals.field_id)
+	{
+		last_field_id = *ff7_externals.field_id;
+
+		simulate_OK_disabled.clear();
+	}
+	else if (last_driver_mode != mode->driver_mode)
+	{
+		last_driver_mode = mode->driver_mode;
+
+		simulate_OK_disabled.clear();
+	}
+}
+
 int opcode_wmode()
 {
 	byte window_id = get_field_parameter<byte>(0);
