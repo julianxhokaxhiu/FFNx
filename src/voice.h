@@ -22,3 +22,4 @@
 #pragma once
 
 void voice_init();
+void ff7_handle_wmode_reset();
