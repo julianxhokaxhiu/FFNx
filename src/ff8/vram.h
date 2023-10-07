@@ -27,3 +27,4 @@
 extern TexturePacker texturePacker;
 
 void vram_init();
+bool ff8_vram_save(const char *fileName, Tim::Bpp bpp);

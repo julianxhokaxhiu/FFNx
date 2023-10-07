@@ -37,6 +37,7 @@
 #include <filesystem>
 
 TexturePacker texturePacker;
+uint8_t *ff8_vram = nullptr; // uint16_t[VRAM_WIDTH * VRAM_HEIGHT] aka uint8_t[VRAM_WIDTH * VRAM_HEIGHT * VRAM_DEPTH]
 
 char next_texture_name[MAX_PATH] = "";
 uint16_t *next_pal_data = nullptr;
@@ -64,24 +65,92 @@ uint8_t *chara_one_world_data;
 // Battle
 char battle_texture_name[MAX_PATH] = "";
 int battle_texture_id = 0;
+Stage stage;
+
+uint8_t *ff8_vram_seek(int xBpp2, int y)
+{
+	return ff8_externals.psxvram_buffer + VRAM_DEPTH * (xBpp2 + y * VRAM_WIDTH);
+}
+
+bool ff8_vram_save(const char *fileName, Tim::Bpp bpp)
+{
+	uint16_t palette[256] = {};
+
+	ff8_tim tim_infos = ff8_tim();
+
+	tim_infos.img_data = ff8_externals.psxvram_buffer;
+	tim_infos.img_w = VRAM_WIDTH;
+	tim_infos.img_h = VRAM_HEIGHT;
+
+	if (bpp < Tim::Bpp16)
+	{
+		tim_infos.pal_data = palette;
+		tim_infos.pal_h = 1;
+		tim_infos.pal_w = bpp == Tim::Bpp4 ? 16 : 256;
+
+		// Greyscale palette
+		for (int i = 0; i < tim_infos.pal_w; ++i)
+		{
+			uint8_t color = bpp == Tim::Bpp4 ? i * 16 : i;
+			palette[i] = color | (color << 5) | (color << 10);
+		}
+	}
+
+	return Tim(bpp, tim_infos).save(fileName, bpp);
+}
 
 void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
-	const int x = pos_and_size[0];
-	const int y = pos_and_size[1];
-	const int w = pos_and_size[2];
-	const int h = pos_and_size[3];
+	const int16_t x = pos_and_size[0];
+	const int16_t y = pos_and_size[1];
+	const int16_t w = pos_and_size[2];
+	const int16_t h = pos_and_size[3];
 	bool isPal = next_pal_data != nullptr && (uint8_t *)next_pal_data == texture_buffer;
 
 	if (trace_all || trace_vram) ffnx_trace("%s x=%d y=%d w=%d h=%d bpp=%d isPal=%d texture_buffer=0x%X\n", __func__, x, y, w, h, next_bpp, isPal, texture_buffer);
 
-	texturePacker.uploadTexture(texture_buffer, x, y, w, h);
+	uint8_t *vram = ff8_vram_seek(x, y);
+	const int vramLineWidth = VRAM_DEPTH * VRAM_WIDTH;
+	const int lineWidth = VRAM_DEPTH * w;
+
+	for (int i = 0; i < h; ++i) {
+		memcpy(vram, texture_buffer, lineWidth);
+
+		texture_buffer += lineWidth;
+		vram += vramLineWidth;
+	}
+
 	texturePacker.setTexture(next_texture_name, x, y, w, h, next_bpp, isPal);
 
 	ff8_externals.sub_464850(x, y, x + w - 1, h + y - 1);
 
 	next_pal_data = nullptr;
 	*next_texture_name = '\0';
+}
+
+void ff8_copy_vram_part(int16_t *pos_and_size, int target_x, int target_y)
+{
+	const int16_t x = pos_and_size[0];
+	const int16_t y = pos_and_size[1];
+	const int16_t w = pos_and_size[2];
+	const int16_t h = pos_and_size[3];
+
+	if (trace_all || trace_vram) ffnx_trace("%s x=%d y=%d w=%d h=%d target_x=%d target_y=%d\n", __func__, x, y, w, h, target_x, target_y);
+
+	uint8_t *vram = ff8_vram_seek(x, y), *target = ff8_vram_seek(target_x, target_y);
+	const int vramLineWidth = VRAM_DEPTH * VRAM_WIDTH;
+	const int lineWidth = VRAM_DEPTH * w;
+
+	for (int i = 0; i < h; ++i) {
+		memcpy(target, vram, lineWidth);
+
+		vram += vramLineWidth;
+		target += vramLineWidth;
+	}
+
+	texturePacker.copyTexture(x, y, w, h, target_x, target_y);
+
+	ff8_externals.sub_464850(x, y, x + w - 1, h + y - 1);
 }
 
 int read_vram_to_buffer_parent_call1(struc_50 *psxvram, texture_page *tex_page, int x, int y, int w, int h, int bpp, int rel_pos, int a9, uint8_t *target)
@@ -743,8 +812,6 @@ void ff8_field_effects_upload_vram1(int16_t *pos_and_size, uint8_t *texture_buff
 	texturePacker.setTexture(texture_name, pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3] * 2, bpp, false);
 }
 
-Stage stage;
-
 int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callback)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: %d\n", __func__, fileId);
@@ -807,7 +874,10 @@ void clean_psxvram_pages()
 
 void vram_init()
 {
-	texturePacker.setVram((uint8_t *)ff8_externals.psxvram_buffer);
+	//---- Texture uploads identification
+
+	replace_function(ff8_externals.upload_psx_vram, ff8_upload_vram);
+	replace_function(ff8_externals.copy_psx_vram_part, ff8_copy_vram_part);
 
 	// pubintro
 	replace_call(ff8_externals.open_lzs_image + 0x72, ff8_credits_open_texture);
@@ -847,12 +917,7 @@ void vram_init()
 	replace_call(ff8_externals.battle_open_file + 0x1A2, ff8_battle_read_file);
 	replace_call(ff8_externals.battle_upload_texture_to_vram + 0x45, ff8_battle_upload_texture_palette);
 
-	// Fix missing textures in battle module by clearing custom textures
-	replace_call(ff8_externals.battle_enter + 0x35, engine_set_init_time);
-	// Clear texture_packer on every module exits
-	replace_call(ff8_externals.psxvram_texture_pages_free + 0x5A, clean_psxvram_pages);
-
-	replace_function(ff8_externals.upload_psx_vram, ff8_upload_vram);
+	//---- VRAM reads
 
 	// read_vram_to_buffer_parent_calls
 	replace_call(ff8_externals.sub_464BD0 + 0x53, read_vram_to_buffer_parent_call1);
@@ -877,4 +942,11 @@ void vram_init()
 
 	// Not used?
 	replace_call(ff8_externals.sub_4649A0 + 0x13F, read_vram_to_buffer_with_palette2);
+
+	//---- Misc
+
+	// Fix missing textures in battle module by clearing custom textures
+	replace_call(ff8_externals.battle_enter + 0x35, engine_set_init_time);
+	// Clear texture_packer on every module exits
+	replace_call(ff8_externals.psxvram_texture_pages_free + 0x5A, clean_psxvram_pages);
 }

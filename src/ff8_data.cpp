@@ -180,6 +180,7 @@ void ff8_find_externals()
 	ff8_externals.battle_load_textures_sub_500900 = get_relative_call(ff8_externals.sub_47CCB0, 0x98D);
 	ff8_externals.loc_5005A0 = ff8_externals.battle_load_textures_sub_500900 + 0x9D + 0x4 + *((int32_t *)(ff8_externals.battle_load_textures_sub_500900 + 0x9D));
 	ff8_externals.battle_upload_texture_to_vram = get_relative_call(ff8_externals.loc_5005A0, 0xD1);
+	ff8_externals.copy_psx_vram_part = get_relative_call(ff8_externals.battle_upload_texture_to_vram, 0x8D);
 
 	ff8_externals.fonts = (font_object **)get_absolute_value(ff8_externals.load_fonts, JP_VERSION ? 0x17 : 0x16);
 
@@ -361,7 +362,7 @@ void ff8_find_externals()
 	ff8_externals.open_lzs_image = get_relative_call(ff8_externals.load_credits_image, 0x27);
 	ff8_externals.credits_open_file = (uint32_t (*)(char*,char*))get_relative_call(ff8_externals.open_lzs_image, 0x72);
 	ff8_externals.upload_psx_vram = get_relative_call(ff8_externals.open_lzs_image, 0xB9);
-	ff8_externals.psxvram_buffer = (WORD *)get_absolute_value(ff8_externals.upload_psx_vram, 0x34);
+	ff8_externals.psxvram_buffer = (uint8_t *)get_absolute_value(ff8_externals.upload_psx_vram, 0x34);
 	ff8_externals.sub_464850 = (void (*)(uint32_t, uint32_t, uint32_t, uint32_t))get_relative_call(ff8_externals.upload_psx_vram, 0x8A);
 
 	ff8_externals.psx_texture_pages = (struc_51 *)get_absolute_value(ff8_externals.sub_464BD0, 0x10);
