@@ -1046,8 +1046,9 @@ struct ff8_externals
 	uint32_t open_lzs_image;
 	uint32_t (*credits_open_file)(char *, char *);
 	uint32_t upload_psx_vram;
+	uint32_t copy_psx_vram_part;
 	void (*sub_464850)(uint32_t, uint32_t, uint32_t, uint32_t);
-	WORD *psxvram_buffer;
+	uint8_t *psxvram_buffer;
 	struct struc_51 *psx_texture_pages; // One per bpp (bpp 4, 8 and 16)
 	uint32_t read_field_data;
 	uint32_t upload_mim_file;

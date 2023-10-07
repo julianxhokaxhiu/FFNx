@@ -27,7 +27,7 @@
 #include <set>
 
 TexturePacker::TexturePacker() :
-	_vram(nullptr), _vramTextureIds(VRAM_WIDTH * VRAM_HEIGHT, INVALID_TEXTURE), _disableDrawTexturesBackground(false)
+	_vramTextureIds(VRAM_WIDTH * VRAM_HEIGHT, INVALID_TEXTURE), _disableDrawTexturesBackground(false)
 {
 }
 
@@ -109,23 +109,6 @@ void TexturePacker::setVramTextureId(ModdedTextureId textureId, int xBpp2, int y
 	}
 }
 
-void TexturePacker::uploadTexture(const uint8_t *source, int xBpp2, int y, int wBpp2, int h)
-{
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s xBpp2=%d y=%d wBpp2=%d h=%d\n", __func__, xBpp2, y, wBpp2, h);
-
-	uint8_t *vram = vramSeek(xBpp2, y);
-	const int vramLineWidth = VRAM_DEPTH * VRAM_WIDTH;
-	const int lineWidth = VRAM_DEPTH * wBpp2;
-
-	for (int i = 0; i < h; ++i)
-	{
-		memcpy(vram, source, lineWidth);
-
-		source += lineWidth;
-		vram += vramLineWidth;
-	}
-}
-
 void TexturePacker::setTexture(const char *name, int xBpp2, int y, int wBpp2, int h, Tim::Bpp bpp, bool isPal)
 {
 	bool hasNamedTexture = name != nullptr && *name != '\0';
@@ -196,6 +179,49 @@ bool TexturePacker::setTextureRedirection(const TextureInfos &oldTexture, const 
 	}
 
 	return false;
+}
+
+void TexturePacker::copyTexture(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
+{
+	if (_externalTextures.empty() && _backgroundTextures.empty() && _textureRedirections.empty())
+	{
+		return;
+	}
+
+	ModdedTextureId textureId = _vramTextureIds.at(sourceXBpp2 + sourceY * VRAM_WIDTH),
+		textureIdTarget = _vramTextureIds.at(targetXBpp2 + targetY * VRAM_WIDTH);
+	if (textureId == INVALID_TEXTURE || textureCategoryFromTextureId(textureId) != TextureCategoryStandard)
+	{
+		return;
+	}
+
+	auto it = _externalTextures.find(textureId);
+
+	if (it == _externalTextures.end())
+	{
+		return;
+	}
+
+	if (textureId != textureIdTarget)
+	{
+		if (textureIdTarget == INVALID_TEXTURE || textureCategoryFromTextureId(textureIdTarget) != TextureCategoryStandard)
+		{
+			return;
+		}
+
+		auto itTarget = _externalTextures.find(textureIdTarget);
+
+		if (itTarget == _externalTextures.end())
+		{
+			return;
+		}
+
+		it->second.copyRect(sourceXBpp2, sourceY, sourceWBpp2, sourceH, targetXBpp2, targetY, itTarget->second);
+	}
+	else
+	{
+		it->second.copyRect(sourceXBpp2, sourceY, sourceWBpp2, sourceH, targetXBpp2, targetY);
+	}
 }
 
 void TexturePacker::clearTiledTexs()
@@ -541,33 +567,6 @@ void TexturePacker::debugSaveTexture(int textureId, const uint32_t *source, int 
 	delete[] target;
 }
 
-bool TexturePacker::saveVram(const char *fileName, Tim::Bpp bpp) const
-{
-	uint16_t palette[256] = {};
-
-	ff8_tim tim_infos = ff8_tim();
-
-	tim_infos.img_data = _vram;
-	tim_infos.img_w = VRAM_WIDTH;
-	tim_infos.img_h = VRAM_HEIGHT;
-
-	if (bpp < Tim::Bpp16)
-	{
-		tim_infos.pal_data = palette;
-		tim_infos.pal_h = 1;
-		tim_infos.pal_w = bpp == Tim::Bpp4 ? 16 : 256;
-
-		// Greyscale palette
-		for (int i = 0; i < tim_infos.pal_w; ++i)
-		{
-			uint8_t color = bpp == Tim::Bpp4 ? i * 16 : i;
-			palette[i] = color | (color << 5) | (color << 10);
-		}
-	}
-
-	return Tim(bpp, tim_infos).save(fileName, bpp);
-}
-
 TexturePacker::TextureInfos::TextureInfos() :
 	_x(0), _y(0), _w(0), _h(0), _bpp(Tim::Bpp4)
 {
@@ -591,16 +590,16 @@ bimg::ImageContainer *TexturePacker::TextureInfos::createImageContainer(const ch
 	ff8_fs_lang_string(langPath);
 	strcat(langPath, "/");
 
-	for (uint8_t lang = 0; lang < 2; lang++)
+	for (size_t idx = 0; idx < mod_ext.size(); idx++)
 	{
-		for (size_t idx = 0; idx < mod_ext.size(); idx++)
+		// Force extension
+		if (extension && stricmp(extension, mod_ext[idx].c_str()) != 0)
 		{
-			// Force extension
-			if (extension && stricmp(extension, mod_ext[idx].c_str()) != 0)
-			{
-				continue;
-			}
+			continue;
+		}
 
+		for (uint8_t lang = 0; lang < 2; lang++)
+		{
 			if (hasPal) {
 				_snprintf(filename, sizeof(filename), "%s/%s/%s%s_%02i.%s", basedir, mod_path.c_str(), langPath, name, palette_index, mod_ext[idx].c_str());
 			} else {
@@ -625,9 +624,9 @@ bimg::ImageContainer *TexturePacker::TextureInfos::createImageContainer(const ch
 			{
 				ffnx_warning("Texture does not exist, skipping: %s\n", filename);
 			}
-		}
 
-		*langPath = '\0';
+			*langPath = '\0';
+		}
 	}
 
 	return nullptr;
@@ -695,6 +694,34 @@ void TexturePacker::TextureInfos::copyRect(
 	}
 }
 
+void TexturePacker::TextureInfos::copyRect(
+	const uint32_t *sourceRGBA, int sourceRGBAW, uint32_t *targetRGBA, int targetRGBAW, uint8_t scale, Tim::Bpp depth,
+	int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
+{
+	int sourceX = sourceXBpp2 * (4 >> int(depth)),
+		sourceW = sourceWBpp2 * (4 >> int(depth)),
+		targetX = targetXBpp2 * (4 >> int(depth));
+
+	sourceW *= scale;
+	sourceH *= scale;
+
+	ffnx_trace("TexturePacker::TextureInfos::%s: w=%d scale=%d depth=%d "
+		"sourceXBpp2=%d sourceX=%d sourceY=%d sourceWBpp2=%d sourceW=%d sourceH=%d targetXBpp2=%d targetX=%d targetY=%d\n",
+		__func__, targetRGBAW, scale, depth, sourceXBpp2, sourceX, sourceY, sourceWBpp2, sourceW, sourceH, targetXBpp2, targetX, targetY
+	);
+
+	const uint32_t *sourceRgba = sourceRGBA + (sourceX + sourceY * sourceRGBAW) * scale;
+	uint32_t *targetRgba = targetRGBA + (targetX + targetY * targetRGBAW) * scale;
+
+	for (int y = 0; y < sourceH; ++y)
+	{
+		memcpy(targetRgba, sourceRgba, sizeof(uint32_t) * sourceW);
+
+		sourceRgba += sourceRGBAW;
+		targetRgba += targetRGBAW;
+	}
+}
+
 TexturePacker::Texture::Texture() :
 	TextureInfos(), _image(nullptr), _name(""), _scale(1)
 {
@@ -758,6 +785,32 @@ void TexturePacker::Texture::copyRect(int vramXBpp2, int vramY, Tim::Bpp texture
 			target, targetX, targetY, targetW, targetScale
 		);
 	}
+}
+
+void TexturePacker::Texture::copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY) const
+{
+	TextureInfos::copyRect(
+		(const uint32_t *)_image->m_data + _image->m_offset, _image->m_width,
+		(uint32_t *)_image->m_data + _image->m_offset, _image->m_width,
+		_scale, bpp(),
+		sourceXBpp2 - x(), sourceY - y(), sourceWBpp2, sourceH,
+		targetXBpp2 - x(), targetY - y()
+	);
+}
+
+void TexturePacker::Texture::copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY, const Texture &targetTexture) const
+{
+	if (bpp() != targetTexture.bpp() || _scale != targetTexture.scale()) {
+		return;
+	}
+
+	TextureInfos::copyRect(
+		(const uint32_t *)_image->m_data + _image->m_offset, _image->m_width,
+		(uint32_t *)targetTexture.image()->m_data + targetTexture.image()->m_offset, targetTexture.image()->m_width,
+		_scale, bpp(),
+		sourceXBpp2 - x(), sourceY - y(), sourceWBpp2, sourceH,
+		targetXBpp2 - targetTexture.x(), targetY - targetTexture.y()
+	);
 }
 
 TexturePacker::TextureBackground::TextureBackground() :
