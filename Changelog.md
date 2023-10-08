@@ -4,6 +4,7 @@
 
 ## Common
 
+- Logo: Fix intro logo showing up when `enable_lighting = true`
 - Movie: Fix audio stream playing at the same time as the external audio
 - Movie: Add support for the AV1 codec
 

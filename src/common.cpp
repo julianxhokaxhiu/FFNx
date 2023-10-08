@@ -3353,8 +3353,13 @@ int ffnx_logo_current_frame = 0;
 
 bool drawFFNxLogoFrame(struct game_obj* game_object)
 {
+	static int was_lighting_enabled = -1;
+
+	if (was_lighting_enabled == -1) was_lighting_enabled = enable_lighting;
+
 	if (ffnx_logo_current_frame >= FFNX_LOGO_FRAME_COUNT) {
 		newRenderer.setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB); // set the gamut back to what it was before newRenderer.drawFFNxLogo() changed it
+		enable_lighting = was_lighting_enabled;
 		return false;
 	}
 
@@ -3369,6 +3374,8 @@ bool drawFFNxLogoFrame(struct game_obj* game_object)
 		fade = 1.0f;
 	else
 		fade = 1.0f - (ffnx_logo_current_frame - 2 * fade_frame_count) / static_cast<float>(fade_frame_count);
+
+	enable_lighting = false;
 
 	newRenderer.drawFFNxLogo(fade);
 
