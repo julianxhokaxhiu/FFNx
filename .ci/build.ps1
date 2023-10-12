@@ -72,8 +72,8 @@ cmd.exe /c "call $vcpkgRoot\bootstrap-vcpkg.bat"
 
 vcpkg integrate install
 
-cmake --preset "x86-${env:_RELEASE_CONFIGURATION}" -D_DLL_VERSION="$env:_BUILD_VERSION"
-cmake --build --preset "x86-${env:_RELEASE_CONFIGURATION}"
+cmake --preset "${env:_RELEASE_CONFIGURATION}" -D_DLL_VERSION="$env:_BUILD_VERSION"
+cmake --build --preset "${env:_RELEASE_CONFIGURATION}"
 
 mkdir .dist\pkg\FF7_1998 | Out-Null
 mkdir .dist\pkg\FF8_2000 | Out-Null

@@ -25,62 +25,63 @@
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
         "_DLL_VERSION": "devel",
-        "CMAKE_C_COMPILER": "cl"
+        "CMAKE_C_COMPILER": "cl",
+        "VCPKG_TARGET_TRIPLET": "x86-windows-static"
       }
     },
     {
-      "name": "x86-Debug",
+      "name": "Release",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "x86-RelWithDebInfo",
+      "name": "RelWithDebInfo",
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
-      "name": "x86-MinSizeRel",
+      "name": "Debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "MinSizeRel"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "x86-Release",
+      "name": "MinSizeRel",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "MinSizeRel"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "x86-Debug",
+      "name": "Release",
       "displayName": "Default",
-      "configurePreset": "x86-Debug",
-      "configuration": "Debug"
+      "configurePreset": "Release",
+      "configuration": "Release"
     },
     {
-      "name": "x86-RelWithDebInfo",
+      "name": "RelWithDebInfo",
       "displayName": "Default",
-      "configurePreset": "x86-RelWithDebInfo",
+      "configurePreset": "RelWithDebInfo",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "x86-MinSizeRel",
+      "name": "Debug",
       "displayName": "Default",
-      "configurePreset": "x86-MinSizeRel",
-      "configuration": "MinSizeRel"
+      "configurePreset": "Debug",
+      "configuration": "Debug"
     },
     {
-      "name": "x86-Release",
+      "name": "MinSizeRel",
       "displayName": "Default",
-      "configurePreset": "x86-Release",
-      "configuration": "Release"
+      "configurePreset": "MinSizeRel",
+      "configuration": "MinSizeRel"
     }
   ],
   "vendor": {
