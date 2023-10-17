@@ -1218,6 +1218,9 @@ struct ff8_externals
 	uint32_t sub_462DF0;
 	uint32_t sub_461220;
 	uint32_t ssigpu_tx_select_2_sub_465CE0;
+	uint32_t write_palette_texture_set_sub_466190;
+	uint32_t read_vram_palette_sub_467370;
+	uint32_t write_palette_to_driver_sub_467310;
 	int (*sub_464F70)(struc_50 *, texture_page *, int, int, int, int, int, int, int, uint8_t *);
 	void(*read_vram_1)(uint8_t *, int, uint8_t *, int, signed int, int, int);
 	void(*read_vram_2_paletted)(uint8_t *, int, uint8_t *, int, signed int, int, int, uint16_t *);

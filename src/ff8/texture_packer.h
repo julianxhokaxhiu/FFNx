@@ -26,7 +26,7 @@
 #include <unordered_map>
 #include <list>
 #include <vector>
-#include <bimg/bimg.h>
+#include <map>
 
 #include "../ff8.h"
 #include "../image/tim.h"
@@ -36,9 +36,14 @@ typedef uint32_t ModdedTextureId;
 
 constexpr int VRAM_WIDTH = 1024;
 constexpr int VRAM_HEIGHT = 512;
+constexpr int VRAM_PAGE_WIDTH = 64;
+constexpr int VRAM_PAGE_HEIGHT = 256;
 constexpr int VRAM_DEPTH = 2;
 constexpr ModdedTextureId INVALID_TEXTURE = ModdedTextureId(0xFFFFFFFF);
 constexpr int MAX_SCALE = 128;
+constexpr int FF8_BASE_RESOLUTION_X = 320;
+
+class ModdedTexture;
 
 class TexturePacker {
 public:
@@ -47,10 +52,16 @@ public:
 		TextureInfos();
 		TextureInfos(
 			int x, int y, int w, int h,
-			Tim::Bpp bpp
+			Tim::Bpp bpp, bool multiBpp = false
 		);
+		inline bool isValid() const {
+			return _x >= 0;
+		}
 		inline int x() const {
 			return _x;
+		}
+		inline int pixelX() const {
+			return _x * (4 >> int(_bpp));
 		}
 		inline int y() const {
 			return _y;
@@ -59,7 +70,7 @@ public:
 			return _w;
 		}
 		inline int pixelW() const {
-			return _w * (4 >> _bpp);
+			return _w * (4 >> int(_bpp));
 		}
 		inline int h() const {
 			return _h;
@@ -67,167 +78,105 @@ public:
 		inline Tim::Bpp bpp() const {
 			return _bpp;
 		}
-	protected:
-		static bimg::ImageContainer *createImageContainer(const char *name, uint8_t palette_index, bool hasPal, const char *extension = nullptr, char *foundExtension = nullptr);
-		static uint8_t computeScale(int sourcePixelW, int sourceH, int targetPixelW, int targetH);
-		static void copyRect(
-			const uint32_t *sourceRGBA, int sourceXBpp2, int sourceY, int sourceW, uint8_t sourceScale, Tim::Bpp sourceDepth,
-			uint32_t *targetRGBA, int targetX, int targetY, int targetW, uint8_t targetScale
-		);
-		static void copyRect(
-			const uint32_t *sourceRGBA, int sourceRGBAW, uint32_t *targetRGBA, int targetRGBAW, uint8_t scale, Tim::Bpp depth,
-			int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH,
-			int targetXBpp2, int targetY
-		);
+		inline bool hasMultiBpp() const {
+			return _multiBpp;
+		}
 	private:
 		int _x, _y;
 		int _w, _h;
 		Tim::Bpp _bpp;
+		bool _multiBpp;
 	};
 
-	struct TiledTex {
+	struct TiledTex : public TextureInfos {
 		TiledTex();
-		TiledTex(int x, int y, Tim::Bpp bpp, int palX, int palY);
-		inline bool isValid() const {
-			return x >= 0;
+		TiledTex(int x, int y, Tim::Bpp bpp, int palVramX = -1, int palVramY = -1);
+		inline bool isPaletteValid(int palIndex) const {
+			return bpp() == Tim::Bpp16 || (palettes.contains(palIndex) && palettes.at(palIndex).isValid());
 		}
-		int x, y;
-		int palX, palY;
-		Tim::Bpp bpp;
-		bool renderedOnce;
+		inline TextureInfos palette(int palIndex) const {
+			return bpp() == Tim::Bpp16 || !palettes.contains(palIndex) ? TextureInfos() : palettes.at(palIndex);
+		}
+		std::map<uint8_t, TextureInfos> palettes;
+	};
+
+	class IdentifiedTexture {
+	public:
+		IdentifiedTexture();
+		IdentifiedTexture(
+			const char *name,
+			const TextureInfos &texture,
+			const TextureInfos &palette = TextureInfos()
+		);
+		void setMod(ModdedTexture *mod);
+		inline ModdedTexture *mod() const {
+			return _mod;
+		}
+		void setRedirection(ModdedTextureId textureId, const IdentifiedTexture &redirection);
+		const std::unordered_map<ModdedTextureId, IdentifiedTexture> &redirections() const {
+			return _redirections;
+		}
+		inline const TextureInfos &texture() const {
+			return _texture;
+		}
+		inline const TextureInfos &palette() const {
+			return _palette;
+		}
+		inline const std::string &name() const {
+			return _name;
+		}
+		inline bool isValid() const {
+			return !_name.empty();
+		}
+	private:
+		TextureInfos _texture, _palette;
+		std::string _name;
+		ModdedTexture *_mod;
+		std::unordered_map<ModdedTextureId, IdentifiedTexture> _redirections;
 	};
 
 	enum TextureTypes {
 		NoTexture = 0,
 		ExternalTexture = 1,
-		InternalTexture = 2
+		InternalTexture = 2,
+		RemoveTexture = 4
 	};
 
 	explicit TexturePacker();
-	void setTexture(const char *name, int x, int y, int w, int h, Tim::Bpp bpp, bool isPal);
+	bool setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), bool clearOldTexture = true);
 	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId = -1, const char *extension = nullptr, char *found_extension = nullptr);
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
-	bool setTextureRedirection(const TextureInfos &oldTexture, const TextureInfos &newTexture, uint32_t *imageData);
-	void copyTexture(int sourceXBpp2, int y, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY);
+	bool setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, uint32_t *imageData);
+	void animateTextureByCopy(int sourceXBpp2, int y, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY);
 	void clearTiledTexs();
 	void clearTextures();
-	uint8_t getMaxScale(const uint8_t *texData) const;
-	void getTextureNames(const uint8_t *texData, std::list<std::string> &names) const;
-	void registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX = 0, int palY = 0);
+	// Returns the textures matching the tiledTex
+	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, const TextureInfos &palette, bool withModsOnly = false) const;
+	void registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX = -1, int palY = -1);
+	void registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY);
 	TiledTex getTiledTex(const uint8_t *texData) const;
 
-	void disableDrawTexturesBackground(bool disabled);
-	inline bool drawTexturesBackgroundIsDisabled() const {
-		return _disableDrawTexturesBackground;
-	}
-	TextureTypes drawTextures(const uint8_t *texData, struct texture_format *tex_format, uint32_t *target, const uint32_t *originalImageData, int originalW, int originalH, uint8_t scale, uint32_t paletteIndex);
+	TextureTypes drawTextures(
+		const uint8_t *texData, uint32_t *rgbaImageData, uint32_t dataSize, int originalW, int originalH,
+		int palIndex, uint8_t *outScale, uint32_t **outTarget
+	) const;
 
 	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after, TextureTypes textureType);
 private:
-	enum TextureCategory {
-		TextureCategoryStandard,
-		TextureCategoryBackground,
-		TextureCategoryRedirection
-	};
-	inline static ModdedTextureId makeTextureId(int xBpp2, int y, TextureCategory textureCategory) {
-		return (xBpp2 + y * VRAM_WIDTH) | (uint32_t(textureCategory) << 28);
+	inline static ModdedTextureId makeTextureId(int xBpp2, int y) {
+		return xBpp2 + y * VRAM_WIDTH;
 	}
-	inline static TextureCategory textureCategoryFromTextureId(ModdedTextureId textureId) {
-		return TextureCategory(textureId >> 28 & 0xF);
-	}
-	inline static ModdedTextureId setTextureIdCategory(ModdedTextureId textureId, TextureCategory textureCategory) {
-		return (textureId & 0xFFFFFFF) | (uint32_t(textureCategory) << 28);
-	}
-	class Texture : public TextureInfos {
-	public:
-		Texture();
-		Texture(
-			const char *name,
-			int x, int y, int wBpp2, int h,
-			Tim::Bpp bpp
-		);
-		inline const std::string &name() const {
-			return _name;
-		}
-		inline uint8_t scale() const {
-			return _scale;
-		}
-		bool createImage(uint8_t palette_index = 0, bool has_pal = true, const char *extension = nullptr, char *foundExtension = nullptr);
-		void destroyImage();
-		inline bool hasImage() const {
-			return _image != nullptr;
-		}
-		inline bool isValid() const {
-			return _scale != 0;
-		}
-		void copyRect(int sourceXBpp2, int sourceYBpp2, Tim::Bpp textureBpp, uint32_t *target, int targetX, int targetY, int targetW, uint8_t targetScale) const;
-		void copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY) const;
-		void copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY, const Texture &targetTexture) const;
-	protected:
-		const bimg::ImageContainer *image() const {
-			return _image;
-		}
-		virtual uint8_t computeScale() const;
-	private:
-		bimg::ImageContainer *_image;
-		std::string _name;
-		uint8_t _scale;
-	};
-	class TextureBackground : public Texture {
-	public:
-		TextureBackground();
-		TextureBackground(
-			const char *name,
-			int x, int y, int w, int h,
-			const std::vector<Tile> &mapTiles,
-			int textureId
-		);
-		bool createImage(const char *extension = nullptr, char *foundExtension = nullptr);
-		void copyRect(int sourceXBpp2, int sourceYBpp2, Tim::Bpp textureBpp, uint32_t *target, int targetX, int targetY, int targetW, uint8_t targetScale) const;
-	private:
-		virtual uint8_t computeScale() const override;
-		std::vector<Tile> _mapTiles;
-		std::unordered_multimap<uint16_t, size_t> _tileIdsByPosition;
-		uint8_t _colsCount;
-		int _textureId;
-	};
-	struct TextureRedirection : public TextureInfos {
-		TextureRedirection();
-		TextureRedirection(
-			const TextureInfos &oldTexture,
-			const TextureInfos &newTexture
-		);
-		inline bool isValid() const {
-			return _scale != 0;
-		}
-		inline uint8_t scale() const {
-			return _scale;
-		}
-		bool createImage(uint32_t *imageData);
-		void destroyImage();
-		inline uint32_t *imageData() {
-			return _image;
-		}
-		inline const TextureInfos &oldTexture() const {
-			return _oldTexture;
-		}
-		void copyRect(int textureX, int textureY, Tim::Bpp textureBpp, uint32_t *target, int targetX, int targetY, int targetW, uint8_t targetScale) const;
-	private:
-		uint8_t computeScale() const;
-		uint32_t *_image;
-		TextureInfos _oldTexture;
-		uint8_t _scale;
-	};
-	void setVramTextureId(ModdedTextureId textureId, int x, int y, int w, int h, bool keepMods = false);
-	TextureTypes drawTextures(uint32_t *target, const TiledTex &tiledTex, int w, int h, uint8_t scale, uint32_t paletteIndex);
+
+	void setVramTextureId(ModdedTextureId textureId, int x, int y, int w, int h, bool clearOldTexture = true);
+	uint8_t getMaxScale(const TiledTex &tiledTex) const;
+	TextureTypes drawTextures(const std::list<IdentifiedTexture> &textures, const TiledTex &tiledTex, const TextureInfos &palette, uint32_t *target, int w, int h, uint8_t scale) const;
 	void cleanVramTextureIds(const TextureInfos &texture);
-	void cleanTextures(ModdedTextureId textureId, bool keepMods = false);
+	void cleanTextures(ModdedTextureId textureId);
 
+	// Link between texture data pointer sent to the graphic driver and VRAM coordinates
 	std::unordered_map<const uint8_t *, TiledTex> _tiledTexs;
+	// Keep track of where textures are uploaded to the VRAM
 	std::vector<ModdedTextureId> _vramTextureIds; // ModdedTextureId[VRAM_WIDTH * VRAM_HEIGHT]
-	std::unordered_map<ModdedTextureId, Texture> _externalTextures;
-	std::unordered_map<ModdedTextureId, TextureRedirection> _textureRedirections;
-	std::unordered_map<ModdedTextureId, TextureBackground> _backgroundTextures;
-
-	bool _disableDrawTexturesBackground;
+	// List of uploaded textures to the VRAM
+	std::unordered_map<ModdedTextureId, IdentifiedTexture> _textures;
 };

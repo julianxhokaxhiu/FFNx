@@ -169,9 +169,6 @@ GamepadAnalogueIntent gamepad_analogue_intent = INTENT_NONE;
 uint32_t *image_data_cache = nullptr;
 uint32_t image_data_size_cache = 0;
 
-uint8_t *image_data_scaled_cache = nullptr;
-uint32_t image_data_scaled_size_cache = 0;
-
 uint32_t noop() { return 0; }
 uint32_t noop_a1(uint32_t a1) { return 0; }
 uint32_t noop_a2(uint32_t a1, uint32_t a2) { return 0; }
@@ -1429,40 +1426,6 @@ void blit_framebuffer_texture(struct texture_set *texture_set, struct tex_header
 	);
 }
 
-
-// Scale 32-bit BGRA image in place
-void scale_up_image_data_in_place(uint8_t *sourceAndTarget, int w, int h, int scale)
-{
-	if (scale <= 1)
-	{
-		return;
-	}
-
-	uint32_t *source = (uint32_t *)sourceAndTarget + w * h,
-		*target = (uint32_t *)sourceAndTarget + (w * scale) * (h * scale);
-
-	for (int y = 0; y < h; ++y)
-	{
-		uint32_t *source_line_start = source;
-
-		for (int i = 0; i < scale; ++i)
-		{
-			source = source_line_start;
-
-			for (int x = 0; x < w; ++x)
-			{
-				source -= 1;
-				target -= scale;
-
-				for (int i = 0; i < scale; ++i)
-				{
-					target[i] = *source;
-				}
-			}
-		}
-	}
-}
-
 // load modpath texture for tex file, returns true if successful
 uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct texture_set *texture_set, struct tex_header *tex_header, uint32_t originalWidth, uint32_t originalHeight)
 {
@@ -1505,50 +1468,31 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 	}
 	else if(ff8)
 	{
-		uint8_t scale = texturePacker.getMaxScale(VREF(tex_header, image_data));
-		uint8_t *image_data_scaled = (uint8_t *)image_data;
+		uint32_t *image_data_scaled = nullptr;
+		uint8_t scale = 1;
+		TexturePacker::TextureTypes textureType = texturePacker.drawTextures(
+			VREF(tex_header, image_data), reinterpret_cast<uint32_t *>(image_data), dataSize, originalWidth, originalHeight,
+			VREF(tex_header, palette_index) / 2,
+			&scale, &image_data_scaled
+		);
 
-		if (scale > 1)
-		{
-			uint32_t image_data_size = originalWidth * scale * originalHeight * scale * 4;
-			// Allocate with cache
-			if (image_data_scaled_size_cache == 0 || image_data_size > image_data_scaled_size_cache) {
-				if (image_data_scaled_cache != nullptr) {
-					driver_free(image_data_scaled_cache);
-				}
-				image_data_scaled_cache = (uint8_t*)driver_malloc(image_data_size);
-				image_data_scaled_size_cache = image_data_size;
-			}
+		if (save_textures && textureType != TexturePacker::InternalTexture) return false;
 
-			image_data_scaled = image_data_scaled_cache;
-
-			// convert source data
-			if (image_data_scaled != nullptr)
-			{
-				memcpy(image_data_scaled, image_data, dataSize);
-				scale_up_image_data_in_place(image_data_scaled, originalWidth, originalHeight, scale);
-			}
-		}
-
-		TexturePacker::TextureTypes textureType = TexturePacker::NoTexture;
-
-		if (image_data_scaled != nullptr && scale > 0)
-		{
-			textureType = texturePacker.drawTextures(VREF(tex_header, image_data), tex_format, (uint32_t *)image_data_scaled, (uint32_t *)image_data, originalWidth, originalHeight, scale, VREF(tex_header, palette_index));
-		}
-
-		if(save_textures && textureType != TexturePacker::InternalTexture) return false;
-
-		if (textureType != TexturePacker::NoTexture)
-		{
-			VREF(texture_set, ogl.width) = originalWidth * scale;
-			VREF(texture_set, ogl.height) = originalHeight * scale;
-			texture = newRenderer.createTexture(image_data_scaled, VREF(texture_set, ogl.width), VREF(texture_set, ogl.height));
-		}
-		else
+		if (textureType == TexturePacker::NoTexture)
 		{
 			if(VREF(texture_set, ogl.external)) stats.external_textures--;
 			VRASS(texture_set, ogl.external, false);
+		}
+		else if (textureType == TexturePacker::RemoveTexture)
+		{
+			ffnx_trace("Remove texture\n");
+			return true;
+		}
+		else
+		{
+			VREF(texture_set, ogl.width) = originalWidth * scale;
+			VREF(texture_set, ogl.height) = originalHeight * scale;
+			texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(image_data_scaled), VREF(texture_set, ogl.width), VREF(texture_set, ogl.height));
 		}
 
 		if (textureType == TexturePacker::InternalTexture)
@@ -1768,8 +1712,18 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	if(tex_format->palettes == 0) tex_format->palettes = VREF(tex_header, palette_entries);
 
 	// convert texture data from source format and load it
-	if(texture_format != 0 && VREF(tex_header, image_data) != 0 && (! ff8 || ! texturePacker.drawTexturesBackgroundIsDisabled()))
+	if(texture_format != 0 && VREF(tex_header, image_data) != 0)
 	{
+		if (ff8)
+		{
+			// optimization to not upload textures with undefined VRAM palette
+			TexturePacker::TiledTex tiledTex = texturePacker.getTiledTex(VREF(tex_header, image_data));
+			if (tiledTex.isValid() && !tiledTex.isPaletteValid(VREF(tex_header, palette_index) / 2))
+			{
+				return _texture_set;
+			}
+		}
+
 		// detect changes in palette data for FF8, we can't trust it to notify us
 		if(ff8 && VREF(tex_header, palettes) > 0 && VREF(tex_header, version) != FB_TEX_VERSION && tex_format->bytesperpixel == 1)
 		{
@@ -1904,7 +1858,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-	if(trace_all) ffnx_trace("dll_gfx: write_palette 0x%x, %i, %i, %i, 0x%x, 0x%x\n", texture_set, source_offset, dest_offset, size, source, palette->palette_entry);
+	if(trace_all) ffnx_trace("dll_gfx: write_palette 0x%x, %i, %i, %i, 0x%x, 0x%x, image_data=0x%X\n", texture_set, source_offset, dest_offset, size, source, palette->palette_entry, VREF(tex_header, image_data));
 
 	if(palette == 0) return false;
 

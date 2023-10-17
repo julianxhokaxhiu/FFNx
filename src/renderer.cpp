@@ -33,6 +33,7 @@
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
 #include "cfg.h"
+#include "image/image.h"
 #include <windows.h>
 #include <vector>
 
@@ -1818,46 +1819,7 @@ uint32_t Renderer::createTexture(char* filename, uint32_t* width, uint32_t* heig
 
 bimg::ImageContainer* Renderer::createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat)
 {
-    FILE* file = fopen(filename, "rb");
-    bimg::ImageContainer* img = nullptr;
-
-    if (file)
-    {
-        size_t filesize = 0;
-        char* buffer = nullptr;
-
-        fseek(file, 0, SEEK_END);
-        filesize = ftell(file);
-
-        if (doesItFitInMemory(filesize + 1))
-        {
-            buffer = (char*)driver_malloc(filesize + 1);
-            fseek(file, 0, SEEK_SET);
-            fread(buffer, filesize, 1, file);
-        }
-
-        fclose(file);
-
-        if (buffer != nullptr)
-        {
-            img = bimg::imageParse(&defaultAllocator, buffer, filesize + 1);
-
-            driver_free(buffer);
-        }
-    }
-
-    if (img && targetFormat != bimg::TextureFormat::Enum::UnknownDepth && targetFormat != img->m_format)
-    {
-        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: convert image to format %d\n", __func__, targetFormat);
-
-        bimg::ImageContainer* converted = bimg::imageConvert(&defaultAllocator, targetFormat, *img);
-
-        bimg::imageFree(img);
-
-        img = converted;
-    }
-
-    return img;
+    return loadImageContainer(&defaultAllocator, filename, targetFormat);
 }
 
 bimg::ImageContainer* Renderer::createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat)
@@ -1866,18 +1828,7 @@ bimg::ImageContainer* Renderer::createImageContainer(cmrc::file* file, bimg::Tex
 
     if (file->size() > 0)
     {
-        img = bimg::imageParse(&defaultAllocator, file->begin(), file->size());
-    }
-
-    if (img && targetFormat != bimg::TextureFormat::Enum::UnknownDepth && targetFormat != img->m_format)
-    {
-        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: convert image to format %d\n", __func__, targetFormat);
-
-        bimg::ImageContainer* converted = bimg::imageConvert(&defaultAllocator, targetFormat, *img, false);
-
-        bimg::imageFree(img);
-
-        img = converted;
+        img = bimg::imageParse(&defaultAllocator, file->begin(), file->size(), targetFormat);
     }
 
     return img;
@@ -1988,174 +1939,33 @@ bgfx::TextureHandle Renderer::createTextureHandle(cmrc::file* file, char* filena
 uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
+    bimg::ImageMip mip;
 
-    FILE* file = fopen(filename, "rb");
-
-    if (file)
-    {
-        png_infop info_ptr = nullptr;
-        png_structp png_ptr = nullptr;
-
-        png_uint_32 _width = 0, _height = 0;
-        png_byte color_type = 0, bit_depth = 0;
-
-        png_bytepp rowptrs = nullptr;
-        size_t rowbytes = 0;
-
-        uint8_t* data = nullptr;
-        size_t datasize = 0;
-
-        fseek(file, 0, SEEK_END);
-        datasize = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)0, RendererLibPngErrorCb, RendererLibPngWarningCb);
-
-        if (!png_ptr)
-        {
-            fclose(file);
-
-            return ret.idx;
-        }
-
-        info_ptr = png_create_info_struct(png_ptr);
-
-        if (!info_ptr)
-        {
-            png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
-
-            fclose(file);
-
-            return ret.idx;
-        }
-
-        if (setjmp(png_jmpbuf(png_ptr)))
-        {
-            png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-
-            fclose(file);
-
-            return ret.idx;
-        }
-
-        png_init_io(png_ptr, file);
-
-        png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
-
-        if (!doesItFitInMemory(datasize))
-        {
-            png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-
-            fclose(file);
-
-            return ret.idx;
-        }
-
-        png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_EXPAND, NULL);
-
-        color_type = png_get_color_type(png_ptr, info_ptr);
-        bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-        _width = png_get_image_width(png_ptr, info_ptr);
-        _height = png_get_image_height(png_ptr, info_ptr);
-
-        rowptrs = png_get_rows(png_ptr, info_ptr);
-        rowbytes = png_get_rowbytes(png_ptr, info_ptr);
-
-        datasize = rowbytes * _height;
-
-        if (!doesItFitInMemory(datasize))
-        {
-            png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-
-            fclose(file);
-
-            return ret.idx;
-        }
-
-        data = (uint8_t*)driver_calloc(datasize, sizeof(uint8_t));
-
-        for (png_uint_32 y = 0; y < _height; y++) memcpy(data + (rowbytes * y), rowptrs[y], rowbytes);
-
-        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-
-        fclose(file);
-
-        // ------------------------------------------------------------
-
-        bgfx::TextureFormat::Enum texFmt = bgfx::TextureFormat::Unknown;
-
-        switch (bit_depth)
-        {
-        case 8:
-        {
-            switch (color_type)
-            {
-            case PNG_COLOR_TYPE_GRAY:
-                texFmt = bgfx::TextureFormat::R8;
-                break;
-            case PNG_COLOR_TYPE_GRAY_ALPHA:
-                texFmt = bgfx::TextureFormat::RG8;
-                break;
-            case PNG_COLOR_TYPE_RGB:
-                texFmt = bgfx::TextureFormat::RGB8;
-                break;
-            case PNG_COLOR_TYPE_RGBA:
-            case PNG_COLOR_TYPE_PALETTE:
-                texFmt = bgfx::TextureFormat::RGBA8;
-                break;
-            }
-            break;
-        }
-        case 16:
-        {
-            switch (color_type)
-            {
-            case PNG_COLOR_TYPE_GRAY:
-                texFmt = bgfx::TextureFormat::R16;
-                break;
-            case PNG_COLOR_TYPE_GRAY_ALPHA:
-                texFmt = bgfx::TextureFormat::RG16;
-                break;
-            case PNG_COLOR_TYPE_RGB:
-            case PNG_COLOR_TYPE_RGBA:
-                texFmt = bgfx::TextureFormat::RGBA16;
-                break;
-            case PNG_COLOR_TYPE_PALETTE:
-                break;
-            }
-            break;
-        }
-        default:
-            break;
-        }
-
-        if (texFmt != bgfx::TextureFormat::Unknown)
-        {
-            const bgfx::Memory* mem = bgfx::makeRef(data, datasize, RendererReleaseData, data);
-
-            uint64_t flags = BGFX_SAMPLER_NONE;
-
-            if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
-            else flags |= BGFX_TEXTURE_NONE;
-
-            ret = bgfx::createTexture2D(
-                _width,
-                _height,
-                false,
-                1,
-                texFmt,
-                flags,
-                mem
-            );
-
-            *width = _width;
-            *height = _height;
-        }
-        else
-            driver_free(data);
-
-        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
+    if (!loadPng(filename, mip)) {
+        return ret.idx;
     }
+
+    const bgfx::Memory* mem = bgfx::makeRef(mip.m_data, mip.m_size, RendererReleaseData, (void *)mip.m_data);
+
+    uint64_t flags = BGFX_SAMPLER_NONE;
+
+    if (isSrgb) flags |= BGFX_TEXTURE_SRGB;
+    else flags |= BGFX_TEXTURE_NONE;
+
+    ret = bgfx::createTexture2D(
+        mip.m_width,
+        mip.m_height,
+        false,
+        1,
+        bgfx::TextureFormat::Enum(mip.m_format),
+        flags,
+        mem
+    );
+
+    *width = mip.m_width;
+    *height = mip.m_height;
+
+    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
 
     return ret.idx;
 }
@@ -2625,7 +2435,7 @@ void Renderer::setGameLightData(light_data* lightdata)
         internalState.gameLightColor3[3] = 1.0;
 
         if (mode->driver_mode == MODE_WORLDMAP)
-        {           
+        {
             internalState.gameLightDir1[0] = lightdata->light_dir_1.x;
             internalState.gameLightDir1[1] = lightdata->light_dir_1.z;
             internalState.gameLightDir1[2] = lightdata->light_dir_1.y;
@@ -2638,7 +2448,7 @@ void Renderer::setGameLightData(light_data* lightdata)
             internalState.gameLightDir3[1] = lightdata->light_dir_3.z;
             internalState.gameLightDir3[2] = lightdata->light_dir_3.y;
         }
-        else 
+        else
         {
             internalState.gameLightDir1[0] = -lightdata->light_dir_1.x;
             internalState.gameLightDir1[1] = -lightdata->light_dir_1.y;

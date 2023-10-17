@@ -216,10 +216,10 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 
 	TexturePacker::TiledTex tiledTex = texturePacker.getTiledTex(VREF(tex_header, image_data));
 	if (tiledTex.isValid()) {
-		Tim::Bpp bpp = tiledTex.bpp == 0 ? Tim::Bpp8 : tiledTex.bpp;
+		int bytesperpixel = int(tiledTex.bpp() == Tim::Bpp4 ? Tim::Bpp8 : tiledTex.bpp());
 
-		if (VREF(tex_header, tex_format.bytesperpixel) != int(bpp)) {
-			if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: ignore reload because BPP does not match 0x%X (bpp vram=%d, bpp tex=%d) image_data=0x%X\n", texture_set, tiledTex.bpp, VREF(tex_header, tex_format.bytesperpixel), VREF(tex_header, image_data));
+		if (VREF(tex_header, tex_format.bytesperpixel) != bytesperpixel) {
+			if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: ignore reload because BPP does not match 0x%X (bpp vram=%d, bpp tex=%d) image_data=0x%X\n", texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), VREF(tex_header, image_data));
 
 			return;
 		}

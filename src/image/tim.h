@@ -127,7 +127,7 @@ public:
 		return _tim.img_y;
 	}
 	inline uint16_t imageWidth() const {
-		return _tim.img_w;
+		return _tim.img_w / (4 >> int(_bpp));
 	}
 	inline uint16_t imageHeight() const {
 		return _tim.img_h;

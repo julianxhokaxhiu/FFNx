@@ -9,12 +9,13 @@ Except for the Menu module, you can add the language at the beginning of the pat
 
 Path: `{mod_path}\cardgame`
 
-| File name | Description             | Animated |
-| --------- | ----------------------- | -------- |
-| cards_00  | Cards front and back    | No       |
-| game_00   | Game background         | No       |
-| icons_00  | Numbers, icons and text | No       |
-| intro_00  | Intro/outro background  | No       |
+| File name | Description             | Animated | Multi palettes |
+| --------- | ----------------------- | -------- | -------------- |
+| cards_00  | Cards front and back    | No       | No             |
+| game_00   | Game background         | No       | No             |
+| icons_00  | Numbers, icons and text | No       | No             |
+| intro_00  | Intro/outro background  | No       | No             |
+| font_00   | Font (unused)           | No       | Yes (2)        |
 
 ## Battle
 
