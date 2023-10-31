@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.16.0",
-  "builtin-baseline": "ced4b6dbc1fcae4a30b39d004ba67242a79434a5",
+  "builtin-baseline": "8eb57355a4ffb410a2e94c07b4dca2dffbee8e50",
   "dependencies": [
     "bgfx",
     {
@@ -69,7 +69,7 @@
     {
       "name": "ffmpeg",
       "version": "6.0",
-      "port-version": 0
+      "port-version": 1
     },
     {
       "name": "imgui",
@@ -93,7 +93,7 @@
     },
     {
       "name": "pugixml",
-      "version": "1.13.0",
+      "version": "1.14",
       "port-version": 0
     },
     {
