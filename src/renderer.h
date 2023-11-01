@@ -37,7 +37,6 @@
 #include <bimg/encode.h>
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
-#include <libpng16/png.h>
 #include <cmrc/cmrc.hpp>
 #include "log.h"
 #include "gl.h"
@@ -157,16 +156,6 @@ static void RendererReleaseData(void* _ptr, void* _userData)
 {
     BX_UNUSED(_ptr);
     driver_free(_userData);
-}
-
-static void RendererLibPngErrorCb(png_structp png_ptr, const char* error)
-{
-    ffnx_error("libpng error: %s\n", error);
-}
-
-static void RendererLibPngWarningCb(png_structp png_ptr, const char* warning)
-{
-    ffnx_info("libpng warning: %s\n", warning);
 }
 
 struct RendererCallbacks : public bgfx::CallbackI {
@@ -384,8 +373,6 @@ private:
 
     void printMatrix(char* name, float* mat);
 
-    bool doesItFitInMemory(size_t size);
-
     void recalcInternals();
     void calcBackendProjMatrix();
     void prepareFramebuffer();
@@ -443,8 +430,8 @@ public:
 
     uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true);
     uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
-    bimg::ImageContainer* createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::UnknownDepth);
-    bimg::ImageContainer* createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::UnknownDepth);
+    bimg::ImageContainer* createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
+    bimg::ImageContainer* createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
     bgfx::TextureHandle createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
     bgfx::TextureHandle createTextureHandle(cmrc::file* file, char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
     uint32_t createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb = true);
@@ -514,6 +501,8 @@ public:
 
     // Game lighting
     void setGameLightData(light_data* lightdata = nullptr);
+
+    static bool doesItFitInMemory(size_t size);
 };
 
 extern Renderer newRenderer;
