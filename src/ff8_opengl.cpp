@@ -671,6 +671,41 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);
 	replace_function(ff8_externals.dinput_update_gamepad_status, ff8_update_gamepad_status);
 
+	// Do not alter worldmap texture UVs (Maki's patch) http://forums.qhimm.com/index.php?topic=16327.0
+	if (FF8_US_VERSION)
+	{
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x180, 0); // +-2 replaced by 0
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x18A, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x198, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1A2, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1B2, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1BC, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1CC, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1D6, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1E6, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1F0, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1F8, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x202, 0);
+	}
+	else
+	{
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x19F, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1AA, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1BB, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1C6, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1D9, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1E4, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x1F7, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x202, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x215, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x220, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x229, 0);
+		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x234, 0);
+	}
+
+	// Fix blue color in battle with fire spells
+	patch_code_byte(ff8_externals.read_vram_palette_sub_467370 + 0x6F, 0);
+
 	// #####################
 	// battle toggle
 	// #####################
