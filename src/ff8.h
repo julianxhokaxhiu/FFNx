@@ -1074,6 +1074,7 @@ struct ff8_externals
 	uint32_t worldmap_sub_541970_upload_tim;
 	uint32_t worldmap_sub_548020;
 	uint32_t worldmap_sub_5531F0;
+	uint32_t worldmap_alter_uv_sub_553B40;
 	uint32_t worldmap_sub_545E20;
 	uint32_t worldmap_chara_one;
 	int32_t (*open_file_world)(const char*, int32_t, uint32_t, void *);
