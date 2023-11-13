@@ -36,8 +36,6 @@ typedef uint32_t ModdedTextureId;
 
 constexpr int VRAM_WIDTH = 1024;
 constexpr int VRAM_HEIGHT = 512;
-constexpr int VRAM_PAGE_WIDTH = 64;
-constexpr int VRAM_PAGE_HEIGHT = 256;
 constexpr int VRAM_DEPTH = 2;
 constexpr ModdedTextureId INVALID_TEXTURE = ModdedTextureId(0xFFFFFFFF);
 constexpr int MAX_SCALE = 128;
@@ -125,6 +123,9 @@ public:
 		inline const std::string &name() const {
 			return _name;
 		}
+		inline const char *printableName() const {
+			return _name.empty() ? "N/A" : _name.c_str();
+		}
 		inline bool isValid() const {
 			return !_name.empty();
 		}
@@ -143,15 +144,16 @@ public:
 	};
 
 	explicit TexturePacker();
-	bool setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), bool clearOldTexture = true);
+	bool setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), int textureCount = -1, bool clearOldTexture = true);
 	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId = -1, const char *extension = nullptr, char *found_extension = nullptr);
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
 	bool setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, uint32_t *imageData);
 	void animateTextureByCopy(int sourceXBpp2, int y, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY);
+	void forceCurrentPalette(int xBpp2, int y, int8_t paletteId);
 	void clearTiledTexs();
 	void clearTextures();
 	// Returns the textures matching the tiledTex
-	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, const TextureInfos &palette, bool withModsOnly = false) const;
+	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, bool withModsOnly = false) const;
 	void registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX = -1, int palY = -1);
 	void registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY);
 	TiledTex getTiledTex(const uint8_t *texData) const;
@@ -163,8 +165,20 @@ public:
 
 	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after, TextureTypes textureType);
 private:
-	inline static ModdedTextureId makeTextureId(int xBpp2, int y) {
-		return xBpp2 + y * VRAM_WIDTH;
+	inline static ModdedTextureId makeTextureId(int xBpp2, int y, bool isPal = false) {
+		return (xBpp2 + y * VRAM_WIDTH) | (isPal << 31);
+	}
+	inline static bool textureIdIspalette(ModdedTextureId textureId) {
+		return (textureId & 0x80000000) != 0;
+	}
+	inline static ModdedTextureId getTextureIdWithoutFlags(ModdedTextureId textureId) {
+		return textureId & 0x7FFFFFFF;
+	}
+	inline static int getWidthFromTextureId(ModdedTextureId textureId) {
+		return getTextureIdWithoutFlags(textureId) % VRAM_WIDTH;
+	}
+	inline static int getHeightFromTextureId(ModdedTextureId textureId) {
+		return getTextureIdWithoutFlags(textureId) / VRAM_WIDTH;
 	}
 
 	void setVramTextureId(ModdedTextureId textureId, int x, int y, int w, int h, bool clearOldTexture = true);

@@ -215,14 +215,12 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	}
 
 	TexturePacker::TiledTex tiledTex = texturePacker.getTiledTex(VREF(tex_header, image_data));
-	if (tiledTex.isValid()) {
-		int bytesperpixel = int(tiledTex.bpp() == Tim::Bpp4 ? Tim::Bpp8 : tiledTex.bpp());
+	Tim::Bpp texBpp = VREF(tex_header, tex_format.bytesperpixel) == 2 ? Tim::Bpp16 : (VREF(tex_header, palette_entries) == 256 ? Tim::Bpp8 : Tim::Bpp4);
 
-		if (VREF(tex_header, tex_format.bytesperpixel) != bytesperpixel) {
-			if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: ignore reload because BPP does not match 0x%X (bpp vram=%d, bpp tex=%d) image_data=0x%X\n", texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), VREF(tex_header, image_data));
+	if (tiledTex.isValid() && texBpp != tiledTex.bpp()) {
+		if(trace_all || trace_vram) ffnx_trace("%s: ignore reload because BPP does not match 0x%X (bpp vram=%d, bpp tex=%d, source bpp tex=%d) image_data=0x%X\n", __func__, texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), texBpp, VREF(tex_header, image_data));
 
-			return;
-		}
+		return;
 	}
 
 	common_unload_texture((struct texture_set *)texture_set);
@@ -242,7 +240,7 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 
 	stats.texture_reloads++;
 
-	if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: 0x%X (bpp=%d) image_data=0x%X\n", texture_set, VREF(tex_header, tex_format.bytesperpixel), VREF(tex_header, image_data));
+	if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: 0x%X (bpp=%d, sourceBpp=%d) image_data=0x%X\n", texture_set, VREF(tex_header, tex_format.bytesperpixel), texBpp, VREF(tex_header, image_data));
 }
 
 void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)

@@ -103,13 +103,13 @@ private:
 
 class TextureModStandard : public ModdedTexture {
 public:
-	TextureModStandard(const TexturePacker::IdentifiedTexture &originalTexture) : ModdedTexture(originalTexture), _lastDrawnPalette(0) {}
+	TextureModStandard(const TexturePacker::IdentifiedTexture &originalTexture) : ModdedTexture(originalTexture), _currentPalette(-1) {}
 	TextureModStandard(const TextureModStandard &other) = delete;
 	~TextureModStandard();
 	inline bool canCopyRect() const override {
 		return true;
 	}
-	bool createImages(int internalLodScale = 1);
+	bool createImages(int paletteCount, int internalLodScale = 1);
 	uint8_t scale(int vramPalXBpp2, int vramPalY) const override;
 	TexturePacker::TextureTypes drawToImage(
 		int offsetX, int offsetY,
@@ -120,12 +120,14 @@ public:
 	void copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY);
 	// Copy rect to another textures
 	void copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY, const TextureModStandard &targetTexture);
+	// Set to -1 to unforce
+	void forceCurrentPalette(int8_t currentPalette);
 private:
 	bool createImage(const char *name, int paletteId = -1, const char *extension = nullptr, char *foundExtension = nullptr);
 	uint8_t computePaletteId(int vramPalXBpp2, int vramPalY) const;
 	const TextureImage &textureImage(uint8_t paletteId) const;
-	std::map<uint8_t, TextureImage> _textures; // Index: paletteId
-	uint8_t _lastDrawnPalette;
+	std::map<uint8_t, TextureImage> _textures; // Index: paletteId or current texture
+	int8_t _currentPalette;
 };
 
 class TextureBackground : public ModdedTexture {

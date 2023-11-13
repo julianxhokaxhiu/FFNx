@@ -170,7 +170,7 @@ bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_
 {
 	char langPath[16] = "/";
 
-	if(trace_all || trace_loaders) ffnx_trace("texture file name (VRAM): %s\n", name);
+	if(trace_all || trace_loaders) ffnx_trace("texture file name (VRAM): %s palette_index=%d hasPal=%d\n", name, palette_index, hasPal);
 
 	if(save_textures) return false;
 
@@ -282,11 +282,12 @@ TextureModStandard::~TextureModStandard()
 	}
 }
 
-bool TextureModStandard::createImages(int internalLodScale)
+bool TextureModStandard::createImages(int paletteCount, int internalLodScale)
 {
-	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s: internalLodScale=%d\n", __func__, internalLodScale);
+	paletteCount = paletteCount >= 0 ? paletteCount : originalTexture().palette().h(); // Works most of the time
 
-	int paletteCount = originalTexture().palette().h(); // Works most of the time
+	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s: paletteCount=%d internalLodScale=%d\n", __func__, paletteCount, internalLodScale);
+
 	int modCount = std::max(paletteCount, 1);
 	char filename[MAX_PATH] = {}, *extension = nullptr, found_extension[16] = {};
 
@@ -313,6 +314,11 @@ bool TextureModStandard::createImages(int internalLodScale)
 
 uint8_t TextureModStandard::computePaletteId(int vramPalXBpp2, int vramPalY) const
 {
+	if (_currentPalette >= 0)
+	{
+		return uint8_t(_currentPalette);
+	}
+
 	if (vramPalXBpp2 == originalTexture().palette().x()
 		&& vramPalY >= originalTexture().palette().y() && vramPalY < originalTexture().palette().y() + originalTexture().palette().h())
 	{
@@ -430,6 +436,13 @@ void TextureModStandard::copyRect(
 				targetXBpp2 - targetTex.x(), targetY - targetTex.y()
 			);
 		}
+	}
+}
+
+void TextureModStandard::forceCurrentPalette(int8_t currentPalette)
+{
+	if (_textures.contains(currentPalette)) {
+		_currentPalette = currentPalette;
 	}
 }
 
