@@ -2825,7 +2825,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 					if (ff7sound)
 					{
 						if (external_sfx_volume > -1) fread(&external_sfx_volume, sizeof(DWORD), 1, ff7sound);
-						if (external_sfx_volume > -1) fread(&external_music_volume, sizeof(DWORD), 1, ff7sound);
+						if (external_music_volume > -1) fread(&external_music_volume, sizeof(DWORD), 1, ff7sound);
 						fclose(ff7sound);
 					}
 				}
