@@ -123,6 +123,16 @@ enable_time_cycle = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_time_cycle_path = "time"
 
+#[EXTERNAL WORLDMAP MESH]
+# Enable worldmap external meshes.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_worldmap_external_mesh = false
+
+#[EXTERNAL MESH PATH]
+# Path for external mesh files.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external_mesh_path = "mesh"
+
 #[HDR]
 # This flag will set the brightness level that SDR "white" is rendered at within an HDR monitor.
 # By default is set to 0, which means to attempt autodetection of the correct value for your monitor via software.
@@ -359,10 +369,15 @@ external_movie_audio_ext = "ogg"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_analogue_controls = false
 
-#[INVERT CAMERA CONTROLS]
+#[INVERT VERTICAL CAMERA CONTROLS]
 # This flag will enable inverted camera vertical movement when controlling the camera in battles.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-enable_inverted_camera_controls = false
+enable_inverted_vertical_camera_controls = false
+
+#[INVERT HORIZONTAL CAMERA CONTROLS]
+# This flag will enable inverted camera horizontal movement when controlling the camera in battles.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_inverted_horizontal_camera_controls = false
 
 #[LEFT ANALOG STICK DEADZONE]
 # Sets the deadzone for the left analog stick. Values are from 0 to 1.

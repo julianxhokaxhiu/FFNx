@@ -28,12 +28,12 @@ void lighting_debug(bool* isOpen)
         return;
     }
 
-    /*if (!(getmode_cached()->driver_mode == MODE_FIELD || getmode_cached()->driver_mode == MODE_BATTLE))
+    if (!(getmode_cached()->driver_mode == MODE_FIELD || getmode_cached()->driver_mode == MODE_BATTLE || getmode_cached()->driver_mode == MODE_WORLDMAP))
 	{
-		ImGui::Text("Not currently on a battle/field.");
+		ImGui::Text("Not currently on a battle/field or worldmap.");
 		ImGui::End();
 		return;
-	}*/
+	}
 
     ImGui::Text("Group ID: %s", lighting.getConfigGroup().c_str());
 

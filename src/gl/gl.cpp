@@ -326,7 +326,8 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 
 	if (!ff8 && enable_lighting && normals != nullptr && isLightingEnabledTexture) 
 	{
-		newRenderer.drawWithLighting(true);
+		newRenderer.drawToShadowMap();
+		newRenderer.drawWithLighting(true, true);
 	}
 	else newRenderer.draw();
 

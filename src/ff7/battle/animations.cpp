@@ -743,9 +743,9 @@ namespace ff7::battle
                 return;
             }
 
-            ff7_externals.engine_copy_3x3_rot_matrix_to_game_engine_663673(ff7_externals.ifrit_rot_matrix_BCC768);
+            ff7_externals.engine_set_game_engine_rot_matrix_663673(ff7_externals.ifrit_rot_matrix_BCC768);
             ff7_externals.engine_set_game_engine_position_663707(ff7_externals.ifrit_rot_matrix_BCC768);
-            ff7_externals.battle_sub_662ECC(ff7_externals.battle_ifrit_model_position, *ff7_externals.ifrit_vector3_int_ptr_BCC6A8, &(*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)[1].y);
+            ff7_externals.engine_apply_translation_with_delta_662ECC(ff7_externals.battle_ifrit_model_position, *ff7_externals.ifrit_vector3_int_ptr_BCC6A8, &(*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)[1].y);
             getBattleModelState(3)->modelPosition.x = (*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)->x;
             getBattleModelState(3)->modelPosition.y = (*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)->y;
             getBattleModelState(3)->modelPosition.z = (*ff7_externals.ifrit_vector3_int_ptr_BCC6A8)->z;

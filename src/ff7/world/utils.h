@@ -5,9 +5,9 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
-//    Copyright (C) 2023 Cosmos                                             //
-//    Copyright (C) 2023 Tang-Tang Zhou                                     //
+//    Copyright (C) 2022 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 Cosmos                                             //
+//    Copyright (C) 2022 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -21,13 +21,20 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
-
 namespace ff7::world
 {
-    void world_hook_init();
-    void world_update_model_movement(int delta_position_x, int delta_position_z);
+    bool is_key_pressed(int current_key_status, int key)
+    {
+        return (current_key_status & key) != 0;
+    }
 
-    void update_world_camera(short world_camera_rotation_y);
-    void update_player_and_handle_input();
+    bool is_key_pressed_first_time(int current_key_status, int prev_key_status, int key)
+    {
+        return (current_key_status & key) != 0 && (prev_key_status & key) == 0;
+    }
+
+    bool is_key_released(int current_key_status, int prev_key_status, int key)
+    {
+        return (current_key_status & key) == 0 && (prev_key_status & key) != 0;
+    }
 }

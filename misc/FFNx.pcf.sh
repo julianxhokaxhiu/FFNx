@@ -129,5 +129,8 @@ float sampleShadowMapPCF7x7(vec3 shadowPos, vec3 worldSpacePos)
     sum += uw2 * vw3 * sampleShadowMap(base_uv, u2, v3, shadowMapSizeInv, lightDepth, worldSpacePos);
     sum += uw3 * vw3 * sampleShadowMap(base_uv, u3, v3, shadowMapSizeInv, lightDepth, worldSpacePos);
 
-    return sum * 1.0 / 2704.0;
+    vec2 baseUvShifted = abs(base_uv * 2.0 - 1.0);
+    float fadeCoeff = saturate(max(baseUvShifted.x, baseUvShifted.y) - 0.9) / 0.1;
+
+    return mix(sum * 1.0 / 2704.0, 1.0, fadeCoeff);
 }

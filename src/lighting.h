@@ -108,7 +108,6 @@ private:
 
     void loadConfig();
     void initParamsFromConfig();
-    void updateLightMatrices(struct boundingbox* sceneAabb);
 
     void ff7_load_ibl();
 
@@ -124,6 +123,7 @@ public:
     void reload();
     void save();
 
+    void updateLightMatrices(const vector3<float>& center);
     void draw(struct game_obj* game_object);
 
     const LightingState& getLightingState();
@@ -221,6 +221,6 @@ inline void Lighting::setConfigEntry(const char *key, auto value)
 		config.insert_or_assign(key, value);
 }
 
-void drawFieldShadow();
+void drawFieldShadowCallback();
 
 extern Lighting lighting;

@@ -275,3 +275,48 @@ vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ive
 	outcolor = mix(outcolor, pixelval, lowcutoff);
 	return outcolor;
 }
+
+// Fog ---------------------------------------------
+vec3 ApplyWorldFog(vec3 color, vec3 viewPosition)
+{
+	float d = sqrt(dot(viewPosition, viewPosition));
+	float s0 = 0;
+	float e0 = 10000;
+
+	float density = 0.00025;
+	float t = 1 / exp (d * density);
+
+	vec3 fogColor0 = vec3(0.1, 0.1, 0.2);
+	vec3 outColor = mix(color * fogColor0, color, t);
+
+	float e1 = 15000;
+	float t2 = 1.0 - saturate((d - e0) / e1);
+	outColor *= t2;
+
+	return outColor;
+}
+
+// Spherical world  ---------------------------------------------
+#define cplx vec2
+#define cplx_new(re, im) vec2(re, im)
+#define cplx_re(z) z.x
+#define cplx_im(z) z.y
+#define cplx_exp(z) (exp(z.x) * cplx_new(cos(z.y), sin(z.y)))
+#define cplx_scale(z, scalar) (z * scalar)
+#define cplx_abs(z) (sqrt(z.x * z.x + z.y * z.y))
+
+vec3 ApplySphericalWorld(vec3 viewPosition, float radiusScale)
+{
+	vec3 outResult = vec3(0.0, 0.0, 0.0);
+
+	float rp = -250000 * radiusScale;
+
+	vec2 planedir = normalize(vec2(viewPosition.x, viewPosition.z));
+	cplx plane = cplx_new(viewPosition.y, sqrt((viewPosition.x) * (viewPosition.x) + (viewPosition.z) * (viewPosition.z)));
+	cplx circle = rp * cplx_exp(cplx_scale(plane, 1.0 / rp)) - cplx_new(rp, 0);
+	outResult.x = cplx_im(circle) * planedir.x;
+	outResult.z = cplx_im(circle) * planedir.y;
+	outResult.y = cplx_re(circle);
+
+	return outResult;
+}

@@ -26,7 +26,9 @@ namespace ff7::battle
             ~Camera() = default;
 
             void setRotationSpeed(float rotX, float rotY, float rotZ);
+            vector3<float> getRotationSpeed();
             void setZoomSpeed(float speed);
+            float getZoomSpeed();
             void reset();
 
             void controlCamera(vector3<short>* cameraPosition, vector3<short>* cameraFocusPosition);
@@ -40,6 +42,16 @@ namespace ff7::battle
             const float minVerticalAngle = 5.0f;
             const float maxVerticalAngle = 85.0f;
     };
+
+    inline vector3<float> Camera::getRotationSpeed()
+    {
+        return rotationSpeed;
+    }
+
+    inline float Camera::getZoomSpeed()
+    {
+        return zoomSpeed;
+    }
 
     extern Camera camera;
 }

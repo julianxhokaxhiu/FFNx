@@ -20,7 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0, v_normal0
+$input v_color0, v_texcoord0, v_position0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.common.sh"
@@ -36,6 +36,7 @@ uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
+uniform vec4 WMFlags;
 uniform vec4 FSMovieFlags;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
@@ -101,6 +102,8 @@ uniform vec4 gameScriptedLightColor;
 
 #define gameLightingMode gameLightingFlags.x
 #define GAME_LIGHTING_PER_PIXEL 2
+
+#define isFogEnabled WMFlags.y > 0.0
 
 void main()
 {
@@ -287,6 +290,8 @@ void main()
     }
 
     if (isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
+
+    if (isTLVertex && isFogEnabled) color.rgb = ApplyWorldFog(color.rgb, v_position0.xyz);
 
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
     color.rgb = toGamma(color.rgb);
