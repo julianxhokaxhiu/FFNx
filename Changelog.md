@@ -21,6 +21,7 @@
 - Lighting: Fixed minor shadow visual glitches occurring in some fields
 - Music: Fix overlapping external music tracks when `external_music_resume = false`
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
+- Sound: Fix loading music volume value from ff7sound.cfg
 - Voice: Enable tutorial voice acting
 - Widescreen: Added experimental support for 16:10 aspect ratio
 - Widescreen: Fix Pollensalta attack (only when also using 30/60FPS mode since it is a temporary fix) and Bahamut Zero summon background
