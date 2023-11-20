@@ -14,6 +14,7 @@
 - Ambient: Allow ambient effects to playback in fields that use movies as background
 - Core: Add additional main models eye-to-model mapping
 - DevTools: Add Game Moment in Field Debug
+- Input: Fix character naming screen not working correctly when Steam Input is enabled
 - Lighting: Fix [`config.toml`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.lighting.toml) load/save logic
 - Lighting: Fix Bahamut Zero and Supernova not displaying correctly when lighting enabled
 - Lighting: Fix field shadows not displaying during FMV movies
