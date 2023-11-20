@@ -28,6 +28,10 @@
 - Widescreen: Fix Pandora Box white background position
 - Voice: Fix auto-text sometimes not working on certain fields after long gameplay sessions
 
+## FF7 Steam
+
+- Common: Fix a softlock when trying to change in-game Controller setting to "Normal" (by disabling this option)
+
 ## FF8
 
 - Hext: `fix_uv_coords` hext files are not needed anymore ( https://github.com/julianxhokaxhiu/FFNx/pull/619 )
@@ -44,10 +48,6 @@
 - Voice: Enable battle dialogs voice acting
 - Voice: Enable worldmap voice acting
 - Voice: Enable tutorial voice acting
-
-## FF7 Steam
-
-- Common: Fix a softlock when trying to change in-game Controller setting to "Normal" (by disabling this option)
 
 # 1.16.0
 
