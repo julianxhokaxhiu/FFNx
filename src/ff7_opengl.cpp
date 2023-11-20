@@ -84,6 +84,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// Allow mouse cursor to be shown
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
 
+  // Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
+  memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);
+
 	// TODO: Comment this if Chocobo's not visible in race
 	// replace_function(ff7_externals.draw_3d_model, draw_3d_model);
 
