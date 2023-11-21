@@ -371,9 +371,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x23C, 0x90, 5);
 	}
 
-	//#############################
-	// steam save game preservation
-	//#############################
+	//#############################################
+	// steam save game preservation and other fixes
+	//#############################################
 	if (steam_edition)
 	{
 		switch(version)
@@ -389,6 +389,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10FE, ff7_write_save_file);
 				break;
 		}
+
+		// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
+		memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);    
 	}
 
 	//###############################

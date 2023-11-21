@@ -2793,7 +2793,7 @@ struct ff7_externals
 	uint32_t field_map_infos;
 	uint32_t sound_operation;
 	struct ff7_field_sfx_state* sound_states;
-	uint32_t menu_sound_slider_loop;
+	uint32_t config_menu_sub;
 	uint32_t call_menu_sound_slider_loop_sfx_up;
 	uint32_t call_menu_sound_slider_loop_sfx_down;
 	uint32_t menu_start;
