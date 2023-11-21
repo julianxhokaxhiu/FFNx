@@ -385,7 +385,13 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		}
 
 		// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
-		memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);    
+		memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);
+
+		// Restore Steam release behavior on character name screen when using gamepads in Steam Input mode
+		// Aali driver used to patch out these three functions to fix this issue
+		replace_function(ff7_externals.set_default_input_settings_save, noop);
+		replace_function(ff7_externals.keyboard_name_input, noop);
+		replace_function(ff7_externals.restore_input_settings, noop);
 	}
 
 	//###############################

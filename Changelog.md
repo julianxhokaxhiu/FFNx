@@ -31,6 +31,7 @@
 ## FF7 Steam
 
 - Common: Fix a softlock when trying to change in-game Controller setting to "Normal" (by disabling this option)
+- Input: Fix character naming screen not working correctly when Steam Input is enabled
 
 ## FF8
 
