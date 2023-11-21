@@ -285,7 +285,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_tutorial_sub_6C49FD = (int (*)())get_relative_call(ff7_externals.menu_sub_6CB56A, 0x2B7);
 	ff7_externals.timer_menu_sub = ff7_externals.menu_subs_call_table[0];
 	ff7_externals.status_menu_sub = ff7_externals.menu_subs_call_table[5];
-	ff7_externals.menu_sound_slider_loop = ff7_externals.menu_subs_call_table[8];
+	ff7_externals.config_menu_sub = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.menu_sub_6FEDB0 = ff7_externals.menu_subs_call_table[10];
 
 	ff7_externals.menu_tutorial_window_state = (BYTE*)get_absolute_value((uint32_t)ff7_externals.menu_tutorial_sub_6C49FD, 0x9);
