@@ -41,9 +41,9 @@
 - Graphics: Fix texture glitches using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/591 )
 - Graphics: Fix external texture blending ( https://github.com/julianxhokaxhiu/FFNx/pull/598 https://github.com/julianxhokaxhiu/FFNx/pull/601 )
 - Graphics: Add chara.one worldmap texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/615 )
-- Graphics: Add support for external texture animation ( https://github.com/julianxhokaxhiu/FFNx/pull/616 )
-- Graphics: Add support for multiple palettes in external texture ( https://github.com/julianxhokaxhiu/FFNx/pull/617 )
-- Graphics: Minimize texture uploads when the palette is not set yet ( https://github.com/julianxhokaxhiu/FFNx/pull/617 )
+- Graphics: Add support for external texture animation ( https://github.com/julianxhokaxhiu/FFNx/pull/616 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
+- Graphics: Add support for multiple palettes in external texture ( https://github.com/julianxhokaxhiu/FFNx/pull/617 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
+- Graphics: Minimize texture uploads when the palette is not set yet ( https://github.com/julianxhokaxhiu/FFNx/pull/617 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
 - Graphics: Increase max texture size to 16384 for external textures ( https://github.com/julianxhokaxhiu/FFNx/pull/601 )
 - Music: Add `ff8_external_music_force_original_filenames` option to use original music names (eg 018s-julia.ogg) instead of just the main identifier in external music ( https://github.com/julianxhokaxhiu/FFNx/pull/594 )
 - Voice: Enable battle dialogs voice acting

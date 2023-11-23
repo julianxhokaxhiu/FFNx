@@ -2,6 +2,8 @@
 
 Texture names pattern in FF8 mostly follows the paths used in FS/FL/FI archives in the original game.
 
+It is recommended to use uncompressed DDS for improved loading times.
+
 Except for the Menu module, you can add the language at the beginning of the path for localization:
 `{mod_path}\fre\cardgame\cards_00.dds`
 
@@ -31,9 +33,112 @@ Path: `{mod_path}\world`
 
 Path: `{mod_path}\world\dat\wmset\section{section number}\texture{texture number}_00`
 
+#### Section 17
+
+Worldmap texture animations, replace `section38/texture21` and `section38/texture22`.
+
+#### Section 38
+
+| Section                    | Description                  | Animated       | Multi palettes |
+| -------------------------- | ---------------------------- | -------------- | -------------- |
+| texture0_00 -> texture7_00 | Main textures                | No             | No             |
+| texture7_00                | Water texture (maybe unused) | No             | Not sure       |
+| texture9_00                | Moon                         | No             | No             |
+| texture10_00               | Sky                          | No             | No             |
+| texture11_00               | Map                          | No             | Yes (2)        |
+| texture12_00               | Circle Shadow                | No             | No             |
+| texture13_00               | Square Shadow                | No             | No             |
+| texture14_00               | Effect                       | No             | Not sure       |
+| texture15_00               | Forest particles effect      | No             | Yes (6)        |
+| texture16_00               | Sea                          | Yes            | Yes (6)        |
+| texture17_00               | Shallow water                | Yes            | Yes (6)        |
+| texture18_00               | Sea                          | Yes            | Yes (6)        |
+| texture19_00               | River                        | Yes            | Yes (6)        |
+| texture20_00 texture23_00  | Sea                          | No             | No             |
+| texture21_00 texture22_00  | Beaches                      | See section 17 | No             |
+| texture24_00               | Map field of view            | No             | No             |
+| texture25_00               | Map character orientation    | No             | No             |
+| texture26_00               | Effect                       | No             | No             |
+| texture27_00               | Effect                       | No             | No             |
+| texture28_00               | Effect                       | No             | No             |
+| texture29_00               | Effect                       | No             | No             |
+| texture30_00               | Effect                       | No             | No             |
+| texture31_00               | Effect                       | No             | No             |
+| texture32_00               | Effect                       | No             | No             |
+| texture33_00               | Effect                       | No             | No             |
+| texture34_00               | Effect                       | No             | No             |
+| texture35_00               | City barrier disk 4          | No             | No             |
+
+#### Section 39
+
+Rails and roads.
+
+#### Section 40
+
+| File name   | Description           | Animated | Multi palettes |
+| ----------- | --------------------- | -------- | -------------- |
+| texture0_00 | Esthar extra texture  | No       | No             |
+
+#### Section 42
+
+Some mobile models.
+
+| File name    | Description             |
+| ------------ | ----------------------- |
+| texture0_00  | BGU                     |
+| texture1_00  | BGU (copy)              |
+| texture2_00  | Luxury blue locomotive  |
+| texture3_00  | Luxury blue wagon       |
+| texture4_00  | Luxury green locomotive |
+| texture5_00  | Luxury green wagon      |
+| texture6_00  | Old locomotive          |
+| texture7_00  | Old wagon               |
+| texture8_00  | Grey Freight Wagon      |
+| texture9_00  | Yellow car              |
+| texture10_00 | Galbadia military car   |
+| texture11_00 | Galbadia military car   |
+| texture12_00 | Unknown                 |
+| texture13_00 | Unknown                 |
+| texture14_00 | Unknown                 |
+| texture15_00 | Unknown                 |
+| texture16_00 | Unknown                 |
+| texture17_00 | Green car               |
+| texture18_00 | Brown car               |
+| texture19_00 | Blue car                |
+| texture20_00 | Mint car                |
+| texture21_00 | Pink car                |
+| texture22_00 | Yellow Esthar car       |
+| texture23_00 | Blue Esthar car         |
+| texture24_00 | Unknown                 |
+| texture25_00 | Lunatic Pandora         |
+| texture26_00 | Lunatic Pandora         |
+| texture27_00 | Lunatic Pandora         |
+| texture28_00 | Disk 4 doors            |
+| texture29_00 | City barrier disk 4     |
+| texture30_00 | Jumbo Cactuar           |
+| texture31_00 | Rocks                   |
+| texture32_00 | City barrier disk 4     |
+
 ### texl.obj
 
 Path: `{mod_path}\world\dat\texl\texture{texture number}_00`
+
+High res version of `wmset\section38\texture{0,7}_00`. Will be loaded by the game as you travel the worldmap.
+Ideally, for a smooth experience, keep `wmset\section38\texture{0,7}_00` texture resolution
+low (and uncompressed DDS) and increase the resolution in the texl directory.
+
+### chara.one
+
+Path: `{mod_path}\world\esk\chara_one\model{model number}-{texture number}_00`
+
+| File name                  | Description      |
+| -------------------------- | ---------------- |
+| model0-0_00 -> model0-1_00 | Squall           |
+| model1-0_00 -> model1-3_00 | Ragnarok         |
+| model2-0_00 -> model3-1_00 | Chocobos         |
+| model4-0_00 -> model4-1_00 | Squall (Student) |
+| model5-0_00 -> model5-1_00 | Zell             |
+| model6-0_00 -> model6-1_00 | Selphie (unused) |
 
 ## Menu
 

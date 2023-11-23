@@ -132,6 +132,9 @@ public:
 	inline uint16_t imageHeight() const {
 		return _tim.img_h;
 	}
+	inline uint8_t *imageData() const {
+		return _tim.img_data;
+	}
 	inline uint16_t paletteX() const {
 		return _tim.pal_x;
 	}
@@ -144,7 +147,12 @@ public:
 	inline uint16_t paletteHeight() const {
 		return _tim.pal_h;
 	}
-	bool save(const char *fileName, uint8_t palX = 0, uint8_t palY = 0, bool withAlpha = false) const;
+	inline uint16_t *paletteData() const {
+		return _tim.pal_data;
+	}
+	bool save(const char *fileName, bool withAlpha = false) const;
+	bool save(const char *fileName, uint8_t paletteId, bool withAlpha = false) const;
+	bool save(const char *fileName, uint8_t palX, uint8_t palY, bool withAlpha = false) const;
 	bool saveMultiPaletteGrid(
 		const char *fileName, uint8_t cellCols, uint8_t cellRows, uint8_t colorsPerPal = 0, uint8_t palColsPerRow = 1,
 		bool withAlpha = false
@@ -165,7 +173,7 @@ public:
 	static Tim fromLzsData(const uint8_t *uncompressed_data);
 	static Tim fromTimData(const uint8_t *data);
 private:
-	bool save(const char *fileName, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha) const;
+	bool save(const char *fileName, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha, int forcePaletteId = -1) const;
 	bool toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha) const;
 	ff8_tim _tim;
 	Bpp _bpp;

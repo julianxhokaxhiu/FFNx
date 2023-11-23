@@ -24,34 +24,24 @@
 #pragma once
 
 #include "../../common.h"
+#include "../../image/tim.h"
 
 #include <vector>
+#include <unordered_map>
 
-constexpr int TEXTURE_WIDTH_BYTES = 128; // Real texture width depends on the texture depth (bpp4 => 256, bpp8 => 128, bpp16 => 64)
-constexpr int TEXTURE_WIDTH_BPP16 = 64;
-constexpr int TEXTURE_WIDTH_BPP8 = 128;
-constexpr int TEXTURE_WIDTH_BPP4 = 256;
-constexpr int TEXTURE_HEIGHT = 256;
-constexpr int VRAM_PAGE_MIM_MAX_COUNT = 13;
-constexpr int MIM_DATA_WIDTH_BYTES = TEXTURE_WIDTH_BYTES * VRAM_PAGE_MIM_MAX_COUNT;
-constexpr int MIM_DATA_HEIGHT = TEXTURE_HEIGHT;
-constexpr int TILE_SIZE = 16;
-constexpr int PALETTE_SIZE = 256;
-
-struct Tile {
-	int16_t x, y, z;
-	uint16_t texID; // 2 bits = depth | 2 bits = blend | 1 bit = draw | 4 bits = textureID
-	uint16_t palID; // 6 bits = Always 30 | 4 bits = PaletteID | 6 bits = Always 0
-	uint8_t srcX, srcY;
-	uint8_t layerID; // 0-7
-	uint8_t blendType; // 0-4
-	uint8_t parameter, state;
+struct WmsetSection17Texture {
+    uint16_t x, y;
+    std::vector<const uint8_t *> textureFramePositions;
 };
 
-// A tile looks like another if it uses the same texture with the same palette and uses the same blending
-bool ff8_background_tiles_looks_alike(const Tile &tile, const Tile &other);
+struct WmsetSection41Texture {
+    uint16_t srcX, srcY, x, y;
+    uint8_t height;
+    std::vector<const uint16_t *> palettePositions;
+};
 
-std::vector<Tile> ff8_background_parse_tiles(const uint8_t *map_data);
-void ff8_background_tiles_to_map(const std::vector<Tile> &tiles, uint8_t *map_data);
-bool ff8_background_save_textures(const std::vector<Tile> &tiles, const uint8_t *mim_data, const char *filename);
-bool ff8_background_save_textures_legacy(const std::vector<Tile> &tiles, const uint8_t *mim_data, const char *filename);
+std::vector<WmsetSection17Texture> ff8_world_wmset_wave_animations_parse(const uint8_t *wmset_section17_data, size_t size);
+bool ff8_world_wmset_wave_animations_save_texture(const std::vector<WmsetSection17Texture> &textures, int texture_id, const char *dirname, const Tim &baseTexture);
+
+std::unordered_map<uint32_t, WmsetSection41Texture> ff8_world_wmset_palette_animations_parse(const uint8_t *wmset_section41_data, size_t size);
+bool ff8_world_wmset_palette_animations_save_texture(const WmsetSection41Texture &texture, const char *dirname, const Tim &baseTexture);

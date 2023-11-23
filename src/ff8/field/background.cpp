@@ -62,6 +62,17 @@ std::vector<Tile> ff8_background_parse_tiles(const uint8_t *map_data)
 	return tiles;
 }
 
+void ff8_background_tiles_to_map(const std::vector<Tile> &tiles, uint8_t *map_data)
+{
+	for (const Tile &tile: tiles) {
+		memcpy(map_data, (const void *)&tile, sizeof(Tile));
+
+		map_data += sizeof(Tile);
+	}
+
+	*(uint16_t *)map_data = 0x7fff;
+}
+
 void ff8_background_draw_tile(const Tile &tile, uint32_t *target, const uint16_t target_width, const uint8_t* const textures_data, const uint16_t* const palettes_data)
 {
 	Tim::Bpp bpp = Tim::Bpp((tile.texID >> 7) & 3);

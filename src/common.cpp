@@ -1485,7 +1485,6 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		}
 		else if (textureType == TexturePacker::RemoveTexture)
 		{
-			ffnx_trace("Remove texture\n");
 			return true;
 		}
 		else
@@ -1718,8 +1717,11 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 		{
 			// optimization to not upload textures with undefined VRAM palette
 			TexturePacker::TiledTex tiledTex = texturePacker.getTiledTex(VREF(tex_header, image_data));
+
 			if (tiledTex.isValid() && !tiledTex.isPaletteValid(VREF(tex_header, palette_index) / 2))
 			{
+				if(trace_all || trace_vram) ffnx_trace("dll_gfx: load_texture ignored pointer=0x%X pos=(%d, %d) bpp=%d\n", VREF(tex_header, image_data), tiledTex.x(), tiledTex.y(), tiledTex.bpp());
+
 				return _texture_set;
 			}
 		}
