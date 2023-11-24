@@ -31,6 +31,7 @@
 #include "../ff7/widescreen.h"
 
 #include "ff7/field/background.h"
+#include "ff7/world/renderer.h"
 
 uint32_t nodefer = false;
 
@@ -81,6 +82,8 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	deferred_draws[defer].draw_call_type = DCT_DRAW;
 	if(enable_time_cycle)
 		deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+	if(enable_worldmap_external_mesh)
+		deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
 	gl_save_state(&deferred_draws[defer].state);
 
 	memcpy(deferred_draws[defer].indices, indices, sizeof(*indices) * count);
@@ -288,6 +291,78 @@ uint32_t gl_defer_zoom()
 	return true;
 }
 
+uint32_t gl_defer_world_external_mesh()
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_world_external_mesh");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_world_external_mesh: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_world_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].draw_call_type = DCT_WORLD_EXTERNAL_MESH;
+	deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+	deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_world_external_mesh: return true\n");
+
+	return true;
+}
+
+uint32_t gl_defer_cloud_external_mesh()
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].draw_call_type = DCT_CLOUD_EXTERNAL_MESH;
+	deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+	deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: return true\n");
+
+	return true;
+}
+
 uint32_t gl_defer_battle_depth_clear()
 {
 	if (ff8 || !enable_lighting)
@@ -453,6 +528,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 		deferred_sorted_draws[defer].z = z;
 		if(enable_time_cycle)
 				deferred_sorted_draws[defer].deferred_draw.is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+		deferred_sorted_draws[defer].deferred_draw.is_fog_enabled = false;
 
 		for(tri = 0; tri < count / 3 && vert_index < tri_num * 3; tri++)
 		{
@@ -504,6 +580,12 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 
 	for (int i = 0; i < num_deferred; ++i)
 	{
+		if(enable_time_cycle)
+			newRenderer.setTimeFilterEnabled(deferred_draws[i].is_time_filter_enabled);
+
+		if(enable_worldmap_external_mesh)
+			newRenderer.setFogEnabled(deferred_draws[i].is_fog_enabled);
+
 		if(deferred_draws[i].draw_call_type == DCT_CLEAR)
 		{
 			common_clear(deferred_draws[i].clear_color, deferred_draws[i].clear_depth, true, deferred_draws[i].game_object);
@@ -528,6 +610,16 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 			ff7::battle::battle_depth_clear();
 			continue;
 		}
+		else if(deferred_draws[i].draw_call_type == DCT_WORLD_EXTERNAL_MESH)
+		{
+			ff7::world::worldRenderer.drawWorldMapExternalMesh();
+			continue;
+		}
+		else if(deferred_draws[i].draw_call_type == DCT_CLOUD_EXTERNAL_MESH)
+		{
+			ff7::world::worldRenderer.drawCloudsAndMeteorExternalMesh(*ff7_externals.is_meteor_flag_on_E2AAE4);
+			continue;
+		}
 
 		if (deferred_draws[i].vertices == nullptr)
 		{
@@ -544,9 +636,6 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 		}
 
 		gl_load_state(&deferred_draws[i].state);
-
-		if(enable_time_cycle)
-			newRenderer.setTimeFilterEnabled(deferred_draws[i].is_time_filter_enabled);
 
 		gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
 			deferred_draws[i].vertextype,

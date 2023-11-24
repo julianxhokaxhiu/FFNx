@@ -27,6 +27,7 @@
 - Widescreen: Fix Pollensalta attack (only when also using 30/60FPS mode since it is a temporary fix) and Bahamut Zero summon background
 - Widescreen: Fix Pandora Box white background position
 - Voice: Fix auto-text sometimes not working on certain fields after long gameplay sessions
+- Renderer: Added functionality to replace worldmap rendering with an external 3d mesh
 
 ## FF7 Steam
 

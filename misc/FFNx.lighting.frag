@@ -32,6 +32,7 @@ uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
+uniform vec4 WMFlags;
 uniform vec4 FSMovieFlags;
 
 uniform vec4 lightingSettings;
@@ -108,6 +109,8 @@ uniform vec4 gameScriptedLightColor;
 
 #define isPbrTextureEnabled lightingSettings.x > 0.0
 #define isEnvironmentLightingEnabled lightingSettings.y > 0.0
+
+#define isFogEnabled WMFlags.y > 0.0
 
 #define isNmlTextureLoaded FSTexFlags.x > 0.0
 #define isPbrTextureLoaded FSTexFlags.y > 0.0
@@ -372,6 +375,8 @@ void main()
         {
             indirectLuminance = CalcConstIndirectLuminance(color.rgb);
         }
+
+        if (isFogEnabled) color.rgb = ApplyWorldFog(color.rgb, v_position0.xyz);
 
         if(debugOutput == DEBUG_OUTPUT_COLOR)
         {

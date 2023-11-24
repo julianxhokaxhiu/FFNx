@@ -325,11 +325,15 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
 	replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
 
-	// #####################
-	// control battle camera
-	// #####################
-	if(enable_analogue_controls)
+	// ###########################
+	// control battle/world camera
+	// ###########################
+	if(enable_analogue_controls) {
 		replace_call_function(ff7_externals.battle_sub_42D992 + 0xFB, ff7::battle::update_battle_camera);
+		
+		// Disable show targets with R2 in battles
+        memset_code(ff7_externals.handle_actor_ready + 0xA8, 0x90, 29);	
+	}
 
 	//######################
 	// menu rendering fix
@@ -350,10 +354,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	{
 		replace_call_function(ff7_externals.battle_draw_text_ui_graphics_objects_call, ff7::battle::draw_ui_graphics_objects_wrapper);
 		replace_call_function(ff7_externals.battle_draw_box_ui_graphics_objects_call, ff7::battle::draw_ui_graphics_objects_wrapper);
-
-		replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x175, ff7::world::wm0_draw_minimap_quad_graphics_object);
-		replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x1BE, ff7::world::wm0_draw_world_effects_1_graphics_object);
-		replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x208, ff7::world::wm0_draw_minimap_points_graphics_object);
 	}
 
 	if (game_lighting != GAME_LIGHTING_ORIGINAL)

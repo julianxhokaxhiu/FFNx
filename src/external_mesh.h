@@ -7,7 +7,6 @@
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
-//    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -23,11 +22,61 @@
 
 #pragma once
 
-namespace ff7::world
-{
-    void world_hook_init();
-    void world_update_model_movement(int delta_position_x, int delta_position_z);
+#include <vector>
+#include <map>
+#include <string>
 
-    void update_world_camera(short world_camera_rotation_y);
-    void update_player_and_handle_input();
-}
+#include "common.h"
+#include "globals.h"
+#include "renderer.h"
+
+struct Material
+{
+    std::vector<bgfx::TextureHandle> baseColorTexHandles;
+    std::vector<bgfx::TextureHandle> normalTexHandles;
+    std::vector<bgfx::TextureHandle> pbrTexHandles;
+    int texIndex = 0;
+    int frameInterval = 0;
+};
+
+struct Shape
+{
+    std::vector<nvertex> vertices;
+    std::vector<vector3<float>> normals;
+    std::vector<uint32_t> indices;
+    vector3<float> min;
+    vector3<float> max;
+    Material* pMaterial = nullptr;
+    bool isDoubleSided = false;
+};
+
+class ExternalMesh
+{
+public:
+    bool importExternalMeshGltfFile(char* file_path, char* tex_path);
+    uint32_t fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, uint32_t inCount);
+    uint32_t fillExternalMeshIndexBuffer(uint32_t* inIndex, uint32_t inCount);
+    void updateExternalMeshBuffers();
+    void bindField3dVertexBuffer(uint32_t offset, uint32_t inCount);
+    void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
+    void clearExternalMesh3dBuffers();
+    void unloadExternalMesh();
+    
+    std::vector<Shape> shapes;
+	std::map<std::string, Material> materials;
+private:
+    void loadConfig(const std::string& path);
+
+    int getTextureCount(std::string tex_name);
+    int getFrameInterval(std::string tex_name);
+
+private:
+    // Config
+    toml::parse_result config;
+
+    std::vector<Vertex> vertexBufferData;
+    bgfx::DynamicVertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;
+
+    std::vector<uint32_t> indexBufferData;
+    bgfx::DynamicIndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;   
+};

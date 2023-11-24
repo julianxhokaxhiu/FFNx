@@ -93,7 +93,7 @@ namespace ff7::field
         int dummy_1, dummy_2;
         int ret;
 
-        ff7_externals.engine_copy_3x3_rot_matrix_to_game_engine_663673(ff7_externals.field_camera_rotation_matrix_CFF3D8);
+        ff7_externals.engine_set_game_engine_rot_matrix_663673(ff7_externals.field_camera_rotation_matrix_CFF3D8);
         ff7_externals.engine_set_game_engine_position_663707(ff7_externals.field_camera_rotation_matrix_CFF3D8);
         ff7_externals.engine_set_game_engine_delta_values_661976(ff7_externals.field_viewport_xy_CFF204->x, ff7_externals.field_viewport_xy_CFF204->y);
         ret = engine_apply_matrix_product_float_66307D(input_vector, output_vector, &dummy_1, &dummy_2);

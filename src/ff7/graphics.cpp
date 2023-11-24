@@ -661,6 +661,61 @@ void update_view_matrix(struct ff7_game_obj *game_object)
 			ff7_get_field_view_matrix(&viewMatrix);
 			newRenderer.setViewMatrix(&viewMatrix);
 			break;
+		case MODE_WORLDMAP:
+		{
+			if (enable_worldmap_external_mesh)
+			{
+				int world_pos_x = ff7_externals.world_player_pos_E04918->x;
+				int world_pos_y = ff7_externals.world_player_pos_E04918->y;
+				int world_pos_z = ff7_externals.world_player_pos_E04918->z;
+
+				auto rot_matrix = ff7_externals.world_camera_direction_matrix_DFC448;
+				auto tr_matrix = ff7_externals.world_camera_position_matrix_DE6A20;
+
+				float cameraRotationMatrixFloat[16];
+
+				cameraRotationMatrixFloat[0] = rot_matrix->r3_sub_matrix[0][0] / 4096.0f;
+				cameraRotationMatrixFloat[1] = rot_matrix->r3_sub_matrix[0][1] / 4096.0f;
+				cameraRotationMatrixFloat[2] = rot_matrix->r3_sub_matrix[0][2] / 4096.0f;
+				cameraRotationMatrixFloat[3] = 0.0f;
+
+				cameraRotationMatrixFloat[4] = rot_matrix->r3_sub_matrix[1][0] / 4096.0f;
+				cameraRotationMatrixFloat[5] = rot_matrix->r3_sub_matrix[1][1] / 4096.0f;
+				cameraRotationMatrixFloat[6] = rot_matrix->r3_sub_matrix[1][2] / 4096.0f;
+				cameraRotationMatrixFloat[7] = 0.0f;
+
+				cameraRotationMatrixFloat[8] = rot_matrix->r3_sub_matrix[2][0] / 4096.0f;
+				cameraRotationMatrixFloat[9] = rot_matrix->r3_sub_matrix[2][1] / 4096.0f;
+				cameraRotationMatrixFloat[10] = rot_matrix->r3_sub_matrix[2][2] / 4096.0f;
+				cameraRotationMatrixFloat[11] = 0.0f;
+
+				cameraRotationMatrixFloat[12] = 0.0f;
+				cameraRotationMatrixFloat[13] = 0.0f;
+				cameraRotationMatrixFloat[14] = 0.0f;
+				cameraRotationMatrixFloat[15] = 1.0f;
+
+				float cameraTranslationMatrixFloat[16];
+				bx::mtxTranslate(cameraTranslationMatrixFloat, 0, 0, -tr_matrix->position[2]);
+
+				float cameraTranslationMatrixFloat2[16];
+				bx::mtxTranslate(cameraTranslationMatrixFloat2, world_pos_x, world_pos_y, world_pos_z);
+
+				float tmp[16];
+				bx::mtxMul(tmp, cameraTranslationMatrixFloat, cameraRotationMatrixFloat);
+
+				float cameraMatrixFloat[16];
+				bx::mtxMul(cameraMatrixFloat, tmp, cameraTranslationMatrixFloat2);
+
+				float viewMatrixFloat[16];
+				bx::mtxInverse(viewMatrixFloat, cameraMatrixFloat);
+
+				struct matrix viewMatrix;
+				::memcpy(&viewMatrix.m[0][0], viewMatrixFloat, sizeof(viewMatrix.m));
+
+				newRenderer.setViewMatrix(&viewMatrix);
+			}
+		}
+			break;
 		default:
 			pViewMatrix = game_object->camera_matrix;
 			if (pViewMatrix)

@@ -58,7 +58,8 @@
         "tools"
       ]
     },
-    "cmakerc"
+    "cmakerc",
+    "cgltf"
   ],
   "overrides": [
     {
@@ -134,6 +135,11 @@
     {
       "name": "cmakerc",
       "version": "2023-07-24",
+      "port-version": 0
+    },
+    {
+      "name": "cgltf",
+      "version": "1.13",
       "port-version": 0
     }
   ]
