@@ -714,6 +714,14 @@ void update_view_matrix(struct ff7_game_obj *game_object)
 
 				newRenderer.setViewMatrix(&viewMatrix);
 			}
+			else
+			{
+				pViewMatrix = game_object->camera_matrix;
+				if (pViewMatrix)
+				{
+					newRenderer.setViewMatrix(pViewMatrix);
+				}
+			}
 		}
 			break;
 		default:

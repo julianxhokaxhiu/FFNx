@@ -2536,7 +2536,12 @@ void Renderer::setGameLightData(light_data* lightdata)
 {
     struct game_mode* mode = getmode_cached();
 
-    bool useGameLighting = lightdata != nullptr && !(enable_worldmap_external_mesh && mode->driver_mode == MODE_WORLDMAP);
+    bool useGameLighting = lightdata != nullptr;    
+    if (enable_worldmap_external_mesh && mode->driver_mode == MODE_WORLDMAP)
+    {
+        useGameLighting = false;
+    }
+
     if (useGameLighting)
     {
         internalState.gameGlobalLightColor[0] = lightdata->global_light_color.r;
@@ -2562,16 +2567,16 @@ void Renderer::setGameLightData(light_data* lightdata)
         if (mode->driver_mode == MODE_WORLDMAP)
         {
             internalState.gameLightDir1[0] = lightdata->light_dir_1.x;
-            internalState.gameLightDir1[1] = lightdata->light_dir_1.y;
-            internalState.gameLightDir1[2] = lightdata->light_dir_1.z;
+            internalState.gameLightDir1[1] = lightdata->light_dir_1.z;
+            internalState.gameLightDir1[2] = lightdata->light_dir_1.y;
 
             internalState.gameLightDir2[0] = lightdata->light_dir_2.x;
-            internalState.gameLightDir2[1] = lightdata->light_dir_2.y;
-            internalState.gameLightDir2[2] = lightdata->light_dir_2.z;
+            internalState.gameLightDir2[1] = lightdata->light_dir_2.z;
+            internalState.gameLightDir2[2] = lightdata->light_dir_2.y;
 
             internalState.gameLightDir3[0] = lightdata->light_dir_3.x;
-            internalState.gameLightDir3[1] = lightdata->light_dir_3.y;
-            internalState.gameLightDir3[2] = lightdata->light_dir_3.z;
+            internalState.gameLightDir3[1] = lightdata->light_dir_3.z;
+            internalState.gameLightDir3[2] = lightdata->light_dir_3.y;
         }
         else
         {
