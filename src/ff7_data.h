@@ -647,6 +647,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.battle_fps_menu_multiplier = battle_main_loop + 0x335;
 	ff7_externals.submarine_minigame_status = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_submarine, 0x48);
+	ff7_externals.submarine_last_gametime = (time_t *)get_absolute_value(ff7_externals.fps_limiter_submarine, 0x26);
 	ff7_externals.field_limit_fps = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_field, 0x1F);
 	ff7_externals.swirl_limit_fps = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_swirl, 0x48);
 

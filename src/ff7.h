@@ -3030,6 +3030,7 @@ struct ff7_externals
 	uint32_t sub_779E14;
 	uint32_t battle_fps_menu_multiplier;
 	DWORD *submarine_minigame_status;
+	time_t *submarine_last_gametime;
 	DWORD *field_limit_fps;
 	DWORD *swirl_limit_fps;
 	int16_t (*get_bank_value)(int16_t, int16_t);

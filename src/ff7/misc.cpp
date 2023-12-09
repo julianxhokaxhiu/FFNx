@@ -563,6 +563,9 @@ void ff7_limit_fps()
 		// Gameover screen has nothing to limit
 		qpc_get_time(&last_gametime);
 		return;
+	case MODE_SUBMARINE:
+		last_gametime = *ff7_externals.submarine_last_gametime;
+		break;
 	}
 
 	if (ff7_fps_limiter < FF7_LIMITER_60FPS)
@@ -589,6 +592,7 @@ void ff7_limit_fps()
 		case MODE_BATTLE:
 		case MODE_SWIRL:
 		case MODE_SNOWBOARD:
+		case MODE_SUBMARINE:
 		case MODE_COASTER:
 		case MODE_CONDOR:
 		case MODE_CREDITS:

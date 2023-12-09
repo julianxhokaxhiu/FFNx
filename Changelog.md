@@ -11,6 +11,7 @@
 ## FF7
 
 - 60FPS: Refactor 60FPS battle menu fix and fix ESUI compatibility ( https://github.com/julianxhokaxhiu/FFNx/pull/597 )
+- 60FPS: Fix Submarine minigame ( https://github.com/julianxhokaxhiu/FFNx/issues/621 )
 - Ambient: Allow ambient effects to playback in fields that use movies as background
 - Core: Add additional main models eye-to-model mapping
 - DevTools: Add Game Moment in Field Debug
