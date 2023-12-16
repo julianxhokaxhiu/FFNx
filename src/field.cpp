@@ -80,7 +80,7 @@ int opcode_kawai_eye_texture() {
 		// Skip custom eye replacement for NPCs
 		if (eye_index < 9)
 		{
-			char directpath[MAX_PATH];
+			char directpath[MAX_PATH + sizeof(basedir)];
 			char filename[10];
 			char ext[4];
 
@@ -97,7 +97,7 @@ int opcode_kawai_eye_texture() {
 			if (left_eye_index > 0)
 			{
 				_splitpath(ff7_externals.field_models_eye_blink_buffer[eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
-				_snprintf(directpath, sizeof(directpath), "%s/flevel/%s_%d.TEX", direct_mode_path.c_str(), filename, left_eye_index);
+				_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, left_eye_index);
 
 				if (fileExists(directpath))
 				{
@@ -122,7 +122,7 @@ int opcode_kawai_eye_texture() {
 			if (right_eye_index > 0)
 			{
 				_splitpath(ff7_externals.field_models_eye_blink_buffer[eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
-				_snprintf(directpath, sizeof(directpath), "%s/flevel/%s_%d.TEX", direct_mode_path.c_str(), filename, right_eye_index);
+				_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, right_eye_index);
 
 				if (fileExists(directpath))
 				{
