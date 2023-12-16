@@ -2242,10 +2242,10 @@ struct field_arrow_graphics_data
 
 struct field_model_blink_data
 {
-	byte blink_mode;
-	byte blink_mode_2;
-	char unknown;
-	char model_id;
+	byte blink_left_eye_mode;
+  byte blink_right_eye_mode;
+  char unknown;
+  char model_id;
 };
 
 struct world_event_data
@@ -2651,9 +2651,9 @@ struct ff7_model_eye_texture_data
 {
   int has_eyes;
   char *custom_left_eye_filename;
-  const char *static_left_eye_filename;
+  char *static_left_eye_filename;
   char *custom_right_eye_filename;
-  const char *static_right_eye_filename;
+  char *static_right_eye_filename;
 };
 
 
@@ -2754,6 +2754,7 @@ struct ff7_externals
 	uint32_t field_models_eye_to_model;
 	ff7_model_eye_texture_data* field_models_eye_blink_buffer;
 	int (*field_load_model_eye_tex)(ff7_model_eye_texture_data *eye_data, field_animation_data *anim_data);
+	void (*field_unload_model_eye_tex)(void* eye_tex);
 	uint32_t field_sub_60DCED;
 	void (*destroy_animation)(struct anim_header *);
 	uint32_t context_chdir;
@@ -2966,6 +2967,7 @@ struct ff7_externals
 	void (*field_evaluate_encounter_rate_60B2C6)();
 	uint32_t field_animate_3d_models_6392BB;
 	uint32_t field_apply_kawai_op_64A070;
+	field_model_blink_data* field_model_blink_data_D000C8;
 	void (*field_blink_3d_model_649B50)(field_animation_data*, field_model_blink_data*);
 	short *field_player_model_id;
 	WORD *field_n_models;

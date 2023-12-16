@@ -270,7 +270,7 @@ namespace ff7::field
     void ff7_field_blink_3d_model(field_animation_data* anim_data, field_model_blink_data* blink_data)
     {
         ff7_externals.field_blink_3d_model_649B50(anim_data, blink_data);
-        if(blink_data->blink_mode == 2)
+        if(blink_data->blink_left_eye_mode == 2)
         {
             auto &field_event_data = (*ff7_externals.field_event_data_ptr)[blink_data->model_id];
             if(external_model_data[blink_data->model_id].blinkFrameIndex > 0)
