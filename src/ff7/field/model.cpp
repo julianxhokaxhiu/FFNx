@@ -102,7 +102,6 @@ namespace ff7::field
         int frame_multiplier = get_frame_multiplier();
         field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
 
-        
         if(is_fps_running_more_than_original() && *ff7_externals.field_id == 748)
         {
             // Fix softlock related to this discussion https://github.com/julianxhokaxhiu/FFNx/discussions/569. 

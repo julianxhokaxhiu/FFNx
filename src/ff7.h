@@ -2157,14 +2157,17 @@ struct field_animation_data
 	int actor_x;
 	int actor_y;
 	int actor_z;
-	byte field_10[18];
-	__int16 field_22;
+	byte field_10[16];
+	byte eye_texture_idx;
 	byte field_24[336];
 	WORD field_174;
 	WORD field_176;
 	uint32_t *anim_frame_object;
 	uint32_t *field_17C;
-	byte field_180[16];
+	void* custom_left_eye_tex;
+  void* static_left_eye_tex;
+  void* custom_right_eye_tex;
+  void* static_right_eye_tex;
 };
 
 struct field_gateway
@@ -2644,6 +2647,16 @@ struct world_snake_graphics_data
 	bgra_color_ui8 color;
 };
 
+struct ff7_model_eye_texture_data
+{
+  int has_eyes;
+  char *custom_left_eye_filename;
+  const char *static_left_eye_filename;
+  char *custom_right_eye_filename;
+  const char *static_right_eye_filename;
+};
+
+
 // --------------- end of FF7 imports ---------------
 
 struct ff7_channel_6_state
@@ -2739,7 +2752,8 @@ struct ff7_externals
 	uint32_t field_load_animation;
 	uint32_t field_load_models;
 	uint32_t field_models_eye_to_model;
-	uint32_t field_models_eye_blink_buffer;
+	ff7_model_eye_texture_data* field_models_eye_blink_buffer;
+	int (*field_load_model_eye_tex)(ff7_model_eye_texture_data *eye_data, field_animation_data *anim_data);
 	uint32_t field_sub_60DCED;
 	void (*destroy_animation)(struct anim_header *);
 	uint32_t context_chdir;
@@ -2910,6 +2924,8 @@ struct ff7_externals
 	uint32_t opcode_ask;
 	uint32_t opcode_wmode;
 	uint32_t opcode_tutor;
+	uint32_t opcode_pc;
+	uint32_t opcode_kawai;
 	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_load_and_play_with_speed;

@@ -36,7 +36,8 @@ byte map_patch_storage[7] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // Pla
 bool map_changing = false;
 
 // FF7 only
-int (*old_pc)();
+int (*opcode_old_kawai)();
+int (*opcode_old_pc)();
 
 byte get_field_bank_value(int16_t bank)
 {
@@ -59,7 +60,88 @@ byte get_field_bank_value(int16_t bank)
 	}
 }
 
-int script_PC_map_change() {
+int opcode_kawai_eye_texture() {
+	byte num_params = get_field_parameter<byte>(0);
+	byte subcode = get_field_parameter<byte>(1);
+
+	if (subcode == 0x0) // EYETX
+	{
+		byte left_eye_index = get_field_parameter<byte>(2);
+		byte right_eye_index = get_field_parameter<byte>(3);
+		byte mouth_index = get_field_parameter<byte>(4);
+
+		field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
+		byte curr_model_id = ff7_externals.field_model_id_array[*ff7_externals.current_entity_id];
+		byte eye_index = animation_data[curr_model_id].eye_texture_idx;
+
+		if (trace_all || trace_opcodes)
+			ffnx_trace("opcode[KAWAI]: num_params:%u,subcode:0x%x,left_eye_index:%u,right_eye_index:%u,mouth_index:%u\n", num_params, subcode, left_eye_index, right_eye_index, mouth_index);
+
+		// Skip custom eye replacement for NPCs
+		if (eye_index < 9)
+		{
+			char directpath[MAX_PATH];
+			char filename[10];
+			char ext[4];
+
+			// LEFT EYE
+			if (ff7_externals.field_models_eye_blink_buffer[eye_index].custom_left_eye_filename)
+			{
+				external_free(ff7_externals.field_models_eye_blink_buffer[eye_index].custom_left_eye_filename);
+				ff7_externals.field_models_eye_blink_buffer[eye_index].custom_left_eye_filename = NULL;
+			}
+
+			if(animation_data[curr_model_id].static_left_eye_tex) external_free(animation_data[curr_model_id].static_left_eye_tex);
+			if(animation_data[curr_model_id].custom_left_eye_tex) external_free(animation_data[curr_model_id].custom_left_eye_tex);
+
+			if (left_eye_index > 0)
+			{
+				_splitpath(ff7_externals.field_models_eye_blink_buffer[eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
+				_snprintf(directpath, sizeof(directpath), "%s/flevel/%s_%d.TEX", direct_mode_path.c_str(), filename, left_eye_index);
+
+				if (fileExists(directpath))
+				{
+					char* ret = (char*)external_malloc(1024);
+					_snprintf(ret, 1024, "%s_%d%s", filename, left_eye_index, ext);
+					ff7_externals.field_models_eye_blink_buffer[eye_index].custom_left_eye_filename = ret;
+				}
+				else if (trace_all || trace_direct || trace_opcodes)
+					ffnx_trace("opcode[KAWAI]: Custom left eye texture not found: %s\n", directpath);
+			}
+
+			// RIGHT EYE
+			if (ff7_externals.field_models_eye_blink_buffer[eye_index].custom_right_eye_filename)
+			{
+				external_free(ff7_externals.field_models_eye_blink_buffer[eye_index].custom_right_eye_filename);
+				ff7_externals.field_models_eye_blink_buffer[eye_index].custom_right_eye_filename = NULL;
+			}
+
+			if(animation_data[curr_model_id].static_right_eye_tex) external_free(animation_data[curr_model_id].static_right_eye_tex);
+			if(animation_data[curr_model_id].custom_right_eye_tex) external_free(animation_data[curr_model_id].custom_right_eye_tex);
+
+			if (right_eye_index > 0)
+			{
+				_splitpath(ff7_externals.field_models_eye_blink_buffer[eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
+				_snprintf(directpath, sizeof(directpath), "%s/flevel/%s_%d.TEX", direct_mode_path.c_str(), filename, right_eye_index);
+
+				if (fileExists(directpath))
+				{
+					char* ret = (char*)external_malloc(1024);
+					_snprintf(ret, 1024, "%s_%d%s", filename, right_eye_index, ext);
+					ff7_externals.field_models_eye_blink_buffer[eye_index].custom_right_eye_filename = ret;
+				}
+				else if (trace_all || trace_direct || trace_opcodes)
+					ffnx_trace("opcode[KAWAI]: Custom right eye texture not found: %s\n", directpath);
+			}
+
+			ff7_externals.field_load_model_eye_tex(&ff7_externals.field_models_eye_blink_buffer[eye_index], &animation_data[curr_model_id]);
+		}
+	}
+
+	return opcode_old_kawai();
+}
+
+int opcode_pc_map_change() {
 	if (map_changing)
 	{
 		byte* level_data = *ff7_externals.field_level_data_pointer;
@@ -76,7 +158,7 @@ int script_PC_map_change() {
 		map_changing = false;
 	}
 
-	return old_pc();
+	return opcode_old_pc();
 }
 
 int field_calc_window_pos(int16_t WINDOW_ID, int16_t X, int16_t Y, int16_t W, int16_t H)
@@ -89,8 +171,11 @@ void field_init()
 	if (!ff8)
 	{
 		// Proxies the PC field opcode to reposition the player after a forced map change
-		old_pc = (int (*)())common_externals.execute_opcode_table[0xA0];
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA0], (DWORD)&script_PC_map_change);
+		opcode_old_pc = (int (*)())ff7_externals.opcode_pc;
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA0], (DWORD)&opcode_pc_map_change);
+
+		opcode_old_kawai = (int (*)())ff7_externals.opcode_kawai;
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x28], (DWORD)&opcode_kawai_eye_texture);
 
 		// Proxy the window calculation formula so we can offset windows vertically
 		replace_call_function(common_externals.execute_opcode_table[0x50] + 0x174, field_calc_window_pos);

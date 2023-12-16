@@ -220,10 +220,11 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_load_models = get_relative_call(ff7_externals.field_sub_60DCED, 0x168);
 	ff7_externals.field_models_eye_to_model = get_relative_call(ff7_externals.field_load_models, 0xA79);
 	ff7_externals.field_load_animation = get_relative_call(ff7_externals.field_load_models, 0x8DF);
+	ff7_externals.field_load_model_eye_tex = (int (*)(ff7_model_eye_texture_data*,field_animation_data*))get_relative_call(ff7_externals.field_load_models, 0xB90);
 	ff7_externals.load_animation = get_relative_call(ff7_externals.field_load_animation, 0x16D);
 	ff7_externals.destroy_animation = (void (*)(anim_header*))get_relative_call(ff7_externals.load_animation, 0x162);
 
-	ff7_externals.field_models_eye_blink_buffer = get_absolute_value(ff7_externals.field_load_models, 0xB8C);
+	ff7_externals.field_models_eye_blink_buffer = (ff7_model_eye_texture_data*)get_absolute_value(ff7_externals.field_load_models, 0xB8C);
 
 	ff7_externals.load_lgp = get_relative_call(main_loop, 0x450);
 	ff7_externals.open_lgp_file = get_relative_call(ff7_externals.load_lgp, 0x1C);
@@ -501,6 +502,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.opcode_shake = common_externals.execute_opcode_table[0x5E];
 	ff7_externals.opcode_setbyte = common_externals.execute_opcode_table[0x80];
 	ff7_externals.opcode_biton = common_externals.execute_opcode_table[0x82];
+	ff7_externals.opcode_pc = common_externals.execute_opcode_table[0xA0];
+	ff7_externals.opcode_kawai = common_externals.execute_opcode_table[0x28];
 
 	ff7_externals.field_opcode_08_sub_61D0D4 = get_relative_call(common_externals.execute_opcode_table[0x08], 0x5A);
 	ff7_externals.field_opcode_08_09_set_rotation_61DB2C = (void(*)(short, byte, byte))get_relative_call(ff7_externals.field_opcode_08_sub_61D0D4, 0x196);
