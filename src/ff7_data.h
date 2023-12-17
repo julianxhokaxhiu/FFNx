@@ -226,6 +226,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.destroy_animation = (void (*)(anim_header*))get_relative_call(ff7_externals.load_animation, 0x162);
 
 	ff7_externals.field_models_eye_blink_buffer = (ff7_model_eye_texture_data*)get_absolute_value(ff7_externals.field_load_models, 0xB8C);
+	ff7_externals.field_models_data = (DWORD*)get_absolute_value(ff7_externals.field_load_models, 0xE);
 
 	ff7_externals.load_lgp = get_relative_call(main_loop, 0x450);
 	ff7_externals.open_lgp_file = get_relative_call(ff7_externals.load_lgp, 0x1C);

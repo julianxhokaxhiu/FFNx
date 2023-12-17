@@ -2753,6 +2753,7 @@ struct ff7_externals
 	uint32_t field_load_models;
 	uint32_t field_models_eye_to_model;
 	ff7_model_eye_texture_data* field_models_eye_blink_buffer;
+	DWORD* field_models_data;
 	int (*field_load_model_eye_tex)(ff7_model_eye_texture_data *eye_data, field_animation_data *anim_data);
 	void (*field_unload_model_eye_tex)(void* eye_tex);
 	uint32_t field_sub_60DCED;
