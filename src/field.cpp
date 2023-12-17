@@ -74,7 +74,7 @@ int opcode_kawai_eye_texture() {
 
 		field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
 		byte curr_model_id = ff7_externals.field_model_id_array[*ff7_externals.current_entity_id];
-		byte eye_index = animation_data[curr_model_id].eye_texture_idx;
+		byte curr_eye_index = animation_data[curr_model_id].eye_texture_idx;
 		char curr_model_name[10];
 
 		_splitpath((const char*)(*ff7_externals.field_models_data + (10380 * curr_model_id) + 512), NULL, NULL, curr_model_name, NULL);
@@ -82,61 +82,63 @@ int opcode_kawai_eye_texture() {
 		if (trace_all || trace_opcodes)
 		{
 			ffnx_trace("opcode[KAWAI]: num_params=%u,subcode=0x%x,left_eye_index=%u,right_eye_index=%u,mouth_index=%u\n", num_params, subcode, left_eye_index, right_eye_index, mouth_index);
-			ffnx_trace("subcode[EYETX]: curr_model_id=%d,curr_model_name=%s\n", curr_model_id, curr_model_name);
+			ffnx_trace("subcode[EYETX]: curr_model_id=%u,curr_eye_index=%u,curr_model_name=%s\n", curr_model_id, curr_eye_index, curr_model_name);
 		}
 
-		// Skip custom eye replacement for NPCs
-		if (eye_index < 9)
+		if (curr_eye_index < 10)
 		{
 			char directpath[MAX_PATH + sizeof(basedir)];
 			char filename[10];
 			char ext[4];
 
+			// NPCs always default on Cloud eyes
+			if (curr_eye_index == 9) curr_eye_index = 0;
+
 			// LEFT EYE
-			_splitpath(ff7_eyes[eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
+			_splitpath(ff7_eyes[curr_eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
 
 			_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%s_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, left_eye_index);
 			if (fileExists(directpath))
-				_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_left_eye_filename, 1024, "eye_%s_%d%s", curr_model_name, left_eye_index, ext);
+				_snprintf(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, 1024, "eye_%s_%d%s", curr_model_name, left_eye_index, ext);
 			else
 			{
-				if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("opcode[KAWAI]: Custom left eye texture not found: %s\n", directpath);
+				if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom left eye texture not found: %s\n", directpath);
 
 				_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, left_eye_index);
 				if (fileExists(directpath))
-					_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_left_eye_filename, 1024, "%s_%d%s", filename, left_eye_index, ext);
+					_snprintf(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, 1024, "%s_%d%s", filename, left_eye_index, ext);
 				else
 				{
-					if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("opcode[KAWAI]: Custom left eye texture not found: %s\n", directpath);
+					if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom left eye texture not found: %s\n", directpath);
 
-					_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_left_eye_filename, 1024, "%s%s", filename, ext);
+					_snprintf(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, 1024, "%s%s", filename, ext);
 				}
 			}
 
 			// RIGHT EYE
-			_splitpath(ff7_eyes[eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
+			_splitpath(ff7_eyes[curr_eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
 
 			_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%sr_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, right_eye_index);
 			if (fileExists(directpath))
-				_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_right_eye_filename, 1024, "eye_%sr_%d%s", curr_model_name, right_eye_index, ext);
+				_snprintf(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, 1024, "eye_%sr_%d%s", curr_model_name, right_eye_index, ext);
 			else
 			{
-				if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("opcode[KAWAI]: Custom right eye texture not found: %s\n", directpath);
+				if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom right eye texture not found: %s\n", directpath);
 
 				_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, right_eye_index);
 				if (fileExists(directpath))
-					_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_right_eye_filename, 1024, "%s_%d%s", filename, right_eye_index, ext);
+					_snprintf(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, 1024, "%s_%d%s", filename, right_eye_index, ext);
 				else
 				{
-					if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("opcode[KAWAI]: Custom right eye texture not found: %s\n", directpath);
-					_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_right_eye_filename, 1024, "%s%s", filename, ext);
+					if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom right eye texture not found: %s\n", directpath);
+					_snprintf(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, 1024, "%s%s", filename, ext);
 				}
 			}
 
 			// Reload TEX data in memory
 			if(animation_data[curr_model_id].static_left_eye_tex) ff7_externals.field_unload_model_eye_tex(animation_data[curr_model_id].static_left_eye_tex);
 			if(animation_data[curr_model_id].static_right_eye_tex) ff7_externals.field_unload_model_eye_tex(animation_data[curr_model_id].static_right_eye_tex);
-			ff7_externals.field_load_model_eye_tex(&ff7_externals.field_models_eye_blink_buffer[eye_index], &animation_data[curr_model_id]);
+			ff7_externals.field_load_model_eye_tex(&ff7_externals.field_models_eye_blink_buffer[curr_eye_index], &animation_data[curr_model_id]);
 
 			// Index is also treated as blink mode, if higher than 2 then "fake a closed eyes" in order to reload textures
 			if (left_eye_index <= 2 || right_eye_index <= 2)
