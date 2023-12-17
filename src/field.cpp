@@ -92,9 +92,9 @@ int opcode_kawai_eye_texture() {
 			memset(ff7_externals.field_models_eye_blink_buffer[eye_index].static_left_eye_filename, 0, 1024);
 			if (fileExists(directpath))
 				_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_left_eye_filename, 1024, "%s_%d%s", filename, left_eye_index, ext);
-			else if (trace_all || trace_direct || trace_opcodes)
+			else
 			{
-				if (left_eye_index > 2) ffnx_trace("opcode[KAWAI]: Custom left eye texture not found: %s\n", directpath);
+				if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("opcode[KAWAI]: Custom left eye texture not found: %s\n", directpath);
 				_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_left_eye_filename, 1024, "%s%s", filename, ext);
 			}
 
@@ -104,9 +104,9 @@ int opcode_kawai_eye_texture() {
 			memset(ff7_externals.field_models_eye_blink_buffer[eye_index].static_right_eye_filename, 0, 1024);
 			if (fileExists(directpath))
 				_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_right_eye_filename, 1024, "%s_%d%s", filename, right_eye_index, ext);
-			else if (trace_all || trace_direct || trace_opcodes)
+			else
 			{
-				if (right_eye_index > 2) ffnx_trace("opcode[KAWAI]: Custom right eye texture not found: %s\n", directpath);
+				if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("opcode[KAWAI]: Custom right eye texture not found: %s\n", directpath);
 				_snprintf(ff7_externals.field_models_eye_blink_buffer[eye_index].static_right_eye_filename, 1024, "%s%s", filename, ext);
 			}
 
@@ -116,18 +116,18 @@ int opcode_kawai_eye_texture() {
 			ff7_externals.field_load_model_eye_tex(&ff7_externals.field_models_eye_blink_buffer[eye_index], &animation_data[curr_model_id]);
 
 			// Index is also treated as blink mode, if higher than 2 then "fake a closed eyes" in order to reload textures
-			if (left_eye_index > 2 || right_eye_index > 2)
+			if (left_eye_index <= 2 || right_eye_index <= 2)
 			{
-				ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode = 2;
-				ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode = 2;
+				ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode = 0;
+				ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode = 0;
 				ff7_externals.field_model_blink_data_D000C8->unknown = 0;
 				ff7_externals.field_model_blink_data_D000C8->model_id = curr_model_id;
 				ff7_externals.field_blink_3d_model_649B50(&animation_data[curr_model_id], ff7_externals.field_model_blink_data_D000C8);
 			}
-			else if (left_eye_index == 0 || right_eye_index == 0)
+			else
 			{
-				ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode = 0;
-				ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode = 0;
+				ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode = 2;
+				ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode = 2;
 				ff7_externals.field_model_blink_data_D000C8->unknown = 0;
 				ff7_externals.field_model_blink_data_D000C8->model_id = curr_model_id;
 				ff7_externals.field_blink_3d_model_649B50(&animation_data[curr_model_id], ff7_externals.field_model_blink_data_D000C8);
