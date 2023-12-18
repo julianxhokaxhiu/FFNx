@@ -322,6 +322,8 @@ namespace ff7::field
             return 1;
         if ( !_strcmpi(model_name, "AGGB") )
             return 1;
+        if ( !_strcmpi(model_name, "BUAC") )
+            return 1;
 
         // Aerith
         if ( !_strcmpi(model_name, "AUFF") )
@@ -329,6 +331,10 @@ namespace ff7::field
         if ( !_strcmpi(model_name, "CAHC") )
             return 2;
         if ( !_strcmpi(model_name, "AZBB") )
+            return 2;
+        if ( !_strcmpi(model_name, "CQGA") )
+            return 2;
+        if ( !_strcmpi(model_name, "DIFF") )
             return 2;
 
         // Barret
