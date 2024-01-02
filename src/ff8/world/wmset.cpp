@@ -139,8 +139,6 @@ std::unordered_map<uint32_t, WmsetSection41Texture> ff8_world_wmset_palette_anim
 			texture.palettePositions.push_back((const uint16_t *)(wmset_section41_data + pos + 12 + toc[j] + 20));
 		}
 
-		ffnx_info("%s: height=%d src=(%d, %d) pos=(%d, %d)\n", __func__, texture.height, texture.srcX, texture.srcY, texture.x, texture.y);
-
 		textures[uint32_t(texture.srcX) | (uint32_t(texture.srcY) << 16)] = texture;
 	}
 

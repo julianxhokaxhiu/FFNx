@@ -70,8 +70,11 @@ void ff8_find_externals()
 	ff8_externals.pubintro_exit = get_absolute_value(ff8_externals.main_entry, 0x176);
 	ff8_externals.pubintro_main_loop = get_absolute_value(ff8_externals.main_entry, 0x180);
 	ff8_externals.credits_main_loop = get_absolute_value(ff8_externals.pubintro_main_loop, 0x6D);
+	ff8_externals.go_to_main_menu_main_loop = get_absolute_value(ff8_externals.credits_main_loop, 0xE2);
+	ff8_externals.main_menu_main_loop = get_absolute_value(ff8_externals.go_to_main_menu_main_loop, 0x2B);
 
 	ff8_set_main_loop(MODE_CREDITS, ff8_externals.credits_main_loop);
+	ff8_set_main_loop(MODE_MAIN_MENU, ff8_externals.main_menu_main_loop);
 
 	ff8_externals.config_worldmap_fog_disabled = (uint8_t *)get_absolute_value(ff8_externals.main_entry, 0x1C1);
 	ff8_externals.config_worldmap_color_anim_disabled = (uint8_t *)get_absolute_value(ff8_externals.main_entry, 0x1C7);
@@ -84,9 +87,7 @@ void ff8_find_externals()
 	ff8_externals.input_get_keyscan = (int(*)(int,int))get_relative_call(ff8_externals.sub_52FE80, 0xD1);
 	ff8_externals.credits_loop_state = (DWORD*)get_absolute_value(ff8_externals.load_credits_image, 0x7);
 	ff8_externals.credits_counter = (DWORD *)get_absolute_value(ff8_externals.load_credits_image, 0x59);
-	ff8_externals.sub_470520 = get_absolute_value(ff8_externals.credits_main_loop, 0xE2);
-	ff8_externals.sub_4A24B0 = get_absolute_value(ff8_externals.sub_470520, 0x2B);
-	ff8_externals.sub_470630 = get_absolute_value(ff8_externals.sub_4A24B0, 0xE4);
+	ff8_externals.sub_470630 = get_absolute_value(ff8_externals.main_menu_main_loop, 0xE4);
 	ff8_externals.main_loop = get_absolute_value(ff8_externals.sub_470630, 0x24);
 
 	ff8_externals.reg_get_data_drive = (uint32_t(*)(char*, DWORD))get_relative_call(ff8_externals.init_config, 0x21);
@@ -222,7 +223,7 @@ void ff8_find_externals()
 	ff8_externals.get_vibration_capability = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xE3);
 	ff8_externals.vibrate_data_main = (uint8_t **)get_absolute_value(uint32_t(ff8_externals.pause_menu_with_vibration), 0x261);
 	ff8_externals.set_vibration = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0x26A);
-	ff8_externals.gamepad_vibration_states = (ff8_gamepad_vibration_state *)(get_absolute_value(ff8_externals.get_vibration_capability, 0xE + 3) - 0xB);
+	ff8_externals.gamepad_states = (ff8_gamepad_state *)(get_absolute_value(ff8_externals.get_vibration_capability, 0xE + 3) - 0xB);
 	ff8_externals.vibration_objects = (ff8_vibrate_struc *)get_absolute_value(ff8_externals.set_vibration, 0x2 + 1);
 	ff8_externals.vibration_clear_intensity = get_relative_call(ff8_externals.sub_471F70, 0x276);
 	ff8_externals.open_battle_vibrate_vib = get_relative_call(ff8_externals.pubintro_exit, 0x18);
@@ -359,7 +360,7 @@ void ff8_find_externals()
 
 	ff8_externals.menu_viewport = (sprite_viewport *)(get_absolute_value(ff8_externals.sub_4972A0, 0x12) - 0x20);
 
-	ff8_externals.sub_497380 = get_relative_call(ff8_externals.sub_4A24B0, 0xAA);
+	ff8_externals.sub_497380 = get_relative_call(ff8_externals.main_menu_main_loop, 0xAA);
 	ff8_externals.sub_4B3410 = get_relative_call(ff8_externals.sub_497380, 0xAC);
 	ff8_externals.sub_4BE4D0 = get_relative_call(ff8_externals.sub_4B3410, 0x68);
 	ff8_externals.sub_4BECC0 = get_relative_call(ff8_externals.sub_4BE4D0, 0x39);
@@ -547,11 +548,11 @@ void ff8_find_externals()
 		ff8_externals.show_vram_window = (void (*)())get_relative_call(ff8_externals.worldmap_main_loop, 0xA0);
 		ff8_externals.refresh_vram_window = (void (*)())get_relative_call(ff8_externals.worldmap_main_loop, 0xA5);
 		ff8_externals.worldmap_with_fog_sub_53FAC0 = get_relative_call(ff8_externals.worldmap_main_loop, 0x134);
-		ff8_externals.sub_559240 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x1E);
-		ff8_externals.sub_554940 = get_relative_call(ff8_externals.sub_559240, 0x23D);
+		ff8_externals.worldmap_input_update_sub_559240 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x1E);
+		ff8_externals.sub_554940 = get_relative_call(ff8_externals.worldmap_input_update_sub_559240, 0x23D);
 		ff8_externals.sub_554940_call_130 = ff8_externals.sub_554940 + 0x130;
 		ff8_externals.sub_541AE0 = get_relative_call(ff8_externals.sub_554940, 0x130);
-		ff8_externals.sub_554BC0 = get_relative_call(ff8_externals.sub_559240, 0x25B);
+		ff8_externals.sub_554BC0 = get_relative_call(ff8_externals.worldmap_input_update_sub_559240, 0x25B);
 		ff8_externals.sub_54B460 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x5D7);
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x1D5);
@@ -619,11 +620,11 @@ void ff8_find_externals()
 		ff8_externals.show_vram_window = (void (*)())get_relative_call(ff8_externals.worldmap_main_loop, 0xA3);
 		ff8_externals.refresh_vram_window = (void (*)())get_relative_call(ff8_externals.worldmap_main_loop, 0xA8);
 		ff8_externals.worldmap_with_fog_sub_53FAC0 = get_relative_call(ff8_externals.worldmap_main_loop, 0x137);
-		ff8_externals.sub_559240 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x1C);
-		ff8_externals.sub_554940 = get_relative_call(ff8_externals.sub_559240, 0x23A);
+		ff8_externals.worldmap_input_update_sub_559240 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x1C);
+		ff8_externals.sub_554940 = get_relative_call(ff8_externals.worldmap_input_update_sub_559240, 0x23A);
 		ff8_externals.sub_554940_call_130 = ff8_externals.sub_554940 + 0x13C;
 		ff8_externals.sub_541AE0 = get_relative_call(ff8_externals.sub_554940, 0x13C);
-		ff8_externals.sub_554BC0 = get_relative_call(ff8_externals.sub_559240, 0x258);
+		ff8_externals.sub_554BC0 = get_relative_call(ff8_externals.worldmap_input_update_sub_559240, 0x258);
 		ff8_externals.sub_54B460 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x5D9);
 
 		ff8_externals.sub_549E80 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x1D6);

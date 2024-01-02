@@ -39,6 +39,8 @@
 ## FF8
 
 - Hext: `fix_uv_coords` hext files are not needed anymore ( https://github.com/julianxhokaxhiu/FFNx/pull/619 )
+- Input: Enable support for 360° analog movement ( https://github.com/julianxhokaxhiu/FFNx/pull/632 )
+- Input: Enable support dual-stick vehicle control ( https://github.com/julianxhokaxhiu/FFNx/pull/632 )
 - Graphics: Fix blue color on some attacks in battle ( https://github.com/julianxhokaxhiu/FFNx/pull/619 )
 - Graphics: Fix crash when using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/588 )
 - Graphics: Fix texture glitches using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/591 )

@@ -38,6 +38,10 @@
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
+int left_stick_y = 0x80;
+int left_stick_x = 0x80;
+int right_stick_y = 0x80;
+int right_stick_x = 0x80;
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
 {
@@ -296,6 +300,38 @@ int ff8_init_gamepad()
 	return FALSE;
 }
 
+int ff8_get_analog_value(int8_t port, int type, int8_t offset)
+{
+	if (type == 0) {
+		return right_stick_x;
+	}
+
+	if (type == 1) {
+		return right_stick_y;
+	}
+
+	if (type == 2) {
+		return left_stick_x;
+	}
+
+	if (type == 3) {
+		return left_stick_y;
+	}
+
+	return -1;
+}
+
+int ff8_get_analog_value_wm(int8_t port, int type, int8_t offset)
+{
+	if (left_stick_x != 0x80 || left_stick_y != 0x80) {
+		int *keyscans = *(int **)(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0x64 : 0x61));
+		int index = **(int **)(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0x9 : 0x6));
+		keyscans[index] &= 0x0FFF; // Remove d-pad keys
+	}
+
+	return ff8_get_analog_value(port, type, offset);
+}
+
 LPDIJOYSTATE2 ff8_update_gamepad_status()
 {
 	ff8_externals.dinput_gamepad_state->rgdwPOV[0] = -1;
@@ -305,6 +341,8 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 	ff8_externals.dinput_gamepad_state->lRy = 0;
 
 	nxVibrationEngine.rumbleUpdate();
+
+	int lX = 0, lY = 0, rX = 0, rY = 0;
 
 	if (xinput_connected)
 	{
@@ -331,6 +369,11 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 			ff8_externals.dinput_gamepad_state->lX = -0xFFFFFFFFFFFFFFFF;
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
 		}
+
+		lY = int(gamepad.leftStickY * 0x80);
+		lX = int(gamepad.leftStickX * 0x80);
+		rY = int(gamepad.rightStickY * 0x80);
+		rX = int(gamepad.rightStickX * 0x80);
 
 		if (gamepad.rightStickY > 0.5f)
 			ff8_externals.dinput_gamepad_state->lRy = 0xFFFFFFFFFFFFFFFF;
@@ -389,6 +432,11 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
 		}
 
+		lY = int(joystick.GetState()->lY * 0x80 / SHRT_MAX);
+		lX = int(joystick.GetState()->lX * 0x80 / SHRT_MAX);
+		rY = int(joystick.GetState()->lRy * 0x80 / SHRT_MAX);
+		rX = int(joystick.GetState()->lRx * 0x80 / SHRT_MAX);
+
 		if (joystick.GetState()->lRy < joystick.GetDeadZone(-0.5f))
 			ff8_externals.dinput_gamepad_state->lRy = 0xFFFFFFFFFFFFFFFF;
 		else if (joystick.GetState()->lRy > joystick.GetDeadZone(0.5f))
@@ -419,6 +467,34 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgbButtons[10] = joystick.GetState()->rgbButtons[10] & 0x80 ? 0x80 : 0; // L3
 		ff8_externals.dinput_gamepad_state->rgbButtons[11] = joystick.GetState()->rgbButtons[11] & 0x80 ? 0x80 : 0; // R3
 		ff8_externals.dinput_gamepad_state->rgbButtons[12] = joystick.GetState()->rgbButtons[12] & 0x80 ? 0x80 : 0; // PS Button
+	}
+
+	left_stick_y = -lY + 0x80;
+	if (left_stick_y > 255) left_stick_y = 255;
+	if (left_stick_y < 0) left_stick_y = 0;
+
+	left_stick_x = lX + 0x80;
+	if (left_stick_x > 255) left_stick_x = 255;
+	if (left_stick_x < 0) left_stick_x = 0;
+
+	int mul = (left_stick_x - 128) * (left_stick_x - 128) + (left_stick_y - 128) * (left_stick_y - 128);
+	if (mul < 1600) {
+		left_stick_y = 0x80;
+		left_stick_x = 0x80;
+	}
+
+	right_stick_y = -rY + 0x80;
+	if (right_stick_y > 255) right_stick_y = 255;
+	if (right_stick_y < 0) right_stick_y = 0;
+
+	right_stick_x = rX + 0x80;
+	if (right_stick_x > 255) right_stick_x = 255;
+	if (right_stick_x < 0) right_stick_x = 0;
+
+	mul = (right_stick_x - 128) * (right_stick_x - 128) + (right_stick_y - 128) * (right_stick_y - 128);
+	if (mul < 1600) {
+		right_stick_y = 0x80;
+		right_stick_x = 0x80;
 	}
 
 	return ff8_externals.dinput_gamepad_state;
@@ -668,6 +744,19 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Gamepad
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);
 	replace_function(ff8_externals.dinput_update_gamepad_status, ff8_update_gamepad_status);
+
+	// #####################
+	// Analog 360 patch
+	// #####################
+	// Field
+	replace_call(ff8_externals.sub_4789A0 + (JP_VERSION ? 0x320 : 0x336), ff8_get_analog_value); // Test if available
+	replace_call(ff8_externals.sub_4789A0 + (JP_VERSION ? 0x331 : 0x347), ff8_get_analog_value); // lX
+	replace_call(ff8_externals.sub_4789A0 + (JP_VERSION ? 0x345 : 0x35B), ff8_get_analog_value); // lY
+	// Worldmap
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0xC2 : 0xBF), ff8_get_analog_value_wm); // lX
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0xD2 : 0xCF), ff8_get_analog_value); // lY
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0xE2 : 0xDF), ff8_get_analog_value); // rX
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0xF2 : 0xEF), ff8_get_analog_value); // rY
 
 	// Do not alter worldmap texture UVs (Maki's patch) http://forums.qhimm.com/index.php?topic=16327.0
 	if (FF8_US_VERSION)

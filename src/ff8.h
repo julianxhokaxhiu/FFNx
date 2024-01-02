@@ -36,12 +36,13 @@ enum ff8_game_modes
 	FF8_MODE_5,
 	FF8_MODE_MENU,
 	FF8_MODE_7,
-	FF8_MODE_CARDGAME,
+	FF8_MODE_CARDGAME, // And battle
 	FF8_MODE_9,
 	FF8_MODE_TUTO,
 	FF8_MODE_11,
 	FF8_MODE_INTRO,
 	FF8_MODE_100 = 100,
+	FF8_MODE_MAIN_MENU = 200,
 	FF8_MODE_BATTLE = 999
 };
 
@@ -565,16 +566,19 @@ struct ff8_win_obj
 };
 
 struct ff8_gamepad_vibration_state_entry {
-	int16_t field_0;
+	uint8_t analog_disabled;
+	uint8_t analog_flags;
 	int16_t keyscan;
-	int16_t field_4;
-	int16_t field_6;
+	uint8_t analog_rx;
+	uint8_t analog_ry;
+	uint8_t analog_lx;
+	uint8_t analog_ly;
 	int16_t field_8;
 	int16_t field_A;
 	int16_t field_C;
 	int16_t field_E;
 	int16_t keyon;
-	int16_t field_12;
+	int16_t keyscan_invert;
 };
 
 struct ff8_gamepad_vibration_state {
@@ -599,8 +603,21 @@ struct ff8_gamepad_vibration_state {
 	ff8_gamepad_vibration_state_entry entries[8];
 	uint32_t field_BC;
 	uint16_t field_C0;
-	uint8_t sound_volume; // Analog level in PSX version
-	uint8_t gamepad_options; // is_enabled | u40 | u20 | u10 | u8 | u4 | u2 | u1
+	uint8_t port_id;
+	uint8_t gamepad_options; // is_enabled (1-bit) | u40 | u20 | u10 | u8 | analog sensitivity (1 to 4, 3-bits)
+};
+
+struct ff8_driver_input_state {
+	ff8_gamepad_vibration_state_entry entry;
+	uint32_t field_14;
+	uint32_t field_18;
+	uint32_t field_1C;
+	uint32_t field_20;
+};
+
+struct ff8_gamepad_state {
+	ff8_gamepad_vibration_state state_by_port[2];
+	ff8_driver_input_state driver_state_by_port[2];
 };
 
 struct ff8_vibrate_motor_struc
@@ -1014,10 +1031,10 @@ struct ff8_externals
 	uint32_t pubintro_exit;
 	uint32_t pubintro_main_loop;
 	uint32_t credits_main_loop;
+	uint32_t go_to_main_menu_main_loop;
+	uint32_t main_menu_main_loop;
 	DWORD* credits_loop_state;
 	DWORD* credits_counter;
-	uint32_t sub_470520;
-	uint32_t sub_4A24B0;
 	uint32_t sub_470630;
 	uint32_t dd_d3d_start;
 	uint32_t create_d3d_gfx_driver;
@@ -1150,7 +1167,7 @@ struct ff8_externals
 	uint32_t sub_54E9B0;
 	uint32_t sub_550070;
 	int (*sub_541C80)(int);
-	uint32_t sub_559240;
+	uint32_t worldmap_input_update_sub_559240;
 	uint32_t sub_554940;
 	uint32_t sub_554940_call_130;
 	uint32_t sub_541AE0;
@@ -1276,7 +1293,7 @@ struct ff8_externals
 	uint32_t vibration_apply;
 	int(*get_keyon)(int, int);
 	uint32_t set_vibration;
-	ff8_gamepad_vibration_state *gamepad_vibration_states;
+	ff8_gamepad_state *gamepad_states;
 	ff8_vibrate_struc *vibration_objects;
 	uint32_t vibration_clear_intensity;
 	uint8_t *vibrate_data_world;
