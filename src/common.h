@@ -88,6 +88,7 @@ enum game_modes
 	MODE_CARDGAME,
 	MODE_UNKNOWN,
 	MODE_AFTER_BATTLE,
+	MODE_MAIN_MENU,
 };
 
 enum AspectRatioMode

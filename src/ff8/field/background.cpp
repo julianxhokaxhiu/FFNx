@@ -26,6 +26,8 @@
 #include "../../saveload.h"
 #include "../../log.h"
 
+#include <unordered_map>
+
 bool ff8_background_tiles_looks_alike(const Tile &tile, const Tile &other)
 {
 	return tile.texID == other.texID

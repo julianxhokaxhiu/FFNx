@@ -64,9 +64,9 @@ void vibrate(int left, int right)
 {
 	const int port = 0;
 
-	if (trace_all || trace_gamepad) ffnx_trace("%s left=%d right=%d vibrate_option_enabled=%d\n", __func__, left, right, ff8_externals.gamepad_vibration_states[port].vibrate_option_enabled);
+	if (trace_all || trace_gamepad) ffnx_trace("%s left=%d right=%d vibrate_option_enabled=%d\n", __func__, left, right, ff8_externals.gamepad_states->state_by_port[port].vibrate_option_enabled);
 
-	if (ff8_externals.gamepad_vibration_states[port].vibrate_option_enabled == 255)
+	if (ff8_externals.gamepad_states->state_by_port[port].vibrate_option_enabled == 255)
 	{
 		nxVibrationEngine.setLeftMotorValue(left);
 		nxVibrationEngine.setRightMotorValue(right);
@@ -76,7 +76,7 @@ void vibrate(int left, int right)
 
 void apply_vibrate_calc(char port, int left, int right)
 {
-	ff8_gamepad_vibration_state *gamepad_state = ff8_externals.gamepad_vibration_states;
+	ff8_gamepad_vibration_state *gamepad_state = ff8_externals.gamepad_states->state_by_port;
 	if (left < 0) left = 0;
 	if (right < 0) right = 0;
 

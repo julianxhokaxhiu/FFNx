@@ -27,7 +27,7 @@
 #include "../../log.h"
 
 #include <set>
-#include <unordered_set>
+#include <unordered_map>
 
 const uint8_t *ff8_battle_stage_search_model(const uint8_t *stage_data, size_t stage_data_size, std::list<uint32_t> &model_offsets)
 {
