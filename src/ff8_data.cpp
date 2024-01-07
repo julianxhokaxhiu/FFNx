@@ -717,6 +717,17 @@ void ff8_find_externals()
 
 	ff8_externals.battle_current_actor_talking = (DWORD*)get_absolute_value(ff8_externals.sub_485610, 0x36E);
 
+	ff8_externals.sub_502380 = get_relative_call(ff8_externals.sub_500CC0, 0x69);
+	ff8_externals.sub_50A790 = get_relative_call(ff8_externals.sub_502380, 0x51);
+	ff8_externals.sub_50A9A0 = get_absolute_value(ff8_externals.sub_50A790, 0x7C);
+	ff8_externals.battle_read_effect_sub_50AF20 = get_relative_call(ff8_externals.sub_50A9A0, 0xF4);
+	ff8_externals.func_off_battle_effects_C81774 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x2C);
+
+	ff8_externals.battle_effect_quezacotl_sub_6C3550 = ff8_externals.func_off_battle_effects_C81774[115];
+	ff8_externals.sub_6C3640 = get_relative_call(ff8_externals.battle_effect_quezacotl_sub_6C3550, 0x5);
+	ff8_externals.sub_6C3760 = get_absolute_value(ff8_externals.sub_6C3640, 0x8B);
+	ff8_externals.vibrate_data_summon_quezacotl = (uint8_t **)get_absolute_value(ff8_externals.sub_6C3760, 0xB0);
+
 	// Required by Steam edition
 	switch (version)
 	{
