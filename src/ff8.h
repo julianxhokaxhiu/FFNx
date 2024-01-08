@@ -1369,6 +1369,15 @@ struct ff8_externals
 	char* unk_1CF3E48;
 	DWORD* dword_1CF3EE0;
 	DWORD* battle_current_actor_talking;
+	uint32_t sub_502380;
+	uint32_t sub_50A790;
+	uint32_t sub_50A9A0;
+	uint32_t battle_read_effect_sub_50AF20;
+	DWORD* func_off_battle_effects_C81774;
+	uint32_t battle_effect_quezacotl_sub_6C3550;
+	uint32_t sub_6C3640;
+	uint32_t sub_6C3760;
+	uint8_t **vibrate_data_summon_quezacotl;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

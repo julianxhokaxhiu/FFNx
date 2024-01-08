@@ -54,6 +54,7 @@
 - Voice: Enable battle dialogs voice acting
 - Voice: Enable worldmap voice acting
 - Voice: Enable tutorial voice acting
+- SFX: Fix Quezacotl sounds ( https://github.com/julianxhokaxhiu/FFNx/pull/633 )
 
 # 1.16.0
 

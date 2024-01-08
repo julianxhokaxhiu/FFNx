@@ -82,13 +82,14 @@ We are always open for contributions via PRs, and in case you want to join the c
 
 #### FF8
 - Vibration support
+- Analog controls improved support
 - **Voice acting**! [Echo-S](https://www.tsunamods.com/echo-s-8/) was the first mod to take advantage of this!
 - Various graphical patches for worldmap included
 - Enable the VRAM debug window while playing in order to see how the engine uploads textures
 - Support for external SFX audio effects
 - Support for external movie audio files (allows multiple videos to share the same audio)
 - Support for external movie voice acting (dedicated audio layer only for voice acting on top of movies)
-- Support for external music audio
+- Support for external music audio with music resume after battle and improved volume transitions
 
 ### As a modder
 
@@ -276,7 +277,7 @@ These people are:
 - [LaZar00](https://github.com/LaZar00)
   - for the Snowboard TMD structures
 - [ChthonVII](https://github.com/ChthonVII)
-  - for the R&D needed to match modern display gamuts to the original PSX release 
+  - for the R&D needed to match modern display gamuts to the original PSX release
 
 I'm sure I forgot many others. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 
