@@ -51,6 +51,7 @@
 - Graphics: Minimize texture uploads when the palette is not set yet ( https://github.com/julianxhokaxhiu/FFNx/pull/617 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
 - Graphics: Increase max texture size to 16384 for external textures ( https://github.com/julianxhokaxhiu/FFNx/pull/601 )
 - Music: Add `ff8_external_music_force_original_filenames` option to use original music names (eg 018s-julia.ogg) instead of just the main identifier in external music ( https://github.com/julianxhokaxhiu/FFNx/pull/594 )
+- Music: Fix intro credits unsync ( https://github.com/julianxhokaxhiu/FFNx/pull/634 )
 - Voice: Enable battle dialogs voice acting
 - Voice: Enable worldmap voice acting
 - Voice: Enable tutorial voice acting

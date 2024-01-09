@@ -87,6 +87,8 @@ void ff8_find_externals()
 	ff8_externals.input_get_keyscan = (int(*)(int,int))get_relative_call(ff8_externals.sub_52FE80, 0xD1);
 	ff8_externals.credits_loop_state = (DWORD*)get_absolute_value(ff8_externals.load_credits_image, 0x7);
 	ff8_externals.credits_counter = (DWORD *)get_absolute_value(ff8_externals.load_credits_image, 0x59);
+	ff8_externals.credits_current_image_global_counter_start = (DWORD *)get_absolute_value(ff8_externals.load_credits_image, 0x1CB);
+	ff8_externals.credits_current_step_image = (DWORD *)get_absolute_value(ff8_externals.load_credits_image, 0x1BC);
 	ff8_externals.sub_470630 = get_absolute_value(ff8_externals.main_menu_main_loop, 0xE4);
 	ff8_externals.main_loop = get_absolute_value(ff8_externals.sub_470630, 0x24);
 
