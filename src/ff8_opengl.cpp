@@ -43,6 +43,11 @@ int left_stick_x = 0x80;
 int right_stick_y = 0x80;
 int right_stick_x = 0x80;
 
+std::chrono::time_point<std::chrono::high_resolution_clock> intro_credits_music_start_time;
+constexpr int intro_credits_fade_frames = 33;
+constexpr int intro_credits_adjusted_frames = 438; // Instead of 374 in the Game
+constexpr int intro_credits_frames_between_music_start_and_first_image = 180;
+
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
 {
 	struct matrix_set *matrix_set;
@@ -634,6 +639,35 @@ uint32_t ff8_credits_main_loop_gfx_begin_scene(uint32_t unknown, struct game_obj
 	return common_begin_scene(unknown, game_object);
 }
 
+int credits_controller_music_play(void *data)
+{
+	int ret = ((int(*)(void*))ff8_externals.sdmusicplay)(data);
+
+	intro_credits_music_start_time = highResolutionNow();
+
+	return ret;
+}
+
+int credits_controller_input_call()
+{
+	if (*ff8_externals.credits_counter == 0) {
+		int frameCountAdjusted =
+			intro_credits_frames_between_music_start_and_first_image
+			+ *ff8_externals.credits_current_step_image * intro_credits_adjusted_frames
+			+ intro_credits_fade_frames;
+
+		int realFramesEllapsed = int((60.0 / 1000.0) * (elapsedMicroseconds(intro_credits_music_start_time) / 1000.0));
+		int waitFor = frameCountAdjusted - realFramesEllapsed;
+
+		// Add frames on each image display
+		if (waitFor > 0) {
+			*ff8_externals.credits_current_image_global_counter_start += waitFor;
+		}
+	}
+
+	return ((int(*)())ff8_externals.sub_52FE80)();
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -803,6 +837,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	patch_code_byte(ff8_externals.load_credits_image + 0x5FD, 0); // if (intro_step >= 0) ...
 	// Add FFNx Logo
 	replace_call(ff8_externals.credits_main_loop + 0x6D, ff8_credits_main_loop_gfx_begin_scene);
+	// Fix credits intro synchronization with the music
+	replace_call(ff8_externals.load_credits_image + 0x164, credits_controller_music_play);
+	replace_call(ff8_externals.load_credits_image + 0x305, credits_controller_input_call);
 
 	if (!steam_edition) {
 		// Look again with the DataDrive specified in the register

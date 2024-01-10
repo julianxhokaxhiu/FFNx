@@ -1035,6 +1035,8 @@ struct ff8_externals
 	uint32_t main_menu_main_loop;
 	DWORD* credits_loop_state;
 	DWORD* credits_counter;
+	DWORD* credits_current_image_global_counter_start;
+	DWORD* credits_current_step_image;
 	uint32_t sub_470630;
 	uint32_t dd_d3d_start;
 	uint32_t create_d3d_gfx_driver;
