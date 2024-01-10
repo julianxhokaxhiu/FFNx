@@ -2659,6 +2659,14 @@ struct ff7_model_eye_texture_data
 
 // --------------- end of FF7 imports ---------------
 
+struct ff7_model_mouth_data
+{
+	int has_mouth;
+	int current_mouth_idx;
+	char* mouth_tex_filename;
+	p_hundred* mouth_tex;
+};
+
 struct ff7_channel_6_state
 {
 	float volume;
@@ -2755,8 +2763,12 @@ struct ff7_externals
 	ff7_model_eye_texture_data* field_models_eye_blink_buffer;
 	DWORD* field_models_data;
 	int (*field_load_model_eye_tex)(ff7_model_eye_texture_data *eye_data, field_animation_data *anim_data);
-	void (*field_unload_model_eye_tex)(void* eye_tex);
+	p_hundred* (*field_load_model_tex)(int idx1, int idx2, char *filename, struc_3 *tex_info, game_obj *game_object);
+	void (*field_unload_model_tex)(void* eye_tex);
+	void (*create_struc_3_info_sub_67455E)(struc_3 *tex_info);
 	uint32_t field_sub_60DCED;
+	int (*field_sub_6A2736)(ff7_polygon_set *polygon_set);
+	uint32_t* field_unk_909288;
 	void (*destroy_animation)(struct anim_header *);
 	uint32_t context_chdir;
 	uint32_t lgp_chdir;

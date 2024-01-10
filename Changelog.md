@@ -15,6 +15,7 @@
 - Ambient: Allow ambient effects to playback in fields that use movies as background
 - Core: Add additional main models eye-to-model mapping
 - Core: Add ability to replace eye textures with custom one ( https://github.com/julianxhokaxhiu/FFNx/issues/589 )
+- Core: Add ability to replace mouth textures with custom one
 - DevTools: Add Game Moment in Field Debug
 - Lighting: Fix [`config.toml`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.lighting.toml) load/save logic
 - Lighting: Fix Bahamut Zero and Supernova not displaying correctly when lighting enabled
