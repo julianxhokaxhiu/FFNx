@@ -253,8 +253,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 			{
 				common_frame_multiplier = 2;
-				ff7::world::world_hook_init();
-
+				
 				// Swirl mode 60FPS fix
 				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x184, common_frame_multiplier); // wait frames before swirling
 				patch_multiply_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, common_frame_multiplier);
@@ -267,6 +266,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			}
 		}
 	}
+
+	// World fix (60 FPS, night cycle, external mesh)
+	ff7::world::world_hook_init();
 
 	// Field FPS fix (60FPS, 30FPS movies)
 	ff7::field::ff7_field_hook_init();
