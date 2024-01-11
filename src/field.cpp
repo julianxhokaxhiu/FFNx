@@ -93,7 +93,7 @@ int opcode_kawai_eye_texture() {
 			char filename[10];
 			char ext[4];
 
-			// NPCs always default on Cloud eyes
+			// NPCs always default on Cloud eyes/mouth
 			if (curr_eye_index == 9) curr_eye_index = 0;
 
 			// LEFT EYE
@@ -232,6 +232,9 @@ int field_load_mouth(ff7_polygon_set *polygon_set)
 	byte curr_model_id = ff7_externals.field_model_id_array[*ff7_externals.current_entity_id];
 	byte curr_eye_index = animation_data[curr_model_id].eye_texture_idx;
 	int idx = polygon_set->numgroups - 1;
+
+	// NPCs always default on Cloud eyes/mouth
+	if (curr_eye_index == 9) curr_eye_index = 0;
 
 	if (polygon_set && ff7_mouths[curr_eye_index].mouth_tex)
 		polygon_set->hundred_data_group_array[idx] = ff7_mouths[curr_eye_index].mouth_tex;
