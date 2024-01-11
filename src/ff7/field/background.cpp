@@ -424,6 +424,10 @@ namespace ff7::field
         {
             camera_range = widescreen.getCameraRange();
 
+            // Adjustment to prevent scrolling stopping one pixel too early
+            camera_range.left += 1;
+            camera_range.right -= 1;
+
             // This centers the background if necessary
             int cameraRangeSize = camera_range.right - camera_range.left;
             half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
@@ -496,6 +500,10 @@ namespace ff7::field
     void field_widescreen_width_clip_with_camera_range(vector2<short>* point)
     {
         auto camera_range = widescreen.getCameraRange();
+        
+        // Adjustment to prevent scrolling stopping one pixel too early
+        camera_range.left += 1;
+        camera_range.right -= 1;
 
         // This centers the background if necessary
         int cameraRangeSize = camera_range.right - camera_range.left;

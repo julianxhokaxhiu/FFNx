@@ -144,44 +144,47 @@ namespace ff7::world
 
     void world_hook_init()
     {
-        // World init
-        replace_call_function(ff7_externals.world_mode_loop_sub_74DB8C + 0x108, world_init_variables);
+        if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+        {
+            // World init
+            replace_call_function(ff7_externals.world_mode_loop_sub_74DB8C + 0x108, world_init_variables);
 
-        // Movement related fix
-        patch_divide_code<DWORD>(ff7_externals.world_init_variables_74E1E9 + 0x15D, common_frame_multiplier);
-        replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x172, pop_world_stack_divide_wrapper);
-        replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x14B, pop_world_stack_divide_wrapper);
-        replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x55D, pop_world_stack_divide_wrapper);
-        replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x584, pop_world_stack_divide_wrapper);
+            // Movement related fix
+            patch_divide_code<DWORD>(ff7_externals.world_init_variables_74E1E9 + 0x15D, common_frame_multiplier);
+            replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x172, pop_world_stack_divide_wrapper);
+            replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x14B, pop_world_stack_divide_wrapper);
+            replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x55D, pop_world_stack_divide_wrapper);
+            replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x584, pop_world_stack_divide_wrapper);
 
-        // Camera related fix
-        replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x7DC, pop_world_stack_divide_wrapper);
+            // Camera related fix
+            replace_call_function(ff7_externals.run_world_event_scripts_system_operations + 0x7DC, pop_world_stack_divide_wrapper);
 
-        // Midgar zolom (snake) movement fix
-        replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x26, world_snake_compute_delta_position);
-        replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x195, world_snake_compute_delta_position);
-        replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x2B4, world_snake_compute_delta_position);
+            // Midgar zolom (snake) movement fix
+            replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x26, world_snake_compute_delta_position);
+            replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x195, world_snake_compute_delta_position);
+            replace_call_function(ff7_externals.update_world_snake_position_7564CD + 0x2B4, world_snake_compute_delta_position);
 
-        // World Encounter rate fix
-        replace_call_function(ff7_externals.world_sub_767641 + 0x110, get_world_encounter_rate);
+            // World Encounter rate fix
+            replace_call_function(ff7_externals.world_sub_767641 + 0x110, get_world_encounter_rate);
 
-        // Text box message fix
-        patch_code_byte(ff7_externals.world_text_box_window_paging_769C02 + 0xF6, 0x5 + common_frame_multiplier / 2);
-        patch_divide_code<byte>(ff7_externals.world_text_box_window_paging_769C02 + 0xF9, common_frame_multiplier);
-        patch_divide_code<WORD>(ff7_externals.world_text_box_window_paging_769C02 + 0x10A, common_frame_multiplier);
-        patch_code_byte(ff7_externals.world_text_box_window_paging_769C02 + 0x13A, 0x4 + common_frame_multiplier / 2);
-        patch_code_byte(ff7_externals.world_text_box_window_opening_769A66 + 0x3D, 0x2 + common_frame_multiplier / 2);
-        patch_code_byte(ff7_externals.world_text_box_window_opening_769A66 + 0xD2, 0x2 + common_frame_multiplier / 2);
-        patch_code_byte(ff7_externals.world_text_box_window_closing_76ADF7 + 0x67, 0x2 + common_frame_multiplier / 2);
-        patch_code_byte(ff7_externals.world_text_box_window_closing_76ADF7 + 0xC2, 0x2 + common_frame_multiplier / 2);
-        patch_divide_code<short>(ff7_externals.world_text_box_reverse_paging_76ABE9 + 0x42, common_frame_multiplier);
-        patch_divide_code<short>(ff7_externals.world_opcode_message + 0x1AC, common_frame_multiplier);
-        patch_divide_code<short>(ff7_externals.world_opcode_message + 0x2CF, common_frame_multiplier);
-        patch_divide_code<short>(ff7_externals.world_opcode_ask + 0x1AC, common_frame_multiplier);
-        patch_divide_code<byte>(ff7_externals.world_opcode_ask + 0x3CC, common_frame_multiplier);
+            // Text box message fix
+            patch_code_byte(ff7_externals.world_text_box_window_paging_769C02 + 0xF6, 0x5 + common_frame_multiplier / 2);
+            patch_divide_code<byte>(ff7_externals.world_text_box_window_paging_769C02 + 0xF9, common_frame_multiplier);
+            patch_divide_code<WORD>(ff7_externals.world_text_box_window_paging_769C02 + 0x10A, common_frame_multiplier);
+            patch_code_byte(ff7_externals.world_text_box_window_paging_769C02 + 0x13A, 0x4 + common_frame_multiplier / 2);
+            patch_code_byte(ff7_externals.world_text_box_window_opening_769A66 + 0x3D, 0x2 + common_frame_multiplier / 2);
+            patch_code_byte(ff7_externals.world_text_box_window_opening_769A66 + 0xD2, 0x2 + common_frame_multiplier / 2);
+            patch_code_byte(ff7_externals.world_text_box_window_closing_76ADF7 + 0x67, 0x2 + common_frame_multiplier / 2);
+            patch_code_byte(ff7_externals.world_text_box_window_closing_76ADF7 + 0xC2, 0x2 + common_frame_multiplier / 2);
+            patch_divide_code<short>(ff7_externals.world_text_box_reverse_paging_76ABE9 + 0x42, common_frame_multiplier);
+            patch_divide_code<short>(ff7_externals.world_opcode_message + 0x1AC, common_frame_multiplier);
+            patch_divide_code<short>(ff7_externals.world_opcode_message + 0x2CF, common_frame_multiplier);
+            patch_divide_code<short>(ff7_externals.world_opcode_ask + 0x1AC, common_frame_multiplier);
+            patch_divide_code<byte>(ff7_externals.world_opcode_ask + 0x3CC, common_frame_multiplier);
 
-        // Wait frames decrease delayed
-        replace_call_function(ff7_externals.run_world_event_scripts + 0xC7, run_world_script_system_operations);
+            // Wait frames decrease delayed
+            replace_call_function(ff7_externals.run_world_event_scripts + 0xC7, run_world_script_system_operations);
+        }
 
         if (enable_time_cycle)
         {

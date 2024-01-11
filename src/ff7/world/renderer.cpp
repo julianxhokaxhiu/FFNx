@@ -387,6 +387,7 @@ namespace ff7::world {
             }
         }
 
+        newRenderer.setInterpolationQualifier(SMOOTH);
         newRenderer.setPrimitiveType();
         newRenderer.isTLVertex(false);
         newRenderer.setBlendMode(RendererBlendMode::BLEND_NONE);
@@ -633,6 +634,7 @@ namespace ff7::world {
         
         }
 
+        newRenderer.setInterpolationQualifier(SMOOTH);
         newRenderer.setPrimitiveType();
         newRenderer.isTLVertex(false);
         newRenderer.setBlendMode(RendererBlendMode::BLEND_ADD);
@@ -779,6 +781,7 @@ namespace ff7::world {
 
         multiply_matrix(&worldMatrix, &viewMatrix, &worldViewMatrix);
 
+        newRenderer.setInterpolationQualifier(SMOOTH);
         newRenderer.setPrimitiveType();
         newRenderer.isTLVertex(false);
         newRenderer.setBlendMode(RendererBlendMode::BLEND_ADD);
