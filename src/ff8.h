@@ -977,6 +977,11 @@ struct ff8_field_state_background {
 	uint8_t field_1b3;
 };
 
+struct ff8_menu_callback {
+	void (*func)(int);
+	uint32_t field_4;
+};
+
 // --------------- end of FF8 imports ---------------
 
 // memory addresses and function pointers from FF8.exe
@@ -1059,6 +1064,12 @@ struct ff8_externals
 	uint32_t sub_559F30;
 	uint32_t sub_497380;
 	uint32_t sub_4B3410;
+	uint32_t sub_4B3310;
+	uint32_t sub_4B3140;
+	uint32_t sub_4BDB30;
+	ff8_menu_callback *menu_callbacks;
+	uint32_t main_menu_render_sub_4E5550;
+	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;
 	uint32_t menu_draw_text;

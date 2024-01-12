@@ -57,6 +57,7 @@
 - Voice: Enable worldmap voice acting
 - Voice: Enable tutorial voice acting
 - SFX: Fix Quezacotl sounds ( https://github.com/julianxhokaxhiu/FFNx/pull/633 )
+- Menu: Fix main menu texts when selecting "new game" option (European versions only) ( https://github.com/julianxhokaxhiu/FFNx/pull/636 )
 
 # 1.16.0
 
