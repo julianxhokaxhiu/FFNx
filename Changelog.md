@@ -2,6 +2,14 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.0...master
 
+## Common
+
+- Core: Hide cursor when the game is started in fullscreen mode ( https://github.com/julianxhokaxhiu/FFNx/pull/638 )
+
+## FF8
+
+- Graphics: Fix Tonberry compatibility layer for field backgrouns ( https://github.com/julianxhokaxhiu/FFNx/pull/638 )
+
 # 1.17.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.16.0...1.17.0
