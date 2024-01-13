@@ -17,6 +17,7 @@
 - Core: Add ability to replace eye textures with custom one ( https://github.com/julianxhokaxhiu/FFNx/issues/589 )
 - Core: Add ability to replace mouth textures with custom one
 - DevTools: Add Game Moment in Field Debug
+- Input: Added right analog stick camera scrolling controls in field mode
 - Lighting: Fix [`config.toml`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.lighting.toml) load/save logic
 - Lighting: Fix Bahamut Zero and Supernova not displaying correctly when lighting enabled
 - Lighting: Fix field shadows not displaying during FMV movies
@@ -24,14 +25,13 @@
 - Lighting: Fixed minor shadow visual glitches occurring in some fields
 - Music: Fix overlapping external music tracks when `external_music_resume = false`
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
+- Renderer: Added functionality to replace worldmap rendering with an external 3d mesh
 - Sound: Fix loading music volume value from ff7sound.cfg
 - Voice: Enable tutorial voice acting
 - Widescreen: Added experimental support for 16:10 aspect ratio
 - Widescreen: Fix Pollensalta attack (only when also using 30/60FPS mode since it is a temporary fix) and Bahamut Zero summon background
 - Widescreen: Fix Pandora Box white background position
 - Voice: Fix auto-text sometimes not working on certain fields after long gameplay sessions
-- Renderer: Added functionality to replace worldmap rendering with an external 3d mesh
-- Input: Added right analog stick camera scrolling controls in field mode
 
 ## FF7 Steam
 
@@ -41,8 +41,6 @@
 ## FF8
 
 - Hext: `fix_uv_coords` hext files are not needed anymore ( https://github.com/julianxhokaxhiu/FFNx/pull/619 )
-- Input: Enable support for 360° analog movement ( https://github.com/julianxhokaxhiu/FFNx/pull/632 )
-- Input: Enable support dual-stick vehicle control ( https://github.com/julianxhokaxhiu/FFNx/pull/632 )
 - Graphics: Fix blue color on some attacks in battle ( https://github.com/julianxhokaxhiu/FFNx/pull/619 )
 - Graphics: Fix crash when using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/588 )
 - Graphics: Fix texture glitches using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/591 )
@@ -52,13 +50,15 @@
 - Graphics: Add support for multiple palettes in external texture ( https://github.com/julianxhokaxhiu/FFNx/pull/617 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
 - Graphics: Minimize texture uploads when the palette is not set yet ( https://github.com/julianxhokaxhiu/FFNx/pull/617 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
 - Graphics: Increase max texture size to 16384 for external textures ( https://github.com/julianxhokaxhiu/FFNx/pull/601 )
+- Input: Enable support for 360° analog movement ( https://github.com/julianxhokaxhiu/FFNx/pull/632 )
+- Input: Enable support dual-stick vehicle control ( https://github.com/julianxhokaxhiu/FFNx/pull/632 )
+- Menu: Fix main menu texts when selecting "new game" option (European versions only) ( https://github.com/julianxhokaxhiu/FFNx/pull/636 )
 - Music: Add `ff8_external_music_force_original_filenames` option to use original music names (eg 018s-julia.ogg) instead of just the main identifier in external music ( https://github.com/julianxhokaxhiu/FFNx/pull/594 )
 - Music: Fix intro credits unsync ( https://github.com/julianxhokaxhiu/FFNx/pull/634 )
+- SFX: Fix Quezacotl sounds ( https://github.com/julianxhokaxhiu/FFNx/pull/633 )
 - Voice: Enable battle dialogs voice acting
 - Voice: Enable worldmap voice acting
 - Voice: Enable tutorial voice acting
-- SFX: Fix Quezacotl sounds ( https://github.com/julianxhokaxhiu/FFNx/pull/633 )
-- Menu: Fix main menu texts when selecting "new game" option (European versions only) ( https://github.com/julianxhokaxhiu/FFNx/pull/636 )
 
 # 1.16.0
 
