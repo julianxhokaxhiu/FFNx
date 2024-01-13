@@ -668,6 +668,28 @@ int credits_controller_input_call()
 	return ((int(*)())ff8_externals.sub_52FE80)();
 }
 
+char new_game_text_cache[64] = "";
+char load_game_text_cache[64] = "";
+
+char *ff8_get_text_cached(int pool_id, int cat_id, int text_id, int a4, char *cache)
+{
+	if (*cache == '\0') {
+		memcpy(cache, ((char*(*)(int,int,int,int))ff8_externals.get_text_data)(pool_id, cat_id, text_id, a4), sizeof(new_game_text_cache));
+	}
+
+	return cache;
+}
+
+char *ff8_get_text_cached_new_game(int pool_id, int cat_id, int text_id, int a4)
+{
+	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, new_game_text_cache);
+}
+
+char *ff8_get_text_cached_load_game(int pool_id, int cat_id, int text_id, int a4)
+{
+	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, load_game_text_cache);
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -852,6 +874,12 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 12, 240033); // 240033 - 240000 + 370 = ID 403
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 8, 240036); // 240036 - 240000 + 370 = ID 406
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 4, 240039); // 240039 - 240000 + 370 = ID 409
+
+	if (!FF8_US_VERSION && !JP_VERSION) {
+		// Fix "New Game" and "Load Game" texts converted to "Doomtrain" and "Alexander" when starting a new game
+		replace_call(ff8_externals.main_menu_render_sub_4E5550 + 0x203, ff8_get_text_cached_new_game);
+		replace_call(ff8_externals.main_menu_render_sub_4E5550 + 0x222, ff8_get_text_cached_load_game);
+	}
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
