@@ -2547,7 +2547,7 @@ void Renderer::setGameLightData(light_data* lightdata)
         internalState.gameGlobalLightColor[0] = lightdata->global_light_color.r;
         internalState.gameGlobalLightColor[1] = lightdata->global_light_color.g;
         internalState.gameGlobalLightColor[2] = lightdata->global_light_color.b;
-        internalState.gameGlobalLightColor[3] = enable_lighting ? 3.0f : 1.15f;
+        internalState.gameGlobalLightColor[3] = enable_lighting ? 2.5f : 1.0f;
 
         internalState.gameLightColor1[0] = lightdata->light_color_1.r;
         internalState.gameLightColor1[1] = lightdata->light_color_1.g;

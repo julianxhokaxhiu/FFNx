@@ -31,6 +31,7 @@
 - Widescreen: Fix Pandora Box white background position
 - Voice: Fix auto-text sometimes not working on certain fields after long gameplay sessions
 - Renderer: Added functionality to replace worldmap rendering with an external 3d mesh
+- Input: Added right analog stick camera scrolling controls in field mode
 
 ## FF7 Steam
 

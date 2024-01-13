@@ -1,5 +1,5 @@
 /****************************************************************************/
-//    Copyright (C) 2023 Cosmos                                             //
+//    Copyright (C) 2022 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -17,7 +17,7 @@
 
 #include "../../common.h"
 
-namespace ff7::battle
+namespace ff7::field
 {
     class Camera
     {
@@ -25,35 +25,37 @@ namespace ff7::battle
             Camera() = default;
             ~Camera() = default;
 
-            void setRotationSpeed(float rotX, float rotY, float rotZ);
-            vector3<float> getRotationSpeed();
-            void setZoomSpeed(float speed);
-            float getZoomSpeed();
-            void reset();
-            void setupInitialCamera();
+            void setScrollingDir(float x, float y);
+            float getScrollingDirX();
+            float getScrollingDirY();
 
-            void controlCamera(vector3<short>* cameraPosition);
+            void setScrollingOffset(float x, float y);
+            float getScrollingOffsetX();
+            float getScrollingOffsetY();
+
         private:
-            vector3<float> rotationSpeed = { 0.0, 0.0, 0.0 };
-            vector3<float> rotationOffset = { 0.0, 0.0, 0.0 };
-            vector3<float> initialCameraPos = { 0.0, 0.0, 0.0 };
-            vector3<float> initialCameraFocusPos = { 0.0, 0.0, 0.0 };
-            float zoomSpeed = 0.0f;
-            float zoomOffset = 0.0f;
-            const float minZoomDist = 5000.0f;
-            const float maxZoomDist = 30000.0f;
-            const float minVerticalAngle = 5.0f;
-            const float maxVerticalAngle = 85.0f;
+            vector2<float> scrollingDir = { 0.0, 0.0 };
+            vector2<float> scrollingOffset = { 0.0, 0.0 };
     };
 
-    inline vector3<float> Camera::getRotationSpeed()
+    inline float Camera::getScrollingDirX()
     {
-        return rotationSpeed;
+        return scrollingDir.x;
     }
 
-    inline float Camera::getZoomSpeed()
+    inline float Camera::getScrollingDirY()
     {
-        return zoomSpeed;
+        return scrollingDir.y;
+    }
+
+    inline float Camera::getScrollingOffsetX()
+    {
+        return scrollingOffset.x;
+    }
+
+    inline float Camera::getScrollingOffsetY()
+    {
+        return scrollingOffset.y;
     }
 
     extern Camera camera;

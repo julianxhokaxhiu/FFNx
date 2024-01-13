@@ -31,6 +31,7 @@
 #include "background.h"
 #include "defs.h"
 #include "utils.h"
+#include "camera.h"
 
 #include <functional>
 
@@ -445,6 +446,34 @@ namespace ff7::field
             point->y = camera_range.bottom - 120;
         if (point->y < camera_range.top + 120)
             point->y = camera_range.top + 120;
+
+        if (enable_analogue_controls)
+        {
+            float accelCoeff = 0.1f / static_cast<float>(common_frame_multiplier);
+            float maxScroll = 120;
+            float maxScrollY = maxScroll * camera.getScrollingDirY();
+            float maxScrollX = maxScroll * camera.getScrollingDirX();
+
+            if (maxScrollX > 0.0) maxScrollX = std::min(maxScrollX, (camera_range.right - half_width - point->x));
+            else maxScrollX = std::max(maxScrollX, camera_range.left + half_width - point->x);
+            if (maxScrollY > 0.0) maxScrollY =  std::min(maxScrollY, (camera_range.bottom - 120 - point->y));
+            else maxScrollY =  std::max(maxScrollY, camera_range.top + 120 - point->y);
+
+            camera.setScrollingOffset(camera.getScrollingOffsetX() + accelCoeff * (maxScrollX - camera.getScrollingOffsetX()),
+                                      camera.getScrollingOffsetY() + accelCoeff * (maxScrollY - camera.getScrollingOffsetY()));
+
+            point->x += camera.getScrollingOffsetX();
+            point->y += camera.getScrollingOffsetY();
+
+            if (point->x > camera_range.right - half_width)
+                point->x = camera_range.right - half_width;
+            if (point->x < camera_range.left + half_width)
+                point->x = camera_range.left + half_width;
+            if (point->y > camera_range.bottom - 120)
+                point->y = camera_range.bottom - 120;
+            if (point->y < camera_range.top + 120)
+                point->y = camera_range.top + 120;
+        }
     }
 
     void float_sub_643628(field_trigger_header *trigger_header, vector2<float> *delta_position)
@@ -577,6 +606,8 @@ namespace ff7::field
         vector2<short> world_pos;
         if ( !ff7_externals.modules_global_object->world_move_status )
         {
+            last_valid_scripted_field_delta_world_pos = {INVALID_VALUE, INVALID_VALUE};
+
             switch ( ff7_externals.modules_global_object->world_move_mode )
             {
             case 0:
@@ -584,6 +615,8 @@ namespace ff7::field
                 *ff7_externals.field_curr_delta_world_pos_x = 0;
                 *ff7_externals.field_curr_delta_world_pos_y = 0;
                 ff7_externals.modules_global_object->world_move_status = 2;
+
+                last_valid_scripted_field_delta_world_pos = field_curr_delta_world_pos;
                 break;
             case 1:
                 *ff7_externals.field_bg_flag_CC15E4 = 1;
@@ -784,6 +817,11 @@ namespace ff7::field
                 break;
             }
         }
+
+        if(is_position_valid(field_curr_delta_world_pos))
+        {
+            last_valid_scripted_field_delta_world_pos = field_curr_delta_world_pos;
+        }
     }
 
     void set_world_and_background_positions(vector2<float> delta_position, bool use_camdat_pan)
@@ -873,8 +911,35 @@ namespace ff7::field
         }
         else if(*ff7_externals.field_bg_flag_CC15E4)
         {
-            if(is_position_valid(field_curr_delta_world_pos))
-                set_world_and_background_positions({-field_curr_delta_world_pos.x, -field_curr_delta_world_pos.y}, true);
+            if (enable_analogue_controls)
+            {
+                vector2<float> bg_delta_position = {0.0f, 0.0f};
+                bool use_camdat_pan = true;
+                if(is_position_valid(field_curr_delta_world_pos))
+                {
+                    bg_delta_position.x = -field_curr_delta_world_pos.x;
+                    bg_delta_position.y = -field_curr_delta_world_pos.y;
+                    use_camdat_pan = true;
+                    set_world_and_background_positions(bg_delta_position, true);
+                }
+                else if(is_position_valid(last_valid_scripted_field_delta_world_pos))
+                {
+                    bg_delta_position.x = -last_valid_scripted_field_delta_world_pos.x;
+                    bg_delta_position.y = -last_valid_scripted_field_delta_world_pos.y;
+                    
+                    field_clip_with_camera_range_float(&bg_delta_position);
+                    field_curr_delta_world_pos.x = -bg_delta_position.x;
+                    field_curr_delta_world_pos.y = -bg_delta_position.y;
+
+                    set_world_and_background_positions(bg_delta_position, true);
+                }
+            }
+            else
+            {
+                if(is_position_valid(field_curr_delta_world_pos))
+                    set_world_and_background_positions({-field_curr_delta_world_pos.x, -field_curr_delta_world_pos.y}, true);
+            }           
+            
 
             if((*ff7_externals.field_event_data_ptr)[player_model_id].field_62)
                 compute_pointer_hand_position(field_3d_world_pos, player_model_id);

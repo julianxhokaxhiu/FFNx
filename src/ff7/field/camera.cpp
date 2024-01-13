@@ -5,9 +5,9 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
-//    Copyright (C) 2023 Cosmos                                             //
-//    Copyright (C) 2023 Tang-Tang Zhou                                     //
+//    Copyright (C) 2022 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 Tang-Tang Zhou                                     //
+//    Copyright (C) 2022 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -20,32 +20,21 @@
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
-
-#include "../../common.h"
-#include "../../ff7.h"
-
-#pragma once
+#include "camera.h"
 
 namespace ff7::field
 {
-    constexpr float INVALID_VALUE = -1000000;
+    Camera camera;
 
-    vector2<float>
-        field_curr_delta_world_pos,
-        last_valid_scripted_field_delta_world_pos,
-        field_3d_world_pos,
-        bg_main_layer_pos,
-        bg_layer3_pos,
-        bg_layer4_pos,
-        cursor_position;
-
-    void ff7_field_update_background();
-    void ff7_field_set_world_coordinate_640EB7();
-    void ff7_field_submit_draw_arrow(field_arrow_graphics_data* arrow_data);
-    void ff7_field_submit_draw_cursor(field_arrow_graphics_data* arrow_data);
-    void draw_gray_quads_sub_644E90();
-    bool is_position_valid(vector2<float> position) {
-        return position.x != INVALID_VALUE && position.y != INVALID_VALUE;
+    void Camera::setScrollingDir(float x, float y)
+    {
+        scrollingDir.x = x;
+        scrollingDir.y = y;
     }
 
+    void Camera::setScrollingOffset(float x, float y)
+    {
+        scrollingOffset.x = x;
+        scrollingOffset.y = y;
+    }
 }
