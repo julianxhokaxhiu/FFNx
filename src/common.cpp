@@ -888,6 +888,11 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 						// Show the cursor
 						while (ShowCursor(true) < 0);
 					}
+					else if (fullscreen)
+					{
+						// Hide the cursor
+						while (ShowCursor(false) >= 0);
+					}
 
 					nxAudioEngine.init();
 

@@ -471,15 +471,11 @@ std::list<TexturePacker::IdentifiedTexture> TexturePacker::matchTextures(const T
 	return ret;
 }
 
-int textureId = 0;
-
 TexturePacker::TextureTypes TexturePacker::drawTextures(
 	const uint8_t *texData, uint32_t *rgbaImageData, uint32_t dataSize, int originalW, int originalH,
 	int palIndex, uint8_t *outScale, uint32_t **outTarget) const
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s texData=0x%X originalSize=(%d, %d) palIndex=%d\n", __func__, texData, originalW, originalH, palIndex);
-
-	textureId++;
 
 	*outScale = 1;
 	*outTarget = rgbaImageData;
