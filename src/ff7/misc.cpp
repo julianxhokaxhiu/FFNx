@@ -23,6 +23,7 @@
 #include <stdint.h>
 
 #include "battle/camera.h"
+#include "field/camera.h"
 #include "world/camera.h"
 #include "world/world.h"
 
@@ -36,6 +37,8 @@
 #include "../metadata.h"
 #include "../sfx.h"
 #include "../achievement.h"
+
+#include <bx/math.h>
 
 // CORE GAME LOOP
 void ff7_core_game_loop()
@@ -136,6 +139,8 @@ void ff7_use_analogue_controls(float analog_threshold)
 
 	vector3<float> joyDir = {0.0f, 0.0f, 0.0f};
 	vector3<float> inputDir = {0.0f, 0.0f, 0.0f};
+	float horizontalScroll = 0.0f;
+	float verticalScroll = 0.0f;
 	const float rotSpeedMax = 4.0f;
 	float verticalRotSpeed = 0.0f;
 	float horizontalRotSpeed = 0.0f;
@@ -183,6 +188,7 @@ void ff7_use_analogue_controls(float analog_threshold)
 				if(!isCameraReset)
 				{
 					ff7::world::camera.requestResetCameraRotation(true);
+					ff7::battle::camera.reset();
 					isCameraReset = true;
 				}
 			} else 	
@@ -194,10 +200,19 @@ void ff7_use_analogue_controls(float analog_threshold)
 				if(gamepad.leftTrigger > left_analog_trigger_deadzone)
 					zoomSpeed -= zoomSpeedMax * (0.5f * gamepad.leftTrigger);
 
-				if(std::abs(gamepad.rightStickY) > right_analog_stick_deadzone)
-				verticalRotSpeed = invertedVerticalCameraScale * -rotSpeedMax * gamepad.rightStickY;
-				if(std::abs(gamepad.rightStickX) > right_analog_stick_deadzone)
-					horizontalRotSpeed = invertedHorizontalCameraScale * rotSpeedMax * gamepad.rightStickX;
+				bx::Vec3 rightAnalogDir(gamepad.rightStickX, gamepad.rightStickY, 0.0f);
+				float length = std::min(bx::length(rightAnalogDir), 1.0f);
+				if(length > right_analog_stick_deadzone)
+				{
+					rightAnalogDir = bx::normalize(rightAnalogDir);
+					float scale = (length - right_analog_stick_deadzone) / (1.0 - right_analog_stick_deadzone);
+					rightAnalogDir.x *= scale;
+					rightAnalogDir.y *= scale;
+					verticalRotSpeed = invertedVerticalCameraScale * -rotSpeedMax * rightAnalogDir.y;
+					horizontalRotSpeed = invertedHorizontalCameraScale * rotSpeedMax * rightAnalogDir.x;
+					horizontalScroll = rightAnalogDir.x;
+					verticalScroll = -rightAnalogDir.y;
+				}
 			}
 		}
 	}
@@ -240,16 +255,28 @@ void ff7_use_analogue_controls(float analog_threshold)
 				if(!isCameraReset)
 				{
 					ff7::world::camera.requestResetCameraRotation(true);
+					ff7::battle::camera.reset();
 					isCameraReset = true;
 				}
 			} else 	
 			{	
 				isCameraReset = false;
 
-				if(std::abs(joystick.GetState()->lRz) > joystick.GetDeadZone(right_analog_stick_deadzone))
-					verticalRotSpeed = invertedVerticalCameraScale * rotSpeedMax * static_cast<float>(joystick.GetState()->lRz) / static_cast<float>(SHRT_MAX);
-				if(std::abs(joystick.GetState()->lZ) > joystick.GetDeadZone(right_analog_stick_deadzone))
-					horizontalRotSpeed = invertedHorizontalCameraScale * rotSpeedMax * static_cast<float>(joystick.GetState()->lZ) / static_cast<float>(SHRT_MAX);
+				bx::Vec3 rightAnalogDir(
+					static_cast<float>(joystick.GetState()->lZ) / static_cast<float>(SHRT_MAX),
+					static_cast<float>(joystick.GetState()->lRz) / static_cast<float>(SHRT_MAX), 0.0f);
+				float length = std::min(bx::length(rightAnalogDir), 1.0f);
+				if(length > right_analog_stick_deadzone)
+				{				
+					rightAnalogDir = bx::normalize(rightAnalogDir);
+					float scale = (length - right_analog_stick_deadzone) / (1.0 - right_analog_stick_deadzone);
+					rightAnalogDir.x *=  scale;
+					rightAnalogDir.y *=  scale;
+					verticalRotSpeed = invertedVerticalCameraScale * rotSpeedMax * rightAnalogDir.y;
+					horizontalRotSpeed = invertedHorizontalCameraScale * rotSpeedMax * rightAnalogDir.x;
+					horizontalScroll = rightAnalogDir.x;
+					verticalScroll = rightAnalogDir.y;
+				}
 
 				if(joystick.HasAnalogTriggers())
 				{
@@ -284,6 +311,7 @@ void ff7_use_analogue_controls(float analog_threshold)
 
 	ff7::battle::camera.setRotationSpeed(verticalRotSpeed, horizontalRotSpeed, 0.0f);
 	ff7::battle::camera.setZoomSpeed(zoomSpeed);
+	ff7::field::camera.setScrollingDir(horizontalScroll, verticalScroll);
 	ff7::world::camera.setRotationSpeed(verticalRotSpeed, horizontalRotSpeed, 0.0f);
 	ff7::world::camera.setZoomSpeed(zoomSpeed);
 }

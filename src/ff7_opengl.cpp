@@ -332,6 +332,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// ###########################
 	if(enable_analogue_controls) {
 		replace_call_function(ff7_externals.battle_sub_42D992 + 0xFB, ff7::battle::update_battle_camera);
+		replace_function((uint32_t)ff7_externals.field_clip_with_camera_range_6438F6, ff7::field::ff7_field_clip_with_camera_range);
 		
 		// Disable show targets with R2 in battles
         memset_code(ff7_externals.handle_actor_ready + 0xA8, 0x90, 29);	

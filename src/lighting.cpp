@@ -120,7 +120,7 @@ void Lighting::initParamsFromConfig()
 	float metallic = config["material_metallic"].value_or(0.5);
 	lighting.setMetallic(metallic);
 
-	float specular = config["material_specular"].value_or(0.2);
+	float specular = config["material_specular"].value_or(0.1);
 	lighting.setSpecular(specular);
 
 	int shadowMapResolution = config["shadowmap_resolution"].value_or(2048);
