@@ -291,7 +291,7 @@ void main()
 
     if (isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
 
-    if (isTLVertex && isFogEnabled) color.rgb = ApplyWorldFog(color.rgb, v_position0.xyz);
+    if (!(isTLVertex) && isFogEnabled) color.rgb = ApplyWorldFog(color.rgb, v_position0.xyz);
 
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
     color.rgb = toGamma(color.rgb);
