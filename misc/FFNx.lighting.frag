@@ -376,8 +376,6 @@ void main()
             indirectLuminance = CalcConstIndirectLuminance(color.rgb);
         }
 
-        if (isFogEnabled) color.rgb = ApplyWorldFog(color.rgb, v_position0.xyz);
-
         if(debugOutput == DEBUG_OUTPUT_COLOR)
         {
             gl_FragColor = color;
@@ -414,6 +412,8 @@ void main()
         {
             gl_FragColor = vec4(luminance + indirectLuminance, color.a);
         }
+
+        if (isFogEnabled && debugOutput == DEBUG_OUTPUT_DISABLED ) gl_FragColor.rgb = ApplyWorldFog(gl_FragColor.rgb, v_position0.xyz);
     }
 
     if(!(isTLVertex) && gameLightingMode == GAME_LIGHTING_PER_PIXEL && debugOutput == DEBUG_OUTPUT_DISABLED)
