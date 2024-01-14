@@ -1,10 +1,18 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.0...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.1...master
+
+# 1.17.1
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.0...1.17.1
 
 ## Common
 
 - Core: Hide cursor when the game is started in fullscreen mode ( https://github.com/julianxhokaxhiu/FFNx/pull/638 )
+
+## FF7
+
+- Renderer: Fixed fog rendering not working in underwater worldmap
 
 ## FF8
 
