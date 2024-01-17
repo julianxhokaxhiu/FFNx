@@ -505,6 +505,105 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 	return ff8_externals.dinput_gamepad_state;
 }
 
+int ff8_get_input_device_capabilities_number_of_buttons(int a1)
+{
+	return xinput_connected ? 10 : std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6)
+{
+	int *icon_sp1_data = ((int*(*)())ff8_externals.get_icon_sp1_data)();
+
+	if (icon_id >= icon_sp1_data[0])
+	{
+		return draw_infos;
+	}
+
+	// Keep the "keys" if it is a keyboard and not a gamepad
+	if (icon_id >= 128 && icon_id < 140)
+	{
+		BYTE is_gamepad = *ff8_externals.engine_gamepad_button_pressed != 0;
+
+		if (is_gamepad)
+		{
+			int val = ((int(*)(int,int,int))ff8_externals.get_command_key)(is_gamepad, icon_id - 128, 0);
+
+			if (val == 0) {
+				val = ((int(*)(int,int,int))ff8_externals.get_command_key)(!is_gamepad, icon_id - 128, 0);
+			}
+
+			int rgbButton = val - 224;
+			icon_id = 0;
+
+			switch (rgbButton) {
+				case 0: // Cross (Steam)/Square
+					icon_id = steam_edition ? 134 : 135;
+					break;
+				case 1: // Circle (Steam)/Cross
+					icon_id = steam_edition ? 133 : 134;
+					break;
+				case 2: // Square (Steam)/Circle
+					icon_id = steam_edition ? 135 : 133;
+					break;
+				case 3: // Triangle
+					icon_id = 132;
+					break;
+				case 4: // L1
+					icon_id = 130;
+					break;
+				case 5: // R1
+					icon_id = 131;
+					break;
+				case 6: // SELECT (Steam)/L2
+					icon_id = steam_edition ? 136 : 128;
+					break;
+				case 7: // START (Steam)/R2
+					icon_id = steam_edition ? 139 : 129;
+					break;
+				case 8: // L2 (Steam)/SELECT
+					icon_id = steam_edition ? 128 : 136;
+					break;
+				case 9: // R2 (Steam)/START
+					icon_id = steam_edition ? 129 : 139;
+					break;
+				default:
+					((void(*)(int, ff8_draw_menu_sprite_texture_infos*, int, uint16_t, uint16_t))ff8_externals.draw_controller_or_keyboard_icons)(a1, draw_infos, icon_id, x, y);
+					return draw_infos;
+			}
+		}
+		else
+		{
+			((void(*)(int, ff8_draw_menu_sprite_texture_infos*, int, uint16_t, uint16_t))ff8_externals.draw_controller_or_keyboard_icons)(a1, draw_infos, icon_id, x, y);
+
+			return draw_infos;
+		}
+	}
+
+	int states_count = HIWORD(icon_sp1_data[icon_id + 1]);
+	unsigned int *sp1_section_data = (unsigned int *)((char *)icon_sp1_data + uint16_t(icon_sp1_data[icon_id + 1]));
+	if (states_count <= 0)
+	{
+		return draw_infos;
+	}
+
+	for (int i = states_count; i > 0; --i)
+	{
+		draw_infos->field_0 = 0x5000000;
+		draw_infos->field_10 = (sp1_section_data[0] & 0x7CFFFFF) + 0x38100000;
+		draw_infos->field_8 = (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
+		draw_infos->field_4 = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
+		draw_infos->field_14 = sp1_section_data[1] & 0xFF00FF;
+		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
+		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
+		((void(*)(int, ff8_draw_menu_sprite_texture_infos*))ff8_externals.sub_49BB30)(a1, draw_infos);
+		draw_infos += 1;
+		sp1_section_data += 2;
+	}
+
+	return draw_infos;
+
+}
+
 int ff8_is_window_active()
 {
 	if (gameHwnd == GetActiveWindow())
@@ -800,6 +899,30 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Gamepad
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);
 	replace_function(ff8_externals.dinput_update_gamepad_status, ff8_update_gamepad_status);
+	replace_function(ff8_externals.dinput_get_input_device_capabilities_number_of_buttons, ff8_get_input_device_capabilities_number_of_buttons);
+
+	if (steam_edition)
+	{
+		// Create ff8input.cfg with the same default values than the FF8_Launcher
+
+		// When the game starts without ff8input.cfg file
+		patch_code_byte(ff8_externals.input_init + 0x29, 225); // 226 => 225
+		patch_code_byte(ff8_externals.input_init + 0x3C, 224); // 225 => 224
+		patch_code_byte(ff8_externals.input_init + 0x53, 226); // 224 => 226
+		patch_code_byte(ff8_externals.input_init + 0xA7, 232); // 230 => 232
+		patch_code_byte(ff8_externals.input_init + 0xBA, 233); // 231 => 233
+		patch_code_byte(ff8_externals.input_init + 0xD1, 230); // 232 => 230
+		patch_code_byte(ff8_externals.input_init + 0xE4, 231); // 233 => 231
+
+		// When the player reset the controls in the game menu
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0xD8, 225); // 226 => 225
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0xEB, 224); // 225 => 224
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x102, 226); // 224 => 226
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x156, 232); // 230 => 232
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x169, 233); // 231 => 233
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x180, 230); // 232 => 230
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x193, 231); // 233 => 231
+	}
 
 	// #####################
 	// Analog 360 patch
@@ -879,6 +1002,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// Fix "New Game" and "Load Game" texts converted to "Doomtrain" and "Alexander" when starting a new game
 		replace_call(ff8_externals.main_menu_render_sub_4E5550 + 0x203, ff8_get_text_cached_new_game);
 		replace_call(ff8_externals.main_menu_render_sub_4E5550 + 0x222, ff8_get_text_cached_load_game);
+	}
+
+	if (ff8_use_gamepad_icons) {
+		// Replace the whole function to conditionnally show PlayStation icons or keyboard keys
+		replace_function(ff8_externals.draw_icon, ff8_draw_icon);
 	}
 }
 

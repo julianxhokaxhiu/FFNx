@@ -64,6 +64,7 @@ void ff8_find_externals()
 	ff8_externals.input_init = get_relative_call(ff8_externals.pubintro_init, 0xBA);
 	ff8_externals.ff8input_cfg_read = get_relative_call(ff8_externals.input_init, 0x5);
 	ff8_externals.sub_468810 = get_relative_call(ff8_externals.sub_467C00, 0x59);
+	ff8_externals.dinput_get_input_device_capabilities_number_of_buttons = get_relative_call(ff8_externals.sub_467C00, 0xA8);
 	ff8_externals.sub_468BD0 = get_relative_call(ff8_externals.sub_468810, 0x5B);
 	common_externals.dinput_hack1 = ff8_externals.sub_468BD0 + 0x64;
 
@@ -220,6 +221,11 @@ void ff8_find_externals()
 	ff8_externals.pause_menu = (int(*)(int))get_relative_call(uint32_t(ff8_externals.check_game_is_paused), 0x88);
 	ff8_externals.init_pause_menu = get_relative_call(uint32_t(ff8_externals.check_game_is_paused), 0xE2);
 	ff8_externals.pause_menu_with_vibration = (int(*)(int))(ff8_externals.init_pause_menu - 0x290);
+	ff8_externals.draw_icon = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0x1CF);
+	ff8_externals.get_icon_sp1_data = get_relative_call(ff8_externals.draw_icon, 0x2);
+	ff8_externals.draw_controller_or_keyboard_icons = get_relative_call(ff8_externals.draw_icon, 0x40);
+	ff8_externals.get_command_key = get_relative_call(ff8_externals.draw_controller_or_keyboard_icons, 0x31);
+	ff8_externals.sub_49BB30 = get_relative_call(ff8_externals.draw_icon, 0xF6);
 	ff8_externals.vibration_apply = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xB4);
 	ff8_externals.get_keyon = (int(*)(int, int))get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xC9);
 	ff8_externals.get_vibration_capability = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xE3);
@@ -368,12 +374,14 @@ void ff8_find_externals()
 	ff8_externals.sub_4B3140 = get_relative_call(ff8_externals.sub_4B3310, 0xC8);
 	ff8_externals.sub_4BDB30 = get_relative_call(ff8_externals.sub_4B3140, 0x4);
 	ff8_externals.menu_callbacks = (ff8_menu_callback *)get_absolute_value(ff8_externals.sub_4BDB30, 0x11);
+	ff8_externals.menu_config_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x8);
 	ff8_externals.main_menu_render_sub_4E5550 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x3);
 	ff8_externals.get_text_data = get_relative_call(ff8_externals.main_menu_render_sub_4E5550, 0x203);
 	ff8_externals.sub_4BE4D0 = get_relative_call(ff8_externals.sub_4B3410, 0x68);
 	ff8_externals.sub_4BECC0 = get_relative_call(ff8_externals.sub_4BE4D0, 0x39);
 	ff8_externals.menu_draw_text = get_relative_call(ff8_externals.sub_4BECC0, 0x127);
 	ff8_externals.get_character_width = (uint32_t (*)(uint32_t))get_relative_call(ff8_externals.menu_draw_text, JP_VERSION ? 0x1E1 : 0x1D0);
+	ff8_externals.ff8input_cfg_reset = get_relative_call(ff8_externals.menu_config_controller, 0x185);
 
 	ff8_externals.open_lzs_image = get_relative_call(ff8_externals.load_credits_image, 0x27);
 	ff8_externals.credits_open_file = (uint32_t (*)(char*,char*))get_relative_call(ff8_externals.open_lzs_image, 0x72);

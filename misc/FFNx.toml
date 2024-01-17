@@ -705,6 +705,11 @@ ff8_fix_uv_coords_precision = true
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_external_music_force_original_filenames = false
 
+# Use icon textures for gamepad buttons instead of "B1", "B2", etc...
+# By default the PS1 icons are used from the game data.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_use_gamepad_icons = false
+
 ## GAME INSTALLATION OPTIONS
 
 #[APP PATH]
