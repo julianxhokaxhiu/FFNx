@@ -88,7 +88,7 @@ public:
 
 	struct TiledTex : public TextureInfos {
 		TiledTex();
-		TiledTex(int x, int y, Tim::Bpp bpp, int palVramX = -1, int palVramY = -1);
+		TiledTex(int x, int y, int w, int h, Tim::Bpp bpp, int palVramX = -1, int palVramY = -1);
 		inline bool isPaletteValid(int palIndex) const {
 			return bpp() == Tim::Bpp16 || (palettes.contains(palIndex) && palettes.at(palIndex).isValid());
 		}
@@ -154,7 +154,7 @@ public:
 	void clearTextures();
 	// Returns the textures matching the tiledTex
 	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, bool withModsOnly = false) const;
-	void registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX = -1, int palY = -1);
+	void registerTiledTex(const uint8_t *texData, int x, int y, int w, int h, Tim::Bpp bpp, int palX = -1, int palY = -1);
 	void registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY);
 	TiledTex getTiledTex(const uint8_t *texData) const;
 
