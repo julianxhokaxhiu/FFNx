@@ -50,6 +50,7 @@ private:
 
 public:
   LPDIJOYSTATE2 GetState();
+  LPDIDEVCAPS GetCaps();
   bool CheckConnection();
   bool Refresh();
   bool HasAnalogTriggers();

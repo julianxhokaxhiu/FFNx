@@ -2,6 +2,11 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.1...master
 
+## FF8
+
+- Input: New option to show PlayStation gamepad icons when a gamepad is used ( https://github.com/julianxhokaxhiu/FFNx/pull/641 )
+- Input: Fix mapping of gamepad buttons when modified in the game ( https://github.com/julianxhokaxhiu/FFNx/pull/641 )
+
 # 1.17.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.0...1.17.1

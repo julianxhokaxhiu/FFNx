@@ -152,6 +152,7 @@ extern long external_audio_sample_rate;
 extern bool ff8_worldmap_internal_highres_textures;
 extern bool ff8_fix_uv_coords_precision;
 extern bool ff8_external_music_force_original_filenames;
+extern bool ff8_use_gamepad_icons;
 extern std::string app_path;
 extern std::string data_drive;
 extern bool enable_ntscj_gamut_mode;

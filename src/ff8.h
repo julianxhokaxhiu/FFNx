@@ -641,6 +641,16 @@ struct ff8_vibrate_struc
 	uint8_t field_23;
 };
 
+struct ff8_draw_menu_sprite_texture_infos {
+	uint32_t field_0;
+	uint32_t field_4;
+	uint32_t field_8;
+	uint16_t x_related;
+	uint16_t y_related;
+	uint32_t field_10;
+	uint32_t field_14;
+};
+
 struct ff8_audio_fmt
 {
 	uint32_t audio_data_length;
@@ -1031,6 +1041,8 @@ struct ff8_externals
 	uint32_t pubintro_init;
 	uint32_t sub_467C00;
 	uint32_t sub_468810;
+	uint32_t dinput_get_input_device_capabilities_number_of_buttons;
+	uint32_t get_command_key;
 	uint32_t sub_468BD0;
 	uint32_t pubintro_cleanup;
 	uint32_t pubintro_exit;
@@ -1068,6 +1080,7 @@ struct ff8_externals
 	uint32_t sub_4B3140;
 	uint32_t sub_4BDB30;
 	ff8_menu_callback *menu_callbacks;
+	uint32_t menu_config_controller;
 	uint32_t main_menu_render_sub_4E5550;
 	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
@@ -1284,6 +1297,7 @@ struct ff8_externals
 	FILE *(*_fsopen)(const char*, const char*, int);
 	uint32_t input_init;
 	uint32_t ff8input_cfg_read;
+	uint32_t ff8input_cfg_reset;
 	char *(*strcpy_with_malloc)(const char *);
 	uint32_t moriya_filesytem_open;
 	uint32_t moriya_filesytem_seek;
@@ -1300,8 +1314,12 @@ struct ff8_externals
 	uint32_t sub_4A0C00;
 	char(*show_dialog)(int32_t, uint32_t, int16_t);
 	int(*pause_menu_with_vibration)(int);
+	uint32_t draw_icon;
 	int(*pause_menu)(int);
 	uint32_t init_pause_menu;
+	uint32_t sub_49BB30;
+	uint32_t get_icon_sp1_data;
+	uint32_t draw_controller_or_keyboard_icons;
 	uint32_t get_vibration_capability;
 	uint32_t vibration_apply;
 	int(*get_keyon)(int, int);

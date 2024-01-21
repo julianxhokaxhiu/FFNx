@@ -98,6 +98,11 @@ LPDIJOYSTATE2 Joystick::GetState()
   return &currentState;
 }
 
+LPDIDEVCAPS Joystick::GetCaps()
+{
+  return &caps;
+}
+
 bool Joystick::CheckConnection()
 {
   if (dev == nullptr)
