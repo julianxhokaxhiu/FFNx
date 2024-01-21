@@ -628,17 +628,17 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(const std::list<Identifi
 	return drawnTextureTypes;
 }
 
-void TexturePacker::registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX, int palY)
+void TexturePacker::registerTiledTex(const uint8_t *texData, int x, int y, int w, int h, Tim::Bpp bpp, int palX, int palY)
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s pointer=0x%X x=%d y=%d bpp=%d palX=%d palY=%d\n", __func__, texData, x, y, bpp, palX, palY);
 
 	// If this entry already exist, override
-	_tiledTexs[texData] = TiledTex(x, y, bpp, palX, palY);
+	_tiledTexs[texData] = TiledTex(x, y, w, h, bpp, palX, palY);
 }
 
 void TexturePacker::registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s pointer=0x%X palIndex=%d palX=%d palY=%d\n", __func__, texData, palIndex, palX, palY);
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s pointer=0x%X palIndex=%d palX=%d palY=%d\n", __func__, texData, palIndex, palX, palY);
 
 	if (_tiledTexs.contains(texData))
 	{
@@ -649,7 +649,7 @@ void TexturePacker::registerPaletteWrite(const uint8_t *texData, int palIndex, i
 	{
 		if (trace_all || trace_vram) ffnx_warning("TexturePacker::%s pointer=0x%X register palette before image\n", __func__, texData);
 
-		_tiledTexs[texData] = TiledTex(-1, -1, Tim::Bpp4, palX, palY);
+		_tiledTexs[texData] = TiledTex(-1, -1, -1, -1, Tim::Bpp4, palX, palY);
 	}
 }
 
@@ -702,8 +702,8 @@ TexturePacker::TiledTex::TiledTex()
 }
 
 TexturePacker::TiledTex::TiledTex(
-	int x, int y, Tim::Bpp bpp, int palVramX, int palVramY
-) : TextureInfos(x, y, 256 / (4 >> int(bpp)), 256, bpp)
+	int x, int y, int w, int h, Tim::Bpp bpp, int palVramX, int palVramY
+) : TextureInfos(x, y, w, h, bpp)
 {
 	if (palVramX >= 0) {
 		palettes[0] = TextureInfos(palVramX, palVramY, 256, 1, Tim::Bpp16);

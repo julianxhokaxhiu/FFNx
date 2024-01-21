@@ -1725,7 +1725,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 
 			if (tiledTex.isValid() && !tiledTex.isPaletteValid(VREF(tex_header, palette_index) / 2))
 			{
-				if(trace_all || trace_vram) ffnx_trace("dll_gfx: load_texture ignored pointer=0x%X pos=(%d, %d) bpp=%d\n", VREF(tex_header, image_data), tiledTex.x(), tiledTex.y(), tiledTex.bpp());
+				if(trace_all || trace_vram) ffnx_trace("dll_gfx: load_texture ignored texture_set=0x%X pointer=0x%X pos=(%d, %d) bpp=%d index=%d\n", _texture_set, VREF(tex_header, image_data), tiledTex.x(), tiledTex.y(), tiledTex.bpp(), VREF(tex_header, palette_index) / 2);
 
 				return _texture_set;
 			}

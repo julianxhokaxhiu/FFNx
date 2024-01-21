@@ -45,6 +45,8 @@ TexturePacker::TextureInfos palette_infos = TexturePacker::TextureInfos();
 uint16_t *next_pal_data = nullptr;
 int next_psxvram_x = -1;
 int next_psxvram_y = -1;
+int next_psxvram_pal_x = -1;
+int next_psxvram_pal_y = -1;
 int next_texl_id = 0;
 int next_texture_count = -1;
 int next_do_not_clear_old_texture = false;
@@ -185,6 +187,22 @@ int read_vram_to_buffer_parent_call1(struc_50 *psxvram, texture_page *tex_page, 
 	return ret;
 }
 
+int read_vram_to_buffer_parent_call1_tx_select(struc_50 *psxvram, texture_page *tex_page, int x, int y, int w, int h, int bpp, int rel_pos, int a9, uint8_t *target)
+{
+	TexturePacker::TiledTex oldTiledTex = texturePacker.getTiledTex((uint8_t *)ff8_externals.psx_texture_pages[bpp].struc_50_array[rel_pos].texture_page[0].image_data);
+
+	int ret = read_vram_to_buffer_parent_call1(psxvram, tex_page, x, y, w, h, bpp, rel_pos, a9, target);
+
+	if (trace_all || trace_vram) ffnx_trace("%s: copy palette infos from 0x%X\n", __func__, ff8_externals.psx_texture_pages[bpp].struc_50_array[rel_pos].texture_page[0].image_data);
+
+	// Copy known palettes from neighbor tex
+	for (const std::pair<uint8_t, const TexturePacker::TextureInfos &> &pal: oldTiledTex.palettes) {
+		texturePacker.registerPaletteWrite((const uint8_t *)tex_page->image_data, pal.first, pal.second.x(), pal.second.y());
+	}
+
+	return ret;
+}
+
 int read_vram_to_buffer_parent_call2(texture_page *tex_page, int rel_pos, int a3)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: x=%d y=%d color_key=%d rel_pos=(%d, %d)\n", __func__, tex_page->x, tex_page->y, tex_page->color_key, rel_pos & 0xF, rel_pos >> 4);
@@ -206,11 +224,15 @@ int read_vram_to_buffer_with_palette1_parent_call1(texture_page *tex_page, int r
 
 	next_psxvram_x = (tex_page->x >> (2 - tex_page->color_key)) + ((rel_pos & 0xF) << 6);
 	next_psxvram_y = tex_page->y + (((rel_pos >> 4) & 1) << 8);
+	next_psxvram_pal_x = (psxvram_structure->vram_palette_pos & 0x3F) * 16;
+	next_psxvram_pal_y = (psxvram_structure->vram_palette_pos >> 6) & 0x1FF;
 
 	int ret = ((int(*)(texture_page*,int,struc_50*))ff8_externals.sub_464DB0)(tex_page, rel_pos, psxvram_structure);
 
 	next_psxvram_x = -1;
 	next_psxvram_y = -1;
+	next_psxvram_pal_x = -1;
+	next_psxvram_pal_y = -1;
 
 	return ret;
 }
@@ -221,11 +243,15 @@ int read_vram_to_buffer_with_palette1_parent_call2(texture_page *tex_page, int r
 
 	next_psxvram_x = (tex_page->x >> (2 - tex_page->color_key)) + ((rel_pos & 0xF) << 6);
 	next_psxvram_y = tex_page->y + (((rel_pos >> 4) & 1) << 8);
+	next_psxvram_pal_x = (psxvram_structure->vram_palette_pos & 0x3F) * 16;
+	next_psxvram_pal_y = (psxvram_structure->vram_palette_pos >> 6) & 0x1FF;
 
 	int ret = ((int(*)(texture_page*,int,struc_50*))ff8_externals.sub_465720)(tex_page, rel_pos, psxvram_structure);
 
 	next_psxvram_x = -1;
 	next_psxvram_y = -1;
+	next_psxvram_pal_x = -1;
+	next_psxvram_pal_y = -1;
 
 	return ret;
 }
@@ -240,19 +266,10 @@ void read_vram_to_buffer(uint8_t *vram, int vram_w_2048, uint8_t *target, int ta
 	}
 	else
 	{
-		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, Tim::Bpp(bpp));
+		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, target_w, h, Tim::Bpp(bpp));
 	}
 
 	ff8_externals.read_vram_1(vram, vram_w_2048, target, target_w, w, h, bpp);
-}
-
-void get_vram_palette_pos_from_texture_pages(uint16_t &x, uint16_t &y)
-{
-	int vram_page = (next_psxvram_x / 64) + (next_psxvram_y / 256) * 16;
-	uint16_t pos = ff8_externals.psx_texture_pages->struc_50_array[vram_page].vram_palette_pos;
-
-	x = (pos & 0x3F) * 16;
-	y = (pos >> 6) & 0x1FF;
 }
 
 void read_vram_to_buffer_with_palette1(uint8_t *vram, int vram_w_2048, uint8_t *target, int target_w, int w, int h, int bpp, uint16_t *vram_palette)
@@ -265,9 +282,7 @@ void read_vram_to_buffer_with_palette1(uint8_t *vram, int vram_w_2048, uint8_t *
 	}
 	else
 	{
-		uint16_t psxvram_pal_x, psxvram_pal_y;
-		get_vram_palette_pos_from_texture_pages(psxvram_pal_x, psxvram_pal_y);
-		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, Tim::Bpp(bpp), psxvram_pal_x, psxvram_pal_y);
+		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, target_w, h, Tim::Bpp(bpp), next_psxvram_pal_x, next_psxvram_pal_y);
 	}
 
 	ff8_externals.read_vram_2_paletted(vram, vram_w_2048, target, target_w, w, h, bpp, vram_palette);
@@ -283,9 +298,7 @@ void read_vram_to_buffer_with_palette2(uint8_t *vram, uint8_t *target, int w, in
 	}
 	else
 	{
-		uint16_t psxvram_pal_x, psxvram_pal_y;
-		get_vram_palette_pos_from_texture_pages(psxvram_pal_x, psxvram_pal_y);
-		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, Tim::Bpp(bpp), psxvram_pal_x, psxvram_pal_y);
+		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, w, h, Tim::Bpp(bpp), next_psxvram_pal_x, next_psxvram_pal_y);
 	}
 
 	ff8_externals.read_vram_3_paletted(vram, target, w, h, bpp, vram_palette);
@@ -1053,6 +1066,15 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 	return ((int16_t(*)(int,void*,int,int))ff8_externals.battle_open_file)(fileId, data, a3, callback);
 }
 
+void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWORD *outSize)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
+
+	snprintf(battle_texture_name, sizeof(battle_texture_name), "magic/%s", fileName);
+
+	return ((void *(*)(const char*,void*,int,DWORD*))ff8_externals.load_magic_data_sub_571900)(fileName, data, dataSize, outSize);
+}
+
 size_t ff8_battle_read_file(char *fileName, void *data)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
@@ -1073,6 +1095,7 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, battle_texture_name);
 
 	Tim tim = Tim::fromTimData(texture_buffer - 20);
+	next_pal_data = (uint16_t *)texture_buffer;
 
 	ff8_upload_vram(pos_and_size, texture_buffer);
 
@@ -1094,12 +1117,18 @@ void engine_set_init_time(double fps_adjust)
 {
 	texturePacker.clearTextures();
 
+	palette_infos = TexturePacker::TextureInfos();
+	texture_infos = TexturePacker::TextureInfos();
+
 	((void(*)(double))ff8_externals.engine_set_init_time)(fps_adjust);
 }
 
 void clean_psxvram_pages()
 {
 	texturePacker.clearTiledTexs();
+
+	palette_infos = TexturePacker::TextureInfos();
+	texture_infos = TexturePacker::TextureInfos();
 
 	((void(*)())ff8_externals.sub_4672C0)();
 }
@@ -1151,6 +1180,8 @@ void vram_init()
 	replace_call(ff8_externals.battle_open_file + 0x8E, ff8_battle_read_file);
 	replace_call(ff8_externals.battle_open_file + 0x1A2, ff8_battle_read_file);
 	replace_call(ff8_externals.battle_upload_texture_to_vram + 0x45, ff8_battle_upload_texture_palette);
+	replace_call(ff8_externals.load_magic_data_sub_5718E0 + 0xB, ff8_battle_open_effect);
+	replace_call(ff8_externals.load_magic_data_sub_571B80 + 0x1E, ff8_battle_open_effect);
 
 	//---- VRAM reads
 
@@ -1158,7 +1189,7 @@ void vram_init()
 	replace_call(ff8_externals.sub_464BD0 + 0x53, read_vram_to_buffer_parent_call1);
 	replace_call(ff8_externals.sub_464BD0 + 0xED, read_vram_to_buffer_parent_call1);
 	replace_call(ff8_externals.sub_464BD0 + 0x1A1, read_vram_to_buffer_parent_call1);
-	replace_call(ff8_externals.ssigpu_tx_select_2_sub_465CE0 + 0x281, read_vram_to_buffer_parent_call1);
+	replace_call(ff8_externals.ssigpu_tx_select_2_sub_465CE0 + 0x281, read_vram_to_buffer_parent_call1_tx_select);
 
 	replace_call(ff8_externals.sub_464BD0 + 0x79, read_vram_to_buffer_parent_call2);
 	replace_call(ff8_externals.sub_464BD0 + 0x1B5, read_vram_to_buffer_parent_call2);

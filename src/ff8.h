@@ -446,7 +446,7 @@ struct struc_50
 	uint32_t texture_page_enabled;
 	uint32_t field_328;
 	uint32_t vram_needs_reload;
-	uint32_t field_330;
+	uint32_t palette_index;
 	char dummy[256];
 	uint32_t vram_x;
 	uint32_t vram_y;
@@ -1405,10 +1405,14 @@ struct ff8_externals
 	uint32_t sub_50A9A0;
 	uint32_t battle_read_effect_sub_50AF20;
 	DWORD* func_off_battle_effects_C81774;
+	DWORD* func_off_battle_effect_textures_50AF93;
 	uint32_t battle_effect_quezacotl_sub_6C3550;
 	uint32_t sub_6C3640;
 	uint32_t sub_6C3760;
 	uint8_t **vibrate_data_summon_quezacotl;
+	uint32_t load_magic_data_sub_571B80;
+	uint32_t load_magic_data_sub_5718E0;
+	uint32_t load_magic_data_sub_571900;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

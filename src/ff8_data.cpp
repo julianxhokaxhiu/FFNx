@@ -738,11 +738,16 @@ void ff8_find_externals()
 	ff8_externals.sub_50A9A0 = get_absolute_value(ff8_externals.sub_50A790, 0x7C);
 	ff8_externals.battle_read_effect_sub_50AF20 = get_relative_call(ff8_externals.sub_50A9A0, 0xF4);
 	ff8_externals.func_off_battle_effects_C81774 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x2C);
+	ff8_externals.func_off_battle_effect_textures_50AF93 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x6B);
 
 	ff8_externals.battle_effect_quezacotl_sub_6C3550 = ff8_externals.func_off_battle_effects_C81774[115];
 	ff8_externals.sub_6C3640 = get_relative_call(ff8_externals.battle_effect_quezacotl_sub_6C3550, 0x5);
 	ff8_externals.sub_6C3760 = get_absolute_value(ff8_externals.sub_6C3640, 0x8B);
 	ff8_externals.vibrate_data_summon_quezacotl = (uint8_t **)get_absolute_value(ff8_externals.sub_6C3760, 0xB0);
+
+	ff8_externals.load_magic_data_sub_571B80 = get_relative_call(ff8_externals.func_off_battle_effect_textures_50AF93[0], 0x5);
+	ff8_externals.load_magic_data_sub_571900 = get_relative_call(ff8_externals.load_magic_data_sub_571B80, 0x1E);
+	ff8_externals.load_magic_data_sub_5718E0 = get_relative_call(ff8_externals.func_off_battle_effect_textures_50AF93[198], 0x5);
 
 	// Required by Steam edition
 	switch (version)
