@@ -223,9 +223,6 @@ bgfx::RendererType::Enum Renderer::getUserChosenRenderer() {
     case RENDERER_BACKEND_OPENGL:
         ret = bgfx::RendererType::OpenGL;
         break;
-    case RENDERER_BACKEND_DIRECT3D9:
-        ret = bgfx::RendererType::Direct3D9;
-        break;
     case RENDERER_BACKEND_DIRECT3D11:
         ret = bgfx::RendererType::Direct3D11;
         break;
@@ -252,10 +249,6 @@ void Renderer::updateRendererShaderPaths()
     case bgfx::RendererType::OpenGL:
         currentRenderer = "OpenGL";
         shaderSuffix = ".gl";
-        break;
-    case bgfx::RendererType::Direct3D9:
-        currentRenderer = "Direct3D9";
-        shaderSuffix = ".d3d9";
         break;
     case bgfx::RendererType::Direct3D11:
         currentRenderer = "Direct3D11";

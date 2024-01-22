@@ -49,11 +49,11 @@ Write-Output "VCPKG BRANCH: $vcpkgBranchName"
 Write-Output "VCPKG BASELINE: $vcpkgBaseline"
 Write-Output "--------------------------------------------------"
 
-Write-Host "##vso[task.setvariable variable=_BUILD_VERSION;]${env:_BUILD_VERSION}"
-Write-Host "##vso[task.setvariable variable=_RELEASE_VERSION;]${env:_RELEASE_VERSION}"
-Write-Host "##vso[task.setvariable variable=_IS_BUILD_CANARY;]${env:_IS_BUILD_CANARY}"
-Write-Host "##vso[task.setvariable variable=_IS_GITHUB_RELEASE;]${env:_IS_GITHUB_RELEASE}"
-Write-Host "##vso[task.setvariable variable=_CHANGELOG_VERSION;]${env:_CHANGELOG_VERSION}"
+Write-Output "_BUILD_VERSION=${env:_BUILD_VERSION}" >> ${env:GITHUB_ENV}
+Write-Output "_RELEASE_VERSION=${env:_RELEASE_VERSION}" >> ${env:GITHUB_ENV}
+Write-Output "_IS_BUILD_CANARY=${env:_IS_BUILD_CANARY}" >> ${env:GITHUB_ENV}
+Write-Output "_IS_GITHUB_RELEASE=${env:_IS_GITHUB_RELEASE}" >> ${env:GITHUB_ENV}
+Write-Output "_CHANGELOG_VERSION=${env:_CHANGELOG_VERSION}" >> ${env:GITHUB_ENV}
 
 # Load vcvarsall environment for x86
 $vcvarspath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -prerelease -latest -property InstallationPath
@@ -64,6 +64,29 @@ Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
   }
 }
 
+# Unset VCPKG_ROOT if set
+[Environment]::SetEnvironmentVariable('VCPKG_ROOT','')
+
+# Add Github Packages registry
+nuget sources add -Name github -Source "https://nuget.pkg.github.com/${env:GITHUB_REPOSITORY_OWNER}/index.json" -Username ${env:GITHUB_REPOSITORY_OWNER} -Password ${env:GITHUB_PACKAGES_PAT} -StorePasswordInClearText
+nuget setApiKey ${env:GITHUB_PACKAGES_PAT} -Source "https://nuget.pkg.github.com/${env:GITHUB_REPOSITORY_OWNER}/index.json"
+nuget sources list
+
+# Install Scoop
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
+
+# Install CMake
+scoop bucket add main
+scoop install main/cmake@3.28.1
+
+cmake --version
+
+# Install Powershell
+scoop install main/pwsh@7.4.1
+pwsh --version
+
+# Vcpkg setup
 git -C $vcpkgRoot pull --all
 git -C $vcpkgRoot checkout $vcpkgBaseline
 git -C $vcpkgRoot clean -fxd
@@ -72,9 +95,11 @@ cmd.exe /c "call $vcpkgRoot\bootstrap-vcpkg.bat"
 
 vcpkg integrate install
 
+# Start the build
 cmake --preset "${env:_RELEASE_CONFIGURATION}" -D_DLL_VERSION="$env:_BUILD_VERSION"
 cmake --build --preset "${env:_RELEASE_CONFIGURATION}"
 
+# Start the packaging
 mkdir .dist\pkg\FF7_1998 | Out-Null
 mkdir .dist\pkg\FF8_2000 | Out-Null
 mkdir .dist\pkg\FFNx_Steam | Out-Null

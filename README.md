@@ -1,4 +1,4 @@
-![License](https://img.shields.io/github/license/julianxhokaxhiu/FFNx) ![Overall Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/total?label=Overall%20Downloads) ![Latest Stable Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/latest/total?label=Latest%20Stable%20Downloads&sort=semver) ![Latest Canary Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/canary/total?label=Latest%20Canary%20Downloads) [![Build Status](https://dev.azure.com/julianxhokaxhiu/Github/_apis/build/status/julianxhokaxhiu.FFNx?branchName=master)](https://dev.azure.com/julianxhokaxhiu/Github/_build/latest?definitionId=1&branchName=master)
+![License](https://img.shields.io/github/license/julianxhokaxhiu/FFNx) ![Overall Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/total?label=Overall%20Downloads) ![Latest Stable Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/latest/total?label=Latest%20Stable%20Downloads&sort=semver) ![Latest Canary Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/canary/total?label=Latest%20Canary%20Downloads) ![GitHub Actions Workflow Status](https://github.com/julianxhokaxhiu/FFNx/actions/workflows/main.yml/badge.svg?branch=master)
 
 <div align="center">
   <img src="https://github.com/julianxhokaxhiu/FFNx/blob/master/.logo/logo_nobg.png" alt="">
@@ -24,7 +24,6 @@ FFNx today in a nutshell:
   - DirectX 12
   - Vulkan
   - OpenGL
-  - DirectX 9 (Experimental: Not Recommended)
 
 ## The Team
 
@@ -158,6 +157,19 @@ Once the project is built you can find the output in this path: `.build/bin`
 0. Clone the [vcpkg](https://vcpkg.io) project in the root folder of your `C:` drive (`git clone https://github.com/Microsoft/vcpkg.git`)
 1. Go inside the `C:\vcpkg` folder and double click `bootstrap-vcpkg.bat`
 2. Open a `cmd` window in `C:\vcpkg` and run the following command: `vcpkg integrate install`
+
+### OPTIONAL: NuGet
+
+> **Please note:**
+>
+> This step is completely optional but you can make use of it if you prefer to use your own Github Free package registry plan.
+
+0. Make sure you have [NuGet CLI installed](https://learn.microsoft.com/en-us/nuget/install-nuget-client-tools?tabs=windows#install-nugetexe).
+1. [Create a Personal Access token ( classic )](https://github.com/settings/tokens/new) with the `write:packages` permission.
+2. Open a `cmd` window and run the following command ( replace `YOUR_GITHUB_USERNAME` and `YOUR_GITHUB_PAT` accordingly ):
+```pwsh
+nuget sources add -Name github -Source "https://nuget.pkg.github.com/YOUR_GITHUB_USERNAME/index.json" -Username YOUR_GITHUB_USERNAME -Password YOUR_GITHUB_PAT -StorePasswordInClearText
+```
 
 ### Visual Studio
 

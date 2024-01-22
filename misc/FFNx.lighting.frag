@@ -135,8 +135,6 @@ void main()
                 texture2D(tex_2, v_texcoord0.xy).r
             );
 
-// d3d9 doesn't support textureSize()
-#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
             if (!(isFullRange)){
                 // dither prior to range conversion
                 ivec2 ydimensions = textureSize(tex_0, 0);
@@ -146,7 +144,6 @@ void main()
                 // clamp back to tv range
                 yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
             }
-#endif
 
             if (isBT601ColorMatrix){
                 yuv.g = yuv.g - (128.0/255.0);
@@ -207,10 +204,8 @@ void main()
                 if ((isSRGBColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
                     color.rgb = GamutLUT(color.rgb);
                     // dither after the LUT operation
-                    #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
                     ivec2 dimensions = textureSize(tex_0, 0);
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
-                    #endif
                 }
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
@@ -220,10 +215,8 @@ void main()
                 if ((isNTSCJColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
                     color.rgb = GamutLUT(color.rgb);
                     // dither after the LUT operation
-                    #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
                     ivec2 dimensions = textureSize(tex_0, 0);
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
-                    #endif
                 }
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
@@ -290,10 +283,8 @@ void main()
             // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
             else if (doGamutOverride){
                 texture_color.rgb = GamutLUT(texture_color.rgb);
-                #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
                 ivec2 dimensions = textureSize(tex_0, 0);
                 texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
-                #endif
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
 

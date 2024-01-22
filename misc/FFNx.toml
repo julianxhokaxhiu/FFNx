@@ -12,7 +12,7 @@
 # Available choices are:
 # - 0: Auto ( default, will pick the best rendering backend for your GPU )
 # - 1: OpenGL ( works fine on Intel/Nvidia, MAY break on AMD )
-# - 2: Direct3D9 ( Tech Preview: Not Recommended )
+# - 2: UNUSED ( used to be Direct3D9, no more supported )
 # - 3: Direct3D11 ( works fine under any GPU on Windows )
 # - 4: Direct3D12
 # - 5: Vulkan

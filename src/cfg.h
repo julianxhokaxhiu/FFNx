@@ -28,7 +28,8 @@
 
 #define RENDERER_BACKEND_AUTO 0
 #define RENDERER_BACKEND_OPENGL 1
-#define RENDERER_BACKEND_DIRECT3D9 2
+// Slot 2 used to be used for DIRECT3D9 but is not more officially supported by bgfx.
+// Preserve the slot numbers as they are to ensure compatibility with existing installations and tooling.
 #define RENDERER_BACKEND_DIRECT3D11 3
 #define RENDERER_BACKEND_DIRECT3D12 4
 #define RENDERER_BACKEND_VULKAN 5
