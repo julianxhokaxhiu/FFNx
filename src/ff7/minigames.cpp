@@ -1,6 +1,6 @@
 /****************************************************************************/
 //    Copyright (C) 2009 Aali132                                            //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
