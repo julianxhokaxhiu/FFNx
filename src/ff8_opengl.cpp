@@ -437,9 +437,9 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
 		}
 
-		lY = int(joystick.GetState()->lY * 0x80 / SHRT_MAX);
+		lY = -int(joystick.GetState()->lY * 0x80 / SHRT_MAX);
 		lX = int(joystick.GetState()->lX * 0x80 / SHRT_MAX);
-		rY = int(joystick.GetState()->lRy * 0x80 / SHRT_MAX);
+		rY = -int(joystick.GetState()->lRy * 0x80 / SHRT_MAX);
 		rX = int(joystick.GetState()->lRx * 0x80 / SHRT_MAX);
 
 		if (joystick.GetState()->lRy < joystick.GetDeadZone(-0.5f))
