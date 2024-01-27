@@ -23,6 +23,7 @@
 #include "ff8_data.h"
 
 #include "patch.h"
+#include "ff8/battle/effects.h"
 
 void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 {
@@ -186,6 +187,7 @@ void ff8_find_externals()
 	ff8_externals.battle_filenames = (char **)get_absolute_value(ff8_externals.battle_open_file, 0x11);
 
 	ff8_externals.sub_47D890 = get_relative_call(ff8_externals.sub_506CF0, 0x59);
+	ff8_externals.sub_505DF0 = get_relative_call(ff8_externals.sub_506CF0, 0xAA);
 	ff8_externals.sub_4A94D0 = get_relative_call(ff8_externals.sub_47D890, 0x9);
 	ff8_externals.sub_4BCBE0 = get_relative_call(ff8_externals.sub_4A94D0, 0x1E0);
 	ff8_externals.sub_4C8B10 = get_relative_call(ff8_externals.sub_4BCBE0, 0x8E);
@@ -769,12 +771,27 @@ void ff8_find_externals()
 	ff8_externals.sub_50A9A0 = get_absolute_value(ff8_externals.sub_50A790, 0x7C);
 	ff8_externals.battle_read_effect_sub_50AF20 = get_relative_call(ff8_externals.sub_50A9A0, 0xF4);
 	ff8_externals.func_off_battle_effects_C81774 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x2C);
+	ff8_externals.battle_magic_id = (int*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x3E);
+	ff8_externals.sub_571870 = get_relative_call(ff8_externals.battle_read_effect_sub_50AF20, 0x63);
 	ff8_externals.func_off_battle_effect_textures_50AF93 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x6B);
 
-	ff8_externals.battle_effect_quezacotl_sub_6C3550 = ff8_externals.func_off_battle_effects_C81774[115];
-	ff8_externals.sub_6C3640 = get_relative_call(ff8_externals.battle_effect_quezacotl_sub_6C3550, 0x5);
+	ff8_externals.sub_6C3640 = get_relative_call(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::Quezacotl], 0x5);
 	ff8_externals.sub_6C3760 = get_absolute_value(ff8_externals.sub_6C3640, 0x8B);
 	ff8_externals.vibrate_data_summon_quezacotl = (uint8_t **)get_absolute_value(ff8_externals.sub_6C3760, 0xB0);
+
+	ff8_externals.sub_B586F0 = get_absolute_value(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::Leviathan], 0x45);
+	ff8_externals.sub_B64B80 = get_relative_call(ff8_externals.sub_B586F0, 0x1B5);
+	ff8_externals.leviathan_funcs_B64C3C = (DWORD *)get_absolute_value(ff8_externals.sub_B64B80, 0xBF);
+	ff8_externals.mag_data_palette_sub_B66560 = get_relative_call(ff8_externals.leviathan_funcs_B64C3C[FF8BattleEffectOpcode::UploadPalette75], 0x13);
+	ff8_externals.effect_struct_27973EC = (DWORD **)get_absolute_value(ff8_externals.mag_data_palette_sub_B66560, 0x4);
+	ff8_externals.mag_data_dword_2798A68 = (uint8_t **)get_absolute_value(ff8_externals.mag_data_palette_sub_B66560, 0x19);
+	ff8_externals.effect_struct_2797624 = (DWORD **)get_absolute_value(ff8_externals.mag_data_palette_sub_B66560, 0x28);
+	ff8_externals.battle_set_action_upload_raw_palette_sub_B666F0 = get_relative_call(ff8_externals.leviathan_funcs_B64C3C[FF8BattleEffectOpcode::UploadPalette75], 0xD4);
+	ff8_externals.battle_set_action_upload_raw_palette_sub_B66400 = get_relative_call(ff8_externals.battle_set_action_upload_raw_palette_sub_B666F0, 0x141);
+
+	ff8_externals.sub_B63230 = get_relative_call(ff8_externals.leviathan_funcs_B64C3C[FF8BattleEffectOpcode::UploadTexture39], 0x9);
+	ff8_externals.mag_data_texture_sub_B66560 = get_relative_call(ff8_externals.sub_B63230, 0xA);
+	ff8_externals.dword_27973E8 = (BYTE**)get_absolute_value(ff8_externals.mag_data_texture_sub_B66560, 0x8F);
 
 	ff8_externals.load_magic_data_sub_571B80 = get_relative_call(ff8_externals.func_off_battle_effect_textures_50AF93[0], 0x5);
 	ff8_externals.load_magic_data_sub_571900 = get_relative_call(ff8_externals.load_magic_data_sub_571B80, 0x1E);

@@ -1455,8 +1455,9 @@ struct ff8_externals
 	uint32_t sub_50A9A0;
 	uint32_t battle_read_effect_sub_50AF20;
 	DWORD* func_off_battle_effects_C81774;
+	int* battle_magic_id;
+	uint32_t sub_571870;
 	DWORD* func_off_battle_effect_textures_50AF93;
-	uint32_t battle_effect_quezacotl_sub_6C3550;
 	uint32_t sub_6C3640;
 	uint32_t sub_6C3760;
 	uint8_t **vibrate_data_summon_quezacotl;
@@ -1464,6 +1465,7 @@ struct ff8_externals
 	uint32_t load_magic_data_sub_5718E0;
 	uint32_t load_magic_data_sub_571900;
 	uint32_t sub_47D890;
+	uint32_t sub_505DF0;
 	uint32_t sub_4A94D0;
 	uint32_t sub_4BCBE0;
 	uint32_t sub_4C8B10;
@@ -1473,6 +1475,18 @@ struct ff8_externals
 	void *battle_menu_state;
 	uint32_t battle_pause_window_sub_4CD350;
 	uint32_t sub_4A7210;
+	uint32_t sub_B586F0;
+	uint32_t sub_B64B80;
+	DWORD* leviathan_funcs_B64C3C;
+	uint32_t mag_data_palette_sub_B66560;
+	DWORD** effect_struct_27973EC;
+	uint8_t** mag_data_dword_2798A68;
+	DWORD** effect_struct_2797624;
+	uint32_t sub_B63230;
+	uint32_t mag_data_texture_sub_B66560;
+	BYTE** dword_27973E8;
+	uint32_t battle_set_action_upload_raw_palette_sub_B666F0;
+	uint32_t battle_set_action_upload_raw_palette_sub_B66400;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
