@@ -405,6 +405,7 @@ void Renderer::resetState()
 
     doMirrorTextureWrap();
     setSphericalWorldRate();
+    setFogEnabled();
 
     resetViewMatrixFlag();
 };

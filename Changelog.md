@@ -19,6 +19,7 @@
 
 ## FF7
 
+- Renderer: Fixed fog being incorrectly applied to Emerald Weapon battle
 - Renderer: Fixed fog rendering not working in underwater worldmap
 
 ## FF8
