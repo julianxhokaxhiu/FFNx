@@ -437,9 +437,9 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
 		}
 
-		lY = int(joystick.GetState()->lY * 0x80 / SHRT_MAX);
+		lY = -int(joystick.GetState()->lY * 0x80 / SHRT_MAX);
 		lX = int(joystick.GetState()->lX * 0x80 / SHRT_MAX);
-		rY = int(joystick.GetState()->lRy * 0x80 / SHRT_MAX);
+		rY = -int(joystick.GetState()->lRy * 0x80 / SHRT_MAX);
 		rX = int(joystick.GetState()->lRx * 0x80 / SHRT_MAX);
 
 		if (joystick.GetState()->lRy < joystick.GetDeadZone(-0.5f))
@@ -510,15 +510,8 @@ int ff8_get_input_device_capabilities_number_of_buttons(int a1)
 	return xinput_connected ? 10 : std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
 }
 
-ff8_draw_menu_sprite_texture_infos *ff8_draw_icon(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6)
+int ff8_draw_gamepad_icon_or_keyboard_key(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y)
 {
-	int *icon_sp1_data = ((int*(*)())ff8_externals.get_icon_sp1_data)();
-
-	if (icon_id >= icon_sp1_data[0])
-	{
-		return draw_infos;
-	}
-
 	// Keep the "keys" if it is a keyboard and not a gamepad
 	if (icon_id >= 128 && icon_id < 140)
 	{
@@ -533,55 +526,72 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon(int a1, ff8_draw_menu_sprite_t
 			}
 
 			int rgbButton = val - 224;
-			icon_id = 0;
 
-			switch (rgbButton) {
+			switch (rgbButton)
+			{
 				case 0: // Cross (Steam)/Square
-					icon_id = steam_edition ? 134 : 135;
-					break;
+					return steam_edition ? 134 : 135;
 				case 1: // Circle (Steam)/Cross
-					icon_id = steam_edition ? 133 : 134;
-					break;
+					return steam_edition ? 133 : 134;
 				case 2: // Square (Steam)/Circle
-					icon_id = steam_edition ? 135 : 133;
-					break;
+					return steam_edition ? 135 : 133;
 				case 3: // Triangle
-					icon_id = 132;
-					break;
+					return 132;
 				case 4: // L1
-					icon_id = 130;
-					break;
+					return 130;
 				case 5: // R1
-					icon_id = 131;
-					break;
+					return 131;
 				case 6: // SELECT (Steam)/L2
-					icon_id = steam_edition ? 136 : 128;
-					break;
+					return steam_edition ? 136 : 128;
 				case 7: // START (Steam)/R2
-					icon_id = steam_edition ? 139 : 129;
-					break;
+					return steam_edition ? 139 : 129;
 				case 8: // L2 (Steam)/SELECT
-					icon_id = steam_edition ? 128 : 136;
-					break;
+					return steam_edition ? 128 : 136;
 				case 9: // R2 (Steam)/START
-					icon_id = steam_edition ? 129 : 139;
-					break;
-				default:
-					((void(*)(int, ff8_draw_menu_sprite_texture_infos*, int, uint16_t, uint16_t))ff8_externals.draw_controller_or_keyboard_icons)(a1, draw_infos, icon_id, x, y);
-					return draw_infos;
+					return steam_edition ? 129 : 139;
 			}
 		}
-		else
-		{
-			((void(*)(int, ff8_draw_menu_sprite_texture_infos*, int, uint16_t, uint16_t))ff8_externals.draw_controller_or_keyboard_icons)(a1, draw_infos, icon_id, x, y);
 
-			return draw_infos;
-		}
+		((void(*)(int, ff8_draw_menu_sprite_texture_infos*, int, uint16_t, uint16_t))ff8_externals.draw_controller_or_keyboard_icons)(a1, draw_infos, icon_id, x, y);
+
+		return -1;
 	}
 
-	int states_count = HIWORD(icon_sp1_data[icon_id + 1]);
-	unsigned int *sp1_section_data = (unsigned int *)((char *)icon_sp1_data + uint16_t(icon_sp1_data[icon_id + 1]));
-	if (states_count <= 0)
+	return icon_id;
+}
+
+unsigned int *ff8_draw_icon_get_icon_sp1_infos(int icon_id, int &states_count)
+{
+	int *icon_sp1_data = ((int*(*)())ff8_externals.get_icon_sp1_data)();
+
+	if (icon_id >= icon_sp1_data[0])
+	{
+		states_count = 0;
+
+		return nullptr;
+	}
+
+	states_count = HIWORD(icon_sp1_data[icon_id + 1]);
+
+	return (unsigned int *)((char *)icon_sp1_data + uint16_t(icon_sp1_data[icon_id + 1]));
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
+	int a1, ff8_draw_menu_sprite_texture_infos *draw_infos,
+	int icon_id, uint16_t x, uint16_t y, int a6, int field10_modifier = 0,
+	bool noA6Mask = false,
+	bool override_field4_8_with_a6 = false
+) {
+	icon_id = ff8_draw_gamepad_icon_or_keyboard_key(a1, draw_infos, icon_id, x, y);
+	if (icon_id < 0)
+	{
+		return draw_infos;
+	}
+
+	int states_count = 0;
+	unsigned int *sp1_section_data = ff8_draw_icon_get_icon_sp1_infos(icon_id, states_count);
+
+	if (sp1_section_data == nullptr)
 	{
 		return draw_infos;
 	}
@@ -589,9 +599,17 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon(int a1, ff8_draw_menu_sprite_t
 	for (int i = states_count; i > 0; --i)
 	{
 		draw_infos->field_0 = 0x5000000;
-		draw_infos->field_10 = (sp1_section_data[0] & 0x7CFFFFF) + 0x38100000;
-		draw_infos->field_8 = (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
-		draw_infos->field_4 = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
+		draw_infos->field_10 = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + field10_modifier) << 16);
+		if (override_field4_8_with_a6)
+		{
+			draw_infos->field_8 = ((a6 & 0xFFFFFF) | 0x64000000) | (((HIBYTE(a6) >> 1) & 2) << 24);
+			draw_infos->field_4 = ((HIBYTE(a6) & 3) << 5) | 0xE100041E;
+		}
+		else
+		{
+			draw_infos->field_8 = noA6Mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
+			draw_infos->field_4 = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
+		}
 		draw_infos->field_14 = sp1_section_data[1] & 0xFF00FF;
 		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
 		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
@@ -601,7 +619,31 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon(int a1, ff8_draw_menu_sprite_t
 	}
 
 	return draw_infos;
+}
 
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key1(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key2(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, *ff8_externals.dword_1D2B808);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key3(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y, int a6)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, 0, true);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key4(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y, int a6, int a7)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, false, true);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key5(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6, int a7)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, true);
 }
 
 int ff8_is_window_active()
@@ -1006,7 +1048,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	if (ff8_use_gamepad_icons) {
 		// Replace the whole function to conditionnally show PlayStation icons or keyboard keys
-		replace_function(ff8_externals.draw_icon, ff8_draw_icon);
+		replace_function(ff8_externals.ff8_draw_icon_or_key1, ff8_draw_icon_or_key1);
+		replace_function(ff8_externals.ff8_draw_icon_or_key2, ff8_draw_icon_or_key2);
+		replace_function(ff8_externals.ff8_draw_icon_or_key3, ff8_draw_icon_or_key3);
+		replace_function(ff8_externals.ff8_draw_icon_or_key4, ff8_draw_icon_or_key4);
+		replace_function(ff8_externals.ff8_draw_icon_or_key5, ff8_draw_icon_or_key5);
 	}
 }
 
