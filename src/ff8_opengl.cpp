@@ -646,6 +646,38 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key5(int a1, ff8_draw_menu_
 	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, true);
 }
 
+ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw_menu_sprite_texture_infos_short *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6, int a7) {
+	// We should not cast like this, but that's what the game does
+	icon_id = ff8_draw_gamepad_icon_or_keyboard_key(a1, reinterpret_cast<ff8_draw_menu_sprite_texture_infos *>(draw_infos), icon_id, x, y);
+	if (icon_id < 0)
+	{
+		return draw_infos;
+	}
+
+	int states_count = 0;
+	unsigned int *sp1_section_data = ff8_draw_icon_get_icon_sp1_infos(icon_id, states_count);
+
+	if (sp1_section_data == nullptr)
+	{
+		return draw_infos;
+	}
+
+	for (int i = states_count; i > 0; --i)
+	{
+		draw_infos->field_0 = 0x4000000;
+		draw_infos->field_C = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + a7) << 16);
+		draw_infos->field_4 = a6 | (((sp1_section_data[0] >> 26) & 2) << 24);
+		draw_infos->field_10 = sp1_section_data[1] & 0xFF00FF;
+		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
+		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
+		((void(*)(int, ff8_draw_menu_sprite_texture_infos_short*))ff8_externals.sub_49FE60)(a1, draw_infos);
+		draw_infos += 1;
+		sp1_section_data += 2;
+	}
+
+	return draw_infos;
+}
+
 int ff8_is_window_active()
 {
 	if (gameHwnd == GetActiveWindow())
@@ -1053,6 +1085,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_function(ff8_externals.ff8_draw_icon_or_key3, ff8_draw_icon_or_key3);
 		replace_function(ff8_externals.ff8_draw_icon_or_key4, ff8_draw_icon_or_key4);
 		replace_function(ff8_externals.ff8_draw_icon_or_key5, ff8_draw_icon_or_key5);
+		replace_function(ff8_externals.ff8_draw_icon_or_key6, ff8_draw_icon_or_key6);
 	}
 }
 
