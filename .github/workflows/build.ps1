@@ -78,7 +78,7 @@ Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
 
 # Install CMake
 scoop bucket add main
-scoop install main/cmake@3.28.1
+scoop install main/cmake@3.28.2
 
 cmake --version
 
