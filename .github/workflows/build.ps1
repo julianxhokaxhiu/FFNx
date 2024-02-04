@@ -55,6 +55,20 @@ Write-Output "_IS_BUILD_CANARY=${env:_IS_BUILD_CANARY}" >> ${env:GITHUB_ENV}
 Write-Output "_IS_GITHUB_RELEASE=${env:_IS_GITHUB_RELEASE}" >> ${env:GITHUB_ENV}
 Write-Output "_CHANGELOG_VERSION=${env:_CHANGELOG_VERSION}" >> ${env:GITHUB_ENV}
 
+# Install CMake
+Write-Output "Installing cmake v${env:_WINGET_CMAKE}..."
+winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+cmake --version
+
+# Install Powershell
+Write-Output "Installing powershell v${env:_WINGET_POWERSHELL}..."
+winget install Microsoft.PowerShell --version ${env:_WINGET_POWERSHELL} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+pwsh --version
+
+# Install Visual Studio Enterprise
+Write-Output "Installing VisualStudio 2022 Enterprise v${env:_WINGET_VS2022}..."
+winget install Microsoft.VisualStudio.2022.Enterprise --version ${env:_WINGET_VS2022} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+
 # Load vcvarsall environment for x86
 $vcvarspath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -prerelease -latest -property InstallationPath
 cmd.exe /c "call `"$vcvarspath\VC\Auxiliary\Build\vcvarsall.bat`" x86 && set > %temp%\vcvars.txt"
@@ -71,20 +85,6 @@ Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
 nuget sources add -Name github -Source "https://nuget.pkg.github.com/${env:GITHUB_REPOSITORY_OWNER}/index.json" -Username ${env:GITHUB_REPOSITORY_OWNER} -Password ${env:GITHUB_PACKAGES_PAT} -StorePasswordInClearText
 nuget setApiKey ${env:GITHUB_PACKAGES_PAT} -Source "https://nuget.pkg.github.com/${env:GITHUB_REPOSITORY_OWNER}/index.json"
 nuget sources list
-
-# Install Scoop
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
-
-# Install CMake
-scoop bucket add main
-scoop install main/cmake@3.28.2
-
-cmake --version
-
-# Install Powershell
-scoop install main/pwsh@7.4.1
-pwsh --version
 
 # Vcpkg setup
 git -C $vcpkgRoot pull --all
