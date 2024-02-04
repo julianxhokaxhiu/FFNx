@@ -549,14 +549,18 @@ TexturePacker::TextureTypes TextureBackground::drawToImage(
 		const int realOffsetX = (_vramPageId * TEXTURE_WIDTH_BPP16 - offsetX) / (4 >> uint16_t(targetBpp));
 		const int vramPageIdTarget = realOffsetX / TEXTURE_WIDTH_BPP16;
 
-		drawImage(
-			imgData, imgWidth, imgScale,
-			targetRgba, targetW, targetScale,
-			0, 0, vramPageIdTarget == _vramPageId ? imgWidth : std::max<int>(imgWidth - 128, 0), imgHeight,
-			vramPageIdTarget == _vramPageId ? 0 : 128, 0
-		);
+		if (vramPageIdTarget == _vramPageId) {
+			drawImage(
+				imgData, imgWidth, imgScale,
+				targetRgba, targetW, targetScale,
+				0, 0, imgWidth, imgHeight,
+				0, 0
+			);
 
-		return TexturePacker::ExternalTexture;
+			return TexturePacker::ExternalTexture;
+		}
+
+		return TexturePacker::NoTexture;
 	}
 
 	const uint8_t cols = targetW / TILE_SIZE, rows = targetH / TILE_SIZE;
