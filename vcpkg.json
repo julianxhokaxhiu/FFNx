@@ -35,6 +35,7 @@
     },
     "imgui",
     "libpng",
+    "directxtex",
     {
       "name": "mimalloc",
       "default-features": false,

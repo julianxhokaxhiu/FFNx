@@ -43,14 +43,43 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 		destroyImage();
 	}
 
-	_image = loadImageContainer(&defaultAllocator, filename, bimg::TextureFormat::BGRA8);
+	bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::BGRA8;
+
+	const char *extension = strrchr(filename, '.');
+	if (extension != nullptr && stricmp(extension + 1, "png") == 0) {
+		// Load PNG using libPNG
+		bimg::ImageMip mip;
+		if (loadPng(filename, mip, targetFormat) && Renderer::doesItFitInMemory(mip.m_size + 1))
+		{
+			_image = bimg::imageAlloc(&defaultAllocator, mip.m_format, mip.m_width, mip.m_height, mip.m_depth, 1, false, false, mip.m_data);
+			setLod(0);
+
+			driver_free((void *)mip.m_data);
+		}
+	} else if (extension != nullptr && stricmp(extension + 1, "dds") == 0) {
+		// Load DDS using DirectXTex
+		DirectX::TexMetadata metadata;
+		DirectX::ScratchImage image;
+		if (parseDds(filename, image, metadata)) {
+			int lod = computeLod(originalTexturePixelWidth, metadata.width, metadata.mipLevels, internalLodScale, filename);
+			// Convert only the relevant lod to improve performance
+			_image = convertDds(&defaultAllocator, image, metadata, targetFormat, lod);
+			image.Release();
+			setLod(0);
+		}
+	} else {
+		_image = loadImageContainer(&defaultAllocator, filename, bimg::TextureFormat::BGRA8);
+
+		if (_image != nullptr)
+		{
+			setLod(computeLod(originalTexturePixelWidth, _image->m_width, _image->m_numMips, internalLodScale, filename));
+		}
+	}
 
 	if (_image == nullptr)
 	{
 		return false;
 	}
-
-	setLod(computeLod(originalTexturePixelWidth, internalLodScale));
 
 	uint8_t scale = computeScale(originalTexturePixelWidth, originalTextureHeight);
 
@@ -97,25 +126,24 @@ int TextureImage::computeMaxScale()
 	return std::max(resWidth, FF8_BASE_RESOLUTION_X) / baseResW;
 }
 
-uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int internalScale) const
+uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int imageWidth, int numMips, int internalScale, const char *filename) const
 {
-	if (_image == nullptr || _image->m_numMips <= 1)
+	if (numMips <= 1)
 	{
 		return 0;
 	}
 
 	int maxScale = computeMaxScale(),
-		maxWidth = originalTexturePixelWidth * maxScale * internalScale,
-		imageWidth = _image->m_width;
+		maxWidth = originalTexturePixelWidth * maxScale * internalScale;
 
 	if (trace_all || trace_vram)
 	{
-		ffnx_info("ModdedTexture::%s: maxScale=%d maxWidth=%d imageWidth=%d\n", __func__, maxScale, maxWidth, imageWidth);
+		ffnx_info("TextureImage::%s: maxScale=%d maxWidth=%d imageWidth=%d\n", __func__, maxScale, maxWidth, imageWidth);
 	}
 
-	for (uint8_t lod = 0; lod < _image->m_numMips; ++lod)
+	for (uint8_t lod = 0; lod < numMips; ++lod)
 	{
-		if (imageWidth == maxWidth)
+		if (imageWidth <= maxWidth)
 		{
 			return lod;
 		}
@@ -123,7 +151,7 @@ uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int internalScal
 		imageWidth /= 2;
 	}
 
-	ffnx_warning("ModdedTexture::%s: Cannot detect the LOD of the texture\n", __func__);
+	ffnx_warning("TextureImage::%s: Cannot detect the LOD of the texture %s\n", __func__, filename);
 
 	return 0;
 }
@@ -170,7 +198,7 @@ bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_
 {
 	char langPath[16] = "/";
 
-	if(trace_all || trace_loaders) ffnx_trace("texture file name (VRAM): %s palette_index=%d hasPal=%d\n", name, palette_index, hasPal);
+	if(trace_all || trace_loaders) ffnx_trace("Texture file name (VRAM): %s palette_index=%d hasPal=%d\n", name, palette_index, hasPal);
 
 	if(save_textures) return false;
 
