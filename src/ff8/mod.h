@@ -51,7 +51,7 @@ public:
 	static int computeMaxScale();
 private:
 	void setLod(uint8_t lod);
-	uint8_t computeLod(int originalTexturePixelWidth, int internalScale = 1) const;
+	uint8_t computeLod(int originalTexturePixelWidth, int imageWidth, int numMips, int internalScale = 1, const char *filename = "") const;
 	uint8_t computeScale(int originalTexturePixelWidth, int originalTextureHeight) const;
 	bimg::ImageContainer *_image;
 	bimg::ImageMip _mip;

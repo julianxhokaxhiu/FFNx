@@ -651,6 +651,15 @@ struct ff8_draw_menu_sprite_texture_infos {
 	uint32_t field_14;
 };
 
+struct ff8_draw_menu_sprite_texture_infos_short {
+	uint32_t field_0;
+	uint32_t field_4;
+	uint16_t x_related;
+	uint16_t y_related;
+	uint32_t field_C;
+	uint32_t field_10;
+};
+
 struct ff8_audio_fmt
 {
 	uint32_t audio_data_length;
@@ -1326,6 +1335,7 @@ struct ff8_externals
 	int(*pause_menu)(int);
 	uint32_t init_pause_menu;
 	uint32_t sub_49BB30;
+	uint32_t sub_49FE60;
 	uint32_t get_icon_sp1_data;
 	uint32_t draw_controller_or_keyboard_icons;
 	uint32_t get_vibration_capability;

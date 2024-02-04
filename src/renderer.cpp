@@ -148,7 +148,7 @@ void Renderer::setCommonUniforms()
         NULL
     };
     if (uniform_log) ffnx_trace("%s: VSFlags XYZW(isTLVertex %f, blendMode %f, isFBTexture %f, isTexture %f)\n", __func__, internalState.VSFlags[0], internalState.VSFlags[1], internalState.VSFlags[2], internalState.VSFlags[3]);
-    
+
     internalState.FSMovieFlags = {
         (float)internalState.bIsMovieColorMatrix,
         (float)internalState.bIsMovieColorGamut,
@@ -1815,7 +1815,7 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
     internalState.clearColorValue = createBGRA(r * 255, g * 255, b * 255, a * 255);
 }
 
-uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb)
+uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb, bool copyData)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
@@ -1835,7 +1835,16 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
     if (doesItFitInMemory(texInfo.storageSize) && (data != NULL))
     {
-        const bgfx::Memory* mem = bgfx::copy(data, texInfo.storageSize);
+        const bgfx::Memory* mem;
+
+        if (copyData)
+        {
+            mem = bgfx::copy(data, texInfo.storageSize);
+        }
+        else
+        {
+            mem = bgfx::makeRef(data, texInfo.storageSize, RendererReleaseData, (void *)data);
+        }
 
         uint64_t flags = BGFX_SAMPLER_NONE;
 
@@ -2025,7 +2034,7 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
     *width = mip.m_width;
     *height = mip.m_height;
 
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
+    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, *width, *height, filename);
 
     return ret.idx;
 }
@@ -2453,10 +2462,10 @@ void Renderer::setD3DProjection(struct matrix* matrix)
     {
         struct game_mode* mode = getmode_cached();
         if(mode->driver_mode == MODE_WORLDMAP)
-        {            
+        {
             const float f_offset = 0.0035f;
             const float n_offset = 0.0f;
-            
+
             float a = internalState.d3dProjectionMatrix[10];
             float b = internalState.d3dProjectionMatrix[11];
 
@@ -2530,7 +2539,7 @@ void Renderer::setGameLightData(light_data* lightdata)
 {
     struct game_mode* mode = getmode_cached();
 
-    bool useGameLighting = lightdata != nullptr;    
+    bool useGameLighting = lightdata != nullptr;
     if (enable_worldmap_external_mesh && mode->driver_mode == MODE_WORLDMAP)
     {
         useGameLighting = false;

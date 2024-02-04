@@ -25,39 +25,32 @@
 #include "mod.h"
 #include <set>
 
-uint32_t *image_data_scaled_cache = nullptr;
-uint32_t image_data_scaled_size_cache = 0;
-
-// Scale 32-bit BGRA image in place
-void scale_up_image_data_in_place(uint32_t *sourceAndTarget, uint32_t w, uint32_t h, uint8_t scale)
+// Scale 32-bit BGRA image
+void scale_up_image_data(const uint32_t *source, uint32_t *target, uint32_t w, uint32_t h, uint8_t scale)
 {
 	if (scale <= 1)
 	{
+		memcpy(target, source, w * h * sizeof(uint32_t));
+
 		return;
 	}
 
-	uint32_t *source = sourceAndTarget + w * h,
-		*target = sourceAndTarget + (w * scale) * (h * scale);
-
 	for (int y = 0; y < h; ++y)
 	{
-		uint32_t *source_line_start = source;
-
 		for (int i = 0; i < scale; ++i)
 		{
-			source = source_line_start;
-
 			for (int x = 0; x < w; ++x)
 			{
-				source -= 1;
-				target -= scale;
-
-				for (int i = 0; i < scale; ++i)
+				for (int j = 0; j < scale; ++j)
 				{
-					target[i] = *source;
+					target[j] = source[x];
 				}
+
+				target += scale;
 			}
 		}
+
+		source += w;
 	}
 }
 
@@ -544,28 +537,30 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 
 	if (scale > 1)
 	{
-		uint32_t image_data_size = originalW * scale * originalH * scale * 4;
-		// Allocate with cache
-		if (image_data_scaled_size_cache == 0 || image_data_size > image_data_scaled_size_cache) {
-			if (image_data_scaled_cache != nullptr) {
-				driver_free(image_data_scaled_cache);
-			}
-			image_data_scaled_cache = (uint32_t *)driver_malloc(image_data_size);
-			image_data_scaled_size_cache = image_data_size;
+		target = (uint32_t *)driver_malloc(originalW * scale * originalH * scale * 4);
+
+		// Retry with lower resolution
+		while (target == nullptr && scale > 1)
+		{
+			scale -= 1;
+			ffnx_warning("%s: Not enough memory, retry with scale=%d\n", __func__, scale);
+			target = (uint32_t *)driver_malloc(originalW * scale * originalH * scale * 4);
 		}
 
-		target = image_data_scaled_cache;
-
-		// convert source data
-		if (target != nullptr)
+		if (target == nullptr)
 		{
-			memcpy(target, rgbaImageData, dataSize);
-			scale_up_image_data_in_place(target, originalW, originalH, scale);
+			return NoTexture;
+		}
+
+		if (scale > 1)
+		{
+			// convert source data
+			scale_up_image_data(rgbaImageData, target, originalW, originalH, scale);
 		}
 	}
 	else if (scale == 0)
 	{
-		return TextureTypes::NoTexture;
+		return NoTexture;
 	}
 
 	*outScale = scale;
@@ -573,7 +568,7 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 
 	TextureTypes ret = drawTextures(textures, tiledTex, palette, target, originalW, originalH, scale);
 
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s tex=(%d, %d) bpp=%d paletteVram=(%d, %d) drawnTextureTypes=0x%X\n", __func__, tiledTex.x(), tiledTex.y(), tiledTex.bpp(), palette.x(), palette.y(), ret);
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s tex=(%d, %d) bpp=%d paletteVram=(%d, %d) drawnTextureTypes=0x%X scale=%d\n", __func__, tiledTex.x(), tiledTex.y(), tiledTex.bpp(), palette.x(), palette.y(), ret, scale);
 
 	return ret;
 }
