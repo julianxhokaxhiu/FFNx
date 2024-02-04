@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.1...master
 
+## FF7
+
+- Renderer: Fixed fog being incorrectly applied to Emerald Weapon battle ( https://github.com/julianxhokaxhiu/FFNx/pull/648 )
+
 ## FF8
 
 - Graphics: Add external textures replacement for magic.fs textures ( https://github.com/julianxhokaxhiu/FFNx/pull/646 )
@@ -23,8 +27,7 @@
 
 ## FF7
 
-- Renderer: Fixed fog being incorrectly applied to Emerald Weapon battle
-- Renderer: Fixed fog rendering not working in underwater worldmap
+- Renderer: Fixed fog rendering not working in underwater worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/639 )
 
 ## FF8
 
