@@ -6,7 +6,9 @@
 
 - Graphics: Add external textures replacement for magic.fs textures ( https://github.com/julianxhokaxhiu/FFNx/pull/646 )
 - Graphics: Fix white textures in battle ( https://github.com/julianxhokaxhiu/FFNx/pull/646 )
-- Input: New option to show PlayStation gamepad icons when a gamepad is used ( https://github.com/julianxhokaxhiu/FFNx/pull/641 )
+- Graphics: Opimize PNG and DDS loading time ( https://github.com/julianxhokaxhiu/FFNx/pull/650 )
+- Graphics: Minimize RAM usage of external textures and prevent crashes with big textures ( https://github.com/julianxhokaxhiu/FFNx/pull/650 )
+- Input: New option to show PlayStation gamepad icons when a gamepad is used ( https://github.com/julianxhokaxhiu/FFNx/pull/641 https://github.com/julianxhokaxhiu/FFNx/pull/650 )
 - Input: Fix mapping of gamepad buttons when modified in the game ( https://github.com/julianxhokaxhiu/FFNx/pull/641 )
 - Input: Fix inverted analog up/down direction for non-XInput controllers ( https://github.com/julianxhokaxhiu/FFNx/pull/647 )
 

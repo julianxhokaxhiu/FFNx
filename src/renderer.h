@@ -476,7 +476,7 @@ public:
 
     void bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normals, uint32_t inCount);
     void bindIndexBuffer(WORD* inIndex, uint32_t inCount);
-    
+
     bgfx::UniformHandle setUniform(RendererUniform uniform, const void* uniformValue);
     void setCommonUniforms();
     void setLightingUniforms();
@@ -486,7 +486,7 @@ public:
     void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
-    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true);
+    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true);
     uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
     bimg::ImageContainer* createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
     bimg::ImageContainer* createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
@@ -565,7 +565,7 @@ public:
     void setSphericalWorldRate(float value = 0.0f);
     void setFogEnabled(bool flag = false);
     bool isFogEnabled();
-    
+
     // Game lighting
     void setGameLightData(light_data* lightdata = nullptr);
 

@@ -1481,22 +1481,38 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			&scale, &image_data_scaled
 		);
 
-		if (save_textures && textureType != TexturePacker::InternalTexture) return false;
+		if (save_textures && textureType != TexturePacker::InternalTexture) {
+			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
+				driver_free(image_data_scaled);
+			}
+
+			return false;
+		}
 
 		if (textureType == TexturePacker::NoTexture)
 		{
+			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
+				driver_free(image_data_scaled);
+			}
+
 			if(VREF(texture_set, ogl.external)) stats.external_textures--;
 			VRASS(texture_set, ogl.external, false);
 		}
 		else if (textureType == TexturePacker::RemoveTexture)
 		{
+			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
+				driver_free(image_data_scaled);
+			}
+
 			return true;
 		}
 		else
 		{
 			VREF(texture_set, ogl.width) = originalWidth * scale;
 			VREF(texture_set, ogl.height) = originalHeight * scale;
-			texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(image_data_scaled), VREF(texture_set, ogl.width), VREF(texture_set, ogl.height));
+			// Data is passed to bgfx, not need to free it here
+			bool copyData = image_data_scaled == image_data;
+			texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(image_data_scaled), VREF(texture_set, ogl.width), VREF(texture_set, ogl.height), 0, RendererTextureType::BGRA, true, copyData);
 		}
 
 		if (textureType == TexturePacker::InternalTexture)
