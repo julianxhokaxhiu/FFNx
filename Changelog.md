@@ -5,6 +5,7 @@
 ## FF7
 
 - Renderer: Fixed fog being incorrectly applied to Emerald Weapon battle ( https://github.com/julianxhokaxhiu/FFNx/pull/648 )
+- Renderer: Preserve world camera state when changing game modes ( https://github.com/julianxhokaxhiu/FFNx/pull/651 )
 
 ## FF8
 
