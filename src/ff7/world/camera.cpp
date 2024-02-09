@@ -166,16 +166,20 @@ namespace ff7::world
         float targetRotationX = -ff7_externals.world_get_camera_rotation_x_74F916() * 360.0f / 4096.0f;
         //ff7_externals.world_get_camera_rotation_x_74F916();
 
-        static float zoomTarget = 10000.0f;        
+        static float zoomTarget = 10000.0f;
+        static int cameraStatusCounter = 0;
         float maxZoomDist = camera.getMaxZoomDist();
         
-        if(world_map_type != SNOWSTORM &&
-           *ff7_externals.world_is_control_enabled_DE6B5C &&
-            ff7_externals.world_get_unknown_flag_75335C())
+        if(world_map_type != SNOWSTORM && ff7_externals.world_get_unknown_flag_75335C())
         {
             targetRotationX = camera.targetRotation.x;
             zoomTarget = std::min(maxZoomDist, std::max(camera.minZoomDist, zoomTarget - camera.getZoomSpeed()));            
-        } else zoomTarget = 10000.0f;
+            cameraStatusCounter = 0;
+        } else 
+        {
+            if (cameraStatusCounter > 0) zoomTarget = 10000.0f;            
+            cameraStatusCounter++;
+        }
 
         const float t = 0.1f * movement_multiplier;     
         camera.rotationOffset.x = (1.0f - t) * camera.rotationOffset.x + t * targetRotationX;
