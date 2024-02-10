@@ -2980,6 +2980,7 @@ struct ff7_externals
 	void (*field_evaluate_encounter_rate_60B2C6)();
 	uint32_t field_animate_3d_models_6392BB;
 	uint32_t field_apply_kawai_op_64A070;
+	uint32_t sub_64EC60;
 	field_model_blink_data* field_model_blink_data_D000C8;
 	void (*field_blink_3d_model_649B50)(field_animation_data*, field_model_blink_data*);
 	short *field_player_model_id;

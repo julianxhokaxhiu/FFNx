@@ -6,6 +6,7 @@
 
 - Renderer: Fixed fog being incorrectly applied to Emerald Weapon battle ( https://github.com/julianxhokaxhiu/FFNx/pull/648 )
 - Renderer: Preserve world camera state when changing game modes ( https://github.com/julianxhokaxhiu/FFNx/pull/651 )
+- Lighting: Fix Temple of the Ancients rolling stones color when `game_lighting` is set to `1` or `2` ( regression since 1.17.0 )
 
 ## FF8
 
