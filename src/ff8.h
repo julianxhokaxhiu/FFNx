@@ -1091,6 +1091,10 @@ struct ff8_externals
 	ff8_menu_callback *menu_callbacks;
 	uint32_t menu_config_controller;
 	uint32_t main_menu_render_sub_4E5550;
+	uint32_t main_menu_controller;
+	uint32_t menu_chocobo_world_controller;
+	uint32_t create_save_file_sub_4C6E50;
+	uint32_t create_save_chocobo_world_file_sub_4C6620;
 	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;
