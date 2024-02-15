@@ -57,7 +57,7 @@ Write-Output "_CHANGELOG_VERSION=${env:_CHANGELOG_VERSION}" >> ${env:GITHUB_ENV}
 
 # Install CMake
 Write-Output "Installing cmake v${env:_WINGET_CMAKE}..."
-winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --uninstall-previous
+winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --uninstall-previous --no-upgrade
 cmake --version
 
 # Install Powershell
