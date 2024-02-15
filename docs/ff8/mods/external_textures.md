@@ -158,10 +158,10 @@ Path: `{mod_path}\field\mapdata\{map name}\{map name}.png`
 
 Example: `mods\Textures\field\mapdata\bccent_1\bccent_1.png`
 
-#### Legacy support for Tomberry's mods
+#### Legacy support for Tonberry's mods
 
 There is an alternative way to override maps, but on some edge cases it can be buggy.
-This is compatible with mods made for [Tomberry](https://forums.qhimm.com/index.php?topic=15945.0).
+This is compatible with mods made for [Tonberry](https://forums.qhimm.com/index.php?topic=15945.0).
 
 Path: `{mod_path}\field\mapdata\{first two letters of map name}\{map name}\{map name}_{number}.png`
 

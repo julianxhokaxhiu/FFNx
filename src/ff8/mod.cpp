@@ -544,7 +544,7 @@ TexturePacker::TextureTypes TextureBackground::drawToImage(
 	const uint8_t imgScale = _texture.scale();
 	const uint32_t imgWidth = mip.m_width / imgScale, imgHeight = mip.m_height / imgScale;
 
-	// Tomberry way
+	// Tonberry way
 	if (_vramPageId >= 0) {
 		const int realOffsetX = (_vramPageId * TEXTURE_WIDTH_BPP16 - offsetX) / (4 >> uint16_t(targetBpp));
 		const int vramPageIdTarget = realOffsetX / TEXTURE_WIDTH_BPP16;
