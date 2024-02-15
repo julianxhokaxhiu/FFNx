@@ -147,7 +147,7 @@ public:
 	bool setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), int textureCount = -1, bool clearOldTexture = true);
 	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId = -1, const char *extension = nullptr, char *found_extension = nullptr);
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
-	bool setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, uint32_t *imageData);
+	void setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim);
 	void animateTextureByCopy(int sourceXBpp2, int y, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY);
 	void forceCurrentPalette(int xBpp2, int y, int8_t paletteId);
 	void clearTiledTexs();

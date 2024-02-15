@@ -57,17 +57,17 @@ Write-Output "_CHANGELOG_VERSION=${env:_CHANGELOG_VERSION}" >> ${env:GITHUB_ENV}
 
 # Install CMake
 Write-Output "Installing cmake v${env:_WINGET_CMAKE}..."
-winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --uninstall-previous --accept-source-agreements --accept-package-agreements --disable-interactivity --force | out-null
 cmake --version
 
 # Install Powershell
 Write-Output "Installing powershell v${env:_WINGET_POWERSHELL}..."
-winget install Microsoft.PowerShell --version ${env:_WINGET_POWERSHELL} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+winget install Microsoft.PowerShell --version ${env:_WINGET_POWERSHELL} --silent --uninstall-previous --accept-source-agreements --accept-package-agreements --disable-interactivity --force | out-null
 pwsh --version
 
 # Install Visual Studio Enterprise
 Write-Output "Installing VisualStudio 2022 Enterprise v${env:_WINGET_VS2022}..."
-winget install Microsoft.VisualStudio.2022.Enterprise --version ${env:_WINGET_VS2022} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+winget install Microsoft.VisualStudio.2022.Enterprise --version ${env:_WINGET_VS2022} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --force | out-null
 
 # Load vcvarsall environment for x86
 $vcvarspath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -prerelease -latest -property InstallationPath
@@ -82,8 +82,8 @@ Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
 [Environment]::SetEnvironmentVariable('VCPKG_ROOT','')
 
 # Add Github Packages registry
-nuget sources add -Name github -Source "https://nuget.pkg.github.com/${env:GITHUB_REPOSITORY_OWNER}/index.json" -Username ${env:GITHUB_REPOSITORY_OWNER} -Password ${env:GITHUB_PACKAGES_PAT} -StorePasswordInClearText
-nuget setApiKey ${env:GITHUB_PACKAGES_PAT} -Source "https://nuget.pkg.github.com/${env:GITHUB_REPOSITORY_OWNER}/index.json"
+nuget sources add -Name github -Source "https://nuget.pkg.github.com/julianxhokaxhiu/index.json" -Username ${env:GITHUB_REPOSITORY_OWNER} -Password ${env:GITHUB_PACKAGES_PAT} -StorePasswordInClearText
+nuget setApiKey ${env:GITHUB_PACKAGES_PAT} -Source "https://nuget.pkg.github.com/julianxhokaxhiu/index.json"
 nuget sources list
 
 # Vcpkg setup

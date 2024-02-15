@@ -456,7 +456,7 @@ save_textures = false
 
 # Dump internal legacy textures to PNG files in the mod_path
 # FF7: There is currently no legacy format
-# FF8: Field backgrounds will be saved in Tomberry's format, instead of FFNx one
+# FF8: Field backgrounds will be saved in Tonberry's format, instead of FFNx one
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 save_textures_legacy = false
 

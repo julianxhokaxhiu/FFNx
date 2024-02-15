@@ -816,22 +816,7 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 	}
 
 	// Redirect internal texl textures
-	uint32_t image_data_size = newTexture.pixelW() * newTexture.h() * 4;
-	uint32_t *image = (uint32_t*)driver_malloc(image_data_size);
-
-	if (image)
-	{
-		if (! tim.toRGBA32MultiPaletteGrid(image, 4, 4, 0, 4, true))
-		{
-			driver_free(image);
-			return;
-		}
-
-		if (! texturePacker.setTextureRedirection(next_texture_name, oldTexture, newTexture, image))
-		{
-			driver_free(image);
-		}
-	}
+	texturePacker.setTextureRedirection(next_texture_name, oldTexture, newTexture, tim);
 
 	*next_texture_name = '\0';
 

@@ -19,6 +19,10 @@
 - Input: Fix mapping of gamepad buttons when modified in the game ( https://github.com/julianxhokaxhiu/FFNx/pull/641 )
 - Input: Fix inverted analog up/down direction for non-XInput controllers ( https://github.com/julianxhokaxhiu/FFNx/pull/647 )
 
+## FF8 Steam
+
+- Misc: Rewrite metadata file when a save file is created to prevent save file loss ( https://github.com/julianxhokaxhiu/FFNx/pull/655 )
+
 # 1.17.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.0...1.17.1

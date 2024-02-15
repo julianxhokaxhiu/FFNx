@@ -376,6 +376,10 @@ void ff8_find_externals()
 	ff8_externals.menu_callbacks = (ff8_menu_callback *)get_absolute_value(ff8_externals.sub_4BDB30, 0x11);
 	ff8_externals.menu_config_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x8);
 	ff8_externals.main_menu_render_sub_4E5550 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x3);
+	ff8_externals.main_menu_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x8);
+	ff8_externals.menu_chocobo_world_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[27].func), 0xB);
+	ff8_externals.create_save_file_sub_4C6E50 = get_relative_call(ff8_externals.main_menu_controller, 0xF8D);
+	ff8_externals.create_save_chocobo_world_file_sub_4C6620 = get_relative_call(ff8_externals.menu_chocobo_world_controller, 0x9F6);
 	ff8_externals.get_text_data = get_relative_call(ff8_externals.main_menu_render_sub_4E5550, 0x203);
 	ff8_externals.sub_4BE4D0 = get_relative_call(ff8_externals.sub_4B3410, 0x68);
 	ff8_externals.sub_4BECC0 = get_relative_call(ff8_externals.sub_4BE4D0, 0x39);

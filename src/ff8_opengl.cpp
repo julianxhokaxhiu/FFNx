@@ -35,6 +35,7 @@
 #include "gamehacks.h"
 #include "vibration.h"
 #include "ff8/file.h"
+#include "metadata.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -863,6 +864,30 @@ char *ff8_get_text_cached_load_game(int pool_id, int cat_id, int text_id, int a4
 	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, load_game_text_cache);
 }
 
+int ff8_create_save_file(int a1, int a2)
+{
+	if (trace_all) ffnx_trace("%s\n", __func__);
+
+	int ret = ((int(*)(int,int))ff8_externals.create_save_file_sub_4C6E50)(a1, a2);
+
+	metadataPatcher.apply();
+
+	return ret;
+}
+
+int ff8_create_save_file_chocobo_world(int unused, int data_source, int offset, size_t size)
+{
+	if (trace_all) ffnx_trace("%s\n", __func__);
+
+	int ret = ((int(*)(int,int,int,size_t))ff8_externals.create_save_chocobo_world_file_sub_4C6620)(unused, data_source, offset, size);
+
+	if (ret > 0) {
+		metadataPatcher.apply();
+	}
+
+	return ret;
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -904,6 +929,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_externals.d3dcaps[2] = true;
 	ff8_externals.d3dcaps[3] = true;
 
+	// Fix save format
 	if (version == VERSION_FF8_12_FR_NV || version == VERSION_FF8_12_SP_NV || version == VERSION_FF8_12_IT_NV)
 	{
 		unsigned char ff8fr_savefix1[] = "\xC0\xEA\x03\x8A\x41\x6D\x80\xE2"
@@ -944,6 +970,16 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		patch_code_byte(ff8_externals.sub_54FDA0 + 0x17F, 0x70);
 		patch_code_byte(ff8_externals.sub_54FDA0 + 0x1C7, 0x70);
 		patch_code_byte(ff8_externals.sub_54FDA0 + 0x1DB, 0x70);
+	}
+
+	// Update the metadata file when a save file is modified
+	if (steam_edition)
+	{
+		replace_call(ff8_externals.main_menu_controller + 0xF8D, ff8_create_save_file);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x9F6, ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0xFA3, ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x11BB, ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13EC, ff8_create_save_file_chocobo_world);
 	}
 
 	// don't set system speaker config to stereo
