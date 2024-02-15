@@ -158,17 +158,18 @@ Once the project is built you can find the output in this path: `.build/bin`
 1. Go inside the `C:\vcpkg` folder and double click `bootstrap-vcpkg.bat`
 2. Open a `cmd` window in `C:\vcpkg` and run the following command: `vcpkg integrate install`
 
-### OPTIONAL: NuGet
+### NuGet
 
 > **Please note:**
 >
-> This step is completely optional but you can make use of it if you prefer to use your own Github Free package registry plan.
+> This step will speed up your compilation times by avoiding the vcpkg dependencies rebuild.
 
 0. Make sure you have [NuGet CLI installed](https://learn.microsoft.com/en-us/nuget/install-nuget-client-tools?tabs=windows#install-nugetexe).
 1. [Create a Personal Access token ( classic )](https://github.com/settings/tokens/new) with the `write:packages` permission.
-2. Open a `cmd` window and run the following command ( replace `YOUR_GITHUB_USERNAME` and `YOUR_GITHUB_PAT` accordingly ):
+2. Open a `cmd` window and run the following commands ( replace `YOUR_GITHUB_USERNAME` and `YOUR_GITHUB_PAT` accordingly ):
 ```pwsh
-nuget sources add -Name github -Source "https://nuget.pkg.github.com/YOUR_GITHUB_USERNAME/index.json" -Username YOUR_GITHUB_USERNAME -Password YOUR_GITHUB_PAT -StorePasswordInClearText
+$ nuget sources add -Name github -Source "https://nuget.pkg.github.com/julianxhokaxhiu/index.json" -Username YOUR_GITHUB_USERNAME -Password YOUR_GITHUB_PAT -StorePasswordInClearText
+$ nuget setApiKey YOUR_GITHUB_PAT -Source "https://nuget.pkg.github.com/julianxhokaxhiu/index.json"
 ```
 
 ### Visual Studio
