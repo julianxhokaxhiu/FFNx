@@ -187,7 +187,7 @@ bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, 
 	return tex.mod() != nullptr;
 }
 
-bool TexturePacker::setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, uint32_t *imageData)
+void TexturePacker::setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim)
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s: %s old=(%d, %d, %d, %d) <= new=(%d, %d, %d, %d)\n", __func__, name,
 		oldTexture.x(), oldTexture.y(), oldTexture.w(), oldTexture.h(),
@@ -199,7 +199,7 @@ bool TexturePacker::setTextureRedirection(const char *name, const TextureInfos &
 	{
 		ffnx_warning("TexturePacker::%s cannot find original texture of redirection\n", __func__);
 
-		return false;
+		return;
 	}
 
 	auto it = _textures.find(textureId);
@@ -208,7 +208,7 @@ bool TexturePacker::setTextureRedirection(const char *name, const TextureInfos &
 	{
 		ffnx_warning("TexturePacker::%s cannot find original texture of redirection 2\n", __func__);
 
-		return false;
+		return;
 	}
 
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s: found %s\n", __func__, it->second.printableName());
@@ -233,13 +233,26 @@ bool TexturePacker::setTextureRedirection(const char *name, const TextureInfos &
 		if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s: use internal texture\n", __func__);
 
 		delete mod;
+
+		uint32_t *imageData = (uint32_t*)driver_malloc(newTexture.pixelW() * newTexture.h() * 4);
+
+		if (!imageData)
+		{
+			return;
+		}
+
+		if (!tim.toRGBA32MultiPaletteGrid(imageData, 4, 4, 0, 4, true))
+		{
+			driver_free(imageData);
+
+			return;
+		}
+
 		// Use internal texture
 		red.setMod(new TextureRawImage(red, imageData, newTexture.pixelW(), newTexture.h()));
 	}
 
 	_textures[textureId].setRedirection(redirectionTextureId, red);
-
-	return true;
 }
 
 void TexturePacker::animateTextureByCopy(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
