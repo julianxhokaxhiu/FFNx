@@ -56,19 +56,18 @@ Write-Output "_IS_GITHUB_RELEASE=${env:_IS_GITHUB_RELEASE}" >> ${env:GITHUB_ENV}
 Write-Output "_CHANGELOG_VERSION=${env:_CHANGELOG_VERSION}" >> ${env:GITHUB_ENV}
 
 # Install CMake
-Get-Command cmake
 Write-Output "Installing cmake v${env:_WINGET_CMAKE}..."
-winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --scope machine | out-null
 cmake --version
 
 # Install Powershell
 Write-Output "Installing powershell v${env:_WINGET_POWERSHELL}..."
-winget install Microsoft.PowerShell --version ${env:_WINGET_POWERSHELL} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+winget install Microsoft.PowerShell --version ${env:_WINGET_POWERSHELL} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --scope machine | out-null
 pwsh --version
 
 # Install Visual Studio Enterprise
 Write-Output "Installing VisualStudio 2022 Enterprise v${env:_WINGET_VS2022}..."
-winget install Microsoft.VisualStudio.2022.Enterprise --version ${env:_WINGET_VS2022} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity | out-null
+winget install Microsoft.VisualStudio.2022.Enterprise --version ${env:_WINGET_VS2022} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --scope machine | out-null
 
 # Load vcvarsall environment for x86
 $vcvarspath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -prerelease -latest -property InstallationPath
