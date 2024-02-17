@@ -1,6 +1,6 @@
 name: FFNx
 
-run-name: 1.17.1.${{ github.run_number }}
+run-name: 1.18.0.${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -20,7 +20,6 @@ env:
   _RELEASE_VERSION: v0
   _RELEASE_CONFIGURATION: Release
   _BUILD_BRANCH: "${{ github.ref }}"
-  _BUILD_VERSION: "1.17.1.${{ github.run_number }}"
   _CHANGELOG_VERSION: "0"
   # GIT: Fix reporting from stderr to stdout
   GIT_REDIRECT_STDERR: 2>&1
@@ -51,6 +50,7 @@ jobs:
       run: ".github/workflows/build.ps1"
       shell: pwsh
       env:
+        _BUILD_VERSION: "1.18.0.${{ github.run_number }}"
         GITHUB_PACKAGES_PAT: ${{ secrets.GITHUB_TOKEN }}
     - name: Publish PR artifacts
       if: env._IS_GITHUB_RELEASE == 'false' && success()
