@@ -185,6 +185,17 @@ void ff8_find_externals()
 	ff8_externals.battle_open_file = get_relative_call(ff8_externals.battle_open_file_wrapper, 0x14);
 	ff8_externals.battle_filenames = (char **)get_absolute_value(ff8_externals.battle_open_file, 0x11);
 
+	ff8_externals.sub_47D890 = get_relative_call(ff8_externals.sub_506CF0, 0x59);
+	ff8_externals.sub_4A94D0 = get_relative_call(ff8_externals.sub_47D890, 0x9);
+	ff8_externals.sub_4BCBE0 = get_relative_call(ff8_externals.sub_4A94D0, 0x1E0);
+	ff8_externals.sub_4C8B10 = get_relative_call(ff8_externals.sub_4BCBE0, 0x8E);
+	ff8_externals.battle_pause_sub_4CD140 = get_absolute_value(ff8_externals.sub_4C8B10, 0x3);
+	ff8_externals.battle_pause_window_sub_4CD350 = get_relative_call(ff8_externals.battle_pause_sub_4CD140, JP_VERSION ? 0x1F1 : 0x225);
+	ff8_externals.is_alternative_pause_menu = (uint32_t *)get_absolute_value(ff8_externals.battle_pause_window_sub_4CD350, 0x6B);
+	ff8_externals.pause_menu_option_state = (uint32_t *)get_absolute_value(ff8_externals.battle_pause_window_sub_4CD350, 0x9C);
+	ff8_externals.battle_menu_state = (void *)get_absolute_value(ff8_externals.battle_pause_window_sub_4CD350, 0x29);
+	ff8_externals.sub_4A7210 = get_relative_call(ff8_externals.battle_pause_window_sub_4CD350, 0xC3);
+
 	ff8_externals.battle_load_textures_sub_500900 = get_relative_call(ff8_externals.sub_47CCB0, 0x98D);
 	ff8_externals.loc_5005A0 = ff8_externals.battle_load_textures_sub_500900 + 0x9D + 0x4 + *((int32_t *)(ff8_externals.battle_load_textures_sub_500900 + 0x9D));
 	ff8_externals.battle_upload_texture_to_vram = get_relative_call(ff8_externals.loc_5005A0, 0xD1);
@@ -227,6 +238,8 @@ void ff8_find_externals()
 	ff8_externals.get_command_key = get_relative_call(ff8_externals.draw_controller_or_keyboard_icons, 0x31);
 	ff8_externals.sub_49BB30 = get_relative_call(ff8_externals.ff8_draw_icon_or_key1, 0xF6);
 	ff8_externals.vibration_apply = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xB4);
+	ff8_externals.vibration_set_is_enabled = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xF3);
+	ff8_externals.vibration_get_is_enabled = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xA9);
 	ff8_externals.get_keyon = (int(*)(int, int))get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xC9);
 	ff8_externals.get_vibration_capability = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0xE3);
 	ff8_externals.vibrate_data_main = (uint8_t **)get_absolute_value(uint32_t(ff8_externals.pause_menu_with_vibration), 0x261);
@@ -374,9 +387,14 @@ void ff8_find_externals()
 	ff8_externals.sub_4B3140 = get_relative_call(ff8_externals.sub_4B3310, 0xC8);
 	ff8_externals.sub_4BDB30 = get_relative_call(ff8_externals.sub_4B3140, 0x4);
 	ff8_externals.menu_callbacks = (ff8_menu_callback *)get_absolute_value(ff8_externals.sub_4BDB30, 0x11);
+	ff8_externals.menu_config_render = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x3);
+	ff8_externals.menu_config_render_submenu = get_relative_call(ff8_externals.menu_config_render, 0x101);
 	ff8_externals.menu_config_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x8);
+	ff8_externals.menu_config_input_desc = (ff8_menu_config_input *)get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x39);
+	ff8_externals.menu_config_input_desc_keymap = (ff8_menu_config_input_keymap *)get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x110);
 	ff8_externals.main_menu_render_sub_4E5550 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x3);
 	ff8_externals.main_menu_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x8);
+	ff8_externals.sub_4C2FF0 = get_relative_call(uint32_t(ff8_externals.menu_callbacks[16].func), 0x2B);
 	ff8_externals.menu_chocobo_world_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[27].func), 0xB);
 	ff8_externals.create_save_file_sub_4C6E50 = get_relative_call(ff8_externals.main_menu_controller, JP_VERSION ? 0x1004 : 0xF8D);
 	ff8_externals.create_save_chocobo_world_file_sub_4C6620 = get_relative_call(ff8_externals.menu_chocobo_world_controller, 0x9F6);
