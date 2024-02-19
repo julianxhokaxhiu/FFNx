@@ -408,7 +408,7 @@ namespace ff7::world {
             {
                 if(player_model_id == HIGHWIND)
                     ff7_externals.world_run_special_opcode_7640BC(6);
-                else if(player_model_id & (CLOUD | TIFA | CID | BUGGY) && ff7_externals.world_get_player_walkmap_type() != 14)
+                else if((player_model_id ==  CLOUD || player_model_id ==  TIFA || player_model_id ==  CID || player_model_id == BUGGY) && ff7_externals.world_get_player_walkmap_type() != 14)
                 {
                     ff7_externals.world_set_camera_fade_speed_755B97(16);
                     ff7_externals.world_set_world_control_lock_74D438(0, 1);
