@@ -6,6 +6,10 @@
 
 - Renderer: Fixed menu not working when using external worldmap mesh ( https://github.com/julianxhokaxhiu/FFNx/pull/657 )
 
+## FF8 Steam
+
+- Misc: Fix crash for the Japanese version ( https://github.com/julianxhokaxhiu/FFNx/pull/663 )
+
 # 1.18.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.1...1.18.0

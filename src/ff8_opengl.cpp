@@ -975,7 +975,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Update the metadata file when a save file is modified
 	if (steam_edition)
 	{
-		replace_call(ff8_externals.main_menu_controller + 0xF8D, ff8_create_save_file);
+		replace_call(ff8_externals.main_menu_controller + (JP_VERSION ? 0x1004 : 0xF8D), ff8_create_save_file);
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x9F6, ff8_create_save_file_chocobo_world);
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0xFA3, ff8_create_save_file_chocobo_world);
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x11BB, ff8_create_save_file_chocobo_world);
