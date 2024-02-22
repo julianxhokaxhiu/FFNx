@@ -26,7 +26,7 @@ env:
   # Tools versions
   _WINGET_CMAKE: 3.28.3
   _WINGET_POWERSHELL: 7.4.1
-  _WINGET_VS2022: 17.8.6
+  _WINGET_VS2022: 17.9.1
 
 jobs:
   FFNx:
