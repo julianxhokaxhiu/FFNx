@@ -8,6 +8,10 @@
 - Widescreen: Fixed scripted camera clipping when widescreen enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/664 )
 - Input: Fixed auto-run not working sometimes on diagonals ( https://github.com/julianxhokaxhiu/FFNx/pull/666 )
 
+## Steam
+
+- Metadata: Fixes randomly disappearing save files, by rewriting completely the engine and patching `metadata.xml` only for the save file where the player saves
+
 ## FF8 Steam
 
 - Misc: Fix crash for the Japanese version ( https://github.com/julianxhokaxhiu/FFNx/pull/663 )

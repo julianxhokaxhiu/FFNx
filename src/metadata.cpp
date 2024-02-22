@@ -24,191 +24,180 @@
 Metadata metadataPatcher;
 
 // PRIVATE
-void Metadata::updateFF7()
+void Metadata::loadXml()
+{
+    ffnx_trace("Metadata: loading metadata.xml\n");
+
+    // Load Metadata
+    doc.load_file(savePath);
+}
+
+void Metadata::saveXml()
+{
+    ffnx_trace("Metadata: saving metadata.xml\n");
+
+    // Save Metadata
+    doc.save_file(savePath);
+}
+
+void Metadata::calcNow()
+{
+    std::chrono::milliseconds nowMS = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
+
+    now = std::to_string(nowMS.count());
+}
+
+// PUBLIC
+void Metadata::init()
+{
+    ffnx_trace("Metadata: Initializing manager.\n");
+
+    // Get Save Path
+    get_userdata_path(userPath, sizeof(userPath), true);
+
+    // Get Metadata Path
+    strcpy(savePath, userPath);
+    PathAppendA(savePath, "metadata.xml");
+
+    // Save userID
+    userID.assign(strrchr(userPath, '_') + 1);
+}
+
+void Metadata::updateFF7(uint8_t save)
 {
     char currentSave[260]{ 0 };
-    BYTE dataBuffer[64 * 1024 + 8];
-    int dataSize = 0;
+    BYTE dataBuffer[64 * 1024 + 8]{0};
+    int dataSize = userID.length();
+
+    loadXml();
+
+    // Append save file name
+    strcpy(currentSave, userPath);
+    sprintf(currentSave + strlen(currentSave), R"(\save%02i.ff7)", save);
 
     // Hash existing save files
-    for (uint32_t idx = 0; idx < 10; idx++)
+    if (fileExists(currentSave))
     {
-        dataSize = userID.length();
-        memset(dataBuffer, 0, sizeof(dataBuffer));
-        strcpy(currentSave, savePath);
+        ffnx_trace("Metadata: calculating hash for %s\n", currentSave);
 
-        // Append save file name
-        sprintf(currentSave + strlen(currentSave), R"(\save%02i.ff7)", idx);
+        FILE* file = fopen(currentSave, "rb");
 
-        if (fileExists(currentSave))
-        {
-            FILE* file = fopen(currentSave, "rb");
+        fseek(file, 0, SEEK_END);
+        int fileSize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        fread(dataBuffer, 1, fileSize, file);
+        fclose(file);
 
-            fseek(file, 0, SEEK_END);
-            int fileSize = ftell(file);
-            fseek(file, 0, SEEK_SET);
-            fread(dataBuffer, 1, fileSize, file);
-            fclose(file);
+        memcpy(dataBuffer + fileSize, userID.data(), userID.length());
 
-            memcpy(dataBuffer + fileSize, userID.data(), userID.length());
-
-            dataSize += fileSize;
-        }
-        else
-        {
-            memcpy(dataBuffer, userID.data(), userID.length());
-        }
-
-        // Hash to MD5
-        MD5 md5(dataBuffer, dataSize);
-
-        saveHash.push_back(md5.hexdigest());
+        dataSize += fileSize;
     }
+    else
+    {
+        memcpy(dataBuffer, userID.data(), userID.length());
+    }
+    MD5 md5(dataBuffer, dataSize);
 
     // Update metadata
-    int saveNumber;
-
+    calcNow();
     for (pugi::xml_node gamestatus : doc.children())
     {
         for (pugi::xml_node savefiles : gamestatus.children())
         {
-            if (strcmp(savefiles.name(), "savefiles") == 0)
+            if (std::atoi(savefiles.attribute("block").value()) == save)
             {
-                saveNumber = std::atoi(savefiles.attribute("block").value()) - 1;
-            }
+                ffnx_trace("Metadata: updating timestamp and signature for %s\n", currentSave);
 
-            for (pugi::xml_node child : savefiles.children())
-            {
-                if (strcmp(child.name(), "timestamp") == 0)
+                for (pugi::xml_node child : savefiles.children())
                 {
-                    child.text().set(now.data());
-                }
+                    if (strcmp(child.name(), "timestamp") == 0)
+                    {
+                        child.text().set(now.data());
+                    }
 
-                if (strcmp(child.name(), "signature") == 0)
-                {
-                    child.text().set(saveHash[saveNumber].data());
+                    if (strcmp(child.name(), "signature") == 0)
+                    {
+                        child.text().set(md5.hexdigest().data());
+                    }
                 }
             }
         }
     }
+
+    // Flush
+    saveXml();
 }
 
-void Metadata::updateFF8()
+void Metadata::updateFF8(uint8_t slot, uint8_t save)
 {
     char currentSave[260]{ 0 };
-    BYTE dataBuffer[8 * 1024 + 8];
-    int dataSize = 0;
-    int slotNumber = 1;
+    BYTE dataBuffer[8 * 1024 + 8]{0};
+    int dataSize = userID.length();
 
-    // Hash existing save files
-    for (uint32_t idx = 0; idx < 61; idx++)
-    {
-        dataSize = userID.length();
-        memset(dataBuffer, 0, sizeof(dataBuffer));
-        strcpy(currentSave, savePath);
+    loadXml();
 
-        if (idx == 30) slotNumber = 2;
-
-        // Append save file name
-        if (idx == 60) {
-            strcpy(currentSave + strlen(currentSave), "\\chocorpg.ff8");
-        } else {
-            sprintf(currentSave + strlen(currentSave), R"(\slot%d_save%02i.ff8)", slotNumber, (slotNumber == 2 ? idx - 30 : idx) + 1);
-        }
-
-        if (fileExists(currentSave))
-        {
-            FILE* file = fopen(currentSave, "rb");
-
-            fseek(file, 0, SEEK_END);
-            int fileSize = ftell(file);
-            fseek(file, 0, SEEK_SET);
-            fread(dataBuffer, 1, fileSize, file);
-            fclose(file);
-
-            memcpy(dataBuffer + fileSize, userID.data(), userID.length());
-
-            dataSize += fileSize;
-        }
-        else
-        {
-            memcpy(dataBuffer, userID.data(), userID.length());
-        }
-
-        // Hash to MD5
-        MD5 md5(dataBuffer, dataSize);
-
-        saveHash.push_back(md5.hexdigest());
+    // Append save file name
+    strcpy(currentSave, userPath);
+    if (slot > 2) {
+        strcpy(currentSave + strlen(currentSave), "\\chocorpg.ff8");
+    } else {
+        sprintf(currentSave + strlen(currentSave), R"(\slot%d_save%02i.ff8)", slot, save);
     }
 
-    // Update metadata
-    int saveNumber;
+    // Hash existing save files
+    if (fileExists(currentSave))
+    {
+        ffnx_trace("Metadata: calculating hash for %s\n", currentSave);
 
+        FILE* file = fopen(currentSave, "rb");
+
+        fseek(file, 0, SEEK_END);
+        int fileSize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        fread(dataBuffer, 1, fileSize, file);
+        fclose(file);
+
+        memcpy(dataBuffer + fileSize, userID.data(), userID.length());
+
+        dataSize += fileSize;
+    }
+    else
+    {
+        memcpy(dataBuffer, userID.data(), userID.length());
+    }
+    MD5 md5(dataBuffer, dataSize);
+
+    // Update metadata
+    calcNow();
     for (pugi::xml_node gamestatus : doc.children())
     {
         for (pugi::xml_node savefile : gamestatus.children())
         {
-            if (strcmp(savefile.name(), "savefile") == 0)
+            if ((
+                strcmp(savefile.attribute("type").value(), "choco") == 0 && slot > 2) ||
+                (std::atoi(savefile.attribute("num").value()) == save && std::atoi(savefile.attribute("slot").value()) == slot)
+            )
             {
-                if (strcmp(savefile.attribute("type").value(), "choco") == 0)
-                {
-                    saveNumber = 30;
-                    slotNumber = 2;
-                }
-                else
-                {
-                    saveNumber = std::atoi(savefile.attribute("num").value()) - 1;
-                    slotNumber = std::atoi(savefile.attribute("slot").value());
-                }
-            }
+                ffnx_trace("Metadata: updating timestamp and signature for %s\n", currentSave);
 
-            for (pugi::xml_node child : savefile.children())
-            {
-                if (strcmp(child.name(), "timestamp") == 0)
+                for (pugi::xml_node child : savefile.children())
                 {
-                    child.text().set(now.data());
-                }
+                    if (strcmp(child.name(), "timestamp") == 0)
+                    {
+                        child.text().set(now.data());
+                    }
 
-                if (strcmp(child.name(), "signature") == 0)
-                {
-                    child.text().set(saveHash[saveNumber + (slotNumber == 2 ? 30 : 0)].data());
+                    if (strcmp(child.name(), "signature") == 0)
+                    {
+                        child.text().set(md5.hexdigest().data());
+                    }
                 }
             }
         }
     }
-}
 
-// PUBLIC
-void Metadata::apply()
-{
-    ffnx_trace("Applying required metadata.xml patch to preserve save files.\n");
-
-    char metadataPath[260]{ 0 };
-    std::chrono::milliseconds nowMS = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-        );
-
-    now = std::to_string(nowMS.count());
-
-    // Get Save Path
-    get_userdata_path(savePath, sizeof(savePath), true);
-
-    // Get Metadata Path
-    strcpy(metadataPath, savePath);
-    PathAppendA(metadataPath, "metadata.xml");
-
-    // Save userID
-    userID.assign(strrchr(savePath, '_') + 1);
-
-    // Load Metadata
-    doc.load_file(metadataPath);
-
-    // Update Metadata
-    if (ff8)
-        updateFF8();
-    else
-        updateFF7();
-
-    // Save Metadata
-    doc.save_file(metadataPath);
+    // Flush
+    saveXml();
 }

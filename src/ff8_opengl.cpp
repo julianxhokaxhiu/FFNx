@@ -864,26 +864,24 @@ char *ff8_get_text_cached_load_game(int pool_id, int cat_id, int text_id, int a4
 	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, load_game_text_cache);
 }
 
-int ff8_create_save_file(int a1, int a2)
+int ff8_create_save_file(int slot, char* save)
 {
-	if (trace_all) ffnx_trace("%s\n", __func__);
+	int ret = ((int(*)(int,char*))ff8_externals.create_save_file_sub_4C6E50)(slot, save);
 
-	int ret = ((int(*)(int,int))ff8_externals.create_save_file_sub_4C6E50)(a1, a2);
-
-	metadataPatcher.apply();
+	uint8_t savefile_slot = slot + 1;
+	uint8_t savefile_save = atoi(&save[strlen(save) - 2]) + 1;
+	ffnx_trace("Save: user saved in slot:%u,save:%u\n", savefile_slot, savefile_save);
+	metadataPatcher.updateFF8(savefile_slot, savefile_save);
 
 	return ret;
 }
 
 int ff8_create_save_file_chocobo_world(int unused, int data_source, int offset, size_t size)
 {
-	if (trace_all) ffnx_trace("%s\n", __func__);
-
 	int ret = ((int(*)(int,int,int,size_t))ff8_externals.create_save_chocobo_world_file_sub_4C6620)(unused, data_source, offset, size);
 
-	if (ret > 0) {
-		metadataPatcher.apply();
-	}
+	ffnx_trace("Save: user saved in slot:choco\n");
+	if (ret > 0) metadataPatcher.updateFF8(3, 0);
 
 	return ret;
 }

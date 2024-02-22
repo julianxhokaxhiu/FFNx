@@ -39,14 +39,17 @@ private:
 
 	std::string now;
 	std::string userID;
+	char userPath[260]{ 0 };
 	char savePath[260]{ 0 };
-	std::vector<std::string> saveHash;
 
-	void updateFF7();
-	void updateFF8();
+	void calcNow();
+	void loadXml();
+	void saveXml();
 
 public:
-	void apply();
+	void init();
+	void updateFF7(uint8_t save);
+	void updateFF8(uint8_t slot, uint8_t save);
 };
 
 extern Metadata metadataPatcher;
