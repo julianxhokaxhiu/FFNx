@@ -6,6 +6,7 @@
 
 - Renderer: Fixed menu not working when using external worldmap mesh ( https://github.com/julianxhokaxhiu/FFNx/pull/657 )
 - Widescreen: Fixed scripted camera clipping when widescreen enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/664 )
+- Input: Fixed auto-run not working sometimes on diagonals ( https://github.com/julianxhokaxhiu/FFNx/pull/666 )
 
 ## FF8 Steam
 

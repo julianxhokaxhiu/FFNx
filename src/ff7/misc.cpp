@@ -381,8 +381,10 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 			// Update the player intent based on the analogue movement
 			if (enable_auto_run)
 			{
-				if (abs(gamepad.leftStickX) > run_threshold || abs(gamepad.leftStickY) > run_threshold) gamepad_analogue_intent = INTENT_RUN;
-				else if(abs(gamepad.leftStickX) > analog_threshold || abs(gamepad.leftStickY) > analog_threshold) gamepad_analogue_intent = INTENT_WALK;
+				bx::Vec3 joyDir = {gamepad.leftStickX, gamepad.leftStickY, 0.0f};
+				auto joyLength = std::min(bx::length(joyDir), 1.0f);
+				if (joyLength > run_threshold) gamepad_analogue_intent = INTENT_RUN;
+				else if(joyLength > analog_threshold) gamepad_analogue_intent = INTENT_WALK;
 			}
 		}
 	}
@@ -418,19 +420,11 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 			// Update the player intent based on the analogue movement
 			if (enable_auto_run)
 			{
-				if (
-					(joystick.GetState()->lY < joystick.GetDeadZone(-run_threshold)) ||
-					(joystick.GetState()->lY > joystick.GetDeadZone(run_threshold)) ||
-					(joystick.GetState()->lX < joystick.GetDeadZone(-run_threshold)) ||
-					(joystick.GetState()->lX > joystick.GetDeadZone(run_threshold))
-				)
-					gamepad_analogue_intent = INTENT_RUN;
-				else if (
-					(joystick.GetState()->lY < joystick.GetDeadZone(-analog_threshold)) ||
-					(joystick.GetState()->lY > joystick.GetDeadZone(analog_threshold)) ||
-					(joystick.GetState()->lX < joystick.GetDeadZone(-analog_threshold)) ||
-					(joystick.GetState()->lX > joystick.GetDeadZone(analog_threshold))
-				) gamepad_analogue_intent = INTENT_WALK;
+				bx::Vec3 joyDir = {static_cast<float>(joystick.GetState()->lX) / static_cast<float>(joystick.GetDeadZone(1.0f)), 
+				static_cast<float>(joystick.GetState()->lY) / static_cast<float>(joystick.GetDeadZone(1.0f)), 0.0f};
+				auto joyLength = std::min(bx::length(joyDir), 1.0f);
+				if (joyLength > run_threshold) gamepad_analogue_intent = INTENT_RUN;
+				else if(joyLength > analog_threshold) gamepad_analogue_intent = INTENT_WALK;
 			}
 		}
 	}
