@@ -2,15 +2,15 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.18.0...master
 
-## FF7
-
-- Renderer: Fixed menu not working when using external worldmap mesh ( https://github.com/julianxhokaxhiu/FFNx/pull/657 )
-- Widescreen: Fixed scripted camera clipping when widescreen enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/664 )
-- Input: Fixed auto-run not working sometimes on diagonals ( https://github.com/julianxhokaxhiu/FFNx/pull/666 )
-
-## Steam
+## Common
 
 - Metadata: Fixes randomly disappearing save files, by rewriting completely the engine and patching `metadata.xml` only for the save file where the player saves
+
+## FF7
+
+- Input: Fixed auto-run not working sometimes on diagonals ( https://github.com/julianxhokaxhiu/FFNx/pull/666 )
+- Renderer: Fixed menu not working when using external worldmap mesh ( https://github.com/julianxhokaxhiu/FFNx/pull/657 )
+- Widescreen: Fixed scripted camera clipping when widescreen enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/664 )
 
 ## FF8 Steam
 
