@@ -34,6 +34,9 @@ jobs:
     timeout-minutes: 1440
     strategy:
       max-parallel: 1
+    permissions:
+      actions: write
+      contents: read
     steps:
     - name: Set Git Config
       run: |
@@ -124,3 +127,16 @@ jobs:
         _MAP_FFNX_QHIMM_FF8: "${{ secrets._FFNX_QHIMM_FF8 }}"
       run: ".github/workflows/alert.ps1"
       shell: pwsh
+    - name: Cleanup previous release workflows
+      uses: Mattraks/delete-workflow-runs@v2
+      if: env._IS_GITHUB_RELEASE == 'true' && env._IS_BUILD_CANARY == 'false' && success()
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        retain_days: 1
+        keep_minimum_runs: 1
+        delete_run_by_conclusion_pattern: >-
+          ${{
+            !contains(github.event.inputs.delete_run_by_name_pattern, '1.22.0')
+            && github.event.inputs.delete_run_by_name_pattern
+          }}
