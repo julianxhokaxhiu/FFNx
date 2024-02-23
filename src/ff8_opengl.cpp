@@ -870,7 +870,7 @@ int ff8_create_save_file(int slot, char* save)
 
 	uint8_t savefile_slot = slot + 1;
 	uint8_t savefile_save = atoi(&save[strlen(save) - 2]) + 1;
-	ffnx_trace("Save: user saved in slot:%u,save:%u\n", savefile_slot, savefile_save);
+	ffnx_trace("Save: user saved in slot%d_save%02i\n", savefile_slot, savefile_save);
 	metadataPatcher.updateFF8(savefile_slot, savefile_save);
 
 	return ret;

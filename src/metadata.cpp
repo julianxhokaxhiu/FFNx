@@ -106,7 +106,7 @@ void Metadata::updateFF7(uint8_t save)
     {
         for (pugi::xml_node savefiles : gamestatus.children())
         {
-            if (std::atoi(savefiles.attribute("block").value()) == save)
+            if (std::atoi(savefiles.attribute("block").value()) == (save+1))
             {
                 ffnx_trace("Metadata: updating timestamp and signature for %s\n", currentSave);
 
