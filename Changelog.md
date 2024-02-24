@@ -9,9 +9,9 @@
 ## FF7
 
 - Input: Fixed auto-run not working sometimes on diagonals ( https://github.com/julianxhokaxhiu/FFNx/pull/666 )
+- Input: Fixed not being able to place the flags during snowstorm ( https://github.com/julianxhokaxhiu/FFNx/pull/667 )
 - Renderer: Fixed menu not working when using external worldmap mesh ( https://github.com/julianxhokaxhiu/FFNx/pull/657 )
 - Widescreen: Fixed scripted camera clipping when widescreen enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/664 )
-- Input: Fixed not being able to place the flags during snowstorm ( https://github.com/julianxhokaxhiu/FFNx/pull/667 )
 
 ## FF8 Steam
 
