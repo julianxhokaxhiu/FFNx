@@ -83,7 +83,7 @@ jobs:
         removeArtifacts: true
         name: "${{ env._RELEASE_NAME }}-${{ env._RELEASE_VERSION }}"
         body: |
-          See https://github.com/julianxhokaxhiu/FFNx/blob/master/Changelog.md#$(_CHANGELOG_VERSION)
+          See https://github.com/julianxhokaxhiu/FFNx/blob/master/Changelog.md#${{ env._CHANGELOG_VERSION }}
     - name: Send alerts
       if: env._IS_GITHUB_RELEASE == 'true' && success()
       env:
