@@ -43,7 +43,7 @@ namespace ff7::world
         {
             auto flag = current_key_input & ANY_DIRECTIONAL_KEY;
             int delta_camera_step = ff7_externals.world_snowstorm_get_camera_movement_758B12(flag,
-                                    !is_key_released(current_key_input, prev_key_input, CIRCLE));
+                                    !((current_key_input & CIRCLE) == 0 || (prev_key_input & CIRCLE) != 0));
             *ff7_externals.world_camera_front_DFC484 += delta_camera_step;
         }
         else
@@ -131,7 +131,7 @@ namespace ff7::world
                 camera.rotationOffset.y += 360;
             else if (diff < - 180)  camera.rotationOffset.y -= 360;
 
-            const float t = 0.1f * movement_multiplier;
+            const float t = 0.05f * movement_multiplier;
             camera.rotationOffset.y = (1.0f - t) * camera.rotationOffset.y + t * targetRotationY;
 
             *ff7_externals.world_camera_rotation_y_DFC474 = camera.rotationOffset.y * 4096.0f / 360.0f;
@@ -181,7 +181,7 @@ namespace ff7::world
             cameraStatusCounter++;
         }
 
-        const float t = 0.1f * movement_multiplier;     
+        const float t = 0.05f * movement_multiplier;     
         camera.rotationOffset.x = (1.0f - t) * camera.rotationOffset.x + t * targetRotationX;
 
         bx::Vec3 up = { 0, 1, 0 };
