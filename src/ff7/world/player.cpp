@@ -188,7 +188,7 @@ namespace ff7::world {
                     }
                     else
                     {
-                        const float rotSpeedXMax = worldmap_type == UNDERWATER || player_model_id == SUBMARINE ? 24.0f : 32.0f;
+                        const float rotSpeedXMax = worldmap_type == UNDERWATER || player_model_id == SUBMARINE ? 24.0f : player_model_id == BUGGY ? 64.0f : 32.0f;
                         float rotSpeedX = 0.0f;
                         if (std::abs(joyDir.x) > 0.0)
                             rotSpeedX = rotSpeedXMax * joyDir.x / common_frame_multiplier;

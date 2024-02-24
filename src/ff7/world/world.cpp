@@ -250,6 +250,7 @@ namespace ff7::world
             //if (enable_lighting)
             {
                 replace_call_function((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x13B, ff7::world::draw_shadow);
+                replace_call_function((uint32_t)ff7_externals.world_wm3_snowstorm_draw_all_74C589 + 0xB8, ff7::world::draw_shadow);
             }
         }
     }    
