@@ -58,6 +58,31 @@ jobs:
       with:
         name: "${{ env._RELEASE_NAME }}-${{ env._RELEASE_VERSION }}"
         path: ".dist/*.zip"
+    - name: VirusTotal Scan
+      id: vt-scan
+      if: env._IS_GITHUB_RELEASE == 'true' && success()
+      uses: crazy-max/ghaction-virustotal@v4
+      with:
+        vt_api_key: ${{ secrets._VT_API_KEY }}
+        files: ".dist/*.zip"
+    - name: Parse VirusTotal Results
+      id: vt-res
+      if: env._IS_GITHUB_RELEASE == 'true' && success()
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          let ret = `${{ steps.vt-scan.outputs.analysis }}`;
+
+          ret = '- ' + ret
+          .replaceAll('.dist/','')
+          .replaceAll('=h', ': h')
+          .replaceAll(',', "\n- ");
+
+          console.log('Results:');
+          console.log(ret);
+
+          return ret;
     - name: Publish Canary release
       uses: ncipollo/release-action@v1
       if: env._IS_GITHUB_RELEASE == 'true' && env._IS_BUILD_CANARY == 'true' && success()
@@ -73,6 +98,9 @@ jobs:
           See https://github.com/julianxhokaxhiu/FFNx/blob/master/Changelog.md#next
 
           This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
+
+          🛡️ **VirusTotal analysis:**
+          ${{ steps.vt-res.outputs.result }}
     - name: Publish Stable release
       uses: ncipollo/release-action@v1
       if: env._IS_GITHUB_RELEASE == 'true' && env._IS_BUILD_CANARY == 'false' && success()
@@ -84,6 +112,9 @@ jobs:
         name: "${{ env._RELEASE_NAME }}-${{ env._RELEASE_VERSION }}"
         body: |
           See https://github.com/julianxhokaxhiu/FFNx/blob/master/Changelog.md#${{ env._CHANGELOG_VERSION }}
+
+          🛡️ **VirusTotal analysis:**
+          ${{ steps.vt-res.outputs.result }}
     - name: Send alerts
       if: env._IS_GITHUB_RELEASE == 'true' && success()
       env:
