@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.18.1...master
 
+## FF8
+
+- Added vibration option in the config menu and the battle pause menu ( https://github.com/julianxhokaxhiu/FFNx/pull/658 )
+
 # 1.18.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.18.0...1.18.1

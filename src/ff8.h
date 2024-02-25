@@ -641,6 +641,27 @@ struct ff8_vibrate_struc
 	uint8_t field_23;
 };
 
+struct ff8_menu_config_input {
+	int16_t text_id_name;
+	uint16_t text_id_value1;
+	uint16_t text_id_value2;
+	uint16_t type;
+	uint16_t mask;
+	uint16_t value;
+	void(*callback_change_state)();
+};
+
+struct ff8_menu_config_input_keymap {
+	uint8_t field_0;
+	uint8_t field_1;
+	uint8_t field_2;
+	uint8_t field_3;
+	uint8_t text_id;
+	uint8_t padd_5;
+	uint8_t padd_6;
+	uint8_t padd_7;
+};
+
 struct ff8_draw_menu_sprite_texture_infos {
 	uint32_t field_0;
 	uint32_t field_4;
@@ -1090,8 +1111,13 @@ struct ff8_externals
 	uint32_t sub_4BDB30;
 	ff8_menu_callback *menu_callbacks;
 	uint32_t menu_config_controller;
+	uint32_t menu_config_render;
+	uint32_t menu_config_render_submenu;
+	ff8_menu_config_input *menu_config_input_desc;
+	ff8_menu_config_input_keymap *menu_config_input_desc_keymap;
 	uint32_t main_menu_render_sub_4E5550;
 	uint32_t main_menu_controller;
+	uint32_t sub_4C2FF0;
 	uint32_t menu_chocobo_world_controller;
 	uint32_t create_save_file_sub_4C6E50;
 	uint32_t create_save_chocobo_world_file_sub_4C6620;
@@ -1344,6 +1370,8 @@ struct ff8_externals
 	uint32_t draw_controller_or_keyboard_icons;
 	uint32_t get_vibration_capability;
 	uint32_t vibration_apply;
+	uint32_t vibration_set_is_enabled;
+	uint32_t vibration_get_is_enabled;
 	int(*get_keyon)(int, int);
 	uint32_t set_vibration;
 	ff8_gamepad_state *gamepad_states;
@@ -1435,6 +1463,16 @@ struct ff8_externals
 	uint32_t load_magic_data_sub_571B80;
 	uint32_t load_magic_data_sub_5718E0;
 	uint32_t load_magic_data_sub_571900;
+	uint32_t sub_47D890;
+	uint32_t sub_4A94D0;
+	uint32_t sub_4BCBE0;
+	uint32_t sub_4C8B10;
+	uint32_t battle_pause_sub_4CD140;
+	uint32_t *is_alternative_pause_menu;
+	uint32_t *pause_menu_option_state;
+	void *battle_menu_state;
+	uint32_t battle_pause_window_sub_4CD350;
+	uint32_t sub_4A7210;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
