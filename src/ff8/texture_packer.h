@@ -163,7 +163,7 @@ public:
 		int palIndex, uint8_t *outScale, uint32_t **outTarget
 	) const;
 
-	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after, TextureTypes textureType);
+	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha = true, bool after = false, TextureTypes textureType = NoTexture);
 private:
 	inline static ModdedTextureId makeTextureId(int xBpp2, int y, bool isPal = false) {
 		return (xBpp2 + y * VRAM_WIDTH) | (isPal << 31);
