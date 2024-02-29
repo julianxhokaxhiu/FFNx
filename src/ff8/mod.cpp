@@ -81,7 +81,7 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 		return false;
 	}
 
-	uint8_t scale = computeScale(originalTexturePixelWidth, originalTextureHeight);
+	uint8_t scale = computeScale(originalTexturePixelWidth, originalTextureHeight, filename);
 
 	if (trace_all || trace_vram)
 	{
@@ -156,7 +156,7 @@ uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int imageWidth, 
 	return 0;
 }
 
-uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH) const
+uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *filename) const
 {
 	int targetPixelW = _mip.m_width, targetH = _mip.m_height;
 
@@ -165,7 +165,7 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH) const
 		|| targetPixelW % sourcePixelW != 0
 		|| targetH % sourceH != 0)
 	{
-		ffnx_warning("Texture redirection size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d)\n", targetPixelW, targetH, sourcePixelW, sourceH);
+		ffnx_warning("External texture size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d, filename=%s)\n", targetPixelW, targetH, sourcePixelW, sourceH, filename);
 
 		return 0;
 	}
@@ -174,14 +174,14 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH) const
 
 	if (scaleW != scaleH)
 	{
-		ffnx_warning("Texture redirection size must have the same ratio as the original texture: (%d / %d)\n", sourcePixelW, sourceH);
+		ffnx_warning("External texture size must have the same ratio as the original texture: (%d / %d) filename=%s\n", sourcePixelW, sourceH, filename);
 
 		return 0;
 	}
 
 	if (scaleW > MAX_SCALE)
 	{
-		ffnx_warning("External texture size cannot exceed \"original size * %d\" (scale=%d)\n", MAX_SCALE, scaleW);
+		ffnx_warning("External texture size cannot exceed \"original size * %d\" (scale=%d) filename=%s\n", MAX_SCALE, scaleW, filename);
 
 		return 0;
 	}
