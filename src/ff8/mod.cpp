@@ -287,11 +287,13 @@ void ModdedTexture::copyRect(
 	int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
 {
 	int sourceX = sourceXBpp2 * (4 >> int(depth)),
-		sourceW = sourceWBpp2 * (4 >> int(depth)),
+		sourceW = sourceWBpp2 * (4 >> int(depth)) * scale,
 		targetX = targetXBpp2 * (4 >> int(depth));
 
 	const uint32_t *source = sourceRgba + (sourceX + sourceY * sourceRgbaW) * scale;
 	uint32_t *target = targetRgba + (targetX + targetY * targetRgbaW) * scale;
+
+	sourceH *= scale;
 
 	for (int y = 0; y < sourceH; ++y)
 	{
