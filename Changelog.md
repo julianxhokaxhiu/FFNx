@@ -4,7 +4,12 @@
 
 ## FF8
 
-- Added vibration option in the config menu and the battle pause menu ( https://github.com/julianxhokaxhiu/FFNx/pull/658 )
+- Vibration: Added vibration option in the config menu and the battle pause menu ( https://github.com/julianxhokaxhiu/FFNx/pull/658 )
+- Graphics: Fix texture animations by copy only partially animated ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )
+
+## FF8 2000
+
+- Misc: Update the FF8.reg file to disable the compatibility fix from Windows that disallow ALT+tab ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )
 
 # 1.18.1
 
