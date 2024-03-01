@@ -232,7 +232,7 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
     io.BackendPlatformName = "imgui_impl_win32";
-    io.ImeWindowHandle = gameHwnd;
+    ImGui::GetMainViewport()->PlatformHandleRaw = gameHwnd;
 
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array that we will update during the application lifetime.
     io.KeyMap[ImGuiKey_Tab] = VK_TAB;
@@ -250,7 +250,7 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
     io.KeyMap[ImGuiKey_Space] = VK_SPACE;
     io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
     io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-    io.KeyMap[ImGuiKey_KeyPadEnter] = VK_RETURN;
+    io.KeyMap[ImGuiKey_KeypadEnter] = VK_RETURN;
     io.KeyMap[ImGuiKey_A] = 'A';
     io.KeyMap[ImGuiKey_C] = 'C';
     io.KeyMap[ImGuiKey_V] = 'V';
