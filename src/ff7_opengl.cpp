@@ -307,7 +307,21 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// worldmap fx effects ( forest trail, ocean trail with highwind, etc. )
 	// #####################
-	patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 8);
+	switch(version)
+		{
+			case VERSION_FF7_102_US:
+				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x8);
+				break;
+			case VERSION_FF7_102_DE:
+				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x20);
+				break;
+			case VERSION_FF7_102_FR:
+				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x50);
+				break;
+			case VERSION_FF7_102_SP:
+				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0xB0);
+				break;
+		}
 
 	// #####################
 	// battle toggle
