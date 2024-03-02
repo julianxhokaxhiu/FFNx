@@ -20,7 +20,7 @@
       },
       "environment": {
         "VCPKG_ROOT": "C:/vcpkg",
-        "VCPKG_BINARY_SOURCES": "clear;nuget,github,readwrite"
+        "VCPKG_BINARY_SOURCES": "clear;nuget,github,readwrite;default,readwrite"
       },
       "binaryDir": "${sourceDir}/.build",
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
