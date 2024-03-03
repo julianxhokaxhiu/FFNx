@@ -44,19 +44,21 @@ public:
 	{
 		MusicOptions() :
 			offsetSeconds(0.0),
+			fadetime(0.0),
+			targetVolume(-1.0f),
+			relativeSpeed(1.0f),
+			format(""),
 			noIntro(false),
 			sync(false),
 			useNameAsFullPath(false),
-			suppressOpeningSilence(false),
-			fadetime(0.0),
-			targetVolume(-1.0f),
-			format("")
+			suppressOpeningSilence(false)
 		{}
 		SoLoud::time offsetSeconds;
-		bool noIntro, sync, useNameAsFullPath, suppressOpeningSilence;
 		SoLoud::time fadetime;
 		float targetVolume;
+		float relativeSpeed;
 		char format[12];
+		bool noIntro, sync, useNameAsFullPath, suppressOpeningSilence;
 	};
 
 	struct NxAudioEngineSFX
