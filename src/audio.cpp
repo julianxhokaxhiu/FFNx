@@ -308,6 +308,12 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 			stopSFX(channel);
 			unloadSFXChannel(channel);
 		}
+		// If the engine is asking us to play again the same id on the same channel, and is a looping effect...
+		else if (options->stream != nullptr && options->id == id && loop)
+		{
+			// ...simply skip it since it's already playing
+			skipPlay = true;
+		}
 	}
 	// If channel is known to lazy unload what is currently playing, save the handler for later
 	else if (std::find(_sfxLazyUnloadChannels.begin(), _sfxLazyUnloadChannels.end(), channel) != _sfxLazyUnloadChannels.end())
