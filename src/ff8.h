@@ -1277,6 +1277,7 @@ struct ff8_externals
 	uint32_t opcode_moviesync;
 	uint32_t opcode_spuready;
 	uint32_t opcode_movieready;
+	uint32_t opcode_setvibrate;
 	uint32_t opcode_musicload;
 	uint32_t opcode_crossmusic;
 	uint32_t opcode_dualmusic;
@@ -1381,6 +1382,7 @@ struct ff8_externals
 	uint32_t open_battle_vibrate_vib;
 	uint8_t **vibrate_data_main;
 	uint8_t **vibrate_data_battle;
+	uint8_t *vibrate_data_field;
 	uint32_t sub_537F30;
 	uint32_t sub_5391B0;
 	uint32_t sub_534560;

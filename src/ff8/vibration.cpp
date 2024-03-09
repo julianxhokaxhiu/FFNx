@@ -26,7 +26,7 @@
 #include "../joystick.h"
 #include "../patch.h"
 #include "../vibration.h"
-#include <xxhash.h>
+#include "battle/effects.h"
 
 char vibrateName[32] = "";
 ff8_menu_config_input_keymap menu_options_keymap_desc[11];
@@ -92,28 +92,6 @@ const char *set_name(const char *name)
 	return strncpy(vibrateName, name, sizeof(vibrateName));
 }
 
-size_t vibrate_data_size(const uint8_t *data)
-{
-	const uint32_t *header = (const uint32_t *)data;
-	uint32_t max_pos = 0;
-
-	while (header - (const uint32_t *)data < 64) {
-		if (*header > max_pos) {
-			max_pos = *header;
-		}
-		header++;
-	}
-
-	if (max_pos == 0) {
-		return 0;
-	}
-
-	const uint16_t *it = (const uint16_t *)(data + max_pos);
-	uint16_t left_size = it[0], right_size = it[1];
-
-	return max_pos + 4 + left_size + right_size;
-}
-
 const char *vibrate_data_name(const uint8_t *data)
 {
 	if (trace_all || trace_gamepad) ffnx_trace("%s: data=0x%X\n", __func__, data);
@@ -133,81 +111,83 @@ const char *vibrate_data_name(const uint8_t *data)
 		return set_name("world");
 	}
 
-	size_t size = vibrate_data_size(data);
-	if (size == 0)
+	if (data == ff8_externals.vibrate_data_field)
+	{
+		return set_name("field");
+	}
+
+	if (getmode_cached()->driver_mode != MODE_BATTLE)
 	{
 		return nullptr;
 	}
 
-	XXH64_hash_t hash = XXH3_64bits(data, size);
-
-	if (trace_all || trace_gamepad) ffnx_trace("%s: hash=0x%llX\n", __func__, hash);
-
-	switch (hash)
+	switch (FF8BattleEffect::Effect(*ff8_externals.battle_magic_id))
 	{
-	case 0x3A8B11844E20E005:
-		return set_name("field");
-	case 0x12ED0CB959EE1D06:
+	case FF8BattleEffect::Quezacotl:
 		return set_name("battle_quezacotl");
-	case 0x5609D2CFA36FAA0A:
+	case FF8BattleEffect::Shiva:
 		return set_name("battle_shiva");
-	case 0xCEFDFB6A96824726:
+	case FF8BattleEffect::Ifrit:
 		return set_name("battle_ifrit");
-	case 0x453F6DFFE0C9349F:
+	case FF8BattleEffect::Siren:
 		return set_name("battle_siren");
-	case 0xEBD9E3F6260E3959:
+	case FF8BattleEffect::Brothers:
 		return set_name("battle_brothers");
-	case 0x9BFBB2F64D8D7481:
+	case FF8BattleEffect::Diablos:
 		return set_name("battle_diablos");
-	case 0xBB77D755D1E18AAE:
+	case FF8BattleEffect::Carbuncle:
 		return set_name("battle_carbuncle");
-	case 0x6CE5937D628A4A8C:
+	case FF8BattleEffect::Leviathan:
 		return set_name("battle_leviathan");
-	case 0x9FC2EA78F38A8DB2:
+	case FF8BattleEffect::Pandemona:
 		return set_name("battle_pandemona");
-	case 0xA0CB223A3095EF8E:
+	case FF8BattleEffect::Cerberus:
 		return set_name("battle_cerberus");
-	case 0x4618E0051D8EB26A:
+	case FF8BattleEffect::Alexander:
 		return set_name("battle_alexander");
-	case 0x8226A772A7F38BE3:
-		return set_name("battle_helltrain");
-	case 0xB0A0606DC821934F:
+	case FF8BattleEffect::Doomtrain:
+		return set_name("battle_doomtrain");
+	case FF8BattleEffect::Bahamut:
 		return set_name("battle_bahamut");
-	case 0x9B9C719D7B06C9F6:
+	case FF8BattleEffect::Cactuar:
 		return set_name("battle_cactuar");
-	case 0xC5C7EEC0C8CA65F0:
+	case FF8BattleEffect::Tonberry:
 		return set_name("battle_tonberry");
-	case 0x52E0D8894C20D609:
+	case FF8BattleEffect::Eden:
 		return set_name("battle_eden");
-	case 0x928D553922FE8248:
+	case FF8BattleEffect::Odin:
 		return set_name("battle_odin");
-	case 0x79AC9002E7CD9699:
+	case FF8BattleEffect::GilgameshZantetsuken:
 		return set_name("battle_gilgamesh_zantetsuken");
-	case 0x50BE9269B62CFD2E:
+	case FF8BattleEffect::GilgameshMasamune:
+		return set_name("battle_gilgamesh_masamune");
+	case FF8BattleEffect::GilgameshExcaliber:
+		return set_name("battle_gilgamesh_excaliber");
+	case FF8BattleEffect::GilgameshExcalipoor:
 		return set_name("battle_gilgamesh_excalipoor");
-	case 0x182DC6DE431B0B59:
+	case FF8BattleEffect::Phoenix:
 		return set_name("battle_phoenix");
-	case 0xFCF682172921F687:
+	case FF8BattleEffect::Moomba:
 		return set_name("battle_moomba");
-	case 0x2870C502E6C869CA:
+	case FF8BattleEffect::Minimog:
 		return set_name("battle_minimog");
-	case 0x34A36AEB4BDB2873:
+	case FF8BattleEffect::BokoChocofire:
 		return set_name("battle_boko_chocofire");
-	case 0x71C550B41E196BF5:
+	case FF8BattleEffect::BokoChocoflare:
 		return set_name("battle_boko_chocoflare");
-	case 0x58D0E469C7393C42:
+	case FF8BattleEffect::BokoChocometeor:
 		return set_name("battle_boko_chocometeor");
-	case 0x711807BEA87AE308:
+	case FF8BattleEffect::BokoChocobocle:
 		return set_name("battle_boko_chocobocle");
-	case 0x66A9AC8656CDA67E:
+	case FF8BattleEffect::Meteor:
 		return set_name("battle_meteor");
-	case 0x8CB04A5C704B20BB:
+	case FF8BattleEffect::Apocalypse:
 		return set_name("battle_apocalypse");
-	case 0xE443180422A17638:
+	case FF8BattleEffect::Ultima:
 		return set_name("battle_ultima");
 	}
 
-	snprintf(vibrateName, sizeof(vibrateName), "%llX", hash);
+	snprintf(vibrateName, sizeof(vibrateName), "battle_effect_%d", *ff8_externals.battle_magic_id);
 
 	return vibrateName;
 }
