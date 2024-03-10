@@ -267,6 +267,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_ames = common_externals.execute_opcode_table[0x65];
 	ff8_externals.opcode_battle = common_externals.execute_opcode_table[0x69];
 	ff8_externals.opcode_aask = common_externals.execute_opcode_table[0x6F];
+	ff8_externals.opcode_setvibrate = common_externals.execute_opcode_table[0xA1];
 	ff8_externals.opcode_movieready = common_externals.execute_opcode_table[0xA3];
 	ff8_externals.opcode_musicload = common_externals.execute_opcode_table[0xB5];
 	ff8_externals.opcode_crossmusic = common_externals.execute_opcode_table[0xBA];
@@ -282,6 +283,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_getmusicoffset = common_externals.execute_opcode_table[0x16F];
 	ff8_externals.opcode_tuto = common_externals.execute_opcode_table[0x177];
 
+	ff8_externals.vibrate_data_field = (uint8_t*)get_absolute_value(ff8_externals.opcode_setvibrate, 0x27);
 	ff8_externals.current_tutorial_id = (BYTE*)get_absolute_value(ff8_externals.opcode_tuto, 0x2A);
 
 	common_externals.cross_fade_midi = get_relative_call(ff8_externals.opcode_crossmusic, 0x5C);

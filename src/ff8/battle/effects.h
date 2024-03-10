@@ -24,9 +24,41 @@
 #pragma once
 
 namespace FF8BattleEffect {
+    // See https://github.com/DarkShinryu/doomtrain/blob/master/Doomtrain/Resources/Magic_ID_List.txt
     enum Effect {
+        Cure = 0,
         Leviathan = 5,
-        Quezacotl = 115
+        Tonberry = 89,
+        Siren = 94,
+        Minimog = 95,
+        BokoChocofire = 96,
+        BokoChocoflare = 97,
+        BokoChocometeor = 98,
+        BokoChocobocle = 99,
+        Quezacotl = 115,
+        Phoenix = 139,
+        Ultima = 148,
+        Shiva = 184,
+        Odin = 186,
+        Doomtrain = 190,
+        Cactuar = 198,
+        Ifrit = 200,
+        Bahamut = 201,
+        Cerberus = 202,
+        Alexander = 203,
+        Brothers = 204,
+        Eden = 205,
+        Apocalypse = 220,
+        Meteor = 222,
+        Carbuncle = 277,
+        Pandemona = 290,
+        Diablos = 324,
+        GilgameshZantetsukenReverse = 325,
+        GilgameshZantetsuken = 326,
+        GilgameshMasamune = 327,
+        GilgameshExcaliber = 328,
+        GilgameshExcalipoor = 329,
+        Moomba = 337,
     };
 }
 
