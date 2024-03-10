@@ -9,6 +9,7 @@
 ## FF8
 
 - Graphics: Fix texture animations by copy only partially animated ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )
+- Graphics: Allow more external texture replacement for battle effects ( https://github.com/julianxhokaxhiu/FFNx/pull/674 )
 - SFX: Fix some external SFX effects that were not stopping when they were looped in certain scenes
 - Vibration: Added vibration option in the config menu and the battle pause menu ( https://github.com/julianxhokaxhiu/FFNx/pull/658 )
 

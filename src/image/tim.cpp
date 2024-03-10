@@ -222,25 +222,47 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 	{
 		if (_tim.pal_data == nullptr || paletteDetectionStrategy == nullptr)
 		{
-			ffnx_error("%s bpp 0 without palette\n", __func__);
+			uint8_t *img_data8 = _tim.img_data;
 
-			return false;
-		}
-
-		uint8_t *img_data = _tim.img_data;
-
-		for (int y = 0; y < _tim.img_h; ++y)
-		{
-			for (int x = 0; x < _tim.img_w / 2; ++x)
+			for (int y = 0; y < _tim.img_h; ++y)
 			{
-				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2, y))[*img_data & 0xF], withAlpha);
+				for (int x = 0; x < _tim.img_w / 2; ++x)
+				{
+					// Grey color
+					uint8_t color = (*img_data8 & 0xF) * 16;
 
-				++target;
+					*target = ((color == 0 && withAlpha ? 0x00 : 0xffu) << 24) |
+						(color << 16) | (color << 8) | color;
 
-				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2 + 1, y))[*img_data >> 4], withAlpha);
+					++target;
 
-				++target;
-				++img_data;
+					color = (*img_data8 >> 4) * 16;
+
+					*target = ((color == 0 && withAlpha ? 0x00 : 0xffu) << 24) |
+						(color << 16) | (color << 8) | color;
+
+					++target;
+					++img_data8;
+				}
+			}
+		}
+		else
+		{
+			uint8_t *img_data = _tim.img_data;
+
+			for (int y = 0; y < _tim.img_h; ++y)
+			{
+				for (int x = 0; x < _tim.img_w / 2; ++x)
+				{
+					*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2, y))[*img_data & 0xF], withAlpha);
+
+					++target;
+
+					*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2 + 1, y))[*img_data >> 4], withAlpha);
+
+					++target;
+					++img_data;
+				}
 			}
 		}
 	}
@@ -248,7 +270,7 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 	{
 		if (_tim.pal_data == nullptr || paletteDetectionStrategy == nullptr)
 		{
-			uint8_t *img_data8 = (uint8_t *)_tim.img_data;
+			uint8_t *img_data8 = _tim.img_data;
 
 			for (int y = 0; y < _tim.img_h; ++y)
 			{
