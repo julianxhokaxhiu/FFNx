@@ -1102,11 +1102,6 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 		snprintf(battle_texture_name, sizeof(battle_texture_name), "battle/%s", ff8_externals.battle_filenames[fileId]);
 	}
 
-	// We already know that we have only one texture in those files
-	if (StrStrIA(battle_texture_name, ".TIM") != nullptr) {
-		battle_texture_id = -1;
-	}
-
 	// Remember texture name for later
 	BattleTextureFileName tex = BattleTextureFileName();
 	strncpy(tex.file_name, battle_texture_name, sizeof(tex.file_name));
@@ -1130,7 +1125,7 @@ void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWO
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
 
-	battle_texture_id = -1;
+	battle_texture_id = 0;
 	snprintf(battle_texture_name, sizeof(battle_texture_name), "magic/%s", fileName);
 
 	return ((void *(*)(const char*,void*,int,DWORD*))ff8_externals.load_magic_data_sub_571900)(fileName, data, dataSize, outSize);
@@ -1169,6 +1164,9 @@ void battle_read_effect_alloc()
 		battle_texture_headers[i] = BattleTextureHeader();
 	}
 	battle_texture_headers_cursor = 0;
+	// Guess the filename until a file is actually opened
+	battle_texture_id = 0;
+	snprintf(battle_texture_name, sizeof(battle_texture_name), "magic/mag%03d.tim", *ff8_externals.battle_magic_id);
 
 	((void(*)())ff8_externals.sub_571870)();
 }
@@ -1281,6 +1279,7 @@ void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffe
 			}
 
 			snprintf(next_texture_name, sizeof(next_texture_name), "magic/MAG%03d_B.%02d-%d", header.effect_id, header.file_id, header.file_relative_id);
+				bool texture_saved = false;
 
 			if (minY != 0xFFFF) {
 				next_bpp = maxX - minX == 16 ? Tim::Bpp4 : Tim::Bpp8;
@@ -1302,6 +1301,7 @@ void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffe
 					tim_infos.img_w = pos_and_size[2];
 					tim_infos.img_h = pos_and_size[3];
 					Tim(next_bpp, tim_infos).save(next_texture_name, header2.y - minY, true);
+					texture_saved = true;
 
 					last_pal_x = header2.x;
 					last_pal_y = header2.y;
@@ -1311,8 +1311,16 @@ void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffe
 						battle_texture_headers[(index + i) % battle_texture_data_list_size] = BattleTextureHeader();
 					}
 				}
-			} else {
-				next_bpp = Tim::Bpp16;
+			}
+
+			// We don't know the palette
+			if (!texture_saved) {
+				next_bpp = Tim::Bpp8;
+				ff8_tim tim_infos = ff8_tim();
+				tim_infos.img_data = texture_buffer;
+				tim_infos.img_w = pos_and_size[2];
+				tim_infos.img_h = pos_and_size[3];
+				Tim(next_bpp, tim_infos).save(next_texture_name, uint8_t(0), true);
 			}
 
 			battle_texture_headers[index] = BattleTextureHeader();
@@ -1359,8 +1367,23 @@ void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffe
 				tim_infos.pal_h = header.h;
 				Tim(next_bpp, tim_infos).save(fileName, true);
 			}
-		} else if (trace_all || trace_vram) {
-			ffnx_warning("%s: unknown texture uploaded\n", __func__);
+		} else {
+			if (trace_all || trace_vram) ffnx_warning("%s: unknown texture uploaded\n", __func__);
+
+			if (pos_and_size[2] > 32 && pos_and_size[3] > 32) {
+				snprintf(next_texture_name, sizeof(next_texture_name), "magic/mag%03d.tim-%d", *ff8_externals.battle_magic_id, battle_texture_id);
+				++battle_texture_id;
+				next_bpp = Tim::Bpp8;
+
+				ff8_tim tim_infos = ff8_tim();
+				tim_infos.img_data = texture_buffer;
+				tim_infos.img_x = pos_and_size[0];
+				tim_infos.img_y = pos_and_size[1];
+				tim_infos.img_w = pos_and_size[2];
+				tim_infos.img_h = pos_and_size[3];
+				// Save without palette
+				Tim(next_bpp, tim_infos).save(next_texture_name);
+			}
 		}
 	}
 
@@ -1389,6 +1412,10 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 	if (save_textures) {
 		if (StrStrIA(battle_texture_name, ".X") != nullptr) {
 			ff8_battle_state_save_texture(stage, tim, next_texture_name);
+		} else if (palette_infos.h() > 1) {
+			for (int pal = 0; pal < palette_infos.h(); ++pal) {
+				tim.save(next_texture_name, 0, pal, true);
+			}
 		} else {
 			tim.save(next_texture_name, 0, 0, true);
 		}
