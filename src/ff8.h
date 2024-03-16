@@ -683,14 +683,14 @@ struct ff8_draw_menu_sprite_texture_infos_short {
 
 struct ff8_audio_fmt
 {
-	uint32_t audio_data_length;
-	uint32_t audio_data_offset;
-	uint8_t is_looped;
-	uint8_t field_9;
-	uint8_t field_A;
-	uint8_t field_B;
-	uint32_t buffer_read_cursor;
-	uint32_t buffer_write_cursor;
+	uint32_t length;
+	uint32_t offset;
+	uint8_t loop;
+	uint8_t count;
+	uint8_t unk1;
+	uint8_t unk2;
+	uint32_t loop_start;
+	uint32_t loop_end;
 	LPWAVEFORMATEX wave_format;
 };
 

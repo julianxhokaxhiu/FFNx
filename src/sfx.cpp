@@ -267,7 +267,7 @@ bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 
 	// Get loop info from audio.fmt
 	if (id <= *ff8_externals.sfx_sound_count) {
-		loop = (*ff8_externals.sfx_audio_fmt)[id].is_looped;
+		loop = (*ff8_externals.sfx_audio_fmt)[id].loop;
 	}
 
 	// TODO: inverted panning option ((Reg.SoundOptions >> 20) & 1)
