@@ -467,7 +467,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sfx_play_effects_id_channel_6 = (DWORD *)get_absolute_value((uint32_t)common_externals.play_sfx_effects, 0x119);
 	ff7_externals.sound_states = (ff7_field_sfx_state*)get_absolute_value(common_externals.play_sfx_on_channel, 0x28);
 	common_externals.master_sfx_volume = (uint32_t*)get_absolute_value(common_externals.play_sfx_on_channel, 0x342);
-	ff7_externals.sfx_fmt_header = (uint32_t)get_absolute_value(common_externals.play_sfx_on_channel, 0x51);
+	ff7_externals.sfx_fmt_header = (ff7_audio_fmt*)get_absolute_value(common_externals.sfx_load, 0x51);
 
 	common_externals.directsound_create = get_relative_call(common_externals.sfx_init, 0x11C);
 	common_externals.directsound = (LPLPDIRECTSOUND)get_absolute_value(common_externals.directsound_create, 0x15);

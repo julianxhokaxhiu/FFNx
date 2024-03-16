@@ -1662,6 +1662,17 @@ struct dll_gfx_externals
 	gfx_light_polygon_set *generic_light_polygon_set;
 };
 
+struct ff7_audio_fmt
+{
+	uint32_t length;
+	uint32_t offset;
+	uint32_t loop;
+	uint32_t count;
+	uint32_t loop_start;
+	uint32_t loop_end;
+	LPWAVEFORMATEX wave_format;
+};
+
 struct ff7_game_obj
 {
 	uint32_t do_quit;
@@ -2943,7 +2954,7 @@ struct ff7_externals
 	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_load_and_play_with_speed;
-	uint32_t sfx_fmt_header;
+	ff7_audio_fmt* sfx_fmt_header;
 	DWORD *sfx_play_effects_id_channel_6;
 	uint32_t sfx_stop_channel_6;
 	UINT *sfx_stop_channel_timer_handle;
