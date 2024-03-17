@@ -43,7 +43,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 {
 	uint32_t mode = getmode_cached()->driver_mode;
 	VOBJ(texture_set, texture_set, current_state.texture_set);
-	uint32_t defer = false;
+	uint32_t defer = false, force_defer = false;
 
 	// modpath textures rendered in 3D should always be filtered
 	if(vertextype != TLVERTEX && current_state.texture_set && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
@@ -112,6 +112,11 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 
 		// z-sort select menu elements everywhere
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->menu_fade)) defer = true;
+		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->window_bg))
+		{
+			defer = true;
+			force_defer = true;
+		}
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->blend_window_bg)) defer = true;
 
 		if(mode == MODE_BATTLE)
@@ -122,7 +127,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		}
 	}
 
-	if(defer && !ff8) return gl_defer_sorted_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap);
+	if(defer && !ff8) return gl_defer_sorted_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap, force_defer);
 
 	return false;
 }

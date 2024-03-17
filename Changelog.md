@@ -6,6 +6,10 @@
 
 - Music: Add new [relative_speed](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.music.toml#L29-L31) option in the config layer ( https://github.com/julianxhokaxhiu/FFNx/pull/672 )
 
+## FF7
+
+- Rendering: Fix wrong rendering for overlapping message boxes. Usually noticed while using custom mods like SYW UI or Kactuar.
+
 ## FF8
 
 - Graphics: Fix texture animations by copy only partially animated ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )

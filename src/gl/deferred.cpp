@@ -398,7 +398,7 @@ uint32_t gl_defer_battle_depth_clear()
 }
 
 // re-order and save a draw call for later processing
-uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap)
+uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap, uint32_t force_defer)
 {
 	uint32_t tri;
 	uint32_t mode = getmode_cached()->driver_mode;
@@ -416,60 +416,63 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 		return false;
 	}
 
-	// output will not be consistent if depth testing is disabled, this call
-	// cannot be re-ordered
-	if(!current_state.depthtest)
+	if (!force_defer)
 	{
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: depthtest false\n");
-		return false;
-	}
-
-	// framebuffer textures should not be re-ordered
-	if(current_state.fb_texture)
-	{
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: fb_texture true\n");
-		return false;
-	}
-
-	if(current_state.blend_mode != BLEND_NONE)
-	{
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_NONE - blend_mode: %u\n", current_state.blend_mode);
-		if(current_state.blend_mode != BLEND_AVG)
+		// output will not be consistent if depth testing is disabled, this call
+		// cannot be re-ordered
+		if(!current_state.depthtest)
 		{
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
-			// be conservative with non-standard blending modes
-			if (mode != MODE_MENU && mode != MODE_BATTLE) {
-				if (trace_all) ffnx_trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
-				return false;
-			}
-		}
-	}
-	else
-	{
-		if (!current_state.texture_set)
-		{
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set false\n");
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: depthtest false\n");
 			return false;
+		}
+
+		// framebuffer textures should not be re-ordered
+		if(current_state.fb_texture)
+		{
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: fb_texture true\n");
+			return false;
+		}
+
+		if(current_state.blend_mode != BLEND_NONE)
+		{
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_NONE - blend_mode: %u\n", current_state.blend_mode);
+			if(current_state.blend_mode != BLEND_AVG)
+			{
+				if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
+				// be conservative with non-standard blending modes
+				if (mode != MODE_MENU && mode != MODE_BATTLE) {
+					if (trace_all) ffnx_trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
+					return false;
+				}
+			}
 		}
 		else
 		{
-			VOBJ(texture_set, texture_set, current_state.texture_set);
-			VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
-
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set true for texture %s%d\n", VREF(tex_header, file.pc_name), VREF(tex_header, palette_index));
-
-			// texture format does not support alpha, re-order is not necessary
-			if (!VREF(texture_set, ogl.external) && VREF(tex_header, tex_format.alpha_bits) < 2) {
-				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture format does not support alpha, re-order is not necessary\n");
+			if (!current_state.texture_set)
+			{
+				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set false\n");
 				return false;
 			}
-		}
-	}
+			else
+			{
+				VOBJ(texture_set, texture_set, current_state.texture_set);
+				VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-	// quads are used for some GUI elements, we do not need to re-order these
-	if (primitivetype != RendererPrimitiveType::PT_TRIANGLES) {
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: primitivetype != TRIANGLES\n");
-		return false;
+				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set true for texture %s%d\n", VREF(tex_header, file.pc_name), VREF(tex_header, palette_index));
+
+				// texture format does not support alpha, re-order is not necessary
+				if (!VREF(texture_set, ogl.external) && VREF(tex_header, tex_format.alpha_bits) < 2) {
+					if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture format does not support alpha, re-order is not necessary\n");
+					return false;
+				}
+			}
+		}
+
+		// quads are used for some GUI elements, we do not need to re-order these
+		if (primitivetype != RendererPrimitiveType::PT_TRIANGLES) {
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: primitivetype != TRIANGLES\n");
+			return false;
+		}
 	}
 
 	if(num_sorted_deferred + count / 3 > DEFERRED_MAX)
