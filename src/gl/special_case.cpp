@@ -112,12 +112,11 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 
 		// z-sort select menu elements everywhere
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->menu_fade)) defer = true;
-		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->window_bg))
-		{
-			defer = true;
-			force_defer = true;
-		}
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->blend_window_bg)) defer = true;
+		// always z-sort vanilla messages and font rendering draws
+		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->font_a)) force_defer = true;
+		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->font_b)) force_defer = true;
+		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->window_bg)) force_defer = true;
 
 		if(mode == MODE_BATTLE)
 		{
@@ -127,7 +126,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		}
 	}
 
-	if(defer && !ff8) return gl_defer_sorted_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap, force_defer);
+	if((defer || force_defer) && !ff8) return gl_defer_sorted_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap, force_defer);
 
 	return false;
 }
