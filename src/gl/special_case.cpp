@@ -127,6 +127,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 			// z-sort some GUI elements in battle
 			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->unknown2)) defer = true; // Limit and barrier bar (necessary for ESUI)
 			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->unknown3)) defer = true; // Limit and barrier bar (necessary for ESUI)
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->unknown5)) defer = true; // Limit box (necessary for ESUI)
 		}
 	}
 
