@@ -24,6 +24,10 @@
 
 - Misc: Update the FF8.reg file to disable the compatibility fix from Windows that disallow ALT+tab ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )
 
+## FF8 Steam
+
+- Misc: Fix metadata save file preservation when a save file is created on Slot 2
+
 # 1.18.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.18.0...1.18.1
