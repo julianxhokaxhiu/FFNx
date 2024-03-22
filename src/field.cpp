@@ -94,6 +94,7 @@ int opcode_kawai_eye_texture() {
 			char directpath[MAX_PATH + sizeof(basedir)];
 			char filename[10];
 			char ext[4];
+			bool ext_left_eye_found = false, ext_right_eye_found = false;
 
 			// NPCs always default on Cloud eyes/mouth
 			if (ff7_curr_eye_index == 9) ff7_curr_eye_index = 0;
@@ -102,14 +103,14 @@ int opcode_kawai_eye_texture() {
 			_splitpath(ff7_eyes[ff7_curr_eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
 
 			_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%s_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, left_eye_index);
-			if (fileExists(directpath))
+			if (ext_left_eye_found = fileExists(directpath))
 				_snprintf(ff7_externals.field_models_eye_blink_buffer[ff7_curr_eye_index].static_left_eye_filename, 1024, "eye_%s_%d%s", curr_model_name, left_eye_index, ext);
 			else
 			{
 				if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom left eye texture not found: %s\n", directpath);
 
 				_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, left_eye_index);
-				if (fileExists(directpath))
+				if (ext_left_eye_found = fileExists(directpath))
 					_snprintf(ff7_externals.field_models_eye_blink_buffer[ff7_curr_eye_index].static_left_eye_filename, 1024, "%s_%d%s", filename, left_eye_index, ext);
 				else
 				{
@@ -123,14 +124,14 @@ int opcode_kawai_eye_texture() {
 			_splitpath(ff7_eyes[ff7_curr_eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
 
 			_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%sr_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, right_eye_index);
-			if (fileExists(directpath))
+			if (ext_right_eye_found = fileExists(directpath))
 				_snprintf(ff7_externals.field_models_eye_blink_buffer[ff7_curr_eye_index].static_right_eye_filename, 1024, "eye_%sr_%d%s", curr_model_name, right_eye_index, ext);
 			else
 			{
 				if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom right eye texture not found: %s\n", directpath);
 
 				_snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, right_eye_index);
-				if (fileExists(directpath))
+				if (ext_right_eye_found = fileExists(directpath))
 					_snprintf(ff7_externals.field_models_eye_blink_buffer[ff7_curr_eye_index].static_right_eye_filename, 1024, "%s_%d%s", filename, right_eye_index, ext);
 				else
 				{
@@ -190,7 +191,7 @@ int opcode_kawai_eye_texture() {
 				ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode = left_eye_index;
 				ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode = right_eye_index;
 			}
-			else
+			else if (ext_left_eye_found || ext_right_eye_found)
 			{
 				ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode = 2;
 				ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode = 2;

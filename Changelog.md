@@ -8,6 +8,7 @@
 
 ## FF7
 
+- Modding: Do not replace eyes if no external texture has been found.
 - Rendering: Fix wrong rendering for overlapping message boxes. Usually noticed while using custom mods like SYW UI or Kactuar.
 
 ## FF8
