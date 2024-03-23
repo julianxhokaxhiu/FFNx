@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.18.1",
-  "builtin-baseline": "fba75d09065fcc76a25dcf386b1d00d33f5175af",
+  "builtin-baseline": "898b728edc5e0d12b50015f9cd18247c4257a3eb",
   "dependencies": [
     "bgfx",
     {
@@ -75,7 +75,7 @@
     {
       "name": "ffmpeg",
       "version": "6.1.1",
-      "port-version": 0
+      "port-version": 2
     },
     {
       "name": "imgui",
@@ -84,12 +84,12 @@
     },
     {
       "name": "libpng",
-      "version": "1.6.40",
-      "port-version": 1
+      "version": "1.6.43",
+      "port-version": 0
     },
     {
       "name": "directxtex",
-      "version": "2023-12-31",
+      "version": "2024-03-06",
       "port-version": 0
     },
     {
