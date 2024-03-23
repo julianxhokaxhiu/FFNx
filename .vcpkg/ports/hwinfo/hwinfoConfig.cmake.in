@@ -1,0 +1,32 @@
+include(FindPackageHandleStandardArgs)
+
+if (NOT HWINFO_FOUND)
+	find_library(
+		HWINFO_LIBRARY
+		hwinfo
+		PATH_SUFFIXES
+		lib
+		vendor/lib
+	)
+
+	find_path(
+		HWINFO_INCLUDE_DIR
+		hwinfo
+		PATH_SUFFIXES
+		include
+		vendor/include
+	)
+
+	add_library(HWINFO::HWINFO STATIC IMPORTED)
+
+	set_target_properties(
+		HWINFO::HWINFO
+		PROPERTIES
+		IMPORTED_LOCATION
+		"${HWINFO_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES
+		"${HWINFO_INCLUDE_DIR}"
+	)
+
+	find_package_handle_standard_args(HWINFO DEFAULT_MSG HWINFO_LIBRARY HWINFO_INCLUDE_DIR)
+endif()

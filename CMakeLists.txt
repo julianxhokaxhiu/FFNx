@@ -80,6 +80,7 @@ find_package(tomlplusplus CONFIG REQUIRED)
 find_package(STEAMWORKSSDK CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
+find_package(HWINFO REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -145,6 +146,7 @@ target_link_libraries(
   Vorbis::vorbisfile
   Vorbis::vorbis
   MPG123::libmpg123
+  HWINFO::HWINFO
   ${BX_LIBRARIES}
   ${BIMG_LIBRARIES}
   ${BGFX_LIBRARIES}

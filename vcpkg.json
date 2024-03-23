@@ -64,7 +64,8 @@
       ]
     },
     "cmakerc",
-    "cgltf"
+    "cgltf",
+    "hwinfo"
   ],
   "overrides": [
     {
@@ -150,6 +151,11 @@
     {
       "name": "cgltf",
       "version": "1.13",
+      "port-version": 0
+    },
+    {
+      "name": "hwinfo",
+      "version": "1.0.0",
       "port-version": 0
     }
   ]
