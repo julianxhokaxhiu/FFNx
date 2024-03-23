@@ -4,6 +4,7 @@
 
 ## Common
 
+- Core: Add a new capability that will expose the current PC config (CPU, GPU including Driver version, RAM and OS) used to run FFNx. This will help a lot during troubleshooting.
 - Music: Add new [relative_speed](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.music.toml#L29-L31) option in the config layer ( https://github.com/julianxhokaxhiu/FFNx/pull/672 )
 
 ## FF7

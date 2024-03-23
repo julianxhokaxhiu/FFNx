@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <sys/timeb.h>
 #include <steamworkssdk/steam_api.h>
+#include <hwinfo/hwinfo.h>
 
 #include "renderer.h"
 #include "hext.h"
@@ -255,6 +256,37 @@ void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
 		FFNxStackWalker sw;
 		sw.ShowCallstack();
 	}
+}
+
+void ffnx_log_current_pc_specs()
+{
+	// Start report of PC specs
+	ffnx_info("--- PC SPECS ---\n");
+
+	// CPU
+	auto cpus = hwinfo::getAllCPUs();
+	for (const auto& cpu : cpus) {
+		ffnx_info("CPU: %s\n", cpu.modelName().c_str());
+	}
+
+	// GPU
+	auto gpus = hwinfo::getAllGPUs();
+	for (auto& gpu : gpus) {
+		uint16_t vendorId = std::stoi(gpu.vendor_id(), 0, 16), deviceId = std::stoi(gpu.device_id(), 0, 16);
+		if (newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId)
+			ffnx_info("GPU: %s (%dMB) - Driver: %s\n", gpu.name().c_str(), (int)(gpu.memory_Bytes() / 1024.0 / 1024.0), gpu.driverVersion().c_str());
+	}
+
+	// RAM
+	hwinfo::Memory memory;
+	ffnx_info("RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.total_Bytes() - memory.free_Bytes()) / 1024.0 / 1024.0), (int)(memory.total_Bytes() / 1024.0 / 1024.0), (int)(memory.free_Bytes() / 1024.0 / 1024.0));
+
+	// OS
+	hwinfo::OS os;
+	ffnx_info(" OS: %s %s (build %s)\n", os.name().c_str(), (os.is32bit() ? "32 bit" : "64 bit"), os.version().c_str());
+
+	// End report of PC specs
+	ffnx_info("----------------\n");
 }
 
 // figure out which game module is currently running by looking at the game's
@@ -874,6 +906,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 				// Init Lighting
 				if (!ff8 && enable_lighting) lighting.init();
+
+				ffnx_log_current_pc_specs();
 
 				// enable verbose logging for FFMpeg
 				av_log_set_level(AV_LOG_VERBOSE);
