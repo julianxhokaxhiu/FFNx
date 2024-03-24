@@ -42,7 +42,7 @@ void ff7_sfx_release(IDirectSoundBuffer *buffer)
 
 bool ff7_should_sfx_loop(int id)
 {
-	return ff7_externals.sfx_fmt_header[id].loop;
+	return ff7_externals.sfx_fmt_header[id-1].loop;
 }
 
 void ff7_sfx_stop_channel(int channel, double time = 0)
