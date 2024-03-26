@@ -273,7 +273,10 @@ void ffnx_log_current_pc_specs()
 	auto gpus = hwinfo::getAllGPUs();
 	for (auto& gpu : gpus) {
 		uint16_t vendorId = std::stoi(gpu.vendor_id(), 0, 16), deviceId = std::stoi(gpu.device_id(), 0, 16);
-		if (newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId)
+		if (
+			(newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId) ||
+			(newRenderer.getCaps()->vendorId == vendorId && renderer_backend == RENDERER_BACKEND_OPENGL)
+		)
 			ffnx_info("GPU: %s (%dMB) - Driver: %s - Backend: %s\n", gpu.name().c_str(), (int)(gpu.memory_Bytes() / 1024.0 / 1024.0), gpu.driverVersion().c_str(), newRenderer.currentRenderer.c_str());
 	}
 
