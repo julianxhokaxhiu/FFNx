@@ -15,6 +15,7 @@
 
 ## FF8
 
+- Fix crash when some text windows are opening in worldmap on Spanish and Italian versions ( https://github.com/julianxhokaxhiu/FFNx/pull/682/files )
 - Graphics: Fix texture animations by copy only partially animated ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )
 - Graphics: Allow more external texture replacement for battle effects ( https://github.com/julianxhokaxhiu/FFNx/pull/674 https://github.com/julianxhokaxhiu/FFNx/pull/676 )
 - SFX: Fix some external SFX effects that were not stopping when they were looped in certain scenes
