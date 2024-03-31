@@ -13,6 +13,10 @@
 - Rendering: Fix wrong rendering for battle limit boxes when using transparency. Usually notices while using ESUI or FFNx default hext files.
 - Rendering: Fix wrong rendering for overlapping message boxes. Usually noticed while using custom mods like SYW UI or Kactuar.
 
+## FF7 Steam
+
+- Input: Prevent input configuration corruption after starting a new game and entering the Config menu ( https://github.com/julianxhokaxhiu/FFNx/pull/683 )
+
 ## FF8
 
 - Fix crash when some text windows are opening in worldmap on Spanish and Italian versions ( https://github.com/julianxhokaxhiu/FFNx/pull/682/files )
