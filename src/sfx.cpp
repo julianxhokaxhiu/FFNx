@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -42,7 +42,7 @@ void ff7_sfx_release(IDirectSoundBuffer *buffer)
 
 bool ff7_should_sfx_loop(int id)
 {
-	return *(BYTE *)(ff7_externals.sfx_fmt_header + (28 * (id - 1)));
+	return ff7_externals.sfx_fmt_header[id-1].loop;
 }
 
 void ff7_sfx_stop_channel(int channel, double time = 0)
@@ -267,7 +267,7 @@ bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 
 	// Get loop info from audio.fmt
 	if (id <= *ff8_externals.sfx_sound_count) {
-		loop = (*ff8_externals.sfx_audio_fmt)[id].is_looped;
+		loop = (*ff8_externals.sfx_audio_fmt)[id].loop;
 	}
 
 	// TODO: inverted panning option ((Reg.SoundOptions >> 20) & 1)

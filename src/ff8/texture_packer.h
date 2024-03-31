@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -36,8 +36,6 @@ typedef uint32_t ModdedTextureId;
 
 constexpr int VRAM_WIDTH = 1024;
 constexpr int VRAM_HEIGHT = 512;
-constexpr int VRAM_PAGE_WIDTH = 64;
-constexpr int VRAM_PAGE_HEIGHT = 256;
 constexpr int VRAM_DEPTH = 2;
 constexpr ModdedTextureId INVALID_TEXTURE = ModdedTextureId(0xFFFFFFFF);
 constexpr int MAX_SCALE = 128;
@@ -90,7 +88,7 @@ public:
 
 	struct TiledTex : public TextureInfos {
 		TiledTex();
-		TiledTex(int x, int y, Tim::Bpp bpp, int palVramX = -1, int palVramY = -1);
+		TiledTex(int x, int y, int w, int h, Tim::Bpp bpp, int palVramX = -1, int palVramY = -1);
 		inline bool isPaletteValid(int palIndex) const {
 			return bpp() == Tim::Bpp16 || (palettes.contains(palIndex) && palettes.at(palIndex).isValid());
 		}
@@ -125,6 +123,9 @@ public:
 		inline const std::string &name() const {
 			return _name;
 		}
+		inline const char *printableName() const {
+			return _name.empty() ? "N/A" : _name.c_str();
+		}
 		inline bool isValid() const {
 			return !_name.empty();
 		}
@@ -143,16 +144,17 @@ public:
 	};
 
 	explicit TexturePacker();
-	bool setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), bool clearOldTexture = true);
+	bool setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), int textureCount = -1, bool clearOldTexture = true);
 	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId = -1, const char *extension = nullptr, char *found_extension = nullptr);
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
-	bool setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, uint32_t *imageData);
+	void setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim);
 	void animateTextureByCopy(int sourceXBpp2, int y, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY);
+	void forceCurrentPalette(int xBpp2, int y, int8_t paletteId);
 	void clearTiledTexs();
 	void clearTextures();
 	// Returns the textures matching the tiledTex
-	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, const TextureInfos &palette, bool withModsOnly = false) const;
-	void registerTiledTex(const uint8_t *texData, int x, int y, Tim::Bpp bpp, int palX = -1, int palY = -1);
+	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, bool withModsOnly = false) const;
+	void registerTiledTex(const uint8_t *texData, int x, int y, int w, int h, Tim::Bpp bpp, int palX = -1, int palY = -1);
 	void registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY);
 	TiledTex getTiledTex(const uint8_t *texData) const;
 
@@ -161,10 +163,22 @@ public:
 		int palIndex, uint8_t *outScale, uint32_t **outTarget
 	) const;
 
-	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha, bool after, TextureTypes textureType);
+	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha = true, bool after = false, TextureTypes textureType = NoTexture);
 private:
-	inline static ModdedTextureId makeTextureId(int xBpp2, int y) {
-		return xBpp2 + y * VRAM_WIDTH;
+	inline static ModdedTextureId makeTextureId(int xBpp2, int y, bool isPal = false) {
+		return (xBpp2 + y * VRAM_WIDTH) | (isPal << 31);
+	}
+	inline static bool textureIdIspalette(ModdedTextureId textureId) {
+		return (textureId & 0x80000000) != 0;
+	}
+	inline static ModdedTextureId getTextureIdWithoutFlags(ModdedTextureId textureId) {
+		return textureId & 0x7FFFFFFF;
+	}
+	inline static int getWidthFromTextureId(ModdedTextureId textureId) {
+		return getTextureIdWithoutFlags(textureId) % VRAM_WIDTH;
+	}
+	inline static int getHeightFromTextureId(ModdedTextureId textureId) {
+		return getTextureIdWithoutFlags(textureId) / VRAM_WIDTH;
 	}
 
 	void setVramTextureId(ModdedTextureId textureId, int x, int y, int w, int h, bool clearOldTexture = true);

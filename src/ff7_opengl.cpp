@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //    Copyright (C) 2023 Marcin 'Maki' Gomulak                              //
 //                                                                          //
@@ -253,8 +253,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			if(ff7_fps_limiter == FF7_LIMITER_60FPS)
 			{
 				common_frame_multiplier = 2;
-				ff7::world::world_hook_init();
-
+				
 				// Swirl mode 60FPS fix
 				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x184, common_frame_multiplier); // wait frames before swirling
 				patch_multiply_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, common_frame_multiplier);
@@ -268,6 +267,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		}
 	}
 
+	// World fix (60 FPS, night cycle, external mesh)
+	ff7::world::world_hook_init();
+
 	// Field FPS fix (60FPS, 30FPS movies)
 	ff7::field::ff7_field_hook_init();
 
@@ -280,7 +282,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// red XIII eye blinking
 	// #####################
 	byte ff7_redxiii_eye_fix[] = "\xEC\x79\x90\x00\x00\x00\x00\x00";
-	memcpy_code(ff7_externals.field_models_eye_blink_buffer + 0x58, ff7_redxiii_eye_fix, sizeof(ff7_redxiii_eye_fix) - 1);
+	memcpy_code((uint32_t)ff7_externals.field_models_eye_blink_buffer + 0x58, ff7_redxiii_eye_fix, sizeof(ff7_redxiii_eye_fix) - 1);
 
 	// #####################
 	// field vertical center
@@ -305,7 +307,21 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// worldmap fx effects ( forest trail, ocean trail with highwind, etc. )
 	// #####################
-	patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 8);
+	switch(version)
+		{
+			case VERSION_FF7_102_US:
+				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x8);
+				break;
+			case VERSION_FF7_102_DE:
+				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x20);
+				break;
+			case VERSION_FF7_102_FR:
+				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0x50);
+				break;
+			case VERSION_FF7_102_SP:
+				patch_code_byte(ff7_externals.world_sub_75C283 + 0x2A8, 0xB0);
+				break;
+		}
 
 	// #####################
 	// battle toggle
@@ -325,11 +341,16 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function(ff7_externals.get_gamepad, ff7_get_gamepad);
 	replace_function(ff7_externals.update_gamepad_status, ff7_update_gamepad_status);
 
-	// #####################
-	// control battle camera
-	// #####################
-	if(enable_analogue_controls)
+	// ###########################
+	// control battle/world camera
+	// ###########################
+	if(enable_analogue_controls) {
 		replace_call_function(ff7_externals.battle_sub_42D992 + 0xFB, ff7::battle::update_battle_camera);
+		replace_function((uint32_t)ff7_externals.field_clip_with_camera_range_6438F6, ff7::field::ff7_field_clip_with_camera_range);
+		
+		// Disable show targets with R2 in battles
+        memset_code(ff7_externals.handle_actor_ready + 0xA8, 0x90, 29);	
+	}
 
 	//######################
 	// menu rendering fix
@@ -350,19 +371,17 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	{
 		replace_call_function(ff7_externals.battle_draw_text_ui_graphics_objects_call, ff7::battle::draw_ui_graphics_objects_wrapper);
 		replace_call_function(ff7_externals.battle_draw_box_ui_graphics_objects_call, ff7::battle::draw_ui_graphics_objects_wrapper);
-
-		replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x175, ff7::world::wm0_draw_minimap_quad_graphics_object);
-		replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x1BE, ff7::world::wm0_draw_world_effects_1_graphics_object);
-		replace_call_function(ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x208, ff7::world::wm0_draw_minimap_points_graphics_object);
 	}
 
 	if (game_lighting != GAME_LIGHTING_ORIGINAL)
 	{
 		// Disables unnecesary lighting in Chocobos applied throught the KAWAI op
-		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x864, 0x90, 5);	
+		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x864, 0x90, 5);
 		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x2E4, 0x90, 5);
 		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x3A3, 0x90, 5);
 		memset_code(ff7_externals.field_apply_kawai_op_64A070 + 0x23C, 0x90, 5);
+		// Disables unnecessary lighting in temple of the ancients rolling rocks
+		replace_function(ff7_externals.sub_64EC60, noop);
 	}
 
 	//#############################################
@@ -385,7 +404,13 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		}
 
 		// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
-		memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);    
+		memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);
+
+		// Restore Steam release behavior on character name screen when using gamepads in Steam Input mode
+		// Aali driver used to patch out these three functions to fix this issue
+		replace_function(ff7_externals.set_default_input_settings_save, noop);
+		replace_function(ff7_externals.keyboard_name_input, noop);
+		replace_function(ff7_externals.restore_input_settings, noop);
 	}
 
 	//###############################

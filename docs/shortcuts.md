@@ -91,3 +91,10 @@ This cheat will allow you to toggle the voice auto text feature while playing th
 Shortcuts:
 
 - Keyboard Shortcut: `CTRL + T`
+
+### Quit Game ( FF8 only! )
+
+Shortcuts:
+
+- Keyboard Shortcut: `CTRL + Q` (For Qwerty keyboards)
+- Keyboard Shortcut: `CTRL + A` (For Azerty keyboards)

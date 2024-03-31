@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -43,16 +43,45 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 		destroyImage();
 	}
 
-	_image = loadImageContainer(&defaultAllocator, filename, bimg::TextureFormat::BGRA8);
+	bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::BGRA8;
+
+	const char *extension = strrchr(filename, '.');
+	if (extension != nullptr && stricmp(extension + 1, "png") == 0) {
+		// Load PNG using libPNG
+		bimg::ImageMip mip;
+		if (loadPng(filename, mip, targetFormat) && Renderer::doesItFitInMemory(mip.m_size + 1))
+		{
+			_image = bimg::imageAlloc(&defaultAllocator, mip.m_format, mip.m_width, mip.m_height, mip.m_depth, 1, false, false, mip.m_data);
+			setLod(0);
+
+			driver_free((void *)mip.m_data);
+		}
+	} else if (extension != nullptr && stricmp(extension + 1, "dds") == 0) {
+		// Load DDS using DirectXTex
+		DirectX::TexMetadata metadata;
+		DirectX::ScratchImage image;
+		if (parseDds(filename, image, metadata)) {
+			int lod = computeLod(originalTexturePixelWidth, metadata.width, metadata.mipLevels, internalLodScale, filename);
+			// Convert only the relevant lod to improve performance
+			_image = convertDds(&defaultAllocator, image, metadata, targetFormat, lod);
+			image.Release();
+			setLod(0);
+		}
+	} else {
+		_image = loadImageContainer(&defaultAllocator, filename, bimg::TextureFormat::BGRA8);
+
+		if (_image != nullptr)
+		{
+			setLod(computeLod(originalTexturePixelWidth, _image->m_width, _image->m_numMips, internalLodScale, filename));
+		}
+	}
 
 	if (_image == nullptr)
 	{
 		return false;
 	}
 
-	setLod(computeLod(originalTexturePixelWidth, internalLodScale));
-
-	uint8_t scale = computeScale(originalTexturePixelWidth, originalTextureHeight);
+	uint8_t scale = computeScale(originalTexturePixelWidth, originalTextureHeight, filename);
 
 	if (trace_all || trace_vram)
 	{
@@ -97,25 +126,24 @@ int TextureImage::computeMaxScale()
 	return std::max(resWidth, FF8_BASE_RESOLUTION_X) / baseResW;
 }
 
-uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int internalScale) const
+uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int imageWidth, int numMips, int internalScale, const char *filename) const
 {
-	if (_image == nullptr || _image->m_numMips <= 1)
+	if (numMips <= 1)
 	{
 		return 0;
 	}
 
 	int maxScale = computeMaxScale(),
-		maxWidth = originalTexturePixelWidth * maxScale * internalScale,
-		imageWidth = _image->m_width;
+		maxWidth = originalTexturePixelWidth * maxScale * internalScale;
 
 	if (trace_all || trace_vram)
 	{
-		ffnx_info("ModdedTexture::%s: maxScale=%d maxWidth=%d imageWidth=%d\n", __func__, maxScale, maxWidth, imageWidth);
+		ffnx_info("TextureImage::%s: maxScale=%d maxWidth=%d imageWidth=%d\n", __func__, maxScale, maxWidth, imageWidth);
 	}
 
-	for (uint8_t lod = 0; lod < _image->m_numMips; ++lod)
+	for (uint8_t lod = 0; lod < numMips; ++lod)
 	{
-		if (imageWidth == maxWidth)
+		if (imageWidth <= maxWidth)
 		{
 			return lod;
 		}
@@ -123,12 +151,12 @@ uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int internalScal
 		imageWidth /= 2;
 	}
 
-	ffnx_warning("ModdedTexture::%s: Cannot detect the LOD of the texture\n", __func__);
+	ffnx_warning("TextureImage::%s: Cannot detect the LOD of the texture %s\n", __func__, filename);
 
 	return 0;
 }
 
-uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH) const
+uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *filename) const
 {
 	int targetPixelW = _mip.m_width, targetH = _mip.m_height;
 
@@ -137,7 +165,7 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH) const
 		|| targetPixelW % sourcePixelW != 0
 		|| targetH % sourceH != 0)
 	{
-		ffnx_warning("Texture redirection size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d)\n", targetPixelW, targetH, sourcePixelW, sourceH);
+		ffnx_warning("External texture size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d, filename=%s)\n", targetPixelW, targetH, sourcePixelW, sourceH, filename);
 
 		return 0;
 	}
@@ -146,14 +174,14 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH) const
 
 	if (scaleW != scaleH)
 	{
-		ffnx_warning("Texture redirection size must have the same ratio as the original texture: (%d / %d)\n", sourcePixelW, sourceH);
+		ffnx_warning("External texture size must have the same ratio as the original texture: (%d / %d) filename=%s\n", sourcePixelW, sourceH, filename);
 
 		return 0;
 	}
 
 	if (scaleW > MAX_SCALE)
 	{
-		ffnx_warning("External texture size cannot exceed \"original size * %d\" (scale=%d)\n", MAX_SCALE, scaleW);
+		ffnx_warning("External texture size cannot exceed \"original size * %d\" (scale=%d) filename=%s\n", MAX_SCALE, scaleW, filename);
 
 		return 0;
 	}
@@ -170,7 +198,7 @@ bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_
 {
 	char langPath[16] = "/";
 
-	if(trace_all || trace_loaders) ffnx_trace("texture file name (VRAM): %s\n", name);
+	if(trace_all || trace_loaders) ffnx_trace("Texture file name (VRAM): %s palette_index=%d hasPal=%d\n", name, palette_index, hasPal);
 
 	if(save_textures) return false;
 
@@ -259,11 +287,13 @@ void ModdedTexture::copyRect(
 	int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
 {
 	int sourceX = sourceXBpp2 * (4 >> int(depth)),
-		sourceW = sourceWBpp2 * (4 >> int(depth)),
+		sourceW = sourceWBpp2 * (4 >> int(depth)) * scale,
 		targetX = targetXBpp2 * (4 >> int(depth));
 
 	const uint32_t *source = sourceRgba + (sourceX + sourceY * sourceRgbaW) * scale;
 	uint32_t *target = targetRgba + (targetX + targetY * targetRgbaW) * scale;
+
+	sourceH *= scale;
 
 	for (int y = 0; y < sourceH; ++y)
 	{
@@ -282,11 +312,12 @@ TextureModStandard::~TextureModStandard()
 	}
 }
 
-bool TextureModStandard::createImages(int internalLodScale)
+bool TextureModStandard::createImages(int paletteCount, int internalLodScale)
 {
-	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s: internalLodScale=%d\n", __func__, internalLodScale);
+	paletteCount = paletteCount >= 0 ? paletteCount : originalTexture().palette().h(); // Works most of the time
 
-	int paletteCount = originalTexture().palette().h(); // Works most of the time
+	if (trace_all || trace_vram) ffnx_trace("TextureModStandard::%s: paletteCount=%d internalLodScale=%d\n", __func__, paletteCount, internalLodScale);
+
 	int modCount = std::max(paletteCount, 1);
 	char filename[MAX_PATH] = {}, *extension = nullptr, found_extension[16] = {};
 
@@ -313,6 +344,11 @@ bool TextureModStandard::createImages(int internalLodScale)
 
 uint8_t TextureModStandard::computePaletteId(int vramPalXBpp2, int vramPalY) const
 {
+	if (_currentPalette >= 0)
+	{
+		return uint8_t(_currentPalette);
+	}
+
 	if (vramPalXBpp2 == originalTexture().palette().x()
 		&& vramPalY >= originalTexture().palette().y() && vramPalY < originalTexture().palette().y() + originalTexture().palette().h())
 	{
@@ -433,6 +469,13 @@ void TextureModStandard::copyRect(
 	}
 }
 
+void TextureModStandard::forceCurrentPalette(int8_t currentPalette)
+{
+	if (_textures.contains(currentPalette)) {
+		_currentPalette = currentPalette;
+	}
+}
+
 TextureBackground::TextureBackground(
 	const TexturePacker::IdentifiedTexture &originalTexture,
 	const std::vector<Tile> &mapTiles,
@@ -503,16 +546,23 @@ TexturePacker::TextureTypes TextureBackground::drawToImage(
 	const uint8_t imgScale = _texture.scale();
 	const uint32_t imgWidth = mip.m_width / imgScale, imgHeight = mip.m_height / imgScale;
 
-	// Tomberry way
+	// Tonberry way
 	if (_vramPageId >= 0) {
-		drawImage(
-			imgData, imgWidth, imgScale,
-			targetRgba, targetW, targetScale,
-			0, 0, imgWidth, imgHeight,
-			0, 0
-		);
+		const int realOffsetX = (_vramPageId * TEXTURE_WIDTH_BPP16 - offsetX) / (4 >> uint16_t(targetBpp));
+		const int vramPageIdTarget = realOffsetX / TEXTURE_WIDTH_BPP16;
 
-		return TexturePacker::ExternalTexture;
+		if (vramPageIdTarget == _vramPageId) {
+			drawImage(
+				imgData, imgWidth, imgScale,
+				targetRgba, targetW, targetScale,
+				0, 0, imgWidth, imgHeight,
+				0, 0
+			);
+
+			return TexturePacker::ExternalTexture;
+		}
+
+		return TexturePacker::NoTexture;
 	}
 
 	const uint8_t cols = targetW / TILE_SIZE, rows = targetH / TILE_SIZE;

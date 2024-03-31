@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -64,7 +64,7 @@ struct LightingState
     float lightDirData[4] = { 0.3, -1.0, -0.3, 0.0 };
     float lightData[4] = { 1.0, 1.0, 1.0, 4.0 };
     float ambientLightData[4] = { 1.0, 1.0, 1.0, 1.0 };
-    float materialData[4] = { 0.7, 0.5, 0.2, 0.0 };
+    float materialData[4] = { 0.7, 0.5, 0.1, 0.0 };
     float materialScaleData[4] = { 1.0, 1.0, 1.0, 1.0 };
     float shadowData[4] = { 0.001, 0.0, 0.0, 2048.0 };
     float fieldShadowData[4] = { 0.3, 1000.0, 100.0, 0.0 };
@@ -108,7 +108,6 @@ private:
 
     void loadConfig();
     void initParamsFromConfig();
-    void updateLightMatrices(struct boundingbox* sceneAabb);
 
     void ff7_load_ibl();
 
@@ -124,6 +123,7 @@ public:
     void reload();
     void save();
 
+    void updateLightMatrices(const vector3<float>& center);
     void draw(struct game_obj* game_object);
 
     const LightingState& getLightingState();
@@ -221,6 +221,6 @@ inline void Lighting::setConfigEntry(const char *key, auto value)
 		config.insert_or_assign(key, value);
 }
 
-void drawFieldShadow();
+void drawFieldShadowCallback();
 
 extern Lighting lighting;

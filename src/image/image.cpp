@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -20,6 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "image.h"
 #include "../common.h"
 #include "../renderer.h"
 #include <stdio.h>
@@ -35,7 +36,7 @@ static void LibPngWarningCb(png_structp png_ptr, const char* warning)
     ffnx_info("libpng warning: %s\n", warning);
 }
 
-bool loadPng(const char *filename, bimg::ImageMip &mip)
+bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enum targetFormat)
 {
     FILE* file = fopen(filename, "rb");
 
@@ -102,7 +103,15 @@ bool loadPng(const char *filename, bimg::ImageMip &mip)
         return false;
     }
 
-    png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_EXPAND, NULL);
+    int transforms = PNG_TRANSFORM_EXPAND;
+
+    if (targetFormat == bimg::TextureFormat::BGRA8) {
+        transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_BGR;
+    } else if (targetFormat == bimg::TextureFormat::RGBA8) {
+        transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB;
+    }
+
+    png_read_png(png_ptr, info_ptr, transforms, NULL);
 
     color_type = png_get_color_type(png_ptr, info_ptr);
     bit_depth = png_get_bit_depth(png_ptr, info_ptr);
@@ -202,28 +211,86 @@ bool loadPng(const char *filename, bimg::ImageMip &mip)
     return false;
 }
 
-bimg::ImageContainer *loadImageContainer(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat, bool isPng)
+bool parseDds(const char *filename, DirectX::ScratchImage &image, DirectX::TexMetadata &metadata)
 {
-    bimg::ImageContainer* img = nullptr;
+    wchar_t filenameW[MAX_PATH];
 
-    if (isPng)
+    mbstowcs(filenameW, filename, MAX_PATH);
+
+    HRESULT hr = DirectX::LoadFromDDSFile(
+        filenameW,
+        DirectX::DDS_FLAGS_NONE, &metadata, image
+    );
+    if (FAILED(hr) || image.GetImageCount() == 0)
     {
-        bimg::ImageMip mip;
-        if (loadPng(filename, mip))
-        {
-            img = bimg::imageAlloc(allocator, mip.m_format, mip.m_width, mip.m_height, mip.m_depth, 1, false, false, mip.m_data);
+        ffnx_error("%s: Load DDS from file error (%d)\n", __func__, HRESULT_CODE(hr));
 
-            driver_free((void *)mip.m_data);
-
-            return img;
-        }
+        return false;
     }
 
+    return true;
+}
+
+bimg::ImageContainer *convertDds(bx::AllocatorI *allocator, DirectX::ScratchImage &image, const DirectX::TexMetadata &metadata, bimg::TextureFormat::Enum targetFormat, int lod)
+{
+    if (lod >= image.GetImageCount())
+    {
+        lod = image.GetImageCount() - 1;
+    }
+
+    const DirectX::Image &mainImage = image.GetImages()[lod];
+    DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    if (targetFormat == bimg::TextureFormat::BGRA8) {
+        format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    } else {
+        targetFormat = bimg::TextureFormat::RGBA8;
+    }
+
+    DirectX::ScratchImage out;
+    HRESULT hr;
+    if (DirectX::IsCompressed(image.GetMetadata().format))
+    {
+        hr = DirectX::Decompress(mainImage, format, out);
+        image.Release();
+    }
+    else if (image.GetMetadata().format != format)
+    {
+        hr = DirectX::Convert(mainImage, format, DirectX::TEX_FILTER_DEFAULT, DirectX::TEX_THRESHOLD_DEFAULT, out);
+        image.Release();
+    }
+    else
+    {
+        if (!Renderer::doesItFitInMemory(mainImage.rowPitch * mainImage.height + 1)) {
+            return nullptr;
+        }
+
+        return bimg::imageAlloc(allocator, targetFormat, mainImage.width, mainImage.height, 0, 1, false, false, mainImage.pixels);
+    }
+
+    if (FAILED(hr) || out.GetImageCount() == 0)
+    {
+        ffnx_error("%s: Convert DDS error (%d)\n", __func__, HRESULT_CODE(hr));
+
+        return nullptr;
+    }
+
+    const DirectX::Image &mainImage2 = out.GetImages()[0];
+
+    if (!Renderer::doesItFitInMemory(mainImage2.rowPitch * mainImage2.height + 1)) {
+        return nullptr;
+    }
+
+    return bimg::imageAlloc(allocator, targetFormat, mainImage2.width, mainImage2.height, 0, 1, false, false, mainImage2.pixels);
+}
+
+bimg::ImageContainer *loadImageContainer(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat)
+{
     FILE* file = fopen(filename, "rb");
 
     if (!file)
     {
-        return img;
+        return nullptr;
     }
 
     size_t filesize = 0;
@@ -241,12 +308,14 @@ bimg::ImageContainer *loadImageContainer(bx::AllocatorI *allocator, const char *
 
     fclose(file);
 
-    if (buffer != nullptr)
+    if (buffer == nullptr)
     {
-        img = bimg::imageParse(allocator, buffer, filesize + 1, targetFormat);
-
-        driver_free(buffer);
+        return nullptr;
     }
+
+    bimg::ImageContainer* img = bimg::imageParse(allocator, buffer, filesize + 1, targetFormat);
+
+    driver_free(buffer);
 
     return img;
 }

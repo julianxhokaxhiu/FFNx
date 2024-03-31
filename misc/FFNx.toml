@@ -12,7 +12,7 @@
 # Available choices are:
 # - 0: Auto ( default, will pick the best rendering backend for your GPU )
 # - 1: OpenGL ( works fine on Intel/Nvidia, MAY break on AMD )
-# - 2: Direct3D9 ( Tech Preview: Not Recommended )
+# - 2: UNUSED ( used to be Direct3D9, no more supported )
 # - 3: Direct3D11 ( works fine under any GPU on Windows )
 # - 4: Direct3D12
 # - 5: Vulkan
@@ -122,6 +122,16 @@ enable_time_cycle = false
 # Path for external day-night time files.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_time_cycle_path = "time"
+
+#[EXTERNAL WORLDMAP MESH]
+# Enable worldmap external meshes.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_worldmap_external_mesh = false
+
+#[EXTERNAL MESH PATH]
+# Path for external mesh files.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external_mesh_path = "mesh"
 
 #[HDR]
 # This flag will set the brightness level that SDR "white" is rendered at within an HDR monitor.
@@ -355,37 +365,42 @@ external_movie_audio_ext = "ogg"
 ###########################
 
 #[ANALOGUE CONTROLS]
-# This flag will enable analogue joystick input for controlling the player in fields and the camera in battles.
+# FF7: This flag will enable analogue joystick input for controlling the player in fields and the camera in battles.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_analogue_controls = false
 
-#[INVERT CAMERA CONTROLS]
-# This flag will enable inverted camera vertical movement when controlling the camera in battles.
+#[INVERT VERTICAL CAMERA CONTROLS]
+# FF7: This flag will enable inverted camera vertical movement when controlling the camera in battles.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-enable_inverted_camera_controls = false
+enable_inverted_vertical_camera_controls = false
+
+#[INVERT HORIZONTAL CAMERA CONTROLS]
+# FF7: This flag will enable inverted camera horizontal movement when controlling the camera in battles.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_inverted_horizontal_camera_controls = false
 
 #[LEFT ANALOG STICK DEADZONE]
-# Sets the deadzone for the left analog stick. Values are from 0 to 1.
+# FF7: Sets the deadzone for the left analog stick. Values are from 0 to 1.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 left_analog_stick_deadzone = 0.1
 
 #[RIGHT ANALOG STICK DEADZONE]
-# Sets the deadzone for the right analog stick. Values are from 0 to 1.
+# FF7: Sets the deadzone for the right analog stick. Values are from 0 to 1.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 right_analog_stick_deadzone = 0.1
 
 #[LEFT ANALOG TRIGGER DEADZONE]
-# Sets the deadzone for the left analog trigger. Values are from 0 to 1.
+# FF7: Sets the deadzone for the left analog trigger. Values are from 0 to 1.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 left_analog_trigger_deadzone = 0.1
 
 #[RIGHT ANALOG TRIGGER DEADZONE]
-# Sets the deadzone for the right analog trigger. Values are from 0 to 1.
+# FF7: Sets the deadzone for the right analog trigger. Values are from 0 to 1.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 right_analog_trigger_deadzone = 0.1
 
 #[AUTO RUN]
-# This flag enables mode to walk or run depending on how much the left analog stick is tilt.
+# FF7: This flag enables mode to walk or run depending on how much the left analog stick is tilt.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_auto_run = false
 
@@ -441,7 +456,7 @@ save_textures = false
 
 # Dump internal legacy textures to PNG files in the mod_path
 # FF7: There is currently no legacy format
-# FF8: Field backgrounds will be saved in Tomberry's format, instead of FFNx one
+# FF8: Field backgrounds will be saved in Tonberry's format, instead of FFNx one
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 save_textures_legacy = false
 
@@ -689,6 +704,11 @@ ff8_fix_uv_coords_precision = true
 # Use this option if you want to use OGG files from Remastered Edition directly in external music
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_external_music_force_original_filenames = false
+
+# Use icon textures for gamepad buttons instead of "B1", "B2", etc...
+# By default the PS1 icons are used from the game data.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_use_gamepad_icons = false
 
 ## GAME INSTALLATION OPTIONS
 

@@ -1,0 +1,126 @@
+name: FFNx
+
+run-name: 1.18.1.${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+    - master
+    tags:
+    - "*"
+  pull_request:
+    branches:
+    - master
+
+env:
+  _IS_BUILD_CANARY: false
+  _IS_GITHUB_RELEASE: false
+  _RELEASE_NAME: FFNx
+  _RELEASE_VERSION: v0
+  _RELEASE_CONFIGURATION: Release
+  _BUILD_BRANCH: "${{ github.ref }}"
+  _CHANGELOG_VERSION: "0"
+  # GIT: Fix reporting from stderr to stdout
+  GIT_REDIRECT_STDERR: 2>&1
+  # Tools versions
+  _WINGET_CMAKE: 3.29.0
+  _WINGET_POWERSHELL: 7.4.1
+  _WINGET_VS2022: 17.9.1
+
+jobs:
+  FFNx:
+    runs-on: windows-latest
+    timeout-minutes: 1440
+    strategy:
+      max-parallel: 1
+    steps:
+    - name: Set Git Config
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.filemode false
+        git config --global core.longpaths true
+    - name: Checkout
+      uses: actions/checkout@v4.1.0
+    - name: Install WinGet
+      uses: Cyberboss/install-winget@v1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build
+      run: ".github/workflows/build.ps1"
+      shell: pwsh
+      env:
+        _BUILD_VERSION: "1.18.1.${{ github.run_number }}"
+        GITHUB_PACKAGES_PAT: ${{ secrets.GITHUB_TOKEN }}
+    - name: Publish PR artifacts
+      if: env._IS_GITHUB_RELEASE == 'false' && success()
+      uses: actions/upload-artifact@v4.0.0
+      with:
+        name: "${{ env._RELEASE_NAME }}-${{ env._RELEASE_VERSION }}"
+        path: ".dist/*.zip"
+    - name: VirusTotal Scan
+      id: vt-scan
+      if: env._IS_GITHUB_RELEASE == 'true' && success()
+      uses: crazy-max/ghaction-virustotal@v4
+      with:
+        vt_api_key: ${{ secrets._VT_API_KEY }}
+        files: ".dist/*.zip"
+    - name: Parse VirusTotal Results
+      id: vt-res
+      if: env._IS_GITHUB_RELEASE == 'true' && success()
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          let ret = `${{ steps.vt-scan.outputs.analysis }}`;
+
+          ret = '- ' + ret
+          .replaceAll('.dist/','')
+          .replaceAll('=h', ': h')
+          .replaceAll(',', "\n- ");
+
+          console.log('Results:');
+          console.log(ret);
+
+          return ret;
+    - name: Publish Canary release
+      uses: ncipollo/release-action@v1
+      if: env._IS_GITHUB_RELEASE == 'true' && env._IS_BUILD_CANARY == 'true' && success()
+      with:
+        artifacts: ".dist/*.zip"
+        allowUpdates: true
+        generateReleaseNotes: true
+        prerelease: true
+        removeArtifacts: true
+        tag: canary
+        name: "${{ env._RELEASE_NAME }}-${{ env._RELEASE_VERSION }}"
+        body: |
+          See https://github.com/julianxhokaxhiu/FFNx/blob/master/Changelog.md#next
+
+          This is a canary build. Please be aware it may be prone to crashing and is NOT tested by anyone. Use this build AT YOUR OWN RISK!
+
+          🛡️ **VirusTotal analysis:**
+          ${{ steps.vt-res.outputs.result }}
+    - name: Publish Stable release
+      uses: ncipollo/release-action@v1
+      if: env._IS_GITHUB_RELEASE == 'true' && env._IS_BUILD_CANARY == 'false' && success()
+      with:
+        artifacts: ".dist/*.zip"
+        generateReleaseNotes: true
+        makeLatest: true
+        removeArtifacts: true
+        name: "${{ env._RELEASE_NAME }}-${{ env._RELEASE_VERSION }}"
+        body: |
+          See https://github.com/julianxhokaxhiu/FFNx/blob/master/Changelog.md#${{ env._CHANGELOG_VERSION }}
+
+          🛡️ **VirusTotal analysis:**
+          ${{ steps.vt-res.outputs.result }}
+    - name: Send alerts
+      if: env._IS_GITHUB_RELEASE == 'true' && success()
+      env:
+        _MAP_FFNX_TSUNAMODS_FF7: "${{ secrets._FFNX_TSUNAMODS_FF7 }}"
+        _MAP_FFNX_TSUNAMODS_FF8: "${{ secrets._FFNX_TSUNAMODS_FF8 }}"
+        _MAP_FFNX_QHIMM_FF7: "${{ secrets._FFNX_QHIMM_FF7 }}"
+        _MAP_FFNX_QHIMM_FF8: "${{ secrets._FFNX_QHIMM_FF8 }}"
+      run: ".github/workflows/alert.ps1"
+      shell: pwsh

@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -307,6 +307,12 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 		{
 			stopSFX(channel);
 			unloadSFXChannel(channel);
+		}
+		// If the engine is asking us to play again the same id on the same channel, and is a looping effect...
+		else if (options->stream != nullptr && options->id == id && loop)
+		{
+			// ...simply skip it since it's already playing
+			skipPlay = true;
 		}
 	}
 	// If channel is known to lazy unload what is currently playing, save the handler for later
@@ -618,6 +624,7 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 	std::optional<SoLoud::time> offset_seconds_opt = config[name]["offset_seconds"].value<SoLoud::time>();
 	std::optional<std::string> no_intro_track_opt = config[name]["no_intro_track"].value<std::string>();
 	std::optional<SoLoud::time> intro_seconds_opt = config[name]["intro_seconds"].value<SoLoud::time>();
+	std::optional<float> relative_speed_opt = config[name]["relative_speed"].value<float>();
 
 	if (offset_seconds_opt.has_value()) {
 		musicOptions->offsetSeconds = *offset_seconds_opt;
@@ -645,6 +652,10 @@ void NxAudioEngine::overloadPlayArgumentsFromConfig(char* name, uint32_t* id, Mu
 		else {
 			ffnx_info("%s: cannot play no intro track, please configure it in %s/config.toml\n", __func__, external_music_path.c_str());
 		}
+	}
+
+	if (relative_speed_opt.has_value() && *relative_speed_opt > 0.0f) {
+		musicOptions->relativeSpeed = *relative_speed_opt;
 	}
 
 	// Shuffle Music playback, if any entry found for the current music name
@@ -714,6 +725,10 @@ bool NxAudioEngine::playMusic(const char* name, uint32_t id, int channel, MusicO
 		}
 		else if (options.fadetime > 0.0) {
 			setMusicVolume(music.wantedMusicVolume, channel, options.fadetime);
+		}
+
+		if (options.relativeSpeed > 0.0f && options.relativeSpeed != 1.0f) {
+			setMusicSpeed(options.relativeSpeed, channel);
 		}
 
 		return true;

@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
@@ -102,7 +102,6 @@ namespace ff7::field
         int frame_multiplier = get_frame_multiplier();
         field_event_data* field_event_data_array = (*ff7_externals.field_event_data_ptr);
 
-        
         if(is_fps_running_more_than_original() && *ff7_externals.field_id == 748)
         {
             // Fix softlock related to this discussion https://github.com/julianxhokaxhiu/FFNx/discussions/569. 
@@ -271,7 +270,7 @@ namespace ff7::field
     void ff7_field_blink_3d_model(field_animation_data* anim_data, field_model_blink_data* blink_data)
     {
         ff7_externals.field_blink_3d_model_649B50(anim_data, blink_data);
-        if(blink_data->blink_mode == 2)
+        if(blink_data->blink_left_eye_mode == 2)
         {
             auto &field_event_data = (*ff7_externals.field_event_data_ptr)[blink_data->model_id];
             if(external_model_data[blink_data->model_id].blinkFrameIndex > 0)
@@ -323,6 +322,8 @@ namespace ff7::field
             return 1;
         if ( !_strcmpi(model_name, "AGGB") )
             return 1;
+        if ( !_strcmpi(model_name, "BUAC") )
+            return 1;
 
         // Aerith
         if ( !_strcmpi(model_name, "AUFF") )
@@ -330,6 +331,10 @@ namespace ff7::field
         if ( !_strcmpi(model_name, "CAHC") )
             return 2;
         if ( !_strcmpi(model_name, "AZBB") )
+            return 2;
+        if ( !_strcmpi(model_name, "CQGA") )
+            return 2;
+        if ( !_strcmpi(model_name, "DIFF") )
             return 2;
 
         // Barret

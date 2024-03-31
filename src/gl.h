@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -35,7 +35,9 @@ enum DrawCallType
 	DCT_DRAW,
 	DCT_DRAW_MOVIE,
 	DCT_BATTLE_DEPTH_CLEAR,
-	DCT_ZOOM
+	DCT_ZOOM,
+	DCT_WORLD_EXTERNAL_MESH,
+	DCT_CLOUD_EXTERNAL_MESH,
 };
 
 struct driver_state
@@ -81,6 +83,7 @@ struct deferred_draw
 	struct game_obj *game_object;
 	uint32_t movie_buffer_index;
 	bool is_time_filter_enabled;
+	bool is_fog_enabled;
 };
 
 struct deferred_sorted_draw
@@ -117,12 +120,14 @@ void gl_draw_movie_quad(uint32_t width, uint32_t height);
 void gl_save_state(struct driver_state *dest);
 void gl_load_state(struct driver_state *src);
 uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, struct light_data* lightdata, uint32_t clip, uint32_t mipmap);
-uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap);
+uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap, uint32_t force_defer);
 uint32_t gl_defer_blit_framebuffer(struct texture_set *texture_set, struct tex_header *tex_header);
 uint32_t gl_defer_clear_buffer(uint32_t clear_color, uint32_t clear_depth, struct game_obj *game_object);
 uint32_t gl_defer_yuv_frame(uint32_t buffer_index);
 uint32_t gl_defer_battle_depth_clear();
 uint32_t gl_defer_zoom();
+uint32_t gl_defer_world_external_mesh();
+uint32_t gl_defer_cloud_external_mesh();
 void gl_draw_deferred(draw_field_shadow_callback shadow_callback);
 struct boundingbox calculateSceneAabb();
 void gl_draw_sorted_deferred();

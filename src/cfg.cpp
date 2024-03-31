@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -47,6 +47,7 @@ std::vector<std::string> external_ambient_ext;
 std::string external_lighting_path;
 std::string external_widescreen_path;
 std::string external_time_cycle_path;
+std::string external_mesh_path;
 bool enable_voice_music_fade;
 long external_voice_music_fade_volume;
 bool enable_voice_auto_text;
@@ -92,6 +93,7 @@ bool enable_lighting;
 bool prefer_lighting_cpu_calculations;
 long game_lighting;
 bool enable_time_cycle;
+bool enable_worldmap_external_mesh;
 bool ff7_external_opening_music;
 bool more_debug;
 bool ff8_ssigpu_debug;
@@ -118,7 +120,8 @@ long ff7_fps_limiter;
 bool ff7_footsteps;
 bool ff7_field_center;
 bool enable_analogue_controls;
-bool enable_inverted_camera_controls;
+bool enable_inverted_vertical_camera_controls;
+bool enable_inverted_horizontal_camera_controls;
 double left_analog_stick_deadzone;
 double right_analog_stick_deadzone;
 double left_analog_trigger_deadzone;
@@ -132,6 +135,7 @@ long external_audio_sample_rate;
 bool ff8_worldmap_internal_highres_textures;
 bool ff8_fix_uv_coords_precision;
 bool ff8_external_music_force_original_filenames;
+bool ff8_use_gamepad_icons;
 std::string app_path;
 std::string data_drive;
 bool enable_ntscj_gamut_mode;
@@ -204,6 +208,7 @@ void read_cfg()
 	external_lighting_path = config["external_lighting_path"].value_or("");
 	external_widescreen_path = config["external_widescreen_path"].value_or("");
 	external_time_cycle_path = config["external_time_cycle_path"].value_or("");
+	external_mesh_path = config["external_mesh_path"].value_or("");
 	save_textures = config["save_textures"].value_or(false);
 	save_textures_legacy = config["save_textures_legacy"].value_or(false);
 	trace_all = config["trace_all"].value_or(false);
@@ -245,6 +250,7 @@ void read_cfg()
 	prefer_lighting_cpu_calculations = config["prefer_lighting_cpu_calculations"].value_or(true);
 	game_lighting = config["game_lighting"].value_or(GAME_LIGHTING_PER_VERTEX);
 	enable_time_cycle = config["enable_time_cycle"].value_or(false);
+	enable_worldmap_external_mesh = config["enable_worldmap_external_mesh"].value_or(false);
 	ff7_external_opening_music = config["ff7_external_opening_music"].value_or(false);
 	more_debug = config["more_debug"].value_or(false);
 	ff8_ssigpu_debug = config["ff8_ssigpu_debug"].value_or(false);
@@ -271,7 +277,8 @@ void read_cfg()
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	ff7_field_center = config["ff7_field_center"].value_or(true);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
-	enable_inverted_camera_controls = config["enable_inverted_camera_controls"].value_or(false);
+	enable_inverted_vertical_camera_controls = config["enable_inverted_vertical_camera_controls"].value_or(false);
+	enable_inverted_horizontal_camera_controls = config["enable_inverted_horizontal_camera_controls"].value_or(false);
 	left_analog_stick_deadzone = config["left_analog_stick_deadzone"].value_or(0.1);
 	right_analog_stick_deadzone = config["right_analog_stick_deadzone"].value_or(0.1);
 	left_analog_trigger_deadzone = config["left_analog_trigger_deadzone"].value_or(0.1);
@@ -286,6 +293,7 @@ void read_cfg()
 	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(true);
 	ff8_fix_uv_coords_precision = config["ff8_fix_uv_coords_precision"].value_or(true);
 	ff8_external_music_force_original_filenames = config["ff8_external_music_force_original_filenames"].value_or(false);
+	ff8_use_gamepad_icons = config["ff8_use_gamepad_icons"].value_or(false);
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");
 	enable_ntscj_gamut_mode = config["enable_ntscj_gamut_mode"].value_or(false);
@@ -445,6 +453,10 @@ void read_cfg()
 	// EXTERNAL TIME CYCLE
 	if (external_time_cycle_path.empty())
 		external_time_cycle_path = "time";
+
+	// EXTERNAL MESH
+	if (external_mesh_path.empty())
+		external_mesh_path = "mesh";
 
 	// MOD PATH
 	if (mod_path.empty())

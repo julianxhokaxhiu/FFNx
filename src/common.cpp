@@ -6,7 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2020 Marcin Gomulak                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <sys/timeb.h>
 #include <steamworkssdk/steam_api.h>
+#include <hwinfo/hwinfo.h>
 
 #include "renderer.h"
 #include "hext.h"
@@ -255,6 +256,40 @@ void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
 		FFNxStackWalker sw;
 		sw.ShowCallstack();
 	}
+}
+
+void ffnx_log_current_pc_specs()
+{
+	// Start report of PC specs
+	ffnx_info("--- PC SPECS ---\n");
+
+	// CPU
+	auto cpus = hwinfo::getAllCPUs();
+	for (const auto& cpu : cpus) {
+		ffnx_info("CPU: %s\n", cpu.modelName().c_str());
+	}
+
+	// GPU
+	auto gpus = hwinfo::getAllGPUs();
+	for (auto& gpu : gpus) {
+		uint16_t vendorId = std::stoi(gpu.vendor_id(), 0, 16), deviceId = std::stoi(gpu.device_id(), 0, 16);
+		if (
+			(newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId) ||
+			(newRenderer.getCaps()->vendorId == vendorId && renderer_backend == RENDERER_BACKEND_OPENGL)
+		)
+			ffnx_info("GPU: %s (%dMB) - Driver: %s - Backend: %s\n", gpu.name().c_str(), (int)(gpu.memory_Bytes() / 1024.0 / 1024.0), gpu.driverVersion().c_str(), newRenderer.currentRenderer.c_str());
+	}
+
+	// RAM
+	hwinfo::Memory memory;
+	ffnx_info("RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.total_Bytes() - memory.free_Bytes()) / 1024.0 / 1024.0), (int)(memory.total_Bytes() / 1024.0 / 1024.0), (int)(memory.free_Bytes() / 1024.0 / 1024.0));
+
+	// OS
+	hwinfo::OS os;
+	ffnx_info(" OS: %s %s (build %s)\n", os.name().c_str(), (os.is32bit() ? "32 bit" : "64 bit"), os.version().c_str());
+
+	// End report of PC specs
+	ffnx_info("----------------\n");
 }
 
 // figure out which game module is currently running by looking at the game's
@@ -875,6 +910,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				// Init Lighting
 				if (!ff8 && enable_lighting) lighting.init();
 
+				ffnx_log_current_pc_specs();
+
 				// enable verbose logging for FFMpeg
 				av_log_set_level(AV_LOG_VERBOSE);
 				av_log_set_callback(ffmpeg_log_callback);
@@ -887,6 +924,11 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 					{
 						// Show the cursor
 						while (ShowCursor(true) < 0);
+					}
+					else if (fullscreen)
+					{
+						// Hide the cursor
+						while (ShowCursor(false) >= 0);
 					}
 
 					nxAudioEngine.init();
@@ -938,8 +980,6 @@ void common_cleanup(struct game_obj *game_object)
 
 	if (steam_edition)
 	{
-		metadataPatcher.apply();
-
 		if (!ff8)
 		{
 			// Write ff7sound.cfg
@@ -1476,23 +1516,38 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			&scale, &image_data_scaled
 		);
 
-		if (save_textures && textureType != TexturePacker::InternalTexture) return false;
+		if (save_textures && textureType != TexturePacker::InternalTexture) {
+			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
+				driver_free(image_data_scaled);
+			}
+
+			return false;
+		}
 
 		if (textureType == TexturePacker::NoTexture)
 		{
+			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
+				driver_free(image_data_scaled);
+			}
+
 			if(VREF(texture_set, ogl.external)) stats.external_textures--;
 			VRASS(texture_set, ogl.external, false);
 		}
 		else if (textureType == TexturePacker::RemoveTexture)
 		{
-			ffnx_trace("Remove texture\n");
+			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
+				driver_free(image_data_scaled);
+			}
+
 			return true;
 		}
 		else
 		{
 			VREF(texture_set, ogl.width) = originalWidth * scale;
 			VREF(texture_set, ogl.height) = originalHeight * scale;
-			texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(image_data_scaled), VREF(texture_set, ogl.width), VREF(texture_set, ogl.height));
+			// Data is passed to bgfx, not need to free it here
+			bool copyData = image_data_scaled == image_data;
+			texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(image_data_scaled), VREF(texture_set, ogl.width), VREF(texture_set, ogl.height), 0, RendererTextureType::BGRA, true, copyData);
 		}
 
 		if (textureType == TexturePacker::InternalTexture)
@@ -1718,8 +1773,11 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 		{
 			// optimization to not upload textures with undefined VRAM palette
 			TexturePacker::TiledTex tiledTex = texturePacker.getTiledTex(VREF(tex_header, image_data));
+
 			if (tiledTex.isValid() && !tiledTex.isPaletteValid(VREF(tex_header, palette_index) / 2))
 			{
+				if(trace_all || trace_vram) ffnx_trace("dll_gfx: load_texture ignored texture_set=0x%X pointer=0x%X pos=(%d, %d) bpp=%d index=%d\n", _texture_set, VREF(tex_header, image_data), tiledTex.x(), tiledTex.y(), tiledTex.bpp(), VREF(tex_header, palette_index) / 2);
+
 				return _texture_set;
 			}
 		}
@@ -2824,8 +2882,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 					if (ff7sound)
 					{
-						if (external_sfx_volume > -1) fread(&external_sfx_volume, sizeof(DWORD), 1, ff7sound);
-						if (external_music_volume > -1) fread(&external_music_volume, sizeof(DWORD), 1, ff7sound);
+						if (external_sfx_volume < 0) fread(&external_sfx_volume, sizeof(DWORD), 1, ff7sound);
+						if (external_music_volume < 0) fread(&external_music_volume, sizeof(DWORD), 1, ff7sound);
 						fclose(ff7sound);
 					}
 				}
@@ -2964,6 +3022,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			if (external_ambient_volume < 0) external_ambient_volume = 100;
 			if (ffmpeg_video_volume < 0) ffmpeg_video_volume = 100;
 		}
+
+		// Init metadata patcher
+		if (steam_edition) metadataPatcher.init();
 
 		// Apply hext patching
 		hextPatcher.applyAll();

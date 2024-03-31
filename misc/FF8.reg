@@ -7,7 +7,7 @@ Windows Registry Editor Version 5.00
 #    Copyright (C) 2020 myst6re                                               #
 #    Copyright (C) 2020 Chris Rizzitello                                      #
 #    Copyright (C) 2020 John Pritchard                                        #
-#    Copyright (C) 2023 Julian Xhokaxhiu                                      #
+#    Copyright (C) 2024 Julian Xhokaxhiu                                      #
 #                                                                             #
 #    This file is part of FFNx                                                #
 #                                                                             #
@@ -38,3 +38,11 @@ Windows Registry Editor Version 5.00
 
 [HKEY_CURRENT_USER\Software\Classes\VirtualStore\MACHINE\SOFTWARE\Wow6432Node\Square Soft, Inc\FINAL FANTASY VIII\1.00]
 "Graphics"=dword:00100021
+
+# Disable compatibility flags
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags]
+"{e1af58c2-e896-4640-bb34-d9fa0b8260a3}"=dword:00000077
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\AppCompatFlags]
+"{e1af58c2-e896-4640-bb34-d9fa0b8260a3}"=dword:00000077

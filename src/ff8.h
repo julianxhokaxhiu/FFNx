@@ -6,7 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2020 Marcin Gomulak                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -36,12 +36,13 @@ enum ff8_game_modes
 	FF8_MODE_5,
 	FF8_MODE_MENU,
 	FF8_MODE_7,
-	FF8_MODE_CARDGAME,
+	FF8_MODE_CARDGAME, // And battle
 	FF8_MODE_9,
 	FF8_MODE_TUTO,
 	FF8_MODE_11,
 	FF8_MODE_INTRO,
 	FF8_MODE_100 = 100,
+	FF8_MODE_MAIN_MENU = 200,
 	FF8_MODE_BATTLE = 999
 };
 
@@ -445,7 +446,7 @@ struct struc_50
 	uint32_t texture_page_enabled;
 	uint32_t field_328;
 	uint32_t vram_needs_reload;
-	uint32_t field_330;
+	uint32_t palette_index;
 	char dummy[256];
 	uint32_t vram_x;
 	uint32_t vram_y;
@@ -565,16 +566,19 @@ struct ff8_win_obj
 };
 
 struct ff8_gamepad_vibration_state_entry {
-	int16_t field_0;
+	uint8_t analog_disabled;
+	uint8_t analog_flags;
 	int16_t keyscan;
-	int16_t field_4;
-	int16_t field_6;
+	uint8_t analog_rx;
+	uint8_t analog_ry;
+	uint8_t analog_lx;
+	uint8_t analog_ly;
 	int16_t field_8;
 	int16_t field_A;
 	int16_t field_C;
 	int16_t field_E;
 	int16_t keyon;
-	int16_t field_12;
+	int16_t keyscan_invert;
 };
 
 struct ff8_gamepad_vibration_state {
@@ -599,8 +603,21 @@ struct ff8_gamepad_vibration_state {
 	ff8_gamepad_vibration_state_entry entries[8];
 	uint32_t field_BC;
 	uint16_t field_C0;
-	uint8_t sound_volume; // Analog level in PSX version
-	uint8_t gamepad_options; // is_enabled | u40 | u20 | u10 | u8 | u4 | u2 | u1
+	uint8_t port_id;
+	uint8_t gamepad_options; // is_enabled (1-bit) | u40 | u20 | u10 | u8 | analog sensitivity (1 to 4, 3-bits)
+};
+
+struct ff8_driver_input_state {
+	ff8_gamepad_vibration_state_entry entry;
+	uint32_t field_14;
+	uint32_t field_18;
+	uint32_t field_1C;
+	uint32_t field_20;
+};
+
+struct ff8_gamepad_state {
+	ff8_gamepad_vibration_state state_by_port[2];
+	ff8_driver_input_state driver_state_by_port[2];
 };
 
 struct ff8_vibrate_motor_struc
@@ -624,16 +641,56 @@ struct ff8_vibrate_struc
 	uint8_t field_23;
 };
 
+struct ff8_menu_config_input {
+	int16_t text_id_name;
+	uint16_t text_id_value1;
+	uint16_t text_id_value2;
+	uint16_t type;
+	uint16_t mask;
+	uint16_t value;
+	void(*callback_change_state)();
+};
+
+struct ff8_menu_config_input_keymap {
+	uint8_t field_0;
+	uint8_t field_1;
+	uint8_t field_2;
+	uint8_t field_3;
+	uint8_t text_id;
+	uint8_t padd_5;
+	uint8_t padd_6;
+	uint8_t padd_7;
+};
+
+struct ff8_draw_menu_sprite_texture_infos {
+	uint32_t field_0;
+	uint32_t field_4;
+	uint32_t field_8;
+	uint16_t x_related;
+	uint16_t y_related;
+	uint32_t field_10;
+	uint32_t field_14;
+};
+
+struct ff8_draw_menu_sprite_texture_infos_short {
+	uint32_t field_0;
+	uint32_t field_4;
+	uint16_t x_related;
+	uint16_t y_related;
+	uint32_t field_C;
+	uint32_t field_10;
+};
+
 struct ff8_audio_fmt
 {
-	uint32_t audio_data_length;
-	uint32_t audio_data_offset;
-	uint8_t is_looped;
-	uint8_t field_9;
-	uint8_t field_A;
-	uint8_t field_B;
-	uint32_t buffer_read_cursor;
-	uint32_t buffer_write_cursor;
+	uint32_t length;
+	uint32_t offset;
+	uint8_t loop;
+	uint8_t count;
+	uint8_t unk1;
+	uint8_t unk2;
+	uint32_t loop_start;
+	uint32_t loop_end;
 	LPWAVEFORMATEX wave_format;
 };
 
@@ -960,6 +1017,11 @@ struct ff8_field_state_background {
 	uint8_t field_1b3;
 };
 
+struct ff8_menu_callback {
+	void (*func)(int);
+	uint32_t field_4;
+};
+
 // --------------- end of FF8 imports ---------------
 
 // memory addresses and function pointers from FF8.exe
@@ -980,6 +1042,9 @@ struct ff8_externals
 	uint32_t cdcheck_main_loop;
 	uint32_t cdcheck_sub_52F9E0;
 	uint32_t main_entry;
+	uint8_t *config_worldmap_fog_disabled;
+	uint8_t *config_worldmap_color_anim_disabled;
+	uint8_t *config_worldmap_textured_anim_disabled;
 	uint32_t init_config;
 	uint32_t (*reg_get_data_drive)(char*, DWORD);
 	void (*set_game_paths)(int, char *, const char *);
@@ -1006,15 +1071,19 @@ struct ff8_externals
 	uint32_t pubintro_init;
 	uint32_t sub_467C00;
 	uint32_t sub_468810;
+	uint32_t dinput_get_input_device_capabilities_number_of_buttons;
+	uint32_t get_command_key;
 	uint32_t sub_468BD0;
 	uint32_t pubintro_cleanup;
 	uint32_t pubintro_exit;
 	uint32_t pubintro_main_loop;
 	uint32_t credits_main_loop;
+	uint32_t go_to_main_menu_main_loop;
+	uint32_t main_menu_main_loop;
 	DWORD* credits_loop_state;
 	DWORD* credits_counter;
-	uint32_t sub_470520;
-	uint32_t sub_4A24B0;
+	DWORD* credits_current_image_global_counter_start;
+	DWORD* credits_current_step_image;
 	uint32_t sub_470630;
 	uint32_t dd_d3d_start;
 	uint32_t create_d3d_gfx_driver;
@@ -1037,6 +1106,22 @@ struct ff8_externals
 	uint32_t sub_559F30;
 	uint32_t sub_497380;
 	uint32_t sub_4B3410;
+	uint32_t sub_4B3310;
+	uint32_t sub_4B3140;
+	uint32_t sub_4BDB30;
+	ff8_menu_callback *menu_callbacks;
+	uint32_t menu_config_controller;
+	uint32_t menu_config_render;
+	uint32_t menu_config_render_submenu;
+	ff8_menu_config_input *menu_config_input_desc;
+	ff8_menu_config_input_keymap *menu_config_input_desc_keymap;
+	uint32_t main_menu_render_sub_4E5550;
+	uint32_t main_menu_controller;
+	uint32_t sub_4C2FF0;
+	uint32_t menu_chocobo_world_controller;
+	uint32_t create_save_file_sub_4C6E50;
+	uint32_t create_save_chocobo_world_file_sub_4C6620;
+	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;
 	uint32_t menu_draw_text;
@@ -1066,14 +1151,19 @@ struct ff8_externals
 	uint32_t worldmap_main_loop;
 	uint32_t worldmap_enter_main;
 	uint32_t worldmap_sub_53F310;
+	uint32_t worldmap_sub_53F310_call_24D;
 	uint32_t worldmap_sub_53F310_call_2A9;
 	uint32_t worldmap_sub_53F310_call_30D;
 	uint32_t worldmap_sub_53F310_call_330;
 	uint32_t worldmap_sub_53F310_call_366;
+	uint32_t worldmap_sub_53F310_call_3B5;
 	uint32_t worldmap_sub_53F310_loc_53F7EE;
+	uint32_t worldmap_wmset_set_pointers_sub_542DA0;
 	uint32_t worldmap_sub_541970_upload_tim;
 	uint32_t worldmap_sub_548020;
 	uint32_t worldmap_sub_5531F0;
+	uint32_t worldmap_sub_554AA0;
+	uint32_t worldmap_sub_554AA0_call_C2;
 	uint32_t worldmap_alter_uv_sub_553B40;
 	uint32_t worldmap_sub_545E20;
 	uint32_t worldmap_chara_one;
@@ -1082,9 +1172,12 @@ struct ff8_externals
 	uint32_t open_file_world_sub_52D670_texl_call2;
 	uint32_t upload_psxvram_texl_pal_call1;
 	uint32_t upload_psxvram_texl_pal_call2;
+	uint32_t **worldmap_section17_position;
+	uint32_t **worldmap_section18_position;
 	uint32_t **worldmap_section38_position;
 	uint32_t **worldmap_section39_position;
 	uint32_t **worldmap_section40_position;
+	uint32_t **worldmap_section41_position;
 	uint32_t **worldmap_section42_position;
 	uint32_t (*worldmap_prepare_tim_for_upload)(uint8_t *, ff8_tim *);
 	uint32_t engine_eval_process_input;
@@ -1139,6 +1232,11 @@ struct ff8_externals
 	uint32_t sub_54E9B0;
 	uint32_t sub_550070;
 	int (*sub_541C80)(int);
+	uint32_t worldmap_input_update_sub_559240;
+	uint32_t sub_554940;
+	uint32_t sub_554940_call_130;
+	uint32_t sub_541AE0;
+	uint32_t sub_554BC0;
 	uint32_t sub_54B460;
 	uint32_t sub_558D70;
 	uint32_t sub_545EA0;
@@ -1179,6 +1277,7 @@ struct ff8_externals
 	uint32_t opcode_moviesync;
 	uint32_t opcode_spuready;
 	uint32_t opcode_movieready;
+	uint32_t opcode_setvibrate;
 	uint32_t opcode_musicload;
 	uint32_t opcode_crossmusic;
 	uint32_t opcode_dualmusic;
@@ -1238,6 +1337,7 @@ struct ff8_externals
 	FILE *(*_fsopen)(const char*, const char*, int);
 	uint32_t input_init;
 	uint32_t ff8input_cfg_read;
+	uint32_t ff8input_cfg_reset;
 	char *(*strcpy_with_malloc)(const char *);
 	uint32_t moriya_filesytem_open;
 	uint32_t moriya_filesytem_seek;
@@ -1251,22 +1351,38 @@ struct ff8_externals
 	uint32_t sub_470440;
 	uint32_t sub_49ACD0;
 	uint32_t sub_4A0880;
+	uint32_t sub_4A09A0;
+	uint32_t sub_49FC10;
 	uint32_t sub_4A0C00;
+	uint32_t *dword_1D2B808;
 	char(*show_dialog)(int32_t, uint32_t, int16_t);
 	int(*pause_menu_with_vibration)(int);
+	uint32_t ff8_draw_icon_or_key1;
+	uint32_t ff8_draw_icon_or_key2;
+	uint32_t ff8_draw_icon_or_key3;
+	uint32_t ff8_draw_icon_or_key4;
+	uint32_t ff8_draw_icon_or_key5;
+	uint32_t ff8_draw_icon_or_key6;
 	int(*pause_menu)(int);
 	uint32_t init_pause_menu;
+	uint32_t sub_49BB30;
+	uint32_t sub_49FE60;
+	uint32_t get_icon_sp1_data;
+	uint32_t draw_controller_or_keyboard_icons;
 	uint32_t get_vibration_capability;
 	uint32_t vibration_apply;
+	uint32_t vibration_set_is_enabled;
+	uint32_t vibration_get_is_enabled;
 	int(*get_keyon)(int, int);
 	uint32_t set_vibration;
-	ff8_gamepad_vibration_state *gamepad_vibration_states;
+	ff8_gamepad_state *gamepad_states;
 	ff8_vibrate_struc *vibration_objects;
 	uint32_t vibration_clear_intensity;
 	uint8_t *vibrate_data_world;
 	uint32_t open_battle_vibrate_vib;
 	uint8_t **vibrate_data_main;
 	uint8_t **vibrate_data_battle;
+	uint8_t *vibrate_data_field;
 	uint32_t sub_537F30;
 	uint32_t sub_5391B0;
 	uint32_t sub_534560;
@@ -1336,6 +1452,43 @@ struct ff8_externals
 	char* unk_1CF3E48;
 	DWORD* dword_1CF3EE0;
 	DWORD* battle_current_actor_talking;
+	uint32_t sub_502380;
+	uint32_t sub_50A790;
+	uint32_t sub_50A9A0;
+	uint32_t battle_read_effect_sub_50AF20;
+	DWORD* func_off_battle_effects_C81774;
+	int* battle_magic_id;
+	uint32_t sub_571870;
+	DWORD* func_off_battle_effect_textures_50AF93;
+	uint32_t sub_6C3640;
+	uint32_t sub_6C3760;
+	uint8_t **vibrate_data_summon_quezacotl;
+	uint32_t load_magic_data_sub_571B80;
+	uint32_t load_magic_data_sub_5718E0;
+	uint32_t load_magic_data_sub_571900;
+	uint32_t sub_47D890;
+	uint32_t sub_505DF0;
+	uint32_t sub_4A94D0;
+	uint32_t sub_4BCBE0;
+	uint32_t sub_4C8B10;
+	uint32_t battle_pause_sub_4CD140;
+	uint32_t *is_alternative_pause_menu;
+	uint32_t *pause_menu_option_state;
+	void *battle_menu_state;
+	uint32_t battle_pause_window_sub_4CD350;
+	uint32_t sub_4A7210;
+	uint32_t sub_B586F0;
+	uint32_t sub_B64B80;
+	DWORD* leviathan_funcs_B64C3C;
+	uint32_t mag_data_palette_sub_B66560;
+	DWORD** effect_struct_27973EC;
+	uint8_t** mag_data_dword_2798A68;
+	DWORD** effect_struct_2797624;
+	uint32_t sub_B63230;
+	uint32_t mag_data_texture_sub_B66560;
+	BYTE** dword_27973E8;
+	uint32_t battle_set_action_upload_raw_palette_sub_B666F0;
+	uint32_t battle_set_action_upload_raw_palette_sub_B66400;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

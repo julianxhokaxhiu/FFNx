@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -44,19 +44,21 @@ public:
 	{
 		MusicOptions() :
 			offsetSeconds(0.0),
+			fadetime(0.0),
+			targetVolume(-1.0f),
+			relativeSpeed(1.0f),
+			format(""),
 			noIntro(false),
 			sync(false),
 			useNameAsFullPath(false),
-			suppressOpeningSilence(false),
-			fadetime(0.0),
-			targetVolume(-1.0f),
-			format("")
+			suppressOpeningSilence(false)
 		{}
 		SoLoud::time offsetSeconds;
-		bool noIntro, sync, useNameAsFullPath, suppressOpeningSilence;
 		SoLoud::time fadetime;
 		float targetVolume;
+		float relativeSpeed;
 		char format[12];
+		bool noIntro, sync, useNameAsFullPath, suppressOpeningSilence;
 	};
 
 	struct NxAudioEngineSFX

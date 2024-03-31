@@ -25,6 +25,10 @@
 # -----------------------------------------------------------------------------
 # disabled: Set this flag to true to never play this music and act like it was
 # never triggered by the game.
+# -----------------------------------------------------------------------------
+# relative_speed: Set the music relative speed, with 1.0 is the normal speed,
+# between 0.0 and 1.0 (not included) the music is slowed down, and above 1.0
+# the music is sped up.
 ###############################################################################
 
 # This entry will shuffle "battle" with "battle2", "bossbat1" and "bossbat2".

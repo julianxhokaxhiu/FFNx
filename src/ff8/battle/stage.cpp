@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
@@ -27,7 +27,7 @@
 #include "../../log.h"
 
 #include <set>
-#include <unordered_set>
+#include <unordered_map>
 
 const uint8_t *ff8_battle_stage_search_model(const uint8_t *stage_data, size_t stage_data_size, std::list<uint32_t> &model_offsets)
 {

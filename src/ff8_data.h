@@ -6,7 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2020 Marcin Gomulak                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -40,7 +40,8 @@ static struct game_mode ff8_modes[] = {
 	{FF8_MODE_11,            "MODE_11",            MODE_UNKNOWN,       true },
 	{FF8_MODE_INTRO,         "MODE_INTRO",         MODE_INTRO,         true },
 	{FF8_MODE_100,           "MODE_100",           MODE_UNKNOWN,       true },
-	{FF8_MODE_BATTLE,        "MODE_BATTLE",        MODE_BATTLE,        true },
+	{FF8_MODE_MAIN_MENU,     "MODE_MAIN_MENU",     MODE_MAIN_MENU,     true },
+	{FF8_MODE_BATTLE,        "MODE_BATTLE",        MODE_BATTLE,        true }
 };
 
 void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop);

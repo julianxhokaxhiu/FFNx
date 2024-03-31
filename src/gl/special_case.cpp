@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -43,7 +43,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 {
 	uint32_t mode = getmode_cached()->driver_mode;
 	VOBJ(texture_set, texture_set, current_state.texture_set);
-	uint32_t defer = false;
+	uint32_t defer = false, force_defer = false;
 
 	// modpath textures rendered in 3D should always be filtered
 	if(vertextype != TLVERTEX && current_state.texture_set && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
@@ -114,15 +114,24 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->menu_fade)) defer = true;
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->blend_window_bg)) defer = true;
 
+		if(mode == MODE_FIELD)
+		{
+			// always z-sort vanilla messages and font rendering draws
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->font_a)) force_defer = true;
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->font_b)) force_defer = true;
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->window_bg)) force_defer = true;
+		}
+
 		if(mode == MODE_BATTLE)
 		{
 			// z-sort some GUI elements in battle
 			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->unknown2)) defer = true; // Limit and barrier bar (necessary for ESUI)
 			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->unknown3)) defer = true; // Limit and barrier bar (necessary for ESUI)
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->unknown5)) defer = true; // Limit box (necessary for ESUI)
 		}
 	}
 
-	if(defer && !ff8) return gl_defer_sorted_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap);
+	if((defer || force_defer) && !ff8) return gl_defer_sorted_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap, force_defer);
 
 	return false;
 }

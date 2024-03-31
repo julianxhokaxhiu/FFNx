@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -73,7 +73,31 @@ uint32_t PaletteDetectionStrategyFixed::palOffset(uint16_t, uint16_t) const
 
 uint32_t PaletteDetectionStrategyFixed::palIndex() const
 {
-	return palOffset(0, 0);
+	if (_tim->bpp() == Tim::Bpp16)
+	{
+		return 0;
+	}
+
+	if (_tim->bpp() == Tim::Bpp8 || _tim->paletteWidth() == 16)
+	{
+		return _palY;
+	}
+
+	int palPerLine = _tim->paletteWidth() / 16;
+
+	return _palY * palPerLine + _palX / 16;
+}
+
+bool Tim::save(const char *fileName, bool withAlpha) const
+{
+	PaletteDetectionStrategyFixed fixed(this, 0, 0);
+	return fixed.isValid() && save(fileName, &fixed, withAlpha);
+}
+
+bool Tim::save(const char *fileName, uint8_t paletteId, bool withAlpha) const
+{
+	PaletteDetectionStrategyFixed fixed(this, 0, 0);
+	return fixed.isValid() && save(fileName, &fixed, withAlpha, paletteId);
 }
 
 bool Tim::save(const char *fileName, uint8_t palX, uint8_t palY, bool withAlpha) const
@@ -198,25 +222,47 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 	{
 		if (_tim.pal_data == nullptr || paletteDetectionStrategy == nullptr)
 		{
-			ffnx_error("%s bpp 0 without palette\n", __func__);
+			uint8_t *img_data8 = _tim.img_data;
 
-			return false;
-		}
-
-		uint8_t *img_data = _tim.img_data;
-
-		for (int y = 0; y < _tim.img_h; ++y)
-		{
-			for (int x = 0; x < _tim.img_w / 2; ++x)
+			for (int y = 0; y < _tim.img_h; ++y)
 			{
-				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2, y))[*img_data & 0xF], withAlpha);
+				for (int x = 0; x < _tim.img_w / 2; ++x)
+				{
+					// Grey color
+					uint8_t color = (*img_data8 & 0xF) * 16;
 
-				++target;
+					*target = ((color == 0 && withAlpha ? 0x00 : 0xffu) << 24) |
+						(color << 16) | (color << 8) | color;
 
-				*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2 + 1, y))[*img_data >> 4], withAlpha);
+					++target;
 
-				++target;
-				++img_data;
+					color = (*img_data8 >> 4) * 16;
+
+					*target = ((color == 0 && withAlpha ? 0x00 : 0xffu) << 24) |
+						(color << 16) | (color << 8) | color;
+
+					++target;
+					++img_data8;
+				}
+			}
+		}
+		else
+		{
+			uint8_t *img_data = _tim.img_data;
+
+			for (int y = 0; y < _tim.img_h; ++y)
+			{
+				for (int x = 0; x < _tim.img_w / 2; ++x)
+				{
+					*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2, y))[*img_data & 0xF], withAlpha);
+
+					++target;
+
+					*target = fromR5G5B5Color((_tim.pal_data + paletteDetectionStrategy->palOffset(x * 2 + 1, y))[*img_data >> 4], withAlpha);
+
+					++target;
+					++img_data;
+				}
 			}
 		}
 	}
@@ -224,7 +270,7 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 	{
 		if (_tim.pal_data == nullptr || paletteDetectionStrategy == nullptr)
 		{
-			uint8_t *img_data8 = (uint8_t *)_tim.img_data;
+			uint8_t *img_data8 = _tim.img_data;
 
 			for (int y = 0; y < _tim.img_h; ++y)
 			{
@@ -280,7 +326,7 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 	return true;
 }
 
-bool Tim::save(const char *fileName, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha) const
+bool Tim::save(const char *fileName, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha, int forcePaletteId) const
 {
 	// allocate PBO
 	uint32_t image_data_size = _tim.img_w * _tim.img_h * 4;
@@ -291,7 +337,7 @@ bool Tim::save(const char *fileName, PaletteDetectionStrategy *paletteDetectionS
 	{
 		if (toRGBA32(image_data, paletteDetectionStrategy, withAlpha))
 		{
-			save_texture(image_data, image_data_size, _tim.img_w, _tim.img_h, paletteDetectionStrategy != nullptr ? paletteDetectionStrategy->palIndex() : 0, fileName, false);
+			save_texture(image_data, image_data_size, _tim.img_w, _tim.img_h, forcePaletteId >= 0 ? forcePaletteId : (paletteDetectionStrategy != nullptr ? paletteDetectionStrategy->palIndex() : 0), fileName, false);
 		}
 
 		driver_free(image_data);

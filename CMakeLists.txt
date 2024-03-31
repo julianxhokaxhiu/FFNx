@@ -5,7 +5,7 @@
 #    Copyright (C) 2020 myst6re                                               #
 #    Copyright (C) 2020 Chris Rizzitello                                      #
 #    Copyright (C) 2020 John Pritchard                                        #
-#    Copyright (C) 2023 Julian Xhokaxhiu                                      #
+#    Copyright (C) 2024 Julian Xhokaxhiu                                      #
 #                                                                             #
 #    This file is part of FFNx                                                #
 #                                                                             #
@@ -71,6 +71,7 @@ find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
 find_package(libpng CONFIG REQUIRED)
+find_package(directxtex CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(SOLOUD REQUIRED)
@@ -79,6 +80,7 @@ find_package(tomlplusplus CONFIG REQUIRED)
 find_package(STEAMWORKSSDK CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
+find_package(HWINFO REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -134,6 +136,7 @@ target_link_libraries(
   strmiids
   ZLIB::ZLIB
   png_static
+  Microsoft::DirectXTex
   mimalloc-static
   imgui::imgui
   pugixml::pugixml
@@ -143,6 +146,7 @@ target_link_libraries(
   Vorbis::vorbisfile
   Vorbis::vorbis
   MPG123::libmpg123
+  HWINFO::HWINFO
   ${BX_LIBRARIES}
   ${BIMG_LIBRARIES}
   ${BGFX_LIBRARIES}
@@ -162,6 +166,7 @@ target_compile_options(
   PRIVATE /Zc:strictStrings-
   PRIVATE /Zc:__cplusplus
   PRIVATE /Qpar
+  PRIVATE /MP
 )
 if(PATCH_COLLECT_DUPLICATES)
   target_compile_definitions(${RELEASE_NAME}
@@ -201,15 +206,6 @@ foreach(FFNX_SHADER IN LISTS FFNX_SHADERS)
         ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.vert -o
         ${CMAKE_BINARY_DIR}/bin/shaders/${FFNX_SHADER}.${BGFX_VARYING}.vk.vert --type v --varyingdef
         ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform windows --profile spirv
-      # Direct3D 9
-      COMMAND
-        ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.frag -o
-        ${CMAKE_BINARY_DIR}/bin/shaders/${FFNX_SHADER}.${BGFX_VARYING}.d3d9.frag --type f --varyingdef
-        ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform windows -p s_3_0 -O 3
-      COMMAND
-        ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.vert -o
-        ${CMAKE_BINARY_DIR}/bin/shaders/${FFNX_SHADER}.${BGFX_VARYING}.d3d9.vert --type v --varyingdef
-        ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --platform windows -p s_3_0 -O 3
       # Direct3D 11
       COMMAND
         ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.frag -o

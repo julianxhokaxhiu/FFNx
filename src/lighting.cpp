@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -120,7 +120,7 @@ void Lighting::initParamsFromConfig()
 	float metallic = config["material_metallic"].value_or(0.5);
 	lighting.setMetallic(metallic);
 
-	float specular = config["material_specular"].value_or(0.2);
+	float specular = config["material_specular"].value_or(0.1);
 	lighting.setSpecular(specular);
 
 	int shadowMapResolution = config["shadowmap_resolution"].value_or(2048);
@@ -146,7 +146,7 @@ void Lighting::initParamsFromConfig()
 	}
 }
 
-void Lighting::updateLightMatrices(struct boundingbox *sceneAabb)
+void Lighting::updateLightMatrices(const vector3<float>& center)
 {
 	struct game_mode *mode = getmode_cached();
 
@@ -172,25 +172,21 @@ void Lighting::updateLightMatrices(struct boundingbox *sceneAabb)
 		area = lightingState.fieldShadowMapArea;
 		nearFarSize = lightingState.fieldShadowMapNearFarSize;
 	}
+	if (mode->driver_mode == MODE_WORLDMAP)
+    {
+		worldSpaceLightDir[1] *= -1.0f;
+        worldSpaceLightDir[2] *= -1.0f;
+		worldSpaceLightDir[3] *= -1.0f;
+	}
 
 	// Transform light direction into view space
 	float viewSpaceLightDir[4];
 	bx::vec4MulMtx(viewSpaceLightDir, worldSpaceLightDir, newRenderer.getViewMatrix());
 
-	lightingState.lightDirData[0] = viewSpaceLightDir[0];
-	lightingState.lightDirData[1] = viewSpaceLightDir[1];
-	lightingState.lightDirData[2] = viewSpaceLightDir[2];
-
-	// Light view frustum pointing to scene AABB center
-	const bx::Vec3 center = {
-			0.5f * (sceneAabb->min_x + sceneAabb->max_x),
-			0.5f * (sceneAabb->min_y + sceneAabb->max_y),
-			0.5f * (sceneAabb->min_z + sceneAabb->max_z)};
-
-	const bx::Vec3 at = {center.x, center.y, center.z};
-	const bx::Vec3 eye = {center.x + viewSpaceLightDir[0],
-												center.y + viewSpaceLightDir[1],
-												center.z + viewSpaceLightDir[2]};
+    const bx::Vec3 at = { center.x, center.y, center.z };
+    const bx::Vec3 eye = { center.x + viewSpaceLightDir[0],
+                           center.y + viewSpaceLightDir[1],
+                           center.z + viewSpaceLightDir[2] };
 
 	bx::Vec3 up = {0, 1, 0};
 	const bx::Vec3 viewDir = {worldSpaceLightDir[0], worldSpaceLightDir[1], worldSpaceLightDir[2]};
@@ -758,6 +754,7 @@ void Lighting::draw(struct game_obj *game_object)
 	switch(mode->driver_mode)
 	{
 		case MODE_FIELD:
+		{
 			// Refresh the configuration if we're on a new field
 			if (last_field_id != *ff7_externals.field_id)
 			{
@@ -766,24 +763,70 @@ void Lighting::draw(struct game_obj *game_object)
 			}
 
 			struct boundingbox fieldSceneAabb = calcFieldSceneAabb(&sceneAabb);
-			updateLightMatrices(&fieldSceneAabb);
-			gl_draw_deferred(&drawFieldShadow);
+
+			// Light view frustum pointing to scene AABB center
+			vector3<float> center = {
+				0.5f * (fieldSceneAabb.min_x + fieldSceneAabb.max_x),
+				0.5f * (fieldSceneAabb.min_y + fieldSceneAabb.max_y),
+				0.5f * (fieldSceneAabb.min_z + fieldSceneAabb.max_z) };
+
+				float viewSpaceCenter[4];
+	float centerFloat[4];
+	centerFloat[0] = center.x;
+	centerFloat[1] = center.y;
+	centerFloat[2] = center.z;
+	centerFloat[3] = 1;
+	bx::vec4MulMtx(viewSpaceCenter, centerFloat, newRenderer.getViewMatrix());
+			updateLightMatrices(center);
+			gl_draw_deferred(&drawFieldShadowCallback);
 			break;
+		}
+		case MODE_WORLDMAP:
+		{
+			int world_pos_x = ff7_externals.world_player_pos_E04918->x;
+			int world_pos_y = ff7_externals.world_player_pos_E04918->y;
+			int world_pos_z = ff7_externals.world_player_pos_E04918->z;
+
+			// Light view frustum pointing to player position
+			vector3<float> center = {
+				static_cast<float>(world_pos_x),
+				static_cast<float>(world_pos_y),
+				static_cast<float>(world_pos_z)};
+
+			struct matrix viewMatrix;
+    		::memcpy(&viewMatrix.m[0][0], newRenderer.getViewMatrix(), sizeof(viewMatrix.m));
+			vector3<float> centerViewSpace;
+			transform_point(&viewMatrix, &center, &centerViewSpace);
+
+			updateLightMatrices(centerViewSpace);
+			gl_draw_deferred(nullptr);
+		}
+		break;
 		case MODE_BATTLE:
+		{
 			// Refresh the configuration if we're on a new battle
 			if (last_battle_id != ff7_externals.modules_global_object->battle_id)
 			{
 				last_battle_id = ff7_externals.modules_global_object->battle_id;
 				initParamsFromConfig();
 			}
+		}
 		default:
-			updateLightMatrices(&sceneAabb);
+		{
+			// Light view frustum pointing to scene AABB center
+			vector3<float> center = {
+				0.5f * (sceneAabb.min_x + sceneAabb.max_x),
+				0.5f * (sceneAabb.min_y + sceneAabb.max_y),
+				0.5f * (sceneAabb.min_z + sceneAabb.max_z) };
+
+			updateLightMatrices(center);
 			gl_draw_deferred(nullptr);
 			break;
+		}
 	}
 }
 
-void drawFieldShadow()
+void drawFieldShadowCallback()
 {
 	lighting.createFieldWalkmesh(lighting.getWalkmeshExtrudeSize());
 

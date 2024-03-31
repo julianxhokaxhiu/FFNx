@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
@@ -23,10 +23,11 @@
 
 #pragma once
 
-#include "renderer.h"
-
 namespace ff7::world
 {
     void world_hook_init();
     void world_update_model_movement(int delta_position_x, int delta_position_z);
+
+    void update_world_camera(short world_camera_rotation_y);
+    void update_player_and_handle_input();
 }

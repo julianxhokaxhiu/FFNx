@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -20,7 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0, v_normal0
+$input v_color0, v_texcoord0, v_position0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.common.sh"
@@ -36,6 +36,7 @@ uniform vec4 FSAlphaFlags;
 uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
+uniform vec4 WMFlags;
 uniform vec4 FSMovieFlags;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
@@ -102,6 +103,8 @@ uniform vec4 gameScriptedLightColor;
 #define gameLightingMode gameLightingFlags.x
 #define GAME_LIGHTING_PER_PIXEL 2
 
+#define isFogEnabled WMFlags.y > 0.0
+
 void main()
 {
     vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
@@ -116,8 +119,6 @@ void main()
                 texture2D(tex_2, v_texcoord0.xy).r
             );
 
-// d3d9 doesn't support textureSize()
-#if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
             if (!(isFullRange)){
                 // dither prior to range conversion
                 ivec2 ydimensions = textureSize(tex_0, 0);
@@ -127,7 +128,6 @@ void main()
                 // clamp back to tv range
                 yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
             }
-#endif
 
             if (isBT601ColorMatrix){
                 yuv.g = yuv.g - (128.0/255.0);
@@ -186,10 +186,8 @@ void main()
                 if ((isSRGBColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
                     color.rgb = GamutLUT(color.rgb);
                     // dither after the LUT operation
-                    #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
                     ivec2 dimensions = textureSize(tex_0, 0);
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
-                    #endif
                 }
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
@@ -199,10 +197,8 @@ void main()
                 if ((isNTSCJColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
                     color.rgb = GamutLUT(color.rgb);
                     // dither after the LUT operation
-                    #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
                     ivec2 dimensions = textureSize(tex_0, 0);
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
-                    #endif
                 }
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
@@ -266,10 +262,8 @@ void main()
             // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
             else if (doGamutOverride){
                 texture_color.rgb = GamutLUT(texture_color.rgb);
-                #if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_GLSL || BGFX_SHADER_LANGUAGE_SPIRV
                 ivec2 dimensions = textureSize(tex_0, 0);
                 texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
-                #endif
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
 
@@ -287,6 +281,8 @@ void main()
     }
 
     if (isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
+
+    if (!(isTLVertex) && isFogEnabled) color.rgb = ApplyWorldFog(color.rgb, v_position0.xyz);
 
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
     color.rgb = toGamma(color.rgb);

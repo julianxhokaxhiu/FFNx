@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Marcin 'Maki' Gomulak                              //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -1007,6 +1007,24 @@ struct rotation_matrix
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+struct transform_matrix
+{
+  int16_t eye_x;
+  int16_t eye_y;
+  int16_t eye_z;
+  int16_t target_x;
+  int16_t target_y;
+  int16_t target_z;
+  int16_t up_x;
+  int16_t up_y;
+  int16_t up_z;
+  int pos_x;
+  int pos_y;
+  int pos_z;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 struct ff7_game_engine_data
 {
 	float scale;
@@ -1644,6 +1662,17 @@ struct dll_gfx_externals
 	gfx_light_polygon_set *generic_light_polygon_set;
 };
 
+struct ff7_audio_fmt
+{
+	uint32_t length;
+	uint32_t offset;
+	uint32_t loop;
+	uint32_t count;
+	uint32_t loop_start;
+	uint32_t loop_end;
+	LPWAVEFORMATEX wave_format;
+};
+
 struct ff7_game_obj
 {
 	uint32_t do_quit;
@@ -2139,14 +2168,17 @@ struct field_animation_data
 	int actor_x;
 	int actor_y;
 	int actor_z;
-	byte field_10[18];
-	__int16 field_22;
+	byte field_10[16];
+	byte eye_texture_idx;
 	byte field_24[336];
 	WORD field_174;
 	WORD field_176;
 	uint32_t *anim_frame_object;
 	uint32_t *field_17C;
-	byte field_180[16];
+	void* custom_left_eye_tex;
+  void* static_left_eye_tex;
+  void* custom_right_eye_tex;
+  void* static_right_eye_tex;
 };
 
 struct field_gateway
@@ -2221,10 +2253,10 @@ struct field_arrow_graphics_data
 
 struct field_model_blink_data
 {
-	byte blink_mode;
-	byte blink_mode_2;
-	char unknown;
-	char model_id;
+	byte blink_left_eye_mode;
+  byte blink_right_eye_mode;
+  char unknown;
+  char model_id;
 };
 
 struct world_event_data
@@ -2232,10 +2264,9 @@ struct world_event_data
 	world_event_data *next_ptr;
 	world_event_data *player_data_ptr;
 	world_event_data *special_data_ptr;
-	vector3<int> position;
-	int field_18;
-	vector3<int> prev_position;
-	byte field_28[24];
+	vector4<int> position;
+	vector4<int> prev_position;
+	byte field_28[20];
 	short facing;
 	byte field_42[2];
 	short offset_y;
@@ -2565,7 +2596,87 @@ struct snowboard_object
   int field_68;
 };
 
+struct world_texture_data
+{
+	int field_0[2];
+	short top_left_x;
+	short top_left_y;
+	uint8_t start_u_multiplier;
+	uint8_t start_v_multiplier;
+	uint8_t field_E[2];
+	short top_right_x;
+	short top_right_y;
+	uint8_t end_u_multiplier;
+	uint8_t field_15[3];
+	short bottom_left_x;
+	short bottom_left_y;
+	uint8_t field_1C;
+	uint8_t end_v_multiplier;
+	uint8_t field_1E[2];
+	short bottom_right_x;
+	short bottom_right_y;
+	uint8_t field_24[4];
+	struct ff7_graphics_object* graphics_object;
+	bgra_color_ui8 color;
+};
+
+struct world_effect_2d_list_node
+{
+  world_effect_2d_list_node *next;
+  int x;
+  int y;
+  int z;
+  byte field_10[10];
+  __int16 rotation_y;
+  byte unknown_idx;
+  byte field_1C;
+  byte apply_rotation_y;
+  byte field_1E[5];
+  world_texture_data texture_data;
+};
+
+struct world_snake_graphics_data
+{
+	int field_0[2];
+    vector2<short> top_left_vertex;
+    uint8_t top_left_u;
+    uint8_t top_left_v;
+    short n_shapes;
+    vector2<short> top_right_vertex;
+	uint8_t top_right_u;
+	uint8_t top_right_v;
+	uint8_t field_16[2];
+	vector2<short> bottom_left_vertex;
+	uint8_t bottom_left_u;
+	uint8_t bottom_left_v;
+	short delta_x;
+	vector2<short> bottom_right_vertex;
+	uint8_t bottom_right_u;
+	uint8_t bottom_right_v;
+	short delta_y;
+	struct ff7_graphics_object* graphics_object;
+	bgra_color_ui8 color;
+};
+
+struct ff7_model_eye_texture_data
+{
+  int has_eyes;
+  char *custom_left_eye_filename;
+  char *static_left_eye_filename;
+  char *custom_right_eye_filename;
+  char *static_right_eye_filename;
+};
+
+
 // --------------- end of FF7 imports ---------------
+
+struct ff7_model_mouth_data
+{
+	int has_mouth;
+	int current_mouth_idx;
+	char* mouth_tex_filename;
+	p_hundred* mouth_tex;
+};
 
 struct ff7_channel_6_state
 {
@@ -2660,8 +2771,15 @@ struct ff7_externals
 	uint32_t field_load_animation;
 	uint32_t field_load_models;
 	uint32_t field_models_eye_to_model;
-	uint32_t field_models_eye_blink_buffer;
+	ff7_model_eye_texture_data* field_models_eye_blink_buffer;
+	DWORD* field_models_data;
+	int (*field_load_model_eye_tex)(ff7_model_eye_texture_data *eye_data, field_animation_data *anim_data);
+	p_hundred* (*field_load_model_tex)(int idx1, int idx2, char *filename, struc_3 *tex_info, game_obj *game_object);
+	void (*field_unload_model_tex)(void* eye_tex);
+	void (*create_struc_3_info_sub_67455E)(struc_3 *tex_info);
 	uint32_t field_sub_60DCED;
+	int (*field_sub_6A2736)(ff7_polygon_set *polygon_set);
+	uint32_t* field_unk_909288;
 	void (*destroy_animation)(struct anim_header *);
 	uint32_t context_chdir;
 	uint32_t lgp_chdir;
@@ -2831,10 +2949,12 @@ struct ff7_externals
 	uint32_t opcode_ask;
 	uint32_t opcode_wmode;
 	uint32_t opcode_tutor;
+	uint32_t opcode_pc;
+	uint32_t opcode_kawai;
 	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_load_and_play_with_speed;
-	uint32_t sfx_fmt_header;
+	ff7_audio_fmt* sfx_fmt_header;
 	DWORD *sfx_play_effects_id_channel_6;
 	uint32_t sfx_stop_channel_6;
 	UINT *sfx_stop_channel_timer_handle;
@@ -2871,6 +2991,8 @@ struct ff7_externals
 	void (*field_evaluate_encounter_rate_60B2C6)();
 	uint32_t field_animate_3d_models_6392BB;
 	uint32_t field_apply_kawai_op_64A070;
+	uint32_t sub_64EC60;
+	field_model_blink_data* field_model_blink_data_D000C8;
 	void (*field_blink_3d_model_649B50)(field_animation_data*, field_model_blink_data*);
 	short *field_player_model_id;
 	WORD *field_n_models;
@@ -2893,6 +3015,7 @@ struct ff7_externals
 	void (*engine_set_game_engine_delta_values_661976)(int, int);
 	uint32_t engine_apply_matrix_product_66307D;
 	void (*engine_convert_psx_matrix_to_float_matrix_row_version_661465)(rotation_matrix*, float*);
+	void (*engine_apply_rotation_to_transform_matrix_6628DE)(vector3<short>*, rotation_matrix*);
 	void (*engine_apply_matrix_product_to_vector_66CF7E)(float*, vector3<float>*, vector3<float>*);
 	vector2<int>* field_bg_offset;
 	short* field_curr_delta_world_pos_x;
@@ -2950,6 +3073,7 @@ struct ff7_externals
 	uint32_t sub_779E14;
 	uint32_t battle_fps_menu_multiplier;
 	DWORD *submarine_minigame_status;
+	time_t *submarine_last_gametime;
 	DWORD *field_limit_fps;
 	DWORD *swirl_limit_fps;
 	int16_t (*get_bank_value)(int16_t, int16_t);
@@ -3174,9 +3298,9 @@ struct ff7_externals
 	void(*add_kotr_camera_fn_to_effect100_fn_476AAB)(DWORD, DWORD, WORD);
 	uint32_t run_kotr_camera_476AFB;
 	vector3<int>* (*battle_sub_661000)(int);
-	void (*engine_copy_3x3_rot_matrix_to_game_engine_663673)(rotation_matrix*);
+	void (*engine_set_game_engine_rot_matrix_663673)(rotation_matrix*);
 	void (*engine_set_game_engine_position_663707)(rotation_matrix*);
-	void (*battle_sub_662ECC)(vector3<short>*, vector3<int>*, int*);
+	void (*engine_apply_translation_with_delta_662ECC)(vector3<short>*, vector3<int>*, int*);
 	uint32_t run_chocobuckle_main_loop_560C32;
 	uint32_t run_confu_main_loop_5600BE;
 	uint32_t bomb_blast_black_bg_effect_537427;
@@ -3296,14 +3420,26 @@ struct ff7_externals
 
 	// world stuff
 	uint32_t world_mode_loop_sub_74DB8C;
+	uint32_t world_exit_74BD77;
+	void (*world_exit_destroy_graphics_objects_75A921)();
 	uint32_t world_init_variables_74E1E9;
 	uint32_t world_sub_7641A7;
+	void (*world_init_load_wm_bot_block_7533AF)();
 	uint32_t run_world_event_scripts;
 	uint32_t run_world_event_scripts_system_operations;
 	uint32_t world_animate_all_models;
 	uint32_t world_animate_single_model;
 	uint32_t run_world_snake_ai_script_7562FF;
 	uint32_t update_world_snake_position_7564CD;
+	uint32_t is_update_snake_enabled_7562A9;
+	uint32_t animate_world_snake_75692A;
+	bool (*sub_753366)(short, short);
+	void (*world_draw_snake_texture_75D544)(short, short, short, short, world_snake_graphics_data*, short);
+	vector4<short>** world_snake_data_position_ptr_E2A18C;
+	vector4<short>* world_snake_data_position_E29F80;
+	vector4<short>* snake_position_size_of_array_E2A100;
+	world_snake_graphics_data* world_snake_graphics_data_E2A490;
+	world_snake_graphics_data* world_snake_graphics_data_end_E2A6D0;
 	uint32_t world_sub_75EF46;
 	uint32_t world_sub_767540;
 	uint32_t world_sub_767641;
@@ -3315,6 +3451,10 @@ struct ff7_externals
 	uint32_t world_text_box_window_paging_769C02;
 	uint32_t world_text_box_reverse_paging_76ABE9;
 	uint32_t world_text_box_window_closing_76ADF7;
+	uint32_t world_compute_all_models_data_76323A;
+	uint32_t world_compute_3d_model_data_76328F;
+	uint32_t world_sub_74D319;
+	uint32_t world_sub_762F9A;
 	int (*get_world_encounter_rate)();
 	int (*pop_world_script_stack)();
 	uint32_t world_update_player_74EA48;
@@ -3323,23 +3463,89 @@ struct ff7_externals
 	int (*world_get_player_walkmap_type)();
 	void(*world_sub_753D00)(vector3<short>*, short);
 	void(*world_update_model_movement_762E87)(int, int);
+	bool (*world_is_player_model_bitmask)(int);
+	void (*world_copy_player_pos_to_param_762798)(vector4<int>*);
+	void (*world_set_current_entity_to_player_entity)();
+	void (*world_add_y_pos_to_current_entity_761F22)(int);
+	void (*world_add_delta_movement_due_to_bridge_7591C2)(int*, int*);
+	void (*world_current_entity_model_collision_detection_with_other_models_76296E)();
+	int (*world_get_unknown_flag_75335C)();
+	short (*world_get_minimap_mask)();
+	void (*world_set_minimap_mask)(short);
+	void (*world_set_facing_and_direction_to_current_entity)(short);
+	bool (*world_is_current_entity_animated_761F44)();
+	void (*world_sub_74D6BB)();
+	void (*world_sub_74D6F6)();
+	void (*world_sub_762F75)(short, short, short);
+	void (*world_run_special_opcode_7640BC)(int);
+	void (*world_set_camera_fade_speed_755B97)(int);
+	void (*world_set_world_control_lock_74D438)(int, int);
+	void (*world_sub_74C980)(int);
+	void (*world_sub_753BE8)();
+	void (*world_music_set_frequency_all_channels_75E6A8)(byte, char);
+	void (*world_sfx_play_or_stop_75E6CC)(int);
+	void (*world_set_camera_view_type_74D3D1)(int);
+	uint32_t world_update_camera_74E8CE;
+	int (*world_snowstorm_get_camera_movement_758B12)(int, int);
+	int (*world_get_camera_rotation_x_74F916)();
+	int* world_highwind_height_lowerbound_DF5420;
+	int* world_mode_E045E4;
+	int* previous_player_direction_DF5434;
+	int* world_is_control_enabled_DE6B5C;
+	short* world_special_delta_movement_DE6A18;
+	int* world_y_player_pos_flag_DE6A14;
+	int* world_unk_rotation_value_E045E0;
 	world_event_data** world_event_current_entity_ptr_E39AD8;
 	world_event_data** world_event_current_entity_ptr_E3A7CC;
+	int* world_progress_E28CB4;
 	int* is_wait_frames_zero_E39BC0;
+	int* world_prev_key_input_status_DFC470;
+	int* world_map_type_E045E8;
+	int* world_movement_multiplier_DFC480;
+	int* world_camera_var1_DF542C;
+	int* world_camera_var2_DE6B4C;
+	int* world_camera_var3_DE6A0C;
+	int* world_camera_viewtype_DFC4B4;
+	int* world_camera_front_DFC484;
+	int* world_camera_rotation_y_DFC474;
+	int* world_camera_position_z_DFC478;
+	int* world_camera_delta_y_DE6A04;
+	int* world_camera_rotation_z_DE6B70;
+	short* world_current_camera_rotation_x_DE7418;
+	std::span<short> world_camera_x_rotation_array_E37120;
+	rotation_matrix* world_camera_position_matrix_DE6A20;
+	rotation_matrix* world_camera_direction_matrix_DFC448;
+	vector4<int>* world_player_pos_E04918;
 	uint32_t world_sub_75A1C6;
 	uint32_t world_load_graphics_objects_75A5D5;
 	uint32_t world_init_load_map_meshes_graphics_objects_75A283;
-	uint32_t world_wm0_overworld_draw_all_74C179;
+	void (*world_wm0_overworld_draw_all_74C179)();
+	void (*world_wm2_underwater_draw_all_74C3F0)();
+	void (*world_wm3_snowstorm_draw_all_74C589)();
+	uint32_t world_draw_all_3d_model_74C6B0;
 	uint32_t world_draw_fade_quad_75551A;
 	uint32_t world_sub_75079D;
 	uint32_t world_sub_751EFC;
 	uint32_t world_sub_75C02B;
 	uint32_t world_sub_75C0FD;
 	uint32_t world_sub_75C283;
+	uint32_t world_sub_75F0AD;
+	uint32_t world_sub_75042B;
 	uint32_t world_culling_bg_meshes_75F263;
 	uint32_t world_submit_draw_bg_meshes_75F68C;
 	uint32_t world_compute_skybox_data_754100;
 	uint32_t world_submit_draw_clouds_and_meteor_7547A6;
+	int (*sub_74C9A5)();
+	int* is_meteor_flag_on_E2AAE4;
+	uint32_t engine_apply_4x4_matrix_product_with_game_obj_matrix_67D2BF;
+	void (*engine_apply_4x4_matrix_product_between_matrices_66C6CD)(struct matrix *, struct matrix *, struct matrix *);
+	void (*world_copy_position_75042B)(vector4<int>* a1);
+	int (*get_world_camera_front_rot_74D298)();
+	void (*engine_apply_rotation_to_rot_matrix_662AD8)(vector3<short>*, transform_matrix*);
+	short (*world_get_world_current_camera_rotation_x_74D3C6)();
+	int (_stdcall *world_submit_draw_effects_75C283)(world_texture_data*, int, vector3<short>*, short);
+	world_effect_2d_list_node** dword_E35648;
+	byte* byte_96D6A8;
 
 	uint32_t swirl_main_loop;
 	uint32_t swirl_loop_sub_4026D4;

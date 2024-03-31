@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
@@ -25,6 +25,8 @@
 #include "../../image/tim.h"
 #include "../../saveload.h"
 #include "../../log.h"
+
+#include <unordered_map>
 
 bool ff8_background_tiles_looks_alike(const Tile &tile, const Tile &other)
 {
@@ -60,6 +62,17 @@ std::vector<Tile> ff8_background_parse_tiles(const uint8_t *map_data)
 	}
 
 	return tiles;
+}
+
+void ff8_background_tiles_to_map(const std::vector<Tile> &tiles, uint8_t *map_data)
+{
+	for (const Tile &tile: tiles) {
+		memcpy(map_data, (const void *)&tile, sizeof(Tile));
+
+		map_data += sizeof(Tile);
+	}
+
+	*(uint16_t *)map_data = 0x7fff;
 }
 
 void ff8_background_draw_tile(const Tile &tile, uint32_t *target, const uint16_t target_width, const uint8_t* const textures_data, const uint16_t* const palettes_data)

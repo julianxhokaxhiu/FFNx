@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
@@ -259,23 +259,28 @@ namespace ff7::battle
     void update_battle_camera(short cameraScriptIndex)
     {
         vector3<short>* pGlobalCameraPos = ff7_externals.g_battle_camera_position;
-        vector3<short>* pGlobalCameraFocusPos = ff7_externals.g_battle_camera_focal_point;
         vector3<short>* pCameraPosition = &ff7_externals.battle_camera_position[*ff7_externals.g_variation_index].point;
         vector3<short>* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
 
         ((void(*)(short))ff7_externals.update_battle_camera_sub_5C20CE)(cameraScriptIndex);
 
+        byte battle_enter_frames_to_wait = *ff7_externals.battle_enter_frames_to_wait;
+        if(cameraScriptIndex == -2 && battle_enter_frames_to_wait > 5) 
+        {
+            camera.reset();
+            camera.setupInitialCamera();
+        }
+
         if((std::abs(pGlobalCameraPos->x - pFormationCameraPos->x) <= 1 &&
             std::abs(pGlobalCameraPos->y - pFormationCameraPos->y) <= 1 &&
             std::abs(pGlobalCameraPos->z - pFormationCameraPos->z) <= 1))
         {
-            camera.controlCamera(pGlobalCameraPos, pGlobalCameraFocusPos);
+            camera.controlCamera(pGlobalCameraPos);
             *pFormationCameraPos = *pGlobalCameraPos;
             *pCameraPosition = *pGlobalCameraPos;
         }
 
-        byte battle_enter_frames_to_wait = *ff7_externals.battle_enter_frames_to_wait;
-        if(cameraScriptIndex == -3 || (cameraScriptIndex == -2 && battle_enter_frames_to_wait > 5)) camera.reset();
+        if(cameraScriptIndex == -3) camera.reset();
     }
 
     void camera_hook_init()
@@ -320,27 +325,23 @@ namespace ff7::battle
         zoomOffset = 0.0f;
     }
 
-    void Camera::controlCamera(vector3<short>* cameraPosition, vector3<short>* cameraFocusPosition)
+    void  Camera::setupInitialCamera()
+    {
+        vector3<short>* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
+        vector3<short>* pFormationCameraFocusPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point;
+
+        initialCameraPos.x = pFormationCameraPos->x;
+        initialCameraPos.y = pFormationCameraPos->y;
+        initialCameraPos.z = pFormationCameraPos->z;
+
+        initialCameraFocusPos.x = pFormationCameraFocusPos->x;
+        initialCameraFocusPos.y = pFormationCameraFocusPos->y;
+        initialCameraFocusPos.z = pFormationCameraFocusPos->z;
+    }
+
+    void Camera::controlCamera(vector3<short>* cameraPosition)
     {
         static WORD last_battle_id = 0;
-        static vector3<short> initialCameraPos;
-        static vector3<short> initialCameraFocusPos;
-
-        if (last_battle_id != ff7_externals.modules_global_object->battle_id)
-        {
-            vector3<short>* pFormationCameraPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].position;
-            vector3<short>* pFormationCameraFocusPos = &ff7_externals.formation_camera[*ff7_externals.curr_formation_camera_idx].focal_point;
-
-            initialCameraPos.x = pFormationCameraPos->x;
-            initialCameraPos.y = pFormationCameraPos->y;
-            initialCameraPos.z = pFormationCameraPos->z;
-
-            initialCameraFocusPos.x = pFormationCameraFocusPos->x;
-            initialCameraFocusPos.y = pFormationCameraFocusPos->y;
-            initialCameraFocusPos.z = pFormationCameraFocusPos->z;
-
-            last_battle_id = ff7_externals.modules_global_object->battle_id;
-        }
 
         bx::Vec3 cameraPos = {
             static_cast<float>(initialCameraPos.x),

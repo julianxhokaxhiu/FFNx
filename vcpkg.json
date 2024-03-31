@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
-  "version": "1.16.0",
-  "builtin-baseline": "f287c482288ba916c3a479598a301ce471a8c6a1",
+  "version": "1.18.1",
+  "builtin-baseline": "898b728edc5e0d12b50015f9cd18247c4257a3eb",
   "dependencies": [
     "bgfx",
     {
@@ -36,6 +36,11 @@
     "imgui",
     "libpng",
     {
+      "name": "directxtex",
+      "default-features": false,
+      "features": []
+    },
+    {
       "name": "mimalloc",
       "default-features": false,
       "features": [
@@ -58,7 +63,9 @@
         "tools"
       ]
     },
-    "cmakerc"
+    "cmakerc",
+    "cgltf",
+    "hwinfo"
   ],
   "overrides": [
     {
@@ -68,23 +75,28 @@
     },
     {
       "name": "ffmpeg",
-      "version": "6.1",
-      "port-version": 0
+      "version": "6.1.1",
+      "port-version": 2
     },
     {
       "name": "imgui",
-      "version": "1.89.9",
+      "version": "1.90.2",
       "port-version": 0
     },
     {
       "name": "libpng",
-      "version": "1.6.39",
-      "port-version": 1
+      "version": "1.6.43",
+      "port-version": 0
+    },
+    {
+      "name": "directxtex",
+      "version": "2024-03-06",
+      "port-version": 0
     },
     {
       "name": "mimalloc",
-      "version": "2.1.1",
-      "port-version": 0
+      "version": "2.1.2",
+      "port-version": 1
     },
     {
       "name": "openpsf",
@@ -108,7 +120,7 @@
     },
     {
       "name": "tomlplusplus",
-      "version": "3.3.0",
+      "version": "3.4.0",
       "port-version": 0
     },
     {
@@ -134,6 +146,16 @@
     {
       "name": "cmakerc",
       "version": "2023-07-24",
+      "port-version": 0
+    },
+    {
+      "name": "cgltf",
+      "version": "1.13",
+      "port-version": 0
+    },
+    {
+      "name": "hwinfo",
+      "version": "1.0.0",
       "port-version": 0
     }
   ]

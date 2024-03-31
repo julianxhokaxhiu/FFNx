@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
@@ -32,6 +32,7 @@ namespace ff7::field
 
     vector2<float>
         field_curr_delta_world_pos,
+        last_valid_scripted_field_delta_world_pos,
         field_3d_world_pos,
         bg_main_layer_pos,
         bg_layer3_pos,

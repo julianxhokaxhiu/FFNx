@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -29,6 +29,7 @@
 #include "field/background.h"
 #include "field/chara_one.h"
 #include "world/chara_one.h"
+#include "world/wmset.h"
 #include "battle/stage.h"
 #include "file.h"
 
@@ -44,12 +45,12 @@ TexturePacker::TextureInfos palette_infos = TexturePacker::TextureInfos();
 uint16_t *next_pal_data = nullptr;
 int next_psxvram_x = -1;
 int next_psxvram_y = -1;
+int next_psxvram_pal_x = -1;
+int next_psxvram_pal_y = -1;
 int next_texl_id = 0;
+int next_texture_count = -1;
 int next_do_not_clear_old_texture = false;
 Tim::Bpp next_bpp = Tim::Bpp16;
-uint8_t next_scale = 1;
-int8_t texl_id_left = -1;
-int8_t texl_id_right = -1;
 int last_CLUT = 0;
 
 // Field background
@@ -64,10 +65,30 @@ uint32_t chara_one_current_texture = 0;
 // World
 std::vector<CharaOneModelTextures> chara_one_world_texture_offsets;
 uint8_t *chara_one_world_data;
+std::vector<WmsetSection17Texture> wm_wmset_wave_animations_textures;
+std::unordered_map<uint32_t, WmsetSection41Texture> wm_wmset_palette_animations_textures;
 // Battle
 char battle_texture_name[MAX_PATH] = "";
 int battle_texture_id = 0;
 Stage stage;
+struct BattleTextureHeader {
+	uint8_t effect_id;
+	uint8_t file_id;
+	uint8_t is_palette;
+	uint8_t file_relative_id;
+	int16_t x, y;
+	int16_t w, h;
+	uint8_t *data;
+};
+constexpr int battle_texture_data_list_size = 32;
+std::vector<BattleTextureHeader> battle_texture_headers = std::vector<BattleTextureHeader>(battle_texture_data_list_size);
+int battle_texture_headers_cursor = 0;
+struct BattleTextureFileName {
+	char file_name[32];
+	void *data;
+};
+std::vector<BattleTextureFileName> battle_texture_data_list = std::vector<BattleTextureFileName>(battle_texture_data_list_size);
+int battle_texture_data_list_cursor = 0;
 
 uint8_t *ff8_vram_seek(int xBpp2, int y)
 {
@@ -98,7 +119,7 @@ bool ff8_vram_save(const char *fileName, Tim::Bpp bpp)
 		}
 	}
 
-	return Tim(bpp, tim_infos).save(fileName, bpp);
+	return Tim(bpp, tim_infos).save(fileName, int(bpp), false);
 }
 
 void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
@@ -124,18 +145,19 @@ void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 	}
 
 	if (texture_infos.isValid() && palette_infos.isValid()) {
-		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos, !next_do_not_clear_old_texture);
+		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos, next_texture_count, !next_do_not_clear_old_texture);
 
 		texture_infos = TexturePacker::TextureInfos();
 		palette_infos = TexturePacker::TextureInfos();
 	} else if (!texture_infos.isValid() && !palette_infos.isValid() && !isPal) {
-		texturePacker.setTexture(next_texture_name, TexturePacker::TextureInfos(x, y, w, h, next_bpp), TexturePacker::TextureInfos(), !next_do_not_clear_old_texture);
+		texturePacker.setTexture(next_texture_name, TexturePacker::TextureInfos(x, y, w, h, next_bpp), TexturePacker::TextureInfos(), next_texture_count, !next_do_not_clear_old_texture);
 	}
 
 	ff8_externals.sub_464850(x, y, x + w - 1, h + y - 1);
 
 	*next_texture_name = '\0';
 	next_do_not_clear_old_texture = false;
+	next_texture_count = -1;
 }
 
 void ff8_vram_copy_part(int x, int y, int w, int h, int target_x, int target_y)
@@ -183,6 +205,22 @@ int read_vram_to_buffer_parent_call1(struc_50 *psxvram, texture_page *tex_page, 
 	return ret;
 }
 
+int read_vram_to_buffer_parent_call1_tx_select(struc_50 *psxvram, texture_page *tex_page, int x, int y, int w, int h, int bpp, int rel_pos, int a9, uint8_t *target)
+{
+	TexturePacker::TiledTex oldTiledTex = texturePacker.getTiledTex((uint8_t *)ff8_externals.psx_texture_pages[bpp].struc_50_array[rel_pos].texture_page[0].image_data);
+
+	int ret = read_vram_to_buffer_parent_call1(psxvram, tex_page, x, y, w, h, bpp, rel_pos, a9, target);
+
+	if (trace_all || trace_vram) ffnx_trace("%s: copy palette infos from 0x%X\n", __func__, ff8_externals.psx_texture_pages[bpp].struc_50_array[rel_pos].texture_page[0].image_data);
+
+	// Copy known palettes from neighbor tex
+	for (const std::pair<uint8_t, const TexturePacker::TextureInfos &> &pal: oldTiledTex.palettes) {
+		texturePacker.registerPaletteWrite((const uint8_t *)tex_page->image_data, pal.first, pal.second.x(), pal.second.y());
+	}
+
+	return ret;
+}
+
 int read_vram_to_buffer_parent_call2(texture_page *tex_page, int rel_pos, int a3)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: x=%d y=%d color_key=%d rel_pos=(%d, %d)\n", __func__, tex_page->x, tex_page->y, tex_page->color_key, rel_pos & 0xF, rel_pos >> 4);
@@ -204,11 +242,15 @@ int read_vram_to_buffer_with_palette1_parent_call1(texture_page *tex_page, int r
 
 	next_psxvram_x = (tex_page->x >> (2 - tex_page->color_key)) + ((rel_pos & 0xF) << 6);
 	next_psxvram_y = tex_page->y + (((rel_pos >> 4) & 1) << 8);
+	next_psxvram_pal_x = (psxvram_structure->vram_palette_pos & 0x3F) * 16;
+	next_psxvram_pal_y = (psxvram_structure->vram_palette_pos >> 6) & 0x1FF;
 
 	int ret = ((int(*)(texture_page*,int,struc_50*))ff8_externals.sub_464DB0)(tex_page, rel_pos, psxvram_structure);
 
 	next_psxvram_x = -1;
 	next_psxvram_y = -1;
+	next_psxvram_pal_x = -1;
+	next_psxvram_pal_y = -1;
 
 	return ret;
 }
@@ -219,8 +261,29 @@ int read_vram_to_buffer_with_palette1_parent_call2(texture_page *tex_page, int r
 
 	next_psxvram_x = (tex_page->x >> (2 - tex_page->color_key)) + ((rel_pos & 0xF) << 6);
 	next_psxvram_y = tex_page->y + (((rel_pos >> 4) & 1) << 8);
+	next_psxvram_pal_x = (psxvram_structure->vram_palette_pos & 0x3F) * 16;
+	next_psxvram_pal_y = (psxvram_structure->vram_palette_pos >> 6) & 0x1FF;
 
 	int ret = ((int(*)(texture_page*,int,struc_50*))ff8_externals.sub_465720)(tex_page, rel_pos, psxvram_structure);
+
+	next_psxvram_x = -1;
+	next_psxvram_y = -1;
+	next_psxvram_pal_x = -1;
+	next_psxvram_pal_y = -1;
+
+	return ret;
+}
+
+int read_vram_to_buffer_with_palette2_parent_call(int a1, uint16_t rel_pos, int16_t palette_pos_related, uint8_t x, uint8_t y, int16_t w, int16_t h)
+{
+	uint8_t color_key = (rel_pos >> 7) & 3;
+
+	if (trace_all || trace_vram) ffnx_trace("%s: x=%d y=%d w=%d h=%d color_key=%d rel_pos=(%d, %d)\n", __func__, x, y, w, h, color_key, rel_pos & 0xF, (rel_pos >> 4) & 1);
+
+	next_psxvram_x = (x >> (2 - color_key)) + ((rel_pos & 0xF) << 6);
+	next_psxvram_y = y + (((rel_pos >> 4) & 1) << 8);
+
+	int ret = ((int(*)(int, uint16_t, int16_t, uint8_t, uint8_t, int16_t, int16_t))ff8_externals.sub_4649A0)(a1, rel_pos, palette_pos_related, x, y, w, h);
 
 	next_psxvram_x = -1;
 	next_psxvram_y = -1;
@@ -238,19 +301,10 @@ void read_vram_to_buffer(uint8_t *vram, int vram_w_2048, uint8_t *target, int ta
 	}
 	else
 	{
-		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, Tim::Bpp(bpp));
+		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, target_w, h, Tim::Bpp(bpp));
 	}
 
 	ff8_externals.read_vram_1(vram, vram_w_2048, target, target_w, w, h, bpp);
-}
-
-void get_vram_palette_pos_from_texture_pages(uint16_t &x, uint16_t &y)
-{
-	int vram_page = (next_psxvram_x / 64) + (next_psxvram_y / 256) * 16;
-	uint16_t pos = ff8_externals.psx_texture_pages->struc_50_array[vram_page].vram_palette_pos;
-
-	x = (pos & 0x3F) * 16;
-	y = (pos >> 6) & 0x1FF;
 }
 
 void read_vram_to_buffer_with_palette1(uint8_t *vram, int vram_w_2048, uint8_t *target, int target_w, int w, int h, int bpp, uint16_t *vram_palette)
@@ -263,9 +317,7 @@ void read_vram_to_buffer_with_palette1(uint8_t *vram, int vram_w_2048, uint8_t *
 	}
 	else
 	{
-		uint16_t psxvram_pal_x, psxvram_pal_y;
-		get_vram_palette_pos_from_texture_pages(psxvram_pal_x, psxvram_pal_y);
-		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, Tim::Bpp(bpp), psxvram_pal_x, psxvram_pal_y);
+		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, target_w, h, Tim::Bpp(bpp), next_psxvram_pal_x, next_psxvram_pal_y);
 	}
 
 	ff8_externals.read_vram_2_paletted(vram, vram_w_2048, target, target_w, w, h, bpp, vram_palette);
@@ -281,9 +333,7 @@ void read_vram_to_buffer_with_palette2(uint8_t *vram, uint8_t *target, int w, in
 	}
 	else
 	{
-		uint16_t psxvram_pal_x, psxvram_pal_y;
-		get_vram_palette_pos_from_texture_pages(psxvram_pal_x, psxvram_pal_y);
-		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, Tim::Bpp(bpp), psxvram_pal_x, psxvram_pal_y);
+		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, w, h, Tim::Bpp(bpp), next_psxvram_pal_x, next_psxvram_pal_y);
 	}
 
 	ff8_externals.read_vram_3_paletted(vram, target, w, h, bpp, vram_palette);
@@ -433,6 +483,25 @@ int search_pos_in_toc(const uint32_t *toc, uint32_t searching_value)
 	return -1;
 }
 
+void ff8_wm_section_17_set_texture(int texture_id)
+{
+	if (texture_id >= wm_wmset_wave_animations_textures.size())
+	{
+		return;
+	}
+
+	const WmsetSection17Texture &tex = wm_wmset_wave_animations_textures.at(texture_id);
+	Tim tim = Tim::fromTimData(tex.textureFramePositions.at(0));
+	TexturePacker::TextureInfos palette_infos(tim.paletteX(), tim.paletteY(), tim.paletteWidth(), tim.paletteHeight(), Tim::Bpp16);
+	TexturePacker::TextureInfos texture_infos(tex.x, tex.y, tim.imageWidth(), tim.imageHeight(), tim.bpp());
+
+	char texture_name[MAX_PATH] = {};
+
+	snprintf(texture_name, sizeof(texture_name), "world/dat/wmset/section17/texture%d", texture_id);
+
+	texturePacker.setTexture(texture_name, texture_infos, palette_infos, tex.textureFramePositions.size(), true);
+}
+
 uint32_t ff8_wm_section_38_prepare_texture_for_upload(uint8_t *tim_file_data, ff8_tim *tim_infos)
 {
 	uint8_t bpp = tim_file_data[4] & 0x3;
@@ -451,14 +520,89 @@ uint32_t ff8_wm_section_38_prepare_texture_for_upload(uint8_t *tim_file_data, ff
 		texture_infos = TexturePacker::TextureInfos(tim_infos->img_x, tim_infos->img_y, tim_infos->img_w, tim_infos->img_h, next_bpp);
 		palette_infos = TexturePacker::TextureInfos(tim_infos->pal_x, tim_infos->pal_y, tim_infos->pal_w, tim_infos->pal_h, Tim::Bpp16);
 	}
+	else
+	{
+		texture_infos = TexturePacker::TextureInfos();
+		palette_infos = TexturePacker::TextureInfos();
+	}
 
 	next_do_not_clear_old_texture = timId >= 16 && timId <= 18 || timId == 20;
+
+	// Open wave animation textures
+	if (!*(ff8_externals.config_worldmap_textured_anim_disabled))
+	{
+		if (timId == 0)
+		{
+			// Open section 17
+			uint8_t *wm_section_17_dword_2040068 = *(uint8_t **)ff8_externals.worldmap_section17_position,
+				*wm_section_18_dword_2040638 = *(uint8_t **)ff8_externals.worldmap_section18_position;
+
+			wm_wmset_wave_animations_textures = ff8_world_wmset_wave_animations_parse(wm_section_17_dword_2040068, wm_section_18_dword_2040638 - wm_section_17_dword_2040068);
+		}
+		else if (timId == 21)
+		{
+			if (save_textures)
+			{
+				// Save first texture of section 17, using the palette from section38/texture21
+				ff8_world_wmset_wave_animations_save_texture(wm_wmset_wave_animations_textures, 0, "world/dat/wmset/section17", Tim::fromTimData(tim_file_data));
+			}
+		}
+		else if (timId == 22)
+		{
+			if (save_textures)
+			{
+				// Save second and third textures of section 17, using the palette from section38/texture22
+				Tim tim = Tim::fromTimData(tim_file_data);
+				ff8_world_wmset_wave_animations_save_texture(wm_wmset_wave_animations_textures, 1, "world/dat/wmset/section17", tim);
+				ff8_world_wmset_wave_animations_save_texture(wm_wmset_wave_animations_textures, 2, "world/dat/wmset/section17", tim);
+			}
+		}
+		else if (timId == 34) // After uploads of section38/texture21 & 22
+		{
+			for (int i = 0; i < wm_wmset_wave_animations_textures.size(); ++i)
+			{
+				ff8_wm_section_17_set_texture(i);
+			}
+		}
+	}
+
+	if (!*(ff8_externals.config_worldmap_color_anim_disabled))
+	{
+		if (timId == 0)
+		{
+			// Open section 41
+			uint8_t *wm_section_41_animation_palettes_dword_203FAF8 = (uint8_t *)*ff8_externals.worldmap_section41_position,
+				*wm_section_42_dword_2040690 = (uint8_t *)*ff8_externals.worldmap_section42_position;
+
+			wm_wmset_palette_animations_textures = ff8_world_wmset_palette_animations_parse(wm_section_41_animation_palettes_dword_203FAF8, wm_section_42_dword_2040690 - wm_section_41_animation_palettes_dword_203FAF8);
+		}
+
+		if (palette_infos.isValid() && wm_wmset_palette_animations_textures.contains(uint32_t(palette_infos.x()) | (uint32_t(palette_infos.y()) << 16)))
+		{
+			const WmsetSection41Texture &tex = wm_wmset_palette_animations_textures[uint32_t(palette_infos.x()) | (uint32_t(palette_infos.y()) << 16)];
+			if (trace_all || trace_vram) ffnx_trace("%s: set animation palette source=(%d, %d)\n", __func__, tex.srcX, tex.srcY);
+			next_texture_count = tex.height;
+			TexturePacker::TextureInfos palette(tex.x, tex.y, 256, tex.height, Tim::Bpp16);
+			texturePacker.setTexture(nullptr, palette, palette);
+
+			if (save_textures)
+			{
+				ff8_world_wmset_palette_animations_save_texture(tex, next_texture_name, Tim::fromTimData(tim_file_data));
+			}
+		}
+	}
 
 	if (save_textures)
 	{
 		if (timId < 8)
 		{
 			Tim::fromTimData(tim_file_data).saveMultiPaletteGrid(next_texture_name, 8, 4, 0, 4, true);
+		}
+		else if (palette_infos.h() > 1)
+		{
+			for (int pal = 0; pal < palette_infos.h(); ++pal) {
+				Tim::fromTimData(tim_file_data).save(next_texture_name, 0, pal, true);
+			}
 		}
 		else
 		{
@@ -495,7 +639,43 @@ Tim ff8_wm_set_texture_name_from_section_position(uint8_t section_number, uint32
 
 	next_bpp = tim.bpp();
 
+	texture_infos = TexturePacker::TextureInfos(tim.imageX(), tim.imageY(), tim.imageWidth(), tim.imageHeight(), tim.bpp());
+	if (tim.bpp() != Tim::Bpp16) {
+		palette_infos = TexturePacker::TextureInfos(tim.paletteX(), tim.paletteY(), tim.paletteWidth(), tim.paletteHeight(), Tim::Bpp16);
+		next_pal_data = tim.paletteData();
+	}
+
 	return tim;
+}
+
+void ff8_wm_section_17_upload(uint8_t *tim_file_data, int16_t x, int16_t y)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: pos=(%d, %d)\n", __func__, x, y);
+
+	Tim tim = Tim::fromTimData(tim_file_data);
+
+	next_bpp = tim.bpp();
+	palette_infos = TexturePacker::TextureInfos(); // Invalid palette
+	texture_infos = TexturePacker::TextureInfos(x, y, tim.imageWidth(), tim.imageHeight(), tim.bpp());
+
+	int texture_id = 0;
+	for (const WmsetSection17Texture &texture: wm_wmset_wave_animations_textures) {
+		int frame_id = 0;
+		for (const uint8_t *frameTexturePos: texture.textureFramePositions) {
+			if (frameTexturePos == tim_file_data) {
+				texturePacker.forceCurrentPalette(x, y, frame_id);
+
+				((void(*)(uint8_t*,int16_t,int16_t))ff8_externals.sub_541AE0)(tim_file_data, x, y);
+
+				return;
+			}
+			++frame_id;
+		}
+
+		++texture_id;
+	}
+
+	((void(*)(uint8_t*,int16_t,int16_t))ff8_externals.sub_541AE0)(tim_file_data, x, y);
 }
 
 void ff8_wm_section_39_upload(uint8_t *tim_file_data)
@@ -507,6 +687,8 @@ void ff8_wm_section_39_upload(uint8_t *tim_file_data)
 	}
 
 	((void(*)(uint8_t*))ff8_externals.worldmap_sub_541970_upload_tim)(tim_file_data);
+
+	next_pal_data = nullptr;
 }
 
 void ff8_wm_section_40_upload(uint8_t *tim_file_data)
@@ -518,6 +700,17 @@ void ff8_wm_section_40_upload(uint8_t *tim_file_data)
 	}
 
 	((void(*)(uint8_t*))ff8_externals.worldmap_sub_541970_upload_tim)(tim_file_data);
+
+	next_pal_data = nullptr;
+}
+
+void ff8_wm_section_41_upload_palette(int16_t *pos_and_size, uint8_t *texture_buffer)
+{
+	next_pal_data = (uint16_t *)texture_buffer;
+
+	ff8_upload_vram(pos_and_size, texture_buffer);
+
+	next_pal_data = nullptr;
 }
 
 void ff8_wm_section_42_upload(uint8_t *tim_file_data)
@@ -529,6 +722,8 @@ void ff8_wm_section_42_upload(uint8_t *tim_file_data)
 	}
 
 	((void(*)(uint8_t*))ff8_externals.worldmap_sub_541970_upload_tim)(tim_file_data);
+
+	next_pal_data = nullptr;
 }
 
 int ff8_wm_chara_one_read_file(int fd, uint8_t *data, size_t size)
@@ -571,6 +766,15 @@ int ff8_wm_chara_one_upload_texture_2(char *image_buffer, char bpp, char a3, int
 	}
 
 	return ((int(*)(char *, char, char, int, __int16, int, __int16))ff8_externals.chara_one_upload_texture)(image_buffer, bpp, a3, x, y, w, h);
+}
+
+void ff8_wm_chara_one_upload_palette_2(int16_t *pos_and_size, uint8_t *texture_buffer)
+{
+	next_pal_data = (uint16_t *)texture_buffer;
+
+	ff8_upload_vram(pos_and_size, texture_buffer);
+
+	next_pal_data = nullptr;
 }
 
 int ff8_wm_open_data(const char *path, int32_t pos, uint32_t size, void *data)
@@ -647,22 +851,7 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 	}
 
 	// Redirect internal texl textures
-	uint32_t image_data_size = newTexture.pixelW() * newTexture.h() * 4;
-	uint32_t *image = (uint32_t*)driver_malloc(image_data_size);
-
-	if (image)
-	{
-		if (! tim.toRGBA32MultiPaletteGrid(image, 4, 4, 0, 4, true))
-		{
-			driver_free(image);
-			return;
-		}
-
-		if (! texturePacker.setTextureRedirection(next_texture_name, oldTexture, newTexture, image))
-		{
-			driver_free(image);
-		}
-	}
+	texturePacker.setTextureRedirection(next_texture_name, oldTexture, newTexture, tim);
 
 	*next_texture_name = '\0';
 
@@ -695,20 +884,17 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 
 	uint32_t ret = ff8_externals.sm_pc_read(filename, map_data);
 
-	std::vector<Tile> tiles = ff8_background_parse_tiles(map_data);
-
-	char tex_directory[MAX_PATH] = {};
-	char tex_filename[MAX_PATH] = {};
+	char tex_directory[MAX_PATH] = {}, tex_filename[MAX_PATH] = {};
 
 	snprintf(tex_directory, sizeof(tex_directory), "field/mapdata/%s", get_current_field_name());
 	snprintf(tex_filename, sizeof(tex_filename), "%s/%s", tex_directory, get_current_field_name());
 
 	if (save_textures_legacy) {
-		ff8_background_save_textures_legacy(tiles, mim_texture_buffer, tex_filename);
+		ff8_background_save_textures_legacy(ff8_background_parse_tiles(map_data), mim_texture_buffer, tex_filename);
 
 		return ret;
 	} else if (save_textures) {
-		ff8_background_save_textures(tiles, mim_texture_buffer, tex_filename);
+		ff8_background_save_textures(ff8_background_parse_tiles(map_data), mim_texture_buffer, tex_filename);
 
 		return ret;
 	}
@@ -721,6 +907,12 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 		ffnx_warning("Directory does not exist, fallback to Tonberry compatibility layer: %s\n", tex_abs_directory);
 	}
 
+	std::vector<Tile> tiles;
+
+	if (has_dir) {
+		tiles = ff8_background_parse_tiles(map_data);
+	}
+
 	if (!has_dir || !texturePacker.setTextureBackground(tex_filename, 0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles)) {
 		snprintf(tex_directory, MAX_PATH, "field/mapdata/%.2s/%s", get_current_field_name(), get_current_field_name());
 		snprintf(tex_abs_directory, sizeof(tex_abs_directory), "%s/%s", mod_path.c_str(), tex_directory);
@@ -731,6 +923,10 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 			}
 
 			return ret;
+		}
+
+		if (tiles.empty()) {
+			tiles = ff8_background_parse_tiles(map_data);
 		}
 
 		char found_extension[MAX_PATH] = {};
@@ -881,20 +1077,63 @@ void ff8_field_effects_upload_vram1(int16_t *pos_and_size, uint8_t *texture_buff
 	texturePacker.setTexture(texture_name, TexturePacker::TextureInfos(pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3] * 2, bpp));
 }
 
+int battle_get_texture_file_name_index(void *texture_buffer)
+{
+	for (int i = 0; i < battle_texture_data_list_size; ++i) {
+		if (battle_texture_data_list.at(i).data == texture_buffer) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callback)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s: %d\n", __func__, fileId);
+	if (trace_all || trace_vram) ffnx_trace("%s: %d => %s\n", __func__, fileId, ff8_externals.battle_filenames[fileId]);
 
-	snprintf(battle_texture_name, sizeof(battle_texture_name), "battle/%s", ff8_externals.battle_filenames[fileId]);
+	battle_texture_id = 0;
+	if (stricmp(ff8_externals.battle_filenames[fileId], "B0WAVE.DAT") == 0) {
+		// Fix redundant texture
+		strncpy(battle_texture_name, "battle/A8DEF.TIM", sizeof(battle_texture_name));
+
+		if (trace_all || trace_vram) ffnx_trace("%s: rename texture to %s\n", __func__, battle_texture_name);
+	} else {
+		snprintf(battle_texture_name, sizeof(battle_texture_name), "battle/%s", ff8_externals.battle_filenames[fileId]);
+	}
+
+	// Remember texture name for later
+	BattleTextureFileName tex = BattleTextureFileName();
+	strncpy(tex.file_name, battle_texture_name, sizeof(tex.file_name));
+	tex.data = data;
+
+	int index = battle_get_texture_file_name_index(data);
+	if (index < 0) {
+		battle_texture_data_list[battle_texture_data_list_cursor] = tex;
+
+		battle_texture_data_list_cursor = (battle_texture_data_list_cursor + 1) % battle_texture_data_list_size;
+	} else {
+		if (trace_all || trace_vram) ffnx_trace("%s: texture found in the list at index %d\n", __func__, index);
+
+		battle_texture_data_list[index] = tex;
+	}
 
 	return ((int16_t(*)(int,void*,int,int))ff8_externals.battle_open_file)(fileId, data, a3, callback);
+}
+
+void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWORD *outSize)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
+
+	battle_texture_id = 0;
+	snprintf(battle_texture_name, sizeof(battle_texture_name), "magic/%s", fileName);
+
+	return ((void *(*)(const char*,void*,int,DWORD*))ff8_externals.load_magic_data_sub_571900)(fileName, data, dataSize, outSize);
 }
 
 size_t ff8_battle_read_file(char *fileName, void *data)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
-
-	battle_texture_id = 0;
 
 	size_t file_size = ff8_externals.sm_pc_read(fileName, data);
 
@@ -905,22 +1144,278 @@ size_t ff8_battle_read_file(char *fileName, void *data)
 	return file_size;
 }
 
+int battle_get_texture_header_index(uint8_t *texture_buffer)
+{
+	for (int i = 0; i < battle_texture_data_list_size; ++i) {
+		if (battle_texture_headers.at(i).data == texture_buffer) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+void battle_read_effect_alloc()
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: magic_id=%d\n", __func__, *ff8_externals.battle_magic_id);
+
+	// Reset list
+	for (int i = 0; i < battle_texture_headers.size(); ++i) {
+		battle_texture_headers[i] = BattleTextureHeader();
+	}
+	battle_texture_headers_cursor = 0;
+	// Guess the filename until a file is actually opened
+	battle_texture_id = 0;
+	snprintf(battle_texture_name, sizeof(battle_texture_name), "magic/mag%03d.tim", *ff8_externals.battle_magic_id);
+
+	((void(*)())ff8_externals.sub_571870)();
+}
+
+void battle_set_texture_header(uint8_t file_id, bool is_palette, uint8_t file_relative_id, int16_t *pos_and_size, uint8_t *texture_buffer)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: effect_id=%d file_id=%d is_palette=%d file_relative_id=%d pos_and_size=(%d, %d, %d, %d) texture_buffer=0x%X battle_texture_headers_cursor=%d\n", __func__,
+		*ff8_externals.battle_magic_id, file_id, is_palette, file_relative_id,
+		pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3], texture_buffer, battle_texture_headers_cursor);
+
+	BattleTextureHeader header = BattleTextureHeader();
+	header.effect_id = *ff8_externals.battle_magic_id;
+	header.file_id = file_id;
+	header.is_palette = is_palette;
+	header.file_relative_id = file_relative_id;
+	header.x = pos_and_size[0];
+	header.y = pos_and_size[1];
+	header.w = pos_and_size[2];
+	header.h = pos_and_size[3];
+	header.data = texture_buffer;
+
+	int index = battle_get_texture_header_index(texture_buffer);
+
+	if (index < 0) {
+		battle_texture_headers[battle_texture_headers_cursor] = header;
+
+		battle_texture_headers_cursor = (battle_texture_headers_cursor + 1) % battle_texture_data_list_size;
+	} else {
+		battle_texture_headers[index] = header;
+	}
+}
+
+void ff8_battle_set_palette_data_from_mag(int file_relative_id)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: file_relative_id=%d\n", __func__, file_relative_id);
+
+	int file_ext_number = *(uint8_t *)(*(*ff8_externals.effect_struct_27973EC + 42) + file_relative_id);
+
+	uint8_t *data = ff8_externals.mag_data_dword_2798A68[file_ext_number];
+	uint8_t *texture_data = data + *(DWORD *)(data + 8) + *(DWORD *)(data + *(DWORD *)(data + 8) + 4 * file_relative_id);
+	*(*ff8_externals.effect_struct_2797624 + 63) = DWORD(texture_data);
+	*(*ff8_externals.effect_struct_2797624 + 60) = *(*ff8_externals.effect_struct_27973EC + 39) + 8 * file_relative_id;
+
+	battle_set_texture_header(file_ext_number, true, file_relative_id, *(int16_t **)(*ff8_externals.effect_struct_2797624 + 60), texture_data);
+}
+
+void ff8_battle_set_texture_data_from_mag(int file_relative_id)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: file_relative_id=%d\n", __func__, file_relative_id);
+
+	BYTE file_ext_infos = *(BYTE *)(*(*ff8_externals.effect_struct_27973EC + 41) + file_relative_id);
+	int file_ext_number = file_ext_infos & 0x7F;
+
+	*(*ff8_externals.effect_struct_2797624 + 62) = file_ext_infos & 0x80;
+	uint8_t *texture_data1 = ff8_externals.mag_data_dword_2798A68[file_ext_number] + *(DWORD *)(ff8_externals.mag_data_dword_2798A68[file_ext_number] + 20);
+	uint8_t *texture_data = texture_data1 + ((unsigned int)0xFFFFFF & *(DWORD *)(texture_data1 + 4 * file_relative_id));
+	*(*ff8_externals.effect_struct_2797624 + 63) = DWORD(texture_data);
+	int pos_and_size = *(*ff8_externals.effect_struct_27973EC + 38) + 8 * file_relative_id;
+	*(*ff8_externals.effect_struct_2797624 + 60) = pos_and_size;
+	WORD *v4 = *(WORD **)(*ff8_externals.effect_struct_2797624 + 60);
+	*(WORD *)&pos_and_size = *v4;
+	*(*ff8_externals.effect_struct_2797624 + 61) = *(*ff8_externals.effect_struct_2797624 + 62) | *(*ff8_externals.dword_27973E8 + 146) & 0x60 | ((v4[1] & 0x100 | (pos_and_size >> 2) & 0x3F0) >> 4);
+
+	battle_set_texture_header(file_ext_number, false, file_relative_id, *(int16_t **)(*ff8_externals.effect_struct_2797624 + 60), texture_data);
+}
+
+void *battle_set_texture_action_upload_raw_pal_call(int16_t *pos_and_size, char *texture_data)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: pos=(%d, %d) size=(%d, %d) texture_data=0x%X\n", __func__, pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3], texture_data);
+
+	battle_set_texture_header(0, true, 0, pos_and_size, (uint8_t *)texture_data);
+
+	return ((void*(*)(int16_t*,char*))ff8_externals.sub_505DF0)(pos_and_size, texture_data);
+}
+
+void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffer)
+{
+	int index = battle_get_texture_header_index(texture_buffer);
+
+	if (index >= 0) {
+		const BattleTextureHeader &header = battle_texture_headers.at(index);
+
+		if (trace_all || trace_vram) ffnx_trace("%s: texture identified is_pal=%d rect=(%d, %d, %d, %d) effect_id=%d file_id=%d file_relative_id=%d\n", __func__,
+			header.is_palette, header.x, header.y, header.w, header.h, header.effect_id, header.file_id, header.file_relative_id);
+
+		if (header.is_palette) {
+			next_pal_data = (uint16_t *)texture_buffer;
+		} else {
+			uint16_t minX = 0xFFFF, maxX = 0, minY = 0xFFFF, maxY = 0;
+			int index2 = index;
+
+			for (int i = 1; i < battle_texture_data_list_size; ++i) {
+				const BattleTextureHeader &header2 = battle_texture_headers.at((index + i) % battle_texture_data_list_size);
+				if (!header2.is_palette) {
+					break;
+				}
+
+				if (minX > header2.x) {
+					minX = header2.x;
+				}
+				if (minY > header2.y) {
+					minY = header2.y;
+				}
+				if (maxX < header2.x + header2.w) {
+					maxX = header2.x + header2.w;
+				}
+				if (maxY < header2.y + header2.h) {
+					maxY = header2.y + header2.h;
+				}
+			}
+
+			snprintf(next_texture_name, sizeof(next_texture_name), "magic/MAG%03d_B.%02d-%d", header.effect_id, header.file_id, header.file_relative_id);
+				bool texture_saved = false;
+
+			if (minY != 0xFFFF) {
+				next_bpp = maxX - minX == 16 ? Tim::Bpp4 : Tim::Bpp8;
+				texture_infos = TexturePacker::TextureInfos(pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3], next_bpp);
+				palette_infos = TexturePacker::TextureInfos(minX, minY, maxX - minX, maxY - minY, next_bpp);
+				int last_pal_x = -1, last_pal_y = -1;
+
+				for (int i = 1; i < battle_texture_data_list_size; ++i) {
+					const BattleTextureHeader &header2 = battle_texture_headers.at((index + i) % battle_texture_data_list_size);
+					if (!header2.is_palette || (last_pal_y >= 0 && std::abs(header2.y - last_pal_y) > 10) || (last_pal_x >= 0 && last_pal_x != header.x)) {
+						break;
+					}
+
+					ff8_tim tim_infos = ff8_tim();
+					tim_infos.pal_data = (uint16_t *)header2.data;
+					tim_infos.pal_w = header2.w;
+					tim_infos.pal_h = header2.h;
+					tim_infos.img_data = texture_buffer;
+					tim_infos.img_w = pos_and_size[2];
+					tim_infos.img_h = pos_and_size[3];
+					Tim(next_bpp, tim_infos).save(next_texture_name, header2.y - minY, true);
+					texture_saved = true;
+
+					last_pal_x = header2.x;
+					last_pal_y = header2.y;
+
+					// We assume that the first palette is correct, so we remove it from the array. The others maybe not, so keep them
+					if (i == 1) {
+						battle_texture_headers[(index + i) % battle_texture_data_list_size] = BattleTextureHeader();
+					}
+				}
+			}
+
+			// We don't know the palette
+			if (!texture_saved) {
+				next_bpp = Tim::Bpp8;
+				ff8_tim tim_infos = ff8_tim();
+				tim_infos.img_data = texture_buffer;
+				tim_infos.img_w = pos_and_size[2];
+				tim_infos.img_h = pos_and_size[3];
+				Tim(next_bpp, tim_infos).save(next_texture_name, uint8_t(0), true);
+			}
+
+			battle_texture_headers[index] = BattleTextureHeader();
+		}
+	} else {
+		int index = battle_get_texture_file_name_index(texture_buffer);
+
+		if (index >= 0) {
+			if (trace_all || trace_vram) ffnx_trace("%s: texture data identified 0x%X\n", __func__, texture_buffer);
+
+			strncpy(next_texture_name, battle_texture_data_list[index].file_name, sizeof(battle_texture_data_list[index].file_name));
+
+			battle_texture_data_list[index] = BattleTextureFileName();
+
+			next_bpp = Tim::Bpp8;
+
+			// Splitted version of A8DEF.TIM
+			if (stricmp(next_texture_name, "battle/MA8DEF_P.0") == 0 || stricmp(next_texture_name, "battle/MA8DEF_P.1") == 0 || stricmp(next_texture_name, "battle/MA8DEF_P.2") == 0) {
+				next_bpp = Tim::Bpp4;
+			}
+
+			ff8_tim tim_infos = ff8_tim();
+			tim_infos.img_data = texture_buffer;
+			tim_infos.img_x = pos_and_size[0];
+			tim_infos.img_y = pos_and_size[1];
+			tim_infos.img_w = pos_and_size[2];
+			tim_infos.img_h = pos_and_size[3];
+			// Save without palette
+			Tim(next_bpp, tim_infos).save(next_texture_name);
+
+			// Save with every palettes we know
+			for (int i = 1; i < battle_texture_data_list_size; ++i) {
+				const BattleTextureHeader &header = battle_texture_headers.at(i % battle_texture_data_list_size);
+				if (!header.is_palette) {
+					continue;
+				}
+
+				char fileName[MAX_PATH] = {};
+
+				snprintf(fileName, sizeof(fileName), "%s-pal-guess-%dx%d", next_texture_name, header.x, header.y);
+
+				tim_infos.pal_data = (uint16_t *)header.data;
+				tim_infos.pal_w = header.w;
+				tim_infos.pal_h = header.h;
+				Tim(next_bpp, tim_infos).save(fileName, true);
+			}
+		} else {
+			if (trace_all || trace_vram) ffnx_warning("%s: unknown texture uploaded\n", __func__);
+
+			if (pos_and_size[2] > 32 && pos_and_size[3] > 32) {
+				snprintf(next_texture_name, sizeof(next_texture_name), "magic/mag%03d.tim-%d", *ff8_externals.battle_magic_id, battle_texture_id);
+				++battle_texture_id;
+				next_bpp = Tim::Bpp8;
+
+				ff8_tim tim_infos = ff8_tim();
+				tim_infos.img_data = texture_buffer;
+				tim_infos.img_x = pos_and_size[0];
+				tim_infos.img_y = pos_and_size[1];
+				tim_infos.img_w = pos_and_size[2];
+				tim_infos.img_h = pos_and_size[3];
+				// Save without palette
+				Tim(next_bpp, tim_infos).save(next_texture_name);
+			}
+		}
+	}
+
+	ff8_upload_vram(pos_and_size, texture_buffer);
+}
+
 void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, battle_texture_name);
+	if (trace_all || trace_vram) ffnx_trace("%s: %s battle_texture_id=%d\n", __func__, battle_texture_name, battle_texture_id);
 
 	Tim tim = Tim::fromTimData(texture_buffer - 20);
+	next_pal_data = (uint16_t *)texture_buffer;
 
 	ff8_upload_vram(pos_and_size, texture_buffer);
 
+	texture_infos = TexturePacker::TextureInfos(tim.imageX(), tim.imageY(), tim.imageWidth(), tim.imageHeight(), tim.bpp());
+	palette_infos = TexturePacker::TextureInfos(tim.paletteX(), tim.paletteY(), tim.paletteWidth(), tim.paletteHeight(), Tim::Bpp16);
 	next_bpp = tim.bpp();
-	snprintf(next_texture_name, sizeof(next_texture_name), "%s-%d", battle_texture_name, battle_texture_id);
-
-	++battle_texture_id;
+	if (battle_texture_id < 0) {
+		strncpy(next_texture_name, battle_texture_name, sizeof(next_texture_name));
+	} else {
+		snprintf(next_texture_name, sizeof(next_texture_name), "%s-%d", battle_texture_name, battle_texture_id);
+		++battle_texture_id;
+	}
 
 	if (save_textures) {
 		if (StrStrIA(battle_texture_name, ".X") != nullptr) {
 			ff8_battle_state_save_texture(stage, tim, next_texture_name);
+		} else if (palette_infos.h() > 1) {
+			for (int pal = 0; pal < palette_infos.h(); ++pal) {
+				tim.save(next_texture_name, 0, pal, true);
+			}
 		} else {
 			tim.save(next_texture_name, 0, 0, true);
 		}
@@ -931,6 +1426,9 @@ void engine_set_init_time(double fps_adjust)
 {
 	texturePacker.clearTextures();
 
+	palette_infos = TexturePacker::TextureInfos();
+	texture_infos = TexturePacker::TextureInfos();
+
 	((void(*)(double))ff8_externals.engine_set_init_time)(fps_adjust);
 }
 
@@ -938,13 +1436,14 @@ void clean_psxvram_pages()
 {
 	texturePacker.clearTiledTexs();
 
+	palette_infos = TexturePacker::TextureInfos();
+	texture_infos = TexturePacker::TextureInfos();
+
 	((void(*)())ff8_externals.sub_4672C0)();
 }
 
 void vram_init()
 {
-	//---- Texture uploads identification
-
 	replace_function(ff8_externals.upload_psx_vram, ff8_upload_vram);
 	replace_function(ff8_externals.copy_psx_vram_part, ff8_copy_vram_part);
 
@@ -957,13 +1456,16 @@ void vram_init()
 	replace_call(ff8_externals.sub_5391B0 + 0x1CC, ff8_upload_vram_triple_triad_2_palette);
 	replace_call(ff8_externals.sub_5391B0 + 0x1E1, ff8_upload_vram_triple_triad_2_data);
 	// worldmap
+	replace_call(ff8_externals.sub_554940_call_130, ff8_wm_section_17_upload); // Waves
 	replace_call(ff8_externals.worldmap_sub_53F310_call_2A9, ff8_wm_section_38_prepare_texture_for_upload);
 	replace_call(ff8_externals.worldmap_sub_53F310_call_30D, ff8_upload_vram_wm_section_38_palette);
 	replace_call(ff8_externals.worldmap_sub_53F310_call_330, ff8_wm_section_39_upload); // Rails/Roads
 	replace_call(ff8_externals.worldmap_sub_53F310_call_366, ff8_wm_section_40_upload);
+	replace_call(ff8_externals.worldmap_sub_554AA0_call_C2, ff8_wm_section_41_upload_palette); // Animated palettes
 	replace_call(ff8_externals.worldmap_sub_548020 + 0x47, ff8_wm_section_42_upload); // Train/vehicles
 	replace_call(ff8_externals.worldmap_chara_one + 0xCC, ff8_wm_chara_one_read_file);
 	replace_call(ff8_externals.worldmap_chara_one + 0x4D1, ff8_wm_chara_one_upload_texture_2); // Characters/Chocobos/Ragnarok
+	replace_call(ff8_externals.worldmap_chara_one + 0x566, ff8_wm_chara_one_upload_palette_2);
 	// wm texl project
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call1, ff8_wm_texl_palette_upload_vram);
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call2, ff8_wm_texl_palette_upload_vram);
@@ -981,9 +1483,19 @@ void vram_init()
 	// field: effects
 	replace_call(ff8_externals.upload_pmp_file + 0x7F, ff8_field_effects_upload_vram1);
 	// battle
+	// battle: File System
 	replace_call(ff8_externals.battle_open_file_wrapper + 0x14, ff8_battle_open_and_read_file);
+	replace_call(ff8_externals.load_magic_data_sub_5718E0 + 0xB, ff8_battle_open_effect);
+	replace_call(ff8_externals.load_magic_data_sub_571B80 + 0x1E, ff8_battle_open_effect);
 	replace_call(ff8_externals.battle_open_file + 0x8E, ff8_battle_read_file);
 	replace_call(ff8_externals.battle_open_file + 0x1A2, ff8_battle_read_file);
+	// battle: Effects
+	replace_call(ff8_externals.battle_read_effect_sub_50AF20 + 0x63, battle_read_effect_alloc);
+	replace_function(ff8_externals.mag_data_palette_sub_B66560, ff8_battle_set_palette_data_from_mag);
+	replace_function(ff8_externals.mag_data_texture_sub_B66560, ff8_battle_set_texture_data_from_mag);
+	// battle: Upload texture
+	replace_call(ff8_externals.battle_set_action_upload_raw_palette_sub_B66400 + 0x68, battle_set_texture_action_upload_raw_pal_call);
+	replace_call(ff8_externals.battle_upload_texture_to_vram + 0x2E, ff8_battle_upload_texture_raw);
 	replace_call(ff8_externals.battle_upload_texture_to_vram + 0x45, ff8_battle_upload_texture_palette);
 
 	//---- VRAM reads
@@ -992,7 +1504,7 @@ void vram_init()
 	replace_call(ff8_externals.sub_464BD0 + 0x53, read_vram_to_buffer_parent_call1);
 	replace_call(ff8_externals.sub_464BD0 + 0xED, read_vram_to_buffer_parent_call1);
 	replace_call(ff8_externals.sub_464BD0 + 0x1A1, read_vram_to_buffer_parent_call1);
-	replace_call(ff8_externals.ssigpu_tx_select_2_sub_465CE0 + 0x281, read_vram_to_buffer_parent_call1);
+	replace_call(ff8_externals.ssigpu_tx_select_2_sub_465CE0 + 0x281, read_vram_to_buffer_parent_call1_tx_select);
 
 	replace_call(ff8_externals.sub_464BD0 + 0x79, read_vram_to_buffer_parent_call2);
 	replace_call(ff8_externals.sub_464BD0 + 0x1B5, read_vram_to_buffer_parent_call2);
@@ -1002,6 +1514,11 @@ void vram_init()
 	replace_call(ff8_externals.ssigpu_tx_select_2_sub_465CE0 + 0x2CF, read_vram_to_buffer_with_palette1_parent_call1);
 
 	replace_call(ff8_externals.sub_464BD0 + 0xAF, read_vram_to_buffer_with_palette1_parent_call2);
+
+	// read_vram_to_buffer_with_palette2_parent_calls
+	replace_call(ff8_externals.ssigpu_callbacks_2[100] + 0x33, read_vram_to_buffer_with_palette2_parent_call);
+	replace_call(ff8_externals.ssigpu_callbacks_2[116] + 0x2E, read_vram_to_buffer_with_palette2_parent_call);
+	replace_call(ff8_externals.ssigpu_callbacks_2[124] + 0x2E, read_vram_to_buffer_with_palette2_parent_call);
 
 	replace_call(uint32_t(ff8_externals.sub_464F70) + 0x2C5, read_vram_to_buffer);
 	replace_call(ff8_externals.sub_4653B0 + 0x9D, read_vram_to_buffer);

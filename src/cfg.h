@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -28,7 +28,8 @@
 
 #define RENDERER_BACKEND_AUTO 0
 #define RENDERER_BACKEND_OPENGL 1
-#define RENDERER_BACKEND_DIRECT3D9 2
+// Slot 2 used to be used for DIRECT3D9 but is not more officially supported by bgfx.
+// Preserve the slot numbers as they are to ensure compatibility with existing installations and tooling.
 #define RENDERER_BACKEND_DIRECT3D11 3
 #define RENDERER_BACKEND_DIRECT3D12 4
 #define RENDERER_BACKEND_VULKAN 5
@@ -64,6 +65,7 @@ extern std::vector<std::string> external_ambient_ext;
 extern std::string external_lighting_path;
 extern std::string external_widescreen_path;
 extern std::string external_time_cycle_path;
+extern std::string external_mesh_path;
 extern bool enable_voice_music_fade;
 extern long external_voice_music_fade_volume;
 extern bool enable_voice_auto_text;
@@ -108,6 +110,7 @@ extern bool enable_lighting;
 extern bool prefer_lighting_cpu_calculations;
 extern long game_lighting;
 extern bool enable_time_cycle;
+extern bool enable_worldmap_external_mesh;
 extern bool ff7_external_opening_music;
 extern bool more_debug;
 extern bool ff8_ssigpu_debug;
@@ -134,7 +137,8 @@ extern long ff7_fps_limiter;
 extern bool ff7_footsteps;
 extern bool ff7_field_center;
 extern bool enable_analogue_controls;
-extern bool enable_inverted_camera_controls;
+extern bool enable_inverted_vertical_camera_controls;
+extern bool enable_inverted_horizontal_camera_controls;
 extern double left_analog_stick_deadzone;
 extern double right_analog_stick_deadzone;
 extern double left_analog_trigger_deadzone;
@@ -149,6 +153,7 @@ extern long external_audio_sample_rate;
 extern bool ff8_worldmap_internal_highres_textures;
 extern bool ff8_fix_uv_coords_precision;
 extern bool ff8_external_music_force_original_filenames;
+extern bool ff8_use_gamepad_icons;
 extern std::string app_path;
 extern std::string data_drive;
 extern bool enable_ntscj_gamut_mode;

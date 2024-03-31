@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -35,9 +35,19 @@
 #include "gamehacks.h"
 #include "vibration.h"
 #include "ff8/file.h"
+#include "metadata.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
+int left_stick_y = 0x80;
+int left_stick_x = 0x80;
+int right_stick_y = 0x80;
+int right_stick_x = 0x80;
+
+std::chrono::time_point<std::chrono::high_resolution_clock> intro_credits_music_start_time;
+constexpr int intro_credits_fade_frames = 33;
+constexpr int intro_credits_adjusted_frames = 438; // Instead of 374 in the Game
+constexpr int intro_credits_frames_between_music_start_and_first_image = 180;
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
 {
@@ -215,14 +225,12 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	}
 
 	TexturePacker::TiledTex tiledTex = texturePacker.getTiledTex(VREF(tex_header, image_data));
-	if (tiledTex.isValid()) {
-		int bytesperpixel = int(tiledTex.bpp() == Tim::Bpp4 ? Tim::Bpp8 : tiledTex.bpp());
+	Tim::Bpp texBpp = VREF(tex_header, tex_format.bytesperpixel) == 2 ? Tim::Bpp16 : (VREF(tex_header, palette_entries) == 256 ? Tim::Bpp8 : Tim::Bpp4);
 
-		if (VREF(tex_header, tex_format.bytesperpixel) != bytesperpixel) {
-			if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: ignore reload because BPP does not match 0x%X (bpp vram=%d, bpp tex=%d) image_data=0x%X\n", texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), VREF(tex_header, image_data));
+	if (tiledTex.isValid() && texBpp != tiledTex.bpp()) {
+		if(trace_all || trace_vram) ffnx_trace("%s: ignore reload because BPP does not match 0x%X (bpp vram=%d, bpp tex=%d, source bpp tex=%d) image_data=0x%X\n", __func__, texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), texBpp, VREF(tex_header, image_data));
 
-			return;
-		}
+		return;
 	}
 
 	common_unload_texture((struct texture_set *)texture_set);
@@ -242,7 +250,7 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 
 	stats.texture_reloads++;
 
-	if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: 0x%X (bpp=%d) image_data=0x%X\n", texture_set, VREF(tex_header, tex_format.bytesperpixel), VREF(tex_header, image_data));
+	if(trace_all || trace_vram) ffnx_trace("texture_reload_hack: 0x%X (bpp=%d, sourceBpp=%d) image_data=0x%X\n", texture_set, VREF(tex_header, tex_format.bytesperpixel), texBpp, VREF(tex_header, image_data));
 }
 
 void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
@@ -298,6 +306,38 @@ int ff8_init_gamepad()
 	return FALSE;
 }
 
+int ff8_get_analog_value(int8_t port, int type, int8_t offset)
+{
+	if (type == 0) {
+		return right_stick_x;
+	}
+
+	if (type == 1) {
+		return right_stick_y;
+	}
+
+	if (type == 2) {
+		return left_stick_x;
+	}
+
+	if (type == 3) {
+		return left_stick_y;
+	}
+
+	return -1;
+}
+
+int ff8_get_analog_value_wm(int8_t port, int type, int8_t offset)
+{
+	if (left_stick_x != 0x80 || left_stick_y != 0x80) {
+		int *keyscans = *(int **)(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0x64 : 0x61));
+		int index = **(int **)(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0x9 : 0x6));
+		keyscans[index] &= 0x0FFF; // Remove d-pad keys
+	}
+
+	return ff8_get_analog_value(port, type, offset);
+}
+
 LPDIJOYSTATE2 ff8_update_gamepad_status()
 {
 	ff8_externals.dinput_gamepad_state->rgdwPOV[0] = -1;
@@ -307,6 +347,8 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 	ff8_externals.dinput_gamepad_state->lRy = 0;
 
 	nxVibrationEngine.rumbleUpdate();
+
+	int lX = 0, lY = 0, rX = 0, rY = 0;
 
 	if (xinput_connected)
 	{
@@ -333,6 +375,11 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 			ff8_externals.dinput_gamepad_state->lX = -0xFFFFFFFFFFFFFFFF;
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
 		}
+
+		lY = int(gamepad.leftStickY * 0x80);
+		lX = int(gamepad.leftStickX * 0x80);
+		rY = int(gamepad.rightStickY * 0x80);
+		rX = int(gamepad.rightStickX * 0x80);
 
 		if (gamepad.rightStickY > 0.5f)
 			ff8_externals.dinput_gamepad_state->lRy = 0xFFFFFFFFFFFFFFFF;
@@ -391,6 +438,11 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
 		}
 
+		lY = -int(joystick.GetState()->lY * 0x80 / SHRT_MAX);
+		lX = int(joystick.GetState()->lX * 0x80 / SHRT_MAX);
+		rY = -int(joystick.GetState()->lRy * 0x80 / SHRT_MAX);
+		rX = int(joystick.GetState()->lRx * 0x80 / SHRT_MAX);
+
 		if (joystick.GetState()->lRy < joystick.GetDeadZone(-0.5f))
 			ff8_externals.dinput_gamepad_state->lRy = 0xFFFFFFFFFFFFFFFF;
 		else if (joystick.GetState()->lRy > joystick.GetDeadZone(0.5f))
@@ -423,7 +475,208 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgbButtons[12] = joystick.GetState()->rgbButtons[12] & 0x80 ? 0x80 : 0; // PS Button
 	}
 
+	left_stick_y = -lY + 0x80;
+	if (left_stick_y > 255) left_stick_y = 255;
+	if (left_stick_y < 0) left_stick_y = 0;
+
+	left_stick_x = lX + 0x80;
+	if (left_stick_x > 255) left_stick_x = 255;
+	if (left_stick_x < 0) left_stick_x = 0;
+
+	int mul = (left_stick_x - 128) * (left_stick_x - 128) + (left_stick_y - 128) * (left_stick_y - 128);
+	if (mul < 1600) {
+		left_stick_y = 0x80;
+		left_stick_x = 0x80;
+	}
+
+	right_stick_y = -rY + 0x80;
+	if (right_stick_y > 255) right_stick_y = 255;
+	if (right_stick_y < 0) right_stick_y = 0;
+
+	right_stick_x = rX + 0x80;
+	if (right_stick_x > 255) right_stick_x = 255;
+	if (right_stick_x < 0) right_stick_x = 0;
+
+	mul = (right_stick_x - 128) * (right_stick_x - 128) + (right_stick_y - 128) * (right_stick_y - 128);
+	if (mul < 1600) {
+		right_stick_y = 0x80;
+		right_stick_x = 0x80;
+	}
+
 	return ff8_externals.dinput_gamepad_state;
+}
+
+int ff8_get_input_device_capabilities_number_of_buttons(int a1)
+{
+	return xinput_connected ? 10 : std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
+}
+
+int ff8_draw_gamepad_icon_or_keyboard_key(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y)
+{
+	// Keep the "keys" if it is a keyboard and not a gamepad
+	if (icon_id >= 128 && icon_id < 140)
+	{
+		BYTE is_gamepad = *ff8_externals.engine_gamepad_button_pressed != 0;
+
+		if (is_gamepad)
+		{
+			int val = ((int(*)(int,int,int))ff8_externals.get_command_key)(is_gamepad, icon_id - 128, 0);
+
+			if (val == 0) {
+				val = ((int(*)(int,int,int))ff8_externals.get_command_key)(!is_gamepad, icon_id - 128, 0);
+			}
+
+			int rgbButton = val - 224;
+
+			switch (rgbButton)
+			{
+				case 0: // Cross (Steam)/Square
+					return steam_edition ? 134 : 135;
+				case 1: // Circle (Steam)/Cross
+					return steam_edition ? 133 : 134;
+				case 2: // Square (Steam)/Circle
+					return steam_edition ? 135 : 133;
+				case 3: // Triangle
+					return 132;
+				case 4: // L1
+					return 130;
+				case 5: // R1
+					return 131;
+				case 6: // SELECT (Steam)/L2
+					return steam_edition ? 136 : 128;
+				case 7: // START (Steam)/R2
+					return steam_edition ? 139 : 129;
+				case 8: // L2 (Steam)/SELECT
+					return steam_edition ? 128 : 136;
+				case 9: // R2 (Steam)/START
+					return steam_edition ? 129 : 139;
+			}
+		}
+
+		((void(*)(int, ff8_draw_menu_sprite_texture_infos*, int, uint16_t, uint16_t))ff8_externals.draw_controller_or_keyboard_icons)(a1, draw_infos, icon_id, x, y);
+
+		return -1;
+	}
+
+	return icon_id;
+}
+
+unsigned int *ff8_draw_icon_get_icon_sp1_infos(int icon_id, int &states_count)
+{
+	int *icon_sp1_data = ((int*(*)())ff8_externals.get_icon_sp1_data)();
+
+	if (icon_id >= icon_sp1_data[0])
+	{
+		states_count = 0;
+
+		return nullptr;
+	}
+
+	states_count = HIWORD(icon_sp1_data[icon_id + 1]);
+
+	return (unsigned int *)((char *)icon_sp1_data + uint16_t(icon_sp1_data[icon_id + 1]));
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
+	int a1, ff8_draw_menu_sprite_texture_infos *draw_infos,
+	int icon_id, uint16_t x, uint16_t y, int a6, int field10_modifier = 0,
+	bool noA6Mask = false,
+	bool override_field4_8_with_a6 = false
+) {
+	icon_id = ff8_draw_gamepad_icon_or_keyboard_key(a1, draw_infos, icon_id, x, y);
+	if (icon_id < 0)
+	{
+		return draw_infos;
+	}
+
+	int states_count = 0;
+	unsigned int *sp1_section_data = ff8_draw_icon_get_icon_sp1_infos(icon_id, states_count);
+
+	if (sp1_section_data == nullptr)
+	{
+		return draw_infos;
+	}
+
+	for (int i = states_count; i > 0; --i)
+	{
+		draw_infos->field_0 = 0x5000000;
+		draw_infos->field_10 = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + field10_modifier) << 16);
+		if (override_field4_8_with_a6)
+		{
+			draw_infos->field_8 = ((a6 & 0xFFFFFF) | 0x64000000) | (((HIBYTE(a6) >> 1) & 2) << 24);
+			draw_infos->field_4 = ((HIBYTE(a6) & 3) << 5) | 0xE100041E;
+		}
+		else
+		{
+			draw_infos->field_8 = noA6Mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
+			draw_infos->field_4 = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
+		}
+		draw_infos->field_14 = sp1_section_data[1] & 0xFF00FF;
+		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
+		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
+		((void(*)(int, ff8_draw_menu_sprite_texture_infos*))ff8_externals.sub_49BB30)(a1, draw_infos);
+		draw_infos += 1;
+		sp1_section_data += 2;
+	}
+
+	return draw_infos;
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key1(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key2(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, *ff8_externals.dword_1D2B808);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key3(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y, int a6)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, 0, true);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key4(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y, int a6, int a7)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, false, true);
+}
+
+ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key5(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6, int a7)
+{
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, true);
+}
+
+ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw_menu_sprite_texture_infos_short *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6, int a7) {
+	// We should not cast like this, but that's what the game does
+	icon_id = ff8_draw_gamepad_icon_or_keyboard_key(a1, reinterpret_cast<ff8_draw_menu_sprite_texture_infos *>(draw_infos), icon_id, x, y);
+	if (icon_id < 0)
+	{
+		return draw_infos;
+	}
+
+	int states_count = 0;
+	unsigned int *sp1_section_data = ff8_draw_icon_get_icon_sp1_infos(icon_id, states_count);
+
+	if (sp1_section_data == nullptr)
+	{
+		return draw_infos;
+	}
+
+	for (int i = states_count; i > 0; --i)
+	{
+		draw_infos->field_0 = 0x4000000;
+		draw_infos->field_C = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + a7) << 16);
+		draw_infos->field_4 = a6 | (((sp1_section_data[0] >> 26) & 2) << 24);
+		draw_infos->field_10 = sp1_section_data[1] & 0xFF00FF;
+		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
+		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
+		((void(*)(int, ff8_draw_menu_sprite_texture_infos_short*))ff8_externals.sub_49FE60)(a1, draw_infos);
+		draw_infos += 1;
+		sp1_section_data += 2;
+	}
+
+	return draw_infos;
 }
 
 int ff8_is_window_active()
@@ -560,6 +813,79 @@ uint32_t ff8_credits_main_loop_gfx_begin_scene(uint32_t unknown, struct game_obj
 	return common_begin_scene(unknown, game_object);
 }
 
+int credits_controller_music_play(void *data)
+{
+	int ret = ((int(*)(void*))ff8_externals.sdmusicplay)(data);
+
+	intro_credits_music_start_time = highResolutionNow();
+
+	return ret;
+}
+
+int credits_controller_input_call()
+{
+	if (*ff8_externals.credits_counter == 0) {
+		int frameCountAdjusted =
+			intro_credits_frames_between_music_start_and_first_image
+			+ *ff8_externals.credits_current_step_image * intro_credits_adjusted_frames
+			+ intro_credits_fade_frames;
+
+		int realFramesEllapsed = int((60.0 / 1000.0) * (elapsedMicroseconds(intro_credits_music_start_time) / 1000.0));
+		int waitFor = frameCountAdjusted - realFramesEllapsed;
+
+		// Add frames on each image display
+		if (waitFor > 0) {
+			*ff8_externals.credits_current_image_global_counter_start += waitFor;
+		}
+	}
+
+	return ((int(*)())ff8_externals.sub_52FE80)();
+}
+
+char new_game_text_cache[64] = "";
+char load_game_text_cache[64] = "";
+
+char *ff8_get_text_cached(int pool_id, int cat_id, int text_id, int a4, char *cache)
+{
+	if (*cache == '\0') {
+		memcpy(cache, ((char*(*)(int,int,int,int))ff8_externals.get_text_data)(pool_id, cat_id, text_id, a4), sizeof(new_game_text_cache));
+	}
+
+	return cache;
+}
+
+char *ff8_get_text_cached_new_game(int pool_id, int cat_id, int text_id, int a4)
+{
+	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, new_game_text_cache);
+}
+
+char *ff8_get_text_cached_load_game(int pool_id, int cat_id, int text_id, int a4)
+{
+	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, load_game_text_cache);
+}
+
+int ff8_create_save_file(int slot, char* save)
+{
+	int ret = ((int(*)(int,char*))ff8_externals.create_save_file_sub_4C6E50)(slot, save);
+
+	uint8_t savefile_slot = slot > 1 ? 2 : 1;
+	uint8_t savefile_save = atoi(&save[strlen(save) - 2]) + 1;
+	ffnx_trace("Save: user saved in slot%d_save%02i\n", savefile_slot, savefile_save);
+	metadataPatcher.updateFF8(savefile_slot, savefile_save);
+
+	return ret;
+}
+
+int ff8_create_save_file_chocobo_world(int unused, int data_source, int offset, size_t size)
+{
+	int ret = ((int(*)(int,int,int,size_t))ff8_externals.create_save_chocobo_world_file_sub_4C6620)(unused, data_source, offset, size);
+
+	ffnx_trace("Save: user saved in slot:choco\n");
+	if (ret > 0) metadataPatcher.updateFF8(3, 0);
+
+	return ret;
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -601,6 +927,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_externals.d3dcaps[2] = true;
 	ff8_externals.d3dcaps[3] = true;
 
+	// Fix save format
 	if (version == VERSION_FF8_12_FR_NV || version == VERSION_FF8_12_SP_NV || version == VERSION_FF8_12_IT_NV)
 	{
 		unsigned char ff8fr_savefix1[] = "\xC0\xEA\x03\x8A\x41\x6D\x80\xE2"
@@ -643,6 +970,16 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		patch_code_byte(ff8_externals.sub_54FDA0 + 0x1DB, 0x70);
 	}
 
+	// Update the metadata file when a save file is modified
+	if (steam_edition)
+	{
+		replace_call(ff8_externals.main_menu_controller + (JP_VERSION ? 0x1004 : 0xF8D), ff8_create_save_file);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x9F6, ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0xFA3, ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x11BB, ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13EC, ff8_create_save_file_chocobo_world);
+	}
+
 	// don't set system speaker config to stereo
 	memset_code(common_externals.directsound_create + 0x6D, 0x90, 34);
 
@@ -670,6 +1007,43 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Gamepad
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);
 	replace_function(ff8_externals.dinput_update_gamepad_status, ff8_update_gamepad_status);
+	replace_function(ff8_externals.dinput_get_input_device_capabilities_number_of_buttons, ff8_get_input_device_capabilities_number_of_buttons);
+
+	if (steam_edition)
+	{
+		// Create ff8input.cfg with the same default values than the FF8_Launcher
+
+		// When the game starts without ff8input.cfg file
+		patch_code_byte(ff8_externals.input_init + 0x29, 225); // 226 => 225
+		patch_code_byte(ff8_externals.input_init + 0x3C, 224); // 225 => 224
+		patch_code_byte(ff8_externals.input_init + 0x53, 226); // 224 => 226
+		patch_code_byte(ff8_externals.input_init + 0xA7, 232); // 230 => 232
+		patch_code_byte(ff8_externals.input_init + 0xBA, 233); // 231 => 233
+		patch_code_byte(ff8_externals.input_init + 0xD1, 230); // 232 => 230
+		patch_code_byte(ff8_externals.input_init + 0xE4, 231); // 233 => 231
+
+		// When the player reset the controls in the game menu
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0xD8, 225); // 226 => 225
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0xEB, 224); // 225 => 224
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x102, 226); // 224 => 226
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x156, 232); // 230 => 232
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x169, 233); // 231 => 233
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x180, 230); // 232 => 230
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x193, 231); // 233 => 231
+	}
+
+	// #####################
+	// Analog 360 patch
+	// #####################
+	// Field
+	replace_call(ff8_externals.sub_4789A0 + (JP_VERSION ? 0x320 : 0x336), ff8_get_analog_value); // Test if available
+	replace_call(ff8_externals.sub_4789A0 + (JP_VERSION ? 0x331 : 0x347), ff8_get_analog_value); // lX
+	replace_call(ff8_externals.sub_4789A0 + (JP_VERSION ? 0x345 : 0x35B), ff8_get_analog_value); // lY
+	// Worldmap
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0xC2 : 0xBF), ff8_get_analog_value_wm); // lX
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0xD2 : 0xCF), ff8_get_analog_value); // lY
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0xE2 : 0xDF), ff8_get_analog_value); // rX
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0xF2 : 0xEF), ff8_get_analog_value); // rY
 
 	// Do not alter worldmap texture UVs (Maki's patch) http://forums.qhimm.com/index.php?topic=16327.0
 	if (FF8_US_VERSION)
@@ -716,11 +1090,36 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	patch_code_byte(ff8_externals.load_credits_image + 0x5FD, 0); // if (intro_step >= 0) ...
 	// Add FFNx Logo
 	replace_call(ff8_externals.credits_main_loop + 0x6D, ff8_credits_main_loop_gfx_begin_scene);
+	// Fix credits intro synchronization with the music
+	replace_call(ff8_externals.load_credits_image + 0x164, credits_controller_music_play);
+	replace_call(ff8_externals.load_credits_image + 0x305, credits_controller_input_call);
 
 	if (!steam_edition) {
 		// Look again with the DataDrive specified in the register
 		replace_call(ff8_externals.get_disk_number + 0x6E, ff8_retry_configured_drive);
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
+	}
+
+	// Force SFX IDs for Quezacotl
+	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 16, 240030); // 240030 - 240000 + 370 = ID 400
+	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 12, 240033); // 240033 - 240000 + 370 = ID 403
+	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 8, 240036); // 240036 - 240000 + 370 = ID 406
+	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 4, 240039); // 240039 - 240000 + 370 = ID 409
+
+	if (!FF8_US_VERSION && !JP_VERSION) {
+		// Fix "New Game" and "Load Game" texts converted to "Doomtrain" and "Alexander" when starting a new game
+		replace_call(ff8_externals.main_menu_render_sub_4E5550 + 0x203, ff8_get_text_cached_new_game);
+		replace_call(ff8_externals.main_menu_render_sub_4E5550 + 0x222, ff8_get_text_cached_load_game);
+	}
+
+	if (ff8_use_gamepad_icons) {
+		// Replace the whole function to conditionnally show PlayStation icons or keyboard keys
+		replace_function(ff8_externals.ff8_draw_icon_or_key1, ff8_draw_icon_or_key1);
+		replace_function(ff8_externals.ff8_draw_icon_or_key2, ff8_draw_icon_or_key2);
+		replace_function(ff8_externals.ff8_draw_icon_or_key3, ff8_draw_icon_or_key3);
+		replace_function(ff8_externals.ff8_draw_icon_or_key4, ff8_draw_icon_or_key4);
+		replace_function(ff8_externals.ff8_draw_icon_or_key5, ff8_draw_icon_or_key5);
+		replace_function(ff8_externals.ff8_draw_icon_or_key6, ff8_draw_icon_or_key6);
 	}
 }
 

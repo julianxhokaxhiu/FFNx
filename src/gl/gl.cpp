@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -326,7 +326,8 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 
 	if (!ff8 && enable_lighting && normals != nullptr && isLightingEnabledTexture) 
 	{
-		newRenderer.drawWithLighting(true);
+		newRenderer.drawToShadowMap();
+		newRenderer.drawWithLighting(true, true);
 	}
 	else newRenderer.draw();
 

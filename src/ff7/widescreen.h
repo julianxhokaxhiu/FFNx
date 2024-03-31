@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
@@ -71,6 +71,7 @@ public:
     int getHorizontalOffset();
     int getVerticalOffset();
     bool isResetVerticalPos();
+    bool isScriptedClipEnabled();
     WIDESCREEN_MODE getMode();
 
     KeyPair getMovieKeyPair(int frame);
@@ -91,6 +92,7 @@ private:
     int h_offset = 0;
     int v_offset = 0;
     bool is_reset_vertical_pos = false;
+    bool is_scripted_clip_enabled = true;
     WIDESCREEN_MODE widescreen_mode = WM_DISABLED;
 
     std::vector<Keyframe> movie_v_offset;
@@ -115,6 +117,11 @@ inline int Widescreen::getVerticalOffset()
 inline bool Widescreen::isResetVerticalPos()
 {
     return is_reset_vertical_pos;
+}
+
+inline bool Widescreen::isScriptedClipEnabled()
+{
+    return is_scripted_clip_enabled;
 }
 
 inline WIDESCREEN_MODE Widescreen::getMode()

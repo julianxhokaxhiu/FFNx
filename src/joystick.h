@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -50,6 +50,7 @@ private:
 
 public:
   LPDIJOYSTATE2 GetState();
+  LPDIDEVCAPS GetCaps();
   bool CheckConnection();
   bool Refresh();
   bool HasAnalogTriggers();

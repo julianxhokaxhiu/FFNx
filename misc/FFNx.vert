@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -20,7 +20,7 @@
 /****************************************************************************/
 
 $input a_position, a_color0, a_texcoord0, a_normal
-$output v_color0, v_texcoord0, v_normal0
+$output v_color0, v_texcoord0, v_position0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.common.sh"
@@ -41,9 +41,14 @@ uniform vec4 gameLightDir3;
 uniform vec4 gameScriptedLightColor;
 
 uniform vec4 VSFlags;
+uniform vec4 WMFlags;
+
 #define isTLVertex VSFlags.x > 0.0
 #define blendMode VSFlags.y
 #define isFBTexture VSFlags.z > 0.0
+
+#define isApplySphericalWorld WMFlags.x > 0.0
+#define sphericaWorldRadiusScale  WMFlags.x
 
 #define gameLightingMode gameLightingFlags.x
 #define GAME_LIGHTING_PER_VERTEX 1
@@ -64,7 +69,12 @@ void main()
     }
     else
     {
-        pos = mul(mul(d3dViewport,mul(d3dProjection,worldView)), vec4(pos.xyz, 1.0));
+        v_position0 = mul(worldView, vec4(pos.xyz, 1.0));
+
+        if (isApplySphericalWorld) pos.xyz = ApplySphericalWorld(v_position0.xyz, sphericaWorldRadiusScale);
+        else pos = v_position0;
+
+        pos = mul(mul(d3dViewport, d3dProjection), vec4(pos.xyz, 1.0));
         v_normal0 = mul(normalMatrix, vec4(a_normal, 0.0)).xyz;
 
         // In this default shader, lighting is applied in gamma space so that it does better match the original lighting

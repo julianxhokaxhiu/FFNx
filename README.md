@@ -1,4 +1,4 @@
-![License](https://img.shields.io/github/license/julianxhokaxhiu/FFNx) ![Overall Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/total?label=Overall%20Downloads) ![Latest Stable Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/latest/total?label=Latest%20Stable%20Downloads&sort=semver) ![Latest Canary Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/canary/total?label=Latest%20Canary%20Downloads) [![Build Status](https://dev.azure.com/julianxhokaxhiu/Github/_apis/build/status/julianxhokaxhiu.FFNx?branchName=master)](https://dev.azure.com/julianxhokaxhiu/Github/_build/latest?definitionId=1&branchName=master)
+![License](https://img.shields.io/github/license/julianxhokaxhiu/FFNx) ![Overall Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/total?label=Overall%20Downloads) ![Latest Stable Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/latest/total?label=Latest%20Stable%20Downloads&sort=semver) ![Latest Canary Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/canary/total?label=Latest%20Canary%20Downloads) ![GitHub Actions Workflow Status](https://github.com/julianxhokaxhiu/FFNx/actions/workflows/main-1.18.1.yml/badge.svg?branch=master)
 
 <div align="center">
   <img src="https://github.com/julianxhokaxhiu/FFNx/blob/master/.logo/logo_nobg.png" alt="">
@@ -24,7 +24,6 @@ FFNx today in a nutshell:
   - DirectX 12
   - Vulkan
   - OpenGL
-  - DirectX 9 (Experimental: Not Recommended)
 
 ## The Team
 
@@ -82,13 +81,14 @@ We are always open for contributions via PRs, and in case you want to join the c
 
 #### FF8
 - Vibration support
+- Analog controls improved support
 - **Voice acting**! [Echo-S](https://www.tsunamods.com/echo-s-8/) was the first mod to take advantage of this!
 - Various graphical patches for worldmap included
 - Enable the VRAM debug window while playing in order to see how the engine uploads textures
 - Support for external SFX audio effects
 - Support for external movie audio files (allows multiple videos to share the same audio)
 - Support for external movie voice acting (dedicated audio layer only for voice acting on top of movies)
-- Support for external music audio
+- Support for external music audio with music resume after battle and improved volume transitions
 
 ### As a modder
 
@@ -157,6 +157,20 @@ Once the project is built you can find the output in this path: `.build/bin`
 0. Clone the [vcpkg](https://vcpkg.io) project in the root folder of your `C:` drive (`git clone https://github.com/Microsoft/vcpkg.git`)
 1. Go inside the `C:\vcpkg` folder and double click `bootstrap-vcpkg.bat`
 2. Open a `cmd` window in `C:\vcpkg` and run the following command: `vcpkg integrate install`
+
+### NuGet
+
+> **Please note:**
+>
+> This step will speed up your compilation times by avoiding the vcpkg dependencies rebuild.
+
+0. Make sure you have [NuGet CLI installed](https://learn.microsoft.com/en-us/nuget/install-nuget-client-tools?tabs=windows#install-nugetexe).
+1. [Create a Personal Access token ( classic )](https://github.com/settings/tokens/new) with the `write:packages` permission.
+2. Open a `cmd` window and run the following commands ( replace `YOUR_GITHUB_USERNAME` and `YOUR_GITHUB_PAT` accordingly ):
+```pwsh
+$ nuget sources add -Name github -Source "https://nuget.pkg.github.com/julianxhokaxhiu/index.json" -Username YOUR_GITHUB_USERNAME -Password YOUR_GITHUB_PAT -StorePasswordInClearText
+$ nuget setApiKey YOUR_GITHUB_PAT -Source "https://nuget.pkg.github.com/julianxhokaxhiu/index.json"
+```
 
 ### Visual Studio
 
@@ -276,7 +290,7 @@ These people are:
 - [LaZar00](https://github.com/LaZar00)
   - for the Snowboard TMD structures
 - [ChthonVII](https://github.com/ChthonVII)
-  - for the R&D needed to match modern display gamuts to the original PSX release 
+  - for the R&D needed to match modern display gamuts to the original PSX release
 
 I'm sure I forgot many others. In case you feel you're missing here, feel free to open a PR! I'll be happy to include you because you deserve this.
 

@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -31,6 +31,7 @@
 #include "../ff7/widescreen.h"
 
 #include "ff7/field/background.h"
+#include "ff7/world/renderer.h"
 
 uint32_t nodefer = false;
 
@@ -81,6 +82,8 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 	deferred_draws[defer].draw_call_type = DCT_DRAW;
 	if(enable_time_cycle)
 		deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+	if(enable_worldmap_external_mesh)
+		deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
 	gl_save_state(&deferred_draws[defer].state);
 
 	memcpy(deferred_draws[defer].indices, indices, sizeof(*indices) * count);
@@ -288,6 +291,78 @@ uint32_t gl_defer_zoom()
 	return true;
 }
 
+uint32_t gl_defer_world_external_mesh()
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_world_external_mesh");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_world_external_mesh: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_world_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].draw_call_type = DCT_WORLD_EXTERNAL_MESH;
+	deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+	deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_world_external_mesh: return true\n");
+
+	return true;
+}
+
+uint32_t gl_defer_cloud_external_mesh()
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].draw_call_type = DCT_CLOUD_EXTERNAL_MESH;
+	deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+	deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_cloud_external_mesh: return true\n");
+
+	return true;
+}
+
 uint32_t gl_defer_battle_depth_clear()
 {
 	if (ff8 || !enable_lighting)
@@ -323,7 +398,7 @@ uint32_t gl_defer_battle_depth_clear()
 }
 
 // re-order and save a draw call for later processing
-uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap)
+uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap, uint32_t force_defer)
 {
 	uint32_t tri;
 	uint32_t mode = getmode_cached()->driver_mode;
@@ -341,60 +416,63 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 		return false;
 	}
 
-	// output will not be consistent if depth testing is disabled, this call
-	// cannot be re-ordered
-	if(!current_state.depthtest)
+	if (!force_defer)
 	{
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: depthtest false\n");
-		return false;
-	}
-
-	// framebuffer textures should not be re-ordered
-	if(current_state.fb_texture)
-	{
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: fb_texture true\n");
-		return false;
-	}
-
-	if(current_state.blend_mode != BLEND_NONE)
-	{
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_NONE - blend_mode: %u\n", current_state.blend_mode);
-		if(current_state.blend_mode != BLEND_AVG)
+		// output will not be consistent if depth testing is disabled, this call
+		// cannot be re-ordered
+		if(!current_state.depthtest)
 		{
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
-			// be conservative with non-standard blending modes
-			if (mode != MODE_MENU && mode != MODE_BATTLE) {
-				if (trace_all) ffnx_trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
-				return false;
-			}
-		}
-	}
-	else
-	{
-		if (!current_state.texture_set)
-		{
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set false\n");
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: depthtest false\n");
 			return false;
+		}
+
+		// framebuffer textures should not be re-ordered
+		if(current_state.fb_texture)
+		{
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: fb_texture true\n");
+			return false;
+		}
+
+		if(current_state.blend_mode != BLEND_NONE)
+		{
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_NONE - blend_mode: %u\n", current_state.blend_mode);
+			if(current_state.blend_mode != BLEND_AVG)
+			{
+				if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
+				// be conservative with non-standard blending modes
+				if (mode != MODE_MENU && mode != MODE_BATTLE) {
+					if (trace_all) ffnx_trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
+					return false;
+				}
+			}
 		}
 		else
 		{
-			VOBJ(texture_set, texture_set, current_state.texture_set);
-			VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
-
-			if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set true for texture %s%d\n", VREF(tex_header, file.pc_name), VREF(tex_header, palette_index));
-
-			// texture format does not support alpha, re-order is not necessary
-			if (!VREF(texture_set, ogl.external) && VREF(tex_header, tex_format.alpha_bits) < 2) {
-				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture format does not support alpha, re-order is not necessary\n");
+			if (!current_state.texture_set)
+			{
+				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set false\n");
 				return false;
 			}
-		}
-	}
+			else
+			{
+				VOBJ(texture_set, texture_set, current_state.texture_set);
+				VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-	// quads are used for some GUI elements, we do not need to re-order these
-	if (primitivetype != RendererPrimitiveType::PT_TRIANGLES) {
-		if (trace_all) ffnx_trace("gl_defer_sorted_draw: primitivetype != TRIANGLES\n");
-		return false;
+				if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture_set true for texture %s%d\n", VREF(tex_header, file.pc_name), VREF(tex_header, palette_index));
+
+				// texture format does not support alpha, re-order is not necessary
+				if (!VREF(texture_set, ogl.external) && VREF(tex_header, tex_format.alpha_bits) < 2) {
+					if (trace_all) ffnx_trace("gl_defer_sorted_draw: texture format does not support alpha, re-order is not necessary\n");
+					return false;
+				}
+			}
+		}
+
+		// quads are used for some GUI elements, we do not need to re-order these
+		if (primitivetype != RendererPrimitiveType::PT_TRIANGLES) {
+			if (trace_all) ffnx_trace("gl_defer_sorted_draw: primitivetype != TRIANGLES\n");
+			return false;
+		}
 	}
 
 	if(num_sorted_deferred + count / 3 > DEFERRED_MAX)
@@ -453,6 +531,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 		deferred_sorted_draws[defer].z = z;
 		if(enable_time_cycle)
 				deferred_sorted_draws[defer].deferred_draw.is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+		deferred_sorted_draws[defer].deferred_draw.is_fog_enabled = false;
 
 		for(tri = 0; tri < count / 3 && vert_index < tri_num * 3; tri++)
 		{
@@ -504,6 +583,12 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 
 	for (int i = 0; i < num_deferred; ++i)
 	{
+		if(enable_time_cycle)
+			newRenderer.setTimeFilterEnabled(deferred_draws[i].is_time_filter_enabled);
+
+		if(enable_worldmap_external_mesh)
+			newRenderer.setFogEnabled(deferred_draws[i].is_fog_enabled);
+
 		if(deferred_draws[i].draw_call_type == DCT_CLEAR)
 		{
 			common_clear(deferred_draws[i].clear_color, deferred_draws[i].clear_depth, true, deferred_draws[i].game_object);
@@ -528,6 +613,16 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 			ff7::battle::battle_depth_clear();
 			continue;
 		}
+		else if(deferred_draws[i].draw_call_type == DCT_WORLD_EXTERNAL_MESH)
+		{
+			ff7::world::worldRenderer.drawWorldMapExternalMesh();
+			continue;
+		}
+		else if(deferred_draws[i].draw_call_type == DCT_CLOUD_EXTERNAL_MESH)
+		{
+			ff7::world::worldRenderer.drawCloudsAndMeteorExternalMesh(*ff7_externals.is_meteor_flag_on_E2AAE4);
+			continue;
+		}
 
 		if (deferred_draws[i].vertices == nullptr)
 		{
@@ -544,9 +639,6 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 		}
 
 		gl_load_state(&deferred_draws[i].state);
-
-		if(enable_time_cycle)
-			newRenderer.setTimeFilterEnabled(deferred_draws[i].is_time_filter_enabled);
 
 		gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
 			deferred_draws[i].vertextype,

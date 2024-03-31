@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -32,6 +32,8 @@
 #include "lighting.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
+#include "ff7/world/world.h"
+#include "ff7/world/camera.h"
 #include "cfg.h"
 #include "image/image.h"
 #include <windows.h>
@@ -139,6 +141,14 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) ffnx_trace("%s: FSTexFlags XYZW(isNmlTextureLoaded %f, isPbrTextureLoaded %f, isIblTextureLoaded %f, NULL)\n", __func__, internalState.FSTexFlags[0], internalState.FSTexFlags[1], internalState.FSTexFlags[2]);
 
+    internalState.WMFlags = {
+        (float)internalState.sphericalWorldRate,
+        (float)internalState.bIsFogEnabled,
+        NULL,
+        NULL
+    };
+    if (uniform_log) ffnx_trace("%s: VSFlags XYZW(isTLVertex %f, blendMode %f, isFBTexture %f, isTexture %f)\n", __func__, internalState.VSFlags[0], internalState.VSFlags[1], internalState.VSFlags[2], internalState.VSFlags[3]);
+
     internalState.FSMovieFlags = {
         (float)internalState.bIsMovieColorMatrix,
         (float)internalState.bIsMovieColorGamut,
@@ -154,51 +164,52 @@ void Renderer::setCommonUniforms()
         NULL,
     };
 
-    setUniform("VSFlags", bgfx::UniformType::Vec4, internalState.VSFlags.data());
-    setUniform("FSAlphaFlags", bgfx::UniformType::Vec4, internalState.FSAlphaFlags.data());
-    setUniform("FSMiscFlags", bgfx::UniformType::Vec4, internalState.FSMiscFlags.data());
-    setUniform("FSHDRFlags", bgfx::UniformType::Vec4, internalState.FSHDRFlags.data());
-    setUniform("FSTexFlags", bgfx::UniformType::Vec4, internalState.FSTexFlags.data());
-    setUniform("FSMovieFlags", bgfx::UniformType::Vec4, internalState.FSMovieFlags.data());
-    setUniform("TimeColor", bgfx::UniformType::Vec4, internalState.TimeColor.data());
-    setUniform("TimeData", bgfx::UniformType::Vec4, internalState.TimeData.data());
+    setUniform(RendererUniform::VS_FLAGS,  internalState.VSFlags.data());
+    setUniform(RendererUniform::FS_ALPHA_FLAGS, internalState.FSAlphaFlags.data());
+    setUniform(RendererUniform::FS_MISC_FLAGS, internalState.FSMiscFlags.data());
+    setUniform(RendererUniform::FS_HDR_FLAGS, internalState.FSHDRFlags.data());
+    setUniform(RendererUniform::FS_TEX_FLAGS, internalState.FSTexFlags.data());
+    setUniform(RendererUniform::FS_MOVIE_FLAGS, internalState.FSMovieFlags.data());
+    setUniform(RendererUniform::WM_FLAGS, internalState.WMFlags.data());
+    setUniform(RendererUniform::TIME_COLOR, internalState.TimeColor.data());
+    setUniform(RendererUniform::TIME_DATA, internalState.TimeData.data());
 
-    setUniform("d3dViewport", bgfx::UniformType::Mat4, internalState.d3dViewMatrix);
-    setUniform("d3dProjection", bgfx::UniformType::Mat4, internalState.d3dProjectionMatrix);
-    setUniform("worldView", bgfx::UniformType::Mat4, internalState.worldViewMatrix);
-    setUniform("normalMatrix", bgfx::UniformType::Mat4, internalState.normalMatrix);
-    setUniform("viewMatrix", bgfx::UniformType::Mat4, internalState.viewMatrix);
-    setUniform("invViewMatrix", bgfx::UniformType::Mat4, internalState.invViewMatrix);
+    setUniform(RendererUniform::D3D_VIEWPORT, internalState.d3dViewMatrix);
+    setUniform(RendererUniform::D3D_PROJECTION, internalState.d3dProjectionMatrix);
+    setUniform(RendererUniform::WORLD_VIEW, internalState.worldViewMatrix);
+    setUniform(RendererUniform::NORMAL_MATRIX, internalState.normalMatrix);
+    setUniform(RendererUniform::VIEW_MATRIX, internalState.viewMatrix);
+    setUniform(RendererUniform::INV_VIEW_MATRIX, internalState.invViewMatrix);
 
-    setUniform("gameLightingFlags", bgfx::UniformType::Vec4, internalState.gameLightingFlags.data());
-    setUniform("gameGlobalLightColor", bgfx::UniformType::Vec4, internalState.gameGlobalLightColor);
-    setUniform("gameLightColor1", bgfx::UniformType::Vec4, internalState.gameLightColor1);
-    setUniform("gameLightColor2", bgfx::UniformType::Vec4, internalState.gameLightColor2);
-    setUniform("gameLightColor3", bgfx::UniformType::Vec4, internalState.gameLightColor3);
-    setUniform("gameLightDir1", bgfx::UniformType::Vec4, internalState.gameLightDir1);
-    setUniform("gameLightDir2", bgfx::UniformType::Vec4, internalState.gameLightDir2);
-    setUniform("gameLightDir3", bgfx::UniformType::Vec4, internalState.gameLightDir3);
-    setUniform("gameScriptedLightColor", bgfx::UniformType::Vec4, internalState.gameScriptedLightColor);
+    setUniform(RendererUniform::GAME_LIGHTING_FLAGS,  internalState.gameLightingFlags.data());
+    setUniform(RendererUniform::GAME_GLOBAL_LIGHT_COLOR, internalState.gameGlobalLightColor);
+    setUniform(RendererUniform::GAME_LIGHT_COLOR1, internalState.gameLightColor1);
+    setUniform(RendererUniform::GAME_LIGHT_COLOR2, internalState.gameLightColor2);
+    setUniform(RendererUniform::GAME_LIGHT_COLOR3, internalState.gameLightColor3);
+    setUniform(RendererUniform::GAME_LIGHT_DIR1, internalState.gameLightDir1);
+    setUniform(RendererUniform::GAME_LIGHT_DIR2, internalState.gameLightDir2);
+    setUniform(RendererUniform::GAME_LIGHT_DIR3, internalState.gameLightDir3);
+    setUniform(RendererUniform::GAME_SCRIPTED_LIGHT_COLOR, internalState.gameScriptedLightColor);
 }
 
 void Renderer::setLightingUniforms()
 {
     auto lightingState = lighting.getLightingState();
 
-    setUniform("lightingSettings", bgfx::UniformType::Vec4, lightingState.lightingSettings);
-    setUniform("lightDirData", bgfx::UniformType::Vec4, lightingState.lightDirData);
-    setUniform("lightData", bgfx::UniformType::Vec4, lightingState.lightData);
-    setUniform("ambientLightData", bgfx::UniformType::Vec4, lightingState.ambientLightData);
-    setUniform("shadowData", bgfx::UniformType::Vec4, lightingState.shadowData);
-    setUniform("fieldShadowData", bgfx::UniformType::Vec4, lightingState.fieldShadowData);
-    setUniform("materialData", bgfx::UniformType::Vec4, lightingState.materialData);
-    setUniform("materialScaleData", bgfx::UniformType::Vec4, lightingState.materialScaleData);
-    setUniform("lightingDebugData", bgfx::UniformType::Vec4, lightingState.lightingDebugData);
-    setUniform("iblData", bgfx::UniformType::Vec4, lightingState.iblData);
+    setUniform(RendererUniform::LIGHTING_SETTINGS, lightingState.lightingSettings);
+    setUniform(RendererUniform::LIGHT_DIR_DATA, lightingState.lightDirData);
+    setUniform(RendererUniform::LIGHT_DATA, lightingState.lightData);
+    setUniform(RendererUniform::AMBIENT_LIGHT_DATA, lightingState.ambientLightData);
+    setUniform(RendererUniform::SHADOW_DATA, lightingState.shadowData);
+    setUniform(RendererUniform::FIELD_SHADOW_DATA, lightingState.fieldShadowData);
+    setUniform(RendererUniform::MATERIAL_DATA, lightingState.materialData);
+    setUniform(RendererUniform::MATERIAL_SCALE_DATA, lightingState.materialScaleData);
+    setUniform(RendererUniform::LIGHTING_DEBUG_DATA, lightingState.lightingDebugData);
+    setUniform(RendererUniform::IBL_DATA, lightingState.iblData);
 
-    setUniform("lightViewProjMatrix", bgfx::UniformType::Mat4, lightingState.lightViewProjMatrix);
-    setUniform("lightViewProjTexMatrix", bgfx::UniformType::Mat4, lightingState.lightViewProjTexMatrix);
-    setUniform("lightInvViewProjTexMatrix", bgfx::UniformType::Mat4, lightingState.lightInvViewProjTexMatrix);
+    setUniform(RendererUniform::LIGHT_VIEW_PROJ_MATRIX, lightingState.lightViewProjMatrix);
+    setUniform(RendererUniform::LIGHT_VIEW_PROJ_TEX_MATRIX, lightingState.lightViewProjTexMatrix);
+    setUniform(RendererUniform::LIGHT_INV_VIEW_PROJ_TEX_MATRIX, lightingState.lightInvViewProjTexMatrix);
 }
 
 bgfx::RendererType::Enum Renderer::getUserChosenRenderer() {
@@ -211,9 +222,6 @@ bgfx::RendererType::Enum Renderer::getUserChosenRenderer() {
         break;
     case RENDERER_BACKEND_OPENGL:
         ret = bgfx::RendererType::OpenGL;
-        break;
-    case RENDERER_BACKEND_DIRECT3D9:
-        ret = bgfx::RendererType::Direct3D9;
         break;
     case RENDERER_BACKEND_DIRECT3D11:
         ret = bgfx::RendererType::Direct3D11;
@@ -241,10 +249,6 @@ void Renderer::updateRendererShaderPaths()
     case bgfx::RendererType::OpenGL:
         currentRenderer = "OpenGL";
         shaderSuffix = ".gl";
-        break;
-    case bgfx::RendererType::Direct3D9:
-        currentRenderer = "Direct3D9";
-        shaderSuffix = ".d3d9";
         break;
     case bgfx::RendererType::Direct3D11:
         currentRenderer = "Direct3D11";
@@ -316,27 +320,16 @@ bgfx::ShaderHandle Renderer::getShader(const char* filePath)
     return handle;
 }
 
-bgfx::UniformHandle Renderer::getUniform(std::string uniformName, bgfx::UniformType::Enum uniformType)
+bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType)
 {
     bgfx::UniformHandle handle;
-    auto ret = bgfxUniformHandles.find(uniformName);
-
-    if (ret != bgfxUniformHandles.end())
-    {
-        handle = { (uint16_t)ret->second };
-    }
-    else
-    {
-        handle = bgfx::createUniform(uniformName.c_str(), uniformType);
-        bgfxUniformHandles[uniformName] = handle.idx;
-    }
-
+    handle = bgfx::createUniform(uniformName.c_str(), uniformType);
     return handle;
 }
 
-bgfx::UniformHandle Renderer::setUniform(const char* uniformName, bgfx::UniformType::Enum uniformType, const void* uniformValue)
+bgfx::UniformHandle Renderer::setUniform(RendererUniform uniform, const void* uniformValue)
 {
-    bgfx::UniformHandle handle = getUniform(std::string(uniformName), uniformType);
+    bgfx::UniformHandle handle = bgfxUniformHandles[uniform];
 
     if (bgfx::isValid(handle))
     {
@@ -348,15 +341,11 @@ bgfx::UniformHandle Renderer::setUniform(const char* uniformName, bgfx::UniformT
 
 void Renderer::destroyUniforms()
 {
-    for (const auto& item : bgfxUniformHandles)
+    for (const auto& handle : bgfxUniformHandles)
     {
-        bgfx::UniformHandle handle = { item.second };
-
         if (bgfx::isValid(handle))
             bgfx::destroy(handle);
     }
-
-    bgfxUniformHandles.clear();
 }
 
 void Renderer::destroyAll()
@@ -413,6 +402,10 @@ void Renderer::resetState()
     setGamutOverride();
     setGammaType();
     setGameLightData();
+
+    doMirrorTextureWrap();
+    setSphericalWorldRate();
+    setFogEnabled();
 
     resetViewMatrixFlag();
 };
@@ -708,6 +701,8 @@ void Renderer::bindTextures()
                         }
                         else
                         {
+                            if (internalState.bDoMirrorTextureWrap) flags |= BGFX_SAMPLER_U_MIRROR | BGFX_SAMPLER_V_MIRROR | BGFX_SAMPLER_W_CLAMP;
+
                             if (internalState.bIsMovie) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
                             if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
@@ -726,7 +721,7 @@ void Renderer::bindTextures()
 
                 if (flags == 0) flags = UINT32_MAX;
 
-                bgfx::setTexture(idx, getUniform("tex_" + std::to_string(idx), bgfx::UniformType::Sampler), handle, flags);
+                bgfx::setTexture(idx, bgfxTexUniformHandles[idx], handle, flags);
             }
         }
 
@@ -1035,6 +1030,55 @@ void Renderer::init()
         overlay.init(backendProgramHandles[RendererProgram::OVERLAY], window_size_x, window_size_y);
     }
 
+    bgfxUniformHandles[RendererUniform::VS_FLAGS] = createUniform("VSFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::FS_ALPHA_FLAGS] = createUniform("FSAlphaFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::FS_MISC_FLAGS] = createUniform("FSMiscFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::FS_HDR_FLAGS] = createUniform("FSHDRFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::FS_TEX_FLAGS] = createUniform("FSTexFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::FS_MOVIE_FLAGS] = createUniform("FSMovieFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::WM_FLAGS] = createUniform("WMFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::TIME_COLOR] = createUniform("TimeColor", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::TIME_DATA] = createUniform("TimeData", bgfx::UniformType::Vec4);
+
+    bgfxUniformHandles[RendererUniform::D3D_VIEWPORT] = createUniform("d3dViewport", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::D3D_PROJECTION] = createUniform("d3dProjection", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::WORLD_VIEW] = createUniform("worldView", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::NORMAL_MATRIX] = createUniform("normalMatrix", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::VIEW_MATRIX] = createUniform("viewMatrix", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::INV_VIEW_MATRIX] = createUniform("invViewMatrix", bgfx::UniformType::Mat4);
+
+    bgfxUniformHandles[RendererUniform::LIGHTING_SETTINGS] = createUniform("lightingSettings", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::LIGHT_DIR_DATA] = createUniform("lightDirData", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::LIGHT_DATA] = createUniform("lightData", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::AMBIENT_LIGHT_DATA] = createUniform("ambientLightData", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::SHADOW_DATA] = createUniform("shadowData", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::FIELD_SHADOW_DATA] = createUniform("fieldShadowData", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::MATERIAL_DATA] = createUniform("materialData", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::MATERIAL_SCALE_DATA] = createUniform("materialScaleData", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::LIGHTING_DEBUG_DATA] = createUniform("lightingDebugData", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::IBL_DATA] = createUniform("iblData", bgfx::UniformType::Vec4);
+
+    bgfxUniformHandles[RendererUniform::LIGHT_VIEW_PROJ_MATRIX] = createUniform("lightViewProjMatrix", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::LIGHT_VIEW_PROJ_TEX_MATRIX] = createUniform("lightViewProjTexMatrix", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::LIGHT_INV_VIEW_PROJ_TEX_MATRIX] = createUniform("lightInvViewProjTexMatrix", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::VIEW_OFFSET_MATRIX] = createUniform("viewOffsetMatrix", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::INV_VIEW_OFFSET_MATRIX] = createUniform("invViewOffsetMatrix", bgfx::UniformType::Mat4);
+
+    bgfxUniformHandles[RendererUniform::GAME_LIGHTING_FLAGS] = createUniform("gameLightingFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::GAME_GLOBAL_LIGHT_COLOR] = createUniform("gameGlobalLightColor", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::GAME_LIGHT_COLOR1] = createUniform("gameLightColor1", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::GAME_LIGHT_COLOR2] = createUniform("gameLightColor2", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::GAME_LIGHT_COLOR3] = createUniform("gameLightColor3", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR1] = createUniform("gameLightDir1", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR2] = createUniform("gameLightDir2", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR3] = createUniform("gameLightDir3", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::GAME_SCRIPTED_LIGHT_COLOR] = createUniform("gameScriptedLightColor", bgfx::UniformType::Vec4);
+
+    for(int i = 0; i < RendererTextureSlot::COUNT; ++i)
+    {
+        bgfxTexUniformHandles[i] = createUniform("tex_" + std::to_string(i), bgfx::UniformType::Sampler);
+    }
+
     // Set defaults
     show();
 };
@@ -1272,7 +1316,7 @@ void Renderer::clearShadowMap()
     bgfx::touch(0);
 }
 
-void Renderer::drawToShadowMap()
+void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlreadyAttached)
 {
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
@@ -1290,11 +1334,17 @@ void Renderer::drawToShadowMap()
     bgfx::setViewTransform(0, lightingState.lightViewMatrix, lightingState.lightProjMatrix);
 
     // Set uniforms
-    setLightingUniforms();
-    setCommonUniforms();
+    if(!uniformsAlreadyAttached)
+    {
+        setLightingUniforms();
+        setCommonUniforms();
+    }
 
     // Bind textures in pipeline
-    bindTextures();
+    if (!texturesAlreadyAttached)
+    {
+        bindTextures();
+    }
 
     // Set state
     internalState.state = BGFX_STATE_DEPTH_TEST_LEQUAL | BGFX_STATE_WRITE_Z;
@@ -1313,39 +1363,36 @@ void Renderer::drawToShadowMap()
     bgfx::submit(0, backendProgramHandles[RendererProgram::SHADOW_MAP], 0, BGFX_DISCARD_NONE);
 };
 
-void Renderer::drawWithLighting(bool isCastShadow)
+void Renderer::drawWithLighting(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, bool keepBindings)
 {
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
-
-    // Draw to shadowmap
-    if (isCastShadow) newRenderer.drawToShadowMap();
 
     // Set lighting program
     backendProgram = backendProgram == SMOOTH ? LIGHTING_SMOOTH : LIGHTING_FLAT;
 
     // Re-Bind shadow map with comparison sampler
-    bgfx::setTexture(RendererTextureSlot::TEX_S, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_S), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+    bgfx::setTexture(RendererTextureSlot::TEX_S, bgfxTexUniformHandles[RendererTextureSlot::TEX_S], bgfx::getTexture(shadowMapFrameBuffer));
 
     // Bind specular IBL cubemap
     if (bgfx::isValid(specularIblTexture))
     {
-        bgfx::setTexture(RendererTextureSlot::TEX_IBL_SPEC, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_IBL_SPEC), bgfx::UniformType::Sampler), specularIblTexture);
+        bgfx::setTexture(RendererTextureSlot::TEX_IBL_SPEC, bgfxTexUniformHandles[RendererTextureSlot::TEX_IBL_SPEC], specularIblTexture);
     }
 
     // Bind diffuse IBL cubemap
     if (bgfx::isValid(diffuseIblTexture))
     {
-        bgfx::setTexture(RendererTextureSlot::TEX_IBL_DIFF, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_IBL_DIFF), bgfx::UniformType::Sampler), diffuseIblTexture);
+        bgfx::setTexture(RendererTextureSlot::TEX_IBL_DIFF, bgfxTexUniformHandles[RendererTextureSlot::TEX_IBL_DIFF], diffuseIblTexture);
     }
 
     // Bind environment BRDF texture
     if (bgfx::isValid(envBrdfTexture))
     {
-        bgfx::setTexture(RendererTextureSlot::TEX_BRDF, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_BRDF), bgfx::UniformType::Sampler), envBrdfTexture, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+        bgfx::setTexture(RendererTextureSlot::TEX_BRDF, bgfxTexUniformHandles[RendererTextureSlot::TEX_BRDF], envBrdfTexture, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     }
 
     // Draw with lighting
-    draw(isCastShadow);
+    draw(uniformsAlreadyAttached, texturesAlreadyAttached, keepBindings);
 }
 
 void Renderer::drawFieldShadow()
@@ -1353,15 +1400,15 @@ void Renderer::drawFieldShadow()
     backendProgram = RendererProgram::FIELD_SHADOW;
 
     // Re-Bind shadow map with comparison sampler
-    bgfx::setTexture(RendererTextureSlot::TEX_S, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_S), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer));
+    bgfx::setTexture(RendererTextureSlot::TEX_S, bgfxTexUniformHandles[RendererTextureSlot::TEX_S], bgfx::getTexture(shadowMapFrameBuffer));
 
     // Re-Bind shadow map for direct depth sampling
-    bgfx::setTexture(RendererTextureSlot::TEX_D, getUniform("tex_" + std::to_string(RendererTextureSlot::TEX_D), bgfx::UniformType::Sampler), bgfx::getTexture(shadowMapFrameBuffer), BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP);
+    bgfx::setTexture(RendererTextureSlot::TEX_D, bgfxTexUniformHandles[RendererTextureSlot::TEX_D], bgfx::getTexture(shadowMapFrameBuffer), BGFX_TEXTURE_RT | BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP);
 
     draw();
 }
 
-void Renderer::draw(bool uniformsAlreadyAttached)
+void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, bool keepBindings)
 {
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
@@ -1386,7 +1433,6 @@ void Renderer::draw(bool uniformsAlreadyAttached)
         bgfx::setViewTransform(backendViewId, NULL, internalState.backendProjMatrix);
     }
 
-
     // Skip uniform attachment as it has been done already
     if (!uniformsAlreadyAttached)
     {
@@ -1398,7 +1444,10 @@ void Renderer::draw(bool uniformsAlreadyAttached)
     AssignGamutLUT();
 
     // Bind textures in pipeline
-    bindTextures();
+    if (!texturesAlreadyAttached)
+    {
+        bindTextures();
+    }
 
     // Set state
     {
@@ -1451,11 +1500,17 @@ void Renderer::draw(bool uniformsAlreadyAttached)
     }
     bgfx::setState(internalState.state);
 
-    bgfx::submit(backendViewId, backendProgramHandles[backendProgram]);
+    auto flags = keepBindings ? BGFX_DISCARD_STATE : BGFX_DISCARD_ALL;
+    bgfx::submit(backendViewId, backendProgramHandles[backendProgram], 0, flags);
 
     internalState.bHasDrawBeenDone = true;
     internalState.bTexturesBound = false;
 };
+
+void Renderer::discardAllBindings()
+{
+    bgfx::discard(BGFX_DISCARD_ALL);
+}
 
 void Renderer::drawOverlay()
 {
@@ -1608,6 +1663,11 @@ const bgfx::Stats* Renderer::getStats()
     return bgfx::getStats();
 }
 
+const bgfx::VertexLayout& Renderer::GetVertexLayout()
+{
+    return vertexLayout;
+}
+
 void Renderer::bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normals, uint32_t inCount)
 {
     if (!bgfx::isValid(vertexBufferHandle)) vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, vertexLayout, BGFX_BUFFER_ALLOW_RESIZE);
@@ -1755,7 +1815,7 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
     internalState.clearColorValue = createBGRA(r * 255, g * 255, b * 255, a * 255);
 }
 
-uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb)
+uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb, bool copyData)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
@@ -1775,7 +1835,16 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
     if (doesItFitInMemory(texInfo.storageSize) && (data != NULL))
     {
-        const bgfx::Memory* mem = bgfx::copy(data, texInfo.storageSize);
+        const bgfx::Memory* mem;
+
+        if (copyData)
+        {
+            mem = bgfx::copy(data, texInfo.storageSize);
+        }
+        else
+        {
+            mem = bgfx::makeRef(data, texInfo.storageSize, RendererReleaseData, (void *)data);
+        }
 
         uint64_t flags = BGFX_SAMPLER_NONE;
 
@@ -1965,7 +2034,7 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
     *width = mip.m_width;
     *height = mip.m_height;
 
-    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
+    if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, *width, *height, filename);
 
     return ret.idx;
 }
@@ -2210,6 +2279,11 @@ void Renderer::doTextureFiltering(bool flag)
     internalState.bDoTextureFiltering = flag;
 };
 
+void Renderer::doMirrorTextureWrap(bool flag)
+{
+    internalState.bDoMirrorTextureWrap = flag;
+}
+
 void Renderer::isExternalTexture(bool flag)
 {
     internalState.bIsExternalTexture = flag;
@@ -2316,35 +2390,53 @@ float* Renderer::getViewMatrix()
     return internalState.viewMatrix;
 }
 
- bool Renderer::isViewMatrixSet()
- {
+float* Renderer::getInvViewMatrix()
+{
+    return internalState.invViewMatrix;
+}
+
+bool Renderer::isViewMatrixSet()
+{
     return internalState.isViewMatrixSet;
- }
+}
 
 void Renderer::resetViewMatrixFlag()
 {
     internalState.isViewMatrixSet = false;
 }
 
-void Renderer::setWorldViewMatrix(struct matrix *matrix)
+void Renderer::setWorldViewMatrix(struct matrix *matrix, bool calculateNormalMatrix)
 {
     ::memcpy(internalState.worldViewMatrix, &matrix->m[0][0], sizeof(matrix->m));
 
     if (uniform_log) printMatrix(__func__, internalState.worldViewMatrix);
 
-    struct matrix transpose;
-    transpose_matrix(matrix, &transpose);
-    struct matrix invTranspose;
-    inverse_matrix(&transpose, &invTranspose);
-    invTranspose._41 = 0.0;
-    invTranspose._42 = 0.0;
-    invTranspose._43 = 0.0;
-    invTranspose._44 = 1.0;
+    if(calculateNormalMatrix)
+    {
+        struct matrix transpose;
+        transpose_matrix(matrix, &transpose);
+        struct matrix invTranspose;
+        inverse_matrix(&transpose, &invTranspose);
+        invTranspose._41 = 0.0;
+        invTranspose._42 = 0.0;
+        invTranspose._43 = 0.0;
+        invTranspose._44 = 1.0;
 
-    ::memcpy(internalState.normalMatrix, &invTranspose.m[0][0], sizeof(invTranspose.m));
+        ::memcpy(internalState.normalMatrix, &invTranspose.m[0][0], sizeof(invTranspose.m));
 
-    if (uniform_log) printMatrix(__func__, internalState.normalMatrix);
-};
+        if (uniform_log) printMatrix(__func__, internalState.normalMatrix);
+    }
+}
+
+float* Renderer::getWorldViewMatrix()
+{
+    return internalState.worldViewMatrix;
+}
+
+float* Renderer::getNormalMatrix()
+{
+    return internalState.normalMatrix;
+}
 
 void Renderer::setD3DViweport(struct matrix* matrix)
 {
@@ -2363,6 +2455,26 @@ void Renderer::setD3DProjection(struct matrix* matrix)
         float widescreenScale = round(float(game_width) / wide_viewport_width * 100) / 100.f;
         internalState.d3dProjectionMatrix[0] *= widescreenScale;
         internalState.d3dProjectionMatrix[8] *= widescreenScale;
+    }
+
+    // Modify the projection matrix to extend view distance
+    if (enable_worldmap_external_mesh)
+    {
+        struct game_mode* mode = getmode_cached();
+        if(mode->driver_mode == MODE_WORLDMAP)
+        {
+            const float f_offset = 0.0035f;
+            const float n_offset = 0.0f;
+
+            float a = internalState.d3dProjectionMatrix[10];
+            float b = internalState.d3dProjectionMatrix[11];
+
+            float f = b / (a + 1.0f) + f_offset;
+            float n = b / (a - 1.0f) + n_offset;
+
+            internalState.d3dProjectionMatrix[10] = -(f + n) / (f -n);
+            internalState.d3dProjectionMatrix[11] = -(2*f*n) / (f - n);
+        }
     }
 
     if (uniform_log) printMatrix(__func__, internalState.d3dProjectionMatrix);
@@ -2408,16 +2520,37 @@ bool Renderer::isTimeFilterEnabled()
     return static_cast<bool>(internalState.TimeData[1]);
 }
 
+void Renderer::setSphericalWorldRate(float value)
+{
+    internalState.sphericalWorldRate = value;
+}
+
+void Renderer::setFogEnabled(bool flag)
+{
+    internalState.bIsFogEnabled = flag;
+}
+
+bool Renderer::isFogEnabled()
+{
+    return internalState.bIsFogEnabled;
+}
+
 void Renderer::setGameLightData(light_data* lightdata)
 {
     struct game_mode* mode = getmode_cached();
 
-    if (lightdata != nullptr)
+    bool useGameLighting = lightdata != nullptr;
+    if (enable_worldmap_external_mesh && mode->driver_mode == MODE_WORLDMAP)
+    {
+        useGameLighting = false;
+    }
+
+    if (useGameLighting)
     {
         internalState.gameGlobalLightColor[0] = lightdata->global_light_color.r;
         internalState.gameGlobalLightColor[1] = lightdata->global_light_color.g;
         internalState.gameGlobalLightColor[2] = lightdata->global_light_color.b;
-        internalState.gameGlobalLightColor[3] = enable_lighting ? 3.0f : 1.15f;
+        internalState.gameGlobalLightColor[3] = enable_lighting ? 2.5f : 1.0f;
 
         internalState.gameLightColor1[0] = lightdata->light_color_1.r;
         internalState.gameLightColor1[1] = lightdata->light_color_1.g;

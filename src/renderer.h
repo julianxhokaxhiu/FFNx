@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
 //    This file is part of FFNx                                             //
@@ -94,6 +94,52 @@ enum RendererTextureType
     YUV
 };
 
+enum RendererUniform
+{
+    VS_FLAGS = 0,
+    FS_ALPHA_FLAGS,
+    FS_MISC_FLAGS,
+    FS_HDR_FLAGS,
+    FS_TEX_FLAGS,
+    FS_MOVIE_FLAGS,
+    WM_FLAGS,
+    TIME_COLOR,
+    TIME_DATA,
+    D3D_VIEWPORT,
+    D3D_PROJECTION,
+    WORLD_VIEW,
+    NORMAL_MATRIX,
+    VIEW_MATRIX,
+    INV_VIEW_MATRIX,
+    GAME_LIGHTING_FLAGS,
+    GAME_GLOBAL_LIGHT_COLOR,
+    GAME_LIGHT_COLOR1,
+    GAME_LIGHT_COLOR2,
+    GAME_LIGHT_COLOR3,
+    GAME_LIGHT_DIR1,
+    GAME_LIGHT_DIR2,
+    GAME_LIGHT_DIR3,
+    GAME_SCRIPTED_LIGHT_COLOR,
+
+    LIGHTING_SETTINGS,
+    LIGHT_DIR_DATA,
+    LIGHT_DATA,
+    AMBIENT_LIGHT_DATA,
+    SHADOW_DATA,
+    FIELD_SHADOW_DATA,
+    MATERIAL_DATA,
+    MATERIAL_SCALE_DATA,
+    LIGHTING_DEBUG_DATA,
+    IBL_DATA,
+    LIGHT_VIEW_PROJ_MATRIX,
+    LIGHT_VIEW_PROJ_TEX_MATRIX,
+    LIGHT_INV_VIEW_PROJ_TEX_MATRIX,
+    VIEW_OFFSET_MATRIX,
+    INV_VIEW_OFFSET_MATRIX,
+
+    COUNT,
+};
+
 enum ColorMatrixType{
     COLORMATRIX_BT601 = 0,
     COLORMATRIX_BT709 = 1,
@@ -176,8 +222,25 @@ struct RendererCallbacks : public bgfx::CallbackI {
     virtual void captureFrame(const void* _data, uint32_t _size) override {};
 };
 
+// Vertex data structure
+struct Vertex
+{
+    float x;
+    float y;
+    float z;
+    float w;
+    uint32_t bgra;
+    float u;
+    float v;
+    float nx;
+    float ny;
+    float nz;
+};
+
 class Renderer {
 private:
+    friend class Lighting;
+
     // Current renderer view
     enum RendererProgram {
         FLAT = 0,
@@ -190,21 +253,6 @@ private:
         OVERLAY,
         BLIT,
         COUNT
-    };
-
-    // Vertex data structure
-    struct Vertex
-    {
-        float x;
-        float y;
-        float z;
-        float w;
-        uint32_t bgra;
-        float u;
-        float v;
-        float nx;
-        float ny;
-        float nz;
     };
 
     struct RendererState
@@ -226,12 +274,14 @@ private:
         bool bIsFBTexture = false;
         bool bIsTexture = false;
         bool bDoTextureFiltering = false;
+        bool bDoMirrorTextureWrap = false;
         bool bModulateAlpha = false;
         bool bIsMovie = false;
         bool bIsMovieFullRange = false;
         bool bIsMovieYUV = false;
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
+        bool bIsFogEnabled = false;
         ColorMatrixType bIsMovieColorMatrix = COLORMATRIX_BT601;
         ColorGamutType bIsMovieColorGamut = COLORGAMUT_SRGB;
         ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
@@ -246,6 +296,7 @@ private:
         std::vector<float> FSMiscFlags;
         std::vector<float> FSHDRFlags;
         std::vector<float> FSTexFlags;
+        std::vector<float> WMFlags;
         std::vector<float> FSMovieFlags;
 
         std::array<float, 4> TimeColor;
@@ -267,6 +318,8 @@ private:
         float invViewMatrix[16];
         float worldViewMatrix[16];
         float normalMatrix[16];
+
+        float sphericalWorldRate = 0.0f;
 
         uint32_t clearColorValue;
 
@@ -333,7 +386,8 @@ private:
 
     bgfx::VertexLayout vertexLayout;
 
-    std::map<std::string,uint16_t> bgfxUniformHandles;
+    std::array<bgfx::UniformHandle, RendererUniform::COUNT> bgfxUniformHandles;
+    std::array<bgfx::UniformHandle, RendererTextureSlot::COUNT> bgfxTexUniformHandles;
 
     RendererState internalState;
 
@@ -356,14 +410,12 @@ private:
     uint16_t scalingFactor = 0;
 
     uint32_t createBGRA(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-    void setCommonUniforms();
-    void setLightingUniforms();
     bgfx::RendererType::Enum getUserChosenRenderer();
     void updateRendererShaderPaths();
     bgfx::ShaderHandle getShader(const char* filePath);
 
-    bgfx::UniformHandle getUniform(std::string uniformName, bgfx::UniformType::Enum uniformType);
-    bgfx::UniformHandle setUniform(const char* uniformName, bgfx::UniformType::Enum uniformType, const void* uniformValue);
+    bgfx::UniformHandle createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType);
+
     void destroyUniforms();
     void destroyAll();
 
@@ -377,7 +429,6 @@ private:
     void calcBackendProjMatrix();
     void prepareFramebuffer();
 
-    void bindTextures();
     void AssignGamutLUT();
 
     bx::DefaultAllocator defaultAllocator;
@@ -405,10 +456,11 @@ public:
     void shutdown();
 
     void clearShadowMap();
-    void drawToShadowMap();
-    void drawWithLighting(bool isCastShadow);
+    void drawToShadowMap(bool uniformsAlreadyAttached = false, bool texturesAlreadyAttached = false);
+    void drawWithLighting(bool uniformsAlreadyAttached = false, bool texturesAlreadyAttached = false, bool keepBindings = false);
     void drawFieldShadow();
-    void draw(bool uniformsAlreadyAttached = false);
+    void draw(bool uniformsAlreadyAttached = false, bool texturesAlreadyAttached = false, bool keepBindings = false);
+    void discardAllBindings();
     void drawOverlay();
     void drawFFNxLogo(float fade);
     void show();
@@ -420,15 +472,21 @@ public:
 
     const bgfx::Caps* getCaps();
     const bgfx::Stats* getStats();
+    const bgfx::VertexLayout& GetVertexLayout();
 
     void bindVertexBuffer(struct nvertex* inVertex, vector3<float>* normals, uint32_t inCount);
     void bindIndexBuffer(WORD* inIndex, uint32_t inCount);
+
+    bgfx::UniformHandle setUniform(RendererUniform uniform, const void* uniformValue);
+    void setCommonUniforms();
+    void setLightingUniforms();
+    void bindTextures();
 
     void setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
     void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
-    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true);
+    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true);
     uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
     bimg::ImageContainer* createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
     bimg::ImageContainer* createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
@@ -452,6 +510,7 @@ public:
     void isYUV(bool flag = false);
     void doModulateAlpha(bool flag = false);
     void doTextureFiltering(bool flag = false);
+    void doMirrorTextureWrap(bool flag = false);
     void isExternalTexture(bool flag = false);
     bool isHDR();
     void setColorMatrix(ColorMatrixType cmtype = COLORMATRIX_BT601);
@@ -480,9 +539,12 @@ public:
     // Viewport
     void setViewMatrix(struct matrix* matrix);
     float* getViewMatrix();
+    float* getInvViewMatrix();
     bool isViewMatrixSet();
     void resetViewMatrixFlag();
-    void setWorldViewMatrix(struct matrix* matrix);
+    void setWorldViewMatrix(struct matrix* matrix, bool calculateNormalMatrix = true);
+    float* getWorldViewMatrix();
+    float* getNormalMatrix();
     void setD3DViweport(struct matrix* matrix);
     void setD3DProjection(struct matrix* matrix);
 
@@ -498,6 +560,11 @@ public:
     void setTimeEnabled(bool flag = false);
     void setTimeFilterEnabled(bool flag = false);
     bool isTimeFilterEnabled();
+
+    // Worldmap
+    void setSphericalWorldRate(float value = 0.0f);
+    void setFogEnabled(bool flag = false);
+    bool isFogEnabled();
 
     // Game lighting
     void setGameLightData(light_data* lightdata = nullptr);

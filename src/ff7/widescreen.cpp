@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //    Copyright (C) 2023 Cosmos                                             //
 //                                                                          //
@@ -389,6 +389,7 @@ void Widescreen::initParamsFromConfig()
     h_offset = 0;
     v_offset = 0;
     is_reset_vertical_pos = false;
+    is_scripted_clip_enabled = true;
     movie_v_offset.clear();
 
     auto pName = get_current_field_name();
@@ -405,6 +406,7 @@ void Widescreen::initParamsFromConfig()
         if(auto hOffsetNode = node["h_offset"]) h_offset = hOffsetNode.value_or(0);
         if(auto vOffsetNode = node["v_offset"]) v_offset = vOffsetNode.value_or(0);
         if(auto vResetVerticalPosNode = node["reset_vertical_pos"]) is_reset_vertical_pos = vResetVerticalPosNode.value_or(false);
+        if(auto vScripteClipNode = node["scripted_clip"]) is_scripted_clip_enabled = vScripteClipNode.value_or(true);
 
         if(auto modeNode = node["mode"]) widescreen_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
 

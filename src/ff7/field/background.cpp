@@ -5,7 +5,7 @@
 //    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2024 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
 //    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
@@ -31,6 +31,7 @@
 #include "background.h"
 #include "defs.h"
 #include "utils.h"
+#include "camera.h"
 
 #include <functional>
 
@@ -424,6 +425,10 @@ namespace ff7::field
         {
             camera_range = widescreen.getCameraRange();
 
+            // Adjustment to prevent scrolling stopping one pixel too early
+            camera_range.left += 1;
+            camera_range.right -= 1;
+
             // This centers the background if necessary
             int cameraRangeSize = camera_range.right - camera_range.left;
             half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
@@ -441,6 +446,34 @@ namespace ff7::field
             point->y = camera_range.bottom - 120;
         if (point->y < camera_range.top + 120)
             point->y = camera_range.top + 120;
+
+        if (enable_analogue_controls)
+        {
+            float accelCoeff = 0.1f / static_cast<float>(common_frame_multiplier);
+            float maxScroll = 120;
+            float maxScrollY = maxScroll * camera.getScrollingDirY();
+            float maxScrollX = maxScroll * camera.getScrollingDirX();
+
+            if (maxScrollX > 0.0) maxScrollX = std::min(maxScrollX, (camera_range.right - half_width - point->x));
+            else maxScrollX = std::max(maxScrollX, camera_range.left + half_width - point->x);
+            if (maxScrollY > 0.0) maxScrollY =  std::min(maxScrollY, (camera_range.bottom - 120 - point->y));
+            else maxScrollY =  std::max(maxScrollY, camera_range.top + 120 - point->y);
+
+            camera.setScrollingOffset(camera.getScrollingOffsetX() + accelCoeff * (maxScrollX - camera.getScrollingOffsetX()),
+                                      camera.getScrollingOffsetY() + accelCoeff * (maxScrollY - camera.getScrollingOffsetY()));
+
+            point->x += camera.getScrollingOffsetX();
+            point->y += camera.getScrollingOffsetY();
+
+            if (point->x > camera_range.right - half_width)
+                point->x = camera_range.right - half_width;
+            if (point->x < camera_range.left + half_width)
+                point->x = camera_range.left + half_width;
+            if (point->y > camera_range.bottom - 120)
+                point->y = camera_range.bottom - 120;
+            if (point->y < camera_range.top + 120)
+                point->y = camera_range.top + 120;
+        }
     }
 
     void float_sub_643628(field_trigger_header *trigger_header, vector2<float> *delta_position)
@@ -495,15 +528,22 @@ namespace ff7::field
 
     void field_widescreen_width_clip_with_camera_range(vector2<short>* point)
     {
+        if(!widescreen.isScriptedClipEnabled())
+        {
+            return;
+        }
+
         auto camera_range = widescreen.getCameraRange();
+        
+        // Adjustment to prevent scrolling stopping one pixel too early
+        camera_range.left += 1;
+        camera_range.right -= 1;
 
         // This centers the background if necessary
         int cameraRangeSize = camera_range.right - camera_range.left;
         float half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
 
         point->x += widescreen.getHorizontalOffset();
-
-        if (widescreen.getMode() == WM_EXTEND_ONLY) return;
 
         if (point->x > camera_range.right - half_width)
             point->x = camera_range.right - half_width;
@@ -569,6 +609,8 @@ namespace ff7::field
         vector2<short> world_pos;
         if ( !ff7_externals.modules_global_object->world_move_status )
         {
+            last_valid_scripted_field_delta_world_pos = {INVALID_VALUE, INVALID_VALUE};
+
             switch ( ff7_externals.modules_global_object->world_move_mode )
             {
             case 0:
@@ -576,6 +618,8 @@ namespace ff7::field
                 *ff7_externals.field_curr_delta_world_pos_x = 0;
                 *ff7_externals.field_curr_delta_world_pos_y = 0;
                 ff7_externals.modules_global_object->world_move_status = 2;
+
+                last_valid_scripted_field_delta_world_pos = field_curr_delta_world_pos;
                 break;
             case 1:
                 *ff7_externals.field_bg_flag_CC15E4 = 1;
@@ -586,24 +630,24 @@ namespace ff7::field
                 *ff7_externals.field_bg_flag_CC15E4 = 1;
                 *ff7_externals.scripted_world_move_n_steps = ff7_externals.modules_global_object->field_20;
                 *ff7_externals.scripted_world_move_step_index = 0;
-                world_pos = {*ff7_externals.field_curr_delta_world_pos_x, *ff7_externals.field_curr_delta_world_pos_y};
+                world_pos = {-(*ff7_externals.field_curr_delta_world_pos_x), -(*ff7_externals.field_curr_delta_world_pos_y)};
 
                 if(is_fieldmap_wide())
                     field_widescreen_width_clip_with_camera_range(&world_pos);
 
-                *ff7_externals.scripted_world_initial_pos_x = world_pos.x;
-                *ff7_externals.scripted_world_initial_pos_y = world_pos.y;
+                *ff7_externals.scripted_world_initial_pos_x = -world_pos.x;
+                *ff7_externals.scripted_world_initial_pos_y = -world_pos.y;
                 ff7_externals.modules_global_object->world_move_status = 1;
                 break;
             case 4:
                 *ff7_externals.field_bg_flag_CC15E4 = 1;
 
-                world_pos = {ff7_externals.modules_global_object->field_A, ff7_externals.modules_global_object->field_C};
+                world_pos = {-(ff7_externals.modules_global_object->field_A), -(ff7_externals.modules_global_object->field_C)};
                 if(is_fieldmap_wide())
                     field_widescreen_width_clip_with_camera_range(&world_pos);
 
-                *ff7_externals.field_curr_delta_world_pos_x = world_pos.x;
-                *ff7_externals.field_curr_delta_world_pos_y = world_pos.y;
+                *ff7_externals.field_curr_delta_world_pos_x = -world_pos.x;
+                *ff7_externals.field_curr_delta_world_pos_y = -world_pos.y;
                 ff7_externals.modules_global_object->world_move_status = 2;
                 break;
             case 5:
@@ -612,19 +656,19 @@ namespace ff7::field
                 *ff7_externals.scripted_world_move_n_steps = ff7_externals.modules_global_object->field_20;
                 *ff7_externals.scripted_world_move_step_index = 0;
 
-                world_pos = {*ff7_externals.field_curr_delta_world_pos_x, *ff7_externals.field_curr_delta_world_pos_y};
+                world_pos = {(-*ff7_externals.field_curr_delta_world_pos_x), -(*ff7_externals.field_curr_delta_world_pos_y)};
                 if(is_fieldmap_wide())
                     field_widescreen_width_clip_with_camera_range(&world_pos);
 
-                *ff7_externals.scripted_world_initial_pos_x = world_pos.x;
-                *ff7_externals.scripted_world_initial_pos_y = world_pos.y;
+                *ff7_externals.scripted_world_initial_pos_x = -world_pos.x;
+                *ff7_externals.scripted_world_initial_pos_y = -world_pos.y;
 
-                world_pos = {ff7_externals.modules_global_object->field_A, ff7_externals.modules_global_object->field_C};
+                world_pos = {-(ff7_externals.modules_global_object->field_A), -(ff7_externals.modules_global_object->field_C)};
                 if(is_fieldmap_wide())
                     field_widescreen_width_clip_with_camera_range(&world_pos);
 
-                *ff7_externals.scripted_world_final_pos_x = world_pos.x;
-                *ff7_externals.scripted_world_final_pos_y = world_pos.y;
+                *ff7_externals.scripted_world_final_pos_x = -world_pos.x;
+                *ff7_externals.scripted_world_final_pos_y = -world_pos.y;
                 ff7_externals.modules_global_object->world_move_status = 1;
                 break;
             default:
@@ -714,18 +758,15 @@ namespace ff7::field
             case 6:
                 if(*ff7_externals.scripted_world_move_n_steps)
                 {
-                    field_trigger_header* field_triggers_header_ptr = *ff7_externals.field_triggers_header;
-                    auto camera_range = field_triggers_header_ptr->camera_range;
-                    if(widescreen_enabled && widescreen.getMode() == WM_ZOOM)
+                    if(is_fieldmap_wide())
                     {
-                        camera_range = widescreen.getCameraRange();
+                        world_pos = {-(*ff7_externals.scripted_world_final_pos_x), -(*ff7_externals.scripted_world_final_pos_y)};
+                        field_widescreen_width_clip_with_camera_range(&world_pos);
+                        *ff7_externals.scripted_world_final_pos_x = -world_pos.x;
 
-                        // This centers the background for fields which width is bigger than 320 but less than what is needed to fill the whole screen in 16:9
-                        if(2 * std::abs(wide_viewport_x) - *ff7_externals.scripted_world_final_pos_x > camera_range.right)
-                            *ff7_externals.scripted_world_final_pos_x = std::min(0, static_cast<int>(2 * std::abs(wide_viewport_x) - camera_range.right));
-
-                        if(-2 * std::abs(wide_viewport_x) - *ff7_externals.scripted_world_final_pos_x < camera_range.left)
-                            *ff7_externals.scripted_world_final_pos_x = std::max(0, static_cast<int>(-2 * std::abs(wide_viewport_x) - camera_range.left));
+                        world_pos = {-(*ff7_externals.scripted_world_initial_pos_x), -(*ff7_externals.scripted_world_initial_pos_y)};
+                        field_widescreen_width_clip_with_camera_range(&world_pos);    
+                        *ff7_externals.scripted_world_initial_pos_x = -world_pos.x;                    
                     }
 
                     std::function<int(int, int, int, int)> field_get_interpolated_value = ff7_externals.modules_global_object->world_move_mode == 5 ?
@@ -775,6 +816,18 @@ namespace ff7::field
             default:
                 break;
             }
+
+            if(is_fieldmap_wide())
+            {
+                world_pos = {-(*ff7_externals.field_curr_delta_world_pos_x), -(*ff7_externals.field_curr_delta_world_pos_y)};
+                field_widescreen_width_clip_with_camera_range(&world_pos);
+                *ff7_externals.field_curr_delta_world_pos_x = -world_pos.x;
+            }
+        }
+
+        if(is_position_valid(field_curr_delta_world_pos))
+        {
+            last_valid_scripted_field_delta_world_pos = field_curr_delta_world_pos;
         }
     }
 
@@ -865,8 +918,35 @@ namespace ff7::field
         }
         else if(*ff7_externals.field_bg_flag_CC15E4)
         {
-            if(is_position_valid(field_curr_delta_world_pos))
-                set_world_and_background_positions({-field_curr_delta_world_pos.x, -field_curr_delta_world_pos.y}, true);
+            if (enable_analogue_controls)
+            {
+                vector2<float> bg_delta_position = {0.0f, 0.0f};
+                bool use_camdat_pan = true;
+                if(is_position_valid(field_curr_delta_world_pos))
+                {
+                    bg_delta_position.x = -field_curr_delta_world_pos.x;
+                    bg_delta_position.y = -field_curr_delta_world_pos.y;
+                    use_camdat_pan = true;
+                    set_world_and_background_positions(bg_delta_position, true);
+                }
+                else if(is_position_valid(last_valid_scripted_field_delta_world_pos))
+                {
+                    bg_delta_position.x = -last_valid_scripted_field_delta_world_pos.x;
+                    bg_delta_position.y = -last_valid_scripted_field_delta_world_pos.y;
+                    
+                    field_clip_with_camera_range_float(&bg_delta_position);
+                    field_curr_delta_world_pos.x = -bg_delta_position.x;
+                    field_curr_delta_world_pos.y = -bg_delta_position.y;
+
+                    set_world_and_background_positions(bg_delta_position, true);
+                }
+            }
+            else
+            {
+                if(is_position_valid(field_curr_delta_world_pos))
+                    set_world_and_background_positions({-field_curr_delta_world_pos.x, -field_curr_delta_world_pos.y}, true);
+            }           
+            
 
             if((*ff7_externals.field_event_data_ptr)[player_model_id].field_62)
                 compute_pointer_hand_position(field_3d_world_pos, player_model_id);

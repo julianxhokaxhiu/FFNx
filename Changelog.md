@@ -1,6 +1,98 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.16.0...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.18.1...master
+
+## Common
+
+- Core: Add a new capability that will expose the current PC config (CPU, GPU including Driver version, RAM and OS) used to run FFNx. This will help a lot during troubleshooting.
+- Music: Add new [relative_speed](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.music.toml#L29-L31) option in the config layer ( https://github.com/julianxhokaxhiu/FFNx/pull/672 )
+
+## FF7
+
+- Modding: Do not replace eyes if no external texture has been found.
+- Rendering: Fix wrong rendering for battle limit boxes when using transparency. Usually notices while using ESUI or FFNx default hext files.
+- Rendering: Fix wrong rendering for overlapping message boxes. Usually noticed while using custom mods like SYW UI or Kactuar.
+
+## FF8
+
+- Fix crash when some text windows are opening in worldmap on Spanish and Italian versions ( https://github.com/julianxhokaxhiu/FFNx/pull/682/files )
+- Graphics: Fix texture animations by copy only partially animated ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )
+- Graphics: Allow more external texture replacement for battle effects ( https://github.com/julianxhokaxhiu/FFNx/pull/674 https://github.com/julianxhokaxhiu/FFNx/pull/676 )
+- SFX: Fix some external SFX effects that were not stopping when they were looped in certain scenes
+- Vibration: Added vibration option in the config menu and the battle pause menu ( https://github.com/julianxhokaxhiu/FFNx/pull/658 )
+- Vibration: do not rely on hashes anymore to identify vibration data ( https://github.com/julianxhokaxhiu/FFNx/pull/675 )
+
+## FF8 2000
+
+- Misc: Update the FF8.reg file to disable the compatibility fix from Windows that disallow ALT+tab ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )
+
+## FF8 Steam
+
+- Misc: Fix metadata save file preservation when a save file is created on Slot 2
+
+# 1.18.1
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.18.0...1.18.1
+
+## Common
+
+- Metadata: Fixes randomly disappearing save files, by rewriting completely the engine and patching `metadata.xml` only for the save file where the player saves
+
+## FF7
+
+- Input: Fixed auto-run not working sometimes on diagonals ( https://github.com/julianxhokaxhiu/FFNx/pull/666 )
+- Input: Fixed not being able to place the flags during snowstorm ( https://github.com/julianxhokaxhiu/FFNx/pull/667 )
+- Renderer: Fixed menu not working when using external worldmap mesh ( https://github.com/julianxhokaxhiu/FFNx/pull/657 )
+- Widescreen: Fixed scripted camera clipping when widescreen enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/664 )
+
+## FF8 Steam
+
+- Misc: Fix crash for the Japanese version ( https://github.com/julianxhokaxhiu/FFNx/pull/663 )
+
+# 1.18.0
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.1...1.18.0
+
+## FF7
+
+- Lighting: Fix Temple of the Ancients rolling stones color when `game_lighting` is set to `1` or `2` ( regression since 1.17.0 )
+- Renderer: Fixed fog being incorrectly applied to Emerald Weapon battle ( https://github.com/julianxhokaxhiu/FFNx/pull/648 )
+- Renderer: Preserve world camera state when changing game modes ( https://github.com/julianxhokaxhiu/FFNx/pull/651 )
+
+## FF8
+
+- Graphics: Add external textures replacement for magic.fs textures ( https://github.com/julianxhokaxhiu/FFNx/pull/646 )
+- Graphics: Fix white textures in battle ( https://github.com/julianxhokaxhiu/FFNx/pull/646 )
+- Graphics: Opimize PNG and DDS loading time ( https://github.com/julianxhokaxhiu/FFNx/pull/650 )
+- Graphics: Minimize RAM usage of external textures and prevent crashes with big textures ( https://github.com/julianxhokaxhiu/FFNx/pull/650 )
+- Graphics: Fix Tonberry compatibility layer for field background -again- ( https://github.com/julianxhokaxhiu/FFNx/pull/650 )
+- Input: New option to show PlayStation gamepad icons when a gamepad is used ( https://github.com/julianxhokaxhiu/FFNx/pull/641 https://github.com/julianxhokaxhiu/FFNx/pull/650 )
+- Input: Fix mapping of gamepad buttons when modified in the game ( https://github.com/julianxhokaxhiu/FFNx/pull/641 )
+- Input: Fix inverted analog up/down direction for non-XInput controllers ( https://github.com/julianxhokaxhiu/FFNx/pull/647 )
+
+## FF8 Steam
+
+- Misc: Rewrite metadata file when a save file is created to prevent save file loss ( https://github.com/julianxhokaxhiu/FFNx/pull/655 )
+
+# 1.17.1
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.17.0...1.17.1
+
+## Common
+
+- Core: Hide cursor when the game is started in fullscreen mode ( https://github.com/julianxhokaxhiu/FFNx/pull/638 )
+
+## FF7
+
+- Renderer: Fixed fog rendering not working in underwater worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/639 )
+
+## FF8
+
+- Graphics: Fix Tonberry compatibility layer for field backgrouns ( https://github.com/julianxhokaxhiu/FFNx/pull/638 )
+
+# 1.17.0
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.16.0...1.17.0
 
 ## Common
 
@@ -11,9 +103,13 @@
 ## FF7
 
 - 60FPS: Refactor 60FPS battle menu fix and fix ESUI compatibility ( https://github.com/julianxhokaxhiu/FFNx/pull/597 )
+- 60FPS: Fix Submarine minigame ( https://github.com/julianxhokaxhiu/FFNx/issues/621 )
 - Ambient: Allow ambient effects to playback in fields that use movies as background
 - Core: Add additional main models eye-to-model mapping
+- Core: Add ability to replace eye textures with custom one ( https://github.com/julianxhokaxhiu/FFNx/issues/589 )
+- Core: Add ability to replace mouth textures with custom one
 - DevTools: Add Game Moment in Field Debug
+- Input: Added right analog stick camera scrolling controls in field mode
 - Lighting: Fix [`config.toml`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FFNx.lighting.toml) load/save logic
 - Lighting: Fix Bahamut Zero and Supernova not displaying correctly when lighting enabled
 - Lighting: Fix field shadows not displaying during FMV movies
@@ -21,6 +117,7 @@
 - Lighting: Fixed minor shadow visual glitches occurring in some fields
 - Music: Fix overlapping external music tracks when `external_music_resume = false`
 - Renderer: Fix black color in some field maps (`spipe2` for example) ( https://github.com/julianxhokaxhiu/FFNx/pull/587 )
+- Renderer: Added functionality to replace worldmap rendering with an external 3d mesh
 - Sound: Fix loading music volume value from ff7sound.cfg
 - Voice: Enable tutorial voice acting
 - Widescreen: Added experimental support for 16:10 aspect ratio
@@ -31,6 +128,7 @@
 ## FF7 Steam
 
 - Common: Fix a softlock when trying to change in-game Controller setting to "Normal" (by disabling this option)
+- Input: Fix character naming screen not working correctly when Steam Input is enabled
 
 ## FF8
 
@@ -40,11 +138,16 @@
 - Graphics: Fix texture glitches using external texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/591 )
 - Graphics: Fix external texture blending ( https://github.com/julianxhokaxhiu/FFNx/pull/598 https://github.com/julianxhokaxhiu/FFNx/pull/601 )
 - Graphics: Add chara.one worldmap texture replacement ( https://github.com/julianxhokaxhiu/FFNx/pull/615 )
-- Graphics: Add support for external texture animation ( https://github.com/julianxhokaxhiu/FFNx/pull/616 )
-- Graphics: Add support for multiple palettes in external texture ( https://github.com/julianxhokaxhiu/FFNx/pull/617 )
-- Graphics: Minimize texture uploads when the palette is not set yet ( https://github.com/julianxhokaxhiu/FFNx/pull/617 )
+- Graphics: Add support for external texture animation ( https://github.com/julianxhokaxhiu/FFNx/pull/616 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
+- Graphics: Add support for multiple palettes in external texture ( https://github.com/julianxhokaxhiu/FFNx/pull/617 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
+- Graphics: Minimize texture uploads when the palette is not set yet ( https://github.com/julianxhokaxhiu/FFNx/pull/617 https://github.com/julianxhokaxhiu/FFNx/pull/628 )
 - Graphics: Increase max texture size to 16384 for external textures ( https://github.com/julianxhokaxhiu/FFNx/pull/601 )
+- Input: Enable support for 360° analog movement ( https://github.com/julianxhokaxhiu/FFNx/pull/632 )
+- Input: Enable support dual-stick vehicle control ( https://github.com/julianxhokaxhiu/FFNx/pull/632 )
+- Menu: Fix main menu texts when selecting "new game" option (European versions only) ( https://github.com/julianxhokaxhiu/FFNx/pull/636 )
 - Music: Add `ff8_external_music_force_original_filenames` option to use original music names (eg 018s-julia.ogg) instead of just the main identifier in external music ( https://github.com/julianxhokaxhiu/FFNx/pull/594 )
+- Music: Fix intro credits unsync ( https://github.com/julianxhokaxhiu/FFNx/pull/634 )
+- SFX: Fix Quezacotl sounds ( https://github.com/julianxhokaxhiu/FFNx/pull/633 )
 - Voice: Enable battle dialogs voice acting
 - Voice: Enable worldmap voice acting
 - Voice: Enable tutorial voice acting
