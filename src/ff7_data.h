@@ -294,6 +294,8 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.config_menu_sub = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.menu_sub_6FEDB0 = ff7_externals.menu_subs_call_table[10];
 
+  ff7_externals.config_initialize = get_relative_call(main_init_loop, 0x4B0);
+
 	ff7_externals.menu_tutorial_window_state = (BYTE*)get_absolute_value((uint32_t)ff7_externals.menu_tutorial_sub_6C49FD, 0x9);
 	ff7_externals.menu_tutorial_window_text_ptr = (DWORD*)get_absolute_value((uint32_t)ff7_externals.menu_tutorial_sub_6C49FD, 0x18);
 

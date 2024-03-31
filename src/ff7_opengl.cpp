@@ -411,6 +411,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_function(ff7_externals.set_default_input_settings_save, noop);
 		replace_function(ff7_externals.keyboard_name_input, noop);
 		replace_function(ff7_externals.restore_input_settings, noop);
+
+    // Patch the default config bitmask so that "Customize" controller option is enabled by default
+    memset_code(ff7_externals.config_initialize + 0x36, 0x45, 1);
 	}
 
 	//###############################
