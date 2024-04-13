@@ -64,6 +64,8 @@
 #include "ff8/engine.h"
 #include "ff8/uv_patch.h"
 
+#include "wine.h"
+
 bool proxyWndProc = false;
 
 namespace GameWindowState {
@@ -266,7 +268,7 @@ void ffnx_log_current_pc_specs()
 	// CPU
 	auto cpus = hwinfo::getAllCPUs();
 	for (const auto& cpu : cpus) {
-		ffnx_info("CPU: %s\n", cpu.modelName().c_str());
+		ffnx_info("   CPU: %s\n", cpu.modelName().c_str());
 	}
 
 	// GPU
@@ -277,16 +279,29 @@ void ffnx_log_current_pc_specs()
 			(newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId) ||
 			(newRenderer.getCaps()->vendorId == vendorId && renderer_backend == RENDERER_BACKEND_OPENGL)
 		)
-			ffnx_info("GPU: %s (%dMB) - Driver: %s - Backend: %s\n", gpu.name().c_str(), (int)(gpu.memory_Bytes() / 1024.0 / 1024.0), gpu.driverVersion().c_str(), newRenderer.currentRenderer.c_str());
+			ffnx_info("   GPU: %s (%dMB) - Driver: %s - Backend: %s\n", gpu.name().c_str(), (int)(gpu.memory_Bytes() / 1024.0 / 1024.0), gpu.driverVersion().c_str(), newRenderer.currentRenderer.c_str());
 	}
 
 	// RAM
 	hwinfo::Memory memory;
-	ffnx_info("RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.total_Bytes() - memory.free_Bytes()) / 1024.0 / 1024.0), (int)(memory.total_Bytes() / 1024.0 / 1024.0), (int)(memory.free_Bytes() / 1024.0 / 1024.0));
+	ffnx_info("   RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.total_Bytes() - memory.free_Bytes()) / 1024.0 / 1024.0), (int)(memory.total_Bytes() / 1024.0 / 1024.0), (int)(memory.free_Bytes() / 1024.0 / 1024.0));
 
 	// OS
 	hwinfo::OS os;
-	ffnx_info(" OS: %s %s (build %s)\n", os.name().c_str(), (os.is32bit() ? "32 bit" : "64 bit"), os.version().c_str());
+	ffnx_info("    OS: %s %s (build %s)\n", os.name().c_str(), (os.is32bit() ? "32 bit" : "64 bit"), os.version().c_str());
+
+	// WINE+PROTON
+	const char* env_wineloader = std::getenv("WINELOADER");
+	if (env_wineloader != NULL) // Are we running under Wine/Proton?
+	{
+		ffnx_info("  WINE: v%s\n", GetWineVersion());
+
+		const std::regex proton_regex("([Pp]roton[\\s\\-\\w.()]+)");
+		std::smatch base_match;
+		std::string s_wineloader = std::string(env_wineloader);
+		if (std::regex_search(s_wineloader, base_match, proton_regex))
+			ffnx_info("PROTON: %s\n", base_match[1].str().c_str());
+	}
 
 	// End report of PC specs
 	ffnx_info("----------------\n");

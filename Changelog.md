@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.19.0...master
 
+## Common
+
+- Core: Expose current Wine and Proton version as well in the log, if detected.
+
 # 1.19.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.18.1...1.19.0
