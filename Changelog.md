@@ -12,6 +12,7 @@
 - Modding: Do not replace eyes if no external texture has been found.
 - Rendering: Fix wrong rendering for battle limit boxes when using transparency. Usually notices while using ESUI or FFNx default hext files.
 - Rendering: Fix wrong rendering for overlapping message boxes. Usually noticed while using custom mods like SYW UI or Kactuar.
+- Rendering: Fix world FX effects in DE, FR and SP editions.
 
 ## FF7 Steam
 
@@ -19,7 +20,7 @@
 
 ## FF8
 
-- Fix crash when some text windows are opening in worldmap on Spanish and Italian versions ( https://github.com/julianxhokaxhiu/FFNx/pull/682/files )
+- Core: Fix crash when some text windows are opening in worldmap on Spanish and Italian versions ( https://github.com/julianxhokaxhiu/FFNx/pull/682/files )
 - Graphics: Fix texture animations by copy only partially animated ( https://github.com/julianxhokaxhiu/FFNx/pull/670 )
 - Graphics: Allow more external texture replacement for battle effects ( https://github.com/julianxhokaxhiu/FFNx/pull/674 https://github.com/julianxhokaxhiu/FFNx/pull/676 )
 - SFX: Fix some external SFX effects that were not stopping when they were looped in certain scenes
