@@ -1285,37 +1285,41 @@ void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffe
 				next_bpp = maxX - minX == 16 ? Tim::Bpp4 : Tim::Bpp8;
 				texture_infos = TexturePacker::TextureInfos(pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3], next_bpp);
 				palette_infos = TexturePacker::TextureInfos(minX, minY, maxX - minX, maxY - minY, next_bpp);
-				int last_pal_x = -1, last_pal_y = -1;
 
-				for (int i = 1; i < battle_texture_data_list_size; ++i) {
-					const BattleTextureHeader &header2 = battle_texture_headers.at((index + i) % battle_texture_data_list_size);
-					if (!header2.is_palette || (last_pal_y >= 0 && std::abs(header2.y - last_pal_y) > 10) || (last_pal_x >= 0 && last_pal_x != header.x)) {
-						break;
-					}
+				if (save_textures) {
+					int last_pal_x = -1, last_pal_y = -1;
 
-					ff8_tim tim_infos = ff8_tim();
-					tim_infos.pal_data = (uint16_t *)header2.data;
-					tim_infos.pal_w = header2.w;
-					tim_infos.pal_h = header2.h;
-					tim_infos.img_data = texture_buffer;
-					tim_infos.img_w = pos_and_size[2];
-					tim_infos.img_h = pos_and_size[3];
-					Tim(next_bpp, tim_infos).save(next_texture_name, header2.y - minY, true);
-					texture_saved = true;
+					for (int i = 1; i < battle_texture_data_list_size; ++i) {
+						const BattleTextureHeader &header2 = battle_texture_headers.at((index + i) % battle_texture_data_list_size);
+						if (!header2.is_palette || (last_pal_y >= 0 && std::abs(header2.y - last_pal_y) > 10) || (last_pal_x >= 0 && last_pal_x != header.x)) {
+							break;
+						}
 
-					last_pal_x = header2.x;
-					last_pal_y = header2.y;
+						ff8_tim tim_infos = ff8_tim();
+						tim_infos.pal_data = (uint16_t *)header2.data;
+						tim_infos.pal_w = header2.w;
+						tim_infos.pal_h = header2.h;
+						tim_infos.img_data = texture_buffer;
+						tim_infos.img_w = pos_and_size[2];
+						tim_infos.img_h = pos_and_size[3];
+						Tim(next_bpp, tim_infos).save(next_texture_name, header2.y - minY, true);
+						texture_saved = true;
 
-					// We assume that the first palette is correct, so we remove it from the array. The others maybe not, so keep them
-					if (i == 1) {
-						battle_texture_headers[(index + i) % battle_texture_data_list_size] = BattleTextureHeader();
+						last_pal_x = header2.x;
+						last_pal_y = header2.y;
+
+						// We assume that the first palette is correct, so we remove it from the array. The others maybe not, so keep them
+						if (i == 1) {
+							battle_texture_headers[(index + i) % battle_texture_data_list_size] = BattleTextureHeader();
+						}
 					}
 				}
+			} else {
+				next_bpp = Tim::Bpp8;
 			}
 
 			// We don't know the palette
-			if (!texture_saved) {
-				next_bpp = Tim::Bpp8;
+			if (save_textures && !texture_saved) {
 				ff8_tim tim_infos = ff8_tim();
 				tim_infos.img_data = texture_buffer;
 				tim_infos.img_w = pos_and_size[2];
@@ -1342,30 +1346,32 @@ void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffe
 				next_bpp = Tim::Bpp4;
 			}
 
-			ff8_tim tim_infos = ff8_tim();
-			tim_infos.img_data = texture_buffer;
-			tim_infos.img_x = pos_and_size[0];
-			tim_infos.img_y = pos_and_size[1];
-			tim_infos.img_w = pos_and_size[2];
-			tim_infos.img_h = pos_and_size[3];
-			// Save without palette
-			Tim(next_bpp, tim_infos).save(next_texture_name);
+			if (save_textures) {
+				ff8_tim tim_infos = ff8_tim();
+				tim_infos.img_data = texture_buffer;
+				tim_infos.img_x = pos_and_size[0];
+				tim_infos.img_y = pos_and_size[1];
+				tim_infos.img_w = pos_and_size[2];
+				tim_infos.img_h = pos_and_size[3];
+				// Save without palette
+				Tim(next_bpp, tim_infos).save(next_texture_name);
 
-			// Save with every palettes we know
-			for (int i = 1; i < battle_texture_data_list_size; ++i) {
-				const BattleTextureHeader &header = battle_texture_headers.at(i % battle_texture_data_list_size);
-				if (!header.is_palette) {
-					continue;
+				// Save with every palettes we know
+				for (int i = 1; i < battle_texture_data_list_size; ++i) {
+					const BattleTextureHeader &header = battle_texture_headers.at(i % battle_texture_data_list_size);
+					if (!header.is_palette) {
+						continue;
+					}
+
+					char fileName[MAX_PATH] = {};
+
+					snprintf(fileName, sizeof(fileName), "%s-pal-guess-%dx%d", next_texture_name, header.x, header.y);
+
+					tim_infos.pal_data = (uint16_t *)header.data;
+					tim_infos.pal_w = header.w;
+					tim_infos.pal_h = header.h;
+					Tim(next_bpp, tim_infos).save(fileName, true);
 				}
-
-				char fileName[MAX_PATH] = {};
-
-				snprintf(fileName, sizeof(fileName), "%s-pal-guess-%dx%d", next_texture_name, header.x, header.y);
-
-				tim_infos.pal_data = (uint16_t *)header.data;
-				tim_infos.pal_w = header.w;
-				tim_infos.pal_h = header.h;
-				Tim(next_bpp, tim_infos).save(fileName, true);
 			}
 		} else {
 			if (trace_all || trace_vram) ffnx_warning("%s: unknown texture uploaded\n", __func__);
@@ -1375,14 +1381,16 @@ void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffe
 				++battle_texture_id;
 				next_bpp = Tim::Bpp8;
 
-				ff8_tim tim_infos = ff8_tim();
-				tim_infos.img_data = texture_buffer;
-				tim_infos.img_x = pos_and_size[0];
-				tim_infos.img_y = pos_and_size[1];
-				tim_infos.img_w = pos_and_size[2];
-				tim_infos.img_h = pos_and_size[3];
-				// Save without palette
-				Tim(next_bpp, tim_infos).save(next_texture_name);
+				if (save_textures) {
+					ff8_tim tim_infos = ff8_tim();
+					tim_infos.img_data = texture_buffer;
+					tim_infos.img_x = pos_and_size[0];
+					tim_infos.img_y = pos_and_size[1];
+					tim_infos.img_w = pos_and_size[2];
+					tim_infos.img_h = pos_and_size[3];
+					// Save without palette
+					Tim(next_bpp, tim_infos).save(next_texture_name);
+				}
 			}
 		}
 	}
