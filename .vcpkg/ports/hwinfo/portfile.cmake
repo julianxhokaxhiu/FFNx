@@ -2,9 +2,9 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO julianxhokaxhiu/hwinfo
-    REF c02bca930fb3ebbfc0c3098b6a3ace188d8486c8
-    SHA512 cbb734df915332b931f3db372981591cee7cde678f00a91ca03fce5f7bd72a00c7515e36db198bd6cce40c60b4ac727cdf1f3a5332a865e1f66afbb5e769cd7c
+    REPO lfreist/hwinfo
+    REF 3d234f4799f9eb7651f9853bd3fd17456b191a58
+    SHA512 f109449ffb678810383ee5f39d6ba098b96779ace538f0301833c5b2f168a119ca325a47df2353a783b1cdb47e0c282b18bb578587dd79568e7defe115b27350
 )
 
 vcpkg_cmake_configure(
