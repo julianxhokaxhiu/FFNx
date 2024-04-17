@@ -10,6 +10,7 @@
 
 - **Important:** If you have installed [FFNx-v1.19.0.0](https://github.com/julianxhokaxhiu/FFNx/releases/tag/1.19.0), please remove the directories `mods/Textures/battle` and `mods/Textures/magic` and reinstall your battle mods if you had any. A lots of PNG textures has been wrongly dumped into those directories ( https://github.com/julianxhokaxhiu/FFNx/pull/685 )
 - Rendering: Do not dump any textures if save_textures flag is false ( https://github.com/julianxhokaxhiu/FFNx/pull/685 )
+- Rendering: Fix game over crash with external texture ( https://github.com/julianxhokaxhiu/FFNx/pull/686 )
 
 # 1.19.0
 

@@ -118,10 +118,18 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     _width = png_get_image_width(png_ptr, info_ptr);
     _height = png_get_image_height(png_ptr, info_ptr);
 
+    if (color_type == PNG_COLOR_TYPE_RGB && (targetFormat == bimg::TextureFormat::BGRA8 || targetFormat == bimg::TextureFormat::RGBA8)) {
+        ffnx_warning("%s: PNG files without alpha is not supported, please convert it to RGBA for improved performance\n", __func__);
+
+        return false;
+    }
+
     rowptrs = png_get_rows(png_ptr, info_ptr);
     rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 
     datasize = rowbytes * _height;
+
+    if (trace_all || trace_loaders) ffnx_trace("%s: data_size=%d width=%d height=%d bit_depth=%d color_type=%X\n", __func__, datasize, _width, _height, bit_depth, color_type);
 
     if (!Renderer::doesItFitInMemory(datasize))
     {
