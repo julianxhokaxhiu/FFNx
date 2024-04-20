@@ -1,14 +1,20 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.19.0...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.19.1...master
+
+# 1.19.1
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.19.0...1.19.1
 
 ## Common
 
 - Core: Expose current Wine and Proton version as well in the log, if detected.
+- Core: Fix crash that happened on startup on certain machine configurations while fetching PC specs.
 
 ## FF8
 
-- **Important:** If you have installed [FFNx-v1.19.0.0](https://github.com/julianxhokaxhiu/FFNx/releases/tag/1.19.0), please remove the directories `mods/Textures/battle` and `mods/Textures/magic` and reinstall your battle mods if you had any. A lots of PNG textures has been wrongly dumped into those directories ( https://github.com/julianxhokaxhiu/FFNx/pull/685 )
+> **Important:** If you have installed [FFNx-v1.19.0.0](https://github.com/julianxhokaxhiu/FFNx/releases/tag/1.19.0), please remove the directories `mods/Textures/battle` and `mods/Textures/magic` and reinstall your battle mods if you had any. A lots of PNG textures has been wrongly dumped into those directories ( https://github.com/julianxhokaxhiu/FFNx/pull/685 )
+
 - Rendering: Do not dump any textures if save_textures flag is false ( https://github.com/julianxhokaxhiu/FFNx/pull/685 )
 - Rendering: Fix game over crash with external texture ( https://github.com/julianxhokaxhiu/FFNx/pull/686 )
 
