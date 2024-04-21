@@ -1485,7 +1485,7 @@ void blit_framebuffer_texture(struct texture_set *texture_set, struct tex_header
 }
 
 // load modpath texture for tex file, returns true if successful
-uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct texture_set *texture_set, struct tex_header *tex_header, uint32_t originalWidth, uint32_t originalHeight)
+uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct texture_set *texture_set, struct tex_header *tex_header, uint32_t originalWidth, uint32_t originalHeight, uint32_t saveload_palette_index)
 {
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, tex_header);
@@ -1493,13 +1493,11 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 	struct gl_texture_set *gl_set = VREF(texture_set, ogl.gl_set);
 	struct texture_format* tex_format = VREFP(tex_header, tex_format);
 
-	if((uint32_t)VREF(tex_header, file.pc_name) > 32)
+	if((uint32_t)VREF(tex_header, file.pc_name) > 32 && !save_textures)
 	{
-		if(save_textures) return false;
-
 		if(trace_all || trace_loaders) ffnx_trace("texture file name: %s\n", VREF(tex_header, file.pc_name));
 
-		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), VREF(tex_header, palette_index), VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
+		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), saveload_palette_index, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
 
 		if (enable_lighting)
 		{
@@ -1524,7 +1522,8 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 
 		if(!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand_1", strlen("flevel/hand_1") - 1)) gl_set->force_filter = true;
 	}
-	else if(ff8)
+
+	if(ff8 && texture == 0)
 	{
 		uint32_t *image_data_scaled = nullptr;
 		uint8_t scale = 1;
@@ -1767,7 +1766,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 		}
 		else
 		{
-			VRASS(tex_header, palette_index, VREF(texture_set, palette_index));
+			VRASS(tex_header, palette_index, ff8 ? VREF(texture_set, palette_index) & 0x1FFF : VREF(texture_set, palette_index));
 		}
 	}
 	else VRASS(tex_header, palette_index, 0);
@@ -1787,16 +1786,29 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 	// convert texture data from source format and load it
 	if(texture_format != 0 && VREF(tex_header, image_data) != 0)
 	{
+		uint32_t saveload_palette_index = VREF(tex_header, palette_index);
+
 		if (ff8)
 		{
 			// optimization to not upload textures with undefined VRAM palette
 			TexturePacker::TiledTex tiledTex = texturePacker.getTiledTex(VREF(tex_header, image_data));
 
-			if (tiledTex.isValid() && !tiledTex.isPaletteValid(VREF(tex_header, palette_index) / 2))
+			if (tiledTex.isValid())
 			{
-				if(trace_all || trace_vram) ffnx_trace("dll_gfx: load_texture ignored texture_set=0x%X pointer=0x%X pos=(%d, %d) bpp=%d index=%d\n", _texture_set, VREF(tex_header, image_data), tiledTex.x(), tiledTex.y(), tiledTex.bpp(), VREF(tex_header, palette_index) / 2);
+				TexturePacker::TextureInfos pal = tiledTex.palette(VREF(tex_header, palette_index) / 2);
 
-				return _texture_set;
+				if (tiledTex.bpp() != Tim::Bpp16 && !pal.isValid())
+				{
+					if(trace_all || trace_vram) ffnx_trace("dll_gfx: load_texture ignored texture_set=0x%X pointer=0x%X pos=(%d, %d) bpp=%d index=%d\n", _texture_set, VREF(tex_header, image_data), tiledTex.x(), tiledTex.y(), tiledTex.bpp(), VREF(tex_header, palette_index) / 2);
+
+					return _texture_set;
+				}
+
+				if (pal.isValid()) {
+					saveload_palette_index = uint32_t(0xC0000000) | ((uint32_t(pal.y()) & 0x7FFF) << 15) | (uint32_t(pal.x()) & 0x7FFF);
+				} else {
+					saveload_palette_index = uint32_t(-1);
+				}
 			}
 		}
 
@@ -1806,9 +1818,9 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			if(!VREF(tex_header, old_palette_data))
 			{
 				VRASS(tex_header, old_palette_data, (unsigned char*)external_malloc(4 * tex_format->palette_size));
+				memcpy(VREF(tex_header, old_palette_data), tex_format->palette_data, 4 * tex_format->palette_size);
 			}
-
-			if(memcmp(VREF(tex_header, old_palette_data), tex_format->palette_data, 4 * tex_format->palette_size) != 0)
+			else if(memcmp(VREF(tex_header, old_palette_data), tex_format->palette_data, 4 * tex_format->palette_size) != 0)
 			{
 				for (uint32_t idx = 0; idx < VREF(texture_set, ogl.gl_set->textures); idx++)
 					newRenderer.deleteTexture(VREF(texture_set, texturehandle[idx]));
@@ -1881,11 +1893,11 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			// save texture to modpath if save_textures is enabled
 			if(save_textures && (uint32_t)VREF(tex_header, file.pc_name) > 32)
 			{
-				save_texture(image_data, image_data_size, w, h, VREF(tex_header, palette_index), VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated));
+				save_texture(image_data, image_data_size, w, h, saveload_palette_index, VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated));
 			}
 
 			// check if this texture can be loaded from the modpath, we may not have to do any conversion
-			if (!load_external_texture(image_data, image_data_size, _texture_set, _tex_header, w, h))
+			if (!load_external_texture(image_data, image_data_size, _texture_set, _tex_header, w, h, saveload_palette_index))
 			{
 				// commit PBO and populate texture set
 				gl_upload_texture(_texture_set, VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA);
@@ -1934,7 +1946,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 	VOBJ(texture_set, texture_set, texture_set);
 	VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-	if(trace_all) ffnx_trace("dll_gfx: write_palette 0x%x, %i, %i, %i, 0x%x, 0x%x, image_data=0x%X\n", texture_set, source_offset, dest_offset, size, source, palette->palette_entry, VREF(tex_header, image_data));
+	if(trace_all) ffnx_trace("dll_gfx: write_palette texture_set=0x%x source_offset=%i dest_offset=%i size=%i source=0x%x palette_entry=0x%x image_data=0x%X\n", texture_set, source_offset, dest_offset, size, source, palette->palette_entry, VREF(tex_header, image_data));
 
 	if(palette == 0) return false;
 
@@ -1979,10 +1991,60 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 		// FF8 writes multiple palettes in one swath but it always writes whole palettes
 		if(palettes > 1 && size % VREF(tex_header, palette_entries)) ffnx_unexpected("unaligned multipalette write\n");
 
+		const TexturePacker::TextureInfos paletteInfos = texturePacker.getTiledTex(VREF(tex_header, image_data)).palette(palette_index / 2);
+
+		if (paletteInfos.isValid())
+		{
+			if(!VREF(tex_header, vram_positions))
+			{
+				VRASS(tex_header, vram_positions, (uint32_t*)external_calloc(128, sizeof(uint32_t)));
+			}
+
+			const uint32_t pos = VREF(tex_header, vram_positions)[palette_index];
+			const uint16_t x = uint16_t(pos & 0xFFFF), y = uint16_t(pos >> 16);
+
+			// We have a texture for this index, but the coordinates do not match
+			// In this case, we can search if indexes haven't just swaped
+			if (VREF(tex_header, old_palette_data) && VREF(texture_set, texturehandle[palette_index]) && (x > 0 || y > 0) && (x != paletteInfos.x() || y != paletteInfos.y()))
+			{
+				for (uint32_t idx = 0; idx < VREF(texture_set, ogl.gl_set->textures); idx++)
+				{
+					if (idx == palette_index || VREF(texture_set, texturehandle[idx]) == 0)
+					{
+						continue;
+					}
+
+					const uint32_t pos2 = VREF(tex_header, vram_positions)[idx];
+					const uint16_t x2 = uint16_t(pos2 & 0xFFFF), y2 = uint16_t(pos2 >> 16);
+
+					// Found one texture using the same coordinates
+					if ((x2 > 0 || y2 > 0) && paletteInfos.x() == x2 && paletteInfos.y() == y2)
+					{
+						// Swap handles
+						uint32_t old_handle = VREF(texture_set, texturehandle[palette_index]);
+						VRASS(texture_set, texturehandle[palette_index], VREF(texture_set, texturehandle[idx]));
+						VRASS(texture_set, texturehandle[idx], old_handle);
+						// Swap palette data
+						uint32_t *tmp_palette = (uint32_t *)external_malloc(size * 4);
+						memcpy(tmp_palette, ((uint32_t *)VREF(tex_header, old_palette_data)) + dest_offset, size * 4);
+						memcpy(((uint32_t *)VREF(tex_header, old_palette_data)) + dest_offset, ((uint32_t *)VREF(tex_header, old_palette_data)) + idx * size, size * 4);
+						memcpy(((uint32_t *)VREF(tex_header, old_palette_data)) + idx * size, tmp_palette, size * 4);
+						external_free(tmp_palette);
+						// Move vram position
+						VREF(tex_header, vram_positions)[idx] = VREF(tex_header, vram_positions)[palette_index];
+
+						break;
+					}
+				}
+			}
+
+			VREF(tex_header, vram_positions)[palette_index] = uint32_t(paletteInfos.x()) | (uint32_t(paletteInfos.y()) << 16);
+		}
+
 		if(!VREF(tex_header, old_palette_data)) return false;
 
 		// since FF8 may have already modified the palette itself we need to compare the new data to our backup
-		if(memcmp(((uint32_t *)VREF(tex_header, old_palette_data)) + dest_offset, ((uint32_t *)source + source_offset), size * 4))
+		if(memcmp(((uint32_t *)VREF(tex_header, old_palette_data)) + dest_offset, ((uint32_t *)source + source_offset), size * 4) != 0)
 		{
 			memcpy(((uint32_t *)VREF(tex_header, old_palette_data)) + dest_offset, ((uint32_t *)source + source_offset), size * 4);
 			memcpy(((uint32_t *)VREF(tex_header, tex_format.palette_data)) + dest_offset, ((uint32_t *)source + source_offset), size * 4);
@@ -2000,7 +2062,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 			if(palettes && !VREF(texture_set, ogl.external))
 			{
 				for (uint32_t idx = 0; idx < palettes; idx++)
-					newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index]));
+					newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index + idx]));
 
 				memset(VREFP(texture_set, texturehandle[palette_index]), 0, palettes * sizeof(uint32_t));
 			}

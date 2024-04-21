@@ -60,8 +60,8 @@ bool operator<(const TimRect &rect, const TimRect &other)
 	return ((uint64_t(rect.palIndex) << 56) | (uint64_t(rect.x1) << 28) | uint64_t(rect.y1)) < ((uint64_t(other.palIndex) << 56) | (uint64_t(other.x1) << 28) | uint64_t(other.y1));
 }
 
-Tim::Tim(Bpp bpp, const ff8_tim &tim) :
-	_bpp(bpp), _tim(tim)
+Tim::Tim(Bpp bpp, const ff8_tim &tim, int lineSkip) :
+	_bpp(bpp), _tim(tim), _lineSkip(lineSkip)
 {
 	_tim.img_w *= 4 >> int(bpp);
 }
@@ -244,6 +244,8 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 					++target;
 					++img_data8;
 				}
+
+				img_data8 += _lineSkip / 2;
 			}
 		}
 		else
@@ -263,6 +265,8 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 					++target;
 					++img_data;
 				}
+
+				img_data += _lineSkip / 2;
 			}
 		}
 	}
@@ -283,6 +287,8 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 					++target;
 					++img_data8;
 				}
+
+				img_data8 += _lineSkip;
 			}
 		}
 		else
@@ -298,6 +304,8 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 					++target;
 					++img_data;
 				}
+
+				img_data += _lineSkip;
 			}
 		}
 	}
@@ -314,6 +322,8 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 				++target;
 				++img_data16;
 			}
+
+			img_data16 += _lineSkip;
 		}
 	}
 	else
@@ -324,6 +334,23 @@ bool Tim::toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionS
 	}
 
 	return true;
+}
+
+Tim Tim::chunk(int x, int y, int w, int h)
+{
+	ff8_tim infos = ff8_tim();
+	infos.img_data = _tim.img_data + (x + y * imageWidth()) * 2;
+	infos.img_x = _tim.img_x + x;
+	infos.img_y = _tim.img_y + y;
+	infos.img_w = w;
+	infos.img_h = h;
+	infos.pal_data = _tim.pal_data;
+	infos.pal_x = _tim.pal_x;
+	infos.pal_y = _tim.pal_y;
+	infos.pal_w = _tim.pal_w;
+	infos.pal_h = _tim.pal_h;
+
+	return Tim(_bpp, infos, _tim.img_w - w * (4 >> int(_bpp)));
 }
 
 bool Tim::save(const char *fileName, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha, int forcePaletteId) const

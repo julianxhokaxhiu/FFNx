@@ -4,8 +4,28 @@ Texture names pattern in FF8 mostly follows the paths used in FS/FL/FI archives 
 
 It is recommended to use uncompressed DDS for improved loading times.
 
-Except for the Menu module, you can add the language at the beginning of the path for localization:
+There are two types of override:
+- By texture: the easiest for modders, but with a little loading penalty
+- By VRAM page: the fastest, but textures are split into chunks of 256x256, and animation are more difficult to handle
+
+The menu module is only available by VRAM page, since source textures are already splitted by VRAM page,
+the game pass thoses textures directly to the GPU.
+
+If you mod __by texture__, file names look like this:<br>
+`{mod_path}\cardgame\cards_{palette index}.dds` (palette index is zero padded)<br>
+If not specified, the game will always fallback to the path with palette index equals to 00:<br>
+`{mod_path}\cardgame\cards_00.dds`<br>
+You can add the language at the beginning of the path for localization:<br>
 `{mod_path}\fre\cardgame\cards_00.dds`
+
+If you mod __by VRAM page__, file names look like this:<br>
+`{mod_path}\cardgame\cards_{relative vram page}_{palette x}_{palette y}.dds`<br>
+If a texture is not found, the game will always fallback to the path with zeroed palette x and palette y:<br>
+`{mod_path}\cardgame\cards_{relative vram page}_0_0.dds`
+
+When there are both files for the two types of mods, the VRAM page image takes priority over the other one.
+
+Again, use [`trace_loaders`](../../mods/external_textures.md) option to see in the logs the paths the game try to lookup.
 
 ## Triple Triad
 

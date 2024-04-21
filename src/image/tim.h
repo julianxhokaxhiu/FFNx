@@ -115,7 +115,7 @@ public:
 		Bpp16 = 2
 	};
 
-	Tim(Bpp bpp, const ff8_tim &tim);
+	Tim(Bpp bpp, const ff8_tim &tim, int lineSkip = 0);
 	uint16_t colorsPerPal() const;
 	inline Bpp bpp() const {
 		return _bpp;
@@ -170,6 +170,7 @@ public:
 		uint32_t *target, const std::vector<TimRect> &rectangles,
 		bool withAlpha = false
 	) const;
+	Tim chunk(int x, int y, int w, int h);
 	static Tim fromLzsData(const uint8_t *uncompressed_data);
 	static Tim fromTimData(const uint8_t *data);
 private:
@@ -177,4 +178,5 @@ private:
 	bool toRGBA32(uint32_t *target, PaletteDetectionStrategy *paletteDetectionStrategy, bool withAlpha) const;
 	ff8_tim _tim;
 	Bpp _bpp;
+	int _lineSkip;
 };

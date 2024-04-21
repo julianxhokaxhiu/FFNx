@@ -438,8 +438,8 @@ struct ff7_tex_header
 	unsigned char *old_palette_data;
 	uint32_t field_DC;
 	uint32_t field_E0;
-	uint32_t field_E4;
-	uint32_t field_E8;
+	uint32_t *vram_positions;
+	uint32_t y;
 };
 
 struct ff7_texture_set

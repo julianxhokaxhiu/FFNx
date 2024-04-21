@@ -47,6 +47,7 @@ int next_psxvram_x = -1;
 int next_psxvram_y = -1;
 int next_psxvram_pal_x = -1;
 int next_psxvram_pal_y = -1;
+texture_page *current_tex_page = nullptr;
 int next_texl_id = 0;
 int next_texture_count = -1;
 int next_do_not_clear_old_texture = false;
@@ -196,11 +197,13 @@ int read_vram_to_buffer_parent_call1(struc_50 *psxvram, texture_page *tex_page, 
 
 	next_psxvram_x = (x >> (2 - bpp)) + ((rel_pos & 0xF) << 6);
 	next_psxvram_y = y + (((rel_pos >> 4) & 1) << 8);
+	current_tex_page = tex_page;
 
 	int ret = ff8_externals.sub_464F70(psxvram, tex_page, x, y, w, h, bpp, rel_pos, a9, target);
 
 	next_psxvram_x = -1;
 	next_psxvram_y = -1;
+	current_tex_page = nullptr;
 
 	return ret;
 }
@@ -227,11 +230,13 @@ int read_vram_to_buffer_parent_call2(texture_page *tex_page, int rel_pos, int a3
 
 	next_psxvram_x = (tex_page->x >> (2 - tex_page->color_key)) + ((rel_pos & 0xF) << 6);
 	next_psxvram_y = tex_page->y + (((rel_pos >> 4) & 1) << 8);
+	current_tex_page = tex_page;
 
 	int ret = ((int(*)(texture_page *, int, int))ff8_externals.sub_4653B0)(tex_page, rel_pos, a3);
 
 	next_psxvram_x = -1;
 	next_psxvram_y = -1;
+	current_tex_page = nullptr;
 
 	return ret;
 }
@@ -244,6 +249,7 @@ int read_vram_to_buffer_with_palette1_parent_call1(texture_page *tex_page, int r
 	next_psxvram_y = tex_page->y + (((rel_pos >> 4) & 1) << 8);
 	next_psxvram_pal_x = (psxvram_structure->vram_palette_pos & 0x3F) * 16;
 	next_psxvram_pal_y = (psxvram_structure->vram_palette_pos >> 6) & 0x1FF;
+	current_tex_page = tex_page;
 
 	int ret = ((int(*)(texture_page*,int,struc_50*))ff8_externals.sub_464DB0)(tex_page, rel_pos, psxvram_structure);
 
@@ -251,6 +257,7 @@ int read_vram_to_buffer_with_palette1_parent_call1(texture_page *tex_page, int r
 	next_psxvram_y = -1;
 	next_psxvram_pal_x = -1;
 	next_psxvram_pal_y = -1;
+	current_tex_page = nullptr;
 
 	return ret;
 }
@@ -263,6 +270,7 @@ int read_vram_to_buffer_with_palette1_parent_call2(texture_page *tex_page, int r
 	next_psxvram_y = tex_page->y + (((rel_pos >> 4) & 1) << 8);
 	next_psxvram_pal_x = (psxvram_structure->vram_palette_pos & 0x3F) * 16;
 	next_psxvram_pal_y = (psxvram_structure->vram_palette_pos >> 6) & 0x1FF;
+	current_tex_page = tex_page;
 
 	int ret = ((int(*)(texture_page*,int,struc_50*))ff8_externals.sub_465720)(tex_page, rel_pos, psxvram_structure);
 
@@ -270,6 +278,7 @@ int read_vram_to_buffer_with_palette1_parent_call2(texture_page *tex_page, int r
 	next_psxvram_y = -1;
 	next_psxvram_pal_x = -1;
 	next_psxvram_pal_y = -1;
+	current_tex_page = nullptr;
 
 	return ret;
 }
@@ -291,25 +300,101 @@ int read_vram_to_buffer_with_palette2_parent_call(int a1, uint16_t rel_pos, int1
 	return ret;
 }
 
-void read_vram_to_buffer(uint8_t *vram, int vram_w_2048, uint8_t *target, int target_w, signed int w, int h, int bpp)
+void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_header)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s: vram_pos=(%d, %d) target=0x%X target_w=%d w=%d h=%d bpp=%d\n", __func__, next_psxvram_x, next_psxvram_y, int(target), target_w, w, h, bpp);
-
-	if (next_psxvram_x == -1)
+	if (tex_header == nullptr)
 	{
-		ffnx_warning("%s: cannot detect VRAM position\n", __func__);
-	}
-	else
-	{
-		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, target_w, h, Tim::Bpp(bpp));
+		return;
 	}
 
-	ff8_externals.read_vram_1(vram, vram_w_2048, target, target_w, w, h, bpp);
+	const auto textures = texturePacker.matchTextures(tiledTex);
+
+	if (textures.empty())
+	{
+		return;
+	}
+
+	std::string filename;
+	int file_count = 0;
+	int startVramId = 0;
+
+	for (const TexturePacker::IdentifiedTexture &tex: textures)
+	{
+		if (tex.isValid())
+		{
+			if (file_count == 0)
+			{
+				filename.append(tex.name());
+				startVramId = tex.texture().vramId();
+			}
+			else
+			{
+				size_t index = tex.name().find_last_of('/');
+				if (index < 0)
+				{
+					filename.append(tex.name());
+				}
+				else
+				{
+					filename.append(tex.name().substr(index + 1));
+				}
+			}
+			filename.append("_");
+			file_count += 1;
+
+			// Do not produce huge file names
+			if (file_count > 6)
+			{
+				break;
+			}
+		}
+	}
+
+	if (!filename.empty())
+	{
+		int vramId = next_psxvram_x / TEXTURE_WIDTH_BPP16 + (next_psxvram_y >= TEXTURE_HEIGHT ? 16 : 0);
+
+		if (file_count == 1) {
+			// To be on par with remaster naming, instead for example with use "card_16", "card_17" etc.., we starts with "card_0"
+			vramId -= startVramId;
+		}
+
+		if (filename.size() > 240) {
+			filename = filename.substr(0, 240);
+
+			if (!filename.ends_with('_')) {
+				filename.append("_");
+			}
+		}
+
+		filename.append(std::to_string(vramId));
+
+		if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, filename.c_str());
+
+		tex_header->file.pc_name = (char*)external_malloc(1024);
+
+		if (tex_header->file.pc_name != nullptr)
+		{
+			strncpy(tex_header->file.pc_name, filename.c_str(), 1024);
+		}
+	}
 }
 
-void read_vram_to_buffer_with_palette1(uint8_t *vram, int vram_w_2048, uint8_t *target, int target_w, int w, int h, int bpp, uint16_t *vram_palette)
+void free_tex_header(ff8_tex_header *tex_header)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s: vram_pos=(%d, %d) target=0x%X target_w=%d w=%d h=%d bpp=%d vram_palette=%X\n", __func__, next_psxvram_x, next_psxvram_y, int(target), target_w, w, h, bpp, int(vram_palette));
+	if (tex_header != nullptr && uint32_t(tex_header->file.pc_name) > 32)
+	{
+		if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, tex_header->file.pc_name);
+
+		external_free(tex_header->file.pc_name);
+	}
+
+	((void(*)(ff8_tex_header*))ff8_externals.psxvram_texture_page_tex_header_free)(tex_header);
+}
+
+void read_vram_to_buffer(uint8_t *vram, int vram_w_2048, uint8_t *target, int target_w_in_bytes, signed int w, int h, int bpp)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: vram_pos=(%d, %d) target=0x%X target_w_in_bytes=%d w=%d h=%d bpp=%d\n", __func__, next_psxvram_x, next_psxvram_y, int(target), target_w_in_bytes, w, h, bpp);
 
 	if (next_psxvram_x == -1)
 	{
@@ -317,10 +402,39 @@ void read_vram_to_buffer_with_palette1(uint8_t *vram, int vram_w_2048, uint8_t *
 	}
 	else
 	{
-		texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, target_w, h, Tim::Bpp(bpp), next_psxvram_pal_x, next_psxvram_pal_y);
+		const TexturePacker::TiledTex &tiledTex = texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, w, h, Tim::Bpp(bpp));
+
+		if (current_tex_page != nullptr)
+		{
+			set_tex_name(tiledTex, current_tex_page->tex_header);
+		}
 	}
 
-	ff8_externals.read_vram_2_paletted(vram, vram_w_2048, target, target_w, w, h, bpp, vram_palette);
+	ff8_externals.read_vram_1(vram, vram_w_2048, target, target_w_in_bytes, w, h, bpp);
+}
+
+void read_vram_to_buffer_with_palette1(uint8_t *vram, int vram_w_2048, uint8_t *target, int target_w_in_bytes, int w, int h, int bpp, uint16_t *vram_palette)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: vram_pos=(%d, %d) target=0x%X target_w_in_bytes=%d w=%d h=%d bpp=%d vram_palette=%X\n", __func__, next_psxvram_x, next_psxvram_y, int(target), target_w_in_bytes, w, h, bpp, int(vram_palette));
+
+	if (next_psxvram_x == -1)
+	{
+		ffnx_warning("%s: cannot detect VRAM position\n", __func__);
+	}
+	else
+	{
+		const TexturePacker::TiledTex &tiledTex = texturePacker.registerTiledTex(target, next_psxvram_x, next_psxvram_y, w, h, Tim::Bpp(bpp), next_psxvram_pal_x, next_psxvram_pal_y);
+
+		if (current_tex_page != nullptr)
+		{
+			set_tex_name(
+				tiledTex,
+				current_tex_page->sub_tri_gfxobj == nullptr ? current_tex_page->sub_tex_header : (ff8_tex_header *)((ff8_texture_set *)current_tex_page->sub_tri_gfxobj->hundred_data->texture_set)->tex_header
+			);
+		}
+	}
+
+	ff8_externals.read_vram_2_paletted(vram, vram_w_2048, target, target_w_in_bytes, w, h, bpp, vram_palette);
 }
 
 void read_vram_to_buffer_with_palette2(uint8_t *vram, uint8_t *target, int w, int h, int bpp, uint16_t *vram_palette)
@@ -737,7 +851,7 @@ int ff8_wm_chara_one_read_file(int fd, uint8_t *data, size_t size)
 
 	if (save_textures) {
 		char filename[MAX_PATH];
-		snprintf(filename, sizeof(filename), "world/esk/chara_one/");
+		snprintf(filename, sizeof(filename), "world/esk/chara_one");
 		ff8_world_chara_one_model_save_textures(chara_one_world_texture_offsets, data, filename);
 	}
 
@@ -1340,13 +1454,24 @@ void ff8_battle_upload_texture_raw(int16_t *pos_and_size, uint8_t *texture_buffe
 			battle_texture_data_list[index] = BattleTextureFileName();
 
 			next_bpp = Tim::Bpp8;
+			bool skip_save_textures = false;
 
 			// Splitted version of A8DEF.TIM
-			if (stricmp(next_texture_name, "battle/MA8DEF_P.0") == 0 || stricmp(next_texture_name, "battle/MA8DEF_P.1") == 0 || stricmp(next_texture_name, "battle/MA8DEF_P.2") == 0) {
+			if (stricmp(next_texture_name, "battle/MA8DEF_P.0") == 0) {
 				next_bpp = Tim::Bpp4;
+				skip_save_textures = true;
+				strncpy(next_texture_name, "battle/A8DEF0.TIM", sizeof(next_texture_name));
+			} else if (stricmp(next_texture_name, "battle/MA8DEF_P.1") == 0) {
+				next_bpp = Tim::Bpp4;
+				skip_save_textures = true;
+				strncpy(next_texture_name, "battle/A8DEF1.TIM", sizeof(next_texture_name));
+			} else if (stricmp(next_texture_name, "battle/MA8DEF_P.2") == 0) {
+				next_bpp = Tim::Bpp4;
+				skip_save_textures = true;
+				strncpy(next_texture_name, "battle/A8DEF2.TIM", sizeof(next_texture_name));
 			}
 
-			if (save_textures) {
+			if (save_textures && !skip_save_textures) {
 				ff8_tim tim_infos = ff8_tim();
 				tim_infos.img_data = texture_buffer;
 				tim_infos.img_x = pos_and_size[0];
@@ -1409,8 +1534,21 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 
 	texture_infos = TexturePacker::TextureInfos(tim.imageX(), tim.imageY(), tim.imageWidth(), tim.imageHeight(), tim.bpp());
 	palette_infos = TexturePacker::TextureInfos(tim.paletteX(), tim.paletteY(), tim.paletteWidth(), tim.paletteHeight(), Tim::Bpp16);
+
 	next_bpp = tim.bpp();
-	if (battle_texture_id < 0) {
+	if (stricmp(battle_texture_name, "battle/A8DEF.TIM") == 0) {
+		// Exceptionally split the texture into 3 pages, because the game will reupload page by page later (via MA8DEF textures)
+		texture_infos = TexturePacker::TextureInfos(tim.imageX(), tim.imageY(), 64, tim.imageHeight(), tim.bpp());
+		strncpy(next_texture_name, "battle/A8DEF0.TIM", sizeof(next_texture_name));
+		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos);
+		texture_infos = TexturePacker::TextureInfos(tim.imageX() + 64, tim.imageY(), 64, tim.imageHeight(), tim.bpp());
+		strncpy(next_texture_name, "battle/A8DEF1.TIM", sizeof(next_texture_name));
+		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos);
+		texture_infos = TexturePacker::TextureInfos(tim.imageX() + 128, tim.imageY(), 64, tim.imageHeight(), tim.bpp());
+		strncpy(next_texture_name, "battle/A8DEF2.TIM", sizeof(next_texture_name));
+		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos);
+		texture_infos = TexturePacker::TextureInfos(); // Bypass next upload vram
+	} else if (battle_texture_id < 0) {
 		strncpy(next_texture_name, battle_texture_name, sizeof(next_texture_name));
 	} else {
 		snprintf(next_texture_name, sizeof(next_texture_name), "%s-%d", battle_texture_name, battle_texture_id);
@@ -1418,7 +1556,16 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 	}
 
 	if (save_textures) {
-		if (StrStrIA(battle_texture_name, ".X") != nullptr) {
+		if (stricmp(battle_texture_name, "battle/A8DEF.TIM") == 0) {
+			Tim chunk1 = tim.chunk(0, 0, 64, 256),
+				chunk2 = tim.chunk(64, 0, 64, 256),
+				chunk3 = tim.chunk(128, 0, 64, 256);
+			for (int pal = 0; pal < palette_infos.h(); ++pal) {
+				chunk1.save("battle/A8DEF0.TIM", 0, pal, true);
+				chunk2.save("battle/A8DEF1.TIM", 0, pal, true);
+				chunk3.save("battle/A8DEF2.TIM", 0, pal, true);
+			}
+		} else if (StrStrIA(battle_texture_name, ".X") != nullptr) {
 			ff8_battle_state_save_texture(stage, tim, next_texture_name);
 		} else if (palette_infos.h() > 1) {
 			for (int pal = 0; pal < palette_infos.h(); ++pal) {
@@ -1547,4 +1694,7 @@ void vram_init()
 	replace_call(ff8_externals.battle_enter + 0x35, engine_set_init_time);
 	// Clear texture_packer on every module exits
 	replace_call(ff8_externals.psxvram_texture_pages_free + 0x5A, clean_psxvram_pages);
+	// Free pc_name in tex_header
+	replace_call(ff8_externals.psxvram_texture_page_free + 0x98, free_tex_header);
+	replace_call(ff8_externals.psxvram_texture_page_free + 0xAF, free_tex_header);
 }
