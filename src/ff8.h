@@ -1311,6 +1311,7 @@ struct ff8_externals
 	uint32_t stop_cdrom_cleanup_call;
 	uint32_t** savemap;
 	int32_t (*check_game_is_paused)(int32_t);
+	DWORD* is_game_paused;
 	uint32_t sub_470250;
 	uint32_t *ssigpu_callbacks_1;
 	uint32_t *ssigpu_callbacks_2;

@@ -25,7 +25,7 @@ void ff8_handle_ambient_playback()
 {
 	struct game_mode *mode = getmode_cached();
 	static char filename[64]{0};
-	static WORD last_field_id = 0, last_battle_id = 0, is_game_paused = 0;
+	static WORD last_field_id = 0, last_battle_id = 0;
 
 	switch (mode->driver_mode)
 	{
@@ -37,10 +37,9 @@ void ff8_handle_ambient_playback()
 			sprintf(filename, "bat_%d", last_battle_id);
 			nxAudioEngine.playAmbient(filename);
 		}
-		is_game_paused = ff8_externals.check_game_is_paused(NULL) != 0;
-		if (is_game_paused && nxAudioEngine.isAmbientPlaying())
+		if ((*ff8_externals.is_game_paused != 0) && nxAudioEngine.isAmbientPlaying())
 			nxAudioEngine.pauseAmbient();
-		else if (!is_game_paused && !(nxAudioEngine.isAmbientPlaying()))
+		else if (!(*ff8_externals.is_game_paused != 0) && !(nxAudioEngine.isAmbientPlaying()))
 			nxAudioEngine.resumeAmbient();
 		break;
 	case MODE_FIELD:
