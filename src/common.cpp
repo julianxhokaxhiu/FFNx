@@ -63,6 +63,7 @@
 #include "ff8/vibration.h"
 #include "ff8/engine.h"
 #include "ff8/uv_patch.h"
+#include "ff8/ambient.h"
 
 #include "wine.h"
 
@@ -1221,6 +1222,8 @@ void common_flip(struct game_obj *game_object)
 		if (mode->driver_mode == MODE_CARDGAME) common_clear_all(0);
 
 		if (ff8_ssigpu_debug) ff8_externals.refresh_vram_window();
+
+		ff8_handle_ambient_playback();
 	}
 	else
 	{

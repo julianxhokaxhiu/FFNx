@@ -2,6 +2,11 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.19.1...master
 
+## FF8
+
+- Audio: Add ambient layer support for Fields and Battles
+
+
 # 1.19.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.19.0...1.19.1
