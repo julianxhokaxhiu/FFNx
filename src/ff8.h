@@ -334,7 +334,7 @@ struct ff8_tex_header
 	unsigned char *old_palette_data;
 	uint32_t field_DC;
 	uint32_t field_E0;
-	uint32_t x;
+	uint32_t *vram_positions;
 	uint32_t y;
 };
 
@@ -1055,6 +1055,8 @@ struct ff8_externals
 	uint32_t field_main_loop;
 	uint32_t field_main_exit;
 	uint32_t psxvram_texture_pages_free;
+	uint32_t psxvram_texture_page_free;
+	uint32_t psxvram_texture_page_tex_header_free;
 	uint32_t engine_set_init_time;
 	uint32_t sub_4672C0;
 	uint32_t sub_471F70;

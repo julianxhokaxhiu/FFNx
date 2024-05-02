@@ -138,6 +138,8 @@ void ff8_find_externals()
 
 	ff8_externals.psxvram_texture_pages_free = get_relative_call(ff8_externals.field_main_exit, 0x58);
 	ff8_externals.sub_4672C0 = get_relative_call(ff8_externals.psxvram_texture_pages_free, 0x5A);
+	ff8_externals.psxvram_texture_page_free = get_relative_call(ff8_externals.psxvram_texture_pages_free, 0x21);
+	ff8_externals.psxvram_texture_page_tex_header_free = get_relative_call(ff8_externals.psxvram_texture_page_free, 0x98);
 	ff8_externals.engine_set_init_time = get_relative_call(ff8_externals.battle_enter, 0x35);
 
 	common_externals.debug_print2 = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x16);

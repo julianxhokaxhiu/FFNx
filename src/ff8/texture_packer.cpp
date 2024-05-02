@@ -395,7 +395,7 @@ std::list<TexturePacker::IdentifiedTexture> TexturePacker::matchTextures(const T
 
 	std::set<ModdedTextureId> textureIds;
 
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s looking for textures at (%d, %d, %d, %d) in VRAM\n", __func__, tiledTex.x(), tiledTex.y(), tiledTex.w(), tiledTex.h());
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s looking for textures at (%d, %d, %d, %d, bpp=%d) in VRAM\n", __func__, tiledTex.x(), tiledTex.y(), tiledTex.w(), tiledTex.h(), tiledTex.bpp());
 
 	for (int y = 0; y < tiledTex.h(); ++y)
 	{
@@ -636,12 +636,14 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(const std::list<Identifi
 	return drawnTextureTypes;
 }
 
-void TexturePacker::registerTiledTex(const uint8_t *texData, int x, int y, int w, int h, Tim::Bpp bpp, int palX, int palY)
+const TexturePacker::TiledTex &TexturePacker::registerTiledTex(const uint8_t *texData, int xBpp2, int y, int pixelW, int h, Tim::Bpp sourceBpp, int palX, int palY)
 {
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s pointer=0x%X x=%d y=%d bpp=%d palX=%d palY=%d\n", __func__, texData, x, y, bpp, palX, palY);
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s pointer=0x%X xBpp2=%d y=%d pixelW=%d h=%d sourceBpp=%d palX=%d palY=%d\n", __func__, texData, xBpp2, y, pixelW, h, sourceBpp, palX, palY);
 
 	// If this entry already exist, override
-	_tiledTexs[texData] = TiledTex(x, y, w, h, bpp, palX, palY);
+	_tiledTexs[texData] = TiledTex(xBpp2, y, pixelW, h, sourceBpp, palX, palY);
+
+	return _tiledTexs[texData];
 }
 
 void TexturePacker::registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY)
@@ -704,14 +706,19 @@ TexturePacker::TextureInfos::TextureInfos(
 {
 }
 
+int TexturePacker::TextureInfos::vramId() const
+{
+	return x() / TEXTURE_WIDTH_BPP16 + (y() >= TEXTURE_HEIGHT ? 16 : 0);
+}
+
 TexturePacker::TiledTex::TiledTex()
  : TextureInfos()
 {
 }
 
 TexturePacker::TiledTex::TiledTex(
-	int x, int y, int w, int h, Tim::Bpp bpp, int palVramX, int palVramY
-) : TextureInfos(x, y, w, h, bpp)
+	int xBpp2, int y, int pixelW, int h, Tim::Bpp sourceBpp, int palVramX, int palVramY
+) : TextureInfos(xBpp2, y, pixelW / (4 >> sourceBpp), h, sourceBpp)
 {
 	if (palVramX >= 0) {
 		palettes[0] = TextureInfos(palVramX, palVramY, 256, 1, Tim::Bpp16);

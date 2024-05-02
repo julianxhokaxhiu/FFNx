@@ -79,6 +79,7 @@ public:
 		inline bool hasMultiBpp() const {
 			return _multiBpp;
 		}
+		int vramId() const;
 	private:
 		int _x, _y;
 		int _w, _h;
@@ -154,7 +155,7 @@ public:
 	void clearTextures();
 	// Returns the textures matching the tiledTex
 	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, bool withModsOnly = false) const;
-	void registerTiledTex(const uint8_t *texData, int x, int y, int w, int h, Tim::Bpp bpp, int palX = -1, int palY = -1);
+	const TiledTex &registerTiledTex(const uint8_t *texData, int xBpp2, int y, int pixelW, int h, Tim::Bpp sourceBpp, int palX = -1, int palY = -1);
 	void registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY);
 	TiledTex getTiledTex(const uint8_t *texData) const;
 
