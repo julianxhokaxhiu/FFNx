@@ -176,7 +176,7 @@ private:
 	std::map<int, SoLoud::VGMStream*> _sfxEffectsHandler;
 	std::vector<short> _sfxLazyUnloadChannels;
 
-	SoLoud::VGMStream* loadSFX(int id, bool loop = false);
+	SoLoud::VGMStream* loadSFX(std::string id, bool loop = false);
 	void unloadSFXChannel(int channel);
 
 	// MUSIC
@@ -218,8 +218,7 @@ private:
 
 	// MISC
 	// Returns false if the file does not exist
-	template <class T>
-	bool getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type);
+	bool getFilenameFullPath(char *_out, const char* _key, NxAudioEngineLayer _type);
 
 	bool fileExists(const char* filename);
 
@@ -237,7 +236,6 @@ public:
 	// SFX
 	int getSFXIdFromChannel(int channel);
 	void unloadSFX(int id);
-	bool canPlaySFX(int id);
 	bool playSFX(const char* name, int id, int channel, float panning, bool loop = false);
 	void stopSFX(int channel, double time = 0);
 	void pauseSFX(int channel);

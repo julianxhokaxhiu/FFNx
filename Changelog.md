@@ -2,6 +2,11 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.19.1...master
 
+## Common
+
+- Audio: Fix bug that won't allow to configure vanilla SFX IDs using the `sfx/config.toml` file
+
+
 ## FF8
 
 - Audio: Add ambient layer support for Fields and Battles

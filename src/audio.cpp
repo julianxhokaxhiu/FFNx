@@ -77,8 +77,7 @@ void NxAudioEngine::loadConfig()
 	}
 }
 
-template <class T>
-bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _type)
+bool NxAudioEngine::getFilenameFullPath(char *_out, const char* _key, NxAudioEngineLayer _type)
 {
 	std::vector<std::string> extensions;
 
@@ -105,19 +104,19 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, T _key, NxAudioEngineLayer _
 		switch (_type)
 		{
 		case NxAudioEngineLayer::NXAUDIOENGINE_SFX:
-			sprintf(_out, "%s/%s/%d.%s", basedir, external_sfx_path.c_str(), (int)_key, extension.c_str());
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_sfx_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), (const char*)_key, extension.c_str());
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), (const char*)_key, extension.c_str());
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_ambient_path.c_str(), (const char*)_key, extension.c_str());
+			sprintf(_out, "%s/%s/%s.%s", basedir, external_ambient_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO:
-			sprintf(_out, "%s.%s", (const char*)_key, extension.c_str());
+			sprintf(_out, "%s.%s", _key, extension.c_str());
 			break;
 		}
 
@@ -211,27 +210,17 @@ void NxAudioEngine::cleanup()
 }
 
 // SFX
-bool NxAudioEngine::canPlaySFX(int id)
+SoLoud::VGMStream* NxAudioEngine::loadSFX(std::string id, bool loop)
 {
-	char filename[MAX_PATH];
-
-	return getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
-}
-
-SoLoud::VGMStream* NxAudioEngine::loadSFX(int id, bool loop)
-{
-	int _curId = id - 1;
-
 	if (_engineInitialized)
 	{
 		char filename[MAX_PATH];
 
-		bool exists = getFilenameFullPath<int>(filename, id, NxAudioEngineLayer::NXAUDIOENGINE_SFX);
+		bool exists = getFilenameFullPath(filename, id.c_str(), NxAudioEngineLayer::NXAUDIOENGINE_SFX);
 
 		if (exists)
 		{
-			std::string _id = std::to_string(id);
-			auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][_id];
+			auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][id];
 
 			if (node)
 			{
@@ -296,8 +285,9 @@ void NxAudioEngine::unloadSFXChannel(int channel)
 bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning, bool loop)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
-	int _curId = id - 1;
+	int _curId = id;
 	bool skipPlay = false;
+	std::string _id(name);
 
 	// If channel is known to be reusable
 	if (channel <= _sfxReusableChannels)
@@ -338,7 +328,8 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 		{
 			auto _newId = shuffleIds->get(getRandomInt(0, shuffleIds->size() - 1));
 
-			_curId = _newId->value_or(id) - 1;
+			_curId = _newId->value_or(id);
+			_id = std::to_string(_curId);
 		}
 
 		// Sequentially playback new SFX ids, if any entry found for the current id
@@ -352,7 +343,8 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 
 			_sfxSequentialIndexes[name]++;
 
-			_curId = _newId->value_or(id) - 1;
+			_curId = _newId->value_or(id);
+			_id = std::to_string(_curId);
 		}
 
 		// Should we skip playing the track?
@@ -366,9 +358,9 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	if (options->stream == nullptr)
 	{
 		options->game_id = id;
-		options->id = _curId + 1;
+		options->id = _curId;
 		// Avoid loading a stream if it is meant to be skipped
-		options->stream = skipPlay ? nullptr : loadSFX(options->id, loop);
+		options->stream = skipPlay ? nullptr : loadSFX(_id, loop);
 	}
 
 	if (skipPlay)
@@ -526,7 +518,7 @@ bool NxAudioEngine::canPlayMusic(const char* name)
 {
 	char filename[MAX_PATH];
 
-	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
+	return getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 }
 
 bool NxAudioEngine::isMusicDisabled(const char* name)
@@ -576,7 +568,7 @@ SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath,
 
 	if (!exists)
 	{
-		exists = getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
+		exists = getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_MUSIC);
 	}
 
 	if (exists)
@@ -1044,7 +1036,7 @@ bool NxAudioEngine::canPlayVoice(const char* name)
 {
 	char filename[MAX_PATH];
 
-	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+	return getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 }
 
 bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
@@ -1075,7 +1067,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 		{
 			auto _newName = shuffleNames->get(getRandomInt(0, shuffleNames->size() - 1));
 
-			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(name), NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+			exists = getFilenameFullPath(filename, _newName->value_or(name), NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 		}
 
 		// Sequentially playback new voice items, if any entry found for the current id
@@ -1089,13 +1081,13 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 
 			_voiceSequentialIndexes[name]++;
 
-			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(name), NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+			exists = getFilenameFullPath(filename, _newName->value_or(name), NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 		}
 	}
 
 	// If none of the previous configurations worked, load the default one as last tentative
 	if (!exists) {
-		exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+		exists = getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 	}
 
 	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: slot[%d] %s\n", __func__, slot, filename);
@@ -1194,7 +1186,7 @@ bool NxAudioEngine::canPlayAmbient(const char* name)
 {
 	char filename[MAX_PATH];
 
-	return getFilenameFullPath<const char*>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+	return getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 }
 
 bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
@@ -1216,7 +1208,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 		{
 			auto _newName = shuffleIds->get(getRandomInt(0, shuffleIds->size() - 1));
 
-			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(""), NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+			exists = getFilenameFullPath(filename, _newName->value_or(""), NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 		}
 
 		// Sequentially playback new Ambient ids, if any entry found for the current id
@@ -1233,7 +1225,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 
 			_ambientSequentialIndexes[name]++;
 
-			exists = getFilenameFullPath<const char *>(filename, _newName->value_or(""), NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+			exists = getFilenameFullPath(filename, _newName->value_or(""), NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 		}
 
 		// Fade In time for this track, if configured
@@ -1253,7 +1245,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 		}
 	}
 	else
-		exists = getFilenameFullPath<const char *>(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+		exists = getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 
 	if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
@@ -1374,13 +1366,13 @@ bool NxAudioEngine::canPlayMovieAudio(const char* nameWithPath)
 {
 	char filename[MAX_PATH];
 
-	return getFilenameFullPath<const char*>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
+	return getFilenameFullPath(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
 }
 
 bool NxAudioEngine::playMovieAudio(const char* nameWithPath, int slot, float volume)
 {
 	char filename[MAX_PATH];
-	bool exists = getFilenameFullPath<const char *>(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
+	bool exists = getFilenameFullPath(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
 
 	if (trace_all || trace_movies) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 
