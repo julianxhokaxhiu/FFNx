@@ -1244,8 +1244,11 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 			_currentAmbient.fade_out = fadeOutTime->value_or(0.0f);
 		}
 	}
-	else
+
+	// If none of the previous configurations worked, load the default one as last tentative
+	if (!exists) {
 		exists = getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
+	}
 
 	if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
 

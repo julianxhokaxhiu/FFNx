@@ -5,7 +5,7 @@
 ## Common
 
 - Audio: Fix bug that won't allow to configure vanilla SFX IDs using the `sfx/config.toml` file
-
+- Audio: Fix bug where overriding only fade flags in `ambient/config.toml` would not allow the ambient audio file to be loaded
 
 ## FF8
 
