@@ -105,7 +105,7 @@ void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t 
 
 	make_path(filename);
 
-	if (! fileExists(filename))
+	if (!fileExists(filename))
 	{
 		if (!newRenderer.saveTexture(filename, width, height, data)) ffnx_error("Save texture failed for the file [ %s ].\n", filename);
 	}
@@ -168,12 +168,12 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 	{
 		if((palette_index & 0x3FFFFFFF) != 0)
 		{
-			if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n");
+			if(trace_all || show_missing_textures) ffnx_info("No external texture found [%s], falling back to palette 0\n", filename);
 			return load_normal_texture(data, dataSize, name, palette_index & 0xC0000000, width, height, gl_set, tex_path);
 		}
 		else
 		{
-			if(trace_all || show_missing_textures) ffnx_info("No external texture found, switching back to the internal one.\n");
+			if(trace_all || show_missing_textures) ffnx_info("No external texture found [%s], switching back to the internal one.\n", filename);
 			return 0;
 		}
 	}
