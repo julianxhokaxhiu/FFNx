@@ -410,7 +410,7 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 	const bimg::ImageMip &mip = image.mip();
 
 	drawImage(
-		(const uint32_t *)mip.m_data, mip.m_width / image.scale(), image.scale(),
+		reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width / image.scale(), image.scale(),
 		targetRgba, targetW, targetScale,
 		sourceX, sourceY, width, height,
 		targetX, targetY
@@ -478,9 +478,8 @@ void TextureModStandard::forceCurrentPalette(int8_t currentPalette)
 
 TextureBackground::TextureBackground(
 	const TexturePacker::IdentifiedTexture &originalTexture,
-	const std::vector<Tile> &mapTiles,
-	int vramPageId
-) : ModdedTexture(originalTexture), _mapTiles(mapTiles), _vramPageId(vramPageId)
+	const std::vector<Tile> &mapTiles
+) : ModdedTexture(originalTexture), _mapTiles(mapTiles)
 {
 }
 
@@ -502,7 +501,7 @@ bool TextureBackground::createImages(const char *extension, char *foundExtension
 		return false;
 	}
 
-	if (!_texture.createImage(filename, _vramPageId >= 0 ? TEXTURE_HEIGHT : _colsCount * TILE_SIZE, TEXTURE_HEIGHT))
+	if (!_texture.createImage(filename, _colsCount * TILE_SIZE, TEXTURE_HEIGHT))
 	{
 		return false;
 	}
@@ -514,16 +513,14 @@ bool TextureBackground::createImages(const char *extension, char *foundExtension
 	size_t tileId = 0;
 	for (const Tile &tile: _mapTiles) {
 		const uint8_t texId = tile.texID & 0xF;
-		if (_vramPageId < 0 || _vramPageId == texId) {
-			const uint8_t bpp = (tile.texID >> 7) & 3;
-			const uint16_t key = uint16_t(texId) | (uint16_t(tile.srcX / TILE_SIZE) << 4) | (uint16_t(tile.srcY / TILE_SIZE) << 8) | (uint16_t(bpp) << 12);
-			_usedBpps |= 1 << bpp;
+		const uint8_t bpp = (tile.texID >> 7) & 3;
+		const uint16_t key = uint16_t(texId) | (uint16_t(tile.srcX / TILE_SIZE) << 4) | (uint16_t(tile.srcY / TILE_SIZE) << 8) | (uint16_t(bpp) << 12);
+		_usedBpps |= 1 << bpp;
 
-			auto it = _tileIdsByTextureId.find(key);
-			// Remove some duplicates (but keep those which render differently)
-			if (it == _tileIdsByTextureId.end() || ! ff8_background_tiles_looks_alike(tile, _mapTiles.at(it->second))) {
-				_tileIdsByTextureId.insert(std::pair<uint16_t, size_t>(key, tileId));
-			}
+		auto it = _tileIdsByTextureId.find(key);
+		// Remove some duplicates (but keep those which render differently)
+		if (it == _tileIdsByTextureId.end() || ! ff8_background_tiles_looks_alike(tile, _mapTiles.at(it->second))) {
+			_tileIdsByTextureId.insert(std::pair<uint16_t, size_t>(key, tileId));
 		}
 		++tileId;
 	}
@@ -542,28 +539,9 @@ TexturePacker::TextureTypes TextureBackground::drawToImage(
 	int16_t vramPalXBpp2, int16_t vramPalY) const
 {
 	const bimg::ImageMip &mip = _texture.mip();
-	const uint32_t *imgData = (const uint32_t *)mip.m_data;
+	const uint32_t *imgData = reinterpret_cast<const uint32_t *>(mip.m_data);
 	const uint8_t imgScale = _texture.scale();
 	const uint32_t imgWidth = mip.m_width / imgScale, imgHeight = mip.m_height / imgScale;
-
-	// Tonberry way
-	if (_vramPageId >= 0) {
-		const int realOffsetX = (_vramPageId * TEXTURE_WIDTH_BPP16 - offsetX) / (4 >> uint16_t(targetBpp));
-		const int vramPageIdTarget = realOffsetX / TEXTURE_WIDTH_BPP16;
-
-		if (vramPageIdTarget == _vramPageId) {
-			drawImage(
-				imgData, imgWidth, imgScale,
-				targetRgba, targetW, targetScale,
-				0, 0, imgWidth, imgHeight,
-				0, 0
-			);
-
-			return TexturePacker::ExternalTexture;
-		}
-
-		return TexturePacker::NoTexture;
-	}
 
 	const uint8_t cols = targetW / TILE_SIZE, rows = targetH / TILE_SIZE;
 	const uint8_t colsBpp = TILE_SIZE / (1 << uint16_t(targetBpp));

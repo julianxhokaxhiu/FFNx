@@ -1077,11 +1077,6 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		patch_code_byte(ff8_externals.worldmap_alter_uv_sub_553B40 + 0x234, 0);
 	}
 
-	// Fix blue color in battle with fire spells
-	patch_code_byte(ff8_externals.read_vram_palette_sub_467370 + 0x6F, 0);
-	// Fix half alpha for palettes
-	patch_code_byte(ff8_externals.read_vram_palette_sub_467370 + 0x64, 0xFF);
-
 	// #####################
 	// battle toggle
 	// #####################

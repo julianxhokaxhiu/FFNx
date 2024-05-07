@@ -6,11 +6,13 @@
 
 - Audio: Fix bug that won't allow to configure vanilla SFX IDs using the `sfx/config.toml` file
 - Audio: Fix bug where overriding only fade flags in `ambient/config.toml` would not allow the ambient audio file to be loaded
+- External textures: Reuse already loaded textures on fallback to palette 0 ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
+- Rendering: Add bilinear filtering option `enable_bilinear` ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 
 ## FF8
 
 - Audio: Add ambient layer support for Fields and Battles
-- External textures: Add support for modding VRAM pages directly, like Tonberry Mods does, see [documentation](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/ff8/mods/external_textures.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
+- External textures: Add support for modding VRAM pages directly, like Tonberry Mods does, see [documentation](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/ff8/mods/external_textures.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/687 https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 - External textures: Fix filename lookup which can match more textures than it should in a VRAM page ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - External textures: Split `battle/A8DEF.TIM` into three files to avoid redundant textures ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - Rendering: Avoid texture reupload in case of palette swap ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )

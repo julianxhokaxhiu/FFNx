@@ -140,15 +140,14 @@ public:
 	enum TextureTypes {
 		NoTexture = 0,
 		ExternalTexture = 1,
-		InternalTexture = 2,
-		RemoveTexture = 4
+		InternalTexture = 2
 	};
 
 	explicit TexturePacker();
 	bool setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), int textureCount = -1, bool clearOldTexture = true);
-	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId = -1, const char *extension = nullptr, char *found_extension = nullptr);
+	bool setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, const char *extension = nullptr, char *found_extension = nullptr);
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
-	void setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim);
+	bool setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim);
 	void animateTextureByCopy(int sourceXBpp2, int y, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY);
 	void forceCurrentPalette(int xBpp2, int y, int8_t paletteId);
 	void clearTiledTexs();
@@ -159,9 +158,9 @@ public:
 	void registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY);
 	TiledTex getTiledTex(const uint8_t *texData) const;
 
-	TextureTypes drawTextures(
-		const uint8_t *texData, uint32_t *rgbaImageData, uint32_t dataSize, int originalW, int originalH,
-		int palIndex, uint8_t *outScale, uint32_t **outTarget
+	uint32_t composeTextures(
+		const uint8_t *texData, uint32_t *rgbaImageData, int originalW, int originalH,
+		int palIndex, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set, bool *isExternal
 	) const;
 
 	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha = true, bool after = false, TextureTypes textureType = NoTexture);

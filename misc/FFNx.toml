@@ -85,6 +85,11 @@ enable_antialiasing = 0
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_anisotropic = true
 
+#[BILINEAR]
+# Enable bilinear filtering on 3D textures. For FF7, textures in menu are also filtered.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_bilinear = false
+
 #[LIGHTING]
 # Enable advanced lighting mode with real-time shadows.
 # NOTICE: Parameters such as light direction and color can be edited on the lighting debug window in the FFNx DevTools.

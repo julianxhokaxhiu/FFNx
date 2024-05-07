@@ -300,6 +300,29 @@ int read_vram_to_buffer_with_palette2_parent_call(int a1, uint16_t rel_pos, int1
 	return ret;
 }
 
+const std::string &tex_name_special_cases(std::string &filename, const std::string &full_filename, int vram_id)
+{
+	// Keep compatibility with old Tonberry mods that uses VRAM ID 13 to 26
+	if (full_filename.starts_with("field/mapdata/")) {
+		char fallback_dir[MAX_PATH]{}, fallback[MAX_PATH]{};
+		snprintf(fallback, sizeof(fallback), "%s%d", full_filename.c_str(), vram_id + VRAM_PAGE_MIM_MAX_COUNT);
+
+		ffnx_info("%s: %s %s %d\n", __func__, filename.c_str(), full_filename.c_str(), vram_id);
+
+		for (const std::string &ext: mod_ext) {
+			snprintf(fallback_dir, sizeof(fallback_dir), "%s/%s/%s.%s", basedir, mod_path.c_str(), fallback, ext.c_str());
+			ffnx_info("%s: %s\n", __func__, fallback_dir);
+
+			if (fileExists(fallback_dir)) {
+				filename = std::string(fallback);
+				return filename;
+			}
+		}
+	}
+
+	return filename;
+}
+
 void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_header)
 {
 	if (tex_header == nullptr)
@@ -359,6 +382,8 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 			vramId -= startVramId;
 		}
 
+		std::string full_filename = filename;
+
 		if (filename.size() > 240) {
 			filename = filename.substr(0, 240);
 
@@ -368,6 +393,8 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 		}
 
 		filename.append(std::to_string(vramId));
+
+		filename = tex_name_special_cases(filename, full_filename, vramId);
 
 		if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, filename.c_str());
 
@@ -453,13 +480,30 @@ void read_vram_to_buffer_with_palette2(uint8_t *vram, uint8_t *target, int w, in
 	ff8_externals.read_vram_3_paletted(vram, target, w, h, bpp, vram_palette);
 }
 
-void ff8_read_vram_palette(int CLUT, uint8_t *rgba, int size)
+void ff8_read_vram_palette(int CLUT, uint8_t *bgra, int size)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: CLUT=(%d, %d) size=%d\n", __func__, (CLUT & 0x3F) * 16, (CLUT >> 6) & 0x1FF, size);
 
 	last_CLUT = CLUT;
 
-	((void(*)(int,uint8_t*,int))ff8_externals.read_vram_palette_sub_467370)(CLUT, rgba, size);
+	uint16_t *psxvram_buffer_pointer = (uint16_t *)ff8_vram_seek((CLUT & 0x3F) * 16, (CLUT >> 6) & 0x1FF);
+
+	// Rewrite color conversion and alpha part
+	for (int i = 0; i < size; ++i) {
+		uint16_t color = *psxvram_buffer_pointer++;
+
+		uint8_t r = color & 31,
+			g = (color >> 5) & 31,
+			b = (color >> 10) & 31;
+
+		// Fix blue color in battle with fire spells, and fix palettes always semi-transparent
+		bgra[0] = (b << 3) + (b >> 2);
+		bgra[1] = (g << 3) + (g >> 2);
+		bgra[2] = (r << 3) + (r >> 2);
+		bgra[3] = color == 0 ? 0 : ((color & 0x8000) != 0 ? 0x7F : 0xFF);
+
+		bgra += 4;
+	}
 }
 
 int ff8_write_palette_to_driver(int source_offset, int size, uint32_t *source_rgba, int dest_offset, ff8_texture_set *texture_set)
@@ -965,7 +1009,10 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 	}
 
 	// Redirect internal texl textures
-	texturePacker.setTextureRedirection(next_texture_name, oldTexture, newTexture, tim);
+	if (!texturePacker.setTextureRedirection(next_texture_name, oldTexture, newTexture, tim))
+	{
+		return;
+	}
 
 	*next_texture_name = '\0';
 
@@ -1028,47 +1075,9 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 	}
 
 	if (!has_dir || !texturePacker.setTextureBackground(tex_filename, 0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles)) {
-		snprintf(tex_directory, MAX_PATH, "field/mapdata/%.2s/%s", get_current_field_name(), get_current_field_name());
-		snprintf(tex_abs_directory, sizeof(tex_abs_directory), "%s/%s", mod_path.c_str(), tex_directory);
+		snprintf(tex_directory, sizeof(tex_directory), "field/mapdata/%.2s/%s/%s", get_current_field_name(), get_current_field_name(), get_current_field_name());
 
-		if (!dirExists(tex_abs_directory)) {
-			if (trace_all || trace_loaders || trace_vram) {
-				ffnx_warning("Directory does not exist, abort looking for field textures: %s\n", tex_abs_directory);
-			}
-
-			return ret;
-		}
-
-		if (tiles.empty()) {
-			tiles = ff8_background_parse_tiles(map_data);
-		}
-
-		char found_extension[MAX_PATH] = {};
-		char *extension = nullptr;
-		bool found_pages[VRAM_PAGE_MIM_MAX_COUNT] = {};
-
-		snprintf(tex_directory, MAX_PATH, "%s/%s", tex_directory, get_current_field_name());
-
-		// Compatibility with Tonberry, vram pages 13-25
-		for (int i = 0; i < VRAM_PAGE_MIM_MAX_COUNT; ++i) {
-			snprintf(tex_filename, MAX_PATH, "%s_%d", tex_directory, i + VRAM_PAGE_MIM_MAX_COUNT);
-
-			if (texturePacker.setTextureBackground(tex_filename, i * TEXTURE_WIDTH_BPP16, 256, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles, i, extension, found_extension)) {
-				extension = found_extension;
-				found_pages[i] = true;
-			}
-		}
-
-		// Compatibility with Tonberry, vram pages 0-12
-		for (int i = 0; i < VRAM_PAGE_MIM_MAX_COUNT; ++i) {
-			snprintf(tex_filename, MAX_PATH, "%s_%d", tex_directory, i);
-
-			if (!found_pages[i] && !texturePacker.setTextureBackground(tex_filename, i * TEXTURE_WIDTH_BPP16, 256, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles, i, extension, found_extension)) {
-				break;
-			}
-
-			extension = found_extension;
-		}
+		texturePacker.setTexture(tex_directory, TexturePacker::TextureInfos(0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, Tim::Bpp16, true), TexturePacker::TextureInfos(0, 232, 256, 24, Tim::Bpp16), 0);
 	}
 
 	return ret;
