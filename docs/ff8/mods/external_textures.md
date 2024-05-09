@@ -144,8 +144,9 @@ Some mobile models.
 Path: `{mod_path}\world\dat\texl\texture{texture number}_00`
 
 High res version of `wmset\section38\texture{0,7}_00`. Will be loaded by the game as you travel the worldmap.
-Ideally, for a smooth experience, keep `wmset\section38\texture{0,7}_00` texture resolution
-low (and uncompressed DDS) and increase the resolution in the texl directory.
+
+**Note:** Ideally, for a smooth experience, do not use texl, instead use `world\dat\wmset\section38\texture0_texture1_16_0_0.dds`
+which is GPU accelerated.
 
 ### chara.one
 
@@ -158,7 +159,7 @@ Path: `{mod_path}\world\esk\chara_one\model{model number}-{texture number}_00`
 | model2-0_00 -> model3-1_00 | Chocobos         |
 | model4-0_00 -> model4-1_00 | Squall (Student) |
 | model5-0_00 -> model5-1_00 | Zell             |
-| model6-0_00 -> model6-1_00 | Selphie (unused) |
+| model6-0_00 -> model6-1_00 | Selphie          |
 
 ## Menu
 

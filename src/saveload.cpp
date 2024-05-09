@@ -92,7 +92,7 @@ void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t 
 	{
 		_snprintf(filename, sizeof(filename), "%s/%s/%s.png", basedir, mod_path.c_str(), name);
 	}
-	else if ((palette_index & 0xC0000000) == 0xC0000000)
+	else if (palette_index & 0x40000000)
 	{
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u.png", basedir, mod_path.c_str(), name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF);
 	}
@@ -146,7 +146,7 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 		{
 			_snprintf(filename, sizeof(filename), "%s/%s/%s.%s", basedir, tex_path.c_str(), name, mod_ext[idx].c_str());
 		}
-		else if ((palette_index & 0xC0000000) == 0xC0000000)
+		else if (palette_index & 0x40000000)
 		{
 			_snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u.%s", basedir, tex_path.c_str(), name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF, mod_ext[idx].c_str());
 		}
@@ -166,10 +166,19 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 
 	if(!ret)
 	{
-		if((palette_index & 0x3FFFFFFF) != 0)
+		if(palette_index != uint32_t(-1) && (palette_index & 0x3FFFFFFF) != 0)
 		{
 			if(trace_all || show_missing_textures) ffnx_info("No external texture found [%s], falling back to palette 0\n", filename);
-			return load_normal_texture(data, dataSize, name, palette_index & 0xC0000000, width, height, gl_set, tex_path);
+			if(gl_set->default_texture_id)
+			{
+				return gl_set->default_texture_id;
+			}
+			else
+			{
+				gl_set->default_texture_id = load_normal_texture(data, dataSize, name, (palette_index & 0xC0000000) == 0xC0000000 ? -1 : (palette_index & 0x40000000), width, height, gl_set, tex_path);
+
+				return gl_set->default_texture_id;
+			}
 		}
 		else
 		{
@@ -188,7 +197,7 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 				{
 					_snprintf(filename, sizeof(filename), "%s/%s/%s_%s.%s", basedir, tex_path.c_str(), name, it.second.c_str(), mod_ext[idx].c_str());
 				}
-				else if ((palette_index & 0xC0000000) == 0xC0000000)
+				else if (palette_index & 0x40000000)
 				{
 					_snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u_%s.%s", basedir, tex_path.c_str(), name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF, it.second.c_str(), mod_ext[idx].c_str());
 				}
@@ -266,7 +275,15 @@ uint32_t load_animated_texture(const void* data, uint32_t dataSize, const char* 
 	if(palette_index != 0)
 	{
 		if(trace_all || show_missing_textures) ffnx_info("No external texture found, falling back to palette 0\n");
-		ret = load_animated_texture(data, dataSize, name, 0, width, height, gl_set, tex_path);
+		if(gl_set->default_texture_id)
+		{
+			ret = gl_set->default_texture_id;
+		}
+		else
+		{
+			ret = load_animated_texture(data, dataSize, name, 0, width, height, gl_set, tex_path);
+			gl_set->default_texture_id = ret;
+		}
 		if(ret) gl_set->animated_textures[texture_key] = ret;
 		return ret;
 	}

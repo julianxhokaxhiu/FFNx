@@ -1497,77 +1497,58 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 	{
 		if(trace_all || trace_loaders) ffnx_trace("texture file name: %s\n", VREF(tex_header, file.pc_name));
 
+		// Don't use palette index on fallback (for keeping compatibility with Tonberry mods)
+		if(ff8 && _strnicmp(VREF(tex_header, file.pc_name), "field/mapdata/", strlen("field/mapdata/") - 1) == 0) saveload_palette_index |= 0x80000000;
+
 		texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name), saveload_palette_index, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
 
-		if (enable_lighting)
+		if (!ff8)
 		{
-			std::string path = VREF(tex_header, file.pc_name);
-			std::string filename = path.substr(path.find_last_of("/") + 1);
-
-			if(lighting.isDisabledLightingTexture(filename))
+			if (enable_lighting)
 			{
-				gl_set->disable_lighting = true;
+				std::string path = VREF(tex_header, file.pc_name);
+				std::string filename = path.substr(path.find_last_of("/") + 1);
+
+				if(lighting.isDisabledLightingTexture(filename))
+				{
+					gl_set->disable_lighting = true;
+				}
 			}
+
+			if(!_strnicmp(VREF(tex_header, file.pc_name), "world", strlen("world") - 1)) gl_set->force_filter = true;
+
+			if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/usfont", strlen("menu/usfont") - 1))
+			{
+				gl_set->force_filter = true;
+				gl_set->force_zsort = true;
+			}
+
+			if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win", strlen("menu/btl_win") - 1)) gl_set->force_zsort = true;
+
+			if(!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand_1", strlen("flevel/hand_1") - 1)) gl_set->force_filter = true;
 		}
-
-		if(!_strnicmp(VREF(tex_header, file.pc_name), "world", strlen("world") - 1)) gl_set->force_filter = true;
-
-		if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/usfont", strlen("menu/usfont") - 1))
-		{
-			gl_set->force_filter = true;
-			gl_set->force_zsort = true;
-		}
-
-		if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win", strlen("menu/btl_win") - 1)) gl_set->force_zsort = true;
-
-		if(!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand_1", strlen("flevel/hand_1") - 1)) gl_set->force_filter = true;
 	}
 
 	if(ff8 && texture == 0)
 	{
-		uint32_t *image_data_scaled = nullptr;
-		uint8_t scale = 1;
-		TexturePacker::TextureTypes textureType = texturePacker.drawTextures(
-			VREF(tex_header, image_data), reinterpret_cast<uint32_t *>(image_data), dataSize, originalWidth, originalHeight,
+		bool external = true;
+		texture = texturePacker.composeTextures(
+			VREF(tex_header, image_data), reinterpret_cast<uint32_t *>(image_data), originalWidth, originalHeight,
 			VREF(tex_header, palette_index) / 2,
-			&scale, &image_data_scaled
+			VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set, &external
 		);
 
-		if (save_textures && textureType != TexturePacker::InternalTexture) {
-			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
-				driver_free(image_data_scaled);
-			}
-
-			return false;
+		if (texture == uint32_t(-1))
+		{
+			return true; // Remove texture
 		}
 
-		if (textureType == TexturePacker::NoTexture)
+		if (texture == 0)
 		{
-			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
-				driver_free(image_data_scaled);
-			}
-
 			if(VREF(texture_set, ogl.external)) stats.external_textures--;
 			VRASS(texture_set, ogl.external, false);
 		}
-		else if (textureType == TexturePacker::RemoveTexture)
-		{
-			if (image_data_scaled != nullptr && image_data_scaled != image_data) {
-				driver_free(image_data_scaled);
-			}
-
-			return true;
-		}
-		else
-		{
-			VREF(texture_set, ogl.width) = originalWidth * scale;
-			VREF(texture_set, ogl.height) = originalHeight * scale;
-			// Data is passed to bgfx, not need to free it here
-			bool copyData = image_data_scaled == image_data;
-			texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(image_data_scaled), VREF(texture_set, ogl.width), VREF(texture_set, ogl.height), 0, RendererTextureType::BGRA, true, copyData);
-		}
-
-		if (textureType == TexturePacker::InternalTexture)
+		else if (external == false)
 		{
 			gl_replace_texture(texture_set, VREF(tex_header, palette_index), texture);
 
@@ -1805,7 +1786,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 				}
 
 				if (pal.isValid()) {
-					saveload_palette_index = uint32_t(0xC0000000) | ((uint32_t(pal.y()) & 0x7FFF) << 15) | (uint32_t(pal.x()) & 0x7FFF);
+					saveload_palette_index = uint32_t(0x40000000) | ((uint32_t(pal.y()) & 0x7FFF) << 15) | (uint32_t(pal.x()) & 0x7FFF);
 				} else {
 					saveload_palette_index = uint32_t(-1);
 				}

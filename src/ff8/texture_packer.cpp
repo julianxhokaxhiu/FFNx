@@ -22,6 +22,7 @@
 #include "texture_packer.h"
 #include "../saveload.h"
 #include "../patch.h"
+#include "../renderer.h"
 #include "mod.h"
 #include <set>
 
@@ -144,7 +145,7 @@ bool TexturePacker::setTexture(const char *name, const TextureInfos &texture, co
 
 	IdentifiedTexture tex(name, texture, palette);
 
-	if (hasNamedTexture)
+	if (hasNamedTexture && textureCount != 0)
 	{
 		TextureModStandard *mod = new TextureModStandard(tex);
 
@@ -163,16 +164,16 @@ bool TexturePacker::setTexture(const char *name, const TextureInfos &texture, co
 	return tex.mod() != nullptr;
 }
 
-bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, int bgTexId, const char *extension, char *found_extension)
+bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, const char *extension, char *found_extension)
 {
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s %s x=%d y=%d w=%d h=%d tileCount=%d bgTexId=%d\n", __func__, name, x, y, w, h, mapTiles.size(), bgTexId);
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s %s x=%d y=%d w=%d h=%d tileCount=%d\n", __func__, name, x, y, w, h, mapTiles.size());
 
 	ModdedTextureId textureId = makeTextureId(x, y);
 	setVramTextureId(textureId, x, y, w, h);
 
 	IdentifiedTexture tex(name, TextureInfos(x, y, w, h, Tim::Bpp16, true));
 
-	TextureBackground *mod = new TextureBackground(tex, mapTiles, bgTexId);
+	TextureBackground *mod = new TextureBackground(tex, mapTiles);
 	if (mod->createImages(extension, found_extension))
 	{
 		tex.setMod(mod);
@@ -187,7 +188,7 @@ bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, 
 	return tex.mod() != nullptr;
 }
 
-void TexturePacker::setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim)
+bool TexturePacker::setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim)
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s: %s old=(%d, %d, %d, %d) <= new=(%d, %d, %d, %d)\n", __func__, name,
 		oldTexture.x(), oldTexture.y(), oldTexture.w(), oldTexture.h(),
@@ -199,7 +200,7 @@ void TexturePacker::setTextureRedirection(const char *name, const TextureInfos &
 	{
 		ffnx_warning("TexturePacker::%s cannot find original texture of redirection\n", __func__);
 
-		return;
+		return false;
 	}
 
 	auto it = _textures.find(textureId);
@@ -208,7 +209,7 @@ void TexturePacker::setTextureRedirection(const char *name, const TextureInfos &
 	{
 		ffnx_warning("TexturePacker::%s cannot find original texture of redirection 2\n", __func__);
 
-		return;
+		return false;
 	}
 
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s: found %s\n", __func__, it->second.printableName());
@@ -230,6 +231,14 @@ void TexturePacker::setTextureRedirection(const char *name, const TextureInfos &
 	}
 	else
 	{
+		char filename[MAX_PATH];
+		if (it->second.mod() != nullptr
+			|| ModdedTexture::findExternalTexture("world/dat/wmset/section38/texture0_texture1_16_0_0", filename, 0, false))
+		{
+			// Disable internal redirection, for perfomance reasons, because it will be overloaded by a mod
+			return false;
+		}
+
 		if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s: use internal texture\n", __func__);
 
 		delete mod;
@@ -238,14 +247,14 @@ void TexturePacker::setTextureRedirection(const char *name, const TextureInfos &
 
 		if (!imageData)
 		{
-			return;
+			return false;
 		}
 
 		if (!tim.toRGBA32MultiPaletteGrid(imageData, 4, 4, 0, 4, true))
 		{
 			driver_free(imageData);
 
-			return;
+			return false;
 		}
 
 		// Use internal texture
@@ -253,6 +262,8 @@ void TexturePacker::setTextureRedirection(const char *name, const TextureInfos &
 	}
 
 	_textures[textureId].setRedirection(redirectionTextureId, red);
+
+	return red.mod() != nullptr;
 }
 
 void TexturePacker::animateTextureByCopy(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY)
@@ -477,20 +488,19 @@ std::list<TexturePacker::IdentifiedTexture> TexturePacker::matchTextures(const T
 	return ret;
 }
 
-TexturePacker::TextureTypes TexturePacker::drawTextures(
-	const uint8_t *texData, uint32_t *rgbaImageData, uint32_t dataSize, int originalW, int originalH,
-	int palIndex, uint8_t *outScale, uint32_t **outTarget) const
+uint32_t TexturePacker::composeTextures(
+	const uint8_t *texData, uint32_t *rgbaImageData, int originalW, int originalH,
+	int palIndex, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set, bool *isExternal) const
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s texData=0x%X originalSize=(%d, %d) palIndex=%d\n", __func__, texData, originalW, originalH, palIndex);
 
-	*outScale = 1;
-	*outTarget = rgbaImageData;
+	*isExternal = true;
 
 	if (_textures.empty())
 	{
 		if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s No textures to draw\n", __func__);
 
-		return NoTexture;
+		return 0;
 	}
 
 	auto it = _tiledTexs.find(texData);
@@ -499,7 +509,7 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 	{
 		if (trace_all || trace_vram) ffnx_error("TexturePacker::%s Unknown tiledTex data\n", __func__);
 
-		return NoTexture;
+		return 0;
 	}
 
 	const TiledTex &tiledTex = it->second;
@@ -508,14 +518,14 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 	{
 		if (trace_all || trace_vram) ffnx_error("TexturePacker::%s Invalid tiledTex data\n", __func__);
 
-		return NoTexture;
+		return 0;
 	}
 
 	if (!tiledTex.isPaletteValid(palIndex))
 	{
 		if (trace_all || trace_vram) ffnx_warning("TexturePacker::%s Palette is not set yet, we should not consider this texture\n", __func__);
 
-		return NoTexture;
+		return 0;
 	}
 
 	std::list<IdentifiedTexture> textures = matchTextures(tiledTex, true);
@@ -524,7 +534,7 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 	{
 		if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s No matched textures at (%d, %d)\n", __func__, tiledTex.x(), tiledTex.y());
 
-		return NoTexture;
+		return 0;
 	}
 
 	TextureInfos palette = tiledTex.palette(palIndex);
@@ -537,6 +547,13 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 			if (pair.second.mod() != nullptr)
 			{
 				scale = std::max(scale, pair.second.mod()->scale(palette.x(), palette.y()));
+				// Cache for redirections (texl)
+				if (gl_set->default_texture_id != 0)
+				{
+					if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s Texture already uploaded, not need for another one\n", __func__);
+
+					return gl_set->default_texture_id;
+				}
 			}
 		}
 
@@ -544,6 +561,11 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 		{
 			scale = std::max(scale, tex.mod()->scale(palette.x(), palette.y()));
 		}
+	}
+
+	if (scale == 0)
+	{
+		return 0;
 	}
 
 	uint32_t *target = rgbaImageData;
@@ -562,7 +584,7 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 
 		if (target == nullptr)
 		{
-			return NoTexture;
+			return 0;
 		}
 
 		if (scale > 1)
@@ -571,19 +593,33 @@ TexturePacker::TextureTypes TexturePacker::drawTextures(
 			scale_up_image_data(rgbaImageData, target, originalW, originalH, scale);
 		}
 	}
-	else if (scale == 0)
+
+	TextureTypes textureType = drawTextures(textures, tiledTex, palette, target, originalW, originalH, scale);
+
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s tex=(%d, %d) bpp=%d paletteVram=(%d, %d) drawnTextureTypes=0x%X scale=%d\n", __func__, tiledTex.x(), tiledTex.y(), tiledTex.bpp(), palette.x(), palette.y(), textureType, scale);
+
+	if (textureType == TexturePacker::InternalTexture || (!save_textures && textureType == TexturePacker::ExternalTexture))
 	{
-		return NoTexture;
+		*isExternal = textureType == TexturePacker::InternalTexture;
+		*width = originalW * scale;
+		*height = originalH * scale;
+		// Data is passed to bgfx, not need to free it here
+		bool copyData = target == rgbaImageData;
+		uint32_t texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, true, copyData);
+
+		if (palIndex == 0) {
+			gl_set->default_texture_id = texture;
+		}
+
+		return texture;
 	}
 
-	*outScale = scale;
-	*outTarget = target;
+	if (target != nullptr && target != rgbaImageData)
+	{
+		driver_free(target);
+	}
 
-	TextureTypes ret = drawTextures(textures, tiledTex, palette, target, originalW, originalH, scale);
-
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s tex=(%d, %d) bpp=%d paletteVram=(%d, %d) drawnTextureTypes=0x%X scale=%d\n", __func__, tiledTex.x(), tiledTex.y(), tiledTex.bpp(), palette.x(), palette.y(), ret, scale);
-
-	return ret;
+	return 0;
 }
 
 TexturePacker::TextureTypes TexturePacker::drawTextures(const std::list<IdentifiedTexture> &textures, const TiledTex &tiledTex, const TextureInfos &palette, uint32_t *target, int targetW, int targetH, uint8_t scale) const

@@ -80,8 +80,8 @@ public:
 		uint32_t *targetRgba, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp,
 		int16_t paletteVramX, int16_t paletteVramY
 	) const=0;
-protected:
 	static bool findExternalTexture(const char *name, char *outFilename, uint8_t palette_index, bool hasPal, const char *extension = nullptr, char *foundExtension = nullptr);
+protected:
 	static void drawImage(
 		const uint32_t *sourceRgba, int sourceRgbaW, uint8_t sourceScale,
 		uint32_t *targetRgba, int targetRgbaW, uint8_t targetScale,
@@ -98,7 +98,7 @@ protected:
 	}
 private:
 	TexturePacker::IdentifiedTexture _originalTexture;
-	bool _isInternal;
+	bool _isInternal, _isFlushed;
 };
 
 class TextureModStandard : public ModdedTexture {
@@ -134,13 +134,12 @@ class TextureBackground : public ModdedTexture {
 public:
 	TextureBackground(
 		const TexturePacker::IdentifiedTexture &originalTexture,
-		const std::vector<Tile> &mapTiles,
-		int vramPageId
+		const std::vector<Tile> &mapTiles
 	);
 	TextureBackground(const TextureBackground &other) = delete;
 	~TextureBackground();
 	bool isBpp(Tim::Bpp bpp) const override;
-	uint8_t scale(int vramPalXBpp2, int vramPalY) const override {
+	inline uint8_t scale(int vramPalXBpp2, int vramPalY) const override {
 		return _texture.scale();
 	}
 	bool createImages(const char *extension = nullptr, char *foundExtension = nullptr);
@@ -153,7 +152,6 @@ private:
 	std::vector<Tile> _mapTiles;
 	std::unordered_multimap<uint16_t, size_t> _tileIdsByTextureId;
 	TextureImage _texture;
-	int _vramPageId;
 	uint8_t _colsCount, _usedBpps;
 };
 
@@ -167,7 +165,7 @@ struct TextureRawImage : public ModdedTexture {
 	inline bool isValid() const {
 		return _scale != 0;
 	}
-	uint8_t scale(int vramPalXBpp2, int vramPalY) const override {
+	inline uint8_t scale(int vramPalXBpp2, int vramPalY) const override {
 		return _scale;
 	}
 	TexturePacker::TextureTypes drawToImage(
