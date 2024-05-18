@@ -15,6 +15,7 @@
 - External textures: Add support for modding VRAM pages directly, like Tonberry Mods does, see [documentation](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/ff8/mods/external_textures.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/687 https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 - External textures: Fix filename lookup which can match more textures than it should in a VRAM page ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - External textures: Split `battle/A8DEF.TIM` into three files to avoid redundant textures ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
+- External music: Fix music get stopped in Fisherman's Horizon concert ( https://github.com/julianxhokaxhiu/FFNx/pull/694 )
 - Rendering: Avoid texture reupload in case of palette swap ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - Rendering: Fix texture unload when multiple palettes are written ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - Rendering: Prevent the game from sending textures with half-alpha colors ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )

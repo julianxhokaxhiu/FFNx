@@ -760,6 +760,8 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 		}
 	}
 
+	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: handle=%X\n", __func__, groupHandle);
+
 	if (!_engine.isVoiceGroupEmpty(groupHandle)) {
 		_musics[channel].handle = groupHandle;
 		_musics[channel].id = id;
@@ -1090,7 +1092,7 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 		exists = getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 	}
 
-	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: slot[%d] %s\n", __func__, slot, filename);
+	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: slot[%d] %s exists=%d\n", __func__, slot, filename, exists);
 
 	if (exists)
 	{
@@ -1123,14 +1125,23 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 
 void NxAudioEngine::stopVoice(int slot, double time)
 {
+	SoLoud::handle handle = _currentVoice[slot].handle;
+
+	if (trace_all || trace_voice) ffnx_trace("NxAudioEngine::%s: slot=%d time=%lf handle=%X\n", __func__, slot, time, handle);
+
+	if (!_engine.isValidVoiceHandle(handle))
+	{
+		return;
+	}
+
 	if (time > 0.0)
 	{
-		_engine.fadeVolume(_currentVoice[slot].handle, 0, time);
-		_engine.scheduleStop(_currentVoice[slot].handle, time);
+		_engine.fadeVolume(handle, 0, time);
+		_engine.scheduleStop(handle, time);
 	}
 	else
 	{
-		_engine.stop(_currentVoice[slot].handle);
+		_engine.stop(handle);
 	}
 }
 
@@ -1250,7 +1261,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 		exists = getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT);
 	}
 
-	if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
+	if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s exists=%d handle=%X\n", __func__, filename, exists, _currentAmbient.handle);
 
 	// Stop any previously playing ambient
 	if (_engine.isValidVoiceHandle(_currentAmbient.handle))
@@ -1377,7 +1388,7 @@ bool NxAudioEngine::playMovieAudio(const char* nameWithPath, int slot, float vol
 	char filename[MAX_PATH];
 	bool exists = getFilenameFullPath(filename, nameWithPath, NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO);
 
-	if (trace_all || trace_movies) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, filename);
+	if (trace_all || trace_movies) ffnx_trace("NxAudioEngine::%s: %s exists=%d\n", __func__, filename, exists);
 
 	// Stop any previously playing movie audio
 	if (_engine.isValidVoiceHandle(_currentMovieAudio[slot].handle))
