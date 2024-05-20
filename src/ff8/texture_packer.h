@@ -130,11 +130,22 @@ public:
 		inline bool isValid() const {
 			return !_name.empty();
 		}
+		inline bool isAnimated() const {
+			return _isAnimated;
+		}
+		void setCurrentAnimationFrame(int frameId);
+		void setCurrentAnimationFrame(int xBpp2, int y, int wBpp2, int h);
+		inline int currentAnimationFrame() const {
+			return _frameId;
+		}
 	private:
 		TextureInfos _texture, _palette;
 		std::string _name;
 		ModdedTexture *_mod;
 		std::unordered_map<ModdedTextureId, IdentifiedTexture> _redirections;
+		int _frameId;
+		std::vector<uint64_t> _frames;
+		bool _isAnimated;
 	};
 
 	enum TextureTypes {
@@ -149,11 +160,11 @@ public:
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
 	bool setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim);
 	void animateTextureByCopy(int sourceXBpp2, int y, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY);
-	void forceCurrentPalette(int xBpp2, int y, int8_t paletteId);
+	void setCurrentAnimationFrame(int xBpp2, int y, int8_t frameId);
 	void clearTiledTexs();
 	void clearTextures();
 	// Returns the textures matching the tiledTex
-	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, bool withModsOnly = false) const;
+	std::list<IdentifiedTexture> matchTextures(const TiledTex &tiledTex, bool withModsOnly = false, bool withAnimatedOnly = false) const;
 	const TiledTex &registerTiledTex(const uint8_t *texData, int xBpp2, int y, int pixelW, int h, Tim::Bpp sourceBpp, int palX = -1, int palY = -1);
 	void registerPaletteWrite(const uint8_t *texData, int palIndex, int palX, int palY);
 	TiledTex getTiledTex(const uint8_t *texData) const;

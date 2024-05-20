@@ -299,6 +299,8 @@ void TexturePacker::animateTextureByCopy(int sourceXBpp2, int sourceY, int sourc
 
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s matches %s inPalette=%d\n", __func__, it->second.printableName(), inPalette);
 
+	it->second.setCurrentAnimationFrame(sourceXBpp2, sourceY, sourceWBpp2, sourceH);
+
 	if (textureId != textureIdTarget)
 	{
 		if (textureIdTarget == INVALID_TEXTURE)
@@ -314,6 +316,8 @@ void TexturePacker::animateTextureByCopy(int sourceXBpp2, int sourceY, int sourc
 		}
 
 		if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s also matches %s for target\n", __func__, itTarget->second.printableName());
+
+		itTarget->second.setCurrentAnimationFrame(sourceXBpp2, sourceY, sourceWBpp2, sourceH);
 
 		if (itTarget->second.mod() != nullptr)
 		{
@@ -345,7 +349,7 @@ void TexturePacker::animateTextureByCopy(int sourceXBpp2, int sourceY, int sourc
 	}
 }
 
-void TexturePacker::forceCurrentPalette(int xBpp2, int y, int8_t paletteId)
+void TexturePacker::setCurrentAnimationFrame(int xBpp2, int y, int8_t frameId)
 {
 	ModdedTextureId textureId = _vramTextureIds.at(xBpp2 + y * VRAM_WIDTH);
 	if (textureId == INVALID_TEXTURE)
@@ -360,11 +364,13 @@ void TexturePacker::forceCurrentPalette(int xBpp2, int y, int8_t paletteId)
 		return;
 	}
 
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s matches %s\n", __func__, it->second.name());
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s matches %s\n", __func__, it->second.printableName());
+
+	it->second.setCurrentAnimationFrame(frameId);
 
 	if (it->second.mod() != nullptr && it->second.mod()->canCopyRect())
 	{
-		dynamic_cast<TextureModStandard *>(it->second.mod())->forceCurrentPalette(paletteId);
+		dynamic_cast<TextureModStandard *>(it->second.mod())->forceCurrentPalette(frameId);
 	}
 }
 
@@ -389,7 +395,7 @@ void TexturePacker::clearTextures()
 	_textures.clear();
 }
 
-std::list<TexturePacker::IdentifiedTexture> TexturePacker::matchTextures(const TiledTex &tiledTex, bool withModsOnly) const
+std::list<TexturePacker::IdentifiedTexture> TexturePacker::matchTextures(const TiledTex &tiledTex, bool withModsOnly, bool withAnimatedOnly) const
 {
 	std::list<IdentifiedTexture> ret;
 
@@ -406,7 +412,7 @@ std::list<TexturePacker::IdentifiedTexture> TexturePacker::matchTextures(const T
 
 	std::set<ModdedTextureId> textureIds;
 
-	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s looking for textures at (%d, %d, %d, %d, bpp=%d) in VRAM\n", __func__, tiledTex.x(), tiledTex.y(), tiledTex.w(), tiledTex.h(), tiledTex.bpp());
+	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s looking for %s textures at (%d, %d, %d, %d, bpp=%d) in VRAM\n", __func__, withModsOnly ? "modded" : (withAnimatedOnly ? "animated" : "all"), tiledTex.x(), tiledTex.y(), tiledTex.w(), tiledTex.h(), tiledTex.bpp());
 
 	for (int y = 0; y < tiledTex.h(); ++y)
 	{
@@ -476,6 +482,13 @@ std::list<TexturePacker::IdentifiedTexture> TexturePacker::matchTextures(const T
 		else if (!texture.texture().hasMultiBpp() && texture.texture().bpp() != tiledTex.bpp())
 		{
 			if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s ignore matches %s because not right bpp rect=(%d, %d, %d, %d) bpp=%d (tiledTexBpp=%d)\n", __func__, texture.printableName(), texture.texture().x(), texture.texture().y(), texture.texture().w(), texture.texture().h(), texture.texture().bpp(), tiledTex.bpp());
+
+			continue;
+		}
+
+		if (withAnimatedOnly && !texture.isAnimated())
+		{
+			if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s ignore matches %s because not animated rect=(%d, %d, %d, %d) bpp=%d (tiledTexBpp=%d)\n", __func__, texture.printableName(), texture.texture().x(), texture.texture().y(), texture.texture().w(), texture.texture().h(), texture.texture().bpp(), tiledTex.bpp());
 
 			continue;
 		}
@@ -762,7 +775,8 @@ TexturePacker::TiledTex::TiledTex(
 }
 
 TexturePacker::IdentifiedTexture::IdentifiedTexture() :
-	_texture(TextureInfos()), _palette(TextureInfos()), _name(""), _mod(nullptr)
+	_texture(TextureInfos()), _palette(TextureInfos()), _name(""), _mod(nullptr),
+	_frameId(-1), _isAnimated(false)
 {
 }
 
@@ -770,7 +784,8 @@ TexturePacker::IdentifiedTexture::IdentifiedTexture(
 	const char *name,
 	const TextureInfos &texture,
 	const TextureInfos &palette
-) : _texture(texture), _palette(palette), _name(name == nullptr ? "" : name), _mod(nullptr)
+) : _texture(texture), _palette(palette), _name(name == nullptr ? "" : name), _mod(nullptr),
+    _frameId(-1), _isAnimated(false)
 {
 }
 
@@ -787,4 +802,26 @@ void TexturePacker::IdentifiedTexture::setMod(ModdedTexture *mod)
 void TexturePacker::IdentifiedTexture::setRedirection(ModdedTextureId textureId, const IdentifiedTexture &redirection)
 {
 	_redirections[textureId] = redirection;
+}
+
+void TexturePacker::IdentifiedTexture::setCurrentAnimationFrame(int frameId)
+{
+	_frameId = frameId;
+	_isAnimated = true;
+}
+
+void TexturePacker::IdentifiedTexture::setCurrentAnimationFrame(int xBpp2, int y, int wBpp2, int h)
+{
+	uint64_t key = uint64_t(xBpp2 + y * VRAM_WIDTH) | (uint64_t(wBpp2 + h * VRAM_WIDTH) << 32);
+	_isAnimated = true;
+	auto it = std::find(_frames.begin(), _frames.end(), key);
+	if (it == _frames.end())
+	{
+		_frameId = _frames.size();
+		_frames.push_back(key);
+	}
+	else
+	{
+		_frameId = std::distance(_frames.begin(), it);
+	}
 }
