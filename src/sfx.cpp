@@ -54,13 +54,13 @@ void ff7_sfx_stop_channel(int channel, double time = 0)
 	sfx_state[channel-1].is_looped = false;
 }
 
-void ff8_sfx_stop_channel(int channel)
+void ff8_sfx_stop_channel(int channel, double time = 0)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d\n", __func__, channel);
 
 	if (channel <= FF8_MAX_CHANNEL_NUMBER)
 	{
-		nxAudioEngine.stopSFX(channel);
+		nxAudioEngine.stopSFX(channel, time);
 	}
 }
 
@@ -115,10 +115,10 @@ void ff8_sfx_set_volume(uint32_t channel, uint32_t volume, int32_t time)
 {
 	if (trace_all || trace_sfx) ffnx_trace("%s: channel=%d, volume=%d, time=%d\n", __func__, channel, volume, time);
 
-	if (channel <= FF8_MAX_CHANNEL_NUMBER && volume <= 127)
-	{
+	if (volume == 0)
+		ff8_sfx_stop_channel(channel, time / 60.0f);
+	else if (channel <= FF8_MAX_CHANNEL_NUMBER && volume <= 127)
 		nxAudioEngine.setSFXVolume(channel, volume / 127.0f, time / 60.0f);
-	}
 }
 
 void ff7_sfx_set_volume_trans_on_channel(byte volume, int channel, int time)
