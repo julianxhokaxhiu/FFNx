@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.19.1",
-  "builtin-baseline": "898b728edc5e0d12b50015f9cd18247c4257a3eb",
+  "builtin-baseline": "a4275b7eee79fb24ec2e135481ef5fce8b41c339",
   "dependencies": [
     "bgfx",
     {
@@ -76,17 +76,17 @@
     {
       "name": "ffmpeg",
       "version": "6.1.1",
-      "port-version": 2
+      "port-version": 4
     },
     {
       "name": "imgui",
-      "version": "1.90.2",
+      "version": "1.90.6",
       "port-version": 0
     },
     {
       "name": "libpng",
       "version": "1.6.43",
-      "port-version": 0
+      "port-version": 1
     },
     {
       "name": "directxtex",
@@ -96,7 +96,7 @@
     {
       "name": "mimalloc",
       "version": "2.1.2",
-      "port-version": 1
+      "port-version": 2
     },
     {
       "name": "openpsf",
@@ -150,7 +150,7 @@
     },
     {
       "name": "cgltf",
-      "version": "1.13",
+      "version": "1.14",
       "port-version": 0
     },
     {

@@ -9,10 +9,10 @@ index f34fe127..539deb44 100644
  
  if(CMAKE_SYSTEM_NAME MATCHES Darwin)
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 675eb364..57a3a35e 100644
+index 3e707614..1dcd6a42 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -84,3 +84,30 @@ if(NOT EMSCRIPTEN)
+@@ -90,3 +90,30 @@ if(NOT EMSCRIPTEN)
  		set_target_properties(libvgmstream_shared PROPERTIES LINK_FLAGS_RELEASE -s)
  	endif()
  endif()
@@ -44,7 +44,7 @@ index 675eb364..57a3a35e 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/nwa_decoder.h DESTINATION include/libvgmstream/coding )
 +endif()
 diff --git a/src/streamfile.c b/src/streamfile.c
-index 8566febf..8ceaa561 100644
+index 183c76bc..171812c4 100644
 --- a/src/streamfile.c
 +++ b/src/streamfile.c
 @@ -260,8 +260,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char

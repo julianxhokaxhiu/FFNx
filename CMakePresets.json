@@ -19,6 +19,7 @@
         "strategy": "set"
       },
       "environment": {
+        "NUGET_CLI_LANGUAGE": "en-us",
         "VCPKG_ROOT": "C:/vcpkg",
         "VCPKG_BINARY_SOURCES": "clear;nuget,github,readwrite;default,readwrite"
       },
