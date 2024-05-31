@@ -71,6 +71,7 @@ extern long external_voice_music_fade_volume;
 extern bool enable_voice_auto_text;
 extern bool save_textures;
 extern bool save_textures_legacy;
+extern bool save_exe_data;
 extern bool trace_all;
 extern bool trace_renderer;
 extern bool trace_movies;

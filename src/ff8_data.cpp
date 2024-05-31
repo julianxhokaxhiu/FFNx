@@ -802,6 +802,19 @@ void ff8_find_externals()
 	ff8_externals.load_magic_data_sub_571900 = get_relative_call(ff8_externals.load_magic_data_sub_571B80, 0x1E);
 	ff8_externals.load_magic_data_sub_5718E0 = get_relative_call(ff8_externals.func_off_battle_effect_textures_50AF93[198], 0x5);
 
+	ff8_externals.sub_84D110 = get_absolute_value(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::Scan], 0x28);
+	ff8_externals.sub_84D1F0 = get_absolute_value(ff8_externals.sub_84D110, 0x14);
+	ff8_externals.sub_84D230 = get_absolute_value(ff8_externals.sub_84D1F0, 0x9);
+	ff8_externals.sub_84D2C0 = get_absolute_value(ff8_externals.sub_84D230, 0xC);
+	ff8_externals.sub_84D4B0 = get_absolute_value(ff8_externals.sub_84D2C0, 0x3C);
+	ff8_externals.sub_84F2A0 = get_absolute_value(ff8_externals.sub_84D4B0, 0x39);
+	ff8_externals.sub_84F860 = get_absolute_value(ff8_externals.sub_84F2A0, 0x14);
+	ff8_externals.sub_84F8D0 = get_absolute_value(ff8_externals.sub_84F860, 0xD);
+	ff8_externals.scan_get_text_sub_B687C0 = get_relative_call(ff8_externals.sub_84F8D0, 0x88);
+	ff8_externals.battle_entities_1D27BCB = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x18);
+	ff8_externals.scan_text_positions = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x20);
+	ff8_externals.scan_text_data = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x27);
+
 	// Required by Steam edition
 	switch (version)
 	{

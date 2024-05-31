@@ -7,6 +7,7 @@
 - Audio: Fix bug that won't allow to configure vanilla SFX IDs using the `sfx/config.toml` file
 - Audio: Fix bug where overriding only fade flags in `ambient/config.toml` would not allow the ambient audio file to be loaded
 - External textures: Reuse already loaded textures on fallback to palette 0 ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
+- Modding: Allow replacing EXE text/data hardcoded in code ( https://github.com/julianxhokaxhiu/FFNx/pull/699 )
 - Rendering: Add bilinear filtering option `enable_bilinear` ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 
 ## FF8

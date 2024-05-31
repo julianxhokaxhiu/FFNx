@@ -28,6 +28,7 @@ namespace FF8BattleEffect {
     enum Effect {
         Cure = 0,
         Leviathan = 5,
+        Scan = 39,
         Tonberry = 89,
         Siren = 94,
         Minimog = 95,

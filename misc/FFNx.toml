@@ -465,6 +465,11 @@ save_textures = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 save_textures_legacy = false
 
+# Dump identified data from EXE to "<direct_mode_path>/exe/"
+# List of files dumped here: https://github.com/julianxhokaxhiu/FFNx/tree/master/docs/mods/exe_data.md
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+save_exe_data = false
+
 # This path is where the Hext patching layer will look for txt files.
 # The path will ALWAYS have appended:
 # 1. The game name ( if FF7 it will be "ff7/", if FF8 will be "ff8/")
