@@ -1492,6 +1492,18 @@ struct ff8_externals
 	BYTE** dword_27973E8;
 	uint32_t battle_set_action_upload_raw_palette_sub_B666F0;
 	uint32_t battle_set_action_upload_raw_palette_sub_B66400;
+	uint32_t sub_84D110;
+	uint32_t sub_84D1F0;
+	uint32_t sub_84D230;
+	uint32_t sub_84D2C0;
+	uint32_t sub_84D4B0;
+	uint32_t sub_84F2A0;
+	uint32_t sub_84F860;
+	uint32_t sub_84F8D0;
+	uint32_t scan_get_text_sub_B687C0;
+	uint32_t battle_entities_1D27BCB;
+	uint32_t scan_text_data;
+	uint32_t scan_text_positions;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

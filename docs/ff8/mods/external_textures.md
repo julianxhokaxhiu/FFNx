@@ -18,6 +18,8 @@ If not specified, the game will always fallback to the path with palette index e
 You can add the language at the beginning of the path for localization:<br>
 `{mod_path}\fre\cardgame\cards_00.dds`
 
+Available language suffixes: eng (English), fre (French), ger (German), ita (Italian), jp (Japanese), spa (Spanish).
+
 If you mod __by VRAM page__, file names look like this:<br>
 `{mod_path}\cardgame\cards_{relative vram page}_{palette x}_{palette y}.dds`<br>
 If a texture is not found, the game will always fallback to the path with zeroed palette x and palette y:<br>

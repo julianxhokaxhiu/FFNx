@@ -17,6 +17,8 @@ Welcome to the FFNx documentation!
 ## Modding
 
 - [DevTools](mods/devtools.md)
+- [Direct Mode](mods/direct_mode.md)
+- [EXE Data](mods/exe_data.md)
 - [Audio Engine](mods/audio_engine.md)
 - [Video Encoding Guide](mods/video_encoding_guide.md)
 - [External textures](mods/external_textures.md)

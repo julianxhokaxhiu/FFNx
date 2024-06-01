@@ -41,9 +41,9 @@ std::map<uint16_t, std::string> additional_textures = {
 	{RendererTextureSlot::TEX_PBR, "pbr"}
 };
 
-void make_path(char *name)
+void make_path(const char *name)
 {
-	char *next = name;
+	const char *next = name;
 
 	while((next = strchr(next, '/')))
 	{

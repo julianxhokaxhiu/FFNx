@@ -55,6 +55,7 @@
 #include "lighting.h"
 #include "achievement.h"
 #include "game_cfg.h"
+#include "exe_data.h"
 
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
@@ -919,6 +920,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 					}
 					vibration_init();
 				}
+
+				exe_data_init();
 
 				// Init Day Night Cycle
 				if (!ff8 && enable_time_cycle) ff7::time.init();

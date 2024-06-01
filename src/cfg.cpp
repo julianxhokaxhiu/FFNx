@@ -54,6 +54,7 @@ bool enable_voice_auto_text;
 bool enable_auto_run;
 bool save_textures;
 bool save_textures_legacy;
+bool save_exe_data;
 bool trace_all;
 bool trace_renderer;
 bool trace_movies;
@@ -212,6 +213,7 @@ void read_cfg()
 	external_mesh_path = config["external_mesh_path"].value_or("");
 	save_textures = config["save_textures"].value_or(false);
 	save_textures_legacy = config["save_textures_legacy"].value_or(false);
+	save_exe_data = config["save_exe_data"].value_or(false);
 	trace_all = config["trace_all"].value_or(false);
 	trace_renderer = config["trace_renderer"].value_or(false);
 	trace_movies = config["trace_movies"].value_or(false);
