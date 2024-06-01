@@ -45,7 +45,8 @@ enum WIDESCREEN_MODE
     WM_DISABLED,
     WM_EXTEND_ONLY,
     WM_ZOOM,
-    WM_EXTEND_WIDE
+    WM_EXTEND_WIDE,
+    WM_FILL
 };
 
 struct Keyframe

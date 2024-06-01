@@ -34,6 +34,8 @@
 #include "../log.h"
 #include "../matrix.h"
 
+#include "../ff7/widescreen.h"
+
 struct matrix d3dviewport_matrix = {
 	1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 1.0f, 0.0f, 0.0f,
@@ -60,6 +62,24 @@ void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 
 	if (!ff8 && !ff7_field_center) movieOffsetY = 0.0f;
 
+	float movie_quad_x = 0.0f;
+	float movie_quad_y = movieOffsetY;
+	float movie_quad_height = movieHeight + movieOffsetY;
+	float movie_quad_width = movieWidth;
+	if (!ff8)
+	{
+		if (widescreen.getMovieMode() == WM_FILL)
+		{
+			movie_quad_x = wide_viewport_x;
+			movie_quad_y = 0.0f;
+			movie_quad_height = movieHeight + 2 * movieOffsetY;
+			movie_quad_width = wide_game_width;
+		} else if (widescreen.getMovieMode() == WM_EXTEND_ONLY)
+		{
+			movie_quad_x = wide_viewport_x;
+		}
+	}
+
 	/*  y0    y2
 	 x0 +-----+ x2
 		|    /|
@@ -72,17 +92,17 @@ void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 	*/
 
 	// 0
-	float x0 = 0.0f;
-	float y0 = movieOffsetY;
+	float x0 = movie_quad_x;
+	float y0 = movie_quad_y;
 	float u0 = 0.0f;
 	float v0 = 0.0f;
 	// 1
 	float x1 = x0;
-	float y1 = movieHeight + movieOffsetY;
+	float y1 = movie_quad_height;
 	float u1 = u0;
 	float v1 = 1.0f;
 	// 2
-	float x2 = movieWidth;
+	float x2 = x0 + movie_quad_width;
 	float y2 = y0;
 	float u2 = 1.0f;
 	float v2 = v0;

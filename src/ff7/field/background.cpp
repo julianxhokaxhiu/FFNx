@@ -544,6 +544,7 @@ namespace ff7::field
         float half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
 
         point->x += widescreen.getHorizontalOffset();
+        point->y += widescreen.getVerticalOffset();
 
         if (point->x > camera_range.right - half_width)
             point->x = camera_range.right - half_width;
