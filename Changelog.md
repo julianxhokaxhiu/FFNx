@@ -9,6 +9,9 @@
 - External textures: Reuse already loaded textures on fallback to palette 0 ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 - Rendering: Add bilinear filtering option `enable_bilinear` ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 
+## FF7
+- Widescreen: Added feature to extend movies in true widescreen mode ( https://github.com/julianxhokaxhiu/FFNx/pull/700 )
+
 ## FF8
 
 - Audio: Add ambient layer support for Fields and Battles
