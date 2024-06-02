@@ -1049,8 +1049,8 @@ struct battle_text_data
 {
 	short buffer_idx;
 	short field_2;
-	char wait_frames;
-	char n_frames;
+	byte wait_frames;
+	byte n_frames;
 };
 
 struct battle_chdir_struc
