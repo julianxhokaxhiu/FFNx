@@ -53,7 +53,16 @@ extern uint32_t nodefer;
 void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 {
 	struct game_obj *game_object = common_externals.get_game_object();
-	float ratio = game_width / (float)width;
+	uint32_t cur_game_width = game_width;
+	if (!ff8)
+	{
+		if (widescreen.getMovieMode() == WM_EXTEND_ONLY)
+		{
+			cur_game_width = wide_game_width;
+		}
+	}
+
+	float ratio = cur_game_width / (float)width;
 	float movieHeight = ratio * height;
 	float movieWidth = ratio * width;
 	float movieOffsetY = (game_height - movieHeight) / 2.0f;
@@ -76,7 +85,7 @@ void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 			movie_quad_width = wide_game_width;
 		} else if (widescreen.getMovieMode() == WM_EXTEND_ONLY)
 		{
-			movie_quad_x = wide_viewport_x;
+			movie_quad_x = (game_width - movieWidth) / 2.0f;
 		}
 	}
 
