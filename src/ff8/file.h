@@ -37,3 +37,5 @@ uint32_t(*ff8_read_file)(uint32_t count, void* buffer, struct ff8_file* file);
 void (*ff8_close_file)(struct ff8_file* file);
 
 void ff8_fs_lang_string(char *data);
+
+bool ff8_fs_last_fopen_is_redirected();

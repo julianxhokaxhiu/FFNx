@@ -25,14 +25,17 @@
 
 #include "redirect.h"
 
-int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
+int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamPath)
 {
 	std::string newIn(in);
 
-	std::transform(newIn.begin(), newIn.end(), newIn.begin(), ::tolower);
+	if (!ff8)
+	{
+		std::transform(newIn.begin(), newIn.end(), newIn.begin(), ::tolower);
+	}
 
-	bool isSavegame = strstr(newIn.data(), ".ff7") != NULL;
-	bool isCacheFile = strstr(newIn.data(), ".p") != NULL;
+	bool isSavegame = !ff8 && strstr(newIn.data(), ".ff7") != NULL;
+	bool isCacheFile = !ff8 && strstr(newIn.data(), ".p") != NULL;
 
 	if (wantsSteamPath && !fileExists(in))
 	{
@@ -133,11 +136,11 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 		}
 		else if (!isCacheFile)
 		{
-			const char* pos = strstr(newIn.data(), "data");
+			const char* pos = ff8 ? newIn.data() : strstr(newIn.data(), "data");
 
 			if (pos != NULL)
 			{
-				pos += 5;
+				pos += ff8 ? 0 : 5;
 			}
 			else
 			{
@@ -169,9 +172,9 @@ int attempt_redirection(char* in, char* out, size_t size, bool wantsSteamPath)
 	return -1;
 }
 
-int redirect_path_with_override(char* in, char* out, size_t out_size)
+int redirect_path_with_override(const char* in, char* out, size_t out_size)
 {
-  char _newFilename[260]{ 0 };
+  char _newFilename[MAX_PATH]{ 0 };
 
   // Attempt another redirection based on Steam/eStore logic
   int redirect_status = attempt_redirection(in, _newFilename, sizeof(_newFilename), steam_edition || estore_edition);

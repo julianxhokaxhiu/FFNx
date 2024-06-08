@@ -23,11 +23,13 @@
 #include "file.h"
 #include "../ff8.h"
 #include "../log.h"
+#include "../redirect.h"
 
 #include <fcntl.h>
 #include <io.h>
 
 char next_direct_file[MAX_PATH] = "";
+bool last_fopen_is_redirected = false;
 
 size_t get_fl_prefix_size()
 {
@@ -115,6 +117,19 @@ void ff8_fs_archive_free_file_container_sub_archive(ff8_file_container *file_con
 	return ff8_externals.free_file_container(file_container);
 }
 
+bool ff8_attempt_redirection(const char *in, char *out, size_t size)
+{
+	// Remove AppPath from input
+	if (strncmp(in, ff8_externals.app_path, strlen(ff8_externals.app_path)) == 0) {
+		// +1 because the last '\' is stripped from AppPath by the game
+		in += strlen(ff8_externals.app_path) + 1;
+
+		return attempt_redirection(in, out, size) != -1;
+	}
+
+	return false;
+}
+
 int ff8_open(const char *fileName, int oflag, ...)
 {
 	va_list va;
@@ -122,7 +137,7 @@ int ff8_open(const char *fileName, int oflag, ...)
 	va_start(va, oflag);
 	int pmode = va_arg(va, int);
 
-	if (trace_all || trace_files) ffnx_trace("%s: %s pmode=%X\n", __func__, fileName, pmode);
+	if (trace_all || trace_files) ffnx_trace("%s: %s oflag=%X pmode=%X\n", __func__, fileName, oflag, pmode);
 
 	if (next_direct_file && *next_direct_file != '\0')
 	{
@@ -135,7 +150,16 @@ int ff8_open(const char *fileName, int oflag, ...)
 		return ret;
 	}
 
-	return ff8_externals._sopen(fileName, oflag, 64, pmode);
+	char _filename[MAX_PATH]{ 0 };
+	bool is_redirected = ff8_attempt_redirection(fileName, _filename, sizeof(_filename));
+
+	last_fopen_is_redirected = is_redirected;
+
+	int ret = ff8_externals._sopen(is_redirected ? _filename : fileName, oflag, 64, pmode);
+
+	last_fopen_is_redirected = false;
+
+	return ret;
 }
 
 FILE *ff8_fopen(const char *fileName, const char *mode)
@@ -153,7 +177,16 @@ FILE *ff8_fopen(const char *fileName, const char *mode)
 		return file;
 	}
 
-	return ff8_externals._fsopen(fileName, mode, 64);
+	char _filename[MAX_PATH]{ 0 };
+	bool is_redirected = ff8_attempt_redirection(fileName, _filename, sizeof(_filename));
+
+	last_fopen_is_redirected = is_redirected;
+
+	FILE *file = ff8_externals._fsopen(is_redirected ? _filename : fileName, mode, 64);
+
+	last_fopen_is_redirected = false;
+
+	return file;
 }
 
 ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
@@ -234,8 +267,15 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 			}
 			else
 			{
+				char _filename[256]{ 0 };
+				bool is_redirected = ff8_attempt_redirection(fullpath, _filename, sizeof(_filename));
+
+				last_fopen_is_redirected = is_redirected;
+
 				// We need to use the external _open, and not the official one
-				file->fd = ff8_externals._sopen(fullpath, oflag, 64, pmode);
+				file->fd = ff8_externals._sopen(is_redirected ? _filename : fullpath, oflag, 64, pmode);
+
+				last_fopen_is_redirected = false;
 			}
 
 			file->is_open = 1;
@@ -252,4 +292,9 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 	}
 
 	return file;
+}
+
+bool ff8_fs_last_fopen_is_redirected()
+{
+	return last_fopen_is_redirected;
 }
