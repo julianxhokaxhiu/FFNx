@@ -550,6 +550,14 @@ namespace ff7::field
             point->x = camera_range.right - half_width;
         if (point->x < camera_range.left + half_width)
             point->x = camera_range.left + half_width;
+
+        if(widescreen.isScriptedVerticalClipEnabled())
+        {
+            if (point->y > camera_range.bottom - 120)
+                point->y = camera_range.bottom - 120;
+            if (point->y < camera_range.top + 120)
+                point->y = camera_range.top + 120;
+        }
     }
 
     void engine_set_game_engine_world_coord_float_661B23(int field_world_x, int field_world_y)

@@ -390,6 +390,7 @@ void Widescreen::initParamsFromConfig()
     v_offset = 0;
     is_reset_vertical_pos = false;
     is_scripted_clip_enabled = true;
+    is_scripted_vertical_clip_enabled = false;
     movie_v_offset.clear();
 
     auto pName = get_current_field_name();
@@ -406,7 +407,8 @@ void Widescreen::initParamsFromConfig()
         if(auto hOffsetNode = node["h_offset"]) h_offset = hOffsetNode.value_or(0);
         if(auto vOffsetNode = node["v_offset"]) v_offset = vOffsetNode.value_or(0);
         if(auto vResetVerticalPosNode = node["reset_vertical_pos"]) is_reset_vertical_pos = vResetVerticalPosNode.value_or(false);
-        if(auto vScripteClipNode = node["scripted_clip"]) is_scripted_clip_enabled = vScripteClipNode.value_or(true);
+        if(auto vScriptedClipNode = node["scripted_clip"]) is_scripted_clip_enabled = vScriptedClipNode.value_or(true);
+        if(auto vScriptedVerticalClipNode = node["scripted_vertical_clip"]) is_scripted_vertical_clip_enabled = vScriptedVerticalClipNode.value_or(false);
 
         if(auto modeNode = node["mode"]) widescreen_mode = static_cast<WIDESCREEN_MODE>(modeNode.value_or(0));
 

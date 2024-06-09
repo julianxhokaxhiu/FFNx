@@ -11,6 +11,7 @@
 - Rendering: Add bilinear filtering option `enable_bilinear` ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 
 ## FF7
+- Widescreen: Added option to clip camera position during scripted events
 - Widescreen: Added feature to extend movies in true widescreen mode ( https://github.com/julianxhokaxhiu/FFNx/pull/700 )
 - 60FPS: Fix bug that displayed battle text too quickly when set at full SLOW speed
 

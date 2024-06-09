@@ -73,6 +73,7 @@ public:
     int getVerticalOffset();
     bool isResetVerticalPos();
     bool isScriptedClipEnabled();
+    bool isScriptedVerticalClipEnabled();
     WIDESCREEN_MODE getMode();
 
     KeyPair getMovieKeyPair(int frame);
@@ -94,6 +95,7 @@ private:
     int v_offset = 0;
     bool is_reset_vertical_pos = false;
     bool is_scripted_clip_enabled = true;
+    bool is_scripted_vertical_clip_enabled = false;
     WIDESCREEN_MODE widescreen_mode = WM_DISABLED;
 
     std::vector<Keyframe> movie_v_offset;
@@ -123,6 +125,11 @@ inline bool Widescreen::isResetVerticalPos()
 inline bool Widescreen::isScriptedClipEnabled()
 {
     return is_scripted_clip_enabled;
+}
+
+inline bool Widescreen::isScriptedVerticalClipEnabled()
+{
+    return is_scripted_vertical_clip_enabled;
 }
 
 inline WIDESCREEN_MODE Widescreen::getMode()
