@@ -24,7 +24,7 @@
 
 #include "patch.h"
 
-void normalize_path(char *name)
+void normalize_path_win(char *name)
 {
 	int idx = 0;
 	while (name[idx] != 0)
@@ -43,7 +43,7 @@ void set_game_paths(int install_options, char *_app_path, const char *_dataDrive
 		ffnx_info("Overriding AppPath with %s\n", app_path.c_str());
 		strncpy(fileName, app_path.c_str(), sizeof(fileName));
 		_app_path = fileName;
-		normalize_path(_app_path);
+		normalize_path_win(_app_path);
 	}
 
 	if (!steam_edition && !data_drive.empty())

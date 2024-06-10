@@ -277,7 +277,7 @@ void TexturePacker::animateTextureByCopy(int sourceXBpp2, int sourceY, int sourc
 		textureIdTarget = _vramTextureIds.at(targetXBpp2 + targetY * VRAM_WIDTH);
 	if (textureId == INVALID_TEXTURE)
 	{
-		if (trace_all || trace_vram) ffnx_warning("TexturePacker::%s pos=(%d, %d) not found\n", __func__, sourceXBpp2, sourceY);
+		if (trace_all || trace_vram) ffnx_warning("TexturePacker::%s pos=(%d, %d) source not found\n", __func__, sourceXBpp2, sourceY);
 
 		return;
 	}
@@ -548,11 +548,11 @@ uint32_t TexturePacker::composeTextures(
 			{
 				scale = std::max(scale, pair.second.mod()->scale(palette.x(), palette.y()));
 				// Cache for redirections (texl)
-				if (gl_set->default_texture_id != 0)
+				if (gl_set->default_texture_id_compose != 0)
 				{
 					if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s Texture already uploaded, not need for another one\n", __func__);
 
-					return gl_set->default_texture_id;
+					return gl_set->default_texture_id_compose;
 				}
 			}
 		}
@@ -608,7 +608,7 @@ uint32_t TexturePacker::composeTextures(
 		uint32_t texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, true, copyData);
 
 		if (palIndex == 0) {
-			gl_set->default_texture_id = texture;
+			gl_set->default_texture_id_compose = texture;
 		}
 
 		return texture;
