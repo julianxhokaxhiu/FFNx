@@ -1051,6 +1051,7 @@ struct ff8_externals
 	uint32_t (*sm_pc_read)(char*,void*);
 	uint32_t get_disk_number;
 	char* disk_data_path;
+	const char *app_path;
 	uint32_t swirl_main_loop;
 	uint32_t field_main_loop;
 	uint32_t field_main_exit;

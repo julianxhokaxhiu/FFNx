@@ -65,6 +65,7 @@
 #include "ff8/engine.h"
 #include "ff8/uv_patch.h"
 #include "ff8/ambient.h"
+#include "ff8/file.h"
 
 #include "wine.h"
 
@@ -3261,11 +3262,16 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 
 __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
+	if (ff8_fs_last_fopen_is_redirected())
+	{
+		return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	}
+
 	HANDLE ret = INVALID_HANDLE_VALUE;
 
 	if (strstr(lpFileName, "CD:") != NULL)
 	{
-		CHAR newPath[260]{ 0 };
+		CHAR newPath[MAX_PATH]{ 0 };
 		uint8_t requiredDisk = *(uint8_t*)(*(DWORD*)ff8_externals.requiredDisk + 0xCC);
 		CHAR diskAsChar[2];
 
@@ -3289,31 +3295,31 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 	}
 	else if (strstr(lpFileName, "app.log") || strstr(lpFileName, "ff8input.cfg"))
 	{
-		CHAR newPath[260]{ 0 };
+		CHAR newPath[MAX_PATH]{ 0 };
 
 		// Search for the last '\' character and get a pointer to the next char
 		const char* pos = strrchr(lpFileName, 92) + 1;
 
-		get_userdata_path(newPath, 260, false);
+		get_userdata_path(newPath, sizeof(newPath), false);
 		PathAppendA(newPath, JP_VERSION ? "ff8input_jp.cfg" : pos);
 
 		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	}
 	else if (strstr(lpFileName, "temp.fi") || strstr(lpFileName, "temp.fl") || strstr(lpFileName, "temp.fs") || strstr(lpFileName, "temp_evn.") || strstr(lpFileName, "temp_odd."))
 	{
-		CHAR newPath[260]{ 0 };
+		CHAR newPath[MAX_PATH]{ 0 };
 
 		// Search for the last '\' character and get a pointer to the next char
 		const char* pos = strrchr(lpFileName, 92) + 1;
 
-		get_userdata_path(newPath, 260, false);
+		get_userdata_path(newPath, sizeof(newPath), false);
 		PathAppendA(newPath, pos);
 
 		ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	}
 	else if (strstr(lpFileName, ".fi") != NULL || strstr(lpFileName, ".fl") != NULL || strstr(lpFileName, ".fs") != NULL)
 	{
-		CHAR newPath[260]{ 0 };
+		CHAR newPath[MAX_PATH]{ 0 };
 
 		// Search for the last '\' character and get a pointer to the next char
 		const char* pos = strrchr(lpFileName, 92) + 1;
@@ -3325,7 +3331,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 	}
 	else if (StrStrIA(lpFileName, R"(SAVE\)") != NULL) // SAVE\SLOTX\saveN or save\chocorpg
 	{
-		CHAR newPath[260]{ 0 };
+		CHAR newPath[MAX_PATH]{ 0 };
 		CHAR saveFileName[50]{ 0 };
 
 		// Search for the next character pointer after "SAVE\"
