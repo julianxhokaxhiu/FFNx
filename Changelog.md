@@ -6,7 +6,7 @@
 
 - Audio: Fix bug that won't allow to configure vanilla SFX IDs using the `sfx/config.toml` file
 - Audio: Fix bug where overriding only fade flags in `ambient/config.toml` would not allow the ambient audio file to be loaded
-- External textures: Reuse already loaded textures on fallback to palette 0 ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
+- External textures: Reuse already loaded textures on fallback to palette 0 ( https://github.com/julianxhokaxhiu/FFNx/pull/692 https://github.com/julianxhokaxhiu/FFNx/pull/707 )
 - Modding: Allow replacing EXE text/data hardcoded in code ( https://github.com/julianxhokaxhiu/FFNx/pull/699 )
 - Rendering: Add bilinear filtering option `enable_bilinear` ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 
@@ -22,7 +22,7 @@
 - External textures: Fix filename lookup which can match more textures than it should in a VRAM page ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - External textures: Split `battle/A8DEF.TIM` into three files to avoid redundant textures ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - External music: Fix music get stopped in Fisherman's Horizon concert ( https://github.com/julianxhokaxhiu/FFNx/pull/694 )
-- Files: Enable support for `override_path` option ( https://github.com/julianxhokaxhiu/FFNx/pull/705 )
+- Files: Enable support for `override_path` option ( https://github.com/julianxhokaxhiu/FFNx/pull/705 https://github.com/julianxhokaxhiu/FFNx/pull/707 )
 - Rendering: Avoid texture reupload in case of palette swap ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - Rendering: Fix texture unload when multiple palettes are written ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - Rendering: Prevent the game from sending textures with half-alpha colors ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
