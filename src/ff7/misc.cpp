@@ -590,12 +590,12 @@ void ff7_limit_fps()
 		break;
 	}
 
-	if (ff7_fps_limiter < FF7_LIMITER_60FPS)
+	if (ff7_fps_limiter < FPS_LIMITER_60FPS)
 	{
 		switch (mode->driver_mode)
 		{
 		case MODE_BATTLE:
-			if (ff7_fps_limiter < FF7_LIMITER_30FPS) framerate = 15.0f;
+			if (ff7_fps_limiter < FPS_LIMITER_30FPS) framerate = 15.0f;
 			break;
 		case MODE_SNOWBOARD:
 		case MODE_COASTER:

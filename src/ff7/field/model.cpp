@@ -292,11 +292,11 @@ namespace ff7::field
         const int original_animation_speed = model_event_data.animation_speed;
         if (is_overlapping_movie_playing())
         {
-            if(movie_fps_ratio == 1 && ff7_fps_limiter == FF7_LIMITER_60FPS)
+            if(movie_fps_ratio == 1 && ff7_fps_limiter == FPS_LIMITER_60FPS)
                 model_event_data.animation_speed *= common_frame_multiplier;
-            else if(movie_fps_ratio > 1 && ff7_fps_limiter < FF7_LIMITER_60FPS)
+            else if(movie_fps_ratio > 1 && ff7_fps_limiter < FPS_LIMITER_60FPS)
                 model_event_data.animation_speed /= movie_fps_ratio;
-            else if(movie_fps_ratio > 2 && ff7_fps_limiter == FF7_LIMITER_60FPS)
+            else if(movie_fps_ratio > 2 && ff7_fps_limiter == FPS_LIMITER_60FPS)
                 model_event_data.animation_speed /= (movie_fps_ratio / 2);
         }
 

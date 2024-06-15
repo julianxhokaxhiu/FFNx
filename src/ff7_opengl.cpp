@@ -220,7 +220,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// replace time diff
 	replace_function((uint32_t)common_externals.diff_time, qpc_diff_time);
 
-	if (ff7_fps_limiter >= FF7_LIMITER_DEFAULT)
+	if (ff7_fps_limiter >= FPS_LIMITER_DEFAULT)
 	{
 		// replace rdtsc timing
 		replace_function((uint32_t)common_externals.get_time, qpc_get_time);
@@ -241,16 +241,16 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_function(ff7_externals.fps_limiter_submarine, ff7_limit_fps);
 		replace_function(ff7_externals.fps_limiter_credits, ff7_limit_fps);
 
-		if (ff7_fps_limiter >= FF7_LIMITER_30FPS)
+		if (ff7_fps_limiter >= FPS_LIMITER_30FPS)
 		{
-			battle_frame_multiplier = (ff7_fps_limiter == FF7_LIMITER_30FPS) ? 2 : 4;
+			battle_frame_multiplier = (ff7_fps_limiter == FPS_LIMITER_30FPS) ? 2 : 4;
 
 			patch_divide_code<byte>(ff7_externals.battle_fps_menu_multiplier, battle_frame_multiplier); // Works perfectly only in 30 FPS
 
 			ff7::battle::camera_hook_init();
 			ff7::battle::animations_hook_init();
 
-			if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+			if(ff7_fps_limiter == FPS_LIMITER_60FPS)
 			{
 				common_frame_multiplier = 2;
 				

@@ -33,7 +33,7 @@ namespace ff7::field
         if(is_overlapping_movie_playing())
             return movie_fps_ratio > 1;
         else
-            return ff7_fps_limiter == FF7_LIMITER_60FPS;
+            return ff7_fps_limiter == FPS_LIMITER_60FPS;
     }
 
     int get_frame_multiplier()

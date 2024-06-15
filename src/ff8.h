@@ -1505,6 +1505,7 @@ struct ff8_externals
 	uint32_t battle_entities_1D27BCB;
 	uint32_t scan_text_data;
 	uint32_t scan_text_positions;
+	uint32_t fps_limiter;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

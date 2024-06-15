@@ -187,9 +187,9 @@ namespace ff7::field
         replace_call_function(ff7_externals.field_update_models_positions + 0x7C, ff7_field_update_models_rotation_new);
         memcpy_code(ff7_externals.field_update_models_positions + 0x81, jump_to_OFST_update, sizeof(jump_to_OFST_update));
 
-        if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+        if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
         {
-            if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+            if(ff7_fps_limiter == FPS_LIMITER_60FPS)
             {
                 // Partial animation fps fix
                 patch_code_dword((uint32_t)&common_externals.execute_opcode_table[CANMX1], (DWORD)&opcode_script_partial_animation_wrapper);

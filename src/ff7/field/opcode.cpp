@@ -210,7 +210,7 @@ namespace ff7::field
         }
         else
         {
-            if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+            if(ff7_fps_limiter == FPS_LIMITER_60FPS)
             {
                 if(field_bank_address_to_be_fixed.contains(current_mvief_bank_address))
                     right_value *= common_frame_multiplier;

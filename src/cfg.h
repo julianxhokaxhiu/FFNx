@@ -34,10 +34,10 @@
 #define RENDERER_BACKEND_DIRECT3D12 4
 #define RENDERER_BACKEND_VULKAN 5
 
-#define FF7_LIMITER_ORIGINAL 0
-#define FF7_LIMITER_DEFAULT 1
-#define FF7_LIMITER_30FPS 2
-#define FF7_LIMITER_60FPS 3
+#define FPS_LIMITER_ORIGINAL 0
+#define FPS_LIMITER_DEFAULT 1
+#define FPS_LIMITER_30FPS 2
+#define FPS_LIMITER_60FPS 3
 
 #define GAME_LIGHTING_ORIGINAL 0
 #define GAME_LIGHTING_PER_VERTEX 1
@@ -156,6 +156,7 @@ extern bool ff8_worldmap_internal_highres_textures;
 extern bool ff8_fix_uv_coords_precision;
 extern bool ff8_external_music_force_original_filenames;
 extern bool ff8_use_gamepad_icons;
+extern long ff8_fps_limiter;
 extern std::string app_path;
 extern std::string data_drive;
 extern bool enable_ntscj_gamut_mode;

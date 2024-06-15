@@ -51,7 +51,7 @@ namespace ff7::field
 
         bg_position.x = bg_position_x;
         bg_position.y = bg_position_y;
-        if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+        if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
         {
             if(is_position_valid(bg_main_layer_pos))
             {
@@ -86,7 +86,7 @@ namespace ff7::field
 
         bg_position.x = bg_position_x;
         bg_position.y = bg_position_y;
-        if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+        if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
         {
             if(is_position_valid(bg_main_layer_pos))
             {
@@ -152,7 +152,7 @@ namespace ff7::field
 
         bg_position.x = bg_position_x;
         bg_position.y = bg_position_y;
-        if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+        if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
         {
             if(is_position_valid(bg_layer3_pos))
             {
@@ -277,7 +277,7 @@ namespace ff7::field
 
             bg_position.x = bg_position_x;
             bg_position.y = bg_position_y;
-            if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+            if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
             {
                 if(is_position_valid(bg_layer4_pos))
                 {
@@ -568,7 +568,7 @@ namespace ff7::field
         ff7_game_obj* game_obj = (ff7_game_obj*)common_externals.get_game_object();
         if(game_obj)
         {
-            if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+            if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
             {
                 if(is_position_valid(field_3d_world_pos))
                 {
@@ -703,7 +703,7 @@ namespace ff7::field
                 *ff7_externals.field_curr_delta_world_pos_y = -world_pos.y;
 
                 // Smooth background movement with floating point
-                if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+                if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
                 {
                     field_apply_player_position_2D_translation_float(&world_pos_float, ff7_externals.modules_global_object->world_move_follow_model_id);
                     field_clip_with_camera_range_float(&world_pos_float);
@@ -733,7 +733,7 @@ namespace ff7::field
                     );
 
                     // Smooth background movement with floating point
-                    if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+                    if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
                     {
                         field_apply_player_position_2D_translation_float(&world_pos_float, ff7_externals.modules_global_object->world_move_follow_model_id);
                         field_clip_with_camera_range_float(&world_pos_float);
@@ -794,7 +794,7 @@ namespace ff7::field
                     );
 
                     // Smooth background movement with floating point
-                    if(ff7_fps_limiter >= FF7_LIMITER_30FPS)
+                    if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
                     {
                         std::function<float(float, float, int, int)> field_get_interpolated_value = ff7_externals.modules_global_object->world_move_mode == 5 ?
                             field_get_linear_interpolated_value_float : field_get_smooth_interpolated_value_float;

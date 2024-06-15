@@ -138,6 +138,7 @@ bool ff8_worldmap_internal_highres_textures;
 bool ff8_fix_uv_coords_precision;
 bool ff8_external_music_force_original_filenames;
 bool ff8_use_gamepad_icons;
+long ff8_fps_limiter;
 std::string app_path;
 std::string data_drive;
 bool enable_ntscj_gamut_mode;
@@ -277,7 +278,7 @@ void read_cfg()
 	speedhack_min = config["speedhack_min"].value_or(1.0);
 	enable_animated_textures = config["enable_animated_textures"].value_or(false);
 	disable_animated_textures_on_field = get_string_or_array_of_strings(config["disable_animated_textures_on_field"]);
-	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FF7_LIMITER_DEFAULT);
+	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FPS_LIMITER_DEFAULT);
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	ff7_field_center = config["ff7_field_center"].value_or(true);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
@@ -298,6 +299,7 @@ void read_cfg()
 	ff8_fix_uv_coords_precision = config["ff8_fix_uv_coords_precision"].value_or(true);
 	ff8_external_music_force_original_filenames = config["ff8_external_music_force_original_filenames"].value_or(false);
 	ff8_use_gamepad_icons = config["ff8_use_gamepad_icons"].value_or(false);
+	ff8_fps_limiter = config["ff8_fps_limiter"].value_or(FPS_LIMITER_DEFAULT);
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");
 	enable_ntscj_gamut_mode = config["enable_ntscj_gamut_mode"].value_or(false);
@@ -320,8 +322,11 @@ void read_cfg()
 	// SAFE DEFAULTS
 	// #############
 
-	if (ff7_fps_limiter < FF7_LIMITER_ORIGINAL) ff7_fps_limiter = FF7_LIMITER_ORIGINAL;
-	else if (ff7_fps_limiter > FF7_LIMITER_60FPS) ff7_fps_limiter = FF7_LIMITER_60FPS;
+	if (ff7_fps_limiter < FPS_LIMITER_ORIGINAL) ff7_fps_limiter = FPS_LIMITER_ORIGINAL;
+	else if (ff7_fps_limiter > FPS_LIMITER_60FPS) ff7_fps_limiter = FPS_LIMITER_60FPS;
+
+	if (ff8_fps_limiter < FPS_LIMITER_ORIGINAL) ff8_fps_limiter = FPS_LIMITER_ORIGINAL;
+	else if (ff8_fps_limiter > FPS_LIMITER_60FPS) ff8_fps_limiter = FPS_LIMITER_60FPS;
 
 	if (hext_patching_path.empty())
 	{

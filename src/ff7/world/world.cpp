@@ -144,7 +144,7 @@ namespace ff7::world
 
     void world_hook_init()
     {
-        if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+        if(ff7_fps_limiter == FPS_LIMITER_60FPS)
         {
             // World init
             replace_call_function(ff7_externals.world_mode_loop_sub_74DB8C + 0x108, world_init_variables);

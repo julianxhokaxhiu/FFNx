@@ -17,6 +17,7 @@
 
 ## FF8
 
+- 60FPS: Add support for 60FPS in the entire game ( separate mods are still required for a stable gameplay )
 - Audio: Add ambient layer support for Fields and Battles
 - External textures: Add support for modding VRAM pages directly, like Tonberry Mods does, see [documentation](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/ff8/mods/external_textures.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/687 https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 - External textures: Fix filename lookup which can match more textures than it should in a VRAM page ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
@@ -27,6 +28,7 @@
 - Rendering: Fix texture unload when multiple palettes are written ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - Rendering: Prevent the game from sending textures with half-alpha colors ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - SFX: Add missing support for audio effects to be stopped in time
+- Speedhack: Fix support in field which were not getting the real speed up despite FFNx prompting it on screen.
 
 
 # 1.19.1

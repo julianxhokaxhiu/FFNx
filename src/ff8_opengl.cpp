@@ -886,6 +886,67 @@ int ff8_create_save_file_chocobo_world(int unused, int data_source, int offset, 
 	return ret;
 }
 
+int ff8_limit_fps()
+{
+	static time_t last_gametime;
+	time_t gametime;
+	double framerate = 30.0f;
+
+	struct ff8_game_obj *game_object = (ff8_game_obj *)common_externals.get_game_object();
+	struct game_mode *mode = getmode_cached();
+
+	switch(mode->driver_mode)
+	{
+	case MODE_FIELD:
+		if (ff8_externals.movie_object->movie_is_playing)
+		{
+			// Some movies do not expect to be frame limited
+			qpc_get_time(&last_gametime);
+			return 0;
+		}
+		break;
+	case MODE_GAMEOVER:
+		// Gameover screen has nothing to limit
+		qpc_get_time(&last_gametime);
+		return 0;
+	}
+
+	if (ff8_fps_limiter < FPS_LIMITER_60FPS)
+	{
+		switch (mode->driver_mode)
+		{
+		case MODE_BATTLE:
+			if (ff8_fps_limiter < FPS_LIMITER_30FPS) framerate = 15.0f;
+			break;
+		case MODE_CREDITS:
+			framerate = 60.0f;
+			break;
+		}
+	}
+	else
+	{
+		switch (mode->driver_mode)
+		{
+		case MODE_FIELD:
+		case MODE_WORLDMAP:
+		case MODE_BATTLE:
+		case MODE_SWIRL:
+		case MODE_CREDITS:
+			framerate = 60.0f;
+			break;
+		}
+	}
+
+	framerate *= gamehacks.getCurrentSpeedhack();
+
+	do qpc_get_time(&gametime);
+	while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < ((ff8_game_obj*)common_externals.get_game_object())->countspersecond / framerate);
+
+	last_gametime = gametime;
+
+	return 0;
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -994,15 +1055,24 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	memcpy_code(ff8_externals.sub_465720 + 0xB3, texture_reload_fix2, sizeof(texture_reload_fix2));
 	replace_function(ff8_externals.sub_465720 + 0xB3 + sizeof(texture_reload_fix2), texture_reload_hack2);
 
-	// replace rdtsc timing
-	replace_function((uint32_t)common_externals.get_time, qpc_get_time);
+	// #####################
+	// new timer calibration
+	// #####################
 
-	// override the timer calibration
-	QueryPerformanceFrequency((LARGE_INTEGER *)&game_object->_countspersecond);
-	game_object->countspersecond = (double)game_object->_countspersecond;
-
-	// Add speedhack support
+	// replace time diff
 	replace_function((uint32_t)common_externals.diff_time, qpc_diff_time);
+
+	if (ff8_fps_limiter >= FPS_LIMITER_DEFAULT)
+	{
+		// replace rdtsc timing
+		replace_function((uint32_t)common_externals.get_time, qpc_get_time);
+
+		// override the timer calibration
+		QueryPerformanceFrequency((LARGE_INTEGER *)&game_object->_countspersecond);
+		game_object->countspersecond = (double)game_object->_countspersecond;
+
+		replace_function(ff8_externals.fps_limiter, ff8_limit_fps);
+	}
 
 	// Gamepad
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);

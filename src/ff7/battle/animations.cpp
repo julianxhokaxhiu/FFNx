@@ -1143,7 +1143,7 @@ namespace ff7::battle
     void animations_hook_init()
     {
         // 3d model animation
-        if(ff7_fps_limiter == FF7_LIMITER_30FPS)
+        if(ff7_fps_limiter == FPS_LIMITER_30FPS)
         {
             patch_multiply_code<byte>(ff7_externals.battle_update_3d_model_data + 0x13E, battle_frame_multiplier);
             patch_multiply_code<byte>(ff7_externals.battle_update_3d_model_data + 0x316, battle_frame_multiplier);
@@ -1286,7 +1286,7 @@ namespace ff7::battle
         patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, battle_frame_multiplier);
 
         // Bad workaround to fix ESUI compatibility with 30fps when no widescreen mod is enabled
-        if (ff7_fps_limiter == FF7_LIMITER_60FPS || (ff7_fps_limiter == FF7_LIMITER_30FPS && widescreen_enabled)) 
+        if (ff7_fps_limiter == FPS_LIMITER_60FPS || (ff7_fps_limiter == FPS_LIMITER_30FPS && widescreen_enabled)) 
         {
             patch_multiply_code<WORD>(ff7_externals.battle_sub_5BCF9D + 0x3A, battle_frame_multiplier);
         }
@@ -1338,7 +1338,7 @@ namespace ff7::battle
         patch_code_byte(ff7_externals.battle_handle_status_effect_anim_5BA7C0 + 0x97, 0x3 + battle_frame_multiplier / 2);
         patch_divide_code<WORD>(ff7_externals.battle_handle_player_mark_5B9C8E + 0x6A, battle_frame_multiplier);
 
-        if(ff7_fps_limiter == FF7_LIMITER_60FPS)
+        if(ff7_fps_limiter == FPS_LIMITER_60FPS)
         {
             // Speed up window menu closing speed to fix Bizarro menu box softlock
             patch_code_byte(ff7_externals.battle_menu_closing_window_box_6DAEF0 + 0x29, 0x2 - 1);
