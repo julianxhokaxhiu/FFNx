@@ -205,7 +205,7 @@ uint32_t reload_buffer_index = 0;
 
 // this function is wedged into the middle of a function designed to reload a Direct3D texture
 // when the image data changes
-void texture_reload_hack(struct ff8_texture_set *texture_set)
+void texture_reload_hack(struct texture_page *texture_page, struct ff8_texture_set *texture_set)
 {
 	uint32_t i;
 	uint32_t size;
@@ -225,10 +225,18 @@ void texture_reload_hack(struct ff8_texture_set *texture_set)
 	}
 
 	TexturePacker::TiledTex tiledTex = texturePacker.getTiledTex(VREF(tex_header, image_data));
-	Tim::Bpp texBpp = VREF(tex_header, tex_format.bytesperpixel) == 2 ? Tim::Bpp16 : (VREF(tex_header, palette_entries) == 256 ? Tim::Bpp8 : Tim::Bpp4);
+	Tim::Bpp texBpp = Tim::Bpp(texture_page->color_key);
 
 	if (tiledTex.isValid() && texBpp != tiledTex.bpp()) {
 		if(trace_all || trace_vram) ffnx_trace("%s: ignore reload because BPP does not match 0x%X (bpp vram=%d, bpp tex=%d, source bpp tex=%d) image_data=0x%X\n", __func__, texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), texBpp, VREF(tex_header, image_data));
+
+		return;
+	}
+
+	const std::list<TexturePacker::IdentifiedTexture> &textures = texturePacker.matchTextures(tiledTex, false, true);
+
+	if (textures.empty()) {
+		if(trace_all || trace_vram) ffnx_trace("%s: ignore reload because no animated texture matches the current texture set 0x%X (bpp vram=%d, bpp tex=%d, source bpp tex=%d) image_data=0x%X\n", __func__, texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), texBpp, VREF(tex_header, image_data));
 
 		return;
 	}
@@ -257,14 +265,14 @@ void texture_reload_hack1(struct texture_page *texture_page, uint32_t unknown1, 
 {
 	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->tri_gfxobj->hundred_data->texture_set;
 
-	texture_reload_hack(texture_set);
+	texture_reload_hack(texture_page, texture_set);
 }
 
 void texture_reload_hack2(struct texture_page *texture_page, uint32_t unknown1, uint32_t unknown2)
 {
 	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)texture_page->sub_tri_gfxobj->hundred_data->texture_set;
 
-	texture_reload_hack(texture_set);
+	texture_reload_hack(texture_page, texture_set);
 }
 
 void ff8_unload_texture(struct ff8_texture_set *texture_set)

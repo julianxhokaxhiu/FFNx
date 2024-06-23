@@ -339,7 +339,7 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 
 	std::string filename;
 	int file_count = 0;
-	int startVramId = 0;
+	int start_vram_id = 0;
 
 	for (const TexturePacker::IdentifiedTexture &tex: textures)
 	{
@@ -348,7 +348,7 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 			if (file_count == 0)
 			{
 				filename.append(tex.name());
-				startVramId = tex.texture().vramId();
+				start_vram_id = tex.texture().vramId();
 			}
 			else
 			{
@@ -363,6 +363,13 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 				}
 			}
 			filename.append("_");
+			// Add current frame info
+			if (tex.currentAnimationFrame() >= 0)
+			{
+				filename.append("f");
+				filename.append(std::to_string(tex.currentAnimationFrame()));
+				filename.append("_");
+			}
 			file_count += 1;
 
 			// Do not produce huge file names
@@ -379,7 +386,7 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 
 		if (file_count == 1) {
 			// To be on par with remaster naming, instead for example with use "card_16", "card_17" etc.., we starts with "card_0"
-			vramId -= startVramId;
+			vramId -= start_vram_id;
 		}
 
 		std::string full_filename = filename;
@@ -821,7 +828,7 @@ void ff8_wm_section_17_upload(uint8_t *tim_file_data, int16_t x, int16_t y)
 		int frame_id = 0;
 		for (const uint8_t *frameTexturePos: texture.textureFramePositions) {
 			if (frameTexturePos == tim_file_data) {
-				texturePacker.forceCurrentPalette(x, y, frame_id);
+				texturePacker.setCurrentAnimationFrame(x, y, frame_id);
 
 				((void(*)(uint8_t*,int16_t,int16_t))ff8_externals.sub_541AE0)(tim_file_data, x, y);
 
@@ -864,6 +871,8 @@ void ff8_wm_section_40_upload(uint8_t *tim_file_data)
 
 void ff8_wm_section_41_upload_palette(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
+	if (trace_all || trace_vram) ffnx_trace("%s", __func__);
+
 	next_pal_data = (uint16_t *)texture_buffer;
 
 	ff8_upload_vram(pos_and_size, texture_buffer);
@@ -933,6 +942,18 @@ void ff8_wm_chara_one_upload_palette_2(int16_t *pos_and_size, uint8_t *texture_b
 	ff8_upload_vram(pos_and_size, texture_buffer);
 
 	next_pal_data = nullptr;
+}
+
+void ff8_wm_update_fence_animation()
+{
+	uint8_t current_disk = uint8_t((*ff8_externals.savemap)[51]);
+
+	if (trace_all || trace_vram) ffnx_trace("%s: current_disk=%d\n", __func__, current_disk);
+
+	// Disable the animation if not in disk 4
+	if (current_disk == 4) {
+		((void(*)())ff8_externals.sub_557140)();
+	}
 }
 
 int ff8_wm_open_data(const char *path, int32_t pos, uint32_t size, void *data)
@@ -1630,6 +1651,7 @@ void vram_init()
 	replace_call(ff8_externals.worldmap_chara_one + 0xCC, ff8_wm_chara_one_read_file);
 	replace_call(ff8_externals.worldmap_chara_one + 0x4D1, ff8_wm_chara_one_upload_texture_2); // Characters/Chocobos/Ragnarok
 	replace_call(ff8_externals.worldmap_chara_one + 0x566, ff8_wm_chara_one_upload_palette_2);
+	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0x263 : 0x260), ff8_wm_update_fence_animation);
 	// wm texl project
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call1, ff8_wm_texl_palette_upload_vram);
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call2, ff8_wm_texl_palette_upload_vram);

@@ -1240,6 +1240,7 @@ struct ff8_externals
 	uint32_t sub_554940_call_130;
 	uint32_t sub_541AE0;
 	uint32_t sub_554BC0;
+	uint32_t sub_557140;
 	uint32_t sub_54B460;
 	uint32_t sub_558D70;
 	uint32_t sub_545EA0;

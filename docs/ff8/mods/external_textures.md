@@ -24,6 +24,7 @@ If you mod __by VRAM page__, file names look like this:<br>
 `{mod_path}\cardgame\cards_{relative vram page}_{palette x}_{palette y}.dds`<br>
 If a texture is not found, the game will always fallback to the path with zeroed palette x and palette y:<br>
 `{mod_path}\cardgame\cards_{relative vram page}_0_0.dds`
+For animations, unlike replacement __by texture__, you must override each frame.
 
 When there are both files for the two types of mods, the VRAM page image takes priority over the other one.
 
