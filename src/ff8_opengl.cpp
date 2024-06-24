@@ -233,12 +233,14 @@ void texture_reload_hack(struct texture_page *texture_page, struct ff8_texture_s
 		return;
 	}
 
-	const std::list<TexturePacker::IdentifiedTexture> &textures = texturePacker.matchTextures(tiledTex, false, true);
+	if (texBpp != Tim::Bpp16) {
+		const std::list<TexturePacker::IdentifiedTexture> &textures = texturePacker.matchTextures(tiledTex, false, true);
 
-	if (textures.empty()) {
-		if(trace_all || trace_vram) ffnx_trace("%s: ignore reload because no animated texture matches the current texture set 0x%X (bpp vram=%d, bpp tex=%d, source bpp tex=%d) image_data=0x%X\n", __func__, texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), texBpp, VREF(tex_header, image_data));
+		if (textures.empty()) {
+			if(trace_all || trace_vram) ffnx_trace("%s: ignore reload because no animated texture matches the current texture set 0x%X (bpp vram=%d, bpp tex=%d, source bpp tex=%d) image_data=0x%X\n", __func__, texture_set, tiledTex.bpp(), VREF(tex_header, tex_format.bytesperpixel), texBpp, VREF(tex_header, image_data));
 
-		return;
+			return;
+		}
 	}
 
 	common_unload_texture((struct texture_set *)texture_set);
