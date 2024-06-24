@@ -240,10 +240,11 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 
 bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 {
+	const struct game_mode* mode = getmode_cached();
+	bool playing = false;
+	char track_name[64];
 	float panningf = panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f;
 	float volumef = volume / 127.0;
-	const struct game_mode* mode = getmode_cached();
-	char track_name[64];
 
 	switch(mode->driver_mode)
 	{
@@ -272,9 +273,9 @@ bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 
 	// TODO: inverted panning option ((Reg.SoundOptions >> 20) & 1)
 	nxAudioEngine.setSFXVolume(channel, volumef);
-	bool playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop);
+
 	// If any overridden layer could not be played, fallback to default
-	if (!playing)
+	if (!(playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop)))
 	{
 		sprintf(track_name, "%d", id);
 		playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop);
