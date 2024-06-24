@@ -72,6 +72,9 @@ void NxAudioEngine::loadConfig()
 		}
 		catch (const toml::parse_error &err)
 		{
+			ffnx_warning("Parse error while opening the file %s. Will continue with the default settings.\n", _fullpath);
+			ffnx_warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
+
 			nxAudioEngineConfig[type] = toml::parse("");
 		}
 	}
