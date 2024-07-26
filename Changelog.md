@@ -20,7 +20,7 @@
 
 - 60FPS: Add support for 60FPS in the entire game ( separate mods are still required for a stable gameplay )
 - Audio: Add ambient layer support for Fields and Battles
-- External textures: Add support for modding VRAM pages directly, like Tonberry Mods does, see [documentation](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/ff8/mods/external_textures.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/687 https://github.com/julianxhokaxhiu/FFNx/pull/692 )
+- External textures: Add support for modding VRAM pages directly, like Tonberry Mods does, see [documentation](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/ff8/mods/external_textures.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/687 https://github.com/julianxhokaxhiu/FFNx/pull/692 https://github.com/julianxhokaxhiu/FFNx/pull/696 https://github.com/julianxhokaxhiu/FFNx/pull/712 )
 - External textures: Fix filename lookup which can match more textures than it should in a VRAM page ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - External textures: Split `battle/A8DEF.TIM` into three files to avoid redundant textures ( https://github.com/julianxhokaxhiu/FFNx/pull/687 )
 - External music: Fix music get stopped in Fisherman's Horizon concert ( https://github.com/julianxhokaxhiu/FFNx/pull/694 )

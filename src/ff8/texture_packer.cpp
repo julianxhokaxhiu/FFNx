@@ -177,6 +177,8 @@ bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, 
 	if (mod->createImages(extension, found_extension))
 	{
 		tex.setMod(mod);
+		// Force texture_reload_hack
+		tex.setCurrentAnimationFrame(-1);
 	}
 	else
 	{

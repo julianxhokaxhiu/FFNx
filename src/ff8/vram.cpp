@@ -1099,6 +1099,8 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 		snprintf(tex_directory, sizeof(tex_directory), "field/mapdata/%.2s/%s/%s", get_current_field_name(), get_current_field_name(), get_current_field_name());
 
 		texturePacker.setTexture(tex_directory, TexturePacker::TextureInfos(0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, Tim::Bpp16, true), TexturePacker::TextureInfos(0, 232, 256, 24, Tim::Bpp16), 0);
+		// Force texture_reload_hack
+		texturePacker.setCurrentAnimationFrame(0, 256, -1);
 	}
 
 	return ret;
