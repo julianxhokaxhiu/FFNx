@@ -9,7 +9,7 @@ index f34fe127..539deb44 100644
  
  if(CMAKE_SYSTEM_NAME MATCHES Darwin)
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 3e707614..1dcd6a42 100644
+index 3e707614..f653a75e 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -90,3 +90,30 @@ if(NOT EMSCRIPTEN)
@@ -38,28 +38,27 @@ index 3e707614..1dcd6a42 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util/log.h DESTINATION include/libvgmstream/util )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util/reader_get.h DESTINATION include/libvgmstream/util )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util/reader_put.h DESTINATION include/libvgmstream/util )
++	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/util/vgmstream_limits.h DESTINATION include/libvgmstream/util )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/streamtypes.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/streamfile.h DESTINATION include/libvgmstream )
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/g72x_state.h DESTINATION include/libvgmstream/coding )
-+	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/nwa_decoder.h DESTINATION include/libvgmstream/coding )
 +endif()
-diff --git a/src/streamfile.c b/src/streamfile.c
-index 183c76bc..171812c4 100644
---- a/src/streamfile.c
-+++ b/src/streamfile.c
-@@ -260,8 +260,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
-     this_sf->buf = buf;
+diff --git a/src/base/streamfile_stdio.c b/src/base/streamfile_stdio.c
+index 948f5ffc..a3dc25b0 100644
+--- a/src/base/streamfile_stdio.c
++++ b/src/base/streamfile_stdio.c
+@@ -264,7 +264,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
  
      this_sf->name_len = strlen(filename);
--    if (this_sf->name_len >= sizeof(this_sf->name))
-+    if (this_sf->name_len >= sizeof(this_sf->name)) {
+     if (this_sf->name_len >= sizeof(this_sf->name))
++    {
 +        vgm_logi("STREAMFILE: filename length is longer than sizeof(this_sf->name).\n");
          goto fail;
 +    }
      memcpy(this_sf->name, filename, this_sf->name_len);
      this_sf->name[this_sf->name_len] = '\0';
  
-@@ -301,6 +303,7 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
+@@ -304,6 +307,7 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
      return &this_sf->vt;
  
  fail:

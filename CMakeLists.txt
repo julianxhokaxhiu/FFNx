@@ -176,6 +176,7 @@ target_compile_options(
   PRIVATE /DNOMINMAX
   PRIVATE /Zc:strictStrings-
   PRIVATE /Zc:__cplusplus
+  PRIVATE /Zc:preprocessor
   PRIVATE /Qpar
   PRIVATE /MP
 )

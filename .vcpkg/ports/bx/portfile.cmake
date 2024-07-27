@@ -7,8 +7,8 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/bx"
     HEAD_REF master
-    REF e3ebb936fb9f37e9025af79e5db1f04a22205494
-    SHA512 fa98c6e5b276dfea7266a30abb3877cdcd7f29e0c37a70a1924180b47818ac26a817a60e696601b67be90112d416473ed22c3196b8aa8ad132f75bb6a62cb076
+    REF ba882e5864c94dcacf6ba623b8e71249a88448c6
+    SHA512 1d23a85520dcb1676799623d71a591a093d197f159791a544b6a8571c7fed1a1735545a5aab7679437daa4fa6d51ccdae59f3ea1cf8471296a0eebb93de5953e
 )
 
 # Set up GENie (custom project generator)
