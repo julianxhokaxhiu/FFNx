@@ -196,12 +196,7 @@ uint32_t ff8_movie_frames;
 
 void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 {
-	char fmvName[260];
-	char camName[260];
-
-	char newFmvName[260];
-	char newCamName[260];
-
+	char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
 	uint32_t camOffset = 0;
 
 	// Unexpected cases default to current disk
@@ -209,8 +204,8 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 		disc = ff8_currentdisk - 1;
 	}
 
-	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
-	_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
+	_snprintf(fmvName, sizeof(fmvName), "%s/data/movies/disc%02i_%02ih.%s", ff8_externals.app_path, disc, movie, ffmpeg_video_ext.c_str());
+	_snprintf(camName, sizeof(camName), "%s/data/movies/disc%02i_%02i.cam", ff8_externals.app_path, disc, movie);
 
 	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
 	redirect_path_with_override(camName, newCamName, sizeof(newCamName));

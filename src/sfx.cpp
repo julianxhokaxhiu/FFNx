@@ -666,7 +666,7 @@ void sfx_process_footstep(bool is_player_moving)
 		if (*ff7_externals.input_run_button_status != 0 || gamepad_analogue_intent == INTENT_RUN) pace = 0.30f;
 
 		qpc_get_time(&current_playback_time);
-		if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
+		if (qpc_diff_time(&current_playback_time, &last_playback_time, nullptr) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
 		{
 			if (use_external_sfx) ff7_sfx_play_layered(0.0f, 159, 7);
 			else common_externals.play_sfx(159);
@@ -686,7 +686,7 @@ void sfx_process_wm_footstep(int player_model_id, int player_walkmap_type)
 		pace = 0.5f;
 
 	qpc_get_time(&current_playback_time);
-	if (qpc_diff_time(&current_playback_time, &last_playback_time, NULL) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
+	if (qpc_diff_time(&current_playback_time, &last_playback_time, nullptr) >= ((ff7_game_obj*)common_externals.get_game_object())->countspersecond * pace)
 	{
 		char track_name[64];
 		if (use_external_sfx)

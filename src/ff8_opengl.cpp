@@ -905,21 +905,9 @@ int ff8_limit_fps()
 	struct ff8_game_obj *game_object = (ff8_game_obj *)common_externals.get_game_object();
 	struct game_mode *mode = getmode_cached();
 
-	switch(mode->driver_mode)
-	{
-	case MODE_FIELD:
-		if (ff8_externals.movie_object->movie_is_playing)
-		{
-			// Some movies do not expect to be frame limited
-			qpc_get_time(&last_gametime);
-			return 0;
-		}
-		break;
-	case MODE_GAMEOVER:
-		// Gameover screen has nothing to limit
-		qpc_get_time(&last_gametime);
-		return 0;
-	}
+	// For cross music play (vanilla music only)
+	qpc_get_time(&gametime);
+	*ff8_externals.time_volume_change_related_1A78BE0 = (1000.0 / game_object->countspersecond) * qpc_diff_time(&gametime, &last_gametime, nullptr);
 
 	if (ff8_fps_limiter < FPS_LIMITER_60FPS)
 	{
@@ -948,9 +936,10 @@ int ff8_limit_fps()
 	}
 
 	framerate *= gamehacks.getCurrentSpeedhack();
+	double frame_time = game_object->countspersecond / framerate;
 
 	do qpc_get_time(&gametime);
-	while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < ((ff8_game_obj*)common_externals.get_game_object())->countspersecond / framerate);
+	while (gametime > last_gametime && qpc_diff_time(&gametime, &last_gametime, nullptr) < frame_time);
 
 	last_gametime = gametime;
 
