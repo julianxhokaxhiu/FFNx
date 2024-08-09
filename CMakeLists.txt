@@ -239,6 +239,10 @@ foreach(FFNX_SHADER IN LISTS FFNX_SHADERS)
   endforeach()
 endforeach()
 
+# List .gitkeep files to remove them on INSTALL
+FILE(GLOB_RECURSE HEXT_GIT_KEEP_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/misc/ ${CMAKE_CURRENT_SOURCE_DIR}/misc/hext/ff8/**/.gitkeep)
+LIST(TRANSFORM HEXT_GIT_KEEP_FILES PREPEND ${CMAKE_BINARY_DIR}/bin/)
+
 # INSTALL
 add_custom_command(
   TARGET ${RELEASE_NAME}
@@ -278,6 +282,8 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/hext
           ${CMAKE_BINARY_DIR}/bin/hext
+  COMMAND ${CMAKE_COMMAND} -E rm ${HEXT_GIT_KEEP_FILES}
+
   # ambient .toml
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.ambient.toml

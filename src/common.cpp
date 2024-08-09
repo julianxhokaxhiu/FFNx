@@ -2585,7 +2585,7 @@ time_t qpc_diff_time(time_t* t1, time_t* t2, time_t* out)
 
 	if (ff8) ret *= gamehacks.getCurrentSpeedhack();
 
-	if (out != NULL) *out = ret;
+	if (out != nullptr) *out = ret;
 
 	return ret;
 }
@@ -2703,7 +2703,7 @@ uint32_t get_version()
 
 void get_data_lang_path(PCHAR buffer)
 {
-	strcpy(buffer, basedir);
+	strcpy(buffer, ff8 ? ff8_externals.app_path : basedir);
 	PathAppendA(buffer, R"(data\lang-)");
 	switch (version)
 	{
@@ -3282,6 +3282,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 
 		if (strstr(lpFileName, "DISK1") != NULL || strstr(lpFileName, "DISK2") != NULL || strstr(lpFileName, "DISK3") != NULL || strstr(lpFileName, "DISK4") != NULL)
 		{
+			PathAppendA(newPath, ff8_externals.app_path);
 			PathAppendA(newPath, R"(data\disk)");
 			PathAppendA(newPath, pos);
 

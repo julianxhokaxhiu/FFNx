@@ -146,7 +146,7 @@ void ff7_use_analogue_controls(float analog_threshold)
 	float horizontalRotSpeed = 0.0f;
 	const float zoomSpeedMax = 1000.0f;
 	float zoomSpeed = 0.0f;
-	
+
 	float invertedVerticalCameraScale = -1.0;
 	if(enable_inverted_vertical_camera_controls) invertedVerticalCameraScale = 1.0;
 
@@ -181,9 +181,9 @@ void ff7_use_analogue_controls(float analog_threshold)
 			else if(gamepad.leftStickY < -analog_threshold && !(gamepad.leftStickX < -analog_threshold || gamepad.leftStickX > analog_threshold))
 				inputDir = {0.0f, -1.0f, 0.0f};
 
-			if (gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) 
+			if (gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB)
 			    && std::abs(gamepad.rightStickX) < right_analog_stick_deadzone
-				&& std::abs(gamepad.rightStickY) < right_analog_stick_deadzone) 
+				&& std::abs(gamepad.rightStickY) < right_analog_stick_deadzone)
 			{
 				if(!isCameraReset)
 				{
@@ -191,7 +191,7 @@ void ff7_use_analogue_controls(float analog_threshold)
 					ff7::battle::camera.reset();
 					isCameraReset = true;
 				}
-			} else 	
+			} else
 			{
 				isCameraReset = false;
 
@@ -246,11 +246,11 @@ void ff7_use_analogue_controls(float analog_threshold)
 				inputDir = {0.707f, -0.707f, 0.0f};
 			else if(joystick.GetState()->lY > joystick.GetDeadZone(analog_threshold) &&
 				!(joystick.GetState()->lX < joystick.GetDeadZone(-analog_threshold) || joystick.GetState()->lX > joystick.GetDeadZone(analog_threshold)))
-				inputDir = {0.0f, -1.0f, 0.0f};		
+				inputDir = {0.0f, -1.0f, 0.0f};
 
-			if ((joystick.GetState()->rgbButtons[11] & 0x80) 
+			if ((joystick.GetState()->rgbButtons[11] & 0x80)
 			    && std::abs(joystick.GetState()->lRz) < joystick.GetDeadZone(right_analog_stick_deadzone)
-				&& std::abs(joystick.GetState()->lZ) < joystick.GetDeadZone(right_analog_stick_deadzone)) 
+				&& std::abs(joystick.GetState()->lZ) < joystick.GetDeadZone(right_analog_stick_deadzone))
 			{
 				if(!isCameraReset)
 				{
@@ -258,8 +258,8 @@ void ff7_use_analogue_controls(float analog_threshold)
 					ff7::battle::camera.reset();
 					isCameraReset = true;
 				}
-			} else 	
-			{	
+			} else
+			{
 				isCameraReset = false;
 
 				bx::Vec3 rightAnalogDir(
@@ -267,7 +267,7 @@ void ff7_use_analogue_controls(float analog_threshold)
 					static_cast<float>(joystick.GetState()->lRz) / static_cast<float>(SHRT_MAX), 0.0f);
 				float length = std::min(bx::length(rightAnalogDir), 1.0f);
 				if(length > right_analog_stick_deadzone)
-				{				
+				{
 					rightAnalogDir = bx::normalize(rightAnalogDir);
 					float scale = (length - right_analog_stick_deadzone) / (1.0 - right_analog_stick_deadzone);
 					rightAnalogDir.x *=  scale;
@@ -340,7 +340,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 {
 	float analog_threshold = enable_auto_run ? left_analog_stick_deadzone + 0.25f * (1.0f - left_analog_stick_deadzone) : 0.5f;
 	float run_threshold = left_analog_stick_deadzone + 0.75f * (1.0f - left_analog_stick_deadzone);
-	
+
 	// Reset
 	ZeroMemory(ff7_externals.gamepad_status, sizeof(ff7_gamepad_status));
 	gamepad_analogue_intent = INTENT_NONE;
@@ -420,7 +420,7 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 			// Update the player intent based on the analogue movement
 			if (enable_auto_run)
 			{
-				bx::Vec3 joyDir = {static_cast<float>(joystick.GetState()->lX) / static_cast<float>(joystick.GetDeadZone(1.0f)), 
+				bx::Vec3 joyDir = {static_cast<float>(joystick.GetState()->lX) / static_cast<float>(joystick.GetDeadZone(1.0f)),
 				static_cast<float>(joystick.GetState()->lY) / static_cast<float>(joystick.GetDeadZone(1.0f)), 0.0f};
 				auto joyLength = std::min(bx::length(joyDir), 1.0f);
 				if (joyLength > run_threshold) gamepad_analogue_intent = INTENT_RUN;
@@ -634,9 +634,10 @@ void ff7_limit_fps()
 	}
 
 	framerate *= gamehacks.getCurrentSpeedhack();
+	double frame_time = game_object->countspersecond / framerate;
 
 	do qpc_get_time(&gametime);
-	while ((gametime > last_gametime) && qpc_diff_time(&gametime, &last_gametime, NULL) < ((ff7_game_obj*)common_externals.get_game_object())->countspersecond / framerate);
+	while (gametime > last_gametime && qpc_diff_time(&gametime, &last_gametime, nullptr) < frame_time);
 
 	last_gametime = gametime;
 }
