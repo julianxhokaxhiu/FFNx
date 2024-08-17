@@ -25,8 +25,7 @@
 #include <stdint.h>
 #include <unordered_map>
 #include <string>
-
-#include "cfg.h"
+#include <toml++/toml.h>
 
 constexpr int LEFT_MOTOR_DURATION_FRAMES = 5;
 constexpr int LEFT_MOTOR_MAX_VALUE = 240;
