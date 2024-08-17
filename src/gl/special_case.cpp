@@ -119,6 +119,13 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		{
 			// always z-sort vanilla messages
 			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->window_bg)) force_defer = true;
+
+			// fix timer messages when window is normal
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->_btl_win)) force_defer = true;
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->btl_win_a)) force_defer = true;
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->btl_win_b)) force_defer = true;
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->btl_win_c)) force_defer = true;
+			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->btl_win_d)) force_defer = true;
 		}
 
 		if(mode == MODE_BATTLE)

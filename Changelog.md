@@ -13,6 +13,7 @@
 
 ## FF7
 - Rendering: Fix wrong rendering for fonts in Field mode while scrolling.
+- Rendering: Fix wrong rendering for timer boxes when using normal window mode.
 - Widescreen: Added option to clip camera position during scripted events ( https://github.com/julianxhokaxhiu/FFNx/pull/706 )
 - Widescreen: Added feature to extend movies in true widescreen mode ( https://github.com/julianxhokaxhiu/FFNx/pull/700 )
 - 60FPS: Fix bug that displayed battle text too quickly when set at full SLOW speed
