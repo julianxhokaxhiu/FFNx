@@ -38,8 +38,6 @@
 #include <sstream>
 #include <vector>
 
-#include "patch.h"
-
 class Hext {
 private:
 	int inGlobalOffset;

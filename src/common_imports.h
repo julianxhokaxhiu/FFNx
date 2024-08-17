@@ -35,6 +35,8 @@
 #include <dinput.h>
 #include <dsound.h>
 
+#include "matrix.h"
+
 /*
  * Render states supported by the graphics engine
  *

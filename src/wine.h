@@ -25,7 +25,7 @@
 #include <windows.h>
 
 typedef const char* (*WineVersionFunction)();
-const char* GetWineVersion() {
+inline const char* GetWineVersion() {
     HMODULE hModule = LoadLibraryA("ntdll.dll");
     if (!hModule) {
         return "Wine is not detected.";

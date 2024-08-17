@@ -23,6 +23,8 @@
 #include "game_cfg.h"
 
 #include "patch.h"
+#include "globals.h"
+#include "cfg.h"
 
 void normalize_path_win(char *name)
 {

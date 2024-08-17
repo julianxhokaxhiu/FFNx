@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "patch.h"
+#include "ff8.h"
 
 // FF8 game mode definitions
 static struct game_mode ff8_modes[] = {
