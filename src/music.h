@@ -21,5 +21,7 @@
 
 #pragma once
 
+#include <stdint.h>
+
 void ff7_play_midi(uint32_t music_id);
 void music_init();
