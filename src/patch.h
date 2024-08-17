@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 #include <windows.h>
 
 uint32_t replace_function(uint32_t offset, void *func);
