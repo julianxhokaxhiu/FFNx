@@ -21,9 +21,6 @@
 
 #pragma once
 
-#include "globals.h"
-#include "cfg.h"
-
 #define LIST_FOR_EACH(X, Y) for((X) = (Y)->head; (X); (X) = (X)->next)
 
 /*

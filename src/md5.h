@@ -32,7 +32,6 @@ documentation and/or software.
 
 #pragma once
 
-#include <cstring>
 #include <iostream>
 
 
