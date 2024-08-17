@@ -117,9 +117,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 
 		if(mode == MODE_FIELD)
 		{
-			// always z-sort vanilla messages and font rendering draws
-			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->font_a)) force_defer = true;
-			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->font_b)) force_defer = true;
+			// always z-sort vanilla messages
 			if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->window_bg)) force_defer = true;
 		}
 
