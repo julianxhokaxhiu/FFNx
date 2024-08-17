@@ -19,7 +19,11 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <chrono>
+
 #include "metadata.h"
+#include "log.h"
+#include "md5.h"
 
 Metadata metadataPatcher;
 
