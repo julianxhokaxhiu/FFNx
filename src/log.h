@@ -21,6 +21,7 @@
 
 #pragma once
 
+// Header include necessary due to macro dependencies
 #include "cfg.h"
 #include "common.h"
 #include "globals.h"
