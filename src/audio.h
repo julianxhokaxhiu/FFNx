@@ -30,6 +30,8 @@
 #include "audio/openpsf/openpsf.h"
 #include "audio/vgmstream/vgmstream.h"
 
+#include "log.h"
+
 #define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000
 
 static void NxAudioEngineVgmstreamCallback(int level, const char* str)

@@ -24,9 +24,12 @@
 #include <steamworkssdk/isteamuserstats.h>
 #include <steamworkssdk/isteamuser.h>
 
-#include "achievement.h"
 #include <numeric>
 #include <algorithm>
+
+#include "achievement.h"
+#include "log.h"
+#include "cfg.h"
 
 using std::string;
 

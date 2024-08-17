@@ -22,9 +22,14 @@
 
 #pragma once
 
+#include <memory>
 #include <steamworkssdk/steam_api.h>
 #include <array>
-#include "log.h"
+#include <vector>
+#include <string>
+#include <windows.h>
+
+#include "ff7.h"
 
 #define _ACH_ID(id)           \
     {                         \

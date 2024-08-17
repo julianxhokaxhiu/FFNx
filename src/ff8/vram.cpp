@@ -28,6 +28,7 @@
 #include "../utils.h"
 #include "../globals.h"
 #include "../cfg.h"
+#include "../log.h"
 #include "field/background.h"
 #include "field/chara_one.h"
 #include "world/chara_one.h"

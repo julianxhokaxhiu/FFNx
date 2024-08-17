@@ -20,7 +20,12 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <toml++/toml.h>
+
 #include "cfg.h"
+#include "common.h"
+#include "globals.h"
+#include "log.h"
 
 #define FFNX_CFG_FILE "FFNx.toml"
 
