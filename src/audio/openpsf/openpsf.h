@@ -24,7 +24,6 @@
 #include <soloud.h>
 #include <stdint.h>
 #include <openpsf/openpsf.h>
-#include "../../log.h"
 
 namespace SoLoud
 {

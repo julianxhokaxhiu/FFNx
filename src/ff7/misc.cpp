@@ -36,7 +36,6 @@
 #include "../ff7.h"
 #include "../log.h"
 #include "../metadata.h"
-#include "../sfx.h"
 #include "../achievement.h"
 
 #include <bx/math.h>

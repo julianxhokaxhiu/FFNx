@@ -21,9 +21,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "../../ff7.h"
-
 #pragma once
+
+#include "../../ff7.h"
 
 namespace ff7::field
 {

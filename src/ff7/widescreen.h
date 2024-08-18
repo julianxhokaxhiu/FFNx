@@ -23,10 +23,11 @@
 
 #pragma once
 
-#include "common.h"
-#include "globals.h"
-
 #include <vector>
+#include <toml++/toml.h>
+
+#include "common.h"
+#include "ff7.h"
 
 int wide_viewport_x = -107;
 int wide_viewport_y = 0;
