@@ -21,16 +21,20 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "widescreen.h"
-#include "ff7/field/defs.h"
-#include "field/background.h"
-#include "../patch.h"
+#include "cmath"
+
 #include "../ff7.h"
 #include "../cfg.h"
 #include "../renderer.h"
 #include "../video/movies.h"
 #include "../movies.h"
-#include "cmath"
+#include "../gl.h"
+#include "../globals.h"
+#include "../patch.h"
+
+#include "widescreen.h"
+#include "field/defs.h"
+#include "field/background.h"
 
 int viewport_width_plus_x_widescreen_fix = 750;
 int swirl_framebuffer_offset_x_widescreen_fix = 106;
