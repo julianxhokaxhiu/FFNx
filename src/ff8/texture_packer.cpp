@@ -562,13 +562,6 @@ uint32_t TexturePacker::composeTextures(
 			if (pair.second.mod() != nullptr)
 			{
 				scale = std::max(scale, pair.second.mod()->scale(palette.x(), palette.y()));
-				// Cache for redirections (texl)
-				if (gl_set->default_texture_id_compose != 0)
-				{
-					if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s Texture already uploaded, not need for another one\n", __func__);
-
-					return gl_set->default_texture_id_compose;
-				}
 			}
 		}
 
@@ -615,18 +608,12 @@ uint32_t TexturePacker::composeTextures(
 
 	if (textureType == TexturePacker::InternalTexture || (!save_textures && textureType == TexturePacker::ExternalTexture))
 	{
-		*isExternal = textureType == TexturePacker::InternalTexture;
+		*isExternal = textureType == TexturePacker::ExternalTexture;
 		*width = originalW * scale;
 		*height = originalH * scale;
 		// Data is passed to bgfx, not need to free it here
 		bool copyData = target == rgbaImageData;
-		uint32_t texture = newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, true, copyData);
-
-		if (palIndex == 0) {
-			gl_set->default_texture_id_compose = texture;
-		}
-
-		return texture;
+		return newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, true, copyData);
 	}
 
 	if (target != nullptr && target != rgbaImageData)

@@ -100,7 +100,6 @@ struct gl_texture_set
 	uint32_t force_zsort;
 	uint32_t disable_lighting;
 	uint32_t default_texture_id;
-	uint32_t default_texture_id_compose;
 	// ANIMATED TEXTURES
 	uint32_t is_animated;
 	std::map<std::string, uint32_t> animated_textures;
