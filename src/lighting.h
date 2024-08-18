@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include "matrix.h"
-#include "common.h"
-#include "globals.h"
+#include "common_imports.h"
 
 #include <vector>
+#include <toml++/toml.h>
+#include <windows.h>
 
 enum DebugOutput
 {

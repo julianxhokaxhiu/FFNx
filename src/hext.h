@@ -30,12 +30,7 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cctype>
-#include <filesystem>
-#include <fstream>
-#include <locale>
-#include <sstream>
+#include <string>
 #include <vector>
 
 class Hext {

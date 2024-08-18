@@ -16,6 +16,7 @@
 #include "lighting_debug.h"
 #include "lighting.h"
 #include "cfg.h"
+#include "common.h"
 
 #include <imgui.h>
 #include <math.h>
@@ -81,7 +82,7 @@ void lighting_debug(bool* isOpen)
         float lightIntensity = lighting.getLightIntensity();
         if (ImGui::DragFloat("Intensity##0", &lightIntensity, 0.01f, 0.0f, 100.0f))
         {
-            lighting.setLightIntensity(lightIntensity);            
+            lighting.setLightIntensity(lightIntensity);
             lighting.setConfigEntry("light_intensity", lightIntensity);
         }
         vector3<float> lightColorPoint3d = lighting.getLightColor();

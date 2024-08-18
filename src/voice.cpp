@@ -24,11 +24,10 @@
 #include "audio.h"
 #include "field.h"
 #include "patch.h"
+#include "utils.h"
 
 #include "ff8/engine.h"
 
-#include <iomanip>
-#include <sstream>
 #include <queue>
 
 enum class display_type

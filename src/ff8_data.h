@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "common.h"
 #include "ff8.h"
 
 // FF8 game mode definitions

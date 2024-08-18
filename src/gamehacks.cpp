@@ -20,8 +20,8 @@
 /****************************************************************************/
 
 #include "gamehacks.h"
-#include "music.h"
 #include "audio.h"
+#include "ff7/defs.h"
 #include "gamepad.h"
 #include "joystick.h"
 

@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <cmath>
 #include <Windows.h>
 #include <Xinput.h>
 

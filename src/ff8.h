@@ -22,8 +22,10 @@
 
 #pragma once
 
-#include "common.h"
-#include "matrix.h"
+#include <stdint.h>
+#include <windows.h>
+
+#include "common_imports.h"
 
 // FF7 modules, unknowns are either unused or not relevant to rendering
 enum ff8_game_modes

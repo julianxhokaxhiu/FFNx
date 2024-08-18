@@ -33,8 +33,10 @@
 #include "gamepad.h"
 #include "joystick.h"
 #include "gamehacks.h"
+#include "utils.h"
 #include "vibration.h"
 #include "ff8/file.h"
+#include "ff8/vram.h"
 #include "metadata.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};

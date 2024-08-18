@@ -22,6 +22,10 @@
 
 #pragma once
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include "common.h"
 
 #define VERTEX 1

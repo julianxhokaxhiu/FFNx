@@ -27,6 +27,7 @@
 #include "ff8.h"
 #include "field.h"
 #include "cfg.h"
+#include "utils.h"
 
 Lighting lighting;
 

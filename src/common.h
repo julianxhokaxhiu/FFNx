@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "matrix.h"
 #include "common_imports.h"
 
 // all known OFFICIAL versions of FF7 & FF8 released for the PC

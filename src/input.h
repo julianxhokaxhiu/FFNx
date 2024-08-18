@@ -22,7 +22,6 @@
 #pragma once
 
 #include <windows.h>
-#include <functional>
 #include <vector>
 
 struct KeyEventArgs

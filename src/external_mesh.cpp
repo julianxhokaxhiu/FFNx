@@ -25,6 +25,7 @@
 
 #include "cfg.h"
 #include "renderer.h"
+#include "utils.h"
 
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
@@ -166,7 +167,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path)
 					colorBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
 				}
 			}
-            
+
             outShape.isDoubleSided = primitive.material->double_sided;
 
 			auto texture = primitive.material->pbr_metallic_roughness.base_color_texture.texture;

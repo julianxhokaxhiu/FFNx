@@ -26,7 +26,7 @@
 
 #include "log.h"
 #include "gl.h"
-#include "macro.h"
+#include "utils.h"
 
 #include <xxhash.h>
 

@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <io.h>
 #include "log.h"
+#include "utils.h"
 
 #include "redirect.h"
 
