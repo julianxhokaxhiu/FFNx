@@ -30,7 +30,6 @@
 #include "../ff7/battle/menu.h"
 #include "../ff7/widescreen.h"
 
-#include "ff7/field/background.h"
 #include "ff7/world/renderer.h"
 
 uint32_t nodefer = false;
@@ -135,7 +134,7 @@ uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvert
 		memcpy(deferred_draws[defer].normals, normals, sizeof(*normals) * vertexcount);
 	}
 
-	if(lightdata) 
+	if(lightdata)
 	{
 		deferred_draws[defer].lightdata = (struct light_data*)driver_malloc(sizeof(struct light_data));
 		memcpy(deferred_draws[defer].lightdata, lightdata, sizeof(struct light_data));

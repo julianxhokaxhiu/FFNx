@@ -24,7 +24,6 @@
 #include "../log.h"
 #include "../gl.h"
 #include "../macro.h"
-#include "../saveload.h"
 
 // check to make sure we can actually load a given texture
 bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source)

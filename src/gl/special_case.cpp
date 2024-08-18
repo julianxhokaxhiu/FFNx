@@ -22,14 +22,11 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include "../renderer.h"
 
 #include "../gl.h"
 #include "../cfg.h"
 #include "../macro.h"
-#include "../log.h"
-#include "../ff8.h"
-#include "../saveload.h"
+#include "../globals.h"
 
 #include "../ff7/widescreen.h"
 

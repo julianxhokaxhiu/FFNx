@@ -20,14 +20,11 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <windows.h>
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
 
 #include "../renderer.h"
-#include "../lighting.h"
-
 #include "../cfg.h"
 #include "../gl.h"
 #include "../macro.h"
@@ -254,7 +251,7 @@ void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_
 void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
 {
 	static std::vector<vector3<float>> normals;
-	if (!ff8 && lightdata != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL) 
+	if (!ff8 && lightdata != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
 	{
 		gl_calculate_normals(&normals, ip, polydata, lightdata);
 		gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normals.data(), ip->vertexcount, ip->indices, ip->indexcount, 0, 0, lightdata, clip, true);
@@ -266,7 +263,7 @@ void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *po
 {
 	static std::vector<vector3<float>> normals;
 	if (!ff8)
-	{ 
+	{
 		gl_calculate_normals(&normals, ip, polydata, lightdata);
 		gl_draw_indexed_primitive(ip->primitivetype, ip->vertextype, ip->vertices, normals.data(), ip->vertexcount, ip->indices, ip->indexcount, 0, polydata->boundingboxdata, lightdata, clip, true);
 	}
@@ -348,12 +345,12 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	newRenderer.bindIndexBuffer(indices, count);
 	newRenderer.setPrimitiveType(RendererPrimitiveType(primitivetype));
 
-	if(!ff8 && lightdata != nullptr && normals != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL) 
+	if(!ff8 && lightdata != nullptr && normals != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
 	{
 		newRenderer.setGameLightData(lightdata);
 	} else newRenderer.setGameLightData(nullptr);
 
-	if (!ff8 && enable_lighting && normals != nullptr && isLightingEnabledTexture) 
+	if (!ff8 && enable_lighting && normals != nullptr && isLightingEnabledTexture)
 	{
 		newRenderer.drawToShadowMap();
 		newRenderer.drawWithLighting(true, true);
