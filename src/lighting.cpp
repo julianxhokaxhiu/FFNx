@@ -21,6 +21,7 @@
 /****************************************************************************/
 
 #include "lighting.h"
+#include "gl.h"
 #include "renderer.h"
 #include "macro.h"
 #include "ff7.h"

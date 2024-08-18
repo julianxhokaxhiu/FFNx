@@ -22,12 +22,8 @@
 
 #pragma once
 
-// TODO: fix imports
-
-#include <filesystem>
-#include <iterator>
 #include <vector>
-#include <map>
+#include <array>
 #include <string>
 #include <math.h>
 #include <bx/math.h>
@@ -40,8 +36,8 @@
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
 #include <cmrc/cmrc.hpp>
-#include "log.h"
-#include "gl.h"
+
+#include "common.h"
 #include "overlay.h"
 
 #define FFNX_RENDERER_INVALID_HANDLE { 0 }

@@ -26,6 +26,7 @@
 #include "../../patch.h"
 #include "../../sfx.h"
 
+#include "cfg.h"
 #include "defs.h"
 #include "world.h"
 #include "utils.h"

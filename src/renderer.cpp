@@ -28,17 +28,18 @@
 #define WINVER 0x0A00
 #define _WIN32_WINNT 0x0A00
 
+#include <windows.h>
+#include <vector>
+
 #include "renderer.h"
 #include "lighting.h"
 #include "ff7/widescreen.h"
-#include "ff7/time.h"
 #include "ff7/world/world.h"
-#include "ff7/world/camera.h"
+#include "image/image.h"
+#include "gl.h"
+#include "log.h"
 #include "cfg.h"
 #include "utils.h"
-#include "image/image.h"
-#include <windows.h>
-#include <vector>
 
 CMRC_DECLARE(FFNx);
 

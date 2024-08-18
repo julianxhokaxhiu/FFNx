@@ -19,12 +19,16 @@
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
+#include <set>
+
 #include "texture_packer.h"
 #include "../saveload.h"
 #include "../patch.h"
 #include "../renderer.h"
+#include "cfg.h"
+#include "log.h"
 #include "mod.h"
-#include <set>
+#include "gl.h"
 
 // Scale 32-bit BGRA image
 void scale_up_image_data(const uint32_t *source, uint32_t *target, uint32_t w, uint32_t h, uint8_t scale)

@@ -23,6 +23,8 @@
 
 #include "renderer.h"
 #include "camera.h"
+#include "cfg.h"
+#include "gl.h"
 
 #include "../defs.h"
 #include "../../lighting.h"

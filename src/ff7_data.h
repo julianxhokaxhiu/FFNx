@@ -22,6 +22,11 @@
 
 #pragma once
 
+#include <functional>
+
+#include "ff7.h"
+#include "globals.h"
+#include "log.h"
 #include "patch.h"
 
 // FF7 game mode definitions

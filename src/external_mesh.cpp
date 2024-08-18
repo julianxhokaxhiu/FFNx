@@ -24,7 +24,7 @@
 #include "external_mesh.h"
 
 #include "cfg.h"
-#include "renderer.h"
+#include "log.h"
 #include "utils.h"
 
 #define CGLTF_IMPLEMENTATION
