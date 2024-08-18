@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "field/defs.h"
-#include "battle/defs.h"
-#include "world/defs.h"
+#include "ff7.h"
+#include <windows.h>
+#include <stdint.h>
 
 // kernel
 void kernel2_reset_counters();
