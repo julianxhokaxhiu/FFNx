@@ -31,15 +31,14 @@
 #include <windows.h>
 #include <vector>
 
-#include "renderer.h"
 #include "lighting.h"
 #include "ff7/widescreen.h"
-#include "ff7/world/world.h"
 #include "image/image.h"
 #include "gl.h"
 #include "log.h"
 #include "cfg.h"
 #include "utils.h"
+#include "renderer.h"
 
 CMRC_DECLARE(FFNx);
 

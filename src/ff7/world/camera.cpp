@@ -21,12 +21,11 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "../../globals.h"
 #include "camera.h"
 #include "world.h"
 #include "utils.h"
-
 #include "defs.h"
-#include "../../patch.h"
 
 namespace ff7::world
 {
@@ -38,7 +37,7 @@ namespace ff7::world
         int movement_multiplier = *ff7_externals.world_movement_multiplier_DFC480;
         int world_map_type = *ff7_externals.world_map_type_E045E8;
         int camera_view_type = *ff7_externals.world_camera_viewtype_DFC4B4;
-    
+
         if (world_map_type == SNOWSTORM)
         {
             auto flag = current_key_input & ANY_DIRECTIONAL_KEY;
@@ -51,7 +50,7 @@ namespace ff7::world
 
             auto rotationSpeed = camera.getRotationSpeed();
 
-            int current_key_input = ff7_externals.world_get_current_key_input_status(); 
+            int current_key_input = ff7_externals.world_get_current_key_input_status();
             float playerDeltaMovement = static_cast<float>(*ff7_externals.world_special_delta_movement_DE6A18);
             int movement_speed = get_player_movement_speed(player_model_id);
             float speedCoeff = std::abs(playerDeltaMovement) / (movement_speed);
@@ -78,22 +77,22 @@ namespace ff7::world
                 }
                 else
                 {
-                    float t = 0.02 * movement_multiplier;   
+                    float t = 0.02 * movement_multiplier;
 
                     bool isMovementButtonPressed = is_key_pressed(current_key_input, CIRCLE | R1 | SQUARE | L1 );
 
-                    if (abs(joyDir.x) == 0.0f && !isMovementButtonPressed) t = 0.0f;                  
-    
-                    if (player_model_id == BUGGY) t *= speedCoeff;                        
-                    else t *= isMovementButtonPressed ? std::max(0.1f, speedCoeff) : abs(joyDir.x);                    
-                    
+                    if (abs(joyDir.x) == 0.0f && !isMovementButtonPressed) t = 0.0f;
+
+                    if (player_model_id == BUGGY) t *= speedCoeff;
+                    else t *= isMovementButtonPressed ? std::max(0.1f, speedCoeff) : abs(joyDir.x);
+
                     float diff = player_direction - camera.localTargetRotation.y;
                     if (diff > 180) camera.localTargetRotation.y += 360;
                     else if (diff < - 180)  camera.localTargetRotation.y -= 360;
                     camera.localTargetRotation.y = (1.0f - t) * camera.localTargetRotation.y + t * player_direction;
                 }
                 camera.targetRotation.y = camera.localTargetRotation.y;
-                camera.targetRotation.x = camera.localTargetRotation.x;                
+                camera.targetRotation.x = camera.localTargetRotation.x;
             }
             else
             {
@@ -125,9 +124,9 @@ namespace ff7::world
             float targetRotationY = *ff7_externals.world_camera_front_DFC484 * 360.0f / 4096.0f;
 
             int world_map_type = *ff7_externals.world_map_type_E045E8;
-            
+
             float diff = targetRotationY - camera.rotationOffset.y;
-            if (diff > 180) 
+            if (diff > 180)
                 camera.rotationOffset.y += 360;
             else if (diff < - 180)  camera.rotationOffset.y -= 360;
 
@@ -169,19 +168,19 @@ namespace ff7::world
         static float zoomTarget = 10000.0f;
         static int cameraStatusCounter = 0;
         float maxZoomDist = camera.getMaxZoomDist();
-        
+
         if(world_map_type != SNOWSTORM && ff7_externals.world_get_unknown_flag_75335C())
         {
             targetRotationX = camera.targetRotation.x;
-            zoomTarget = std::min(maxZoomDist, std::max(camera.minZoomDist, zoomTarget - camera.getZoomSpeed()));            
+            zoomTarget = std::min(maxZoomDist, std::max(camera.minZoomDist, zoomTarget - camera.getZoomSpeed()));
             cameraStatusCounter = 0;
-        } else 
+        } else
         {
-            if (cameraStatusCounter > 0) zoomTarget = 10000.0f;            
+            if (cameraStatusCounter > 0) zoomTarget = 10000.0f;
             cameraStatusCounter++;
         }
 
-        const float t = 0.05f * movement_multiplier;     
+        const float t = 0.05f * movement_multiplier;
         camera.rotationOffset.x = (1.0f - t) * camera.rotationOffset.x + t * targetRotationX;
 
         bx::Vec3 up = { 0, 1, 0 };
@@ -199,7 +198,7 @@ namespace ff7::world
         float rotMat[16];
         bx::mtxFromQuaternion(rotMat, quaternion);
 
-        
+
         camera.zoomOffset = (1.0f - t) * camera.zoomOffset + t * zoomTarget;
 
         camera.zoomOffset = std::min(maxZoomDist, std::max(camera.minZoomDist, camera.zoomOffset));

@@ -21,13 +21,14 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "globals.h"
 #include "world.h"
 #include "camera.h"
+#include "cfg.h"
 #include "utils.h"
 
 #include <math.h>
-#include "defs.h"
-#include "../../cfg.h"
+#include "ff7/world/defs.h"
 
 namespace ff7::world {
 

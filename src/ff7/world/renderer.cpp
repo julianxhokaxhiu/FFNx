@@ -21,10 +21,11 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "renderer.h"
+#include "ff7/world/renderer.h"
 #include "camera.h"
 #include "cfg.h"
 #include "gl.h"
+#include "globals.h"
 
 #include "../defs.h"
 #include "../../lighting.h"
@@ -45,9 +46,9 @@ namespace ff7::world {
     }
 
     void wm0_overworld_draw_all() {
-       auto game_object = (struct ff7_game_obj *)common_externals.get_game_object();               
+       auto game_object = (struct ff7_game_obj *)common_externals.get_game_object();
         if (game_object) update_view_matrix (game_object);
-        worldRenderer.drawWorldMapExternalMesh();    
+        worldRenderer.drawWorldMapExternalMesh();
         ff7_externals.world_wm0_overworld_draw_all_74C179();
     }
 
@@ -61,7 +62,7 @@ namespace ff7::world {
     }
 
     void wm2_underwater_draw_all() {
-        auto game_object = (struct ff7_game_obj *)common_externals.get_game_object();               
+        auto game_object = (struct ff7_game_obj *)common_externals.get_game_object();
         if (game_object) update_view_matrix (game_object);
         		const int worldmap_type = *ff7_externals.world_map_type_E045E8;
 		newRenderer.setFogEnabled(true);
@@ -71,7 +72,7 @@ namespace ff7::world {
     }
 
     void wm3_snowstorm_draw_all() {
-        auto game_object = (struct ff7_game_obj *)common_externals.get_game_object();               
+        auto game_object = (struct ff7_game_obj *)common_externals.get_game_object();
         if (game_object) update_view_matrix (game_object);
         worldRenderer.drawWorldMapExternalMesh();
         ff7_externals.world_wm3_snowstorm_draw_all_74C589();
@@ -113,7 +114,7 @@ namespace ff7::world {
         ::memcpy(&viewMatrix.m[0][0], newRenderer.getViewMatrix(), sizeof(viewMatrix.m));
 
         vector3<float> viewPos = {0.0f, 0.0f, 0.0f};
-        transform_point(&viewMatrix, &worldPos, &viewPos);    
+        transform_point(&viewMatrix, &worldPos, &viewPos);
 
         struct matrix invViewMatrix;
         ::memcpy(&invViewMatrix.m[0][0], newRenderer.getInvViewMatrix(), sizeof(invViewMatrix.m));
@@ -141,7 +142,7 @@ namespace ff7::world {
     void world_draw_effects()
     {
         short v0;
-        transform_matrix rot_matrix_0; 
+        transform_matrix rot_matrix_0;
         transform_matrix rot_matrix_1;
         int v3;
         transform_matrix rot_matrix_2;
@@ -161,7 +162,7 @@ namespace ff7::world {
 
         world_effect_2d_list_node* eff_node = *ff7_externals.dword_E35648;
         world_effect_2d_list_node* next_node = nullptr;
-        while (eff_node) 
+        while (eff_node)
         {
             vector3<float> worldPos = {static_cast<float>(eff_node->x), static_cast<float>(eff_node->y), static_cast<float>(eff_node->z)};
             vector3<float> newWorldPos = calcSphericalWorldPos(worldPos);
@@ -221,18 +222,18 @@ namespace ff7::world {
         if ( previous_position < ff7_externals.world_snake_data_position_E29F80 )
             previous_position = &(ff7_externals.world_snake_data_position_E29F80[47]);
 
-        
+
         for ( snake_data = ff7_externals.world_snake_graphics_data_E2A490;
                 snake_data < ff7_externals.world_snake_graphics_data_end_E2A6D0;
                 ++snake_data )
-        {     
+        {
             previous_position += 4;
             if ( previous_position >= ff7_externals.snake_position_size_of_array_E2A100 )
-            previous_position -= 48;            
-            
+            previous_position -= 48;
+
             if ( ff7_externals.sub_753366(((int)previous_position->x >> 13) + 26, ((int)previous_position->y >> 13) + 16) )
             {
-                vector3<float> prevPos = { static_cast<float>(previous_position->x + 212992), 
+                vector3<float> prevPos = { static_cast<float>(previous_position->x + 212992),
                                            static_cast<float>(0),
                                            static_cast<float>(previous_position->y + 0x20000)};
                 vector3<float> newPrevWorldPos = calcSphericalWorldPos(prevPos);
@@ -252,7 +253,7 @@ namespace ff7::world {
                         ff7_externals.world_draw_snake_texture_75D544(300, 300, unknown + v1, v2, snake_data, 0);// first two parameters = width and height of one block of the snake
                         previous_position = previous_position_backup;
                     }
-                }               
+                }
             }
 
 
@@ -273,7 +274,7 @@ namespace ff7::world {
         struct game_mode* mode = getmode_cached();
 
         struct matrix projection_matrix;
-        ::memcpy(&projection_matrix.m[0][0], &a2->m[0][0], sizeof(projection_matrix.m));    
+        ::memcpy(&projection_matrix.m[0][0], &a2->m[0][0], sizeof(projection_matrix.m));
 
         if (mode->driver_mode == MODE_WORLDMAP)
         {
@@ -287,11 +288,11 @@ namespace ff7::world {
             float f = b / (a + 1.0f) + f_offset;
             float n = b / (a - 1.0f) + n_offset;
 
-            
+
             projection_matrix._33 = -(f + n) / (f -n);
-            projection_matrix._43 = -(2*f*n) / (f - n);            
+            projection_matrix._43 = -(2*f*n) / (f - n);
         }
-    
+
         ff7_externals.engine_apply_4x4_matrix_product_between_matrices_66C6CD(a1, &projection_matrix, a3);
     }
 
@@ -357,7 +358,7 @@ namespace ff7::world {
     {
         externalWorldMapModel.unloadExternalMesh();
         externalCloudsModel.unloadExternalMesh();
-        externalMeteorModel.unloadExternalMesh();    
+        externalMeteorModel.unloadExternalMesh();
     }
 
     bool Renderer::drawWorldMapExternalMesh()
@@ -473,7 +474,7 @@ namespace ff7::world {
                     vector3<float> centerShifted;
                     centerShifted.x = center.x + gridX * 294912;
                     centerShifted.y = center.z;
-                    centerShifted.z = center.y + gridZ * 229376;      
+                    centerShifted.z = center.y + gridZ * 229376;
 
                     vector2<float> diff;
                     diff.x = world_pos_x - centerShifted.x;
@@ -502,7 +503,7 @@ namespace ff7::world {
                     {
                         continue;
                     }
-                    
+
                     if (isFirstBinding)
                     {
                         newRenderer.setWorldViewMatrix(&worldViewMatrix[3 * (gridX + 1) + gridZ + 1]);
@@ -511,8 +512,8 @@ namespace ff7::world {
                         isFirstBinding = false;
                     }
                     else
-                    {				
-                        newRenderer.setWorldViewMatrix(&worldViewMatrix[3 * (gridX + 1) + gridZ + 1], false);    
+                    {
+                        newRenderer.setWorldViewMatrix(&worldViewMatrix[3 * (gridX + 1) + gridZ + 1], false);
                         newRenderer.setUniform(RendererUniform::WORLD_VIEW, newRenderer.getWorldViewMatrix());
                     }
 
@@ -612,7 +613,7 @@ namespace ff7::world {
         const float scaleY = scaleX / 4;
         for(int i = 0; i < numQuads; ++i)
         {
-            identity_matrix(&worldViewMatrix[i]);  
+            identity_matrix(&worldViewMatrix[i]);
 
             float offset = 2.0f * scaleX * (i- numQuads / 2);
             float cameraOffset = -4.0f * scaleX * (std::remainder(ff7::world::camera.getRotationOffsetY(), 360.0f) / 360.0f);
@@ -634,14 +635,14 @@ namespace ff7::world {
             worldMatrix._43 = focusPos.z + forward.z * 100000 + totalOffset * right.z;
 
             multiply_matrix(&worldMatrix, &viewMatrix, &worldViewMatrix[i]);
-        
+
         }
 
         newRenderer.setInterpolationQualifier(SMOOTH);
         newRenderer.setPrimitiveType();
         newRenderer.isTLVertex(false);
         newRenderer.setBlendMode(RendererBlendMode::BLEND_ADD);
-        newRenderer.doTextureFiltering(true);    
+        newRenderer.doTextureFiltering(true);
         newRenderer.isExternalTexture(true);
         newRenderer.isTexture(true);
         newRenderer.doDepthTest(true);
@@ -670,7 +671,7 @@ namespace ff7::world {
             }
         }
 
-        newRenderer.setWorldViewMatrix(&worldViewMatrix[0]);    
+        newRenderer.setWorldViewMatrix(&worldViewMatrix[0]);
         newRenderer.setCommonUniforms();
 
         auto shapeCount = externalCloudsModel.shapes.size();
@@ -709,7 +710,7 @@ namespace ff7::world {
                     else newRenderer.useTexture(0, RendererTextureSlot::TEX_PBR);
                 }
 
-                newRenderer.bindTextures();      
+                newRenderer.bindTextures();
             }
 
             for(int i = 0; i < numQuads; ++i)
@@ -723,7 +724,7 @@ namespace ff7::world {
                 newRenderer.draw(true, true, true);
             }
         }
-        
+
         newRenderer.discardAllBindings();
 
         newRenderer.setSphericalWorldRate(1.0f);
@@ -817,7 +818,7 @@ namespace ff7::world {
             }
         }
 
-        newRenderer.setWorldViewMatrix(&worldViewMatrix);    
+        newRenderer.setWorldViewMatrix(&worldViewMatrix);
         newRenderer.setCommonUniforms();
 
         auto shapeCount = externalMeteorModel.shapes.size();
@@ -856,12 +857,12 @@ namespace ff7::world {
                     else newRenderer.useTexture(0, RendererTextureSlot::TEX_PBR);
                 }
 
-                newRenderer.bindTextures();      
+                newRenderer.bindTextures();
             }
 
             newRenderer.draw(true, true, true);
         }
-        
+
         newRenderer.discardAllBindings();
 
         newRenderer.setSphericalWorldRate(1.0f);
@@ -874,8 +875,8 @@ namespace ff7::world {
         if(gl_defer_cloud_external_mesh()) return false;
 
         if (isDrawMeteor) drawMeteorExternalMesh();
-        drawCloudsExternalMesh();  
+        drawCloudsExternalMesh();
 
-        return true;  
+        return true;
     }
 }

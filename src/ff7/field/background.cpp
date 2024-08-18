@@ -21,7 +21,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "../../log.h"
 #include "../../common.h"
 #include "../../globals.h"
 #include "../widescreen.h"
@@ -534,7 +533,7 @@ namespace ff7::field
         }
 
         auto camera_range = widescreen.getCameraRange();
-        
+
         // Adjustment to prevent scrolling stopping one pixel too early
         camera_range.left += 1;
         camera_range.right -= 1;
@@ -774,8 +773,8 @@ namespace ff7::field
                         *ff7_externals.scripted_world_final_pos_x = -world_pos.x;
 
                         world_pos = {-(*ff7_externals.scripted_world_initial_pos_x), -(*ff7_externals.scripted_world_initial_pos_y)};
-                        field_widescreen_width_clip_with_camera_range(&world_pos);    
-                        *ff7_externals.scripted_world_initial_pos_x = -world_pos.x;                    
+                        field_widescreen_width_clip_with_camera_range(&world_pos);
+                        *ff7_externals.scripted_world_initial_pos_x = -world_pos.x;
                     }
 
                     std::function<int(int, int, int, int)> field_get_interpolated_value = ff7_externals.modules_global_object->world_move_mode == 5 ?
@@ -942,7 +941,7 @@ namespace ff7::field
                 {
                     bg_delta_position.x = -last_valid_scripted_field_delta_world_pos.x;
                     bg_delta_position.y = -last_valid_scripted_field_delta_world_pos.y;
-                    
+
                     field_clip_with_camera_range_float(&bg_delta_position);
                     field_curr_delta_world_pos.x = -bg_delta_position.x;
                     field_curr_delta_world_pos.y = -bg_delta_position.y;
@@ -954,8 +953,8 @@ namespace ff7::field
             {
                 if(is_position_valid(field_curr_delta_world_pos))
                     set_world_and_background_positions({-field_curr_delta_world_pos.x, -field_curr_delta_world_pos.y}, true);
-            }           
-            
+            }
+
 
             if((*ff7_externals.field_event_data_ptr)[player_model_id].field_62)
                 compute_pointer_hand_position(field_3d_world_pos, player_model_id);

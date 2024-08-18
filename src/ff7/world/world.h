@@ -25,10 +25,6 @@
 
 #include "matrix.h"
 
-#include "globals.h"
-
-#include <string>
-
 namespace ff7::world
 {
     enum input_key

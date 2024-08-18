@@ -23,8 +23,7 @@
 
 #pragma once
 
-#include "../../common.h"
-#include "../../globals.h"
+#include "ff7.h"
 
 namespace ff7::field
 {

@@ -22,7 +22,10 @@
 
 #pragma once
 
-#include "../../ff7.h"
+#include <unordered_map>
+#include <unordered_set>
+#include <stdint.h>
+#include <windows.h>
 
 namespace ff7::battle
 {

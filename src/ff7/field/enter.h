@@ -29,7 +29,7 @@
 
 namespace ff7::field
 {
-    void ff7_field_initialize_variables()
+    inline void ff7_field_initialize_variables()
     {
         ((void(*)())ff7_externals.field_initialize_variables)();
 

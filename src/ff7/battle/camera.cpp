@@ -25,11 +25,9 @@
 
 #include <unordered_set>
 #include <unordered_map>
-#include <utility>
 #include <span>
 
 #include "../../patch.h"
-#include "../../log.h"
 #include "../../globals.h"
 
 #include <bx/math.h>
@@ -265,7 +263,7 @@ namespace ff7::battle
         ((void(*)(short))ff7_externals.update_battle_camera_sub_5C20CE)(cameraScriptIndex);
 
         byte battle_enter_frames_to_wait = *ff7_externals.battle_enter_frames_to_wait;
-        if(cameraScriptIndex == -2 && battle_enter_frames_to_wait > 5) 
+        if(cameraScriptIndex == -2 && battle_enter_frames_to_wait > 5)
         {
             camera.reset();
             camera.setupInitialCamera();

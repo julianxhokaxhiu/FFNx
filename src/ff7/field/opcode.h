@@ -24,6 +24,7 @@
 #pragma once
 
 #include <array>
+#include <windows.h>
 
 namespace ff7::field
 {

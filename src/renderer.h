@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <cmrc/cmrc.hpp>
 #include <vector>
 #include <array>
 #include <string>
@@ -35,7 +36,6 @@
 #include <bimg/encode.h>
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
-#include <cmrc/cmrc.hpp>
 
 #include "common.h"
 #include "overlay.h"
