@@ -21,13 +21,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "renderer.h"
 #include "cfg.h"
 #include "ff7.h"
-#include "gl.h"
 #include "patch.h"
-#include "movies.h"
-#include "music.h"
 #include "ff7/defs.h"
 #include "ff7_data.h"
 #include "ff7/widescreen.h"

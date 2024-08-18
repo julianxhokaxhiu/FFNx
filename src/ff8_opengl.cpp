@@ -19,7 +19,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "renderer.h"
 #include "globals.h"
 #include "common.h"
 #include "ff8.h"
@@ -29,7 +28,6 @@
 #include "macro.h"
 #include "movies.h"
 #include "gl.h"
-#include "saveload.h"
 #include "gamepad.h"
 #include "joystick.h"
 #include "gamehacks.h"

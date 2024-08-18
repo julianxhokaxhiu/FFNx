@@ -21,14 +21,12 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "renderer.h"
+#include "api.h"
+#include "field.h"
 #include "overlay.h"
 #include <bx/file.h>
 #include "cfg.h"
-#include "field.h"
 #include "world.h"
-#include "api.h"
-#include "renderer.h"
 #include "lighting_debug.h"
 
 #define IMGUI_VIEW_ID 255

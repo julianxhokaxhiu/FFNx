@@ -22,8 +22,8 @@
 #include <windowsx.h>
 #include <dinput.h>
 #include "input.h"
-#include "api.h"
 #include "gamehacks.h"
+#include "globals.h"
 
 byte keys[256];
 bool blockKeys = false;

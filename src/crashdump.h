@@ -21,11 +21,9 @@
 
 #pragma once
 
-#include <stdio.h>
 #include <StackWalker.h>
 #include <dbghelp.h>
 
-#include "crashdump.h"
 #include "log.h"
 
 #define STACK_MAX_NAME_LENGTH 256

@@ -22,11 +22,7 @@
 
 #include "audio.h"
 #include "movies.h"
-#include "renderer.h"
-#include "gl.h"
 #include "patch.h"
-#include "field.h"
-#include "ff7/defs.h"
 #include "ff7/widescreen.h"
 #include "video/movies.h"
 #include "redirect.h"

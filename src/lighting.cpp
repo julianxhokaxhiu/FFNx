@@ -22,11 +22,9 @@
 
 #include "lighting.h"
 #include "gl.h"
+#include "globals.h"
 #include "renderer.h"
 #include "macro.h"
-#include "ff7.h"
-#include "ff8.h"
-#include "field.h"
 #include "cfg.h"
 #include "utils.h"
 

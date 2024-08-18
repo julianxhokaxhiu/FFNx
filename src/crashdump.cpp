@@ -20,7 +20,6 @@
 /****************************************************************************/
 
 #include "audio.h"
-#include "renderer.h"
 
 #include "crashdump.h"
 

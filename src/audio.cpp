@@ -19,6 +19,8 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "audio/openpsf/openpsf.h"
+
 #include "audio.h"
 
 #include "log.h"
