@@ -20,6 +20,7 @@
 /****************************************************************************/
 
 #include "openpsf.h"
+#include "utils.h"
 
 constexpr auto SOLOUD_OPENPSF_VOLUME_SCALE = float(3.2f / double(0x8000));
 

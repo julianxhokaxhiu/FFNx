@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 
+#include "defs.h"
 #include "battle/camera.h"
 #include "field/camera.h"
 #include "world/camera.h"

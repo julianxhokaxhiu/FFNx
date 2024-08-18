@@ -24,6 +24,7 @@
 #include "renderer.h"
 #include "camera.h"
 
+#include "../defs.h"
 #include "../../lighting.h"
 
 namespace ff7::world {

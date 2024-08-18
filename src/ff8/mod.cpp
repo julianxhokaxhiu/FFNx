@@ -21,11 +21,10 @@
 /****************************************************************************/
 #include "mod.h"
 
-#include <set>
-
 #include "../image/image.h"
 #include "../log.h"
 #include "../renderer.h"
+#include "../utils.h"
 #include "file.h"
 
 

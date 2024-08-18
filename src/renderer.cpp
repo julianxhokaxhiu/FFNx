@@ -35,6 +35,7 @@
 #include "ff7/world/world.h"
 #include "ff7/world/camera.h"
 #include "cfg.h"
+#include "utils.h"
 #include "image/image.h"
 #include <windows.h>
 #include <vector>
