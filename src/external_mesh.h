@@ -25,9 +25,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <toml++/toml.h>
 
-#include "common.h"
-#include "globals.h"
 #include "renderer.h"
 
 struct Material
@@ -61,7 +60,7 @@ public:
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
-    
+
     std::vector<Shape> shapes;
 	std::map<std::string, Material> materials;
 private:
@@ -78,5 +77,5 @@ private:
     bgfx::DynamicVertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;
 
     std::vector<uint32_t> indexBufferData;
-    bgfx::DynamicIndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;   
+    bgfx::DynamicIndexBufferHandle indexBufferHandle = BGFX_INVALID_HANDLE;
 };

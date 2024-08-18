@@ -2641,3 +2641,4 @@ void Renderer::setGameLightData(light_data* lightdata)
         internalState.gameScriptedLightColor[2] = 1.0;
     }
 }
+

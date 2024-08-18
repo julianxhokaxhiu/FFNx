@@ -21,6 +21,8 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#pragma once
+
 #include "model.h"
 #include "background.h"
 #include "../widescreen.h"

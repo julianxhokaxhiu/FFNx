@@ -21,6 +21,8 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#pragma once
+
 namespace ff7::world
 {
     bool is_key_pressed(int current_key_status, int key)

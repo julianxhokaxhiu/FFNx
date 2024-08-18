@@ -21,6 +21,8 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#pragma once
+
 #include "../../movies.h"
 #include "../../cfg.h"
 #include "../../globals.h"

@@ -61,14 +61,14 @@ static struct game_mode ff7_modes[] = {
 	{FF7_MODE_UNKNOWN28,   "MODE_UNKNOWN28",   MODE_UNKNOWN,     false },
 };
 
-void ff7_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
+inline void ff7_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 {
 	uint32_t i;
 
 	for(i = 0; i < num_modes; i++) if(ff7_modes[i].driver_mode == driver_mode) ff7_modes[i].main_loop = main_loop;
 }
 
-void ff7_find_externals(struct ff7_game_obj* game_object)
+inline void ff7_find_externals(struct ff7_game_obj* game_object)
 {
 	uint32_t main_init_loop = (uint32_t)game_object->engine_loop_obj.init;
 	uint32_t main_loop = (uint32_t)game_object->engine_loop_obj.main_loop;
@@ -1130,7 +1130,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.pollensalta_cold_breath_atk_draw_white_dots_547E75 = (void(*)(short))get_relative_call(ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56, 0x20);
 	ff7_externals.pollensalta_cold_breath_white_dots_pos = std::span((vector4<short>*) get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56, 0x79), 400);
 	ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar = (short*) get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_white_dot_effect_547D56, 0x1B);
-	ff7_externals.pollensalta_cold_breath_bg_texture_ctx = get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_draw_bg_effect_547B94, 0x2A);	
+	ff7_externals.pollensalta_cold_breath_bg_texture_ctx = get_absolute_value(ff7_externals.pollensalta_cold_breath_atk_draw_bg_effect_547B94, 0x2A);
 	uint32_t pandora_box_skill_enter_5667E1 = ff7_externals.enemy_skill_effects_fn_table[23];
 	uint32_t pandora_box_skill_main_566806 = get_relative_call(pandora_box_skill_enter_5667E1, 0x1A);
 	uint32_t pandora_box_skill_sub_566871 = get_absolute_value(pandora_box_skill_main_566806, 0x30);
@@ -1204,7 +1204,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_snake_data_position_E29F80 = (vector4<short> *)get_absolute_value((uint32_t)ff7_externals.animate_world_snake_75692A, 0x2A);
 	ff7_externals.world_snake_graphics_data_E2A490 = (world_snake_graphics_data *)get_absolute_value(ff7_externals.animate_world_snake_75692A, 0x3A);
 	ff7_externals.world_snake_graphics_data_end_E2A6D0 = (world_snake_graphics_data *)get_absolute_value(ff7_externals.animate_world_snake_75692A, 0x4C);
-	ff7_externals.snake_position_size_of_array_E2A100 = (vector4<short> *)get_absolute_value(ff7_externals.update_world_snake_position_7564CD, 0x3C);	
+	ff7_externals.snake_position_size_of_array_E2A100 = (vector4<short> *)get_absolute_value(ff7_externals.update_world_snake_position_7564CD, 0x3C);
 	ff7_externals.world_opcode_message_sub_75EE86 = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xB6D);
 	ff7_externals.world_opcode_ask_sub_75EEBB = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xBA1);
 	ff7_externals.world_opcode_message = get_relative_call(ff7_externals.world_sub_75EF46, 0x8C);
@@ -1296,7 +1296,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_compute_skybox_data_754100 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x537);
 	ff7_externals.world_submit_draw_clouds_and_meteor_7547A6 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x547);
 	ff7_externals.world_sub_75F0AD = get_relative_call(ff7_externals.world_sub_751EFC, 0x551);
-	ff7_externals.world_sub_75042B = get_relative_call(ff7_externals.world_compute_3d_model_data_76328F, 0x37D);	
+	ff7_externals.world_sub_75042B = get_relative_call(ff7_externals.world_compute_3d_model_data_76328F, 0x37D);
 	ff7_externals.world_player_pos_E04918 = (vector4<int>*)get_absolute_value(ff7_externals.world_sub_75042B, 0xE);
 		ff7_externals.sub_74C9A5 = (int (*)())get_relative_call(ff7_externals.world_submit_draw_clouds_and_meteor_7547A6, 0x09);
 	ff7_externals.is_meteor_flag_on_E2AAE4 = (int*)get_absolute_value(ff7_externals.world_submit_draw_clouds_and_meteor_7547A6, 0x592);
@@ -1308,7 +1308,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_get_world_current_camera_rotation_x_74D3C6 = (short (*)())get_relative_call(ff7_externals.world_sub_75C0FD, 0x30);
 	ff7_externals.world_submit_draw_effects_75C283 = (int (_stdcall *)(world_texture_data *, int, vector3<short>*, short))get_relative_call(ff7_externals.world_sub_75C0FD, 0x175);
 	ff7_externals.dword_E35648 = (world_effect_2d_list_node**)get_absolute_value(ff7_externals.world_sub_75C0FD, 0x5B);
-	ff7_externals.byte_96D6A8 = (byte*)get_absolute_value(ff7_externals.world_sub_75C0FD, 0x169);	
+	ff7_externals.byte_96D6A8 = (byte*)get_absolute_value(ff7_externals.world_sub_75C0FD, 0x169);
 
 	// Swirl externals
 	ff7_externals.swirl_main_loop = swirl_main_loop;
@@ -1452,7 +1452,7 @@ void ff7_find_externals(struct ff7_game_obj* game_object)
 	// --------------------------------
 }
 
-void ff7_data(struct ff7_game_obj* game_object)
+inline void ff7_data(struct ff7_game_obj* game_object)
 {
 	num_modes = sizeof(ff7_modes) / sizeof(ff7_modes[0]);
 
