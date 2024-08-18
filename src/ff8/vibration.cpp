@@ -22,8 +22,6 @@
 #include "vibration.h"
 #include "../ff8.h"
 #include "../log.h"
-#include "../gamepad.h"
-#include "../joystick.h"
 #include "../patch.h"
 #include "../vibration.h"
 #include "battle/effects.h"

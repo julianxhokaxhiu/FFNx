@@ -19,12 +19,13 @@
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
-#include "mod.h"
 
 #include "../image/image.h"
 #include "../log.h"
 #include "../renderer.h"
 #include "../utils.h"
+
+#include "mod.h"
 #include "file.h"
 
 

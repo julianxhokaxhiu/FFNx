@@ -21,7 +21,4 @@
 
 #pragma once
 
-#include "../audio.h"
-#include "../ff8.h"
-
 void ff8_handle_ambient_playback();

@@ -34,11 +34,9 @@
 #include "world/chara_one.h"
 #include "world/wmset.h"
 #include "battle/stage.h"
-#include "file.h"
 
 #include <unordered_map>
 #include <vector>
-#include <filesystem>
 
 TexturePacker texturePacker;
 

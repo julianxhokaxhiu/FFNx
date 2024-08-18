@@ -20,6 +20,9 @@
 /****************************************************************************/
 
 #include "ambient.h"
+#include "audio.h"
+#include "common.h"
+#include "globals.h"
 
 void ff8_handle_ambient_playback()
 {

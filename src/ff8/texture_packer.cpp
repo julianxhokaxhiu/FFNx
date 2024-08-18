@@ -23,7 +23,6 @@
 
 #include "texture_packer.h"
 #include "../saveload.h"
-#include "../patch.h"
 #include "../renderer.h"
 #include "cfg.h"
 #include "log.h"

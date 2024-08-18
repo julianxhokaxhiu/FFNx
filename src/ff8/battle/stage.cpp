@@ -23,7 +23,6 @@
 
 #include "stage.h"
 #include "../../image/tim.h"
-#include "../../saveload.h"
 #include "../../log.h"
 
 #include <set>

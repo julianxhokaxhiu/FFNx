@@ -23,7 +23,6 @@
 
 #include "chara_one.h"
 #include "../../image/tim.h"
-#include "../../saveload.h"
 #include "../../log.h"
 
 std::vector<CharaOneModelTextures> ff8_world_chara_one_parse_models(const uint8_t *chara_one_data, size_t size)

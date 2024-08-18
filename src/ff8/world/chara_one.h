@@ -23,8 +23,6 @@
 
 #pragma once
 
-#include "../../common.h"
-
 #include <vector>
 
 typedef std::vector<uint32_t> CharaOneModelTextures;
