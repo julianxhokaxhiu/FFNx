@@ -20,6 +20,8 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <stdio.h>
+
 #include "ff8_data.h"
 
 #include "globals.h"
