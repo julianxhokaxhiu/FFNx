@@ -22,6 +22,9 @@
 
 #pragma once
 
+#include "common.h"
+#include "overlay.h"
+
 #include <cmrc/cmrc.hpp>
 #include <vector>
 #include <array>
@@ -36,9 +39,6 @@
 #include <bimg/encode.h>
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
-
-#include "common.h"
-#include "overlay.h"
 
 #define FFNX_RENDERER_INVALID_HANDLE { 0 }
 

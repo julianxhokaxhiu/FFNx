@@ -19,6 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <shlwapi.h>
 #include <filesystem>
 #include <io.h>
 #include "log.h"

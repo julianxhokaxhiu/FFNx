@@ -19,6 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <shlwapi.h>
 #include <chrono>
 
 #include "metadata.h"

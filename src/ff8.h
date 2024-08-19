@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <windows.h>
+#include <ddraw.h>
+#include <dinput.h>
 
 #include "common_imports.h"
 

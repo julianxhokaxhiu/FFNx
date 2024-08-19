@@ -35,6 +35,7 @@
 #include "world/wmset.h"
 #include "battle/stage.h"
 
+#include <shlwapi.h>
 #include <unordered_map>
 #include <vector>
 
