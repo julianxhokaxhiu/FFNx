@@ -302,22 +302,25 @@ int read_vram_to_buffer_with_palette2_parent_call(int a1, uint16_t rel_pos, int1
 
 const std::string &tex_name_special_cases(std::string &filename, const std::string &full_filename, int vram_id)
 {
-	// Keep compatibility with old Tonberry mods that uses VRAM ID 13 to 26
 	if (full_filename.starts_with("field/mapdata/")) {
+		int field_vram_id = next_psxvram_x / TEXTURE_WIDTH_BPP16;
 		char fallback_dir[MAX_PATH]{}, fallback[MAX_PATH]{};
-		snprintf(fallback, sizeof(fallback), "%s%d", full_filename.c_str(), vram_id + VRAM_PAGE_MIM_MAX_COUNT);
+		// Keep compatibility with old Tonberry mods that uses VRAM ID 13 to 26
+		snprintf(fallback, sizeof(fallback), "field/mapdata/%.2s/%s/%s_%d", get_current_field_name(), get_current_field_name(), get_current_field_name(), field_vram_id + VRAM_PAGE_MIM_MAX_COUNT);
 
-		ffnx_info("%s: %s %s %d\n", __func__, filename.c_str(), full_filename.c_str(), vram_id);
+		if (trace_vram || trace_all) ffnx_info("%s: %s %s %d\n", __func__, filename.c_str(), full_filename.c_str(), field_vram_id);
 
 		for (const std::string &ext: mod_ext) {
 			snprintf(fallback_dir, sizeof(fallback_dir), "%s/%s/%s.%s", basedir, mod_path.c_str(), fallback, ext.c_str());
-			ffnx_info("%s: %s\n", __func__, fallback_dir);
 
 			if (fileExists(fallback_dir)) {
 				filename = std::string(fallback);
 				return filename;
 			}
 		}
+		// Force VRAM ID 0 to 12
+		snprintf(fallback, sizeof(fallback), "field/mapdata/%.2s/%s/%s_%d", get_current_field_name(), get_current_field_name(), get_current_field_name(), field_vram_id);
+		filename = std::string(fallback);
 	}
 
 	return filename;
@@ -1098,9 +1101,13 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 	if (!has_dir || !texturePacker.setTextureBackground(tex_filename, 0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, tiles)) {
 		snprintf(tex_directory, sizeof(tex_directory), "field/mapdata/%.2s/%s/%s", get_current_field_name(), get_current_field_name(), get_current_field_name());
 
-		texturePacker.setTexture(tex_directory, TexturePacker::TextureInfos(0, 256, VRAM_PAGE_MIM_MAX_COUNT * TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, Tim::Bpp16, true), TexturePacker::TextureInfos(0, 232, 256, 24, Tim::Bpp16), 0);
-		// Force texture_reload_hack
-		texturePacker.setCurrentAnimationFrame(0, 256, -1);
+		for (int i = 0; i < VRAM_PAGE_MIM_MAX_COUNT; ++i) {
+			snprintf(tex_filename, sizeof(tex_filename), "%s_%d", tex_directory, i);
+			const int x = i * TEXTURE_WIDTH_BPP16, y = 256;
+			texturePacker.setTexture(tex_filename, TexturePacker::TextureInfos(x, y, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, Tim::Bpp16, true), TexturePacker::TextureInfos(), 0);
+			// Force texture_reload_hack
+			texturePacker.setCurrentAnimationFrame(x, y, -1);
+		}
 	}
 
 	return ret;
