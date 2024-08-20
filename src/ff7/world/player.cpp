@@ -21,13 +21,14 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "globals.h"
 #include "world.h"
 #include "camera.h"
+#include "cfg.h"
 #include "utils.h"
 
 #include <math.h>
-#include "defs.h"
-#include "../../patch.h"
+#include "ff7/world/defs.h"
 
 namespace ff7::world {
 
@@ -128,7 +129,7 @@ namespace ff7::world {
 
                 static float deltaMovement = 0.0f;
                 static int horizontalDeltaInterp = 0;
-                
+
                 bool highwind_view_and_square_pressed = camera_view_type == HIGHWIND_VIEW && is_key_pressed(current_key_input, SQUARE | L1);
 
                 int horizontal_delta = 0;
@@ -142,7 +143,7 @@ namespace ff7::world {
                     horizontal_delta = -2048;
                 }
 
-                horizontalDeltaInterp = (15 * horizontalDeltaInterp + horizontal_delta) / 16;                
+                horizontalDeltaInterp = (15 * horizontalDeltaInterp + horizontal_delta) / 16;
                 if(camera_view_type == HIGHWIND_VIEW || worldmap_type == UNDERWATER || player_model_id == TINY_BRONCO || player_model_id == BUGGY || player_model_id == SUBMARINE)
                 {
                     bool is_movement_key_pressed = is_key_pressed(current_key_input, highwind_view_and_square_pressed ? ANY_DIRECTIONAL_KEY: CIRCLE | R1);
@@ -151,7 +152,7 @@ namespace ff7::world {
                     if(is_back_movement_key_pressed && (player_model_id == BUGGY || player_model_id == SUBMARINE))
                     {
                         if(!is_movement_key_pressed)
-                        {                   
+                        {
                             movement_speed = -movement_speed * 0.75f;
                         } else movement_speed = 0;
 
@@ -159,7 +160,7 @@ namespace ff7::world {
                     }
 
                     if (!is_movement_key_pressed || highwind_view_and_square_pressed) movement_speed = 0;
-                    
+
                     deltaMovement = (deltaMovement * 31.0f + movement_speed) / 32.0f;
 
                     if(!is_movement_key_pressed && std::abs(deltaMovement) < 10.0f) deltaMovement = 0.0f;
@@ -208,14 +209,14 @@ namespace ff7::world {
                         short delta = -static_cast<short>(rotationSpeedInterp);
 
                         if (player_model_id == BUGGY )
-                        {                                
+                        {
                             auto maxSpeed = static_cast<float>(get_player_movement_speed(player_model_id));
                             if (is_back_movement_key_pressed) maxSpeed *= 0.5f;
                             delta *= std::abs(deltaMovement) / maxSpeed;
                         }
 
                         last_valid_player_direction += delta;
-                        
+
 
                         if(last_valid_player_direction > 2048)
                             last_valid_player_direction -= 4096;
@@ -252,7 +253,7 @@ namespace ff7::world {
                 static float verticalSpeedinterp = 0.0;
                 float verticalSpeed = 0.0;
                 if(camera_view_type == HIGHWIND_VIEW && !highwind_view_and_square_pressed)
-                {                    
+                {
                     vector4<int> player_highwind_position;
                     ff7_externals.world_copy_player_pos_to_param_762798(&player_highwind_position);
 

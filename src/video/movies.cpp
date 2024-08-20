@@ -21,6 +21,7 @@
 
 #include "../audio.h"
 #include "../renderer.h"
+#include "../gl.h"
 
 #include "movies.h"
 

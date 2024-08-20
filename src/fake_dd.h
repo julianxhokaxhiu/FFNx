@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 struct ddsurface
 {
 	void *query_interface;

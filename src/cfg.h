@@ -24,7 +24,6 @@
 
 #include <string>
 #include <vector>
-#include "log.h"
 
 #define RENDERER_BACKEND_AUTO 0
 #define RENDERER_BACKEND_OPENGL 1

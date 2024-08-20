@@ -20,7 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "../ff7.h"
+#include <windows.h>
 
 int ff7_dsound_create(HWND hwnd, LPGUID guid)
 {

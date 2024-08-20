@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "../../common.h"
+#include "ff7.h"
 
 #include <array>
 

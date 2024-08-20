@@ -26,6 +26,8 @@
 #include "globals.h"
 #include "common.h"
 #include "patch.h"
+#include "log.h"
+#include "utils.h"
 
 #include "field.h"
 

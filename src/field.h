@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <unordered_set>
+#include "globals.h"
 
 void field_init();
 void field_debug(bool *isOpen);

@@ -20,9 +20,12 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <vector>
+#include <string>
+
+#include "../globals.h"
+
 #include "engine.h"
-#include "../ff8.h"
-#include "../log.h"
 
 static const std::vector<std::string> ff8_table = {
   " ","0","1","2","3","4","5","6","7","8","9","%","/",":","!","?",

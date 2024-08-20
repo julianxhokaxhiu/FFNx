@@ -19,6 +19,8 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <cmath>
+
 #include "gamepad.h"
 
 Gamepad gamepad;

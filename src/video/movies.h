@@ -25,10 +25,7 @@
 #include <math.h>
 #include <sys/timeb.h>
 #include <dbghelp.h>
-
-#include "../crashdump.h"
-#include "../log.h"
-#include "../gl.h"
+#include <stdint.h>
 
 void ffmpeg_movie_init();
 void ffmpeg_release_movie_objects();

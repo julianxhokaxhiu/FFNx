@@ -23,7 +23,8 @@
 
 #pragma once
 
-#include "../../external_mesh.h"
+#include "external_mesh.h"
+#include "ff7.h"
 
 namespace ff7::world {
 

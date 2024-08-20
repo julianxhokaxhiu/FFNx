@@ -19,10 +19,13 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "audio/openpsf/openpsf.h"
+
 #include "audio.h"
 
 #include "log.h"
 #include "gamehacks.h"
+#include "utils.h"
 
 #if defined(__cplusplus)
 extern "C" {

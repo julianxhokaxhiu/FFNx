@@ -25,7 +25,9 @@
 #include "../../renderer.h"
 
 #include "menu.h"
+#include "cfg.h"
 #include "defs.h"
+#include "gl.h"
 
 namespace ff7::battle
 {

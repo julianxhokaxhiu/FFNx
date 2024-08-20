@@ -21,7 +21,8 @@
 
 #pragma once
 
-#include "log.h"
+#include <stdint.h>
+#include <windows.h>
 
 class GameHacks
 {

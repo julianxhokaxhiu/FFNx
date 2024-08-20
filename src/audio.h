@@ -27,8 +27,9 @@
 #include <unordered_map>
 #include <soloud.h>
 #include "audio/memorystream/memorystream.h"
-#include "audio/openpsf/openpsf.h"
 #include "audio/vgmstream/vgmstream.h"
+
+#include "log.h"
 
 #define NXAUDIOENGINE_INVALID_HANDLE 0xfffff000
 

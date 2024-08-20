@@ -20,6 +20,10 @@
 /****************************************************************************/
 
 #include "hext.h"
+#include "log.h"
+#include "patch.h"
+#include "utils.h"
+#include <filesystem>
 #include <io.h>
 
 Hext hextPatcher;

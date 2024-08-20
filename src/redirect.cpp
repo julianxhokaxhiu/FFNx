@@ -19,9 +19,11 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <shlwapi.h>
 #include <filesystem>
 #include <io.h>
 #include "log.h"
+#include "utils.h"
 
 #include "redirect.h"
 

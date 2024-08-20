@@ -21,15 +21,20 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "widescreen.h"
-#include "field/background.h"
-#include "../patch.h"
+#include "cmath"
+
 #include "../ff7.h"
 #include "../cfg.h"
 #include "../renderer.h"
 #include "../video/movies.h"
 #include "../movies.h"
-#include "cmath"
+#include "../gl.h"
+#include "../globals.h"
+#include "../patch.h"
+
+#include "widescreen.h"
+#include "field/defs.h"
+#include "field/background.h"
 
 int viewport_width_plus_x_widescreen_fix = 750;
 int swirl_framebuffer_offset_x_widescreen_fix = 106;
@@ -105,17 +110,17 @@ void ifrit_second_third_wave_effect_widescreen_fix_sub_66A47E(int wave_data_poin
     ff7_externals.engine_draw_sub_66A47E(wave_data_pointer);
 }
 
-void pollensalta_cold_breath_atk_white_dot_effect() 
+void pollensalta_cold_breath_atk_white_dot_effect()
 {
     effect100_data* effect_data = &ff7_externals.effect100_array_data[*ff7_externals.effect100_array_idx];
     ff7_externals.pollensalta_cold_breath_atk_draw_white_dots_547E75(*ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar);
-    if (!*ff7_externals.g_is_battle_paused) 
+    if (!*ff7_externals.g_is_battle_paused)
     {
         for (int i = 0; i < 400; i++)
         {
             short offset = 2 * (i % 2) + 2;
             ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x = (offset + ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x);
-            if (ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x < wide_viewport_x) 
+            if (ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x < wide_viewport_x)
                 ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x = ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x + wide_viewport_width;
             if (ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x > wide_viewport_width + wide_viewport_x)
                 ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x = ff7_externals.pollensalta_cold_breath_white_dots_pos[i].x - wide_viewport_width;
@@ -129,7 +134,7 @@ void pollensalta_cold_breath_atk_white_dot_effect()
             *ff7_externals.pollensalta_cold_breath_white_dot_rgb_scalar -= 1;
         if (++effect_data->field_2 == 50)
             effect_data->field_0 = 0xFFFF;
-        
+
     }
 }
 

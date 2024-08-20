@@ -30,6 +30,7 @@
 #include "../../patch.h"
 #include "../../common.h"
 #include "../widescreen.h"
+#include "../defs.h"
 
 #include "opcode.h"
 #include "background.h"

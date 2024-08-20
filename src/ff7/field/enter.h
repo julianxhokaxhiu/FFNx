@@ -21,13 +21,15 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#pragma once
+
 #include "model.h"
 #include "background.h"
 #include "../widescreen.h"
 
 namespace ff7::field
 {
-    void ff7_field_initialize_variables()
+    inline void ff7_field_initialize_variables()
     {
         ((void(*)())ff7_externals.field_initialize_variables)();
 

@@ -17,7 +17,7 @@
 #include <stdint.h>
 
 #include "../ff7.h"
-#include "../log.h"
+#include "../globals.h"
 
 void ff7_condor_fix_unit_texture_load(uint32_t unk, struc_3 *struc_3)
 {

@@ -19,5 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#pragma once
+
 int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamPath = false);
 int redirect_path_with_override(const char* in, char* out, size_t out_size);

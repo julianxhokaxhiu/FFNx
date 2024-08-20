@@ -22,9 +22,7 @@
 
 #pragma once
 
-#include "../ff8.h"
-
-#include <sstream>
+#include <string>
 
 int ff8_manage_time_engine(int enable_rdtsc);
 std::string ff8_decode_text(const char* encoded_text);

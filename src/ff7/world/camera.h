@@ -22,7 +22,7 @@
 /****************************************************************************/
 #pragma once
 
-#include "../../common.h"
+#include "matrix.h"
 
 #include <bx/math.h>
 #include <bx/bx.h>

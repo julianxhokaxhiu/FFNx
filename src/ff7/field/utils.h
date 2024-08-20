@@ -21,6 +21,8 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#pragma once
+
 #include "../../movies.h"
 #include "../../cfg.h"
 #include "../../globals.h"
@@ -28,7 +30,7 @@
 
 namespace ff7::field
 {
-    bool is_fps_running_more_than_original()
+    inline bool is_fps_running_more_than_original()
     {
         if(is_overlapping_movie_playing())
             return movie_fps_ratio > 1;
@@ -36,7 +38,7 @@ namespace ff7::field
             return ff7_fps_limiter == FPS_LIMITER_60FPS;
     }
 
-    int get_frame_multiplier()
+    inline int get_frame_multiplier()
     {
         if(is_overlapping_movie_playing())
             return movie_fps_ratio;
@@ -44,23 +46,23 @@ namespace ff7::field
             return common_frame_multiplier;
     }
 
-    bool is_fieldmap_wide()
+    inline bool is_fieldmap_wide()
     {
         return widescreen_enabled && widescreen.getMode() != WM_DISABLED;
     }
 
-    float field_get_linear_interpolated_value_float(float initial_value, float final_value, int n_steps, int step_idx)
+    inline float field_get_linear_interpolated_value_float(float initial_value, float final_value, int n_steps, int step_idx)
     {
         return std::lerp(initial_value, final_value, step_idx / (float)n_steps);
     }
 
-    float field_get_smooth_interpolated_value_float(float initial_value, float final_value, int n_steps, int step_idx)
+    inline float field_get_smooth_interpolated_value_float(float initial_value, float final_value, int n_steps, int step_idx)
     {
         float delta = final_value - initial_value;
         return initial_value + delta * (0.5f + sin(-M_PI/2.f + M_PI * (step_idx / (float)n_steps)) / 2.f);
     }
 
-    int engine_apply_matrix_product_float_66307D(vector3<float> *input_vector, vector2<float> *output_vector, int *dummy1, int *dummy2)
+    inline int engine_apply_matrix_product_float_66307D(vector3<float> *input_vector, vector2<float> *output_vector, int *dummy1, int *dummy2)
     {
         int ret;
         float matrix[16];
@@ -88,7 +90,7 @@ namespace ff7::field
         return ret;
     }
 
-    int field_apply_2D_translation_float_64314F(vector3<float> *input_vector, vector2<float> *output_vector)
+    inline int field_apply_2D_translation_float_64314F(vector3<float> *input_vector, vector2<float> *output_vector)
     {
         int dummy_1, dummy_2;
         int ret;

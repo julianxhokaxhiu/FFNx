@@ -13,14 +13,13 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "time.h"
-#include "cfg.h"
-#include "field/background.h"
-
-#include "../patch.h"
-#include "../ff7.h"
 #include "../renderer.h"
-#include "../lighting.h"
+#include "../globals.h"
+#include "../patch.h"
+#include "../cfg.h"
+
+#include "time.h"
+#include "field/background.h"
 
 namespace ff7
 {

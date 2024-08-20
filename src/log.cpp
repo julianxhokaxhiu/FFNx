@@ -25,8 +25,7 @@
 
 #include "log.h"
 #include "hext.h"
-
-#include "renderer.h"
+#include "utils.h"
 
 #define FFNX_DEBUG_BUFFER_SIZE 4096
 

@@ -20,10 +20,12 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "uv_patch.h"
+#include <stdint.h>
 
-#include "../log.h"
+#include "../globals.h"
 #include "../patch.h"
+
+#include "uv_patch.h"
 
 struct TexCoord {
 	uint8_t x, y;

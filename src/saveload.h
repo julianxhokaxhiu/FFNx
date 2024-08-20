@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 void make_path(const char *name);
 void normalize_path(char *name);
 void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated);

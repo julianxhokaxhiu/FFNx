@@ -21,7 +21,8 @@
 
 #pragma once
 
-#include "log.h"
+#include <stdint.h>
+#include <windows.h>
 
 uint32_t replace_function(uint32_t offset, void *func);
 // Can also unreplace a call_function

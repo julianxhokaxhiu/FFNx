@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <math.h>
 #include <stdint.h>
 
 void sfx_process_footstep(bool is_player_moving);

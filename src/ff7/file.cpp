@@ -19,16 +19,13 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <filesystem>
 #include <string.h>
 #include <sys/stat.h>
 #include <io.h>
 
 #include "../ff7.h"
 #include "../log.h"
-#include "../hext.h"
 #include "../redirect.h"
-#include "../achievement.h"
 
 FILE *open_lgp_file(char *filename, uint32_t mode)
 {

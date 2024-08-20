@@ -15,7 +15,8 @@
 
 #pragma once
 
-#include "globals.h"
+#include <toml++/toml.h>
+#include <windows.h>
 #include "bx/math.h"
 
 namespace ff7

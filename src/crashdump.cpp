@@ -19,8 +19,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <shlwapi.h>
+
 #include "audio.h"
-#include "renderer.h"
 
 #include "crashdump.h"
 

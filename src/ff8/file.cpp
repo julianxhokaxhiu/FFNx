@@ -21,6 +21,7 @@
 /****************************************************************************/
 
 #include "file.h"
+#include "utils.h"
 #include "../ff8.h"
 #include "../log.h"
 #include "../redirect.h"

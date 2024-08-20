@@ -23,7 +23,6 @@
 
 #include "wmset.h"
 #include "../../image/tim.h"
-#include "../../saveload.h"
 #include "../../log.h"
 
 std::vector<WmsetSection17Texture> ff8_world_wmset_wave_animations_parse(const uint8_t *wmset_section17_data, size_t size)

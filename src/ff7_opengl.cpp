@@ -21,17 +21,16 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "renderer.h"
 #include "cfg.h"
 #include "ff7.h"
-#include "gl.h"
 #include "patch.h"
-#include "movies.h"
-#include "music.h"
 #include "ff7/defs.h"
 #include "ff7_data.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
+#include "ff7/battle/defs.h"
+#include "ff7/field/defs.h"
+#include "ff7/world/defs.h"
 
 unsigned char midi_fix[] = {0x8B, 0x4D, 0x14};
 WORD snowboard_fix[] = {0x0F, 0x10, 0x0F};
@@ -253,7 +252,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 			if(ff7_fps_limiter == FPS_LIMITER_60FPS)
 			{
 				common_frame_multiplier = 2;
-				
+
 				// Swirl mode 60FPS fix
 				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x184, common_frame_multiplier); // wait frames before swirling
 				patch_multiply_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, common_frame_multiplier);
@@ -347,9 +346,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	if(enable_analogue_controls) {
 		replace_call_function(ff7_externals.battle_sub_42D992 + 0xFB, ff7::battle::update_battle_camera);
 		replace_function((uint32_t)ff7_externals.field_clip_with_camera_range_6438F6, ff7::field::ff7_field_clip_with_camera_range);
-		
+
 		// Disable show targets with R2 in battles
-        memset_code(ff7_externals.handle_actor_ready + 0xA8, 0x90, 29);	
+        memset_code(ff7_externals.handle_actor_ready + 0xA8, 0x90, 29);
 	}
 
 	//######################

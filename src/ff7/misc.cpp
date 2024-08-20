@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 
+#include "defs.h"
 #include "battle/camera.h"
 #include "field/camera.h"
 #include "world/camera.h"
@@ -35,7 +36,6 @@
 #include "../ff7.h"
 #include "../log.h"
 #include "../metadata.h"
-#include "../sfx.h"
 #include "../achievement.h"
 
 #include <bx/math.h>

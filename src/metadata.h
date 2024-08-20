@@ -21,16 +21,10 @@
 
 #pragma once
 
-#include <chrono>
-#include <cstring>
 #include <io.h>
-#include <sstream>
 
 #include <pugiconfig.hpp>
 #include <pugixml.hpp>
-
-#include "log.h"
-#include "md5.h"
 
 class Metadata
 {

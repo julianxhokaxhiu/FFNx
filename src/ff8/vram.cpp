@@ -26,16 +26,18 @@
 #include "../macro.h"
 #include "../image/tim.h"
 #include "../utils.h"
+#include "../globals.h"
+#include "../cfg.h"
+#include "../log.h"
 #include "field/background.h"
 #include "field/chara_one.h"
 #include "world/chara_one.h"
 #include "world/wmset.h"
 #include "battle/stage.h"
-#include "file.h"
 
+#include <shlwapi.h>
 #include <unordered_map>
 #include <vector>
-#include <filesystem>
 
 TexturePacker texturePacker;
 

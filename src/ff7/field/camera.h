@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "../../common.h"
+#include "matrix.h"
 
 namespace ff7::field
 {

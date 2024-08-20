@@ -22,8 +22,6 @@
 
 #pragma once
 
-#include "common.h"
-
 extern short movie_fps_ratio = 1;
 extern bool is_movie_bgfield = false;
 

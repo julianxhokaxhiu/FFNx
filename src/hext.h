@@ -30,15 +30,8 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cctype>
-#include <filesystem>
-#include <fstream>
-#include <locale>
-#include <sstream>
+#include <string>
 #include <vector>
-
-#include "patch.h"
 
 class Hext {
 private:

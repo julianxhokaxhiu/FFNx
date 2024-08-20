@@ -20,11 +20,13 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <stdio.h>
+#include <libpng16/png.h>
+
 #include "image.h"
 #include "../common.h"
 #include "../renderer.h"
-#include <stdio.h>
-#include <libpng16/png.h>
+#include "log.h"
 
 static void LibPngErrorCb(png_structp png_ptr, const char* error)
 {

@@ -20,8 +20,11 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <stdio.h>
+
 #include "ff8_data.h"
 
+#include "globals.h"
 #include "patch.h"
 #include "ff8/battle/effects.h"
 

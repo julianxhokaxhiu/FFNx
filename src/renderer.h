@@ -22,10 +22,12 @@
 
 #pragma once
 
-#include <filesystem>
-#include <iterator>
+#include "common.h"
+#include "overlay.h"
+
+#include <cmrc/cmrc.hpp>
 #include <vector>
-#include <map>
+#include <array>
 #include <string>
 #include <math.h>
 #include <bx/math.h>
@@ -37,10 +39,6 @@
 #include <bimg/encode.h>
 #include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
-#include <cmrc/cmrc.hpp>
-#include "log.h"
-#include "gl.h"
-#include "overlay.h"
 
 #define FFNX_RENDERER_INVALID_HANDLE { 0 }
 

@@ -23,8 +23,6 @@
 
 #pragma once
 
-#include "../../common.h"
-
 #include <vector>
 
 constexpr int TEXTURE_WIDTH_BYTES = 128; // Real texture width depends on the texture depth (bpp4 => 256, bpp8 => 128, bpp16 => 64)

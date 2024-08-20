@@ -28,6 +28,13 @@
 #include <sys/timeb.h>
 #include <steamworkssdk/steam_api.h>
 #include <hwinfo/hwinfo.h>
+#include <regex>
+#include <shlwapi.h>
+#include <shlobj.h>
+#include <psapi.h>
+#include <mmsystem.h>
+#include <malloc.h>
+#include <ddraw.h>
 
 #include "renderer.h"
 #include "hext.h"
@@ -57,6 +64,7 @@
 #include "game_cfg.h"
 #include "exe_data.h"
 
+#include "ff7/defs.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
 

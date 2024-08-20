@@ -24,7 +24,6 @@
 #include "../../log.h"
 #include "../../globals.h"
 #include "../../ff7.h"
-#include "../../common.h"
 #include "../../field.h"
 #include "opcode.h"
 #include "utils.h"

@@ -24,6 +24,7 @@
 #include "../../globals.h"
 #include "../../sfx.h"
 #include "../../movies.h"
+#include "../../utils.h"
 #include "../widescreen.h"
 
 #include "utils.h"
