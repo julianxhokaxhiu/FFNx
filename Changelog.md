@@ -33,6 +33,10 @@
 - SFX: Add missing support for audio effects to be stopped in time
 - Speedhack: Fix support in field which were not getting the real speed up despite FFNx prompting it on screen.
 
+# FF8 2000
+
+- Audio: Creative EAX Unified is now optional to launch the game ( https://github.com/julianxhokaxhiu/FFNx/pull/718 )
+
 # FF8 Steam
 
 - Files: Fix `app_path` option support ( https://github.com/julianxhokaxhiu/FFNx/pull/714 )

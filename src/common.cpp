@@ -35,6 +35,7 @@
 #include <mmsystem.h>
 #include <malloc.h>
 #include <ddraw.h>
+#include <filesystem>
 
 #include "renderer.h"
 #include "hext.h"
@@ -3419,15 +3420,33 @@ __declspec(dllexport) BOOL __stdcall dotemuDeleteFileA(LPCSTR lpFileName)
 __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(LPGUID guid, LPLPDIRECTSOUND directsound, IUnknown FAR* unk)
 {
 	typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(LPGUID, LPLPDIRECTSOUND, IUnknown FAR*);
+	char eax_dll[MAX_PATH] = {};
 
-	char eax_dll[MAX_PATH];
-	GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
-	strcat(eax_dll, R"(\eax.dll)");
+	if (std::filesystem::exists("creative_eax.dll")) {
+		// For portable installation, this name can be used to load the official Creative EAX 2.0+ DLL along with FFNx
+		snprintf(eax_dll, sizeof(eax_dll), R"(%s\creative_eax.dll)", basedir);
+	} else {
+		GetSystemDirectoryA(eax_dll, sizeof(eax_dll));
+		strcat(eax_dll, R"(\eax.dll)");
+	}
 
-	HMODULE hEaxDll = LoadLibraryA(eax_dll);
-	FARPROC procEaxDSoundCreate = GetProcAddress((HMODULE)hEaxDll, "EAXDirectSoundCreate");
+	FARPROC procDSoundCreate = NULL;
+	HMODULE hDll = LoadLibraryA(eax_dll);
+	if (hDll != NULL) {
+		procDSoundCreate = GetProcAddress(hDll, "EAXDirectSoundCreate");
+	}
 
-	return ((LPEAXDIRECTSOUNDCREATE)procEaxDSoundCreate)(guid, directsound, unk);
+	if (procDSoundCreate == NULL) {
+		ffnx_warning("%s: Cannot load EAX Library, please install Creative EAX Unified redistribuable version 2.0+\n", __func__);
+
+		hDll = LoadLibraryA("dsound.dll");
+		if (hDll != NULL) {
+			// EAXDirectSoundCreate is basically DirectSoundCreate with more features
+			procDSoundCreate = GetProcAddress(hDll, "DirectSoundCreate");
+		}
+	}
+
+	return LPEAXDIRECTSOUNDCREATE(procDSoundCreate)(guid, directsound, unk);
 }
 
 void ffnx_inject_driver(struct game_obj* game_object)
