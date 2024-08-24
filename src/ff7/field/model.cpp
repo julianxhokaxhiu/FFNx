@@ -337,6 +337,8 @@ namespace ff7::field
             return 2;
         if ( !_strcmpi(model_name, "DIFF") )
             return 2;
+        if ( !_strcmpi(model_name, "CPJF") ) // Ifalna - shares the same eyes
+            return 2;
 
         // Barret
         if ( !_strcmpi(model_name, "ACGD") )
