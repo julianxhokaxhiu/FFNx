@@ -346,7 +346,7 @@ void field_debug(bool *isOpen)
 		return;
 	}
 
-	if (!ff8) ImGui::Text("Game Moment: %u", *ff7_externals.field_game_moment);
+	ImGui::Text("Game Moment: %u", *common_externals.field_game_moment);
 	ImGui::Text("Current field ID: %u", *common_externals.current_field_id);
 	ImGui::Text("Current triangle ID: %d", *common_externals.current_triangle_id);
 	ImGui::Text("Previous field ID: %u", *common_externals.previous_field_id);
