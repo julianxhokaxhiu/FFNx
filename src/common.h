@@ -289,6 +289,7 @@ struct common_externals
 	WORD* previous_field_id;
 	uint32_t update_entities_call;
 	int16_t* current_triangle_id;
+	WORD* field_game_moment;
 };
 
 // heap allocation wrappers

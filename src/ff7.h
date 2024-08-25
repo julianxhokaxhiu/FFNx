@@ -3090,7 +3090,6 @@ struct ff7_externals
 	field_animation_data** field_animation_data_ptr; // 0xCFF738
 	WORD* wait_frames_ptr; //0xCC0900
 	char* animation_type_array; //0xCC0980
-	WORD* field_game_moment; //0xDC08DC
 	ff7_modules_global_object *modules_global_object; // 0xCC0D88
 	ff7_modules_global_object **field_global_object_ptr; // 0xCBF9D8
 	void (*sub_767039)(DWORD*,DWORD*,DWORD*);
