@@ -195,7 +195,7 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 	switch(mode->driver_mode)
 	{
 	case MODE_FIELD:
-		sprintf(track_name, "%s_%d_%d", get_current_field_name(), *ff7_externals.current_triangle_id, id);
+		sprintf(track_name, "%s_%d_%d", get_current_field_name(), *common_externals.current_triangle_id, id);
 		break;
 	case MODE_MENU:
 		sprintf(track_name, "menu_%d", id);
@@ -245,11 +245,22 @@ bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 	char track_name[64];
 	float panningf = panning == 64 ? 0.0f : panning * 2 / 127.0f - 1.0f;
 	float volumef = volume / 127.0;
+	bool loop = false;
+
+	// Get loop info from audio.fmt
+	if (id <= *ff8_externals.sfx_sound_count) {
+		loop = (*ff8_externals.sfx_audio_fmt)[id].loop;
+	}
+
+	// TODO: inverted panning option ((Reg.SoundOptions >> 20) & 1)
+	nxAudioEngine.setSFXVolume(channel, volumef);
 
 	switch(mode->driver_mode)
 	{
 	case MODE_FIELD:
-		sprintf(track_name, "%s_%d", get_current_field_name(), id);
+		sprintf(track_name, "%s_%d_%d", get_current_field_name(), *common_externals.current_triangle_id, id);
+		playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop);
+		if (!playing) sprintf(track_name, "%s_%d", get_current_field_name(), id);
 		break;
 	case MODE_MENU:
 		sprintf(track_name, "menu_%d", id);
@@ -263,16 +274,6 @@ bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 	default:
 		sprintf(track_name, "%d", id);
 	}
-
-	bool loop = false;
-
-	// Get loop info from audio.fmt
-	if (id <= *ff8_externals.sfx_sound_count) {
-		loop = (*ff8_externals.sfx_audio_fmt)[id].loop;
-	}
-
-	// TODO: inverted panning option ((Reg.SoundOptions >> 20) & 1)
-	nxAudioEngine.setSFXVolume(channel, volumef);
 
 	// If any overridden layer could not be played, fallback to default
 	if (!(playing = nxAudioEngine.playSFX(track_name, id, channel, panningf, loop)))
