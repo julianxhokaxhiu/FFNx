@@ -93,6 +93,9 @@ extern bool xinput_connected;
 extern bool simulate_OK_button;
 extern GamepadAnalogueIntent gamepad_analogue_intent;
 
+extern bool next_music_is_battle;
+extern uint16_t next_battle_scene_id;
+
 extern char *get_current_field_name();
 extern uint32_t noop();
 extern uint32_t noop_a1(uint32_t a1);

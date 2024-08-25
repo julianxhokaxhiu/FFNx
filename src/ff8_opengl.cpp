@@ -759,15 +759,21 @@ int ff8_toggle_battle_field()
 	int ret = 1;
 
 	if (gamehacks.wantsBattle()) ret = ff8_externals.sub_52B3A0();
+	if (!ret) next_battle_scene_id = *ff8_externals.battle_encounter_id;
+
+	next_music_is_battle = !ret;
 
 	return ret;
 }
 
-int ff8_toggle_battle_worldmap(int param)
+int ff8_toggle_battle_worldmap(WORD* battle_id)
 {
 	int ret = 0;
 
-	if (gamehacks.wantsBattle()) ret = ff8_externals.sub_541C80(param);
+	if (gamehacks.wantsBattle()) ret = ff8_externals.sub_541C80(battle_id);
+	if (ret) next_battle_scene_id = *battle_id;
+
+	next_music_is_battle = ret;
 
 	return ret;
 }

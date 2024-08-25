@@ -24,5 +24,22 @@
 
 #include <string>
 
+static const std::vector<std::string> ff8_names = {
+	"Squall",
+  "Zell",
+  "Irvine",
+  "Quistis",
+  "Rinoa",
+  "Selphie",
+  "Seifer",
+  "Edea",
+  "Laguna",
+  "Kiros",
+  "Ward",
+  "Angelo",
+  "Griever",
+  "Boko"
+};
+
 int ff8_manage_time_engine(int enable_rdtsc);
 std::string ff8_decode_text(const char* encoded_text);

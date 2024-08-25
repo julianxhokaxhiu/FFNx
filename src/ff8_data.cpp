@@ -722,7 +722,7 @@ void ff8_find_externals()
 	ff8_externals.worldmap_windows_idx_map = (char*)get_absolute_value((uint32_t)ff8_externals.world_dialog_assign_text_sub_543790, 0x3B);
 
 	ff8_externals.sub_548080 = get_relative_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE, 0x9B);
-	ff8_externals.sub_541C80 = (int (*)(int))get_relative_call(ff8_externals.battle_trigger_worldmap, 0);
+	ff8_externals.sub_541C80 = (int (*)(WORD*))get_relative_call(ff8_externals.battle_trigger_worldmap, 0);
 
 	ff8_externals.sub_558D70 = get_relative_call(ff8_externals.sub_54B460, 0x3F3);
 
@@ -827,6 +827,8 @@ void ff8_find_externals()
 
 	ff8_externals.fps_limiter = get_relative_call(ff8_externals.field_main_loop, 0x261);
 	ff8_externals.time_volume_change_related_1A78BE0 = (double *)get_absolute_value(ff8_externals.fps_limiter, 0x3F);
+
+	ff8_externals.game_mode_obj_1D9CF88 = get_absolute_value(ff8_externals.sub_47CA90, 0xCD);
 
 	// Required by Steam edition
 	switch (version)
