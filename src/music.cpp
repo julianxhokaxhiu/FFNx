@@ -227,7 +227,6 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 			}
 
 			next_music_is_battle = false;
-			next_battle_scene_id = 0;
 		}
 		// Attempt to override field music
 		else if (mode->driver_mode == MODE_FIELD)

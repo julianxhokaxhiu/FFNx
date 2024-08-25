@@ -33,9 +33,9 @@ void ff8_handle_ambient_playback()
 	switch (mode->driver_mode)
 	{
 	case MODE_BATTLE:
-		if (last_battle_id != *ff8_externals.battle_encounter_id)
+		if (last_battle_id != next_battle_scene_id)
 		{
-			last_battle_id = *ff8_externals.battle_encounter_id;
+			last_battle_id = next_battle_scene_id;
 
 			sprintf(filename, "bat_%d", last_battle_id);
 			nxAudioEngine.playAmbient(filename);
