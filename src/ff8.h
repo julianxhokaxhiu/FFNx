@@ -1299,6 +1299,7 @@ struct ff8_externals
 	uint32_t opcode_drawpoint;
 	uint32_t opcode_battle;
 	uint32_t opcode_tuto;
+	uint32_t opcode_mapjump;
 	BYTE* current_tutorial_id;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;
@@ -1513,7 +1514,7 @@ struct ff8_externals
 	uint32_t scan_text_positions;
 	uint32_t fps_limiter;
 	double *time_volume_change_related_1A78BE0;
-	uint32_t game_mode_obj_1D9CF88;
+	uint32_t* game_mode_obj_1D9CF88;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

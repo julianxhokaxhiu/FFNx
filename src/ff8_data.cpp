@@ -267,6 +267,7 @@ void ff8_find_externals()
 
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x65A);
 	ff8_externals.opcode_effectplay2 = common_externals.execute_opcode_table[0x21];
+	ff8_externals.opcode_mapjump = common_externals.execute_opcode_table[0x29];
 	ff8_externals.opcode_mes = common_externals.execute_opcode_table[0x47];
 	ff8_externals.opcode_messync = common_externals.execute_opcode_table[0x48];
 	ff8_externals.opcode_ask = common_externals.execute_opcode_table[0x4A];
@@ -828,7 +829,9 @@ void ff8_find_externals()
 	ff8_externals.fps_limiter = get_relative_call(ff8_externals.field_main_loop, 0x261);
 	ff8_externals.time_volume_change_related_1A78BE0 = (double *)get_absolute_value(ff8_externals.fps_limiter, 0x3F);
 
-	ff8_externals.game_mode_obj_1D9CF88 = get_absolute_value(ff8_externals.sub_47CA90, 0xCD);
+	ff8_externals.game_mode_obj_1D9CF88 = (uint32_t*)get_absolute_value(ff8_externals.sub_47CA90, 0xCD);
+
+	common_externals.current_triangle_id = (int16_t*)(get_absolute_value(ff8_externals.read_field_data, 0xE2E) + 0x79E);
 
 	// Required by Steam edition
 	switch (version)

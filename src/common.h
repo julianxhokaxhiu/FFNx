@@ -288,6 +288,7 @@ struct common_externals
 	char* current_field_name;
 	WORD* previous_field_id;
 	uint32_t update_entities_call;
+	int16_t* current_triangle_id;
 };
 
 // heap allocation wrappers

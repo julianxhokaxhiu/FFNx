@@ -700,7 +700,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.sub_408116 = get_relative_call(ff7_externals.field_loop_sub_63C17F, 0x2A);
 	ff7_externals.word_CC16E8 = (char *)get_absolute_value(ff7_externals.sub_408116, 0x8E);
-	ff7_externals.current_triangle_id = (int16_t *)((char *)ff7_externals.word_CC16E8 + 136 * ff7_externals.modules_global_object->field_model_id);
+	common_externals.current_triangle_id = (int16_t *)((char *)ff7_externals.word_CC16E8 + 136 * ff7_externals.modules_global_object->field_model_id);
 
 	ff7_externals.sub_6499F7 = get_relative_call(ff7_externals.field_loop_sub_63C17F, 0x10C);
 	ff7_externals.input_ok_button_status = (DWORD*)get_absolute_value(ff7_externals.sub_6499F7, 0x60);

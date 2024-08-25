@@ -3107,7 +3107,6 @@ struct ff7_externals
 	byte** field_level_data_pointer;
 	uint32_t sub_408116;
 	char *word_CC16E8;
-	int16_t* current_triangle_id;
 	uint16_t* menu_battle_end_mode;
 	uint32_t* pointer_functions_7C2980;
 	uint32_t battle_enemy_killed_sub_433BD2;
