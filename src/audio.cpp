@@ -1214,7 +1214,7 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 	// Reset state
 	_currentAmbient.fade_in = 0.0f;
 	_currentAmbient.fade_out = 0.0f;
-	_currentAmbient.volume = 1.0f;
+	_currentAmbient.volume = volume * getAmbientMasterVolume();
 
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT][name];
 	if (node)
@@ -1260,6 +1260,13 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 		{
 			_currentAmbient.fade_out = fadeOutTime->value_or(0.0f);
 		}
+
+		// Set volume for the current ambient
+		toml::node *ambientVolume = node["volume"].as_integer();
+		if (ambientVolume)
+		{
+			_currentAmbient.volume = (ambientVolume->value_or(100) / 100.0f) * getAmbientMasterVolume();
+		}
 	}
 
 	// If none of the previous configurations worked, load the default one as last tentative
@@ -1281,8 +1288,6 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 
 	if (exists)
 	{
-		_currentAmbient.volume = volume * getAmbientMasterVolume();
-
 		_currentAmbient.stream = new SoLoud::VGMStream();
 
 		SoLoud::result res = _currentAmbient.stream->load(filename);

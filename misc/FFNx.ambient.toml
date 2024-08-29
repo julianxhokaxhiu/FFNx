@@ -24,14 +24,15 @@
 # -----------------------------------------------------------------------------
 # fade_out: Fade out the track on stop. The value MUST be a floating point
 # number and if 0.0 ( default ) then the track will NOT fade.
+# -----------------------------------------------------------------------------
+# volume: Allow volume to be adjusted for a specific track.
 ###############################################################################
 
-# This entry will shuffle the SFX ID 1 ( menu cursor ) with the ID 2, 3 or 4.
-# Everytime the game engine will try to playback 1, one of the entries in the
-# array will be picked randomly.
+# Example
 # -----------------------------------------------------------------------------
 #[field_123]
 #shuffle = [ "field_121", "field_122", "field_124" ]
 #sequential = [ "field_121", "field_122", "field_124" ]
 #fade_in = 0.0
 #fade_out = 0.0
+#volume = 50
