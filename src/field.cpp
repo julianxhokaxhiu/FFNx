@@ -245,7 +245,6 @@ int field_load_mouth(ff7_polygon_set *polygon_set)
 		ff7_head = polygon_set;
 	}
 
-
 	return ret;
 }
 

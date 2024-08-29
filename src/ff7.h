@@ -2775,7 +2775,7 @@ struct ff7_externals
 	ff7_model_eye_texture_data* field_models_eye_blink_buffer;
 	DWORD* field_models_data;
 	int (*field_load_model_eye_tex)(ff7_model_eye_texture_data *eye_data, field_animation_data *anim_data);
-	p_hundred* (*field_load_model_tex)(int idx1, int idx2, char *filename, struc_3 *tex_info, game_obj *game_object);
+	p_hundred* (*field_load_model_tex)(int idx1, int shademode, char *filename, struc_3 *tex_info, game_obj *game_object);
 	void (*field_unload_model_tex)(void* eye_tex);
 	void (*create_struc_3_info_sub_67455E)(struc_3 *tex_info);
 	uint32_t field_sub_60DCED;
