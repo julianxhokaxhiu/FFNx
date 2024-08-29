@@ -205,7 +205,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 
 	if (ff8)
 	{
-		const char* current_party_leader = ff8_names[*(byte*)(ff8_externals.game_mode_obj_1D9CF88 + 0x255)].c_str();
+		const char* current_party_leader = ff8_names[*(byte*)(ff8_externals.field_vars_stack_1CFE9B8 + 0xCB) == 62 ? 8 : 0].c_str();
 
 		// Attempt to override battle music
 		if (next_music_is_battle)
