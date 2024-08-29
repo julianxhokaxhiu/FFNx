@@ -13,6 +13,7 @@
 - Rendering: Add bilinear filtering option `enable_bilinear` ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 
 ## FF7
+- Core: Fix mouth replacement for main characters, by replacing only model where the KAWAI opcode has been called.
 - Rendering: Fix wrong rendering for fonts in Field mode while scrolling.
 - Rendering: Fix wrong rendering for timer boxes when using normal window mode.
 - Widescreen: Added option to clip camera position during scripted events ( https://github.com/julianxhokaxhiu/FFNx/pull/706 )
