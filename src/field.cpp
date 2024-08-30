@@ -240,7 +240,7 @@ int field_load_mouth(ff7_polygon_set *polygon_set)
 
 	field_animation_data* animation_data = *ff7_externals.field_animation_data_ptr;
 	byte curr_model_id = ff7_externals.field_model_id_array[*ff7_externals.current_entity_id];
-	byte curr_eye_index = animation_data[curr_model_id].eye_texture_idx;
+	byte curr_eye_index = curr_model_id != MAXBYTE ? animation_data[curr_model_id].eye_texture_idx : MAXBYTE;
 
 	if (curr_eye_index < 9 && polygon_set && ff7_mouths[curr_eye_index].mouth_tex)
 	{
