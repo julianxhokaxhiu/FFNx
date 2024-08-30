@@ -832,8 +832,9 @@ void ff8_find_externals()
 
 	ff8_externals.game_mode_obj_1D9CF88 = (uint32_t*)get_absolute_value(ff8_externals.sub_47CA90, 0xCD);
 	ff8_externals.field_vars_stack_1CFE9B8 = get_absolute_value(ff8_externals.opcode_pshm_w, 0x1E);
+	ff8_externals.field_init_from_file = (int(*)(int,int,int,int))(get_relative_call(ff8_externals.read_field_data, 0xE49));
 
-	common_externals.current_triangle_id = (int16_t*)(get_absolute_value(ff8_externals.read_field_data, 0xE2E) + 0x79E);
+	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
 
 	// Required by Steam edition

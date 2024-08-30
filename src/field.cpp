@@ -251,6 +251,21 @@ int field_load_mouth(ff7_polygon_set *polygon_set)
 	return ret;
 }
 
+int ff8_field_init_from_file(int unk1, int unk2, int unk3, int unk4)
+{
+	int ret = ff8_externals.field_init_from_file(unk1, unk2, unk3, unk4);
+
+	// Current triangle id address changes on each field on FF8
+	// Loop through objects until we find the one that has a valid triangle ID
+	for(int i = 0; i < MAXBYTE; i++)
+	{
+		common_externals.current_triangle_id = (int16_t*)(*ff8_externals.game_mode_obj_1D9CF88 + 0x264 * i + 0x1FA);
+		if (*common_externals.current_triangle_id != 0) break;
+	}
+
+	return ret;
+}
+
 void field_init()
 {
 	if (!ff8)
@@ -297,6 +312,11 @@ void field_init()
 			ff7_mouths[i].mouth_tex_filename = (char*)external_calloc(sizeof(char), sizeof(basedir) + 1024);
 			ff7_mouths[i].mouth_tex = NULL;
 		}
+	}
+	else
+	{
+		// Proxy the field init file read
+		replace_call_function(ff8_externals.read_field_data + 0xE49, ff8_field_init_from_file);
 	}
 }
 
