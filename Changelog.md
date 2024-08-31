@@ -15,6 +15,8 @@
 
 ## FF7
 - Core: Fix mouth replacement for main characters, by replacing only model where the KAWAI opcode has been called.
+- Core: NPCs can now have custom eyes and mouths, each their own, during the whole lifecycle of a field scene.
+- Core: Fix blinking to use the correct closed eyes texture for NPCs
 - Rendering: Fix wrong rendering for fonts in Field mode while scrolling.
 - Rendering: Fix wrong rendering for timer boxes when using normal window mode.
 - Widescreen: Added option to clip camera position during scripted events ( https://github.com/julianxhokaxhiu/FFNx/pull/706 )
