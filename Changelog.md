@@ -8,6 +8,7 @@
 - Audio: Fix bug where overriding only fade flags in `ambient/config.toml` would not allow the ambient audio file to be loaded
 - Audio: Warn user in logs if the `config.toml` file was not parsed correctly, instead of failing silently
 - Audio: Allow customising Ambient tracks volume via `config.toml`
+- Audio: Ensure Ambient does not stop currently playing track if new one requested does not exist
 - External textures: Reuse already loaded textures on fallback to palette 0 ( https://github.com/julianxhokaxhiu/FFNx/pull/692 https://github.com/julianxhokaxhiu/FFNx/pull/707 )
 - Modding: Allow replacing EXE text/data hardcoded in code ( https://github.com/julianxhokaxhiu/FFNx/pull/699 )
 - Rendering: Add bilinear filtering option `enable_bilinear` ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )

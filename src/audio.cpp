@@ -1276,18 +1276,18 @@ bool NxAudioEngine::playAmbient(const char* name, float volume, double time)
 
 	if (trace_all || trace_ambient) ffnx_trace("NxAudioEngine::%s: %s exists=%d handle=%X\n", __func__, filename, exists, _currentAmbient.handle);
 
-	// Stop any previously playing ambient
-	if (_engine.isValidVoiceHandle(_currentAmbient.handle))
-	{
-		_engine.stop(_currentAmbient.handle);
-
-		delete _currentAmbient.stream;
-
-		_currentAmbient.handle = NXAUDIOENGINE_INVALID_HANDLE;
-	}
-
 	if (exists)
 	{
+		// Stop any previously playing ambient
+		if (_engine.isValidVoiceHandle(_currentAmbient.handle))
+		{
+			_engine.stop(_currentAmbient.handle);
+
+			delete _currentAmbient.stream;
+
+			_currentAmbient.handle = NXAUDIOENGINE_INVALID_HANDLE;
+		}
+
 		_currentAmbient.stream = new SoLoud::VGMStream();
 
 		SoLoud::result res = _currentAmbient.stream->load(filename);
