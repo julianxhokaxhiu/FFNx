@@ -29,6 +29,8 @@
 
 #include "common.h"
 
+#define FF7_MAX_NUM_GROUP_ENTITIES 32
+
 /*
  * Primitive types supported by the engine, mostly a 1:1 mapping to PSX GPU
  * capabilities.

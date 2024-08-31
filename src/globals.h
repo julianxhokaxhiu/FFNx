@@ -96,6 +96,9 @@ extern GamepadAnalogueIntent gamepad_analogue_intent;
 extern bool next_music_is_battle;
 extern uint16_t next_battle_scene_id;
 
+extern ff7_model_eye_texture_data ff7_eyes[9];
+extern ff7_model_mouth_data ff7_mouths[FF7_MAX_NUM_GROUP_ENTITIES];
+
 extern char *get_current_field_name();
 extern uint32_t noop();
 extern uint32_t noop_a1(uint32_t a1);
