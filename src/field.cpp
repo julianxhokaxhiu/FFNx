@@ -186,6 +186,8 @@ int opcode_kawai_eye_texture() {
 			curr_model_data.static_left_eye_filename = ff7_model_data[curr_entity_id].left_eye_tex_filename;
 			curr_model_data.static_right_eye_filename = ff7_model_data[curr_entity_id].right_eye_tex_filename;
 			ff7_externals.field_load_model_eye_tex(&curr_model_data, &animation_data[curr_model_id]);
+			ff7_model_data[curr_entity_id].left_eye_tex = animation_data[curr_model_id].static_left_eye_tex;
+			ff7_model_data[curr_entity_id].right_eye_tex = animation_data[curr_model_id].static_right_eye_tex;
 
 			// Restore original curr_eye_index
 			curr_eye_index = animation_data[curr_model_id].eye_texture_idx;
@@ -290,6 +292,8 @@ int field_load_mouth(ff7_polygon_set *polygon_set)
 
 	if (polygon_set && ff7_model_data[curr_entity_id].mouth_tex)
 	{
+		if (ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode == 1) polygon_set->hundred_data_group_array[polygon_set->numgroups - 3] = ff7_model_data[curr_entity_id].left_eye_tex;
+		if (ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode == 1) polygon_set->hundred_data_group_array[polygon_set->numgroups - 2] = ff7_model_data[curr_entity_id].right_eye_tex;
 		polygon_set->hundred_data_group_array[polygon_set->numgroups - 1] = ff7_model_data[curr_entity_id].mouth_tex;
 		ff7_head = polygon_set;
 	}

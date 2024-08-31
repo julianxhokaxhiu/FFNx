@@ -2178,10 +2178,10 @@ struct field_animation_data
 	WORD field_176;
 	uint32_t *anim_frame_object;
 	uint32_t *field_17C;
-	void* custom_left_eye_tex;
-  void* static_left_eye_tex;
-  void* custom_right_eye_tex;
-  void* static_right_eye_tex;
+	p_hundred* custom_left_eye_tex;
+  p_hundred* static_left_eye_tex;
+  p_hundred* custom_right_eye_tex;
+  p_hundred* static_right_eye_tex;
 };
 
 struct field_gateway
@@ -2681,6 +2681,8 @@ struct ff7_model_custom_data
 	p_hundred* mouth_tex;
 	char *left_eye_tex_filename;
 	char *right_eye_tex_filename;
+	p_hundred* left_eye_tex;
+	p_hundred* right_eye_tex;
 };
 
 struct ff7_channel_6_state
