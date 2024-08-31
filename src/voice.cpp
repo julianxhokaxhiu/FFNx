@@ -369,28 +369,12 @@ void ff7_handle_wmode_reset()
 		last_field_id = *ff7_externals.field_id;
 
 		simulate_OK_disabled.clear();
-
-		// Reset mouths
-		for(int i = 0; i < FF7_MAX_NUM_GROUP_ENTITIES; i++)
-		{
-			ff7_mouths[i].current_mouth_idx = 0;
-			if (ff7_mouths[i].mouth_tex) ff7_externals.field_unload_model_tex(ff7_mouths[i].mouth_tex);
-			ff7_mouths[i].mouth_tex = NULL;
-		}
 	}
 	else if (last_driver_mode != mode->driver_mode)
 	{
 		last_driver_mode = mode->driver_mode;
 
 		simulate_OK_disabled.clear();
-
-		// Reset mouths
-		for(int i = 0; i < FF7_MAX_NUM_GROUP_ENTITIES; i++)
-		{
-			ff7_mouths[i].current_mouth_idx = 0;
-			if (ff7_mouths[i].mouth_tex) ff7_externals.field_unload_model_tex(ff7_mouths[i].mouth_tex);
-			ff7_mouths[i].mouth_tex = NULL;
-		}
 	}
 }
 

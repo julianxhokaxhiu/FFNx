@@ -1270,6 +1270,7 @@ void common_flip(struct game_obj *game_object)
 		ff7_handle_ambient_playback();
 		ff7_handle_voice_playback();
 		ff7_handle_wmode_reset();
+		ff7_handle_field_reset();
 	}
 
 	// Steamworks SDK API run callbacks

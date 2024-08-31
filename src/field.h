@@ -50,3 +50,4 @@ void set_field_parameter(int id, T value)
 byte get_field_bank_value(int16_t bank);
 
 byte* get_level_data_pointer();
+void ff7_handle_field_reset();
