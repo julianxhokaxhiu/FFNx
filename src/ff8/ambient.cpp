@@ -58,7 +58,7 @@ void ff8_handle_ambient_playback()
 			if (!playing)
 			{
 				sprintf(filename, "field_%d", last_field_id);
-				nxAudioEngine.playAmbient(filename);
+				playing = nxAudioEngine.playAmbient(filename);
 			}
 		}
 		else if (common_externals.current_triangle_id != 0 && last_field_id == *common_externals.current_field_id && last_triangle_id != *common_externals.current_triangle_id)
