@@ -68,6 +68,7 @@
 #include "ff7/defs.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
+#include "ff7/field/defs.h"
 
 #include "ff8/vram.h"
 #include "ff8/vibration.h"
@@ -1270,7 +1271,7 @@ void common_flip(struct game_obj *game_object)
 		ff7_handle_ambient_playback();
 		ff7_handle_voice_playback();
 		ff7_handle_wmode_reset();
-		ff7_handle_field_reset();
+		ff7::field::ff7_field_handle_blink_reset();
 	}
 
 	// Steamworks SDK API run callbacks

@@ -283,6 +283,17 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	byte ff7_redxiii_eye_fix[] = "\xEC\x79\x90\x00\x00\x00\x00\x00";
 	memcpy_code((uint32_t)ff7_externals.field_models_eye_blink_buffer + 0x58, ff7_redxiii_eye_fix, sizeof(ff7_redxiii_eye_fix) - 1);
 
+	// ##################
+	// field eye blinking
+	// ##################
+	replace_function(uint32_t(ff7_externals.field_blink_3d_model_649B50), ff7::field::ff7_field_blink_eye_sub_649B50);
+	// allow eye condition to always match
+	memset_code(ff7_externals.opcode_kawai + 0x275, 0x90, 6);
+	memset_code(ff7_externals.opcode_kawai + 0x294, 0x90, 2);
+	// allow up to 128 eyes
+	memset_code(ff7_externals.opcode_kawai + 0x286, 0x7F, 1);
+	memset_code(ff7_externals.opcode_kawai + 0x2A1, 0x7F, 1);
+
 	// #####################
 	// field vertical center
 	// #####################

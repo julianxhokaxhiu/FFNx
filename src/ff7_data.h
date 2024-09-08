@@ -579,6 +579,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_animate_3d_models_6392BB = get_relative_call(field_main_loop, 0xF6);
 	ff7_externals.field_blink_3d_model_649B50 = (void(*)(field_animation_data*, field_model_blink_data*))get_relative_call(ff7_externals.field_animate_3d_models_6392BB, 0x8A7);
 	ff7_externals.field_sub_6A2736 = (int (*)(ff7_polygon_set*))get_relative_call((uint32_t)ff7_externals.field_blink_3d_model_649B50, 0xC4);
+	ff7_externals.field_sub_6A2782 = (p_hundred** (*)(int idx, p_hundred *hundreddata, ff7_polygon_set *polygon_set))(get_relative_call(uint32_t(ff7_externals.field_blink_3d_model_649B50), 0x143));
 	ff7_externals.field_model_blink_data_D000C8 = (field_model_blink_data*)get_absolute_value(ff7_externals.field_animate_3d_models_6392BB, 0x7E6);
 	ff7_externals.field_apply_kawai_op_64A070 = get_relative_call(ff7_externals.field_animate_3d_models_6392BB, 0x726);
 	ff7_externals.sub_64EC60 = get_relative_call(ff7_externals.field_apply_kawai_op_64A070, 0x964);

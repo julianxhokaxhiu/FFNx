@@ -47,6 +47,8 @@ namespace ff7::field
     constexpr int BLINKING_FRAMES = 4;
 
     std::array<external_field_model_data, MAX_FIELD_MODELS> external_model_data;
+    ff7_model_eye_texture_data curr_model_data;
+    ff7_model_custom_data ff7_model_data[FF7_MAX_NUM_MODEL_ENTITIES];
 
     bool ff7_field_do_draw_3d_model(short x, short y);
     void ff7_field_update_models_position(int key_input_status);
@@ -54,7 +56,8 @@ namespace ff7::field
     int ff7_field_update_single_model_position(short model_id);
     int ff7_field_check_collision_with_target(field_event_data* field_event_model, short target_collision_radius);
     void ff7_field_update_models_rotation_new();
-    void ff7_field_blink_3d_model(field_animation_data* anim_data, field_model_blink_data* blink_data);
+    int ff7_field_blink_eye_sub_649B50(field_animation_data *field_anim_data, field_model_blink_data *blink_data);
+    void ff7_field_handle_blink_reset();
     void ff7_field_update_model_animation_frame(short model_id);
     int ff7_field_models_eye_to_model(char* model_name);
 }

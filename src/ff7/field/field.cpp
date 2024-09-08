@@ -223,9 +223,6 @@ namespace ff7::field
                 patch_divide_code<short>((uint32_t)ff7_externals.field_opcode_ask_update_loop_6310A1 + 0x1AC, common_frame_multiplier);
                 patch_divide_code<byte>((uint32_t)ff7_externals.field_opcode_ask_update_loop_6310A1 + 0x3CC, common_frame_multiplier);
 
-                // Model blinking: wait time and blink time
-                replace_call_function(ff7_externals.field_animate_3d_models_6392BB + 0x8A7, ff7_field_blink_3d_model);
-
                 // Fade in and fade out screen transitions
                 patch_divide_code<short>(ff7_externals.field_initialize_variables + 0x123, common_frame_multiplier);
                 patch_code_byte(ff7_externals.field_handle_screen_fading + 0x210, 25 * common_frame_multiplier);

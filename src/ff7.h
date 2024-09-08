@@ -29,7 +29,7 @@
 
 #include "common.h"
 
-#define FF7_MAX_NUM_GROUP_ENTITIES 64
+#define FF7_MAX_NUM_MODEL_ENTITIES 32
 
 /*
  * Primitive types supported by the engine, mostly a 1:1 mapping to PSX GPU
@@ -1168,6 +1168,34 @@ struct rsd_data
 	struct pd_data *pd_data;
 };
 
+#pragma pack(push, 1)
+struct ff7_hrc_polygon_data
+{
+  int version;
+  DWORD dword4;
+  DWORD number_of_frames;
+  DWORD dwordC;
+  DWORD dword10;
+  DWORD dword14;
+  BYTE gap18[4];
+  DWORD dword1C;
+  BYTE gap20[8];
+  DWORD dword28;
+  int fps;
+  DWORD dword30;
+  DWORD dword34;
+  struc_110 struc_110;
+  BYTE gapAC[4];
+  DWORD dwordB0;
+  hrc_data *hrc_data;
+  ff7_game_obj *game_obj;
+  __int64 lag;
+  unsigned __int64 current_time;
+  BYTE gapCC[8];
+  file_context file_contextD4;
+};
+#pragma pack(pop)
+
 struct lgp_toc_entry
 {
 	char name[16];
@@ -2176,7 +2204,7 @@ struct field_animation_data
 	byte field_24[336];
 	WORD field_174;
 	WORD field_176;
-	uint32_t *anim_frame_object;
+	ff7_hrc_polygon_data *anim_frame_object;
 	uint32_t *field_17C;
 	p_hundred* custom_left_eye_tex;
   p_hundred* static_left_eye_tex;
@@ -2258,7 +2286,7 @@ struct field_model_blink_data
 {
 	byte blink_left_eye_mode;
   byte blink_right_eye_mode;
-  char unknown;
+  char blink_mouth_mode;
   char model_id;
 };
 
@@ -2786,6 +2814,7 @@ struct ff7_externals
 	void (*create_struc_3_info_sub_67455E)(struc_3 *tex_info);
 	uint32_t field_sub_60DCED;
 	int (*field_sub_6A2736)(ff7_polygon_set *polygon_set);
+	p_hundred** (*field_sub_6A2782)(int idx, p_hundred *hundreddata, ff7_polygon_set *polygon_set);
 	uint32_t* field_unk_909288;
 	void (*destroy_animation)(struct anim_header *);
 	uint32_t context_chdir;

@@ -25,6 +25,7 @@
 #include "../../sfx.h"
 #include "../../movies.h"
 #include "../../utils.h"
+#include "../../log.h"
 #include "../widescreen.h"
 
 #include "utils.h"
@@ -268,23 +269,291 @@ namespace ff7::field
         }
     }
 
-    void ff7_field_blink_3d_model(field_animation_data* anim_data, field_model_blink_data* blink_data)
+    void ff7_field_handle_blink_reset()
     {
-        ff7_externals.field_blink_3d_model_649B50(anim_data, blink_data);
-        if(blink_data->blink_left_eye_mode == 2)
+        static WORD last_field_id = 0;
+
+        if (last_field_id != *common_externals.current_field_id)
         {
-            auto &field_event_data = (*ff7_externals.field_event_data_ptr)[blink_data->model_id];
-            if(external_model_data[blink_data->model_id].blinkFrameIndex > 0)
+            last_field_id = *common_externals.current_field_id;
+
+            // Reset eyes blinking
+            ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode = 0;
+            ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode = 0;
+
+            // Reset mouths
+            for(int i = 0; i < FF7_MAX_NUM_MODEL_ENTITIES; i++)
             {
-                field_event_data.blink_wait_frames = 0;
-                external_model_data[blink_data->model_id].blinkFrameIndex--;
-            }
-            else
-            {
-                field_event_data.blink_wait_frames = 64 * common_frame_multiplier + getRandomInt(0, 32 * common_frame_multiplier);
-                external_model_data[blink_data->model_id].blinkFrameIndex = BLINKING_FRAMES;
+                ff7_model_data[i].current_mouth_idx = 0;
+                if (ff7_model_data[i].mouth_tex) ff7_externals.field_unload_model_tex(ff7_model_data[i].mouth_tex);
+                ff7_model_data[i].mouth_tex = NULL;
             }
         }
+    }
+
+    int ff7_internal_blink_eye(field_animation_data *field_anim_data, field_model_blink_data *blink_data, ff7_polygon_set *polygon_set)
+    {
+        int i;
+        struct hrc_bone *bones;
+        hrc_data *hrc_data;
+        int blink_left_eye_mode;
+        int blink_right_eye_mode;
+
+        if ( field_anim_data->anim_frame_object )
+        {
+            hrc_data = field_anim_data->anim_frame_object->hrc_data;
+            if ( hrc_data )
+            {
+                int bone_idx = 0;
+                bones = field_anim_data->anim_frame_object->hrc_data->bones;
+                if ( (char)field_anim_data->eye_texture_idx >= 33 )
+                    return 1;
+                while ( bone_idx < (signed int)hrc_data->num_bones && _strcmpi(bones->bone_name, "head") )
+                {
+                    ++bone_idx;
+                    ++bones;
+                }
+                if ( bone_idx == hrc_data->num_bones ) return 0;
+                polygon_set = bones->rsd_array->rsd_data->polygon_set;
+                ff7_externals.field_sub_6A2736(polygon_set);
+                // Mouth replacement logic
+                if (polygon_set && ff7_model_data[blink_data->model_id].mouth_tex)
+                {
+                    polygon_set->hundred_data_group_array[polygon_set->numgroups - 1] = ff7_model_data[blink_data->model_id].mouth_tex;
+                    polygon_set->per_group_hundreds = 1;
+                }
+                blink_left_eye_mode = blink_data->blink_left_eye_mode;
+                for ( i = 0; i < (signed int)polygon_set->numgroups && !polygon_set->hundred_data[i].texture_set; ++i );
+                if ( i == polygon_set->numgroups )return 0;
+                if ( blink_left_eye_mode == 1 )
+                {
+                    if (ff7_model_data[blink_data->model_id].left_eye_tex) polygon_set->hundred_data_group_array[polygon_set->numgroups - 3] = ff7_model_data[blink_data->model_id].left_eye_tex;
+                    ff7_externals.field_sub_6A2782(i, &polygon_set->hundred_data[i], polygon_set);
+                }
+                else
+                {
+                    if ( blink_left_eye_mode != 2 )
+                    {
+                        if (!ff7_model_data[blink_data->model_id].has_mouth) polygon_set->per_group_hundreds = 0;
+                        return 0;
+                    }
+                    polygon_set->per_group_hundreds = 1;
+                    if ( !field_anim_data->static_left_eye_tex )
+                    goto LABEL_22;
+                    ff7_externals.field_sub_6A2782(i, (p_hundred *)field_anim_data->static_left_eye_tex, polygon_set);
+                }
+                blink_right_eye_mode = blink_data->blink_right_eye_mode;
+                if ( ++i == polygon_set->numgroups ) return 0;
+                if ( blink_right_eye_mode == 1 )
+                {
+                    if (ff7_model_data[blink_data->model_id].right_eye_tex) polygon_set->hundred_data_group_array[polygon_set->numgroups - 2] = ff7_model_data[blink_data->model_id].right_eye_tex;
+                    ff7_externals.field_sub_6A2782(i, &polygon_set->hundred_data[i], polygon_set);
+                    return 1;
+                }
+                if ( blink_right_eye_mode != 2 )
+                {
+                    if (!ff7_model_data[blink_data->model_id].has_mouth) polygon_set->per_group_hundreds = 0;
+                    return 0;
+                }
+                polygon_set->per_group_hundreds = 1;
+                if ( field_anim_data->static_right_eye_tex )
+                {
+                    ff7_externals.field_sub_6A2782(i, (p_hundred *)field_anim_data->static_right_eye_tex, polygon_set);
+                    return 1;
+                }
+            LABEL_22:
+                ff7_externals.field_sub_6A2782(i, &polygon_set->hundred_data[i], polygon_set);
+                return 0;
+            }
+        }
+
+        return 0;
+    }
+
+    int ff7_field_blink_eye_sub_649B50(field_animation_data *field_anim_data, field_model_blink_data *blink_data)
+    {
+        int ret = 0;
+        ff7_polygon_set *polygon_set = nullptr;
+
+        // Custom eyes + mouth fetching
+        byte curr_entity_id = *ff7_externals.current_entity_id;
+        byte curr_model_id = blink_data->model_id;
+        byte curr_eye_index = MAXBYTE;
+        static char curr_model_name[10]{0};
+        bool is_npc = false;
+
+        if (curr_model_id != MAXBYTE)
+        {
+            byte left_eye_index = blink_data->blink_left_eye_mode;
+            byte right_eye_index = blink_data->blink_right_eye_mode;
+            byte mouth_index = ff7_model_data[curr_model_id].current_mouth_idx;
+            curr_eye_index = field_anim_data->eye_texture_idx;
+
+            _splitpath((const char*)(*ff7_externals.field_models_data + (10380 * curr_model_id) + 512), NULL, NULL, curr_model_name, NULL);
+
+            if (trace_all || trace_opcodes) ffnx_trace("field_blink_eye_sub: curr_entity_id=%u,curr_model_id=%u,curr_eye_index=%u,curr_mouth_index=%u,curr_model_name=%s\n", curr_entity_id, curr_model_id, curr_eye_index, mouth_index, curr_model_name);
+
+            if (curr_eye_index < 10)
+            {
+                char directpath[MAX_PATH + sizeof(basedir)];
+                char filename[10];
+                char ext[4];
+                bool ext_left_eye_found = false, ext_right_eye_found = false;
+
+                // NPCs always default on Cloud eyes/mouth
+                if (curr_eye_index == 9)
+                {
+                    curr_eye_index = 0;
+                    is_npc = true;
+                }
+
+                // LEFT EYE
+                _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
+
+                _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%s_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, left_eye_index);
+                if (ext_left_eye_found = fileExists(directpath))
+                    _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "eye_%s_%d%s", curr_model_name, left_eye_index, ext);
+                else
+                {
+                    if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom left eye texture not found: %s\n", directpath);
+
+                    // If it is an NPC use the generic NPC name instead of Cloud
+                    if (is_npc) _snprintf(filename, sizeof(filename), "npc_eye2");
+
+                    _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, left_eye_index);
+                    if (ext_left_eye_found = fileExists(directpath))
+                        _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "%s_%d%s", filename, left_eye_index, ext);
+                    else
+                    {
+                        if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom left eye texture not found: %s\n", directpath);
+
+                        // If it is an NPC, and nothing was found so far, switch back to Cloud eye
+                        if (is_npc) _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
+                        _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "%s%s", filename, ext);
+                    }
+                }
+
+                // RIGHT EYE
+                _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
+
+                _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%sr_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, right_eye_index);
+                if (ext_right_eye_found = fileExists(directpath))
+                    _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "eye_%sr_%d%s", curr_model_name, right_eye_index, ext);
+                else
+                {
+                    if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom right eye texture not found: %s\n", directpath);
+
+                    // If it is an NPC use the generic NPC name instead of Cloud
+                    if (is_npc) _snprintf(filename, sizeof(filename), "npc_eye2r");
+
+                    _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, right_eye_index);
+                    if (ext_right_eye_found = fileExists(directpath))
+                        _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "%s_%d%s", filename, right_eye_index, ext);
+                    else
+                    {
+                        if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom right eye texture not found: %s\n", directpath);
+
+                        // If it is an NPC, and nothing was found so far, switch back to Cloud eye
+                        if (is_npc) _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
+                        _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "%s%s", filename, ext);
+                    }
+                }
+
+                // Reload TEX data in memory
+                if(field_anim_data->static_left_eye_tex) ff7_externals.field_unload_model_tex(field_anim_data->static_left_eye_tex);
+                if(field_anim_data->static_right_eye_tex) ff7_externals.field_unload_model_tex(field_anim_data->static_right_eye_tex);
+                curr_model_data.has_eyes = 1;
+                curr_model_data.static_left_eye_filename = ff7_model_data[curr_model_id].left_eye_tex_filename;
+                curr_model_data.static_right_eye_filename = ff7_model_data[curr_model_id].right_eye_tex_filename;
+                ff7_externals.field_load_model_eye_tex(&curr_model_data, field_anim_data);
+                ff7_model_data[curr_model_id].left_eye_tex = field_anim_data->static_left_eye_tex;
+                ff7_model_data[curr_model_id].right_eye_tex = field_anim_data->static_right_eye_tex;
+
+                // Restore original curr_eye_index
+                curr_eye_index = field_anim_data->eye_texture_idx;
+
+                // MOUTH
+                char* char_name = strtok(filename, "_");
+
+                _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/mouth_%s_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, mouth_index);
+                if (ff7_model_data[curr_model_id].has_mouth = fileExists(directpath))
+                    _snprintf(ff7_model_data[curr_model_id].mouth_tex_filename, 1024, "mouth_%s_%d%s", curr_model_name, mouth_index, ext);
+                else
+                {
+                    if (mouth_index > 0 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom mouth texture not found: %s\n", directpath);
+
+                    // NPC only
+                    if (is_npc)
+                    {
+                        _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/npc_mouth_%d.TEX", basedir, direct_mode_path.c_str(), mouth_index);
+                        if (ff7_model_data[curr_model_id].has_mouth = fileExists(directpath))
+                            _snprintf(ff7_model_data[curr_model_id].mouth_tex_filename, 1024, "%s_mouth_%d%s", char_name, mouth_index, ext);
+                        else if (mouth_index > 0 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom mouth texture not found: %s\n", directpath);
+                    }
+                    else
+                    {
+                        _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_mouth_%d.TEX", basedir, direct_mode_path.c_str(), filename, mouth_index);
+                        if (ff7_model_data[curr_model_id].has_mouth = fileExists(directpath))
+                            _snprintf(ff7_model_data[curr_model_id].mouth_tex_filename, 1024, "%s_mouth_%d%s", char_name, mouth_index, ext);
+                        else if (mouth_index > 0 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom mouth texture not found: %s\n", directpath);
+                    }
+                }
+
+                // Prepare mouth tex object
+                if (ff7_model_data[curr_model_id].has_mouth)
+                {
+                    struc_3 tex_mouth_info;
+                    ff7_externals.create_struc_3_info_sub_67455E(&tex_mouth_info);
+                    tex_mouth_info.base_directory = (uint32_t)ff7_externals.field_unk_909288;
+                    tex_mouth_info.file_context.use_lgp = 1;
+                    tex_mouth_info.file_context.lgp_num = 1;
+                    tex_mouth_info.file_context.name_mangler = 0;
+                    ff7_model_data[curr_model_id].mouth_tex = ff7_externals.field_load_model_tex(0, 0, ff7_model_data[curr_model_id].mouth_tex_filename, &tex_mouth_info, common_externals.get_game_object());
+                }
+                else
+                {
+                    if (ff7_model_data[curr_model_id].mouth_tex) ff7_externals.field_unload_model_tex(ff7_model_data[curr_model_id].mouth_tex);
+                    ff7_model_data[curr_model_id].mouth_tex = NULL;
+                }
+
+                // Index is also treated as blink mode, if higher than 2 then "fake a closed eyes" in order to reload textures
+                if (left_eye_index <= 2 || right_eye_index <= 2)
+                {
+                    blink_data->blink_left_eye_mode = left_eye_index;
+                    blink_data->blink_right_eye_mode = right_eye_index;
+                }
+                else if (ext_left_eye_found || ext_right_eye_found)
+                {
+                    blink_data->blink_left_eye_mode = 2;
+                    blink_data->blink_right_eye_mode = 2;
+                }
+                blink_data->model_id = curr_model_id;
+            }
+        }
+
+        // Original code
+        ret = ff7_internal_blink_eye(field_anim_data, blink_data, polygon_set);
+
+        // 60FPS patch: wait time and blink time
+        if(ff7_fps_limiter == FPS_LIMITER_60FPS)
+        {
+            if(blink_data->blink_left_eye_mode == 2)
+            {
+                auto &field_event_data = (*ff7_externals.field_event_data_ptr)[blink_data->model_id];
+                if(external_model_data[blink_data->model_id].blinkFrameIndex > 0)
+                {
+                    field_event_data.blink_wait_frames = 0;
+                    external_model_data[blink_data->model_id].blinkFrameIndex--;
+                }
+                else
+                {
+                    field_event_data.blink_wait_frames = 64 * common_frame_multiplier + getRandomInt(0, 32 * common_frame_multiplier);
+                    external_model_data[blink_data->model_id].blinkFrameIndex = BLINKING_FRAMES;
+                }
+            }
+        }
+
+        return ret;
     }
 
     void ff7_field_update_model_animation_frame(short model_id)
