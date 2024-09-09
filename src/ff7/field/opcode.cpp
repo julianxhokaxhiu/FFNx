@@ -91,7 +91,7 @@ namespace ff7::field
             case 1:
             case 3:
                 if(animation_data)
-                    total_number_of_frames = animation_data[curr_model_id].anim_frame_object->number_of_frames;
+                    total_number_of_frames = animation_data[curr_model_id].anim_frame_object->number_of_frames - 1;
 
                 if(last_frame > total_number_of_frames)
                     last_frame = total_number_of_frames;
