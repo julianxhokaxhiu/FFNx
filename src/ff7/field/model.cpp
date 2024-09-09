@@ -319,15 +319,18 @@ namespace ff7::field
                 // Mouth replacement logic
                 if (polygon_set && ff7_model_data[blink_data->model_id].mouth_tex)
                 {
-                    polygon_set->hundred_data_group_array[polygon_set->numgroups - 1] = ff7_model_data[blink_data->model_id].mouth_tex;
-                    polygon_set->per_group_hundreds = 1;
+                    if (polygon_set->hundred_data_group_array[3] != NULL)
+                    {
+                        polygon_set->hundred_data_group_array[3] = ff7_model_data[blink_data->model_id].mouth_tex;
+                        polygon_set->per_group_hundreds = 1;
+                    }
                 }
                 blink_left_eye_mode = blink_data->blink_left_eye_mode;
                 for ( i = 0; i < (signed int)polygon_set->numgroups && !polygon_set->hundred_data[i].texture_set; ++i );
                 if ( i == polygon_set->numgroups )return 0;
                 if ( blink_left_eye_mode == 1 )
                 {
-                    if (ff7_model_data[blink_data->model_id].left_eye_tex) polygon_set->hundred_data_group_array[polygon_set->numgroups - 3] = ff7_model_data[blink_data->model_id].left_eye_tex;
+                    if (ff7_model_data[blink_data->model_id].left_eye_tex) polygon_set->hundred_data_group_array[1] = ff7_model_data[blink_data->model_id].left_eye_tex;
                     ff7_externals.field_sub_6A2782(i, &polygon_set->hundred_data[i], polygon_set);
                 }
                 else
@@ -346,7 +349,7 @@ namespace ff7::field
                 if ( ++i == polygon_set->numgroups ) return 0;
                 if ( blink_right_eye_mode == 1 )
                 {
-                    if (ff7_model_data[blink_data->model_id].right_eye_tex) polygon_set->hundred_data_group_array[polygon_set->numgroups - 2] = ff7_model_data[blink_data->model_id].right_eye_tex;
+                    if (ff7_model_data[blink_data->model_id].right_eye_tex) polygon_set->hundred_data_group_array[2] = ff7_model_data[blink_data->model_id].right_eye_tex;
                     ff7_externals.field_sub_6A2782(i, &polygon_set->hundred_data[i], polygon_set);
                     return 1;
                 }
