@@ -286,6 +286,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// ##################
 	// field eye blinking
 	// ##################
+	if (ff7_advanced_blinking)
 	replace_function(uint32_t(ff7_externals.field_blink_3d_model_649B50), ff7::field::ff7_field_blink_eye_sub_649B50);
 	// allow eye condition to always match
 	memset_code(ff7_externals.opcode_kawai + 0x275, 0x90, 6);

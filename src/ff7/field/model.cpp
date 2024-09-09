@@ -318,7 +318,7 @@ namespace ff7::field
                 polygon_set = bones->rsd_array->rsd_data->polygon_set;
                 ff7_externals.field_sub_6A2736(polygon_set);
                 // Mouth replacement logic
-                if (polygon_set && ff7_model_data[blink_data->model_id].mouth_tex)
+                if (ff7_advanced_blinking && polygon_set && ff7_model_data[blink_data->model_id].mouth_tex)
                 {
                     if (polygon_set->hundred_data_group_array[3] != NULL)
                     {
@@ -331,14 +331,14 @@ namespace ff7::field
                 if ( i == polygon_set->numgroups )return 0;
                 if ( blink_left_eye_mode == 1 )
                 {
-                    if (ff7_model_data[blink_data->model_id].left_eye_tex) polygon_set->hundred_data_group_array[1] = ff7_model_data[blink_data->model_id].left_eye_tex;
+                    if (ff7_advanced_blinking && ff7_model_data[blink_data->model_id].left_eye_tex) polygon_set->hundred_data_group_array[1] = ff7_model_data[blink_data->model_id].left_eye_tex;
                     ff7_externals.field_sub_6A2782(i, &polygon_set->hundred_data[i], polygon_set);
                 }
                 else
                 {
                     if ( blink_left_eye_mode != 2 )
                     {
-                        if (!ff7_model_data[blink_data->model_id].has_mouth) polygon_set->per_group_hundreds = 0;
+                        if (ff7_advanced_blinking && !ff7_model_data[blink_data->model_id].has_mouth) polygon_set->per_group_hundreds = 0;
                         return 0;
                     }
                     polygon_set->per_group_hundreds = 1;
@@ -350,13 +350,13 @@ namespace ff7::field
                 if ( ++i == polygon_set->numgroups ) return 0;
                 if ( blink_right_eye_mode == 1 )
                 {
-                    if (ff7_model_data[blink_data->model_id].right_eye_tex) polygon_set->hundred_data_group_array[2] = ff7_model_data[blink_data->model_id].right_eye_tex;
+                    if (ff7_advanced_blinking && ff7_model_data[blink_data->model_id].right_eye_tex) polygon_set->hundred_data_group_array[2] = ff7_model_data[blink_data->model_id].right_eye_tex;
                     ff7_externals.field_sub_6A2782(i, &polygon_set->hundred_data[i], polygon_set);
                     return 1;
                 }
                 if ( blink_right_eye_mode != 2 )
                 {
-                    if (!ff7_model_data[blink_data->model_id].has_mouth) polygon_set->per_group_hundreds = 0;
+                    if (ff7_advanced_blinking && !ff7_model_data[blink_data->model_id].has_mouth) polygon_set->per_group_hundreds = 0;
                     return 0;
                 }
                 polygon_set->per_group_hundreds = 1;
@@ -385,7 +385,7 @@ namespace ff7::field
         static char curr_model_name[10]{0};
         bool is_npc = false;
 
-        if (curr_model_id != MAXBYTE)
+        if (ff7_advanced_blinking && curr_model_id != MAXBYTE)
         {
             byte left_eye_index = blink_data->blink_left_eye_mode;
             byte right_eye_index = blink_data->blink_right_eye_mode;

@@ -152,6 +152,7 @@ long external_sfx_volume;
 long external_voice_volume;
 long external_ambient_volume;
 long ffmpeg_video_volume;
+bool ff7_advanced_blinking;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -313,6 +314,7 @@ void read_cfg()
 	external_voice_volume = config["external_voice_volume"].value_or(-1);
 	external_ambient_volume = config["external_ambient_volume"].value_or(-1);
 	ffmpeg_video_volume = config["ffmpeg_video_volume"].value_or(-1);
+	ff7_advanced_blinking = config["ff7_advanced_blinking"].value_or(false);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
