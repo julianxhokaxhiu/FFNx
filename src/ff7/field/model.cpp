@@ -291,9 +291,10 @@ namespace ff7::field
         }
     }
 
-    int ff7_internal_blink_eye(field_animation_data *field_anim_data, field_model_blink_data *blink_data, ff7_polygon_set *polygon_set)
+    int ff7_internal_blink_eye(field_animation_data *field_anim_data, field_model_blink_data *blink_data)
     {
         int i;
+        ff7_polygon_set *polygon_set = nullptr;
         struct hrc_bone *bones;
         hrc_data *hrc_data;
         int blink_left_eye_mode;
@@ -376,7 +377,6 @@ namespace ff7::field
     int ff7_field_blink_eye_sub_649B50(field_animation_data *field_anim_data, field_model_blink_data *blink_data)
     {
         int ret = 0;
-        ff7_polygon_set *polygon_set = nullptr;
 
         // Custom eyes + mouth fetching
         byte curr_entity_id = *ff7_externals.current_entity_id;
@@ -535,12 +535,12 @@ namespace ff7::field
         }
 
         // Original code
-        ret = ff7_internal_blink_eye(field_anim_data, blink_data, polygon_set);
+        ret = ff7_internal_blink_eye(field_anim_data, blink_data);
 
         // 60FPS patch: wait time and blink time
         if(ff7_fps_limiter == FPS_LIMITER_60FPS)
         {
-            if(blink_data->blink_left_eye_mode == 2)
+            if(blink_data->blink_left_eye_mode == 2 && blink_data->blink_right_eye_mode == 2)
             {
                 auto &field_event_data = (*ff7_externals.field_event_data_ptr)[blink_data->model_id];
                 if(external_model_data[blink_data->model_id].blinkFrameIndex > 0)
