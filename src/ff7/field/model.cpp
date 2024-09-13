@@ -493,7 +493,7 @@ namespace ff7::field
                     {
                         _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/npc_mouth_%d.TEX", basedir, direct_mode_path.c_str(), mouth_index);
                         if (ff7_model_data[curr_model_id].has_mouth = fileExists(directpath))
-                            _snprintf(ff7_model_data[curr_model_id].mouth_tex_filename, 1024, "%s_mouth_%d%s", char_name, mouth_index, ext);
+                            _snprintf(ff7_model_data[curr_model_id].mouth_tex_filename, 1024, "npc_mouth_%d%s", mouth_index, ext);
                         else if (mouth_index > 0 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom mouth texture not found: %s\n", directpath);
                     }
                     else
