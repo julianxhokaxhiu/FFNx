@@ -410,70 +410,73 @@ namespace ff7::field
                     is_npc = true;
                 }
 
-                // LEFT EYE
-                _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
-
-                _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%s_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, left_eye_index);
-                if (ext_left_eye_found = fileExists(directpath))
-                    _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "eye_%s_%d%s", curr_model_name, left_eye_index, ext);
-                else
+                if (ff7_externals.field_models_eye_blink_buffer[curr_eye_index].has_eyes)
                 {
-                    if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom left eye texture not found: %s\n", directpath);
+                    // LEFT EYE
+                    _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
 
-                    // If it is an NPC use the generic NPC name instead of Cloud
-                    if (is_npc) _snprintf(filename, sizeof(filename), "npc_eye2");
-
-                    _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, left_eye_index);
+                    _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%s_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, left_eye_index);
                     if (ext_left_eye_found = fileExists(directpath))
-                        _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "%s_%d%s", filename, left_eye_index, ext);
+                        _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "eye_%s_%d%s", curr_model_name, left_eye_index, ext);
                     else
                     {
                         if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom left eye texture not found: %s\n", directpath);
 
-                        // If it is an NPC, and nothing was found so far, switch back to Cloud eye
-                        if (is_npc) _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
-                        _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "%s%s", filename, ext);
+                        // If it is an NPC use the generic NPC name instead of Cloud
+                        if (is_npc) _snprintf(filename, sizeof(filename), "npc_eye2");
+
+                        _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, left_eye_index);
+                        if (ext_left_eye_found = fileExists(directpath))
+                            _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "%s_%d%s", filename, left_eye_index, ext);
+                        else
+                        {
+                            if (left_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom left eye texture not found: %s\n", directpath);
+
+                            // If it is an NPC, and nothing was found so far, switch back to Cloud eye
+                            if (is_npc) _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_left_eye_filename, NULL, NULL, filename, ext);
+                            _snprintf(ff7_model_data[curr_model_id].left_eye_tex_filename, 1024, "%s%s", filename, ext);
+                        }
                     }
-                }
 
-                // RIGHT EYE
-                _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
+                    // RIGHT EYE
+                    _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
 
-                _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%sr_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, right_eye_index);
-                if (ext_right_eye_found = fileExists(directpath))
-                    _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "eye_%sr_%d%s", curr_model_name, right_eye_index, ext);
-                else
-                {
-                    if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom right eye texture not found: %s\n", directpath);
-
-                    // If it is an NPC use the generic NPC name instead of Cloud
-                    if (is_npc) _snprintf(filename, sizeof(filename), "npc_eye2r");
-
-                    _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, right_eye_index);
+                    _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/eye_%sr_%d.TEX", basedir, direct_mode_path.c_str(), curr_model_name, right_eye_index);
                     if (ext_right_eye_found = fileExists(directpath))
-                        _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "%s_%d%s", filename, right_eye_index, ext);
+                        _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "eye_%sr_%d%s", curr_model_name, right_eye_index, ext);
                     else
                     {
                         if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom right eye texture not found: %s\n", directpath);
 
-                        // If it is an NPC, and nothing was found so far, switch back to Cloud eye
-                        if (is_npc) _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
-                        _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "%s%s", filename, ext);
+                        // If it is an NPC use the generic NPC name instead of Cloud
+                        if (is_npc) _snprintf(filename, sizeof(filename), "npc_eye2r");
+
+                        _snprintf(directpath, sizeof(directpath), "%s/%s/flevel/%s_%d.TEX", basedir, direct_mode_path.c_str(), filename, right_eye_index);
+                        if (ext_right_eye_found = fileExists(directpath))
+                            _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "%s_%d%s", filename, right_eye_index, ext);
+                        else
+                        {
+                            if (right_eye_index > 2 && (trace_all || trace_direct || trace_opcodes)) ffnx_trace("subcode[EYETX]: Custom right eye texture not found: %s\n", directpath);
+
+                            // If it is an NPC, and nothing was found so far, switch back to Cloud eye
+                            if (is_npc) _splitpath(ff7_externals.field_models_eye_blink_buffer[curr_eye_index].static_right_eye_filename, NULL, NULL, filename, ext);
+                            _snprintf(ff7_model_data[curr_model_id].right_eye_tex_filename, 1024, "%s%s", filename, ext);
+                        }
                     }
+
+                    // Reload TEX data in memory
+                    if(field_anim_data->static_left_eye_tex) ff7_externals.field_unload_model_tex(field_anim_data->static_left_eye_tex);
+                    if(field_anim_data->static_right_eye_tex) ff7_externals.field_unload_model_tex(field_anim_data->static_right_eye_tex);
+                    curr_model_data.has_eyes = 1;
+                    curr_model_data.static_left_eye_filename = ff7_model_data[curr_model_id].left_eye_tex_filename;
+                    curr_model_data.static_right_eye_filename = ff7_model_data[curr_model_id].right_eye_tex_filename;
+                    ff7_externals.field_load_model_eye_tex(&curr_model_data, field_anim_data);
+                    ff7_model_data[curr_model_id].left_eye_tex = field_anim_data->static_left_eye_tex;
+                    ff7_model_data[curr_model_id].right_eye_tex = field_anim_data->static_right_eye_tex;
+
+                    // Restore original curr_eye_index
+                    curr_eye_index = field_anim_data->eye_texture_idx;
                 }
-
-                // Reload TEX data in memory
-                if(field_anim_data->static_left_eye_tex) ff7_externals.field_unload_model_tex(field_anim_data->static_left_eye_tex);
-                if(field_anim_data->static_right_eye_tex) ff7_externals.field_unload_model_tex(field_anim_data->static_right_eye_tex);
-                curr_model_data.has_eyes = 1;
-                curr_model_data.static_left_eye_filename = ff7_model_data[curr_model_id].left_eye_tex_filename;
-                curr_model_data.static_right_eye_filename = ff7_model_data[curr_model_id].right_eye_tex_filename;
-                ff7_externals.field_load_model_eye_tex(&curr_model_data, field_anim_data);
-                ff7_model_data[curr_model_id].left_eye_tex = field_anim_data->static_left_eye_tex;
-                ff7_model_data[curr_model_id].right_eye_tex = field_anim_data->static_right_eye_tex;
-
-                // Restore original curr_eye_index
-                curr_eye_index = field_anim_data->eye_texture_idx;
 
                 // MOUTH
                 char* char_name = strtok(filename, "_");
