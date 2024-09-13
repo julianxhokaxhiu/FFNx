@@ -404,7 +404,7 @@ namespace ff7::field
                 bool ext_left_eye_found = false, ext_right_eye_found = false;
 
                 // NPCs always default on Cloud eyes/mouth
-                if (curr_eye_index > 7)
+                if (curr_eye_index == 9)
                 {
                     curr_eye_index = 0;
                     is_npc = true;
