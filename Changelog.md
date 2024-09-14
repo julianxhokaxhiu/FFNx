@@ -14,6 +14,7 @@
 - Rendering: Add bilinear filtering option `enable_bilinear` ( https://github.com/julianxhokaxhiu/FFNx/pull/692 )
 
 ## FF7
+
 - Core: Fix mouth replacement for main characters, by replacing only model where the KAWAI opcode has been called.
 - Core: NPCs can now have custom eyes and mouths, each their own, during the whole lifecycle of a field scene.
 - Core: Fix blinking to use the correct closed eyes texture for NPCs
