@@ -1,6 +1,6 @@
 {
   "name": "ffnx",
-  "version": "1.19.1",
+  "version": "1.20.0",
   "builtin-baseline": "1de2026f28ead93ff1773e6e680387643e914ea1",
   "dependencies": [
     "bgfx",
