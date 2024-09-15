@@ -586,6 +586,22 @@ namespace ff7::field
         // Cloud
         if ( !_strcmpi(model_name, "AAAA") )
             return 0;
+        if ( !_strcmpi(model_name, "AFIE") )
+            return 0;
+        if ( !_strcmpi(model_name, "BHFF") )
+            return 0;
+        if ( !_strcmpi(model_name, "BUGE") )
+            return 0;
+        if ( !_strcmpi(model_name, "DLFB") )
+            return 0;
+        if ( !_strcmpi(model_name, "EIHD") )
+            return 0;
+        if ( !_strcmpi(model_name, "EKBF") )
+            return 0;
+        if ( !_strcmpi(model_name, "ENAB") )
+            return 0;
+        if ( !_strcmpi(model_name, "HTJE") )
+            return 0;
 
         // Tifa
         if ( !_strcmpi(model_name, "AAGB") )
