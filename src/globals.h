@@ -80,7 +80,6 @@ extern uint32_t num_modes;
 extern uint32_t text_colors[];
 
 extern uint32_t ff8;
-extern uint32_t ff8_currentdisk;
 
 extern uint32_t frame_counter;
 extern double frame_rate;
