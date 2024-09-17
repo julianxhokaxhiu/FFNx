@@ -112,8 +112,6 @@ MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
 // global FF7/FF8 flag, available after version check
 uint32_t ff8 = false;
 
-uint32_t ff8_currentdisk = 0;
-
 uint32_t ff7_do_reset = false;
 
 // global FF7/FF8 flag, check if is steam edition
@@ -3299,8 +3297,6 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 
 			if (strstr(lpFileName, diskAsChar) != NULL)
 			{
-				ff8_currentdisk = requiredDisk;
-
 				ret = CreateFileA(newPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 			}
 		}

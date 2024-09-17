@@ -6,6 +6,10 @@
 
 - Core: Add missing Cloud models in the model to eye mapping list
 
+## FF8 2000
+
+- Movie: Fix path lookup when using ffmpeg ( https://github.com/julianxhokaxhiu/FFNx/issues/730 )
+
 # 1.20.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.19.1...1.20.0

@@ -190,15 +190,10 @@ uint32_t ff7_get_movie_frame()
 
 uint32_t ff8_movie_frames;
 
-void ff8_prepare_movie(uint32_t disc, uint32_t movie)
+void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 {
 	char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
 	uint32_t camOffset = 0;
-
-	// Unexpected cases default to current disk
-	if (disc >= 5u) {
-		disc = ff8_currentdisk - 1;
-	}
 
 	_snprintf(fmvName, sizeof(fmvName), "%s/data/movies/disc%02i_%02ih.%s", ff8_externals.app_path, disc, movie, ffmpeg_video_ext.c_str());
 	_snprintf(camName, sizeof(camName), "%s/data/movies/disc%02i_%02i.cam", ff8_externals.app_path, disc, movie);
@@ -206,7 +201,7 @@ void ff8_prepare_movie(uint32_t disc, uint32_t movie)
 	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
 	redirect_path_with_override(camName, newCamName, sizeof(newCamName));
 
-	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s\n", fmvName);
+	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", fmvName, disc, movie);
 
 	if(disc != 4)
 	{
