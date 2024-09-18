@@ -6,6 +6,10 @@
 
 - Core: Add missing Cloud models in the model to eye mapping list
 
+## FF8
+
+- Movie: Fix `override_path` support
+
 ## FF8 2000
 
 - Movie: Fix path lookup when using ffmpeg ( https://github.com/julianxhokaxhiu/FFNx/issues/730 )

@@ -195,21 +195,28 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 	char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
 	uint32_t camOffset = 0;
 
-	_snprintf(fmvName, sizeof(fmvName), "%s/data/movies/disc%02i_%02ih.%s", ff8_externals.app_path, disc, movie, ffmpeg_video_ext.c_str());
-	_snprintf(camName, sizeof(camName), "%s/data/movies/disc%02i_%02i.cam", ff8_externals.app_path, disc, movie);
+	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
+	_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
 
-	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
-	redirect_path_with_override(camName, newCamName, sizeof(newCamName));
+	if (redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName)) == 0)
+	{
+		_snprintf(newFmvName, sizeof(newFmvName), "%s/data/movies/disc%02i_%02ih.%s", ff8_externals.app_path, disc, movie, ffmpeg_video_ext.c_str());
+	}
+
+	if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) == 0)
+	{
+		_snprintf(newCamName, sizeof(newCamName), "%s/data/movies/disc%02i_%02i.cam", ff8_externals.app_path, disc, movie);
+	}
 
 	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", fmvName, disc, movie);
 
 	if(disc != 4)
 	{
-		FILE *camFile = fopen(camName, "rb");
+		FILE *camFile = fopen(newCamName, "rb");
 
 		if(!camFile)
 		{
-			ffnx_error("could not load camera data from %s\n", camName);
+			ffnx_error("could not load camera data from %s\n", newCamName);
 			return;
 		}
 

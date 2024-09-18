@@ -126,7 +126,7 @@ int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamP
 			// This one means we still have to redirect it
 			else if (pos != NULL)
 			{
-				strcpy(out, basedir);
+				strcpy(out, ff8 ? ff8_externals.app_path : basedir);
 				PathAppendA(out, save_path.c_str());
 				PathAppendA(out, ++pos);
 
@@ -152,7 +152,7 @@ int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamP
 				if (pos != NULL) pos += 1;
 			}
 
-			strcpy(out, basedir);
+			strcpy(out, ff8 ? ff8_externals.app_path : basedir);
 			PathAppendA(out, override_path.c_str());
 			if (pos != NULL)
 				PathAppendA(out, pos);
@@ -191,6 +191,8 @@ int redirect_path_with_override(const char* in, char* out, size_t out_size)
     {
       redirect_status = 0;
 
+			if (trace_all || trace_files) ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, out);
+
       // If was not found, use original redirected path
       strcpy(out, _newFilename);
     }
@@ -204,6 +206,8 @@ int redirect_path_with_override(const char* in, char* out, size_t out_size)
     if (redirect_status == -1)
     {
       redirect_status = 0;
+
+			if (trace_all || trace_files) ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, out);
 
       // If was not found, use original filename
       strcpy(out, in);
