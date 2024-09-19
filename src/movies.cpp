@@ -201,7 +201,7 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 	redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
 	redirect_path_with_override(camName, newCamName, sizeof(newCamName));
 
-	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", fmvName, disc, movie);
+	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", newFmvName, disc, movie);
 
 	if(disc != 4)
 	{
