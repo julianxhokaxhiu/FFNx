@@ -118,7 +118,7 @@ int field_calc_window_pos(int16_t WINDOW_ID, int16_t X, int16_t Y, int16_t W, in
 
 int ff8_field_init_from_file(int unk1, int unk2, int unk3, int unk4)
 {
-	int ret = ff8_externals.field_init_from_file(unk1, unk2, unk3, unk4);
+	int ret = ff8_externals.field_scripts_init(unk1, unk2, unk3, unk4);
 
 	// Current triangle id address changes on each field on FF8
 	// Loop through objects until we find the one that has a valid triangle ID

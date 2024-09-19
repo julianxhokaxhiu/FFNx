@@ -1147,7 +1147,7 @@ struct ff8_externals
 	uint32_t upload_mim_file;
 	uint32_t upload_pmp_file;
 	char *field_filename;
-	uint32_t field_scripts_init;
+	int (*field_scripts_init)(int, int, int, int);
 	uint8_t *field_state_background_count;
 	ff8_field_state_background **field_state_backgrounds;
 	uint32_t load_field_models;
@@ -1517,7 +1517,6 @@ struct ff8_externals
 	double *time_volume_change_related_1A78BE0;
 	uint32_t* game_mode_obj_1D9CF88;
 	uint32_t field_vars_stack_1CFE9B8;
-	int (*field_init_from_file)(int, int, int, int);
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

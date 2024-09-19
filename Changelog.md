@@ -8,6 +8,7 @@
 
 ## FF8
 
+- Fix crash on JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/733 )
 - Movie: Fix `override_path` support
 
 ## FF8 2000
