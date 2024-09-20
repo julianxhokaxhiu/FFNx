@@ -21,5 +21,17 @@
 
 #pragma once
 
+/**
+ * Returns:
+ *  -1 if the file was not found
+ *   0 if the file is redirected
+ *   1 if the file was not found but required
+ */
 int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamPath = false);
+/**
+ * Returns:
+ *  -1 if the file was not found, in this case, `out` path is filled with `in` path content
+ *  0  if the file is redirected
+ *  1  if the file was not found but required
+ */
 int redirect_path_with_override(const char* in, char* out, size_t out_size);

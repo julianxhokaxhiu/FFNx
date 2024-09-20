@@ -126,7 +126,7 @@ int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamP
 			// This one means we still have to redirect it
 			else if (pos != NULL)
 			{
-				strcpy(out, ff8 ? ff8_externals.app_path : basedir);
+				strcpy(out, basedir);
 				PathAppendA(out, save_path.c_str());
 				PathAppendA(out, ++pos);
 
@@ -152,7 +152,7 @@ int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamP
 				if (pos != NULL) pos += 1;
 			}
 
-			strcpy(out, ff8 ? ff8_externals.app_path : basedir);
+			strcpy(out, basedir);
 			PathAppendA(out, override_path.c_str());
 			if (pos != NULL)
 				PathAppendA(out, pos);
@@ -176,43 +176,39 @@ int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamP
 
 int redirect_path_with_override(const char* in, char* out, size_t out_size)
 {
-  char _newFilename[MAX_PATH]{ 0 };
+	char _newFilename[MAX_PATH]{ 0 };
 
-  // Attempt another redirection based on Steam/eStore logic
-  int redirect_status = attempt_redirection(in, _newFilename, sizeof(_newFilename), steam_edition || estore_edition);
+	// Attempt another redirection based on Steam/eStore logic
+	int redirect_status = attempt_redirection(in, _newFilename, sizeof(_newFilename), steam_edition || estore_edition);
 
-  // File was found
-  if (redirect_status == 0)
-  {
-    // Attemp override redirection on top of Steam/eStore new path
-    redirect_status = attempt_redirection(_newFilename, out, out_size);
+	// File was found
+	if (redirect_status == 0)
+	{
+		// Attemp override redirection on top of Steam/eStore new path
+		redirect_status = attempt_redirection(_newFilename, out, out_size);
 
-    if (redirect_status == -1)
-    {
-      redirect_status = 0;
+		if (redirect_status == -1)
+		{
+			if (trace_all || trace_files) ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, _newFilename);
 
+			// If was not found, use original redirected path
+			strcpy(out, _newFilename);
+		}
+	}
+	// File was not found
+	else if (redirect_status == -1)
+	{
+		// Attemp override redirection on top of classic path
+		redirect_status = attempt_redirection(in, out, out_size);
+
+		if (redirect_status == -1)
+		{
 			if (trace_all || trace_files) ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, out);
 
-      // If was not found, use original redirected path
-      strcpy(out, _newFilename);
-    }
-  }
-  // File was not found
-  else if (redirect_status == -1)
-  {
-    // Attemp override redirection on top of classic path
-    redirect_status = attempt_redirection(in, out, out_size);
+			// If was not found, use original filename
+			strcpy(out, in);
+		}
+	}
 
-    if (redirect_status == -1)
-    {
-      redirect_status = 0;
-
-			if (trace_all || trace_files) ffnx_trace("Redirection attempted, but file was not found: %s -> %s\n", in, out);
-
-      // If was not found, use original filename
-      strcpy(out, in);
-    }
-  }
-
-  return redirect_status;
+	return redirect_status;
 }
