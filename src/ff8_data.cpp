@@ -435,9 +435,9 @@ void ff8_find_externals()
 	ff8_externals.upload_pmp_file = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0x80C : 0x812);
 	ff8_externals.field_filename = (char *)get_absolute_value(ff8_externals.read_field_data, 0xF0);
 
-	ff8_externals.field_scripts_init = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0xEDC : 0xE49);
-	ff8_externals.field_state_background_count = (uint8_t *)get_absolute_value(ff8_externals.field_scripts_init, 0x2CD + 0x1);
-	ff8_externals.field_state_backgrounds = (ff8_field_state_background **)get_absolute_value(ff8_externals.field_scripts_init, 0x50B + 0x2);
+	ff8_externals.field_scripts_init = (int(*)(int,int,int,int))(get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0xEDC : 0xE49));
+	ff8_externals.field_state_background_count = (uint8_t *)get_absolute_value(uint32_t(ff8_externals.field_scripts_init), 0x2CD + 0x1);
+	ff8_externals.field_state_backgrounds = (ff8_field_state_background **)get_absolute_value(uint32_t(ff8_externals.field_scripts_init), 0x50B + 0x2);
 	ff8_externals.load_field_models = get_relative_call(ff8_externals.read_field_data, JP_VERSION ? 0xFA2 : 0xF0F);
 	ff8_externals.chara_one_read_file = get_relative_call(ff8_externals.load_field_models, 0x15F);
 	ff8_externals.chara_one_seek_file = get_relative_call(ff8_externals.load_field_models, 0x582);
@@ -828,11 +828,14 @@ void ff8_find_externals()
 	ff8_externals.scan_text_data = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x27);
 
 	ff8_externals.fps_limiter = get_relative_call(ff8_externals.field_main_loop, 0x261);
+	if (JP_VERSION)
+	{
+		ff8_externals.fps_limiter = get_relative_call(ff8_externals.fps_limiter, 0x0);
+	}
 	ff8_externals.time_volume_change_related_1A78BE0 = (double *)get_absolute_value(ff8_externals.fps_limiter, 0x3F);
 
 	ff8_externals.game_mode_obj_1D9CF88 = (uint32_t*)get_absolute_value(ff8_externals.sub_47CA90, 0xCD);
 	ff8_externals.field_vars_stack_1CFE9B8 = get_absolute_value(ff8_externals.opcode_pshm_w, 0x1E);
-	ff8_externals.field_init_from_file = (int(*)(int,int,int,int))(get_relative_call(ff8_externals.read_field_data, 0xE49));
 
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
