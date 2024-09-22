@@ -196,19 +196,19 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 	uint32_t camOffset = 0;
 
 	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
-	_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
 
 	if (redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName)) != 0) {
 		_snprintf(newFmvName, sizeof(newFmvName), "%s/%s", ff8_externals.app_path, fmvName);
 	}
-	if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) != 0) {
-		_snprintf(newCamName, sizeof(newCamName), "%s/%s", ff8_externals.app_path, camName);
-	}
-
-	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", newFmvName, disc, movie);
 
 	if(disc != 4)
 	{
+		_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
+
+		if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) != 0) {
+			_snprintf(newCamName, sizeof(newCamName), "%s/%s", ff8_externals.app_path, camName);
+		}
+
 		FILE *camFile = fopen(newCamName, "rb");
 
 		if(!camFile)
@@ -234,6 +234,8 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 	ff8_externals.movie_object->camdata_pointer = ff8_externals.movie_object->camdata_start;
 
 	ff8_externals.movie_object->movie_current_frame = 0;
+
+	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", newFmvName, disc, movie);
 
 	ff8_movie_frames = ffmpeg_prepare_movie(newFmvName);
 }
