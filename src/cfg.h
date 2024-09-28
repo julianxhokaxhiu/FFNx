@@ -151,6 +151,7 @@ extern long ff7_fps_limiter;
 extern bool ff7_footsteps;
 extern bool ff7_field_center;
 extern bool use_sdl_gamepad;
+extern bool ff7_japanese_text;
 extern bool enable_analogue_controls;
 extern bool enable_inverted_vertical_camera_controls;
 extern bool enable_inverted_horizontal_camera_controls;

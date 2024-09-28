@@ -266,7 +266,7 @@ namespace ff7::field
         if (emulate_run)
         {
             ff7_externals.modules_global_object->current_key_input_status |= 0x40;
-            ff7_externals.modules_global_object->field_78 |= 0x40;
+            ff7_externals.modules_global_object->special_current_key_input_status |= 0x40;
         }
 
         int ret = call_original_opcode_function(IFKEY);
@@ -274,7 +274,7 @@ namespace ff7::field
         if (emulate_run)
         {
             ff7_externals.modules_global_object->current_key_input_status &= ~0x40;
-            ff7_externals.modules_global_object->field_78 &= ~0x40;
+            ff7_externals.modules_global_object->special_current_key_input_status &= ~0x40;
         }
 
         return ret;

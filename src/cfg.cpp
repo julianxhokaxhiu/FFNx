@@ -129,6 +129,7 @@ long ff7_fps_limiter;
 bool ff7_footsteps;
 bool ff7_field_center;
 bool use_sdl_gamepad;
+bool ff7_japanese_text;
 bool enable_analogue_controls;
 bool enable_inverted_vertical_camera_controls;
 bool enable_inverted_horizontal_camera_controls;
@@ -297,6 +298,8 @@ void read_cfg()
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	ff7_field_center = config["ff7_field_center"].value_or(true);
 	use_sdl_gamepad = config["use_sdl_gamepad"].value_or(false);
+	ff7_japanese_text = config["ff7_japanese_text"].value_or(false);
+	ff7_japanese_edition = config["ff7_japanese_edition"].value_or(false);
 	enable_analogue_controls = config["enable_analogue_controls"].value_or(false);
 	enable_inverted_vertical_camera_controls = config["enable_inverted_vertical_camera_controls"].value_or(false);
 	enable_inverted_horizontal_camera_controls = config["enable_inverted_horizontal_camera_controls"].value_or(false);
