@@ -1,6 +1,10 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.1...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.2...master
+
+# 1.20.2
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.1...1.20.2
 
 ## FF7 Steam
 
