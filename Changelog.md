@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.1...master
 
+## FF7 Steam
+
+- Core: Fix crash when entering Config menu in Spanish ( https://github.com/julianxhokaxhiu/FFNx/discussions/735 )
+
 # 1.20.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.0...1.20.1
