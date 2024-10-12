@@ -1409,6 +1409,7 @@ struct ff8_externals
 	uint8_t *cardgame_tim_texture_cards;
 	uint8_t *cardgame_tim_texture_icons;
 	uint8_t *cardgame_tim_texture_font;
+	uint32_t* is_card_game;
 	uint32_t sfx_play_to_current_playing_channel;
 	uint32_t sfx_unload_all;
 	uint32_t sfx_pause_all;

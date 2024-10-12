@@ -345,6 +345,23 @@ struct game_mode *getmode()
 		}
 	}
 
+	// FF8 has BATTLE and CARDGAME baked inside the same module
+	// Only for this case use a custom match logic
+	if (ff8)
+	{
+		for(i = 0; i < num_modes; i++)
+		{
+			struct game_mode *m = &modes[i];
+
+			if (*ff8_externals.is_card_game == 1 && *common_externals._mode == m->mode)
+			{
+				if (trace_all) ffnx_trace("getmode: exact match - driver_mode: %u - mode: %u - name: %s\n", m->driver_mode, m->mode, m->name);
+
+				return m;
+			}
+		}
+	}
+
 	// if there is no exact match, try to find a match by main loop only
 	for(i = 0; i < num_modes; i++)
 	{

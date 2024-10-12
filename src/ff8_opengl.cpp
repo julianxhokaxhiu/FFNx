@@ -923,6 +923,7 @@ int ff8_limit_fps()
 			if (ff8_fps_limiter < FPS_LIMITER_30FPS) framerate = 15.0f;
 			break;
 		case MODE_CREDITS:
+		case MODE_CARDGAME:
 			framerate = 60.0f;
 			break;
 		}

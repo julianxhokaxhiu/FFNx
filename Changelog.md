@@ -6,6 +6,10 @@
 
 - Music: Fix battle ID detection ( https://github.com/julianxhokaxhiu/FFNx/issues/738 )
 
+## FF8
+
+- Core: Fix Card Game mode and allow it to run at 60 FPS
+
 # 1.20.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.1...1.20.2

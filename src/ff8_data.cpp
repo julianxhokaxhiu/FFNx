@@ -184,6 +184,7 @@ void ff8_find_externals()
 	ff8_externals.cardgame_tim_texture_icons = (uint8_t *)get_absolute_value(ff8_externals.sub_534640, 0x125);
 	ff8_externals.sub_539500 = get_relative_call(ff8_externals.sub_534640, 0x110);
 	ff8_externals.cardgame_tim_texture_font = (uint8_t *)get_absolute_value(ff8_externals.sub_539500, 0x1);
+	ff8_externals.is_card_game = (uint32_t*)get_absolute_value(ff8_externals.sub_47CCB0, 0xB7991);
 
 	ff8_externals.loc_47D490 = ff8_externals.sub_47CCB0 + 0xDA + 0x4 + *((int32_t *)(ff8_externals.sub_47CCB0 + 0xDA));
 	ff8_externals.sub_500870 = get_relative_call(ff8_externals.loc_47D490, 0x85);
