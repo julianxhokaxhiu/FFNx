@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.2...master
 
+## FF7
+
+- Music: Fix battle ID detection ( https://github.com/julianxhokaxhiu/FFNx/issues/738 )
+
 # 1.20.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.1...1.20.2

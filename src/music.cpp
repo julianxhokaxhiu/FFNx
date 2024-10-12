@@ -193,7 +193,7 @@ uint32_t ff7_use_midi(uint32_t midi)
 
 bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* fullpath = nullptr)
 {
-	const struct game_mode* mode = getmode();
+	const struct game_mode* mode;
 	bool playing = false;
 	char new_music_name[50];
 
@@ -206,6 +206,8 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 	if (ff8)
 	{
 		const char* current_party_leader = ff8_names[*(byte*)(ff8_externals.field_vars_stack_1CFE9B8 + 0xCB) == 62 ? 8 : 0].c_str();
+
+		mode = getmode();
 
 		// Attempt to override battle music
 		if (next_music_is_battle)
@@ -271,6 +273,8 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 	else
 	{
 		const uint32_t main_theme_midi_id = 13; // The Main Theme is always resumed
+
+		mode = getmode_cached();
 
 		if (external_music_resume) {
 			if (nxAudioEngine.currentMusicId(0) == main_theme_midi_id || channel == 1) {
