@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.3...master
 
+## FF8
+
+- Ambient: Fix missing Battle ID for battles triggered using field opcodes
+
 # 1.20.3
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.2...1.20.3

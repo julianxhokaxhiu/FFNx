@@ -49,6 +49,8 @@ constexpr int intro_credits_fade_frames = 33;
 constexpr int intro_credits_adjusted_frames = 438; // Instead of 374 in the Game
 constexpr int intro_credits_frames_between_music_start_and_first_image = 180;
 
+int (*ff8_opcode_old_battle)(int);
+
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
 {
 	struct matrix_set *matrix_set;
@@ -754,6 +756,16 @@ bool ff8_skip_movies()
 	return false;
 }
 
+int ff8_opcode_battle(int unk)
+{
+	int ret = ff8_opcode_old_battle(unk);
+
+	next_battle_scene_id = *ff8_externals.battle_encounter_id;
+	next_music_is_battle = true;
+
+	return ret;
+}
+
 int ff8_toggle_battle_field()
 {
 	int ret = 1;
@@ -1194,6 +1206,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_function(ff8_externals.ff8_draw_icon_or_key5, ff8_draw_icon_or_key5);
 		replace_function(ff8_externals.ff8_draw_icon_or_key6, ff8_draw_icon_or_key6);
 	}
+
+	// All possible message and ask windows
+	ff8_opcode_old_battle = (int (*)(int))ff8_externals.opcode_battle;
+	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x69], (DWORD)&ff8_opcode_battle);
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
