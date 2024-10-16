@@ -72,13 +72,14 @@ void ff8_handle_ambient_playback()
 			playing = nxAudioEngine.playAmbient(filename);
 		}
 		break;
+	case MODE_AFTER_BATTLE:
+		next_battle_scene_id = 0;
 	default:
 		if (last_field_id != 0 || last_battle_id != 0)
 		{
 			nxAudioEngine.stopAmbient();
 			last_field_id = 0;
 			last_battle_id = 0;
-			next_battle_scene_id = 0;
 		}
 		break;
 	}
