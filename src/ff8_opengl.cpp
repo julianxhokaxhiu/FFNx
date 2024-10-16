@@ -1174,7 +1174,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// battle toggle
 	// #####################
-	replace_call_function(ff8_externals.sub_4789A0 + 0x68B, ff8_toggle_battle_field);
+	replace_call_function(ff8_externals.sub_4789A0 + (JP_VERSION ? 0x674 : 0x68B), ff8_toggle_battle_field);
 	replace_call_function(ff8_externals.battle_trigger_worldmap, ff8_toggle_battle_worldmap);
 
 	// Allow squaresoft logo skip by pressing a button
