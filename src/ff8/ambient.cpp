@@ -78,6 +78,7 @@ void ff8_handle_ambient_playback()
 			nxAudioEngine.stopAmbient();
 			last_field_id = 0;
 			last_battle_id = 0;
+			next_battle_scene_id = 0;
 		}
 		break;
 	}
