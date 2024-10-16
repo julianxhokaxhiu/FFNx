@@ -5,6 +5,7 @@
 ## FF8
 
 - Ambient: Fix missing Battle ID for battles triggered using field opcodes
+- Ambient: Fix Battle ID detection for random encounters in Field
 
 # 1.20.3
 

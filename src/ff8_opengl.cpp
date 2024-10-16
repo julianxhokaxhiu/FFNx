@@ -770,7 +770,7 @@ int ff8_toggle_battle_field()
 {
 	int ret = 1;
 
-	if (gamehacks.wantsBattle()) ret = ff8_externals.sub_52B3A0();
+	if (gamehacks.wantsBattle()) ret = ff8_externals.sub_47CA90();
 	if (!ret) next_battle_scene_id = *ff8_externals.battle_encounter_id;
 
 	next_music_is_battle = !ret;
@@ -1168,7 +1168,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// battle toggle
 	// #####################
-	replace_call_function(ff8_externals.battle_trigger_field, ff8_toggle_battle_field);
+	replace_call_function(ff8_externals.sub_4789A0 + 0x68B, ff8_toggle_battle_field);
 	replace_call_function(ff8_externals.battle_trigger_worldmap, ff8_toggle_battle_worldmap);
 
 	// Allow squaresoft logo skip by pressing a button

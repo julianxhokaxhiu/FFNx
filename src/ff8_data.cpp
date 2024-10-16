@@ -227,7 +227,7 @@ void ff8_find_externals()
 		ff8_externals.sub_4789A0 = get_relative_call(ff8_externals.sub_4767B0, 0x40F + 3);
 		ff8_externals.stop_cdrom = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0xB46 - 13);
 		ff8_externals.stop_cdrom_field_call = ff8_externals.sub_4767B0 + 0xB46 - 0xD;
-		ff8_externals.sub_47CA90 = get_relative_call(ff8_externals.sub_4789A0, 0x674);
+		ff8_externals.sub_47CA90 = (char (*)())get_relative_call(ff8_externals.sub_4789A0, 0x674);
 	}
 	else
 	{
@@ -236,11 +236,10 @@ void ff8_find_externals()
 		ff8_externals.sub_4789A0 = get_relative_call(ff8_externals.sub_4767B0, 0x40F);
 		ff8_externals.stop_cdrom = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0xB46);
 		ff8_externals.stop_cdrom_field_call = ff8_externals.sub_4767B0 + 0xB46;
-		ff8_externals.sub_47CA90 = get_relative_call(ff8_externals.sub_4789A0, 0x68B);
+		ff8_externals.sub_47CA90 = (char (*)())get_relative_call(ff8_externals.sub_4789A0, 0x68B);
 	}
 
-	ff8_externals.battle_trigger_field = ff8_externals.sub_47CA90 + 0x15;
-	ff8_externals.sub_52B3A0 = (int (*)())get_relative_call(ff8_externals.battle_trigger_field, 0);
+	ff8_externals.battle_trigger_field = uint32_t(ff8_externals.sub_47CA90) + 0x15;
 	ff8_externals.check_game_is_paused = (int32_t(*)(int32_t))get_relative_call(ff8_externals.field_main_loop, 0x16C);
 	ff8_externals.is_game_paused = (DWORD*)get_absolute_value((uint32_t)ff8_externals.check_game_is_paused, 0x78);
 	ff8_externals.pause_menu = (int(*)(int))get_relative_call(uint32_t(ff8_externals.check_game_is_paused), 0x88);
@@ -835,7 +834,7 @@ void ff8_find_externals()
 	}
 	ff8_externals.time_volume_change_related_1A78BE0 = (double *)get_absolute_value(ff8_externals.fps_limiter, 0x3F);
 
-	ff8_externals.game_mode_obj_1D9CF88 = (uint32_t*)get_absolute_value(ff8_externals.sub_47CA90, 0xCD);
+	ff8_externals.game_mode_obj_1D9CF88 = (uint32_t*)get_absolute_value(uint32_t(ff8_externals.sub_47CA90), 0xCD);
 	ff8_externals.field_vars_stack_1CFE9B8 = get_absolute_value(ff8_externals.opcode_pshm_w, 0x1E);
 
 	common_externals.current_triangle_id = 0x0;
