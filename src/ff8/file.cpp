@@ -28,9 +28,13 @@
 
 #include <fcntl.h>
 #include <io.h>
+#include <lz4.h>
 
 char next_direct_file[MAX_PATH] = "";
 bool last_fopen_is_redirected = false;
+uint32_t last_compression_type = 0;
+size_t last_compressed_size = 0;
+size_t last_uncompressed_size = 0;
 
 size_t get_fl_prefix_size()
 {
@@ -67,7 +71,7 @@ int ff8_fs_archive_search_filename2(const char *fullpath, ff8_file_fi_infos *fi_
 		// Lookup without the language in the path
 		size_t prefix_size = get_fl_prefix_size();
 
-		if (trace_all || trace_files) ffnx_trace("%s: file not found, searching again with another language %s...\n", __func__, fullpath + prefix_size);
+		if (trace_all || trace_files) ffnx_warning("%s: file not found, searching again with another language %s...\n", __func__, fullpath + prefix_size);
 
 		for (int id = 0; id < file_container->fl_infos->file_count; ++id)
 		{
@@ -118,6 +122,66 @@ void ff8_fs_archive_free_file_container_sub_archive(ff8_file_container *file_con
 	return ff8_externals.free_file_container(file_container);
 }
 
+void ff8_fs_archive_patch_compression(uint32_t compression_type)
+{
+	if (trace_all || trace_files) ffnx_trace("%s compression_type=%d\n", __func__, compression_type);
+
+	last_compression_type = compression_type;
+}
+
+uint8_t *ff8_fs_archive_malloc_source_data(size_t size, char *source_code_path, int line)
+{
+	if (trace_all || trace_files) ffnx_trace("%s size=%d\n", __func__, size);
+
+	last_compressed_size = size;
+
+	return (uint8_t *)common_externals.assert_malloc(size, source_code_path, line);
+}
+
+uint8_t *ff8_fs_archive_malloc_target_data(size_t size, char *source_code_path, int line)
+{
+	if (trace_all || trace_files) ffnx_trace("%s size=%d\n", __func__, size);
+
+	if (last_compression_type == 2) // LZ4 compression
+	{
+		size += 10;
+
+		last_uncompressed_size = size;
+	}
+
+	return (uint8_t *)common_externals.assert_malloc(size, source_code_path, line);
+}
+
+void ff8_fs_archive_uncompress_data(const uint8_t *source_data, uint8_t *target_data)
+{
+	if (trace_all || trace_files) ffnx_trace("%s\n", __func__);
+
+	if (last_compression_type == 2) // LZ4 compression
+	{
+		if (trace_all || trace_files) ffnx_trace("%s LZ4 compression detected\n", __func__);
+
+		int uncompressed_size = LZ4_decompress_safe((const char *)source_data + 8, (char *)target_data, last_compressed_size - 8, last_uncompressed_size);
+
+		if (uncompressed_size < 0)
+		{
+			ffnx_error("%s: cannot uncompress lz4 file data (compressed_size=%d, error=%d)\n", __func__, last_compressed_size, uncompressed_size);
+
+			return;
+		}
+
+		if (uncompressed_size != last_uncompressed_size)
+		{
+			ffnx_warning("%s: uncompressed size is different than expected: %d != %d\n", __func__, uncompressed_size, last_uncompressed_size);
+
+			return;
+		}
+	}
+	else
+	{
+		((void(*)(const uint8_t*, uint8_t*))ff8_externals.lzs_uncompress)(source_data, target_data);
+	}
+}
+
 bool ff8_attempt_redirection(const char *in, char *out, size_t size)
 {
 	// Remove AppPath from input
@@ -136,7 +200,8 @@ int ff8_open(const char *fileName, int oflag, ...)
 	va_list va;
 
 	va_start(va, oflag);
-	int pmode = va_arg(va, int);
+	int pmode = va_arg(va, DWORD);
+	const int shflag = _SH_DENYNO;
 
 	if (trace_all || trace_files) ffnx_trace("%s: %s oflag=%X pmode=%X\n", __func__, fileName, oflag, pmode);
 
@@ -144,7 +209,7 @@ int ff8_open(const char *fileName, int oflag, ...)
 	{
 		if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", next_direct_file);
 
-		int ret = ff8_externals._sopen(next_direct_file, oflag, 64, pmode);
+		int ret = ff8_externals._sopen(next_direct_file, oflag, shflag, pmode);
 
 		*next_direct_file = '\0';
 
@@ -156,7 +221,7 @@ int ff8_open(const char *fileName, int oflag, ...)
 
 	last_fopen_is_redirected = is_redirected;
 
-	int ret = ff8_externals._sopen(is_redirected ? _filename : fileName, oflag, 64, pmode);
+	int ret = ff8_externals._sopen(is_redirected ? _filename : fileName, oflag, shflag, pmode);
 
 	last_fopen_is_redirected = false;
 
@@ -167,11 +232,13 @@ FILE *ff8_fopen(const char *fileName, const char *mode)
 {
 	if (trace_all || trace_files) ffnx_trace("%s: %s mode=%s\n", __func__, fileName, mode);
 
+	const int shflag = _SH_DENYNO;
+
 	if (next_direct_file && *next_direct_file != '\0')
 	{
 		if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", next_direct_file);
 
-		FILE *file = ff8_externals._fsopen(next_direct_file, mode, 64);
+		FILE *file = ff8_externals._fsopen(next_direct_file, mode, shflag);
 
 		*next_direct_file = '\0';
 
@@ -183,7 +250,7 @@ FILE *ff8_fopen(const char *fileName, const char *mode)
 
 	last_fopen_is_redirected = is_redirected;
 
-	FILE *file = ff8_externals._fsopen(is_redirected ? _filename : fileName, mode, 64);
+	FILE *file = ff8_externals._fsopen(is_redirected ? _filename : fileName, mode, shflag);
 
 	last_fopen_is_redirected = false;
 
@@ -195,7 +262,8 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 	if (trace_all || trace_files) ffnx_trace("%s: %s mode=%d callback=%p noOpen=%d archive=%p field_4=%d\n", __func__, fs_path, infos->mode, infos->filename_callback, infos->field_4, infos->file_container, infos->field_4);
 
 	ff8_file *file;
-	char fullpath[256];
+	char fullpath[MAX_PATH];
+	const int shflag = _SH_DENYNO;
 
 	if (infos->filename_callback != nullptr)
 	{
@@ -249,7 +317,7 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 
 				set_direct_path(fullpath, direct_path, sizeof(direct_path));
 
-				file->fd = ff8_externals._sopen(direct_path, oflag, 64, pmode);
+				file->fd = ff8_externals._sopen(direct_path, oflag, shflag, pmode);
 
 				if (file->fd != -1)
 				{
@@ -274,7 +342,7 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 				last_fopen_is_redirected = is_redirected;
 
 				// We need to use the external _open, and not the official one
-				file->fd = ff8_externals._sopen(is_redirected ? _filename : fullpath, oflag, 64, pmode);
+				file->fd = ff8_externals._sopen(is_redirected ? _filename : fullpath, oflag, shflag, pmode);
 
 				last_fopen_is_redirected = false;
 			}

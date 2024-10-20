@@ -56,6 +56,7 @@
     "vgmstream",
     "steamworkssdk",
     "xxhash",
+    "lz4",
     {
       "name": "cpuinfo",
       "default-features": false,
@@ -137,6 +138,11 @@
       "name": "xxhash",
       "version": "0.8.2",
       "port-version": 0
+    },
+    {
+      "name": "lz4",
+      "version": "1.9.4",
+      "port-version": 2
     },
     {
       "name": "cpuinfo",

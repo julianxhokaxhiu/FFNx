@@ -90,6 +90,7 @@ find_package(OPENPSF REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
 find_package(STEAMWORKSSDK CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
+find_package(LZ4 REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
 find_package(HWINFO REQUIRED)
 
@@ -154,6 +155,7 @@ target_link_libraries(
   tomlplusplus::tomlplusplus
   STEAMWORKSSDK::STEAMWORKSSDK
   xxHash::xxhash
+  lz4::lz4
   Vorbis::vorbisfile
   Vorbis::vorbis
   MPG123::libmpg123

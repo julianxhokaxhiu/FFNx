@@ -29,6 +29,10 @@
 int ff8_fs_archive_search_filename2(const char *fullpath, ff8_file_fi_infos *fi_infos_for_the_path, const ff8_file_container *file_container);
 int ff8_fs_archive_search_filename_sub_archive(const char *fullpath, ff8_file_fi_infos *fi_infos_for_the_path, const ff8_file_container *file_container);
 void ff8_fs_archive_free_file_container_sub_archive(ff8_file_container *file_container);
+void ff8_fs_archive_patch_compression(uint32_t compression_type);
+uint8_t *ff8_fs_archive_malloc_source_data(size_t size, char *source_code_path, int line);
+uint8_t *ff8_fs_archive_malloc_target_data(size_t size, char *source_code_path, int line);
+void ff8_fs_archive_uncompress_data(const uint8_t *source_data, uint8_t *target_data);
 
 int ff8_open(const char *fileName, int oflag, ...);
 FILE *ff8_fopen(const char *fileName, const char *mode);
