@@ -1,6 +1,16 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.2...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.3...master
+
+## FF8
+
+- Ambient: Fix missing Battle ID for battles triggered using field opcodes
+- Ambient: Fix Battle ID detection for random encounters in Field
+- Modding: Allow modding card names hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/739 )
+
+# 1.20.3
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.2...1.20.3
 
 ## FF7
 
@@ -8,7 +18,7 @@
 
 ## FF8
 
-- Modding: Allow modding card names hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/739 )
+- Core: Fix Card Game mode and allow it to run at 60 FPS
 
 # 1.20.2
 

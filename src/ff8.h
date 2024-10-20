@@ -1068,8 +1068,7 @@ struct ff8_externals
 	uint32_t sub_471F70;
 	uint32_t sub_4767B0;
 	uint32_t sub_4789A0;
-	uint32_t sub_47CA90;
-	int (*sub_52B3A0)();
+	char (*sub_47CA90)();
 	uint32_t battle_trigger_field;
 	uint32_t battle_trigger_worldmap;
 	uint32_t _load_texture;
@@ -1412,6 +1411,7 @@ struct ff8_externals
 	uint8_t *cardgame_tim_texture_cards;
 	uint8_t *cardgame_tim_texture_icons;
 	uint8_t *cardgame_tim_texture_font;
+	uint32_t* is_card_game;
 	uint32_t sfx_play_to_current_playing_channel;
 	uint32_t sfx_unload_all;
 	uint32_t sfx_pause_all;
