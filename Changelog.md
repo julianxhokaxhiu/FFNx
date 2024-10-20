@@ -6,6 +6,7 @@
 
 - Ambient: Fix missing Battle ID for battles triggered using field opcodes
 - Ambient: Fix Battle ID detection for random encounters in Field
+- Modding: Allow modding card names hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/739 )
 
 # 1.20.3
 

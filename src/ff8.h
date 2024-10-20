@@ -1117,6 +1117,9 @@ struct ff8_externals
 	uint32_t sub_4B3140;
 	uint32_t sub_4BDB30;
 	ff8_menu_callback *menu_callbacks;
+	uint32_t menu_cards_render;
+	uint32_t sub_4EFC00;
+	uint32_t sub_4EFCD0;
 	uint32_t menu_config_controller;
 	uint32_t menu_config_render;
 	uint32_t menu_config_render_submenu;
@@ -1517,6 +1520,8 @@ struct ff8_externals
 	double *time_volume_change_related_1A78BE0;
 	uint32_t* game_mode_obj_1D9CF88;
 	uint32_t field_vars_stack_1CFE9B8;
+	uint32_t get_card_name;
+	uint32_t card_name_positions;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

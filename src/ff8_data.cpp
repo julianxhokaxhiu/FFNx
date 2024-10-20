@@ -404,6 +404,9 @@ void ff8_find_externals()
 	ff8_externals.sub_4B3140 = get_relative_call(ff8_externals.sub_4B3310, 0xC8);
 	ff8_externals.sub_4BDB30 = get_relative_call(ff8_externals.sub_4B3140, 0x4);
 	ff8_externals.menu_callbacks = (ff8_menu_callback *)get_absolute_value(ff8_externals.sub_4BDB30, 0x11);
+	ff8_externals.menu_cards_render = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[7].func), 0x5);
+	ff8_externals.sub_4EFC00 = get_relative_call(ff8_externals.menu_cards_render, 0x2B6);
+	ff8_externals.sub_4EFCD0 = get_absolute_value(ff8_externals.sub_4EFC00, 0xB0);
 	ff8_externals.menu_config_render = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x3);
 	ff8_externals.menu_config_render_submenu = get_relative_call(ff8_externals.menu_config_render, 0x101);
 	ff8_externals.menu_config_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x8);
@@ -826,6 +829,8 @@ void ff8_find_externals()
 	ff8_externals.battle_entities_1D27BCB = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x18);
 	ff8_externals.scan_text_positions = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x20);
 	ff8_externals.scan_text_data = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x27);
+	ff8_externals.get_card_name = get_relative_call(ff8_externals.sub_4EFCD0, 0x89);
+	ff8_externals.card_name_positions = get_absolute_value(ff8_externals.get_card_name, 0xB);
 
 	ff8_externals.fps_limiter = get_relative_call(ff8_externals.field_main_loop, 0x261);
 	if (JP_VERSION)
