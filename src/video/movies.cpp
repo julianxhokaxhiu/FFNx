@@ -114,12 +114,11 @@ void ffmpeg_release_movie_objects()
 }
 
 // prepare a movie for playback
-uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
+uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 {
 	uint32_t i;
 	WAVEFORMATEX sound_format;
 	DSBUFFERDESC1 sbdesc;
-	uint32_t ret;
 	bool okpixelformat = false;
 	bool okcolorspace = false;
 	bool yuvjfixneeded = false;
@@ -129,7 +128,9 @@ uint32_t ffmpeg_prepare_movie(char *name, bool with_audio)
 	int bytessincebackslash = 0;
 	int scanoffset = 0;
 
-	if(ret = avformat_open_input(&format_ctx, name, NULL, NULL))
+	movie_frames = 0;
+
+	if(avformat_open_input(&format_ctx, name, NULL, NULL))
 	{
 		ffnx_error("prepare_movie: couldn't open movie file: %s\n", name);
 		ffmpeg_release_movie_objects();

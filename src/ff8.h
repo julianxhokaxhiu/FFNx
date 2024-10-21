@@ -151,8 +151,8 @@ struct struc_38
 
 struct ff8_file_fi_infos
 {
-	int pos;
 	int size;
+	int pos;
 	int compression;
 };
 
@@ -1253,8 +1253,8 @@ struct ff8_externals
 	uint32_t sub_545EA0;
 	uint32_t sub_545F10;
 	uint32_t sub_465720;
-	uint32_t requiredDisk;
 	uint32_t sm_battle_sound;
+	uint32_t outputdebugstringa;
 	uint32_t sdmusicplay;
 	uint32_t(*sd_music_play)(uint32_t, char*, uint32_t);
 	uint32_t sd_music_play_at;
@@ -1353,10 +1353,12 @@ struct ff8_externals
 	uint32_t ff8input_cfg_read;
 	uint32_t ff8input_cfg_reset;
 	char *(*strcpy_with_malloc)(const char *);
-	uint32_t moriya_filesytem_open;
-	uint32_t moriya_filesytem_seek;
-	uint32_t moriya_filesytem_read;
-	uint32_t moriya_filesytem_close;
+	uint32_t moriya_filesystem_open;
+	uint32_t moriya_filesystem_seek;
+	uint32_t moriya_filesystem_read;
+	uint32_t moriya_filesystem_close;
+	uint32_t read_or_uncompress_fs_data;
+	uint32_t lzs_uncompress;
 	void(*free_file_container)(ff8_file_container *);
 	uint32_t field_get_dialog_string;
 	uint32_t set_window_object;

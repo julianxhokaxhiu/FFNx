@@ -994,15 +994,32 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_function(common_externals.open_file, ff8_open_file);
 	replace_call(uint32_t(ff8_externals.fs_archive_search_filename) + 0x10, ff8_fs_archive_search_filename2);
 	// Search file in temp.fs archive (field)
-	replace_call(ff8_externals.moriya_filesytem_open + 0x776, ff8_fs_archive_search_filename_sub_archive);
+	replace_call(ff8_externals.moriya_filesystem_open + 0x776, ff8_fs_archive_search_filename_sub_archive);
 	// Search file in FS archive
-	replace_call(ff8_externals.moriya_filesytem_open + 0x83C, ff8_fs_archive_search_filename_sub_archive);
+	replace_call(ff8_externals.moriya_filesystem_open + 0x83C, ff8_fs_archive_search_filename_sub_archive);
 	replace_function(ff8_externals._open, ff8_open);
 	replace_function(ff8_externals.fopen, ff8_fopen);
-	replace_call(ff8_externals.moriya_filesytem_close + 0x1F, ff8_fs_archive_free_file_container_sub_archive);
+	replace_call(ff8_externals.moriya_filesystem_close + 0x1F, ff8_fs_archive_free_file_container_sub_archive);
 
 	ff8_read_file = (uint32_t(*)(uint32_t, void *, struct ff8_file *))common_externals.read_file;
 	ff8_close_file = (void (*)(struct ff8_file *))common_externals.close_file;
+
+	// #####################
+	// Adding LZ4 support to FS archives
+	// #####################
+
+	// Insert a call to ff8_fs_archive_patch_compression to pass the compression type
+	// 83 BD D4 FD FF FF 01|0F 84(addrCompre)|E9(addrUnkComp)
+	// 51|E8 (addrPatch)|83 C4 04|E9(addrCompre) 90 90 90 90
+	uint32_t read_or_uncompress_fs_data_jump_to_uncompress = *(uint32_t *)(ff8_externals.read_or_uncompress_fs_data + 0x54 + 2);
+	memcpy_code(ff8_externals.read_or_uncompress_fs_data + 0x4D, "\x51\xE8\x00\x00\x00\x00\x83\xC4\x04\xE9\x00\x00\x00\x00\x90\x90\x90\x90", 18);
+	replace_call(ff8_externals.read_or_uncompress_fs_data + 0x4D + 1, ff8_fs_archive_patch_compression);
+	patch_code_dword(ff8_externals.read_or_uncompress_fs_data + 0x4D + 10, read_or_uncompress_fs_data_jump_to_uncompress - 1);
+	// Obtain the compressed and the uncompressed sizes
+	replace_call(ff8_externals.read_or_uncompress_fs_data + 0x153, ff8_fs_archive_malloc_source_data);
+	replace_call(ff8_externals.read_or_uncompress_fs_data + 0x188, ff8_fs_archive_malloc_target_data);
+	// Replace the LZS algorithm by LZ4 if compression type is 2
+	replace_call(ff8_externals.read_or_uncompress_fs_data + 0x1E6, ff8_fs_archive_uncompress_data);
 
 	memset_code(ff8_externals.movie_hack1, 0x90, 14);
 	memset_code(ff8_externals.movie_hack2, 0x90, 8);

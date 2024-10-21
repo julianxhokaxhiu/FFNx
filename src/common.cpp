@@ -902,6 +902,11 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				if (more_debug)
 				{
 					replace_function(common_externals.debug_print2, external_debug_print2);
+
+					if (ff8)
+					{
+						patch_code_dword(ff8_externals.outputdebugstringa, DWORD(external_debug_print));
+					}
 				}
 
 #ifdef NO_EXT_HEAP
@@ -2789,7 +2794,7 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 			else
 			{
 				// Search for the first "user_" match in the game path
-				CHAR searchPath[260];
+				CHAR searchPath[MAX_PATH];
 				WIN32_FIND_DATA pathFound;
 				HANDLE hFind;
 
@@ -3107,6 +3112,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				patch_code_dword(mciSendCommandA, (DWORD)dotemuMciSendCommandA);
 			}
 
+			if (external_music_path.empty()) external_music_path = "data/music/dmusic/ogg";
 			if (external_music_volume < 0) external_music_volume = 100;
 			if (external_sfx_volume < 0) external_sfx_volume = 100;
 			if (external_voice_volume < 0) external_voice_volume = 100;
@@ -3298,7 +3304,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 	if (strstr(lpFileName, "CD:") != NULL)
 	{
 		CHAR newPath[MAX_PATH]{ 0 };
-		uint8_t requiredDisk = *(uint8_t*)(*(DWORD*)ff8_externals.requiredDisk + 0xCC);
+		uint8_t requiredDisk = *(uint8_t*)(*(DWORD*)ff8_externals.savemap + 0xCC);
 		CHAR diskAsChar[2];
 
 		itoa(requiredDisk, diskAsChar, 10);

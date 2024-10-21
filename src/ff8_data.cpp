@@ -151,11 +151,13 @@ void ff8_find_externals()
 	ff8_externals.engine_set_init_time = get_relative_call(ff8_externals.battle_enter, 0x35);
 
 	common_externals.debug_print2 = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x16);
-	ff8_externals.moriya_filesytem_open = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x21);
-	ff8_externals.moriya_filesytem_seek = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x77);
-	ff8_externals.moriya_filesytem_read = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0xB7);
-	ff8_externals.moriya_filesytem_close = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0xDD);
-	ff8_externals.free_file_container = (void(*)(ff8_file_container*))get_relative_call(ff8_externals.moriya_filesytem_close, 0x1F);
+	ff8_externals.moriya_filesystem_open = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x21);
+	ff8_externals.moriya_filesystem_seek = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x77);
+	ff8_externals.moriya_filesystem_read = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0xB7);
+	ff8_externals.moriya_filesystem_close = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0xDD);
+	ff8_externals.read_or_uncompress_fs_data = get_relative_call(ff8_externals.moriya_filesystem_read, 0x5C);
+	ff8_externals.lzs_uncompress = get_relative_call(ff8_externals.read_or_uncompress_fs_data, 0x1E6);
+	ff8_externals.free_file_container = (void(*)(ff8_file_container*))get_relative_call(ff8_externals.moriya_filesystem_close, 0x1F);
 
 	ff8_externals.cdcheck_sub_52F9E0 = get_relative_call(ff8_externals.cdcheck_main_loop, 0x95);
 
@@ -184,7 +186,7 @@ void ff8_find_externals()
 	ff8_externals.cardgame_tim_texture_icons = (uint8_t *)get_absolute_value(ff8_externals.sub_534640, 0x125);
 	ff8_externals.sub_539500 = get_relative_call(ff8_externals.sub_534640, 0x110);
 	ff8_externals.cardgame_tim_texture_font = (uint8_t *)get_absolute_value(ff8_externals.sub_539500, 0x1);
-	ff8_externals.is_card_game = (uint32_t*)get_absolute_value(ff8_externals.sub_47CCB0, 0xB7991);
+	ff8_externals.is_card_game = (uint32_t*)get_absolute_value(ff8_externals.sub_47CCB0, *(uint32_t *)(ff8_externals.sub_47CCB0 + 0xF2) + 0xF7);
 
 	ff8_externals.loc_47D490 = ff8_externals.sub_47CCB0 + 0xDA + 0x4 + *((int32_t *)(ff8_externals.sub_47CCB0 + 0xDA));
 	ff8_externals.sub_500870 = get_relative_call(ff8_externals.loc_47D490, 0x85);
@@ -482,6 +484,7 @@ void ff8_find_externals()
 	ff8_externals.volume_update = get_relative_call(ff8_externals.field_main_loop, 0x28C);
 	ff8_externals.volume_music_update = get_relative_call(ff8_externals.volume_update, 0x6);
 
+	ff8_externals.outputdebugstringa = get_absolute_value(ff8_externals.sm_battle_sound, 0x1B);
 	ff8_externals.sdmusicplay = get_relative_call(ff8_externals.sm_battle_sound, 0x164);
 	ff8_externals.sd_music_play = (uint32_t(*)(uint32_t, char*, uint32_t))get_relative_call(ff8_externals.sdmusicplay, 0x17);
 	ff8_externals.current_music_ids = (uint32_t*)get_absolute_value(uint32_t(ff8_externals.sd_music_play), 0x1AA);
@@ -844,29 +847,6 @@ void ff8_find_externals()
 
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
-
-	// Required by Steam edition
-	switch (version)
-	{
-	case VERSION_FF8_12_US_NV:
-		ff8_externals.requiredDisk = 0xB8EE90;
-		break;
-	case VERSION_FF8_12_FR_NV:
-		ff8_externals.requiredDisk = 0xB8EDB8;
-		break;
-	case VERSION_FF8_12_DE_NV:
-		ff8_externals.requiredDisk = 0xB8EDC0;
-		break;
-	case VERSION_FF8_12_SP_NV:
-		ff8_externals.requiredDisk = 0xB8EDC0;
-		break;
-	case VERSION_FF8_12_IT_NV:
-		ff8_externals.requiredDisk = 0xB8EDB8;
-		break;
-	case VERSION_FF8_12_JP:
-		ff8_externals.requiredDisk = 0xD92BB0;
-		break;
-	}
 }
 
 void ff8_data()
