@@ -27,20 +27,16 @@
 
 bool fileExists(const char *filename)
 {
-    if (ff8)
-    {
-        // Fastest way
-        return std::filesystem::exists(filename);
-    }
-
     struct stat dummy;
 
     // Use stat to keep compatibility with 7th Heaven
     return stat(filename, &dummy) == 0;
 }
 
-bool dirExists(const char *filename)
+bool dirExists(const char *dirname)
 {
-    // Fastest way
-    return std::filesystem::is_directory(filename);
+    struct stat dummy;
+
+    // Use stat to keep compatibility with 7th Heaven
+    return stat(dirname, &dummy) == 0;
 }

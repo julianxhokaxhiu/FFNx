@@ -64,6 +64,7 @@
 #include "achievement.h"
 #include "game_cfg.h"
 #include "exe_data.h"
+#include "utils.h"
 
 #include "ff7/defs.h"
 #include "ff7/widescreen.h"
@@ -3443,7 +3444,7 @@ __declspec(dllexport) HRESULT __stdcall EAXDirectSoundCreate(LPGUID guid, LPLPDI
 	typedef HRESULT(FAR PASCAL* LPEAXDIRECTSOUNDCREATE)(LPGUID, LPLPDIRECTSOUND, IUnknown FAR*);
 	char eax_dll[MAX_PATH] = {};
 
-	if (std::filesystem::exists("creative_eax.dll")) {
+	if (fileExists("creative_eax.dll")) {
 		// For portable installation, this name can be used to load the official Creative EAX 2.0+ DLL along with FFNx
 		snprintf(eax_dll, sizeof(eax_dll), R"(%s\creative_eax.dll)", basedir);
 	} else {
