@@ -133,7 +133,7 @@ uint8_t *ff8_fs_archive_malloc_source_data(size_t size, char *source_code_path, 
 {
 	if (trace_all || trace_files) ffnx_trace("%s size=%d\n", __func__, size);
 
-	last_compressed_size = size;
+	last_compressed_size = size - 12;
 
 	return (uint8_t *)common_externals.assert_malloc(size, source_code_path, line);
 }
@@ -144,9 +144,9 @@ uint8_t *ff8_fs_archive_malloc_target_data(size_t size, char *source_code_path, 
 
 	if (last_compression_type == 2) // LZ4 compression
 	{
-		size += 10;
-
 		last_uncompressed_size = size;
+
+		size += 10;
 	}
 
 	return (uint8_t *)common_externals.assert_malloc(size, source_code_path, line);
@@ -160,11 +160,11 @@ void ff8_fs_archive_uncompress_data(const uint8_t *source_data, uint8_t *target_
 	{
 		if (trace_all || trace_files) ffnx_trace("%s LZ4 compression detected\n", __func__);
 
-		int uncompressed_size = LZ4_decompress_safe((const char *)source_data + 8, (char *)target_data, last_compressed_size - 8, last_uncompressed_size);
+		int uncompressed_size = LZ4_decompress_safe_partial((const char *)source_data + 12, (char *)target_data, last_compressed_size, last_uncompressed_size, last_uncompressed_size + 10);
 
 		if (uncompressed_size < 0)
 		{
-			ffnx_error("%s: cannot uncompress lz4 file data (compressed_size=%d, error=%d)\n", __func__, last_compressed_size, uncompressed_size);
+			ffnx_error("%s: cannot uncompress lz4 file data (compressed_size=%d, uncompressed_size=%d, error=%d)\n", __func__, last_compressed_size, last_uncompressed_size, uncompressed_size);
 
 			return;
 		}

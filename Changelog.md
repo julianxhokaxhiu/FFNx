@@ -8,7 +8,7 @@
 - Ambient: Fix missing Battle ID for battles triggered using field opcodes
 - Ambient: Fix Battle ID detection for random encounters in Field
 - Modding: Allow modding card names hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/739 )
-- Modding: Add compatibility to LZ4 compression in FS archives ( https://github.com/julianxhokaxhiu/FFNx/pull/741 )
+- Modding: Add compatibility to LZ4 compression in FS archives ( https://github.com/julianxhokaxhiu/FFNx/pull/741 https://github.com/julianxhokaxhiu/FFNx/pull/743/files )
 
 # 1.20.3
 
