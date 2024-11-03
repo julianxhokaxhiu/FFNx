@@ -365,61 +365,137 @@ add_custom_command(
     ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/cpuinfo/isa-info
 )
 
-# Copy FFNx release to FF7 game path if installed
-cmake_host_system_information(RESULT FF7_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc./Final Fantasy VII" VALUE "AppPath" ERROR_VARIABLE FF7_KEY_QUERY_RES)
+# Copy FFNx release to FF7 1998 game path if installed
+cmake_host_system_information(RESULT FF7_1998_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc./Final Fantasy VII" VALUE "AppPath" ERROR_VARIABLE FF7_KEY_QUERY_RES)
 if("${FF7_KEY_QUERY_RES}" STREQUAL "")
-  cmake_path(CONVERT "${FF7_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_GAME_PATH)
+  cmake_path(CONVERT "${FF7_1998_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_1998_GAME_PATH)
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_GAME_PATH}...
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_1998_GAME_PATH}...
     # Preserve the current FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_GAME_PATH}/FFNx.toml
-            ${FF7_GAME_PATH}/FFNx.toml.bak
+            ${FF7_1998_GAME_PATH}/FFNx.toml
+            ${FF7_1998_GAME_PATH}/FFNx.toml.bak
     # Copy all dist files
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_BINARY_DIR}/bin
-            ${FF7_GAME_PATH}
+            ${FF7_1998_GAME_PATH}
     # Delete the new copied FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF7_GAME_PATH}/FFNx.toml
+            ${FF7_1998_GAME_PATH}/FFNx.toml
     # Bring back the existing FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_GAME_PATH}/FFNx.toml.bak
-            ${FF7_GAME_PATH}/FFNx.toml
+            ${FF7_1998_GAME_PATH}/FFNx.toml.bak
+            ${FF7_1998_GAME_PATH}/FFNx.toml
   )
 endif()
 
-# Copy FFNx release to FF8 game path if installed
-cmake_host_system_information(RESULT FF8_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc/FINAL FANTASY VIII/1.00" VALUE "AppPath" ERROR_VARIABLE FF8_KEY_QUERY_RES)
+# Copy FFNx release to FF8 2000 game path if installed
+cmake_host_system_information(RESULT FF8_2000_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc/FINAL FANTASY VIII/1.00" VALUE "AppPath" ERROR_VARIABLE FF8_KEY_QUERY_RES)
 if("${FF8_KEY_QUERY_RES}" STREQUAL "")
-  cmake_path(CONVERT "${FF8_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_GAME_PATH)
+  cmake_path(CONVERT "${FF8_2000_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_2000_GAME_PATH)
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_GAME_PATH}...
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_2000_GAME_PATH}...
     # Preserve the current FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_GAME_PATH}/FFNx.toml
-            ${FF8_GAME_PATH}/FFNx.toml.bak
+            ${FF8_2000_GAME_PATH}/FFNx.toml
+            ${FF8_2000_GAME_PATH}/FFNx.toml.bak
     # Copy all dist files
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_BINARY_DIR}/bin
-            ${FF8_GAME_PATH}
+            ${FF8_2000_GAME_PATH}
     # Delete previous eax.dll
     COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF8_GAME_PATH}/eax.dll
+            ${FF8_2000_GAME_PATH}/eax.dll
     # Rename FFNx.dll to eax.dll
     COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_GAME_PATH}/FFNx.dll
-            ${FF8_GAME_PATH}/eax.dll
+            ${FF8_2000_GAME_PATH}/FFNx.dll
+            ${FF8_2000_GAME_PATH}/eax.dll
     # Delete the new copied FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF8_GAME_PATH}/FFNx.toml
+            ${FF8_2000_GAME_PATH}/FFNx.toml
     # Bring back the existing FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF8_GAME_PATH}/FFNx.toml.bak
-            ${FF8_GAME_PATH}/FFNx.toml
+            ${FF8_2000_GAME_PATH}/FFNx.toml.bak
+            ${FF8_2000_GAME_PATH}/FFNx.toml
+  )
+endif()
+
+# Copy FFNx release to FF7 Steam game path if installed
+execute_process(
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 39140
+  OUTPUT_VARIABLE FF7_STEAM_GAME_PATH
+  ERROR_VARIABLE FF7_STEAM_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT "${FF7_STEAM_GAME_PATH}" STREQUAL "")
+  cmake_path(CONVERT "${FF7_STEAM_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_STEAM_GAME_PATH)
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_STEAM_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_STEAM_GAME_PATH}/FFNx.toml
+            ${FF7_STEAM_GAME_PATH}/FFNx.toml.bak
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF7_STEAM_GAME_PATH}
+    # Delete previous AF3DN.P
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF7_STEAM_GAME_PATH}/AF3DN.P
+    # Rename FFNx.dll to AF3DN.P
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_STEAM_GAME_PATH}/FFNx.dll
+            ${FF7_STEAM_GAME_PATH}/AF3DN.P
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF7_STEAM_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_STEAM_GAME_PATH}/FFNx.toml.bak
+            ${FF7_STEAM_GAME_PATH}/FFNx.toml
+  )
+endif()
+
+# Copy FFNx release to FF7 Steam game path if installed
+execute_process(
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 39150
+  OUTPUT_VARIABLE FF8_STEAM_GAME_PATH
+  ERROR_VARIABLE FF8_STEAM_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT "${FF8_STEAM_GAME_PATH}" STREQUAL "")
+  cmake_path(CONVERT "${FF8_STEAM_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_STEAM_GAME_PATH)
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_STEAM_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_STEAM_GAME_PATH}/FFNx.toml
+            ${FF8_STEAM_GAME_PATH}/FFNx.toml.bak
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF8_STEAM_GAME_PATH}
+    # Delete previous AF3DN.P
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_STEAM_GAME_PATH}/AF3DN.P
+    # Rename FFNx.dll to AF3DN.P
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_STEAM_GAME_PATH}/FFNx.dll
+            ${FF8_STEAM_GAME_PATH}/AF3DN.P
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_STEAM_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_STEAM_GAME_PATH}/FFNx.toml.bak
+            ${FF8_STEAM_GAME_PATH}/FFNx.toml
   )
 endif()
