@@ -2615,8 +2615,6 @@ time_t qpc_diff_time(time_t* t1, time_t* t2, time_t* out)
 {
 	time_t ret = *t1 - *t2;
 
-	if (ff8) ret *= gamehacks.getCurrentSpeedhack();
-
 	if (out != nullptr) *out = ret;
 
 	return ret;
