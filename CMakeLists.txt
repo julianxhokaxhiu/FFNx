@@ -369,6 +369,11 @@ add_custom_command(
 cmake_host_system_information(RESULT FF7_1998_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc./Final Fantasy VII" VALUE "AppPath" ERROR_VARIABLE FF7_KEY_QUERY_RES)
 if("${FF7_KEY_QUERY_RES}" STREQUAL "")
   cmake_path(CONVERT "${FF7_1998_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_1998_GAME_PATH)
+  # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
+  if(NOT EXISTS "${FF7_1998_GAME_PATH}/FFNx.toml")
+    # Copy file if it doesn't exist
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF7_1998_GAME_PATH}/")
+  endif()
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
@@ -395,6 +400,11 @@ endif()
 cmake_host_system_information(RESULT FF8_2000_GAME_PATH QUERY WINDOWS_REGISTRY "HKLM/SOFTWARE/Square Soft, Inc/FINAL FANTASY VIII/1.00" VALUE "AppPath" ERROR_VARIABLE FF8_KEY_QUERY_RES)
 if("${FF8_KEY_QUERY_RES}" STREQUAL "")
   cmake_path(CONVERT "${FF8_2000_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_2000_GAME_PATH)
+  # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
+  if(NOT EXISTS "${FF8_2000_GAME_PATH}/FFNx.toml")
+    # Copy file if it doesn't exist
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF8_2000_GAME_PATH}/")
+  endif()
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
@@ -433,6 +443,11 @@ execute_process(
 )
 if(NOT "${FF7_STEAM_GAME_PATH}" STREQUAL "")
   cmake_path(CONVERT "${FF7_STEAM_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_STEAM_GAME_PATH)
+  # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
+  if(NOT EXISTS "${FF7_STEAM_GAME_PATH}/FFNx.toml")
+    # Copy file if it doesn't exist
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF7_STEAM_GAME_PATH}/")
+  endif()
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
@@ -471,6 +486,11 @@ execute_process(
 )
 if(NOT "${FF8_STEAM_GAME_PATH}" STREQUAL "")
   cmake_path(CONVERT "${FF8_STEAM_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_STEAM_GAME_PATH)
+  # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
+  if(NOT EXISTS "${FF8_STEAM_GAME_PATH}/FFNx.toml")
+    # Copy file if it doesn't exist
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF8_STEAM_GAME_PATH}/")
+  endif()
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
