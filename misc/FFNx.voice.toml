@@ -5,7 +5,7 @@
 # Remove the initial # character to set the entire sections block and its flags
 # -----------------------------------------------------------------------------
 # Syntax:
-# [FIELDNAME/FILENAME]
+# [FIELDNAME/FILENAME(.GAME_MOMENT)]
 # flag = value
 # another_flag = value
 # -----------------------------------------------------------------------------
@@ -13,6 +13,8 @@
 # - FIELDNAME: the current field name, for eg. 'md1stin'
 # - FILENAME: the filename as you have it in your own folder,
 #             for eg. '6' for 6.ogg
+# - GAME_MOMENT: OPTIONAL attribute to assign a flag only when game moment
+#                matches the ID given, for eg. 'gm-123'
 ###############################################################################
 
 ### SUPPORTED FLAGS: ##########################################################
@@ -29,6 +31,13 @@
 # This entry will set the volume to 50%
 # -----------------------------------------------------------------------------
 #[md1stin-6]
+#volume = 50
+#shuffle = [ "foo", "bar" ]
+#sequential = [ "foo", "bar" ]
+
+# This entry will set the volume to 0% only when game moment is 123
+# -----------------------------------------------------------------------------
+#[md1stin-6.gm-123]
 #volume = 50
 #shuffle = [ "foo", "bar" ]
 #sequential = [ "foo", "bar" ]

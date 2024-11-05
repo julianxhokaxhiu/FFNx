@@ -278,7 +278,7 @@ public:
 
 	// Voice
 	bool canPlayVoice(const char* name);
-	bool playVoice(const char* name, int slot = 0, float volume = 1.0f);
+	bool playVoice(const char* name, int slot = 0, float volume = 1.0f, int game_moment = -1);
 	void stopVoice(int slot = 0, double time = 0);
 	void pauseVoice(int slot = 0, double time = 0);
 	void resumeVoice(int slot = 0, double time = 0);

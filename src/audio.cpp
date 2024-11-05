@@ -1047,7 +1047,7 @@ bool NxAudioEngine::canPlayVoice(const char* name)
 	return getFilenameFullPath(filename, name, NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 }
 
-bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
+bool NxAudioEngine::playVoice(const char* name, int slot, float volume, int game_moment)
 {
 	char filename[MAX_PATH];
 
@@ -1056,10 +1056,20 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 	_currentVoice[slot].volume = volume * getVoiceMasterVolume();
 
 	std::string _name(name);
+
 	// TOML doesn't like the / char as key, replace it with - ( one of the valid accepted chars )
 	replaceAll(_name, '/', '-');
 
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_VOICE][_name];
+
+  // Attempt to load a subnode based on the current game moment
+  if (game_moment > -1)
+  {
+    std::string _gamemoment("gm-" + std::to_string(game_moment));
+    auto subnode = node[_gamemoment];
+    if (subnode) node = subnode;
+  }
+
 	if (node)
 	{
 		// Set volume for the current track
