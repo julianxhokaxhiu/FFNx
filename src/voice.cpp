@@ -65,6 +65,7 @@ struct opcode_message_status
 		message_last_transition(0),
 		message_last_option(UCHAR_MAX),
 		message_dialog_id(0),
+		message_last_dialog_id(0),
 		char_id(0),
 		message_kind(message_kind::NONE),
 		field_name("")
@@ -75,6 +76,7 @@ struct opcode_message_status
 	WORD message_last_transition = 0;
 	byte message_last_option = UCHAR_MAX;
 	int message_dialog_id = 0;
+	int message_last_dialog_id = 0;
 	byte char_id = 0;
 	message_kind message_kind = message_kind::NONE;
 	std::string field_name = "";
@@ -648,8 +650,8 @@ void ff7_enqueue_script_display_string(short actor_id, byte command_index, uint1
 void ff7_add_text_to_display_queue(WORD buffer_idx, byte wait_frames, byte n_frames, WORD param_4)
 {
 	auto text_data = std::find_if(ff7_externals.battle_display_text_queue.begin(), ff7_externals.battle_display_text_queue.end(),
-								  [](const battle_text_data &data)
-								  { return data.buffer_idx == -1; });
+									[](const battle_text_data &data)
+									{ return data.buffer_idx == -1; });
 
 	if (text_data != ff7_externals.battle_display_text_queue.end())
 	{
@@ -730,11 +732,11 @@ void ff7_update_display_text_queue()
 				case display_type::CHAR_CMD:
 					tokenized_dialogue = tokenize_text(decoded_text);
 					other_text_data_first.has_started = play_battle_cmd_voice(other_text_data_first.char_id, other_text_data_first.command_id,
-																			  tokenized_dialogue, other_text_data_first.page_count);
+																				tokenized_dialogue, other_text_data_first.page_count);
 
 					if (trace_all || trace_battle_text)
 						ffnx_trace("Begin voice for (character ID: %d; command ID: %X) [filename: %s]\n",
-								   other_text_data_first.char_id, other_text_data_first.command_id, tokenized_dialogue.c_str());
+									 other_text_data_first.char_id, other_text_data_first.command_id, tokenized_dialogue.c_str());
 
 					break;
 				default:
@@ -932,14 +934,14 @@ char* ff8_battle_get_monster_name(int idx)
 char* ff8_battle_get_actor_name(int idx)
 {
 	char* ret;
-  BYTE actor_id = *(ff8_externals.byte_1CFF1C3 + 0x1D0 * idx);
+	BYTE actor_id = *(ff8_externals.byte_1CFF1C3 + 0x1D0 * idx);
 
-  if ( !actor_id )
-    ret = ff8_externals.unk_1CFDC70;
-  else if ( actor_id == 4 )
-    ret = ff8_externals.unk_1CFDC7C;
-  else if ( *(ff8_externals.word_1CF75EC + 0x12 * *(ff8_externals.byte_1CFF1C3 + 0x1D0 * idx)) == -1 )
-    ret = ff8_externals.unk_1CFF84C;
+	if ( !actor_id )
+		ret = ff8_externals.unk_1CFDC70;
+	else if ( actor_id == 4 )
+		ret = ff8_externals.unk_1CFDC7C;
+	else if ( *(ff8_externals.word_1CF75EC + 0x12 * *(ff8_externals.byte_1CFF1C3 + 0x1D0 * idx)) == -1 )
+		ret = ff8_externals.unk_1CFF84C;
 	else
 		ret = ff8_externals.unk_1CF3E48 + *(ff8_externals.word_1CF75EC + 0x12 * *(ff8_externals.byte_1CFF1C3 + 0x1D0 * idx)) + *ff8_externals.dword_1CF3EE0;
 
@@ -960,8 +962,20 @@ int ff8_world_dialog_assign_text(int idx, int dialog_id, char *text)
 	int window_id = *(ff8_externals.worldmap_windows_idx_map + 0x10 * idx);
 
 	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+	current_opcode_message_status[window_id].message_kind = message_kind::MESSAGE;
 
 	return ff8_externals.world_dialog_assign_text_sub_543790(idx, dialog_id, text);
+}
+
+int ff8_world_dialog_question_assign_text(int idx, int dialog_id, char *text, int first_question, int last_question, int current_choice, uint8_t default_option)
+{
+	int window_id = *(ff8_externals.worldmap_windows_idx_map + 0x10 * idx);
+
+	current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+	current_opcode_message_status[window_id].message_kind = message_kind::ASK;
+	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option = default_option;
+
+	return ff8_externals.world_dialog_question_assign_text_sub_5438D0(idx, dialog_id, text, first_question, last_question, current_choice, default_option);
 }
 
 int ff8_opcode_voice_drawpoint(int unk)
@@ -1125,10 +1139,11 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
 	int dialog_id = current_opcode_message_status[window_id].message_dialog_id;
 	ff8_win_obj *win = ff8_externals.windows + window_id;
-	int message_current_opcode = win->state;
+	uint32_t message_current_opcode = win->state;
 	message_kind message_kind = current_opcode_message_status[window_id].message_kind;
 	std::string field_name = current_opcode_message_status[window_id].field_name;
 	byte message_page_count = current_opcode_message_status[window_id].message_page_count;
+	if (mode->driver_mode == MODE_WORLDMAP && message_kind == message_kind::ASK) opcode_ask_current_option = win->current_choice_question;
 
 	bool _is_dialog_opening = is_dialog_opening(win->open_close_transition);
 	bool _is_dialog_starting = is_dialog_starting(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
@@ -1229,12 +1244,16 @@ int ff8_show_dialog(int window_id, int state, int a3)
 	}
 	else if (mode->driver_mode == MODE_WORLDMAP)
 	{
+		bool _has_dialog_text_changed = dialog_id != current_opcode_message_status[window_id].message_last_dialog_id;
+
 		if (_is_dialog_opening)
 		{
 			begin_voice(window_id);
 			current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+			current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
+			current_opcode_message_status[window_id].message_kind = message_kind;
 		}
-		else if (_is_dialog_starting)
+		else if (_is_dialog_starting || _has_dialog_text_changed)
 		{
 			if (dialog_id < 0)
 			{
@@ -1252,10 +1271,25 @@ int ff8_show_dialog(int window_id, int state, int a3)
 				current_opcode_message_status[window_id].is_voice_acting = play_voice("_world", window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
 			}
 		}
+		else if (_is_dialog_option_changed && _is_dialog_ask)
+		{
+			if (trace_all || trace_opcodes) ffnx_trace("[WORLD]: window_id=%u,dialog_id=%u,option_id=%u,char=%X\n", window_id, dialog_id, opcode_ask_current_option,current_opcode_message_status[window_id].char_id);
+			play_option("_world", window_id, dialog_id, opcode_ask_current_option);
+		}
 		else if (_is_dialog_closing)
 		{
 			end_voice(window_id);
 			current_opcode_message_status[window_id].is_voice_acting = false;
+		}
+
+		// Auto close the message if it was voice acted and the audio file has finished playing
+		if (message_kind == message_kind::MESSAGE)
+		{
+			if (current_opcode_message_status[window_id].is_voice_acting && !nxAudioEngine.isVoicePlaying(window_id))
+			{
+				current_opcode_message_status[window_id].is_voice_acting = false;
+				if (!simulate_OK_disabled[window_id] && enable_voice_auto_text) simulate_OK_button = true;
+			}
 		}
 	}
 	else if (mode->mode == FF8_MODE_TUTO)
@@ -1297,6 +1331,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
 	current_opcode_message_status[window_id].message_last_transition = win->open_close_transition;
 	current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
+	current_opcode_message_status[window_id].message_last_dialog_id = dialog_id;
 
 	return ff8_externals.show_dialog(window_id, state, a3);
 }
@@ -1384,5 +1419,11 @@ void voice_init()
 		replace_call_function(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0xEED : (FF8_SP_VERSION ? 0xFAD : 0xF72)), ff8_world_dialog_assign_text);
 		replace_call_function(ff8_externals.sub_54FDA0 + (FF8_US_VERSION ? 0xAE : 0xAC), ff8_world_dialog_assign_text);
 		replace_call_function(ff8_externals.sub_54FDA0 + (FF8_US_VERSION ? 0x178 : 0x175), ff8_world_dialog_assign_text);
+		replace_call_function(ff8_externals.sub_543CB0 + (FF8_US_VERSION ? 0x5EE : (FF8_SP_VERSION || FF8_IT_VERSION) ? 0x5D2 : 0x5BB), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_5484B0 + (FF8_US_VERSION ? 0xBD : 0x96), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_5484B0 + (FF8_US_VERSION ? 0x24F : 0x228), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_54D7E0 + (FF8_US_VERSION ? 0x119 : 0x116), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x621 : (FF8_SP_VERSION ? 0x66E : 0x633)), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0xBE4 : (FF8_SP_VERSION ? 0xC31 : 0xBF6)), ff8_world_dialog_question_assign_text);
 	}
 }

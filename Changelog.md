@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.3...master
 
+## Common
+
+- Voice: Add support for `config.toml` configuration override based on Game Moment ID
+
 ## FF8
 
 - Core: Fix crash for non-us versions introduced in 1.20.3 ( https://github.com/julianxhokaxhiu/FFNx/pull/741 )
@@ -9,6 +13,8 @@
 - Ambient: Fix Battle ID detection for random encounters in Field
 - Modding: Allow modding card names hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/739 )
 - Modding: Add compatibility to LZ4 compression in FS archives ( https://github.com/julianxhokaxhiu/FFNx/pull/741 https://github.com/julianxhokaxhiu/FFNx/pull/743/files )
+- Voice: Add support for Worldmap question dialogs
+- Voice: Add support for Auto text in World messages
 
 # 1.20.3
 

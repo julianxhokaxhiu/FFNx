@@ -404,15 +404,15 @@ struct ff8_texture_set
 };
 
 struct struc_color_texture {
-    uint32_t field_0;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t _padding;
-    int16_t x;
-    int16_t y;
-    int16_t w;
-    int16_t h;
+		uint32_t field_0;
+		uint8_t r;
+		uint8_t g;
+		uint8_t b;
+		uint8_t _padding;
+		int16_t x;
+		int16_t y;
+		int16_t w;
+		int16_t h;
 };
 
 struct texture_page
@@ -565,7 +565,9 @@ struct ff8_win_obj
 	uint8_t field_2D;
 	uint8_t field_2E;
 	uint8_t field_2F;
-	uint32_t field_30;
+	uint16_t field_30;
+	uint8_t field_32;
+	uint8_t field_33;
 	uint32_t callback1;
 	uint32_t callback2;
 };
@@ -1236,6 +1238,7 @@ struct ff8_externals
 	uint32_t worldmap_with_fog_sub_53FAC0;
 	char* worldmap_windows_idx_map;
 	int (*world_dialog_assign_text_sub_543790)(int,int,char*);
+	int (*world_dialog_question_assign_text_sub_5438D0)(int, int, char*, int, int, int, uint8_t);
 	uint32_t sub_543CB0;
 	uint32_t sub_5484B0;
 	uint32_t sub_54A230;
