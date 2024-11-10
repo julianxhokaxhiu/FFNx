@@ -16,3 +16,6 @@ And then FFNx will look for those files directly instead of data from the EXE.
 - `battle_scans.msd`: Texts in battle scans. Note: this is not exactly the same
   format in the EXE, the msd format is used because it is a well documented format
   of FF8.
+- `card_names.msd`: Card names. Note: this is not exactly the same
+  format in the EXE, the msd format is used because it is a well documented format
+  of FF8.
