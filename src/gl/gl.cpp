@@ -337,8 +337,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	newRenderer.isTLVertex(vertextype == TLVERTEX);
 	newRenderer.isFBTexture(current_state.fb_texture);
 
-	if (ff8) newRenderer.doModulateAlpha(false);
-	else newRenderer.doModulateAlpha(true);
+	newRenderer.doModulateAlpha(true);
 
 	//// upload vertex data
 	newRenderer.bindVertexBuffer(vertices, normals, vertexcount);

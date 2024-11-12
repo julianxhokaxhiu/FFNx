@@ -9,8 +9,10 @@
 ## FF8
 
 - Core: Fix crash for non-us versions introduced in 1.20.3 ( https://github.com/julianxhokaxhiu/FFNx/pull/741 )
+- Core: Fix crash when `more_debug` option is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/749 )
 - Ambient: Fix missing Battle ID for battles triggered using field opcodes
 - Ambient: Fix Battle ID detection for random encounters in Field
+- Modding: Fix blending in external textures ( https://github.com/julianxhokaxhiu/FFNx/pull/749 )
 - Modding: Allow modding card names hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/739 )
 - Modding: Add compatibility to LZ4 compression in FS archives ( https://github.com/julianxhokaxhiu/FFNx/pull/741 https://github.com/julianxhokaxhiu/FFNx/pull/743/files )
 - Voice: Add support for Worldmap question dialogs

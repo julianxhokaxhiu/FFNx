@@ -903,11 +903,6 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				if (more_debug)
 				{
 					replace_function(common_externals.debug_print2, external_debug_print2);
-
-					if (ff8)
-					{
-						patch_code_dword(ff8_externals.outputdebugstringa, DWORD(external_debug_print));
-					}
 				}
 
 #ifdef NO_EXT_HEAP
