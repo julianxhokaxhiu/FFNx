@@ -1059,7 +1059,9 @@ struct ff8_externals
 	uint32_t get_disk_number;
 	char* disk_data_path;
 	const char *app_path;
+	uint32_t swirl_enter;
 	uint32_t swirl_main_loop;
+	uint32_t sub_460B60;
 	uint32_t field_main_loop;
 	uint32_t field_main_exit;
 	uint32_t psxvram_texture_pages_free;
@@ -1068,6 +1070,8 @@ struct ff8_externals
 	uint32_t engine_set_init_time;
 	uint32_t sub_4672C0;
 	uint32_t sub_471F70;
+	uint32_t field_fade_transition_sub_472990;
+	uint32_t sub_45CDD0;
 	uint32_t sub_4767B0;
 	uint32_t sub_4789A0;
 	char (*sub_47CA90)();
@@ -1214,6 +1218,7 @@ struct ff8_externals
 	uint32_t sub_45B310;
 	uint32_t sub_45B460;
 	uint32_t ssigpu_init;
+	uint32_t *sub_blending_capability;
 	uint32_t *d3dcaps;
 	uint32_t sub_53BB90;
 	uint32_t worldmap_fog_filter_polygons_in_block_1;

@@ -123,6 +123,7 @@ void ff8_find_externals()
 		ff8_externals.battle_main_loop = get_absolute_value(ff8_externals.main_loop, 0x340 + 4);
 		// Search battle sound function to find play/stop midi related methods
 		ff8_externals.sm_battle_sound = get_relative_call(ff8_externals.main_loop, 0x487 + 5);
+		ff8_externals.swirl_enter = get_absolute_value(ff8_externals.main_loop, 0x493 + 5);
 		ff8_externals.swirl_main_loop = get_absolute_value(ff8_externals.main_loop, 0x4A3 + 5);
 		ff8_externals.sub_470250 = get_relative_call(ff8_externals.main_loop, 0x6E7 - 15);
 	}
@@ -140,6 +141,7 @@ void ff8_find_externals()
 		ff8_externals.battle_main_loop = get_absolute_value(ff8_externals.main_loop, 0x340);
 		// Search battle sound function to find play/stop midi related methods
 		ff8_externals.sm_battle_sound = get_relative_call(ff8_externals.main_loop, 0x487);
+		ff8_externals.swirl_enter = get_absolute_value(ff8_externals.main_loop, 0x493);
 		ff8_externals.swirl_main_loop = get_absolute_value(ff8_externals.main_loop, 0x4A3);
 		ff8_externals.sub_470250 = get_relative_call(ff8_externals.main_loop, 0x6E7);
 	}
@@ -149,6 +151,7 @@ void ff8_find_externals()
 	ff8_externals.psxvram_texture_page_free = get_relative_call(ff8_externals.psxvram_texture_pages_free, 0x21);
 	ff8_externals.psxvram_texture_page_tex_header_free = get_relative_call(ff8_externals.psxvram_texture_page_free, 0x98);
 	ff8_externals.engine_set_init_time = get_relative_call(ff8_externals.battle_enter, 0x35);
+	ff8_externals.sub_460B60 = get_relative_call(ff8_externals.swirl_enter, 0x9);
 
 	common_externals.debug_print2 = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x16);
 	ff8_externals.moriya_filesystem_open = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0x21);
@@ -221,6 +224,8 @@ void ff8_find_externals()
 	common_externals.assert_malloc = (void* (*)(uint32_t, const char*, uint32_t))get_relative_call(ff8_externals.load_fonts, JP_VERSION ? 0x29 : 0x2A);
 
 	ff8_externals.sub_471F70 = get_relative_call(ff8_externals.field_main_loop, 0x148);
+	ff8_externals.field_fade_transition_sub_472990 = get_relative_call(ff8_externals.field_main_loop, 0x19E);
+	ff8_externals.sub_45CDD0 = get_relative_call(ff8_externals.field_fade_transition_sub_472990, 0x5C);
 
 	if (JP_VERSION)
 	{
@@ -572,6 +577,7 @@ void ff8_find_externals()
 	ff8_externals.sub_45B310 = get_relative_call(ff8_externals.pubintro_init, 0x91);
 	ff8_externals.sub_45B460 = get_relative_call(ff8_externals.sub_45B310, 0x0);
 	ff8_externals.ssigpu_init = get_relative_call(ff8_externals.sub_45B460, 0x26);
+	ff8_externals.sub_blending_capability = (uint32_t *)get_absolute_value(ff8_externals.sub_45B460, 0x19);
 	ff8_externals.d3dcaps = (uint32_t *)get_absolute_value(ff8_externals.ssigpu_init, 0x6C);
 
 	if(FF8_US_VERSION)

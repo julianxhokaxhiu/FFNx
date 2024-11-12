@@ -296,10 +296,33 @@ void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 
 	if(trace_all) ffnx_trace("swirl_sub_56D390: (%i, %i) %ix%i 0x%x (0x%x)\n", x, y, w, h, *ff8_externals.swirl_texture1, tex_header);
 
+	struct ff8_texture_set *texture_set = (struct ff8_texture_set *)(*ff8_externals.swirl_texture1)->hundred_data->texture_set;
+
 	common_unload_texture((*ff8_externals.swirl_texture1)->hundred_data->texture_set);
-	common_load_texture((*ff8_externals.swirl_texture1)->hundred_data->texture_set, tex_header, texture_format);
+	common_load_texture((*ff8_externals.swirl_texture1)->hundred_data->texture_set, tex_header, texture_set->texture_format);
 
 	last_tex_header = tex_header;
+}
+
+void ff8_wm_set_render_to_vram_current_screen_flag_before_battle()
+{
+	if(trace_all) ffnx_trace("%s\n", __func__);
+
+	// There is currently an visual issue in the last worldmap frame before swirl if this flag is enabled
+	// We lose the shadows, but keep the full battle transition effect
+	*ff8_externals.sub_blending_capability = false;
+
+	// Disable software frame rendering to VRAM (by not doing anything here) because it is not needed anymore
+}
+
+void ff8_swirl_init(float a1)
+{
+	if(trace_all) ffnx_trace("%s\n", __func__);
+
+	// Reenable the flag that was disabled in worldmap
+	*ff8_externals.sub_blending_capability = true;
+
+	((void(*)(float))ff8_externals.sub_460B60)(a1);
 }
 
 int ff8_init_gamepad()
@@ -987,6 +1010,8 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_function(ff8_externals.engine_eval_process_input, ff8_is_window_active);
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
+	replace_call(ff8_externals.worldmap_with_fog_sub_53FAC0 + (FF8_US_VERSION ? 0xB3C: 0xB2F), ff8_wm_set_render_to_vram_current_screen_flag_before_battle);
+	replace_call(ff8_externals.swirl_enter + 0x9, ff8_swirl_init);
 
 	replace_function(common_externals.destroy_tex_header, ff8_destroy_tex_header);
 	replace_function(common_externals.load_tex_file, ff8_load_tex_file);
@@ -1024,10 +1049,13 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	memset_code(ff8_externals.movie_hack1, 0x90, 14);
 	memset_code(ff8_externals.movie_hack2, 0x90, 8);
 
-	ff8_externals.d3dcaps[0] = true;
-	ff8_externals.d3dcaps[1] = true;
-	ff8_externals.d3dcaps[2] = true;
-	ff8_externals.d3dcaps[3] = true;
+	ff8_externals.d3dcaps[0] = true; // Has DDSCAPS_OVERLAY capability in Hardware Emulation Layer + Enable alpha on textures
+	ff8_externals.d3dcaps[1] = true; // Enable alpha on textures
+	ff8_externals.d3dcaps[2] = false; // Emulate substractive blending via non-paletted texture if enabled
+	ff8_externals.d3dcaps[3] = true; // Seems to divide by 2 one vertex if disabled
+	ff8_externals.d3dcaps[4] = false;
+	*ff8_externals.sub_blending_capability = true;
+	patch_code_byte(ff8_externals.sub_45CDD0 + 0x12, 2); // Force comparison to current driver, to enable substractive blending in field fade in/out
 
 	// Fix save format
 	if (version == VERSION_FF8_12_FR_NV || version == VERSION_FF8_12_SP_NV || version == VERSION_FF8_12_IT_NV)
