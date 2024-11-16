@@ -1420,10 +1420,10 @@ void voice_init()
 		replace_call_function(ff8_externals.sub_54FDA0 + (FF8_US_VERSION ? 0xAE : 0xAC), ff8_world_dialog_assign_text);
 		replace_call_function(ff8_externals.sub_54FDA0 + (FF8_US_VERSION ? 0x178 : 0x175), ff8_world_dialog_assign_text);
 		replace_call_function(ff8_externals.sub_543CB0 + (FF8_US_VERSION ? 0x5EE : (FF8_SP_VERSION || FF8_IT_VERSION) ? 0x5D2 : 0x5BB), ff8_world_dialog_question_assign_text);
-		replace_call_function(ff8_externals.sub_5484B0 + (FF8_US_VERSION ? 0xBD : 0x96), ff8_world_dialog_question_assign_text);
-		replace_call_function(ff8_externals.sub_5484B0 + (FF8_US_VERSION ? 0x24F : 0x228), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_5484B0 + (FF8_US_VERSION ? 0xBD : 0x131), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_5484B0 + (FF8_US_VERSION ? 0x24F : 0x244), ff8_world_dialog_question_assign_text);
 		replace_call_function(ff8_externals.sub_54D7E0 + (FF8_US_VERSION ? 0x119 : 0x116), ff8_world_dialog_question_assign_text);
-		replace_call_function(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x621 : (FF8_SP_VERSION ? 0x66E : 0x633)), ff8_world_dialog_question_assign_text);
-		replace_call_function(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0xBE4 : (FF8_SP_VERSION ? 0xC31 : 0xBF6)), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x621 : (FF8_SP_VERSION ? 0x66A : 0x62F)), ff8_world_dialog_question_assign_text);
+		replace_call_function(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0xBE4 : (FF8_SP_VERSION ? 0xC99 : 0xC5E)), ff8_world_dialog_question_assign_text);
 	}
 }

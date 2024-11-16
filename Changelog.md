@@ -15,6 +15,7 @@
 - Modding: Fix blending in external textures ( https://github.com/julianxhokaxhiu/FFNx/pull/749 )
 - Modding: Allow modding card names hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/739 )
 - Modding: Add compatibility to LZ4 compression in FS archives ( https://github.com/julianxhokaxhiu/FFNx/pull/741 https://github.com/julianxhokaxhiu/FFNx/pull/743/files )
+- Rendering: Add support for substractive blending ( https://github.com/julianxhokaxhiu/FFNx/pull/750 )
 - Voice: Add support for Worldmap question dialogs
 - Voice: Add support for Auto text in World messages
 
