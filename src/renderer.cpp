@@ -1840,7 +1840,11 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
 
         if (copyData)
         {
-            mem = bgfx::copy(data, texInfo.storageSize);
+            mem = bgfx::alloc(texInfo.storageSize);
+            // Protect from crashes
+            if (mem != NULL) {
+                bx::memCopy(mem->data, data, texInfo.storageSize);
+            }
         }
         else
         {
