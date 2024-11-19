@@ -30,7 +30,7 @@ uint8_t *ff8_exe_card_names = nullptr;
 
 bool ff8_get_exe_path(const char *name, char *target_filename)
 {
-    snprintf(target_filename, MAX_PATH, "%s/exe/%s.msd", direct_mode_path.c_str(), name);
+    snprintf(target_filename, MAX_PATH, "%s/%s/exe/%s.msd", basedir, direct_mode_path.c_str(), name);
     normalize_path(target_filename);
 
     return fileExists(target_filename);
