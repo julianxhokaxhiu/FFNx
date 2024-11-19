@@ -4,6 +4,7 @@
 
 ## Common
 
+- Core: Fix bgfx crash when memory cannot be allocated ( https://github.com/julianxhokaxhiu/FFNx/pull/755 )
 - Voice: Add support for `config.toml` configuration override based on Game Moment ID
 
 ## FF8
