@@ -1,8 +1,10 @@
 # Next
-## FF7
-- Allow loading of field lgp files that have been mangled by Square to break modding.
   
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.0...master
+
+## FF7
+
+- Core: Fix loading field lgp files that might have incorrect headers ( https://github.com/julianxhokaxhiu/FFNx/issues/758 )
 
 # 1.21.0
 
