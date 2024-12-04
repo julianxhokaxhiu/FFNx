@@ -2071,7 +2071,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 			}
 
 			// if there's anything left at this point, reload the affected textures
-			if(palettes && !VREF(texture_set, ogl.external))
+			if(palettes)
 			{
 				for (uint32_t idx = 0; idx < palettes; idx++)
 					newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index + idx]));
