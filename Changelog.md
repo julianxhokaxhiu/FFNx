@@ -6,6 +6,10 @@
 
 - Core: Fix loading field lgp files that might have incorrect headers ( https://github.com/julianxhokaxhiu/FFNx/issues/758 )
 
+## FF8
+
+- External textures: Fix texture not reloaded between fields ( https://github.com/julianxhokaxhiu/FFNx/pull/761 )
+
 # 1.21.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.3...1.21.0
