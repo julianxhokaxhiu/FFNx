@@ -659,8 +659,16 @@ int ff7_read_field_file(char* path)
 		else
 		{
 			data_ptr = *(original_field_data + 0x6 + 0x4 * n); // no more cast needed
-			data_len = *(original_field_data + data_ptr);      // because those variables are unsigned 32 bit int now.
-
+			if (n<(FF7_FIELD_NUM_SECTIONS-1)) // if this isn't the last section
+      {
+        // the lgp might be lying about the length of the section! recalculate it.
+        data_len = *(uint32_t*)(original_field_data + 0x6 + 0x4 * (n + 1)) - *(uint32_t*)(original_field_data + 0x6 + 0x4 * n) - 4;
+      }
+      else
+      {
+        //there is no section after, so we use known_field_buffer_size.
+        data_len = *ff7_externals.known_field_buffer_size - *(uint32_t*)(original_field_data + 0x6 + 0x4 * n) - 4; // known field buffer size is already uint32_t as well.
+      }
 			ff7_field_file_chunked[n].size = data_len;         // no more writign a signed variable into an unsigned area.
 			ff7_field_file_chunked[n].data = new byte[ff7_field_file_chunked[n].size];  // and value will be correct here as well.
 
