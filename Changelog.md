@@ -1,5 +1,5 @@
 # Next
-  
+
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.0...master
 
 ## FF7
