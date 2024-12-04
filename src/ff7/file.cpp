@@ -638,7 +638,7 @@ int ff7_read_field_file(char* path)
 
 	// Attempt to override part of the current field file with chunk files
 	char chunk_file[1024]{0};
-	int data_ptr = 0, data_len = 0;
+	uint32_t data_ptr = 0, data_len = 0, next_data_ptr = 0;
 	FILE* fd;
 
 	for (int n = 0; n < FF7_FIELD_NUM_SECTIONS; n++)
@@ -658,8 +658,21 @@ int ff7_read_field_file(char* path)
 		}
 		else
 		{
-			data_ptr = *(int*)(original_field_data + 0x6 + 0x4 * n);
-			data_len = *(int*)(original_field_data + data_ptr);
+			data_ptr = *(uint32_t*)(original_field_data + 0x6 + 0x4 * n);
+
+			// if this isn't the last section
+			if (n < (FF7_FIELD_NUM_SECTIONS-1))
+			{
+				next_data_ptr = *(uint32_t*)(original_field_data + 0x6 + 0x4 * (n + 1));
+
+				// the lgp might be lying about the length of the section! recalculate it.
+				data_len = next_data_ptr - data_ptr - 0x4;
+			}
+			else
+			{
+				//there is no section after, so we use known_field_buffer_size.
+				data_len = *ff7_externals.known_field_buffer_size - data_ptr - 0x4;
+			}
 
 			ff7_field_file_chunked[n].size = data_len;
 			ff7_field_file_chunked[n].data = new byte[ff7_field_file_chunked[n].size];
