@@ -6,6 +6,10 @@
 
 - Core: Fix loading field lgp files that might have incorrect headers ( https://github.com/julianxhokaxhiu/FFNx/issues/758 )
 
+## FF8
+
+- External textures: Fix texture not reloaded between fields ( https://github.com/julianxhokaxhiu/FFNx/pull/761 )
+
 # 1.21.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.3...1.21.0
@@ -21,7 +25,6 @@
 - Core: Fix crash when `more_debug` option is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/749 )
 - Ambient: Fix missing Battle ID for battles triggered using field opcodes
 - Ambient: Fix Battle ID detection for random encounters in Field
-- External textures: Fix texture not reloaded between fields ( https://github.com/julianxhokaxhiu/FFNx/pull/761 )
 - Modding: Fix blending in external textures ( https://github.com/julianxhokaxhiu/FFNx/pull/749 )
 - Modding: Allow modding card names hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/739 )
 - Modding: Add compatibility to LZ4 compression in FS archives ( https://github.com/julianxhokaxhiu/FFNx/pull/741 https://github.com/julianxhokaxhiu/FFNx/pull/743/files )
