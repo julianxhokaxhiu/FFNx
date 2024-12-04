@@ -638,7 +638,7 @@ int ff7_read_field_file(char* path)
 
 	// Attempt to override part of the current field file with chunk files
 	char chunk_file[1024]{0};
-	int data_ptr = 0, data_len = 0;
+	uint32_t data_ptr = 0, data_len = 0; // make sure no signed overflow can happen.
 	FILE* fd;
 
 	for (int n = 0; n < FF7_FIELD_NUM_SECTIONS; n++)
@@ -658,11 +658,11 @@ int ff7_read_field_file(char* path)
 		}
 		else
 		{
-			data_ptr = *(int*)(original_field_data + 0x6 + 0x4 * n);
-			data_len = *(int*)(original_field_data + data_ptr);
+			data_ptr = *(original_field_data + 0x6 + 0x4 * n); // no more cast needed
+			data_len = *(original_field_data + data_ptr);      // because those variables are unsigned 32 bit int now.
 
-			ff7_field_file_chunked[n].size = data_len;
-			ff7_field_file_chunked[n].data = new byte[ff7_field_file_chunked[n].size];
+			ff7_field_file_chunked[n].size = data_len;         // no more writign a signed variable into an unsigned area.
+			ff7_field_file_chunked[n].data = new byte[ff7_field_file_chunked[n].size];  // and value will be correct here as well.
 
 			memcpy(ff7_field_file_chunked[n].data, original_field_data + data_ptr + 0x4, ff7_field_file_chunked[n].size);
 		}
@@ -673,17 +673,17 @@ int ff7_read_field_file(char* path)
 	*ff7_externals.field_file_buffer = (char*)external_malloc(*ff7_externals.known_field_buffer_size);
 
 	// Build the new field file
-	*(short*)(*ff7_externals.field_file_buffer) = 0x0; // 0x0
-	*(int*)(*ff7_externals.field_file_buffer + 0x2) = FF7_FIELD_NUM_SECTIONS; // 0x2
+	*(short*)(*ff7_externals.field_file_buffer) = 0x0; // 0x0 (no issue here, we are writign a small value)
+	*(int*)(*ff7_externals.field_file_buffer + 0x2) = FF7_FIELD_NUM_SECTIONS; // 0x2 (same here)
 	uint32_t offset = FF7_FIELD_OFFSET;
 	for (int n = 0; n < FF7_FIELD_NUM_SECTIONS; n++)
 	{
 		// Pointer to data section
 		ff7_externals.field_file_section_ptrs[n] = offset;
-		*(int*)(*ff7_externals.field_file_buffer + 0x6 + (0x4 * n)) = ff7_externals.field_file_section_ptrs[n];
+		*(int*)(*ff7_externals.field_file_buffer + 0x6 + (0x4 * n)) = ff7_externals.field_file_section_ptrs[n]; // not sure about this, but leaving it for now.
 
 		// Length of data section
-		*(int*)(*ff7_externals.field_file_buffer + offset) = ff7_field_file_chunked[n].size;
+		*(int*)(*ff7_externals.field_file_buffer + offset) = ff7_field_file_chunked[n].size;                    // same here. hopefuly this fixes it.
 
 		// The data
 		offset += 0x4;
