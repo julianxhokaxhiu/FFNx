@@ -64,7 +64,9 @@ bool SteamManager::requestStats()
     if (trace_all || trace_achievement)
         ffnx_trace("%s - Request user stats sent\n", __func__);
 
-    return SteamUserStats()->RequestCurrentStats();
+    // New Steam behavior is that this is done before the game starts.
+    // We do not need to worry anymore about it
+    return true;
 }
 
 bool SteamManager::setAchievement(int achID)
