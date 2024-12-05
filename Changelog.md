@@ -10,6 +10,10 @@
 
 - External textures: Fix texture not reloaded between fields ( https://github.com/julianxhokaxhiu/FFNx/pull/761 )
 
+## FF8 Steam
+
+- Input: Fix button schema mapping
+
 # 1.21.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.20.3...1.21.0
