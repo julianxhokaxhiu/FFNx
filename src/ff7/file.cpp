@@ -670,9 +670,9 @@ int ff7_read_field_file(char* path)
 			}
 			else
 			{
-          // there is no section after, so we have to trust it.
-          data_len = *(uint32_t*)(original_field_data + data_ptr);
-      }
+				// there is no section after, so we have to trust it.
+				data_len = *(uint32_t*)(original_field_data + data_ptr);
+			}
 
 			ff7_field_file_chunked[n].size = data_len;
 			ff7_field_file_chunked[n].data = new byte[ff7_field_file_chunked[n].size];
