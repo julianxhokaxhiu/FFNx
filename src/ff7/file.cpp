@@ -670,8 +670,8 @@ int ff7_read_field_file(char* path)
 			}
 			else
 			{
-				//there is no section after, so we use known_field_buffer_size.
-				data_len = *ff7_externals.known_field_buffer_size - data_ptr - 0x4;
+				// there is no section after, so we have to trust it.
+				data_len = *(uint32_t*)(original_field_data + data_ptr);
 			}
 
 			ff7_field_file_chunked[n].size = data_len;

@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.1...master
 
+## FF7
+
+- Core: Fix field chunk size calculation for the chunk number 9 ( https://github.com/julianxhokaxhiu/FFNx/pull/763 )
+
 # 1.21.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.0...1.21.1
