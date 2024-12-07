@@ -1,3 +1,7 @@
+## FF7
+
+- Core: Fix crash when loading gameplay mods such as SAC and New Threat caused by my previous commit.
+
 # Next
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.1...master
