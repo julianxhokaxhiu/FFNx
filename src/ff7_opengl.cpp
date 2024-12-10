@@ -436,7 +436,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	//###############################
 	// steam achievement unlock calls
 	//###############################
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 	{
 		// BATTLE SQUARE
 		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7::battle::load_battle_stage);

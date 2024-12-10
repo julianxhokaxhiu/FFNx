@@ -85,7 +85,7 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	if(widescreen_enabled)
 		widescreen.initMovieParamsFromConfig(filename);
 
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 		g_FF7SteamAchievements->initMovieStats(std::string(filename));
 
 	return true;
@@ -115,7 +115,7 @@ retry:
 		ff7_externals.movie_object->movie_end = 1;
 		is_movie_bgfield = false;
 
-		if(steam_edition || enable_steam_achievements)
+		if(enable_steam_achievements)
 			if(g_FF7SteamAchievements->isEndingMovie())
 				g_FF7SteamAchievements->unlockGameProgressAchievement();
 

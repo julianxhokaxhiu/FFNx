@@ -744,7 +744,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	WNDCLASSA WndClass;
 
 	// Init Steam API
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 	{
 		// generate automatically steam_appid.txt
 		if(!steam_edition){
@@ -1044,7 +1044,7 @@ void common_cleanup(struct game_obj *game_object)
 	}
 
 	// Shutdown Steam API
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 		SteamAPI_Shutdown();
 
 	nxAudioEngine.cleanup();
@@ -1291,7 +1291,7 @@ void common_flip(struct game_obj *game_object)
 	}
 
 	// Steamworks SDK API run callbacks
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 		SteamAPI_RunCallbacks();
 
 }
@@ -2808,7 +2808,7 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 uint32_t ff7_get_inserted_cd(void) {
 	int ret = 1;
 
-	if(steam_edition || enable_steam_achievements){
+	if(enable_steam_achievements){
 		if (trace_all || trace_achievement)
 			ffnx_trace("inserted CD: %d, requiredCD: %d\n", *ff7_externals.insertedCD, *ff7_externals.requiredCD);
 
