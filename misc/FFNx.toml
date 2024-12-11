@@ -90,6 +90,10 @@ enable_anisotropic = true
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_bilinear = false
 
+#[INTERNAL TEXTURES]
+# Enable filtering on internal textures that were filtered in original release, and that can be filtered without glitches.
+filter_internal_textures = true
+
 #[LIGHTING]
 # Enable advanced lighting mode with real-time shadows.
 # NOTICE: Parameters such as light direction and color can be edited on the lighting debug window in the FFNx DevTools.

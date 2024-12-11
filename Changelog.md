@@ -1,3 +1,7 @@
+## FF7
+
+- Core: added option to filter what the original game filtered when still using internal textures.
+
 # Next
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.2...master
