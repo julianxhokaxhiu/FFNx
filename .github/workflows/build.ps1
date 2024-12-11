@@ -110,6 +110,8 @@ Remove-Item .dist\pkg\FF7_1998\FF8.reg
 Remove-Item .dist\pkg\FF8_2000\FF7.reg
 Remove-Item .dist\pkg\FFNx_Steam\FF7.reg
 Remove-Item .dist\pkg\FFNx_Steam\FF8.reg
+Remove-Item .dist\pkg\FF7_1998\AF4DN.P
+Remove-Item .dist\pkg\FF8_2000\AF4DN.P
 Move-Item .dist\pkg\FF7_1998\FF7.reg .dist\pkg\FF7_1998\FFNx.reg
 Move-Item .dist\pkg\FF8_2000\FF8.reg .dist\pkg\FF8_2000\FFNx.reg
 Move-Item .dist\pkg\FF8_2000\FFNx.dll .dist\pkg\FF8_2000\eax.dll
