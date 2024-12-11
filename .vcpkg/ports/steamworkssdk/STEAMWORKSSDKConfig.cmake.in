@@ -3,7 +3,7 @@ include(FindPackageHandleStandardArgs)
 if (NOT STEAMWORKSSDK_FOUND)
 	find_library(
 		STEAMWORKSSDK_LIBRARY
-		FFNx_steam_api
+		steam_api
 		PATH_SUFFIXES
 		lib
 		vendor/lib

@@ -299,7 +299,7 @@ add_custom_command(
           ${CMAKE_BINARY_DIR}/bin/AF4DN.P
   # steam_api.dll
   COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/steamworkssdk/${RELEASE_NAME}_steam_api.dll
+          ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/steamworkssdk/steam_api.dll
           ${CMAKE_BINARY_DIR}/bin
   # .pdb
   COMMAND ${CMAKE_COMMAND} -E copy
