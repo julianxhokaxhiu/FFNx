@@ -55,7 +55,18 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	if(ff8) current_state.texture_filter = enable_bilinear && vertextype != TLVERTEX && current_state.texture_set;
 	else if (enable_bilinear && (vertextype != TLVERTEX || mode == MODE_MENU || (current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter)))) current_state.texture_filter = true;
 
-	// some modpath textures have z-sort forced on
+  // since we are no longer disabling all filtering on interal textures, we need to shut it off for the ones that filtering breaks.
+  // don't filter original textures in submarine minigame
+  if (current_state.texture_set && (mode == MODE_SUBMARINE) && !(VREF(texture_set, ogl.external))) // only ff7 has a submarine mode.
+  {
+    current_state.texture_filter = false; // don't filter original submarine textures, this causes thin lines, and original did not. 
+  }
+  // or coaster minigame
+  if (current_state.texture_set && (mode == MODE_COASTER) && !(VREF(texture_set, ogl.external))) // only ff7 has coaster minigame.
+  {
+    current_state.texture_filter = false; // don't filter original coaster textures
+  }
+  // some modpath textures have z-sort forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_zsort) && VREF(texture_set, ogl.external)) defer = true;
 
 	// z-sort by default in menu, unnecessary sorting will be avoided by defer logic
@@ -101,11 +112,37 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 		{
 			VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
 
-			if((uint32_t)VREF(tex_header, file.pc_name) > 32)
-			{
-				// avoid filtering window borders
-				if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win_c_", strlen("menu/btl_win_c_") - 1) && VREF(texture_set, palette_index) == 0) current_state.texture_filter = false;
-			}
+      if ((uint32_t)VREF(tex_header, file.pc_name) > 32)
+      {
+        // avoid filtering window borders
+        if (!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win_c_", strlen("menu/btl_win_c_") - 1) && VREF(texture_set, palette_index) == 0) current_state.texture_filter = false;
+
+        // don't filter original menu textures in ff7, because it introduces glitches
+        if ((VREF(texture_set, ogl.external)))
+        {
+
+        }
+        else
+        {
+          if (!ff8 && (!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win_", strlen("menu/btl_win_") - 1)))
+          {
+            current_state.texture_filter = false; // don't filter original btl_win. 
+          }
+          if (!ff8 && (!_strnicmp(VREF(tex_header, file.pc_name), "menu/usfont_", strlen("menu/usfont_") - 1)))
+          {
+            current_state.texture_filter = false; // or the us menu font. 
+          }
+          if (!ff8 && (!_strnicmp(VREF(tex_header, file.pc_name), "menu/jafont_", strlen("menu/jafont_") - 1)))
+          {
+            current_state.texture_filter = false; // or the japanese menu font either.. 
+          }
+          if (!ff8 && (!_strnicmp(VREF(tex_header, file.pc_name), "flevel/hand", strlen("flevel/hand") - 1)))
+          {
+            current_state.texture_filter = false; // or the field cursor. 
+          }
+
+        }
+      }
 		}
 
 		// z-sort select menu elements everywhere
