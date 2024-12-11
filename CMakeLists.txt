@@ -105,6 +105,34 @@ else()
   set(_DLL_RCSTRVERSION ${_DLL_VERSION})
 endif()
 
+# Choco driver
+set(CHOCO_RELEASE_NAME "FFNx-Choco")
+file(GLOB_RECURSE choco_source_files "${CMAKE_SOURCE_DIR}/choco/*.cpp")
+add_library(${CHOCO_RELEASE_NAME} SHARED ${choco_source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+target_include_directories(
+  ${CHOCO_RELEASE_NAME}
+  PRIVATE "${CMAKE_SOURCE_DIR}/choco"
+)
+target_link_libraries(
+  ${CHOCO_RELEASE_NAME}
+  shlwapi
+)
+target_compile_options(
+  ${CHOCO_RELEASE_NAME}
+  PRIVATE /DVERSION="${_DLL_VERSION}"
+  PRIVATE /D_CRT_SECURE_NO_WARNINGS
+  PRIVATE /DNOMINMAX
+  PRIVATE /Zc:strictStrings-
+  PRIVATE /Zc:__cplusplus
+  PRIVATE /Zc:preprocessor
+  PRIVATE /Qpar
+  PRIVATE /MP
+)
+target_compile_features(${CHOCO_RELEASE_NAME}
+  PRIVATE cxx_std_20
+)
+target_link_options(${CHOCO_RELEASE_NAME} PRIVATE /PDBALTPATH:${CHOCO_RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${CHOCO_RELEASE_NAME}.def)
+
 # Include all the source code files
 file(GLOB_RECURSE source_files "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
@@ -118,6 +146,7 @@ cmrc_add_resource_library(
 )
 
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME})
 target_include_directories(
   ${RELEASE_NAME}
   PRIVATE "${CMAKE_SOURCE_DIR}/src"
@@ -260,6 +289,14 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.dll
           ${CMAKE_BINARY_DIR}/bin
+  # choco .dll
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${CHOCO_RELEASE_NAME}.dll
+          ${CMAKE_BINARY_DIR}/bin
+  # rename choco .dll to AF4DN.P
+  COMMAND ${CMAKE_COMMAND} -E rename
+          ${CMAKE_BINARY_DIR}/bin/${CHOCO_RELEASE_NAME}.dll
+          ${CMAKE_BINARY_DIR}/bin/AF4DN.P
   # steam_api.dll
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/steamworkssdk/${RELEASE_NAME}_steam_api.dll

@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.2...master
 
+## FF8 Steam
+
+- Choco: Create a custom driver that allows to launch the mini game without the need of a custom protocol
+
 # 1.21.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.1...1.21.2
