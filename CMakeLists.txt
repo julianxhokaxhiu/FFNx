@@ -392,7 +392,7 @@ add_custom_command(
 
 # CPU INFO
 add_custom_command(
-  TARGET ${RELEASE_NAME}
+  TARGET ${CHOCO_RELEASE_NAME}
   PRE_BUILD
   # Get CPU info
   COMMAND
