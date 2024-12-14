@@ -1,6 +1,14 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.2...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.3...master
+
+# 1.21.3
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.2...1.21.3
+
+## FF7 Steam
+
+- Achievements: Fix unlocking achievements when using Steam
 
 ## FF8 Steam
 
