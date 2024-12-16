@@ -1246,6 +1246,9 @@ void common_flip(struct game_obj *game_object)
 	// Update day night time cycle
 	if (!ff8 && enable_time_cycle) ff7::time.update();
 
+	// Handle main menu background music
+	handle_mainmenu_playback();
+
 	// FF8 does not clear the screen properly in the card game module
 	if (ff8)
 	{

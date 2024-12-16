@@ -23,5 +23,6 @@
 
 #include <stdint.h>
 
+void handle_mainmenu_playback();
 void ff7_play_midi(uint32_t music_id);
 void music_init();

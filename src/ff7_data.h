@@ -50,7 +50,7 @@ static struct game_mode ff7_modes[] = {
 	{FF7_MODE_BATTLE_MENU, "MODE_BATTLE_MENU", MODE_MENU,        true  },
 	{FF7_MODE_UNKNOWN18,   "MODE_UNKNOWN18",   MODE_UNKNOWN,     false },
 	{FF7_MODE_EXIT,        "MODE_EXIT",        MODE_EXIT,        true  },
-	{FF7_MODE_MAIN_MENU,   "MODE_MAIN_MENU",   MODE_MENU,        true  },
+	{FF7_MODE_MAIN_MENU,   "MODE_MAIN_MENU",   MODE_MAIN_MENU,   true  },
 	{FF7_MODE_UNKNOWN21,   "MODE_UNKNOWN21",   MODE_UNKNOWN,     false },
 	{FF7_MODE_INTRO,       "MODE_INTRO",       MODE_INTRO,       true  },
 	{FF7_MODE_SWIRL,       "MODE_SWIRL",       MODE_SWIRL,       true  },
@@ -121,6 +121,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_set_main_loop(MODE_CREDITS, credits_main_loop);
 	menu_main_loop = get_absolute_value(main_loop, 0x62E);
 	ff7_set_main_loop(MODE_MENU, menu_main_loop);
+	ff7_set_main_loop(MODE_MAIN_MENU, menu_main_loop);
 	battle_main_loop = get_absolute_value(main_loop, 0x89A);
 	ff7_set_main_loop(MODE_BATTLE, battle_main_loop);
 	field_main_loop = get_absolute_value(main_loop, 0x8F8);
@@ -299,7 +300,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.config_menu_sub = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.menu_sub_6FEDB0 = ff7_externals.menu_subs_call_table[10];
 
-  ff7_externals.config_initialize = get_relative_call(main_init_loop, 0x4B0);
+	ff7_externals.config_initialize = get_relative_call(main_init_loop, 0x4B0);
 
 	ff7_externals.menu_tutorial_window_state = (BYTE*)get_absolute_value((uint32_t)ff7_externals.menu_tutorial_sub_6C49FD, 0x9);
 	ff7_externals.menu_tutorial_window_text_ptr = (DWORD*)get_absolute_value((uint32_t)ff7_externals.menu_tutorial_sub_6C49FD, 0x18);

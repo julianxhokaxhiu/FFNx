@@ -45,6 +45,31 @@ uint8_t ff7_last_akao_call_type = 0;
 uint32_t ff7_last_music_id = 0;
 int16_t ff7_next_field_music_relative_id = -1;
 
+void handle_mainmenu_playback()
+{
+	struct game_mode *mode = getmode_cached();
+	static bool is_main_menu = false;
+
+	switch (mode->driver_mode)
+	{
+	case MODE_MAIN_MENU:
+		if (!is_main_menu)
+		{
+			is_main_menu = true;
+
+			nxAudioEngine.playMusic("main_menu", 0xFF, 0);
+		}
+		break;
+	default:
+		if (is_main_menu)
+		{
+			nxAudioEngine.stopMusic();
+			is_main_menu = false;
+		}
+		break;
+	}
+}
+
 void music_flush()
 {
 	nxAudioEngine.flush();

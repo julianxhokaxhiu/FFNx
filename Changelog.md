@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.3...master
 
+## Commmon
+
+- Music: Add the ability to play a custom `main_menu` music file on the new game screen.
+
 # 1.21.3
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.2...1.21.3
