@@ -40,3 +40,38 @@ bool dirExists(const char *dirname)
     // Use stat to keep compatibility with 7th Heaven
     return stat(dirname, &dummy) == 0;
 }
+
+std::string getCopyrightInfoFromExe(const std::string& filePath)
+{
+    // Get the size of the version information
+    DWORD handle = 0;
+    DWORD versionInfoSize = GetFileVersionInfoSize(filePath.c_str(), &handle);
+    if (versionInfoSize == 0) return "Failed to get version info size.";
+
+    // Allocate memory to hold version information
+    std::vector<char> versionData(versionInfoSize);
+    if (!GetFileVersionInfo(filePath.c_str(), handle, versionInfoSize, versionData.data())) return "Failed to get version information.";
+
+    // Query the translation table to locate the language and code page
+    struct LANGANDCODEPAGE {
+        WORD language;
+        WORD codePage;
+    } *translation = nullptr;
+
+    UINT translationSize = 0;
+    if (!VerQueryValue(versionData.data(), "\\VarFileInfo\\Translation", (LPVOID*)&translation, &translationSize)) return "Failed to query translation information.";
+
+    if (translationSize == 0) return "No translation information available.";
+
+    // Use the first language and code page in the translation table
+    char subBlock[50];
+    snprintf(subBlock, sizeof(subBlock), "\\StringFileInfo\\%04x%04x\\LegalCopyright", translation[0].language, translation[0].codePage);
+
+    // Query the copyright information
+    char* copyrightInfo = nullptr;
+    UINT infoSize = 0;
+    if (!VerQueryValue(versionData.data(), subBlock, (LPVOID*)&copyrightInfo, &infoSize) || infoSize == 0) return "Copyright information not found.";
+
+    // Return the copyright information as a std::string
+    return std::string(copyrightInfo, infoSize);
+}

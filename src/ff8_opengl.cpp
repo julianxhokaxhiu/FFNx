@@ -433,16 +433,16 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgdwPOV[1] = -1;
 		ff8_externals.dinput_gamepad_state->rgdwPOV[2] = -1;
 		ff8_externals.dinput_gamepad_state->rgdwPOV[3] = -1;
-		ff8_externals.dinput_gamepad_state->rgbButtons[0] = gamepad.IsPressed(XINPUT_GAMEPAD_X) ? 0x80 : 0; // Square
-		ff8_externals.dinput_gamepad_state->rgbButtons[1] = gamepad.IsPressed(XINPUT_GAMEPAD_A) ? 0x80 : 0; // Cross
-		ff8_externals.dinput_gamepad_state->rgbButtons[2] = gamepad.IsPressed(XINPUT_GAMEPAD_B) ? 0x80 : 0; // Circle
+		ff8_externals.dinput_gamepad_state->rgbButtons[0] = gamepad.IsPressed(steam_stock_launcher ? XINPUT_GAMEPAD_A : XINPUT_GAMEPAD_X) ? 0x80 : 0; // Cross (Steam)/Square
+		ff8_externals.dinput_gamepad_state->rgbButtons[1] = gamepad.IsPressed(steam_stock_launcher ? XINPUT_GAMEPAD_B : XINPUT_GAMEPAD_A) ? 0x80 : 0; // Circle (Steam)/Cross
+		ff8_externals.dinput_gamepad_state->rgbButtons[2] = gamepad.IsPressed(steam_stock_launcher ? XINPUT_GAMEPAD_X : XINPUT_GAMEPAD_B) ? 0x80 : 0; // Square (Steam)/Circle
 		ff8_externals.dinput_gamepad_state->rgbButtons[3] = gamepad.IsPressed(XINPUT_GAMEPAD_Y) ? 0x80 : 0; // Triangle
 		ff8_externals.dinput_gamepad_state->rgbButtons[4] = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER) ? 0x80 : 0; // L1
 		ff8_externals.dinput_gamepad_state->rgbButtons[5] = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) ? 0x80 : 0; // R1
-		ff8_externals.dinput_gamepad_state->rgbButtons[6] = gamepad.leftTrigger > 0.85f ? 0x80 : 0; // L2
-		ff8_externals.dinput_gamepad_state->rgbButtons[7] = gamepad.rightTrigger > 0.85f ? 0x80 : 0; // R2
-		ff8_externals.dinput_gamepad_state->rgbButtons[8] = gamepad.IsPressed(XINPUT_GAMEPAD_BACK) ? 0x80 : 0; // SELECT
-		ff8_externals.dinput_gamepad_state->rgbButtons[9] = gamepad.IsPressed(XINPUT_GAMEPAD_START) ? 0x80 : 0; // START
+		ff8_externals.dinput_gamepad_state->rgbButtons[6] = (steam_stock_launcher ? gamepad.IsPressed(XINPUT_GAMEPAD_BACK) : gamepad.leftTrigger > 0.85f) ? 0x80 : 0; // SELECT (Steam)/L2
+		ff8_externals.dinput_gamepad_state->rgbButtons[7] = (steam_stock_launcher ? gamepad.IsPressed(XINPUT_GAMEPAD_START) : gamepad.rightTrigger > 0.85f) ? 0x80 : 0; // START (Steam)/R2
+		ff8_externals.dinput_gamepad_state->rgbButtons[8] = (steam_stock_launcher ? gamepad.leftTrigger > 0.85f : gamepad.IsPressed(XINPUT_GAMEPAD_BACK)) ? 0x80 : 0; // L2 (Steam)/SELECT
+		ff8_externals.dinput_gamepad_state->rgbButtons[9] = (steam_stock_launcher ? gamepad.rightTrigger > 0.85f : gamepad.IsPressed(XINPUT_GAMEPAD_START)) ? 0x80 : 0; // R2 (Steam)/START
 		ff8_externals.dinput_gamepad_state->rgbButtons[10] = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB) ? 0x80 : 0; // L3
 		ff8_externals.dinput_gamepad_state->rgbButtons[11] = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) ? 0x80 : 0; // R3
 		ff8_externals.dinput_gamepad_state->rgbButtons[12] = gamepad.IsPressed(0x400) ? 0x80 : 0; // PS Button
@@ -565,26 +565,26 @@ int ff8_draw_gamepad_icon_or_keyboard_key(int a1, ff8_draw_menu_sprite_texture_i
 
 			switch (rgbButton)
 			{
-				case 0: // Square
-					return 135;
-				case 1: // Cross
-					return 134;
-				case 2: // Circle
-					return 133;
+				case 0: // Cross (Steam)/Square
+					return steam_stock_launcher ? 134 : 135;
+				case 1: // Circle (Steam)/Cross
+					return steam_stock_launcher ? 133 : 134;
+				case 2: // Square (Steam)/Circle
+					return steam_stock_launcher ? 135 : 133;
 				case 3: // Triangle
 					return 132;
 				case 4: // L1
 					return 130;
 				case 5: // R1
 					return 131;
-				case 6: // L2
-					return 128;
-				case 7: // R2
-					return 129;
-				case 8: // SELECT
-					return 136;
-				case 9: // START
-					return 139;
+				case 6: // SELECT (Steam)/L2
+					return steam_stock_launcher ? 136 : 128;
+				case 7: // START (Steam)/R2
+					return steam_stock_launcher ? 139 : 129;
+				case 8: // L2 (Steam)/SELECT
+					return steam_stock_launcher ? 128 : 136;
+				case 9: // R2 (Steam)/START
+					return steam_stock_launcher ? 129 : 139;
 			}
 		}
 
@@ -1147,6 +1147,29 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_function(ff8_externals.dinput_init_gamepad, ff8_init_gamepad);
 	replace_function(ff8_externals.dinput_update_gamepad_status, ff8_update_gamepad_status);
 	replace_function(ff8_externals.dinput_get_input_device_capabilities_number_of_buttons, ff8_get_input_device_capabilities_number_of_buttons);
+
+	if (steam_stock_launcher)
+	{
+		// Create ff8input.cfg with the same default values than the FF8_Launcher
+
+		// When the game starts without ff8input.cfg file
+		patch_code_byte(ff8_externals.input_init + 0x29, 225); // 226 => 225
+		patch_code_byte(ff8_externals.input_init + 0x3C, 224); // 225 => 224
+		patch_code_byte(ff8_externals.input_init + 0x53, 226); // 224 => 226
+		patch_code_byte(ff8_externals.input_init + 0xA7, 232); // 230 => 232
+		patch_code_byte(ff8_externals.input_init + 0xBA, 233); // 231 => 233
+		patch_code_byte(ff8_externals.input_init + 0xD1, 230); // 232 => 230
+		patch_code_byte(ff8_externals.input_init + 0xE4, 231); // 233 => 231
+
+		// When the player reset the controls in the game menu
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0xD8, 225); // 226 => 225
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0xEB, 224); // 225 => 224
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x102, 226); // 224 => 226
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x156, 232); // 230 => 232
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x169, 233); // 231 => 233
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x180, 230); // 232 => 230
+		patch_code_byte(ff8_externals.ff8input_cfg_reset + 0x193, 231); // 233 => 231
+	}
 
 	// #####################
 	// Analog 360 patch

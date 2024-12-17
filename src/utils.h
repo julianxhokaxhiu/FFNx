@@ -139,3 +139,4 @@ inline long double elapsedMicroseconds(std::chrono::time_point<std::chrono::high
 
 bool fileExists(const char *filename);
 bool dirExists(const char *dirname);
+std::string getCopyrightInfoFromExe(const std::string& filePath);

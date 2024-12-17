@@ -118,6 +118,9 @@ uint32_t ff7_do_reset = false;
 // global FF7/FF8 flag, check if is steam edition
 uint32_t steam_edition = false;
 
+// global FF7/FF8 flag, check if using the steam stock launcher
+uint32_t steam_stock_launcher = false;
+
 // global FF7 flag, check if is eStore edition
 uint32_t estore_edition = false;
 
@@ -3084,6 +3087,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				ffnx_trace("Detected Steam edition.\n");
 
 				steam_edition = true;
+
+				// Detect if FF8 Stock Launcher
+				if (contains(getCopyrightInfoFromExe("FF8_Launcher.exe"), "SQUARE ENIX CO., LTD"))
+				{
+					steam_stock_launcher = true;
+					ffnx_trace("Detected Steam stock launcher.\n");
+				}
 
 				// Steam edition contains movies unpacked
 				enable_ffmpeg_videos = true;
