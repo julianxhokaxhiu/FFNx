@@ -288,7 +288,7 @@ void NxAudioEngine::unloadSFXChannel(int channel)
 	}
 }
 
-bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning, bool loop)
+bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning, bool loop, float volume)
 {
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 	int _curId = id;
@@ -324,6 +324,9 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 	{
 		unloadSFXChannel(channel);
 	}
+
+	// Reset state
+	options->volume = volume;
 
 	auto node = nxAudioEngineConfig[NxAudioEngineLayer::NXAUDIOENGINE_SFX][name];
 	if (node)
@@ -382,7 +385,7 @@ bool NxAudioEngine::playSFX(const char* name, int id, int channel, float panning
 		if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: panning overridden because of external_sfx_always_centered\n", __func__);
 	}
 
-	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: name=%s,id=%d,channel=%d,panning=%f\n", __func__, name, options->id, channel, panning);
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: name=%s,id=%d,channel=%d,panning=%f,volume=%f\n", __func__, name, options->id, channel, panning, options->volume);
 
 	if (options->stream != nullptr)
 	{
@@ -461,6 +464,8 @@ void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 	NxAudioEngineSFX *options = &_sfxChannels[channel - 1];
 
 	options->volume = volume;
+
+	ffnx_trace("NxAudioEngine::%s: channel=%d,volume=%f\n", __func__, channel, volume);
 
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();

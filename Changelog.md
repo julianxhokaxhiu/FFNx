@@ -6,6 +6,10 @@
 
 - Music: Add the ability to play a custom `main_menu` music file on the new game screen.
 
+## FF8
+
+- SFX: Fix incorrect volume assignment when playing sfx effects using the external layer
+
 # 1.21.3
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.2...1.21.3
