@@ -198,6 +198,7 @@ bool ff7_sfx_play_layered(float panning, int id, int channel)
 		sprintf(track_name, "%s_%d_%d", get_current_field_name(), *common_externals.current_triangle_id, id);
 		break;
 	case MODE_MENU:
+	case MODE_MAIN_MENU:
 		sprintf(track_name, "menu_%d", id);
 		break;
 	case MODE_WORLDMAP:
@@ -263,6 +264,7 @@ bool ff8_sfx_play_layered(int channel, int id, int volume, float panning)
 		if (!playing) sprintf(track_name, "%s_%d", get_current_field_name(), id);
 		break;
 	case MODE_MENU:
+	case MODE_MAIN_MENU:
 		sprintf(track_name, "menu_%d", id);
 		break;
 	case MODE_WORLDMAP:

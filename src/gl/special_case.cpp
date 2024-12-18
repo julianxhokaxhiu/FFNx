@@ -46,20 +46,20 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	if(vertextype != TLVERTEX && current_state.texture_set && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
 
 	// modpath textures in menu should always be filtered
-	if(mode == MODE_MENU && current_state.texture_set && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
+	if((mode == MODE_MENU || mode == MODE_MAIN_MENU) && current_state.texture_set && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
 
 	// some modpath textures have filtering forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter) && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
 
 	// Texture filtering mostly does not work well in FF8
 	if(ff8) current_state.texture_filter = enable_bilinear && vertextype != TLVERTEX && current_state.texture_set;
-	else if (enable_bilinear && (vertextype != TLVERTEX || mode == MODE_MENU || (current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter)))) current_state.texture_filter = true;
+	else if (enable_bilinear && (vertextype != TLVERTEX || mode == MODE_MENU || mode == MODE_MAIN_MENU || (current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter)))) current_state.texture_filter = true;
 
 	// some modpath textures have z-sort forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_zsort) && VREF(texture_set, ogl.external)) defer = true;
 
 	// z-sort by default in menu, unnecessary sorting will be avoided by defer logic
-	if(mode == MODE_MENU) defer = true;
+	if(mode == MODE_MENU || mode == MODE_MAIN_MENU) defer = true;
 
 	if(!ff8)
 	{

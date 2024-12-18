@@ -1275,6 +1275,7 @@ void common_flip(struct game_obj *game_object)
 				{
 					// Skip reset on these mode(s)
 					case MODE_MENU:
+					case MODE_MAIN_MENU:
 					case MODE_GAMEOVER:
 					case MODE_CREDITS:
 						ff7_do_reset = false;
@@ -1315,7 +1316,7 @@ void common_clear(uint32_t clear_color, uint32_t clear_depth, uint32_t unknown, 
 	if (!ff8 && enable_lighting) newRenderer.clearShadowMap();
 
 	newRenderer.setClearFlags(
-		clear_color || mode == MODE_MENU || mode == MODE_CONDOR,
+		clear_color || mode == MODE_MENU || mode == MODE_MAIN_MENU || mode == MODE_CONDOR,
 		clear_depth
 	);
 }

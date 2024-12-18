@@ -439,7 +439,7 @@ uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struc
 			{
 				if (trace_all) ffnx_trace("gl_defer_sorted_draw: blend_mode != BLEND_AVG - blend_mode: %u\n", current_state.blend_mode);
 				// be conservative with non-standard blending modes
-				if (mode != MODE_MENU && mode != MODE_BATTLE) {
+				if (mode != MODE_MENU && mode != MODE_MAIN_MENU && mode != MODE_BATTLE) {
 					if (trace_all) ffnx_trace("gl_defer_sorted_draw: mode != MODE_MENU && mode != MODE_BATTLE - mode: %u\n", mode);
 					return false;
 				}
