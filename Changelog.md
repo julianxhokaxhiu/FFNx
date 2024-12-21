@@ -6,6 +6,10 @@
 
 - Music: Add the ability to play a custom `main_menu` music file on the new game screen.
 
+## FF7
+
+- Rendering: Add uncrop option to remove black bars from top/bottom of the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/767 )
+
 ## FF8
 
 - SFX: Fix incorrect volume assignment when playing sfx effects using the external layer
