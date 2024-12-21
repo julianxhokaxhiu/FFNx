@@ -51,6 +51,11 @@ namespace ff7::field
         return widescreen_enabled && widescreen.getMode() != WM_DISABLED;
     }
 
+    inline bool is_fieldmap_uncropped()
+    {
+        return enable_uncrop && widescreen.getMode() != WM_DISABLED;
+    }
+
     inline float field_get_linear_interpolated_value_float(float initial_value, float final_value, int n_steps, int step_idx)
     {
         return std::lerp(initial_value, final_value, step_idx / (float)n_steps);

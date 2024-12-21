@@ -154,8 +154,11 @@ namespace ff7::field
         if(widescreen_enabled)
         {
             x -= abs(wide_viewport_x);
-            y -= ff7_field_center ? 16 : 0;
             width += (wide_viewport_width - game_width);
+        }
+        if(enable_uncrop)
+        {
+            y -= ff7_field_center ? 16 : 0;
             height += 32;
         }
         ff7_externals.field_sub_63AC3F(x, y, width, height);

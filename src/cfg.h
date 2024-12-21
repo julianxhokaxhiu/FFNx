@@ -99,6 +99,7 @@ extern long window_size_x;
 extern long window_size_y;
 extern long internal_resolution_scale;
 extern long aspect_ratio;
+extern bool enable_uncrop;
 extern bool fullscreen;
 extern bool borderless;
 extern long refresh_rate;

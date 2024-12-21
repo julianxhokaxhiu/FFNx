@@ -127,10 +127,10 @@ namespace ff7::field
     {
         const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
         const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
-        const int top_offset = 256 + (widescreen_enabled ? 8 : 0);
-        const int bottom_offset = widescreen_enabled ? 8 : 0;
+        const int top_offset = 256 + (enable_uncrop ? 8 : 0);
+        const int bottom_offset = enable_uncrop ? 8 : 0;
         const int half_width = is_fieldmap_wide() ? ceil(wide_viewport_width / 4) : 160;
-        const int half_height = widescreen_enabled ? 120 : 112;
+        const int half_height = enable_uncrop ? 120 : 112;
 
         if(tile_position->x <= bg_position->x - left_offset || tile_position->x >= bg_position->x + right_offset)
             tile_position->x += (tile_position->x >= bg_position->x - half_width) ? -layer3_width : layer3_width;
@@ -167,14 +167,14 @@ namespace ff7::field
         else
             z_value = 0.9998;
 
-        const bool do_increase_height = widescreen_enabled;
+        const bool do_increase_height = enable_uncrop;
         const bool do_increase_width = is_fieldmap_wide() && (*ff7_externals.field_triggers_header)->bg3_width < ceil(wide_viewport_width / 2);
         const int layer3_width = (*ff7_externals.field_triggers_header)->bg3_width * (do_increase_width ? 2 : 1);
         const int layer3_height = (*ff7_externals.field_triggers_header)->bg3_height * (do_increase_height ? 2 : 1);
         const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
         const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
-        const int top_offset = 256 + (widescreen_enabled ? 8 : 0);
-        const int bottom_offset = widescreen_enabled ? 8 : 0;
+        const int top_offset = 256 + (enable_uncrop ? 8 : 0);
+        const int bottom_offset = enable_uncrop ? 8 : 0;
 
         for(int i = 0; i < *ff7_externals.field_layer3_tiles_num; i++)
         {
@@ -202,7 +202,7 @@ namespace ff7::field
                                         layer3_tiles[tile_index].v, layer3_tiles[tile_index].palette_index, page);
         }
 
-        if(widescreen_enabled)
+        if(widescreen_enabled || enable_uncrop)
         {
             // Apply repeat x-y for background layer 4 tiles
             std::vector<vector2<int>> tile_offsets;
@@ -250,8 +250,8 @@ namespace ff7::field
     {
         const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
         const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
-        const int top_offset = 256 + (widescreen_enabled ? 8 : 0);
-        const int bottom_offset = widescreen_enabled ? 8 : 0;
+        const int top_offset = 256 + (enable_uncrop ? 8 : 0);
+        const int bottom_offset = enable_uncrop ? 8 : 0;
         const int half_width = is_fieldmap_wide() ? ceil(wide_viewport_width / 4) : 160;
 
         if(tile_position->x <= bg_position->x - left_offset || tile_position->x >= bg_position->x + right_offset)
@@ -289,14 +289,14 @@ namespace ff7::field
             initial_pos.y = ((ff7_field_center ? 232 : 224) - bg_position.y) * field_bg_multiplier;
             float z_value = ff7_externals.field_layer_sub_623C0F(ff7_externals.field_camera_rotation_matrix_CFF3D8, ff7_externals.modules_global_object->field_AE, 0, 0);
 
-            const bool do_increase_height = widescreen_enabled;
+            const bool do_increase_height = enable_uncrop;
             const bool do_increase_width = is_fieldmap_wide() && (*ff7_externals.field_triggers_header)->bg4_width < ceil(wide_viewport_width / 2);
             const int layer4_width = (*ff7_externals.field_triggers_header)->bg4_width * (do_increase_width ? 2 : 1);
             const int layer4_height = (*ff7_externals.field_triggers_header)->bg4_height * (do_increase_height ? 2 : 1);
             const int left_offset = 352 + (is_fieldmap_wide() ? abs(wide_viewport_x) : 0);
             const int right_offset = is_fieldmap_wide() ? abs(wide_viewport_x) : 0;
-            const int top_offset = 256 + (widescreen_enabled ? 8 : 0);
-            const int bottom_offset = widescreen_enabled ? 8 : 0;
+            const int top_offset = 256 + (enable_uncrop ? 8 : 0);
+            const int bottom_offset = enable_uncrop ? 8 : 0;
 
             for(int i = 0; i < *ff7_externals.field_layer4_tiles_num; i++)
             {
@@ -326,7 +326,7 @@ namespace ff7::field
                 }
             }
 
-            if(widescreen_enabled)
+            if(widescreen_enabled || enable_uncrop)
             {
                 // Apply repeat x-y for background layer 4 tiles
                 std::vector<vector2<int>> tile_offsets;
@@ -420,10 +420,13 @@ namespace ff7::field
         float half_width = 160;
         auto camera_range = field_triggers_header_ptr->camera_range;
 
-        if(widescreen_enabled && is_fieldmap_wide())
+        if(widescreen_enabled || enable_uncrop)
         {
             camera_range = widescreen.getCameraRange();
+        }
 
+        if(is_fieldmap_wide())
+        {
             // Adjustment to prevent scrolling stopping one pixel too early
             camera_range.left += 1;
             camera_range.right -= 1;
@@ -480,10 +483,13 @@ namespace ff7::field
         float half_width = 160;
         auto camera_range = trigger_header->camera_range;
 
-        if(widescreen_enabled && is_fieldmap_wide())
+        if (enable_uncrop || widescreen_enabled)
         {
             camera_range = widescreen.getCameraRange();
+        }
 
+        if(is_fieldmap_wide())
+        {
             // This centers the background if necessary
             int cameraRangeSize = camera_range.right - camera_range.left;
             half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
@@ -543,12 +549,23 @@ namespace ff7::field
         float half_width = 160 + std::min(53, cameraRangeSize / 2 - 160);
 
         point->x += widescreen.getHorizontalOffset();
-        point->y += widescreen.getVerticalOffset();
 
         if (point->x > camera_range.right - half_width)
             point->x = camera_range.right - half_width;
         if (point->x < camera_range.left + half_width)
             point->x = camera_range.left + half_width;
+    }
+
+    void field_uncropped_height_clip_with_camera_range(vector2<short>* point)
+    {
+        if(!widescreen.isScriptedClipEnabled())
+        {
+            return;
+        }
+
+        auto camera_range = widescreen.getCameraRange();
+
+        point->y += widescreen.getVerticalOffset();
 
         if(widescreen.isScriptedVerticalClipEnabled())
         {
@@ -642,6 +659,9 @@ namespace ff7::field
 
                 if(is_fieldmap_wide())
                     field_widescreen_width_clip_with_camera_range(&world_pos);
+                if(is_fieldmap_uncropped())
+                    field_uncropped_height_clip_with_camera_range(&world_pos);
+                
 
                 *ff7_externals.scripted_world_initial_pos_x = -world_pos.x;
                 *ff7_externals.scripted_world_initial_pos_y = -world_pos.y;
@@ -653,6 +673,8 @@ namespace ff7::field
                 world_pos = {-(ff7_externals.modules_global_object->field_A), -(ff7_externals.modules_global_object->field_C)};
                 if(is_fieldmap_wide())
                     field_widescreen_width_clip_with_camera_range(&world_pos);
+                if(is_fieldmap_uncropped())
+                    field_uncropped_height_clip_with_camera_range(&world_pos);
 
                 *ff7_externals.field_curr_delta_world_pos_x = -world_pos.x;
                 *ff7_externals.field_curr_delta_world_pos_y = -world_pos.y;
@@ -667,6 +689,8 @@ namespace ff7::field
                 world_pos = {(-*ff7_externals.field_curr_delta_world_pos_x), -(*ff7_externals.field_curr_delta_world_pos_y)};
                 if(is_fieldmap_wide())
                     field_widescreen_width_clip_with_camera_range(&world_pos);
+                if(is_fieldmap_uncropped())
+                    field_uncropped_height_clip_with_camera_range(&world_pos);
 
                 *ff7_externals.scripted_world_initial_pos_x = -world_pos.x;
                 *ff7_externals.scripted_world_initial_pos_y = -world_pos.y;
@@ -674,6 +698,8 @@ namespace ff7::field
                 world_pos = {-(ff7_externals.modules_global_object->field_A), -(ff7_externals.modules_global_object->field_C)};
                 if(is_fieldmap_wide())
                     field_widescreen_width_clip_with_camera_range(&world_pos);
+                if(is_fieldmap_uncropped())
+                    field_uncropped_height_clip_with_camera_range(&world_pos);
 
                 *ff7_externals.scripted_world_final_pos_x = -world_pos.x;
                 *ff7_externals.scripted_world_final_pos_y = -world_pos.y;
@@ -776,6 +802,8 @@ namespace ff7::field
                         field_widescreen_width_clip_with_camera_range(&world_pos);
                         *ff7_externals.scripted_world_initial_pos_x = -world_pos.x;
                     }
+                    if(is_fieldmap_uncropped())
+                        field_uncropped_height_clip_with_camera_range(&world_pos);
 
                     std::function<int(int, int, int, int)> field_get_interpolated_value = ff7_externals.modules_global_object->world_move_mode == 5 ?
                         ff7_externals.field_get_linear_interpolated_value : ff7_externals.field_get_smooth_interpolated_value;
@@ -831,6 +859,8 @@ namespace ff7::field
                 field_widescreen_width_clip_with_camera_range(&world_pos);
                 *ff7_externals.field_curr_delta_world_pos_x = -world_pos.x;
             }
+            if(is_fieldmap_uncropped())
+                field_uncropped_height_clip_with_camera_range(&world_pos);
         }
 
         if(is_position_valid(field_curr_delta_world_pos))
