@@ -204,9 +204,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_call_function(ff7_externals.battle_set_do_render_menu_call, ff7::battle::battle_menu_enter);
 
 	// #####################
-	// widescreen
+	// widescreen / uncrop
 	// #####################
-	if(widescreen_enabled)
+	if(widescreen_enabled || enable_uncrop)
 		ff7_widescreen_hook_init();
 
 	if (enable_time_cycle)

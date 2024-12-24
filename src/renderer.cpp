@@ -1722,6 +1722,22 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     scissorWidth = getInternalCoordX(width);
     scissorHeight = getInternalCoordY(height);
 
+    // This removes the black bars on the top and bottom of the screen
+    if (enable_uncrop)
+    {
+        bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
+        if((is_movie_playing && widescreen.getMovieMode() == WM_DISABLED))
+        {
+            return;
+        }
+
+        if(y == 16 && height == 448)
+        {
+            scissorOffsetY = getInternalCoordY(0.0);
+            scissorHeight = getInternalCoordY(480);
+        }
+    }
+
     if(!widescreen_enabled) return;
 
     struct game_mode* mode = getmode_cached();
@@ -1743,13 +1759,6 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
                     return;
                 }
 
-                // This removes the black bars on the top and bottom of the screen
-                if(y == 16 && height == 448)
-                {
-                    scissorOffsetY = getInternalCoordY(0.0);
-                    scissorHeight = getInternalCoordY(480);
-                }
-
                 // This changes the scissor width and makes it bigger to fit widescreen
                 if(x == 0 && width == game_width)
                     scissorWidth = getInternalCoordX(wide_viewport_width);
@@ -1759,13 +1768,6 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
             break;
         case MODE_SWIRL:
             {
-                // This removes the black bars on the top and bottom of the screen
-                if(y == 16 && height == 448)
-                {
-                    scissorOffsetY = getInternalCoordY(0.0);
-                    scissorHeight = getInternalCoordY(480);
-                }
-
                 // This changes the scissor width and makes it bigger to fit widescreen
                 if(x == 0 && width == game_width)
                     scissorWidth = getInternalCoordX(wide_viewport_width);

@@ -58,6 +58,11 @@ internal_resolution_scale = 0
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 aspect_ratio = 0
 
+#[UNCROP]
+# Uncrops the image to remove the black bars on the top and bottom of the screen.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_uncrop = false
+
 #[ENABLE VSYNC]
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_vsync = true
