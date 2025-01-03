@@ -31,6 +31,11 @@
 
 #define IMGUI_VIEW_ID 255
 
+inline bool Overlay::IsVkDown(int vk)
+{
+    return (::GetKeyState(vk) & 0x8000) != 0;
+}
+
 // Updates the mouse position
 void Overlay::UpdateMousePos()
 {
@@ -233,28 +238,28 @@ bool Overlay::init(bgfx::ProgramHandle program, int width, int height)
     ImGui::GetMainViewport()->PlatformHandleRaw = gameHwnd;
 
     // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array that we will update during the application lifetime.
-    io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-    io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-    io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-    io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-    io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-    io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
-    io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
-    io.KeyMap[ImGuiKey_Home] = VK_HOME;
-    io.KeyMap[ImGuiKey_End] = VK_END;
-    io.KeyMap[ImGuiKey_Insert] = VK_INSERT;
-    io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-    io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-    io.KeyMap[ImGuiKey_Space] = VK_SPACE;
-    io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-    io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-    io.KeyMap[ImGuiKey_KeypadEnter] = VK_RETURN;
-    io.KeyMap[ImGuiKey_A] = 'A';
-    io.KeyMap[ImGuiKey_C] = 'C';
-    io.KeyMap[ImGuiKey_V] = 'V';
-    io.KeyMap[ImGuiKey_X] = 'X';
-    io.KeyMap[ImGuiKey_Y] = 'Y';
-    io.KeyMap[ImGuiKey_Z] = 'Z';
+    io.AddKeyEvent(ImGuiKey_Tab, IsVkDown(VK_TAB));
+    io.AddKeyEvent(ImGuiKey_LeftArrow, IsVkDown(VK_LEFT));
+    io.AddKeyEvent(ImGuiKey_RightArrow, IsVkDown(VK_RIGHT));
+    io.AddKeyEvent(ImGuiKey_UpArrow, IsVkDown(VK_UP));
+    io.AddKeyEvent(ImGuiKey_DownArrow, IsVkDown(VK_DOWN));
+    io.AddKeyEvent(ImGuiKey_PageUp, IsVkDown(VK_PRIOR));
+    io.AddKeyEvent(ImGuiKey_PageDown, IsVkDown(VK_NEXT));
+    io.AddKeyEvent(ImGuiKey_Home, IsVkDown(VK_HOME));
+    io.AddKeyEvent(ImGuiKey_End, IsVkDown(VK_END));
+    io.AddKeyEvent(ImGuiKey_Insert, IsVkDown(VK_INSERT));
+    io.AddKeyEvent(ImGuiKey_Delete, IsVkDown(VK_DELETE));
+    io.AddKeyEvent(ImGuiKey_Backspace, IsVkDown(VK_BACK));
+    io.AddKeyEvent(ImGuiKey_Space, IsVkDown(VK_SPACE));
+    io.AddKeyEvent(ImGuiKey_Enter, IsVkDown(VK_RETURN));
+    io.AddKeyEvent(ImGuiKey_Escape, IsVkDown(VK_ESCAPE));
+    io.AddKeyEvent(ImGuiKey_KeypadEnter, IsVkDown(VK_RETURN));
+    io.AddKeyEvent(ImGuiKey_A, IsVkDown('A'));
+    io.AddKeyEvent(ImGuiKey_C, IsVkDown('C'));
+    io.AddKeyEvent(ImGuiKey_V, IsVkDown('V'));
+    io.AddKeyEvent(ImGuiKey_X, IsVkDown('X'));
+    io.AddKeyEvent(ImGuiKey_Y, IsVkDown('Y'));
+    io.AddKeyEvent(ImGuiKey_Z, IsVkDown('Z'));
 
     io.DisplaySize = ImVec2(width, height);
     io.DeltaTime = 1.0f / 60.0f;
@@ -377,15 +382,11 @@ void Overlay::KeyUp(KeyEventArgs e)
 {
     if (e.keyValue == devtools_hotkey)
         visible = !visible;
-
-    if (e.keyValue < 256)
-        ImGui::GetIO().KeysDown[e.keyValue] = 0;
 }
 
 void Overlay::KeyDown(KeyEventArgs e)
 {
-    if (e.keyValue < 256)
-        ImGui::GetIO().KeysDown[e.keyValue] = 1;
+    // Silence is golden
 }
 
 void Overlay::KeyPress(KeyPressEventArgs e)

@@ -6,6 +6,7 @@
   "license": "MIT",
   "supports": "(windows | linux) & !uwp",
   "dependencies": [
+    "fmt",
     {
       "name": "vcpkg-cmake",
       "host": true

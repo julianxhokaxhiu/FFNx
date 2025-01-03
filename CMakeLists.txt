@@ -81,18 +81,19 @@ find_package(Vorbis CONFIG REQUIRED)
 find_package(VGMSTREAM REQUIRED)
 find_package(STACKWALKER REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
-find_package(libpng CONFIG REQUIRED)
+find_package(PNG REQUIRED)
 find_package(directxtex CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(SOLOUD REQUIRED)
 find_package(OPENPSF REQUIRED)
-find_package(tomlplusplus CONFIG REQUIRED)
 find_package(STEAMWORKSSDK CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
 find_package(LZ4 REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
-find_package(HWINFO REQUIRED)
+find_package(lfreist-hwinfo CONFIG REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(tomlplusplus REQUIRED IMPORTED_TARGET tomlplusplus)
 
 set(RELEASE_NAME "FFNx")
 
@@ -176,26 +177,26 @@ target_link_libraries(
   XINPUT9_1_0
   strmiids
   ZLIB::ZLIB
-  png_static
+  PNG::PNG
   Microsoft::DirectXTex
   mimalloc-static
   imgui::imgui
   pugixml::pugixml
-  tomlplusplus::tomlplusplus
+  PkgConfig::tomlplusplus
   STEAMWORKSSDK::STEAMWORKSSDK
   xxHash::xxhash
   lz4::lz4
   Vorbis::vorbisfile
   Vorbis::vorbis
   MPG123::libmpg123
-  HWINFO::HWINFO
+  lfreist-hwinfo::hwinfo
+  unofficial::stackwalker::StackWalker
   ${BX_LIBRARIES}
   ${BIMG_LIBRARIES}
   ${BGFX_LIBRARIES}
   ${FFMPEG_LIBRARIES}
   ${OPENPSF_LIBRARIES}
   ${SOLOUD_LIBRARIES}
-  ${STACKWALKER_LIBRARIES}
   ${VGMSTREAM_LIBRARIES}
 )
 target_compile_options(

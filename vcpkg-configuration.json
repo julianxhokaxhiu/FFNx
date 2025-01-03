@@ -10,8 +10,6 @@
         "hwinfo",
         "openpsf",
         "soloud",
-        "stackwalker",
-        "tomlplusplus",
         "vgmstream",
         "steamworkssdk"
       ]

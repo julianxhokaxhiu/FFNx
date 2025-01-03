@@ -23,6 +23,7 @@
 #include "log.h"
 #include "patch.h"
 #include "utils.h"
+#include <fstream>
 #include <filesystem>
 #include <io.h>
 

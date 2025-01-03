@@ -27,6 +27,7 @@
 #include "macro.h"
 #include "cfg.h"
 #include "utils.h"
+#include <fstream>
 
 Lighting lighting;
 

@@ -1,4 +1,0 @@
-To use HWINFO add the following to your CMake project:
-
-    find_package(HWINFO REQUIRED)
-    target_link_libraries(main PRIVATE HWINFO::HWINFO)

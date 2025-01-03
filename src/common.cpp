@@ -36,6 +36,7 @@
 #include <malloc.h>
 #include <ddraw.h>
 #include <filesystem>
+#include <fstream>
 
 #include "renderer.h"
 #include "hext.h"

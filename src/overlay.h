@@ -48,6 +48,7 @@ private:
 	bool UpdateMouseCursor();
 	void Update();
 	void Render(ImDrawData* drawData);
+	inline bool IsVkDown(int vk);
 public:
 	bool init(bgfx::ProgramHandle program, int width, int height);
 	void drawMainWindow();
