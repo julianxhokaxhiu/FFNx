@@ -1726,15 +1726,13 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     if (enable_uncrop)
     {
         bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
-        if((is_movie_playing && widescreen.getMovieMode() == WM_DISABLED))
+        if(!(is_movie_playing && widescreen.getMovieMode() == WM_DISABLED))
         {
-            return;
-        }
-
-        if(y == 16 && height == 448)
-        {
-            scissorOffsetY = getInternalCoordY(0.0);
-            scissorHeight = getInternalCoordY(480);
+            if(y == 16 && height == 448)
+            {
+                scissorOffsetY = getInternalCoordY(0.0);
+                scissorHeight = getInternalCoordY(480);
+            }
         }
     }
 
