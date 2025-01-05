@@ -914,7 +914,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				replace_function((uint32_t)common_externals.assert_calloc, ext_calloc);
 #endif
 
-				if (widescreen_enabled) widescreen.init();
+				if (widescreen_enabled || enable_uncrop) widescreen.init();
 
 				// Init renderer
 				newRenderer.init();
