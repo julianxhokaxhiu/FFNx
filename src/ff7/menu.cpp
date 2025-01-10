@@ -136,7 +136,9 @@ uint32_t ff7_menu_decrease_item_quantity(uint32_t item_used)
 }
 
 void dispatchAttackCommand(){
-    *ff7_externals.issued_command_id = 0x01;
+    char* character = (char*)ff7_externals.menu_objects + 0x2CBC; //Character attacking
+    char* attack = (char*)ff7_externals.gamepad_status + 0xCA8 + (*character * 6); //Their equipped attack
+    *ff7_externals.issued_command_id = *attack;
     *ff7_externals.issued_action_target_type = 0;
     *ff7_externals.issued_action_target_index = 4;
     ((void(*)())ff7_externals.dispatch_chosen_battle_action)();
