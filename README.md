@@ -19,7 +19,7 @@ FFNx today in a nutshell:
 - Comes built-in with 7th Heaven v2.3 and higher
 - Supports the newest video and audio codecs (WEBM, H.265, Ogg, etc.)
 - Drastically enhances the gameplay experience compared to the vanilla experience
-- Provides four stable and one experimental rendering backends:
+- Provides four stable rendering backends:
   - DirectX 11 (default)
   - DirectX 12
   - Vulkan
