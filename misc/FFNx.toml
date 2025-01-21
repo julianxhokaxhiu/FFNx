@@ -8,6 +8,12 @@
 ## DISPLAY
 #########################
 
+#[DISPLAY INDEX]
+# The display where you want the game to run. By default the window will be created on the primary display.
+# NOTE: If the value is set lower than 1, it will pick the primary display. If the value is set higher to the maximum number of screens, it will pick the last one.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+display_index = -1
+
 #[RENDERING BACKEND]
 # Available choices are:
 # - 0: Auto ( default, will pick the best rendering backend for your GPU )

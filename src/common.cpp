@@ -99,6 +99,12 @@ struct {
 	uint32_t h;
 } gameWindow[GameWindowState::COUNT];
 
+struct MonitorInfo {
+	RECT rcMonitor;
+	std::string deviceName;
+};
+std::vector<MonitorInfo> monitors;
+
 // global game window handler
 RECT gameWindowRect;
 HINSTANCE gameHinstance;
@@ -493,7 +499,6 @@ void adjust_maximized_client_rect(HWND window, RECT& rect) {
 	rect = monitor_info.rcWork;
 }
 
-
 bool composition_enabled() {
 	BOOL composition_enabled = FALSE;
 	bool success = DwmIsCompositionEnabled(&composition_enabled) == S_OK;
@@ -680,10 +685,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_MENUCHAR:
 			if (LOWORD(wParam) == VK_RETURN)
 			{
+				const auto& targetMonitor = monitors[display_index-1];
 				if (fullscreen)
 				{
 					// Bring back the original resolution
-					ChangeDisplaySettingsEx(0, &dmCurrentScreenSettings, 0, CDS_FULLSCREEN, 0);
+					ChangeDisplaySettingsExA(targetMonitor.deviceName.c_str(), &dmCurrentScreenSettings, 0, CDS_FULLSCREEN, 0);
 
 					// Move to window
 					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
@@ -700,7 +706,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					gameWindow[GameWindowState::PRE_FULLSCREEN] = gameWindow[GameWindowState::CURRENT];
 
 					// Bring back the user resolution
-					ChangeDisplaySettingsEx(0, &dmNewScreenSettings, 0, CDS_FULLSCREEN, 0);
+					ChangeDisplaySettingsExA(targetMonitor.deviceName.c_str(), &dmNewScreenSettings, 0, CDS_FULLSCREEN, 0);
 
 					// Move to fullscreen
 					SetWindowLongPtr(gameHwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
@@ -735,6 +741,21 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	gamehacks.processKeyboardInput(uMsg, wParam, lParam);
 
 	return common_externals.engine_wndproc(hwnd, uMsg, wParam, lParam);
+}
+
+BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+	std::vector<MonitorInfo>* monitors = reinterpret_cast<std::vector<MonitorInfo>*>(dwData);
+
+	MONITORINFOEX monitorInfoEx;
+	monitorInfoEx.cbSize = sizeof(MONITORINFOEX);
+
+	if (GetMonitorInfo(hMonitor, &monitorInfoEx)) {
+		bool isPrimary = (monitorInfoEx.dwFlags & MONITORINFOF_PRIMARY) != 0;
+		monitors->push_back({ monitorInfoEx.rcMonitor, monitorInfoEx.szDevice });
+		if (isPrimary && display_index < 1) display_index = monitors->size();
+	}
+
+	return TRUE;
 }
 
 int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
@@ -775,8 +796,15 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>();
 	}
 
-	// fetch current user screen settings
-	EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmCurrentScreenSettings);
+	// Enumerate available monitors
+	EnumDisplayMonitors(nullptr, nullptr, MonitorEnumProc, reinterpret_cast<LPARAM>(&monitors));
+	if (display_index > monitors.size()) display_index = monitors.size();
+
+	// Get the target monitor
+	auto& targetMonitor = monitors[display_index-1];
+
+	// fetch current screen settings
+	EnumDisplaySettingsA(targetMonitor.deviceName.c_str(), ENUM_CURRENT_SETTINGS, &dmCurrentScreenSettings);
 
 	// store all settings so we can change only few parameters
 	dmNewScreenSettings = dmCurrentScreenSettings;
@@ -824,12 +852,22 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 
 		if (fullscreen)
 		{
-			if (ChangeDisplaySettingsEx(0, &dmNewScreenSettings, 0, CDS_FULLSCREEN, 0) != DISP_CHANGE_SUCCESSFUL)
+			if (ChangeDisplaySettingsExA(targetMonitor.deviceName.c_str(), &dmNewScreenSettings, 0, CDS_FULLSCREEN, 0) != DISP_CHANGE_SUCCESSFUL)
 			{
 				MessageBoxA(gameHwnd, "Failed to set the requested fullscreen mode, reverting to the original resolution.\n", "Error", 0);
 				ffnx_error("failed to set fullscreen mode\n");
 				window_size_x = dmCurrentScreenSettings.dmPelsWidth;
 				window_size_y = dmCurrentScreenSettings.dmPelsHeight;
+			}
+			else
+			{
+				// re-fetch current monitors
+				monitors.clear();
+				EnumDisplayMonitors(nullptr, nullptr, MonitorEnumProc, reinterpret_cast<LPARAM>(&monitors));
+				// Get the target monitor
+				targetMonitor = monitors[display_index-1];
+				// update current screen settings
+				dmCurrentScreenSettings = dmNewScreenSettings;
 			}
 		}
 	}
@@ -859,13 +897,14 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 		else
 			calc_window_size(window_size_x, window_size_y);
 
+		const RECT& monitorRect = targetMonitor.rcMonitor;
 		hWnd = CreateWindowExA(
 			WS_EX_APPWINDOW,
 			VREF(game_object, window_class),
 			VREF(game_object, window_title),
 			fullscreen ? WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_OVERLAPPEDWINDOW,
-			fullscreen ? 0 : gameWindow[GameWindowState::CURRENT].x,
-			fullscreen ? 0 : gameWindow[GameWindowState::CURRENT].y,
+			monitorRect.left + (fullscreen ? 0 : gameWindow[GameWindowState::CURRENT].x),
+			monitorRect.top + (fullscreen ? 0 : gameWindow[GameWindowState::CURRENT].y),
 			fullscreen ? window_size_x : gameWindow[GameWindowState::CURRENT].w,
 			fullscreen ? window_size_y : gameWindow[GameWindowState::CURRENT].h,
 			0,

@@ -4,6 +4,7 @@
 
 ## Commmon
 
+- Core: Users can now choose on which screen to run the game, using the new `display_index` option.
 - Music: Add the ability to play a custom `main_menu` music file on the new game screen.
 
 ## FF7

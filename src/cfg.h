@@ -166,5 +166,6 @@ extern long external_voice_volume;
 extern long external_ambient_volume;
 extern long ffmpeg_video_volume;
 extern bool ff7_advanced_blinking;
+extern long display_index;
 
 void read_cfg();
