@@ -626,7 +626,11 @@ int ff7_read_field_file(char* path)
   uint32_t size = lgp_get_filesize(lgp_file, 1);
   char* dest = (char*)driver_malloc(size);
   char* original_field_data = (char*)driver_malloc(*ff7_externals.known_field_buffer_size);
-	if ( !ff7_externals.field_file_buffer ) return 0;
+	if ( !ff7_externals.field_file_buffer )
+	{
+		driver_free(original_field_data);
+		return 0;
+	}
 
   lgp_read_file(lgp_file, 1, dest, size);
   ff7_externals.lzss_decode(dest, original_field_data);
