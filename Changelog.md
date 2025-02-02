@@ -9,6 +9,7 @@
 
 ## FF7
 
+- Core: Fix memory leak when using the field chunk functionality ( https://github.com/julianxhokaxhiu/FFNx/issues/768 )
 - Rendering: Add uncrop option to remove black bars from top/bottom of the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/767 )
 
 ## FF8
