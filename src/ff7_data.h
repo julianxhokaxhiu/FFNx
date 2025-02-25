@@ -76,7 +76,6 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t field_main_loop;
 	uint32_t battle_main_loop;
 	uint32_t menu_main_loop;
-	uint32_t worldmap_main_loop;
 	uint32_t cdcheck_main_loop;
 	uint32_t credits_main_loop;
 	uint32_t coaster_main_loop;
@@ -126,8 +125,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_set_main_loop(MODE_BATTLE, battle_main_loop);
 	field_main_loop = get_absolute_value(main_loop, 0x8F8);
 	ff7_set_main_loop(MODE_FIELD, field_main_loop);
-	worldmap_main_loop = get_absolute_value(main_loop, 0x977);
-	ff7_set_main_loop(MODE_WORLDMAP, worldmap_main_loop);
+	ff7_externals.world_loop_74BE49 = get_absolute_value(main_loop, 0x977);
+	ff7_set_main_loop(MODE_WORLDMAP, ff7_externals.world_loop_74BE49);
 	chocobo_main_loop = get_absolute_value(main_loop, 0x9C5);
 	ff7_set_main_loop(MODE_CHOCOBO, chocobo_main_loop);
 	condor_main_loop = get_absolute_value(main_loop, 0xA13);
@@ -382,7 +381,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.create_d3d2_indexed_primitive = get_relative_call((uint32_t)common_externals.generic_load_group, 0x22);
 	ff7_externals.destroy_d3d2_indexed_primitive = get_relative_call(ff7_externals.create_d3d2_indexed_primitive, 0x290);
 
-	ff7_externals.enter_main = get_absolute_value(worldmap_main_loop, 0x2AE);
+	ff7_externals.enter_main = get_absolute_value(ff7_externals.world_loop_74BE49, 0x2AE);
 
 	ff7_externals.kernel_init = get_relative_call(ff7_externals.enter_main, 0xF1);
 	ff7_externals.kernel_load_kernel2 = (void (*)(char*))get_relative_call(ff7_externals.kernel_init, 0x1FD);
@@ -660,7 +659,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.fps_limiter_field = get_relative_call(ff7_externals.field_sub_6388EE, 0x58);
 	ff7_externals.fps_limiter_highway = get_relative_call(ff7_externals.highway_loop_sub_650F36, 0xC3);
 	ff7_externals.fps_limiter_snowboard = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0x14);
-	ff7_externals.fps_limiter_worldmap = get_relative_call(worldmap_main_loop, 0x1D);
+	ff7_externals.fps_limiter_worldmap = get_relative_call(ff7_externals.world_loop_74BE49, 0x1D);
 	ff7_externals.fps_limiter_chocobo = get_relative_call(ff7_externals.sub_779E14, 0x4D);
 	ff7_externals.fps_limiter_submarine = get_relative_call(submarine_main_loop, 0x98);
 	ff7_externals.fps_limiter_credits = get_relative_call(credits_main_loop, 0x1C);
@@ -678,7 +677,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.wait_frames_ptr = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x24], 0x1C);
 
-	ff7_externals.world_mode_loop_sub_74DB8C = get_relative_call(worldmap_main_loop, 0x114);
+	ff7_externals.world_mode_loop_sub_74DB8C = get_relative_call(ff7_externals.world_loop_74BE49, 0x114);
 	ff7_externals.sub_767039 = (void (*)(DWORD*,DWORD*,DWORD*))get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x613);
 	ff7_externals.wm_change_music = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x2CF);
 	ff7_externals.wm_play_music_call = ff7_externals.wm_change_music + 0x5A;
@@ -1182,6 +1181,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battleground_midgar_flashback_rain_5BDC4F = get_relative_call(ff7_externals.update_3d_battleground, 0x3C);
 
 	// World externals
+	ff7_externals.world_dword_DE68FC = (void(**)())get_absolute_value(ff7_externals.world_loop_74BE49, 0x123);
 	ff7_externals.world_exit_74BD77 = get_absolute_value(main_loop, 0x993);
 	ff7_externals.world_exit_destroy_graphics_objects_75A921 = (void(*)())get_relative_call(ff7_externals.world_exit_74BD77, 0x11);
 	ff7_externals.world_init_variables_74E1E9 = get_relative_call(ff7_externals.world_mode_loop_sub_74DB8C, 0x108);
@@ -1219,6 +1219,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_get_player_model_id = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x1B);
 	ff7_externals.world_get_current_key_input_status = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x4A);
 	ff7_externals.world_get_player_walkmap_type = (int(*)())get_relative_call(ff7_externals.world_update_player_74EA48, 0x7DF);
+	ff7_externals.world_get_player_walkmap_region = (int(*)())get_relative_call(ff7_externals.world_sub_767641, 0x2B);
 	ff7_externals.world_sub_753D00 = (void(*)(vector3<short>*, short))get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xDF9);
 	ff7_externals.world_update_model_movement_762E87 = (void(*)(int, int))get_relative_call(ff7_externals.world_update_player_74EA48, 0xCDF);
 	ff7_externals.engine_apply_rotation_to_transform_matrix_6628DE = (void(*)(vector3<short>*, rotation_matrix*))get_relative_call(ff7_externals.world_update_player_74EA48, 0x733);

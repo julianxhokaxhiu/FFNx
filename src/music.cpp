@@ -37,12 +37,14 @@ bool hold_volume_for_channel[2] = { false, false };
 bool next_music_is_not_multi = false;
 double next_music_fade_time = 0.0;
 bool next_music_is_battle = false;
+bool next_music_is_world = false;
 uint16_t next_battle_scene_id = 0;
 bool ff8_music_intro_volume_changed = false;
 char* eyes_on_me_track = "eyes_on_me";
 bool eyes_on_me_is_playing = false;
 uint8_t ff7_last_akao_call_type = 0;
 uint32_t ff7_last_music_id = 0;
+uint32_t ff7_last_region_id = -1;
 int16_t ff7_next_field_music_relative_id = -1;
 
 void handle_mainmenu_playback()
@@ -324,10 +326,18 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 
 			if (battle_id > 0)
 			{
-				sprintf(new_music_name, "bat_%u", battle_id);
+				sprintf(new_music_name, "bat_%u_a%d", battle_id, ff7_externals.world_get_player_walkmap_region());
 
-				// Attempt to load theme by Battle ID
+				// Attempt to load theme by Battle ID + WM region
 				playing = nxAudioEngine.playMusic(new_music_name, music_id, channel, options);
+
+				if (!playing)
+				{
+					sprintf(new_music_name, "bat_%u", battle_id);
+
+					// Attempt to load theme by Battle ID
+					playing = nxAudioEngine.playMusic(new_music_name, music_id, channel, options);
+				}
 
 				if (!playing && *common_externals._previous_mode == FF7_MODE_FIELD)
 				{
@@ -336,11 +346,30 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 					// Attempt to load theme by Field name
 					playing = nxAudioEngine.playMusic(new_music_name, music_id, channel, options);
 				}
+
+				if (!playing)
+				{
+					sprintf(new_music_name, "bat_a%d", ff7_externals.world_get_player_walkmap_region());
+
+					// Attempt to load theme by Battle WM region
+					playing = nxAudioEngine.playMusic(new_music_name, music_id, channel, options);
+				}
 			}
 			else
 			{
 				if (trace_all || trace_music) ffnx_warning("%s: Unknown battle_id\n", __func__);
 			}
+		}
+		else if (next_music_is_world)
+		{
+			ff7_last_region_id = ff7_externals.world_get_player_walkmap_region();
+
+			sprintf(new_music_name, "%s_a%d", music_name, ff7_last_region_id);
+
+			// Since world music comes with the same ID, we need to stop manually the channel to allow the new per region file to load again
+			if (nxAudioEngine.canPlayMusic(new_music_name)) nxAudioEngine.stopMusic(channel);
+
+			playing = nxAudioEngine.playMusic(new_music_name, music_id, channel, options);
 		}
 		// Attempt to override field music
 		else if (mode->driver_mode == MODE_FIELD)
@@ -665,16 +694,30 @@ uint32_t ff7_worldmap_music_change(uint32_t type, uint32_t music_id, uint32_t fa
 			break;
 		}
 	}
+	else
+		next_music_is_world = true;
 
 	// Backup music operation type for custom battle music call
 	ff7_last_akao_call_type = type;
 	ff7_last_music_id = music_id;
 
-	uint32_t ret = ff7_music_sound_operation_fix(type, music_id, fadetime, param3, param4, param5);
+	return 0;
+}
 
-	next_music_is_battle = false;
+void ff7_worldmap_on_loop()
+{
+	(*ff7_externals.world_dword_DE68FC)();
 
-	return ret;
+	// If we change region while moving in the worldmap, trigger a new music change
+	if (ff7_last_region_id != ff7_externals.world_get_player_walkmap_region()) next_music_is_world = true;
+
+	if (next_music_is_battle || next_music_is_world)
+	{
+		ff7_music_sound_operation_fix(ff7_last_akao_call_type, ff7_last_music_id, 4, 0, 0, 0);
+
+		next_music_is_battle = false;
+		next_music_is_world = false;
+	}
 }
 
 void ff7_worldmap_play_custom_battle_music(DWORD* unk1, DWORD* unk2, DWORD* battle_id)
@@ -1216,6 +1259,9 @@ void music_init()
 			replace_call(ff7_externals.play_battle_music_call, ff7_battle_music);
 			replace_call(ff7_externals.play_battle_music_win_call, ff7_battle_music_fanfare);
 			replace_call(ff7_externals.wm_play_music_call, ff7_worldmap_music_change);
+			// Introduce a custom hook to run music AKAO code
+			patch_code_byte(ff7_externals.world_loop_74BE49 + 0x121, 0x90);
+			replace_call_function(ff7_externals.world_loop_74BE49 + 0x122, ff7_worldmap_on_loop);
 
 			replace_call(ff7_externals.field_music_id_to_midi_id_call1, ff7_field_music_id_to_midi_id);
 			replace_call(ff7_externals.field_music_id_to_midi_id_call2, ff7_field_music_id_to_midi_id);

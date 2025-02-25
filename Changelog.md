@@ -11,6 +11,7 @@
 
 - Core: Fix memory leak when using the field chunk functionality ( https://github.com/julianxhokaxhiu/FFNx/issues/768 )
 - Rendering: Add uncrop option to remove black bars from top/bottom of the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/767 )
+- Music: Allow to use a custom music track per world map area ( music files will have an `_aXX` format appended to the file name, where XX is the area ID )
 
 ## FF8
 

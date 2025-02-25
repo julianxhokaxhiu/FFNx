@@ -3456,6 +3456,8 @@ struct ff7_externals
 	// world stuff
 	uint32_t world_mode_loop_sub_74DB8C;
 	uint32_t world_exit_74BD77;
+	uint32_t world_loop_74BE49;
+	void (**world_dword_DE68FC)();
 	void (*world_exit_destroy_graphics_objects_75A921)();
 	uint32_t world_init_variables_74E1E9;
 	uint32_t world_sub_7641A7;
@@ -3496,6 +3498,7 @@ struct ff7_externals
 	int (*world_get_player_model_id)();
 	int (*world_get_current_key_input_status)();
 	int (*world_get_player_walkmap_type)();
+	int (*world_get_player_walkmap_region)();
 	void(*world_sub_753D00)(vector3<short>*, short);
 	void(*world_update_model_movement_762E87)(int, int);
 	bool (*world_is_player_model_bitmask)(int);
