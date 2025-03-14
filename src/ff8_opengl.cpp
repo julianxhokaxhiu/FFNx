@@ -615,8 +615,9 @@ unsigned int *ff8_draw_icon_get_icon_sp1_infos(int icon_id, int &states_count)
 ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
 	int a1, ff8_draw_menu_sprite_texture_infos *draw_infos,
 	int icon_id, uint16_t x, uint16_t y, int a6, int field10_modifier = 0,
-	bool noA6Mask = false,
-	bool override_field4_8_with_a6 = false
+	bool no_a6_mask = false,
+	bool override_field4_8_with_a6 = false,
+	bool yfix = false
 ) {
 	icon_id = ff8_draw_gamepad_icon_or_keyboard_key(a1, draw_infos, icon_id, x, y);
 	if (icon_id < 0)
@@ -643,14 +644,19 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
 		}
 		else
 		{
-			draw_infos->field_8 = noA6Mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
+			draw_infos->field_8 = no_a6_mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
 			draw_infos->field_4 = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
 		}
 		draw_infos->field_14 = sp1_section_data[1] & 0xFF00FF;
 		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
-		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
+		draw_infos->y_related = y + (int32_t(sp1_section_data[1]) >> 24);
+		if (yfix && *ff8_externals.battle_boost_cross_icon_display_1D76604) {
+			*((uint8_t *)draw_infos + 11) |= 2u;
+		}
 		((void(*)(int, ff8_draw_menu_sprite_texture_infos*))ff8_externals.sub_49BB30)(a1, draw_infos);
-		draw_infos += 1;
+		if (!no_a6_mask) {
+			draw_infos += 1;
+		}
 		sp1_section_data += 2;
 	}
 
@@ -679,7 +685,7 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key4(int a1, ff8_draw_menu_
 
 ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key5(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6, int a7)
 {
-	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, true);
+	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, true, false, true);
 }
 
 ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw_menu_sprite_texture_infos_short *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6, int a7) {

@@ -1389,6 +1389,7 @@ struct ff8_externals
 	uint32_t ff8_draw_icon_or_key4;
 	uint32_t ff8_draw_icon_or_key5;
 	uint32_t ff8_draw_icon_or_key6;
+	uint8_t *battle_boost_cross_icon_display_1D76604;
 	int(*pause_menu)(int);
 	uint32_t init_pause_menu;
 	uint32_t sub_49BB30;

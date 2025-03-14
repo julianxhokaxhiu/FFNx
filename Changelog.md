@@ -15,6 +15,7 @@
 
 ## FF8
 
+- Rendering: Fix red cross not showing in GF boost ability when ff8_use_gamepad_icons is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/784 )
 - Modding: Allow modding card texts hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/774 )
 - Modding: Allow modding draw texts hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/774 )
 - SFX: Fix incorrect volume assignment when playing sfx effects using the external layer

@@ -767,6 +767,7 @@ void ff8_find_externals()
 	ff8_externals.ff8_draw_icon_or_key4 = ff8_externals.ff8_draw_icon_or_key3 + 0xF0;
 	ff8_externals.ff8_draw_icon_or_key5 = ff8_externals.ff8_draw_icon_or_key4 + 0x120;
 	ff8_externals.ff8_draw_icon_or_key6 = ff8_externals.ff8_draw_icon_or_key5 + 0x110;
+	ff8_externals.battle_boost_cross_icon_display_1D76604 = (uint8_t *)get_absolute_value(ff8_externals.ff8_draw_icon_or_key5, 0xD5);
 	ff8_externals.sub_49FE60 = get_relative_call(ff8_externals.ff8_draw_icon_or_key6, 0xC9);
 	ff8_externals.sub_4A0C00 = get_absolute_value(ff8_externals.sub_4A0880, 0x33);
 	ff8_externals.show_dialog = (char(*)(int32_t, uint32_t, int16_t))get_relative_call(ff8_externals.sub_4A0C00, 0x5F);
