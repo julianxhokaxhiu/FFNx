@@ -1,6 +1,10 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.3...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.22.0...master
+
+# 1.22.0
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.3...1.22.0
 
 ## Commmon
 
@@ -10,14 +14,16 @@
 ## FF7
 
 - Core: Fix memory leak when using the field chunk functionality ( https://github.com/julianxhokaxhiu/FFNx/issues/768 )
-- Rendering: Add uncrop option to remove black bars from top/bottom of the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/767 )
+- Cheats: Use equipped Attack behavior when using auto-attack shortcut ( https://github.com/julianxhokaxhiu/FFNx/pull/773 )
 - Music: Allow to use a custom music track per world map area ( music files will have an `_aXX` format appended to the file name, where XX is the area ID )
+- Rendering: Add uncrop option to remove black bars from top/bottom of the screen ( https://github.com/julianxhokaxhiu/FFNx/pull/767 )
 
 ## FF8
 
-- Rendering: Fix red cross not showing in GF boost ability when ff8_use_gamepad_icons is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/784 )
+- Input: Fix regression supporting native Steam input config when using the native launcher.
 - Modding: Allow modding card texts hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/774 )
 - Modding: Allow modding draw texts hardcoded in exe ( https://github.com/julianxhokaxhiu/FFNx/pull/774 )
+- Rendering: Fix red cross not showing in GF boost ability when ff8_use_gamepad_icons is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/784 )
 - SFX: Fix incorrect volume assignment when playing sfx effects using the external layer
 
 # 1.21.3
