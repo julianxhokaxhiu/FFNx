@@ -24,9 +24,9 @@ env:
   # GIT: Fix reporting from stderr to stdout
   GIT_REDIRECT_STDERR: 2>&1
   # Tools versions
-  _WINGET_CMAKE: 3.31.3
-  _WINGET_POWERSHELL: 7.4.6
-  _WINGET_VS2022: 17.12.3
+  _WINGET_CMAKE: 3.31.6
+  _WINGET_POWERSHELL: 7.5.0
+  _WINGET_VS2022: 17.13.5
 
 jobs:
   FFNx:
@@ -34,9 +34,6 @@ jobs:
     timeout-minutes: 1440
     strategy:
       max-parallel: 1
-    permissions:
-      actions: write
-      contents: read
     steps:
     - name: Set Git Config
       run: |

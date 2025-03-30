@@ -167,6 +167,7 @@ target_link_directories(
 target_link_libraries(
   ${RELEASE_NAME}
   ${RELEASE_NAME}::rc
+  wintrust
   dbghelp
   shlwapi
   psapi

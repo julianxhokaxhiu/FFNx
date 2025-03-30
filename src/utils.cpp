@@ -24,6 +24,8 @@
 
 #include <sys/stat.h>
 #include <filesystem>
+#include <Softpub.h>
+#include <wintrust.h>
 
 bool fileExists(const char *filename)
 {
@@ -74,4 +76,33 @@ std::string getCopyrightInfoFromExe(const std::string& filePath)
 
     // Return the copyright information as a std::string
     return std::string(copyrightInfo, infoSize);
+}
+
+bool isFileSigned(const wchar_t* dllPath) {
+    WINTRUST_FILE_INFO fileInfo = {0};
+    WINTRUST_DATA trustData = {0};
+    WINTRUST_SIGNATURE_SETTINGS signatureSettings = {0};
+
+    // Open the file with proper sharing flags
+    fileInfo.cbStruct = sizeof(WINTRUST_FILE_INFO);
+    fileInfo.pcwszFilePath = NULL;
+    fileInfo.hFile = CreateFileW(dllPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);;
+    fileInfo.pgKnownSubject = NULL;
+
+    GUID actionID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+
+    trustData.cbStruct = sizeof(WINTRUST_DATA);
+    trustData.dwUIChoice = WTD_UI_NONE;
+    trustData.fdwRevocationChecks = WTD_REVOKE_NONE;
+    trustData.dwUnionChoice = WTD_CHOICE_FILE;
+    trustData.pFile = &fileInfo;
+    trustData.dwStateAction = WTD_STATEACTION_VERIFY;
+    trustData.dwProvFlags = WTD_SAFER_FLAG | WTD_LIFETIME_SIGNING_FLAG | WTD_CACHE_ONLY_URL_RETRIEVAL;
+
+    LONG status = WinVerifyTrust(NULL, &actionID, &trustData);
+
+    trustData.dwStateAction = WTD_STATEACTION_CLOSE;
+    WinVerifyTrust(NULL, &actionID, &trustData);
+
+    return status == ERROR_SUCCESS;
 }

@@ -2944,7 +2944,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		ffnx_info("FFNx driver version " VERSION "\n");
 		version = get_version();
-
 		if (version >= VERSION_FF8_12_US)
 		{
 			ff8 = true;
@@ -2968,7 +2967,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		if (!version)
 		{
-			ffnx_error("no compatible version found\n");
+			ffnx_unexpected("no compatible version found\n");
 			MessageBoxA(NULL, "Your ff7.exe or ff8.exe is incompatible with this driver and will exit after this message.\n"
 				"Possible reasons for this error:\n"
 				" - You have the faulty \"1.4 XP Patch\" for FF7.\n"
@@ -2978,7 +2977,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				" - You have an unsupported translation of FF8. (US English, French, German, Spanish, Italian and Japanese versions are currently supported)\n"
 				" - You have a conflicting patch applied.\n\n"
 				, "Error", MB_ICONERROR | MB_OK);
-			exit(1);
+			return FALSE;
+		}
+
+		if (!isFileSigned(L"steam_api.dll"))
+		{
+			ffnx_unexpected("Invalid steam_api.dll detected. Please ensure your FFNx installation is not corrupted or tampered by unauthorized software.\n");
+			MessageBoxA(NULL, "Invalid steam_api.dll detected. Please ensure your FFNx installation is not corrupted or tampered by unauthorized software.", "Error", MB_ICONERROR | MB_OK);
+			return FALSE;
 		}
 
 		read_cfg();
