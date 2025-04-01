@@ -24,6 +24,7 @@
 #include "audio.h"
 
 #include "crashdump.h"
+#include "utils.h"
 
 // FF7 save file checksum, original by dziugo
 int ff7_checksum(void* qw)
@@ -108,13 +109,7 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 				MiniDumpWithUnloadedModules |
 				MiniDumpWithThreadInfo),
 			&mdei, NULL, NULL)) {
-			wchar_t buf[256];
-
-			FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				NULL, GetLastError(), MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
-				buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
-
-			ffnx_trace("MiniDumpWriteDump failed with error: %ls\n", buf);
+			ffnx_trace("MiniDumpWriteDump failed with error: %ls\n", GetErrorMessage(GetLastError()));
 		}
 	}
 

@@ -21,6 +21,7 @@
 #include "utils.h"
 
 #include "globals.h"
+#include "log.h"
 
 #include <sys/stat.h>
 #include <filesystem>
@@ -78,10 +79,30 @@ std::string getCopyrightInfoFromExe(const std::string& filePath)
     return std::string(copyrightInfo, infoSize);
 }
 
-bool isFileSigned(const wchar_t* dllPath) {
-    WINTRUST_FILE_INFO fileInfo = {0};
-    WINTRUST_DATA trustData = {0};
-    WINTRUST_SIGNATURE_SETTINGS signatureSettings = {0};
+std::wstring GetErrorMessage(unsigned long errorCode)
+{
+    LPWSTR messageBuffer = nullptr;
+
+    FormatMessageW(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        errorCode,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPWSTR)&messageBuffer,
+        0,
+        NULL
+    );
+
+    std::wstring message = messageBuffer ? messageBuffer : L"Unknown error";
+    LocalFree(messageBuffer);
+    return message;
+}
+
+bool isFileSigned(const wchar_t* dllPath)
+{
+    WINTRUST_FILE_INFO fileInfo = {};
+    WINTRUST_DATA trustData = {};
+    WINTRUST_SIGNATURE_SETTINGS signatureSettings = {};
 
     // Open the file with proper sharing flags
     fileInfo.cbStruct = sizeof(WINTRUST_FILE_INFO);
@@ -97,12 +118,16 @@ bool isFileSigned(const wchar_t* dllPath) {
     trustData.dwUnionChoice = WTD_CHOICE_FILE;
     trustData.pFile = &fileInfo;
     trustData.dwStateAction = WTD_STATEACTION_VERIFY;
-    trustData.dwProvFlags = WTD_SAFER_FLAG | WTD_LIFETIME_SIGNING_FLAG | WTD_CACHE_ONLY_URL_RETRIEVAL;
+    trustData.dwProvFlags = WTD_CACHE_ONLY_URL_RETRIEVAL;
 
     LONG status = WinVerifyTrust(NULL, &actionID, &trustData);
 
+    if (status != ERROR_SUCCESS) ffnx_error("Unable to verify '%ls': %ls", dllPath, GetErrorMessage(status));
+
     trustData.dwStateAction = WTD_STATEACTION_CLOSE;
     WinVerifyTrust(NULL, &actionID, &trustData);
+
+    CloseHandle(fileInfo.hFile);
 
     return status == ERROR_SUCCESS;
 }
