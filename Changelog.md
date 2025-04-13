@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.22.0...master
 
+## FF8
+
+- External textures: Fix Rinoa battle model that do not get replaced ( https://github.com/julianxhokaxhiu/FFNx/pull/790 )
+
 # 1.22.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.3...1.22.0
