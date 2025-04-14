@@ -196,7 +196,7 @@ private:
 	uint8_t getMaxScale(const TiledTex &tiledTex) const;
 	TextureTypes drawTextures(const std::list<IdentifiedTexture> &textures, const TiledTex &tiledTex, const TextureInfos &palette, uint32_t *target, int w, int h, uint8_t scale) const;
 	void cleanVramTextureIds(const TextureInfos &texture);
-	void cleanTextures(ModdedTextureId textureId);
+	void cleanTextures(ModdedTextureId textureId, int xBpp2, int y, int wBpp2, int h);
 
 	// Link between texture data pointer sent to the graphic driver and VRAM coordinates
 	std::unordered_map<const uint8_t *, TiledTex> _tiledTexs;

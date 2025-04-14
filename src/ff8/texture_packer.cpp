@@ -72,7 +72,7 @@ void TexturePacker::cleanVramTextureIds(const TextureInfos &texture)
 	}
 }
 
-void TexturePacker::cleanTextures(ModdedTextureId previousTextureId)
+void TexturePacker::cleanTextures(ModdedTextureId previousTextureId, int xBpp2, int y, int wBpp2, int h)
 {
 	auto it = _textures.find(previousTextureId);
 
@@ -81,16 +81,34 @@ void TexturePacker::cleanTextures(ModdedTextureId previousTextureId)
 		return;
 	}
 
-	if (trace_all || trace_vram) ffnx_info("TexturePacker::%s: clear texture %s textureId=0x%X\n", __func__, it->second.printableName(), previousTextureId);
+	const IdentifiedTexture &identifiedTexture = it->second;
 
-	cleanVramTextureIds(it->second.texture());
+	// Abort clean if the conflict is negligible (fixes Rinoa's battle model d4c009.dat)
+	if (identifiedTexture.texture().w() >= 10) {
+		if (xBpp2 + 1 == identifiedTexture.texture().x() + identifiedTexture.texture().w()) {
+			if (trace_all || trace_vram) ffnx_warning("TexturePacker::%s: texture not cleared because the conflict is negligible %s textureId=0x%X\n", __func__, identifiedTexture.printableName(), previousTextureId);
 
-	if (it->second.mod() != nullptr)
-	{
-		delete it->second.mod();
+			return;
+		}
+	}
+	if (identifiedTexture.texture().h() >= 10) {
+		if (y + 1 == identifiedTexture.texture().y() + identifiedTexture.texture().h()) {
+			if (trace_all || trace_vram) ffnx_warning("TexturePacker::%s: texture not cleared because the conflict is negligible %s textureId=0x%X\n", __func__, identifiedTexture.printableName(), previousTextureId);
+
+			return;
+		}
 	}
 
-	for (const std::pair<ModdedTextureId, const IdentifiedTexture &> &pair: it->second.redirections())
+	if (trace_all || trace_vram) ffnx_info("TexturePacker::%s: clear texture %s textureId=0x%X\n", __func__, identifiedTexture.printableName(), previousTextureId);
+
+	cleanVramTextureIds(identifiedTexture.texture());
+
+	if (identifiedTexture.mod() != nullptr)
+	{
+		delete identifiedTexture.mod();
+	}
+
+	for (const std::pair<ModdedTextureId, const IdentifiedTexture &> &pair: identifiedTexture.redirections())
 	{
 		if (pair.second.mod() != nullptr)
 		{
@@ -120,7 +138,7 @@ void TexturePacker::setVramTextureId(ModdedTextureId textureId, int xBpp2, int y
 
 				if (previousTextureId != INVALID_TEXTURE)
 				{
-					cleanTextures(previousTextureId);
+					cleanTextures(previousTextureId, xBpp2, y, wBpp2, h);
 				}
 			}
 
