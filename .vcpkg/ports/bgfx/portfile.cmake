@@ -134,12 +134,12 @@ if(GENIE_ACTION STREQUAL cmake)
     file(INSTALL ${instfiles} DESTINATION "${CURRENT_PACKAGES_DIR}/debug/lib")
     file(INSTALL "${SOURCE_DIR}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME "copyright")
 else()
-    vcpkg_install_msbuild(
+    vcpkg_msbuild_install(
         SOURCE_PATH "${SOURCE_DIR}"
         PROJECT_SUBPATH ".build/projects/${PROJ_FOLDER}/bgfx.sln"
-        LICENSE_SUBPATH "LICENSE"
-        INCLUDES_SUBPATH "include"
     )
+    file(INSTALL "${SOURCE_DIR}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME "copyright")
+    file(INSTALL "${SOURCE_DIR}/include/" DESTINATION "${CURRENT_PACKAGES_DIR}/include")
     # Install shader include file
     file(INSTALL "${SOURCE_DIR}/src/bgfx_shader.sh" DESTINATION "${CURRENT_PACKAGES_DIR}/include/bgfx" )
     # Remove redundant files

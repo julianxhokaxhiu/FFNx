@@ -4,6 +4,10 @@
   "description": "Image library",
   "homepage": "https://github.com/bkaradzic/bimg",
   "dependencies": [
-    "bx"
+    "bx",
+    {
+      "name": "vcpkg-msbuild",
+      "host": true
+    }
   ]
 }

@@ -104,12 +104,12 @@ if(GENIE_ACTION STREQUAL cmake)
     file(INSTALL "${SOURCE_DIR}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
 else()
     # Run MSBuild
-    vcpkg_install_msbuild(
+    vcpkg_msbuild_install(
         SOURCE_PATH "${SOURCE_DIR}"
         PROJECT_SUBPATH ".build/projects/${PROJ_FOLDER}/bx.vcxproj"
-        LICENSE_SUBPATH "LICENSE"
-        INCLUDES_SUBPATH "include"
     )
+    file(INSTALL "${SOURCE_DIR}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME "copyright")
+    file(INSTALL "${SOURCE_DIR}/include/" DESTINATION "${CURRENT_PACKAGES_DIR}/include")
 endif()
 
 file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")

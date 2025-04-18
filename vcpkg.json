@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.22.0",
-  "builtin-baseline": "b322364f06308bdd24823f9d8f03fe0cc86fd46f",
+  "builtin-baseline": "ce613c41372b23b1f51333815feb3edd87ef8a8b",
   "dependencies": [
     "bgfx",
     {
@@ -77,28 +77,28 @@
     },
     {
       "name": "ffmpeg",
-      "version": "7.1",
+      "version": "7.1.1",
       "port-version": 1
     },
     {
       "name": "imgui",
-      "version": "1.91.5",
+      "version": "1.91.9",
       "port-version": 0
     },
     {
       "name": "libpng",
-      "version": "1.6.44",
+      "version": "1.6.46",
       "port-version": 0
     },
     {
       "name": "directxtex",
-      "version": "2024-10-28",
+      "version": "2025-03-24",
       "port-version": 0
     },
     {
       "name": "mimalloc",
-      "version": "2.1.7",
-      "port-version": 1
+      "version": "2.2.3",
+      "port-version": 0
     },
     {
       "name": "openpsf",
@@ -107,7 +107,7 @@
     },
     {
       "name": "pugixml",
-      "version": "1.14",
+      "version": "1.15",
       "port-version": 0
     },
     {
@@ -123,7 +123,7 @@
     {
       "name": "tomlplusplus",
       "version": "3.4.0",
-      "port-version": 0
+      "port-version": 1
     },
     {
       "name": "vgmstream",
@@ -137,7 +137,7 @@
     },
     {
       "name": "xxhash",
-      "version": "0.8.2",
+      "version": "0.8.3",
       "port-version": 0
     },
     {
@@ -167,7 +167,7 @@
     },
     {
       "name": "pkgconf",
-      "version": "2.3.0",
+      "version": "2.4.3",
       "port-version": 0
     }
   ]

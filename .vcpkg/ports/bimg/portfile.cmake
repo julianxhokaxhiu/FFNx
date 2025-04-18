@@ -127,13 +127,13 @@ if(GENIE_ACTION STREQUAL cmake)
 else()
     # Run MSBuild for all 3 targets
     foreach(PROJ bimg bimg_decode bimg_encode)
-        vcpkg_install_msbuild(
+        vcpkg_msbuild_install(
             SOURCE_PATH "${SOURCE_DIR}"
             PROJECT_SUBPATH ".build/projects/${PROJ_FOLDER}/${PROJ}.vcxproj"
-            LICENSE_SUBPATH "LICENSE"
-            INCLUDES_SUBPATH "include"
         )
     endforeach()
+    file(INSTALL "${SOURCE_DIR}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME "copyright")
+    file(INSTALL "${SOURCE_DIR}/include/" DESTINATION "${CURRENT_PACKAGES_DIR}/include")
     # Remove redundant files
     foreach(a bx)
         foreach(b Debug Release)

@@ -154,9 +154,7 @@ Once the project is built you can find the output in this path: `.build/bin`
 >
 > FFNx uses vcpkg as a package manager to resolve dependencies. Failing to follow these steps will result in build errors.
 
-0. Clone the [vcpkg](https://vcpkg.io) project in the root folder of your `C:` drive (`git clone https://github.com/Microsoft/vcpkg.git`)
-1. Go inside the `C:\vcpkg` folder and double click `bootstrap-vcpkg.bat`
-2. Open a `cmd` window in `C:\vcpkg` and run the following command: `vcpkg integrate install`
+0. Clone this repository using the `--recursive` flag, eg. `git clone --recursive https://github.com/julianxhokaxhiu/FFNx.git`
 
 ### NuGet
 
@@ -177,13 +175,16 @@ $ nuget setApiKey YOUR_GITHUB_PAT -Source "https://nuget.pkg.github.com/julianxh
 > **Please note:**
 >
 > By default Visual Studio will pick the **x86-Release** build configuration, but you can choose any other profile available.
+> FFNx uses vcpkg as a package manager to resolve dependencies. Failing to follow these steps will result in build errors.
 
 0. Download the the latest [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installer
 1. Run the installer and import this [.vsconfig](.vsconfig) file in the installer to pick the components required to build this project
 2. Make sure you select the English Language pack in the language list before clicking Install
-3. Once installed, open this repository **as a folder** in Visual Studio
-4. Choose as preset in the status bar the one you desire
-5. Click the `Build` button
+3. Go inside the [`vcpkg`](./vcpkg) folder and double click `bootstrap-vcpkg.bat`
+4. Open a `cmd` window in [`vcpkg`](./vcpkg) and run the following command: `vcpkg integrate install`
+5. Once installed, open this repository **as a folder** in Visual Studio
+6. Choose as preset in the status bar the one you desire
+7. Click the `Build` button
 
 ### Visual Studio Code
 

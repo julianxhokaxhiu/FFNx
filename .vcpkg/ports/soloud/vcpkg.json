@@ -4,6 +4,10 @@
   "description": "Free, easy, portable audio engine for games",
   "homepage": "https://github.com/julianxhokaxhiu/soloud",
   "dependencies": [
-    "bx"
+    "bx",
+    {
+      "name": "vcpkg-msbuild",
+      "host": true
+    }
   ]
 }

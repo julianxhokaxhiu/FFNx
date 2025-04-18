@@ -41,7 +41,10 @@ jobs:
         git config --global core.filemode false
         git config --global core.longpaths true
     - name: Checkout
-      uses: actions/checkout@v4.1.0
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
     - name: Install WinGet
       uses: Cyberboss/install-winget@v1
       with:
@@ -52,6 +55,12 @@ jobs:
       env:
         _BUILD_VERSION: "1.22.0.${{ github.run_number }}"
         GITHUB_PACKAGES_PAT: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload vcpkg build logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: vcpkg-logs
+        path: ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
     - name: Publish PR artifacts
       if: env._IS_GITHUB_RELEASE == 'false' && success()
       uses: actions/upload-artifact@v4.0.0

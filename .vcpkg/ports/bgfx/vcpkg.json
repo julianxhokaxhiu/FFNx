@@ -5,6 +5,10 @@
   "homepage": "https://github.com/bkaradzic/bgfx",
   "dependencies": [
     "bx",
-    "bimg"
+    "bimg",
+    {
+      "name": "vcpkg-msbuild",
+      "host": true
+    }
   ]
 }
