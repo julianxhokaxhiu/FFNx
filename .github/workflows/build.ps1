@@ -37,7 +37,7 @@ $env:_RELEASE_VERSION = "v${env:_BUILD_VERSION}"
 $vcpkgRoot = ".\vcpkg"
 $vcpkgBaseline = [string](jq --arg baseline "builtin-baseline" -r '.[$baseline]' vcpkg.json)
 $vcpkgOriginUrl = &"git" -C $vcpkgRoot remote get-url origin
-$vcpkgBranchName = &"git" -C $vcpkgRoot branch --show-current
+$vcpkgTagName = &"git" -C $vcpkgRoot describe --exact-match --tags
 
 $releasePath = [string](jq -r '.configurePresets[0].binaryDir' CMakePresets.json).Replace('${sourceDir}/', '')
 
@@ -45,7 +45,7 @@ Write-Output "--------------------------------------------------"
 Write-Output "BUILD CONFIGURATION: $env:_RELEASE_CONFIGURATION"
 Write-Output "RELEASE VERSION: $env:_RELEASE_VERSION"
 Write-Output "VCPKG ORIGIN: $vcpkgOriginUrl"
-Write-Output "VCPKG BRANCH: $vcpkgBranchName"
+Write-Output "VCPKG TAG: $vcpkgTagName"
 Write-Output "VCPKG BASELINE: $vcpkgBaseline"
 Write-Output "--------------------------------------------------"
 
@@ -59,11 +59,6 @@ Write-Output "_CHANGELOG_VERSION=${env:_CHANGELOG_VERSION}" >> ${env:GITHUB_ENV}
 Write-Output "Installing cmake v${env:_WINGET_CMAKE}..."
 winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --uninstall-previous --accept-source-agreements --accept-package-agreements --disable-interactivity --force | out-null
 cmake --version
-
-# Install Powershell
-Write-Output "Installing powershell v${env:_WINGET_POWERSHELL}..."
-winget install Microsoft.PowerShell --version ${env:_WINGET_POWERSHELL} --silent --uninstall-previous --accept-source-agreements --accept-package-agreements --disable-interactivity --force | out-null
-pwsh --version
 
 # Install Visual Studio Enterprise
 Write-Output "Installing VisualStudio 2022 Enterprise v${env:_WINGET_VS2022}..."

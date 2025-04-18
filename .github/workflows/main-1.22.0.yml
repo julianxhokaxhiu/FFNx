@@ -24,9 +24,8 @@ env:
   # GIT: Fix reporting from stderr to stdout
   GIT_REDIRECT_STDERR: 2>&1
   # Tools versions
-  _WINGET_CMAKE: 3.31.6
-  _WINGET_POWERSHELL: 7.5.0
-  _WINGET_VS2022: 17.13.5
+  _WINGET_CMAKE: 3.31.7
+  _WINGET_VS2022: 17.13.6
 
 jobs:
   FFNx:
