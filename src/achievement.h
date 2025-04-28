@@ -241,7 +241,7 @@ public:
 class SteamAchievementsFF8
 {
 private:
-    enum AchievementsFF8
+    enum Achievements
     {
         UNLOCK_GF_QUEZACOTL = 0,
         UNLOCK_GF_SHIVA = 1,
@@ -290,7 +290,7 @@ private:
         TOTAL_KILLS_10000 = 44
     };
 
-    static inline const achievement g_AchievementsFF8[] = {
+    static inline const achievement ACHIEVEMENTS[] = {
         _ACH_ID(UNLOCK_GF_QUEZACOTL),
         _ACH_ID(UNLOCK_GF_SHIVA),
         _ACH_ID(UNLOCK_GF_IFRIT),
@@ -340,8 +340,13 @@ private:
 
     static inline constexpr int FF8_N_ACHIEVEMENTS = 45;
 
+    std::unique_ptr<SteamManager> steamManager;
+
 public:
-    SteamAchievementsFF8() {}
+    SteamAchievementsFF8();
+    ~SteamAchievementsFF8() = default;
+
+    void unlockPlayTripleTriadAchievement();
 };
 
 // Global, access to Achievements object

@@ -3358,7 +3358,7 @@ __declspec(dllexport) HANDLE __stdcall dotemuCreateFileA(LPCSTR lpFileName, DWOR
 	if (strstr(lpFileName, "CD:") != NULL)
 	{
 		CHAR newPath[MAX_PATH]{ 0 };
-		uint8_t requiredDisk = *(uint8_t*)(*(DWORD*)ff8_externals.savemap + 0xCC);
+		uint8_t requiredDisk = (*ff8_externals.savemap_field)->curr_disk;
 		CHAR diskAsChar[2];
 
 		itoa(requiredDisk, diskAsChar, 10);

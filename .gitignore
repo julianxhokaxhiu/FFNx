@@ -398,3 +398,5 @@ cmake-build*/
 # vcpkg
 !make.exe
 vcpkg_installed/
+
+compile_commands.json

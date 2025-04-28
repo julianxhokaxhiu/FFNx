@@ -29,6 +29,7 @@
 #include <dinput.h>
 
 #include "common_imports.h"
+#include "ff8/save_data.h"
 
 // FF7 modules, unknowns are either unused or not relevant to rendering
 enum ff8_game_modes
@@ -1041,7 +1042,7 @@ struct ff8_externals
 	uint32_t nvidia_hack1;
 	uint32_t nvidia_hack2;
 	struct sprite_viewport *menu_viewport;
-	uint32_t main_loop;
+	uint32_t main_loop; // 0x4706B0
 	uint32_t sub_47CCB0;
 	uint32_t sub_534640;
 	uint32_t sub_4972A0;
@@ -1332,7 +1333,7 @@ struct ff8_externals
 	uint32_t (*stop_cdrom)();
 	uint32_t stop_cdrom_field_call;
 	uint32_t stop_cdrom_cleanup_call;
-	uint32_t** savemap;
+	savemap_field_h** savemap_field;
 	int32_t (*check_game_is_paused)(int32_t);
 	DWORD* is_game_paused;
 	uint32_t sub_470250;
@@ -1415,6 +1416,7 @@ struct ff8_externals
 	uint32_t sub_534560;
 	uint32_t sub_536C30;
 	uint32_t sub_535640;
+	int(*cardgame_func_534BC0)();
 	uint32_t sub_536CB0;
 	uint8_t **card_texts_off_B96968;
 	uint32_t sub_536C80;

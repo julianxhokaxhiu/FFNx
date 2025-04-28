@@ -36,6 +36,7 @@
 #include "ff8/file.h"
 #include "ff8/vram.h"
 #include "metadata.h"
+#include "achievement.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -758,7 +759,7 @@ bool ff8_skip_movies()
 
 			// Force last frame for field scripts
 			ff8_externals.movie_object->movie_current_frame = 0xFFFF;
-			(*ff8_externals.savemap)[80 / 4] = 0xFFFF;
+			(*ff8_externals.savemap_field)->current_frame = 0xFFFF;
 			ff8_externals.sub_5304B0();
 		}
 		else if (mode == MODE_CREDITS)
@@ -947,6 +948,11 @@ int ff8_create_save_file_chocobo_world(int unused, int data_source, int offset, 
 	if (ret > 0) metadataPatcher.updateFF8(3, 0);
 
 	return ret;
+}
+
+int ff8_cardgame_postgame_func_534BC0() {
+	g_FF8SteamAchievements->unlockPlayTripleTriadAchievement();
+	return ff8_externals.cardgame_func_534BC0();
 }
 
 int ff8_limit_fps()
@@ -1267,6 +1273,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// All possible message and ask windows
 	ff8_opcode_old_battle = (int (*)(int))ff8_externals.opcode_battle;
 	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x69], (DWORD)&ff8_opcode_battle);
+
+	//###############################
+	// steam achievement unlock calls
+	//###############################
+	if(steam_edition || enable_steam_achievements)
+	{
+		patch_code_dword((uint32_t)&ff8_externals.cardgame_funcs[4], (uint32_t)&ff8_cardgame_postgame_func_534BC0);
+	}
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)

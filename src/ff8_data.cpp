@@ -107,7 +107,7 @@ void ff8_find_externals()
 	}
 	ff8_externals.app_path = (const char*)get_absolute_value(uint32_t(ff8_externals.set_game_paths), 0x9A);
 
-	ff8_externals.savemap = (uint32_t**)get_absolute_value(ff8_externals.main_loop, 0x21);
+	ff8_externals.savemap_field = (savemap_field_h**)get_absolute_value(ff8_externals.main_loop, 0x21);
 
 	if (JP_VERSION)
 	{
@@ -181,6 +181,7 @@ void ff8_find_externals()
 	ff8_externals.cardgame_funcs = (uint32_t *)get_absolute_value(ff8_externals.sub_534560, 0x5D);
 	ff8_externals.sub_536C30 = ff8_externals.cardgame_funcs[1];
 	ff8_externals.sub_535640 = ff8_externals.cardgame_funcs[3];
+	ff8_externals.cardgame_func_534BC0 = (int(*)())ff8_externals.cardgame_funcs[4];
 	ff8_externals.sub_536CB0 = get_absolute_value(ff8_externals.sub_536C30, 0x14);
 	ff8_externals.card_texts_off_B96968 = (uint8_t **)get_absolute_value(ff8_externals.sub_536CB0, 0x59);
 	ff8_externals.sub_536C80 = get_absolute_value(ff8_externals.sub_536C30, 0x25);

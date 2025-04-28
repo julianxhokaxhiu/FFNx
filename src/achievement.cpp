@@ -556,3 +556,17 @@ void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(unsigned char yuffi
 }
 
 // -------------------------- STEAM ACHIEVEMENTS OF FF8 ---------------------------
+
+SteamAchievementsFF8::SteamAchievementsFF8()
+{
+    this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS, FF8_N_ACHIEVEMENTS);
+}
+
+void SteamAchievementsFF8::unlockPlayTripleTriadAchievement()
+{
+    if (trace_all || trace_achievement)
+        ffnx_trace("%s - trying to unlock play card game first time achievement\n", __func__);
+
+    if (!(this->steamManager->isAchieved(CARDGAME_FIRST_TIME)))
+        this->steamManager->setAchievement(CARDGAME_FIRST_TIME);
+}
