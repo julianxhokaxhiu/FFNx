@@ -596,3 +596,30 @@ void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const triple_triad 
         }
     }
 }
+
+void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const triple_triad &tt_data)
+{
+    ach_trace("%s - trying to unlock collector card game achievement\n", __func__);
+    if (this->steamManager->isAchieved(COLLECT_ALL_CARDS)) {
+      return;
+    }
+
+    int ownedNormalCards = 0;
+    for (int i = 0; i < N_CARDS; i++) {
+        bool owned = tt_data.cards[i] > 0x80;
+        ownedNormalCards += owned;
+    }
+
+    int ownedRareCards = 0;
+    for (int i = 0; i < N_RARE_CARDS; i++) {
+        bool owned = tt_data.card_locations[i] == SQUALL_CARD_LOCATION && (tt_data.cards_rare[i / 8] & (1 << i % 8)) > 0;
+        ownedRareCards += owned;
+    }
+
+    ach_trace("%s - collector report: normal cards %d/%d, rare cards %d/%d\n", __func__,
+              ownedNormalCards, N_CARDS, ownedRareCards, N_RARE_CARDS);
+
+    if (ownedNormalCards + ownedRareCards == N_CARDS + N_RARE_CARDS) {
+        this->steamManager->setAchievement(COLLECT_ALL_CARDS);
+    }
+}

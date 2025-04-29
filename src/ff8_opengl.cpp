@@ -968,6 +968,73 @@ void ff8_cardgame_exit_hook_sub_4972A0()
   ((void(*)())ff8_externals.sub_4972A0)();
 }
 
+int ff8_cardgame_add_card_to_squall_original(int card_idx) {
+  // update known cards
+  if (card_idx >= 77)
+    ff8_externals.savemap->triple_triad.cards_rare[(card_idx - 77) / 8] |= 1 << ((card_idx - 77) % 8);
+  else
+    ff8_externals.savemap->triple_triad.cards[card_idx] |= 0x80u;
+
+  // add card to squall
+  if (card_idx >= 77)
+  {
+    ff8_externals.savemap->triple_triad.card_locations[card_idx - 77] = 240; // SQUALL
+    return 0;
+  }
+  else if ((ff8_externals.savemap->triple_triad.cards[card_idx] & 0x7Fu) >= 100)
+  {
+    return -1;
+  }
+  else
+  {
+    ++ff8_externals.savemap->triple_triad.cards[card_idx];
+    return 0;
+  }
+}
+
+int ff8_cardgame_add_card_to_squall(int card_idx)
+{
+  int ret = ff8_cardgame_add_card_to_squall_original(card_idx);
+	g_FF8SteamAchievements->unlockCollectorTripleTriadAchievement(ff8_externals.savemap->triple_triad);
+  return ret;
+}
+
+int ff8_cardgame_update_card_with_location_original(int card_idx, int card_location)
+{
+  if ( card_idx >= 77 )
+  {
+    ff8_externals.savemap->triple_triad.card_locations[card_idx - 77] = card_location;
+    return 0;
+  }
+  else
+  {
+    byte card_value = ff8_externals.savemap->triple_triad.cards[card_idx];
+    if ( card_location == 240 ) // SQUALL location
+    {
+      if ((card_value & 0x7Fu) < 100)
+      {
+        ff8_externals.savemap->triple_triad.cards[card_idx] = card_value + 1;
+        return 0;
+      }
+    }
+    else if ((card_value & 0x7F) != 0)
+    {
+      ff8_externals.savemap->triple_triad.cards[card_idx] = card_value - 1;
+      return 0;
+    }
+    return -1;
+  }
+}
+
+int ff8_cardgame_update_card_with_location(int card_idx, int card_location)
+{
+  int ret = ff8_cardgame_update_card_with_location_original(card_idx, card_location);
+  if (card_location == 240) {
+    g_FF8SteamAchievements->unlockCollectorTripleTriadAchievement(ff8_externals.savemap->triple_triad);
+  }
+  return ret;
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1296,6 +1363,8 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		patch_code_dword((uint32_t)&ff8_externals.cardgame_funcs[4], (uint32_t)&ff8_cardgame_postgame_func_534BC0);
     replace_call(ff8_externals.sub_534640 + 0x8D, (void*)ff8_cardgame_enter_hook_sub_460B60);
     replace_call(ff8_externals.sub_534640 + 0x51, (void*)ff8_cardgame_exit_hook_sub_4972A0);
+		replace_function(ff8_externals.cardgame_add_card_to_squall_534840, (void*)ff8_cardgame_add_card_to_squall);
+		replace_function(ff8_externals.cardgame_update_card_with_location_5347F0, (void*)ff8_cardgame_update_card_with_location);
 	}
 }
 

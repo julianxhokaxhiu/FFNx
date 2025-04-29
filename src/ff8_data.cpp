@@ -183,6 +183,7 @@ void ff8_find_externals()
 	ff8_externals.sub_534560 = get_relative_call(ff8_externals.sub_534640, 0x5B);
 	ff8_externals.cardgame_funcs = (uint32_t *)get_absolute_value(ff8_externals.sub_534560, 0x5D);
 	ff8_externals.sub_536C30 = ff8_externals.cardgame_funcs[1];
+	ff8_externals.cardgame_func_534340 = ff8_externals.cardgame_funcs[2];
 	ff8_externals.sub_535640 = ff8_externals.cardgame_funcs[3];
 	ff8_externals.cardgame_func_534BC0 = (int(*)())ff8_externals.cardgame_funcs[4];
 	ff8_externals.sub_536CB0 = get_absolute_value(ff8_externals.sub_536C30, 0x14);
@@ -196,6 +197,10 @@ void ff8_find_externals()
 	ff8_externals.sub_539500 = get_relative_call(ff8_externals.sub_534640, 0x110);
 	ff8_externals.cardgame_tim_texture_font = (uint8_t *)get_absolute_value(ff8_externals.sub_539500, 0x1);
 	ff8_externals.is_card_game = (uint32_t*)get_absolute_value(ff8_externals.sub_47CCB0, *(uint32_t *)(ff8_externals.sub_47CCB0 + 0xF2) + 0xF7);
+	ff8_externals.cardgame_add_card_to_squall_534840 = get_relative_call((uint32_t)ff8_externals.cardgame_func_534BC0, 0x181);
+	ff8_externals.cardgame_sub_536DE0 = get_relative_call(ff8_externals.cardgame_func_534340, 0x2);
+	ff8_externals.cardgame_sub_537110 = get_absolute_value(ff8_externals.cardgame_sub_536DE0, 0x15);
+	ff8_externals.cardgame_update_card_with_location_5347F0 = get_relative_call(ff8_externals.cardgame_sub_537110, 0xFD);
 
 	ff8_externals.loc_47D490 = ff8_externals.sub_47CCB0 + 0xDA + 0x4 + *((int32_t *)(ff8_externals.sub_47CCB0 + 0xDA));
 	ff8_externals.sub_500870 = get_relative_call(ff8_externals.loc_47D490, 0x85);

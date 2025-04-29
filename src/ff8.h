@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <stdint.h>
 #include <stdio.h>
 #include <windows.h>
@@ -1417,6 +1418,7 @@ struct ff8_externals
 	uint32_t sub_5391B0;
 	uint32_t sub_534560;
 	uint32_t sub_536C30;
+	uint32_t cardgame_func_534340;
 	uint32_t sub_535640;
 	int(*cardgame_func_534BC0)();
 	uint32_t sub_536CB0;
@@ -1431,6 +1433,10 @@ struct ff8_externals
 	uint8_t *cardgame_tim_texture_icons;
 	uint8_t *cardgame_tim_texture_font;
 	uint32_t* is_card_game;
+  uint32_t cardgame_add_card_to_squall_534840;
+	uint32_t cardgame_sub_536DE0;
+	uint32_t cardgame_sub_537110;
+	uint32_t cardgame_update_card_with_location_5347F0;
 	uint32_t sfx_play_to_current_playing_channel;
 	uint32_t sfx_unload_all;
 	uint32_t sfx_pause_all;

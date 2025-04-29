@@ -341,6 +341,7 @@ private:
 
     static inline constexpr int FF8_N_ACHIEVEMENTS = 45;
 
+    static inline constexpr int N_CARDS = 77;
     static inline constexpr int N_RARE_CARDS = 33;
     static inline constexpr byte SQUALL_CARD_LOCATION = 0xF0;
 
@@ -351,9 +352,11 @@ public:
     SteamAchievementsFF8();
     ~SteamAchievementsFF8() = default;
 
+    void initOwnedTripleTriadRareCards(const triple_triad &triple_triad);
+
     void unlockPlayTripleTriadAchievement();
     void unlockLoserTripleTriadAchievement(const triple_triad &triple_triad);
-    void initOwnedTripleTriadRareCards(const triple_triad &triple_triad);
+    void unlockCollectorTripleTriadAchievement(const triple_triad &triple_triad);
 };
 
 // Global, access to Achievements object
