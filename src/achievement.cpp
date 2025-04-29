@@ -31,6 +31,8 @@
 #include "log.h"
 #include "cfg.h"
 
+#define ach_trace(x, ...) if (trace_all || trace_achievement) ffnx_trace((x), ##__VA_ARGS__)
+
 using std::string;
 
 std::unique_ptr<SteamAchievementsFF7> g_FF7SteamAchievements = nullptr;
@@ -562,11 +564,35 @@ SteamAchievementsFF8::SteamAchievementsFF8()
     this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS, FF8_N_ACHIEVEMENTS);
 }
 
+void SteamAchievementsFF8::initOwnedTripleTriadRareCards(const triple_triad &tt_data)
+{
+    ach_trace("%s - init owned triple triad rare cards\n", __func__);
+
+    for (int i = 0; i < this->prevOwnedRareCards.size(); i++) {
+        bool owned = tt_data.card_locations[i] == SQUALL_CARD_LOCATION && (tt_data.cards_rare[i / 8] & (1 << i % 8)) > 0;
+        this->prevOwnedRareCards[i] = owned;
+    }
+}
+
 void SteamAchievementsFF8::unlockPlayTripleTriadAchievement()
 {
-    if (trace_all || trace_achievement)
-        ffnx_trace("%s - trying to unlock play card game first time achievement\n", __func__);
+    ach_trace("%s - trying to unlock play card game first time achievement\n", __func__);
 
     if (!(this->steamManager->isAchieved(CARDGAME_FIRST_TIME)))
         this->steamManager->setAchievement(CARDGAME_FIRST_TIME);
+}
+
+void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const triple_triad &tt_data)
+{
+    ach_trace("%s - trying to unlock loser card game achievement\n", __func__);
+
+    for (int i = 0; i < this->prevOwnedRareCards.size(); i++) {
+        bool owned = tt_data.card_locations[i] == SQUALL_CARD_LOCATION && (tt_data.cards_rare[i / 8] & (1 << i % 8)) > 0;
+        if (!owned && this->prevOwnedRareCards[i]) {
+            ach_trace("%s - LOSER achievement unlocked due to card id '%d' lost\n", __func__, i);
+
+            if (!(this->steamManager->isAchieved(LOSER)))
+                this->steamManager->setAchievement(LOSER);
+        }
+    }
 }

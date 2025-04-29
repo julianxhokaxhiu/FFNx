@@ -37,6 +37,7 @@
 #include "ff8/vram.h"
 #include "metadata.h"
 #include "achievement.h"
+#include <cstdint>
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -955,6 +956,18 @@ int ff8_cardgame_postgame_func_534BC0() {
 	return ff8_externals.cardgame_func_534BC0();
 }
 
+void ff8_cardgame_enter_hook_sub_460B60(float a1)
+{
+	g_FF8SteamAchievements->initOwnedTripleTriadRareCards(ff8_externals.savemap->triple_triad);
+  ((void(*)(float))ff8_externals.sub_460B60)(a1);
+}
+
+void ff8_cardgame_exit_hook_sub_4972A0()
+{
+	g_FF8SteamAchievements->unlockLoserTripleTriadAchievement(ff8_externals.savemap->triple_triad);
+  ((void(*)())ff8_externals.sub_4972A0)();
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1279,7 +1292,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	//###############################
 	if(steam_edition || enable_steam_achievements)
 	{
+    // triple triad
 		patch_code_dword((uint32_t)&ff8_externals.cardgame_funcs[4], (uint32_t)&ff8_cardgame_postgame_func_534BC0);
+    replace_call(ff8_externals.sub_534640 + 0x8D, (void*)ff8_cardgame_enter_hook_sub_460B60);
+    replace_call(ff8_externals.sub_534640 + 0x51, (void*)ff8_cardgame_exit_hook_sub_4972A0);
 	}
 }
 

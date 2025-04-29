@@ -30,6 +30,7 @@
 #include <windows.h>
 
 #include "ff7.h"
+#include "ff8/save_data.h"
 
 #define _ACH_ID(id)           \
     {                         \
@@ -340,13 +341,19 @@ private:
 
     static inline constexpr int FF8_N_ACHIEVEMENTS = 45;
 
+    static inline constexpr int N_RARE_CARDS = 33;
+    static inline constexpr byte SQUALL_CARD_LOCATION = 0xF0;
+
     std::unique_ptr<SteamManager> steamManager;
+    std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
 
 public:
     SteamAchievementsFF8();
     ~SteamAchievementsFF8() = default;
 
     void unlockPlayTripleTriadAchievement();
+    void unlockLoserTripleTriadAchievement(const triple_triad &triple_triad);
+    void initOwnedTripleTriadRareCards(const triple_triad &triple_triad);
 };
 
 // Global, access to Achievements object

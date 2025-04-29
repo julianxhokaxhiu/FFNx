@@ -56,12 +56,14 @@ void ff8_find_externals()
 	ff8_externals.init_config = get_relative_call(ff8_externals.main_entry, 0x73);
 	ff8_externals.pubintro_init = get_absolute_value(ff8_externals.main_entry, 0x158);
 	ff8_externals.pubintro_cleanup = get_absolute_value(ff8_externals.main_entry, 0x162);
+	ff8_externals.pubintro_enter_main = get_absolute_value(ff8_externals.main_entry, 0x16C);
 
 	if (JP_VERSION)
 	{
 		ff8_externals.init_config = get_relative_call(ff8_externals.init_config, 0x0);
 		ff8_externals.pubintro_init = get_relative_call(ff8_externals.pubintro_init, 0x0);
 		ff8_externals.pubintro_cleanup = get_relative_call(ff8_externals.pubintro_cleanup, 0x0);
+		ff8_externals.pubintro_enter_main = get_relative_call(ff8_externals.pubintro_enter_main, 0x0);
 	}
 
 	ff8_externals.sub_467C00 = get_relative_call(ff8_externals.pubintro_init, 0xB5);
@@ -107,6 +109,7 @@ void ff8_find_externals()
 	}
 	ff8_externals.app_path = (const char*)get_absolute_value(uint32_t(ff8_externals.set_game_paths), 0x9A);
 
+	ff8_externals.savemap = (savemap_ff8*)get_absolute_value(ff8_externals.pubintro_enter_main, 0x9);
 	ff8_externals.savemap_field = (savemap_field_h**)get_absolute_value(ff8_externals.main_loop, 0x21);
 
 	if (JP_VERSION)

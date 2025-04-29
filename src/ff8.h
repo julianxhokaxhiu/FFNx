@@ -1089,6 +1089,7 @@ struct ff8_externals
 	uint32_t get_command_key;
 	uint32_t sub_468BD0;
 	uint32_t pubintro_cleanup;
+	uint32_t pubintro_enter_main;
 	uint32_t pubintro_exit;
 	uint32_t pubintro_main_loop;
 	uint32_t credits_main_loop;
@@ -1334,6 +1335,7 @@ struct ff8_externals
 	uint32_t stop_cdrom_field_call;
 	uint32_t stop_cdrom_cleanup_call;
 	savemap_field_h** savemap_field;
+	savemap_ff8* savemap;
 	int32_t (*check_game_is_paused)(int32_t);
 	DWORD* is_game_paused;
 	uint32_t sub_470250;
