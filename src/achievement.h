@@ -357,6 +357,7 @@ public:
     void unlockPlayTripleTriadAchievement();
     void unlockLoserTripleTriadAchievement(const triple_triad &triple_triad);
     void unlockCollectorTripleTriadAchievement(const triple_triad &triple_triad);
+    void unlockProfessionalTripleTriadAchievement(const triple_triad &triple_triad);
 };
 
 // Global, access to Achievements object

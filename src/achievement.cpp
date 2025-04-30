@@ -597,6 +597,17 @@ void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const triple_triad 
     }
 }
 
+void SteamAchievementsFF8::unlockProfessionalTripleTriadAchievement(const triple_triad &tt_data)
+{
+    WORD tt_wins = tt_data.victory_count;
+    ach_trace("%s - trying to unlock professional player card game achievement (wins: %d)\n", __func__, tt_wins);
+    if (tt_wins >= 100)
+    {
+        if (!(this->steamManager->isAchieved(PROFESSIONAL)))
+            this->steamManager->setAchievement(PROFESSIONAL);
+    }
+}
+
 void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const triple_triad &tt_data)
 {
     ach_trace("%s - trying to unlock collector card game achievement\n", __func__);

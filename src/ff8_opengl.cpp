@@ -1029,8 +1029,20 @@ int ff8_cardgame_update_card_with_location_original(int card_idx, int card_locat
 int ff8_cardgame_update_card_with_location(int card_idx, int card_location)
 {
   int ret = ff8_cardgame_update_card_with_location_original(card_idx, card_location);
-  if (card_location == 240) {
+  if (card_location == 240) 
+  {
     g_FF8SteamAchievements->unlockCollectorTripleTriadAchievement(ff8_externals.savemap->triple_triad);
+  }
+  return ret;
+}
+
+int ff8_cardgame_sub_535D00(void* tt_data)
+{
+  uint16_t prev_card_wins = ff8_externals.savemap->triple_triad.victory_count;
+  int ret = ff8_externals.cardgame_sub_535D00(tt_data);
+  if (ff8_externals.savemap->triple_triad.victory_count > prev_card_wins)
+  {
+    g_FF8SteamAchievements->unlockProfessionalTripleTriadAchievement(ff8_externals.savemap->triple_triad);
   }
   return ret;
 }
@@ -1365,6 +1377,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
     replace_call(ff8_externals.sub_534640 + 0x51, (void*)ff8_cardgame_exit_hook_sub_4972A0);
 		replace_function(ff8_externals.cardgame_add_card_to_squall_534840, (void*)ff8_cardgame_add_card_to_squall);
 		replace_function(ff8_externals.cardgame_update_card_with_location_5347F0, (void*)ff8_cardgame_update_card_with_location);
+		patch_code_dword(ff8_externals.cargame_func_535C90 + 0x19, (uint32_t)&ff8_cardgame_sub_535D00);
 	}
 }
 
