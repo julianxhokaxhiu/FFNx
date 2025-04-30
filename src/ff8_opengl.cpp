@@ -1047,6 +1047,12 @@ int ff8_cardgame_sub_535D00(void* tt_data)
   return ret;
 }
 
+void ff8_enable_gf_sub_47E480(int gf_idx)
+{
+  ff8_externals.savemap->gfs[gf_idx].exists |= 1u;
+  g_FF8SteamAchievements->unlockGuardianForceAchievement(gf_idx);
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1378,6 +1384,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_function(ff8_externals.cardgame_add_card_to_squall_534840, (void*)ff8_cardgame_add_card_to_squall);
 		replace_function(ff8_externals.cardgame_update_card_with_location_5347F0, (void*)ff8_cardgame_update_card_with_location);
 		patch_code_dword(ff8_externals.cargame_func_535C90 + 0x19, (uint32_t)&ff8_cardgame_sub_535D00);
+
+    // guardian forces
+		replace_function(ff8_externals.enable_gf_sub_47E480, (void*)ff8_enable_gf_sub_47E480);
 	}
 }
 

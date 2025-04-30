@@ -634,3 +634,15 @@ void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const triple_tr
         this->steamManager->setAchievement(COLLECT_ALL_CARDS);
     }
 }
+
+void SteamAchievementsFF8::unlockGuardianForceAchievement(int gf_idx)
+{
+    if (gf_idx < 0 || gf_idx > 15) {
+      ach_trace("%s - invalid guardian force idx (gf id: %d)\n", __func__, gf_idx);
+      return;
+    }
+
+    ach_trace("%s - trying to unlock guardian force achievement (gf id: %d)\n", __func__, gf_idx);
+    if (!(this->steamManager->isAchieved(gfIndexToAchMap[gf_idx])))
+        this->steamManager->setAchievement(gfIndexToAchMap[gf_idx]);
+}

@@ -339,6 +339,25 @@ private:
         _ACH_ID(TOTAL_KILLS_10000),
     };
 
+    static inline const Achievements gfIndexToAchMap[16] = {
+        UNLOCK_GF_QUEZACOTL,
+        UNLOCK_GF_SHIVA,
+        UNLOCK_GF_IFRIT,
+        UNLOCK_GF_SIREN,
+        UNLOCK_GF_BROTHERS,
+        UNLOCK_GF_DIABLOS,
+        UNLOCK_GF_CARBUNCLE,
+        UNLOCK_GF_LEVIATHAN,
+        UNLOCK_GF_PANDEMONA,
+        UNLOCK_GF_CERBERUS,
+        UNLOCK_GF_ALEXANDER,
+        UNLOCK_GF_DOOMTRAIN,
+        UNLOCK_GF_BAHAMUT,
+        UNLOCK_GF_CACTUAR,
+        UNLOCK_GF_TONBERRY,
+        UNLOCK_GF_EDEN,
+    };
+
     static inline constexpr int FF8_N_ACHIEVEMENTS = 45;
 
     static inline constexpr int N_CARDS = 77;
@@ -358,6 +377,7 @@ public:
     void unlockLoserTripleTriadAchievement(const triple_triad &triple_triad);
     void unlockCollectorTripleTriadAchievement(const triple_triad &triple_triad);
     void unlockProfessionalTripleTriadAchievement(const triple_triad &triple_triad);
+    void unlockGuardianForceAchievement(int gf_idx);
 };
 
 // Global, access to Achievements object

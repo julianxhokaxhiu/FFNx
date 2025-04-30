@@ -308,6 +308,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_musicvolfade = common_externals.execute_opcode_table[0xC2];
 	ff8_externals.opcode_mesmode = common_externals.execute_opcode_table[0x106];
 	ff8_externals.opcode_ramesw = common_externals.execute_opcode_table[0x116];
+	ff8_externals.opcode_menuname = common_externals.execute_opcode_table[0x129];
 	ff8_externals.opcode_choicemusic = common_externals.execute_opcode_table[0x135];
 	ff8_externals.opcode_drawpoint = common_externals.execute_opcode_table[0x137];
 	ff8_externals.opcode_musicskip = common_externals.execute_opcode_table[0x144];
@@ -330,6 +331,7 @@ void ff8_find_externals()
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
 
 	ff8_externals.drawpoint_messages = get_absolute_value(ff8_externals.opcode_drawpoint, 0xD6);
+	ff8_externals.enable_gf_sub_47E480 = get_relative_call(common_externals.execute_opcode_table[0x129], 0x6E);
 
 	common_externals.debug_print = get_relative_call(common_externals.update_movie_sample, 0x141);
 

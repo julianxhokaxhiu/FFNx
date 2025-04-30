@@ -1316,6 +1316,7 @@ struct ff8_externals
 	uint32_t opcode_tuto;
 	uint32_t opcode_mapjump;
 	uint32_t opcode_pshm_w;
+	uint32_t opcode_menuname;
 	BYTE* current_tutorial_id;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;
@@ -1549,6 +1550,7 @@ struct ff8_externals
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;
+	uint32_t enable_gf_sub_47E480;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
