@@ -442,6 +442,7 @@ void ff8_find_externals()
 	ff8_externals.menu_config_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x8);
 	ff8_externals.menu_config_input_desc = (ff8_menu_config_input *)get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x39);
 	ff8_externals.menu_config_input_desc_keymap = (ff8_menu_config_input_keymap *)get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x110);
+	ff8_externals.menu_junkshop_sub_4EA890 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[12].func), 0x10);
 	ff8_externals.main_menu_render_sub_4E5550 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x3);
 	ff8_externals.main_menu_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x8);
 	ff8_externals.sub_4C2FF0 = get_relative_call(uint32_t(ff8_externals.menu_callbacks[16].func), 0x2B);
@@ -450,6 +451,8 @@ void ff8_find_externals()
 	ff8_externals.create_save_file_sub_4C6E50 = get_relative_call(ff8_externals.main_menu_controller, JP_VERSION ? 0x1004 : 0xF8D);
 	ff8_externals.create_save_chocobo_world_file_sub_4C6620 = get_relative_call(ff8_externals.menu_chocobo_world_controller, 0x9F6);
 	ff8_externals.update_seed_exp_4C30E0 = (void(*)(int))get_relative_call(ff8_externals.menu_sub_4D4D30, 0x928);
+	ff8_externals.sub_4ABC40 = (int(*)(int,int))get_relative_call(ff8_externals.menu_junkshop_sub_4EA890, 0x5C1);
+	ff8_externals.sub_4EA770 = (int(*)(int,uint32_t))get_relative_call(ff8_externals.menu_junkshop_sub_4EA890, 0x60B);
 	ff8_externals.get_text_data = get_relative_call(ff8_externals.main_menu_render_sub_4E5550, 0x203);
 	ff8_externals.sub_4BE4D0 = get_relative_call(ff8_externals.sub_4B3410, 0x68);
 	ff8_externals.sub_4BECC0 = get_relative_call(ff8_externals.sub_4BE4D0, 0x39);

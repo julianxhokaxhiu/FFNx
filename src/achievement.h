@@ -339,6 +339,11 @@ private:
         _ACH_ID(TOTAL_KILLS_10000),
     };
 
+    struct upgrade_data {
+        byte char_id = 0xFF;
+        byte prev_weapon_id = 0xFF;
+    };
+
     static inline const Achievements gfIndexToAchMap[16] = {
         UNLOCK_GF_QUEZACOTL,
         UNLOCK_GF_SHIVA,
@@ -366,12 +371,14 @@ private:
 
     std::unique_ptr<SteamManager> steamManager;
     std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
+    upgrade_data prevWeaponUpgradeData;
 
 public:
     SteamAchievementsFF8();
     ~SteamAchievementsFF8() = default;
 
     void initOwnedTripleTriadRareCards(const savemap_triple_triad &triple_triad);
+    void initPreviousWeaponIdBeforeUpgrade(byte charId, byte weaponId);
 
     void unlockPlayTripleTriadAchievement();
     void unlockLoserTripleTriadAchievement(const savemap_triple_triad &triple_triad);
@@ -379,6 +386,7 @@ public:
     void unlockProfessionalTripleTriadAchievement(const savemap_triple_triad &triple_triad);
     void unlockGuardianForceAchievement(int gf_idx);
     void unlockTopSeedRankAchievement(WORD seed_exp);
+    void unlockUpgradeWeaponAchievement(const savemap_ff8 &savemap);
 };
 
 // Global, access to Achievements object

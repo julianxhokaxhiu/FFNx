@@ -28,6 +28,7 @@
 #include <algorithm>
 
 #include "achievement.h"
+#include "ff8/save_data.h"
 #include "log.h"
 #include "cfg.h"
 
@@ -574,6 +575,13 @@ void SteamAchievementsFF8::initOwnedTripleTriadRareCards(const savemap_triple_tr
     }
 }
 
+void SteamAchievementsFF8::initPreviousWeaponIdBeforeUpgrade(byte charId, byte weaponId)
+{
+    ach_trace("%s - init previous weapon id before upgrade (char id: %d, weapon id: %d)\n", __func__, charId, weaponId);
+    this->prevWeaponUpgradeData.char_id = charId;
+    this->prevWeaponUpgradeData.prev_weapon_id = weaponId;
+}
+
 void SteamAchievementsFF8::unlockPlayTripleTriadAchievement()
 {
     ach_trace("%s - trying to unlock play card game first time achievement\n", __func__);
@@ -654,5 +662,24 @@ void SteamAchievementsFF8::unlockTopSeedRankAchievement(WORD seed_exp)
         if (!(this->steamManager->isAchieved(REACH_SEED_RANK_A)))
             this->steamManager->setAchievement(REACH_SEED_RANK_A);
     }
+}
+
+void SteamAchievementsFF8::unlockUpgradeWeaponAchievement(const savemap_ff8 &savemap)
+{
+    if (this->prevWeaponUpgradeData.char_id == 0xFF || this->prevWeaponUpgradeData.prev_weapon_id == 0xFF) {
+        ach_trace("%s - invalid previous weapon id before upgrade (char id: %d, weapon id: %d)\n",
+                  __func__, this->prevWeaponUpgradeData.char_id, this->prevWeaponUpgradeData.prev_weapon_id);
+    }
+
+    byte weaponId = savemap.chars[this->prevWeaponUpgradeData.char_id].weapon_id;
+    ach_trace("%s - trying to unlock handyman achivement (new weapon id: %d, old weapon id: %d)\n",
+              __func__, weaponId, this->prevWeaponUpgradeData.prev_weapon_id);
+    if (weaponId > this->prevWeaponUpgradeData.prev_weapon_id) {
+        if (!(this->steamManager->isAchieved(UPGRADE_WEAPON_FIRST_TIME)))
+            this->steamManager->setAchievement(UPGRADE_WEAPON_FIRST_TIME);
+    }
+
+    this->prevWeaponUpgradeData.char_id = 0xFF;
+    this->prevWeaponUpgradeData.prev_weapon_id = 0xFF;
 }
 

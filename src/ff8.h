@@ -1138,6 +1138,7 @@ struct ff8_externals
 	uint32_t menu_config_render_submenu;
 	ff8_menu_config_input *menu_config_input_desc;
 	ff8_menu_config_input_keymap *menu_config_input_desc_keymap;
+	uint32_t menu_junkshop_sub_4EA890;
 	uint32_t main_menu_render_sub_4E5550;
 	uint32_t main_menu_controller;
 	uint32_t sub_4C2FF0;
@@ -1146,6 +1147,8 @@ struct ff8_externals
 	uint32_t create_save_file_sub_4C6E50;
 	uint32_t create_save_chocobo_world_file_sub_4C6620;
 	void (*update_seed_exp_4C30E0)(int);
+	int (*sub_4ABC40)(int, int);
+	int (*sub_4EA770)(int, uint32_t);
 	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;

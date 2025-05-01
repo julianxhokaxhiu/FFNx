@@ -1090,6 +1090,22 @@ void ff8_worldmap_update_seed_level() {
   }
 }
 
+// Replacing a specific call that is called when player remodel weapon just before assigning the new
+// weapon id to the character
+int ff8_menu_junkshop_get_char_id_hook_4ABC40(int chars_available_bitmap, int char_idx) {
+  int char_id = ff8_externals.sub_4ABC40(chars_available_bitmap, char_idx);
+  g_FF8SteamAchievements->initPreviousWeaponIdBeforeUpgrade(char_id, ff8_externals.savemap->chars[char_id].weapon_id);
+  return char_id;
+}
+
+// Replacing a specific call that is called when player remodel weapon just after assigning the new
+// weapon id to the character
+int ff8_menu_junkshop_hook_4EA770(int a1, uint32_t a2) {
+  int ret = ff8_externals.sub_4EA770(a1, a2);
+  g_FF8SteamAchievements->unlockUpgradeWeaponAchievement(*ff8_externals.savemap);
+  return ret;
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1431,6 +1447,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x153], (uint32_t)&ff8_field_opcode_ADDSEEDLEVEL);
     replace_call(ff8_externals.sub_529FF0 + 0x120, (void*)ff8_field_update_seed_level);
     replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x152, (void*)ff8_worldmap_update_seed_level);
+
+    // handyman: upgrade weapon
+    replace_call(ff8_externals.menu_junkshop_sub_4EA890 + 0x5C1, (void*)ff8_menu_junkshop_get_char_id_hook_4ABC40);
+    replace_call(ff8_externals.menu_junkshop_sub_4EA890 + 0x60B, (void*)ff8_menu_junkshop_hook_4EA770);
 	}
 }
 
