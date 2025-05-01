@@ -371,13 +371,14 @@ public:
     SteamAchievementsFF8();
     ~SteamAchievementsFF8() = default;
 
-    void initOwnedTripleTriadRareCards(const triple_triad &triple_triad);
+    void initOwnedTripleTriadRareCards(const savemap_triple_triad &triple_triad);
 
     void unlockPlayTripleTriadAchievement();
-    void unlockLoserTripleTriadAchievement(const triple_triad &triple_triad);
-    void unlockCollectorTripleTriadAchievement(const triple_triad &triple_triad);
-    void unlockProfessionalTripleTriadAchievement(const triple_triad &triple_triad);
+    void unlockLoserTripleTriadAchievement(const savemap_triple_triad &triple_triad);
+    void unlockCollectorTripleTriadAchievement(const savemap_triple_triad &triple_triad);
+    void unlockProfessionalTripleTriadAchievement(const savemap_triple_triad &triple_triad);
     void unlockGuardianForceAchievement(int gf_idx);
+    void unlockTopSeedRankAchievement(WORD seed_exp);
 };
 
 // Global, access to Achievements object

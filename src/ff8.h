@@ -1077,6 +1077,8 @@ struct ff8_externals
 	uint32_t sub_4767B0;
 	uint32_t sub_4789A0;
 	char (*sub_47CA90)();
+	uint32_t sub_529FF0;
+	uint32_t field_update_seed_level_52B140;
 	uint32_t battle_trigger_field;
 	uint32_t battle_trigger_worldmap;
 	uint32_t _load_texture;
@@ -1139,9 +1141,11 @@ struct ff8_externals
 	uint32_t main_menu_render_sub_4E5550;
 	uint32_t main_menu_controller;
 	uint32_t sub_4C2FF0;
+	uint32_t menu_sub_4D4D30;
 	uint32_t menu_chocobo_world_controller;
 	uint32_t create_save_file_sub_4C6E50;
 	uint32_t create_save_chocobo_world_file_sub_4C6620;
+	void (*update_seed_exp_4C30E0)(int);
 	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;
@@ -1252,6 +1256,8 @@ struct ff8_externals
 	uint32_t sub_543CB0;
 	uint32_t sub_5484B0;
 	uint32_t sub_54A230;
+	uint32_t worldmap_update_steps_sub_6519D0;
+	uint32_t worldmap_update_seed_level_651C10;
 	uint32_t sub_54E9B0;
 	uint32_t sub_550070;
 	int (*sub_541C80)(WORD*);
@@ -1316,7 +1322,9 @@ struct ff8_externals
 	uint32_t opcode_tuto;
 	uint32_t opcode_mapjump;
 	uint32_t opcode_pshm_w;
+	int (*opcode_popm_w)(void*, int);
 	uint32_t opcode_menuname;
+	int (*opcode_addseedlevel)(void*);
 	BYTE* current_tutorial_id;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;

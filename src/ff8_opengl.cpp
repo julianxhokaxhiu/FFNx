@@ -1053,6 +1053,43 @@ void ff8_enable_gf_sub_47E480(int gf_idx)
   g_FF8SteamAchievements->unlockGuardianForceAchievement(gf_idx);
 }
 
+void ff8_update_seed_exp_4C30E0(int seed_lvl)
+{
+  ff8_externals.update_seed_exp_4C30E0(seed_lvl);
+	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+}
+
+int ff8_field_opcode_POPM_W(void* field_data, int memory_offset) {
+  WORD prevSeedExp = ff8_externals.savemap->field_header.seedExp;
+	int ret = ff8_externals.opcode_popm_w(field_data, memory_offset);
+  if (ff8_externals.savemap->field_header.seedExp > prevSeedExp) {
+    g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+  }
+  return ret;
+}
+
+int ff8_field_opcode_ADDSEEDLEVEL(void* field_data, int memory_offset) {
+	int ret = ff8_externals.opcode_addseedlevel(field_data);
+  g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+  return ret;
+}
+
+void ff8_field_update_seed_level() {
+  WORD prevSeedExp = ff8_externals.savemap->field_header.seedExp;
+	((void(*)())ff8_externals.field_update_seed_level_52B140)();
+  if (ff8_externals.savemap->field_header.seedExp > prevSeedExp) {
+    g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+  }
+}
+
+void ff8_worldmap_update_seed_level() {
+  WORD prevSeedExp = ff8_externals.savemap->field_header.seedExp;
+	((void(*)())ff8_externals.worldmap_update_seed_level_651C10)();
+  if (ff8_externals.savemap->field_header.seedExp > prevSeedExp) {
+    g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+  }
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1387,6 +1424,13 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
     // guardian forces
 		replace_function(ff8_externals.enable_gf_sub_47E480, (void*)ff8_enable_gf_sub_47E480);
+
+    // seed rank A
+    replace_call(ff8_externals.menu_sub_4D4D30 + 0x928, (void*)ff8_update_seed_exp_4C30E0);
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0D], (uint32_t)&ff8_field_opcode_POPM_W);
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x153], (uint32_t)&ff8_field_opcode_ADDSEEDLEVEL);
+    replace_call(ff8_externals.sub_529FF0 + 0x120, (void*)ff8_field_update_seed_level);
+    replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x152, (void*)ff8_worldmap_update_seed_level);
 	}
 }
 

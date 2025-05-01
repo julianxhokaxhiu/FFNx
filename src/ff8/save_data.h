@@ -29,7 +29,7 @@
 
 #pragma pack(push, 1)
 
-struct header {
+struct savemap_header {
 	uint16_t location_id;
 	uint16_t char1_curr_hp;
 	uint16_t char1_max_hp;
@@ -48,7 +48,7 @@ struct header {
 	uint32_t curr_save;
 };
 
-struct g_force {
+struct savemap_gf {
 	uint8_t name[12];
 	uint32_t exp;
 	uint8_t unk1;
@@ -64,7 +64,7 @@ struct g_force {
 	uint8_t forgotten3;
 };
 
-struct character {
+struct savemap_character {
 	uint16_t current_hp;
 	uint16_t max_hp;
 	uint32_t exp;
@@ -106,13 +106,13 @@ struct character {
 	uint8_t unk5; // padding ?
 };
 
-struct shop {
+struct savemap_shop {
 	uint8_t items[16];
 	uint8_t visited;
 	uint8_t unk1[3];
 };
 
-struct limit_break {
+struct savemap_limit_break {
 	uint16_t quistis_lb;
 	uint16_t zell_lb;
 	uint8_t irvine_lb;
@@ -122,12 +122,12 @@ struct limit_break {
 	uint8_t angelo_p_lb[8];
 };
 
-struct items {
+struct savemap_items {
 	uint8_t battle_order[32];
 	uint16_t items[198];
 };
 
-struct battle {
+struct savemap_battle {
 	uint32_t unk1;
 	uint32_t victory_count;
 	uint16_t unk2;
@@ -195,7 +195,7 @@ struct savemap_field_h {
 	uint8_t unkH[42];
 };
 
-struct triple_triad {
+struct savemap_triple_triad {
 	uint8_t cards[77];
 	uint8_t card_locations[33];
 	uint8_t cards_rare[5];
@@ -207,14 +207,14 @@ struct triple_triad {
 	uint32_t unk3;
 };
 
-// For more info: https://wiki.ffrtt.ru/index.php/FF8/GameSaveFormat
+// For more info: https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/miscellaneous/game-save-format
 struct savemap_ff8 {
 	uint16_t checksum;
 	uint16_t fixed_value; // always 0x8FF
-	header header;
-	g_force gfs[G_FORCE_NUM];
-	character chars[CHAR_NUM];
-	shop shop[20];
+	savemap_header header;
+	savemap_gf gfs[G_FORCE_NUM];
+	savemap_character chars[CHAR_NUM];
+	savemap_shop shop[20];
 	uint8_t config[20];
 	uint8_t party[4]; // 0xFF terminated
 	uint32_t known_weapons;
@@ -223,11 +223,11 @@ struct savemap_ff8 {
 	uint16_t unk2;
 	uint32_t gil;
 	uint32_t gil_laguna;
-	limit_break lb;
-	items items;
+	savemap_limit_break lb;
+	savemap_items items;
 	uint32_t game_time;
 	uint32_t countdown;
-	battle battle;
+	savemap_battle battle;
 	uint8_t tutorial_infos[16];
 	uint8_t seed_test_lvl;
 	uint32_t unk3;
@@ -244,7 +244,7 @@ struct savemap_ff8 {
 	savemap_field_h field_header;
 	uint8_t field[1024];
 	uint8_t worldmap[128];
-	triple_triad triple_triad;
+	savemap_triple_triad triple_triad;
 	uint8_t choco_world[64];
 };
 

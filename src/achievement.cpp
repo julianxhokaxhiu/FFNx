@@ -564,7 +564,7 @@ SteamAchievementsFF8::SteamAchievementsFF8()
     this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS, FF8_N_ACHIEVEMENTS);
 }
 
-void SteamAchievementsFF8::initOwnedTripleTriadRareCards(const triple_triad &tt_data)
+void SteamAchievementsFF8::initOwnedTripleTriadRareCards(const savemap_triple_triad &tt_data)
 {
     ach_trace("%s - init owned triple triad rare cards\n", __func__);
 
@@ -582,7 +582,7 @@ void SteamAchievementsFF8::unlockPlayTripleTriadAchievement()
         this->steamManager->setAchievement(CARDGAME_FIRST_TIME);
 }
 
-void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const triple_triad &tt_data)
+void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const savemap_triple_triad &tt_data)
 {
     ach_trace("%s - trying to unlock loser card game achievement\n", __func__);
 
@@ -597,7 +597,7 @@ void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const triple_triad 
     }
 }
 
-void SteamAchievementsFF8::unlockProfessionalTripleTriadAchievement(const triple_triad &tt_data)
+void SteamAchievementsFF8::unlockProfessionalTripleTriadAchievement(const savemap_triple_triad &tt_data)
 {
     WORD tt_wins = tt_data.victory_count;
     ach_trace("%s - trying to unlock professional player card game achievement (wins: %d)\n", __func__, tt_wins);
@@ -608,7 +608,7 @@ void SteamAchievementsFF8::unlockProfessionalTripleTriadAchievement(const triple
     }
 }
 
-void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const triple_triad &tt_data)
+void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const savemap_triple_triad &tt_data)
 {
     ach_trace("%s - trying to unlock collector card game achievement\n", __func__);
     if (this->steamManager->isAchieved(COLLECT_ALL_CARDS)) {
@@ -646,3 +646,13 @@ void SteamAchievementsFF8::unlockGuardianForceAchievement(int gf_idx)
     if (!(this->steamManager->isAchieved(gfIndexToAchMap[gf_idx])))
         this->steamManager->setAchievement(gfIndexToAchMap[gf_idx]);
 }
+
+void SteamAchievementsFF8::unlockTopSeedRankAchievement(WORD seed_exp)
+{
+    ach_trace("%s - trying to unlock seed rank A achivement (seed exp: %d)\n", __func__, seed_exp);
+    if (seed_exp >= 3100) {
+        if (!(this->steamManager->isAchieved(REACH_SEED_RANK_A)))
+            this->steamManager->setAchievement(REACH_SEED_RANK_A);
+    }
+}
+
