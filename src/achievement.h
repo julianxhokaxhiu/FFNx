@@ -372,6 +372,7 @@ private:
     std::unique_ptr<SteamManager> steamManager;
     std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
     upgrade_data prevWeaponUpgradeData;
+    byte statCharId = 0xFF;
 
 public:
     SteamAchievementsFF8();
@@ -379,6 +380,9 @@ public:
 
     void initOwnedTripleTriadRareCards(const savemap_triple_triad &triple_triad);
     void initPreviousWeaponIdBeforeUpgrade(byte charId, byte weaponId);
+    void initStatCharIdUnderStatCompute(byte statCharId);
+
+    byte getStatCharIdUnderStatCompute();
 
     void unlockPlayTripleTriadAchievement();
     void unlockLoserTripleTriadAchievement(const savemap_triple_triad &triple_triad);
@@ -387,6 +391,7 @@ public:
     void unlockGuardianForceAchievement(int gf_idx);
     void unlockTopSeedRankAchievement(WORD seed_exp);
     void unlockUpgradeWeaponAchievement(const savemap_ff8 &savemap);
+    void unlockMaxHpAchievement(int max_hp);
 };
 
 // Global, access to Achievements object

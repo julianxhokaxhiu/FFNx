@@ -38,6 +38,7 @@
 #include "metadata.h"
 #include "achievement.h"
 #include <cstdint>
+#include <execution>
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -1106,6 +1107,23 @@ int ff8_menu_junkshop_hook_4EA770(int a1, uint32_t a2) {
   return ret;
 }
 
+// Replacing a call done before computing max HP for a character in order to get the 
+// index "party_char_id"
+void ff8_hook_sub_4954B0(int party_char_id) {
+  ff8_externals.sub_4954B0(party_char_id);
+  g_FF8SteamAchievements->initStatCharIdUnderStatCompute(party_char_id);
+}
+
+int ff8_compute_char_max_hp_496310(int multiplier, int char_id) {
+  int max_hp_mul = ff8_externals.compute_char_max_hp_496310(multiplier, char_id);
+  byte stat_char_id = g_FF8SteamAchievements->getStatCharIdUnderStatCompute();
+  if (stat_char_id != 0xFFu) {
+    int max_hp = ff8_externals.char_comp_stats_1CFF000[stat_char_id].unk3[14] * max_hp_mul / 100;
+    g_FF8SteamAchievements->unlockMaxHpAchievement(max_hp);
+  }
+  return max_hp_mul;
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1451,6 +1469,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
     // handyman: upgrade weapon
     replace_call(ff8_externals.menu_junkshop_sub_4EA890 + 0x5C1, (void*)ff8_menu_junkshop_get_char_id_hook_4ABC40);
     replace_call(ff8_externals.menu_junkshop_sub_4EA890 + 0x60B, (void*)ff8_menu_junkshop_hook_4EA770);
+
+    // max HP
+    replace_call(ff8_externals.compute_char_stats_sub_495960 + 0x68, (void*)ff8_hook_sub_4954B0);
+    replace_call(ff8_externals.compute_char_stats_sub_495960 + 0x94, (void*)ff8_compute_char_max_hp_496310);
 	}
 }
 

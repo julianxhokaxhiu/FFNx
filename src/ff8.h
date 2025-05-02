@@ -1,4 +1,4 @@
-/****************************************************************************/
+/***************************************************************************/
 //    Copyright (C) 2009 Aali132                                            //
 //    Copyright (C) 2018 quantumpencil                                      //
 //    Copyright (C) 2018 Maxime Bacoux                                      //
@@ -23,6 +23,7 @@
 #pragma once
 
 #include <cstdint>
+#include <span>
 #include <stdint.h>
 #include <stdio.h>
 #include <windows.h>
@@ -1026,6 +1027,15 @@ struct ff8_field_state_background {
 	uint8_t field_1b3;
 };
 
+struct ff8_char_computed_stats {
+  uint8_t unk1[370];
+  uint16_t curr_hp;
+  uint16_t max_hp;
+  uint8_t unk2[66];
+  uint8_t stat_multiplier;
+  uint8_t unk3[23];
+};
+
 struct ff8_menu_callback {
 	void (*func)(int);
 	uint32_t field_4;
@@ -1489,6 +1499,11 @@ struct ff8_externals
 	uint32_t sub_4A84E0;
 	uint32_t sub_4AD400;
 	uint32_t sub_4BB840;
+	uint32_t sub_48B7E0;
+	void(*sub_4954B0)(int);
+	uint32_t compute_char_stats_sub_495960;
+	int(*compute_char_max_hp_496310)(int, int);
+  std::span<ff8_char_computed_stats> char_comp_stats_1CFF000;
 	BYTE* battle_current_active_character_id;
 	BYTE* battle_new_active_character_id;
 	WORD* battle_encounter_id;

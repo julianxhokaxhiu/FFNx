@@ -582,6 +582,15 @@ void SteamAchievementsFF8::initPreviousWeaponIdBeforeUpgrade(byte charId, byte w
     this->prevWeaponUpgradeData.prev_weapon_id = weaponId;
 }
 
+void SteamAchievementsFF8::initStatCharIdUnderStatCompute(byte statCharId) {
+    ach_trace("%s - init stat char id before max hp computation (char id: %d)\n", __func__, statCharId);
+    this->statCharId = statCharId;
+}
+
+byte SteamAchievementsFF8::getStatCharIdUnderStatCompute() {
+    return this->statCharId;
+}
+
 void SteamAchievementsFF8::unlockPlayTripleTriadAchievement()
 {
     ach_trace("%s - trying to unlock play card game first time achievement\n", __func__);
@@ -681,5 +690,17 @@ void SteamAchievementsFF8::unlockUpgradeWeaponAchievement(const savemap_ff8 &sav
 
     this->prevWeaponUpgradeData.char_id = 0xFF;
     this->prevWeaponUpgradeData.prev_weapon_id = 0xFF;
+}
+
+void SteamAchievementsFF8::unlockMaxHpAchievement(int max_hp)
+{
+    ach_trace("%s - trying to unlock maximum HP achivement (max hp: %d)\n", __func__, max_hp);
+
+    if (max_hp >= 9999)
+    {
+        if (!(this->steamManager->isAchieved(REACH_MAX_HP)))
+            this->steamManager->setAchievement(REACH_MAX_HP);
+    }
+    this->statCharId = 0xFF;
 }
 

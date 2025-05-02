@@ -24,6 +24,7 @@
 
 #include "ff8_data.h"
 
+#include "ff8.h"
 #include "globals.h"
 #include "patch.h"
 #include "ff8/battle/effects.h"
@@ -804,6 +805,12 @@ void ff8_find_externals()
 	ff8_externals.sub_4AD8D0 = get_absolute_value(ff8_externals.sub_4AD7D0, 0xC8);
 	ff8_externals.sub_4AB4F0 = get_relative_call(ff8_externals.sub_4AD8D0, 0x159);
 	ff8_externals.sub_4AB190 = get_relative_call(ff8_externals.sub_4AB4F0, 0x20);
+
+	ff8_externals.sub_48B7E0 = get_relative_call(ff8_externals.sub_47CCB0, 0x8F0);
+	ff8_externals.compute_char_stats_sub_495960 = get_relative_call(ff8_externals.sub_48B7E0, 0xA3);
+	ff8_externals.sub_4954B0 = (void(*)(int))get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x68);
+	ff8_externals.compute_char_max_hp_496310 = (int(*)(int, int))get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x94);
+	ff8_externals.char_comp_stats_1CFF000 = std::span((ff8_char_computed_stats*)get_absolute_value(ff8_externals.compute_char_stats_sub_495960, 0x2A), 3);
 
 	ff8_externals.sub_4A84E0 = get_relative_call(ff8_externals.battle_main_loop, 0x142);
 	ff8_externals.sub_4AD400 = get_relative_call(ff8_externals.sub_4A84E0, 0x2DB);
