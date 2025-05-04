@@ -725,3 +725,39 @@ void SteamAchievementsFF8::unlockTopLevelAchievement(int level)
             this->steamManager->setAchievement(REACH_LEVEL_100);
     }
 }
+
+void SteamAchievementsFF8::unlockKillsAchievement(int kills)
+{
+    ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, kills);
+
+    if (kills >= 100)
+    {
+        if (!(this->steamManager->isAchieved(TOTAL_KILLS_100)))
+            this->steamManager->setAchievement(TOTAL_KILLS_100);
+    }
+    else
+    {
+        if (kills % 10 == 0) {
+            this->steamManager->showAchievementProgress(TOTAL_KILLS_100, kills, 100);
+        }
+    }
+
+    if (kills >= 1000)
+    {
+        if (!(this->steamManager->isAchieved(TOTAL_KILLS_1000)))
+            this->steamManager->setAchievement(TOTAL_KILLS_1000);
+    }
+    else
+    {
+        if (kills > 100 && kills % 100 == 0) {
+            this->steamManager->showAchievementProgress(TOTAL_KILLS_1000, kills, 1000);
+        }
+    }
+
+    if (kills >= 10000)
+    {
+        if (!(this->steamManager->isAchieved(TOTAL_KILLS_10000)))
+            this->steamManager->setAchievement(TOTAL_KILLS_10000);
+    }
+}
+

@@ -1145,6 +1145,19 @@ int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
   return ret;
 }
 
+// Replace a function that is called before increasing the kills of a character
+void ff8_battle_after_enemy_kill_sub_496CB0(int party_char_id, int a1, int current_actor_second_byte, int a2)
+{
+  ff8_externals.battle_sub_494AF0(party_char_id, a1, current_actor_second_byte, a2);
+  if (party_char_id < 3 && current_actor_second_byte != 0xFE) {
+    int kills = 0;
+    for (int i = 0; i < 8; i++) {
+      kills += ff8_externals.savemap->chars[i].kills;
+    }
+    g_FF8SteamAchievements->unlockKillsAchievement(kills + 1);
+  }
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1502,6 +1515,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
     // max LEVEL
     replace_call(ff8_externals.battle_menu_sub_4A3EE0 + 0x581, (void*)ff8_battle_menu_add_exp_and_bonus_496CB0);
+
+    // kills
+    replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_496CB0);
 	}
 }
 

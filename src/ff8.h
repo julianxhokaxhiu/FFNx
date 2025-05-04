@@ -1587,6 +1587,10 @@ struct ff8_externals
 	uint32_t battle_menu_sub_4A3EE0;
 	int(*battle_menu_add_exp_and_stat_bonus_496CB0)(int, uint16_t);
   byte* character_data_1CFE74C;
+	uint32_t battle_sub_485160;
+	uint32_t battle_sub_48FE20;
+	uint32_t battle_sub_494410;
+	void (*battle_sub_494AF0)(int, int, int, int);
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

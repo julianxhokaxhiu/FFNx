@@ -399,6 +399,8 @@ public:
     void unlockMaxHpAchievement(int max_hp);
     void unlockMaxGilAchievement(uint32_t gil);
     void unlockTopLevelAchievement(int level);
+    void unlockKillsAchievement(int kills);
+
 };
 
 // Global, access to Achievements object
