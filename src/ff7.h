@@ -2756,7 +2756,7 @@ struct ff7_externals
 	char** field_file_buffer;
 	DWORD* field_file_section_ptrs;
 	uint32_t* known_field_buffer_size;
-	uint32_t* field_CFF268;
+	uint32_t* field_resuming_from_battle_CFF268;
 	void (*draw_character)(uint32_t, uint32_t, char *, uint32_t, float);
 	uint32_t destroy_field_bk;
 	uint32_t destroy_field_tiles;
@@ -3168,6 +3168,8 @@ struct ff7_externals
 	uint32_t sub_6499F7;
 	DWORD* input_ok_button_status;
 	DWORD* input_run_button_status;
+	uint32_t sub_62120E;
+	int (*field_load_map_trigger_data_sub_6211C3)();
 
 	// battle camera script externals
 	uint32_t handle_camera_functions;

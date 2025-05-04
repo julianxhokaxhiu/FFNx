@@ -616,7 +616,7 @@ int ff7_read_field_file(char* path)
 {
 	char filepath[256];
 
-	if ( *ff7_externals.field_CFF268 ) return 1;
+	if ( *ff7_externals.field_resuming_from_battle_CFF268 ) return 1;
 
   _splitpath(path, NULL, NULL, filepath, NULL);
 
