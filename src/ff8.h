@@ -1506,6 +1506,7 @@ struct ff8_externals
 	void(*sub_4954B0)(int);
 	uint32_t compute_char_stats_sub_495960;
 	int(*compute_char_max_hp_496310)(int, int);
+	int(*get_char_level_4961D0)(int, int);
   std::span<ff8_char_computed_stats> char_comp_stats_1CFF000;
 	BYTE* battle_current_active_character_id;
 	BYTE* battle_new_active_character_id;
@@ -1580,6 +1581,12 @@ struct ff8_externals
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;
 	uint32_t enable_gf_sub_47E480;
+	uint32_t battle_menu_loop_4A2690;
+	uint32_t battle_menu_sub_4A6660;
+	uint32_t battle_menu_sub_4A3D20;
+	uint32_t battle_menu_sub_4A3EE0;
+	int(*battle_menu_add_exp_and_stat_bonus_496CB0)(int, uint16_t);
+  byte* character_data_1CFE74C;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

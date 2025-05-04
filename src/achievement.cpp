@@ -714,3 +714,14 @@ void SteamAchievementsFF8::unlockMaxGilAchievement(uint32_t gil)
             this->steamManager->setAchievement(REACH_MAX_GIL);
     }
 }
+
+void SteamAchievementsFF8::unlockTopLevelAchievement(int level)
+{
+    ach_trace("%s - trying to unlock top level achivement (level: %d)\n", __func__, level);
+
+    if (level == MAX_LEVEL)
+    {
+        if (!(this->steamManager->isAchieved(REACH_LEVEL_100)))
+            this->steamManager->setAchievement(REACH_LEVEL_100);
+    }
+}

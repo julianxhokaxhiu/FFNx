@@ -813,6 +813,7 @@ void ff8_find_externals()
 	ff8_externals.compute_char_stats_sub_495960 = get_relative_call(ff8_externals.sub_48B7E0, 0xA3);
 	ff8_externals.sub_4954B0 = (void(*)(int))get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x68);
 	ff8_externals.compute_char_max_hp_496310 = (int(*)(int, int))get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x94);
+	ff8_externals.get_char_level_4961D0 = (int(*)(int, int))get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x82);
 	ff8_externals.char_comp_stats_1CFF000 = std::span((ff8_char_computed_stats*)get_absolute_value(ff8_externals.compute_char_stats_sub_495960, 0x2A), 3);
 
 	ff8_externals.sub_4A84E0 = get_relative_call(ff8_externals.battle_main_loop, 0x142);
@@ -884,6 +885,13 @@ void ff8_find_externals()
 	ff8_externals.scan_text_data = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x27);
 	ff8_externals.get_card_name = get_relative_call(ff8_externals.sub_4EFCD0, 0x89);
 	ff8_externals.card_name_positions = get_absolute_value(ff8_externals.get_card_name, 0xB);
+
+	ff8_externals.battle_menu_loop_4A2690 = get_absolute_value(ff8_externals.battle_main_loop, 0x216);
+	ff8_externals.battle_menu_sub_4A6660 = get_relative_call(ff8_externals.battle_menu_loop_4A2690, 0xAF);
+	ff8_externals.battle_menu_sub_4A3D20 = get_relative_call(ff8_externals.battle_menu_sub_4A6660, 0);
+	ff8_externals.battle_menu_sub_4A3EE0 = get_relative_call(ff8_externals.battle_menu_sub_4A3D20, 0x12A);
+	ff8_externals.battle_menu_add_exp_and_stat_bonus_496CB0 = (int(*)(int, uint16_t))get_relative_call(ff8_externals.battle_menu_sub_4A3EE0, 0x581);
+  ff8_externals.character_data_1CFE74C = (byte*)get_absolute_value((uint32_t)ff8_externals.battle_menu_add_exp_and_stat_bonus_496CB0, 0xD);
 
 	ff8_externals.fps_limiter = get_relative_call(ff8_externals.field_main_loop, 0x261);
 	if (JP_VERSION)

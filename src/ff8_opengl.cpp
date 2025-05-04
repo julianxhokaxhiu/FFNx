@@ -1134,6 +1134,17 @@ void ff8_menu_shop_sub_4EBE40(byte* menu_data)
   }
 }
 
+int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
+{
+  byte char_id = *(ff8_externals.character_data_1CFE74C + party_char_id);
+  int ret = ff8_externals.battle_menu_add_exp_and_stat_bonus_496CB0(party_char_id, exp);
+  if (char_id != 0xFF) {
+    int level = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[char_id].exp, char_id);
+    g_FF8SteamAchievements->unlockTopLevelAchievement(level);
+  }
+  return ret;
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1488,6 +1499,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
     replace_call((uint32_t)ff8_externals.menu_callbacks[11].func + 0x1F0, (void*)ff8_menu_shop_sub_4EBE40);
     patch_code_dword((uint32_t)ff8_externals.menu_callbacks[11].func + 0x39, (uint32_t)ff8_menu_shop_sub_4EBE40);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x151], (uint32_t)&ff8_field_opcode_ADDGIL);
+
+    // max LEVEL
+    replace_call(ff8_externals.battle_menu_sub_4A3EE0 + 0x581, (void*)ff8_battle_menu_add_exp_and_bonus_496CB0);
 	}
 }
 
