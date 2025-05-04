@@ -28,7 +28,6 @@
 #include <algorithm>
 
 #include "achievement.h"
-#include "ff8/save_data.h"
 #include "log.h"
 #include "cfg.h"
 
@@ -39,13 +38,17 @@ using std::string;
 std::unique_ptr<SteamAchievementsFF7> g_FF7SteamAchievements = nullptr;
 std::unique_ptr<SteamAchievementsFF8> g_FF8SteamAchievements = nullptr;
 
-SteamManager::SteamManager(const achievement *achievements, int nAchievements) : isInitialized(false),
-                                                                                 callbackUserStatsReceived(this, &SteamManager::OnUserStatsReceived),
-                                                                                 callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
-                                                                                 callbackAchievementStored(this, &SteamManager::OnAchievementStored)
+SteamManager::SteamManager(const achievement *achievements, int nAchievements, std::vector<std::string> statsNameVec):
+  isInitialized(false),
+  callbackUserStatsReceived(this, &SteamManager::OnUserStatsReceived),
+  callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
+  callbackAchievementStored(this, &SteamManager::OnAchievementStored)
 {
     this->appID = SteamUtils()->GetAppID();
     this->nAchievements = nAchievements;
+    for (std::string statName : statsNameVec) {
+        this->stats.insert({statName, 0});
+    }
     this->achievementList.insert(this->achievementList.end(), &achievements[0], &achievements[nAchievements]);
     this->requestStats();
     if (trace_all || trace_achievement)
@@ -130,6 +133,15 @@ void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
             if (trace_all || trace_achievement)
                 ffnx_trace("%s - received stats and achievements from Steam\n", __func__);
             this->isInitialized = true;
+ 
+            // load stats (assume all stats to be integers)
+            for (auto statName: this->stats) {
+                int statValue;
+                SteamUserStats()->GetUserStat(pCallback->m_steamIDUser, statName.first.c_str(), &statValue);
+                this->stats.insert_or_assign(statName.first, statValue);
+
+                ach_trace("%s - user stat(%s, %d)\n", __func__, statName.first.c_str(), statValue);
+            }
 
             // load achievements
             for (int i = 0; i < this->nAchievements; ++i)
@@ -562,7 +574,8 @@ void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(unsigned char yuffi
 
 SteamAchievementsFF8::SteamAchievementsFF8()
 {
-    this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS, FF8_N_ACHIEVEMENTS);
+    std::vector<std::string> statsNameVec = { ENEMY_KILLED_STAT_NAME, DRAW_MAGIC_STAT_NAME, STOCK_MAGIC_STAT_NAME, WON_CARDGAME_STAT_NAME };
+    this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS, FF8_N_ACHIEVEMENTS, statsNameVec);
 }
 
 void SteamAchievementsFF8::initOwnedTripleTriadRareCards(const savemap_triple_triad &tt_data)

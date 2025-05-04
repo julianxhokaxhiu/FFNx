@@ -25,6 +25,7 @@
 #include <memory>
 #include <steamworkssdk/steam_api.h>
 #include <array>
+#include <unordered_map>
 #include <vector>
 #include <string>
 #include <windows.h>
@@ -50,13 +51,14 @@ struct achievement
 class SteamManager
 {
 private:
-    int appID;                                // Our current AppID
-    std::vector<achievement> achievementList; // Achievements data
-    int nAchievements;                        // The number of Achievements
-    bool isInitialized;                       // Have we called Request stats and received the callback?
+    int appID;                                          // Our current AppID
+    std::vector<achievement> achievementList;           // Achievements data
+    int nAchievements;                                  // The number of Achievements
+    bool isInitialized;                                 // Have we called Request stats and received the callback?
+    std::unordered_map<std::string, int> stats;         // Steam stats used by the game
 
 public:
-    SteamManager(const achievement *achievements, int nAchievements);
+    SteamManager(const achievement *achievements, int nAchievements, std::vector<std::string> statsNameVec = {});
     ~SteamManager() = default;
 
     bool requestStats();
@@ -365,6 +367,11 @@ private:
 
     static inline constexpr int FF8_N_ACHIEVEMENTS = 45;
 
+    static inline const std::string ENEMY_KILLED_STAT_NAME = "nmy_kill";
+    static inline const std::string DRAW_MAGIC_STAT_NAME = "mag_draw";
+    static inline const std::string STOCK_MAGIC_STAT_NAME = "mag_stck";
+    static inline const std::string WON_CARDGAME_STAT_NAME = "won_card";
+
     static inline constexpr int N_CARDS = 77;
     static inline constexpr int N_RARE_CARDS = 33;
     static inline constexpr byte SQUALL_CARD_LOCATION = 0xF0;
@@ -378,6 +385,10 @@ private:
     std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
     upgrade_data prevWeaponUpgradeData;
     byte statCharId = 0xFF;
+
+    // steam stats
+    int magicStocked = 0;
+    int magicDrawn = 0;
 
 public:
     SteamAchievementsFF8();
