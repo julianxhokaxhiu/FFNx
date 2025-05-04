@@ -1056,8 +1056,11 @@ void ff8_enable_gf_sub_47E480(int gf_idx)
 
 void ff8_update_seed_exp_4C30E0(int seed_lvl)
 {
+  WORD prevSeedExp = ff8_externals.savemap->field_header.seedExp;
   ff8_externals.update_seed_exp_4C30E0(seed_lvl);
-	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+  if (ff8_externals.savemap->field_header.seedExp > prevSeedExp) {
+    g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+  }
 }
 
 int ff8_field_opcode_POPM_W(void* field_data, int memory_offset) {
@@ -1070,8 +1073,11 @@ int ff8_field_opcode_POPM_W(void* field_data, int memory_offset) {
 }
 
 int ff8_field_opcode_ADDSEEDLEVEL(void* field_data, int memory_offset) {
+  WORD prevSeedExp = ff8_externals.savemap->field_header.seedExp;
 	int ret = ff8_externals.opcode_addseedlevel(field_data);
-  g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+  if (ff8_externals.savemap->field_header.seedExp > prevSeedExp) {
+    g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+  }
   return ret;
 }
 
