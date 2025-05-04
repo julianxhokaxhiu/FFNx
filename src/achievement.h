@@ -369,6 +369,10 @@ private:
     static inline constexpr int N_RARE_CARDS = 33;
     static inline constexpr byte SQUALL_CARD_LOCATION = 0xF0;
 
+    static inline constexpr WORD MAX_SEED_EXP = 3100;
+    static inline constexpr int MAX_HP = 9999;
+    static inline constexpr uint32_t MAX_GIL = 99999999;
+
     std::unique_ptr<SteamManager> steamManager;
     std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
     upgrade_data prevWeaponUpgradeData;
@@ -392,6 +396,7 @@ public:
     void unlockTopSeedRankAchievement(WORD seed_exp);
     void unlockUpgradeWeaponAchievement(const savemap_ff8 &savemap);
     void unlockMaxHpAchievement(int max_hp);
+    void unlockMaxGilAchievement(uint32_t gil);
 };
 
 // Global, access to Achievements object

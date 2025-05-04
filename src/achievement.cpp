@@ -667,7 +667,7 @@ void SteamAchievementsFF8::unlockGuardianForceAchievement(int gf_idx)
 void SteamAchievementsFF8::unlockTopSeedRankAchievement(WORD seed_exp)
 {
     ach_trace("%s - trying to unlock seed rank A achivement (seed exp: %d)\n", __func__, seed_exp);
-    if (seed_exp >= 3100) {
+    if (seed_exp >= MAX_SEED_EXP) {
         if (!(this->steamManager->isAchieved(REACH_SEED_RANK_A)))
             this->steamManager->setAchievement(REACH_SEED_RANK_A);
     }
@@ -696,7 +696,7 @@ void SteamAchievementsFF8::unlockMaxHpAchievement(int max_hp)
 {
     ach_trace("%s - trying to unlock maximum HP achivement (max hp: %d)\n", __func__, max_hp);
 
-    if (max_hp >= 9999)
+    if (max_hp >= MAX_HP)
     {
         if (!(this->steamManager->isAchieved(REACH_MAX_HP)))
             this->steamManager->setAchievement(REACH_MAX_HP);
@@ -704,3 +704,13 @@ void SteamAchievementsFF8::unlockMaxHpAchievement(int max_hp)
     this->statCharId = 0xFF;
 }
 
+void SteamAchievementsFF8::unlockMaxGilAchievement(uint32_t gil)
+{
+    ach_trace("%s - trying to unlock maximum gil achivement (gil: %d)\n", __func__, gil);
+
+    if (gil >= MAX_GIL)
+    {
+        if (!(this->steamManager->isAchieved(REACH_MAX_GIL)))
+            this->steamManager->setAchievement(REACH_MAX_GIL);
+    }
+}

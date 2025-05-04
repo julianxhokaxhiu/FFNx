@@ -320,6 +320,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_musicvolsync = common_externals.execute_opcode_table[0x149];
 	ff8_externals.opcode_getmusicoffset = common_externals.execute_opcode_table[0x16F];
 	ff8_externals.opcode_tuto = common_externals.execute_opcode_table[0x177];
+	ff8_externals.opcode_addgil = (int(*)(void*))common_externals.execute_opcode_table[0x151];
 	ff8_externals.opcode_addseedlevel = (int(*)(void*))common_externals.execute_opcode_table[0x153];
 
 	ff8_externals.vibrate_data_field = (uint8_t*)get_absolute_value(ff8_externals.opcode_setvibrate, 0x27);
@@ -443,6 +444,7 @@ void ff8_find_externals()
 	ff8_externals.menu_config_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x8);
 	ff8_externals.menu_config_input_desc = (ff8_menu_config_input *)get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x39);
 	ff8_externals.menu_config_input_desc_keymap = (ff8_menu_config_input_keymap *)get_absolute_value(uint32_t(ff8_externals.menu_callbacks[8].func), 0x110);
+	ff8_externals.menu_shop_sub_4EBE40 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[11].func), 0x39);
 	ff8_externals.menu_junkshop_sub_4EA890 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[12].func), 0x10);
 	ff8_externals.main_menu_render_sub_4E5550 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x3);
 	ff8_externals.main_menu_controller = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[16].func), 0x8);
@@ -460,6 +462,7 @@ void ff8_find_externals()
 	ff8_externals.menu_draw_text = get_relative_call(ff8_externals.sub_4BECC0, 0x127);
 	ff8_externals.get_character_width = (uint32_t (*)(uint32_t))get_relative_call(ff8_externals.menu_draw_text, JP_VERSION ? 0x1E1 : 0x1D0);
 	ff8_externals.ff8input_cfg_reset = get_relative_call(ff8_externals.menu_config_controller, 0x185);
+	ff8_externals.menu_data_1D76A9C = (uint32_t*)get_absolute_value(ff8_externals.menu_shop_sub_4EBE40, 0xE);
 
 	ff8_externals.open_lzs_image = get_relative_call(ff8_externals.load_credits_image, 0x27);
 	ff8_externals.credits_open_file = (uint32_t (*)(char*,char*))get_relative_call(ff8_externals.open_lzs_image, 0x72);
