@@ -239,6 +239,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_function(ff7_externals.fps_limiter_chocobo, ff7_limit_fps);
 		replace_function(ff7_externals.fps_limiter_submarine, ff7_limit_fps);
 		replace_function(ff7_externals.fps_limiter_credits, ff7_limit_fps);
+		replace_function(ff7_externals.fps_limiter_menu, ff7_limit_fps);
 
 		if (ff7_fps_limiter >= FPS_LIMITER_30FPS)
 		{

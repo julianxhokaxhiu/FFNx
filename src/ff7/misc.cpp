@@ -601,6 +601,8 @@ void ff7_limit_fps()
 		case MODE_COASTER:
 		case MODE_CONDOR:
 		case MODE_CREDITS:
+		case MODE_MENU:
+		case MODE_MAIN_MENU:
 			framerate = 60.0f;
 			break;
 		}
@@ -618,6 +620,8 @@ void ff7_limit_fps()
 		case MODE_COASTER:
 		case MODE_CONDOR:
 		case MODE_CREDITS:
+		case MODE_MENU:
+		case MODE_MAIN_MENU:
 			framerate = 60.0f;
 			break;
 		}

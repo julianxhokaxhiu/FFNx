@@ -665,6 +665,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.fps_limiter_chocobo = get_relative_call(ff7_externals.sub_779E14, 0x4D);
 	ff7_externals.fps_limiter_submarine = get_relative_call(submarine_main_loop, 0x98);
 	ff7_externals.fps_limiter_credits = get_relative_call(credits_main_loop, 0x1C);
+	ff7_externals.fps_limiter_menu = get_relative_call(menu_main_loop, 0x16);
 
 	ff7_externals.battle_fps_menu_multiplier = battle_main_loop + 0x335;
 	ff7_externals.submarine_minigame_status = (DWORD *)get_absolute_value(ff7_externals.fps_limiter_submarine, 0x48);

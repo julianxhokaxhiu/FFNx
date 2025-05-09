@@ -3105,6 +3105,7 @@ struct ff7_externals
 	uint32_t fps_limiter_chocobo;
 	uint32_t fps_limiter_submarine;
 	uint32_t fps_limiter_credits;
+	uint32_t fps_limiter_menu;
 	uint32_t sub_5F5042;
 	uint32_t highway_loop_sub_650F36;
 	uint32_t sub_779E14;
