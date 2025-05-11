@@ -1041,7 +1041,7 @@ int ff8_cardgame_sub_535D00(void* tt_data)
   int ret = ff8_externals.cardgame_sub_535D00(tt_data);
   if (ff8_externals.savemap->triple_triad.victory_count > prev_card_wins)
   {
-    g_FF8SteamAchievements->unlockProfessionalTripleTriadAchievement(ff8_externals.savemap->triple_triad);
+    g_FF8SteamAchievements->increaseCardWinsAndUnlockProfessionalAchievement();
   }
   return ret;
 }
@@ -1149,13 +1149,7 @@ int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
 void ff8_battle_after_enemy_kill_sub_496CB0(int party_char_id, int a1, int current_actor_second_byte, int a2)
 {
   ff8_externals.battle_sub_494AF0(party_char_id, a1, current_actor_second_byte, a2);
-  if (party_char_id < 3 && current_actor_second_byte != 0xFE) {
-    int kills = 0;
-    for (int i = 0; i < 8; i++) {
-      kills += ff8_externals.savemap->chars[i].kills;
-    }
-    g_FF8SteamAchievements->unlockKillsAchievement(kills + 1);
-  }
+  g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement();
 }
 
 int ff8_limit_fps()

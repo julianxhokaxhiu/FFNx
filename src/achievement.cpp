@@ -124,6 +124,22 @@ const char *SteamManager::getStringAchievementID(int achID)
     return this->achievementList[achID].chAchID;
 }
 
+std::optional<int> SteamManager::getUserStat(std::string statName) {
+    if (!this->stats.contains(statName)) {
+       return {};
+    }
+    return {this->stats.at(statName)};
+}
+
+bool SteamManager::updateUserStat(std::string statName, int value) {
+    if (!this->stats.contains(statName)) {
+       return false;
+    }
+    this->stats.insert_or_assign(statName, value);
+    SteamUserStats()->SetStat(statName.c_str(), value);
+    return SteamUserStats()->StoreStats();
+}
+
 void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
 {
     if (this->appID == pCallback->m_nGameID)
@@ -137,8 +153,9 @@ void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
             // load stats (assume all stats to be integers)
             for (auto statName: this->stats) {
                 int statValue;
-                SteamUserStats()->GetUserStat(pCallback->m_steamIDUser, statName.first.c_str(), &statValue);
-                this->stats.insert_or_assign(statName.first, statValue);
+                if (SteamUserStats()->GetStat(statName.first.c_str(), &statValue)) {
+                    this->stats.insert_or_assign(statName.first, statValue);
+                }
 
                 ach_trace("%s - user stat(%s, %d)\n", __func__, statName.first.c_str(), statValue);
             }
@@ -627,11 +644,18 @@ void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const savemap_tripl
     }
 }
 
-void SteamAchievementsFF8::unlockProfessionalTripleTriadAchievement(const savemap_triple_triad &tt_data)
+void SteamAchievementsFF8::increaseCardWinsAndUnlockProfessionalAchievement()
 {
-    WORD tt_wins = tt_data.victory_count;
-    ach_trace("%s - trying to unlock professional player card game achievement (wins: %d)\n", __func__, tt_wins);
-    if (tt_wins >= 100)
+    auto opt_wins = this->steamManager->getUserStat(WON_CARDGAME_STAT_NAME);
+    if (!opt_wins.has_value()) {
+        ffnx_error("%s - failed to get %s stat\n", __func__, WON_CARDGAME_STAT_NAME.c_str());
+        return;
+    }
+    int new_wins = opt_wins.value() + 1;
+    ach_trace("%s - trying to unlock professional player card game achievement (wins: %d)\n", __func__, new_wins);
+    this->steamManager->updateUserStat(WON_CARDGAME_STAT_NAME, new_wins);
+
+    if (new_wins >= 100)
     {
         if (!(this->steamManager->isAchieved(PROFESSIONAL)))
             this->steamManager->setAchievement(PROFESSIONAL);
@@ -739,35 +763,39 @@ void SteamAchievementsFF8::unlockTopLevelAchievement(int level)
     }
 }
 
-void SteamAchievementsFF8::unlockKillsAchievement(int kills)
+void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
 {
-    ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, kills);
+    auto opt_kills = this->steamManager->getUserStat(ENEMY_KILLED_STAT_NAME);
+    if (!opt_kills.has_value()) {
+        ffnx_error("%s - failed to get %s stat\n", __func__, ENEMY_KILLED_STAT_NAME.c_str());
+        return;
+    }
+    
+    int new_kills = opt_kills.value() + 1;
+    ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, new_kills);
+    this->steamManager->updateUserStat(ENEMY_KILLED_STAT_NAME, new_kills);
 
-    if (kills >= 100)
+    if (new_kills >= 100)
     {
         if (!(this->steamManager->isAchieved(TOTAL_KILLS_100)))
             this->steamManager->setAchievement(TOTAL_KILLS_100);
     }
-    else
-    {
-        if (kills % 10 == 0) {
-            this->steamManager->showAchievementProgress(TOTAL_KILLS_100, kills, 100);
-        }
+    else if (new_kills % 10 == 0) {
+        this->steamManager->showAchievementProgress(TOTAL_KILLS_100, new_kills, 100);
     }
+    
 
-    if (kills >= 1000)
+    if (new_kills >= 1000)
     {
         if (!(this->steamManager->isAchieved(TOTAL_KILLS_1000)))
             this->steamManager->setAchievement(TOTAL_KILLS_1000);
     }
-    else
-    {
-        if (kills > 100 && kills % 100 == 0) {
-            this->steamManager->showAchievementProgress(TOTAL_KILLS_1000, kills, 1000);
-        }
+    else if (new_kills > 100 && new_kills % 100 == 0) {
+        this->steamManager->showAchievementProgress(TOTAL_KILLS_1000, new_kills, 1000);
     }
+    
 
-    if (kills >= 10000)
+    if (new_kills >= 10000)
     {
         if (!(this->steamManager->isAchieved(TOTAL_KILLS_10000)))
             this->steamManager->setAchievement(TOTAL_KILLS_10000);

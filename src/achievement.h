@@ -23,6 +23,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <steamworkssdk/steam_api.h>
 #include <array>
 #include <unordered_map>
@@ -66,6 +67,8 @@ public:
     bool setAchievement(int achID);
     bool isAchieved(int achID);
     const char *getStringAchievementID(int achID);
+    std::optional<int> getUserStat(std::string statName);
+    bool updateUserStat(std::string statName, int value);
 
     STEAM_CALLBACK(SteamManager, OnUserStatsReceived, UserStatsReceived_t, callbackUserStatsReceived);
     STEAM_CALLBACK(SteamManager, OnUserStatsStored, UserStatsStored_t, callbackUserStatsStored);
@@ -403,14 +406,14 @@ public:
     void unlockPlayTripleTriadAchievement();
     void unlockLoserTripleTriadAchievement(const savemap_triple_triad &triple_triad);
     void unlockCollectorTripleTriadAchievement(const savemap_triple_triad &triple_triad);
-    void unlockProfessionalTripleTriadAchievement(const savemap_triple_triad &triple_triad);
+    void increaseCardWinsAndUnlockProfessionalAchievement();
     void unlockGuardianForceAchievement(int gf_idx);
     void unlockTopSeedRankAchievement(WORD seed_exp);
     void unlockUpgradeWeaponAchievement(const savemap_ff8 &savemap);
     void unlockMaxHpAchievement(int max_hp);
     void unlockMaxGilAchievement(uint32_t gil);
     void unlockTopLevelAchievement(int level);
-    void unlockKillsAchievement(int kills);
+    void increaseKillsAndTryUnlockAchievement();
 
 };
 
