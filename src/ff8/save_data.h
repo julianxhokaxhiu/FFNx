@@ -27,8 +27,6 @@
 
 #include <cstdint>
 
-#pragma pack(push, 1)
-
 struct savemap_header {
 	uint16_t location_id;
 	uint16_t char1_curr_hp;
@@ -127,6 +125,7 @@ struct savemap_items {
 	uint16_t items[198];
 };
 
+#pragma pack(push, 1)
 struct savemap_battle {
 	uint32_t unk1;
 	uint32_t victory_count;
@@ -146,6 +145,7 @@ struct savemap_battle {
 	uint8_t renzokuken_indicator;
 	uint8_t unk4;
 };
+#pragma pack(pop)
 
 struct savemap_field_h {
 	uint32_t unk1;
@@ -248,4 +248,3 @@ struct savemap_ff8 {
 	uint8_t choco_world[64];
 };
 
-#pragma pack(pop)
