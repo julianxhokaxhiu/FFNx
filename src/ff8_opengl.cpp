@@ -1485,7 +1485,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	//###############################
 	// steam achievement unlock calls
 	//###############################
-	if(steam_edition || enable_steam_achievements)
+	if(steam_achievements_debug_mode)
 	{
 		// triple triad
 		patch_code_dword((uint32_t)&ff8_externals.cardgame_funcs[4], (uint32_t)&ff8_cardgame_postgame_func_534BC0);
