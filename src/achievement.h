@@ -389,10 +389,6 @@ private:
     upgrade_data prevWeaponUpgradeData;
     byte statCharId = 0xFF;
 
-    // steam stats
-    int magicStocked = 0;
-    int magicDrawn = 0;
-
 public:
     SteamAchievementsFF8();
     ~SteamAchievementsFF8() = default;
