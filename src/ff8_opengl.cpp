@@ -950,7 +950,8 @@ int ff8_create_save_file_chocobo_world(int unused, int data_source, int offset, 
 	return ret;
 }
 
-int ff8_cardgame_postgame_func_534BC0() {
+int ff8_cardgame_postgame_func_534BC0()
+{
 	g_FF8SteamAchievements->unlockPlayTripleTriadAchievement();
 	return ff8_externals.cardgame_func_534BC0();
 }
@@ -967,7 +968,8 @@ void ff8_cardgame_exit_hook_sub_4972A0()
 	((void(*)())ff8_externals.sub_4972A0)();
 }
 
-int ff8_cardgame_add_card_to_squall_original(int card_idx) {
+int ff8_cardgame_add_card_to_squall_original(int card_idx)
+{
 	// update known cards
 	if (card_idx >= 77)
 		ff8_externals.savemap->triple_triad.cards_rare[(card_idx - 77) / 8] |= 1 << ((card_idx - 77) % 8);
@@ -985,7 +987,7 @@ int ff8_cardgame_add_card_to_squall_original(int card_idx) {
 		return -1;
 	}
 	else
-{
+	{
 		++ff8_externals.savemap->triple_triad.cards[card_idx];
 		return 0;
 	}
@@ -1006,7 +1008,7 @@ int ff8_cardgame_update_card_with_location_original(int card_idx, int card_locat
 		return 0;
 	}
 	else
-{
+	{
 		byte card_value = ff8_externals.savemap->triple_triad.cards[card_idx];
 		if ( card_location == 240 ) // SQUALL location
 		{
@@ -1058,25 +1060,29 @@ void ff8_update_seed_exp_4C30E0(int seed_lvl)
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 }
 
-int ff8_field_opcode_POPM_W(void* field_data, int memory_offset) {
+int ff8_field_opcode_POPM_W(void* field_data, int memory_offset)
+{
 	int ret = ff8_externals.opcode_popm_w(field_data, memory_offset);
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 	return ret;
 }
 
-int ff8_field_opcode_ADDSEEDLEVEL(void* field_data) {
+int ff8_field_opcode_ADDSEEDLEVEL(void* field_data)
+{
 	int ret = ff8_externals.opcode_addseedlevel(field_data);
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 	return ret;
 }
 
-void ff8_field_update_seed_level() {
+void ff8_field_update_seed_level()
+{
 	((void(*)())ff8_externals.field_update_seed_level_52B140)();
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
 }
 
-void ff8_worldmap_update_seed_level() {
+void ff8_worldmap_update_seed_level()
+{
 	((void(*)())ff8_externals.worldmap_update_seed_level_651C10)();
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
@@ -1084,7 +1090,8 @@ void ff8_worldmap_update_seed_level() {
 
 // Replacing a specific call that is called when player remodel weapon just before assigning the new
 // weapon id to the character
-int ff8_menu_junkshop_get_char_id_hook_4ABC40(int chars_available_bitmap, int char_idx) {
+int ff8_menu_junkshop_get_char_id_hook_4ABC40(int chars_available_bitmap, int char_idx)
+{
 	int char_id = ff8_externals.sub_4ABC40(chars_available_bitmap, char_idx);
 	g_FF8SteamAchievements->initPreviousWeaponIdBeforeUpgrade(char_id, ff8_externals.savemap->chars[char_id].weapon_id);
 	return char_id;
@@ -1092,7 +1099,8 @@ int ff8_menu_junkshop_get_char_id_hook_4ABC40(int chars_available_bitmap, int ch
 
 // Replacing a specific call that is called when player remodel weapon just after assigning the new
 // weapon id to the character
-int ff8_menu_junkshop_hook_4EA770(int a1, uint32_t a2) {
+int ff8_menu_junkshop_hook_4EA770(int a1, uint32_t a2)
+{
 	int ret = ff8_externals.sub_4EA770(a1, a2);
 	g_FF8SteamAchievements->unlockUpgradeWeaponAchievement(*ff8_externals.savemap);
 	return ret;
@@ -1100,12 +1108,14 @@ int ff8_menu_junkshop_hook_4EA770(int a1, uint32_t a2) {
 
 // Replacing a call done before computing max HP for a character in order to get the 
 // index "party_char_id"
-void ff8_hook_sub_4954B0(int party_char_id) {
+void ff8_hook_sub_4954B0(int party_char_id)
+{
 	ff8_externals.sub_4954B0(party_char_id);
 	g_FF8SteamAchievements->initStatCharIdUnderStatCompute(party_char_id);
 }
 
-int ff8_compute_char_max_hp_496310(int multiplier, int char_id) {
+int ff8_compute_char_max_hp_496310(int multiplier, int char_id)
+{
 	int max_hp_mul = ff8_externals.compute_char_max_hp_496310(multiplier, char_id);
 	byte stat_char_id = g_FF8SteamAchievements->getStatCharIdUnderStatCompute();
 	if (stat_char_id != 0xFFu) {
@@ -1115,7 +1125,8 @@ int ff8_compute_char_max_hp_496310(int multiplier, int char_id) {
 	return max_hp_mul;
 }
 
-int ff8_field_opcode_ADDGIL(void* field_data) {
+int ff8_field_opcode_ADDGIL(void* field_data)
+{
 	int ret = ff8_externals.opcode_addgil(field_data);
 	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
 	return ret;
