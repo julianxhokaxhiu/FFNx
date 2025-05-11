@@ -135,6 +135,7 @@ bool SteamManager::updateUserStat(std::string statName, int value) {
     if (!this->stats.contains(statName)) {
        return false;
     }
+    ach_trace("%s - Updating steam user stat '%s' to %d", __func__, statName.c_str(), value);
     this->stats.insert_or_assign(statName, value);
     SteamUserStats()->SetStat(statName.c_str(), value);
     return SteamUserStats()->StoreStats();
@@ -646,6 +647,11 @@ void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const savemap_ff8_t
 
 void SteamAchievementsFF8::increaseCardWinsAndUnlockProfessionalAchievement()
 {
+    if (this->steamManager->isAchieved(PROFESSIONAL))
+    {
+        return;
+    }
+
     auto opt_wins = this->steamManager->getUserStat(WON_CARDGAME_STAT_NAME);
     if (!opt_wins.has_value()) {
         ffnx_error("%s - failed to get %s stat\n", __func__, WON_CARDGAME_STAT_NAME.c_str());
@@ -657,8 +663,7 @@ void SteamAchievementsFF8::increaseCardWinsAndUnlockProfessionalAchievement()
 
     if (new_wins >= 100)
     {
-        if (!(this->steamManager->isAchieved(PROFESSIONAL)))
-            this->steamManager->setAchievement(PROFESSIONAL);
+        this->steamManager->setAchievement(PROFESSIONAL);
     }
 }
 
@@ -765,12 +770,17 @@ void SteamAchievementsFF8::unlockTopLevelAchievement(int level)
 
 void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
 {
+    if (this->steamManager->isAchieved(TOTAL_KILLS_10000))
+    {
+        return;
+    }
+
     auto opt_kills = this->steamManager->getUserStat(ENEMY_KILLED_STAT_NAME);
     if (!opt_kills.has_value()) {
         ffnx_error("%s - failed to get %s stat\n", __func__, ENEMY_KILLED_STAT_NAME.c_str());
         return;
     }
-    
+
     int new_kills = opt_kills.value() + 1;
     ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, new_kills);
     this->steamManager->updateUserStat(ENEMY_KILLED_STAT_NAME, new_kills);
@@ -783,7 +793,6 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
     else if (new_kills % 10 == 0) {
         this->steamManager->showAchievementProgress(TOTAL_KILLS_100, new_kills, 100);
     }
-    
 
     if (new_kills >= 1000)
     {
@@ -793,12 +802,56 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
     else if (new_kills > 100 && new_kills % 100 == 0) {
         this->steamManager->showAchievementProgress(TOTAL_KILLS_1000, new_kills, 1000);
     }
-    
 
     if (new_kills >= 10000)
     {
-        if (!(this->steamManager->isAchieved(TOTAL_KILLS_10000)))
-            this->steamManager->setAchievement(TOTAL_KILLS_10000);
+        this->steamManager->setAchievement(TOTAL_KILLS_10000);
+    }
+}
+
+void SteamAchievementsFF8::increaseMagicStockAndTryUnlockAchievement()
+{
+    if (this->steamManager->isAchieved(MAGIC_FINDER))
+    {
+        return;
+    }
+
+    auto opt_stocks = this->steamManager->getUserStat(STOCK_MAGIC_STAT_NAME);
+    if (!opt_stocks.has_value()) {
+        ffnx_error("%s - failed to get %s stat\n", __func__, STOCK_MAGIC_STAT_NAME.c_str());
+        return;
+    }
+
+    int new_stocks = opt_stocks.value() + 1;
+    ach_trace("%s - trying to unlock magic stocks achivements (stocks: %d)\n", __func__, new_stocks);
+    this->steamManager->updateUserStat(STOCK_MAGIC_STAT_NAME, new_stocks);
+
+    if (new_stocks >= 100)
+    {
+        this->steamManager->setAchievement(MAGIC_FINDER);
+    }
+}
+
+void SteamAchievementsFF8::increaseMagicDrawsAndTryUnlockAchievement()
+{
+    if (this->steamManager->isAchieved(DRAW_100_MAGIC))
+    {
+        return;
+    }
+
+    auto opt_draws = this->steamManager->getUserStat(DRAW_MAGIC_STAT_NAME);
+    if (!opt_draws.has_value()) {
+        ffnx_error("%s - failed to get %s stat\n", __func__, DRAW_MAGIC_STAT_NAME.c_str());
+        return;
+    }
+
+    int new_draws = opt_draws.value() + 1;
+    ach_trace("%s - trying to unlock draw magic achivement (draws: %d)\n", __func__, new_draws);
+    this->steamManager->updateUserStat(DRAW_MAGIC_STAT_NAME, new_draws);
+
+    if (new_draws >= 100)
+    {
+        this->steamManager->setAchievement(DRAW_100_MAGIC);
     }
 }
 

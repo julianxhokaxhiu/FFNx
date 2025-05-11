@@ -410,6 +410,8 @@ public:
     void unlockMaxGilAchievement(uint32_t gil);
     void unlockTopLevelAchievement(int level);
     void increaseKillsAndTryUnlockAchievement();
+    void increaseMagicStockAndTryUnlockAchievement();
+    void increaseMagicDrawsAndTryUnlockAchievement();
 
 };
 
