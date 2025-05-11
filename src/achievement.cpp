@@ -595,7 +595,7 @@ SteamAchievementsFF8::SteamAchievementsFF8()
     this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS, FF8_N_ACHIEVEMENTS, statsNameVec);
 }
 
-void SteamAchievementsFF8::initOwnedTripleTriadRareCards(const savemap_triple_triad &tt_data)
+void SteamAchievementsFF8::initOwnedTripleTriadRareCards(const savemap_ff8_triple_triad &tt_data)
 {
     ach_trace("%s - init owned triple triad rare cards\n", __func__);
 
@@ -629,7 +629,7 @@ void SteamAchievementsFF8::unlockPlayTripleTriadAchievement()
         this->steamManager->setAchievement(CARDGAME_FIRST_TIME);
 }
 
-void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const savemap_triple_triad &tt_data)
+void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const savemap_ff8_triple_triad &tt_data)
 {
     ach_trace("%s - trying to unlock loser card game achievement\n", __func__);
 
@@ -662,7 +662,7 @@ void SteamAchievementsFF8::increaseCardWinsAndUnlockProfessionalAchievement()
     }
 }
 
-void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const savemap_triple_triad &tt_data)
+void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const savemap_ff8_triple_triad &tt_data)
 {
     ach_trace("%s - trying to unlock collector card game achievement\n", __func__);
     if (this->steamManager->isAchieved(COLLECT_ALL_CARDS)) {

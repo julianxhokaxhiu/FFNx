@@ -1360,7 +1360,7 @@ struct ff8_externals
 	uint32_t (*stop_cdrom)();
 	uint32_t stop_cdrom_field_call;
 	uint32_t stop_cdrom_cleanup_call;
-	savemap_field_h** savemap_field;
+	savemap_ff8_field_h** savemap_field;
 	savemap_ff8* savemap;
 	int32_t (*check_game_is_paused)(int32_t);
 	DWORD* is_game_paused;
