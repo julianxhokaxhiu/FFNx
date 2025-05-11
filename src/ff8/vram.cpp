@@ -951,7 +951,7 @@ void ff8_wm_chara_one_upload_palette_2(int16_t *pos_and_size, uint8_t *texture_b
 
 void ff8_wm_update_fence_animation()
 {
-	uint8_t current_disk = uint8_t((*ff8_externals.savemap)[51]);
+	uint8_t current_disk = (*ff8_externals.savemap_field)->curr_disk;
 
 	if (trace_all || trace_vram) ffnx_trace("%s: current_disk=%d\n", __func__, current_disk);
 

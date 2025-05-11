@@ -23,13 +23,16 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <steamworkssdk/steam_api.h>
 #include <array>
+#include <unordered_map>
 #include <vector>
 #include <string>
 #include <windows.h>
 
 #include "ff7.h"
+#include "ff8/save_data.h"
 
 #define _ACH_ID(id)           \
     {                         \
@@ -49,13 +52,14 @@ struct achievement
 class SteamManager
 {
 private:
-    int appID;                                // Our current AppID
-    std::vector<achievement> achievementList; // Achievements data
-    int nAchievements;                        // The number of Achievements
-    bool isInitialized;                       // Have we called Request stats and received the callback?
+    int appID;                                          // Our current AppID
+    std::vector<achievement> achievementList;           // Achievements data
+    int nAchievements;                                  // The number of Achievements
+    bool isInitialized;                                 // Have we called Request stats and received the callback?
+    std::unordered_map<std::string, int> stats;         // Steam stats used by the game
 
 public:
-    SteamManager(const achievement *achievements, int nAchievements);
+    SteamManager(const achievement *achievements, int nAchievements, std::vector<std::string> statsNameVec = {});
     ~SteamManager() = default;
 
     bool requestStats();
@@ -63,6 +67,8 @@ public:
     bool setAchievement(int achID);
     bool isAchieved(int achID);
     const char *getStringAchievementID(int achID);
+    std::optional<int> getUserStat(std::string statName);
+    bool updateUserStat(std::string statName, int value);
 
     STEAM_CALLBACK(SteamManager, OnUserStatsReceived, UserStatsReceived_t, callbackUserStatsReceived);
     STEAM_CALLBACK(SteamManager, OnUserStatsStored, UserStatsStored_t, callbackUserStatsStored);
@@ -241,7 +247,7 @@ public:
 class SteamAchievementsFF8
 {
 private:
-    enum AchievementsFF8
+    enum Achievements
     {
         UNLOCK_GF_QUEZACOTL = 0,
         UNLOCK_GF_SHIVA = 1,
@@ -290,7 +296,7 @@ private:
         TOTAL_KILLS_10000 = 44
     };
 
-    static inline const achievement g_AchievementsFF8[] = {
+    static inline const achievement ACHIEVEMENTS[] = {
         _ACH_ID(UNLOCK_GF_QUEZACOTL),
         _ACH_ID(UNLOCK_GF_SHIVA),
         _ACH_ID(UNLOCK_GF_IFRIT),
@@ -338,10 +344,77 @@ private:
         _ACH_ID(TOTAL_KILLS_10000),
     };
 
+    struct upgrade_data {
+        byte char_id = 0xFF;
+        byte prev_weapon_id = 0xFF;
+    };
+
+    static inline const Achievements gfIndexToAchMap[16] = {
+        UNLOCK_GF_QUEZACOTL,
+        UNLOCK_GF_SHIVA,
+        UNLOCK_GF_IFRIT,
+        UNLOCK_GF_SIREN,
+        UNLOCK_GF_BROTHERS,
+        UNLOCK_GF_DIABLOS,
+        UNLOCK_GF_CARBUNCLE,
+        UNLOCK_GF_LEVIATHAN,
+        UNLOCK_GF_PANDEMONA,
+        UNLOCK_GF_CERBERUS,
+        UNLOCK_GF_ALEXANDER,
+        UNLOCK_GF_DOOMTRAIN,
+        UNLOCK_GF_BAHAMUT,
+        UNLOCK_GF_CACTUAR,
+        UNLOCK_GF_TONBERRY,
+        UNLOCK_GF_EDEN,
+    };
+
     static inline constexpr int FF8_N_ACHIEVEMENTS = 45;
 
+    static inline const std::string ENEMY_KILLED_STAT_NAME = "nmy_kill";
+    static inline const std::string DRAW_MAGIC_STAT_NAME = "mag_draw";
+    static inline const std::string STOCK_MAGIC_STAT_NAME = "mag_stck";
+    static inline const std::string WON_CARDGAME_STAT_NAME = "won_card";
+
+    static inline constexpr int N_CARDS = 77;
+    static inline constexpr int N_RARE_CARDS = 33;
+    static inline constexpr byte SQUALL_CARD_LOCATION = 0xF0;
+
+    static inline constexpr WORD MAX_SEED_EXP = 3100;
+    static inline constexpr int MAX_HP = 9999;
+    static inline constexpr uint32_t MAX_GIL = 99999999;
+    static inline constexpr int MAX_LEVEL = 100;
+
+    std::unique_ptr<SteamManager> steamManager;
+    std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
+    upgrade_data prevWeaponUpgradeData;
+    byte statCharId = 0xFF;
+
+    // steam stats
+    int magicStocked = 0;
+    int magicDrawn = 0;
+
 public:
-    SteamAchievementsFF8() {}
+    SteamAchievementsFF8();
+    ~SteamAchievementsFF8() = default;
+
+    void initOwnedTripleTriadRareCards(const savemap_ff8_triple_triad &triple_triad);
+    void initPreviousWeaponIdBeforeUpgrade(byte charId, byte weaponId);
+    void initStatCharIdUnderStatCompute(byte statCharId);
+
+    byte getStatCharIdUnderStatCompute();
+
+    void unlockPlayTripleTriadAchievement();
+    void unlockLoserTripleTriadAchievement(const savemap_ff8_triple_triad &triple_triad);
+    void unlockCollectorTripleTriadAchievement(const savemap_ff8_triple_triad &triple_triad);
+    void increaseCardWinsAndUnlockProfessionalAchievement();
+    void unlockGuardianForceAchievement(int gf_idx);
+    void unlockTopSeedRankAchievement(WORD seed_exp);
+    void unlockUpgradeWeaponAchievement(const savemap_ff8 &savemap);
+    void unlockMaxHpAchievement(int max_hp);
+    void unlockMaxGilAchievement(uint32_t gil);
+    void unlockTopLevelAchievement(int level);
+    void increaseKillsAndTryUnlockAchievement();
+
 };
 
 // Global, access to Achievements object

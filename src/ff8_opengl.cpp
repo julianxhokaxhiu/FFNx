@@ -36,6 +36,7 @@
 #include "ff8/file.h"
 #include "ff8/vram.h"
 #include "metadata.h"
+#include "achievement.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -758,7 +759,7 @@ bool ff8_skip_movies()
 
 			// Force last frame for field scripts
 			ff8_externals.movie_object->movie_current_frame = 0xFFFF;
-			(*ff8_externals.savemap)[80 / 4] = 0xFFFF;
+			(*ff8_externals.savemap_field)->current_frame = 0xFFFF;
 			ff8_externals.sub_5304B0();
 		}
 		else if (mode == MODE_CREDITS)
@@ -947,6 +948,219 @@ int ff8_create_save_file_chocobo_world(int unused, int data_source, int offset, 
 	if (ret > 0) metadataPatcher.updateFF8(3, 0);
 
 	return ret;
+}
+
+int ff8_cardgame_postgame_func_534BC0()
+{
+	g_FF8SteamAchievements->unlockPlayTripleTriadAchievement();
+	return ff8_externals.cardgame_func_534BC0();
+}
+
+void ff8_cardgame_enter_hook_sub_460B60(float a1)
+{
+	g_FF8SteamAchievements->initOwnedTripleTriadRareCards(ff8_externals.savemap->triple_triad);
+	((void(*)(float))ff8_externals.sub_460B60)(a1);
+}
+
+void ff8_cardgame_exit_hook_sub_4972A0()
+{
+	g_FF8SteamAchievements->unlockLoserTripleTriadAchievement(ff8_externals.savemap->triple_triad);
+	((void(*)())ff8_externals.sub_4972A0)();
+}
+
+int ff8_cardgame_add_card_to_squall_original(int card_idx)
+{
+	// update known cards
+	if (card_idx >= 77)
+		ff8_externals.savemap->triple_triad.cards_rare[(card_idx - 77) / 8] |= 1 << ((card_idx - 77) % 8);
+	else
+		ff8_externals.savemap->triple_triad.cards[card_idx] |= 0x80u;
+
+	// add card to squall
+	if (card_idx >= 77)
+	{
+		ff8_externals.savemap->triple_triad.card_locations[card_idx - 77] = 240; // SQUALL
+		return 0;
+	}
+	else if ((ff8_externals.savemap->triple_triad.cards[card_idx] & 0x7Fu) >= 100)
+	{
+		return -1;
+	}
+	else
+	{
+		++ff8_externals.savemap->triple_triad.cards[card_idx];
+		return 0;
+	}
+}
+
+int ff8_cardgame_add_card_to_squall(int card_idx)
+{
+	int ret = ff8_cardgame_add_card_to_squall_original(card_idx);
+	g_FF8SteamAchievements->unlockCollectorTripleTriadAchievement(ff8_externals.savemap->triple_triad);
+	return ret;
+}
+
+int ff8_cardgame_update_card_with_location_original(int card_idx, int card_location)
+{
+	if ( card_idx >= 77 )
+	{
+		ff8_externals.savemap->triple_triad.card_locations[card_idx - 77] = card_location;
+		return 0;
+	}
+	else
+	{
+		byte card_value = ff8_externals.savemap->triple_triad.cards[card_idx];
+		if ( card_location == 240 ) // SQUALL location
+		{
+			if ((card_value & 0x7Fu) < 100)
+			{
+				ff8_externals.savemap->triple_triad.cards[card_idx] = card_value + 1;
+				return 0;
+			}
+		}
+		else if ((card_value & 0x7F) != 0)
+		{
+			ff8_externals.savemap->triple_triad.cards[card_idx] = card_value - 1;
+			return 0;
+		}
+		return -1;
+	}
+}
+
+int ff8_cardgame_update_card_with_location(int card_idx, int card_location)
+{
+	int ret = ff8_cardgame_update_card_with_location_original(card_idx, card_location);
+	if (card_location == 240) // Squall location
+	{
+		g_FF8SteamAchievements->unlockCollectorTripleTriadAchievement(ff8_externals.savemap->triple_triad);
+	}
+	return ret;
+}
+
+int ff8_cardgame_sub_535D00(void* tt_data)
+{
+	uint16_t prev_card_wins = ff8_externals.savemap->triple_triad.victory_count;
+	int ret = ff8_externals.cardgame_sub_535D00(tt_data);
+	if (ff8_externals.savemap->triple_triad.victory_count > prev_card_wins)
+	{
+		g_FF8SteamAchievements->increaseCardWinsAndUnlockProfessionalAchievement();
+	}
+	return ret;
+}
+
+void ff8_enable_gf_sub_47E480(int gf_idx)
+{
+	ff8_externals.savemap->gfs[gf_idx].exists |= 1u;
+	g_FF8SteamAchievements->unlockGuardianForceAchievement(gf_idx);
+}
+
+void ff8_update_seed_exp_4C30E0(int seed_lvl)
+{
+	ff8_externals.update_seed_exp_4C30E0(seed_lvl);
+	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+}
+
+int ff8_field_opcode_POPM_W(void* field_data, int memory_offset)
+{
+	int ret = ff8_externals.opcode_popm_w(field_data, memory_offset);
+	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+	return ret;
+}
+
+int ff8_field_opcode_ADDSEEDLEVEL(void* field_data)
+{
+	int ret = ff8_externals.opcode_addseedlevel(field_data);
+	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+	return ret;
+}
+
+void ff8_field_update_seed_level()
+{
+	((void(*)())ff8_externals.field_update_seed_level_52B140)();
+	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
+}
+
+void ff8_worldmap_update_seed_level()
+{
+	((void(*)())ff8_externals.worldmap_update_seed_level_651C10)();
+	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
+}
+
+// Replacing a specific call that is called when player remodel weapon just before assigning the new
+// weapon id to the character
+int ff8_menu_junkshop_get_char_id_hook_4ABC40(int chars_available_bitmap, int char_idx)
+{
+	int char_id = ff8_externals.sub_4ABC40(chars_available_bitmap, char_idx);
+	g_FF8SteamAchievements->initPreviousWeaponIdBeforeUpgrade(char_id, ff8_externals.savemap->chars[char_id].weapon_id);
+	return char_id;
+}
+
+// Replacing a specific call that is called when player remodel weapon just after assigning the new
+// weapon id to the character
+int ff8_menu_junkshop_hook_4EA770(int a1, uint32_t a2)
+{
+	int ret = ff8_externals.sub_4EA770(a1, a2);
+	g_FF8SteamAchievements->unlockUpgradeWeaponAchievement(*ff8_externals.savemap);
+	return ret;
+}
+
+// Replacing a call done before computing max HP for a character in order to get the 
+// index "party_char_id"
+void ff8_hook_sub_4954B0(int party_char_id)
+{
+	ff8_externals.sub_4954B0(party_char_id);
+	g_FF8SteamAchievements->initStatCharIdUnderStatCompute(party_char_id);
+}
+
+int ff8_compute_char_max_hp_496310(int multiplier, int char_id)
+{
+	int max_hp_mul = ff8_externals.compute_char_max_hp_496310(multiplier, char_id);
+	byte stat_char_id = g_FF8SteamAchievements->getStatCharIdUnderStatCompute();
+	if (stat_char_id != 0xFFu) {
+		int max_hp = ff8_externals.char_comp_stats_1CFF000[stat_char_id].unk3[14] * max_hp_mul / 100;
+		g_FF8SteamAchievements->unlockMaxHpAchievement(max_hp);
+	}
+	return max_hp_mul;
+}
+
+int ff8_field_opcode_ADDGIL(void* field_data)
+{
+	int ret = ff8_externals.opcode_addgil(field_data);
+	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
+	return ret;
+}
+
+void ff8_menu_shop_sub_4EBE40(byte* menu_data)
+{
+	uint16_t menu_op = *(uint16_t*)(menu_data + 16);
+	bool is_menu_sell_buy = ((*ff8_externals.menu_data_1D76A9C) & 0x40) != 0;
+	((void(*)(byte*))ff8_externals.menu_shop_sub_4EBE40)(menu_data);
+	byte is_sell = *(byte*)(menu_data + 70);
+	if (menu_op == 12 && is_menu_sell_buy && is_sell)
+	{
+		uint32_t gil = *(uint32_t*)(menu_data + 40);
+		g_FF8SteamAchievements->unlockMaxGilAchievement(gil);
+	}
+}
+
+int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
+{
+	byte char_id = *(ff8_externals.character_data_1CFE74C + party_char_id);
+	int ret = ff8_externals.battle_menu_add_exp_and_stat_bonus_496CB0(party_char_id, exp);
+	if (char_id != 0xFF) {
+		int level = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[char_id].exp, char_id);
+		g_FF8SteamAchievements->unlockTopLevelAchievement(level);
+	}
+	return ret;
+}
+
+// Replace a function that is called before increasing the kills of a character
+void ff8_battle_after_enemy_kill_sub_496CB0(int party_char_id, int a1, int current_actor_second_byte, int a2)
+{
+	ff8_externals.battle_sub_494AF0(party_char_id, a1, current_actor_second_byte, a2);
+	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement();
 }
 
 int ff8_limit_fps()
@@ -1267,6 +1481,49 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// All possible message and ask windows
 	ff8_opcode_old_battle = (int (*)(int))ff8_externals.opcode_battle;
 	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x69], (DWORD)&ff8_opcode_battle);
+
+	//###############################
+	// steam achievement unlock calls
+	//###############################
+	if(steam_achievements_debug_mode)
+	{
+		// triple triad
+		patch_code_dword((uint32_t)&ff8_externals.cardgame_funcs[4], (uint32_t)&ff8_cardgame_postgame_func_534BC0);
+		replace_call(ff8_externals.sub_534640 + 0x8D, (void*)ff8_cardgame_enter_hook_sub_460B60);
+		replace_call(ff8_externals.sub_534640 + 0x51, (void*)ff8_cardgame_exit_hook_sub_4972A0);
+		replace_function(ff8_externals.cardgame_add_card_to_squall_534840, (void*)ff8_cardgame_add_card_to_squall);
+		replace_function(ff8_externals.cardgame_update_card_with_location_5347F0, (void*)ff8_cardgame_update_card_with_location);
+		patch_code_dword(ff8_externals.cargame_func_535C90 + 0x19, (uint32_t)&ff8_cardgame_sub_535D00);
+
+		// guardian forces
+		replace_function(ff8_externals.enable_gf_sub_47E480, (void*)ff8_enable_gf_sub_47E480);
+
+		// seed rank A (also max GIL)
+		replace_call(ff8_externals.menu_sub_4D4D30 + 0x928, (void*)ff8_update_seed_exp_4C30E0);
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0D], (uint32_t)&ff8_field_opcode_POPM_W);
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x153], (uint32_t)&ff8_field_opcode_ADDSEEDLEVEL);
+		replace_call(ff8_externals.sub_529FF0 + 0x120, (void*)ff8_field_update_seed_level);
+		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x152, (void*)ff8_worldmap_update_seed_level);
+
+		// handyman: upgrade weapon
+		replace_call(ff8_externals.menu_junkshop_sub_4EA890 + 0x5C1, (void*)ff8_menu_junkshop_get_char_id_hook_4ABC40);
+		replace_call(ff8_externals.menu_junkshop_sub_4EA890 + 0x60B, (void*)ff8_menu_junkshop_hook_4EA770);
+
+		// max HP
+		replace_call(ff8_externals.compute_char_stats_sub_495960 + 0x68, (void*)ff8_hook_sub_4954B0);
+		replace_call(ff8_externals.compute_char_stats_sub_495960 + 0x94, (void*)ff8_compute_char_max_hp_496310);
+
+		// max GIL
+		replace_call((uint32_t)ff8_externals.menu_callbacks[11].func + 0x1F0, (void*)ff8_menu_shop_sub_4EBE40);
+		patch_code_dword((uint32_t)ff8_externals.menu_callbacks[11].func + 0x39, (uint32_t)ff8_menu_shop_sub_4EBE40);
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x151], (uint32_t)&ff8_field_opcode_ADDGIL);
+
+		// max LEVEL
+		replace_call(ff8_externals.battle_menu_sub_4A3EE0 + 0x581, (void*)ff8_battle_menu_add_exp_and_bonus_496CB0);
+
+		// kills
+		replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_496CB0);
+	}
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)

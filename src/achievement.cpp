@@ -31,18 +31,24 @@
 #include "log.h"
 #include "cfg.h"
 
+#define ach_trace(x, ...) if (trace_all || trace_achievement) ffnx_trace((x), ##__VA_ARGS__)
+
 using std::string;
 
 std::unique_ptr<SteamAchievementsFF7> g_FF7SteamAchievements = nullptr;
 std::unique_ptr<SteamAchievementsFF8> g_FF8SteamAchievements = nullptr;
 
-SteamManager::SteamManager(const achievement *achievements, int nAchievements) : isInitialized(false),
-                                                                                 callbackUserStatsReceived(this, &SteamManager::OnUserStatsReceived),
-                                                                                 callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
-                                                                                 callbackAchievementStored(this, &SteamManager::OnAchievementStored)
+SteamManager::SteamManager(const achievement *achievements, int nAchievements, std::vector<std::string> statsNameVec):
+  isInitialized(false),
+  callbackUserStatsReceived(this, &SteamManager::OnUserStatsReceived),
+  callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
+  callbackAchievementStored(this, &SteamManager::OnAchievementStored)
 {
     this->appID = SteamUtils()->GetAppID();
     this->nAchievements = nAchievements;
+    for (std::string statName : statsNameVec) {
+        this->stats.insert({statName, 0});
+    }
     this->achievementList.insert(this->achievementList.end(), &achievements[0], &achievements[nAchievements]);
     this->requestStats();
     if (trace_all || trace_achievement)
@@ -118,6 +124,22 @@ const char *SteamManager::getStringAchievementID(int achID)
     return this->achievementList[achID].chAchID;
 }
 
+std::optional<int> SteamManager::getUserStat(std::string statName) {
+    if (!this->stats.contains(statName)) {
+       return {};
+    }
+    return {this->stats.at(statName)};
+}
+
+bool SteamManager::updateUserStat(std::string statName, int value) {
+    if (!this->stats.contains(statName)) {
+       return false;
+    }
+    this->stats.insert_or_assign(statName, value);
+    SteamUserStats()->SetStat(statName.c_str(), value);
+    return SteamUserStats()->StoreStats();
+}
+
 void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
 {
     if (this->appID == pCallback->m_nGameID)
@@ -127,6 +149,16 @@ void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
             if (trace_all || trace_achievement)
                 ffnx_trace("%s - received stats and achievements from Steam\n", __func__);
             this->isInitialized = true;
+ 
+            // load stats (assume all stats to be integers)
+            for (auto statName: this->stats) {
+                int statValue;
+                if (SteamUserStats()->GetStat(statName.first.c_str(), &statValue)) {
+                    this->stats.insert_or_assign(statName.first, statValue);
+                }
+
+                ach_trace("%s - user stat(%s, %d)\n", __func__, statName.first.c_str(), statValue);
+            }
 
             // load achievements
             for (int i = 0; i < this->nAchievements; ++i)
@@ -556,3 +588,217 @@ void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(unsigned char yuffi
 }
 
 // -------------------------- STEAM ACHIEVEMENTS OF FF8 ---------------------------
+
+SteamAchievementsFF8::SteamAchievementsFF8()
+{
+    std::vector<std::string> statsNameVec = { ENEMY_KILLED_STAT_NAME, DRAW_MAGIC_STAT_NAME, STOCK_MAGIC_STAT_NAME, WON_CARDGAME_STAT_NAME };
+    this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS, FF8_N_ACHIEVEMENTS, statsNameVec);
+}
+
+void SteamAchievementsFF8::initOwnedTripleTriadRareCards(const savemap_ff8_triple_triad &tt_data)
+{
+    ach_trace("%s - init owned triple triad rare cards\n", __func__);
+
+    for (int i = 0; i < this->prevOwnedRareCards.size(); i++) {
+        bool owned = tt_data.card_locations[i] == SQUALL_CARD_LOCATION && (tt_data.cards_rare[i / 8] & (1 << i % 8)) > 0;
+        this->prevOwnedRareCards[i] = owned;
+    }
+}
+
+void SteamAchievementsFF8::initPreviousWeaponIdBeforeUpgrade(byte charId, byte weaponId)
+{
+    ach_trace("%s - init previous weapon id before upgrade (char id: %d, weapon id: %d)\n", __func__, charId, weaponId);
+    this->prevWeaponUpgradeData.char_id = charId;
+    this->prevWeaponUpgradeData.prev_weapon_id = weaponId;
+}
+
+void SteamAchievementsFF8::initStatCharIdUnderStatCompute(byte statCharId) {
+    ach_trace("%s - init stat char id before max hp computation (char id: %d)\n", __func__, statCharId);
+    this->statCharId = statCharId;
+}
+
+byte SteamAchievementsFF8::getStatCharIdUnderStatCompute() {
+    return this->statCharId;
+}
+
+void SteamAchievementsFF8::unlockPlayTripleTriadAchievement()
+{
+    ach_trace("%s - trying to unlock play card game first time achievement\n", __func__);
+
+    if (!(this->steamManager->isAchieved(CARDGAME_FIRST_TIME)))
+        this->steamManager->setAchievement(CARDGAME_FIRST_TIME);
+}
+
+void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const savemap_ff8_triple_triad &tt_data)
+{
+    ach_trace("%s - trying to unlock loser card game achievement\n", __func__);
+
+    for (int i = 0; i < this->prevOwnedRareCards.size(); i++) {
+        bool owned = tt_data.card_locations[i] == SQUALL_CARD_LOCATION && (tt_data.cards_rare[i / 8] & (1 << i % 8)) > 0;
+        if (!owned && this->prevOwnedRareCards[i]) {
+            ach_trace("%s - LOSER achievement unlocked due to card id '%d' lost\n", __func__, i);
+
+            if (!(this->steamManager->isAchieved(LOSER)))
+                this->steamManager->setAchievement(LOSER);
+        }
+    }
+}
+
+void SteamAchievementsFF8::increaseCardWinsAndUnlockProfessionalAchievement()
+{
+    auto opt_wins = this->steamManager->getUserStat(WON_CARDGAME_STAT_NAME);
+    if (!opt_wins.has_value()) {
+        ffnx_error("%s - failed to get %s stat\n", __func__, WON_CARDGAME_STAT_NAME.c_str());
+        return;
+    }
+    int new_wins = opt_wins.value() + 1;
+    ach_trace("%s - trying to unlock professional player card game achievement (wins: %d)\n", __func__, new_wins);
+    this->steamManager->updateUserStat(WON_CARDGAME_STAT_NAME, new_wins);
+
+    if (new_wins >= 100)
+    {
+        if (!(this->steamManager->isAchieved(PROFESSIONAL)))
+            this->steamManager->setAchievement(PROFESSIONAL);
+    }
+}
+
+void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const savemap_ff8_triple_triad &tt_data)
+{
+    ach_trace("%s - trying to unlock collector card game achievement\n", __func__);
+    if (this->steamManager->isAchieved(COLLECT_ALL_CARDS)) {
+      return;
+    }
+
+    int ownedNormalCards = 0;
+    for (int i = 0; i < N_CARDS; i++) {
+        bool owned = tt_data.cards[i] > 0x80;
+        ownedNormalCards += owned;
+    }
+
+    int ownedRareCards = 0;
+    for (int i = 0; i < N_RARE_CARDS; i++) {
+        bool owned = tt_data.card_locations[i] == SQUALL_CARD_LOCATION && (tt_data.cards_rare[i / 8] & (1 << i % 8)) > 0;
+        ownedRareCards += owned;
+    }
+
+    ach_trace("%s - collector report: normal cards %d/%d, rare cards %d/%d\n", __func__,
+              ownedNormalCards, N_CARDS, ownedRareCards, N_RARE_CARDS);
+
+    if (ownedNormalCards + ownedRareCards == N_CARDS + N_RARE_CARDS) {
+        this->steamManager->setAchievement(COLLECT_ALL_CARDS);
+    }
+}
+
+void SteamAchievementsFF8::unlockGuardianForceAchievement(int gf_idx)
+{
+    if (gf_idx < 0 || gf_idx > 15) {
+      ach_trace("%s - invalid guardian force idx (gf id: %d)\n", __func__, gf_idx);
+      return;
+    }
+
+    ach_trace("%s - trying to unlock guardian force achievement (gf id: %d)\n", __func__, gf_idx);
+    if (!(this->steamManager->isAchieved(gfIndexToAchMap[gf_idx])))
+        this->steamManager->setAchievement(gfIndexToAchMap[gf_idx]);
+}
+
+void SteamAchievementsFF8::unlockTopSeedRankAchievement(WORD seed_exp)
+{
+    ach_trace("%s - trying to unlock seed rank A achivement (seed exp: %d)\n", __func__, seed_exp);
+    if (seed_exp >= MAX_SEED_EXP) {
+        if (!(this->steamManager->isAchieved(REACH_SEED_RANK_A)))
+            this->steamManager->setAchievement(REACH_SEED_RANK_A);
+    }
+}
+
+void SteamAchievementsFF8::unlockUpgradeWeaponAchievement(const savemap_ff8 &savemap)
+{
+    if (this->prevWeaponUpgradeData.char_id == 0xFF || this->prevWeaponUpgradeData.prev_weapon_id == 0xFF) {
+        ach_trace("%s - invalid previous weapon id before upgrade (char id: %d, weapon id: %d)\n",
+                  __func__, this->prevWeaponUpgradeData.char_id, this->prevWeaponUpgradeData.prev_weapon_id);
+    }
+
+    byte weaponId = savemap.chars[this->prevWeaponUpgradeData.char_id].weapon_id;
+    ach_trace("%s - trying to unlock handyman achivement (new weapon id: %d, old weapon id: %d)\n",
+              __func__, weaponId, this->prevWeaponUpgradeData.prev_weapon_id);
+    if (weaponId > this->prevWeaponUpgradeData.prev_weapon_id) {
+        if (!(this->steamManager->isAchieved(UPGRADE_WEAPON_FIRST_TIME)))
+            this->steamManager->setAchievement(UPGRADE_WEAPON_FIRST_TIME);
+    }
+
+    this->prevWeaponUpgradeData.char_id = 0xFF;
+    this->prevWeaponUpgradeData.prev_weapon_id = 0xFF;
+}
+
+void SteamAchievementsFF8::unlockMaxHpAchievement(int max_hp)
+{
+    ach_trace("%s - trying to unlock maximum HP achivement (max hp: %d)\n", __func__, max_hp);
+
+    if (max_hp >= MAX_HP)
+    {
+        if (!(this->steamManager->isAchieved(REACH_MAX_HP)))
+            this->steamManager->setAchievement(REACH_MAX_HP);
+    }
+    this->statCharId = 0xFF;
+}
+
+void SteamAchievementsFF8::unlockMaxGilAchievement(uint32_t gil)
+{
+    ach_trace("%s - trying to unlock maximum gil achivement (gil: %d)\n", __func__, gil);
+
+    if (gil >= MAX_GIL)
+    {
+        if (!(this->steamManager->isAchieved(REACH_MAX_GIL)))
+            this->steamManager->setAchievement(REACH_MAX_GIL);
+    }
+}
+
+void SteamAchievementsFF8::unlockTopLevelAchievement(int level)
+{
+    ach_trace("%s - trying to unlock top level achivement (level: %d)\n", __func__, level);
+
+    if (level == MAX_LEVEL)
+    {
+        if (!(this->steamManager->isAchieved(REACH_LEVEL_100)))
+            this->steamManager->setAchievement(REACH_LEVEL_100);
+    }
+}
+
+void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
+{
+    auto opt_kills = this->steamManager->getUserStat(ENEMY_KILLED_STAT_NAME);
+    if (!opt_kills.has_value()) {
+        ffnx_error("%s - failed to get %s stat\n", __func__, ENEMY_KILLED_STAT_NAME.c_str());
+        return;
+    }
+    
+    int new_kills = opt_kills.value() + 1;
+    ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, new_kills);
+    this->steamManager->updateUserStat(ENEMY_KILLED_STAT_NAME, new_kills);
+
+    if (new_kills >= 100)
+    {
+        if (!(this->steamManager->isAchieved(TOTAL_KILLS_100)))
+            this->steamManager->setAchievement(TOTAL_KILLS_100);
+    }
+    else if (new_kills % 10 == 0) {
+        this->steamManager->showAchievementProgress(TOTAL_KILLS_100, new_kills, 100);
+    }
+    
+
+    if (new_kills >= 1000)
+    {
+        if (!(this->steamManager->isAchieved(TOTAL_KILLS_1000)))
+            this->steamManager->setAchievement(TOTAL_KILLS_1000);
+    }
+    else if (new_kills > 100 && new_kills % 100 == 0) {
+        this->steamManager->showAchievementProgress(TOTAL_KILLS_1000, new_kills, 1000);
+    }
+    
+
+    if (new_kills >= 10000)
+    {
+        if (!(this->steamManager->isAchieved(TOTAL_KILLS_10000)))
+            this->steamManager->setAchievement(TOTAL_KILLS_10000);
+    }
+}
+
