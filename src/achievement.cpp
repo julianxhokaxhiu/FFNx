@@ -124,18 +124,18 @@ const char *SteamManager::getStringAchievementID(int achID)
     return this->achievementList[achID].chAchID;
 }
 
-std::optional<int> SteamManager::getUserStat(std::string statName) {
+std::optional<int> SteamManager::getUserStat(const std::string &statName) {
     if (!this->stats.contains(statName)) {
        return {};
     }
     return {this->stats.at(statName)};
 }
 
-bool SteamManager::updateUserStat(std::string statName, int value) {
+bool SteamManager::updateUserStat(const std::string &statName, int value) {
     if (!this->stats.contains(statName)) {
        return false;
     }
-    ach_trace("%s - Updating steam user stat '%s' to %d", __func__, statName.c_str(), value);
+    ach_trace("%s - Updating steam user stat '%s' to %d\n", __func__, statName.c_str(), value);
     this->stats.insert_or_assign(statName, value);
     SteamUserStats()->SetStat(statName.c_str(), value);
     return SteamUserStats()->StoreStats();
@@ -647,24 +647,7 @@ void SteamAchievementsFF8::unlockLoserTripleTriadAchievement(const savemap_ff8_t
 
 void SteamAchievementsFF8::increaseCardWinsAndUnlockProfessionalAchievement()
 {
-    if (this->steamManager->isAchieved(PROFESSIONAL))
-    {
-        return;
-    }
-
-    auto opt_wins = this->steamManager->getUserStat(WON_CARDGAME_STAT_NAME);
-    if (!opt_wins.has_value()) {
-        ffnx_error("%s - failed to get %s stat\n", __func__, WON_CARDGAME_STAT_NAME.c_str());
-        return;
-    }
-    int new_wins = opt_wins.value() + 1;
-    ach_trace("%s - trying to unlock professional player card game achievement (wins: %d)\n", __func__, new_wins);
-    this->steamManager->updateUserStat(WON_CARDGAME_STAT_NAME, new_wins);
-
-    if (new_wins >= 100)
-    {
-        this->steamManager->setAchievement(PROFESSIONAL);
-    }
+    this->increaseUserStatAndTryUnlockAchievement(PROFESSIONAL, WON_CARDGAME_STAT_NAME, 100);
 }
 
 void SteamAchievementsFF8::unlockCollectorTripleTriadAchievement(const savemap_ff8_triple_triad &tt_data)
@@ -811,47 +794,38 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
 
 void SteamAchievementsFF8::increaseMagicStockAndTryUnlockAchievement()
 {
-    if (this->steamManager->isAchieved(MAGIC_FINDER))
-    {
-        return;
-    }
-
-    auto opt_stocks = this->steamManager->getUserStat(STOCK_MAGIC_STAT_NAME);
-    if (!opt_stocks.has_value()) {
-        ffnx_error("%s - failed to get %s stat\n", __func__, STOCK_MAGIC_STAT_NAME.c_str());
-        return;
-    }
-
-    int new_stocks = opt_stocks.value() + 1;
-    ach_trace("%s - trying to unlock magic stocks achivements (stocks: %d)\n", __func__, new_stocks);
-    this->steamManager->updateUserStat(STOCK_MAGIC_STAT_NAME, new_stocks);
-
-    if (new_stocks >= 100)
-    {
-        this->steamManager->setAchievement(MAGIC_FINDER);
-    }
+    this->increaseUserStatAndTryUnlockAchievement(MAGIC_FINDER, STOCK_MAGIC_STAT_NAME, 100, true);
 }
 
 void SteamAchievementsFF8::increaseMagicDrawsAndTryUnlockAchievement()
 {
-    if (this->steamManager->isAchieved(DRAW_100_MAGIC))
+    this->increaseUserStatAndTryUnlockAchievement(DRAW_100_MAGIC, DRAW_MAGIC_STAT_NAME, 100, true);
+}
+
+void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
+{
+    if (this->steamManager->isAchieved(achId))
     {
         return;
     }
 
-    auto opt_draws = this->steamManager->getUserStat(DRAW_MAGIC_STAT_NAME);
-    if (!opt_draws.has_value()) {
-        ffnx_error("%s - failed to get %s stat\n", __func__, DRAW_MAGIC_STAT_NAME.c_str());
+    auto opt_stat_value = this->steamManager->getUserStat(statName);
+    if (!opt_stat_value.has_value()) {
+        ffnx_error("%s - failed to get %s stat\n", __func__, statName.c_str());
         return;
     }
 
-    int new_draws = opt_draws.value() + 1;
-    ach_trace("%s - trying to unlock draw magic achivement (draws: %d)\n", __func__, new_draws);
-    this->steamManager->updateUserStat(DRAW_MAGIC_STAT_NAME, new_draws);
+    int new_stat_value = opt_stat_value.value() + 1;
+    ach_trace("%s - trying to unlock %s achivement (stat value: %d)\n", __func__, this->ACHIEVEMENTS[achId].chAchID, new_stat_value);
+    this->steamManager->updateUserStat(statName, new_stat_value);
 
-    if (new_draws >= 100)
+    if (new_stat_value >= achValue)
     {
-        this->steamManager->setAchievement(DRAW_100_MAGIC);
+        this->steamManager->setAchievement(achId);
+    }
+    else if (showAchievementProgress)
+    {
+        this->steamManager->showAchievementProgress(achId, new_stat_value, achValue);
     }
 }
 

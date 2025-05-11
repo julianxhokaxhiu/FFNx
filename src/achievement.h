@@ -67,8 +67,8 @@ public:
     bool setAchievement(int achID);
     bool isAchieved(int achID);
     const char *getStringAchievementID(int achID);
-    std::optional<int> getUserStat(std::string statName);
-    bool updateUserStat(std::string statName, int value);
+    std::optional<int> getUserStat(const std::string &statName);
+    bool updateUserStat(const std::string &statName, int value);
 
     STEAM_CALLBACK(SteamManager, OnUserStatsReceived, UserStatsReceived_t, callbackUserStatsReceived);
     STEAM_CALLBACK(SteamManager, OnUserStatsStored, UserStatsStored_t, callbackUserStatsStored);
@@ -388,6 +388,8 @@ private:
     std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
     upgrade_data prevWeaponUpgradeData;
     byte statCharId = 0xFF;
+
+    void increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress = false);
 
 public:
     SteamAchievementsFF8();
