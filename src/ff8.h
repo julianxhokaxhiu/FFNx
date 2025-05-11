@@ -1,4 +1,4 @@
-/***************************************************************************/
+/****************************************************************************/
 //    Copyright (C) 2009 Aali132                                            //
 //    Copyright (C) 2018 quantumpencil                                      //
 //    Copyright (C) 2018 Maxime Bacoux                                      //
@@ -1028,12 +1028,12 @@ struct ff8_field_state_background {
 };
 
 struct ff8_char_computed_stats {
-  uint8_t unk1[370];
-  uint16_t curr_hp;
-  uint16_t max_hp;
-  uint8_t unk2[66];
-  uint8_t stat_multiplier;
-  uint8_t unk3[23];
+	uint8_t unk1[370];
+	uint16_t curr_hp;
+	uint16_t max_hp;
+	uint8_t unk2[66];
+	uint8_t stat_multiplier;
+	uint8_t unk3[23];
 };
 
 struct ff8_menu_callback {
@@ -1458,7 +1458,7 @@ struct ff8_externals
 	uint8_t *cardgame_tim_texture_icons;
 	uint8_t *cardgame_tim_texture_font;
 	uint32_t* is_card_game;
-  uint32_t cardgame_add_card_to_squall_534840;
+	uint32_t cardgame_add_card_to_squall_534840;
 	uint32_t cardgame_sub_536DE0;
 	uint32_t cardgame_sub_537110;
 	uint32_t cardgame_update_card_with_location_5347F0;
@@ -1507,7 +1507,7 @@ struct ff8_externals
 	uint32_t compute_char_stats_sub_495960;
 	int(*compute_char_max_hp_496310)(int, int);
 	int(*get_char_level_4961D0)(int, int);
-  std::span<ff8_char_computed_stats> char_comp_stats_1CFF000;
+	std::span<ff8_char_computed_stats> char_comp_stats_1CFF000;
 	BYTE* battle_current_active_character_id;
 	BYTE* battle_new_active_character_id;
 	WORD* battle_encounter_id;
@@ -1586,7 +1586,7 @@ struct ff8_externals
 	uint32_t battle_menu_sub_4A3D20;
 	uint32_t battle_menu_sub_4A3EE0;
 	int(*battle_menu_add_exp_and_stat_bonus_496CB0)(int, uint16_t);
-  byte* character_data_1CFE74C;
+	byte* character_data_1CFE74C;
 	uint32_t battle_sub_485160;
 	uint32_t battle_sub_48FE20;
 	uint32_t battle_sub_494410;

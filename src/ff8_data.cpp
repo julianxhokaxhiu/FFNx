@@ -262,7 +262,7 @@ void ff8_find_externals()
 	}
 
 	ff8_externals.battle_trigger_field = uint32_t(ff8_externals.sub_47CA90) + 0x15;
-  ff8_externals.field_update_seed_level_52B140 = get_relative_call(ff8_externals.sub_529FF0, 0x120);
+	ff8_externals.field_update_seed_level_52B140 = get_relative_call(ff8_externals.sub_529FF0, 0x120);
 	ff8_externals.check_game_is_paused = (int32_t(*)(int32_t))get_relative_call(ff8_externals.field_main_loop, 0x16C);
 	ff8_externals.is_game_paused = (DWORD*)get_absolute_value((uint32_t)ff8_externals.check_game_is_paused, 0x78);
 	ff8_externals.pause_menu = (int(*)(int))get_relative_call(uint32_t(ff8_externals.check_game_is_paused), 0x88);
@@ -769,7 +769,7 @@ void ff8_find_externals()
 		ff8_externals.battle_trigger_worldmap = ff8_externals.worldmap_with_fog_sub_53FAC0 + 0x4EA;
 	}
 
-  ff8_externals.worldmap_update_seed_level_651C10 = get_relative_call(ff8_externals.worldmap_update_steps_sub_6519D0, 0x152);
+	ff8_externals.worldmap_update_seed_level_651C10 = get_relative_call(ff8_externals.worldmap_update_steps_sub_6519D0, 0x152);
 	ff8_externals.worldmap_windows_idx_map = (char*)get_absolute_value((uint32_t)ff8_externals.world_dialog_assign_text_sub_543790, 0x3B);
 
 	ff8_externals.sub_548080 = get_relative_call(ff8_externals.worldmap_sub_53F310_loc_53F7EE, 0x9B);
@@ -891,7 +891,7 @@ void ff8_find_externals()
 	ff8_externals.battle_menu_sub_4A3D20 = get_relative_call(ff8_externals.battle_menu_sub_4A6660, 0);
 	ff8_externals.battle_menu_sub_4A3EE0 = get_relative_call(ff8_externals.battle_menu_sub_4A3D20, 0x12A);
 	ff8_externals.battle_menu_add_exp_and_stat_bonus_496CB0 = (int(*)(int, uint16_t))get_relative_call(ff8_externals.battle_menu_sub_4A3EE0, 0x581);
-  ff8_externals.character_data_1CFE74C = (byte*)get_absolute_value((uint32_t)ff8_externals.battle_menu_add_exp_and_stat_bonus_496CB0, 0xD);
+	ff8_externals.character_data_1CFE74C = (byte*)get_absolute_value((uint32_t)ff8_externals.battle_menu_add_exp_and_stat_bonus_496CB0, 0xD);
 	ff8_externals.battle_sub_485160 = get_relative_call(ff8_externals.sub_47CCB0, 0xB18);
 	ff8_externals.battle_sub_48FE20 = get_relative_call(ff8_externals.battle_sub_485160, 0x91);
 	ff8_externals.battle_sub_494410 = get_relative_call(ff8_externals.battle_sub_48FE20, 0x139C);
