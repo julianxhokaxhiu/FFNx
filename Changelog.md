@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.22.0...master
 
+## Common
+
+- Core: Improve error message on crash and make the link clickable
+
 ## FF7
 
 - Core: Fix core game bug issue happening on the wind wall fields `woa_*` ( https://github.com/julianxhokaxhiu/FFNx/issues/797 )

@@ -20,6 +20,7 @@
 /****************************************************************************/
 
 #include <shlwapi.h>
+#include <commctrl.h>
 
 #include "audio.h"
 
@@ -52,6 +53,14 @@ int ff7_checksum(void* qw)
 }
 
 static const char save_name[] = "\x25" "MERGENCY" "\x00\x33" "AVE" "\xFF";
+
+HRESULT CALLBACK TaskDialogCallbackProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LONG_PTR lpRefData) {
+	if (msg == TDN_HYPERLINK_CLICKED) {
+		LPCWSTR url = (LPCWSTR)lParam;
+		ShellExecuteW(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+	}
+	return S_OK;
+}
 
 LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 {
@@ -152,7 +161,16 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 
 	ffnx_error("Unhandled Exception. See dumped information above.\n");
 
-	MessageBoxA(gameHwnd, "Feel free to visit this link to know about further next steps you can take: https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/faq.md", "Game crashed :(", MB_ICONERROR | MB_OK);
+	TASKDIALOGCONFIG config = { sizeof(config) };
+	config.hwndParent = gameHwnd;
+	config.dwFlags = TDF_ENABLE_HYPERLINKS;
+	config.pszWindowTitle = L"Something went wrong";
+	config.pszMainInstruction = L"Game crashed :(";
+	config.pszContent = L"Something unexpected happened and unfortunately the game crashed.\n\nFeel free to visit <a href=\"https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/faq.md\">this link</a> to know about further next steps you can take.";
+	config.pszMainIcon = TD_ERROR_ICON;
+	config.pfCallback = TaskDialogCallbackProc;
+
+	TaskDialogIndirect(&config, NULL, NULL, NULL);
 
 	// Cleanup the audio device
 	nxAudioEngine.cleanup();
