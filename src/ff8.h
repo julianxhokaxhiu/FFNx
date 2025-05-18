@@ -1265,6 +1265,7 @@ struct ff8_externals
 	uint32_t sub_54D7E0;
 	uint32_t sub_54FDA0;
 	uint32_t worldmap_with_fog_sub_53FAC0;
+	void (*set_drawpoint_state_521D90)(uint8_t, char);
 	char* worldmap_windows_idx_map;
 	int (*world_dialog_assign_text_sub_543790)(int,int,char*);
 	int (*world_dialog_question_assign_text_sub_5438D0)(int, int, char*, int, int, int, uint8_t);
@@ -1580,6 +1581,7 @@ struct ff8_externals
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;
+	void(*opcode_drawpoint_sub_4A0850)(int, int);
 	uint32_t enable_gf_sub_47E480;
 	uint32_t battle_menu_loop_4A2690;
 	uint32_t battle_menu_sub_4A6660;

@@ -1163,6 +1163,18 @@ void ff8_battle_after_enemy_kill_sub_496CB0(int party_char_id, int a1, int curre
 	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement();
 }
 
+void ff8_opcode_drawpoint_sub_4A0850(int a1, int draw_magic_count)
+{
+	ff8_externals.opcode_drawpoint_sub_4A0850(a1, draw_magic_count);
+	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+}
+
+void ff8_set_drawpoint_state_52D190(uint8_t drawpoint_id, char value)
+{
+	ff8_externals.set_drawpoint_state_521D90(drawpoint_id, value);
+	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1523,6 +1535,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// kills
 		replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_496CB0);
+
+		// draw magic from draw points
+		replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
+		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : 0x85F), (void*)ff8_set_drawpoint_state_52D190);
 	}
 }
 

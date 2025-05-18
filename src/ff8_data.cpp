@@ -337,6 +337,7 @@ void ff8_find_externals()
 	common_externals.stop_movie = get_relative_call(common_externals.update_movie_sample, 0x3E2);
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
 
+	ff8_externals.opcode_drawpoint_sub_4A0850 = (void(*)(int, int))get_relative_call(ff8_externals.opcode_drawpoint, 0x6B7);
 	ff8_externals.drawpoint_messages = get_absolute_value(ff8_externals.opcode_drawpoint, 0xD6);
 	ff8_externals.enable_gf_sub_47E480 = get_relative_call(common_externals.execute_opcode_table[0x129], 0x6E);
 
@@ -680,6 +681,7 @@ void ff8_find_externals()
 		ff8_externals.sub_54A230 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x5CF);
 		ff8_externals.sub_543CB0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0xA55);
 		ff8_externals.worldmap_update_steps_sub_6519D0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x8DB);
+		ff8_externals.set_drawpoint_state_521D90 = (void(*)(uint8_t, char))get_relative_call(ff8_externals.sub_54E9B0, 0x845);
 
 		ff8_externals.sub_545F10 = get_relative_call(ff8_externals.sub_545EA0, 0x20);
 
@@ -759,6 +761,7 @@ void ff8_find_externals()
 		ff8_externals.sub_54A230 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x5D1);
 		ff8_externals.sub_543CB0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0xA47);
 		ff8_externals.worldmap_update_steps_sub_6519D0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x8C4);
+		ff8_externals.set_drawpoint_state_521D90 = (void(*)(uint8_t, char))get_relative_call(ff8_externals.sub_54E9B0, 0x85F);
 
 		ff8_externals.sub_545F10 = get_relative_call(ff8_externals.sub_545EA0, 0x1C);
 

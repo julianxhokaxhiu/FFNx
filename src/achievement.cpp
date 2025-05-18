@@ -794,14 +794,15 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
 
 void SteamAchievementsFF8::increaseMagicStockAndTryUnlockAchievement()
 {
-    this->increaseUserStatAndTryUnlockAchievement(MAGIC_FINDER, STOCK_MAGIC_STAT_NAME, 100, true);
+    this->increaseUserStatAndTryUnlockAchievement(DRAW_100_MAGIC, STOCK_MAGIC_STAT_NAME, 100, true);
 }
 
 void SteamAchievementsFF8::increaseMagicDrawsAndTryUnlockAchievement()
 {
-    this->increaseUserStatAndTryUnlockAchievement(DRAW_100_MAGIC, DRAW_MAGIC_STAT_NAME, 100, true);
+    this->increaseUserStatAndTryUnlockAchievement(MAGIC_FINDER, DRAW_MAGIC_STAT_NAME, 100, true);
 }
 
+// Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {
     if (this->steamManager->isAchieved(achId))
