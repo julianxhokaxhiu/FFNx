@@ -436,6 +436,7 @@ void ff8_find_externals()
 	ff8_externals.sub_4B3140 = get_relative_call(ff8_externals.sub_4B3310, 0xC8);
 	ff8_externals.sub_4BDB30 = get_relative_call(ff8_externals.sub_4B3140, 0x4);
 	ff8_externals.menu_callbacks = (ff8_menu_callback *)get_absolute_value(ff8_externals.sub_4BDB30, 0x11);
+	ff8_externals.menu_use_items_sub_4F81F0 = (char(*)(int))get_absolute_value(uint32_t(ff8_externals.menu_callbacks[2].func), 0x8);
 	ff8_externals.menu_cards_render = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[7].func), 0x5);
 	ff8_externals.sub_534AD0 = get_relative_call(ff8_externals.menu_cards_render, 0x76);
 	ff8_externals.card_texts_off_B96504 = (uint8_t **)get_absolute_value(ff8_externals.sub_534AD0, 0xB1);

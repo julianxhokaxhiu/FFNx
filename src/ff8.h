@@ -1138,6 +1138,7 @@ struct ff8_externals
 	uint32_t sub_4B3140;
 	uint32_t sub_4BDB30;
 	ff8_menu_callback *menu_callbacks;
+    char (*menu_use_items_sub_4F81F0)(int);
 	uint32_t menu_cards_render;
 	uint32_t sub_534AD0;
 	uint8_t **card_texts_off_B96504;

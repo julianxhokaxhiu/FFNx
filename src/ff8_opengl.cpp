@@ -37,6 +37,7 @@
 #include "ff8/vram.h"
 #include "metadata.h"
 #include "achievement.h"
+#include <cstdint>
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -1194,6 +1195,17 @@ int ff8_battle_get_magic_draw_amount_48FD20(int actor_idx, int monster_id, int m
 	return ret;
 }
 
+char ff8_menu_use_item_sub_4F81F0(int menu_data_pointer)
+{
+	uint16_t mode = *(uint16_t*)(menu_data_pointer + 16);
+	char ret = ff8_externals.menu_use_items_sub_4F81F0(menu_data_pointer);
+	if (mode == 111) // Show quistis blue magic unlocked message
+	{
+		g_FF8SteamAchievements->unlockQuistisLimitBreaksAchievement(ff8_externals.savemap->lb.quistis_lb);
+	}
+	return ret;
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1564,6 +1576,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// timber maniacs
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0B], (uint32_t)&ff8_field_opcode_POPM_B);
+
+		// quistis blue magics
+		replace_call((uint32_t)ff8_externals.menu_callbacks[2].func + 0x152, (void*)ff8_menu_use_item_sub_4F81F0);
+		patch_code_dword((uint32_t)ff8_externals.menu_callbacks[2].func + 0x8, (uint32_t)ff8_menu_use_item_sub_4F81F0);
 	}
 }
 

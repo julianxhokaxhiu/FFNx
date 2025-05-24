@@ -416,6 +416,7 @@ public:
     void increaseMagicDrawsAndTryUnlockAchievement();
     void unlockTimberManiacsAchievement(WORD timber_maniacs_bitmap);
     void unlockFirstSalaryAchievement();
+    void unlockQuistisLimitBreaksAchievement(WORD quistis_lb_bitmap);
 
 };
 

@@ -819,6 +819,17 @@ void SteamAchievementsFF8::unlockFirstSalaryAchievement()
         this->steamManager->setAchievement(SEED_FIRST_SALARY);
 }
 
+void SteamAchievementsFF8::unlockQuistisLimitBreaksAchievement(WORD quistis_lb_bitmap)
+{
+    ach_trace("%s - trying to unlock quistis limit breaks achivement (quistis lb: 0x%x)\n", __func__, quistis_lb_bitmap);
+
+    if (quistis_lb_bitmap == 0xFFFF)
+    {
+        if (!(this->steamManager->isAchieved(BLUE_MAGICS)))
+            this->steamManager->setAchievement(BLUE_MAGICS);
+    }
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {
