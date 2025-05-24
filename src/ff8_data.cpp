@@ -290,6 +290,7 @@ void ff8_find_externals()
 
 	common_externals.execute_opcode_table = (uint32_t*)get_absolute_value(common_externals.update_field_entities, 0x65A);
 	ff8_externals.opcode_pshm_w = common_externals.execute_opcode_table[0x0C];
+	ff8_externals.opcode_popm_b = (int(*)(void*, int))common_externals.execute_opcode_table[0x0B];
 	ff8_externals.opcode_popm_w = (int(*)(void*, int))common_externals.execute_opcode_table[0x0D];
 	ff8_externals.opcode_effectplay2 = common_externals.execute_opcode_table[0x21];
 	ff8_externals.opcode_mapjump = common_externals.execute_opcode_table[0x29];

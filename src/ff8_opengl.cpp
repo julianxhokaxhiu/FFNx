@@ -1067,6 +1067,16 @@ int ff8_field_opcode_POPM_W(void* field_data, int memory_offset)
 	return ret;
 }
 
+int ff8_field_opcode_POPM_B(void* field_data, int memory_offset)
+{
+	int ret = ff8_externals.opcode_popm_b(field_data, memory_offset);
+	if (memory_offset == 0x130 || memory_offset == 0x131) // timber maniacs offset
+	{
+		g_FF8SteamAchievements->unlockTimberManiacsAchievement(ff8_externals.savemap->field.timber_maniacs);
+	}
+	return ret;
+}
+
 int ff8_field_opcode_ADDSEEDLEVEL(void* field_data)
 {
 	int ret = ff8_externals.opcode_addseedlevel(field_data);
@@ -1549,6 +1559,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// draw magic via stock in battle
 		replace_call(ff8_externals.battle_sub_48D200 + 0x354, (void*)ff8_battle_get_magic_draw_amount_48FD20);
+
+		// timber maniacs
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0B], (uint32_t)&ff8_field_opcode_POPM_B);
 	}
 }
 

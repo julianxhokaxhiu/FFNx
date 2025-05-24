@@ -414,6 +414,7 @@ public:
     void increaseKillsAndTryUnlockAchievement();
     void increaseMagicStockAndTryUnlockAchievement();
     void increaseMagicDrawsAndTryUnlockAchievement();
+    void unlockTimberManiacsAchievement(WORD timber_maniacs_bitmap);
 
 };
 

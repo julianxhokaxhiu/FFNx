@@ -195,6 +195,38 @@ struct savemap_ff8_field_h {
 	uint8_t unkH[42];
 };
 
+struct savemap_ff8_field {
+	uint16_t game_moment;
+	uint8_t ward_unused;
+	uint8_t unused1[2];
+	uint8_t save_flag;
+	uint8_t unused2[2];
+	uint8_t wm_related[7];
+	uint8_t unused3;
+	uint8_t tt_rules[8];
+	uint8_t tt_traderules[8];
+	uint8_t tt_lastrules[2];
+	uint8_t tt_lastregion[2];
+	uint8_t tt_new_rules_tmp;// Unused in save
+	uint8_t tt_new_trade_rules_tmp;// Unused in save
+	uint8_t tt_add_this_rule_queen_tmp;// Unused in save
+	uint8_t tt_cardqueen_location;
+	uint8_t tt_traderating_region;
+	uint8_t tt_traderating;
+	uint8_t tt_degeneration;
+	uint8_t tt_curtraderulequeen;
+	uint8_t tt_cardqueen_quest;
+	uint8_t unused4[3];
+	uint16_t timber_maniacs; // bitmap for timber maniacs found
+	uint8_t unk1[168];
+	uint8_t tt_players_bgu_dialogs1;
+	uint8_t tt_players_bgu_dialogs2;
+	uint8_t tt_players_bgu_dialogs3;
+	uint8_t tt_cc_quest; // Jack | Clover | Spades | Shu | Diamonds
+	uint8_t tt_bgu_victory_count;
+	uint8_t unk2[801];
+};
+
 struct savemap_ff8_triple_triad {
 	uint8_t cards[77];
 	uint8_t card_locations[33];
@@ -217,7 +249,7 @@ struct savemap_ff8 {
 	savemap_ff8_shop shop[20];
 	uint8_t config[20];
 	uint8_t party[4]; // 0xFF terminated
-	uint32_t known_weapons;
+	uint32_t unlocked_weapons; // bitmap for weapons unlocked
 	uint8_t griever_name[12];
 	uint16_t unk1;
 	uint16_t unk2;
@@ -242,7 +274,7 @@ struct savemap_ff8 {
 	uint8_t dir[3]; // direction (party1, party2, party3)
 	uint8_t unk7[5];
 	savemap_ff8_field_h field_header;
-	uint8_t field[1024];
+	savemap_ff8_field field;
 	uint8_t worldmap[128];
 	savemap_ff8_triple_triad triple_triad;
 	uint8_t choco_world[64];

@@ -802,6 +802,15 @@ void SteamAchievementsFF8::increaseMagicDrawsAndTryUnlockAchievement()
     this->increaseUserStatAndTryUnlockAchievement(MAGIC_FINDER, DRAW_MAGIC_STAT_NAME, 100, true);
 }
 
+void SteamAchievementsFF8::unlockTimberManiacsAchievement(WORD timber_maniacs_bitmap)
+{
+    ach_trace("%s - trying to unlock timber maniacs achivement (timber maniacs: 0x%x)\n", __func__, timber_maniacs_bitmap);
+    if ((timber_maniacs_bitmap & 0x3FFF) == 0x3FFE || (timber_maniacs_bitmap & 0x3FFF) == 0x3FFD) {
+        if (!(this->steamManager->isAchieved(TIMBER_MANIACS)))
+            this->steamManager->setAchievement(TIMBER_MANIACS);
+    }
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {

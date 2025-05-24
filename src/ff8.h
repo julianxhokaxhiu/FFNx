@@ -1339,6 +1339,7 @@ struct ff8_externals
 	uint32_t opcode_mapjump;
 	uint32_t opcode_pshm_w;
 	int (*opcode_popm_w)(void*, int);
+	int (*opcode_popm_b)(void*, int);
 	uint32_t opcode_menuname;
 	int (*opcode_addgil)(void*);
 	int (*opcode_addseedlevel)(void*);
