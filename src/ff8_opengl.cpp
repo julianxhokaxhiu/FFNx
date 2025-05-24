@@ -1175,6 +1175,13 @@ void ff8_set_drawpoint_state_52D190(uint8_t drawpoint_id, char value)
 	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
 }
 
+int ff8_battle_get_magic_draw_amount_48FD20(int actor_idx, int monster_id, int magic_id)
+{
+	int ret = ff8_externals.battle_get_draw_magic_amount_48FD20(actor_idx, monster_id, magic_id);
+	g_FF8SteamAchievements->increaseMagicStockAndTryUnlockAchievement();
+	return ret;
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1539,6 +1546,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// draw magic from draw points
 		replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
 		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : 0x85F), (void*)ff8_set_drawpoint_state_52D190);
+
+		// draw magic via stock in battle
+		replace_call(ff8_externals.battle_sub_48D200 + 0x354, (void*)ff8_battle_get_magic_draw_amount_48FD20);
 	}
 }
 

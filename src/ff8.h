@@ -1503,6 +1503,8 @@ struct ff8_externals
 	uint32_t sub_4A84E0;
 	uint32_t sub_4AD400;
 	uint32_t sub_4BB840;
+	uint32_t battle_sub_48D200;
+	int (*battle_get_draw_magic_amount_48FD20)(int, int, int);
 	uint32_t sub_48B7E0;
 	void(*sub_4954B0)(int);
 	uint32_t compute_char_stats_sub_495960;
