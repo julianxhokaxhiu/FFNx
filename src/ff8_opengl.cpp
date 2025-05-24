@@ -1089,6 +1089,7 @@ void ff8_field_update_seed_level()
 	((void(*)())ff8_externals.field_update_seed_level_52B140)();
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
+	g_FF8SteamAchievements->unlockFirstSalaryAchievement();
 }
 
 void ff8_worldmap_update_seed_level()
@@ -1096,6 +1097,7 @@ void ff8_worldmap_update_seed_level()
 	((void(*)())ff8_externals.worldmap_update_seed_level_651C10)();
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
+	g_FF8SteamAchievements->unlockFirstSalaryAchievement();
 }
 
 // Replacing a specific call that is called when player remodel weapon just before assigning the new

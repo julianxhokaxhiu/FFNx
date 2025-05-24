@@ -811,6 +811,14 @@ void SteamAchievementsFF8::unlockTimberManiacsAchievement(WORD timber_maniacs_bi
     }
 }
 
+void SteamAchievementsFF8::unlockFirstSalaryAchievement()
+{
+    ach_trace("%s - trying to unlock first salary achivement\n", __func__);
+
+    if (!(this->steamManager->isAchieved(SEED_FIRST_SALARY)))
+        this->steamManager->setAchievement(SEED_FIRST_SALARY);
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {
