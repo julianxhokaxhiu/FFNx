@@ -419,6 +419,7 @@ public:
     void unlockQuistisLimitBreaksAchievement(WORD quistis_lb_bitmap);
     void unlockOmegaDestroyedAchievement();
     void unlockPupuQuestAchievement(byte pupu_encounter_bitmap);
+    void unlockChocoLootAchievement();
 
 };
 

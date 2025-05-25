@@ -1220,6 +1220,13 @@ void ff8_battle_after_set_result_to_won_sub_494D40()
 	}
 }
 
+int ff8_menu_choco_add_item_to_player_47ED00(int item_id, char quantity)
+{
+	int ret = ff8_externals.add_item_to_player_sub_47ED00(item_id, quantity);
+	g_FF8SteamAchievements->unlockChocoLootAchievement();
+	return ret;
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1600,6 +1607,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// pupu side quest
 		replace_call(ff8_externals.battle_check_won_sub_486500 + 0x66, (void*)ff8_battle_after_set_result_to_won_sub_494D40);
+
+		// chocobo world
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x1814, (void*)ff8_menu_choco_add_item_to_player_47ED00);
 	}
 }
 

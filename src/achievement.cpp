@@ -849,6 +849,14 @@ void SteamAchievementsFF8::unlockPupuQuestAchievement(byte pupu_encounter_bitmap
     }
 }
 
+void SteamAchievementsFF8::unlockChocoLootAchievement()
+{
+    ach_trace("%s - trying to unlock choco loot achivement\n", __func__);
+
+    if (!(this->steamManager->isAchieved(CHOCORPG_FIRST_ITEM)))
+        this->steamManager->setAchievement(CHOCORPG_FIRST_ITEM);
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {
