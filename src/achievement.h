@@ -420,6 +420,7 @@ public:
     void unlockOmegaDestroyedAchievement();
     void unlockPupuQuestAchievement(byte pupu_encounter_bitmap);
     void unlockChocoLootAchievement();
+    void unlockTopLevelBokoAchievement(byte boko_lvl);
 
 };
 

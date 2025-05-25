@@ -457,6 +457,7 @@ void ff8_find_externals()
 	ff8_externals.create_save_file_sub_4C6E50 = get_relative_call(ff8_externals.main_menu_controller, JP_VERSION ? 0x1004 : 0xF8D);
 	ff8_externals.create_save_chocobo_world_file_sub_4C6620 = get_relative_call(ff8_externals.menu_chocobo_world_controller, 0x9F6);
 	ff8_externals.add_item_to_player_sub_47ED00 = (int(*)(int, char))get_relative_call(ff8_externals.menu_chocobo_world_controller, 0x1814);
+	ff8_externals.menu_chocobo_sub_4FF8F0 = (void(*)())get_relative_call(ff8_externals.menu_chocobo_world_controller, 0x13D0);
 	ff8_externals.update_seed_exp_4C30E0 = (void(*)(int))get_relative_call(ff8_externals.menu_sub_4D4D30, 0x928);
 	ff8_externals.sub_4ABC40 = (int(*)(int,int))get_relative_call(ff8_externals.menu_junkshop_sub_4EA890, 0x5C1);
 	ff8_externals.sub_4EA770 = (int(*)(int,uint32_t))get_relative_call(ff8_externals.menu_junkshop_sub_4EA890, 0x60B);

@@ -1158,6 +1158,7 @@ struct ff8_externals
 	uint32_t menu_chocobo_world_controller;
 	uint32_t create_save_file_sub_4C6E50;
 	uint32_t create_save_chocobo_world_file_sub_4C6620;
+	void (*menu_chocobo_sub_4FF8F0)();
 	int (*add_item_to_player_sub_47ED00)(int, char);
 	void (*update_seed_exp_4C30E0)(int);
 	int (*sub_4ABC40)(int, int);

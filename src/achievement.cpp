@@ -857,6 +857,16 @@ void SteamAchievementsFF8::unlockChocoLootAchievement()
         this->steamManager->setAchievement(CHOCORPG_FIRST_ITEM);
 }
 
+void SteamAchievementsFF8::unlockTopLevelBokoAchievement(byte boko_lvl)
+{
+    ach_trace("%s - trying to unlock top level boko achivement (boko lvl: %d)\n", __func__, boko_lvl);
+
+    if (boko_lvl >= 100) {
+        if (!(this->steamManager->isAchieved(CHICOBO_TOP_LEVEL)))
+            this->steamManager->setAchievement(CHICOBO_TOP_LEVEL);
+    }
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {

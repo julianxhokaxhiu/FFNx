@@ -1227,6 +1227,12 @@ int ff8_menu_choco_add_item_to_player_47ED00(int item_id, char quantity)
 	return ret;
 }
 
+void ff8_menu_chocobo_sub_4FF8F0()
+{
+	ff8_externals.menu_chocobo_sub_4FF8F0();
+	g_FF8SteamAchievements->unlockTopLevelBokoAchievement(ff8_externals.savemap->choco_world.level);
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1610,6 +1616,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// chocobo world
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x1814, (void*)ff8_menu_choco_add_item_to_player_47ED00);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13D0, (void*)ff8_menu_chocobo_sub_4FF8F0);
 	}
 }
 
