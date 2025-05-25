@@ -838,6 +838,17 @@ void SteamAchievementsFF8::unlockOmegaDestroyedAchievement()
         this->steamManager->setAchievement(BEAT_OMEGA_WEAPON);
 }
 
+void SteamAchievementsFF8::unlockPupuQuestAchievement(byte pupu_encounter_bitmap)
+{
+    ach_trace("%s - trying to unlock UFO achivement (pupu encounter var: 0x%x)\n", __func__, pupu_encounter_bitmap);
+
+    if ((pupu_encounter_bitmap & 0xFC) == 0xFC)
+    {
+        if (!(this->steamManager->isAchieved(UFO)))
+            this->steamManager->setAchievement(UFO);
+    }
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {

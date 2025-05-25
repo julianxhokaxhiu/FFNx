@@ -1170,9 +1170,9 @@ int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
 }
 
 // Replace a function that is called before increasing the kills of a character
-void ff8_battle_after_enemy_kill_sub_496CB0(int party_char_id, int a1, int current_actor_second_byte, int a2)
+void ff8_battle_after_enemy_kill_sub_494AF0(int party_char_id, int monster_id, int current_actor_second_byte, int a2)
 {
-	ff8_externals.battle_sub_494AF0(party_char_id, a1, current_actor_second_byte, a2);
+	ff8_externals.battle_sub_494AF0(party_char_id, monster_id, current_actor_second_byte, a2);
 	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement();
 }
 
@@ -1210,6 +1210,14 @@ void ff8_obtain_proof_of_omega(int tut_info_id)
 {
 	ff8_externals.update_tutorial_info_4AD170(tut_info_id);
 	g_FF8SteamAchievements->unlockOmegaDestroyedAchievement();
+}
+
+void ff8_battle_after_set_result_to_won_sub_494D40()
+{
+	ff8_externals.battle_sub_494D40();
+	if (*ff8_externals.global_battle_encounter_id_1CFF6E0 == 750 && *ff8_externals.battle_result_state_1CFF6E7 == 4) { // Won Pupu encounter
+		g_FF8SteamAchievements->unlockPupuQuestAchievement(ff8_externals.savemap->worldmap.pupu_quest);
+	}
 }
 
 int ff8_limit_fps()
@@ -1571,7 +1579,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.battle_menu_sub_4A3EE0 + 0x581, (void*)ff8_battle_menu_add_exp_and_bonus_496CB0);
 
 		// kills
-		replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_496CB0);
+		replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_494AF0);
 
 		// draw magic from draw points
 		replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
@@ -1589,6 +1597,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// omega destroyed
 		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + 0x216C, (void*)ff8_obtain_proof_of_omega);
+
+		// pupu side quest
+		replace_call(ff8_externals.battle_check_won_sub_486500 + 0x66, (void*)ff8_battle_after_set_result_to_won_sub_494D40);
 	}
 }
 

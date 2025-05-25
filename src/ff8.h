@@ -1505,6 +1505,8 @@ struct ff8_externals
 	uint32_t sub_4A84E0;
 	uint32_t sub_4AD400;
 	uint32_t sub_4BB840;
+	uint32_t battle_check_won_sub_486500;
+	void(*battle_sub_494D40)();
 	uint32_t battle_sub_4877F0;
 	uint32_t battle_sub_48D200;
 	uint32_t battle_ai_opcode_sub_487DF0;
@@ -1518,7 +1520,9 @@ struct ff8_externals
 	std::span<ff8_char_computed_stats> char_comp_stats_1CFF000;
 	BYTE* battle_current_active_character_id;
 	BYTE* battle_new_active_character_id;
+	WORD* global_battle_encounter_id_1CFF6E0;
 	WORD* battle_encounter_id;
+	BYTE* battle_result_state_1CFF6E7; // 2: escaped, 4: won, 1-3: other type, 5: unknown
 	uint32_t sub_4AB450;
 	uint32_t battle_get_monster_name_sub_495100;
 	uint32_t sub_4AA920;

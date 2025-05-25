@@ -814,6 +814,10 @@ void ff8_find_externals()
 	ff8_externals.sub_4AB4F0 = get_relative_call(ff8_externals.sub_4AD8D0, 0x159);
 	ff8_externals.sub_4AB190 = get_relative_call(ff8_externals.sub_4AB4F0, 0x20);
 
+	ff8_externals.battle_check_won_sub_486500 = get_relative_call(ff8_externals.sub_47CCB0, 0xA82);
+	ff8_externals.battle_sub_494D40 = (void(*)())get_relative_call(ff8_externals.battle_check_won_sub_486500, 0x66);
+	ff8_externals.battle_result_state_1CFF6E7 = (byte*)get_absolute_value(ff8_externals.battle_check_won_sub_486500, 0x1);
+
 	ff8_externals.battle_sub_4877F0 = get_relative_call(ff8_externals.sub_485610, 0x6F);
 	ff8_externals.battle_sub_48D200 = get_relative_call(ff8_externals.sub_485610, 0x323);
 	ff8_externals.battle_ai_opcode_sub_487DF0 = get_relative_call(ff8_externals.battle_sub_4877F0, 0x82);
@@ -832,6 +836,7 @@ void ff8_find_externals()
 	ff8_externals.battle_current_active_character_id = (BYTE*)get_absolute_value(ff8_externals.sub_4BB840, 0x13);
 	ff8_externals.battle_new_active_character_id = (BYTE*)get_absolute_value(ff8_externals.sub_4BB840, 0x37);
 
+	ff8_externals.global_battle_encounter_id_1CFF6E0 = (WORD*)(get_absolute_value(ff8_externals.opcode_battle, 0x50) - 2);
 	ff8_externals.battle_encounter_id = (WORD*)get_absolute_value(ff8_externals.opcode_battle, 0x66);
 
 	ff8_externals.sub_4AB450 = get_relative_call(ff8_externals.sub_47CCB0, 0xA5F);
