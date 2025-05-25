@@ -1206,6 +1206,12 @@ char ff8_menu_use_item_sub_4F81F0(int menu_data_pointer)
 	return ret;
 }
 
+void ff8_obtain_proof_of_omega(int tut_info_id)
+{
+	ff8_externals.update_tutorial_info_4AD170(tut_info_id);
+	g_FF8SteamAchievements->unlockOmegaDestroyedAchievement();
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1580,6 +1586,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// quistis blue magics
 		replace_call((uint32_t)ff8_externals.menu_callbacks[2].func + 0x152, (void*)ff8_menu_use_item_sub_4F81F0);
 		patch_code_dword((uint32_t)ff8_externals.menu_callbacks[2].func + 0x8, (uint32_t)ff8_menu_use_item_sub_4F81F0);
+
+		// omega destroyed
+		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + 0x216C, (void*)ff8_obtain_proof_of_omega);
 	}
 }
 

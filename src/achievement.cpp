@@ -830,6 +830,14 @@ void SteamAchievementsFF8::unlockQuistisLimitBreaksAchievement(WORD quistis_lb_b
     }
 }
 
+void SteamAchievementsFF8::unlockOmegaDestroyedAchievement()
+{
+    ach_trace("%s - trying to unlock omega destroyed achivement\n", __func__);
+
+    if (!(this->steamManager->isAchieved(BEAT_OMEGA_WEAPON)))
+        this->steamManager->setAchievement(BEAT_OMEGA_WEAPON);
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {
