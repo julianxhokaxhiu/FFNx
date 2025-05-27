@@ -1089,6 +1089,7 @@ struct ff8_externals
 	char (*sub_47CA90)();
 	uint32_t sub_529FF0;
 	uint32_t field_update_seed_level_52B140;
+	uint32_t field_update_rinoa_limit_breaks_52B320;
 	uint32_t battle_trigger_field;
 	uint32_t battle_trigger_worldmap;
 	uint32_t _load_texture;
@@ -1277,6 +1278,7 @@ struct ff8_externals
 	uint32_t sub_54A230;
 	uint32_t worldmap_update_steps_sub_6519D0;
 	uint32_t worldmap_update_seed_level_651C10;
+    int (*play_sfx_sub_46B2A0)(int, int, uint32_t, uint32_t);
 	uint32_t sub_54E9B0;
 	uint32_t sub_550070;
 	int (*sub_541C80)(WORD*);
@@ -1594,7 +1596,7 @@ struct ff8_externals
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;
-	void(*opcode_drawpoint_sub_4A0850)(int, int);
+	int(*opcode_drawpoint_sub_4A0850)(int, int);
 	uint32_t enable_gf_sub_47E480;
 	uint32_t battle_menu_loop_4A2690;
 	uint32_t battle_menu_sub_4A6660;

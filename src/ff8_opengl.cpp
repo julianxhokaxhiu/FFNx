@@ -1176,10 +1176,11 @@ void ff8_battle_after_enemy_kill_sub_494AF0(int party_char_id, int monster_id, i
 	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement();
 }
 
-void ff8_opcode_drawpoint_sub_4A0850(int a1, int draw_magic_count)
+int ff8_opcode_drawpoint_sub_4A0850(int a1, int draw_magic_count)
 {
-	ff8_externals.opcode_drawpoint_sub_4A0850(a1, draw_magic_count);
+	int ret = ff8_externals.opcode_drawpoint_sub_4A0850(a1, draw_magic_count);
 	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+	return ret;
 }
 
 void ff8_set_drawpoint_state_52D190(uint8_t drawpoint_id, char value)
@@ -1203,6 +1204,13 @@ char ff8_menu_use_item_sub_4F81F0(int menu_data_pointer)
 	{
 		g_FF8SteamAchievements->unlockQuistisLimitBreaksAchievement(ff8_externals.savemap->lb.quistis_lb);
 	}
+	return ret;
+}
+
+int ff8_play_sfx_at_unlock_rinoa_limit_break(int a1, int a2, uint32_t a3, uint32_t a4)
+{
+	int ret = ff8_externals.play_sfx_sub_46B2A0(a1, a2, a3, a4);
+	g_FF8SteamAchievements->unlockRinoaLimitBreaksAchievement(ff8_externals.savemap->lb.angelo_completed_lb);
 	return ret;
 }
 
@@ -1607,6 +1615,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// quistis blue magics
 		replace_call((uint32_t)ff8_externals.menu_callbacks[2].func + 0x152, (void*)ff8_menu_use_item_sub_4F81F0);
 		patch_code_dword((uint32_t)ff8_externals.menu_callbacks[2].func + 0x8, (uint32_t)ff8_menu_use_item_sub_4F81F0);
+
+		// dog trainer rinoa
+		replace_call(ff8_externals.field_update_rinoa_limit_breaks_52B320 + 0x5D, (void*)ff8_play_sfx_at_unlock_rinoa_limit_break);
+		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x225, (void*)ff8_play_sfx_at_unlock_rinoa_limit_break);
 
 		// omega destroyed
 		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + 0x216C, (void*)ff8_obtain_proof_of_omega);

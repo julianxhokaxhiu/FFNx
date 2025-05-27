@@ -20,6 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <cstdint>
 #include <stdio.h>
 
 #include "ff8_data.h"
@@ -263,6 +264,8 @@ void ff8_find_externals()
 
 	ff8_externals.battle_trigger_field = uint32_t(ff8_externals.sub_47CA90) + 0x15;
 	ff8_externals.field_update_seed_level_52B140 = get_relative_call(ff8_externals.sub_529FF0, 0x120);
+	ff8_externals.field_update_rinoa_limit_breaks_52B320 = get_relative_call(ff8_externals.sub_529FF0, 0x183);
+	ff8_externals.play_sfx_sub_46B2A0 = (int(*)(int, int, uint32_t, uint32_t))get_relative_call(ff8_externals.field_update_rinoa_limit_breaks_52B320, 0x5D);
 	ff8_externals.check_game_is_paused = (int32_t(*)(int32_t))get_relative_call(ff8_externals.field_main_loop, 0x16C);
 	ff8_externals.is_game_paused = (DWORD*)get_absolute_value((uint32_t)ff8_externals.check_game_is_paused, 0x78);
 	ff8_externals.pause_menu = (int(*)(int))get_relative_call(uint32_t(ff8_externals.check_game_is_paused), 0x88);
@@ -338,7 +341,7 @@ void ff8_find_externals()
 	common_externals.stop_movie = get_relative_call(common_externals.update_movie_sample, 0x3E2);
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
 
-	ff8_externals.opcode_drawpoint_sub_4A0850 = (void(*)(int, int))get_relative_call(ff8_externals.opcode_drawpoint, 0x6B7);
+	ff8_externals.opcode_drawpoint_sub_4A0850 = (int(*)(int, int))get_relative_call(ff8_externals.opcode_drawpoint, 0x6B7);
 	ff8_externals.drawpoint_messages = get_absolute_value(ff8_externals.opcode_drawpoint, 0xD6);
 	ff8_externals.enable_gf_sub_47E480 = get_relative_call(common_externals.execute_opcode_table[0x129], 0x6E);
 

@@ -421,6 +421,7 @@ public:
     void unlockPupuQuestAchievement(byte pupu_encounter_bitmap);
     void unlockChocoLootAchievement();
     void unlockTopLevelBokoAchievement(byte boko_lvl);
+    void unlockRinoaLimitBreaksAchievement(byte rinoa_completed_lb);
 
 };
 

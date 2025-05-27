@@ -115,9 +115,9 @@ struct savemap_ff8_limit_break {
 	uint16_t zell_lb;
 	uint8_t irvine_lb;
 	uint8_t selphie_lb;
-	uint8_t angelo_c_lb;
-	uint8_t angelo_k_lb;
-	uint8_t angelo_p_lb[8];
+	uint8_t angelo_completed_lb;
+	uint8_t angelo_known_lb;
+	uint8_t angelo_points_lb[8];
 };
 
 struct savemap_ff8_items {
@@ -143,7 +143,7 @@ struct savemap_ff8_battle {
 	uint8_t ennemy_scanned_once[20];
 	uint8_t renzokuken_auto;
 	uint8_t renzokuken_indicator;
-	uint8_t unk4;
+	uint8_t special_flags; //dream|Odin|Phoenix|Gilgamesh|Angelo disabled|Angel Wing enabled|???|???
 };
 #pragma pack(pop)
 

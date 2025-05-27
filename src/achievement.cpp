@@ -830,6 +830,17 @@ void SteamAchievementsFF8::unlockQuistisLimitBreaksAchievement(WORD quistis_lb_b
     }
 }
 
+void SteamAchievementsFF8::unlockRinoaLimitBreaksAchievement(byte rinoa_completed_lb)
+{
+    ach_trace("%s - trying to unlock rinoa limit breaks achivement (completed lb: 0x%x)\n", __func__, rinoa_completed_lb);
+
+    if (rinoa_completed_lb == 0xFF)
+    {
+        if (!(this->steamManager->isAchieved(DOG_TRICKS)))
+            this->steamManager->setAchievement(DOG_TRICKS);
+    }
+}
+
 void SteamAchievementsFF8::unlockOmegaDestroyedAchievement()
 {
     ach_trace("%s - trying to unlock omega destroyed achivement\n", __func__);
