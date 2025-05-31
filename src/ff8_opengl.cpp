@@ -1054,10 +1054,9 @@ int ff8_field_opcode_CARDGAME(int field_data)
 	int ret = ff8_externals.opcode_cardgame(field_data);
 	if (ret == 2) // cardgame exited
     {
-		uint16_t field_id = *common_externals.current_field_id;
 		uint8_t deck_id = *ff8_externals.cardgame_deck_id_1DCD7AD;
 		int cardgame_result = *(int*)(field_data + 324);
-		if ((field_id == 246 || field_id == 257) && deck_id == 202 && cardgame_result == 0) // Won against quistis in balamb garden
+		if (deck_id == 202 && cardgame_result == 0) // Won against quistis
 		{
 			g_FF8SteamAchievements->unlockCardClubMasterAchievement(ff8_externals.savemap->field);
 		}
