@@ -1049,6 +1049,22 @@ int ff8_cardgame_sub_535D00(void* tt_data)
 	return ret;
 }
 
+int ff8_field_opcode_CARDGAME(int field_data)
+{
+	int ret = ff8_externals.opcode_cardgame(field_data);
+	if (ret == 2) // cardgame exited
+    {
+		uint16_t field_id = *common_externals.current_field_id;
+		uint8_t deck_id = *ff8_externals.cardgame_deck_id_1DCD7AD;
+		int cardgame_result = *(int*)(field_data + 324);
+		if ((field_id == 246 || field_id == 257) && deck_id == 202 && cardgame_result == 0) // Won against quistis in balamb garden
+		{
+			g_FF8SteamAchievements->unlockCardClubMasterAchievement(ff8_externals.savemap->field);
+		}
+	}
+	return ret;
+}
+
 void ff8_enable_gf_sub_47E480(int gf_idx)
 {
 	ff8_externals.savemap->gfs[gf_idx].exists |= 1u;
@@ -1572,6 +1588,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_function(ff8_externals.cardgame_add_card_to_squall_534840, (void*)ff8_cardgame_add_card_to_squall);
 		replace_function(ff8_externals.cardgame_update_card_with_location_5347F0, (void*)ff8_cardgame_update_card_with_location);
 		patch_code_dword(ff8_externals.cargame_func_535C90 + 0x19, (uint32_t)&ff8_cardgame_sub_535D00);
+
+		// cc master
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x13A], (uint32_t)&ff8_field_opcode_CARDGAME);
 
 		// guardian forces
 		replace_function(ff8_externals.enable_gf_sub_47E480, (void*)ff8_enable_gf_sub_47E480);

@@ -320,6 +320,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_menuname = common_externals.execute_opcode_table[0x129];
 	ff8_externals.opcode_choicemusic = common_externals.execute_opcode_table[0x135];
 	ff8_externals.opcode_drawpoint = common_externals.execute_opcode_table[0x137];
+	ff8_externals.opcode_cardgame = (int(*)(int))common_externals.execute_opcode_table[0x13A];
 	ff8_externals.opcode_musicskip = common_externals.execute_opcode_table[0x144];
 	ff8_externals.opcode_musicvolsync = common_externals.execute_opcode_table[0x149];
 	ff8_externals.opcode_getmusicoffset = common_externals.execute_opcode_table[0x16F];
@@ -327,6 +328,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_addgil = (int(*)(void*))common_externals.execute_opcode_table[0x151];
 	ff8_externals.opcode_addseedlevel = (int(*)(void*))common_externals.execute_opcode_table[0x153];
 
+	ff8_externals.cardgame_deck_id_1DCD7AD = (uint8_t*)get_absolute_value((uint32_t)ff8_externals.opcode_cardgame, 0xAE);
 	ff8_externals.vibrate_data_field = (uint8_t*)get_absolute_value(ff8_externals.opcode_setvibrate, 0x27);
 	ff8_externals.current_tutorial_id = (BYTE*)get_absolute_value(ff8_externals.opcode_tuto, 0x2A);
 

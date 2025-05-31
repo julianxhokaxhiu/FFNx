@@ -218,13 +218,15 @@ struct savemap_ff8_field {
 	uint8_t tt_cardqueen_quest;
 	uint8_t unused4[3];
 	uint16_t timber_maniacs; // bitmap for timber maniacs found
-	uint8_t unk1[168];
+	uint8_t unk1[154];
+	uint8_t tt_cc_quest_1; // ??? | ??? | Joker | ??? | King unlocked
+	uint8_t unk2[13];
 	uint8_t tt_players_bgu_dialogs1;
-	uint8_t tt_players_bgu_dialogs2;
+	uint8_t tt_players_bgu_dialogs2; // King win
 	uint8_t tt_players_bgu_dialogs3;
-	uint8_t tt_cc_quest; // Jack | Clover | Spades | Shu | Diamonds
+	uint8_t tt_cc_quest_2; // Jack | Clover | Spades | Shu | Diamonds
 	uint8_t tt_bgu_victory_count;
-	uint8_t unk2[801];
+	uint8_t unk3[801];
 };
 
 struct savemap_ff8_worldmap {

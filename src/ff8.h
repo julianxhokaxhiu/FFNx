@@ -1339,6 +1339,7 @@ struct ff8_externals
 	uint32_t opcode_musicvolsync;
 	uint32_t opcode_getmusicoffset;
 	uint32_t opcode_drawpoint;
+	int (*opcode_cardgame)(int);
 	uint32_t opcode_battle;
 	uint32_t opcode_tuto;
 	uint32_t opcode_mapjump;
@@ -1348,6 +1349,7 @@ struct ff8_externals
 	uint32_t opcode_menuname;
 	int (*opcode_addgil)(void*);
 	int (*opcode_addseedlevel)(void*);
+	uint8_t* cardgame_deck_id_1DCD7AD;
 	BYTE* current_tutorial_id;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;

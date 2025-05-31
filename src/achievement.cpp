@@ -878,6 +878,18 @@ void SteamAchievementsFF8::unlockTopLevelBokoAchievement(byte boko_lvl)
     }
 }
 
+void SteamAchievementsFF8::unlockCardClubMasterAchievement(savemap_ff8_field &savemap_field)
+{
+    byte cc_quest_1 = savemap_field.tt_cc_quest_1;
+    byte cc_quest_2 = savemap_field.tt_cc_quest_2;
+    ach_trace("%s - trying to unlock card club master achivement (cc quest 1: 0x%X, 2: 0x%X)\n", __func__, cc_quest_1, cc_quest_2);
+
+    if ((cc_quest_1 & 0b10100) == 0b10100 && (cc_quest_2 & 0b11111) == 0b11111) {
+        if (!(this->steamManager->isAchieved(CARDS_CLUB_MASTER)))
+            this->steamManager->setAchievement(CARDS_CLUB_MASTER);
+    }
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {
