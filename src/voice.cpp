@@ -1134,6 +1134,7 @@ int ff8_opcode_voice_aask(int unk)
 	int ret = ff8_opcode_old_aask(unk);
 	if (ret == 3) // aask exit
 	{
+		// --- Only for unlocking chocobo achievement (only way to implement it) ---
 		int chosen_option = *(DWORD*)(unk + 240);
 		if (dialog_id == 56 && chosen_option == 0) // capture chocobo
 		{
