@@ -1257,6 +1257,17 @@ void ff8_menu_chocobo_sub_4FF8F0()
 	g_FF8SteamAchievements->unlockTopLevelBokoAchievement(ff8_externals.savemap->choco_world.level);
 }
 
+int ff8_world_sub_54D7E0(WORD* a1)
+{
+	bool obel_quest_was_finished = ff8_externals.savemap->worldmap.obel_quest[2] & 1;
+	int ret = ((int(*)(WORD*))ff8_externals.sub_54D7E0)(a1);
+	if (!obel_quest_was_finished && (ff8_externals.savemap->worldmap.obel_quest[2] & 1)) 
+	{
+		g_FF8SteamAchievements->unlockObelLakeQuestAchievement();
+	}
+	return ret;
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1649,6 +1660,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x1814, (void*)ff8_menu_choco_add_item_to_player_47ED00);
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13D0, (void*)ff8_menu_chocobo_sub_4FF8F0);
 		// chocobo achievement is implemented in aask opcode (voice section)
+
+		// obel lake quest
+		replace_call(ff8_externals.worldmap_with_fog_sub_53FAC0 + (FF8_US_VERSION ? 0x3C2 : 0x3C4), (void*)ff8_world_sub_54D7E0);
 	}
 }
 

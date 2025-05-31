@@ -898,6 +898,14 @@ void SteamAchievementsFF8::unlockCardClubMasterAchievement(savemap_ff8_field &sa
     }
 }
 
+void SteamAchievementsFF8::unlockObelLakeQuestAchievement()
+{
+    ach_trace("%s - trying to unlock obel lake quest achivement\n", __func__);
+
+    if (!(this->steamManager->isAchieved(OBEL_LAKE_SECRET)))
+        this->steamManager->setAchievement(OBEL_LAKE_SECRET);
+}
+
 // Private methods
 void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress)
 {
