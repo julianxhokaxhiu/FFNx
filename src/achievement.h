@@ -423,6 +423,7 @@ public:
     void unlockTopLevelBokoAchievement(byte boko_lvl);
     void unlockRinoaLimitBreaksAchievement(byte rinoa_completed_lb);
     void unlockCardClubMasterAchievement(savemap_ff8_field &savemap_field);
+    void unlockChocoboAchievement();
 
 };
 

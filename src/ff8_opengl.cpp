@@ -1648,6 +1648,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// chocobo world
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x1814, (void*)ff8_menu_choco_add_item_to_player_47ED00);
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13D0, (void*)ff8_menu_chocobo_sub_4FF8F0);
+		// chocobo achievement is implemented in aask opcode (voice section)
 	}
 }
 

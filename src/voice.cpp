@@ -21,6 +21,7 @@
 
 #include "voice.h"
 
+#include "achievement.h"
 #include "audio.h"
 #include "field.h"
 #include "patch.h"
@@ -1130,7 +1131,16 @@ int ff8_opcode_voice_aask(int unk)
 	else
 		opcode_ask_current_option = win->current_choice_question;
 
-	return ff8_opcode_old_aask(unk);
+	int ret = ff8_opcode_old_aask(unk);
+	if (ret == 3) // aask exit
+	{
+		int chosen_option = *(DWORD*)(unk + 240);
+		if (dialog_id == 56 && chosen_option == 0) // capture chocobo
+		{
+			g_FF8SteamAchievements->unlockChocoboAchievement();
+		}
+	}
+	return ret;
 }
 
 int ff8_show_dialog(int window_id, int state, int a3)

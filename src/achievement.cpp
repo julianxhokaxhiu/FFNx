@@ -878,6 +878,14 @@ void SteamAchievementsFF8::unlockTopLevelBokoAchievement(byte boko_lvl)
     }
 }
 
+void SteamAchievementsFF8::unlockChocoboAchievement()
+{
+    ach_trace("%s - trying to unlock chocobo achivement\n", __func__);
+
+    if (!(this->steamManager->isAchieved(CAPTURE_CHOCOBO_FIRST_TIME)))
+        this->steamManager->setAchievement(CAPTURE_CHOCOBO_FIRST_TIME);
+}
+
 void SteamAchievementsFF8::unlockCardClubMasterAchievement(savemap_ff8_field &savemap_field)
 {
     byte cc_quest_1 = savemap_field.tt_cc_quest_1;
