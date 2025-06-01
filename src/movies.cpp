@@ -22,6 +22,7 @@
 
 #include "audio.h"
 #include "movies.h"
+#include "globals.h"
 #include "patch.h"
 #include "ff7/widescreen.h"
 #include "video/movies.h"
@@ -236,6 +237,12 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 	ff8_externals.movie_object->movie_current_frame = 0;
 
 	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", newFmvName, disc, movie);
+
+	if (disc == 3 && movie == 4) // game ending movie
+	{
+		int squall_lvl = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[0].exp, 0);
+		g_FF8SteamAchievements->unlockEndOfGameAchievement(squall_lvl);
+	}
 
 	ff8_movie_frames = ffmpeg_prepare_movie(newFmvName);
 }

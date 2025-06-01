@@ -886,7 +886,7 @@ void SteamAchievementsFF8::unlockChocoboAchievement()
         this->steamManager->setAchievement(CAPTURE_CHOCOBO_FIRST_TIME);
 }
 
-void SteamAchievementsFF8::unlockCardClubMasterAchievement(savemap_ff8_field &savemap_field)
+void SteamAchievementsFF8::unlockCardClubMasterAchievement(const savemap_ff8_field &savemap_field)
 {
     bool cc_king_unlocked = savemap_field.tt_cc_quest_1 & 0b10000;
     ach_trace("%s - trying to unlock card club master achivement (cc king unlocked: %d)\n", __func__, cc_king_unlocked);
@@ -903,6 +903,27 @@ void SteamAchievementsFF8::unlockObelLakeQuestAchievement()
 
     if (!(this->steamManager->isAchieved(OBEL_LAKE_SECRET)))
         this->steamManager->setAchievement(OBEL_LAKE_SECRET);
+}
+
+void SteamAchievementsFF8::unlockRagnarokAchievement()
+{
+    ach_trace("%s - trying to unlock ragnarok achivement\n", __func__);
+
+    if (!(this->steamManager->isAchieved(FOUND_RAGNAROK)))
+        this->steamManager->setAchievement(FOUND_RAGNAROK);
+}
+
+void SteamAchievementsFF8::unlockEndOfGameAchievement(int squall_lvl)
+{
+    ach_trace("%s - trying to unlock end of game achivement (squall_lvl: %d)\n", __func__);
+
+    if (!(this->steamManager->isAchieved(FINISH_THE_GAME)))
+        this->steamManager->setAchievement(FINISH_THE_GAME);
+
+    if (squall_lvl == 7) {
+        if (!(this->steamManager->isAchieved(FINISH_THE_GAME_INITIAL_LEVEL)))
+            this->steamManager->setAchievement(FINISH_THE_GAME_INITIAL_LEVEL);
+    }
 }
 
 // Private methods

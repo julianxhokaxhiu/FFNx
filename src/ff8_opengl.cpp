@@ -1079,7 +1079,14 @@ void ff8_update_seed_exp_4C30E0(int seed_lvl)
 int ff8_field_opcode_POPM_W(void* field_data, int memory_offset)
 {
 	int ret = ff8_externals.opcode_popm_w(field_data, memory_offset);
-	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+	if (memory_offset == 16) // seed exp
+	{
+		g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+	}
+	if (memory_offset == 256 && ff8_externals.savemap->field.game_moment == 3000) // Ragnarok found
+	{
+		g_FF8SteamAchievements->unlockRagnarokAchievement();
+	}
 	return ret;
 }
 
