@@ -27,6 +27,11 @@
 
 #include <cstdint>
 
+struct savemap_ff8_item {
+	uint8_t item_id;
+	uint8_t item_quantity;
+};
+
 struct savemap_ff8_header {
 	uint16_t location_id;
 	uint16_t char1_curr_hp;
@@ -122,7 +127,7 @@ struct savemap_ff8_limit_break {
 
 struct savemap_ff8_items {
 	uint8_t battle_order[32];
-	uint16_t items[198];
+	savemap_ff8_item items[198];
 };
 
 #pragma pack(push, 1)

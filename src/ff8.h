@@ -1160,11 +1160,13 @@ struct ff8_externals
 	uint32_t create_save_file_sub_4C6E50;
 	uint32_t create_save_chocobo_world_file_sub_4C6620;
 	void (*menu_chocobo_sub_4FF8F0)();
+	void (*menu_shop_update_gil_and_items_4EB9F0)(int);
 	int (*add_item_to_player_sub_47ED00)(int, char);
 	void (*update_seed_exp_4C30E0)(int);
 	int (*sub_4ABC40)(int, int);
 	int (*sub_4EA770)(int, uint32_t);
 	uint32_t* menu_data_1D76A9C;
+    std::span<uint8_t> menu_shop_staged_items_1D8D058;
 	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;

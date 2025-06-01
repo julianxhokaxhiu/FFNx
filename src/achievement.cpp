@@ -20,12 +20,14 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <cstdint>
 #include <steamworkssdk/isteamutils.h>
 #include <steamworkssdk/isteamuserstats.h>
 #include <steamworkssdk/isteamuser.h>
 
 #include <numeric>
 #include <algorithm>
+#include <unordered_set>
 
 #include "achievement.h"
 #include "log.h"
@@ -924,6 +926,26 @@ void SteamAchievementsFF8::unlockEndOfGameAchievement(int squall_lvl)
         if (!(this->steamManager->isAchieved(FINISH_THE_GAME_INITIAL_LEVEL)))
             this->steamManager->setAchievement(FINISH_THE_GAME_INITIAL_LEVEL);
     }
+}
+
+void SteamAchievementsFF8::unlockMagazineAddictAchievement(const savemap_ff8_items &items)
+{
+    std::unordered_set<uint8_t> magazines_found = {};
+    for (int i = 0; i < ITEM_SLOTS; i++) {
+        if (itemIsMagazine(items.items[i].item_id) && items.items[i].item_quantity > 0) {
+            magazines_found.insert(items.items[i].item_id);
+        }
+    }
+    ach_trace("%s - trying to unlock magazine addict achivement (magazines found: %d)\n", __func__, magazines_found.size());
+ 
+    if (magazines_found.size() >= MAGAZINES_TO_COLLECT) {
+        if (!(this->steamManager->isAchieved(MAGAZINES_ADDICT)))
+            this->steamManager->setAchievement(MAGAZINES_ADDICT);
+    }
+}
+
+bool SteamAchievementsFF8::itemIsMagazine(uint8_t item_id) {
+    return item_id >= 0xB1 && item_id <= 0xC6;
 }
 
 // Private methods

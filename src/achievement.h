@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <steamworkssdk/steam_api.h>
@@ -383,6 +384,8 @@ private:
     static inline constexpr int MAX_HP = 9999;
     static inline constexpr uint32_t MAX_GIL = 99999999;
     static inline constexpr int MAX_LEVEL = 100;
+    static inline constexpr int ITEM_SLOTS = 198;
+    static inline constexpr int MAGAZINES_TO_COLLECT = 22;
 
     std::unique_ptr<SteamManager> steamManager;
     std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
@@ -427,6 +430,9 @@ public:
     void unlockObelLakeQuestAchievement();
     void unlockRagnarokAchievement();
     void unlockEndOfGameAchievement(int squall_lvl);
+    void unlockMagazineAddictAchievement(const savemap_ff8_items &items);
+
+    static bool itemIsMagazine(uint8_t item_id);
 
 };
 

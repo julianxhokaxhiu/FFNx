@@ -19,6 +19,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include "ff8/save_data.h"
 #include "globals.h"
 #include "common.h"
 #include "ff8.h"
@@ -1274,6 +1275,74 @@ int ff8_world_sub_54D7E0(WORD* a1)
 	return ret;
 }
 
+// Re-implementation of the function to add item to player items (sub_47ED00)
+int ff8_add_item_to_player(int item_id, char quantity)
+{
+	if (!item_id) {
+		return 0;
+	}
+
+    savemap_ff8_item *items = ff8_externals.savemap->items.items;
+	for (int i = 0; i < 198; ++i)
+	{
+		if (items[i].item_id == item_id )
+		{
+			items[i].item_quantity += quantity;
+			if (items[i].item_quantity < 100) {
+				return 0;
+			} else {
+				items[i].item_quantity = 100;
+				return 1;
+			}
+		}
+	}
+
+	int open_slot = 0;
+	for (open_slot = 0; open_slot < 198 && !items[open_slot].item_id; open_slot++);
+	if (open_slot >= 198) {
+		return 1;
+	}
+	items[open_slot].item_id = item_id;
+	items[open_slot].item_quantity += quantity;
+	if (items[open_slot].item_quantity < 100) {
+		return 0;
+	} else {
+		items[open_slot].item_quantity = 100;
+		return 1;
+	}
+}
+
+int ff8_add_item_to_player_wrapper(int item_id, char quantity)
+{
+	int ret = ff8_add_item_to_player(item_id, quantity);
+	if (SteamAchievementsFF8::itemIsMagazine(item_id)) {
+		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_externals.savemap->items);
+	}
+	return ret;
+}
+
+void ff8_menu_shop_update_gil_and_items(int gil)
+{
+	bool bought_magazine = false;
+    savemap_ff8_item *items = ff8_externals.savemap->items.items;
+	for (int i = 0; i < 198; ++i)
+	{
+		if (SteamAchievementsFF8::itemIsMagazine(items[i].item_id)
+			&& ff8_externals.menu_shop_staged_items_1D8D058[items[i].item_id] > items[i].item_quantity)
+		{
+			bought_magazine = true;
+			break;
+		}
+	}
+
+	ff8_externals.menu_shop_update_gil_and_items_4EB9F0(gil);
+
+	if (bought_magazine)
+	{
+		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_externals.savemap->items);
+	}
+}
+
 int ff8_limit_fps()
 {
 	static time_t last_gametime;
@@ -1666,6 +1735,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x1814, (void*)ff8_menu_choco_add_item_to_player_47ED00);
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13D0, (void*)ff8_menu_chocobo_sub_4FF8F0);
 		// chocobo achievement is implemented in aask opcode (voice section)
+
+		// magazine addict
+		replace_function((uint32_t)ff8_menu_choco_add_item_to_player_47ED00, (void*)ff8_add_item_to_player_wrapper);
+		replace_call(ff8_externals.menu_shop_sub_4EBE40 + 0x11A7, (void*)ff8_menu_shop_update_gil_and_items);
 
 		// obel lake quest
 		replace_call(ff8_externals.worldmap_with_fog_sub_53FAC0 + (FF8_US_VERSION ? 0x3C2 : 0x3C4), (void*)ff8_world_sub_54D7E0);
