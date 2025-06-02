@@ -739,6 +739,11 @@ ff8_external_music_force_original_filenames = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_use_gamepad_icons = false
 
+# Allows the windows to not be focused but still get controller inputs
+# By default this is false
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_always_capture_input = false
+
 # FPS Limiter
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This flag will overwrite the internal FPS limiter of the game.
