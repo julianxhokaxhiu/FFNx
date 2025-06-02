@@ -1371,6 +1371,7 @@ namespace ff7::battle
         one_call_effect100_addresses.insert(ff7_externals.roulette_skill_main_loop_566287);
         one_call_effect100_addresses.insert(ff7_externals.bomb_blast_black_bg_effect_537427);
         one_call_effect100_addresses.insert(ff7_externals.run_confu_main_loop_5600BE);
+        one_call_effect100_addresses.insert(ff7_externals.battle_escape_magic_loop_5D602A);
         one_call_effect100_addresses.insert(ff7_externals.death_kill_sub_loop_5624A5);
         one_call_effect100_addresses.insert(ff7_externals.death_kill_sub_loop_562C60);
         model_thresholds_by_address[ff7_externals.run_alexander_movement_5078D8] = 3000;
