@@ -14,6 +14,10 @@
 
 - External textures: Fix Rinoa battle model that do not get replaced ( https://github.com/julianxhokaxhiu/FFNx/pull/790 )
 
+## FF8 Steam
+
+- Achievements: Implement all Steam achievements
+
 # 1.22.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.21.3...1.22.0
