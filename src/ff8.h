@@ -1280,7 +1280,6 @@ struct ff8_externals
 	uint32_t sub_54A230;
 	uint32_t worldmap_update_steps_sub_6519D0;
 	uint32_t worldmap_update_seed_level_651C10;
-	int (*play_sfx_sub_46B2A0)(int, int, uint32_t, uint32_t);
 	uint32_t sub_54E9B0;
 	uint32_t sub_550070;
 	int (*sub_541C80)(WORD*);

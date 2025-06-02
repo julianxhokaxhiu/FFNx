@@ -38,6 +38,7 @@
 #include "ff8/save_data.h"
 #include "metadata.h"
 #include "achievement.h"
+#include <cstdint>
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -1231,7 +1232,7 @@ char ff8_menu_use_item_sub_4F81F0(int menu_data_pointer)
 
 int ff8_play_sfx_at_unlock_rinoa_limit_break(int a1, int a2, uint32_t a3, uint32_t a4)
 {
-	int ret = ff8_externals.play_sfx_sub_46B2A0(a1, a2, a3, a4);
+	int ret = ((int(*)(int, int, uint32_t, uint32_t))ff8_externals.sfx_play_to_current_playing_channel)(a1, a2, a3, a4);
 	g_FF8SteamAchievements->unlockRinoaLimitBreaksAchievement(ff8_externals.savemap->lb.angelo_completed_lb);
 	return ret;
 }
