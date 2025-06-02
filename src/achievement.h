@@ -67,8 +67,8 @@ public:
     bool setAchievement(int achID);
     bool isAchieved(int achID);
     const char *getStringAchievementID(int achID);
-    std::optional<int> getUserStat(std::string statName);
-    bool updateUserStat(std::string statName, int value);
+    std::optional<int> getUserStat(const std::string &statName);
+    bool updateUserStat(const std::string &statName, int value);
 
     STEAM_CALLBACK(SteamManager, OnUserStatsReceived, UserStatsReceived_t, callbackUserStatsReceived);
     STEAM_CALLBACK(SteamManager, OnUserStatsStored, UserStatsStored_t, callbackUserStatsStored);
@@ -383,15 +383,15 @@ private:
     static inline constexpr int MAX_HP = 9999;
     static inline constexpr uint32_t MAX_GIL = 99999999;
     static inline constexpr int MAX_LEVEL = 100;
+    static inline constexpr int ITEM_SLOTS = 198;
+    static inline constexpr int MAGAZINES_TO_COLLECT = 22;
 
     std::unique_ptr<SteamManager> steamManager;
     std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
     upgrade_data prevWeaponUpgradeData;
     byte statCharId = 0xFF;
 
-    // steam stats
-    int magicStocked = 0;
-    int magicDrawn = 0;
+    void increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress = false);
 
 public:
     SteamAchievementsFF8();
@@ -414,6 +414,24 @@ public:
     void unlockMaxGilAchievement(uint32_t gil);
     void unlockTopLevelAchievement(int level);
     void increaseKillsAndTryUnlockAchievement();
+    void increaseMagicStockAndTryUnlockAchievement();
+    void increaseMagicDrawsAndTryUnlockAchievement();
+    void unlockTimberManiacsAchievement(WORD timber_maniacs_bitmap);
+    void unlockFirstSalaryAchievement();
+    void unlockQuistisLimitBreaksAchievement(WORD quistis_lb_bitmap);
+    void unlockOmegaDestroyedAchievement();
+    void unlockPupuQuestAchievement(byte pupu_encounter_bitmap);
+    void unlockChocoLootAchievement();
+    void unlockTopLevelBokoAchievement(byte boko_lvl);
+    void unlockRinoaLimitBreaksAchievement(byte rinoa_completed_lb);
+    void unlockCardClubMasterAchievement(const savemap_ff8_field &savemap_field);
+    void unlockChocoboAchievement();
+    void unlockObelLakeQuestAchievement();
+    void unlockRagnarokAchievement();
+    void unlockEndOfGameAchievement(int squall_lvl);
+    void unlockMagazineAddictAchievement(const savemap_ff8_items &items);
+
+    static bool itemIsMagazine(uint8_t item_id);
 
 };
 

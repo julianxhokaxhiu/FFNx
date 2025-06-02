@@ -35,6 +35,7 @@
 #include "vibration.h"
 #include "ff8/file.h"
 #include "ff8/vram.h"
+#include "ff8/save_data.h"
 #include "metadata.h"
 #include "achievement.h"
 
@@ -1048,6 +1049,21 @@ int ff8_cardgame_sub_535D00(void* tt_data)
 	return ret;
 }
 
+int ff8_field_opcode_CARDGAME(int field_data)
+{
+	int ret = ff8_externals.opcode_cardgame(field_data);
+	if (ret == 2) // cardgame exited
+	{
+		uint8_t deck_id = *ff8_externals.cardgame_deck_id_1DCD7AD;
+		int cardgame_result = *(int*)(field_data + 324);
+		if (deck_id == 202 && cardgame_result == 0) // Won against quistis
+		{
+			g_FF8SteamAchievements->unlockCardClubMasterAchievement(ff8_externals.savemap->field);
+		}
+	}
+	return ret;
+}
+
 void ff8_enable_gf_sub_47E480(int gf_idx)
 {
 	ff8_externals.savemap->gfs[gf_idx].exists |= 1u;
@@ -1063,7 +1079,24 @@ void ff8_update_seed_exp_4C30E0(int seed_lvl)
 int ff8_field_opcode_POPM_W(void* field_data, int memory_offset)
 {
 	int ret = ff8_externals.opcode_popm_w(field_data, memory_offset);
-	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+	if (memory_offset == 16) // seed exp
+	{
+		g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
+	}
+	if (memory_offset == 256 && ff8_externals.savemap->field.game_moment == 3000) // Ragnarok found
+	{
+		g_FF8SteamAchievements->unlockRagnarokAchievement();
+	}
+	return ret;
+}
+
+int ff8_field_opcode_POPM_B(void* field_data, int memory_offset)
+{
+	int ret = ff8_externals.opcode_popm_b(field_data, memory_offset);
+	if (memory_offset == 0x130 || memory_offset == 0x131) // timber maniacs offset
+	{
+		g_FF8SteamAchievements->unlockTimberManiacsAchievement(ff8_externals.savemap->field.timber_maniacs);
+	}
 	return ret;
 }
 
@@ -1079,6 +1112,7 @@ void ff8_field_update_seed_level()
 	((void(*)())ff8_externals.field_update_seed_level_52B140)();
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
+	g_FF8SteamAchievements->unlockFirstSalaryAchievement();
 }
 
 void ff8_worldmap_update_seed_level()
@@ -1086,6 +1120,7 @@ void ff8_worldmap_update_seed_level()
 	((void(*)())ff8_externals.worldmap_update_seed_level_651C10)();
 	g_FF8SteamAchievements->unlockTopSeedRankAchievement(ff8_externals.savemap->field_header.seedExp);
 	g_FF8SteamAchievements->unlockMaxGilAchievement(ff8_externals.savemap->gil);
+	g_FF8SteamAchievements->unlockFirstSalaryAchievement();
 }
 
 // Replacing a specific call that is called when player remodel weapon just before assigning the new
@@ -1157,10 +1192,154 @@ int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
 }
 
 // Replace a function that is called before increasing the kills of a character
-void ff8_battle_after_enemy_kill_sub_496CB0(int party_char_id, int a1, int current_actor_second_byte, int a2)
+void ff8_battle_after_enemy_kill_sub_494AF0(int party_char_id, int monster_id, int current_actor_second_byte, int a2)
 {
-	ff8_externals.battle_sub_494AF0(party_char_id, a1, current_actor_second_byte, a2);
+	ff8_externals.battle_sub_494AF0(party_char_id, monster_id, current_actor_second_byte, a2);
 	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement();
+}
+
+int ff8_opcode_drawpoint_sub_4A0850(int a1, int draw_magic_count)
+{
+	int ret = ff8_externals.opcode_drawpoint_sub_4A0850(a1, draw_magic_count);
+	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+	return ret;
+}
+
+void ff8_set_drawpoint_state_52D190(uint8_t drawpoint_id, char value)
+{
+	ff8_externals.set_drawpoint_state_521D90(drawpoint_id, value);
+	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+}
+
+int ff8_battle_get_magic_draw_amount_48FD20(int actor_idx, int monster_id, int magic_id)
+{
+	int ret = ff8_externals.battle_get_draw_magic_amount_48FD20(actor_idx, monster_id, magic_id);
+	g_FF8SteamAchievements->increaseMagicStockAndTryUnlockAchievement();
+	return ret;
+}
+
+char ff8_menu_use_item_sub_4F81F0(int menu_data_pointer)
+{
+	uint16_t mode = *(uint16_t*)(menu_data_pointer + 16);
+	char ret = ff8_externals.menu_use_items_sub_4F81F0(menu_data_pointer);
+	if (mode == 111) // Show quistis blue magic unlocked message
+	{
+		g_FF8SteamAchievements->unlockQuistisLimitBreaksAchievement(ff8_externals.savemap->lb.quistis_lb);
+	}
+	return ret;
+}
+
+int ff8_play_sfx_at_unlock_rinoa_limit_break(int a1, int a2, uint32_t a3, uint32_t a4)
+{
+	int ret = ((int(*)(int, int, uint32_t, uint32_t))ff8_externals.sfx_play_to_current_playing_channel)(a1, a2, a3, a4);
+	g_FF8SteamAchievements->unlockRinoaLimitBreaksAchievement(ff8_externals.savemap->lb.angelo_completed_lb);
+	return ret;
+}
+
+void ff8_obtain_proof_of_omega(int tut_info_id)
+{
+	ff8_externals.update_tutorial_info_4AD170(tut_info_id);
+	g_FF8SteamAchievements->unlockOmegaDestroyedAchievement();
+}
+
+void ff8_battle_after_set_result_to_won_sub_494D40()
+{
+	ff8_externals.battle_sub_494D40();
+	if (*ff8_externals.global_battle_encounter_id_1CFF6E0 == 750 && *ff8_externals.battle_result_state_1CFF6E7 == 4) { // Won Pupu encounter
+		g_FF8SteamAchievements->unlockPupuQuestAchievement(ff8_externals.savemap->worldmap.pupu_quest);
+	}
+}
+
+int ff8_menu_choco_add_item_to_player_47ED00(int item_id, char quantity)
+{
+	int ret = ff8_externals.add_item_to_player_sub_47ED00(item_id, quantity);
+	g_FF8SteamAchievements->unlockChocoLootAchievement();
+	return ret;
+}
+
+void ff8_menu_chocobo_sub_4FF8F0()
+{
+	ff8_externals.menu_chocobo_sub_4FF8F0();
+	g_FF8SteamAchievements->unlockTopLevelBokoAchievement(ff8_externals.savemap->choco_world.level);
+}
+
+int ff8_world_sub_54D7E0(WORD* a1)
+{
+	bool obel_quest_was_finished = ff8_externals.savemap->worldmap.obel_quest[2] & 1;
+	int ret = ((int(*)(WORD*))ff8_externals.sub_54D7E0)(a1);
+	if (!obel_quest_was_finished && (ff8_externals.savemap->worldmap.obel_quest[2] & 1)) 
+	{
+		g_FF8SteamAchievements->unlockObelLakeQuestAchievement();
+	}
+	return ret;
+}
+
+// Re-implementation of the function to add item to player items (sub_47ED00)
+int ff8_add_item_to_player(int item_id, char quantity)
+{
+	if (!item_id) {
+		return 0;
+	}
+
+	savemap_ff8_item *items = ff8_externals.savemap->items.items;
+	for (int i = 0; i < 198; ++i)
+	{
+		if (items[i].item_id == item_id )
+		{
+			items[i].item_quantity += quantity;
+			if (items[i].item_quantity < 100) {
+				return 0;
+			} else {
+				items[i].item_quantity = 100;
+				return 1;
+			}
+		}
+	}
+
+	int open_slot = 0;
+	for (open_slot = 0; open_slot < 198 && !items[open_slot].item_id; open_slot++);
+	if (open_slot >= 198) {
+		return 1;
+	}
+	items[open_slot].item_id = item_id;
+	items[open_slot].item_quantity += quantity;
+	if (items[open_slot].item_quantity < 100) {
+		return 0;
+	} else {
+		items[open_slot].item_quantity = 100;
+		return 1;
+	}
+}
+
+int ff8_add_item_to_player_wrapper(int item_id, char quantity)
+{
+	int ret = ff8_add_item_to_player(item_id, quantity);
+	if (SteamAchievementsFF8::itemIsMagazine(item_id)) {
+		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_externals.savemap->items);
+	}
+	return ret;
+}
+
+void ff8_menu_shop_update_gil_and_items(int gil)
+{
+	bool bought_magazine = false;
+	savemap_ff8_item *items = ff8_externals.savemap->items.items;
+	for (int i = 0; i < 198; ++i)
+	{
+		if (SteamAchievementsFF8::itemIsMagazine(items[i].item_id)
+			&& ff8_externals.menu_shop_staged_items_1D8D058[items[i].item_id] > items[i].item_quantity)
+		{
+			bought_magazine = true;
+			break;
+		}
+	}
+
+	ff8_externals.menu_shop_update_gil_and_items_4EB9F0(gil);
+
+	if (bought_magazine)
+	{
+		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_externals.savemap->items);
+	}
 }
 
 int ff8_limit_fps()
@@ -1485,7 +1664,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	//###############################
 	// steam achievement unlock calls
 	//###############################
-	if(steam_achievements_debug_mode)
+	if(steam_edition || enable_steam_achievements)
 	{
 		// triple triad
 		patch_code_dword((uint32_t)&ff8_externals.cardgame_funcs[4], (uint32_t)&ff8_cardgame_postgame_func_534BC0);
@@ -1494,6 +1673,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_function(ff8_externals.cardgame_add_card_to_squall_534840, (void*)ff8_cardgame_add_card_to_squall);
 		replace_function(ff8_externals.cardgame_update_card_with_location_5347F0, (void*)ff8_cardgame_update_card_with_location);
 		patch_code_dword(ff8_externals.cargame_func_535C90 + 0x19, (uint32_t)&ff8_cardgame_sub_535D00);
+
+		// cc master
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x13A], (uint32_t)&ff8_field_opcode_CARDGAME);
 
 		// guardian forces
 		replace_function(ff8_externals.enable_gf_sub_47E480, (void*)ff8_enable_gf_sub_47E480);
@@ -1522,7 +1704,43 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.battle_menu_sub_4A3EE0 + 0x581, (void*)ff8_battle_menu_add_exp_and_bonus_496CB0);
 
 		// kills
-		replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_496CB0);
+		replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_494AF0);
+
+		// draw magic from draw points
+		replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
+		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : 0x85F), (void*)ff8_set_drawpoint_state_52D190);
+
+		// draw magic via stock in battle
+		replace_call(ff8_externals.battle_sub_48D200 + 0x354, (void*)ff8_battle_get_magic_draw_amount_48FD20);
+
+		// timber maniacs
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0B], (uint32_t)&ff8_field_opcode_POPM_B);
+
+		// quistis blue magics
+		replace_call((uint32_t)ff8_externals.menu_callbacks[2].func + 0x152, (void*)ff8_menu_use_item_sub_4F81F0);
+		patch_code_dword((uint32_t)ff8_externals.menu_callbacks[2].func + 0x8, (uint32_t)ff8_menu_use_item_sub_4F81F0);
+
+		// dog trainer rinoa
+		replace_call(ff8_externals.field_update_rinoa_limit_breaks_52B320 + 0x5D, (void*)ff8_play_sfx_at_unlock_rinoa_limit_break);
+		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x225, (void*)ff8_play_sfx_at_unlock_rinoa_limit_break);
+
+		// omega destroyed
+		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + 0x216C, (void*)ff8_obtain_proof_of_omega);
+
+		// pupu side quest
+		replace_call(ff8_externals.battle_check_won_sub_486500 + 0x66, (void*)ff8_battle_after_set_result_to_won_sub_494D40);
+
+		// chocobo world
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x1814, (void*)ff8_menu_choco_add_item_to_player_47ED00);
+		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13D0, (void*)ff8_menu_chocobo_sub_4FF8F0);
+		// chocobo achievement is implemented in aask opcode (voice section)
+
+		// magazine addict
+		replace_function((uint32_t)ff8_menu_choco_add_item_to_player_47ED00, (void*)ff8_add_item_to_player_wrapper);
+		replace_call(ff8_externals.menu_shop_sub_4EBE40 + 0x11A7, (void*)ff8_menu_shop_update_gil_and_items);
+
+		// obel lake quest
+		replace_call(ff8_externals.worldmap_with_fog_sub_53FAC0 + (FF8_US_VERSION ? 0x3C2 : 0x3C4), (void*)ff8_world_sub_54D7E0);
 	}
 }
 

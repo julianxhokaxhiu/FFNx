@@ -27,6 +27,11 @@
 
 #include <cstdint>
 
+struct savemap_ff8_item {
+	uint8_t item_id;
+	uint8_t item_quantity;
+};
+
 struct savemap_ff8_header {
 	uint16_t location_id;
 	uint16_t char1_curr_hp;
@@ -115,14 +120,14 @@ struct savemap_ff8_limit_break {
 	uint16_t zell_lb;
 	uint8_t irvine_lb;
 	uint8_t selphie_lb;
-	uint8_t angelo_c_lb;
-	uint8_t angelo_k_lb;
-	uint8_t angelo_p_lb[8];
+	uint8_t angelo_completed_lb;
+	uint8_t angelo_known_lb;
+	uint8_t angelo_points_lb[8];
 };
 
 struct savemap_ff8_items {
 	uint8_t battle_order[32];
-	uint16_t items[198];
+	savemap_ff8_item items[198];
 };
 
 #pragma pack(push, 1)
@@ -143,7 +148,7 @@ struct savemap_ff8_battle {
 	uint8_t ennemy_scanned_once[20];
 	uint8_t renzokuken_auto;
 	uint8_t renzokuken_indicator;
-	uint8_t unk4;
+	uint8_t special_flags; //dream|Odin|Phoenix|Gilgamesh|Angelo disabled|Angel Wing enabled|???|???
 };
 #pragma pack(pop)
 
@@ -195,6 +200,75 @@ struct savemap_ff8_field_h {
 	uint8_t unkH[42];
 };
 
+struct savemap_ff8_field {
+	uint16_t game_moment;
+	uint8_t ward_unused;
+	uint8_t unused1[2];
+	uint8_t save_flag;
+	uint8_t unused2[2];
+	uint8_t wm_related[7];
+	uint8_t unused3;
+	uint8_t tt_rules[8];
+	uint8_t tt_traderules[8];
+	uint8_t tt_lastrules[2];
+	uint8_t tt_lastregion[2];
+	uint8_t tt_new_rules_tmp;// Unused in save
+	uint8_t tt_new_trade_rules_tmp;// Unused in save
+	uint8_t tt_add_this_rule_queen_tmp;// Unused in save
+	uint8_t tt_cardqueen_location;
+	uint8_t tt_traderating_region;
+	uint8_t tt_traderating;
+	uint8_t tt_degeneration;
+	uint8_t tt_curtraderulequeen;
+	uint8_t tt_cardqueen_quest;
+	uint8_t unused4[3];
+	uint16_t timber_maniacs; // bitmap for timber maniacs found
+	uint8_t unk1[154];
+	uint8_t tt_cc_quest_1; // ??? | ??? | Joker | ??? | King unlocked
+	uint8_t unk2[13];
+	uint8_t tt_players_bgu_dialogs1;
+	uint8_t tt_players_bgu_dialogs2; // King win
+	uint8_t tt_players_bgu_dialogs3;
+	uint8_t tt_cc_quest_2; // Jack | Clover | Spades | Shu | Diamonds
+	uint8_t tt_bgu_victory_count;
+	uint8_t unk3[137];
+	uint8_t chocobo_affinity[7]; // fourth element is for chocobo garden (value 128 means chocobo found)
+	uint8_t unk4[658];
+};
+
+struct savemap_ff8_worldmap {
+	uint16_t char_pos[6];
+	uint16_t unknown_pos1[6];
+	uint16_t ragnarok_pos[6];
+	uint16_t balamb_garden_pos[6];
+	uint16_t car_pos[6];
+	uint16_t unknown_pos2[6];
+	uint16_t unknown_pos3[6];
+	uint16_t unknown_pos4[6];
+	uint16_t steps_related;
+	uint8_t car_rent;
+	uint8_t unk1[7];
+	uint16_t unk2;
+	uint16_t unk3;
+	uint8_t disp_map_config;// 0:none|1:minisphere|2:minimap
+	uint8_t unk4;
+	uint16_t car_steps_related;
+	uint16_t car_steps_related2;
+	uint8_t vehicles_instructions_worldmap;
+	uint8_t pupu_quest;
+	uint8_t obel_quest[8];
+	/* [0] => avoir fredonné twice|???|Unused|Unused|n ricochets|infini ricochets|Vu ryo|Vu ryo² ("100x + de ricochets que toi !")
+	 * [1] => Ryo a donné tablette|Unused|Indices ombre pour trouver l'idiot|Unused|Unused|Unused|Indice ombre pour Eldbeak|Eldbeak trouvé
+	 * [2] => Trésor île Minde|Trésor Plaine de Mordor|Unused|Unused|Unused|Unused|Unused|Unused
+	 * [3] => ???|Pierre Balamb|Pierre Ryo|Pierre Timber|Pierre Galbadia|Toutes les pierres|Indice Ombre pour Balamb|???
+	 * [4] => ??? (mordor var?)
+	 * [5] => ???|???|???|???|Block access Lunatic Pandora|???|Block access Lunatic Pandora|???
+	 * [6] => avoir parlé à l'ombre|Accepter de chercher l'idiot|Avoir vu l'idiot|...
+	 * [7] => ??? (temp var)
+	 */
+	uint8_t unk5[2];
+};
+
 struct savemap_ff8_triple_triad {
 	uint8_t cards[77];
 	uint8_t card_locations[33];
@@ -207,6 +281,30 @@ struct savemap_ff8_triple_triad {
 	uint32_t unk3;
 };
 
+struct savemap_ff8_chocobo {
+	uint8_t enabled;
+	uint8_t level;
+	uint8_t current_hp;
+	uint8_t max_hp;
+	uint16_t weapon;
+	uint8_t rank;
+	uint8_t move;
+	uint32_t save_count;
+	uint16_t id_related;
+	uint8_t unk1[6];
+	uint8_t item_class_a_count;
+	uint8_t item_class_b_count;
+	uint8_t item_class_c_count;
+	uint8_t item_class_d_count;
+	uint8_t unk2[16];
+	uint32_t associated_save_id;
+	uint8_t unk3;
+	uint8_t boko_attack;
+	uint8_t unk4;
+	uint8_t home_walking;
+	uint8_t unk5[16];
+};
+
 // For more info: https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/miscellaneous/game-save-format
 struct savemap_ff8 {
 	uint16_t checksum;
@@ -217,7 +315,7 @@ struct savemap_ff8 {
 	savemap_ff8_shop shop[20];
 	uint8_t config[20];
 	uint8_t party[4]; // 0xFF terminated
-	uint32_t known_weapons;
+	uint32_t unlocked_weapons; // bitmap for weapons unlocked
 	uint8_t griever_name[12];
 	uint16_t unk1;
 	uint16_t unk2;
@@ -242,9 +340,9 @@ struct savemap_ff8 {
 	uint8_t dir[3]; // direction (party1, party2, party3)
 	uint8_t unk7[5];
 	savemap_ff8_field_h field_header;
-	uint8_t field[1024];
-	uint8_t worldmap[128];
+	savemap_ff8_field field;
+	savemap_ff8_worldmap worldmap;
 	savemap_ff8_triple_triad triple_triad;
-	uint8_t choco_world[64];
+	savemap_ff8_chocobo choco_world;
 };
 

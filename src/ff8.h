@@ -1089,6 +1089,7 @@ struct ff8_externals
 	char (*sub_47CA90)();
 	uint32_t sub_529FF0;
 	uint32_t field_update_seed_level_52B140;
+	uint32_t field_update_rinoa_limit_breaks_52B320;
 	uint32_t battle_trigger_field;
 	uint32_t battle_trigger_worldmap;
 	uint32_t _load_texture;
@@ -1138,6 +1139,7 @@ struct ff8_externals
 	uint32_t sub_4B3140;
 	uint32_t sub_4BDB30;
 	ff8_menu_callback *menu_callbacks;
+	char (*menu_use_items_sub_4F81F0)(int);
 	uint32_t menu_cards_render;
 	uint32_t sub_534AD0;
 	uint8_t **card_texts_off_B96504;
@@ -1157,10 +1159,14 @@ struct ff8_externals
 	uint32_t menu_chocobo_world_controller;
 	uint32_t create_save_file_sub_4C6E50;
 	uint32_t create_save_chocobo_world_file_sub_4C6620;
+	void (*menu_chocobo_sub_4FF8F0)();
+	void (*menu_shop_update_gil_and_items_4EB9F0)(int);
+	int (*add_item_to_player_sub_47ED00)(int, char);
 	void (*update_seed_exp_4C30E0)(int);
 	int (*sub_4ABC40)(int, int);
 	int (*sub_4EA770)(int, uint32_t);
 	uint32_t* menu_data_1D76A9C;
+	std::span<uint8_t> menu_shop_staged_items_1D8D058;
 	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;
@@ -1265,6 +1271,7 @@ struct ff8_externals
 	uint32_t sub_54D7E0;
 	uint32_t sub_54FDA0;
 	uint32_t worldmap_with_fog_sub_53FAC0;
+	void (*set_drawpoint_state_521D90)(uint8_t, char);
 	char* worldmap_windows_idx_map;
 	int (*world_dialog_assign_text_sub_543790)(int,int,char*);
 	int (*world_dialog_question_assign_text_sub_5438D0)(int, int, char*, int, int, int, uint8_t);
@@ -1333,14 +1340,17 @@ struct ff8_externals
 	uint32_t opcode_musicvolsync;
 	uint32_t opcode_getmusicoffset;
 	uint32_t opcode_drawpoint;
+	int (*opcode_cardgame)(int);
 	uint32_t opcode_battle;
 	uint32_t opcode_tuto;
 	uint32_t opcode_mapjump;
 	uint32_t opcode_pshm_w;
 	int (*opcode_popm_w)(void*, int);
+	int (*opcode_popm_b)(void*, int);
 	uint32_t opcode_menuname;
 	int (*opcode_addgil)(void*);
 	int (*opcode_addseedlevel)(void*);
+	uint8_t* cardgame_deck_id_1DCD7AD;
 	BYTE* current_tutorial_id;
 	uint32_t dmusic_segment_connect_to_dls;
 	uint32_t choice_music;
@@ -1502,6 +1512,13 @@ struct ff8_externals
 	uint32_t sub_4A84E0;
 	uint32_t sub_4AD400;
 	uint32_t sub_4BB840;
+	uint32_t battle_check_won_sub_486500;
+	void(*battle_sub_494D40)();
+	uint32_t battle_sub_4877F0;
+	uint32_t battle_sub_48D200;
+	uint32_t battle_ai_opcode_sub_487DF0;
+	int (*battle_get_draw_magic_amount_48FD20)(int, int, int);
+	void(*update_tutorial_info_4AD170)(int);
 	uint32_t sub_48B7E0;
 	void(*sub_4954B0)(int);
 	uint32_t compute_char_stats_sub_495960;
@@ -1510,7 +1527,9 @@ struct ff8_externals
 	std::span<ff8_char_computed_stats> char_comp_stats_1CFF000;
 	BYTE* battle_current_active_character_id;
 	BYTE* battle_new_active_character_id;
+	WORD* global_battle_encounter_id_1CFF6E0;
 	WORD* battle_encounter_id;
+	BYTE* battle_result_state_1CFF6E7; // 2: escaped, 4: won, 1-3: other type, 5: unknown
 	uint32_t sub_4AB450;
 	uint32_t battle_get_monster_name_sub_495100;
 	uint32_t sub_4AA920;
@@ -1580,6 +1599,7 @@ struct ff8_externals
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;
+	int(*opcode_drawpoint_sub_4A0850)(int, int);
 	uint32_t enable_gf_sub_47E480;
 	uint32_t battle_menu_loop_4A2690;
 	uint32_t battle_menu_sub_4A6660;
