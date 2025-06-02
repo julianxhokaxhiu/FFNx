@@ -20,7 +20,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <cstdint>
 #include <steamworkssdk/isteamutils.h>
 #include <steamworkssdk/isteamuserstats.h>
 #include <steamworkssdk/isteamuser.h>
@@ -970,7 +969,7 @@ void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(Achievements 
     {
         this->steamManager->setAchievement(achId);
     }
-    else if (showAchievementProgress)
+    else if (showAchievementProgress && new_stat_value % (achValue / 10) == 0)
     {
         this->steamManager->showAchievementProgress(achId, new_stat_value, achValue);
     }
