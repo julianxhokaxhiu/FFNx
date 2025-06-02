@@ -917,7 +917,7 @@ void SteamAchievementsFF8::unlockRagnarokAchievement()
 
 void SteamAchievementsFF8::unlockEndOfGameAchievement(int squall_lvl)
 {
-    ach_trace("%s - trying to unlock end of game achivement (squall_lvl: %d)\n", __func__);
+    ach_trace("%s - trying to unlock end of game achivement (squall_lvl: %d)\n", __func__, squall_lvl);
 
     if (!(this->steamManager->isAchieved(FINISH_THE_GAME)))
         this->steamManager->setAchievement(FINISH_THE_GAME);
