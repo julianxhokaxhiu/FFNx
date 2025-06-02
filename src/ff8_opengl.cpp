@@ -19,7 +19,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include "ff8/save_data.h"
 #include "globals.h"
 #include "common.h"
 #include "ff8.h"
@@ -36,9 +35,9 @@
 #include "vibration.h"
 #include "ff8/file.h"
 #include "ff8/vram.h"
+#include "ff8/save_data.h"
 #include "metadata.h"
 #include "achievement.h"
-#include <cstdint>
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -1054,7 +1053,7 @@ int ff8_field_opcode_CARDGAME(int field_data)
 {
 	int ret = ff8_externals.opcode_cardgame(field_data);
 	if (ret == 2) // cardgame exited
-    {
+	{
 		uint8_t deck_id = *ff8_externals.cardgame_deck_id_1DCD7AD;
 		int cardgame_result = *(int*)(field_data + 324);
 		if (deck_id == 202 && cardgame_result == 0) // Won against quistis
@@ -1282,7 +1281,7 @@ int ff8_add_item_to_player(int item_id, char quantity)
 		return 0;
 	}
 
-    savemap_ff8_item *items = ff8_externals.savemap->items.items;
+	savemap_ff8_item *items = ff8_externals.savemap->items.items;
 	for (int i = 0; i < 198; ++i)
 	{
 		if (items[i].item_id == item_id )
@@ -1324,7 +1323,7 @@ int ff8_add_item_to_player_wrapper(int item_id, char quantity)
 void ff8_menu_shop_update_gil_and_items(int gil)
 {
 	bool bought_magazine = false;
-    savemap_ff8_item *items = ff8_externals.savemap->items.items;
+	savemap_ff8_item *items = ff8_externals.savemap->items.items;
 	for (int i = 0; i < 198; ++i)
 	{
 		if (SteamAchievementsFF8::itemIsMagazine(items[i].item_id)

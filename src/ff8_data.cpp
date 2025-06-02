@@ -20,7 +20,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <cstdint>
 #include <stdio.h>
 
 #include "ff8_data.h"

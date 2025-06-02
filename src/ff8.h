@@ -1139,7 +1139,7 @@ struct ff8_externals
 	uint32_t sub_4B3140;
 	uint32_t sub_4BDB30;
 	ff8_menu_callback *menu_callbacks;
-    char (*menu_use_items_sub_4F81F0)(int);
+	char (*menu_use_items_sub_4F81F0)(int);
 	uint32_t menu_cards_render;
 	uint32_t sub_534AD0;
 	uint8_t **card_texts_off_B96504;
@@ -1166,7 +1166,7 @@ struct ff8_externals
 	int (*sub_4ABC40)(int, int);
 	int (*sub_4EA770)(int, uint32_t);
 	uint32_t* menu_data_1D76A9C;
-    std::span<uint8_t> menu_shop_staged_items_1D8D058;
+	std::span<uint8_t> menu_shop_staged_items_1D8D058;
 	uint32_t get_text_data;
 	uint32_t sub_4BE4D0;
 	uint32_t sub_4BECC0;
@@ -1280,7 +1280,7 @@ struct ff8_externals
 	uint32_t sub_54A230;
 	uint32_t worldmap_update_steps_sub_6519D0;
 	uint32_t worldmap_update_seed_level_651C10;
-    int (*play_sfx_sub_46B2A0)(int, int, uint32_t, uint32_t);
+	int (*play_sfx_sub_46B2A0)(int, int, uint32_t, uint32_t);
 	uint32_t sub_54E9B0;
 	uint32_t sub_550070;
 	int (*sub_541C80)(WORD*);

@@ -22,7 +22,6 @@
 
 #include "audio.h"
 #include "movies.h"
-#include "globals.h"
 #include "patch.h"
 #include "ff7/widescreen.h"
 #include "video/movies.h"
