@@ -24,6 +24,7 @@
 #include "achievement.h"
 #include "audio.h"
 #include "field.h"
+#include "globals.h"
 #include "patch.h"
 #include "utils.h"
 
@@ -1136,7 +1137,9 @@ int ff8_opcode_voice_aask(int unk)
 	{
 		// --- Only for unlocking chocobo achievement (only way to implement it) ---
 		int chosen_option = *(DWORD*)(unk + 240);
-		if (dialog_id == 56 && chosen_option == 0) // capture chocobo
+		WORD field_id = *common_externals.current_field_id;
+		bool is_field_chocobo_forest = field_id >= 287 && field_id <= 293 && field_id != 290;
+		if (is_field_chocobo_forest && dialog_id == 56 && chosen_option == 0) // capture chocobo
 		{
 			g_FF8SteamAchievements->unlockChocoboAchievement();
 		}
