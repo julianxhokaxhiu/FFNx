@@ -346,6 +346,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_drawpoint_sub_4A0850 = (int(*)(int, int))get_relative_call(ff8_externals.opcode_drawpoint, 0x6B7);
 	ff8_externals.drawpoint_messages = get_absolute_value(ff8_externals.opcode_drawpoint, 0xD6);
 	ff8_externals.enable_gf_sub_47E480 = get_relative_call(common_externals.execute_opcode_table[0x129], 0x6E);
+	ff8_externals.enable_chocobo_sub_4AD360 = (void(*)())get_relative_call(common_externals.execute_opcode_table[0x129], 0x1FC);
 
 	common_externals.debug_print = get_relative_call(common_externals.update_movie_sample, 0x141);
 

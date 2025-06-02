@@ -1093,10 +1093,17 @@ int ff8_field_opcode_POPM_W(void* field_data, int memory_offset)
 
 int ff8_field_opcode_POPM_B(void* field_data, int memory_offset)
 {
+	byte stack_idx = *(byte *)((uint32_t)field_data + 388);
+	int byte_value = *(byte *)((uint32_t)field_data + 4 * stack_idx);
 	int ret = ff8_externals.opcode_popm_b(field_data, memory_offset);
 	if (memory_offset == 0x130 || memory_offset == 0x131) // timber maniacs offset
 	{
 		g_FF8SteamAchievements->unlockTimberManiacsAchievement(ff8_externals.savemap->field.timber_maniacs);
+	}
+	if (memory_offset >= 616 && memory_offset <= 622 && memory_offset != 619
+		&& byte_value == 128 && (ff8_externals.savemap->field.chocoboy_progress >= 64)) // captured another chocobo
+	{
+		g_FF8SteamAchievements->unlockChocoboAchievement();
 	}
 	return ret;
 }
@@ -1262,6 +1269,12 @@ void ff8_menu_chocobo_sub_4FF8F0()
 {
 	ff8_externals.menu_chocobo_sub_4FF8F0();
 	g_FF8SteamAchievements->unlockTopLevelBokoAchievement(ff8_externals.savemap->choco_world.level);
+}
+
+void ff8_enable_chocobo()
+{
+	ff8_externals.enable_chocobo_sub_4AD360();
+	g_FF8SteamAchievements->unlockChocoboAchievement();
 }
 
 int ff8_world_sub_54D7E0(WORD* a1)
@@ -1731,9 +1744,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// pupu side quest
 		replace_call(ff8_externals.battle_check_won_sub_486500 + 0x66, (void*)ff8_battle_after_set_result_to_won_sub_494D40);
 
-		// chocobo world
+		// chocobo world + chocobo
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x1814, (void*)ff8_menu_choco_add_item_to_player_47ED00);
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13D0, (void*)ff8_menu_chocobo_sub_4FF8F0);
+		replace_call(common_externals.execute_opcode_table[0x129] + 0x1FC, (void*)ff8_enable_chocobo);
+
 		// chocobo achievement is implemented in aask opcode (voice section)
 
 		// magazine addict

@@ -1602,6 +1602,7 @@ struct ff8_externals
 	uint32_t drawpoint_messages;
 	int(*opcode_drawpoint_sub_4A0850)(int, int);
 	uint32_t enable_gf_sub_47E480;
+    void (*enable_chocobo_sub_4AD360)();
 	uint32_t battle_menu_loop_4A2690;
 	uint32_t battle_menu_sub_4A6660;
 	uint32_t battle_menu_sub_4A3D20;
