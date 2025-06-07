@@ -725,10 +725,8 @@ ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw
 int ff8_is_window_active()
 {
 	if (gameHwnd == GetActiveWindow() || ff8_always_capture_input){	
-		if(require_active_window){
-			ff8_externals.engine_eval_keyboard_gamepad_input();
-			ff8_externals.has_keyboard_gamepad_input();
-		}
+		ff8_externals.engine_eval_keyboard_gamepad_input();
+		ff8_externals.has_keyboard_gamepad_input();
 
 		if (simulate_OK_button)
 		{
