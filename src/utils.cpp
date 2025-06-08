@@ -28,6 +28,11 @@
 #include <Softpub.h>
 #include <wintrust.h>
 
+#include <cryptopp/md5.h>
+#include <cryptopp/sha.h>
+#include <cryptopp/files.h>
+#include <cryptopp/hex.h>
+
 bool fileExists(const char *filename)
 {
     struct stat dummy;
@@ -130,4 +135,32 @@ bool isFileSigned(const wchar_t* dllPath)
     CloseHandle(fileInfo.hFile);
 
     return status == ERROR_SUCCESS;
+}
+
+std::string sha1_file(const std::string& filename)
+{
+    CryptoPP::SHA1 hash;
+    std::string digest;
+
+    CryptoPP::FileSource(filename.c_str(), true,
+        new CryptoPP::HashFilter(hash,
+            new CryptoPP::HexEncoder(
+                new CryptoPP::StringSink(digest), false)));
+
+    return digest;
+}
+
+std::string md5_hash(const unsigned char* data, size_t length)
+{
+    using namespace CryptoPP;
+
+    std::string digest;
+
+    MD5 hash;
+    StringSource(data, length, true,
+        new HashFilter(hash,
+            new HexEncoder(
+                new StringSink(digest), false)));
+
+    return digest;
 }

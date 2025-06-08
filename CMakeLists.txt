@@ -93,6 +93,7 @@ find_package(xxHash CONFIG REQUIRED)
 find_package(LZ4 REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
 find_package(lfreist-hwinfo CONFIG REQUIRED)
+find_package(cryptopp CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(tomlplusplus REQUIRED IMPORTED_TARGET tomlplusplus)
 
@@ -194,6 +195,7 @@ target_link_libraries(
   MPG123::libmpg123
   lfreist-hwinfo::hwinfo
   unofficial::stackwalker::StackWalker
+  cryptopp::cryptopp
   ${BX_LIBRARIES}
   ${BIMG_LIBRARIES}
   ${BGFX_LIBRARIES}

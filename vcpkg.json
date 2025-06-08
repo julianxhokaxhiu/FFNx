@@ -67,7 +67,8 @@
     "cmakerc",
     "cgltf",
     "hwinfo",
-    "pkgconf"
+    "pkgconf",
+    "cryptopp"
   ],
   "overrides": [
     {
@@ -169,6 +170,11 @@
       "name": "pkgconf",
       "version": "2.4.3",
       "port-version": 0
+    },
+    {
+      "name": "cryptopp",
+      "version": "8.9.0",
+      "port-version": 1
     }
   ]
 }

@@ -24,7 +24,6 @@
 
 #include "metadata.h"
 #include "log.h"
-#include "md5.h"
 #include "utils.h"
 
 Metadata metadataPatcher;
@@ -104,7 +103,7 @@ void Metadata::updateFF7(uint8_t save)
     {
         memcpy(dataBuffer, userID.data(), userID.length());
     }
-    MD5 md5(dataBuffer, dataSize);
+    std::string md5 = md5_hash(dataBuffer, dataSize);
 
     // Update metadata
     calcNow();
@@ -125,7 +124,7 @@ void Metadata::updateFF7(uint8_t save)
 
                     if (strcmp(child.name(), "signature") == 0)
                     {
-                        child.text().set(md5.hexdigest().data());
+                        child.text().set(md5.data());
                     }
                 }
             }
@@ -173,7 +172,7 @@ void Metadata::updateFF8(uint8_t slot, uint8_t save)
     {
         memcpy(dataBuffer, userID.data(), userID.length());
     }
-    MD5 md5(dataBuffer, dataSize);
+    std::string md5 = md5_hash(dataBuffer, dataSize);
 
     // Update metadata
     calcNow();
@@ -197,7 +196,7 @@ void Metadata::updateFF8(uint8_t slot, uint8_t save)
 
                     if (strcmp(child.name(), "signature") == 0)
                     {
-                        child.text().set(md5.hexdigest().data());
+                        child.text().set(md5.data());
                     }
                 }
             }
