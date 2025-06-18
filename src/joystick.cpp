@@ -147,7 +147,7 @@ bool Joystick::CheckConnection()
     }
 
     // set cooperative level
-    if (FAILED(gameController->SetCooperativeLevel(gameHwnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE)))
+    if (FAILED(gameController->SetCooperativeLevel(gameHwnd, ((ff8 && ff8_always_capture_input) ? DISCL_BACKGROUND : DISCL_FOREGROUND) | DISCL_EXCLUSIVE)))
       return false;
 
     // set data format
