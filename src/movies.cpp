@@ -237,10 +237,12 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 
 	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", newFmvName, disc, movie);
 
-	if (disc == 3 && movie == 4) // game ending movie
-	{
-		int squall_lvl = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[0].exp, 0);
-		g_FF8SteamAchievements->unlockEndOfGameAchievement(squall_lvl);
+	if (steam_edition || enable_steam_achievements) {
+		if (disc == 3 && movie == 4) // game ending movie
+		{
+			int squall_lvl = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[0].exp, 0);
+			g_FF8SteamAchievements->unlockEndOfGameAchievement(squall_lvl);
+		}
 	}
 
 	ff8_movie_frames = ffmpeg_prepare_movie(newFmvName);
