@@ -233,7 +233,7 @@ struct savemap_ff8_field {
 	uint8_t tt_bgu_victory_count;
 	uint8_t unk3[137];
 	uint8_t chocobo_affinity[7]; // fourth element is for chocobo garden (value 128 means chocobo found)
-	uint8_t unk4[658];
+	uint8_t unk4[657];
 };
 
 struct savemap_ff8_worldmap {

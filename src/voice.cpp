@@ -1133,15 +1133,18 @@ int ff8_opcode_voice_aask(int unk)
 		opcode_ask_current_option = win->current_choice_question;
 
 	int ret = ff8_opcode_old_aask(unk);
-	if (ret == 3) // aask exit
-	{
-		// --- Only for unlocking chocobo achievement (only way to implement it) ---
-		int chosen_option = *(DWORD*)(unk + 240);
-		WORD field_id = *common_externals.current_field_id;
-		bool is_field_chocobo_forest = field_id >= 287 && field_id <= 293 && field_id != 290;
-		if (is_field_chocobo_forest && dialog_id == 56 && chosen_option == 0) // capture chocobo
+
+	if (steam_edition || enable_steam_achievements) {
+		if (ret == 3) // aask exit
 		{
-			g_FF8SteamAchievements->unlockChocoboAchievement();
+			// --- Only for unlocking chocobo achievement (only way to implement it) ---
+			int chosen_option = *(DWORD*)(unk + 240);
+			WORD field_id = *common_externals.current_field_id;
+			bool is_field_chocobo_forest = field_id >= 287 && field_id <= 293 && field_id != 290;
+			if (is_field_chocobo_forest && dialog_id == 56 && chosen_option == 0) // capture chocobo
+			{
+				g_FF8SteamAchievements->unlockChocoboAchievement();
+			}
 		}
 	}
 	return ret;
