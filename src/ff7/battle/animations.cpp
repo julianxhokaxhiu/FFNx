@@ -1282,6 +1282,29 @@ namespace ff7::battle
         memset_code(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xCE, 0x90, 6);
         patch_multiply_code<byte>(ff7_externals.aerith_limit_2_1_sub_45B0CF + 0xE2, battle_frame_multiplier);
 
+        // Magics
+        patch_multiply_code<byte>(ff7_externals.battle_escape_magic_loop_5D602A + 0x3B, battle_frame_multiplier);
+        patch_multiply_code<byte>(ff7_externals.battle_escape_magic_loop_5D602A + 0x2FB, battle_frame_multiplier);
+        patch_multiply_code<byte>(ff7_externals.battle_escape_magic_loop_5D602A + 0x302, battle_frame_multiplier);
+        patch_multiply_code<byte>(ff7_externals.battle_escape_magic_loop_5D602A + 0x8F0, battle_frame_multiplier);
+        patch_multiply_code<byte>(ff7_externals.battle_escape_magic_loop_5D602A + 0x8F7, battle_frame_multiplier);
+        patch_divide_code<byte>(ff7_externals.battle_escape_magic_loop_5D602A + 0x4A, battle_frame_multiplier);
+        patch_divide_code<DWORD>(ff7_externals.battle_escape_magic_loop_5D602A + 0xC1, battle_frame_multiplier);
+        patch_code_byte(ff7_externals.battle_escape_magic_loop_5D602A + 0x6A8, 4 + battle_frame_multiplier / 2);
+        patch_divide_code<WORD>(ff7_externals.battle_escape_magic_loop_5D602A + 0x6CF, battle_frame_multiplier);
+        patch_divide_code<DWORD>(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x12C, battle_frame_multiplier);
+        patch_divide_code<DWORD>(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x131, battle_frame_multiplier);
+        patch_divide_code<DWORD>(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x148, battle_frame_multiplier);
+        patch_divide_code<DWORD>(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x14D, battle_frame_multiplier);
+        patch_divide_code<DWORD>(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x164, battle_frame_multiplier);
+        patch_divide_code<DWORD>(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x169, battle_frame_multiplier);
+        byte lea_eax_ecx_15[] = {0x8D, 0x54, 0x08, 0xEB};
+        byte lea_eax_ecx_10[] = {0x8D, 0x54, 0x08, 0xF0};
+        memcpy_code(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x1B2, lea_eax_ecx_15, sizeof(lea_eax_ecx_15));
+        memcpy_code(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x1CE, lea_eax_ecx_10, sizeof(lea_eax_ecx_10));
+        patch_divide_code<byte>(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x1E6, battle_frame_multiplier);
+        patch_divide_code<DWORD>(ff7_externals.battle_escape_magic_init_data_5D59B0 + 0x1E8, battle_frame_multiplier);
+
         // Effect60 related
         patch_multiply_code<WORD>(ff7_externals.battle_sub_425E5F + 0x3A, battle_frame_multiplier);
 
@@ -1366,12 +1389,12 @@ namespace ff7::battle
         fixed_effect100_addresses.insert(ff7_externals.run_ifrit_movement_596702);
         fixed_effect100_addresses.insert(ff7_externals.vincent_limit_fade_effect_sub_5D4240);
         fixed_effect100_addresses.insert(ff7_externals.cloud_limit_2_2_sub_467256);
+        fixed_effect100_addresses.insert(ff7_externals.battle_escape_magic_loop_5D602A);
         one_call_effect100_addresses.insert(ff7_externals.run_bahamut_zero_main_loop_484A16);
         one_call_effect100_addresses.insert(ff7_externals.death_sentence_main_loop_5661A0);
         one_call_effect100_addresses.insert(ff7_externals.roulette_skill_main_loop_566287);
         one_call_effect100_addresses.insert(ff7_externals.bomb_blast_black_bg_effect_537427);
         one_call_effect100_addresses.insert(ff7_externals.run_confu_main_loop_5600BE);
-        one_call_effect100_addresses.insert(ff7_externals.battle_escape_magic_loop_5D602A);
         one_call_effect100_addresses.insert(ff7_externals.death_kill_sub_loop_5624A5);
         one_call_effect100_addresses.insert(ff7_externals.death_kill_sub_loop_562C60);
         model_thresholds_by_address[ff7_externals.run_alexander_movement_5078D8] = 3000;
