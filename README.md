@@ -166,8 +166,8 @@ Once the project is built you can find the output in this path: `.build/bin`
 1. [Create a Personal Access token ( classic )](https://github.com/settings/tokens/new) with the `write:packages` permission.
 2. Open a `cmd` window and run the following commands ( replace `YOUR_GITHUB_USERNAME` and `YOUR_GITHUB_PAT` accordingly ):
 ```pwsh
-$ nuget sources add -Name github -Source "https://nuget.pkg.github.com/julianxhokaxhiu/index.json" -Username YOUR_GITHUB_USERNAME -Password YOUR_GITHUB_PAT -StorePasswordInClearText
-$ nuget setApiKey YOUR_GITHUB_PAT -Source "https://nuget.pkg.github.com/julianxhokaxhiu/index.json"
+$ nuget sources add -Name github -Source "https://nuget.pkg.github.com/YOUR_GITHUB_USERNAME/index.json" -Username YOUR_GITHUB_USERNAME -Password YOUR_GITHUB_PAT -StorePasswordInClearText
+$ nuget setApiKey YOUR_GITHUB_PAT -Source "https://nuget.pkg.github.com/YOUR_GITHUB_USERNAME/index.json"
 ```
 
 ### Visual Studio
