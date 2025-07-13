@@ -315,7 +315,7 @@ I'm sure I forgot many others. In case you feel you're missing here, feel free t
 
 ## License
 
-FFNx is released under GPLv3 license. You can get a copy of the license here: [COPYING.txt](COPYING.txt)
+FFNx is released under GPLv3 license. You can get a copy of the license here: [COPYING.TXT](COPYING.TXT)
 
 If you paid for FFNx, remember to ask for a refund from the person who sold you a copy. Also make sure you get a copy of the source code (if it was provided as binary only).
 
