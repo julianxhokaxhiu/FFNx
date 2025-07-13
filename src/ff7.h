@@ -3341,6 +3341,7 @@ struct ff7_externals
 	void (*engine_apply_translation_with_delta_662ECC)(vector3<short>*, vector3<int>*, int*);
 	uint32_t run_chocobuckle_main_loop_560C32;
 	uint32_t run_confu_main_loop_5600BE;
+	uint32_t battle_escape_magic_init_data_5D59B0;
 	uint32_t battle_escape_magic_loop_5D602A;
 	uint32_t bomb_blast_black_bg_effect_537427;
 	uint32_t goblin_punch_flash_573291;

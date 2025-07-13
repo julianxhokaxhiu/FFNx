@@ -1086,6 +1086,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.run_confu_main_loop_5600BE = get_absolute_value(handler_confu_magic_sub_55FEF2, 0x6C);
 	uint32_t battle_escape_magic_entrypoint_5D5720 = ff7_externals.magic_effects_fn_table[25];
 	uint32_t battle_escape_magic_sub_5D573F = get_relative_call(battle_escape_magic_entrypoint_5D5720, 0x15);
+	ff7_externals.battle_escape_magic_init_data_5D59B0 = get_relative_call(battle_escape_magic_sub_5D573F, 0x6);
 	ff7_externals.battle_escape_magic_loop_5D602A = get_absolute_value(battle_escape_magic_sub_5D573F, 0x11);
 	uint32_t bomb_blast_effects_5373D0 = ff7_externals.enemy_atk_effects_fn_table[67];
 	uint32_t bomb_blast_effects_sub_5373E5 = get_relative_call(bomb_blast_effects_5373D0, 0xB);
