@@ -26,7 +26,6 @@
 
 - Core: Users can now choose on which screen to run the game, using the new `display_index` option.
 - Music: Add the ability to play a custom `main_menu` music file on the new game screen.
-- Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly.
 
 ## FF7
 
