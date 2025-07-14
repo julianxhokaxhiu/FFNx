@@ -4,6 +4,10 @@
 
 ## Common
 
+- Movie: Replace unprincipled "toeless sRGB" gamma function for movies with BT1886 Appendix 1 function with constants selected to match a properly calibrated mid-90s Sony Trinitron CRT.
+
+## Common
+
 - Core: Improve error message on crash and make the link clickable
 
 ## FF7
