@@ -4,6 +4,10 @@
 
 ## Common
 
+- Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly.
+
+## Common
+
 - Core: Improve error message on crash and make the link clickable
 
 ## FF7
