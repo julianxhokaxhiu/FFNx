@@ -202,16 +202,24 @@ vec3 GamutLUT(vec3 rgb_input)
 	vec3 temp = saturate(rgb_input) * vec3_splat(63.0);
 	vec3 floors = floor(temp);
 	vec3 ceils = ceil(temp);
-	vec3 ceilweights = temp - floors;
+	vec3 ceilweights = saturate(temp - floors);
 
-	vec3 RfGfBf = texture2D(tex_10, vec2(((floors.b * 64.0) + floors.r) / 4095.0, floors.g / 63.0)).xyz;
-	vec3 RfGfBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + floors.r) / 4095.0, floors.g / 63.0)).xyz;
-	vec3 RfGcBf = texture2D(tex_10, vec2(((floors.b * 64.0) + floors.r) / 4095.0, ceils.g / 63.0)).xyz;
-	vec3 RfGcBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + floors.r) / 4095.0, ceils.g / 63.0)).xyz;
-	vec3 RcGfBf = texture2D(tex_10, vec2(((floors.b * 64.0) + ceils.r) / 4095.0, floors.g / 63.0)).xyz;
-	vec3 RcGfBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + ceils.r) / 4095.0, floors.g / 63.0)).xyz;
-	vec3 RcGcBf = texture2D(tex_10, vec2(((floors.b * 64.0) + ceils.r) / 4095.0, ceils.g / 63.0)).xyz;
-	vec3 RcGcBc = texture2D(tex_10, vec2(((ceils.b * 64.0) + ceils.r) / 4095.0, ceils.g / 63.0)).xyz;
+	// driver might not correctly sample a 1.0 coordinate
+	// so we are going to add a just-under-half-step offset to red and green, then increase their divisors by 1
+	// This should get us a slightly lower coordinate within the same pixel
+	floors = floors + vec3(0.4999, 0.4999, 0.0);
+	ceils = ceils + vec3(0.4999, 0.4999, 0.0);
+	floors = floors / vec3(4096.0, 64.0, 64.0);
+	ceils = ceils / vec3(4096.0, 64.0, 64.0);
+
+	vec3 RfGfBf = (texture2D(tex_10, vec2(floors.b + floors.r, floors.g))).xyz;
+	vec3 RfGfBc = (texture2D(tex_10, vec2(ceils.b + floors.r, floors.g))).xyz;
+	vec3 RfGcBf = (texture2D(tex_10, vec2(floors.b + floors.r, ceils.g))).xyz;
+	vec3 RfGcBc = (texture2D(tex_10, vec2(ceils.b + floors.r, ceils.g))).xyz;
+	vec3 RcGfBf = (texture2D(tex_10, vec2(floors.b + ceils.r, floors.g))).xyz;
+	vec3 RcGfBc = (texture2D(tex_10, vec2(ceils.b + ceils.r, floors.g))).xyz;
+	vec3 RcGcBf = (texture2D(tex_10, vec2(floors.b + ceils.r, ceils.g))).xyz;
+	vec3 RcGcBc = (texture2D(tex_10, vec2(ceils.b + ceils.r, ceils.g))).xyz;
 
 	vec3 RfGf = mix(RfGfBf, RfGfBc, vec3_splat(ceilweights.b));
 	vec3 RfGc = mix(RfGcBf, RfGcBc, vec3_splat(ceilweights.b));
