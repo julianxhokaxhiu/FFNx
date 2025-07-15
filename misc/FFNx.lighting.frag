@@ -89,7 +89,7 @@ uniform vec4 gameScriptedLightColor;
 #define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
 #define is2pt2Gamma abs(FSMovieFlags.z - 1.0) < 0.00001
 #define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
-#define isToelessSRGBGamma abs(FSMovieFlags.z - 3.0) < 0.00001
+#define isCRTGamma abs(FSMovieFlags.z - 3.0) < 0.00001
 #define is2pt8Gamma abs(FSMovieFlags.z - 4.0) < 0.00001
 
 #define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
@@ -178,8 +178,8 @@ void main()
             }
 
             // Use a different inverse gamma function depending on the FMV's metadata
-            if (isToelessSRGBGamma){
-                color.rgb = toLinearToelessSRGB(color.rgb);
+            if (isCRTGamma){
+                color.rgb = toLinearBT1886Appx1Fast(color.rgb);
             }
             else if (is2pt2Gamma){
                 color.rgb = toLinear2pt2(color.rgb);
