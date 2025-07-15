@@ -4,6 +4,10 @@
 
 ## Common
 
+- Movie: Replace unprincipled "toeless sRGB" gamma function for PS1-derived movies with BT1886 Appendix 1 function with constants selected to match a properly calibrated mid-90s Sony Trinitron CRT.
+
+## Common
+
 - Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly.
 
 ## Common
