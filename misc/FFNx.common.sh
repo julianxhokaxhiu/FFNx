@@ -14,15 +14,15 @@
 /****************************************************************************/
 
 // Constants for BT1886 Appendix 1 EOTF Function
-// These constants correspond to a mid-90s Sony Trinitron CRT with the "brightness" knob turned up a bit
+// These constants correspond to a mid-90s Sony Trinitron CRT with the "brightness" knob turned up a little bit
 // Do not change them blindly. If you change black or white level, then B, K, and S need to be recalculated.
 // (https://github.com/ChthonVII/gamutthingy can calculate them for you.)
-#define crtBlackLevel 0.001
+#define crtBlackLevel 0.0005
 #define crtWhiteLevel 1.71
-#define crtConstantB 0.0798668734159236
-#define crtConstantK 1.4003401525817423
-#define crtConstantS 1.4017365852508221
-#define crtConstantI 0.1559200215461360
+#define crtConstantB 0.0621374665681032
+#define crtConstantK 1.4619287796470970
+#define crtConstantS 1.4255523197400675
+#define crtConstantI 0.1458934076565475
 
 // Gamut LUT
 SAMPLER2D(tex_10, 10);
