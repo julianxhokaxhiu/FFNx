@@ -254,20 +254,18 @@ void main()
                 }
             }
 
+
             if (isFBTexture)
             {
                 if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
                 // This was previously in gamma space, so linearize again.
-                texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
+                //texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
+
             }
-            else {
-              // fix the gamma
-              // I'd rather prevent BGFX from linearizing in the first place,
-              // but it's buried so deep I can't find all the places it happens
-              texture_color.rgb = toGamma(texture_color.rgb);
-              texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
-            }
+
+            // Use CRT gamma for all textures (no longer using BGFX's built-in sRGB linearization)
+            texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
 
             if (isMovie) texture_color.a = 1.0;
 
