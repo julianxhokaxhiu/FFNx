@@ -22,6 +22,7 @@
 #define crtConstantB 0.0352201203161258
 #define crtConstantK 1.5628276249141149
 #define crtConstantS 1.4645911818943733
+#define crtConstantI 0.1308441716013507
 
 // Gamut LUT
 SAMPLER2D(tex_10, 10);
@@ -155,6 +156,26 @@ vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 	return saturate(pow((c1 + c2 * Lp) / (vec3_splat(1.0) + c3 * Lp), vec3_splat(m2)));
 }
 
+// Inverse EOTF Function from BT1886 Appendix 1 (https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.1886-0-201103-I!!PDF-E.pdf)
+// Approximates the inverse of gamma behavior of a CRT (more accurately than the crummy Annex 1 function)
+// Constants have been selected to match a properly calibrated mid-90s Sony Trinitron CRT.
+vec3 toGammaBT1886Appx1Fast(vec3 _rgb)
+{
+	// undo the chop and normalization post-processing
+	_rgb = _rgb * vec3_splat(crtWhiteLevel - crtBlackLevel);
+	_rgb = _rgb + vec3_splat(crtBlackLevel);
+
+	// Inverse EOTF
+	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(crtConstantI));
+	vec3 higher = pow(vec3_splat(1.0/crtConstantK) * _rgb, vec3_splat(1.0/2.6));
+	vec3 lower = pow(vec3_splat(1.0/crtConstantK) * vec3_splat(1.0/crtConstantS) * _rgb, vec3_splat(1.0/3.0));
+	vec3 outcolor = mix(higher, lower, cutoff);
+
+	//unshift
+	outcolor = outcolor - vec3_splat(crtConstantB);
+
+	return saturate(outcolor);
+}
 
 // Gamut conversions ---------------------------------------------
 // These functions all take a linear RGB input and produce a linear RGB output.
