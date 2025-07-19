@@ -211,9 +211,8 @@ To build from the terminal (example with *RelWithDebInfo*):
 - For dependency use: `cmake --preset RelWithDebInfo`
 - For building the project: `cmake --build --preset RelWithDebInfo`
 
-**NOTICE**: For the dependency step, make sure that PATH variable does not contain any UNIX command tools since vcpkg build process is based on UNIX tools.
-Also on terminal it might not auto detect the kernel32_lib, so pass it with `-DCMAKE_LIBRARY_PATH=%kernel32_lib%`
-(e.g. `cmake --preset RelWithDebInfo -DCMAKE_LIBRARY_PATH="C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\x86"`)
+**NOTE**: Make sure to use the `cmake` executable that comes from Visual Studio
+(e.g. `C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe`)
 
 ## Auto-Formatting
 
