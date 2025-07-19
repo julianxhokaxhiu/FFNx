@@ -1357,7 +1357,12 @@ namespace ff7::battle
         patch_divide_code<byte>(ff7_externals.battleground_midgar_flashback_rain_5BDC4F + 0x156, battle_frame_multiplier);
 
         // Other animations (Status effects: confusion, sleep, and silence; and player mark on top of head)
+        // And fixes for manipulate, poison and regen color effect on characters 3d models
         patch_divide_code<WORD>(ff7_externals.battle_sub_5B9EC2 + 0x1CB, battle_frame_multiplier);
+        patch_multiply_code<byte>(ff7_externals.battle_sub_5B9EC2 + 0x292, battle_frame_multiplier);
+        patch_divide_code<WORD>(ff7_externals.battle_sub_5B9EC2 + 0x2A8, battle_frame_multiplier);
+        patch_divide_code<WORD>(ff7_externals.battle_sub_5B9EC2 + 0x2D0, battle_frame_multiplier);
+        patch_code_byte(ff7_externals.battle_sub_5B9EC2 + 0x316, (0x1F + 1) * battle_frame_multiplier - 1);
         patch_code_byte(ff7_externals.battle_handle_status_effect_anim_5BA7C0 + 0x97, 0x3 + battle_frame_multiplier / 2);
         patch_divide_code<WORD>(ff7_externals.battle_handle_player_mark_5B9C8E + 0x6A, battle_frame_multiplier);
 
