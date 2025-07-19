@@ -13,6 +13,8 @@
 ## FF7
 
 - Core: Fix core game bug issue happening on the wind wall fields `woa_*` ( https://github.com/julianxhokaxhiu/FFNx/issues/797 )
+- 60FPS: Fix escape magic animation speed (https://github.com/julianxhokaxhiu/FFNx/issues/794)
+- 60FPS: Fix manipulate, poison and regen effect animation in battle (https://github.com/julianxhokaxhiu/FFNx/issues/817)
 
 ## FF8
 
