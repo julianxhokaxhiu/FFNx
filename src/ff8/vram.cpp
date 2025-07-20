@@ -1087,7 +1087,7 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 	}
 
 	char tex_abs_directory[MAX_PATH] = {};
-	snprintf(tex_abs_directory, sizeof(tex_abs_directory), "%s/%s", mod_path.c_str(), tex_directory);
+	snprintf(tex_abs_directory, sizeof(tex_abs_directory), "%s/%s/%s", basedir, mod_path.c_str(), tex_directory);
 	bool has_dir = dirExists(tex_abs_directory);
 
 	if (!has_dir && (trace_all || trace_loaders || trace_vram)) {

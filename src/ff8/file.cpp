@@ -55,7 +55,7 @@ bool set_direct_path(const char *fullpath, char *output, size_t output_size)
 		return false;
 	}
 
-	_snprintf(output, output_size, "%s\\%s\\%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size());
+	_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size());
 
 	return true;
 }

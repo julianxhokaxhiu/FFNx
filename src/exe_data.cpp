@@ -386,7 +386,7 @@ char *ff8_get_card_name(int32_t card_id)
 void dump_exe_data()
 {
     char dirname[MAX_PATH] = {};
-    snprintf(dirname, sizeof(dirname), "%s/exe/", direct_mode_path.c_str());
+    snprintf(dirname, sizeof(dirname), "%s/%s/exe/", basedir, direct_mode_path.c_str());
 
     normalize_path(dirname);
     make_path(dirname);
