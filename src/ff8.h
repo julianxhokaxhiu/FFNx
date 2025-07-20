@@ -1087,7 +1087,6 @@ struct ff8_externals
 	uint32_t sub_4767B0;
 	uint32_t sub_4789A0;
 	char (*sub_47CA90)();
-	uint32_t sub_529FF0;
 	uint32_t field_update_seed_level_52B140;
 	uint32_t field_update_rinoa_limit_breaks_52B320;
 	uint32_t battle_trigger_field;

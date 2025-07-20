@@ -725,7 +725,7 @@ ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw
 int ff8_is_window_active()
 {
 	if (gameHwnd == GetActiveWindow() || ff8_always_capture_input)
-	{	
+	{
 		ff8_externals.engine_eval_keyboard_gamepad_input();
 		ff8_externals.has_keyboard_gamepad_input();
 
@@ -1141,7 +1141,7 @@ int ff8_menu_junkshop_hook_4EA770(int a1, uint32_t a2)
 	return ret;
 }
 
-// Replacing a call done before computing max HP for a character in order to get the 
+// Replacing a call done before computing max HP for a character in order to get the
 // index "party_char_id"
 void ff8_hook_sub_4954B0(int party_char_id)
 {
@@ -1267,7 +1267,7 @@ int ff8_world_sub_54D7E0(WORD* a1)
 {
 	bool obel_quest_was_finished = ff8_externals.savemap->worldmap.obel_quest[2] & 1;
 	int ret = ((int(*)(WORD*))ff8_externals.sub_54D7E0)(a1);
-	if (!obel_quest_was_finished && (ff8_externals.savemap->worldmap.obel_quest[2] & 1)) 
+	if (!obel_quest_was_finished && (ff8_externals.savemap->worldmap.obel_quest[2] & 1))
 	{
 		g_FF8SteamAchievements->unlockObelLakeQuestAchievement();
 	}
@@ -1684,7 +1684,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.menu_sub_4D4D30 + 0x928, (void*)ff8_update_seed_exp_4C30E0);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0D], (uint32_t)&ff8_field_opcode_POPM_W);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x153], (uint32_t)&ff8_field_opcode_ADDSEEDLEVEL);
-		replace_call(ff8_externals.sub_529FF0 + 0x120, (void*)ff8_field_update_seed_level);
+		replace_call(common_externals.update_field_entities + 0x120, (void*)ff8_field_update_seed_level);
 		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x152, (void*)ff8_worldmap_update_seed_level);
 
 		// handyman: upgrade weapon
@@ -1711,7 +1711,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : 0x85F), (void*)ff8_set_drawpoint_state_52D190);
 
 		// draw magic via stock in battle
-		replace_call(ff8_externals.battle_sub_48D200 + 0x354, (void*)ff8_battle_get_magic_draw_amount_48FD20);
+		replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : 0x355), (void*)ff8_battle_get_magic_draw_amount_48FD20);
 
 		// timber maniacs
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0B], (uint32_t)&ff8_field_opcode_POPM_B);
@@ -1725,7 +1725,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x225, (void*)ff8_play_sfx_at_unlock_rinoa_limit_break);
 
 		// omega destroyed
-		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + 0x216C, (void*)ff8_obtain_proof_of_omega);
+		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + (FF8_US_VERSION ? 0x216C : 0x2176), (void*)ff8_obtain_proof_of_omega);
 
 		// pupu side quest
 		replace_call(ff8_externals.battle_check_won_sub_486500 + 0x66, (void*)ff8_battle_after_set_result_to_won_sub_494D40);
