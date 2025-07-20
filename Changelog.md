@@ -4,15 +4,13 @@
 
 ## Common
 
-- Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly.
-
-## Common
-
 - Core: Improve error message on crash and make the link clickable
+- Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly.
 
 ## FF7
 
 - Core: Fix core game bug issue happening on the wind wall fields `woa_*` ( https://github.com/julianxhokaxhiu/FFNx/issues/797 )
+- Core: Fix FADE opcode fading color when type=2 is used ( https://github.com/julianxhokaxhiu/FFNx/issues/805 )
 - 60FPS: Fix escape magic animation speed (https://github.com/julianxhokaxhiu/FFNx/issues/794)
 - 60FPS: Fix manipulate, poison and regen effect animation in battle (https://github.com/julianxhokaxhiu/FFNx/issues/817)
 

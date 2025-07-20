@@ -3171,6 +3171,8 @@ struct ff7_externals
 	DWORD* input_run_button_status;
 	uint32_t sub_62120E;
 	int (*field_load_map_trigger_data_sub_6211C3)();
+	uint32_t field_fade_screen_sub_63B84B;
+	uint32_t field_calc_fade_color_sub_63AE66;
 
 	// battle camera script externals
 	uint32_t handle_camera_functions;

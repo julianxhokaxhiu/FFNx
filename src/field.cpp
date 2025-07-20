@@ -116,6 +116,15 @@ int field_calc_window_pos(int16_t WINDOW_ID, int16_t X, int16_t Y, int16_t W, in
 	return ff7_externals.sub_630C48(WINDOW_ID, X, ff7_field_center ? Y + 8 : Y, W, H);
 }
 
+int ff7_calc_opcode_type_2_fade_color(int16_t r, int16_t g, int16_t b)
+{
+	uint8_t fade_b = (256 - b) * (256 - ff7_externals.modules_global_object->fade_adjustment / 2) / 256;
+	uint8_t fade_g = (256 - g) * (256 - ff7_externals.modules_global_object->fade_adjustment / 2) / 256;
+	uint8_t fade_r = (256 - r) * (256 - ff7_externals.modules_global_object->fade_adjustment / 2) / 256;
+
+	return 0xFF000000 | (fade_r << 16) | (fade_g << 8) | fade_b;
+}
+
 int ff8_field_init_from_file(int unk1, int unk2, int unk3, int unk4)
 {
 	int ret = ff8_externals.field_scripts_init(unk1, unk2, unk3, unk4);
@@ -144,6 +153,12 @@ void field_init()
 
 		// Proxy the window calculation formula so we can offset windows vertically
 		replace_call_function(common_externals.execute_opcode_table[0x50] + 0x174, field_calc_window_pos);
+
+		// Proxy FADE opcode color calculation
+		byte opcode_fade_patch[] = {0x0F, 0xBF, 0x45, 0x10, 0x50, 0x0F, 0xBF, 0x45, 0x0C, 0x50, 0x0F, 0xBF, 0x45, 0x08, 0x50, 0xE8, 0xFF, 0xFF, 0xFF, 0xFF, 0x83, 0xC4, 0x0C};
+		memcpy_code(ff7_externals.field_calc_fade_color_sub_63AE66 + 0x244, opcode_fade_patch, sizeof(opcode_fade_patch));
+		memset_code(ff7_externals.field_calc_fade_color_sub_63AE66 + 0x244 + sizeof(opcode_fade_patch), 0x90, 0xE1 - sizeof(opcode_fade_patch));
+		replace_call_function(ff7_externals.field_calc_fade_color_sub_63AE66 + 0x244 + 0xF, ff7_calc_opcode_type_2_fade_color);
 
 		// Init custom eyes and mouths structs
 		for(int i = 0; i < FF7_MAX_NUM_MODEL_ENTITIES; i++)

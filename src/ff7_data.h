@@ -629,6 +629,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_handle_screen_fading = get_relative_call(ff7_externals.field_loop_sub_63C17F, 0x634);
 	ff7_externals.sub_62120E = get_relative_call(ff7_externals.enter_field, 0x229);
 	ff7_externals.field_load_map_trigger_data_sub_6211C3 = (int(*)())get_relative_call(ff7_externals.sub_62120E, 0x3AA);
+	ff7_externals.field_fade_screen_sub_63B84B = get_relative_call(ff7_externals.field_loop_sub_63C17F, 0x634);
+	ff7_externals.field_calc_fade_color_sub_63AE66 = get_relative_call(ff7_externals.field_fade_screen_sub_63B84B, 0xE7);
 
 	ff7_externals.sfx_stop_channel_6 = get_relative_call(common_externals.sfx_cleanup, 0x16);
 	ff7_externals.sfx_stop_channel_timer_handle = (UINT *)get_absolute_value(ff7_externals.sfx_stop_channel_6, 0x5);
