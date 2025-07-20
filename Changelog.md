@@ -17,6 +17,7 @@
 ## FF8
 
 - External textures: Fix Rinoa battle model that do not get replaced ( https://github.com/julianxhokaxhiu/FFNx/pull/790 )
+- Direct file: field subarchives (mapdata.fs for example) can now be loaded outside field.fs ( https://github.com/julianxhokaxhiu/FFNx/pull/822 )
 
 ## FF8 Steam
 
