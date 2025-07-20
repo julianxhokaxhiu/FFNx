@@ -59,7 +59,7 @@ void main()
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
 
-    color.rgb = toLinear(color.bgr);
+    color.rgb = toLinearBT1886Appx1Fast(color.bgr);
 
     if (isTLVertex)
     {
@@ -86,10 +86,10 @@ void main()
             float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
             float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
             float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
-            vec3 light1Ambient = toLinear(gameLightColor1.rgb) * dotLight1 * dotLight1;
-            vec3 light2Ambient = toLinear(gameLightColor2.rgb) * dotLight2 * dotLight2;
-            vec3 light3Ambient = toLinear(gameLightColor3.rgb) * dotLight3 * dotLight3;
-            vec3 lightAmbient = toLinear(gameScriptedLightColor.rgb) * (toLinear(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
+            vec3 light1Ambient = toLinearBT1886Appx1Fast(gameLightColor1.rgb) * dotLight1 * dotLight1;
+            vec3 light2Ambient = toLinearBT1886Appx1Fast(gameLightColor2.rgb) * dotLight2 * dotLight2;
+            vec3 light3Ambient = toLinearBT1886Appx1Fast(gameLightColor3.rgb) * dotLight3 * dotLight3;
+            vec3 lightAmbient = toLinearBT1886Appx1Fast(gameScriptedLightColor.rgb) * (toLinearBT1886Appx1Fast(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
             color.rgb *= gameGlobalLightColor.w * lightAmbient;
         }
 

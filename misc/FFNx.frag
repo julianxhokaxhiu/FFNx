@@ -107,7 +107,7 @@ uniform vec4 gameScriptedLightColor;
 
 void main()
 {
-    vec4 color = vec4(toLinear(v_color0.rgb), v_color0.a);
+    vec4 color = vec4(toLinearBT1886Appx1Fast(v_color0.rgb), v_color0.a);
 
     if (isTexture)
     {
@@ -256,8 +256,16 @@ void main()
                 if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
                 // This was previously in gamma space, so linearize again.
-                texture_color.rgb = toLinear(texture_color.rgb);
+                texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
             }
+            else {
+              // fix the gamma
+              // I'd rather prevent BGFX from linearizing in the first place,
+              // but it's buried so deep I can't find all the places it happens
+              texture_color.rgb = toGamma(texture_color.rgb);
+              texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
+            }
+            /*
             // This stanza currently does nothing because there's no way to set doGamutOverride.
             // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
             else if (doGamutOverride){
@@ -266,6 +274,7 @@ void main()
                 texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
+            */
 
             if (isMovie) texture_color.a = 1.0;
 
@@ -285,7 +294,7 @@ void main()
     if (!(isTLVertex) && isFogEnabled) color.rgb = ApplyWorldFog(color.rgb, v_position0.xyz);
 
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
-    color.rgb = toGamma(color.rgb);
+    color.rgb = toGammaBT1886Appx1Fast(color.rgb);
 
     // In this default shader, lighting is applied in gamma space so that it does better match the original lighting
     if (gameLightingMode == GAME_LIGHTING_PER_PIXEL)

@@ -277,8 +277,16 @@ void main()
                 if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
                 // This was previously in gamma space, so linearize again.
-                texture_color.rgb = toLinear(texture_color.rgb);
+                texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
             }
+            else {
+              // fix the gamma
+              // I'd rather prevent BGFX from linearizing in the first place,
+              // but it's buried so deep I can't find all the places it happens
+              texture_color.rgb = toGamma(texture_color.rgb);
+              texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
+            }
+            /*
             // This stanza currently does nothing because there's no way to set doGamutOverride.
             // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
             else if (doGamutOverride){
@@ -287,6 +295,7 @@ void main()
                 texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
+            */
 
             if (isMovie) texture_color.a = 1.0;
 
@@ -413,13 +422,13 @@ void main()
         float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
         float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
         float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
-        vec3 light1Ambient = toLinear(gameLightColor1.rgb) * dotLight1 * dotLight1;
-        vec3 light2Ambient = toLinear(gameLightColor2.rgb) * dotLight2 * dotLight2;
-        vec3 light3Ambient = toLinear(gameLightColor3.rgb) * dotLight3 * dotLight3;
-        vec3 lightAmbient = toLinear(gameScriptedLightColor.rgb) * (toLinear(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
+        vec3 light1Ambient = toLinearBT1886Appx1Fast(gameLightColor1.rgb) * dotLight1 * dotLight1;
+        vec3 light2Ambient = toLinearBT1886Appx1Fast(gameLightColor2.rgb) * dotLight2 * dotLight2;
+        vec3 light3Ambient = toLinearBT1886Appx1Fast(gameLightColor3.rgb) * dotLight3 * dotLight3;
+        vec3 lightAmbient = toLinearBT1886Appx1Fast(gameScriptedLightColor.rgb) * (toLinearBT1886Appx1Fast(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
         gl_FragColor.rgb *= gameGlobalLightColor.w * lightAmbient;
     }
 
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
-    gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
+    gl_FragColor.rgb = toGammaBT1886Appx1Fast(gl_FragColor.rgb);
 }
