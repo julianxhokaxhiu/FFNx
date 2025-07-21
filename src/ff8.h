@@ -1409,6 +1409,9 @@ struct ff8_externals
 	uint32_t read_or_uncompress_fs_data;
 	uint32_t lzs_uncompress;
 	void(*free_file_container)(ff8_file_container *);
+	ff8_file_container*(*archive_open)(char*,char*,char*);
+	void(*sub_archive_get_filename)(const char*,char*);
+	char *temp_fs_path_cache;
 	uint32_t field_get_dialog_string;
 	uint32_t set_window_object;
 	ff8_win_obj *windows;

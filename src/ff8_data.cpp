@@ -165,6 +165,9 @@ void ff8_find_externals()
 	ff8_externals.read_or_uncompress_fs_data = get_relative_call(ff8_externals.moriya_filesystem_read, 0x5C);
 	ff8_externals.lzs_uncompress = get_relative_call(ff8_externals.read_or_uncompress_fs_data, 0x1E6);
 	ff8_externals.free_file_container = (void(*)(ff8_file_container*))get_relative_call(ff8_externals.moriya_filesystem_close, 0x1F);
+	ff8_externals.sub_archive_get_filename = (void(*)(const char*,char*))get_relative_call(ff8_externals.moriya_filesystem_open, 0x126);
+	ff8_externals.temp_fs_path_cache = (char *)get_absolute_value(ff8_externals.moriya_filesystem_open, 0x161);
+	ff8_externals.archive_open = (ff8_file_container*(*)(char*,char*,char*))get_relative_call(ff8_externals.moriya_filesystem_open, 0x27D);
 
 	ff8_externals.cdcheck_sub_52F9E0 = get_relative_call(ff8_externals.cdcheck_main_loop, 0x95);
 

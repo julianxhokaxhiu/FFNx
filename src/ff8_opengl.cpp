@@ -1417,6 +1417,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	replace_function(common_externals.open_file, ff8_open_file);
 	replace_call(uint32_t(ff8_externals.fs_archive_search_filename) + 0x10, ff8_fs_archive_search_filename2);
+	replace_call(ff8_externals.moriya_filesystem_open + 0x126, ff8_fs_archive_sub_archive_get_filename);
+	// Open temp.fs/temp.fl/temp.fi
+	replace_call(ff8_externals.moriya_filesystem_open + 0x705, ff8_fs_archive_open_temp);
 	// Search file in temp.fs archive (field)
 	replace_call(ff8_externals.moriya_filesystem_open + 0x776, ff8_fs_archive_search_filename_sub_archive);
 	// Search file in FS archive
