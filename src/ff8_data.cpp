@@ -181,6 +181,8 @@ void ff8_find_externals()
 	ff8_externals.sub_4972A0 = get_relative_call(ff8_externals.sub_534640, 0x51);
 	ff8_externals.load_fonts = get_relative_call(ff8_externals.sub_4972A0, 0x16);
 
+	ff8_externals.engine_reset_viewport_sub_4972D0 = get_relative_call(ff8_externals.sub_47CCB0, 0xB7A25);
+
 	ff8_externals.sub_537F30 = get_relative_call(ff8_externals.sub_534640, 0x2E);
 	ff8_externals.sub_5391B0 = get_relative_call(ff8_externals.sub_537F30, 0x58);
 	ff8_externals.sub_534560 = get_relative_call(ff8_externals.sub_534640, 0x5B);
@@ -431,7 +433,8 @@ void ff8_find_externals()
 		ff8_externals.nvidia_hack2 = get_absolute_value(ff8_externals.sub_559F30, 0xAC);
 	}
 
-	ff8_externals.menu_viewport = (sprite_viewport *)(get_absolute_value(ff8_externals.sub_4972A0, 0x12) - 0x20);
+	ff8_externals.sprite_viewport = (sprite_viewport *)get_absolute_value(ff8_externals.sub_4972A0, 0xB);
+	ff8_externals.menu_viewport = (sprite_viewport*)get_absolute_value(ff8_externals.engine_reset_viewport_sub_4972D0, 0xB);
 
 	ff8_externals.sub_497380 = get_relative_call(ff8_externals.main_menu_main_loop, 0xAA);
 	ff8_externals.sub_4B3410 = get_relative_call(ff8_externals.sub_497380, 0xAC);

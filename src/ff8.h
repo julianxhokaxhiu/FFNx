@@ -1052,7 +1052,8 @@ struct ff8_externals
 	uint32_t swirl_sub_56D390;
 	uint32_t nvidia_hack1;
 	uint32_t nvidia_hack2;
-	struct sprite_viewport *menu_viewport;
+	struct sprite_viewport *sprite_viewport; // 0xB86D40
+	struct sprite_viewport *menu_viewport; // 0xB86DA0
 	uint32_t main_loop; // 0x4706B0
 	uint32_t sub_47CCB0;
 	uint32_t sub_534640;
@@ -1613,6 +1614,7 @@ struct ff8_externals
 	uint32_t battle_sub_48FE20;
 	uint32_t battle_sub_494410;
 	void (*battle_sub_494AF0)(int, int, int, int);
+	uint32_t engine_reset_viewport_sub_4972D0;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
