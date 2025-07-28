@@ -14,17 +14,15 @@
 /****************************************************************************/
 
 // Constants for BT1886 Appendix 1 EOTF Function
-// These constants correspond to a mid-90s Sony Trinitron CRT with the "brightness" knob (black level)
-// turned halfway between properly calibrated (which is too dark for FF7/8) and
-// what the BT1886 authors call "moderate."
+// These constants correspond to a mid-90s Sony Trinitron CRT with the brightness turned pretty far up.
 // Do not change them blindly. If you change black or white level, then B, K, S, and I need to be recalculated.
 // (https://github.com/ChthonVII/gamutthingy can calculate them for you.)
-#define crtBlackLevel 0.00055
+#define crtBlackLevel 0.0015
 #define crtWhiteLevel 1.71
-#define crtConstantB 0.0643013946915687
-#define crtConstantK 1.4542131553257964
-#define crtConstantS 1.4225693320509021
-#define crtConstantI 0.1471128797338669
+#define crtConstantB 0.0927318537550299
+#define crtConstantK 1.3578779688794360
+#define crtConstantS 1.3852995465983342
+#define crtConstantI 0.1632400591934701
 
 // Gamut LUT
 SAMPLER2D(tex_10, 10);
