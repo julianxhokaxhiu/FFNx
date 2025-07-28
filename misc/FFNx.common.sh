@@ -102,6 +102,8 @@ vec3 toLinear2pt2(vec3 _rgb)
 // Microsoft says PAL uses a pure 2.8 gamma curve. See: https://learn.microsoft.com/en-us/windows/win32/api/mfobjects/ne-mfobjects-mfvideotransferfunction
 // ffmpeg thinks there *should* be a linear toe slope, but uses a pure curve since they cannot find any documentation for it. See: https://github.com/FFmpeg/FFmpeg/blob/master/libavfilter/vf_colorspace.c#L162
 // In any event, Poynton says 2.8 is "unrealistically high" and PAL CRT units did not really behave like that.
+// They had the same gamma function as every other CRT (reasonably well approximated by BT1886 Appendix 1), because the underlying physics so dictated.
+// Notwithstanding the behavior of the CRTs, digital video encoded for PAL/EBU might have followe dthe 2.8 gamma in the spec.
 // PAL switched to the SMPTE170M function in 2005 (see BT1700)
 vec3 toLinear2pt8(vec3 _rgb)
 {
@@ -110,6 +112,8 @@ vec3 toLinear2pt8(vec3 _rgb)
 
 // EOTF Function from BT1886 Appendix 1 (https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.1886-0-201103-I!!PDF-E.pdf)
 // Approximates the gamma behavior of a CRT (more accurately than the crummy Annex 1 function)
+// Constants have been selected to match a mid-90s Sony Trinitron CRT with the brightness turned pretty far up.
+// Assumes input in range 0-1, output in range 0-1.
 vec3 toLinearBT1886Appx1Fast(vec3 _rgb)
 {
 	// add B
@@ -157,7 +161,7 @@ vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 
 // Inverse EOTF Function from BT1886 Appendix 1 (https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.1886-0-201103-I!!PDF-E.pdf)
 // Approximates the inverse of gamma behavior of a CRT (more accurately than the crummy Annex 1 function)
-// Constants have been selected to match a properly calibrated mid-90s Sony Trinitron CRT.
+// Constants have been selected to match a mid-90s Sony Trinitron CRT with the brightness turned pretty far up.
 vec3 toGammaBT1886Appx1Fast(vec3 _rgb)
 {
 	// undo the chop and normalization post-processing
@@ -177,22 +181,23 @@ vec3 toGammaBT1886Appx1Fast(vec3 _rgb)
 }
 
 // Gamut conversions ---------------------------------------------
-// These functions all take a linear RGB input and produce a linear RGB output.
-// Mathematically, they are equivalent to:
-//   1. Convert linear RGB to XYZ using the source gamut's red/green/blue points
-//   2. Do a gamut conversion from the source gamut to the destination gamut
-//   3. Covert XYZ to linear RGB using the destination gamut's red/green/blue points
-// But all of that has been pre-computed into a single matrix multiply operation.
+// For final conversion in NTSC-J mode + NTSC-J movie in uncorrected mode:
+// 		Start from gamma-space R'G'B'
+// 		Simulate color correction circuit
+// 		Linearize with BT1886 Appendix 1 EOTF function
+// 		Chromatic adaption to convert whitepoint to D65
+// 		Gamut conversion to sRGB (or REC2020)
+// 		Gamut compression to make result fit inside sRGB gamut (not needed for REC2020)
+// 		Output linear RGB in sRGB gamut
+// For 709/SMPTEC/EBU in NTSC-J mode:
+// 		Do the inverse of the above so that the final conversion will round-trip
+// 		E.g., linear 709(=sRBG) to gamma-space NTSC-J
+// For SMPTEC/EBU movie in uncorrected mode:
+// 		Do linear-to-linear gamut conversion + compression.
 
 // Note: sRGB is the same gamut as rec709 video.
 
 // Note: High precision values are used for the "D65" whitepoint. (x=0.312713, y=0.329016)
-
-// Note: There are (at least) three different whitepoints that are all referred to as "D93"/"9300K."
-// The one used here is 9300K+27mpcd (x=0.281, y=0.311), which is what NTSC-J television sets used.
-
-// Most of the gamut conversion matrices have been replacved with LUTs.
-// We will want to bring them back for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
 
 // To rec2020:
 // See https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ColorSpaceUtility.hlsli#L120
@@ -206,16 +211,58 @@ vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
 	return saturate(instMul(toRec2020, rgb_input));
 }
 
+// NTSC-J (actually P22) to REC2020 (linear RGB input, linear RGB output)
+// Converts P22 primaries (gamutthingy's "P22_trinitron_mixandmatch" with 9300K+8MPCD whitepoint to REC2020 primaries with D65 whitepoint)
+// (flip matrix b/c shader languages are column-major)
 vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 {
 	mat3 NTSCJtoRec2020 = mat3(
-		vec3(+0.835314787642499, +0.064086581191406, -0.00258827855966),
-		vec3(+0.139190018780176, +0.859494098117681, +0.036362217824334),
-		vec3(+0.025495200617381, +0.076419362630435, +0.966226011255509)
+		vec3(+0.611788289692391, +0.0797156499454548, 0.00725711913733915),
+		vec3(+0.314277589465384, +0.867319879942047, +0.0632222078142046),
+		vec3(+0.0739341206756937, +0.0529644701077284, +0.929520673095398)
 	);
 	return saturate(instMul(NTSCJtoRec2020, rgb_input));
 }
 
+// Simulate CRT behavior (gamma-space R'G'B' input, linear RGB output)
+// Some outputs **WILL** be > 1.0! Make sure subsequent code can handle that.
+vec3 CRTSimulation(vec3 rgb_input){
+	// Apply the color correction matrix
+	// Matrices can be derived from the chip datasheets through the inverse of the method explained in
+	// Parker, Norman W. "An Analysis of the Necessary Decoder Corrections for Color Receiver Operation with Non-Standard Receiver Primaries." IEEE Transactions on Consumer Electronics, Vol. CE-28, No. 1, pp. 74-83. February 1982. (Reprint of 1966 original.)
+	// This matrix corresponds to the CXA2060BS in JP mode.
+	// (flip matrix b/c shader languages are column-major)
+	mat3 crtMatrix = mat3(
+		vec3(+1.29035834025603, +0.01339988905600664, +0.0),
+		vec3(-0.1862128635604091, +0.9814911231433754, +0.0),
+		vec3(-0.1041454766956209, +0.005108987800618033, +1.0)
+	);
+	vec3 corrected = instMul(crtMatrix, rgb_input);
+
+	// It does not appear that CRTs low clamped the output from color correction.
+	// But it was implicitly clamped by the fact electron guns don't run in reverse.
+
+	// Whether CRTs ever high clamped the output from color correction (and, if so, how high) is a great mystery.
+	// The scant evidence available suggests no clamping at all.
+	// But that could be wrong, or it could vary by model.
+
+	// linearize with a slightly modified version of BT1886 that accepts out-of-bounds input
+	// (which we need due to not clamping the color correction circuit)
+	// add B
+	corrected = corrected + vec3_splat(crtConstantB);
+	// clamp low at zero light emission (electron gun doesn't go in reverse)
+	corrected = max(corrected, vec3_splat(0.0));
+	// EOTF
+	bvec3 cutoff = lessThan(corrected.rgb, vec3_splat(0.35 + crtConstantB));
+	vec3 higher = pow(corrected, vec3_splat(2.6)) * vec3_splat(crtConstantK);
+	vec3 lower = pow(corrected, vec3_splat(3.0)) * vec3_splat(crtConstantK) * vec3_splat(crtConstantS);
+	vec3 outcolor = mix(higher, lower, cutoff);
+	// renormalize
+	outcolor = outcolor - vec3_splat(crtBlackLevel);
+	outcolor = outcolor / vec3_splat(crtWhiteLevel - crtBlackLevel);
+	// clamp low in case of floating point errors; don't clamp high
+	return max(outcolor, vec3_splat(0.0));
+}
 
 // This is a generic 3D LUT function.
 // We're using it to do gamut conversions when a gamut compression mapping algorithm is necessary to avoid losing detail to clipping.
@@ -223,21 +270,34 @@ vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 // Renderer::AssignGamutLUT() in renderer.cpp is in charge of making sure the correct LUT is bound.
 // Expects:
 // - coords 0,0 in the upper left corner
-// - 4096x64 dimensions
-// - linear rgb (unlike most other textures BGFX is NOT doing a linearize for us; we expect the image is linear to start with)
+// - 4096x64 dimensions (FYI: BGFX cannot handle 16384x128)
+// - stores values as linear RGB, or sRGB gamma-space, or CRT gamma-space as indicated by srgblut and crtlut parameters.
+// 		(do not let BGFX linearize this texture when loading it)
 // - black in the upper left corner
 // - green on the vertical axis
 // - red on the small horizontal axis
 // - blue on the large horizontal axis
+// - input is linear or CRT gamma-space, as indicated by crttypeinput parameter
+// output is always linearized (regardless of how it was stored)
 
-vec3 GamutLUT(vec3 rgb_input)
+vec3 GamutLUT(vec3 rgb_input, bool crttypeinput, bool srgblut, bool crtlut)
 {
 	vec3 temp = saturate(rgb_input) * vec3_splat(63.0);
 	vec3 floors = floor(temp);
 	vec3 ceils = ceil(temp);
 	vec3 ceilweights = saturate(temp - floors);
 
-	// driver might not correctly sample a 1.0 coordinate
+	// If the input is in CRT gamma space, we need to get it, and the LUT indices, into linear RGB to compute interpolation weights.
+	// This two-corner method is slightly wrong because the gamma-space indices don't form a perfect cube in linear space.
+	// But it should be close enough that the error is smaller than quantization error.
+	if (crttypeinput){
+		vec3 temp_linear = CRTSimulation(rgb_input);
+		vec3 floors_linear = CRTSimulation(floors/vec3_splat(63.0));
+		vec3 ceils_linear = CRTSimulation(ceils/vec3_splat(63.0));
+		ceilweights = saturate((temp_linear - floors_linear) / (ceils_linear - floors_linear));
+	}
+
+	// driver might not correctly sample a 1.0 coordinate (and/or might not honor clamp-to-edge)
 	// so we are going to add a just-under-half-step offset to red and green, then increase their divisors by 1
 	// This should get us a slightly lower coordinate within the same pixel
 	floors = floors + vec3(0.4999, 0.4999, 0.0);
@@ -245,6 +305,7 @@ vec3 GamutLUT(vec3 rgb_input)
 	floors = floors / vec3(4096.0, 64.0, 64.0);
 	ceils = ceils / vec3(4096.0, 64.0, 64.0);
 
+	// take 8 samples
 	vec3 RfGfBf = (texture2D(tex_10, vec2(floors.b + floors.r, floors.g))).xyz;
 	vec3 RfGfBc = (texture2D(tex_10, vec2(ceils.b + floors.r, floors.g))).xyz;
 	vec3 RfGcBf = (texture2D(tex_10, vec2(floors.b + floors.r, ceils.g))).xyz;
@@ -254,17 +315,47 @@ vec3 GamutLUT(vec3 rgb_input)
 	vec3 RcGcBf = (texture2D(tex_10, vec2(floors.b + ceils.r, ceils.g))).xyz;
 	vec3 RcGcBc = (texture2D(tex_10, vec2(ceils.b + ceils.r, ceils.g))).xyz;
 
+	// if the LUT is stored with sRGB gamma, need to linearize for interpolation
+	if (srgblut){
+		RfGfBf = toLinear(RfGfBf);
+		RfGfBc = toLinear(RfGfBc);
+		RfGcBf = toLinear(RfGcBf);
+		RfGcBc = toLinear(RfGcBc);
+		RcGfBf = toLinear(RcGfBf);
+		RcGfBc = toLinear(RcGfBc);
+		RcGcBf = toLinear(RcGcBf);
+		RcGcBc = toLinear(RcGcBc);
+	}
+	// or if the LUT stores CRT gamma-space values, linearize those
+	// (this is slightly wrong b/c we're skipping color correction simulation,
+	// but we must skip it since it's not cleanly invertible (which is something we need));
+	// and the error should be smaller than the quantization error anyway,
+	// and we're only doing this in one narrow case: non-NTSC-J movies in NTSC-J mode)
+	else if (crtlut){
+		RfGfBf = toLinearBT1886Appx1Fast(RfGfBf);
+		RfGfBc = toLinearBT1886Appx1Fast(RfGfBc);
+		RfGcBf = toLinearBT1886Appx1Fast(RfGcBf);
+		RfGcBc = toLinearBT1886Appx1Fast(RfGcBc);
+		RcGfBf = toLinearBT1886Appx1Fast(RcGfBf);
+		RcGfBc = toLinearBT1886Appx1Fast(RcGfBc);
+		RcGcBf = toLinearBT1886Appx1Fast(RcGcBf);
+		RcGcBc = toLinearBT1886Appx1Fast(RcGcBc);
+	}
+
+	// merge down to 4 samples along blue axis
 	vec3 RfGf = mix(RfGfBf, RfGfBc, vec3_splat(ceilweights.b));
 	vec3 RfGc = mix(RfGcBf, RfGcBc, vec3_splat(ceilweights.b));
 	vec3 RcGf = mix(RcGfBf, RcGfBc, vec3_splat(ceilweights.b));
 	vec3 RcGc = mix(RcGcBf, RcGcBc, vec3_splat(ceilweights.b));
 
+	// merge down to 2 samples along green axis
 	vec3 Rf = mix(RfGf, RfGc, vec3_splat(ceilweights.g));
 	vec3 Rc = mix(RcGf, RcGc, vec3_splat(ceilweights.g));
 
+	// merge down to one color along red axis
 	vec3 outcolor = mix(Rf, Rc, vec3_splat(ceilweights.r));
 
-	return outcolor;
+	return saturate(outcolor);
 }
 
 // Dithering ---------------------------------------------
@@ -307,12 +398,15 @@ vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ive
 	// scale down below the specified step size
 	dither = dither / vec3_splat(scale_divisor);
 	// add to input
-	vec3 tempout = saturate(pixelval + dither);
+	vec3 tempout = pixelval + dither; // Don't clamp. NTSC-J color correction simulation produces values >1.0 in HDR mode. Have faith that input was clamped in other cases.
 
-	// don't dither colors so close to 0 or 1 that dithering is asymmetric
+	// Don't dither colors so close to 0 or 1 that dithering would be asymmetric.
+	// But do dither values >1.0 in the special case that NTSC-J color correction simulation produces them in HDR mode.
 	bvec3 highcutoff = greaterThan(pixelval, vec3_splat(1.0 - (0.5 / scale_divisor)));
+	bvec3 superhighcutoff = greaterThan(pixelval, vec3_splat(1.0 + (0.5 / scale_divisor)));
 	bvec3 lowcutoff = lessThan(pixelval, vec3_splat(0.5 / scale_divisor));
 	vec3 outcolor = mix(tempout, pixelval, highcutoff);
+	outcolor = mix(outcolor, tempout, superhighcutoff);
 	outcolor = mix(outcolor, pixelval, lowcutoff);
 	return outcolor;
 }

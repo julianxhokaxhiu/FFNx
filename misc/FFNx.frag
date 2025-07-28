@@ -177,14 +177,14 @@ void main()
             }
 
             // Convert gamut to BT709/SRGB or NTSC-J, depending on what we're going to do in post.
+            // We need to do this here, because we may draw things on top of the video, and so we need to match the gamut of the things we're going to draw.
             // This approach has the unfortunate drawback of resulting in two gamut conversions for some inputs.
-            // But it seems to be the only way to avoid breaking stuff that has expectations about the texture colors (like animated field textures).
-            // Use of NTSC-J as the source gamut  for the original videos and their derivatives is a *highly* probable guess:
-            // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
+            // But I see no alternative.
             if (isOverallNTSCJColorGamut){
                 // do nothing for NTSC-J
+                // for other gamuts, backwards convert so that final NTSCJ-to-sRGB conversion will be a round trip
                 if ((isSRGBColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
-                    color.rgb = GamutLUT(color.rgb);
+                    color.rgb = GamutLUT(color.rgb, false, false, true); // linear in, linear out; LUT contains gamma-space data, but LUT function will linearize it while interpolating
                     // dither after the LUT operation
                     ivec2 dimensions = textureSize(tex_0, 0);
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
@@ -194,8 +194,14 @@ void main()
             // overall sRGB
             else {
                 // do nothing for sRGB
+                // take NTSC-J back to gamma-space, then full-on conversion
+                // straight linear-to-linear conversion for SMPTE-C and EBU
                 if ((isNTSCJColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
-                    color.rgb = GamutLUT(color.rgb);
+                    if (isNTSCJColorGamut){
+                      // go back to gamma space
+                      color.rgb = toGammaBT1886Appx1Fast(color.rgb);
+                    }
+                    color.rgb = GamutLUT(color.rgb, isNTSCJColorGamut, true, false); // variable in, linear out; LUT contains sRGB gamma-space data, but LUT function will linearize it while interpolating
                     // dither after the LUT operation
                     ivec2 dimensions = textureSize(tex_0, 0);
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);

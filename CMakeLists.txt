@@ -389,15 +389,6 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_ebu.png
           ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_srgb_to_ntscj.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_smptec_to_ntscj.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ebu_to_ntscj.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
 
 )
 

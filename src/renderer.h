@@ -183,10 +183,7 @@ enum GamutLUTIndexType{
 	INDEX_LUT_EBU_TO_SRGB,
 	INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
 	INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC,
-	INDEX_LUT_INVERSE_NTSCJ_TO_EBU,
-	INDEX_LUT_SRGB_TO_NTSCJ,
-	INDEX_LUT_SMPTEC_TO_NTSCJ,
-	INDEX_LUT_EBU_TO_NTSCJ
+	INDEX_LUT_INVERSE_NTSCJ_TO_EBU
 };
 
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
@@ -378,9 +375,6 @@ private:
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleSRGBtoNTSCJ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleSMPTECtoNTSCJ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleEBUtoNTSCJ = BGFX_INVALID_HANDLE;
 
     bgfx::VertexLayout vertexLayout;
 
