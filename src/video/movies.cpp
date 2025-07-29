@@ -335,8 +335,14 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AVCOL_TRC_RESERVED:
 		case AVCOL_TRC_RESERVED0:
 			if (colormatrix == COLORMATRIX_BT709){
-				gammatype = GAMMAFUNCTION_SMPTE170M;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
+				if (islogomovie){
+					gammatype = GAMMAFUNCTION_BT1886_APPX1;
+					if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, using BT1886 Appendix 1 (CRT television/monitor) gamma curve because this is a logo movie.\n");
+				}
+				else {
+					gammatype = GAMMAFUNCTION_SMPTE170M;
+					if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
+				}
 			}
 			else if (codec_ctx->color_primaries == AVCOL_PRI_BT470BG){
 				gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
