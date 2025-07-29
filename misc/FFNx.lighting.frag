@@ -75,8 +75,6 @@ uniform vec4 gameScriptedLightColor;
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
 
-#define doGamutOverride FSHDRFlags.z > 0.0
-
 #define isBT601ColorMatrix abs(FSMovieFlags.x - 0.0) < 0.00001
 #define isBT709ColorMatrix abs(FSMovieFlags.x - 1.0) < 0.00001
 #define isBRG24ColorMatrix abs(FSMovieFlags.x - 2.0) < 0.00001
@@ -292,16 +290,6 @@ void main()
               texture_color.rgb = toGamma(texture_color.rgb);
               texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
             }
-            /*
-            // This stanza currently does nothing because there's no way to set doGamutOverride.
-            // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
-            else if (doGamutOverride){
-                texture_color.rgb = GamutLUT(texture_color.rgb);
-                ivec2 dimensions = textureSize(tex_0, 0);
-                texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
-                // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
-            }
-            */
 
             if (isMovie) texture_color.a = 1.0;
 

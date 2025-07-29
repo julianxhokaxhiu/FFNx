@@ -280,7 +280,6 @@ private:
         ColorMatrixType bIsMovieColorMatrix = COLORMATRIX_BT601;
         ColorGamutType bIsMovieColorGamut = COLORGAMUT_SRGB;
         ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
-        bool bIsOverrideGamut = false;
         InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
 
         float backendProjMatrix[16];
@@ -509,7 +508,6 @@ public:
     void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);
-    void setGamutOverride(bool flag = false);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);

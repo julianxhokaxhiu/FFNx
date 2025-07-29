@@ -129,7 +129,6 @@ void Renderer::setCommonUniforms()
     internalState.FSHDRFlags = {
         (float)internalState.bIsHDR,
         (float)hdr_max_nits,
-        (float)internalState.bIsOverrideGamut,
         NULL
     };
     if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isHDR %f, monitorNits %f, NULL, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1]);
@@ -400,7 +399,6 @@ void Renderer::resetState()
     setColorMatrix();
     setColorGamut();
     setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB);
-    setGamutOverride();
     setGammaType();
     setGameLightData();
 
@@ -735,14 +733,13 @@ void Renderer::AssignGamutLUT()
 	// Since HDR uses the super-wide rec2020 gamut, it doesn't need a gamut (compression) mapping algorithm,
 	// so it would be better to use the old matrix-based conversions instead of the LUTs that embody a GMA.
 	// That's what we do in post-processing.
-	// However, in two cases we have two serial conversions happening:
-	// (1) Movies where the movie's gamut isn't the same as the selected gamut mode
-	// (2) The implemented but as-yet unused internalState.bIsOverrideGamut
+	// However, in one case we have two serial conversions happening:
+	// Movies where the movie's gamut isn't the same as the selected gamut mode
 	// What I'd *like* to do is to do matrix-based conversions for the first round,
 	// then *tolerate* the out-of-bounds values until post processing,
 	// then the final conversion to rec2020 will bring those values back in bounds.
 	// Unfortunately, I don't think the lighting code could tolerate out-of-bounds values.
-	// (Also, the srgb gamma function would need to be changed to avoid calling pow() on a negative input.)
+	// (Also, the gamma function would need to be changed to avoid calling pow() on a negative input.)
 	// So, for now I'm using the LUTs for the first step for both SDR and HDR,
 	// and I'm putting this comment here in case we ever figure out how to tolerate out-of-bounds values
 	//if (internalState.bIsHDR) return;
@@ -753,12 +750,10 @@ void Renderer::AssignGamutLUT()
 		LoadGamutLUT(INDEX_LUT_NTSCJ_TO_SRGB); // load LUT if not already loaded
 		useTexture(GLUTHandleNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
 	}
-	// Movies and override flag
-	// Note: Override flag currently does nothing because it's never set to true anywhere
-	// The intent is to eventually have a way to say "I want to display a NTSCJ asset in sRGB mode" or "I want to display a sRGB asset in NTSCJ mode."
+	// Movies
 	else {
 		if (internalState.bIsOverallColorGamut == COLORGAMUT_SRGB){
-			if ((internalState.bIsMovieColorGamut == COLORGAMUT_NTSCJ) || internalState.bIsOverrideGamut){
+			if (internalState.bIsMovieColorGamut == COLORGAMUT_NTSCJ){
 				LoadGamutLUT(INDEX_LUT_NTSCJ_TO_SRGB); // load LUT if not already loaded
 				useTexture(GLUTHandleNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
 			}
@@ -776,7 +771,7 @@ void Renderer::AssignGamutLUT()
 			// The consequence is that some colors near places where the P22 gamut exceeds the sRGB/SMPTE-C/EBU gamuts
 			// will appear slightly brighter and/or more saturated in HDR than they would if the round-trip were perfect.
 			// I don't think anyone will mind...
-			if ((internalState.bIsMovieColorGamut == COLORGAMUT_SRGB) || internalState.bIsOverrideGamut){
+			if (internalState.bIsMovieColorGamut == COLORGAMUT_SRGB){
 				LoadGamutLUT(INDEX_LUT_INVERSE_NTSCJ_TO_SRGB); // load LUT if not already loaded
 				useTexture(GLUTHandleInverseNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
 			}
@@ -2258,11 +2253,6 @@ void Renderer::setColorGamut(ColorGamutType cgtype){
 
 void Renderer::setOverallColorGamut(ColorGamutType cgtype){
     internalState.bIsOverallColorGamut = cgtype;
-}
-
-void Renderer::setGamutOverride(bool flag)
-{
-    internalState.bIsOverrideGamut = flag;
 }
 
 void Renderer::setGammaType(InverseGammaFunctionType gtype)
