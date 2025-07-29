@@ -4,6 +4,7 @@
 
 ## Common
 
+- Rendering: Remove stubs for unused per-asset gamut override concept.
 - Rendering: Revise NTSC-J mode to approximate a mid-90s Japanese Sony Trinitron.
 - Rendering: Use BT1886 Appendix 1 gamma function for textures and solid colors.
 - Movie: Use BT1886 Appendix 1 gamma function for PS1-derived movies.
