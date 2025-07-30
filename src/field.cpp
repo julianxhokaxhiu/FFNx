@@ -173,7 +173,7 @@ void field_init()
 	else
 	{
 		// Proxy the field init file read
-		replace_call_function(ff8_externals.read_field_data + 0xE49, ff8_field_init_from_file);
+		replace_call_function(ff8_externals.read_field_data + (JP_VERSION ? 0xEDC : 0xE49), ff8_field_init_from_file);
 	}
 }
 
