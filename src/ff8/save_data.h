@@ -126,6 +126,30 @@ struct savemap_ff8_shop {
 	uint8_t unk1[3];
 };
 
+struct savemap_ff8_config
+{
+	uint8_t battle_speed;
+	uint8_t battle_message_speed;
+	uint8_t message_speed;
+	uint8_t analog_or_volume;
+	uint8_t flags; // ATB|sound|pointer|???|???|custom gamepad|vibration|joystick
+	uint8_t scan;
+	uint8_t camera;
+	uint8_t u3;
+	uint8_t l2;
+	uint8_t r2;
+	uint8_t l1;
+	uint8_t r1;
+	uint8_t triangle;
+	uint8_t circle;
+	uint8_t cross;
+	uint8_t square;
+	uint8_t select;
+	uint8_t u4;
+	uint8_t u5;
+	uint8_t start;
+};
+
 struct savemap_ff8_limit_break {
 	uint16_t quistis_lb;
 	uint16_t zell_lb;
@@ -324,7 +348,7 @@ struct savemap_ff8 {
 	savemap_ff8_gf gfs[G_FORCE_NUM];
 	savemap_ff8_character chars[CHAR_NUM];
 	savemap_ff8_shop shop[20];
-	uint8_t config[20];
+	savemap_ff8_config config;
 	uint8_t party[4]; // 0xFF terminated
 	uint32_t unlocked_weapons; // bitmap for weapons unlocked
 	uint8_t griever_name[12];
