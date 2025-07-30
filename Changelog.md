@@ -54,6 +54,7 @@
 - Exe data: Ensure files loaded only once ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
 - External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
 - External textures: Change texture color for model field external textures, depending on the current map ( https://github.com/julianxhokaxhiu/FFNx/pull/981 )
+- Japanese support: Add ability to use Japanese data with a non-jp exe ( https://github.com/julianxhokaxhiu/FFNx/pull/844 )
 - Widescreen: Fix text dialogues in battles when using 16:9 ( https://github.com/julianxhokaxhiu/FFNx/pull/960 )
 - Movie: Add support for Music/Voice layer for external movies
 - Movie: Fix field models and scripts running too fast on top of movies above 15 FPS, models move smoothly between the 15 FPS steps
@@ -62,7 +63,7 @@
 
 ## FF8 Remastered
 
-- Add support for multi language switch ( https://github.com/julianxhokaxhiu/FFNx/pull/982 )
+- Add support for multi language switch ( https://github.com/julianxhokaxhiu/FFNx/pull/982 https://github.com/julianxhokaxhiu/FFNx/pull/844 )
 
 # 1.24.3
 

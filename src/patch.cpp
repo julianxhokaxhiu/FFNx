@@ -274,7 +274,7 @@ void patch_code_double(uint32_t offset, double r)
 	*(double *)offset = r;
 }
 
-void memcpy_code(uint32_t offset, void *data, uint32_t size)
+void memcpy_code(uint32_t offset, const void *data, uint32_t size)
 {
 	DWORD dummy;
 
