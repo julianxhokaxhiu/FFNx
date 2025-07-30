@@ -73,7 +73,7 @@ static bool screen_open = false;
 
 static void swap_screen_rows()
 {
-	uint8_t *config = ff8_externals.savemap->config;
+	uint8_t *config = &ff8_externals.savemap->config.battle_speed;
 
 	std::swap_ranges(screen_rows, screen_rows + SOUND_COUNT + 1, ff8_externals.menu_config_input_desc);
 	std::swap(screen_row_count, *ff8_externals.menu_config_input_count);
