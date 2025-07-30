@@ -60,65 +60,6 @@ uint16_t *field_current_poly = nullptr;
 
 int (*ff8_opcode_old_battle)(int);
 
-static constexpr uint8_t ff8_remastered_font_alignment_data[] = {
-	0x85, 0x86, 0x88, 0x88, 0x88, 0xB8, 0x47, 0x74, 0x7A, 0x77, 0x89, 0x77, 0x55, 0x44, 0x84, 0x77,
-	0x74, 0x47, 0x89, 0x87, 0x68, 0x86, 0x38, 0x76, 0x96, 0x87, 0x86, 0x66, 0x88, 0x98, 0x88, 0x68,
-	0x66, 0x66, 0x65, 0x36, 0x54, 0x93, 0x66, 0x66, 0x54, 0x64, 0x96, 0x66, 0x76, 0x66, 0x77, 0x55,
-	0x55, 0x34, 0x44, 0x76, 0x77, 0x67, 0x66, 0xA6, 0x66, 0x66, 0x66, 0x66, 0x66, 0x34, 0x44, 0x66,
-	0x66, 0x66, 0x66, 0xA6, 0x5D, 0x95, 0x99, 0x66, 0xA9, 0x77, 0x49, 0x9A, 0xA7, 0x74, 0x35, 0xD7,
-	0x88, 0x97, 0x74, 0x79, 0x93, 0xAA, 0x89, 0x8E, 0x8C, 0x8A, 0x88, 0x88, 0x8A, 0x8F, 0x88, 0x8C,
-	0xC8, 0x09, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x0C, 0x01, 0x00, 0x00,
-	0x00, 0x00, 0xE0, 0x01, 0x10, 0x00, 0x10, 0x00, 0x00, 0x00, 0x52, 0xCA, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0xEF, 0xBD, 0xAD, 0xB5, 0x4A, 0xA9, 0x08, 0xA1, 0x00, 0x00, 0xE7, 0x9C, 0xFF, 0x83, 0xFF, 0x83,
-	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
-	0x4A, 0xA9, 0xAD, 0xB5, 0x10, 0xC2, 0x94, 0xD2, 0x00, 0x00, 0xA5, 0x94, 0xFF, 0x83, 0xFF, 0x83,
-	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
-	0xA5, 0x94, 0x31, 0x86, 0xD6, 0x86, 0x7B, 0x87, 0x00, 0x00, 0xA5, 0x94, 0xFF, 0x83, 0xFF, 0x83,
-	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
-	0xA9, 0x94, 0x73, 0x8C, 0x5A, 0x88, 0x1D, 0x80, 0x00, 0x00, 0xA5, 0x94, 0xFF, 0x83, 0xFF, 0x83,
-	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
-	0xE4, 0x90, 0x22, 0x8A, 0xC2, 0x8A, 0xA0, 0x83, 0x00, 0x00, 0xA5, 0x94, 0xFF, 0x83, 0xFF, 0x83,
-	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
-	0x06, 0xA1, 0xE8, 0xD9, 0x2A, 0xE2, 0xCD, 0xF6, 0x00, 0x00, 0xC6, 0x98, 0xFF, 0x83, 0xFF, 0x83,
-	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
-	0x88, 0xA0, 0x92, 0xC8, 0x58, 0xE0, 0x1D, 0xF4, 0x00, 0x00, 0xE7, 0x9C, 0xFF, 0x83, 0xFF, 0x83,
-	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
-	0x4A, 0xA9, 0x10, 0x42, 0xB5, 0x56, 0x9C, 0x73, 0x0C, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x40, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
-
-static_assert(sizeof(ff8_remastered_font_alignment_data) == 0x1B9);
-
-static uint32_t ff8_load_fonts(uint32_t font_id, uint32_t unknown_arg2, uint32_t unknown_arg3)
-{
-	const auto load_fonts = reinterpret_cast<uint32_t (*)(uint32_t, uint32_t, uint32_t)>(ff8_externals.load_fonts);
-	const uint32_t result = load_fonts(font_id, unknown_arg2, unknown_arg3);
-
-	if (font_id == 0 && ff8_is_remastered_font_asset())
-	{
-		uint8_t *font_alignment_data = reinterpret_cast<uint8_t *>(ff8_externals.dword_1D2B808) + 0x10;
-		memcpy(font_alignment_data, ff8_remastered_font_alignment_data, sizeof(ff8_remastered_font_alignment_data));
-	}
-
-	return result;
-}
-
-static uint32_t ff8_get_character_width(uint32_t character_id)
-{
-	if (character_id == 173) return 9;
-	if (character_id == 174) return 10;
-
-	const uint8_t *font_alignment_data = ff8_is_remastered_font_asset()
-		? ff8_remastered_font_alignment_data
-		: reinterpret_cast<uint8_t *>(ff8_externals.dword_1D2B808) + 0x10;
-	const uint8_t packed_widths = font_alignment_data[character_id >> 1];
-	return ((character_id & 1) != 0 ? packed_widths >> 4 : packed_widths) & 0xF;
-}
-
 enum class ff8_battle_effect_layout_patch_mode
 {
 	direct,
@@ -588,38 +529,40 @@ struct ff8_tex_header *ff8_load_tex_file(struct ff8_file_context* file_context, 
 		}
 	}
 
-	ret->file.pc_name = (char*)external_calloc(1024, sizeof(char));
+	if (file_context->file_container != nullptr) { // tex files inside FS archives only (JP version has temp tdw textures outside archives)
+		ret->file.pc_name = (char*)external_calloc(1024, sizeof(char));
 
-	if (ret->file.pc_name != nullptr) {
-		len = _snprintf(ret->file.pc_name, 511, "%s", &filename[7]);
+		if (ret->file.pc_name != nullptr) {
+			len = _snprintf(ret->file.pc_name, 511, "%s", &filename[7]);
 
-		for(i = 0; i < len; i++)
-		{
-			if(ret->file.pc_name[i] == '.')
+			for(i = 0; i < len; i++)
 			{
-				if(!_strnicmp(&ret->file.pc_name[i], ".TEX", 4)) ret->file.pc_name[i] = 0;
-				else ret->file.pc_name[i] = '_';
+				if(ret->file.pc_name[i] == '.')
+				{
+					if(!_strnicmp(&ret->file.pc_name[i], ".TEX", 4)) ret->file.pc_name[i] = 0;
+					else ret->file.pc_name[i] = '_';
+				}
 			}
-		}
 
-		// Remastered alternative name
-		char langPath[16] = {}, suffix[ZZZ_FILENAME_MAX_SIZE] = {}, remasterFileName[ZZZ_FILENAME_MAX_SIZE] = {};
-		concat_lang_str(langPath);
-		_snprintf(suffix, sizeof(suffix), "%s", filename + 7 + strlen(ff8_externals.archive_path_prefix));
+			// Remastered alternative name
+			char langPath[16] = {}, suffix[ZZZ_FILENAME_MAX_SIZE] = {}, remasterFileName[ZZZ_FILENAME_MAX_SIZE] = {};
+			concat_lang_str(langPath);
+			_snprintf(suffix, sizeof(suffix), "%s", filename + 7 + strlen(ff8_externals.archive_path_prefix));
 
-		// Disable if ff8_high_res_font is 0 or 1 + font
-		if (!is_remastered_hd_textures_disabled("menu") && (ff8_high_res_font == -1 || ff8_high_res_font == 2 || (!strstr(suffix, "hires\\sysevn") && !strstr(suffix, "hires\\sysodd") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "font8")))) {
-			// Non-paletted + lang path
-			_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s_%s.png", suffix, langPath);
-			if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
-				_snprintf(ret->file.pc_name + 512, 511, "%s_%s", suffix, langPath);
-			} else {
-				// Paletted + lang path
-				_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s\\%s\\0.png", suffix, langPath);
+			// Disable if ff8_high_res_font is 0 or 1 + font
+			if (!is_remastered_hd_textures_disabled("menu") && (ff8_high_res_font == -1 || ff8_high_res_font == 2 || (!strstr(suffix, "hires\\sysevn") && !strstr(suffix, "hires\\sysodd") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "font8")))) {
+				// Non-paletted + lang path
+				_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s_%s.png", suffix, langPath);
 				if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
-					_snprintf(ret->file.pc_name + 512, 511, "%s\\%s", suffix, langPath);
+					_snprintf(ret->file.pc_name + 512, 511, "%s_%s", suffix, langPath);
 				} else {
-					strncpy(ret->file.pc_name + 512, suffix, strlen(suffix));
+					// Paletted + lang path
+					_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s\\%s\\0.png", suffix, langPath);
+					if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
+						_snprintf(ret->file.pc_name + 512, 511, "%s\\%s", suffix, langPath);
+					} else {
+						strncpy(ret->file.pc_name + 512, suffix, strlen(suffix));
+					}
 				}
 			}
 		}
@@ -1060,180 +1003,6 @@ int ff8_get_input_device_capabilities_number_of_buttons(int a1)
 	return (use_sdl_gamepad || xinput_connected) ? 10 : std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
 }
 
-int ff8_draw_gamepad_icon_or_keyboard_key(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y)
-{
-	// Keep the "keys" if it is a keyboard and not a gamepad
-	if (icon_id >= 128 && icon_id < 140)
-	{
-		BYTE is_gamepad = *ff8_externals.engine_gamepad_button_pressed != 0;
-
-		if (is_gamepad)
-		{
-			int val = ((int(*)(int,int,int))ff8_externals.get_command_key)(is_gamepad, icon_id - 128, 0);
-
-			if (val == 0) {
-				val = ((int(*)(int,int,int))ff8_externals.get_command_key)(!is_gamepad, icon_id - 128, 0);
-			}
-
-			int rgbButton = val - 224;
-
-			switch (rgbButton)
-			{
-				case 0: // Cross (Steam)/Square
-					return steam_stock_launcher ? 134 : 135;
-				case 1: // Circle (Steam)/Cross
-					return steam_stock_launcher ? 133 : 134;
-				case 2: // Square (Steam)/Circle
-					return steam_stock_launcher ? 135 : 133;
-				case 3: // Triangle
-					return 132;
-				case 4: // L1
-					return 130;
-				case 5: // R1
-					return 131;
-				case 6: // SELECT (Steam)/L2
-					return steam_stock_launcher ? 136 : 128;
-				case 7: // START (Steam)/R2
-					return steam_stock_launcher ? 139 : 129;
-				case 8: // L2 (Steam)/SELECT
-					return steam_stock_launcher ? 128 : 136;
-				case 9: // R2 (Steam)/START
-					return steam_stock_launcher ? 129 : 139;
-			}
-		}
-
-		((void(*)(int, ff8_draw_menu_sprite_texture_infos*, int, uint16_t, uint16_t))ff8_externals.draw_controller_or_keyboard_icons)(a1, draw_infos, icon_id, x, y);
-
-		return -1;
-	}
-
-	return icon_id;
-}
-
-unsigned int *ff8_draw_icon_get_icon_sp1_infos(int icon_id, int &states_count)
-{
-	int *icon_sp1_data = ((int*(*)())ff8_externals.get_icon_sp1_data)();
-
-	if (icon_id >= icon_sp1_data[0])
-	{
-		states_count = 0;
-
-		return nullptr;
-	}
-
-	states_count = HIWORD(icon_sp1_data[icon_id + 1]);
-
-	return (unsigned int *)((char *)icon_sp1_data + uint16_t(icon_sp1_data[icon_id + 1]));
-}
-
-ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
-	int a1, ff8_draw_menu_sprite_texture_infos *draw_infos,
-	int icon_id, uint16_t x, uint16_t y, int a6, int field10_modifier = 0,
-	bool no_a6_mask = false,
-	bool override_field4_8_with_a6 = false,
-	bool yfix = false
-) {
-	icon_id = ff8_draw_gamepad_icon_or_keyboard_key(a1, draw_infos, icon_id, x, y);
-	if (icon_id < 0)
-	{
-		return draw_infos;
-	}
-
-	int states_count = 0;
-	unsigned int *sp1_section_data = ff8_draw_icon_get_icon_sp1_infos(icon_id, states_count);
-
-	if (sp1_section_data == nullptr)
-	{
-		return draw_infos;
-	}
-
-	for (int i = states_count; i > 0; --i)
-	{
-		draw_infos->field_0 = 0x5000000;
-		draw_infos->field_10 = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + field10_modifier) << 16);
-		if (override_field4_8_with_a6)
-		{
-			draw_infos->field_8 = ((a6 & 0xFFFFFF) | 0x64000000) | (((HIBYTE(a6) >> 1) & 2) << 24);
-			draw_infos->field_4 = ((HIBYTE(a6) & 3) << 5) | 0xE100041E;
-		}
-		else
-		{
-			draw_infos->field_8 = no_a6_mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
-			draw_infos->field_4 = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
-		}
-		draw_infos->field_14 = sp1_section_data[1] & 0xFF00FF;
-		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
-		draw_infos->y_related = y + (int32_t(sp1_section_data[1]) >> 24);
-		if (yfix && *ff8_externals.battle_boost_cross_icon_display_1D76604) {
-			*((uint8_t *)draw_infos + 11) |= 2u;
-		}
-		((void(*)(int, ff8_draw_menu_sprite_texture_infos*))ff8_externals.sub_49BB30)(a1, draw_infos);
-		if (!no_a6_mask) {
-			draw_infos += 1;
-		}
-		sp1_section_data += 2;
-	}
-
-	return draw_infos;
-}
-
-ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key1(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6)
-{
-	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6);
-}
-
-ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key2(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y)
-{
-	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, *ff8_externals.dword_1D2B808);
-}
-
-ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key3(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y, int a6)
-{
-	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, 0, true);
-}
-
-ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key4(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int *icon_sp1_data, int icon_id, uint16_t x, uint16_t y, int a6, int a7)
-{
-	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, false, true);
-}
-
-ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key5(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6, int a7)
-{
-	return ff8_draw_icon_or_key(a1, draw_infos, icon_id, x, y, a6, a7, true, false, true);
-}
-
-ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw_menu_sprite_texture_infos_short *draw_infos, int icon_id, uint16_t x, uint16_t y, int a6, int a7) {
-	// We should not cast like this, but that's what the game does
-	icon_id = ff8_draw_gamepad_icon_or_keyboard_key(a1, reinterpret_cast<ff8_draw_menu_sprite_texture_infos *>(draw_infos), icon_id, x, y);
-	if (icon_id < 0)
-	{
-		return draw_infos;
-	}
-
-	int states_count = 0;
-	unsigned int *sp1_section_data = ff8_draw_icon_get_icon_sp1_infos(icon_id, states_count);
-
-	if (sp1_section_data == nullptr)
-	{
-		return draw_infos;
-	}
-
-	for (int i = states_count; i > 0; --i)
-	{
-		draw_infos->field_0 = 0x4000000;
-		draw_infos->field_C = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + a7) << 16);
-		draw_infos->field_4 = a6 | (((sp1_section_data[0] >> 26) & 2) << 24);
-		draw_infos->field_10 = sp1_section_data[1] & 0xFF00FF;
-		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
-		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
-		((void(*)(int, ff8_draw_menu_sprite_texture_infos_short*))ff8_externals.sub_49FE60)(a1, draw_infos);
-		draw_infos += 1;
-		sp1_section_data += 2;
-	}
-
-	return draw_infos;
-}
-
 int ff8_get_key_state(WPARAM dinput_scan_code)
 {
 	int virt_key = 0;
@@ -1477,11 +1246,13 @@ char *ff8_get_text_cached(int pool_id, int cat_id, int text_id, int a4, char *ca
 
 char *ff8_get_text_cached_new_game(int pool_id, int cat_id, int text_id, int a4)
 {
+	ffnx_trace("%s\n", __func__);
 	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, new_game_text_cache);
 }
 
 char *ff8_get_text_cached_load_game(int pool_id, int cat_id, int text_id, int a4)
 {
+	ffnx_trace("%s\n", __func__);
 	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, load_game_text_cache);
 }
 
@@ -2080,8 +1851,6 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_function(ff8_externals._open, ff8_open);
 	replace_function(ff8_externals.fopen, ff8_fopen);
 	if (ff8_remastered_edition) {
-		replace_call(ff8_externals.sub_4972A0 + 0x16, ff8_load_fonts);
-		replace_function(reinterpret_cast<uint32_t>(ff8_externals.get_character_width), ff8_get_character_width);
 		replace_function(uint32_t(ff8_externals._lseek), ff8_lseek);
 		replace_function(uint32_t(ff8_externals._read), ff8_read);
 		replace_function(uint32_t(ff8_externals._write), ff8_write);
@@ -2313,16 +2082,6 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.main_menu_render_sub_4E5550 + 0x222, ff8_get_text_cached_load_game);
 	}
 
-	if (ff8_use_gamepad_icons) {
-		// Replace the whole function to conditionnally show PlayStation icons or keyboard keys
-		replace_function(ff8_externals.ff8_draw_icon_or_key1, ff8_draw_icon_or_key1);
-		replace_function(ff8_externals.ff8_draw_icon_or_key2, ff8_draw_icon_or_key2);
-		replace_function(ff8_externals.ff8_draw_icon_or_key3, ff8_draw_icon_or_key3);
-		replace_function(ff8_externals.ff8_draw_icon_or_key4, ff8_draw_icon_or_key4);
-		replace_function(ff8_externals.ff8_draw_icon_or_key5, ff8_draw_icon_or_key5);
-		replace_function(ff8_externals.ff8_draw_icon_or_key6, ff8_draw_icon_or_key6);
-	}
-
 	// All possible message and ask windows
 	ff8_opcode_old_battle = (int (*)(int))ff8_externals.opcode_battle;
 	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x69], (DWORD)&ff8_opcode_battle);
@@ -2357,7 +2116,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_function(ff8_externals.enable_gf_sub_47E480, (void*)ff8_enable_gf_sub_47E480);
 
 		// seed rank A (also max GIL)
-		replace_call(ff8_externals.menu_sub_4D4D30 + (JP_VERSION ? 0x929 : 0x928), (void*)ff8_update_seed_exp_4C30E0);
+		replace_call(ff8_externals.menu_23_controller_sub_4D4D30 + (JP_VERSION ? 0x929 : 0x928), (void*)ff8_update_seed_exp_4C30E0);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0D], (uint32_t)&ff8_field_opcode_POPM_W);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x153], (uint32_t)&ff8_field_opcode_ADDSEEDLEVEL);
 		replace_call(common_externals.update_field_entities + 0x120, (void*)ff8_field_update_seed_level);

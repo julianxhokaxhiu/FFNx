@@ -148,6 +148,7 @@ bool ff8_worldmap_internal_highres_textures;
 bool ff8_fix_uv_coords_precision;
 bool ff8_use_gamepad_icons;
 bool ff8_always_capture_input;
+bool ff8_enable_japanese_font;
 long ff8_fps_limiter;
 std::string app_path;
 std::string data_drive;
@@ -322,6 +323,7 @@ void read_cfg()
 	ff8_fix_uv_coords_precision = config["ff8_fix_uv_coords_precision"].value_or(true);
 	ff8_use_gamepad_icons = config["ff8_use_gamepad_icons"].value_or(false);
 	ff8_always_capture_input = config["ff8_always_capture_input"].value_or(false);
+	ff8_enable_japanese_font = config["ff8_enable_japanese_font"].value_or(false);
 	ff8_fps_limiter = config["ff8_fps_limiter"].value_or(FPS_LIMITER_DEFAULT);
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");

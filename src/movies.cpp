@@ -299,7 +299,11 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 	if (!fileExists(newFmvName)) {
 		if (ff8_remastered_edition) {
 			// Force 'avi' extension
-			_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.avi", disc, movie);
+			if (JP_VERSION && disc == 3 && (movie == 5 || movie == 6)) {
+				_snprintf(fmvName, sizeof(fmvName), "data/lang-jp/movies/disc%02i_%02ih.avi", disc, movie);
+			} else {
+				_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.avi", disc, movie);
+			}
 			void *opaque = ff8_zzz_open(fmvName);
 
 			if (opaque != nullptr) {

@@ -242,7 +242,7 @@ int ff8_fs_archive_search_filename2(const char *fullpath, ff8_file_fi_infos *fi_
 	if (ret != 1 && file_container != nullptr && !ff8_remastered_edition)
 	{
 		// Lookup without the language in the path
-		size_t prefix_size = get_fl_prefix_size();
+		size_t prefix_size = get_fl_prefix_size(), archive_prefix_size = 0;
 
 		if (trace_all || trace_files) ffnx_warning("%s: file not found, searching again with another language %s...\n", __func__, fullpath + prefix_size);
 
@@ -250,7 +250,17 @@ int ff8_fs_archive_search_filename2(const char *fullpath, ff8_file_fi_infos *fi_
 		{
 			char *path = ff8_externals.fs_archive_get_fl_filepath(id, file_container->fl_infos);
 
-			if (!_stricmp(fullpath + prefix_size, path + prefix_size))
+			if (archive_prefix_size == 0) {
+				archive_prefix_size = strlen("C:\\ff8\\Data\\");
+				char *index_after = strchr(path + archive_prefix_size, '\\');
+				if (index_after == nullptr) {
+					archive_prefix_size = prefix_size;
+				} else {
+					archive_prefix_size = index_after + 1 - path;
+				}
+			}
+
+			if (!_stricmp(fullpath + prefix_size, path + archive_prefix_size))
 			{
 				*fi_infos_for_the_path = file_container->fi_infos[id];
 
@@ -853,13 +863,13 @@ bool ff8_steam_redirection(const char *lpFileName, char *newPath, bool *isZzzFil
 
 		redirected = true;
 	}
-	else if (strstr(lpFileName, "temp.fi") || strstr(lpFileName, "temp.fl") || strstr(lpFileName, "temp.fs") || strstr(lpFileName, "temp_evn.") || strstr(lpFileName, "temp_odd."))
+	else if (strstr(lpFileName, "temp.fi") || strstr(lpFileName, "temp.fl") || strstr(lpFileName, "temp.fs") || strstr(lpFileName, "temp_evn.") || strstr(lpFileName, "temp_odd.") || strstr(lpFileName, "temp_evn1.") || strstr(lpFileName, "temp_odd1."))
 	{
 		// Search for the last '\' character and get a pointer to the next char
-		const char* pos = strrchr(lpFileName, 92) + 1;
+		const char* pos = strrchr(lpFileName, 92);
 
 		get_userdata_path(newPath, MAX_PATH, false);
-		PathAppendA(newPath, pos);
+		PathAppendA(newPath, pos == nullptr ? lpFileName : pos + 1);
 
 		redirected = true;
 	}
