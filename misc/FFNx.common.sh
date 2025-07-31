@@ -14,15 +14,16 @@
 /****************************************************************************/
 
 // Constants for BT1886 Appendix 1 EOTF Function
-// These constants correspond to a mid-90s Sony Trinitron CRT with the brightness turned pretty far up.
+// These constants correspond to a mid-90s Sony Trinitron CRT with the brightness turned pretty far up and the contrast turned pretty far down.
 // Do not change them blindly. If you change black or white level, then B, K, S, and I need to be recalculated.
+// And LUTs will need to be recalculated.
 // (https://github.com/ChthonVII/gamutthingy can calculate them for you.)
-#define crtBlackLevel 0.0015
-#define crtWhiteLevel 1.71
-#define crtConstantB 0.0927318537550299
-#define crtConstantK 1.3578779688794360
-#define crtConstantS 1.3852995465983342
-#define crtConstantI 0.1632400591934701
+#define crtBlackLevel 0.0018
+#define crtWhiteLevel 1.5
+#define crtConstantB 0.1042361441620798
+#define crtConstantK 1.1591247176412838
+#define crtConstantS 1.3711574400867077
+#define crtConstantI 0.1489575626482313
 
 // Gamut LUT
 SAMPLER2D(tex_10, 10);
@@ -112,7 +113,7 @@ vec3 toLinear2pt8(vec3 _rgb)
 
 // EOTF Function from BT1886 Appendix 1 (https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.1886-0-201103-I!!PDF-E.pdf)
 // Approximates the gamma behavior of a CRT (more accurately than the crummy Annex 1 function)
-// Constants have been selected to match a mid-90s Sony Trinitron CRT with the brightness turned pretty far up.
+// Constants have been selected to match a mid-90s Sony Trinitron CRT with the brightness turned pretty far up and the contrast turned pretty far down.
 // Assumes input in range 0-1, output in range 0-1.
 vec3 toLinearBT1886Appx1Fast(vec3 _rgb)
 {
