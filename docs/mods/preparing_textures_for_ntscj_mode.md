@@ -25,7 +25,7 @@ Recolor your texture as per "If you are very anal," below.
 Make your texture in sRGB in Photoshop, etc., then apply the inverse NTSC-J conversion. Later, at display time, NTSC-J mode will apply the forward conversion, thus roundtripping your texture back to what you saw in Photoshop, etc.
 
 To do the inverse conversion, use [gamutthingy](https://github.com/ChthonVII/gamutthingy), as so:
-`gamutthingy --crtemu front --crtdemod CXA2060BS_JP --crtyuvconst 3digit --crtclamphighenable false --crtclamplowzerolight true --crtblack 0.0015 --crtwhite 1.71 --source-primaries P22_trinitron_mixandmatch --source-whitepoint 9300K8mpcd --dest-primaries srgb_spec --dest-whitepoint D65 --adapt cat16 --spiral-carisma true --map-mode compress --gamut-mapping-algorithm vprc --gamma-out srgb --backwards true --infile your_input_file.png --outfile your_output_file.png`
+`gamutthingy --crtemu front --crtdemod CXA2060BS_JP --crtyuvconst 3digit --crtclamphighenable false --crtclamplowzerolight true --crtblack 0.0018 --crtwhite 1.5 --crt-saturation-knob 1.04 --source-primaries P22_trinitron_mixandmatch --source-whitepoint 9300K8mpcd --dest-primaries srgb_spec --dest-whitepoint D65 --adapt cat16 --spiral-carisma true --map-mode compress --gamut-mapping-algorithm vprc --gamma-out srgb --backwards true --infile your_input_file.png --outfile your_output_file.png`
 
 ## **If you are very anal:**
 
@@ -36,9 +36,9 @@ This has two advantages:
 2. Color blending will be perfectly correct because what Photoshop, etc. thinks is the correct conversion to linear RGB will indeed be correct. (Though this hardly matters because color blending in the wrong linear space is still pretty close to correct. So the error is usually smaller than the error inherent in 8-bit quantization anyway.)
 
 To forward convert from NTSC-J to sRGB:
-`gamutthingy --crtemu front --crtdemod CXA2060BS_JP --crtyuvconst 3digit --crtclamphighenable false --crtclamplowzerolight true --crtblack 0.0015 --crtwhite 1.71 --source-primaries P22_trinitron_mixandmatch --source-whitepoint 9300K8mpcd --dest-primaries srgb_spec --dest-whitepoint D65 --adapt cat16 --spiral-carisma true --map-mode compress --gamut-mapping-algorithm vprc --gamma-out srgb --infile your_input_file.png --outfile your_output_file.png`
+`gamutthingy --crtemu front --crtdemod CXA2060BS_JP --crtyuvconst 3digit --crtclamphighenable false --crtclamplowzerolight true --crtblack 0.0018 --crtwhite 1.5 --crt-saturation-knob 1.04 --source-primaries P22_trinitron_mixandmatch --source-whitepoint 9300K8mpcd --dest-primaries srgb_spec --dest-whitepoint D65 --adapt cat16 --spiral-carisma true --map-mode compress --gamut-mapping-algorithm vprc --gamma-out srgb --infile your_input_file.png --outfile your_output_file.png`
 
 Make edits in sRGB space.
 
 To inverse convert back to NTSC-J:
-`gamutthingy --crtemu front --crtdemod CXA2060BS_JP --crtyuvconst 3digit --crtclamphighenable false --crtclamplowzerolight true --crtblack 0.0015 --crtwhite 1.71 --source-primaries P22_trinitron_mixandmatch --source-whitepoint 9300K8mpcd --dest-primaries srgb_spec --dest-whitepoint D65 --adapt cat16 --spiral-carisma true --map-mode compress --gamut-mapping-algorithm vprc --gamma-out srgb --backwards true --infile your_input_file.png --outfile your_output_file.png`
+`gamutthingy --crtemu front --crtdemod CXA2060BS_JP --crtyuvconst 3digit --crtclamphighenable false --crtclamplowzerolight true --crtblack 0.0018 --crtwhite 1.5 --crt-saturation-knob 1.04 --source-primaries P22_trinitron_mixandmatch --source-whitepoint 9300K8mpcd --dest-primaries srgb_spec --dest-whitepoint D65 --adapt cat16 --spiral-carisma true --map-mode compress --gamut-mapping-algorithm vprc --gamma-out srgb --backwards true --infile your_input_file.png --outfile your_output_file.png`

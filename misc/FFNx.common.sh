@@ -218,7 +218,7 @@ vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
 vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 {
 	mat3 NTSCJtoRec2020 = mat3(
-		vec3(+0.611788289692391, +0.0797156499454548, 0.00725711913733915),
+		vec3(+0.611788289692391, +0.0797156499454548, +0.00725711913733915),
 		vec3(+0.314277589465384, +0.867319879942047, +0.0632222078142046),
 		vec3(+0.0739341206756937, +0.0529644701077284, +0.929520673095398)
 	);
@@ -232,11 +232,12 @@ vec3 CRTSimulation(vec3 rgb_input){
 	// Matrices can be derived from the chip datasheets through the inverse of the method explained in
 	// Parker, Norman W. "An Analysis of the Necessary Decoder Corrections for Color Receiver Operation with Non-Standard Receiver Primaries." IEEE Transactions on Consumer Electronics, Vol. CE-28, No. 1, pp. 74-83. February 1982. (Reprint of 1966 original.)
 	// This matrix corresponds to the CXA2060BS in JP mode.
+	// With the saturation knob turned up a bit, also rolled into the matrix.
 	// (flip matrix b/c shader languages are column-major)
 	mat3 crtMatrix = mat3(
-		vec3(+1.29035834025603, +0.01339988905600664, +0.0),
-		vec3(-0.1862128635604091, +0.9814911231433754, +0.0),
-		vec3(-0.1041454766956209, +0.005108987800618033, +1.0)
+		vec3(+1.329241997338724, +0.002013691127971472, -0.004560000000000004),
+		vec3(-0.2171413781028256, +0.9972707680691105, -0.02348000000000002),
+		vec3(-0.1128712957634457, +0.0007533473126427508, +1.03544)
 	);
 	vec3 corrected = instMul(crtMatrix, rgb_input);
 
