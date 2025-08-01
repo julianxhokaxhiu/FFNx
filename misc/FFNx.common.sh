@@ -222,7 +222,10 @@ vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 		vec3(+0.314277589465384, +0.867319879942047, +0.0632222078142046),
 		vec3(+0.0739341206756937, +0.0529644701077284, +0.929520673095398)
 	);
-	return saturate(instMul(NTSCJtoRec2020, rgb_input));
+	// clamp low in case of floating point errors; don't clamp high
+	// out-of-bounds red will get scaled down to something sane inside ApplyREC2084Curve()
+	// end result should be a pure red that's stronger than the red component of white (but still easily in bounds for rec2020)
+	return max(instMul(NTSCJtoRec2020, rgb_input), vec3_splat(0.0));
 }
 
 // Simulate CRT behavior (gamma-space R'G'B' input, linear RGB output)
