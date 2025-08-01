@@ -45,7 +45,7 @@ void main()
 			color.rgb = CRTSimulation(color.rgb); // CRT gamma-space in, linear out
 		}
 		else {
-			color.rgb = toLinear(color.rgb);
+			color.rgb = toLinearBT1886Appx1Fast(color.rgb);
 		}
 
 		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
