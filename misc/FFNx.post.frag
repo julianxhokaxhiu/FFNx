@@ -41,7 +41,7 @@ void main()
 
 	if (isHDR) {
 		// back to linear for gamut conversion and PQ gamma curve
-		color.rgb = toLinear(color.rgb);
+		color.rgb = toLinearBT1886Appx1Fast(color.rgb);
 
 		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
 		ivec2 dimensions = textureSize(tex_0, 0);
@@ -55,7 +55,7 @@ void main()
 		color.rgb = ApplyREC2084Curve(color.rgb, monitorNits);
 	}
 	else if (isOverallNTSCJColorGamut){
-		color.rgb = toLinear(color.rgb);
+		color.rgb = toLinearBT1886Appx1Fast(color.rgb);
 		color.rgb = GamutLUT(color.rgb);
 		// dither after the LUT operation
 		ivec2 dimensions = textureSize(tex_0, 0);
