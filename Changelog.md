@@ -19,6 +19,9 @@
 - Core: Fix crash when entering field in JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/827 )
 - External textures: Fix Rinoa battle model that do not get replaced ( https://github.com/julianxhokaxhiu/FFNx/pull/790 )
 - Direct file: field subarchives (mapdata.fs for example) can now be loaded outside field.fs ( https://github.com/julianxhokaxhiu/FFNx/pull/822 )
+- Widescreen: Initial support for the entire game
+- Widescreen: Fix menu rendering bringing it back to its original aspect ratio
+- Widescreen: Enable some full 3D areas to be seen entirely instead of vertically cropped
 
 ## FF8 Steam
 
