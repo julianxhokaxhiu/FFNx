@@ -985,10 +985,15 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 				if (ff8)
 				{
 					vram_init();
-					if (ff8_fix_uv_coords_precision) {
-						uv_patch_init();
-					}
+					if (ff8_fix_uv_coords_precision) uv_patch_init();
 					vibration_init();
+					if (widescreen_enabled)
+					{
+						*ff8_externals.current_viewport_x_dword_1A7764C = wide_viewport_x;
+						*ff8_externals.current_viewport_y_dword_1A77648 = wide_viewport_y;
+						*ff8_externals.current_viewport_width_dword_1A77654 = wide_viewport_width;
+						*ff8_externals.current_viewport_height_dword_1A77650 = wide_viewport_height;
+					}
 				}
 
 				exe_data_init();

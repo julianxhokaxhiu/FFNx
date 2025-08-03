@@ -38,6 +38,7 @@
 #include "ff8/save_data.h"
 #include "metadata.h"
 #include "achievement.h"
+#include "widescreen.h"
 
 unsigned char texture_reload_fix1[] = {0x5B, 0x5F, 0x5E, 0x5D, 0x81, 0xC4, 0x10, 0x01, 0x00, 0x00};
 unsigned char texture_reload_fix2[] = {0x5F, 0x5E, 0x5D, 0x5B, 0x81, 0xC4, 0x8C, 0x00, 0x00, 0x00};
@@ -1393,6 +1394,42 @@ int ff8_limit_fps()
 	return 0;
 }
 
+void* ff8_engine_set_wide_viewport(int x, int y, int w, int h)
+{
+	*ff8_externals.current_viewport_x_dword_1A7764C = wide_viewport_x;
+	*ff8_externals.current_viewport_y_dword_1A77648 = wide_viewport_y;
+	*ff8_externals.current_viewport_width_dword_1A77654 = wide_viewport_width;
+	*ff8_externals.current_viewport_height_dword_1A77650 = wide_viewport_height;
+
+	*ff8_externals.ssigpu_viewport_x_dword_1CA89D8 = wide_viewport_x;
+	*ff8_externals.ssigpu_viewport_y_dword_1CA89DC = wide_viewport_y;
+	*ff8_externals.ssigpu_viewport_width_dword_B7CBF8 = wide_viewport_width;
+	*ff8_externals.ssigpu_viewport_height_dword_B7CBFC = wide_viewport_height;
+
+	if ( w >= 540 || h >= 380 )
+	{
+		if ( *ff8_externals.dword_B7CE28 != -1 )
+			*ff8_externals.flag_d3d_renderer_related_dword_1CCFD94 = *ff8_externals.dword_B7CE28;
+	}
+	else
+	{
+		int tmp = *ff8_externals.flag_d3d_renderer_related_dword_1CCFD94;
+		*ff8_externals.flag_d3d_renderer_related_dword_1CCFD94 = 0;
+		*ff8_externals.dword_B7CE28 = tmp;
+	}
+
+	return ff8_externals.engine_setviewport_sub_41E070(wide_viewport_x, wide_viewport_y, wide_viewport_width, wide_viewport_height, common_externals.get_game_object());
+}
+
+void ff8_widescreen_hook_init() {
+	// Viewport fixes
+	replace_function(ff8_externals.engine_setviewport_sub_45B4C0, ff8_engine_set_wide_viewport);
+
+	// Menu
+	ff8_externals.menu_viewport[2].scale_x = 2.0;
+	ff8_externals.menu_viewport[2].offset_x = -64.0;
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -1745,6 +1782,12 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// obel lake quest
 		replace_call(ff8_externals.worldmap_with_fog_sub_53FAC0 + (FF8_US_VERSION ? 0x3C2 : 0x3C4), (void*)ff8_world_sub_54D7E0);
 	}
+
+	// #####################
+	// widescreen / uncrop
+	// #####################
+	if(widescreen_enabled)
+		ff8_widescreen_hook_init();
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)

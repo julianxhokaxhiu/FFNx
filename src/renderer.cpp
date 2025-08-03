@@ -600,7 +600,10 @@ void Renderer::recalcInternals()
     }
 
     // Let the user know about chosen resolutions
-    ffnx_info("Original resolution %ix%i, Scaling factor %ix, Internal resolution %ix%i, Output resolution %ix%i\n", game_width, game_height, scalingFactor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
+    if (widescreen_enabled)
+        ffnx_info("Original resolution %ix%i, Scaling factor %ix, Internal resolution %ix%i, Output resolution %ix%i\n", wide_game_width, wide_game_height, scalingFactor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
+    else
+        ffnx_info("Original resolution %ix%i, Scaling factor %ix, Internal resolution %ix%i, Output resolution %ix%i\n", game_width, game_height, scalingFactor, framebufferWidth, framebufferHeight, window_size_x, window_size_y);
 }
 
 void Renderer::calcBackendProjMatrix()

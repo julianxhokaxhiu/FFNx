@@ -29,6 +29,8 @@
 #include "patch.h"
 #include "ff8/battle/effects.h"
 
+#include "log.h"
+
 void ff8_set_main_loop(uint32_t driver_mode, uint32_t main_loop)
 {
 	uint32_t i;
@@ -182,6 +184,18 @@ void ff8_find_externals()
 	ff8_externals.load_fonts = get_relative_call(ff8_externals.sub_4972A0, 0x16);
 
 	ff8_externals.engine_reset_viewport_sub_4972D0 = get_relative_call(ff8_externals.sub_47CCB0, 0xB7A25);
+	ff8_externals.engine_setviewport_sub_45B4C0 = get_relative_call(ff8_externals.field_main_loop, 0x39);
+	ff8_externals.engine_setviewport_sub_41E070 = (void*(*)(int, int, int, int, void*))get_relative_call(ff8_externals.engine_setviewport_sub_45B4C0, 0x6B);
+	ff8_externals.dword_B7CE28 = (uint32_t*)get_absolute_value(ff8_externals.engine_setviewport_sub_45B4C0, 0x53);
+	ff8_externals.flag_d3d_renderer_related_dword_1CCFD94 = (uint32_t*)get_absolute_value(ff8_externals.engine_setviewport_sub_45B4C0, 0x5D);
+	ff8_externals.ssigpu_viewport_x_dword_1CA89D8 = (int32_t*)get_absolute_value(ff8_externals.engine_setviewport_sub_45B4C0, 0x1C);
+	ff8_externals.ssigpu_viewport_y_dword_1CA89DC = (int32_t*)get_absolute_value(ff8_externals.engine_setviewport_sub_45B4C0, 0x22);
+	ff8_externals.ssigpu_viewport_width_dword_B7CBF8 = (int32_t*)get_absolute_value(ff8_externals.engine_setviewport_sub_45B4C0, 0x28);
+  ff8_externals.ssigpu_viewport_height_dword_B7CBFC = (int32_t*)get_absolute_value(ff8_externals.engine_setviewport_sub_45B4C0, 0x2E);
+	ff8_externals.current_viewport_x_dword_1A7764C = (int32_t*)get_absolute_value(ff8_externals.engine_reset_viewport_sub_4972D0, 0xAE41);
+	ff8_externals.current_viewport_y_dword_1A77648 = (int32_t*)get_absolute_value(ff8_externals.engine_reset_viewport_sub_4972D0, 0xAE47);
+	ff8_externals.current_viewport_width_dword_1A77654 = (int32_t*)get_absolute_value(ff8_externals.engine_reset_viewport_sub_4972D0, 0xAE4D);
+	ff8_externals.current_viewport_height_dword_1A77650 = (int32_t*)get_absolute_value(ff8_externals.engine_reset_viewport_sub_4972D0, 0xAE5E);
 
 	ff8_externals.sub_537F30 = get_relative_call(ff8_externals.sub_534640, 0x2E);
 	ff8_externals.sub_5391B0 = get_relative_call(ff8_externals.sub_537F30, 0x58);

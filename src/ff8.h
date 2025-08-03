@@ -1615,6 +1615,18 @@ struct ff8_externals
 	uint32_t battle_sub_494410;
 	void (*battle_sub_494AF0)(int, int, int, int);
 	uint32_t engine_reset_viewport_sub_4972D0;
+	uint32_t engine_setviewport_sub_45B4C0;
+	void* (*engine_setviewport_sub_41E070)(int, int, int, int, void*);
+	uint32_t *dword_B7CE28;
+	uint32_t *flag_d3d_renderer_related_dword_1CCFD94;
+	int32_t *ssigpu_viewport_x_dword_1CA89D8;
+	int32_t *ssigpu_viewport_y_dword_1CA89DC;
+	int32_t *ssigpu_viewport_width_dword_B7CBF8;
+	int32_t *ssigpu_viewport_height_dword_B7CBFC;
+	int32_t *current_viewport_x_dword_1A7764C;
+	int32_t *current_viewport_y_dword_1A77648;
+	int32_t *current_viewport_width_dword_1A77654;
+	int32_t *current_viewport_height_dword_1A77650;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
