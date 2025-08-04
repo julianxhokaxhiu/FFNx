@@ -27,6 +27,8 @@ Make your texture in sRGB in Photoshop, etc., then apply the inverse NTSC-J conv
 To do the inverse conversion, use [gamutthingy](https://github.com/ChthonVII/gamutthingy), as so:
 `gamutthingy --crtemu front --crtdemod CXA2060BS_JP --crtyuvconst 3digit --crtclamphighenable false --crtclamplowzerolight true --crtblack 0.0018 --crtwhite 1.5 --crt-saturation-knob 1.04 --source-primaries P22_trinitron_mixandmatch --source-whitepoint 9300K8mpcd --dest-primaries srgb_spec --dest-whitepoint D65 --adapt cat16 --spiral-carisma true --map-mode compress --gamut-mapping-algorithm vprc --gamma-out srgb --backwards true --infile your_input_file.png --outfile your_output_file.png`
 
+If you texture is a UI element that may be stretched when it is displayed, add `--dither false`. You might also consider `--dither false` for elements like fonts that may be repeated irregularly.
+
 ## **If you are very anal:**
 
 If you are very anal, you can convert the original texture to sRGB, work on it (or use it for inspiration) in sRGB, then apply the inverse conversion to go back to NTSC-J colors.
@@ -42,3 +44,5 @@ Make edits in sRGB space.
 
 To inverse convert back to NTSC-J:
 `gamutthingy --crtemu front --crtdemod CXA2060BS_JP --crtyuvconst 3digit --crtclamphighenable false --crtclamplowzerolight true --crtblack 0.0018 --crtwhite 1.5 --crt-saturation-knob 1.04 --source-primaries P22_trinitron_mixandmatch --source-whitepoint 9300K8mpcd --dest-primaries srgb_spec --dest-whitepoint D65 --adapt cat16 --spiral-carisma true --map-mode compress --gamut-mapping-algorithm vprc --gamma-out srgb --backwards true --infile your_input_file.png --outfile your_output_file.png`
+
+If you texture is a UI element that may be stretched when it is displayed, add `--dither false` to both commands. You might also consider `--dither false` for elements like fonts that may be repeated irregularly.
