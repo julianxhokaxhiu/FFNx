@@ -1762,6 +1762,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
 
                 if (isKeepDefaultScissor)
                 {
+                    scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
                     return;
                 }
 
