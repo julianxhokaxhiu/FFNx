@@ -4,6 +4,7 @@
 
 ## Common
 
+- Movie: Use BT1886 Appendix 1 gamma function for PS1-derived movies.
 - Core: Improve error message on crash and make the link clickable
 - Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly.
 
