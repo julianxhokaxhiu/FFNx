@@ -89,7 +89,7 @@ uniform vec4 gameScriptedLightColor;
 #define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
 #define is2pt2Gamma abs(FSMovieFlags.z - 1.0) < 0.00001
 #define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
-#define isToelessSRGBGamma abs(FSMovieFlags.z - 3.0) < 0.00001
+#define isCRTGamma abs(FSMovieFlags.z - 3.0) < 0.00001
 #define is2pt8Gamma abs(FSMovieFlags.z - 4.0) < 0.00001
 
 #define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
@@ -178,8 +178,8 @@ void main()
             }
 
             // Use a different inverse gamma function depending on the FMV's metadata
-            if (isToelessSRGBGamma){
-                color.rgb = toLinearToelessSRGB(color.rgb);
+            if (isCRTGamma){
+                color.rgb = toLinearBT1886Appx1Fast(color.rgb);
             }
             else if (is2pt2Gamma){
                 color.rgb = toLinear2pt2(color.rgb);
@@ -195,14 +195,14 @@ void main()
             }
 
             // Convert gamut to BT709/SRGB or NTSC-J, depending on what we're going to do in post.
+            // We need to do this here, because we may draw things on top of the video, and so we need to match the gamut of the things we're going to draw.
             // This approach has the unfortunate drawback of resulting in two gamut conversions for some inputs.
-            // But it seems to be the only way to avoid breaking stuff that has expectations about the texture colors (like animated field textures).
-            // Use of NTSC-J as the source gamut  for the original videos and their derivatives is a *highly* probable guess:
-            // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
+            // But I see no alternative.
             if (isOverallNTSCJColorGamut){
                 // do nothing for NTSC-J
+                // for other gamuts, backwards convert so that final NTSCJ-to-sRGB conversion will be a round trip
                 if ((isSRGBColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
-                    color.rgb = GamutLUT(color.rgb);
+                    color.rgb = GamutLUT(color.rgb, false, false, true); // linear in, linear out; LUT contains gamma-space data, but LUT function will linearize it while interpolating
                     // dither after the LUT operation
                     ivec2 dimensions = textureSize(tex_0, 0);
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
@@ -212,8 +212,14 @@ void main()
             // overall sRGB
             else {
                 // do nothing for sRGB
+                // take NTSC-J back to gamma-space, then full-on conversion
+                // straight linear-to-linear conversion for SMPTE-C and EBU
                 if ((isNTSCJColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
-                    color.rgb = GamutLUT(color.rgb);
+                    if (isNTSCJColorGamut){
+                      // go back to gamma space
+                      color.rgb = toGammaBT1886Appx1Fast(color.rgb);
+                    }
+                    color.rgb = GamutLUT(color.rgb, isNTSCJColorGamut, true, false); // variable in, linear out; LUT contains sRGB gamma-space data, but LUT function will linearize it while interpolating
                     // dither after the LUT operation
                     ivec2 dimensions = textureSize(tex_0, 0);
                     color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
@@ -277,8 +283,9 @@ void main()
                 if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
 
                 // This was previously in gamma space, so linearize again.
-                texture_color.rgb = toLinear(texture_color.rgb);
+                //texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
             }
+            /*
             // This stanza currently does nothing because there's no way to set doGamutOverride.
             // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
             else if (doGamutOverride){
@@ -287,6 +294,10 @@ void main()
                 texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
                 // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
             }
+            */
+
+            // Use CRT gamma for all textures (no longer using BGFX's built-in sRGB linearization)
+            texture_color.rgb = toLinearBT1886Appx1Fast(texture_color.rgb);
 
             if (isMovie) texture_color.a = 1.0;
 
@@ -413,13 +424,13 @@ void main()
         float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
         float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
         float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
-        vec3 light1Ambient = toLinear(gameLightColor1.rgb) * dotLight1 * dotLight1;
-        vec3 light2Ambient = toLinear(gameLightColor2.rgb) * dotLight2 * dotLight2;
-        vec3 light3Ambient = toLinear(gameLightColor3.rgb) * dotLight3 * dotLight3;
-        vec3 lightAmbient = toLinear(gameScriptedLightColor.rgb) * (toLinear(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
+        vec3 light1Ambient = toLinearBT1886Appx1Fast(gameLightColor1.rgb) * dotLight1 * dotLight1;
+        vec3 light2Ambient = toLinearBT1886Appx1Fast(gameLightColor2.rgb) * dotLight2 * dotLight2;
+        vec3 light3Ambient = toLinearBT1886Appx1Fast(gameLightColor3.rgb) * dotLight3 * dotLight3;
+        vec3 lightAmbient = toLinearBT1886Appx1Fast(gameScriptedLightColor.rgb) * (toLinearBT1886Appx1Fast(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
         gl_FragColor.rgb *= gameGlobalLightColor.w * lightAmbient;
     }
 
     // return to gamma space so we can do alpha blending the same way FF7/8 did.
-    gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
+    gl_FragColor.rgb = toGammaBT1886Appx1Fast(gl_FragColor.rgb);
 }
