@@ -9,10 +9,12 @@
 
 ## FF7
 
-- Core: Fix core game bug issue happening on the wind wall fields `woa_*` ( https://github.com/julianxhokaxhiu/FFNx/issues/797 )
-- Core: Fix FADE opcode fading color when type=2 is used ( https://github.com/julianxhokaxhiu/FFNx/issues/805 )
 - 60FPS: Fix escape magic animation speed (https://github.com/julianxhokaxhiu/FFNx/issues/794)
 - 60FPS: Fix manipulate, poison and regen effect animation in battle (https://github.com/julianxhokaxhiu/FFNx/issues/817)
+- Core: Fix core game bug issue happening on the wind wall fields `woa_*` ( https://github.com/julianxhokaxhiu/FFNx/issues/797 )
+- Core: Fix FADE opcode fading color when type=2 is used ( https://github.com/julianxhokaxhiu/FFNx/issues/805 )
+- Core: Fix Credits playing too fast ( https://github.com/julianxhokaxhiu/FFNx/issues/828 )
+- GameHacks: Allow to skip ending movie using the movie skip shortcut
 
 ## FF8
 
