@@ -532,6 +532,11 @@ bool ff7_skip_movies()
 	{
 		ff7_externals.movie_object->movie_end = 1;
 
+		if (mode == MODE_ENDINGMOVIE)
+		{
+			ff7_externals.movie_object->is_playing = 0;
+		}
+
 		if (mode == MODE_FIELD)
 		{
 			*ff7_externals.word_CC0DD4 = 5;
