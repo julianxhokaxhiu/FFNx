@@ -6,6 +6,7 @@
 
 - Core: Improve error message on crash and make the link clickable
 - Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly.
+- Renderer: Fix game crashing while using Vulkan returning error VK_ERROR_OUT_OF_POOL_MEMORY
 
 ## FF7
 
