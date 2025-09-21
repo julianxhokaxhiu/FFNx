@@ -85,8 +85,10 @@ void ff7_load_kernel2_wrapper(char *filename)
 			else
 				fread(kernel2_sections[n-9], sizeof(byte), chunk_size, fd);
 
-			ffnx_trace("kernel section %i overridden with %s\n", n+1, chunk_file);
+			ffnx_trace("%s: kernel section %i overridden with %s\n", __func__, n+1, chunk_file);
 			fclose(fd);
 		}
+		else if (trace_direct)
+			ffnx_trace("%s: could not find %s\n", __func__, chunk_file);
 	}
 }
