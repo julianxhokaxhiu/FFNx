@@ -70,7 +70,7 @@ namespace ff7::battle
 		uint32_t chunk_size = 0;
 		FILE* fd;
 
-		_snprintf(chunk_file, sizeof(chunk_file), "%s/%s/battle/scene.bin.chunk.%i", basedir, direct_mode_path.c_str(), (offset >> 13) + 1);
+		_snprintf(chunk_file, sizeof(chunk_file), "%s/%s/battle/scene.bin.chunk.%i", basedir, direct_mode_path.c_str(), ff7_externals.modules_global_object->battle_id / 4);
 
 		if ((fd = fopen(chunk_file, "rb")) != NULL)
 		{
@@ -79,9 +79,11 @@ namespace ff7::battle
 			fseek(fd, 0L, SEEK_SET);
 			fread(*out_buffer, sizeof(byte), chunk_size, fd);
 
-			ffnx_trace("scene section %i overridden with %s\n", (offset >> 13) + 1, chunk_file);
+			ffnx_trace("%s: scene overridden using %s\n", __func__, chunk_file);
 			fclose(fd);
 		}
+		else if (trace_direct)
+			ffnx_trace("%s: could not find %s\n", __func__, chunk_file);
 
 		return ret;
 	}
