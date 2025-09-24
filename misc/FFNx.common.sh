@@ -13,6 +13,18 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+// Constants for BT1886 Appendix 1 EOTF Function
+// These constants correspond to a mid-90s Sony Trinitron CRT with the brightness turned pretty far up and the contrast turned pretty far down.
+// Do not change them blindly. If you change black or white level, then B, K, S, and I need to be recalculated.
+// And LUTs will need to be recalculated.
+// (https://github.com/ChthonVII/gamutthingy can calculate them for you.)
+#define crtBlackLevel 0.0018
+#define crtWhiteLevel 1.5
+#define crtConstantB 0.1042361441620798
+#define crtConstantK 1.1591247176412838
+#define crtConstantS 1.3711574400867077
+#define crtConstantI 0.1489575626482313
+
 // Gamut LUT
 SAMPLER2D(tex_10, 10);
 
@@ -97,19 +109,23 @@ vec3 toLinear2pt8(vec3 _rgb)
 	return saturate(pow(_rgb.rgb, vec3_splat(2.8)));
 }
 
-// This is an unprincipled, bespoke gamma function that "looks good" with FF7 videos, while all other options are problematic:
-//   - Functions with toe slopes cause banding near black in these videos.
-//   - A pure 2.2 power function loses details in shadow to darkness.
-//   - A pure 2.0 power function blows out highlights.
-// While unmoored from any theoretical or mathematical justification, this function avoids all those problems.
-vec3 toLinearToelessSRGB(vec3 _rgb)
+// EOTF Function from BT1886 Appendix 1 (https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.1886-0-201103-I!!PDF-E.pdf)
+// Approximates the gamma behavior of a CRT (more accurately than the crummy Annex 1 function)
+// Constants have been selected to match a mid-90s Sony Trinitron CRT with the brightness turned pretty far up and the contrast turned pretty far down.
+// Assumes input in range 0-1, output in range 0-1.
+vec3 toLinearBT1886Appx1Fast(vec3 _rgb)
 {
-	vec3 twoPtwo = toLinear2pt2(_rgb);
-	vec3 sRGB = toLinear(_rgb);
-	bvec3 useSRGB = lessThan(sRGB, twoPtwo);
-	vec3 proportion = pow(_rgb / vec3_splat(0.389223), vec3_splat(1.0 / 2.2));
-	vec3 merged = mix(twoPtwo, sRGB, proportion);
-	return saturate(mix(merged, sRGB, useSRGB));
+	// add B
+	_rgb = _rgb + vec3_splat(crtConstantB);
+	// EOTF
+	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(0.35 + crtConstantB));
+	vec3 higher = pow(_rgb, vec3_splat(2.6)) * vec3_splat(crtConstantK);
+	vec3 lower = pow(_rgb, vec3_splat(3.0)) * vec3_splat(crtConstantK) * vec3_splat(crtConstantS);
+	vec3 outcolor = mix(higher, lower, cutoff);
+	// renormalize
+	outcolor = outcolor - vec3_splat(crtBlackLevel);
+	outcolor = outcolor / vec3_splat(crtWhiteLevel - crtBlackLevel);
+	return saturate(outcolor);
 }
 
 // linear --> gamma encoded:
@@ -142,6 +158,26 @@ vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 	return saturate(pow((c1 + c2 * Lp) / (vec3_splat(1.0) + c3 * Lp), vec3_splat(m2)));
 }
 
+// Inverse EOTF Function from BT1886 Appendix 1 (https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.1886-0-201103-I!!PDF-E.pdf)
+// Approximates the inverse of gamma behavior of a CRT (more accurately than the crummy Annex 1 function)
+// Constants have been selected to match a properly calibrated mid-90s Sony Trinitron CRT.
+vec3 toGammaBT1886Appx1Fast(vec3 _rgb)
+{
+	// undo the chop and normalization post-processing
+	_rgb = _rgb * vec3_splat(crtWhiteLevel - crtBlackLevel);
+	_rgb = _rgb + vec3_splat(crtBlackLevel);
+
+	// Inverse EOTF
+	bvec3 cutoff = lessThan(_rgb.rgb, vec3_splat(crtConstantI));
+	vec3 higher = pow(vec3_splat(1.0/crtConstantK) * _rgb, vec3_splat(1.0/2.6));
+	vec3 lower = pow(vec3_splat(1.0/crtConstantK) * vec3_splat(1.0/crtConstantS) * _rgb, vec3_splat(1.0/3.0));
+	vec3 outcolor = mix(higher, lower, cutoff);
+
+	//unshift
+	outcolor = outcolor - vec3_splat(crtConstantB);
+
+	return saturate(outcolor);
+}
 
 // Gamut conversions ---------------------------------------------
 // These functions all take a linear RGB input and produce a linear RGB output.
