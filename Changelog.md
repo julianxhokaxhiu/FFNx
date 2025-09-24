@@ -25,6 +25,7 @@
 - Widescreen: Initial support for the entire game
 - Widescreen: Fix menu rendering bringing it back to its original aspect ratio
 - Widescreen: Enable some full 3D areas to be seen entirely instead of vertically cropped
+- External textures: Swizzle as one image: Fix stride, was `imgWidth / imgScale` instead of `imgWidth`. (https://github.com/julianxhokaxhiu/FFNx/pull/842)
 
 ## FF8 Steam
 
