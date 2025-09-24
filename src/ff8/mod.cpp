@@ -599,7 +599,7 @@ TexturePacker::TextureTypes TextureBackground::drawToImage(
 			const int col = tileId % _colsCount, row = tileId / _colsCount;
 
 			drawImage(
-				imgData, imgWidth / imgScale, imgScale,
+				imgData, imgWidth, imgScale,
 				targetRgba, targetW, targetScale,
 				col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE,
 				x * TILE_SIZE, y * TILE_SIZE
