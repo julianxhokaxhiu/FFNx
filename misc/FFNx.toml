@@ -163,13 +163,14 @@ hdr_max_nits = 0
 
 #[COLOR GAMUT]
 # If enabled, performs a conversion to simulate the color gamut of the 1990s Japanese television sets that FF7 and FF8 were originally designed for.
-# The resulting colors are generally brighter and more vivid.
+# See docs/gamma_and_gamut.md for details.
 # This mode is appropriate for:
 # (1) Vanilla FF7/FF8.
 # (2) Mod assets that are upscales of the original assets.
-# (3) Mod assets made from scratch where the modder used the original assets as a color reference without doing a gamut conversion.
+# (3) Mod assets made from scratch where the modder used the original assets as an uncorrected color reference.
 # This mode is not appropriate for mod assets made from scratch that truly use the sRGB color gamut.
 # Such assets can be made suitable for this mode using this converter program: https://github.com/ChthonVII/gamutthingy
+# See docs/mods/preparing_textures_for_ntscj_mode.md for details
 enable_ntscj_gamut_mode = false
 
 #########################
