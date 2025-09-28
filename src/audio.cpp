@@ -31,7 +31,6 @@
 extern "C" {
 #endif
 
-#include <libvgmstream/vgmstream.h>
 #include <libvgmstream/util/log.h>
 
 #if defined(__cplusplus)

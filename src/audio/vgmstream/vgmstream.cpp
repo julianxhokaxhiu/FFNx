@@ -40,7 +40,7 @@ namespace SoLoud
 	unsigned int VGMStreamInstance::getAudio(float* aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize)
 	{
 		memset(mStreamBuffer, 0, sizeof(sample_t) * SAMPLE_GRANULARITY * mChannels);
-		int sample_count = render_vgmstream(mStreamBuffer, aSamplesToRead, mParent->mStream);
+		int sample_count = render_vgmstream2(mStreamBuffer, aSamplesToRead, mParent->mStream);
 
 		for (int j = 0; j < sample_count; j++)
 		{

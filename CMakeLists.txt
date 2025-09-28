@@ -94,8 +94,7 @@ find_package(LZ4 REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
 find_package(lfreist-hwinfo CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(tomlplusplus REQUIRED IMPORTED_TARGET tomlplusplus)
+find_package(tomlplusplus CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -186,7 +185,7 @@ target_link_libraries(
   mimalloc-static
   imgui::imgui
   pugixml::pugixml
-  PkgConfig::tomlplusplus
+  tomlplusplus::tomlplusplus
   STEAMWORKSSDK::STEAMWORKSSDK
   xxHash::xxhash
   lz4::lz4

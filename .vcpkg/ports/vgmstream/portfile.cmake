@@ -7,8 +7,8 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO "vgmstream/vgmstream"
     HEAD_REF master
-    REF ed9a720221b4b0f2589a3860ad72631cec7145e9
-    SHA512 32f235cac5ca219a9fe604de3ff402e3108a6cb55f732cdc20b95b7549d92e7f6c8ac38054cabdbdb2d3c90b2739300c2e5473f7383549a5cf4d8d9848231a06
+    REF 9db666eb0c2275334ac68a2537a6a689aee792f2
+    SHA512 6af36bd947d6dd56351734587394d30640d3ea3a9e596caf4ec6c8ed0439193e0bc62b4a90cbabbe9ed115eb3d2edfd62d833141febfb84cefa65fbea4bc1edf
     PATCHES cmake.patch
 )
 
@@ -34,10 +34,10 @@ vcpkg_configure_cmake(
         -DUSE_ATRAC9=OFF
         -DUSE_CELT=OFF
         -DUSE_FFMPEG=${USE_FFMPEG}
-        -DAVCODEC_VERSION=57
-        -DAVUTIL_VERSION=55
-        -DAVFORMAT_VERSION=57
-        -DSWRESAMPLE_VERSION=2
+        -DAVCODEC_VERSION=61
+        -DAVUTIL_VERSION=59
+        -DAVFORMAT_VERSION=61
+        -DSWRESAMPLE_VERSION=5
         -DUSE_G719=OFF
         -DUSE_G7221=ON
         -DUSE_MPEG=${USE_MPEG}

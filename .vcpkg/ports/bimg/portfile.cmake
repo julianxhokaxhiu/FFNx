@@ -6,8 +6,8 @@
 vcpkg_from_github(OUT_SOURCE_PATH BX_SOURCE_DIR
     REPO "julianxhokaxhiu/bx"
     HEAD_REF master
-    REF e85d662279acd3489315331fa7214d77d8546f4c
-    SHA512 abca07c1502b20bfbc99ad96456ad6149227de072f4d6cf4da062a2ac1b6e06102855eea3bf91b325f03940b503c5be741ec1ea6c15550fddc15994febe3a2c5
+    REF f3da9f2d061cdcda234c9c11cf6aac3dc4d76423
+    SHA512 f5f840ccaa6d9286eb2ce87cb547df6fef6e07ecba812afab97a9a2b866a3eb7e7dd8003c96eda2b73e1e8cde0b5a095386a73034dcdfcbc104f1beaaac94d83
 )
 
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR

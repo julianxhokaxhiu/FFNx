@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 4686d2ab..901ac32a 100644
+index d623860b..8b657d5e 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,4 +1,5 @@
@@ -9,12 +9,12 @@ index 4686d2ab..901ac32a 100644
  
  if(CMAKE_SYSTEM_NAME MATCHES Darwin)
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 3e707614..f653a75e 100644
+index 65768024..31d0b762 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -90,3 +90,30 @@ if(NOT EMSCRIPTEN)
- 		set_target_properties(libvgmstream_shared PROPERTIES LINK_FLAGS_RELEASE -s)
- 	endif()
+@@ -105,3 +105,30 @@ if(BUILD_SHARED_LIBS)
+ 		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/vgmstream
+ 	)
  endif()
 +
 +if(MSVC)

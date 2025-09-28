@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.22.0",
-  "builtin-baseline": "f26ec398c25c4980f33a50391f00a75f7ad62ef7",
+  "builtin-baseline": "4334d8b4c8916018600212ab4dd4bbdc343065d1",
   "dependencies": [
     "bgfx",
     {
@@ -67,7 +67,6 @@
     "cmakerc",
     "cgltf",
     "hwinfo",
-    "pkgconf",
     "cryptopp"
   ],
   "overrides": [
@@ -79,7 +78,7 @@
     {
       "name": "ffmpeg",
       "version": "7.1.1",
-      "port-version": 1
+      "port-version": 5
     },
     {
       "name": "imgui",
@@ -88,18 +87,18 @@
     },
     {
       "name": "libpng",
-      "version": "1.6.46",
+      "version": "1.6.50",
       "port-version": 0
     },
     {
       "name": "directxtex",
-      "version": "2025-03-24",
+      "version": "2025-07-10",
       "port-version": 0
     },
     {
       "name": "mimalloc",
       "version": "2.2.3",
-      "port-version": 0
+      "port-version": 1
     },
     {
       "name": "openpsf",
@@ -164,11 +163,6 @@
     {
       "name": "hwinfo",
       "version": "1.0.0",
-      "port-version": 0
-    },
-    {
-      "name": "pkgconf",
-      "version": "2.4.3",
       "port-version": 0
     },
     {
