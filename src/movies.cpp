@@ -36,6 +36,8 @@ enum MovieAudioLayers {
 char movie_music_path[512];
 char movie_voice_path[512];
 
+uint8_t ff8_movie_cam_buffer[2*1024*1024]; // 2MB
+
 uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice, uint32_t dd2interface)
 {
 	char drivename[4];
@@ -217,20 +219,17 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 			return;
 		}
 
-		while(!feof(camFile) && !ferror(camFile))
-		{
-			uint32_t res = fread(&ff8_externals.movie_object->camdata_buffer[camOffset], 1, 4096, camFile);
-
-			if(res > 0) camOffset += res;
-		}
-
+		fseek(camFile, 0, SEEK_END);
+		long camFileSize = ftell(camFile);
+		rewind(camFile);
+		fread(&ff8_movie_cam_buffer, 1, camFileSize, camFile);
 		fclose(camFile);
 
 		ff8_externals.movie_object->movie_intro_pak = false;
 	}
 	else ff8_externals.movie_object->movie_intro_pak = true;
 
-	ff8_externals.movie_object->camdata_start = (struct ff8_camdata *)(&ff8_externals.movie_object->camdata_buffer[8]);
+	ff8_externals.movie_object->camdata_start = (struct ff8_camdata *)(&ff8_movie_cam_buffer[8]);
 	ff8_externals.movie_object->camdata_pointer = ff8_externals.movie_object->camdata_start;
 
 	ff8_externals.movie_object->movie_current_frame = 0;
@@ -305,7 +304,7 @@ int ff8_start_movie()
 	if(ff8_externals.movie_object->movie_intro_pak) ff8_externals.movie_object->movie_total_frames = ff8_movie_frames;
 	else
 	{
-		ff8_externals.movie_object->movie_total_frames = ((WORD *)ff8_externals.movie_object->camdata_buffer)[3];
+		ff8_externals.movie_object->movie_total_frames = ((WORD *)ff8_movie_cam_buffer)[3];
 		ffnx_trace("%i frames\n", ff8_externals.movie_object->movie_total_frames);
 	}
 
