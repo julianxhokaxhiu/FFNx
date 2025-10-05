@@ -20,12 +20,13 @@
 ## FF8
 
 - Core: Fix crash when entering field in JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/827 )
-- External textures: Fix Rinoa battle model that do not get replaced ( https://github.com/julianxhokaxhiu/FFNx/pull/790 )
 - Direct file: field subarchives (mapdata.fs for example) can now be loaded outside field.fs ( https://github.com/julianxhokaxhiu/FFNx/pull/822 )
+- External textures: Fix Rinoa battle model that do not get replaced ( https://github.com/julianxhokaxhiu/FFNx/pull/790 )
+- External textures: Swizzle as one image: Fix stride, was `imgWidth / imgScale` instead of `imgWidth`. (https://github.com/julianxhokaxhiu/FFNx/pull/842)
+- Movie: Fix CAM file loading when bigger than 312KB
 - Widescreen: Initial support for the entire game
 - Widescreen: Fix menu rendering bringing it back to its original aspect ratio
 - Widescreen: Enable some full 3D areas to be seen entirely instead of vertically cropped
-- External textures: Swizzle as one image: Fix stride, was `imgWidth / imgScale` instead of `imgWidth`. (https://github.com/julianxhokaxhiu/FFNx/pull/842)
 
 ## FF8 Steam
 
