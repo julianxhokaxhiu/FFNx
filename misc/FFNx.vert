@@ -19,6 +19,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+// This shader is always used for 2D elements.
+// This shader is used for 3D elements when advanced lighting is disabled.
+
 $input a_position, a_color0, a_texcoord0, a_normal
 $output v_color0, v_texcoord0, v_position0, v_normal0
 
