@@ -1275,46 +1275,9 @@ int ff8_world_sub_54D7E0(WORD* a1)
 	return ret;
 }
 
-// Re-implementation of the function to add item to player items (sub_47ED00)
-int ff8_add_item_to_player(int item_id, char quantity)
-{
-	if (!item_id) {
-		return 0;
-	}
-
-	savemap_ff8_item *items = ff8_externals.savemap->items.items;
-	for (int i = 0; i < 198; ++i)
-	{
-		if (items[i].item_id == item_id )
-		{
-			items[i].item_quantity += quantity;
-			if (items[i].item_quantity < 100) {
-				return 0;
-			} else {
-				items[i].item_quantity = 100;
-				return 1;
-			}
-		}
-	}
-
-	int open_slot = 0;
-	for (open_slot = 0; open_slot < 198 && !items[open_slot].item_id; open_slot++);
-	if (open_slot >= 198) {
-		return 1;
-	}
-	items[open_slot].item_id = item_id;
-	items[open_slot].item_quantity += quantity;
-	if (items[open_slot].item_quantity < 100) {
-		return 0;
-	} else {
-		items[open_slot].item_quantity = 100;
-		return 1;
-	}
-}
-
 int ff8_add_item_to_player_wrapper(int item_id, char quantity)
 {
-	int ret = ff8_add_item_to_player(item_id, quantity);
+	int ret = ff8_externals.add_item_to_player_sub_47ED00(item_id, quantity);
 	if (SteamAchievementsFF8::itemIsMagazine(item_id)) {
 		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_externals.savemap->items);
 	}
