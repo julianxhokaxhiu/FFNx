@@ -1358,8 +1358,8 @@ void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlread
     {
         switch (internalState.cullMode)
         {
-        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CCW;
-        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CW;
+        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW;
+        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW;
         }
     }
     bgfx::setState(internalState.state);

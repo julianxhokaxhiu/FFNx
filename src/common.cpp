@@ -2219,8 +2219,8 @@ void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *
 
 		// cull face, does this ever change?
 		case V_CULLFACE:
-			if (option) newRenderer.setCullMode(RendererCullMode::FRONT);
-			else newRenderer.setCullMode(RendererCullMode::BACK);
+			if (!option) newRenderer.setCullMode(RendererCullMode::BACK);
+			else newRenderer.setCullMode(RendererCullMode::FRONT);
 			current_state.cullface = option;
 			break;
 
