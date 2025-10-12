@@ -20,6 +20,7 @@
 ## FF8
 
 - Core: Fix crash when entering field in JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/827 )
+- Core: Fix Chocobo World item import ( https://github.com/julianxhokaxhiu/FFNx/issues/840 )
 - Direct file: field subarchives (mapdata.fs for example) can now be loaded outside field.fs ( https://github.com/julianxhokaxhiu/FFNx/pull/822 )
 - External textures: Fix Rinoa battle model that do not get replaced ( https://github.com/julianxhokaxhiu/FFNx/pull/790 )
 - External textures: Swizzle as one image: Fix stride, was `imgWidth / imgScale` instead of `imgWidth`. (https://github.com/julianxhokaxhiu/FFNx/pull/842)
