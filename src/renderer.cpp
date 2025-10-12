@@ -2247,7 +2247,7 @@ void Renderer::zoomBackendFrameBuffer(int x, int y, int width, int height)
     bindIndexBuffer(indices, 6);
 
     doDepthTest(false);
-    setCullMode(DISABLED);
+    setCullMode(RendererCullMode::DISABLED);
     setBlendMode(RendererBlendMode::BLEND_DISABLED);
     setPrimitiveType();
 
