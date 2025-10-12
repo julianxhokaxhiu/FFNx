@@ -58,7 +58,7 @@ namespace ff7::field
         if (emulate_run)
         {
             key_input_status &= ~0x40;
-            if (emulate_run) ff7_externals.modules_global_object->current_key_input_status &= ~0x40;
+            ff7_externals.modules_global_object->current_key_input_status &= ~0x40;
         }
 
         for(int model_idx = 0; model_idx < (int)(*ff7_externals.field_n_models); model_idx++)
