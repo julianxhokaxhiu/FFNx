@@ -289,5 +289,8 @@ namespace ff7::field
 
         // Fix wind wall animation for woa_* fields
         replace_call_function(ff7_externals.sub_62120E + 0x3AA, ff7_field_load_map_trigger_data);
+
+        // Fix run emulation when using the analogue key for NPCs
+        patch_code_dword((uint32_t)&common_externals.execute_opcode_table[IFKEY], (DWORD)&opcode_script_IFKEY);
     }
 }

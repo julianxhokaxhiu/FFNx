@@ -16,6 +16,7 @@
 - Core: Fix FADE opcode fading color when type=2 is used ( https://github.com/julianxhokaxhiu/FFNx/issues/805 )
 - Core: Fix Credits playing too fast ( https://github.com/julianxhokaxhiu/FFNx/issues/828 )
 - GameHacks: Allow to skip ending movie using the movie skip shortcut
+- Input: Fix Auto-Run behavior for NPCs when using the analogue controller ( https://github.com/julianxhokaxhiu/FFNx/issues/831 )
 
 ## FF8
 

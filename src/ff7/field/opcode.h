@@ -60,6 +60,7 @@ namespace ff7::field
     int opcode_script_BGMOVIE();
     uint8_t opcode_IFSW_compare_sub();
     int opcode_script_FADE();
+    int opcode_script_IFKEY();
 
     // Thanks for myst6re https://github.com/myst6re/makoureactor/blob/5231723307901043941356ad1e42d26725305edf/core/field/Opcode.h#L71
     enum FieldOpcode {

@@ -257,5 +257,27 @@ namespace ff7::field
 
         return ret;
     }
+
+    int opcode_script_IFKEY()
+    {
+        uint16_t key = get_field_parameter<uint16_t>(0);
+        bool emulate_run = (key & 0x40) == 0x40 && gamepad_analogue_intent == INTENT_RUN;
+
+        if (emulate_run)
+        {
+            ff7_externals.modules_global_object->current_key_input_status |= 0x40;
+            ff7_externals.modules_global_object->field_78 |= 0x40;
+        }
+
+        int ret = call_original_opcode_function(IFKEY);
+
+        if (emulate_run)
+        {
+            ff7_externals.modules_global_object->current_key_input_status &= ~0x40;
+            ff7_externals.modules_global_object->field_78 &= ~0x40;
+        }
+
+        return ret;
+    }
 }
 
