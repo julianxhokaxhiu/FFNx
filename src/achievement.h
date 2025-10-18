@@ -394,6 +394,9 @@ private:
     void increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress = false);
 
 public:
+    static inline constexpr byte DIABLOS_GF_IDX = 5;
+    static inline constexpr WORD DIABLOS_ENCOUNTER_ID = 811;
+
     SteamAchievementsFF8();
     ~SteamAchievementsFF8() = default;
 

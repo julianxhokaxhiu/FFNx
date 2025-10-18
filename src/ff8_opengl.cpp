@@ -1068,7 +1068,10 @@ int ff8_field_opcode_CARDGAME(int field_data)
 void ff8_enable_gf_sub_47E480(int gf_idx)
 {
 	ff8_externals.savemap->gfs[gf_idx].exists |= 1u;
-	g_FF8SteamAchievements->unlockGuardianForceAchievement(gf_idx);
+	// NOTE: This function for Diablos is called when starting his battle
+	if (gf_idx != SteamAchievementsFF8::DIABLOS_GF_IDX) {
+		g_FF8SteamAchievements->unlockGuardianForceAchievement(gf_idx);
+	}
 }
 
 void ff8_update_seed_exp_4C30E0(int seed_lvl)
@@ -1188,6 +1191,9 @@ int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
 	if (char_id != 0xFF) {
 		int level = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[char_id].exp, char_id);
 		g_FF8SteamAchievements->unlockTopLevelAchievement(level);
+	}
+	if (*ff8_externals.global_battle_encounter_id_1CFF6E0 == SteamAchievementsFF8::DIABLOS_ENCOUNTER_ID) {
+		g_FF8SteamAchievements->unlockGuardianForceAchievement(SteamAchievementsFF8::DIABLOS_GF_IDX);
 	}
 	return ret;
 }
