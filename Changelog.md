@@ -5,7 +5,7 @@
 ## Common
 
 - Core: Improve error message on crash and make the link clickable
-- Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly.
+- Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly ( https://github.com/julianxhokaxhiu/FFNx/pull/813 )
 - Renderer: Fix game crashing while using Vulkan returning error VK_ERROR_OUT_OF_POOL_MEMORY
 
 ## FF7
@@ -15,16 +15,18 @@
 - Core: Fix core game bug issue happening on the wind wall fields `woa_*` ( https://github.com/julianxhokaxhiu/FFNx/issues/797 )
 - Core: Fix FADE opcode fading color when type=2 is used ( https://github.com/julianxhokaxhiu/FFNx/issues/805 )
 - Core: Fix Credits playing too fast ( https://github.com/julianxhokaxhiu/FFNx/issues/828 )
+- Direct: Fix scene.bin chunk load logic which was using the wrong chunk ID when loading from disk
 - GameHacks: Allow to skip ending movie using the movie skip shortcut
 - Input: Fix Auto-Run behavior for NPCs when using the analogue controller ( https://github.com/julianxhokaxhiu/FFNx/issues/831 )
 
 ## FF8
 
 - Core: Fix crash when entering field in JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/827 )
-- Core: Fix Chocobo World item import ( https://github.com/julianxhokaxhiu/FFNx/issues/840 )
+- Core: Fix crashes happening in Non-US versions ( https://github.com/julianxhokaxhiu/FFNx/pull/821 )
 - Direct file: field subarchives (mapdata.fs for example) can now be loaded outside field.fs ( https://github.com/julianxhokaxhiu/FFNx/pull/822 )
 - External textures: Fix Rinoa battle model that do not get replaced ( https://github.com/julianxhokaxhiu/FFNx/pull/790 )
 - External textures: Swizzle as one image: Fix stride, was `imgWidth / imgScale` instead of `imgWidth`. (https://github.com/julianxhokaxhiu/FFNx/pull/842)
+- Input: Allow to capture input from Gamepad when game window is not focused ( https://github.com/julianxhokaxhiu/FFNx/pull/804 )
 - Movie: Fix CAM file loading when bigger than 312KB
 - Widescreen: Initial support for the entire game
 - Widescreen: Fix menu rendering bringing it back to its original aspect ratio
@@ -32,7 +34,7 @@
 
 ## FF8 Steam
 
-- Achievements: Implement all Steam achievements
+- Achievements: Add support for all Steam achievements
 
 # 1.22.0
 
