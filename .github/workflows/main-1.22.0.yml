@@ -25,7 +25,7 @@ env:
   GIT_REDIRECT_STDERR: 2>&1
   # Tools versions
   _WINGET_CMAKE: 3.31.8
-  _WINGET_VS2022: 17.14.13
+  _WINGET_VS2022: 17.14.18
 
 jobs:
   FFNx:
