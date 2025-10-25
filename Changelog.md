@@ -1,6 +1,10 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.22.0...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.23.0...master
+
+# 1.23.0
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.22.0...1.23.0
 
 ## Common
 
