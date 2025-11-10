@@ -647,21 +647,21 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
 
 	for (int i = states_count; i > 0; --i)
 	{
-		draw_infos->field_0 = 0x5000000;
-		*(DWORD *)&draw_infos->field_10 = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + field10_modifier) << 16);
+		draw_infos->command = 0x5000000;
+		*(DWORD *)&draw_infos->inner.u = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + field10_modifier) << 16);
 		if (override_field4_8_with_a6)
 		{
-			draw_infos->field_8 = ((a6 & 0xFFFFFF) | 0x64000000) | (((HIBYTE(a6) >> 1) & 2) << 24);
-			draw_infos->field_4 = ((HIBYTE(a6) & 3) << 5) | 0xE100041E;
+			draw_infos->inner.color = ((a6 & 0xFFFFFF) | 0x64000000) | (((HIBYTE(a6) >> 1) & 2) << 24);
+			draw_infos->inner.texID = ((HIBYTE(a6) & 3) << 5) | 0xE100041E;
 		}
 		else
 		{
-			draw_infos->field_8 = no_a6_mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
-			draw_infos->field_4 = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
+			draw_infos->inner.color = no_a6_mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
+			draw_infos->inner.texID = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
 		}
-		draw_infos->field_14 = sp1_section_data[1] & 0xFF00FF;
-		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
-		draw_infos->y_related = y + (int32_t(sp1_section_data[1]) >> 24);
+		*(uint32_t *)&draw_infos->inner.w = sp1_section_data[1] & 0xFF00FF;
+		draw_infos->inner.x = x + (int16_t(sp1_section_data[1]) >> 8);
+		draw_infos->inner.y = y + (int32_t(sp1_section_data[1]) >> 24);
 		if (yfix && *ff8_externals.battle_boost_cross_icon_display_1D76604) {
 			*((uint8_t *)draw_infos + 11) |= 2u;
 		}
@@ -718,12 +718,12 @@ ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw
 
 	for (int i = states_count; i > 0; --i)
 	{
-		draw_infos->field_0 = 0x4000000;
-		*(uint32_t *)&draw_infos->field_C = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + a7) << 16);
-		draw_infos->field_4 = a6 | (((sp1_section_data[0] >> 26) & 2) << 24);
-		draw_infos->field_10 = sp1_section_data[1] & 0xFF00FF;
-		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
-		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
+		draw_infos->texID = 0x4000000;
+		*(uint32_t *)&draw_infos->u = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + a7) << 16);
+		draw_infos->color = a6 | (((sp1_section_data[0] >> 26) & 2) << 24);
+		*(uint32_t *)&draw_infos->w = sp1_section_data[1] & 0xFF00FF;
+		draw_infos->x = x + (int16_t(sp1_section_data[1]) >> 8);
+		draw_infos->y = y + (sp1_section_data[1] >> 24);
 		((void(*)(int, ff8_draw_menu_sprite_texture_infos_short*))ff8_externals.sub_49FE60)(a1, draw_infos);
 		draw_infos += 1;
 		sp1_section_data += 2;
@@ -1563,9 +1563,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	{
 		replace_call(ff8_externals.main_menu_controller + (JP_VERSION ? 0x1004 : 0xF8D), ff8_create_save_file);
 		replace_call(ff8_externals.menu_chocobo_world_controller + 0x9F6, ff8_create_save_file_chocobo_world);
-		replace_call(ff8_externals.menu_chocobo_world_controller + 0xFA3, ff8_create_save_file_chocobo_world);
-		replace_call(ff8_externals.menu_chocobo_world_controller + 0x11BB, ff8_create_save_file_chocobo_world);
-		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13EC, ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + (JP_VERSION ? 0xF8D : 0xFA3), ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + (JP_VERSION ? 0x11A5 : 0x11BB), ff8_create_save_file_chocobo_world);
+		replace_call(ff8_externals.menu_chocobo_world_controller + (JP_VERSION ? 0x13D6 : 0x13EC), ff8_create_save_file_chocobo_world);
 	}
 
 	// don't set system speaker config to stereo
@@ -1740,15 +1740,15 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_function(ff8_externals.enable_gf_sub_47E480, (void*)ff8_enable_gf_sub_47E480);
 
 		// seed rank A (also max GIL)
-		replace_call(ff8_externals.menu_sub_4D4D30 + 0x928, (void*)ff8_update_seed_exp_4C30E0);
+		replace_call(ff8_externals.menu_sub_4D4D30 + (JP_VERSION ? 0x929 : 0x928), (void*)ff8_update_seed_exp_4C30E0);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0D], (uint32_t)&ff8_field_opcode_POPM_W);
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x153], (uint32_t)&ff8_field_opcode_ADDSEEDLEVEL);
 		replace_call(common_externals.update_field_entities + 0x120, (void*)ff8_field_update_seed_level);
 		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x152, (void*)ff8_worldmap_update_seed_level);
 
 		// handyman: upgrade weapon
-		replace_call(ff8_externals.menu_junkshop_sub_4EA890 + 0x5C1, (void*)ff8_menu_junkshop_get_char_id_hook_4ABC40);
-		replace_call(ff8_externals.menu_junkshop_sub_4EA890 + 0x60B, (void*)ff8_menu_junkshop_hook_4EA770);
+		replace_call(ff8_externals.menu_junkshop_sub_4EA890 + (JP_VERSION ? 0x5F0 : 0x5C1), (void*)ff8_menu_junkshop_get_char_id_hook_4ABC40);
+		replace_call(ff8_externals.menu_junkshop_sub_4EA890 + (JP_VERSION ? 0x63A : 0x60B), (void*)ff8_menu_junkshop_hook_4EA770);
 
 		// max HP
 		replace_call(ff8_externals.compute_char_stats_sub_495960 + 0x68, (void*)ff8_hook_sub_4954B0);
@@ -1770,7 +1770,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : 0x85F), (void*)ff8_set_drawpoint_state_52D190);
 
 		// draw magic via stock in battle
-		replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : 0x355), (void*)ff8_battle_get_magic_draw_amount_48FD20);
+		replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355)), (void*)ff8_battle_get_magic_draw_amount_48FD20);
 
 		// timber maniacs
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0B], (uint32_t)&ff8_field_opcode_POPM_B);
@@ -1784,14 +1784,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x225, (void*)ff8_play_sfx_at_unlock_rinoa_limit_break);
 
 		// omega destroyed
-		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + (FF8_US_VERSION ? 0x216C : 0x2176), (void*)ff8_obtain_proof_of_omega);
+		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + (FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : 0x2176)), (void*)ff8_obtain_proof_of_omega);
 
 		// pupu side quest
 		replace_call(ff8_externals.battle_check_won_sub_486500 + 0x66, (void*)ff8_battle_after_set_result_to_won_sub_494D40);
 
 		// chocobo world
-		replace_call(ff8_externals.menu_chocobo_world_controller + 0x1814, (void*)ff8_menu_choco_add_item_to_player_47ED00);
-		replace_call(ff8_externals.menu_chocobo_world_controller + 0x13D0, (void*)ff8_menu_chocobo_sub_4FF8F0);
+		replace_call(ff8_externals.menu_chocobo_world_controller + (JP_VERSION ? 0x17FE : 0x1814), (void*)ff8_menu_choco_add_item_to_player_47ED00);
+		replace_call(ff8_externals.menu_chocobo_world_controller + (JP_VERSION ? 0x13BA : 0x13D0), (void*)ff8_menu_chocobo_sub_4FF8F0);
 		// chocobo achievement is implemented in aask opcode (voice section)
 
 		// magazine addict
