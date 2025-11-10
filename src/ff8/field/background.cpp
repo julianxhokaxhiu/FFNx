@@ -163,25 +163,30 @@ bool ff8_background_save_textures_legacy(const std::vector<Tile> &tiles, const u
 {
 	if (trace_all || trace_vram) ffnx_trace("%s %s\n", __func__, filename);
 
-	std::unordered_map<uint16_t, Tile> tiles_per_position_in_texture;
-	std::unordered_map<uint8_t, Tim::Bpp> min_depths_per_texture_id;
+	std::unordered_map<uint16_t, Tile> tiles_per_position_in_texture, pal_conflicts;
+	std::unordered_map<uint8_t, std::vector<uint8_t>> texture_ids;
 
 	const uint16_t *palettes_data = reinterpret_cast<const uint16_t *>(mim_data + 0x1000);
 	const uint8_t *textures_data = mim_data + 0x3000;
 
 	for (const Tile &tile: tiles) {
-		uint8_t texture_id = tile.texID & 0xF;
+		uint8_t texture_id = tile.texID & 0xF, pal_id = (tile.texID >> 6) & 0xF;
 		Tim::Bpp bpp = Tim::Bpp((tile.texID >> 7) & 3);
 
-		ffnx_info("dst %d %d %d src %d %d texid %d bpp %d\n", tile.x, tile.y, tile.z, tile.srcX, tile.srcY, texture_id, int(bpp));
+		ffnx_info("dst %d %d %d src %d %d texid %d bpp %d palid %d blendType %d\n", tile.x, tile.y, tile.z, tile.srcX, tile.srcY, texture_id, int(bpp), pal_id, tile.blendType);
+		texture_ids.insert(std::pair<uint8_t, std::vector<uint8_t>>(texture_id, std::vector<uint8_t>()));
+		texture_ids[texture_id].push_back(0xFF);
 
-		tiles_per_position_in_texture[texture_id | ((tile.srcX / 16) << 4) | ((tile.srcY / 16) << 8)] = tile;
-
-		auto it = min_depths_per_texture_id.find(texture_id);
-		if (it == min_depths_per_texture_id.end()) {
-			min_depths_per_texture_id[texture_id] = bpp;
+		uint16_t key = texture_id | ((tile.srcX / 16) << 4) | ((tile.srcY / 16) << 8);
+		if (tiles_per_position_in_texture.contains(key)) {
+			if (tiles_per_position_in_texture[key].palID == pal_id || pal_conflicts.contains(key | (pal_id << 12))) {
+				ffnx_warning("Tile conflict\n");
+			} else {
+				pal_conflicts[key | (pal_id << 12)] = tile;
+				texture_ids[texture_id].push_back(pal_id);
+			}
 		} else {
-			min_depths_per_texture_id[texture_id] = Tim::Bpp(std::min(int(bpp), int(it->second)));
+			tiles_per_position_in_texture[key] = tile;
 		}
 	}
 
@@ -191,38 +196,51 @@ bool ff8_background_save_textures_legacy(const std::vector<Tile> &tiles, const u
 		return false;
 	}
 
+	const uint32_t image_data_size = TEXTURE_WIDTH_BPP4 * TEXTURE_HEIGHT * sizeof(uint32_t);
+
 	// Save textures
-	for (const std::pair<uint8_t, Tim::Bpp> &pair: min_depths_per_texture_id) {
+	for (const std::pair<uint8_t, std::vector<uint8_t>> pair: texture_ids) {
 		const uint8_t texture_id = pair.first;
-		const Tim::Bpp min_depth = pair.second;
-		const uint16_t width = TEXTURE_WIDTH_BPP4 >> min_depth;
-		const uint32_t image_data_size = width * TEXTURE_HEIGHT * sizeof(uint32_t);
 
-		// Fill with zeroes (transparent image)
-		memset(image_data_start, 0, image_data_size);
+		for (const uint8_t pal_id: pair.second) {
+			const std::unordered_map<uint16_t, Tile> &tiles = pal_id == 0xFF ? tiles_per_position_in_texture : pal_conflicts;
+			const uint16_t key = texture_id | (pal_id == 0xFF ? 0 : (pal_id << 12));
 
-		char filename_tex[MAX_PATH] = {};
+			// Fill with zeroes (transparent image)
+			memset(image_data_start, 0, image_data_size);
 
-		snprintf(filename_tex, sizeof(filename_tex), "%s_%d", filename, texture_id);
+			for (uint8_t row = 0; row < 16; ++row) {
+				for (uint8_t col = 0; col < 16; ++col) {
+					uint32_t *target = image_data_start + row * TILE_SIZE * TEXTURE_WIDTH_BPP4 + col * TILE_SIZE;
+					auto it = tiles.find(key | (col << 4) | (row << 8));
+					if (it == tiles.end()) {
+						if (pal_id == 0xFF) {
+							ffnx_info("texture_id=%d row=%d col=%d pal_id=%d not found\n", texture_id, row, col, pal_id);
+							continue;
+						}
 
-		for (uint8_t row = 0; row < 16; ++row) {
-			for (uint8_t col = 0; col < width / 16; ++col) {
-				auto it = tiles_per_position_in_texture.find(texture_id | (col << 4) | (row << 8));
-				if (it == tiles_per_position_in_texture.end()) {
-					ffnx_info("texture_id=%d row=%d col=%d not found\n", texture_id, row, col);
-					continue;
+						it = tiles_per_position_in_texture.find(texture_id | (col << 4) | (row << 8));
+						if (it == tiles_per_position_in_texture.end()) {
+							ffnx_info("texture_id=%d row=%d col=%d pal_id=%d not found\n", texture_id, row, col, pal_id);
+							continue;
+						}
+					}
+
+					ff8_background_draw_tile(it->second, target, TEXTURE_WIDTH_BPP4, textures_data, palettes_data);
+
+					ffnx_info("texture_id=%d row=%d col=%d pal_id=%d\n", texture_id, row, col, pal_id);
 				}
-
-				ffnx_info("texture_id=%d row=%d col=%d\n", texture_id, row, col);
-
-				const Tile &tile = it->second;
-				uint32_t *target = image_data_start + row * TILE_SIZE * width + col * TILE_SIZE;
-
-				ff8_background_draw_tile(tile, target, width, textures_data, palettes_data);
 			}
-		}
 
-		save_texture(image_data_start, image_data_size, width, TEXTURE_HEIGHT, -1, filename_tex, false);
+			char filename_tex[MAX_PATH] = {};
+
+			if (pal_id == 0xFF) {
+				snprintf(filename_tex, sizeof(filename_tex), "%s_%d", filename, texture_id);
+			} else {
+				snprintf(filename_tex, sizeof(filename_tex), "%s_%d_0_%d", filename, texture_id, pal_id + 240);
+			}
+			save_texture(image_data_start, image_data_size, TEXTURE_WIDTH_BPP4, TEXTURE_HEIGHT, -1, filename_tex, false);
+		}
 	}
 
 	delete[] image_data_start;

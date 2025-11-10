@@ -1890,6 +1890,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 					newRenderer.deleteTexture(VREF(texture_set, texturehandle[idx]));
 
 				memset(VREF(texture_set, texturehandle), 0, VREF(texture_set, ogl.gl_set->textures) * sizeof(uint32_t));
+				VREF(texture_set, ogl.gl_set->default_texture_id) = 0;
 
 				memcpy(VREF(tex_header, old_palette_data), tex_format->palette_data, 4 * tex_format->palette_size);
 			}

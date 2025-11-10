@@ -76,7 +76,7 @@ void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t 
 	char filename[sizeof(basedir) + 1024];
 	uint64_t hash;
 
-	if (!save_textures) {
+	if (!save_textures && !save_textures_legacy) {
 		ffnx_warning("Save texture skipped because the option \"save_textures\" is disabled (name=%s).\n", name);
 
 		return;

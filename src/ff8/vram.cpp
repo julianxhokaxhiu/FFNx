@@ -1060,7 +1060,12 @@ void ff8_field_mim_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_b
 {
 	if (trace_all || trace_vram) ffnx_trace("%s\n", __func__);
 
-	mim_texture_buffer = texture_buffer;
+	if (save_textures_legacy || save_textures) {
+		if (mim_texture_buffer == nullptr) {
+			mim_texture_buffer = new uint8_t[438272];
+		}
+		memcpy(mim_texture_buffer, texture_buffer, 438272);
+	}
 
 	ff8_upload_vram(pos_and_size, texture_buffer);
 }
@@ -1077,7 +1082,8 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 	snprintf(tex_filename, sizeof(tex_filename), "%s/%s", tex_directory, get_current_field_name());
 
 	if (save_textures_legacy) {
-		ff8_background_save_textures_legacy(ff8_background_parse_tiles(map_data), mim_texture_buffer, tex_filename);
+		snprintf(tex_directory, sizeof(tex_directory), "field/mapdata/%.2s/%s/%s", get_current_field_name(), get_current_field_name(), get_current_field_name());
+		ff8_background_save_textures_legacy(ff8_background_parse_tiles(map_data), mim_texture_buffer, tex_directory);
 
 		return ret;
 	} else if (save_textures) {

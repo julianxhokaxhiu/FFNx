@@ -1108,6 +1108,7 @@ struct ff8_externals
 	uint32_t pubintro_main_loop;
 	uint32_t credits_main_loop;
 	uint32_t go_to_main_menu_main_loop;
+	uint32_t main_menu_enter;
 	uint32_t main_menu_main_loop;
 	DWORD* credits_loop_state;
 	DWORD* credits_counter;
