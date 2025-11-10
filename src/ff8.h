@@ -243,16 +243,16 @@ struct ff8_create_graphic_object {
     uint32_t field_80;
 };
 
-struct struc_v7
+struct ff8_vertex
 {
-	float field_0;
-	float field_4;
-	float field_8;
+	float x;
+	float y;
+	float z;
 	float field_C;
-	uint32_t field_10;
-	uint32_t field_14;
-	float field_18;
-	float field_1C;
+	uint32_t color;
+	uint32_t color_mask;
+	float u;
+	float v;
 };
 
 struct ff8_graphics_object
@@ -286,7 +286,7 @@ struct ff8_graphics_object
 	uint32_t field_68;
 	uint32_t field_6C;
 	uint32_t field_70;
-	struc_v7 *field_74;
+	ff8_vertex *vertices;
 	uint32_t field_78;
 	uint32_t field_7C;
 	uint32_t field_80;
@@ -381,8 +381,8 @@ struct ff8_tex_header
 	uint32_t field_D4;
 	unsigned char *image_data;
 	unsigned char *old_palette_data;
-	uint32_t field_DC;
-	uint32_t field_E0;
+	uint32_t field_DC; // field_E0 in reality
+	uint32_t field_E0; // field_E4 in reality
 	uint32_t *vram_positions;
 	uint32_t y;
 };
