@@ -2,6 +2,12 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.23.0...master
 
+## FF8
+
+- Core: Fix crashes happening in Non-US versions ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
+- External textures: Fix glitches in field module ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
+- External textures: Fix Tonberry format when dumping PNGs using `save_textures_legacy` flag ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
+
 # 1.23.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.22.0...1.23.0
