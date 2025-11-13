@@ -2130,6 +2130,7 @@ uint32_t common_write_palette(uint32_t source_offset, uint32_t size, void *sourc
 					newRenderer.deleteTexture(VREF(texture_set, texturehandle[palette_index + idx]));
 
 				memset(VREFP(texture_set, texturehandle[palette_index]), 0, palettes * sizeof(uint32_t));
+				VREF(texture_set, ogl.gl_set->default_texture_id) = 0;
 			}
 
 			stats.texture_reloads++;
