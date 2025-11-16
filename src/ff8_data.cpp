@@ -638,7 +638,9 @@ void ff8_find_externals()
 	ff8_externals.sub_45B460 = get_relative_call(ff8_externals.sub_45B310, 0x0);
 	ff8_externals.ssigpu_init = get_relative_call(ff8_externals.sub_45B460, 0x26);
 	ff8_externals.sub_blending_capability = (uint32_t *)get_absolute_value(ff8_externals.sub_45B460, 0x19);
+	ff8_externals.loc_460BB0 = get_relative_call(ff8_externals.sub_45B460, 0x47);
 	ff8_externals.d3dcaps = (uint32_t *)get_absolute_value(ff8_externals.ssigpu_init, 0x6C);
+	ff8_externals.psx_floats1 = (float *)get_absolute_value(ff8_externals.loc_460BB0, 0x3);
 
 	if(FF8_US_VERSION)
 	{

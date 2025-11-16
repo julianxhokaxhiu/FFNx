@@ -1251,6 +1251,8 @@ struct ff8_externals
 	uint32_t ssigpu_init;
 	uint32_t *sub_blending_capability;
 	uint32_t *d3dcaps;
+	uint32_t loc_460BB0;
+	float *psx_floats1;
 	uint32_t sub_53BB90;
 	uint32_t worldmap_fog_filter_polygons_in_block_1;
 	uint32_t worldmap_polygon_condition_2045C8C;
