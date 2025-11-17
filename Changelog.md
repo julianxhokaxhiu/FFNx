@@ -7,6 +7,7 @@
 - Core: Fix crashes happening in Non-US versions ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
 - External textures: Fix glitches in field module ( https://github.com/julianxhokaxhiu/FFNx/pull/848 https://github.com/julianxhokaxhiu/FFNx/pull/851 )
 - External textures: Fix Tonberry format when dumping PNGs using `save_textures_legacy` flag ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
+- Graphics: Use more precise texture UVs ( https://github.com/julianxhokaxhiu/FFNx/pull/852 )
 
 # 1.23.0
 

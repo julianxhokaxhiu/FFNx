@@ -24,6 +24,7 @@
 
 #include "../globals.h"
 #include "../patch.h"
+#include "../log.h"
 
 #include "uv_patch.h"
 
@@ -61,6 +62,7 @@ void *current_polygon_condition_old = nullptr;
 bool old_dword_2045C90_value = false;
 uint8_t *current_block_data_start = nullptr;
 float *maybe_hundred_bak = nullptr;
+float psx_floats512[512] = {};
 
 void worldmap_fog_filter_polygons_in_block_leave()
 {
@@ -130,13 +132,12 @@ void ssigpu_callback_sub_461E00(SsigpuExecutionInstruction *a1)
 	((void(*)(SsigpuExecutionInstruction*))ff8_externals.sub_461E00)(a1);
 
 	if (!(*(int *)ff8_externals.dword_1CA8848) && maybe_hundred_bak != nullptr) {
-		// Not 512 to avoid space between textures
-		maybe_hundred_bak[6] = double(uint32_t(a1->tex_coord_a.x) * 2 + ((lost_bits >> 0) & 1)) / 511.999;
-		maybe_hundred_bak[7] = double(uint32_t(a1->tex_coord_a.y) * 2 + ((lost_bits >> 1) & 1)) / 511.999;
-		maybe_hundred_bak[14] = double(uint32_t(a1->tex_coord_b.x) * 2 + ((lost_bits >> 2) & 1)) / 511.999;
-		maybe_hundred_bak[15] = double(uint32_t(a1->tex_coord_b.y) * 2 + ((lost_bits >> 3) & 1)) / 511.999;
-		maybe_hundred_bak[22] = double(uint32_t(a1->tex_coord_c.x) * 2 + ((lost_bits >> 4) & 1)) / 511.999;
-		maybe_hundred_bak[23] = double(uint32_t(a1->tex_coord_c.y) * 2 + ((lost_bits >> 5) & 1)) / 511.999;
+		maybe_hundred_bak[6] = psx_floats512[uint32_t(a1->tex_coord_a.x) * 2 + ((lost_bits >> 0) & 1)];
+		maybe_hundred_bak[7] = psx_floats512[uint32_t(a1->tex_coord_a.y) * 2 + ((lost_bits >> 1) & 1)];
+		maybe_hundred_bak[14] = psx_floats512[uint32_t(a1->tex_coord_b.x) * 2 + ((lost_bits >> 2) & 1)];
+		maybe_hundred_bak[15] = psx_floats512[uint32_t(a1->tex_coord_b.y) * 2 + ((lost_bits >> 3) & 1)];
+		maybe_hundred_bak[22] = psx_floats512[uint32_t(a1->tex_coord_c.x) * 2 + ((lost_bits >> 4) & 1)];
+		maybe_hundred_bak[23] = psx_floats512[uint32_t(a1->tex_coord_c.y) * 2 + ((lost_bits >> 5) & 1)];
 
 		maybe_hundred_bak = nullptr;
 	}
@@ -147,6 +148,24 @@ void ssigpu_sub_461220(float *maybe_hundred)
 	maybe_hundred_bak = maybe_hundred;
 
 	((void(*)(float*))ff8_externals.sub_461220)(maybe_hundred);
+}
+
+int pubintro_psxvram_buffer_init_sub_45B310()
+{
+	if (trace_all) ffnx_trace("%s\n", __func__);
+
+	int ret = ((int(*)())ff8_externals.sub_45B310)();
+
+	// Divide by 255 instead of 256, and don't alter values of psx_floats1[0] and psx_floats1[255]
+	for (int i = 0; i < 256; ++i) {
+		ff8_externals.psx_floats1[i] = float(double(i) / 255.0);
+	}
+
+	for (int i = 0; i < 512; ++i) {
+		psx_floats512[i] = float(double(i) / 511.0);
+	}
+
+	return ret;
 }
 
 void uv_patch_init()
@@ -171,4 +190,6 @@ void uv_patch_init()
 	replace_call(ff8_externals.worldmap_fog_filter_polygons_in_block_2 + (FF8_US_VERSION ? 0x698 : 0x6CD), enrich_tex_coords_sub_45E3A0);
 	replace_call(ff8_externals.sub_461E00 + 0x50, ssigpu_sub_461220);
 	ff8_externals.ssigpu_callbacks_1[52] = uint32_t(ssigpu_callback_sub_461E00);
+
+	replace_call(ff8_externals.pubintro_init + 0x91, pubintro_psxvram_buffer_init_sub_45B310);
 }
