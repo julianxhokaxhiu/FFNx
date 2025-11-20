@@ -30,6 +30,7 @@
 void ffmpeg_movie_init();
 void ffmpeg_release_movie_objects();
 uint32_t ffmpeg_prepare_movie(const char* name, bool with_audio = true);
+uint32_t ffmpeg_prepare_movie_from_io(const char* name, void *opaque, int(*read_packet)(void *opaque, uint8_t *buf, int buf_size), int64_t(*seek)(void *opaque, int64_t offset, int whence), void(*close)(void *opaque), bool with_audio = true);
 void ffmpeg_stop_movie();
 uint32_t ffmpeg_update_movie_sample(bool use_movie_fps = true);
 void ffmpeg_draw_current_frame();
