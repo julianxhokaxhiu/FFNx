@@ -131,6 +131,14 @@ struct sprite_viewport
 	float offset_y;
 };
 
+struct pak_pointers_entry
+{
+	uint32_t cam_offset;
+	uint32_t bik_offset;
+	uint32_t bik_lowres_offset;
+	uint32_t flag;
+};
+
 struct font_object
 {
 	uint32_t dummy1[0x12];
@@ -1072,6 +1080,7 @@ struct ff8_externals
 	uint32_t get_disk_number;
 	char* disk_data_path;
 	const char *app_path;
+	const char *data_drive_path;
 	uint32_t swirl_enter;
 	uint32_t swirl_main_loop;
 	uint32_t sub_460B60;
@@ -1241,6 +1250,8 @@ struct ff8_externals
 	DWORD* engine_mapped_buttons;
 	uint32_t draw_movie_frame;
 	struct ff8_movie_obj *movie_object;
+	char **disc_pak_filenames;
+	pak_pointers_entry **disc_pak_offsets;
 	int (*sub_5304B0)();
 	uint32_t *enable_framelimiter;
 	unsigned char *byte_1CE4907;

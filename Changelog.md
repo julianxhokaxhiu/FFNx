@@ -9,6 +9,10 @@
 - External textures: Fix Tonberry format when dumping PNGs using `save_textures_legacy` flag ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
 - Graphics: Use more precise texture UVs ( https://github.com/julianxhokaxhiu/FFNx/pull/852 )
 
+## FF8 (2000)
+
+- External movies: load cam files from disks by default when external movies is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/853 )
+
 # 1.23.0
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.22.0...1.23.0
