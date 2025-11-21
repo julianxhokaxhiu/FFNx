@@ -111,6 +111,7 @@ void ff8_find_externals()
 		ff8_externals.set_game_paths = (void (*)(int, char*, const char*))get_relative_call(uint32_t(ff8_externals.set_game_paths), 0x0);
 	}
 	ff8_externals.app_path = (const char*)get_absolute_value(uint32_t(ff8_externals.set_game_paths), 0x9A);
+	ff8_externals.data_drive_path = (const char*)get_absolute_value(uint32_t(ff8_externals.set_game_paths), 0x275);
 
 	ff8_externals.savemap = (savemap_ff8*)get_absolute_value(ff8_externals.pubintro_enter_main, 0x9);
 	ff8_externals.savemap_field = (savemap_ff8_field_h**)get_absolute_value(ff8_externals.main_loop, 0x21);
@@ -357,6 +358,8 @@ void ff8_find_externals()
 	ff8_externals.draw_movie_frame = get_relative_call(ff8_externals.opcode_moviesync, 0x1C);
 	common_externals.stop_movie = get_relative_call(common_externals.update_movie_sample, 0x3E2);
 	ff8_externals.movie_object = (ff8_movie_obj *)get_absolute_value(common_externals.prepare_movie, 0xDB);
+	ff8_externals.disc_pak_filenames = (char **)get_absolute_value(common_externals.prepare_movie, 0xB2);
+	ff8_externals.disc_pak_offsets = (pak_pointers_entry **)get_absolute_value(common_externals.prepare_movie, 0x20D);
 
 	ff8_externals.opcode_drawpoint_sub_4A0850 = (int(*)(int, int))get_relative_call(ff8_externals.opcode_drawpoint, 0x6B7);
 	ff8_externals.drawpoint_messages = get_absolute_value(ff8_externals.opcode_drawpoint, 0xD6);
