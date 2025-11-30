@@ -1641,6 +1641,7 @@ struct ff8_externals
 	int32_t *current_viewport_y_dword_1A77648;
 	int32_t *current_viewport_width_dword_1A77654;
 	int32_t *current_viewport_height_dword_1A77650;
+	uint32_t set_render_to_vram_current_screen_flag_before_battle;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);

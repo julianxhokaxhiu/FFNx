@@ -49,7 +49,7 @@ struct Tile {
 // A tile looks like another if it uses the same texture with the same palette and uses the same blending
 bool ff8_background_tiles_looks_alike(const Tile &tile, const Tile &other);
 
-std::vector<Tile> ff8_background_parse_tiles(const uint8_t *map_data);
+std::vector<Tile> ff8_background_parse_tiles(const uint8_t *map_data, int *maxW);
 void ff8_background_tiles_to_map(const std::vector<Tile> &tiles, uint8_t *map_data);
 bool ff8_background_save_textures(const std::vector<Tile> &tiles, const uint8_t *mim_data, const char *filename);
 bool ff8_background_save_textures_legacy(const std::vector<Tile> &tiles, const uint8_t *mim_data, const char *filename);

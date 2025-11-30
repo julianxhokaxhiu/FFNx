@@ -714,6 +714,7 @@ void ff8_find_externals()
 		ff8_externals.sub_543CB0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0xA55);
 		ff8_externals.worldmap_update_steps_sub_6519D0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0x8DB);
 		ff8_externals.set_drawpoint_state_521D90 = (void(*)(uint8_t, char))get_relative_call(ff8_externals.sub_54E9B0, 0x845);
+		ff8_externals.set_render_to_vram_current_screen_flag_before_battle = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, 0xB3C);
 
 		ff8_externals.sub_545F10 = get_relative_call(ff8_externals.sub_545EA0, 0x20);
 
@@ -794,6 +795,7 @@ void ff8_find_externals()
 		ff8_externals.sub_543CB0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, JP_VERSION ? 0xA3C : 0xA47);
 		ff8_externals.worldmap_update_steps_sub_6519D0 = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, JP_VERSION ? 0x8C4 : 0x8CD);
 		ff8_externals.set_drawpoint_state_521D90 = (void(*)(uint8_t, char))get_relative_call(ff8_externals.sub_54E9B0, 0x85F);
+		ff8_externals.set_render_to_vram_current_screen_flag_before_battle = get_relative_call(ff8_externals.worldmap_with_fog_sub_53FAC0, JP_VERSION ? 0xB24 : 0xB2F);
 
 		ff8_externals.sub_545F10 = get_relative_call(ff8_externals.sub_545EA0, 0x1C);
 
