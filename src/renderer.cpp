@@ -1726,7 +1726,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
     scissorHeight = getInternalCoordY(height);
 
     // This removes the black bars on the top and bottom of the screen
-    if (enable_uncrop)
+    if (enable_uncrop && !ff8)
     {
         bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
         if(!(is_movie_playing && widescreen.getMovieMode() == WM_DISABLED))
