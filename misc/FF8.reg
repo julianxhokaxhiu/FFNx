@@ -21,6 +21,19 @@ Windows Registry Editor Version 5.00
 #    GNU General Public License for more details.                             #
 #*****************************************************************************#
 
+# Enable 640x480 res + high res font + high res movies
+# enum Graphics {
+#     EnableHighResMovies = 0x1
+#     DisableWorldmapFog = 0x2
+#     DisableWorldmapTexturedAnimation = 0x4
+#     DisableWorldmapPalettedAnimation = 0x8
+#     DisableBilinear = 0x10
+#     HighResFont = 0x20
+#     GfxDriverOptions1 = 0x00F00000 // If != 0 then 640x480 resolution else 320x240
+#     GfxDriverOptions2 = 0x0F000000 // ???
+#     CurrentGfxDriver = 0xF0000000 // If != 0 then directX 5.0 else software (no other values from the register)
+# }
+
 [HKEY_LOCAL_MACHINE\SOFTWARE\Square Soft, Inc\FINAL FANTASY VIII\1.00]
 "Graphics"=dword:00100021
 
