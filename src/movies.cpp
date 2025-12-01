@@ -27,6 +27,8 @@
 #include "video/movies.h"
 #include "redirect.h"
 #include "achievement.h"
+#include "utils.h"
+#include "ff8/movies.h"
 
 enum MovieAudioLayers {
 	MUSIC = 0,
@@ -265,6 +267,16 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 		{
 			int squall_lvl = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[0].exp, 0);
 			g_FF8SteamAchievements->unlockEndOfGameAchievement(squall_lvl);
+		}
+	}
+
+	if (!steam_edition && !fileExists(newFmvName)) {
+		void *opaque = ff8_bink_open(disc, movie);
+
+		if (opaque != nullptr) {
+			ff8_movie_frames = ffmpeg_prepare_movie_from_io(newFmvName, opaque, ff8_bink_read, ff8_bink_seek, ff8_bink_close);
+
+			return;
 		}
 	}
 
