@@ -37,9 +37,11 @@ bool ff8_background_tiles_looks_alike(const Tile &tile, const Tile &other)
 		&& tile.blendType == other.blendType;
 }
 
-std::vector<Tile> ff8_background_parse_tiles(const uint8_t *map_data)
+std::vector<Tile> ff8_background_parse_tiles(const uint8_t *map_data, int *maxW)
 {
 	std::vector<Tile> tiles;
+
+	*maxW = 0;
 
 	while (true) {
 		Tile tile;
@@ -51,10 +53,17 @@ std::vector<Tile> ff8_background_parse_tiles(const uint8_t *map_data)
 		}
 
 		uint8_t texture_id = tile.texID & 0xF;
-		Tim::Bpp bpp = Tim::Bpp((tile.texID >> 7) & 3);
-		uint8_t pal_id = (tile.palID >> 6) & 0xF;
+		int maxX = (texture_id + 1) * TEXTURE_WIDTH_BPP16;
+		if (maxX > *maxW) {
+			*maxW = maxX;
+		}
 
-		if (trace_all || trace_vram) ffnx_info("tile %d dst %d %d %d src %d %d texid %d bpp %d palId %d blendType %d param %d %d\n", tiles.size(), tile.x, tile.y, tile.z, tile.srcX, tile.srcY, texture_id, int(bpp), pal_id, tile.blendType, tile.parameter, tile.state);
+		if (trace_all || trace_vram) {
+			Tim::Bpp bpp = Tim::Bpp((tile.texID >> 7) & 3);
+			uint8_t pal_id = (tile.palID >> 6) & 0xF;
+
+			ffnx_info("tile %d dst %d %d %d src %d %d texid %d bpp %d palId %d blendType %d param %d %d\n", tiles.size(), tile.x, tile.y, tile.z, tile.srcX, tile.srcY, texture_id, int(bpp), pal_id, tile.blendType, tile.parameter, tile.state);
+		}
 
 		tiles.push_back(tile);
 

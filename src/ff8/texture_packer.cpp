@@ -185,19 +185,11 @@ bool TexturePacker::setTexture(const char *name, const TextureInfos &texture, co
 	return tex.mod() != nullptr;
 }
 
-bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, int h, const std::vector<Tile> &mapTiles, const char *extension, char *found_extension)
+bool TexturePacker::setTextureBackground(const char *name, int x, int y, int w, int h, int maxW, const std::vector<Tile> &mapTiles, const char *extension, char *found_extension)
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s %s x=%d y=%d w=%d h=%d tileCount=%d\n", __func__, name, x, y, w, h, mapTiles.size());
 
 	ModdedTextureId textureId = makeTextureId(x, y);
-	// Adjust width with actual texture usage
-	int maxW = 0;
-	for (const Tile &tile: mapTiles) {
-		int maxX = ((tile.texID + 1) & 0xF) * TEXTURE_WIDTH_BPP16;
-		if (maxX > maxW) {
-			maxW = maxX;
-		}
-	}
 	setVramTextureId(textureId, x, y, maxW, h);
 
 	IdentifiedTexture tex(name, TextureInfos(x, y, w, h, Tim::Bpp16, true));

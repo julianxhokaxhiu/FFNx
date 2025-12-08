@@ -52,6 +52,8 @@ constexpr int intro_credits_fade_frames = 33;
 constexpr int intro_credits_adjusted_frames = 438; // Instead of 374 in the Game
 constexpr int intro_credits_frames_between_music_start_and_first_image = 180;
 
+uint8_t *extended_memory = nullptr;
+
 int (*ff8_opcode_old_battle)(int);
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
@@ -307,6 +309,13 @@ void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 	last_tex_header = tex_header;
 }
 
+void ff8_set_render_to_vram_current_screen_flag_before_battle()
+{
+	if(trace_all) ffnx_trace("%s\n", __func__);
+
+	// Disable software frame rendering to VRAM (by not doing anything here) because it is not needed anymore
+}
+
 void ff8_wm_set_render_to_vram_current_screen_flag_before_battle()
 {
 	if(trace_all) ffnx_trace("%s\n", __func__);
@@ -315,7 +324,7 @@ void ff8_wm_set_render_to_vram_current_screen_flag_before_battle()
 	// We lose the shadows, but keep the full battle transition effect
 	*ff8_externals.sub_blending_capability = false;
 
-	// Disable software frame rendering to VRAM (by not doing anything here) because it is not needed anymore
+	ff8_set_render_to_vram_current_screen_flag_before_battle();
 }
 
 void ff8_swirl_init(float a1)
@@ -1454,6 +1463,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
 	replace_call(ff8_externals.worldmap_with_fog_sub_53FAC0 + (FF8_US_VERSION ? 0xB3C: (JP_VERSION ? 0xB24 : 0xB2F)), ff8_wm_set_render_to_vram_current_screen_flag_before_battle);
+	replace_function(ff8_externals.set_render_to_vram_current_screen_flag_before_battle, ff8_set_render_to_vram_current_screen_flag_before_battle);
 	replace_call(ff8_externals.swirl_enter + 0x9, ff8_swirl_init);
 
 	replace_function(common_externals.destroy_tex_header, ff8_destroy_tex_header);
@@ -1795,6 +1805,29 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	if(widescreen_enabled)
 		ff8_widescreen_hook_init();
+
+	// #####################
+	// 3D model extended memory
+	// #####################
+	extended_memory = (uint8_t *)driver_malloc(0x1000000); // 16 MB
+
+	if (extended_memory) {
+		uint32_t memory_offsets = JP_VERSION ? 0xD6DD60 : 0xB6D060;
+		patch_code_dword(memory_offsets + 0xC, uint32_t(extended_memory) + 0x300000);
+		patch_code_dword(memory_offsets + 0x18, uint32_t(extended_memory) + 0x80000);
+		patch_code_dword(memory_offsets + 0x1C, uint32_t(extended_memory) + 0x80000);
+		patch_code_dword(memory_offsets + 0x20, uint32_t(extended_memory) + 0x100000);
+		patch_code_dword(memory_offsets + 0x24, uint32_t(extended_memory) + 0x100000);
+		patch_code_dword(memory_offsets + 0x2C, uint32_t(extended_memory) + 0x180000);
+		patch_code_dword(memory_offsets + 0x30, uint32_t(extended_memory) + 0x180000);
+		patch_code_dword(memory_offsets + 0x34, uint32_t(extended_memory) + 0x180000);
+
+		// Extend field data size
+		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF64 : 0xED1), uint32_t(extended_memory) + 0x5F0000);
+		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF6B : 0xED8), uint32_t(extended_memory) + 0x600000);
+	} else {
+		ffnx_error("%s: cannot allocate extended_memory\n", __func__);
+	}
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
