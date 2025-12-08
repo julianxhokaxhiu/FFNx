@@ -44,7 +44,8 @@ This guide explains how to edit and encode FMV videos for high quality and prope
      - Also extract to any avi format to get wav audio. (Must be demuxed later.) 
 - Do pre-processing with a frameserver and save output back to a series of .png images.
      - VapourSynth is recommended over AviSynth(+) because it has better performance, better stability, and does not have functions with undesirable "gotcha" default parameters like AviSynth does (e.g., ConvertToYUV() does a PC->TV range conversion by default).
-     - [fmtconv](https://github.com/EleonoreMizo/fmtconv) is recommended for all color, bit-depth, and pixel format conversions, for both VapourSynth and AviSynth.
+     - [fmtconv](https://github.com/EleonoreMizo/fmtconv) is recommended for bit-depth, and pixel format conversions, for both VapourSynth and AviSynth.
+     - There is no good answer for color conversion. fmtconv is not good for our use cases. (See below.) Frames could be saved as a series of .png images and then fed throught gamutthingy, but that's very time consuming. (Perhaps one day gamutthingy will be able to create LUTs in the format used by the Avisynth/Vapoursynth Timecube filter.) The best answer may be to avoid color conversion and depend on FFNx to convert at playback.
 - Batch process your .png images through your AI upscaler program.
 - Do post-processing with a frameserver, piping output to your encoder.
 - Encode with the standalone x264 command-line encoder.
@@ -70,8 +71,8 @@ This guide explains how to edit and encode FMV videos for high quality and prope
 
 ### Color Matrix
 **Background Info:** The color matrix is used to convert between YUV and RGB. The same matrix must be used for playback as was used at encoding time.  
-**x264 encoder parameter:** `--colormatrix` Possible values are `undef`, `bt709`, `fcc`, `bt470bg`, `smpte170m`, `smpte240m`, `GBR`, `YCgCo`, `bt2020nc`, `bt2020c`, `smpte2085`, `chroma-derived-nc`,         `chroma-derived-c`, and `ICtCp`. This parameter only sets the metadata used for playback; it does not do a color matrix conversion.  
-**Recommended:** `bt709` for new material or if doing a color matrix and gamut conversion in a frameserver. Otherwise retain the source material's matrix.  
+**x264 encoder parameter:** `--colormatrix` Possible values are `undef`, `bt709`, `fcc`, `bt470bg`, `smpte170m`, `smpte240m`, `GBR`, `YCgCo`, `bt2020nc`, `bt2020c`, `smpte2085`, `chroma-derived-nc`, `chroma-derived-c`, and `ICtCp`. This parameter only sets the metadata used for playback; it does not do a color matrix conversion.
+**Recommended:** `bt709` for new material or if doing a color matrix and gamut conversion in a frameserver. Otherwise retain the source material's matrix. **For upscales/edits of Playstation videos, retain bt601 and leave the metadata absent.**
 **Permitted:** Anything ffmpeg can decode  
 **FFNx default behavior:** If the color matrix metadata is absent or `undef`, `smpte170m` (bt601) is assumed. Except `bt709` is assumed for FF8 when the video has HD dimensions and no colorimetry metadata.  
 **Notes:**
@@ -89,16 +90,18 @@ This guide explains how to edit and encode FMV videos for high quality and prope
 **Permitted:** `undef`, `bt709`, `bt470m`, `smpte170m`, `smpte240m`, `bt470bg` _If video metadata specifies unsupported color primaries, the video will fail to play._  
 **FFNx default behavior:** If the color primary metadata is absent or `undef`, the NTSC-J color gamut is generally assumed. Except that `bt709` is assumed when (1) the color matrix is bt709, or (2) for FF8 when the video has HD dimensions and no colorimetry metadata, or (3) if the file name is eidoslogo.avi or sqlogo.avi.  
 **Notes:**
-- The original Playstation 1 videos were mastered for playback using the "NTSC-J" gamut from the Japanese television standard in force in the 1990s.  
+- The original Playstation 1 videos were mastered for playback using the color gamut of the P22 phosphors used in 1990s televisions, coupled with the "color correction" built in to television receivers to (crudely) compensate for the discrepancy between the phosphors and the Japanese broadcast specification.
      - Unfortunately, neither the x264 encoder nor ffmpeg have an enum for this color gamut. So FFNx must hijack `undef` to mean "NTSC-J." **Therefore, unless the exceptions noted above apply, a video that is not NTSC-J will play back with (very) incorrect colors in FFNx if the `--colorprim` metadata is absent.**
-     - fmtconv is capable of doing conversions to/from the NTSC-J color gamut.
-- In the absence of metadata, `bt709` (sRGB) is assumed for eidoslogo.avi and sqlogo.avi because these files don't exist on the Playstation discs, and were presumably created for the PC release, presumably using the sRGB gamut.
-- The avi video files from the Steam edition of FF8 appear to use the bt709 color gamut. (Gamut conversion from NTSC-J was already done when these videos were encoded.)
+     - **Do not** attempt gamut conversions to/from NTSC-J unless you are 110% sure you know what you're doing. FFNx's gamut conversion is now **very** good, probably much better than whatever Avisynth filter you've found. So it's almost certainly a better idea to leave the color gamut alone and let FFNx deal with it. (Even if you are 110% sure you know what you're doing, it's probably wise to ask ChthonVII to be absolutely certain.)
+          - Do not use fmtconv for conversions to/from NTSC-J color gamut. Its NTSC-J preset uses a somewhat wrong whitepoint, uses the unreachable color primary coordinates from the NTSC spec (FFNx uses realistic coordinates for P22 phosphors, and simulates the "color correction" that would have crudely compensated for the discrepancy from the spec), and does not use a gamut compression algorithm to handle colors outside the destination gamut without clipping.
+          - [gamutthingy](https://github.com/ChthonVII/gamutthingy) can do the conversion correctly, but you would have to batch process one frame at a time in .png format. Perhaps one day gamutthingy will be able to create LUTs in the format used by the Avisynth/Vapoursynth Timecube filter.
+- In the absence of metadata, `bt709` (sRGB) is assumed for eidoslogo.avi and sqlogo.avi because these files don't exist on the Playstation discs, and were presumably created for the PC release, presumably using the sRGB gamut. (It's honestly hard to say what the intended colorimetry for these two videos was, and sRGB is just the best guess available. We don't really know what was sitting on the desks of the people who made these videos. In 1998, the sRGB standard had been proposed, but not yet accepted. The first generation of consumer LCD monitors became available in 1997 and 1998, and *most* of them would have been at least close to sRGB. The colorimetry of CRT computer monitors was a "wild west.")
+- The avi video files from the Steam edition of FF8 appear to use the bt709 color gamut. (It appears that gamut conversion from NTSC-J was already done when these videos were encoded.)
 - The `bt709` color gamut is the same as sRGB, used by modern computer monitors. FFNx will ultimately convert everything to this color gamut. (Except if HDR is enabled, everything will instead be converted to the rec2020 color gamut used by HDR monitors.)
 - Due to some compromises necessary for rendering gameplay, videos are subject to two sequential color gamut conversions in some circumstances. This is not ideal, but it cannot be avoided. Sequential color gamut conversions happen when:
      - When NTSC-J mode is enabled, and the video's color gamut is not NTSC-J.
      - When HDR is enabled, and NTSC-J mode is disabled, and the video's color gamut is not `bt709` (sRGB).
-- The `bt470m` color gamut was deprecated in television standards in 1979. If `bt470m` metadata is encountered, FFNx will assume it's an error and that `smpte170m` was intended.
+- The `bt470m` color gamut was deprecated in television standards in 1994. If `bt470m` metadata is encountered, FFNx will assume it's an error and that `smpte170m` was intended.
 - `smpte170m` is SMPTE-C, the North American standard for standard definition television. `smpte240m` is identical.
 - `bt470bg` is EBU (PAL), the European standard for standard definition television.
 - The color primaries of an unlabeled video likely match its color matrix, as follows: `bt709` for bt709, `smpte170m` for NTSC bt601, `bt470bg` for PAL bt601. NTSC-J is limited to material mastered for playback on Japanese CRT television sets. Videos created from still images created in image editing software like Photoshop and GIMP likely use the sRGB (`bt709`) gamut.
@@ -124,24 +127,25 @@ This guide explains how to edit and encode FMV videos for high quality and prope
 ### Transfer Characteristics (Gamma)
 **Background Info:** The gamma function used to convert between linear RGB and gamma-encoded RGB. (See [gamma correction](https://en.wikipedia.org/wiki/Gamma_correction).) At playback time, the inverse of whatever gamma function was previously used must be used to recover linear RGB, which can then be re-gamma-encoded using the inverse of the playback device's gamma function.  
 **x264 encoder parameter:** `--transfer` Possible values are `undef`, `bt709`, `bt470m`, `bt470bg`, `smpte170m`, `smpte240m`, `linear`, `log100`, `log316`, `iec61966-2-4`, `bt1361e`, `iec61966-2-1`, `bt2020-10`, `bt2020-12`, `smpte2084`, `smpte428`, and `arib-std-b67`. This parameter only sets the metadata used for playback; it does not do a gamma conversion.  
-**Recommended:** The inverse of whatever gamma function was previously used to convert from linear RGB to gamma-encoded RGB. If you didn't do such a conversion, then retain the source material's transfer characteristics.  
+**Recommended:** The inverse of whatever gamma function was previously used to convert from linear RGB to gamma-encoded RGB. If you didn't do such a conversion, then retain the source material's transfer characteristics. (Also, **don't** do such a conversion on Playstation videos unless you have software that can perform the BT1886 Appendix 1 function. See gamma_and_gamut.md for details.)
 **Permitted:** `undef`, `bt709`, `bt470bg`, `iec61966-2-1`, `smpte170m`, `bt2020-10`, `bt2020-12`, `iec61966-2-4`, `bt1361e` (ffmpeg's AVCOL_TRC_GAMMA22 is also supported, but there's no way to flag that in x264's metadata.)  _If video metadata specifies unsupported transfer characteristics, the video will fail to play._  
-**FFNx default behavior:** If the transfer characteristics metadata is absent or `undef`, FFNx will generally use custom gamma function that's been tweaked to look good with Playstation movies (orginal and upscaled). Except `bt709` is assumed when the color matrix is bt709 or for FF8 when the video has HD dimensions and no colorimetry metadata, and `bt470bg` is assumed when the color gamut is bt470bg.  
+**FFNx default behavior:** If the transfer characteristics metadata is absent or `undef`, FFNx will generally use the BT1886 Appendix 1 EOTF function. Except `bt709` is assumed when the color matrix is bt709 or for FF8 when the video has HD dimensions and no colorimetry metadata, and `bt470bg` is assumed when the color gamut is bt470bg.
 **Notes:**
-- The gamma function used for the original Playstation 1 videos is a bit of a mystery. One would assume compliance with the applicable television standard, and thus `smpte170m`. However, using SMPTE170M, or any other piecewise function, for playback results in noticeable banding near black within the "toe slope." (Also, the SMPTE170M function is deliberately overbright in order to counteract other factors with playback on CRT television sets.) The nominal gamma for NTSC television was 2.2. However, using a pure 2.2 curve causes details in shadowy areas to be lost to darkness. A pure curve around 1.9 or 2.0 better preserves details in shadows, but blows out highlights. In sum, we don't know what gamma function was used originally, and all of the likely candidates have flaws. Given this uncertainty, in the absence of metadata, FFNx defaults to a custom gamma function (which we call "toeless sRGB") that avoids each of these flaws. It's certainly not the real inverse of the original gamma function, but the results look very good.
-- `iec61966-2-1` is the sRGB gamma function. Computer monitors use this gamma function. FFNx will ultimately convert everything to this. The average of this function is roughly equivalent to a pure 2.2 curve. (Except if HDR is enabled, everything will instead be converted to the rec2084 ("PQ") gamma function used by HDR monitors.)
-- `smpte170m`, `bt709`, `bt2020-10`, `bt2020-12`, `iec61966-2-4`, and `bt1361e` are all functionally identical. This is the gamma function used in the NTSC and HD television standards. The average of this function is roughly equivalent to a pure 1.9 curve (though 2.0 is often cited). This is deliberately overbright in order to counteract other factors with playback on CRT television sets.
-- `bt470bg` is the gamma function for PAL standard definition television. It's a pure 2.8 gamma curve. (Though, the actual behavior of PAL CRT television sets was not really as high as 2.8.) 
+- In the absence of metadata, FFNx assumes original Playstation 1 videos (or derivatives thereof). Since these videos were meant to play on a CRT television, FFNx uses the EOTF (gamma) function from BT1886 Appendix 1, with constants selected to match a mid-90s Sony Trinitron CRT with the brightness and contrast knobs turned to where it looks "good."
+- `iec61966-2-1` is the sRGB gamma function. Modern sRGB computer monitors use this gamma function. FFNx will ultimately convert everything to this. The average of this function is roughly equivalent to a pure 2.2 curve. (Except if HDR is enabled, everything will instead be converted to the rec2084 ("PQ") gamma function used by HDR monitors.)
+- `smpte170m`, `bt709`, `bt2020-10`, `bt2020-12`, `iec61966-2-4`, and `bt1361e` are all functionally identical. This is the gamma function used in the digital NTSC and HD television standards. The average of this function is roughly equivalent to a pure 1.9 curve (though 2.0 is often cited). This is deliberately overbright in order to counteract other factors with playback on CRT television sets.
+- `bt470bg` is the gamma function for PAL standard definition television. It's a pure 2.8 gamma curve. (Despite the spec, physics dictated that PAL CRT televisions had the same gamma characteristics as other CRTs, so the BT1886 Appendix 1 EOTF functions captures them well. 2.8 should only be used for digital sources, if at all.)
 -  Aside from Playstation 1 videos (see above), the transfer characteristics of an unlabeled video are most likely `smpte170m`.
 
 ### Full Colorimetry Conversion Example
+(**WARNING:** This is ill-advised. Again, you probably should not mess with NTSC-J video. fmtconv's conversion is not very good. You should probably leave the conversion to FFNx instead.)
 The correct frameserver procedure for completely converting all colorimetry properties is somewhat complicated. Therefore, an example is provided here. The steps are:
 1. Increase working bit depth to (at least) 16 bits per color. If the input is tv range, do a range conversion in the same operation.
 2. Convert to (gamma encoded) RGB using the source color matrix.
 3. Convert to linear RGB using the source gamma function.
 4. Convert from the source color gamut to the destination color gamut.
 5. Convert to gamma encoded RGB using the destination gamma function.
-    - However, if you want to use FFNx's custom gamma function at playback, then instead just use the inverse of step 3 and set the `--transfer` metadata to `undef`.
+    - However, if you want to use BT1886 Appendix 1 at playback, then instead just use the inverse of step 3 and set the `--transfer` metadata to `undef`.
 6. Convert to YUV using the destination color matrix.
 7. Downsample to 10 bits per color for output.
 8. Set metadata encoder parameters correctly for the destination color properties.
@@ -156,7 +160,7 @@ video = core.std.SetFrameProp(video, prop='_ColorRange', intval=0) # 0 means ful
 video = core.fmtc.resample(video,css='444', fulls=True, fulld=True) # YUV->RGB conversion will require 444
 video = core.fmtc.matrix(video, mats="601", matd="RGB", fulls=True, fulld=True)
 # assume 2.2 pure gamma curve for playstation videos; would normally use transs/transd instead of gcor, but there's no 2.2 option
-video = core.fmtc.transfer(video, transs="linear", transd="linear", gcor=2.2, fulls=True, fulld=True) 
+video = core.fmtc.transfer(video, transs="linear", transd="linear", gcor=2.2, fulls=True, fulld=True)
 video = core.fmtc.primaries(video, prims="ntscj", primd="709")
 # Because we want to use FFNx's custom gamma function, rather than converting to bt709's gamma function, invert the earlier step and set metadata to undef
 # Again, would normally use transs/transd instead of gcor, but there's no 2.2 option
@@ -166,7 +170,7 @@ video = core.fmtc.transfer(video, transs="linear", transd="linear", gcor=1.0/2.2
 video = core.fmtc.matrix(video, mats="RGB", matd="709", fulls=True, fulld=True)
 video = core.fmtc.resample(video,css='420', fulls=True, fulld=True)
 video = core.fmtc.bitdepth(video, bits=10, fulls=True, fulld=False)
-video.set_output() 
+video.set_output()
 # remember to set encoder parameters --input depth 10 --output-depth 10 --colormatrix bt709 --colorprim 709 --input-range pc --range pc --transfer undef (so that FFNx will use its custom gamma function)
 ```
 

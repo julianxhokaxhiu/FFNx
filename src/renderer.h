@@ -155,7 +155,7 @@ enum InverseGammaFunctionType{
     GAMMAFUNCTION_SRGB = 0,
     GAMMAFUNCTION_TWO_PT_TWO = 1,
     GAMMAFUNCTION_SMPTE170M = 2,
-    GAMMAFUNCTION_TOELESS_SRGB = 3,
+    GAMMAFUNCTION_BT1886_APPX1 = 3,
     GAMMAFUNCTION_TWO_PT_EIGHT = 4
 };
 
@@ -178,15 +178,12 @@ namespace RendererTextureSlot {
 };
 
 enum GamutLUTIndexType{
-	INDEX_LUT_NTSCJ_TO_SRGB,
-	INDEX_LUT_SMPTEC_TO_SRGB,
-	INDEX_LUT_EBU_TO_SRGB,
-	INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
-	INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC,
-	INDEX_LUT_INVERSE_NTSCJ_TO_EBU,
-	INDEX_LUT_SRGB_TO_NTSCJ,
-	INDEX_LUT_SMPTEC_TO_NTSCJ,
-	INDEX_LUT_EBU_TO_NTSCJ
+    INDEX_LUT_NTSCJ_TO_SRGB,
+    INDEX_LUT_SMPTEC_TO_SRGB,
+    INDEX_LUT_EBU_TO_SRGB,
+    INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
+    INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC,
+    INDEX_LUT_INVERSE_NTSCJ_TO_EBU
 };
 
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
@@ -283,7 +280,6 @@ private:
         ColorMatrixType bIsMovieColorMatrix = COLORMATRIX_BT601;
         ColorGamutType bIsMovieColorGamut = COLORGAMUT_SRGB;
         ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
-        bool bIsOverrideGamut = false;
         InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
 
         float backendProjMatrix[16];
@@ -378,9 +374,6 @@ private:
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleSRGBtoNTSCJ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleSMPTECtoNTSCJ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleEBUtoNTSCJ = BGFX_INVALID_HANDLE;
 
     bgfx::VertexLayout vertexLayout;
 
@@ -450,7 +443,7 @@ public:
     void prepareDiffuseIbl(char* fullpath = nullptr);
     void prepareEnvBrdf();
     void prepareGamutLUTs();
-	void LoadGamutLUT(GamutLUTIndexType whichLUT);
+    void LoadGamutLUT(GamutLUTIndexType whichLUT);
     void shutdown();
 
     void clearShadowMap();
@@ -484,13 +477,13 @@ public:
     void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
-    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true);
-    uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
+    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = false, bool copyData = true);
+    uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = false);
     bimg::ImageContainer* createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
     bimg::ImageContainer* createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
-    bgfx::TextureHandle createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
-    bgfx::TextureHandle createTextureHandle(cmrc::file* file, char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
-    uint32_t createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb = true);
+    bgfx::TextureHandle createTextureHandle(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = false);
+    bgfx::TextureHandle createTextureHandle(cmrc::file* file, char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = false);
+    uint32_t createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb = false);
     bool saveTexture(const char* filename, uint32_t width, uint32_t height, const void* data);
     void deleteTexture(uint16_t texId);
     void useTexture(uint16_t texId, uint32_t slot = 0);
@@ -515,7 +508,6 @@ public:
     void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);
-    void setGamutOverride(bool flag = false);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);
