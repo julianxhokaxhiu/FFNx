@@ -63,7 +63,7 @@ void *ff8_bink_open(uint8_t disc, uint32_t movie)
 
 int ff8_bink_read(void *opaque, uint8_t *buf, int buf_size)
 {
-	if (trace_all || true) ffnx_trace("%s: buf_size=%d\n", __func__, buf_size);
+	if (trace_all || trace_movies) ffnx_trace("%s: buf_size=%d\n", __func__, buf_size);
 
 	if (opaque == nullptr) {
 		return AVERROR_EXIT;

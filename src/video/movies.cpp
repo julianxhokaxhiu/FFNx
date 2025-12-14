@@ -725,111 +725,6 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.setGammaType(GAMMAFUNCTION_SRGB);
 }
 
-int decode_packet(AVCodecContext *codec_ctx, const AVPacket *packet, time_t *now)
-{
-	int ret = avcodec_send_packet(codec_ctx, packet);
-
-	/* if (ret == AVERROR(EAGAIN))
-	{
-		//ret = avcodec_send_packet(codec_ctx, packet);
-		ffnx_trace("%s: avcodec_send_packet0 -> %d videostream=%d\n", __func__, ret, packet->stream_index == videostream);
-
-		ret = 0;
-	} */
-
-	if (ret < 0)
-	{
-		ffnx_trace("%s: avcodec_send_packet -> %d\n", __func__, ret);
-		return ret;
-	}
-
-	while (ret >= 0)
-	{
-		ret = avcodec_receive_frame(codec_ctx, movie_frame);
-
-		if (ret < 0)
-		{
-			if (ret == AVERROR(EAGAIN))
-			{
-				//ret = avcodec_send_packet(codec_ctx, packet);
-				ffnx_trace("%s: avcodec_send_packet2 -> %d videostream=%d\n", __func__, ret, packet->stream_index == videostream);
-
-				return 0;
-			}
-
-			if (ret == AVERROR_EOF)
-			{
-				return ret;
-			}
-
-			ffnx_trace("%s: avcodec_receive_frame -> %d\n", __func__, ret);
-
-			return 0;
-		}
-
-		if (codec_ctx->codec->type == AVMEDIA_TYPE_VIDEO)
-		{
-			QueryPerformanceCounter((LARGE_INTEGER *)now);
-
-			if (sws_ctx)
-			{
-				AVFrame* frame = av_frame_alloc();
-				frame->width = movie_width;
-				frame->height = movie_height;
-				frame->format = targetpixelformat;
-
-				av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
-
-				sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, frame->height, frame->data, frame->linesize);
-				buffer_yuv_frame(frame->data, frame->linesize);
-
-				av_freep(&frame->data[0]);
-				av_frame_free(&frame);
-			}
-			else buffer_yuv_frame(movie_frame->extended_data, movie_frame->linesize);
-
-			if (vbuffer_write == vbuffer_read)
-			{
-				draw_yuv_frame(vbuffer_read);
-
-				vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
-
-				av_frame_unref(movie_frame);
-
-				return -1;
-			}
-
-			return 0;
-		}
-		else if(codec_ctx->codec->type == AVMEDIA_TYPE_AUDIO)
-		{
-			QueryPerformanceCounter((LARGE_INTEGER *)now);
-
-			uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT) : av_get_bytes_per_sample(codec_ctx->sample_fmt);
-			uint32_t _size = bytesperpacket * movie_frame->nb_samples * codec_ctx->ch_layout.nb_channels;
-
-			// Sometimes the captured frame may have no sound samples. Just skip and move forward
-			if (_size)
-			{
-				uint8_t *buffer;
-
-				av_samples_alloc(&buffer, movie_frame->linesize, codec_ctx->ch_layout.nb_channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : codec_ctx->sample_fmt), 0);
-				if (audio_must_be_converted) swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
-				else av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, codec_ctx->ch_layout.nb_channels, codec_ctx->sample_fmt);
-
-				nxAudioEngine.pushStreamData(buffer, _size);
-
-				av_freep(&buffer);
-			}
-		}
-
-		av_frame_unref(movie_frame);
-		//return 0;
-	}
-
-	return 0;
-}
-
 // display the next frame
 uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 {
@@ -848,21 +743,122 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 	{
 		if(packet.stream_index == videostream)
 		{
-			ret = decode_packet(codec_ctx, &packet, &now);
-		}
-		else if(packet.stream_index == audiostream)
-		{
-			//QueryPerformanceCounter((LARGE_INTEGER *)&now);
+			ret = avcodec_send_packet(codec_ctx, &packet);
 
-			ret = decode_packet(acodec_ctx, &packet, &now);
+			if (ret < 0)
+			{
+				ffnx_trace("%s: avcodec_send_packet (video) -> %d\n", __func__, ret);
+				av_packet_unref(&packet);
+				break;
+			}
+
+			// Receive all frames produced by this packet
+			while (true)
+			{
+				ret = avcodec_receive_frame(codec_ctx, movie_frame);
+
+				if (ret == AVERROR(EAGAIN))
+				{
+					// Decoder needs more input, continue to next packet
+					break;
+				}
+
+				if (ret < 0)
+				{
+					if (ret != AVERROR_EOF) ffnx_trace("%s: avcodec_receive_frame (video) -> %d\n", __func__, ret);
+					av_packet_unref(&packet);
+					goto packet_loop_exit;
+				}
+
+				// Successfully received a frame
+				QueryPerformanceCounter((LARGE_INTEGER *)&now);
+
+				if(sws_ctx)
+				{
+					AVFrame* frame = av_frame_alloc();
+					frame->width = movie_width;
+					frame->height = movie_height;
+					frame->format = targetpixelformat;
+
+					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
+
+					sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, frame->height, frame->data, frame->linesize);
+					buffer_yuv_frame(frame->data, frame->linesize);
+
+					av_freep(&frame->data[0]);
+					av_frame_free(&frame);
+				}
+				else buffer_yuv_frame(movie_frame->extended_data, movie_frame->linesize);
+
+				if(vbuffer_write == vbuffer_read)
+				{
+					draw_yuv_frame(vbuffer_read);
+
+					vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
+
+					av_packet_unref(&packet);
+
+					// Exit both the receive loop and packet loop
+					goto packet_loop_exit;
+				}
+			}
+		}
+
+		if(packet.stream_index == audiostream)
+		{
+			QueryPerformanceCounter((LARGE_INTEGER *)&now);
+
+			ret = avcodec_send_packet(acodec_ctx, &packet);
+
+			if (ret < 0)
+			{
+				ffnx_trace("%s: avcodec_send_packet (audio) -> %d\n", __func__, ret);
+				av_packet_unref(&packet);
+				break;
+			}
+
+			// Receive all frames produced by this packet
+			while (true)
+			{
+				ret = avcodec_receive_frame(acodec_ctx, movie_frame);
+
+				if (ret == AVERROR(EAGAIN))
+				{
+					// Decoder needs more input, continue to next packet
+					break;
+				}
+
+				if (ret < 0)
+				{
+					if (ret != AVERROR_EOF) ffnx_trace("%s: avcodec_receive_frame (audio) -> %d\n", __func__, ret);
+					av_packet_unref(&packet);
+					goto packet_loop_exit;
+				}
+
+				// Successfully received a frame
+				uint32_t bytesperpacket = audio_must_be_converted ? av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT) : av_get_bytes_per_sample(acodec_ctx->sample_fmt);
+				uint32_t _size = bytesperpacket * movie_frame->nb_samples * acodec_ctx->ch_layout.nb_channels;
+
+				// Sometimes the captured frame may have no sound samples. Just skip and move forward
+				if (_size)
+				{
+					uint8_t *buffer;
+
+					av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->ch_layout.nb_channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : acodec_ctx->sample_fmt), 0);
+					if (audio_must_be_converted) swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
+					else av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->ch_layout.nb_channels, acodec_ctx->sample_fmt);
+
+					nxAudioEngine.pushStreamData(buffer, _size);
+
+					av_freep(&buffer);
+				}
+			}
 		}
 
 		av_packet_unref(&packet);
-		if (ret < 0)
-		{
-			break;
-		}
 	}
+
+packet_loop_exit:
 
 	if (first_audio_packet)
 	{
