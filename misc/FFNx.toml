@@ -349,10 +349,7 @@ external_ambient_volume = -1
 
 #[ENABLE FFMPEG VIDEOS]
 # This flag will enable/disable the support of FFMpeg layer to reproduce movies in-game.
-# Default Value (-1) sets the flag, depending on the game version.
-# - FF7 1998 - true
-# - FF7/FF8 Steam - true
-# - FF8 2000 - false
+# Default Value (-1) enables FFMpeg if the game supports it.
 # It is suggested to keep the default behavior unless you really know what are you doing.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_ffmpeg_videos = -1

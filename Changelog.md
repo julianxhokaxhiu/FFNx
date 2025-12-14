@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.23.0...master
 
+## Common
+
+- External movies: Always enable external_movies by default ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
+
 ## FF8
 
 - Core: Fix crashes happening in Non-US versions ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
@@ -14,6 +18,7 @@
 ## FF8 (2000)
 
 - External movies: load cam files from disks by default when external movies is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/853 )
+- External movies: load pak files (bink movies) from disks by default when external movies is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
 
 # 1.23.0
 
