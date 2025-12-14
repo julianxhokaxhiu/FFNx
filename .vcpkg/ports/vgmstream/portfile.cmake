@@ -28,7 +28,7 @@ if("vorbis" IN_LIST FEATURES)
     SET(USE_VORBIS ON)
 endif()
 
-vcpkg_configure_cmake(
+vcpkg_cmake_configure(
     SOURCE_PATH ${SOURCE_PATH}
     OPTIONS
         -DUSE_ATRAC9=OFF
@@ -51,7 +51,7 @@ vcpkg_configure_cmake(
         -DSKIP_INSTALL_HEADERS=ON
 )
 
-vcpkg_install_cmake()
+vcpkg_cmake_install()
 
 vcpkg_copy_pdbs()
 
