@@ -22,6 +22,8 @@
 
 #include "movies.h"
 
+#include <algorithm>
+
 #include "../globals.h"
 #include "../log.h"
 
@@ -34,7 +36,12 @@ void *ff8_bink_open(uint8_t disc, uint32_t movie)
 {
 	const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
 	char filename[MAX_PATH] = {};
-	strcpy(filename, ff8_externals.data_drive_path);
+	if (disc >= 4) {
+		strcpy(filename, ff8_externals.app_path);
+		filename[strlen(filename)] = '\\';
+	} else {
+		strcpy(filename, ff8_externals.data_drive_path);
+	}
 	strcat(filename, ff8_externals.disc_pak_filenames[disc]);
 
 	if (trace_all || trace_files || trace_movies) ffnx_trace("%s: disc=%d movie=%d filename=%s\n", __func__, disc, movie, filename);
@@ -69,20 +76,26 @@ int ff8_bink_read(void *opaque, uint8_t *buf, int buf_size)
 		return AVERROR_EXIT;
 	}
 
-	if (buf_size == 0) {
-		return 0;
+	if (buf_size <= 0) {
+		return AVERROR_BUFFER_TOO_SMALL;
 	}
 
 	FF8Bink *f = (FF8Bink *)opaque;
+	long pos = ftell(f->f);
 
-	int r = fread(buf, 1, buf_size, f->f);
-
-	if (feof(f->f) || ftell(f->f) >= f->entry.bik_lowres_offset) {
+	if (pos >= f->entry.bik_lowres_offset) {
 		return AVERROR_EOF;
 	}
 
+	int max_size = int(f->entry.bik_lowres_offset - pos);
+	int r = fread(buf, 1, std::min(buf_size, max_size), f->f);
+
 	if (r < 0) {
 		return AVERROR_EXIT;
+	}
+
+	if (r == 0 && ftell(f->f) >= f->entry.bik_lowres_offset) {
+		return AVERROR_EOF;
 	}
 
 	return r;
@@ -90,7 +103,7 @@ int ff8_bink_read(void *opaque, uint8_t *buf, int buf_size)
 
 int64_t ff8_bink_seek(void *opaque, int64_t offset, int whence)
 {
-	if (trace_all || true) ffnx_trace("%s: offset=%d, whence=%X\n", __func__, offset, whence);
+	if (trace_all || trace_movies) ffnx_trace("%s: offset=%d, whence=%X\n", __func__, offset, whence);
 
 	if (opaque == nullptr) {
 		return AVERROR_EXIT;
