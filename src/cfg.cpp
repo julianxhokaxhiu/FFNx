@@ -426,7 +426,7 @@ void read_cfg()
 
 	// EXTERNAL MOVIE FLAG
 	if (enable_ffmpeg_videos < 0)
-		enable_ffmpeg_videos = !ff8;
+		enable_ffmpeg_videos = 1;
 
 	// EXTERNAL MOVIE EXTENSION
 	if (ffmpeg_video_ext.empty())
