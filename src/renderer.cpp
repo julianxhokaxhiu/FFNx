@@ -840,7 +840,7 @@ void Renderer::init()
         ffnx_info("HDR monitor detected. HDR enabled.\n");
 
         bgfxInit.resolution.reset |= BGFX_RESET_HDR10;
-        bgfxInit.resolution.format = bgfx::TextureFormat::RGB10A2;
+        bgfxInit.resolution.formatColor = bgfx::TextureFormat::RGB10A2;
 
         if (hdr_max_nits <= 0) {
             ffnx_info("Attempting to autodetect SDR white level for HDR...\n");
@@ -947,7 +947,7 @@ void Renderer::init()
             }
         } // end if  (hdr_max_nits <= 0)
 
-        bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.format);
+        bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.formatColor);
     } //end if HDR
 
     internalState.texHandlers.resize(RendererTextureSlot::COUNT, BGFX_INVALID_HANDLE);
@@ -1094,7 +1094,7 @@ void Renderer::reset()
 
     if(!ff8 && enable_lighting) prepareShadowMap();
 
-    bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.format);
+    bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.formatColor);
 }
 
 #define FFNX_LOGO_PATH ".logo/logo_nobg.png"

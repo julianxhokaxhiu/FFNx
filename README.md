@@ -117,7 +117,7 @@ For a more in-depth documentation feel free to visit the [docs/](docs/) folder.
 If you're curious to know, FFNx makes use of:
 
 - C++ code base
-- Latest MSVC available on [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
+- Latest MSVC available on [Visual Studio 2026 Community Edition](https://visualstudio.microsoft.com/vs/features/cplusplus/)
 - [vcpkg](https://vcpkg.io/) (dependency manager)
 - [CMake](https://cmake.org/) (make files)
 - [BGFX](https://github.com/bkaradzic/bgfx) (backend renderer)
@@ -212,7 +212,7 @@ To build from the terminal (example with *RelWithDebInfo*):
 - For building the project: `cmake --build --preset RelWithDebInfo`
 
 **NOTE**: Make sure to use the `cmake` executable that comes from Visual Studio
-(e.g. `C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe`)
+(e.g. `C:\Program Files\Microsoft Visual Studio\2026\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe`)
 
 ## Auto-Formatting
 

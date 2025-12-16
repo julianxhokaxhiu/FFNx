@@ -28,6 +28,7 @@
       "cacheVariables": {
         "_DLL_VERSION": "devel",
         "CMAKE_C_COMPILER": "cl",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/.vcpkg/triplets",
         "VCPKG_TARGET_TRIPLET": "x86-windows-static"
       }
     },

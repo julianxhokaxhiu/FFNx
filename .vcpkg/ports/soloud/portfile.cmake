@@ -5,8 +5,8 @@
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/soloud"
     HEAD_REF master
-    REF bbb2e0b24dc61a1983f32d962bcf7b25be8deeed
-    SHA512 c17bfe29334e4c2b0e7e5c0fc41eac5146fa29a15d024a6e74e178c6e4a0c75b9aef566a485a32397f43699f6ec7fb7d75f7e63d79bee34360dd0c460d128abc
+    REF 5a25d38af34f6aff7abed2aaa5484400216fb65b
+    SHA512 637acd44ccc6f94d7f46f91d9d8b77e5e5278291abc583b136dce6dca0cabcb42e84a987e92fce8abbe0db8606f77a314ece41df133e0406af0bf524df0c5619
 )
 
 # Set up GENie (custom project generator)
@@ -53,6 +53,8 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(GENIE_ACTION vs2019)
     elseif(VCPKG_PLATFORM_TOOLSET STREQUAL "v143")
         set(GENIE_ACTION vs2022)
+    elseif(VCPKG_PLATFORM_TOOLSET STREQUAL "v145")
+        set(GENIE_ACTION vs2026)
     else()
         message(FATAL_ERROR "Unsupported Visual Studio toolset: ${VCPKG_PLATFORM_TOOLSET}")
     endif()
