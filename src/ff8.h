@@ -1642,6 +1642,15 @@ struct ff8_externals
 	int32_t *current_viewport_width_dword_1A77654;
 	int32_t *current_viewport_height_dword_1A77650;
 	uint32_t set_render_to_vram_current_screen_flag_before_battle;
+	uint32_t sub_472B30;
+	uint32_t sub_530810;
+	uint32_t sub_533CD0;
+	uint32_t sub_530C30;
+	void (*field_push_mch_vertices_rect_sub_533A90)(int, uint16_t *, int, int);
+	void (*set_current_triangle_sub_45E160)(int, int, int);
+	void (*calc_model_triangle_condition_sub_45EE10)();
+	int *dword_1DC6314;
+	int32_t *calc_model_poly_condition_result_dword_1CA8A70;
 };
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object);
