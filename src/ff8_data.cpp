@@ -265,6 +265,8 @@ void ff8_find_externals()
 		ff8_externals.sub_4767B0 = get_relative_call(ff8_externals.sub_471F70, 0x4FE - 2);
 		common_externals.update_field_entities = get_relative_call(ff8_externals.sub_4767B0, 0x14E + 1);
 		ff8_externals.sub_4789A0 = get_relative_call(ff8_externals.sub_4767B0, 0x40F + 3);
+		ff8_externals.sub_472B30 = get_relative_call(ff8_externals.sub_4767B0, 0x4C9 + 3);
+		ff8_externals.sub_530810 = get_relative_call(ff8_externals.sub_472B30, 0x35D + 7);
 		ff8_externals.stop_cdrom = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0xB46 - 13);
 		ff8_externals.stop_cdrom_field_call = ff8_externals.sub_4767B0 + 0xB46 - 0xD;
 		ff8_externals.sub_47CA90 = (char (*)())get_relative_call(ff8_externals.sub_4789A0, 0x674);
@@ -274,10 +276,20 @@ void ff8_find_externals()
 		ff8_externals.sub_4767B0 = get_relative_call(ff8_externals.sub_471F70, 0x4FE);
 		common_externals.update_field_entities = get_relative_call(ff8_externals.sub_4767B0, 0x14E);
 		ff8_externals.sub_4789A0 = get_relative_call(ff8_externals.sub_4767B0, 0x40F);
+		ff8_externals.sub_472B30 = get_relative_call(ff8_externals.sub_4767B0, 0x4C9);
+		ff8_externals.sub_530810 = get_relative_call(ff8_externals.sub_472B30, 0x35D);
 		ff8_externals.stop_cdrom = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0xB46);
 		ff8_externals.stop_cdrom_field_call = ff8_externals.sub_4767B0 + 0xB46;
 		ff8_externals.sub_47CA90 = (char (*)())get_relative_call(ff8_externals.sub_4789A0, 0x68B);
 	}
+
+	ff8_externals.sub_533CD0 = get_relative_call(ff8_externals.sub_530810, 0x27B);
+	ff8_externals.sub_530C30 = get_relative_call(ff8_externals.sub_533CD0, 0x28E);
+	ff8_externals.field_push_mch_vertices_rect_sub_533A90 = (void(*)(int,uint16_t*,int,int))get_relative_call(ff8_externals.sub_530C30, 0x46A);
+	ff8_externals.dword_1DC6314 = (int *)get_absolute_value(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90), 0x43);
+	ff8_externals.set_current_triangle_sub_45E160 = (void(*)(int,int,int))get_relative_call(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90), 0x48);
+	ff8_externals.calc_model_triangle_condition_sub_45EE10 = (void(*)())get_relative_call(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90), 0x4D);
+	ff8_externals.calc_model_poly_condition_result_dword_1CA8A70 = (int32_t *)get_absolute_value(uint32_t(ff8_externals.calc_model_triangle_condition_sub_45EE10), 0x50);
 
 	ff8_externals.battle_trigger_field = uint32_t(ff8_externals.sub_47CA90) + 0x15;
 	ff8_externals.field_update_seed_level_52B140 = get_relative_call(common_externals.update_field_entities, 0x120);

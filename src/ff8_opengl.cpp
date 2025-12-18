@@ -53,6 +53,7 @@ constexpr int intro_credits_adjusted_frames = 438; // Instead of 374 in the Game
 constexpr int intro_credits_frames_between_music_start_and_first_image = 180;
 
 uint8_t *extended_memory = nullptr;
+uint16_t *field_current_poly = nullptr;
 
 int (*ff8_opcode_old_battle)(int);
 
@@ -1446,6 +1447,32 @@ void ff8_widescreen_hook_init() {
 	ff8_externals.menu_viewport[2].offset_x = -64.0;
 }
 
+void ff8_field_3d_models_push_rects(int a1, uint16_t *a2, int a3, int a4)
+{
+	field_current_poly = a2;
+
+	ff8_externals.field_push_mch_vertices_rect_sub_533A90(a1, a2, a3, a4);
+
+	field_current_poly = nullptr;
+}
+
+void ff8_field_calc_triangle_condition()
+{
+	ff8_externals.calc_model_triangle_condition_sub_45EE10();
+
+	// The current rect is refused, but this is a rect, with 4 vertices, and only one triangle was checked here (field_current_poly[0], field_current_poly[1], field_current_poly[2])
+	if (uint32_t(*ff8_externals.calc_model_poly_condition_result_dword_1CA8A70) >= 1500000) {
+		// Retry with another triangle (field_current_poly[1], field_current_poly[2], field_current_poly[3])
+		ff8_externals.set_current_triangle_sub_45E160(ff8_externals.dword_1DC6314[field_current_poly[1]], ff8_externals.dword_1DC6314[field_current_poly[2]], ff8_externals.dword_1DC6314[field_current_poly[3]]);
+		ff8_externals.calc_model_triangle_condition_sub_45EE10();
+
+		// With this triangle, a negative result is OK, so we override the result for the game to accept it
+		*ff8_externals.calc_model_poly_condition_result_dword_1CA8A70 = *ff8_externals.calc_model_poly_condition_result_dword_1CA8A70 > -1500000 && *ff8_externals.calc_model_poly_condition_result_dword_1CA8A70 <= 0 ? 1 : 1500001;
+	}
+
+	field_current_poly += 14;
+}
+
 void ff8_init_hooks(struct game_obj *_game_object)
 {
 	struct ff8_game_obj *game_object = (struct ff8_game_obj *)_game_object;
@@ -1828,6 +1855,13 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	} else {
 		ffnx_error("%s: cannot allocate extended_memory\n", __func__);
 	}
+
+	// #####################
+	// field 3D model holes fix
+	// #####################
+	replace_call(ff8_externals.sub_530C30 + 0x46A, ff8_field_3d_models_push_rects);
+	replace_call(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90) + 0x4D, ff8_field_calc_triangle_condition);
+
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)

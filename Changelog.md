@@ -12,6 +12,7 @@
 - Core: Fix crashes happening in Non-US versions ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
 - Core: Fix the game engine to show up to 16 high res field models without crashes or texture glitches ( https://github.com/julianxhokaxhiu/FFNx/pull/860 )
 - Core: Fix sudden black frame between New Game movie and Infirmary intro scene
+- Core: Fix missing polygons on field 3D models ( https://github.com/julianxhokaxhiu/FFNx/pull/868 )
 - External textures: Fix glitches in field module ( https://github.com/julianxhokaxhiu/FFNx/pull/848 https://github.com/julianxhokaxhiu/FFNx/pull/851 )
 - External textures: Fix Tonberry format when dumping PNGs using `save_textures_legacy` flag ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
 - External textures: Fix bgroad_6, and some other maps, which cannot be modded ( https://github.com/julianxhokaxhiu/FFNx/pull/857 )
