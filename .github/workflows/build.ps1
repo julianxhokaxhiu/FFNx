@@ -55,15 +55,6 @@ Write-Output "_IS_BUILD_CANARY=${env:_IS_BUILD_CANARY}" >> ${env:GITHUB_ENV}
 Write-Output "_IS_GITHUB_RELEASE=${env:_IS_GITHUB_RELEASE}" >> ${env:GITHUB_ENV}
 Write-Output "_CHANGELOG_VERSION=${env:_CHANGELOG_VERSION}" >> ${env:GITHUB_ENV}
 
-# Install CMake
-Write-Output "Installing cmake v${env:_WINGET_CMAKE}..."
-winget install Kitware.CMake --version ${env:_WINGET_CMAKE} --silent --uninstall-previous --accept-source-agreements --accept-package-agreements --disable-interactivity --force | out-null
-cmake --version
-
-# Install Visual Studio Enterprise
-Write-Output "Installing VisualStudio 2022 Enterprise v${env:_WINGET_VS2022}..."
-winget install Microsoft.VisualStudio.2022.Enterprise --version ${env:_WINGET_VS2022} --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --force | out-null
-
 # Load vcvarsall environment for x86
 $vcvarspath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -prerelease -latest -property InstallationPath
 cmd.exe /c "call `"$vcvarspath\VC\Auxiliary\Build\vcvarsall.bat`" x86 && set > %temp%\vcvars.txt"

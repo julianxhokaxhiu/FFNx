@@ -6,15 +6,15 @@
 vcpkg_from_github(OUT_SOURCE_PATH BX_SOURCE_DIR
     REPO "julianxhokaxhiu/bx"
     HEAD_REF master
-    REF f3da9f2d061cdcda234c9c11cf6aac3dc4d76423
-    SHA512 f5f840ccaa6d9286eb2ce87cb547df6fef6e07ecba812afab97a9a2b866a3eb7e7dd8003c96eda2b73e1e8cde0b5a095386a73034dcdfcbc104f1beaaac94d83
+    REF e22f5f8db1b70afa4b14899e47358987309d7669
+    SHA512 c8d37bd0f8e30536d3ea1a6c6eab9aade1555809a7d81367747c554f517d53ef5e0275f5dfeb568978e3e8cdddd83b5acbd7ac302049c986043e1376eadc0fb9
 )
 
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/bimg"
     HEAD_REF master
-    REF a1a2ae3c129d8c33e765eecd91801bffd985c317
-    SHA512 568e91a739a8fdd190893b3cf5c7b923e25914fb00de24ad42fa85fd2318faab6b71bca373fba587080fef31a21445783a7f5b2d0f62e391c0d35ef279a5776e
+    REF bf10ffbb3df1f9f12ad7a9105e5e96e11a9c5a0c
+    SHA512 1fd763dd001d71030d9e993edab1cdda2094f99c1c30ea07b900b5137af4ae714b6d0e84df201ca4a40429c48f8a0812629d8c7b1b3b3c56fa3573e8185c425a
 )
 
 # Move bx source inside bgfx source tree
@@ -62,6 +62,8 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(GENIE_ACTION vs2019)
     elseif(VCPKG_PLATFORM_TOOLSET STREQUAL "v143")
         set(GENIE_ACTION vs2022)
+    elseif(VCPKG_PLATFORM_TOOLSET STREQUAL "v145")
+        set(GENIE_ACTION vs2026)
     else()
         message(FATAL_ERROR "Unsupported Visual Studio toolset: ${VCPKG_PLATFORM_TOOLSET}")
     endif()
