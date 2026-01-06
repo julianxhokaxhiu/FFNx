@@ -1095,6 +1095,9 @@ struct ff8_externals
 	uint32_t field_fade_transition_sub_472990;
 	uint32_t sub_45CDD0;
 	uint32_t sub_4767B0;
+	uint32_t (*ctrl_keyboard_actions)();
+	uint32_t get_key_state;
+	byte **keyboard_state;
 	uint32_t sub_4789A0;
 	char (*sub_47CA90)();
 	uint32_t field_update_seed_level_52B140;
