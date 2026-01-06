@@ -3329,7 +3329,12 @@ __declspec(dllexport) LSTATUS __stdcall dotemuRegQueryValueExA(HKEY hKey, LPCSTR
 		lpData[0] = 0x0;
 	}
 	/* FF8 */
-	else if (strcmp(lpValueName, "GraphicsGUID") == 0 || strcmp(lpValueName, "SoundGUID") == 0 || strcmp(lpValueName, "MIDIGUID") == 0)
+	else if (strcmp(lpValueName, "MIDIGUID") == 0)
+	{
+		uint32_t microsoft_synthesizer[4] = {0x58C2B4D0, 0x11D146E7, 0xA000AC89, 0x294105C9};
+		memcpy(lpData, microsoft_synthesizer, 16);
+	}
+	else if (strcmp(lpValueName, "GraphicsGUID") == 0 || strcmp(lpValueName, "SoundGUID") == 0)
 	{
 		memcpy(lpData, buf, 16);
 	}

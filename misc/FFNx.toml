@@ -765,6 +765,15 @@ app_path = ""
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 data_drive = ""
 
+#[HIGH RES FONT]
+# Overrides the high res font option if set.
+# Available choices are:
+# - -1: Default game behavior (High-res on FF8 Steam, honor FF8Config option on FF8 2000)
+# - 0: Low-res font
+# - 1: High-res font
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_high_res_font = -1
+
 ## DEBUGGING OPTIONS - These options are mostly useful for developers or people reporting crashes. Please do enable them only when required.
 
 # Show the PSX SSIGPU VRAM window

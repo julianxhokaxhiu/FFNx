@@ -37,7 +37,7 @@ void normalize_path_win(char *name)
 	}
 }
 
-void set_game_paths(int install_options, char *_app_path, const char *_dataDrive)
+void ff8_set_game_paths(int install_options, char *_app_path, const char *_dataDrive)
 {
 	char fileName[MAX_PATH] = {};
 
@@ -58,10 +58,66 @@ void set_game_paths(int install_options, char *_app_path, const char *_dataDrive
 	ff8_externals.set_game_paths(install_options, _app_path, _dataDrive);
 }
 
+bool ff8_reg_set_graphics(uint32_t graphics)
+{
+	HKEY phkResult = 0;
+	LSTATUS ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Square Soft, Inc\\Final Fantasy VIII\\1.00", 0, KEY_SET_VALUE, &phkResult);
+
+	if (ret != ERROR_SUCCESS)
+	{
+		return false;
+	}
+
+	ret = RegSetValueExA(phkResult, "Graphics", 0, REG_DWORD, (const BYTE *)&graphics, sizeof(uint32_t));
+	RegFlushKey(phkResult);
+	RegCloseKey(phkResult);
+
+	return ret == ERROR_SUCCESS;
+}
+
+int ff8_reg_get_midiguid(LPDWORD midi_guid)
+{
+	int ret = ff8_externals.reg_get_midiguid((LPBYTE)midi_guid);
+	LPDWORD default_midi_guid[4] = {0, 0, 0, 0};
+
+	if (memcmp(midi_guid, default_midi_guid, 16) == 0) {
+		ffnx_info("MIDI GUID is zero, force to Microsoft Synthesizer\n");
+		// Use default Microsoft synthesizer, instead of starting FF8Config.exe
+		uint32_t buf[4] = {0x58C2B4D0, 0x11D146E7, 0xA000AC89, 0x294105C9};
+		memcpy(midi_guid, buf, 16);
+
+		if (!steam_edition) {
+			ff8_externals.reg_set_midiguid((uint8_t *)buf);
+			ff8_reg_set_graphics(0x100021); // High res by default
+		}
+
+		return 1;
+	}
+
+	return ret;
+}
+
+uint32_t ff8_reg_get_graphics()
+{
+	uint32_t ret = ff8_externals.reg_get_graphics();
+
+	ret |= 0x00100000; // Force this flag to prevent graphical glitches
+
+	if (ff8_high_res_font == 1) {
+		ret |= 0x00000020;
+	} else if (ff8_high_res_font == 0) {
+		ret &= 0xFFFFFFDF;
+	}
+
+	return ret;
+}
+
 void game_cfg_init()
 {
 	if (ff8)
 	{
-		replace_call(ff8_externals.init_config + 0x3E, set_game_paths);
+		replace_call(ff8_externals.init_config + 0x3E, ff8_set_game_paths);
+		replace_call(ff8_externals.init_config + 0x48, ff8_reg_get_midiguid);
+		replace_call(ff8_externals.init_config + 0x16B, ff8_reg_get_graphics);
 	}
 }

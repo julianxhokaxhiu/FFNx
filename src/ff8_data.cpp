@@ -112,6 +112,9 @@ void ff8_find_externals()
 	}
 	ff8_externals.app_path = (const char*)get_absolute_value(uint32_t(ff8_externals.set_game_paths), 0x9A);
 	ff8_externals.data_drive_path = (const char*)get_absolute_value(uint32_t(ff8_externals.set_game_paths), 0x275);
+	ff8_externals.reg_get_midiguid = (int(*)(LPBYTE))get_relative_call(ff8_externals.init_config, 0x48);
+	ff8_externals.reg_set_midiguid = (BOOL(*)(const BYTE*))(uint32_t(ff8_externals.reg_get_midiguid) + 0xB0);
+	ff8_externals.reg_get_graphics = (int(*)())get_relative_call(ff8_externals.init_config, 0x16B);
 
 	ff8_externals.savemap = (savemap_ff8*)get_absolute_value(ff8_externals.pubintro_enter_main, 0x9);
 	ff8_externals.savemap_field = (savemap_ff8_field_h**)get_absolute_value(ff8_externals.main_loop, 0x21);

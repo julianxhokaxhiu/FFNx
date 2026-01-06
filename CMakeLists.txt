@@ -524,7 +524,7 @@ if(NOT "${FF7_STEAM_GAME_PATH}" STREQUAL "")
   )
 endif()
 
-# Copy FFNx release to FF7 Steam game path if installed
+# Copy FFNx release to FF8 Steam game path if installed
 execute_process(
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 39150
   OUTPUT_VARIABLE FF8_STEAM_GAME_PATH

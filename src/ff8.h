@@ -1076,6 +1076,9 @@ struct ff8_externals
 	uint32_t init_config;
 	uint32_t (*reg_get_data_drive)(char*, DWORD);
 	void (*set_game_paths)(int, char *, const char *);
+	int (*reg_get_midiguid)(LPBYTE);
+	BOOL (*reg_set_midiguid)(const BYTE *);
+	int (*reg_get_graphics)();
 	uint32_t (*sm_pc_read)(char*,void*);
 	uint32_t get_disk_number;
 	char* disk_data_path;
