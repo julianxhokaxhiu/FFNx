@@ -634,7 +634,7 @@ uint32_t TexturePacker::composeTextures(
 		*height = originalH * scale;
 		// Data is passed to bgfx, not need to free it here
 		bool copyData = target == rgbaImageData;
-		return newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, true, copyData);
+		return newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, false, copyData);
 	}
 
 	if (target != nullptr && target != rgbaImageData)
