@@ -733,6 +733,32 @@ ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw
 	return draw_infos;
 }
 
+int ff8_get_key_state(WPARAM dinput_scan_code)
+{
+	int virt_key = 0;
+
+	if (!*ff8_externals.keyboard_state || dinput_scan_code > 0xFF) {
+		return 0; // What are you doing, William?
+	}
+
+	switch (dinput_scan_code) {
+		// Force real Q key, instead of directinput's positional DIK_Q (which is A in Azerty keyboards)
+		case DIK_Q:
+			virt_key = 'Q';
+			break;
+		case DIK_R:
+			virt_key = 'R';
+			break;
+		// Keep the old implementation to prevent performance issues with using GetKeyState on each frame
+		default: // DIK_LCONTROL, DIK_RCONTROL, and everything else
+			return (*ff8_externals.keyboard_state)[dinput_scan_code];
+	}
+
+	return (GetKeyState(virt_key) & 0x8000) != 0;
+}
+
+int is_q_pressed = 0;
+
 int ff8_is_window_active()
 {
 	if (gameHwnd == GetActiveWindow() || ff8_always_capture_input)
@@ -747,6 +773,24 @@ int ff8_is_window_active()
 
 			// End simulation right here before we press this button by mistake in other windows
 			simulate_OK_button = false;
+		}
+
+		// Allow to quit the game anywhere
+		if ((ff8_get_key_state(DIK_LCONTROL) || ff8_get_key_state(DIK_RCONTROL)) && ff8_get_key_state(DIK_Q))
+		{
+			if (is_q_pressed > 20)
+			{
+				((ff8_game_obj *)common_externals.get_game_object())->do_quit = 1;
+				is_q_pressed = 0;
+			}
+			else
+			{
+				is_q_pressed += 1;
+			}
+		}
+		else
+		{
+			is_q_pressed = 0;
 		}
 	}
 
@@ -1487,6 +1531,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		ff8_externals.show_vram_window();
 
 	replace_function(ff8_externals.engine_eval_process_input, ff8_is_window_active);
+	replace_function(ff8_externals.get_key_state, ff8_get_key_state);
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
 	replace_call(ff8_externals.worldmap_with_fog_sub_53FAC0 + (FF8_US_VERSION ? 0xB3C: (JP_VERSION ? 0xB24 : 0xB2F)), ff8_wm_set_render_to_vram_current_screen_flag_before_battle);

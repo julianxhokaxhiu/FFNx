@@ -64,7 +64,7 @@ This cheat will allow you to reset the game like on PSX, by triggering the game 
 
 Shortcuts:
 
-- Keyboard Shortcut: `CTRL + R`
+- Keyboard Shortcut: `CTRL + R` (on FF8, hold for 2 seconds)
 - Gamepad Shortcut: `L3` THEN `START + SELECT` (XInput: `LSB` THEN `BACK + START`)
 
 ### Auto-Attack ( FF7 only! )
@@ -96,5 +96,4 @@ Shortcuts:
 
 Shortcuts:
 
-- Keyboard Shortcut: `CTRL + Q` (For Qwerty keyboards)
-- Keyboard Shortcut: `CTRL + A` (For Azerty keyboards)
+- Keyboard Shortcut: `CTRL + Q` (hold for 2 seconds)
