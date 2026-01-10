@@ -6,8 +6,8 @@
 vcpkg_from_github(OUT_SOURCE_PATH BX_SOURCE_DIR
     REPO "julianxhokaxhiu/bx"
     HEAD_REF master
-    REF e22f5f8db1b70afa4b14899e47358987309d7669
-    SHA512 c8d37bd0f8e30536d3ea1a6c6eab9aade1555809a7d81367747c554f517d53ef5e0275f5dfeb568978e3e8cdddd83b5acbd7ac302049c986043e1376eadc0fb9
+    REF 204fcf06376bced8f881be1f7638b6bc5557920c
+    SHA512 a91854a61df546c490af9b37075c8ca109dbec4905536b1c7188cebfd573e9ab444f8e3b14034c857160a119c10f5a9e9906f6097562b08aaf4d82d07e22ab28
 )
 
 vcpkg_from_github(OUT_SOURCE_PATH BIMG_SOURCE_DIR
@@ -20,8 +20,8 @@ vcpkg_from_github(OUT_SOURCE_PATH BIMG_SOURCE_DIR
 vcpkg_from_github(OUT_SOURCE_PATH SOURCE_DIR
     REPO "julianxhokaxhiu/bgfx"
     HEAD_REF master
-    REF 854aadd00e9493aa850f8be1bb6395f0b0274bcb
-    SHA512 39fcdb53557ccd722886afa2a319b28049d37fd03dd7bf143205ffb2d2f1efd19a0aac65058fb8cf30d15fbfca8f3e5accd84c523de4deb1f609d22ea7fdab0a
+    REF 2858a833495e8992c01602bd828e1393beae948e
+    SHA512 46b7ad2cf5e83ca54a270a09fa4acd7c79820d8dc6519edd456acf011e5ba6f0ae8904db1d92c25c0c0820d9bc439b6ae49d0b476886078edb31890c51c24538
 )
 
 # Move bx source inside bgfx source tree

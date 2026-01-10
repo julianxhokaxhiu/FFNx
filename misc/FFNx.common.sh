@@ -21,42 +21,42 @@ SAMPLER2D(tex_10, 10);
 
 vec3 toRGB_bt601_fullrange(vec3 yuv_input)
 {
-	const mat3 jpeg_rgb_transform = mat3(
+	mat3 jpeg_rgb_transform = mtxFromCols(
 		vec3(+1.000, +1.000, +1.000),
 		vec3(+0.000, -0.202008 / 0.587, +1.772),
 		vec3(+1.402, -0.419198 / 0.587, +0.000)
 	);
-	return saturate(instMul(jpeg_rgb_transform, yuv_input));
+	return saturate(mul(jpeg_rgb_transform, yuv_input));
 }
 
 vec3 toRGB_bt601_tvrange(vec3 yuv_input)
 {
-	const mat3 mpeg_rgb_transform = mat3(
+	mat3 mpeg_rgb_transform = mtxFromCols(
 		vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
 		vec3(+0.000, -25.75602 / 65.744 , +225.93 / 112.0),
 		vec3(+178.755 / 112.0, -53.447745 / 65.744 , +0.000)
 	);
-	return saturate(instMul(mpeg_rgb_transform, yuv_input));
+	return saturate(mul(mpeg_rgb_transform, yuv_input));
 }
 
 vec3 toRGB_bt709_fullrange(vec3 yuv_input)
 {
-	const mat3 bt709full_rgb_transform = mat3(
+	mat3 bt709full_rgb_transform = mtxFromCols(
 		vec3(+1.000, +1.000, +1.000),
 		vec3(+0.000, -0.13397432 / 0.7152, +1.8556),
 		vec3(+1.5748, -0.33480248 / 0.7152 , +0.000)
 	);
-	return saturate(instMul(bt709full_rgb_transform, yuv_input));
+	return saturate(mul(bt709full_rgb_transform, yuv_input));
 }
 
 vec3 toRGB_bt709_tvrange(vec3 yuv_input)
 {
-	const mat3 bt709tv_rgb_transform = mat3(
+	mat3 bt709tv_rgb_transform = mtxFromCols(
 		vec3(+255.0 / 219.0, +255.0 / 219.0, +255.0 / 219.0),
 		vec3(+0.000, -17.0817258 / 80.1024 , +236.589 / 112.0),
 		vec3(+200.787 / 112.0, -42.6873162 / 80.1024 , +0.000)
 	);
-	return saturate(instMul(bt709tv_rgb_transform, yuv_input));
+	return saturate(mul(bt709tv_rgb_transform, yuv_input));
 }
 
 
@@ -165,22 +165,22 @@ vec3 ApplyREC2084Curve(vec3 _color, float max_nits)
 // See https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ColorSpaceUtility.hlsli#L120
 vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
 {
-	mat3 toRec2020 = mat3(
+	mat3 toRec2020 = mtxFromCols(
 		vec3(+0.628252390228217, +0.069018748494509, +0.016358741846493),
 		vec3(+0.329243684863216, +0.9191169021082, +0.087837787397663),
 		vec3(+0.042503924908568, +0.011864349397292, +0.895803470755843)
 	);
-	return saturate(instMul(toRec2020, rgb_input));
+	return saturate(mul(toRec2020, rgb_input));
 }
 
 vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 {
-	mat3 NTSCJtoRec2020 = mat3(
+	mat3 NTSCJtoRec2020 = mtxFromCols(
 		vec3(+0.835314787642499, +0.064086581191406, -0.00258827855966),
 		vec3(+0.139190018780176, +0.859494098117681, +0.036362217824334),
 		vec3(+0.025495200617381, +0.076419362630435, +0.966226011255509)
 	);
-	return saturate(instMul(NTSCJtoRec2020, rgb_input));
+	return saturate(mul(NTSCJtoRec2020, rgb_input));
 }
 
 
