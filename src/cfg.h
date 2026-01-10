@@ -157,6 +157,7 @@ extern bool ff8_fix_uv_coords_precision;
 extern bool ff8_external_music_force_original_filenames;
 extern bool ff8_use_gamepad_icons;
 extern bool ff8_always_capture_input;
+extern bool ff8_enable_japanese_font;
 extern long ff8_fps_limiter;
 extern std::string app_path;
 extern std::string data_drive;
