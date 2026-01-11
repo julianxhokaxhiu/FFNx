@@ -16,6 +16,21 @@
 // Gamut LUT
 SAMPLER2D(tex_10, 10);
 
+#if BGFX_SHADER_LANGUAGE_HLSL \
+ || BGFX_SHADER_LANGUAGE_PSSL \
+ || BGFX_SHADER_LANGUAGE_SPIRV \
+ || BGFX_SHADER_LANGUAGE_METAL
+vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
+vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
+vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_mtx, _vec); }
+vec4 instMul(mat4 _mtx, vec4 _vec) { return mul(_vec, _mtx); }
+#else
+vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
+vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }
+vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_vec, _mtx); }
+vec4 instMul(mat4 _mtx, vec4 _vec) { return mul(_mtx, _vec); }
+#endif
+
 // YUV to RGB ---------------------------------------------------------
 // tv-range functions include implicit range expansion
 
@@ -26,7 +41,7 @@ vec3 toRGB_bt601_fullrange(vec3 yuv_input)
 		vec3(+0.000, -0.202008 / 0.587, +1.772),
 		vec3(+1.402, -0.419198 / 0.587, +0.000)
 	);
-	return saturate(mul(jpeg_rgb_transform, yuv_input));
+	return saturate(instMul(jpeg_rgb_transform, yuv_input));
 }
 
 vec3 toRGB_bt601_tvrange(vec3 yuv_input)
@@ -36,7 +51,7 @@ vec3 toRGB_bt601_tvrange(vec3 yuv_input)
 		vec3(+0.000, -25.75602 / 65.744 , +225.93 / 112.0),
 		vec3(+178.755 / 112.0, -53.447745 / 65.744 , +0.000)
 	);
-	return saturate(mul(mpeg_rgb_transform, yuv_input));
+	return saturate(instMul(mpeg_rgb_transform, yuv_input));
 }
 
 vec3 toRGB_bt709_fullrange(vec3 yuv_input)
@@ -46,7 +61,7 @@ vec3 toRGB_bt709_fullrange(vec3 yuv_input)
 		vec3(+0.000, -0.13397432 / 0.7152, +1.8556),
 		vec3(+1.5748, -0.33480248 / 0.7152 , +0.000)
 	);
-	return saturate(mul(bt709full_rgb_transform, yuv_input));
+	return saturate(instMul(bt709full_rgb_transform, yuv_input));
 }
 
 vec3 toRGB_bt709_tvrange(vec3 yuv_input)
@@ -56,7 +71,7 @@ vec3 toRGB_bt709_tvrange(vec3 yuv_input)
 		vec3(+0.000, -17.0817258 / 80.1024 , +236.589 / 112.0),
 		vec3(+200.787 / 112.0, -42.6873162 / 80.1024 , +0.000)
 	);
-	return saturate(mul(bt709tv_rgb_transform, yuv_input));
+	return saturate(instMul(bt709tv_rgb_transform, yuv_input));
 }
 
 
@@ -170,7 +185,7 @@ vec3 convertGamut_SRGBtoREC2020(vec3 rgb_input)
 		vec3(+0.329243684863216, +0.9191169021082, +0.087837787397663),
 		vec3(+0.042503924908568, +0.011864349397292, +0.895803470755843)
 	);
-	return saturate(mul(toRec2020, rgb_input));
+	return saturate(instMul(toRec2020, rgb_input));
 }
 
 vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
@@ -180,7 +195,7 @@ vec3 convertGamut_NTSCJtoREC2020(vec3 rgb_input)
 		vec3(+0.139190018780176, +0.859494098117681, +0.036362217824334),
 		vec3(+0.025495200617381, +0.076419362630435, +0.966226011255509)
 	);
-	return saturate(mul(NTSCJtoRec2020, rgb_input));
+	return saturate(instMul(NTSCJtoRec2020, rgb_input));
 }
 
 
