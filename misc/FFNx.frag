@@ -52,6 +52,7 @@ uniform vec4 gameScriptedLightColor;
 
 #define isTLVertex VSFlags.x > 0.0
 #define isFBTexture VSFlags.z > 0.0
+#define isNotFBTexture VSFlags.z < 0.00001
 #define isTexture VSFlags.w > 0.0
 // ---
 #define inAlphaRef FSAlphaFlags.x
@@ -269,7 +270,7 @@ void main()
 
             if (isMovie) texture_color.a = 1.0;
 
-            if (texture_color.a == 0.0) discard;
+            if (isNotFBTexture && texture_color.a == 0.0) discard;
 
             if (modulateAlpha) color *= texture_color;
             else
@@ -301,6 +302,6 @@ void main()
         vec3 lightAmbient = gameScriptedLightColor.rgb * (gameGlobalLightColor.rgb + light1Ambient + light2Ambient + light3Ambient);
         color.rgb *= gameGlobalLightColor.w * lightAmbient;
     }
-    
+
     gl_FragColor = color;
 }

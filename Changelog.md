@@ -19,6 +19,7 @@
 - External textures: Fix Tonberry format when dumping PNGs using `save_textures_legacy` flag ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
 - External textures: Fix bgroad_6, and some other maps, which cannot be modded ( https://github.com/julianxhokaxhiu/FFNx/pull/857 )
 - Graphics: Use more precise texture UVs ( https://github.com/julianxhokaxhiu/FFNx/pull/852 )
+- Renderer: Fix wrong alpha rendering for battle swirls
 
 ## FF8 (2000)
 
