@@ -1049,6 +1049,47 @@ struct ff8_menu_callback {
 	uint32_t field_4;
 };
 
+struct TexCoord {
+	uint8_t u, v;
+};
+
+struct SsigpuExecutionInstructionTriangle52 {
+	uint32_t field_0;
+	uint8_t r, g, b, func_id;
+	uint32_t vertex_a;
+	TexCoord tex_coord_a;
+	uint16_t tex_pos_x6_y9;
+	uint32_t field_10;
+	uint32_t vertex_b;
+	TexCoord tex_coord_b;
+	uint16_t tex_header;
+	uint32_t field_1C;
+	uint32_t vertex_c;
+	TexCoord tex_coord_c;
+	uint16_t field_26;
+};
+
+struct SsigpuExecutionInstructionTriangle36 {
+	uint32_t field_0;
+	uint8_t r, g, b, func_id;
+	uint32_t vertex_a;
+	TexCoord tex_coord_a;
+	uint16_t tex_pos_x6_y9;
+	uint32_t vertex_b;
+	TexCoord tex_coord_b;
+	uint16_t tex_header;
+	uint32_t vertex_c;
+	TexCoord tex_coord_c;
+	uint16_t alpha;
+};
+
+struct SsigpuExecutionInstructionRect44 {
+	SsigpuExecutionInstructionTriangle36 parent;
+	uint32_t vertex_d;
+	TexCoord tex_coord_d;
+	uint16_t field26;
+};
+
 // --------------- end of FF8 imports ---------------
 
 // memory addresses and function pointers from FF8.exe
@@ -1229,6 +1270,8 @@ struct ff8_externals
 	uint32_t worldmap_alter_uv_sub_553B40;
 	uint32_t worldmap_sub_545E20;
 	uint32_t worldmap_chara_one;
+	uint32_t wm_chara_one_push_polygons_sub_6528D0;
+	uint32_t dword_24FEE48;
 	int32_t (*open_file_world)(const char*, int32_t, uint32_t, void *);
 	uint32_t open_file_world_sub_52D670_texl_call1;
 	uint32_t open_file_world_sub_52D670_texl_call2;

@@ -825,6 +825,9 @@ void ff8_find_externals()
 		ff8_externals.battle_trigger_worldmap = ff8_externals.worldmap_with_fog_sub_53FAC0 + 0x4EA;
 	}
 
+	ff8_externals.wm_chara_one_push_polygons_sub_6528D0 = get_relative_call(ff8_externals.worldmap_chara_one, 0x675);
+	ff8_externals.dword_24FEE48 = get_absolute_value(ff8_externals.wm_chara_one_push_polygons_sub_6528D0, 0x2A);
+
 	ff8_externals.worldmap_update_seed_level_651C10 = get_relative_call(ff8_externals.worldmap_update_steps_sub_6519D0, 0x152);
 	ff8_externals.worldmap_windows_idx_map = (char*)get_absolute_value((uint32_t)ff8_externals.world_dialog_assign_text_sub_543790, 0x3B);
 

@@ -45,7 +45,7 @@ std::vector<CharaOneModelTextures> ff8_world_chara_one_parse_models(const uint8_
 			cur -= 4;
 			memcpy(&tim_offset, cur, 4);
 
-			if (tim_offset == 0xFFFFFFFF) {
+			if (int32_t(tim_offset) < 0) {
 				break;
 			}
 
