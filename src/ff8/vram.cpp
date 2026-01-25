@@ -73,6 +73,8 @@ std::vector<CharaOneModelTextures> chara_one_world_texture_offsets;
 uint8_t *chara_one_world_data;
 std::vector<WmsetSection17Texture> wm_wmset_wave_animations_textures;
 std::unordered_map<uint32_t, WmsetSection41Texture> wm_wmset_palette_animations_textures;
+int wm_selphie_old_second_texture_pos = 0;
+int wm_selphie_new_second_texture_pos = 0;
 // Battle
 char battle_texture_name[MAX_PATH] = "";
 int battle_texture_id = 0;
@@ -986,6 +988,8 @@ int ff8_wm_chara_one_read_file(int fd, uint8_t *data, size_t size)
 
 	chara_one_world_texture_offsets = ff8_world_chara_one_parse_models(data, read);
 	chara_one_world_data = data;
+	wm_selphie_old_second_texture_pos = 0;
+	wm_selphie_new_second_texture_pos = 0;
 
 	if (save_textures) {
 		char filename[MAX_PATH];
@@ -996,9 +1000,63 @@ int ff8_wm_chara_one_read_file(int fd, uint8_t *data, size_t size)
 	return read;
 }
 
+uint8_t *wm_chara_one_push_polygons_selphie_patch(int model_id_1, int model_id_2, uint32_t *current_model_data)
+{
+	if (trace_all || trace_vram) ffnx_trace("%s: model_id_1=%d model_id_2=%d\n", __func__, model_id_1, model_id_2);
+
+	uint8_t *ret = ((uint8_t*(*)(int,int,uint32_t*))ff8_externals.wm_chara_one_push_polygons_sub_6528D0)(model_id_1, model_id_2, current_model_data);
+
+	if (model_id_2 != 6 || wm_selphie_new_second_texture_pos == 0 || wm_selphie_old_second_texture_pos == wm_selphie_new_second_texture_pos) {
+		return ret;
+	}
+
+	// Patch Selphie
+	uint32_t **chara_one_model_data = (uint32_t **)ff8_externals.dword_24FEE48;
+	uint32_t *model_data = chara_one_model_data[model_id_2];
+	int count1 = model_data[12], count2 = model_data[13], count3 = model_data[14], count4 = model_data[15];
+
+	uint8_t *cur = (uint8_t *)current_model_data[22];
+	int8_t shift = (wm_selphie_new_second_texture_pos - wm_selphie_old_second_texture_pos) * 4;
+
+	for (int j = 0; j < 2; ++j) {
+		cur += count1 * 28 + count2 * 36;
+
+		SsigpuExecutionInstructionTriangle36 *exec_36 = (SsigpuExecutionInstructionTriangle36 *)cur;
+
+		for (int i = 0; i < count3; ++i) {
+			if (exec_36->tex_pos_x6_y9 == 0x3F81) { // Second texture (<=> palette=1)
+				// Move texture coordinates
+				exec_36->tex_coord_a.u += shift;
+				exec_36->tex_coord_b.u += shift;
+				exec_36->tex_coord_c.u += shift;
+			}
+
+			exec_36 += 1;
+		}
+
+		SsigpuExecutionInstructionRect44 *exec_44 = (SsigpuExecutionInstructionRect44 *)exec_36;
+
+		for (int i = 0; i < count4; ++i) {
+			if (exec_44->parent.tex_pos_x6_y9 == 0x3F81) { // Second texture (<=> palette=1)
+				// Move texture coordinates
+				exec_44->parent.tex_coord_a.u += shift;
+				exec_44->parent.tex_coord_b.u += shift;
+				exec_44->parent.tex_coord_c.u += shift;
+				exec_44->tex_coord_d.u += shift;
+			}
+
+			exec_44 += 1;
+		}
+
+		cur = (uint8_t *)exec_44;
+	}
+
+	return ret;
+}
+
 int ff8_wm_chara_one_upload_texture_2(char *image_buffer, char bpp, char a3, int x, int16_t y, int w, int16_t h)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s\n", __func__);
+	if (trace_all || trace_vram) ffnx_trace("%s %d %d %d %d\n", __func__, x, y, w, h);
 
 	int chara_one_offset = int(*(ff8_externals.chara_one_data_start) - chara_one_world_data);
 	int model_id = 0;
@@ -1008,6 +1066,19 @@ int ff8_wm_chara_one_upload_texture_2(char *image_buffer, char bpp, char a3, int
 			if (texture_offset == chara_one_offset) {
 				next_bpp = Tim::Bpp(bpp);
 				snprintf(next_texture_name, MAX_PATH, "world/esk/chara_one/model%d-%d", model_id, texture_id);
+
+				// Selphie patch: detect texture overlap and move the second texture on the right
+				if (model_id == 6) {
+					if (texture_id == 0) {
+						wm_selphie_new_second_texture_pos = x + w / 4;
+					} else if (texture_id == 1) {
+						wm_selphie_old_second_texture_pos = x;
+
+						if (wm_selphie_new_second_texture_pos > 0 && wm_selphie_new_second_texture_pos != x) {
+							x = wm_selphie_new_second_texture_pos;
+						}
+					}
+				}
 
 				return ((int(*)(char *, char, char, int, __int16, int, __int16))ff8_externals.chara_one_upload_texture)(image_buffer, bpp, a3, x, y, w, h);
 			}
@@ -1790,6 +1861,7 @@ void vram_init()
 	replace_call(ff8_externals.worldmap_chara_one + 0xCC, ff8_wm_chara_one_read_file);
 	replace_call(ff8_externals.worldmap_chara_one + 0x4D1, ff8_wm_chara_one_upload_texture_2); // Characters/Chocobos/Ragnarok
 	replace_call(ff8_externals.worldmap_chara_one + 0x566, ff8_wm_chara_one_upload_palette_2);
+	replace_call(ff8_externals.worldmap_chara_one + 0x675, wm_chara_one_push_polygons_selphie_patch); // Patch Selphie
 	replace_call(ff8_externals.worldmap_input_update_sub_559240 + (FF8_US_VERSION ? 0x263 : 0x260), ff8_wm_update_fence_animation);
 	// wm texl project
 	replace_call(ff8_externals.upload_psxvram_texl_pal_call1, ff8_wm_texl_palette_upload_vram);
