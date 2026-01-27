@@ -270,6 +270,37 @@ struct ff8_graphics_object
 	struct matrix matrix;
 };
 
+struct ff8_light
+{
+	uint32_t flags;
+	uint32_t field_4;
+	struct struc_106 *color_1;
+	struct struc_106 *color_2;
+	struct struc_106 *color_3;
+	struct bgra_color global_light_color_abgr;
+	struct bgra_color global_light_color_abgr_norm;
+	uint32_t global_light_color_rgba;
+	struct matrix field_38;
+	struct matrix field_78;
+	struct matrix field_B8;
+	struct matrix field_F8;
+	uint32_t field_138;
+	struct matrix normal_matrix;
+	uint32_t field_17C;
+	uint32_t field_180;
+	uint32_t field_184;
+	uint32_t field_188;
+	uint32_t field_18C;
+	uint32_t field_190;
+	uint32_t field_194;
+	uint32_t field_198;
+	struct matrix *matrix_pointer;
+	uint32_t field_1A0;
+	uint32_t field_1A4[256];
+	uint32_t field_5A4;
+	bgra_color_ui8 color;
+};
+
 struct ff8_polygon_set
 {
 	uint32_t field_0;
