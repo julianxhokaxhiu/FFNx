@@ -189,6 +189,31 @@ namespace ff7::field
         return ff7_externals.field_load_map_trigger_data_sub_6211C3();
     }
 
+    void field_apply_model_light(ff7_light *global_light, ff7_light *cb_light_polygon_set, hrc_data *hrc_data)
+    {
+        if (hrc_data && !ff7_disable_field_lighting)
+        {
+            struct hrc_bone *bones = hrc_data->bones;
+            for (int i = 0; i < (signed int)hrc_data->num_bones; ++i)
+            {
+                if (bones->num_rsd > 0)
+                {
+                    struct rsd_array_member *rsd_array = bones->rsd_array;
+                    if (rsd_array)
+                    {
+                        for (int j = 0; j < (signed int)bones->num_rsd; ++j)
+                        {
+                            if (rsd_array->rsd_data)
+                                ((void (__cdecl *)(ff7_light *, struct ff7_polygon_set *))cb_light_polygon_set)(global_light, rsd_array->rsd_data->polygon_set);
+                            ++rsd_array;
+                        }
+                    }
+                }
+                ++bones;
+            }
+        }
+    }
+
     void ff7_field_hook_init()
     {
         std::copy(common_externals.execute_opcode_table, &common_externals.execute_opcode_table[OPCODE_COUNT - 1], &original_opcode_table[0]);
@@ -292,5 +317,8 @@ namespace ff7::field
 
         // Fix run emulation when using the analogue key for NPCs
         patch_code_dword((uint32_t)&common_externals.execute_opcode_table[IFKEY], (DWORD)&opcode_script_IFKEY);
+
+        // Fix KAWAI LIGHT opcode animation
+        replace_function(ff7_externals.field_apply_model_light_sub_685028, field_apply_model_light);
     }
 }

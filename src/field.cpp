@@ -64,9 +64,11 @@ byte get_field_bank_value(int16_t bank)
 	}
 }
 
-int opcode_kawai_eye_texture() {
-	byte num_params = get_field_parameter<byte>(0);
+int opcode_kawai() {
+	byte byte_size = get_field_parameter<byte>(0);
 	byte subcode = get_field_parameter<byte>(1);
+
+	if (trace_all || trace_opcodes) ffnx_trace("opcode[KAWAI]: byte_size=%u,subcode=0x%x\n", byte_size, subcode);
 
 	if (subcode == 0x0) // EYETX
 	{
@@ -83,8 +85,38 @@ int opcode_kawai_eye_texture() {
 
 		if (trace_all || trace_opcodes)
 		{
-			ffnx_trace("opcode[KAWAI]: num_params=%u,subcode=0x%x,left_eye_index=%u,right_eye_index=%u,mouth_index=%u\n", num_params, subcode, left_eye_index, right_eye_index, mouth_index);
-			ffnx_trace("subcode[EYETX]: curr_entity_id=%u,curr_model_id=%u,curr_eye_index=%u\n", curr_entity_id, curr_model_id, curr_eye_index);
+			ffnx_trace("subcode[EYETX]: left_eye_index=%u,right_eye_index=%u,mouth_index=%u,curr_entity_id=%u,curr_model_id=%u,curr_eye_index=%u\n", left_eye_index, right_eye_index, mouth_index, curr_entity_id, curr_model_id, curr_eye_index);
+		}
+	}
+	else if (subcode == 0x2) // AMBNT
+	{
+		byte curr_entity_id = *ff7_externals.current_entity_id;
+		byte curr_model_id = ff7_externals.field_model_id_array[curr_entity_id];
+
+		ff7_disable_field_lighting = false;
+
+		if (trace_all || trace_opcodes)
+		{
+			ffnx_trace("subcode[AMBNT]: curr_model_id=%u\n", curr_model_id);
+		}
+	}
+	else if (subcode == 0x6) // LIGHT
+	{
+		byte curr_entity_id = *ff7_externals.current_entity_id;
+		byte curr_model_id = ff7_externals.field_model_id_array[curr_entity_id];
+
+		ff7_disable_field_lighting = true;
+
+		if (trace_all || trace_opcodes)
+		{
+			ffnx_trace("subcode[LIGHT]: curr_model_id=%u\n", curr_model_id);
+		}
+	}
+	else if (subcode == 0xD) // SHINE
+	{
+		if (trace_all || trace_opcodes)
+		{
+			ffnx_trace("subcode[SHINE]: TODO\n");
 		}
 	}
 
@@ -149,7 +181,7 @@ void field_init()
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0xA0], (DWORD)&opcode_pc_map_change);
 
 		opcode_old_kawai = (int (*)())ff7_externals.opcode_kawai;
-		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x28], (DWORD)&opcode_kawai_eye_texture);
+		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x28], (DWORD)&opcode_kawai);
 
 		// Proxy the window calculation formula so we can offset windows vertically
 		replace_call_function(common_externals.execute_opcode_table[0x50] + 0x174, field_calc_window_pos);

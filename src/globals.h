@@ -54,6 +54,7 @@ extern uint32_t steam_stock_launcher;
 extern uint32_t estore_edition;
 extern uint32_t ff7_japanese_edition;
 extern uint32_t ff7_do_reset;
+extern uint32_t ff7_disable_field_lighting;
 
 #define BASEDIR_LENGTH 512
 extern char basedir[BASEDIR_LENGTH];

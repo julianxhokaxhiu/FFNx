@@ -7,6 +7,10 @@
 - External movies: Always enable external_movies by default ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
 - Renderer: Skip rendering frame if no draw commands have been submitted previously
 
+## FF7
+
+- Core: Fix KAWAI LIGHT opcode behavior ( https://github.com/julianxhokaxhiu/FFNx/issues/874 )
+
 ## FF8
 
 - Core: Fix crashes happening in Non-US versions ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
