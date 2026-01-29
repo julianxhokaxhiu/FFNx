@@ -83,8 +83,18 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// Allow mouse cursor to be shown
 	replace_function(ff7_externals.dinput_createdevice_mouse, noop);
 
-	// TODO: Comment this if Chocobo's not visible in race
-	// replace_function(ff7_externals.draw_3d_model, draw_3d_model);
+	if (enable_external_mesh)
+	{
+		// TODO: Comment this if Chocobo's not visible in race
+		replace_function(ff7_externals.draw_3d_model, draw_3d_model_smooth_skinning);
+		//replace_function(ff7_externals.battle_sub_684CC6, battle_sub_684CC6);
+		replace_function((uint32_t)ff7_externals.free_polygon_data, free_polygon_data);
+	}
+	else
+	{
+		// TODO: Comment this if Chocobo's not visible in race
+		//replace_function(ff7_externals.draw_3d_model, draw_3d_model);
+	}
 
 	// sub_6B27A9 hack, replace d3d code
 	memset_code((uint32_t)ff7_externals.sub_6B27A9 + 25, 0x90, 6);

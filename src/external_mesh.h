@@ -42,6 +42,8 @@ struct Shape
 {
     std::vector<nvertex> vertices;
     std::vector<vector3<float>> normals;
+    std::vector<vector4<float>> joints;
+    std::vector<vector4<float>> weights;
     std::vector<uint32_t> indices;
     vector3<float> min;
     vector3<float> max;
@@ -49,11 +51,40 @@ struct Shape
     bool isDoubleSided = false;
 };
 
+struct Joint
+{
+    vector4<float> rotation;
+    vector3<float> translation;
+    std::string name;
+    int parentJointIndex = -1;
+    float inverseBindPoseMatrix[16];
+    float calculatedMatrix[16];
+};
+
+struct Skin
+{
+    std::vector<Joint> joints;
+    std::string current_anim;
+    int current_frame = 0;
+};
+
+struct KeyFrame
+{
+    int targetJointIndex = 0;
+    std::vector<vector4<float>> rotation;
+    std::vector<vector3<float>> translation;
+};
+
+struct Animation
+{
+    std::vector<KeyFrame> keyFrames;
+};
+
 class ExternalMesh
 {
 public:
-    bool importExternalMeshGltfFile(char* file_path, char* tex_path);
-    uint32_t fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, uint32_t inCount);
+    bool importExternalMeshGltfFile(char* file_path, char* tex_path, bool isZUp = false);
+    uint32_t fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, struct vector4<float>* joints, struct vector4<float>* weights, uint32_t inCount);
     uint32_t fillExternalMeshIndexBuffer(uint32_t* inIndex, uint32_t inCount);
     void updateExternalMeshBuffers();
     void bindField3dVertexBuffer(uint32_t offset, uint32_t inCount);
@@ -63,6 +94,8 @@ public:
 
     std::vector<Shape> shapes;
 	std::map<std::string, Material> materials;
+    std::vector<Skin> skins;
+    std::map<std::string, Animation> animations;
 private:
     void loadConfig(const std::string& path);
 

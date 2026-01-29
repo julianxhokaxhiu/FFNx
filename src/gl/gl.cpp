@@ -32,6 +32,7 @@
 #include "../matrix.h"
 
 #include "../ff7/widescreen.h"
+#include "external_mesh.h"
 
 struct matrix d3dviewport_matrix = {
 	1.0f, 0.0f, 0.0f, 0.0f,
@@ -250,6 +251,13 @@ void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_
 
 void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
 {
+	if (enable_external_mesh && polydata->field_48)
+	{
+		auto externalMesh = reinterpret_cast<ExternalMesh*>(polydata->field_48);
+		gl_draw_external_mesh(externalMesh, lightdata);
+		return;
+	}
+	
 	static std::vector<vector3<float>> normals;
 	if (!ff8 && lightdata != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
 	{
@@ -261,6 +269,13 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data 
 // draw a set of primitives with lighting
 void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
 {
+	if (enable_external_mesh && polydata->field_48)
+	{
+		auto externalMesh = reinterpret_cast<ExternalMesh*>(polydata->field_48);
+		gl_draw_external_mesh(externalMesh, lightdata);
+		return;
+	}
+
 	static std::vector<vector3<float>> normals;
 	if (!ff8)
 	{
@@ -339,6 +354,8 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 
 	newRenderer.doModulateAlpha(true);
 
+	newRenderer.isSmoothSkinning(false);
+
 	//// upload vertex data
 	newRenderer.bindVertexBuffer(vertices, normals, vertexcount);
 	newRenderer.bindIndexBuffer(indices, count);
@@ -394,4 +411,195 @@ uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, ch
 	va_end(args);
 
 	return true;
+}
+
+void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
+{	
+	if(gl_defer_external_mesh(externalMesh, lightdata)) return;
+
+	byte *level_data = *ff7_externals.field_level_data_pointer;
+	if (!level_data)
+	{
+		return;
+	}
+
+	uint32_t model_loader_offset = *(uint32_t *)(level_data + 0x0E);
+	auto pScale = (short*)(level_data + model_loader_offset + 0x8);
+	auto scale = static_cast<float>((*pScale)) / 128.0f;
+
+	std::array<struct matrix, MAX_BONE_MATRICES> matrix_palette;
+    if (externalMesh->skins.size() > 0)
+	{
+		auto skin = externalMesh->skins[0];
+		auto current_frame =  skin.current_frame;
+	
+		if(externalMesh->animations.contains(skin.current_anim))
+		{
+			auto anim = externalMesh->animations[skin.current_anim];		
+
+			auto jointCount = skin.joints.size();
+
+			for(int i = 0; i < jointCount; ++i)
+			{
+				auto& joint = skin.joints[i];
+
+				auto frame = std::min(current_frame, static_cast<int>(anim.keyFrames[i].rotation.size()) - 1);
+
+				float parentMatrix[16];
+				bx::mtxScale(parentMatrix, scale);
+
+				if(joint.parentJointIndex != -1)
+				{
+					auto& parentBone = skin.joints[joint.parentJointIndex];
+					memcpy(parentMatrix, parentBone.calculatedMatrix, sizeof(float) * 16);
+				}
+
+				float currentTranslationMatrix[16];
+				auto currentTranslation = anim.keyFrames[i].translation[frame];
+				bx::mtxTranslate(currentTranslationMatrix, currentTranslation.x, currentTranslation.y, currentTranslation.z);
+
+				float currentRotationMatrix[16];
+				auto currentRotation = anim.keyFrames[i].rotation[frame];
+				bx::Quaternion rotationQuaternion = {currentRotation.x, currentRotation.y, currentRotation.z, -currentRotation.w};
+				bx::mtxFromQuaternion(currentRotationMatrix, rotationQuaternion);
+
+				float currentMatrix[16];
+				bx::mtxMul(currentMatrix, currentRotationMatrix, currentTranslationMatrix);
+			
+				float currentGlobalMatrix[16];
+				bx::mtxMul(currentGlobalMatrix, currentMatrix, parentMatrix);
+				
+				float boneMatrix[16];
+				bx::mtxMul(boneMatrix, joint.inverseBindPoseMatrix, currentGlobalMatrix);
+
+				memcpy(joint.calculatedMatrix, currentGlobalMatrix, sizeof(float) * 16);
+				
+				float identityMatrix[16];
+				bx::mtxIdentity(identityMatrix);
+
+				memcpy(matrix_palette[i].m[0], boneMatrix, sizeof(float) * 16);
+			}
+		}
+		else
+		{
+			auto jointCount = skin.joints.size();
+			for(int i = 0; i < jointCount; ++i)
+			{			
+				float parentMatrix[16];
+				bx::mtxScale(parentMatrix, scale);
+				memcpy(matrix_palette[i].m[0], parentMatrix, sizeof(float) * 16);
+			}
+		}
+	}
+	else
+	{
+		for(int i = 0; i < MAX_BONE_MATRICES; ++i)
+		{			
+			float identityMatrix[16];
+			bx::mtxIdentity(identityMatrix);
+			memcpy(matrix_palette[i].m[0], identityMatrix, sizeof(float) * 16);
+		}
+	}	
+
+	if(!ff8 && lightdata != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL) 
+	{
+		newRenderer.setGameLightData(lightdata);
+	} else newRenderer.setGameLightData(nullptr);
+
+	if (externalMesh->skins.size())
+	{
+		newRenderer.setSmoothSkinningBoneMatrices(&matrix_palette);
+
+		newRenderer.isSmoothSkinning(true);
+		newRenderer.setSmoothSkinningUniforms();
+	}
+
+	newRenderer.setInterpolationQualifier(SMOOTH);
+	newRenderer.setPrimitiveType();
+	newRenderer.isTLVertex(false);
+	newRenderer.doTextureFiltering(true);
+	newRenderer.isExternalTexture(true);
+	newRenderer.isTexture(true);
+	newRenderer.doDepthTest(true);
+	newRenderer.doDepthWrite(true);
+
+	struct matrix* pProjMatrix = nullptr;
+	if(!ff8)
+	{
+		struct ff7_game_obj *game_object = (ff7_game_obj *)common_externals.get_game_object();
+		if (game_object)
+		{
+			auto polygon_set = (ff7_polygon_set*)game_object->polygon_set_2EC;
+			if(polygon_set)
+			{
+				auto matrix_set = polygon_set->matrix_set;
+				pProjMatrix = matrix_set->matrix_projection;
+			}
+
+		}
+
+		if(pProjMatrix != nullptr)
+		{
+			newRenderer.setD3DProjection(pProjMatrix);
+			newRenderer.setD3DViweport(&d3dviewport_matrix);
+		}
+	}
+
+	newRenderer.setCommonUniforms();
+	if (enable_lighting) newRenderer.setLightingUniforms();
+
+	auto shapeCount = externalMesh->shapes.size();
+	int vertexOffset = 0;
+	int indexOffset = 0;
+
+	for (int i = 0; i < shapeCount; ++i)
+	{
+		auto& shape = externalMesh->shapes[i];
+
+		newRenderer.setCullMode(shape.isDoubleSided ? RendererCullMode::DISABLED : RendererCullMode::FRONT);
+
+		externalMesh->bindField3dVertexBuffer(vertexOffset, shape.vertices.size());
+		externalMesh->bindField3dIndexBuffer(indexOffset, shape.indices.size());
+
+		if(shape.pMaterial != nullptr)
+		{
+			if(shape.pMaterial->baseColorTexHandles.size() > 0)
+			{
+				auto baseColorTexHandle = shape.pMaterial->baseColorTexHandles[shape.pMaterial->texIndex];
+				if(bgfx::isValid(baseColorTexHandle))
+					newRenderer.useTexture(baseColorTexHandle.idx, RendererTextureSlot::TEX_Y);
+				else newRenderer.useTexture(0, RendererTextureSlot::TEX_Y);
+			}
+
+			if(shape.pMaterial->normalTexHandles.size() > 0)
+			{
+				auto normalTexHandle = shape.pMaterial->normalTexHandles[0];
+				if(bgfx::isValid(normalTexHandle))
+					newRenderer.useTexture(normalTexHandle.idx, RendererTextureSlot::TEX_NML);
+				else newRenderer.useTexture(0, RendererTextureSlot::TEX_NML);
+			}
+
+			if(shape.pMaterial->pbrTexHandles.size() > 0)
+			{
+				auto pbrTexHandle = shape.pMaterial->pbrTexHandles[0];
+				if(bgfx::isValid(pbrTexHandle))
+					newRenderer.useTexture(pbrTexHandle.idx, RendererTextureSlot::TEX_PBR);
+				else newRenderer.useTexture(0, RendererTextureSlot::TEX_PBR);
+			}
+
+			newRenderer.bindTextures();      
+		}
+
+ 		if (enable_lighting)
+		{
+			newRenderer.drawToShadowMap(true, true);
+			newRenderer.drawWithLighting(true, true, true);
+		}
+		newRenderer.draw(true, true, true);
+
+		vertexOffset += shape.vertices.size();
+		indexOffset += shape.indices.size();
+	}
+	
+	newRenderer.discardAllBindings();
 }

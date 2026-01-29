@@ -95,6 +95,8 @@ struct tex_header *sub_673F5C(struct struc_91 *struc91);
 void draw_single_triangle(struct nvertex *vertices);
 void sub_6B2720(struct indexed_primitive *ip);
 void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object);
+void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object);
+int battle_sub_684CC6(hrc_data *a1, ff7_game_obj *game_object);
 void fill_light_data(struct light_data* pOutLightData, struct ff7_polygon_set *polygon_set);
 void update_view_matrix(struct ff7_game_obj *game_object);
 
@@ -102,6 +104,7 @@ void update_view_matrix(struct ff7_game_obj *game_object);
 struct anim_header *load_animation(struct file_context *file_context, char *filename);
 struct battle_hrc_header *read_battle_hrc(uint32_t use_file_context, struct file_context *file_context, char *filename);
 struct polygon_data *load_p_file(struct file_context *file_context, uint32_t create_lists, char *filename);
+void free_polygon_data(struct polygon_data *ret);
 void destroy_tex_header(struct ff7_tex_header *tex_header);
 struct ff7_tex_header *load_tex_file(struct file_context *file_context, char *filename);
 

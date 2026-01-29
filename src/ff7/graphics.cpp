@@ -30,6 +30,8 @@
 #include "../gl.h"
 #include "defs.h"
 
+#include "../external_mesh.h"
+
 /*
  * Most of these functions are lifted from the game with only minor changes to
  * replace Direct3D calls. Modifying or even attempting to understand most of
@@ -388,6 +390,53 @@ void sub_6B2720(struct indexed_primitive *ip)
 	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, true, true);
 }
 
+bool isExternalMesh(struct hrc_data *hrc_data)
+{
+	bool is_external_mesh = false;
+	if(hrc_data->bone_list)
+	{
+		struct list_node *bone_list_node;
+		
+		LIST_FOR_EACH(bone_list_node, hrc_data->bone_list)
+		{
+			struct bone_list_member *bone_list_member = (struct bone_list_member *)&bone_list_node->object;
+			if(bone_list_member->bone_type == 1)
+			{
+				uint32_t bone_index = bone_list_member->bone_index;
+				struct hrc_bone *bone = &hrc_data->bones[bone_index];
+
+				if(bone->rsd_array)
+				{
+					uint32_t i;
+					struct rsd_array_member *rsd_array_member;
+
+					for(i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)
+					{
+						struct ff7_polygon_set *polygon_set;
+
+						if(!rsd_array_member->rsd_data) continue;
+
+						polygon_set = rsd_array_member->rsd_data->polygon_set;
+
+						if(!polygon_set) continue;
+
+						if(polygon_set->polygon_data->field_48)
+						{
+							is_external_mesh = true;
+							break;
+						}
+					}
+				}
+			}
+			if (is_external_mesh)
+			{
+				break;
+			}
+		}	
+	}
+	return is_external_mesh;
+}
+
 void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
 {
 	struct anim_frame *anim_frame;
@@ -579,6 +628,329 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 	ff7_externals.stack_pop(matrix_stack);
 }
 
+void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
+{
+	struct anim_frame *anim_frame;
+	struct stack *matrix_stack;
+	struct matrix *root_matrix;
+	struct matrix world_matrix;
+	void (*root_animation_sub)(struct matrix *, struct anim_frame *, struct anim_header *, struct hrc_data *);
+	void (*frame_animation_sub)(uint32_t, struct matrix *, vector3<float> *, struct anim_frame *, struct anim_header *, struct hrc_bone *, struct hrc_data *);
+
+	if(!anim_header) return;
+	if(!hrc_data) return;
+	if(current_frame >= anim_header->num_frames) return;
+
+	anim_frame = &anim_header->anim_frames[current_frame];
+
+	if(anim_header->use_matrix_array)
+	{
+		anim_header->current_matrix_array = &anim_header->matrix_array[(anim_header->num_bones + 1) * current_frame];
+	}
+
+	matrix_stack = game_object->matrix_stack1;
+
+	ff7_externals.stack_push(matrix_stack);
+
+	root_matrix = (matrix*)ff7_externals.stack_top(matrix_stack);
+
+	if(hrc_data->field_A4 && *hrc_data->field_A4)
+	{
+		root_animation_sub = ff7_externals._root_animation;
+		frame_animation_sub = ff7_externals._frame_animation;
+	}
+	else
+	{
+		root_animation_sub = ff7_externals.root_animation;
+		frame_animation_sub = ff7_externals.frame_animation;
+	}
+
+	root_animation_sub(root_matrix, anim_frame, anim_header, hrc_data);
+
+	if(hrc_data->flags & 0x400) memcpy(&hrc_data->field_24, root_matrix, sizeof(*root_matrix));
+
+	bool is_external_mesh = isExternalMesh(hrc_data);
+	if(is_external_mesh)
+	{
+		identity_matrix(&world_matrix);
+
+		if(struc_110)
+		{
+			struct matrix scale_matrix;
+
+			if(struc_110->scale_factor != 1.0f)
+			{
+				float scale_factor = struc_110->scale_factor;
+
+				world_matrix._41 *= scale_factor;
+				world_matrix._42 *= scale_factor;
+				world_matrix._43 *= scale_factor;
+
+				uniform_scaling_matrix(scale_factor, &scale_matrix);
+				multiply_matrix_unary(&world_matrix, &scale_matrix);
+			}
+
+			if(struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
+			{
+				scaling_matrix(&struc_110->scale, &scale_matrix);
+				multiply_matrix_unary(&world_matrix, &scale_matrix);
+
+				world_matrix._41 *= struc_110->scale.x;
+				world_matrix._42 *= struc_110->scale.y;
+				world_matrix._43 *= struc_110->scale.z;
+			}
+
+			if(*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX)
+			{
+				multiply_matrix_unary(&world_matrix, &struc_110->matrix);
+			}
+
+			if(struc_110->rotation.y != 0.0) rotate_matrix_y(DEG2RAD(struc_110->rotation.y), &world_matrix);
+			if(struc_110->rotation.x != 0.0) rotate_matrix_x(DEG2RAD(struc_110->rotation.x), &world_matrix);
+			if(struc_110->rotation.z != 0.0) rotate_matrix_z(DEG2RAD(struc_110->rotation.z), &world_matrix);
+
+			world_matrix._41 += struc_110->position.x;
+			world_matrix._42 += struc_110->position.y;
+			world_matrix._43 += struc_110->position.z;
+		}
+
+		if(hrc_data->flags & 0x800)
+		{
+			struct matrix pos_matrix;
+			multiply_matrix(root_matrix, &world_matrix, &pos_matrix);
+
+			memcpy(&hrc_data->field_64, &pos_matrix, sizeof(pos_matrix));
+		}
+
+		if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
+		{
+			struc_110->bone_positions[0].x = world_matrix._41 + root_matrix->_41;
+			struc_110->bone_positions[0].y = world_matrix._42 + root_matrix->_42;
+			struc_110->bone_positions[0].z = world_matrix._43 + root_matrix->_43;
+		}
+	}
+	else
+	{
+		if(struc_110)
+		{
+			struct matrix scale_matrix;
+
+			if(struc_110->scale_factor != 1.0f)
+			{
+				float scale_factor = struc_110->scale_factor;
+
+				root_matrix->_41 *= scale_factor;
+				root_matrix->_42 *= scale_factor;
+				root_matrix->_43 *= scale_factor;
+
+				uniform_scaling_matrix(scale_factor, &scale_matrix);
+				multiply_matrix_unary(root_matrix, &scale_matrix);
+			}
+
+			if(struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
+			{
+				scaling_matrix(&struc_110->scale, &scale_matrix);
+				multiply_matrix_unary(root_matrix, &scale_matrix);
+
+				root_matrix->_41 *= struc_110->scale.x;
+				root_matrix->_42 *= struc_110->scale.y;
+				root_matrix->_43 *= struc_110->scale.z;
+			}
+
+			if(*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX) multiply_matrix_unary(root_matrix, &struc_110->matrix);
+
+			if(struc_110->rotation.y != 0.0) rotate_matrix_y(DEG2RAD(struc_110->rotation.y), root_matrix);
+			if(struc_110->rotation.x != 0.0) rotate_matrix_x(DEG2RAD(struc_110->rotation.x), root_matrix);
+			if(struc_110->rotation.z != 0.0) rotate_matrix_z(DEG2RAD(struc_110->rotation.z), root_matrix);
+
+			root_matrix->_41 += struc_110->position.x;
+			root_matrix->_42 += struc_110->position.y;
+			root_matrix->_43 += struc_110->position.z;
+		}
+
+		if(hrc_data->flags & 0x800) memcpy(&hrc_data->field_64, root_matrix, sizeof(*root_matrix));
+
+		if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
+		{
+			struc_110->bone_positions[0].x = root_matrix->_41;
+			struc_110->bone_positions[0].y = root_matrix->_42;
+			struc_110->bone_positions[0].z = root_matrix->_43;
+		}
+	}
+
+	if(hrc_data->bone_list)
+	{
+		struct list_node *bone_list_node;
+
+		LIST_FOR_EACH(bone_list_node, hrc_data->bone_list)
+		{
+			struct bone_list_member *bone_list_member = (struct bone_list_member *)&bone_list_node->object;
+
+			if(bone_list_member->bone_type == 1)
+			{
+				uint32_t bone_index = bone_list_member->bone_index;
+				struct hrc_bone *bone = &hrc_data->bones[bone_index];
+				struct matrix *parent_matrix;
+				struct matrix *bone_matrix;
+				vector3<float> *frame_rotation;
+				struct matrix local_matrix;
+				struct matrix eye_matrix;
+				struct matrix *matrix;
+				vector3<float> dummy_point = {0.0f, 0.0f, 0.0f};
+
+				parent_matrix = (struct matrix*)ff7_externals.stack_top(matrix_stack);
+				ff7_externals.stack_push(matrix_stack);
+				bone_matrix = (struct matrix*)ff7_externals.stack_top(matrix_stack);
+
+				if(anim_header->num_bones <= bone_index) frame_rotation = &dummy_point;
+				else frame_rotation = &anim_frame->data[bone_index];
+
+				frame_animation_sub(bone_index, &local_matrix, frame_rotation, anim_frame, anim_header, bone, hrc_data);
+
+				multiply_matrix(&local_matrix, parent_matrix, bone_matrix);
+
+				if(*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
+				{
+					if(hrc_data->flags & 0x4000 && struc_110->bone_matrices) matrix = &struc_110->bone_matrices[bone_index + 1];
+					else matrix = &eye_matrix;
+
+					multiply_matrix(bone_matrix, game_object->camera_matrix, matrix);
+
+					matrix->_14 = 0.0f;
+					matrix->_24 = 0.0f;
+					matrix->_34 = 0.0f;
+					matrix->_44 = 1.0f;
+
+					if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
+					{
+						struc_110->bone_positions[bone_index + 1].x = bone_matrix->_41;
+						struc_110->bone_positions[bone_index + 1].y = bone_matrix->_42;
+						struc_110->bone_positions[bone_index + 1].z = bone_matrix->_43;
+					}
+				}
+				else matrix = bone_matrix;
+
+				struct matrix model_view_matrix;
+				if(*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
+				{
+					multiply_matrix( &world_matrix, game_object->camera_matrix, &model_view_matrix);
+				}
+
+				if(bone->rsd_array)
+				{
+					uint32_t i;
+					struct rsd_array_member *rsd_array_member;
+
+					for(i = 0, rsd_array_member = bone->rsd_array; i < bone->num_rsd; i++, rsd_array_member++)
+					{
+						struct ff7_polygon_set *polygon_set;
+
+						if(!rsd_array_member->rsd_data) continue;
+
+						polygon_set = rsd_array_member->rsd_data->polygon_set;
+
+						if(!polygon_set) continue;
+
+						if (is_external_mesh && polygon_set->polygon_data->field_48 == nullptr) continue;
+
+						if(polygon_set->polygon_data->field_48)
+						{
+							if(*ff7_externals.model_mode & MDL_USE_CAMERA_MATRIX)
+							{
+								common_setmatrix(0, &model_view_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+							}
+							else
+							{
+								common_setmatrix(0, &world_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+							}							
+						}
+						else
+						{
+							common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+							if(polygon_set->matrix_set) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
+							common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
+						}
+
+						if(hrc_data->flags & 0x2000000)
+						{
+							struct ff7_light *light = polygon_set->light;
+
+							if(light)
+							{
+								if(polygon_set->matrix_set) light->matrix_pointer = polygon_set->matrix_set->matrix_world;
+								else light->matrix_pointer = 0;
+
+								if(light->field_138)
+								{
+									struct matrix tmp;
+
+									multiply_matrix(bone_matrix, &light->normal_matrix, &tmp);
+
+									ff7_externals.sub_69C69F(&tmp, light);
+								}
+								else ff7_externals.sub_69C69F(bone_matrix, light);
+
+								common_externals.generic_light_polygon_set((struct polygon_set *)polygon_set, (struct light *)light);
+							}
+						}
+						if (polygon_set->polygon_data->field_48)
+						{
+							auto externalMesh = reinterpret_cast<ExternalMesh*>(polygon_set->polygon_data->field_48);
+
+							std::string animFullName = anim_header->file.pc_name;
+							std::string animName = animFullName.substr(animFullName.length() - 6, 4);
+
+							externalMesh->skins[0].current_anim = animName;
+							externalMesh->skins[0].current_frame = current_frame;
+						}
+						if(hrc_data->field_4 && hrc_data->flags & 0x100000) ff7gl_field_78(polygon_set, game_object);
+					}
+				}
+			}
+			if(bone_list_member->bone_type == 2) ff7_externals.stack_pop(matrix_stack);
+		}
+	}
+
+	ff7_externals.stack_pop(matrix_stack);
+}
+
+int battle_sub_684CC6(hrc_data *a1, ff7_game_obj *game_object)
+{
+  int result = 0; // eax
+  int j; // [esp+4h] [ebp-10h]
+  struct rsd_array_member *rsd_array; // [esp+8h] [ebp-Ch]
+  int bone_index; // [esp+Ch] [ebp-8h]
+  struct hrc_bone *bones; // [esp+10h] [ebp-4h]
+
+  if ( a1 )
+  {
+    bones = a1->bones;
+    for ( bone_index = 0; ; ++bone_index )
+    {
+      result = (int)a1;
+      if ( bone_index >= a1->num_bones )
+        break;
+
+      if ( bones->num_rsd > 0 )
+      {
+        rsd_array = bones->rsd_array;
+        if ( rsd_array )
+        {
+          for ( j = 0; j < bones->num_rsd; ++j )
+          {
+            if ( rsd_array->rsd_data )
+			{
+              	ff7gl_field_78(rsd_array->rsd_data->polygon_set, game_object);
+			}
+            ++rsd_array;
+          }
+        }
+      }
+      ++bones;
+    }
+  }
+  return result;
+}
 void fill_light_data(struct light_data* lightData, struct ff7_polygon_set *polygon_set)
 {
 	lightData->global_light_color = polygon_set->light->global_light_color_abgr_norm;

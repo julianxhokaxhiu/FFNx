@@ -24,6 +24,8 @@
 
 #include "defs.h"
 
+#include "external_mesh.h"
+
 uint32_t get_frame_data_size(struct anim_header *anim_header)
 {
 	if(!anim_header) return 0;
@@ -162,9 +164,36 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 
 	if(ret->field_2C) ffnx_unexpected("oops, missed some .p data\n");
 
+	if (enable_external_mesh)
+	{
+		ExternalMesh* externalModel = new ExternalMesh;
+		std::string full_filename = filename;
+		size_t lastindex = full_filename.find_last_of("."); 
+		std::string filename_no_ext = full_filename.substr(0, lastindex);
+
+		char file_path_gltf[MAX_PATH];
+		sprintf(file_path_gltf, "%s/%s/field/%s.gltf", basedir, external_mesh_path.data(), filename_no_ext.data());
+
+		char tex_path[MAX_PATH];
+		sprintf(tex_path, "%s/%s/field/textures/", basedir, external_mesh_path.data());
+
+		if (externalModel->importExternalMeshGltfFile(file_path_gltf, tex_path, true))
+		{
+			ret->field_48 = reinterpret_cast<vector3<float>*>(externalModel);
+		}
+		else
+		{
+			ret->field_48 = nullptr;
+			delete externalModel;
+		}
+	}
+	else
+	{
+		ret->field_48 = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->field_48), ret->field_14, (struct file *)file);
+	}
+
 	ret->vertdata = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->vertdata), ret->numverts, (struct file *)file);
 	ret->normaldata = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->normaldata), ret->numnormals, (struct file *)file);
-	ret->field_48 = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->field_48), ret->field_14, (struct file *)file);
 	ret->texcoorddata = (struct texcoords*)common_externals.alloc_read_file(sizeof(*ret->texcoorddata), ret->numtexcoords, (struct file *)file);
 	ret->vertexcolordata = (uint32_t*)common_externals.alloc_read_file(sizeof(*ret->vertexcolordata), ret->numvertcolors, (struct file *)file);
 	ret->polycolordata = (uint32_t*)common_externals.alloc_read_file(sizeof(*ret->polycolordata), ret->numpolys, (struct file *)file);
@@ -186,6 +215,18 @@ error:
 	ff7_externals.free_polygon_data(ret);
 	close_file(file);
 	return 0;
+}
+
+void free_polygon_data(struct polygon_data *ret)
+{
+	if (!ret) return;
+	if (enable_external_mesh && ret->field_48)
+	{
+		ExternalMesh* pExternalMesh = reinterpret_cast<ExternalMesh*>(ret->field_48);
+		external_free(pExternalMesh);
+	}
+
+	ff7_externals.free_polygon_data_impl(1, ret);
 }
 
 void destroy_tex_header(struct ff7_tex_header *tex_header)

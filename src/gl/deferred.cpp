@@ -290,6 +290,50 @@ uint32_t gl_defer_zoom()
 	return true;
 }
 
+uint32_t gl_defer_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
+{
+	if (ff8 || !enable_lighting)
+	{
+		return false;
+	}
+
+	if (trace_all) ffnx_trace("gl_defer_external_mesh");
+
+	if (!deferred_draws) deferred_draws = (deferred_draw*)driver_calloc(sizeof(*deferred_draws), DEFERRED_MAX);
+
+	// global disable
+	if (nodefer) {
+		if (trace_all) ffnx_trace("gl_defer_external_mesh: nodefer true\n");
+		return false;
+	}
+
+	if (num_deferred + 1 > DEFERRED_MAX)
+	{
+		if (trace_all) ffnx_trace("gl_defer_external_mesh: deferred draw queue overflow - num_deferred: %u - count: 1 - DEFERRED_MAX: %u\n", num_deferred, DEFERRED_MAX);
+		return false;
+	}
+
+	uint32_t defer = num_deferred;
+
+	deferred_draws[defer].draw_call_type = DCT_EXTERNAL_MESH;
+	deferred_draws[defer].is_time_filter_enabled = newRenderer.isTimeFilterEnabled();
+	deferred_draws[defer].is_fog_enabled = newRenderer.isFogEnabled();
+	deferred_draws[defer].external_mesh = externalMesh;
+	if(lightdata) 
+	{
+		deferred_draws[defer].lightdata = (struct light_data*)driver_malloc(sizeof(struct light_data));
+		memcpy(deferred_draws[defer].lightdata, lightdata, sizeof(struct light_data));
+	}
+	deferred_draws[defer].vertextype = VERTEX;
+	gl_save_state(&deferred_draws[defer].state);
+
+	num_deferred++;
+
+	if (trace_all) ffnx_trace("gl_defer_external_mesh: return true\n");
+
+	return true;
+}
+
 uint32_t gl_defer_world_external_mesh()
 {
 	if (ff8 || !enable_lighting)
@@ -623,11 +667,6 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 			continue;
 		}
 
-		if (deferred_draws[i].vertices == nullptr)
-		{
-			continue;
-		}
-
 		if (shadow_callback != nullptr && !isFieldShadowDrawn && deferred_draws[i].vertextype != TLVERTEX)
 		{
 			newRenderer.setD3DProjection(&deferred_draws[i].state.d3dprojection_matrix);
@@ -639,19 +678,32 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 
 		gl_load_state(&deferred_draws[i].state);
 
-		gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
-			deferred_draws[i].vertextype,
-			deferred_draws[i].vertices,
-			i > lastBlitDrawCallIndex ? deferred_draws[i].normals : 0,
-			deferred_draws[i].vertexcount,
-			deferred_draws[i].indices,
-			deferred_draws[i].count,
-			0,
-			deferred_draws[i].boundingbox,
-			deferred_draws[i].lightdata,
-			deferred_draws[i].clip,
-			deferred_draws[i].mipmap
-		);
+		if(deferred_draws[i].draw_call_type == DCT_EXTERNAL_MESH)
+		{
+			gl_draw_external_mesh(deferred_draws[i].external_mesh, deferred_draws[i].lightdata);
+			continue;
+		}
+		else
+		{
+			if (deferred_draws[i].vertices == nullptr)
+			{
+				continue;
+			}
+
+			gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
+				deferred_draws[i].vertextype,
+				deferred_draws[i].vertices,
+				i > lastBlitDrawCallIndex ? deferred_draws[i].normals : 0,
+				deferred_draws[i].vertexcount,
+				deferred_draws[i].indices,
+				deferred_draws[i].count,
+				0,
+				deferred_draws[i].boundingbox,
+				deferred_draws[i].lightdata,
+				deferred_draws[i].clip,
+				deferred_draws[i].mipmap
+			);
+		}
 
 		++stats.deferred;
 

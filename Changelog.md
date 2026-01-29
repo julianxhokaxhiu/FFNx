@@ -10,6 +10,7 @@
 ## FF7
 
 - Core: Fix KAWAI LIGHT opcode behavior ( https://github.com/julianxhokaxhiu/FFNx/issues/874 )
+- Graphics: Implemented smooth skinning for gltf 3d models ( https://github.com/julianxhokaxhiu/FFNx/pull/882 )
 
 ## FF8
 

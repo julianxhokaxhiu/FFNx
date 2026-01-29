@@ -187,6 +187,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.create_polygon_data = (polygon_data* (*)(uint32_t, uint32_t))get_relative_call(ff7_externals.load_p_file, 0x17);
 	ff7_externals.create_polygon_lists = (void (*)(polygon_data*))get_relative_call(ff7_externals.load_p_file, 0x35B);
 	ff7_externals.free_polygon_data = (void (*)(polygon_data*))get_relative_call(ff7_externals.load_p_file, 0x3C4);
+	ff7_externals.free_polygon_data_impl = (void (*)(int, polygon_data*))get_relative_call((uint32_t)ff7_externals.free_polygon_data, 0x9);
 
 	common_externals.open_file = get_relative_call(ff7_externals.load_p_file, 0x3A);
 
@@ -1177,6 +1178,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t battle_sub_4297B9 = get_relative_call(ff7_externals.battle_sub_42D992, 0x59);
 	uint32_t battle_sub_42952E = get_relative_call(battle_sub_4297B9, 0x10);
 	ff7_externals.battle_sub_42F3E8 = get_relative_call(battle_sub_42952E, 0xCD);
+	ff7_externals.battle_sub_684CC6 = get_relative_call(ff7_externals.battle_sub_42F3E8, 0xE2A);
 	uint32_t battle_sub_5B9B30 = get_relative_call(ff7_externals.battle_sub_42F3E8, 0x756);
 	ff7_externals.battle_handle_status_effect_anim_5BA7C0 = get_relative_call(battle_sub_5B9B30, 0xB2);
 	ff7_externals.battle_handle_player_mark_5B9C8E = get_relative_call(battle_sub_5B9B30, 0x123);
