@@ -189,9 +189,16 @@ namespace ff7::field
         return ff7_externals.field_load_map_trigger_data_sub_6211C3();
     }
 
-    void field_apply_model_light(ff7_light *global_light, ff7_light *cb_light_polygon_set, hrc_data *hrc_data)
+    int ff7_apply_KAWAI_op_code(int sub_code, ff7_hrc_polygon_data *ff7_hrc_polygon_data, uint8_t *unk3, int unk4, int unk5, int model_id, int *unk7)
     {
-        if (hrc_data && !ff7_disable_field_lighting)
+        ff7_kawai_current_model_id = model_id;
+
+        return ff7_externals.field_apply_kawai_op_64A070(sub_code, ff7_hrc_polygon_data, unk3, unk4, unk5, model_id, unk7);
+    }
+
+    void ff7_field_apply_model_light(ff7_light *global_light, ff7_light *cb_light_polygon_set, hrc_data *hrc_data)
+    {
+        if (hrc_data)
         {
             struct hrc_bone *bones = hrc_data->bones;
             for (int i = 0; i < (signed int)hrc_data->num_bones; ++i)
@@ -204,7 +211,12 @@ namespace ff7::field
                         for (int j = 0; j < (signed int)bones->num_rsd; ++j)
                         {
                             if (rsd_array->rsd_data)
-                                ((void (__cdecl *)(ff7_light *, struct ff7_polygon_set *))cb_light_polygon_set)(global_light, rsd_array->rsd_data->polygon_set);
+                            {
+                                if (ff7::field::ff7_model_data[ff7_kawai_current_model_id].is_kawai_light)
+                                    rsd_array->rsd_data->polygon_set->light = nullptr;
+                                else
+                                    ((void (__cdecl *)(ff7_light *, struct ff7_polygon_set *))cb_light_polygon_set)(global_light, rsd_array->rsd_data->polygon_set);
+                            }
                             ++rsd_array;
                         }
                     }
@@ -319,6 +331,7 @@ namespace ff7::field
         patch_code_dword((uint32_t)&common_externals.execute_opcode_table[IFKEY], (DWORD)&opcode_script_IFKEY);
 
         // Fix KAWAI LIGHT opcode animation
-        replace_function(ff7_externals.field_apply_model_light_sub_685028, field_apply_model_light);
+        replace_call_function(ff7_externals.field_animate_3d_models_6392BB + 0x726, ff7_apply_KAWAI_op_code);
+        replace_function(ff7_externals.field_apply_model_light_sub_685028, ff7_field_apply_model_light);
     }
 }

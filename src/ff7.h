@@ -2711,6 +2711,7 @@ struct ff7_model_custom_data
 	char *right_eye_tex_filename;
 	p_hundred* left_eye_tex;
 	p_hundred* right_eye_tex;
+	int is_kawai_light;
 };
 
 struct ff7_channel_6_state
@@ -3027,7 +3028,7 @@ struct ff7_externals
 	int (*field_get_smooth_interpolated_value)(int, int, int, int);
 	void (*field_evaluate_encounter_rate_60B2C6)();
 	uint32_t field_animate_3d_models_6392BB;
-	uint32_t field_apply_kawai_op_64A070;
+	int (*field_apply_kawai_op_64A070)(int, ff7_hrc_polygon_data*, uint8_t*, int, int, int, int*);
 	uint32_t sub_64EC60;
 	field_model_blink_data* field_model_blink_data_D000C8;
 	void (*field_blink_3d_model_649B50)(field_animation_data*, field_model_blink_data*);

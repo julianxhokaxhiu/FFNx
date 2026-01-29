@@ -29,6 +29,7 @@
 #include "../log.h"
 #include "../gl.h"
 #include "defs.h"
+#include "field/model.h"
 
 /*
  * Most of these functions are lifted from the game with only minor changes to
@@ -342,7 +343,7 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 						}
 						else
 						{
-							if(polygon_set->light != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL && !ff7_disable_field_lighting)
+							if(polygon_set->light != nullptr && game_lighting != GAME_LIGHTING_ORIGINAL)
 							{
 								struct light_data lightData;
 								fill_light_data(&lightData, polygon_set);
