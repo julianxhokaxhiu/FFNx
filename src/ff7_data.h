@@ -124,6 +124,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	battle_main_loop = get_absolute_value(main_loop, 0x89A);
 	ff7_set_main_loop(MODE_BATTLE, battle_main_loop);
 	field_main_loop = get_absolute_value(main_loop, 0x8F8);
+	ff7_externals.field_main_loop = field_main_loop;
 	ff7_set_main_loop(MODE_FIELD, field_main_loop);
 	ff7_externals.world_loop_74BE49 = get_absolute_value(main_loop, 0x977);
 	ff7_set_main_loop(MODE_WORLDMAP, ff7_externals.world_loop_74BE49);
@@ -577,12 +578,13 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_get_linear_interpolated_value = (int (*)(int, int, int, int))get_relative_call(ff7_externals.field_update_models_positions, 0x122);
 	ff7_externals.field_get_smooth_interpolated_value = (int (*)(int, int, int, int))get_relative_call(ff7_externals.field_update_models_positions, 0x1EC);
 	ff7_externals.field_evaluate_encounter_rate_60B2C6 = (void (*)())get_relative_call(ff7_externals.field_update_models_positions, 0x90F);
-	ff7_externals.field_animate_3d_models_6392BB = get_relative_call(field_main_loop, 0xF6);
-	ff7_externals.field_blink_3d_model_649B50 = (void(*)(field_animation_data*, field_model_blink_data*))get_relative_call(ff7_externals.field_animate_3d_models_6392BB, 0x8A7);
+	ff7_externals.field_animate_3d_models_6392BB = (void(*)())get_relative_call(field_main_loop, 0xF6);
+	ff7_externals.field_model_light_data = (ff7_light**)get_absolute_value((uint32_t)ff7_externals.field_animate_3d_models_6392BB, 0x27F);
+	ff7_externals.field_blink_3d_model_649B50 = (void(*)(field_animation_data*, field_model_blink_data*))get_relative_call((uint32_t)ff7_externals.field_animate_3d_models_6392BB, 0x8A7);
 	ff7_externals.field_sub_6A2736 = (int (*)(ff7_polygon_set*))get_relative_call((uint32_t)ff7_externals.field_blink_3d_model_649B50, 0xC4);
 	ff7_externals.field_sub_6A2782 = (p_hundred** (*)(int idx, p_hundred *hundreddata, ff7_polygon_set *polygon_set))(get_relative_call(uint32_t(ff7_externals.field_blink_3d_model_649B50), 0x143));
-	ff7_externals.field_model_blink_data_D000C8 = (field_model_blink_data*)get_absolute_value(ff7_externals.field_animate_3d_models_6392BB, 0x7E6);
-	ff7_externals.field_apply_kawai_op_64A070 = (int(*)(int, ff7_hrc_polygon_data*, uint8_t*, int, int, int, int*))get_relative_call(ff7_externals.field_animate_3d_models_6392BB, 0x726);
+	ff7_externals.field_model_blink_data_D000C8 = (field_model_blink_data*)get_absolute_value((uint32_t)ff7_externals.field_animate_3d_models_6392BB, 0x7E6);
+	ff7_externals.field_apply_kawai_op_64A070 = (int(*)(int, ff7_hrc_polygon_data*, ff7_kawai_opcode_params*, int, int, int, int*))get_relative_call((uint32_t)ff7_externals.field_animate_3d_models_6392BB, 0x726);
 	ff7_externals.sub_64EC60 = get_relative_call((uint32_t)ff7_externals.field_apply_kawai_op_64A070, 0x964);
 	ff7_externals.field_player_model_id = (short*)get_absolute_value(ff7_externals.field_update_models_positions, 0x45D);
 	ff7_externals.field_n_models = (WORD*)get_absolute_value(ff7_externals.field_update_models_positions, 0x25);
@@ -1357,7 +1359,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	// --------------------------------
 
 	// Widescreen
-	ff7_externals.field_culling_model_639252 = get_relative_call(ff7_externals.field_animate_3d_models_6392BB, 0x203);
+	ff7_externals.field_culling_model_639252 = get_relative_call((uint32_t)ff7_externals.field_animate_3d_models_6392BB, 0x203);
 	ff7_externals.field_sub_63AC66 = get_relative_call(ff7_externals.sub_60DF96, 0xB0);
 	ff7_externals.field_sub_63AC3F = (void(*)(int, int, int, int))get_relative_call(ff7_externals.field_sub_63AC66, 0xD5);
 

@@ -71,6 +71,7 @@
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
 #include "ff7/field/defs.h"
+#include "ff7/field/model.h"
 
 #include "ff8/vram.h"
 #include "ff8/vibration.h"

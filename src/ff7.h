@@ -2144,11 +2144,37 @@ struct ff7_field_script_header {
 	char szName[8];			// Field name (never shown)
 };
 
+struct ff7_kawai_opcode_params
+{
+	byte param_1;
+	byte param_2;
+	byte param_3;
+	byte param_4;
+	byte param_5;
+	byte param_6;
+	byte param_7;
+	byte param_8;
+	byte param_9;
+	byte param_A;
+	byte param_B;
+	byte param_C;
+	byte param_D;
+	byte param_E;
+	byte param_F;
+	byte param_10;
+	byte param_11;
+	byte param_12;
+	byte param_13;
+	byte param_14;
+	byte param_15;
+	byte param_16;
+};
+
 struct field_event_data
 {
-	WORD field_0;
+	WORD apply_kawai;
 	WORD padding_2;
-	DWORD field_4;
+	ff7_kawai_opcode_params* opcode_params;
 	byte field_8;
 	byte padding_9;
 	WORD blink_wait_frames;
@@ -2214,7 +2240,8 @@ struct field_animation_data
 	int actor_z;
 	byte field_10[16];
 	byte eye_texture_idx;
-	byte field_24[336];
+	byte kawai_opcode;
+	byte field_24[335];
 	WORD field_174;
 	WORD field_176;
 	ff7_hrc_polygon_data *anim_frame_object;
@@ -2725,6 +2752,9 @@ struct ff7_model_custom_data
 	p_hundred* left_eye_tex;
 	p_hundred* right_eye_tex;
 	int is_kawai_light;
+	int reinit_kawai;
+	ff7_kawai_opcode_params* init_kawai_params;
+	ff7_kawai_opcode_params* exec_kawai_params;
 };
 
 struct ff7_channel_6_state
@@ -3041,8 +3071,10 @@ struct ff7_externals
 	int (*field_get_linear_interpolated_value)(int, int, int, int);
 	int (*field_get_smooth_interpolated_value)(int, int, int, int);
 	void (*field_evaluate_encounter_rate_60B2C6)();
-	uint32_t field_animate_3d_models_6392BB;
-	int (*field_apply_kawai_op_64A070)(int, ff7_hrc_polygon_data*, uint8_t*, int, int, int, int*);
+	uint32_t field_main_loop;
+	void (*field_animate_3d_models_6392BB)();
+	ff7_light** field_model_light_data;
+	int (*field_apply_kawai_op_64A070)(int, ff7_hrc_polygon_data*, ff7_kawai_opcode_params*, int, int, int, int*);
 	uint32_t sub_64EC60;
 	field_model_blink_data* field_model_blink_data_D000C8;
 	void (*field_blink_3d_model_649B50)(field_animation_data*, field_model_blink_data*);

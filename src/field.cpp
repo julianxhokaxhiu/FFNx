@@ -120,7 +120,22 @@ int opcode_kawai() {
 		}
 	}
 
-	return opcode_old_kawai();
+	int ret = opcode_old_kawai();
+
+	if (subcode == 0x6) // LIGHT
+	{
+		field_event_data* field_event_data = (*ff7_externals.field_event_data_ptr);
+
+		byte curr_entity_id = *ff7_externals.current_entity_id;
+		byte curr_model_id = ff7_externals.field_model_id_array[curr_entity_id];
+
+		if (field_event_data[curr_model_id].opcode_params->param_1 == 0)
+			ff7::field::ff7_model_data[curr_model_id].init_kawai_params = field_event_data[curr_model_id].opcode_params;
+		else
+			ff7::field::ff7_model_data[curr_model_id].exec_kawai_params = field_event_data[curr_model_id].opcode_params;
+	}
+
+	return ret;
 }
 
 int opcode_pc_map_change() {

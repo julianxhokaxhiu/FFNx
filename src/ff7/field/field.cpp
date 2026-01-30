@@ -189,11 +189,35 @@ namespace ff7::field
         return ff7_externals.field_load_map_trigger_data_sub_6211C3();
     }
 
-    int ff7_apply_KAWAI_op_code(int sub_code, ff7_hrc_polygon_data *ff7_hrc_polygon_data, uint8_t *unk3, int unk4, int unk5, int model_id, int *unk7)
+    void field_animate_3d_models()
+    {
+        ff7_externals.field_animate_3d_models_6392BB();
+
+        field_event_data* field_event_data = (*ff7_externals.field_event_data_ptr);
+
+        if (
+            field_event_data[ff7_kawai_current_model_id].opcode_params == ff7::field::ff7_model_data[ff7_kawai_current_model_id].exec_kawai_params &&
+            field_event_data[ff7_kawai_current_model_id].apply_kawai == 2
+        )
+        {
+            field_event_data[ff7_kawai_current_model_id].apply_kawai = 1;
+            field_event_data[ff7_kawai_current_model_id].opcode_params = ff7::field::ff7_model_data[ff7_kawai_current_model_id].init_kawai_params;
+        }
+        else if (
+            field_event_data[ff7_kawai_current_model_id].opcode_params == ff7::field::ff7_model_data[ff7_kawai_current_model_id].init_kawai_params &&
+            field_event_data[ff7_kawai_current_model_id].apply_kawai == 2
+        )
+        {
+            field_event_data[ff7_kawai_current_model_id].apply_kawai = 1;
+            field_event_data[ff7_kawai_current_model_id].opcode_params = ff7::field::ff7_model_data[ff7_kawai_current_model_id].exec_kawai_params;
+        }
+    }
+
+    int ff7_apply_KAWAI_op_code(int sub_code, ff7_hrc_polygon_data *ff7_hrc_polygon_data, ff7_kawai_opcode_params *opcode_params, int model_pos_xy, int model_pos_z, int model_id, int *sub_code_ret)
     {
         ff7_kawai_current_model_id = model_id;
 
-        return ff7_externals.field_apply_kawai_op_64A070(sub_code, ff7_hrc_polygon_data, unk3, unk4, unk5, model_id, unk7);
+        return ff7_externals.field_apply_kawai_op_64A070(sub_code, ff7_hrc_polygon_data, opcode_params, model_pos_xy, model_pos_z, model_id, sub_code_ret);
     }
 
     void ff7_field_apply_model_light(ff7_light *global_light, ff7_light *cb_light_polygon_set, hrc_data *hrc_data)
@@ -331,7 +355,8 @@ namespace ff7::field
         patch_code_dword((uint32_t)&common_externals.execute_opcode_table[IFKEY], (DWORD)&opcode_script_IFKEY);
 
         // Fix KAWAI LIGHT opcode animation
-        replace_call_function(ff7_externals.field_animate_3d_models_6392BB + 0x726, ff7_apply_KAWAI_op_code);
+        replace_call_function(ff7_externals.field_main_loop + 0xF6, field_animate_3d_models);
+        replace_call_function((uint32_t)ff7_externals.field_animate_3d_models_6392BB + 0x726, ff7_apply_KAWAI_op_code);
         replace_function(ff7_externals.field_apply_model_light_sub_685028, ff7_field_apply_model_light);
     }
 }
