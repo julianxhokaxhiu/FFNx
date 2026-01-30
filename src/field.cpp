@@ -102,6 +102,8 @@ int opcode_kawai() {
 	}
 	else if (subcode == 0x6) // LIGHT
 	{
+		byte activate = get_field_parameter<byte>(2);
+
 		byte curr_entity_id = *ff7_externals.current_entity_id;
 		byte curr_model_id = ff7_externals.field_model_id_array[curr_entity_id];
 
@@ -109,7 +111,7 @@ int opcode_kawai() {
 
 		if (trace_all || trace_opcodes)
 		{
-			ffnx_trace("subcode[LIGHT]: curr_model_id=%u\n", curr_model_id);
+			ffnx_trace("subcode[LIGHT]: activate=%u,curr_model_id=%u\n", activate, curr_model_id);
 		}
 	}
 	else if (subcode == 0xD) // SHINE

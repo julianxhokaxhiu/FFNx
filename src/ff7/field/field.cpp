@@ -189,11 +189,11 @@ namespace ff7::field
         return ff7_externals.field_load_map_trigger_data_sub_6211C3();
     }
 
-    int ff7_apply_KAWAI_op_code(int sub_code, ff7_hrc_polygon_data *ff7_hrc_polygon_data, uint8_t *unk3, int unk4, int unk5, int model_id, int *unk7)
+    int ff7_apply_KAWAI_op_code(int sub_code, ff7_hrc_polygon_data *ff7_hrc_polygon_data, ff7_kawai_opcode_params *opcode_params, int model_pos_xy, int model_pos_z, int model_id, int *sub_code_ret)
     {
         ff7_kawai_current_model_id = model_id;
 
-        return ff7_externals.field_apply_kawai_op_64A070(sub_code, ff7_hrc_polygon_data, unk3, unk4, unk5, model_id, unk7);
+        return ff7_externals.field_apply_kawai_op_64A070(sub_code, ff7_hrc_polygon_data, opcode_params, model_pos_xy, model_pos_z, model_id, sub_code_ret);
     }
 
     void ff7_field_apply_model_light(ff7_light *global_light, ff7_light *cb_light_polygon_set, hrc_data *hrc_data)
