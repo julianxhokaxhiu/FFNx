@@ -93,7 +93,7 @@ int opcode_kawai() {
 		byte curr_entity_id = *ff7_externals.current_entity_id;
 		byte curr_model_id = ff7_externals.field_model_id_array[curr_entity_id];
 
-		ff7_disable_field_lighting = false;
+		ff7::field::ff7_model_data[curr_model_id].is_kawai_light = false;
 
 		if (trace_all || trace_opcodes)
 		{
@@ -105,7 +105,7 @@ int opcode_kawai() {
 		byte curr_entity_id = *ff7_externals.current_entity_id;
 		byte curr_model_id = ff7_externals.field_model_id_array[curr_entity_id];
 
-		ff7_disable_field_lighting = true;
+		ff7::field::ff7_model_data[curr_model_id].is_kawai_light = true;
 
 		if (trace_all || trace_opcodes)
 		{
