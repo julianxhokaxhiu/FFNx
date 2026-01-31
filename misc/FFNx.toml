@@ -139,6 +139,11 @@ enable_time_cycle = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_time_cycle_path = "time"
 
+#[EXTERNAL MESH]
+# Enable external meshes.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_external_mesh = false
+
 #[EXTERNAL WORLDMAP MESH]
 # Enable worldmap external meshes.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~

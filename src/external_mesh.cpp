@@ -30,7 +30,34 @@
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
 
-bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path)
+void createJointHierarchy(Skin* pSkin, int parentIndex, cgltf_node* pJointNode, int* curIndex)
+{
+    Joint outJoint;
+
+    outJoint.rotation.x = pJointNode->rotation[0];
+    outJoint.rotation.y = pJointNode->rotation[1];
+    outJoint.rotation.z = pJointNode->rotation[2];
+    outJoint.rotation.w = pJointNode->rotation[3];
+
+    outJoint.translation.x = pJointNode->translation[0];
+    outJoint.translation.y = pJointNode->translation[1];
+    outJoint.translation.z = pJointNode->translation[2];
+
+    outJoint.name = pJointNode->name;
+
+    outJoint.parentJointIndex = parentIndex;
+
+    pSkin->joints[*curIndex] = outJoint;
+    auto newParentIndex = *curIndex;
+    (*curIndex)++;
+
+    for (int i = 0; i < pJointNode->children_count; ++i)
+    {
+        createJointHierarchy(pSkin, newParentIndex, pJointNode->children[i], curIndex);
+    }    
+}
+
+bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, bool isZUp)
 {
 	cgltf_options options = {0};
 	cgltf_data* data = NULL;
@@ -139,6 +166,8 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path)
 			float* normalBuffer = nullptr;
 			float* uvBuffer = nullptr;
 			float* colorBuffer = nullptr;
+            byte* jointsBuffer = nullptr;
+            float * weightsBuffer = nullptr;
 			for (size_t k = 0; k < primitive.attributes_count; k++)
 			{
 				cgltf_attribute attr = primitive.attributes[k];
@@ -166,6 +195,14 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path)
 				{
 					colorBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
 				}
+                else if(strcmp(attr.name, "JOINTS_0") == 0)
+				{
+					jointsBuffer = (byte*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+				}
+                else if(strcmp(attr.name, "WEIGHTS_0") == 0)
+				{
+					weightsBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+				}
 			}
 
             outShape.isDoubleSided = primitive.material->double_sided;
@@ -181,8 +218,16 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path)
 			{
 				struct nvertex vertex;
 				vertex._.x = posBuffer[3 * vertexIndex];
-				vertex._.y = posBuffer[3 * vertexIndex + 2];
-				vertex._.z = posBuffer[3 * vertexIndex + 1];
+                if (isZUp)
+                {
+                    vertex._.y = posBuffer[3 * vertexIndex + 1];
+                    vertex._.z = posBuffer[3 * vertexIndex + 2];
+                }
+                else
+                {
+                    vertex._.y = posBuffer[3 * vertexIndex + 2];
+                    vertex._.z = posBuffer[3 * vertexIndex + 1];
+                }
 
 				vertex.color.w = 1.0f;
 				vertex.color.r = static_cast<char>(baseColorFactor[0] * 255);
@@ -206,10 +251,42 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path)
 				struct vector3<float> normal;
 
 				normal.x = normalBuffer[3 * vertexIndex];
-				normal.y = normalBuffer[3 * vertexIndex + 2];
-				normal.z = normalBuffer[3 * vertexIndex + 1];
+                if (isZUp)
+                {
+                    normal.y = normalBuffer[3 * vertexIndex + 1];
+				    normal.z = normalBuffer[3 * vertexIndex + 2];
+                }
+                else
+                {
+                    normal.y = normalBuffer[3 * vertexIndex + 2];
+				    normal.z = normalBuffer[3 * vertexIndex + 1];
+                }
 
 				outShape.normals.push_back(normal);
+
+                if (jointsBuffer != nullptr)
+                {
+                    struct vector4<float> joints;
+         
+                    joints.x = jointsBuffer[4 * vertexIndex];
+                    joints.y = jointsBuffer[4 * vertexIndex + 1];
+                    joints.z = jointsBuffer[4 * vertexIndex + 2];
+                    joints.w = jointsBuffer[4 * vertexIndex + 3];
+
+                    outShape.joints.push_back(joints);
+                }
+
+                if (weightsBuffer != nullptr)
+                {
+                    struct vector4<float> weights;
+
+                    weights.x = weightsBuffer[4 * vertexIndex];
+                    weights.y = weightsBuffer[4 * vertexIndex + 1];
+                    weights.z = weightsBuffer[4 * vertexIndex + 2];
+                    weights.w = weightsBuffer[4 * vertexIndex + 3];
+
+                    outShape.weights.push_back(weights);
+                }
 			}
 
 			if(primitive.indices->component_type == cgltf_component_type_r_16u)
@@ -229,12 +306,113 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path)
 				}
 			}
 
-            fillExternalMeshVertexBuffer(outShape.vertices.data(), outShape.normals.data(), outShape.vertices.size());
+            fillExternalMeshVertexBuffer(outShape.vertices.data(), outShape.normals.data(), outShape.joints.data(), outShape.weights.data(), outShape.vertices.size());
             fillExternalMeshIndexBuffer(outShape.indices.data(), outShape.indices.size());
 
             shapes.push_back(outShape);
 		}
 	}
+
+    for (size_t i = 0; i < data->skins_count; i++)
+	{
+        Skin outSkin;
+
+        cgltf_skin skin = data->skins[i];
+
+        outSkin.joints.resize(skin.joints_count);
+        int curIndex = 0;
+        while (curIndex != skin.joints_count)
+        {
+            createJointHierarchy(&outSkin, -1, skin.joints[curIndex], &curIndex);
+        }
+
+        auto joint_count = outSkin.joints.size();
+        for (size_t j = 0; j < joint_count; j++)
+		{
+            auto inverseBindPoseMatrixBuffer = (float*)((char*)skin.inverse_bind_matrices->buffer_view->buffer->data + skin.inverse_bind_matrices->buffer_view->offset);
+            memcpy(outSkin.joints[j].inverseBindPoseMatrix, &inverseBindPoseMatrixBuffer[16 * j], sizeof(float) * 16);
+        }
+		/*for (size_t j = 0; j < skin.joints_count; j++)
+		{
+			Joint outJoint;
+
+            auto joint = skin.joints[j];
+
+            outJoint.rotation.x = joint->rotation[0];
+            outJoint.rotation.y = joint->rotation[1];
+            outJoint.rotation.z = joint->rotation[2];
+            outJoint.rotation.w = joint->rotation[3];
+
+            outJoint.translation.x = joint->translation[0];
+            outJoint.translation.y = joint->translation[1];
+            outJoint.translation.z = joint->translation[2];
+
+            outSkin.joints.push_back(outJoint);
+        }*/
+
+        skins.push_back(outSkin);
+    }
+
+    for (size_t i = 0; i < data->animations_count; i++)
+    {
+        cgltf_animation anim = data->animations[i];
+        std::string animFullName = anim.name;
+        auto animName = animFullName.substr(0, 4);
+
+        Animation outAnim;
+        
+        int jointCount = skins[0].joints.size();
+        outAnim.keyFrames.resize(jointCount);
+        for (size_t j = 0; j < anim.channels_count; j++)
+        {
+            auto channel = anim.channels[j];
+
+            int targetJointIndex = -1;
+            for (int jointIndex = 0; jointIndex < jointCount; ++jointIndex)
+            {
+                auto joint = skins[0].joints[jointIndex];
+                if(channel.target_node->name == joint.name)
+                {
+                    targetJointIndex = jointIndex;
+                    break;
+                }
+            }
+
+            if(targetJointIndex == -1) continue;
+
+            float* samplerBuffer = (float*)((char*)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
+        
+            KeyFrame& outKeyFrame = outAnim.keyFrames[targetJointIndex];
+            if (channel.target_path == cgltf_animation_path_type_translation)
+            {     
+                for (int k = 0; k < channel.sampler->output->count; ++k)
+                {
+                    vector3<float> translation;
+                    translation.x = samplerBuffer[k * 3 + 0];
+                    translation.y = samplerBuffer[k * 3 + 1];
+                    translation.z = samplerBuffer[k * 3 + 2];
+                    outKeyFrame.translation.push_back(translation);  
+                }
+                outKeyFrame.targetJointIndex = targetJointIndex;
+                outAnim.keyFrames.push_back(outKeyFrame);
+            }
+            else if (channel.target_path == cgltf_animation_path_type_rotation)
+            {
+                //KeyFrame outKeyFrame;
+                for (int k = 0; k < channel.sampler->output->count; ++k)
+                {
+                    vector4<float> rotation;
+                    rotation.x = samplerBuffer[k * 4 + 0];
+                    rotation.y = samplerBuffer[k * 4 + 1];
+                    rotation.z = samplerBuffer[k * 4 + 2];
+                    rotation.w = samplerBuffer[k * 4 + 3];
+                    outKeyFrame.rotation.push_back(rotation);  
+                }
+            }        
+        }
+
+        animations[animName] = outAnim;
+    }
 
     updateExternalMeshBuffers();
 
@@ -243,7 +421,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path)
 	return true;
 }
 
-uint32_t ExternalMesh::fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, uint32_t inCount)
+uint32_t ExternalMesh::fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, struct vector4<float>* joints, struct vector4<float>* weights, uint32_t inCount)
 {
     if (!bgfx::isValid(vertexBufferHandle)) vertexBufferHandle = bgfx::createDynamicVertexBuffer(inCount, newRenderer.GetVertexLayout(), BGFX_BUFFER_ALLOW_RESIZE);
 
@@ -266,6 +444,22 @@ uint32_t ExternalMesh::fillExternalMeshVertexBuffer(struct nvertex* inVertex, st
             vertexBufferData[currentOffset + idx].nx = normals[idx].x;
             vertexBufferData[currentOffset + idx].ny = normals[idx].y;
             vertexBufferData[currentOffset + idx].nz = normals[idx].z;
+        }
+
+        if (joints)
+        {
+            vertexBufferData[currentOffset + idx].bone_indices[0] = static_cast<uint8_t>(joints[idx].x);
+            vertexBufferData[currentOffset + idx].bone_indices[1] = static_cast<uint8_t>(joints[idx].y);
+            vertexBufferData[currentOffset + idx].bone_indices[2] = static_cast<uint8_t>(joints[idx].z);
+            vertexBufferData[currentOffset + idx].bone_indices[3] = static_cast<uint8_t>(joints[idx].w);
+        }
+
+        if (weights)
+        {
+            vertexBufferData[currentOffset + idx].bone_weights[0] = weights[idx].x;
+            vertexBufferData[currentOffset + idx].bone_weights[1] = weights[idx].y;
+            vertexBufferData[currentOffset + idx].bone_weights[2] = weights[idx].z;
+            vertexBufferData[currentOffset + idx].bone_weights[3] = weights[idx].w;
         }
 
         if (vertex_log && idx == 0) ffnx_trace("%s: %u [XYZW(%f, %f, %f, %f), BGRA(%08x), UV(%f, %f)]\n", __func__, idx, vertexBufferData[currentOffset + idx].x, vertexBufferData[currentOffset + idx].y, vertexBufferData[currentOffset + idx].z, vertexBufferData[currentOffset + idx].w, vertexBufferData[currentOffset + idx].bgra, vertexBufferData[currentOffset + idx].u, vertexBufferData[currentOffset + idx].v);

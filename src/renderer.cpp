@@ -191,6 +191,8 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::GAME_LIGHT_DIR2, internalState.gameLightDir2);
     setUniform(RendererUniform::GAME_LIGHT_DIR3, internalState.gameLightDir3);
     setUniform(RendererUniform::GAME_SCRIPTED_LIGHT_COLOR, internalState.gameScriptedLightColor);
+
+    setUniform(RendererUniform::SKINNING_FLAGS, internalState.SkinningFlags.data());
 }
 
 void Renderer::setLightingUniforms()
@@ -328,13 +330,13 @@ bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::Unifo
     return handle;
 }
 
-bgfx::UniformHandle Renderer::setUniform(RendererUniform uniform, const void* uniformValue)
+bgfx::UniformHandle Renderer::setUniform(RendererUniform uniform, const void* uniformValue, int arraySize)
 {
     bgfx::UniformHandle handle = bgfxUniformHandles[uniform];
 
     if (bgfx::isValid(handle))
     {
-        bgfx::setUniform(handle, uniformValue);
+        bgfx::setUniform(handle, uniformValue, arraySize);
     }
 
     return handle;
@@ -397,6 +399,7 @@ void Renderer::resetState()
     doModulateAlpha();
     doTextureFiltering();
     isExternalTexture();
+    isSmoothSkinning();
     setColorMatrix();
     setColorGamut();
     setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB);
@@ -1015,6 +1018,8 @@ void Renderer::init()
         .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Uint8, false, true)
         .end();
 
     bgfx::setDebug(BGFX_DEBUG_TEXT);
@@ -1074,6 +1079,9 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR2] = createUniform("gameLightDir2", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR3] = createUniform("gameLightDir3", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::GAME_SCRIPTED_LIGHT_COLOR] = createUniform("gameScriptedLightColor", bgfx::UniformType::Vec4);
+
+    bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::SKINNING_FLAGS] = createUniform("skinningFlags", bgfx::UniformType::Vec4);
 
     for(int i = 0; i < RendererTextureSlot::COUNT; ++i)
     {
@@ -2552,6 +2560,27 @@ void Renderer::setTimeFilterEnabled(bool flag)
 bool Renderer::isTimeFilterEnabled()
 {
     return static_cast<bool>(internalState.TimeData[1]);
+}
+
+void Renderer::isSmoothSkinning(bool flag)
+{
+    internalState.SkinningFlags[0] = flag;
+}
+
+void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette)
+{
+    if(matrix_palette != nullptr)
+    {
+        for(int i = 0; i < MAX_BONE_MATRICES; ++i)
+        {
+            ::memcpy(&internalState.bone_matrices[16*i], &(*matrix_palette)[i].m[0][0], sizeof((*matrix_palette)[i].m));
+        }
+    }
+}
+
+void Renderer::setSmoothSkinningUniforms()
+{
+    setUniform(RendererUniform::BONE_MATRICES, internalState.bone_matrices, MAX_BONE_MATRICES);
 }
 
 void Renderer::setSphericalWorldRate(float value)

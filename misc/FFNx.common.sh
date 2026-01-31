@@ -328,3 +328,5 @@ vec3 ApplySphericalWorld(vec3 viewPosition, float radiusScale)
 
 	return outResult;
 }
+
+#define MAX_BONE_MATRICES 128

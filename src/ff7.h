@@ -387,6 +387,19 @@ struct ff7_polygon_set
 	uint32_t field_AC;
 };
 
+struct ff7_extended_vertex_data
+{
+	int boneIndices[4];
+	float boneWeights[4];
+};
+
+struct ff7_extended_polygon_set
+{
+	struct ff7_extended_vertex_data* extended_vertex_data = nullptr;
+	uint32_t current_frame = 0;
+	struct anim_header *anim_header = nullptr;
+};
+
 struct ff7_tex_header
 {
 	uint32_t version;
@@ -2793,6 +2806,7 @@ struct ff7_externals
 	struct polygon_data *(*create_polygon_data)(uint32_t, uint32_t);
 	void (*create_polygon_lists)(struct polygon_data *);
 	void (*free_polygon_data)(struct polygon_data *);
+	void (*free_polygon_data_impl)(int, struct polygon_data *);
 	uint32_t battle_sub_42A0E7;
 	uint32_t load_battle_stage;
 	uint32_t load_battle_stage_pc;
@@ -3428,6 +3442,7 @@ struct ff7_externals
 	uint32_t battle_set_do_render_menu;
 	int *g_do_render_menu;
 	uint32_t battle_sub_42F3E8;
+	uint32_t battle_sub_684CC6;
 	uint32_t battle_handle_player_mark_5B9C8E;
 	uint32_t battle_handle_status_effect_anim_5BA7C0;
 	uint32_t battle_update_targeting_info_6E6291;

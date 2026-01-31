@@ -112,6 +112,7 @@ extern bool enable_lighting;
 extern bool prefer_lighting_cpu_calculations;
 extern long game_lighting;
 extern bool enable_time_cycle;
+extern bool enable_external_mesh;
 extern bool enable_worldmap_external_mesh;
 extern bool ff7_external_opening_music;
 extern bool more_debug;

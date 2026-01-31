@@ -13,7 +13,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input a_position, a_color0, a_texcoord0, a_normal
+$input a_position, a_color0, a_texcoord0, a_normal, a_indices, a_weight
 $output v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
@@ -40,10 +40,15 @@ uniform vec4 gameLightDir2;
 uniform vec4 gameLightDir3;
 uniform vec4 gameScriptedLightColor;
 
+uniform mat4 boneMatrices[MAX_BONE_MATRICES];
+uniform vec4 skinningFlags;
+
 #define isTLVertex VSFlags.x > 0.0
 #define blendMode VSFlags.y
 #define isFBTexture VSFlags.z > 0.0
 #define isNotTexture VSFlags.w == 0.0
+
+#define isSmoothSkinning skinningFlags.x > 0.0
 
 #define isApplySphericalWorld WMFlags.x > 0.0
 #define sphericaWorldRadiusScale WMFlags.x
@@ -56,6 +61,7 @@ uniform vec4 gameScriptedLightColor;
 void main()
 {
 	vec4 pos = a_position;
+    vec3 nrm = a_normal;
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
 
@@ -71,13 +77,33 @@ void main()
     }
     else
     {
+        if (isSmoothSkinning)
+        {
+            int boneIndex = a_indices.x;
+            vec3 avgPos = vec3(0.0, 0.0, 0.0);
+            avgPos += a_weight.x * mul(boneMatrices[a_indices.x], vec4(pos.xyz, 1.0)).xyz;
+            avgPos += a_weight.y * mul(boneMatrices[a_indices.y], vec4(pos.xyz, 1.0)).xyz;
+            avgPos += a_weight.z * mul(boneMatrices[a_indices.z], vec4(pos.xyz, 1.0)).xyz;
+            avgPos += a_weight.w * mul(boneMatrices[a_indices.w], vec4(pos.xyz, 1.0)).xyz;
+
+            pos = vec4(avgPos, 1.0);
+
+            vec3 avgNrm = vec3(0.0, 0.0, 0.0);
+            avgNrm += a_weight.x * mul(boneMatrices[a_indices.x], vec4(nrm.xyz, 0.0)).xyz;
+            avgNrm += a_weight.y * mul(boneMatrices[a_indices.y], vec4(nrm.xyz, 0.0)).xyz;
+            avgNrm += a_weight.z * mul(boneMatrices[a_indices.z], vec4(nrm.xyz, 0.0)).xyz;
+            avgNrm += a_weight.w * mul(boneMatrices[a_indices.w], vec4(nrm.xyz, 0.0)).xyz;
+
+            nrm = avgNrm;
+        }
+
         v_position0 = mul(worldView, vec4(pos.xyz, 1.0));
 
         if (isApplySphericalWorld) pos.xyz = ApplySphericalWorld(v_position0.xyz, sphericaWorldRadiusScale);
         else pos = v_position0;
 
         v_shadow0 = mul(lightViewProjTexMatrix, v_position0);
-        v_normal0 = mul(normalMatrix, vec4(a_normal, 0.0)).xyz;
+        v_normal0 = mul(normalMatrix, vec4(nrm, 0.0)).xyz;
         pos = mul(mul(d3dViewport, d3dProjection), vec4(pos.xyz, 1.0));
 
         if (gameLightingMode == GAME_LIGHTING_PER_VERTEX)
