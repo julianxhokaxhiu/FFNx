@@ -49,6 +49,7 @@ namespace ff7::field
     std::array<external_field_model_data, MAX_FIELD_MODELS> external_model_data;
     ff7_model_eye_texture_data curr_model_data;
     ff7_model_custom_data ff7_model_data[FF7_MAX_NUM_MODEL_ENTITIES];
+    uint32_t ff7_kawai_current_model_id = 0xFF;
 
     bool ff7_field_do_draw_3d_model(short x, short y);
     void ff7_field_update_models_position(int key_input_status);

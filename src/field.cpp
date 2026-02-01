@@ -110,22 +110,22 @@ int opcode_kawai() {
 		{
 			ff7::field::ff7_model_data[curr_model_id].is_kawai_active = false;
 			ff7::field::ff7_model_data[curr_model_id].do_kawai_repeat = false;
-
-			ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode = 0x0;
-			ff7::field::ff7_model_data[curr_model_id].init_kawai_params = nullptr;
-
-			ff7::field::ff7_model_data[curr_model_id].exec_kawai_opcode = 0x0;
-			ff7::field::ff7_model_data[curr_model_id].exec_kawai_params = nullptr;
 		}
 		else
 		{
+			if (ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode != 0x2)
+			{
+				ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode = 0x0;
+				ff7::field::ff7_model_data[curr_model_id].init_kawai_params = nullptr;
+			}
+
 			ff7::field::ff7_model_data[curr_model_id].exec_kawai_opcode = subcode;
 			ff7::field::ff7_model_data[curr_model_id].exec_kawai_params = event_data[curr_model_id].opcode_params;
 		}
 
 		if (trace_all || trace_opcodes)
 		{
-			ffnx_trace("subcode[TRNSP]: curr_model_id=%u,opcode_params=0x%X\n", curr_model_id, event_data[curr_model_id].opcode_params);
+			ffnx_trace("subcode[TRNSP]: curr_model_id=%u,activate=%u,opcode_params=0x%X\n", curr_model_id, event_data[curr_model_id].opcode_params->param_1, event_data[curr_model_id].opcode_params);
 		}
 	}
 	else if (subcode == 0x2) // AMBNT
@@ -161,7 +161,7 @@ int opcode_kawai() {
 
 		if (trace_all || trace_opcodes)
 		{
-			ffnx_trace("subcode[LIGHT]: curr_model_id=%u,opcode_params=0x%X,opcode_repeats=%u\n", curr_model_id, event_data[curr_model_id].opcode_params, ff7::field::ff7_model_data[curr_model_id].do_kawai_repeat);
+			ffnx_trace("subcode[LIGHT]: curr_model_id=%u,activate=%u,opcode_params=0x%X,opcode_repeats=%u\n", curr_model_id, event_data[curr_model_id].opcode_params->param_1, event_data[curr_model_id].opcode_params, ff7::field::ff7_model_data[curr_model_id].do_kawai_repeat);
 		}
 	}
 	else if (subcode == 0x7) // UNKNOWN7
@@ -181,7 +181,7 @@ int opcode_kawai() {
 
 		if (trace_all || trace_opcodes)
 		{
-			ffnx_trace("subcode[UNKNOWN7]: curr_model_id=%u,opcode_params=0x%X\n", curr_model_id, event_data[curr_model_id].opcode_params);
+			ffnx_trace("subcode[UNKNOWN7]: curr_model_id=%u,activate=%u,opcode_params=0x%X\n", curr_model_id, event_data[curr_model_id].opcode_params->param_1, event_data[curr_model_id].opcode_params);
 		}
 	}
 	else if (subcode == 0x8 || subcode == 0x9) // UNKNOWN9
@@ -201,7 +201,7 @@ int opcode_kawai() {
 
 		if (trace_all || trace_opcodes)
 		{
-			ffnx_trace("subcode[UNKNOWN9]: curr_model_id=%u,opcode_params=0x%X\n", curr_model_id, event_data[curr_model_id].opcode_params);
+			ffnx_trace("subcode[UNKNOWN9]: curr_model_id=%u,activate=%u,opcode_params=0x%X\n", curr_model_id, event_data[curr_model_id].opcode_params->param_1, event_data[curr_model_id].opcode_params);
 		}
 	}
 

@@ -234,7 +234,7 @@ namespace ff7::field
 
     int ff7_apply_KAWAI_op_code(int sub_code, ff7_hrc_polygon_data *ff7_hrc_polygon_data, ff7_kawai_opcode_params *opcode_params, int model_pos_xy, int model_pos_z, int model_id, int *sub_code_ret)
     {
-        ff7_kawai_current_model_id = model_id;
+        ff7::field::ff7_kawai_current_model_id = model_id;
 
         return ff7_externals.field_apply_kawai_op_64A070(sub_code, ff7_hrc_polygon_data, opcode_params, model_pos_xy, model_pos_z, model_id, sub_code_ret);
     }
@@ -255,7 +255,7 @@ namespace ff7::field
                         {
                             if (rsd_array->rsd_data)
                             {
-                                if (ff7::field::ff7_model_data[ff7_kawai_current_model_id].is_kawai_active && ff7::field::ff7_model_data[ff7_kawai_current_model_id].exec_kawai_opcode == 0x6 && ff7::field::ff7_model_data[ff7_kawai_current_model_id].init_kawai_opcode == 0x6)
+                                if (ff7::field::ff7_model_data[ff7::field::ff7_kawai_current_model_id].init_kawai_opcode == 0x6 || ff7::field::ff7_model_data[ff7::field::ff7_kawai_current_model_id].exec_kawai_opcode == 0x6)
                                     rsd_array->rsd_data->polygon_set->light = nullptr;
                                 else
                                     ((void (__cdecl *)(ff7_light *, struct ff7_polygon_set *))cb_light_polygon_set)(global_light, rsd_array->rsd_data->polygon_set);

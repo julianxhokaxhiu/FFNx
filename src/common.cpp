@@ -122,7 +122,6 @@ MEMORYSTATUSEX last_ram_state = { sizeof(last_ram_state) };
 uint32_t ff8 = false;
 
 uint32_t ff7_do_reset = false;
-uint32_t ff7_kawai_current_model_id;
 
 // global FF7/FF8 flag, check if is steam edition
 uint32_t steam_edition = false;
