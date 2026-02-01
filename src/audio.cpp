@@ -465,7 +465,7 @@ void NxAudioEngine::setSFXVolume(int channel, float volume, double time)
 
 	options->volume = volume;
 
-	ffnx_trace("NxAudioEngine::%s: channel=%d,volume=%f\n", __func__, channel, volume);
+	if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: channel=%d,volume=%f\n", __func__, channel, volume);
 
 	if (time > 0.0) {
 		time /= gamehacks.getCurrentSpeedhack();
