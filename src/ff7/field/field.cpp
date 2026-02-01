@@ -196,7 +196,13 @@ namespace ff7::field
 
         for (int i = 0; i < FF7_MAX_NUM_MODEL_ENTITIES; i++)
         {
-            if (ff7::field::ff7_model_data[i].is_kawai_active)
+            if (
+                ff7::field::ff7_model_data[i].is_kawai_active
+                && (
+                    (ff7::field::ff7_model_data[i].do_kawai_repeat && field_animation_data[i].kawai_opcode != 0x6)
+                    || (ff7::field::ff7_model_data[i].do_kawai_repeat && field_animation_data[i].kawai_opcode == 0x6)
+                )
+            )
             {
                 if (
                     field_event_data[i].opcode_params == ff7::field::ff7_model_data[i].exec_kawai_params

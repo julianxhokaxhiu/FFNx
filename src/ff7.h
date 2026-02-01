@@ -2752,6 +2752,7 @@ struct ff7_model_custom_data
 	p_hundred* left_eye_tex;
 	p_hundred* right_eye_tex;
 	byte is_kawai_active;
+	byte do_kawai_repeat;
 	byte init_kawai_opcode;
 	ff7_kawai_opcode_params* init_kawai_params;
 	byte exec_kawai_opcode;
