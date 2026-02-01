@@ -84,7 +84,6 @@ int opcode_kawai() {
 
 		byte curr_eye_index = animation_data[curr_model_id].eye_texture_idx;
 
-		ff7::field::ff7_model_data[curr_model_id].is_kawai_active = false;
 		ff7::field::ff7_model_data[curr_model_id].current_mouth_idx = mouth_index;
 
 		if (trace_all || trace_opcodes)
