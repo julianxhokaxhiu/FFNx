@@ -394,6 +394,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.battle_draw_box_ui_graphics_objects_call, ff7::battle::draw_ui_graphics_objects_wrapper);
 	}
 
+	if (game_lighting != GAME_LIGHTING_ORIGINAL)
+	{
+		// Disables unnecessary lighting in temple of the ancients rolling rocks
+		replace_function(ff7_externals.sub_64EC60, noop);
+	}
+
 	//#############################################
 	// steam save game preservation and other fixes
 	//#############################################
