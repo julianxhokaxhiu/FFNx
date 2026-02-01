@@ -191,26 +191,39 @@ namespace ff7::field
 
     void field_animate_3d_models()
     {
-        ff7_externals.field_animate_3d_models_6392BB();
-
         field_event_data* field_event_data = (*ff7_externals.field_event_data_ptr);
+        field_animation_data* field_animation_data = *ff7_externals.field_animation_data_ptr;
 
-        if (
-            field_event_data[ff7_kawai_current_model_id].opcode_params == ff7::field::ff7_model_data[ff7_kawai_current_model_id].exec_kawai_params &&
-            field_event_data[ff7_kawai_current_model_id].apply_kawai == 2
-        )
+        for (int i = 0; i < FF7_MAX_NUM_MODEL_ENTITIES; i++)
         {
-            field_event_data[ff7_kawai_current_model_id].apply_kawai = 1;
-            field_event_data[ff7_kawai_current_model_id].opcode_params = ff7::field::ff7_model_data[ff7_kawai_current_model_id].init_kawai_params;
+            if (ff7::field::ff7_model_data[i].is_kawai_active)
+            {
+                if (
+                    field_event_data[i].opcode_params == ff7::field::ff7_model_data[i].exec_kawai_params
+                    && field_event_data[i].apply_kawai == 2
+                )
+                {
+                    field_event_data[i].apply_kawai = 1;
+                    field_event_data[i].opcode_params = ff7::field::ff7_model_data[i].init_kawai_params;
+                    field_animation_data[i].kawai_opcode = ff7::field::ff7_model_data[i].init_kawai_opcode;
+
+                    if (trace_all || trace_opcodes) ffnx_trace("opcode[KAWAI]: curr_model_id=%d,reinit_subcode=%u,reinit_opcode_params=0x%X\n", i, field_animation_data[i].kawai_opcode, field_event_data[i].opcode_params);
+                }
+                else if (
+                    field_event_data[i].opcode_params == ff7::field::ff7_model_data[i].init_kawai_params
+                    && field_event_data[i].apply_kawai == 2
+                )
+                {
+                    field_event_data[i].apply_kawai = 1;
+                    field_event_data[i].opcode_params = ff7::field::ff7_model_data[i].exec_kawai_params;
+                    field_animation_data[i].kawai_opcode = ff7::field::ff7_model_data[i].exec_kawai_opcode;
+
+                    if (trace_all || trace_opcodes) ffnx_trace("opcode[KAWAI]: curr_model_id=%d,reinit_subcode=%u,reinit_opcode_params=0x%X\n", i, field_animation_data[i].kawai_opcode, field_event_data[i].opcode_params);
+                }
+            }
         }
-        else if (
-            field_event_data[ff7_kawai_current_model_id].opcode_params == ff7::field::ff7_model_data[ff7_kawai_current_model_id].init_kawai_params &&
-            field_event_data[ff7_kawai_current_model_id].apply_kawai == 2
-        )
-        {
-            field_event_data[ff7_kawai_current_model_id].apply_kawai = 1;
-            field_event_data[ff7_kawai_current_model_id].opcode_params = ff7::field::ff7_model_data[ff7_kawai_current_model_id].exec_kawai_params;
-        }
+
+        ff7_externals.field_animate_3d_models_6392BB();
     }
 
     int ff7_apply_KAWAI_op_code(int sub_code, ff7_hrc_polygon_data *ff7_hrc_polygon_data, ff7_kawai_opcode_params *opcode_params, int model_pos_xy, int model_pos_z, int model_id, int *sub_code_ret)
@@ -236,7 +249,7 @@ namespace ff7::field
                         {
                             if (rsd_array->rsd_data)
                             {
-                                if (ff7::field::ff7_model_data[ff7_kawai_current_model_id].is_kawai_light)
+                                if (ff7::field::ff7_model_data[ff7_kawai_current_model_id].exec_kawai_opcode == 0x6 && ff7::field::ff7_model_data[ff7_kawai_current_model_id].init_kawai_opcode == 0x6)
                                     rsd_array->rsd_data->polygon_set->light = nullptr;
                                 else
                                     ((void (__cdecl *)(ff7_light *, struct ff7_polygon_set *))cb_light_polygon_set)(global_light, rsd_array->rsd_data->polygon_set);
