@@ -58,7 +58,7 @@ namespace ff7::field
     int ff7_field_check_collision_with_target(field_event_data* field_event_model, short target_collision_radius);
     void ff7_field_update_models_rotation_new();
     int ff7_field_blink_eye_sub_649B50(field_animation_data *field_anim_data, field_model_blink_data *blink_data);
-    void ff7_field_handle_blink_reset();
+    void ff7_handle_KAWAI_reset();
     void ff7_field_update_model_animation_frame(short model_id);
     int ff7_field_models_eye_to_model(char* model_name);
 }

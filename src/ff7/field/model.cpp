@@ -269,7 +269,7 @@ namespace ff7::field
         }
     }
 
-    void ff7_field_handle_blink_reset()
+    void ff7_handle_KAWAI_reset()
     {
         static WORD last_field_id = 0;
 
@@ -281,12 +281,20 @@ namespace ff7::field
             ff7_externals.field_model_blink_data_D000C8->blink_left_eye_mode = 0;
             ff7_externals.field_model_blink_data_D000C8->blink_right_eye_mode = 0;
 
-            // Reset mouths
             for(int i = 0; i < FF7_MAX_NUM_MODEL_ENTITIES; i++)
             {
+                // Reset mouths
                 ff7_model_data[i].current_mouth_idx = 0;
                 if (ff7_model_data[i].mouth_tex) ff7_externals.field_unload_model_tex(ff7_model_data[i].mouth_tex);
                 ff7_model_data[i].mouth_tex = NULL;
+
+                // Reset KAWAI state
+                ff7_model_data[i].is_kawai_active = false;
+                ff7_model_data[i].do_kawai_repeat = false;
+                ff7_model_data[i].init_kawai_opcode = 0x0;
+                ff7_model_data[i].init_kawai_params = nullptr;
+                ff7_model_data[i].exec_kawai_opcode = 0x0;
+                ff7_model_data[i].exec_kawai_params = nullptr;
             }
         }
     }
