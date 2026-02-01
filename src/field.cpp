@@ -184,7 +184,7 @@ int opcode_kawai() {
 			ffnx_trace("subcode[UNKNOWN7]: curr_model_id=%u,opcode_params=0x%X\n", curr_model_id, event_data[curr_model_id].opcode_params);
 		}
 	}
-	else if (subcode == 0x9) // UNKNOWN9
+	else if (subcode == 0x8 || subcode == 0x9) // UNKNOWN9
 	{
 		if (event_data[curr_model_id].opcode_params->param_1 == 0)
 		{
