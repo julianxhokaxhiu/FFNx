@@ -98,7 +98,7 @@ int opcode_kawai() {
 
 		if (trace_all || trace_opcodes)
 		{
-			ffnx_trace("subcode[SHINE]: TODO\n");
+			ffnx_trace("subcode[SHINE]: curr_model_id=%u\n", curr_model_id);
 		}
 	}
 
