@@ -106,8 +106,22 @@ int opcode_kawai() {
 
 	if (subcode == 0x1) // TRNSP
 	{
-		ff7::field::ff7_model_data[curr_model_id].exec_kawai_opcode = subcode;
-		ff7::field::ff7_model_data[curr_model_id].exec_kawai_params = event_data[curr_model_id].opcode_params;
+		if (event_data[curr_model_id].opcode_params->param_1 == 0)
+		{
+			ff7::field::ff7_model_data[curr_model_id].is_kawai_active = false;
+			ff7::field::ff7_model_data[curr_model_id].do_kawai_repeat = false;
+
+			ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode = 0x0;
+			ff7::field::ff7_model_data[curr_model_id].init_kawai_params = nullptr;
+
+			ff7::field::ff7_model_data[curr_model_id].exec_kawai_opcode = 0x0;
+			ff7::field::ff7_model_data[curr_model_id].exec_kawai_params = nullptr;
+		}
+		else
+		{
+			ff7::field::ff7_model_data[curr_model_id].exec_kawai_opcode = subcode;
+			ff7::field::ff7_model_data[curr_model_id].exec_kawai_params = event_data[curr_model_id].opcode_params;
+		}
 
 		if (trace_all || trace_opcodes)
 		{
