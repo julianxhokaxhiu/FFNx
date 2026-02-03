@@ -667,6 +667,11 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 			continue;
 		}
 
+		if (deferred_draws[i].vertices == nullptr && deferred_draws[i].draw_call_type != DCT_EXTERNAL_MESH)
+		{
+			continue;
+		}
+
 		if (shadow_callback != nullptr && !isFieldShadowDrawn && deferred_draws[i].vertextype != TLVERTEX)
 		{
 			newRenderer.setD3DProjection(&deferred_draws[i].state.d3dprojection_matrix);
@@ -678,19 +683,13 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 
 		if(deferred_draws[i].draw_call_type == DCT_EXTERNAL_MESH)
 		{
-			gl_load_state(&deferred_draws[i].state);
+			gl_load_state(&deferred_draws[i].state, false);
 			gl_draw_external_mesh(deferred_draws[i].external_mesh, deferred_draws[i].lightdata);
 			continue;
 		}
 		else
 		{
-			if (deferred_draws[i].vertices == nullptr)
-			{
-				continue;
-			}
-
 			gl_load_state(&deferred_draws[i].state);
-
 			gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
 				deferred_draws[i].vertextype,
 				deferred_draws[i].vertices,
