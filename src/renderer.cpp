@@ -1706,7 +1706,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
                 bool isKeepDefaultScissor = false;
                 if (!ff8)
                 {
-                bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
+                     bool is_movie_playing = *ff7_externals.word_CC1638 && !ff7_externals.modules_global_object->BGMOVIE_flag;
                      isKeepDefaultScissor = (is_movie_playing && widescreen.getMovieMode() == WM_DISABLED) || widescreen.getMode() == WM_DISABLED;
                 }
 
