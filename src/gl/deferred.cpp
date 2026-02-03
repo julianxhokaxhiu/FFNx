@@ -676,10 +676,9 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 			isFieldShadowDrawn = true;
 		}
 
-		gl_load_state(&deferred_draws[i].state);
-
 		if(deferred_draws[i].draw_call_type == DCT_EXTERNAL_MESH)
 		{
+			gl_load_state(&deferred_draws[i].state);
 			gl_draw_external_mesh(deferred_draws[i].external_mesh, deferred_draws[i].lightdata);
 			continue;
 		}
@@ -689,6 +688,8 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 			{
 				continue;
 			}
+
+			gl_load_state(&deferred_draws[i].state);
 
 			gl_draw_indexed_primitive(deferred_draws[i].primitivetype,
 				deferred_draws[i].vertextype,
