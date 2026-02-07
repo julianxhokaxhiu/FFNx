@@ -36,9 +36,9 @@ uint32_t last_compression_type = 0;
 size_t last_compressed_size = 0;
 size_t last_uncompressed_size = 0;
 
-size_t get_fl_prefix_size()
+size_t get_fl_prefix_size(bool with_lang = true)
 {
-	return 2 + strlen(ff8_externals.archive_path_prefix);
+	return 2 + strlen(with_lang ? ff8_externals.archive_path_prefix : "\\FF8\\Data\\");
 }
 
 void ff8_fs_lang_string(char *data)
@@ -48,6 +48,13 @@ void ff8_fs_lang_string(char *data)
 
 bool set_direct_path(const char *fullpath, char *output, size_t output_size)
 {
+	if (strnicmp(fullpath + 2, "\\FF8\\Data\\Magic\\", strlen("\\FF8\\Data\\Magic\\")) == 0)
+	{
+		_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size(false));
+
+		return true;
+	}
+
 	if (strnicmp(fullpath + 2, ff8_externals.archive_path_prefix, strlen(ff8_externals.archive_path_prefix)) != 0)
 	{
 		if (trace_all || trace_direct) ffnx_warning("%s: file ignored for direct path %s (should match %s)\n", __func__, fullpath, ff8_externals.archive_path_prefix);
