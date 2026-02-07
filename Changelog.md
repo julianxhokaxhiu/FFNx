@@ -20,11 +20,13 @@
 - Core: Fix missing polygons on field 3D models ( https://github.com/julianxhokaxhiu/FFNx/pull/868 )
 - Core: Allow to quit game via CTRL+Q everywhere ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
 - Core: add `ff8_high_res_font` option ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
+- Direct mode: Fix direct mode for magic.fs archive ( https://github.com/julianxhokaxhiu/FFNx/pull/888 )
 - External textures: Fix glitches in field module ( https://github.com/julianxhokaxhiu/FFNx/pull/848 https://github.com/julianxhokaxhiu/FFNx/pull/851 )
 - External textures: Fix Tonberry format when dumping PNGs using `save_textures_legacy` flag ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
 - External textures: Fix bgroad_6, and some other maps, which cannot be modded ( https://github.com/julianxhokaxhiu/FFNx/pull/857 )
 - Graphics: Use more precise texture UVs ( https://github.com/julianxhokaxhiu/FFNx/pull/852 )
 - Graphics: Fix Selphie texture on worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/878 )
+- Movies: Allow absent publisher movie ( https://github.com/julianxhokaxhiu/FFNx/pull/888 )
 - Renderer: Fix wrong alpha rendering for battle swirls
 
 ## FF8 (2000)

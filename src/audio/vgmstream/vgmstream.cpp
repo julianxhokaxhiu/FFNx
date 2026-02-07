@@ -91,16 +91,17 @@ namespace SoLoud
 		return 0;
 	}
 
-	VGMStream::VGMStream()
+	VGMStream::VGMStream() : mStream(nullptr), mSampleCount(0)
 	{
-		mSampleCount = 0;
 	}
 
 	VGMStream::~VGMStream()
 	{
 		stop();
 
-		close_vgmstream(mStream);
+		if (mStream != nullptr) {
+			close_vgmstream(mStream);
+		}
 	}
 
 	VGMSTREAM* VGMStream::init_vgmstream_with_extension(const char* aFilename, const char* ext)
