@@ -195,7 +195,8 @@ void main()
             // (We may draw objects over the top of the movie, so we need to make things consistent **NOW**)
             if (isOverallNTSCJColorGamut){
                 // do nothing for NTSC-J
-                if ((isSRGBColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
+                // the combination of SRGB gamut & CRT gamma implies logo movie
+                if (((isSRGBColorGamut) && (!(isCRTGamma))) || (isSMPTECColorGamut) || (isEBUColorGamut)){
                     color.rgb = GamutLUT(color.rgb, false, true);
                 }
             }
