@@ -26,6 +26,7 @@
 #include "image.h"
 #include "../common.h"
 #include "../renderer.h"
+#include "../ff8/zzz_archive.h"
 #include "log.h"
 
 static void LibPngErrorCb(png_structp png_ptr, const char* error)
@@ -38,13 +39,44 @@ static void LibPngWarningCb(png_structp png_ptr, const char* warning)
     ffnx_info("libpng warning: %s\n", warning);
 }
 
-bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enum targetFormat)
+void read_zzz(png_structp png_ptr, png_bytep data, size_t size)
 {
-    FILE* file = fopen(filename, "rb");
+    Zzz::File* zzzFile = (Zzz::File*)png_ptr;
 
-    if (!file)
+    if (zzzFile->read(data, size) != size) {
+        png_error(png_ptr, "Cannot read data in the ZZZ archive");
+    }
+}
+
+bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enum targetFormat, Zzz *zzzArchive)
+{
+    FILE* file = nullptr;
+    Zzz::File* zzzFile = nullptr;
+    size_t datasize = 0;
+
+    if (zzzArchive != nullptr)
     {
-        return false;
+        zzzFile = zzzArchive->openFile(filename, strnlen(filename, MAX_PATH));
+
+        if (!zzzFile)
+        {
+            return false;
+        }
+
+        datasize = zzzFile->size();
+    }
+    else
+    {
+        file = fopen(filename, "rb");
+
+        if (!file)
+        {
+            return false;
+        }
+
+        fseek(file, 0, SEEK_END);
+        datasize = ftell(file);
+        fseek(file, 0, SEEK_SET);
     }
 
     png_infop info_ptr = nullptr;
@@ -57,17 +89,12 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     size_t rowbytes = 0;
 
     uint8_t* data = nullptr;
-    size_t datasize = 0;
-
-    fseek(file, 0, SEEK_END);
-    datasize = ftell(file);
-    fseek(file, 0, SEEK_SET);
 
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)0, LibPngErrorCb, LibPngWarningCb);
 
     if (!png_ptr)
     {
-        fclose(file);
+        if (file) fclose(file);
 
         return false;
     }
@@ -78,7 +105,7 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     {
         png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
 
-        fclose(file);
+        if (file) fclose(file);
 
         return false;
     }
@@ -87,12 +114,19 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-        fclose(file);
+        if (file) fclose(file);
 
         return false;
     }
 
-    png_init_io(png_ptr, file);
+    if (file)
+    {
+        png_init_io(png_ptr, file);
+    }
+    else
+    {
+        png_set_read_fn(png_ptr, zzzFile, read_zzz);
+    }
 
     png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
 
@@ -100,16 +134,14 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-        fclose(file);
+        if (file) fclose(file);
 
         return false;
     }
 
     int transforms = PNG_TRANSFORM_EXPAND;
 
-    if (targetFormat == bimg::TextureFormat::BGRA8) {
-        transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_BGR;
-    } else if (targetFormat == bimg::TextureFormat::RGBA8) {
+    if (targetFormat == bimg::TextureFormat::RGBA8) {
         transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB;
     }
 
@@ -119,12 +151,6 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     bit_depth = png_get_bit_depth(png_ptr, info_ptr);
     _width = png_get_image_width(png_ptr, info_ptr);
     _height = png_get_image_height(png_ptr, info_ptr);
-
-    if (color_type == PNG_COLOR_TYPE_RGB && (targetFormat == bimg::TextureFormat::BGRA8 || targetFormat == bimg::TextureFormat::RGBA8)) {
-        ffnx_warning("%s: PNG files without alpha is not supported, please convert it to RGBA for improved performance\n", __func__);
-
-        return false;
-    }
 
     rowptrs = png_get_rows(png_ptr, info_ptr);
     rowbytes = png_get_rowbytes(png_ptr, info_ptr);
@@ -137,7 +163,7 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-        fclose(file);
+        if (file) fclose(file);
 
         return false;
     }
@@ -148,7 +174,7 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
 
     png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-    fclose(file);
+    if (file) fclose(file);
 
     // ------------------------------------------------------------
 

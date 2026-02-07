@@ -1552,6 +1552,15 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(ff8_externals.moriya_filesystem_open + 0x83C, ff8_fs_archive_search_filename_sub_archive);
 	replace_function(ff8_externals._open, ff8_open);
 	replace_function(ff8_externals.fopen, ff8_fopen);
+	if (remastered_edition) {
+		replace_function(uint32_t(ff8_externals._lseek), ff8_lseek);
+		replace_function(uint32_t(ff8_externals._read), ff8_read);
+		replace_function(uint32_t(ff8_externals._write), ff8_write);
+		replace_function(uint32_t(ff8_externals._close), ff8_close);
+		replace_function(uint32_t(ff8_externals._filelength), ff8_filelength);
+		replace_function(ff8_externals.field_filename_concat_extension, ff8_fs_archive_field_concat_extension);
+		memcpy_code(ff8_externals.main_loop + 0x27, "\xb9\x01\x00\x00\x00\x90", 6);
+	}
 	replace_call(ff8_externals.moriya_filesystem_close + 0x1F, ff8_fs_archive_free_file_container_sub_archive);
 
 	ff8_read_file = (uint32_t(*)(uint32_t, void *, struct ff8_file *))common_externals.read_file;
@@ -1758,7 +1767,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(ff8_externals.load_credits_image + 0x164, credits_controller_music_play);
 	replace_call(ff8_externals.load_credits_image + 0x305, credits_controller_input_call);
 
-	if (!steam_edition) {
+	if (!steam_edition && !remastered_edition) {
 		// Look again with the DataDrive specified in the register
 		replace_call(ff8_externals.get_disk_number + 0x6E, ff8_retry_configured_drive);
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
@@ -1897,6 +1906,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// Extend field data size
 		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF64 : 0xED1), uint32_t(extended_memory) + 0x5F0000);
 		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF6B : 0xED8), uint32_t(extended_memory) + 0x600000);
+
+		// Relocate effect buffer
+		patch_code_dword(ff8_externals.sub_571870 + 0x3, 0x380000 / 4); // Patch size
+		patch_code_dword(ff8_externals.sub_571870 + 0xA, uint32_t(extended_memory) + 0x200000); // Patch offset
+		patch_code_dword(ff8_externals.get_battle_effect_buffer_sub_571B50 + 0x1, uint32_t(extended_memory) + 0x200000); // Patch offset
+		patch_code_dword(ff8_externals.get_battle_effect_buffer_size_sub_571B60 + 0x1, 0x380000); // Patch size
+		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x5, 0x380000); // Patch size
+		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x13, uint32_t(extended_memory) + 0x200000); // Patch offset
 	} else {
 		ffnx_error("%s: cannot allocate extended_memory\n", __func__);
 	}

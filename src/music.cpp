@@ -25,6 +25,8 @@
 #include "audio.h"
 #include "music.h"
 #include "patch.h"
+#include "ff8/remaster.h"
+#include "audio/vgmstream/zzzstreamfile.h"
 
 #include "ff8/engine.h"
 
@@ -148,7 +150,7 @@ char* ff8_format_midi_name(const char* midi_name)
 	// midi_name format: {num}{type}-{name}.sgt or {name}.sgt or _Missing.sgt
 	const char* truncated_name = midi_name;
 
-	if (!ff8_external_music_force_original_filenames) {
+	if (!ff8_external_music_force_original_filenames && !external_music_path.starts_with("zzz://")) {
 		truncated_name = strchr(midi_name, '-');
 
 		if (nullptr != truncated_name) {
@@ -851,7 +853,13 @@ uint32_t ff8_play_wav(uint32_t zero, char* filename, uint32_t volume)
 			music_name = "lasbossintro";
 		}
 		else {
-			music_name = ff8_format_midi_name(filename);
+			music_name = strrchr(filename, '\\');
+			if (music_name == nullptr) {
+				music_name = filename;
+			} else {
+				music_name += 1;
+			}
+			music_name = ff8_format_midi_name(music_name);
 		}
 
 		if (nullptr == music_name) {

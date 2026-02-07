@@ -141,6 +141,6 @@ bool fileExists(const char *filename);
 bool dirExists(const char *dirname);
 std::string getCopyrightInfoFromExe(const std::string& filePath);
 std::wstring GetErrorMessage(unsigned long errorCode);
-bool isFileSigned(const wchar_t* dllPath);
-std::string sha1_file(const std::string& filename);
+bool isFileSigned(const char* dllPath);
+std::string sha1_file(const char* filename);
 std::string md5_hash(const unsigned char* data, size_t length);

@@ -80,7 +80,8 @@ public:
 		uint32_t *targetRgba, int targetW, int targetH, uint8_t targetScale, Tim::Bpp targetBpp,
 		int16_t paletteVramX, int16_t paletteVramY
 	) const=0;
-	static bool findExternalTexture(const char *name, char *outFilename, uint8_t palette_index, bool hasPal, const char *extension = nullptr, char *foundExtension = nullptr);
+	bool findExternalTexture(char *outFilename, uint8_t paletteIndex, bool hasPal, const char *extension = nullptr, char *foundExtension = nullptr);
+	static bool findExternalTexture(const char *name, char *outFilename, uint8_t paletteIndex, bool hasPal, const char *extension = nullptr, char *foundExtension = nullptr, const char *remasteredName = nullptr);
 protected:
 	static void drawImage(
 		const uint32_t *sourceRgba, int sourceRgbaW, uint8_t sourceScale,
