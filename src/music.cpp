@@ -772,8 +772,9 @@ uint32_t* ff8_load_music(uint32_t channel, uint32_t music_id, uint32_t data)
 uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint32_t unused2)
 {
 	const int channel = next_music_channel;
+	const uint32_t current_music_id = nxAudioEngine.currentMusicId(channel);
 
-	if (nxAudioEngine.currentMusicId(channel) != music_id)
+	if (current_music_id != music_id)
 	{
 		if (is_gameover(music_id)) music_flush();
 
@@ -789,20 +790,18 @@ uint32_t ff8_play_midi(uint32_t music_id, int32_t volume, uint32_t unused1, uint
 		SoLoud::time offset = 0;
 		bool noIntro = false, backup_channel_1_after = false;
 
-		if (next_music_is_skipped_with_saved_offset && remember_musics[music_id]) {
-			remember_musics[music_id] = false;
-			if (trace_all || trace_music) ffnx_trace("%s: use remembered music time\n", __func__);
-			// Move music to channel 1
-			nxAudioEngine.swapChannels();
-			nxAudioEngine.pauseMusic(1, 1.0);
-			backup_channel_1_after = true;
+		if (remember_musics[current_music_id]) {
+			remember_musics[current_music_id] = false;
+			if (trace_all || trace_music) ffnx_trace("%s: remember music time for music_id %d\n", __func__, current_music_id);
+
+			nxAudioEngine.pauseMusic(0, 0.2, true);
+		}
+
+		if (next_music_is_skipped_with_saved_offset) {
+			nxAudioEngine.prioritizeMusicRestore(music_id);
 		}
 		else if (next_music_is_skipped) {
 			noIntro = true;
-		}
-		else if (remember_musics[music_id]) {
-			if (trace_all || trace_music) ffnx_trace("%s: discard remembered music\n", __func__);
-			remember_musics[music_id] = false;
 		}
 
 		NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions();
@@ -851,7 +850,13 @@ uint32_t ff8_play_wav(uint32_t zero, char* filename, uint32_t volume)
 			music_name = "lasbossintro";
 		}
 		else {
-			music_name = ff8_format_midi_name(filename);
+			music_name = strrchr(filename, '\\');
+			if (music_name == nullptr) {
+				music_name = filename;
+			} else {
+				music_name += 1;
+			}
+			music_name = ff8_format_midi_name(music_name);
 		}
 
 		if (nullptr == music_name) {
@@ -928,7 +933,7 @@ uint32_t ff8_opcode_musicskip_play_midi_at(char* midi_data, uint32_t offset)
 	hold_volume_for_channel[channel] = false;
 
 	if (trace_all || trace_music) ffnx_trace("%s: music skip, play midi at %d\n", __func__, offset);
-	next_music_is_skipped_with_saved_offset = offset & 0xFF == 0xFF; // Special offset returned by ff8_opcode_getmusicoffset()
+	next_music_is_skipped_with_saved_offset = (offset & 0xFF) == 0xFF; // Special offset returned by ff8_opcode_getmusicoffset()
 	channel = ff8_play_midi_at(midi_data, offset);
 	next_music_is_skipped_with_saved_offset = false;
 	return channel;

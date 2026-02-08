@@ -784,11 +784,42 @@ void NxAudioEngine::playSynchronizedMusics(const std::vector<std::string>& names
 	}
 }
 
-void NxAudioEngine::swapChannels()
+/**
+ * Put music on top of the music stack for backup/restore feature
+ */
+void NxAudioEngine::prioritizeMusicRestore(uint32_t id)
 {
-	NxAudioEngineMusic music1 = _musics[0];
-	_musics[0] = _musics[1];
-	_musics[1] = music1;
+	std::stack<NxAudioEngineMusic> removedElements;
+	NxAudioEngineMusic foundElement = NxAudioEngineMusic();
+
+	// Search for id
+	while (! _musicStack.empty()) {
+		const NxAudioEngineMusic &backup = _musicStack.top();
+
+		if (backup.id == id) {
+			foundElement = backup;
+			break;
+		}
+
+		removedElements.push(backup);
+
+		_musicStack.pop();
+	}
+
+	// Rebuild stack
+	while (!removedElements.empty()) {
+		_musicStack.push(removedElements.top());
+		removedElements.pop();
+	}
+
+	// Push music on top
+	if (foundElement.id == id) {
+		if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: found midi %d\n", __func__, id);
+
+		_musicStack.push(foundElement);
+	} else {
+		if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: midi %d not found\n", __func__, id);
+	}
 }
 
 void NxAudioEngine::stopMusic(double time)

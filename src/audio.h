@@ -256,7 +256,7 @@ public:
 	bool isMusicDisabled(const char* name);
 	bool playMusic(const char* name, uint32_t id, int channel, MusicOptions options = MusicOptions());
 	void playSynchronizedMusics(const std::vector<std::string>& names, uint32_t id, MusicOptions options = MusicOptions());
-	void swapChannels();
+	void prioritizeMusicRestore(uint32_t id);
 	void stopMusic(double time = 0);
 	void stopMusic(int channel, double time = 0);
 	void pauseMusic(double time = 0);
