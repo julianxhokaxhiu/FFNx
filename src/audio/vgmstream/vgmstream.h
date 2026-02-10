@@ -41,6 +41,7 @@ namespace SoLoud
 	public:
 		VGMSTREAM* mStream;
 		unsigned int mSampleCount;
+		unsigned int mLoopEndSample;
 
 		sample_t* mData;
 

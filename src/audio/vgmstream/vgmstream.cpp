@@ -53,11 +53,8 @@ namespace SoLoud
 		mOffset += sample_count;
 
 		// If the song is looping, recalculate the offset correctly
-		if (mFlags & AudioSourceInstance::LOOPING) {
-			if (mOffset >= mParent->mStream->loop_end_sample)
-			{
-				mOffset = mOffset - mParent->mSampleCount + mParent->mStream->loop_start_sample;
-			}
+		if ((mFlags & AudioSourceInstance::LOOPING) && mOffset >= mParent->mLoopEndSample) {
+			mOffset = mOffset - mParent->mLoopEndSample + mParent->mStream->loop_start_sample;
 		}
 
 		return sample_count;
@@ -84,11 +81,7 @@ namespace SoLoud
 
 	bool VGMStreamInstance::hasEnded()
 	{
-		if (!(mFlags & AudioSourceInstance::LOOPING) && mOffset >= mParent->mSampleCount)
-		{
-			return 1;
-		}
-		return 0;
+		return !(mFlags & AudioSourceInstance::LOOPING) && mOffset >= mParent->mSampleCount;
 	}
 
 	VGMStream::VGMStream() : mStream(nullptr), mSampleCount(0)
@@ -151,6 +144,8 @@ namespace SoLoud
 		if (mStream->loop_flag) setLooping(true);
 		// If the file has no loop tags, but the users wants to loop, force a basic start to end loop
 		else if (mFlags & AudioSourceInstance::LOOPING) vgmstream_force_loop(mStream, true, 0, mStream->num_samples);
+
+		mLoopEndSample = mStream->loop_end_sample != 0 ? mStream->loop_end_sample : mSampleCount;
 
 		return SO_NO_ERROR;
 	}

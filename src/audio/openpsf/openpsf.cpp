@@ -75,6 +75,11 @@ namespace SoLoud
 
 		mOffset += offset;
 
+		// If the song is looping, just ensure mOffset does not overflow
+		if ((mFlags & AudioSourceInstance::LOOPING) && mOffset >= mParent->mSampleCount) {
+			mOffset = mParent->mSampleCount;
+		}
+
 		return offset;
 	}
 

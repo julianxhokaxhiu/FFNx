@@ -5,6 +5,7 @@
 ## Common
 
 - External movies: Always enable external_movies by default ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
+- External music: Fix music stopping too soon if the music is not looped ( https://github.com/julianxhokaxhiu/FFNx/pull/889 )
 - Renderer: Skip rendering frame if no draw commands have been submitted previously
 
 ## FF7
@@ -21,6 +22,8 @@
 - Core: Allow to quit game via CTRL+Q everywhere ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
 - Core: add `ff8_high_res_font` option ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
 - Direct mode: Fix direct mode for magic.fs archive ( https://github.com/julianxhokaxhiu/FFNx/pull/888 )
+- External music: Fix music resuming in BGU ( https://github.com/julianxhokaxhiu/FFNx/pull/889 )
+- External music: Fix wav music overloading ( https://github.com/julianxhokaxhiu/FFNx/pull/889 )
 - External textures: Fix glitches in field module ( https://github.com/julianxhokaxhiu/FFNx/pull/848 https://github.com/julianxhokaxhiu/FFNx/pull/851 )
 - External textures: Fix Tonberry format when dumping PNGs using `save_textures_legacy` flag ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
 - External textures: Fix bgroad_6, and some other maps, which cannot be modded ( https://github.com/julianxhokaxhiu/FFNx/pull/857 )
