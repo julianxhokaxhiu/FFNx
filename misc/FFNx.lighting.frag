@@ -36,7 +36,6 @@ uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
 uniform vec4 WMFlags;
-//uniform vec4 FSMovieFlags;
 
 uniform vec4 lightingSettings;
 uniform vec4 lightingDebugData;
@@ -78,24 +77,6 @@ uniform vec4 gameScriptedLightColor;
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
-
-#define isBT601ColorMatrix abs(FSMovieFlags.x - 0.0) < 0.00001
-#define isBT709ColorMatrix abs(FSMovieFlags.x - 1.0) < 0.00001
-#define isBRG24ColorMatrix abs(FSMovieFlags.x - 2.0) < 0.00001
-
-#define isSRGBColorGamut abs(FSMovieFlags.y - 0.0) < 0.00001
-#define isNTSCJColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
-#define isSMPTECColorGamut abs(FSMovieFlags.y - 2.0) < 0.00001
-#define isEBUColorGamut abs(FSMovieFlags.y - 3.0) < 0.00001
-
-#define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
-#define is2pt2Gamma abs(FSMovieFlags.z - 1.0) < 0.00001
-#define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
-#define isCRTGamma abs(FSMovieFlags.z - 3.0) < 0.00001
-#define is2pt8Gamma abs(FSMovieFlags.z - 4.0) < 0.00001
-
-#define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
-//#define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001 // already defined in included FFNx.lighting.sh
 
 // ---
 #define debugOutput lightingDebugData.z
