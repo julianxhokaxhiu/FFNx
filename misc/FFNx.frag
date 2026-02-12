@@ -90,10 +90,9 @@ uniform vec4 gameScriptedLightColor;
 #define isEBUColorGamut abs(FSMovieFlags.y - 3.0) < 0.00001
 
 #define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
-#define is2pt2Gamma abs(FSMovieFlags.z - 1.0) < 0.00001
-#define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
-#define isCRTGamma abs(FSMovieFlags.z - 3.0) < 0.00001
-#define is2pt8Gamma abs(FSMovieFlags.z - 4.0) < 0.00001
+#define is170MGamma abs(FSMovieFlags.z - 1.0) < 0.00001
+#define isCRTGamma abs(FSMovieFlags.z - 2.0) < 0.00001
+
 
 #define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
 #define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001
