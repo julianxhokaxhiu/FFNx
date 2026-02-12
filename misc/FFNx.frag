@@ -111,7 +111,7 @@ void main()
     // v_color0 is used for solid 2D colors (e.g., textbox backgrounds), solid-color polygon faces (e.g., all original FF7 models), and colorizing textures
     // This variable is clobbered for YUV movies.
     vec4 color = v_color0;
-    color.rgb = toSomeLinearRGB(color.rgb, isOverallNTSCJColorGamut);
+    color.rgb = toLinear(color.rgb);
 
     if (isTexture)
     {
@@ -267,7 +267,7 @@ void main()
             }
 
             // linearize
-            texture_color.rgb = toSomeLinearRGB(texture_color.rgb, isOverallNTSCJColorGamut);
+            texture_color.rgb = toLinear(texture_color.rgb);
 
             // multiply by v_color0
             if (modulateAlpha) color *= texture_color;
@@ -285,7 +285,7 @@ void main()
     if (!(isTLVertex) && isFogEnabled) color.rgb = ApplyWorldFog(color.rgb, v_position0.xyz);
 
     // return to sRGB gamma space so we can do alpha blending the same way FF7/8 did.
-    color.rgb = toSomeGammaRGB(color.rgb, isOverallNTSCJColorGamut);
+    color.rgb = toGamma(color.rgb);
 
     // In this default shader, lighting is applied in gamma space so that it does better match the original lighting
     if ((gameLightingMode == GAME_LIGHTING_PER_PIXEL))

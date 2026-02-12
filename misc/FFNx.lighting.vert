@@ -32,7 +32,6 @@ uniform mat4 invViewMatrix;
 
 uniform vec4 VSFlags;
 uniform vec4 WMFlags;
-uniform vec4 FSMovieFlags;
 uniform vec4 lightingDebugData;
 uniform vec4 gameLightingFlags;
 uniform vec4 gameGlobalLightColor;
@@ -62,9 +61,6 @@ uniform vec4 skinningFlags;
 #define gameLightingMode gameLightingFlags.x
 #define GAME_LIGHTING_PER_VERTEX 1
 
-#define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
-#define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001
-
 void main()
 {
     vec4 pos = a_position;
@@ -72,7 +68,7 @@ void main()
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
 
-    color.rgb = toSomeLinearRGB(color.bgr, isOverallNTSCJColorGamut);
+    color.rgb = toLinear(color.bgr);
 
     if (isTLVertex)
     {
@@ -120,10 +116,10 @@ void main()
             float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
             float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
 
-            vec3 light1Ambient = toSomeLinearRGB(gameLightColor1.rgb, isOverallNTSCJColorGamut) * dotLight1 * dotLight1;
-            vec3 light2Ambient = toSomeLinearRGB(gameLightColor2.rgb, isOverallNTSCJColorGamut) * dotLight2 * dotLight2;
-            vec3 light3Ambient = toSomeLinearRGB(gameLightColor3.rgb, isOverallNTSCJColorGamut) * dotLight3 * dotLight3;
-            vec3 lightAmbient = toSomeLinearRGB(gameScriptedLightColor.rgb, isOverallNTSCJColorGamut) * (toSomeLinearRGB(gameGlobalLightColor.rgb, isOverallNTSCJColorGamut) + light1Ambient + light2Ambient + light3Ambient);
+            vec3 light1Ambient = toLinear(gameLightColor1.rgb) * dotLight1 * dotLight1;
+            vec3 light2Ambient = toLinear(gameLightColor2.rgb) * dotLight2 * dotLight2;
+            vec3 light3Ambient = toLinear(gameLightColor3.rgb) * dotLight3 * dotLight3;
+            vec3 lightAmbient = toLinear(gameScriptedLightColor.rgb) * (toLinear(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
 
             color.rgb *= gameGlobalLightColor.w * lightAmbient;
         }

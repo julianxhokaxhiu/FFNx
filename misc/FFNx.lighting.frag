@@ -290,7 +290,7 @@ void main()
             }
 
             // linearize, possibly with gamut conversion
-            texture_color.rgb = toSomeLinearRGB(texture_color.rgb, isOverallNTSCJColorGamut);
+            texture_color.rgb = toLinear(texture_color.rgb);
 
             // multiply by v_color0
             if (modulateAlpha) color *= texture_color;
@@ -417,16 +417,16 @@ void main()
         float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
 
 
-        vec3 light1Ambient = toSomeLinearRGB(gameLightColor1.rgb, isOverallNTSCJColorGamut) * dotLight1 * dotLight1;
-        vec3 light2Ambient = toSomeLinearRGB(gameLightColor2.rgb, isOverallNTSCJColorGamut) * dotLight2 * dotLight2;
-        vec3 light3Ambient = toSomeLinearRGB(gameLightColor3.rgb, isOverallNTSCJColorGamut) * dotLight3 * dotLight3;
-        vec3 lightAmbient = toSomeLinearRGB(gameScriptedLightColor.rgb, isOverallNTSCJColorGamut) * (toSomeLinearRGB(gameGlobalLightColor.rgb, isOverallNTSCJColorGamut) + light1Ambient + light2Ambient + light3Ambient);
+        vec3 light1Ambient = toLinear(gameLightColor1.rgb) * dotLight1 * dotLight1;
+        vec3 light2Ambient = toLinear(gameLightColor2.rgb) * dotLight2 * dotLight2;
+        vec3 light3Ambient = toLinear(gameLightColor3.rgb) * dotLight3 * dotLight3;
+        vec3 lightAmbient = toLinear(gameScriptedLightColor.rgb) * (toLinear(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
 
         gl_FragColor.rgb *= gameGlobalLightColor.w * lightAmbient;
     }
 
     // return to sRGB gamma space so we can do alpha blending the same way FF7/8 did.
-    gl_FragColor.rgb = toSomeGammaRGB(gl_FragColor.rgb, isOverallNTSCJColorGamut);
+    gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
 
     // if we did a movie gamut conversion, and won't dither later, then dither now
     // do this in gamma space so that dither step size is proportional to quantization step size

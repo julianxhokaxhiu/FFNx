@@ -393,41 +393,6 @@ vec3 GamutLUT(vec3 rgb_input, bool crtinput, bool crtvalues)
 	return saturate(outcolor);
 }
 
-
-// Goes to a different linear RGB space depending on ntscjmode
-// if true, goes to color corrected correct, unclamped, linear RGB in CRT P22/9300K+8MPCD gamut (this may include values >1.0)
-// if false, goes to linear sRGB
-vec3 toSomeLinearRGB(vec3 rgb_input, bool ntscjmode)
-{
-	vec3 outcolor = rgb_input;
-	if (ntscjmode)
-	{
-		outcolor = CRTSimulation(outcolor);
-	}
-	else
-	{
-		outcolor = toLinear(outcolor);
-	}
-	return outcolor;
-}
-
-// Inverse of toSomeLinearRGB()
-// goes to CRT gamma-space R'G'B' or gamma-space sRGB
-vec3 toSomeGammaRGB(vec3 rgb_input, bool ntscjmode)
-{
-	vec3 outcolor = rgb_input;
-	if (ntscjmode)
-	{
-		outcolor = InverseCRTSimulation(outcolor);
-	}
-	else
-	{
-		outcolor = toGamma(outcolor);
-	}
-	return outcolor;
-}
-
-
 // Dithering ---------------------------------------------
 
 // Apply Martin Roberts' quasirandom dithering scaled below a specified level of precision.
