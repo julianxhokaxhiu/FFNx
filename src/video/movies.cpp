@@ -212,39 +212,41 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	// figure out if this is the eidos logo or square logo; they need special treatment
 	// scan till we hit 0 terminator
-	while (true){
-		bytessincebackslash++;
-		// note the index of the last backslash, and how far the string continues after that
-		if (name[scanoffset] == 92){
-			lastbackslashindex = scanoffset;
-			bytessincebackslash = 0;
-		}
-		else if (name[scanoffset] == 0){
-			break;
-		}
-		scanoffset++;
-	}
-	char upperbuffer[128];
-	memset(upperbuffer, 0, 128);
-	if ((lastbackslashindex > -1) && (bytessincebackslash > 1) && (bytessincebackslash <= 128)){
-		memcpy(&upperbuffer, &name[lastbackslashindex+1], bytessincebackslash);
-		// convert to uppercase
-		for (int i=0; i<bytessincebackslash; i++){
-			upperbuffer[i] = toupper(upperbuffer[i]);
-		}
-		// strip the file extension
-		for (int i=bytessincebackslash-1; i>=0; i--){
-			char backchar = upperbuffer[i];
-			upperbuffer[i] = 0;
-			if (backchar == 46){
+	if ((codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) && (codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)){
+		while (true){
+			bytessincebackslash++;
+			// note the index of the last backslash, and how far the string continues after that
+			if (name[scanoffset] == 92){
+				lastbackslashindex = scanoffset;
+				bytessincebackslash = 0;
+			}
+			else if (name[scanoffset] == 0){
 				break;
 			}
+			scanoffset++;
 		}
-		if (	(strcmp(upperbuffer, "EIDOSLOGO") == 0) ||
-			(strcmp(upperbuffer, "SQLOGO") == 0)
-		){
-			islogomovie = true;
-			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie; NTSC-J conversion will be supressed.\n", name);
+		char upperbuffer[128];
+		memset(upperbuffer, 0, 128);
+		if ((lastbackslashindex > -1) && (bytessincebackslash > 1) && (bytessincebackslash <= 128)){
+			memcpy(&upperbuffer, &name[lastbackslashindex+1], bytessincebackslash);
+			// convert to uppercase
+			for (int i=0; i<bytessincebackslash; i++){
+				upperbuffer[i] = toupper(upperbuffer[i]);
+			}
+			// strip the file extension
+			for (int i=bytessincebackslash-1; i>=0; i--){
+				char backchar = upperbuffer[i];
+				upperbuffer[i] = 0;
+				if (backchar == 46){
+					break;
+				}
+			}
+			if (	(strcmp(upperbuffer, "EIDOSLOGO") == 0) ||
+				(strcmp(upperbuffer, "SQLOGO") == 0)
+			){
+				islogomovie = true;
+				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie; NTSC-J conversion will be supressed.\n", name);
+			}
 		}
 	}
 
