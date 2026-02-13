@@ -385,8 +385,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb/bt709 color gamut detected.\n");
 			break;
 		case AVCOL_PRI_BT470M:
-			// Since 470m (NTSC1953) was deprecated in 1979, material in this gamut is rare and likely irrelevant to FF7/8.
-			// Assume user meant SMPTE-C (which replaced NTSC1953 in 1979).
+			// Assume user meant SMPTE-C.
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: NTSC1953 color gamut detected. Assuming user error and using SMPTE-C instead.\n");
 			// fall through to next case
 		case AVCOL_PRI_SMPTE170M:
@@ -411,10 +410,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming NTSC-J.\n");
 			}
 			break;
-		case AVCOL_PRI_BT470BG:
-			colorgamut = COLORGAMUT_EBU;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: EBU(PAL) color gamut detected.\n");
-			break;
+		case AVCOL_PRI_BT470BG: // fall through
 		default:
 			ffnx_error("prepare_movie: unsupported color gamut\n");
 			ffmpeg_release_movie_objects();

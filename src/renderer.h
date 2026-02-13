@@ -153,7 +153,7 @@ enum ColorGamutType{
     COLORGAMUT_SRGB = 0,
     COLORGAMUT_NTSCJ = 1,
     COLORGAMUT_SMPTEC = 2,
-    COLORGAMUT_EBU = 3
+    COLORGAMUT_RAWP22 = 3
 };
 
 enum InverseGammaFunctionType{
@@ -183,10 +183,8 @@ namespace RendererTextureSlot {
 enum GamutLUTIndexType{
     INDEX_LUT_NTSCJ_TO_SRGB,
     INDEX_LUT_SMPTEC_TO_SRGB,
-    INDEX_LUT_EBU_TO_SRGB,
     INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
-    INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC,
-    INDEX_LUT_INVERSE_NTSCJ_TO_EBU
+    INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC
 };
 
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
@@ -378,10 +376,8 @@ private:
 
     bgfx::TextureHandle GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleSMPTECtoSRGB = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleEBUtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
 
     bgfx::VertexLayout vertexLayout;
 

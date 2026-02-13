@@ -87,7 +87,7 @@ uniform vec4 gameScriptedLightColor;
 #define isSRGBColorGamut abs(FSMovieFlags.y - 0.0) < 0.00001
 #define isNTSCJColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
 #define isSMPTECColorGamut abs(FSMovieFlags.y - 2.0) < 0.00001
-#define isEBUColorGamut abs(FSMovieFlags.y - 3.0) < 0.00001
+#define isRawP22ColorGamut abs(FSMovieFlags.y - 3.0) < 0.00001
 
 #define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
 #define is170MGamma abs(FSMovieFlags.z - 1.0) < 0.00001
@@ -189,7 +189,7 @@ void main()
             if (isOverallNTSCJColorGamut){
                 // do nothing for NTSC-J
                 // the combination of SRGB gamut & CRT gamma implies logo movie
-                if (((isSRGBColorGamut) && (!(isCRTGamma))) || (isSMPTECColorGamut) || (isEBUColorGamut)){
+                if (((isSRGBColorGamut) && (!(isCRTGamma))) || (isSMPTECColorGamut)){
                     color.rgb = GamutLUT(color.rgb, false, true);
                 }
             }
@@ -197,7 +197,7 @@ void main()
             else {
                 // do nothing for sRGB(/bt709) -- nothing to be done
                 // do nothing for NTSC-J -- already done above
-                if ((isSMPTECColorGamut) || (isEBUColorGamut)){
+                if (isSMPTECColorGamut){
                     color.rgb = GamutLUT(color.rgb, false, false);
                 }
             }
