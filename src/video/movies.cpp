@@ -211,6 +211,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	// figure out if this is the eidos logo or square logo; they need special treatment
 	// scan till we hit 0 terminator
+	// TODO: Add FF8 logo movies
 	if ((codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) && (codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)){
 		while (true){
 			bytessincebackslash++;
@@ -244,7 +245,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 				(strcmp(upperbuffer, "SQLOGO") == 0)
 			){
 				islogomovie = true;
-				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie; NTSC-J conversion will be supressed.\n", name);
+				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie.\n", name);
 			}
 		}
 	}
@@ -326,15 +327,13 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AVCOL_TRC_UNSPECIFIED:
 		case AVCOL_TRC_RESERVED:
 		case AVCOL_TRC_RESERVED0:
-			if (colormatrix == COLORMATRIX_BT709){
-				if (islogomovie){
-					gammatype = GAMMAFUNCTION_BT1886_APPX1;
-					if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, using BT1886 Appendix 1 (CRT television/monitor) gamma curve because this is a logo movie.\n");
-				}
-				else {
-					gammatype = GAMMAFUNCTION_SMPTE170M;
-					if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
-				}
+			if (islogomovie){
+				gammatype = GAMMAFUNCTION_BT1886_APPX1;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, using BT1886 Appendix 1 (CRT television/monitor) gamma curve because this is a logo movie.\n");
+			}
+			else if (colormatrix == COLORMATRIX_BT709){
+				gammatype = GAMMAFUNCTION_SMPTE170M;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
 			}
 			else {
 				gammatype = GAMMAFUNCTION_BT1886_APPX1;
@@ -402,8 +401,8 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because bt709 color matrix.\n");
 			}
 			else if (islogomovie){
-				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a logo movie.\n");
+				colorgamut = COLORGAMUT_RAWP22;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming uncorrected P22 (CRT computer monitor) because this is a logo movie.\n");
 			}
 			else {
 				colorgamut = COLORGAMUT_NTSCJ;

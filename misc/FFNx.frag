@@ -114,17 +114,36 @@ void main()
 
     if (isTexture)
     {
+        // TODO: relocate this stanza to a separate shader for YUVmovies
         // All movies except non-steam FF8 use YUV plumbing. (Including FF7 original movies.)
         if (isYUV)
         {
+            // At this juncture, ffmpeg has decoded our video file,
+            // and the metadata we need has been passed as uniforms.
+            // Now we need to do the following:
+            //  1. If limited (tv) range, expand to full (pc) range
+            //  2. Convert YUV to gamma-space R'G'B'
+            //  3. Convert gamma-space R'G'B' to linear RGB.
+            //  4. Convert from the video's gamut to our working gamut.
+            //  5. Convert from linear R'G'B' to our working gamma-space.
+            // In NTSC-J mode, our working gamut and gamma is uncorrected NTSC-J (i.e., before the CRT's color correction circuit).
+            // Temporary: Until this shader gets split off, we may need an extra gamma conversion
+            //    to get in the right space ahead of the toGamma() at the bottom of this shader.
+            //    (After the split, that toGamma() can be changed.)
+            // In sRGB mode, our working gamut and gamma is sRGB.
+            // Also, in sRGB mode, we simply ignore the video's gamma and gamut and treat them as if they were sRGB.
+            // This is wrong in almost every case, but our project maintainer insists upon it.
+
+            // fetch YUV from 3 textures
+            // TODO: Look at the feasibility of passing chroma position as a uniform so we can resample YUV 4:2:0 etc properly in the shader instead of on the CPU in swscale
             vec3 yuv = vec3(
                 texture2D(tex_0, v_texcoord0.xy).r,
                 texture2D(tex_1, v_texcoord0.xy).r,
                 texture2D(tex_2, v_texcoord0.xy).r
             );
 
+            // If the video is limited range, dither ahead of increasing the effective bit depth
             if (!(isFullRange)){
-                // dither prior to range conversion
                 ivec2 ydimensions = textureSize(tex_0, 0);
                 ivec2 udimensions = textureSize(tex_1, 0);
                 ivec2 vdimensions = textureSize(tex_2, 0);
@@ -133,6 +152,7 @@ void main()
                 yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
             }
 
+            // Convert YUV to linear R'G'B', expanding range if needed
             if (isBT601ColorMatrix){
                 yuv.g = yuv.g - (128.0/255.0);
                 yuv.b = yuv.b - (128.0/255.0);
@@ -155,53 +175,49 @@ void main()
                     color.rgb = toRGB_bt709_tvrange(yuv);
                 }
             }
-            else if (isBRG24ColorMatrix){
+            else { //isBRG24ColorMatrix
+                // This is a special case where we converted the BRG24 movies from the PC98 edition of FF7 to planar RGB in order to pass them through the YUV plumbing.
                 color.rgb = yuv;
             }
-            // default should be unreachable
-            else {
-                color.rgb = vec3_splat(0.5);
-            }
 
-            // Use a different inverse gamma function depending on the FMV's metadata
-            // special case -- assume NTSC-J gamut always implies BT1886 Appx1 gamma (and how we deal with that depends on our target gamut)
-            if (isNTSCJColorGamut)
-            {
-                if (isOverallNTSCJColorGamut){
-                    color.rgb = CRTSimulation(color.rgb);
-                }
-                else{
-                    color.rgb = GamutLUT(color.rgb, true, false);
-                }
-            }
-            else if (isCRTGamma){
-                color.rgb = toLinearBT1886Appx1Fast(color.rgb);
-            }
-            else if (is170MGamma){
-                color.rgb = toLinearSMPTE170M(color.rgb);
-            }
-            else {
-                color.rgb = toLinear(color.rgb);
-            }
-
-            // We need to get everything into linear RGB in our working gamut
-            // (We may draw objects over the top of the movie, so we need to make things consistent **NOW**)
+            // TODO: Split into two separate shaders, one with this stanza, and one without
             if (isOverallNTSCJColorGamut){
-                // do nothing for NTSC-J
-                // the combination of SRGB gamut & CRT gamma implies logo movie
-                if (((isSRGBColorGamut) && (!(isCRTGamma))) || (isSMPTECColorGamut)){
-                    color.rgb = GamutLUT(color.rgb, false, true);
-                }
-            }
-            // overall sRGB
-            else {
-                // do nothing for sRGB(/bt709) -- nothing to be done
-                // do nothing for NTSC-J -- already done above
-                if (isSMPTECColorGamut){
-                    color.rgb = GamutLUT(color.rgb, false, false);
-                }
-            }
+                // Convert gamma to CRT gamma (BT1886 Appenddix 1) and gamut to NTSC-J
 
+                // Do nothing for NTSC-J gamut; it's already correct. (CRT gamma is implied.)
+
+                // For uncorrected P22, multiply by the inverse of the matrix for the CRT color correction circuit,
+                // and the final NTSC-J-to-sRGB/rec2020 conversion will roundtrip that,
+                // leading to the desired overall result
+                if (isRawP22ColorGamut){
+                    color.rgb = CRTUncorrect(color.rgb);
+                    // (CRT gamma is implied.)
+                }
+                // Otherwise we need to do a full conversion
+                else if ((isSRGBColorGamut) || (isSMPTECColorGamut)) {
+                    if (isCRTGamma){
+                        color.rgb = toLinearBT1886Appx1Fast(color.rgb);
+                    }
+                    else if (is170MGamma){
+                        color.rgb = toLinearSMPTE170M(color.rgb);
+                    }
+                    else {
+                        color.rgb = toLinear(color.rgb);
+                    }
+                    // This LUT goes backards from linear RGB to uncorrected gamma-space NTSC-J
+                    // AssignGamutLUT() in renderer.cpp should have bound the correct LUT
+                    color.rgb = GamutLUTBackwards(color.rgb);
+                }
+            }
+            // for sRGB mode:
+            //    ignore the movie's gamma and use sRGB instead
+            //    ignore the movie's gamut and use sRGB instead
+
+            // temporary!!!
+            // linearize as sRGB to roundtrip the toGamma() at the bottom of this shader
+            color.rgb = toLinear(color.rgb);
+
+            // don't forget to set alpha
             color.a = 1.0;
         }
         // This stanza pertains to 2D textures (aside from YUV movies) and textures on 3D objects if advanced lighting is disabled
@@ -295,6 +311,7 @@ void main()
         color.rgb *= gameGlobalLightColor.w * lightAmbient;
     }
     
+    // TODO: relocate this stanza to a separate shader for YUVmovies
     // if we did a movie gamut conversion, and won't dither later, then dither now
     // do this in gamma space so that dither step size is proportional to quantization step size
     if (isTexture && !(isOverallNTSCJColorGamut) && isYUV && !(isSRGBColorGamut))

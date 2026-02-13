@@ -306,6 +306,22 @@ vec3 InverseCRTSimulation(vec3 rgb_input){
 	return saturate(outcolor);
 }
 
+// Apply the inverse of the CRT color correction matrix. (gamma-space R'G'B' input and output)
+// When used together with NTSC-J mode, the overall result is what you'd get from a CRT television
+// with P22 phosphors, 9300K+8MPCD whitepoint, and no color correction circuit --
+// which basically describes a mid-90s CRT computer monitor.
+vec3 CRTUncorrect(vec3 rgb_input){
+	//// apply inverse of color correction matrix
+	mat3 inverseCRTMatrix = mtxFromCols(
+		vec3(+0.7517584969, -0.0015204271, +0.0032762102),
+		vec3(+0.1657451679, +1.0024222152, +0.0234612064),
+		vec3(+0.0824963352, -0.0009017881, +0.9732625834)
+	);
+	vec3 outcolor = mul(inverseCRTMatrix, rgb_input);
+	// clamp
+	return saturate(outcolor);
+}
+
 // This is a generic 3D LUT function.
 // We're using it to do gamut conversions when a gamut compression mapping algorithm is necessary to avoid losing detail to clipping.
 // Since that's waaaay too compute heavy, we precompute it, then use a LUT.
@@ -318,26 +334,20 @@ vec3 InverseCRTSimulation(vec3 rgb_input){
 // - green on the vertical axis
 // - red on the small horizontal axis
 // - blue on the large horizontal axis
-// - input is either CRT gamma-space R'G'B' or linear RGB; set crtinput accordingly
-// - stored values are either gamma-space sRGB or CRT gamma-space R'G'B'; set crtvalues accordingly
-// output is always linearized
-// if crtvalues=true, then output may be >1/0. See CRTSimulation().
-
-vec3 GamutLUT(vec3 rgb_input, bool crtinput, bool crtvalues)
+// - input is CRT gamma-space R'G'B' (before the CRT's color correction circuit)
+// - output is always linearized
+vec3 GamutLUT(vec3 rgb_input)
 {
 	vec3 temp = saturate(rgb_input) * vec3_splat(63.0); // use 63 b/c LUT is created with left-of-bin DAC to make interpolation here easier
 	vec3 floors = floor(temp);
 	vec3 ceils = ceil(temp);
-	vec3 ceilweights = saturate(temp - floors);
 	// If the input is in CRT gamma space, we need to get it, and the LUT indices, into linear RGB to compute interpolation weights.
 	// This two-corner method is slightly wrong because the gamma-space indices don't form a perfect cube in linear space.
 	// But it should be close enough that the error is smaller than quantization error.
-	if (crtinput){
-		vec3 temp_linear = CRTSimulation(rgb_input);
-		vec3 floors_linear = CRTSimulation(floors/vec3_splat(63.0));
-		vec3 ceils_linear = CRTSimulation(ceils/vec3_splat(63.0));
-		ceilweights = saturate((temp_linear - floors_linear) / max((ceils_linear - floors_linear), vec3_splat(0.0000000001))); // avoid div0
-	}
+	vec3 temp_linear = CRTSimulation(rgb_input);
+	vec3 floors_linear = CRTSimulation(floors/vec3_splat(63.0));
+	vec3 ceils_linear = CRTSimulation(ceils/vec3_splat(63.0));
+	vec3 ceilweights = saturate((temp_linear - floors_linear) / max((ceils_linear - floors_linear), vec3_splat(0.0000000001))); // avoid div0
 
 	// multiply blue by 64, as it is the horizontal "major" axis
 	floors = floors * vec3(1.0, 1.0, 64.0);
@@ -345,37 +355,14 @@ vec3 GamutLUT(vec3 rgb_input, bool crtinput, bool crtvalues)
 
 	// take 8 samples
 	// LUT is always stored in gamma-space sRGB, so linearize them
-	vec3 RfGfBf = texelFetch(tex_10, ivec2(floors.b + floors.r, floors.g), 0).xyz;
-	vec3 RfGfBc = texelFetch(tex_10, ivec2(ceils.b + floors.r, floors.g), 0).xyz;
-	vec3 RfGcBf = texelFetch(tex_10, ivec2(floors.b + floors.r, ceils.g), 0).xyz;
-	vec3 RfGcBc = texelFetch(tex_10, ivec2(ceils.b + floors.r, ceils.g), 0).xyz;
-	vec3 RcGfBf = texelFetch(tex_10, ivec2(floors.b + ceils.r, floors.g), 0).xyz;
-	vec3 RcGfBc = texelFetch(tex_10, ivec2(ceils.b + ceils.r, floors.g), 0).xyz;
-	vec3 RcGcBf = texelFetch(tex_10, ivec2(floors.b + ceils.r, ceils.g), 0).xyz;
-	vec3 RcGcBc = texelFetch(tex_10, ivec2(ceils.b + ceils.r, ceils.g), 0).xyz;
-
-	// if values are stores as CRT gamma-space R'B'G', color correct and linearize with BT1886 function
-	if (crtvalues){
-		RfGfBf = CRTSimulation(RfGfBf);
-		RfGfBc = CRTSimulation(RfGfBc);
-		RfGcBf = CRTSimulation(RfGcBf);
-		RfGcBc = CRTSimulation(RfGcBc);
-		RcGfBf = CRTSimulation(RcGfBf);
-		RcGfBc = CRTSimulation(RcGfBc);
-		RcGcBf = CRTSimulation(RcGcBf);
-		RcGcBc = CRTSimulation(RcGcBc);
-	}
-	// otherwise, linearize as sRGB
-	else {
-		RfGfBf = toLinear(RfGfBf);
-		RfGfBc = toLinear(RfGfBc);
-		RfGcBf = toLinear(RfGcBf);
-		RfGcBc = toLinear(RfGcBc);
-		RcGfBf = toLinear(RcGfBf);
-		RcGfBc = toLinear(RcGfBc);
-		RcGcBf = toLinear(RcGcBf);
-		RcGcBc = toLinear(RcGcBc);
-	}
+	vec3 RfGfBf = toLinear(texelFetch(tex_10, ivec2(floors.b + floors.r, floors.g), 0).xyz);
+	vec3 RfGfBc = toLinear(texelFetch(tex_10, ivec2(ceils.b + floors.r, floors.g), 0).xyz);
+	vec3 RfGcBf = toLinear(texelFetch(tex_10, ivec2(floors.b + floors.r, ceils.g), 0).xyz);
+	vec3 RfGcBc = toLinear(texelFetch(tex_10, ivec2(ceils.b + floors.r, ceils.g), 0).xyz);
+	vec3 RcGfBf = toLinear(texelFetch(tex_10, ivec2(floors.b + ceils.r, floors.g), 0).xyz);
+	vec3 RcGfBc = toLinear(texelFetch(tex_10, ivec2(ceils.b + ceils.r, floors.g), 0).xyz);
+	vec3 RcGcBf = toLinear(texelFetch(tex_10, ivec2(floors.b + ceils.r, ceils.g), 0).xyz);
+	vec3 RcGcBc = toLinear(texelFetch(tex_10, ivec2(ceils.b + ceils.r, ceils.g), 0).xyz);
 
 	// merge down to 4 samples along blue axis
 	vec3 RfGf = mix(RfGfBf, RfGfBc, vec3_splat(ceilweights.b));
@@ -391,6 +378,48 @@ vec3 GamutLUT(vec3 rgb_input, bool crtinput, bool crtvalues)
 	vec3 outcolor = mix(Rf, Rc, vec3_splat(ceilweights.r));
 
 	return saturate(outcolor);
+}
+
+// This is the same as GamutLUT() except that:
+//   - The input is linear RGB
+//   - The output is CRT gamma-space R'G'B' (before the CRT's color correction circuit)
+//   - The stored values are CRT gamma-space R'G'B' (before the CRT's color correction circuit)
+vec3 GamutLUTBackwards(vec3 rgb_input)
+{
+	vec3 temp = saturate(rgb_input) * vec3_splat(63.0); // use 63 b/c LUT is created with left-of-bin DAC to make interpolation here easier
+	vec3 floors = floor(temp);
+	vec3 ceils = ceil(temp);
+	vec3 ceilweights = saturate(temp - floors);
+
+	// multiply blue by 64, as it is the horizontal "major" axis
+	floors = floors * vec3(1.0, 1.0, 64.0);
+	ceils = ceils * vec3(1.0, 1.0, 64.0);
+
+	// take 8 samples
+	// LUT is always stored as CRT gamma-space R'G'B', so run CRT simulation to linearize them
+	vec3 RfGfBf = CRTSimulation(texelFetch(tex_10, ivec2(floors.b + floors.r, floors.g), 0).xyz);
+	vec3 RfGfBc = CRTSimulation(texelFetch(tex_10, ivec2(ceils.b + floors.r, floors.g), 0).xyz);
+	vec3 RfGcBf = CRTSimulation(texelFetch(tex_10, ivec2(floors.b + floors.r, ceils.g), 0).xyz);
+	vec3 RfGcBc = CRTSimulation(texelFetch(tex_10, ivec2(ceils.b + floors.r, ceils.g), 0).xyz);
+	vec3 RcGfBf = CRTSimulation(texelFetch(tex_10, ivec2(floors.b + ceils.r, floors.g), 0).xyz);
+	vec3 RcGfBc = CRTSimulation(texelFetch(tex_10, ivec2(ceils.b + ceils.r, floors.g), 0).xyz);
+	vec3 RcGcBf = CRTSimulation(texelFetch(tex_10, ivec2(floors.b + ceils.r, ceils.g), 0).xyz);
+	vec3 RcGcBc = CRTSimulation(texelFetch(tex_10, ivec2(ceils.b + ceils.r, ceils.g), 0).xyz);
+
+	// merge down to 4 samples along blue axis
+	vec3 RfGf = mix(RfGfBf, RfGfBc, vec3_splat(ceilweights.b));
+	vec3 RfGc = mix(RfGcBf, RfGcBc, vec3_splat(ceilweights.b));
+	vec3 RcGf = mix(RcGfBf, RcGfBc, vec3_splat(ceilweights.b));
+	vec3 RcGc = mix(RcGcBf, RcGcBc, vec3_splat(ceilweights.b));
+
+	// merge down to 2 samples along green axis
+	vec3 Rf = mix(RfGf, RfGc, vec3_splat(ceilweights.g));
+	vec3 Rc = mix(RcGf, RcGc, vec3_splat(ceilweights.g));
+
+	// merge down to one color along red axis
+	vec3 outcolor = mix(Rf, Rc, vec3_splat(ceilweights.r));
+
+	return InverseCRTSimulation(outcolor);
 }
 
 // Dithering ---------------------------------------------

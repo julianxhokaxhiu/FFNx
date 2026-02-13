@@ -57,7 +57,7 @@ void main()
 		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
 	}
 	else if (isOverallNTSCJColorGamut){
-		color.rgb = GamutLUT(color.rgb, true, false);
+		color.rgb = GamutLUT(color.rgb); // AssignGamutLUT() in renderer.cpp should have bound the correct LUT
 		color.rgb = toGamma(color.rgb);
 		ivec2 dimensions = textureSize(tex_0, 0);
 		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
