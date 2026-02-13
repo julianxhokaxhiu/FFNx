@@ -1084,7 +1084,7 @@ void Renderer::prepareFFNxLogo()
     auto logo = fs.open(FFNX_LOGO_PATH);
 
     uint32_t width, height, mipCount = 0;
-    FFNxLogoHandle = createTextureHandle(&logo, FFNX_LOGO_PATH, &width, &height, &mipCount, false);
+    FFNxLogoHandle = createTextureHandle(&logo, FFNX_LOGO_PATH, &width, &height, &mipCount, true);
     if (!FFNxLogoHandle.idx) FFNxLogoHandle = BGFX_INVALID_HANDLE;
 }
 

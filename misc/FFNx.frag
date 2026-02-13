@@ -273,10 +273,10 @@ void main()
             if (isFBTexture)
             {
                 if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
-            }
 
-            // linearize
-            texture_color.rgb = toLinear(texture_color.rgb);
+                // This was previously in gamma space, so linearize again.
+                texture_color.rgb = toLinear(texture_color.rgb);
+            }
 
             // multiply by v_color0
             if (modulateAlpha) color *= texture_color;
