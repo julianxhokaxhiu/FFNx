@@ -217,7 +217,7 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 			if (f != nullptr)
 			{
 				f->read(&ff8_movie_cam_buffer, f->size());
-				g_FF8ZzzArchiveOther.closeFile(f);
+				Zzz::closeFile(f);
 
 				camdata_read = true;
 			}

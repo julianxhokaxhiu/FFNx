@@ -212,18 +212,18 @@ Zzz::File::~File()
 	_close(_fd);
 }
 
-int64_t Zzz::File::seek(int32_t pos, Whence whence)
+int64_t Zzz::File::seek(int64_t pos, bx::Whence::Enum whence)
 {
 	if (trace_all) ffnx_trace("Zzz::File::%s: %u\n", __func__, pos);
 
 	switch (whence) {
-		case SeekEnd:
+		case bx::Whence::End:
 			pos = _tocEntry.fileSize + (pos < 0 ? pos : 0);
 			break;
-		case SeekCur:
+		case bx::Whence::Current:
 			pos += relativePos();
 			break;
-		case SeekSet:
+		case bx::Whence::Begin:
 			break;
 	}
 

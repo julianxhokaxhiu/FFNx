@@ -48,35 +48,36 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 
 	const char *extension = strrchr(filename, '.');
 	if (extension != nullptr && stricmp(extension + 1, "png") == 0) {
-		Zzz *archive = nullptr;
-		if (remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
-			filename += 6;
-			archive = &g_FF8ZzzArchiveMain;
-		}
 		// Load PNG using libPNG
 		bimg::ImageContainer image;
-		if (loadPng(filename, image, bimg::TextureFormat::RGBA8, archive))
-		{
-			// Remastered fix (Convert 768x288 to 768x384)
-			if (remastered_edition && image.m_width == 768 && image.m_height == 288)
-			{
-				void *old_data = image.m_data;
-				uint32_t old_size = image.m_size;
-				image.m_height = 384;
-				image.m_size = image.m_width * image.m_height * 4;
-				void *new_data = driver_calloc(image.m_size, sizeof(uint8_t));
+		if (!loadPng(filename, image, bimg::TextureFormat::RGBA8)) {
+			ffnx_error("%s: cannot read PNG file %s\n", __func__, filename);
+			return false;
+		}
 
-				memcpy(new_data, old_data, old_size);
-				image.m_data = new_data;
-				driver_free(old_data);
+		// Remastered fix (Convert 768x288 to 768x384)
+		if (remastered_edition && image.m_width == 768 && image.m_height == 288) {
+			void *old_data = image.m_data;
+			uint32_t old_size = image.m_size;
+			image.m_height = 384;
+			image.m_size = image.m_width * image.m_height * 4;
+			void *new_data = driver_calloc(image.m_size, sizeof(uint8_t));
+
+			if (new_data == nullptr) {
+				ffnx_error("%s: cannot allocate more memory\n", __func__);
+				return false;
 			}
 
-			_image = bimg::imageConvert(&defaultAllocator, targetFormat, image);
-
-			setLod(0);
-
-			driver_free(image.m_data);
+			memcpy(new_data, old_data, old_size);
+			image.m_data = new_data;
+			driver_free(old_data);
 		}
+
+		_image = bimg::imageConvert(&defaultAllocator, targetFormat, image);
+
+		driver_free(image.m_data);
+
+		setLod(0);
 	} else if (extension != nullptr && stricmp(extension + 1, "dds") == 0) {
 		// Load DDS using DirectXTex
 		DirectX::TexMetadata metadata;
@@ -291,7 +292,7 @@ bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_
 		}
 
 		if (remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename, strnlen(filename, MAX_PATH))) {
-			_snprintf(filename, MAX_PATH, "zzz://%s.png", name);
+			_snprintf(filename, MAX_PATH, "zzz://%s.png", remasterName);
 
 			if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", filename);
 

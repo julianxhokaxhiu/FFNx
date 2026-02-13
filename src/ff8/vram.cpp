@@ -437,7 +437,12 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 		{
 			if (file_count == 0)
 			{
-				filename.append(tex.name());
+				if (remastered_edition && !tex.remasteredName().empty()) {
+					filename.append("zzz://");
+					filename.append(tex.remasteredName());
+				} else {
+					filename.append(tex.name());
+				}
 				start_vram_id = tex.texture().vramId();
 			}
 			else
@@ -622,6 +627,11 @@ uint32_t ff8_credits_open_texture(char *fileName, char *buffer)
 
 	// {name}.lzs
 	strncpy(next_texture_name, strrchr(fileName, '\\') + 1, sizeof(next_texture_name));
+	if (strstr(fileName, "ff8.lzs")) {
+		snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "textures\\ff8logo\\%s", strrchr(fileName, '\\') + 1);
+	} else {
+		snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "textures\\opening\\%s", strrchr(fileName, '\\') + 1);
+	}
 	next_bpp = Tim::Bpp16;
 
 	uint32_t ret = ff8_externals.credits_open_file(fileName, buffer);

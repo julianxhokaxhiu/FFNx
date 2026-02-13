@@ -435,12 +435,12 @@ __int32 ff8_lseek(int fd, __int32 offset, int whence)
 	if (remastered_edition && openedZzzFiles.contains(fd)) {
 		Zzz::File *file = openedZzzFiles.at(fd);
 		uint32_t pos = offset;
-		Zzz::File::Whence zzzWhence = Zzz::File::SeekSet;
+		bx::Whence::Enum zzzWhence = bx::Whence::Begin;
 
 		if (whence == SEEK_END) {
-			zzzWhence = Zzz::File::SeekEnd;
+			zzzWhence = bx::Whence::End;
 		} else if (whence == SEEK_CUR) {
-			zzzWhence = Zzz::File::SeekCur;
+			zzzWhence = bx::Whence::Current;
 		} else if (whence != SEEK_SET) {
 			ffnx_error("%s: seek type not supported: %d\n", __func__, whence);
 

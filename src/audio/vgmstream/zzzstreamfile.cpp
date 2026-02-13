@@ -94,7 +94,7 @@ size_t zzz_read(ZZZ_STREAMFILE* sf, uint8_t* dst, offv_t offset, size_t length)
         size_t length_to_read;
 
         /* ignore requests at EOF */
-        if (offset >= sf->infile->size() || sf->infile->seek(offset, Zzz::File::SeekSet) < 0)
+        if (offset >= sf->infile->size() || sf->infile->seek(offset, bx::Whence::Begin) < 0)
         {
             break;
         }
@@ -158,7 +158,7 @@ STREAMFILE* zzz_open(ZZZ_STREAMFILE* sf, const char* const filename, size_t buf_
 void zzz_close(ZZZ_STREAMFILE* sf)
 {
     if (trace_all || trace_files) ffnx_trace("%s: %s\n", __func__, sf->infile->fileName());
-    g_FF8ZzzArchiveOther.closeFile(sf->infile);
+    Zzz::closeFile(sf->infile);
     delete[] sf->buf;
     delete sf;
 }

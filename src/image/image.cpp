@@ -24,9 +24,9 @@
 #include <libpng16/png.h>
 
 #include "image.h"
+#include "../ff8/remaster.h"
 #include "../common.h"
 #include "../renderer.h"
-#include "../ff8/zzz_archive.h"
 #include "log.h"
 
 static void LibPngErrorCb(png_structp png_ptr, const char* error)
@@ -39,46 +39,52 @@ static void LibPngWarningCb(png_structp png_ptr, const char* warning)
     ffnx_info("libpng warning: %s\n", warning);
 }
 
-void read_zzz(png_structp png_ptr, png_bytep data, size_t size)
+void read_png_file(png_structp png_ptr, png_bytep data, size_t size)
 {
-    Zzz::File* zzzFile = (Zzz::File*)png_ptr;
+    bx::ReaderI *reader = (bx::ReaderI *)png_get_io_ptr(png_ptr);
+    bx::Error err;
 
-    if (zzzFile->read(data, size) != size) {
-        png_error(png_ptr, "Cannot read data in the ZZZ archive");
+    int32_t r = bx::read(reader, data, size, &err);
+
+    if (!err.isOk() || r != size) {
+        png_error(png_ptr, "Cannot read data");
     }
 }
 
-bool loadPng(const char *filename, bimg::ImageContainer &image, bimg::TextureFormat::Enum targetFormat, Zzz *zzzArchive)
+bool loadPng(const char *filename, bimg::ImageContainer &image, bimg::TextureFormat::Enum targetFormat)
 {
-    FILE* file = nullptr;
-    Zzz::File* zzzFile = nullptr;
-    size_t datasize = 0;
+    bool ret = false;
 
-    if (zzzArchive != nullptr)
-    {
-        zzzFile = zzzArchive->openFile(filename, strnlen(filename, MAX_PATH));
+    ffnx_trace("%s: %s\n", __func__, filename);
 
-        if (!zzzFile)
-        {
+    if (remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
+        Zzz::File *zzzFile = g_FF8ZzzArchiveMain.openFile(filename + 6, strnlen(filename + 6, MAX_PATH));
+
+        if (zzzFile == nullptr) {
             return false;
         }
 
-        datasize = zzzFile->size();
-    }
-    else
-    {
-        file = fopen(filename, "rb");
+        ret = loadPng(zzzFile, image, targetFormat);
 
-        if (!file)
-        {
+        Zzz::closeFile(zzzFile);
+    } else {
+        bx::FileReader reader;
+        bx::Error err;
+
+        if (!bx::open(&reader, filename, &err) || !err.isOk()) {
             return false;
         }
 
-        fseek(file, 0, SEEK_END);
-        datasize = ftell(file);
-        fseek(file, 0, SEEK_SET);
+        ret = loadPng(&reader, image, targetFormat);
+
+        bx::close(&reader);
     }
 
+    return ret;
+}
+
+bool loadPng(bx::ReaderSeekerI *reader, bimg::ImageContainer &image, bimg::TextureFormat::Enum targetFormat)
+{
     png_infop info_ptr = nullptr;
     png_structp png_ptr = nullptr;
 
@@ -89,13 +95,13 @@ bool loadPng(const char *filename, bimg::ImageContainer &image, bimg::TextureFor
     size_t rowbytes = 0;
 
     uint8_t* data = nullptr;
+    size_t datasize = bx::seek(reader, 0, bx::Whence::End);
+    bx::seek(reader, 0, bx::Whence::Begin);
 
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)0, LibPngErrorCb, LibPngWarningCb);
 
     if (!png_ptr)
     {
-        if (file) fclose(file);
-
         return false;
     }
 
@@ -105,8 +111,6 @@ bool loadPng(const char *filename, bimg::ImageContainer &image, bimg::TextureFor
     {
         png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
 
-        if (file) fclose(file);
-
         return false;
     }
 
@@ -114,27 +118,16 @@ bool loadPng(const char *filename, bimg::ImageContainer &image, bimg::TextureFor
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-        if (file) fclose(file);
-
         return false;
     }
 
-    if (file)
-    {
-        png_init_io(png_ptr, file);
-    }
-    else
-    {
-        png_set_read_fn(png_ptr, zzzFile, read_zzz);
-    }
+    png_set_read_fn(png_ptr, reader, read_png_file);
 
     png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
 
     if (!Renderer::doesItFitInMemory(datasize))
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-
-        if (file) fclose(file);
 
         return false;
     }
@@ -159,22 +152,17 @@ bool loadPng(const char *filename, bimg::ImageContainer &image, bimg::TextureFor
 
     if (trace_all || trace_loaders) ffnx_trace("%s: data_size=%d width=%d height=%d bit_depth=%d color_type=%X\n", __func__, datasize, _width, _height, bit_depth, color_type);
 
-    if (!Renderer::doesItFitInMemory(datasize))
-    {
-        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+    data = (uint8_t*)driver_calloc(datasize, sizeof(uint8_t));
 
-        if (file) fclose(file);
+    if (data == NULL) {
+        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
         return false;
     }
 
-    data = (uint8_t*)driver_calloc(datasize, sizeof(uint8_t));
-
     for (png_uint_32 y = 0; y < _height; y++) memcpy(data + (rowbytes * y), rowptrs[y], rowbytes);
 
     png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-
-    if (file) fclose(file);
 
     // ------------------------------------------------------------
 

@@ -199,12 +199,12 @@ int64_t ff8_zzz_seek(void *opaque, int64_t offset, int whence)
 
 	whence &= 0xFFFF;
 
-	Zzz::File::Whence zzzWhence = Zzz::File::SeekSet;
+	bx::Whence::Enum zzzWhence = bx::Whence::Begin;
 
 	if (whence == SEEK_END) {
-		zzzWhence = Zzz::File::SeekEnd;
+		zzzWhence = bx::Whence::End;
 	} else if (whence == SEEK_CUR) {
-		zzzWhence = Zzz::File::SeekCur;
+		zzzWhence = bx::Whence::Current;
 	} else if (whence != SEEK_SET) {
 		ffnx_error("%s: seek type not supported: %d\n", __func__, whence);
 
@@ -230,5 +230,5 @@ void ff8_zzz_close(void *opaque)
 
 	Zzz::File *f = (Zzz::File *)opaque;
 
-	g_FF8ZzzArchiveOther.closeFile(f);
+	Zzz::closeFile(f);
 }

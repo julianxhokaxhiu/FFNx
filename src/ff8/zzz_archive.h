@@ -25,6 +25,7 @@
 #include <map>
 #include <string>
 #include <windows.h>
+#include <bx/file.h>
 
 struct ZzzTocEntry
 {
@@ -37,16 +38,14 @@ struct ZzzTocEntry
 class Zzz
 {
 public:
-	class File
+	class File : public bx::ReaderSeekerI
 	{
 	public:
-		enum Whence {
-			SeekSet = SEEK_SET,
-			SeekEnd = SEEK_END,
-			SeekCur = SEEK_CUR
-		};
-		int64_t seek(int32_t pos, Whence whence);
+		int64_t seek(int64_t offset = 0, bx::Whence::Enum whence = bx::Whence::Current) override;
 		int read(void *data, unsigned int size);
+		inline virtual int32_t read(void* data, int32_t size, bx::Error* _err) override {
+			return read(data, size);
+		}
 		inline int64_t relativePos() const {
 			return int64_t(_pos - _tocEntry.filePos);
 		}
@@ -68,7 +67,7 @@ public:
 	private:
 		friend class Zzz;
 		File(const ZzzTocEntry &tocEntry, int fd);
-		~File();
+		virtual ~File();
 		const ZzzTocEntry _tocEntry;
 		int _fd;
 		int64_t _pos;
