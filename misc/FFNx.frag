@@ -177,14 +177,8 @@ void main()
             else if (isCRTGamma){
                 color.rgb = toLinearBT1886Appx1Fast(color.rgb);
             }
-            else if (is2pt2Gamma){
-                color.rgb = toLinear2pt2(color.rgb);
-            }
             else if (is170MGamma){
                 color.rgb = toLinearSMPTE170M(color.rgb);
-            }
-            else if (is2pt8Gamma){
-                color.rgb = toLinear2pt8(color.rgb);
             }
             else {
                 color.rgb = toLinear(color.rgb);

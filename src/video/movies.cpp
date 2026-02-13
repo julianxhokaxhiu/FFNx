@@ -345,6 +345,10 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb gamma transfer function detected\n");
 			gammatype = GAMMAFUNCTION_SRGB;
 			break;
+		case AVCOL_TRC_GAMMA22: //2.2
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected, using sRGB instead.\n");
+			gammatype = GAMMAFUNCTION_SRGB;
+			break;
 		case AVCOL_TRC_SMPTE170M:
 		case AVCOL_TRC_BT709: // same as SMPTE170M
 		case AVCOL_TRC_BT2020_10: // same as SMPTE170M
@@ -354,7 +358,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			gammatype = GAMMAFUNCTION_SMPTE170M;
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
 			break;
-		case AVCOL_TRC_GAMMA22: //fall through
 		case AVCOL_TRC_GAMMA28: //fall through
 		default:
 			ffnx_error("prepare_movie: unsupported transfer (inverse gamma) function\n");
