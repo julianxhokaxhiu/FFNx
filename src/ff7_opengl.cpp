@@ -266,9 +266,10 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 				// Swirl mode 60FPS fix
 				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x184, common_frame_multiplier); // wait frames before swirling
-				patch_multiply_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, common_frame_multiplier);
-				byte swirl_cmp_fix[7] = {0x82, 0xB9, 0x50, 0x11, 0x00, 0x00, 0x9C};
-				memcpy_code(ff7_externals.swirl_loop_sub_4026D4 + 0x10B, swirl_cmp_fix, sizeof(swirl_cmp_fix));
+				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x79, common_frame_multiplier); // swirling sound delay
+				patch_code_byte(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, 50); // replace 48 with a bigger number without multiplying in order to have fading effect correctly
+				patch_code_byte(ff7_externals.swirl_loop_sub_4026D4 + 0x111, 0x7F); // cannot multiply otherwise char overflow
+				patch_divide_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x61, common_frame_multiplier); // decrease fading speed
 				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1AB), common_frame_multiplier);
 				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1B1), common_frame_multiplier);
 				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1E4), common_frame_multiplier);
