@@ -49,13 +49,17 @@ void ff8_set_game_paths(int install_options, char *_app_path, const char *_dataD
 		normalize_path_win(_app_path);
 	}
 
-	if (!steam_edition && !data_drive.empty())
+	if (!steam_edition && !remastered_edition && !data_drive.empty())
 	{
 		ffnx_info("Overriding DataDrive with %s\n", data_drive.c_str());
 		_dataDrive = data_drive.c_str();
 	}
 
 	ff8_externals.set_game_paths(install_options, _app_path, _dataDrive);
+
+	if (remastered_edition) {
+		strcpy(ff8_externals.music_path, "zzz://data\\music\\stream\\");
+	}
 }
 
 bool ff8_reg_set_graphics(uint32_t graphics)
@@ -77,16 +81,16 @@ bool ff8_reg_set_graphics(uint32_t graphics)
 
 int ff8_reg_get_midiguid(LPDWORD midi_guid)
 {
-	int ret = ff8_externals.reg_get_midiguid((LPBYTE)midi_guid);
+	int ret = remastered_edition ? 0 : ff8_externals.reg_get_midiguid((LPBYTE)midi_guid);
 	LPDWORD default_midi_guid[4] = {0, 0, 0, 0};
 
-	if (memcmp(midi_guid, default_midi_guid, 16) == 0) {
+	if (remastered_edition || memcmp(midi_guid, default_midi_guid, 16) == 0) {
 		ffnx_info("MIDI GUID is zero, force to Microsoft Synthesizer\n");
 		// Use default Microsoft synthesizer, instead of starting FF8Config.exe
 		uint32_t buf[4] = {0x58C2B4D0, 0x11D146E7, 0xA000AC89, 0x294105C9};
 		memcpy(midi_guid, buf, 16);
 
-		if (!steam_edition) {
+		if (!steam_edition && !remastered_edition) {
 			ff8_externals.reg_set_midiguid((uint8_t *)buf);
 			ff8_reg_set_graphics(0x100021); // High res by default
 		}
@@ -99,7 +103,7 @@ int ff8_reg_get_midiguid(LPDWORD midi_guid)
 
 uint32_t ff8_reg_get_graphics()
 {
-	uint32_t ret = ff8_externals.reg_get_graphics();
+	uint32_t ret = remastered_edition ? 0x00100021 : ff8_externals.reg_get_graphics();
 
 	ret |= 0x00100000; // Force this flag to prevent graphical glitches
 
@@ -112,6 +116,42 @@ uint32_t ff8_reg_get_graphics()
 	return ret;
 }
 
+void ff8_reg_get_app_path(CHAR *lpData, DWORD cbData)
+{
+	char buf[MAX_PATH]{ 0 };
+	GetCurrentDirectory(sizeof(buf), buf);
+	strcat(buf, R"(\)");
+	strcpy(lpData, buf);
+}
+
+void ff8_reg_get_data_drive(CHAR *lpData, DWORD cbData)
+{
+	strcpy(lpData, "CD:");
+}
+
+int ff8_reg_get_installoptions()
+{
+	return 0x000000ff;
+}
+
+int ff8_reg_get_guid(LPBYTE lpData)
+{
+	LPSTR buf[16]{ 0 };
+	memcpy(lpData, buf, 16);
+
+	return 1;
+}
+
+int ff8_reg_get_soundoptions()
+{
+	return 0x00000000;
+}
+
+int ff8_reg_get_midioptions()
+{
+	return 0x00000001;
+}
+
 void game_cfg_init()
 {
 	if (ff8)
@@ -119,5 +159,16 @@ void game_cfg_init()
 		replace_call(ff8_externals.init_config + 0x3E, ff8_set_game_paths);
 		replace_call(ff8_externals.init_config + 0x48, ff8_reg_get_midiguid);
 		replace_call(ff8_externals.init_config + 0x16B, ff8_reg_get_graphics);
+
+		if (remastered_edition)
+		{
+			replace_call(ff8_externals.init_config + 0x15, ff8_reg_get_app_path);
+			replace_call(ff8_externals.init_config + 0x21, ff8_reg_get_data_drive);
+			replace_call(ff8_externals.init_config + 0x26, ff8_reg_get_installoptions);
+			replace_call(ff8_externals.pubintro_init + 0x14, ff8_reg_get_guid); // Graphics
+			replace_call(ff8_externals.pubintro_init + 0x28, ff8_reg_get_guid); // Sound
+			replace_call(ff8_externals.pubintro_init + 0x1E, ff8_reg_get_soundoptions);
+			replace_call(ff8_externals.pubintro_init + 0x32, ff8_reg_get_midioptions);
+		}
 	}
 }

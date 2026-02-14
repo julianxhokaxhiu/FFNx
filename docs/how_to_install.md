@@ -74,7 +74,7 @@ external_music_ext = "akb"
 #### [2000 Squaresoft Release](https://www.mobygames.com/game/windows/final-fantasy-viii)
 
 0. Install the game on this path: `C:\Games\Final Fantasy VIII`
-1. Update your game to v1.2 ( you can find a collection here: https://www.ff8.fr/telechargements/programmes )
+1. Update your game to v1.2 ( you can find a collection here: [FF8.fr download page](https://www-ff8-fr.translate.goog/telechargements/programmes?_x_tr_sl=fr&_x_tr_tl=en&_x_tr_hl=fr&_x_tr_pto=wapp#archives_conserve_pour_la_posterite) )
 2. Download the latest `FFNx-FF8_2000` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 3. Extract the ZIP content next to `ff8.exe` file
 4. Double click on [`FFNx.reg`](https://github.com/julianxhokaxhiu/FFNx/blob/master/misc/FF8.reg)
@@ -89,6 +89,20 @@ external_music_ext = "akb"
 4. Extract the ZIP content next to your `ff8_*.exe` file ( for eg. for EN language `ff8_en.exe`)
 5. Replace all files when asked.
 6. Enjoy!
+
+#### Early alpha [Remastered Release](https://store.steampowered.com/app/1026680/FINAL_FANTASY_VIII__REMASTERED/)
+
+**Warning:** The compatibilty with the Remastered version is currently uncomplete. You will most likely encounters crashes
+in battle and model rendering issues.
+
+0. Install the game using Steam
+1. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
+2. Download the FF8 patch v1.2 ( you can find a collection here: [FF8.fr download page](https://www-ff8-fr.translate.goog/telechargements/programmes?_x_tr_sl=fr&_x_tr_tl=en&_x_tr_hl=fr&_x_tr_pto=wapp#archives_conserve_pour_la_posterite) )
+3. Extract the patch ZIP content next to `FFVIII_LAUNCHER.exe` file
+4. Rename `FF8.exe` to `FF8.ffnx`
+5. Download the latest `FFNx-FF8_Remastered` release here: https://github.com/julianxhokaxhiu/FFNx/releases
+6. Extract the FFNx ZIP content next to `FFVIII_LAUNCHER.exe` file
+7. Enjoy!
 
 ## Mod Launchers
 

@@ -38,7 +38,7 @@ borderless = false
 #[RESOLUTION]
 # Resolution of the game.
 # Default (value = 0):
-# - Window mode will use 640x480
+# - Window mode will use 640x480 (1024x768 on FF8:Remastered)
 # - Fullscreen mode will use your desktop resolution
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 window_size_x = 0
@@ -263,6 +263,7 @@ external_music_sync = false
 # - FF7 eStore: data/music_ogg
 # - FF7 Steam: data/music_ogg
 # - FF8 2000/Steam: data/music/dmusic/ogg
+# - FF8 Remastered: main.zzz:/data/music/dmusic/ogg
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_music_path = ""
 

@@ -25,6 +25,8 @@
 #include "audio.h"
 #include "music.h"
 #include "patch.h"
+#include "ff8/remaster.h"
+#include "audio/vgmstream/zzzstreamfile.h"
 
 #include "ff8/engine.h"
 
@@ -148,7 +150,7 @@ char* ff8_format_midi_name(const char* midi_name)
 	// midi_name format: {num}{type}-{name}.sgt or {name}.sgt or _Missing.sgt
 	const char* truncated_name = midi_name;
 
-	if (!ff8_external_music_force_original_filenames) {
+	if (!ff8_external_music_force_original_filenames && !external_music_path.starts_with("zzz://")) {
 		truncated_name = strchr(midi_name, '-');
 
 		if (nullptr != truncated_name) {

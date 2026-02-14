@@ -42,6 +42,7 @@
 TexturePacker texturePacker;
 
 char next_texture_name[MAX_PATH] = "";
+char next_remastered_texture_name[MAX_PATH] = "";
 TexturePacker::TextureInfos texture_infos = TexturePacker::TextureInfos();
 TexturePacker::TextureInfos palette_infos = TexturePacker::TextureInfos();
 uint16_t *next_pal_data = nullptr;
@@ -77,6 +78,7 @@ int wm_selphie_old_second_texture_pos = 0;
 int wm_selphie_new_second_texture_pos = 0;
 // Battle
 char battle_texture_name[MAX_PATH] = "";
+int battle_file_id = 0;
 int battle_texture_id = 0;
 Stage stage;
 struct BattleTextureHeader {
@@ -230,17 +232,18 @@ void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 	}
 
 	if (texture_infos.isValid() && palette_infos.isValid()) {
-		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos, next_texture_count, !next_do_not_clear_old_texture);
+		texturePacker.setTexture(next_texture_name, next_remastered_texture_name, texture_infos, palette_infos, next_texture_count, !next_do_not_clear_old_texture);
 
 		texture_infos = TexturePacker::TextureInfos();
 		palette_infos = TexturePacker::TextureInfos();
 	} else if (!texture_infos.isValid() && !palette_infos.isValid() && !isPal) {
-		texturePacker.setTexture(next_texture_name, TexturePacker::TextureInfos(x, y, w, h, next_bpp), TexturePacker::TextureInfos(), next_texture_count, !next_do_not_clear_old_texture);
+		texturePacker.setTexture(next_texture_name, next_remastered_texture_name, TexturePacker::TextureInfos(x, y, w, h, next_bpp), TexturePacker::TextureInfos(), next_texture_count, !next_do_not_clear_old_texture);
 	}
 
 	ff8_externals.sub_464850(x, y, x + w - 1, h + y - 1);
 
 	*next_texture_name = '\0';
+	*next_remastered_texture_name = '\0';
 	next_do_not_clear_old_texture = false;
 	next_texture_count = -1;
 }
@@ -434,7 +437,12 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 		{
 			if (file_count == 0)
 			{
-				filename.append(tex.name());
+				if (remastered_edition && !tex.remasteredName().empty()) {
+					filename.append("zzz://");
+					filename.append(tex.remasteredName());
+				} else {
+					filename.append(tex.name());
+				}
 				start_vram_id = tex.texture().vramId();
 			}
 			else
@@ -619,6 +627,11 @@ uint32_t ff8_credits_open_texture(char *fileName, char *buffer)
 
 	// {name}.lzs
 	strncpy(next_texture_name, strrchr(fileName, '\\') + 1, sizeof(next_texture_name));
+	if (strstr(fileName, "ff8.lzs")) {
+		snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "textures\\ff8logo\\%s", strrchr(fileName, '\\') + 1);
+	} else {
+		snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "textures\\opening\\%s", strrchr(fileName, '\\') + 1);
+	}
 	next_bpp = Tim::Bpp16;
 
 	uint32_t ret = ff8_externals.credits_open_file(fileName, buffer);
@@ -751,7 +764,7 @@ void ff8_wm_section_17_set_texture(int texture_id)
 
 	snprintf(texture_name, sizeof(texture_name), "world/dat/wmset/section17/texture%d", texture_id);
 
-	texturePacker.setTexture(texture_name, texture_infos, palette_infos, tex.textureFramePositions.size(), true);
+	texturePacker.setTexture(texture_name, nullptr, texture_infos, palette_infos, tex.textureFramePositions.size(), true);
 }
 
 uint32_t ff8_wm_section_38_prepare_texture_for_upload(uint8_t *tim_file_data, ff8_tim *tim_infos)
@@ -835,7 +848,7 @@ uint32_t ff8_wm_section_38_prepare_texture_for_upload(uint8_t *tim_file_data, ff
 			if (trace_all || trace_vram) ffnx_trace("%s: set animation palette source=(%d, %d)\n", __func__, tex.srcX, tex.srcY);
 			next_texture_count = tex.height;
 			TexturePacker::TextureInfos palette(tex.x, tex.y, 256, tex.height, Tim::Bpp16);
-			texturePacker.setTexture(nullptr, palette, palette);
+			texturePacker.setTexture(nullptr, nullptr, palette, palette);
 
 			if (save_textures)
 			{
@@ -1261,7 +1274,7 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 		for (int i = 0; i < VRAM_PAGE_MIM_MAX_COUNT; ++i) {
 			snprintf(tex_filename, sizeof(tex_filename), "%s_%d", tex_directory, i);
 			const int x = i * TEXTURE_WIDTH_BPP16, y = 256;
-			texturePacker.setTexture(tex_filename, TexturePacker::TextureInfos(x, y, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, Tim::Bpp16, true), TexturePacker::TextureInfos(), 0);
+			texturePacker.setTexture(tex_filename, nullptr, TexturePacker::TextureInfos(x, y, TEXTURE_WIDTH_BPP16, TEXTURE_HEIGHT, Tim::Bpp16, true), TexturePacker::TextureInfos(), 0);
 			// Force texture_reload_hack
 			texturePacker.setCurrentAnimationFrame(x, y, -1);
 		}
@@ -1350,6 +1363,7 @@ int ff8_field_texture_upload_one(char *image_buffer, char bpp, char a3, int x, i
 
 		if (chara_one_current_texture < model.texturesData.size()) {
 			next_bpp = Tim::Bpp(bpp);
+			snprintf(next_remastered_texture_name, MAX_PATH, "textures\\field.fs\\field_hd_new\\%s_%d", model.name, chara_one_current_texture);
 			snprintf(next_texture_name, MAX_PATH, "field/model/%s_chr/%s-%d", model.isMch ? "main" : "second", model.name, chara_one_current_texture);
 
 			++chara_one_current_texture;
@@ -1384,7 +1398,7 @@ void ff8_field_effects_upload_vram1(int16_t *pos_and_size, uint8_t *texture_buff
 	ff8_upload_vram(pos_and_size, texture_buffer);
 
 	// This upload and the next one together
-	texturePacker.setTexture(texture_name, TexturePacker::TextureInfos(pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3] * 2, bpp));
+	texturePacker.setTexture(texture_name, nullptr, TexturePacker::TextureInfos(pos_and_size[0], pos_and_size[1], pos_and_size[2], pos_and_size[3] * 2, bpp));
 }
 
 int battle_get_texture_file_name_index(void *texture_buffer)
@@ -1403,6 +1417,7 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 	if (trace_all || trace_vram) ffnx_trace("%s: %d => %s\n", __func__, fileId, ff8_externals.battle_filenames[fileId]);
 
 	battle_texture_id = 0;
+	battle_file_id = fileId;
 	if (stricmp(ff8_externals.battle_filenames[fileId], "B0WAVE.DAT") == 0) {
 		// Fix redundant texture
 		strncpy(battle_texture_name, "battle/A8DEF.TIM", sizeof(battle_texture_name));
@@ -1736,17 +1751,24 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 		// Exceptionally split the texture into 3 pages, because the game will reupload page by page later (via MA8DEF textures)
 		texture_infos = TexturePacker::TextureInfos(tim.imageX(), tim.imageY(), 64, tim.imageHeight(), tim.bpp());
 		strncpy(next_texture_name, "battle/A8DEF0.TIM", sizeof(next_texture_name));
-		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos);
+		texturePacker.setTexture(next_texture_name, nullptr, texture_infos, palette_infos);
 		texture_infos = TexturePacker::TextureInfos(tim.imageX() + 64, tim.imageY(), 64, tim.imageHeight(), tim.bpp());
 		strncpy(next_texture_name, "battle/A8DEF1.TIM", sizeof(next_texture_name));
-		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos);
+		texturePacker.setTexture(next_texture_name, nullptr, texture_infos, palette_infos);
 		texture_infos = TexturePacker::TextureInfos(tim.imageX() + 128, tim.imageY(), 64, tim.imageHeight(), tim.bpp());
 		strncpy(next_texture_name, "battle/A8DEF2.TIM", sizeof(next_texture_name));
-		texturePacker.setTexture(next_texture_name, texture_infos, palette_infos);
+		texturePacker.setTexture(next_texture_name, nullptr, texture_infos, palette_infos);
 		texture_infos = TexturePacker::TextureInfos(); // Bypass next upload vram
 	} else if (battle_texture_id < 0) {
 		strncpy(next_texture_name, battle_texture_name, sizeof(next_texture_name));
 	} else {
+		// Only enabled for ennemies for now
+		if (strstr(battle_texture_name, ".DAT") != nullptr && strstr(battle_texture_name, "C0M") != nullptr) {
+			// Remove extension
+			strncpy(next_texture_name, ff8_externals.battle_filenames[battle_file_id], strlen(ff8_externals.battle_filenames[battle_file_id]) - 4);
+			next_texture_name[strlen(ff8_externals.battle_filenames[battle_file_id]) - 4] = '\0';
+			snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "textures\\battle.fs\\hd_new\\%s_%d", next_texture_name, battle_texture_id);
+		}
 		snprintf(next_texture_name, sizeof(next_texture_name), "%s-%d", battle_texture_name, battle_texture_id);
 		++battle_texture_id;
 	}

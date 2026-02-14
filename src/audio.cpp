@@ -26,6 +26,7 @@
 #include "log.h"
 #include "gamehacks.h"
 #include "utils.h"
+#include "ff8/remaster.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -56,7 +57,11 @@ void NxAudioEngine::loadConfig()
 			if (trace_all || trace_sfx) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
-			sprintf(_fullpath, "%s/%s/config.toml", basedir, external_music_path.c_str());
+			if (external_music_path.starts_with("zzz://")) {
+				sprintf(_fullpath, "%s/config.toml", external_music_path.c_str());
+			} else {
+				sprintf(_fullpath, "%s/%s/config.toml", basedir, external_music_path.c_str());
+			}
 			if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %s\n", __func__, _fullpath);
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
@@ -69,16 +74,20 @@ void NxAudioEngine::loadConfig()
 			break;
 		}
 
-		try
-		{
-			nxAudioEngineConfig[type] = toml::parse_file(_fullpath);
-		}
-		catch (const toml::parse_error &err)
-		{
-			ffnx_warning("Parse error while opening the file %s. Will continue with the default settings.\n", _fullpath);
-			ffnx_warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
+		if (fileExists(_fullpath)) {
+			try
+			{
+				nxAudioEngineConfig[type] = toml::parse_file(_fullpath);
+			}
+			catch (const toml::parse_error &err)
+			{
+				ffnx_warning("Parse error while opening the file %s. Will continue with the default settings.\n", _fullpath);
+				ffnx_warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
 
-			nxAudioEngineConfig[type] = toml::parse("");
+				nxAudioEngineConfig[type] = toml::v3::ex::parse_result();
+			}
+		} else {
+			nxAudioEngineConfig[type] = toml::v3::ex::parse_result();
 		}
 	}
 }
@@ -113,7 +122,11 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, const char* _key, NxAudioEng
 			sprintf(_out, "%s/%s/%s.%s", basedir, external_sfx_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
+			if (external_music_path.starts_with("zzz://")) {
+				sprintf(_out, "%s/%s.%s", external_music_path.c_str(), _key, extension.c_str());
+			} else {
+				sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
+			}
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
 			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, extension.c_str());
@@ -136,7 +149,9 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, const char* _key, NxAudioEng
 
 bool NxAudioEngine::fileExists(const char* filename)
 {
-	bool ret = ::fileExists(filename);
+	bool ret = remastered_edition && strncmp(filename, "zzz://", 6) == 0
+		? g_FF8ZzzArchiveOther.fileExists(filename + 6, strlen(filename + 6))
+		: ::fileExists(filename);
 
 	if (!ret && (trace_all || trace_music || trace_sfx || trace_voice || trace_ambient))
 		ffnx_warning("NxAudioEngine::%s: Could not find file %s\n", __func__, filename);

@@ -23,8 +23,11 @@
 #pragma once
 
 #include "texture_packer.h"
+#include "field/chara_one.h"
+#include <unordered_map>
 
 extern TexturePacker texturePacker;
+extern std::unordered_map<uint32_t, CharaOneModel> chara_one_models;
 
 void vram_init();
 bool ff8_vram_save(const char *fileName, Tim::Bpp bpp);

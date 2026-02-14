@@ -24,6 +24,7 @@
 #include <libpng16/png.h>
 
 #include "image.h"
+#include "../ff8/remaster.h"
 #include "../common.h"
 #include "../renderer.h"
 #include "log.h"
@@ -38,15 +39,52 @@ static void LibPngWarningCb(png_structp png_ptr, const char* warning)
     ffnx_info("libpng warning: %s\n", warning);
 }
 
-bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enum targetFormat)
+void read_png_file(png_structp png_ptr, png_bytep data, size_t size)
 {
-    FILE* file = fopen(filename, "rb");
+    bx::ReaderI *reader = (bx::ReaderI *)png_get_io_ptr(png_ptr);
+    bx::Error err;
 
-    if (!file)
-    {
-        return false;
+    int32_t r = bx::read(reader, data, size, &err);
+
+    if (!err.isOk() || r != size) {
+        png_error(png_ptr, "Cannot read data");
+    }
+}
+
+bool loadPng(const char *filename, bimg::ImageContainer &image, bimg::TextureFormat::Enum targetFormat)
+{
+    bool ret = false;
+
+    ffnx_trace("%s: %s\n", __func__, filename);
+
+    if (remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
+        Zzz::File *zzzFile = g_FF8ZzzArchiveMain.openFile(filename + 6, strnlen(filename + 6, MAX_PATH));
+
+        if (zzzFile == nullptr) {
+            return false;
+        }
+
+        ret = loadPng(zzzFile, image, targetFormat);
+
+        Zzz::closeFile(zzzFile);
+    } else {
+        bx::FileReader reader;
+        bx::Error err;
+
+        if (!bx::open(&reader, filename, &err) || !err.isOk()) {
+            return false;
+        }
+
+        ret = loadPng(&reader, image, targetFormat);
+
+        bx::close(&reader);
     }
 
+    return ret;
+}
+
+bool loadPng(bx::ReaderSeekerI *reader, bimg::ImageContainer &image, bimg::TextureFormat::Enum targetFormat)
+{
     png_infop info_ptr = nullptr;
     png_structp png_ptr = nullptr;
 
@@ -57,18 +95,13 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     size_t rowbytes = 0;
 
     uint8_t* data = nullptr;
-    size_t datasize = 0;
-
-    fseek(file, 0, SEEK_END);
-    datasize = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    size_t datasize = bx::seek(reader, 0, bx::Whence::End);
+    bx::seek(reader, 0, bx::Whence::Begin);
 
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)0, LibPngErrorCb, LibPngWarningCb);
 
     if (!png_ptr)
     {
-        fclose(file);
-
         return false;
     }
 
@@ -78,8 +111,6 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     {
         png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
 
-        fclose(file);
-
         return false;
     }
 
@@ -87,12 +118,10 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-        fclose(file);
-
         return false;
     }
 
-    png_init_io(png_ptr, file);
+    png_set_read_fn(png_ptr, reader, read_png_file);
 
     png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
 
@@ -100,17 +129,13 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-        fclose(file);
-
         return false;
     }
 
     int transforms = PNG_TRANSFORM_EXPAND;
 
-    if (targetFormat == bimg::TextureFormat::BGRA8) {
-        transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_BGR;
-    } else if (targetFormat == bimg::TextureFormat::RGBA8) {
-        transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB;
+    if (targetFormat == bimg::TextureFormat::RGBA8) {
+        transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_PACKING;
     }
 
     png_read_png(png_ptr, info_ptr, transforms, NULL);
@@ -120,12 +145,6 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     _width = png_get_image_width(png_ptr, info_ptr);
     _height = png_get_image_height(png_ptr, info_ptr);
 
-    if (color_type == PNG_COLOR_TYPE_RGB && (targetFormat == bimg::TextureFormat::BGRA8 || targetFormat == bimg::TextureFormat::RGBA8)) {
-        ffnx_warning("%s: PNG files without alpha is not supported, please convert it to RGBA for improved performance\n", __func__);
-
-        return false;
-    }
-
     rowptrs = png_get_rows(png_ptr, info_ptr);
     rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 
@@ -133,22 +152,17 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
 
     if (trace_all || trace_loaders) ffnx_trace("%s: data_size=%d width=%d height=%d bit_depth=%d color_type=%X\n", __func__, datasize, _width, _height, bit_depth, color_type);
 
-    if (!Renderer::doesItFitInMemory(datasize))
-    {
-        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+    data = (uint8_t*)driver_calloc(datasize, sizeof(uint8_t));
 
-        fclose(file);
+    if (data == NULL) {
+        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
         return false;
     }
 
-    data = (uint8_t*)driver_calloc(datasize, sizeof(uint8_t));
-
     for (png_uint_32 y = 0; y < _height; y++) memcpy(data + (rowbytes * y), rowptrs[y], rowbytes);
 
     png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-
-    fclose(file);
 
     // ------------------------------------------------------------
 
@@ -201,15 +215,14 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
 
     if (texFmt != bimg::TextureFormat::Unknown)
     {
-        mip.m_blockSize = 0;
-        mip.m_bpp = 0;
-        mip.m_data = data;
-        mip.m_depth = 0;
-        mip.m_format = texFmt;
-        mip.m_hasAlpha = true;
-        mip.m_size = datasize;
-        mip.m_width = _width;
-        mip.m_height = _height;
+        image = bimg::ImageContainer();
+        image.m_data      = data;
+        image.m_format    = texFmt;
+        image.m_size      = datasize;
+        image.m_width     = _width;
+        image.m_height    = _height;
+        image.m_numLayers = 1;
+        image.m_numMips   = 1;
 
         return true;
     }

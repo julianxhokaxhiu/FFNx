@@ -135,6 +135,30 @@ target_compile_features(${CHOCO_RELEASE_NAME}
 )
 target_link_options(${CHOCO_RELEASE_NAME} PRIVATE /PDBALTPATH:${CHOCO_RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${CHOCO_RELEASE_NAME}.def)
 
+# Remastered proxy
+set(REMASTERED_RELEASE_NAME "FFNx-Remastered-Proxy")
+file(GLOB_RECURSE remastered_source_files "${CMAKE_SOURCE_DIR}/remastered-proxy/*.cpp")
+add_library(${REMASTERED_RELEASE_NAME} SHARED ${remastered_source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+target_include_directories(
+  ${REMASTERED_RELEASE_NAME}
+  PRIVATE "${CMAKE_SOURCE_DIR}/remastered-proxy"
+)
+target_compile_options(
+  ${REMASTERED_RELEASE_NAME}
+  PRIVATE /DVERSION="${_DLL_VERSION}"
+  PRIVATE /D_CRT_SECURE_NO_WARNINGS
+  PRIVATE /DNOMINMAX
+  PRIVATE /Zc:strictStrings-
+  PRIVATE /Zc:__cplusplus
+  PRIVATE /Zc:preprocessor
+  PRIVATE /Qpar
+  PRIVATE /MP
+)
+target_compile_features(${REMASTERED_RELEASE_NAME}
+  PRIVATE cxx_std_20
+)
+target_link_options(${REMASTERED_RELEASE_NAME} PRIVATE /PDBALTPATH:${REMASTERED_RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${REMASTERED_RELEASE_NAME}.def)
+
 # Include all the source code files
 file(GLOB_RECURSE source_files "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
@@ -148,7 +172,7 @@ cmrc_add_resource_library(
 )
 
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME})
+add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME} ${REMASTERED_RELEASE_NAME})
 target_include_directories(
   ${RELEASE_NAME}
   PRIVATE "${CMAKE_SOURCE_DIR}/src"
@@ -186,7 +210,6 @@ target_link_libraries(
   imgui::imgui
   pugixml::pugixml
   tomlplusplus::tomlplusplus
-  STEAMWORKSSDK::STEAMWORKSSDK
   xxHash::xxhash
   lz4::lz4
   Vorbis::vorbisfile
@@ -307,10 +330,21 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E rename
           ${CMAKE_BINARY_DIR}/bin/${CHOCO_RELEASE_NAME}.dll
           ${CMAKE_BINARY_DIR}/bin/AF4DN.P
+  # remastered proxy .dll
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${REMASTERED_RELEASE_NAME}.dll
+          ${CMAKE_BINARY_DIR}/bin
+  # rename remastered .dll to FFVIII_EFIGS.dll
+  COMMAND ${CMAKE_COMMAND} -E rename
+          ${CMAKE_BINARY_DIR}/bin/${REMASTERED_RELEASE_NAME}.dll
+          ${CMAKE_BINARY_DIR}/bin/FFVIII_EFIGS.dll
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_BINARY_DIR}/bin/FFVIII_EFIGS.dll
+          ${CMAKE_BINARY_DIR}/bin/FFVIII_JP.dll
   # steam_api.dll
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/steamworkssdk/steam_api.dll
-          ${CMAKE_BINARY_DIR}/bin
+          ${CMAKE_BINARY_DIR}/bin/ffnx_steam_api.dll
   # .pdb
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.pdb
@@ -564,5 +598,51 @@ if(NOT "${FF8_STEAM_GAME_PATH}" STREQUAL "")
     COMMAND ${CMAKE_COMMAND} -E rename
             ${FF8_STEAM_GAME_PATH}/FFNx.toml.bak
             ${FF8_STEAM_GAME_PATH}/FFNx.toml
+  )
+endif()
+
+# Copy FFNx release to FF8 Remastered Steam game path if installed
+execute_process(
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 1026680
+  OUTPUT_VARIABLE FF8_REMASTERED_GAME_PATH
+  ERROR_VARIABLE FF8_REMASTERED_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT "${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
+  cmake_path(CONVERT "${FF8_REMASTERED_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_REMASTERED_GAME_PATH)
+  # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
+  if(NOT EXISTS "${FF8_REMASTERED_GAME_PATH}/FFNx.toml")
+    # Copy file if it doesn't exist
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF8_REMASTERED_GAME_PATH}/")
+  endif()
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_REMASTERED_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
+    # Prevent steam_api.dll to be deployed
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${CMAKE_BINARY_DIR}/bin/steam_api.dll
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF8_REMASTERED_GAME_PATH}
+    # Delete previous eax.dll
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_REMASTERED_GAME_PATH}/eax.dll
+    # Rename FFNx.dll to eax.dll
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.dll
+            ${FF8_REMASTERED_GAME_PATH}/eax.dll
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
   )
 endif()

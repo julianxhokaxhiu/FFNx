@@ -20,10 +20,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <steamworkssdk/isteamutils.h>
-#include <steamworkssdk/isteamuserstats.h>
-#include <steamworkssdk/isteamuser.h>
-
 #include <numeric>
 #include <algorithm>
 #include <unordered_set>
@@ -45,7 +41,7 @@ SteamManager::SteamManager(const achievement *achievements, int nAchievements, s
   callbackUserStatsStored(this, &SteamManager::OnUserStatsStored),
   callbackAchievementStored(this, &SteamManager::OnAchievementStored)
 {
-    this->appID = SteamUtils()->GetAppID();
+    this->appID = steam_utils()->GetAppID();
     this->nAchievements = nAchievements;
     for (std::string statName : statsNameVec) {
         this->stats.insert({statName, 0});
@@ -59,19 +55,19 @@ SteamManager::SteamManager(const achievement *achievements, int nAchievements, s
 bool SteamManager::requestStats()
 {
     // Is Steam loaded?
-    if (NULL == SteamUserStats() || NULL == SteamUser())
+    if (NULL == steam_user_stats() || NULL == steam_user())
     {
         return false;
     }
     // Is the user logged on?
-    if (!SteamUser()->BLoggedOn())
+    if (!steam_user()->BLoggedOn())
     {
         return false;
     }
     if (trace_all || trace_achievement)
         ffnx_trace("%s - Request user stats sent\n", __func__);
 
-    return SteamUserStats()->RequestCurrentStats();
+    return steam_user_stats()->RequestCurrentStats();
 }
 
 bool SteamManager::setAchievement(int achID)
@@ -84,12 +80,12 @@ bool SteamManager::setAchievement(int achID)
         this->achievementList[achID].isAchieved = true;
         if (steam_achievements_debug_mode)
         {
-            return SteamUserStats()->IndicateAchievementProgress(this->getStringAchievementID(achID), 99, 100);
+            return steam_user_stats()->IndicateAchievementProgress(this->getStringAchievementID(achID), 99, 100);
         }
         else
         {
-            SteamUserStats()->SetAchievement(this->getStringAchievementID(achID));
-            return SteamUserStats()->StoreStats();
+            steam_user_stats()->SetAchievement(this->getStringAchievementID(achID));
+            return steam_user_stats()->StoreStats();
         }
     }
 
@@ -106,7 +102,7 @@ bool SteamManager::showAchievementProgress(int achID, int progressValue, int max
         if (trace_all || trace_achievement)
             ffnx_trace("%s - Show achievement progress for achievement %s (%d/%d)\n", __func__, this->getStringAchievementID(achID), progressValue, maxValue);
 
-        return SteamUserStats()->IndicateAchievementProgress(this->getStringAchievementID(achID), progressValue, maxValue);
+        return steam_user_stats()->IndicateAchievementProgress(this->getStringAchievementID(achID), progressValue, maxValue);
     }
 
     if (trace_all || trace_achievement)
@@ -138,8 +134,8 @@ bool SteamManager::updateUserStat(const std::string &statName, int value) {
     }
     ach_trace("%s - Updating steam user stat '%s' to %d\n", __func__, statName.c_str(), value);
     this->stats.insert_or_assign(statName, value);
-    SteamUserStats()->SetStat(statName.c_str(), value);
-    return SteamUserStats()->StoreStats();
+    steam_user_stats()->SetStat(statName.c_str(), value);
+    return steam_user_stats()->StoreStats();
 }
 
 void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
@@ -151,11 +147,11 @@ void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
             if (trace_all || trace_achievement)
                 ffnx_trace("%s - received stats and achievements from Steam\n", __func__);
             this->isInitialized = true;
- 
+
             // load stats (assume all stats to be integers)
             for (auto statName: this->stats) {
                 int statValue;
-                if (SteamUserStats()->GetStat(statName.first.c_str(), &statValue)) {
+                if (steam_user_stats()->GetStat(statName.first.c_str(), &statValue)) {
                     this->stats.insert_or_assign(statName.first, statValue);
                 }
 
@@ -167,12 +163,12 @@ void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
             {
                 achievement &ach = this->achievementList[i];
 
-                SteamUserStats()->GetAchievement(ach.chAchID, &ach.isAchieved);
+                steam_user_stats()->GetAchievement(ach.chAchID, &ach.isAchieved);
                 _snprintf(ach.achName, sizeof(ach.achName), "%s",
-                          SteamUserStats()->GetAchievementDisplayAttribute(ach.chAchID,
+                          steam_user_stats()->GetAchievementDisplayAttribute(ach.chAchID,
                                                                            "name"));
                 _snprintf(ach.achDescription, sizeof(ach.achDescription), "%s",
-                          SteamUserStats()->GetAchievementDisplayAttribute(ach.chAchID,
+                          steam_user_stats()->GetAchievementDisplayAttribute(ach.chAchID,
                                                                            "desc"));
 
                 if (trace_all || trace_achievement)
@@ -936,7 +932,7 @@ void SteamAchievementsFF8::unlockMagazineAddictAchievement(const savemap_ff8_ite
         }
     }
     ach_trace("%s - trying to unlock magazine addict achivement (magazines found: %d)\n", __func__, magazines_found.size());
- 
+
     if (magazines_found.size() >= MAGAZINES_TO_COLLECT) {
         if (!(this->steamManager->isAchieved(MAGAZINES_ADDICT)))
             this->steamManager->setAchievement(MAGAZINES_ADDICT);
