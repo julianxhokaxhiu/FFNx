@@ -2361,17 +2361,18 @@ void common_setrenderstate(struct p_hundred *hundred_data, struct game_obj *game
 	// are features that we do not currently handle
 }
 
-// called by the game to apply a predetermined set of render states
-// one for each blend mode? not sure what this is used for exactly
-void common_field_74(uint32_t unknown, struct game_obj *game_object)
+void common_field_74(uint32_t blend_mode, struct game_obj *game_object)
 {
 	VOBJ(game_obj, game_object, game_object);
+	struc_81* struc_81 = VREF(game_object, field_944);
 
 	if(trace_all) ffnx_trace("dll_gfx: field_74\n");
 
-	if(unknown > 4) return;
-
-	common_setrenderstate(VREF(game_object, hundred_array[unknown]), game_object);
+	if (struc_81)
+	{
+		struc_81->blend_mode = blend_mode;
+		gl_set_blend_func(struc_81->blend_mode);
+	}
 }
 
 // called by the game to render a polygon set
