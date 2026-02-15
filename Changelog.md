@@ -11,6 +11,7 @@
 ## FF7
 
 - 60FPS: Fix battle swirl fading effect and speed
+- 60FPS: Fix field `woa_*` trigger battles by relaxing max battle count to 3
 - Core: Fix KAWAI opcode behavior ( https://github.com/julianxhokaxhiu/FFNx/issues/809 + https://github.com/julianxhokaxhiu/FFNx/issues/874 )
 - Core: Fix fr_e field blend mode
 - Graphics: Implemented smooth skinning for gltf 3d models ( https://github.com/julianxhokaxhiu/FFNx/pull/882 )

@@ -3017,6 +3017,7 @@ struct ff7_externals
 	uint32_t opcode_canm1_canm2;
 	uint32_t opcode_fade;
 	uint32_t opcode_shake;
+	int (*field_opcode_14_sub_6117CB)();
 	uint32_t field_opcode_08_sub_61D0D4;
 	void (*field_opcode_08_09_set_rotation_61DB2C)(short, byte, byte);
 	uint32_t field_opcode_AA_2A_sub_616476;
@@ -3035,6 +3036,7 @@ struct ff7_externals
 	uint32_t opcode_tutor;
 	uint32_t opcode_pc;
 	uint32_t opcode_kawai;
+	uint32_t opcode_ifub;
 	uint32_t *sfx_initialized;
 	uint32_t sfx_play_summon;
 	uint32_t sfx_load_and_play_with_speed;

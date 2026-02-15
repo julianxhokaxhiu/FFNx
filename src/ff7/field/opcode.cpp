@@ -279,5 +279,46 @@ namespace ff7::field
 
         return ret;
     }
+
+    int opcode_script_IFUB_60fps()
+    {
+        // Relax trigger battles in woa_* field maps for 60 FPS
+        if ((*common_externals.current_field_id == 709) ||
+            (*common_externals.current_field_id == 710) ||
+            (*common_externals.current_field_id == 711))
+        {
+            last_woa_field_map = *common_externals.current_field_id;
+            byte first_mem_bank = (get_field_parameter<byte>(0) >> 4) & 0xF;
+            byte second_mem_bank = get_field_parameter<byte>(0) & 0xF;
+            byte address = get_field_parameter<byte>(1);
+            byte value = get_field_parameter<byte>(2);
+            byte op_comparison = get_field_parameter<byte>(3);
+            bool is_trigger_battle_cond = false;
+            switch(*common_externals.current_field_id) {
+            case 709:
+                is_trigger_battle_cond = first_mem_bank == 5 && second_mem_bank == 0 && address == 4 && value == 0 && op_comparison == 0;
+                break;
+            case 710:
+                is_trigger_battle_cond = first_mem_bank == 5 && second_mem_bank == 0 && address == 18 && value == 0 && op_comparison == 0;
+                break;
+            case 711:
+                is_trigger_battle_cond = first_mem_bank == 5 && second_mem_bank == 0 && address == 7 && value == 0 && op_comparison == 0;
+                break;
+            default:
+                break;
+            }
+            if (is_trigger_battle_cond) {
+                if (woa_battle_count[*common_externals.current_field_id - 709] >= 3) {
+                    // jump script position to defined offset as if the IF condition is failed
+                    ff7_externals.field_curr_script_position[*ff7_externals.current_entity_id] += get_field_parameter<byte>(4) + 5;
+                    return 0;
+                }
+                if (ff7_externals.field_opcode_14_sub_6117CB()) {
+                    woa_battle_count[*common_externals.current_field_id - 709] += 1;
+                }
+            }
+        }
+        return call_original_opcode_function(IFUB);
+    }
 }
 

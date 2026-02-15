@@ -327,6 +327,9 @@ namespace ff7::field
                 patch_divide_code<short>(ff7_externals.field_initialize_variables + 0x123, common_frame_multiplier);
                 patch_code_byte(ff7_externals.field_handle_screen_fading + 0x210, 25 * common_frame_multiplier);
                 patch_code_int(ff7_externals.field_handle_screen_fading + 0x240, 25 * common_frame_multiplier - 1);
+
+                // Relax woa_* trigger battle condition
+                patch_code_dword((uint32_t)&common_externals.execute_opcode_table[IFUB], (DWORD)&opcode_script_IFUB_60fps);
             }
 
             // Smooth background movement for both 30 fps mode and 60 fps mode

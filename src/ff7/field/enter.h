@@ -25,6 +25,7 @@
 
 #include "model.h"
 #include "background.h"
+#include "opcode.h"
 #include "../widescreen.h"
 
 namespace ff7::field
@@ -47,6 +48,14 @@ namespace ff7::field
             external_data.prevCollisionRadius = 0;
 
             external_data.blinkFrameIndex = BLINKING_FRAMES;
+        }
+
+        // reset woa_* battle count at field enter
+        if(*common_externals.current_field_id != last_woa_field_map) {
+            last_woa_field_map = 0;
+            woa_battle_count[0] = 0;
+            woa_battle_count[1] = 0;
+            woa_battle_count[2] = 0;
         }
 
         if(widescreen_enabled || enable_uncrop) widescreen.initParamsFromConfig();
