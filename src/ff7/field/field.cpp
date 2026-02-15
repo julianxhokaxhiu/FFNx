@@ -90,8 +90,10 @@ namespace ff7::field
             if(ff7_externals.field_layers[i]->type == 1)
             {
                 if(i >= 24) blend_mode = 0;
-                else if(i >= 19) blend_mode = 1;
-                else if(i >= 15) blend_mode = 2;
+                else if(i >= 15) blend_mode = 1;
+
+                // fr_e map uses this blend mode for these specific texture slots
+                if(i >= 15 && i <= 18 && *common_externals.current_field_id == 347) blend_mode = 2;
             }
             else if(ff7_externals.field_layers[i]->type == 2)
             {
