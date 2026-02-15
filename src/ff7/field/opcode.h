@@ -51,6 +51,9 @@ namespace ff7::field
 
     std::array<uint32_t, 256> original_opcode_table {0};
 
+    WORD last_woa_field_map = 0;
+    int woa_battle_count[3] = {0, 0, 0};
+
     short ff7_opcode_multiply_get_bank_value(short bank, short address);
     short ff7_opcode_divide_get_bank_value(short bank, short address);
     int opcode_script_partial_animation_wrapper();
@@ -61,6 +64,7 @@ namespace ff7::field
     uint8_t opcode_IFSW_compare_sub();
     int opcode_script_FADE();
     int opcode_script_IFKEY();
+    int opcode_script_IFUB_60fps();
 
     // Thanks for myst6re https://github.com/myst6re/makoureactor/blob/5231723307901043941356ad1e42d26725305edf/core/field/Opcode.h#L71
     enum FieldOpcode {
