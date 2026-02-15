@@ -155,7 +155,7 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 			_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, tex_path.c_str(), name, palette_index, mod_ext[idx].c_str());
 		}
 
-		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
+		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", false);
 
 		if(ret)
 		{
@@ -242,7 +242,7 @@ uint32_t load_animated_texture(const void* data, uint32_t dataSize, const char* 
 	{
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.%s", basedir, tex_path.c_str(), name, palette_index, hash, mod_ext[idx].c_str());
 
-		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
+		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", false);
 
 		if(ret)
 		{
@@ -259,7 +259,7 @@ uint32_t load_animated_texture(const void* data, uint32_t dataSize, const char* 
 	{
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i.%s", basedir, tex_path.c_str(), name, palette_index, mod_ext[idx].c_str());
 
-		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", true);
+		ret = load_texture_helper(filename, width, height, mod_ext[idx] == "png", false);
 
 		if(ret)
 		{
