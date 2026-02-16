@@ -132,10 +132,20 @@ void main()
             //    (After the split, that toGamma() can be changed.)
             // In sRGB mode, our working gamut and gamma is sRGB.
             // Also, in sRGB mode, we simply ignore the video's gamma and gamut and treat them as if they were sRGB.
-            // This is wrong in almost every case, but our project maintainer insists upon it.
+            // This is wrong in almost every case, but simple, fast, and consistent with how 2D/3D assets are rendered in sRGB mode.
 
             // fetch YUV from 3 textures
             // TODO: Look at the feasibility of passing chroma position as a uniform so we can resample YUV 4:2:0 etc properly in the shader instead of on the CPU in swscale
+            // See https://docs.amd.com/r/en-US/pg231-v-proc-ss/4-2-0
+            // Depending on chroma sample position, for each luma sample, for each axis, there are 3 possibilities:
+            //    1. It's in phase with a chroma sample.
+            //        In this case, use that chroma sample.
+            //    2. It's fully out-of-phase with the chroma samples.
+            //        In this case, use a 50/50 average with the next chroma sample in that direction
+            //    3. It's halfway out-of-phase with the chroma samples.
+            //        In this case, use a 75/25 average with the next chroma sample in that direction.
+            // For luma samples out of phase on both axes, average 4 samples. (The operation is separable.)
+            // Better results can be obtained using a larger kernel, but 2 samples is "good enough" for AMD to use it as the default.
             vec3 yuv = vec3(
                 texture2D(tex_0, v_texcoord0.xy).r,
                 texture2D(tex_1, v_texcoord0.xy).r,
