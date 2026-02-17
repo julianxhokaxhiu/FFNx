@@ -27,13 +27,9 @@ $input v_color0, v_texcoord0
 SAMPLER2D(tex_0, 0);
 
 uniform vec4 FSHDRFlags;
-uniform vec4 FSMovieFlags;
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
-
-#define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
-#define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001
 
 void main()
 {
@@ -41,14 +37,8 @@ void main()
 
 	if (isHDR) {
 		// back to linear for gamut conversion and PQ gamma curve
-		if (isOverallNTSCJColorGamut){
-			color.rgb = CRTSimulation(color.rgb); // CRT gamma-space in, linear out
-			color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
-		}
-		else {
-			color.rgb = toLinear(color.rgb);
-			color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
-		}
+		color.rgb = toLinear(color.rgb);
+		color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
 		color.rgb = ApplyREC2084Curve(color.rgb, monitorNits);
 		// dither because we increased bit depth
 		// dither in gamma space so dither step size is proportional to quantization step size
@@ -56,13 +46,6 @@ void main()
 		ivec2 dimensions = textureSize(tex_0, 0);
 		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
 	}
-	else if (isOverallNTSCJColorGamut){
-		color.rgb = GamutLUT(color.rgb); // AssignGamutLUT() in renderer.cpp should have bound the correct LUT
-		color.rgb = toGamma(color.rgb);
-		ivec2 dimensions = textureSize(tex_0, 0);
-		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
-	}
-	// If not HDR mode nor NTSC-J mode, we should already be in gamma-space sRGB.
-
+	// If not HDR mode, we should already be in gamma-space sRGB.
 	gl_FragColor = color;
 }
