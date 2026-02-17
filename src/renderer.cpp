@@ -272,6 +272,8 @@ void Renderer::updateRendererShaderPaths()
     fragmentPathSmooth += ".smooth" + shaderSuffix + ".frag";
     vertexPostPath += ".smooth" + shaderSuffix + ".vert";
     fragmentPostPath += ".smooth" + shaderSuffix + ".frag";
+    vertexPostNTSCJPath += ".smooth" + shaderSuffix + ".vert";
+    fragmentPostNTSCJPath += ".smooth" + shaderSuffix + ".frag";
     vertexOverlayPath += ".smooth" + shaderSuffix + ".vert";
     fragmentOverlayPath += ".smooth" + shaderSuffix + ".frag";
     vertexLightingPathFlat += ".flat" + shaderSuffix + ".vert";
@@ -459,7 +461,12 @@ void Renderer::renderFrame()
         1, 3, 2
     };
 
-    backendProgram = RendererProgram::POSTPROCESSING;
+    if (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ){
+      backendProgram = RendererProgram::POSTPROCESSING_NTSCJ;
+    }
+    else {
+      backendProgram = RendererProgram::POSTPROCESSING;
+    }
     backendViewId++;
     {
         bool needsToDraw = internalState.bHasDrawBeenDone;
@@ -697,7 +704,7 @@ void Renderer::bindTextures()
                     case RendererTextureSlot::TEX_V:
                         if (!internalState.bIsMovie && idx > RendererTextureSlot::TEX_Y) handle = BGFX_INVALID_HANDLE;
 
-                        if (backendProgram == RendererProgram::POSTPROCESSING)
+                        if ((backendProgram == RendererProgram::POSTPROCESSING) || (backendProgram == RendererProgram::POSTPROCESSING_NTSCJ))
                         {
                             flags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
                         }
@@ -746,7 +753,7 @@ void Renderer::AssignGamutLUT()
 
 
   // NTSCJ mode post-processing
-  if ((backendProgram == RendererProgram::POSTPROCESSING) && (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ)){
+  if ((backendProgram == RendererProgram::POSTPROCESSING_NTSCJ) && (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ)){
     LoadGamutLUT(INDEX_LUT_NTSCJ_TO_SRGB); // load LUT if not already loaded
     useTexture(GLUTHandleNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
   }
@@ -935,6 +942,12 @@ void Renderer::init()
     backendProgramHandles[RendererProgram::POSTPROCESSING] = bgfx::createProgram(
         getShader(vertexPostPath.c_str()),
         getShader(fragmentPostPath.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::POSTPROCESSING_NTSCJ] = bgfx::createProgram(
+        getShader(vertexPostNTSCJPath.c_str()),
+        getShader(fragmentPostNTSCJPath.c_str()),
         true
     );
 
@@ -1338,7 +1351,7 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
     // Set current view rect
-    if (backendProgram == RendererProgram::POSTPROCESSING)
+    if ((backendProgram == RendererProgram::POSTPROCESSING) || (backendProgram == RendererProgram::POSTPROCESSING_NTSCJ))
     {
         bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
 

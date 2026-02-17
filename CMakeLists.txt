@@ -232,7 +232,7 @@ target_link_options(
 )
 
 # SHADER COMPILATION
-set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.blit")
+set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.post.ntscj" "FFNx.blit")
 foreach(FFNX_SHADER IN LISTS FFNX_SHADERS)
   foreach(BGFX_VARYING flat smooth)
     add_custom_command(

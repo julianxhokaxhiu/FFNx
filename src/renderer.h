@@ -248,6 +248,7 @@ private:
         LIGHTING_SMOOTH,
         FIELD_SHADOW,
         POSTPROCESSING,
+        POSTPROCESSING_NTSCJ,
         OVERLAY,
         BLIT,
         COUNT
@@ -338,6 +339,8 @@ private:
     std::string fragmentPathSmooth = "shaders/FFNx";
     std::string vertexPostPath = "shaders/FFNx.post";
     std::string fragmentPostPath = "shaders/FFNx.post";
+    std::string vertexPostNTSCJPath = "shaders/FFNx.post.ntscj";
+    std::string fragmentPostNTSCJPath = "shaders/FFNx.post.ntscj";
     std::string vertexOverlayPath = "shaders/FFNx.overlay";
     std::string fragmentOverlayPath = "shaders/FFNx.overlay";
     std::string vertexLightingPathFlat = "shaders/FFNx.lighting";
