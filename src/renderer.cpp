@@ -286,6 +286,10 @@ void Renderer::updateRendererShaderPaths()
     fragmentFieldShadowPath += ".smooth" + shaderSuffix + ".frag";
     vertexBlitPath += ".flat" + shaderSuffix + ".vert";
     fragmentBlitPath += ".flat" + shaderSuffix + ".frag";
+    vertexYUVMoviePath += ".flat" + shaderSuffix + ".vert";
+    fragmentYUVMoviePath += ".flat" + shaderSuffix + ".frag";
+    vertexYUVMovieTrueColorPath += ".flat" + shaderSuffix + ".vert";
+    fragmentYUVMovieTrueColorPath += ".flat" + shaderSuffix + ".frag";
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
@@ -990,6 +994,18 @@ void Renderer::init()
     backendProgramHandles[RendererProgram::BLIT] = bgfx::createProgram(
         getShader(vertexBlitPath.c_str()),
         getShader(fragmentBlitPath.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::YUVMOVIE] = bgfx::createProgram(
+        getShader(vertexYUVMoviePath.c_str()),
+        getShader(fragmentYUVMoviePath.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::YUVMOVIE_TRUECOLOR] = bgfx::createProgram(
+        getShader(vertexYUVMovieTrueColorPath.c_str()),
+        getShader(fragmentYUVMovieTrueColorPath.c_str()),
         true
     );
 
@@ -2237,6 +2253,26 @@ void Renderer::isFullRange(bool flag)
 
 void Renderer::isYUV(bool flag)
 {
+    if (flag){
+      // remember prior backend
+      if (!internalState.bIsMovieYUV){
+        priorBackend = backendProgram;
+      }
+      // set YUV movie backend
+      if (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ){
+        backendProgram = RendererProgram::YUVMOVIE_TRUECOLOR;
+      }
+      else {
+        backendProgram = RendererProgram::YUVMOVIE;
+      }
+    }
+    else {
+      // restore prior backend
+      if (internalState.bIsMovieYUV){
+        backendProgram = priorBackend;
+      }
+    }
+    // set internal flag
     internalState.bIsMovieYUV = flag;
 };
 

@@ -251,6 +251,8 @@ private:
         POSTPROCESSING_NTSCJ,
         OVERLAY,
         BLIT,
+        YUVMOVIE,
+        YUVMOVIE_TRUECOLOR,
         COUNT
     };
 
@@ -353,9 +355,14 @@ private:
     std::string fragmentFieldShadowPath = "shaders/FFNx.field.shadow";
     std::string vertexBlitPath = "shaders/FFNx.blit";
     std::string fragmentBlitPath = "shaders/FFNx.blit";
+    std::string vertexYUVMoviePath = "shaders/FFNx.yuvmovie";
+    std::string fragmentYUVMoviePath = "shaders/FFNx.yuvmovie"
+    std::string vertexYUVMovieTrueColorPath = "shaders/FFNx.yuvmovie.truecolor";
+    std::string fragmentYUVMovieTrueColorPath = "shaders/FFNx.yuvmovie.truecolor"
 
     bgfx::ViewId backendViewId = 1;
     RendererProgram backendProgram = RendererProgram::SMOOTH;
+    RendererProgram priorBackend = RendererProgram::SMOOTH;
 
     std::vector<bgfx::ProgramHandle> backendProgramHandles = std::vector<bgfx::ProgramHandle>(RendererProgram::COUNT, BGFX_INVALID_HANDLE);
 
