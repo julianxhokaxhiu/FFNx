@@ -70,8 +70,6 @@ uniform vec4 gameScriptedLightColor;
 #define doAlphaTest FSAlphaFlags.z > 0.0
 
 // ---
-#define isFullRange FSMiscFlags.x > 0.0
-#define isYUV FSMiscFlags.y > 0.0
 #define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
 

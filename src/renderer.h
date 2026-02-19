@@ -533,6 +533,7 @@ public:
     void setCullMode(RendererCullMode mode = RendererCullMode::DISABLED);
     void doDepthTest(bool flag = false);
     void doDepthWrite(bool flag = false);
+    void setYUVMovieBackend();
 
     // Scissor test
     void doScissorTest(bool flag = false);

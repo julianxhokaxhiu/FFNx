@@ -286,10 +286,10 @@ void Renderer::updateRendererShaderPaths()
     fragmentFieldShadowPath += ".smooth" + shaderSuffix + ".frag";
     vertexBlitPath += ".flat" + shaderSuffix + ".vert";
     fragmentBlitPath += ".flat" + shaderSuffix + ".frag";
-    vertexYUVMoviePath += ".flat" + shaderSuffix + ".vert";
-    fragmentYUVMoviePath += ".flat" + shaderSuffix + ".frag";
-    vertexYUVMovieTrueColorPath += ".flat" + shaderSuffix + ".vert";
-    fragmentYUVMovieTrueColorPath += ".flat" + shaderSuffix + ".frag";
+    vertexYUVMoviePath += ".smooth" + shaderSuffix + ".vert";
+    fragmentYUVMoviePath += ".smooth" + shaderSuffix + ".frag";
+    vertexYUVMovieTrueColorPath += ".smooth" + shaderSuffix + ".vert";
+    fragmentYUVMovieTrueColorPath += ".smooth" + shaderSuffix + ".frag";
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
@@ -2253,6 +2253,7 @@ void Renderer::isFullRange(bool flag)
 
 void Renderer::isYUV(bool flag)
 {
+    /*
     if (flag){
       // remember prior backend
       if (!internalState.bIsMovieYUV){
@@ -2271,7 +2272,7 @@ void Renderer::isYUV(bool flag)
       if (internalState.bIsMovieYUV){
         backendProgram = priorBackend;
       }
-    }
+    }*/
     // set internal flag
     internalState.bIsMovieYUV = flag;
 };
@@ -2341,6 +2342,17 @@ void Renderer::setInterpolationQualifier(RendererInterpolationQualifier qualifie
         backendProgram = RendererProgram::SMOOTH;
         if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: SMOOTH\n", __func__);
         break;
+    }
+}
+
+void Renderer::setYUVMovieBackend(){
+    if (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ){
+        backendProgram = RendererProgram::YUVMOVIE_TRUECOLOR;
+        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: YUVMOVIE_TRUECOLOR\n", __func__);
+    }
+    else {
+        backendProgram = RendererProgram::YUVMOVIE;
+        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: YUVMOVIE\n", __func__);
     }
 }
 

@@ -40,7 +40,6 @@ uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
 uniform vec4 WMFlags;
-uniform vec4 FSMovieFlags;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
 uniform vec4 gameLightingFlags;
@@ -72,30 +71,11 @@ uniform vec4 gameScriptedLightColor;
 
 
 // ---
-#define isFullRange FSMiscFlags.x > 0.0
-#define isYUV FSMiscFlags.y > 0.0
 #define modulateAlpha FSMiscFlags.z > 0.0
 #define isMovie FSMiscFlags.w > 0.0
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
-
-#define isBT601ColorMatrix abs(FSMovieFlags.x - 0.0) < 0.00001
-#define isBT709ColorMatrix abs(FSMovieFlags.x - 1.0) < 0.00001
-#define isBRG24ColorMatrix abs(FSMovieFlags.x - 2.0) < 0.00001
-
-#define isSRGBColorGamut abs(FSMovieFlags.y - 0.0) < 0.00001
-#define isNTSCJColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
-#define isSMPTECColorGamut abs(FSMovieFlags.y - 2.0) < 0.00001
-#define isRawP22ColorGamut abs(FSMovieFlags.y - 3.0) < 0.00001
-
-#define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
-#define is170MGamma abs(FSMovieFlags.z - 1.0) < 0.00001
-#define isCRTGamma abs(FSMovieFlags.z - 2.0) < 0.00001
-
-
-#define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
-#define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001
 
 #define isTimeEnabled TimeData.x > 0.0
 #define isTimeFilterEnabled TimeData.x > 0.0 && TimeData.y > 0.0
@@ -114,190 +94,73 @@ void main()
 
     if (isTexture)
     {
-        // TODO: relocate this stanza to a separate shader for YUVmovies
-        // All movies except non-steam FF8 use YUV plumbing. (Including FF7 original movies.)
-        if (isYUV)
-        {
-            // At this juncture, ffmpeg has decoded our video file,
-            // and the metadata we need has been passed as uniforms.
-            // Now we need to do the following:
-            //  1. If limited (tv) range, expand to full (pc) range
-            //  2. Convert YUV to gamma-space R'G'B'
-            //  3. Convert gamma-space R'G'B' to linear RGB.
-            //  4. Convert from the video's gamut to our working gamut.
-            //  5. Convert from linear R'G'B' to our working gamma-space.
-            // In NTSC-J mode, our working gamut and gamma is uncorrected NTSC-J (i.e., before the CRT's color correction circuit).
-            // Temporary: Until this shader gets split off, we may need an extra gamma conversion
-            //    to get in the right space ahead of the toGamma() at the bottom of this shader.
-            //    (After the split, that toGamma() can be changed.)
-            // In sRGB mode, our working gamut and gamma is sRGB.
-            // Also, in sRGB mode, we simply ignore the video's gamma and gamut and treat them as if they were sRGB.
-            // This is wrong in almost every case, but simple, fast, and consistent with how 2D/3D assets are rendered in sRGB mode.
+        // Handling for YUV movies was moved to separate shader(s)
 
-            // fetch YUV from 3 textures
-            // TODO: Look at the feasibility of passing chroma position as a uniform so we can resample YUV 4:2:0 etc properly in the shader instead of on the CPU in swscale
-            // See https://docs.amd.com/r/en-US/pg231-v-proc-ss/4-2-0
-            // Depending on chroma sample position, for each luma sample, for each axis, there are 3 possibilities:
-            //    1. It's in phase with a chroma sample.
-            //        In this case, use that chroma sample.
-            //    2. It's fully out-of-phase with the chroma samples.
-            //        In this case, use a 50/50 average with the next chroma sample in that direction
-            //    3. It's halfway out-of-phase with the chroma samples.
-            //        In this case, use a 75/25 average with the next chroma sample in that direction.
-            // For luma samples out of phase on both axes, average 4 samples. (The operation is separable.)
-            // Better results can be obtained using a larger kernel, but 2 samples is "good enough" for AMD to use it as the default.
-            vec3 yuv = vec3(
-                texture2D(tex_0, v_texcoord0.xy).r,
-                texture2D(tex_1, v_texcoord0.xy).r,
-                texture2D(tex_2, v_texcoord0.xy).r
-            );
-
-            // If the video is limited range, dither ahead of increasing the effective bit depth
-            if (!(isFullRange)){
-                ivec2 ydimensions = textureSize(tex_0, 0);
-                ivec2 udimensions = textureSize(tex_1, 0);
-                ivec2 vdimensions = textureSize(tex_2, 0);
-                yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 256.0, 1.0);
-                // clamp back to tv range
-                yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
-            }
-
-            // Convert YUV to linear R'G'B', expanding range if needed
-            if (isBT601ColorMatrix){
-                yuv.g = yuv.g - (128.0/255.0);
-                yuv.b = yuv.b - (128.0/255.0);
-                if (isFullRange){
-                    color.rgb = toRGB_bt601_fullrange(yuv);
-                }
-                else {
-                    yuv.r = saturate(yuv.r - (16.0/255.0));
-                    color.rgb = toRGB_bt601_tvrange(yuv);
-                }
-            }
-            else if (isBT709ColorMatrix){
-                yuv.g = yuv.g - (128.0/255.0);
-                yuv.b = yuv.b - (128.0/255.0);
-                if (isFullRange){
-                    color.rgb = toRGB_bt709_fullrange(yuv);
-                }
-                else {
-                    yuv.r = saturate(yuv.r - (16.0/255.0));
-                    color.rgb = toRGB_bt709_tvrange(yuv);
-                }
-            }
-            else { //isBRG24ColorMatrix
-                // This is a special case where we converted the BRG24 movies from the PC98 edition of FF7 to planar RGB in order to pass them through the YUV plumbing.
-                color.rgb = yuv;
-            }
-
-            // TODO: Split into two separate shaders, one with this stanza, and one without
-            if (isOverallNTSCJColorGamut){
-                // Convert gamma to CRT gamma (BT1886 Appenddix 1) and gamut to NTSC-J
-
-                // Do nothing for NTSC-J gamut; it's already correct. (CRT gamma is implied.)
-
-                // For uncorrected P22, multiply by the inverse of the matrix for the CRT color correction circuit,
-                // and the final NTSC-J-to-sRGB/rec2020 conversion will roundtrip that,
-                // leading to the desired overall result
-                if (isRawP22ColorGamut){
-                    color.rgb = CRTUncorrect(color.rgb);
-                    // (CRT gamma is implied.)
-                }
-                // Otherwise we need to do a full conversion
-                else if ((isSRGBColorGamut) || (isSMPTECColorGamut)) {
-                    if (isCRTGamma){
-                        color.rgb = toLinearBT1886Appx1Fast(color.rgb);
-                    }
-                    else if (is170MGamma){
-                        color.rgb = toLinearSMPTE170M(color.rgb);
-                    }
-                    else {
-                        color.rgb = toLinear(color.rgb);
-                    }
-                    // This LUT goes backards from linear RGB to uncorrected gamma-space NTSC-J
-                    // AssignGamutLUT() in renderer.cpp should have bound the correct LUT
-                    color.rgb = GamutLUTBackwards(color.rgb);
-                }
-            }
-            // for sRGB mode:
-            //    ignore the movie's gamma and use sRGB instead
-            //    ignore the movie's gamut and use sRGB instead
-
-            // temporary!!!
-            // linearize as sRGB to roundtrip the toGamma() at the bottom of this shader
-            color.rgb = toLinear(color.rgb);
-
-            // don't forget to set alpha
-            color.a = 1.0;
-        }
         // This stanza pertains to 2D textures (aside from YUV movies) and textures on 3D objects if advanced lighting is disabled
+        vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
+
+        if (doAlphaTest)
+        {
+            //NEVER
+            if (isAlphaNever) discard;
+
+            //LESS
+            if (isAlphaLess)
+            {
+                if (!(texture_color.a < inAlphaRef)) discard;
+            }
+
+            //EQUAL
+            if (isAlphaEqual)
+            {
+                if (!(texture_color.a == inAlphaRef)) discard;
+            }
+
+            //LEQUAL
+            if (isAlphaLEqual)
+            {
+                if (!(texture_color.a <= inAlphaRef)) discard;
+            }
+
+            //GREATER
+            if (isAlphaGreater)
+            {
+                if (!(texture_color.a > inAlphaRef)) discard;
+            }
+
+            //NOTEQUAL
+            if (isAlphaNotEqual)
+            {
+                if (!(texture_color.a != inAlphaRef)) discard;
+            }
+
+            //GEQUAL
+            if (isAlphaGEqual)
+            {
+                if (!(texture_color.a >= inAlphaRef)) discard;
+            }
+        }
+
+        // check for some discard conditions
+        if (isMovie) texture_color.a = 1.0;
+        if (isNotFBTexture && texture_color.a == 0.0) discard;
+        if (isFBTexture)
+        {
+            if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
+
+            // This was previously in gamma space, so linearize again.
+            texture_color.rgb = toLinear(texture_color.rgb);
+        }
+
+        // multiply by v_color0
+        if (modulateAlpha) color *= texture_color;
         else
         {
-            vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
-
-            if (doAlphaTest)
-            {
-                //NEVER
-                if (isAlphaNever) discard;
-
-                //LESS
-                if (isAlphaLess)
-                {
-                    if (!(texture_color.a < inAlphaRef)) discard;
-                }
-
-                //EQUAL
-                if (isAlphaEqual)
-                {
-                    if (!(texture_color.a == inAlphaRef)) discard;
-                }
-
-                //LEQUAL
-                if (isAlphaLEqual)
-                {
-                    if (!(texture_color.a <= inAlphaRef)) discard;
-                }
-
-                //GREATER
-                if (isAlphaGreater)
-                {
-                    if (!(texture_color.a > inAlphaRef)) discard;
-                }
-
-                //NOTEQUAL
-                if (isAlphaNotEqual)
-                {
-                    if (!(texture_color.a != inAlphaRef)) discard;
-                }
-
-                //GEQUAL
-                if (isAlphaGEqual)
-                {
-                    if (!(texture_color.a >= inAlphaRef)) discard;
-                }
-            }
-
-            // check for some discard conditions
-            if (isMovie) texture_color.a = 1.0;
-            if (isNotFBTexture && texture_color.a == 0.0) discard;
-            if (isFBTexture)
-            {
-                if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
-
-                // This was previously in gamma space, so linearize again.
-                texture_color.rgb = toLinear(texture_color.rgb);
-            }
-
-            // multiply by v_color0
-            if (modulateAlpha) color *= texture_color;
-            else
-            {
-                color.rgb *= texture_color.rgb;
-                color.a = texture_color.a;
-            }
-
+            color.rgb *= texture_color.rgb;
+            color.a = texture_color.a;
         }
-    }
+
+    } //end if (isTexture)
 
     if (isTimeFilterEnabled) color.rgb *= TimeColor.rgb;
 
@@ -321,14 +184,5 @@ void main()
         color.rgb *= gameGlobalLightColor.w * lightAmbient;
     }
     
-    // TODO: relocate this stanza to a separate shader for YUVmovies
-    // if we did a movie gamut conversion, and won't dither later, then dither now
-    // do this in gamma space so that dither step size is proportional to quantization step size
-    if (isTexture && !(isOverallNTSCJColorGamut) && isYUV && !(isSRGBColorGamut))
-    {
-      ivec2 dimensions = textureSize(tex_0, 0);
-      color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 4320.0);
-    }
-
     gl_FragColor = color;
 }
