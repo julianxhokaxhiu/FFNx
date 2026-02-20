@@ -182,7 +182,6 @@ namespace RendererTextureSlot {
 
 enum GamutLUTIndexType{
     INDEX_LUT_NTSCJ_TO_SRGB,
-    INDEX_LUT_SMPTEC_TO_SRGB,
     INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
     INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC
 };

@@ -138,7 +138,7 @@ void main()
     }
 
 
-    // Convert gamma to CRT gamma (BT1886 Appenddix 1) and gamut to NTSC-J
+    // Convert gamma to CRT gamma (BT1886 Appendix 1) and gamut to NTSC-J
 
     // Do nothing for NTSC-J gamut; it's already correct. (CRT gamma is implied.)
 
