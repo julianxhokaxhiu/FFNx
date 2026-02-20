@@ -677,14 +677,12 @@ void draw_yuv_frame(uint32_t buffer_index)
 		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
 
 	newRenderer.isMovie(true);
-	newRenderer.isYUV(true); // this changes the backend renderer
 	newRenderer.isFullRange(fullrange_input);
 	newRenderer.setColorMatrix(colormatrix);
 	newRenderer.setColorGamut(colorgamut);
 	newRenderer.setGammaType(gammatype);
 	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isMovie(false);
-	newRenderer.isYUV(false); // this changes the backend renderer
 	newRenderer.isFullRange(false);
 	newRenderer.setColorMatrix(COLORMATRIX_BT601);
 	newRenderer.setColorGamut(COLORGAMUT_SRGB);

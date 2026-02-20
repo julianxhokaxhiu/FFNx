@@ -72,7 +72,6 @@ uniform vec4 gameScriptedLightColor;
 
 // ---
 #define modulateAlpha FSMiscFlags.z > 0.0
-#define isMovie FSMiscFlags.w > 0.0
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
@@ -88,13 +87,12 @@ uniform vec4 gameScriptedLightColor;
 void main()
 {
     // v_color0 is used for solid 2D colors (e.g., textbox backgrounds), solid-color polygon faces (e.g., all original FF7 models), and colorizing textures
-    // This variable is clobbered for YUV movies.
     vec4 color = v_color0;
     color.rgb = toLinear(color.rgb);
 
     if (isTexture)
     {
-        // Handling for YUV movies was moved to separate shader(s)
+        // Handling for YUV movies was moved to separate shaders
 
         // This stanza pertains to 2D textures (aside from YUV movies) and textures on 3D objects if advanced lighting is disabled
         vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
@@ -142,7 +140,6 @@ void main()
         }
 
         // check for some discard conditions
-        if (isMovie) texture_color.a = 1.0;
         if (isNotFBTexture && texture_color.a == 0.0) discard;
         if (isFBTexture)
         {

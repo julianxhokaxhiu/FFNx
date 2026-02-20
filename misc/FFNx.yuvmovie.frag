@@ -20,8 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-// This shader is always used for 2D elements.
-// This shader is used for 3D elements when advanced lighting is disabled.
+// This shader is always used for YUV movies if NTSC-J mode is disabled.
 
 $input v_color0, v_texcoord0, v_position0, v_normal0
 
@@ -34,14 +33,13 @@ SAMPLER2D(tex_2, 2);
 
 uniform mat4 invViewMatrix;
 
-uniform vec4 FSMiscFlags; //TODO: Move isFullRange into movie flags and remove this
 uniform vec4 FSMovieFlags;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
 
 
 // ---
-#define isFullRange FSMiscFlags.x > 0.0
+#define isFullRange FSMovieFlags.w > 0.0
 
 
 #define isBT601ColorMatrix abs(FSMovieFlags.x - 0.0) < 0.00001

@@ -71,7 +71,6 @@ uniform vec4 gameScriptedLightColor;
 
 // ---
 #define modulateAlpha FSMiscFlags.z > 0.0
-#define isMovie FSMiscFlags.w > 0.0
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
@@ -104,7 +103,6 @@ void main()
 {
     // v_color0 is used for solid-color polygon faces (e.g., all original FF7 models) and colorizing textures
     // (Not used for solid-color 2D elements b/c this shader isn't used for 2D elements.)
-    // This variable is clobbered for YUV movies.
     vec4 color = v_color0; //previously linearized in vertex shader
     vec4 color_nml = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 color_pbr = vec4(0.0, 0.0, 0.0, 0.0);
@@ -162,7 +160,6 @@ void main()
         }
 
         // check for some discard conditions
-        if (isMovie) texture_color.a = 1.0;
         if (isNotFBTexture && texture_color.a == 0.0) discard;
         if (isFBTexture)
         {

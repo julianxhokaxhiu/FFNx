@@ -279,7 +279,6 @@ private:
         bool bModulateAlpha = false;
         bool bIsMovie = false;
         bool bIsMovieFullRange = false;
-        bool bIsMovieYUV = false;
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
         bool bIsFogEnabled = false;
@@ -512,7 +511,6 @@ public:
     void isTexture(bool flag = false);
     void isFBTexture(bool flag = false);
     void isFullRange(bool flag = false);
-    void isYUV(bool flag = false);
     void doModulateAlpha(bool flag = false);
     void doTextureFiltering(bool flag = false);
     void doMirrorTextureWrap(bool flag = false);

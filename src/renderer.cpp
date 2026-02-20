@@ -119,8 +119,8 @@ void Renderer::setCommonUniforms()
     if (uniform_log) ffnx_trace("%s: FSAlphaFlags XYZW(inAlphaRef %f, inAlphaFunc %f, bDoAlphaTest %f, NULL)\n", __func__, internalState.FSAlphaFlags[0], internalState.FSAlphaFlags[1], internalState.FSAlphaFlags[2]);
 
     internalState.FSMiscFlags = {
-        (float)internalState.bIsMovieFullRange,
-        (float)internalState.bIsMovieYUV,
+        NULL,
+        NULL,
         (float)internalState.bModulateAlpha,
         (float)internalState.bIsMovie
     };
@@ -153,7 +153,7 @@ void Renderer::setCommonUniforms()
         (float)internalState.bIsMovieColorMatrix,
         (float)internalState.bIsMovieColorGamut,
         (float)internalState.bIsMovieGammaType,
-        (float)internalState.bIsOverallColorGamut,
+        (float)internalState.bIsMovieFullRange,
     };
     if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, overall color gamut %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
 
@@ -397,7 +397,6 @@ void Renderer::resetState()
     setAlphaRef();
     setInterpolationQualifier();
     isTLVertex();
-    isYUV();
     isFullRange();
     isFBTexture();
     isTexture();
@@ -2249,32 +2248,6 @@ void Renderer::isFBTexture(bool flag)
 void Renderer::isFullRange(bool flag)
 {
     internalState.bIsMovieFullRange = flag;
-};
-
-void Renderer::isYUV(bool flag)
-{
-    /*
-    if (flag){
-      // remember prior backend
-      if (!internalState.bIsMovieYUV){
-        priorBackend = backendProgram;
-      }
-      // set YUV movie backend
-      if (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ){
-        backendProgram = RendererProgram::YUVMOVIE_TRUECOLOR;
-      }
-      else {
-        backendProgram = RendererProgram::YUVMOVIE;
-      }
-    }
-    else {
-      // restore prior backend
-      if (internalState.bIsMovieYUV){
-        backendProgram = priorBackend;
-      }
-    }*/
-    // set internal flag
-    internalState.bIsMovieYUV = flag;
 };
 
 void Renderer::doModulateAlpha(bool flag)
