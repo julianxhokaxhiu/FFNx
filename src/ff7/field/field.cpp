@@ -290,6 +290,9 @@ namespace ff7::field
         replace_call_function(ff7_externals.field_update_models_positions + 0x7C, ff7_field_update_models_rotation_new);
         memcpy_code(ff7_externals.field_update_models_positions + 0x81, jump_to_OFST_update, sizeof(jump_to_OFST_update));
 
+        // woa_* background animation fix
+        replace_call_function(ff7_externals.field_loop_sub_63C17F + 0x1A6, ff7_field_update_background_original);
+
         if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
         {
             if(ff7_fps_limiter == FPS_LIMITER_60FPS)
@@ -333,7 +336,7 @@ namespace ff7::field
 
             // Smooth background movement for both 30 fps mode and 60 fps mode
             replace_call_function(ff7_externals.field_draw_everything + 0x34, ff7_field_set_world_coordinate_640EB7);
-            replace_call_function(ff7_externals.field_loop_sub_63C17F + 0x1A6, ff7_field_update_background);
+            replace_call_function(ff7_externals.field_loop_sub_63C17F + 0x1A6, ff7_field_update_background_smooth);
             replace_call_function(ff7_externals.compute_and_submit_draw_gateways_arrows_64DA3B + 0x357, ff7_field_submit_draw_arrow);
             replace_call_function(ff7_externals.compute_and_submit_draw_gateways_arrows_64DA3B + 0x63C, ff7_field_submit_draw_arrow);
             replace_call_function(ff7_externals.field_submit_draw_pointer_hand_60D572 + 0x284, ff7_field_submit_draw_cursor);
