@@ -19,34 +19,27 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0
+// This shader is always used for YUV movies if NTSC-J mode is disabled.
+
+$input a_position, a_color0, a_texcoord0, a_normal, a_indices, a_weight
+$output v_color0, v_texcoord0, v_position0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
-#include "FFNx.common.sh"
-
-SAMPLER2D(tex_0, 0);
-
-uniform vec4 FSHDRFlags;
-
-#define isHDR FSHDRFlags.x > 0.0
-#define monitorNits FSHDRFlags.y
 
 void main()
 {
-	vec4 color = texture2D(tex_0, v_texcoord0.xy);
+    vec4 pos = a_position;
+    vec4 color = a_color0;
+    vec2 coords = a_texcoord0;
 
-	if (isHDR) {
-		// dither because we will increase effective bit depth
-		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
-		// dither in gamma space so dither step size is proportional to quantization step size
-		// can't dither in rec2084 space because our max signal only occupies a small space near the bottom of the range.
-		ivec2 dimensions = textureSize(tex_0, 0);
-		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
-		// back to linear for gamut conversion and PQ gamma curve
-		color.rgb = toLinear(color.rgb);
-		color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
-		color.rgb = ApplyREC2084Curve(color.rgb, monitorNits);
-	}
-	// If not HDR mode, we should already be in gamma-space sRGB.
-	gl_FragColor = color;
+    color.rgb = color.bgr;
+
+    pos.w = 1.0 / pos.w;
+    pos.xyz *= pos.w;
+    pos = mul(u_proj, pos);
+
+    gl_Position = pos;
+    v_color0 = color;
+    v_texcoord0 = coords;
 }
+
