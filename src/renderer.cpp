@@ -291,8 +291,11 @@ void Renderer::updateRendererShaderPaths()
 bgfx::ShaderHandle Renderer::getShader(const char* filePath)
 {
     bgfx::ShaderHandle handle = BGFX_INVALID_HANDLE;
+    char _fullpath[MAX_PATH];
 
-    FILE* file = fopen(filePath, "rb");
+    _snprintf(_fullpath, sizeof(_fullpath), "%s/%s", basedir, filePath);
+
+    FILE* file = fopen(_fullpath, "rb");
 
     if (file == NULL)
     {
