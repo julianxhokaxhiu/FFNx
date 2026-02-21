@@ -176,22 +176,6 @@ namespace ff7::field
         field_event_data_array[*ff7_externals.field_player_model_id].movement_speed = original_movement_speed;
     }
 
-    int ff7_field_load_map_trigger_data()
-    {
-        // Do not override current trigger data for woa_* fields
-        if (
-            *ff7_externals.field_resuming_from_battle_CFF268 &&
-            (
-                (*common_externals.current_field_id == 709) ||
-                (*common_externals.current_field_id == 710) ||
-                (*common_externals.current_field_id == 711)
-            )
-        )
-            return 1;
-
-        return ff7_externals.field_load_map_trigger_data_sub_6211C3();
-    }
-
     void field_animate_3d_models()
     {
         field_event_data* field_event_data = (*ff7_externals.field_event_data_ptr);
@@ -290,6 +274,9 @@ namespace ff7::field
         replace_call_function(ff7_externals.field_update_models_positions + 0x7C, ff7_field_update_models_rotation_new);
         memcpy_code(ff7_externals.field_update_models_positions + 0x81, jump_to_OFST_update, sizeof(jump_to_OFST_update));
 
+        // woa_* background animation fix
+        replace_call_function(ff7_externals.field_loop_sub_63C17F + 0x1A6, ff7_field_update_background_original);
+
         if(ff7_fps_limiter >= FPS_LIMITER_30FPS)
         {
             if(ff7_fps_limiter == FPS_LIMITER_60FPS)
@@ -333,7 +320,7 @@ namespace ff7::field
 
             // Smooth background movement for both 30 fps mode and 60 fps mode
             replace_call_function(ff7_externals.field_draw_everything + 0x34, ff7_field_set_world_coordinate_640EB7);
-            replace_call_function(ff7_externals.field_loop_sub_63C17F + 0x1A6, ff7_field_update_background);
+            replace_call_function(ff7_externals.field_loop_sub_63C17F + 0x1A6, ff7_field_update_background_smooth);
             replace_call_function(ff7_externals.compute_and_submit_draw_gateways_arrows_64DA3B + 0x357, ff7_field_submit_draw_arrow);
             replace_call_function(ff7_externals.compute_and_submit_draw_gateways_arrows_64DA3B + 0x63C, ff7_field_submit_draw_arrow);
             replace_call_function(ff7_externals.field_submit_draw_pointer_hand_60D572 + 0x284, ff7_field_submit_draw_cursor);
@@ -369,9 +356,6 @@ namespace ff7::field
         // Others fps fix
         patch_code_dword((uint32_t)&common_externals.execute_opcode_table[WAIT], (DWORD)&opcode_script_WAIT);
         replace_function(ff7_externals.sub_611BAE, opcode_IFSW_compare_sub);
-
-        // Fix wind wall animation for woa_* fields
-        replace_call_function(ff7_externals.sub_62120E + 0x3AA, ff7_field_load_map_trigger_data);
 
         // Fix run emulation when using the analogue key for NPCs
         patch_code_dword((uint32_t)&common_externals.execute_opcode_table[IFKEY], (DWORD)&opcode_script_IFKEY);

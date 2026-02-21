@@ -38,7 +38,8 @@ namespace ff7::field
         bg_layer4_pos,
         cursor_position;
 
-    void ff7_field_update_background();
+    void ff7_field_update_background_smooth();
+    void ff7_field_update_background_original();
     void ff7_field_set_world_coordinate_640EB7();
     void ff7_field_submit_draw_arrow(field_arrow_graphics_data* arrow_data);
     void ff7_field_submit_draw_cursor(field_arrow_graphics_data* arrow_data);
