@@ -38,7 +38,7 @@ borderless = false
 #[RESOLUTION]
 # Resolution of the game.
 # Default (value = 0):
-# - Window mode will use 640x480
+# - Window mode will use 640x480 (1024x768 on FF8:Remastered)
 # - Fullscreen mode will use your desktop resolution
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 window_size_x = 0
@@ -262,7 +262,7 @@ external_music_sync = false
 # - FF7 1998: music/vgmstream ( 7h-era compatibility )
 # - FF7 eStore: data/music_ogg
 # - FF7 Steam: data/music_ogg
-# - FF8 2000/Steam: data/music/dmusic/ogg
+# - FF8: data/music/dmusic/ogg
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_music_path = ""
 
@@ -773,11 +773,27 @@ data_drive = ""
 #[HIGH RES FONT]
 # Overrides the high res font option if set.
 # Available choices are:
-# - -1: Default game behavior (High-res on FF8 Steam, honor FF8Config option on FF8 2000)
+# - -1: Default game behavior (HD font on remastered, High-res on FF8 Steam, honor FF8Config option on FF8 2000)
 # - 0: Low-res font
 # - 1: High-res font
+# - 2: HD font (remastered only)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_high_res_font = -1
+
+#[HD TEXTURES]
+# Prevent the game from loading remastered HD PNG textures, this is a list of modules to disable.
+# Available choices are:
+# - field
+# - battle_ennemy
+# - battle_ally
+# - battle_weapon
+# - battle_magic
+# - menu
+# - cardgame
+# - intro
+# - world
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_disable_remastered_hd_textures = []
 
 ## DEBUGGING OPTIONS - These options are mostly useful for developers or people reporting crashes. Please do enable them only when required.
 

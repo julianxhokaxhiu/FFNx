@@ -129,7 +129,7 @@ uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool
 
 	if (ret)
 	{
-		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", name);
+		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s (%d)\n", name, ret);
 	}
 
 	return ret;
@@ -145,6 +145,10 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 		if (palette_index == uint32_t(-1))
 		{
 			_snprintf(filename, sizeof(filename), "%s/%s/%s.%s", basedir, tex_path.c_str(), name, mod_ext[idx].c_str());
+		}
+		else if ((palette_index & 0xC0000000) == 0xC0000000) // Remastered
+		{
+			_snprintf(filename, sizeof(filename), "%s/%s/%s/%u.%s", basedir, tex_path.c_str(), name, palette_index & 0xFFFF, mod_ext[idx].c_str());
 		}
 		else if (palette_index & 0x40000000)
 		{

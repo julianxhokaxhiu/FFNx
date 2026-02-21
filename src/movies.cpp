@@ -29,6 +29,7 @@
 #include "achievement.h"
 #include "utils.h"
 #include "ff8/movies.h"
+#include "ff8/remaster.h"
 
 enum MovieAudioLayers {
 	MUSIC = 0,
@@ -197,7 +198,6 @@ uint32_t ff8_movie_frames;
 void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 {
 	char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
-	uint32_t camOffset = 0;
 
 	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
 
@@ -208,47 +208,67 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 	if(disc != 4)
 	{
 		_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
+		bool camdata_read = false;
 
-		if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) != 0) {
-			_snprintf(newCamName, sizeof(newCamName), "%s/%s", ff8_externals.app_path, camName);
+		if (remastered_edition)
+		{
+			Zzz::File *f = g_FF8ZzzArchiveOther.openFile(camName);
+
+			if (f != nullptr)
+			{
+				f->read(&ff8_movie_cam_buffer, f->size());
+				Zzz::closeFile(f);
+
+				camdata_read = true;
+			}
+			else
+			{
+				ffnx_warning("could not load camera data from %s in other.zzz\n", camName);
+			}
 		}
 
-		FILE *camFile = fopen(newCamName, "rb");
-
-		if(!camFile)
-		{
-			if (steam_edition)
-			{
-				ffnx_error("could not load camera data from %s\n", newCamName);
-				return;
+		if (!camdata_read) {
+			if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) != 0) {
+				_snprintf(newCamName, sizeof(newCamName), "%s/%s", ff8_externals.app_path, camName);
 			}
 
-			// Try to open the cam files using the FF8 2000 PAK files
-			const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
-
-			char filename[MAX_PATH] = {};
-			strcpy(filename, ff8_externals.data_drive_path);
-			strcat(filename, ff8_externals.disc_pak_filenames[disc]);
-
-			FILE *camFile = fopen(filename, "rb");
+			FILE *camFile = fopen(newCamName, "rb");
 
 			if (!camFile)
 			{
-				ffnx_error("could not load camera data from %s\n", filename);
-				return;
-			}
+				if (steam_edition)
+				{
+					ffnx_error("could not load camera data from %s\n", newCamName);
+					return;
+				}
 
-			fseek(camFile, pak_pointer.cam_offset, SEEK_SET);
-			fread(&ff8_movie_cam_buffer, 1, pak_pointer.bik_offset - pak_pointer.cam_offset, camFile);
-			fclose(camFile);
-		}
-		else
-		{
-			fseek(camFile, 0, SEEK_END);
-			long camFileSize = ftell(camFile);
-			rewind(camFile);
-			fread(&ff8_movie_cam_buffer, 1, camFileSize, camFile);
-			fclose(camFile);
+				// Try to open the cam files using the FF8 2000 PAK files
+				const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
+
+				char filename[MAX_PATH] = {};
+				strcpy(filename, ff8_externals.data_drive_path);
+				strcat(filename, ff8_externals.disc_pak_filenames[disc]);
+
+				FILE *camFile = fopen(filename, "rb");
+
+				if (!camFile)
+				{
+					ffnx_error("could not load camera data from %s\n", filename);
+					return;
+				}
+
+				fseek(camFile, pak_pointer.cam_offset, SEEK_SET);
+				fread(&ff8_movie_cam_buffer, 1, pak_pointer.bik_offset - pak_pointer.cam_offset, camFile);
+				fclose(camFile);
+			}
+			else
+			{
+				fseek(camFile, 0, SEEK_END);
+				long camFileSize = ftell(camFile);
+				rewind(camFile);
+				fread(&ff8_movie_cam_buffer, 1, camFileSize, camFile);
+				fclose(camFile);
+			}
 		}
 
 		ff8_externals.movie_object->movie_intro_pak = false;
@@ -270,13 +290,25 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 		}
 	}
 
-	if (!steam_edition && !fileExists(newFmvName)) {
-		void *opaque = ff8_bink_open(disc, movie);
+	ffmpeg_release_movie_objects();
 
-		if (opaque != nullptr) {
-			ff8_movie_frames = ffmpeg_prepare_movie_from_io(newFmvName, opaque, ff8_bink_read, ff8_bink_seek, ff8_bink_close);
+	if (!fileExists(newFmvName)) {
+		if (remastered_edition) {
+			void *opaque = ff8_zzz_open(fmvName);
 
-			return;
+			if (opaque != nullptr) {
+				ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_zzz_read, ff8_zzz_seek, ff8_zzz_close);
+
+				return;
+			}
+		} else if (!steam_edition) {
+			void *opaque = ff8_bink_open(disc, movie);
+
+			if (opaque != nullptr) {
+				ff8_movie_frames = ffmpeg_prepare_movie_from_io(newFmvName, opaque, ff8_bink_read, ff8_bink_seek, ff8_bink_close);
+
+				return;
+			}
 		}
 	}
 

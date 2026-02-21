@@ -21,6 +21,7 @@
 
 #include "vgmstream.h"
 #include "../../utils.h"
+#include "./zzzstreamfile.h"
 
 namespace SoLoud
 {
@@ -116,16 +117,26 @@ namespace SoLoud
 	result VGMStream::load(const char* aFilename, const char* ext)
 	{
 		mBaseSamplerate = 0;
+		STREAMFILE* zzz_stream = nullptr;
 
-		if (aFilename == 0)
-			return INVALID_PARAMETER;
-
-		if (! fileExists(aFilename))
+		if (strncmp(aFilename, "zzz://", 6) == 0) {
+			zzz_stream = open_ZZZ_STREAMFILE(aFilename + 6);
+			if (zzz_stream == nullptr) {
+				return FILE_NOT_FOUND;
+			}
+		} else if (! fileExists(aFilename)) {
 			return FILE_NOT_FOUND;
+		} else {
+			return INVALID_PARAMETER;
+		}
 
 		stop();
 
-		if (ext && ext[0] != '\0') {
+		if (zzz_stream != nullptr) {
+			mStream = init_vgmstream_from_STREAMFILE(zzz_stream);
+			close_streamfile(zzz_stream);
+		}
+		else if (ext != nullptr && ext[0] != '\0') {
 			mStream = init_vgmstream_with_extension(aFilename, ext);
 		}
 		else {

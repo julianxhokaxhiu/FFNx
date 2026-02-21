@@ -24,7 +24,6 @@
 
 #include <memory>
 #include <optional>
-#include <steamworkssdk/steam_api.h>
 #include <array>
 #include <unordered_map>
 #include <vector>
@@ -33,6 +32,7 @@
 
 #include "ff7.h"
 #include "ff8/save_data.h"
+#include "steam.h"
 
 #define _ACH_ID(id)           \
     {                         \
@@ -70,9 +70,9 @@ public:
     std::optional<int> getUserStat(const std::string &statName);
     bool updateUserStat(const std::string &statName, int value);
 
-    STEAM_CALLBACK(SteamManager, OnUserStatsReceived, UserStatsReceived_t, callbackUserStatsReceived);
-    STEAM_CALLBACK(SteamManager, OnUserStatsStored, UserStatsStored_t, callbackUserStatsStored);
-    STEAM_CALLBACK(SteamManager, OnAchievementStored, UserAchievementStored_t, callbackAchievementStored);
+    FFNX_STEAM_CALLBACK(SteamManager, OnUserStatsReceived, UserStatsReceived_t, callbackUserStatsReceived);
+    FFNX_STEAM_CALLBACK(SteamManager, OnUserStatsStored, UserStatsStored_t, callbackUserStatsStored);
+    FFNX_STEAM_CALLBACK(SteamManager, OnAchievementStored, UserAchievementStored_t, callbackAchievementStored);
 };
 
 class SteamAchievementsFF7
