@@ -14,6 +14,9 @@
 
 ## FF8
 
+- Direct mode: Optionally add the language prefix to the path for multi-language mods ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
+- Direct mode: Add the chunk feature for c0mXXX.dat files ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
+- Exe data: Ensure files loaded only once ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
 - External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
 
 # 1.24.3
