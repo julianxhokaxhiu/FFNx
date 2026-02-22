@@ -1008,7 +1008,7 @@ struct ff8_gfx_driver
 
 struct ff8_field_state_common {
 	uint8_t stack_data[0x140];
-	uint32_t field_140;
+	uint32_t return_value;
 	uint32_t field_144;
 	uint32_t field_148;
 	uint32_t field_14c;
@@ -1064,6 +1064,30 @@ struct ff8_field_state_background {
 	uint8_t bgshade_color2g_2; // field_1b1
 	uint8_t bgshade_color2b_2; // field_1b2
 	uint8_t field_1b3;
+};
+
+struct ff8_field_state_other {
+	ff8_field_state_common common;
+	uint8_t gap1[114];
+	uint16_t current_triangle_id;
+	uint8_t gap1b[28];
+	int16_t model_id;
+	uint8_t gap2[47];
+	uint8_t pushonoff;
+	uint8_t gap3;
+	uint8_t talkonoff;
+	uint8_t throughonoff;
+	uint8_t gap4[2];
+	uint8_t baseanim1;
+	uint8_t baseanim2;
+	uint8_t baseanim3;
+	uint8_t ladderanim1;
+	uint8_t ladderanim2;
+	uint8_t ladderanim3;
+	uint8_t setpc;
+	uint8_t gap5;
+	uint8_t setgeta;
+	uint8_t gap6[12];
 };
 
 struct ff8_char_computed_stats {
@@ -1276,6 +1300,8 @@ struct ff8_externals
 	int (*field_scripts_init)(int, int, int, int);
 	uint8_t *field_state_background_count;
 	ff8_field_state_background **field_state_backgrounds;
+	uint8_t *field_state_other_count;
+	ff8_field_state_other **field_state_others;
 	uint32_t load_field_models;
 	uint32_t chara_one_read_file;
 	uint32_t chara_one_seek_file;
@@ -1691,7 +1717,6 @@ struct ff8_externals
 	uint32_t scan_text_positions;
 	uint32_t fps_limiter;
 	double *time_volume_change_related_1A78BE0;
-	uint32_t* game_mode_obj_1D9CF88;
 	uint32_t field_vars_stack_1CFE9B8;
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
