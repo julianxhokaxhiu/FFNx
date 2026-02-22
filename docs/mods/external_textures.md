@@ -1,7 +1,7 @@
 # External textures
 
 You can override game's textures with images in DDS (recommended) or PNG format.
-To know where to put your custom textures, set the option `trace_loaders` to `true` and look at the content of FFNx.log
+To know where to put your custom textures, set the options `trace_loaders` and `show_missing_textures` to `true` and look at the content of FFNx.log
 when the game is running.
 
 It is also possible to dump textures on runtime in PNG format by setting the option `save_textures` to true.
