@@ -100,50 +100,50 @@ void main()
         texture2D(tex_2, v_texcoord0.xy).r
     );
 
-    // If the video is limited range, dither ahead of increasing the effective bit depth
-    if (!(isFullRange)){
-        ivec2 ydimensions = textureSize(tex_0, 0);
-        ivec2 udimensions = textureSize(tex_1, 0);
-        ivec2 vdimensions = textureSize(tex_2, 0);
-        yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 256.0, 1.0);
-        // clamp back to tv range
-        yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
-    }
-
-    // Convert YUV to linear R'G'B', expanding range if needed
-    if (isBT601ColorMatrix){
-        yuv.g = yuv.g - (128.0/255.0);
-        yuv.b = yuv.b - (128.0/255.0);
-        if (isFullRange){
-            color.rgb = toRGB_bt601_fullrange(yuv);
-        }
-        else {
-            yuv.r = saturate(yuv.r - (16.0/255.0));
-            color.rgb = toRGB_bt601_tvrange(yuv);
-        }
-    }
-    else if (isBT709ColorMatrix){
-        yuv.g = yuv.g - (128.0/255.0);
-        yuv.b = yuv.b - (128.0/255.0);
-        if (isFullRange){
-            color.rgb = toRGB_bt709_fullrange(yuv);
-        }
-        else {
-            yuv.r = saturate(yuv.r - (16.0/255.0));
-            color.rgb = toRGB_bt709_tvrange(yuv);
-        }
-    }
-    else if (isBinkColorMatrix){
-        // bink is always limited range
-        yuv.g = yuv.g - (128.0/255.0);
-        yuv.b = yuv.b - (128.0/255.0);
-        yuv.r = saturate(yuv.r - (16.0/255.0));
-        color.rgb = toRGB_bink(yuv);
-    }
-    else { //isBRG24ColorMatrix
+    // Convert YUV to RGB
+    if (isBRG24ColorMatrix){
         // This is a special case where we converted the BRG24 movies from the PC98 edition of FF7 to planar RGB in order to pass them through the YUV plumbing.
         color.rgb = yuv;
     }
+    else { // actually YUV
+        // shift UV to range -0.5 to 0.5
+        yuv.g = yuv.g - (128.0/255.0);
+        yuv.b = yuv.b - (128.0/255.0);
+        // if not full range, expand to full range
+        if (!(isFullRange)){
+            // subtract 16 from Y
+            yuv.r = saturate(yuv.r - (16.0/255.0));
+            // scale Y
+            // Bink uses 16-234 range for Y, while common video standard is 16-235.
+            if (isBinkColorMatrix){
+              yuv.r = saturate(yuv.r * 255.0/218.0);
+            }
+            else {
+              yuv.r = saturate(yuv.r * 255.0/219.0);
+            }
+            // scale UV
+            yuv.g = clamp(yuv.g * (255.0/224.0), -0.5, 0.5);
+            yuv.b = clamp(yuv.b * (255.0/224.0), -0.5, 0.5);
+
+            // dither
+            ivec2 ydimensions = textureSize(tex_0, 0);
+            ivec2 udimensions = textureSize(tex_1, 0);
+            ivec2 vdimensions = textureSize(tex_2, 0);
+            yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 256.0, 1.0);
+        } // end if !isFullRange
+        // matrix YUV to RGB
+        if (isBT601ColorMatrix){
+            color.rgb = toRGB_bt601_fullrange(yuv);
+        }
+        else if (isBT709ColorMatrix){
+            color.rgb = toRGB_bt709_fullrange(yuv);
+        }
+        else if (isBinkColorMatrix){
+          color.rgb = toRGB_bink(yuv);
+        }
+    } //end else isBRG24ColorMatrix
+
+
 
 
     // Convert gamma to CRT gamma (BT1886 Appendix 1) and gamut to NTSC-J
