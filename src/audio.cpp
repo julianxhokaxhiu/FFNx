@@ -69,20 +69,23 @@ void NxAudioEngine::loadConfig()
 			break;
 		}
 
-		if (fileExists(_fullpath)) {
-			try
+		try
+		{
+			nxAudioEngineConfig[type] = toml::parse_file(_fullpath);
+		}
+		catch (const toml::parse_error &err)
+		{
+			if (!fileExists(_fullpath))
 			{
-				nxAudioEngineConfig[type] = toml::parse_file(_fullpath);
+				ffnx_warning("File %s not found. Will continue with the default settings.\n", _fullpath);
 			}
-			catch (const toml::parse_error &err)
+			else
 			{
 				ffnx_warning("Parse error while opening the file %s. Will continue with the default settings.\n", _fullpath);
 				ffnx_warning("%s (Line %u Column %u)\n", err.what(), err.source().begin.line, err.source().begin.column);
-
-				nxAudioEngineConfig[type] = toml::v3::ex::parse_result();
 			}
-		} else {
-			nxAudioEngineConfig[type] = toml::v3::ex::parse_result();
+
+			nxAudioEngineConfig[type] = toml::parse("");
 		}
 	}
 }
@@ -569,13 +572,13 @@ void NxAudioEngine::cleanOldAudioSources()
 	if (trace_all || trace_music) ffnx_trace("NxAudioEngine::%s: %d elements in the list after cleaning\n", __func__, _audioSourcesToDeleteLater.size());
 }
 
-SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool isFullPath, const char* format, bool suppressOpeningSilence)
+SoLoud::AudioSource* NxAudioEngine::loadMusic(const char* name, bool useNameAsFullPath, const char* format, bool suppressOpeningSilence)
 {
 	SoLoud::AudioSource* music = nullptr;
 	char filename[MAX_PATH];
 	bool exists = false;
 
-	if (isFullPath)
+	if (useNameAsFullPath)
 	{
 		exists = true;
 		strcpy(filename, name);

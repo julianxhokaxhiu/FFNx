@@ -218,7 +218,7 @@ uint32_t ff7_use_midi(uint32_t midi)
 	return strcmp(name, "HEART") != 0 && strcmp(name, "SATO") != 0 && strcmp(name, "SENSUI") != 0 && strcmp(name, "WIND") != 0;
 }
 
-bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* fullpath = nullptr)
+bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioEngine::MusicOptions options = NxAudioEngine::MusicOptions(), char* wav_fullpath = nullptr)
 {
 	const struct game_mode* mode;
 	bool playing = false;
@@ -282,19 +282,18 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 			playing = nxAudioEngine.playMusic(new_music_name, music_id, channel, options);
 		}
 
-		if (!playing) {
-			if (fullpath == nullptr || nxAudioEngine.canPlayMusic(music_name))
-			{
-				playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
-			}
-			else if (fullpath != nullptr)
-			{
-				if (trace_all || trace_music) ffnx_info("%s: back to wav %s\n", __func__, fullpath);
+		if (!playing)
+		{
+			playing = nxAudioEngine.playMusic(music_name, music_id, channel, options);
+		}
 
-				options.useNameAsFullPath = true;
-				strcpy(options.format, "wav");
-				playing = nxAudioEngine.playMusic(fullpath, music_id, channel, options);
-			}
+		if (!playing && wav_fullpath != nullptr)
+		{
+			if (trace_all || trace_music) ffnx_info("%s: back to wav %s\n", __func__, wav_fullpath);
+
+			options.useNameAsFullPath = true;
+			strcpy(options.format, "wav");
+			playing = nxAudioEngine.playMusic(wav_fullpath, music_id, channel, options);
 		}
 	}
 	else

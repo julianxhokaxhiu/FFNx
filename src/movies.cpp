@@ -197,7 +197,6 @@ uint32_t ff8_movie_frames;
 void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 {
 	char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
-	uint32_t camOffset = 0;
 
 	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
 
