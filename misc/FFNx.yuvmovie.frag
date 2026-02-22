@@ -45,6 +45,7 @@ uniform vec4 TimeData;
 #define isBT601ColorMatrix abs(FSMovieFlags.x - 0.0) < 0.00001
 #define isBT709ColorMatrix abs(FSMovieFlags.x - 1.0) < 0.00001
 #define isBRG24ColorMatrix abs(FSMovieFlags.x - 2.0) < 0.00001
+#define isBinkColorMatrix abs(FSMovieFlags.x - 3.0) < 0.00001
 
 #define isSRGBColorGamut abs(FSMovieFlags.y - 0.0) < 0.00001
 #define isNTSCJColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
@@ -130,6 +131,13 @@ void main()
             yuv.r = saturate(yuv.r - (16.0/255.0));
             color.rgb = toRGB_bt709_tvrange(yuv);
         }
+    }
+    else if (isBinkColorMatrix){
+        // bink is always limited range
+        yuv.g = yuv.g - (128.0/255.0);
+        yuv.b = yuv.b - (128.0/255.0);
+        yuv.r = saturate(yuv.r - (16.0/255.0));
+        color.rgb = toRGB_bink(yuv);
     }
     else { //isBRG24ColorMatrix
         // This is a special case where we converted the BRG24 movies from the PC98 edition of FF7 to planar RGB in order to pass them through the YUV plumbing.

@@ -296,6 +296,12 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 				okcolorspace = true;
 				break;
 			}
+			else if (ff8 && (codec_ctx->color_range != AVCOL_RANGE_JPEG) && !yuvjfixneeded){
+				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Assuming FF8 bink or bink-derived movie. (e.g., PC2000 or Steam) Using bink color matrix and forcing color range to TV (limited).\n");
+				colormatrix = COLORMATRIX_BINK;
+				fullrange_input = false;
+				break;
+			}
 			// fall through to next case if we didn't already break
 		case AVCOL_SPC_BT470BG:
 		case AVCOL_SPC_SMPTE170M:

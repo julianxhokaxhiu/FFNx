@@ -71,6 +71,21 @@ vec3 toRGB_bt709_tvrange(vec3 yuv_input)
 	return saturate(mul(bt709tv_rgb_transform, yuv_input));
 }
 
+vec3 toRGB_bink(vec3 yuv_input)
+{
+	// Bink is always limited range.
+	// Bink uses 16-234 range for Y, while common video standard is 16-235.
+	// (Not rolling this into the matrix b/c it's accumulating too many rounding errors.)
+	yuv_input.r = saturate(yuv_input.r * 255.0/218.0);
+	yuv_input.g = min(0.5, max(-0.5, yuv_input.g * 255.0/224.0));
+	yuv_input.b = min(0.5, max(-0.5, yuv_input.b * 255.0/224.0));
+	mat3 bink_yuv_rgb_transform = mtxFromCols(
+		vec3(+0.992121226065255, +1.00472469291526, +0.993728379556196),
+		vec3(-0.00771162997168706, -0.714434200767644, +1.40552508918856),
+		vec3(+1.77255699135453, -0.343897012250908, -0.000682109776365476)
+	);
+	return saturate(mul(bink_yuv_rgb_transform, yuv_input));
+}
 
 // Gamma functions ------------------------------------------------
 
