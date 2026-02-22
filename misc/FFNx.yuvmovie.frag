@@ -125,10 +125,14 @@ void main()
             yuv.b = clamp(yuv.b * (255.0/224.0), -0.5, 0.5);
 
             // dither
+            yuv.g = yuv.g + 0.5;
+            yuv.b = yuv.b + 0.5;
             ivec2 ydimensions = textureSize(tex_0, 0);
             ivec2 udimensions = textureSize(tex_1, 0);
             ivec2 vdimensions = textureSize(tex_2, 0);
             yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 256.0, 1.0);
+            yuv.g = yuv.g - 0.5;
+            yuv.b = yuv.b - 0.5;
         } // end if !isFullRange
         // matrix YUV to RGB
         if (isBT601ColorMatrix){
