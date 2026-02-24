@@ -190,7 +190,7 @@ private:
 	SoLoud::time _lastVolumeFadeEndTime = 0.0;
 
 	void cleanOldAudioSources();
-	SoLoud::AudioSource* loadMusic(const char* name, bool isFullPath = false, const char* format = nullptr, bool suppressOpeningSilence = false);
+	SoLoud::AudioSource* loadMusic(const char* name, bool useNameAsFullPath = false, const char* format = nullptr, bool suppressOpeningSilence = false);
 	void overloadPlayArgumentsFromConfig(char* name, uint32_t *id, MusicOptions *MusicOptions);
 	void backupMusic(int channelSource);
 	void restoreMusic(int channelDest, double stopTime = 0);

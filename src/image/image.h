@@ -25,10 +25,12 @@
 #include <stdint.h>
 #include <bimg/bimg.h>
 #include <DirectXTex.h>
+#include <bx/file.h>
 
 bimg::ImageContainer *loadImageContainer(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Count);
-// Fast PNG opening, you need to deallocate mip.m_data yourself
-bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Count);
+// Fast PNG opening
+bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Count);
+bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, bx::ReaderI *reader, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Count);
 // Fast DDS opening
 bool parseDds(const char *filename, DirectX::ScratchImage &image, DirectX::TexMetadata &metadata);
 bimg::ImageContainer *convertDds(bx::AllocatorI *allocator, DirectX::ScratchImage &image, const DirectX::TexMetadata &metadata, bimg::TextureFormat::Enum targetFormat, int lod);

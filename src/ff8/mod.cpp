@@ -48,14 +48,8 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 	const char *extension = strrchr(filename, '.');
 	if (extension != nullptr && stricmp(extension + 1, "png") == 0) {
 		// Load PNG using libPNG
-		bimg::ImageMip mip;
-		if (loadPng(filename, mip, targetFormat) && Renderer::doesItFitInMemory(mip.m_size + 1))
-		{
-			_image = bimg::imageAlloc(&defaultAllocator, mip.m_format, mip.m_width, mip.m_height, mip.m_depth, 1, false, false, mip.m_data);
-			setLod(0);
-
-			driver_free((void *)mip.m_data);
-		}
+		_image = loadPng(&defaultAllocator, filename, targetFormat);
+		setLod(0);
 	} else if (extension != nullptr && stricmp(extension + 1, "dds") == 0) {
 		// Load DDS using DirectXTex
 		DirectX::TexMetadata metadata;
@@ -68,7 +62,7 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 			setLod(0);
 		}
 	} else {
-		_image = loadImageContainer(&defaultAllocator, filename, bimg::TextureFormat::BGRA8);
+		_image = loadImageContainer(&defaultAllocator, filename, targetFormat);
 
 		if (_image != nullptr)
 		{
@@ -541,7 +535,7 @@ TexturePacker::TextureTypes TextureBackground::drawToImage(
 	const bimg::ImageMip &mip = _texture.mip();
 	const uint32_t *imgData = reinterpret_cast<const uint32_t *>(mip.m_data);
 	const uint8_t imgScale = _texture.scale();
-	const uint32_t imgWidth = mip.m_width / imgScale, imgHeight = mip.m_height / imgScale;
+	const uint32_t imgWidth = mip.m_width / imgScale;
 
 	const uint8_t cols = targetW / TILE_SIZE, rows = targetH / TILE_SIZE;
 	const uint8_t colsBpp = TILE_SIZE / (1 << uint16_t(targetBpp));

@@ -1837,7 +1837,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// draw magic from draw points
 		replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
-		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : 0x85F), (void*)ff8_set_drawpoint_state_52D190);
+		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : (FF8_SP_VERSION ? 0x89A : 0x85F)), (void*)ff8_set_drawpoint_state_52D190);
 
 		// draw magic via stock in battle
 		replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355)), (void*)ff8_battle_get_magic_draw_amount_48FD20);
@@ -1854,7 +1854,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x225, (void*)ff8_play_sfx_at_unlock_rinoa_limit_break);
 
 		// omega destroyed
-		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + (FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : 0x2176)), (void*)ff8_obtain_proof_of_omega);
+		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + (FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : (FF8_SP_VERSION ? 0x21A0 : 0x2176))), (void*)ff8_obtain_proof_of_omega);
 
 		// pupu side quest
 		replace_call(ff8_externals.battle_check_won_sub_486500 + 0x66, (void*)ff8_battle_after_set_result_to_won_sub_494D40);

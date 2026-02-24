@@ -2988,7 +2988,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			return FALSE;
 		}
 
-		bool is_genuine_steam_api = isFileSigned(L"steam_api.dll");
+		bool is_genuine_steam_api = isFileSigned("steam_api.dll");
 		if (!is_genuine_steam_api) is_genuine_steam_api = sha1_file("steam_api.dll") == "03bd9f3e352553a0af41f5fe006f6249a168c243";
 		if (!is_genuine_steam_api)
 		{
