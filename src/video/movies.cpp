@@ -292,8 +292,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601
 			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
 				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
-				colormatrix = COLORMATRIX_BGR24;
-				okcolorspace = true;
+				okcolorspace = false;
 				break;
 			}
 			else if (ff8 && (codec_ctx->color_range != AVCOL_RANGE_JPEG) && !yuvjfixneeded){
@@ -314,14 +313,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			colormatrix = COLORMATRIX_BT709;
 			okcolorspace = true;
 		case AVCOL_SPC_RGB:
-			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
-				colormatrix = COLORMATRIX_BGR24;
-				okcolorspace = true;
-			}
-			else {
-				okcolorspace = false;
-			}
+			okcolorspace = false;
 			break;
 		default:
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: unhandled color matrix detected; will use swscale to convert. Expect incorrect gamut.\n");
@@ -370,12 +362,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			goto exit;
 	}
 
-	if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
-		targetpixelformat = AV_PIX_FMT_BGR24;
-	}
-	else{
-		targetpixelformat = AV_PIX_FMT_YUV444P;
-	}
+	targetpixelformat = AV_PIX_FMT_YUV444P;
 
 	// will we need to convert the pixel format?
 	// we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
@@ -482,6 +469,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			// convert
 			else {
 				coefs_out = const_cast<int*>(sws_getCoefficients(SWS_CS_ITU601)); // const sucks
+        colormatrix = COLORMATRIX_BT601;
 			}
 
 			// Surprisingly, these parameters don't appear to **do** anything in most cases.
@@ -619,59 +607,9 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 
 void buffer_yuv_frame(uint8_t **planes, int *strides)
 {
-	// Special case for BGR24. Make it planar RGB so we can pass it through the YUV plumbing
-	// Not very efficient, but it's not worth making everything else more complex for the sake of this one case.
-	if (targetpixelformat == AV_PIX_FMT_BGR24){
-		if (strides[0] % 3 != 0){
-			ffnx_error("buffer_yuv_frame: movie file claims to be bgr24, but stride isn't divisible by 3!\n");
-			ffmpeg_release_movie_objects();
-			movie_frame_counter = 0;
-			return;
-		}
-		const int planarstride = strides[0]/3;
-		int fakestrides[3] = {planarstride, planarstride, planarstride};
-		uint8_t* realbuffer = planes[0];
-		uint8_t* redbuffer = (uint8_t*)malloc(planarstride * movie_height * sizeof(uint8_t));
-		uint8_t* greenbuffer = (uint8_t*)malloc(planarstride * movie_height * sizeof(uint8_t));
-		uint8_t* bluebuffer = (uint8_t*)malloc(planarstride * movie_height * sizeof(uint8_t));
-		uint8_t* fakeplanes[3] = {redbuffer, greenbuffer, bluebuffer};
-		int smallindex = 0;
-		int rgbindex = 0;
-		int maxindex = strides[0] * movie_height;
-		for (int i=0; i<maxindex; i++){
-			uint8_t nextbyte = realbuffer[i];
-			if (rgbindex == 0){
-				bluebuffer[smallindex] = nextbyte;
-			}
-			else if (rgbindex == 1){
-				greenbuffer[smallindex] = nextbyte;
-			}
-			else {
-				redbuffer[smallindex] = nextbyte;
-				smallindex++;
-			}
-			rgbindex++;
-			if (rgbindex > 2){
-				rgbindex = 0;
-			}
-		}
-		upload_yuv_texture(fakeplanes, fakestrides, 0, vbuffer_write); // R as Y
-		upload_yuv_texture(fakeplanes, fakestrides, 1, vbuffer_write); // G as U
-		upload_yuv_texture(fakeplanes, fakestrides, 2, vbuffer_write); // B as V
-		free(redbuffer);
-		redbuffer = nullptr;
-		free(greenbuffer);
-		greenbuffer = nullptr;
-		free(bluebuffer);
-		bluebuffer = nullptr;
-	}
-	// normal case
-	else {
-		upload_yuv_texture(planes, strides, 0, vbuffer_write); // Y
-		upload_yuv_texture(planes, strides, 1, vbuffer_write); // U
-		upload_yuv_texture(planes, strides, 2, vbuffer_write); // V
-	}
-
+	upload_yuv_texture(planes, strides, 0, vbuffer_write); // Y
+	upload_yuv_texture(planes, strides, 1, vbuffer_write); // U
+	upload_yuv_texture(planes, strides, 2, vbuffer_write); // V
 	vbuffer_write = (vbuffer_write + 1) % VIDEO_BUFFER_SIZE;
 }
 

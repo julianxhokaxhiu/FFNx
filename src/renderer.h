@@ -146,8 +146,7 @@ enum RendererUniform
 enum ColorMatrixType{
     COLORMATRIX_BT601 = 0,
     COLORMATRIX_BT709 = 1,
-    COLORMATRIX_BGR24 = 2,
-    COLORMATRIX_BINK = 3
+    COLORMATRIX_BINK = 2
 };
 
 enum ColorGamutType{
