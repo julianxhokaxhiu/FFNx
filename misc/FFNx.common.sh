@@ -33,20 +33,22 @@ SAMPLER2D(tex_10, 10);
 
 vec3 toRGB_bt601_fullrange(vec3 yuv_input)
 {
+	// https://www.itu.int/dms_pubrec/itu-r/rec/bt/r-rec-bt.601-7-201103-i!!pdf-e.pdf
 	mat3 jpeg_rgb_transform = mtxFromCols(
 		vec3(+1.000, +1.000, +1.000),
-		vec3(+0.000, -0.202008 / 0.587, +1.772),
-		vec3(+1.402, -0.419198 / 0.587, +0.000)
+		vec3(+0.000, -(0.114 * 1.772) / 0.587, +1.772),
+		vec3(+1.402, -(0.299 * 1.402) / 0.587, +0.000)
 	);
 	return saturate(mul(jpeg_rgb_transform, yuv_input));
 }
 
 vec3 toRGB_bt709_fullrange(vec3 yuv_input)
 {
+	// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.709-6-201506-I!!PDF-E.pdf
 	mat3 bt709full_rgb_transform = mtxFromCols(
 		vec3(+1.000, +1.000, +1.000),
-		vec3(+0.000, -0.13397432 / 0.7152, +1.8556),
-		vec3(+1.5748, -0.33480248 / 0.7152 , +0.000)
+		vec3(+0.000, -(0.0722 * 1.8556) / 0.7152, +1.8556),
+		vec3(+1.5748, -(0.2126 * 1.5748) / 0.7152 , +0.000)
 	);
 	return saturate(mul(bt709full_rgb_transform, yuv_input));
 }
