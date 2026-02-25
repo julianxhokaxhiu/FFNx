@@ -329,10 +329,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 				gammatype = GAMMAFUNCTION_BT1886_APPX1;
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, using BT1886 Appendix 1 (CRT television/monitor) gamma curve because this is a logo movie.\n");
 			}
-			else if (colormatrix == COLORMATRIX_BT709){
-				gammatype = GAMMAFUNCTION_SMPTE170M;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
-			}
 			else {
 				gammatype = GAMMAFUNCTION_BT1886_APPX1;
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using BT1886 Appendix 1 (CRT television) gamma curve.\n");
@@ -389,11 +385,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AVCOL_PRI_UNSPECIFIED:
 		case AVCOL_PRI_RESERVED0:
 		case AVCOL_PRI_RESERVED:
-			if (colormatrix == COLORMATRIX_BT709){
-				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because bt709 color matrix.\n");
-			}
-			else if (islogomovie){
+			if (islogomovie){
 				colorgamut = COLORGAMUT_RAWP22;
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming uncorrected P22 (CRT computer monitor) because this is a logo movie.\n");
 			}
