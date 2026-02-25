@@ -126,6 +126,9 @@ uint32_t ff7_do_reset = false;
 // global FF7/FF8 flag, check if is steam edition
 uint32_t steam_edition = false;
 
+// global FF7 flag, check if is FF7 Steam re-release edition
+uint32_t ff7_steam_rerelease_edition = false;
+
 // global FF7/FF8 flag, check if using the steam stock launcher
 uint32_t steam_stock_launcher = false;
 
@@ -775,7 +778,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 		// generate automatically steam_appid.txt
 		if(!steam_edition){
 			std::ofstream steam_appid_file("steam_appid.txt");
-			steam_appid_file << ((ff8) ? FF8_APPID : FF7_APPID);
+			steam_appid_file << ((ff8) ? FF8_APPID : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID));
 			steam_appid_file.close();
 		}
 
@@ -3022,9 +3025,24 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			{
 				ff7_japanese_edition = strstr(parentName, "ff7_ja.exe") != NULL;
 
+				if (strstr(basedir, "workingdir") != NULL)
+				{
+					if (fileExists("../../steam_api64.dll"))
+					{
+						ff7_steam_rerelease_edition = true;
+						ffnx_trace("Detected Steam Rerelease edition.\n");
+					}
+					else if(fileExists("../../goggame-1698970154.info"))
+						ffnx_trace("Detected GOG edition.\n");
+					else
+						ffnx_trace("Detected Windows Store edition.\n");
+
+					estore_edition = true;
+				}
 				// Steam edition is usually installed in this path
-				if (strstr(basedir, "steamapps") != NULL) {
-					ffnx_trace("Detected Steam edition.\n");
+				else if (strstr(basedir, "steamapps") != NULL)
+				{
+					ffnx_trace("Detected Steam 2013 edition.\n");
 					steam_edition = true;
 
 					// Read ff7sound.cfg

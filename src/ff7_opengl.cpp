@@ -404,7 +404,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	//#############################################
 	// steam save game preservation and other fixes
 	//#############################################
-	if (steam_edition)
+	if (steam_edition || ff7_steam_rerelease_edition)
 	{
 		switch(version)
 		{

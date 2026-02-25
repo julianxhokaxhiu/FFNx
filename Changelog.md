@@ -4,6 +4,7 @@
 
 ## Common
 
+- Core: Add support for Windows Store, GOG and Steam Rerelease
 - External movies: Always enable external_movies by default ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
 - External music: Fix music stopping too soon if the music is not looped ( https://github.com/julianxhokaxhiu/FFNx/pull/889 )
 - External textures: Convert RGB png to RGBA and RGBA64 to RGBA32 ( https://github.com/julianxhokaxhiu/FFNx/pull/896 )
