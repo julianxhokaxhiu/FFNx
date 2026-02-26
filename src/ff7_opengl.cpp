@@ -409,22 +409,22 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		switch(version)
 		{
 			case VERSION_FF7_102_US:
-				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x1096, ff7_write_save_file);
+				if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x1096, ff7_write_save_file);
 				// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
 				memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);
 				break;
 			case VERSION_FF7_102_DE:
-				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10B2, ff7_write_save_file);
+				if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10B2, ff7_write_save_file);
 				// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
 				memset_code(ff7_externals.config_menu_sub + 0x8B3, 0x90, 0xE6);
 				break;
 			case VERSION_FF7_102_FR:
-				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10B2, ff7_write_save_file);
+				if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10B2, ff7_write_save_file);
 				// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
 				memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);
 				break;
 			case VERSION_FF7_102_SP:
-				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10FE, ff7_write_save_file);
+				if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10FE, ff7_write_save_file);
 				// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
 				memset_code(ff7_externals.config_menu_sub + 0x8B3, 0x90, 0xE6);
 				break;
