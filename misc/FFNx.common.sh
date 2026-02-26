@@ -56,9 +56,9 @@ vec3 toRGB_bt709_fullrange(vec3 yuv_input)
 vec3 toRGB_bink_fullrange(vec3 yuv_input)
 {
 	mat3 bink_yuv_rgb_transform = mtxFromCols(
-		vec3(+0.992121226065255, +1.00472469291526, +0.993728379556196),
-		vec3(-0.00771162997168706, -0.714434200767644, +1.40552508918856),
-		vec3(+1.77255699135453, -0.343897012250908, -0.000682109776365476)
+		vec3(+1.000, +1.000, +1.000),
+		vec3(+0.000, -(0.299 * 1.402) / 0.587, +1.402),
+		vec3(+1.772, -(0.114 * 1.772) / 0.587, +0.000)
 	);
 	return saturate(mul(bink_yuv_rgb_transform, yuv_input));
 }

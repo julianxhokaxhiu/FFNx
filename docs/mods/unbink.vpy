@@ -28,9 +28,12 @@ Vin = core.std.ShufflePlanes(video, planes=2, colorfamily=vs.GRAY)
 Yin = core.std.Expr(clips=[Yin], expr=["x 219 218 / *"])
 
 # Matrix by the inverse of the bink encoder's observable RGB-to-YUV behavior.
-Rout = core.std.Expr(clips=[Yin, Uin, Vin], expr=["x 0.992121226065255 * y -0.00771162997168706 * + z 1.77255699135453 * + "])
-Gout = core.std.Expr(clips=[Yin, Uin, Vin], expr=["x 1.00472469291526 * y -0.714434200767644 * + z -0.343897012250908 * + "])
-Bout = core.std.Expr(clips=[Yin, Uin, Vin], expr=["x 0.993728379556196 * y 1.40552508918856 * + z -0.000682109776365476 * + "])
+# This is an incorrect rec601 matrix in which:
+#   - E'r and E'b, the weights for red and blue's contributions to Y (0.299 and 0.114, respectively), are transposed.
+#   - The scaling factors for U and V (1.772 and 1.402, respectively) are transposed.
+Rout = core.std.Expr(clips=[Yin, Uin, Vin], expr=["x z 1.772 * + "])
+Gout = core.std.Expr(clips=[Yin, Uin, Vin], expr=["x y -0.299 1.402 * 0.587 / * + z -0.114 1.772 * 0.587 / * + "])
+Bout = core.std.Expr(clips=[Yin, Uin, Vin], expr=["x y 1.402 * +"])
 
 # Clamp any out-of-range outputs to 0-1.
 Rout = core.std.Expr(clips=[Rout], expr=["x 0 max 1 min"])
