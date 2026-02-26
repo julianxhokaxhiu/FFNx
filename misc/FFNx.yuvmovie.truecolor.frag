@@ -100,10 +100,10 @@ void main()
     );
 
     // Convert YUV to RGB
-    // shift UV to range -0.5 to 0.5
-    yuv.g = yuv.g - (128.0/255.0);
-    yuv.b = yuv.b - (128.0/255.0);
     if (isFullRange){
+        // center UV at 128
+        yuv.g = yuv.g - (128.0/255.0);
+        yuv.b = yuv.b - (128.0/255.0);
         // fix uv scale b/c 128 isn't quite halfway between 0 and 255
         float uscalar = (yuv.g < 0.0) ? 255.0/256.0 : 255.0/254.0;
         float vscalar = (yuv.b < 0.0) ? 255.0/256.0 : 255.0/254.0;
@@ -113,25 +113,23 @@ void main()
     else {
         // if not full range, expand to full range
 
+        // dither
+        ivec2 ydimensions = textureSize(tex_0, 0);
+        ivec2 udimensions = textureSize(tex_1, 0);
+        ivec2 vdimensions = textureSize(tex_2, 0);
+        yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 256.0, 1.0);
         // subtract 16 from Y
         yuv.r = saturate(yuv.r - (16.0/255.0));
         // scale Y
         // Common video standard for Y range is 16-235, but bink uses 16-234
         float yscalar = (isBinkColorMatrix) ? 255.0/218.0 : 255.0/219.0;
         yuv.r = saturate(yuv.r * yscalar);
+        // center UV at 128
+        yuv.g = yuv.g - (128.0/255.0);
+        yuv.b = yuv.b - (128.0/255.0);
         // scale UV
         yuv.g = clamp(yuv.g * (255.0/224.0), -0.5, 0.5);
         yuv.b = clamp(yuv.b * (255.0/224.0), -0.5, 0.5);
-
-        // dither
-        yuv.g = yuv.g + 0.5;
-        yuv.b = yuv.b + 0.5;
-        ivec2 ydimensions = textureSize(tex_0, 0);
-        ivec2 udimensions = textureSize(tex_1, 0);
-        ivec2 vdimensions = textureSize(tex_2, 0);
-        yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 256.0, 1.0);
-        yuv.g = yuv.g - 0.5;
-        yuv.b = yuv.b - 0.5;
     } // end else (not full range)
     // matrix YUV to RGB
     if (isBT601ColorMatrix){
