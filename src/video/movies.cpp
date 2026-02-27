@@ -105,6 +105,7 @@ void ffmpeg_release_movie_objects()
 		swr_free(&swr_ctx);
 	}
 	if(sws_ctx) sws_freeContext(sws_ctx);
+  sws_ctx = nullptr;
 
 	codec_ctx = 0;
 	acodec_ctx = 0;
@@ -419,6 +420,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	if(!movie_frame) movie_frame = av_frame_alloc();
 
 	if(sws_ctx) sws_freeContext(sws_ctx);
+  sws_ctx = nullptr;
 
 	vbuffer_read = 0;
 	vbuffer_write = 0;
@@ -479,9 +481,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 		}
 
-	}
-	else {
-		sws_ctx = nullptr;
 	}
 
 	if(audiostream >= 0)
