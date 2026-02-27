@@ -40,6 +40,8 @@ const AVCodec* codec = nullptr;
 AVCodecContext* acodec_ctx = nullptr;
 const AVCodec* acodec = nullptr;
 AVFrame* movie_frame = nullptr;
+AVFrame* sws_frame = nullptr;
+AVFrame* usethis_frame = nullptr;
 SwsContext* sws_ctx = nullptr;
 SwrContext* swr_ctx = nullptr;
 void(*io_close)(void *opaque) = nullptr;
@@ -85,6 +87,7 @@ void ffmpeg_release_movie_objects()
 	uint32_t i;
 
 	if (movie_frame) av_frame_free(&movie_frame);
+  if (sws_frame) av_frame_free(&sws_frame);
 	if (codec_ctx) avcodec_free_context(&codec_ctx);
 	if (acodec_ctx) avcodec_free_context(&acodec_ctx);
 	if (format_ctx) {
@@ -418,6 +421,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	}
 
 	if(!movie_frame) movie_frame = av_frame_alloc();
+  if(!sws_frame) sws_frame = av_frame_alloc();
 
 	if(sws_ctx) sws_freeContext(sws_ctx);
   sws_ctx = nullptr;
@@ -673,22 +677,31 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// Successfully received a frame
 				QueryPerformanceCounter((LARGE_INTEGER *)&now);
 
+				// use a pointer to identify the AVFrame object we ultimately want to use
+				// so we can call buffer_yuv_frame() in just one place using this pointer
+				// (if we had hardware decoding with writeback, we'd swap this to point at the AVFrame av_hwframe_transfer_data() gave us)
+				usethis_frame = movie_frame;
+
+				// if we need to use swscale, do so
 				if(sws_ctx)
 				{
-					AVFrame* frame = av_frame_alloc();
-					frame->width = movie_width;
-					frame->height = movie_height;
-					frame->format = targetpixelformat;
+					sws_frame->width = movie_width;
+					sws_frame->height = movie_height;
+					sws_frame->format = targetpixelformat;
 
-					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
+					av_image_alloc(sws_frame->data, sws_frame->linesize, sws_frame->width, sws_frame->height, AVPixelFormat(sws_frame->format), 1);
 
-					sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, frame->height, frame->data, frame->linesize);
-					buffer_yuv_frame(frame->data, frame->linesize);
+					sws_scale(sws_ctx, usethis_frame->extended_data, usethis_frame->linesize, 0, sws_frame->height, sws_frame->data, sws_frame->linesize);
 
-					av_freep(&frame->data[0]);
-					av_frame_free(&frame);
+					// swap the pointer's target
+					usethis_frame = sws_frame;
+
 				}
-				else buffer_yuv_frame(movie_frame->extended_data, movie_frame->linesize);
+				buffer_yuv_frame(usethis_frame->extended_data, usethis_frame->linesize);
+
+				// clear out the AVFrame objects before reusing them
+				av_frame_unref(movie_frame);
+				av_frame_unref(sws_frame);
 
 				if(vbuffer_write == vbuffer_read)
 				{
