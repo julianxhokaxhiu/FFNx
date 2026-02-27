@@ -34,14 +34,14 @@
 
 uint32_t audio_must_be_converted = false;
 
-AVFormatContext *format_ctx = 0;
-AVCodecContext *codec_ctx = 0;
-const AVCodec *codec = 0;
-AVCodecContext *acodec_ctx = 0;
-const AVCodec *acodec = 0;
-AVFrame *movie_frame = 0;
-struct SwsContext *sws_ctx = 0;
-SwrContext* swr_ctx = NULL;
+AVFormatContext* format_ctx = nullptr;
+AVCodecContext* codec_ctx = nullptr;
+const AVCodec* codec = nullptr;
+AVCodecContext* acodec_ctx = nullptr;
+const AVCodec* acodec = nullptr;
+AVFrame* movie_frame = nullptr;
+SwsContext* sws_ctx = nullptr;
+SwrContext* swr_ctx = nullptr;
 void(*io_close)(void *opaque) = nullptr;
 
 int videostream;
