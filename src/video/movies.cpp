@@ -104,6 +104,7 @@ void ffmpeg_release_movie_objects()
 		swr_close(swr_ctx);
 		swr_free(&swr_ctx);
 	}
+	if(sws_ctx) sws_freeContext(sws_ctx);
 
 	codec_ctx = 0;
 	acodec_ctx = 0;
