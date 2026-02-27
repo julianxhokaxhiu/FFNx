@@ -36,6 +36,7 @@
 #include "ff8/file.h"
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
+#include "ff8/remaster.h"
 #include "metadata.h"
 #include "achievement.h"
 #include "widescreen.h"
@@ -179,16 +180,40 @@ struct ff8_tex_header *ff8_load_tex_file(struct ff8_file_context* file_context, 
 		}
 	}
 
-	ret->file.pc_name = (char*)external_malloc(1024);
+	ret->file.pc_name = (char*)external_calloc(1024, sizeof(char));
 
-	len = _snprintf(ret->file.pc_name, 1024, "%s", &filename[7]);
+	if (ret->file.pc_name != nullptr) {
+		len = _snprintf(ret->file.pc_name, 511, "%s", &filename[7]);
 
-	for(i = 0; i < len; i++)
-	{
-		if(ret->file.pc_name[i] == '.')
+		for(i = 0; i < len; i++)
 		{
-			if(!_strnicmp(&ret->file.pc_name[i], ".TEX", 4)) ret->file.pc_name[i] = 0;
-			else ret->file.pc_name[i] = '_';
+			if(ret->file.pc_name[i] == '.')
+			{
+				if(!_strnicmp(&ret->file.pc_name[i], ".TEX", 4)) ret->file.pc_name[i] = 0;
+				else ret->file.pc_name[i] = '_';
+			}
+		}
+
+		// Remastered alternative name
+		char langPath[16] = {}, suffix[ZZZ_FILENAME_MAX_SIZE] = {}, remasterFileName[ZZZ_FILENAME_MAX_SIZE] = {};
+		concat_lang_str(langPath);
+		_snprintf(suffix, sizeof(suffix), "%s", filename + 7 + strlen(ff8_externals.archive_path_prefix));
+
+		// Disable if ff8_high_res_font is 0 or 1 + font
+		if (!is_remastered_hd_textures_disabled("menu") && (ff8_high_res_font == -1 || ff8_high_res_font == 2 || (!strstr(suffix, "hires\\sysevn") && !strstr(suffix, "hires\\sysodd") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "font8")))) {
+			// Non-paletted + lang path
+			_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s_%s.png", suffix, langPath);
+			if (remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
+				_snprintf(ret->file.pc_name + 512, 511, "%s_%s", suffix, langPath);
+			} else {
+				// Paletted + lang path
+				_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s\\%s\\0.png", suffix, langPath);
+				if (remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
+					_snprintf(ret->file.pc_name + 512, 511, "%s\\%s", suffix, langPath);
+				} else {
+					strncpy(ret->file.pc_name + 512, suffix, strlen(suffix));
+				}
+			}
 		}
 	}
 
@@ -1552,6 +1577,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(ff8_externals.moriya_filesystem_open + 0x83C, ff8_fs_archive_search_filename_sub_archive);
 	replace_function(ff8_externals._open, ff8_open);
 	replace_function(ff8_externals.fopen, ff8_fopen);
+	if (remastered_edition) {
+		replace_function(uint32_t(ff8_externals._lseek), ff8_lseek);
+		replace_function(uint32_t(ff8_externals._read), ff8_read);
+		replace_function(uint32_t(ff8_externals._write), ff8_write);
+		replace_function(uint32_t(ff8_externals._close), ff8_close);
+		replace_function(uint32_t(ff8_externals._filelength), ff8_filelength);
+		replace_function(ff8_externals.field_filename_concat_extension, ff8_fs_archive_field_concat_extension);
+	}
 	replace_call(ff8_externals.moriya_filesystem_close + 0x1F, ff8_fs_archive_free_file_container_sub_archive);
 
 	ff8_read_file = (uint32_t(*)(uint32_t, void *, struct ff8_file *))common_externals.read_file;
@@ -1758,7 +1791,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(ff8_externals.load_credits_image + 0x164, credits_controller_music_play);
 	replace_call(ff8_externals.load_credits_image + 0x305, credits_controller_input_call);
 
-	if (!steam_edition) {
+	if (!steam_edition && !remastered_edition) {
 		// Look again with the DataDrive specified in the register
 		replace_call(ff8_externals.get_disk_number + 0x6E, ff8_retry_configured_drive);
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
@@ -1897,6 +1930,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// Extend field data size
 		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF64 : 0xED1), uint32_t(extended_memory) + 0x5F0000);
 		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF6B : 0xED8), uint32_t(extended_memory) + 0x600000);
+
+		// Relocate effect buffer
+		patch_code_dword(ff8_externals.sub_571870 + 0x3, 0x380000 / 4); // Patch size
+		patch_code_dword(ff8_externals.sub_571870 + 0xA, uint32_t(extended_memory) + 0x200000); // Patch offset
+		patch_code_dword(ff8_externals.get_battle_effect_buffer_sub_571B50 + 0x1, uint32_t(extended_memory) + 0x200000); // Patch offset
+		patch_code_dword(ff8_externals.get_battle_effect_buffer_size_sub_571B60 + 0x1, 0x380000); // Patch size
+		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x5, 0x380000); // Patch size
+		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x13, uint32_t(extended_memory) + 0x200000); // Patch offset
 	} else {
 		ffnx_error("%s: cannot allocate extended_memory\n", __func__);
 	}

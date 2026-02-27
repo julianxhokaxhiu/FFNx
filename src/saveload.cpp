@@ -146,6 +146,10 @@ uint32_t load_normal_texture(const void* data, uint32_t dataSize, const char* na
 		{
 			_snprintf(filename, sizeof(filename), "%s/%s/%s.%s", basedir, tex_path.c_str(), name, mod_ext[idx].c_str());
 		}
+		else if ((palette_index & 0xC0000000) == 0xC0000000) // Remastered
+		{
+			_snprintf(filename, sizeof(filename), "%s/%s/%s/%u.%s", basedir, tex_path.c_str(), name, palette_index & 0xFFFF, mod_ext[idx].c_str());
+		}
 		else if (palette_index & 0x40000000)
 		{
 			_snprintf(filename, sizeof(filename), "%s/%s/%s_%u_%u.%s", basedir, tex_path.c_str(), name, (palette_index & 0x7FFF), ((palette_index & 0x3FFFFFFF) >> 15) & 0x7FFF, mod_ext[idx].c_str());
