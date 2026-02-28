@@ -33,7 +33,6 @@
 #include "cfg.h"
 
 #define ach_trace(x, ...) if (trace_all || trace_achievement) ffnx_trace((x), ##__VA_ARGS__)
-#define get_ach_id(flag_2013, ach_2013, ach_re_release) (flag_2013) ? std::static_cast<int>(ach_2013) : std::static_cast<int>(ach_re_release)
 
 using std::string;
 
