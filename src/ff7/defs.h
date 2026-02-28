@@ -66,6 +66,7 @@ void ff7_chocobo_field_entity_60FA7D(WORD param1, short param2, short param3);
 void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, short param3);
 int ff7_load_save_file(int param_1);
 void ff7_engine_switch_game_loop_sub_666CF2(void*, void*);
+void ff7_chocobo_switch_mode_76DB33(void* ff7_game_obj);
 
 // file
 FILE *open_lgp_file(char *filename, uint32_t mode);

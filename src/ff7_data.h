@@ -80,7 +80,6 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t credits_main_loop;
 	uint32_t coaster_main_loop;
 	uint32_t condor_main_loop;
-	uint32_t chocobo_main_loop;
 	uint32_t highway_main_loop;
 	uint32_t swirl_main_loop;
 	uint32_t snowboard_main_loop;
@@ -128,8 +127,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_set_main_loop(MODE_FIELD, field_main_loop);
 	ff7_externals.world_loop_74BE49 = get_absolute_value(main_loop, 0x977);
 	ff7_set_main_loop(MODE_WORLDMAP, ff7_externals.world_loop_74BE49);
-	chocobo_main_loop = get_absolute_value(main_loop, 0x9C5);
-	ff7_set_main_loop(MODE_CHOCOBO, chocobo_main_loop);
+	ff7_externals.chocobo_main_loop = get_absolute_value(main_loop, 0x9C5);
+	ff7_set_main_loop(MODE_CHOCOBO, ff7_externals.chocobo_main_loop);
 	condor_main_loop = get_absolute_value(main_loop, 0xA13);
 	ff7_set_main_loop(MODE_CONDOR, condor_main_loop);
 	highway_main_loop = get_absolute_value(main_loop, 0xA61);
@@ -651,7 +650,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.snowboard_enter_sub_722C10 = get_absolute_value(main_loop, 0xB53);
 	ff7_externals.snowboard_loop_sub_72381C = get_relative_call(snowboard_main_loop, 0x7D);
 	ff7_externals.snowboard_exit_sub_722C52 = get_absolute_value(main_loop, 0xB5A);
-	ff7_externals.sub_779E14 = get_relative_call(chocobo_main_loop, 0x70);
+	ff7_externals.sub_779E14 = get_relative_call(ff7_externals.chocobo_main_loop, 0x70);
+	ff7_externals.chocobo_switch_mode_76DB33 = (void(*)(void*))get_relative_call(ff7_externals.chocobo_main_loop, 0x7E);
 
 	ff7_externals.condor_enter = get_absolute_value(main_loop, 0xA28);
 	ff7_externals.condor_exit = get_absolute_value(main_loop, 0xA2F);
@@ -1396,7 +1396,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_submit_draw_fade_quad_6CD64E = get_relative_call(ff7_externals.menu_battle_end_sub_6C9543, 0x104);
 	ff7_externals.highway_submit_fade_quad_659532 = get_relative_call(ff7_externals.highway_loop_sub_650F36, 0x126);
 	ff7_externals.chocobo_init_viewport_values_76D320 = get_relative_call(main_init_loop, 0x38B);
-	uint32_t chocobo_sub_77C462 = get_relative_call(chocobo_main_loop, 0x5E);
+	uint32_t chocobo_sub_77C462 = get_relative_call(ff7_externals.chocobo_main_loop, 0x5E);
 	uint32_t chocobo_sub_77946A = get_relative_call(chocobo_sub_77C462, 0x649);
 	ff7_externals.chocobo_submit_draw_fade_quad_77B1CE = get_relative_call(chocobo_sub_77946A, 0x33);
 	ff7_externals.chocobo_submit_draw_water_quad_77A7D0 = get_relative_call(chocobo_sub_77C462, 0x30B);

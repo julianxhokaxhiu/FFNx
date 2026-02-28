@@ -638,6 +638,18 @@ void SteamAchievementsFF7::unlockAchievementByDialogEvent(WORD fieldMapId, int t
     }
 }
 
+void SteamAchievementsFF7::unlockWinChocoboMinigameAchievement(int racePosition)
+{
+    if (!this->isFF72013Release) {
+        ach_trace("%s - trying to unlock win chocobo minigame achievement (race position: %d)\n", __func__, racePosition);
+
+        // 0 is first position
+        if (racePosition == 0) {
+            this->steamManager->setAchievement(A07_Chocochampion);
+        }
+    }
+}
+
 // -------------------------- STEAM ACHIEVEMENTS OF FF8 ---------------------------
 
 SteamAchievementsFF8::SteamAchievementsFF8()

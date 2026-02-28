@@ -321,6 +321,7 @@ public:
     // Achievements for 2026 edition
     void unlockFallInBattleAchievement();
     void unlockAchievementByDialogEvent(WORD fieldMapId, int textId);
+    void unlockWinChocoboMinigameAchievement(int racePosition);
 };
 
 class SteamAchievementsFF8

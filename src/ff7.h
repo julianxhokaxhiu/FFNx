@@ -3675,11 +3675,15 @@ struct ff7_externals
 	int (*get_button_pressed)(int);
 	uint32_t credits_main_loop;
 	uint32_t highway_submit_fade_quad_659532;
+
+	// chocobo mode
+	uint32_t chocobo_main_loop;
 	uint32_t chocobo_enter_76D597;
 	uint32_t chocobo_initialize_variables_76BAFD;
 	uint32_t chocobo_init_viewport_values_76D320;
 	uint32_t chocobo_submit_draw_fade_quad_77B1CE;
 	uint32_t chocobo_submit_draw_water_quad_77A7D0;
+	void(*chocobo_switch_mode_76DB33)(void* ff7_game_obj);
 	void(*generic_submit_quad_graphics_object_671D2A)(int, int, int, int, int, int, float, DWORD*) ;
 	byte* chocobo_fade_quad_data_97A498;
 
