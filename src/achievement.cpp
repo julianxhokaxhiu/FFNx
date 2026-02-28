@@ -77,6 +77,11 @@ bool SteamManager::setAchievement(int achID)
 {
     if (this->isInitialized)
     {
+        if (this->isAchieved(achID)) {
+            ach_trace("%s - Achievement %s already achieved, skip sending request to Steam\n", __func__, this->getStringAchievementID(achID));
+            return true;
+        }
+
         ach_trace("%s - Achievement %s set, Store request sent to Steam\n", __func__, this->getStringAchievementID(achID));
 
         this->achievementList[achID].isAchieved = true;
@@ -365,28 +370,25 @@ void SteamAchievementsFF7::unlockBattleWonAchievement(WORD formationID)
     int beat_ruby_weapon_ach = getAchievementIdByVersion(BEAT_RUBY_WEAPON, A30_RubyWeapon);
     int beat_emerald_weapon_ach = getAchievementIdByVersion(BEAT_EMERALD_WEAPON, A31_EmeraldWeapon);
 
-    if (!this->steamManager->isAchieved(won_1st_battle_ach))
-        this->steamManager->setAchievement(won_1st_battle_ach);
+    this->steamManager->setAchievement(won_1st_battle_ach);
 
-    if (!this->steamManager->isAchieved(beat_diamond_weapon_ach) && formationID == DIAMOND_WEAPON_FORMATION_ID)
+    if (formationID == DIAMOND_WEAPON_FORMATION_ID)
     {
         this->steamManager->setAchievement(beat_diamond_weapon_ach);
     }
 
-    if (!this->steamManager->isAchieved(beat_ruby_weapon_ach)
-        && find(begin(RUBY_WEAPON_FORMATION_ID), end(RUBY_WEAPON_FORMATION_ID), formationID) != end(RUBY_WEAPON_FORMATION_ID))
+    if (find(begin(RUBY_WEAPON_FORMATION_ID), end(RUBY_WEAPON_FORMATION_ID), formationID) != end(RUBY_WEAPON_FORMATION_ID))
     {
         this->steamManager->setAchievement(beat_ruby_weapon_ach);
     }
 
-    if (!this->steamManager->isAchieved(beat_emerald_weapon_ach)
-        && find(begin(EMERALD_WEAPON_FORMATION_ID), end(EMERALD_WEAPON_FORMATION_ID), formationID) != end(EMERALD_WEAPON_FORMATION_ID))
+    if (find(begin(EMERALD_WEAPON_FORMATION_ID), end(EMERALD_WEAPON_FORMATION_ID), formationID) != end(EMERALD_WEAPON_FORMATION_ID))
     {
         this->steamManager->setAchievement(beat_emerald_weapon_ach);
     }
 
     if (this->isFF72013Release) {
-        if (!this->steamManager->isAchieved(BEAT_ULTIMATE_WEAPON) && formationID == ULTIMATE_WEAPON_FORMATION_ID)
+        if (formationID == ULTIMATE_WEAPON_FORMATION_ID)
         {
             this->steamManager->setAchievement(BEAT_ULTIMATE_WEAPON);
         }
@@ -398,7 +400,7 @@ void SteamAchievementsFF7::unlockGilAchievement(uint32_t gilAmount)
     ach_trace("%s - trying to unlock achievement for gil (amount: %d)\n", __func__, gilAmount);
     int gil_ach = getAchievementIdByVersion(GET_99999999_GILS, A14_MasterOfGil);
 
-    if (!this->steamManager->isAchieved(gil_ach) && gilAmount >= GIL_ACHIEVEMENT_VALUE)
+    if (gilAmount >= GIL_ACHIEVEMENT_VALUE)
         this->steamManager->setAchievement(gil_ach);
 }
 
@@ -425,7 +427,7 @@ void SteamAchievementsFF7::unlockBattleSquareAchievement(WORD battleLocationID)
     ach_trace("%s - trying to unlock achievement for fighting in battle square (battle location id: 0x%04x)\n", __func__, battleLocationID);
 
     if (this->isFF72013Release) {
-        if (!this->steamManager->isAchieved(FIGHT_IN_BATTLE_SQUARE) && battleLocationID == BATTLE_SQUARE_LOCATION_ID)
+        if (battleLocationID == BATTLE_SQUARE_LOCATION_ID)
         {
             this->steamManager->setAchievement(FIGHT_IN_BATTLE_SQUARE);
         }
@@ -440,8 +442,7 @@ void SteamAchievementsFF7::unlockGotMateriaAchievement(byte materiaID)
 
     if (find(begin(unmasterableMateriaList), end(unmasterableMateriaList), materiaID) != end(unmasterableMateriaList))
     {
-        if (!this->steamManager->isAchieved(lvl_up_materia_ach))
-            this->steamManager->setAchievement(lvl_up_materia_ach);
+        this->steamManager->setAchievement(lvl_up_materia_ach);
 
         int nMateriaMastered = accumulate(begin(masteredMateria), end(masteredMateria), 0);
         boolean wasNotMastered = !this->masteredMateria[materiaID];
@@ -500,8 +501,7 @@ void SteamAchievementsFF7::unlockMasterMateriaAchievement(const savemap_char cha
                 nNewMateriaMastered += (!this->masteredMateria[materia & 0xFF]) ? 1 : 0;
                 this->masteredMateria[materia & 0xFF] = true;
                 this->equipMasteredMateriaCharacter[i][j] = true;
-                if (!this->steamManager->isAchieved(lvl_up_materia_ach))
-                    this->steamManager->setAchievement(lvl_up_materia_ach);
+                this->steamManager->setAchievement(lvl_up_materia_ach);
             }
         }
     }
@@ -524,10 +524,7 @@ void SteamAchievementsFF7::unlockFirstLimitBreakAchievement(short commandID, sho
         if (item != firstLimitBreakActionID.end())
         {
             if (this->isFF72013Release) {
-                if (!this->steamManager->isAchieved(USE_1ST_LIMIT_CLOUD + distance(firstLimitBreakActionID.cbegin(), item)))
-                {
-                    this->steamManager->setAchievement(USE_1ST_LIMIT_CLOUD + distance(firstLimitBreakActionID.cbegin(), item));
-                }
+                this->steamManager->setAchievement(USE_1ST_LIMIT_CLOUD + distance(firstLimitBreakActionID.cbegin(), item));
             } else {
                 this->steamManager->setAchievement(A02_Braver);
             }
@@ -540,9 +537,7 @@ void SteamAchievementsFF7::unlockCaitSithLastLimitBreakAchievement(const savemap
     ach_trace("%s - trying to unlock achievement for cait sith last limit break achievement (num_kills: %d)\n", __func__, characters[CAIT_SITH_INDEX].num_kills);
     int cait_sith_last_limit_ach = getAchievementIdByVersion(GET_FOURTH_CAITSITH_LAST_LIMIT, A24_Slots);
 
-    if (!this->steamManager->isAchieved(cait_sith_last_limit_ach) && this->caitsithNumKills >= 0 && this->caitsithNumKills < 40
-        && characters[CAIT_SITH_INDEX].num_kills >= 40)
-    {
+    if (this->caitsithNumKills >= 0 && this->caitsithNumKills < 40 && characters[CAIT_SITH_INDEX].num_kills >= 40) {
         this->steamManager->setAchievement(cait_sith_last_limit_ach);
     }
     this->caitsithNumKills = -1;
@@ -555,12 +550,8 @@ void SteamAchievementsFF7::unlockLastLimitBreakAchievement(WORD usedItemID)
     int cloud_last_limit_ach = getAchievementIdByVersion(GET_FOURTH_CLOUD_LAST_LIMIT, A18_Omnislash);
 
     auto item = find(limitBreakItemsID.begin(), limitBreakItemsID.end(), usedItemID);
-    if (item != limitBreakItemsID.end())
-    {
-        if (!this->steamManager->isAchieved(cloud_last_limit_ach + distance(limitBreakItemsID.cbegin(), item)))
-        {
-            this->steamManager->setAchievement(cloud_last_limit_ach + distance(limitBreakItemsID.cbegin(), item));
-        }
+    if (item != limitBreakItemsID.end()) {
+        this->steamManager->setAchievement(cloud_last_limit_ach + distance(limitBreakItemsID.cbegin(), item));
     }
 }
 
@@ -588,16 +579,15 @@ void SteamAchievementsFF7::unlockGameProgressAchievement()
     ach_trace("%s - trying to unlock game progress achievement (movieName: %s)\n", __func__, this->lastSeenMovieName.c_str());
 
     if (this->isFF72013Release) {
-        if (!(this->steamManager->isAchieved(DEATH_OF_AERITH)) && this->lastSeenMovieName == DEATH_OF_AERITH_MOVIE_NAME)
+        if (this->lastSeenMovieName == DEATH_OF_AERITH_MOVIE_NAME)
             this->steamManager->setAchievement(DEATH_OF_AERITH);
 
-        if (!(this->steamManager->isAchieved(SHINRA_ANNIHILATED)) && this->lastSeenMovieName == SHINRA_ANNIHILATED_MOVIE_NAME)
+        if (this->lastSeenMovieName == SHINRA_ANNIHILATED_MOVIE_NAME)
             this->steamManager->setAchievement(SHINRA_ANNIHILATED);
     }
 
-    int finish_ff7_ach = getAchievementIdByVersion(END_OF_GAME, A27_FinishFF7);
-    if (!(this->steamManager->isAchieved(finish_ff7_ach)) && this->lastSeenMovieName == END_OF_GAME_MOVIE_NAME)
-        this->steamManager->setAchievement(finish_ff7_ach);
+    if (this->lastSeenMovieName == END_OF_GAME_MOVIE_NAME)
+        this->steamManager->setAchievement(getAchievementIdByVersion(END_OF_GAME, A27_FinishFF7));
 }
 
 void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(unsigned char yuffieRegMask, unsigned char vincentRegMask)
@@ -724,16 +714,14 @@ void SteamAchievementsFF8::unlockGuardianForceAchievement(int gf_idx)
     }
 
     ach_trace("%s - trying to unlock guardian force achievement (gf id: %d)\n", __func__, gf_idx);
-    if (!(this->steamManager->isAchieved(gfIndexToAchMap[gf_idx])))
-        this->steamManager->setAchievement(gfIndexToAchMap[gf_idx]);
+    this->steamManager->setAchievement(gfIndexToAchMap[gf_idx]);
 }
 
 void SteamAchievementsFF8::unlockTopSeedRankAchievement(WORD seed_exp)
 {
     ach_trace("%s - trying to unlock seed rank A achivement (seed exp: %d)\n", __func__, seed_exp);
     if (seed_exp >= MAX_SEED_EXP) {
-        if (!(this->steamManager->isAchieved(REACH_SEED_RANK_A)))
-            this->steamManager->setAchievement(REACH_SEED_RANK_A);
+        this->steamManager->setAchievement(REACH_SEED_RANK_A);
     }
 }
 
@@ -748,8 +736,7 @@ void SteamAchievementsFF8::unlockUpgradeWeaponAchievement(const savemap_ff8 &sav
     ach_trace("%s - trying to unlock handyman achivement (new weapon id: %d, old weapon id: %d)\n",
               __func__, weaponId, this->prevWeaponUpgradeData.prev_weapon_id);
     if (weaponId > this->prevWeaponUpgradeData.prev_weapon_id) {
-        if (!(this->steamManager->isAchieved(UPGRADE_WEAPON_FIRST_TIME)))
-            this->steamManager->setAchievement(UPGRADE_WEAPON_FIRST_TIME);
+        this->steamManager->setAchievement(UPGRADE_WEAPON_FIRST_TIME);
     }
 
     this->prevWeaponUpgradeData.char_id = 0xFF;
@@ -760,10 +747,8 @@ void SteamAchievementsFF8::unlockMaxHpAchievement(int max_hp)
 {
     ach_trace("%s - trying to unlock maximum HP achivement (max hp: %d)\n", __func__, max_hp);
 
-    if (max_hp >= MAX_HP)
-    {
-        if (!(this->steamManager->isAchieved(REACH_MAX_HP)))
-            this->steamManager->setAchievement(REACH_MAX_HP);
+    if (max_hp >= MAX_HP) {
+        this->steamManager->setAchievement(REACH_MAX_HP);
     }
     this->statCharId = 0xFF;
 }
@@ -772,10 +757,8 @@ void SteamAchievementsFF8::unlockMaxGilAchievement(uint32_t gil)
 {
     ach_trace("%s - trying to unlock maximum gil achivement (gil: %d)\n", __func__, gil);
 
-    if (gil >= MAX_GIL)
-    {
-        if (!(this->steamManager->isAchieved(REACH_MAX_GIL)))
-            this->steamManager->setAchievement(REACH_MAX_GIL);
+    if (gil >= MAX_GIL) {
+        this->steamManager->setAchievement(REACH_MAX_GIL);
     }
 }
 
@@ -783,10 +766,8 @@ void SteamAchievementsFF8::unlockTopLevelAchievement(int level)
 {
     ach_trace("%s - trying to unlock top level achivement (level: %d)\n", __func__, level);
 
-    if (level == MAX_LEVEL)
-    {
-        if (!(this->steamManager->isAchieved(REACH_LEVEL_100)))
-            this->steamManager->setAchievement(REACH_LEVEL_100);
+    if (level == MAX_LEVEL) {
+        this->steamManager->setAchievement(REACH_LEVEL_100);
     }
 }
 
@@ -809,8 +790,7 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
 
     if (new_kills >= 100)
     {
-        if (!(this->steamManager->isAchieved(TOTAL_KILLS_100)))
-            this->steamManager->setAchievement(TOTAL_KILLS_100);
+        this->steamManager->setAchievement(TOTAL_KILLS_100);
     }
     else if (new_kills % 10 == 0) {
         this->steamManager->showAchievementProgress(TOTAL_KILLS_100, new_kills, 100);
@@ -818,8 +798,7 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
 
     if (new_kills >= 1000)
     {
-        if (!(this->steamManager->isAchieved(TOTAL_KILLS_1000)))
-            this->steamManager->setAchievement(TOTAL_KILLS_1000);
+        this->steamManager->setAchievement(TOTAL_KILLS_1000);
     }
     else if (new_kills > 100 && new_kills % 100 == 0) {
         this->steamManager->showAchievementProgress(TOTAL_KILLS_1000, new_kills, 1000);
@@ -845,8 +824,7 @@ void SteamAchievementsFF8::unlockTimberManiacsAchievement(WORD timber_maniacs_bi
 {
     ach_trace("%s - trying to unlock timber maniacs achivement (timber maniacs: 0x%x)\n", __func__, timber_maniacs_bitmap);
     if ((timber_maniacs_bitmap & 0x3FFF) == 0x3FFE || (timber_maniacs_bitmap & 0x3FFF) == 0x3FFD) {
-        if (!(this->steamManager->isAchieved(TIMBER_MANIACS)))
-            this->steamManager->setAchievement(TIMBER_MANIACS);
+        this->steamManager->setAchievement(TIMBER_MANIACS);
     }
 }
 
@@ -854,18 +832,15 @@ void SteamAchievementsFF8::unlockFirstSalaryAchievement()
 {
     ach_trace("%s - trying to unlock first salary achivement\n", __func__);
 
-    if (!(this->steamManager->isAchieved(SEED_FIRST_SALARY)))
-        this->steamManager->setAchievement(SEED_FIRST_SALARY);
+    this->steamManager->setAchievement(SEED_FIRST_SALARY);
 }
 
 void SteamAchievementsFF8::unlockQuistisLimitBreaksAchievement(WORD quistis_lb_bitmap)
 {
     ach_trace("%s - trying to unlock quistis limit breaks achivement (quistis lb: 0x%x)\n", __func__, quistis_lb_bitmap);
 
-    if (quistis_lb_bitmap == 0xFFFF)
-    {
-        if (!(this->steamManager->isAchieved(BLUE_MAGICS)))
-            this->steamManager->setAchievement(BLUE_MAGICS);
+    if (quistis_lb_bitmap == 0xFFFF) {
+        this->steamManager->setAchievement(BLUE_MAGICS);
     }
 }
 
@@ -873,10 +848,8 @@ void SteamAchievementsFF8::unlockRinoaLimitBreaksAchievement(byte rinoa_complete
 {
     ach_trace("%s - trying to unlock rinoa limit breaks achivement (completed lb: 0x%x)\n", __func__, rinoa_completed_lb);
 
-    if (rinoa_completed_lb == 0xFF)
-    {
-        if (!(this->steamManager->isAchieved(DOG_TRICKS)))
-            this->steamManager->setAchievement(DOG_TRICKS);
+    if (rinoa_completed_lb == 0xFF) {
+        this->steamManager->setAchievement(DOG_TRICKS);
     }
 }
 
@@ -884,18 +857,15 @@ void SteamAchievementsFF8::unlockOmegaDestroyedAchievement()
 {
     ach_trace("%s - trying to unlock omega destroyed achivement\n", __func__);
 
-    if (!(this->steamManager->isAchieved(BEAT_OMEGA_WEAPON)))
-        this->steamManager->setAchievement(BEAT_OMEGA_WEAPON);
+    this->steamManager->setAchievement(BEAT_OMEGA_WEAPON);
 }
 
 void SteamAchievementsFF8::unlockPupuQuestAchievement(byte pupu_encounter_bitmap)
 {
     ach_trace("%s - trying to unlock UFO achivement (pupu encounter var: 0x%x)\n", __func__, pupu_encounter_bitmap);
 
-    if ((pupu_encounter_bitmap & 0xFC) == 0xFC)
-    {
-        if (!(this->steamManager->isAchieved(UFO)))
-            this->steamManager->setAchievement(UFO);
+    if ((pupu_encounter_bitmap & 0xFC) == 0xFC) {
+        this->steamManager->setAchievement(UFO);
     }
 }
 
@@ -903,8 +873,7 @@ void SteamAchievementsFF8::unlockChocoLootAchievement()
 {
     ach_trace("%s - trying to unlock choco loot achivement\n", __func__);
 
-    if (!(this->steamManager->isAchieved(CHOCORPG_FIRST_ITEM)))
-        this->steamManager->setAchievement(CHOCORPG_FIRST_ITEM);
+    this->steamManager->setAchievement(CHOCORPG_FIRST_ITEM);
 }
 
 void SteamAchievementsFF8::unlockTopLevelBokoAchievement(byte boko_lvl)
@@ -912,8 +881,7 @@ void SteamAchievementsFF8::unlockTopLevelBokoAchievement(byte boko_lvl)
     ach_trace("%s - trying to unlock top level boko achivement (boko lvl: %d)\n", __func__, boko_lvl);
 
     if (boko_lvl >= 100) {
-        if (!(this->steamManager->isAchieved(CHICOBO_TOP_LEVEL)))
-            this->steamManager->setAchievement(CHICOBO_TOP_LEVEL);
+        this->steamManager->setAchievement(CHICOBO_TOP_LEVEL);
     }
 }
 
@@ -921,8 +889,7 @@ void SteamAchievementsFF8::unlockChocoboAchievement()
 {
     ach_trace("%s - trying to unlock chocobo achivement\n", __func__);
 
-    if (!(this->steamManager->isAchieved(CAPTURE_CHOCOBO_FIRST_TIME)))
-        this->steamManager->setAchievement(CAPTURE_CHOCOBO_FIRST_TIME);
+    this->steamManager->setAchievement(CAPTURE_CHOCOBO_FIRST_TIME);
 }
 
 void SteamAchievementsFF8::unlockCardClubMasterAchievement(const savemap_ff8_field &savemap_field)
@@ -931,8 +898,7 @@ void SteamAchievementsFF8::unlockCardClubMasterAchievement(const savemap_ff8_fie
     ach_trace("%s - trying to unlock card club master achivement (cc king unlocked: %d)\n", __func__, cc_king_unlocked);
 
     if (cc_king_unlocked) {
-        if (!(this->steamManager->isAchieved(CARDS_CLUB_MASTER)))
-            this->steamManager->setAchievement(CARDS_CLUB_MASTER);
+        this->steamManager->setAchievement(CARDS_CLUB_MASTER);
     }
 }
 
@@ -940,28 +906,24 @@ void SteamAchievementsFF8::unlockObelLakeQuestAchievement()
 {
     ach_trace("%s - trying to unlock obel lake quest achivement\n", __func__);
 
-    if (!(this->steamManager->isAchieved(OBEL_LAKE_SECRET)))
-        this->steamManager->setAchievement(OBEL_LAKE_SECRET);
+    this->steamManager->setAchievement(OBEL_LAKE_SECRET);
 }
 
 void SteamAchievementsFF8::unlockRagnarokAchievement()
 {
     ach_trace("%s - trying to unlock ragnarok achivement\n", __func__);
 
-    if (!(this->steamManager->isAchieved(FOUND_RAGNAROK)))
-        this->steamManager->setAchievement(FOUND_RAGNAROK);
+    this->steamManager->setAchievement(FOUND_RAGNAROK);
 }
 
 void SteamAchievementsFF8::unlockEndOfGameAchievement(int squall_lvl)
 {
     ach_trace("%s - trying to unlock end of game achivement (squall_lvl: %d)\n", __func__, squall_lvl);
 
-    if (!(this->steamManager->isAchieved(FINISH_THE_GAME)))
-        this->steamManager->setAchievement(FINISH_THE_GAME);
+    this->steamManager->setAchievement(FINISH_THE_GAME);
 
     if (squall_lvl == 7) {
-        if (!(this->steamManager->isAchieved(FINISH_THE_GAME_INITIAL_LEVEL)))
-            this->steamManager->setAchievement(FINISH_THE_GAME_INITIAL_LEVEL);
+        this->steamManager->setAchievement(FINISH_THE_GAME_INITIAL_LEVEL);
     }
 }
 
@@ -976,8 +938,7 @@ void SteamAchievementsFF8::unlockMagazineAddictAchievement(const savemap_ff8_ite
     ach_trace("%s - trying to unlock magazine addict achivement (magazines found: %d)\n", __func__, magazines_found.size());
  
     if (magazines_found.size() >= MAGAZINES_TO_COLLECT) {
-        if (!(this->steamManager->isAchieved(MAGAZINES_ADDICT)))
-            this->steamManager->setAchievement(MAGAZINES_ADDICT);
+        this->steamManager->setAchievement(MAGAZINES_ADDICT);
     }
 }
 
