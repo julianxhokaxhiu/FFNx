@@ -422,18 +422,6 @@ void SteamAchievementsFF7::unlockCharacterLevelAchievement(const savemap_char ch
     }
 }
 
-void SteamAchievementsFF7::unlockBattleSquareAchievement(WORD battleLocationID)
-{
-    ach_trace("%s - trying to unlock achievement for fighting in battle square (battle location id: 0x%04x)\n", __func__, battleLocationID);
-
-    if (this->isFF72013Release) {
-        if (battleLocationID == BATTLE_SQUARE_LOCATION_ID)
-        {
-            this->steamManager->setAchievement(FIGHT_IN_BATTLE_SQUARE);
-        }
-    }
-}
-
 void SteamAchievementsFF7::unlockGotMateriaAchievement(byte materiaID)
 {
     using namespace std;
@@ -561,25 +549,6 @@ void SteamAchievementsFF7::unlockLastLimitBreakAchievement(WORD usedItemID)
     }
 }
 
-void SteamAchievementsFF7::unlockGoldChocoboAchievement(const chocobo_slot firstFourSlots[], const chocobo_slot lastTwoSlots[])
-{
-    ach_trace("%s - trying to unlock gold chocobo achievement\n", __func__);
-    if (!this->isFF72013Release)
-        return;
-
-    if (this->steamManager->isAchieved(GET_GOLD_CHOCOBO))
-        return;
-
-    for (int i = 0; i < N_GOLD_CHOCOBO_FIRST_SLOTS + N_GOLD_CHOCOBO_LAST_SLOTS; i++)
-    {
-        const chocobo_slot slot = (i < N_GOLD_CHOCOBO_FIRST_SLOTS) ? firstFourSlots[i] : lastTwoSlots[i - N_GOLD_CHOCOBO_FIRST_SLOTS];
-        if (!this->isGoldChocoboSlot[i] && slot.type == GOLD_CHOCOBO_TYPE)
-        {
-            this->steamManager->setAchievement(GET_GOLD_CHOCOBO);
-        }
-    }
-}
-
 void SteamAchievementsFF7::unlockGameProgressAchievement()
 {
     ach_trace("%s - trying to unlock game progress achievement (movieName: %s)\n", __func__, this->lastSeenMovieName.c_str());
@@ -614,6 +583,38 @@ void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(unsigned char yuffi
     }
 }
 
+// Achievements only in 2013 edition
+void SteamAchievementsFF7::unlockGoldChocoboAchievement(const chocobo_slot firstFourSlots[], const chocobo_slot lastTwoSlots[])
+{
+    ach_trace("%s - trying to unlock gold chocobo achievement\n", __func__);
+    if (!this->isFF72013Release)
+        return;
+
+    if (this->steamManager->isAchieved(GET_GOLD_CHOCOBO))
+        return;
+
+    for (int i = 0; i < N_GOLD_CHOCOBO_FIRST_SLOTS + N_GOLD_CHOCOBO_LAST_SLOTS; i++)
+    {
+        const chocobo_slot slot = (i < N_GOLD_CHOCOBO_FIRST_SLOTS) ? firstFourSlots[i] : lastTwoSlots[i - N_GOLD_CHOCOBO_FIRST_SLOTS];
+        if (!this->isGoldChocoboSlot[i] && slot.type == GOLD_CHOCOBO_TYPE)
+        {
+            this->steamManager->setAchievement(GET_GOLD_CHOCOBO);
+        }
+    }
+}
+
+void SteamAchievementsFF7::unlockBattleSquareAchievement(WORD battleLocationID)
+{
+    if (this->isFF72013Release) {
+        ach_trace("%s - trying to unlock achievement for fighting in battle square (battle location id: 0x%04x)\n", __func__, battleLocationID);
+        if (battleLocationID == BATTLE_SQUARE_LOCATION_ID)
+        {
+            this->steamManager->setAchievement(FIGHT_IN_BATTLE_SQUARE);
+        }
+    }
+}
+
+// Achievements only in 2026 edition
 void SteamAchievementsFF7::unlockFallInBattleAchievement()
 {
     if (!this->isFF72013Release) {
