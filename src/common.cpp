@@ -135,6 +135,9 @@ uint32_t steam_stock_launcher = false;
 // global FF7 flag, check if is eStore edition
 uint32_t estore_edition = false;
 
+// global FF7 flag, check if it is 2026 rerelease
+uint32_t ff7_2026_rerelease = false;
+
 // global FF7 flag, check if is japanese edition ( detected as US )
 uint32_t ff7_japanese_edition = false;
 
@@ -3037,7 +3040,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 					else
 						ffnx_trace("Detected Windows Store edition.\n");
 
-					estore_edition = true;
+					ff7_2026_rerelease = true;
 				}
 				// Steam edition is usually installed in this path
 				else if (strstr(basedir, "steamapps") != NULL)

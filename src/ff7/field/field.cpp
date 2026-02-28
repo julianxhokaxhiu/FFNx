@@ -364,5 +364,8 @@ namespace ff7::field
         replace_call_function(ff7_externals.field_main_loop + 0xF6, field_animate_3d_models);
         replace_call_function((uint32_t)ff7_externals.field_animate_3d_models_6392BB + 0x726, ff7_apply_KAWAI_op_code);
         replace_function(ff7_externals.field_apply_model_light_sub_685028, ff7_field_apply_model_light);
+
+        // Fix FF7 2026 rerelease crash after battle
+        patch_code_dword((uint32_t)&common_externals.execute_opcode_table[VISI], (DWORD)&opcode_script_VISI);
     }
 }

@@ -179,7 +179,7 @@ int redirect_path_with_override(const char* in, char* out, size_t out_size)
 	char _newFilename[MAX_PATH]{ 0 };
 
 	// Attempt another redirection based on Steam/eStore logic
-	int redirect_status = attempt_redirection(in, _newFilename, sizeof(_newFilename), steam_edition || estore_edition);
+	int redirect_status = attempt_redirection(in, _newFilename, sizeof(_newFilename), steam_edition || estore_edition || ff7_2026_rerelease);
 
 	// File was found
 	if (redirect_status == 0)
