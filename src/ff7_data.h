@@ -80,7 +80,6 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t credits_main_loop;
 	uint32_t coaster_main_loop;
 	uint32_t condor_main_loop;
-	uint32_t chocobo_main_loop;
 	uint32_t highway_main_loop;
 	uint32_t swirl_main_loop;
 	uint32_t snowboard_main_loop;
@@ -128,8 +127,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_set_main_loop(MODE_FIELD, field_main_loop);
 	ff7_externals.world_loop_74BE49 = get_absolute_value(main_loop, 0x977);
 	ff7_set_main_loop(MODE_WORLDMAP, ff7_externals.world_loop_74BE49);
-	chocobo_main_loop = get_absolute_value(main_loop, 0x9C5);
-	ff7_set_main_loop(MODE_CHOCOBO, chocobo_main_loop);
+	ff7_externals.chocobo_main_loop = get_absolute_value(main_loop, 0x9C5);
+	ff7_set_main_loop(MODE_CHOCOBO, ff7_externals.chocobo_main_loop);
 	condor_main_loop = get_absolute_value(main_loop, 0xA13);
 	ff7_set_main_loop(MODE_CONDOR, condor_main_loop);
 	highway_main_loop = get_absolute_value(main_loop, 0xA61);
@@ -165,6 +164,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_loop = get_relative_call(battle_main_loop, 0x1C8);
 	ff7_externals.battle_mode = (DWORD*)get_absolute_value(ff7_externals.battle_loop, 0x18);
 	ff7_externals.battle_sub_429AC0 = get_absolute_value(ff7_externals.battle_loop, 0x79);
+	ff7_externals.engine_switch_game_loop_sub_666CF2 = (void(*)(void*, void*)) get_relative_call(ff7_externals.battle_loop, 0xB78);
 	ff7_externals.battle_sub_42D808 = get_relative_call(ff7_externals.battle_sub_429AC0, 0xE7);
 	ff7_externals.battle_sub_42D992 = get_relative_call(ff7_externals.battle_sub_42D808, 0x30);
 	ff7_externals.battle_sub_42DAE5 = get_relative_call(ff7_externals.battle_sub_42D992, 0x7E);
@@ -647,10 +647,16 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.sub_5F5042 = get_relative_call(condor_main_loop, 0x69);
 	ff7_externals.highway_loop_sub_650F36 = get_relative_call(highway_main_loop, 0x53);
+	ff7_externals.highway_exit_address_location = main_loop + 0xA7D;
+	ff7_externals.highway_exit_sub_650340 = (void(*)(void*))get_absolute_value(main_loop, 0xA7D);
+	ff7_externals.highway_exit_sub_650AD5 = get_relative_call((uint32_t)ff7_externals.highway_exit_sub_650340, 0x27);
+	ff7_externals.highway_score_D85990 = (int*)get_absolute_value(ff7_externals.highway_exit_sub_650AD5, 0x8A);
+	ff7_externals.highway_is_minigame_at_gold_saucer_D8596C = (int*)get_absolute_value(ff7_externals.highway_exit_sub_650AD5, 0x82);
 	ff7_externals.snowboard_enter_sub_722C10 = get_absolute_value(main_loop, 0xB53);
 	ff7_externals.snowboard_loop_sub_72381C = get_relative_call(snowboard_main_loop, 0x7D);
 	ff7_externals.snowboard_exit_sub_722C52 = get_absolute_value(main_loop, 0xB5A);
-	ff7_externals.sub_779E14 = get_relative_call(chocobo_main_loop, 0x70);
+	ff7_externals.sub_779E14 = get_relative_call(ff7_externals.chocobo_main_loop, 0x70);
+	ff7_externals.chocobo_switch_mode_76DB33 = (void(*)(void*))get_relative_call(ff7_externals.chocobo_main_loop, 0x7E);
 
 	ff7_externals.condor_enter = get_absolute_value(main_loop, 0xA28);
 	ff7_externals.condor_exit = get_absolute_value(main_loop, 0xA2F);
@@ -1395,7 +1401,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.menu_submit_draw_fade_quad_6CD64E = get_relative_call(ff7_externals.menu_battle_end_sub_6C9543, 0x104);
 	ff7_externals.highway_submit_fade_quad_659532 = get_relative_call(ff7_externals.highway_loop_sub_650F36, 0x126);
 	ff7_externals.chocobo_init_viewport_values_76D320 = get_relative_call(main_init_loop, 0x38B);
-	uint32_t chocobo_sub_77C462 = get_relative_call(chocobo_main_loop, 0x5E);
+	uint32_t chocobo_sub_77C462 = get_relative_call(ff7_externals.chocobo_main_loop, 0x5E);
 	uint32_t chocobo_sub_77946A = get_relative_call(chocobo_sub_77C462, 0x649);
 	ff7_externals.chocobo_submit_draw_fade_quad_77B1CE = get_relative_call(chocobo_sub_77946A, 0x33);
 	ff7_externals.chocobo_submit_draw_water_quad_77A7D0 = get_relative_call(chocobo_sub_77C462, 0x30B);

@@ -778,14 +778,15 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	// Init Steam API
 	if(steam_edition || enable_steam_achievements)
 	{
+		int app_id = ff8 ? FF8_APPID : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID);
 		// generate automatically steam_appid.txt
 		if(!steam_edition){
 			std::ofstream steam_appid_file("steam_appid.txt");
-			steam_appid_file << ((ff8) ? FF8_APPID : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID));
+			steam_appid_file << app_id;
 			steam_appid_file.close();
 		}
 
-		if (SteamAPI_RestartAppIfNecessary((ff8) ? FF8_APPID : FF7_APPID))
+		if (SteamAPI_RestartAppIfNecessary(app_id))
 		{
 			MessageBoxA(gameHwnd, "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n", "Steam App ID Wrong", 0);
 			ffnx_error( "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n" );
@@ -797,10 +798,13 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			ffnx_error( "Steam Error - Steam must be running to play this game with achievements (SteamAPI_Init() failed).\n" );
 			return 1;
 		}
-		if (ff8)
+		if (ff8) {
 			g_FF8SteamAchievements = std::make_unique<SteamAchievementsFF8>();
-		else
-			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>();
+		} else if (ff7_steam_rerelease_edition) {
+			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>(false);
+		} else {
+			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>(true);
+		}
 	}
 
 	// Enumerate available monitors

@@ -484,6 +484,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				replace_call_function(ff7_externals.menu_sub_7212FB + 0xEC5, ff7_load_save_file);
 				break;
 		}
+
+		// For RE-RELEASE edition
+		replace_call_function(ff7_externals.battle_loop + 0xB78, ff7_engine_switch_game_loop_sub_666CF2);
+		replace_call_function(ff7_externals.chocobo_main_loop + 0x7E, ff7_chocobo_switch_mode_76DB33);
+		patch_code_dword(ff7_externals.highway_exit_address_location, (DWORD)ff7_highway_exit_650340);
 	}
 
 	replace_call(ff7_externals.credits_main_loop + 0xAC, ff7_credits_loop_gfx_begin_scene);
