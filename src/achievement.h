@@ -78,7 +78,7 @@ public:
 class SteamAchievementsFF7
 {
 private:
-    enum Achievements
+    enum Achievements2013
     {
         DEATH_OF_AERITH = 0,
         SHINRA_ANNIHILATED = 1,
@@ -117,8 +117,42 @@ private:
         USE_1ST_LIMIT_CID = 34,
         FIGHT_IN_BATTLE_SQUARE = 35
     };
+    enum AchievementsReRelease
+    {
+        A01_FirstBattle,
+        A02_Braver,
+        A03_DonCorneo,
+        A04_Summon,
+        A05_MasterMateria,
+        A06_Bromance,
+        A07_Chocochampion,
+        A08_CorelAngel,
+        A09_Yuffie,
+        A10_Vincent,
+        A11_Leviathan,
+        A12_Bahamut,
+        A13_FaillureIsAnOption,
+        A14_MasterOfGil,
+        A15_TopLevel,
+        A16_BahamutZero,
+        A17_KnightsOfTheRound,
+        A18_Omnislash,
+        A19_Catastrophe,
+        A20_FinalHeaven,
+        A21_GreatGospel,
+        A22_CosmoMemory,
+        A23_AllCreation,
+        A24_Slots,
+        A25_Chaos,
+        A26_Highwind,
+        A27_FinishFF7,
+        A28_MasterInvocation,
+        A29_DiamondWeapon,
+        A30_RubyWeapon,
+        A31_EmeraldWeapon
+    };
 
-    static inline const achievement ACHIEVEMENTS[] = {
+    static inline const achievement ACHIEVEMENTS_2013[] = {
         _ACH_ID(DEATH_OF_AERITH),
         _ACH_ID(SHINRA_ANNIHILATED),
         _ACH_ID(END_OF_GAME),
@@ -156,8 +190,39 @@ private:
         _ACH_ID(USE_1ST_LIMIT_CID),
         _ACH_ID(FIGHT_IN_BATTLE_SQUARE),
     };
-
-    static inline constexpr int FF7_N_ACHIEVEMENTS = 36;
+    static inline const achievement ACHIEVEMENTS_RE_RELEASE[] = {
+        _ACH_ID(A01_FirstBattle),
+        _ACH_ID(A02_Braver),
+        _ACH_ID(A03_DonCorneo),
+        _ACH_ID(A04_Summon),
+        _ACH_ID(A05_MasterMateria),
+        _ACH_ID(A06_Bromance),
+        _ACH_ID(A07_Chocochampion),
+        _ACH_ID(A08_CorelAngel),
+        _ACH_ID(A09_Yuffie),
+        _ACH_ID(A10_Vincent),
+        _ACH_ID(A11_Leviathan),
+        _ACH_ID(A12_Bahamut),
+        _ACH_ID(A13_FaillureIsAnOption),
+        _ACH_ID(A14_MasterOfGil),
+        _ACH_ID(A15_TopLevel),
+        _ACH_ID(A16_BahamutZero),
+        _ACH_ID(A17_KnightsOfTheRound),
+        _ACH_ID(A18_Omnislash),
+        _ACH_ID(A19_Catastrophe),
+        _ACH_ID(A20_FinalHeaven),
+        _ACH_ID(A21_GreatGospel),
+        _ACH_ID(A22_CosmoMemory),
+        _ACH_ID(A23_AllCreation),
+        _ACH_ID(A24_Slots),
+        _ACH_ID(A25_Chaos),
+        _ACH_ID(A26_Highwind),
+        _ACH_ID(A27_FinishFF7),
+        _ACH_ID(A28_MasterInvocation),
+        _ACH_ID(A29_DiamondWeapon),
+        _ACH_ID(A30_RubyWeapon),
+        _ACH_ID(A31_EmeraldWeapon)
+    };
 
     static inline constexpr int N_CHARACTERS = 9;
     static inline constexpr int N_TYPE_MATERIA = 91;
@@ -177,8 +242,12 @@ private:
 
     static inline constexpr byte MATERIA_EMPTY_SLOT = 0xFF;
     static inline constexpr int MATERIA_AP_MASTERED = 0xFFFFFF;
+    // materia id found in https://wiki.ffrtt.ru/index.php/FF7/Savemap#Save_Materia_List
+    static inline constexpr byte LEVIATHAN_MATERIA_ID = 0x50;
+    static inline constexpr byte BAHAMUT_MATERIA_ID = 0x51;
     static inline constexpr byte BAHAMUT_ZERO_MATERIA_ID = 0x58;
     static inline constexpr byte KOTR_MATERIA_ID = 0x59;
+    static inline constexpr byte SUMMON_MATERIA_ID = 0x5A;
 
     // took from here https://finalfantasy.fandom.com/wiki/Diamond_Weapon_(Final_Fantasy_VII_boss)#Formations
     static inline constexpr WORD DIAMOND_WEAPON_FORMATION_ID = 980;
@@ -203,6 +272,7 @@ private:
     static inline constexpr std::array<byte, N_CHARACTERS> firstLimitBreakActionID = {0x00, 0x07, 0x62, 0x0E, 0x23, 0x31, 0x2A, 0x2D, 0x1C};
     static inline constexpr std::array<WORD, N_CHARACTERS> limitBreakItemsID = {0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0xFFFF, 0x5D, 0x5E};
 
+    boolean isFF72013Release;
     std::unique_ptr<SteamManager> steamManager;
 
     std::array<WORD, N_CHARACTERS> previousUsedLimitNumber;
@@ -214,6 +284,7 @@ private:
     int caitsithNumKills;
     std::string lastSeenMovieName;
 
+    int getAchievementIdByVersion(Achievements2013 ach_2013, AchievementsReRelease ach_rerelease);
     bool isYuffieUnlocked(char yuffieRegular);
     bool isVincentUnlocked(char vincentRegular);
     void initMateriaMastered(const savemap &savemap);
@@ -221,7 +292,7 @@ private:
     bool isAllMateriaMastered(const std::array<bool, N_TYPE_MATERIA> masteredMateriaList);
 
 public:
-    SteamAchievementsFF7();
+    SteamAchievementsFF7(boolean isFF72013Release);
     ~SteamAchievementsFF7() = default;
 
     void initStatsFromSaveFile(const savemap &savemap);
