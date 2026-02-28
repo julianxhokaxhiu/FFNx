@@ -3161,6 +3161,7 @@ struct ff7_externals
 	void (*highway_exit_sub_650340)(void* ff7_game_obj);
 	uint32_t highway_exit_sub_650AD5;
 	int *highway_score_D85990;
+	int *highway_is_minigame_at_gold_saucer_D8596C;
 	uint32_t highway_exit_address_location;
 	uint32_t sub_779E14;
 	uint32_t battle_fps_menu_multiplier;
