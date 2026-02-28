@@ -3046,6 +3046,7 @@ struct ff7_externals
 	uint32_t battle_limit_omnislash_loop;
 	void (*reset_game_obj_sub_5F4971)(struct game_obj*);
 	uint32_t engine_exit_game_mode_sub_666C78;
+	void (*engine_switch_game_loop_sub_666CF2)(void*, void*);
 	void* (*sub_666C13)(struct game_obj*);
 	void* (*sub_670F9B)(void*);
 	WORD* word_CC0828;

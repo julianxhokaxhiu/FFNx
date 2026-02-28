@@ -618,6 +618,15 @@ void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(unsigned char yuffi
     }
 }
 
+void SteamAchievementsFF7::unlockFallInBattleAchievement()
+{
+    ach_trace("%s - trying to unlock fall in battle achievement\n", __func__);
+
+    if (!this->isFF72013Release) {
+        this->steamManager->setAchievement(A13_FaillureIsAnOption);
+    }
+}
+
 // -------------------------- STEAM ACHIEVEMENTS OF FF8 ---------------------------
 
 SteamAchievementsFF8::SteamAchievementsFF8()

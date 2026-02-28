@@ -119,7 +119,7 @@ private:
     };
     enum AchievementsReRelease
     {
-        A01_FirstBattle,
+        A01_FirstBattle = 0,
         A02_Braver,
         A03_DonCorneo,
         A04_Summon,
@@ -301,18 +301,24 @@ public:
 
     bool isEndingMovie();
 
+    // Common achievements
     void unlockBattleWonAchievement(WORD formationID);
     void unlockGilAchievement(uint32_t gilAmount);
     void unlockCharacterLevelAchievement(const savemap_char characters[]);
-    void unlockBattleSquareAchievement(WORD battleLocationID);
     void unlockGotMateriaAchievement(byte materiaID);
     void unlockMasterMateriaAchievement(const savemap_char characters[]);
     void unlockFirstLimitBreakAchievement(short characterIndex, short actionIndex);
     void unlockLastLimitBreakAchievement(WORD itemID);
     void unlockCaitSithLastLimitBreakAchievement(const savemap_char characters[]);
-    void unlockGoldChocoboAchievement(const chocobo_slot firstFourSlots[], const chocobo_slot lastTwoSlots[]);
     void unlockGameProgressAchievement();
     void unlockYuffieAndVincentAchievement(unsigned char yuffieRegMask, unsigned char vincentRegMask);
+
+    // Achievements for 2013 edition
+    void unlockBattleSquareAchievement(WORD battleLocationID);
+    void unlockGoldChocoboAchievement(const chocobo_slot firstFourSlots[], const chocobo_slot lastTwoSlots[]);
+
+    // Achievements for 2026 edition
+    void unlockFallInBattleAchievement();
 };
 
 class SteamAchievementsFF8

@@ -769,3 +769,10 @@ void ff7_character_regularly_field_entity_60FA7D(WORD param1, short param2, shor
 	if(param3 & (1 << 0) || param3 & (1 << 2))
 		g_FF7SteamAchievements->unlockYuffieAndVincentAchievement(ff7_externals.savemap->yuffie_reg_mask, ff7_externals.savemap->vincent_reg_mask);
 }
+
+void ff7_engine_switch_game_loop_sub_666CF2(void* game_obj, void* ff7_game_obj) {
+	if (ff7_externals.modules_global_object->game_mode == ff7_game_modes::FF7_MODE_GAMEOVER) {
+		g_FF7SteamAchievements->unlockFallInBattleAchievement();
+	}
+	ff7_externals.engine_switch_game_loop_sub_666CF2(game_obj, ff7_game_obj);
+}

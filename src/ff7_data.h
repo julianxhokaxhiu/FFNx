@@ -165,6 +165,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_loop = get_relative_call(battle_main_loop, 0x1C8);
 	ff7_externals.battle_mode = (DWORD*)get_absolute_value(ff7_externals.battle_loop, 0x18);
 	ff7_externals.battle_sub_429AC0 = get_absolute_value(ff7_externals.battle_loop, 0x79);
+	ff7_externals.engine_switch_game_loop_sub_666CF2 = (void(*)(void*, void*)) get_relative_call(ff7_externals.battle_loop, 0xB78);
 	ff7_externals.battle_sub_42D808 = get_relative_call(ff7_externals.battle_sub_429AC0, 0xE7);
 	ff7_externals.battle_sub_42D992 = get_relative_call(ff7_externals.battle_sub_42D808, 0x30);
 	ff7_externals.battle_sub_42DAE5 = get_relative_call(ff7_externals.battle_sub_42D992, 0x7E);
