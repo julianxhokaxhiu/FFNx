@@ -3158,6 +3158,10 @@ struct ff7_externals
 	uint32_t fps_limiter_menu;
 	uint32_t sub_5F5042;
 	uint32_t highway_loop_sub_650F36;
+	void (*highway_exit_sub_650340)(void* ff7_game_obj);
+	uint32_t highway_exit_sub_650AD5;
+	int *highway_score_D85990;
+	uint32_t highway_exit_address_location;
 	uint32_t sub_779E14;
 	uint32_t battle_fps_menu_multiplier;
 	DWORD *submarine_minigame_status;

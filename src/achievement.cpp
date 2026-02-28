@@ -651,6 +651,17 @@ void SteamAchievementsFF7::unlockWinChocoboMinigameAchievement(int racePosition)
     }
 }
 
+void SteamAchievementsFF7::unlockBikeHighscoreAchievement(int score)
+{
+    if (!this->isFF72013Release) {
+        ach_trace("%s - trying to unlock bike highscore achievement (score: %d)\n", __func__, score);
+
+        if (score >= 10050) {
+            this->steamManager->setAchievement(A08_CorelAngel);
+        }
+    }
+}
+
 // -------------------------- STEAM ACHIEVEMENTS OF FF8 ---------------------------
 
 SteamAchievementsFF8::SteamAchievementsFF8()

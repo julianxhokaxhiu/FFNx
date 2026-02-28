@@ -781,3 +781,9 @@ void ff7_chocobo_switch_mode_76DB33(void* ff7_game_obj) {
 	g_FF7SteamAchievements->unlockWinChocoboMinigameAchievement(ff7_externals.savemap->field_D74[73]);
 	ff7_externals.chocobo_switch_mode_76DB33(ff7_game_obj);
 }
+
+void ff7_highway_exit_650340(void* ff7_game_obj) {
+	ff7_externals.highway_exit_sub_650340(ff7_game_obj);
+
+	g_FF7SteamAchievements->unlockBikeHighscoreAchievement(*ff7_externals.highway_score_D85990);
+}

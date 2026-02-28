@@ -647,6 +647,10 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.sub_5F5042 = get_relative_call(condor_main_loop, 0x69);
 	ff7_externals.highway_loop_sub_650F36 = get_relative_call(highway_main_loop, 0x53);
+	ff7_externals.highway_exit_address_location = main_loop + 0xA7D;
+	ff7_externals.highway_exit_sub_650340 = (void(*)(void*))get_absolute_value(main_loop, 0xA7D);
+	ff7_externals.highway_exit_sub_650AD5 = get_relative_call((uint32_t)ff7_externals.highway_exit_sub_650340, 0x27);
+	ff7_externals.highway_score_D85990 = (int*)get_absolute_value(ff7_externals.highway_exit_sub_650AD5, 0x8A);
 	ff7_externals.snowboard_enter_sub_722C10 = get_absolute_value(main_loop, 0xB53);
 	ff7_externals.snowboard_loop_sub_72381C = get_relative_call(snowboard_main_loop, 0x7D);
 	ff7_externals.snowboard_exit_sub_722C52 = get_absolute_value(main_loop, 0xB5A);

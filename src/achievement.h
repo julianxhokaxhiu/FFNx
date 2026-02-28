@@ -322,6 +322,7 @@ public:
     void unlockFallInBattleAchievement();
     void unlockAchievementByDialogEvent(WORD fieldMapId, int textId);
     void unlockWinChocoboMinigameAchievement(int racePosition);
+    void unlockBikeHighscoreAchievement(int score);
 };
 
 class SteamAchievementsFF8
