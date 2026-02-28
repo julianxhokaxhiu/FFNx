@@ -268,6 +268,7 @@ private:
     static inline constexpr std::array<byte, N_UNKNOWN_MATERIA> unknownMateriaList = {0x16, 0x26, 0x2D, 0x2E, 0x2F, 0x3F, 0x42, 0x43};
     static inline constexpr std::array<byte, 4> unmasterableMateriaList = {0x11, 0x30, 0x49, 0x5A};
 
+    static inline constexpr byte SUMMON_COMMAND_INDEX = 0x03;
     static inline constexpr byte LIMIT_COMMAND_INDEX = 0x14;
     static inline constexpr std::array<byte, N_CHARACTERS> firstLimitBreakActionID = {0x00, 0x07, 0x62, 0x0E, 0x23, 0x31, 0x2A, 0x2D, 0x1C};
     static inline constexpr std::array<WORD, N_CHARACTERS> limitBreakItemsID = {0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0xFFFF, 0x5D, 0x5E};
@@ -307,7 +308,7 @@ public:
     void unlockCharacterLevelAchievement(const savemap_char characters[]);
     void unlockGotMateriaAchievement(byte materiaID);
     void unlockMasterMateriaAchievement(const savemap_char characters[]);
-    void unlockFirstLimitBreakAchievement(short characterIndex, short actionIndex);
+    void unlockAchievementByBattleCommandAndAction(short characterIndex, short actionIndex);
     void unlockLastLimitBreakAchievement(WORD itemID);
     void unlockCaitSithLastLimitBreakAchievement(const savemap_char characters[]);
     void unlockGameProgressAchievement();
@@ -319,6 +320,7 @@ public:
 
     // Achievements for 2026 edition
     void unlockFallInBattleAchievement();
+    void unlockAchievementByDialogEvent(WORD fieldMapId, int textId);
 };
 
 class SteamAchievementsFF8

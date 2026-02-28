@@ -514,9 +514,9 @@ void SteamAchievementsFF7::unlockMasterMateriaAchievement(const savemap_char cha
     }
 }
 
-void SteamAchievementsFF7::unlockFirstLimitBreakAchievement(short commandID, short actionID)
+void SteamAchievementsFF7::unlockAchievementByBattleCommandAndAction(short commandID, short actionID)
 {
-    ach_trace("%s - trying to unlock achievement for first limit break achievement(command_id: 0x%02x, action_id: 0x%02x)\n", __func__, commandID, actionID);
+    ach_trace("%s - trying to unlock achievement by battle command and action (command_id: 0x%02x, action_id: 0x%02x)\n", __func__, commandID, actionID);
 
     if (commandID == LIMIT_COMMAND_INDEX)
     {
@@ -528,6 +528,12 @@ void SteamAchievementsFF7::unlockFirstLimitBreakAchievement(short commandID, sho
             } else {
                 this->steamManager->setAchievement(A02_Braver);
             }
+        }
+    }
+
+    if (!this->isFF72013Release) {
+        if (commandID == SUMMON_COMMAND_INDEX) {
+            this->steamManager->setAchievement(A04_Summon);
         }
     }
 }
@@ -610,10 +616,25 @@ void SteamAchievementsFF7::unlockYuffieAndVincentAchievement(unsigned char yuffi
 
 void SteamAchievementsFF7::unlockFallInBattleAchievement()
 {
-    ach_trace("%s - trying to unlock fall in battle achievement\n", __func__);
-
     if (!this->isFF72013Release) {
+        ach_trace("%s - trying to unlock fall in battle achievement\n", __func__);
         this->steamManager->setAchievement(A13_FaillureIsAnOption);
+    }
+}
+
+void SteamAchievementsFF7::unlockAchievementByDialogEvent(WORD fieldMapId, int textId)
+{
+    if (!this->isFF72013Release) {
+        ach_trace("%s - trying to unlock achievement by dialog event text (field_id: %d, text_id: %d)\n", __func__, fieldMapId, textId);
+
+        // Don Corneo choosing Cloud
+        if (fieldMapId == 210 && textId == 11) {
+            this->steamManager->setAchievement(A03_DonCorneo);
+        }
+        // Go on a date with Barret in the Gold Saucer
+        else if (fieldMapId == 489 && textId == 56) {
+            this->steamManager->setAchievement(A06_Bromance);
+        }
     }
 }
 

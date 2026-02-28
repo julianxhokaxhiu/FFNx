@@ -433,6 +433,11 @@ int opcode_voice_message()
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
 
+	// Enable achievements based on text dialog
+	if (steam_edition || enable_steam_achievements) {
+		g_FF7SteamAchievements->unlockAchievementByDialogEvent(*common_externals.current_field_id, dialog_id);
+	}
+
 	return opcode_old_message();
 }
 

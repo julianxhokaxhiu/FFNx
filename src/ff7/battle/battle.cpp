@@ -59,7 +59,7 @@ namespace ff7::battle
 		ff7_externals.battle_actor_data->command_index = command_id;
 		ff7_externals.battle_actor_data->action_index = action_id;
 
-		g_FF7SteamAchievements->unlockFirstLimitBreakAchievement(command_id, action_id);
+		g_FF7SteamAchievements->unlockAchievementByBattleCommandAndAction(command_id, action_id);
 	}
 
 	int load_scene_bin_chunk(char *filename, int offset, int size, char **out_buffer, void (*callback)(void))
