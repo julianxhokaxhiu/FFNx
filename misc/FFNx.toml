@@ -746,6 +746,11 @@ ff8_use_gamepad_icons = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_always_capture_input = false
 
+# Enable japanese font loading
+# on non-JP version of the game
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ff8_enable_japanese_font = false
+
 # FPS Limiter
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This flag will overwrite the internal FPS limiter of the game.

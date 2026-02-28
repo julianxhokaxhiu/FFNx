@@ -648,21 +648,21 @@ ff8_draw_menu_sprite_texture_infos *ff8_draw_icon_or_key(
 
 	for (int i = states_count; i > 0; --i)
 	{
-		draw_infos->field_0 = 0x5000000;
-		draw_infos->field_10 = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + field10_modifier) << 16);
+		draw_infos->command = 0x5000000;
+		*(DWORD *)&draw_infos->inner.u = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + field10_modifier) << 16);
 		if (override_field4_8_with_a6)
 		{
-			draw_infos->field_8 = ((a6 & 0xFFFFFF) | 0x64000000) | (((HIBYTE(a6) >> 1) & 2) << 24);
-			draw_infos->field_4 = ((HIBYTE(a6) & 3) << 5) | 0xE100041E;
+			draw_infos->inner.color = ((a6 & 0xFFFFFF) | 0x64000000) | (((HIBYTE(a6) >> 1) & 2) << 24);
+			draw_infos->inner.texID = ((HIBYTE(a6) & 3) << 5) | 0xE100041E;
 		}
 		else
 		{
-			draw_infos->field_8 = no_a6_mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
-			draw_infos->field_4 = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
+			draw_infos->inner.color = no_a6_mask ? a6 | (((sp1_section_data[0] >> 26) & 2) << 24) : (a6 & 0x3FFFFFF) | (((sp1_section_data[0] >> 26) & 2 | 0x64) << 24);
+			draw_infos->inner.texID = (sp1_section_data[0] >> 25) & 0x60 | 0xE100041E;
 		}
-		draw_infos->field_14 = sp1_section_data[1] & 0xFF00FF;
-		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
-		draw_infos->y_related = y + (int32_t(sp1_section_data[1]) >> 24);
+		*(uint32_t *)&draw_infos->inner.w = sp1_section_data[1] & 0xFF00FF;
+		draw_infos->inner.x = x + (int16_t(sp1_section_data[1]) >> 8);
+		draw_infos->inner.y = y + (int32_t(sp1_section_data[1]) >> 24);
 		if (yfix && *ff8_externals.battle_boost_cross_icon_display_1D76604) {
 			*((uint8_t *)draw_infos + 11) |= 2u;
 		}
@@ -719,12 +719,12 @@ ff8_draw_menu_sprite_texture_infos_short *ff8_draw_icon_or_key6(int a1, ff8_draw
 
 	for (int i = states_count; i > 0; --i)
 	{
-		draw_infos->field_0 = 0x4000000;
-		draw_infos->field_C = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + a7) << 16);
-		draw_infos->field_4 = a6 | (((sp1_section_data[0] >> 26) & 2) << 24);
-		draw_infos->field_10 = sp1_section_data[1] & 0xFF00FF;
-		draw_infos->x_related = x + (int16_t(sp1_section_data[1]) >> 8);
-		draw_infos->y_related = y + (sp1_section_data[1] >> 24);
+		draw_infos->texID = 0x4000000;
+		*(uint32_t *)&draw_infos->u = (sp1_section_data[0] & 0x7CFFFFF) + ((0x3810 + a7) << 16);
+		draw_infos->color = a6 | (((sp1_section_data[0] >> 26) & 2) << 24);
+		*(uint32_t *)&draw_infos->w = sp1_section_data[1] & 0xFF00FF;
+		draw_infos->x = x + (int16_t(sp1_section_data[1]) >> 8);
+		draw_infos->y = y + (sp1_section_data[1] >> 24);
 		((void(*)(int, ff8_draw_menu_sprite_texture_infos_short*))ff8_externals.sub_49FE60)(a1, draw_infos);
 		draw_infos += 1;
 		sp1_section_data += 2;
@@ -976,11 +976,13 @@ char *ff8_get_text_cached(int pool_id, int cat_id, int text_id, int a4, char *ca
 
 char *ff8_get_text_cached_new_game(int pool_id, int cat_id, int text_id, int a4)
 {
+	ffnx_trace("%s\n", __func__);
 	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, new_game_text_cache);
 }
 
 char *ff8_get_text_cached_load_game(int pool_id, int cat_id, int text_id, int a4)
 {
+	ffnx_trace("%s\n", __func__);
 	return ff8_get_text_cached(pool_id, cat_id, text_id, a4, load_game_text_cache);
 }
 
