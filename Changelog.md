@@ -17,6 +17,7 @@
 - Core: Fix fr_e field blend mode
 - Core: Fix desync background animation on the wind wall fields of `woa_*` ( https://github.com/julianxhokaxhiu/FFNx/issues/797 )
 - Graphics: Implemented smooth skinning for gltf 3d models ( https://github.com/julianxhokaxhiu/FFNx/pull/882 )
+- Achievements: Add support for all 2026 Re-Release Steam achievements
 
 ## FF8
 
