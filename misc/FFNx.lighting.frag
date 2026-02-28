@@ -13,6 +13,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+// This shader is never used for 2D elements.
+// This shader is used for 3D elements when advanced lighting is enabled.
+
 $input v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
@@ -33,7 +36,6 @@ uniform vec4 FSMiscFlags;
 uniform vec4 FSHDRFlags;
 uniform vec4 FSTexFlags;
 uniform vec4 WMFlags;
-uniform vec4 FSMovieFlags;
 
 uniform vec4 lightingSettings;
 uniform vec4 lightingDebugData;
@@ -68,33 +70,10 @@ uniform vec4 gameScriptedLightColor;
 #define doAlphaTest FSAlphaFlags.z > 0.0
 
 // ---
-#define isFullRange FSMiscFlags.x > 0.0
-#define isYUV FSMiscFlags.y > 0.0
 #define modulateAlpha FSMiscFlags.z > 0.0
-#define isMovie FSMiscFlags.w > 0.0
 
 #define isHDR FSHDRFlags.x > 0.0
 #define monitorNits FSHDRFlags.y
-
-#define doGamutOverride FSHDRFlags.z > 0.0
-
-#define isBT601ColorMatrix abs(FSMovieFlags.x - 0.0) < 0.00001
-#define isBT709ColorMatrix abs(FSMovieFlags.x - 1.0) < 0.00001
-#define isBRG24ColorMatrix abs(FSMovieFlags.x - 2.0) < 0.00001
-
-#define isSRGBColorGamut abs(FSMovieFlags.y - 0.0) < 0.00001
-#define isNTSCJColorGamut abs(FSMovieFlags.y - 1.0) < 0.00001
-#define isSMPTECColorGamut abs(FSMovieFlags.y - 2.0) < 0.00001
-#define isEBUColorGamut abs(FSMovieFlags.y - 3.0) < 0.00001
-
-#define isSRGBGamma abs(FSMovieFlags.z - 0.0) < 0.00001
-#define is2pt2Gamma abs(FSMovieFlags.z - 1.0) < 0.00001
-#define is170MGamma abs(FSMovieFlags.z - 2.0) < 0.00001
-#define isToelessSRGBGamma abs(FSMovieFlags.z - 3.0) < 0.00001
-#define is2pt8Gamma abs(FSMovieFlags.z - 4.0) < 0.00001
-
-#define isOverallSRGBColorGamut abs(FSMovieFlags.w - 0.0) < 0.00001
-#define isOverallNTSCJColorGamut abs(FSMovieFlags.w - 1.0) < 0.00001
 
 // ---
 #define debugOutput lightingDebugData.z
@@ -122,184 +101,83 @@ uniform vec4 gameScriptedLightColor;
 
 void main()
 {
-    vec4 color = v_color0;
+    // v_color0 is used for solid-color polygon faces (e.g., all original FF7 models) and colorizing textures
+    // (Not used for solid-color 2D elements b/c this shader isn't used for 2D elements.)
+    vec4 color = v_color0; //previously linearized in vertex shader
     vec4 color_nml = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 color_pbr = vec4(0.0, 0.0, 0.0, 0.0);
 
     if (isTexture)
     {
-        if (isYUV)
+        // if (isYUV) stanza removed because unreachable
+
+        // This stanza pertains to textures on 3D objects if advanced lighting is enabled
+        vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
+
+        if (isNmlTextureLoaded) color_nml = texture2D(tex_5, v_texcoord0.xy);
+        if (isPbrTextureLoaded) color_pbr = texture2D(tex_6, v_texcoord0.xy);
+
+        if (doAlphaTest)
         {
-            vec3 yuv = vec3(
-                texture2D(tex_0, v_texcoord0.xy).r,
-                texture2D(tex_1, v_texcoord0.xy).r,
-                texture2D(tex_2, v_texcoord0.xy).r
-            );
+            //NEVER
+            if (isAlphaNever) discard;
 
-            if (!(isFullRange)){
-                // dither prior to range conversion
-                ivec2 ydimensions = textureSize(tex_0, 0);
-                ivec2 udimensions = textureSize(tex_1, 0);
-                ivec2 vdimensions = textureSize(tex_2, 0);
-                yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 255.0, 1.0);
-                // clamp back to tv range
-                yuv = clamp(yuv, vec3_splat(16.0/255.0), vec3(235.0/255.0, 240.0/255.0, 240.0/255.0));
+            //LESS
+            if (isAlphaLess)
+            {
+                if (!(texture_color.a < inAlphaRef)) discard;
             }
 
-            if (isBT601ColorMatrix){
-                yuv.g = yuv.g - (128.0/255.0);
-                yuv.b = yuv.b - (128.0/255.0);
-                if (isFullRange){
-                    color.rgb = toRGB_bt601_fullrange(yuv);
-                }
-                else {
-                    yuv.r = saturate(yuv.r - (16.0/255.0));
-                    color.rgb = toRGB_bt601_tvrange(yuv);
-                }
-
-            }
-            else if (isBT709ColorMatrix){
-                yuv.g = yuv.g - (128.0/255.0);
-                yuv.b = yuv.b - (128.0/255.0);
-                if (isFullRange){
-                    color.rgb = toRGB_bt709_fullrange(yuv);
-                }
-                else {
-                    yuv.r = saturate(yuv.r - (16.0/255.0));
-                    color.rgb = toRGB_bt709_tvrange(yuv);
-                }
-
-            }
-            else if (isBRG24ColorMatrix){
-                color.rgb = yuv;
-            }
-            // default should be unreachable
-            else {
-                color.rgb = vec3_splat(0.5);
+            //EQUAL
+            if (isAlphaEqual)
+            {
+                if (!(texture_color.a == inAlphaRef)) discard;
             }
 
-            // Use a different inverse gamma function depending on the FMV's metadata
-            if (isToelessSRGBGamma){
-                color.rgb = toLinearToelessSRGB(color.rgb);
-            }
-            else if (is2pt2Gamma){
-                color.rgb = toLinear2pt2(color.rgb);
-            }
-            else if (is170MGamma){
-                color.rgb = toLinearSMPTE170M(color.rgb);
-            }
-            else if (is2pt8Gamma){
-                color.rgb = toLinear2pt8(color.rgb);
-            }
-            else {
-                color.rgb = toLinear(color.rgb);
+            //LEQUAL
+            if (isAlphaLEqual)
+            {
+                if (!(texture_color.a <= inAlphaRef)) discard;
             }
 
-            // Convert gamut to BT709/SRGB or NTSC-J, depending on what we're going to do in post.
-            // This approach has the unfortunate drawback of resulting in two gamut conversions for some inputs.
-            // But it seems to be the only way to avoid breaking stuff that has expectations about the texture colors (like animated field textures).
-            // Use of NTSC-J as the source gamut  for the original videos and their derivatives is a *highly* probable guess:
-            // It looks correct, is consistent with the PS1's movie decoder chip's known use of BT601 color matrix, and conforms with Japanese TV standards of the time.
-            if (isOverallNTSCJColorGamut){
-                // do nothing for NTSC-J
-                if ((isSRGBColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
-                    color.rgb = GamutLUT(color.rgb);
-                    // dither after the LUT operation
-                    ivec2 dimensions = textureSize(tex_0, 0);
-                    color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
-                }
-                // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
-            }
-            // overall sRGB
-            else {
-                // do nothing for sRGB
-                if ((isNTSCJColorGamut) || (isSMPTECColorGamut) || (isEBUColorGamut)){
-                    color.rgb = GamutLUT(color.rgb);
-                    // dither after the LUT operation
-                    ivec2 dimensions = textureSize(tex_0, 0);
-                    color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 4320.0);
-                }
-                // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
+            //GREATER
+            if (isAlphaGreater)
+            {
+                if (!(texture_color.a > inAlphaRef)) discard;
             }
 
-            color.a = 1.0;
+            //NOTEQUAL
+            if (isAlphaNotEqual)
+            {
+                if (!(texture_color.a != inAlphaRef)) discard;
+            }
+
+            //GEQUAL
+            if (isAlphaGEqual)
+            {
+                if (!(texture_color.a >= inAlphaRef)) discard;
+            }
         }
+
+        // check for some discard conditions
+        if (isNotFBTexture && texture_color.a == 0.0) discard;
+        if (isFBTexture)
+        {
+            if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
+
+            // This was previously in gamma space, so linearize again.
+            texture_color.rgb = toLinear(texture_color.rgb);
+        }
+
+        // multiply by v_color0
+        if (modulateAlpha) color *= texture_color;
         else
         {
-            vec4 texture_color = texture2D(tex_0, v_texcoord0.xy);
-
-            if (isNmlTextureLoaded) color_nml = texture2D(tex_5, v_texcoord0.xy);
-            if (isPbrTextureLoaded) color_pbr = texture2D(tex_6, v_texcoord0.xy);
-
-            if (doAlphaTest)
-            {
-                //NEVER
-                if (isAlphaNever) discard;
-
-                //LESS
-                if (isAlphaLess)
-                {
-                    if (!(texture_color.a < inAlphaRef)) discard;
-                }
-
-                //EQUAL
-                if (isAlphaEqual)
-                {
-                    if (!(texture_color.a == inAlphaRef)) discard;
-                }
-
-                //LEQUAL
-                if (isAlphaLEqual)
-                {
-                    if (!(texture_color.a <= inAlphaRef)) discard;
-                }
-
-                //GREATER
-                if (isAlphaGreater)
-                {
-                    if (!(texture_color.a > inAlphaRef)) discard;
-                }
-
-                //NOTEQUAL
-                if (isAlphaNotEqual)
-                {
-                    if (!(texture_color.a != inAlphaRef)) discard;
-                }
-
-                //GEQUAL
-                if (isAlphaGEqual)
-                {
-                    if (!(texture_color.a >= inAlphaRef)) discard;
-                }
-            }
-
-            if (isFBTexture)
-            {
-                if(all(equal(texture_color.rgb,vec3_splat(0.0)))) discard;
-
-                // This was previously in gamma space, so linearize again.
-                texture_color.rgb = toLinear(texture_color.rgb);
-            }
-            // This stanza currently does nothing because there's no way to set doGamutOverride.
-            // Hopefully the future will bring a way to set this for types of textures (e.g., world, model, field, spell, etc.) or even for individual textures based on metadata.
-            else if (doGamutOverride){
-                texture_color.rgb = GamutLUT(texture_color.rgb);
-                ivec2 dimensions = textureSize(tex_0, 0);
-                texture_color.rgb = QuasirandomDither(texture_color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 255.0, 1.0);
-                // Note: Bring back matrix-based conversions for HDR *if* we can find a way to left potentially out-of-bounds values linger until post processing.
-            }
-
-            if (isMovie) texture_color.a = 1.0;
-
-            if (isNotFBTexture && texture_color.a == 0.0) discard;
-
-            if (modulateAlpha) color *= texture_color;
-            else
-            {
-                color.rgb *= texture_color.rgb;
-			    color.a = texture_color.a;
-            }
+            color.rgb *= texture_color.rgb;
+            color.a = texture_color.a;
         }
+
+
     }
 
     vec3 normal = vec3(0.0, 0.0, 0.0);
@@ -414,13 +292,17 @@ void main()
         float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
         float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
         float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
+
+
         vec3 light1Ambient = toLinear(gameLightColor1.rgb) * dotLight1 * dotLight1;
         vec3 light2Ambient = toLinear(gameLightColor2.rgb) * dotLight2 * dotLight2;
         vec3 light3Ambient = toLinear(gameLightColor3.rgb) * dotLight3 * dotLight3;
         vec3 lightAmbient = toLinear(gameScriptedLightColor.rgb) * (toLinear(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
+
         gl_FragColor.rgb *= gameGlobalLightColor.w * lightAmbient;
     }
 
-    // return to gamma space so we can do alpha blending the same way FF7/8 did.
+    // return to sRGB gamma space so we can do alpha blending the same way FF7/8 did.
     gl_FragColor.rgb = toGamma(gl_FragColor.rgb);
+
 }

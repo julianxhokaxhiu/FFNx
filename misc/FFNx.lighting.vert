@@ -13,6 +13,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+// This shader is never used for 2D elements.
+// This shader is used for 3D elements when advanced lighting is enabled.
+
 $input a_position, a_color0, a_texcoord0, a_normal, a_indices, a_weight
 $output v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
 
@@ -60,7 +63,7 @@ uniform vec4 skinningFlags;
 
 void main()
 {
-	vec4 pos = a_position;
+    vec4 pos = a_position;
     vec3 nrm = a_normal;
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
@@ -112,10 +115,12 @@ void main()
             float dotLight1 = saturate(dot(worldNormal, gameLightDir1.xyz));
             float dotLight2 = saturate(dot(worldNormal, gameLightDir2.xyz));
             float dotLight3 = saturate(dot(worldNormal, gameLightDir3.xyz));
+
             vec3 light1Ambient = toLinear(gameLightColor1.rgb) * dotLight1 * dotLight1;
             vec3 light2Ambient = toLinear(gameLightColor2.rgb) * dotLight2 * dotLight2;
             vec3 light3Ambient = toLinear(gameLightColor3.rgb) * dotLight3 * dotLight3;
             vec3 lightAmbient = toLinear(gameScriptedLightColor.rgb) * (toLinear(gameGlobalLightColor.rgb) + light1Ambient + light2Ambient + light3Ambient);
+
             color.rgb *= gameGlobalLightColor.w * lightAmbient;
         }
 

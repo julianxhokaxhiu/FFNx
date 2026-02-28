@@ -7,6 +7,7 @@ Welcome to the FFNx documentation!
 - [How To Install](how_to_install.md)
 - [FAQ - Frequently Asked Questions](faq.md)
 - [Built-In Shortcuts](shortcuts.md)
+- [Gamma and Color Gamut Information](gamma_and_gamut.md)
 
 ## FF7
 
@@ -22,3 +23,4 @@ Welcome to the FFNx documentation!
 - [Audio Engine](mods/audio_engine.md)
 - [Video Encoding Guide](mods/video_encoding_guide.md)
 - [External textures](mods/external_textures.md)
+- [Preparing Textures for NTSC-J Mode](mods/preparing_textures_for_ntscj_mode.md)

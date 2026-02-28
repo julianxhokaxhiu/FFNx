@@ -136,7 +136,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	bool okcolorspace = false;
 	bool yuvjfixneeded = false;
 	bool islogomovie = false;
-	bool isff8steammovie = false;
 	int lastbackslashindex = -1;
 	int bytessincebackslash = 0;
 	int scanoffset = 0;
@@ -212,54 +211,43 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	// figure out if this is the eidos logo or square logo; they need special treatment
 	// scan till we hit 0 terminator
-	while (true){
-		bytessincebackslash++;
-		// note the index of the last backslash, and how far the string continues after that
-		if (name[scanoffset] == 92){
-			lastbackslashindex = scanoffset;
-			bytessincebackslash = 0;
-		}
-		else if (name[scanoffset] == 0){
-			break;
-		}
-		scanoffset++;
-	}
-	char upperbuffer[128];
-	memset(upperbuffer, 0, 128);
-	if ((lastbackslashindex > -1) && (bytessincebackslash > 1) && (bytessincebackslash <= 128)){
-		memcpy(&upperbuffer, &name[lastbackslashindex+1], bytessincebackslash);
-		// convert to uppercase
-		for (int i=0; i<bytessincebackslash; i++){
-			upperbuffer[i] = toupper(upperbuffer[i]);
-		}
-		// strip the file extension
-		for (int i=bytessincebackslash-1; i>=0; i--){
-			char backchar = upperbuffer[i];
-			upperbuffer[i] = 0;
-			if (backchar == 46){
+	// TODO: Add FF8 logo movies
+	if ((codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) && (codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)){
+		while (true){
+			bytessincebackslash++;
+			// note the index of the last backslash, and how far the string continues after that
+			if (name[scanoffset] == 92){
+				lastbackslashindex = scanoffset;
+				bytessincebackslash = 0;
+			}
+			else if (name[scanoffset] == 0){
 				break;
 			}
+			scanoffset++;
 		}
-		if (	(strcmp(upperbuffer, "EIDOSLOGO") == 0) ||
-			(strcmp(upperbuffer, "SQLOGO") == 0)
-		){
-			islogomovie = true;
-			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie; NTSC-J conversion will be supressed.\n", name);
+		char upperbuffer[128];
+		memset(upperbuffer, 0, 128);
+		if ((lastbackslashindex > -1) && (bytessincebackslash > 1) && (bytessincebackslash <= 128)){
+			memcpy(&upperbuffer, &name[lastbackslashindex+1], bytessincebackslash);
+			// convert to uppercase
+			for (int i=0; i<bytessincebackslash; i++){
+				upperbuffer[i] = toupper(upperbuffer[i]);
+			}
+			// strip the file extension
+			for (int i=bytessincebackslash-1; i>=0; i--){
+				char backchar = upperbuffer[i];
+				upperbuffer[i] = 0;
+				if (backchar == 46){
+					break;
+				}
+			}
+			if (	(strcmp(upperbuffer, "EIDOSLOGO") == 0) ||
+				(strcmp(upperbuffer, "SQLOGO") == 0)
+			){
+				islogomovie = true;
+				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie.\n", name);
+			}
 		}
-	}
-
-	// Movie files from the ff8 Steam release appear to be bt709, tv-range, with gamut conversion already done, and no metadata
-	// (Not completely sure about bt709; it's hard to tell under the circumstances.)
-	if (    ff8 &&
-			((codec_ctx->height >= 720) || (codec_ctx->width >= 1280)) && // the samples I examined were 1280 x 896, but I didn't check them all to rule out some of them being cropped
-			(codec_ctx->pix_fmt == AV_PIX_FMT_YUV420P) &&
-			(codec_ctx->color_range == AVCOL_RANGE_UNSPECIFIED) &&
-			(codec_ctx->colorspace == AVCOL_SPC_UNSPECIFIED) &&
-			(codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) &&
-			(codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)
-	){
-		isff8steammovie = true;
-		if (trace_movies  || trace_all) ffnx_trace("prepare_movie: File %s appears to be from the FF8 Steam release. Missing metadata will be guessed accordingly.\n", name);
 	}
 
 	movie_width = codec_ctx->width;
@@ -295,11 +283,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			yuvjfixneeded = false;
 	}
 
-	if (isff8steammovie){
-		fullrange_input = false;
-		yuvjfixneeded = false;
-	}
-
 	if (trace_movies  || trace_all) ffnx_trace("prepare_movie: color range detected as %i (0=tv, 1=pc).\n", fullrange_input);
 
 	// will we need to convert the colorspace?
@@ -313,10 +296,10 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 				okcolorspace = true;
 				break;
 			}
-			else if (isff8steammovie){
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: assuming bt709 color matrix because this is a FF8 Steam release movie.\n");
-				colormatrix = COLORMATRIX_BT709;
-				okcolorspace = true;
+			else if (ff8 && (codec_ctx->color_range != AVCOL_RANGE_JPEG) && !yuvjfixneeded){
+				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Assuming FF8 bink or bink-derived movie. (e.g., PC2000 or Steam) Using bink color matrix and forcing color range to TV (limited).\n");
+				colormatrix = COLORMATRIX_BINK;
+				fullrange_input = false;
 				break;
 			}
 			// fall through to next case if we didn't already break
@@ -350,26 +333,26 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AVCOL_TRC_UNSPECIFIED:
 		case AVCOL_TRC_RESERVED:
 		case AVCOL_TRC_RESERVED0:
-			if (colormatrix == COLORMATRIX_BT709){
+			if (islogomovie){
+				gammatype = GAMMAFUNCTION_BT1886_APPX1;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, using BT1886 Appendix 1 (CRT television/monitor) gamma curve because this is a logo movie.\n");
+			}
+			else if (colormatrix == COLORMATRIX_BT709){
 				gammatype = GAMMAFUNCTION_SMPTE170M;
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
 			}
-			else if (codec_ctx->color_primaries == AVCOL_PRI_BT470BG){
-				gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but EBU color gamut (PAL), so assuming 2.8 gamma (PAL).\n");
-			}
 			else {
-				gammatype = GAMMAFUNCTION_TOELESS_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using \"toeless sRGB\" gamma curve.\n");
+				gammatype = GAMMAFUNCTION_BT1886_APPX1;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using BT1886 Appendix 1 (CRT television) gamma curve.\n");
 			}
 			break;
 		case AVCOL_TRC_IEC61966_2_1: //srgb
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb gamma transfer function detected\n");
 			gammatype = GAMMAFUNCTION_SRGB;
 			break;
-		case AVCOL_TRC_GAMMA22:
-			gammatype = GAMMAFUNCTION_TWO_PT_TWO;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected\n");
+		case AVCOL_TRC_GAMMA22: //2.2
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected, using sRGB instead.\n");
+			gammatype = GAMMAFUNCTION_SRGB;
 			break;
 		case AVCOL_TRC_SMPTE170M:
 		case AVCOL_TRC_BT709: // same as SMPTE170M
@@ -380,10 +363,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			gammatype = GAMMAFUNCTION_SMPTE170M;
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
 			break;
-		case AVCOL_TRC_GAMMA28:
-			gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.8 gamma transfer function detected\n");
-			break;
+		case AVCOL_TRC_GAMMA28: //fall through
 		default:
 			ffnx_error("prepare_movie: unsupported transfer (inverse gamma) function\n");
 			ffmpeg_release_movie_objects();
@@ -410,8 +390,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb/bt709 color gamut detected.\n");
 			break;
 		case AVCOL_PRI_BT470M:
-			// Since 470m (NTSC1953) was deprecated in 1979, material in this gamut is rare and likely irrelevant to FF7/8.
-			// Assume user meant SMPTE-C (which replaced NTSC1953 in 1979).
+			// Assume user meant SMPTE-C.
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: NTSC1953 color gamut detected. Assuming user error and using SMPTE-C instead.\n");
 			// fall through to next case
 		case AVCOL_PRI_SMPTE170M:
@@ -423,27 +402,20 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AVCOL_PRI_UNSPECIFIED:
 		case AVCOL_PRI_RESERVED0:
 		case AVCOL_PRI_RESERVED:
-			if (isff8steammovie){
-				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a FF8 Steam release video. (Steam already did NTSC-J to SRGB gamut conversion.)\n");
-			}
-			else if (colormatrix == COLORMATRIX_BT709){
+			if (colormatrix == COLORMATRIX_BT709){
 				colorgamut = COLORGAMUT_SRGB;
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because bt709 color matrix.\n");
 			}
 			else if (islogomovie){
-				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a logo movie.\n");
+				colorgamut = COLORGAMUT_RAWP22;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming uncorrected P22 (CRT computer monitor) because this is a logo movie.\n");
 			}
 			else {
 				colorgamut = COLORGAMUT_NTSCJ;
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming NTSC-J.\n");
 			}
 			break;
-		case AVCOL_PRI_BT470BG:
-			colorgamut = COLORGAMUT_EBU;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: EBU(PAL) color gamut detected.\n");
-			break;
+		case AVCOL_PRI_BT470BG: // fall through
 		default:
 			ffnx_error("prepare_movie: unsupported color gamut\n");
 			ffmpeg_release_movie_objects();
@@ -711,15 +683,13 @@ void draw_yuv_frame(uint32_t buffer_index)
 		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
 
 	newRenderer.isMovie(true);
-	newRenderer.isYUV(true);
 	newRenderer.isFullRange(fullrange_input);
 	newRenderer.setColorMatrix(colormatrix);
 	newRenderer.setColorGamut(colorgamut);
 	newRenderer.setGammaType(gammatype);
 	gl_draw_movie_quad(movie_width, movie_height);
-	newRenderer.isFullRange(false);
-	newRenderer.isYUV(false);
 	newRenderer.isMovie(false);
+	newRenderer.isFullRange(false);
 	newRenderer.setColorMatrix(COLORMATRIX_BT601);
 	newRenderer.setColorGamut(COLORGAMUT_SRGB);
 	newRenderer.setGammaType(GAMMAFUNCTION_SRGB);

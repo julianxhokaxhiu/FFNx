@@ -146,22 +146,21 @@ enum RendererUniform
 enum ColorMatrixType{
     COLORMATRIX_BT601 = 0,
     COLORMATRIX_BT709 = 1,
-    COLORMATRIX_BGR24 = 2
+    COLORMATRIX_BGR24 = 2,
+    COLORMATRIX_BINK = 3
 };
 
 enum ColorGamutType{
     COLORGAMUT_SRGB = 0,
     COLORGAMUT_NTSCJ = 1,
     COLORGAMUT_SMPTEC = 2,
-    COLORGAMUT_EBU = 3
+    COLORGAMUT_RAWP22 = 3
 };
 
 enum InverseGammaFunctionType{
     GAMMAFUNCTION_SRGB = 0,
-    GAMMAFUNCTION_TWO_PT_TWO = 1,
-    GAMMAFUNCTION_SMPTE170M = 2,
-    GAMMAFUNCTION_TOELESS_SRGB = 3,
-    GAMMAFUNCTION_TWO_PT_EIGHT = 4
+    GAMMAFUNCTION_SMPTE170M = 1,
+    GAMMAFUNCTION_BT1886_APPX1 = 2
 };
 
 namespace RendererTextureSlot {
@@ -183,15 +182,9 @@ namespace RendererTextureSlot {
 };
 
 enum GamutLUTIndexType{
-	INDEX_LUT_NTSCJ_TO_SRGB,
-	INDEX_LUT_SMPTEC_TO_SRGB,
-	INDEX_LUT_EBU_TO_SRGB,
-	INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
-	INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC,
-	INDEX_LUT_INVERSE_NTSCJ_TO_EBU,
-	INDEX_LUT_SRGB_TO_NTSCJ,
-	INDEX_LUT_SMPTEC_TO_NTSCJ,
-	INDEX_LUT_EBU_TO_NTSCJ
+    INDEX_LUT_NTSCJ_TO_SRGB,
+    INDEX_LUT_INVERSE_NTSCJ_TO_SRGB,
+    INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC
 };
 
 static void RendererReleaseImageContainer(void* _ptr, void* _userData)
@@ -255,8 +248,11 @@ private:
         LIGHTING_SMOOTH,
         FIELD_SHADOW,
         POSTPROCESSING,
+        POSTPROCESSING_NTSCJ,
         OVERLAY,
         BLIT,
+        YUVMOVIE,
+        YUVMOVIE_TRUECOLOR,
         COUNT
     };
 
@@ -283,14 +279,12 @@ private:
         bool bModulateAlpha = false;
         bool bIsMovie = false;
         bool bIsMovieFullRange = false;
-        bool bIsMovieYUV = false;
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
         bool bIsFogEnabled = false;
         ColorMatrixType bIsMovieColorMatrix = COLORMATRIX_BT601;
         ColorGamutType bIsMovieColorGamut = COLORGAMUT_SRGB;
         ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
-        bool bIsOverrideGamut = false;
         InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
 
         float backendProjMatrix[16];
@@ -346,6 +340,8 @@ private:
     std::string fragmentPathSmooth = "shaders/FFNx";
     std::string vertexPostPath = "shaders/FFNx.post";
     std::string fragmentPostPath = "shaders/FFNx.post";
+    std::string vertexPostNTSCJPath = "shaders/FFNx.post.ntscj";
+    std::string fragmentPostNTSCJPath = "shaders/FFNx.post.ntscj";
     std::string vertexOverlayPath = "shaders/FFNx.overlay";
     std::string fragmentOverlayPath = "shaders/FFNx.overlay";
     std::string vertexLightingPathFlat = "shaders/FFNx.lighting";
@@ -358,9 +354,14 @@ private:
     std::string fragmentFieldShadowPath = "shaders/FFNx.field.shadow";
     std::string vertexBlitPath = "shaders/FFNx.blit";
     std::string fragmentBlitPath = "shaders/FFNx.blit";
+    std::string vertexYUVMoviePath = "shaders/FFNx.yuvmovie";
+    std::string fragmentYUVMoviePath = "shaders/FFNx.yuvmovie";
+    std::string vertexYUVMovieTrueColorPath = "shaders/FFNx.yuvmovie.truecolor";
+    std::string fragmentYUVMovieTrueColorPath = "shaders/FFNx.yuvmovie.truecolor";
 
     bgfx::ViewId backendViewId = 1;
     RendererProgram backendProgram = RendererProgram::SMOOTH;
+    RendererProgram priorBackend = RendererProgram::SMOOTH;
 
     std::vector<bgfx::ProgramHandle> backendProgramHandles = std::vector<bgfx::ProgramHandle>(RendererProgram::COUNT, BGFX_INVALID_HANDLE);
 
@@ -384,13 +385,8 @@ private:
 
     bgfx::TextureHandle GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleSMPTECtoSRGB = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleEBUtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleInverseNTSCJtoEBU = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleSRGBtoNTSCJ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleSMPTECtoNTSCJ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle GLUTHandleEBUtoNTSCJ = BGFX_INVALID_HANDLE;
 
     bgfx::VertexLayout vertexLayout;
 
@@ -460,7 +456,7 @@ public:
     void prepareDiffuseIbl(char* fullpath = nullptr);
     void prepareEnvBrdf();
     void prepareGamutLUTs();
-	void LoadGamutLUT(GamutLUTIndexType whichLUT);
+    void LoadGamutLUT(GamutLUTIndexType whichLUT);
     void shutdown();
 
     void clearShadowMap();
@@ -515,7 +511,6 @@ public:
     void isTexture(bool flag = false);
     void isFBTexture(bool flag = false);
     void isFullRange(bool flag = false);
-    void isYUV(bool flag = false);
     void doModulateAlpha(bool flag = false);
     void doTextureFiltering(bool flag = false);
     void doMirrorTextureWrap(bool flag = false);
@@ -525,7 +520,6 @@ public:
     void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);
-    void setGamutOverride(bool flag = false);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);
@@ -537,6 +531,7 @@ public:
     void setCullMode(RendererCullMode mode = RendererCullMode::DISABLED);
     void doDepthTest(bool flag = false);
     void doDepthWrite(bool flag = false);
+    void setYUVMovieBackend();
 
     // Scissor test
     void doScissorTest(bool flag = false);

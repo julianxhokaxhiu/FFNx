@@ -232,7 +232,7 @@ target_link_options(
 )
 
 # SHADER COMPILATION
-set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.blit")
+set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.post.ntscj" "FFNx.blit" "FFNx.yuvmovie" "FFNx.yuvmovie.truecolor")
 foreach(FFNX_SHADER IN LISTS FFNX_SHADERS)
   foreach(BGFX_VARYING flat smooth)
     add_custom_command(
@@ -374,28 +374,10 @@ add_custom_command(
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ntscj_to_srgb.png
           ${CMAKE_BINARY_DIR}/bin/shaders
   COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_smptec_to_srgb.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ebu_to_srgb.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_srgb.png
           ${CMAKE_BINARY_DIR}/bin/shaders
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_smptec.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_inverse_ntscj_to_ebu.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_srgb_to_ntscj.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_smptec_to_ntscj.png
-          ${CMAKE_BINARY_DIR}/bin/shaders
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_SOURCE_DIR}/misc/glut_ebu_to_ntscj.png
           ${CMAKE_BINARY_DIR}/bin/shaders
 
 )

@@ -40,13 +40,19 @@ void main()
 		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
 		// dither in gamma space so dither step size is proportional to quantization step size
 		// can't dither in rec2084 space because our max signal only occupies a small space near the bottom of the range.
+		// It's not ideal to dither ahead of CRT color correction simulation, but doing it after is gnarly due to out-of-bounds red.
 		ivec2 dimensions = textureSize(tex_0, 0);
 		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
-		// back to linear for gamut conversion and PQ gamma curve
-		color.rgb = toLinear(color.rgb);
-		color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
+		// simulate CRT color correction and gamma
+		color.rgb = CRTSimulation(color.rgb); // CRT gamma-space in, linear out
+		color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
 		color.rgb = ApplyREC2084Curve(color.rgb, monitorNits);
 	}
-	// If not HDR mode, we should already be in gamma-space sRGB.
+	else {
+		color.rgb = GamutLUT(color.rgb); // AssignGamutLUT() in renderer.cpp should have bound the correct LUT
+		color.rgb = toGamma(color.rgb);
+		ivec2 dimensions = textureSize(tex_0, 0);
+		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
+	}
 	gl_FragColor = color;
 }
