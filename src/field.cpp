@@ -112,12 +112,6 @@ int opcode_kawai() {
 		}
 		else
 		{
-			if (ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode != 0x2)
-			{
-				ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode = 0x0;
-				ff7::field::ff7_model_data[curr_model_id].init_kawai_params = nullptr;
-			}
-
 			ff7::field::ff7_model_data[curr_model_id].exec_kawai_opcode = subcode;
 			ff7::field::ff7_model_data[curr_model_id].exec_kawai_params = event_data[curr_model_id].opcode_params;
 		}
