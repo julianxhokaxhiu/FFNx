@@ -102,6 +102,7 @@ enum RendererUniform
     FS_HDR_FLAGS,
     FS_TEX_FLAGS,
     FS_MOVIE_FLAGS,
+    FS_MORE_MOVIE_FLAGS,
     WM_FLAGS,
     TIME_COLOR,
     TIME_DATA,
@@ -160,6 +161,15 @@ enum InverseGammaFunctionType{
     GAMMAFUNCTION_SRGB = 0,
     GAMMAFUNCTION_SMPTE170M = 1,
     GAMMAFUNCTION_BT1886_APPX1 = 2
+};
+
+enum ChromaLocationType{
+    CHROMALOC_TOPLEFT = 0,
+    CHROMALOC_TOP = 1,
+    CHROMALOC_LEFT = 2,
+    CHROMALOC_CENTER = 3,
+    CHROMALOC_BOTTOMLEFT = 4,
+    CHROMALOC_BOTTOM = 5
 };
 
 namespace RendererTextureSlot {
@@ -285,6 +295,7 @@ private:
         ColorGamutType bIsMovieColorGamut = COLORGAMUT_SRGB;
         ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
         InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
+        ChromaLocationType bChromaLocation = CHROMALOC_CENTER;
 
         float backendProjMatrix[16];
         float postprocessingProjMatrix[16];
@@ -296,6 +307,7 @@ private:
         std::vector<float> FSTexFlags;
         std::vector<float> WMFlags;
         std::vector<float> FSMovieFlags;
+        std::vector<float> FSMoreMovieFlags;
 
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
@@ -519,6 +531,7 @@ public:
     void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);
+    void setChromaLocationType(ChromaLocationType cltype = CHROMALOC_CENTER);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);

@@ -67,7 +67,8 @@ bool fullrange_input = false;
 ColorMatrixType colormatrix = COLORMATRIX_BT601;
 ColorGamutType colorgamut = COLORGAMUT_SRGB;
 InverseGammaFunctionType gammatype = GAMMAFUNCTION_SRGB;
-AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV444P;
+const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P;
+ChromaLocationType chromaloc = CHROMALOC_CENTER;
 
 bool first_audio_packet;
 
@@ -144,6 +145,9 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	int lastbackslashindex = -1;
 	int bytessincebackslash = 0;
 	int scanoffset = 0;
+	int chromawidthshift = 0;
+	int chromaheightshift = 0;
+	const AVPixFmtDescriptor* pix_desc = nullptr;
 
 	movie_frames = 0;
 
@@ -363,8 +367,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			goto exit;
 	}
 
-	targetpixelformat = AV_PIX_FMT_YUV444P;
-
 	// will we need to convert the pixel format?
 	// we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
 	// Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions
@@ -405,6 +407,95 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			ffmpeg_release_movie_objects();
 			goto exit;
 	}
+
+	// what is the chroma sample location?
+	// first, we may need to know about the pixel format
+	pix_desc = av_pix_fmt_desc_get(codec_ctx->pix_fmt);
+	if (pix_desc){
+		chromawidthshift = pix_desc->log2_chroma_w;
+		chromaheightshift = pix_desc->log2_chroma_h;
+	}
+	switch (codec_ctx->chroma_sample_location){
+		case AVCHROMA_LOC_LEFT:
+			chromaloc = CHROMALOC_LEFT;
+			break;
+		case AVCHROMA_LOC_CENTER:
+			chromaloc = CHROMALOC_CENTER;
+			break;
+		case AVCHROMA_LOC_TOPLEFT:
+			chromaloc = CHROMALOC_TOPLEFT;
+			break;
+		case AVCHROMA_LOC_TOP:
+			chromaloc = CHROMALOC_TOP;
+			break;
+		case AVCHROMA_LOC_BOTTOMLEFT:
+			chromaloc = CHROMALOC_BOTTOMLEFT;
+			break;
+		case AVCHROMA_LOC_BOTTOM:
+			chromaloc = CHROMALOC_BOTTOM;
+			break;
+		case AVCHROMA_LOC_UNSPECIFIED: //fall through
+		default:
+			// chroma sample location isn't specified so we must guess
+
+			// if the pixel format is 444, it must be center
+			if (pix_desc && (chromawidthshift == 0) && (chromaheightshift == 0)){
+				chromaloc = CHROMALOC_CENTER;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location must be center because 4:4:4 pixel format.\n");
+			}
+			// if the pixel format is 420, guess from the codec
+			else if (pix_desc && (chromawidthshift == 1) && (chromaheightshift == 1)){
+				// deafults for some common codecs
+				switch (codec_ctx->codec_id){
+					case AV_CODEC_ID_MPEG2VIDEO:
+					case AV_CODEC_ID_MPEG4:
+					case AV_CODEC_ID_H264:
+					case AV_CODEC_ID_HEVC:
+						chromaloc = CHROMALOC_LEFT;
+						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is left for 4:2:0 pixel format based on codec.\n");
+						break;
+					case AV_CODEC_ID_MJPEG:
+					case AV_CODEC_ID_H261:
+					case AV_CODEC_ID_MPEG1VIDEO:
+					case AV_CODEC_ID_H263:
+						chromaloc = CHROMALOC_CENTER;
+						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is center for 4:2:0 pixel format based on codec.\n");
+						break;
+					default:
+						// per jpsxdec documentation, PSX video has chroma position center https://github.com/m35/jpsxdec/blob/readme/jpsxdec/PlayStation1_STR_format.txt
+						// no idea what bink chroma position is.
+						chromaloc = CHROMALOC_CENTER;
+						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location for 4:2:0 pixel format based on codec. Assuming center.\n");
+						break;
+				}
+			}
+			else if (pix_desc && (chromawidthshift == 1) && (chromaheightshift == 0)){
+				if (codec_ctx->codec_id == AV_CODEC_ID_MPEG2VIDEO){
+					// ffmpeg docs say topleft, but that's impossible for 422
+					// (Think ffmpeg docs are always relative to 420's 2x2 box even when it's not 420.)
+					chromaloc = CHROMALOC_LEFT;
+					if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is left for 4:2:2 pixel format based on codec.\n");
+				}
+				else {
+					chromaloc = CHROMALOC_CENTER;
+					if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location for 4:2:2 pixel format based on codec. Assuming center.\n");
+				}
+			}
+			else {
+				chromaloc = CHROMALOC_CENTER;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location based on pixel format and codec. Assuming center.\n");
+			}
+			break;
+	}
+	// Metadata may have lied. Force center for 4:4:4.
+	if (pix_desc && (chromawidthshift == 0) && (chromaheightshift == 0) && (chromaloc != CHROMALOC_CENTER)){
+		chromaloc = CHROMALOC_CENTER;
+		if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location must be center because 4:4:4 pixel format. (Overriding erroneous metadata.)\n");
+	}
+	// We also haven't addressed the possibility that a modder did an improper conversion without adjusting the chroma sample location.
+	// But that's the modder's fault and we can't fix it here.
+	if (trace_movies || trace_all) ffnx_trace("prepare_movie: Chroma sample location detected or guessed as %d (0=topleft, 1=top, 2=left, 3=center, 4=bottomleft, 5=bottom).\n", chromaloc);
+
 
 	if (trace_movies || trace_all)
 	{
@@ -582,9 +673,12 @@ void ffmpeg_stop_movie()
 void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t buffer_index)
 {
 	uint32_t upload_width = strides[num];
-	// Use full dimensions for chroma planes in yuv444. If yuv420, use half width and half height instead.
 	uint32_t tex_width = movie_width;
 	uint32_t tex_height = movie_height;
+	if (num > 0){
+		tex_width /= 2;
+		tex_height /= 2;
+	}
 
 	if (upload_width > tex_width) tex_width = upload_width;
 
@@ -621,12 +715,15 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.setColorMatrix(colormatrix);
 	newRenderer.setColorGamut(colorgamut);
 	newRenderer.setGammaType(gammatype);
+	newRenderer.setChromaLocationType(chromaloc);
 	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isMovie(false);
-	newRenderer.isFullRange(false);
-	newRenderer.setColorMatrix(COLORMATRIX_BT601);
-	newRenderer.setColorGamut(COLORGAMUT_SRGB);
-	newRenderer.setGammaType(GAMMAFUNCTION_SRGB);
+	// set these back to default
+	newRenderer.isFullRange();
+	newRenderer.setColorMatrix();
+	newRenderer.setColorGamut();
+	newRenderer.setGammaType();
+	newRenderer.setChromaLocationType();
 }
 
 // display the next frame

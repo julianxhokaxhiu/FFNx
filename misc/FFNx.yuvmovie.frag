@@ -34,6 +34,7 @@ SAMPLER2D(tex_2, 2);
 uniform mat4 invViewMatrix;
 
 uniform vec4 FSMovieFlags;
+uniform vec4 FSMoreMovieFlags;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
 
@@ -55,6 +56,8 @@ uniform vec4 TimeData;
 #define is170MGamma abs(FSMovieFlags.z - 1.0) < 0.00001
 #define isCRTGamma abs(FSMovieFlags.z - 2.0) < 0.00001
 
+#define chromaLocation FSMoreMovieFlags.x
+
 #define isTimeEnabled TimeData.x > 0.0
 #define isTimeFilterEnabled TimeData.x > 0.0 && TimeData.y > 0.0
 
@@ -67,6 +70,7 @@ void main()
     // At this juncture, ffmpeg has decoded our video file,
     // and the metadata we need has been passed as uniforms.
     // Now we need to do the following:
+    //  0. Correct for chroma sampling location
     //  1. If limited (tv) range, expand to full (pc) range
     //  2. Convert YUV to gamma-space R'G'B'
     //  3. Convert gamma-space R'G'B' to linear RGB.
@@ -79,6 +83,17 @@ void main()
     // In sRGB mode, our working gamut and gamma is sRGB.
     // Also, in sRGB mode, we simply ignore the video's gamma and gamut and treat them as if they were sRGB.
     // This is wrong in almost every case, but simple, fast, and consistent with how 2D/3D assets are rendered in sRGB mode.
+
+    // We need to account for chroma sampling location.
+    // Since U & V should always be set to BGFX_SAMPLER_XXX_ANISOTROPIC,
+    // all we need do is move our sampling coordinates the opposite of the chroma sampling location's offset from center,
+    // and the texture sampler's blending should do the rest.
+    // (This would be more clear as a const array of vec2, but bgfx's shader language doesn't like that.)
+    float chromaxoff = (mod(chromaLocation, 2.0) < 0.5) ? 0.25 : 0.0;
+    float chromayoff = (chromaLocation < 1.1) ? 0.25 : -2.5;
+    chromayoff = (chromaLocation < 3.1) ? 0.0 : chromayoff;
+    vec2 uvdxdy = vec2_splat(1.0) / textureSize(tex_1, 0);
+    vec2 chromaoffset = uvdxdy * vec2(chromaxoff, chromayoff);
 
     // fetch YUV from 3 textures
     vec3 yuv = vec3(

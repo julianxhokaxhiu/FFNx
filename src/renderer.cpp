@@ -153,9 +153,17 @@ void Renderer::setCommonUniforms()
         (float)internalState.bIsMovieColorMatrix,
         (float)internalState.bIsMovieColorGamut,
         (float)internalState.bIsMovieGammaType,
-        (float)internalState.bIsMovieFullRange,
+        (float)internalState.bIsMovieFullRange
     };
-    if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, overall color gamut %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
+    if (uniform_log) ffnx_trace("%s: FSMovieFlags XYZW(color matrix %f, color gamut %f, gamma type %f, is full range %f)\n", __func__, internalState.FSMovieFlags[0], internalState.FSMovieFlags[1], internalState.FSMovieFlags[2], internalState.FSMovieFlags[3]);
+
+    internalState.FSMoreMovieFlags = {
+        (float)internalState.bChromaLocation,
+        NULL,
+        NULL,
+        NULL
+    };
+    if (uniform_log) ffnx_trace("%s: FSMoreMovieFlags XYZW(chroma location %f, reserved %f, reserved %f, reserved %f)\n", __func__, internalState.FSMoreMovieFlags[0], internalState.FSMoreMovieFlags[1], internalState.FSMoreMovieFlags[2], internalState.FSMoreMovieFlags[3]);
 
     internalState.gameLightingFlags = {
         (float)game_lighting,
@@ -170,6 +178,7 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::FS_HDR_FLAGS, internalState.FSHDRFlags.data());
     setUniform(RendererUniform::FS_TEX_FLAGS, internalState.FSTexFlags.data());
     setUniform(RendererUniform::FS_MOVIE_FLAGS, internalState.FSMovieFlags.data());
+    setUniform(RendererUniform::FS_MORE_MOVIE_FLAGS, internalState.FSMoreMovieFlags.data());
     setUniform(RendererUniform::WM_FLAGS, internalState.WMFlags.data());
     setUniform(RendererUniform::TIME_COLOR, internalState.TimeColor.data());
     setUniform(RendererUniform::TIME_DATA, internalState.TimeData.data());
@@ -408,6 +417,7 @@ void Renderer::resetState()
     setColorGamut();
     setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB);
     setGammaType();
+    setChromaLocationType();
     setGameLightData();
 
     doMirrorTextureWrap();
@@ -717,7 +727,11 @@ void Renderer::bindTextures()
 
                             if (internalState.bIsMovie) flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP;
 
-                            if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
+                            // we always need chroma interpolation for YUV420 movies
+                            if (internalState.bIsMovie && (idx > RendererTextureSlot::TEX_Y)){
+                              flags = BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+                            }
+                            else if (!internalState.bDoTextureFiltering || !internalState.bIsExternalTexture) flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT;
                         }
                         break;
                     case RendererTextureSlot::TEX_S:
@@ -1018,6 +1032,7 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::FS_HDR_FLAGS] = createUniform("FSHDRFlags", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::FS_TEX_FLAGS] = createUniform("FSTexFlags", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::FS_MOVIE_FLAGS] = createUniform("FSMovieFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::FS_MORE_MOVIE_FLAGS] = createUniform("FSMoreMovieFlags", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::WM_FLAGS] = createUniform("WMFlags", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::TIME_COLOR] = createUniform("TimeColor", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::TIME_DATA] = createUniform("TimeData", bgfx::UniformType::Vec4);
@@ -2249,6 +2264,11 @@ void Renderer::setOverallColorGamut(ColorGamutType cgtype){
 void Renderer::setGammaType(InverseGammaFunctionType gtype)
 {
     internalState.bIsMovieGammaType = gtype;
+};
+
+void Renderer::setChromaLocationType(ChromaLocationType cltype)
+{
+    internalState.bChromaLocation = cltype;
 };
 
 void Renderer::setAlphaRef(RendererAlphaFunc func, float ref)
