@@ -159,11 +159,11 @@ void Renderer::setCommonUniforms()
 
     internalState.FSMoreMovieFlags = {
         (float)internalState.bChromaLocation,
-        NULL,
-        NULL,
+        (float)internalState.bMovieYHorizontalCropFactor,
+        (float)internalState.bMovieUVHorizontalCropFactor,
         NULL
     };
-    if (uniform_log) ffnx_trace("%s: FSMoreMovieFlags XYZW(chroma location %f, reserved %f, reserved %f, reserved %f)\n", __func__, internalState.FSMoreMovieFlags[0], internalState.FSMoreMovieFlags[1], internalState.FSMoreMovieFlags[2], internalState.FSMoreMovieFlags[3]);
+    if (uniform_log) ffnx_trace("%s: FSMoreMovieFlags XYZW(chroma location %f, Y horizontal crop factor %f, UV horizontal crop factor %f, reserved %f)\n", __func__, internalState.FSMoreMovieFlags[0], internalState.FSMoreMovieFlags[1], internalState.FSMoreMovieFlags[2], internalState.FSMoreMovieFlags[3]);
 
     internalState.gameLightingFlags = {
         (float)game_lighting,
@@ -418,6 +418,7 @@ void Renderer::resetState()
     setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB);
     setGammaType();
     setChromaLocationType();
+    setMovieHorizontalCropFactors();
     setGameLightData();
 
     doMirrorTextureWrap();
@@ -2269,6 +2270,12 @@ void Renderer::setGammaType(InverseGammaFunctionType gtype)
 void Renderer::setChromaLocationType(ChromaLocationType cltype)
 {
     internalState.bChromaLocation = cltype;
+};
+
+void Renderer::setMovieHorizontalCropFactors(float yfactor, float uvfactor)
+{
+    internalState.bMovieYHorizontalCropFactor = yfactor;
+    internalState.bMovieUVHorizontalCropFactor = uvfactor;
 };
 
 void Renderer::setAlphaRef(RendererAlphaFunc func, float ref)

@@ -296,6 +296,8 @@ private:
         ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
         InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
         ChromaLocationType bChromaLocation = CHROMALOC_CENTER;
+        float bMovieYHorizontalCropFactor = 1.0;
+        float bMovieUVHorizontalCropFactor = 1.0;
 
         float backendProjMatrix[16];
         float postprocessingProjMatrix[16];
@@ -532,6 +534,7 @@ public:
     void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);
     void setChromaLocationType(ChromaLocationType cltype = CHROMALOC_CENTER);
+    void setMovieHorizontalCropFactors(float yfactor = 1.0, float uvfactor = 1.0);
 
     // Alpha mode emulation
     void setAlphaRef(RendererAlphaFunc func = RendererAlphaFunc::ALWAYS, float ref = 0.0f);

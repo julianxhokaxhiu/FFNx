@@ -57,6 +57,9 @@ uniform vec4 TimeData;
 
 #define chromaLocation FSMoreMovieFlags.x
 
+#define YhorizontalCropScaleFactor FSMoreMovieFlags.y
+#define UVhorizontalCropScaleFactor FSMoreMovieFlags.z
+
 #define isTimeEnabled TimeData.x > 0.0
 #define isTimeFilterEnabled TimeData.x > 0.0 && TimeData.y > 0.0
 
@@ -94,11 +97,18 @@ void main()
     vec2 uvdxdy = vec2_splat(1.0) / textureSize(tex_1, 0);
     vec2 chromaoffset = uvdxdy * vec2(chromaxoff, chromayoff);
 
+    // Video bitstreams might be padded out to a multiple of blocksize or whatever.
+    // So we may need to crop off the resulting green crap.
+    vec2 Ycoord = v_texcoord0.xy;
+    Ycoord.x = min(Ycoord.x * YhorizontalCropScaleFactor, YhorizontalCropScaleFactor);
+    vec2 UVcoord = v_texcoord0.xy + chromaoffset;
+    UVcoord.x = min(UVcoord.x * UVhorizontalCropScaleFactor, UVhorizontalCropScaleFactor);
+
     // fetch YUV from 3 textures
     vec3 yuv = vec3(
-        texture2D(tex_0, v_texcoord0.xy).r,
-        texture2D(tex_1, v_texcoord0.xy + chromaoffset).r,
-        texture2D(tex_2, v_texcoord0.xy + chromaoffset).r
+        texture2D(tex_0, Ycoord).r,
+        texture2D(tex_1, UVcoord).r,
+        texture2D(tex_2, UVcoord).r
     );
 
     // Convert YUV to RGB

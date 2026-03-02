@@ -69,6 +69,9 @@ ColorGamutType colorgamut = COLORGAMUT_SRGB;
 InverseGammaFunctionType gammatype = GAMMAFUNCTION_SRGB;
 const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P;
 ChromaLocationType chromaloc = CHROMALOC_CENTER;
+bool dofirstframereports = false;
+float yhorizontalcropfactor = 1.0;
+float uvhorizontalcropfactor = 1.0;
 
 bool first_audio_packet;
 
@@ -523,6 +526,8 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
+	dofirstframereports = true;
+
 	// Make sure the swscale context is cleared out, then create one if we need swscale
 	// to convert pixel format, convert YUV colorspace, or suppress a bogus color range expansion.
 	if(sws_ctx) sws_freeContext(sws_ctx);
@@ -696,7 +701,30 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 		tex_height /= 2;
 	}
 
-	if (upload_width > tex_width) tex_width = upload_width;
+	if (upload_width > tex_width){
+		// This is clunky. It would be better if bgfx gave us a way to crop the texture after we make it.
+		// crop an extra half pixel so that the sampler doesn't blend in the green crap from the next pixel over
+		float cropfactor = (((float)tex_width) - 0.5) / (float)upload_width;
+		if (num == 0){
+			yhorizontalcropfactor = cropfactor;
+		}
+		else {
+			uvhorizontalcropfactor = cropfactor;
+		}
+		if (dofirstframereports && (trace_movies || trace_all)){
+			ffnx_trace("upload_yuv_texture: Bitstream is padded. Plane %i. Movie width is %i, but frame stride is %i. Need to crop. Y crop factor is %f. UV crop factor is %f.\n", num, tex_width, upload_width, yhorizontalcropfactor, uvhorizontalcropfactor);
+		}
+		// include the green crap so bgfx texture creation works
+		tex_width = upload_width;
+	}
+	else {
+		if (num == 0){
+			yhorizontalcropfactor = 1.0;
+		}
+		else {
+			uvhorizontalcropfactor = 1.0;
+		}
+	}
 
 	if (video_buffer[buffer_index].yuv_textures[num])
 		newRenderer.deleteTexture(video_buffer[buffer_index].yuv_textures[num]);
@@ -732,6 +760,7 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.setColorGamut(colorgamut);
 	newRenderer.setGammaType(gammatype);
 	newRenderer.setChromaLocationType(chromaloc);
+	newRenderer.setMovieHorizontalCropFactors(yhorizontalcropfactor, uvhorizontalcropfactor);
 	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isMovie(false);
 	// set these back to default
@@ -740,6 +769,7 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.setColorGamut();
 	newRenderer.setGammaType();
 	newRenderer.setChromaLocationType();
+	newRenderer.setMovieHorizontalCropFactors();
 }
 
 // display the next frame
@@ -815,6 +845,8 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// clear out the AVFrame objects before reusing them
 				av_frame_unref(movie_frame);
 				av_frame_unref(sws_frame);
+
+				dofirstframereports = false;
 
 				if(vbuffer_write == vbuffer_read)
 				{
