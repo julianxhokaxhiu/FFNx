@@ -268,7 +268,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	// some pixel formats are inherently full-range
 	// so we should treat them as such, even if the color range metadata is missing
-	// some of these formats also trigger an automatic color range conversion that we must suppress
+	// some of these formats also trigger a bogus automatic color range conversion that we must suppress
 	switch (codec_ctx->pix_fmt){
 		case AV_PIX_FMT_YUVJ420P:
 		case AV_PIX_FMT_YUVJ411P:
@@ -294,7 +294,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	if (trace_movies  || trace_all) ffnx_trace("prepare_movie: color range detected as %i (0=tv, 1=pc).\n", fullrange_input);
 
-	// will we need to convert the colorspace?
+	// will we need to convert the YUV colorspace?
 	switch(codec_ctx->colorspace){
 		// these are all the same (bt601)
 		case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601
@@ -368,12 +368,14 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	}
 
 	// will we need to convert the pixel format?
-	// we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
-	// Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions
+	// We're going to target YUV420 on the assumption that most of our input will already be 420,
+	// and resampling chroma in the shader will be faster than doing it in swscale.
+	// (Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions.)
 	if (codec_ctx->pix_fmt == targetpixelformat){
 		okpixelformat = true;
 	}
 
+	// Figure out which color gamut to use.
 	switch(codec_ctx->color_primaries){
 		case AVCOL_PRI_BT709:
 			colorgamut = COLORGAMUT_SRGB;
@@ -403,9 +405,14 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			break;
 		case AVCOL_PRI_BT470BG: // fall through
 		default:
-			ffnx_error("prepare_movie: unsupported color gamut\n");
-			ffmpeg_release_movie_objects();
-			goto exit;
+			if (islogomovie){
+				colorgamut = COLORGAMUT_RAWP22;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unsupported color primaries. Instead using uncorrected P22 (CRT computer monitor) because this is a logo movie. (This will probably look wrong.)\n");
+			}
+			else {
+				colorgamut = COLORGAMUT_NTSCJ;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unsupported color primaries. Instead using NTSC-J. (This will probably look wrong.)\n");
+			}
 	}
 
 	// what is the chroma sample location?
@@ -445,7 +452,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			}
 			// if the pixel format is 420, guess from the codec
 			else if (pix_desc && (chromawidthshift == 1) && (chromaheightshift == 1)){
-				// deafults for some common codecs
+				// defaults for some common codecs
 				switch (codec_ctx->codec_id){
 					case AV_CODEC_ID_MPEG2VIDEO:
 					case AV_CODEC_ID_MPEG4:
@@ -499,9 +506,8 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	if (trace_movies || trace_all)
 	{
-		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames, codec_ctx->color_range);
-		// bogus FPS value, assume the codec provides frame limiting
-		else ffnx_info("prepare_movie: %s; %s/%s %ix%i, duration: %f, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_duration, codec_ctx->color_range);
+		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i (coded %ix%i), %f FPS, duration: %f, frames: %i, pixel format: %s (needs conversion: %i), chroma location: %i, color matrix: %s (shader matrix type %i)(needs conversion: %i), color_range: %d (needs yuvj fix: %i), transfer function %s (shader gamma type: %i), color primaries: %s (shader color gamut: %i), islogomovie: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, codec_ctx->coded_width, codec_ctx->coded_height, movie_fps, movie_duration, movie_frames, av_get_pix_fmt_name(codec_ctx->pix_fmt), !okpixelformat, chromaloc, av_color_space_name(codec_ctx->colorspace), colormatrix, !okcolorspace, codec_ctx->color_range, yuvjfixneeded, av_color_transfer_name(codec_ctx->color_trc), gammatype, av_color_primaries_name(codec_ctx->color_primaries), colorgamut, islogomovie);
+		else ffnx_info("prepare_movie: %s; %s/%s %ix%i (coded %ix%i), duration: %f, frames: %i, pixel format: %s (needs conversion: %i), chroma location: %i, color matrix: %s (shader matrix type %i)(needs conversion: %i), color_range: %d (needs yuvj fix: %i), transfer function %s (shader gamma type: %i), color primaries: %s (shader color gamut: %i), islogomovie: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, codec_ctx->coded_width, codec_ctx->coded_height, movie_duration, movie_frames, av_get_pix_fmt_name(codec_ctx->pix_fmt), !okpixelformat, chromaloc, av_color_space_name(codec_ctx->colorspace), colormatrix, !okcolorspace, codec_ctx->color_range, yuvjfixneeded, av_color_transfer_name(codec_ctx->color_trc), gammatype, av_color_primaries_name(codec_ctx->color_primaries), colorgamut, islogomovie);
 	}
 
 	if(movie_width > max_texture_size || movie_height > max_texture_size)
@@ -512,21 +518,29 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	}
 
 	if(!movie_frame) movie_frame = av_frame_alloc();
-  if(!sws_frame) sws_frame = av_frame_alloc();
-
-	if(sws_ctx) sws_freeContext(sws_ctx);
-  sws_ctx = nullptr;
+	if(!sws_frame) sws_frame = av_frame_alloc();
 
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
+	// Make sure the swscale context is cleared out, then create one if we need swscale
+	// to convert pixel format, convert YUV colorspace, or suppress a bogus color range expansion.
+	if(sws_ctx) sws_freeContext(sws_ctx);
+	sws_ctx = nullptr;
 	if(!okpixelformat || !okcolorspace || yuvjfixneeded)
 		// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader
 	{
 		if (trace_movies || trace_all)
 		{
-			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->colorspace: %s\n", av_color_space_name(codec_ctx->colorspace));
-			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->pix_fmt: %s\n", av_pix_fmt_desc_get(codec_ctx->pix_fmt)->name);
+			if (!okcolorspace){
+				ffnx_trace("prepare_movie: Using swscale to convert pixel format from %s to %s.\n", av_get_pix_fmt_name(codec_ctx->pix_fmt), av_get_pix_fmt_name(targetpixelformat));
+			}
+			if (!okcolorspace){
+				ffnx_trace("prepare_movie: Using swscale to convert YUV colorspace from %s to rec601.\n", av_color_space_name(codec_ctx->colorspace));
+			}
+			if (yuvjfixneeded){
+				ffnx_trace("prepare_movie: Using swscale to workaround ffmpeg yuvj color range bug.\n", av_color_space_name(codec_ctx->colorspace));
+			}
 		}
 
 		sws_ctx = sws_getContext(
@@ -675,6 +689,8 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 	uint32_t upload_width = strides[num];
 	uint32_t tex_width = movie_width;
 	uint32_t tex_height = movie_height;
+	// Since our target format is 420, U & V planes are half size.
+	// (We're *assuming* dimensions will always be even and not worrying about rounding up.)
 	if (num > 0){
 		tex_width /= 2;
 		tex_height /= 2;
@@ -792,8 +808,8 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 					// swap the pointer's target
 					usethis_frame = sws_frame;
-
 				}
+				// send frame data to buffer
 				buffer_yuv_frame(usethis_frame->extended_data, usethis_frame->linesize);
 
 				// clear out the AVFrame objects before reusing them
