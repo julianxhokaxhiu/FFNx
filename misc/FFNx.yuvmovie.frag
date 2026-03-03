@@ -7,6 +7,7 @@
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2026 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
+//    Copyright (C) 2026 ChthonVII                                          //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -26,6 +27,8 @@ $input v_color0, v_texcoord0, v_position0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.common.sh"
+#include "FFNx.moviefunctions.sh"
+#include "FFNx.dither.sh"
 
 SAMPLER2D(tex_0, 0);
 SAMPLER2D(tex_1, 1);
@@ -73,16 +76,14 @@ void main()
     // At this juncture, ffmpeg has decoded our video file,
     // and the metadata we need has been passed as uniforms.
     // Now we need to do the following:
-    //  0. Correct for chroma sampling location
-    //  1. If limited (tv) range, expand to full (pc) range
-    //  2. Convert YUV to gamma-space R'G'B'
+    //  1. Correct for chroma sampling location
+    //  2. Crop any green crap from a padded bitstream
+    //  3. Normalize Y'UV ranges and, if limited (tv) range, expand to full (pc) range
+    //  2. Convert Y'UV to gamma-space R'G'B'
     //  3. Convert gamma-space R'G'B' to linear RGB.
     //  4. Convert from the video's gamut to our working gamut.
     //  5. Convert from linear R'G'B' to our working gamma-space.
-    // In NTSC-J mode, our working gamut and gamma is uncorrected NTSC-J (i.e., before the CRT's color correction circuit).
-    // Temporary: Until this shader gets split off, we may need an extra gamma conversion
-    //    to get in the right space ahead of the toGamma() at the bottom of this shader.
-    //    (After the split, that toGamma() can be changed.)
+
     // In sRGB mode, our working gamut and gamma is sRGB.
     // Also, in sRGB mode, we simply ignore the video's gamma and gamut and treat them as if they were sRGB.
     // This is wrong in almost every case, but simple, fast, and consistent with how 2D/3D assets are rendered in sRGB mode.
@@ -105,46 +106,26 @@ void main()
     vec2 UVcoord = v_texcoord0.xy + chromaoffset;
     UVcoord.x = min(UVcoord.x * UVhorizontalCropScaleFactor, UVhorizontalCropScaleFactor);
 
-    // fetch YUV from 3 textures
+    // fetch Y'UV from 3 textures
     vec3 yuv = vec3(
         texture2D(tex_0, Ycoord).r,
         texture2D(tex_1, UVcoord).r,
         texture2D(tex_2, UVcoord).r
     );
 
-    // Convert YUV to RGB
+    // Convert Y'UV to R'G'B'
     if (isFullRange){
-        // center UV at 128
-        yuv.g = yuv.g - (128.0/255.0);
-        yuv.b = yuv.b - (128.0/255.0);
-        // fix uv scale b/c 128 isn't quite halfway between 0 and 255
-        float uscalar = (yuv.g < 0.0) ? 255.0/256.0 : 255.0/254.0;
-        float vscalar = (yuv.b < 0.0) ? 255.0/256.0 : 255.0/254.0;
-        yuv.g = clamp(yuv.g * uscalar, -0.5, 0.5);
-        yuv.b = clamp(yuv.b * vscalar, -0.5, 0.5);
+        yuv = normalizefullrangeYUV(yuv);
     }
     else {
-        // if not full range, expand to full range
-
-        // dither
+        // if not full range, dither, then expand to full range
         ivec2 ydimensions = textureSize(tex_0, 0);
         ivec2 udimensions = textureSize(tex_1, 0);
         ivec2 vdimensions = textureSize(tex_2, 0);
         yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 256.0, 1.0);
-        // subtract 16 from Y
-        yuv.r = saturate(yuv.r - (16.0/255.0));
-        // scale Y
-        // Common video standard for Y range is 16-235, but bink uses 16-234
-        float yscalar = (isBinkColorMatrix) ? 255.0/218.0 : 255.0/219.0;
-        yuv.r = saturate(yuv.r * yscalar);
-        // center UV at 128
-        yuv.g = yuv.g - (128.0/255.0);
-        yuv.b = yuv.b - (128.0/255.0);
-        // scale UV
-        yuv.g = clamp(yuv.g * (255.0/224.0), -0.5, 0.5);
-        yuv.b = clamp(yuv.b * (255.0/224.0), -0.5, 0.5);
-    } // end else (not full range)
-    // matrix YUV to RGB
+        yuv = normalizelimitedrangeYUV(yuv, isBinkColorMatrix);
+    }
+    // matrix Y'UV to R'G'B'
     if (isBT601ColorMatrix){
         color.rgb = toRGB_bt601_fullrange(yuv);
     }
@@ -154,6 +135,7 @@ void main()
     else if (isBinkColorMatrix){
         color.rgb = toRGB_bink_fullrange(yuv);
     }
+
 
     // for sRGB mode:
     //    ignore the movie's gamma and use sRGB instead

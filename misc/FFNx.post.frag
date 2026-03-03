@@ -6,6 +6,7 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2026 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2026 ChthonVII                                          //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -23,6 +24,7 @@ $input v_color0, v_texcoord0
 
 #include <bgfx/bgfx_shader.sh>
 #include "FFNx.common.sh"
+#include "FFNx.dither.sh"
 
 SAMPLER2D(tex_0, 0);
 
