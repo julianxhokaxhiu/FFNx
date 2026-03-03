@@ -156,6 +156,7 @@ void main()
             color.rgb = toLinear(color.rgb);
         }
         // This LUT goes backards from linear RGB to uncorrected gamma-space NTSC-J
+        // So the final NTSC-J->sRGB conversion will round-trip back to the original.
         // AssignGamutLUT() in renderer.cpp should have bound the correct LUT
         color.rgb = GamutLUTBackwards(color.rgb);
     }
