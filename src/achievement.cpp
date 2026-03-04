@@ -447,11 +447,11 @@ void SteamAchievementsFF7::unlockGotMateriaAchievement(byte materiaID)
 
     if (materiaID == BAHAMUT_ZERO_MATERIA_ID)
     {
-        this->steamManager->setAchievement(getAchievementIdByVersion(GET_MATERIA_KOTR, A17_KnightsOfTheRound));
+        this->steamManager->setAchievement(getAchievementIdByVersion(GET_MATERIA_BAHAMUT_ZERO, A16_BahamutZero));
     }
     else if (materiaID == KOTR_MATERIA_ID)
     {
-        this->steamManager->setAchievement(getAchievementIdByVersion(GET_MATERIA_BAHAMUT_ZERO, A16_BahamutZero));
+        this->steamManager->setAchievement(getAchievementIdByVersion(GET_MATERIA_KOTR, A17_KnightsOfTheRound));
     }
 
     if (!this->isFF72013Release) {
