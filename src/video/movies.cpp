@@ -365,9 +365,9 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			break;
 		case AVCOL_TRC_GAMMA28: //fall through
 		default:
-			ffnx_error("prepare_movie: unsupported transfer (inverse gamma) function\n");
-			ffmpeg_release_movie_objects();
-			goto exit;
+			ffnx_error("prepare_movie: Unsupported transfer (inverse gamma) function. Using default instead.\n");
+			gammatype = GAMMAFUNCTION_BT1886_APPX1;
+      break;
 	}
 
 	// will we need to convert the pixel format?
