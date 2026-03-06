@@ -267,7 +267,17 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	movie_fps = av_q2d(av_guess_frame_rate(format_ctx, format_ctx->streams[videostream], NULL));
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
 	movie_frames = (uint32_t)::round(movie_fps * movie_duration);
-	fullrange_input = (codec_ctx->color_range == AVCOL_RANGE_JPEG);
+
+	switch (codec_ctx->color_range){
+		case AVCOL_RANGE_JPEG:
+			fullrange_input = true;
+			break;
+		case AVCOL_RANGE_UNSPECIFIED:
+		case AVCOL_RANGE_MPEG:
+		default:
+			fullrange_input = false;
+			break;
+	}
 
 	// some pixel formats are inherently full-range
 	// so we should treat them as such, even if the color range metadata is missing
