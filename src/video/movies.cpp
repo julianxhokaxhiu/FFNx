@@ -34,14 +34,16 @@
 
 uint32_t audio_must_be_converted = false;
 
-AVFormatContext *format_ctx = 0;
-AVCodecContext *codec_ctx = 0;
-const AVCodec *codec = 0;
-AVCodecContext *acodec_ctx = 0;
-const AVCodec *acodec = 0;
-AVFrame *movie_frame = 0;
-struct SwsContext *sws_ctx = 0;
-SwrContext* swr_ctx = NULL;
+AVFormatContext* format_ctx = nullptr;
+AVCodecContext* codec_ctx = nullptr;
+const AVCodec* codec = nullptr;
+AVCodecContext* acodec_ctx = nullptr;
+const AVCodec* acodec = nullptr;
+AVFrame* movie_frame = nullptr;
+AVFrame* sws_frame = nullptr;
+AVFrame* usethis_frame = nullptr;
+SwsContext* sws_ctx = nullptr;
+SwrContext* swr_ctx = nullptr;
 void(*io_close)(void *opaque) = nullptr;
 
 int videostream;
@@ -65,7 +67,11 @@ bool fullrange_input = false;
 ColorMatrixType colormatrix = COLORMATRIX_BT601;
 ColorGamutType colorgamut = COLORGAMUT_SRGB;
 InverseGammaFunctionType gammatype = GAMMAFUNCTION_SRGB;
-AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV444P;
+const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P;
+ChromaLocationType chromaloc = CHROMALOC_CENTER;
+bool dofirstframereports = false;
+float yhorizontalcropfactor = 1.0;
+float uvhorizontalcropfactor = 1.0;
 
 bool first_audio_packet;
 
@@ -85,6 +91,7 @@ void ffmpeg_release_movie_objects()
 	uint32_t i;
 
 	if (movie_frame) av_frame_free(&movie_frame);
+  if (sws_frame) av_frame_free(&sws_frame);
 	if (codec_ctx) avcodec_free_context(&codec_ctx);
 	if (acodec_ctx) avcodec_free_context(&acodec_ctx);
 	if (format_ctx) {
@@ -104,6 +111,8 @@ void ffmpeg_release_movie_objects()
 		swr_close(swr_ctx);
 		swr_free(&swr_ctx);
 	}
+	if(sws_ctx) sws_freeContext(sws_ctx);
+  sws_ctx = nullptr;
 
 	codec_ctx = 0;
 	acodec_ctx = 0;
@@ -136,10 +145,12 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	bool okcolorspace = false;
 	bool yuvjfixneeded = false;
 	bool islogomovie = false;
-	bool isff8steammovie = false;
 	int lastbackslashindex = -1;
 	int bytessincebackslash = 0;
 	int scanoffset = 0;
+	int chromawidthshift = 0;
+	int chromaheightshift = 0;
+	const AVPixFmtDescriptor* pix_desc = nullptr;
 
 	movie_frames = 0;
 
@@ -212,54 +223,43 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	// figure out if this is the eidos logo or square logo; they need special treatment
 	// scan till we hit 0 terminator
-	while (true){
-		bytessincebackslash++;
-		// note the index of the last backslash, and how far the string continues after that
-		if (name[scanoffset] == 92){
-			lastbackslashindex = scanoffset;
-			bytessincebackslash = 0;
-		}
-		else if (name[scanoffset] == 0){
-			break;
-		}
-		scanoffset++;
-	}
-	char upperbuffer[128];
-	memset(upperbuffer, 0, 128);
-	if ((lastbackslashindex > -1) && (bytessincebackslash > 1) && (bytessincebackslash <= 128)){
-		memcpy(&upperbuffer, &name[lastbackslashindex+1], bytessincebackslash);
-		// convert to uppercase
-		for (int i=0; i<bytessincebackslash; i++){
-			upperbuffer[i] = toupper(upperbuffer[i]);
-		}
-		// strip the file extension
-		for (int i=bytessincebackslash-1; i>=0; i--){
-			char backchar = upperbuffer[i];
-			upperbuffer[i] = 0;
-			if (backchar == 46){
+	// TODO: Add FF8 logo movies
+	if ((codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) && (codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)){
+		while (true){
+			bytessincebackslash++;
+			// note the index of the last backslash, and how far the string continues after that
+			if (name[scanoffset] == 92){
+				lastbackslashindex = scanoffset;
+				bytessincebackslash = 0;
+			}
+			else if (name[scanoffset] == 0){
 				break;
 			}
+			scanoffset++;
 		}
-		if (	(strcmp(upperbuffer, "EIDOSLOGO") == 0) ||
-			(strcmp(upperbuffer, "SQLOGO") == 0)
-		){
-			islogomovie = true;
-			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie; NTSC-J conversion will be supressed.\n", name);
+		char upperbuffer[128];
+		memset(upperbuffer, 0, 128);
+		if ((lastbackslashindex > -1) && (bytessincebackslash > 1) && (bytessincebackslash <= 128)){
+			memcpy(&upperbuffer, &name[lastbackslashindex+1], bytessincebackslash);
+			// convert to uppercase
+			for (int i=0; i<bytessincebackslash; i++){
+				upperbuffer[i] = toupper(upperbuffer[i]);
+			}
+			// strip the file extension
+			for (int i=bytessincebackslash-1; i>=0; i--){
+				char backchar = upperbuffer[i];
+				upperbuffer[i] = 0;
+				if (backchar == 46){
+					break;
+				}
+			}
+			if (	(strcmp(upperbuffer, "EIDOSLOGO") == 0) ||
+				(strcmp(upperbuffer, "SQLOGO") == 0)
+			){
+				islogomovie = true;
+				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie.\n", name);
+			}
 		}
-	}
-
-	// Movie files from the ff8 Steam release appear to be bt709, tv-range, with gamut conversion already done, and no metadata
-	// (Not completely sure about bt709; it's hard to tell under the circumstances.)
-	if (    ff8 &&
-			((codec_ctx->height >= 720) || (codec_ctx->width >= 1280)) && // the samples I examined were 1280 x 896, but I didn't check them all to rule out some of them being cropped
-			(codec_ctx->pix_fmt == AV_PIX_FMT_YUV420P) &&
-			(codec_ctx->color_range == AVCOL_RANGE_UNSPECIFIED) &&
-			(codec_ctx->colorspace == AVCOL_SPC_UNSPECIFIED) &&
-			(codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) &&
-			(codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)
-	){
-		isff8steammovie = true;
-		if (trace_movies  || trace_all) ffnx_trace("prepare_movie: File %s appears to be from the FF8 Steam release. Missing metadata will be guessed accordingly.\n", name);
 	}
 
 	movie_width = codec_ctx->width;
@@ -271,7 +271,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	// some pixel formats are inherently full-range
 	// so we should treat them as such, even if the color range metadata is missing
-	// some of these formats also trigger an automatic color range conversion that we must suppress
+	// some of these formats also trigger a bogus automatic color range conversion that we must suppress
 	switch (codec_ctx->pix_fmt){
 		case AV_PIX_FMT_YUVJ420P:
 		case AV_PIX_FMT_YUVJ411P:
@@ -295,28 +295,22 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			yuvjfixneeded = false;
 	}
 
-	if (isff8steammovie){
-		fullrange_input = false;
-		yuvjfixneeded = false;
-	}
-
 	if (trace_movies  || trace_all) ffnx_trace("prepare_movie: color range detected as %i (0=tv, 1=pc).\n", fullrange_input);
 
-	// will we need to convert the colorspace?
+	// will we need to convert the YUV colorspace?
 	switch(codec_ctx->colorspace){
 		// these are all the same (bt601)
 		case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601
 		case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601
 			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
 				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
-				colormatrix = COLORMATRIX_BGR24;
-				okcolorspace = true;
+				okcolorspace = false;
 				break;
 			}
-			else if (isff8steammovie){
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: assuming bt709 color matrix because this is a FF8 Steam release movie.\n");
-				colormatrix = COLORMATRIX_BT709;
-				okcolorspace = true;
+			else if (ff8 && (codec_ctx->color_range != AVCOL_RANGE_JPEG) && !yuvjfixneeded){
+				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Assuming FF8 bink or bink-derived movie. (e.g., PC2000 or Steam) Using bink color matrix and forcing color range to TV (limited).\n");
+				colormatrix = COLORMATRIX_BINK;
+				fullrange_input = false;
 				break;
 			}
 			// fall through to next case if we didn't already break
@@ -331,14 +325,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			colormatrix = COLORMATRIX_BT709;
 			okcolorspace = true;
 		case AVCOL_SPC_RGB:
-			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
-				colormatrix = COLORMATRIX_BGR24;
-				okcolorspace = true;
-			}
-			else {
-				okcolorspace = false;
-			}
+			okcolorspace = false;
 			break;
 		default:
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: unhandled color matrix detected; will use swscale to convert. Expect incorrect gamut.\n");
@@ -350,26 +337,22 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AVCOL_TRC_UNSPECIFIED:
 		case AVCOL_TRC_RESERVED:
 		case AVCOL_TRC_RESERVED0:
-			if (colormatrix == COLORMATRIX_BT709){
-				gammatype = GAMMAFUNCTION_SMPTE170M;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but bt709 color matrix, so assuming SMPTE170M transfer function.\n");
-			}
-			else if (codec_ctx->color_primaries == AVCOL_PRI_BT470BG){
-				gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, but EBU color gamut (PAL), so assuming 2.8 gamma (PAL).\n");
+			if (islogomovie){
+				gammatype = GAMMAFUNCTION_BT1886_APPX1;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, using BT1886 Appendix 1 (CRT television/monitor) gamma curve because this is a logo movie.\n");
 			}
 			else {
-				gammatype = GAMMAFUNCTION_TOELESS_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using \"toeless sRGB\" gamma curve.\n");
+				gammatype = GAMMAFUNCTION_BT1886_APPX1;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using BT1886 Appendix 1 (CRT television) gamma curve.\n");
 			}
 			break;
 		case AVCOL_TRC_IEC61966_2_1: //srgb
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb gamma transfer function detected\n");
 			gammatype = GAMMAFUNCTION_SRGB;
 			break;
-		case AVCOL_TRC_GAMMA22:
-			gammatype = GAMMAFUNCTION_TWO_PT_TWO;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected\n");
+		case AVCOL_TRC_GAMMA22: //2.2
+			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected, using sRGB instead.\n");
+			gammatype = GAMMAFUNCTION_SRGB;
 			break;
 		case AVCOL_TRC_SMPTE170M:
 		case AVCOL_TRC_BT709: // same as SMPTE170M
@@ -380,38 +363,29 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			gammatype = GAMMAFUNCTION_SMPTE170M;
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
 			break;
-		case AVCOL_TRC_GAMMA28:
-			gammatype = GAMMAFUNCTION_TWO_PT_EIGHT;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.8 gamma transfer function detected\n");
-			break;
+		case AVCOL_TRC_GAMMA28: //fall through
 		default:
 			ffnx_error("prepare_movie: unsupported transfer (inverse gamma) function\n");
 			ffmpeg_release_movie_objects();
 			goto exit;
 	}
 
-	if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
-		targetpixelformat = AV_PIX_FMT_BGR24;
-	}
-	else{
-		targetpixelformat = AV_PIX_FMT_YUV444P;
-	}
-
 	// will we need to convert the pixel format?
-	// we're going to target YUV444 on the assumption that swscale does better subsampling than texture2D() in the shader
-	// Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions
+	// We're going to target YUV420 on the assumption that most of our input will already be 420,
+	// and resampling chroma in the shader will be faster than doing it in swscale.
+	// (Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions.)
 	if (codec_ctx->pix_fmt == targetpixelformat){
 		okpixelformat = true;
 	}
 
+	// Figure out which color gamut to use.
 	switch(codec_ctx->color_primaries){
 		case AVCOL_PRI_BT709:
 			colorgamut = COLORGAMUT_SRGB;
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb/bt709 color gamut detected.\n");
 			break;
 		case AVCOL_PRI_BT470M:
-			// Since 470m (NTSC1953) was deprecated in 1979, material in this gamut is rare and likely irrelevant to FF7/8.
-			// Assume user meant SMPTE-C (which replaced NTSC1953 in 1979).
+			// Assume user meant SMPTE-C.
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: NTSC1953 color gamut detected. Assuming user error and using SMPTE-C instead.\n");
 			// fall through to next case
 		case AVCOL_PRI_SMPTE170M:
@@ -423,38 +397,120 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AVCOL_PRI_UNSPECIFIED:
 		case AVCOL_PRI_RESERVED0:
 		case AVCOL_PRI_RESERVED:
-			if (isff8steammovie){
-				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a FF8 Steam release video. (Steam already did NTSC-J to SRGB gamut conversion.)\n");
-			}
-			else if (colormatrix == COLORMATRIX_BT709){
-				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because bt709 color matrix.\n");
-			}
-			else if (islogomovie){
-				colorgamut = COLORGAMUT_SRGB;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming srgb/bt709 because this is a logo movie.\n");
+			if (islogomovie){
+				colorgamut = COLORGAMUT_RAWP22;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming uncorrected P22 (CRT computer monitor) because this is a logo movie.\n");
 			}
 			else {
 				colorgamut = COLORGAMUT_NTSCJ;
 				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming NTSC-J.\n");
 			}
 			break;
-		case AVCOL_PRI_BT470BG:
-			colorgamut = COLORGAMUT_EBU;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: EBU(PAL) color gamut detected.\n");
-			break;
+		case AVCOL_PRI_BT470BG: // fall through
 		default:
-			ffnx_error("prepare_movie: unsupported color gamut\n");
-			ffmpeg_release_movie_objects();
-			goto exit;
+			if (islogomovie){
+				colorgamut = COLORGAMUT_RAWP22;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unsupported color primaries. Instead using uncorrected P22 (CRT computer monitor) because this is a logo movie. (This will probably look wrong.)\n");
+			}
+			else {
+				colorgamut = COLORGAMUT_NTSCJ;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unsupported color primaries. Instead using NTSC-J. (This will probably look wrong.)\n");
+			}
 	}
+
+	// what is the chroma sample location?
+	// first, we may need to know about the pixel format
+	pix_desc = av_pix_fmt_desc_get(codec_ctx->pix_fmt);
+	if (pix_desc){
+		chromawidthshift = pix_desc->log2_chroma_w;
+		chromaheightshift = pix_desc->log2_chroma_h;
+	}
+	switch (codec_ctx->chroma_sample_location){
+		case AVCHROMA_LOC_LEFT:
+			chromaloc = CHROMALOC_LEFT;
+			break;
+		case AVCHROMA_LOC_CENTER:
+			chromaloc = CHROMALOC_CENTER;
+			break;
+		case AVCHROMA_LOC_TOPLEFT:
+			chromaloc = CHROMALOC_TOPLEFT;
+			break;
+		case AVCHROMA_LOC_TOP:
+			chromaloc = CHROMALOC_TOP;
+			break;
+		case AVCHROMA_LOC_BOTTOMLEFT:
+			chromaloc = CHROMALOC_BOTTOMLEFT;
+			break;
+		case AVCHROMA_LOC_BOTTOM:
+			chromaloc = CHROMALOC_BOTTOM;
+			break;
+		case AVCHROMA_LOC_UNSPECIFIED: //fall through
+		default:
+			// chroma sample location isn't specified so we must guess
+
+			// if the pixel format is 444, it must be center
+			if (pix_desc && (chromawidthshift == 0) && (chromaheightshift == 0)){
+				chromaloc = CHROMALOC_CENTER;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location must be center because 4:4:4 pixel format.\n");
+			}
+			// if the pixel format is 420, guess from the codec
+			else if (pix_desc && (chromawidthshift == 1) && (chromaheightshift == 1)){
+				// defaults for some common codecs
+				switch (codec_ctx->codec_id){
+					case AV_CODEC_ID_MPEG2VIDEO:
+					case AV_CODEC_ID_MPEG4:
+					case AV_CODEC_ID_H264:
+					case AV_CODEC_ID_HEVC:
+						chromaloc = CHROMALOC_LEFT;
+						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is left for 4:2:0 pixel format based on codec.\n");
+						break;
+					case AV_CODEC_ID_MJPEG:
+					case AV_CODEC_ID_H261:
+					case AV_CODEC_ID_MPEG1VIDEO:
+					case AV_CODEC_ID_H263:
+						chromaloc = CHROMALOC_CENTER;
+						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is center for 4:2:0 pixel format based on codec.\n");
+						break;
+					default:
+						// per jpsxdec documentation, PSX video has chroma position center https://github.com/m35/jpsxdec/blob/readme/jpsxdec/PlayStation1_STR_format.txt
+						// no idea what bink chroma position is.
+						chromaloc = CHROMALOC_CENTER;
+						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location for 4:2:0 pixel format based on codec. Assuming center.\n");
+						break;
+				}
+			}
+			else if (pix_desc && (chromawidthshift == 1) && (chromaheightshift == 0)){
+				if (codec_ctx->codec_id == AV_CODEC_ID_MPEG2VIDEO){
+					// ffmpeg docs say topleft, but that's impossible for 422
+					// (Think ffmpeg docs are always relative to 420's 2x2 box even when it's not 420.)
+					chromaloc = CHROMALOC_LEFT;
+					if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is left for 4:2:2 pixel format based on codec.\n");
+				}
+				else {
+					chromaloc = CHROMALOC_CENTER;
+					if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location for 4:2:2 pixel format based on codec. Assuming center.\n");
+				}
+			}
+			else {
+				chromaloc = CHROMALOC_CENTER;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location based on pixel format and codec. Assuming center.\n");
+			}
+			break;
+	}
+	// Metadata may have lied. Force center for 4:4:4.
+	if (pix_desc && (chromawidthshift == 0) && (chromaheightshift == 0) && (chromaloc != CHROMALOC_CENTER)){
+		chromaloc = CHROMALOC_CENTER;
+		if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location must be center because 4:4:4 pixel format. (Overriding erroneous metadata.)\n");
+	}
+	// We also haven't addressed the possibility that a modder did an improper conversion without adjusting the chroma sample location.
+	// But that's the modder's fault and we can't fix it here.
+	if (trace_movies || trace_all) ffnx_trace("prepare_movie: Chroma sample location detected or guessed as %d (0=topleft, 1=top, 2=left, 3=center, 4=bottomleft, 5=bottom).\n", chromaloc);
+
 
 	if (trace_movies || trace_all)
 	{
-		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i, %f FPS, duration: %f, frames: %i, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_fps, movie_duration, movie_frames, codec_ctx->color_range);
-		// bogus FPS value, assume the codec provides frame limiting
-		else ffnx_info("prepare_movie: %s; %s/%s %ix%i, duration: %f, color_range: %d\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, movie_duration, codec_ctx->color_range);
+		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i (coded %ix%i), %f FPS, duration: %f, frames: %i, pixel format: %s (needs conversion: %i), chroma location: %i, color matrix: %s (shader matrix type %i)(needs conversion: %i), color_range: %d (needs yuvj fix: %i), transfer function %s (shader gamma type: %i), color primaries: %s (shader color gamut: %i), islogomovie: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, codec_ctx->coded_width, codec_ctx->coded_height, movie_fps, movie_duration, movie_frames, av_get_pix_fmt_name(codec_ctx->pix_fmt), !okpixelformat, chromaloc, av_color_space_name(codec_ctx->colorspace), colormatrix, !okcolorspace, codec_ctx->color_range, yuvjfixneeded, av_color_transfer_name(codec_ctx->color_trc), gammatype, av_color_primaries_name(codec_ctx->color_primaries), colorgamut, islogomovie);
+		else ffnx_info("prepare_movie: %s; %s/%s %ix%i (coded %ix%i), duration: %f, frames: %i, pixel format: %s (needs conversion: %i), chroma location: %i, color matrix: %s (shader matrix type %i)(needs conversion: %i), color_range: %d (needs yuvj fix: %i), transfer function %s (shader gamma type: %i), color primaries: %s (shader color gamut: %i), islogomovie: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, codec_ctx->coded_width, codec_ctx->coded_height, movie_duration, movie_frames, av_get_pix_fmt_name(codec_ctx->pix_fmt), !okpixelformat, chromaloc, av_color_space_name(codec_ctx->colorspace), colormatrix, !okcolorspace, codec_ctx->color_range, yuvjfixneeded, av_color_transfer_name(codec_ctx->color_trc), gammatype, av_color_primaries_name(codec_ctx->color_primaries), colorgamut, islogomovie);
 	}
 
 	if(movie_width > max_texture_size || movie_height > max_texture_size)
@@ -465,19 +521,31 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	}
 
 	if(!movie_frame) movie_frame = av_frame_alloc();
-
-	if(sws_ctx) sws_freeContext(sws_ctx);
+	if(!sws_frame) sws_frame = av_frame_alloc();
 
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
+	dofirstframereports = true;
+
+	// Make sure the swscale context is cleared out, then create one if we need swscale
+	// to convert pixel format, convert YUV colorspace, or suppress a bogus color range expansion.
+	if(sws_ctx) sws_freeContext(sws_ctx);
+	sws_ctx = nullptr;
 	if(!okpixelformat || !okcolorspace || yuvjfixneeded)
 		// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader
 	{
 		if (trace_movies || trace_all)
 		{
-			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->colorspace: %s\n", av_color_space_name(codec_ctx->colorspace));
-			ffnx_trace("prepare_movie: Video must be converted: IN codec_ctx->pix_fmt: %s\n", av_pix_fmt_desc_get(codec_ctx->pix_fmt)->name);
+			if (!okcolorspace){
+				ffnx_trace("prepare_movie: Using swscale to convert pixel format from %s to %s.\n", av_get_pix_fmt_name(codec_ctx->pix_fmt), av_get_pix_fmt_name(targetpixelformat));
+			}
+			if (!okcolorspace){
+				ffnx_trace("prepare_movie: Using swscale to convert YUV colorspace from %s to rec601.\n", av_color_space_name(codec_ctx->colorspace));
+			}
+			if (yuvjfixneeded){
+				ffnx_trace("prepare_movie: Using swscale to workaround ffmpeg yuvj color range bug.\n", av_color_space_name(codec_ctx->colorspace));
+			}
 		}
 
 		sws_ctx = sws_getContext(
@@ -510,6 +578,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			// convert
 			else {
 				coefs_out = const_cast<int*>(sws_getCoefficients(SWS_CS_ITU601)); // const sucks
+        colormatrix = COLORMATRIX_BT601;
 			}
 
 			// Surprisingly, these parameters don't appear to **do** anything in most cases.
@@ -526,9 +595,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 		}
 
-	}
-	else {
-		sws_ctx = nullptr;
 	}
 
 	if(audiostream >= 0)
@@ -626,11 +692,39 @@ void ffmpeg_stop_movie()
 void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t buffer_index)
 {
 	uint32_t upload_width = strides[num];
-	// Use full dimensions for chroma planes in yuv444. If yuv420, use half width and half height instead.
 	uint32_t tex_width = movie_width;
 	uint32_t tex_height = movie_height;
+	// Since our target format is 420, U & V planes are half size.
+	// (We're *assuming* dimensions will always be even and not worrying about rounding up.)
+	if (num > 0){
+		tex_width /= 2;
+		tex_height /= 2;
+	}
 
-	if (upload_width > tex_width) tex_width = upload_width;
+	if (upload_width > tex_width){
+		// This is clunky. It would be better if bgfx gave us a way to crop the texture after we make it.
+		// crop an extra half pixel so that the sampler doesn't blend in the green crap from the next pixel over
+		float cropfactor = (((float)tex_width) - 0.5) / (float)upload_width;
+		if (num == 0){
+			yhorizontalcropfactor = cropfactor;
+		}
+		else {
+			uvhorizontalcropfactor = cropfactor;
+		}
+		if (dofirstframereports && (trace_movies || trace_all)){
+			ffnx_trace("upload_yuv_texture: Bitstream is padded. Plane %i. Movie width is %i, but frame stride is %i. Need to crop. Y crop factor is %f. UV crop factor is %f.\n", num, tex_width, upload_width, yhorizontalcropfactor, uvhorizontalcropfactor);
+		}
+		// include the green crap so bgfx texture creation works
+		tex_width = upload_width;
+	}
+	else {
+		if (num == 0){
+			yhorizontalcropfactor = 1.0;
+		}
+		else {
+			uvhorizontalcropfactor = 1.0;
+		}
+	}
 
 	if (video_buffer[buffer_index].yuv_textures[num])
 		newRenderer.deleteTexture(video_buffer[buffer_index].yuv_textures[num]);
@@ -647,59 +741,9 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 
 void buffer_yuv_frame(uint8_t **planes, int *strides)
 {
-	// Special case for BGR24. Make it planar RGB so we can pass it through the YUV plumbing
-	// Not very efficient, but it's not worth making everything else more complex for the sake of this one case.
-	if (targetpixelformat == AV_PIX_FMT_BGR24){
-		if (strides[0] % 3 != 0){
-			ffnx_error("buffer_yuv_frame: movie file claims to be bgr24, but stride isn't divisible by 3!\n");
-			ffmpeg_release_movie_objects();
-			movie_frame_counter = 0;
-			return;
-		}
-		const int planarstride = strides[0]/3;
-		int fakestrides[3] = {planarstride, planarstride, planarstride};
-		uint8_t* realbuffer = planes[0];
-		uint8_t* redbuffer = (uint8_t*)malloc(planarstride * movie_height * sizeof(uint8_t));
-		uint8_t* greenbuffer = (uint8_t*)malloc(planarstride * movie_height * sizeof(uint8_t));
-		uint8_t* bluebuffer = (uint8_t*)malloc(planarstride * movie_height * sizeof(uint8_t));
-		uint8_t* fakeplanes[3] = {redbuffer, greenbuffer, bluebuffer};
-		int smallindex = 0;
-		int rgbindex = 0;
-		int maxindex = strides[0] * movie_height;
-		for (int i=0; i<maxindex; i++){
-			uint8_t nextbyte = realbuffer[i];
-			if (rgbindex == 0){
-				bluebuffer[smallindex] = nextbyte;
-			}
-			else if (rgbindex == 1){
-				greenbuffer[smallindex] = nextbyte;
-			}
-			else {
-				redbuffer[smallindex] = nextbyte;
-				smallindex++;
-			}
-			rgbindex++;
-			if (rgbindex > 2){
-				rgbindex = 0;
-			}
-		}
-		upload_yuv_texture(fakeplanes, fakestrides, 0, vbuffer_write); // R as Y
-		upload_yuv_texture(fakeplanes, fakestrides, 1, vbuffer_write); // G as U
-		upload_yuv_texture(fakeplanes, fakestrides, 2, vbuffer_write); // B as V
-		free(redbuffer);
-		redbuffer = nullptr;
-		free(greenbuffer);
-		greenbuffer = nullptr;
-		free(bluebuffer);
-		bluebuffer = nullptr;
-	}
-	// normal case
-	else {
-		upload_yuv_texture(planes, strides, 0, vbuffer_write); // Y
-		upload_yuv_texture(planes, strides, 1, vbuffer_write); // U
-		upload_yuv_texture(planes, strides, 2, vbuffer_write); // V
-	}
-
+	upload_yuv_texture(planes, strides, 0, vbuffer_write); // Y
+	upload_yuv_texture(planes, strides, 1, vbuffer_write); // U
+	upload_yuv_texture(planes, strides, 2, vbuffer_write); // V
 	vbuffer_write = (vbuffer_write + 1) % VIDEO_BUFFER_SIZE;
 }
 
@@ -711,18 +755,21 @@ void draw_yuv_frame(uint32_t buffer_index)
 		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
 
 	newRenderer.isMovie(true);
-	newRenderer.isYUV(true);
 	newRenderer.isFullRange(fullrange_input);
 	newRenderer.setColorMatrix(colormatrix);
 	newRenderer.setColorGamut(colorgamut);
 	newRenderer.setGammaType(gammatype);
+	newRenderer.setChromaLocationType(chromaloc);
+	newRenderer.setMovieHorizontalCropFactors(yhorizontalcropfactor, uvhorizontalcropfactor);
 	gl_draw_movie_quad(movie_width, movie_height);
-	newRenderer.isFullRange(false);
-	newRenderer.isYUV(false);
 	newRenderer.isMovie(false);
-	newRenderer.setColorMatrix(COLORMATRIX_BT601);
-	newRenderer.setColorGamut(COLORGAMUT_SRGB);
-	newRenderer.setGammaType(GAMMAFUNCTION_SRGB);
+	// set these back to default
+	newRenderer.isFullRange();
+	newRenderer.setColorMatrix();
+	newRenderer.setColorGamut();
+	newRenderer.setGammaType();
+	newRenderer.setChromaLocationType();
+	newRenderer.setMovieHorizontalCropFactors();
 }
 
 // display the next frame
@@ -773,22 +820,33 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// Successfully received a frame
 				QueryPerformanceCounter((LARGE_INTEGER *)&now);
 
+				// use a pointer to identify the AVFrame object we ultimately want to use
+				// so we can call buffer_yuv_frame() in just one place using this pointer
+				// (if we had hardware decoding with writeback, we'd swap this to point at the AVFrame av_hwframe_transfer_data() gave us)
+				usethis_frame = movie_frame;
+
+				// if we need to use swscale, do so
 				if(sws_ctx)
 				{
-					AVFrame* frame = av_frame_alloc();
-					frame->width = movie_width;
-					frame->height = movie_height;
-					frame->format = targetpixelformat;
+					sws_frame->width = movie_width;
+					sws_frame->height = movie_height;
+					sws_frame->format = targetpixelformat;
 
-					av_image_alloc(frame->data, frame->linesize, frame->width, frame->height, AVPixelFormat(frame->format), 1);
+					av_image_alloc(sws_frame->data, sws_frame->linesize, sws_frame->width, sws_frame->height, AVPixelFormat(sws_frame->format), 1);
 
-					sws_scale(sws_ctx, movie_frame->extended_data, movie_frame->linesize, 0, frame->height, frame->data, frame->linesize);
-					buffer_yuv_frame(frame->data, frame->linesize);
+					sws_scale(sws_ctx, usethis_frame->extended_data, usethis_frame->linesize, 0, sws_frame->height, sws_frame->data, sws_frame->linesize);
 
-					av_freep(&frame->data[0]);
-					av_frame_free(&frame);
+					// swap the pointer's target
+					usethis_frame = sws_frame;
 				}
-				else buffer_yuv_frame(movie_frame->extended_data, movie_frame->linesize);
+				// send frame data to buffer
+				buffer_yuv_frame(usethis_frame->extended_data, usethis_frame->linesize);
+
+				// clear out the AVFrame objects before reusing them
+				av_frame_unref(movie_frame);
+				av_frame_unref(sws_frame);
+
+				dofirstframereports = false;
 
 				if(vbuffer_write == vbuffer_read)
 				{
