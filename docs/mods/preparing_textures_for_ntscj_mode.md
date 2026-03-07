@@ -10,9 +10,9 @@ In this case, you do not need to do anything. (Unless you are very anal. See bel
 
 Just be aware that the colors you see in Photoshop, etc. are wrong. So do not "eyeball" color adjustments in Photoshop.
 
-## **2. The texture is an original work, inspired by the original texture and hewing fairly close to the original colors.**
+## **2. The texture is an original work, for which you used an uncorrected original asset as a color reference.**
 
-In this case, it's probably best to do nothing. If your asset is close to the original colors, as wrongly displayed in Photoshop, etc., then it will also display close to the original colors, as correctly displayed in NTSC-J mode. (Even though you didn't take color correction into consideration, then end result will be about the same as if you had.)
+In this case, it's probably best to do nothing. The combination of using an incorrect color reference and then having NTSC-J mode color correct the modded asset will yield a result close to what you would have gotten if you had used the correct color reference in the first place. (Even though you didn't take color correction into consideration, then end result will be about the same as if you had.)
 
 (If you are very anal, see below.)
 
@@ -29,7 +29,7 @@ To do the inverse conversion, use [gamutthingy](https://github.com/ChthonVII/gam
 
 ## **If you are very anal:**
 
-If you are very anal, you can convert the original texture to sRGB, work on it (or use it for inspiration) in sRGB, then apply the inverse conversion to go back to NTSC-J colors.
+If you are very anal, you can convert the original texture to sRGB, work on it (or use it as a color reference) in sRGB, then apply the inverse conversion to go back to NTSC-J colors.
 
 This has two advantages:
 1. If you eyeball colors in Photoshop, etc., what you see is what you get.
