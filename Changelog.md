@@ -1,6 +1,14 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.0...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.1...master
+
+# 1.24.1
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.0...1.24.1
+
+## FF7
+
+- Renderer: Fix performance issue when using Cosmos Gaia
 
 # 1.24.0
 
