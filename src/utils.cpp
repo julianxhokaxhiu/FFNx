@@ -27,6 +27,7 @@
 #include <filesystem>
 #include <Softpub.h>
 #include <wintrust.h>
+#include <winternl.h>
 
 #include <cryptopp/md5.h>
 #include <cryptopp/sha.h>
@@ -163,4 +164,21 @@ std::string md5_hash(const unsigned char* data, size_t length)
                 new StringSink(digest), false)));
 
     return digest;
+}
+
+bool isMacOSLauncher()
+{
+    char value[256] = {};
+    GetEnvironmentVariableA("__CFBundleIdentifier", value, sizeof(value));
+    return strcmp(value, "com.tsunamods.7thHeaven") == 0 || strcmp(value, "com.tsunamods.JunctionVIII") == 0;
+}
+
+uint32_t getProcessEntryPoint()
+{
+    HMODULE base = GetModuleHandleA(nullptr);
+
+    PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
+    PIMAGE_NT_HEADERS nt  = (PIMAGE_NT_HEADERS)((BYTE*)base + dos->e_lfanew);
+
+    return (uint32_t)((BYTE*)base + nt->OptionalHeader.AddressOfEntryPoint);
 }
