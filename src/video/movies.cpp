@@ -41,10 +41,14 @@ AVCodecContext* acodec_ctx = nullptr;
 const AVCodec* acodec = nullptr;
 AVFrame* movie_frame = nullptr;
 AVFrame* sws_frame = nullptr;
+AVFrame* wb_frame = nullptr;
 AVFrame* usethis_frame = nullptr;
 SwsContext* sws_ctx = nullptr;
+SwsContext* sws_wb_ctx = nullptr;
+SwsContext* usethis_sws = nullptr;
 SwrContext* swr_ctx = nullptr;
 void(*io_close)(void *opaque) = nullptr;
+AVBufferRef* hw_device_ctx = nullptr;
 
 int videostream;
 int audiostream;
@@ -68,6 +72,8 @@ ColorMatrixType colormatrix = COLORMATRIX_BT601;
 ColorGamutType colorgamut = COLORGAMUT_SRGB;
 InverseGammaFunctionType gammatype = GAMMAFUNCTION_SRGB;
 const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P;
+AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
+AVPixelFormat wb_pix_fmt = AV_PIX_FMT_NONE;
 ChromaLocationType chromaloc = CHROMALOC_CENTER;
 bool dofirstframereports = false;
 bool needsws = false;
@@ -76,6 +82,49 @@ bool first_audio_packet;
 
 time_t timer_freq;
 time_t start_time;
+
+// We need to set a pointer to this function in AVCodecContext for hardware decoding.
+// Somewhat cogent explanation of what this does: https://stackoverflow.com/a/9654397
+static AVPixelFormat get_hw_format(AVCodecContext* ctx, const AVPixelFormat* pix_fmts)
+{
+		// ffmpeg docs promise us that pix_fmts always contains:
+		//	the file's native pixel format as the second-to-last entry, and
+		//	-1 as the last entry
+
+		const AVPixelFormat* p = nullptr;
+		const AVPixelFormat* lastp = nullptr;
+
+		if (trace_movies  || trace_all){
+			for (p = pix_fmts; *p != -1; p++) {
+				ffnx_trace("get_hw_format: Hardware decoder's pixel format candidate list: %s.\n", av_get_pix_fmt_name(*p));
+			}
+		}
+
+		/*
+		TODO: Favor one particular format for bypassing writeback.
+		Needs to be commonly supported and easy to deal with in the shader.
+		Probably NV12.
+		for (p = pix_fmts; *p != -1; p++) {
+				if (*p == some preferred format){
+						if (trace_movies  || trace_all) ffnx_trace("get_hw_format: Using hardware pixel format %s to avoid CPU writeback.\n", av_get_pix_fmt_name(*p));
+						return *p;
+				}
+				lastp = p;
+		}
+		*/
+
+		for (p = pix_fmts; *p != -1; p++) {
+				if (*p == hw_pix_fmt){
+						return *p;
+				}
+				lastp = p;
+		}
+		if (trace_movies  || trace_all) ffnx_trace("get_hw_format: Hardware decoder says it can't decode this movie after all. (Possibly unsupported bit-depth, profile, or level.) Software decoding will be used.\n");
+		if (lastp) return *lastp; // return the second-to-last object on the list, the software type
+
+		if (trace_movies  || trace_all) ffnx_trace("get_hw_format: Got bad list from hardware decoder. Unrecoverable error.\n");
+		return AV_PIX_FMT_NONE;
+}
 
 void ffmpeg_movie_init()
 {
@@ -91,6 +140,7 @@ void ffmpeg_release_movie_objects()
 
 	if (movie_frame) av_frame_free(&movie_frame);
   if (sws_frame) av_frame_free(&sws_frame);
+	if (wb_frame) av_frame_free(&wb_frame);
 	if (codec_ctx) avcodec_free_context(&codec_ctx);
 	if (acodec_ctx) avcodec_free_context(&acodec_ctx);
 	if (format_ctx) {
@@ -111,11 +161,15 @@ void ffmpeg_release_movie_objects()
 		swr_free(&swr_ctx);
 	}
 	if(sws_ctx) sws_freeContext(sws_ctx);
-  sws_ctx = nullptr;
+	if(sws_wb_ctx) sws_freeContext(sws_wb_ctx);
+	if(hw_device_ctx) av_buffer_unref(&hw_device_ctx);
 
-	codec_ctx = 0;
-	acodec_ctx = 0;
-	format_ctx = 0;
+	codec_ctx = nullptr;
+	acodec_ctx = nullptr;
+	format_ctx = nullptr;
+	sws_ctx = nullptr;
+	sws_wb_ctx = nullptr;
+	hw_device_ctx = nullptr;
 
 	audio_must_be_converted = false;
 
@@ -144,12 +198,16 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	bool okcolorspace = false;
 	bool yuvjfixneeded = false;
 	bool islogomovie = false;
+	bool tryhwdecode = false;
 	int lastbackslashindex = -1;
 	int bytessincebackslash = 0;
 	int scanoffset = 0;
 	int chromawidthshift = 0;
 	int chromaheightshift = 0;
 	const AVPixFmtDescriptor* pix_desc = nullptr;
+	AVHWDeviceType hwacceltype = AV_HWDEVICE_TYPE_NONE;
+	AVPixelFormat nativepixformat = AV_PIX_FMT_NONE;
+	AVPixelFormat wb_nonblank_fmt = AV_PIX_FMT_NONE;
 
 	movie_frames = 0;
 
@@ -182,6 +240,88 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	else
 		audiostream = -1;
 
+	// Does the user want to try hardware decoding?
+	tryhwdecode = enable_hardware_video_decoding;
+	if (tryhwdecode){
+		// Check if the chosen hardware decoding API can theoretically decode this codec.
+		//TODO: Let the user pick which hardware decoding API they want
+		// list https://www.ffmpeg.org/doxygen/4.0/hwcontext_8h.html#acf25724be4b066a51ad86aa9214b0d34
+		hwacceltype = AV_HWDEVICE_TYPE_D3D11VA;
+		hw_pix_fmt = AV_PIX_FMT_NONE;
+		tryhwdecode = false;
+		for (int i = 0;; i++) {
+			const AVCodecHWConfig *hwconfig = avcodec_get_hw_config(codec, i);
+			if (!hwconfig) {
+					if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Codec %s cannot be decoded by hardware decoding API %s. Software decoding will be used.\n", codec->name, av_hwdevice_get_type_name(hwacceltype));
+					tryhwdecode = false;
+					break;
+			}
+			if (hwconfig->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
+					hwconfig->device_type == hwacceltype) {
+					hw_pix_fmt = hwconfig->pix_fmt;
+					if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Codec %s can be decoded by hardware decoding API %s. The hardware pixel format used is %s.\n", codec->name, av_hwdevice_get_type_name(hwacceltype), av_get_pix_fmt_name(hw_pix_fmt));
+					tryhwdecode = true;
+					break;
+			}
+		}
+	}
+	// if hardware decoding is theoretically possible, then try to initialize the hardware decoder
+	if (hw_device_ctx) av_buffer_unref(&hw_device_ctx); // clear prior decoder if somehow still around
+	hw_device_ctx = nullptr;
+	if (tryhwdecode){
+		int retcd = 0;
+		// TODO: ffmpeg's examples use av_hwdevice_ctx_create() like this.
+		// Alternatively, we could set the 3rd and 4th parameters to set API-specific decoder parameters.
+		// Also, accoring to the documentation: "This is a convenience function intended to cover the simple cases. Callers who need to fine-tune device creation/management should open the device manually and then wrap it in an AVHWDeviceContext using av_hwdevice_ctx_alloc()/av_hwdevice_ctx_init()."
+		retcd = av_hwdevice_ctx_create(&hw_device_ctx, hwacceltype, NULL, NULL, 0);
+		if (retcd < 0){
+			tryhwdecode = false;
+			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Failed to initialize a %s decoder. Your hardware may not support it. Software decoding will be used.\n", av_hwdevice_get_type_name(hwacceltype));
+		}
+		else if (trace_movies  || trace_all) {
+			ffnx_trace("prepare_movie: Successfully initialized %s decoder.\n", av_hwdevice_get_type_name(hwacceltype));
+		}
+	}
+	// if we initialized a hardware device, see if it can copy back our target pixel format,
+	// or at least a pixel format swscale can convert for us
+	// see https://stackoverflow.com/questions/47049312/how-can-i-convert-an-ffmpeg-avframe-with-pixel-format-av-pix-fmt-cuda-to-a-new-a
+	wb_pix_fmt = AV_PIX_FMT_NONE;
+	if (tryhwdecode){
+		AVHWFramesConstraints* hw_frames_const = av_hwdevice_get_hwframe_constraints(hw_device_ctx, nullptr);
+		if (hw_frames_const){
+			AVPixelFormat* p;
+			bool foundusable = false;
+			for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
+				if (*p == targetpixelformat){
+					wb_pix_fmt = *p;
+					foundusable = true;
+					break;
+				}
+			}
+			if (!foundusable){
+				for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
+					if (sws_isSupportedInput(*p)){
+						wb_pix_fmt = *p;
+						foundusable = true;
+						break;
+					}
+				}
+			}
+			if (foundusable){
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Hardware decoder can write back usable pixel format %s.\n", av_get_pix_fmt_name(wb_pix_fmt));
+			}
+			else {
+				tryhwdecode = false;
+				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Hardware decoder cannot write back a usable pixel format. Software decoding will be used.\n");
+			}
+			av_hwframe_constraints_free(&hw_frames_const);
+		}
+		else {
+			tryhwdecode = false;
+			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: av_hwdevice_get_hwframe_constraints() failed. Software decoding will be used.\n");
+		}
+	}
+
 	codec_ctx = avcodec_alloc_context3(codec);
 	if (!codec_ctx) {
 		ffnx_error("prepare_movie: could not allocate video codec context\n");
@@ -190,6 +330,12 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		goto exit;
 	}
 	avcodec_parameters_to_context(codec_ctx, format_ctx->streams[videostream]->codecpar);
+
+	// if we successfully initialized a hardware decoder, attach it to codec context
+	if (tryhwdecode){
+		codec_ctx->get_format = get_hw_format;
+		codec_ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+	}
 
 	if(avcodec_open2(codec_ctx, codec, NULL) < 0)
 	{
@@ -278,10 +424,18 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			break;
 	}
 
+	// hardware decoding may have swapped the pixel format if get_hw_format() has already been called by now
+	if (tryhwdecode && (codec_ctx->pix_fmt != codec_ctx->sw_pix_fmt) && (codec_ctx->sw_pix_fmt != AV_PIX_FMT_NONE)){
+		nativepixformat = codec_ctx->sw_pix_fmt;
+	}
+	else {
+		nativepixformat = codec_ctx->pix_fmt;
+	}
+
 	// some pixel formats are inherently full-range
 	// so we should treat them as such, even if the color range metadata is missing
 	// some of these formats also trigger a bogus automatic color range conversion that we must suppress
-	switch (codec_ctx->pix_fmt){
+	switch (nativepixformat){
 		case AV_PIX_FMT_YUVJ420P:
 		case AV_PIX_FMT_YUVJ411P:
 		case AV_PIX_FMT_YUVJ422P:
@@ -311,7 +465,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		// these are all the same (bt601)
 		case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601
 		case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601
-			if (codec_ctx->pix_fmt == AV_PIX_FMT_BGR24){
+			if (nativepixformat == AV_PIX_FMT_BGR24){
 				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
 				okcolorspace = false;
 				break;
@@ -383,8 +537,20 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	// We're going to target YUV420 on the assumption that most of our input will already be 420,
 	// and resampling chroma in the shader will be faster than doing it in swscale.
 	// (Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions.)
-	if (codec_ctx->pix_fmt == targetpixelformat){
+	if (tryhwdecode){
+		// TODO: if not doing writeback, okpixelformat = true;
+		if (wb_pix_fmt == targetpixelformat){
+			okpixelformat = true;
+		}
+		else {
+			okpixelformat = false;
+		}
+	}
+	else if (codec_ctx->pix_fmt == targetpixelformat){
 		okpixelformat = true;
+	}
+	else {
+		okpixelformat = false;
 	}
 
 	// Figure out which color gamut to use.
@@ -429,7 +595,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	// what is the chroma sample location?
 	// first, we may need to know about the pixel format
-	pix_desc = av_pix_fmt_desc_get(codec_ctx->pix_fmt);
+	pix_desc = av_pix_fmt_desc_get(nativepixformat);
 	if (pix_desc){
 		chromawidthshift = pix_desc->log2_chroma_w;
 		chromaheightshift = pix_desc->log2_chroma_h;
@@ -518,8 +684,8 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	if (trace_movies || trace_all)
 	{
-		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i (coded %ix%i), %f FPS, duration: %f, frames: %i, pixel format: %s (needs conversion: %i), chroma location: %i, color matrix: %s (shader matrix type %i)(needs conversion: %i), color_range: %d (needs yuvj fix: %i), transfer function %s (shader gamma type: %i), color primaries: %s (shader color gamut: %i), islogomovie: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, codec_ctx->coded_width, codec_ctx->coded_height, movie_fps, movie_duration, movie_frames, av_get_pix_fmt_name(codec_ctx->pix_fmt), !okpixelformat, chromaloc, av_color_space_name(codec_ctx->colorspace), colormatrix, !okcolorspace, codec_ctx->color_range, yuvjfixneeded, av_color_transfer_name(codec_ctx->color_trc), gammatype, av_color_primaries_name(codec_ctx->color_primaries), colorgamut, islogomovie);
-		else ffnx_info("prepare_movie: %s; %s/%s %ix%i (coded %ix%i), duration: %f, frames: %i, pixel format: %s (needs conversion: %i), chroma location: %i, color matrix: %s (shader matrix type %i)(needs conversion: %i), color_range: %d (needs yuvj fix: %i), transfer function %s (shader gamma type: %i), color primaries: %s (shader color gamut: %i), islogomovie: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, codec_ctx->coded_width, codec_ctx->coded_height, movie_duration, movie_frames, av_get_pix_fmt_name(codec_ctx->pix_fmt), !okpixelformat, chromaloc, av_color_space_name(codec_ctx->colorspace), colormatrix, !okcolorspace, codec_ctx->color_range, yuvjfixneeded, av_color_transfer_name(codec_ctx->color_trc), gammatype, av_color_primaries_name(codec_ctx->color_primaries), colorgamut, islogomovie);
+		if (movie_fps < 100.0) ffnx_info("prepare_movie: %s; %s/%s %ix%i (coded %ix%i), %f FPS, duration: %f, frames: %i, pixel format: %s (needs conversion: %i), chroma location: %i, color matrix: %s (shader matrix type %i)(needs conversion: %i), color_range: %d (needs yuvj fix: %i), transfer function %s (shader gamma type: %i), color primaries: %s (shader color gamut: %i), islogomovie: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, codec_ctx->coded_width, codec_ctx->coded_height, movie_fps, movie_duration, movie_frames, av_get_pix_fmt_name(nativepixformat), !okpixelformat, chromaloc, av_color_space_name(codec_ctx->colorspace), colormatrix, !okcolorspace, codec_ctx->color_range, yuvjfixneeded, av_color_transfer_name(codec_ctx->color_trc), gammatype, av_color_primaries_name(codec_ctx->color_primaries), colorgamut, islogomovie);
+		else ffnx_info("prepare_movie: %s; %s/%s %ix%i (coded %ix%i), duration: %f, frames: %i, pixel format: %s (needs conversion: %i), chroma location: %i, color matrix: %s (shader matrix type %i)(needs conversion: %i), color_range: %d (needs yuvj fix: %i), transfer function %s (shader gamma type: %i), color primaries: %s (shader color gamut: %i), islogomovie: %i\n", name, codec->name, acodec_ctx ? acodec->name : "null", movie_width, movie_height, codec_ctx->coded_width, codec_ctx->coded_height, movie_duration, movie_frames, av_get_pix_fmt_name(nativepixformat), !okpixelformat, chromaloc, av_color_space_name(codec_ctx->colorspace), colormatrix, !okcolorspace, codec_ctx->color_range, yuvjfixneeded, av_color_transfer_name(codec_ctx->color_trc), gammatype, av_color_primaries_name(codec_ctx->color_primaries), colorgamut, islogomovie);
 	}
 
 	if(movie_width > max_texture_size || movie_height > max_texture_size)
@@ -531,17 +697,22 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	if(!movie_frame) movie_frame = av_frame_alloc();
 	if(!sws_frame) sws_frame = av_frame_alloc();
+	if(!wb_frame) wb_frame = av_frame_alloc();
 
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
 	dofirstframereports = true;
 
-	// Make sure the swscale context is cleared out, then create one
 	// Swscale is used to convert pixel format, convert YUV colorspace, suppress a bogus color range expansion, or crop a padded bitstream.
 	// Create one even if we don't think we need it now, since we won't know if bitstream is padded until we have a frame.
+	// Two actually, since the hardware decoding writeback may be in a different pixel format,
+	// and we won't know if hardware decoding was actually used until we have a frame.
+	// Make sure the swscale context is cleared out first
 	if(sws_ctx) sws_freeContext(sws_ctx);
 	sws_ctx = nullptr;
+	if(sws_wb_ctx) sws_freeContext(sws_wb_ctx);
+	sws_wb_ctx = nullptr;
 	needsws = false;
 	if(!okpixelformat || !okcolorspace || yuvjfixneeded){
 		needsws = true;
@@ -564,7 +735,21 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	sws_ctx = sws_getContext(
 		movie_width,
 		movie_height,
-		codec_ctx->pix_fmt,
+		nativepixformat,
+		movie_width,
+		movie_height,
+		targetpixelformat,
+		SWS_LANCZOS | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT,
+		NULL,
+		NULL,
+		NULL
+	);
+
+	wb_nonblank_fmt = (wb_pix_fmt == AV_PIX_FMT_NONE) ? nativepixformat : wb_pix_fmt; // this will assert if AV_PIX_FMT_NONE is passed
+	sws_wb_ctx = sws_getContext(
+		movie_width,
+		movie_height,
+		wb_nonblank_fmt,
 		movie_width,
 		movie_height,
 		targetpixelformat,
@@ -606,6 +791,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		}
 
 		sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
+		sws_setColorspaceDetails(sws_wb_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 	}
 
 	if(audiostream >= 0)
@@ -810,13 +996,33 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					goto packet_loop_exit;
 				}
 
-				// Successfully received a frame
-				QueryPerformanceCounter((LARGE_INTEGER *)&now);
+
 
 				// use a pointer to identify the AVFrame object we ultimately want to use
 				// so we can call buffer_yuv_frame() in just one place using this pointer
-				// (if we had hardware decoding with writeback, we'd swap this to point at the AVFrame av_hwframe_transfer_data() gave us)
 				usethis_frame = movie_frame;
+				// ditto for sws context
+				usethis_sws = sws_ctx;
+
+				// was this frame decoded with hardware decoding?
+				if (movie_frame->hw_frames_ctx){
+					if ((trace_movies || trace_all) && dofirstframereports) ffnx_trace("ffmpeg_update_movie_sample: Frame was decoded using hardware. Pixel format is %s,\n", av_get_pix_fmt_name(AVPixelFormat(movie_frame->format)));
+					// copy back to CPU so swsscale can convert the pixel format to what the shaders expect
+					// TODO: notes
+					wb_frame->format = wb_pix_fmt;
+					int retcopyback = av_hwframe_transfer_data(wb_frame, movie_frame, 0);
+					if (retcopyback < 0){
+						ffnx_error("ffmpeg_update_movie_sample: av_hwframe_transfer_data() failed!\n");
+						goto packet_loop_exit;
+					}
+					// swap pointers' targets
+					usethis_frame = wb_frame;
+					usethis_sws = sws_wb_ctx;
+				}
+				else if ((trace_movies || trace_all) && dofirstframereports) ffnx_trace("ffmpeg_update_movie_sample: Frame was decoded using software. Pixel format is %s.\n", av_get_pix_fmt_name(AVPixelFormat(usethis_frame->format)));
+
+				// Successfully received a frame
+				QueryPerformanceCounter((LARGE_INTEGER *)&now);
 
 				// check if we have a padded bitstream that needs cropped
 				if (usethis_frame->linesize[0] % movie_width != 0){
@@ -835,7 +1041,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 					av_image_alloc(sws_frame->data, sws_frame->linesize, sws_frame->width, sws_frame->height, AVPixelFormat(sws_frame->format), 1);
 
-					sws_scale(sws_ctx, usethis_frame->extended_data, usethis_frame->linesize, 0, sws_frame->height, sws_frame->data, sws_frame->linesize);
+					sws_scale(usethis_sws, usethis_frame->extended_data, usethis_frame->linesize, 0, sws_frame->height, sws_frame->data, sws_frame->linesize);
 
 					// swap the pointer's target
 					usethis_frame = sws_frame;
@@ -846,6 +1052,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// clear out the AVFrame objects before reusing them
 				av_frame_unref(movie_frame);
 				av_frame_unref(sws_frame);
+				av_frame_unref(wb_frame);
 
 				dofirstframereports = false;
 
