@@ -70,8 +70,7 @@ InverseGammaFunctionType gammatype = GAMMAFUNCTION_SRGB;
 const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P;
 ChromaLocationType chromaloc = CHROMALOC_CENTER;
 bool dofirstframereports = false;
-float yhorizontalcropfactor = 1.0;
-float uvhorizontalcropfactor = 1.0;
+bool needsws = false;
 
 bool first_audio_packet;
 
@@ -538,73 +537,75 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	dofirstframereports = true;
 
-	// Make sure the swscale context is cleared out, then create one if we need swscale
-	// to convert pixel format, convert YUV colorspace, or suppress a bogus color range expansion.
+	// Make sure the swscale context is cleared out, then create one
+	// Swscale is used to convert pixel format, convert YUV colorspace, suppress a bogus color range expansion, or crop a padded bitstream.
+	// Create one even if we don't think we need it now, since we won't know if bitstream is padded until we have a frame.
 	if(sws_ctx) sws_freeContext(sws_ctx);
 	sws_ctx = nullptr;
-	if(!okpixelformat || !okcolorspace || yuvjfixneeded)
-		// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader
+	needsws = false;
+	if(!okpixelformat || !okcolorspace || yuvjfixneeded){
+		needsws = true;
+	}
+	// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader
+
+	if (trace_movies || trace_all)
 	{
-		if (trace_movies || trace_all)
-		{
-			if (!okcolorspace){
-				ffnx_trace("prepare_movie: Using swscale to convert pixel format from %s to %s.\n", av_get_pix_fmt_name(codec_ctx->pix_fmt), av_get_pix_fmt_name(targetpixelformat));
-			}
-			if (!okcolorspace){
-				ffnx_trace("prepare_movie: Using swscale to convert YUV colorspace from %s to rec601.\n", av_color_space_name(codec_ctx->colorspace));
-			}
-			if (yuvjfixneeded){
-				ffnx_trace("prepare_movie: Using swscale to workaround ffmpeg yuvj color range bug.\n", av_color_space_name(codec_ctx->colorspace));
-			}
+		if (!okcolorspace){
+			ffnx_trace("prepare_movie: Using swscale to convert pixel format from %s to %s.\n", av_get_pix_fmt_name(codec_ctx->pix_fmt), av_get_pix_fmt_name(targetpixelformat));
+		}
+		if (!okcolorspace){
+			ffnx_trace("prepare_movie: Using swscale to convert YUV colorspace from %s to rec601.\n", av_color_space_name(codec_ctx->colorspace));
+		}
+		if (yuvjfixneeded){
+			ffnx_trace("prepare_movie: Using swscale to workaround ffmpeg yuvj color range bug.\n", av_color_space_name(codec_ctx->colorspace));
+		}
+	}
+
+	sws_ctx = sws_getContext(
+		movie_width,
+		movie_height,
+		codec_ctx->pix_fmt,
+		movie_width,
+		movie_height,
+		targetpixelformat,
+		SWS_LANCZOS | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT,
+		NULL,
+		NULL,
+		NULL
+	);
+
+	// if we need a colorspace conversion, set it up here
+	// this would also be the place to set up color range conversion, if it worked -- which it doens't
+	if (!okcolorspace || yuvjfixneeded){
+		int *coefs_in;
+		int *coefs_out;
+		int srcRange, dstRange;
+		int brightness, contrast, saturation;
+		sws_getColorspaceDetails(sws_ctx, &coefs_in, &srcRange, &coefs_out, &dstRange, &brightness, &contrast, &saturation);
+
+		coefs_in = const_cast<int*>(sws_getCoefficients(codec_ctx->colorspace)); // const sucks
+		// use the same colorspace
+		if (okcolorspace){
+			coefs_out = coefs_in;
+		}
+		// convert
+		else {
+			coefs_out = const_cast<int*>(sws_getCoefficients(SWS_CS_ITU601)); // const sucks
+			colormatrix = COLORMATRIX_BT601;
 		}
 
-		sws_ctx = sws_getContext(
-			movie_width,
-			movie_height,
-			codec_ctx->pix_fmt,
-			movie_width,
-			movie_height,
-			targetpixelformat,
-			SWS_LANCZOS | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT,
-			NULL,
-			NULL,
-			NULL
-		);
-
-		// if we need a colorspace conversion, set it up here
-		// this would also be the place to set up color range conversion, if it worked -- which it doens't
-		if (!okcolorspace || yuvjfixneeded){
-			int *coefs_in;
-			int *coefs_out;
-			int srcRange, dstRange;
-			int brightness, contrast, saturation;
-			sws_getColorspaceDetails(sws_ctx, &coefs_in, &srcRange, &coefs_out, &dstRange, &brightness, &contrast, &saturation);
-
-			coefs_in = const_cast<int*>(sws_getCoefficients(codec_ctx->colorspace)); // const sucks
-			// use the same colorspace
-			if (okcolorspace){
-				coefs_out = coefs_in;
-			}
-			// convert
-			else {
-				coefs_out = const_cast<int*>(sws_getCoefficients(SWS_CS_ITU601)); // const sucks
-        colormatrix = COLORMATRIX_BT601;
-			}
-
-			// Surprisingly, these parameters don't appear to **do** anything in most cases.
-			// It appears that whether swscale does a range conversion is controlled by pixformat and range metadata.
-			// And it will do one regardless of whether you want it.
-			// Except, when the input format is YUVJ, these parameters can be used to **prevent** an un-asked-for PC->TV conversion
-			// (They are totally ignored with 10-bit input formats, however.)
-			// Gawd... swscale is a buggy mess...
-			if (yuvjfixneeded){
-				srcRange = fullrange_input ? 1 : 0; // use the input color range
-				dstRange = srcRange; // no conversion!
-			}
-
-			sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
+		// Surprisingly, these parameters don't appear to **do** anything in most cases.
+		// It appears that whether swscale does a range conversion is controlled by pixformat and range metadata.
+		// And it will do one regardless of whether you want it.
+		// Except, when the input format is YUVJ, these parameters can be used to **prevent** an un-asked-for PC->TV conversion
+		// (They are totally ignored with 10-bit input formats, however.)
+		// Gawd... swscale is a buggy mess...
+		if (yuvjfixneeded){
+			srcRange = fullrange_input ? 1 : 0; // use the input color range
+			dstRange = srcRange; // no conversion!
 		}
 
+		sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 	}
 
 	if(audiostream >= 0)
@@ -712,29 +713,13 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 	}
 
 	if (upload_width > tex_width){
-		// This is clunky. It would be better if bgfx gave us a way to crop the texture after we make it.
-		// crop an extra half pixel so that the sampler doesn't blend in the green crap from the next pixel over
-		float cropfactor = (((float)tex_width) - 0.5) / (float)upload_width;
-		if (num == 0){
-			yhorizontalcropfactor = cropfactor;
-		}
-		else {
-			uvhorizontalcropfactor = cropfactor;
-		}
 		if (dofirstframereports && (trace_movies || trace_all)){
-			ffnx_trace("upload_yuv_texture: Bitstream is padded. Plane %i. Movie width is %i, but frame stride is %i. Need to crop. Y crop factor is %f. UV crop factor is %f.\n", num, tex_width, upload_width, yhorizontalcropfactor, uvhorizontalcropfactor);
+			ffnx_trace("upload_yuv_texture: Bitstream is unexpectedly wide. Plane %i. Movie width is %i, but frame stride is %i.\n", num, tex_width, upload_width);
 		}
 		// include the green crap so bgfx texture creation works
 		tex_width = upload_width;
 	}
-	else {
-		if (num == 0){
-			yhorizontalcropfactor = 1.0;
-		}
-		else {
-			uvhorizontalcropfactor = 1.0;
-		}
-	}
+
 
 	if (video_buffer[buffer_index].yuv_textures[num])
 		newRenderer.deleteTexture(video_buffer[buffer_index].yuv_textures[num]);
@@ -770,7 +755,6 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.setColorGamut(colorgamut);
 	newRenderer.setGammaType(gammatype);
 	newRenderer.setChromaLocationType(chromaloc);
-	newRenderer.setMovieHorizontalCropFactors(yhorizontalcropfactor, uvhorizontalcropfactor);
 	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isMovie(false);
 	// set these back to default
@@ -779,7 +763,6 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.setColorGamut();
 	newRenderer.setGammaType();
 	newRenderer.setChromaLocationType();
-	newRenderer.setMovieHorizontalCropFactors();
 }
 
 // display the next frame
@@ -835,8 +818,16 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// (if we had hardware decoding with writeback, we'd swap this to point at the AVFrame av_hwframe_transfer_data() gave us)
 				usethis_frame = movie_frame;
 
+				// check if we have a padded bitstream that needs cropped
+				if (usethis_frame->linesize[0] % movie_width != 0){
+					needsws = true;
+					if (dofirstframereports && (trace_movies || trace_all)){
+						ffnx_trace("ffmpeg_update_movie_sample: Bitstream is padded. Using Swscale to crop.\n");
+					}
+				}
+
 				// if we need to use swscale, do so
-				if(sws_ctx)
+				if(needsws)
 				{
 					sws_frame->width = movie_width;
 					sws_frame->height = movie_height;

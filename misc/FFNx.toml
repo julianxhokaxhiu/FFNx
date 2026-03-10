@@ -380,6 +380,11 @@ ffmpeg_video_ext = "avi"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 external_movie_audio_ext = "ogg"
 
+#[HARDWARE VIDEO DECODING]
+# Attempt to use your GPU to decode movie files faster.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+enable_hardware_video_decoding = false
+
 ###########################
 # Controller Options
 ###########################
