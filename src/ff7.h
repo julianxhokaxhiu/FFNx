@@ -3046,6 +3046,7 @@ struct ff7_externals
 	uint32_t battle_limit_omnislash_loop;
 	void (*reset_game_obj_sub_5F4971)(struct game_obj*);
 	uint32_t engine_exit_game_mode_sub_666C78;
+	void (*engine_switch_game_loop_sub_666CF2)(void*, void*);
 	void* (*sub_666C13)(struct game_obj*);
 	void* (*sub_670F9B)(void*);
 	WORD* word_CC0828;
@@ -3157,6 +3158,11 @@ struct ff7_externals
 	uint32_t fps_limiter_menu;
 	uint32_t sub_5F5042;
 	uint32_t highway_loop_sub_650F36;
+	void (*highway_exit_sub_650340)(void* ff7_game_obj);
+	uint32_t highway_exit_sub_650AD5;
+	int *highway_score_D85990;
+	int *highway_is_minigame_at_gold_saucer_D8596C;
+	uint32_t highway_exit_address_location;
 	uint32_t sub_779E14;
 	uint32_t battle_fps_menu_multiplier;
 	DWORD *submarine_minigame_status;
@@ -3674,11 +3680,15 @@ struct ff7_externals
 	int (*get_button_pressed)(int);
 	uint32_t credits_main_loop;
 	uint32_t highway_submit_fade_quad_659532;
+
+	// chocobo mode
+	uint32_t chocobo_main_loop;
 	uint32_t chocobo_enter_76D597;
 	uint32_t chocobo_initialize_variables_76BAFD;
 	uint32_t chocobo_init_viewport_values_76D320;
 	uint32_t chocobo_submit_draw_fade_quad_77B1CE;
 	uint32_t chocobo_submit_draw_water_quad_77A7D0;
+	void(*chocobo_switch_mode_76DB33)(void* ff7_game_obj);
 	void(*generic_submit_quad_graphics_object_671D2A)(int, int, int, int, int, int, float, DWORD*) ;
 	byte* chocobo_fade_quad_data_97A498;
 

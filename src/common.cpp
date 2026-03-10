@@ -126,11 +126,17 @@ uint32_t ff7_do_reset = false;
 // global FF7/FF8 flag, check if is steam edition
 uint32_t steam_edition = false;
 
+// global FF7 flag, check if is FF7 Steam re-release edition
+uint32_t ff7_steam_rerelease_edition = false;
+
 // global FF7/FF8 flag, check if using the steam stock launcher
 uint32_t steam_stock_launcher = false;
 
 // global FF7 flag, check if is eStore edition
 uint32_t estore_edition = false;
+
+// global FF7 flag, check if it is 2026 rerelease
+uint32_t ff7_2026_rerelease = false;
 
 // global FF7 flag, check if is japanese edition ( detected as US )
 uint32_t ff7_japanese_edition = false;
@@ -770,16 +776,17 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	WNDCLASSA WndClass;
 
 	// Init Steam API
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 	{
+		int app_id = ff8 ? FF8_APPID : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID);
 		// generate automatically steam_appid.txt
 		if(!steam_edition){
 			std::ofstream steam_appid_file("steam_appid.txt");
-			steam_appid_file << ((ff8) ? FF8_APPID : FF7_APPID);
+			steam_appid_file << app_id;
 			steam_appid_file.close();
 		}
 
-		if (SteamAPI_RestartAppIfNecessary((ff8) ? FF8_APPID : FF7_APPID))
+		if (SteamAPI_RestartAppIfNecessary(app_id))
 		{
 			MessageBoxA(gameHwnd, "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n", "Steam App ID Wrong", 0);
 			ffnx_error( "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n" );
@@ -791,10 +798,13 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			ffnx_error( "Steam Error - Steam must be running to play this game with achievements (SteamAPI_Init() failed).\n" );
 			return 1;
 		}
-		if (ff8)
+		if (ff8) {
 			g_FF8SteamAchievements = std::make_unique<SteamAchievementsFF8>();
-		else
-			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>();
+		} else if (ff7_steam_rerelease_edition) {
+			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>(false);
+		} else {
+			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>(true);
+		}
 	}
 
 	// Enumerate available monitors
@@ -1093,7 +1103,7 @@ void common_cleanup(struct game_obj *game_object)
 	}
 
 	// Shutdown Steam API
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 		SteamAPI_Shutdown();
 
 	nxAudioEngine.cleanup();
@@ -1344,7 +1354,7 @@ void common_flip(struct game_obj *game_object)
 	}
 
 	// Steamworks SDK API run callbacks
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 		SteamAPI_RunCallbacks();
 
 }
@@ -2863,7 +2873,7 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 uint32_t ff7_get_inserted_cd(void) {
 	int ret = 1;
 
-	if(steam_edition || enable_steam_achievements){
+	if(enable_steam_achievements){
 		if (trace_all || trace_achievement)
 			ffnx_trace("inserted CD: %d, requiredCD: %d\n", *ff7_externals.insertedCD, *ff7_externals.requiredCD);
 
@@ -2988,7 +2998,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			return FALSE;
 		}
 
-		bool is_genuine_steam_api = isFileSigned(L"steam_api.dll");
+		bool is_genuine_steam_api = isFileSigned("steam_api.dll");
 		if (!is_genuine_steam_api) is_genuine_steam_api = sha1_file("steam_api.dll") == "03bd9f3e352553a0af41f5fe006f6249a168c243";
 		if (!is_genuine_steam_api)
 		{
@@ -3012,6 +3022,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		GetModuleFileNameA((HMODULE)hinstDLL, dllName, sizeof(dllName));
 		_strlwr(dllName);
 
+		bool macOsLauncher = isMacOSLauncher();
+
 		if (!ff8)
 		{
 			common_externals.winmain = get_relative_call(common_externals.start, 0x14D);
@@ -3022,10 +3034,31 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			{
 				ff7_japanese_edition = strstr(parentName, "ff7_ja.exe") != NULL;
 
+				if (strstr(basedir, "workingdir") != NULL)
+				{
+					if (fileExists("../../steam_api64.dll"))
+					{
+						ff7_steam_rerelease_edition = true;
+						enable_steam_achievements = !macOsLauncher;
+
+						ffnx_trace("Detected Steam Rerelease edition.\n");
+					}
+					else if(fileExists("../../goggame-1698970154.info"))
+						ffnx_trace("Detected GOG edition.\n");
+					else
+						ffnx_trace("Detected Windows Store edition.\n");
+
+					ff7_2026_rerelease = true;
+				}
 				// Steam edition is usually installed in this path
-				if (strstr(basedir, "steamapps") != NULL) {
-					ffnx_trace("Detected Steam edition.\n");
+				else if (strstr(basedir, "steamapps") != NULL)
+				{
+					ffnx_trace("Detected Steam 2013 edition.\n");
+
 					steam_edition = true;
+					enable_steam_achievements = !macOsLauncher;
+
+					if (macOsLauncher) replace_function(getProcessEntryPoint(), (void*)common_externals.start);
 
 					// Read ff7sound.cfg
 					char ff7soundPath[260]{ 0 };
@@ -3141,9 +3174,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 			if (strstr(dllName, "af3dn.p") != NULL)
 			{
-				ffnx_trace("Detected Steam edition.\n");
+				ffnx_trace("Detected Steam 2013 edition.\n");
 
 				steam_edition = true;
+				enable_steam_achievements = !macOsLauncher;
+
+				if (macOsLauncher) replace_function(getProcessEntryPoint(), (void*)ff8_externals.start);
 
 				// Detect if FF8 Stock Launcher
 				if (contains(getCopyrightInfoFromExe("FF8_Launcher.exe"), "SQUARE ENIX CO., LTD"))

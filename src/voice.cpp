@@ -433,6 +433,11 @@ int opcode_voice_message()
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
 
+	// Enable achievements based on text dialog
+	if (enable_steam_achievements) {
+		g_FF7SteamAchievements->unlockAchievementByDialogEvent(*common_externals.current_field_id, dialog_id);
+	}
+
 	return opcode_old_message();
 }
 
@@ -1134,7 +1139,7 @@ int ff8_opcode_voice_aask(int unk)
 
 	int ret = ff8_opcode_old_aask(unk);
 
-	if (steam_edition || enable_steam_achievements) {
+	if (enable_steam_achievements) {
 		if (ret == 3) // aask exit
 		{
 			// --- Only for unlocking chocobo achievement (only way to implement it) ---

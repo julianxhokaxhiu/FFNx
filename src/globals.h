@@ -50,8 +50,10 @@ extern HWND gameHwnd;
 extern MEMORYSTATUSEX last_ram_state;
 extern uint32_t version;
 extern uint32_t steam_edition;
+extern uint32_t ff7_steam_rerelease_edition;
 extern uint32_t steam_stock_launcher;
 extern uint32_t estore_edition;
+extern uint32_t ff7_2026_rerelease;
 extern uint32_t ff7_japanese_edition;
 extern uint32_t ff7_do_reset;
 

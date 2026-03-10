@@ -279,5 +279,24 @@ namespace ff7::field
 
         return ret;
     }
+
+    int opcode_script_VISI()
+    {
+        byte show_entity = get_field_parameter<byte>(0);
+        int ret = call_original_opcode_function(VISI);
+
+        // For unknown reason to us Square forgot a RET opcode in their 2026 flevel code
+        // Inject therefore it back again emulating like it was there to ensure proper script execution.
+        // Remove this patch would lead to an instant crash of the game after first battle.
+        if (
+            ff7_2026_rerelease
+            && *common_externals.current_field_id == 116
+            && *ff7_externals.current_entity_id == 5
+            && show_entity == 0
+        )
+            ret = call_original_opcode_function(RET);
+
+        return ret;
+    }
 }
 

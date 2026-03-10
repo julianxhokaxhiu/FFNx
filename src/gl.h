@@ -127,7 +127,7 @@ typedef void (*draw_field_shadow_callback)(void);
 
 void gl_draw_movie_quad(uint32_t width, uint32_t height);
 void gl_save_state(struct driver_state *dest);
-void gl_load_state(struct driver_state *src);
+void gl_load_state(struct driver_state *src, bool bind_textures = true);
 uint32_t gl_defer_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex* vertices, struct vector3<float>* normals, uint32_t vertexcount, WORD* indices, uint32_t count, struct boundingbox* boundingbox, struct light_data* lightdata, uint32_t clip, uint32_t mipmap);
 uint32_t gl_defer_sorted_draw(uint32_t primitivetype, uint32_t vertextype, struct nvertex *vertices, uint32_t vertexcount, WORD *indices, uint32_t count, uint32_t clip, uint32_t mipmap, uint32_t force_defer);
 uint32_t gl_defer_blit_framebuffer(struct texture_set *texture_set, struct tex_header *tex_header);

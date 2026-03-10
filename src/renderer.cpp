@@ -131,7 +131,7 @@ void Renderer::setCommonUniforms()
         (float)hdr_max_nits,
         NULL
     };
-    if (uniform_log) ffnx_trace("%s: FSMiscFlags XYZW(isHDR %f, monitorNits %f, NULL, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1]);
+    if (uniform_log) ffnx_trace("%s: FSHDRFlags XYZW(isHDR %f, monitorNits %f, bIsOverrideGamut %f, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1], internalState.FSHDRFlags[2]);
 
     internalState.FSTexFlags = {
         (float)(internalState.texHandlers[RendererTextureSlot::TEX_NML].idx != bgfx::kInvalidHandle),
@@ -147,7 +147,7 @@ void Renderer::setCommonUniforms()
         NULL,
         NULL
     };
-    if (uniform_log) ffnx_trace("%s: VSFlags XYZW(isTLVertex %f, blendMode %f, isFBTexture %f, isTexture %f)\n", __func__, internalState.VSFlags[0], internalState.VSFlags[1], internalState.VSFlags[2], internalState.VSFlags[3]);
+    if (uniform_log) ffnx_trace("%s: WMFlags XYZW(sphericalWorldRate %f, bIsFogEnabled %f, NULL, NULL)\n", __func__, internalState.WMFlags[0], internalState.WMFlags[1]);
 
     internalState.FSMovieFlags = {
         (float)internalState.bIsMovieColorMatrix,
@@ -171,6 +171,15 @@ void Renderer::setCommonUniforms()
         NULL,
         NULL,
     };
+    if (uniform_log) ffnx_trace("%s: gameLightingFlags XYZW(game_lighting %f, NULL, NULL, NULL)\n", __func__, internalState.gameLightingFlags[0]);
+
+    internalState.SmoothSkinningFlags = {
+        (float)internalState.bIsSmoothSkinning,
+        NULL,
+        NULL,
+        NULL
+    };
+    if (uniform_log) ffnx_trace("%s: SmoothSkinningFlags XYZW(isSmoothSkinning %f, NULL, NULL, NULL)\n", __func__, internalState.SmoothSkinningFlags[0]);
 
     setUniform(RendererUniform::VS_FLAGS,  internalState.VSFlags.data());
     setUniform(RendererUniform::FS_ALPHA_FLAGS, internalState.FSAlphaFlags.data());
@@ -180,6 +189,7 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::FS_MOVIE_FLAGS, internalState.FSMovieFlags.data());
     setUniform(RendererUniform::FS_MORE_MOVIE_FLAGS, internalState.FSMoreMovieFlags.data());
     setUniform(RendererUniform::WM_FLAGS, internalState.WMFlags.data());
+    setUniform(RendererUniform::SKINNING_FLAGS, internalState.SmoothSkinningFlags.data());
     setUniform(RendererUniform::TIME_COLOR, internalState.TimeColor.data());
     setUniform(RendererUniform::TIME_DATA, internalState.TimeData.data());
 
@@ -199,8 +209,6 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::GAME_LIGHT_DIR2, internalState.gameLightDir2);
     setUniform(RendererUniform::GAME_LIGHT_DIR3, internalState.gameLightDir3);
     setUniform(RendererUniform::GAME_SCRIPTED_LIGHT_COLOR, internalState.gameScriptedLightColor);
-
-    setUniform(RendererUniform::SKINNING_FLAGS, internalState.SkinningFlags.data());
 }
 
 void Renderer::setLightingUniforms()
@@ -305,8 +313,11 @@ void Renderer::updateRendererShaderPaths()
 bgfx::ShaderHandle Renderer::getShader(const char* filePath)
 {
     bgfx::ShaderHandle handle = BGFX_INVALID_HANDLE;
+    char _fullpath[MAX_PATH];
 
-    FILE* file = fopen(filePath, "rb");
+    _snprintf(_fullpath, sizeof(_fullpath), "%s/%s", basedir, filePath);
+
+    FILE* file = fopen(_fullpath, "rb");
 
     if (file == NULL)
     {
@@ -1968,13 +1979,13 @@ bgfx::TextureHandle Renderer::createTextureHandle(cmrc::file* file, char* filena
 uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t* height, bool isSrgb)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
-    bimg::ImageMip mip;
+    bimg::ImageContainer* img = loadPng(&defaultAllocator, filename);
 
-    if (!loadPng(filename, mip)) {
+    if (img == nullptr) {
         return ret.idx;
     }
 
-    const bgfx::Memory* mem = bgfx::makeRef(mip.m_data, mip.m_size, RendererReleaseData, (void *)mip.m_data);
+    const bgfx::Memory* mem = bgfx::makeRef(img->m_data, img->m_size, RendererReleaseImageContainer, img);
 
     uint64_t flags = BGFX_SAMPLER_NONE;
 
@@ -1982,17 +1993,17 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
     else flags |= BGFX_TEXTURE_NONE;
 
     ret = bgfx::createTexture2D(
-        mip.m_width,
-        mip.m_height,
+        img->m_width,
+        img->m_height,
         false,
         1,
-        bgfx::TextureFormat::Enum(mip.m_format),
+        bgfx::TextureFormat::Enum(img->m_format),
         flags,
         mem
     );
 
-    *width = mip.m_width;
-    *height = mip.m_height;
+    *width = img->m_width;
+    *height = img->m_height;
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, *width, *height, filename);
 
@@ -2488,7 +2499,7 @@ bool Renderer::isTimeFilterEnabled()
 
 void Renderer::isSmoothSkinning(bool flag)
 {
-    internalState.SkinningFlags[0] = flag;
+    internalState.bIsSmoothSkinning = flag;
 }
 
 void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette)

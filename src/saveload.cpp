@@ -129,7 +129,7 @@ uint32_t load_texture_helper(char* name, uint32_t* width, uint32_t* height, bool
 
 	if (ret)
 	{
-		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", name);
+		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s (textureId=%d)\n", name, ret);
 	}
 
 	return ret;

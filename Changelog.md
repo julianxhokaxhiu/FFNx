@@ -1,37 +1,63 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.23.0...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.1...master
+
+# 1.24.1
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.0...1.24.1
+
+## FF7
+
+- Renderer: Fix performance issue when using Cosmos Gaia
+
+# 1.24.0
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.23.0...1.24.0
 
 ## Common
 
-- External movies: Always enable external_movies by default ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
+- External movies: Always enable `external_movies` by default ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
+- External music: Fix music stopping too soon if the music is not looped ( https://github.com/julianxhokaxhiu/FFNx/pull/889 )
+- External textures: Unify PNG reading color conversion from RGB/RGBA64 to RGBA ( https://github.com/julianxhokaxhiu/FFNx/pull/896 )
 - Renderer: Skip rendering frame if no draw commands have been submitted previously
 
 ## FF7
 
-- Core: Fix KAWAI opcode behavior ( https://github.com/julianxhokaxhiu/FFNx/issues/809 + https://github.com/julianxhokaxhiu/FFNx/issues/874 )
+- Core: Add support for Windows Store, GOG and Steam 2026 Rerelease
+- 60FPS: Fix battle swirl fading effect and speed
+- Core: Restore original KAWAI opcode LIGHT, TRNSP, AMBNT and SHINE subcode behaviors ( https://github.com/julianxhokaxhiu/FFNx/issues/809 + https://github.com/julianxhokaxhiu/FFNx/issues/874 )
+- Core: Fix `fr_e` field blend mode
+- Core: Fix desync background animation on the wind wall fields of `woa_*` ( https://github.com/julianxhokaxhiu/FFNx/issues/797 )
 - Graphics: Implemented smooth skinning for gltf 3d models ( https://github.com/julianxhokaxhiu/FFNx/pull/882 )
+
+## FF7 Steam 2026
+
+- Achievements: Add support for new 2026 release achievements
 
 ## FF8
 
-- Core: Fix crashes happening in Non-US versions ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
+- Core: Fix crashes happening in Non-US versions ( https://github.com/julianxhokaxhiu/FFNx/pull/848 https://github.com/julianxhokaxhiu/FFNx/pull/896 )
 - Core: Fix the game engine to show up to 16 high res field models without crashes or texture glitches ( https://github.com/julianxhokaxhiu/FFNx/pull/860 )
 - Core: Fix sudden black frame between New Game movie and Infirmary intro scene
 - Core: Fix missing polygons on field 3D models ( https://github.com/julianxhokaxhiu/FFNx/pull/868 )
 - Core: Allow to quit game via CTRL+Q everywhere ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
-- Core: add `ff8_high_res_font` option ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
+- Core: Add `ff8_high_res_font` option ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
+- Direct mode: Fix direct mode for magic.fs archive ( https://github.com/julianxhokaxhiu/FFNx/pull/888 )
+- External music: Fix music resuming in BGU ( https://github.com/julianxhokaxhiu/FFNx/pull/889 )
+- External music: Fix wav music overloading ( https://github.com/julianxhokaxhiu/FFNx/pull/889 )
 - External textures: Fix glitches in field module ( https://github.com/julianxhokaxhiu/FFNx/pull/848 https://github.com/julianxhokaxhiu/FFNx/pull/851 )
 - External textures: Fix Tonberry format when dumping PNGs using `save_textures_legacy` flag ( https://github.com/julianxhokaxhiu/FFNx/pull/848 )
-- External textures: Fix bgroad_6, and some other maps, which cannot be modded ( https://github.com/julianxhokaxhiu/FFNx/pull/857 )
+- External textures: Fix `bgroad_6`, and some other maps, which cannot be modded ( https://github.com/julianxhokaxhiu/FFNx/pull/857 )
 - Graphics: Use more precise texture UVs ( https://github.com/julianxhokaxhiu/FFNx/pull/852 )
 - Graphics: Fix Selphie texture on worldmap ( https://github.com/julianxhokaxhiu/FFNx/pull/878 )
+- Movies: Allow absent publisher movie ( https://github.com/julianxhokaxhiu/FFNx/pull/888 )
 - Renderer: Fix wrong alpha rendering for battle swirls
 
 ## FF8 (2000)
 
-- Core: prevent ff8config to start when launching the game ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
-- External movies: load cam files from disks by default when external movies is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/853 )
-- External movies: load pak files (bink movies) from disks by default when external movies is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
+- Core: Prevent `ff8config.exe` to start when MIDI GUID is not set correctly when launching the game ( https://github.com/julianxhokaxhiu/FFNx/pull/873 )
+- External movies: Load cam files from disks by default when external movies is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/853 )
+- External movies: Load pak files (Bink movies) from disks by default when external movies is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/854 )
 
 # 1.23.0
 

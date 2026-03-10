@@ -933,8 +933,15 @@ namespace ff7::field
             cursor_position.y = ff7_externals.field_viewport_xy_CFF204->y - 32;
     }
 
-    void ff7_field_update_background()
+    void ff7_field_update_background_smooth()
     {
+        // Pause field background animation when opcode script is paused (which is when MENU mode is opened).
+        // Fix woa_* desync animation
+        if (*common_externals._mode == 5)
+        {
+            return;
+        }
+
         ff7_externals.field_update_background_positions();
 
         int player_model_id = *ff7_externals.field_player_model_id;
@@ -1002,6 +1009,19 @@ namespace ff7::field
             compute_pointer_hand_position(field_3d_world_pos, player_model_id);
         }
     }
+
+    void ff7_field_update_background_original()
+    {
+        // Pause field background animation when opcode script is paused (which is when MENU mode is opened).
+        // Fix woa_* desync animation
+        if (*common_externals._mode == 5)
+        {
+            return;
+        }
+
+        ff7_externals.field_update_background_positions();
+    }
+
 
     // This function should be called at each frame after drawing backgrounds and 3d models
     void draw_gray_quads_sub_644E90()

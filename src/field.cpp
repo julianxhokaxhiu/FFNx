@@ -112,12 +112,6 @@ int opcode_kawai() {
 		}
 		else
 		{
-			if (ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode != 0x2)
-			{
-				ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode = 0x0;
-				ff7::field::ff7_model_data[curr_model_id].init_kawai_params = nullptr;
-			}
-
 			ff7::field::ff7_model_data[curr_model_id].exec_kawai_opcode = subcode;
 			ff7::field::ff7_model_data[curr_model_id].exec_kawai_params = event_data[curr_model_id].opcode_params;
 		}
@@ -148,7 +142,7 @@ int opcode_kawai() {
 		if (event_data[curr_model_id].opcode_params->param_1 == 0)
 		{
 			ff7::field::ff7_model_data[curr_model_id].is_kawai_active = true;
-			ff7::field::ff7_model_data[curr_model_id].do_kawai_repeat = event_data[curr_model_id].opcode_params->param_F == 1 && event_data[curr_model_id].opcode_params->param_11 == 1 && event_data[curr_model_id].opcode_params->param_13 == 1;
+			ff7::field::ff7_model_data[curr_model_id].do_kawai_repeat = event_data[curr_model_id].opcode_params->param_F == 1 && event_data[curr_model_id].opcode_params->param_11 == 1 && event_data[curr_model_id].opcode_params->param_13 == 1 && event_data[curr_model_id].opcode_params->param_15 == 1;
 			ff7::field::ff7_model_data[curr_model_id].init_kawai_opcode = subcode;
 			ff7::field::ff7_model_data[curr_model_id].init_kawai_params = event_data[curr_model_id].opcode_params;
 		}
@@ -249,7 +243,7 @@ int ff8_field_init_from_file(int unk1, int unk2, int unk3, int unk4)
 	// Loop through objects until we find the one that has a valid triangle ID
 	for(int i = 0; i < MAXBYTE; i++)
 	{
-		common_externals.current_triangle_id = (int16_t*)(*ff8_externals.game_mode_obj_1D9CF88 + 0x264 * i + 0x1FA);
+		common_externals.current_triangle_id = (int16_t*)(*(uint32_t *)ff8_externals.field_state_others + 0x264 * i + 0x1FA);
 		if (*common_externals.current_triangle_id != 0) break;
 	}
 
