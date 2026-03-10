@@ -1025,7 +1025,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				QueryPerformanceCounter((LARGE_INTEGER *)&now);
 
 				// check if we have a padded bitstream that needs cropped
-				if (usethis_frame->linesize[0] % movie_width != 0){
+				if (!needsws && (usethis_frame->linesize[0] % movie_width != 0)){
 					needsws = true;
 					if (dofirstframereports && (trace_movies || trace_all)){
 						ffnx_trace("ffmpeg_update_movie_sample: Bitstream is padded. Using Swscale to crop.\n");
