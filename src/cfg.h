@@ -170,5 +170,6 @@ extern long ffmpeg_video_volume;
 extern bool ff7_advanced_blinking;
 extern long display_index;
 extern long ff8_high_res_font;
+extern bool enable_hardware_video_decoding;
 
 void read_cfg();
