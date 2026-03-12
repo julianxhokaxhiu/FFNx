@@ -2,6 +2,14 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.1...master
 
+## Common
+
+- Core: Add support for [SummonKit](https://github.com/julianxhokaxhiu/SummonKit)
+
+## FF7
+
+- Rendering: Fix crash happening when advanced blinking was running while a field movie was playing
+
 # 1.24.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.0...1.24.1
