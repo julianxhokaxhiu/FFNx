@@ -393,7 +393,7 @@ namespace ff7::field
         static char curr_model_name[10]{0};
         bool is_npc = false;
 
-        if (ff7_advanced_blinking && curr_model_id != MAXBYTE)
+        if (ff7_advanced_blinking && curr_model_id != MAXBYTE && !ff7_externals.movie_object->is_playing)
         {
             byte left_eye_index = blink_data->blink_left_eye_mode;
             byte right_eye_index = blink_data->blink_right_eye_mode;
