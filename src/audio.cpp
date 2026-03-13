@@ -117,19 +117,19 @@ bool NxAudioEngine::getFilenameFullPath(char *_out, const char* _key, NxAudioEng
 		switch (_type)
 		{
 		case NxAudioEngineLayer::NXAUDIOENGINE_SFX:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_sfx_path.c_str(), _key, extension.c_str());
+			snprintf(_out, MAX_PATH, "%s/%s/%s.%s", basedir, external_sfx_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MUSIC:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
+			snprintf(_out, MAX_PATH, "%s/%s/%s.%s", basedir, external_music_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_VOICE:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, extension.c_str());
+			snprintf(_out, MAX_PATH, "%s/%s/%s.%s", basedir, external_voice_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_AMBIENT:
-			sprintf(_out, "%s/%s/%s.%s", basedir, external_ambient_path.c_str(), _key, extension.c_str());
+			snprintf(_out, MAX_PATH, "%s/%s/%s.%s", basedir, external_ambient_path.c_str(), _key, extension.c_str());
 			break;
 		case NxAudioEngineLayer::NXAUDIOENGINE_MOVIE_AUDIO:
-			sprintf(_out, "%s.%s", _key, extension.c_str());
+			snprintf(_out, MAX_PATH, "%s.%s", _key, extension.c_str());
 			break;
 		}
 
@@ -1095,9 +1095,15 @@ bool NxAudioEngine::playVoice(const char* name, int slot, float volume, int game
 
 	bool exists = false;
 
+	if (slot < 0 || slot >= _voiceMaxSlots)
+	{
+		ffnx_error("%s: invalid slot value %d\n", __func__, slot);
+		return false;
+	}
+
 	_currentVoice[slot].volume = volume * getVoiceMasterVolume();
 
-	std::string _name(name);
+	std::string _name(name, strnlen(name, MAX_PATH));
 
 	// TOML doesn't like the / char as key, replace it with - ( one of the valid accepted chars )
 	replaceAll(_name, '/', '-');

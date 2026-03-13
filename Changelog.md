@@ -10,6 +10,10 @@
 
 - Rendering: Fix crash happening when advanced blinking was running while a field movie was playing
 
+## FF8
+
+- Core: Fix random crash when battles start ( https://github.com/julianxhokaxhiu/FFNx/pull/912 )
+
 # 1.24.1
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.0...1.24.1
