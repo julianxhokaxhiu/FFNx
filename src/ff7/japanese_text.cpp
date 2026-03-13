@@ -487,6 +487,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
   float character_u_width_in_byte; // [esp+CCh] [ebp-4h]
 
   bool kanjiDetected = false;
+  bool possibleOpcode = true;
   int charWidth = 16;
   int leftPadding = 0;
 
@@ -516,6 +517,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           ++buffer_text;
           graphics_object = ff7_externals.menu_jafont_2_graphics_object;
           kanjiDetected = true;
+          possibleOpcode = false;
           charWidth = charWidthData[1][*buffer_text] & 0x1F;
           leftPadding = charWidthData[1][*buffer_text] >> 5;
           continue;
@@ -524,6 +526,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           ++buffer_text;
           graphics_object = ff7_externals.menu_jafont_3_graphics_object;
           kanjiDetected = true;
+          possibleOpcode = false;
           charWidth = charWidthData[2][*buffer_text] & 0x1F;
           leftPadding = charWidthData[2][*buffer_text] >> 5;
           continue;
@@ -532,6 +535,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           ++buffer_text;
           graphics_object = ff7_externals.menu_jafont_4_graphics_object;
           kanjiDetected = true;
+          possibleOpcode = false;
           charWidth = charWidthData[3][*buffer_text] & 0x1F;
           leftPadding = charWidthData[3][*buffer_text] >> 5;
           continue;
@@ -540,23 +544,34 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           ++buffer_text;
           graphics_object = ff7_externals.menu_jafont_5_graphics_object;
           kanjiDetected = true;
+          possibleOpcode = false;
           charWidth = charWidthData[4][*buffer_text] & 0x1F;
           leftPadding = charWidthData[4][*buffer_text] >> 5;
           continue;
         case 0xFEu:
           ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
           ++buffer_text;
-          graphics_object = ff7_externals.menu_jafont_6_graphics_object;
-          kanjiDetected = true;
-          charWidth = charWidthData[5][*buffer_text] & 0x1F;
-          leftPadding = charWidthData[5][*buffer_text] >> 5;
-          continue;
+          if (*buffer_text < 0xD2u)
+          {
+            graphics_object = ff7_externals.menu_jafont_6_graphics_object;
+            kanjiDetected = true;
+            possibleOpcode = false;
+            charWidth = charWidthData[5][*buffer_text] & 0x1F;
+            leftPadding = charWidthData[5][*buffer_text] >> 5;
+            continue;
+          }
+          else
+          {
+            --buffer_text;
+            // fall through
+          }
         default:
           if(!kanjiDetected)
           {
             graphics_object = ff7_externals.menu_jafont_1_graphics_object;
             charWidth = charWidthData[0][*buffer_text] & 0x1F;
             leftPadding = charWidthData[0][*buffer_text] >> 5;
+            possibleOpcode = true;
           }
           kanjiDetected = false;
           break;
@@ -565,65 +580,35 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
       offset_character_x = 0;
       switch ( *buffer_text )
       {
-        /*case 0xFAu:
-          ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-          ++buffer_text;
-          graphics_object_v_in_byte = 132;
-          text_offset_spacing = 231;
-          goto LABEL_39;
-        case 0xFBu:
-          ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-          ++buffer_text;
-          graphics_object_v_in_byte = 0;
-          offset_character_x = 16;
-          text_offset_spacing = 441;
-          goto LABEL_39;
-        case 0xFCu:
-          ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-          ++buffer_text;
-          graphics_object_v_in_byte = 132;
-          offset_character_x = 16;
-          text_offset_spacing = 672;
-          goto LABEL_39;
-        case 0xFDu:
-          ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-          ++buffer_text;
-          graphics_object_v_in_byte = 132;
-          text_offset_spacing = 882;
-          goto LABEL_39;
         case 0xFEu:
-          ++buffer_text;
-          ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-          if ( *buffer_text < 0xD2u )
+          if (possibleOpcode)
           {
-            graphics_object_v_in_byte = 132;
-            offset_character_x = 16;
-            text_offset_spacing = 1092;
-            goto LABEL_39;
-          }
-          ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-          if ( *buffer_text < 0xDAu )
-          {
-            (*ff7_externals.word_91F028) = *buffer_text++ - 210;
-            break;
-          }
-          if ( *buffer_text == 218 )
-          {
-            (*ff7_externals.word_DC3CC0) ^= 1u;
+            ++buffer_text;
+            ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
+//            ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
+            if (*buffer_text < 0xDAu)
+            {
+              (*ff7_externals.word_91F028) = *buffer_text++ - 210;
+              break;
+            }
+            if (*buffer_text == 218)
+            {
+              (*ff7_externals.word_DC3CC0) ^= 1u;
+              ++buffer_text;
+              break;
+            }
+            if (*buffer_text == 219)
+            {
+              (*ff7_externals.word_DC3CC4) ^= 1u;
+              ++buffer_text;
+              break;
+            }
+            if (*buffer_text != 233)
+              goto LABEL_39;
+            (*ff7_externals.dword_DC3CD4) ^= 1u;
             ++buffer_text;
             break;
           }
-          if ( *buffer_text == 219 )
-          {
-            (*ff7_externals.word_DC3CC4) ^= 1u;
-            ++buffer_text;
-            break;
-          }
-          if ( *buffer_text != 233 )
-            goto LABEL_39;
-          (*ff7_externals.dword_DC3CD4) ^= 1u;
-          ++buffer_text;
-          break;*/
         default:
           if ( *buffer_text < 0xF6u || *buffer_text > 0xF9u )
           {
