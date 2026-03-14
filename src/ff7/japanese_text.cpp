@@ -793,17 +793,17 @@ LABEL_39:
                   special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
                   ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
                   break;
-                case 0x36u: // 3 in JP sheet. l2/b7
-                  offset_u_in_byte = 32;
-                  graphics_object_v_in_byte = 160;
-                  graphics_object = *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC;
-                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
-                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
-                  break;
-                case 0x35u: // 2 in jp sheet. r1/b6
+                case 0x36u: // 3 in JP sheet. r1/b6
                   offset_u_in_byte = 192;
                   graphics_object_v_in_byte = 160;
                   graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x35u: // 2 in jp sheet. l2/b7
+                  offset_u_in_byte = 32;
+                  graphics_object_v_in_byte = 160;
+                  graphics_object = *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC;
                   special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
                   ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
                   break;
