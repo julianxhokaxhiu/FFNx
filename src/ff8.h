@@ -1217,6 +1217,7 @@ struct ff8_externals
 	uint32_t pubintro_enter_main;
 	uint32_t pubintro_exit;
 	uint32_t pubintro_main_loop;
+	uint32_t credits_enter;
 	uint32_t credits_main_loop;
 	uint32_t go_to_main_menu_main_loop;
 	uint32_t main_menu_enter;
