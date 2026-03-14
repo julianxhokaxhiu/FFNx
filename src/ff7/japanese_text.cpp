@@ -490,7 +490,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
   bool possibleOpcode = true;
   int charWidth = 16;
   int leftPadding = 0;
-
+  character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20; // Fix first line for nameless windows. without this, piano instructions don't line up.
   character_count = 0;
   for ( i = 0;
         i < 1024
@@ -502,7 +502,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
   {
     if ( *buffer_text == 231 )
     {
-      character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 16;
+      character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20; // need to indent this far for pointers to point properly
       character_y += 32;
       ++buffer_text;
       ++ff7_externals.field_text_line_row_DC3CB8;
@@ -663,12 +663,12 @@ LABEL_39:
               if ( offset_u_in_byte == 480 )
               {
                 character_u_width_in_byte = 32.0;
-                character_x_width = 16;
+                character_x_width = 20;
               }
               else
               {
                 character_u_width_in_byte = 32.0;
-                character_x_width = 16;
+                character_x_width = 20;
               }
               character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
             }
@@ -698,7 +698,7 @@ LABEL_39:
               character_top_left->v = character_v;
               character_bottom_left = graphics_object->vertex_transform + 1;
               character_bottom_left->position.x = (float)character_x;
-              character_bottom_left->position.y = (double)character_y + 16;
+              character_bottom_left->position.y = (double)character_y + 20;
               character_bottom_left->position.z = z_value;
               character_bottom_left->position.w = 1.0;
               character_bottom_left->color = color;
@@ -716,7 +716,7 @@ LABEL_39:
               character_top_right->v = character_v;
               character_bottom_right = graphics_object->vertex_transform + 3;
               character_bottom_right->position.x = (double)character_x + (double)character_x_width;
-              character_bottom_right->position.y = (double)character_y + 16;
+              character_bottom_right->position.y = (double)character_y + 20;
               character_bottom_right->position.z = z_value;
               character_bottom_right->position.w = 1.0;
               character_bottom_right->color = color;
@@ -728,9 +728,9 @@ LABEL_39:
               (*ff7_externals.field_do_draw_character_DC3CEC) = 1;
             }
             if ( (*ff7_externals.dword_DC3CD4) )
-              character_x += 26;
+              character_x += 30;
             else
-              character_x += std::ceil(0.5f * charWidth);//2 * (*(byte *)((*ff7_externals.g_text_spacing_DB958C) + text_offset_spacing + current_character) & 0x1F);
+              character_x += std::ceil(0.5f * charWidth*1.25f);//2 * (*(byte *)((*ff7_externals.g_text_spacing_DB958C) + text_offset_spacing + current_character) & 0x1F);
             --(*ff7_externals.field_remaining_character_length_DC3CCC);
             ++buffer_text;
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
@@ -867,7 +867,7 @@ LABEL_39:
               special_character_top_left->v = (double)graphics_object_v_in_byte / 256.0f; // no longer ignores graphics_object_v_in_byte
               special_character_bottom_left = graphics_object->vertex_transform + 1;
               special_character_bottom_left->position.x = (float)character_x;
-              special_character_bottom_left->position.y = (double)character_y + 16.0;
+              special_character_bottom_left->position.y = (double)character_y + 20.0;
               special_character_bottom_left->position.z = z_value;
               special_character_bottom_left->position.w = 1.0;
               special_character_bottom_left->color = color;
@@ -875,7 +875,7 @@ LABEL_39:
               special_character_bottom_left->u = special_character_u;
               special_character_bottom_left->v = (double)graphics_object_v_in_byte / 256.0f + 0.125; // no longer ignores graphics_object_v_in_byte
               special_character_top_right = graphics_object->vertex_transform + 2;
-              special_character_top_right->position.x = (double)character_x + 16.0;
+              special_character_top_right->position.x = (double)character_x + 20.0;
               special_character_top_right->position.y = (double)character_y;
               special_character_top_right->position.z = z_value;
               special_character_top_right->position.w = 1.0;
@@ -884,8 +884,8 @@ LABEL_39:
               special_character_top_right->u = special_character_u + 0.125;
               special_character_top_right->v = (double)graphics_object_v_in_byte / 256.0f; // no longer ignores graphics_object_v_in_byte
               window_vertices = graphics_object->vertex_transform;
-              window_vertices[3].position.x = (double)character_x + 16.0;
-              window_vertices[3].position.y = (double)character_y + 16.0;
+              window_vertices[3].position.x = (double)character_x + 20.0;
+              window_vertices[3].position.y = (double)character_y + 20.0;
               window_vertices[3].position.z = z_value;
               window_vertices[3].position.w = 1.0;
               window_vertices[3].color = color;
@@ -899,7 +899,7 @@ LABEL_39:
             ++buffer_text;
             --(*ff7_externals.field_remaining_character_length_DC3CCC);
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-            character_x += 16;
+            character_x += 20;
           }
           break;
       }
@@ -2316,7 +2316,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
 		W += leftPadding + std::ceil(0.5f * charWidth);
 	}
-	*pOutW = (std::max(maxW, W) + 40) / 2;
+	*pOutW = (std::max(maxW, W) + 40) * 5 / 8;
 	*pOutH = (std::max(maxH, H) + 50) / 2;
 }
 
