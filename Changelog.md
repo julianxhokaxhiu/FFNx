@@ -8,6 +8,7 @@
 
 ## FF7
 
+- Core: Fix save path location for Windows Store, GOG and Steam 2026 Rerelease
 - Rendering: Fix crash happening when advanced blinking was running while a field movie was playing
 
 ## FF8

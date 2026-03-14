@@ -94,8 +94,13 @@ int attempt_redirection(const char* in, char* out, size_t size, bool wantsSteamP
 				{
 					if (isSavegame)
 					{
-						pos = strrchr(newIn.data(), 47) + 1;
-						PathAppendA(out, pos);
+						if (steam_edition)
+						{
+							pos = strrchr(newIn.data(), 47) + 1;
+							PathAppendA(out, pos);
+						}
+						else
+							PathAppendA(out, newIn.data());
 					}
 					else
 					{
