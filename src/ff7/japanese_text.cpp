@@ -585,7 +585,6 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           {
             ++buffer_text;
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-//            ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
             if (*buffer_text < 0xDAu)
             {
               (*ff7_externals.word_91F028) = *buffer_text++ - 210;
@@ -741,10 +740,95 @@ LABEL_39:
             switch ( *buffer_text )
             {
               case 0xF6u:
-                offset_u_in_byte = 192;
-                graphics_object_v_in_byte = 128;
-                graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
-                special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                // check for squeenix extended prompts, and grab from correct place in btl_win
+                ++buffer_text; // go to next character
+                switch (*buffer_text)
+                {
+                case 0x3Du: // , in jp sheet. right
+                  offset_u_in_byte = 160;
+                  graphics_object_v_in_byte = 96;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8; 
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x3Cu: // 9 in JP sheet. left
+                  offset_u_in_byte = 192;
+                  graphics_object_v_in_byte = 96;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x3Bu: // 8 in JP sheet. down
+                  offset_u_in_byte = 192;
+                  graphics_object_v_in_byte = 64;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x3Au: // 7 in JP sheet. Up
+                  offset_u_in_byte = 160;
+                  graphics_object_v_in_byte = 64;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x39u: // 6 in JP sheet. select/b10
+                  offset_u_in_byte = 224;
+                  graphics_object_v_in_byte = 192;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x38u: // 5 in JP sheet. start/b9
+                  offset_u_in_byte = 192;
+                  graphics_object_v_in_byte = 192;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x37u: // 4 in JP sheet r2/b8
+                  offset_u_in_byte = 224;
+                  graphics_object_v_in_byte = 160;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x36u: // 3 in JP sheet. l2/b7
+                  offset_u_in_byte = 32;
+                  graphics_object_v_in_byte = 160;
+                  graphics_object = *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x35u: // 2 in jp sheet. r1/b6
+                  offset_u_in_byte = 192;
+                  graphics_object_v_in_byte = 160;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x34u: // 1 in jp sheet. l1/b5
+                  offset_u_in_byte = 0;
+                  graphics_object_v_in_byte = 160;
+                  graphics_object = *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                case 0x33u: // 0 in JP sheet. circle/B3, for now, as we haven't implemented true x/o swap
+                  offset_u_in_byte = 192;
+                  graphics_object_v_in_byte = 128;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
+                  break;
+                default:
+                  --buffer_text; // not extended code, undo the peek and don't advance. normal circle/B3 prompt
+                  offset_u_in_byte = 192;
+                  graphics_object_v_in_byte = 128;
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
+                  special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                  break;
+               }
                 break;
               case 0xF7u:
                 offset_u_in_byte = 32;
@@ -780,7 +864,7 @@ LABEL_39:
               special_character_top_left->color = color;
               special_character_top_left->alpha_mask = -16777216;
               special_character_top_left->u = special_character_u;
-              special_character_top_left->v = 0.5;
+              special_character_top_left->v = (double)graphics_object_v_in_byte / 256.0f; // no longer ignores graphics_object_v_in_byte
               special_character_bottom_left = graphics_object->vertex_transform + 1;
               special_character_bottom_left->position.x = (float)character_x;
               special_character_bottom_left->position.y = (double)character_y + 16.0;
@@ -789,7 +873,7 @@ LABEL_39:
               special_character_bottom_left->color = color;
               special_character_bottom_left->alpha_mask = -16777216;
               special_character_bottom_left->u = special_character_u;
-              special_character_bottom_left->v = 0.5 + 0.125;
+              special_character_bottom_left->v = (double)graphics_object_v_in_byte / 256.0f + 0.125; // no longer ignores graphics_object_v_in_byte
               special_character_top_right = graphics_object->vertex_transform + 2;
               special_character_top_right->position.x = (double)character_x + 16.0;
               special_character_top_right->position.y = (double)character_y;
@@ -798,7 +882,7 @@ LABEL_39:
               special_character_top_right->color = color;
               special_character_top_right->alpha_mask = -16777216;
               special_character_top_right->u = special_character_u + 0.125;
-              special_character_top_right->v = 0.5;
+              special_character_top_right->v = (double)graphics_object_v_in_byte / 256.0f; // no longer ignores graphics_object_v_in_byte
               window_vertices = graphics_object->vertex_transform;
               window_vertices[3].position.x = (double)character_x + 16.0;
               window_vertices[3].position.y = (double)character_y + 16.0;
@@ -807,7 +891,7 @@ LABEL_39:
               window_vertices[3].color = color;
               window_vertices[3].alpha_mask = -16777216;
               window_vertices[3].u = special_character_u + 0.125;
-              window_vertices[3].v = 0.5 + 0.125;
+              window_vertices[3].v = (double)graphics_object_v_in_byte / 256.0f + 0.125; // no longer ignores graphics_object_v_in_byte
               *(byte *)graphics_object->curr_total_n_shape = 7;
               graphics_object->field_7C = 7;
             }
