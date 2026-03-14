@@ -170,7 +170,7 @@ bool isMacOSLauncher()
 {
     char value[256] = {};
     GetEnvironmentVariableA("__CFBundleIdentifier", value, sizeof(value));
-    return strcmp(value, "com.tsunamods.7thHeaven") == 0 || strcmp(value, "com.tsunamods.JunctionVIII") == 0;
+    return strcmp(value, "com.julianxhokaxhiu.SummonKit") == 0;
 }
 
 uint32_t getProcessEntryPoint()
