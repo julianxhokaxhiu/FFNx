@@ -52,6 +52,7 @@ void ff8_find_externals()
 	}
 
 	ff8_externals.archive_path_prefix = (char *)get_absolute_value(ff8_externals.main_entry, 0x2E);
+	ff8_externals.archive_path_prefix_menu = (char *)get_absolute_value(ff8_externals.main_entry, 0x3A);
 	ff8_externals.manage_time_engine_sub_569971 = get_relative_call(common_externals.winmain, 0x23);
 	ff8_externals.enable_rdtsc_sub_40AA00 = (int (*)(int))get_relative_call(ff8_externals.manage_time_engine_sub_569971, 0x21);
 	common_externals.get_time = (uint64_t (*)(uint64_t*))get_relative_call(common_externals.winmain, 0x20E);
@@ -68,6 +69,8 @@ void ff8_find_externals()
 		ff8_externals.pubintro_cleanup = get_relative_call(ff8_externals.pubintro_cleanup, 0x0);
 	}
 
+	ff8_externals.pubintro_cleanup_textures = get_relative_call(ff8_externals.pubintro_cleanup, 0x35);
+	ff8_externals.pubintro_cleanup_textures_menu = get_relative_call(ff8_externals.pubintro_cleanup_textures, 0x0);
 	ff8_externals.sub_467C00 = get_relative_call(ff8_externals.pubintro_init, 0xB5);
 	ff8_externals.input_init = get_relative_call(ff8_externals.pubintro_init, 0xBA);
 	ff8_externals.ff8input_cfg_read = get_relative_call(ff8_externals.input_init, 0x5);
@@ -81,6 +84,7 @@ void ff8_find_externals()
 	ff8_externals.credits_main_loop = get_absolute_value(ff8_externals.pubintro_main_loop, 0x6D);
 	ff8_externals.go_to_main_menu_main_loop = get_absolute_value(ff8_externals.credits_main_loop, 0xE2);
 	ff8_externals.main_menu_enter = get_absolute_value(ff8_externals.go_to_main_menu_main_loop, 0x19);
+	ff8_externals.menu_enter2 = get_relative_call(ff8_externals.main_menu_enter, 0xD);
 	ff8_externals.main_menu_main_loop = get_absolute_value(ff8_externals.go_to_main_menu_main_loop, 0x2B);
 
 	ff8_set_main_loop(MODE_CREDITS, ff8_externals.credits_main_loop);
@@ -187,6 +191,7 @@ void ff8_find_externals()
 	ff8_externals.sub_534640 = get_relative_call(ff8_externals.sub_47CCB0, 0xF1);
 	ff8_externals.sub_4972A0 = get_relative_call(ff8_externals.sub_534640, 0x51);
 	ff8_externals.load_fonts = get_relative_call(ff8_externals.sub_4972A0, 0x16);
+	ff8_externals.sub_497F20 = get_relative_call(ff8_externals.pubintro_exit, 0x1D);
 
 	ff8_externals.engine_reset_viewport_sub_4972D0 = get_relative_call(ff8_externals.main_menu_enter, 0xD);
 	ff8_externals.engine_setviewport_sub_45B4C0 = get_relative_call(ff8_externals.field_main_loop, 0x39);
@@ -255,7 +260,7 @@ void ff8_find_externals()
 	ff8_externals.battle_upload_texture_to_vram = get_relative_call(ff8_externals.loc_5005A0, 0xD1);
 	ff8_externals.copy_psx_vram_part = get_relative_call(ff8_externals.battle_upload_texture_to_vram, 0x8D);
 
-	ff8_externals.fonts = (font_object **)get_absolute_value(ff8_externals.load_fonts, JP_VERSION ? 0x17 : 0x16);
+	ff8_externals.fonts = (ff8_font **)get_absolute_value(ff8_externals.load_fonts, JP_VERSION ? 0x17 : 0x16);
 
 	common_externals.assert_malloc = (void* (*)(uint32_t, const char*, uint32_t))get_relative_call(ff8_externals.load_fonts, JP_VERSION ? 0x29 : 0x2A);
 
@@ -387,6 +392,7 @@ void ff8_find_externals()
 	common_externals.debug_print = get_relative_call(common_externals.update_movie_sample, 0x141);
 
 	ff8_externals._load_texture = get_relative_call(ff8_externals.load_fonts, JP_VERSION ? 0x31B : 0x197);
+	ff8_externals.free_graphics_object = (void(*)(ff8_graphics_object*))get_relative_call(ff8_externals._load_texture, 0x59A);
 	ff8_externals.sub_4076B6 = get_relative_call(ff8_externals._load_texture, 0x16D);
 	ff8_externals.sub_41AC34 = get_relative_call(ff8_externals.sub_4076B6, 0x46);
 	ff8_externals.load_texture_data = get_relative_call(ff8_externals.sub_41AC34, 0x168);
@@ -665,6 +671,7 @@ void ff8_find_externals()
 	ff8_externals.loc_460BB0 = get_relative_call(ff8_externals.sub_45B460, 0x47);
 	ff8_externals.d3dcaps = (uint32_t *)get_absolute_value(ff8_externals.ssigpu_init, 0x6C);
 	ff8_externals.psx_floats1 = (float *)get_absolute_value(ff8_externals.loc_460BB0, 0x3);
+	ff8_externals.create_graphics_object_info_structure = (void(*)(int,ff8_create_graphic_object*))get_relative_call(ff8_externals.ssigpu_init, 0x16A);
 
 	if(FF8_US_VERSION)
 	{

@@ -139,13 +139,6 @@ struct pak_pointers_entry
 	uint32_t flag;
 };
 
-struct font_object
-{
-	uint32_t dummy1[0x12];
-	struct ff8_graphics_object *font_a;
-	struct ff8_graphics_object *font_b;
-};
-
 struct struc_38
 {
 	uint32_t field_0;
@@ -222,6 +215,54 @@ struct ff8_indexed_vertices
 	struct ff8_graphics_object *graphics_object;
 };
 
+struct ff8_create_graphic_object {
+    uint32_t flags;
+    uint32_t field_4;
+    uint32_t field_8;
+    uint32_t field_C;
+    uint32_t field_10;
+    uint32_t field_14;
+    uint32_t field_18;
+    uint32_t field_1C;
+    uint32_t blend_mode;
+    uint32_t directory;
+    uint32_t tex_header;
+    uint32_t blend_related;
+    uint32_t texture_set;
+    uint32_t field_34;
+    uint32_t field_38;
+    uint32_t field_3C;
+    uint32_t field_40;
+    uint32_t field_44;
+    uint32_t file_context;
+    uint32_t field_4C;
+    uint32_t field_50;
+    uint32_t field_54;
+    ff8_file_container *file_container;
+    uint32_t field_5C;
+    uint32_t field_60;
+    uint32_t field_64;
+    uint32_t palette_index;
+    uint32_t field_6C;
+    uint32_t field_70;
+    uint32_t field_74;
+    uint32_t field_78;
+    uint32_t field_7C;
+    uint32_t field_80;
+};
+
+struct ff8_vertex
+{
+	float x;
+	float y;
+	float z;
+	float field_C;
+	uint32_t color;
+	uint32_t color_mask;
+	float u;
+	float v;
+};
+
 struct ff8_graphics_object
 {
 	uint32_t type;
@@ -253,7 +294,7 @@ struct ff8_graphics_object
 	uint32_t field_68;
 	uint32_t field_6C;
 	uint32_t field_70;
-	uint32_t field_74;
+	ff8_vertex *vertices;
 	uint32_t field_78;
 	uint32_t field_7C;
 	uint32_t field_80;
@@ -379,8 +420,8 @@ struct ff8_tex_header
 	uint32_t field_D4;
 	unsigned char *image_data;
 	unsigned char *old_palette_data;
-	uint32_t field_DC;
-	uint32_t field_E0;
+	uint32_t field_DC; // field_E0 in reality
+	uint32_t field_E0; // field_E4 in reality
 	uint32_t *vram_positions;
 	uint32_t y;
 };
@@ -591,13 +632,16 @@ struct ff8_win_obj
 	uint16_t field_12;
 	uint16_t field_14;
 	uint8_t field_16;
-	uint8_t field_17;
+	uint8_t current_color;
 	uint8_t win_id;
 	uint8_t field_19;
 	uint16_t mode1;
 	int16_t open_close_transition;
 	int16_t field_1E;
-	uint32_t field_20;
+	uint8_t text_data1_offset;
+	uint8_t field_21;
+	uint8_t text_data1_line;
+	uint8_t field_23;
 	uint32_t state;
 	uint8_t field_28;
 	uint8_t first_question;
@@ -606,10 +650,9 @@ struct ff8_win_obj
 	uint8_t field_2C;
 	uint8_t field_2D;
 	uint8_t field_2E;
-	uint8_t field_2F;
+	uint8_t icon_id;
 	uint16_t field_30;
-	uint8_t field_32;
-	uint8_t field_33;
+	uint16_t field_32;
 	uint32_t callback1;
 	uint32_t callback2;
 };
@@ -711,23 +754,59 @@ struct ff8_menu_config_input_keymap {
 	uint8_t padd_7;
 };
 
-struct ff8_draw_menu_sprite_texture_infos {
-	uint32_t field_0;
-	uint32_t field_4;
-	uint32_t field_8;
-	uint16_t x_related;
-	uint16_t y_related;
-	uint32_t field_10;
-	uint32_t field_14;
+struct ff8_draw_menu_sprite_texture_infos_short {
+	uint32_t texID; // 2 bits = depth | 2 bits = blend | 1 bit = draw | 4 bits = textureID
+	uint32_t color;
+	uint16_t x; // field_8
+	uint16_t y;
+	uint8_t u; // field_C
+	uint8_t v;
+	uint16_t palID; // 6 bits = ??? | 4 bits = PaletteID | 6 bits = ???
+	int16_t w; // field_10
+	int16_t h;
 };
 
-struct ff8_draw_menu_sprite_texture_infos_short {
-	uint32_t field_0;
-	uint32_t field_4;
-	uint16_t x_related;
-	uint16_t y_related;
-	uint32_t field_C;
-	uint32_t field_10;
+struct ff8_draw_menu_sprite_texture_infos {
+	uint32_t command;
+	ff8_draw_menu_sprite_texture_infos_short inner;
+};
+
+struct ff8_font
+{
+    uint8_t field_0;
+    uint8_t field_1;
+    uint8_t field_2;
+    uint8_t field_3;
+    float field_4;
+    float field_8;
+    float field_C;
+    float field_10;
+    uint32_t field_14;
+    float field_18;
+    float field_1C;
+    float field_20;
+    float field_24;
+    float field_28;
+    float field_2C;
+    uint32_t field_30;
+    uint32_t field_34;
+    uint32_t field_38;
+    uint8_t field_3C;
+    uint8_t field_3D;
+    uint16_t field_3E;
+    int16_t field_40;
+    uint16_t field_42;
+    uint32_t field_44;
+    ff8_graphics_object *graphics_object48;
+    ff8_graphics_object *graphics_object4C;
+    ff8_graphics_object *graphics_object50;
+    ff8_graphics_object *graphics_object54;
+};
+
+struct struc_kernel_sysfont {
+    uint8_t field_0;
+    uint8_t field_1;
+    uint16_t field_2;
 };
 
 struct ff8_audio_fmt
@@ -1150,7 +1229,7 @@ struct SsigpuExecutionInstructionRect44 {
 // memory addresses and function pointers from FF8.exe
 struct ff8_externals
 {
-	struct font_object **fonts;
+	struct ff8_font **fonts;
 	uint32_t movie_hack1;
 	uint32_t movie_hack2;
 	uint32_t swirl_sub_56D390;
@@ -1163,6 +1242,7 @@ struct ff8_externals
 	uint32_t sub_534640;
 	uint32_t sub_4972A0;
 	uint32_t load_fonts;
+	uint32_t sub_497F20;
 	uint32_t cdcheck_main_loop;
 	uint32_t cdcheck_sub_52F9E0;
 	uint32_t main_entry;
@@ -1204,6 +1284,7 @@ struct ff8_externals
 	uint32_t battle_trigger_field;
 	uint32_t battle_trigger_worldmap;
 	uint32_t _load_texture;
+	void (*free_graphics_object)(ff8_graphics_object *);
 	uint32_t sub_4076B6;
 	uint32_t sub_41AC34;
 	uint32_t load_texture_data;
@@ -1214,6 +1295,8 @@ struct ff8_externals
 	uint32_t get_command_key;
 	uint32_t sub_468BD0;
 	uint32_t pubintro_cleanup;
+	uint32_t pubintro_cleanup_textures;
+	uint32_t pubintro_cleanup_textures_menu;
 	uint32_t pubintro_enter_main;
 	uint32_t pubintro_exit;
 	uint32_t pubintro_main_loop;
@@ -1221,6 +1304,8 @@ struct ff8_externals
 	uint32_t go_to_main_menu_main_loop;
 	uint32_t main_menu_enter;
 	uint32_t main_menu_main_loop;
+	uint32_t menu_enter;
+	uint32_t menu_enter2;
 	DWORD* credits_loop_state;
 	DWORD* credits_counter;
 	DWORD* credits_current_image_global_counter_start;
@@ -1370,6 +1455,7 @@ struct ff8_externals
 	uint32_t *d3dcaps;
 	uint32_t loc_460BB0;
 	float *psx_floats1;
+	void (*create_graphics_object_info_structure)(int, ff8_create_graphic_object *);
 	uint32_t sub_53BB90;
 	uint32_t worldmap_fog_filter_polygons_in_block_1;
 	uint32_t worldmap_polygon_condition_2045C8C;
@@ -1511,6 +1597,7 @@ struct ff8_externals
 	uint32_t sub_464DB0;
 	uint32_t sub_4649A0;
 	char *archive_path_prefix;
+	char *archive_path_prefix_menu;
 	int(*fs_archive_search_filename)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
 	int(*ff8_fs_archive_search_filename2)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
 	char *(*fs_archive_get_fl_filepath)(int, const ff8_file_fl *);

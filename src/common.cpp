@@ -79,6 +79,7 @@
 #include "ff8/uv_patch.h"
 #include "ff8/ambient.h"
 #include "ff8/file.h"
+#include "ff8/fonts.h"
 
 #include "wine.h"
 
@@ -998,6 +999,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 					vram_init();
 					if (ff8_fix_uv_coords_precision) uv_patch_init();
 					vibration_init();
+					fonts_init();
 					if (widescreen_enabled)
 					{
 						*ff8_externals.current_viewport_x_dword_1A7764C = wide_viewport_x;
