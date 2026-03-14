@@ -13,6 +13,7 @@
 ## FF8
 
 - Core: Fix random crash when battles start ( https://github.com/julianxhokaxhiu/FFNx/pull/912 )
+- External textures: Clear identified textures properly between game modes ( https://github.com/julianxhokaxhiu/FFNx/pull/913 )
 
 # 1.24.1
 
