@@ -744,38 +744,37 @@ LABEL_39:
                 offset_u_in_byte = 192;
                 graphics_object_v_in_byte = 128;
                 graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
-                special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8);
+                special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
                 break;
               case 0xF7u:
                 offset_u_in_byte = 32;
                 graphics_object_v_in_byte = 128;
                 graphics_object = *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC;
-                special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC);
+                special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
                 break;
               case 0xF8u:
                 offset_u_in_byte = 0;
                 graphics_object_v_in_byte = 128;
                 graphics_object = *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC;
-                special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC);
+                special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
                 break;
               case 0xF9u:
                 offset_u_in_byte = 224;
                 graphics_object_v_in_byte = 128;
                 graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
-                goto LABEL_34;
-              default:
-LABEL_34:
                 special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+
+              default:
                 break;
             }
             if ( special_character_do_draw )
             {
               auto color = get_character_color(7);
 
-              special_character_u = (double)offset_u_in_byte / 512.0f;
+              special_character_u = (double)offset_u_in_byte / 256.0f;
               special_character_top_left = graphics_object->vertex_transform;
               special_character_top_left->position.x = (float)character_x;
-              special_character_top_left->position.y = (double)character_y - 4.0;
+              special_character_top_left->position.y = (double)character_y;
               special_character_top_left->position.z = z_value;
               special_character_top_left->position.w = 1.0;
               special_character_top_left->color = color;
@@ -784,7 +783,7 @@ LABEL_34:
               special_character_top_left->v = 0.5;
               special_character_bottom_left = graphics_object->vertex_transform + 1;
               special_character_bottom_left->position.x = (float)character_x;
-              special_character_bottom_left->position.y = (double)character_y - 4.0 + 16.0;
+              special_character_bottom_left->position.y = (double)character_y + 16.0;
               special_character_bottom_left->position.z = z_value;
               special_character_bottom_left->position.w = 1.0;
               special_character_bottom_left->color = color;
@@ -793,7 +792,7 @@ LABEL_34:
               special_character_bottom_left->v = 0.5 + 0.125;
               special_character_top_right = graphics_object->vertex_transform + 2;
               special_character_top_right->position.x = (double)character_x + 16.0;
-              special_character_top_right->position.y = (double)character_y - 4.0;
+              special_character_top_right->position.y = (double)character_y;
               special_character_top_right->position.z = z_value;
               special_character_top_right->position.w = 1.0;
               special_character_top_right->color = color;
@@ -802,7 +801,7 @@ LABEL_34:
               special_character_top_right->v = 0.5;
               window_vertices = graphics_object->vertex_transform;
               window_vertices[3].position.x = (double)character_x + 16.0;
-              window_vertices[3].position.y = (double)character_y - 4.0 + 16.0;
+              window_vertices[3].position.y = (double)character_y + 16.0;
               window_vertices[3].position.z = z_value;
               window_vertices[3].position.w = 1.0;
               window_vertices[3].color = color;
@@ -816,7 +815,7 @@ LABEL_34:
             ++buffer_text;
             --(*ff7_externals.field_remaining_character_length_DC3CCC);
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-            character_x += 32;
+            character_x += 16;
           }
           break;
       }
