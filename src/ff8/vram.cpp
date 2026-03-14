@@ -1400,7 +1400,7 @@ int battle_get_texture_file_name_index(void *texture_buffer)
 
 int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callback)
 {
-	if (trace_all || trace_vram) ffnx_trace("%s: %d => %s\n", __func__, fileId, ff8_externals.battle_filenames[fileId]);
+	if (trace_all || trace_files) ffnx_trace("%s: %d => %s\n", __func__, fileId, ff8_externals.battle_filenames[fileId]);
 
 	battle_texture_id = 0;
 	if (stricmp(ff8_externals.battle_filenames[fileId], "B0WAVE.DAT") == 0) {
@@ -1428,7 +1428,72 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 		battle_texture_data_list[index] = tex;
 	}
 
-	return ((int16_t(*)(int,void*,int,int))ff8_externals.battle_open_file)(fileId, data, a3, callback);
+	int16_t ret = ((int16_t(*)(int,void*,int,int))ff8_externals.battle_open_file)(fileId, data, a3, callback);
+
+	// c0mXXX.dat files (battle ennemies)
+	if (fileId >= 166 && fileId <= 309 && *(uint32_t *)data == 11) {
+		char chunk_file[1024]{0};
+		byte *chunks_data[11]{nullptr};
+		long chunks_size[11]{0};
+		bool has_chunk = false;
+
+		for (int chunkId = 0; chunkId < 11; ++chunkId) {
+			_snprintf(chunk_file, sizeof(chunk_file), "%s/%s/battle/%s.chunk.%i", basedir, direct_mode_path.c_str(), ff8_externals.battle_filenames[fileId], chunkId + 1);
+
+			FILE *fd = fopen(chunk_file, "rb");
+
+			if (fd == nullptr) {
+				if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", chunk_file);
+
+				continue;
+			}
+
+			if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", chunk_file);
+
+			fseek(fd, 0L, SEEK_END);
+			long chunk_size = ftell(fd);
+			fseek(fd, 0L, SEEK_SET);
+
+			byte *chunk_data = new byte[chunk_size];
+
+			fread(chunk_data, sizeof(byte), chunk_size, fd);
+			fclose(fd);
+
+			chunks_data[chunkId] = chunk_data;
+			chunks_size[chunkId] = chunk_size;
+			has_chunk = true;
+		}
+
+		// Rebuild file content with chunks + original data
+		if (has_chunk) {
+			uint32_t *toc = (uint32_t *)data + 1;
+			uint32_t cur_data_pos = (11 + 2) * sizeof(uint32_t);
+			byte *old_data = new byte[toc[12]];
+			memcpy(old_data, data, toc[12] * sizeof(byte));
+			uint32_t *old_toc = (uint32_t *)old_data + 1;
+
+			for (int chunkId = 0; chunkId < 11; ++chunkId) {
+				byte *chunk_data = chunks_data[chunkId];
+				long chunk_size;
+				toc[chunkId] = cur_data_pos;
+				if (chunk_data != nullptr) {
+					chunk_size = chunks_size[chunkId];
+					memcpy((uint8_t *)data + toc[chunkId], chunk_data, chunks_size[chunkId]);
+					delete[] chunk_data;
+				} else {
+					chunk_size = old_toc[chunkId + 1] - old_toc[chunkId];
+					memcpy((uint8_t *)data + toc[chunkId], old_data + old_toc[chunkId], chunk_size);
+				}
+				cur_data_pos += chunk_size;
+			}
+
+			toc[11] = cur_data_pos;
+
+			delete[] old_data;
+		}
+	}
+
+	return ret;
 }
 
 void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWORD *outSize)
