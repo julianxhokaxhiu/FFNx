@@ -2372,6 +2372,8 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   int16_t originalW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;  // store original width
   int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to set it back later. 
   auto_resize_text_box(WINDOW_ID, &W, &H);                                                      // haven't needed to do it yet, but we might.
+  if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x < 0)
+    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x = 0;                // if off the left, move it back on. :)
   ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
   ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
   if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
