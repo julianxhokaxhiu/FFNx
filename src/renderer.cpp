@@ -229,7 +229,10 @@ bgfx::RendererType::Enum Renderer::getUserChosenRenderer() {
     switch (renderer_backend)
     {
     case RENDERER_BACKEND_AUTO:
-        ret = bgfx::RendererType::Count;
+        if (isMacOSLauncher())
+            ret = bgfx::RendererType::Vulkan;
+        else
+            ret = bgfx::RendererType::Count;
         break;
     case RENDERER_BACKEND_OPENGL:
         ret = bgfx::RendererType::OpenGL;
