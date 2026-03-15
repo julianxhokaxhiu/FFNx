@@ -2231,14 +2231,23 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 	int16_t H = 0;
 	int16_t maxW = 0;
 	int16_t maxH = 0;
-	byte* buffer_text = (byte*)ff7_externals.current_dialog_string_pointer[WINDOW_ID];
+  // first store waht the flevel says it is, in case we need to give up
+  *pOutW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width; 
+  *pOutH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height;
+
+  byte* buffer_text = (byte*)ff7_externals.current_dialog_string_pointer[WINDOW_ID];
   bool isKanjiDetected = false;
+  bool possibleOpcode = true; // we need to bail out if we see assigned variables bedies party names
   int charWidth = 0;
   int leftPadding = 0;
 	for ( int i = 0;	i < 1024; ++i )
 	{
     byte character = buffer_text[i];
     byte next_character = buffer_text[i + 1];
+    byte next_character2 = buffer_text[i + 2];
+    byte next_character3 = buffer_text[i + 3];
+    byte next_character4 = buffer_text[i + 4];
+    byte next_character5 = buffer_text[i + 5];
 
     if(character == 0xFF) break;
 
@@ -2248,33 +2257,42 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         charWidth = charWidthData[1][next_character] & 0x1F;
         leftPadding = charWidthData[1][next_character] >> 5;
         isKanjiDetected = true;
+        possibleOpcode = false;
         continue;
       case 0xFBu:
 
         charWidth = charWidthData[2][next_character] & 0x1F;
         leftPadding = charWidthData[2][next_character] >> 5;          
         isKanjiDetected = true;
+        possibleOpcode = false;
         continue;
       case 0xFCu:
         charWidth = charWidthData[3][next_character] & 0x1F;
         leftPadding = charWidthData[3][next_character] >> 5;
         isKanjiDetected = true;
+        possibleOpcode = false;
         continue;
       case 0xFDu:
         charWidth = charWidthData[4][next_character] & 0x1F;
         leftPadding = charWidthData[4][next_character] >> 5;
         isKanjiDetected = true;
+        possibleOpcode = false;
         continue;
       case 0xFEu:
-        charWidth = charWidthData[5][next_character] & 0x1F;
-        leftPadding = charWidthData[5][next_character] >> 5;
-        isKanjiDetected = true;
-        continue;
+        if (next_character < 0xD2u)
+        {
+          charWidth = charWidthData[5][next_character] & 0x1F;
+          leftPadding = charWidthData[5][next_character] >> 5;
+          isKanjiDetected = true;
+          possibleOpcode = false;
+          continue;
+        }
       default:
         if(!isKanjiDetected)
         {
           charWidth = charWidthData[0][character] & 0x1F;
           leftPadding = charWidthData[0][character] >> 5;
+          possibleOpcode = true;
         }
         isKanjiDetected = false;
         break;
@@ -2297,7 +2315,28 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       
       continue;
     }
-
+    // if its' an opcode, then we need to account for variables
+    if (possibleOpcode && (character == 0XFEu))
+    {
+      switch (next_character)
+      {
+        case 0xDEu:
+        case 0xDFu:
+        case 0xE1u:          
+          return; // Abort, because we don't know what the variable says. assume original width is correct.
+        case 0xE2u:
+          int stringlength = next_character4 << 8 | next_character5; // get size
+          charWidth = 20.0f * stringlength; // assume characters are maximum width
+          leftPadding = 0;                  // no padding.
+          W += leftPadding+ std::ceil(charWidth);
+          i = i + 5; // skip the opcode bytes for next go around 
+      }
+    }
+    // we also need to abort the resize if it's a borderless window, because it migth havew a pesky clock in it
+    if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].flags>0)
+    {
+      return;
+    }
 		if(character == 0xE7)
 		{
       maxW = std::max(maxW, W);
@@ -2324,10 +2363,11 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
 {
   int16_t W = 0;
   int16_t H = 0;
-  auto_resize_text_box(WINDOW_ID, &W, &H);
+  int16_t originalW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;  // store original width
+  int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to override later.
+  auto_resize_text_box(WINDOW_ID, &W, &H); // nowe accounts for fixed length string references, and gives up when it sees an unknown variable.
   ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
   ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
-  
   if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
   {
     ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width
@@ -2345,7 +2385,7 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
     if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width
       && ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height )
     {
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_mode = 2;
+      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_mode = 2; 
     }
   }
 }
