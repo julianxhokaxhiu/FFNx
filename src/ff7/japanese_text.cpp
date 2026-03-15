@@ -2446,7 +2446,7 @@ int sub_6F54A2_jp(byte *a1)
     else
       v2 += 2 * ((int)*(unsigned __int8 *)(ff7_externals.g_text_spacing_DB958C + v4 + (unsigned __int8)*a1) >> 5)
           + 2 * (*(byte *)(ff7_externals.g_text_spacing_DB958C + v4 + (unsigned __int8)*a1) & 0x1F);*/
-    v2 += leftPadding + std::ceil(0.5f * charWidth);
+    v2 += 18; // complete hack, but it seems to space thigns correctly in battle and the save file select screen.
     ++a1;
     ++v3;
   }
