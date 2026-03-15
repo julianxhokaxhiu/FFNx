@@ -5,6 +5,7 @@
 ## Common
 
 - Core: Add support for [SummonKit](https://github.com/julianxhokaxhiu/SummonKit)
+- Core: Improve PC Specs detection and use "Unknown" when not able to detect a specific entry
 
 ## FF7
 
