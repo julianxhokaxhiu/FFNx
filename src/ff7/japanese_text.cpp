@@ -487,7 +487,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
   float character_u_width_in_byte; // [esp+CCh] [ebp-4h]
 
   bool kanjiDetected = false;
-  bool possibleOpcode = true;
+  bool possibleOpcode = true; // 0xFEu i ssometimes JP text, and sometimes an FE opcode.  we must parse the opcodes.
   int charWidth = 16;
   int leftPadding = 0;
   character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20; // Fix first line for nameless windows. without this, piano instructions don't line up.
@@ -517,7 +517,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           ++buffer_text;
           graphics_object = ff7_externals.menu_jafont_2_graphics_object;
           kanjiDetected = true;
-          possibleOpcode = false;
+          possibleOpcode = false; // only 0xFEu *might* be an opcode.
           charWidth = charWidthData[1][*buffer_text] & 0x1F;
           leftPadding = charWidthData[1][*buffer_text] >> 5;
           continue;
@@ -551,7 +551,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
         case 0xFEu:
           ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
           ++buffer_text;
-          if (*buffer_text < 0xD2u)
+          if (*buffer_text < 0xD2u) // real JP text.
           {
             graphics_object = ff7_externals.menu_jafont_6_graphics_object;
             kanjiDetected = true;
@@ -562,8 +562,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           }
           else
           {
-            --buffer_text;
-            // fall through
+            --buffer_text; // it was really an opcode, back up one character again and fall through to default so we can parse it later. 
           }
         default:
           if(!kanjiDetected)
@@ -571,7 +570,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             graphics_object = ff7_externals.menu_jafont_1_graphics_object;
             charWidth = charWidthData[0][*buffer_text] & 0x1F;
             leftPadding = charWidthData[0][*buffer_text] >> 5;
-            possibleOpcode = true;
+            possibleOpcode = true; // it SHOULD already be true, but just in case.
           }
           kanjiDetected = false;
           break;
@@ -580,70 +579,70 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
       offset_character_x = 0;
       switch ( *buffer_text )
       {
-        case 0xFEu:
-          if (possibleOpcode)
+        case 0xFEu: // might be an opcode, or it might be second byte of a JP character
+          if (possibleOpcode) // if it's an opcode.
           {
             ++buffer_text;
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-            if (*buffer_text < 0xDAu)
+            if (*buffer_text < 0xDAu) // color
             {
-              (*ff7_externals.word_91F028) = *buffer_text++ - 210;
+              (*ff7_externals.word_91F028) = *buffer_text++ - 210; // write color to game memory.
               break;
             }
             if (*buffer_text == 218)
             {
-              (*ff7_externals.word_DC3CC0) ^= 1u;
+              (*ff7_externals.word_DC3CC0) ^= 1u; // set flash flag
               ++buffer_text;
               break;
             }
             if (*buffer_text == 219)
             {
-              (*ff7_externals.word_DC3CC4) ^= 1u;
+              (*ff7_externals.word_DC3CC4) ^= 1u; // set rainbow flag.
               ++buffer_text;
               break;
             }
-            if (*buffer_text != 233)
-              goto LABEL_39;
+            if (*buffer_text != 233)  // if we aren't goign to the next window
+              goto LABEL_39;  // not a prompts skip the check for them.
             (*ff7_externals.dword_DC3CD4) ^= 1u;
             ++buffer_text;
             break;
           }
         default:
-          if ( *buffer_text < 0xF6u || *buffer_text > 0xF9u )
+          if ( *buffer_text < 0xF6u || *buffer_text > 0xF9u ) // not a button prompt.
           {
             text_offset_spacing = 0;
             graphics_object_v_in_byte = 0;
 LABEL_39:
-            if ( (*ff7_externals.word_DC3CC0) || (*ff7_externals.word_DC3CC4) )
+            if ( (*ff7_externals.word_DC3CC0) || (*ff7_externals.word_DC3CC4) ) // if a color flag is set
             {
-              if ( (*ff7_externals.word_DC3CC4) )
+              if ( (*ff7_externals.word_DC3CC4) ) // rainboe
               {
-                character_n_shapes = ((unsigned __int8)((*ff7_externals.word_DC3CC8) >> 2) - character_count) & 7;
+                character_n_shapes = ((unsigned __int8)((*ff7_externals.word_DC3CC8) >> 2) - character_count) & 7; // get character color, but modify by character count
               }
-              else if ( (((*ff7_externals.word_DC3CC8) >> 2) & 1) != 0 )
+              else if ( (((*ff7_externals.word_DC3CC8) >> 2) & 1) != 0 ) // flash
               {
-                character_n_shapes = (*ff7_externals.word_91F028);
+                character_n_shapes = (*ff7_externals.word_91F028); // get flash color
               }
               else
               {
-                if ( !(*ff7_externals.word_91F028) )
+                if ( !(*ff7_externals.word_91F028) )  // if we didn't assign a color
                 {
-                  character_x += offset_character_x;
+                  character_x += offset_character_x; // advance the start position of the character.
                   break;
                 }
-                character_n_shapes = 0;
+                character_n_shapes = 0;  // go back to normal is the color is cleared.
               }
             }
             else
             {
-              character_n_shapes = (*ff7_externals.word_91F028);
+              character_n_shapes = (*ff7_externals.word_91F028); // read external to select chacter color normally.
             }
             current_character = *buffer_text;
             character = current_character;
             //if ( *buffer_text == 0xD2 || *buffer_text == 0xD3 )
               //character = current_character - 78;
             offset_u_in_byte = 32 * (character % 16);
-            graphics_object_v_in_byte += 32 * (character / 16);
+            graphics_object_v_in_byte += 32 * (character / 16); // calculate character position in sheet so we render the rigth character
             /*if ( character_x
                - (*ff7_externals.field_current_window_pos_x_DC3CB4)
                + 2
@@ -654,23 +653,23 @@ LABEL_39:
               character_y += 32;
               ++ff7_externals.field_text_line_row_DC3CB8;
             }*/
-            if ( !(*ff7_externals.dword_DC3CD4) )
-              character_x += leftPadding; //2
+            if ( !(*ff7_externals.dword_DC3CD4) ) // if not going to next window
+              character_x += leftPadding; // apply padding 
                            //* ((int)*(unsigned __int8 *)((*ff7_externals.g_text_spacing_DB958C) + text_offset_spacing + current_character) >> 5);*/
-            if ( offset_u_in_byte <= 480 )
+            if ( offset_u_in_byte <= 480 ) // can't actually fail, but just in case...
             {
               chararacter_u_in_byte = 32 * (character % 16);
               if ( offset_u_in_byte == 480 )
               {
                 character_u_width_in_byte = 32.0;
-                character_x_width = 20;
+                character_x_width = 20; // jp field dialogs use character width of 20, not 16
               }
               else
               {
                 character_u_width_in_byte = 32.0;
                 character_x_width = 20;
               }
-              character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+              character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object); // try and fetch the graphics object.
             }
             /*else
             {
@@ -682,7 +681,7 @@ LABEL_39:
             }*/
             if ( character_do_draw )
             {
-              auto color = get_character_color(character_n_shapes);
+              auto color = get_character_color(character_n_shapes); // set color from variable
 
               character_u = (double)chararacter_u_in_byte / 512.0;
               character_v = (double)graphics_object_v_in_byte / 512.0;
@@ -692,13 +691,13 @@ LABEL_39:
               character_top_left->position.y = (float)character_y;
               character_top_left->position.z = z_value;
               character_top_left->position.w = 1.0;
-              character_top_left->color = color;
+              character_top_left->color = color; // the set color
               character_top_left->alpha_mask = -16777216;
               character_top_left->u = character_u;
               character_top_left->v = character_v;
               character_bottom_left = graphics_object->vertex_transform + 1;
               character_bottom_left->position.x = (float)character_x;
-              character_bottom_left->position.y = (double)character_y + 20;
+              character_bottom_left->position.y = (double)character_y + 20; // height is forced to 20 to match the new scaled width
               character_bottom_left->position.z = z_value;
               character_bottom_left->position.w = 1.0;
               character_bottom_left->color = color;
@@ -706,7 +705,7 @@ LABEL_39:
               character_bottom_left->u = character_u;
               character_bottom_left->v = character_v + 32.0f / 512.0f;
               character_top_right = graphics_object->vertex_transform + 2;
-              character_top_right->position.x = (double)character_x + (double)character_x_width;
+              character_top_right->position.x = (double)character_x + (double)character_x_width; // must use full char width to render properly
               character_top_right->position.y = (float)character_y;
               character_top_right->position.z = z_value;
               character_top_right->position.w = 1.0;
@@ -727,17 +726,17 @@ LABEL_39:
               graphics_object->field_7C = 2 * character_n_shapes;
               (*ff7_externals.field_do_draw_character_DC3CEC) = 1;
             }
-            if ( (*ff7_externals.dword_DC3CD4) )
-              character_x += 30;
+            if ( (*ff7_externals.dword_DC3CD4) )  // if goign to next window
+              character_x += 30; // extra padding
             else
-              character_x += std::ceil(0.5f * charWidth*1.25f);//2 * (*(byte *)((*ff7_externals.g_text_spacing_DB958C) + text_offset_spacing + current_character) & 0x1F);
+              character_x += std::ceil(0.5f * charWidth*1.25f); // scaled up to match scaling we did above
             --(*ff7_externals.field_remaining_character_length_DC3CCC);
             ++buffer_text;
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
           }
           else
           {
-            switch ( *buffer_text )
+            switch ( *buffer_text ) // what button prompt do we have?
             {
               case 0xF6u:
                 // check for squeenix extended prompts, and grab from correct place in btl_win
@@ -853,7 +852,7 @@ LABEL_39:
             }
             if ( special_character_do_draw )
             {
-              auto color = get_character_color(7);
+              auto color = get_character_color(7); // use palette seven"
 
               special_character_u = (double)offset_u_in_byte / 256.0f;
               special_character_top_left = graphics_object->vertex_transform;
@@ -867,7 +866,7 @@ LABEL_39:
               special_character_top_left->v = (double)graphics_object_v_in_byte / 256.0f; // no longer ignores graphics_object_v_in_byte
               special_character_bottom_left = graphics_object->vertex_transform + 1;
               special_character_bottom_left->position.x = (float)character_x;
-              special_character_bottom_left->position.y = (double)character_y + 20.0;
+              special_character_bottom_left->position.y = (double)character_y + 20.0; // same scaling as i did for JP text.
               special_character_bottom_left->position.z = z_value;
               special_character_bottom_left->position.w = 1.0;
               special_character_bottom_left->color = color;
@@ -994,6 +993,7 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
 
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value)
 {
+  // FIXME: this function can draw charactesr with different scaling, dependent on z_value. I have not been able to figure it out, so leaving at 16 for now.
   graphics_vertex *bottom_right; // [esp+1Ch] [ebp-4Ch]
   graphics_vertex *top_right; // [esp+20h] [ebp-48h]
   graphics_vertex *bottom_left; // [esp+24h] [ebp-44h]
@@ -1346,8 +1346,8 @@ void battle_draw_menu_everything_6CEE84_jp()
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_text_box_quad_graphics_object_DC1008);
 }
 
-void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4)
-{
+void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4) // used for attack names in battle, among other things.
+{                                                                                                // probably should be scaled dup, but until the other one is fixed, not bothering.
   __int64 v4; // rax
   __int64 menu_width; // rax
   graphics_vertex *v6; // [esp+1A8h] [ebp-304h]
@@ -1541,7 +1541,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
     v95 = 0;
     v123 = text_sub_41963C;
     v106 = 0;
-    for ( j = 0; j < 256 && text_sub_41963C->name[0] != 255; ++j )
+    for ( j = 0; j < 256 && text_sub_41963C->name[0] != 255; ++j ) // this code set the start point for centered text.
     {
       int charWidth = 16;
       int leftPadding = 0;
@@ -1619,9 +1619,9 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
     }
     v135 = v123;
     v4 = (*ff7_externals.battle_menu_data_DC3630)[menu_box_idx].menu_width;
-    v107 = (((int)v4 - HIWORD(v4)) >> 1) - v106 / 2;
+    v107 = (((int)v4 - HIWORD(v4)) >> 1) - v106 / 2; // starting point for text set.
     v120 = 0;
-    bool isKanjiDetected = false;
+    bool isKanjiDetected = false;                    // reset for second pass
     int charWidth = 16;
     int leftPadding = 0;
     ff7_graphics_object* graphics_object = ff7_externals.menu_jafont_1_graphics_object;
@@ -1717,19 +1717,20 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
             v126 = 16.0;
             a2 = graphics_object;//(*ff7_externals.battle_graphics_data_ptr_9ADFD8)->menu_font_b_graphics_object;
           //}*/
-          v108 = v107;
-          v96 = leftPadding;//2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + v135->name[0]) & 0x1F);
+          v108 = v107;   // change! was adding character width before printing character isntead of after.  this was incorrect. will at it aat end of loop later
+          v96 = leftPadding;   // padding from above.
 LABEL_49:
           if ( ff7_externals.g_get_do_render_menu_6CDBF2() && !*ff7_externals.g_is_battle_paused_DC0E6C && common_externals.draw_graphics_object(1, (struct graphics_object*)a2) )
           {
-            auto color = get_character_color(7);
+            // let's go and print some text.
+            auto color = get_character_color(7); 
             color.a = 128;
 
             v102 = (double)v127 / 512.0;
             v99 = (double)v129 / 512.0;
             v98 = v137 / 512.0;
             v94 = a2->vertex_transform;
-            v94->position.x = (double)offset_x + (double)v108;
+            v94->position.x = (double)offset_x + (double)v108; // add centering offset, adjusted for placed characters
             v94->position.y = (double)offset_y + (double)12;
             v94->position.z = 0.0;
             v94->position.w = 1.0;
@@ -1739,7 +1740,7 @@ LABEL_49:
             v94->v = v99;
             v93 = a2->vertex_transform + 1;
             v93->position.x = (double)offset_x + (double)v108;
-            v93->position.y = (double)offset_y + (double)12 + 16.0;
+            v93->position.y = (double)offset_y + (double)12 + 16.0; // not scaling up yet.
             v93->position.z = 0.0;
             v93->position.w = 1.0;
             v93->color = color;
@@ -1747,7 +1748,7 @@ LABEL_49:
             v93->u = v102;
             v93->v = v99 + 32.0f / 512.0f;
             v92 = a2->vertex_transform + 2;
-            v92->position.x = (double)offset_x + (double)v108 + (double)v126;
+            v92->position.x = (double)offset_x + (double)v108 + (double)v126; // add base width to right corners
             v92->position.y = (double)offset_y + (double)12;
             v92->position.z = 0.0;
             v92->position.w = 1.0;
@@ -1768,7 +1769,7 @@ LABEL_49:
             a2->field_7C = 14;
           }
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
-          v107 = v96 + v108+ std::ceil(0.5f * charWidth); // moved here to stop everything from being shifted right wihout regard for padding.
+          v107 = v96 + v108+ std::ceil(0.5f * charWidth); // character width+padding+previous centering offset.
 LABEL_31:
           ++v120;
           break;
@@ -2227,27 +2228,28 @@ void main_menu_draw_everything_maybe_6C0B91_jp()
 
 void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 {
+  // as many textboxes in flevel are set wrong, we need to resize them.
 	int16_t W = 0;
 	int16_t H = 0;
-	int16_t maxW = 0;
+	int16_t maxW = 0; // used to remember the longest row so far.
 	int16_t maxH = 0;
-  // first store waht the flevel says it is, in case we need to give up
+  // first store what the flevel says it is, in case we need to give up
   *pOutW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width; 
   *pOutH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height;
 
   byte* buffer_text = (byte*)ff7_externals.current_dialog_string_pointer[WINDOW_ID];
   bool isKanjiDetected = false;
-  bool possibleOpcode = true; // we need to bail out if we see assigned variables bedies party names
+  bool possibleOpcode = true; // some opcodes mmust be parsed, so we must look for them
   int charWidth = 0;
   int leftPadding = 0;
 	for ( int i = 0;	i < 1024; ++i )
 	{
     byte character = buffer_text[i];
     byte next_character = buffer_text[i + 1];
-    byte next_character2 = buffer_text[i + 2];
+    byte next_character2 = buffer_text[i + 2]; // additional ones needed to parse fixed length strings later 
     byte next_character3 = buffer_text[i + 3];
-    byte next_character4 = buffer_text[i + 4];
-    byte next_character5 = buffer_text[i + 5];
+    byte next_character4 = buffer_text[i + 4]; // this is te counter of characters, which is whet we need to do that.
+    byte next_character5 = buffer_text[i + 5]; //
 
     if(character == 0xFF) break;
 
@@ -2257,7 +2259,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         charWidth = charWidthData[1][next_character] & 0x1F;
         leftPadding = charWidthData[1][next_character] >> 5;
         isKanjiDetected = true;
-        possibleOpcode = false;
+        possibleOpcode = false; // not an opcode for sure
         continue;
       case 0xFBu:
 
@@ -2284,21 +2286,22 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
           charWidth = charWidthData[5][next_character] & 0x1F;
           leftPadding = charWidthData[5][next_character] >> 5;
           isKanjiDetected = true;
-          possibleOpcode = false;
-          continue;
+          possibleOpcode = false; // not an opcode
+          continue;               
         }
+        // fall through
       default:
         if(!isKanjiDetected)
         {
           charWidth = charWidthData[0][character] & 0x1F;
           leftPadding = charWidthData[0][character] >> 5;
-          possibleOpcode = true;
+          possibleOpcode = true; // again, this shouldn't be required, but can't hurt.
         }
         isKanjiDetected = false;
         break;
     }
 
-    // character names
+    // character names need to be counted to resize proprely.
     if(character >= 0xEA && character <= 0xF5) 
     {
       auto name_buffer = ff7_externals.sub_6CB9B8(character - 0xEA);
@@ -2313,51 +2316,52 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         W += leftPadding + std::ceil(0.5f * charWidth);
       }
       
-      continue;
+      continue; // back to the start, we already added to the length
     }
     // if its' an opcode, then we need to account for variables
     if (possibleOpcode && (character == 0XFEu))
     {
       switch (next_character)
       {
-        case 0xDEu:
-        case 0xDFu:
-        case 0xE1u:          
-          return; // Abort, because we don't know what the variable says. assume original size is correct.
-        case 0xE2u:
-          int stringlength = next_character4 << 8 | next_character5; // get size
-          charWidth = 20.0f * stringlength; // assume characters are maximum width
-          leftPadding = 0;                  // no padding.
-          W += leftPadding+ std::ceil(charWidth);
-          i = i + 5; // skip the opcode bytes for next go around
         case 0xE9u: // monospace toggle
           return;   // if present, assume flevel is correct (it seems to be for the one I saw in wonder square)
+        case 0xDEu: // these are variabel length
+        case 0xDFu: // variable opcodes
+        case 0xE1u: // FIXME: actually parse them and account for string length
+          return; // Abort, because we don't know what the variable says. assume original size is correct.
+        case 0xE2u: // fix length string. this, i can parse well enough.
+          int stringlength = next_character4 << 8 | next_character5; // cheat and just grab size feel free to actualy lok at the characters.
+          charWidth = 16 * stringlength; // assume characters are maximum width 
+          leftPadding = 0;                  // no padding.
+                                            // gets added in later
+          i = i + 5; // skip the opcode bytes for next go around 5 out of six, with the last one done aat start of loop
       }
     }
-    // we also need to abort the resize if it's a borderless window, because it migth havew a pesky clock in it
-    if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].flags>0)
+    // we also need to abort the resize if it's a borderless window, because it might havew a pesky clock in it, and need to be left as is to actually display it.
+    if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].flags>0) // assumption, seems correct so far
     {
       return;
     }
-		if(character == 0xE7)
+    // more special character handling
+		if(character == 0xE7) // next line
 		{
-      maxW = std::max(maxW, W);
+      maxW = std::max(maxW, W); // update max
       W = 0;
 			H += 32;
       continue;
 		}
-		if(character == 0xE9 || character == 0xE8)
+		if(character == 0xE9 || character == 0xE8) // next window
 		{
-			maxW = std::max(maxW, W);
+			maxW = std::max(maxW, W); // update maxes
 			maxH = std::max(maxH, H);
 			W = 0;
 			H = 0;
       continue;
 		}
 
-		W += leftPadding + std::ceil(0.5f * charWidth);
+		W += leftPadding + std::ceil(0.5f * charWidth); // if we get here, normal charcter, OR fixed string. add char width
 	}
-	*pOutW = (std::max(maxW, W) + 40) * 5 / 8;
+	*pOutW = ((std::max(maxW, W) + 40) * 5 /4)/ 2;  // scaling up. not sure why we are dividing this by two, but it seems to be right.
 	*pOutH = (std::max(maxH, H) + 50) / 2;
 }
 
@@ -2366,8 +2370,8 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   int16_t W = 0;
   int16_t H = 0;
   int16_t originalW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;  // store original width
-  int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to override later.
-  auto_resize_text_box(WINDOW_ID, &W, &H); // nowe accounts for fixed length string references, and gives up when it sees an unknown variable.
+  int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to set it back later. 
+  auto_resize_text_box(WINDOW_ID, &W, &H);                                                      // haven't needed to do it yet, but we might.
   ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
   ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
   if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
@@ -2392,7 +2396,7 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   }
 }
 
-int sub_6F54A2_jp(byte *a1)
+int sub_6F54A2_jp(byte *a1) // this function appears to affect the tab stops in the game file select screen (1-10)
 {
   int v2; // [esp+Ch] [ebp-Ch]
   int v3; // [esp+10h] [ebp-8h]
@@ -2488,7 +2492,7 @@ int sub_6F54A2_jp(byte *a1)
     else
       v2 += 2 * ((int)*(unsigned __int8 *)(ff7_externals.g_text_spacing_DB958C + v4 + (unsigned __int8)*a1) >> 5)
           + 2 * (*(byte *)(ff7_externals.g_text_spacing_DB958C + v4 + (unsigned __int8)*a1) & 0x1F);*/
-    v2 += 18; // complete hack, but it seems to space thigns correctly in battle and the save file select screen.
+    v2 += 18; // so i'm now completely ignoring the character widths, and just assumign thaty are all 18. this fixes the save pointer. No amount of using actual widths fixed alignment
     ++a1;
     ++v3;
   }
