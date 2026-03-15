@@ -1717,7 +1717,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
             v126 = 16.0;
             a2 = graphics_object;//(*ff7_externals.battle_graphics_data_ptr_9ADFD8)->menu_font_b_graphics_object;
           //}*/
-          v108 = std::ceil(0.5f * charWidth)/* 2 * ((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + v135->name[0]) >> 5)*/ + v107;
+          v108 = v107;
           v96 = leftPadding;//2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + v135->name[0]) & 0x1F);
 LABEL_49:
           if ( ff7_externals.g_get_do_render_menu_6CDBF2() && !*ff7_externals.g_is_battle_paused_DC0E6C && common_externals.draw_graphics_object(1, (struct graphics_object*)a2) )
@@ -1768,7 +1768,7 @@ LABEL_49:
             a2->field_7C = 14;
           }
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
-          v107 = v96 + v108;
+          v107 = v96 + v108+ std::ceil(0.5f * charWidth); // moved here to stop everything from being shifted right wihout regard for padding.
 LABEL_31:
           ++v120;
           break;
@@ -2323,13 +2323,15 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         case 0xDEu:
         case 0xDFu:
         case 0xE1u:          
-          return; // Abort, because we don't know what the variable says. assume original width is correct.
+          return; // Abort, because we don't know what the variable says. assume original size is correct.
         case 0xE2u:
           int stringlength = next_character4 << 8 | next_character5; // get size
           charWidth = 20.0f * stringlength; // assume characters are maximum width
           leftPadding = 0;                  // no padding.
           W += leftPadding+ std::ceil(charWidth);
-          i = i + 5; // skip the opcode bytes for next go around 
+          i = i + 5; // skip the opcode bytes for next go around
+        case 0xE9u: // monospace toggle
+          return;   // if present, assume flevel is correct (it seems to be for the one I saw in wonder square)
       }
     }
     // we also need to abort the resize if it's a borderless window, because it migth havew a pesky clock in it
