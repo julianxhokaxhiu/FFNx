@@ -999,7 +999,7 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   // log Z values given
   double scaleFactor = 1.0f; // default scale factor. only one ever used for field texts. use 1.0 for normal small text behavior
   float xPosFudge = 0;
-  float yPosFudge = 0;
+  float yPosFudge = 4;
   graphics_vertex *bottom_right; // [esp+1Ch] [ebp-4Ch]
   graphics_vertex *top_right; // [esp+20h] [ebp-48h]
   graphics_vertex *bottom_left; // [esp+24h] [ebp-44h]
@@ -1355,7 +1355,9 @@ void battle_draw_menu_everything_6CEE84_jp()
 void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4) // used for attack names in battle, among other things.
 {
   // probably should be scaled up, but until the other one is fixed, not bothering.
-  double scaleFactor = 1.0f; // default scale factor.
+  double scaleFactor = 1.0f; // default scale factor. only one ever used for field texts. use 1.0 for normal small text behavior
+  // no x position fudging for battle text.
+  float yPosFudge = 4;       // smaller text is lower.
 
   __int64 v4; // rax
   __int64 menu_width; // rax
@@ -1741,7 +1743,7 @@ LABEL_49:
             v98 = v137 / 512.0;
             v94 = a2->vertex_transform;
             v94->position.x = (double)offset_x + (double)v108; // add centering offset, adjusted for placed characters
-            v94->position.y = (double)offset_y + (double)12;
+            v94->position.y = (double)offset_y + (double)12+yPosFudge;
             v94->position.z = 0.0;
             v94->position.w = 1.0;
             v94->color = color;
@@ -1750,7 +1752,7 @@ LABEL_49:
             v94->v = v99;
             v93 = a2->vertex_transform + 1;
             v93->position.x = (double)offset_x + (double)v108;
-            v93->position.y = (double)offset_y + (double)12 + 16.0 * scaleFactor; // not scaling up yet.
+            v93->position.y = (double)offset_y + (double)12 + 16.0 * scaleFactor+yPosFudge; // not scaling up yet.
             v93->position.z = 0.0;
             v93->position.w = 1.0;
             v93->color = color;
