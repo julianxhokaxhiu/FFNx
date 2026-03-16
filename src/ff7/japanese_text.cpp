@@ -458,6 +458,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
         byte *buffer_text,
         float z_value)
 {
+  float scaleFactor = 1.25f;  // adjust size of text. 1.25 seesm correct.
   int special_character_do_draw; // eax
   graphics_vertex *window_vertices; // eax
   int character_do_draw; // eax
@@ -662,12 +663,12 @@ LABEL_39:
               if ( offset_u_in_byte == 480 )
               {
                 character_u_width_in_byte = 32.0;
-                character_x_width = 20; // jp field dialogs use character width of 20, not 16
+                character_x_width = (short)(16.0f*scaleFactor); // scale character
               }
               else
               {
                 character_u_width_in_byte = 32.0;
-                character_x_width = 20;
+                character_x_width = (short)(16.0f * scaleFactor); // scale character
               }
               character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object); // try and fetch the graphics object.
             }
@@ -697,7 +698,7 @@ LABEL_39:
               character_top_left->v = character_v;
               character_bottom_left = graphics_object->vertex_transform + 1;
               character_bottom_left->position.x = (float)character_x;
-              character_bottom_left->position.y = (double)character_y + 20; // height is forced to 20 to match the new scaled width
+              character_bottom_left->position.y = (double)character_y + 16.0f*scaleFactor; // height is scaled
               character_bottom_left->position.z = z_value;
               character_bottom_left->position.w = 1.0;
               character_bottom_left->color = color;
@@ -715,7 +716,7 @@ LABEL_39:
               character_top_right->v = character_v;
               character_bottom_right = graphics_object->vertex_transform + 3;
               character_bottom_right->position.x = (double)character_x + (double)character_x_width;
-              character_bottom_right->position.y = (double)character_y + 20;
+              character_bottom_right->position.y = (double)character_y + 16.0f*scaleFactor;
               character_bottom_right->position.z = z_value;
               character_bottom_right->position.w = 1.0;
               character_bottom_right->color = color;
@@ -729,7 +730,7 @@ LABEL_39:
             if ( (*ff7_externals.dword_DC3CD4) )  // if goign to next window
               character_x += 30; // extra padding
             else
-              character_x += std::ceil(0.5f * charWidth*1.25f); // scaled up to match scaling we did above
+              character_x += std::ceil(0.5f * charWidth*scaleFactor); // scaled up to match scaling we did above
             --(*ff7_externals.field_remaining_character_length_DC3CCC);
             ++buffer_text;
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
@@ -866,7 +867,7 @@ LABEL_39:
               special_character_top_left->v = (double)graphics_object_v_in_byte / 256.0f; // no longer ignores graphics_object_v_in_byte
               special_character_bottom_left = graphics_object->vertex_transform + 1;
               special_character_bottom_left->position.x = (float)character_x;
-              special_character_bottom_left->position.y = (double)character_y + 20.0; // same scaling as i did for JP text.
+              special_character_bottom_left->position.y = (double)character_y + 16.0f*scaleFactor; // same scaling as i did for JP text.
               special_character_bottom_left->position.z = z_value;
               special_character_bottom_left->position.w = 1.0;
               special_character_bottom_left->color = color;
@@ -874,7 +875,7 @@ LABEL_39:
               special_character_bottom_left->u = special_character_u;
               special_character_bottom_left->v = (double)graphics_object_v_in_byte / 256.0f + 0.125; // no longer ignores graphics_object_v_in_byte
               special_character_top_right = graphics_object->vertex_transform + 2;
-              special_character_top_right->position.x = (double)character_x + 20.0;
+              special_character_top_right->position.x = (double)character_x + 16.0f * scaleFactor;
               special_character_top_right->position.y = (double)character_y;
               special_character_top_right->position.z = z_value;
               special_character_top_right->position.w = 1.0;
@@ -883,8 +884,8 @@ LABEL_39:
               special_character_top_right->u = special_character_u + 0.125;
               special_character_top_right->v = (double)graphics_object_v_in_byte / 256.0f; // no longer ignores graphics_object_v_in_byte
               window_vertices = graphics_object->vertex_transform;
-              window_vertices[3].position.x = (double)character_x + 20.0;
-              window_vertices[3].position.y = (double)character_y + 20.0;
+              window_vertices[3].position.x = (double)character_x + 16.0f * scaleFactor;
+              window_vertices[3].position.y = (double)character_y + 16.0f * scaleFactor;
               window_vertices[3].position.z = z_value;
               window_vertices[3].position.w = 1.0;
               window_vertices[3].color = color;
@@ -898,7 +899,7 @@ LABEL_39:
             ++buffer_text;
             --(*ff7_externals.field_remaining_character_length_DC3CCC);
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-            character_x += 20;
+            character_x += (short)(16.0f * scaleFactor);
           }
           break;
       }
@@ -993,7 +994,12 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
 
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value)
 {
-  // FIXME: this function can draw charactesr with different scaling, dependent on z_value. I have not been able to figure it out, so leaving at 16 for now.
+  // FIXME: this function can draw charactesr with different scaling, dependent on what sorta text is beign printed.
+  // so, let's set soem scale and positions factors, and tweak them by hand when we know they are wrong for a specific bit of text.
+  // log Z values given
+  double scaleFactor = 1.0f; // default scale factor. only one ever used for field texts. use 1.0 for normal small text behavior
+  float xPosFudge = 0;
+  float yPosFudge = 0;
   graphics_vertex *bottom_right; // [esp+1Ch] [ebp-4Ch]
   graphics_vertex *top_right; // [esp+20h] [ebp-48h]
   graphics_vertex *bottom_left; // [esp+24h] [ebp-44h]
@@ -1147,8 +1153,8 @@ LABEL_9:
         vertex_v = (double)image_v / 512.0f;
         vertex_u_width = image_u_width / 512.0f;
         top_left = character_graphics_object->vertex_transform;
-        top_left->position.x = (float)vertex_x;
-        top_left->position.y = (float)vertex_y;
+        top_left->position.x = (float)vertex_x + xPosFudge;
+        top_left->position.y = (float)vertex_y + yPosFudge;
         top_left->position.z = z_value;
         top_left->position.w = 1.0;
         top_left->color = color;
@@ -1156,8 +1162,8 @@ LABEL_9:
         top_left->u = vertex_u;
         top_left->v = vertex_v;
         bottom_left = character_graphics_object->vertex_transform + 1;
-        bottom_left->position.x = (float)vertex_x;
-        bottom_left->position.y = (double)vertex_y + 16.0;
+        bottom_left->position.x = (float)vertex_x + xPosFudge;
+        bottom_left->position.y = (double)vertex_y + 16.0*scaleFactor +yPosFudge;
         bottom_left->position.z = z_value;
         bottom_left->position.w = 1.0;
         bottom_left->color = color;
@@ -1165,8 +1171,8 @@ LABEL_9:
         bottom_left->u = vertex_u;
         bottom_left->v = vertex_v + 32.0f / 512.0f;
         top_right = character_graphics_object->vertex_transform + 2;
-        top_right->position.x = (double)vertex_x + (double)vertex_width;
-        top_right->position.y = (float)vertex_y;
+        top_right->position.x = (double)vertex_x + (double)vertex_width*scaleFactor+xPosFudge;
+        top_right->position.y = (float)vertex_y+yPosFudge;
         top_right->position.z = z_value;
         top_right->position.w = 1.0;
         top_right->color = color;
@@ -1174,8 +1180,8 @@ LABEL_9:
         top_right->u = vertex_u + vertex_u_width;
         top_right->v = vertex_v;
         bottom_right = character_graphics_object->vertex_transform + 3;
-        bottom_right->position.x = (double)vertex_x + (double)vertex_width;
-        bottom_right->position.y = (double)vertex_y + 16.0;
+        bottom_right->position.x = (double)vertex_x + (double)vertex_width*scaleFactor+xPosFudge;
+        bottom_right->position.y = (double)vertex_y + 16.0*scaleFactor+yPosFudge;
         bottom_right->position.z = z_value;
         bottom_right->position.w = 1.0;
         bottom_right->color = color;
@@ -1189,7 +1195,7 @@ LABEL_9:
         return vertex_x + std::ceil(0.5f * charWidth) * 1.6666666;//(__int64)((double)(*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F) * 1.6666666)
              //+ vertex_x;
       else*/
-        return vertex_x + std::ceil(0.5f * charWidth);// 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F);
+        return vertex_x + std::ceil(0.5f * charWidth*scaleFactor);// 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F);
   }
 }
 
@@ -1347,7 +1353,10 @@ void battle_draw_menu_everything_6CEE84_jp()
 }
 
 void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4) // used for attack names in battle, among other things.
-{                                                                                                // probably should be scaled dup, but until the other one is fixed, not bothering.
+{
+  // probably should be scaled up, but until the other one is fixed, not bothering.
+  double scaleFactor = 1.0f; // default scale factor.
+
   __int64 v4; // rax
   __int64 menu_width; // rax
   graphics_vertex *v6; // [esp+1A8h] [ebp-304h]
@@ -1618,6 +1627,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
       text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
     }
     v135 = v123;
+    v106 = (short)(((float)v106 * scaleFactor));  // recenter based on JP text scale factor.
     v4 = (*ff7_externals.battle_menu_data_DC3630)[menu_box_idx].menu_width;
     v107 = (((int)v4 - HIWORD(v4)) >> 1) - v106 / 2; // starting point for text set.
     v120 = 0;
@@ -1740,7 +1750,7 @@ LABEL_49:
             v94->v = v99;
             v93 = a2->vertex_transform + 1;
             v93->position.x = (double)offset_x + (double)v108;
-            v93->position.y = (double)offset_y + (double)12 + 16.0; // not scaling up yet.
+            v93->position.y = (double)offset_y + (double)12 + 16.0 * scaleFactor; // not scaling up yet.
             v93->position.z = 0.0;
             v93->position.w = 1.0;
             v93->color = color;
@@ -1748,7 +1758,7 @@ LABEL_49:
             v93->u = v102;
             v93->v = v99 + 32.0f / 512.0f;
             v92 = a2->vertex_transform + 2;
-            v92->position.x = (double)offset_x + (double)v108 + (double)v126; // add base width to right corners
+            v92->position.x = (double)offset_x + (double)v108 + (double)v126 * scaleFactor; // add base width to right corners
             v92->position.y = (double)offset_y + (double)12;
             v92->position.z = 0.0;
             v92->position.w = 1.0;
@@ -1757,8 +1767,8 @@ LABEL_49:
             v92->u = v102 + v98;
             v92->v = v99;
             v91 = a2->vertex_transform + 3;
-            v91->position.x = (double)offset_x + (double)v108 + (double)v126;
-            v91->position.y = (double)offset_y + (double)12 + 16.0;
+            v91->position.x = (double)offset_x + (double)v108 + (double)v126 * scaleFactor;
+            v91->position.y = (double)offset_y + (double)12 + 16.0*scaleFactor;
             v91->position.z = 0.0;
             v91->position.w = 1.0;
             v91->color = color;
@@ -1769,7 +1779,7 @@ LABEL_49:
             a2->field_7C = 14;
           }
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
-          v107 = v96 + v108+ std::ceil(0.5f * charWidth); // character width+padding+previous centering offset.
+          v107 = v96 + v108+ std::ceil(0.5f * charWidth*scaleFactor); // character width+padding+previous centering offset.
 LABEL_31:
           ++v120;
           break;
@@ -2229,6 +2239,7 @@ void main_menu_draw_everything_maybe_6C0B91_jp()
 void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 {
   // as many textboxes in flevel are set wrong, we need to resize them.
+  float scaleFactor = 1.25f; // resizer neeeds to scale too
 	int16_t W = 0;
 	int16_t H = 0;
 	int16_t maxW = 0; // used to remember the longest row so far.
@@ -2361,7 +2372,8 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
 		W += leftPadding + std::ceil(0.5f * charWidth); // if we get here, normal charcter, OR fixed string. add char width
 	}
-	*pOutW = ((std::max(maxW, W) + 40) * 5 /4)/ 2;  // scaling up. not sure why we are dividing this by two, but it seems to be right.
+  float pOutWtmp = (std::max(maxW, W) + 40) * scaleFactor;
+	*pOutW = (int)((pOutWtmp)/ 2);  // scaling up. not sure why we are dividing this by two, but it seems to be right.
 	*pOutH = (std::max(maxH, H) + 50) / 2;
 }
 
