@@ -32,6 +32,7 @@
 #include "../matrix.h"
 
 #include "../ff7/widescreen.h"
+#include "../globals.h"
 #include "external_mesh.h"
 
 struct matrix d3dviewport_matrix = {
@@ -370,12 +371,39 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		newRenderer.setGameLightData(lightdata);
 	} else newRenderer.setGameLightData(nullptr);
 
+	// Ifrit ground hole - PSX had subtractive blending so it's black, PC port uses additive so it's bright.
+	// We catch that draw (untextured, additive, only black/white verts) and force BLEND_SUB so it looks right.
+	bool ifrit_blend_override = false;
+	uint32_t saved_blend_mode = 0;
+	if (!ff8 && mode == MODE_BATTLE && vertextype != TLVERTEX
+		&& !current_state.fb_texture && !current_state.texture_set
+		&& current_state.blend_mode == BLEND_ADD)
+	{
+		bool only_black_or_white = true;
+		for (uint32_t vi = 0; vi < vertexcount && only_black_or_white; vi++)
+		{
+			uint32_t rgb = vertices[vi].color.color & 0x00FFFFFF;
+			if (rgb != 0x00FFFFFF && rgb != 0x00000000)
+				only_black_or_white = false;
+		}
+		if (only_black_or_white)
+		{
+			saved_blend_mode = current_state.blend_mode;
+			gl_set_blend_func(BLEND_SUB);
+			ifrit_blend_override = true;
+			if (trace_all) ffnx_trace("gl_draw_indexed_primitive: Ifrit ground hole fix - forcing BLEND_SUB (was %u) for %u verts\n", saved_blend_mode, vertexcount);
+		}
+	}
+
 	if (!ff8 && enable_lighting && normals != nullptr && isLightingEnabledTexture)
 	{
 		newRenderer.drawToShadowMap();
 		newRenderer.drawWithLighting(true, true);
 	}
 	else newRenderer.draw();
+
+	if (ifrit_blend_override)
+		gl_set_blend_func(saved_blend_mode);
 
 	stats.vertex_count += count;
 
