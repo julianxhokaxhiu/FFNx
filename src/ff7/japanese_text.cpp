@@ -2350,11 +2350,6 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
           i = i + 5; // skip the opcode bytes for next go around 5 out of six, with the last one done aat start of loop
       }
     }
-    // we also need to abort the resize if it's a borderless window, because it might havew a pesky clock in it, and need to be left as is to actually display it.
-    if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].flags>0) // assumption, seems correct so far
-    {
-      return;
-    }
     // more special character handling
 		if(character == 0xE7) // next line
 		{
@@ -2375,6 +2370,11 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 		W += leftPadding + std::ceil(0.5f * charWidth); // if we get here, normal charcter, OR fixed string. add char width
 	}
   float pOutWtmp = (std::max(maxW, W) + 40) * scaleFactor;
+  // final sanity check
+  // if our resiser thinks it's shorter than flevel has it, its' wrong, abort.
+  if (((std::max(maxH, H) + 50) / 2) < *pOutH) // flevel is taller
+    return;
+
 	*pOutW = (int)((pOutWtmp)/ 2);  // scaling up. not sure why we are dividing this by two, but it seems to be right.
 	*pOutH = (std::max(maxH, H) + 50) / 2;
 }
