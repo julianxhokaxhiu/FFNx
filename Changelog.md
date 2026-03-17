@@ -2,6 +2,11 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.2...master
 
+## FF8
+
+- Direct mode: Optionally add the language prefix to the path for multi-language mods ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
+- Direct mode: Add the chunk feature for c0mXXX.dat files ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
+
 # 1.24.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.1...1.24.2
