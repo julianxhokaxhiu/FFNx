@@ -995,10 +995,10 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value)
 {
   // FIXME: this function can draw characters with different scaling, dependent on what sorta text is being printed.
-  // The rule seems to be that text not aligned with battle_win stuff is scaled 1.25 up, while text that is aligned that way is instead moved down 4 units.
-  // Problem is i have no idea how to tell.  checkign z value is no help, because it does not reliably determine this.
+  // But it needs to know what the source of te text that wa sput int oth ebuffer was to work this out, and that info is NOT passe das a parameter
+  // will need to hook the function that loads texts to the buffer and set a global based on where in memory the original text is.
 
-  double scaleFactor = 1.0f; // 
+  double scaleFactor = 1.0f; // small for now, because fprcing big looks worse.
   float xPosFudge = 0;
   float yPosFudge = 4;       // small text is moved down 4 units to align properly.
   graphics_vertex *bottom_right; // [esp+1Ch] [ebp-4Ch]
