@@ -997,7 +997,8 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   // FIXME: this function can draw characters with different scaling, dependent on what sorta text is being printed.
   // The rule seems to be that text not aligned with battle_win stuff is scaled 1.25 up, while text that is aligned that way is instead moved down 4 units.
   // Problem is i have no idea how to tell.  checkign z value is no help, because it does not reliably determine this.
-  double scaleFactor = 1.0f; // uses small for now, because we dont' know hot to tell if it should be big yet.
+
+  double scaleFactor = 1.0f; // 
   float xPosFudge = 0;
   float yPosFudge = 4;       // small text is moved down 4 units to align properly.
   graphics_vertex *bottom_right; // [esp+1Ch] [ebp-4Ch]
@@ -1352,7 +1353,7 @@ void battle_draw_menu_everything_6CEE84_jp()
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_text_box_quad_graphics_object_DC1008);
 }
 
-void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4) // used for attack names in battle, among other things.
+void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4) // used printing centered texts.
 {
   // probably should be scaled up, but until the other one is fixed, not bothering.
   double scaleFactor = 1.0f; // default scale factor. only one ever used for field texts. use 1.0 for normal small text behavior
@@ -1732,7 +1733,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
           v108 = v107;   // change! was adding character width before printing character isntead of after.  this was incorrect. will at it aat end of loop later
           v96 = leftPadding;   // padding from above.
 LABEL_49:
-          if ( ff7_externals.g_get_do_render_menu_6CDBF2() && !*ff7_externals.g_is_battle_paused_DC0E6C && common_externals.draw_graphics_object(1, (struct graphics_object*)a2) )
+          if (ff7_externals.g_get_do_render_menu_6CDBF2() && common_externals.draw_graphics_object(1, (struct graphics_object*)a2))
           {
             // let's go and print some text.
             auto color = get_character_color(7); 
