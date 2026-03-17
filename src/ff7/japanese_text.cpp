@@ -1761,7 +1761,7 @@ LABEL_49:
             v93->v = v99 + 32.0f / 512.0f;
             v92 = a2->vertex_transform + 2;
             v92->position.x = (double)offset_x + (double)v108 + (double)v126 * scaleFactor; // add base width to right corners
-            v92->position.y = (double)offset_y + (double)12;
+            v92->position.y = (double)offset_y + (double)12 + yPosFudge;
             v92->position.z = 0.0;
             v92->position.w = 1.0;
             v92->color = color;
