@@ -13,7 +13,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 #include "../globals.h"
-
+#include "../log.h" 
 #include "../ff7.h"
 
 void engine_load_menu_graphics_objects_6C1468_jp(int a1)
