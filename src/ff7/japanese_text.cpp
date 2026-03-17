@@ -994,12 +994,12 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
 
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value)
 {
-  // FIXME: this function can draw charactesr with different scaling, dependent on what sorta text is beign printed.
-  // so, let's set soem scale and positions factors, and tweak them by hand when we know they are wrong for a specific bit of text.
-  // log Z values given
-  double scaleFactor = 1.0f; // default scale factor. only one ever used for field texts. use 1.0 for normal small text behavior
+  // FIXME: this function can draw characters with different scaling, dependent on what sorta text is being printed.
+  // The rule seems to be that text not aligned with battle_win stuff is scaled 1.25 up, while text that is aligned that way is instead moved down 4 units.
+  // Problem is i have no idea how to tell.  checkign z value is no help, because it does not reliably determine this.
+  double scaleFactor = 1.0f; // uses small for now, because we dont' know hot to tell if it should be big yet.
   float xPosFudge = 0;
-  float yPosFudge = 4;
+  float yPosFudge = 4;       // small text is moved down 4 units to align properly.
   graphics_vertex *bottom_right; // [esp+1Ch] [ebp-4Ch]
   graphics_vertex *top_right; // [esp+20h] [ebp-48h]
   graphics_vertex *bottom_left; // [esp+24h] [ebp-44h]
@@ -1770,7 +1770,7 @@ LABEL_49:
             v92->v = v99;
             v91 = a2->vertex_transform + 3;
             v91->position.x = (double)offset_x + (double)v108 + (double)v126 * scaleFactor;
-            v91->position.y = (double)offset_y + (double)12 + 16.0*scaleFactor;
+            v91->position.y = (double)offset_y + (double)12 + 16.0*scaleFactor+yPosFudge;
             v91->position.z = 0.0;
             v91->position.w = 1.0;
             v91->color = color;
@@ -2412,12 +2412,12 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   }
 }
 
-int sub_6F54A2_jp(byte *a1) // this function appears to affect the tab stops in the game file select screen (1-10)
+int sub_6F54A2_jp(byte *a1) // this function appears to affect aligning stuff to sideways ppointert stops)
 {
   int v2; // [esp+Ch] [ebp-Ch]
   int v3; // [esp+10h] [ebp-8h]
   int v4; // [esp+14h] [ebp-4h]
-
+  float scaleFactor = 1.25f; //even if text is small, treat as large for x alignment with pointers
   v3 = 0;
   v2 = 0;
   bool kanjiDetected = false;
@@ -2508,9 +2508,10 @@ int sub_6F54A2_jp(byte *a1) // this function appears to affect the tab stops in 
     else
       v2 += 2 * ((int)*(unsigned __int8 *)(ff7_externals.g_text_spacing_DB958C + v4 + (unsigned __int8)*a1) >> 5)
           + 2 * (*(byte *)(ff7_externals.g_text_spacing_DB958C + v4 + (unsigned __int8)*a1) & 0x1F);*/
-    v2 += 18; // so i'm now completely ignoring the character widths, and just assumign thaty are all 18. this fixes the save pointer. No amount of using actual widths fixed alignment
+    v2 += leftPadding + std::ceil(std::ceil(0.5f*charWidth)*scaleFactor); // round after EACH multiplication should align properly with pointers. hooray for inherited jank from no FP in PS1
     ++a1;
     ++v3;
   }
+  v2 += 3; // final correction needed for text to align with pointers
   return v2;
 }
