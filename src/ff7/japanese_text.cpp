@@ -2342,9 +2342,13 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         case 0xDEu: // these are variabel length
         case 0xDFu: // variable opcodes
         case 0xE1u: // FIXME: actually parse them and account for string length
-          return; // Abort, because we don't know what the variable says. assume original size is correct.
-        case 0xE2u: // fix length string. this, i can parse well enough.
-          int stringlength = next_character5 << 8 | next_character4; // cheat and just grab size feel free to actualy look at the characters.
+          charWidth = 32 * 8; // assume there are no more than 8 characters for now?  
+          leftPadding = 0;                  // no padding.
+          // gets added in later
+          i = i + 1; // skip the byte after the opcode
+          break;
+        case 0xE2u: // fixed length string. this, i can parse well enough.
+          int stringlength = next_character5 << 8 | next_character4; // we know how many characteres. for safety, assume max width.
           charWidth = 32 * stringlength; // assume characters are maximum width 
           leftPadding = 0;                  // no padding.
                                             // gets added in later
