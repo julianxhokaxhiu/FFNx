@@ -2352,7 +2352,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
           charWidth = 32 * stringlength; // assume characters are maximum width 
           leftPadding = 0;                  // no padding.
                                             // gets added in later
-          i = i + 5; // skip the opcode bytes for next go around 5 out of six, with the last one done aat start of loop
+          i = i + 5; // skip the opcode bytes for next go around 5 out of six, with the last one done at start of loop
       }
     }
     // more special character handling
@@ -2374,13 +2374,13 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
 		W += leftPadding + std::ceil(0.5f * charWidth); // if we get here, normal charcter, OR fixed string. add char width
 	}
-  float pOutWtmp = (std::max(maxW, W) + 40) * scaleFactor;
+  float pOutWtmp = (std::max(maxW, W) + 40) * scaleFactor;  // make calculated length bigger, but not height.
   // final sanity check
   // if our resiser thinks it's shorter than flevel has it, its' wrong, abort.
   if (((std::max(maxH, H) + 50) / 2) < *pOutH) // flevel is taller
     return;
 
-	*pOutW = (int)((pOutWtmp)/ 2);  // scaling up. not sure why we are dividing this by two, but it seems to be right.
+	*pOutW = (int)((pOutWtmp)/ 2);  // usual shrink from 32 to 16. but we scaled up before.
 	*pOutH = (std::max(maxH, H) + 50) / 2;
 }
 
