@@ -138,11 +138,24 @@ int pubintro_psxvram_buffer_init_sub_45B310()
 
 	// Divide by 255 instead of 256, and don't alter values of psx_floats1[0] and psx_floats1[255]
 	for (int i = 0; i < 256; ++i) {
-		ff8_externals.psx_floats1[i] = float(double(i) / 255.0);
+		ff8_externals.psx_floats1[i] = float(double(i) / (enable_bilinear ? 256.0 : 255.0));
 	}
 
 	for (int i = 0; i < 512; ++i) {
-		psx_floats512[i] = float(double(i) / 511.0);
+		psx_floats512[i] = float(double(i) / (enable_bilinear ? 512.0 : 511.0));
+	}
+
+	if (enable_bilinear)
+	{
+		ff8_externals.psx_floats1[0] = ff8_externals.psx_floats1[1];
+		ff8_externals.psx_floats1[255] = ff8_externals.psx_floats1[254];
+
+		psx_floats512[0] = psx_floats512[3];
+		psx_floats512[1] = psx_floats512[3];
+		psx_floats512[2] = psx_floats512[3];
+		psx_floats512[509] = psx_floats512[508];
+		psx_floats512[510] = psx_floats512[508];
+		psx_floats512[511] = psx_floats512[508];
 	}
 
 	return ret;
