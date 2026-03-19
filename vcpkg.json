@@ -67,7 +67,8 @@
     "cmakerc",
     "cgltf",
     "hwinfo",
-    "cryptopp"
+    "cryptopp",
+    "sdl3"
   ],
   "overrides": [
     {
@@ -168,6 +169,11 @@
     {
       "name": "cryptopp",
       "version": "2025-12-01",
+      "port-version": 0
+    },
+    {
+      "name": "sdl3",
+      "version": "3.2.14",
       "port-version": 0
     }
   ]

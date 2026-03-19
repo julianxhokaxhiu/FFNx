@@ -95,6 +95,7 @@ find_package(CMakeRC CONFIG REQUIRED)
 find_package(lfreist-hwinfo CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -202,6 +203,7 @@ target_link_libraries(
   ${OPENPSF_LIBRARIES}
   ${SOLOUD_LIBRARIES}
   ${VGMSTREAM_LIBRARIES}
+  SDL3::SDL3-static
 )
 target_compile_options(
   ${RELEASE_NAME}
