@@ -53,7 +53,6 @@
 #include "sfx.h"
 #include "saveload.h"
 #include "gamepad.h"
-#include "joystick.h"
 #include "input.h"
 #include "field.h"
 #include "world.h"
@@ -191,8 +190,6 @@ struct texture_format *texture_format;
 char basedir[BASEDIR_LENGTH];
 
 uint32_t version;
-
-bool xinput_connected = false;
 
 bool simulate_OK_button = false;
 
@@ -1315,23 +1312,7 @@ void common_flip(struct game_obj *game_object)
 		}
 	}
 
-	// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
-	if (!xinput_connected && gamepad.CheckConnection())
-	{
-		if (trace_all || trace_gamepad) ffnx_trace("XInput controller: connected.\n");
-
-		xinput_connected = true;
-
-		// Release any previous DirectInput attached controller, if any
-		joystick.Clean();
-	}
-	else if (xinput_connected && !gamepad.CheckConnection())
-	{
-		if (trace_all || trace_gamepad) ffnx_trace("XInput controller: disconnected.\n");
-
-		xinput_connected = false;
-	}
-
+	// Keep track of whether a gamepad is connected (for logging/hotplug).
 	frame_counter++;
 
 	// We need to process Gamepad input on each frame

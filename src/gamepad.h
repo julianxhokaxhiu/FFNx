@@ -22,22 +22,80 @@
 #pragma once
 
 #include <Windows.h>
-#include <Xinput.h>
+#include <SDL3/SDL.h>
+#include <string>
 
 // Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
+// for the foundation of FFNx's original XInput implementation
+
+// SDL-style button bitmask constants
+#define GAMEPAD_BUTTON_DPAD_UP        0x0001
+#define GAMEPAD_BUTTON_DPAD_DOWN      0x0002
+#define GAMEPAD_BUTTON_DPAD_LEFT      0x0004
+#define GAMEPAD_BUTTON_DPAD_RIGHT     0x0008
+#define GAMEPAD_BUTTON_START          0x0010
+#define GAMEPAD_BUTTON_BACK           0x0020
+#define GAMEPAD_BUTTON_LEFT_THUMB     0x0040
+#define GAMEPAD_BUTTON_RIGHT_THUMB    0x0080
+#define GAMEPAD_BUTTON_LEFT_SHOULDER  0x0100
+#define GAMEPAD_BUTTON_RIGHT_SHOULDER 0x0200
+#define GAMEPAD_BUTTON_GUIDE          0x0400
+#define GAMEPAD_BUTTON_A              0x1000
+#define GAMEPAD_BUTTON_B              0x2000
+#define GAMEPAD_BUTTON_X              0x4000
+#define GAMEPAD_BUTTON_Y              0x8000
+
+typedef struct GamepadInput
+{
+    WORD wButtons;
+    BYTE bLeftTrigger;
+    BYTE bRightTrigger;
+    SHORT sThumbLX;
+    SHORT sThumbLY;
+    SHORT sThumbRX;
+    SHORT sThumbRY;
+} GamepadInput;
+
+typedef struct GamepadState
+{
+    DWORD dwPacketNumber;
+    GamepadInput Gamepad;
+} GamepadState;
+
+typedef struct GamepadVibration
+{
+    WORD wLeftMotorSpeed;
+    WORD wRightMotorSpeed;
+} GamepadVibration;
+
+// SDL3 state type means we still use SDL_JoystickID as the device identifier.
+// It is not used as the legacy SI joystick path, only for SDL_GetGamepads / event IDs.
+
 class Gamepad
 {
 private:
     int cId;
-    XINPUT_STATE state;
-    XINPUT_VIBRATION vibration;
+    GamepadState state;
+    GamepadVibration vibration;
 
     float deadzoneX;
     float deadzoneY;
 
+    SDL_Gamepad *sdlGamepad = nullptr;
+    SDL_JoystickID sdlInstanceId = -1;
+    bool sdlInitialized = false;
+    std::string controllerName;
+
+    bool Gamepad_Init();
+    void handleSDLEvents();
+    bool openGamepad();
+    void GetDeviceName(SDL_Gamepad *gp, SDL_JoystickID id);
+    void closeGamepad();
+
 public:
-    Gamepad() : deadzoneX(0.05f), deadzoneY(0.02f) {}
-    Gamepad(float dzX, float dzY) : deadzoneX(dzX), deadzoneY(dzY) {}
+    Gamepad();
+    Gamepad(float dzX, float dzY);
+    ~Gamepad();
 
     float leftStickX;
     float leftStickY;
@@ -47,14 +105,13 @@ public:
     float rightTrigger;
 
     int  GetPort() const;
-    XINPUT_GAMEPAD* GetState();
-    const XINPUT_VIBRATION &GetVibrationState() const;
+    GamepadInput* GetState();
+    const GamepadVibration &GetVibrationState() const;
     bool CheckConnection();
-    // Get state from remote device
     bool Refresh();
     bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
     bool IsPressed(WORD) const;
-    bool IsIdle();
+    bool IsIdle() const;
 };
 
 extern Gamepad gamepad;

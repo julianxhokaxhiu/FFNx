@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "gamepad.h"
-#include "joystick.h"
 #include "globals.h"
 #include "log.h"
 
@@ -51,7 +50,7 @@ void NxVibrationEngine::setLeftMotorValue(uint8_t force)
 
 	if (force > 0)
 	{
-		_leftMotorStopTimeFrame = xinput_connected ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
+		_leftMotorStopTimeFrame = gamepad.GetPort() > 0 ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
 		_left = force;
 	}
 }
@@ -81,13 +80,13 @@ bool NxVibrationEngine::hasChanged() const
 
 void NxVibrationEngine::updateLeftMotorValue()
 {
-	if (xinput_connected && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
+	if (gamepad.GetPort() > 0 && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
 	{
 		if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s stop\n", __func__);
 		_leftMotorStopTimeFrame = 0;
 		_left = 0;
 	}
-	else if (!xinput_connected)
+	else if (gamepad.GetPort() <= 0)
 	{
 		_leftMotorStopTimeFrame = 0;
 	}
@@ -104,7 +103,7 @@ bool NxVibrationEngine::rumbleUpdate()
 
 	if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s left=%d right=%d\n", __func__, _left, _right);
 
-	const DWORD maxVibration = xinput_connected ? UINT16_MAX : joystick.GetMaxVibration();
+	const DWORD maxVibration = UINT16_MAX;
 	DWORD left = _left * maxVibration / LEFT_MOTOR_MAX_VALUE;
 	DWORD right = _right * maxVibration / RIGHT_MOTOR_MAX_VALUE;
 
@@ -115,14 +114,7 @@ bool NxVibrationEngine::rumbleUpdate()
 		right = maxVibration;
 	}
 
-	if (xinput_connected)
-	{
-		gamepad.Vibrate(left, right);
-	}
-	else
-	{
-		joystick.Vibrate(left, right);
-	}
+	gamepad.Vibrate(left, right);
 
 	_currentLeft = _left;
 	_currentRight = _right;
@@ -132,12 +124,7 @@ bool NxVibrationEngine::rumbleUpdate()
 
 bool NxVibrationEngine::canRumble() const
 {
-	if (xinput_connected)
-	{
-		return gamepad.GetPort() > 0;
-	}
-
-	return joystick.CheckConnection() && joystick.HasForceFeedback();
+	return gamepad.GetPort() > 0;
 }
 
 uint8_t *NxVibrationEngine::createVibrateDataFromConfig(const toml::parse_result &config)

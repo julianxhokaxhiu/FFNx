@@ -31,7 +31,6 @@
 #include "../audio.h"
 #include "../gamepad.h"
 #include "../gamehacks.h"
-#include "../joystick.h"
 #include "../music.h"
 #include "../ff7.h"
 #include "../log.h"
@@ -153,143 +152,62 @@ void ff7_use_analogue_controls(float analog_threshold)
 	float invertedHorizontalCameraScale = -1.0;
 	if(enable_inverted_horizontal_camera_controls) invertedHorizontalCameraScale = 1.0;
 
-	if(xinput_connected)
+	if (gamepad.Refresh())
 	{
-		if (gamepad.Refresh())
+		if(std::abs(gamepad.leftStickX) > left_analog_stick_deadzone ||
+		   std::abs(gamepad.leftStickY) > left_analog_stick_deadzone)
+			joyDir = {gamepad.leftStickX, gamepad.leftStickY, 0.0f};
+		else
+			joyDir = {0.0f, 0.0, 0.0};
+
+		if(gamepad.leftStickY > analog_threshold && !(gamepad.leftStickX < -analog_threshold || gamepad.leftStickX > analog_threshold))
+			inputDir = {0.0f, 1.0f, 0.0f};
+		else if(gamepad.leftStickY > analog_threshold && gamepad.leftStickX < -analog_threshold)
+			inputDir = {-0.707f, 0.707f, 0.0f};
+		else if(gamepad.leftStickY > analog_threshold && gamepad.leftStickX > analog_threshold)
+			inputDir = {0.707f, 0.707f, 0.0f};
+		else if(gamepad.leftStickX < -analog_threshold &&!(gamepad.leftStickY > analog_threshold || gamepad.leftStickY < -analog_threshold))
+			inputDir = {-1.0f, 0.0f, 0.0f};
+		else if(gamepad.leftStickX > analog_threshold && !(gamepad.leftStickY > analog_threshold || gamepad.leftStickY < -analog_threshold))
+			inputDir = {1.0f, 0.0f, 0.0f};
+		else if(gamepad.leftStickY < -analog_threshold && gamepad.leftStickX < -analog_threshold)
+			inputDir = {-0.707f, -0.707f, 0.0f};
+		else if(gamepad.leftStickY < -analog_threshold && gamepad.leftStickX > analog_threshold)
+			inputDir = {0.707f, -0.707f, 0.0f};
+		else if(gamepad.leftStickY < -analog_threshold && !(gamepad.leftStickX < -analog_threshold || gamepad.leftStickX > analog_threshold))
+			inputDir = {0.0f, -1.0f, 0.0f};
+
+		if (gamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_THUMB)
+		    && std::abs(gamepad.rightStickX) < right_analog_stick_deadzone
+			&& std::abs(gamepad.rightStickY) < right_analog_stick_deadzone)
 		{
-			if(std::abs(gamepad.leftStickX) > left_analog_stick_deadzone ||
-			   std::abs(gamepad.leftStickY) > left_analog_stick_deadzone)
-				joyDir = {gamepad.leftStickX, gamepad.leftStickY, 0.0f};
-			else
-				joyDir = {0.0f, 0.0, 0.0};
-
-
-			if(gamepad.leftStickY > analog_threshold && !(gamepad.leftStickX < -analog_threshold || gamepad.leftStickX > analog_threshold))
-				inputDir = {0.0f, 1.0f, 0.0f};
-			else if(gamepad.leftStickY > analog_threshold && gamepad.leftStickX < -analog_threshold)
-				inputDir = {-0.707f, 0.707f, 0.0f};
-			else if(gamepad.leftStickY > analog_threshold && gamepad.leftStickX > analog_threshold)
-				inputDir = {0.707f, 0.707f, 0.0f};
-			else if(gamepad.leftStickX < -analog_threshold &&!(gamepad.leftStickY > analog_threshold || gamepad.leftStickY < -analog_threshold))
-				inputDir = {-1.0f, 0.0f, 0.0f};
-			else if(gamepad.leftStickX > analog_threshold && !(gamepad.leftStickY > analog_threshold || gamepad.leftStickY < -analog_threshold))
-				inputDir = {1.0f, 0.0f, 0.0f};
-			else if(gamepad.leftStickY < -analog_threshold && gamepad.leftStickX < -analog_threshold)
-				inputDir = {-0.707f, -0.707f, 0.0f};
-			else if(gamepad.leftStickY < -analog_threshold && gamepad.leftStickX > analog_threshold)
-				inputDir = {0.707f, -0.707f, 0.0f};
-			else if(gamepad.leftStickY < -analog_threshold && !(gamepad.leftStickX < -analog_threshold || gamepad.leftStickX > analog_threshold))
-				inputDir = {0.0f, -1.0f, 0.0f};
-
-			if (gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB)
-			    && std::abs(gamepad.rightStickX) < right_analog_stick_deadzone
-				&& std::abs(gamepad.rightStickY) < right_analog_stick_deadzone)
+			if(!isCameraReset)
 			{
-				if(!isCameraReset)
-				{
-					ff7::world::camera.requestResetCameraRotation(true);
-					ff7::battle::camera.reset();
-					isCameraReset = true;
-				}
-			} else
-			{
-				isCameraReset = false;
-
-				if(gamepad.rightTrigger > right_analog_trigger_deadzone)
-					zoomSpeed += zoomSpeedMax * (0.5f * gamepad.rightTrigger);
-				if(gamepad.leftTrigger > left_analog_trigger_deadzone)
-					zoomSpeed -= zoomSpeedMax * (0.5f * gamepad.leftTrigger);
-
-				bx::Vec3 rightAnalogDir(gamepad.rightStickX, gamepad.rightStickY, 0.0f);
-				float length = std::min(bx::length(rightAnalogDir), 1.0f);
-				if(length > right_analog_stick_deadzone)
-				{
-					rightAnalogDir = bx::normalize(rightAnalogDir);
-					float scale = (length - right_analog_stick_deadzone) / (1.0 - right_analog_stick_deadzone);
-					rightAnalogDir.x *= scale;
-					rightAnalogDir.y *= scale;
-					verticalRotSpeed = invertedVerticalCameraScale * -rotSpeedMax * rightAnalogDir.y;
-					horizontalRotSpeed = invertedHorizontalCameraScale * rotSpeedMax * rightAnalogDir.x;
-					horizontalScroll = rightAnalogDir.x;
-					verticalScroll = -rightAnalogDir.y;
-				}
+				ff7::world::camera.requestResetCameraRotation(true);
+				ff7::battle::camera.reset();
+				isCameraReset = true;
 			}
-		}
-	}
-	else
-	{
-		if (joystick.Refresh())
+		} else
 		{
-			if(std::abs(joystick.GetState()->lX) > joystick.GetDeadZone(left_analog_trigger_deadzone) ||
-			   std::abs(joystick.GetState()->lY) > joystick.GetDeadZone(left_analog_trigger_deadzone))
-				joyDir = {static_cast<float>(joystick.GetState()->lX) / static_cast<float>(SHRT_MAX),
-				         -static_cast<float>(joystick.GetState()->lY) / static_cast<float>(SHRT_MAX), 0.0f};
-			else
-				joyDir = {0.0f, 0.0, 0.0};
+			isCameraReset = false;
 
-			if(joystick.GetState()->lY < joystick.GetDeadZone(-analog_threshold) &&
-			!(joystick.GetState()->lX < joystick.GetDeadZone(-analog_threshold) || joystick.GetState()->lX > joystick.GetDeadZone(analog_threshold)))
-				inputDir = {0.0f, 1.0f, 0.0f};
-			else if(joystick.GetState()->lY < joystick.GetDeadZone(-analog_threshold) && joystick.GetState()->lX < joystick.GetDeadZone(-analog_threshold))
-				inputDir = {-0.707f, 0.707f, 0.0f};
-			else if(joystick.GetState()->lY < joystick.GetDeadZone(-analog_threshold) && joystick.GetState()->lX > joystick.GetDeadZone(analog_threshold))
-				inputDir = {0.707f, 0.707f, 0.0f};
-			else if(joystick.GetState()->lX < joystick.GetDeadZone(-analog_threshold) &&
-			!(joystick.GetState()->lY < joystick.GetDeadZone(-analog_threshold) || joystick.GetState()->lY > joystick.GetDeadZone(analog_threshold)))
-				inputDir = {-1.0f, 0.0f, 0.0f};
-			else if(joystick.GetState()->lX > joystick.GetDeadZone(analog_threshold) &&
-				!(joystick.GetState()->lY < joystick.GetDeadZone(-analog_threshold) || joystick.GetState()->lY > joystick.GetDeadZone(analog_threshold)))
-				inputDir = {1.0f, 0.0f, 0.0f};
-			else if(joystick.GetState()->lY > joystick.GetDeadZone(analog_threshold) && joystick.GetState()->lX < joystick.GetDeadZone(-analog_threshold))
-				inputDir = {-0.707f, -0.707f, 0.0f};
-			else if(joystick.GetState()->lY > joystick.GetDeadZone(analog_threshold) && joystick.GetState()->lX > joystick.GetDeadZone(analog_threshold))
-				inputDir = {0.707f, -0.707f, 0.0f};
-			else if(joystick.GetState()->lY > joystick.GetDeadZone(analog_threshold) &&
-				!(joystick.GetState()->lX < joystick.GetDeadZone(-analog_threshold) || joystick.GetState()->lX > joystick.GetDeadZone(analog_threshold)))
-				inputDir = {0.0f, -1.0f, 0.0f};
+			if(gamepad.rightTrigger > right_analog_trigger_deadzone)
+				zoomSpeed += zoomSpeedMax * (0.5f * gamepad.rightTrigger);
+			if(gamepad.leftTrigger > left_analog_trigger_deadzone)
+				zoomSpeed -= zoomSpeedMax * (0.5f * gamepad.leftTrigger);
 
-			if ((joystick.GetState()->rgbButtons[11] & 0x80)
-			    && std::abs(joystick.GetState()->lRz) < joystick.GetDeadZone(right_analog_stick_deadzone)
-				&& std::abs(joystick.GetState()->lZ) < joystick.GetDeadZone(right_analog_stick_deadzone))
+			bx::Vec3 rightAnalogDir(gamepad.rightStickX, gamepad.rightStickY, 0.0f);
+			float length = std::min(bx::length(rightAnalogDir), 1.0f);
+			if(length > right_analog_stick_deadzone)
 			{
-				if(!isCameraReset)
-				{
-					ff7::world::camera.requestResetCameraRotation(true);
-					ff7::battle::camera.reset();
-					isCameraReset = true;
-				}
-			} else
-			{
-				isCameraReset = false;
-
-				bx::Vec3 rightAnalogDir(
-					static_cast<float>(joystick.GetState()->lZ) / static_cast<float>(SHRT_MAX),
-					static_cast<float>(joystick.GetState()->lRz) / static_cast<float>(SHRT_MAX), 0.0f);
-				float length = std::min(bx::length(rightAnalogDir), 1.0f);
-				if(length > right_analog_stick_deadzone)
-				{
-					rightAnalogDir = bx::normalize(rightAnalogDir);
-					float scale = (length - right_analog_stick_deadzone) / (1.0 - right_analog_stick_deadzone);
-					rightAnalogDir.x *=  scale;
-					rightAnalogDir.y *=  scale;
-					verticalRotSpeed = invertedVerticalCameraScale * rotSpeedMax * rightAnalogDir.y;
-					horizontalRotSpeed = invertedHorizontalCameraScale * rotSpeedMax * rightAnalogDir.x;
-					horizontalScroll = rightAnalogDir.x;
-					verticalScroll = rightAnalogDir.y;
-				}
-
-				if(joystick.HasAnalogTriggers())
-				{
-					if(joystick.GetState()->lRy > -static_cast<float>(SHRT_MAX) + joystick.GetDeadZone(right_analog_trigger_deadzone))
-						zoomSpeed += zoomSpeedMax * (0.5f + 0.5f * static_cast<float>(joystick.GetState()->lRy) / static_cast<float>(SHRT_MAX));
-					if(joystick.GetState()->lRx > -static_cast<float>(SHRT_MAX) + joystick.GetDeadZone(left_analog_trigger_deadzone))
-						zoomSpeed -= zoomSpeedMax * (0.5f + 0.5f * static_cast<float>(joystick.GetState()->lRx) / static_cast<float>(SHRT_MAX));
-				}
-				else
-				{
-					if(joystick.GetState()->rgbButtons[7] & 0x80) zoomSpeed += zoomSpeedMax;
-					if(joystick.GetState()->rgbButtons[6] & 0x80) zoomSpeed -= zoomSpeedMax;
-				}
+				rightAnalogDir = bx::normalize(rightAnalogDir);
+				float scale = (length - right_analog_stick_deadzone) / (1.0 - right_analog_stick_deadzone);
+				rightAnalogDir.x *= scale;
+				rightAnalogDir.y *= scale;
+				verticalRotSpeed = invertedVerticalCameraScale * -rotSpeedMax * rightAnalogDir.y;
+				horizontalRotSpeed = invertedHorizontalCameraScale * rotSpeedMax * rightAnalogDir.x;
+				horizontalScroll = rightAnalogDir.x;
+				verticalScroll = -rightAnalogDir.y;
 			}
 		}
 	}
@@ -322,16 +240,9 @@ int ff7_get_gamepad()
 	{
 		return TRUE;
 	}
-	else if (xinput_connected)
-	{
-		if (gamepad.Refresh())
-			return TRUE;
-	}
-	else
-	{
-		if (joystick.Refresh())
-    	return TRUE;
-	}
+
+	if (gamepad.Refresh())
+		return TRUE;
 
 	return FALSE;
 }
@@ -353,75 +264,35 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		// End simulation right here before we press this button by mistake in other windows
 		simulate_OK_button = false;
 	}
-	else if (xinput_connected && gamehacks.canInputBeProcessed())
+	else if (gamehacks.canInputBeProcessed())
 	{
 		if (gamepad.Refresh())
 		{
 			ff7_externals.gamepad_status->pos_x = gamepad.leftStickX;
 			ff7_externals.gamepad_status->pos_y = gamepad.leftStickY;
-			ff7_externals.gamepad_status->dpad_up = (gamepad.leftStickY > analog_threshold) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP); // UP
-			ff7_externals.gamepad_status->dpad_down = (gamepad.leftStickY < -analog_threshold) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN); // DOWN
-			ff7_externals.gamepad_status->dpad_left = (gamepad.leftStickX < -analog_threshold) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT); // LEFT
-			ff7_externals.gamepad_status->dpad_right = (gamepad.leftStickX > analog_threshold) || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT); // RIGHT
-			ff7_externals.gamepad_status->button1 = gamepad.IsPressed(XINPUT_GAMEPAD_X); // Square
-			ff7_externals.gamepad_status->button2 = gamepad.IsPressed(XINPUT_GAMEPAD_A); // Cross
-			ff7_externals.gamepad_status->button3 = gamepad.IsPressed(XINPUT_GAMEPAD_B); // Circle
-			ff7_externals.gamepad_status->button4 = gamepad.IsPressed(XINPUT_GAMEPAD_Y); // Triangle
-			ff7_externals.gamepad_status->button5 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER); // L1
-			ff7_externals.gamepad_status->button6 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER); // R1
+			ff7_externals.gamepad_status->dpad_up = (gamepad.leftStickY > analog_threshold) || gamepad.IsPressed(GAMEPAD_BUTTON_DPAD_UP); // UP
+			ff7_externals.gamepad_status->dpad_down = (gamepad.leftStickY < -analog_threshold) || gamepad.IsPressed(GAMEPAD_BUTTON_DPAD_DOWN); // DOWN
+			ff7_externals.gamepad_status->dpad_left = (gamepad.leftStickX < -analog_threshold) || gamepad.IsPressed(GAMEPAD_BUTTON_DPAD_LEFT); // LEFT
+			ff7_externals.gamepad_status->dpad_right = (gamepad.leftStickX > analog_threshold) || gamepad.IsPressed(GAMEPAD_BUTTON_DPAD_RIGHT); // RIGHT
+			ff7_externals.gamepad_status->button1 = gamepad.IsPressed(GAMEPAD_BUTTON_X); // Square
+			ff7_externals.gamepad_status->button2 = gamepad.IsPressed(GAMEPAD_BUTTON_A); // Cross
+			ff7_externals.gamepad_status->button3 = gamepad.IsPressed(GAMEPAD_BUTTON_B); // Circle
+			ff7_externals.gamepad_status->button4 = gamepad.IsPressed(GAMEPAD_BUTTON_Y); // Triangle
+			ff7_externals.gamepad_status->button5 = gamepad.IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER); // L1
+			ff7_externals.gamepad_status->button6 = gamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER); // R1
 			ff7_externals.gamepad_status->button7 = gamepad.leftTrigger > 0.85f; // L2
 			ff7_externals.gamepad_status->button8 = gamepad.rightTrigger > 0.85f; // R2
 
-			ff7_externals.gamepad_status->button9 = gamepad.IsPressed(XINPUT_GAMEPAD_BACK); // SELECT
-			ff7_externals.gamepad_status->button10 = gamepad.IsPressed(XINPUT_GAMEPAD_START); // START
-			ff7_externals.gamepad_status->button11 = gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB); // L3
-			ff7_externals.gamepad_status->button12 = gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB); // R3
+			ff7_externals.gamepad_status->button9 = gamepad.IsPressed(GAMEPAD_BUTTON_BACK); // SELECT
+			ff7_externals.gamepad_status->button10 = gamepad.IsPressed(GAMEPAD_BUTTON_START); // START
+			ff7_externals.gamepad_status->button11 = gamepad.IsPressed(GAMEPAD_BUTTON_LEFT_THUMB); // L3
+			ff7_externals.gamepad_status->button12 = gamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_THUMB); // R3
 			ff7_externals.gamepad_status->button13 = gamepad.IsPressed(0x400); // PS Button
 
 			// Update the player intent based on the analogue movement
 			if (enable_auto_run)
 			{
 				bx::Vec3 joyDir = {gamepad.leftStickX, gamepad.leftStickY, 0.0f};
-				auto joyLength = std::min(bx::length(joyDir), 1.0f);
-				if (joyLength > run_threshold) gamepad_analogue_intent = INTENT_RUN;
-				else if(joyLength > analog_threshold) gamepad_analogue_intent = INTENT_WALK;
-			}
-		}
-	}
-	else if (gamehacks.canInputBeProcessed())
-	{
-		if (joystick.Refresh())
-		{
-			ff7_externals.gamepad_status->pos_x = joystick.GetState()->lX;
-			ff7_externals.gamepad_status->pos_y = joystick.GetState()->lY;
-			ff7_externals.gamepad_status->dpad_up = (joystick.GetState()->lY < joystick.GetDeadZone(-analog_threshold)) || joystick.GetState()->rgdwPOV[0] == 0
-			                                         || joystick.GetState()->rgdwPOV[0] == 4500 || joystick.GetState()->rgdwPOV[0] == 31500; // UP
-			ff7_externals.gamepad_status->dpad_down = (joystick.GetState()->lY > joystick.GetDeadZone(analog_threshold)) || joystick.GetState()->rgdwPOV[0] == 18000
-			                                         || joystick.GetState()->rgdwPOV[0] == 13500 || joystick.GetState()->rgdwPOV[0] == 22500; // DOWN
-			ff7_externals.gamepad_status->dpad_left = (joystick.GetState()->lX < joystick.GetDeadZone(-analog_threshold)) || joystick.GetState()->rgdwPOV[0] == 27000
-			                                         || joystick.GetState()->rgdwPOV[0] == 22500 || joystick.GetState()->rgdwPOV[0] == 31500; // LEFT
-			ff7_externals.gamepad_status->dpad_right = (joystick.GetState()->lX > joystick.GetDeadZone(analog_threshold)) || joystick.GetState()->rgdwPOV[0] == 9000
-			                                         || joystick.GetState()->rgdwPOV[0] == 4500 || joystick.GetState()->rgdwPOV[0] == 13500; // RIGHT
-			ff7_externals.gamepad_status->button1 = joystick.GetState()->rgbButtons[0] & 0x80; // Square
-			ff7_externals.gamepad_status->button2 = joystick.GetState()->rgbButtons[1] & 0x80; // Cross
-			ff7_externals.gamepad_status->button3 = joystick.GetState()->rgbButtons[2] & 0x80; // Circle
-			ff7_externals.gamepad_status->button4 = joystick.GetState()->rgbButtons[3] & 0x80; // Triangle
-			ff7_externals.gamepad_status->button5 = joystick.GetState()->rgbButtons[4] & 0x80; // L1
-			ff7_externals.gamepad_status->button6 = joystick.GetState()->rgbButtons[5] & 0x80; // R1
-			ff7_externals.gamepad_status->button7 = joystick.GetState()->rgbButtons[6] & 0x80; // L2
-			ff7_externals.gamepad_status->button8 = joystick.GetState()->rgbButtons[7] & 0x80; // R2
-
-			ff7_externals.gamepad_status->button9 = joystick.GetState()->rgbButtons[8] & 0x80; // SELECT
-			ff7_externals.gamepad_status->button10 = joystick.GetState()->rgbButtons[9] & 0x80; // START
-			ff7_externals.gamepad_status->button11 = joystick.GetState()->rgbButtons[10] & 0x80; // L3
-			ff7_externals.gamepad_status->button12 = joystick.GetState()->rgbButtons[11] & 0x80; // R3
-			ff7_externals.gamepad_status->button13 = joystick.GetState()->rgbButtons[12] & 0x80; // PS Button
-
-			// Update the player intent based on the analogue movement
-			if (enable_auto_run)
-			{
-				bx::Vec3 joyDir = {static_cast<float>(joystick.GetState()->lX) / static_cast<float>(joystick.GetDeadZone(1.0f)),
-				static_cast<float>(joystick.GetState()->lY) / static_cast<float>(joystick.GetDeadZone(1.0f)), 0.0f};
 				auto joyLength = std::min(bx::length(joyDir), 1.0f);
 				if (joyLength > run_threshold) gamepad_analogue_intent = INTENT_RUN;
 				else if(joyLength > analog_threshold) gamepad_analogue_intent = INTENT_WALK;
