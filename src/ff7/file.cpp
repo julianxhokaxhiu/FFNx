@@ -111,14 +111,11 @@ int lgp_lookup_value(unsigned char c)
 
 uint32_t lgp_chdir(char *path)
 {
+	char *first_slash = strchr(path, '/');
+	if(first_slash) path = first_slash + 1;
+
 	uint32_t len = strlen(path);
-
-	while(path[0] == '/' || path[0] == '\\') path++;
-
 	memcpy(lgp_current_dir, path, len + 1);
-
-	while(lgp_current_dir[len - 1] == '/' || lgp_current_dir[len - 1] == '\\') len--;
-	lgp_current_dir[len] = 0;
 
 	return true;
 }
@@ -233,13 +230,14 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 				case 15: // cr
 				case 16: // disc
 					_snprintf(tmp, sizeof(tmp), "%s/%s/%s_us.lgp/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], fname, ext);
+					ret->fd = fopen(tmp, "rb");
 					break;
 				case 8: // high
 				case 10: // snowboard
 					_snprintf(tmp, sizeof(tmp), "%s/%s/%s-us.lgp/%s%s", basedir, direct_mode_path.c_str(), lgp_names[lgp_num], fname, ext);
+					ret->fd = fopen(tmp, "rb");
 					break;
 			}
-			ret->fd = fopen(tmp, "rb");
 		}
 
 		if(!ret->fd)
