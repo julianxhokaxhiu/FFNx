@@ -105,6 +105,7 @@ public:
     float rightTrigger;
 
     int  GetPort() const;
+    bool HasRumble() const;
     GamepadInput* GetState();
     const GamepadVibration &GetVibrationState() const;
     bool CheckConnection();

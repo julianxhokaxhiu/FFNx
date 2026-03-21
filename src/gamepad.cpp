@@ -307,6 +307,14 @@ bool Gamepad::Refresh()
     return true;
 }
 
+bool Gamepad::HasRumble() const
+{
+    if (!sdlGamepad)
+        return false;
+    SDL_PropertiesID props = SDL_GetGamepadProperties(sdlGamepad);
+    return SDL_GetBooleanProperty(props, SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
+}
+
 bool Gamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 {
     vibration.wLeftMotorSpeed = wLeftMotorSpeed;
@@ -318,10 +326,11 @@ bool Gamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
     if (!sdlGamepad && !openGamepad())
         return false;
 
-    // SDL requires a duration; calling each frame keeps rumble alive.
-    if (!SDL_RumbleGamepad(sdlGamepad, wLeftMotorSpeed, wRightMotorSpeed, 100))
+    Uint32 duration = (wLeftMotorSpeed > 0 || wRightMotorSpeed > 0) ? SDL_HAPTIC_INFINITY : 0;
+    if (!SDL_RumbleGamepad(sdlGamepad, wLeftMotorSpeed, wRightMotorSpeed, duration))
     {
-        closeGamepad();
+        if (trace_all || trace_gamepad)
+            ffnx_trace("Gamepad: Rumble failed: %s\n", SDL_GetError());
         return false;
     }
 
