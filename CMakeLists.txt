@@ -176,6 +176,7 @@ target_link_libraries(
   psapi
   dwmapi
   winmm
+  SDL3::SDL3-static
   strmiids
   ZLIB::ZLIB
   PNG::PNG
@@ -200,7 +201,6 @@ target_link_libraries(
   ${OPENPSF_LIBRARIES}
   ${SOLOUD_LIBRARIES}
   ${VGMSTREAM_LIBRARIES}
-  SDL3::SDL3-static
 )
 target_compile_options(
   ${RELEASE_NAME}
