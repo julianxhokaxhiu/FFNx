@@ -28,6 +28,8 @@
 // Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
 // for the foundation of FFNx's original XInput implementation
 
+// original DirectInput imlpementation was inspired by https://bell0bytes.eu/directinput/
+
 // SDL-style button bitmask constants
 #define GAMEPAD_BUTTON_DPAD_UP        0x0001
 #define GAMEPAD_BUTTON_DPAD_DOWN      0x0002
