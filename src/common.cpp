@@ -1313,6 +1313,24 @@ void common_flip(struct game_obj *game_object)
 	}
 
 	// Keep track of whether a gamepad is connected (for logging/hotplug).
+	static bool sdl_gamepad_connected = false;
+	static std::string sdl_gamepad_name;
+	bool sdl_gamepad_state = (gamepad.GetPort() > 0);
+
+	if (!sdl_gamepad_connected && sdl_gamepad_state)
+	{
+		sdl_gamepad_name = gamepad.GetName();
+		if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: connected (%s)\n", sdl_gamepad_name.c_str());
+		if ((trace_all || trace_gamepad) && gamepad.GetLoadedMappingCount() > 0) ffnx_trace("SDL gamepad: loaded %d mappings from gamecontrollerdb.txt\n", gamepad.GetLoadedMappingCount());
+		sdl_gamepad_connected = true;
+	}
+	else if (sdl_gamepad_connected && !sdl_gamepad_state)
+	{
+		if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: disconnected (%s)\n", sdl_gamepad_name.c_str());
+		sdl_gamepad_name.clear();
+		sdl_gamepad_connected = false;
+	}
+
 	frame_counter++;
 
 	// We need to process Gamepad input on each frame

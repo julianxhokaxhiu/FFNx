@@ -30,13 +30,13 @@ Gamepad gamepad;
 
 Gamepad::Gamepad()
     : cId(-1), deadzoneX(0.05f), deadzoneY(0.02f), sdlGamepad(nullptr), sdlInstanceId(-1), sdlInitialized(false),
-      leftStickX(0.0f), leftStickY(0.0f), rightStickX(0.0f), rightStickY(0.0f), leftTrigger(0.0f), rightTrigger(0.0f), controllerName("")
+      leftStickX(0.0f), leftStickY(0.0f), rightStickX(0.0f), rightStickY(0.0f), leftTrigger(0.0f), rightTrigger(0.0f)
 {
 }
 
 Gamepad::Gamepad(float dzX, float dzY)
     : cId(-1), deadzoneX(dzX), deadzoneY(dzY), sdlGamepad(nullptr), sdlInstanceId(-1), sdlInitialized(false),
-      leftStickX(0.0f), leftStickY(0.0f), rightStickX(0.0f), rightStickY(0.0f), leftTrigger(0.0f), rightTrigger(0.0f), controllerName("")
+      leftStickX(0.0f), leftStickY(0.0f), rightStickX(0.0f), rightStickY(0.0f), leftTrigger(0.0f), rightTrigger(0.0f)
 {
 }
 
@@ -74,30 +74,12 @@ bool Gamepad::Gamepad_Init()
     SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS3_SIXAXIS_DRIVER, "1");
 
     if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD))
-    {
-        if (trace_all || trace_gamepad)
-            ffnx_trace("Gamepad: SDL_InitSubSystem(SDL_INIT_GAMEPAD) failed: %s\n", SDL_GetError());
         return false;
-    }
 
     SDL_SetGamepadEventsEnabled(true);
 
-    int mapped = SDL_AddGamepadMappingsFromFile("SDL_GameControllerDB.txt");
-    if (mapped > 0)
-    {
-        if (trace_all || trace_gamepad)
-            ffnx_trace("Gamepad: loaded %d gamepad mappings from SDL_GameControllerDB\n", mapped);
-    }
-    else if (mapped < 0)
-    {
-        if (trace_all || trace_gamepad)
-            ffnx_trace("Gamepad: SDL_GameControllerDB mapping files failed: %s\n", SDL_GetError());
-    }
-
+    GamepadMappingLoaded = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt");
     sdlInitialized = true;
-
-    if (trace_all || trace_gamepad)
-        ffnx_trace("Gamepad: initialized gamepad subsystem\n");
 
     return true;
 }
@@ -107,10 +89,18 @@ void Gamepad::GetDeviceName(SDL_Gamepad *gp, SDL_JoystickID id)
     sdlGamepad = gp;
     sdlInstanceId = id;
     cId = 0;
-    const char *name = SDL_GetGamepadName(gp);
-    controllerName = name ? name : "";
-    if (trace_all || trace_gamepad)
-        ffnx_trace("Gamepad connected: %s\n", controllerName.c_str());
+}
+
+const char* Gamepad::GetName() const
+{
+    if (!sdlGamepad) return "";
+    const char *name = SDL_GetGamepadName(sdlGamepad);
+    return name ? name : "";
+}
+
+int Gamepad::GetLoadedMappingCount() const
+{
+    return GamepadMappingLoaded;
 }
 
 void Gamepad::handleSDLEvents()
@@ -143,19 +133,10 @@ void Gamepad::handleSDLEvents()
 
                 case SDL_EVENT_GAMEPAD_REMOVED:
                     if (sdlGamepad && event.gdevice.which == sdlInstanceId)
-                    {
-                        if (trace_all || trace_gamepad)
-                            ffnx_trace("Gamepad disconnected: %s\n", controllerName.empty() ? "unknown" : controllerName.c_str());
                         closeGamepad();
-                    }
                     break;
 
                 case SDL_EVENT_GAMEPAD_REMAPPED:
-                    if (sdlGamepad && event.gdevice.which == sdlInstanceId)
-                    {
-                        if (trace_all || trace_gamepad)
-                            ffnx_trace("Gamepad remapped: %s\n", controllerName.c_str());
-                    }
                     break;
 
                 default:
@@ -175,8 +156,6 @@ bool Gamepad::openGamepad()
 
     if (!ids || count == 0)
     {
-        if (trace_all || trace_gamepad)
-            ffnx_trace("Gamepad: no gamepads, count=%d\n", count);
         SDL_free(ids);
         return false;
     }
@@ -184,12 +163,7 @@ bool Gamepad::openGamepad()
     for (int i = 0; i < count; ++i)
     {
         SDL_Gamepad *gp = SDL_OpenGamepad(ids[i]);
-        if (!gp)
-        {
-            if (trace_all || trace_gamepad)
-                ffnx_trace("Gamepad: SDL_OpenGamepad failed: %s\n", SDL_GetError());
-            continue;
-        }
+        if (!gp) continue;
 
         GetDeviceName(gp, ids[i]);
         break;
@@ -209,27 +183,10 @@ void Gamepad::closeGamepad()
 
     sdlInstanceId = -1;
     cId = -1;
-    controllerName.clear();
 
     ZeroMemory(&state, sizeof(state));
     leftStickX = leftStickY = rightStickX = rightStickY = 0.0f;
     leftTrigger = rightTrigger = 0.0f;
-}
-
-bool Gamepad::CheckConnection()
-{
-    if (!Gamepad_Init())
-        return false;
-
-    handleSDLEvents();
-
-    if (sdlGamepad)
-        return true;
-
-    if (!SDL_HasGamepad())
-        return false;
-
-    return openGamepad();
 }
 
 bool Gamepad::Refresh()
@@ -328,11 +285,7 @@ bool Gamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 
     Uint32 duration = (wLeftMotorSpeed > 0 || wRightMotorSpeed > 0) ? SDL_HAPTIC_INFINITY : 0;
     if (!SDL_RumbleGamepad(sdlGamepad, wLeftMotorSpeed, wRightMotorSpeed, duration))
-    {
-        if (trace_all || trace_gamepad)
-            ffnx_trace("Gamepad: Rumble failed: %s\n", SDL_GetError());
         return false;
-    }
 
     return true;
 }

@@ -23,7 +23,6 @@
 
 #include <Windows.h>
 #include <SDL3/SDL.h>
-#include <string>
 
 // Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
 // for the foundation of FFNx's original XInput implementation
@@ -86,7 +85,7 @@ private:
     SDL_Gamepad *sdlGamepad = nullptr;
     SDL_JoystickID sdlInstanceId = -1;
     bool sdlInitialized = false;
-    std::string controllerName;
+    int GamepadMappingLoaded = 0;
 
     bool Gamepad_Init();
     void handleSDLEvents();
@@ -107,10 +106,11 @@ public:
     float rightTrigger;
 
     int  GetPort() const;
+    const char* GetName() const;
+    int  GetLoadedMappingCount() const;
     bool HasRumble() const;
     GamepadInput* GetState();
     const GamepadVibration &GetVibrationState() const;
-    bool CheckConnection();
     bool Refresh();
     bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
     bool IsPressed(WORD) const;
