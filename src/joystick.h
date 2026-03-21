@@ -21,40 +21,45 @@
 
 #pragma once
 
-#include <Windows.h>
-#include <Xinput.h>
+#include <vector>
+#include <dinput.h>
 
-// Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
-class Gamepad
+// Inspired by https://bell0bytes.eu/directinput/
+
+// the joystick class (DirectInput)
+class Joystick
 {
 private:
-    int cId;
-    XINPUT_STATE state;
-    XINPUT_VIBRATION vibration;
+  LPDIRECTINPUT8 dev = nullptr;                          // dinput interface
+  LPDIRECTINPUTDEVICE8 gameController = nullptr;         // the actual joystick device
+  LPDIRECTINPUTEFFECT  gameControllerEffect = nullptr;   // force feedback effect object
+  DIDEVICEOBJECTINSTANCE gameControllerInfo;             // the device object info
+  DIDEVCAPS caps;                                        // the device capabilities
+  DIJOYSTATE2 currentState;			                         // the state of the joystick in the current frame
 
-    float deadzoneX;
-    float deadzoneY;
+  BOOL enumerateGameControllers(LPCDIDEVICEINSTANCE devInst);
+  std::vector<LPDIRECTINPUTDEVICE8> gameControllers;	// a vector of all available game controllers
+
+  BOOL isXInputDevice(const GUID *pGuidProductFromDirectInput);
+
+  static BOOL CALLBACK staticEnumerateGameControllers(LPCDIDEVICEINSTANCE devInst, LPVOID pvRef);
+  static BOOL CALLBACK staticSetGameControllerProperties(LPCDIDEVICEOBJECTINSTANCE devObjInst, LPVOID pvRef);
+
+  BOOL gameControllerSupportsVibration = false;
 
 public:
-    Gamepad() : deadzoneX(0.05f), deadzoneY(0.02f) {}
-    Gamepad(float dzX, float dzY) : deadzoneX(dzX), deadzoneY(dzY) {}
+  LPDIJOYSTATE2 GetState();
+  LPDIDEVCAPS GetCaps();
+  bool CheckConnection();
+  bool Refresh();
+  bool HasAnalogTriggers();
+  bool HasForceFeedback();
+  void Clean();
+  void Vibrate(WORD leftMotorSpeed, WORD rightMotorSpeed);
+  bool IsIdle();
 
-    float leftStickX;
-    float leftStickY;
-    float rightStickX;
-    float rightStickY;
-    float leftTrigger;
-    float rightTrigger;
-
-    int  GetPort() const;
-    XINPUT_GAMEPAD* GetState();
-    const XINPUT_VIBRATION &GetVibrationState() const;
-    bool CheckConnection();
-    // Get state from remote device
-    bool Refresh();
-    bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
-    bool IsPressed(WORD) const;
-    bool IsIdle();
+  LONG GetDeadZone(float percent);
+  DWORD GetMaxVibration();
 };
 
-extern Gamepad gamepad;
+extern Joystick joystick;

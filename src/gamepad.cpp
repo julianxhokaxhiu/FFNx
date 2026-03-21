@@ -20,256 +20,25 @@
 /****************************************************************************/
 
 #include <cmath>
-#include <SDL3/SDL.h>
 
 #include "cfg.h"
-#include "log.h"
 #include "gamepad.h"
 
 Gamepad gamepad;
 
-Gamepad::Gamepad()
-    : cId(-1), deadzoneX(0.05f), deadzoneY(0.02f), sdlGamepad(nullptr), sdlInstanceId(-1), sdlInitialized(false),
-      leftStickX(0.0f), leftStickY(0.0f), rightStickX(0.0f), rightStickY(0.0f), leftTrigger(0.0f), rightTrigger(0.0f)
-{
-}
-
-Gamepad::Gamepad(float dzX, float dzY)
-    : cId(-1), deadzoneX(dzX), deadzoneY(dzY), sdlGamepad(nullptr), sdlInstanceId(-1), sdlInitialized(false),
-      leftStickX(0.0f), leftStickY(0.0f), rightStickX(0.0f), rightStickY(0.0f), leftTrigger(0.0f), rightTrigger(0.0f)
-{
-}
-
-Gamepad::~Gamepad()
-{
-    closeGamepad();
-    if (sdlInitialized)
-    {
-        SDL_QuitSubSystem(SDL_INIT_GAMEPAD);
-        sdlInitialized = false;
-    }
-}
-
 int Gamepad::GetPort() const
 {
-    return sdlGamepad ? 1 : 0;
+    return cId + 1;
 }
 
-GamepadInput* Gamepad::GetState()
+XINPUT_GAMEPAD* Gamepad::GetState()
 {
     return &state.Gamepad;
 }
 
-const GamepadVibration &Gamepad::GetVibrationState() const
+const XINPUT_VIBRATION &Gamepad::GetVibrationState() const
 {
     return vibration;
-}
-
-bool Gamepad::Gamepad_Init()
-{
-    if (sdlInitialized)
-        return true;
-
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS3, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS3_SIXAXIS_DRIVER, "1");
-
-    if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD))
-        return false;
-
-    SDL_SetGamepadEventsEnabled(true);
-
-    GamepadMappingLoaded = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt");
-    sdlInitialized = true;
-
-    return true;
-}
-
-void Gamepad::GetDeviceName(SDL_Gamepad *gp, SDL_JoystickID id)
-{
-    sdlGamepad = gp;
-    sdlInstanceId = id;
-    cId = 0;
-}
-
-const char* Gamepad::GetName() const
-{
-    if (!sdlGamepad) return "";
-    const char *name = SDL_GetGamepadName(sdlGamepad);
-    return name ? name : "";
-}
-
-int Gamepad::GetLoadedMappingCount() const
-{
-    return GamepadMappingLoaded;
-}
-
-void Gamepad::handleSDLEvents()
-{
-    // Pump OS events into the SDL queue once, then peek only at gamepad events.
-    // This avoids consuming unrelated events (window, keyboard, mouse) that the
-    // rest of the engine still needs to process.
-    SDL_PumpEvents();
-
-    SDL_Event events[8];
-    int count;
-    while ((count = SDL_PeepEvents(events, SDL_arraysize(events), SDL_GETEVENT,
-                                   SDL_EVENT_GAMEPAD_AXIS_MOTION,
-                                   SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED)) > 0)
-    {
-        for (int i = 0; i < count; ++i)
-        {
-            const SDL_Event &event = events[i];
-            switch (event.type)
-            {
-                case SDL_EVENT_GAMEPAD_ADDED:
-                    if (!sdlGamepad)
-                    {
-                        SDL_JoystickID id = event.gdevice.which;
-                        SDL_Gamepad *gp = SDL_OpenGamepad(id);
-                        if (gp)
-                            GetDeviceName(gp, id);
-                    }
-                    break;
-
-                case SDL_EVENT_GAMEPAD_REMOVED:
-                    if (sdlGamepad && event.gdevice.which == sdlInstanceId)
-                        closeGamepad();
-                    break;
-
-                case SDL_EVENT_GAMEPAD_REMAPPED:
-                    break;
-
-                default:
-                    break;
-            }
-        }
-    }
-}
-
-bool Gamepad::openGamepad()
-{
-    if (!Gamepad_Init())
-        return false;
-
-    int count = 0;
-    SDL_JoystickID *ids = SDL_GetGamepads(&count);
-
-    if (!ids || count == 0)
-    {
-        SDL_free(ids);
-        return false;
-    }
-
-    for (int i = 0; i < count; ++i)
-    {
-        SDL_Gamepad *gp = SDL_OpenGamepad(ids[i]);
-        if (!gp) continue;
-
-        GetDeviceName(gp, ids[i]);
-        break;
-    }
-
-    SDL_free(ids);
-    return sdlGamepad != nullptr;
-}
-
-void Gamepad::closeGamepad()
-{
-    if (sdlGamepad)
-    {
-        SDL_CloseGamepad(sdlGamepad);
-        sdlGamepad = nullptr;
-    }
-
-    sdlInstanceId = -1;
-    cId = -1;
-
-    ZeroMemory(&state, sizeof(state));
-    leftStickX = leftStickY = rightStickX = rightStickY = 0.0f;
-    leftTrigger = rightTrigger = 0.0f;
-}
-
-bool Gamepad::Refresh()
-{
-    if (!Gamepad_Init())
-        return false;
-
-    handleSDLEvents();
-
-    if (!sdlGamepad)
-    {
-        if (!openGamepad())
-            return false;
-    }
-
-
-    deadzoneX = (float)left_analog_stick_deadzone;
-    deadzoneY = (float)right_analog_stick_deadzone;
-
-    auto normAxis = [](Sint16 v) -> float { return fmaxf(-1.0f, (float)v / 32767.0f); };
-    auto applyDeadzone = [](float v, float dz) -> float
-    {
-        if (fabsf(v) < dz) return 0.0f;
-        float sign = (v < 0.0f) ? -1.0f : 1.0f;
-        return ((fabsf(v) - dz) / (1.0f - dz)) * sign;
-    };
-
-    leftStickX  =  applyDeadzone(normAxis(SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_LEFTX)),  deadzoneX);
-    leftStickY  = -applyDeadzone(normAxis(SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_LEFTY)),  deadzoneY);
-    rightStickX =  applyDeadzone(normAxis(SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_RIGHTX)), deadzoneX);
-    rightStickY = -applyDeadzone(normAxis(SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_RIGHTY)), deadzoneY);
-
-    auto applyTriggerDeadzone = [](float v, float dz) -> float
-    {
-        if (v <= dz) return 0.0f;
-        return (v - dz) / (1.0f - dz);
-    };
-
-    leftTrigger  = applyTriggerDeadzone(SDL_clamp((float)SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER)  / 32767.0f, 0.0f, 1.0f), (float)left_analog_trigger_deadzone);
-    rightTrigger = applyTriggerDeadzone(SDL_clamp((float)SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) / 32767.0f, 0.0f, 1.0f), (float)right_analog_trigger_deadzone);
-
-    static const WORD buttonMasks[] = {
-        GAMEPAD_BUTTON_DPAD_UP, GAMEPAD_BUTTON_DPAD_DOWN, GAMEPAD_BUTTON_DPAD_LEFT,  GAMEPAD_BUTTON_DPAD_RIGHT,
-        GAMEPAD_BUTTON_START,   GAMEPAD_BUTTON_BACK,      GAMEPAD_BUTTON_LEFT_THUMB, GAMEPAD_BUTTON_RIGHT_THUMB,
-        GAMEPAD_BUTTON_LEFT_SHOULDER, GAMEPAD_BUTTON_RIGHT_SHOULDER,
-        GAMEPAD_BUTTON_A, GAMEPAD_BUTTON_B, GAMEPAD_BUTTON_X, GAMEPAD_BUTTON_Y
-    };
-    static const SDL_GamepadButton sdlButtons[] = {
-        SDL_GAMEPAD_BUTTON_DPAD_UP,    SDL_GAMEPAD_BUTTON_DPAD_DOWN,  SDL_GAMEPAD_BUTTON_DPAD_LEFT,  SDL_GAMEPAD_BUTTON_DPAD_RIGHT,
-        SDL_GAMEPAD_BUTTON_START,      SDL_GAMEPAD_BUTTON_BACK,       SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK,
-        SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER,
-        SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_BUTTON_WEST, SDL_GAMEPAD_BUTTON_NORTH
-    };
-    static_assert(sizeof(buttonMasks) == sizeof(sdlButtons) / sizeof(sdlButtons[0]) * sizeof(buttonMasks[0]),
-        "buttonMasks and sdlButtons must have the same number of entries");
-
-    WORD buttons = 0;
-    for (int i = 0; i < (int)(sizeof(buttonMasks) / sizeof(buttonMasks[0])); i++)
-    {
-        if (SDL_GetGamepadButton(sdlGamepad, sdlButtons[i]))
-            buttons |= buttonMasks[i];
-    }
-    if (SDL_GetGamepadButton(sdlGamepad, SDL_GAMEPAD_BUTTON_GUIDE))
-        buttons |= GAMEPAD_BUTTON_GUIDE;
-
-    ZeroMemory(&state, sizeof(GamepadState));
-    state.Gamepad.sThumbLX      = SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_LEFTX);
-    state.Gamepad.sThumbLY      = SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_LEFTY);
-    state.Gamepad.sThumbRX      = SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_RIGHTX);
-    state.Gamepad.sThumbRY      = SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_RIGHTY);
-    state.Gamepad.bLeftTrigger  = (BYTE)(leftTrigger  * 255.0f);
-    state.Gamepad.bRightTrigger = (BYTE)(rightTrigger * 255.0f);
-    state.Gamepad.wButtons      = buttons;
-
-    return true;
-}
-
-bool Gamepad::HasRumble() const
-{
-    if (!sdlGamepad)
-        return false;
-    SDL_PropertiesID props = SDL_GetGamepadProperties(sdlGamepad);
-    return SDL_GetBooleanProperty(props, SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
 }
 
 bool Gamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
@@ -277,17 +46,90 @@ bool Gamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
     vibration.wLeftMotorSpeed = wLeftMotorSpeed;
     vibration.wRightMotorSpeed = wRightMotorSpeed;
 
-    if (!Gamepad_Init())
-        return false;
+    if (cId == -1)
+        CheckConnection();
 
-    if (!sdlGamepad && !openGamepad())
-        return false;
+    if (cId != -1)
+    {
+        if (XInputSetState(cId, &vibration) != ERROR_SUCCESS)
+        {
+            cId = -1;
+            return false;
+        }
 
-    Uint32 duration = (wLeftMotorSpeed > 0 || wRightMotorSpeed > 0) ? SDL_HAPTIC_INFINITY : 0;
-    if (!SDL_RumbleGamepad(sdlGamepad, wLeftMotorSpeed, wRightMotorSpeed, duration))
-        return false;
+        return true;
+    }
 
-    return true;
+    return false;
+}
+
+bool Gamepad::CheckConnection()
+{
+    // When SDL gamepad backend is active, forcefully disable XInput
+    if (use_sdl_gamepad) { cId = -1; return false; }
+
+    int controllerId = -1;
+
+    for (DWORD i = 0; i < XUSER_MAX_COUNT && controllerId == -1; i++)
+    {
+        XINPUT_STATE state;
+        ZeroMemory(&state, sizeof(XINPUT_STATE));
+
+        if (XInputGetState(i, &state) == ERROR_SUCCESS)
+            controllerId = i;
+    }
+
+    cId = controllerId;
+
+    return controllerId != -1;
+}
+
+// Returns false if the controller has been disconnected
+bool Gamepad::Refresh()
+{
+    if (use_sdl_gamepad)
+    {
+        // Fully disable XInput when SDL mode is enabled.
+        cId = -1;
+        return false;
+    }
+
+    if (cId == -1)
+        CheckConnection();
+
+    if (cId != -1)
+    {
+        ZeroMemory(&state, sizeof(XINPUT_STATE));
+        if (XInputGetState(cId, &state) != ERROR_SUCCESS)
+        {
+            cId = -1;
+            return false;
+        }
+
+        float normLX = fmaxf(-1, (float)state.Gamepad.sThumbLX / 32767);
+        float normLY = fmaxf(-1, (float)state.Gamepad.sThumbLY / 32767);
+
+        leftStickX = (abs(normLX) < deadzoneX ? 0 : (abs(normLX) - deadzoneX) * (normLX / abs(normLX)));
+        leftStickY = (abs(normLY) < deadzoneY ? 0 : (abs(normLY) - deadzoneY) * (normLY / abs(normLY)));
+
+        if (deadzoneX > 0) leftStickX *= 1 / (1 - deadzoneX);
+        if (deadzoneY > 0) leftStickY *= 1 / (1 - deadzoneY);
+
+        float normRX = fmaxf(-1, (float)state.Gamepad.sThumbRX / 32767);
+        float normRY = fmaxf(-1, (float)state.Gamepad.sThumbRY / 32767);
+
+        rightStickX = (abs(normRX) < deadzoneX ? 0 : (abs(normRX) - deadzoneX) * (normRX / abs(normRX)));
+        rightStickY = (abs(normRY) < deadzoneY ? 0 : (abs(normRY) - deadzoneY) * (normRY / abs(normRY)));
+
+        if (deadzoneX > 0) rightStickX *= 1 / (1 - deadzoneX);
+        if (deadzoneY > 0) rightStickY *= 1 / (1 - deadzoneY);
+
+        leftTrigger = (float)state.Gamepad.bLeftTrigger / 255;
+        rightTrigger = (float)state.Gamepad.bRightTrigger / 255;
+
+        return true;
+    }
+    return false;
 }
 
 bool Gamepad::IsPressed(WORD button) const
@@ -295,23 +137,24 @@ bool Gamepad::IsPressed(WORD button) const
     return (state.Gamepad.wButtons & button) != 0;
 }
 
-bool Gamepad::IsIdle() const
+bool Gamepad::IsIdle()
 {
-    return !(leftStickY > 0.5f  || IsPressed(GAMEPAD_BUTTON_DPAD_UP))    &&
-           !(leftStickY < -0.5f || IsPressed(GAMEPAD_BUTTON_DPAD_DOWN))  &&
-           !(leftStickX < -0.5f || IsPressed(GAMEPAD_BUTTON_DPAD_LEFT))  &&
-           !(leftStickX > 0.5f  || IsPressed(GAMEPAD_BUTTON_DPAD_RIGHT)) &&
-           !IsPressed(GAMEPAD_BUTTON_X)              &&
-           !IsPressed(GAMEPAD_BUTTON_A)              &&
-           !IsPressed(GAMEPAD_BUTTON_B)              &&
-           !IsPressed(GAMEPAD_BUTTON_Y)              &&
-           !IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER)  &&
-           !IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER) &&
-           !(leftTrigger  > 0.85f)                  &&
-           !(rightTrigger > 0.85f)                  &&
-           !IsPressed(GAMEPAD_BUTTON_BACK)           &&
-           !IsPressed(GAMEPAD_BUTTON_START)          &&
-           !IsPressed(GAMEPAD_BUTTON_LEFT_THUMB)     &&
-           !IsPressed(GAMEPAD_BUTTON_RIGHT_THUMB)    &&
-           !IsPressed(GAMEPAD_BUTTON_GUIDE);
+  return  !(gamepad.leftStickY > 0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_UP)) &&
+          !(gamepad.leftStickY < -0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_DOWN)) &&
+          !(gamepad.leftStickX < -0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_LEFT)) &&
+          !(gamepad.leftStickX > 0.5f || gamepad.IsPressed(XINPUT_GAMEPAD_DPAD_RIGHT)) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_X) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_A) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_B) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_Y) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_SHOULDER)&&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_SHOULDER) &&
+          !(gamepad.leftTrigger > 0.85f) &&
+          !(gamepad.rightTrigger > 0.85f) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_BACK) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_START) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_START) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_LEFT_THUMB) &&
+          !gamepad.IsPressed(XINPUT_GAMEPAD_RIGHT_THUMB) &&
+          !gamepad.IsPressed(0x400);
 }

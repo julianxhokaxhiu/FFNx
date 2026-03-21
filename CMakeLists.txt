@@ -176,6 +176,9 @@ target_link_libraries(
   psapi
   dwmapi
   winmm
+  dinput8
+  dxguid
+  XINPUT9_1_0
   SDL3::SDL3-static
   strmiids
   ZLIB::ZLIB
