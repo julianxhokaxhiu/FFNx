@@ -95,6 +95,7 @@ find_package(CMakeRC CONFIG REQUIRED)
 find_package(lfreist-hwinfo CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -178,6 +179,7 @@ target_link_libraries(
   dinput8
   dxguid
   XINPUT9_1_0
+  SDL3::SDL3-static
   strmiids
   ZLIB::ZLIB
   PNG::PNG

@@ -89,9 +89,9 @@ extern double frame_rate;
 extern int battle_frame_multiplier;
 extern int common_frame_multiplier;
 
-extern bool xinput_connected;
 extern bool simulate_OK_button;
 extern GamepadAnalogueIntent gamepad_analogue_intent;
+extern bool xinput_connected;
 
 extern bool next_music_is_battle;
 extern uint16_t next_battle_scene_id;

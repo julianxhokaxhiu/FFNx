@@ -22,6 +22,7 @@
 #include <wbemidl.h>
 #include <oleauto.h>
 
+#include "cfg.h"
 #include "joystick.h"
 #include "log.h"
 
@@ -105,6 +106,9 @@ LPDIDEVCAPS Joystick::GetCaps()
 
 bool Joystick::CheckConnection()
 {
+  // When SDL gamepad backend is active, forcefully disable DirectInput
+  if (use_sdl_gamepad) return false;
+
   if (dev == nullptr)
   {
     // initialize the main DirectInput 8 device
@@ -177,6 +181,12 @@ bool Joystick::CheckConnection()
 // poll
 bool Joystick::Refresh()
 {
+  if (use_sdl_gamepad)
+  {
+    // Fully disable DirectInput when SDL mode is enabled.
+    return false;
+  }
+
   HRESULT hr;
 
   // Return if no joystick detected
