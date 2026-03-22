@@ -170,5 +170,7 @@ extern long ffmpeg_video_volume;
 extern bool ff7_advanced_blinking;
 extern long display_index;
 extern long ff8_high_res_font;
+extern std::vector<std::string> ff8_disable_remastered_hd_textures;
 
 void read_cfg();
+bool is_remastered_hd_textures_disabled(const std::string &module);

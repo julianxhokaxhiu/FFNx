@@ -24,7 +24,6 @@
 
 #include <memory>
 #include <optional>
-#include <steamworkssdk/steam_api.h>
 #include <array>
 #include <unordered_map>
 #include <vector>
@@ -33,6 +32,7 @@
 
 #include "ff7.h"
 #include "ff8/save_data.h"
+#include "steam.h"
 
 #define _ACH_ID(id)           \
     {                         \
