@@ -1,6 +1,25 @@
 # Next
 
-- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.1...master
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.2...master
+
+# 1.24.2
+
+- Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.1...1.24.2
+
+## Common
+
+- Core: Add support for [SummonKit](https://github.com/julianxhokaxhiu/SummonKit)
+- Core: Improve PC Specs detection and use "Unknown" when not able to detect a specific entry
+
+## FF7
+
+- Core: Fix save path location for Windows Store, GOG and Steam 2026 Rerelease
+- Rendering: Fix crash happening when advanced blinking was running while a field movie was playing
+
+## FF8
+
+- Core: Fix random crash when battles start ( https://github.com/julianxhokaxhiu/FFNx/pull/912 )
+- External textures: Clear identified textures properly between game modes ( https://github.com/julianxhokaxhiu/FFNx/pull/913 )
 
 # 1.24.1
 

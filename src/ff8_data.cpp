@@ -78,6 +78,7 @@ void ff8_find_externals()
 
 	ff8_externals.pubintro_exit = get_absolute_value(ff8_externals.main_entry, 0x176);
 	ff8_externals.pubintro_main_loop = get_absolute_value(ff8_externals.main_entry, 0x180);
+	ff8_externals.credits_enter = get_absolute_value(ff8_externals.pubintro_main_loop, 0x5D);
 	ff8_externals.credits_main_loop = get_absolute_value(ff8_externals.pubintro_main_loop, 0x6D);
 	ff8_externals.go_to_main_menu_main_loop = get_absolute_value(ff8_externals.credits_main_loop, 0xE2);
 	ff8_externals.main_menu_enter = get_absolute_value(ff8_externals.go_to_main_menu_main_loop, 0x19);

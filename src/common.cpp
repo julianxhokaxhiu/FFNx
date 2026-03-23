@@ -295,41 +295,76 @@ void ffnx_log_current_pc_specs()
 	ffnx_info("--- PC SPECS ---\n");
 
 	// CPU
-	auto cpus = hwinfo::getAllCPUs();
-	for (const auto& cpu : cpus) {
-		ffnx_info("   CPU: %s\n", cpu.modelName().c_str());
+	try
+	{
+		auto cpus = hwinfo::getAllCPUs();
+		for (const auto& cpu : cpus) {
+			ffnx_info("   CPU: %s\n", cpu.modelName().c_str());
+		}
+	}
+	catch (const std::exception& e)
+	{
+		ffnx_info("   CPU: Unknown\n");
 	}
 
 	// GPU
-	auto gpus = hwinfo::getAllGPUs();
-	for (auto& gpu : gpus) {
-		uint16_t vendorId = std::stoi(gpu.vendor_id(), 0, 16), deviceId = std::stoi(gpu.device_id(), 0, 16);
-		if (
-			(newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId) ||
-			(newRenderer.getCaps()->vendorId == vendorId && renderer_backend == RENDERER_BACKEND_OPENGL)
-		)
-			ffnx_info("   GPU: %s (%dMB) - Driver: %s - Backend: %s\n", gpu.name().c_str(), (int)(gpu.memory_Bytes() / 1024.0 / 1024.0), gpu.driverVersion().c_str(), newRenderer.currentRenderer.c_str());
+	try
+	{
+		auto gpus = hwinfo::getAllGPUs();
+		for (auto& gpu : gpus) {
+			uint16_t vendorId = std::stoi(gpu.vendor_id(), 0, 16), deviceId = std::stoi(gpu.device_id(), 0, 16);
+			if (
+				(newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId) ||
+				(newRenderer.getCaps()->vendorId == vendorId && renderer_backend == RENDERER_BACKEND_OPENGL)
+			)
+				ffnx_info("   GPU: %s (%dMB) - Driver: %s - Backend: %s\n", gpu.name().c_str(), (int)(gpu.memory_Bytes() / 1024.0 / 1024.0), gpu.driverVersion().c_str(), newRenderer.currentRenderer.c_str());
+		}
+	}
+	catch (const std::exception& e)
+	{
+		ffnx_info("   GPU: Unknown\n");
 	}
 
 	// RAM
-	hwinfo::Memory memory;
-	ffnx_info("   RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.total_Bytes() - memory.free_Bytes()) / 1024.0 / 1024.0), (int)(memory.total_Bytes() / 1024.0 / 1024.0), (int)(memory.free_Bytes() / 1024.0 / 1024.0));
+	try
+	{
+		hwinfo::Memory memory;
+		ffnx_info("   RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.total_Bytes() - memory.free_Bytes()) / 1024.0 / 1024.0), (int)(memory.total_Bytes() / 1024.0 / 1024.0), (int)(memory.free_Bytes() / 1024.0 / 1024.0));
+	}
+	catch (const std::exception& e)
+	{
+		ffnx_info("   RAM: Unknown\n");
+	}
 
 	// OS
-	hwinfo::OS os;
-	ffnx_info("    OS: %s %s (build %s)\n", os.name().c_str(), (os.is32bit() ? "32 bit" : "64 bit"), os.version().c_str());
+	try
+	{
+		hwinfo::OS os;
+		ffnx_info("    OS: %s %s (build %s)\n", os.name().c_str(), (os.is32bit() ? "32 bit" : "64 bit"), os.version().c_str());
+	}
+	catch (const std::exception& e)
+	{
+		ffnx_info("   OS: Unknown\n");
+	}
 
 	// WINE+PROTON
 	const char* env_wineloader = std::getenv("WINELOADER");
 	if (env_wineloader != NULL) // Are we running under Wine/Proton?
 	{
-		ffnx_info("  WINE: v%s\n", GetWineVersion());
+		try
+		{
+			ffnx_info("  WINE: v%s\n", GetWineVersion());
 
-		const std::regex proton_regex("([Pp]roton[\\s\\-\\w.()]+)");
-		std::smatch base_match;
-		std::string s_wineloader = std::string(env_wineloader);
-		if (std::regex_search(s_wineloader, base_match, proton_regex))
-			ffnx_info("PROTON: %s\n", base_match[1].str().c_str());
+			const std::regex proton_regex("([Pp]roton[\\s\\-\\w.()]+)");
+			std::smatch base_match;
+			std::string s_wineloader = std::string(env_wineloader);
+			if (std::regex_search(s_wineloader, base_match, proton_regex))
+				ffnx_info("PROTON: %s\n", base_match[1].str().c_str());
+		}
+		catch (const std::exception& e)
+		{
+			ffnx_info("   WINE: Unknown\n");
+		}
 	}
 
 	// End report of PC specs

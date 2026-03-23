@@ -229,7 +229,10 @@ bgfx::RendererType::Enum Renderer::getUserChosenRenderer() {
     switch (renderer_backend)
     {
     case RENDERER_BACKEND_AUTO:
-        ret = bgfx::RendererType::Count;
+        if (isMacOSLauncher())
+            ret = bgfx::RendererType::Vulkan;
+        else
+            ret = bgfx::RendererType::Count;
         break;
     case RENDERER_BACKEND_OPENGL:
         ret = bgfx::RendererType::OpenGL;
@@ -475,24 +478,21 @@ void Renderer::renderFrame()
     backendProgram = RendererProgram::POSTPROCESSING;
     backendViewId++;
     {
-        if (internalState.bHasDrawBeenDone)
-        {
-            useTexture(
-                bgfx::getTexture(backendFrameBuffer).idx
-            );
+        useTexture(
+            bgfx::getTexture(backendFrameBuffer).idx
+        );
 
-            setClearFlags(true, true);
+        setClearFlags(true, true);
 
-            bindVertexBuffer(vertices, 0, 4);
-            bindIndexBuffer(indices, 6);
+        bindVertexBuffer(vertices, 0, 4);
+        bindIndexBuffer(indices, 6);
 
-            setBlendMode(RendererBlendMode::BLEND_DISABLED);
-            setPrimitiveType();
+        setBlendMode(RendererBlendMode::BLEND_DISABLED);
+        setPrimitiveType();
 
-            draw();
+        draw();
 
-            setBlendMode();
-        }
+        setBlendMode();
     }
 };
 
@@ -1617,25 +1617,28 @@ void Renderer::show()
     // Reset internal state
     resetState();
 
-    renderFrame();
+    if (internalState.bHasDrawBeenDone)
+    {
+        renderFrame();
 
-    bgfx::update(
-        vertexBufferHandle,
-        0,
-        bgfx::copy(
-            vertexBufferData.data(),
-            vectorSizeOf(vertexBufferData)
-        )
-    );
+        bgfx::update(
+            vertexBufferHandle,
+            0,
+            bgfx::copy(
+                vertexBufferData.data(),
+                vectorSizeOf(vertexBufferData)
+            )
+        );
 
-    bgfx::update(
-        indexBufferHandle,
-        0,
-        bgfx::copy(
-            indexBufferData.data(),
-            vectorSizeOf(indexBufferData)
-        )
-    );
+        bgfx::update(
+            indexBufferHandle,
+            0,
+            bgfx::copy(
+                indexBufferData.data(),
+                vectorSizeOf(indexBufferData)
+            )
+        );
+    }
 
     bgfx::frame(doCaptureFrame);
 
