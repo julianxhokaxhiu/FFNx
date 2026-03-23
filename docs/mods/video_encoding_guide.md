@@ -38,10 +38,13 @@ FFNx Behavior x Metadata Chart:
 - Simply rename your file to end with .avi, regardless of its actual type.
 
 ### Video Codec
-**Recommended:** x264  
+**Recommended:** h264
 **Permitted:** Anything ffmpeg can decode  
 **Notes:**
-- x264 is recommended because it is widely used and well tested.
+- h264 is recommended because:
+     - Its encoders and decoders are very mature and reliable.
+     - Lower computational complexity relative to newer codecs helps (CPU) decode performance on old hardware.
+     - Newer codecs are prone to blurring out fine details, whereas h264 is not. According to some commentators, h264 is the last codec truly capable of "transparent" encodes.
 - The standalone x264 command-line encoder is recommended over ffmpeg or GUI-based tools.
 
 ### Audio Codec
