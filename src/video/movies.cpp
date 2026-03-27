@@ -75,8 +75,10 @@ const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P;
 AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 AVPixelFormat wb_pix_fmt = AV_PIX_FMT_NONE;
 ChromaLocationType chromaloc = CHROMALOC_CENTER;
-bool dofirstframereports = false;
+bool dofirstframestuff = false;
 bool needsws = false;
+bool okcolorspace = false;
+bool yuvjfixneeded = false;
 
 bool first_audio_packet;
 
@@ -109,7 +111,6 @@ static AVPixelFormat get_hw_format(AVCodecContext* ctx, const AVPixelFormat* pix
 						if (trace_movies  || trace_all) ffnx_trace("get_hw_format: Using hardware pixel format %s to avoid CPU writeback.\n", av_get_pix_fmt_name(*p));
 						return *p;
 				}
-				lastp = p;
 		}
 		*/
 
@@ -124,6 +125,75 @@ static AVPixelFormat get_hw_format(AVCodecContext* ctx, const AVPixelFormat* pix
 
 		if (trace_movies  || trace_all) ffnx_trace("get_hw_format: Got bad list from hardware decoder. Unrecoverable error.\n");
 		return AV_PIX_FMT_NONE;
+}
+
+// prepare a swscale context and put it in this_sws_ctx
+void prepare_sws_context(bool hw, AVPixelFormat pixfmtin, AVColorSpace colorspacein){
+	if (trace_movies || trace_all){
+		if (pixfmtin != targetpixelformat){
+			ffnx_trace("prepare_movie: Using swscale to convert pixel format from %s to %s.\n", av_get_pix_fmt_name(pixfmtin), av_get_pix_fmt_name(targetpixelformat));
+		}
+		if (!okcolorspace){
+			ffnx_trace("prepare_movie: Using swscale to convert YUV colorspace from %s to rec601.\n", av_color_space_name(colorspacein));
+		}
+		if (yuvjfixneeded){
+			ffnx_trace("prepare_movie: Using swscale to workaround ffmpeg yuvj color range bug.\n");
+		}
+	}
+	// set up pixel format conversion
+	// (scaling also crops green crap from padded bitstreams)
+	SwsContext* this_sws_ctx = sws_getContext(
+		movie_width,
+		movie_height,
+		pixfmtin,
+		movie_width,
+		movie_height,
+		targetpixelformat,
+		SWS_LANCZOS | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT,
+		NULL,
+		NULL,
+		NULL
+	);
+	// if we need a colorspace conversion, set it up here
+	// this would also be the place to set up color range conversion, if it worked -- which it doens't
+	// so just suppress the buggy color range conversion if we can
+	if (!okcolorspace || yuvjfixneeded){
+		int *coefs_in;
+		int *coefs_out;
+		int srcRange, dstRange;
+		int brightness, contrast, saturation;
+		sws_getColorspaceDetails(this_sws_ctx, &coefs_in, &srcRange, &coefs_out, &dstRange, &brightness, &contrast, &saturation);
+
+		coefs_in = const_cast<int*>(sws_getCoefficients(colorspacein)); // const sucks
+		// use the same colorspace
+		if (okcolorspace){
+			coefs_out = coefs_in;
+		}
+		// convert
+		else {
+			coefs_out = const_cast<int*>(sws_getCoefficients(SWS_CS_ITU601)); // const sucks
+		}
+
+		// Surprisingly, these parameters don't appear to **do** anything in most cases.
+		// It appears that whether swscale does a range conversion is controlled by pixformat and range metadata.
+		// And it will do one regardless of whether you want it.
+		// Except, when the input format is YUVJ, these parameters can be used to **prevent** an un-asked-for PC->TV conversion
+		// (They are totally ignored with 10-bit input formats, however.)
+		// Gawd... swscale is a buggy mess...
+		if (yuvjfixneeded){
+			srcRange = fullrange_input ? 1 : 0; // use the input color range
+			dstRange = srcRange; // no conversion!
+		}
+
+		sws_setColorspaceDetails(this_sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
+	}
+	if (hw){
+		sws_wb_ctx = this_sws_ctx;
+	}
+	else {
+		sws_ctx = this_sws_ctx;
+	}
+	return;
 }
 
 void ffmpeg_movie_init()
@@ -195,8 +265,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	WAVEFORMATEX sound_format;
 	DSBUFFERDESC1 sbdesc;
 	bool okpixelformat = false;
-	bool okcolorspace = false;
-	bool yuvjfixneeded = false;
 	bool islogomovie = false;
 	bool tryhwdecode = false;
 	int lastbackslashindex = -1;
@@ -287,6 +355,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	if (tryhwdecode){
 		// Check if the chosen hardware decoding API can theoretically decode this codec.
 		hw_pix_fmt = AV_PIX_FMT_NONE;
+		wb_pix_fmt = AV_PIX_FMT_NONE;
 		tryhwdecode = false;
 		for (int i = 0;; i++) {
 			const AVCodecHWConfig *hwconfig = avcodec_get_hw_config(codec, i);
@@ -319,81 +388,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		}
 		else if (trace_movies  || trace_all) {
 			ffnx_trace("prepare_movie: Successfully initialized %s decoder.\n", av_hwdevice_get_type_name(hwacceltype));
-		}
-	}
-	// if we initialized a hardware device, see if it can copy back our target pixel format,
-	// or at least a pixel format swscale can convert for us
-	// see https://stackoverflow.com/questions/47049312/how-can-i-convert-an-ffmpeg-avframe-with-pixel-format-av-pix-fmt-cuda-to-a-new-a
-	wb_pix_fmt = AV_PIX_FMT_NONE;
-	if (tryhwdecode){
-		AVHWFramesConstraints* hw_frames_const = av_hwdevice_get_hwframe_constraints(hw_device_ctx, nullptr);
-		if (hw_frames_const){
-
-			AVPixelFormat* p;
-
-			if (trace_movies  || trace_all){
-				for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
-					ffnx_trace("ffmpeg_prepare_movie: Hardware decoder writeback pixel format candidate list: %s.\n", av_get_pix_fmt_name(*p));
-				}
-			}
-
-			bool foundusable = false;
-			for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
-				if (*p == targetpixelformat){
-					wb_pix_fmt = *p;
-					foundusable = true;
-					break;
-				}
-			}
-			// we want a pixel format that swscale will accept as input
-			// AND ideally something that's not a RGB pixel format
-			if (!foundusable){
-				for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
-					const AVPixFmtDescriptor* p_pix_desc = av_pix_fmt_desc_get(*p);
-					if (sws_isSupportedInput(*p) && p_pix_desc && !(p_pix_desc->flags & AV_PIX_FMT_FLAG_RGB)){
-						wb_pix_fmt = *p;
-						foundusable = true;
-						break;
-					}
-				}
-			}
-			// Settle for a RGB format if we must, but now we have a problem:
-			// We have no idea how the hardware decoder does the YUV->RGB conversion, and thus no idea if it's correct.
-			if (!foundusable){
-				for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
-					if (sws_isSupportedInput(*p)){
-						// TODO: Dig into the guts of each hardware decoder and figure out:
-						//		Can we control the YUV->RGB matrix and color level behavior?
-						//			If so, we need to set it here.
-						//		If we can't control it, then what is it?
-						//			If we can't control it and it doesn't match our file's properties, we should abort.
-						//			(Or... potentially we could fix incorrect matrix in swscale, but we're likely just screwed with incorrect levels.)
-						// We know in advance that our hardware has no idea how to do bink YUV->RGB.
-
-						// Ugggg. This is actually an unfixable problem.
-						// We need to make a final decision to use/not use hardare decoding and attach the hardware decoder to the codec context before avcodec_open2().
-						// But we can't find out if the YUV->RGB conversion will be correct/fixable until after avcodec_open2().
-						// FML
-						// We should probably just disallow RGB formats entirely...
-						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Warning: Using a RGB pixel format to write back from hardware decoder means YUV->RGB conversion may be incorrect.\n");
-						wb_pix_fmt = *p;
-						foundusable = true;
-						break;
-					}
-				}
-			}
-			if (foundusable){
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Hardware decoder can write back usable pixel format %s.\n", av_get_pix_fmt_name(wb_pix_fmt));
-			}
-			else {
-				tryhwdecode = false;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Hardware decoder cannot write back a usable pixel format. Software decoding will be used.\n");
-			}
-			av_hwframe_constraints_free(&hw_frames_const);
-		}
-		else {
-			tryhwdecode = false;
-			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: av_hwdevice_get_hwframe_constraints() failed. Software decoding will be used.\n");
 		}
 	}
 
@@ -777,12 +771,14 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
-	dofirstframereports = true;
+	dofirstframestuff = true;
 
 	// Swscale is used to convert pixel format, convert YUV colorspace, suppress a bogus color range expansion, or crop a padded bitstream.
-	// Create one even if we don't think we need it now, since we won't know if bitstream is padded until we have a frame.
-	// Two actually, since the hardware decoding writeback may be in a different pixel format,
-	// and we won't know if hardware decoding was actually used until we have a frame.
+	// We won't know if we have a padded bitstream until the first frame is decoded.
+	// If using hardware decoding, we won't know the source pixel format until the first frame is decoded.
+	// So make one sws context for software decoding now.
+	// And potentially make a second one for hardware decoding later.
+
 	// Make sure the swscale context is cleared out first
 	if(sws_ctx) sws_freeContext(sws_ctx);
 	sws_ctx = nullptr;
@@ -792,6 +788,15 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	if(!okpixelformat || !okcolorspace || yuvjfixneeded){
 		needsws = true;
 	}
+
+	prepare_sws_context(false, nativepixformat, codec_ctx->colorspace);
+
+	// if we're using swscale to fix the color matrix, tell the shader it's 601
+	if (!okcolorspace){
+		colormatrix = COLORMATRIX_BT601;
+	}
+
+	/*
 	// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader
 
 	if (trace_movies || trace_all)
@@ -868,6 +873,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 		sws_setColorspaceDetails(sws_wb_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 	}
+	*/
 
 	if(audiostream >= 0)
 	{
@@ -974,7 +980,7 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 	}
 
 	if (upload_width > tex_width){
-		if (dofirstframereports && (trace_movies || trace_all)){
+		if (dofirstframestuff && (trace_movies || trace_all)){
 			ffnx_trace("upload_yuv_texture: Bitstream is unexpectedly wide. Plane %i. Movie width is %i, but frame stride is %i.\n", num, tex_width, upload_width);
 		}
 		// include the green crap so bgfx texture creation works
@@ -1080,21 +1086,88 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				usethis_sws = sws_ctx;
 
 				// was this frame decoded with hardware decoding?
-				if (movie_frame->hw_frames_ctx){
-					if ((trace_movies || trace_all) && dofirstframereports) ffnx_trace("ffmpeg_update_movie_sample: Frame was decoded using hardware. Pixel format is %s,\n", av_get_pix_fmt_name(AVPixelFormat(movie_frame->format)));
+				if ((movie_frame->format == hw_pix_fmt) && (hw_pix_fmt != AV_PIX_FMT_NONE)){
+					// if this is the first frame, we need to figure out our writeback pixel format
+					// we also need to figure out if we need swscale and, if so, to set it up
+					if (dofirstframestuff){
+						if (trace_movies || trace_all) ffnx_trace("ffmpeg_update_movie_sample: Frame was decoded using hardware. Hardware pixel format is %s,\n", av_get_pix_fmt_name(AVPixelFormat(movie_frame->format)));
+						// get the list of possible formats the hardware decoder can use for writeback
+						AVPixelFormat* formats;
+						ret = av_hwframe_transfer_get_formats(movie_frame->hw_frames_ctx, AV_HWFRAME_TRANSFER_DIRECTION_FROM, &formats, 0);
+						if (ret < 0) {
+							ffnx_error("ffmpeg_update_movie_sample: av_hwframe_transfer_get_formats() failed!\n");
+							goto packet_loop_exit;
+						}
+						const AVPixelFormat* p = nullptr;
+						// print the list
+						if (trace_movies || trace_all){
+							for (p = formats; *p != -1; p++) {
+								const AVPixFmtDescriptor* p_pix_desc = av_pix_fmt_desc_get(*p);
+								ffnx_trace("ffmpeg_update_movie_sample: writeback pixel format candidate list: %s. Usable for swscale %i. isYUV %i.\n", av_get_pix_fmt_name(*p), sws_isSupportedInput(*p), !(p_pix_desc->flags & AV_PIX_FMT_FLAG_RGB));
+							}
+						}
+						bool found_good_wb_format = false;
+						// can we write back our target format?
+						for (p = formats; *p != -1; p++) {
+							if (*p == targetpixelformat){
+								wb_pix_fmt = *p;
+								found_good_wb_format = true;
+								break;
+							}
+						}
+						// can we find a YUV format that swscale can use?
+						// we want to avoid RGB formats because we have no control over how the YUV-to-RGB conversion gets done.
+						if (!found_good_wb_format){
+							for (p = formats; *p != -1; p++) {
+								const AVPixFmtDescriptor* p_pix_desc = av_pix_fmt_desc_get(*p);
+								if (sws_isSupportedInput(*p) && !(p_pix_desc->flags & AV_PIX_FMT_FLAG_RGB)){
+									wb_pix_fmt = *p;
+									found_good_wb_format = true;
+									break;
+								}
+							}
+						}
+						// failing that, is there an RGB format swscale can use?
+						if (!found_good_wb_format){
+							for (p = formats; *p != -1; p++) {
+								if (sws_isSupportedInput(*p)){
+									wb_pix_fmt = *p;
+									found_good_wb_format = true;
+									if (trace_movies || trace_all) ffnx_trace("ffmpeg_update_movie_sample: Warning: YUV-to-RGB conversion is being done by hardware decoder without adult supervision. It may be incorrect.\n");
+									break;
+								}
+							}
+						}
+						if (found_good_wb_format){
+							if (trace_movies || trace_all) ffnx_trace("ffmpeg_update_movie_sample: Selected %s as pixel format for CPU writeback.\n", av_get_pix_fmt_name(wb_pix_fmt));
+							// do we need to use swscale?
+							needsws = ((wb_pix_fmt != targetpixelformat) || !okcolorspace || yuvjfixneeded);
+							// we need to set up a sws context now.
+							// (we couldn't do it earlier because we didn't know the source pixel format)
+							// (we might later find out we need this to crop green crap from padded bitstream)
+							prepare_sws_context(true, wb_pix_fmt, codec_ctx->colorspace);
+						} // end if found_good_wb_format
+						else {
+							ffnx_error("ffmpeg_update_movie_sample: Frame was decoded using hardware, but there is no usable format for CPU writeback!\n");
+							goto packet_loop_exit;
+						}
+					} //endif dofirstframestuff
 					// copy back to CPU so swsscale can convert the pixel format to what the shaders expect
-					// TODO: notes
+					// TODO: If the shaders were capable of dealing with a favored hardware pixel format,
+					//		and if we didn't need swscale for some other reason
+					//		(so we'd need to check for padded bitstream here),
+					//		this would be the spot where we'd branch and try to do a GPU-to-GPU copy instead.
 					wb_frame->format = wb_pix_fmt;
-					int retcopyback = av_hwframe_transfer_data(wb_frame, movie_frame, 0);
-					if (retcopyback < 0){
+					ret = av_hwframe_transfer_data(wb_frame, movie_frame, 0);
+					if (ret < 0){
 						ffnx_error("ffmpeg_update_movie_sample: av_hwframe_transfer_data() failed!\n");
 						goto packet_loop_exit;
 					}
 					// swap pointers' targets
 					usethis_frame = wb_frame;
 					usethis_sws = sws_wb_ctx;
-				}
-				else if ((trace_movies || trace_all) && dofirstframereports) ffnx_trace("ffmpeg_update_movie_sample: Frame was decoded using software. Pixel format is %s.\n", av_get_pix_fmt_name(AVPixelFormat(usethis_frame->format)));
+				} // endif frame was decoded using hardware decoding
+				else if ((trace_movies || trace_all) && dofirstframestuff) ffnx_trace("ffmpeg_update_movie_sample: Frame was decoded using software. Pixel format is %s.\n", av_get_pix_fmt_name(AVPixelFormat(usethis_frame->format)));
 
 				// Successfully received a frame
 				QueryPerformanceCounter((LARGE_INTEGER *)&now);
@@ -1102,7 +1175,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// check if we have a padded bitstream that needs cropped
 				if (!needsws && (usethis_frame->linesize[0] % movie_width != 0)){
 					needsws = true;
-					if (dofirstframereports && (trace_movies || trace_all)){
+					if (dofirstframestuff && (trace_movies || trace_all)){
 						ffnx_trace("ffmpeg_update_movie_sample: Bitstream is padded. Using Swscale to crop.\n");
 					}
 				}
@@ -1129,7 +1202,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				av_frame_unref(sws_frame);
 				av_frame_unref(wb_frame);
 
-				dofirstframereports = false;
+				dofirstframestuff = false;
 
 				if(vbuffer_write == vbuffer_read)
 				{
