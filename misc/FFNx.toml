@@ -381,9 +381,19 @@ ffmpeg_video_ext = "avi"
 external_movie_audio_ext = "ogg"
 
 #[HARDWARE VIDEO DECODING]
-# Attempt to use your GPU to decode movie files faster.
+# Attempt to use your GPU to decode movie files faster using the selected API.
+# Possible values:
+# 0 = disabled
+# 1 = vulkan
+# 2 = opencl
+# 3 = dxva2
+# 4 = d3d11va
+# 5 = d3d12va
+# 6 = cuda (requires nVidia GPU)
+# 7 = amf (requires AMD GPU) (not supported yet; next version of ffmpeg)
+# 8 = qsv (requires Intel GPU)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-enable_hardware_video_decoding = false
+hardware_video_decoding = 0
 
 ###########################
 # Controller Options

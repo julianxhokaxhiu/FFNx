@@ -241,12 +241,51 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		audiostream = -1;
 
 	// Does the user want to try hardware decoding?
-	tryhwdecode = enable_hardware_video_decoding;
+	tryhwdecode = true;
+	switch (hardware_video_decoding){
+		case HWVA_NONE:
+			tryhwdecode = false;
+			break;
+		case HWVA_VULKAN:
+			hwacceltype = AV_HWDEVICE_TYPE_VULKAN;
+			break;
+		case HWVA_OPENCL:
+			hwacceltype = AV_HWDEVICE_TYPE_OPENCL;
+			break;
+		case HWVA_DXVA2:
+			hwacceltype = AV_HWDEVICE_TYPE_DXVA2;
+			break;
+		case HWVA_D3D11VA:
+			hwacceltype = AV_HWDEVICE_TYPE_D3D11VA;
+			break;
+		case HWVA_D3D12VA:
+			hwacceltype = AV_HWDEVICE_TYPE_D3D12VA;
+			break;
+		case HWVA_CUDA: // nvidia CPU only
+			hwacceltype = AV_HWDEVICE_TYPE_CUDA;
+			break;
+		// not supported in this version of ffmpeg
+		//case HWVA_AMF: // amd GPU only
+		//	hwacceltype = AV_HWDEVICE_TYPE_AMF;
+		//	break;
+		case HWVA_QSV: // intel GPU only
+			hwacceltype = AV_HWDEVICE_TYPE_QSV;
+			break;
+		default:
+			tryhwdecode = false;
+			break;
+
+		// additional unsupported types:
+		// AV_HWDEVICE_TYPE_VDPAU - Linux only
+		// AV_HWDEVICE_TYPE_VAAPI - Formerly Linux only. Now supported by Windows, but ffmpeg doesn't seem to support it on Windows, and vcpkg won't build ffmpeg with support for it on Windows
+		// AV_HWDEVICE_TYPE_DRM - Linux only?
+		// AV_HWDEVICE_TYPE_VIDEOTOOLBOX - Apple only
+		// AV_HWDEVICE_TYPE_MEDIACODEC - Android only
+		// AV_HWDEVICE_TYPE_OHCODEC - Huawei only
+	}
+
 	if (tryhwdecode){
 		// Check if the chosen hardware decoding API can theoretically decode this codec.
-		//TODO: Let the user pick which hardware decoding API they want
-		// list https://www.ffmpeg.org/doxygen/4.0/hwcontext_8h.html#acf25724be4b066a51ad86aa9214b0d34
-		hwacceltype = AV_HWDEVICE_TYPE_D3D11VA;
 		hw_pix_fmt = AV_PIX_FMT_NONE;
 		tryhwdecode = false;
 		for (int i = 0;; i++) {
@@ -289,7 +328,15 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	if (tryhwdecode){
 		AVHWFramesConstraints* hw_frames_const = av_hwdevice_get_hwframe_constraints(hw_device_ctx, nullptr);
 		if (hw_frames_const){
+
 			AVPixelFormat* p;
+
+			if (trace_movies  || trace_all){
+				for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
+					ffnx_trace("ffmpeg_prepare_movie: Hardware decoder writeback pixel format candidate list: %s.\n", av_get_pix_fmt_name(*p));
+				}
+			}
+
 			bool foundusable = false;
 			for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
 				if (*p == targetpixelformat){
@@ -298,9 +345,37 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 					break;
 				}
 			}
+			// we want a pixel format that swscale will accept as input
+			// AND ideally something that's not a RGB pixel format
+			if (!foundusable){
+				for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
+					const AVPixFmtDescriptor* p_pix_desc = av_pix_fmt_desc_get(*p);
+					if (sws_isSupportedInput(*p) && p_pix_desc && !(p_pix_desc->flags & AV_PIX_FMT_FLAG_RGB)){
+						wb_pix_fmt = *p;
+						foundusable = true;
+						break;
+					}
+				}
+			}
+			// Settle for a RGB format if we must, but now we have a problem:
+			// We have no idea how the hardware decoder does the YUV->RGB conversion, and thus no idea if it's correct.
 			if (!foundusable){
 				for (p = hw_frames_const->valid_sw_formats; *p != AV_PIX_FMT_NONE; p++){
 					if (sws_isSupportedInput(*p)){
+						// TODO: Dig into the guts of each hardware decoder and figure out:
+						//		Can we control the YUV->RGB matrix and color level behavior?
+						//			If so, we need to set it here.
+						//		If we can't control it, then what is it?
+						//			If we can't control it and it doesn't match our file's properties, we should abort.
+						//			(Or... potentially we could fix incorrect matrix in swscale, but we're likely just screwed with incorrect levels.)
+						// We know in advance that our hardware has no idea how to do bink YUV->RGB.
+
+						// Ugggg. This is actually an unfixable problem.
+						// We need to make a final decision to use/not use hardare decoding and attach the hardware decoder to the codec context before avcodec_open2().
+						// But we can't find out if the YUV->RGB conversion will be correct/fixable until after avcodec_open2().
+						// FML
+						// We should probably just disallow RGB formats entirely...
+						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Warning: Using a RGB pixel format to write back from hardware decoder means YUV->RGB conversion may be incorrect.\n");
 						wb_pix_fmt = *p;
 						foundusable = true;
 						break;
