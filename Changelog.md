@@ -2,6 +2,11 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.2...master
 
+## Common
+
+- Core: added SDL Gamepad API support, enhancing controller support
+
+
 # 1.24.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.1...1.24.2
