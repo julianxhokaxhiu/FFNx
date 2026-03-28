@@ -290,8 +290,10 @@ namespace ff7::field
         // Remove this patch would lead to an instant crash of the game after first battle.
         if (
             ff7_2026_rerelease
-            && *common_externals.current_field_id == 116
-            && *ff7_externals.current_entity_id == 5
+            && (
+                (*common_externals.current_field_id == 116 && *ff7_externals.current_entity_id == 5)
+                || (*common_externals.current_field_id == 401 && *ff7_externals.current_entity_id == 8)
+            )
             && show_entity == 0
         )
             ret = call_original_opcode_function(RET);
