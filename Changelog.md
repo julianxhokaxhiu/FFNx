@@ -10,6 +10,10 @@
 
 - Core: Fix crash for `junbin4` on Windows Store, GOG and Steam 2026 Rerelease
 
+## Common
+
+- Renderer: fix `enable_bilinear` option for original game textures ( https://github.com/julianxhokaxhiu/FFNx/pull/914 )
+
 # 1.24.2
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.1...1.24.2
