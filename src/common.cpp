@@ -135,6 +135,12 @@ uint32_t steam_stock_launcher = false;
 // global FF7 flag, check if is eStore edition
 uint32_t estore_edition = false;
 
+// global FF7 flag, check if is gog edition
+uint32_t gog_edition = false;
+
+// global FF7 flag, check if is windows store edition
+uint32_t windows_store_edition = false;
+
 // global FF7 flag, check if it is 2026 rerelease
 uint32_t ff7_2026_rerelease = false;
 
@@ -2861,11 +2867,23 @@ void get_data_lang_path(PCHAR buffer)
 	}
 }
 
+/**
+ * FF7
+ * ===
+ * - estore (2012): {user documents}/Square Enix/FINAL FANTASY VII/ (saves into subdir: user_{number}/)
+ * - Steam (2013): {user documents}/Square Enix/FINAL FANTASY VII Steam/ (saves into subdir: user_{number}/)
+ * - Steam (2026): {user appdata/local}/FINAL FANTASY VII Steam Edition/ (saves into subdir: {SteamAPI->User()->GetSteamId()}/)
+ * - GOG (2026): {user appdata/local}/FINAL FANTASY VII GOG Edition/ (saves into subdir: {GOG User number}/)
+ * - windows store: unknown
+ * FF8
+ * ===
+ * - Steam (2013): {user documents}/Square Enix/FINAL FANTASY VIII Steam/user_{number}/
+ */
 void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 {
 	PWSTR outPath = NULL;
 
-	HRESULT hr = SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &outPath);
+	HRESULT hr = SHGetKnownFolderPath(ff7_2026_rerelease && !windows_store_edition ? FOLDERID_LocalAppData : FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &outPath);
 
 	if (SUCCEEDED(hr))
 	{
@@ -2876,7 +2894,24 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 		if (ff8)
 			PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VIII Steam)");
 		else
-			PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VII Steam)");
+		{
+			if (gog_edition)
+			{
+				PathAppendA(buffer, R"(FINAL FANTASY VII GOG Edition)");
+			}
+			else if (ff7_steam_rerelease_edition)
+			{
+				PathAppendA(buffer, R"(FINAL FANTASY VII Steam Edition)");
+			}
+			else if (estore_edition)
+			{
+				PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VII)");
+			}
+			else
+			{
+				PathAppendA(buffer, R"(Square Enix\FINAL FANTASY VII Steam)");
+			}
+		}
 
 		if (isSavegameFile)
 		{
@@ -2887,17 +2922,46 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 			}
 			else
 			{
-				// Search for the first "user_" match in the game path
-				CHAR searchPath[MAX_PATH];
-				WIN32_FIND_DATA pathFound;
-				HANDLE hFind;
-
-				strcpy(searchPath, buffer);
-				strcat(searchPath, R"(\user_*)");
-				if (hFind = FindFirstFileA(searchPath, &pathFound))
+				if (ff7_2026_rerelease)
 				{
-					PathAppendA(buffer, pathFound.cFileName);
-					FindClose(hFind);
+					// Find first directory with only numbers
+					for (const auto &dirEntry: std::filesystem::directory_iterator(buffer))
+					{
+						if (dirEntry.is_directory() && dirEntry.path().filename().compare("0") != 0)
+						{
+							bool nonDigitFound = false;
+							const auto &filename = dirEntry.path().filename().string();
+							for (const char &c: filename)
+							{
+								if (!std::isdigit(c))
+								{
+									nonDigitFound = true;
+									break;
+								}
+							}
+
+							if (!nonDigitFound)
+							{
+								PathAppendA(buffer, filename.c_str());
+								break;
+							}
+						}
+					}
+				}
+				else
+				{
+					// Search for the first "user_" match in the game path
+					CHAR searchPath[MAX_PATH];
+					WIN32_FIND_DATA pathFound;
+					HANDLE hFind;
+
+					strcpy(searchPath, buffer);
+					strcat(searchPath, R"(\user_*)");
+					if (hFind = FindFirstFileA(searchPath, &pathFound))
+					{
+						PathAppendA(buffer, pathFound.cFileName);
+						FindClose(hFind);
+					}
 				}
 			}
 		}
@@ -3078,9 +3142,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 						ffnx_trace("Detected Steam Rerelease edition.\n");
 					}
 					else if(fileExists("../../goggame-1698970154.info"))
+					{
+						gog_edition = true;
+
 						ffnx_trace("Detected GOG edition.\n");
+					}
 					else
+					{
+						windows_store_edition = true;
+
 						ffnx_trace("Detected Windows Store edition.\n");
+					}
 
 					ff7_2026_rerelease = true;
 				}
