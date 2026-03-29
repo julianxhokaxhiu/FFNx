@@ -50,7 +50,7 @@ We are always open for contributions via PRs, and in case you want to join the c
 - 5.1/7.1 audio output support
 - Steam 2013 support; no game converter required
 - Steam 2013 savegame preservation (you no longer lose saves created while FFNx is active)
-- XInput controller support (Xbox 360 and compatible) with D-Pad working out-of-the-box
+- SDL, XInput, and DirectInput controller support (Xbox, PlayStation, Nintendo and compatible controllers) with D-Pad working out-of-the-box
 - Native speedhack support
 - External music loading to replace original MIDIs
 - The game continues to run within an inactive window
@@ -139,6 +139,7 @@ If you're curious to know, FFNx makes use of:
 - [openpsf](https://github.com/myst6re/openpsf) (MINIPSF emulation engine to playback PSX/PS2 music files)
 - [Steamworks SDK](https://github.com/julianxhokaxhiu/SteamworksSDKCI) (support achievements for the Steam editions of games)
 - [mimalloc](https://github.com/microsoft/mimalloc) (a compact general purpose allocator with excellent performance)
+- [SDL](https://libsdl.org/) using Gamepad API for enhanced controller support
 
 ## How to build
 

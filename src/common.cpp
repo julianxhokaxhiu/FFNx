@@ -54,6 +54,7 @@
 #include "saveload.h"
 #include "gamepad.h"
 #include "joystick.h"
+#include "sdl-gamepad.h"
 #include "input.h"
 #include "field.h"
 #include "world.h"
@@ -1089,6 +1090,12 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	return ret;
 }
 
+void force_sdl_gamepad_mode()
+{
+	xinput_connected = false;
+	joystick.Clean();
+}
+
 // called by the game before rendering starts, after the driver object has been
 // created, we use this opportunity to initialize our default OpenGL render
 // state
@@ -1106,6 +1113,16 @@ uint32_t common_init(struct game_obj *game_object)
 	nxAudioEngine.setSFXMasterVolume(external_sfx_volume / 100.0f);
 	nxAudioEngine.setAmbientMasterVolume(external_ambient_volume / 100.0f);
 	nxAudioEngine.setVoiceMasterVolume(external_voice_volume / 100.0f);
+
+	// When SDL gamepad mode is active, forcefully disable XInput and DirectInput
+	if (use_sdl_gamepad)
+	{
+		force_sdl_gamepad_mode();
+		if (!sdlGamepad.Gamepad_Init())
+			ffnx_error("SDL gamepad: failed to initialize subsystem\n");
+		else if (trace_all || trace_gamepad)
+			ffnx_trace("SDL gamepad: subsystem initialized, XInput and DirectInput forcefully disabled\n");
+	}
 
 	proxyWndProc = true;
 
@@ -1315,21 +1332,49 @@ void common_flip(struct game_obj *game_object)
 		}
 	}
 
-	// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
-	if (!xinput_connected && gamepad.CheckConnection())
+	if (use_sdl_gamepad)
 	{
-		if (trace_all || trace_gamepad) ffnx_trace("XInput controller: connected.\n");
+		// Forcefully ensure XInput and DirectInput remain disabled
+		force_sdl_gamepad_mode();
+		if (trace_all || trace_gamepad) ffnx_trace("common_flip: SDL mode active, XInput/DInput cleaned\n");
 
-		xinput_connected = true;
+		// SDL gamepad hot-plug logging (Refresh is driven by gamehacks.processGamepadInput each frame)
+		static bool sdl_gamepad_connected = false;
+		static std::string sdl_gamepad_name;
+		bool sdl_gamepad_state = (sdlGamepad.GetPort() > 0);
 
-		// Release any previous DirectInput attached controller, if any
-		joystick.Clean();
+		if (!sdl_gamepad_connected && sdl_gamepad_state)
+		{
+			sdl_gamepad_name = sdlGamepad.GetName();
+			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: connected (%s)\n", sdl_gamepad_name.c_str());
+			if ((trace_all || trace_gamepad) && sdlGamepad.GetLoadedMappingCount() > 0) ffnx_trace("SDL gamepad: loaded %d mappings from gamecontrollerdb.txt\n", sdlGamepad.GetLoadedMappingCount());
+			sdl_gamepad_connected = true;
+		}
+		else if (sdl_gamepad_connected && !sdl_gamepad_state)
+		{
+			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: disconnected (%s)\n", sdl_gamepad_name.c_str());
+			sdl_gamepad_name.clear();
+			sdl_gamepad_connected = false;
+		}
 	}
-	else if (xinput_connected && !gamepad.CheckConnection())
+	else
 	{
-		if (trace_all || trace_gamepad) ffnx_trace("XInput controller: disconnected.\n");
+		// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
+		if (!xinput_connected && gamepad.CheckConnection())
+		{
+			if (trace_all || trace_gamepad) ffnx_trace("XInput controller: connected.\n");
 
-		xinput_connected = false;
+			xinput_connected = true;
+
+			// Release any previous DirectInput attached controller, if any
+			joystick.Clean();
+		}
+		else if (xinput_connected && !gamepad.CheckConnection())
+		{
+			if (trace_all || trace_gamepad) ffnx_trace("XInput controller: disconnected.\n");
+
+			xinput_connected = false;
+		}
 	}
 
 	frame_counter++;
