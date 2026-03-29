@@ -24,14 +24,32 @@
 #include "utils.h"
 #include "patch.h"
 #include "saveload.h"
+#include "ff8/file.h"
 
 uint8_t *ff8_exe_scan_texts = nullptr;
+bool ff8_exe_scan_texts_file_absent = false;
 uint8_t *ff8_exe_card_names = nullptr;
+bool ff8_exe_card_names_file_absent = false;
 uint8_t *ff8_exe_draw_point = nullptr;
+bool ff8_exe_draw_point_file_absent = false;
 uint8_t *ff8_exe_card_texts = nullptr;
+bool ff8_exe_card_texts_file_absent = false;
 
 bool ff8_get_exe_path(const char *name, char *target_filename)
 {
+    char langPath[16] = "";
+    ff8_fs_lang_string(langPath);
+
+    snprintf(target_filename, MAX_PATH, "%s/%s/%s/exe/%s.msd", basedir, direct_mode_path.c_str(), langPath, name);
+    normalize_path(target_filename);
+
+    if (fileExists(target_filename)) {
+        return true;
+    }
+
+    if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", target_filename);
+
+    // Retry without lang
     snprintf(target_filename, MAX_PATH, "%s/%s/exe/%s.msd", basedir, direct_mode_path.c_str(), name);
     normalize_path(target_filename);
 
@@ -247,13 +265,14 @@ uint8_t *ff8_open_msd(char *filename, int *data_size = nullptr)
 
 uint8_t *ff8_override_battle_scans()
 {
-    if (ff8_exe_scan_texts != nullptr) {
+    if (ff8_exe_scan_texts != nullptr || ff8_exe_scan_texts_file_absent) {
         return ff8_exe_scan_texts;
     }
 
     char filename[MAX_PATH] = {};
     if (! ff8_get_battle_scan_texts_filename(filename)) {
         if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", filename);
+        ff8_exe_scan_texts_file_absent = true;
 
         return nullptr;
     }
@@ -265,13 +284,14 @@ uint8_t *ff8_override_battle_scans()
 
 uint8_t *ff8_override_card_names()
 {
-    if (ff8_exe_card_names != nullptr) {
+    if (ff8_exe_card_names != nullptr || ff8_exe_card_names_file_absent) {
         return ff8_exe_card_names;
     }
 
     char filename[MAX_PATH] = {};
     if (! ff8_get_card_names_filename(filename)) {
         if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", filename);
+        ff8_exe_card_names_file_absent = true;
 
         return nullptr;
     }
@@ -283,13 +303,14 @@ uint8_t *ff8_override_card_names()
 
 uint8_t *ff8_override_draw_point()
 {
-    if (ff8_exe_draw_point != nullptr) {
+    if (ff8_exe_draw_point != nullptr || ff8_exe_draw_point_file_absent) {
         return ff8_exe_draw_point;
     }
 
     char filename[MAX_PATH] = {};
     if (! ff8_get_draw_point_filename(filename)) {
         if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", filename);
+        ff8_exe_draw_point_file_absent = true;
 
         return nullptr;
     }
@@ -301,13 +322,14 @@ uint8_t *ff8_override_draw_point()
 
 uint8_t *ff8_override_card_texts()
 {
-    if (ff8_exe_card_texts != nullptr) {
+    if (ff8_exe_card_texts != nullptr || ff8_exe_card_texts_file_absent) {
         return ff8_exe_card_texts;
     }
 
     char filename[MAX_PATH] = {};
     if (! ff8_get_card_texts_filename(filename)) {
         if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", filename);
+        ff8_exe_card_texts_file_absent = true;
 
         return nullptr;
     }
