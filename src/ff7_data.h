@@ -699,6 +699,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.sub_630C48 = (int (*)(int16_t, int16_t, int16_t, int16_t, int16_t))get_relative_call(common_externals.execute_opcode_table[0x50], 0x174);
 
 	ff7_externals.current_entity_id = (byte*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0x06); // 0xCC0964
+	ff7_externals.current_entity_script_id = (byte*)get_absolute_value(ff7_externals.field_init_field_objects_60BCFA, 0x29A); // 0xCBF9E8
+	ff7_externals.current_entity_script_priority = (byte*)get_absolute_value(ff7_externals.field_init_field_objects_60BCFA, 0x2CA); // 0xCC0B30
 	ff7_externals.field_script_ptr = (byte**)get_absolute_value(ff7_externals.open_field_file, 0xEA); //0xCBF5E8
 	ff7_externals.field_curr_script_position = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x5F], 0xE); //0xCC0CF8
 	common_externals.field_game_moment = (WORD*)get_absolute_value(common_externals.execute_opcode_table[0x9D], 0xEA); //0xDC08DC
