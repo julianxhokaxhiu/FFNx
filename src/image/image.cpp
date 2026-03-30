@@ -38,15 +38,39 @@ static void LibPngWarningCb(png_structp png_ptr, const char* warning)
     ffnx_info("libpng warning: %s\n", warning);
 }
 
-bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enum targetFormat)
+void read_png_file(png_structp png_ptr, png_bytep data, size_t size)
 {
-    FILE* file = fopen(filename, "rb");
+    bx::ReaderI *reader = (bx::ReaderI *)png_get_io_ptr(png_ptr);
+    bx::Error err;
 
-    if (!file)
-    {
-        return false;
+    int32_t r = bx::read(reader, data, size, &err);
+
+    if (!err.isOk() || r != size) {
+        png_error(png_ptr, "Cannot read data");
+    }
+}
+
+bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat)
+{
+    bimg::ImageContainer *ret;
+    bx::FileReader reader;
+    bx::Error err;
+
+    if (!bx::open(&reader, filename, &err) || !err.isOk()) {
+        return nullptr;
     }
 
+    if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
+
+    ret = loadPng(allocator, &reader, targetFormat);
+
+    bx::close(&reader);
+
+    return ret;
+}
+
+bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, bx::ReaderI *reader, bimg::TextureFormat::Enum targetFormat)
+{
     png_infop info_ptr = nullptr;
     png_structp png_ptr = nullptr;
 
@@ -59,17 +83,11 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     uint8_t* data = nullptr;
     size_t datasize = 0;
 
-    fseek(file, 0, SEEK_END);
-    datasize = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)0, LibPngErrorCb, LibPngWarningCb);
 
     if (!png_ptr)
     {
-        fclose(file);
-
-        return false;
+        return nullptr;
     }
 
     info_ptr = png_create_info_struct(png_ptr);
@@ -78,147 +96,87 @@ bool loadPng(const char *filename, bimg::ImageMip &mip, bimg::TextureFormat::Enu
     {
         png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
 
-        fclose(file);
-
-        return false;
+        return nullptr;
     }
 
     if (setjmp(png_jmpbuf(png_ptr)))
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-        fclose(file);
-
-        return false;
+        return nullptr;
     }
 
-    png_init_io(png_ptr, file);
+    png_set_read_fn(png_ptr, reader, read_png_file);
 
     png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
 
-    if (!Renderer::doesItFitInMemory(datasize))
-    {
-        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+    png_read_info(png_ptr, info_ptr);
 
-        fclose(file);
-
-        return false;
-    }
-
-    int transforms = PNG_TRANSFORM_EXPAND;
+    // Expand data to 24-bit RGB, or 8-bit grayscale, with alpha if available.
+    png_set_expand(png_ptr);
+    png_set_add_alpha(png_ptr, 0xFF, PNG_FILLER_AFTER);
+    // Use 1 byte per pixel in 1, 2, or 4-bit depth files.
+    png_set_packing(png_ptr);
+    // Expand the grayscale to 24-bit RGB if necessary.
+    png_set_gray_to_rgb(png_ptr);
+    // Scale a 16-bit depth file down to 8-bit, accurately.
+    png_set_scale_16(png_ptr);
 
     if (targetFormat == bimg::TextureFormat::BGRA8) {
-        transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_BGR;
-    } else if (targetFormat == bimg::TextureFormat::RGBA8) {
-        transforms |= PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_GRAY_TO_RGB;
+        png_set_bgr(png_ptr);
     }
 
-    png_read_png(png_ptr, info_ptr, transforms, NULL);
+    if ((trace_all || trace_loaders) && (png_get_bit_depth(png_ptr, info_ptr) != 8 || png_get_color_type(png_ptr, info_ptr) != PNG_COLOR_TYPE_RGBA)) {
+        ffnx_warning("%s: PNG format is not RGBA32, it will be converted automatically (bit_depth=%d color_type=%X)\n", __func__, png_get_bit_depth(png_ptr, info_ptr), png_get_color_type(png_ptr, info_ptr));
+    }
+
+    int number_passes = png_set_interlace_handling(png_ptr);
+
+    png_read_update_info(png_ptr, info_ptr);
 
     color_type = png_get_color_type(png_ptr, info_ptr);
     bit_depth = png_get_bit_depth(png_ptr, info_ptr);
     _width = png_get_image_width(png_ptr, info_ptr);
     _height = png_get_image_height(png_ptr, info_ptr);
 
-    if (color_type == PNG_COLOR_TYPE_RGB && (targetFormat == bimg::TextureFormat::BGRA8 || targetFormat == bimg::TextureFormat::RGBA8)) {
-        ffnx_warning("%s: PNG files without alpha is not supported, please convert it to RGBA for improved performance\n", __func__);
-
-        return false;
-    }
-
-    rowptrs = png_get_rows(png_ptr, info_ptr);
     rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 
     datasize = rowbytes * _height;
 
     if (trace_all || trace_loaders) ffnx_trace("%s: data_size=%d width=%d height=%d bit_depth=%d color_type=%X\n", __func__, datasize, _width, _height, bit_depth, color_type);
 
-    if (!Renderer::doesItFitInMemory(datasize))
+    if (color_type != PNG_COLOR_TYPE_RGBA || bit_depth != 8)
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-        fclose(file);
+        ffnx_error("%s: Cannot convert PNG to RGBA32\n", __func__);
 
-        return false;
+        return nullptr;
     }
 
-    data = (uint8_t*)driver_calloc(datasize, sizeof(uint8_t));
+    bimg::ImageContainer *image = bimg::imageAlloc(allocator, targetFormat == bimg::TextureFormat::Count ? bimg::TextureFormat::RGBA8 : targetFormat, _width, _height, 0, 1, false, false);
 
-    for (png_uint_32 y = 0; y < _height; y++) memcpy(data + (rowbytes * y), rowptrs[y], rowbytes);
+    if (image == nullptr) {
+        png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+
+        return nullptr;
+    }
+
+    for (int pass = 0; pass < number_passes; pass++)
+    {
+        data = (uint8_t *)image->m_data;
+        for (int y = 0; y < _height; y++)
+        {
+            png_read_row(png_ptr, data, NULL);
+            data += rowbytes;
+        }
+    }
+
+    png_read_end(png_ptr, info_ptr);
 
     png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-    fclose(file);
-
-    // ------------------------------------------------------------
-
-    bimg::TextureFormat::Enum texFmt = bimg::TextureFormat::Unknown;
-
-    switch (bit_depth)
-    {
-    case 8:
-    {
-        switch (color_type)
-        {
-        case PNG_COLOR_TYPE_GRAY:
-            texFmt = bimg::TextureFormat::R8;
-            break;
-        case PNG_COLOR_TYPE_GRAY_ALPHA:
-            texFmt = bimg::TextureFormat::RG8;
-            break;
-        case PNG_COLOR_TYPE_RGB:
-            texFmt = bimg::TextureFormat::RGB8;
-            break;
-        case PNG_COLOR_TYPE_RGBA:
-        case PNG_COLOR_TYPE_PALETTE:
-            texFmt = bimg::TextureFormat::RGBA8;
-            break;
-        }
-        break;
-    }
-    case 16:
-    {
-        switch (color_type)
-        {
-        case PNG_COLOR_TYPE_GRAY:
-            texFmt = bimg::TextureFormat::R16;
-            break;
-        case PNG_COLOR_TYPE_GRAY_ALPHA:
-            texFmt = bimg::TextureFormat::RG16;
-            break;
-        case PNG_COLOR_TYPE_RGB:
-        case PNG_COLOR_TYPE_RGBA:
-            texFmt = bimg::TextureFormat::RGBA16;
-            break;
-        case PNG_COLOR_TYPE_PALETTE:
-            break;
-        }
-        break;
-    }
-    default:
-        break;
-    }
-
-    if (texFmt != bimg::TextureFormat::Unknown)
-    {
-        mip.m_blockSize = 0;
-        mip.m_bpp = 0;
-        mip.m_data = data;
-        mip.m_depth = 0;
-        mip.m_format = texFmt;
-        mip.m_hasAlpha = true;
-        mip.m_size = datasize;
-        mip.m_width = _width;
-        mip.m_height = _height;
-
-        return true;
-    }
-    else
-    {
-        driver_free(data);
-    }
-
-    return false;
+    return image;
 }
 
 bool parseDds(const char *filename, DirectX::ScratchImage &image, DirectX::TexMetadata &metadata)

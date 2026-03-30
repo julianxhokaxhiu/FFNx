@@ -296,6 +296,7 @@ private:
         ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
         InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
         ChromaLocationType bChromaLocation = CHROMALOC_CENTER;
+        bool bIsSmoothSkinning = false;
 
         float backendProjMatrix[16];
         float postprocessingProjMatrix[16];
@@ -308,13 +309,13 @@ private:
         std::vector<float> WMFlags;
         std::vector<float> FSMovieFlags;
         std::vector<float> FSMoreMovieFlags;
+        std::vector<float> SmoothSkinningFlags;
 
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
 
-        std::array<float, 4> SkinningFlags;
         float bone_matrices[16*MAX_BONE_MATRICES];
-        
+
         std::array<float, 4> gameLightingFlags;
         float gameGlobalLightColor[4] = { 0.0, 0.0, 0.0, 0.0 };
         float gameLightDir1[4] = { 0.0, 0.0, 0.0, 0.0 };

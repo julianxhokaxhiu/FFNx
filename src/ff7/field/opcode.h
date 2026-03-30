@@ -58,6 +58,7 @@ namespace ff7::field
     int opcode_script_WAIT();
     int opcode_script_MVIEF();
     int opcode_script_BGMOVIE();
+    int opcode_script_VISI();
     uint8_t opcode_IFSW_compare_sub();
     int opcode_script_FADE();
     int opcode_script_IFKEY();

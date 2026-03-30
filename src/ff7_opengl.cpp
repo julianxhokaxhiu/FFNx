@@ -266,9 +266,10 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 				// Swirl mode 60FPS fix
 				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x184, common_frame_multiplier); // wait frames before swirling
-				patch_multiply_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, common_frame_multiplier);
-				byte swirl_cmp_fix[7] = {0x82, 0xB9, 0x50, 0x11, 0x00, 0x00, 0x9C};
-				memcpy_code(ff7_externals.swirl_loop_sub_4026D4 + 0x10B, swirl_cmp_fix, sizeof(swirl_cmp_fix));
+				patch_multiply_code<byte>(ff7_externals.swirl_main_loop + 0x79, common_frame_multiplier); // swirling sound delay
+				patch_code_byte(ff7_externals.swirl_loop_sub_4026D4 + 0x3E, 50); // replace 48 with a bigger number without multiplying in order to have fading effect correctly
+				patch_code_byte(ff7_externals.swirl_loop_sub_4026D4 + 0x111, 0x7F); // cannot multiply otherwise char overflow
+				patch_divide_code<byte>(ff7_externals.swirl_loop_sub_4026D4 + 0x61, common_frame_multiplier); // decrease fading speed
 				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1AB), common_frame_multiplier);
 				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1B1), common_frame_multiplier);
 				patch_divide_code<double>(get_absolute_value(ff7_externals.swirl_loop_sub_4026D4, 0x1E4), common_frame_multiplier);
@@ -403,27 +404,27 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	//#############################################
 	// steam save game preservation and other fixes
 	//#############################################
-	if (steam_edition)
+	if (steam_edition || ff7_steam_rerelease_edition)
 	{
 		switch(version)
 		{
 			case VERSION_FF7_102_US:
-				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x1096, ff7_write_save_file);
+				if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x1096, ff7_write_save_file);
 				// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
 				memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);
 				break;
 			case VERSION_FF7_102_DE:
-				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10B2, ff7_write_save_file);
+				if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10B2, ff7_write_save_file);
 				// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
 				memset_code(ff7_externals.config_menu_sub + 0x8B3, 0x90, 0xE6);
 				break;
 			case VERSION_FF7_102_FR:
-				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10B2, ff7_write_save_file);
+				if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10B2, ff7_write_save_file);
 				// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
 				memset_code(ff7_externals.config_menu_sub + 0x8AC, 0x90, 0xE6);
 				break;
 			case VERSION_FF7_102_SP:
-				replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10FE, ff7_write_save_file);
+				if (steam_edition) replace_call_function(ff7_externals.menu_sub_6FEDB0 + 0x10FE, ff7_write_save_file);
 				// Disable "Normal" setting in Controller section of the Config menu (it softlocks on Steam)
 				memset_code(ff7_externals.config_menu_sub + 0x8B3, 0x90, 0xE6);
 				break;
@@ -442,7 +443,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	//###############################
 	// steam achievement unlock calls
 	//###############################
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 	{
 		// BATTLE SQUARE
 		replace_call_function(ff7_externals.battle_sub_42A0E7 + 0x78, ff7::battle::load_battle_stage);
@@ -483,6 +484,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 				replace_call_function(ff7_externals.menu_sub_7212FB + 0xEC5, ff7_load_save_file);
 				break;
 		}
+
+		// For RE-RELEASE edition
+		replace_call_function(ff7_externals.battle_loop + 0xB78, ff7_engine_switch_game_loop_sub_666CF2);
+		replace_call_function(ff7_externals.chocobo_main_loop + 0x7E, ff7_chocobo_switch_mode_76DB33);
+		patch_code_dword(ff7_externals.highway_exit_address_location, (DWORD)ff7_highway_exit_650340);
 	}
 
 	replace_call(ff7_externals.credits_main_loop + 0xAC, ff7_credits_loop_gfx_begin_scene);

@@ -1,4 +1,4 @@
-![License](https://img.shields.io/github/license/julianxhokaxhiu/FFNx) ![Overall Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/total?label=Overall%20Downloads) ![Latest Stable Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/latest/total?label=Latest%20Stable%20Downloads&sort=semver) ![Latest Canary Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/canary/total?label=Latest%20Canary%20Downloads) ![GitHub Actions Workflow Status](https://github.com/julianxhokaxhiu/FFNx/actions/workflows/main-1.23.0.yml/badge.svg?branch=master)
+![License](https://img.shields.io/github/license/julianxhokaxhiu/FFNx) ![Overall Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/total?label=Overall%20Downloads) ![Latest Stable Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/latest/total?label=Latest%20Stable%20Downloads&sort=semver) ![Latest Canary Downloads](https://img.shields.io/github/downloads/julianxhokaxhiu/FFNx/canary/total?label=Latest%20Canary%20Downloads) ![GitHub Actions Workflow Status](https://github.com/julianxhokaxhiu/FFNx/actions/workflows/main-1.24.3.yml/badge.svg?branch=master)
 
 <div align="center">
   <img src="https://github.com/julianxhokaxhiu/FFNx/blob/master/.logo/logo_nobg.png" alt="">
@@ -7,7 +7,7 @@
 
 # FFNx
 
-Next generation modding platform for Final Fantasy VII and Final Fantasy VIII (with native Steam 2013 release support)
+Next generation modding platform for Final Fantasy VII and Final Fantasy VIII (with native Steam 2013, Steam 2026 Rerelease, GOG and Windows Store support)
 
 ## Introduction
 
@@ -48,8 +48,8 @@ We are always open for contributions via PRs, and in case you want to join the c
 - Up to 16x anisotropic support
 - Up to 16x antialiasing support
 - 5.1/7.1 audio output support
-- Steam support; no game converter required
-- Steam savegame preservation (you no longer lose saves created while FFNx is active)
+- Steam 2013 support; no game converter required
+- Steam 2013 savegame preservation (you no longer lose saves created while FFNx is active)
 - XInput controller support (Xbox 360 and compatible) with D-Pad working out-of-the-box
 - Native speedhack support
 - External music loading to replace original MIDIs
@@ -63,7 +63,7 @@ We are always open for contributions via PRs, and in case you want to join the c
 - Menu cursor vertically aligned on the center of words
 - Movies continue to play while running in an inactive window
 - Movie volume respects global sound volume
-- Steam sound and music volume configuration preservation (configure at your pleasure and on the next run it will be inherited)
+- Steam/GOG/Windows Store sound and music volume configuration preservation (configure at your pleasure and on the next run it will be inherited)
 - Configurable background transparency in battle dialogs (by default set to 75%)
 - SFX volume change applies in real-time, instead of requiring a game reload
 - Support for animated textures (like Aerith's waterfall, light fading, etc.)
@@ -74,10 +74,13 @@ We are always open for contributions via PRs, and in case you want to join the c
 - Support for external ambient audio effects
 - Support for external movie audio files (allows multiple videos to share the same audio)
 - Support for external movie voice acting (dedicated audio layer only for voice acting on top of movies)
-- Steam achievements can be unlocked while playing within FFNx
+- Steam 2013 and 2026 Rerelease achievements can be unlocked while playing within FFNx
 - Real-time light engine - You can now feel the game visually like never before
 - Real-time camera control in battles
 - Analogue controls using the full axis of your left analog stick
+- Steam 2026 Rerelease support: manual conversion actions required
+- GOG support: manual conversion actions required
+- Windows Store support: manual conversion actions required
 
 #### FF8
 - Vibration support

@@ -49,6 +49,12 @@ namespace ff7::field
             external_data.blinkFrameIndex = BLINKING_FRAMES;
         }
 
+        // Fix woa_* animation after battle by resetting bg position at field enter
+        if (*common_externals.current_field_id == 710 || *common_externals.current_field_id == 711) {
+            (*ff7_externals.field_triggers_header)->bg4_pos_x = 0;
+            (*ff7_externals.field_triggers_header)->bg4_pos_y = 0;
+        }
+
         if(widescreen_enabled || enable_uncrop) widescreen.initParamsFromConfig();
     }
 }
