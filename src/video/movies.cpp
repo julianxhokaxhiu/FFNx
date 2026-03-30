@@ -309,6 +309,26 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		audiostream = -1;
 
 	// Does the user want to try hardware decoding?
+	// if "auto," make a guess
+	if (hardware_video_decoding == HWVA_AUTO){
+		switch (newRenderer.getCaps()->rendererType){
+			case bgfx::RendererType::OpenGL:
+				hardware_video_decoding = HWVA_DXVA2;
+				break;
+			case bgfx::RendererType::Direct3D11:
+				hardware_video_decoding = HWVA_D3D11VA;
+				break;
+			case bgfx::RendererType::Direct3D12:
+				hardware_video_decoding = HWVA_D3D12VA;
+				break;
+			case bgfx::RendererType::Vulkan:
+				hardware_video_decoding = HWVA_VULKAN;
+				break;
+			default:
+				hardware_video_decoding = HWVA_NONE;
+				break;
+		}
+	}
 	tryhwdecode = true;
 	switch (hardware_video_decoding){
 		case HWVA_NONE:

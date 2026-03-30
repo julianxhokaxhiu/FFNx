@@ -384,16 +384,17 @@ external_movie_audio_ext = "ogg"
 # Attempt to use your GPU to decode movie files faster using the selected API.
 # Possible values:
 # 0 = disabled
-# 1 = vulkan
-# 2 = opencl
-# 3 = dxva2
-# 4 = d3d11va
-# 5 = d3d12va
-# 6 = cuda (requires nVidia GPU)
-# 7 = amf (requires AMD GPU) (not supported yet; next version of ffmpeg)
-# 8 = qsv (requires Intel GPU)
+# 1 = auto (make a guess based on selected renderer)
+# 2 = vulkan
+# 3 = opencl
+# 4 = dxva2
+# 5 = d3d11va
+# 6 = d3d12va
+# 7 = cuda (requires nVidia GPU)
+# 8 = amf (requires AMD GPU) (not supported yet; next version of ffmpeg)
+# 9 = qsv (requires Intel GPU)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-hardware_video_decoding = 0
+hardware_video_decoding = 1
 
 ###########################
 # Controller Options

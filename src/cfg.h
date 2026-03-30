@@ -43,14 +43,15 @@
 #define GAME_LIGHTING_PER_PIXEL 2
 
 #define HWVA_NONE 0
-#define HWVA_VULKAN 1
-#define HWVA_OPENCL 2
-#define HWVA_DXVA2 3
-#define HWVA_D3D11VA 4
-#define HWVA_D3D12VA 5
-#define HWVA_CUDA 6
-#define HWVA_AMF 7
-#define HWVA_QSV 8
+#define HWVA_AUTO 1
+#define HWVA_VULKAN 2
+#define HWVA_OPENCL 3
+#define HWVA_DXVA2 4
+#define HWVA_D3D11VA 5
+#define HWVA_D3D12VA 6
+#define HWVA_CUDA 7
+#define HWVA_AMF 8
+#define HWVA_QSV 9
 
 extern std::string mod_path;
 extern std::vector<std::string> mod_ext;
