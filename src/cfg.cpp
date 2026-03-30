@@ -158,6 +158,7 @@ long ffmpeg_video_volume;
 bool ff7_advanced_blinking;
 long display_index;
 long ff8_high_res_font;
+long hardware_video_decoding;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -325,6 +326,7 @@ void read_cfg()
 	ff7_advanced_blinking = config["ff7_advanced_blinking"].value_or(false);
 	display_index = config["display_index"].value_or(-1);
 	ff8_high_res_font = config["ff8_high_res_font"].value_or(-1);
+	hardware_video_decoding = config["hardware_video_decoding"].value_or(HWVA_NONE);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;

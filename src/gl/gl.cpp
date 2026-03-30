@@ -136,7 +136,7 @@ void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 	internal_set_renderstate(V_DEPTHTEST, 0, game_object);
 	internal_set_renderstate(V_DEPTHMASK, 0, game_object);
 
-	newRenderer.setInterpolationQualifier(RendererInterpolationQualifier::SMOOTH);
+	newRenderer.setYUVMovieBackend();
 	newRenderer.bindVertexBuffer(vertices, 0, 4);
 	newRenderer.bindIndexBuffer(indices, 6);
 
