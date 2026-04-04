@@ -1,3 +1,7 @@
+## FF7
+
+- Enable japanese text support if ff7_ja.exe is being ran.  Unfinished, but appears stable.
+
 # Next
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.3...master
