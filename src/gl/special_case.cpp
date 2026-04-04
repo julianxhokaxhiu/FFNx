@@ -41,28 +41,28 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	uint32_t mode = getmode_cached()->driver_mode;
 	VOBJ(texture_set, texture_set, current_state.texture_set);
 	uint32_t defer = false, force_defer = false;
+	bool isExternalTexture = current_state.texture_set && VREF(texture_set, ogl.external);
 
-	// modpath textures rendered in 3D should always be filtered
-	if(vertextype != TLVERTEX && current_state.texture_set && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
-
-	// modpath textures in menu should always be filtered
-	if((mode == MODE_MENU || mode == MODE_MAIN_MENU) && current_state.texture_set && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
+	// Force disabling filter for ff7 minigames internal textures
+	if(!ff8 && (mode == MODE_SUBMARINE || mode == MODE_COASTER) && !isExternalTexture) current_state.texture_filter = false;
 
 	// some modpath textures have filtering forced on
-	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter) && VREF(texture_set, ogl.external)) current_state.texture_filter = true;
-
-	// Texture filtering mostly does not work well in FF8
-	if(ff8) current_state.texture_filter = enable_bilinear && vertextype != TLVERTEX && current_state.texture_set;
-	else if (enable_bilinear && (vertextype != TLVERTEX || mode == MODE_MENU || mode == MODE_MAIN_MENU || (current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter)))) current_state.texture_filter = true;
+	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter) && isExternalTexture) current_state.texture_filter = true;
 
 	// some modpath textures have z-sort forced on
-	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_zsort) && VREF(texture_set, ogl.external)) defer = true;
+	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_zsort) && isExternalTexture) defer = true;
 
 	// z-sort by default in menu, unnecessary sorting will be avoided by defer logic
 	if(mode == MODE_MENU || mode == MODE_MAIN_MENU) defer = true;
 
 	if(!ff8)
 	{
+		// modpath textures rendered in 3D should always be filtered
+		if(vertextype != TLVERTEX && isExternalTexture) current_state.texture_filter = true;
+
+		// modpath textures in menu should always be filtered
+		if((mode == MODE_MENU || mode == MODE_MAIN_MENU) && isExternalTexture) current_state.texture_filter = true;
+
 		if(SAFE_GFXOBJ_CHECK(graphics_object, ff7_externals.menu_objects->buster_tex))
 		{
 			// stretch main menu to fullscreen if it is a modpath texture
@@ -135,6 +135,11 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	}
 
 	if((defer || force_defer) && !ff8) return gl_defer_sorted_draw(primitivetype, vertextype, vertices, vertexcount, indices, count, clip, mipmap, force_defer);
+
+	// If we use internal texture and the game asks for filtering, we only enabled it if enable_bilinear is set
+	if (!isExternalTexture && current_state.texture_filter && !enable_bilinear) {
+		current_state.texture_filter = false;
+	}
 
 	return false;
 }

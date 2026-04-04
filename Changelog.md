@@ -2,6 +2,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.3...master
 
+## Common
+
+- Renderer: fix `enable_bilinear` option for original game textures ( https://github.com/julianxhokaxhiu/FFNx/pull/914 )
+
 # 1.24.3
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.2...1.24.3
