@@ -772,15 +772,15 @@ LABEL_39:
                   special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
                   ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
                   break;
-                case 0x39u: // 6 in JP sheet. select/b10
-                  offset_u_in_byte = 224;
+                case 0x39u: // 6 in JP sheet. select/b9
+                  offset_u_in_byte = 192;
                   graphics_object_v_in_byte = 192;
                   graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
                   special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
                   ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
                   break;
-                case 0x38u: // 5 in JP sheet. start/b9
-                  offset_u_in_byte = 192;
+                case 0x38u: // 5 in JP sheet. start/b10
+                  offset_u_in_byte = 224;
                   graphics_object_v_in_byte = 192;
                   graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
                   special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
