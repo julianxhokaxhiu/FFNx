@@ -613,7 +613,7 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 int ff8_get_input_device_capabilities_number_of_buttons(int a1)
 {
 	if (use_sdl_gamepad)
-		return sdlGamepad.GetPort() > 0 ? 10 : 0;
+		return 10;
 	else if (xinput_connected)
 		return 10;
 	else

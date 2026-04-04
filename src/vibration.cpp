@@ -145,9 +145,10 @@ bool NxVibrationEngine::canRumble() const
 {
 	if (use_sdl_gamepad)
 		return sdlGamepad.GetPort() > 0 && sdlGamepad.HasRumble();
-	if (xinput_connected)
+	else if (xinput_connected)
 		return gamepad.GetPort() > 0;
-	return joystick.CheckConnection() && joystick.HasForceFeedback();
+	else
+		return joystick.CheckConnection() && joystick.HasForceFeedback();
 }
 
 uint8_t *NxVibrationEngine::createVibrateDataFromConfig(const toml::parse_result &config)
