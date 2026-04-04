@@ -3263,6 +3263,8 @@ struct ff7_externals
 	int8_t (*get_char_bank_value)(int16_t, int16_t);
 	uint32_t sub_611BAE;
 	byte* current_entity_id;
+	byte* current_entity_script_id;
+	byte* current_entity_script_priority;
 	byte** field_script_ptr; //0xCBF5E8
 	WORD* field_curr_script_position; //0xCC0CF8
 	byte* field_model_id_array; //0xCBFB70
