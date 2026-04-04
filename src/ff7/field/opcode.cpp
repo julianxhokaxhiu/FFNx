@@ -291,8 +291,8 @@ namespace ff7::field
         if (
             ff7_2026_rerelease
             && (
-                (*common_externals.current_field_id == 116 && *ff7_externals.current_entity_id == 5)
-                || (*common_externals.current_field_id == 401 && *ff7_externals.current_entity_id == 8)
+                (*common_externals.current_field_id == 116 && *ff7_externals.current_entity_id == 5 && ff7_externals.current_entity_script_id[8 * *ff7_externals.current_entity_id + ff7_externals.current_entity_script_priority[*ff7_externals.current_entity_id]] == 4)
+                || (*common_externals.current_field_id == 401 && *ff7_externals.current_entity_id == 8 && ff7_externals.current_entity_script_id[8 * *ff7_externals.current_entity_id + ff7_externals.current_entity_script_priority[*ff7_externals.current_entity_id]] == 5)
             )
             && show_entity == 0
         )
