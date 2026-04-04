@@ -612,12 +612,7 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 
 int ff8_get_input_device_capabilities_number_of_buttons(int a1)
 {
-	if (use_sdl_gamepad)
-		return 10;
-	else if (xinput_connected)
-		return 10;
-	else
-		return std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
+    return (use_sdl_gamepad || xinput_connected) ? 10 : std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
 }
 
 int ff8_draw_gamepad_icon_or_keyboard_key(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y)
