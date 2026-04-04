@@ -130,7 +130,7 @@ void gl_draw_movie_quad_common(uint32_t width, uint32_t height)
 		1, 3, 2
 	};
 
-	current_state.texture_filter = false; // this was dead code, but now is not, and needs to be liek this to replicate old behavior.
+	current_state.texture_filter = true;
 
 	internal_set_renderstate(V_NOCULL, 1, game_object);
 	internal_set_renderstate(V_DEPTHTEST, 0, game_object);

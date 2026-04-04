@@ -55,14 +55,6 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	if(ff8) current_state.texture_filter = enable_bilinear && vertextype != TLVERTEX && current_state.texture_set;
 	else if (enable_bilinear && (vertextype != TLVERTEX || mode == MODE_MENU || mode == MODE_MAIN_MENU || (current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter)))) current_state.texture_filter = true;
 
-  // submarine and speed ssquare huds glitch if filtered and they are internal textures and resolution is not 640X480.
-  if (current_state.texture_set && !ff8 && !(VREF(texture_set, ogl.external)))
-  {
-    if ((mode == MODE_SUBMARINE) || (mode == MODE_COASTER))
-    {
-      current_state.texture_filter = false; // required to avoid thin lines at the edges of the HUD textures in these modes. 
-    }
-  }
 	// some modpath textures have z-sort forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_zsort) && VREF(texture_set, ogl.external)) defer = true;
 
@@ -113,21 +105,7 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 			{
 				// avoid filtering window borders
 				if(!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win_c_", strlen("menu/btl_win_c_") - 1) && VREF(texture_set, palette_index) == 0) current_state.texture_filter = false;
-        // the following internal textures can glitch when not forced to unfiltered.
-        if (!(VREF(texture_set, ogl.external)))
-        {
-          if (!ff8 && (!_strnicmp(VREF(tex_header, file.pc_name), "menu/btl_win_", strlen("menu/btl_win_") - 1)))
-          {
-            current_state.texture_filter = false; // shows lines at 720p or higher. 
-          }
-          if (!ff8 && (!_strnicmp(VREF(tex_header, file.pc_name), "menu/usfont_", strlen("menu/usfont_") - 1)))
-          {
-            current_state.texture_filter = false; // shows lines at 720p or higher.
-          }
-        }
-
 			}
-
 		}
 
 		// z-sort select menu elements everywhere
