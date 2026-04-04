@@ -387,11 +387,7 @@ int ff7_get_gamepad()
 	}
 	else if (use_sdl_gamepad)
 	{
-		force_sdl_gamepad_mode();
-		if (trace_all || trace_gamepad) ffnx_trace("ff7_get_gamepad: SDL mode active, forcing XInput/DInput disabled\n");
-		if (sdlGamepad.Refresh())
-			return TRUE;
-		// Keep game in SDL mode to prevent fallback to XInput/DInput.
+		sdlGamepad.Refresh();
 		return TRUE;
 	}
 	else if (xinput_connected)

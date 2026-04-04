@@ -21,7 +21,6 @@
 
 #include <cmath>
 
-#include "cfg.h"
 #include "gamepad.h"
 
 Gamepad gamepad;
@@ -65,9 +64,6 @@ bool Gamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 
 bool Gamepad::CheckConnection()
 {
-    // When SDL gamepad backend is active, forcefully disable XInput
-    if (use_sdl_gamepad) { cId = -1; return false; }
-
     int controllerId = -1;
 
     for (DWORD i = 0; i < XUSER_MAX_COUNT && controllerId == -1; i++)
@@ -87,13 +83,6 @@ bool Gamepad::CheckConnection()
 // Returns false if the controller has been disconnected
 bool Gamepad::Refresh()
 {
-    if (use_sdl_gamepad)
-    {
-        // Fully disable XInput when SDL mode is enabled.
-        cId = -1;
-        return false;
-    }
-
     if (cId == -1)
         CheckConnection();
 

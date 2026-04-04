@@ -105,9 +105,6 @@ int SDLGamepad::GetLoadedMappingCount() const
 
 void SDLGamepad::handleSDLEvents()
 {
-    // Pump OS events into the SDL queue once, then peek only at gamepad events.
-    // This avoids consuming unrelated events (window, keyboard, mouse) that the
-    // rest of the engine still needs to process.
     SDL_PumpEvents();
 
     SDL_Event events[8];
@@ -202,7 +199,6 @@ bool SDLGamepad::Refresh()
             return false;
     }
 
-
     deadzoneX = (float)left_analog_stick_deadzone;
     deadzoneY = (float)right_analog_stick_deadzone;
 
@@ -240,9 +236,6 @@ bool SDLGamepad::Refresh()
         SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER,
         SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_BUTTON_WEST, SDL_GAMEPAD_BUTTON_NORTH
     };
-    static_assert(sizeof(buttonMasks) == sizeof(sdlButtons) / sizeof(sdlButtons[0]) * sizeof(buttonMasks[0]),
-        "buttonMasks and sdlButtons must have the same number of entries");
-
     WORD buttons = 0;
     for (int i = 0; i < (int)(sizeof(buttonMasks) / sizeof(buttonMasks[0])); i++)
     {

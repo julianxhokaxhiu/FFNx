@@ -144,7 +144,6 @@ struct light_data
 
 gfx_init common_init;
 gfx_cleanup common_cleanup;
-void force_sdl_gamepad_mode();
 gfx_lock common_lock;
 gfx_unlock common_unlock;
 gfx_flip common_flip;

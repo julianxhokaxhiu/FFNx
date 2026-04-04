@@ -1090,12 +1090,6 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	return ret;
 }
 
-void force_sdl_gamepad_mode()
-{
-	xinput_connected = false;
-	joystick.Clean();
-}
-
 // called by the game before rendering starts, after the driver object has been
 // created, we use this opportunity to initialize our default OpenGL render
 // state
@@ -1114,14 +1108,12 @@ uint32_t common_init(struct game_obj *game_object)
 	nxAudioEngine.setAmbientMasterVolume(external_ambient_volume / 100.0f);
 	nxAudioEngine.setVoiceMasterVolume(external_voice_volume / 100.0f);
 
-	// When SDL gamepad mode is active, forcefully disable XInput and DirectInput
 	if (use_sdl_gamepad)
 	{
-		force_sdl_gamepad_mode();
 		if (!sdlGamepad.Gamepad_Init())
 			ffnx_error("SDL gamepad: failed to initialize subsystem\n");
 		else if (trace_all || trace_gamepad)
-			ffnx_trace("SDL gamepad: subsystem initialized, XInput and DirectInput forcefully disabled\n");
+			ffnx_trace("SDL gamepad: subsystem initialized\n");
 	}
 
 	proxyWndProc = true;
@@ -1334,11 +1326,6 @@ void common_flip(struct game_obj *game_object)
 
 	if (use_sdl_gamepad)
 	{
-		// Forcefully ensure XInput and DirectInput remain disabled
-		force_sdl_gamepad_mode();
-		if (trace_all || trace_gamepad) ffnx_trace("common_flip: SDL mode active, XInput/DInput cleaned\n");
-
-		// SDL gamepad hot-plug logging (Refresh is driven by gamehacks.processGamepadInput each frame)
 		static bool sdl_gamepad_connected = false;
 		static std::string sdl_gamepad_name;
 		bool sdl_gamepad_state = (sdlGamepad.GetPort() > 0);

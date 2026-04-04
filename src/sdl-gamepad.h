@@ -27,9 +27,6 @@
 // Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
 // for the foundation of FFNx's original XInput implementation
 
-// original DirectInput imlpementation was inspired by https://bell0bytes.eu/directinput/
-
-// SDL-style button bitmask constants
 #define GAMEPAD_BUTTON_DPAD_UP        0x0001
 #define GAMEPAD_BUTTON_DPAD_DOWN      0x0002
 #define GAMEPAD_BUTTON_DPAD_LEFT      0x0004
@@ -68,9 +65,6 @@ typedef struct GamepadVibration
     WORD wLeftMotorSpeed;
     WORD wRightMotorSpeed;
 } GamepadVibration;
-
-// SDL3 state type means we still use SDL_JoystickID as the device identifier.
-// It is not used as the legacy SI joystick path, only for SDL_GetGamepads / event IDs.
 
 class SDLGamepad
 {
