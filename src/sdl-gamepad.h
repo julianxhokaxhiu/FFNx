@@ -60,18 +60,10 @@ typedef struct GamepadState
     GamepadInput Gamepad;
 } GamepadState;
 
-typedef struct GamepadVibration
-{
-    WORD wLeftMotorSpeed;
-    WORD wRightMotorSpeed;
-} GamepadVibration;
-
 class SDLGamepad
 {
 private:
-    int cId;
     GamepadState state;
-    GamepadVibration vibration;
 
     float deadzoneX;
     float deadzoneY;
@@ -89,7 +81,6 @@ private:
 public:
     bool Gamepad_Init();
     SDLGamepad();
-    SDLGamepad(float dzX, float dzY);
     ~SDLGamepad();
 
     float leftStickX;
@@ -103,8 +94,6 @@ public:
     const char* GetName() const;
     int  GetLoadedMappingCount() const;
     bool HasRumble() const;
-    GamepadInput* GetState();
-    const GamepadVibration &GetVibrationState() const;
     bool Refresh();
     bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
     bool IsPressed(WORD) const;

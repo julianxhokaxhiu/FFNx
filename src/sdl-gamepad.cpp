@@ -29,14 +29,7 @@
 SDLGamepad sdlGamepad;
 
 SDLGamepad::SDLGamepad()
-    : cId(-1), deadzoneX(0.05f), deadzoneY(0.02f), sdlGamepad(nullptr), sdlInstanceId(-1), sdlInitialized(false),
-      leftStickX(0.0f), leftStickY(0.0f), rightStickX(0.0f), rightStickY(0.0f), leftTrigger(0.0f), rightTrigger(0.0f)
-{
-}
-
-SDLGamepad::SDLGamepad(float dzX, float dzY)
-    : cId(-1), deadzoneX(dzX), deadzoneY(dzY), sdlGamepad(nullptr), sdlInstanceId(-1), sdlInitialized(false),
-      leftStickX(0.0f), leftStickY(0.0f), rightStickX(0.0f), rightStickY(0.0f), leftTrigger(0.0f), rightTrigger(0.0f)
+    : deadzoneX(0.05f), deadzoneY(0.02f)
 {
 }
 
@@ -55,15 +48,6 @@ int SDLGamepad::GetPort() const
     return sdlGamepad ? 1 : 0;
 }
 
-GamepadInput* SDLGamepad::GetState()
-{
-    return &state.Gamepad;
-}
-
-const GamepadVibration &SDLGamepad::GetVibrationState() const
-{
-    return vibration;
-}
 
 bool SDLGamepad::Gamepad_Init()
 {
@@ -88,7 +72,6 @@ void SDLGamepad::GetDeviceName(SDL_Gamepad *gp, SDL_JoystickID id)
 {
     sdlGamepad = gp;
     sdlInstanceId = id;
-    cId = 0;
 }
 
 const char* SDLGamepad::GetName() const
@@ -179,7 +162,6 @@ void SDLGamepad::closeGamepad()
     }
 
     sdlInstanceId = -1;
-    cId = -1;
 
     ZeroMemory(&state, sizeof(state));
     leftStickX = leftStickY = rightStickX = rightStickY = 0.0f;
@@ -245,14 +227,7 @@ bool SDLGamepad::Refresh()
     if (SDL_GetGamepadButton(sdlGamepad, SDL_GAMEPAD_BUTTON_GUIDE))
         buttons |= GAMEPAD_BUTTON_GUIDE;
 
-    ZeroMemory(&state, sizeof(GamepadState));
-    state.Gamepad.sThumbLX      = SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_LEFTX);
-    state.Gamepad.sThumbLY      = SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_LEFTY);
-    state.Gamepad.sThumbRX      = SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_RIGHTX);
-    state.Gamepad.sThumbRY      = SDL_GetGamepadAxis(sdlGamepad, SDL_GAMEPAD_AXIS_RIGHTY);
-    state.Gamepad.bLeftTrigger  = (BYTE)(leftTrigger  * 255.0f);
-    state.Gamepad.bRightTrigger = (BYTE)(rightTrigger * 255.0f);
-    state.Gamepad.wButtons      = buttons;
+    state.Gamepad.wButtons = buttons;
 
     return true;
 }
@@ -267,9 +242,6 @@ bool SDLGamepad::HasRumble() const
 
 bool SDLGamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 {
-    vibration.wLeftMotorSpeed = wLeftMotorSpeed;
-    vibration.wRightMotorSpeed = wRightMotorSpeed;
-
     if (!Gamepad_Init())
         return false;
 
