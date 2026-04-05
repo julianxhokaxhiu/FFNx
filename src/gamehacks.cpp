@@ -24,7 +24,7 @@
 #include "ff7/defs.h"
 #include "gamepad.h"
 #include "joystick.h"
-#include "sdl-gamepad.h"
+#include "sdl_gamepad.h"
 
 GameHacks gamehacks;
 

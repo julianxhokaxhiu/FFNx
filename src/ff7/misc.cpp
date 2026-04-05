@@ -32,7 +32,7 @@
 #include "../gamepad.h"
 #include "../gamehacks.h"
 #include "../joystick.h"
-#include "../sdl-gamepad.h"
+#include "../sdl_gamepad.h"
 #include "../music.h"
 #include "../ff7.h"
 #include "../log.h"

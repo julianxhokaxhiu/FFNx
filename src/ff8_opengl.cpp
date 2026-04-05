@@ -30,7 +30,7 @@
 #include "gl.h"
 #include "gamepad.h"
 #include "joystick.h"
-#include "sdl-gamepad.h"
+#include "sdl_gamepad.h"
 #include "gamehacks.h"
 #include "utils.h"
 #include "vibration.h"

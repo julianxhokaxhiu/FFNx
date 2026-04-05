@@ -54,7 +54,7 @@
 #include "saveload.h"
 #include "gamepad.h"
 #include "joystick.h"
-#include "sdl-gamepad.h"
+#include "sdl_gamepad.h"
 #include "input.h"
 #include "field.h"
 #include "world.h"

@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "gamepad.h"
-#include "sdl-gamepad.h"
+#include "sdl_gamepad.h"
 #include "joystick.h"
 #include "globals.h"
 #include "log.h"

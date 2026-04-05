@@ -24,7 +24,7 @@
 
 #include "cfg.h"
 #include "log.h"
-#include "sdl-gamepad.h"
+#include "sdl_gamepad.h"
 
 SDLGamepad sdlGamepad;
 
