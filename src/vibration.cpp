@@ -121,7 +121,14 @@ bool NxVibrationEngine::rumbleUpdate()
 
 	if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s left=%d right=%d\n", __func__, _left, _right);
 
-	const DWORD maxVibration = use_sdl_gamepad ? UINT16_MAX : xinput_connected ? UINT16_MAX : joystick.GetMaxVibration();
+	DWORD maxVibration;
+	if (use_sdl_gamepad)
+		maxVibration = UINT16_MAX;
+	else if (xinput_connected)
+		maxVibration = UINT16_MAX;
+	else
+		maxVibration = joystick.GetMaxVibration();
+
 	DWORD left = _left * maxVibration / LEFT_MOTOR_MAX_VALUE;
 	DWORD right = _right * maxVibration / RIGHT_MOTOR_MAX_VALUE;
 
@@ -133,11 +140,17 @@ bool NxVibrationEngine::rumbleUpdate()
 	}
 
 	if (use_sdl_gamepad)
+	{
 		sdlGamepad.Vibrate(left, right);
+	}
 	else if (xinput_connected)
+	{
 		gamepad.Vibrate(left, right);
+	}
 	else
+	{
 		joystick.Vibrate(left, right);
+	}
 
 	_currentLeft = _left;
 	_currentRight = _right;
@@ -148,11 +161,17 @@ bool NxVibrationEngine::rumbleUpdate()
 bool NxVibrationEngine::canRumble() const
 {
 	if (use_sdl_gamepad)
+	{
 		return sdlGamepad.GetPort() > 0 && sdlGamepad.HasRumble();
+	}
 	else if (xinput_connected)
+	{
 		return gamepad.GetPort() > 0;
+	}
 	else
+	{
 		return joystick.CheckConnection() && joystick.HasForceFeedback();
+	}
 }
 
 uint8_t *NxVibrationEngine::createVibrateDataFromConfig(const toml::parse_result &config)
