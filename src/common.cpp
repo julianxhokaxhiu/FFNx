@@ -1325,20 +1325,20 @@ void common_flip(struct game_obj *game_object)
 
 		if (!sdl_gamepad_initialized)
 		{
-			if (!sdlGamepad.Gamepad_Init())
+			if (!sdlgamepad.Gamepad_Init())
 				ffnx_error("SDL gamepad: failed to initialize subsystem\n");
 			else if (trace_all || trace_gamepad)
 				ffnx_trace("SDL gamepad: subsystem initialized\n");
 			sdl_gamepad_initialized = true;
 		}
 
-		bool sdl_gamepad_state = (sdlGamepad.GetPort() > 0);
+		bool sdl_gamepad_state = (sdlgamepad.GetPort() > 0);
 
 		if (!sdl_gamepad_connected && sdl_gamepad_state)
 		{
-			sdl_gamepad_name = sdlGamepad.GetName();
+			sdl_gamepad_name = sdlgamepad.GetName();
 			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: connected (%s)\n", sdl_gamepad_name.c_str());
-			if ((trace_all || trace_gamepad) && sdlGamepad.GetLoadedMappingCount() > 0) ffnx_trace("SDL gamepad: loaded %d mappings from gamecontrollerdb.txt\n", sdlGamepad.GetLoadedMappingCount());
+			if ((trace_all || trace_gamepad) && sdlgamepad.GetLoadedMappingCount() > 0) ffnx_trace("SDL gamepad: loaded %d mappings from gamecontrollerdb.txt\n", sdlgamepad.GetLoadedMappingCount());
 			sdl_gamepad_connected = true;
 		}
 		else if (sdl_gamepad_connected && !sdl_gamepad_state)

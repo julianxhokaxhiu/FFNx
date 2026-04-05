@@ -200,9 +200,9 @@ void GameHacks::processGamepadInput()
 
 	if (use_sdl_gamepad)
 	{
-		if (sdlGamepad.Refresh())
+		if (sdlgamepad.Refresh())
 		{
-			if(sdlGamepad.IsIdle())
+			if(sdlgamepad.IsIdle())
 			{
 				hold_input_for_frames = 0;
 				enable_hold_input = true;
@@ -214,7 +214,7 @@ void GameHacks::processGamepadInput()
 				return;
 			}
 
-			if (sdlGamepad.IsPressed(GAMEPAD_BUTTON_LEFT_THUMB)) // L3
+			if (sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_THUMB)) // L3
 			{
 				isGamepadShortcutMode = !isGamepadShortcutMode;
 				if(isGamepadShortcutMode) show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Waiting for shortcut input..");
@@ -226,39 +226,39 @@ void GameHacks::processGamepadInput()
 
 			// Soft reset on START+SELECT
 			if (
-				sdlGamepad.IsPressed(GAMEPAD_BUTTON_BACK) &&
-				sdlGamepad.IsPressed(GAMEPAD_BUTTON_START)
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_BACK) &&
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_START)
 				)
 				softReset();
 			// Increase in-game speed on R1
 			else if (
-				sdlGamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER)
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER)
 				)
 				increaseSpeedhack();
 			// Decrease in-game speed on L1
 			else if (
-				sdlGamepad.IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER)
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER)
 				)
 				decreaseSpeedhack();
 			// Toggle Speedhack on L2/R2
 			else if (
-				sdlGamepad.leftTrigger > 0.85f ||
-				sdlGamepad.rightTrigger > 0.85f
+				sdlgamepad.leftTrigger > 0.85f ||
+				sdlgamepad.rightTrigger > 0.85f
 				)
 				toggleSpeedhack();
 			// Toggle battle mode on Circle
 			else if (
-				sdlGamepad.IsPressed(GAMEPAD_BUTTON_B)
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_B)
 				)
 				toggleBattleMode();
 			// Toggle auto attack mode on Triangle
 			else if (
-				sdlGamepad.IsPressed(GAMEPAD_BUTTON_Y)
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_Y)
 				)
 				toggleAutoAttackMode();
 			// Skip Movies on Square
 			else if (
-				sdlGamepad.IsPressed(GAMEPAD_BUTTON_X)
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_X)
 				)
 				skipMovies();
 		}

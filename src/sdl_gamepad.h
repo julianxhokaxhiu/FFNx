@@ -68,7 +68,7 @@ private:
     float deadzoneX;
     float deadzoneY;
 
-    SDL_Gamepad *sdlGamepad = nullptr;
+    SDL_Gamepad *sdlgamepad = nullptr;
     SDL_JoystickID sdlInstanceId = -1;
     bool sdlInitialized = false;
     int GamepadMappingLoaded = 0;
@@ -100,4 +100,4 @@ public:
     bool IsIdle() const;
 };
 
-extern SDLGamepad sdlGamepad;
+extern SDLGamepad sdlgamepad;

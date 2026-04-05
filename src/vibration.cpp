@@ -53,7 +53,7 @@ void NxVibrationEngine::setLeftMotorValue(uint8_t force)
 	if (force > 0)
 	{
 		if (use_sdl_gamepad)
-			_leftMotorStopTimeFrame = (sdlGamepad.GetPort() > 0) ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
+			_leftMotorStopTimeFrame = (sdlgamepad.GetPort() > 0) ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
 		else
 			_leftMotorStopTimeFrame = xinput_connected ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
 		_left = force;
@@ -87,13 +87,13 @@ void NxVibrationEngine::updateLeftMotorValue()
 {
 	if (use_sdl_gamepad)
 	{
-		if (sdlGamepad.GetPort() > 0 && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
+		if (sdlgamepad.GetPort() > 0 && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
 		{
 			if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s stop\n", __func__);
 			_leftMotorStopTimeFrame = 0;
 			_left = 0;
 		}
-		else if (sdlGamepad.GetPort() <= 0)
+		else if (sdlgamepad.GetPort() <= 0)
 		{
 			_leftMotorStopTimeFrame = 0;
 		}
@@ -141,7 +141,7 @@ bool NxVibrationEngine::rumbleUpdate()
 
 	if (use_sdl_gamepad)
 	{
-		sdlGamepad.Vibrate(left, right);
+		sdlgamepad.Vibrate(left, right);
 	}
 	else if (xinput_connected)
 	{
@@ -162,7 +162,7 @@ bool NxVibrationEngine::canRumble() const
 {
 	if (use_sdl_gamepad)
 	{
-		return sdlGamepad.GetPort() > 0 && sdlGamepad.HasRumble();
+		return sdlgamepad.GetPort() > 0 && sdlgamepad.HasRumble();
 	}
 	else if (xinput_connected)
 	{
