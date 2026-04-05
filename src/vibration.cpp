@@ -52,13 +52,10 @@ void NxVibrationEngine::setLeftMotorValue(uint8_t force)
 
 	if (force > 0)
 	{
-		int port = 0;
 		if (use_sdl_gamepad)
-			port = sdlGamepad.GetPort();
-		else if (xinput_connected)
-			port = gamepad.GetPort();
-
-		_leftMotorStopTimeFrame = (port > 0) ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
+			_leftMotorStopTimeFrame = (sdlGamepad.GetPort() > 0) ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
+		else
+			_leftMotorStopTimeFrame = xinput_connected ? frame_counter + LEFT_MOTOR_DURATION_FRAMES : 0;
 		_left = force;
 	}
 }
@@ -88,19 +85,26 @@ bool NxVibrationEngine::hasChanged() const
 
 void NxVibrationEngine::updateLeftMotorValue()
 {
-	int port = 0;
 	if (use_sdl_gamepad)
-		port = sdlGamepad.GetPort();
-	else if (xinput_connected)
-		port = gamepad.GetPort();
-
-	if (port > 0 && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
+	{
+		if (sdlGamepad.GetPort() > 0 && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
+		{
+			if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s stop\n", __func__);
+			_leftMotorStopTimeFrame = 0;
+			_left = 0;
+		}
+		else if (sdlGamepad.GetPort() <= 0)
+		{
+			_leftMotorStopTimeFrame = 0;
+		}
+	}
+	else if (xinput_connected && _leftMotorStopTimeFrame > 0 && frame_counter > _leftMotorStopTimeFrame)
 	{
 		if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s stop\n", __func__);
 		_leftMotorStopTimeFrame = 0;
 		_left = 0;
 	}
-	else if (port <= 0)
+	else if (!xinput_connected)
 	{
 		_leftMotorStopTimeFrame = 0;
 	}
@@ -117,7 +121,7 @@ bool NxVibrationEngine::rumbleUpdate()
 
 	if (trace_all || trace_gamepad) ffnx_trace("NxVibrationEngine::%s left=%d right=%d\n", __func__, _left, _right);
 
-	const DWORD maxVibration = use_sdl_gamepad || xinput_connected ? UINT16_MAX : joystick.GetMaxVibration();
+	const DWORD maxVibration = use_sdl_gamepad ? UINT16_MAX : xinput_connected ? UINT16_MAX : joystick.GetMaxVibration();
 	DWORD left = _left * maxVibration / LEFT_MOTOR_MAX_VALUE;
 	DWORD right = _right * maxVibration / RIGHT_MOTOR_MAX_VALUE;
 
