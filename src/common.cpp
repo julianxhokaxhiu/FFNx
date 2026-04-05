@@ -1108,14 +1108,6 @@ uint32_t common_init(struct game_obj *game_object)
 	nxAudioEngine.setAmbientMasterVolume(external_ambient_volume / 100.0f);
 	nxAudioEngine.setVoiceMasterVolume(external_voice_volume / 100.0f);
 
-	if (use_sdl_gamepad)
-	{
-		if (!sdlGamepad.Gamepad_Init())
-			ffnx_error("SDL gamepad: failed to initialize subsystem\n");
-		else if (trace_all || trace_gamepad)
-			ffnx_trace("SDL gamepad: subsystem initialized\n");
-	}
-
 	proxyWndProc = true;
 
 	return true;
@@ -1323,11 +1315,23 @@ void common_flip(struct game_obj *game_object)
 			DispatchMessage(&msg);
 		}
 	}
-
+    
+	// if enabled within FFNx.toml: SDL Gamepad will be prioritized over XInput/DirectInput
 	if (use_sdl_gamepad)
 	{
+		static bool sdl_gamepad_initialized = false;
 		static bool sdl_gamepad_connected = false;
 		static std::string sdl_gamepad_name;
+
+		if (!sdl_gamepad_initialized)
+		{
+			if (!sdlGamepad.Gamepad_Init())
+				ffnx_error("SDL gamepad: failed to initialize subsystem\n");
+			else if (trace_all || trace_gamepad)
+				ffnx_trace("SDL gamepad: subsystem initialized\n");
+			sdl_gamepad_initialized = true;
+		}
+
 		bool sdl_gamepad_state = (sdlGamepad.GetPort() > 0);
 
 		if (!sdl_gamepad_connected && sdl_gamepad_state)
