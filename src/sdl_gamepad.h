@@ -46,17 +46,10 @@
 typedef struct GamepadInput
 {
     WORD wButtons;
-    BYTE bLeftTrigger;
-    BYTE bRightTrigger;
-    SHORT sThumbLX;
-    SHORT sThumbLY;
-    SHORT sThumbRX;
-    SHORT sThumbRY;
 } GamepadInput;
 
 typedef struct GamepadState
 {
-    DWORD dwPacketNumber;
     GamepadInput Gamepad;
 } GamepadState;
 
@@ -65,22 +58,17 @@ class SDLGamepad
 private:
     GamepadState state;
 
-    float deadzoneX;
-    float deadzoneY;
-
     SDL_Gamepad *sdlgamepad = nullptr;
     SDL_JoystickID sdlInstanceId = -1;
     bool sdlInitialized = false;
     int GamepadMappingLoaded = 0;
 
-    void handleSDLEvents();
+    void GamepadEvents();
     bool openGamepad();
-    void GetDeviceName(SDL_Gamepad *gp, SDL_JoystickID id);
     void closeGamepad();
 
 public:
     bool Gamepad_Init();
-    SDLGamepad();
     ~SDLGamepad();
 
     float leftStickX;
