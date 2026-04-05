@@ -1315,7 +1315,7 @@ void common_flip(struct game_obj *game_object)
 			DispatchMessage(&msg);
 		}
 	}
-    
+
 	// if enabled within FFNx.toml: SDL Gamepad will be prioritized over XInput/DirectInput
 	if (use_sdl_gamepad)
 	{
