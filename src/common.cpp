@@ -194,6 +194,7 @@ char basedir[BASEDIR_LENGTH];
 uint32_t version;
 
 bool xinput_connected = false;
+bool sdl_gamepad_connected = false;
 
 bool simulate_OK_button = false;
 
@@ -1319,32 +1320,14 @@ void common_flip(struct game_obj *game_object)
 	// if enabled within FFNx.toml: SDL Gamepad will be prioritized over XInput/DirectInput
 	if (use_sdl_gamepad)
 	{
-		static bool sdl_gamepad_initialized = false;
-		static bool sdl_gamepad_connected = false;
-		static std::string sdl_gamepad_name;
-
-		if (!sdl_gamepad_initialized)
+		if (!sdl_gamepad_connected && sdlgamepad.CheckConnection())
 		{
-			if (!sdlgamepad.Gamepad_Init())
-				ffnx_error("SDL gamepad: failed to initialize subsystem\n");
-			else if (trace_all || trace_gamepad)
-				ffnx_trace("SDL gamepad: subsystem initialized\n");
-			sdl_gamepad_initialized = true;
-		}
-
-		bool sdl_gamepad_state = (sdlgamepad.GetPort() > 0);
-
-		if (!sdl_gamepad_connected && sdl_gamepad_state)
-		{
-			sdl_gamepad_name = sdlgamepad.GetName();
-			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: connected (%s)\n", sdl_gamepad_name.c_str());
-			if ((trace_all || trace_gamepad) && sdlgamepad.GetLoadedMappingCount() > 0) ffnx_trace("SDL gamepad: loaded %d mappings from gamecontrollerdb.txt\n", sdlgamepad.GetLoadedMappingCount());
+			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: connected (%s)\n", sdlgamepad.GetName());
 			sdl_gamepad_connected = true;
 		}
-		else if (sdl_gamepad_connected && !sdl_gamepad_state)
+		else if (sdl_gamepad_connected && !sdlgamepad.CheckConnection())
 		{
-			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: disconnected (%s)\n", sdl_gamepad_name.c_str());
-			sdl_gamepad_name.clear();
+			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: disconnected.\n");
 			sdl_gamepad_connected = false;
 		}
 	}

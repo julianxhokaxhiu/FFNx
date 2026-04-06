@@ -23,6 +23,7 @@
 #include <SDL3/SDL.h>
 
 #include "cfg.h"
+#include "log.h"
 #include "sdl_gamepad.h"
 
 SDLGamepad sdlgamepad;
@@ -52,12 +53,21 @@ bool SDLGamepad::Gamepad_Init()
     SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS3_SIXAXIS_DRIVER, "1");
 
     if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD))
+    {
+        ffnx_error("SDL gamepad: failed to initialize subsystem\n");
         return false;
+    }
 
     SDL_SetGamepadEventsEnabled(true);
 
     GamepadMappingLoaded = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt");
     sdlInitialized = true;
+
+    if (trace_all || trace_gamepad)
+    {
+        ffnx_trace("SDL gamepad: subsystem initialized\n");
+        if (GamepadMappingLoaded > 0) ffnx_trace("SDL gamepad: loaded %d mappings from gamecontrollerdb.txt\n", GamepadMappingLoaded);
+    }
 
     return true;
 }
@@ -139,6 +149,16 @@ bool SDLGamepad::openGamepad()
     }
 
     SDL_free(ids);
+    return sdlgamepad != nullptr;
+}
+
+bool SDLGamepad::CheckConnection()
+{
+    if (!Gamepad_Init())
+        return false;
+
+    GamepadEvents();
+
     return sdlgamepad != nullptr;
 }
 

@@ -81,6 +81,7 @@ public:
     int  GetPort() const;
     const char* GetName() const;
     int  GetLoadedMappingCount() const;
+    bool CheckConnection();
     bool HasRumble() const;
     bool Refresh();
     bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
