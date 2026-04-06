@@ -10,6 +10,10 @@
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.2...1.24.3
 
+## Common
+
+- Core: added SDL Gamepad API support, enhancing controller support
+
 ## FF7
 
 - Core: Fix crash for `junbin4` on Windows Store, GOG and Steam 2026 Rerelease

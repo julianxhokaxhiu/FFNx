@@ -24,6 +24,7 @@
 #include "ff7/defs.h"
 #include "gamepad.h"
 #include "joystick.h"
+#include "sdl_gamepad.h"
 
 GameHacks gamehacks;
 
@@ -197,7 +198,72 @@ void GameHacks::processGamepadInput()
 {
 	if(isGamepadShortcutMode && get_popup_time() == 0) isGamepadShortcutMode = false;
 
-	if (xinput_connected)
+	if (use_sdl_gamepad)
+	{
+		if (sdlgamepad.Refresh())
+		{
+			if(sdlgamepad.IsIdle())
+			{
+				hold_input_for_frames = 0;
+				enable_hold_input = true;
+			}
+
+			if(hold_input_for_frames > 0)
+			{
+				drawnInput();
+				return;
+			}
+
+			if (sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_THUMB)) // L3
+			{
+				isGamepadShortcutMode = !isGamepadShortcutMode;
+				if(isGamepadShortcutMode) show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Waiting for shortcut input..");
+				else clear_popup_msg();
+				holdInput();
+			}
+
+			if(!isGamepadShortcutMode) return;
+
+			// Soft reset on START+SELECT
+			if (
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_BACK) &&
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_START)
+				)
+				softReset();
+			// Increase in-game speed on R1
+			else if (
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER)
+				)
+				increaseSpeedhack();
+			// Decrease in-game speed on L1
+			else if (
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER)
+				)
+				decreaseSpeedhack();
+			// Toggle Speedhack on L2/R2
+			else if (
+				sdlgamepad.leftTrigger > 0.85f ||
+				sdlgamepad.rightTrigger > 0.85f
+				)
+				toggleSpeedhack();
+			// Toggle battle mode on Circle
+			else if (
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_B)
+				)
+				toggleBattleMode();
+			// Toggle auto attack mode on Triangle
+			else if (
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_Y)
+				)
+				toggleAutoAttackMode();
+			// Skip Movies on Square
+			else if (
+				sdlgamepad.IsPressed(GAMEPAD_BUTTON_X)
+				)
+				skipMovies();
+		}
+	}
+	else if (xinput_connected)
 	{
 		if (gamepad.Refresh())
 		{
