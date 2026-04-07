@@ -219,7 +219,7 @@ struct RendererCallbacks : public bgfx::CallbackI {
     virtual uint32_t cacheReadSize(uint64_t _id) override;
     virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) override;
     virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) override;
-    virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override {};
+    virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, const void* _data, uint32_t _size, bool _yflip) override {};
     virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, bool _yflip) override {};
     virtual void captureEnd() override {};
     virtual void captureFrame(const void* _data, uint32_t _size) override {};
