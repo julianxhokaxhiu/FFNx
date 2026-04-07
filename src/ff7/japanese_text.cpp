@@ -995,10 +995,10 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value)
 {
   // FIXME: this function can draw characters with different scaling, dependent on what sorta text is being printed.
-  // But it needs to know what the source of te text that wa sput int oth ebuffer was to work this out, and that info is NOT passe das a parameter
+  // But it needs to know what the source of hte text that was put into the buffer was to work this out, and that info is NOT passed as a parameter
   // will need to hook the function that loads texts to the buffer and set a global based on where in memory the original text is.
 
-  double scaleFactor = 1.0f; // small for now, because fprcing big looks worse.
+  double scaleFactor = 1.0f; // small for now, because forcing big looks worse.
   float xPosFudge = 0;
   float yPosFudge = 4;       // small text is moved down 4 units to align properly.
   graphics_vertex *bottom_right; // [esp+1Ch] [ebp-4Ch]
@@ -1730,7 +1730,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
             v126 = 16.0;
             a2 = graphics_object;//(*ff7_externals.battle_graphics_data_ptr_9ADFD8)->menu_font_b_graphics_object;
           //}*/
-          v108 = v107;   // change! was adding character width before printing character isntead of after.  this was incorrect. will at it aat end of loop later
+          v108 = v107;   // change! was adding character width before printing character isntead of after.  this was incorrect. will add it at end of loop later
           v96 = leftPadding;   // padding from above.
 LABEL_49:
           if (ff7_externals.g_get_do_render_menu_6CDBF2() && common_externals.draw_graphics_object(1, (struct graphics_object*)a2))
@@ -2262,7 +2262,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
     byte next_character = buffer_text[i + 1];
     byte next_character2 = buffer_text[i + 2]; // additional ones needed to parse fixed length strings later 
     byte next_character3 = buffer_text[i + 3];
-    byte next_character4 = buffer_text[i + 4]; // this is te counter of characters, which is whet we need to do that.
+    byte next_character4 = buffer_text[i + 4]; // this is the counter of characters, which is what we need to do that.
     byte next_character5 = buffer_text[i + 5]; //
 
     if(character == 0xFF) break;
@@ -2339,7 +2339,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       {
         case 0xE9u: // monospace toggle
           return;   // if present, assume flevel is correct (it seems to be for the one I saw in wonder square)
-        case 0xDEu: // these are variabel length
+        case 0xDEu: // these are variable length
         case 0xDFu: // variable opcodes
         case 0xE1u: // FIXME: actually parse them and account for string length
           charWidth = 32 * 8; // assume there are no more than 8 characters for now?  
@@ -2348,7 +2348,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
           i = i + 1; // skip the byte after the opcode
           break;
         case 0xE2u: // fixed length string. this, i can parse well enough.
-          int stringlength = next_character5 << 8 | next_character4; // we know how many characteres. for safety, assume max width.
+          int stringlength = next_character5 << 8 | next_character4; // we know how many characters. for safety, assume max width.
           charWidth = 32 * stringlength; // assume characters are maximum width 
           leftPadding = 0;                  // no padding.
                                             // gets added in later
