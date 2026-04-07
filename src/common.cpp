@@ -54,6 +54,7 @@
 #include "saveload.h"
 #include "gamepad.h"
 #include "joystick.h"
+#include "sdl_gamepad.h"
 #include "input.h"
 #include "field.h"
 #include "world.h"
@@ -193,6 +194,7 @@ char basedir[BASEDIR_LENGTH];
 uint32_t version;
 
 bool xinput_connected = false;
+bool sdl_gamepad_connected = false;
 
 bool simulate_OK_button = false;
 
@@ -1315,21 +1317,38 @@ void common_flip(struct game_obj *game_object)
 		}
 	}
 
-	// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
-	if (!xinput_connected && gamepad.CheckConnection())
+	// if enabled within FFNx.toml: SDL Gamepad will be prioritized over XInput/DirectInput
+	if (use_sdl_gamepad)
 	{
-		if (trace_all || trace_gamepad) ffnx_trace("XInput controller: connected.\n");
-
-		xinput_connected = true;
-
-		// Release any previous DirectInput attached controller, if any
-		joystick.Clean();
+		if (!sdl_gamepad_connected && sdlgamepad.CheckConnection())
+		{
+			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: connected (%s)\n", sdlgamepad.GetName());
+			sdl_gamepad_connected = true;
+		}
+		else if (sdl_gamepad_connected && !sdlgamepad.CheckConnection())
+		{
+			if (trace_all || trace_gamepad) ffnx_trace("SDL gamepad: disconnected.\n");
+			sdl_gamepad_connected = false;
+		}
 	}
-	else if (xinput_connected && !gamepad.CheckConnection())
+	else
 	{
-		if (trace_all || trace_gamepad) ffnx_trace("XInput controller: disconnected.\n");
+		// Enable XInput if a compatible gamepad is detected while playing the game, otherwise continue with native DInput
+		if (!xinput_connected && gamepad.CheckConnection())
+		{
+			if (trace_all || trace_gamepad) ffnx_trace("XInput controller: connected.\n");
 
-		xinput_connected = false;
+			xinput_connected = true;
+
+			// Release any previous DirectInput attached controller, if any
+			joystick.Clean();
+		}
+		else if (xinput_connected && !gamepad.CheckConnection())
+		{
+			if (trace_all || trace_gamepad) ffnx_trace("XInput controller: disconnected.\n");
+
+			xinput_connected = false;
+		}
 	}
 
 	frame_counter++;
