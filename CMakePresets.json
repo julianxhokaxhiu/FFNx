@@ -1,15 +1,15 @@
 ﻿{
   "version": 6,
   "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 25,
+    "major": 4,
+    "minor": 2,
     "patch": 0
   },
   "configurePresets": [
     {
       "name": "base",
       "hidden": true,
-      "generator": "Visual Studio 17 2022",
+      "generator": "Visual Studio 18 2026",
       "architecture": {
         "value": "win32",
         "strategy": "set"
@@ -28,7 +28,6 @@
       "cacheVariables": {
         "_DLL_VERSION": "devel",
         "CMAKE_C_COMPILER": "cl",
-        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/.vcpkg/triplets",
         "VCPKG_TARGET_TRIPLET": "x86-windows-static"
       }
     },
