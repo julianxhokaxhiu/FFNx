@@ -387,8 +387,7 @@ external_movie_audio_ext = "ogg"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # EXPERIMENTAL
 # This flag will enable SDL Gamepad API for enhanced Controller Support.
-# for FF7 2020/2026: Face Button layout (South/East/West/North aka ABXY Layout) is corrected across 
-# all Controller types (notable for Nintendo Controllers).
+# for FF7 2020/2026: Face Button layout (South/East/West/North aka ABXY Layout) is corrected across all Controller types (notable for Nintendo Controllers).
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 use_sdl_gamepad = false
