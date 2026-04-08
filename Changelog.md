@@ -6,9 +6,6 @@
 
 - Core: [`SDL Gamepad`] refactor Gamepad Buttons to use the API enums directly
 - Core: updated `FFNx.toml`to inform that 7th Heaven/Junction VIII currently do not sync Controls Mappings. (This affects some Controllers)
-
-## Common
-
 - Renderer: fix `enable_bilinear` option for original game textures ( https://github.com/julianxhokaxhiu/FFNx/pull/914 )
 
 # 1.24.3
