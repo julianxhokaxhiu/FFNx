@@ -385,9 +385,8 @@ external_movie_audio_ext = "ogg"
 
 #[SDL GAMEPAD API]
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# EXPERIMENTAL  
-# This flag will enable SDL Gamepad API for enhanced Controller Support,
-# for FF7 2020/2026: Face Button layout is corrected across all Controller types (notable for Nintendo Controllers)
+# EXPERIMENTAL
+# This flag will enable SDL Gamepad API for enhanced Controller Support.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 use_sdl_gamepad = false
 

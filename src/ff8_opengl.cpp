@@ -409,23 +409,23 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		if (!sdlgamepad.Refresh() || !gamehacks.canInputBeProcessed())
 			return ff8_externals.dinput_gamepad_state;
 
-		if ((sdlgamepad.leftStickY > 0.5f) || sdlgamepad.IsPressed(GAMEPAD_BUTTON_DPAD_UP))
+		if ((sdlgamepad.leftStickY > 0.5f) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_UP))
 		{
 			ff8_externals.dinput_gamepad_state->lY = 0xFFFFFFFFFFFFFFFF;
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 0;
 		}
-		else if ((sdlgamepad.leftStickY < -0.5f) || sdlgamepad.IsPressed(GAMEPAD_BUTTON_DPAD_DOWN))
+		else if ((sdlgamepad.leftStickY < -0.5f) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_DOWN))
 		{
 			ff8_externals.dinput_gamepad_state->lY = -0xFFFFFFFFFFFFFFFF;
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 18000;
 		}
 
-		if ((sdlgamepad.leftStickX < -0.5f) || sdlgamepad.IsPressed(GAMEPAD_BUTTON_DPAD_LEFT))
+		if ((sdlgamepad.leftStickX < -0.5f) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_LEFT))
 		{
 			ff8_externals.dinput_gamepad_state->lX = 0xFFFFFFFFFFFFFFFF;
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 27000;
 		}
-		else if ((sdlgamepad.leftStickX > 0.5f) || sdlgamepad.IsPressed(GAMEPAD_BUTTON_DPAD_RIGHT))
+		else if ((sdlgamepad.leftStickX > 0.5f) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_RIGHT))
 		{
 			ff8_externals.dinput_gamepad_state->lX = -0xFFFFFFFFFFFFFFFF;
 			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
@@ -453,19 +453,19 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 		ff8_externals.dinput_gamepad_state->rgdwPOV[1] = -1;
 		ff8_externals.dinput_gamepad_state->rgdwPOV[2] = -1;
 		ff8_externals.dinput_gamepad_state->rgdwPOV[3] = -1;
-		ff8_externals.dinput_gamepad_state->rgbButtons[0] = sdlgamepad.IsPressed(steam_stock_launcher ? GAMEPAD_BUTTON_A : GAMEPAD_BUTTON_X) ? 0x80 : 0; // Cross (Steam)/Square
-		ff8_externals.dinput_gamepad_state->rgbButtons[1] = sdlgamepad.IsPressed(steam_stock_launcher ? GAMEPAD_BUTTON_B : GAMEPAD_BUTTON_A) ? 0x80 : 0; // Circle (Steam)/Cross
-		ff8_externals.dinput_gamepad_state->rgbButtons[2] = sdlgamepad.IsPressed(steam_stock_launcher ? GAMEPAD_BUTTON_X : GAMEPAD_BUTTON_B) ? 0x80 : 0; // Square (Steam)/Circle
-		ff8_externals.dinput_gamepad_state->rgbButtons[3] = sdlgamepad.IsPressed(GAMEPAD_BUTTON_Y) ? 0x80 : 0; // Triangle
-		ff8_externals.dinput_gamepad_state->rgbButtons[4] = sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER) ? 0x80 : 0; // L1
-		ff8_externals.dinput_gamepad_state->rgbButtons[5] = sdlgamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER) ? 0x80 : 0; // R1
-		ff8_externals.dinput_gamepad_state->rgbButtons[6] = (steam_stock_launcher ? sdlgamepad.IsPressed(GAMEPAD_BUTTON_BACK) : sdlgamepad.leftTrigger > 0.85f) ? 0x80 : 0; // SELECT (Steam)/L2
-		ff8_externals.dinput_gamepad_state->rgbButtons[7] = (steam_stock_launcher ? sdlgamepad.IsPressed(GAMEPAD_BUTTON_START) : sdlgamepad.rightTrigger > 0.85f) ? 0x80 : 0; // START (Steam)/R2
-		ff8_externals.dinput_gamepad_state->rgbButtons[8] = (steam_stock_launcher ? sdlgamepad.leftTrigger > 0.85f : sdlgamepad.IsPressed(GAMEPAD_BUTTON_BACK)) ? 0x80 : 0; // L2 (Steam)/SELECT
-		ff8_externals.dinput_gamepad_state->rgbButtons[9] = (steam_stock_launcher ? sdlgamepad.rightTrigger > 0.85f : sdlgamepad.IsPressed(GAMEPAD_BUTTON_START)) ? 0x80 : 0; // R2 (Steam)/START
-		ff8_externals.dinput_gamepad_state->rgbButtons[10] = sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_THUMB) ? 0x80 : 0; // L3
-		ff8_externals.dinput_gamepad_state->rgbButtons[11] = sdlgamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_THUMB) ? 0x80 : 0; // R3
-		ff8_externals.dinput_gamepad_state->rgbButtons[12] = sdlgamepad.IsPressed(GAMEPAD_BUTTON_GUIDE) ? 0x80 : 0; // PS Button
+		ff8_externals.dinput_gamepad_state->rgbButtons[0] = sdlgamepad.IsPressed(steam_stock_launcher ? SDL_GAMEPAD_BUTTON_SOUTH : SDL_GAMEPAD_BUTTON_WEST) ? 0x80 : 0; // Cross (Steam)/Square
+		ff8_externals.dinput_gamepad_state->rgbButtons[1] = sdlgamepad.IsPressed(steam_stock_launcher ? SDL_GAMEPAD_BUTTON_EAST : SDL_GAMEPAD_BUTTON_SOUTH) ? 0x80 : 0; // Circle (Steam)/Cross
+		ff8_externals.dinput_gamepad_state->rgbButtons[2] = sdlgamepad.IsPressed(steam_stock_launcher ? SDL_GAMEPAD_BUTTON_WEST : SDL_GAMEPAD_BUTTON_EAST) ? 0x80 : 0; // Square (Steam)/Circle
+		ff8_externals.dinput_gamepad_state->rgbButtons[3] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_NORTH) ? 0x80 : 0; // Triangle
+		ff8_externals.dinput_gamepad_state->rgbButtons[4] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) ? 0x80 : 0; // L1
+		ff8_externals.dinput_gamepad_state->rgbButtons[5] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER) ? 0x80 : 0; // R1
+		ff8_externals.dinput_gamepad_state->rgbButtons[6] = (steam_stock_launcher ? sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_BACK) : sdlgamepad.leftTrigger > 0.85f) ? 0x80 : 0; // SELECT (Steam)/L2
+		ff8_externals.dinput_gamepad_state->rgbButtons[7] = (steam_stock_launcher ? sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_START) : sdlgamepad.rightTrigger > 0.85f) ? 0x80 : 0; // START (Steam)/R2
+		ff8_externals.dinput_gamepad_state->rgbButtons[8] = (steam_stock_launcher ? sdlgamepad.leftTrigger > 0.85f : sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_BACK)) ? 0x80 : 0; // L2 (Steam)/SELECT
+		ff8_externals.dinput_gamepad_state->rgbButtons[9] = (steam_stock_launcher ? sdlgamepad.rightTrigger > 0.85f : sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_START)) ? 0x80 : 0; // R2 (Steam)/START
+		ff8_externals.dinput_gamepad_state->rgbButtons[10] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_LEFT_STICK) ? 0x80 : 0; // L3
+		ff8_externals.dinput_gamepad_state->rgbButtons[11] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_STICK) ? 0x80 : 0; // R3
+		ff8_externals.dinput_gamepad_state->rgbButtons[12] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_GUIDE) ? 0x80 : 0; // PS Button
 	}
 	else if (xinput_connected)
 	{

@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.24.3",
-  "builtin-baseline": "84bab45d415d22042bd0b9081aea57f362da3f35",
+  "builtin-baseline": "c3867e714dd3a51c272826eea77267876517ed99",
   "dependencies": [
     "bgfx",
     {
@@ -79,16 +79,16 @@
     {
       "name": "ffmpeg",
       "version": "7.1.2",
-      "port-version": 3
+      "port-version": 5
     },
     {
       "name": "imgui",
-      "version": "1.91.9",
+      "version": "1.92.6",
       "port-version": 0
     },
     {
       "name": "libpng",
-      "version": "1.6.53",
+      "version": "1.6.55",
       "port-version": 0
     },
     {
@@ -98,7 +98,7 @@
     },
     {
       "name": "mimalloc",
-      "version": "2.2.4",
+      "version": "3.2.8",
       "port-version": 0
     },
     {
@@ -168,7 +168,7 @@
     },
     {
       "name": "cryptopp",
-      "version": "2025-12-01",
+      "version": "2026-03-02",
       "port-version": 0
     },
     {

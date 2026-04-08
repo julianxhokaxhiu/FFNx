@@ -319,7 +319,7 @@ void ffnx_log_current_pc_specs()
 				(newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId) ||
 				(newRenderer.getCaps()->vendorId == vendorId && renderer_backend == RENDERER_BACKEND_OPENGL)
 			)
-				ffnx_info("   GPU: %s (%dMB) - Driver: %s - Backend: %s\n", gpu.name().c_str(), (int)(gpu.memory_Bytes() / 1024.0 / 1024.0), gpu.driverVersion().c_str(), newRenderer.currentRenderer.c_str());
+				ffnx_info("   GPU: %s (Dedicated: %dMB/Shared: %dMB) [%s]\n", gpu.name().c_str(), (int)(gpu.dedicated_memory_Bytes() / 1024.0 / 1024.0), (int)(gpu.shared_memory_Bytes() / 1024.0 / 1024.0), newRenderer.currentRenderer.c_str());
 		}
 	}
 	catch (const std::exception& e)
@@ -331,7 +331,7 @@ void ffnx_log_current_pc_specs()
 	try
 	{
 		hwinfo::Memory memory;
-		ffnx_info("   RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.total_Bytes() - memory.free_Bytes()) / 1024.0 / 1024.0), (int)(memory.total_Bytes() / 1024.0 / 1024.0), (int)(memory.free_Bytes() / 1024.0 / 1024.0));
+		ffnx_info("   RAM: %dMB/%dMB (Free: %dMB)\n", (int)((memory.size() - memory.free()) / 1024.0 / 1024.0), (int)(memory.size() / 1024.0 / 1024.0), (int)(memory.free() / 1024.0 / 1024.0));
 	}
 	catch (const std::exception& e)
 	{

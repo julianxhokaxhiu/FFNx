@@ -1640,7 +1640,7 @@ void Renderer::show()
         );
     }
 
-    bgfx::frame(doCaptureFrame);
+    bgfx::frame(doCaptureFrame ? BGFX_FRAME_DEBUG_CAPTURE : BGFX_FRAME_NONE);
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s\n", __func__);
 

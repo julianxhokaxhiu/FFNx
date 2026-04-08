@@ -7,8 +7,8 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO "vgmstream/vgmstream"
     HEAD_REF master
-    REF 9db666eb0c2275334ac68a2537a6a689aee792f2
-    SHA512 6af36bd947d6dd56351734587394d30640d3ea3a9e596caf4ec6c8ed0439193e0bc62b4a90cbabbe9ed115eb3d2edfd62d833141febfb84cefa65fbea4bc1edf
+    REF 57df2e179d929532094f4e4dd42ce5395514622b
+    SHA512 e7e697d744a1f49364a4eeb4a0cca34f7aa9952c0d526636feafb536c3cb423caee061c61c143951d36430fb7710d3ed6161cfe1dfd5eb9b3a79a1ec8e5d89c8
     PATCHES cmake.patch
 )
 

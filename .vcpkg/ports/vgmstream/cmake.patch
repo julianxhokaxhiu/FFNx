@@ -44,10 +44,10 @@ index 65768024..31d0b762 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/g72x_state.h DESTINATION include/libvgmstream/coding )
 +endif()
 diff --git a/src/base/streamfile_stdio.c b/src/base/streamfile_stdio.c
-index 5e43ef8f..33886cb2 100644
+index 4548bd5e..a4246075 100644
 --- a/src/base/streamfile_stdio.c
 +++ b/src/base/streamfile_stdio.c
-@@ -277,7 +277,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
+@@ -281,7 +281,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
  
      this_sf->name_len = strlen(filename);
      if (this_sf->name_len >= sizeof(this_sf->name))
@@ -58,7 +58,7 @@ index 5e43ef8f..33886cb2 100644
      memcpy(this_sf->name, filename, this_sf->name_len);
      this_sf->name[this_sf->name_len] = '\0';
  
-@@ -317,6 +320,7 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
+@@ -321,6 +324,7 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char
      return &this_sf->vt;
  
  fail:
