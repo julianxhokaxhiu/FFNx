@@ -387,7 +387,6 @@ external_movie_audio_ext = "ogg"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # EXPERIMENTAL
 # This flag will enable SDL Gamepad API for enhanced Controller Support.
-#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 use_sdl_gamepad = false
 
