@@ -214,7 +214,7 @@ void GameHacks::processGamepadInput()
 				return;
 			}
 
-			if (sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_THUMB)) // L3
+			if (sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_LEFT_STICK)) // L3
 			{
 				isGamepadShortcutMode = !isGamepadShortcutMode;
 				if(isGamepadShortcutMode) show_popup_msg(TEXTCOLOR_LIGHT_BLUE, "Waiting for shortcut input..");
@@ -226,18 +226,18 @@ void GameHacks::processGamepadInput()
 
 			// Soft reset on START+SELECT
 			if (
-				sdlgamepad.IsPressed(GAMEPAD_BUTTON_BACK) &&
-				sdlgamepad.IsPressed(GAMEPAD_BUTTON_START)
+				sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_BACK) &&
+				sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_START)
 				)
 				softReset();
 			// Increase in-game speed on R1
 			else if (
-				sdlgamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER)
+				sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER)
 				)
 				increaseSpeedhack();
 			// Decrease in-game speed on L1
 			else if (
-				sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER)
+				sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER)
 				)
 				decreaseSpeedhack();
 			// Toggle Speedhack on L2/R2
@@ -248,17 +248,17 @@ void GameHacks::processGamepadInput()
 				toggleSpeedhack();
 			// Toggle battle mode on Circle
 			else if (
-				sdlgamepad.IsPressed(GAMEPAD_BUTTON_B)
+				sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_EAST)
 				)
 				toggleBattleMode();
 			// Toggle auto attack mode on Triangle
 			else if (
-				sdlgamepad.IsPressed(GAMEPAD_BUTTON_Y)
+				sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_NORTH)
 				)
 				toggleAutoAttackMode();
 			// Skip Movies on Square
 			else if (
-				sdlgamepad.IsPressed(GAMEPAD_BUTTON_X)
+				sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_WEST)
 				)
 				skipMovies();
 		}

@@ -27,41 +27,12 @@
 // Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
 // for the foundation of FFNx's original XInput implementation
 
-#define GAMEPAD_BUTTON_DPAD_UP        0x0001
-#define GAMEPAD_BUTTON_DPAD_DOWN      0x0002
-#define GAMEPAD_BUTTON_DPAD_LEFT      0x0004
-#define GAMEPAD_BUTTON_DPAD_RIGHT     0x0008
-#define GAMEPAD_BUTTON_START          0x0010
-#define GAMEPAD_BUTTON_BACK           0x0020
-#define GAMEPAD_BUTTON_LEFT_THUMB     0x0040
-#define GAMEPAD_BUTTON_RIGHT_THUMB    0x0080
-#define GAMEPAD_BUTTON_LEFT_SHOULDER  0x0100
-#define GAMEPAD_BUTTON_RIGHT_SHOULDER 0x0200
-#define GAMEPAD_BUTTON_GUIDE          0x0400
-#define GAMEPAD_BUTTON_A              0x1000
-#define GAMEPAD_BUTTON_B              0x2000
-#define GAMEPAD_BUTTON_X              0x4000
-#define GAMEPAD_BUTTON_Y              0x8000
-
-typedef struct GamepadInput
-{
-    WORD wButtons;
-} GamepadInput;
-
-typedef struct GamepadState
-{
-    GamepadInput Gamepad;
-} GamepadState;
-
 class SDLGamepad
 {
 private:
-    GamepadState state;
-
     SDL_Gamepad *sdlgamepad = nullptr;
     SDL_JoystickID sdlInstanceId = -1;
     bool sdlInitialized = false;
-    int GamepadMappingLoaded = 0;
 
     void GamepadEvents();
     bool openGamepad();
@@ -71,21 +42,20 @@ public:
     bool Gamepad_Init();
     ~SDLGamepad();
 
-    float leftStickX;
-    float leftStickY;
-    float rightStickX;
-    float rightStickY;
-    float leftTrigger;
-    float rightTrigger;
+    float leftStickX = 0.0f;
+    float leftStickY = 0.0f;
+    float rightStickX = 0.0f;
+    float rightStickY = 0.0f;
+    float leftTrigger = 0.0f;
+    float rightTrigger = 0.0f;
 
     int  GetPort() const;
     const char* GetName() const;
-    int  GetLoadedMappingCount() const;
     bool CheckConnection();
     bool HasRumble() const;
     bool Refresh();
     bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
-    bool IsPressed(WORD) const;
+    bool IsPressed(SDL_GamepadButton) const;
     bool IsIdle() const;
 };
 

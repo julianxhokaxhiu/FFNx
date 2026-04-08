@@ -181,7 +181,7 @@ void ff7_use_analogue_controls(float analog_threshold)
 			else if(sdlgamepad.leftStickY < -analog_threshold && !(sdlgamepad.leftStickX < -analog_threshold || sdlgamepad.leftStickX > analog_threshold))
 				inputDir = {0.0f, -1.0f, 0.0f};
 
-			if (sdlgamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_THUMB)
+			if (sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_STICK)
 			    && std::abs(sdlgamepad.rightStickX) < right_analog_stick_deadzone
 				&& std::abs(sdlgamepad.rightStickY) < right_analog_stick_deadzone)
 			{
@@ -427,23 +427,23 @@ struct ff7_gamepad_status* ff7_update_gamepad_status()
 		{
 			ff7_externals.gamepad_status->pos_x = sdlgamepad.leftStickX;
 			ff7_externals.gamepad_status->pos_y = sdlgamepad.leftStickY;
-			ff7_externals.gamepad_status->dpad_up = (sdlgamepad.leftStickY > analog_threshold) || sdlgamepad.IsPressed(GAMEPAD_BUTTON_DPAD_UP); // UP
-			ff7_externals.gamepad_status->dpad_down = (sdlgamepad.leftStickY < -analog_threshold) || sdlgamepad.IsPressed(GAMEPAD_BUTTON_DPAD_DOWN); // DOWN
-			ff7_externals.gamepad_status->dpad_left = (sdlgamepad.leftStickX < -analog_threshold) || sdlgamepad.IsPressed(GAMEPAD_BUTTON_DPAD_LEFT); // LEFT
-			ff7_externals.gamepad_status->dpad_right = (sdlgamepad.leftStickX > analog_threshold) || sdlgamepad.IsPressed(GAMEPAD_BUTTON_DPAD_RIGHT); // RIGHT
-			ff7_externals.gamepad_status->button1 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_X); // Square
-			ff7_externals.gamepad_status->button2 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_A); // Cross
-			ff7_externals.gamepad_status->button3 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_B); // Circle
-			ff7_externals.gamepad_status->button4 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_Y); // Triangle
-			ff7_externals.gamepad_status->button5 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER); // L1
-			ff7_externals.gamepad_status->button6 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER); // R1
+			ff7_externals.gamepad_status->dpad_up = (sdlgamepad.leftStickY > analog_threshold) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_UP); // UP
+			ff7_externals.gamepad_status->dpad_down = (sdlgamepad.leftStickY < -analog_threshold) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_DOWN); // DOWN
+			ff7_externals.gamepad_status->dpad_left = (sdlgamepad.leftStickX < -analog_threshold) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_LEFT); // LEFT
+			ff7_externals.gamepad_status->dpad_right = (sdlgamepad.leftStickX > analog_threshold) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_RIGHT); // RIGHT
+			ff7_externals.gamepad_status->button1 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_WEST); // Square
+			ff7_externals.gamepad_status->button2 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_SOUTH); // Cross
+			ff7_externals.gamepad_status->button3 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_EAST); // Circle
+			ff7_externals.gamepad_status->button4 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_NORTH); // Triangle
+			ff7_externals.gamepad_status->button5 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER); // L1
+			ff7_externals.gamepad_status->button6 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER); // R1
 			ff7_externals.gamepad_status->button7 = sdlgamepad.leftTrigger > 0.85f; // L2
 			ff7_externals.gamepad_status->button8 = sdlgamepad.rightTrigger > 0.85f; // R2
-			ff7_externals.gamepad_status->button9 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_BACK); // SELECT
-			ff7_externals.gamepad_status->button10 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_START); // START
-			ff7_externals.gamepad_status->button11 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_LEFT_THUMB); // L3
-			ff7_externals.gamepad_status->button12 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_RIGHT_THUMB); // R3
-			ff7_externals.gamepad_status->button13 = sdlgamepad.IsPressed(GAMEPAD_BUTTON_GUIDE); // PS Button
+			ff7_externals.gamepad_status->button9 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_BACK); // SELECT
+			ff7_externals.gamepad_status->button10 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_START); // START
+			ff7_externals.gamepad_status->button11 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_LEFT_STICK); // L3
+			ff7_externals.gamepad_status->button12 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_STICK); // R3
+			ff7_externals.gamepad_status->button13 = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_GUIDE); // PS Button
 
 			// Update the player intent based on the analogue movement
 			if (enable_auto_run)
