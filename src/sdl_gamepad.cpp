@@ -60,7 +60,7 @@ bool SDLGamepad::Gamepad_Init()
 
     SDL_SetGamepadEventsEnabled(true);
 
-    GamepadMappingLoaded = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt");
+    int GamepadMappingLoaded = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt");
     sdlInitialized = true;
 
     if (trace_all || trace_gamepad)
@@ -77,11 +77,6 @@ const char* SDLGamepad::GetName() const
     if (!sdlgamepad) return "";
     const char *name = SDL_GetGamepadName(sdlgamepad);
     return name ? name : "";
-}
-
-int SDLGamepad::GetLoadedMappingCount() const
-{
-    return GamepadMappingLoaded;
 }
 
 void SDLGamepad::GamepadEvents()
@@ -172,18 +167,12 @@ void SDLGamepad::closeGamepad()
 
     sdlInstanceId = -1;
 
-    ZeroMemory(&state, sizeof(state));
     leftStickX = leftStickY = rightStickX = rightStickY = 0.0f;
     leftTrigger = rightTrigger = 0.0f;
 }
 
 bool SDLGamepad::Refresh()
 {
-    if (!Gamepad_Init())
-        return false;
-
-    GamepadEvents();
-
     if (!sdlgamepad)
     {
         if (!openGamepad())
@@ -215,29 +204,6 @@ bool SDLGamepad::Refresh()
     leftTrigger  = applyTriggerDeadzone(SDL_clamp((float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER)  / 32767.0f, 0.0f, 1.0f), (float)left_analog_trigger_deadzone);
     rightTrigger = applyTriggerDeadzone(SDL_clamp((float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) / 32767.0f, 0.0f, 1.0f), (float)right_analog_trigger_deadzone);
 
-    static const WORD buttonMasks[] = {
-        GAMEPAD_BUTTON_DPAD_UP, GAMEPAD_BUTTON_DPAD_DOWN, GAMEPAD_BUTTON_DPAD_LEFT,  GAMEPAD_BUTTON_DPAD_RIGHT,
-        GAMEPAD_BUTTON_START,   GAMEPAD_BUTTON_BACK,      GAMEPAD_BUTTON_LEFT_THUMB, GAMEPAD_BUTTON_RIGHT_THUMB,
-        GAMEPAD_BUTTON_LEFT_SHOULDER, GAMEPAD_BUTTON_RIGHT_SHOULDER,
-        GAMEPAD_BUTTON_A, GAMEPAD_BUTTON_B, GAMEPAD_BUTTON_X, GAMEPAD_BUTTON_Y
-    };
-    static const SDL_GamepadButton sdlButtons[] = {
-        SDL_GAMEPAD_BUTTON_DPAD_UP,    SDL_GAMEPAD_BUTTON_DPAD_DOWN,  SDL_GAMEPAD_BUTTON_DPAD_LEFT,  SDL_GAMEPAD_BUTTON_DPAD_RIGHT,
-        SDL_GAMEPAD_BUTTON_START,      SDL_GAMEPAD_BUTTON_BACK,       SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK,
-        SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER,
-        SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_BUTTON_WEST, SDL_GAMEPAD_BUTTON_NORTH
-    };
-    WORD buttons = 0;
-    for (int i = 0; i < (int)(sizeof(buttonMasks) / sizeof(buttonMasks[0])); i++)
-    {
-        if (SDL_GetGamepadButton(sdlgamepad, sdlButtons[i]))
-            buttons |= buttonMasks[i];
-    }
-    if (SDL_GetGamepadButton(sdlgamepad, SDL_GAMEPAD_BUTTON_GUIDE))
-        buttons |= GAMEPAD_BUTTON_GUIDE;
-
-    state.Gamepad.wButtons = buttons;
-
     return true;
 }
 
@@ -264,28 +230,29 @@ bool SDLGamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
     return true;
 }
 
-bool SDLGamepad::IsPressed(WORD button) const
+bool SDLGamepad::IsPressed(SDL_GamepadButton button) const
 {
-    return (state.Gamepad.wButtons & button) != 0;
+    if (!sdlgamepad) return false;
+    return SDL_GetGamepadButton(sdlgamepad, button);
 }
 
 bool SDLGamepad::IsIdle() const
 {
-    return !(leftStickY > 0.5f  || IsPressed(GAMEPAD_BUTTON_DPAD_UP))    &&
-           !(leftStickY < -0.5f || IsPressed(GAMEPAD_BUTTON_DPAD_DOWN))  &&
-           !(leftStickX < -0.5f || IsPressed(GAMEPAD_BUTTON_DPAD_LEFT))  &&
-           !(leftStickX > 0.5f  || IsPressed(GAMEPAD_BUTTON_DPAD_RIGHT)) &&
-           !IsPressed(GAMEPAD_BUTTON_X)              &&
-           !IsPressed(GAMEPAD_BUTTON_A)              &&
-           !IsPressed(GAMEPAD_BUTTON_B)              &&
-           !IsPressed(GAMEPAD_BUTTON_Y)              &&
-           !IsPressed(GAMEPAD_BUTTON_LEFT_SHOULDER)  &&
-           !IsPressed(GAMEPAD_BUTTON_RIGHT_SHOULDER) &&
-           !(leftTrigger  > 0.85f)                  &&
-           !(rightTrigger > 0.85f)                  &&
-           !IsPressed(GAMEPAD_BUTTON_BACK)           &&
-           !IsPressed(GAMEPAD_BUTTON_START)          &&
-           !IsPressed(GAMEPAD_BUTTON_LEFT_THUMB)     &&
-           !IsPressed(GAMEPAD_BUTTON_RIGHT_THUMB)    &&
-           !IsPressed(GAMEPAD_BUTTON_GUIDE);
+    return !(leftStickY > 0.5f  || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_UP))    &&
+           !(leftStickY < -0.5f || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_DOWN))  &&
+           !(leftStickX < -0.5f || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_LEFT))  &&
+           !(leftStickX > 0.5f  || IsPressed(SDL_GAMEPAD_BUTTON_DPAD_RIGHT)) &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_WEST)              &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_SOUTH)             &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_EAST)              &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_NORTH)             &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER)     &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER)    &&
+           !(leftTrigger  > 0.85f)                         &&
+           !(rightTrigger > 0.85f)                         &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_BACK)              &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_START)             &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_LEFT_STICK)        &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_STICK)       &&
+           !IsPressed(SDL_GAMEPAD_BUTTON_GUIDE);
 }
