@@ -1775,8 +1775,9 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
-    bgfx::TextureFormat::Enum texFormat = bgfx::TextureFormat::R8;
-    bimg::TextureFormat::Enum imgFormat = bimg::TextureFormat::R8;
+    // use 16-bits for movies so we can accomodate 10-bit inputs
+    bgfx::TextureFormat::Enum texFormat = bgfx::TextureFormat::R16;
+    bimg::TextureFormat::Enum imgFormat = bimg::TextureFormat::R16;
 
     if (type == RendererTextureType::BGRA)
     {

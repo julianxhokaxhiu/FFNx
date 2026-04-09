@@ -38,13 +38,15 @@ void main()
 	vec4 color = texture2D(tex_0, v_texcoord0.xy);
 
 	if (isHDR) {
-		// dither because we will increase effective bit depth
-		// TODO: If/when a full 10-bit pathway is available for 10-bit FMVs, don't dither those
-		// dither in gamma space so dither step size is proportional to quantization step size
-		// can't dither in rec2084 space because our max signal only occupies a small space near the bottom of the range.
+		// Dither because we will increase effective bit depth.
+		// 256 is correct step size for everything except movies, which already have higher precision.
+		// But unfortunately there's no way at this point to segregate movies, from other stuff, from other stuff drawn on top of movies.
+		// So we just have to use 256 for everything.
+		// Dither in gamma space so dither step size is proportional to quantization step size.
+		// Can't dither in rec2084 gamma space because our max signal only occupies a small space near the bottom of the range.
 		// It's not ideal to dither ahead of CRT color correction simulation, but doing it after is gnarly due to out-of-bounds red.
 		ivec2 dimensions = textureSize(tex_0, 0);
-		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
+		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, vec3_splat(256.0), 2160.0);
 		// simulate CRT color correction and gamma
 		color.rgb = CRTSimulation(color.rgb); // CRT gamma-space in, linear out
 		color.rgb = convertGamut_NTSCJtoREC2020(color.rgb);
@@ -53,8 +55,9 @@ void main()
 	else {
 		color.rgb = GamutLUT(color.rgb); // AssignGamutLUT() in renderer.cpp should have bound the correct LUT
 		color.rgb = toGamma(color.rgb);
+    // dither with step size 256 because the LUT only has 8 bits of precision
 		ivec2 dimensions = textureSize(tex_0, 0);
-		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, 256.0, 2160.0);
+		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, vec3_splat(256.0), 2160.0);
 	}
 	gl_FragColor = color;
 }

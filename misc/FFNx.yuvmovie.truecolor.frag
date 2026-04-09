@@ -40,6 +40,7 @@ uniform vec4 FSMovieFlags;
 uniform vec4 FSMoreMovieFlags;
 uniform vec4 TimeColor;
 uniform vec4 TimeData;
+uniform vec4 FSHDRFlags;
 
 
 // ---
@@ -62,6 +63,8 @@ uniform vec4 TimeData;
 
 #define isTimeEnabled TimeData.x > 0.0
 #define isTimeFilterEnabled TimeData.x > 0.0 && TimeData.y > 0.0
+
+#define isHDR FSHDRFlags.x > 0.0
 
 
 void main()
@@ -99,16 +102,24 @@ void main()
         texture2D(tex_2, v_texcoord0.xy + chromaoffset).r
     );
 
+    // swscale guarantees our input pixel format is YUV420P10
+    // scale the 10 bits of data to fill up the 16 bits it's stored in
+    yuv *= vec3_splat(65535/1023);
+    // dither because we increased bit depth
+    // (unless HDR, since we will dither later)
+    if (!(isHDR)){
+      ivec2 ydimensions = textureSize(tex_0, 0);
+      ivec2 udimensions = textureSize(tex_1, 0);
+      ivec2 vdimensions = textureSize(tex_2, 0);
+      yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, vec3_splat(1024.0), 1.0);
+    }
+
     // Convert Y'UV to R'G'B'
     if (isFullRange){
         yuv = normalizefullrangeYUV(yuv);
     }
     else {
-        // if not full range, dither, then expand to full range
-        ivec2 ydimensions = textureSize(tex_0, 0);
-        ivec2 udimensions = textureSize(tex_1, 0);
-        ivec2 vdimensions = textureSize(tex_2, 0);
-        yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, 256.0, 1.0);
+        // we already dithered out to 16 bits, so we don't need another dither for range expansion
         yuv = normalizelimitedrangeYUV(yuv, isBinkColorMatrix);
     }
     // matrix Y'UV to R'G'B'

@@ -71,7 +71,7 @@ bool fullrange_input = false;
 ColorMatrixType colormatrix = COLORMATRIX_BT601;
 ColorGamutType colorgamut = COLORGAMUT_SRGB;
 InverseGammaFunctionType gammatype = GAMMAFUNCTION_SRGB;
-const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P;
+const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P10;
 AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 AVPixelFormat wb_pix_fmt = AV_PIX_FMT_NONE;
 ChromaLocationType chromaloc = CHROMALOC_CENTER;
@@ -626,6 +626,9 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	// We're going to target YUV420 on the assumption that most of our input will already be 420,
 	// and resampling chroma in the shader will be faster than doing it in swscale.
 	// (Also, we generally shouldn't target a YUVJ format because that triggers a bunch of automatic, sometimes wrong, color range conversions.)
+	// We'll target 10-bit so we don't lose data when input is 10-bit,
+	// to speed up our most common and slowest input case by not needing swscale,
+	// and opening the door to HDR video someday.
 	if (tryhwdecode){
 		// TODO: if not doing writeback, okpixelformat = true;
 		if (wb_pix_fmt == targetpixelformat){
@@ -999,12 +1002,16 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 		tex_height /= 2;
 	}
 
-	if (upload_width > tex_width){
+	// Check if the bitstream is padded.
+	// ffmpeg_update_movie_sample() should be sending these to swscale to fix it,
+	// but let's make sure it actually got fixed.
+	// (tex_width should equal 1/2 upload_width because we should have a 10-bit format at this point (stored in 16 bits))
+	if (upload_width > (2*tex_width)){
 		if (dofirstframestuff && (trace_movies || trace_all)){
 			ffnx_trace("upload_yuv_texture: Bitstream is unexpectedly wide. Plane %i. Movie width is %i, but frame stride is %i.\n", num, tex_width, upload_width);
 		}
 		// include the green crap so bgfx texture creation works
-		tex_width = upload_width;
+		tex_width = upload_width/2;
 	}
 
 

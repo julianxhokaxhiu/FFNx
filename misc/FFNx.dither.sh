@@ -27,9 +27,9 @@
 // coords: float (range 0-1) pixel coordinates, i.e., v_texcoord0.xy
 // ydims: integer dimensions of first channel's texture
 // udims & vdims: integer dimensions of first second and third channels' textures (may differ from ydim for various yuv formats)
-// scale_divisor: step size divisor to scale the dithering to fit within. E.g., use 256.0 for dithering 8-bit values.
+// scale_divisors: step size divisors to scale the dithering to fit within. E.g., use 256.0 for dithering 8-bit values. One for each channel.
 // xyoffset: value to add to x & y coords. Should be at least 1 to avoid x=0 and y=0. Should be different if the same input is dithered twice.
-vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims, float scale_divisor, float xyoffset)
+vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ivec2 vdims, vec3 scale_divisors, float xyoffset)
 {
 	// get integer range x,y coords for this pixel
 	// invert one axis for u and the other axis for v to decouple dither patterns across channels
@@ -56,14 +56,15 @@ vec3 QuasirandomDither(vec3 pixelval, vec2 coords, ivec2 ydims, ivec2 udims, ive
 	// shift down by half
 	dither = dither - vec3_splat(0.5);
 	// scale down below the specified step size
-	dither = dither / vec3_splat(scale_divisor);
+	dither = dither / scale_divisors;
 	// add to input
 	vec3 tempout = saturate(pixelval + dither);
 
 	// Don't dither colors so close to 0 or 1 that dithering would be asymmetric.
 	// But do dither values >1.0 in the special case that NTSC-J color correction simulation produces them in HDR mode.
-	bvec3 highcutoff = greaterThan(pixelval, vec3_splat(1.0 - (0.5 / scale_divisor)));
-	bvec3 lowcutoff = lessThan(pixelval, vec3_splat(0.5 / scale_divisor));
+  vec3 halfsteps = vec3_splat(0.5) / scale_divisors;
+	bvec3 highcutoff = greaterThan(pixelval, vec3_splat(1.0) - halfsteps);
+	bvec3 lowcutoff = lessThan(pixelval, halfsteps);
 	vec3 outcolor = mix(tempout, pixelval, highcutoff);
 	outcolor = mix(outcolor, pixelval, lowcutoff);
 	return outcolor;
