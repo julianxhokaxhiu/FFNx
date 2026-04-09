@@ -381,7 +381,12 @@ ffmpeg_video_ext = "avi"
 external_movie_audio_ext = "ogg"
 
 #[HARDWARE VIDEO DECODING]
-# Attempt to use your GPU to decode movie files faster using the selected API.
+# Attempt to use your GPU to decode movie files using the selected API.
+# May improve performance on systems with old/weak CPUs.
+# Try enabling this if you are experiencing slowdown or dropped frames during movies.
+# Support varies depending on your GPU, GPU drivers, system libraries, the API selected, the video codec, the video codec profile level, the video bit depth, and the video pixel format.
+# To check if it's working for a given video file, set trace_movies = true and review FFNx.log.
+# Does not work in Wine (as of early 2026). Linux users should disable this.
 # Possible values:
 # 0 = disabled
 # 1 = auto (make a guess based on selected renderer)
@@ -394,7 +399,7 @@ external_movie_audio_ext = "ogg"
 # 8 = amf (requires AMD GPU) (not supported yet; next version of ffmpeg)
 # 9 = qsv (requires Intel GPU)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-hardware_video_decoding = 1
+hardware_video_decoding = 0
 
 ###########################
 # Controller Options
