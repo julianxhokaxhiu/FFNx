@@ -127,7 +127,7 @@ static AVPixelFormat get_hw_format(AVCodecContext* ctx, const AVPixelFormat* pix
 		return AV_PIX_FMT_NONE;
 }
 
-// prepare a swscale context and put it in this_sws_ctx
+// prepare a swscale context and put it in sws_ctx (if hw=false) or sws_wb_ctx (if hw=true)
 void prepare_sws_context(bool hw, AVPixelFormat pixfmtin, AVColorSpace colorspacein){
 	if (trace_movies || trace_all){
 		if (pixfmtin != targetpixelformat){
@@ -818,85 +818,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	if (!okcolorspace){
 		colormatrix = COLORMATRIX_BT601;
 	}
-
-	/*
-	// Don't check for !fullrange_input here because swscale won't always do color range conversions on request, so we can't rely on it and must instead do it ourselves in the shader
-
-	if (trace_movies || trace_all)
-	{
-		if (!okcolorspace){
-			ffnx_trace("prepare_movie: Using swscale to convert pixel format from %s to %s.\n", av_get_pix_fmt_name(codec_ctx->pix_fmt), av_get_pix_fmt_name(targetpixelformat));
-		}
-		if (!okcolorspace){
-			ffnx_trace("prepare_movie: Using swscale to convert YUV colorspace from %s to rec601.\n", av_color_space_name(codec_ctx->colorspace));
-		}
-		if (yuvjfixneeded){
-			ffnx_trace("prepare_movie: Using swscale to workaround ffmpeg yuvj color range bug.\n", av_color_space_name(codec_ctx->colorspace));
-		}
-	}
-
-	sws_ctx = sws_getContext(
-		movie_width,
-		movie_height,
-		nativepixformat,
-		movie_width,
-		movie_height,
-		targetpixelformat,
-		SWS_LANCZOS | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT,
-		NULL,
-		NULL,
-		NULL
-	);
-
-	wb_nonblank_fmt = (wb_pix_fmt == AV_PIX_FMT_NONE) ? nativepixformat : wb_pix_fmt; // this will assert if AV_PIX_FMT_NONE is passed
-	sws_wb_ctx = sws_getContext(
-		movie_width,
-		movie_height,
-		wb_nonblank_fmt,
-		movie_width,
-		movie_height,
-		targetpixelformat,
-		SWS_LANCZOS | SWS_ACCURATE_RND | SWS_FULL_CHR_H_INT,
-		NULL,
-		NULL,
-		NULL
-	);
-
-	// if we need a colorspace conversion, set it up here
-	// this would also be the place to set up color range conversion, if it worked -- which it doens't
-	if (!okcolorspace || yuvjfixneeded){
-		int *coefs_in;
-		int *coefs_out;
-		int srcRange, dstRange;
-		int brightness, contrast, saturation;
-		sws_getColorspaceDetails(sws_ctx, &coefs_in, &srcRange, &coefs_out, &dstRange, &brightness, &contrast, &saturation);
-
-		coefs_in = const_cast<int*>(sws_getCoefficients(codec_ctx->colorspace)); // const sucks
-		// use the same colorspace
-		if (okcolorspace){
-			coefs_out = coefs_in;
-		}
-		// convert
-		else {
-			coefs_out = const_cast<int*>(sws_getCoefficients(SWS_CS_ITU601)); // const sucks
-			colormatrix = COLORMATRIX_BT601;
-		}
-
-		// Surprisingly, these parameters don't appear to **do** anything in most cases.
-		// It appears that whether swscale does a range conversion is controlled by pixformat and range metadata.
-		// And it will do one regardless of whether you want it.
-		// Except, when the input format is YUVJ, these parameters can be used to **prevent** an un-asked-for PC->TV conversion
-		// (They are totally ignored with 10-bit input formats, however.)
-		// Gawd... swscale is a buggy mess...
-		if (yuvjfixneeded){
-			srcRange = fullrange_input ? 1 : 0; // use the input color range
-			dstRange = srcRange; // no conversion!
-		}
-
-		sws_setColorspaceDetails(sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
-		sws_setColorspaceDetails(sws_wb_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
-	}
-	*/
 
 	if(audiostream >= 0)
 	{
