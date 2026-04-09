@@ -530,9 +530,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AV_PIX_FMT_YUVJ422P:
 		case AV_PIX_FMT_YUVJ444P:
 		case AV_PIX_FMT_YUVJ440P:
-			fullrange_input = true;
-			yuvjfixneeded = true;
-			break;
 		case AV_PIX_FMT_GRAY8:
 		case AV_PIX_FMT_YA8:
 		case AV_PIX_FMT_GRAY16LE:
@@ -541,7 +538,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		case AV_PIX_FMT_YA16LE:
 		case AV_PIX_FMT_BGR24:
 			fullrange_input = true;
-			yuvjfixneeded = false;
+			yuvjfixneeded = true;
 			break;
 		default:
 			yuvjfixneeded = false;
