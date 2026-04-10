@@ -1,10 +1,10 @@
 # Video Encoding Guide
 
-This guide explains how to encode FMV videos for high quality and proper playback within FFNx. In some respects, FFNx behaves like a generic ffmpeg-based video player such as VLC, mpv, etc. However, FFNx's default behavior in the absence of metadata is rather different because it's designed to play back the original game files. **Therefore, if you don't want you video treated like original game files, YOU MUST SET YOUR METADATA ACCORDINGLY.**
+This guide explains how to encode FMV videos for high quality and proper playback within FFNx. In some respects, FFNx behaves like a generic ffmpeg-based video player such as VLC, mpv, etc. However, FFNx's default behavior in the absence of metadata is rather different because it's designed to play back the original game files. **Therefore, if you don't want your video treated like original game files, YOU MUST SET YOUR METADATA ACCORDINGLY.**
 
 Also, FFNx's behavior differs between "NTSC-J" mode and "sRGB mode." NTSC-J mode honors typical metadata values for color primaries and transfer characteristics, but sRGB mode ignores them and treats all content as sRGB.
 
-FFNx Behavior x Metadata Chart:
+FFNx Behavior x Metadata Quick Reference Chart:
 | Metadata Property | FFNx NTSC-J Mode Behavior | FFNx sRGB Mode Behavior |
 |-------------------|---------------------------|-------------------------|
 | Color Matrix, metadata set | Honors metadata. | Honors metadata. |
@@ -68,7 +68,8 @@ FFNx Behavior x Metadata Chart:
 **Recommended:** 10 bits per color  
 **Permitted:** Anything ffmpeg can decode  
 **Notes:**
-- FFNx converts to 8 bits per color internally.
+- FFNx converts to 10 bits per color for internal processing.
+- Most monitors (even many HDR monitors) accept only 8-bit input and require your GPU to do  a final conversion to 8-bit.
 - Nevertheless, 10-bit encoding is recommended, even for 8-bit source material destined for an 8-bit monitor, because it reduces banding and compression artifacts and yields better quality at the same file size (or smaller file size at the same quality).
 - Generally, the first thing your frameserver script should do is increase the bit depth to at least 16, and the last thing it should do is reduce the bit depth to 10. Working in a high bit depth prevents banding and other color errors caused by rounding.
 - Depending on your operating system and the age of your x264 encoder, you might have separate binaries for 8-bit and 10-bit encoding, or a single binary that can do both. The relevant parameters for the dual-depth binary are `--input-depth` and `--output-depth` both of which should be 10.
@@ -90,11 +91,11 @@ FFNx Behavior x Metadata Chart:
      - The bink matrix is the result of bugs in the bink encoder/player transposing two pairs of constants in the standard bt601 calculations.
      - Accordingly, videos produced by the bink encoder look wildly wrong when played back using the standard bt601 matrix. And videos created with the standard bt601 matrix look wildly wrong when played back using the bink matrix. **So make sure to set (or deliberately leave unset) your color matrix metadata accordingly.**
      - A vapoursynth script to convert bink videos to R'G'B' (from which they can then be further converted to any standard matrix) is available at `/docs/mods/unbink.vpy`.
-- FFNx handles bt601 and bt709 natively. Anything else will be converted to bt601 using ffmpeg's swscale component.
+- FFNx handles bt601, bt709, and bink matrix natively. Anything else will be converted to bt601 using ffmpeg's swscale component.
 - The color matrix of an unlabeled video is almost always either bt601 or bt709. Which one can usually be ascertained by "eyeballing" it using a tool that can swap which matrix is used for display (such as [vsedit](https://github.com/YomikoR/VapourSynth-Editor)). [This page](http://avisynth.nl/index.php/Colorimetry) explains how greens and reds will look wrong when the incorrect matrix is used. For live-action content, you can usually tell by looking at a tree or bush. For animated and computer-generated content it can be more difficult to distinguish incorrect color from artistic intent.
 
 ### Color Primaries (Color Gamut)
-**Background Info:** The color gamut is the range of visible light that a playback device is physically capable of producing. Video is "mastered" with a particular class of playback device in mind (e.g., American CRT television sets with SMPTE-C phosphors). To correctly play back video mastered for one gamut on a device with a different gamut, a conversion must be made so that the second device will produce the same visible colors as the first, to the extent it's physically able to.  
+**Background Info:** The color gamut is the range of colors that a playback device is physically capable of producing. Video is "mastered" with a particular class of playback device in mind (e.g., American CRT television sets with SMPTE-C phosphors). To correctly play back video mastered for one gamut on a device with a different gamut, a conversion must be made so that the second device will produce the same colors as the first, to the extent it's physically able to.  
 **x264 encoder parameter:** `--colorprim` Possible values are `undef`, `bt709`, `bt470m`, `bt470bg`, `smpte170m`, `smpte240m`, `film`, `bt2020`, `smpte428`, `smpte431`, `smpte432`. This parameter only sets the metadata used for playback; it does not do a color gamut conversion.  
 **Recommended:** `undef` for NTSC-J material, otherwise the color gamut of the source material (likely `bt709` when color matrix is bt709 and `smpte170m` or `bt470bg` when color matrix is bt601).  
 **Permitted, in NTSC-J mode:** `undef`, `bt709`, `bt470m`, `smpte170m`, `smpte240m`, If video metadata specifies unsupported color primaries, default behavior will be used.  
@@ -124,7 +125,7 @@ FFNx Behavior x Metadata Chart:
 - The video files from the PC2000 and Steam editions of FF8 are (almost) tv range.
      - The bink encoder used for the videos in FF8's 2000 PC release is buggy and uses 16-234 for limited-range luma. (This affects the Steam FF8 videos too, because they are simple upscales of the PC2000 videos.) FFNx will correct for this if the color matrix metadata is left blank.
 - Conversion from full range to tv range should be avoided because color data is irreparably discarded. This tends to cause [color banding](https://en.wikipedia.org/wiki/Colour_banding).
-- Several ffmpeg-based video players (notably including VLC) suffer from a bug in which, under certain circumstances, they apply an unnecessary and incorrect tv->pc range conversion to video that is already full range. FFNx does **_NOT_** have this bug.
+- Several ffmpeg-based video players (notably including VLC) suffer from a bug in which, under certain circumstances, they apply an unnecessary and incorrect range conversion. FFNx does **_NOT_** have this bug.
 - The color range of an unlabeled video can be ascertained using the [histogram filter for VapourSynth](https://vsdb.top/plugins/hist) or [AviSynth](http://avisynth.nl/index.php/Histogram). (See the AviSynth link for useful documentation.)
 
 ### Transfer Characteristics (Gamma)
@@ -135,7 +136,7 @@ FFNx Behavior x Metadata Chart:
 **FFNx default behavior, in NTSC-J mode:** If the transfer characteristics metadata is absent or `undef`, FFNx will use the BT1886 Appendix 1 EOTF function. See `docs/color_modes.md` for details.  
 **FFNx behavior, in sRGB mode:** *Ignores metadata.* Always uses `iec61966-2-1`.  
 **Notes:**
-- In the absence of metadata, FFNx assumes original Playstation 1 videos (or derivatives thereof). Since these videos were meant to play on a CRT television, FFNx uses the EOTF (gamma) function from BT1886 Appendix 1, with constants selected to match a mid-90s Sony Trinitron CRT with the brightness and contrast knobs turned to where it looks "good."
+- For NTSC-J mode, in the absence of metadata, FFNx assumes original Playstation 1 videos (or derivatives thereof). Since these videos were meant to play on a CRT television, FFNx uses the EOTF (gamma) function from BT1886 Appendix 1, with constants selected to match a mid-90s Sony Trinitron CRT with the brightness and contrast knobs turned to where it looks "good."
 - `iec61966-2-1` is the sRGB gamma function. Modern sRGB computer monitors use this gamma function. FFNx will ultimately convert everything to this. The average of this function is roughly equivalent to a pure 2.2 curve. (Except if HDR is enabled, everything will instead be converted to the rec2084 ("PQ") gamma function used by HDR monitors.)
 - `smpte170m`, `bt709`, `bt2020-10`, `bt2020-12`, `iec61966-2-4`, and `bt1361e` are all functionally identical. This is the gamma function used in the digital NTSC and HD television/DVD/Bluray/etc. standards. The average of this function is roughly equivalent to a pure 1.9 curve (though 2.0 is often cited). This is deliberately overbright in order to counteract other factors with playback on CRT television sets.
 -  Aside from Playstation 1 videos (see above), the transfer characteristics of an unlabeled video are most likely `smpte170m`.
