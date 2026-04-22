@@ -34,12 +34,12 @@ private:
     SDL_JoystickID sdlInstanceId = -1;
     bool sdlInitialized = false;
 
+    bool init();
     void GamepadEvents();
     bool openGamepad();
     void closeGamepad();
 
 public:
-    bool Gamepad_Init();
     ~SDLGamepad();
 
     float leftStickX = 0.0f;
