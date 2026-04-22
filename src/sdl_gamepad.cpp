@@ -40,7 +40,7 @@ SDLGamepad::~SDLGamepad()
 
 int SDLGamepad::GetPort() const
 {
-    return sdlgamepad ? 1 : 0;
+    return handle ? 1 : 0;
 }
 
 
@@ -72,8 +72,8 @@ bool SDLGamepad::init()
 
 const char* SDLGamepad::GetName() const
 {
-    if (!sdlgamepad) return "";
-    const char *name = SDL_GetGamepadName(sdlgamepad);
+    if (!handle) return "";
+    const char *name = SDL_GetGamepadName(handle);
     return name ? name : "";
 }
 
@@ -85,42 +85,49 @@ void SDLGamepad::GamepadEvents()
         switch (event.type)
         {
             case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-                if (sdlgamepad && event.gaxis.which == sdlInstanceId)
+                if (handle && event.gaxis.which == sdlInstanceId)
                 {
-                    float leftDeadzone  = (float)left_analog_stick_deadzone;
-                    float rightDeadzone = (float)right_analog_stick_deadzone;
-
-                    auto normAxis = [](Sint16 v) -> float { return SDL_clamp((float)v / SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f); };
-                    auto applyDeadzone = [](float v, float dz) -> float {
-                        if (fabsf(v) < dz) return 0.0f;
-                        float sign = (v < 0.0f) ? -1.0f : 1.0f;
-                        return ((fabsf(v) - dz) / (1.0f - dz)) * sign;
-                    };
-                    auto applyTriggerDeadzone = [](float v, float dz) -> float {
-                        if (v <= dz) return 0.0f;
-                        return (v - dz) / (1.0f - dz);
-                    };
+                    float leftDz  = (float)left_analog_stick_deadzone;
+                    float rightDz = (float)right_analog_stick_deadzone;
 
                     switch ((SDL_GamepadAxis)event.gaxis.axis)
                     {
                         case SDL_GAMEPAD_AXIS_LEFTX:
-                            leftStickX =  applyDeadzone(normAxis(event.gaxis.value), leftDeadzone);
-                            break;
                         case SDL_GAMEPAD_AXIS_LEFTY:
-                            leftStickY = -applyDeadzone(normAxis(event.gaxis.value), leftDeadzone);
+                        {
+                            float normLX = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(handle, SDL_GAMEPAD_AXIS_LEFTX) / SDL_JOYSTICK_AXIS_MAX);
+                            float normLY = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(handle, SDL_GAMEPAD_AXIS_LEFTY) / SDL_JOYSTICK_AXIS_MAX);
+                            leftStickX = (fabsf(normLX) < leftDz ? 0.0f : (fabsf(normLX) - leftDz) * (normLX / fabsf(normLX)));
+                            leftStickY = (fabsf(normLY) < leftDz ? 0.0f : (fabsf(normLY) - leftDz) * (normLY / fabsf(normLY)));
+                            if (leftDz > 0.0f) { leftStickX *= 1.0f / (1.0f - leftDz); leftStickY *= 1.0f / (1.0f - leftDz); }
+                            leftStickY = -leftStickY;
                             break;
+                        }
                         case SDL_GAMEPAD_AXIS_RIGHTX:
-                            rightStickX =  applyDeadzone(normAxis(event.gaxis.value), rightDeadzone);
-                            break;
                         case SDL_GAMEPAD_AXIS_RIGHTY:
-                            rightStickY = -applyDeadzone(normAxis(event.gaxis.value), rightDeadzone);
+                        {
+                            float normRX = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(handle, SDL_GAMEPAD_AXIS_RIGHTX) / SDL_JOYSTICK_AXIS_MAX);
+                            float normRY = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(handle, SDL_GAMEPAD_AXIS_RIGHTY) / SDL_JOYSTICK_AXIS_MAX);
+                            rightStickX = (fabsf(normRX) < rightDz ? 0.0f : (fabsf(normRX) - rightDz) * (normRX / fabsf(normRX)));
+                            rightStickY = (fabsf(normRY) < rightDz ? 0.0f : (fabsf(normRY) - rightDz) * (normRY / fabsf(normRY)));
+                            if (rightDz > 0.0f) { rightStickX *= 1.0f / (1.0f - rightDz); rightStickY *= 1.0f / (1.0f - rightDz); }
+                            rightStickY = -rightStickY;
                             break;
+                        }
                         case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
-                            leftTrigger  = applyTriggerDeadzone(SDL_clamp((float)event.gaxis.value / SDL_JOYSTICK_AXIS_MAX, 0.0f, 1.0f), (float)left_analog_trigger_deadzone);
+                        {
+                            float raw = SDL_clamp((float)event.gaxis.value / SDL_JOYSTICK_AXIS_MAX, 0.0f, 1.0f);
+                            float dz  = (float)left_analog_trigger_deadzone;
+                            leftTrigger = (raw <= dz) ? 0.0f : (raw - dz) / (1.0f - dz);
                             break;
+                        }
                         case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
-                            rightTrigger = applyTriggerDeadzone(SDL_clamp((float)event.gaxis.value / SDL_JOYSTICK_AXIS_MAX, 0.0f, 1.0f), (float)right_analog_trigger_deadzone);
+                        {
+                            float raw = SDL_clamp((float)event.gaxis.value / SDL_JOYSTICK_AXIS_MAX, 0.0f, 1.0f);
+                            float dz  = (float)right_analog_trigger_deadzone;
+                            rightTrigger = (raw <= dz) ? 0.0f : (raw - dz) / (1.0f - dz);
                             break;
+                        }
                         default:
                             break;
                     }
@@ -128,31 +135,20 @@ void SDLGamepad::GamepadEvents()
                 break;
 
             case SDL_EVENT_GAMEPAD_ADDED:
-                if (!sdlgamepad)
+                if (!handle)
                 {
-                    SDL_JoystickID id = event.gdevice.which;
-                    SDL_Gamepad *gp = SDL_OpenGamepad(id);
+                    SDL_Gamepad *gp = SDL_OpenGamepad(event.gdevice.which);
                     if (gp)
                     {
-                        sdlgamepad = gp;
-                        sdlInstanceId = id;
+                        handle = gp;
+                        sdlInstanceId = event.gdevice.which;
                     }
                 }
                 break;
 
             case SDL_EVENT_GAMEPAD_REMOVED:
-                if (sdlgamepad && event.gdevice.which == sdlInstanceId)
+                if (handle && event.gdevice.which == sdlInstanceId)
                     closeGamepad();
-                break;
-
-            case SDL_EVENT_GAMEPAD_REMAPPED:
-                if (sdlgamepad && event.gdevice.which == sdlInstanceId)
-                {
-                    closeGamepad();
-                    openGamepad();
-                    if (trace_all || trace_gamepad)
-                        ffnx_trace("SDL gamepad: mapping remapped, reopened\n");
-                }
                 break;
 
             default:
@@ -161,53 +157,21 @@ void SDLGamepad::GamepadEvents()
     }
 }
 
-bool SDLGamepad::openGamepad()
-{
-    if (!init())
-        return false;
-
-    int count = 0;
-    SDL_JoystickID *ids = SDL_GetGamepads(&count);
-
-    if (!ids || count == 0)
-    {
-        SDL_free(ids);
-        return false;
-    }
-
-    for (int i = 0; i < count; ++i)
-    {
-        SDL_Gamepad *gp = SDL_OpenGamepad(ids[i]);
-        if (!gp) continue;
-
-        sdlgamepad = gp;
-        sdlInstanceId = ids[i];
-        break;
-    }
-
-    SDL_free(ids);
-    return sdlgamepad != nullptr;
-}
 
 bool SDLGamepad::CheckConnection()
 {
-    if (!init())
-        return false;
-
-    GamepadEvents();
-
-    return sdlgamepad != nullptr;
+    return Refresh();
 }
 
 void SDLGamepad::closeGamepad()
 {
-    if (sdlgamepad)
+    if (handle)
     {
-        SDL_CloseGamepad(sdlgamepad);
-        sdlgamepad = nullptr;
+        SDL_CloseGamepad(handle);
+        handle = nullptr;
     }
 
-    sdlInstanceId = -1;
+    sdlInstanceId = 0;
 
     leftStickX = leftStickY = rightStickX = rightStickY = 0.0f;
     leftTrigger = rightTrigger = 0.0f;
@@ -215,31 +179,28 @@ void SDLGamepad::closeGamepad()
 
 bool SDLGamepad::Refresh()
 {
-    if (!sdlgamepad)
-    {
-        if (!openGamepad())
-            return false;
-    }
+    if (!init())
+        return false;
 
     GamepadEvents();
 
-    return true;
+    return handle != nullptr;
 }
 
 bool SDLGamepad::HasRumble() const
 {
-    if (!sdlgamepad)
+    if (!handle)
         return false;
-    SDL_PropertiesID props = SDL_GetGamepadProperties(sdlgamepad);
+    SDL_PropertiesID props = SDL_GetGamepadProperties(handle);
     return SDL_GetBooleanProperty(props, SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
 }
 
 bool SDLGamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 {
-    if (!sdlgamepad && !openGamepad())
+    if (!handle)
         return false;
 
-    if (!SDL_RumbleGamepad(sdlgamepad, wLeftMotorSpeed, wRightMotorSpeed, SDL_HAPTIC_INFINITY))
+    if (!SDL_RumbleGamepad(handle, wLeftMotorSpeed, wRightMotorSpeed, SDL_HAPTIC_INFINITY))
         return false;
 
     return true;
@@ -247,8 +208,8 @@ bool SDLGamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 
 bool SDLGamepad::IsPressed(SDL_GamepadButton button) const
 {
-    if (!sdlgamepad) return false;
-    return SDL_GetGamepadButton(sdlgamepad, button);
+    if (!handle) return false;
+    return SDL_GetGamepadButton(handle, button);
 }
 
 bool SDLGamepad::IsIdle() const
