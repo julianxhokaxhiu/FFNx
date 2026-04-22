@@ -30,7 +30,7 @@
 class SDLGamepad
 {
 private:
-    SDL_Gamepad *handle = nullptr;
+    SDL_Gamepad *sdlgamepad = nullptr;
     SDL_JoystickID sdlInstanceId = 0;
     bool sdlInitialized = false;
 

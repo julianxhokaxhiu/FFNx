@@ -40,7 +40,7 @@ SDLGamepad::~SDLGamepad()
 
 int SDLGamepad::GetPort() const
 {
-    return handle ? 1 : 0;
+    return sdlgamepad ? 1 : 0;
 }
 
 
@@ -72,8 +72,8 @@ bool SDLGamepad::init()
 
 const char* SDLGamepad::GetName() const
 {
-    if (!handle) return "";
-    const char *name = SDL_GetGamepadName(handle);
+    if (!sdlgamepad) return "";
+    const char *name = SDL_GetGamepadName(sdlgamepad);
     return name ? name : "";
 }
 
@@ -85,7 +85,7 @@ void SDLGamepad::GamepadEvents()
         switch (event.type)
         {
             case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-                if (handle && event.gaxis.which == sdlInstanceId)
+                if (sdlgamepad && event.gaxis.which == sdlInstanceId)
                 {
                     float leftDz  = (float)left_analog_stick_deadzone;
                     float rightDz = (float)right_analog_stick_deadzone;
@@ -95,8 +95,8 @@ void SDLGamepad::GamepadEvents()
                         case SDL_GAMEPAD_AXIS_LEFTX:
                         case SDL_GAMEPAD_AXIS_LEFTY:
                         {
-                            float normLX = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(handle, SDL_GAMEPAD_AXIS_LEFTX) / SDL_JOYSTICK_AXIS_MAX);
-                            float normLY = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(handle, SDL_GAMEPAD_AXIS_LEFTY) / SDL_JOYSTICK_AXIS_MAX);
+                            float normLX = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_LEFTX) / SDL_JOYSTICK_AXIS_MAX);
+                            float normLY = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_LEFTY) / SDL_JOYSTICK_AXIS_MAX);
                             leftStickX = (fabsf(normLX) < leftDz ? 0.0f : (fabsf(normLX) - leftDz) * (normLX / fabsf(normLX)));
                             leftStickY = (fabsf(normLY) < leftDz ? 0.0f : (fabsf(normLY) - leftDz) * (normLY / fabsf(normLY)));
                             if (leftDz > 0.0f) { leftStickX *= 1.0f / (1.0f - leftDz); leftStickY *= 1.0f / (1.0f - leftDz); }
@@ -106,8 +106,8 @@ void SDLGamepad::GamepadEvents()
                         case SDL_GAMEPAD_AXIS_RIGHTX:
                         case SDL_GAMEPAD_AXIS_RIGHTY:
                         {
-                            float normRX = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(handle, SDL_GAMEPAD_AXIS_RIGHTX) / SDL_JOYSTICK_AXIS_MAX);
-                            float normRY = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(handle, SDL_GAMEPAD_AXIS_RIGHTY) / SDL_JOYSTICK_AXIS_MAX);
+                            float normRX = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_RIGHTX) / SDL_JOYSTICK_AXIS_MAX);
+                            float normRY = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_RIGHTY) / SDL_JOYSTICK_AXIS_MAX);
                             rightStickX = (fabsf(normRX) < rightDz ? 0.0f : (fabsf(normRX) - rightDz) * (normRX / fabsf(normRX)));
                             rightStickY = (fabsf(normRY) < rightDz ? 0.0f : (fabsf(normRY) - rightDz) * (normRY / fabsf(normRY)));
                             if (rightDz > 0.0f) { rightStickX *= 1.0f / (1.0f - rightDz); rightStickY *= 1.0f / (1.0f - rightDz); }
@@ -135,19 +135,19 @@ void SDLGamepad::GamepadEvents()
                 break;
 
             case SDL_EVENT_GAMEPAD_ADDED:
-                if (!handle)
+                if (!sdlgamepad)
                 {
                     SDL_Gamepad *gp = SDL_OpenGamepad(event.gdevice.which);
                     if (gp)
                     {
-                        handle = gp;
+                        sdlgamepad = gp;
                         sdlInstanceId = event.gdevice.which;
                     }
                 }
                 break;
 
             case SDL_EVENT_GAMEPAD_REMOVED:
-                if (handle && event.gdevice.which == sdlInstanceId)
+                if (sdlgamepad && event.gdevice.which == sdlInstanceId)
                     closeGamepad();
                 break;
 
@@ -165,10 +165,10 @@ bool SDLGamepad::CheckConnection()
 
 void SDLGamepad::closeGamepad()
 {
-    if (handle)
+    if (sdlgamepad)
     {
-        SDL_CloseGamepad(handle);
-        handle = nullptr;
+        SDL_CloseGamepad(sdlgamepad);
+        sdlgamepad = nullptr;
     }
 
     sdlInstanceId = 0;
@@ -184,23 +184,23 @@ bool SDLGamepad::Refresh()
 
     GamepadEvents();
 
-    return handle != nullptr;
+    return sdlgamepad != nullptr;
 }
 
 bool SDLGamepad::HasRumble() const
 {
-    if (!handle)
+    if (!sdlgamepad)
         return false;
-    SDL_PropertiesID props = SDL_GetGamepadProperties(handle);
+    SDL_PropertiesID props = SDL_GetGamepadProperties(sdlgamepad);
     return SDL_GetBooleanProperty(props, SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
 }
 
 bool SDLGamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 {
-    if (!handle)
+    if (!sdlgamepad)
         return false;
 
-    if (!SDL_RumbleGamepad(handle, wLeftMotorSpeed, wRightMotorSpeed, SDL_HAPTIC_INFINITY))
+    if (!SDL_RumbleGamepad(sdlgamepad, wLeftMotorSpeed, wRightMotorSpeed, SDL_HAPTIC_INFINITY))
         return false;
 
     return true;
@@ -208,8 +208,8 @@ bool SDLGamepad::Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed)
 
 bool SDLGamepad::IsPressed(SDL_GamepadButton button) const
 {
-    if (!handle) return false;
-    return SDL_GetGamepadButton(handle, button);
+    if (!sdlgamepad) return false;
+    return SDL_GetGamepadButton(sdlgamepad, button);
 }
 
 bool SDLGamepad::IsIdle() const
