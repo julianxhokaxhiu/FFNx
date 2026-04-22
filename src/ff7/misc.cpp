@@ -387,8 +387,8 @@ int ff7_get_gamepad()
 	}
 	else if (use_sdl_gamepad)
 	{
-		sdlgamepad.Refresh();
-		return TRUE;
+		if (sdlgamepad.Refresh())
+			return TRUE;
 	}
 	else if (xinput_connected)
 	{

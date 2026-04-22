@@ -343,8 +343,8 @@ int ff8_init_gamepad()
 {
 	if (use_sdl_gamepad)
 	{
-		sdlgamepad.Refresh();
-		return TRUE;
+		if (sdlgamepad.Refresh())
+			return TRUE;
 	}
 	else if (xinput_connected)
 	{
