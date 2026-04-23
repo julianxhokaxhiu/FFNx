@@ -77,6 +77,21 @@ const char* SDLGamepad::GetName() const
     return name ? name : "";
 }
 
+static float applyDeadzone(float value, float deadzone)
+{
+    float norm = fmaxf(-1.0f, value / SDL_JOYSTICK_AXIS_MAX);
+    if (fabsf(norm) < deadzone) return 0.0f;
+    float sign = (norm < 0.0f) ? -1.0f : 1.0f;
+    return ((fabsf(norm) - deadzone) / (1.0f - deadzone)) * sign;
+}
+
+static float applyTriggerDeadzone(float value, float deadzone)
+{
+    float raw = SDL_clamp(value / SDL_JOYSTICK_AXIS_MAX, 0.0f, 1.0f);
+    if (raw <= deadzone) return 0.0f;
+    return (raw - deadzone) / (1.0f - deadzone);
+}
+
 void SDLGamepad::GamepadEvents()
 {
     SDL_Event event;
@@ -93,41 +108,23 @@ void SDLGamepad::GamepadEvents()
                     switch ((SDL_GamepadAxis)event.gaxis.axis)
                     {
                         case SDL_GAMEPAD_AXIS_LEFTX:
+                            leftStickX = applyDeadzone((float)event.gaxis.value, leftDz);
+                            break;
                         case SDL_GAMEPAD_AXIS_LEFTY:
-                        {
-                            float normLX = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_LEFTX) / SDL_JOYSTICK_AXIS_MAX);
-                            float normLY = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_LEFTY) / SDL_JOYSTICK_AXIS_MAX);
-                            leftStickX = (fabsf(normLX) < leftDz ? 0.0f : (fabsf(normLX) - leftDz) * (normLX / fabsf(normLX)));
-                            leftStickY = (fabsf(normLY) < leftDz ? 0.0f : (fabsf(normLY) - leftDz) * (normLY / fabsf(normLY)));
-                            if (leftDz > 0.0f) { leftStickX *= 1.0f / (1.0f - leftDz); leftStickY *= 1.0f / (1.0f - leftDz); }
-                            leftStickY = -leftStickY;
+                            leftStickY = -applyDeadzone((float)event.gaxis.value, leftDz);
                             break;
-                        }
                         case SDL_GAMEPAD_AXIS_RIGHTX:
+                            rightStickX = applyDeadzone((float)event.gaxis.value, rightDz);
+                            break;
                         case SDL_GAMEPAD_AXIS_RIGHTY:
-                        {
-                            float normRX = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_RIGHTX) / SDL_JOYSTICK_AXIS_MAX);
-                            float normRY = fmaxf(-1.0f, (float)SDL_GetGamepadAxis(sdlgamepad, SDL_GAMEPAD_AXIS_RIGHTY) / SDL_JOYSTICK_AXIS_MAX);
-                            rightStickX = (fabsf(normRX) < rightDz ? 0.0f : (fabsf(normRX) - rightDz) * (normRX / fabsf(normRX)));
-                            rightStickY = (fabsf(normRY) < rightDz ? 0.0f : (fabsf(normRY) - rightDz) * (normRY / fabsf(normRY)));
-                            if (rightDz > 0.0f) { rightStickX *= 1.0f / (1.0f - rightDz); rightStickY *= 1.0f / (1.0f - rightDz); }
-                            rightStickY = -rightStickY;
+                            rightStickY = -applyDeadzone((float)event.gaxis.value, rightDz);
                             break;
-                        }
                         case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
-                        {
-                            float raw = SDL_clamp((float)event.gaxis.value / SDL_JOYSTICK_AXIS_MAX, 0.0f, 1.0f);
-                            float dz  = (float)left_analog_trigger_deadzone;
-                            leftTrigger = (raw <= dz) ? 0.0f : (raw - dz) / (1.0f - dz);
+                            leftTrigger = applyTriggerDeadzone((float)event.gaxis.value, (float)left_analog_trigger_deadzone);
                             break;
-                        }
                         case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
-                        {
-                            float raw = SDL_clamp((float)event.gaxis.value / SDL_JOYSTICK_AXIS_MAX, 0.0f, 1.0f);
-                            float dz  = (float)right_analog_trigger_deadzone;
-                            rightTrigger = (raw <= dz) ? 0.0f : (raw - dz) / (1.0f - dz);
+                            rightTrigger = applyTriggerDeadzone((float)event.gaxis.value, (float)right_analog_trigger_deadzone);
                             break;
-                        }
                         default:
                             break;
                     }
