@@ -1,3 +1,7 @@
+## FF7
+
+- Enable japanese text support if ff7_ja.exe is being ran.  Unfinished, but appears stable.
+
 # Next
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.3...master
@@ -197,6 +201,10 @@
 
 - Core: Fix bgfx crash when memory cannot be allocated ( https://github.com/julianxhokaxhiu/FFNx/pull/755 )
 - Voice: Add support for `config.toml` configuration override based on Game Moment ID
+
+## FF7
+
+- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 )
 
 ## FF8
 
