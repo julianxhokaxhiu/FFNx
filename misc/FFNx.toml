@@ -405,6 +405,13 @@ hardware_video_decoding = 0
 # Controller Options
 ###########################
 
+#[SDL GAMEPAD API]
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# EXPERIMENTAL
+# This flag will enable SDL Gamepad API for enhanced Controller Support.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+use_sdl_gamepad = false
+
 #[ANALOGUE CONTROLS]
 # FF7: This flag will enable analogue joystick input for controlling the player in fields and the camera in battles.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~

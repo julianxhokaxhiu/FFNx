@@ -162,17 +162,17 @@ bool play_voice(char* field_name, byte window_id, byte dialog_id, byte page_coun
 	char page = 'a' + page_count;
 	if (page > 'z') page = 'z';
 
-	sprintf(name, "%s/w%u_%u%c", field_name, window_id, dialog_id, page);
+	snprintf(name, sizeof(name), "%s/w%u_%u%c", field_name, window_id, dialog_id, page);
 
 	if (!nxAudioEngine.canPlayVoice(name))
-		sprintf(name, "%s/%u%c", field_name, dialog_id, page);
+		snprintf(name, sizeof(name), "%s/%u%c", field_name, dialog_id, page);
 
 	if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
 	{
-		sprintf(name, "%s/w%u_%u", field_name, window_id, dialog_id);
+		snprintf(name, sizeof(name), "%s/w%u_%u", field_name, window_id, dialog_id);
 
 		if (!nxAudioEngine.canPlayVoice(name))
-			sprintf(name, "%s/%u", field_name, dialog_id);
+			snprintf(name, sizeof(name), "%s/%u", field_name, dialog_id);
 	}
 
 	return nxAudioEngine.playVoice(name, window_id, voice_volume, *common_externals.field_game_moment);
@@ -182,7 +182,7 @@ bool play_battle_dialogue_voice(short enemy_id, std::string tokenized_dialogue)
 {
 	char name[MAX_PATH];
 
-	sprintf(name, "_battle/enemy_%04X/%s", enemy_id, tokenized_dialogue.c_str());
+	snprintf(name, sizeof(name), "_battle/enemy_%04X/%s", enemy_id, tokenized_dialogue.c_str());
 
 	return nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
 }
@@ -203,7 +203,7 @@ bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenize
 	case cmd_id::CMD_STEAL:
 	case cmd_id::CMD_MUG:
 		// 3 cases: nothing, couldnt, stole
-		sprintf(name + strlen(name), "%s", split(tokenized_dialogue, "_")[0].c_str());
+		snprintf(name + strlen(name), sizeof(name) - strlen(name), "%s", split(tokenized_dialogue, "_")[0].c_str());
 		break;
 	default:
 		sprintf(name + strlen(name), "%c", page);
@@ -259,7 +259,7 @@ void play_option(char* field_name, byte window_id, byte dialog_id, byte option_c
 {
 	char name[MAX_PATH];
 
-	sprintf(name, "%s/%u_%u", field_name, dialog_id, option_count);
+	snprintf(name, sizeof(name), "%s/%u_%u", field_name, dialog_id, option_count);
 
 	nxAudioEngine.playVoice(name, window_id, voice_volume, *common_externals.field_game_moment);
 }
@@ -432,6 +432,11 @@ int opcode_voice_message()
 	}
 
 	current_opcode_message_status[window_id].message_last_opcode = message_current_opcode;
+
+	// Enable achievements based on text dialog
+	if (enable_steam_achievements) {
+		g_FF7SteamAchievements->unlockAchievementByDialogEvent(*common_externals.current_field_id, dialog_id);
+	}
 
 	return opcode_old_message();
 }
@@ -900,7 +905,7 @@ int ff7_menu_tutorial_render()
 		if (trace_all || trace_opcodes) ffnx_trace("[TUTOR]: id=%d,text=%s\n", dialog_id, decoded_text.c_str());
 
 		char voice_file[MAX_PATH];
-		sprintf(voice_file, "_tutor/%04u/%s", dialog_id, tokenized_dialogue.c_str());
+		snprintf(voice_file, sizeof(voice_file), "_tutor/%04u/%s", dialog_id, tokenized_dialogue.c_str());
 		current_opcode_message_status[window_id].is_voice_acting = nxAudioEngine.playVoice(voice_file, 0, voice_volume, *common_externals.field_game_moment);
 	}
 	else if (_is_dialog_closing)
@@ -1134,7 +1139,7 @@ int ff8_opcode_voice_aask(int unk)
 
 	int ret = ff8_opcode_old_aask(unk);
 
-	if (steam_edition || enable_steam_achievements) {
+	if (enable_steam_achievements) {
 		if (ret == 3) // aask exit
 		{
 			// --- Only for unlocking chocobo achievement (only way to implement it) ---
@@ -1240,15 +1245,16 @@ int ff8_show_dialog(int window_id, int state, int a3)
 		}
 		else if (_is_dialog_starting || _has_dialog_text_changed)
 		{
-			std::string decoded_text = ff8_decode_text(win->text_data1);
+			std::string decoded_text = ff8_decode_text(win->text_data1).substr(0, MAX_PATH);
 			std::string tokenized_dialogue = tokenize_text(decoded_text);
-			std::string actor_name = ff8_decode_text(ff8_battle_actor_name[LOBYTE(*ff8_externals.battle_current_actor_talking)]);
+			int idx = LOBYTE(*ff8_externals.battle_current_actor_talking);
+			std::string actor_name = ff8_battle_actor_name.contains(idx) ? ff8_decode_text(ff8_battle_actor_name[idx]).substr(0, MAX_PATH) : "any";
 			std::string tokenized_actor = tokenize_text(actor_name);
 
 			if (trace_all || trace_opcodes || trace_battle_text) ffnx_trace("[BATTLE]: scene_id=%u,actor=%s,text=%s\n", *ff8_externals.battle_encounter_id, actor_name.c_str(), decoded_text.c_str());
 
 			char voice_file[MAX_PATH];
-			sprintf(voice_file, "_battle/%s/%s", tokenized_actor.c_str(), tokenized_dialogue.c_str());
+			snprintf(voice_file, sizeof(voice_file), "_battle/%s/%s", tokenized_actor.c_str(), tokenized_dialogue.c_str());
 			current_opcode_message_status[window_id].is_voice_acting = nxAudioEngine.playVoice(voice_file, 0, voice_volume, *common_externals.field_game_moment);
 		}
 		else if (_is_dialog_closing)
@@ -1274,12 +1280,12 @@ int ff8_show_dialog(int window_id, int state, int a3)
 		{
 			if (dialog_id < 0)
 			{
-				std::string decoded_text = ff8_decode_text(win->text_data1);
+				std::string decoded_text = ff8_decode_text(win->text_data1).substr(0, MAX_PATH);
 				std::string tokenized_dialogue = tokenize_text(decoded_text);
 				if (trace_all || trace_opcodes) ffnx_trace("[WORLD]: window_id=%u,text=%s\n", window_id, decoded_text.c_str());
 
 				char voice_file[MAX_PATH];
-				sprintf(voice_file, "_world/text/%s", tokenized_dialogue.c_str());
+				snprintf(voice_file, sizeof(voice_file), "_world/text/%s", tokenized_dialogue.c_str());
 				current_opcode_message_status[window_id].is_voice_acting = nxAudioEngine.playVoice(voice_file, 0, voice_volume, *common_externals.field_game_moment);
 			}
 			else
@@ -1320,13 +1326,13 @@ int ff8_show_dialog(int window_id, int state, int a3)
 		}
 		else if (_is_dialog_starting || _has_dialog_text_changed)
 		{
-			std::string decoded_text = ff8_decode_text(win->text_data1);
+			std::string decoded_text = ff8_decode_text(win->text_data1).substr(0, MAX_PATH);
 			std::string tokenized_dialogue = tokenize_text(decoded_text);
 
 			if (trace_all || trace_opcodes || trace_battle_text) ffnx_trace("[TUTO]: id=%u,text=%s\n", *ff8_externals.current_tutorial_id, decoded_text.c_str());
 
 			char voice_file[MAX_PATH];
-			sprintf(voice_file, "_tuto/%04u/%s", *ff8_externals.current_tutorial_id, tokenized_dialogue.c_str());
+			snprintf(voice_file, sizeof(voice_file), "_tuto/%04u/%s", *ff8_externals.current_tutorial_id, tokenized_dialogue.c_str());
 			current_opcode_message_status[window_id].is_voice_acting = nxAudioEngine.playVoice(voice_file, 0, voice_volume, *common_externals.field_game_moment);
 		}
 		else if (_is_dialog_closing)

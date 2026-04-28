@@ -900,6 +900,14 @@ Tim ff8_wm_set_texture_name_from_section_position(uint8_t section_number, uint32
 	return tim;
 }
 
+void ff8_wm_set_section_positions()
+{
+	// This is when the worldmap loads: Clear all textures in the VRAM
+	texturePacker.clearTextures();
+
+	((void(*)())ff8_externals.worldmap_wmset_set_pointers_sub_542DA0)();
+}
+
 void ff8_wm_section_17_upload(uint8_t *tim_file_data, int16_t x, int16_t y)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: pos=(%d, %d)\n", __func__, x, y);
@@ -1210,6 +1218,9 @@ void ff8_wm_texl_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buf
 void ff8_field_mim_palette_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s\n", __func__);
+
+	// This is the first upload when a field map loads: Clear all textures in the VRAM
+	texturePacker.clearTextures();
 
 	field_effect_texture_infos = TexturePacker::TextureInfos();
 
@@ -1851,6 +1862,7 @@ void vram_init()
 	replace_call(ff8_externals.sub_5391B0 + 0x1CC, ff8_upload_vram_triple_triad_2_palette);
 	replace_call(ff8_externals.sub_5391B0 + 0x1E1, ff8_upload_vram_triple_triad_2_data);
 	// worldmap
+	replace_call(ff8_externals.worldmap_sub_53F310_call_24D, ff8_wm_set_section_positions); // Replaced to clear the textures on module loading
 	replace_call(ff8_externals.sub_554940_call_130, ff8_wm_section_17_upload); // Waves
 	replace_call(ff8_externals.worldmap_sub_53F310_call_2A9, ff8_wm_section_38_prepare_texture_for_upload);
 	replace_call(ff8_externals.worldmap_sub_53F310_call_30D, ff8_upload_vram_wm_section_38_palette);
@@ -1939,6 +1951,7 @@ void vram_init()
 
 	// Fix missing textures in battle module by clearing custom textures
 	replace_call(ff8_externals.battle_enter + 0x35, engine_set_init_time);
+	replace_call(ff8_externals.credits_enter + 0x12, engine_set_init_time);
 	// Clear texture_packer on every module exits
 	replace_call(ff8_externals.psxvram_texture_pages_free + 0x5A, clean_psxvram_pages);
 	// Free pc_name in tex_header

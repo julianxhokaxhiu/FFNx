@@ -6,8 +6,6 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2026 Julian Xhokaxhiu                                   //
-//    Copyright (C) 2023 Cosmos                                             //
-//    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -23,38 +21,41 @@
 
 #pragma once
 
-#include "model.h"
-#include "background.h"
-#include "../widescreen.h"
+#include <Windows.h>
+#include <SDL3/SDL.h>
 
-namespace ff7::field
+// Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
+// for the foundation of FFNx's original XInput implementation
+
+class SDLGamepad
 {
-    inline void ff7_field_initialize_variables()
-    {
-        ((void(*)())ff7_externals.field_initialize_variables)();
+private:
+    SDL_Gamepad *sdlgamepad = nullptr;
+    SDL_JoystickID sdlInstanceId = 0;
+    bool sdlInitialized = false;
 
-        field_3d_world_pos = {INVALID_VALUE, INVALID_VALUE};
-        bg_main_layer_pos = {INVALID_VALUE, INVALID_VALUE};
-        bg_layer3_pos = {INVALID_VALUE, INVALID_VALUE};
-        bg_layer4_pos = {INVALID_VALUE, INVALID_VALUE};
-        field_curr_delta_world_pos = {INVALID_VALUE, INVALID_VALUE};
-        cursor_position = {INVALID_VALUE, INVALID_VALUE};
+    bool init();
+    void GamepadEvents();
+    void closeGamepad();
 
-        // reset movement frame index for all models
-        for(auto &external_data : external_model_data){
-            external_data.moveFrameIndex = 0;
-            external_data.rotationMoveFrameIndex = 0;
-            external_data.prevCollisionRadius = 0;
+public:
+    ~SDLGamepad();
 
-            external_data.blinkFrameIndex = BLINKING_FRAMES;
-        }
+    float leftStickX = 0.0f;
+    float leftStickY = 0.0f;
+    float rightStickX = 0.0f;
+    float rightStickY = 0.0f;
+    float leftTrigger = 0.0f;
+    float rightTrigger = 0.0f;
 
-        // Fix woa_* animation after battle by resetting bg position at field enter
-        if (*common_externals.current_field_id == 710 || *common_externals.current_field_id == 711) {
-            (*ff7_externals.field_triggers_header)->bg4_pos_x = 0;
-            (*ff7_externals.field_triggers_header)->bg4_pos_y = 0;
-        }
+    int  GetPort() const;
+    const char* GetName() const;
+    bool CheckConnection();
+    bool HasRumble() const;
+    bool Refresh();
+    bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
+    bool IsPressed(SDL_GamepadButton) const;
+    bool IsIdle() const;
+};
 
-        if(widescreen_enabled || enable_uncrop) widescreen.initParamsFromConfig();
-    }
-}
+extern SDLGamepad sdlgamepad;

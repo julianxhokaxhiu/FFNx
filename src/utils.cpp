@@ -27,6 +27,7 @@
 #include <filesystem>
 #include <Softpub.h>
 #include <wintrust.h>
+#include <winternl.h>
 
 #include <cryptopp/md5.h>
 #include <cryptopp/sha.h>
@@ -103,7 +104,7 @@ std::wstring GetErrorMessage(unsigned long errorCode)
     return message;
 }
 
-bool isFileSigned(const wchar_t* dllPath)
+bool isFileSigned(const char* dllPath)
 {
     WINTRUST_FILE_INFO fileInfo = {};
     WINTRUST_DATA trustData = {};
@@ -112,7 +113,7 @@ bool isFileSigned(const wchar_t* dllPath)
     // Open the file with proper sharing flags
     fileInfo.cbStruct = sizeof(WINTRUST_FILE_INFO);
     fileInfo.pcwszFilePath = NULL;
-    fileInfo.hFile = CreateFileW(dllPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);;
+    fileInfo.hFile = CreateFileA(dllPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
     fileInfo.pgKnownSubject = NULL;
 
     GUID actionID = WINTRUST_ACTION_GENERIC_VERIFY_V2;
@@ -137,12 +138,12 @@ bool isFileSigned(const wchar_t* dllPath)
     return status == ERROR_SUCCESS;
 }
 
-std::string sha1_file(const std::string& filename)
+std::string sha1_file(const char *filename)
 {
     CryptoPP::SHA1 hash;
     std::string digest;
 
-    CryptoPP::FileSource(filename.c_str(), true,
+    CryptoPP::FileSource(filename, true,
         new CryptoPP::HashFilter(hash,
             new CryptoPP::HexEncoder(
                 new CryptoPP::StringSink(digest), false)));
@@ -163,4 +164,21 @@ std::string md5_hash(const unsigned char* data, size_t length)
                 new StringSink(digest), false)));
 
     return digest;
+}
+
+bool isMacOSLauncher()
+{
+    char value[256] = {};
+    GetEnvironmentVariableA("__CFBundleIdentifier", value, sizeof(value));
+    return strcmp(value, "com.julianxhokaxhiu.SummonKit") == 0;
+}
+
+uint32_t getProcessEntryPoint()
+{
+    HMODULE base = GetModuleHandleA(nullptr);
+
+    PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
+    PIMAGE_NT_HEADERS nt  = (PIMAGE_NT_HEADERS)((BYTE*)base + dos->e_lfanew);
+
+    return (uint32_t)((BYTE*)base + nt->OptionalHeader.AddressOfEntryPoint);
 }

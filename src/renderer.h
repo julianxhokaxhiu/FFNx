@@ -221,7 +221,7 @@ struct RendererCallbacks : public bgfx::CallbackI {
     virtual uint32_t cacheReadSize(uint64_t _id) override;
     virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) override;
     virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) override;
-    virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override {};
+    virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, const void* _data, uint32_t _size, bool _yflip) override {};
     virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, bool _yflip) override {};
     virtual void captureEnd() override {};
     virtual void captureFrame(const void* _data, uint32_t _size) override {};
@@ -296,6 +296,7 @@ private:
         ColorGamutType bIsOverallColorGamut = COLORGAMUT_SRGB;
         InverseGammaFunctionType bIsMovieGammaType = GAMMAFUNCTION_SRGB;
         ChromaLocationType bChromaLocation = CHROMALOC_CENTER;
+        bool bIsSmoothSkinning = false;
 
         float backendProjMatrix[16];
         float postprocessingProjMatrix[16];
@@ -308,13 +309,13 @@ private:
         std::vector<float> WMFlags;
         std::vector<float> FSMovieFlags;
         std::vector<float> FSMoreMovieFlags;
+        std::vector<float> SmoothSkinningFlags;
 
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
 
-        std::array<float, 4> SkinningFlags;
         float bone_matrices[16*MAX_BONE_MATRICES];
-        
+
         std::array<float, 4> gameLightingFlags;
         float gameGlobalLightColor[4] = { 0.0, 0.0, 0.0, 0.0 };
         float gameLightDir1[4] = { 0.0, 0.0, 0.0, 0.0 };

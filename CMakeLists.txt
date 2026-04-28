@@ -19,7 +19,7 @@
 #    GNU General Public License for more details.                             #
 #*****************************************************************************#
 
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 4.2)
 cmake_policy(SET CMP0091 NEW)
 
 if(NOT DEFINED CMAKE_BUILD_TYPE)
@@ -95,6 +95,7 @@ find_package(CMakeRC CONFIG REQUIRED)
 find_package(lfreist-hwinfo CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
 
@@ -178,6 +179,7 @@ target_link_libraries(
   dinput8
   dxguid
   XINPUT9_1_0
+  SDL3::SDL3-static
   strmiids
   ZLIB::ZLIB
   PNG::PNG
@@ -546,5 +548,49 @@ if(NOT "${FF8_STEAM_GAME_PATH}" STREQUAL "")
     COMMAND ${CMAKE_COMMAND} -E rename
             ${FF8_STEAM_GAME_PATH}/FFNx.toml.bak
             ${FF8_STEAM_GAME_PATH}/FFNx.toml
+  )
+endif()
+
+# Copy FFNx release to FF7 Rerelease Steam game path if installed
+execute_process(
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 3837340
+  OUTPUT_VARIABLE FF7_STEAM_RERELEASE_GAME_PATH
+  ERROR_VARIABLE FF7_STEAM_RERELEASE_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT "${FF7_STEAM_RERELEASE_GAME_PATH}" STREQUAL "")
+  cmake_path(CONVERT "${FF7_STEAM_RERELEASE_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_STEAM_RERELEASE_GAME_PATH)
+  set(FF7_STEAM_RERELEASE_GAME_PATH "${FF7_STEAM_RERELEASE_GAME_PATH}/ff7/workingdir")
+  # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
+  if(NOT EXISTS "${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml")
+    # Copy file if it doesn't exist
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF7_STEAM_RERELEASE_GAME_PATH}/")
+  endif()
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_STEAM_RERELEASE_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml
+            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml.bak
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF7_STEAM_RERELEASE_GAME_PATH}
+    # Delete previous AF3DN.P
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF7_STEAM_RERELEASE_GAME_PATH}/AF3DN.P
+    # Rename FFNx.dll to AF3DN.P
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.dll
+            ${FF7_STEAM_RERELEASE_GAME_PATH}/AF3DN.P
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml.bak
+            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml
   )
 endif()

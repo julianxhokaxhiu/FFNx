@@ -89,7 +89,7 @@ uint32_t ff7_prepare_movie(char *name, uint32_t loop, struct dddevice **dddevice
 	if(widescreen_enabled)
 		widescreen.initMovieParamsFromConfig(filename);
 
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 		g_FF7SteamAchievements->initMovieStats(std::string(filename));
 
 	return true;
@@ -119,7 +119,7 @@ retry:
 		ff7_externals.movie_object->movie_end = 1;
 		is_movie_bgfield = false;
 
-		if(steam_edition || enable_steam_achievements)
+		if(enable_steam_achievements)
 			if(g_FF7SteamAchievements->isEndingMovie())
 				g_FF7SteamAchievements->unlockGameProgressAchievement();
 
@@ -197,7 +197,6 @@ uint32_t ff8_movie_frames;
 void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 {
 	char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
-	uint32_t camOffset = 0;
 
 	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
 
@@ -262,7 +261,7 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 
 	if(trace_all || trace_movies) ffnx_trace("prepare_movie %s disc=%d movie=%d\n", newFmvName, disc, movie);
 
-	if (steam_edition || enable_steam_achievements) {
+	if (enable_steam_achievements) {
 		if (disc == 3 && movie == 4) // game ending movie
 		{
 			int squall_lvl = ff8_externals.get_char_level_4961D0(ff8_externals.savemap->chars[0].exp, 0);
@@ -337,14 +336,21 @@ int ff8_start_movie()
 {
 	if(trace_all || trace_movies) ffnx_trace("start_movie\n");
 
-	if(ff8_externals.movie_object->movie_intro_pak) ff8_externals.movie_object->movie_total_frames = ff8_movie_frames;
+	ff8_externals.movie_object->field_4C4B0 = 0;
+
+	if(ff8_externals.movie_object->movie_intro_pak)
+	{
+		if (ff8_movie_frames == 0) {
+			return 0;
+		}
+
+		ff8_externals.movie_object->movie_total_frames = ff8_movie_frames;
+	}
 	else
 	{
 		ff8_externals.movie_object->movie_total_frames = ((WORD *)ff8_movie_cam_buffer)[3];
 		if(trace_all || trace_movies) ffnx_trace("%i frames\n", ff8_externals.movie_object->movie_total_frames);
 	}
-
-	ff8_externals.movie_object->field_4C4B0 = 0;
 
 	*ff8_externals.enable_framelimiter = false;
 

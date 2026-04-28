@@ -30,6 +30,7 @@
 #include "gl.h"
 #include "gamepad.h"
 #include "joystick.h"
+#include "sdl_gamepad.h"
 #include "gamehacks.h"
 #include "utils.h"
 #include "vibration.h"
@@ -340,7 +341,12 @@ void ff8_swirl_init(float a1)
 
 int ff8_init_gamepad()
 {
-	if (xinput_connected)
+	if (use_sdl_gamepad)
+	{
+		if (sdlgamepad.Refresh())
+			return TRUE;
+	}
+	else if (xinput_connected)
 	{
 		if (gamepad.Refresh())
 			return TRUE;
@@ -348,7 +354,7 @@ int ff8_init_gamepad()
 	else
 	{
 		if (joystick.Refresh())
-    	return TRUE;
+			return TRUE;
 	}
 
 	return FALSE;
@@ -398,7 +404,70 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 
 	int lX = 0, lY = 0, rX = 0, rY = 0;
 
-	if (xinput_connected)
+	if (use_sdl_gamepad)
+	{
+		if (!sdlgamepad.Refresh() || !gamehacks.canInputBeProcessed())
+			return ff8_externals.dinput_gamepad_state;
+
+		if ((sdlgamepad.leftStickY > 0.5f) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_UP))
+		{
+			ff8_externals.dinput_gamepad_state->lY = 0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 0;
+		}
+		else if ((sdlgamepad.leftStickY < -0.5f) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_DOWN))
+		{
+			ff8_externals.dinput_gamepad_state->lY = -0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 18000;
+		}
+
+		if ((sdlgamepad.leftStickX < -0.5f) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_LEFT))
+		{
+			ff8_externals.dinput_gamepad_state->lX = 0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 27000;
+		}
+		else if ((sdlgamepad.leftStickX > 0.5f) || sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_DPAD_RIGHT))
+		{
+			ff8_externals.dinput_gamepad_state->lX = -0xFFFFFFFFFFFFFFFF;
+			ff8_externals.dinput_gamepad_state->rgdwPOV[0] = 9000;
+		}
+
+		lY = int(sdlgamepad.leftStickY * 0x80);
+		lX = int(sdlgamepad.leftStickX * 0x80);
+		rY = int(sdlgamepad.rightStickY * 0x80);
+		rX = int(sdlgamepad.rightStickX * 0x80);
+
+		if (sdlgamepad.rightStickY > 0.5f)
+			ff8_externals.dinput_gamepad_state->lRy = 0xFFFFFFFFFFFFFFFF;
+		else if (sdlgamepad.rightStickY < -0.5f)
+			ff8_externals.dinput_gamepad_state->lRy = -0xFFFFFFFFFFFFFFFF;
+
+		if (sdlgamepad.rightStickX > 0.5f)
+			ff8_externals.dinput_gamepad_state->lRx = -0xFFFFFFFFFFFFFFFF;
+		else if (sdlgamepad.rightStickX < -0.5f)
+			ff8_externals.dinput_gamepad_state->lRx = 0xFFFFFFFFFFFFFFFF;
+
+		ff8_externals.dinput_gamepad_state->lZ = 0;
+		ff8_externals.dinput_gamepad_state->lRz = 0;
+		ff8_externals.dinput_gamepad_state->rglSlider[0] = 0;
+		ff8_externals.dinput_gamepad_state->rglSlider[1] = 0;
+		ff8_externals.dinput_gamepad_state->rgdwPOV[1] = -1;
+		ff8_externals.dinput_gamepad_state->rgdwPOV[2] = -1;
+		ff8_externals.dinput_gamepad_state->rgdwPOV[3] = -1;
+		ff8_externals.dinput_gamepad_state->rgbButtons[0] = sdlgamepad.IsPressed(steam_stock_launcher ? SDL_GAMEPAD_BUTTON_SOUTH : SDL_GAMEPAD_BUTTON_WEST) ? 0x80 : 0; // Cross (Steam)/Square
+		ff8_externals.dinput_gamepad_state->rgbButtons[1] = sdlgamepad.IsPressed(steam_stock_launcher ? SDL_GAMEPAD_BUTTON_EAST : SDL_GAMEPAD_BUTTON_SOUTH) ? 0x80 : 0; // Circle (Steam)/Cross
+		ff8_externals.dinput_gamepad_state->rgbButtons[2] = sdlgamepad.IsPressed(steam_stock_launcher ? SDL_GAMEPAD_BUTTON_WEST : SDL_GAMEPAD_BUTTON_EAST) ? 0x80 : 0; // Square (Steam)/Circle
+		ff8_externals.dinput_gamepad_state->rgbButtons[3] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_NORTH) ? 0x80 : 0; // Triangle
+		ff8_externals.dinput_gamepad_state->rgbButtons[4] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) ? 0x80 : 0; // L1
+		ff8_externals.dinput_gamepad_state->rgbButtons[5] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER) ? 0x80 : 0; // R1
+		ff8_externals.dinput_gamepad_state->rgbButtons[6] = (steam_stock_launcher ? sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_BACK) : sdlgamepad.leftTrigger > 0.85f) ? 0x80 : 0; // SELECT (Steam)/L2
+		ff8_externals.dinput_gamepad_state->rgbButtons[7] = (steam_stock_launcher ? sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_START) : sdlgamepad.rightTrigger > 0.85f) ? 0x80 : 0; // START (Steam)/R2
+		ff8_externals.dinput_gamepad_state->rgbButtons[8] = (steam_stock_launcher ? sdlgamepad.leftTrigger > 0.85f : sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_BACK)) ? 0x80 : 0; // L2 (Steam)/SELECT
+		ff8_externals.dinput_gamepad_state->rgbButtons[9] = (steam_stock_launcher ? sdlgamepad.rightTrigger > 0.85f : sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_START)) ? 0x80 : 0; // R2 (Steam)/START
+		ff8_externals.dinput_gamepad_state->rgbButtons[10] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_LEFT_STICK) ? 0x80 : 0; // L3
+		ff8_externals.dinput_gamepad_state->rgbButtons[11] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_RIGHT_STICK) ? 0x80 : 0; // R3
+		ff8_externals.dinput_gamepad_state->rgbButtons[12] = sdlgamepad.IsPressed(SDL_GAMEPAD_BUTTON_GUIDE) ? 0x80 : 0; // PS Button
+	}
+	else if (xinput_connected)
 	{
 		if (!gamepad.Refresh() || !gamehacks.canInputBeProcessed()) return 0;
 
@@ -556,7 +625,7 @@ LPDIJOYSTATE2 ff8_update_gamepad_status()
 
 int ff8_get_input_device_capabilities_number_of_buttons(int a1)
 {
-	return xinput_connected ? 10 : std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
+	return (use_sdl_gamepad || xinput_connected) ? 10 : std::min<DWORD>(joystick.GetCaps()->dwButtons, 10);
 }
 
 int ff8_draw_gamepad_icon_or_keyboard_key(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos, int icon_id, uint16_t x, uint16_t y)
@@ -1793,7 +1862,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	//###############################
 	// steam achievement unlock calls
 	//###############################
-	if(steam_edition || enable_steam_achievements)
+	if(enable_steam_achievements)
 	{
 		// triple triad
 		patch_code_dword((uint32_t)&ff8_externals.cardgame_funcs[4], (uint32_t)&ff8_cardgame_postgame_func_534BC0);
@@ -1837,7 +1906,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// draw magic from draw points
 		replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
-		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : 0x85F), (void*)ff8_set_drawpoint_state_52D190);
+		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : (FF8_SP_VERSION ? 0x89A : 0x85F)), (void*)ff8_set_drawpoint_state_52D190);
 
 		// draw magic via stock in battle
 		replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355)), (void*)ff8_battle_get_magic_draw_amount_48FD20);
@@ -1854,7 +1923,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.worldmap_update_steps_sub_6519D0 + 0x225, (void*)ff8_play_sfx_at_unlock_rinoa_limit_break);
 
 		// omega destroyed
-		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + (FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : 0x2176)), (void*)ff8_obtain_proof_of_omega);
+		replace_call(ff8_externals.battle_ai_opcode_sub_487DF0 + (FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : (FF8_SP_VERSION ? 0x21A0 : 0x2176))), (void*)ff8_obtain_proof_of_omega);
 
 		// pupu side quest
 		replace_call(ff8_externals.battle_check_won_sub_486500 + 0x66, (void*)ff8_battle_after_set_result_to_won_sub_494D40);

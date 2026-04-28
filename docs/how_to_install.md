@@ -67,6 +67,18 @@ external_music_ext = "akb"
 
 9. You can now run any `ff7_*.exe` file you prefer. Enjoy!
 
+#### [2026 Steam Rerelease](https://store.steampowered.com/app/3837340/FINAL_FANTASY_VII/)/[GOG](https://www.gog.com/en/game/final_fantasy_vii)/[Windows Store](https://www.xbox.com/en-us/games/store/FINAL-FANTASY-VII-WINDOWS-EDITION/9PN0W216SKZB)
+
+0. Install the game using the relative Store install option
+1. Open the installation directory of the game
+2. Download the latest `FFNx-Steam` release here: https://github.com/julianxhokaxhiu/FFNx/releases
+3. Extract the ZIP content in the `ff7/workingdir` next to your `data` folder
+4. Copy the file in `ff7/resources/ff7_1.02/ff7_en` and paste it in this path `ff7/workingdir/`
+5. Rename `ff7_en` to `ff7_en.exe`
+6. Copy the file in `ff7/workingdir/data/lang-ja/kernel/window.bin` in `ff7/workingdir/data/kernel/windows.bin` ( create missing folders if needed )
+7. **ONLY FOR STEAM:** Create the file in `ff7/workingdir/steam_appid.txt` with this content `3837340` inside and save it
+8. Run `ff7_en.exe` and enjoy!
+
 ### Final Fantasy VIII
 
 **Supported Languages:** EN, DE, FR, SP, IT, JP
