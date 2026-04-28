@@ -2,7 +2,7 @@
 
 This guide explains how to encode FMV videos for high quality and proper playback within FFNx. In some respects, FFNx behaves like a generic ffmpeg-based video player such as VLC, mpv, etc. However, FFNx's default behavior in the absence of metadata is rather different because it's designed to play back the original game files. **Therefore, if you don't want your video treated like original game files, YOU MUST SET YOUR METADATA ACCORDINGLY.**
 
-Also, FFNx's behavior differs between "NTSC-J" mode and "sRGB mode." NTSC-J mode honors typical metadata values for color primaries and transfer characteristics, but sRGB mode ignores them and treats all content as sRGB.
+Also, FFNx's behavior differs between "NTSC-J mode" and "sRGB mode." NTSC-J mode honors typical metadata values for color primaries and transfer characteristics, but sRGB mode ignores them and treats all content as sRGB.
 
 FFNx Behavior x Metadata Quick Reference Chart:
 | Metadata Property | FFNx NTSC-J Mode Behavior | FFNx sRGB Mode Behavior |
@@ -38,7 +38,7 @@ FFNx Behavior x Metadata Quick Reference Chart:
 - Simply rename your file to end with .avi, regardless of its actual type.
 
 ### Video Codec
-**Recommended:** h264
+**Recommended:** h264  
 **Permitted:** Anything ffmpeg can decode  
 **Notes:**
 - h264 is recommended because:
