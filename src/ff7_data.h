@@ -991,6 +991,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t run_ifrit_main_loop_593A95 = get_absolute_value(run_ifrit_sub_5928FE, 0x9D);
 	ff7_externals.run_ifrit_movement_596702 = get_absolute_value(run_ifrit_main_loop_593A95, 0x15B);
 	ff7_externals.run_ifrit_camera_592A36 = get_absolute_value(run_ifrit_camera_handler_5929F6, 0x5);
+	uint32_t ifrit_summon_loader_592720 = get_relative_call(run_ifrit_main_5927C1, 0x122);
+	ff7_externals.ifrit_summon_render_descriptors_8BFEE8 = get_absolute_value(ifrit_summon_loader_592720, 0x2C);
 	uint32_t run_summon_ramuh_main_596FF1 = get_relative_call(ff7_externals.run_summon_animations_5C0E4B, 0x311);
 	uint32_t run_summon_ramuh_sub_59706F = get_relative_call(run_summon_ramuh_main_596FF1, 0x70);
 	uint32_t run_summon_ramuh_sub_5971C6 = get_relative_call(run_summon_ramuh_sub_59706F, 0x13C);
