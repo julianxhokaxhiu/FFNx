@@ -26,6 +26,7 @@
 #include "patch.h"
 #include "ff7/defs.h"
 #include "ff7_data.h"
+#include "ff7/blend.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
 #include "ff7/battle/defs.h"
@@ -100,6 +101,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	memset_code((uint32_t)ff7_externals.sub_6B27A9 + 25, 0x90, 6);
 	replace_function(ff7_externals.sub_6B26C0, draw_single_triangle);
 	replace_function(ff7_externals.sub_6B2720, sub_6B2720);
+
+	// Blend mode fix (#654)
+	ff7::blend_hook_init();
 
 	// replace framebuffer access routine with our own version
 	replace_function(ff7_externals.sub_673F5C, sub_673F5C);

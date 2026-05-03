@@ -2789,6 +2789,8 @@ struct ff7_externals
 	uint32_t sub_6B26C0;
 	uint32_t sub_6B2720;
 	uint32_t sub_673F5C;
+	uint32_t set_blend_mode;
+	uint32_t ifrit_summon_render_descriptors_8BFEE8;
 	struct savemap *savemap;
 	struct menu_objects *menu_objects;
 	uint32_t magic_thread_start;
