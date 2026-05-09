@@ -58,6 +58,7 @@ std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uin
 		}
 
 		CharaOneModel model = CharaOneModel();
+		model.modelId = i;
 
 		if (flag >> 24 != 0xd0) { // NPCs (not main characters)
 			uint32_t tim_offset;

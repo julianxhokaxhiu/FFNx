@@ -25,16 +25,22 @@
 #include "../ff8.h"
 #include "../log.h"
 #include "../redirect.h"
+#include "../patch.h"
+#include "remaster.h"
 
 #include <fcntl.h>
 #include <io.h>
+#include <sys/stat.h>
 #include <lz4.h>
+#include <map>
+#include "Shlwapi.h"
 
 char next_direct_file[MAX_PATH] = "";
 bool last_fopen_is_redirected = false;
 uint32_t last_compression_type = 0;
 size_t last_compressed_size = 0;
 size_t last_uncompressed_size = 0;
+std::map<int, Zzz::File *> openedZzzFiles;
 
 size_t get_fl_prefix_size(bool with_lang = true)
 {
@@ -126,13 +132,34 @@ ff8_file_container *ff8_fs_archive_open_temp(char *fl_path, char *fs_path, char 
 	return ff8_externals.archive_open(fl_path, fs_path, fi_path);
 }
 
+int ff8_remastered_open_from_zzz_archives(const char *fileName)
+{
+	if (trace_all || trace_files) ffnx_trace("%s: fileName=%s\n", __func__, fileName);
+
+	Zzz *archive = &g_FF8ZzzArchiveMain;
+
+	if (strstr(fileName, "data\\sound\\") != nullptr
+		|| strstr(fileName, "data\\music\\") != nullptr) {
+		archive = &g_FF8ZzzArchiveOther;
+	}
+
+	Zzz::File *file = archive->openFile(fileName);
+	if (file != nullptr) {
+		openedZzzFiles[file->fd()] = file;
+
+		return file->fd();
+	}
+
+	return -1;
+}
+
 int ff8_fs_archive_search_filename2(const char *fullpath, ff8_file_fi_infos *fi_infos_for_the_path, const ff8_file_container *file_container)
 {
 	if (trace_all || trace_files) ffnx_trace("%s: Looking in archive for %s\n", __func__, fullpath);
 
 	int ret = ff8_externals.ff8_fs_archive_search_filename2(fullpath, fi_infos_for_the_path, file_container);
 
-	if (ret != 1 && file_container != nullptr)
+	if (ret != 1 && file_container != nullptr && !remastered_edition)
 	{
 		// Lookup without the language in the path
 		size_t prefix_size = get_fl_prefix_size();
@@ -151,6 +178,28 @@ int ff8_fs_archive_search_filename2(const char *fullpath, ff8_file_fi_infos *fi_
 
 				return 1;
 			}
+		}
+	}
+	else if (ret != 1 && remastered_edition)
+	{
+		int fullpath_len = strlen(fullpath);
+		if (fullpath_len > 4) {
+			char extension[5] = {};
+			strncpy(extension, fullpath + fullpath_len - 4, 4);
+
+			char *modifiablePath = const_cast<char *>(fullpath);
+			modifiablePath[fullpath_len - 4] = '_';
+			modifiablePath[fullpath_len - 3] = '\0';
+			concat_lang_str(modifiablePath);
+			strcat(modifiablePath, extension);
+
+			ffnx_error("%s: retry with %s...\n", __func__, modifiablePath);
+
+			ret = ff8_externals.ff8_fs_archive_search_filename2(modifiablePath, fi_infos_for_the_path, file_container);
+		}
+
+		if (ret != 1) {
+			ffnx_error("%s: file not found: %s\n", __func__, fullpath);
 		}
 	}
 
@@ -261,6 +310,22 @@ bool ff8_attempt_redirection(const char *in, char *out, size_t size)
 	return false;
 }
 
+void ff8_fs_archive_field_concat_extension(char *fileName, char *extension)
+{
+	// Remastered edition only
+	if (strstr(extension, ".msd") != NULL || strstr(extension, ".jsm") != NULL
+		|| (JP_VERSION && strstr(extension, ".inf") != NULL))
+	{
+		strcat(fileName, "_");
+		concat_lang_str(fileName);
+		strcat(fileName, extension);
+	}
+	else
+	{
+		strcat(fileName, extension);
+	}
+}
+
 int ff8_open(const char *fileName, int oflag, ...)
 {
 	va_list va;
@@ -283,6 +348,25 @@ int ff8_open(const char *fileName, int oflag, ...)
 	}
 
 	char _filename[MAX_PATH]{ 0 };
+
+	if (remastered_edition)
+	{
+		bool isZzzFile = false;
+		bool is_redirected = ff8_steam_redirection(fileName, _filename, &isZzzFile);
+
+		if (oflag == (_O_BINARY | _O_RDONLY) && isZzzFile) {
+			int ret = ff8_remastered_open_from_zzz_archives(is_redirected ? _filename : fileName);
+
+			if (ret != -1) {
+				return ret;
+			}
+
+			if (trace_all || trace_files) ffnx_info("Fallback to Steam path mode %s\n", _filename);
+		}
+
+		return ff8_externals._sopen(is_redirected ? _filename : fileName, oflag, shflag, pmode);
+	}
+
 	bool is_redirected = ff8_attempt_redirection(fileName, _filename, sizeof(_filename));
 
 	last_fopen_is_redirected = is_redirected;
@@ -292,6 +376,155 @@ int ff8_open(const char *fileName, int oflag, ...)
 	last_fopen_is_redirected = false;
 
 	return ret;
+}
+
+int ff8_read(int fd, void *buffer, unsigned int bufferSize)
+{
+	if (trace_all || trace_files) ffnx_info("%s: fd=%X bufferSize=%d\n", __func__, fd, bufferSize);
+
+	if (remastered_edition && openedZzzFiles.contains(fd))
+	{
+		return openedZzzFiles.at(fd)->read(buffer, bufferSize);
+	}
+
+	if (fd < *ff8_externals._io_fd_number && (*(uint8_t *)(ff8_externals._io_known_fds[fd >> 5] + 36 * (fd & 0x1F) + 4) & 1))
+	{
+		ff8_externals._lock_fhandle(fd);
+		int ret = ff8_externals._read_lk(fd, buffer, bufferSize);
+		ff8_externals._unlock_fhandle(fd);
+
+		return ret;
+	}
+
+	*(ff8_externals._errno()) = EBADF;
+	*(ff8_externals.__doserrno()) = 0;
+
+	return -1;
+}
+
+int ff8_write(int fd, void *buffer, unsigned int bufferSize)
+{
+	if (trace_all || trace_files) ffnx_info("%s: fd=%X bufferSize=%d\n", __func__, fd, bufferSize);
+
+	if (remastered_edition && openedZzzFiles.contains(fd))
+	{
+		ffnx_error("%s: Trying to write in a ZZZ archive is forbidden\n");
+
+		return -1;
+	}
+
+	if (fd < *ff8_externals._io_fd_number && (*(uint8_t *)(ff8_externals._io_known_fds[fd >> 5] + 36 * (fd & 0x1F) + 4) & 1))
+	{
+		ff8_externals._lock_fhandle(fd);
+		int ret = ff8_externals._write_lk(fd, buffer, bufferSize);
+		ff8_externals._unlock_fhandle(fd);
+
+		return ret;
+	}
+
+	*(ff8_externals._errno()) = EBADF;
+	*(ff8_externals.__doserrno()) = 0;
+
+	return -1;
+}
+
+__int32 ff8_lseek(int fd, __int32 offset, int whence)
+{
+	if (trace_all || trace_files) ffnx_info("%s: fd=%X, offset=%d, whence=%d\n", __func__, fd, offset, whence);
+
+	if (remastered_edition && openedZzzFiles.contains(fd)) {
+		Zzz::File *file = openedZzzFiles.at(fd);
+		uint32_t pos = offset;
+		bx::Whence::Enum zzzWhence = bx::Whence::Begin;
+
+		if (whence == SEEK_END) {
+			zzzWhence = bx::Whence::End;
+		} else if (whence == SEEK_CUR) {
+			zzzWhence = bx::Whence::Current;
+		} else if (whence != SEEK_SET) {
+			ffnx_error("%s: seek type not supported: %d\n", __func__, whence);
+
+			return -1;
+		}
+
+		return file->seek(pos, zzzWhence);
+	}
+
+	// Original implementation
+	if (fd < *ff8_externals._io_fd_number && (*(uint8_t *)(ff8_externals._io_known_fds[fd >> 5] + 36 * (fd & 0x1F) + 4) & 1))
+	{
+		ff8_externals._lock_fhandle(fd);
+		int ret = ff8_externals._lseek_lk(fd, offset, whence);
+		ff8_externals._unlock_fhandle(fd);
+
+		return ret;
+	}
+
+	*(ff8_externals._errno()) = EBADF;
+	*(ff8_externals.__doserrno()) = 0;
+
+	return -1;
+}
+
+__int32 ff8_filelength(int fd)
+{
+	if (trace_all) ffnx_info("%s: fd=%X\n", __func__, fd);
+
+	if (remastered_edition && openedZzzFiles.contains(fd)) {
+		return openedZzzFiles.at(fd)->size();
+	}
+
+	// Original implementation
+	if (fd < *ff8_externals._io_fd_number && (*(uint8_t *)(ff8_externals._io_known_fds[fd >> 5] + 36 * (fd & 0x1F) + 4) & 1))
+	{
+		ff8_externals._lock_fhandle(fd);
+		int currentPos = ff8_externals._lseek_lk(fd, 0, SEEK_CUR);
+		int fileSize = -1;
+		if (currentPos != -1)
+		{
+			fileSize = ff8_externals._lseek_lk(fd, 0, SEEK_END);
+
+			if (fileSize != currentPos)
+			{
+				ff8_externals._lseek_lk(fd, currentPos, SEEK_SET);
+			}
+		}
+		ff8_externals._unlock_fhandle(fd);
+
+		return fileSize;
+	}
+
+	*(ff8_externals._errno()) = EBADF;
+	*(ff8_externals.__doserrno()) = 0;
+
+	return -1;
+}
+
+int ff8_close(int fd)
+{
+	if (trace_all || trace_files) ffnx_info("%s: fd=%X\n", __func__, fd);
+
+	if (remastered_edition && openedZzzFiles.contains(fd)) {
+		Zzz::closeFile(openedZzzFiles.at(fd));
+		openedZzzFiles.erase(fd);
+
+		return 0;
+	}
+
+	// Original implementation
+	if (fd < *ff8_externals._io_fd_number && (*(uint8_t *)(ff8_externals._io_known_fds[fd >> 5] + 36 * (fd & 0x1F) + 4) & 1))
+	{
+		ff8_externals._lock_fhandle(fd);
+		int ret = ff8_externals._close_lk(fd);
+		ff8_externals._unlock_fhandle(fd);
+
+		return ret;
+	}
+
+	*(ff8_externals._errno()) = EBADF;
+	*(ff8_externals.__doserrno()) = 0;
+
+	return -1;
 }
 
 FILE *ff8_fopen(const char *fileName, const char *mode)
@@ -312,6 +545,13 @@ FILE *ff8_fopen(const char *fileName, const char *mode)
 	}
 
 	char _filename[MAX_PATH]{ 0 };
+
+	if (remastered_edition)
+	{
+		bool is_redirected = ff8_steam_redirection(fileName, _filename);
+		return ff8_externals._fsopen(is_redirected ? _filename : fileName, mode, shflag);
+	}
+
 	bool is_redirected = ff8_attempt_redirection(fileName, _filename, sizeof(_filename));
 
 	last_fopen_is_redirected = is_redirected;
@@ -402,15 +642,43 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 			}
 			else
 			{
+				file->fd = -1;
 				char _filename[256]{ 0 };
-				bool is_redirected = ff8_attempt_redirection(fullpath, _filename, sizeof(_filename));
 
-				last_fopen_is_redirected = is_redirected;
+				if (remastered_edition)
+				{
+					bool isZzzFile = false;
+					bool is_redirected = ff8_steam_redirection(fullpath, _filename, &isZzzFile);
+					isZzzFile = isZzzFile && oflag == (_O_BINARY | _O_RDONLY);
 
-				// We need to use the external _open, and not the official one
-				file->fd = ff8_externals._sopen(is_redirected ? _filename : fullpath, oflag, shflag, pmode);
+					if (isZzzFile) {
+						file->fd = ff8_remastered_open_from_zzz_archives(is_redirected ? _filename : fullpath);
+					}
 
-				last_fopen_is_redirected = false;
+					if (file->fd == -1 || !isZzzFile)
+					{
+						if (trace_all || trace_files) ffnx_info("Fallback to Steam path mode %s\n", is_redirected ? _filename : fullpath);
+
+						file->fd = ff8_externals._sopen(is_redirected ? _filename : fullpath, oflag, _SH_DENYNO, pmode);
+
+						if (file->fd == -1)
+						{
+							if (trace_all || trace_files) ffnx_info("Fallback to original path mode %s\n", fullpath);
+						}
+					}
+				}
+
+				if (file->fd == -1)
+				{
+					bool is_redirected = ff8_attempt_redirection(fullpath, _filename, sizeof(_filename));
+
+					last_fopen_is_redirected = is_redirected;
+
+					// We need to use the external _open, and not the official one
+					file->fd = ff8_externals._sopen(is_redirected ? _filename : fullpath, oflag, shflag, pmode);
+
+					last_fopen_is_redirected = false;
+				}
 			}
 
 			file->is_open = 1;
@@ -432,4 +700,123 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 bool ff8_fs_last_fopen_is_redirected()
 {
 	return last_fopen_is_redirected;
+}
+
+bool ff8_steam_redirection(const char *lpFileName, char *newPath, bool *isZzzFile)
+{
+	bool redirected = false;
+
+	if (isZzzFile != nullptr)
+	{
+		*isZzzFile = false;
+	}
+
+	if (strstr(lpFileName, "CD:") != NULL)
+	{
+		uint8_t requiredDisk = (*ff8_externals.savemap_field)->curr_disk;
+		CHAR diskAsChar[2];
+
+		itoa(requiredDisk, diskAsChar, 10);
+
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		if (strstr(lpFileName, "DISK1") != NULL || strstr(lpFileName, "DISK2") != NULL || strstr(lpFileName, "DISK3") != NULL || strstr(lpFileName, "DISK4") != NULL)
+		{
+			if (isZzzFile == nullptr)
+			{
+				strcpy(newPath, ff8_externals.app_path);
+			}
+			PathAppendA(newPath, R"(data\disk)");
+			PathAppendA(newPath, pos);
+
+			if (strstr(lpFileName, diskAsChar) != NULL)
+			{
+				redirected = true;
+			}
+		}
+
+		if (isZzzFile != nullptr)
+		{
+			*isZzzFile = true;
+		}
+	}
+	else if (strstr(lpFileName, "app.log") || strstr(lpFileName, "ff8input.cfg"))
+	{
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		get_userdata_path(newPath, MAX_PATH, false);
+		PathAppendA(newPath, JP_VERSION ? "ff8input_jp.cfg" : pos);
+
+		redirected = true;
+	}
+	else if (strstr(lpFileName, "temp.fi") || strstr(lpFileName, "temp.fl") || strstr(lpFileName, "temp.fs") || strstr(lpFileName, "temp_evn.") || strstr(lpFileName, "temp_odd."))
+	{
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		get_userdata_path(newPath, MAX_PATH, false);
+		PathAppendA(newPath, pos);
+
+		redirected = true;
+	}
+	else if (strstr(lpFileName, ".fi") != NULL || strstr(lpFileName, ".fl") != NULL || strstr(lpFileName, ".fs") != NULL)
+	{
+		// Search for the last '\' character and get a pointer to the next char
+		const char* pos = strrchr(lpFileName, 92) + 1;
+
+		if (remastered_edition && (strstr(lpFileName, "field") != NULL || strstr(lpFileName, "magic") != NULL || strstr(lpFileName, "world") != NULL))
+		{
+			PathAppendA(newPath, R"(data)");
+		}
+		else
+		{
+			get_data_lang_path(newPath, isZzzFile == nullptr);
+		}
+
+		PathAppendA(newPath, pos);
+
+		if (isZzzFile != nullptr)
+		{
+			*isZzzFile = true;
+		}
+
+		redirected = true;
+	}
+	else if (StrStrIA(lpFileName, R"(SAVE\)") != NULL) // SAVE\SLOTX\saveN or save\chocorpg
+	{
+		CHAR saveFileName[50]{ 0 };
+
+		// Search for the next character pointer after "SAVE\"
+		const char* pos = StrStrIA(lpFileName, R"(SAVE\)") + 5;
+		strcpy(saveFileName, pos);
+		_strlwr(saveFileName);
+		char* posSeparator = strstr(saveFileName, R"(\)");
+		if (posSeparator != NULL)
+		{
+			*posSeparator = '_';
+		}
+		strcat(saveFileName, R"(.ff8)");
+
+		get_userdata_path(newPath, MAX_PATH, true);
+		PathAppendA(newPath, saveFileName);
+
+		redirected = true;
+	}
+	else if (isZzzFile != nullptr)
+	{
+		if (strncmp(lpFileName, ff8_externals.app_path, strlen(ff8_externals.app_path)) == 0) {
+			// Remove app_path
+			strcpy(newPath, lpFileName + strlen(ff8_externals.app_path) + 1);
+
+			redirected = true;
+		}
+
+		*isZzzFile = true;
+	}
+
+	if (redirected && (trace_all || trace_files)) ffnx_info("Redirected: %s -> %s (is in ZZZ archive: %s)\n", lpFileName, newPath, isZzzFile == nullptr ? "not asked" : (*isZzzFile ? "yes" : "no"));
+
+	return redirected;
 }

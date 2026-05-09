@@ -53,6 +53,7 @@
 #define FF7_APPID 39140
 #define FF7_RERELEASE_APPID 3837340
 #define FF8_APPID 39150
+#define FF8_REMASTERED_APPID 1026680
 
 #define NV_VERSION (!(version & 1))
 #define JP_VERSION (version == VERSION_FF8_12_JP || version == VERSION_FF8_12_JP_NV)
@@ -356,7 +357,8 @@ void internal_set_renderstate(uint32_t state, uint32_t option, struct game_obj *
 uint32_t create_framebuffer_texture(struct texture_set *texture_set, struct tex_header *tex_header);
 void blit_framebuffer_texture(struct texture_set *texture_set, struct tex_header *tex_header);
 
-void get_data_lang_path(PCHAR buffer);
+void get_data_lang_path(PCHAR buffer, bool absolute = true);
+void concat_lang_str(PCHAR buffer);
 void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile);
 
 #if defined(__cplusplus)

@@ -25,6 +25,8 @@
 #include "audio.h"
 #include "music.h"
 #include "patch.h"
+#include "ff8/remaster.h"
+#include "audio/vgmstream/zzzstreamfile.h"
 
 #include "ff8/engine.h"
 
@@ -294,6 +296,31 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 			options.useNameAsFullPath = true;
 			strcpy(options.format, "wav");
 			playing = nxAudioEngine.playMusic(wav_fullpath, music_id, channel, options);
+		}
+
+		if (!playing && remastered_edition)
+		{
+			char file_name[MAX_PATH] = {};
+
+			if (wav_fullpath != nullptr)
+			{
+				snprintf(file_name, sizeof(file_name), "zzz://%s", wav_fullpath);
+				options.useNameAsFullPath = true;
+				strcpy(options.format, "wav");
+				playing = nxAudioEngine.playMusic(file_name, music_id, channel, options);
+			}
+			else
+			{
+				bool old_ff8_external_music_force_original_filenames = ff8_external_music_force_original_filenames;
+				ff8_external_music_force_original_filenames = true;
+				music_name = ff8_midi_name(music_id);
+				ff8_external_music_force_original_filenames = old_ff8_external_music_force_original_filenames;
+
+				snprintf(file_name, sizeof(file_name), "zzz://data\\music\\dmusic\\ogg\\%s.ogg", music_name);
+				options.useNameAsFullPath = true;
+				strcpy(options.format, "ogg");
+				playing = nxAudioEngine.playMusic(file_name, music_id, channel, options);
+			}
 		}
 	}
 	else
