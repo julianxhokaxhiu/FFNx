@@ -129,6 +129,7 @@ void Renderer::setCommonUniforms()
     internalState.FSHDRFlags = {
         (float)internalState.bIsHDR,
         (float)hdr_max_nits,
+        NULL,
         NULL
     };
     if (uniform_log) ffnx_trace("%s: FSHDRFlags XYZW(isHDR %f, monitorNits %f, bIsOverrideGamut %f, NULL)\n", __func__, internalState.FSHDRFlags[0], internalState.FSHDRFlags[1], internalState.FSHDRFlags[2]);
