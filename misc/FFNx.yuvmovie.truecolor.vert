@@ -6,7 +6,6 @@
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2026 Julian Xhokaxhiu                                   //
-//    Copyright (C) 2026 ChthonVII                                          //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -20,37 +19,27 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-$input v_color0, v_texcoord0
+// This shader is always used for YUV movies if NTSC-J mode is enabled.
+
+$input a_position, a_color0, a_texcoord0, a_normal, a_indices, a_weight
+$output v_color0, v_texcoord0, v_position0, v_normal0
 
 #include <bgfx/bgfx_shader.sh>
-#include "FFNx.common.sh"
-#include "FFNx.dither.sh"
-
-SAMPLER2D(tex_0, 0);
-
-uniform vec4 FSHDRFlags;
-
-#define isHDR FSHDRFlags.x > 0.0
-#define monitorNits FSHDRFlags.y
 
 void main()
 {
-	vec4 color = texture2D(tex_0, v_texcoord0.xy);
+    vec4 pos = a_position;
+    vec4 color = a_color0;
+    vec2 coords = a_texcoord0;
 
-	if (isHDR) {
-		// Dither because we will increase effective bit depth.
-		// 256 is correct step size for everything except movies, which already have higher precision.
-		// But unfortunately there's no way at this point to segregate movies, from other stuff, from other stuff drawn on top of movies.
-		// So we just have to use 256 for everything.
-		// Dither in gamma space so dither step size is proportional to quantization step size.
-		// Can't dither in rec2084 gamma space because our max signal only occupies a small space near the bottom of the range.
-		ivec2 dimensions = textureSize(tex_0, 0);
-		color.rgb = QuasirandomDither(color.rgb, v_texcoord0.xy, dimensions, dimensions, dimensions, vec3_splat(256.0), 2160.0);
-		// back to linear for gamut conversion and PQ gamma curve
-		color.rgb = toLinear(color.rgb);
-		color.rgb = convertGamut_SRGBtoREC2020(color.rgb);
-		color.rgb = ApplyREC2084Curve(color.rgb, monitorNits);
-	}
-	// If not HDR mode, we should already be in gamma-space sRGB.
-	gl_FragColor = color;
+    color.rgb = color.bgr;
+
+    pos.w = 1.0 / pos.w;
+    pos.xyz *= pos.w;
+    pos = mul(u_proj, pos);
+
+    gl_Position = pos;
+    v_color0 = color;
+    v_texcoord0 = coords;
 }
+
