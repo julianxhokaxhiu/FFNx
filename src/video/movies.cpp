@@ -209,7 +209,7 @@ void ffmpeg_release_movie_objects()
 	uint32_t i;
 
 	if (movie_frame) av_frame_free(&movie_frame);
-  if (sws_frame) av_frame_free(&sws_frame);
+	if (sws_frame) av_frame_free(&sws_frame);
 	if (wb_frame) av_frame_free(&wb_frame);
 	if (codec_ctx) avcodec_free_context(&codec_ctx);
 	if (acodec_ctx) avcodec_free_context(&acodec_ctx);
@@ -457,7 +457,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	// figure out if this is the eidos logo or square logo; they need special treatment
 	// scan till we hit 0 terminator
-	// TODO: Add FF8 logo movies
 	if ((codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) && (codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)){
 		while (true){
 			bytessincebackslash++;
@@ -627,7 +626,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	// to speed up our most common and slowest input case by not needing swscale,
 	// and opening the door to HDR video someday.
 	if (tryhwdecode){
-		// TODO: if not doing writeback, okpixelformat = true;
+		// Note for future: If we ever implement no-CPU-writeback hardware decoding, then we would always set okpixelformat = true when that was active.
 		if (wb_pix_fmt == targetpixelformat){
 			okpixelformat = true;
 		}
@@ -1098,7 +1097,8 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 						}
 					} //endif dofirstframestuff
 					// copy back to CPU so swsscale can convert the pixel format to what the shaders expect
-					// TODO: If the shaders were capable of dealing with a favored hardware pixel format,
+					// Future note for if/when we implement no-CPU-writeback hardware decoding:
+					//		If the shaders were capable of dealing with a favored hardware pixel format,
 					//		and if we didn't need swscale for some other reason
 					//		(so we'd need to check for padded bitstream here),
 					//		this would be the spot where we'd branch and try to do a GPU-to-GPU copy instead.

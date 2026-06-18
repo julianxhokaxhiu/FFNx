@@ -167,7 +167,7 @@ void main()
     color.rgb = toGamma(color.rgb);
 
     // In this default shader, lighting is applied in gamma space so that it does better match the original lighting
-    if ((gameLightingMode == GAME_LIGHTING_PER_PIXEL))
+    if (gameLightingMode == GAME_LIGHTING_PER_PIXEL)
     {
         vec3 normal = normalize(v_normal0);
         vec3 worldNormal = mul(invViewMatrix, vec4(normal, 0)).xyz;
