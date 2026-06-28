@@ -111,13 +111,13 @@ int lgp_lookup_value(unsigned char c)
 
 uint32_t lgp_chdir(char *path)
 {
-	uint32_t len = strlen(path);
-
 	while(path[0] == '/' || path[0] == '\\') path++;
 
-	memcpy(lgp_current_dir, path, len + 1);
+	uint32_t len = strlen(path);
 
-	while(lgp_current_dir[len - 1] == '/' || lgp_current_dir[len - 1] == '\\') len--;
+	while(len > 0 && (path[len - 1] == '/' || path[len - 1] == '\\')) len--;
+
+	memcpy(lgp_current_dir, path, len);
 	lgp_current_dir[len] = 0;
 
 	return true;
