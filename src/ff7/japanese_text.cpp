@@ -13,8 +13,10 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 #include "../globals.h"
-#include "../log.h" 
+#include "../log.h"
 #include "../ff7.h"
+#include "../patch.h"
+#include <string.h>
 
 void engine_load_menu_graphics_objects_6C1468_jp(int a1)
 {
@@ -325,7 +327,11 @@ int charWidthData[6][256] =
         29, 14, 8, 23, 24, 21, 24, 24, 20, 19, 25, 22, 14, 16, 22, 18,
         27, 22, 26, 21, 27, 22, 21, 24, 22, 24, 31, 24, 23, 23, 14, 22,
         28, 27, 27, 29, 30, 12, 25, 22, 11, 0, 27, 23, 23, 23, 12, 22,
-        11, 23, 23, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        11, 23, 23, 0, 0, 0, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        // ^ index 0xE6 (XIII glyph): was 32, but the width field is only 5 bits
+        //   (& 0x1F), so 32 truncated to width 0 -> zero advance -> the next
+        //   character overlapped it. 31 = max width -> advance matches the
+        //   drawn glyph width (no overlap).
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
     },{ // Jap - 1
@@ -2582,4 +2588,205 @@ int sub_6F54A2_jp(byte *a1) // this function appears to affect aligning stuff to
   }
   v2 += 3; // final correction needed for text to align with pointers
   return v2;
+}
+
+// ===========================================================================
+//  JP name-entry screen: 3-mode (hiragana / katakana / eisuu) support
+// ---------------------------------------------------------------------------
+//  The classic ff7_ja.exe (detected as US 1.02 engine) already contains the
+//  full machinery for a 3-mode JP name screen, but ships with US data:
+//    * grid draw loop (0x7191E1 / 0x7198A0) reads the *displayed* grid at
+//      0x921D70, but only when the char-mode var [0x00DD46F4]==2 (always 2).
+//    * 0x921D70 statically holds only 7 valid hiragana rows (rows 7-8 overflow
+//      into adjacent data -> the garbled bottom two rows seen in-game).
+//    * full master grids DO exist: hiragana @0x921E10, katakana @0x921E78
+//      (each a 90-byte / 10col x 9row table of jafont_1 glyph indices).
+//    * the right menu is drawn with a 7-slot loop (0x719224 `cmp 7`) but the
+//      table at 0x921D48 only defines 5 US entries (space/delete/ok/default/
+//      cancel); slots 5-6 overflow.
+//    * menu actions dispatch through a 7-entry jump table @0x719B61.
+//  Strategy (no full re-impl): keep [0x00DD46F4]==2 so both draw and the
+//  glyph picker (getGlyph @0x718B9A, case 2) use 0x921D70, and simply copy the
+//  selected master grid into 0x921D70 whenever the mode changes. Then relocate
+//  the menu table to a proper 7-entry JP table, neutralize the first three
+//  action slots, and perform the mode switch from a per-frame C hook that
+//  mirrors the engine's own dispatch condition (cancel is dropped).
+// ===========================================================================
+
+// Full 9-row grids as compile-time data (jafont_1 glyph indices, verified from
+// the jafont_1.tex atlas). These mirror the engine's masters (hiragana@0x921E10,
+// katakana@0x921E78) but as our own constants, so the displayed grid never
+// depends on the live exe .data being ready when we install (the live masters
+// are not yet populated at FFNx-init time, which corrupted the initial copy).
+static const uint8_t jp_name_grid_hiragana[90] = {
+  /* row0 */ 0x6B,0x6D,0x69,0x6F,0x71,0xA5,0xA7,0xA9,0xAB,0xAD, // a i u e o (small)
+  /* row1 */ 0x4B,0x4D,0x4F,0x51,0x53,0x0B,0x0D,0x0F,0x11,0x13, // ka.. (ga..)
+  /* row2 */ 0x55,0x57,0x59,0x5B,0x5D,0x15,0x17,0x19,0x1B,0x1D, // sa.. (za..)
+  /* row3 */ 0x5F,0x61,0x63,0x65,0x67,0x1F,0x21,0x23,0x25,0x27, // ta.. (da..)
+  /* row4 */ 0x73,0x75,0x77,0x79,0x7B,0x3F,0x3F,0x3F,0x3F,0xD1, // na.. _ _ _ _ ~
+  /* row5 */ 0x41,0x43,0x45,0x47,0x49,0x01,0x03,0x05,0x07,0x09, // ha.. (ba..)
+  /* row6 */ 0x7D,0x7F,0x81,0x83,0x85,0x2A,0x2C,0x2E,0x30,0x32, // ma.. (pa..)
+  /* row7 */ 0x91,0x93,0x95,0x9F,0xA1,0xA3,0x9D,0x3F,0x3D,0x3E, // ya yu yo (small) _ , .
+  /* row8 */ 0x87,0x89,0x8B,0x8D,0x8F,0x97,0x9B,0x99,0xAE,0xAF, // ra.. wa wo n ! ?
+};
+static const uint8_t jp_name_grid_katakana[90] = { // = hiragana index - 1
+  /* row0 */ 0x6A,0x6C,0x68,0x6E,0x70,0xA4,0xA6,0xA8,0xAA,0xAC,
+  /* row1 */ 0x4A,0x4C,0x4E,0x50,0x52,0x0A,0x0C,0x0E,0x10,0x12,
+  /* row2 */ 0x54,0x56,0x58,0x5A,0x5C,0x14,0x16,0x18,0x1A,0x1C,
+  /* row3 */ 0x5E,0x60,0x62,0x64,0x66,0x1E,0x20,0x22,0x24,0x26,
+  /* row4 */ 0x72,0x74,0x76,0x78,0x7A,0xD7,0xD8,0xDF,0xE0,0xD0, // na.. [ ] ( ) -
+  /* row5 */ 0x40,0x42,0x44,0x46,0x48,0x00,0x02,0x04,0x06,0x08,
+  /* row6 */ 0x7C,0x7E,0x80,0x82,0x84,0x29,0x2B,0x2D,0x2F,0x31,
+  /* row7 */ 0x90,0x92,0x94,0x9E,0xA0,0xA2,0x9C,0x28,0xCE,0xD2, // ya yu yo (small) vu . ...
+  /* row8 */ 0x86,0x88,0x8A,0x8C,0x8E,0x96,0x9A,0x98,0xD5,0xD4, // ra.. wa wo n : /
+};
+
+// Our own 90-byte displayed-grid buffer. The engine's grid-draw (0x7191E1,
+// 0x7198A0) and glyph-picker (getGlyph case 2, 0x718BF3) originally read the
+// grid at 0x921D70; we repoint those three reads at this buffer instead. The
+// static 0x921D70 has its first 8 bytes zeroed somewhere before the screen
+// appears (shifting the initial hiragana by 8 cells), so owning the buffer
+// makes the displayed grid immune to that clobber.
+static uint8_t jp_name_current_grid[90];
+
+// Eisuu (alphanumeric) 90-byte grid (10col x 9row). No eisuu master exists in
+// the US engine, so this is built from the jafont_1 glyph atlas (verified by
+// dumping jafont_1.tex: A-Z=0xB4..0xCD, 0-9=0x33..0x3C, .=0xB2, alpha=0xDB,
+// beta=0xDC, *=0xCF, %=0xD3, &=0xD6, ->=0xDA, XIII=0xE6). 0x3F is the blank
+// cell. 0xD9 is the heart (it has no glyph of its own in jafont_1).
+static const uint8_t jp_name_grid_eisuu[90] = {
+  /* row0  A B C D E F G H I J */ 0xB4,0xB5,0xB6,0xB7,0xB8,0xB9,0xBA,0xBB,0xBC,0xBD,
+  /* row1  K L M N O P Q R S T */ 0xBE,0xBF,0xC0,0xC1,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,
+  /* row2  U V W X Y Z _ . a b */ 0xC8,0xC9,0xCA,0xCB,0xCC,0xCD,0x3F,0xB2,0xDB,0xDC,
+  /* row3  0 1 2 3 4 5 6 7 8 9 */ 0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3A,0x3B,0x3C,
+  /* row4  * % _ _ & _ _ ♥ ->XIII*/0xCF,0xD3,0x3F,0x3F,0xD6,0x3F,0x3F,0xD9,0xDA,0xE6,
+  /* row5 */ 0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,
+  /* row6 */ 0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,
+  /* row7 */ 0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,
+  /* row8 */ 0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,0x3F,
+};
+
+// Relocated 7-entry menu table. Each entry: up to 7 jafont_1 codes + 0xFF
+// terminator, 8 bytes/entry (matches `lea reg,[idx*8 + table]`).
+// Codes derived from decoded hiragana/katakana indices and the existing US
+// table (space/delete/ok/default reused verbatim).
+static const uint8_t jp_name_menu_table[7][8] = {
+  {0x43,0x87,0x0B,0x73,0xFF,0x00,0x00,0x00}, // ひらがな (hi ra ga na)
+  {0x4A,0x5E,0x4A,0x72,0xFF,0x00,0x00,0x00}, // カタカナ (ka ta ka na)
+  {0x6F,0x6D,0x59,0x69,0xFF,0x00,0x00,0x00}, // えいすう (e i su u)
+  {0x58,0x2F,0xD0,0x58,0xFF,0x00,0x00,0x00}, // スペース (space)
+  {0x55,0x4F,0x17,0xA3,0xFF,0x00,0x00,0x00}, // さくじょ (delete)
+  {0x51,0x9D,0x65,0x6D,0xFF,0x00,0x00,0x00}, // けってい (confirm)
+  {0x24,0x44,0xAC,0x8A,0x66,0xFF,0x00,0x00}, // デフォルト (default)
+};
+
+static void jp_name_apply_mode(int mode)
+{
+  const uint8_t* src;
+  if (mode == 1)      src = jp_name_grid_katakana;
+  else if (mode == 2) src = jp_name_grid_eisuu;
+  else                src = jp_name_grid_hiragana;
+  memcpy(jp_name_current_grid, src, 90);
+}
+
+// Decision (OK) button bit for the engine's menu-input check
+// (menu_input_check_6F53F1 ANDs its mask against a 32-bit button-state
+// word). The engine's own dispatch in menu_sub_718DBE tests the bit in
+// both halves of that word (it pushes exactly this mask), so we do the same.
+#define JP_NAME_DECISION_MASK (0x0020 | (0x0020 << 16))
+
+// Per-frame wrapper around name_menu_sub_719C08 (cdecl, one argument, called
+// every frame while the name screen is up). Installed with
+// replace_call_function on its single call site, so the original function
+// stays untouched and can be called directly. The menu-action jump table is
+// reached via a `jmp`, so its targets cannot be plain C functions (there is
+// no return address on the stack to `ret` to). Instead the three mode slots
+// are pointed at the engine's own continuation (the action becomes a no-op)
+// and the mode switch happens here, mirroring the engine's dispatch
+// condition inside menu_sub_718DBE:
+//   decision button pressed this frame -> menu_input_check_6F53F1(decision mask)
+//   right (menu) pane focused          -> *name_menu_selected_pane_921ED4 == 1
+//   cursor on one of the 3 mode rows   -> menu-pane cursor row <= 2
+// The engine still plays the decision SE itself right before its no-op
+// dispatch, so the feedback is unchanged.
+static void jp_name_frame_719C08(int a1)
+{
+  ((void(__cdecl*)(int))ff7_externals.name_menu_sub_719C08)(a1);
+
+  if (*ff7_externals.name_menu_selected_pane_921ED4 == 1)
+  {
+    // cursor row of the right (menu) pane; the cursor state is one struct
+    // per pane, 0x38 bytes each
+    uint32_t row = *(uint32_t*)(ff7_externals.name_menu_pane_cursor_rows_DD453C + 1 * 0x38);
+    if (row <= 2 && ff7_externals.menu_input_check_6F53F1(JP_NAME_DECISION_MASK))
+      jp_name_apply_mode((int)row);
+  }
+}
+
+// menu_sub_71894B is the name-screen init, called once per screen entry from
+// the per-frame loop name_menu_sub_719C08 (guarded by an "inited" flag which
+// resets when the screen closes). Its single call site is redirected here
+// (replace_call_function), so we call the untouched original directly and
+// then force hiragana, so every fresh name screen starts in hiragana instead
+// of inheriting the previous character's last-used mode (e.g. Barret's
+// screen opening in eisuu after Cloud).
+static void jp_name_init_71894B()
+{
+  ((void(__cdecl*)())ff7_externals.menu_sub_71894B)();
+  jp_name_apply_mode(0);                   // force hiragana for the new screen
+}
+
+void name_input_jp_install()
+{
+  // Both hooks are installed at the (single) call sites, keeping the original
+  // functions untouched so they can be called directly from the wrappers.
+  // reset to hiragana on every name-screen entry (see jp_name_init_71894B);
+  // the init call sits inside name_menu_sub_719C08 (same offset ff7_data.h
+  // uses to derive menu_sub_71894B)
+  replace_call_function(ff7_externals.name_menu_sub_719C08 + 0x2A, jp_name_init_71894B);
+
+  // mode switching for the first three menu rows (see jp_name_frame_719C08);
+  // the per-frame call sits inside name_menu_sub_6CBD32 (same offset
+  // ff7_data.h uses to derive name_menu_sub_719C08)
+  replace_call_function(ff7_externals.name_menu_sub_6CBD32 + 0x7, jp_name_frame_719C08);
+
+  // relocate the 7-slot menu table: patch the disp32 of both
+  //   lea ecx,[eax*8+table]  (menu text draw,   disp32 @menu_sub_718DBE+0x479)
+  //   lea eax,[edx*8+table]  (2nd draw routine, disp32 @menu_sub_718DBE+0xB33)
+  patch_code_dword(ff7_externals.menu_sub_718DBE + 0x479, (DWORD)(uintptr_t)&jp_name_menu_table[0][0]);
+  patch_code_dword(ff7_externals.menu_sub_718DBE + 0xB33, (DWORD)(uintptr_t)&jp_name_menu_table[0][0]);
+
+  // rewire the 7-entry menu action jump table. The original US layout is
+  //   [0]=space [1]=delete [2]=confirm [3]=default [4]=cancel
+  // and the 7-item JP menu needs
+  //   [0..2]=hiragana/katakana/eisuu [3]=space [4]=delete [5]=confirm [6]=default
+  // The mode rows become a no-op for the engine (they jump straight to the
+  // dispatch continuation); the actual mode change is done in plain C by the
+  // per-frame hook (see jp_name_frame_719C08).
+  patch_code_dword(ff7_externals.name_menu_action_jump_table_719B61 + 0 * 4, ff7_externals.name_menu_action_continue_71914C);
+  patch_code_dword(ff7_externals.name_menu_action_jump_table_719B61 + 1 * 4, ff7_externals.name_menu_action_continue_71914C);
+  patch_code_dword(ff7_externals.name_menu_action_jump_table_719B61 + 2 * 4, ff7_externals.name_menu_action_continue_71914C);
+  patch_code_dword(ff7_externals.name_menu_action_jump_table_719B61 + 3 * 4, ff7_externals.name_menu_action_space_71905D);   // スペース  (append blank)
+  patch_code_dword(ff7_externals.name_menu_action_jump_table_719B61 + 4 * 4, ff7_externals.name_menu_action_delete_71906C);  // さくじょ
+  patch_code_dword(ff7_externals.name_menu_action_jump_table_719B61 + 5 * 4, ff7_externals.name_menu_action_confirm_719076); // けってい
+  patch_code_dword(ff7_externals.name_menu_action_jump_table_719B61 + 6 * 4, ff7_externals.name_menu_action_default_719147); // デフォルト
+
+  // repoint the three reads of the displayed grid at our own buffer (the
+  // patches store the buffer's address; the engine then reads the buffer's
+  // contents every frame while drawing the grid / picking glyphs):
+  //   grid draw 1:   movzx dx,[ecx+eax+grid]  (disp32 @menu_sub_718DBE+0x428)
+  //   grid draw 2:   movzx cx,[eax+edx+grid]  (disp32 @menu_sub_718DBE+0xAE7)
+  //   glyph picker:  mov   al,[edx+ecx+grid]  (disp32 @menu_sub_718B9A+0x5C)
+  patch_code_dword(ff7_externals.menu_sub_718DBE + 0x428, (DWORD)(uintptr_t)&jp_name_current_grid[0]);
+  patch_code_dword(ff7_externals.menu_sub_718DBE + 0xAE7, (DWORD)(uintptr_t)&jp_name_current_grid[0]);
+  patch_code_dword(ff7_externals.menu_sub_718B9A + 0x5C, (DWORD)(uintptr_t)&jp_name_current_grid[0]);
+
+  // the right menu now has 7 items; move the column up so all 7 fit on screen.
+  //   menu text draw  : y = 0x14A + i*0x22 -> base 0xD2 (imm32 @menu_sub_718DBE+0x486)
+  //   menu cursor hand: y = 0x14C + i*0x22 -> base 0xD4 (imm32 @menu_sub_718DBE+0x20E)
+  patch_code_dword(ff7_externals.menu_sub_718DBE + 0x486, 0xD2);
+  patch_code_dword(ff7_externals.menu_sub_718DBE + 0x20E, 0xD4);
+
+  // initialise the displayed grid to the full 9-row hiragana table
+  jp_name_apply_mode(0);
 }

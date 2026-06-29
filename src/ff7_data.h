@@ -428,6 +428,20 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.keyboard_name_input = get_relative_call(ff7_externals.menu_sub_718DBE, 0x99);
  	ff7_externals.restore_input_settings = get_relative_call(ff7_externals.menu_sub_719B81, 0x80);
 
+	// japanese name-entry screen (used by the ff7_japanese_edition path)
+	ff7_externals.menu_sub_718B9A = get_relative_call(ff7_externals.menu_sub_718DBE, 0x1C0);
+	ff7_externals.menu_input_check_6F53F1 = (uint32_t (*)(uint32_t))get_relative_call(ff7_externals.menu_sub_718DBE, 0x25F);
+	ff7_externals.name_menu_selected_pane_921ED4 = (uint32_t *)get_absolute_value(ff7_externals.menu_sub_718DBE, 0x234);
+	ff7_externals.name_menu_pane_cursor_rows_DD453C = get_absolute_value(ff7_externals.menu_sub_718DBE, 0x284);
+	ff7_externals.name_menu_action_jump_table_719B61 = get_absolute_value(ff7_externals.menu_sub_718DBE, 0x29B);
+	// the `ja` that guards the menu-action dispatch jumps to the shared continuation
+	ff7_externals.name_menu_action_continue_71914C = ff7_externals.menu_sub_718DBE + 0x28F + 6 + get_absolute_value(ff7_externals.menu_sub_718DBE, 0x291);
+	// original US action targets, read from the (still unpatched) jump table
+	ff7_externals.name_menu_action_space_71905D = get_absolute_value(ff7_externals.name_menu_action_jump_table_719B61, 0 * 4);
+	ff7_externals.name_menu_action_delete_71906C = get_absolute_value(ff7_externals.name_menu_action_jump_table_719B61, 1 * 4);
+	ff7_externals.name_menu_action_confirm_719076 = get_absolute_value(ff7_externals.name_menu_action_jump_table_719B61, 2 * 4);
+	ff7_externals.name_menu_action_default_719147 = get_absolute_value(ff7_externals.name_menu_action_jump_table_719B61, 3 * 4);
+
 	ff7_externals.dinput_getdata2 = get_relative_call(ff7_externals.keyboard_name_input, 0x1C);
 	common_externals.get_keyboard_state = get_relative_call(ff7_externals.keyboard_name_input, 0x6);
 

@@ -3056,6 +3056,16 @@ struct ff7_externals
 	uint32_t menu_sub_71894B;
 	uint32_t menu_sub_718DBE;
 	uint32_t menu_sub_719B81;
+	uint32_t menu_sub_718B9A;
+	uint32_t (*menu_input_check_6F53F1)(uint32_t);
+	uint32_t *name_menu_selected_pane_921ED4;
+	uint32_t name_menu_pane_cursor_rows_DD453C;
+	uint32_t name_menu_action_jump_table_719B61;
+	uint32_t name_menu_action_continue_71914C;
+	uint32_t name_menu_action_space_71905D;
+	uint32_t name_menu_action_delete_71906C;
+	uint32_t name_menu_action_confirm_719076;
+	uint32_t name_menu_action_default_719147;
 	uint32_t set_default_input_settings_save;
 	uint32_t keyboard_name_input;
 	uint32_t restore_input_settings;
