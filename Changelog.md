@@ -4,6 +4,7 @@
 
 ## Common
 
+- Renderer: Substantial overhaul of movie rendering, NTSC-J mode, and gamma functions
 - Renderer: fix `enable_bilinear` option for original game textures ( https://github.com/julianxhokaxhiu/FFNx/pull/914 )
 - Core: Add support for SDL3 Gamepad API (`use_sdl_gamepad`) ( https://github.com/julianxhokaxhiu/FFNx/pull/915 )
 
@@ -97,7 +98,6 @@
 
 ## Common
 
-- Rendering: Substantial overhaul of NTSC-J mode and gamma functions
 - Core: Improve error message on crash and make the link clickable
 - Core: Revise LUT shader code to avoid 1.0 coordinates that some graphics drivers may sample incorrectly ( https://github.com/julianxhokaxhiu/FFNx/pull/813 )
 - Renderer: Fix game crashing while using Vulkan returning error VK_ERROR_OUT_OF_POOL_MEMORY
