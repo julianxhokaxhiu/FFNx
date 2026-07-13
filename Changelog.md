@@ -4,7 +4,7 @@
 
 ## Common
 
-- Renderer: Substantial overhaul of movie rendering, NTSC-J mode, and gamma functions
+- Renderer: Substantial overhaul of movie rendering, NTSC-J mode, and gamma functions ( https://github.com/julianxhokaxhiu/FFNx/pull/832 )
 - Renderer: fix `enable_bilinear` option for original game textures ( https://github.com/julianxhokaxhiu/FFNx/pull/914 )
 - Core: Add support for SDL3 Gamepad API (`use_sdl_gamepad`) ( https://github.com/julianxhokaxhiu/FFNx/pull/915 )
 
