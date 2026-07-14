@@ -1,6 +1,6 @@
 ## FF7
 
-- Enable japanese text support if ff7_ja.exe is being ran.  Unfinished, but appears stable.
+- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 ) ( https://github.com/julianxhokaxhiu/FFNx/pull/925 ) 
 
 # Next
 
