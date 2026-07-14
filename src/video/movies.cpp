@@ -1144,6 +1144,9 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 				// clear out the AVFrame objects before reusing them
 				av_frame_unref(movie_frame);
+				if (sws_frame->data[0]){
+					av_freep(&sws_frame->data[0]);
+				}
 				av_frame_unref(sws_frame);
 				av_frame_unref(wb_frame);
 
