@@ -1,7 +1,3 @@
-## FF7
-
-- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 ) ( https://github.com/julianxhokaxhiu/FFNx/pull/925 ) 
-
 # Next
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.3...master
@@ -14,7 +10,7 @@
 
 ## FF7
 
-- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 )
+- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 ) ( https://github.com/julianxhokaxhiu/FFNx/pull/925 ) 
 
 # 1.24.3
 
