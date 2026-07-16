@@ -10,8 +10,7 @@
 
 ## FF7
 
-- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 ) 
-- Japanese Text: Add support for 0xD9 to show the heart present in btl_win_d, which is used by the script, and works in Squares release.
+- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 + https://github.com/julianxhokaxhiu/FFNx/pull/952) 
 
 # 1.24.3
 
