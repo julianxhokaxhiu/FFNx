@@ -1043,9 +1043,17 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   int leftPadding = 0;
 
   p_letter = &letter;
-
+  offset_image_u = 0; // initialise to zero
+  offset_image_v = 0;
   switch ( (byte)letter )
   {
+    case 0xD9: // heart
+      character_graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
+      offset_image_u = 144; // heart is here
+      offset_image_v = 208; // heart is here
+      charWidth = 0x1f;     // max width
+      leftPadding = 0;
+      goto LABEL_9;
     case 0xF8:
       return x;
     case 0xFA:
@@ -1128,36 +1136,44 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
       offset_text_spacing = 0;
       offset_image_v = 0;
 LABEL_9:
-      offset_text_spacing = 0;
-      offset_image_v = 0;
       letter = *(byte *)p_letter;
       //character = *(byte *)p_letter;
       //if ( *(byte *)p_letter == 0xD2 || *(byte *)p_letter == 0xD3 )
       //  character -= 0x4E;
-      offset_image_u = 32 * (letter % 16);
-      image_v = 32 * (letter / 16) + offset_image_v;
-      image_u = 32 * (letter % 16);
-      if ( offset_image_u <= 480 )
+      if (offset_image_u == 0) // only do this if we idn't set stuff above for the heart.
       {
-        //image_u = 24 * (character % 21);
-        if ( offset_image_u == 480 )
+        offset_image_u = 32 * (letter % 16);
+        image_v = 32 * (letter / 16) + offset_image_v;
+        image_u = 32 * (letter % 16);
+        if (offset_image_u <= 480)
         {
-          image_u_width = 32.0;
-          vertex_width = 16;
+          //image_u = 24 * (character % 21);
+          if (offset_image_u == 480)
+          {
+            image_u_width = 32.0;
+            vertex_width = 16;
+          }
+          else
+          {
+            image_u_width = 32.0;
+            vertex_width = 16;
+          }
+          //character_graphics_object = *ff7_externals.menu_font_a_graphics_object_DC100C;
         }
         else
         {
+          //image_u = offset_image_u - 256;
           image_u_width = 32.0;
           vertex_width = 16;
+          //character_graphics_object = *ff7_externals.menu_font_b_graphics_object_DC1010;
         }
-        //character_graphics_object = *ff7_externals.menu_font_a_graphics_object_DC100C;
       }
       else
       {
-        //image_u = offset_image_u - 256;
-        image_u_width = 32.0;
+        image_u_width = 16.0;  // heart. 
         vertex_width = 16;
-        //character_graphics_object = *ff7_externals.menu_font_b_graphics_object_DC1010;
+        image_u = offset_image_u; // exactly equal to offset set above
+        image_v = offset_image_v;
       }
       /*if ( *ff7_externals.dword_DC12DC )
         vertex_x = (__int64)((double)((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) >> 5)
@@ -1168,10 +1184,25 @@ LABEL_9:
       if ( ff7_externals.g_get_do_render_menu_6CDBF2() && common_externals.draw_graphics_object(1, (struct graphics_object*)character_graphics_object) )
       {
         auto color = get_character_color(n_shapes);
-
+        if (offset_image_u == 144) // heart
+        {
+          auto color = get_character_color(7);
+        }
         vertex_u = (double)image_u / 512.0f;
+        if (offset_image_u == 144) // heart
+        {
+          vertex_u = (double)vertex_u / 2.0f; // image half as big
+        }
         vertex_v = (double)image_v / 512.0f;
+        if (offset_image_u == 144) // heart
+        {
+          vertex_v = (double)vertex_v / 2.0f; // image half as big
+        }
         vertex_u_width = image_u_width / 512.0f;
+        if (offset_image_u == 144) // heart
+        {
+          vertex_u_width = (double)vertex_u_width / 2.0f; // image half as big
+        }
         top_left = character_graphics_object->vertex_transform;
         top_left->position.x = (float)vertex_x + xPosFudge;
         top_left->position.y = (float)vertex_y + yPosFudge;
