@@ -1020,22 +1020,22 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   double scaleFactor = 1.0f; // small for now, because forcing big looks worse.
   float xPosFudge = 0;
   float yPosFudge = 4;       // small text is moved down 4 units to align properly.
-  graphics_vertex *bottom_right; // [esp+1Ch] [ebp-4Ch]
-  graphics_vertex *top_right; // [esp+20h] [ebp-48h]
-  graphics_vertex *bottom_left; // [esp+24h] [ebp-44h]
-  graphics_vertex *top_left; // [esp+28h] [ebp-40h]
+  graphics_vertex* bottom_right; // [esp+1Ch] [ebp-4Ch]
+  graphics_vertex* top_right; // [esp+20h] [ebp-48h]
+  graphics_vertex* bottom_left; // [esp+24h] [ebp-44h]
+  graphics_vertex* top_left; // [esp+28h] [ebp-40h]
   float vertex_u_width; // [esp+34h] [ebp-34h]
   float vertex_v; // [esp+38h] [ebp-30h]
   float vertex_u; // [esp+40h] [ebp-28h]
   unsigned __int16 character; // [esp+44h] [ebp-24h]
-  ff7_graphics_object *character_graphics_object; // [esp+48h] [ebp-20h]
+  ff7_graphics_object* character_graphics_object; // [esp+48h] [ebp-20h]
   __int16 offset_text_spacing; // [esp+4Ch] [ebp-1Ch]
   __int16 vertex_width; // [esp+50h] [ebp-18h]
   __int16 image_u; // [esp+54h] [ebp-14h]
   __int16 offset_image_v; // [esp+58h] [ebp-10h]
   __int16 image_v; // [esp+58h] [ebp-10h]
   __int16 offset_image_u; // [esp+5Ch] [ebp-Ch]
-  unsigned __int16 *p_letter; // [esp+60h] [ebp-8h]
+  unsigned __int16* p_letter; // [esp+60h] [ebp-8h]
   float image_u_width; // [esp+64h] [ebp-4h]
   int vertex_x; // [esp+70h] [ebp+8h]
 
@@ -1045,65 +1045,65 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   p_letter = &letter;
   offset_image_u = 0; // initialise to zero
   offset_image_v = 0;
-  switch ( (byte)letter )
+  switch ((byte)letter)
   {
-    case 0xD9: // heart
-      character_graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
-      offset_image_u = 144; // heart is here
-      offset_image_v = 208; // heart is here
-      charWidth = 0x1f;     // max width
-      leftPadding = 0;
-      goto LABEL_9;
-    case 0xF8:
-      return x;
-    case 0xFA:
-      p_letter = (unsigned __int16 *)((byte *)&letter + 1);
-      character_graphics_object = ff7_externals.menu_jafont_2_graphics_object;
-      charWidth = charWidthData[1][*p_letter] & 0x1F;
-      leftPadding = charWidthData[1][*p_letter] >> 5;
-      //offset_image_v = 132;
-      //offset_text_spacing = 231;
-      goto LABEL_9;
-    case 0xFB:
-      p_letter = (unsigned __int16 *)((byte *)&letter + 1);
-      character_graphics_object = ff7_externals.menu_jafont_3_graphics_object;
-      charWidth = charWidthData[2][*p_letter] & 0x1F;
-      leftPadding = charWidthData[2][*p_letter] >> 5;
-      //offset_image_v = 0;
-      //offset_text_spacing = 441;
-      goto LABEL_9;
-    case 0xFC:
-      p_letter = (unsigned __int16 *)((byte *)&letter + 1);
-      character_graphics_object = ff7_externals.menu_jafont_4_graphics_object;
-      charWidth = charWidthData[3][*p_letter] & 0x1F;
-      leftPadding = charWidthData[3][*p_letter] >> 5;
-      //offset_image_v = 132;
-      //offset_text_spacing = 672;
-      goto LABEL_9;
-    case 0xFD:
-      p_letter = (unsigned __int16 *)((byte *)&letter + 1);
-      character_graphics_object = ff7_externals.menu_jafont_5_graphics_object;
-      charWidth = charWidthData[4][*p_letter] & 0x1F;
-      leftPadding = charWidthData[4][*p_letter] >> 5;
-      //offset_image_v = 132;
-      //offset_text_spacing = 882;
-      goto LABEL_9;
-    case 0xFE:
-      p_letter = (unsigned __int16 *)((byte *)&letter + 1);
-      character_graphics_object = ff7_externals.menu_jafont_6_graphics_object;
-      charWidth = charWidthData[5][*p_letter] & 0x1F;
-      leftPadding = charWidthData[5][*p_letter] >> 5;
-      //offset_image_v = 132;
-      //offset_text_spacing = 1092;
-      goto LABEL_9;
-    default:
-      character_graphics_object = ff7_externals.menu_jafont_1_graphics_object;
-      charWidth = charWidthData[0][*p_letter] & 0x1F;
-      leftPadding = charWidthData[0][*p_letter] >> 5;
-      break;
+  case 0xD9: // heart
+    character_graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
+    offset_image_u = 144; // heart is here
+    offset_image_v = 208; // heart is here
+    charWidth = 0x1f;     // max width
+    leftPadding = 0;
+    goto LABEL_9;
+  case 0xF8:
+    return x;
+  case 0xFA:
+    p_letter = (unsigned __int16*)((byte*)&letter + 1);
+    character_graphics_object = ff7_externals.menu_jafont_2_graphics_object;
+    charWidth = charWidthData[1][*p_letter] & 0x1F;
+    leftPadding = charWidthData[1][*p_letter] >> 5;
+    //offset_image_v = 132;
+    //offset_text_spacing = 231;
+    goto LABEL_9;
+  case 0xFB:
+    p_letter = (unsigned __int16*)((byte*)&letter + 1);
+    character_graphics_object = ff7_externals.menu_jafont_3_graphics_object;
+    charWidth = charWidthData[2][*p_letter] & 0x1F;
+    leftPadding = charWidthData[2][*p_letter] >> 5;
+    //offset_image_v = 0;
+    //offset_text_spacing = 441;
+    goto LABEL_9;
+  case 0xFC:
+    p_letter = (unsigned __int16*)((byte*)&letter + 1);
+    character_graphics_object = ff7_externals.menu_jafont_4_graphics_object;
+    charWidth = charWidthData[3][*p_letter] & 0x1F;
+    leftPadding = charWidthData[3][*p_letter] >> 5;
+    //offset_image_v = 132;
+    //offset_text_spacing = 672;
+    goto LABEL_9;
+  case 0xFD:
+    p_letter = (unsigned __int16*)((byte*)&letter + 1);
+    character_graphics_object = ff7_externals.menu_jafont_5_graphics_object;
+    charWidth = charWidthData[4][*p_letter] & 0x1F;
+    leftPadding = charWidthData[4][*p_letter] >> 5;
+    //offset_image_v = 132;
+    //offset_text_spacing = 882;
+    goto LABEL_9;
+  case 0xFE:
+    p_letter = (unsigned __int16*)((byte*)&letter + 1);
+    character_graphics_object = ff7_externals.menu_jafont_6_graphics_object;
+    charWidth = charWidthData[5][*p_letter] & 0x1F;
+    leftPadding = charWidthData[5][*p_letter] >> 5;
+    //offset_image_v = 132;
+    //offset_text_spacing = 1092;
+    goto LABEL_9;
+  default:
+    character_graphics_object = ff7_externals.menu_jafont_1_graphics_object;
+    charWidth = charWidthData[0][*p_letter] & 0x1F;
+    leftPadding = charWidthData[0][*p_letter] >> 5;
+    break;
   }
 
-  switch ( (byte)letter )
+  switch ((byte)letter)
   {
     /*case 0xF8:
       return x;
@@ -1132,121 +1132,222 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
       offset_image_v = 132;
       offset_text_spacing = 1092;
       goto LABEL_9;*/
-    default:
-      offset_text_spacing = 0;
-      offset_image_v = 0;
-LABEL_9:
-      letter = *(byte *)p_letter;
-      //character = *(byte *)p_letter;
-      //if ( *(byte *)p_letter == 0xD2 || *(byte *)p_letter == 0xD3 )
-      //  character -= 0x4E;
-      if (offset_image_u == 0) // only do this if we idn't set stuff above for the heart.
+  default:
+    offset_text_spacing = 0;
+    offset_image_v = 0;
+  LABEL_9:
+    letter = *(byte*)p_letter;
+    //character = *(byte *)p_letter;
+    //if ( *(byte *)p_letter == 0xD2 || *(byte *)p_letter == 0xD3 )
+    //  character -= 0x4E;
+    if (offset_image_u == 0) // only do this if we idn't set stuff above for the heart.
+    {
+      offset_image_u = 32 * (letter % 16);
+      image_v = 32 * (letter / 16) + offset_image_v;
+      image_u = 32 * (letter % 16);
+      if (offset_image_u <= 480)
       {
-        offset_image_u = 32 * (letter % 16);
-        image_v = 32 * (letter / 16) + offset_image_v;
-        image_u = 32 * (letter % 16);
-        if (offset_image_u <= 480)
+        //image_u = 24 * (character % 21);
+        if (offset_image_u == 480)
         {
-          //image_u = 24 * (character % 21);
-          if (offset_image_u == 480)
-          {
-            image_u_width = 32.0;
-            vertex_width = 16;
-          }
-          else
-          {
-            image_u_width = 32.0;
-            vertex_width = 16;
-          }
-          //character_graphics_object = *ff7_externals.menu_font_a_graphics_object_DC100C;
+          image_u_width = 32.0;
+          vertex_width = 16;
         }
         else
         {
-          //image_u = offset_image_u - 256;
           image_u_width = 32.0;
           vertex_width = 16;
-          //character_graphics_object = *ff7_externals.menu_font_b_graphics_object_DC1010;
         }
+        //character_graphics_object = *ff7_externals.menu_font_a_graphics_object_DC100C;
       }
       else
       {
-        image_u_width = 16.0;  // heart. 
+        //image_u = offset_image_u - 256;
+        image_u_width = 32.0;
         vertex_width = 16;
-        image_u = offset_image_u; // exactly equal to offset set above
-        image_v = offset_image_v;
+        //character_graphics_object = *ff7_externals.menu_font_b_graphics_object_DC1010;
       }
-      /*if ( *ff7_externals.dword_DC12DC )
-        vertex_x = (__int64)((double)((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) >> 5)
-                           * 1.6666666)
-                 + x;
-      else*/
-        vertex_x = x + leftPadding;//2 * ((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) >> 5);
-      if ( ff7_externals.g_get_do_render_menu_6CDBF2() && common_externals.draw_graphics_object(1, (struct graphics_object*)character_graphics_object) )
+    }
+    else
+    {
+      image_u_width = 16.0;  // heart. 
+      vertex_width = 16;
+      image_u = offset_image_u; // exactly equal to offset set above
+      image_v = offset_image_v;
+    }
+    /*if ( *ff7_externals.dword_DC12DC )
+      vertex_x = (__int64)((double)((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) >> 5)
+                         * 1.6666666)
+               + x;
+    else*/
+    vertex_x = x + leftPadding;//2 * ((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) >> 5);
+    if (ff7_externals.g_get_do_render_menu_6CDBF2() && common_externals.draw_graphics_object(1, (struct graphics_object*)character_graphics_object))
+    {
+      auto color = get_character_color(n_shapes);
+      if (offset_image_u == 144) // heart
       {
-        auto color = get_character_color(n_shapes);
-        if (offset_image_u == 144) // heart
         {
-          auto color = get_character_color(7);
+          color = get_character_color(7); // suppose dto be white
         }
-        vertex_u = (double)image_u / 512.0f;
-        if (offset_image_u == 144) // heart
-        {
-          vertex_u = (double)vertex_u / 2.0f; // image half as big
-        }
-        vertex_v = (double)image_v / 512.0f;
-        if (offset_image_u == 144) // heart
-        {
-          vertex_v = (double)vertex_v / 2.0f; // image half as big
-        }
-        vertex_u_width = image_u_width / 512.0f;
-        if (offset_image_u == 144) // heart
-        {
-          vertex_u_width = (double)vertex_u_width / 2.0f; // image half as big
-        }
-        top_left = character_graphics_object->vertex_transform;
-        top_left->position.x = (float)vertex_x + xPosFudge;
-        top_left->position.y = (float)vertex_y + yPosFudge;
-        top_left->position.z = z_value;
-        top_left->position.w = 1.0;
-        top_left->color = color;
-        top_left->alpha_mask = 0xFF000000;
-        top_left->u = vertex_u;
-        top_left->v = vertex_v;
-        bottom_left = character_graphics_object->vertex_transform + 1;
-        bottom_left->position.x = (float)vertex_x + xPosFudge;
-        bottom_left->position.y = (double)vertex_y + 16.0*scaleFactor +yPosFudge;
-        bottom_left->position.z = z_value;
-        bottom_left->position.w = 1.0;
-        bottom_left->color = color;
-        bottom_left->alpha_mask = 0xFF000000;
-        bottom_left->u = vertex_u;
-        bottom_left->v = vertex_v + 32.0f / 512.0f;
-        top_right = character_graphics_object->vertex_transform + 2;
-        top_right->position.x = (double)vertex_x + (double)vertex_width*scaleFactor+xPosFudge;
-        top_right->position.y = (float)vertex_y+yPosFudge;
-        top_right->position.z = z_value;
-        top_right->position.w = 1.0;
-        top_right->color = color;
-        top_right->alpha_mask = 0xFF000000;
-        top_right->u = vertex_u + vertex_u_width;
-        top_right->v = vertex_v;
-        bottom_right = character_graphics_object->vertex_transform + 3;
-        bottom_right->position.x = (double)vertex_x + (double)vertex_width*scaleFactor+xPosFudge;
-        bottom_right->position.y = (double)vertex_y + 16.0*scaleFactor+yPosFudge;
-        bottom_right->position.z = z_value;
-        bottom_right->position.w = 1.0;
-        bottom_right->color = color;
-        bottom_right->alpha_mask = -16777216;
-        bottom_right->u = vertex_u + vertex_u_width;
-        bottom_right->v = vertex_v + 32.0f / 512.0f;
-        *(byte *)character_graphics_object->curr_total_n_shape = 2 * n_shapes;
-        character_graphics_object->field_7C = 2 * n_shapes;
       }
-      /*if ( *ff7_externals.dword_DC12DC )                       // Return next x position: basically text spacing
-        return vertex_x + std::ceil(0.5f * charWidth) * 1.6666666;//(__int64)((double)(*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F) * 1.6666666)
-             //+ vertex_x;
-      else*/
-        return vertex_x + std::ceil(0.5f * charWidth*scaleFactor);// 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F);
+      vertex_u = (double)image_u / 512.0f;
+      if (offset_image_u == 144) // heart
+      {
+        vertex_u = (double)vertex_u * 2.0f; // image half as big
+      }
+      vertex_v = (double)image_v / 512.0f;
+      if (offset_image_u == 144) // heart
+      {
+        vertex_v = (double)vertex_v * 2.0f; // image half as big
+      }
+      vertex_u_width = image_u_width / 512.0f;
+      if (offset_image_u == 144) // heart
+      {
+        vertex_u_width = (double)vertex_u_width * 2.0f; // image half as big
+      }
+      top_left = character_graphics_object->vertex_transform;
+      top_left->position.x = (float)vertex_x + xPosFudge;
+      top_left->position.y = (float)vertex_y + yPosFudge;
+      top_left->position.z = z_value;
+      top_left->position.w = 1.0;
+      top_left->color = color;
+      top_left->alpha_mask = 0xFF000000;
+      if (offset_image_u == 144) // heart
+        top_left->alpha_mask = -16777216;
+      top_left->u = vertex_u;
+      top_left->v = vertex_v;
+      bottom_left = character_graphics_object->vertex_transform + 1;
+      bottom_left->position.x = (float)vertex_x + xPosFudge;
+      bottom_left->position.y = (double)vertex_y + 16.0 * scaleFactor + yPosFudge;
+      bottom_left->position.z = z_value;
+      bottom_left->position.w = 1.0;
+      bottom_left->color = color;
+      bottom_left->alpha_mask = 0xFF000000;
+      if (offset_image_u == 144) // heart
+        bottom_left->alpha_mask = -16777216;
+      bottom_left->u = vertex_u;
+      bottom_left->v = vertex_v + 32.0f / 512.0f;
+      top_right = character_graphics_object->vertex_transform + 2;
+      top_right->position.x = (double)vertex_x + (double)vertex_width * scaleFactor + xPosFudge;
+      top_right->position.y = (float)vertex_y + yPosFudge;
+      top_right->position.z = z_value;
+      top_right->position.w = 1.0;
+      top_right->color = color;
+      top_right->alpha_mask = 0xFF000000;
+      if (offset_image_u == 144) // heart
+        top_right->alpha_mask = -16777216;
+      top_right->u = vertex_u + vertex_u_width;
+      top_right->v = vertex_v;
+      bottom_right = character_graphics_object->vertex_transform + 3;
+      bottom_right->position.x = (double)vertex_x + (double)vertex_width * scaleFactor + xPosFudge;
+      bottom_right->position.y = (double)vertex_y + 16.0 * scaleFactor + yPosFudge;
+      bottom_right->position.z = z_value;
+      bottom_right->position.w = 1.0;
+      bottom_right->color = color;
+      bottom_right->alpha_mask = -16777216;
+      bottom_right->u = vertex_u + vertex_u_width;
+      bottom_right->v = vertex_v + 32.0f / 512.0f;
+      *(byte*)character_graphics_object->curr_total_n_shape = 2 * n_shapes;
+      character_graphics_object->field_7C = 2 * n_shapes;
+      if (offset_image_u == 144) // heart
+      {
+        *(byte*)character_graphics_object->curr_total_n_shape = 7;
+        character_graphics_object->field_7C = 7;
+      }
+    }
+    /*if ( *ff7_externals.dword_DC12DC )                       // Return next x position: basically text spacing
+      return vertex_x + std::ceil(0.5f * charWidth) * 1.6666666;//(__int64)((double)(*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F) * 1.6666666)
+           //+ vertex_x;
+    else*/
+    return vertex_x + std::ceil(0.5f * charWidth * scaleFactor);// 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F);
+  }
+}
+
+void menu_draw_everything_6CC9D3_jp()
+{
+  ff7_game_obj* game_object; // [esp+0h] [ebp-4h]
+
+  if (ff7_externals.g_get_do_render_menu_6CDBF2())
+  {
+    game_object = ff7_externals.engine_get_game_object_676578();
+    ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
+    ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
+    ff7_externals.engine_gfx_draw_graphics_object_polygon_set_field_80_sub_660E6A(*ff7_externals.menu_unknown3_graphics_object_DC0FFC, game_object);
+    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_window_bg_graphics_object_DC0FF0, game_object);
+    if (*ff7_externals.menu_is_small_viewport_320_240_DC130C == 1)
+    {
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_4_graphics_object_DC104C, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_blend_4_graphics_object_DC1048, game_object);
+    }
+    else
+    {
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
+
+      // jp
+      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_1_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_2_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_3_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_4_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_5_graphics_object, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_6_graphics_object, game_object);
+    }
+    if (*ff7_externals.dword_DC12EC == 9 || *ff7_externals.dword_DC12E4)
+    {
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_1_graphics_object_DC1020, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_2_graphics_object_DC1024, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_3_graphics_object_DC1028, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_4_graphics_object_DC102C, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_5_graphics_object_DC1030, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_6_graphics_object_DC1034, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_7_graphics_object_DC1038, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_8_graphics_object_DC103C, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_9_graphics_object_DC1040, game_object);
+    }
+    else
+    {
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar_1_graphics_object_DC1014, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar_2_graphics_object_DC1018, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar_3_graphics_object_DC101C, game_object);
+    }
+    if (*ff7_externals.engine_game_mode_word_CBF9DC == 20)
+    {
+      ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 1, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_buster_tex_graphics_object_DC1044, game_object);
+      ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_buster_tex_graphics_object_DC1044);
+    }
+    ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(1, game_object);
+    ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
+    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown4_graphics_object_DC1000, game_object);
+    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_blend_window_bg_graphics_object_DC0FF4, game_object);
+    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_unknown2_graphics_object_DC0FF8, game_object);
+    if (*ff7_externals.menu_is_small_viewport_320_240_DC130C == 1)
+    {
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_0_graphics_object_DC1050, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_blend_1_graphics_object_DC1054, game_object);
+    }
+    else
+    {
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_0_graphics_object_DC0FDC, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_1_graphics_object_DC0FE0, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_1_graphics_object_DC0FE8, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4, game_object);
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC, game_object);
+    }
+    ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(9, 1, game_object);
+    ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_text_box_quad_graphics_object_DC1008, game_object);
+    ff7_externals.engine_gfx_setviewport_sub_66067A(
+      *ff7_externals.menu_viewport_x_DC105C,
+      *ff7_externals.menu_viewport_y_DC1060,
+      *ff7_externals.menu_viewport_width_DC1064,
+      *ff7_externals.menu_viewport_view_DC1068,
+      game_object);
   }
 }
 
