@@ -609,7 +609,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             break;
           }
         default:
-          if ( *buffer_text < 0xF6u || *buffer_text > 0xF9u ) // not a button prompt.
+          if ((*buffer_text != 0xd9u) && (*buffer_text < 0xF6u || *buffer_text > 0xF9u)) // not a button prompt or heart.
           {
             text_offset_spacing = 0;
             graphics_object_v_in_byte = 0;
@@ -739,6 +739,13 @@ LABEL_39:
           {
             switch ( *buffer_text ) // what button prompt do we have?
             {
+              case 0xd9u: // heart
+                offset_u_in_byte = 144;
+                graphics_object_v_in_byte = 208;
+                graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
+                special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
+                break;
+
               case 0xF6u:
                 // check for squeenix extended prompts, and grab from correct place in btl_win
                 ++buffer_text; // go to next character
@@ -873,7 +880,10 @@ LABEL_39:
               special_character_bottom_left->color = color;
               special_character_bottom_left->alpha_mask = -16777216;
               special_character_bottom_left->u = special_character_u;
-              special_character_bottom_left->v = (double)graphics_object_v_in_byte / 256.0f + 0.125; // no longer ignores graphics_object_v_in_byte
+              if (offset_u_in_byte == 144) // it's the heart
+                special_character_bottom_left->v = (double)graphics_object_v_in_byte / 256.0f + 0.0625; // no longer ignores graphics_object_v_in_byte
+              else
+                special_character_bottom_left->v = (double)graphics_object_v_in_byte / 256.0f + 0.125; // no longer ignores graphics_object_v_in_byte
               special_character_top_right = graphics_object->vertex_transform + 2;
               special_character_top_right->position.x = (double)character_x + 16.0f * scaleFactor;
               special_character_top_right->position.y = (double)character_y;
@@ -881,7 +891,10 @@ LABEL_39:
               special_character_top_right->position.w = 1.0;
               special_character_top_right->color = color;
               special_character_top_right->alpha_mask = -16777216;
-              special_character_top_right->u = special_character_u + 0.125;
+              if (offset_u_in_byte == 144) // it's the heart
+                special_character_top_right->u = special_character_u + 0.0625;
+              else
+                special_character_top_right->u = special_character_u + 0.125;
               special_character_top_right->v = (double)graphics_object_v_in_byte / 256.0f; // no longer ignores graphics_object_v_in_byte
               window_vertices = graphics_object->vertex_transform;
               window_vertices[3].position.x = (double)character_x + 16.0f * scaleFactor;
@@ -890,8 +903,14 @@ LABEL_39:
               window_vertices[3].position.w = 1.0;
               window_vertices[3].color = color;
               window_vertices[3].alpha_mask = -16777216;
-              window_vertices[3].u = special_character_u + 0.125;
-              window_vertices[3].v = (double)graphics_object_v_in_byte / 256.0f + 0.125; // no longer ignores graphics_object_v_in_byte
+              if (offset_u_in_byte == 144) // it's the heart
+                window_vertices[3].u = special_character_u + 0.0625;
+              else
+                window_vertices[3].u = special_character_u + 0.125;
+              if (offset_u_in_byte == 144) // it's the heart
+                window_vertices[3].v = (double)graphics_object_v_in_byte / 256.0f + 0.0625; // no longer ignores graphics_object_v_in_byte
+              else
+                window_vertices[3].v = (double)graphics_object_v_in_byte / 256.0f + 0.125; // no longer ignores graphics_object_v_in_byte
               *(byte *)graphics_object->curr_total_n_shape = 7;
               graphics_object->field_7C = 7;
             }
