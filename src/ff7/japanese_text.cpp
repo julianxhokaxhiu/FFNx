@@ -429,7 +429,7 @@ int charWidthData[6][256] =
 // JP keeps the original half-width semantics (32px texel cells -> 16 units).
 static inline float z_half_width(int w) { return ff7_japanese_edition ? std::ceil(0.5f * (float)w) : (float)w; }
 
-// multibyte_font: override the hardcoded width table from <basedir>/multibyte_widths.bin
+// ff7_multibyte_font: override the hardcoded width table from <basedir>/multibyte_widths.bin
 // (6*256 bytes, one per font sheet/code, same (pad<<5|width) packing as window.bin member 3),
 // so translations can tune advances without recompiling FFNx.
 static byte multibyte_icon_mask[256] = {0};
@@ -442,7 +442,7 @@ static void multibyte_load_widths()
   static bool tried = false;
   static long long last_mtime = -1;
   static DWORD last_check = 0;
-  if (!multibyte_font) return;
+  if (!ff7_multibyte_font) return;
   DWORD now = GetTickCount();
   if (tried && (now - last_check) < 1000) return;
   last_check = now;
@@ -458,7 +458,7 @@ static void multibyte_load_widths()
     if (q >= 80 && q <= 160 && q != multibyte_field_linestep_q)
     {
       multibyte_field_linestep_q = q;
-      ffnx_info("multibyte_font: field line step = %d.%02d px\n", q / 4, (q % 4) * 25);
+      ffnx_info("ff7_multibyte_font: field line step = %d.%02d px\n", q / 4, (q % 4) * 25);
     }
     fclose(lf);
   }
@@ -472,16 +472,16 @@ static void multibyte_load_widths()
   }
   tried = true;
   FILE *f = fopen(path, "rb");
-  if (!f) { if (first) ffnx_info("multibyte_font: no %s, using built-in widths\n", path); return; }
+  if (!f) { if (first) ffnx_info("ff7_multibyte_font: no %s, using built-in widths\n", path); return; }
   unsigned char buf[6 * 256];
   if (fread(buf, 1, sizeof(buf), f) == sizeof(buf))
   {
     for (int i = 0; i < 6; i++)
       for (int j = 0; j < 256; j++)
         charWidthData[i][j] = buf[i * 256 + j];
-    ffnx_info("multibyte_font: widths %s\n", first ? "loaded" : "RELOADED (live)");
+    ffnx_info("ff7_multibyte_font: widths %s\n", first ? "loaded" : "RELOADED (live)");
   }
-  else ffnx_error("multibyte_font: %s wrong size (need 1536 bytes)\n", path);
+  else ffnx_error("ff7_multibyte_font: %s wrong size (need 1536 bytes)\n", path);
   fclose(f);
   if (!first) return;
   _snprintf(path, sizeof(path), "%s/multibyte_iconmask.bin", basedir);
@@ -489,7 +489,7 @@ static void multibyte_load_widths()
   if (f)
   {
     if (fread(multibyte_icon_mask, 1, 256, f) == 256)
-      ffnx_info("multibyte_font: icon mask loaded\n");
+      ffnx_info("ff7_multibyte_font: icon mask loaded\n");
     fclose(f);
   }
 }

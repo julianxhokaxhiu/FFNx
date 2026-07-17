@@ -1,6 +1,6 @@
 # Multibyte Font Mode (FF7)
 
-`multibyte_font` lets a translation use the Japanese edition's multi-sheet font system on the
+`ff7_multibyte_font` lets a translation use the Japanese edition's multi-sheet font system on the
 **English/International executable**, without pulling in the Japanese-edition-only menu scaling
 and layout changes. It was built and tested against a full Arabic localization of FF7, but the
 mechanism is script-agnostic: any translation that needs more glyphs than the base 256-entry
@@ -11,12 +11,12 @@ charset (Arabic presentation forms, Chinese, Korean, extended Cyrillic, ...) can
 In `FFNx.toml`:
 
 ```toml
-multibyte_font = true
+ff7_multibyte_font = true
 ```
 
 Do **not** combine it with `ff7_japanese_edition` — that flag is for the actual Japanese
 executable and additionally applies JP-only menu layout/scaling that breaks non-JP menus.
-`multibyte_font` installs only the shared pieces: the multi-sheet font loader, the per-character
+`ff7_multibyte_font` installs only the shared pieces: the multi-sheet font loader, the per-character
 multibyte draw path, and the text-drawing hooks (field, menu, battle, battle top-bar).
 
 ## How text is encoded
@@ -93,7 +93,7 @@ icons, button prompts) rather than letters:
   so colored icon art keeps its true colors. This addresses the recolor conflict with icon
   mods noted above.
 
-## What multibyte_font does NOT do
+## What ff7_multibyte_font does NOT do
 
 - **Name-entry screen**: the 3-mode (hiragana/katakana/eisuu) name-entry screen stays gated
   behind `ff7_japanese_edition`. A translation whose alphabet doesn't fit the stock name screen
@@ -111,4 +111,4 @@ icons, button prompts) rather than letters:
 2. Paint `jafont_1..6` textures (16×16 grid per sheet).
 3. Re-encode game text (kernel, field, battle, world, exe strings) to your charmap.
 4. Generate `multibyte_widths.bin` from your glyph metrics.
-5. Set `multibyte_font = true` and iterate on widths/linestep live in-game.
+5. Set `ff7_multibyte_font = true` and iterate on widths/linestep live in-game.

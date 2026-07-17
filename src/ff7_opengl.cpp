@@ -380,13 +380,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// Shared multi-font glyph space (extra jafont_2..6 via FA-FE escape bytes): needed by BOTH the JP
 	// edition AND English-exe multibyte translations (e.g. Arabic). Only the font LOAD + per-char draw
 	// are shared; the remaining hooks below are JP-only layout that breaks native EN menus.
-	ffnx_info("multibyte hook install check: multibyte_font=%d ff7_japanese_edition=%d\n", multibyte_font, ff7_japanese_edition);
-	ffnx_info("mb-ext: load_menu=%X submit_char=%X sub_6F54A2=%X field_submit=%X field_boxes=%X menu_draw=%X battle_draw=%X mainmenu_draw=%X\n",
-		(uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, (uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E,
-		ff7_externals.sub_6F54A2, ff7_externals.field_submit_draw_text_640x480_6E706D,
-		(uint32_t)ff7_externals.field_draw_text_boxes_and_text_graphics_object_6ECA68, (uint32_t)ff7_externals.menu_draw_everything_6CC9D3,
-		(uint32_t)ff7_externals.battle_draw_menu_everything_6CEE84, (uint32_t)ff7_externals.main_menu_draw_everything_maybe_6C0B91);
-	if (ff7_japanese_edition || multibyte_font)
+	if (ff7_japanese_edition || ff7_multibyte_font)
 	{
 		replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468_jp);
 		replace_function((uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E, common_submit_draw_char_from_buffer_6F564E_jp);
@@ -394,15 +388,15 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// jafont glyph FLUSH + field char submitter — without these, multibyte glyphs queue but never draw
 		replace_function(ff7_externals.field_submit_draw_text_640x480_6E706D, field_submit_draw_text_640x480_6E706D_jp);
 		replace_function((uint32_t)ff7_externals.field_draw_text_boxes_and_text_graphics_object_6ECA68, field_draw_text_boxes_and_text_graphics_object_6ECA68_jp);
-		replace_function((uint32_t)	ff7_externals.menu_draw_everything_6CC9D3, menu_draw_everything_6CC9D3_jp);
-		replace_function((uint32_t)	ff7_externals.battle_draw_menu_everything_6CEE84, battle_draw_menu_everything_6CEE84_jp);
-		replace_function((uint32_t)	ff7_externals.main_menu_draw_everything_maybe_6C0B91, main_menu_draw_everything_maybe_6C0B91_jp);
+		replace_function((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, menu_draw_everything_6CC9D3_jp);
+		replace_function((uint32_t)ff7_externals.battle_draw_menu_everything_6CEE84, battle_draw_menu_everything_6CEE84_jp);
+		replace_function((uint32_t)ff7_externals.main_menu_draw_everything_maybe_6C0B91, main_menu_draw_everything_maybe_6C0B91_jp);
 		// battle top-display bar (draw_text_top_display_6D1CC0): shares the same per-char draw path as the
-		// rest of multibyte text. Without this hook, English-exe multibyte_font mode (Arabic) falls through
+		// rest of multibyte text. Without this hook, English-exe ff7_multibyte_font mode (Arabic) falls through
 		// to the vanilla single-byte draw for this specific bar -> Arabic byte codes get reinterpreted as
 		// vanilla Latin glyph indices -> garbled text (2026-07-09, reported in-battle). Moved here (out of
-		// the ff7_japanese_edition-only block below) since it's needed by BOTH JP edition and multibyte_font.
-		replace_function((uint32_t)	ff7_externals.draw_text_top_display_6D1CC0, draw_text_top_display_6D1CC0_jp);
+		// the ff7_japanese_edition-only block below) since it's needed by BOTH JP edition and ff7_multibyte_font.
+		replace_function((uint32_t)ff7_externals.draw_text_top_display_6D1CC0, draw_text_top_display_6D1CC0_jp);
 	}
 	if (ff7_japanese_edition)
 	{
@@ -419,8 +413,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		patch_code_byte(0x632C4E + 0x2, 0xC);
 		patch_code_byte(0x632C4E + 0x3, 0xC);
 		patch_code_byte(0x632C4E + 0x4, 0xC);
-
-		// sub_6F54A2 hook lives in the shared (ff7_japanese_edition || multibyte_font) block above.
 
 		// 3-mode (hiragana/katakana/eisuu) name-entry screen
 		name_input_jp_install();
