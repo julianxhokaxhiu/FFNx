@@ -12,6 +12,10 @@
 
 - Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 + https://github.com/julianxhokaxhiu/FFNx/pull/952 + https://github.com/julianxhokaxhiu/FFNx/pull/953 + https://github.com/julianxhokaxhiu/FFNx/pull/951) 
 
+## FF8
+
+- External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
+
 # 1.24.3
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.2...1.24.3

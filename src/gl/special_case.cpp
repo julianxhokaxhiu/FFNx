@@ -46,6 +46,9 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	// Force disabling filter for ff7 minigames internal textures
 	if(!ff8 && (mode == MODE_SUBMARINE || mode == MODE_COASTER) && !isExternalTexture) current_state.texture_filter = false;
 
+	// Force disabling filter for ff8 worldmap
+	if(ff8 && mode == MODE_WORLDMAP && (isExternalTexture || ff8_worldmap_internal_highres_textures)) current_state.texture_filter = false;
+
 	// some modpath textures have filtering forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter) && isExternalTexture) current_state.texture_filter = true;
 
