@@ -24,3 +24,4 @@ Welcome to the FFNx documentation!
 - [Video Encoding Guide](mods/video_encoding_guide.md)
 - [External textures](mods/external_textures.md)
 - [Preparing Textures for NTSC-J Mode](mods/preparing_textures_for_ntscj_mode.md)
+- [Multibyte Font Mode (FF7)](mods/multibyte_font.md)
