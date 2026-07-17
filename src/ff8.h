@@ -1623,6 +1623,7 @@ struct ff8_externals
 	uint32_t battle_open_file_wrapper;
 	uint32_t battle_open_file;
 	char **battle_filenames;
+	uint32_t battle_monster_dat_loader_com_id_add_site; // "add eax, 96h" (com_id + 150) inside battle_monster_dat_loader; only reachable per-version, not via a relative-call chain (see ff8_data.cpp). 0 if unmapped for the running version.
 	uint32_t battle_load_textures_sub_500900;
 	uint32_t loc_5005A0;
 	uint32_t battle_upload_texture_to_vram;

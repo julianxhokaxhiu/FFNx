@@ -239,6 +239,29 @@ void ff8_find_externals()
 	ff8_externals.battle_open_file = get_relative_call(ff8_externals.battle_open_file_wrapper, 0x14);
 	ff8_externals.battle_filenames = (char **)get_absolute_value(ff8_externals.battle_open_file, 0x11);
 
+	// battle_monster_dat_loader's "add eax, 96h" (com_id + 150) index computation.
+	// Not reachable via a relative-call chain (battle_monster_dat_loader is only
+	// ever invoked through a function-pointer task dispatch, never a direct
+	// call/jmp instruction), so this is a per-version absolute address like
+	// sub_54A0D0 above. Verified by signature-scanning all six retail 1.2 exe
+	// files (EN/FR/DE/IT/SP/JP); 0 (unmapped) for any other version.
+	if (FF8_US_VERSION)
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x50735A;
+	else if (version == VERSION_FF8_12_FR || version == VERSION_FF8_12_FR_NV)
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x506EBA;
+	else if (version == VERSION_FF8_12_DE || version == VERSION_FF8_12_DE_NV)
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x506F2A;
+	else if (FF8_IT_VERSION)
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x506F2A;
+	else if (FF8_SP_VERSION)
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x506F5A;
+	else if (version == VERSION_FF8_12_JP)
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x50B00A;
+	else if (version == VERSION_FF8_12_JP_NV)
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x50B21A;
+	else
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0;
+
 	ff8_externals.sub_47D890 = get_relative_call(ff8_externals.sub_506CF0, 0x59);
 	ff8_externals.sub_505DF0 = get_relative_call(ff8_externals.sub_506CF0, 0xAA);
 	ff8_externals.sub_4A94D0 = get_relative_call(ff8_externals.sub_47D890, 0x9);

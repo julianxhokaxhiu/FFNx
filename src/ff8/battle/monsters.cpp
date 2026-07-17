@@ -18,7 +18,6 @@
 #include "../../ff8.h"
 #include "../../patch.h"
 #include "../../globals.h"
-#include "../../common.h"
 #include "../../log.h"
 
 #include <stdint.h>
@@ -38,7 +37,7 @@
 //     Index 310 is immediately D0C000.DAT (character files), so the c0m block
 //     cannot grow in place, and com_id 160..215 currently resolve to D0C/garbage.
 //
-// Fix (three memory patches, US 1.2 only for now):
+// Fix (three memory patches):
 //   1) Build an enlarged copy of BattleFilesArray = the original entries
 //      verbatim + 56 appended pointers to new "C0M144.DAT".."C0M199.DAT".
 //   2) Repoint LoadBattleFile's array base to the enlarged copy. Every existing
@@ -48,6 +47,22 @@
 //
 // Encounters need no exe change: enemy_com_value is already a byte, so setting
 // it to (c0m# + 16) selects any monster up to c0m199.
+//
+// ff8_externals.battle_open_file / battle_filenames already resolve
+// dynamically per version via the existing get_relative_call chain in
+// ff8_data.cpp (sub_47CCB0 -> ... -> battle_open_file), so this file uses
+// them as-is with no version branching of its own. battle_monster_dat_loader
+// itself is only ever reached through a function-pointer task dispatch
+// (never a direct call/jmp instruction anywhere in the exe), so its
+// "add eax, 150" com_id remap site can't be resolved through a relative-call
+// chain either; ff8_externals.battle_monster_dat_loader_com_id_add_site is
+// resolved as a per-version absolute address in ff8_data.cpp instead (same
+// pattern as sub_54A0D0 there), verified by signature-scanning all seven
+// retail 1.2 exe files (EN/FR/DE/IT/SP/JP/JP_NV) - see ff8_data.cpp for the
+// address table. The BattleFilesArray table structure itself (c0m000..c0m143
+// at indices 166..309, D0C000.DAT immediately at 310, 1117 entries total) is
+// confirmed identical across all seven builds, so FF8_BATTLE_FILES_ARRAY_LEN
+// below is not version-dependent.
 // -------------------------------------------------------------------------
 
 // Length of the original BattleFilesArray (US 1.2), indices 0..1116.
@@ -63,8 +78,6 @@
 //   index(com_id) = FF8_BATTLE_FILES_ARRAY_LEN + (com_id - FF8_FIRST_NEW_COM_ID)
 //                 = com_id + (FF8_BATTLE_FILES_ARRAY_LEN - FF8_FIRST_NEW_COM_ID)
 #define FF8_NEW_C0M_INDEX_BIAS (FF8_BATTLE_FILES_ARRAY_LEN - FF8_FIRST_NEW_COM_ID) // 957
-// Address of "add eax, 96h" (com_id + 150) inside battle_monster_dat_loader (US 1.2).
-#define FF8_MONSTER_LOADER_ADD_SITE 0x50735A
 
 static char *ff8_extended_battle_filenames[FF8_BATTLE_FILES_ARRAY_LEN + FF8_NEW_C0M_COUNT];
 static char ff8_extended_c0m_names[FF8_NEW_C0M_COUNT][12]; // "C0M199.DAT" + NUL = 11
@@ -90,8 +103,8 @@ static __declspec(naked) void ff8_battle_monster_index_remap()
 
 void ff8_battle_monsters_init()
 {
-	// Only the US 1.2 release is mapped for now (matches the addresses above).
-	if (!FF8_US_VERSION)
+	uint32_t add_site = ff8_externals.battle_monster_dat_loader_com_id_add_site;
+	if (!add_site)
 	{
 		ffnx_info("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
 		return;
@@ -119,8 +132,8 @@ void ff8_battle_monsters_init()
 	// 3) Replace "add eax, 96h" (5 bytes) with "call ff8_battle_monster_index_remap".
 	uint8_t call_patch[5];
 	call_patch[0] = 0xE8;
-	*(uint32_t *)&call_patch[1] = (uint32_t)&ff8_battle_monster_index_remap - (FF8_MONSTER_LOADER_ADD_SITE + 5);
-	memcpy_code(FF8_MONSTER_LOADER_ADD_SITE, call_patch, sizeof(call_patch));
+	*(uint32_t *)&call_patch[1] = (uint32_t)&ff8_battle_monster_index_remap - (add_site + 5);
+	memcpy_code(add_site, call_patch, sizeof(call_patch));
 
 	ffnx_info("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n",
 		FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
