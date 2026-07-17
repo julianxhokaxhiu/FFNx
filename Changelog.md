@@ -11,6 +11,7 @@
 ## FF7
 
 - Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 + https://github.com/julianxhokaxhiu/FFNx/pull/952 + https://github.com/julianxhokaxhiu/FFNx/pull/953 + https://github.com/julianxhokaxhiu/FFNx/pull/951) 
+- Core: Add `ff7_multibyte_font` mode: multibyte text support for non-Japanese translations on the English executable ( https://github.com/julianxhokaxhiu/FFNx/pull/948 )
 
 # 1.24.3
 

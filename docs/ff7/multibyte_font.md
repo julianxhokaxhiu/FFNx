@@ -53,7 +53,7 @@ The loader reads the 6 sheets by the same names the JP edition uses:
 
 Each sheet is a 16×16 grid of glyph cells (256 cells per sheet). Author them exactly like any
 other FFNx-replaceable menu texture — external hi-res textures are supported through the normal
-texture replacement path (see [External textures](external_textures.md)).
+texture replacement path (see [External textures](../mods/external_textures.md)).
 
 ## Per-character widths: `multibyte_widths.bin`
 
