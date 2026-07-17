@@ -16,6 +16,7 @@
 #include "../log.h"
 #include "../ff7.h"
 #include "../patch.h"
+#include "../redirect.h"
 #include <string.h>
 
 static void multibyte_load_widths();
@@ -435,6 +436,15 @@ static inline float z_half_width(int w) { return ff7_japanese_edition ? std::cei
 static byte multibyte_icon_mask[256] = {0};
 static int multibyte_field_linestep_q = 128;   // field line advance in QUARTER px (128 = 32.0), live-tunable
 
+// Resolve a multibyte tuning file through the standard layers: override_path first, then the
+// per-release data path (data/lang-*/kernel on Steam/GOG/Store/2026, data/kernel on 1998).
+static bool multibyte_resolve_path(const char *name, char *out, size_t out_size)
+{
+  char in[MAX_PATH]{ 0 };
+  _snprintf(in, sizeof(in), R"(data\kernel\%s)", name);
+  return redirect_path_with_override(in, out, out_size) != 1;
+}
+
 static void multibyte_load_widths()
 {
   // Hot-reload: re-read the widths file whenever its mtime changes (checked at most 1x/sec),
@@ -446,23 +456,20 @@ static void multibyte_load_widths()
   DWORD now = GetTickCount();
   if (tried && (now - last_check) < 1000) return;
   last_check = now;
-  char path[BASEDIR_LENGTH + 32];
+  char path[MAX_PATH]{ 0 };
   // line step re-read every 1s tick — must NOT sit behind the widths mtime gate,
   // or moving only the spacing slider never reaches it
-  _snprintf(path, sizeof(path), "%s/multibyte_linestep.bin", basedir);
+  multibyte_resolve_path("multibyte_linestep.bin", path, sizeof(path));
   FILE *lf = fopen(path, "rb");
   if (lf)
   {
     unsigned char lb[2]; size_t ln = fread(lb, 1, 2, lf);
     int q = (ln == 2) ? (lb[0] | (lb[1] << 8)) : (ln == 1 ? lb[0] * 4 : 0);  // 1-byte legacy = whole px
     if (q >= 80 && q <= 160 && q != multibyte_field_linestep_q)
-    {
       multibyte_field_linestep_q = q;
-      ffnx_info("ff7_multibyte_font: field line step = %d.%02d px\n", q / 4, (q % 4) * 25);
-    }
     fclose(lf);
   }
-  _snprintf(path, sizeof(path), "%s/multibyte_widths.bin", basedir);
+  multibyte_resolve_path("multibyte_widths.bin", path, sizeof(path));
   struct _stat64 st;
   bool first = !tried;
   if (_stat64(path, &st) == 0)
@@ -472,24 +479,22 @@ static void multibyte_load_widths()
   }
   tried = true;
   FILE *f = fopen(path, "rb");
-  if (!f) { if (first) ffnx_info("ff7_multibyte_font: no %s, using built-in widths\n", path); return; }
+  if (!f) return;
   unsigned char buf[6 * 256];
   if (fread(buf, 1, sizeof(buf), f) == sizeof(buf))
   {
     for (int i = 0; i < 6; i++)
       for (int j = 0; j < 256; j++)
         charWidthData[i][j] = buf[i * 256 + j];
-    ffnx_info("ff7_multibyte_font: widths %s\n", first ? "loaded" : "RELOADED (live)");
   }
   else ffnx_error("ff7_multibyte_font: %s wrong size (need 1536 bytes)\n", path);
   fclose(f);
   if (!first) return;
-  _snprintf(path, sizeof(path), "%s/multibyte_iconmask.bin", basedir);
+  multibyte_resolve_path("multibyte_iconmask.bin", path, sizeof(path));
   f = fopen(path, "rb");
   if (f)
   {
-    if (fread(multibyte_icon_mask, 1, 256, f) == 256)
-      ffnx_info("ff7_multibyte_font: icon mask loaded\n");
+    fread(multibyte_icon_mask, 1, 256, f);
     fclose(f);
   }
 }

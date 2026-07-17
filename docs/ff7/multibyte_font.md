@@ -59,7 +59,10 @@ texture replacement path (see [External textures](../mods/external_textures.md))
 
 Glyph advance widths come from a table you can override **at runtime, without recompiling**:
 
-- Path: `<basedir>/multibyte_widths.bin` (next to `FFNx.toml`).
+- Path: `data/kernel/multibyte_widths.bin`, resolved through the standard layers — the
+  `override_path` layer is checked first, then the release's data path: `data/lang-en/kernel/`
+  (or the active language) on Steam/GOG/Store/2026 releases, plain `data/kernel/` on the 1998
+  release.
 - Format: raw `6 * 256` bytes — one byte per glyph, sheets in order 1..6, code order `0x00-0xFF`
   within each sheet.
 - Byte packing: `(left_padding << 5) | width`, i.e. low 5 bits = advance width in font units
@@ -73,7 +76,7 @@ If the file is missing, built-in defaults are used.
 
 Optional. Controls the vertical line advance of field dialogue for multibyte text:
 
-- Path: `<basedir>/multibyte_linestep.bin`.
+- Path: `data/kernel/multibyte_linestep.bin` (same layered resolution as the widths file).
 - Format: a 2-byte little-endian value, line step in **quarter pixels** (e.g. `128` = 32.0 px,
   `98` = 24.5 px). A 1-byte file is also accepted as whole pixels. Accepted range 80–160
   quarter-px; out-of-range values are ignored.
@@ -87,7 +90,7 @@ default; adjust live until lines neither overlap nor float apart.
 Optional, read once at startup. Marks sheet-1 cells that contain icon art (item/weapon type
 icons, button prompts) rather than letters:
 
-- Path: `<basedir>/multibyte_iconmask.bin`.
+- Path: `data/kernel/multibyte_iconmask.bin` (same layered resolution as the widths file).
 - Format: raw 256 bytes, one per `jafont_1` code. Non-zero = icon cell.
 - Effect: marked cells are always drawn pure white instead of taking the current text color,
   so colored icon art keeps its true colors. This addresses the recolor conflict with icon
