@@ -14,7 +14,7 @@
 
 ## FF8
 
-- Core: Unlock unused battle monster models c0m144-c0m199 (EN/FR/DE/IT/SP/JP), selectable via `enemy_com_value` 160-215 in scene.out ( not yet a PR - branch `AllMonsterFilesUsable` )
+- Core: Unlock unused battle monster models c0m144-c0m199 (EN/FR/DE/IT/SP/JP), selectable via `enemy_com_value` 160-215 in scene.out
 
 # 1.24.3
 
