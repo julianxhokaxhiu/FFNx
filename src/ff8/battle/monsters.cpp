@@ -132,6 +132,11 @@ void ff8_battle_monsters_init()
 	//    battle_open_file + 0x11 is the absolute displacement of that instruction.
 	patch_code_dword(ff8_externals.battle_open_file + 0x11, (DWORD)(uintptr_t)ff8_extended_battle_filenames);
 
+	//    Also repoint FFNx's own cached base pointer so the hooks that index it
+	//    (ff8_battle_open_and_read_file in vram.cpp) resolve the appended
+	//    c0m144-199 indices instead of reading past the original array.
+	ff8_externals.battle_filenames = ff8_extended_battle_filenames;
+
 	// 3) Replace "add eax, 96h" (5 bytes) with "call ff8_battle_monster_index_remap".
 	uint8_t call_patch[5];
 	call_patch[0] = 0xE8;
