@@ -1,5 +1,5 @@
 /****************************************************************************/
-//    Copyright (C) 2026 Julian Xhokaxhiu                                    //
+//    Copyright (C) 2026 Julian Xhokaxhiu, HobbitDur                        //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -56,10 +56,12 @@
 // (never a direct call/jmp instruction anywhere in the exe), so its
 // "add eax, 150" com_id remap site can't be resolved through a relative-call
 // chain either; ff8_externals.battle_monster_dat_loader_com_id_add_site is
-// resolved as a per-version absolute address in ff8_data.cpp instead (same
-// pattern as sub_54A0D0 there), verified by signature-scanning all seven
-// retail 1.2 exe files (EN/FR/DE/IT/SP/JP/JP_NV) - see ff8_data.cpp for the
-// address table. The BattleFilesArray table structure itself (c0m000..c0m143
+// derived in ff8_data.cpp from a per-version absolute address for its caller
+// BattleTask_DispatchComEntityLoad (same fallback as sub_54A0D0 there, since
+// that caller also has no static xref anywhere in the exe), plus a fixed
+// +0x23A byte offset confirmed identical across all seven retail 1.2 exe
+// files (EN/FR/DE/IT/SP/JP/JP_NV) - see ff8_data.cpp for the address table.
+// The BattleFilesArray table structure itself (c0m000..c0m143
 // at indices 166..309, D0C000.DAT immediately at 310, 1117 entries total) is
 // confirmed identical across all seven builds, so FF8_BATTLE_FILES_ARRAY_LEN
 // below is not version-dependent.
@@ -106,14 +108,14 @@ void ff8_battle_monsters_init()
 	uint32_t add_site = ff8_externals.battle_monster_dat_loader_com_id_add_site;
 	if (!add_site)
 	{
-		ffnx_info("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
+		ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
 		return;
 	}
 
 	char **orig = (char **)ff8_externals.battle_filenames;
 	if (orig == nullptr)
 	{
-		ffnx_warning("Extra battle monsters: battle_filenames not resolved, skipping.\n");
+		ffnx_trace("Extra battle monsters: battle_filenames not resolved, skipping.\n");
 		return;
 	}
 
@@ -135,6 +137,5 @@ void ff8_battle_monsters_init()
 	*(uint32_t *)&call_patch[1] = (uint32_t)&ff8_battle_monster_index_remap - (add_site + 5);
 	memcpy_code(add_site, call_patch, sizeof(call_patch));
 
-	ffnx_info("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n",
-		FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
+	ffnx_info("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
 }

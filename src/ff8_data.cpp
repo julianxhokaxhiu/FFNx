@@ -240,25 +240,39 @@ void ff8_find_externals()
 	ff8_externals.battle_filenames = (char **)get_absolute_value(ff8_externals.battle_open_file, 0x11);
 
 	// battle_monster_dat_loader's "add eax, 96h" (com_id + 150) index computation.
-	// Not reachable via a relative-call chain (battle_monster_dat_loader is only
-	// ever invoked through a function-pointer task dispatch, never a direct
-	// call/jmp instruction), so this is a per-version absolute address like
-	// sub_54A0D0 above. Verified by signature-scanning all six retail 1.2 exe
-	// files (EN/FR/DE/IT/SP/JP); 0 (unmapped) for any other version.
+	// battle_monster_dat_loader itself is only ever invoked through a
+	// function-pointer task dispatch (never a direct call/jmp instruction), so
+	// it can't be reached via get_relative_call. Its caller,
+	// BattleTask_DispatchComEntityLoad, embeds battle_monster_dat_loader's
+	// address as a plain "mov eax, offset battle_monster_dat_loader" (opcode
+	// at dispatcher+0x4A, imm32 at +0x4B), which get_absolute_value can read;
+	// this holds identically across all seven retail 1.2 exe files
+	// (EN/FR/DE/IT/SP/JP/JP_NV), as does the com_id+150 add site sitting at a
+	// fixed +0x23A into battle_monster_dat_loader. BattleTask_DispatchComEntityLoad
+	// itself has no static caller anywhere in the exe either (same
+	// function-pointer-only dispatch), so its address remains a per-version
+	// absolute literal, like sub_54A0D0 above; 0 (unmapped) for any other version.
+	uint32_t battle_task_dispatch_com_entity_load = 0;
 	if (FF8_US_VERSION)
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x50735A;
+		battle_task_dispatch_com_entity_load = 0x507080;
 	else if (version == VERSION_FF8_12_FR || version == VERSION_FF8_12_FR_NV)
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x506EBA;
+		battle_task_dispatch_com_entity_load = 0x506BE0;
 	else if (version == VERSION_FF8_12_DE || version == VERSION_FF8_12_DE_NV)
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x506F2A;
+		battle_task_dispatch_com_entity_load = 0x506C50;
 	else if (FF8_IT_VERSION)
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x506F2A;
+		battle_task_dispatch_com_entity_load = 0x506C50;
 	else if (FF8_SP_VERSION)
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x506F5A;
+		battle_task_dispatch_com_entity_load = 0x506C80;
 	else if (version == VERSION_FF8_12_JP)
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x50B00A;
+		battle_task_dispatch_com_entity_load = 0x50AD30;
 	else if (version == VERSION_FF8_12_JP_NV)
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0x50B21A;
+		battle_task_dispatch_com_entity_load = 0x50AF40;
+
+	if (battle_task_dispatch_com_entity_load)
+	{
+		uint32_t battle_monster_dat_loader = get_absolute_value(battle_task_dispatch_com_entity_load, 0x4B);
+		ff8_externals.battle_monster_dat_loader_com_id_add_site = battle_monster_dat_loader + 0x23A;
+	}
 	else
 		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0;
 
