@@ -239,58 +239,6 @@ void ff8_find_externals()
 	ff8_externals.battle_open_file = get_relative_call(ff8_externals.battle_open_file_wrapper, 0x14);
 	ff8_externals.battle_filenames = (char **)get_absolute_value(ff8_externals.battle_open_file, 0x11);
 
-	// battle_monster_dat_loader's "add eax, 96h" (com_id + 150) index computation.
-	// battle_monster_dat_loader itself is only ever invoked through a
-	// function-pointer task dispatch (never a direct call/jmp instruction), so
-	// it can't be reached via get_relative_call. Its caller,
-	// BattleTask_DispatchComEntityLoad, embeds battle_monster_dat_loader's
-	// address as a plain "mov eax, offset battle_monster_dat_loader" (opcode
-	// at dispatcher+0x4A, imm32 at +0x4B), which get_absolute_value can read;
-	// this holds identically across all seven retail 1.2 exe files
-	// (EN/FR/DE/IT/SP/JP/JP_NV), as does the com_id+150 add site sitting at a
-	// fixed +0x23A into battle_monster_dat_loader. BattleTask_DispatchComEntityLoad
-	// itself has no static caller anywhere in the exe either (same
-	// function-pointer-only dispatch), so its address remains a per-version
-	// absolute literal, like sub_54A0D0 above; 0 (unmapped) for any other version.
-	uint32_t battle_task_dispatch_com_entity_load = 0;
-	switch (version)
-	{
-	case VERSION_FF8_12_US:
-	case VERSION_FF8_12_US_NV:
-	case VERSION_FF8_12_US_EIDOS:
-	case VERSION_FF8_12_US_EIDOS_NV:
-		battle_task_dispatch_com_entity_load = 0x507080;
-		break;
-	case VERSION_FF8_12_FR:
-	case VERSION_FF8_12_FR_NV:
-		battle_task_dispatch_com_entity_load = 0x506BE0;
-		break;
-	case VERSION_FF8_12_DE:
-	case VERSION_FF8_12_DE_NV:
-	case VERSION_FF8_12_IT:
-	case VERSION_FF8_12_IT_NV:
-		battle_task_dispatch_com_entity_load = 0x506C50;
-		break;
-	case VERSION_FF8_12_SP:
-	case VERSION_FF8_12_SP_NV:
-		battle_task_dispatch_com_entity_load = 0x506C80;
-		break;
-	case VERSION_FF8_12_JP:
-		battle_task_dispatch_com_entity_load = 0x50AD30;
-		break;
-	case VERSION_FF8_12_JP_NV:
-		battle_task_dispatch_com_entity_load = 0x50AF40;
-		break;
-	}
-
-	if (battle_task_dispatch_com_entity_load)
-	{
-		uint32_t battle_monster_dat_loader = get_absolute_value(battle_task_dispatch_com_entity_load, 0x4B);
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = battle_monster_dat_loader + 0x23A;
-	}
-	else
-		ff8_externals.battle_monster_dat_loader_com_id_add_site = 0;
-
 	ff8_externals.sub_47D890 = get_relative_call(ff8_externals.sub_506CF0, 0x59);
 	ff8_externals.sub_505DF0 = get_relative_call(ff8_externals.sub_506CF0, 0xAA);
 	ff8_externals.sub_4A94D0 = get_relative_call(ff8_externals.sub_47D890, 0x9);
@@ -966,6 +914,20 @@ void ff8_find_externals()
 
 	ff8_externals.sub_502380 = get_relative_call(ff8_externals.sub_500CC0, 0x69);
 	ff8_externals.sub_50A790 = get_relative_call(ff8_externals.sub_502380, 0x51);
+
+	// battle_monster_dat_loader's "add eax, 96h" (com_id + 150) index computation.
+	// sub_50A790 embeds sub_50B830's address as a plain "mov eax, offset ..."
+	// (opcode at +0x82, imm32 at +0x83). sub_50B830 in turn calls
+	// battle_task_dispatch_com_entity_load directly at +0x1B3. That dispatcher
+	// embeds battle_monster_dat_loader's address the same way (opcode at
+	// +0x4A, imm32 at +0x4B), and the com_id+150 add site sits at a fixed
+	// +0x23A into battle_monster_dat_loader. All four offsets confirmed
+	// identical across all seven retail 1.2 exe files (EN/FR/DE/IT/SP/JP/JP_NV).
+	ff8_externals.sub_50B830 = get_absolute_value(ff8_externals.sub_50A790, 0x83);
+	ff8_externals.battle_task_dispatch_com_entity_load = get_relative_call(ff8_externals.sub_50B830, 0x1B3);
+	ff8_externals.battle_monster_dat_loader = get_absolute_value(ff8_externals.battle_task_dispatch_com_entity_load, 0x4B);
+	ff8_externals.battle_monster_dat_loader_com_id_add_site = ff8_externals.battle_monster_dat_loader + 0x23A;
+
 	ff8_externals.sub_50A9A0 = get_absolute_value(ff8_externals.sub_50A790, 0x7C);
 	ff8_externals.battle_read_effect_sub_50AF20 = get_relative_call(ff8_externals.sub_50A9A0, 0xF4);
 	ff8_externals.func_off_battle_effects_C81774 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x2C);

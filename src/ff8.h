@@ -1623,7 +1623,7 @@ struct ff8_externals
 	uint32_t battle_open_file_wrapper;
 	uint32_t battle_open_file;
 	char **battle_filenames;
-	uint32_t battle_monster_dat_loader_com_id_add_site; // "add eax, 96h" (com_id + 150) inside battle_monster_dat_loader; only reachable per-version, not via a relative-call chain (see ff8_data.cpp). 0 if unmapped for the running version.
+	uint32_t battle_monster_dat_loader_com_id_add_site; // "add eax, 96h" (com_id + 150) inside battle_monster_dat_loader, derived from battle_monster_dat_loader + 0x23A (see ff8_data.cpp).
 	uint32_t battle_load_textures_sub_500900;
 	uint32_t loc_5005A0;
 	uint32_t battle_upload_texture_to_vram;
@@ -1670,6 +1670,9 @@ struct ff8_externals
 	DWORD* battle_current_actor_talking;
 	uint32_t sub_502380;
 	uint32_t sub_50A790;
+	uint32_t sub_50B830; // embedded pointer read out of sub_50A790 ("mov eax, offset ...")
+	uint32_t battle_task_dispatch_com_entity_load; // resolved via a call inside sub_50B830
+	uint32_t battle_monster_dat_loader; // embedded pointer read out of battle_task_dispatch_com_entity_load
 	uint32_t sub_50A9A0;
 	uint32_t battle_read_effect_sub_50AF20;
 	DWORD* func_off_battle_effects_C81774;
