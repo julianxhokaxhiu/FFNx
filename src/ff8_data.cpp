@@ -253,20 +253,35 @@ void ff8_find_externals()
 	// function-pointer-only dispatch), so its address remains a per-version
 	// absolute literal, like sub_54A0D0 above; 0 (unmapped) for any other version.
 	uint32_t battle_task_dispatch_com_entity_load = 0;
-	if (FF8_US_VERSION)
+	switch (version)
+	{
+	case VERSION_FF8_12_US:
+	case VERSION_FF8_12_US_NV:
+	case VERSION_FF8_12_US_EIDOS:
+	case VERSION_FF8_12_US_EIDOS_NV:
 		battle_task_dispatch_com_entity_load = 0x507080;
-	else if (version == VERSION_FF8_12_FR || version == VERSION_FF8_12_FR_NV)
+		break;
+	case VERSION_FF8_12_FR:
+	case VERSION_FF8_12_FR_NV:
 		battle_task_dispatch_com_entity_load = 0x506BE0;
-	else if (version == VERSION_FF8_12_DE || version == VERSION_FF8_12_DE_NV)
+		break;
+	case VERSION_FF8_12_DE:
+	case VERSION_FF8_12_DE_NV:
+	case VERSION_FF8_12_IT:
+	case VERSION_FF8_12_IT_NV:
 		battle_task_dispatch_com_entity_load = 0x506C50;
-	else if (FF8_IT_VERSION)
-		battle_task_dispatch_com_entity_load = 0x506C50;
-	else if (FF8_SP_VERSION)
+		break;
+	case VERSION_FF8_12_SP:
+	case VERSION_FF8_12_SP_NV:
 		battle_task_dispatch_com_entity_load = 0x506C80;
-	else if (version == VERSION_FF8_12_JP)
+		break;
+	case VERSION_FF8_12_JP:
 		battle_task_dispatch_com_entity_load = 0x50AD30;
-	else if (version == VERSION_FF8_12_JP_NV)
+		break;
+	case VERSION_FF8_12_JP_NV:
 		battle_task_dispatch_com_entity_load = 0x50AF40;
+		break;
+	}
 
 	if (battle_task_dispatch_com_entity_load)
 	{

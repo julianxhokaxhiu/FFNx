@@ -1,5 +1,6 @@
 /****************************************************************************/
-//    Copyright (C) 2026 Julian Xhokaxhiu, HobbitDur                        //
+//    Copyright (C) 2026 Julian Xhokaxhiu                                    //
+//    Copyright (C) 2026 HobbitDur                                          //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
