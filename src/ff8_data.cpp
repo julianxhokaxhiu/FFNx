@@ -915,18 +915,20 @@ void ff8_find_externals()
 	ff8_externals.sub_502380 = get_relative_call(ff8_externals.sub_500CC0, 0x69);
 	ff8_externals.sub_50A790 = get_relative_call(ff8_externals.sub_502380, 0x51);
 
-	// battle_monster_dat_loader's "add eax, 96h" (com_id + 150) index computation.
+	// battle_monster_dat_loader's BattleFile_CharacterLoad(com_id + 150, dst) call,
+	// hooked to unlock c0m144-199 (see src/ff8/battle/monsters.cpp).
 	// sub_50A790 embeds sub_50B830's address as a plain "mov eax, offset ..."
 	// (opcode at +0x82, imm32 at +0x83). sub_50B830 in turn calls
 	// battle_task_dispatch_com_entity_load directly at +0x1B3. That dispatcher
 	// embeds battle_monster_dat_loader's address the same way (opcode at
-	// +0x4A, imm32 at +0x4B), and the com_id+150 add site sits at a fixed
-	// +0x23A into battle_monster_dat_loader. All four offsets confirmed
+	// +0x4A, imm32 at +0x4B), and the BattleFile_CharacterLoad call sits at a
+	// fixed +0x240 into battle_monster_dat_loader. All offsets confirmed
 	// identical across all seven retail 1.2 exe files (EN/FR/DE/IT/SP/JP/JP_NV).
 	ff8_externals.sub_50B830 = get_absolute_value(ff8_externals.sub_50A790, 0x83);
 	ff8_externals.battle_task_dispatch_com_entity_load = get_relative_call(ff8_externals.sub_50B830, 0x1B3);
 	ff8_externals.battle_monster_dat_loader = get_absolute_value(ff8_externals.battle_task_dispatch_com_entity_load, 0x4B);
-	ff8_externals.battle_monster_dat_loader_com_id_add_site = ff8_externals.battle_monster_dat_loader + 0x23A;
+	ff8_externals.battle_monster_file_load_call_site = ff8_externals.battle_monster_dat_loader + 0x240;
+	ff8_externals.battle_file_character_load = get_relative_call(ff8_externals.battle_monster_dat_loader, 0x240);
 
 	ff8_externals.sub_50A9A0 = get_absolute_value(ff8_externals.sub_50A790, 0x7C);
 	ff8_externals.battle_read_effect_sub_50AF20 = get_relative_call(ff8_externals.sub_50A9A0, 0xF4);

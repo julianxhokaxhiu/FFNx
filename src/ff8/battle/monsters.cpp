@@ -38,13 +38,15 @@
 //     Index 310 is immediately D0C000.DAT (character files), so the c0m block
 //     cannot grow in place, and com_id 160..215 currently resolve to D0C/garbage.
 //
-// Fix (three memory patches):
+// Fix (two memory patches):
 //   1) Build an enlarged copy of BattleFilesArray = the original entries
-//      verbatim + 56 appended pointers to new "C0M144.DAT".."C0M199.DAT".
-//   2) Repoint LoadBattleFile's array base to the enlarged copy. Every existing
-//      index resolves identically (the prefix is copied verbatim); nothing shifts.
-//   3) Hook the loader's "index = com_id + 150" so com_id 160..215 map to the
-//      appended range instead of colliding with D0C.
+//      verbatim + 56 appended pointers to new "C0M144.DAT".."C0M199.DAT",
+//      and repoint LoadBattleFile's array base to it. Every existing index
+//      resolves identically (the prefix is copied verbatim); nothing shifts.
+//   2) Redirect the single BattleFile_CharacterLoad call inside
+//      battle_monster_dat_loader (the monster load path) to a C hook that
+//      remaps the com_id 160..215 file indices into the appended range
+//      instead of letting them collide with D0C.
 //
 // Encounters need no exe change: enemy_com_value is already a byte, so setting
 // it to (c0m# + 16) selects any monster up to c0m199.
@@ -52,20 +54,14 @@
 // ff8_externals.battle_open_file / battle_filenames already resolve
 // dynamically per version via the existing get_relative_call chain in
 // ff8_data.cpp (sub_47CCB0 -> ... -> battle_open_file), so this file uses
-// them as-is with no version branching of its own. battle_monster_dat_loader
-// itself is only ever reached through a function-pointer task dispatch
-// (never a direct call/jmp instruction anywhere in the exe), so its
-// "add eax, 150" com_id remap site can't be resolved through a relative-call
-// chain either; ff8_externals.battle_monster_dat_loader_com_id_add_site is
-// derived in ff8_data.cpp from a per-version absolute address for its caller
-// BattleTask_DispatchComEntityLoad (same fallback as sub_54A0D0 there, since
-// that caller also has no static xref anywhere in the exe), plus a fixed
-// +0x23A byte offset confirmed identical across all seven retail 1.2 exe
-// files (EN/FR/DE/IT/SP/JP/JP_NV) - see ff8_data.cpp for the address table.
-// The BattleFilesArray table structure itself (c0m000..c0m143
-// at indices 166..309, D0C000.DAT immediately at 310, 1117 entries total) is
-// confirmed identical across all seven builds, so FF8_BATTLE_FILES_ARRAY_LEN
-// below is not version-dependent.
+// them as-is with no version branching of its own. The hooked call site
+// (battle_monster_dat_loader + 0x240) and its target (BattleFile_CharacterLoad)
+// are likewise resolved relatively in ff8_data.cpp; the +0x240 offset is
+// confirmed identical across all seven retail 1.2 exe files
+// (EN/FR/DE/IT/SP/JP/JP_NV). The BattleFilesArray table structure itself
+// (c0m000..c0m143 at indices 166..309, D0C000.DAT immediately at 310, 1117
+// entries total) is confirmed identical across all seven builds, so
+// FF8_BATTLE_FILES_ARRAY_LEN below is not version-dependent.
 // -------------------------------------------------------------------------
 
 // Length of the original BattleFilesArray (US 1.2), indices 0..1116.
@@ -77,37 +73,36 @@
 // com_id = c0m# + 16, so the added monsters use com_id 160..215.
 #define FF8_FIRST_NEW_COM_ID (FF8_FIRST_NEW_C0M + 16) // 160
 #define FF8_LAST_NEW_COM_ID  (FF8_LAST_NEW_C0M + 16)  // 215
-// New entries are appended at index FF8_BATTLE_FILES_ARRAY_LEN, so:
-//   index(com_id) = FF8_BATTLE_FILES_ARRAY_LEN + (com_id - FF8_FIRST_NEW_COM_ID)
-//                 = com_id + (FF8_BATTLE_FILES_ARRAY_LEN - FF8_FIRST_NEW_COM_ID)
-#define FF8_NEW_C0M_INDEX_BIAS (FF8_BATTLE_FILES_ARRAY_LEN - FF8_FIRST_NEW_COM_ID) // 957
+// The loader passes BattleFile_CharacterLoad a file index of (com_id + 150), so
+// the new com_id 160..215 arrive as indices 310..365 (which retail resolves to
+// D0C character files); the hook remaps those onto the appended table entries.
+#define FF8_FIRST_NEW_FILE_INDEX (FF8_FIRST_NEW_COM_ID + 150) // 310
+#define FF8_LAST_NEW_FILE_INDEX  (FF8_LAST_NEW_COM_ID + 150)  // 365
 
 static char *ff8_extended_battle_filenames[FF8_BATTLE_FILES_ARRAY_LEN + FF8_NEW_C0M_COUNT];
 static char ff8_extended_c0m_names[FF8_NEW_C0M_COUNT][12]; // "C0M199.DAT" + NUL = 11
 
-// Custom "eax in / eax out" trampoline that replaces the loader's com_id+150.
-// eax = com_id on entry, returns the BattleFilesArray index in eax. Only eax
-// and the flags are touched; the surrounding code does not rely on the flags
-// after this point (it just pushes eax and calls), so this is transparent.
-static __declspec(naked) void ff8_battle_monster_index_remap()
+// Original BattleFile_CharacterLoad(fileIndex, dst), saved so the hook below can
+// forward to it after remapping.
+static int (*ff8_battle_file_character_load)(int fileIndex, void *dst) = nullptr;
+
+// C replacement for the loader's "index = com_id + 150" remap. Hooked onto the
+// single BattleFile_CharacterLoad call inside battle_monster_dat_loader, which
+// is only ever reached for monsters, so a file index in 310..365 unambiguously
+// means one of the newly unlocked c0m144..c0m199; those get remapped onto the
+// appended table entries and everything else is forwarded untouched.
+static int ff8_battle_monster_load_file(int fileIndex, void *dst)
 {
-	__asm {
-		cmp eax, FF8_FIRST_NEW_COM_ID   // 160
-		jb  normal
-		cmp eax, FF8_LAST_NEW_COM_ID    // 215
-		ja  normal
-		add eax, FF8_NEW_C0M_INDEX_BIAS // 957 -> appended c0m144..c0m199
-		ret
-	normal:
-		add eax, 150                    // original c0m000..c0m143 (and unused >= 216)
-		ret
-	}
+	if (fileIndex >= FF8_FIRST_NEW_FILE_INDEX && fileIndex <= FF8_LAST_NEW_FILE_INDEX)
+		fileIndex = FF8_BATTLE_FILES_ARRAY_LEN + (fileIndex - FF8_FIRST_NEW_FILE_INDEX);
+
+	return ff8_battle_file_character_load(fileIndex, dst);
 }
 
 void ff8_battle_monsters_init()
 {
-	uint32_t add_site = ff8_externals.battle_monster_dat_loader_com_id_add_site;
-	if (!add_site)
+	uint32_t call_site = ff8_externals.battle_monster_file_load_call_site;
+	if (!call_site || !ff8_externals.battle_file_character_load)
 	{
 		ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
 		return;
@@ -128,7 +123,7 @@ void ff8_battle_monsters_init()
 		ff8_extended_battle_filenames[FF8_BATTLE_FILES_ARRAY_LEN + i] = ff8_extended_c0m_names[i];
 	}
 
-	// 2) Repoint LoadBattleFile's array base: mov ebx, BattleFilesArray[eax*4].
+	//    Repoint LoadBattleFile's array base: mov ebx, BattleFilesArray[eax*4].
 	//    battle_open_file + 0x11 is the absolute displacement of that instruction.
 	patch_code_dword(ff8_externals.battle_open_file + 0x11, (DWORD)(uintptr_t)ff8_extended_battle_filenames);
 
@@ -137,11 +132,10 @@ void ff8_battle_monsters_init()
 	//    c0m144-199 indices instead of reading past the original array.
 	ff8_externals.battle_filenames = ff8_extended_battle_filenames;
 
-	// 3) Replace "add eax, 96h" (5 bytes) with "call ff8_battle_monster_index_remap".
-	uint8_t call_patch[5];
-	call_patch[0] = 0xE8;
-	*(uint32_t *)&call_patch[1] = (uint32_t)&ff8_battle_monster_index_remap - (add_site + 5);
-	memcpy_code(add_site, call_patch, sizeof(call_patch));
+	// 2) Redirect the monster loader's BattleFile_CharacterLoad call to the C
+	//    hook, keeping the original target to forward to.
+	ff8_battle_file_character_load = (int (*)(int, void *))ff8_externals.battle_file_character_load;
+	replace_call(call_site, (void *)&ff8_battle_monster_load_file);
 
 	ffnx_info("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
 }
