@@ -125,60 +125,79 @@ static bool ff8_magic_armed = false;
 static char *ff8_kernel_stash = nullptr;     // full grown kernel.bin image
 static char *ff8_magic_text = nullptr;       // stash + grown offsetMagicText
 
-// Per-site branch targets, filled from the original jcc displacements at
-// patch time so they stay correct even if surrounding code shifts slightly.
-static uint32_t tramp_gf_target_name;
-static uint32_t tramp_gf_target_desc;
-static uint32_t tramp_gf_target_vis;
-static uint32_t tramp_gf_target_draw;
-
 typedef int(__cdecl *load_file_to_buffer_t)(const char *, char *);
 
-// ---- classification trampolines -----------------------------------------
-// Each replaces "cmp reg,40h / jcc gf_path". On entry reg holds the spell
-// id; jump to the stored GF target only for 64..79, otherwise return to the
-// instruction after the patched site (the magic path). Flags are dead after
-// the original jcc, so clobbering them is safe.
-#define DEFINE_ID_TRAMPOLINE(fn_name, reg, target_var)  \
-	static __declspec(naked) void fn_name()             \
-	{                                                   \
-		__asm { cmp reg, GF_FIRST_ID }                  \
-		__asm { jb magic_path }                         \
-		__asm { cmp reg, GF_LAST_ID }                   \
-		__asm { ja magic_path }                         \
-		__asm { add esp, 4 }                            \
-		__asm { jmp [target_var] }                      \
-		__asm { magic_path: ret }                       \
-	}
-
-DEFINE_ID_TRAMPOLINE(tramp_name_getter, eax, tramp_gf_target_name)
-DEFINE_ID_TRAMPOLINE(tramp_desc_getter, eax, tramp_gf_target_desc)
-DEFINE_ID_TRAMPOLINE(tramp_spell_visibility, eax, tramp_gf_target_vis)
-
-// Draw-execute site classifies on BX (16-bit) - the original is "cmp bx,40h",
-// and BX's upper half is not guaranteed clean here (the game masks esi&0xFFFF
-// immediately after). Compare the 16-bit id to avoid misclassifying a GF when
-// the high half of EBX carries junk. No register is clobbered (flags only).
-static __declspec(naked) void tramp_draw_execute()
+// ---- classification stubs (no inline asm) --------------------------------
+// 4 sites in the exe do "cmp reg,40h / jcc gf_path" to route ids >= 64 to GF
+// handling; none of them sit at a call instruction we could redirect with
+// replace_call, and their containing functions are either too large
+// (computeCommandAction) or too dependent on undocumented struct layouts
+// (manageMonsterSpellVisibility) to safely reimplement whole in C. Each site
+// is instead replaced with a `call` into a tiny stub - built here as literal
+// machine-code bytes, not compiler-assembled inline asm - that widens the
+// check to the GF range (64..79) via an ordinary __cdecl C function, then
+// either falls back into the original instruction stream (magic path) or
+// jumps to the original jcc's target (GF path). This is a pure-C-callable
+// design: the only non-C part is the handful of opcode bytes needed to save/
+// restore the register around the call and act on its return value.
+static int __cdecl ff8_is_gf_id(int id)
 {
-	__asm { cmp bx, GF_FIRST_ID }
-	__asm { jb magic_path }
-	__asm { cmp bx, GF_LAST_ID }
-	__asm { ja magic_path }
-	__asm { add esp, 4 }
-	__asm { jmp [tramp_gf_target_draw] }
-	__asm { magic_path: ret }
+	id &= 0xFFFF; // the draw-execute site classifies on BX (16-bit); harmless elsewhere
+	return (id >= GF_FIRST_ID && id <= GF_LAST_ID) ? 1 : 0;
+}
+
+// Bump-allocates from a single RWX page, lazily created on first use. FFNx
+// has no existing "trampoline buffer" utility (every other patch either
+// rewrites an existing instruction in place, via patch_code_*/memcpy_code, or
+// redirects a call/function entry point, via replace_call/replace_function);
+// these stubs are genuinely new, tiny pieces of machine code, so they need
+// their own executable memory rather than driver_malloc's plain heap.
+static uint8_t *ff8_trampoline_alloc(uint32_t size)
+{
+	static uint8_t *page = nullptr;
+	static uint32_t used = 0;
+	if (!page)
+		page = (uint8_t *)VirtualAlloc(nullptr, 4096, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	uint8_t *stub = page + used;
+	used += size;
+	return stub;
+}
+
+// x86 register encodings used below (push/pop opcode = base + index).
+#define REG_EAX 0
+#define REG_EBX 3
+
+// Builds: push reg ; call ff8_is_gf_id ; test al,al ; pop reg ; jnz gf_target ; ret
+// `reg` (32-bit) holds the spell id on entry and is fully restored before the
+// final `ret`, so falling through to the site's next instruction (the magic
+// path) sees the exact same register state the original "cmp/jcc" would have
+// left it in; taking the jnz instead reproduces the original jcc's GF jump.
+static void *ff8_build_classify_stub(uint8_t reg, uint32_t gf_target)
+{
+	uint8_t *stub = ff8_trampoline_alloc(16);
+	uint8_t *p = stub;
+	*p++ = 0x50 + reg;                                       // push reg
+	*p++ = 0xE8;                                              // call rel32
+	*(uint32_t *)p = (uint32_t)&ff8_is_gf_id - (uint32_t)(p + 4);
+	p += 4;
+	*p++ = 0x84; *p++ = 0xC0;                                 // test al,al
+	*p++ = 0x58 + reg;                                        // pop reg
+	*p++ = 0x0F; *p++ = 0x85;                                 // jnz rel32
+	*(uint32_t *)p = gf_target - (uint32_t)(p + 4);
+	p += 4;
+	*p++ = 0xC3;                                              // ret
+	return stub;
 }
 
 // Verify the expected "cmp reg,40h" + jcc encoding, save the jcc target,
-// then overwrite the whole compare-and-branch with "call trampoline" (+NOPs).
+// then overwrite the whole compare-and-branch with "call stub" (+NOPs).
 //
 // The compare may carry a 0x66 operand-size prefix ("cmp bx,40h" instead of
 // "cmp ebx,40h"): the DRAW-execute site is `66 83 FB 40 0F 83 rel32`. The site
 // MUST start at that prefix - patching one byte late leaves the 0x66 in front
 // of our 0xE8, which the CPU decodes as `66 E8` = a 16-bit CALL that pushes a
 // 2-byte return address and corrupts the stack. So handle the prefix here.
-static bool install_id_trampoline(uint32_t site, void *trampoline, uint32_t *gf_target_out, const char *what)
+static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 {
 	const uint8_t *p = (const uint8_t *)site;
 	uint32_t pre = (p[0] == 0x66) ? 1 : 0;   // optional operand-size prefix
@@ -193,15 +212,15 @@ static bool install_id_trampoline(uint32_t site, void *trampoline, uint32_t *gf_
 
 	uint32_t cmp_len = pre + 3;           // (prefix) + opcode + modrm + imm8
 	const uint8_t *j = p + cmp_len;       // the following jcc
-	uint32_t patch_size;
+	uint32_t patch_size, gf_target;
 	if ((j[0] & 0xF0) == 0x70)            // jcc rel8 (2 bytes)
 	{
-		*gf_target_out = site + cmp_len + 2 + (int8_t)j[1];
+		gf_target = site + cmp_len + 2 + (int8_t)j[1];
 		patch_size = cmp_len + 2;
 	}
 	else if (j[0] == 0x0F && (j[1] & 0xF0) == 0x80) // jcc rel32 (6 bytes)
 	{
-		*gf_target_out = site + cmp_len + 6 + *(int32_t *)(j + 2);
+		gf_target = site + cmp_len + 6 + *(int32_t *)(j + 2);
 		patch_size = cmp_len + 6;
 	}
 	else
@@ -210,10 +229,12 @@ static bool install_id_trampoline(uint32_t site, void *trampoline, uint32_t *gf_
 		return false;
 	}
 
-	// call trampoline (5 bytes) + NOP fill for the remainder of the region.
+	void *stub = ff8_build_classify_stub(reg, gf_target);
+
+	// call stub (5 bytes) + NOP fill for the remainder of the region.
 	uint8_t code[16];
 	code[0] = 0xE8;
-	*(uint32_t *)&code[1] = (uint32_t)trampoline - (site + 5);
+	*(uint32_t *)&code[1] = (uint32_t)stub - (site + 5);
 	for (uint32_t i = 5; i < patch_size; ++i) code[i] = 0x90;
 	memcpy_code(site, code, patch_size);
 
@@ -485,10 +506,10 @@ static void ff8_kernel_magic_arm()
 	// other supported version matched the same count during verification.
 	if (rewritten < 69) ffnx_warning("AddMoreMagic: fewer displacement sites than expected, some magic reads may still use the vanilla table!\n");
 
-	install_id_trampoline(ff8_externals.magic_site_name_getter, tramp_name_getter, &tramp_gf_target_name, "magic name getter");
-	install_id_trampoline(ff8_externals.magic_site_desc_getter, tramp_desc_getter, &tramp_gf_target_desc, "magic desc getter");
-	install_id_trampoline(ff8_externals.magic_site_spell_visibility, tramp_spell_visibility, &tramp_gf_target_vis, "draw-list visibility");
-	install_id_trampoline(ff8_externals.magic_site_draw_execute, tramp_draw_execute, &tramp_gf_target_draw, "draw execution");
+	install_id_trampoline(ff8_externals.magic_site_name_getter, REG_EAX, "magic name getter");
+	install_id_trampoline(ff8_externals.magic_site_desc_getter, REG_EAX, "magic desc getter");
+	install_id_trampoline(ff8_externals.magic_site_spell_visibility, REG_EAX, "draw-list visibility");
+	install_id_trampoline(ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
 
 	replace_function(ff8_externals.magic_fn_linked_stock, (void *)ff8_linked_stock_field_char_data);
 	replace_function(ff8_externals.magic_fn_reorder_magic, (void *)ff8_menu_reorder_magic);
