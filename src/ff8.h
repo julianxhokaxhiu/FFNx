@@ -1719,6 +1719,29 @@ struct ff8_externals
 	uint32_t fps_limiter;
 	double *time_volume_change_related_1A78BE0;
 	uint32_t field_vars_stack_1CFE9B8;
+
+	// AddMoreMagic (src/ff8/kernel_magic.cpp): extended kernel.bin magic
+	// section support. Resolved per-version in ff8_data.cpp; see that file
+	// for how each address was derived. magic_sg_drawn_once_ext is NOT
+	// stored here - it is computed from field_vars_stack_1CFE9B8 (already
+	// resolved above) + 753, the field-script variable slot it relocates to.
+	uint32_t magic_k_magic;               // buffer + 540 (K_MAGIC data label)
+	uint32_t magic_load_file_to_buf;      // int LoadFileToBuffer(const char*, char*)
+	uint32_t magic_kernel_read_call;      // call LoadFileToBuffer(name, KERNEL_HEADER)
+	uint32_t magic_site_name_getter;      // getMagicText:      (66)? cmp reg,40h / jcc
+	uint32_t magic_site_desc_getter;      // desc getter:       (66)? cmp reg,40h / jcc
+	uint32_t magic_site_spell_visibility; // draw-list vis:     (66)? cmp reg,40h / jcc
+	uint32_t magic_site_draw_execute;     // draw command:      66 cmp bx,40h / jcc -- includes the 0x66 prefix
+	uint32_t magic_fn_linked_stock;       // linkedStockFieldCharData(int char, int id)
+	uint32_t magic_fn_reorder_magic;      // menu_reorder_magic(int char, int preset)
+	uint32_t magic_fn_validate_magic;     // sub_4BE790(int char): per-char held-magic + junction validate
+	uint32_t magic_f_char_data;           // FF8FieldCharData[], stride 464
+	uint32_t magic_k_battle_command;      // FF8KernelBattleCommand[], stride 8
+	uint32_t magic_valid_junction;        // uint32[2] per char (8 chars): valid-junction bitfield
+	uint32_t magic_sg_chara_data;         // CharacterData[], stride 152, Magic @+16
+	uint32_t magic_magsort_buffer;        // magsortData magsortbuffer[N][7], stride 64/preset (direct array, not a pointer)
+	uint32_t magic_sg_drawn_once;         // savemap 64-bit drawn-once bitfield (ids 1-64)
+
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;

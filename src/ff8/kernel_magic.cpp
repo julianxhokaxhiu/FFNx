@@ -1,5 +1,6 @@
 /****************************************************************************/
-//    Copyright (C) 2026 Julian Xhokaxhiu                                    //
+//    Copyright (C) 2026 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2026 HobbitDur                                          //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -25,7 +26,8 @@
 #include <string.h>
 
 // -------------------------------------------------------------------------
-// AddMoreMagic - extended kernel.bin magic section (FF8_EN.exe US 1.2)
+// AddMoreMagic - extended kernel.bin magic section (EN/FR/DE/SP/IT/JP/JP_NV
+// retail 1.2 exes)
 //
 // The exe ignores the kernel.bin header for data access: 31 data-section
 // labels are baked at vanilla buffer offsets (K_MAGIC = buffer+540, 57*60B).
@@ -49,8 +51,12 @@
 //     - linkedStockFieldCharData (Draw->Stock setup; split cmp/jcc),
 //     - menu_reorder_magic (writes a 64-byte STACK buffer indexed by
 //       spell id -> would corrupt the stack with extended ids),
-//     - addMagicToMagicKnown (writes the 64-bit savemap drawn-once
-//       bitfield unguarded -> would corrupt savemap with extended ids).
+//     - sub_4BE790 (per-char held-magic + junction validate; writes a
+//       64-bit STACK bitfield indexed by id/32 -> stack smash for id >= 64).
+//  5. Relocates the savemap drawn-once bitfield (blind-scanned by value,
+//     same technique as step 2) to persisted free savemap space once any
+//     magic id >= 96 exists, since 5 native access sites index it by
+//     (id-1)/32 with no bounds check.
 //
 // File contract for modders: kernel.bin's section 1 must contain entries
 // for ids 0..N-1 *including* 32 dummy 60-byte rows for ids 64..95 (GFs 64-79,
@@ -58,41 +64,31 @@
 // everywhere). mmagic.bin (standalone menu file, 4B/spell, loaded with
 // size-from-file) must be extended to cover the highest id; magsort.bin can
 // stay vanilla (new spells sort last).
+//
+// Per-version addresses are resolved once in ff8_data.cpp (ff8_find_externals)
+// into ff8_externals.magic_* fields, following this codebase's standard
+// convention for version-dependent addresses - see that file for how each
+// one was derived (EN researched directly in IDA; FR/DE/SP/IT/JP/JP_NV via
+// byte-signature matching + a verified per-language data-segment delta,
+// cross-checked against 5 independent anchors per language). This module
+// only consumes ff8_externals.magic_*; the drawn-once relocation target is
+// not one of those fields - it is computed below from the already-resolved
+// field_vars_stack_1CFE9B8 external (the field-script variable block base)
+// plus 753, the slot the drawn-once bitfield relocates to.
 // -------------------------------------------------------------------------
 
-// ---- FF8_EN.exe US 1.2 addresses ----------------------------------------
-#define ADDR_KERNEL_BUFFER      0x1CF3E48u  // KERNEL_HEADER static buffer
-#define ADDR_K_MAGIC            0x1CF4064u  // buffer + 540
-#define ADDR_K_MAGIC_END        0x1CF4DC0u  // buffer + 540 + 57*60 (= K_GF_JUNCTIONABLE)
-#define ADDR_LOAD_FILE_TO_BUF   0x52D400u   // int LoadFileToBuffer(const char*, char*)
-#define ADDR_KERNEL_READ_CALL   0x47D336u   // call LoadFileToBuffer(name, KERNEL_HEADER)
-#define SITE_NAME_GETTER        0x47E974u   // getMagicText:      cmp eax,40h / jge rel8
-#define SITE_DESC_GETTER        0x47E9C4u   // desc getter:       cmp eax,40h / jge rel8
-#define SITE_SPELL_VISIBILITY   0x48C7E3u   // draw-list vis:     cmp eax,40h / jge rel8
-#define SITE_DRAW_EXECUTE       0x48D53Bu   // draw command:  66 83 FB 40 (cmp bx,40h) / 0F 83 rel32 (jnb) -- site MUST include the 0x66 prefix
-#define ADDR_FN_LINKED_STOCK    0x48CAE0u   // linkedStockFieldCharData(int char, int id)
-#define ADDR_FN_REORDER_MAGIC   0x4F0030u   // menu_reorder_magic(int char, int preset)
-#define ADDR_FN_ADD_MAGIC_KNOWN 0x48B7A0u   // addMagicToMagicKnown(int id)
-#define ADDR_FN_VALIDATE_MAGIC  0x4BE790u   // sub_4BE790(int char): per-char held-magic + junction validate
-#define ADDR_VALID_JUNCTION     0x1D77154u  // uint32[2] per char (8 chars): valid-junction bitfield
 #define CHAR_STRIDE             152         // FF8CharacterData record size
 #define CHAR_MAGIC_OFF          16          // 32 x {id:u8, amount:u8}
 #define CHAR_JUNCTION_OFF       92          // 20 stat slots, each = a junctioned magic id
-#define ADDR_SG_DRAWN_ONCE      0x1CFE95Cu  // savemap 64-bit drawn-once bitfield (ids 1-64)
 // Relocation target for the drawn-once bitfield when extended magic (id >= 96)
-// is present: field-script variable 753, runtime 0x1CFE9B8 + 753. Vars 753-1023
-// (271 bytes) are verified unused on all three axes - no field script (all 882
-// *.jsm scanned), no EXE code reference, zero in every real save - AND they sit
-// inside the save's CRC span (image bytes 4561+), so the game serializes and
-// checksums them on a normal save. Pointing the drawn-once accesses here gives
-// native persistence for a full 256-bit table with no save/load file hooks.
-#define ADDR_SG_DRAWN_ONCE_EXT  0x1CFECA9u  // savemap var 753 (32 bytes used, ids 1-256)
-#define ADDR_SG_CHARA_DATA      0x1CFE0E8u  // CharacterData[], stride 152, Magic @+16
-#define ADDR_F_CHAR_DATA        0x1CFF000u  // FF8FieldCharData[], stride 464
-#define ADDR_K_BATTLE_COMMAND   0x1CF3F2Cu  // FF8KernelBattleCommand[], stride 8
-#define ADDR_MAGSORT_BUFFER     0x1D2BB5Cu  // magsortData magsortbuffer[N][7], stride 64/preset (direct array, not a pointer)
+// is present: field-script variable 753. Vars 753-1023 (271 bytes) are
+// verified unused on all three axes - no field script (all 882 *.jsm
+// scanned), no EXE code reference, zero in every real save - AND they sit
+// inside the save's CRC span, so the game serializes and checksums them on a
+// normal save. Pointing the drawn-once accesses here gives native
+// persistence for a full 256-bit table with no save/load file hooks.
 #define SCAN_CODE_START         0x401000u
-#define SCAN_CODE_END           0x500000u
+#define SCAN_CODE_END           0x520000u
 
 #define VANILLA_KERNEL_SIZE     37992u
 #define VANILLA_MAGIC_COUNT     57
@@ -224,18 +220,18 @@ static bool install_id_trampoline(uint32_t site, void *trampoline, uint32_t *gf_
 	return true;
 }
 
-// ---- K_MAGIC displacement relocation ------------------------------------
-// Blind scan for any dword in the K_MAGIC address range and repoint it at the
-// relocated table. One important false-positive class must be excluded: a
+// ---- blind value-scan relocation (shared by K_MAGIC and drawn-once) -----
+// Scans SCAN_CODE_START..SCAN_CODE_END for any dword equal to `from` and
+// repoints it to `to`. One important false-positive class must be excluded: a
 // `call rel32` (E8) or `jmp rel32` (E9) whose opcode+displacement bytes happen
-// to form a value inside the K_MAGIC range. Real example (EN 1.2): the call to
+// to form a value equal to `from`. Real example (EN 1.2, K_MAGIC): the call to
 // getAICON_SP1_DATA @0x49A483 is E8 48 CF 01 00, and the dword at 0x49A483 is
-// 0x01CF48E8 - squarely in the magic range. Rewriting it corrupts the call
+// 0x01CF48E8 - squarely in the K_MAGIC range. Rewriting it corrupts the call
 // (E8 -> part of a table address, decoding as `pop esp`), which crashes the
 // field menu (only reached when dword_1D6BC4C==0). Such a match has the branch
 // opcode as its low byte AND a target that lands in real .text - a genuine
-// magic operand never does - so skip those.
-static void relocate_magic_displacements()
+// data operand never does - so skip those.
+static uint32_t relocate_scan(uint32_t from, uint32_t to, uint32_t range_end, const char *what)
 {
 	uint32_t rewritten = 0, skipped_branch = 0;
 
@@ -243,7 +239,7 @@ static void relocate_magic_displacements()
 	{
 		uint32_t value = *(uint32_t *)addr;
 
-		if (value >= ADDR_K_MAGIC && value < ADDR_K_MAGIC_END)
+		if (value >= from && value < range_end)
 		{
 			uint8_t op = *(uint8_t *)addr;
 			if (op == 0xE8 || op == 0xE9) // call/jmp rel32?
@@ -256,26 +252,24 @@ static void relocate_magic_displacements()
 				}
 			}
 
-			patch_code_dword(addr, (DWORD)((uint32_t)&ff8_magic_table[0][0] + (value - ADDR_K_MAGIC)));
+			patch_code_dword(addr, (DWORD)(to + (value - from)));
 			++rewritten;
 			addr += 3; // skip the rewritten dword
 		}
 	}
 
-	// EN 1.2 has 71 genuine K_MAGIC displacement operands in this window (plus
-	// the getAICON_SP1_DATA call false-positive, now skipped).
-	ffnx_info("AddMoreMagic: relocated %u K_MAGIC displacements (expected ~71), skipped %u branch false-positive(s).\n",
-		rewritten, skipped_branch);
-	if (rewritten < 69) ffnx_warning("AddMoreMagic: fewer displacement sites than expected, some magic reads may still use the vanilla table!\n");
+	ffnx_trace("AddMoreMagic: %s: relocated %u displacement(s), skipped %u branch false-positive(s).\n",
+		what, rewritten, skipped_branch);
+	return rewritten;
 }
 
 // ---- replaced functions -------------------------------------------------
-// Draw->Stock action setup (replaces linkedStockFieldCharData @ 0x48CAE0).
+// Draw->Stock action setup (replaces linkedStockFieldCharData).
 // Vanilla routed every id >= 64 to the GF branch; only 64..79 belong there.
 static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_id)
 {
-	uint8_t *chr = (uint8_t *)(ADDR_F_CHAR_DATA + 464 * char_slot);
-	const uint8_t *draw_cmd = (const uint8_t *)(ADDR_K_BATTLE_COMMAND + 8 * 10);
+	uint8_t *chr = (uint8_t *)(ff8_externals.magic_f_char_data + 464 * char_slot);
+	const uint8_t *draw_cmd = (const uint8_t *)(ff8_externals.magic_k_battle_command + 8 * 10);
 
 	chr[0] = 10;          // battle command id: Draw
 	chr[1] = draw_cmd[5]; // command menuFlags
@@ -319,24 +313,24 @@ static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_i
 	return chr;
 }
 
-// Magic menu sort (replaces menu_reorder_magic @ 0x4F0030). The vanilla
-// function fills a 64-byte stack array indexed by spell id; extended ids
-// would corrupt the stack. Ids absent from the sort preset (all extended
-// ones with a vanilla magsort.bin) are appended in ascending id order
-// instead of being silently dropped.
+// Magic menu sort (replaces menu_reorder_magic). The vanilla function fills a
+// 64-byte stack array indexed by spell id; extended ids would corrupt the
+// stack. Ids absent from the sort preset (all extended ones with a vanilla
+// magsort.bin) are appended in ascending id order instead of being silently
+// dropped.
 static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 {
 	// magsortbuffer is an array of pointers (MenuReadFiles passes it as
 	// Menu_GetFile((void**)magsortbuffer, ...) - no '&' - so magsortbuffer[0]
 	// itself holds the loaded-file pointer, confirmed by decompiling
 	// MenuReadFiles @ 0x4A1C31). Must dereference before indexing by preset.
-	const uint8_t *preset = (const uint8_t *)(*(uintptr_t *)ADDR_MAGSORT_BUFFER) + 64 * sort_preset;
+	const uint8_t *preset = (const uint8_t *)(*(uintptr_t *)ff8_externals.magic_magsort_buffer) + 64 * sort_preset;
 	if (!preset[0]) return 0;
 
 	uint8_t amounts[MAX_MAGIC_ID];
 	memset(amounts, 0, sizeof(amounts));
 
-	uint8_t *inventory = (uint8_t *)(ADDR_SG_CHARA_DATA + 152 * character_id + 16); // 32 x {id, amount}
+	uint8_t *inventory = (uint8_t *)(ff8_externals.magic_sg_chara_data + 152 * character_id + 16); // 32 x {id, amount}
 	for (int i = 0; i < 32; ++i)
 	{
 		uint8_t id = inventory[2 * i], amount = inventory[2 * i + 1];
@@ -375,35 +369,27 @@ static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 // (id-1)/32 in 5 places (1 read + 4 writes). ParseBattleParty does exactly this
 // for every held party spell on battle start; for a held id >= 65 the index is
 // >= 2 and it writes past the field into adjacent savemap memory (the enemy
-// scanned-once bitfield at 0x1CFE964) -> corruption that manifests as a later
-// NULL-pointer crash in battle stage setup (0x500FB4).
+// scanned-once bitfield) -> corruption that manifests as a later NULL-pointer
+// crash in battle stage setup.
 //
-// Since magic ids 64-79 are GFs (never magic), the first magic id that overflows
-// the native field is 80. So we only touch the drawn-once field when the kernel
-// actually declares a magic id >= 80 (ff8_magic_count > 80). When it does, we
-// relocate the whole field, for ALL ids, to a 256-bit store in verified-free
-// savemap space (var 753, ADDR_SG_DRAWN_ONCE_EXT) by rewriting the base
-// displacement (0x1CFE95C) at all 5 sites, so every (id-1)/32 access up to id
-// 256 stays in bounds AND the state persists through a normal save (that region
-// is inside the save CRC span - see the ADDR_SG_DRAWN_ONCE_EXT note).
+// Since magic ids 64-95 are GF-reserved (never magic), the first magic id that
+// overflows the native field is 96. So we only touch the drawn-once field when
+// the kernel actually declares a magic id >= 96 (ff8_magic_count > 96). When it
+// does, we relocate the whole field, for ALL ids, to a 256-bit store in
+// verified-free savemap space (field-script variable 753) via the same blind
+// value-scan used for K_MAGIC, so every (id-1)/32 access up to id 256 stays
+// in bounds AND the state persists through a normal save (that region is
+// inside the save CRC span).
 //
 // Why move ALL ids rather than split (vanilla ids native / extended ids new):
 // a single access site computes base[(id-1)/32] from ONE base displacement, so
 // routing low vs high ids to different bases would need a per-site conditional
 // trampoline at all 5 sites (each with different registers) - fragile, for only
-// a cosmetic gain. A stock (unmodded) game never reaches here (id < 80 => no
-// relocation => drawn-once stays byte-for-byte vanilla at 0x1CFE95C), which is
-// the compatibility guarantee that actually matters. In a modded game the new
-// location is invisible in play and held spells are re-marked drawn every battle
-// by ParseBattleParty, so nothing is lost by relocating vanilla ids too.
-static const uint32_t drawn_once_sites[] = {
-	0x48B789u, // reader:  and esi, [eax*4 + field]
-	0x48B7CAu, // addMagicToMagicKnown writer (fixes the vanilla OOB too)
-	0x48B84Eu, // ParseBattleParty writer (battle start)
-	0x48B93Bu, // battleToFieldTransition writer
-	0x48C819u, // manageMonsterSpellVisibility
-};
-
+// a cosmetic gain. A stock (unmodded) game never reaches here (id < 96 => no
+// relocation => drawn-once stays byte-for-byte vanilla), which is the
+// compatibility guarantee that actually matters. In a modded game the new
+// location is invisible in play and held spells are re-marked drawn every
+// battle by ParseBattleParty, so nothing is lost by relocating vanilla ids too.
 static void relocate_drawn_once_bitfield()
 {
 	// Only needed when an extended magic id (>= EXTENDED_MAGIC_FIRST) exists:
@@ -412,46 +398,44 @@ static void relocate_drawn_once_bitfield()
 	// drawn-once bitfield exactly where it is, natively persisted.
 	if (ff8_magic_count <= EXTENDED_MAGIC_FIRST)
 	{
-		ffnx_info("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n",
-			EXTENDED_MAGIC_FIRST, ADDR_SG_DRAWN_ONCE);
+		ffnx_trace("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n",
+			EXTENDED_MAGIC_FIRST, ff8_externals.magic_sg_drawn_once);
 		return;
 	}
 
-	uint32_t patched = 0;
-	for (uint32_t site : drawn_once_sites)
-	{
-		for (uint32_t off = 0; off < 12; ++off)
-		{
-			if (*(uint32_t *)(site + off) == ADDR_SG_DRAWN_ONCE)
-			{
-				patch_code_dword(site + off, ADDR_SG_DRAWN_ONCE_EXT);
-				++patched;
-				break;
-			}
-		}
-	}
-	ffnx_info("AddMoreMagic: relocated %u/%u drawn-once sites to persisted savemap var 753 (0x%08X, 256-bit).\n",
-		patched, (uint32_t)(sizeof(drawn_once_sites) / sizeof(drawn_once_sites[0])), ADDR_SG_DRAWN_ONCE_EXT);
+	// Field-script variable 753, inside the already-resolved variable block
+	// (field_vars_stack_1CFE9B8, used elsewhere for savemap script vars) -
+	// this is not a magic_* field since it is entirely derived, not researched
+	// per language.
+	uint32_t sg_drawn_once_ext = ff8_externals.field_vars_stack_1CFE9B8 + 753;
+
+	// Exactly 5 genuine sites are known to reference this dword (1 reader +
+	// 4 writers); the blind scan finds them with zero false positives (the
+	// value is too specific to alias a branch displacement in practice).
+	uint32_t patched = relocate_scan(ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext,
+		ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
+	if (patched != 5)
+		ffnx_warning("AddMoreMagic: expected 5 drawn-once sites, found %u - some drawn-once state may not persist correctly!\n", patched);
 }
 
-// Per-character held-magic + junction validation (replaces sub_4BE790 @ 0x4BE790,
-// called for every character on menu open). The vanilla function builds a
-// "spells this character holds" bitfield in a 64-bit STACK buffer indexed by
-// id/32 (`held[id/32] |= 1 << (id&31)`); for a held id >= 64, id/32 >= 2 writes
-// past the 2-dword buffer straight onto the saved registers / return address ->
-// stack smash -> the 0x4D0C1A crash. It ALSO marks a per-character 2-dword
-// global (valid-junction bitfield) indexed the same way, which overflows into
-// the next character's slot for id >= 64. This replacement uses a 256-bit local
-// bitfield and clamps the global write to the vanilla 2-dword range (extended
-// junctions stay junctioned but aren't mirrored into the global - purely a
+// Per-character held-magic + junction validation (replaces sub_4BE790, called
+// for every character on menu open). The vanilla function builds a "spells
+// this character holds" bitfield in a 64-bit STACK buffer indexed by id/32
+// (`held[id/32] |= 1 << (id&31)`); for a held id >= 64, id/32 >= 2 writes past
+// the 2-dword buffer straight onto the saved registers / return address ->
+// stack smash. It ALSO marks a per-character 2-dword global (valid-junction
+// bitfield) indexed the same way, which overflows into the next character's
+// slot for id >= 64. This replacement uses a 256-bit local bitfield and
+// clamps the global write to the vanilla 2-dword range (extended junctions
+// stay junctioned but aren't mirrored into the global - purely a
 // junction-menu cosmetic detail, never a crash).
 static int __cdecl ff8_char_validate_magic(int char_idx)
 {
-	uint32_t *valid_junction = (uint32_t *)(ADDR_VALID_JUNCTION + 8 * char_idx);
+	uint32_t *valid_junction = (uint32_t *)(ff8_externals.magic_valid_junction + 8 * char_idx);
 	valid_junction[0] = 0;
 	valid_junction[1] = 0;
 
-	uint8_t *chr = (uint8_t *)(ADDR_SG_CHARA_DATA + CHAR_STRIDE * char_idx);
+	uint8_t *chr = (uint8_t *)(ff8_externals.magic_sg_chara_data + CHAR_STRIDE * char_idx);
 	uint8_t *magic = chr + CHAR_MAGIC_OFF; // 32 x {id, amount}
 
 	uint32_t held[8] = { 0 }; // 256 bits: any byte id (vanilla stack buffer was only 64 bits)
@@ -495,28 +479,28 @@ static void ff8_kernel_magic_arm()
 	if (ff8_magic_armed) return;
 	ff8_magic_armed = true;
 
-	relocate_magic_displacements();
+	uint32_t k_magic_end = ff8_externals.magic_k_magic + VANILLA_MAGIC_COUNT * MAGIC_ENTRY_SIZE;
+	uint32_t rewritten = relocate_scan(ff8_externals.magic_k_magic, (uint32_t)&ff8_magic_table[0][0], k_magic_end, "K_MAGIC table");
+	// EN 1.2 has 71 genuine K_MAGIC displacement operands in this window; every
+	// other supported version matched the same count during verification.
+	if (rewritten < 69) ffnx_warning("AddMoreMagic: fewer displacement sites than expected, some magic reads may still use the vanilla table!\n");
 
-	install_id_trampoline(SITE_NAME_GETTER, tramp_name_getter, &tramp_gf_target_name, "magic name getter");
-	install_id_trampoline(SITE_DESC_GETTER, tramp_desc_getter, &tramp_gf_target_desc, "magic desc getter");
-	install_id_trampoline(SITE_SPELL_VISIBILITY, tramp_spell_visibility, &tramp_gf_target_vis, "draw-list visibility");
-	install_id_trampoline(SITE_DRAW_EXECUTE, tramp_draw_execute, &tramp_gf_target_draw, "draw execution");
+	install_id_trampoline(ff8_externals.magic_site_name_getter, tramp_name_getter, &tramp_gf_target_name, "magic name getter");
+	install_id_trampoline(ff8_externals.magic_site_desc_getter, tramp_desc_getter, &tramp_gf_target_desc, "magic desc getter");
+	install_id_trampoline(ff8_externals.magic_site_spell_visibility, tramp_spell_visibility, &tramp_gf_target_vis, "draw-list visibility");
+	install_id_trampoline(ff8_externals.magic_site_draw_execute, tramp_draw_execute, &tramp_gf_target_draw, "draw execution");
 
-	replace_function(ADDR_FN_LINKED_STOCK, (void *)ff8_linked_stock_field_char_data);
-	replace_function(ADDR_FN_REORDER_MAGIC, (void *)ff8_menu_reorder_magic);
-	replace_function(ADDR_FN_VALIDATE_MAGIC, (void *)ff8_char_validate_magic);
+	replace_function(ff8_externals.magic_fn_linked_stock, (void *)ff8_linked_stock_field_char_data);
+	replace_function(ff8_externals.magic_fn_reorder_magic, (void *)ff8_menu_reorder_magic);
+	replace_function(ff8_externals.magic_fn_validate_magic, (void *)ff8_char_validate_magic);
 
 	// Relocate the 64-bit drawn-once savemap bitfield to a persisted 256-bit
-	// store in free savemap space, but only when a magic id >= 80 is present
-	// (otherwise the vanilla field is left untouched). Patching all 5 access
-	// sites fixes the battle-start writers too (the old addMagicToMagicKnown
-	// replace_function never covered those).
+	// store in free savemap space, but only when a magic id >= 96 is present
+	// (otherwise the vanilla field is left untouched).
 	relocate_drawn_once_bitfield();
 
-	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs).\n",
-		ff8_magic_count, EXTENDED_MAGIC_FIRST, ff8_magic_count - 1);
-	ffnx_info("AddMoreMagic: make sure mmagic.bin covers %d entries (%d bytes).\n",
-		ff8_magic_count, ff8_magic_count * 4);
+	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs; mmagic.bin must cover %d entries / %d bytes).\n",
+		ff8_magic_count, EXTENDED_MAGIC_FIRST, ff8_magic_count - 1, ff8_magic_count, ff8_magic_count * 4);
 }
 
 // ---- kernel.bin load interception ---------------------------------------
@@ -528,7 +512,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	if (ff8_kernel_stash == nullptr)
 		ff8_kernel_stash = (char *)driver_malloc(KERNEL_FILE_MAX);
 
-	int size = ((load_file_to_buffer_t)ADDR_LOAD_FILE_TO_BUF)(filename, ff8_kernel_stash);
+	int size = ((load_file_to_buffer_t)ff8_externals.magic_load_file_to_buf)(filename, ff8_kernel_stash);
 
 	const uint32_t *header = (const uint32_t *)ff8_kernel_stash;
 	const uint32_t *offsets = header + 1;
@@ -590,7 +574,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	ff8_magic_count = entries;
 	ff8_magic_text = ff8_kernel_stash + offsets[32]; // magic text section (unused directly; header serves it)
 
-	ffnx_info("AddMoreMagic: extended kernel.bin detected (%d magic entries, +%u bytes data growth).\n", entries, data_growth);
+	ffnx_trace("AddMoreMagic: extended kernel.bin detected (%d magic entries, +%u bytes data growth).\n", entries, data_growth);
 
 	ff8_kernel_magic_arm();
 
@@ -600,24 +584,22 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 // ---- init ---------------------------------------------------------------
 void ff8_kernel_magic_init()
 {
-	// Only the US 1.2 exe is mapped (all addresses above). Other languages
-	// need their own table - see the AllMonsterFilesUsable precedent.
-	if (!FF8_US_VERSION)
+	if (!ff8_externals.magic_kernel_read_call)
 	{
-		ffnx_info("AddMoreMagic: unsupported game version, extension disabled.\n");
+		ffnx_trace("AddMoreMagic: unsupported game version, extension disabled.\n");
 		return;
 	}
 
 	// Sanity: the call we are about to replace must be "E8 rel32" to
 	// LoadFileToBuffer, and the classification sites must look right
 	// (checked again at arm time before patching them).
-	const uint8_t *call_site = (const uint8_t *)ADDR_KERNEL_READ_CALL;
-	uint32_t call_target = ADDR_KERNEL_READ_CALL + 5 + *(const int32_t *)(call_site + 1);
-	if (call_site[0] != 0xE8 || call_target != ADDR_LOAD_FILE_TO_BUF)
+	const uint8_t *call_site = (const uint8_t *)ff8_externals.magic_kernel_read_call;
+	uint32_t call_target = ff8_externals.magic_kernel_read_call + 5 + *(const int32_t *)(call_site + 1);
+	if (call_site[0] != 0xE8 || call_target != ff8_externals.magic_load_file_to_buf)
 	{
 		ffnx_warning("AddMoreMagic: kernel load call site mismatch (0x%02X -> 0x%X), extension disabled.\n", call_site[0], call_target);
 		return;
 	}
 
-	replace_call(ADDR_KERNEL_READ_CALL, (void *)ff8_kernel_load_hook);
+	replace_call(ff8_externals.magic_kernel_read_call, (void *)ff8_kernel_load_hook);
 }

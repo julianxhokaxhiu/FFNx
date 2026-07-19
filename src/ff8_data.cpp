@@ -978,6 +978,133 @@ void ff8_find_externals()
 
 	ff8_externals.field_vars_stack_1CFE9B8 = get_absolute_value(ff8_externals.opcode_pshm_w, 0x1E);
 
+	// AddMoreMagic (src/ff8/kernel_magic.cpp): extended kernel.bin magic
+	// section support. EN was researched directly in IDA; FR/DE/SP/IT/JP/
+	// JP_NV were resolved by locating each site/function via byte-signature
+	// matching against the EN bytes (verified unique with zero false
+	// positives in every build, cross-checked in ES/SP via decompilation of
+	// computeCommandAction's Draw case and addMagicToMagicKnown), plus every
+	// data address (K_MAGIC, F_CHAR_DATA, K_BATTLE_COMMAND, SG_CHARA_DATA,
+	// SG_DRAWN_ONCE, VALID_JUNCTION, MAGSORT_BUFFER) derived from a single
+	// verified per-language "data segment delta" (EN address + one constant
+	// offset per language), cross-validated against 5 independent anchors
+	// per language (all matched exactly). Unsupported versions leave every
+	// field at 0; kernel_magic.cpp checks that before arming.
+	if (FF8_US_VERSION)
+	{
+		ff8_externals.magic_k_magic = 0x1CF4064u;
+		ff8_externals.magic_load_file_to_buf = 0x52D400u;
+		ff8_externals.magic_kernel_read_call = 0x47D336u;
+		ff8_externals.magic_site_name_getter = 0x47E974u;
+		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+		ff8_externals.magic_site_spell_visibility = 0x48C7E3u;
+		ff8_externals.magic_site_draw_execute = 0x48D53Bu;
+		ff8_externals.magic_fn_linked_stock = 0x48CAE0u;
+		ff8_externals.magic_fn_reorder_magic = 0x4F0030u;
+		ff8_externals.magic_fn_validate_magic = 0x4BE790u;
+		ff8_externals.magic_f_char_data = 0x1CFF000u;
+		ff8_externals.magic_k_battle_command = 0x1CF3F2Cu;
+		ff8_externals.magic_valid_junction = 0x1D77154u;
+		ff8_externals.magic_sg_chara_data = 0x1CFE0E8u;
+		ff8_externals.magic_magsort_buffer = 0x1D2BB5Cu;
+		ff8_externals.magic_sg_drawn_once = 0x1CFE95Cu;
+	}
+	else if (FF8_FR_VERSION)
+	{
+		ff8_externals.magic_k_magic = 0x1CF3D3Cu;
+		ff8_externals.magic_load_file_to_buf = 0x52CF60u;
+		ff8_externals.magic_kernel_read_call = 0x47D336u;
+		ff8_externals.magic_site_name_getter = 0x47E974u;
+		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+		ff8_externals.magic_site_spell_visibility = 0x48C813u;
+		ff8_externals.magic_site_draw_execute = 0x48D56Cu;
+		ff8_externals.magic_fn_linked_stock = 0x48CB10u;
+		ff8_externals.magic_fn_reorder_magic = 0x4EFB90u;
+		ff8_externals.magic_fn_validate_magic = 0x4BE2B0u;
+		ff8_externals.magic_f_char_data = 0x1CFECD8u;
+		ff8_externals.magic_k_battle_command = 0x1CF3C04u;
+		ff8_externals.magic_valid_junction = 0x1D76E2Cu;
+		ff8_externals.magic_sg_chara_data = 0x1CFDDC0u;
+		ff8_externals.magic_magsort_buffer = 0x1D2B834u;
+		ff8_externals.magic_sg_drawn_once = 0x1CFE634u;
+	}
+	else if (FF8_DE_VERSION)
+	{
+		ff8_externals.magic_k_magic = 0x1CF5AD4u;
+		ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
+		ff8_externals.magic_kernel_read_call = 0x47D336u;
+		ff8_externals.magic_site_name_getter = 0x47E974u;
+		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+		ff8_externals.magic_site_spell_visibility = 0x48C813u;
+		ff8_externals.magic_site_draw_execute = 0x48D56Cu;
+		ff8_externals.magic_fn_linked_stock = 0x48CB10u;
+		ff8_externals.magic_fn_reorder_magic = 0x4EFC00u;
+		ff8_externals.magic_fn_validate_magic = 0x4BE320u;
+		ff8_externals.magic_f_char_data = 0x1D00A70u;
+		ff8_externals.magic_k_battle_command = 0x1CF599Cu;
+		ff8_externals.magic_valid_junction = 0x1D78BC4u;
+		ff8_externals.magic_sg_chara_data = 0x1CFFB58u;
+		ff8_externals.magic_magsort_buffer = 0x1D2D5CCu;
+		ff8_externals.magic_sg_drawn_once = 0x1D003CCu;
+	}
+	else if (FF8_SP_VERSION)
+	{
+		ff8_externals.magic_k_magic = 0x1CF54ACu;
+		ff8_externals.magic_load_file_to_buf = 0x52D000u;
+		ff8_externals.magic_kernel_read_call = 0x47D336u;
+		ff8_externals.magic_site_name_getter = 0x47E974u;
+		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+		ff8_externals.magic_site_spell_visibility = 0x48C863u;
+		ff8_externals.magic_site_draw_execute = 0x48D5BCu;
+		ff8_externals.magic_fn_linked_stock = 0x48CB60u;
+		ff8_externals.magic_fn_reorder_magic = 0x4EFC30u;
+		ff8_externals.magic_fn_validate_magic = 0x4BE350u;
+		ff8_externals.magic_f_char_data = 0x1D00448u;
+		ff8_externals.magic_k_battle_command = 0x1CF5374u;
+		ff8_externals.magic_valid_junction = 0x1D7859Cu;
+		ff8_externals.magic_sg_chara_data = 0x1CFF530u;
+		ff8_externals.magic_magsort_buffer = 0x1D2CFA4u;
+		ff8_externals.magic_sg_drawn_once = 0x1CFFDA4u;
+	}
+	else if (FF8_IT_VERSION)
+	{
+		ff8_externals.magic_k_magic = 0x1CF4DE4u;
+		ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
+		ff8_externals.magic_kernel_read_call = 0x47D336u;
+		ff8_externals.magic_site_name_getter = 0x47E974u;
+		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+		ff8_externals.magic_site_spell_visibility = 0x48C803u;
+		ff8_externals.magic_site_draw_execute = 0x48D55Cu;
+		ff8_externals.magic_fn_linked_stock = 0x48CB00u;
+		ff8_externals.magic_fn_reorder_magic = 0x4EFC00u;
+		ff8_externals.magic_fn_validate_magic = 0x4BE320u;
+		ff8_externals.magic_f_char_data = 0x1CFFD80u;
+		ff8_externals.magic_k_battle_command = 0x1CF4CACu;
+		ff8_externals.magic_valid_junction = 0x1D77ED4u;
+		ff8_externals.magic_sg_chara_data = 0x1CFEE68u;
+		ff8_externals.magic_magsort_buffer = 0x1D2C8DCu;
+		ff8_externals.magic_sg_drawn_once = 0x1CFF6DCu;
+	}
+	else if (version == VERSION_FF8_12_JP || version == VERSION_FF8_12_JP_NV)
+	{
+		ff8_externals.magic_k_magic = 0x21F9FFCu;
+		ff8_externals.magic_load_file_to_buf = (version == VERSION_FF8_12_JP) ? 0x5310B0u : 0x5312C0u;
+		ff8_externals.magic_kernel_read_call = (version == VERSION_FF8_12_JP) ? 0x480886u : 0x4808E6u;
+		ff8_externals.magic_site_name_getter = (version == VERSION_FF8_12_JP) ? 0x481EC4u : 0x481F24u;
+		ff8_externals.magic_site_desc_getter = (version == VERSION_FF8_12_JP) ? 0x481F14u : 0x481F74u;
+		ff8_externals.magic_site_spell_visibility = (version == VERSION_FF8_12_JP) ? 0x48FCC3u : 0x48FD23u;
+		ff8_externals.magic_site_draw_execute = (version == VERSION_FF8_12_JP) ? 0x490A36u : 0x490A96u;
+		ff8_externals.magic_fn_linked_stock = (version == VERSION_FF8_12_JP) ? 0x48FFC0u : 0x490020u;
+		ff8_externals.magic_fn_reorder_magic = (version == VERSION_FF8_12_JP) ? 0x4F3FB0u : 0x4F41C0u;
+		ff8_externals.magic_fn_validate_magic = (version == VERSION_FF8_12_JP) ? 0x4C2B20u : 0x4C2D30u;
+		ff8_externals.magic_f_char_data = 0x2204F98u;
+		ff8_externals.magic_k_battle_command = 0x21F9EC4u;
+		ff8_externals.magic_valid_junction = 0x227D0ECu;
+		ff8_externals.magic_sg_chara_data = 0x2204080u;
+		ff8_externals.magic_magsort_buffer = 0x2231AF4u;
+		ff8_externals.magic_sg_drawn_once = 0x22048F4u;
+	}
+
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
 }

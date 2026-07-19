@@ -1978,10 +1978,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90) + 0x4D, ff8_field_calc_triangle_condition);
 
 	// #####################
-	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 80-255)
+	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
 	// #####################
 	ff8_kernel_magic_init();
-
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
