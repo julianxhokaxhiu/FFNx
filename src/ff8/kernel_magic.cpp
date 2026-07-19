@@ -225,14 +225,19 @@ static bool install_id_trampoline(uint32_t site, void *trampoline, uint32_t *gf_
 }
 
 // ---- K_MAGIC displacement relocation ------------------------------------
-// NOTE: reverted the lead-in-byte validation experiment - it rejected all 72
-// genuine sites (the real MSVC encoding here doesn't match the assumed
-// ModRM/mov-imm32/push-imm32 forms), and disabling relocation entirely did
-// NOT stop the menu-open crash, proving this scan was not its cause. Back to
-// the plain blind scan-and-patch until the real bug is found.
+// Blind scan for any dword in the K_MAGIC address range and repoint it at the
+// relocated table. One important false-positive class must be excluded: a
+// `call rel32` (E8) or `jmp rel32` (E9) whose opcode+displacement bytes happen
+// to form a value inside the K_MAGIC range. Real example (EN 1.2): the call to
+// getAICON_SP1_DATA @0x49A483 is E8 48 CF 01 00, and the dword at 0x49A483 is
+// 0x01CF48E8 - squarely in the magic range. Rewriting it corrupts the call
+// (E8 -> part of a table address, decoding as `pop esp`), which crashes the
+// field menu (only reached when dword_1D6BC4C==0). Such a match has the branch
+// opcode as its low byte AND a target that lands in real .text - a genuine
+// magic operand never does - so skip those.
 static void relocate_magic_displacements()
 {
-	uint32_t rewritten = 0;
+	uint32_t rewritten = 0, skipped_branch = 0;
 
 	for (uint32_t addr = SCAN_CODE_START; addr < SCAN_CODE_END - 4; ++addr)
 	{
@@ -240,15 +245,28 @@ static void relocate_magic_displacements()
 
 		if (value >= ADDR_K_MAGIC && value < ADDR_K_MAGIC_END)
 		{
+			uint8_t op = *(uint8_t *)addr;
+			if (op == 0xE8 || op == 0xE9) // call/jmp rel32?
+			{
+				uint32_t target = addr + 5 + *(int32_t *)(addr + 1);
+				if (target >= SCAN_CODE_START && target < 0x600000u)
+				{
+					++skipped_branch; // real branch instruction - never touch it
+					continue;
+				}
+			}
+
 			patch_code_dword(addr, (DWORD)((uint32_t)&ff8_magic_table[0][0] + (value - ADDR_K_MAGIC)));
 			++rewritten;
 			addr += 3; // skip the rewritten dword
 		}
 	}
 
-	// EN 1.2 has 72 genuine K_MAGIC displacement operands in this window.
-	ffnx_info("AddMoreMagic: relocated %u K_MAGIC displacements (expected ~72).\n", rewritten);
-	if (rewritten < 70) ffnx_warning("AddMoreMagic: fewer displacement sites than expected, some magic reads may still use the vanilla table!\n");
+	// EN 1.2 has 71 genuine K_MAGIC displacement operands in this window (plus
+	// the getAICON_SP1_DATA call false-positive, now skipped).
+	ffnx_info("AddMoreMagic: relocated %u K_MAGIC displacements (expected ~71), skipped %u branch false-positive(s).\n",
+		rewritten, skipped_branch);
+	if (rewritten < 69) ffnx_warning("AddMoreMagic: fewer displacement sites than expected, some magic reads may still use the vanilla table!\n");
 }
 
 // ---- replaced functions -------------------------------------------------
