@@ -101,22 +101,20 @@ static int ff8_battle_monster_load_file(int fileIndex, void *dst)
 
 void ff8_battle_monsters_init()
 {
-	uint32_t call_site = ff8_externals.battle_monster_file_load_call_site;
-	if (!call_site || !ff8_externals.battle_file_character_load)
+	if (!ff8_externals.battle_monster_file_load_call_site || !ff8_externals.battle_file_character_load)
 	{
 		ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
 		return;
 	}
 
-	char **orig = (char **)ff8_externals.battle_filenames;
-	if (orig == nullptr)
+	if (ff8_externals.battle_filenames == nullptr)
 	{
 		ffnx_trace("Extra battle monsters: battle_filenames not resolved, skipping.\n");
 		return;
 	}
 
 	// 1) Copy the original table verbatim, then append the new c0m entries.
-	memcpy(ff8_extended_battle_filenames, orig, FF8_BATTLE_FILES_ARRAY_LEN * sizeof(char *));
+	memcpy(ff8_extended_battle_filenames, ff8_externals.battle_filenames, FF8_BATTLE_FILES_ARRAY_LEN * sizeof(char *));
 	for (int i = 0; i < FF8_NEW_C0M_COUNT; ++i)
 	{
 		snprintf(ff8_extended_c0m_names[i], sizeof(ff8_extended_c0m_names[i]), "C0M%03d.DAT", FF8_FIRST_NEW_C0M + i);
@@ -135,7 +133,7 @@ void ff8_battle_monsters_init()
 	// 2) Redirect the monster loader's BattleFile_CharacterLoad call to the C
 	//    hook, keeping the original target to forward to.
 	ff8_battle_file_character_load = (int (*)(int, void *))ff8_externals.battle_file_character_load;
-	replace_call(call_site, (void *)&ff8_battle_monster_load_file);
+	replace_call(ff8_externals.battle_monster_file_load_call_site, (void *)&ff8_battle_monster_load_file);
 
 	ffnx_info("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
 }
