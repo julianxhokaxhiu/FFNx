@@ -53,11 +53,11 @@
 //       bitfield unguarded -> would corrupt savemap with extended ids).
 //
 // File contract for modders: kernel.bin's section 1 must contain entries
-// for ids 0..N-1 *including* 16 dummy 60-byte rows for ids 64..79 when
-// N > 64 (id == entry index everywhere). mmagic.bin (standalone menu
-// file, 4B/spell, loaded with size-from-file) must be extended to cover
-// the highest id; magsort.bin can stay vanilla (new spells sort last).
-// Extended drawn-once state is session-only (not persisted in saves).
+// for ids 0..N-1 *including* 32 dummy 60-byte rows for ids 64..95 (GFs 64-79,
+// 80-95 reserved for a future 32-GF exe patch) when N > 64 (id == entry index
+// everywhere). mmagic.bin (standalone menu file, 4B/spell, loaded with
+// size-from-file) must be extended to cover the highest id; magsort.bin can
+// stay vanilla (new spells sort last).
 // -------------------------------------------------------------------------
 
 // ---- FF8_EN.exe US 1.2 addresses ----------------------------------------
@@ -78,7 +78,15 @@
 #define CHAR_STRIDE             152         // FF8CharacterData record size
 #define CHAR_MAGIC_OFF          16          // 32 x {id:u8, amount:u8}
 #define CHAR_JUNCTION_OFF       92          // 20 stat slots, each = a junctioned magic id
-#define ADDR_SG_DRAWN_ONCE      0x1CFE95Cu  // savemap 64-bit drawn-once bitfield
+#define ADDR_SG_DRAWN_ONCE      0x1CFE95Cu  // savemap 64-bit drawn-once bitfield (ids 1-64)
+// Relocation target for the drawn-once bitfield when extended magic (id >= 96)
+// is present: field-script variable 753, runtime 0x1CFE9B8 + 753. Vars 753-1023
+// (271 bytes) are verified unused on all three axes - no field script (all 882
+// *.jsm scanned), no EXE code reference, zero in every real save - AND they sit
+// inside the save's CRC span (image bytes 4561+), so the game serializes and
+// checksums them on a normal save. Pointing the drawn-once accesses here gives
+// native persistence for a full 256-bit table with no save/load file hooks.
+#define ADDR_SG_DRAWN_ONCE_EXT  0x1CFECA9u  // savemap var 753 (32 bytes used, ids 1-256)
 #define ADDR_SG_CHARA_DATA      0x1CFE0E8u  // CharacterData[], stride 152, Magic @+16
 #define ADDR_F_CHAR_DATA        0x1CFF000u  // FF8FieldCharData[], stride 464
 #define ADDR_K_BATTLE_COMMAND   0x1CF3F2Cu  // FF8KernelBattleCommand[], stride 8
@@ -91,7 +99,14 @@
 #define MAGIC_ENTRY_SIZE        60
 #define MAX_MAGIC_ID            256
 #define GF_FIRST_ID             64
-#define GF_LAST_ID              79
+#define GF_LAST_ID              79          // the exe's real 16 GF ids (SG_ARRAY_GF_DATA[16]);
+                                            // classification trampolines use this, unchanged.
+// Reserve ids 64..95 (32 slots) for GFs - 16 used today, 16 kept free for a
+// future 32-GF exe patch. Extended (mod-added) magic therefore starts at 96,
+// leaving 80..95 as an unused hole. Bump GF_RESERVED_COUNT (and GF_LAST_ID,
+// once the exe supports it) when that future change lands.
+#define GF_RESERVED_COUNT       32
+#define EXTENDED_MAGIC_FIRST    (GF_FIRST_ID + GF_RESERVED_COUNT)   // 96
 #define KERNEL_SECTION_COUNT    56
 #define KERNEL_MAGIC_SECTION    1           // data section that may grow
 #define KERNEL_FIRST_TEXT_SEC   31          // sections 31..55 resolved via header
@@ -113,7 +128,6 @@ static int ff8_magic_count = VANILLA_MAGIC_COUNT;
 static bool ff8_magic_armed = false;
 static char *ff8_kernel_stash = nullptr;     // full grown kernel.bin image
 static char *ff8_magic_text = nullptr;       // stash + grown offsetMagicText
-static uint32_t ff8_drawn_once_ext[8];       // 256-bit drawn-once store
 
 // Per-site branch targets, filled from the original jcc displacements at
 // patch time so they stay correct even if surrounding code shifts slightly.
@@ -342,12 +356,28 @@ static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 // SG_MAGIC_KNOWN_DRAWN_ONCE is a 64-bit (2-dword) savemap bitfield indexed by
 // (id-1)/32 in 5 places (1 read + 4 writes). ParseBattleParty does exactly this
 // for every held party spell on battle start; for a held id >= 65 the index is
-// >= 2 and it writes past the field into adjacent savemap memory -> corruption
-// that manifests as a later NULL-pointer crash in battle stage setup (0x500FB4).
-// Rather than patch each site's bounds, relocate the whole field to a 256-bit
-// FFNx buffer by rewriting the base displacement (0x1CFE95C) at all 5 sites, so
-// every (id-1)/32 access up to id 256 stays in bounds. Drawn-once state becomes
-// session-only (not persisted in the save) - a cosmetic "new spell" detail.
+// >= 2 and it writes past the field into adjacent savemap memory (the enemy
+// scanned-once bitfield at 0x1CFE964) -> corruption that manifests as a later
+// NULL-pointer crash in battle stage setup (0x500FB4).
+//
+// Since magic ids 64-79 are GFs (never magic), the first magic id that overflows
+// the native field is 80. So we only touch the drawn-once field when the kernel
+// actually declares a magic id >= 80 (ff8_magic_count > 80). When it does, we
+// relocate the whole field, for ALL ids, to a 256-bit store in verified-free
+// savemap space (var 753, ADDR_SG_DRAWN_ONCE_EXT) by rewriting the base
+// displacement (0x1CFE95C) at all 5 sites, so every (id-1)/32 access up to id
+// 256 stays in bounds AND the state persists through a normal save (that region
+// is inside the save CRC span - see the ADDR_SG_DRAWN_ONCE_EXT note).
+//
+// Why move ALL ids rather than split (vanilla ids native / extended ids new):
+// a single access site computes base[(id-1)/32] from ONE base displacement, so
+// routing low vs high ids to different bases would need a per-site conditional
+// trampoline at all 5 sites (each with different registers) - fragile, for only
+// a cosmetic gain. A stock (unmodded) game never reaches here (id < 80 => no
+// relocation => drawn-once stays byte-for-byte vanilla at 0x1CFE95C), which is
+// the compatibility guarantee that actually matters. In a modded game the new
+// location is invisible in play and held spells are re-marked drawn every battle
+// by ParseBattleParty, so nothing is lost by relocating vanilla ids too.
 static const uint32_t drawn_once_sites[] = {
 	0x48B789u, // reader:  and esi, [eax*4 + field]
 	0x48B7CAu, // addMagicToMagicKnown writer (fixes the vanilla OOB too)
@@ -358,6 +388,17 @@ static const uint32_t drawn_once_sites[] = {
 
 static void relocate_drawn_once_bitfield()
 {
+	// Only needed when an extended magic id (>= EXTENDED_MAGIC_FIRST) exists:
+	// ids 64..95 are GF-reserved, so id 96 is the first magic whose drawn-once
+	// bit (95) overflows the native 64-bit field. Otherwise leave the vanilla
+	// drawn-once bitfield exactly where it is, natively persisted.
+	if (ff8_magic_count <= EXTENDED_MAGIC_FIRST)
+	{
+		ffnx_info("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n",
+			EXTENDED_MAGIC_FIRST, ADDR_SG_DRAWN_ONCE);
+		return;
+	}
+
 	uint32_t patched = 0;
 	for (uint32_t site : drawn_once_sites)
 	{
@@ -365,14 +406,14 @@ static void relocate_drawn_once_bitfield()
 		{
 			if (*(uint32_t *)(site + off) == ADDR_SG_DRAWN_ONCE)
 			{
-				patch_code_dword(site + off, (DWORD)(uintptr_t)&ff8_drawn_once_ext[0]);
+				patch_code_dword(site + off, ADDR_SG_DRAWN_ONCE_EXT);
 				++patched;
 				break;
 			}
 		}
 	}
-	ffnx_info("AddMoreMagic: relocated %u/%u drawn-once bitfield sites to a 256-bit buffer.\n",
-		patched, (uint32_t)(sizeof(drawn_once_sites) / sizeof(drawn_once_sites[0])));
+	ffnx_info("AddMoreMagic: relocated %u/%u drawn-once sites to persisted savemap var 753 (0x%08X, 256-bit).\n",
+		patched, (uint32_t)(sizeof(drawn_once_sites) / sizeof(drawn_once_sites[0])), ADDR_SG_DRAWN_ONCE_EXT);
 }
 
 // Per-character held-magic + junction validation (replaces sub_4BE790 @ 0x4BE790,
@@ -447,14 +488,15 @@ static void ff8_kernel_magic_arm()
 	replace_function(ADDR_FN_REORDER_MAGIC, (void *)ff8_menu_reorder_magic);
 	replace_function(ADDR_FN_VALIDATE_MAGIC, (void *)ff8_char_validate_magic);
 
-	// Relocate the 64-bit drawn-once savemap bitfield to a 256-bit buffer so
-	// held/junctioned extended ids (>=65) don't overflow it (this replaces the
-	// old addMagicToMagicKnown replace_function - patching all 5 access sites
-	// fixes the battle-start writers too, which that replacement never covered).
+	// Relocate the 64-bit drawn-once savemap bitfield to a persisted 256-bit
+	// store in free savemap space, but only when a magic id >= 80 is present
+	// (otherwise the vanilla field is left untouched). Patching all 5 access
+	// sites fixes the battle-start writers too (the old addMagicToMagicKnown
+	// replace_function never covered those).
 	relocate_drawn_once_bitfield();
 
-	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 and 80-%d available).\n",
-		ff8_magic_count, ff8_magic_count - 1);
+	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs).\n",
+		ff8_magic_count, EXTENDED_MAGIC_FIRST, ff8_magic_count - 1);
 	ffnx_info("AddMoreMagic: make sure mmagic.bin covers %d entries (%d bytes).\n",
 		ff8_magic_count, ff8_magic_count * 4);
 }
