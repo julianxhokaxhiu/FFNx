@@ -69,7 +69,7 @@
 #define SITE_NAME_GETTER        0x47E974u   // getMagicText:      cmp eax,40h / jge rel8
 #define SITE_DESC_GETTER        0x47E9C4u   // desc getter:       cmp eax,40h / jge rel8
 #define SITE_SPELL_VISIBILITY   0x48C7E3u   // draw-list vis:     cmp eax,40h / jge rel8
-#define SITE_DRAW_EXECUTE       0x48D53Cu   // draw command:      cmp ebx,40h / jae rel32
+#define SITE_DRAW_EXECUTE       0x48D53Bu   // draw command:  66 83 FB 40 (cmp bx,40h) / 0F 83 rel32 (jnb) -- site MUST include the 0x66 prefix
 #define ADDR_FN_LINKED_STOCK    0x48CAE0u   // linkedStockFieldCharData(int char, int id)
 #define ADDR_FN_REORDER_MAGIC   0x4F0030u   // menu_reorder_magic(int char, int preset)
 #define ADDR_FN_ADD_MAGIC_KNOWN 0x48B7A0u   // addMagicToMagicKnown(int id)
@@ -144,39 +144,67 @@ typedef int(__cdecl *load_file_to_buffer_t)(const char *, char *);
 DEFINE_ID_TRAMPOLINE(tramp_name_getter, eax, tramp_gf_target_name)
 DEFINE_ID_TRAMPOLINE(tramp_desc_getter, eax, tramp_gf_target_desc)
 DEFINE_ID_TRAMPOLINE(tramp_spell_visibility, eax, tramp_gf_target_vis)
-DEFINE_ID_TRAMPOLINE(tramp_draw_execute, ebx, tramp_gf_target_draw)
+
+// Draw-execute site classifies on BX (16-bit) - the original is "cmp bx,40h",
+// and BX's upper half is not guaranteed clean here (the game masks esi&0xFFFF
+// immediately after). Compare the 16-bit id to avoid misclassifying a GF when
+// the high half of EBX carries junk. No register is clobbered (flags only).
+static __declspec(naked) void tramp_draw_execute()
+{
+	__asm { cmp bx, GF_FIRST_ID }
+	__asm { jb magic_path }
+	__asm { cmp bx, GF_LAST_ID }
+	__asm { ja magic_path }
+	__asm { add esp, 4 }
+	__asm { jmp [tramp_gf_target_draw] }
+	__asm { magic_path: ret }
+}
 
 // Verify the expected "cmp reg,40h" + jcc encoding, save the jcc target,
 // then overwrite the whole compare-and-branch with "call trampoline" (+NOPs).
+//
+// The compare may carry a 0x66 operand-size prefix ("cmp bx,40h" instead of
+// "cmp ebx,40h"): the DRAW-execute site is `66 83 FB 40 0F 83 rel32`. The site
+// MUST start at that prefix - patching one byte late leaves the 0x66 in front
+// of our 0xE8, which the CPU decodes as `66 E8` = a 16-bit CALL that pushes a
+// 2-byte return address and corrupts the stack. So handle the prefix here.
 static bool install_id_trampoline(uint32_t site, void *trampoline, uint32_t *gf_target_out, const char *what)
 {
 	const uint8_t *p = (const uint8_t *)site;
+	uint32_t pre = (p[0] == 0x66) ? 1 : 0;   // optional operand-size prefix
 
-	if (p[0] != 0x83 || p[2] != 0x40)
+	// cmp reg,imm8: (66) 83 /7 ib  (modrm F8=eax/ax, FB=ebx/bx)
+	if (p[pre] != 0x83 || p[pre + 2] != 0x40)
 	{
-		ffnx_warning("AddMoreMagic: unexpected bytes at %s site 0x%X (%02X %02X %02X), skipping patch!\n", what, site, p[0], p[1], p[2]);
+		ffnx_warning("AddMoreMagic: unexpected bytes at %s site 0x%X (%02X %02X %02X %02X), skipping patch!\n",
+			what, site, p[0], p[1], p[2], p[3]);
 		return false;
 	}
 
+	uint32_t cmp_len = pre + 3;           // (prefix) + opcode + modrm + imm8
+	const uint8_t *j = p + cmp_len;       // the following jcc
 	uint32_t patch_size;
-	if ((p[3] & 0xF0) == 0x70) // jcc rel8
+	if ((j[0] & 0xF0) == 0x70)            // jcc rel8 (2 bytes)
 	{
-		*gf_target_out = site + 5 + (int8_t)p[4];
-		patch_size = 5;
+		*gf_target_out = site + cmp_len + 2 + (int8_t)j[1];
+		patch_size = cmp_len + 2;
 	}
-	else if (p[3] == 0x0F && (p[4] & 0xF0) == 0x80) // jcc rel32
+	else if (j[0] == 0x0F && (j[1] & 0xF0) == 0x80) // jcc rel32 (6 bytes)
 	{
-		*gf_target_out = site + 9 + *(int32_t *)(p + 5);
-		patch_size = 9;
+		*gf_target_out = site + cmp_len + 6 + *(int32_t *)(j + 2);
+		patch_size = cmp_len + 6;
 	}
 	else
 	{
-		ffnx_warning("AddMoreMagic: unexpected jcc at %s site 0x%X (%02X), skipping patch!\n", what, site, p[3]);
+		ffnx_warning("AddMoreMagic: unexpected jcc at %s site 0x%X (%02X), skipping patch!\n", what, site, j[0]);
 		return false;
 	}
 
-	uint8_t code[9] = { 0xE8, 0, 0, 0, 0, 0x90, 0x90, 0x90, 0x90 };
+	// call trampoline (5 bytes) + NOP fill for the remainder of the region.
+	uint8_t code[16];
+	code[0] = 0xE8;
 	*(uint32_t *)&code[1] = (uint32_t)trampoline - (site + 5);
+	for (uint32_t i = 5; i < patch_size; ++i) code[i] = 0x90;
 	memcpy_code(site, code, patch_size);
 
 	return true;
