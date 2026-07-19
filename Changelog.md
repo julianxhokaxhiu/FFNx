@@ -10,11 +10,12 @@
 
 ## FF7
 
-- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 + https://github.com/julianxhokaxhiu/FFNx/pull/952 + https://github.com/julianxhokaxhiu/FFNx/pull/953 + https://github.com/julianxhokaxhiu/FFNx/pull/951) 
+- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 + https://github.com/julianxhokaxhiu/FFNx/pull/952 + https://github.com/julianxhokaxhiu/FFNx/pull/953 + https://github.com/julianxhokaxhiu/FFNx/pull/951)
 
 ## FF8
 
 - External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
+- Core: Support kernel.bin Magic sections beyond the vanilla 57 spells, unlocking ids 57-63 and 96-255 (64-95 reserved for GFs)
 
 # 1.24.3
 
