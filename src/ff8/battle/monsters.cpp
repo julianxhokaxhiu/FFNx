@@ -19,6 +19,7 @@
 #include "../../ff8.h"
 #include "../../patch.h"
 #include "../../globals.h"
+#include "../../cfg.h"
 #include "../../log.h"
 
 #include <stdint.h>
@@ -62,6 +63,22 @@
 // (c0m000..c0m143 at indices 166..309, D0C000.DAT immediately at 310, 1117
 // entries total) is confirmed identical across all seven builds, so
 // FF8_BATTLE_FILES_ARRAY_LEN below is not version-dependent.
+//
+// KNOWN LIMITATION (not fixed by this patch - savemap corruption, not a
+// crash): the Scan/Libra "already scanned" bitfield SG_ENEMY_SCANNED_ONCE
+// (savemap global @ 0x1cfe964, IDA-verified) is only 5 DWORDs (20 bytes),
+// immediately followed in the packed savemap struct by SG_RENZOKUKEN_AUTO /
+// SG_RENZOKUKEN_INDICATOR / SG_ODIN_ANGEL_GILGA_FLAG / SG_TUTORIAL_INFO.
+// Both readers/writers of it - Damage_DispatchByAttackType's ATTACK_TYPE_SCAN
+// case (@0x4925a6) and hasEnemyAlreadyScanned (@0x493810) - index it as
+// SG_ENEMY_SCANNED_ONCE[(unsigned __int8)com_file_id / 32] with NO bounds
+// check, so it's only safe for com_file_id (com_id) 0..159. Every com_id this
+// patch adds (160..215, i.e. c0m144..c0m199) is already past that: Scanning
+// any of the new monsters (Scan spell / Libra / Enc-None chance-scan) writes
+// out of bounds into the Renzokuken/tutorial-flag savemap fields above,
+// silently corrupting them. Not addressed here; would need its own hook on
+// the Scan check/write (same shape as the BattleFile_CharacterLoad hook
+// below) to remap or bound com_id before it reaches SG_ENEMY_SCANNED_ONCE.
 // -------------------------------------------------------------------------
 
 // Length of the original BattleFilesArray (US 1.2), indices 0..1116.
@@ -79,6 +96,9 @@
 #define FF8_FIRST_NEW_FILE_INDEX (FF8_FIRST_NEW_COM_ID + 150) // 310
 #define FF8_LAST_NEW_FILE_INDEX  (FF8_LAST_NEW_COM_ID + 150)  // 365
 
+// Must stay static, not stack-local: ff8_battle_monsters_init() hands the exe
+// (via patch_code_dword) and ff8_externals.battle_filenames a raw pointer into
+// these arrays that's expected to remain valid for the rest of the process.
 static char *ff8_extended_battle_filenames[FF8_BATTLE_FILES_ARRAY_LEN + FF8_NEW_C0M_COUNT];
 static char ff8_extended_c0m_names[FF8_NEW_C0M_COUNT][12]; // "C0M199.DAT" + NUL = 11
 
@@ -103,13 +123,13 @@ void ff8_battle_monsters_init()
 {
 	if (!ff8_externals.battle_monster_file_load_call_site || !ff8_externals.battle_file_character_load)
 	{
-		ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
+		if (trace_all) ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
 		return;
 	}
 
 	if (ff8_externals.battle_filenames == nullptr)
 	{
-		ffnx_trace("Extra battle monsters: battle_filenames not resolved, skipping.\n");
+		if (trace_all) ffnx_trace("Extra battle monsters: battle_filenames not resolved, skipping.\n");
 		return;
 	}
 
