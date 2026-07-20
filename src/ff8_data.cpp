@@ -979,92 +979,25 @@ void ff8_find_externals()
 	ff8_externals.field_vars_stack_1CFE9B8 = get_absolute_value(ff8_externals.opcode_pshm_w, 0x1E);
 
 	// AddMoreMagic (src/ff8/kernel_magic.cpp): extended kernel.bin magic
-	// section support.
-	//
-	// Code addresses need the per-version table below: the sites sit at
-	// different absolute addresses in each language build. Unsupported
-	// versions leave every field at 0; kernel_magic.cpp checks that before
-	// arming.
-	switch (version)
-	{
-		case VERSION_FF8_12_US:
-		case VERSION_FF8_12_US_NV:
-		case VERSION_FF8_12_US_EIDOS:
-		case VERSION_FF8_12_US_EIDOS_NV:
-			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_fn_name_getter = 0x47E970u;
-			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
-			ff8_externals.magic_site_spell_visibility = 0x48C7E3u;
-			ff8_externals.magic_site_draw_execute = 0x48D53Bu;
-			ff8_externals.magic_fn_linked_stock = 0x48CAE0u;
-			ff8_externals.magic_fn_reorder_magic = 0x4F0030u;
-			ff8_externals.magic_fn_validate_magic = 0x4BE790u;
-			break;
-		case VERSION_FF8_12_FR:
-		case VERSION_FF8_12_FR_NV:
-			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_fn_name_getter = 0x47E970u;
-			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
-			ff8_externals.magic_site_spell_visibility = 0x48C813u;
-			ff8_externals.magic_site_draw_execute = 0x48D56Cu;
-			ff8_externals.magic_fn_linked_stock = 0x48CB10u;
-			ff8_externals.magic_fn_reorder_magic = 0x4EFB90u;
-			ff8_externals.magic_fn_validate_magic = 0x4BE2B0u;
-			break;
-		case VERSION_FF8_12_DE:
-		case VERSION_FF8_12_DE_NV:
-			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_fn_name_getter = 0x47E970u;
-			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
-			ff8_externals.magic_site_spell_visibility = 0x48C813u;
-			ff8_externals.magic_site_draw_execute = 0x48D56Cu;
-			ff8_externals.magic_fn_linked_stock = 0x48CB10u;
-			ff8_externals.magic_fn_reorder_magic = 0x4EFC00u;
-			ff8_externals.magic_fn_validate_magic = 0x4BE320u;
-			break;
-		case VERSION_FF8_12_SP:
-		case VERSION_FF8_12_SP_NV:
-			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_fn_name_getter = 0x47E970u;
-			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
-			ff8_externals.magic_site_spell_visibility = 0x48C863u;
-			ff8_externals.magic_site_draw_execute = 0x48D5BCu;
-			ff8_externals.magic_fn_linked_stock = 0x48CB60u;
-			ff8_externals.magic_fn_reorder_magic = 0x4EFC30u;
-			ff8_externals.magic_fn_validate_magic = 0x4BE350u;
-			break;
-		case VERSION_FF8_12_IT:
-		case VERSION_FF8_12_IT_NV:
-			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_fn_name_getter = 0x47E970u;
-			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
-			ff8_externals.magic_site_spell_visibility = 0x48C803u;
-			ff8_externals.magic_site_draw_execute = 0x48D55Cu;
-			ff8_externals.magic_fn_linked_stock = 0x48CB00u;
-			ff8_externals.magic_fn_reorder_magic = 0x4EFC00u;
-			ff8_externals.magic_fn_validate_magic = 0x4BE320u;
-			break;
-		case VERSION_FF8_12_JP:
-			ff8_externals.magic_kernel_read_call = 0x480886u;
-			ff8_externals.magic_fn_name_getter = 0x481EC0u;
-			ff8_externals.magic_fn_desc_getter = 0x481F10u;
-			ff8_externals.magic_site_spell_visibility = 0x48FCC3u;
-			ff8_externals.magic_site_draw_execute = 0x490A36u;
-			ff8_externals.magic_fn_linked_stock = 0x48FFC0u;
-			ff8_externals.magic_fn_reorder_magic = 0x4F3FB0u;
-			ff8_externals.magic_fn_validate_magic = 0x4C2B20u;
-			break;
-		case VERSION_FF8_12_JP_NV:
-			ff8_externals.magic_kernel_read_call = 0x4808E6u;
-			ff8_externals.magic_fn_name_getter = 0x481F20u;
-			ff8_externals.magic_fn_desc_getter = 0x481F70u;
-			ff8_externals.magic_site_spell_visibility = 0x48FD23u;
-			ff8_externals.magic_site_draw_execute = 0x490A96u;
-			ff8_externals.magic_fn_linked_stock = 0x490020u;
-			ff8_externals.magic_fn_reorder_magic = 0x4F41C0u;
-			ff8_externals.magic_fn_validate_magic = 0x4C2D30u;
-			break;
-	}
+	// section support. Code addresses are resolved relatively, like everything
+	// else in this file; the few per-family offsets follow the same ternary
+	// convention used elsewhere (e.g. battle_sub_494410 above).
+	ff8_externals.init_data_at_start_sub_470440 = get_absolute_value(ff8_externals.credits_main_loop, 0xD2);
+	ff8_externals.read_kernel_files_sub_47D2A0 = get_relative_call(get_relative_call(ff8_externals.init_data_at_start_sub_470440, 0x22), 0);
+	ff8_externals.magic_kernel_read_call = ff8_externals.read_kernel_files_sub_47D2A0 + 0x96; // call LoadFileToBuffer(name, KERNEL_HEADER)
+
+	ff8_externals.set_all_monster_info_sub_48BA10 = get_relative_call(ff8_externals.sub_47CCB0, 0x996);
+	ff8_externals.manage_monster_spell_visibility_sub_48C7A0 = get_relative_call(ff8_externals.set_all_monster_info_sub_48BA10, 0x1A7);
+	ff8_externals.magic_site_spell_visibility = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + 0x43; // cmp eax,40h / jge
+	ff8_externals.magic_fn_linked_stock = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + 0x340;
+	ff8_externals.magic_site_draw_execute = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + (FF8_US_VERSION ? 0xD9B : (JP_VERSION ? 0xDB6 : 0xD9C)); // 66 cmp bx,40h / jnb, inside computeCommandAction
+
+	ff8_externals.magic_fn_name_getter = get_relative_call(ff8_externals.battle_sub_48D200, FF8_US_VERSION ? 0x3C3 : (JP_VERSION ? 0x3DE : 0x3C4));
+	ff8_externals.magic_fn_desc_getter = ff8_externals.magic_fn_name_getter + 0x50;
+
+	ff8_externals.magic_fn_validate_magic = get_relative_call(uint32_t(ff8_externals.menu_callbacks[1].func), 0xE5);
+	ff8_externals.linked_menu_magic_sub_4F02F0 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[3].func), 0x8);
+	ff8_externals.magic_fn_reorder_magic = get_relative_call(ff8_externals.linked_menu_magic_sub_4F02F0, 0x47BC);
 
 	// LoadFileToBuffer is the function magic_kernel_read_call invokes, so it
 	// is read straight out of a call to it rather than hardcoded: LoadBattleFile
