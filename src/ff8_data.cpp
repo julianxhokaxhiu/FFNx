@@ -991,7 +991,6 @@ void ff8_find_externals()
 		case VERSION_FF8_12_US_NV:
 		case VERSION_FF8_12_US_EIDOS:
 		case VERSION_FF8_12_US_EIDOS_NV:
-			ff8_externals.magic_load_file_to_buf = 0x52D400u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
 			ff8_externals.magic_fn_name_getter = 0x47E970u;
 			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
@@ -1003,7 +1002,6 @@ void ff8_find_externals()
 			break;
 		case VERSION_FF8_12_FR:
 		case VERSION_FF8_12_FR_NV:
-			ff8_externals.magic_load_file_to_buf = 0x52CF60u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
 			ff8_externals.magic_fn_name_getter = 0x47E970u;
 			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
@@ -1015,7 +1013,6 @@ void ff8_find_externals()
 			break;
 		case VERSION_FF8_12_DE:
 		case VERSION_FF8_12_DE_NV:
-			ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
 			ff8_externals.magic_fn_name_getter = 0x47E970u;
 			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
@@ -1027,7 +1024,6 @@ void ff8_find_externals()
 			break;
 		case VERSION_FF8_12_SP:
 		case VERSION_FF8_12_SP_NV:
-			ff8_externals.magic_load_file_to_buf = 0x52D000u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
 			ff8_externals.magic_fn_name_getter = 0x47E970u;
 			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
@@ -1039,7 +1035,6 @@ void ff8_find_externals()
 			break;
 		case VERSION_FF8_12_IT:
 		case VERSION_FF8_12_IT_NV:
-			ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
 			ff8_externals.magic_fn_name_getter = 0x47E970u;
 			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
@@ -1050,7 +1045,6 @@ void ff8_find_externals()
 			ff8_externals.magic_fn_validate_magic = 0x4BE320u;
 			break;
 		case VERSION_FF8_12_JP:
-			ff8_externals.magic_load_file_to_buf = 0x5310B0u;
 			ff8_externals.magic_kernel_read_call = 0x480886u;
 			ff8_externals.magic_fn_name_getter = 0x481EC0u;
 			ff8_externals.magic_fn_desc_getter = 0x481F10u;
@@ -1061,7 +1055,6 @@ void ff8_find_externals()
 			ff8_externals.magic_fn_validate_magic = 0x4C2B20u;
 			break;
 		case VERSION_FF8_12_JP_NV:
-			ff8_externals.magic_load_file_to_buf = 0x5312C0u;
 			ff8_externals.magic_kernel_read_call = 0x4808E6u;
 			ff8_externals.magic_fn_name_getter = 0x481F20u;
 			ff8_externals.magic_fn_desc_getter = 0x481F70u;
@@ -1072,6 +1065,12 @@ void ff8_find_externals()
 			ff8_externals.magic_fn_validate_magic = 0x4C2D30u;
 			break;
 	}
+
+	// LoadFileToBuffer is the function magic_kernel_read_call invokes, so it
+	// is read straight out of a call to it rather than hardcoded: LoadBattleFile
+	// (already resolved as battle_open_file) calls it at +0x8E. ff8_kernel_magic_init
+	// cross-checks this against the call it is about to hook.
+	ff8_externals.magic_load_file_to_buf = get_relative_call(ff8_externals.battle_open_file, 0x8E);
 
 	// Data addresses are read straight out of the instructions that reference
 	// them, so each address comes from the game rather than from an offset we
