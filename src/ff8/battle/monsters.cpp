@@ -193,21 +193,18 @@ static uint32_t ff8_count_battle_filenames(const char *const *filenames)
 	return count;
 }
 
-// Original battle_load_file_sub_508480(fileIndex, dst), saved so the hook below
-// can forward to it after remapping.
-static int (*ff8_battle_load_file)(int fileIndex, void *dst) = nullptr;
-
 // C replacement for the loader's "index = com_id + 150" remap. Hooked onto the
 // single battle-file load call inside battle_monster_dat_loader, which is only
 // ever reached for monsters, so a file index in 310..365 unambiguously means
 // one of the newly unlocked c0m144..c0m199; those get remapped onto the
-// appended table entries and everything else is forwarded untouched.
+// appended table entries and everything else is forwarded to the original
+// battle_load_file_sub_508480 untouched.
 static int ff8_battle_monster_load_file(int fileIndex, void *dst)
 {
 	if (fileIndex >= FF8_FIRST_NEW_FILE_INDEX && fileIndex <= FF8_LAST_NEW_FILE_INDEX)
 		fileIndex = ff8_battle_files_count + (fileIndex - FF8_FIRST_NEW_FILE_INDEX);
 
-	return ff8_battle_load_file(fileIndex, dst);
+	return ((int (*)(int, void *))ff8_externals.battle_load_file_sub_508480)(fileIndex, dst);
 }
 
 // Looks up a battle-relative file's real size on disk without reading it,
@@ -362,9 +359,9 @@ void ff8_battle_monsters_init()
 	//    ff8_externals.battle_filenames and pick the extended table up directly.
 	patch_code_dword(ff8_externals.battle_open_file + 0x11, (DWORD)(uintptr_t)ff8_externals.battle_filenames);
 
-	// 2) Redirect the monster loader's battle-file load call to the C hook,
-	//    keeping the original target to forward to.
-	ff8_battle_load_file = (int (*)(int, void *))ff8_externals.battle_load_file_sub_508480;
+	// 2) Redirect the monster loader's battle-file load call to the C hook; it
+	//    forwards to the original battle_load_file_sub_508480 for everything but
+	//    the remapped range.
 	replace_call(ff8_externals.battle_monster_file_load_call_site, (void *)&ff8_battle_monster_load_file);
 
 	// 3) Relocate the Scan scanned-once bitfield so it stays in bounds
