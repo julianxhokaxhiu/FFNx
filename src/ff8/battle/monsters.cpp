@@ -60,9 +60,10 @@
 // (battle_load_file_sub_508480) are likewise resolved relatively in
 // ff8_data.cpp; the +0x240 offset is confirmed identical across all seven
 // retail 1.2 exe files (EN/FR/DE/IT/SP/JP/JP_NV). The BattleFilesArray table
-// (c0m000..c0m143 at indices 166..309, D0C000.DAT immediately at 310, 1117
-// entries total) is confirmed identical across all seven builds, so
-// FF8_BATTLE_FILES_ARRAY_LEN below is not version-dependent.
+// (c0m000..c0m143 at indices 166..309, D0C000.DAT immediately at 310) is
+// confirmed identical across all seven builds. Its length is not hardcoded
+// either: it is counted at init by walking the table while its entries still
+// look like pointers into the module image (see ff8_count_battle_filenames).
 //
 // Scan savemap overflow fix: the "already scanned" bitfield
 // SG_ENEMY_SCANNED_ONCE (savemap global @ 0x1cfe964, IDA-verified, modelled
@@ -105,8 +106,10 @@
 // serve no purpose.
 // -------------------------------------------------------------------------
 
-// Length of the original BattleFilesArray (US 1.2), indices 0..1116.
-#define FF8_BATTLE_FILES_ARRAY_LEN 1117
+// Sanity bound while counting the original BattleFilesArray; it holds 1117
+// entries on every retail 1.2 build, so this only exists to stop a runaway
+// walk if the table ever looks unfamiliar.
+#define FF8_BATTLE_FILES_ARRAY_MAX 4096
 // c0m file range to add.
 #define FF8_FIRST_NEW_C0M 144
 #define FF8_LAST_NEW_C0M  199
@@ -138,11 +141,41 @@ static_assert(FF8_SCANNED_ONCE_RELOCATE_SIZE >= 32, "must cover the full 0..255 
 #define FF8_SCENE_OUT_ENEMY_COM_VALUE_OFFSET 56
 #define FF8_SCENE_OUT_ENEMY_SLOTS            8
 
-// Must stay static, not stack-local: ff8_battle_monsters_init() hands the exe
-// (via patch_code_dword) and ff8_externals.battle_filenames a raw pointer into
-// these arrays that's expected to remain valid for the rest of the process.
-static char *ff8_extended_battle_filenames[FF8_BATTLE_FILES_ARRAY_LEN + FF8_NEW_C0M_COUNT];
+// Both of these are handed to the exe (via patch_code_dword) and to
+// ff8_externals.battle_filenames as raw pointers, so they must stay valid for
+// the rest of the process: heap-allocated once, never freed, and static.
+static char **ff8_extended_battle_filenames = nullptr;
 static char ff8_extended_c0m_names[FF8_NEW_C0M_COUNT][12]; // "C0M199.DAT" + NUL = 11
+// Length of the original BattleFilesArray, counted at init (see below).
+static uint32_t ff8_battle_files_count = 0;
+
+// Counts the original BattleFilesArray instead of hardcoding its length. Every
+// entry is a pointer to a filename string inside the loaded module image, and
+// the dword immediately after the last entry is not (it is 0x101 on US 1.2),
+// so the run of in-image pointers ends exactly at the end of the array. Bounds
+// come from the module's own PE header, so this needs no per-version literal.
+static uint32_t ff8_count_battle_filenames(const char *const *filenames)
+{
+	HMODULE module = GetModuleHandleA(nullptr);
+	PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)module;
+	PIMAGE_NT_HEADERS nt = (PIMAGE_NT_HEADERS)((BYTE *)module + dos->e_lfanew);
+
+	uintptr_t image_start = (uintptr_t)module;
+	uintptr_t image_end = image_start + nt->OptionalHeader.SizeOfImage;
+
+	uint32_t count = 0;
+	while (count < FF8_BATTLE_FILES_ARRAY_MAX)
+	{
+		uintptr_t entry = (uintptr_t)filenames[count];
+
+		if (entry < image_start || entry >= image_end)
+			break;
+
+		++count;
+	}
+
+	return count;
+}
 
 // Original battle_load_file_sub_508480(fileIndex, dst), saved so the hook below
 // can forward to it after remapping.
@@ -156,7 +189,7 @@ static int (*ff8_battle_load_file)(int fileIndex, void *dst) = nullptr;
 static int ff8_battle_monster_load_file(int fileIndex, void *dst)
 {
 	if (fileIndex >= FF8_FIRST_NEW_FILE_INDEX && fileIndex <= FF8_LAST_NEW_FILE_INDEX)
-		fileIndex = FF8_BATTLE_FILES_ARRAY_LEN + (fileIndex - FF8_FIRST_NEW_FILE_INDEX);
+		fileIndex = ff8_battle_files_count + (fileIndex - FF8_FIRST_NEW_FILE_INDEX);
 
 	return ff8_battle_load_file(fileIndex, dst);
 }
@@ -273,12 +306,23 @@ void ff8_battle_monsters_init()
 		return;
 	}
 
+	ff8_battle_files_count = ff8_count_battle_filenames(ff8_externals.battle_filenames);
+	if (ff8_battle_files_count == 0 || ff8_battle_files_count >= FF8_BATTLE_FILES_ARRAY_MAX)
+	{
+		ffnx_warning("Extra battle monsters: unexpected battle file table length (%u), skipping.\n", ff8_battle_files_count);
+		return;
+	}
+
 	// 1) Copy the original table verbatim, then append the new c0m entries.
-	memcpy(ff8_extended_battle_filenames, ff8_externals.battle_filenames, FF8_BATTLE_FILES_ARRAY_LEN * sizeof(char *));
-	for (int i = 0; i < FF8_NEW_C0M_COUNT; ++i)
+	ff8_extended_battle_filenames = (char **)driver_malloc((ff8_battle_files_count + FF8_NEW_C0M_COUNT) * sizeof(char *));
+	if (ff8_extended_battle_filenames == nullptr)
+		return;
+
+	memcpy(ff8_extended_battle_filenames, ff8_externals.battle_filenames, ff8_battle_files_count * sizeof(char *));
+	for (uint32_t i = 0; i < FF8_NEW_C0M_COUNT; ++i)
 	{
 		snprintf(ff8_extended_c0m_names[i], sizeof(ff8_extended_c0m_names[i]), "C0M%03d.DAT", FF8_FIRST_NEW_C0M + i);
-		ff8_extended_battle_filenames[FF8_BATTLE_FILES_ARRAY_LEN + i] = ff8_extended_c0m_names[i];
+		ff8_extended_battle_filenames[ff8_battle_files_count + i] = ff8_extended_c0m_names[i];
 	}
 
 	//    Repoint LoadBattleFile's array base: mov ebx, BattleFilesArray[eax*4].
@@ -300,8 +344,15 @@ void ff8_battle_monsters_init()
 	//    only when scene.out actually references one - a vanilla or
 	//    not-yet-updated scene.out never reaches a com_id past 159, so the
 	//    native field is already safe and there's nothing to relocate.
-	if (ff8_scene_out_uses_new_monsters())
+	bool uses_new_monsters = ff8_scene_out_uses_new_monsters();
+
+	if (uses_new_monsters)
 		ff8_relocate_enemy_scanned_once();
 
-	ffnx_info("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
+	// Only worth reporting when a mod actually references one of the new
+	// monsters: the table is extended on every supported build, but on a
+	// vanilla install nothing ever indexes into the appended range, so staying
+	// quiet there keeps this out of everyone else's log.
+	if (uses_new_monsters && trace_all)
+		ffnx_trace("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d (%u original battle files).\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID, ff8_battle_files_count);
 }
