@@ -981,25 +981,7 @@ void ff8_find_externals()
 	// AddMoreMagic (src/ff8/kernel_magic.cpp): extended kernel.bin magic
 	// section support.
 	//
-	// Data addresses need no per-version table. Every build places these
-	// globals in one data block that only shifts wholesale per language, so
-	// each address is a fixed offset from an already-resolved external in the
-	// same neighbourhood:
-	//  - the kernel.bin load buffer (unk_1CF3E48) for the two kernel data
-	//    sections, whose offsets are just the kernel's own section offsets;
-	//  - the savemap/field-variable block base (field_vars_stack_1CFE9B8) for
-	//    the savemap fields, matching the layout in ff8/save_data.h;
-	//  - menu_data_1D76A9C / dword_1D2B808 for the two menu globals.
-	ff8_externals.magic_k_battle_command = uint32_t(ff8_externals.unk_1CF3E48) + 228;  // kernel.bin data section 0
-	ff8_externals.magic_k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 540;  // kernel.bin data section 1
-	ff8_externals.magic_sg_chara_data    = ff8_externals.field_vars_stack_1CFE9B8 - 0x8D0;
-	ff8_externals.magic_sg_drawn_once    = ff8_externals.field_vars_stack_1CFE9B8 - 0x5C;  // savemap_ff8_battle::magic_drawn_once
-	ff8_externals.magic_f_char_data      = ff8_externals.field_vars_stack_1CFE9B8 + 0x648;
-	ff8_externals.magic_sg_gf_data       = ff8_externals.field_vars_stack_1CFE9B8 - 0xD10;
-	ff8_externals.magic_valid_junction   = uint32_t(ff8_externals.menu_data_1D76A9C) + 0x6B8;
-	ff8_externals.magic_magsort_buffer   = uint32_t(ff8_externals.dword_1D2B808) + 0x354;
-
-	// Code addresses still need the per-version table below: the sites sit at
+	// Code addresses need the per-version table below: the sites sit at
 	// different absolute addresses in each language build. Unsupported
 	// versions leave every field at 0; kernel_magic.cpp checks that before
 	// arming.
@@ -1089,6 +1071,35 @@ void ff8_find_externals()
 			ff8_externals.magic_fn_reorder_magic = 0x4F41C0u;
 			ff8_externals.magic_fn_validate_magic = 0x4C2D30u;
 			break;
+	}
+
+	// Data addresses are read straight out of the instructions that reference
+	// them, so each address comes from the game rather than from an offset we
+	// picked: whatever a function dereferences is the global, by definition.
+	// The offsets below are therefore positions of a disp32 operand inside a
+	// function already resolved above, not distances between two globals.
+	// Guarded on the code addresses, since an unsupported build leaves those
+	// at 0 and there would be nothing to read from.
+	//
+	// The two kernel.bin sections stay derived from the load buffer instead:
+	// there the relationship is real (buffer + the kernel's own section
+	// offsets), not an offset of convenience.
+	if (ff8_externals.magic_fn_name_getter)
+	{
+		ff8_externals.magic_k_battle_command = uint32_t(ff8_externals.unk_1CF3E48) + 228;  // kernel.bin data section 0
+		ff8_externals.magic_k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 540;  // kernel.bin data section 1
+
+		ff8_externals.magic_sg_gf_data      = get_absolute_value(ff8_externals.magic_fn_name_getter, 0x43);     // lea eax, SG_GF_DATA[edx*4]
+		ff8_externals.magic_f_char_data     = get_absolute_value(ff8_externals.magic_fn_linked_stock, 0x28);    // lea eax, F_CHAR_DATA[edx]
+		ff8_externals.magic_valid_junction  = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x14);  // mov VALID_JUNCTION[ebp*8], ebx
+		ff8_externals.magic_magsort_buffer  = get_absolute_value(ff8_externals.magic_fn_reorder_magic, 0x2);    // mov ecx, MAGSORT_BUFFER
+		// This one points at the magic array inside the character record
+		// (record + 16), so step back to the start of the record.
+		ff8_externals.magic_sg_chara_data   = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x38) - 16; // lea esi, SG_CHARA_DATA[edi]
+		// Not reachable from a magic_fn_* function, but sub_48B7E0 is one of
+		// the five sites that index the drawn-once bitfield and is already
+		// resolved above.
+		ff8_externals.magic_sg_drawn_once   = get_absolute_value(ff8_externals.sub_48B7E0, 0x71);               // or DRAWN_ONCE[eax*4], edx
 	}
 
 	common_externals.current_triangle_id = 0x0;
