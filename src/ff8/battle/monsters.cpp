@@ -156,19 +156,20 @@ static_assert(FF8_SCANNED_ONCE_RELOCATE_SIZE >= 32, "must cover the full 0..255 
 #define FF8_SCENE_OUT_ENEMY_COM_VALUE_OFFSET 56
 #define FF8_SCENE_OUT_ENEMY_SLOTS            8
 
-// Both of these are handed to the exe (via patch_code_dword) and to
-// ff8_externals.battle_filenames as raw pointers, so they must stay valid for
-// the rest of the process: heap-allocated once, never freed, and static.
-static char **ff8_extended_battle_filenames = nullptr;
+// Backing storage for the new entries appended to battle_filenames; the table
+// keeps raw pointers into it for the rest of the process, so it must stay
+// static.
 static char ff8_extended_c0m_names[FF8_NEW_C0M_COUNT][12]; // "C0M199.DAT" + NUL = 11
 // Length of the original BattleFilesArray, counted at init (see below).
 static uint32_t ff8_battle_files_count = 0;
 
-// Counts the original BattleFilesArray instead of hardcoding its length. Every
-// entry is a pointer to a filename string inside the loaded module image, and
-// the dword immediately after the last entry is not (it is 0x101 on US 1.2),
-// so the run of in-image pointers ends exactly at the end of the array. Bounds
-// come from the module's own PE header, so this needs no per-version literal.
+// Counts the original BattleFilesArray. The exe never stores this table's
+// length anywhere - LoadBattleFile indexes it blindly - so there is no value
+// in memory to read back; it has to be measured. Every entry is a pointer to
+// a filename literal inside the exe's own image (bounds read from our own PE
+// header, the same way getProcessEntryPoint in utils.cpp does), and the dword
+// immediately after the last entry is not one (it is 0x101 on US 1.2), so the
+// run of in-image pointers ends exactly at the end of the array.
 static uint32_t ff8_count_battle_filenames(const char *const *filenames)
 {
 	HMODULE module = GetModuleHandleA(nullptr);
@@ -218,17 +219,25 @@ static int ff8_battle_monster_load_file(int fileIndex, void *dst)
 static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t *size_out)
 {
 	char full_path[MAX_PATH];
-	WIN32_FILE_ATTRIBUTE_DATA attr;
 
 	snprintf(full_path, sizeof(full_path), "%s\\direct\\%s", ff8_externals.app_path, relative_path);
-	if (!GetFileAttributesExA(full_path, GetFileExInfoStandard, &attr))
+	FILE *file = fopen(full_path, "rb");
+	if (file == nullptr)
 	{
 		snprintf(full_path, sizeof(full_path), "%s\\%s", ff8_externals.app_path, relative_path);
-		if (!GetFileAttributesExA(full_path, GetFileExInfoStandard, &attr))
+		file = fopen(full_path, "rb");
+		if (file == nullptr)
 			return false;
 	}
 
-	*size_out = attr.nFileSizeLow;
+	fseek(file, 0, SEEK_END);
+	long file_size = ftell(file);
+	fclose(file);
+
+	if (file_size <= 0)
+		return false;
+
+	*size_out = (uint32_t)file_size;
 	return true;
 }
 
@@ -300,7 +309,7 @@ static void ff8_relocate_enemy_scanned_once()
 
 	if (from != *(uint32_t *)ff8_externals.battle_enemy_scanned_write_operand || from != expected)
 	{
-		ffnx_warning("Extra battle monsters: Scan scanned-once operands do not agree with the savemap layout (read 0x%08X, expected 0x%08X), skipping relocation - scanning c0m144-c0m199 may corrupt the savemap!\n", from, expected);
+		if (trace_all) ffnx_warning("Extra battle monsters: Scan scanned-once operands do not agree with the savemap layout (read 0x%08X, expected 0x%08X), skipping relocation - scanning c0m144-c0m199 may corrupt the savemap!\n", from, expected);
 		return;
 	}
 
@@ -327,30 +336,31 @@ void ff8_battle_monsters_init()
 	ff8_battle_files_count = ff8_count_battle_filenames(ff8_externals.battle_filenames);
 	if (ff8_battle_files_count == 0 || ff8_battle_files_count >= FF8_BATTLE_FILES_ARRAY_MAX)
 	{
-		ffnx_warning("Extra battle monsters: unexpected battle file table length (%u), skipping.\n", ff8_battle_files_count);
+		if (trace_all) ffnx_warning("Extra battle monsters: unexpected battle file table length (%u), skipping.\n", ff8_battle_files_count);
 		return;
 	}
 
 	// 1) Copy the original table verbatim, then append the new c0m entries.
-	ff8_extended_battle_filenames = (char **)driver_malloc((ff8_battle_files_count + FF8_NEW_C0M_COUNT) * sizeof(char *));
-	if (ff8_extended_battle_filenames == nullptr)
+	//    The game's own table is a static exe array, never freed; its extended
+	//    replacement is likewise allocated once for the whole process and owned
+	//    by ff8_externals.battle_filenames from here on.
+	char **extended_filenames = (char **)driver_malloc((ff8_battle_files_count + FF8_NEW_C0M_COUNT) * sizeof(char *));
+	if (extended_filenames == nullptr)
 		return;
 
-	memcpy(ff8_extended_battle_filenames, ff8_externals.battle_filenames, ff8_battle_files_count * sizeof(char *));
+	memcpy(extended_filenames, ff8_externals.battle_filenames, ff8_battle_files_count * sizeof(char *));
 	for (uint32_t i = 0; i < FF8_NEW_C0M_COUNT; ++i)
 	{
 		snprintf(ff8_extended_c0m_names[i], sizeof(ff8_extended_c0m_names[i]), "C0M%03d.DAT", FF8_FIRST_NEW_C0M + i);
-		ff8_extended_battle_filenames[ff8_battle_files_count + i] = ff8_extended_c0m_names[i];
+		extended_filenames[ff8_battle_files_count + i] = ff8_extended_c0m_names[i];
 	}
+	ff8_externals.battle_filenames = extended_filenames;
 
-	//    Repoint LoadBattleFile's array base: mov ebx, BattleFilesArray[eax*4].
+	//    Repoint LoadBattleFile's array base to it: mov ebx, BattleFilesArray[eax*4].
 	//    battle_open_file + 0x11 is the absolute displacement of that instruction.
-	patch_code_dword(ff8_externals.battle_open_file + 0x11, (DWORD)(uintptr_t)ff8_extended_battle_filenames);
-
-	//    Also repoint FFNx's own cached base pointer so the hooks that index it
-	//    (ff8_battle_open_and_read_file in vram.cpp) resolve the appended
-	//    c0m144-199 indices instead of reading past the original array.
-	ff8_externals.battle_filenames = ff8_extended_battle_filenames;
+	//    FFNx's own hooks (ff8_battle_open_and_read_file in vram.cpp) read
+	//    ff8_externals.battle_filenames and pick the extended table up directly.
+	patch_code_dword(ff8_externals.battle_open_file + 0x11, (DWORD)(uintptr_t)ff8_externals.battle_filenames);
 
 	// 2) Redirect the monster loader's battle-file load call to the C hook,
 	//    keeping the original target to forward to.
