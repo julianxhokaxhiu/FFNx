@@ -1670,10 +1670,12 @@ struct ff8_externals
 	DWORD* battle_current_actor_talking;
 	uint32_t sub_502380;
 	uint32_t sub_50A790;
-	uint32_t sub_50B830; // embedded pointer read out of sub_50A790 ("mov eax, offset ...")
-	uint32_t battle_task_dispatch_com_entity_load; // resolved via a call inside sub_50B830
-	uint32_t battle_monster_dat_loader; // embedded pointer read out of battle_task_dispatch_com_entity_load
-	uint32_t battle_file_character_load; // BattleFile_CharacterLoad, the monster loader's file-load call target (see monsters.cpp)
+	uint32_t sub_502670; // embedded pointer read out of sub_502380 ("push offset ...")
+	uint32_t battle_entity_task_dispatch_sub_507080; // maps a battle entity id to its task function; called from sub_502670
+	uint32_t battle_monster_dat_loader; // sub_507120, the entity task for monsters; embedded pointer read out of the dispatcher
+	uint32_t battle_load_file_sub_508480; // generic "load battle file by index" wrapper, the monster loader's file-load call target (see monsters.cpp)
+	uint32_t battle_enemy_scanned_read_operand;  // disp32 of the ATTACK_TYPE_SCAN "already scanned?" test (see monsters.cpp)
+	uint32_t battle_enemy_scanned_write_operand; // disp32 of the "mark this com_id scanned" or (see monsters.cpp)
 	uint32_t sub_50A9A0;
 	uint32_t battle_read_effect_sub_50AF20;
 	DWORD* func_off_battle_effects_C81774;
