@@ -995,6 +995,7 @@ void ff8_find_externals()
 	ff8_externals.magic_sg_chara_data    = ff8_externals.field_vars_stack_1CFE9B8 - 0x8D0;
 	ff8_externals.magic_sg_drawn_once    = ff8_externals.field_vars_stack_1CFE9B8 - 0x5C;  // savemap_ff8_battle::magic_drawn_once
 	ff8_externals.magic_f_char_data      = ff8_externals.field_vars_stack_1CFE9B8 + 0x648;
+	ff8_externals.magic_sg_gf_data       = ff8_externals.field_vars_stack_1CFE9B8 - 0xD10;
 	ff8_externals.magic_valid_junction   = uint32_t(ff8_externals.menu_data_1D76A9C) + 0x6B8;
 	ff8_externals.magic_magsort_buffer   = uint32_t(ff8_externals.dword_1D2B808) + 0x354;
 
@@ -1010,8 +1011,8 @@ void ff8_find_externals()
 		case VERSION_FF8_12_US_EIDOS_NV:
 			ff8_externals.magic_load_file_to_buf = 0x52D400u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_site_name_getter = 0x47E974u;
-			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_fn_name_getter = 0x47E970u;
+			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
 			ff8_externals.magic_site_spell_visibility = 0x48C7E3u;
 			ff8_externals.magic_site_draw_execute = 0x48D53Bu;
 			ff8_externals.magic_fn_linked_stock = 0x48CAE0u;
@@ -1022,8 +1023,8 @@ void ff8_find_externals()
 		case VERSION_FF8_12_FR_NV:
 			ff8_externals.magic_load_file_to_buf = 0x52CF60u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_site_name_getter = 0x47E974u;
-			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_fn_name_getter = 0x47E970u;
+			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
 			ff8_externals.magic_site_spell_visibility = 0x48C813u;
 			ff8_externals.magic_site_draw_execute = 0x48D56Cu;
 			ff8_externals.magic_fn_linked_stock = 0x48CB10u;
@@ -1034,8 +1035,8 @@ void ff8_find_externals()
 		case VERSION_FF8_12_DE_NV:
 			ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_site_name_getter = 0x47E974u;
-			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_fn_name_getter = 0x47E970u;
+			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
 			ff8_externals.magic_site_spell_visibility = 0x48C813u;
 			ff8_externals.magic_site_draw_execute = 0x48D56Cu;
 			ff8_externals.magic_fn_linked_stock = 0x48CB10u;
@@ -1046,8 +1047,8 @@ void ff8_find_externals()
 		case VERSION_FF8_12_SP_NV:
 			ff8_externals.magic_load_file_to_buf = 0x52D000u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_site_name_getter = 0x47E974u;
-			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_fn_name_getter = 0x47E970u;
+			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
 			ff8_externals.magic_site_spell_visibility = 0x48C863u;
 			ff8_externals.magic_site_draw_execute = 0x48D5BCu;
 			ff8_externals.magic_fn_linked_stock = 0x48CB60u;
@@ -1058,8 +1059,8 @@ void ff8_find_externals()
 		case VERSION_FF8_12_IT_NV:
 			ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
 			ff8_externals.magic_kernel_read_call = 0x47D336u;
-			ff8_externals.magic_site_name_getter = 0x47E974u;
-			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_fn_name_getter = 0x47E970u;
+			ff8_externals.magic_fn_desc_getter = 0x47E9C0u;
 			ff8_externals.magic_site_spell_visibility = 0x48C803u;
 			ff8_externals.magic_site_draw_execute = 0x48D55Cu;
 			ff8_externals.magic_fn_linked_stock = 0x48CB00u;
@@ -1069,8 +1070,8 @@ void ff8_find_externals()
 		case VERSION_FF8_12_JP:
 			ff8_externals.magic_load_file_to_buf = 0x5310B0u;
 			ff8_externals.magic_kernel_read_call = 0x480886u;
-			ff8_externals.magic_site_name_getter = 0x481EC4u;
-			ff8_externals.magic_site_desc_getter = 0x481F14u;
+			ff8_externals.magic_fn_name_getter = 0x481EC0u;
+			ff8_externals.magic_fn_desc_getter = 0x481F10u;
 			ff8_externals.magic_site_spell_visibility = 0x48FCC3u;
 			ff8_externals.magic_site_draw_execute = 0x490A36u;
 			ff8_externals.magic_fn_linked_stock = 0x48FFC0u;
@@ -1080,8 +1081,8 @@ void ff8_find_externals()
 		case VERSION_FF8_12_JP_NV:
 			ff8_externals.magic_load_file_to_buf = 0x5312C0u;
 			ff8_externals.magic_kernel_read_call = 0x4808E6u;
-			ff8_externals.magic_site_name_getter = 0x481F24u;
-			ff8_externals.magic_site_desc_getter = 0x481F74u;
+			ff8_externals.magic_fn_name_getter = 0x481F20u;
+			ff8_externals.magic_fn_desc_getter = 0x481F70u;
 			ff8_externals.magic_site_spell_visibility = 0x48FD23u;
 			ff8_externals.magic_site_draw_execute = 0x490A96u;
 			ff8_externals.magic_fn_linked_stock = 0x490020u;

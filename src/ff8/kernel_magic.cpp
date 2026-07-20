@@ -44,15 +44,18 @@
 //  2. Copies ALL magic entries (up to 256) into an FFNx-side table and
 //     rewrites every code displacement targeting [K_MAGIC, K_MAGIC_END)
 //     to the table (the exe never bounds-checks these indexings).
-//  3. Fixes the 4 magic-vs-GF classification branches (cmp id,64) so only
-//     64..79 take the GF path: name getter, description getter, draw-list
-//     visibility, Draw-command execution.
-//  4. Replaces 3 functions that cannot be branch-patched:
+//  3. Replaces 5 functions outright (replace_function), in C:
+//     - the magic name and description getters, whose whole body is the
+//       "cmp id,64" split (so they need no code patching of their own),
 //     - linkedStockFieldCharData (Draw->Stock setup; split cmp/jcc),
 //     - menu_reorder_magic (writes a 64-byte STACK buffer indexed by
 //       spell id -> would corrupt the stack with extended ids),
 //     - sub_4BE790 (per-char held-magic + junction validate; writes a
 //       64-bit STACK bitfield indexed by id/32 -> stack smash for id >= 64).
+//  4. Fixes the 2 remaining magic-vs-GF classification branches (cmp id,64)
+//     so only 64..79 take the GF path: draw-list visibility and Draw-command
+//     execution. Both sit deep inside large functions and are not at a call,
+//     so they get a small stub instead (see ff8_build_classify_stub).
 //  5. Relocates the savemap drawn-once bitfield (blind-scanned by value,
 //     same technique as step 2) to persisted free savemap space once any
 //     magic id >= 96 exists, since 5 native access sites index it by
@@ -103,8 +106,22 @@
 #define EXTENDED_MAGIC_FIRST    (GF_FIRST_ID + GF_RESERVED_COUNT)   // 96
 #define KERNEL_SECTION_COUNT    56
 #define KERNEL_MAGIC_SECTION    1           // data section that may grow
+#define KERNEL_GF_SECTION       2           // GF data section (K_GF)
 #define KERNEL_FIRST_TEXT_SEC   31          // sections 31..55 resolved via header
 #define KERNEL_FILE_MAX         (1024 * 1024)
+
+// kernel.bin header: uint32 section count, then one uint32 offset per section.
+#define KERNEL_SECTION_OFFSET(buffer, i) (((const uint32_t *)(buffer))[1 + (i)])
+#define KERNEL_TEXT_MAGIC_SEC   32          // magic names and descriptions
+#define KERNEL_TEXT_GF_DESC_SEC 33          // GF descriptions
+#define KERNEL_NO_TEXT          0xFFFF      // entry has no string
+// Field offsets inside a 60-byte magic entry, and inside a K_GF record.
+#define MAGIC_NAME_OFF          0
+#define MAGIC_DESC_OFF          2
+#define K_GF_STRIDE             132
+#define K_GF_DESC_OFF           2
+// Savemap GF record stride; the GF's name sits at offset 0 of the record.
+#define GF_DATA_STRIDE          68
 
 // Vanilla EN data-section offsets (sections 0..31; index 31 = first text
 // section, used as the end bound of data section 30). Data section sizes are
@@ -124,65 +141,145 @@ static char *ff8_kernel_stash = nullptr;     // full grown kernel.bin image
 
 typedef int(__cdecl *load_file_to_buffer_t)(const char *, char *);
 
-// ---- classification stubs (no inline asm) --------------------------------
+// ---- magic-vs-GF classification -----------------------------------------
 // 4 sites in the exe do "cmp reg,40h / jcc gf_path" to route ids >= 64 to GF
-// handling; none of them sit at a call instruction we could redirect with
-// replace_call, and their containing functions are either too large
-// (computeCommandAction) or too dependent on undocumented struct layouts
-// (manageMonsterSpellVisibility) to safely reimplement whole in C. Each site
-// is instead replaced with a `call` into a tiny stub - built here as literal
-// machine-code bytes, not compiler-assembled inline asm - that widens the
-// check to the GF range (64..79) via an ordinary __cdecl C function, then
-// either falls back into the original instruction stream (magic path) or
-// jumps to the original jcc's target (GF path). This is a pure-C-callable
-// design: the only non-C part is the handful of opcode bytes needed to save/
-// restore the register around the call and act on its return value.
+// handling, which must be narrowed to the real GF range (64..79).
+//
+// Two of them are the whole body of a small getter (the magic name and
+// description lookups, ~0x50 bytes each); those are reimplemented in C below
+// and installed with replace_function, so no trampoline is involved.
+//
+// The other two cannot be replaced wholesale: the draw-list visibility check
+// sits in manageMonsterSpellVisibility, which walks undocumented struct
+// layouts, and the Draw-command check sits inside computeCommandAction, which
+// is over 0x1000 bytes of unrelated logic. Neither is at a call instruction,
+// so replace_call does not apply either. Those two keep a small stub (see
+// ff8_build_classify_stub) that calls the C predicate below and then either
+// falls through to the original instruction stream (magic path) or jumps to
+// the original jcc's target (GF path).
 static int __cdecl ff8_is_gf_id(int id)
 {
 	id &= 0xFFFF; // the draw-execute site classifies on BX (16-bit); harmless elsewhere
 	return (id >= GF_FIRST_ID && id <= GF_LAST_ID) ? 1 : 0;
 }
 
-// Bump-allocates from a single RWX page, lazily created on first use. FFNx
-// has no existing "trampoline buffer" utility (every other patch either
-// rewrites an existing instruction in place, via patch_code_*/memcpy_code, or
-// redirects a call/function entry point, via replace_call/replace_function);
-// these stubs are genuinely new, tiny pieces of machine code, so they need
-// their own executable memory rather than driver_malloc's plain heap.
+// ---- name / description getters (replace_function, no trampoline) --------
+// Both vanilla getters resolve a string as
+// "kernel buffer + header offset of a text section + the entry's text offset",
+// returning a shared empty string when the entry's offset is KERNEL_NO_TEXT.
+// ff8_kernel_load_hook points the text sections' header offsets into the
+// stashed full file, so grown text sections resolve correctly here too.
+static char *ff8_kernel_text(int section, uint16_t text_offset)
+{
+	const uint8_t *buffer = (const uint8_t *)ff8_externals.unk_1CF3E48;
+
+	if (text_offset == KERNEL_NO_TEXT)
+		return ff8_externals.unk_1CFF84C;
+
+	return (char *)(buffer + KERNEL_SECTION_OFFSET(buffer, section) + text_offset);
+}
+
+// Magic entry text offsets: name at +0, description at +2 (both uint16).
+static uint16_t ff8_magic_text_offset(int id, int field_offset)
+{
+	if (id < 0 || id >= ff8_magic_count)
+		return KERNEL_NO_TEXT;
+
+	return *(const uint16_t *)&ff8_magic_table[id][field_offset];
+}
+
+// Replaces getMagicText. Vanilla sent every id >= 64 down the GF branch; only
+// 64..79 belong there, and magic now reads the FFNx-side extended table.
+static char *__cdecl ff8_get_magic_name(int id)
+{
+	if (ff8_is_gf_id(id))
+		return (char *)(ff8_externals.magic_sg_gf_data + GF_DATA_STRIDE * (id - GF_FIRST_ID));
+
+	return ff8_kernel_text(KERNEL_TEXT_MAGIC_SEC, ff8_magic_text_offset(id, MAGIC_NAME_OFF));
+}
+
+// Replaces the magic description getter. Same split, except GF descriptions
+// live in kernel.bin's GF data section and use their own text section.
+static char *__cdecl ff8_get_magic_description(int id)
+{
+	if (ff8_is_gf_id(id))
+	{
+		const uint8_t *k_gf = (const uint8_t *)ff8_externals.unk_1CF3E48 + vanilla_data_offsets[KERNEL_GF_SECTION];
+		return ff8_kernel_text(KERNEL_TEXT_GF_DESC_SEC,
+			*(const uint16_t *)(k_gf + K_GF_STRIDE * (id - GF_FIRST_ID) + K_GF_DESC_OFF));
+	}
+
+	return ff8_kernel_text(KERNEL_TEXT_MAGIC_SEC, ff8_magic_text_offset(id, MAGIC_DESC_OFF));
+}
+
+// x86 register encodings (push/pop opcode = base + index).
+#define REG_EAX 0
+#define REG_EBX 3
+
+#define CLASSIFY_STUB_SIZE  16
+#define TRAMPOLINE_PAGE_SIZE 4096
+
+// Bump-allocates from a single RWX page, lazily created on first use. FFNx has
+// no "trampoline buffer" utility because it never needs one: every other patch
+// either rewrites an existing instruction in place (patch_code_*/memcpy_code)
+// or redirects a call/function entry point (replace_call/replace_function).
+// The two remaining classification stubs are genuinely new machine code, so
+// they need executable memory of their own rather than driver_malloc's heap.
 static uint8_t *ff8_trampoline_alloc(uint32_t size)
 {
 	static uint8_t *page = nullptr;
 	static uint32_t used = 0;
+
 	if (!page)
-		page = (uint8_t *)VirtualAlloc(nullptr, 4096, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	{
+		page = (uint8_t *)VirtualAlloc(nullptr, TRAMPOLINE_PAGE_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		if (!page) return nullptr;
+	}
+
+	if (used + size > TRAMPOLINE_PAGE_SIZE) return nullptr;
+
 	uint8_t *stub = page + used;
 	used += size;
 	return stub;
 }
 
-// x86 register encodings used below (push/pop opcode = base + index).
-#define REG_EAX 0
-#define REG_EBX 3
+// Minimal x86 emitter, so the stub below reads as a list of named instructions
+// instead of a wall of hex. rel32 operands are relative to the end of their
+// own instruction.
+struct x86_emitter
+{
+	uint8_t *p;
 
-// Builds: push reg ; call ff8_is_gf_id ; test al,al ; pop reg ; jnz gf_target ; ret
-// `reg` (32-bit) holds the spell id on entry and is fully restored before the
-// final `ret`, so falling through to the site's next instruction (the magic
-// path) sees the exact same register state the original "cmp/jcc" would have
-// left it in; taking the jnz instead reproduces the original jcc's GF jump.
+	void byte(uint8_t b) { *p++ = b; }
+	void rel32(uint32_t target) { *(uint32_t *)p = target - (uint32_t)(p + 4); p += 4; }
+
+	void push_reg(uint8_t reg) { byte(0x50 + reg); }
+	void pop_reg(uint8_t reg) { byte(0x58 + reg); }
+	void call(uint32_t func) { byte(0xE8); rel32(func); }
+	void test_al_al() { byte(0x84); byte(0xC0); }
+	void jnz(uint32_t target) { byte(0x0F); byte(0x85); rel32(target); }
+	void ret() { byte(0xC3); }
+};
+
+// Widens one "cmp reg,40h / jcc gf_path" site to the real GF range. `reg` holds
+// the spell id on entry; it is restored before either exit, so falling through
+// to the site's next instruction (the magic path) sees exactly the register
+// state the original compare would have left, and taking the jnz reproduces the
+// original jcc's GF branch.
 static void *ff8_build_classify_stub(uint8_t reg, uint32_t gf_target)
 {
-	uint8_t *stub = ff8_trampoline_alloc(16);
-	uint8_t *p = stub;
-	*p++ = 0x50 + reg;                                       // push reg
-	*p++ = 0xE8;                                              // call rel32
-	*(uint32_t *)p = (uint32_t)&ff8_is_gf_id - (uint32_t)(p + 4);
-	p += 4;
-	*p++ = 0x84; *p++ = 0xC0;                                 // test al,al
-	*p++ = 0x58 + reg;                                        // pop reg
-	*p++ = 0x0F; *p++ = 0x85;                                 // jnz rel32
-	*(uint32_t *)p = gf_target - (uint32_t)(p + 4);
-	p += 4;
-	*p++ = 0xC3;                                              // ret
+	uint8_t *stub = ff8_trampoline_alloc(CLASSIFY_STUB_SIZE);
+	if (!stub) return nullptr;
+
+	x86_emitter emit{ stub };
+
+	emit.push_reg(reg);                      // save the id, and pass it as the __cdecl argument
+	emit.call((uint32_t)&ff8_is_gf_id);      // -> al
+	emit.test_al_al();
+	emit.pop_reg(reg);                       // drop the argument (__cdecl) and restore the register
+	emit.jnz(gf_target);                     // GF: take the original branch
+	emit.ret();                              // magic: fall back into the site
+
 	return stub;
 }
 
@@ -227,13 +324,18 @@ static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 	}
 
 	void *stub = ff8_build_classify_stub(reg, gf_target);
+	if (!stub)
+	{
+		ffnx_warning("AddMoreMagic: out of trampoline space for %s site 0x%X, skipping patch!\n", what, site);
+		return false;
+	}
 
-	// call stub (5 bytes) + NOP fill for the remainder of the region.
-	uint8_t code[16];
-	code[0] = 0xE8;
-	*(uint32_t *)&code[1] = (uint32_t)stub - (site + 5);
-	for (uint32_t i = 5; i < patch_size; ++i) code[i] = 0x90;
-	memcpy_code(site, code, patch_size);
+	// Overwrite the compare-and-branch with "call stub", then NOP out whatever
+	// is left of the region so the following instruction still starts where the
+	// original code expected it to.
+	memset_code(site, 0x90, patch_size);
+	patch_code_byte(site, 0xE8);
+	patch_code_dword(site + 1, (uint32_t)stub - (site + 5));
 
 	return true;
 }
@@ -520,11 +622,13 @@ static void ff8_kernel_magic_arm()
 	// other supported version matched the same count during verification.
 	if (rewritten < 69) ffnx_warning("AddMoreMagic: fewer displacement sites than expected, some magic reads may still use the vanilla table!\n");
 
-	install_id_trampoline(ff8_externals.magic_site_name_getter, REG_EAX, "magic name getter");
-	install_id_trampoline(ff8_externals.magic_site_desc_getter, REG_EAX, "magic desc getter");
+	// The two getters are small enough to replace outright; only the two sites
+	// buried in large functions still need a classification stub.
 	install_id_trampoline(ff8_externals.magic_site_spell_visibility, REG_EAX, "draw-list visibility");
 	install_id_trampoline(ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
 
+	replace_function(ff8_externals.magic_fn_name_getter, (void *)ff8_get_magic_name);
+	replace_function(ff8_externals.magic_fn_desc_getter, (void *)ff8_get_magic_description);
 	replace_function(ff8_externals.magic_fn_linked_stock, (void *)ff8_linked_stock_field_char_data);
 	replace_function(ff8_externals.magic_fn_reorder_magic, (void *)ff8_menu_reorder_magic);
 	replace_function(ff8_externals.magic_fn_validate_magic, (void *)ff8_char_validate_magic);
