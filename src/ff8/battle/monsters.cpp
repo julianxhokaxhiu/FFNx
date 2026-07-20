@@ -29,190 +29,81 @@
 // -------------------------------------------------------------------------
 // Unlock the unused battle monster models c0m144..c0m199.
 //
-// Retail FF8 can only load c0m000..c0m143 (144 of the 200 c0m*.dat that ship
-// in battle.fs). The chain, verified in FF8_EN.exe (US 1.2):
-//   - Encounter def: FF8SceneOut.enemy_com_value[8] (1 byte/slot) = com_id.
-//   - sub_507080 dispatches com_id >= 16 (a monster) to battle_monster_dat_loader.
-//   - That loader computes the battle-file index as (com_id + 150) and calls
-//     LoadBattleFile, which reads BattleFilesArray[index] for the filename.
-//   - c0m000 is BattleFilesArray[166] (com_id 16), c0m143 is [309] (com_id 159).
-//     Index 310 is immediately D0C000.DAT (character files), so the c0m block
-//     cannot grow in place, and com_id 160..215 currently resolve to D0C/garbage.
+// Retail only loads c0m000..c0m143. An encounter picks a monster by com_id
+// (one byte per slot in FF8SceneOut.enemy_com_value); the loader adds 150 to
+// get a battle-file index and reads BattleFilesArray[index] for the filename.
+// c0m000..c0m143 live at indices 166..309, but index 310 is already
+// D0C000.DAT, so the c0m block can't grow in place - com_id 160..215 would
+// land on the character files.
 //
-// Fix (two memory patches):
-//   1) Build an enlarged copy of BattleFilesArray = the original entries
-//      verbatim + 56 appended pointers to new "C0M144.DAT".."C0M199.DAT",
-//      and repoint LoadBattleFile's array base to it. Every existing index
-//      resolves identically (the prefix is copied verbatim); nothing shifts.
-//   2) Redirect the single battle-file load call inside
-//      battle_monster_dat_loader (the monster load path) to a C hook that
-//      remaps the com_id 160..215 file indices into the appended range
-//      instead of letting them collide with D0C.
+// Two patches fix it:
+//   1) Swap BattleFilesArray for a copy with 56 extra entries appended
+//      ("C0M144.DAT".."C0M199.DAT") and repoint the loader at it. The original
+//      entries keep their indices, so nothing else moves.
+//   2) Hook the loader's file-load call and remap com_id 160..215 onto the
+//      appended entries instead of D0C.
 //
-// Encounters need no exe change: enemy_com_value is already a byte, so setting
-// it to (c0m# + 16) selects any monster up to c0m199.
+// No encounter format change is needed: enemy_com_value is already a byte, so
+// a mod just sets it to c0m# + 16 to use any monster up to c0m199.
 //
-// ff8_externals.battle_open_file / battle_filenames already resolve
-// dynamically per version via the existing get_relative_call chain in
-// ff8_data.cpp (sub_47CCB0 -> ... -> battle_open_file), so this file uses
-// them as-is with no version branching of its own. The hooked call site
-// (battle_monster_dat_loader + 0x240) and its target
-// (battle_load_file_sub_508480) are likewise resolved relatively in
-// ff8_data.cpp; the +0x240 offset is confirmed identical across all seven
-// retail 1.2 exe files (EN/FR/DE/IT/SP/JP/JP_NV). The BattleFilesArray table
-// (c0m000..c0m143 at indices 166..309, D0C000.DAT immediately at 310) is
-// confirmed identical across all seven builds. Its length is not hardcoded
-// either: it is counted at init by walking the table while its entries still
-// look like pointers into the module image (see ff8_count_battle_filenames).
+// Scan needs a fix too. Its "already scanned" bitfield SG_ENEMY_SCANNED_ONCE
+// is only 5 DWORDs and gets indexed by com_id/32 with no bounds check, so it
+// is only safe up to com_id 159. Scanning a new monster would overflow it into
+// the neighbouring Renzokuken/tutorial savemap fields. We relocate the field
+// to a bigger block in free, persisted savemap space (field vars 785..816) by
+// repointing the two instructions that use it - and only when scene.out
+// actually references a new monster, so vanilla saves stay untouched.
 //
-// Scan savemap overflow fix: the "already scanned" bitfield
-// SG_ENEMY_SCANNED_ONCE (savemap global @ 0x1cfe964, IDA-verified, modelled
-// as savemap_ff8_battle::ennemy_scanned_once in ff8/save_data.h) is only 5
-// DWORDs (20 bytes), immediately followed in the packed savemap struct by
-// SG_RENZOKUKEN_AUTO/SG_RENZOKUKEN_INDICATOR/SG_ODIN_ANGEL_GILGA_FLAG/
-// SG_TUTORIAL_INFO. It has exactly one reader and one writer:
-//   - reader @0x4925a6, in Damage_DispatchByAttackType's ATTACK_TYPE_SCAN
-//     case: tests the bit for the target's com_id (read out of the battle
-//     entity array, battle_entities_1D27BCB) and, when set, flags the enemy's
-//     info as already known.
-//   - writer @0x493810, which is a pure setter - "mark this com_id scanned",
-//     `field[id / 32] |= 1 << (id % 32)` and nothing else.
-// Both index it as SG_ENEMY_SCANNED_ONCE[(unsigned __int8)com_file_id / 32]
-// with NO bounds check, so it's only safe for com_file_id (com_id) 0..159.
-// Every com_id this patch adds (160..215, i.e. c0m144..c0m199) is already
-// past that: casting Scan on any of the new monsters would write out of
-// bounds into the Renzokuken/tutorial-flag savemap fields above, silently
-// corrupting them.
-//
-// Fixed by repointing both instructions at a bigger (32-byte / 8-DWORD, safe
-// for the full 0..255 com_id byte range) block in free savemap space, keeping
-// the existing com_id/32 index math unchanged. The two disp32 operands are
-// resolved relatively in ff8_data.cpp off battle_sub_48FE20 (see there), and
-// re-checked below before anything is written, so a build whose layout does
-// not match is left untouched rather than corrupted.
-//
-// SG_ENEMY_SCANNED_ONCE's own address is derived as
-// field_vars_stack_1CFE9B8 - 0x54, a fixed C-struct field offset within the
-// same packed savemap globals, so it needs no per-version address table
-// either; field_vars_stack_1CFE9B8 already resolves per version elsewhere in
-// ff8_data.cpp.
-//
-// The relocation target is field-script variables 785..816, inside the free
-// block that runs from var 753 to var 1023 (271 bytes). That block is unused
-// on three independent axes: no field script touches it (all 882 *.jsm
-// scanned), no exe code references it (embedded-address scan), and it is zero
-// in 28 real save files. Var 752 is the last script-used one. The block also
-// sits inside the save's CRC span (image bytes 4561..4831), so anything
-// written there survives a normal save, and unlike the temporary variables at
-// 1024+ it is never cleared on field entry - both of which the scanned-once
-// bitfield needs, since it is meant to persist. Runtime address is simply
-// field_vars_stack_1CFE9B8 + var.
-//
-// Vars 753..784 are already claimed by AddMoreMagic's drawn-once relocation
-// (a sibling FFNx fork, see its kernel_magic.cpp), so this deliberately
-// starts right after them to avoid a collision if both ever land upstream.
-//
-// Note the third .text reference to this field, in an unreferenced code gap
-// near Battle_RollCardCommand, is deliberately left alone: it is dead code on
-// every retail 1.2 build (EN, ES, FR, IT, DE, JP), so relocating it would
-// serve no purpose.
+// Addresses are resolved relatively in ff8_data.cpp. The one fixed number here
+// is FF8_BATTLE_FILES_ARRAY_LEN, 1117 on every retail 1.2 build.
 // -------------------------------------------------------------------------
 
-// Sanity bound while counting the original BattleFilesArray; it holds 1117
-// entries on every retail 1.2 build, so this only exists to stop a runaway
-// walk if the table ever looks unfamiliar.
-#define FF8_BATTLE_FILES_ARRAY_MAX 4096
+// Original BattleFilesArray length. The exe never stores it, but it's 1117 on
+// every retail 1.2 build.
+#define FF8_BATTLE_FILES_ARRAY_LEN 1117
 // c0m file range to add.
 #define FF8_FIRST_NEW_C0M 144
 #define FF8_LAST_NEW_C0M  199
 #define FF8_NEW_C0M_COUNT (FF8_LAST_NEW_C0M - FF8_FIRST_NEW_C0M + 1) // 56
-// com_id = c0m# + 16, so the added monsters use com_id 160..215.
+// com_id = c0m# + 16, so the new monsters use com_id 160..215.
 #define FF8_FIRST_NEW_COM_ID (FF8_FIRST_NEW_C0M + 16) // 160
 #define FF8_LAST_NEW_COM_ID  (FF8_LAST_NEW_C0M + 16)  // 215
-// The loader passes the battle-file loader an index of (com_id + 150), so
-// the new com_id 160..215 arrive as indices 310..365 (which retail resolves to
-// D0C character files); the hook remaps those onto the appended table entries.
+// The loader adds 150 to com_id, so com_id 160..215 arrive as file indices
+// 310..365 (D0C on retail); the hook remaps those onto the appended entries.
 #define FF8_FIRST_NEW_FILE_INDEX (FF8_FIRST_NEW_COM_ID + 150) // 310
 #define FF8_LAST_NEW_FILE_INDEX  (FF8_LAST_NEW_COM_ID + 150)  // 365
 
-// Where SG_ENEMY_SCANNED_ONCE sits relative to field_vars_stack_1CFE9B8 (the
-// field-script variable block base, "VARMAP_START"): 0x54 bytes before it, in
-// the same packed savemap globals. This is only used to sanity-check the
-// address read out of the instructions that index the field - it is not how
-// the address is obtained.
+// SG_ENEMY_SCANNED_ONCE sits 0x54 bytes before field_vars_stack_1CFE9B8 in the
+// savemap globals. Only used to sanity-check the address we read from the code.
 #define FF8_SG_ENEMY_SCANNED_ONCE_OFFSET (-0x54)
-// Relocation target: field-script variables 785..816 (32 bytes / 8 DWORDs,
-// safe for the full 0..255 com_id byte range), inside the verified-free
-// 753..1023 block described in the file comment above. Vars 753..784 are
-// already claimed by AddMoreMagic's drawn-once relocation.
+// Where we move the field: field vars 785..816 (8 DWORDs, enough for all 256
+// com_ids), in free savemap space. 753..784 are taken by AddMoreMagic.
 #define FF8_SCANNED_ONCE_RELOCATE_VAR  785
 #define FF8_SCANNED_ONCE_RELOCATE_SIZE 32
 static_assert(FF8_SCANNED_ONCE_RELOCATE_SIZE >= 32, "must cover the full 0..255 com_id byte range (8 DWORDs)");
 
-// scene.out per-record layout (128 bytes/record, enemy_com_value[8] at
-// offset 56 - the data format, not the file's total size, which is read
-// dynamically below so a modded/enlarged scene.out is handled correctly).
+// scene.out record layout: 128 bytes each, enemy_com_value[8] at offset 56.
 #define FF8_SCENE_OUT_RECORD_SIZE            128
 #define FF8_SCENE_OUT_ENEMY_COM_VALUE_OFFSET 56
 #define FF8_SCENE_OUT_ENEMY_SLOTS            8
 
-// Backing storage for the new entries appended to battle_filenames; the table
-// keeps raw pointers into it for the rest of the process, so it must stay
-// static.
-static char ff8_extended_c0m_names[FF8_NEW_C0M_COUNT][12]; // "C0M199.DAT" + NUL = 11
-// Length of the original BattleFilesArray, counted at init (see below).
-static uint32_t ff8_battle_files_count = 0;
+// Backing store for the appended filenames; the table holds pointers into it
+// for the whole session, so it stays static.
+static char ff8_extended_c0m_names[FF8_NEW_C0M_COUNT][12]; // "C0M199.DAT" + NUL
 
-// Counts the original BattleFilesArray. The exe never stores this table's
-// length anywhere - LoadBattleFile indexes it blindly - so there is no value
-// in memory to read back; it has to be measured. Every entry is a pointer to
-// a filename literal inside the exe's own image (bounds read from our own PE
-// header, the same way getProcessEntryPoint in utils.cpp does), and the dword
-// immediately after the last entry is not one (it is 0x101 on US 1.2), so the
-// run of in-image pointers ends exactly at the end of the array.
-static uint32_t ff8_count_battle_filenames(const char *const *filenames)
-{
-	HMODULE module = GetModuleHandleA(nullptr);
-	PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)module;
-	PIMAGE_NT_HEADERS nt = (PIMAGE_NT_HEADERS)((BYTE *)module + dos->e_lfanew);
-
-	uintptr_t image_start = (uintptr_t)module;
-	uintptr_t image_end = image_start + nt->OptionalHeader.SizeOfImage;
-
-	uint32_t count = 0;
-	while (count < FF8_BATTLE_FILES_ARRAY_MAX)
-	{
-		uintptr_t entry = (uintptr_t)filenames[count];
-
-		if (entry < image_start || entry >= image_end)
-			break;
-
-		++count;
-	}
-
-	return count;
-}
-
-// C replacement for the loader's "index = com_id + 150" remap. Hooked onto the
-// single battle-file load call inside battle_monster_dat_loader, which is only
-// ever reached for monsters, so a file index in 310..365 unambiguously means
-// one of the newly unlocked c0m144..c0m199; those get remapped onto the
-// appended table entries and everything else is forwarded to the original
-// battle_load_file_sub_508480 untouched.
+// Our replacement for the loader's com_id+150 file lookup. This call is only
+// reached for monsters, so an index in 310..365 means one of the new
+// c0m144..c0m199 - remap it onto the appended entries and forward the rest.
 static int ff8_battle_monster_load_file(int fileIndex, void *dst)
 {
 	if (fileIndex >= FF8_FIRST_NEW_FILE_INDEX && fileIndex <= FF8_LAST_NEW_FILE_INDEX)
-		fileIndex = ff8_battle_files_count + (fileIndex - FF8_FIRST_NEW_FILE_INDEX);
+		fileIndex = FF8_BATTLE_FILES_ARRAY_LEN + (fileIndex - FF8_FIRST_NEW_FILE_INDEX);
 
 	return ((int (*)(int, void *))ff8_externals.battle_load_file_sub_508480)(fileIndex, dst);
 }
 
-// Looks up a battle-relative file's real size on disk without reading it,
-// checking the same two places FFNx actually stores loose files: the
-// "direct" override folder first, then the plain extracted layout. Doesn't
-// need to know anything about the packed-archive format (fl/fs/fi tables) -
-// modern FFNx installs serve battle files as loose files in one of these two
-// places, not from the original PSX archives.
+// File size on disk, from the two places FFNx serves loose battle files: the
+// "direct" override folder first, then the plain extracted layout.
 static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t *size_out)
 {
 	char full_path[MAX_PATH];
@@ -238,18 +129,10 @@ static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t
 	return true;
 }
 
-// Reads scene.out (through FFNx's own sm_pc_read, so file overrides are
-// respected the same way the game itself would load it) and checks every
-// encounter's enemy_com_value[8] bytes for one referencing a newly unlocked
-// monster (com_id >= FF8_FIRST_NEW_COM_ID). Only encounter data determines
-// whether the relocation below is ever needed - the exe/kernel side has no
-// equivalent "count" to gate on the way AddMoreMagic gates on kernel magic
-// count. The read buffer is sized from the file's real size on disk (see
-// ff8_get_battle_file_size_on_disk above), not an assumed vanilla constant,
-// so a modded/enlarged scene.out is scanned correctly. If the size can't be
-// determined at all (e.g. a packed-archive-only install with no loose
-// scene.out anywhere), be conservative and report "needed" rather than
-// silently skip a real fix.
+// True if any encounter in scene.out uses a new monster (com_id >= 160) - the
+// Scan relocation below is only needed then. Read through sm_pc_read so file
+// overrides count, and sized from the real file so a modded scene.out works. If
+// the size can't be found, assume it's needed rather than skip a real fix.
 static bool ff8_scene_out_uses_new_monsters()
 {
 	uint32_t file_size;
@@ -281,12 +164,9 @@ static bool ff8_scene_out_uses_new_monsters()
 	return uses_new_monsters;
 }
 
-// Relocates SG_ENEMY_SCANNED_ONCE (see the file-level comment above) from its
-// native 5-DWORD savemap field to an 8-DWORD block in free savemap space, so
-// the existing com_id/32 index math stays in bounds for the full 0..255
-// com_id range instead of only 0..159. Only called when scene.out actually
-// references a new monster (see ff8_scene_out_uses_new_monsters above), so a
-// vanilla or not-yet-updated scene.out leaves this bitfield untouched.
+// Moves SG_ENEMY_SCANNED_ONCE to a bigger block so com_id/32 stays in bounds
+// for the whole 0..255 range (see file comment). Only called when scene.out
+// uses a new monster.
 static void ff8_relocate_enemy_scanned_once()
 {
 	if (!ff8_externals.field_vars_stack_1CFE9B8
@@ -294,12 +174,9 @@ static void ff8_relocate_enemy_scanned_once()
 		|| !ff8_externals.battle_enemy_scanned_write_operand)
 		return;
 
-	// Take the field's address from the instruction that indexes it rather than
-	// computing it: whatever the reader dereferences is the field, by
-	// definition. Two independent checks then guard against a mis-resolved
-	// operand, since writing to one would corrupt unrelated code: the writer
-	// must reference the same address, and it must sit where the savemap
-	// layout says it does.
+	// Read the field's address straight out of the instruction that indexes it.
+	// Then guard against a bad resolve before patching: the writer must use the
+	// same address, and it must match the savemap layout.
 	uint32_t from = *(uint32_t *)ff8_externals.battle_enemy_scanned_read_operand;
 	uint32_t expected = ff8_externals.field_vars_stack_1CFE9B8 + FF8_SG_ENEMY_SCANNED_ONCE_OFFSET;
 	uint32_t to = ff8_externals.field_vars_stack_1CFE9B8 + FF8_SCANNED_ONCE_RELOCATE_VAR;
@@ -330,54 +207,38 @@ void ff8_battle_monsters_init()
 		return;
 	}
 
-	ff8_battle_files_count = ff8_count_battle_filenames(ff8_externals.battle_filenames);
-	if (ff8_battle_files_count == 0 || ff8_battle_files_count >= FF8_BATTLE_FILES_ARRAY_MAX)
-	{
-		if (trace_all) ffnx_warning("Extra battle monsters: unexpected battle file table length (%u), skipping.\n", ff8_battle_files_count);
-		return;
-	}
-
-	// 1) Copy the original table verbatim, then append the new c0m entries.
-	//    The game's own table is a static exe array, never freed; its extended
-	//    replacement is likewise allocated once for the whole process and owned
-	//    by ff8_externals.battle_filenames from here on.
-	char **extended_filenames = (char **)driver_malloc((ff8_battle_files_count + FF8_NEW_C0M_COUNT) * sizeof(char *));
+	// 1) Build the extended table (original entries + 56 new ones) and give it
+	//    to battle_filenames. One-time allocation, never freed, like the exe's
+	//    own static table.
+	char **extended_filenames = (char **)driver_malloc((FF8_BATTLE_FILES_ARRAY_LEN + FF8_NEW_C0M_COUNT) * sizeof(char *));
 	if (extended_filenames == nullptr)
 		return;
 
-	memcpy(extended_filenames, ff8_externals.battle_filenames, ff8_battle_files_count * sizeof(char *));
+	memcpy(extended_filenames, ff8_externals.battle_filenames, FF8_BATTLE_FILES_ARRAY_LEN * sizeof(char *));
 	for (uint32_t i = 0; i < FF8_NEW_C0M_COUNT; ++i)
 	{
 		snprintf(ff8_extended_c0m_names[i], sizeof(ff8_extended_c0m_names[i]), "C0M%03d.DAT", FF8_FIRST_NEW_C0M + i);
-		extended_filenames[ff8_battle_files_count + i] = ff8_extended_c0m_names[i];
+		extended_filenames[FF8_BATTLE_FILES_ARRAY_LEN + i] = ff8_extended_c0m_names[i];
 	}
 	ff8_externals.battle_filenames = extended_filenames;
 
-	//    Repoint LoadBattleFile's array base to it: mov ebx, BattleFilesArray[eax*4].
-	//    battle_open_file + 0x11 is the absolute displacement of that instruction.
-	//    FFNx's own hooks (ff8_battle_open_and_read_file in vram.cpp) read
-	//    ff8_externals.battle_filenames and pick the extended table up directly.
+	//    Repoint the loader's array base at it (the disp32 of
+	//    mov ebx, BattleFilesArray[eax*4], at battle_open_file + 0x11). FFNx's
+	//    vram.cpp hooks read battle_filenames, so they pick it up too.
 	patch_code_dword(ff8_externals.battle_open_file + 0x11, (DWORD)(uintptr_t)ff8_externals.battle_filenames);
 
-	// 2) Redirect the monster loader's battle-file load call to the C hook; it
-	//    forwards to the original battle_load_file_sub_508480 for everything but
-	//    the remapped range.
+	// 2) Redirect the loader's file-load call to our hook.
 	replace_call(ff8_externals.battle_monster_file_load_call_site, (void *)&ff8_battle_monster_load_file);
 
-	// 3) Relocate the Scan scanned-once bitfield so it stays in bounds
-	//    for the new monsters' com_id range too (see file-level comment), but
-	//    only when scene.out actually references one - a vanilla or
-	//    not-yet-updated scene.out never reaches a com_id past 159, so the
-	//    native field is already safe and there's nothing to relocate.
+	// 3) Fix the Scan overflow, but only if scene.out actually uses a new
+	//    monster - vanilla never reaches com_id 160, so its field is already safe.
 	bool uses_new_monsters = ff8_scene_out_uses_new_monsters();
 
 	if (uses_new_monsters)
 		ff8_relocate_enemy_scanned_once();
 
-	// Only worth reporting when a mod actually references one of the new
-	// monsters: the table is extended on every supported build, but on a
-	// vanilla install nothing ever indexes into the appended range, so staying
-	// quiet there keeps this out of everyone else's log.
+	// Only log when a mod actually uses the new monsters; the table is extended
+	// everywhere, so staying quiet on vanilla keeps this out of everyone's log.
 	if (uses_new_monsters && trace_all)
-		ffnx_trace("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d (%u original battle files).\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID, ff8_battle_files_count);
+		ffnx_trace("Extra battle monsters enabled: c0m%03d-c0m%03d usable via enemy_com_value %d-%d.\n", FF8_FIRST_NEW_C0M, FF8_LAST_NEW_C0M, FF8_FIRST_NEW_COM_ID, FF8_LAST_NEW_COM_ID);
 }
