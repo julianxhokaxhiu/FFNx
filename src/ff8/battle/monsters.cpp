@@ -135,9 +135,11 @@
 #define FF8_FIRST_NEW_FILE_INDEX (FF8_FIRST_NEW_COM_ID + 150) // 310
 #define FF8_LAST_NEW_FILE_INDEX  (FF8_LAST_NEW_COM_ID + 150)  // 365
 
-// SG_ENEMY_SCANNED_ONCE sits 0x54 bytes before field_vars_stack_1CFE9B8 (the
-// field-script variable block base, "VARMAP_START") in the same packed
-// savemap globals - a fixed C-struct field offset, IDA-verified on US 1.2.
+// Where SG_ENEMY_SCANNED_ONCE sits relative to field_vars_stack_1CFE9B8 (the
+// field-script variable block base, "VARMAP_START"): 0x54 bytes before it, in
+// the same packed savemap globals. This is only used to sanity-check the
+// address read out of the instructions that index the field - it is not how
+// the address is obtained.
 #define FF8_SG_ENEMY_SCANNED_ONCE_OFFSET (-0x54)
 // Relocation target: field-script variables 785..816 (32 bytes / 8 DWORDs,
 // safe for the full 0..255 com_id byte range), inside the verified-free
@@ -286,16 +288,19 @@ static void ff8_relocate_enemy_scanned_once()
 		|| !ff8_externals.battle_enemy_scanned_write_operand)
 		return;
 
-	uint32_t from = ff8_externals.field_vars_stack_1CFE9B8 + FF8_SG_ENEMY_SCANNED_ONCE_OFFSET;
+	// Take the field's address from the instruction that indexes it rather than
+	// computing it: whatever the reader dereferences is the field, by
+	// definition. Two independent checks then guard against a mis-resolved
+	// operand, since writing to one would corrupt unrelated code: the writer
+	// must reference the same address, and it must sit where the savemap
+	// layout says it does.
+	uint32_t from = *(uint32_t *)ff8_externals.battle_enemy_scanned_read_operand;
+	uint32_t expected = ff8_externals.field_vars_stack_1CFE9B8 + FF8_SG_ENEMY_SCANNED_ONCE_OFFSET;
 	uint32_t to = ff8_externals.field_vars_stack_1CFE9B8 + FF8_SCANNED_ONCE_RELOCATE_VAR;
 
-	// Both operands must currently hold the vanilla field address. If either
-	// doesn't, the resolved offsets don't fit this build and writing to them
-	// would corrupt unrelated instructions, so leave the game alone.
-	if (*(uint32_t *)ff8_externals.battle_enemy_scanned_read_operand != from
-		|| *(uint32_t *)ff8_externals.battle_enemy_scanned_write_operand != from)
+	if (from != *(uint32_t *)ff8_externals.battle_enemy_scanned_write_operand || from != expected)
 	{
-		ffnx_warning("Extra battle monsters: Scan scanned-once operands do not hold the expected address, skipping relocation - scanning c0m144-c0m199 may corrupt the savemap!\n");
+		ffnx_warning("Extra battle monsters: Scan scanned-once operands do not agree with the savemap layout (read 0x%08X, expected 0x%08X), skipping relocation - scanning c0m144-c0m199 may corrupt the savemap!\n", from, expected);
 		return;
 	}
 
