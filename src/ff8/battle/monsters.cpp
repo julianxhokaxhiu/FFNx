@@ -95,10 +95,22 @@
 // field_vars_stack_1CFE9B8 - 0x54, a fixed C-struct field offset within the
 // same packed savemap globals, so it needs no per-version address table
 // either; field_vars_stack_1CFE9B8 already resolves per version elsewhere in
-// ff8_data.cpp. The relocation target uses savemap free-region bytes 785..816
-// (var 753..784 is already claimed by AddMoreMagic's drawn-once relocation -
-// see that fork's kernel_magic.cpp - so this deliberately starts right after
-// it to avoid a collision if both forks ever land upstream together).
+// ff8_data.cpp.
+//
+// The relocation target is field-script variables 785..816, inside the free
+// block that runs from var 753 to var 1023 (271 bytes). That block is unused
+// on three independent axes: no field script touches it (all 882 *.jsm
+// scanned), no exe code references it (embedded-address scan), and it is zero
+// in 28 real save files. Var 752 is the last script-used one. The block also
+// sits inside the save's CRC span (image bytes 4561..4831), so anything
+// written there survives a normal save, and unlike the temporary variables at
+// 1024+ it is never cleared on field entry - both of which the scanned-once
+// bitfield needs, since it is meant to persist. Runtime address is simply
+// field_vars_stack_1CFE9B8 + var.
+//
+// Vars 753..784 are already claimed by AddMoreMagic's drawn-once relocation
+// (a sibling FFNx fork, see its kernel_magic.cpp), so this deliberately
+// starts right after them to avoid a collision if both ever land upstream.
 //
 // Note the third .text reference to this field, in an unreferenced code gap
 // near Battle_RollCardCommand, is deliberately left alone: it is dead code on
@@ -117,7 +129,7 @@
 // com_id = c0m# + 16, so the added monsters use com_id 160..215.
 #define FF8_FIRST_NEW_COM_ID (FF8_FIRST_NEW_C0M + 16) // 160
 #define FF8_LAST_NEW_COM_ID  (FF8_LAST_NEW_C0M + 16)  // 215
-// The loader passes BattleFile_CharacterLoad a file index of (com_id + 150), so
+// The loader passes the battle-file loader an index of (com_id + 150), so
 // the new com_id 160..215 arrive as indices 310..365 (which retail resolves to
 // D0C character files); the hook remaps those onto the appended table entries.
 #define FF8_FIRST_NEW_FILE_INDEX (FF8_FIRST_NEW_COM_ID + 150) // 310
@@ -127,9 +139,10 @@
 // field-script variable block base, "VARMAP_START") in the same packed
 // savemap globals - a fixed C-struct field offset, IDA-verified on US 1.2.
 #define FF8_SG_ENEMY_SCANNED_ONCE_OFFSET (-0x54)
-// Relocation target: savemap free-region bytes 785..816 (32 bytes / 8 DWORDs,
-// safe for the full 0..255 com_id byte range). Bytes 753..784 of this same
-// free region are already claimed by AddMoreMagic's drawn-once relocation.
+// Relocation target: field-script variables 785..816 (32 bytes / 8 DWORDs,
+// safe for the full 0..255 com_id byte range), inside the verified-free
+// 753..1023 block described in the file comment above. Vars 753..784 are
+// already claimed by AddMoreMagic's drawn-once relocation.
 #define FF8_SCANNED_ONCE_RELOCATE_VAR  785
 #define FF8_SCANNED_ONCE_RELOCATE_SIZE 32
 static_assert(FF8_SCANNED_ONCE_RELOCATE_SIZE >= 32, "must cover the full 0..255 com_id byte range (8 DWORDs)");
