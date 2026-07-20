@@ -95,6 +95,13 @@
 #define VANILLA_MAGIC_COUNT     57
 #define MAGIC_ENTRY_SIZE        60
 #define MAX_MAGIC_ID            256
+// Instruction counts the two value-scans below expect to rewrite. Both are
+// structural constants (counts of instructions in identical, only-relocated
+// code), verified in IDA and the same on every retail 1.2 build, not
+// per-version figures - see the scans for why a scan is used and why no
+// genuine site can be lost to the branch guard.
+#define K_MAGIC_SITE_COUNT      71
+#define DRAWN_ONCE_SITE_COUNT   5
 #define GF_FIRST_ID             64
 #define GF_LAST_ID              79          // the exe's real 16 GF ids (SG_ARRAY_GF_DATA[16]);
                                             // classification trampolines use this, unchanged.
@@ -546,13 +553,23 @@ static void relocate_drawn_once_bitfield()
 	// per language.
 	uint32_t sg_drawn_once_ext = ff8_externals.field_vars_stack_1CFE9B8 + 753;
 
-	// Exactly 5 genuine sites are known to reference this dword (1 reader +
-	// 4 writers); the blind scan finds them with zero false positives (the
-	// value is too specific to alias a branch displacement in practice).
+	// A value-scan is the right tool here rather than resolving each site
+	// relatively: the field is read/written from DRAWN_ONCE_SITE_COUNT
+	// unrelated places - addMagicToMagicKnown, ParseBattleParty,
+	// battleToFieldTransition, manageMonsterSpellVisibility, and a reader that
+	// is a live function IDA does not recognise and nothing calls directly, so
+	// it has no anchor to resolve from. Enumerating them would need a separate
+	// chain per subsystem for no gain over matching the address itself.
+	//
+	// The match is exact (range is [field, field+1)) and cannot alias a
+	// call/jmp displacement: the field address ends in 0x5C, never 0xE8/0xE9,
+	// so the branch guard in relocate_scan never fires here. The expected count
+	// is therefore an exact structural constant, identical on every build (the
+	// code is the same, only relocated), not a per-version figure.
 	uint32_t patched = relocate_scan(ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext,
 		ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
-	if (patched != 5)
-		ffnx_warning("AddMoreMagic: expected 5 drawn-once sites, found %u - some drawn-once state may not persist correctly!\n", patched);
+	if (patched != DRAWN_ONCE_SITE_COUNT)
+		ffnx_warning("AddMoreMagic: expected %d drawn-once sites, found %u - some drawn-once state may not persist correctly!\n", DRAWN_ONCE_SITE_COUNT, patched);
 }
 
 // Per-character held-magic + junction validation (replaces sub_4BE790, called
@@ -616,11 +633,20 @@ static void ff8_kernel_magic_arm()
 	if (ff8_magic_armed) return;
 	ff8_magic_armed = true;
 
+	// A value-scan is likewise the right tool for K_MAGIC: the exe bakes
+	// K_MAGIC_SITE_COUNT disp32 operands (base + field, the entry index applied
+	// via a register) pointing into the table, scattered across the magic
+	// subsystem, and every one must point at the extended FFNx-side table. That
+	// is far too many to enumerate, and the scan needs no per-version address -
+	// from/to are both resolved. Every real operand's low byte is the field
+	// offset (0x00..0x3B here, base itself 0x64), never 0xE8/0xE9, so the branch
+	// guard only ever rejects unrelated call displacements that happen to fall
+	// in range, never a genuine site. The count is thus a structural constant,
+	// the same on every build.
 	uint32_t k_magic_end = ff8_externals.magic_k_magic + VANILLA_MAGIC_COUNT * MAGIC_ENTRY_SIZE;
 	uint32_t rewritten = relocate_scan(ff8_externals.magic_k_magic, (uint32_t)&ff8_magic_table[0][0], k_magic_end, "K_MAGIC table");
-	// EN 1.2 has 71 genuine K_MAGIC displacement operands in this window; every
-	// other supported version matched the same count during verification.
-	if (rewritten < 69) ffnx_warning("AddMoreMagic: fewer displacement sites than expected, some magic reads may still use the vanilla table!\n");
+	if (rewritten != K_MAGIC_SITE_COUNT)
+		ffnx_warning("AddMoreMagic: expected %d K_MAGIC sites, rewrote %u - some magic reads may still use the vanilla table!\n", K_MAGIC_SITE_COUNT, rewritten);
 
 	// The two getters are small enough to replace outright; only the two sites
 	// buried in large functions still need a classification stub.
