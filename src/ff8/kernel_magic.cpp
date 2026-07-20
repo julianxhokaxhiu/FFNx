@@ -87,8 +87,6 @@
 // inside the save's CRC span, so the game serializes and checksums them on a
 // normal save. Pointing the drawn-once accesses here gives native
 // persistence for a full 256-bit table with no save/load file hooks.
-#define SCAN_CODE_START         0x401000u
-#define SCAN_CODE_END           0x520000u
 
 #define VANILLA_KERNEL_SIZE     37992u
 #define VANILLA_MAGIC_COUNT     57
@@ -123,7 +121,6 @@ static uint8_t ff8_magic_table[MAX_MAGIC_ID][MAGIC_ENTRY_SIZE];
 static int ff8_magic_count = VANILLA_MAGIC_COUNT;
 static bool ff8_magic_armed = false;
 static char *ff8_kernel_stash = nullptr;     // full grown kernel.bin image
-static char *ff8_magic_text = nullptr;       // stash + grown offsetMagicText
 
 typedef int(__cdecl *load_file_to_buffer_t)(const char *, char *);
 
@@ -242,7 +239,21 @@ static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 }
 
 // ---- blind value-scan relocation (shared by K_MAGIC and drawn-once) -----
-// Scans SCAN_CODE_START..SCAN_CODE_END for any dword equal to `from` and
+// The scan window is the running exe's own .text section, read from its PE
+// header (same technique as getProcessEntryPoint() in utils.cpp) rather than
+// an assumed address range - a hardcoded upper bound silently truncates the
+// scan (this exe's code runs well past 0x520000) and would differ per build.
+static void get_code_section_bounds(uint32_t *start, uint32_t *end)
+{
+	HMODULE base = GetModuleHandleA(nullptr);
+	PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
+	PIMAGE_NT_HEADERS nt = (PIMAGE_NT_HEADERS)((BYTE *)base + dos->e_lfanew);
+
+	*start = (uint32_t)base + nt->OptionalHeader.BaseOfCode;
+	*end = *start + nt->OptionalHeader.SizeOfCode;
+}
+
+// Scans the exe's .text section for any dword equal to `from` and
 // repoints it to `to`. One important false-positive class must be excluded: a
 // `call rel32` (E8) or `jmp rel32` (E9) whose opcode+displacement bytes happen
 // to form a value equal to `from`. Real example (EN 1.2, K_MAGIC): the call to
@@ -254,9 +265,12 @@ static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 // data operand never does - so skip those.
 static uint32_t relocate_scan(uint32_t from, uint32_t to, uint32_t range_end, const char *what)
 {
+	uint32_t scan_start, scan_end;
+	get_code_section_bounds(&scan_start, &scan_end);
+
 	uint32_t rewritten = 0, skipped_branch = 0;
 
-	for (uint32_t addr = SCAN_CODE_START; addr < SCAN_CODE_END - 4; ++addr)
+	for (uint32_t addr = scan_start; addr < scan_end - 4; ++addr)
 	{
 		uint32_t value = *(uint32_t *)addr;
 
@@ -266,7 +280,7 @@ static uint32_t relocate_scan(uint32_t from, uint32_t to, uint32_t range_end, co
 			if (op == 0xE8 || op == 0xE9) // call/jmp rel32?
 			{
 				uint32_t target = addr + 5 + *(int32_t *)(addr + 1);
-				if (target >= SCAN_CODE_START && target < 0x600000u)
+				if (target >= scan_start && target < scan_end)
 				{
 					++skipped_branch; // real branch instruction - never touch it
 					continue;
@@ -351,7 +365,7 @@ static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 	uint8_t amounts[MAX_MAGIC_ID];
 	memset(amounts, 0, sizeof(amounts));
 
-	uint8_t *inventory = (uint8_t *)(ff8_externals.magic_sg_chara_data + 152 * character_id + 16); // 32 x {id, amount}
+	uint8_t *inventory = (uint8_t *)(ff8_externals.magic_sg_chara_data + CHAR_STRIDE * character_id + CHAR_MAGIC_OFF); // 32 x {id, amount}
 	for (int i = 0; i < 32; ++i)
 	{
 		uint8_t id = inventory[2 * i], amount = inventory[2 * i + 1];
@@ -590,10 +604,9 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	memcpy(dest + vanilla_data_offsets[KERNEL_FIRST_TEXT_SEC], ff8_kernel_stash + offsets[KERNEL_FIRST_TEXT_SEC],
 		text_src_size < text_dest_size ? text_src_size : text_dest_size);
 
-	// FFNx-side full magic table + text pointer.
+	// FFNx-side full magic table.
 	memcpy(ff8_magic_table, ff8_kernel_stash + offsets[KERNEL_MAGIC_SECTION], entries * MAGIC_ENTRY_SIZE);
 	ff8_magic_count = entries;
-	ff8_magic_text = ff8_kernel_stash + offsets[32]; // magic text section (unused directly; header serves it)
 
 	ffnx_trace("AddMoreMagic: extended kernel.bin detected (%d magic entries, +%u bytes data growth).\n", entries, data_growth);
 
