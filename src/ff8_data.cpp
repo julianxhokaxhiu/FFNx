@@ -878,6 +878,9 @@ void ff8_find_externals()
 	ff8_externals.battle_sub_4877F0 = get_relative_call(ff8_externals.sub_485610, 0x6F);
 	ff8_externals.battle_sub_48D200 = get_relative_call(ff8_externals.sub_485610, 0x323);
 	ff8_externals.battle_ai_opcode_sub_487DF0 = get_relative_call(ff8_externals.battle_sub_4877F0, 0x82);
+	ff8_externals.battle_ai_target_rangecheck_ja = ff8_externals.battle_ai_opcode_sub_487DF0 + 0x1D27;
+	ff8_externals.battle_ai_target_default_scan  = ff8_externals.battle_ai_opcode_sub_487DF0 + 0x1EE5;
+	ff8_externals.battle_ai_opcode_loop_head     = ff8_externals.battle_ai_opcode_sub_487DF0 + 0xEC;
 	ff8_externals.update_tutorial_info_4AD170 = (void(*)(int))get_relative_call(ff8_externals.battle_ai_opcode_sub_487DF0, FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : (FF8_SP_VERSION ? 0x21A0 : 0x2176)));
 	ff8_externals.battle_get_draw_magic_amount_48FD20 = (int(*)(int, int, int))get_relative_call(ff8_externals.battle_sub_48D200, FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355));
 	ff8_externals.sub_48B7E0 = get_relative_call(ff8_externals.sub_47CCB0, 0x8F0);
