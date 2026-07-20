@@ -1002,77 +1002,92 @@ void ff8_find_externals()
 	// different absolute addresses in each language build. Unsupported
 	// versions leave every field at 0; kernel_magic.cpp checks that before
 	// arming.
-	if (FF8_US_VERSION)
+	switch (version)
 	{
-		ff8_externals.magic_load_file_to_buf = 0x52D400u;
-		ff8_externals.magic_kernel_read_call = 0x47D336u;
-		ff8_externals.magic_site_name_getter = 0x47E974u;
-		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
-		ff8_externals.magic_site_spell_visibility = 0x48C7E3u;
-		ff8_externals.magic_site_draw_execute = 0x48D53Bu;
-		ff8_externals.magic_fn_linked_stock = 0x48CAE0u;
-		ff8_externals.magic_fn_reorder_magic = 0x4F0030u;
-		ff8_externals.magic_fn_validate_magic = 0x4BE790u;
-	}
-	else if (FF8_FR_VERSION)
-	{
-		ff8_externals.magic_load_file_to_buf = 0x52CF60u;
-		ff8_externals.magic_kernel_read_call = 0x47D336u;
-		ff8_externals.magic_site_name_getter = 0x47E974u;
-		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
-		ff8_externals.magic_site_spell_visibility = 0x48C813u;
-		ff8_externals.magic_site_draw_execute = 0x48D56Cu;
-		ff8_externals.magic_fn_linked_stock = 0x48CB10u;
-		ff8_externals.magic_fn_reorder_magic = 0x4EFB90u;
-		ff8_externals.magic_fn_validate_magic = 0x4BE2B0u;
-	}
-	else if (FF8_DE_VERSION)
-	{
-		ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
-		ff8_externals.magic_kernel_read_call = 0x47D336u;
-		ff8_externals.magic_site_name_getter = 0x47E974u;
-		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
-		ff8_externals.magic_site_spell_visibility = 0x48C813u;
-		ff8_externals.magic_site_draw_execute = 0x48D56Cu;
-		ff8_externals.magic_fn_linked_stock = 0x48CB10u;
-		ff8_externals.magic_fn_reorder_magic = 0x4EFC00u;
-		ff8_externals.magic_fn_validate_magic = 0x4BE320u;
-	}
-	else if (FF8_SP_VERSION)
-	{
-		ff8_externals.magic_load_file_to_buf = 0x52D000u;
-		ff8_externals.magic_kernel_read_call = 0x47D336u;
-		ff8_externals.magic_site_name_getter = 0x47E974u;
-		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
-		ff8_externals.magic_site_spell_visibility = 0x48C863u;
-		ff8_externals.magic_site_draw_execute = 0x48D5BCu;
-		ff8_externals.magic_fn_linked_stock = 0x48CB60u;
-		ff8_externals.magic_fn_reorder_magic = 0x4EFC30u;
-		ff8_externals.magic_fn_validate_magic = 0x4BE350u;
-	}
-	else if (FF8_IT_VERSION)
-	{
-		ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
-		ff8_externals.magic_kernel_read_call = 0x47D336u;
-		ff8_externals.magic_site_name_getter = 0x47E974u;
-		ff8_externals.magic_site_desc_getter = 0x47E9C4u;
-		ff8_externals.magic_site_spell_visibility = 0x48C803u;
-		ff8_externals.magic_site_draw_execute = 0x48D55Cu;
-		ff8_externals.magic_fn_linked_stock = 0x48CB00u;
-		ff8_externals.magic_fn_reorder_magic = 0x4EFC00u;
-		ff8_externals.magic_fn_validate_magic = 0x4BE320u;
-	}
-	else if (version == VERSION_FF8_12_JP || version == VERSION_FF8_12_JP_NV)
-	{
-		ff8_externals.magic_load_file_to_buf = (version == VERSION_FF8_12_JP) ? 0x5310B0u : 0x5312C0u;
-		ff8_externals.magic_kernel_read_call = (version == VERSION_FF8_12_JP) ? 0x480886u : 0x4808E6u;
-		ff8_externals.magic_site_name_getter = (version == VERSION_FF8_12_JP) ? 0x481EC4u : 0x481F24u;
-		ff8_externals.magic_site_desc_getter = (version == VERSION_FF8_12_JP) ? 0x481F14u : 0x481F74u;
-		ff8_externals.magic_site_spell_visibility = (version == VERSION_FF8_12_JP) ? 0x48FCC3u : 0x48FD23u;
-		ff8_externals.magic_site_draw_execute = (version == VERSION_FF8_12_JP) ? 0x490A36u : 0x490A96u;
-		ff8_externals.magic_fn_linked_stock = (version == VERSION_FF8_12_JP) ? 0x48FFC0u : 0x490020u;
-		ff8_externals.magic_fn_reorder_magic = (version == VERSION_FF8_12_JP) ? 0x4F3FB0u : 0x4F41C0u;
-		ff8_externals.magic_fn_validate_magic = (version == VERSION_FF8_12_JP) ? 0x4C2B20u : 0x4C2D30u;
+		case VERSION_FF8_12_US:
+		case VERSION_FF8_12_US_NV:
+		case VERSION_FF8_12_US_EIDOS:
+		case VERSION_FF8_12_US_EIDOS_NV:
+			ff8_externals.magic_load_file_to_buf = 0x52D400u;
+			ff8_externals.magic_kernel_read_call = 0x47D336u;
+			ff8_externals.magic_site_name_getter = 0x47E974u;
+			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_site_spell_visibility = 0x48C7E3u;
+			ff8_externals.magic_site_draw_execute = 0x48D53Bu;
+			ff8_externals.magic_fn_linked_stock = 0x48CAE0u;
+			ff8_externals.magic_fn_reorder_magic = 0x4F0030u;
+			ff8_externals.magic_fn_validate_magic = 0x4BE790u;
+			break;
+		case VERSION_FF8_12_FR:
+		case VERSION_FF8_12_FR_NV:
+			ff8_externals.magic_load_file_to_buf = 0x52CF60u;
+			ff8_externals.magic_kernel_read_call = 0x47D336u;
+			ff8_externals.magic_site_name_getter = 0x47E974u;
+			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_site_spell_visibility = 0x48C813u;
+			ff8_externals.magic_site_draw_execute = 0x48D56Cu;
+			ff8_externals.magic_fn_linked_stock = 0x48CB10u;
+			ff8_externals.magic_fn_reorder_magic = 0x4EFB90u;
+			ff8_externals.magic_fn_validate_magic = 0x4BE2B0u;
+			break;
+		case VERSION_FF8_12_DE:
+		case VERSION_FF8_12_DE_NV:
+			ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
+			ff8_externals.magic_kernel_read_call = 0x47D336u;
+			ff8_externals.magic_site_name_getter = 0x47E974u;
+			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_site_spell_visibility = 0x48C813u;
+			ff8_externals.magic_site_draw_execute = 0x48D56Cu;
+			ff8_externals.magic_fn_linked_stock = 0x48CB10u;
+			ff8_externals.magic_fn_reorder_magic = 0x4EFC00u;
+			ff8_externals.magic_fn_validate_magic = 0x4BE320u;
+			break;
+		case VERSION_FF8_12_SP:
+		case VERSION_FF8_12_SP_NV:
+			ff8_externals.magic_load_file_to_buf = 0x52D000u;
+			ff8_externals.magic_kernel_read_call = 0x47D336u;
+			ff8_externals.magic_site_name_getter = 0x47E974u;
+			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_site_spell_visibility = 0x48C863u;
+			ff8_externals.magic_site_draw_execute = 0x48D5BCu;
+			ff8_externals.magic_fn_linked_stock = 0x48CB60u;
+			ff8_externals.magic_fn_reorder_magic = 0x4EFC30u;
+			ff8_externals.magic_fn_validate_magic = 0x4BE350u;
+			break;
+		case VERSION_FF8_12_IT:
+		case VERSION_FF8_12_IT_NV:
+			ff8_externals.magic_load_file_to_buf = 0x52CFD0u;
+			ff8_externals.magic_kernel_read_call = 0x47D336u;
+			ff8_externals.magic_site_name_getter = 0x47E974u;
+			ff8_externals.magic_site_desc_getter = 0x47E9C4u;
+			ff8_externals.magic_site_spell_visibility = 0x48C803u;
+			ff8_externals.magic_site_draw_execute = 0x48D55Cu;
+			ff8_externals.magic_fn_linked_stock = 0x48CB00u;
+			ff8_externals.magic_fn_reorder_magic = 0x4EFC00u;
+			ff8_externals.magic_fn_validate_magic = 0x4BE320u;
+			break;
+		case VERSION_FF8_12_JP:
+			ff8_externals.magic_load_file_to_buf = 0x5310B0u;
+			ff8_externals.magic_kernel_read_call = 0x480886u;
+			ff8_externals.magic_site_name_getter = 0x481EC4u;
+			ff8_externals.magic_site_desc_getter = 0x481F14u;
+			ff8_externals.magic_site_spell_visibility = 0x48FCC3u;
+			ff8_externals.magic_site_draw_execute = 0x490A36u;
+			ff8_externals.magic_fn_linked_stock = 0x48FFC0u;
+			ff8_externals.magic_fn_reorder_magic = 0x4F3FB0u;
+			ff8_externals.magic_fn_validate_magic = 0x4C2B20u;
+			break;
+		case VERSION_FF8_12_JP_NV:
+			ff8_externals.magic_load_file_to_buf = 0x5312C0u;
+			ff8_externals.magic_kernel_read_call = 0x4808E6u;
+			ff8_externals.magic_site_name_getter = 0x481F24u;
+			ff8_externals.magic_site_desc_getter = 0x481F74u;
+			ff8_externals.magic_site_spell_visibility = 0x48FD23u;
+			ff8_externals.magic_site_draw_execute = 0x490A96u;
+			ff8_externals.magic_fn_linked_stock = 0x490020u;
+			ff8_externals.magic_fn_reorder_magic = 0x4F41C0u;
+			ff8_externals.magic_fn_validate_magic = 0x4C2D30u;
+			break;
 	}
 
 	common_externals.current_triangle_id = 0x0;

@@ -293,7 +293,7 @@ static uint32_t relocate_scan(uint32_t from, uint32_t to, uint32_t range_end, co
 		}
 	}
 
-	ffnx_trace("AddMoreMagic: %s: relocated %u displacement(s), skipped %u branch false-positive(s).\n",
+	if (trace_all) ffnx_trace("AddMoreMagic: %s: relocated %u displacement(s), skipped %u branch false-positive(s).\n",
 		what, rewritten, skipped_branch);
 	return rewritten;
 }
@@ -433,7 +433,7 @@ static void relocate_drawn_once_bitfield()
 	// drawn-once bitfield exactly where it is, natively persisted.
 	if (ff8_magic_count <= EXTENDED_MAGIC_FIRST)
 	{
-		ffnx_trace("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n",
+		if (trace_all) ffnx_trace("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n",
 			EXTENDED_MAGIC_FIRST, ff8_externals.magic_sg_drawn_once);
 		return;
 	}
@@ -608,7 +608,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	memcpy(ff8_magic_table, ff8_kernel_stash + offsets[KERNEL_MAGIC_SECTION], entries * MAGIC_ENTRY_SIZE);
 	ff8_magic_count = entries;
 
-	ffnx_trace("AddMoreMagic: extended kernel.bin detected (%d magic entries, +%u bytes data growth).\n", entries, data_growth);
+	if (trace_all) ffnx_trace("AddMoreMagic: extended kernel.bin detected (%d magic entries, +%u bytes data growth).\n", entries, data_growth);
 
 	ff8_kernel_magic_arm();
 
@@ -620,7 +620,7 @@ void ff8_kernel_magic_init()
 {
 	if (!ff8_externals.magic_kernel_read_call)
 	{
-		ffnx_trace("AddMoreMagic: unsupported game version, extension disabled.\n");
+		if (trace_all) ffnx_trace("AddMoreMagic: unsupported game version, extension disabled.\n");
 		return;
 	}
 
