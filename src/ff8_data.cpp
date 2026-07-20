@@ -878,7 +878,13 @@ void ff8_find_externals()
 	ff8_externals.battle_sub_4877F0 = get_relative_call(ff8_externals.sub_485610, 0x6F);
 	ff8_externals.battle_sub_48D200 = get_relative_call(ff8_externals.sub_485610, 0x323);
 	ff8_externals.battle_ai_opcode_sub_487DF0 = get_relative_call(ff8_externals.battle_sub_4877F0, 0x82);
-	ff8_externals.update_tutorial_info_4AD170 = (void(*)(int))get_relative_call(ff8_externals.battle_ai_opcode_sub_487DF0, FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : (FF8_SP_VERSION ? 0x21A0 : 0x2176)));
+	// DE and IT need their own offsets here: the 0x2176 fallback is correct for
+	// FR only. On DE it lands on the "add esp, 4" after the call, and on IT
+	// mid-instruction. FR and DE even share the same containing function
+	// address (0x487E20) but differ in size, so the call sits elsewhere in it.
+	// The call site is recognisable as "push 7Fh" immediately followed by the
+	// call; FR verified correct, JP and SP not re-checked.
+	ff8_externals.update_tutorial_info_4AD170 = (void(*)(int))get_relative_call(ff8_externals.battle_ai_opcode_sub_487DF0, FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : (FF8_SP_VERSION ? 0x21A0 : (FF8_DE_VERSION ? 0x2171 : (FF8_IT_VERSION ? 0x218C : 0x2176)))));
 	ff8_externals.battle_get_draw_magic_amount_48FD20 = (int(*)(int, int, int))get_relative_call(ff8_externals.battle_sub_48D200, FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355));
 	ff8_externals.sub_48B7E0 = get_relative_call(ff8_externals.sub_47CCB0, 0x8F0);
 	ff8_externals.compute_char_stats_sub_495960 = get_relative_call(ff8_externals.sub_48B7E0, 0xA3);
