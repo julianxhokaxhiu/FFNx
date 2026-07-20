@@ -53,13 +53,8 @@
 // to a bigger block in free, persisted savemap space (field vars 785..816) by
 // repointing the two instructions that use it - and only when scene.out
 // actually references a new monster, so vanilla saves stay untouched.
-//
-// Addresses are resolved relatively in ff8_data.cpp. The one fixed number here
-// is FF8_BATTLE_FILES_ARRAY_LEN, 1117 on every retail 1.2 build.
 // -------------------------------------------------------------------------
 
-// Original BattleFilesArray length. The exe never stores it, but it's 1117 on
-// every retail 1.2 build.
 #define FF8_BATTLE_FILES_ARRAY_LEN 1117
 // c0m file range to add.
 #define FF8_FIRST_NEW_C0M 144
