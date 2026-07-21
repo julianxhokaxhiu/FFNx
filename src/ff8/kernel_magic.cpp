@@ -31,8 +31,7 @@
 // Vanilla caps magic at 57 entries and routes ids >= 64 to GF handling. When
 // a grown kernel.bin is loaded we arm the extension: serve the game a
 // vanilla-layout image, copy the full magic table FFNx-side, and patch the
-// exe to read from it and to treat only 64..79 as GFs. Addresses come from
-// ff8_externals.magic_* (resolved in ff8_data.cpp); a stock kernel.bin is
+// exe to read from it and to treat only 64..79 as GFs. A stock kernel.bin is
 // left completely untouched.
 //
 // Modder contract: kernel.bin section 1 must list ids 0..N-1, including 32
