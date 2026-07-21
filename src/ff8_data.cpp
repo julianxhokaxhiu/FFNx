@@ -914,14 +914,6 @@ void ff8_find_externals()
 
 	ff8_externals.sub_502380 = get_relative_call(ff8_externals.sub_500CC0, 0x69);
 	ff8_externals.sub_50A790 = get_relative_call(ff8_externals.sub_502380, 0x51);
-
-	// battle_monster_dat_loader's "load battle file (com_id + 150)" call, hooked
-	// to unlock c0m144-199 (see src/ff8/battle/monsters.cpp).
-	// sub_502380 pushes sub_502670 as a plain "push offset ..." (opcode at +0x21,
-	// imm32 at +0x22). sub_502670 calls the battle entity task dispatcher at
-	// +0x110. That dispatcher embeds battle_monster_dat_loader as a
-	// "mov eax, offset ..." (opcode at +0x4A, imm32 at +0x4B), and the file-load
-	// call sits at a fixed +0x240 into battle_monster_dat_loader.
 	ff8_externals.sub_502670 = get_absolute_value(ff8_externals.sub_502380, 0x22);
 	ff8_externals.battle_entity_task_dispatch_sub_507080 = get_relative_call(ff8_externals.sub_502670, 0x110);
 	ff8_externals.battle_monster_dat_loader = get_absolute_value(ff8_externals.battle_entity_task_dispatch_sub_507080, 0x4B);
@@ -983,17 +975,6 @@ void ff8_find_externals()
 	ff8_externals.battle_sub_494410 = get_relative_call(ff8_externals.battle_sub_48FE20, FF8_US_VERSION ? 0x139C : (JP_VERSION ? 0x1300 : (FF8_SP_VERSION ? 0x130B : 0x1301)));
 	ff8_externals.battle_sub_494AF0 = (void(*)(int, int, int, int))get_relative_call(ff8_externals.battle_sub_494410, 0x525);
 
-	// The two instructions that index SG_ENEMY_SCANNED_ONCE by com_id / 32,
-	// relocated to a larger field when c0m144-199 are in use (see
-	// src/ff8/battle/monsters.cpp). battle_sub_48FE20 is the only caller of
-	// Damage_DispatchByAttackType, which in turn is the only caller of the
-	// "mark this com_id scanned" setter. What we want is each instruction's
-	// disp32 operand, so the offsets below land 3 bytes into a
-	// "test [reg*4 + disp32], reg" and an "or [reg*4 + disp32], reg"
-	// respectively. All four offsets verified identical on every retail 1.2
-	// build (EN, ES, FR, IT, DE, JP), so they need no version branching;
-	// monsters.cpp re-checks both operands before writing to them, so any
-	// build that does not match is left untouched rather than corrupted.
 	uint32_t battle_damage_dispatch = get_relative_call(ff8_externals.battle_sub_48FE20, 0x858);
 	uint32_t battle_mark_enemy_scanned = get_relative_call(battle_damage_dispatch, 0x311);
 	ff8_externals.battle_enemy_scanned_read_operand = battle_damage_dispatch + 0x2F2;
