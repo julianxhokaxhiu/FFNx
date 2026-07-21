@@ -26,89 +26,33 @@
 #include <string.h>
 
 // -------------------------------------------------------------------------
-// AddMoreMagic - extended kernel.bin magic section (EN/FR/DE/SP/IT/JP/JP_NV
-// retail 1.2 exes)
+// AddMoreMagic - lets kernel.bin hold more than the vanilla 57 magic spells.
 //
-// The exe ignores the kernel.bin header for data access: 31 data-section
-// labels are baked at vanilla buffer offsets (K_MAGIC = buffer+540, 57*60B).
-// Only TEXT sections (file sections 31..55) are resolved through the header
-// at runtime. Spell ids are bytes; ids >= 64 are routed to GF handling
-// (GFs are 64..79), which caps vanilla magic at 64 ids.
+// Vanilla caps magic at 57 entries and routes ids >= 64 to GF handling. When
+// a grown kernel.bin is loaded we arm the extension: serve the game a
+// vanilla-layout image, copy the full magic table FFNx-side, and patch the
+// exe to read from it and to treat only 64..79 as GFs. Addresses come from
+// ff8_externals.magic_* (resolved in ff8_data.cpp); a stock kernel.bin is
+// left completely untouched.
 //
-// This module arms itself only when the loaded kernel.bin has a grown
-// section 1. It then:
-//  1. Serves the game a vanilla-LAYOUT image of the file (magic truncated
-//     to 57 in-buffer) so every baked data address stays valid, keeps the
-//     full file stashed, and points every text-section header offset into
-//     the stash (text sections may thus grow freely too).
-//  2. Copies ALL magic entries (up to 256) into an FFNx-side table and
-//     rewrites every code displacement targeting [K_MAGIC, K_MAGIC_END)
-//     to the table (the exe never bounds-checks these indexings).
-//  3. Replaces 5 functions outright (replace_function), in C:
-//     - the magic name and description getters, whose whole body is the
-//       "cmp id,64" split (so they need no code patching of their own),
-//     - linkedStockFieldCharData (Draw->Stock setup; split cmp/jcc),
-//     - menu_reorder_magic (writes a 64-byte STACK buffer indexed by
-//       spell id -> would corrupt the stack with extended ids),
-//     - sub_4BE790 (per-char held-magic + junction validate; writes a
-//       64-bit STACK bitfield indexed by id/32 -> stack smash for id >= 64).
-//  4. Fixes the 2 remaining magic-vs-GF classification branches (cmp id,64)
-//     so only 64..79 take the GF path: draw-list visibility and Draw-command
-//     execution. Both sit deep inside large functions and are not at a call,
-//     so they get a small stub instead (see ff8_build_classify_stub).
-//  5. Relocates the savemap drawn-once bitfield (blind-scanned by value,
-//     same technique as step 2) to persisted free savemap space once any
-//     magic id >= 96 exists, since 5 native access sites index it by
-//     (id-1)/32 with no bounds check.
-//
-// File contract for modders: kernel.bin's section 1 must contain entries
-// for ids 0..N-1 *including* 32 dummy 60-byte rows for ids 64..95 (GFs 64-79,
-// 80-95 reserved for a future 32-GF exe patch) when N > 64 (id == entry index
-// everywhere). mmagic.bin (standalone menu file, 4B/spell, loaded with
-// size-from-file) must be extended to cover the highest id; magsort.bin can
-// stay vanilla (new spells sort last).
-//
-// Per-version addresses are resolved once in ff8_data.cpp (ff8_find_externals)
-// into ff8_externals.magic_* fields, following this codebase's standard
-// convention for version-dependent addresses - see that file for how each
-// one was derived (EN researched directly in IDA; FR/DE/SP/IT/JP/JP_NV via
-// byte-signature matching + a verified per-language data-segment delta,
-// cross-checked against 5 independent anchors per language). This module
-// only consumes ff8_externals.magic_*; the drawn-once relocation target is
-// not one of those fields - it is computed below from the already-resolved
-// field_vars_stack_1CFE9B8 external (the field-script variable block base)
-// plus 753, the slot the drawn-once bitfield relocates to.
+// Modder contract: kernel.bin section 1 must list ids 0..N-1, including 32
+// dummy rows for the GF-reserved ids 64..95, once N > 64. mmagic.bin must
+// cover the highest id; magsort.bin can stay vanilla.
 // -------------------------------------------------------------------------
 
 #define CHAR_STRIDE             152         // FF8CharacterData record size
 #define CHAR_MAGIC_OFF          16          // 32 x {id:u8, amount:u8}
 #define CHAR_JUNCTION_OFF       92          // 20 stat slots, each = a junctioned magic id
-// Relocation target for the drawn-once bitfield when extended magic (id >= 96)
-// is present: field-script variable 753. Vars 753-1023 (271 bytes) are
-// verified unused on all three axes - no field script (all 882 *.jsm
-// scanned), no EXE code reference, zero in every real save - AND they sit
-// inside the save's CRC span, so the game serializes and checksums them on a
-// normal save. Pointing the drawn-once accesses here gives native
-// persistence for a full 256-bit table with no save/load file hooks.
-
 #define VANILLA_KERNEL_SIZE     37992u
 #define VANILLA_MAGIC_COUNT     57
 #define MAGIC_ENTRY_SIZE        60
 #define MAX_MAGIC_ID            256
-// Instruction counts the two value-scans below expect to rewrite. Both are
-// structural constants (counts of instructions in identical, only-relocated
-// code), verified in IDA and the same on every retail 1.2 build, not
-// per-version figures - see the scans for why a scan is used and why no
-// genuine site can be lost to the branch guard.
+// How many code sites each value-scan expects to rewrite. Same on every build.
 #define K_MAGIC_SITE_COUNT      71
 #define DRAWN_ONCE_SITE_COUNT   5
 #define GF_FIRST_ID             64
-#define GF_LAST_ID              79          // the exe's real 16 GF ids (SG_ARRAY_GF_DATA[16]);
-                                            // classification trampolines use this, unchanged.
-// Reserve ids 64..95 (32 slots) for GFs - 16 used today, 16 kept free for a
-// future 32-GF exe patch. Extended (mod-added) magic therefore starts at 96,
-// leaving 80..95 as an unused hole. Bump GF_RESERVED_COUNT (and GF_LAST_ID,
-// once the exe supports it) when that future change lands.
+#define GF_LAST_ID              79          // the exe's 16 real GF ids (64..79)
+// Ids 64..95 are reserved for GFs, so mod-added magic starts at 96.
 #define GF_RESERVED_COUNT       32
 #define EXTENDED_MAGIC_FIRST    (GF_FIRST_ID + GF_RESERVED_COUNT)   // 96
 #define KERNEL_SECTION_COUNT    56
@@ -149,33 +93,18 @@ static char *ff8_kernel_stash = nullptr;     // full grown kernel.bin image
 typedef int(__cdecl *load_file_to_buffer_t)(const char *, char *);
 
 // ---- magic-vs-GF classification -----------------------------------------
-// 4 sites in the exe do "cmp reg,40h / jcc gf_path" to route ids >= 64 to GF
-// handling, which must be narrowed to the real GF range (64..79).
-//
-// Two of them are the whole body of a small getter (the magic name and
-// description lookups, ~0x50 bytes each); those are reimplemented in C below
-// and installed with replace_function, so no trampoline is involved.
-//
-// The other two cannot be replaced wholesale: the draw-list visibility check
-// sits in manageMonsterSpellVisibility, which walks undocumented struct
-// layouts, and the Draw-command check sits inside computeCommandAction, which
-// is over 0x1000 bytes of unrelated logic. Neither is at a call instruction,
-// so replace_call does not apply either. Those two keep a small stub (see
-// ff8_build_classify_stub) that calls the C predicate below and then either
-// falls through to the original instruction stream (magic path) or jumps to
-// the original jcc's target (GF path).
+// True only for a real GF id. The exe's "id >= 64 is a GF" checks are all
+// narrowed to this range - the two getters below by full replacement, the
+// two deep-in-function sites by a small stub (ff8_build_classify_stub).
 static int __cdecl ff8_is_gf_id(int id)
 {
 	id &= 0xFFFF; // the draw-execute site classifies on BX (16-bit); harmless elsewhere
 	return (id >= GF_FIRST_ID && id <= GF_LAST_ID) ? 1 : 0;
 }
 
-// ---- name / description getters (replace_function, no trampoline) --------
-// Both vanilla getters resolve a string as
-// "kernel buffer + header offset of a text section + the entry's text offset",
-// returning a shared empty string when the entry's offset is KERNEL_NO_TEXT.
-// ff8_kernel_load_hook points the text sections' header offsets into the
-// stashed full file, so grown text sections resolve correctly here too.
+// ---- name / description getters (replace_function) ----------------------
+// Resolve a kernel string: buffer + text-section header offset + entry offset,
+// or a shared empty string when the entry has none.
 static char *ff8_kernel_text(int section, uint16_t text_offset)
 {
 	const uint8_t *buffer = (const uint8_t *)ff8_externals.unk_1CF3E48;
@@ -195,8 +124,7 @@ static uint16_t ff8_magic_text_offset(int id, int field_offset)
 	return *(const uint16_t *)&ff8_magic_table[id][field_offset];
 }
 
-// Replaces getMagicText. Vanilla sent every id >= 64 down the GF branch; only
-// 64..79 belong there, and magic now reads the FFNx-side extended table.
+// Magic/GF name. Magic reads the FFNx-side table; only 64..79 are GFs.
 static char *__cdecl ff8_get_magic_name(int id)
 {
 	if (ff8_is_gf_id(id))
@@ -205,8 +133,7 @@ static char *__cdecl ff8_get_magic_name(int id)
 	return ff8_kernel_text(KERNEL_TEXT_MAGIC_SEC, ff8_magic_text_offset(id, MAGIC_NAME_OFF));
 }
 
-// Replaces the magic description getter. Same split, except GF descriptions
-// live in kernel.bin's GF data section and use their own text section.
+// Magic/GF description. Same split; GF text lives in kernel.bin's GF section.
 static char *__cdecl ff8_get_magic_description(int id)
 {
 	if (ff8_is_gf_id(id))
@@ -226,12 +153,7 @@ static char *__cdecl ff8_get_magic_description(int id)
 #define CLASSIFY_STUB_SIZE  16
 #define TRAMPOLINE_PAGE_SIZE 4096
 
-// Bump-allocates from a single RWX page, lazily created on first use. FFNx has
-// no "trampoline buffer" utility because it never needs one: every other patch
-// either rewrites an existing instruction in place (patch_code_*/memcpy_code)
-// or redirects a call/function entry point (replace_call/replace_function).
-// The two remaining classification stubs are genuinely new machine code, so
-// they need executable memory of their own rather than driver_malloc's heap.
+// Hands out executable memory for the stubs from one lazily-created RWX page.
 static uint8_t *ff8_trampoline_alloc(uint32_t size)
 {
 	static uint8_t *page = nullptr;
@@ -250,9 +172,7 @@ static uint8_t *ff8_trampoline_alloc(uint32_t size)
 	return stub;
 }
 
-// Minimal x86 emitter, so the stub below reads as a list of named instructions
-// instead of a wall of hex. rel32 operands are relative to the end of their
-// own instruction.
+// Minimal x86 emitter so the stub reads as named instructions, not hex.
 struct x86_emitter
 {
 	uint8_t *p;
@@ -268,11 +188,8 @@ struct x86_emitter
 	void ret() { byte(0xC3); }
 };
 
-// Widens one "cmp reg,40h / jcc gf_path" site to the real GF range. `reg` holds
-// the spell id on entry; it is restored before either exit, so falling through
-// to the site's next instruction (the magic path) sees exactly the register
-// state the original compare would have left, and taking the jnz reproduces the
-// original jcc's GF branch.
+// Stub for one "cmp reg,40h / jcc" site: call the C check, then fall through
+// (magic) or jump to the original GF target. `reg` is preserved either way.
 static void *ff8_build_classify_stub(uint8_t reg, uint32_t gf_target)
 {
 	uint8_t *stub = ff8_trampoline_alloc(CLASSIFY_STUB_SIZE);
@@ -280,24 +197,19 @@ static void *ff8_build_classify_stub(uint8_t reg, uint32_t gf_target)
 
 	x86_emitter emit{ stub };
 
-	emit.push_reg(reg);                      // save the id, and pass it as the __cdecl argument
+	emit.push_reg(reg);                      // pass the id as the __cdecl arg
 	emit.call((uint32_t)&ff8_is_gf_id);      // -> al
 	emit.test_al_al();
-	emit.pop_reg(reg);                       // drop the argument (__cdecl) and restore the register
-	emit.jnz(gf_target);                     // GF: take the original branch
-	emit.ret();                              // magic: fall back into the site
+	emit.pop_reg(reg);                       // restore the id register
+	emit.jnz(gf_target);                     // GF path
+	emit.ret();                              // magic path
 
 	return stub;
 }
 
-// Verify the expected "cmp reg,40h" + jcc encoding, save the jcc target,
-// then overwrite the whole compare-and-branch with "call stub" (+NOPs).
-//
-// The compare may carry a 0x66 operand-size prefix ("cmp bx,40h" instead of
-// "cmp ebx,40h"): the DRAW-execute site is `66 83 FB 40 0F 83 rel32`. The site
-// MUST start at that prefix - patching one byte late leaves the 0x66 in front
-// of our 0xE8, which the CPU decodes as `66 E8` = a 16-bit CALL that pushes a
-// 2-byte return address and corrupts the stack. So handle the prefix here.
+// Overwrites a "cmp reg,40h / jcc" site with a call to its stub. Handles the
+// optional 0x66 prefix (draw-execute is "cmp bx,40h"); the site must start at
+// it, or the leftover 0x66 would corrupt our call.
 static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 {
 	const uint8_t *p = (const uint8_t *)site;
@@ -337,9 +249,7 @@ static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 		return false;
 	}
 
-	// Overwrite the compare-and-branch with "call stub", then NOP out whatever
-	// is left of the region so the following instruction still starts where the
-	// original code expected it to.
+	// call stub, then NOP the rest so the next instruction stays put.
 	memset_code(site, 0x90, patch_size);
 	patch_code_byte(site, 0xE8);
 	patch_code_dword(site + 1, (uint32_t)stub - (site + 5));
@@ -347,11 +257,8 @@ static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 	return true;
 }
 
-// ---- blind value-scan relocation (shared by K_MAGIC and drawn-once) -----
-// The scan window is the running exe's own .text section, read from its PE
-// header (same technique as getProcessEntryPoint() in utils.cpp) rather than
-// an assumed address range - a hardcoded upper bound silently truncates the
-// scan (this exe's code runs well past 0x520000) and would differ per build.
+// ---- value-scan relocation (shared by K_MAGIC and drawn-once) -----------
+// The exe's own .text bounds, from its PE header (adapts to any build).
 static void get_code_section_bounds(uint32_t *start, uint32_t *end)
 {
 	HMODULE base = GetModuleHandleA(nullptr);
@@ -362,16 +269,10 @@ static void get_code_section_bounds(uint32_t *start, uint32_t *end)
 	*end = *start + nt->OptionalHeader.SizeOfCode;
 }
 
-// Scans the exe's .text section for any dword equal to `from` and
-// repoints it to `to`. One important false-positive class must be excluded: a
-// `call rel32` (E8) or `jmp rel32` (E9) whose opcode+displacement bytes happen
-// to form a value equal to `from`. Real example (EN 1.2, K_MAGIC): the call to
-// getAICON_SP1_DATA @0x49A483 is E8 48 CF 01 00, and the dword at 0x49A483 is
-// 0x01CF48E8 - squarely in the K_MAGIC range. Rewriting it corrupts the call
-// (E8 -> part of a table address, decoding as `pop esp`), which crashes the
-// field menu (only reached when dword_1D6BC4C==0). Such a match has the branch
-// opcode as its low byte AND a target that lands in real .text - a genuine
-// data operand never does - so skip those.
+// Repoints every dword in .text that falls in [from, range_end) by the same
+// delta. A call/jmp rel32 whose bytes happen to land in range is skipped -
+// its opcode is the low byte and it targets real code, which a data operand
+// never does.
 static uint32_t relocate_scan(uint32_t from, uint32_t to, uint32_t range_end, const char *what)
 {
 	uint32_t scan_start, scan_end;
@@ -408,8 +309,7 @@ static uint32_t relocate_scan(uint32_t from, uint32_t to, uint32_t range_end, co
 }
 
 // ---- replaced functions -------------------------------------------------
-// Draw->Stock action setup (replaces linkedStockFieldCharData).
-// Vanilla routed every id >= 64 to the GF branch; only 64..79 belong there.
+// Draw->Stock setup (replaces linkedStockFieldCharData); only 64..79 are GFs.
 static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_id)
 {
 	uint8_t *chr = (uint8_t *)(ff8_externals.magic_f_char_data + 464 * char_slot);
@@ -457,17 +357,12 @@ static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_i
 	return chr;
 }
 
-// Magic menu sort (replaces menu_reorder_magic). The vanilla function fills a
-// 64-byte stack array indexed by spell id; extended ids would corrupt the
-// stack. Ids absent from the sort preset (all extended ones with a vanilla
-// magsort.bin) are appended in ascending id order instead of being silently
-// dropped.
+// Magic menu sort (replaces menu_reorder_magic). Vanilla indexes a 64-byte
+// stack array by spell id, which extended ids overflow. Ids not in the sort
+// preset are appended in id order rather than dropped.
 static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 {
-	// magsortbuffer is an array of pointers (MenuReadFiles passes it as
-	// Menu_GetFile((void**)magsortbuffer, ...) - no '&' - so magsortbuffer[0]
-	// itself holds the loaded-file pointer, confirmed by decompiling
-	// MenuReadFiles @ 0x4A1C31). Must dereference before indexing by preset.
+	// magsortbuffer holds the loaded-file pointer directly, so dereference first.
 	const uint8_t *preset = (const uint8_t *)(*(uintptr_t *)ff8_externals.magic_magsort_buffer) + 64 * sort_preset;
 	if (!preset[0]) return 0;
 
@@ -509,37 +404,14 @@ static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 	return 1;
 }
 
-// SG_MAGIC_KNOWN_DRAWN_ONCE is a 64-bit (2-dword) savemap bitfield indexed by
-// (id-1)/32 in 5 places (1 read + 4 writes). ParseBattleParty does exactly this
-// for every held party spell on battle start; for a held id >= 65 the index is
-// >= 2 and it writes past the field into adjacent savemap memory (the enemy
-// scanned-once bitfield) -> corruption that manifests as a later NULL-pointer
-// crash in battle stage setup.
-//
-// Since magic ids 64-95 are GF-reserved (never magic), the first magic id that
-// overflows the native field is 96. So we only touch the drawn-once field when
-// the kernel actually declares a magic id >= 96 (ff8_magic_count > 96). When it
-// does, we relocate the whole field, for ALL ids, to a 256-bit store in
-// verified-free savemap space (field-script variable 753) via the same blind
-// value-scan used for K_MAGIC, so every (id-1)/32 access up to id 256 stays
-// in bounds AND the state persists through a normal save (that region is
-// inside the save CRC span).
-//
-// Why move ALL ids rather than split (vanilla ids native / extended ids new):
-// a single access site computes base[(id-1)/32] from ONE base displacement, so
-// routing low vs high ids to different bases would need a per-site conditional
-// trampoline at all 5 sites (each with different registers) - fragile, for only
-// a cosmetic gain. A stock (unmodded) game never reaches here (id < 96 => no
-// relocation => drawn-once stays byte-for-byte vanilla), which is the
-// compatibility guarantee that actually matters. In a modded game the new
-// location is invisible in play and held spells are re-marked drawn every
-// battle by ParseBattleParty, so nothing is lost by relocating vanilla ids too.
+// The 64-bit "magic drawn once" savemap bitfield is indexed by (id-1)/32 with
+// no bounds check, so a magic id >= 96 writes past it and corrupts the savemap.
+// When such an id exists, move the field to free savemap space (field variable
+// 753, verified unused and inside the save CRC span) big enough for all 256
+// ids. Its DRAWN_ONCE_SITE_COUNT accessors are scattered and one has no anchor,
+// so a value-scan repoints them all. A stock game never gets here.
 static void relocate_drawn_once_bitfield()
 {
-	// Only needed when an extended magic id (>= EXTENDED_MAGIC_FIRST) exists:
-	// ids 64..95 are GF-reserved, so id 96 is the first magic whose drawn-once
-	// bit (95) overflows the native 64-bit field. Otherwise leave the vanilla
-	// drawn-once bitfield exactly where it is, natively persisted.
 	if (ff8_magic_count <= EXTENDED_MAGIC_FIRST)
 	{
 		if (trace_all) ffnx_trace("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n",
@@ -547,42 +419,18 @@ static void relocate_drawn_once_bitfield()
 		return;
 	}
 
-	// Field-script variable 753, inside the already-resolved variable block
-	// (field_vars_stack_1CFE9B8, used elsewhere for savemap script vars) -
-	// this is not a magic_* field since it is entirely derived, not researched
-	// per language.
 	uint32_t sg_drawn_once_ext = ff8_externals.field_vars_stack_1CFE9B8 + 753;
 
-	// A value-scan is the right tool here rather than resolving each site
-	// relatively: the field is read/written from DRAWN_ONCE_SITE_COUNT
-	// unrelated places - addMagicToMagicKnown, ParseBattleParty,
-	// battleToFieldTransition, manageMonsterSpellVisibility, and a reader that
-	// is a live function IDA does not recognise and nothing calls directly, so
-	// it has no anchor to resolve from. Enumerating them would need a separate
-	// chain per subsystem for no gain over matching the address itself.
-	//
-	// The match is exact (range is [field, field+1)) and cannot alias a
-	// call/jmp displacement: the field address ends in 0x5C, never 0xE8/0xE9,
-	// so the branch guard in relocate_scan never fires here. The expected count
-	// is therefore an exact structural constant, identical on every build (the
-	// code is the same, only relocated), not a per-version figure.
 	uint32_t patched = relocate_scan(ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext,
 		ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
 	if (patched != DRAWN_ONCE_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: expected %d drawn-once sites, found %u - some drawn-once state may not persist correctly!\n", DRAWN_ONCE_SITE_COUNT, patched);
 }
 
-// Per-character held-magic + junction validation (replaces sub_4BE790, called
-// for every character on menu open). The vanilla function builds a "spells
-// this character holds" bitfield in a 64-bit STACK buffer indexed by id/32
-// (`held[id/32] |= 1 << (id&31)`); for a held id >= 64, id/32 >= 2 writes past
-// the 2-dword buffer straight onto the saved registers / return address ->
-// stack smash. It ALSO marks a per-character 2-dword global (valid-junction
-// bitfield) indexed the same way, which overflows into the next character's
-// slot for id >= 64. This replacement uses a 256-bit local bitfield and
-// clamps the global write to the vanilla 2-dword range (extended junctions
-// stay junctioned but aren't mirrored into the global - purely a
-// junction-menu cosmetic detail, never a crash).
+// Per-character held-magic + junction validation (replaces sub_4BE790).
+// Vanilla builds the "held" bitfield in a 64-bit stack buffer indexed by
+// id/32, which a held id >= 64 smashes. Uses a 256-bit local instead, and
+// clamps the 2-dword valid-junction global write to its vanilla range.
 static int __cdecl ff8_char_validate_magic(int char_idx)
 {
 	uint32_t *valid_junction = (uint32_t *)(ff8_externals.magic_valid_junction + 8 * char_idx);
@@ -633,23 +481,15 @@ static void ff8_kernel_magic_arm()
 	if (ff8_magic_armed) return;
 	ff8_magic_armed = true;
 
-	// A value-scan is likewise the right tool for K_MAGIC: the exe bakes
-	// K_MAGIC_SITE_COUNT disp32 operands (base + field, the entry index applied
-	// via a register) pointing into the table, scattered across the magic
-	// subsystem, and every one must point at the extended FFNx-side table. That
-	// is far too many to enumerate, and the scan needs no per-version address -
-	// from/to are both resolved. Every real operand's low byte is the field
-	// offset (0x00..0x3B here, base itself 0x64), never 0xE8/0xE9, so the branch
-	// guard only ever rejects unrelated call displacements that happen to fall
-	// in range, never a genuine site. The count is thus a structural constant,
-	// the same on every build.
+	// The exe bakes K_MAGIC_SITE_COUNT operands pointing into the magic table,
+	// too many and too scattered to resolve individually; repoint them all to
+	// the FFNx-side table with a value-scan.
 	uint32_t k_magic_end = ff8_externals.magic_k_magic + VANILLA_MAGIC_COUNT * MAGIC_ENTRY_SIZE;
 	uint32_t rewritten = relocate_scan(ff8_externals.magic_k_magic, (uint32_t)&ff8_magic_table[0][0], k_magic_end, "K_MAGIC table");
 	if (rewritten != K_MAGIC_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: expected %d K_MAGIC sites, rewrote %u - some magic reads may still use the vanilla table!\n", K_MAGIC_SITE_COUNT, rewritten);
 
-	// The two getters are small enough to replace outright; only the two sites
-	// buried in large functions still need a classification stub.
+	// The two deep-in-function GF checks; the rest are replaced whole below.
 	install_id_trampoline(ff8_externals.magic_site_spell_visibility, REG_EAX, "draw-list visibility");
 	install_id_trampoline(ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
 
@@ -659,9 +499,6 @@ static void ff8_kernel_magic_arm()
 	replace_function(ff8_externals.magic_fn_reorder_magic, (void *)ff8_menu_reorder_magic);
 	replace_function(ff8_externals.magic_fn_validate_magic, (void *)ff8_char_validate_magic);
 
-	// Relocate the 64-bit drawn-once savemap bitfield to a persisted 256-bit
-	// store in free savemap space, but only when a magic id >= 96 is present
-	// (otherwise the vanilla field is left untouched).
 	relocate_drawn_once_bitfield();
 
 	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs; mmagic.bin must cover %d entries / %d bytes).\n",
@@ -669,9 +506,8 @@ static void ff8_kernel_magic_arm()
 }
 
 // ---- kernel.bin load interception ---------------------------------------
-// Replaces the "call LoadFileToBuffer(name, KERNEL_HEADER)" inside
-// readFilesKernelNamedicIconSysfnt. Reads the file into our own buffer,
-// passes a vanilla-layout image to the game, and keeps the full data.
+// Replaces the kernel.bin load: reads the file into our stash, hands the game
+// a vanilla-layout image, and arms the extension if the file is grown.
 static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 {
 	if (ff8_kernel_stash == nullptr)
@@ -717,15 +553,10 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 		memcpy(dest + dst, ff8_kernel_stash + src, copy_size);
 	}
 
-	// Text sections (31..55): point the header into the stash (the exe
-	// resolves these offsets through the header at runtime, and "buffer +
-	// offset" arithmetic wraps correctly to the stash). BUT also fill the
-	// vanilla-sized text area in `dest` itself with real bytes (shifted back
-	// from the stash to account for the magic-section growth) rather than
-	// leaving it uninitialized: some code may read kernel text via a
-	// hardcoded buffer-relative offset instead of through the header, the
-	// same way data sections are hardcoded, and uninitialized memory there
-	// caused a crash on first menu open.
+	// Text sections (31..55): point the header at the stash so they can grow
+	// freely. Also fill dest's vanilla-sized text area with real bytes - some
+	// code reads it by hardcoded offset, and leaving it uninitialised crashed
+	// the first menu open.
 	for (int i = KERNEL_FIRST_TEXT_SEC; i < KERNEL_SECTION_COUNT; ++i)
 		out_header[1 + i] = (uint32_t)(ff8_kernel_stash + offsets[i]) - (uint32_t)dest;
 
@@ -754,9 +585,7 @@ void ff8_kernel_magic_init()
 		return;
 	}
 
-	// Sanity: the call we are about to replace must be "E8 rel32" to
-	// LoadFileToBuffer, and the classification sites must look right
-	// (checked again at arm time before patching them).
+	// Sanity: the call we replace must be an E8 to LoadFileToBuffer.
 	const uint8_t *call_site = (const uint8_t *)ff8_externals.magic_kernel_read_call;
 	uint32_t call_target = ff8_externals.magic_kernel_read_call + 5 + *(const int32_t *)(call_site + 1);
 	if (call_site[0] != 0xE8 || call_target != ff8_externals.magic_load_file_to_buf)
