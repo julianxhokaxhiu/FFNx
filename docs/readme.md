@@ -11,6 +11,8 @@ Welcome to the FFNx documentation!
 
 ## FF7
 
+- [Multibyte Font Mode](ff7/multibyte_font.md)
+
 ## FF8
 
  - [FF8 Specific documentation](ff8/readme.md)
