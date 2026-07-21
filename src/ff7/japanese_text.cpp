@@ -16,10 +16,14 @@
 #include "../log.h"
 #include "../ff7.h"
 #include "../patch.h"
+#include "../redirect.h"
 #include <string.h>
+
+static void multibyte_load_widths();
 
 void engine_load_menu_graphics_objects_6C1468_jp(int a1)
 {
+  multibyte_load_widths();
   unsigned int v1; // eax
   unsigned int v2; // eax
   unsigned int v3; // ecx
@@ -422,6 +426,79 @@ int charWidthData[6][256] =
     }
 };
 
+// multibyte (EN) advance: table value IS the advance in screen units (max 31 covers wide Arabic);
+// JP keeps the original half-width semantics (32px texel cells -> 16 units).
+static inline float z_half_width(int w) { return ff7_japanese_edition ? std::ceil(0.5f * (float)w) : (float)w; }
+
+// ff7_multibyte_font: override the hardcoded width table from <basedir>/multibyte_widths.bin
+// (6*256 bytes, one per font sheet/code, same (pad<<5|width) packing as window.bin member 3),
+// so translations can tune advances without recompiling FFNx.
+static byte multibyte_icon_mask[256] = {0};
+static int multibyte_field_linestep_q = 128;   // field line advance in QUARTER px (128 = 32.0), live-tunable
+
+// Resolve a multibyte tuning file through the standard layers: override_path first, then the
+// per-release data path (data/lang-*/kernel on Steam/GOG/Store/2026, data/kernel on 1998).
+static bool multibyte_resolve_path(const char *name, char *out, size_t out_size)
+{
+  char in[MAX_PATH]{ 0 };
+  _snprintf(in, sizeof(in), R"(data\kernel\%s)", name);
+  return redirect_path_with_override(in, out, out_size) != 1;
+}
+
+static void multibyte_load_widths()
+{
+  // Hot-reload: re-read the widths file whenever its mtime changes (checked at most 1x/sec),
+  // so letter advances can be tuned live while the game runs (width_gui.py writes the file).
+  static bool tried = false;
+  static long long last_mtime = -1;
+  static DWORD last_check = 0;
+  if (!ff7_multibyte_font) return;
+  DWORD now = GetTickCount();
+  if (tried && (now - last_check) < 1000) return;
+  last_check = now;
+  char path[MAX_PATH]{ 0 };
+  // line step re-read every 1s tick — must NOT sit behind the widths mtime gate,
+  // or moving only the spacing slider never reaches it
+  multibyte_resolve_path("multibyte_linestep.bin", path, sizeof(path));
+  FILE *lf = fopen(path, "rb");
+  if (lf)
+  {
+    unsigned char lb[2]; size_t ln = fread(lb, 1, 2, lf);
+    int q = (ln == 2) ? (lb[0] | (lb[1] << 8)) : (ln == 1 ? lb[0] * 4 : 0);  // 1-byte legacy = whole px
+    if (q >= 80 && q <= 160 && q != multibyte_field_linestep_q)
+      multibyte_field_linestep_q = q;
+    fclose(lf);
+  }
+  multibyte_resolve_path("multibyte_widths.bin", path, sizeof(path));
+  struct _stat64 st;
+  bool first = !tried;
+  if (_stat64(path, &st) == 0)
+  {
+    if (tried && (long long)st.st_mtime == last_mtime) return;
+    last_mtime = (long long)st.st_mtime;
+  }
+  tried = true;
+  FILE *f = fopen(path, "rb");
+  if (!f) return;
+  unsigned char buf[6 * 256];
+  if (fread(buf, 1, sizeof(buf), f) == sizeof(buf))
+  {
+    for (int i = 0; i < 6; i++)
+      for (int j = 0; j < 256; j++)
+        charWidthData[i][j] = buf[i * 256 + j];
+  }
+  else ffnx_error("ff7_multibyte_font: %s wrong size (need 1536 bytes)\n", path);
+  fclose(f);
+  if (!first) return;
+  multibyte_resolve_path("multibyte_iconmask.bin", path, sizeof(path));
+  f = fopen(path, "rb");
+  if (f)
+  {
+    fread(multibyte_icon_mask, 1, 256, f);
+    fclose(f);
+  }
+}
+
 bgra_byte get_character_color(int n_shapes)
 {
   bgra_byte color = { 255, 255, 255, 255 };
@@ -464,7 +541,9 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
         byte *buffer_text,
         float z_value)
 {
-  float scaleFactor = 1.25f;  // adjust size of text. 1.25 seesm correct.
+  multibyte_load_widths();   // hot-reload here too: dialogs must respond to live width tuning
+  int _lsq_acc = 0;   // quarter-px remainder for fractional line stepping
+  float scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f;  // JP upscales 1.25x; multibyte (EN) draws native 1.0x
   int special_character_do_draw; // eax
   graphics_vertex *window_vertices; // eax
   int character_do_draw; // eax
@@ -510,9 +589,17 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
     if ( *buffer_text == 231 )
     {
       character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20; // need to indent this far for pointers to point properly
-      character_y += 32;
+      _lsq_acc += multibyte_field_linestep_q;
+      character_y += _lsq_acc / 4; _lsq_acc %= 4;
       ++buffer_text;
-      ++ff7_externals.field_text_line_row_DC3CB8;
+      // Window field +0x16 (field_text_line_row) must count newlines, same as the vanilla JP path.
+      // The old code incremented the pointer itself instead of the value it points to, so this
+      // field never advanced past 0 for multibyte text. The engine only sends its "window closed"
+      // signal once this row count and the character count below both reach their expected
+      // values, so leaving this at 0 stalls the field script after any multi-line message.
+      ++(*ff7_externals.field_text_line_row_DC3CB8);
+      // Character count must include newlines, not just drawn glyphs, matching vanilla behavior.
+      // Both fixes on these two lines are required together; either alone still stalls the window.
       ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
     }
     else
@@ -644,22 +731,29 @@ LABEL_39:
             {
               character_n_shapes = (*ff7_externals.word_91F028); // read external to select chacter color normally.
             }
+            if (!ff7_japanese_edition && multibyte_icon_mask[*buffer_text])
+              character_n_shapes = 8; // icon cells: force pure white so icon art keeps true colors so icon art keeps true colors
             current_character = *buffer_text;
             character = current_character;
             //if ( *buffer_text == 0xD2 || *buffer_text == 0xD3 )
               //character = current_character - 78;
             offset_u_in_byte = 32 * (character % 16);
             graphics_object_v_in_byte += 32 * (character / 16); // calculate character position in sheet so we render the rigth character
-            /*if ( character_x
-               - (*ff7_externals.field_current_window_pos_x_DC3CB4)
-               + 2
-               * ((*(byte *)((*ff7_externals.g_text_spacing_DB958C) + text_offset_spacing + *buffer_text) & 0x1F)
-                + ((int)*(unsigned __int8 *)((*ff7_externals.g_text_spacing_DB958C) + text_offset_spacing + *buffer_text) >> 5)) > text_box_right_position )
+            // SOFT-WRAP (Arabic long-line wrap). Not the soft-lock cause (verified: scene still locks
+            // with this disabled). Kept for Arabic line wrapping. zaphod77 PR#925 leaves it off (JP text
+            // pre-wrapped in flevel); Arabic needs it since RTL lines can exceed the window width.
             {
-              character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 16;
-              character_y += 32;
-              ++ff7_externals.field_text_line_row_DC3CB8;
-            }*/
+              int character_advance = (*ff7_externals.dword_DC3CD4)
+                ? 30
+                : leftPadding + (int)std::ceil(z_half_width(charWidth) * scaleFactor);
+              if ( character_x - (*ff7_externals.field_current_window_pos_x_DC3CB4) + character_advance > text_box_right_position )
+              {
+                character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20;
+                _lsq_acc += multibyte_field_linestep_q;
+                character_y += _lsq_acc / 4; _lsq_acc %= 4;
+                ++(*ff7_externals.field_text_line_row_DC3CB8);   // deref: soft-wrap advances the real row (see newline block).
+              }
+            }
             if ( !(*ff7_externals.dword_DC3CD4) ) // if not going to next window
               character_x += leftPadding; // apply padding 
                            //* ((int)*(unsigned __int8 *)((*ff7_externals.g_text_spacing_DB958C) + text_offset_spacing + current_character) >> 5);*/
@@ -736,7 +830,7 @@ LABEL_39:
             if ( (*ff7_externals.dword_DC3CD4) )  // if goign to next window
               character_x += 30; // extra padding
             else
-              character_x += std::ceil(0.5f * charWidth*scaleFactor); // scaled up to match scaling we did above
+              character_x += std::ceil(z_half_width(charWidth)*scaleFactor); // scaled up to match scaling we did above
             --(*ff7_externals.field_remaining_character_length_DC3CCC);
             ++buffer_text;
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
@@ -1019,6 +1113,8 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
 
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value)
 {
+  multibyte_load_widths();   // 1s-gated hot-reload for live width tuning
+
   // FIXME: this function can draw characters with different scaling, dependent on what sorta text is being printed.
   // But it needs to know what the source of hte text that was put into the buffer was to work this out, and that info is NOT passed as a parameter
   // will need to hook the function that loads texts to the buffer and set a global based on where in memory the original text is.
@@ -1265,7 +1361,7 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
       return vertex_x + std::ceil(0.5f * charWidth) * 1.6666666;//(__int64)((double)(*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F) * 1.6666666)
            //+ vertex_x;
     else*/
-    return vertex_x + std::ceil(0.5f * charWidth * scaleFactor);// 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F);
+    return vertex_x + std::ceil(z_half_width(charWidth) * scaleFactor);// 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + offset_text_spacing + letter) & 0x1F);
   }
 }
 
@@ -1633,7 +1729,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[1][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[1][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(0.5f * charWidth);
+          v106 += leftPadding + std::ceil(z_half_width(charWidth));
           isKanjiDetected = true;
           //v106 += 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 231) & 0x1F)
           //      + 2 * ((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 231) >> 5);
@@ -1643,7 +1739,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[2][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[2][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(0.5f * charWidth);
+          v106 += leftPadding + std::ceil(z_half_width(charWidth));
           isKanjiDetected = true;
           //v106 += 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 441) & 0x1F)
           //      + 2 * ((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 441) >> 5);
@@ -1653,7 +1749,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[3][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[3][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(0.5f * charWidth);
+          v106 += leftPadding + std::ceil(z_half_width(charWidth));
           isKanjiDetected = true;
           //v106 += 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 672) & 0x1F)
           //      + 2 * ((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 672) >> 5);
@@ -1663,7 +1759,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[4][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[4][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(0.5f * charWidth);
+          v106 += leftPadding + std::ceil(z_half_width(charWidth));
           isKanjiDetected = true;
           //v106 += 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 672) & 0x1F)
           //      + 2 * ((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 672) >> 5);
@@ -1673,7 +1769,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[5][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[5][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(0.5f * charWidth);
+          v106 += leftPadding + std::ceil(z_half_width(charWidth));
           isKanjiDetected = true;
           //v106 += 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 672) & 0x1F)
           //      + 2 * ((int)*(unsigned __int8 *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0] + 672) >> 5);
@@ -1688,7 +1784,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
           {
             charWidth = charWidthData[0][*(byte*)(text_sub_41963C)] & 0x1F;
             leftPadding = charWidthData[0][*(byte*)(text_sub_41963C)] >> 5;
-            v106 += leftPadding + std::ceil(0.5f * charWidth);
+            v106 += leftPadding + std::ceil(z_half_width(charWidth));
           }
           isKanjiDetected = false;
           //v106 += 2 * (*(byte *)(*ff7_externals.g_text_spacing_DB958C + text_sub_41963C->name[0]) & 0x1F)
@@ -1851,7 +1947,7 @@ LABEL_49:
             a2->field_7C = 14;
           }
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
-          v107 = v96 + v108+ std::ceil(0.5f * charWidth*scaleFactor); // character width+padding+previous centering offset.
+          v107 = v96 + v108+ std::ceil(z_half_width(charWidth)*scaleFactor); // character width+padding+previous centering offset.
 LABEL_31:
           ++v120;
           break;
@@ -2311,7 +2407,7 @@ void main_menu_draw_everything_maybe_6C0B91_jp()
 void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 {
   // as many textboxes in flevel are set wrong, we need to resize them.
-  float scaleFactor = 1.25f; // resizer neeeds to scale too
+  float scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f; // resizer needs to match the draw scale (JP 1.25 / multibyte EN 1.0)
 	int16_t W = 0;
 	int16_t H = 0;
 	int16_t maxW = 0; // used to remember the longest row so far.
@@ -2396,7 +2492,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
         charWidth = charWidthData[0][name_char] & 0x1F;
         leftPadding = charWidthData[0][name_char] >> 5;
-        W += leftPadding + std::ceil(0.5f * charWidth);
+        W += leftPadding + std::ceil(z_half_width(charWidth));
       }
       
       continue; // back to the start, we already added to the length
@@ -2429,7 +2525,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 		{
       maxW = std::max(maxW, W); // update max
       W = 0;
-			H += 32;
+			H += multibyte_field_linestep_q / 4;
       continue;
 		}
 		if(character == 0xE9 || character == 0xE8) // next window
@@ -2441,7 +2537,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       continue;
 		}
 
-		W += leftPadding + std::ceil(0.5f * charWidth); // if we get here, normal charcter, OR fixed string. add char width
+		W += leftPadding + std::ceil(z_half_width(charWidth)); // if we get here, normal charcter, OR fixed string. add char width
 	}
   float pOutWtmp = (std::max(maxW, W) + 40) * scaleFactor;  // make calculated length bigger, but not height.
   // final sanity check
@@ -2457,13 +2553,30 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
 {
   int16_t W = 0;
   int16_t H = 0;
+  // The vanilla create routine (0x631586) assigns this window's owner (CC0960[win] = the entity
+  // that opened it) before marking it active, and clears both owner and mode together on close.
+  // On the multibyte path a window can end up active with no owner assigned (0xFF) — the owner
+  // check below then never matches the current entity, the window never grows, and the field
+  // script that's waiting on it deadlocks. Restore the normal owner assignment for any window
+  // found in this orphaned state before continuing.
+  if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == 0xFF )
+    ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] = *ff7_externals.current_entity_id_byte_CC0964;
   int16_t originalW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;  // store original width
-  int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to set it back later. 
-  auto_resize_text_box(WINDOW_ID, &W, &H);                                                      // haven't needed to do it yet, but we might.
-  if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x < 0)
-    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x = 0;                // if off the left, move it back on. :)
-  ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
-  ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
+  int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to set it back later.
+  // auto_resize_text_box recomputes the window's target width/height from the text every time
+  // it's called, including reading back the values it wrote the previous call — so calling it
+  // every frame makes the target keep moving and the window's grow animation never reaches it,
+  // stalling the open. Instead, compute the target once here while the window is still small,
+  // then hold width/height fixed so the animation converges normally, matching vanilla behavior.
+  // Field files already ship with correctly sized windows, so this only fixes the animation target.
+  if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8 )
+  {
+    auto_resize_text_box(WINDOW_ID, &W, &H);
+    if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x < 0)
+      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x = 0;              // if off the left, move it back on. :)
+    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
+    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
+  }
   if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
   {
     ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width
@@ -2491,7 +2604,7 @@ int sub_6F54A2_jp(byte *a1) // this function appears to affect aligning stuff to
   int v2; // [esp+Ch] [ebp-Ch]
   int v3; // [esp+10h] [ebp-8h]
   int v4; // [esp+14h] [ebp-4h]
-  float scaleFactor = 1.25f; //even if text is small, treat as large for x alignment with pointers
+  float scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f; //JP: treat as large for pointer alignment; multibyte EN: native 1.0
   v3 = 0;
   v2 = 0;
   bool kanjiDetected = false;
@@ -2582,7 +2695,7 @@ int sub_6F54A2_jp(byte *a1) // this function appears to affect aligning stuff to
     else
       v2 += 2 * ((int)*(unsigned __int8 *)(ff7_externals.g_text_spacing_DB958C + v4 + (unsigned __int8)*a1) >> 5)
           + 2 * (*(byte *)(ff7_externals.g_text_spacing_DB958C + v4 + (unsigned __int8)*a1) & 0x1F);*/
-    v2 += leftPadding + std::ceil(std::ceil(0.5f*charWidth)*scaleFactor); // round after EACH multiplication should align properly with pointers. hooray for inherited jank from no FP in PS1
+    v2 += leftPadding + std::ceil(std::ceil(z_half_width(charWidth))*scaleFactor); // round after EACH multiplication should align properly with pointers. hooray for inherited jank from no FP in PS1
     ++a1;
     ++v3;
   }
