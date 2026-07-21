@@ -103,11 +103,11 @@ static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t
 {
 	char full_path[MAX_PATH];
 
-	snprintf(full_path, sizeof(full_path), "%s\\direct\\%s", ff8_externals.app_path, relative_path);
+	snprintf(full_path, sizeof(full_path), "%s/direct/%s", ff8_externals.app_path, relative_path);
 	FILE *file = fopen(full_path, "rb");
 	if (file == nullptr)
 	{
-		snprintf(full_path, sizeof(full_path), "%s\\%s", ff8_externals.app_path, relative_path);
+		snprintf(full_path, sizeof(full_path), "%s/%s", ff8_externals.app_path, relative_path);
 		file = fopen(full_path, "rb");
 		if (file == nullptr)
 			return false;
@@ -131,7 +131,7 @@ static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t
 static bool ff8_scene_out_uses_new_monsters()
 {
 	uint32_t file_size;
-	if (!ff8_get_battle_file_size_on_disk("battle\\scene.out", &file_size))
+	if (!ff8_get_battle_file_size_on_disk("battle/scene.out", &file_size))
 		return true;
 
 	uint8_t *scene_out = new uint8_t[file_size];
