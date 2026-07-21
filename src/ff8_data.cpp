@@ -978,10 +978,6 @@ void ff8_find_externals()
 
 	ff8_externals.field_vars_stack_1CFE9B8 = get_absolute_value(ff8_externals.opcode_pshm_w, 0x1E);
 
-	// AddMoreMagic (src/ff8/kernel_magic.cpp): extended kernel.bin magic
-	// section support. Code addresses are resolved relatively, like everything
-	// else in this file; the few per-family offsets follow the same ternary
-	// convention used elsewhere (e.g. battle_sub_494410 above).
 	ff8_externals.init_data_at_start_sub_470440 = get_absolute_value(ff8_externals.credits_main_loop, 0xD2);
 	ff8_externals.read_kernel_files_sub_47D2A0 = get_relative_call(get_relative_call(ff8_externals.init_data_at_start_sub_470440, 0x22), 0);
 	ff8_externals.magic_kernel_read_call = ff8_externals.read_kernel_files_sub_47D2A0 + 0x96; // call LoadFileToBuffer(name, KERNEL_HEADER)
@@ -998,41 +994,17 @@ void ff8_find_externals()
 	ff8_externals.magic_fn_validate_magic = get_relative_call(uint32_t(ff8_externals.menu_callbacks[1].func), 0xE5);
 	ff8_externals.linked_menu_magic_sub_4F02F0 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[3].func), 0x8);
 	ff8_externals.magic_fn_reorder_magic = get_relative_call(ff8_externals.linked_menu_magic_sub_4F02F0, 0x47BC);
-
-	// LoadFileToBuffer is the function magic_kernel_read_call invokes, so it
-	// is read straight out of a call to it rather than hardcoded: LoadBattleFile
-	// (already resolved as battle_open_file) calls it at +0x8E. ff8_kernel_magic_init
-	// cross-checks this against the call it is about to hook.
 	ff8_externals.magic_load_file_to_buf = get_relative_call(ff8_externals.battle_open_file, 0x8E);
 
-	// Data addresses are read straight out of the instructions that reference
-	// them, so each address comes from the game rather than from an offset we
-	// picked: whatever a function dereferences is the global, by definition.
-	// The offsets below are therefore positions of a disp32 operand inside a
-	// function already resolved above, not distances between two globals.
-	// Guarded on the code addresses, since an unsupported build leaves those
-	// at 0 and there would be nothing to read from.
-	//
-	// The two kernel.bin sections stay derived from the load buffer instead:
-	// there the relationship is real (buffer + the kernel's own section
-	// offsets), not an offset of convenience.
-	if (ff8_externals.magic_fn_name_getter)
-	{
-		ff8_externals.magic_k_battle_command = uint32_t(ff8_externals.unk_1CF3E48) + 228;  // kernel.bin data section 0
-		ff8_externals.magic_k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 540;  // kernel.bin data section 1
+	ff8_externals.magic_k_battle_command = uint32_t(ff8_externals.unk_1CF3E48) + 228;  // kernel.bin data section 0
+	ff8_externals.magic_k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 540;  // kernel.bin data section 1
 
-		ff8_externals.magic_sg_gf_data      = get_absolute_value(ff8_externals.magic_fn_name_getter, 0x43);     // lea eax, SG_GF_DATA[edx*4]
-		ff8_externals.magic_f_char_data     = get_absolute_value(ff8_externals.magic_fn_linked_stock, 0x28);    // lea eax, F_CHAR_DATA[edx]
-		ff8_externals.magic_valid_junction  = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x14);  // mov VALID_JUNCTION[ebp*8], ebx
-		ff8_externals.magic_magsort_buffer  = get_absolute_value(ff8_externals.magic_fn_reorder_magic, 0x2);    // mov ecx, MAGSORT_BUFFER
-		// This one points at the magic array inside the character record
-		// (record + 16), so step back to the start of the record.
-		ff8_externals.magic_sg_chara_data   = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x38) - 16; // lea esi, SG_CHARA_DATA[edi]
-		// Not reachable from a magic_fn_* function, but sub_48B7E0 is one of
-		// the five sites that index the drawn-once bitfield and is already
-		// resolved above.
-		ff8_externals.magic_sg_drawn_once   = get_absolute_value(ff8_externals.sub_48B7E0, 0x71);               // or DRAWN_ONCE[eax*4], edx
-	}
+	ff8_externals.magic_sg_gf_data      = get_absolute_value(ff8_externals.magic_fn_name_getter, 0x43);     // lea eax, SG_GF_DATA[edx*4]
+	ff8_externals.magic_f_char_data     = get_absolute_value(ff8_externals.magic_fn_linked_stock, 0x28);    // lea eax, F_CHAR_DATA[edx]
+	ff8_externals.magic_valid_junction  = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x14);  // mov VALID_JUNCTION[ebp*8], ebx
+	ff8_externals.magic_magsort_buffer  = get_absolute_value(ff8_externals.magic_fn_reorder_magic, 0x2);    // mov ecx, MAGSORT_BUFFER
+	ff8_externals.magic_sg_chara_data   = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x38) - 16; // lea esi, SG_CHARA_DATA[edi]
+	ff8_externals.magic_sg_drawn_once   = get_absolute_value(ff8_externals.sub_48B7E0, 0x71);               // or DRAWN_ONCE[eax*4], edx
 
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
