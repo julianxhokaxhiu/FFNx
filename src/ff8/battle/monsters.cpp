@@ -130,12 +130,12 @@ static bool ff8_get_battle_file_size_on_disk(const char *relative_path, uint32_t
 // the size can't be found, assume it's needed rather than skip a real fix.
 static bool ff8_scene_out_uses_new_monsters()
 {
+	char scene_out_filename[] = "battle/scene.out";
 	uint32_t file_size;
-	if (!ff8_get_battle_file_size_on_disk("battle/scene.out", &file_size))
+	if (!ff8_get_battle_file_size_on_disk(scene_out_filename, &file_size))
 		return true;
 
 	uint8_t *scene_out = new uint8_t[file_size];
-	char scene_out_filename[] = "battle/scene.out";
 	uint32_t read_size = ff8_externals.sm_pc_read(scene_out_filename, scene_out);
 	if (read_size > file_size)
 		read_size = file_size;
