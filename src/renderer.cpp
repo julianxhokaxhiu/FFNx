@@ -1725,7 +1725,7 @@ void Renderer::setScissor(uint16_t x, uint16_t y, uint16_t width, uint16_t heigh
             {
                 if(x == 0 && width == game_width)
                     scissorWidth = getInternalCoordX(wide_viewport_width);
-                else if(internalState.bIsTLVertex)
+                else if(ff8 || internalState.bIsTLVertex)
                     scissorOffsetX = getInternalCoordX(x + abs(wide_viewport_x));
 
                 if (ff8)
