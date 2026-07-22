@@ -19,6 +19,7 @@
 - Direct mode: Add the chunk feature for c0mXXX.dat files ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
 - Exe data: Ensure files loaded only once ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
 - External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
+- Fixing widescreen text in battle
 
 # 1.24.3
 
