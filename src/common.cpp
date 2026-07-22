@@ -142,6 +142,11 @@ uint32_t ff7_2026_rerelease = false;
 // global FF7 flag, check if is japanese edition ( detected as US )
 uint32_t ff7_japanese_edition = false;
 
+// multibyte font mode: enable the extra-font escape codes (FA-FE -> jafont_2..6) WITHOUT the
+// JP-only menu scaling/name-screen, so English-exe translations (e.g. Arabic) get the extra
+// glyph space while keeping native EN menu layout.
+uint32_t ff7_multibyte_font = false;
+
 // window dimensions requested by the game, normally 640x480
 uint32_t game_width;
 uint32_t game_height;
