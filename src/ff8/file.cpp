@@ -52,6 +52,13 @@ bool set_direct_path(const char *fullpath, char *output, size_t output_size)
 	{
 		_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size(false));
 
+		if (!fileExists(output))
+		{
+			if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", output);
+
+			return false;
+		}
+
 		return true;
 	}
 
@@ -62,7 +69,23 @@ bool set_direct_path(const char *fullpath, char *output, size_t output_size)
 		return false;
 	}
 
-	_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size());
+	// Try with the lang prefix
+	_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size(false));
+
+	if (!fileExists(output))
+	{
+		if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", output);
+
+		// Retry without the lang prefix
+		_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size());
+
+		if (!fileExists(output))
+		{
+			if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", output);
+
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -73,9 +96,7 @@ bool check_direct_sub_archive_exists(const char *ext, const char *path_without_e
 
 	sprintf(archive_path, "%s.%s", path_without_ext, ext);
 
-	set_direct_path(archive_path, direct_path, sizeof(direct_path));
-
-	return fileExists(direct_path);
+	return set_direct_path(archive_path, direct_path, sizeof(direct_path));
 }
 
 void ff8_fs_archive_sub_archive_get_filename(const char *filename, char *dirname)
@@ -101,8 +122,6 @@ void ff8_fs_archive_sub_archive_get_filename(const char *filename, char *dirname
 		// Bypass subarchive opening
 		strncpy(ff8_externals.temp_fs_path_cache, cleaned_dirname + 2, path_strlen);
 	} else {
-		if (trace_all || trace_direct) ffnx_warning("Direct files not found %s.fs, .fl and .fi\n", cleaned_dirname);
-
 		next_direct_file[0] = '\0';
 	}
 
@@ -163,17 +182,11 @@ int ff8_fs_archive_search_filename_sub_archive(const char *fullpath, ff8_file_fi
 
 	char direct_path[MAX_PATH];
 
-	set_direct_path(fullpath, direct_path, sizeof(direct_path));
-
-	if (fileExists(direct_path))
+	if (set_direct_path(fullpath, direct_path, sizeof(direct_path)))
 	{
 		strncpy(next_direct_file, direct_path, sizeof(next_direct_file));
 
 		return 0; // Bypass Moriya filesystem
-	}
-	else
-	{
-		if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", direct_path);
 	}
 
 	return ff8_fs_archive_search_filename2(fullpath, fi_infos_for_the_path, file_container);
@@ -379,20 +392,16 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 
 			if (infos->file_container != nullptr)
 			{
-				char direct_path[MAX_PATH];
+				char direct_path[MAX_PATH] = "";
 
-				set_direct_path(fullpath, direct_path, sizeof(direct_path));
-
-				file->fd = ff8_externals._sopen(direct_path, oflag, shflag, pmode);
-
-				if (file->fd != -1)
+				if (set_direct_path(fullpath, direct_path, sizeof(direct_path)))
 				{
+					file->fd = ff8_externals._sopen(direct_path, oflag, shflag, pmode);
+
 					if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", direct_path);
 				}
 				else
 				{
-					if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", direct_path);
-
 					if (ff8_externals.fs_archive_search_filename(fullpath, &file->fi_infos, infos->file_container))
 					{
 						file->fd = 0;
@@ -402,7 +411,7 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 			}
 			else
 			{
-				char _filename[256]{ 0 };
+				char _filename[MAX_PATH]{ 0 };
 				bool is_redirected = ff8_attempt_redirection(fullpath, _filename, sizeof(_filename));
 
 				last_fopen_is_redirected = is_redirected;

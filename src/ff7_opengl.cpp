@@ -377,17 +377,35 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// ###########################
 	// japanese text
 	// ###########################
+	// Shared multi-font glyph space (extra jafont_2..6 via FA-FE escape bytes): needed by BOTH the JP
+	// edition AND English-exe multibyte translations (e.g. Arabic). Only the font LOAD + per-char draw
+	// are shared; the remaining hooks below are JP-only layout that breaks native EN menus.
+	if (ff7_japanese_edition || ff7_multibyte_font)
+	{
+		replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468_jp);
+		replace_function((uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E, common_submit_draw_char_from_buffer_6F564E_jp);
+		replace_function(ff7_externals.sub_6F54A2, sub_6F54A2_jp);
+		// jafont glyph FLUSH + field char submitter — without these, multibyte glyphs queue but never draw
+		replace_function(ff7_externals.field_submit_draw_text_640x480_6E706D, field_submit_draw_text_640x480_6E706D_jp);
+		replace_function((uint32_t)ff7_externals.field_draw_text_boxes_and_text_graphics_object_6ECA68, field_draw_text_boxes_and_text_graphics_object_6ECA68_jp);
+		replace_function((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, menu_draw_everything_6CC9D3_jp);
+		replace_function((uint32_t)ff7_externals.battle_draw_menu_everything_6CEE84, battle_draw_menu_everything_6CEE84_jp);
+		replace_function((uint32_t)ff7_externals.main_menu_draw_everything_maybe_6C0B91, main_menu_draw_everything_maybe_6C0B91_jp);
+		// battle top-display bar (draw_text_top_display_6D1CC0): shares the same per-char draw path as the
+		// rest of multibyte text. Without this hook, English-exe ff7_multibyte_font mode (Arabic) falls through
+		// to the vanilla single-byte draw for this specific bar -> Arabic byte codes get reinterpreted as
+		// vanilla Latin glyph indices -> garbled text (2026-07-09, reported in-battle). Moved here (out of
+		// the ff7_japanese_edition-only block below) since it's needed by BOTH JP edition and ff7_multibyte_font.
+		replace_function((uint32_t)ff7_externals.draw_text_top_display_6D1CC0, draw_text_top_display_6D1CC0_jp);
+	}
 	if (ff7_japanese_edition)
 	{
-		replace_function(ff7_externals.field_submit_draw_text_640x480_6E706D, field_submit_draw_text_640x480_6E706D_jp);
-		replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468_jp);
-		replace_function((uint32_t)ff7_externals.field_draw_text_boxes_and_text_graphics_object_6ECA68, field_draw_text_boxes_and_text_graphics_object_6ECA68_jp);
-		replace_function((uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E, common_submit_draw_char_from_buffer_6F564E_jp);
-		replace_function((uint32_t)	ff7_externals.menu_draw_everything_6CC9D3, menu_draw_everything_6CC9D3_jp);
-		replace_function((uint32_t)	ff7_externals.battle_draw_menu_everything_6CEE84, battle_draw_menu_everything_6CEE84_jp);
-		replace_function((uint32_t)	ff7_externals.draw_text_top_display_6D1CC0, draw_text_top_display_6D1CC0_jp);
-		replace_function((uint32_t)	ff7_externals.main_menu_draw_everything_maybe_6C0B91, main_menu_draw_everything_maybe_6C0B91_jp);
 		//replace_function((uint32_t)	ff7_externals.field_text_box_window_paging_631945, field_text_box_window_paging_631945_jp);
+		// This hook is JP-edition only: its window auto-resize can feed back into itself across
+		// frames (each call recomputes the target size from values it wrote the previous frame),
+		// which can prevent multi-window field scenes from ever finishing their open animation.
+		// The English-exe multibyte path avoids this by using the vanilla opening function and
+		// relying on field files that already ship with correctly sized windows.
 		replace_function((uint32_t)	ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_jp);
 
 		patch_code_byte(0x632C4E, 0xC);
@@ -395,8 +413,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		patch_code_byte(0x632C4E + 0x2, 0xC);
 		patch_code_byte(0x632C4E + 0x3, 0xC);
 		patch_code_byte(0x632C4E + 0x4, 0xC);
-
-		replace_function(ff7_externals.sub_6F54A2, sub_6F54A2_jp);
 
 		// 3-mode (hiragana/katakana/eisuu) name-entry screen
 		name_input_jp_install();

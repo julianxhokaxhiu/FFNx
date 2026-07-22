@@ -38,6 +38,7 @@
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
 #include "ff8/kernel_magic.h"
+#include "ff8/battle/monsters.h"
 #include "metadata.h"
 #include "achievement.h"
 #include "widescreen.h"
@@ -1981,6 +1982,10 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
 	// #####################
 	ff8_kernel_magic_init();
+	// Unlock unused battle monster models c0m144-c0m199
+	// #####################
+	ff8_battle_monsters_init();
+
 }
 
 struct ff8_gfx_driver *ff8_load_driver(void* _game_object)

@@ -9,11 +9,14 @@
 - Core: Add support for SDL3 Gamepad API (`use_sdl_gamepad`) ( https://github.com/julianxhokaxhiu/FFNx/pull/915 )
 
 ## FF7
-
-- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 + https://github.com/julianxhokaxhiu/FFNx/pull/952 + https://github.com/julianxhokaxhiu/FFNx/pull/953 + https://github.com/julianxhokaxhiu/FFNx/pull/951)
+- Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 + https://github.com/julianxhokaxhiu/FFNx/pull/952 + https://github.com/julianxhokaxhiu/FFNx/pull/953 + https://github.com/julianxhokaxhiu/FFNx/pull/951) 
+- Core: Add `ff7_multibyte_font` mode: multibyte text support for non-Japanese translations on the English executable ( https://github.com/julianxhokaxhiu/FFNx/pull/948 )
 
 ## FF8
-
+- Core: Unlock unused battle monster models c0m144-c0m199 (EN/FR/DE/IT/SP/JP), selectable via `enemy_com_value` 160-215 in scene.out
+- Direct mode: Optionally add the language prefix to the path for multi-language mods ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
+- Direct mode: Add the chunk feature for c0mXXX.dat files ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
+- Exe data: Ensure files loaded only once ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )
 - External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
 - Core: Support kernel.bin Magic sections beyond the vanilla 57 spells, unlocking ids 57-63 and 96-255 (64-95 reserved for GFs)
 
