@@ -34,9 +34,9 @@ at which codes — FFNx does not impose any particular character set. Practical 
 - Control codes of the game's text format (`0xE0`+ range in kernel/field text: names, colors,
   new-line, new-page, variables...) keep their engine meaning. Don't place glyphs on bytes your
   target text sections use as control codes.
-- `0xDE` in battle window D is redirected to a heart icon by the Japanese text support
-  (a vanilla JP quirk). Treat `0xDE` as reserved if your translation may run with JP text
-  features enabled.
+- `0xD9` is redirected to a heart icon from battle window D by the Japanese text support
+  (a vanilla JP quirk). That redirect only applies to the Japanese edition; in multibyte mode
+  `0xD9` is an ordinary glyph cell your translation may use.
 - Bytes drawn through the multibyte path are recolored via the palette/color data. Mods that
   repaint icon cells expecting NOT to be recolored (button prompts, item icons) can conflict
   with glyphs you place in those cells; prefer free cells.
@@ -110,7 +110,8 @@ icons, button prompts) rather than letters:
 ## Quick checklist for a new translation
 
 1. Design your charmap: assign characters to sheet/code slots, avoiding engine control codes
-   (and `0xDE`, see above).
+   (see the note above for the JP-edition `0xD9` heart quirk — usable as a glyph cell in
+   multibyte mode).
 2. Paint `jafont_1..6` textures (16×16 grid per sheet).
 3. Re-encode game text (kernel, field, battle, world, exe strings) to your charmap.
 4. Generate `multibyte_widths.bin` from your glyph metrics.
