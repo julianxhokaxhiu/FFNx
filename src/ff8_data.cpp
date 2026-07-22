@@ -881,7 +881,7 @@ void ff8_find_externals()
 	ff8_externals.battle_ai_target_rangecheck_ja = ff8_externals.battle_ai_opcode_sub_487DF0 + 0x1D27;
 	ff8_externals.battle_ai_target_default_scan  = ff8_externals.battle_ai_opcode_sub_487DF0 + 0x1EE5;
 	ff8_externals.battle_ai_opcode_loop_head     = ff8_externals.battle_ai_opcode_sub_487DF0 + 0xEC;
-	ff8_externals.update_tutorial_info_4AD170 = (void(*)(int))get_relative_call(ff8_externals.battle_ai_opcode_sub_487DF0, FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : (FF8_SP_VERSION ? 0x21A0 : 0x2176)));
+	ff8_externals.update_tutorial_info_4AD170 = (void(*)(int))get_relative_call(ff8_externals.battle_ai_opcode_sub_487DF0, FF8_US_VERSION ? 0x216C : (JP_VERSION ? 0x2148 : (FF8_SP_VERSION ? 0x21A0 : (FF8_DE_VERSION ? 0x2171 : (FF8_IT_VERSION ? 0x218C : 0x2176)))));
 	ff8_externals.battle_get_draw_magic_amount_48FD20 = (int(*)(int, int, int))get_relative_call(ff8_externals.battle_sub_48D200, FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355));
 	ff8_externals.sub_48B7E0 = get_relative_call(ff8_externals.sub_47CCB0, 0x8F0);
 	ff8_externals.compute_char_stats_sub_495960 = get_relative_call(ff8_externals.sub_48B7E0, 0xA3);
@@ -917,6 +917,12 @@ void ff8_find_externals()
 
 	ff8_externals.sub_502380 = get_relative_call(ff8_externals.sub_500CC0, 0x69);
 	ff8_externals.sub_50A790 = get_relative_call(ff8_externals.sub_502380, 0x51);
+	ff8_externals.sub_502670 = get_absolute_value(ff8_externals.sub_502380, 0x22);
+	ff8_externals.battle_entity_task_dispatch_sub_507080 = get_relative_call(ff8_externals.sub_502670, 0x110);
+	ff8_externals.battle_monster_dat_loader = get_absolute_value(ff8_externals.battle_entity_task_dispatch_sub_507080, 0x4B);
+	ff8_externals.battle_monster_file_load_call_site = ff8_externals.battle_monster_dat_loader + 0x240;
+	ff8_externals.battle_load_file_sub_508480 = get_relative_call(ff8_externals.battle_monster_file_load_call_site, 0);
+
 	ff8_externals.sub_50A9A0 = get_absolute_value(ff8_externals.sub_50A790, 0x7C);
 	ff8_externals.battle_read_effect_sub_50AF20 = get_relative_call(ff8_externals.sub_50A9A0, 0xF4);
 	ff8_externals.func_off_battle_effects_C81774 = (DWORD*)get_absolute_value(ff8_externals.battle_read_effect_sub_50AF20, 0x2C);
@@ -969,8 +975,13 @@ void ff8_find_externals()
 	ff8_externals.character_data_1CFE74C = (byte*)get_absolute_value((uint32_t)ff8_externals.battle_menu_add_exp_and_stat_bonus_496CB0, 0xD);
 	ff8_externals.battle_sub_485160 = get_relative_call(ff8_externals.sub_47CCB0, 0xB18);
 	ff8_externals.battle_sub_48FE20 = get_relative_call(ff8_externals.battle_sub_485160, 0x91);
-	ff8_externals.battle_sub_494410 = get_relative_call(ff8_externals.battle_sub_48FE20, FF8_US_VERSION ? 0x139C : (JP_VERSION ? 0x1300 : (FF8_SP_VERSION ? 0x130B : 0x1301)));
+	ff8_externals.battle_sub_494410 = get_relative_call(ff8_externals.battle_sub_48FE20, FF8_US_VERSION ? 0x139C : (JP_VERSION ? 0x1300 : (FF8_SP_VERSION ? 0x130B : (FF8_IT_VERSION ? 0x1321 : (FF8_DE_VERSION ? 0x1338 : 0x1301)))));
 	ff8_externals.battle_sub_494AF0 = (void(*)(int, int, int, int))get_relative_call(ff8_externals.battle_sub_494410, 0x525);
+
+	uint32_t battle_damage_dispatch = get_relative_call(ff8_externals.battle_sub_48FE20, 0x858);
+	uint32_t battle_mark_enemy_scanned = get_relative_call(battle_damage_dispatch, 0x311);
+	ff8_externals.battle_enemy_scanned_read_operand = battle_damage_dispatch + 0x2F2;
+	ff8_externals.battle_enemy_scanned_write_operand = battle_mark_enemy_scanned + 0x26;
 
 	ff8_externals.fps_limiter = get_relative_call(ff8_externals.field_main_loop, 0x261);
 	if (JP_VERSION)
