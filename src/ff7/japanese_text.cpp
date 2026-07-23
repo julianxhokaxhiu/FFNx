@@ -702,7 +702,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             break;
           }
         default:
-          if ((*buffer_text != 0xd9u) && (*buffer_text < 0xF6u || *buffer_text > 0xF9u)) // not a button prompt or heart.
+          if ((*buffer_text != 0xd9u || ff7_multibyte_font) && (*buffer_text < 0xF6u || *buffer_text > 0xF9u)) // not a button prompt or heart (heart redirect is JP-edition only; multibyte owns 0xD9 as a glyph cell).
           {
             text_offset_spacing = 0;
             graphics_object_v_in_byte = 0;
@@ -1150,12 +1150,21 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   switch ((byte)letter)
   {
   case 0xD9: // heart
-    character_graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
-    offset_image_u = 144; // heart is here
-    offset_image_v = 208; // heart is here
-    charWidth = 0x1f;     // max width
-    leftPadding = 0;
-    goto LABEL_9;
+    // The heart redirect is a JP-edition feature. In multibyte mode this byte is a normal
+    // jafont_1 glyph cell — translations may map real glyphs here (e.g. Arabic medial qaf).
+    if (!ff7_multibyte_font)
+    {
+      character_graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
+      offset_image_u = 144; // heart is here
+      offset_image_v = 208; // heart is here
+      charWidth = 0x1f;     // max width
+      leftPadding = 0;
+      goto LABEL_9;
+    }
+    character_graphics_object = ff7_externals.menu_jafont_1_graphics_object;
+    charWidth = charWidthData[0][*p_letter] & 0x1F;
+    leftPadding = charWidthData[0][*p_letter] >> 5;
+    break;
   case 0xF8:
     return x;
   case 0xFA:
