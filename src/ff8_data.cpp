@@ -989,6 +989,65 @@ void ff8_find_externals()
 
 	ff8_externals.field_vars_stack_1CFE9B8 = get_absolute_value(ff8_externals.opcode_pshm_w, 0x1E);
 
+	// AddMoreMagic (src/ff8/kernel_magic.cpp): every address is resolved
+	// relatively from an already-known anchor. Offsets that differ per language
+	// are grouped by the exe build they come from, not hardcoded per address.
+	ff8_externals.read_kernel_files_sub_47D2A0 = get_relative_call(get_relative_call(ff8_externals.sub_470440, 0x22), 0);
+	ff8_externals.magic_kernel_read_call = ff8_externals.read_kernel_files_sub_47D2A0 + 0x96; // call LoadFileToBuffer(name, KERNEL_HEADER)
+	ff8_externals.magic_load_file_to_buf = uint32_t(ff8_externals.sm_pc_read);
+
+	ff8_externals.set_all_monster_info_sub_48BA10 = get_relative_call(ff8_externals.sub_47CCB0, 0x996);
+	ff8_externals.manage_monster_spell_visibility_sub_48C7A0 = get_relative_call(ff8_externals.set_all_monster_info_sub_48BA10, 0x1A7);
+	ff8_externals.magic_site_spell_visibility = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + 0x43; // cmp eax,40h / jge
+	ff8_externals.magic_fn_linked_stock = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + 0x340;
+
+	// computeCommandAction: the "66 cmp bx,40h / jnb" GF check and the
+	// getMagicText call it later makes. Both offsets are build-specific.
+	uint32_t draw_execute_offset, name_getter_offset;
+	switch (version)
+	{
+	case VERSION_FF8_12_JP:
+	case VERSION_FF8_12_JP_NV:
+		draw_execute_offset = 0xDB6;
+		name_getter_offset = 0x3EB;
+		break;
+	case VERSION_FF8_12_DE:
+	case VERSION_FF8_12_DE_NV:
+	case VERSION_FF8_12_IT:
+	case VERSION_FF8_12_IT_NV:
+		draw_execute_offset = 0xD9C;
+		name_getter_offset = 0x3F0;
+		break;
+	case VERSION_FF8_12_FR:
+	case VERSION_FF8_12_FR_NV:
+	case VERSION_FF8_12_SP:
+	case VERSION_FF8_12_SP_NV:
+		draw_execute_offset = 0xD9C;
+		name_getter_offset = 0x3BC;
+		break;
+	default: // US (incl. Eidos)
+		draw_execute_offset = 0xD9B;
+		name_getter_offset = 0x3C3;
+		break;
+	}
+	ff8_externals.magic_site_draw_execute = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + draw_execute_offset;
+	ff8_externals.magic_fn_name_getter = get_relative_call(ff8_externals.battle_sub_48D200, name_getter_offset);
+	ff8_externals.magic_fn_desc_getter = ff8_externals.magic_fn_name_getter + 0x50;
+
+	ff8_externals.magic_fn_validate_magic = get_relative_call(uint32_t(ff8_externals.menu_callbacks[1].func), 0xE5);
+	ff8_externals.linked_menu_magic_sub_4F02F0 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[3].func), 0x8);
+	ff8_externals.magic_fn_reorder_magic = get_relative_call(ff8_externals.linked_menu_magic_sub_4F02F0, 0x47BC);
+
+	ff8_externals.magic_k_battle_command = uint32_t(ff8_externals.unk_1CF3E48) + 228;  // kernel.bin data section 0
+	ff8_externals.magic_k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 540;  // kernel.bin data section 1
+
+	ff8_externals.magic_sg_gf_data      = get_absolute_value(ff8_externals.magic_fn_name_getter, 0x43);     // lea eax, SG_GF_DATA[edx*4]
+	ff8_externals.magic_f_char_data     = get_absolute_value(ff8_externals.magic_fn_linked_stock, 0x28);    // lea eax, F_CHAR_DATA[edx]
+	ff8_externals.magic_valid_junction  = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x14);  // mov VALID_JUNCTION[ebp*8], ebx
+	ff8_externals.magic_magsort_buffer  = get_absolute_value(ff8_externals.magic_fn_reorder_magic, 0x2);    // mov ecx, MAGSORT_BUFFER
+	ff8_externals.magic_sg_chara_data   = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x38) - 16; // lea esi, SG_CHARA_DATA[edi]
+	ff8_externals.magic_sg_drawn_once   = get_absolute_value(ff8_externals.sub_48B7E0, 0x71);               // or DRAWN_ONCE[eax*4], edx
+
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
 }
