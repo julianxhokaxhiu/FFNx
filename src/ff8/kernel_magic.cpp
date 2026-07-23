@@ -73,7 +73,7 @@
 // Savemap GF record stride; the GF's name sits at offset 0 of the record.
 #define GF_DATA_STRIDE          68
 
-// Vanilla EN data-section offsets (sections 0..31; index 31 = first text
+// Vanilla data-section offsets (sections 0..31; index 31 = first text
 // section, used as the end bound of data section 30). Data section sizes are
 // language-independent, so this table is the same for every retail build.
 static const uint32_t vanilla_data_offsets[32] = {
@@ -82,6 +82,7 @@ static const uint32_t vanilla_data_offsets[32] = {
 	17912, 18424, 18616, 18936, 19036, 19052, 19152, 19212, 19468, 19660,
 	19720, 19976,
 };
+
 
 // ---- state --------------------------------------------------------------
 static uint8_t ff8_magic_table[MAX_MAGIC_ID][MAGIC_ENTRY_SIZE];
@@ -149,64 +150,55 @@ static char *__cdecl ff8_get_magic_description(int id)
 #define REG_EAX 0
 #define REG_EBX 3
 
-#define CLASSIFY_STUB_SIZE  16
-#define TRAMPOLINE_PAGE_SIZE 4096
-
-// Hands out executable memory for the stubs from one lazily-created RWX page.
-static uint8_t *ff8_trampoline_alloc(uint32_t size)
+// This part is to retrieve the condition > 64, trampoline from there into a code we manage in FFNx
+#pragma pack(push, 1)
+struct ff8_classify_stub
 {
-	static uint8_t *page = nullptr;
-	static uint32_t used = 0;
-
-	if (!page)
-	{
-		page = (uint8_t *)VirtualAlloc(nullptr, TRAMPOLINE_PAGE_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		if (!page) return nullptr;
-	}
-
-	if (used + size > TRAMPOLINE_PAGE_SIZE) return nullptr;
-
-	uint8_t *stub = page + used;
-	used += size;
-	return stub;
-}
-
-// Minimal x86 emitter so the stub reads as named instructions, not hex.
-struct x86_emitter
-{
-	uint8_t *p;
-
-	void byte(uint8_t b) { *p++ = b; }
-	void rel32(uint32_t target) { *(uint32_t *)p = target - (uint32_t)(p + 4); p += 4; }
-
-	void push_reg(uint8_t reg) { byte(0x50 + reg); }
-	void pop_reg(uint8_t reg) { byte(0x58 + reg); }
-	void call(uint32_t func) { byte(0xE8); rel32(func); }
-	void test_al_al() { byte(0x84); byte(0xC0); }
-	void jnz(uint32_t target) { byte(0x0F); byte(0x85); rel32(target); }
-	void ret() { byte(0xC3); }
+	uint8_t push_id_reg;   // 50+reg
+	uint8_t call_opcode;   // E8
+	int32_t call_offset;   // rel32 -> ff8_is_gf_id
+	uint8_t test_al_al[2]; // 84 C0
+	uint8_t pop_id_reg;    // 58+reg
+	uint8_t jnz_opcode[2]; // 0F 85
+	int32_t jnz_offset;    // rel32 -> the site's original GF branch target
+	uint8_t ret_opcode;    // C3
 };
+#pragma pack(pop)
 
-// Stub for one "cmp reg,40h / jcc" site: call the C check, then fall through
-// (magic) or jump to the original GF target. `reg` is preserved either way.
-static void *ff8_build_classify_stub(uint8_t reg, uint32_t gf_target)
+
+#define CLASSIFY_SITE_COUNT 2 // Number of place in the code where we need to apply this stub
+static ff8_classify_stub ff8_classify_stubs[CLASSIFY_SITE_COUNT];
+static int ff8_classify_stubs_used = 0;
+
+// rel32 operands are relative to the end of the instruction they belong to.
+static int32_t ff8_rel32_to(const void *operand_field, uint32_t target)
 {
-	uint8_t *stub = ff8_trampoline_alloc(CLASSIFY_STUB_SIZE);
-	if (!stub) return nullptr;
+	return (int32_t)(target - ((uint32_t)operand_field + sizeof(int32_t)));
+}
 
-	x86_emitter emit{ stub };
+// The stub is a small piece of code that will call ff8_is_gf_id and then jump to the original target if it is a GF, or return if it is not.
+static const ff8_classify_stub *ff8_build_classify_stub(uint8_t id_reg, uint32_t gf_target)
+{
+	if (ff8_classify_stubs_used >= CLASSIFY_SITE_COUNT)
+		return nullptr;
 
-	emit.push_reg(reg);                      // pass the id as the __cdecl arg
-	emit.call((uint32_t)&ff8_is_gf_id);      // -> al
-	emit.test_al_al();
-	emit.pop_reg(reg);                       // restore the id register
-	emit.jnz(gf_target);                     // GF path
-	emit.ret();                              // magic path
+	ff8_classify_stub *stub = &ff8_classify_stubs[ff8_classify_stubs_used++];
+
+	stub->push_id_reg = 0x50 + id_reg;
+	stub->call_opcode = 0xE8;
+	stub->call_offset = ff8_rel32_to(&stub->call_offset, (uint32_t)&ff8_is_gf_id);
+	stub->test_al_al[0] = 0x84;
+	stub->test_al_al[1] = 0xC0;
+	stub->pop_id_reg = 0x58 + id_reg;
+	stub->jnz_opcode[0] = 0x0F;
+	stub->jnz_opcode[1] = 0x85;
+	stub->jnz_offset = ff8_rel32_to(&stub->jnz_offset, gf_target);
+	stub->ret_opcode = 0xC3;
 
 	return stub;
 }
 
-// Overwrites a "cmp reg,40h / jcc" site with a call to its stub. Handles the
+// Overwrites a id > 64 check site with a call to its stub. Handles the
 // optional 0x66 prefix (draw-execute is "cmp bx,40h"); the site must start at
 // it, or the leftover 0x66 would corrupt our call.
 static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
@@ -215,6 +207,7 @@ static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 	uint32_t pre = (p[0] == 0x66) ? 1 : 0;   // optional operand-size prefix
 
 	// cmp reg,imm8: (66) 83 /7 ib  (modrm F8=eax/ax, FB=ebx/bx)
+	// Just guarding if anything is unexpected in the byte we will replace
 	if (p[pre] != 0x83 || p[pre + 2] != 0x40)
 	{
 		ffnx_warning("AddMoreMagic: unexpected bytes at %s site 0x%X (%02X %02X %02X %02X), skipping patch!\n",
@@ -222,6 +215,7 @@ static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 		return false;
 	}
 
+  // Change the id > 64 by the correct check between GF/magic
 	uint32_t cmp_len = pre + 3;           // (prefix) + opcode + modrm + imm8
 	const uint8_t *j = p + cmp_len;       // the following jcc
 	uint32_t patch_size, gf_target;
@@ -241,22 +235,25 @@ static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
 		return false;
 	}
 
-	void *stub = ff8_build_classify_stub(reg, gf_target);
+	const ff8_classify_stub *stub = ff8_build_classify_stub(reg, gf_target);
 	if (!stub)
 	{
-		ffnx_warning("AddMoreMagic: out of trampoline space for %s site 0x%X, skipping patch!\n", what, site);
+		ffnx_warning("AddMoreMagic: out of classify stubs for %s site 0x%X, skipping patch!\n", what, site);
 		return false;
 	}
 
-	// call stub, then NOP the rest so the next instruction stays put.
+	// NOP the whole compare-and-branch, then turn its first 5 bytes into the
+	// call, so whatever follows the site stays exactly where it was.
 	memset_code(site, 0x90, patch_size);
-	patch_code_byte(site, 0xE8);
-	patch_code_dword(site + 1, (uint32_t)stub - (site + 5));
+	replace_call_function(site, (void *)stub);
 
 	return true;
 }
 
 // ---- value-scan relocation (shared by K_MAGIC and drawn-once) -----------
+// All this section will scan the code to find a specific value which reference the kernel table, and replace it with the new table address.
+// This is needed because the exe has hardcoded addresses for the kernel tables, and we need to redirect them to our new tables in FFNx.
+
 // The exe's own .text bounds, from its PE header (adapts to any build).
 static void get_code_section_bounds(uint32_t *start, uint32_t *end)
 {
@@ -489,6 +486,8 @@ static void ff8_kernel_magic_arm()
 		ffnx_warning("AddMoreMagic: expected %d K_MAGIC sites, rewrote %u - some magic reads may still use the vanilla table!\n", K_MAGIC_SITE_COUNT, rewritten);
 
 	// The two deep-in-function GF checks; the rest are replaced whole below.
+	DWORD stub_protect;
+	VirtualProtect(ff8_classify_stubs, sizeof(ff8_classify_stubs), PAGE_EXECUTE_READWRITE, &stub_protect);
 	install_id_trampoline(ff8_externals.magic_site_spell_visibility, REG_EAX, "draw-list visibility");
 	install_id_trampoline(ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
 

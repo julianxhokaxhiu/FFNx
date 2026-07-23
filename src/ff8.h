@@ -1733,7 +1733,6 @@ struct ff8_externals
 	// magic_sg_drawn_once_ext is NOT stored here - it is computed from
 	// field_vars_stack_1CFE9B8 (already resolved above) + 753, the
 	// field-script variable slot it relocates to.
-	uint32_t init_data_at_start_sub_470440;
 	uint32_t read_kernel_files_sub_47D2A0;
 	uint32_t set_all_monster_info_sub_48BA10;
 	uint32_t manage_monster_spell_visibility_sub_48C7A0;
