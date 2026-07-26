@@ -105,7 +105,8 @@ public:
 		IdentifiedTexture(
 			const char *name,
 			const TextureInfos &texture,
-			const TextureInfos &palette = TextureInfos()
+			const TextureInfos &palette = TextureInfos(),
+			const char *remasteredName = nullptr
 		);
 		void setMod(ModdedTexture *mod);
 		inline ModdedTexture *mod() const {
@@ -124,6 +125,9 @@ public:
 		inline const std::string &name() const {
 			return _name;
 		}
+		inline const std::string &remasteredName() const {
+			return _remasteredName;
+		}
 		inline const char *printableName() const {
 			return _name.empty() ? "N/A" : _name.c_str();
 		}
@@ -140,7 +144,7 @@ public:
 		}
 	private:
 		TextureInfos _texture, _palette;
-		std::string _name;
+		std::string _name, _remasteredName;
 		ModdedTexture *_mod;
 		std::unordered_map<ModdedTextureId, IdentifiedTexture> _redirections;
 		int _frameId;
@@ -155,7 +159,7 @@ public:
 	};
 
 	explicit TexturePacker();
-	bool setTexture(const char *name, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), int textureCount = -1, bool clearOldTexture = true);
+	bool setTexture(const char *name, const char *remasteredName, const TextureInfos &texture, const TextureInfos &palette = TextureInfos(), int textureCount = -1, bool clearOldTexture = true);
 	bool setTextureBackground(const char *name, int x, int y, int w, int h, int maxW, const std::vector<Tile> &mapTiles, const char *extension = nullptr, char *found_extension = nullptr);
 	// Override a part of the VRAM from another part of the VRAM, typically with biggest textures (Worldmap)
 	bool setTextureRedirection(const char *name, const TextureInfos &oldTexture, const TextureInfos &newTexture, const Tim &tim);

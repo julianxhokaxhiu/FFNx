@@ -28,3 +28,9 @@ void *ff8_bink_open(uint8_t disc, uint32_t movie);
 int ff8_bink_read(void *opaque, uint8_t *buf, int buf_size);
 int64_t ff8_bink_seek(void *opaque, int64_t offset, int whence);
 void ff8_bink_close(void *opaque);
+
+void *ff8_zzz_open(const char *fmv_name);
+int ff8_zzz_read(void *opaque, uint8_t *buf, int buf_size);
+int64_t ff8_zzz_seek(void *opaque, int64_t offset, int whence);
+void ff8_zzz_close(void *opaque);
+

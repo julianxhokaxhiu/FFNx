@@ -2,12 +2,10 @@
 //    Copyright (C) 2009 Aali132                                            //
 //    Copyright (C) 2018 quantumpencil                                      //
 //    Copyright (C) 2018 Maxime Bacoux                                      //
+//    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 myst6re                                            //
-//    Copyright (C) 2026 Julian Xhokaxhiu                                   //
-//    Copyright (C) 2023 Cosmos                                             //
-//    Copyright (C) 2023 Tang-Tang Zhou                                     //
+//    Copyright (C) 2022 Julian Xhokaxhiu                                   //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -20,19 +18,18 @@
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
-
 #pragma once
 
-#include <vector>
-#include <unordered_map>
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-struct CharaOneModel {
-	char name[6];
-	bool isMch;
-	std::vector<uint32_t> texturesData;
-	uint32_t modelId;
-};
+#include <libvgmstream/vgmstream.h>
 
-std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uint8_t *chara_one_data, size_t size);
-void ff8_mch_parse_model(CharaOneModel &model, const uint8_t *mch_data, size_t size);
-bool ff8_chara_one_model_save_textures(const CharaOneModel &models, const uint8_t *chara_one_model_data, const char *dirname);
+#if defined(__cplusplus)
+}
+#endif
+
+#include "../../ff8/zzz_archive.h"
+
+STREAMFILE* open_ZZZ_STREAMFILE(const char* const filename, size_t buf_size = STREAMFILE_DEFAULT_BUFFER_SIZE);

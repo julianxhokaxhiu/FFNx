@@ -20,10 +20,6 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#include <steamworkssdk/isteamutils.h>
-#include <steamworkssdk/isteamuserstats.h>
-#include <steamworkssdk/isteamuser.h>
-
 #include <numeric>
 #include <algorithm>
 #include <unordered_set>
@@ -151,7 +147,7 @@ void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
         {
             ach_trace("%s - received stats and achievements from Steam\n", __func__);
             this->isInitialized = true;
- 
+
             // load stats (assume all stats to be integers)
             for (auto statName: this->stats) {
                 int statValue;
@@ -980,7 +976,7 @@ void SteamAchievementsFF8::unlockMagazineAddictAchievement(const savemap_ff8_ite
         }
     }
     ach_trace("%s - trying to unlock magazine addict achivement (magazines found: %d)\n", __func__, magazines_found.size());
- 
+
     if (magazines_found.size() >= MAGAZINES_TO_COLLECT) {
         this->steamManager->setAchievement(MAGAZINES_ADDICT);
     }

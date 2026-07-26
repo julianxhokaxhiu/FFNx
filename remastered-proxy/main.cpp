@@ -2,12 +2,12 @@
 //    Copyright (C) 2009 Aali132                                            //
 //    Copyright (C) 2018 quantumpencil                                      //
 //    Copyright (C) 2018 Maxime Bacoux                                      //
+//    Copyright (C) 2026 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2023 myst6re                                            //
+//    Copyright (C) 2020 Marcin Gomulak                                     //
 //    Copyright (C) 2026 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2023 Cosmos                                             //
-//    Copyright (C) 2023 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -21,18 +21,56 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-#pragma once
+#include <filesystem>
+#include <windows.h>
+#include <winuser.h>
 
-#include <vector>
-#include <unordered_map>
-
-struct CharaOneModel {
-	char name[6];
-	bool isMch;
-	std::vector<uint32_t> texturesData;
-	uint32_t modelId;
+const char processes[][32]{
+    "FF8.ffnx",
+    "FF8.exe"
 };
+const int numProcesses = sizeof(processes) / sizeof(processes[0]);
 
-std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uint8_t *chara_one_data, size_t size);
-void ff8_mch_parse_model(CharaOneModel &model, const uint8_t *mch_data, size_t size);
-bool ff8_chara_one_model_save_textures(const CharaOneModel &models, const uint8_t *chara_one_model_data, const char *dirname);
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    return TRUE;
+}
+
+__declspec(dllexport) void __stdcall runGame()
+{
+    int process_to_start = -1;
+
+    for (int i = 0; i < numProcesses; i++)
+    {
+        if (std::filesystem::exists(processes[i]))
+        {
+            process_to_start = i;
+        }
+    }
+
+    if (process_to_start < 0)
+    {
+        MessageBoxA(NULL, "FF8.ffnx/FF8.exe not found", "Error", MB_ICONERROR | MB_OK);
+    }
+
+    // Initialize the process start information
+    STARTUPINFOA si = STARTUPINFOA();
+    PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+    si.cb = sizeof(si);
+
+    // Start the process
+    if (!CreateProcessA(processes[process_to_start], NULL, NULL, NULL, FALSE, NULL, NULL, NULL, &si, &pi))
+    {
+        MessageBoxA(NULL, "Something went wrong while launching the game.", "Error", MB_ICONERROR | MB_OK);
+        return;
+    }
+
+    // Wait for the process to finish
+    WaitForSingleObject(pi.hProcess, INFINITE);
+
+    // Close process and thread handles
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    return;
+}
