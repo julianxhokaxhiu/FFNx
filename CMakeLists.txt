@@ -95,6 +95,18 @@ find_package(CMakeRC CONFIG REQUIRED)
 find_package(lfreist-hwinfo CONFIG REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
+
+# SDL3 subsystem configurations:
+set(SDL_AUDIO        OFF CACHE BOOL "" FORCE)
+set(SDL_VIDEO        OFF CACHE BOOL "" FORCE)
+set(SDL_GPU          OFF CACHE BOOL "" FORCE)
+set(SDL_RENDER       OFF CACHE BOOL "" FORCE)
+set(SDL_CAMERA       OFF CACHE BOOL "" FORCE)
+set(SDL_POWER        OFF CACHE BOOL "" FORCE)
+set(SDL_DIALOG       OFF CACHE BOOL "" FORCE)
+set(SDL_TRAY         OFF CACHE BOOL "" FORCE)
+set(SDL_NOTIFICATION OFF CACHE BOOL "" FORCE)
+
 find_package(SDL3 CONFIG REQUIRED)
 
 set(RELEASE_NAME "FFNx")
