@@ -2578,7 +2578,7 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   // stalling the open. Instead, compute the target once here while the window is still small,
   // then hold width/height fixed so the animation converges normally, matching vanilla behavior.
   // Field files already ship with correctly sized windows, so this only fixes the animation target.
-  if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8 )
+  if ( ff7_japanese_edition || (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8) ) // must run every frame as before to properly handle japanese edition.
   {
     auto_resize_text_box(WINDOW_ID, &W, &H);
     if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x < 0)
