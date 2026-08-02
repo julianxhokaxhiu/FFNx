@@ -102,7 +102,7 @@ external_music_ext = "akb"
 
 #### [Remastered Release](https://store.steampowered.com/app/1026680/FINAL_FANTASY_VIII__REMASTERED/)
 
-**Warning:** The compatibilty with the Remastered version is currently uncomplete. You will most likely encounters crashes in battle and model rendering issues.
+**Warning:** The compatibility with the Remastered version is currently incomplete. You will most likely encounter crashes in battle and model rendering issues.
 
 0. Install the game using Steam
 1. Open the installation directory of the game ( see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682) )
@@ -116,15 +116,22 @@ external_music_ext = "akb"
 
 ## Mod Launchers
 
-### 7thHeaven 2.4.0+
+### 7thHeaven
 
-0. Install Final Fantasy VII using the Steam Client
+0. Install Final Fantasy VII
 1. Download and install the latest 7th Heaven release here: https://github.com/tsunamods-codes/7th-Heaven/releases
 2. Launch `7th Heaven` and click Play on the top left
 3. Enjoy!
 
-### SYW Steam all in one
+### JunctionVIII
 
-0. Install Final Fantasy VII using the Steam Client
-1. Follow installation instructions here: http://forum.tsunamods.com/viewtopic.php?f=69&p=716&sid=a91d0f964f413cc24c649298cf6f764b#p716
+0. Install Final Fantasy VIII
+1. Download and install the latest 7th Heaven release here: https://github.com/tsunamods-codes/Junction-VIII/releases
+2. Launch `Junction VIII` and click Play on the top left
+3. Enjoy!
+
+### SYW Unified
+
+0. Install Final Fantasy VII
+1. Follow installation instructions here: https://forums.qhimm.com/index.php?topic=21616.0
 2. Enjoy!
