@@ -60,7 +60,7 @@ void engine_load_menu_graphics_objects_6C1468_jp(int a1)
     ff7_externals.sub_671082(ff7_externals.menu_win_d_blend_1_graphics_object_DC0FEC);
 
     // jp
-    ff7_externals.sub_671082(&ff7_externals.menu_jafont_1_graphics_object);    
+    ff7_externals.sub_671082(&ff7_externals.menu_jafont_1_graphics_object);
   }
   else
   {
@@ -142,7 +142,7 @@ void engine_load_menu_graphics_objects_6C1468_jp(int a1)
       menu_font_a_texture_path = ff7_externals.aUsfont_a_l_tim;
 
 
-      
+
     *ff7_externals.menu_font_a_graphics_object_DC100C = ff7_externals.engine_load_graphics_object_6710AC(
                                            1,
                                            12,
@@ -656,7 +656,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           }
           else
           {
-            --buffer_text; // it was really an opcode, back up one character again and fall through to default so we can parse it later. 
+            --buffer_text; // it was really an opcode, back up one character again and fall through to default so we can parse it later.
           }
         default:
           if(!kanjiDetected)
@@ -755,7 +755,7 @@ LABEL_39:
               }
             }
             if ( !(*ff7_externals.dword_DC3CD4) ) // if not going to next window
-              character_x += leftPadding; // apply padding 
+              character_x += leftPadding; // apply padding
                            //* ((int)*(unsigned __int8 *)((*ff7_externals.g_text_spacing_DB958C) + text_offset_spacing + current_character) >> 5);*/
             if ( offset_u_in_byte <= 480 ) // can't actually fail, but just in case...
             {
@@ -854,7 +854,7 @@ LABEL_39:
                 case 0x3Du: // , in jp sheet. right
                   offset_u_in_byte = 160;
                   graphics_object_v_in_byte = 96;
-                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8; 
+                  graphics_object = *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8;
                   special_character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object);
                   ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0); // finish advance because this was a doublebyte
                   break;
@@ -1061,7 +1061,7 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
     ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
     if ( *ff7_externals.field_do_draw_character_DC3CEC )
     {
-      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);      
+      ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_a_graphics_object_DC100C, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_font_b_graphics_object_DC1010, game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_font_a_graphics_object_DC100C);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_font_b_graphics_object_DC1010);
@@ -1281,7 +1281,7 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
     }
     else
     {
-      image_u_width = 16.0;  // heart. 
+      image_u_width = 16.0;  // heart.
       vertex_width = 16;
       image_u = offset_image_u; // exactly equal to offset set above
       image_v = offset_image_v;
@@ -1813,7 +1813,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
     int leftPadding = 0;
     ff7_graphics_object* graphics_object = ff7_externals.menu_jafont_1_graphics_object;
     while ( v120 < 256 && v135->name[0] != 255 )
-    {      
+    {
       switch ( v135->name[0] )
       {
         case 0xF8u:
@@ -1910,7 +1910,7 @@ LABEL_49:
           if (ff7_externals.g_get_do_render_menu_6CDBF2() && common_externals.draw_graphics_object(1, (struct graphics_object*)a2))
           {
             // let's go and print some text.
-            auto color = get_character_color(7); 
+            auto color = get_character_color(7);
             color.a = 128;
 
             v102 = (double)v127 / 512.0;
@@ -2422,7 +2422,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 	int16_t maxW = 0; // used to remember the longest row so far.
 	int16_t maxH = 0;
   // first store what the flevel says it is, in case we need to give up
-  *pOutW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width; 
+  *pOutW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;
   *pOutH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height;
 
   byte* buffer_text = (byte*)ff7_externals.current_dialog_string_pointer[WINDOW_ID];
@@ -2434,7 +2434,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 	{
     byte character = buffer_text[i];
     byte next_character = buffer_text[i + 1];
-    byte next_character2 = buffer_text[i + 2]; // additional ones needed to parse fixed length strings later 
+    byte next_character2 = buffer_text[i + 2]; // additional ones needed to parse fixed length strings later
     byte next_character3 = buffer_text[i + 3];
     byte next_character4 = buffer_text[i + 4]; // this is the counter of characters, which is what we need to do that.
     byte next_character5 = buffer_text[i + 5]; //
@@ -2452,7 +2452,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       case 0xFBu:
 
         charWidth = charWidthData[2][next_character] & 0x1F;
-        leftPadding = charWidthData[2][next_character] >> 5;          
+        leftPadding = charWidthData[2][next_character] >> 5;
         isKanjiDetected = true;
         possibleOpcode = false;
         continue;
@@ -2475,7 +2475,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
           leftPadding = charWidthData[5][next_character] >> 5;
           isKanjiDetected = true;
           possibleOpcode = false; // not an opcode
-          continue;               
+          continue;
         }
         // fall through
       default:
@@ -2490,7 +2490,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
     }
 
     // character names need to be counted to resize proprely.
-    if(character >= 0xEA && character <= 0xF5) 
+    if(character >= 0xEA && character <= 0xF5)
     {
       auto name_buffer = ff7_externals.sub_6CB9B8(character - 0xEA);
       for (int j = 0; j < 9; ++j)
@@ -2503,7 +2503,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         leftPadding = charWidthData[0][name_char] >> 5;
         W += leftPadding + std::ceil(z_half_width(charWidth));
       }
-      
+
       continue; // back to the start, we already added to the length
     }
     // if its' an opcode, then we need to account for variables
@@ -2516,14 +2516,14 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         case 0xDEu: // these are variable length
         case 0xDFu: // variable opcodes
         case 0xE1u: // FIXME: actually parse them and account for string length
-          charWidth = 32 * 8; // assume there are no more than 8 characters for now?  
+          charWidth = 32 * 8; // assume there are no more than 8 characters for now?
           leftPadding = 0;                  // no padding.
           // gets added in later
           i = i + 1; // skip the byte after the opcode
           break;
         case 0xE2u: // fixed length string. this, i can parse well enough.
           int stringlength = next_character5 << 8 | next_character4; // we know how many characters. for safety, assume max width.
-          charWidth = 32 * stringlength; // assume characters are maximum width 
+          charWidth = 32 * stringlength; // assume characters are maximum width
           leftPadding = 0;                  // no padding.
                                             // gets added in later
           i = i + 5; // skip the opcode bytes for next go around 5 out of six, with the last one done at start of loop
@@ -2562,6 +2562,9 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
 {
   int16_t W = 0;
   int16_t H = 0;
+  int16_t originalW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;  // store original width
+  int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to set it back later.
+
   // The vanilla create routine (0x631586) assigns this window's owner (CC0960[win] = the entity
   // that opened it) before marking it active, and clears both owner and mode together on close.
   // On the multibyte path a window can end up active with no owner assigned (0xFF) — the owner
@@ -2570,8 +2573,7 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   // found in this orphaned state before continuing.
   if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == 0xFF )
     ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] = *ff7_externals.current_entity_id_byte_CC0964;
-  int16_t originalW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;  // store original width
-  int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to set it back later.
+
   // auto_resize_text_box recomputes the window's target width/height from the text every time
   // it's called, including reading back the values it wrote the previous call — so calling it
   // every frame makes the target keep moving and the window's grow animation never reaches it,
@@ -2581,30 +2583,37 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   if ( ff7_japanese_edition || (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8) ) // must run every frame as before to properly handle japanese edition.
   {
     auto_resize_text_box(WINDOW_ID, &W, &H);
+
     if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x < 0)
       ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x = 0;              // if off the left, move it back on. :)
+
     ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
     ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
   }
+
   if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
   {
-    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width
-                                                                       / 4;
+    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width / 4;
+
     if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8 )
       ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width = 8;
+
     if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width > ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width )
       ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;
-    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height
-                                                                        / 4;
+
+    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height / 4;
+
     if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height < 8 )
       ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height = 8;
+
     if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height > ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height )
       ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height;
-    if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width
-      && ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height )
-    {
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_mode = 2; 
-    }
+
+    if (
+      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width
+      && ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height
+    )
+      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_mode = 2;
   }
 }
 
