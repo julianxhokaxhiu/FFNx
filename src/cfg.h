@@ -185,6 +185,7 @@ extern long display_index;
 extern long ff8_high_res_font;
 extern long hardware_video_decoding;
 extern std::vector<std::string> ff8_disable_remastered_hd_textures;
+extern bool ff7_field_autosize_text_box;
 
 void read_cfg();
 bool is_remastered_hd_textures_disabled(const std::string &module);

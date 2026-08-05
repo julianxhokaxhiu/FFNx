@@ -2560,8 +2560,6 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
 void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
 {
-  int16_t W = 0;
-  int16_t H = 0;
   int16_t originalW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;  // store original width
   int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to set it back later.
 
@@ -2582,13 +2580,16 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   // Field files already ship with correctly sized windows, so this only fixes the animation target.
   if ( ff7_japanese_edition || (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8) ) // must run every frame as before to properly handle japanese edition.
   {
-    auto_resize_text_box(WINDOW_ID, &W, &H);
-
     if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x < 0)
       ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x = 0;              // if off the left, move it back on. :)
 
-    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
-    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
+    if (ff7_field_autosize_text_box)
+    {
+      int16_t W = 0, H = 0;
+      auto_resize_text_box(WINDOW_ID, &W, &H);
+      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
+      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
+    }
   }
 
   if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
