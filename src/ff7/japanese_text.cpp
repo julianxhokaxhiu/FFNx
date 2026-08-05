@@ -2560,9 +2560,6 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
 void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
 {
-  int16_t originalW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;  // store original width
-  int16_t originalH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height; // and height. just in case we need to set it back later.
-
   // The vanilla create routine (0x631586) assigns this window's owner (CC0960[win] = the entity
   // that opened it) before marking it active, and clears both owner and mode together on close.
   // On the multibyte path a window can end up active with no owner assigned (0xFF) — the owner
