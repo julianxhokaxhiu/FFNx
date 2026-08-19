@@ -702,7 +702,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             break;
           }
         default:
-          if ((*buffer_text != 0xd9u || ff7_multibyte_font) && (*buffer_text < 0xF6u || *buffer_text > 0xF9u)) // not a button prompt or heart (heart redirect is JP-edition only; multibyte owns 0xD9 as a glyph cell).
+          if ((*buffer_text != 0xd9u || kanjiDetected || ff7_multibyte_font) && (*buffer_text < 0xF6u || *buffer_text > 0xF9u)) // not a button prompt or heart (heart redirect is JP-edition only; multibyte owns 0xD9 as a glyph cell).
           {
             text_offset_spacing = 0;
             graphics_object_v_in_byte = 0;
