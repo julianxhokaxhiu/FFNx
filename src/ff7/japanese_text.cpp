@@ -320,7 +320,7 @@ int charWidthData[6][256] =
         30, 30, 28, 31, 30, 30, 29, 29, 30, 30, 29, 30, 31, 30, 29, 27,
         30, 29, 29, 29, 31, 30, 28, 23, 30, 30, 30, 31, 29, 31, 30, 30,
         31, 30, 30, 31, 31, 29, 21, 28, 29, 30, 30, 27, 31, 30, 30, 29,
-        29, 30, 30, 22, 22, 22, 22, 23, 22, 22, 22, 22, 22, 51, 62, 16,
+        29, 30, 30, 22, 22, 22, 22, 23, 22, 22, 22, 22, 22, 51, 62, 24,
         28, 29, 24, 30, 26, 29, 29, 29, 28, 29, 26, 29, 29, 28, 25, 23,
         28, 28, 25, 25, 30, 28, 28, 23, 27, 29, 28, 30, 25, 28, 26, 28,
         29, 28, 26, 28, 29, 28, 20, 25, 25, 24, 28, 28, 24, 27, 28, 28,
@@ -702,7 +702,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             break;
           }
         default:
-          if ((*buffer_text != 0xd9u || kanjiDetected || ff7_multibyte_font) && (*buffer_text < 0xF6u || *buffer_text > 0xF9u)) // not a button prompt or heart (heart redirect is JP-edition only; multibyte owns 0xD9 as a glyph cell).
+          if ((!possibleOpcode) || ((*buffer_text < 0xF6u || *buffer_text > 0xF9u) && (*buffer_text != 0xd9u || ff7_multibyte_font))) // check for prompts and heart if on first page
           {
             text_offset_spacing = 0;
             graphics_object_v_in_byte = 0;
