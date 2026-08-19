@@ -320,7 +320,7 @@ int charWidthData[6][256] =
         30, 30, 28, 31, 30, 30, 29, 29, 30, 30, 29, 30, 31, 30, 29, 27,
         30, 29, 29, 29, 31, 30, 28, 23, 30, 30, 30, 31, 29, 31, 30, 30,
         31, 30, 30, 31, 31, 29, 21, 28, 29, 30, 30, 27, 31, 30, 30, 29,
-        29, 30, 30, 22, 22, 22, 22, 23, 22, 22, 22, 22, 22, 51, 62, 24,
+        29, 30, 30, 22, 22, 22, 22, 23, 22, 22, 22, 22, 22, 51, 62, 16,
         28, 29, 24, 30, 26, 29, 29, 29, 28, 29, 26, 29, 29, 28, 25, 23,
         28, 28, 25, 25, 30, 28, 28, 23, 27, 29, 28, 30, 25, 28, 26, 28,
         29, 28, 26, 28, 29, 28, 20, 25, 25, 24, 28, 28, 24, 27, 28, 28,
@@ -574,6 +574,9 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
 
   bool kanjiDetected = false;
   bool possibleOpcode = true; // 0xFEu i ssometimes JP text, and sometimes an FE opcode.  we must parse the opcodes.
+  bool heartAtD9 = false;     // used to decide if d9 is suppose dot be a heart from btl_win;
+  bool isPrompt = false;      // if true, and it's within range, make it a button prompt
+  int curPage = 0;            // track which ja_font page we are on, so we can check widths later to set the above.
   int charWidth = 16;
   int leftPadding = 0;
   character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20; // Fix first line for nameless windows. without this, piano instructions don't line up.
@@ -604,6 +607,8 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
     }
     else
     {
+      heartAtD9 = false;
+      isPrompt = false;
       switch ( *buffer_text )
       {
         case 0xFAu:
@@ -612,6 +617,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           graphics_object = ff7_externals.menu_jafont_2_graphics_object;
           kanjiDetected = true;
           possibleOpcode = false; // only 0xFEu *might* be an opcode.
+          curPage = 1;
           charWidth = charWidthData[1][*buffer_text] & 0x1F;
           leftPadding = charWidthData[1][*buffer_text] >> 5;
           continue;
@@ -621,6 +627,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           graphics_object = ff7_externals.menu_jafont_3_graphics_object;
           kanjiDetected = true;
           possibleOpcode = false;
+          curPage = 2;
           charWidth = charWidthData[2][*buffer_text] & 0x1F;
           leftPadding = charWidthData[2][*buffer_text] >> 5;
           continue;
@@ -630,6 +637,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           graphics_object = ff7_externals.menu_jafont_4_graphics_object;
           kanjiDetected = true;
           possibleOpcode = false;
+          curPage = 3;
           charWidth = charWidthData[3][*buffer_text] & 0x1F;
           leftPadding = charWidthData[3][*buffer_text] >> 5;
           continue;
@@ -639,6 +647,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
           graphics_object = ff7_externals.menu_jafont_5_graphics_object;
           kanjiDetected = true;
           possibleOpcode = false;
+          curPage = 4;
           charWidth = charWidthData[4][*buffer_text] & 0x1F;
           leftPadding = charWidthData[4][*buffer_text] >> 5;
           continue;
@@ -650,12 +659,14 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             graphics_object = ff7_externals.menu_jafont_6_graphics_object;
             kanjiDetected = true;
             possibleOpcode = false;
+            curPage = 5;
             charWidth = charWidthData[5][*buffer_text] & 0x1F;
             leftPadding = charWidthData[5][*buffer_text] >> 5;
             continue;
           }
           else
           {
+            curPage = 0;
             --buffer_text; // it was really an opcode, back up one character again and fall through to default so we can parse it later.
           }
         default:
@@ -665,6 +676,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             charWidth = charWidthData[0][*buffer_text] & 0x1F;
             leftPadding = charWidthData[0][*buffer_text] >> 5;
             possibleOpcode = true; // it SHOULD already be true, but just in case.
+            curPage = 0;           // set page back to zero;
           }
           kanjiDetected = false;
           break;
@@ -702,8 +714,20 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             break;
           }
         default:
-          if ((!possibleOpcode) || ((*buffer_text < 0xF6u || *buffer_text > 0xF9u) && (*buffer_text != 0xd9u || ff7_multibyte_font))) // check for prompts and heart if on first page
+          // check if the heart slot is empty
+          if (charWidthData[0][0xD9u] == 0) // if width is zero for that
+            heartAtD9 = true;                            // then that slot is a heart
+          // check if it could be a prompt.
+          if (charWidthData[curPage][*buffer_text] == 0) // msut have zero spacing
           {
+            // check range
+            if (*buffer_text > 0xF5u || *buffer_text < 0xFAu)
+              isPrompt = true;
+          }
+          if ((!possibleOpcode) || ((!isPrompt) && (*buffer_text != 0xd9u || !heartAtD9))) // check for prompts if on first page, and for heart if on first page and actual japanese
+          {
+            heartAtD9 = false;
+            isPrompt = false;
             text_offset_spacing = 0;
             graphics_object_v_in_byte = 0;
 LABEL_39:
@@ -837,9 +861,11 @@ LABEL_39:
           }
           else
           {
+            heartAtD9 = false;  // clear flag now that we are here
+            isPrompt = false;   // clear flag now that we are here;
             switch ( *buffer_text ) // what button prompt do we have?
             {
-              case 0xd9u: // heart
+              case 0xD9u: // heart
                 offset_u_in_byte = 144;
                 graphics_object_v_in_byte = 208;
                 graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
@@ -1140,6 +1166,7 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   unsigned __int16* p_letter; // [esp+60h] [ebp-8h]
   float image_u_width; // [esp+64h] [ebp-4h]
   int vertex_x; // [esp+70h] [ebp+8h]
+  bool heartAtD9 = false;
 
   int charWidth = 16;
   int leftPadding = 0;
@@ -1147,12 +1174,16 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   p_letter = &letter;
   offset_image_u = 0; // initialise to zero
   offset_image_v = 0;
+  if (charWidthData[0][0xD9u] == 0)
+  {
+    heartAtD9 = true;
+  }
   switch ((byte)letter)
   {
-  case 0xD9: // heart
+  case 0xD9u: // heart
     // The heart redirect is a JP-edition feature. In multibyte mode this byte is a normal
     // jafont_1 glyph cell — translations may map real glyphs here (e.g. Arabic medial qaf).
-    if (!ff7_multibyte_font)
+    if (heartAtD9)
     {
       character_graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
       offset_image_u = 144; // heart is here
