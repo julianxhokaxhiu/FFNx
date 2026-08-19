@@ -724,7 +724,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(
             if (*buffer_text > 0xF5u || *buffer_text < 0xFAu)
               isPrompt = true;
           }
-          if ((!possibleOpcode) || ((!isPrompt) && (*buffer_text != 0xd9u || !heartAtD9))) // check for prompts if on first page, and for heart if on first page and actual japanese
+          if (!possibleOpcode || (!isPrompt && (*buffer_text != 0xd9u || !heartAtD9))) // check for prompts if on first page, and for heart if on first page and actual japanese
           {
             heartAtD9 = false;
             isPrompt = false;
