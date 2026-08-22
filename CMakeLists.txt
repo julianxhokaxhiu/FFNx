@@ -637,13 +637,21 @@ if(NOT "${FF7_2026_RERELEASE_GAME_PATH}" STREQUAL "")
   )
 endif()
 
-# Copy FFNx release to FF8 Remastered Steam game path if installed
+# Copy FFNx release to FF8 Remastered Steam/GOG game path if installed
 execute_process(
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 1026680
   OUTPUT_VARIABLE FF8_REMASTERED_GAME_PATH
   ERROR_VARIABLE FF8_REMASTERED_ERROR
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+if("${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
+  execute_process(
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindGOGGamePath 1086370078
+    OUTPUT_VARIABLE FF8_REMASTERED_GAME_PATH
+    ERROR_VARIABLE FF8_REMASTERED_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endif()
 if(NOT "${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
   cmake_path(CONVERT "${FF8_REMASTERED_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_REMASTERED_GAME_PATH)
   # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
