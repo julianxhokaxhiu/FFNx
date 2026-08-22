@@ -837,9 +837,24 @@ LABEL_39:
               default:
                 break;
             }
+            if ( (*ff7_externals.word_DC3CC0) || (*ff7_externals.word_DC3CC4) ) // if a color flag is set
+            {
+              if ( (*ff7_externals.word_DC3CC4) ) // rainboe
+              {
+                character_n_shapes = ((unsigned __int8)((*ff7_externals.word_DC3CC8) >> 2) - character_count) & 7; // get character color, but modify by character count
+              }
+              else if ( (((*ff7_externals.word_DC3CC8) >> 2) & 1) != 0 ) // flash
+              {
+                character_n_shapes = (*ff7_externals.word_91F028); // get flash color
+              }
+              else
+              {
+                character_n_shapes = 0;  // go back to normal is the color is cleared.
+              }
+            }
             if ( special_character_do_draw )
             {
-              auto color = get_character_color(7); // use palette seven"
+              auto color = get_character_color(character_n_shapes);
 
               special_character_u = (double)offset_u_in_byte / 256.0f;
               special_character_top_left = graphics_object->vertex_transform;
@@ -1191,8 +1206,8 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
       character_graphics_object->field_7C = 2 * n_shapes;
       if (offset_image_u == 144) // heart
       {
-        *(byte*)character_graphics_object->curr_total_n_shape = 7;
-        character_graphics_object->field_7C = 7;
+        *(byte*)character_graphics_object->curr_total_n_shape = n_shapes & 7;
+        character_graphics_object->field_7C = n_shapes & 7;
       }
     }
     return vertex_x + std::ceil(z_half_width(charWidth) * scaleFactor);
