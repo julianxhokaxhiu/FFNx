@@ -3230,6 +3230,7 @@ struct ff7_externals
 	uint32_t field_text_box_window_create_631586;
 	void (*field_text_box_window_opening_6317A9)(short);
 	void (*field_text_box_window_paging_631945)(short);
+	byte* field_dialog_print_table_632C4E;
 	byte* (*sub_6CB9B8)(int a1);
 	uint32_t field_text_box_window_reverse_paging_632CAA;
 	uint32_t field_text_box_window_closing_632EB8;
@@ -3910,6 +3911,8 @@ struct ff7_externals
 	uint32_t battle_menu_display_menu_6D82EA;
 	uint32_t battle_display_base_menu_6DD041;
 	int (*common_submit_draw_char_from_buffer_6F564E)(int, int, int, unsigned __int16, float);
+	int (*draw_string_from_buffer_sub_6F5B03)(int, int, byte*, byte, float);
+	int (*menu_shop_draw_string_from_buffer)(int, int, byte*, byte, float);
 	uint32_t menu_loop_sub_6CC623;
 	void (*menu_draw_everything_6CC9D3)();
 	int (*g_get_do_render_menu_6CDBF2)();

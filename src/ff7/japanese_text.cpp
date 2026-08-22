@@ -20,6 +20,8 @@
 #include <string.h>
 
 static void multibyte_load_widths();
+int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value);
+static bool jp_small_glyphs = true;
 
 void engine_load_menu_graphics_objects_6C1468_jp(int a1)
 {
@@ -299,6 +301,70 @@ int charWidthData[6][256] =
 // JP keeps the original half-width semantics (32px texel cells -> 16 units).
 static inline float z_half_width(int w) { return ff7_japanese_edition ? std::ceil(0.5f * (float)w) : (float)w; }
 
+static const unsigned char jp_spacing_primary[256] = {
+  59, 58, 55, 62, 59, 60, 57, 57, 59, 58, 57, 60, 61, 60, 58, 52,
+  59, 57, 57, 56, 62, 59, 55, 46, 59, 60, 60, 61, 58, 60, 59, 59,
+  61, 60, 59, 60, 61, 59, 40, 56, 57, 58, 57, 53, 61, 58, 59, 57,
+  57, 58, 57, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 42, 50, 49,
+  56, 57, 47, 60, 50, 58, 57, 57, 55, 58, 50, 58, 57, 56, 49, 46,
+  56, 54, 48, 49, 59, 56, 55, 46, 53, 58, 55, 59, 50, 56, 51, 56,
+  57, 54, 52, 56, 57, 55, 39, 48, 50, 46, 55, 55, 48, 52, 55, 55,
+  55, 58, 57, 58, 58, 53, 46, 59, 58, 60, 47, 56, 54, 53, 49, 58,
+  54, 56, 52, 56, 58, 53, 53, 47, 40, 43, 60, 52, 49, 60, 48, 51,
+  57, 58, 57, 55, 50, 53, 49, 58, 51, 57, 49, 54, 45, 48, 48, 49,
+  48, 47, 42, 45, 47, 47, 41, 45, 43, 40, 49, 48, 47, 48, 30, 42,
+  56, 58, 32, 46, 48, 41, 46, 46, 39, 38, 48, 43, 26, 32, 43, 35,
+  53, 43, 51, 41, 52, 43, 43, 46, 43, 47, 61, 47, 45, 45, 36, 44,
+  56, 53, 53, 57, 59, 30, 50, 44, 44, 64, 54, 46, 45, 48, 48, 42,
+  44, 46, 46, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+static const unsigned char jp_spacing_fa[32] = {
+  24, 24, 15, 16, 16, 43, 16, 30, 25, 54, 63, 35, 53, 35, 64, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+static const unsigned char jp_spacing_fc[32] = {
+  36, 38, 36, 38, 37, 33, 36, 35, 14, 25, 34, 18, 50, 36, 39, 38,
+  38, 27, 33, 31, 36, 37, 54, 36, 37, 34, 0, 0, 0, 0, 0, 0
+};
+
+static inline int jp_spacing_metric(uint16_t letter, int char_width)
+{
+  if (!ff7_japanese_edition)
+    return char_width;
+
+  if ((letter & 0xFF) >= 0xFA && (letter & 0xFF) <= 0xFE
+      && ((letter >> 8) < 0xFA || (letter >> 8) > 0xFE))
+    letter = (uint16_t)((letter << 8) | (letter >> 8));
+
+  int spacing = 64;
+  if (letter <= 0xFF)
+    spacing = jp_spacing_primary[letter];
+  else if ((uint16_t)(letter + 0x520) <= 0x1F)
+    spacing = jp_spacing_fa[letter & 0x1F];
+  else if ((uint16_t)(letter + 0x320) <= 0x1F)
+    spacing = jp_spacing_fc[letter & 0x1F];
+
+  spacing += 5;
+  return spacing < 64 ? spacing : 64;
+}
+
+static inline float jp_spacing_advance(uint16_t letter, int left_padding, int char_width, float scale_factor)
+{
+  if (ff7_japanese_edition)
+    return (float)left_padding + (float)jp_spacing_metric(letter, char_width) * 0.3125f;
+  return (float)left_padding + (float)jp_spacing_metric(letter, char_width) * 0.25f * scale_factor;
+}
+
+static inline int jp_center_advance(uint16_t letter, int left_padding, int char_width)
+{
+  if (!ff7_japanese_edition)
+    return left_padding + (int)std::ceil(z_half_width(char_width));
+  return 10 * jp_spacing_metric(letter, char_width) / 64;
+}
+
 // ff7_multibyte_font: override the hardcoded width table from <basedir>/multibyte_widths.bin
 // (6*256 bytes, one per font sheet/code, same (pad<<5|width) packing as window.bin member 3),
 // so translations can tune advances without recompiling FFNx.
@@ -429,7 +495,7 @@ int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t ch
   int16_t i;
   ff7_graphics_object *graphics_object;
   int16_t text_offset_spacing;
-  int16_t character_x_width;
+  float character_x_width;
   int16_t chararacter_u_in_byte;
   int16_t graphics_object_v_in_byte;
   char character_count;
@@ -623,15 +689,25 @@ LABEL_39:
               character_n_shapes = 8; // icon cells: force pure white so icon art keeps true colors so icon art keeps true colors
             current_character = *buffer_text;
             character = current_character;
+            uint16_t field_letter = curPage == 0
+              ? (uint16_t)character
+              : (uint16_t)(((0xFA + curPage - 1) << 8) | character);
+            int field_spacing = jp_spacing_metric(field_letter, charWidth);
+            if (ff7_japanese_edition)
+              leftPadding = 0;
             offset_u_in_byte = 32 * (character % 16);
             graphics_object_v_in_byte += 32 * (character / 16); // calculate character position in sheet so we render the rigth character
             // SOFT-WRAP (Arabic long-line wrap). Not the soft-lock cause (verified: scene still locks
             // with this disabled). Kept for Arabic line wrapping. zaphod77 PR#925 leaves it off (JP text
             // pre-wrapped in flevel); Arabic needs it since RTL lines can exceed the window width.
+            if (!ff7_japanese_edition)
             {
               int character_advance = (*ff7_externals.dword_DC3CD4)
                 ? 30
-                : leftPadding + (int)std::ceil(z_half_width(charWidth) * scaleFactor);
+                : (int)std::ceil(jp_spacing_advance(
+                    curPage == 0 ? (uint16_t)*buffer_text
+                                  : (uint16_t)(((0xFA + curPage - 1) << 8) | *buffer_text),
+                    leftPadding, charWidth, scaleFactor));
               if ( character_x - (*ff7_externals.field_current_window_pos_x_DC3CB4) + character_advance > text_box_right_position )
               {
                 character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20;
@@ -647,13 +723,17 @@ LABEL_39:
               chararacter_u_in_byte = 32 * (character % 16);
               if ( offset_u_in_byte == 480 )
               {
-                character_u_width_in_byte = 32.0;
-                character_x_width = (short)(16.0f*scaleFactor); // scale character
+                character_u_width_in_byte = ff7_japanese_edition ? (float)field_spacing * 0.5f : 32.0f;
+                character_x_width = ff7_japanese_edition
+                  ? field_spacing * 0.3125f
+                  : 16.0f*scaleFactor; // scale character
               }
               else
               {
-                character_u_width_in_byte = 32.0;
-                character_x_width = (short)(16.0f * scaleFactor); // scale character
+                character_u_width_in_byte = ff7_japanese_edition ? (float)field_spacing * 0.5f : 32.0f;
+                character_x_width = ff7_japanese_edition
+                  ? field_spacing * 0.3125f
+                  : 16.0f * scaleFactor; // scale character
               }
               character_do_draw = common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object); // try and fetch the graphics object.
             }
@@ -707,7 +787,9 @@ LABEL_39:
             if ( (*ff7_externals.dword_DC3CD4) )  // if goign to next window
               character_x += 30; // extra padding
             else
-              character_x += std::ceil(z_half_width(charWidth)*scaleFactor); // scaled up to match scaling we did above
+              character_x += ff7_japanese_edition
+                ? (int)(field_spacing * 0.3125f)
+                : std::ceil(z_half_width(charWidth)*scaleFactor); // scaled up to match scaling we did above
             --(*ff7_externals.field_remaining_character_length_DC3CCC);
             ++buffer_text;
             ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
@@ -1005,6 +1087,37 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
   }
 }
 
+static int jp_submit_draw_text_from_buffer(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value, bool small_glyphs)
+{
+  bool previous_small_glyphs = jp_small_glyphs;
+  jp_small_glyphs = small_glyphs;
+  if (!buffer)
+  {
+    jp_small_glyphs = previous_small_glyphs;
+    return x;
+  }
+
+  for (int i = 0; i < 1024 && buffer[i] != 0xFF; ++i)
+  {
+    uint16_t letter = buffer[i];
+    if (buffer[i] >= 0xF8 && buffer[i] <= 0xFE && buffer[i + 1] != 0xFF)
+      letter = (uint16_t)(buffer[i] << 8 | buffer[++i]);
+    x = (int16_t)common_submit_draw_char_from_buffer_6F564E_jp(x, y, n_shapes, letter, z_value);
+  }
+  jp_small_glyphs = previous_small_glyphs;
+  return x;
+}
+
+int common_submit_draw_text_from_buffer_jp(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value)
+{
+  return jp_submit_draw_text_from_buffer(x, y, buffer, n_shapes, z_value, true);
+}
+
+int common_submit_draw_text_from_buffer_large_jp(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value)
+{
+  return jp_submit_draw_text_from_buffer(x, y, buffer, n_shapes, z_value, false);
+}
+
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value)
 {
   multibyte_load_widths();   // 1s-gated hot-reload for live width tuning
@@ -1013,9 +1126,9 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   // But it needs to know what the source of hte text that was put into the buffer was to work this out, and that info is NOT passed as a parameter
   // will need to hook the function that loads texts to the buffer and set a global based on where in memory the original text is.
 
-  double scaleFactor = 1.0f; // small for now, because forcing big looks worse.
+  double scaleFactor = jp_small_glyphs ? 1.0f : 1.25f;
   float xPosFudge = 0;
-  float yPosFudge = 4; // small text is moved down 4 units to align properly.
+  float yPosFudge = jp_small_glyphs ? 4.0f : 0.0f;
   graphics_vertex* bottom_right;
   graphics_vertex* top_right;
   graphics_vertex* bottom_left;
@@ -1026,81 +1139,79 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
   uint16_t character;
   ff7_graphics_object* character_graphics_object;
   int16_t offset_text_spacing;
-  int16_t vertex_width;
+  float vertex_width;
   int16_t image_u;
   int16_t offset_image_v;
   int16_t image_v;
   int16_t offset_image_u;
-  uint16_t* p_letter;
+  byte* p_letter;
   float image_u_width;
   int vertex_x;
   bool heartAtD9 = false;
 
   int charWidth = 16;
   int leftPadding = 0;
+  uint16_t original_letter = letter;
 
-  p_letter = &letter;
+  if ((letter & 0xFF) >= 0xFA && (letter & 0xFF) <= 0xFE
+      && ((letter >> 8) < 0xFA || (letter >> 8) > 0xFE))
+    letter = (uint16_t)((letter << 8) | (letter >> 8));
+  original_letter = letter;
+  p_letter = (byte*)&letter;
   offset_image_u = 0; // initialise to zero
   offset_image_v = 0;
-  if (charWidthData[0][0xD9u] == 0)
-  {
+  if (!ff7_japanese_edition && charWidthData[0][0xD9u] == 0)
     heartAtD9 = true;
-  }
-  switch ((byte)letter)
+  if (letter == 0xF8)
+    return x;
+  if (letter == 0xD9 && (ff7_japanese_edition || heartAtD9))
   {
-  case 0xD9u: // heart
-    // The heart redirect is a JP-edition feature. In multibyte mode this byte is a normal
-    // jafont_1 glyph cell — translations may map real glyphs here (e.g. Arabic medial qaf).
-    if (heartAtD9)
-    {
-      character_graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
-      offset_image_u = 144; // heart is here
-      offset_image_v = 208; // heart is here
-      charWidth = 0x1f;     // max width
-      leftPadding = 0;
-      goto LABEL_9;
-    }
+    character_graphics_object = *ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4;
+    offset_image_u = 144;
+    offset_image_v = 208;
+    charWidth = 0x1f;
+    leftPadding = 0;
+    goto LABEL_9;
+  }
+  switch ((byte)(letter >> 8))
+  {
+  case 0x00:
     character_graphics_object = ff7_externals.menu_jafont_1_graphics_object;
-    charWidth = charWidthData[0][*p_letter] & 0x1F;
-    leftPadding = charWidthData[0][*p_letter] >> 5;
     break;
   case 0xF8:
     return x;
   case 0xFA:
-    p_letter = (uint16_t*)((byte*)&letter + 1);
+    p_letter = (byte*)&letter;
     character_graphics_object = ff7_externals.menu_jafont_2_graphics_object;
-    charWidth = charWidthData[1][*p_letter] & 0x1F;
-    leftPadding = charWidthData[1][*p_letter] >> 5;
     goto LABEL_9;
   case 0xFB:
-    p_letter = (uint16_t*)((byte*)&letter + 1);
+    p_letter = (byte*)&letter;
     character_graphics_object = ff7_externals.menu_jafont_3_graphics_object;
-    charWidth = charWidthData[2][*p_letter] & 0x1F;
-    leftPadding = charWidthData[2][*p_letter] >> 5;
     goto LABEL_9;
   case 0xFC:
-    p_letter = (uint16_t*)((byte*)&letter + 1);
+    p_letter = (byte*)&letter;
     character_graphics_object = ff7_externals.menu_jafont_4_graphics_object;
-    charWidth = charWidthData[3][*p_letter] & 0x1F;
-    leftPadding = charWidthData[3][*p_letter] >> 5;
     goto LABEL_9;
   case 0xFD:
-    p_letter = (uint16_t*)((byte*)&letter + 1);
+    p_letter = (byte*)&letter;
     character_graphics_object = ff7_externals.menu_jafont_5_graphics_object;
-    charWidth = charWidthData[4][*p_letter] & 0x1F;
-    leftPadding = charWidthData[4][*p_letter] >> 5;
     goto LABEL_9;
   case 0xFE:
-    p_letter = (uint16_t*)((byte*)&letter + 1);
+    p_letter = (byte*)&letter;
     character_graphics_object = ff7_externals.menu_jafont_6_graphics_object;
-    charWidth = charWidthData[5][*p_letter] & 0x1F;
-    leftPadding = charWidthData[5][*p_letter] >> 5;
     goto LABEL_9;
   default:
     character_graphics_object = ff7_externals.menu_jafont_1_graphics_object;
-    charWidth = charWidthData[0][*p_letter] & 0x1F;
-    leftPadding = charWidthData[0][*p_letter] >> 5;
     break;
+  }
+
+  if (!ff7_japanese_edition)
+  {
+    int page = 0;
+    if ((letter >> 8) >= 0xFA && (letter >> 8) <= 0xFE)
+      page = (letter >> 8) - 0xF9;
+    charWidth = charWidthData[page][*p_letter] & 0x1F;
+    leftPadding = charWidthData[page][*p_letter] >> 5;
   }
 
   switch ((byte)letter)
@@ -1119,19 +1230,19 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
       {
         if (offset_image_u == 480)
         {
-          image_u_width = 32.0;
-          vertex_width = 16;
+          image_u_width = ff7_japanese_edition ? (float)jp_spacing_metric(original_letter, charWidth) * 0.5f : 32.0f;
+          vertex_width = ff7_japanese_edition ? (float)jp_spacing_metric(original_letter, charWidth) * 0.25f : 16;
         }
         else
         {
-          image_u_width = 32.0;
-          vertex_width = 16;
+          image_u_width = ff7_japanese_edition ? (float)jp_spacing_metric(original_letter, charWidth) * 0.5f : 32.0f;
+          vertex_width = ff7_japanese_edition ? (float)jp_spacing_metric(original_letter, charWidth) * 0.25f : 16;
         }
       }
       else
       {
-        image_u_width = 32.0;
-        vertex_width = 16;
+        image_u_width = ff7_japanese_edition ? (float)jp_spacing_metric(original_letter, charWidth) * 0.5f : 32.0f;
+        vertex_width = ff7_japanese_edition ? (float)jp_spacing_metric(original_letter, charWidth) * 0.25f : 16;
       }
     }
     else
@@ -1210,7 +1321,10 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
         character_graphics_object->field_7C = n_shapes & 7;
       }
     }
-    return vertex_x + std::ceil(z_half_width(charWidth) * scaleFactor);
+    return ff7_japanese_edition
+      ? x + (int)((float)jp_spacing_metric(original_letter, charWidth)
+          * (jp_small_glyphs ? 0.25f : 0.3125f))
+      : vertex_x + std::ceil(z_half_width(charWidth) * scaleFactor);
   }
 }
 
@@ -1573,7 +1687,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[1][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[1][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(z_half_width(charWidth));
+          v106 += jp_center_advance((uint16_t)(0xFA00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -1581,7 +1695,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[2][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[2][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(z_half_width(charWidth));
+          v106 += jp_center_advance((uint16_t)(0xFB00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -1589,7 +1703,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[3][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[3][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(z_half_width(charWidth));
+          v106 += jp_center_advance((uint16_t)(0xFC00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -1597,7 +1711,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[4][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[4][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(z_half_width(charWidth));
+          v106 += jp_center_advance((uint16_t)(0xFD00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -1605,7 +1719,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[5][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[5][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += leftPadding + std::ceil(z_half_width(charWidth));
+          v106 += jp_center_advance((uint16_t)(0xFE00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -1618,7 +1732,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           {
             charWidth = charWidthData[0][*(byte*)(text_sub_41963C)] & 0x1F;
             leftPadding = charWidthData[0][*(byte*)(text_sub_41963C)] >> 5;
-            v106 += leftPadding + std::ceil(z_half_width(charWidth));
+            v106 += jp_center_advance((uint16_t)*(byte*)(text_sub_41963C), leftPadding, charWidth);
           }
           isKanjiDetected = false;
           ++v95;

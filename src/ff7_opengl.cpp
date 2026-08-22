@@ -400,6 +400,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	}
 	if (ff7_japanese_edition)
 	{
+		replace_function((uint32_t)ff7_externals.draw_string_from_buffer_sub_6F5B03, common_submit_draw_text_from_buffer_large_jp);
+		replace_function((uint32_t)ff7_externals.menu_shop_draw_string_from_buffer, common_submit_draw_text_from_buffer_large_jp);
 		//replace_function((uint32_t)	ff7_externals.field_text_box_window_paging_631945, field_text_box_window_paging_631945_jp);
 		// This hook is JP-edition only: its window auto-resize can feed back into itself across
 		// frames (each call recomputes the target size from values it wrote the previous frame),
@@ -408,11 +410,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// relying on field files that already ship with correctly sized windows.
 		replace_function((uint32_t)	ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_jp);
 
-		patch_code_byte(0x632C4E, 0xC);
-		patch_code_byte(0x632C4E + 0x1, 0xC);
-		patch_code_byte(0x632C4E + 0x2, 0xC);
-		patch_code_byte(0x632C4E + 0x3, 0xC);
-		patch_code_byte(0x632C4E + 0x4, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x1, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x2, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x3, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x4, 0xC);
 
 		// 3-mode (hiragana/katakana/eisuu) name-entry screen
 		name_input_jp_install();

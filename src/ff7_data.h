@@ -549,6 +549,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_text_box_window_create_631586 = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x39);
 	ff7_externals.field_text_box_window_opening_6317A9 = (void (*)(short))get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x5A);
 	ff7_externals.field_text_box_window_paging_631945 = (void (*)(short))get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x6D);;
+	ff7_externals.field_dialog_print_table_632C4E = (byte*)((uint32_t)ff7_externals.field_text_box_window_paging_631945 + 0x1309);
 	ff7_externals.sub_6CB9B8 = (byte* (*)(int))get_relative_call((uint32_t)ff7_externals.field_text_box_window_paging_631945, 0x693);
 	ff7_externals.field_text_box_window_reverse_paging_632CAA = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x80);
 	ff7_externals.field_text_box_window_closing_632EB8 = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x235);
@@ -1578,6 +1579,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_menu_display_menu_6D82EA = get_relative_call(battle_sub_6D83C8, 0xE0);
 	ff7_externals.battle_display_base_menu_6DD041 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x29);
 	ff7_externals.common_submit_draw_char_from_buffer_6F564E = (int (*)(int, int, int, unsigned __int16, float))get_relative_call(ff7_externals.battle_display_base_menu_6DD041, 0x382); 
+	ff7_externals.draw_string_from_buffer_sub_6F5B03 = (int (*)(int, int, byte*, byte, float))get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x127);
+	ff7_externals.menu_shop_draw_string_from_buffer = (int (*)(int, int, byte*, byte, float))get_relative_call(ff7_externals.menu_shop_loop, 0x1814);
 	ff7_externals.menu_loop_sub_6CC623 = get_absolute_value(ff7_externals.engine_loop_main_loop_sub_4090E6, 0x62E);
 	ff7_externals.menu_draw_everything_6CC9D3 = (void (*)())get_relative_call(ff7_externals.menu_loop_sub_6CC623, 0x117);
 	
