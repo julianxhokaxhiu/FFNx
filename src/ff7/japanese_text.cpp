@@ -1122,6 +1122,15 @@ int common_submit_draw_text_from_buffer_large_jp(int16_t x, int16_t y, byte* buf
   return jp_submit_draw_text_from_buffer(x, y, buffer, n_shapes, z_value, false);
 }
 
+int common_submit_draw_char_from_buffer_large_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value)
+{
+  bool previous_small_glyphs = jp_small_glyphs;
+  jp_small_glyphs = false;
+  int ret = common_submit_draw_char_from_buffer_6F564E_jp(x, vertex_y, n_shapes, letter, z_value);
+  jp_small_glyphs = previous_small_glyphs;
+  return ret;
+}
+
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value)
 {
   multibyte_load_widths();   // 1s-gated hot-reload for live width tuning

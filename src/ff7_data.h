@@ -23,6 +23,7 @@
 #pragma once
 
 #include <functional>
+#include <initializer_list>
 
 #include "ff7.h"
 #include "globals.h"
@@ -1583,6 +1584,94 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.common_submit_draw_char_from_buffer_6F564E = (int (*)(int, int, int, unsigned __int16, float))get_relative_call(ff7_externals.battle_display_base_menu_6DD041, 0x382); 
 	ff7_externals.draw_string_from_buffer_sub_6F5B03 = (int (*)(int, int, byte*, byte, float))get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x127);
 	ff7_externals.menu_shop_draw_string_from_buffer = (int (*)(int, int, byte*, byte, float))get_relative_call(ff7_externals.menu_shop_loop, 0x1814);
+	ff7_externals.japanese_text_small_glyph_call_count = 0;
+	if (version == VERSION_FF7_102_US)
+	{
+		auto add_japanese_text_small_glyph_calls = [](uint32_t base, std::initializer_list<uint32_t> offsets)
+		{
+			for (uint32_t offset : offsets)
+				ff7_externals.japanese_text_small_glyph_call_addresses[ff7_externals.japanese_text_small_glyph_call_count++] = base + offset;
+		};
+
+		ff7_externals.menu_config_sub_6C3197 = get_relative_call(ff7_externals.config_menu_sub, 0x352);
+		ff7_externals.menu_sub_6C7B54 = get_relative_call(ff7_externals.menu_battle_end_sub_6C9543, 0x77);
+		ff7_externals.menu_sub_6C85F1 = get_relative_call(ff7_externals.menu_sub_6C7B54, 0x3BA);
+		ff7_externals.menu_sub_6CA346 = ff7_externals.menu_subs_call_table[0];
+		ff7_externals.menu_sub_6CDE72 = get_relative_call(ff7_externals.config_menu_sub, 0xE8);
+		ff7_externals.menu_sub_6DE3DB = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x46);
+		ff7_externals.menu_sub_6E0D28 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1A6);
+		ff7_externals.menu_sub_6E1308 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1AD);
+		ff7_externals.menu_sub_6E384F = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1C9);
+		ff7_externals.menu_sub_700090 = get_relative_call(ff7_externals.phs_menu_sub, 0x7D2);
+		ff7_externals.menu_sub_701B4C = get_relative_call(ff7_externals.phs_menu_sub, 0x7DE);
+		ff7_externals.menu_sub_703176 = get_relative_call(ff7_externals.menu_subs_call_table[7], 0x3FC);
+		ff7_externals.menu_sub_703DF1 = get_relative_call(ff7_externals.status_menu_sub, 0x9F);
+		ff7_externals.menu_sub_704612 = get_relative_call(ff7_externals.status_menu_sub, 0x76);
+		ff7_externals.menu_sub_704D34 = get_relative_call(ff7_externals.status_menu_sub, 0x82);
+		ff7_externals.menu_sub_7059FB = get_relative_call(ff7_externals.status_menu_sub, 0x64);
+		ff7_externals.menu_sub_707891 = get_relative_call(ff7_externals.menu_sub_705D16, 0x5C4);
+		ff7_externals.menu_sub_70CF0B = ff7_externals.menu_subs_call_table[3];
+		ff7_externals.menu_sub_709FD8 = get_relative_call(ff7_externals.menu_sub_70CF0B, 0xB9);
+		ff7_externals.menu_sub_70CAF0 = get_relative_call(ff7_externals.menu_sub_70CF0B, 0xCA);
+		ff7_externals.menu_sub_7086BE = get_relative_call(ff7_externals.menu_sub_70CAF0, 0x11C);
+		ff7_externals.menu_sub_70B032 = get_relative_call(ff7_externals.menu_sub_70CAF0, 0xFC);
+		ff7_externals.menu_sub_70B092 = get_relative_call(ff7_externals.menu_sub_70B032, 0x56);
+		ff7_externals.menu_sub_70BA7E = get_relative_call(ff7_externals.menu_sub_70B092, 0x788);
+		ff7_externals.menu_sub_70ECF4 = get_relative_call(ff7_externals.menu_sub_70CF0B, 0x30A);
+		ff7_externals.menu_sub_710DFA = ff7_externals.menu_subs_call_table[2];
+		ff7_externals.menu_sub_715105 = ff7_externals.menu_subs_call_table[1];
+		ff7_externals.menu_sub_719E90 = get_relative_call(ff7_externals.menu_shop_loop, 0x1049);
+		ff7_externals.menu_sub_71E415 = get_relative_call(ff7_externals.menu_shop_loop, 0x399);
+		ff7_externals.menu_sub_71EE01 = get_relative_call(ff7_externals.menu_sub_71E415, 0x788);
+		ff7_externals.menu_sub_720775 = ff7_externals.menu_status_draw_sub;
+
+#define ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(base, ...) \
+		add_japanese_text_small_glyph_calls((base), { __VA_ARGS__ })
+
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_config_sub_6C3197, 0x31, 0x76, 0x9D, 0xD6, 0x123, 0x171, 0x1C2, 0x22E, 0x269, 0x2CF, 0x2F4, 0x41D, 0x447);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_draw_party_member_stats, 0x3E1, 0x41A);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6C7B54, 0x7B6);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6C85F1, 0x1D);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6CA346, 0x783, 0x7CB, 0xA94, 0xAB8);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6CDE72, 0xC6, 0x202);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.display_battle_menu_6D797C, 0x115, 0x195);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6DE3DB, 0x2AF, 0x2F6, 0x35E);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6E0D28, 0x37, 0x55, 0x73);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6E1308, 0x565);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6E384F, 0xB3);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_700090, 0x102, 0x124, 0x149);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_701B4C, 0x1C0);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_703176, 0x48, 0x1A7, 0x1C2);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_703DF1, 0x3D, 0x59, 0x78, 0x9A, 0xBB, 0x270, 0x28F, 0x2B4);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_704612, 0x110, 0x132, 0x157);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_704D34, 0x54, 0x1EB);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.draw_status_limit_level_stats, 0x22F, 0x24A);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_7059FB, 0xE8);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_705D16, 0x5AB);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_707891, 0x56);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_7086BE, 0xF8);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_709FD8, 0x4ED);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_70B092, 0x1FB, 0x216, 0x234, 0x252, 0x26D, 0x28B, 0x343, 0x385, 0x415, 0x462, 0x4E1, 0x561, 0x5E1, 0x65D, 0x6D7, 0x75B, 0x780);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_70BA7E, 0x116);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_70CF0B, 0x16E, 0x189, 0x1A4, 0x1CB);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_70ECF4, 0x50E, 0x530);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_710DFA, 0x145C, 0x15B0, 0x1B02, 0x214C);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_715105, 0x3CF, 0x545);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_719E90, 0x2FB, 0x31D);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_shop_loop, 0x690, 0x6B1, 0x6D5, 0x701, 0x722, 0x742, 0x8C3, 0x8F0, 0xBEE, 0xC1D, 0xC4F, 0x1190, 0x11B0, 0x11D0, 0x11F0, 0x1210, 0x1230);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_71E415, 0x1FB, 0x216, 0x234, 0x252, 0x26D, 0x28B, 0x343, 0x385, 0x415, 0x462, 0x4E1, 0x561, 0x5E1, 0x65D, 0x6D7, 0x75B, 0x780);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_71EE01, 0x116);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_720775, 0x1A8, 0x1EC, 0x20E);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_7212FB, 0x50A, 0x53D, 0x13A);
+		// Save/load slot list ("save1".. "save10"): draws via draw_string_from_buffer_sub_6F5B03,
+		// which is otherwise replaced whole-function with the large-glyph wrapper below.
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6FEDB0, 0x1A3);
+
+#undef ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS
+
+		ff7_externals.japanese_text_large_glyph_char_call_6DD3C3 = ff7_externals.battle_display_base_menu_6DD041 + 0x382;
+		ff7_externals.japanese_text_large_glyph_char_call_7193DE = ff7_externals.menu_sub_718DBE + 0x620;
+	}
 	ff7_externals.menu_loop_sub_6CC623 = get_absolute_value(ff7_externals.engine_loop_main_loop_sub_4090E6, 0x62E);
 	ff7_externals.menu_draw_everything_6CC9D3 = (void (*)())get_relative_call(ff7_externals.menu_loop_sub_6CC623, 0x117);
 	

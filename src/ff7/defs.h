@@ -127,6 +127,7 @@ __int16 field_submit_draw_text_640x480_6E706D_jp(__int16 character_x, __int16 ch
 void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp();
 //int common_submit_draw_char_from_buffer_6F564E(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value);
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value);
+int common_submit_draw_char_from_buffer_large_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value);
 int common_submit_draw_text_from_buffer_jp(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value);
 int common_submit_draw_text_from_buffer_large_jp(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value);
 void menu_draw_everything_6CC9D3_jp();
