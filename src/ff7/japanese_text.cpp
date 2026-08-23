@@ -1097,6 +1097,10 @@ static int jp_submit_draw_text_from_buffer(int16_t x, int16_t y, byte* buffer, b
     return x;
   }
 
+  struct game_mode* mode = getmode_cached();
+  if (mode->driver_mode == MODE_MENU && buffer == ff7_externals.menu_time_label)
+    x += 4;
+
   for (int i = 0; i < 1024 && buffer[i] != 0xFF; ++i)
   {
     uint16_t letter = buffer[i];

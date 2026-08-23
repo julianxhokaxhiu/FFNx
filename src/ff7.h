@@ -2983,8 +2983,10 @@ struct ff7_externals
 	BYTE* menu_tutorial_window_state;
 	DWORD* menu_tutorial_window_text_ptr;
 	uint32_t status_menu_sub;
+	uint32_t menu_status_draw_sub;
 	uint32_t draw_status_limit_level_stats;
 	uint32_t timer_menu_sub;
+	byte* menu_time_label;
 	DWORD *millisecond_counter;
 	char *(*get_kernel_text)(uint32_t, uint32_t, uint32_t);
 	uint32_t sub_5CF282;
