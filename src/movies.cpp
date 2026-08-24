@@ -210,7 +210,7 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 		_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
 		bool camdata_read = false;
 
-		if (remastered_edition)
+		if (ff8_remastered_edition)
 		{
 			Zzz::File *f = g_FF8ZzzArchiveOther.openFile(camName);
 
@@ -293,7 +293,7 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 	ffmpeg_release_movie_objects();
 
 	if (!fileExists(newFmvName)) {
-		if (remastered_edition) {
+		if (ff8_remastered_edition) {
 			// Force 'avi' extension
 			_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.avi", disc, movie);
 			void *opaque = ff8_zzz_open(fmvName);

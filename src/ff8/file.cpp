@@ -178,7 +178,7 @@ int ff8_fs_archive_search_filename2(const char *fullpath, ff8_file_fi_infos *fi_
 
 	int ret = ff8_externals.ff8_fs_archive_search_filename2(fullpath, fi_infos_for_the_path, file_container);
 
-	if (ret != 1 && file_container != nullptr && !remastered_edition)
+	if (ret != 1 && file_container != nullptr && !ff8_remastered_edition)
 	{
 		// Lookup without the language in the path
 		size_t prefix_size = get_fl_prefix_size();
@@ -199,7 +199,7 @@ int ff8_fs_archive_search_filename2(const char *fullpath, ff8_file_fi_infos *fi_
 			}
 		}
 	}
-	else if (ret != 1 && remastered_edition)
+	else if (ret != 1 && ff8_remastered_edition)
 	{
 		int fullpath_len = strlen(fullpath);
 		if (fullpath_len > 4) {
@@ -362,7 +362,7 @@ int ff8_open(const char *fileName, int oflag, ...)
 
 	char _filename[MAX_PATH]{ 0 };
 
-	if (remastered_edition)
+	if (ff8_remastered_edition)
 	{
 		bool isZzzFile = false;
 		bool is_redirected = ff8_steam_redirection(fileName, _filename, &isZzzFile);
@@ -395,7 +395,7 @@ int ff8_read(int fd, void *buffer, unsigned int bufferSize)
 {
 	if (trace_all || trace_files) ffnx_info("%s: fd=%X bufferSize=%d\n", __func__, fd, bufferSize);
 
-	if (remastered_edition && openedZzzFiles.contains(fd))
+	if (ff8_remastered_edition && openedZzzFiles.contains(fd))
 	{
 		return openedZzzFiles.at(fd)->read(buffer, bufferSize);
 	}
@@ -419,7 +419,7 @@ int ff8_write(int fd, void *buffer, unsigned int bufferSize)
 {
 	if (trace_all || trace_files) ffnx_info("%s: fd=%X bufferSize=%d\n", __func__, fd, bufferSize);
 
-	if (remastered_edition && openedZzzFiles.contains(fd))
+	if (ff8_remastered_edition && openedZzzFiles.contains(fd))
 	{
 		ffnx_error("%s: Trying to write in a ZZZ archive is forbidden\n");
 
@@ -445,7 +445,7 @@ __int32 ff8_lseek(int fd, __int32 offset, int whence)
 {
 	if (trace_all || trace_files) ffnx_info("%s: fd=%X, offset=%d, whence=%d\n", __func__, fd, offset, whence);
 
-	if (remastered_edition && openedZzzFiles.contains(fd)) {
+	if (ff8_remastered_edition && openedZzzFiles.contains(fd)) {
 		Zzz::File *file = openedZzzFiles.at(fd);
 		uint32_t pos = offset;
 		bx::Whence::Enum zzzWhence = bx::Whence::Begin;
@@ -483,7 +483,7 @@ __int32 ff8_filelength(int fd)
 {
 	if (trace_all) ffnx_info("%s: fd=%X\n", __func__, fd);
 
-	if (remastered_edition && openedZzzFiles.contains(fd)) {
+	if (ff8_remastered_edition && openedZzzFiles.contains(fd)) {
 		return openedZzzFiles.at(fd)->size();
 	}
 
@@ -517,7 +517,7 @@ int ff8_close(int fd)
 {
 	if (trace_all || trace_files) ffnx_info("%s: fd=%X\n", __func__, fd);
 
-	if (remastered_edition && openedZzzFiles.contains(fd)) {
+	if (ff8_remastered_edition && openedZzzFiles.contains(fd)) {
 		Zzz::closeFile(openedZzzFiles.at(fd));
 		openedZzzFiles.erase(fd);
 
@@ -559,7 +559,7 @@ FILE *ff8_fopen(const char *fileName, const char *mode)
 
 	char _filename[MAX_PATH]{ 0 };
 
-	if (remastered_edition)
+	if (ff8_remastered_edition)
 	{
 		bool is_redirected = ff8_steam_redirection(fileName, _filename);
 		return ff8_externals._fsopen(is_redirected ? _filename : fileName, mode, shflag);
@@ -654,7 +654,7 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 				file->fd = -1;
 				char _filename[MAX_PATH]{ 0 };
 
-				if (remastered_edition)
+				if (ff8_remastered_edition)
 				{
 					bool isZzzFile = false;
 					bool is_redirected = ff8_steam_redirection(fullpath, _filename, &isZzzFile);
@@ -775,7 +775,7 @@ bool ff8_steam_redirection(const char *lpFileName, char *newPath, bool *isZzzFil
 		// Search for the last '\' character and get a pointer to the next char
 		const char* pos = strrchr(lpFileName, 92) + 1;
 
-		if (remastered_edition && (strstr(lpFileName, "field") != NULL || strstr(lpFileName, "magic") != NULL || strstr(lpFileName, "world") != NULL))
+		if (ff8_remastered_edition && (strstr(lpFileName, "field") != NULL || strstr(lpFileName, "magic") != NULL || strstr(lpFileName, "world") != NULL))
 		{
 			PathAppendA(newPath, R"(data)");
 		}

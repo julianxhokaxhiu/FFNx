@@ -298,7 +298,7 @@ bool play_music(const char* music_name, uint32_t music_id, int channel, NxAudioE
 			playing = nxAudioEngine.playMusic(wav_fullpath, music_id, channel, options);
 		}
 
-		if (!playing && remastered_edition)
+		if (!playing && ff8_remastered_edition)
 		{
 			char file_name[MAX_PATH] = {};
 

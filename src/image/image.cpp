@@ -55,7 +55,7 @@ bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, b
 {
     bimg::ImageContainer *ret = nullptr;
 
-    if (remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
+    if (ff8_remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
         Zzz::File *zzzFile = g_FF8ZzzArchiveMain.openFile(filename + 6);
 
         if (zzzFile == nullptr) {

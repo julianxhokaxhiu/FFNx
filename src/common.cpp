@@ -135,7 +135,7 @@ uint32_t ff7_steam_rerelease_edition = false;
 uint32_t steam_stock_launcher = false;
 
 // global FF8 flag, check if is remastered edition
-uint32_t remastered_edition = false;
+uint32_t ff8_remastered_edition = false;
 
 // globale FF7/FF8 flag, check if it is GOG edition
 uint32_t gog_edition = false;
@@ -827,9 +827,9 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	// Init Steam API
 	if(enable_steam_achievements)
 	{
-		int app_id = ff8 ? (remastered_edition ? FF8_REMASTERED_APPID : FF8_APPID) : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID);
+		int app_id = ff8 ? (ff8_remastered_edition ? FF8_REMASTERED_APPID : FF8_APPID) : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID);
 		// generate automatically steam_appid.txt
-		if(!steam_edition && !remastered_edition)
+		if(!steam_edition && !ff8_remastered_edition)
 		{
 			std::ofstream steam_appid_file("steam_appid.txt");
 			steam_appid_file << app_id;
@@ -893,8 +893,8 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 		}
 		else
 		{
-			window_size_x = remastered_edition ? 1024 : game_width;
-			window_size_y = remastered_edition ? 768 : game_height;
+			window_size_x = ff8_remastered_edition ? 1024 : game_width;
+			window_size_y = ff8_remastered_edition ? 768 : game_height;
 		}
 	}
 	else
@@ -1048,7 +1048,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 					vram_init();
 					if (ff8_fix_uv_coords_precision) uv_patch_init();
 					vibration_init();
-					if (remastered_edition) {
+					if (ff8_remastered_edition) {
 						ff8_remaster_init();
 					}
 					if (widescreen_enabled)
@@ -1701,7 +1701,7 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			}
 
 			// Retry inside zzz archive for the remastered
-			if (remastered_edition && texture == 0)
+			if (ff8_remastered_edition && texture == 0)
 			{
 				char filename[MAX_PATH] = {};
 				if (VREF(tex_header, palettes) > 1
@@ -2947,7 +2947,7 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 		CoTaskMemFree(outPath);
 
 		if (ff8) {
-			if (remastered_edition)
+			if (ff8_remastered_edition)
 			{
 				PathAppendA(buffer, R"(My Games\FINAL FANTASY VIII Remastered)");
 				PathAppendA(buffer, gog_edition ? R"(GOG)" : R"(Steam)");
@@ -2965,7 +2965,7 @@ void get_userdata_path(PCHAR buffer, size_t bufSize, bool isSavegameFile)
 				// Directly use the given userdata
 				PathAppendA(buffer, steam_game_userdata.c_str());
 			}
-			else if (remastered_edition)
+			else if (ff8_remastered_edition)
 			{
 				// Find first directory with only numbers
 				for (const auto &dirEntry: std::filesystem::directory_iterator(buffer))
@@ -3307,7 +3307,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			{
 				ffnx_trace("Detected Remastered edition.\n");
 
-				remastered_edition = true;
+				ff8_remastered_edition = true;
 
 				if(fileExists("goggame-1086370078.info"))
 				{
@@ -3316,9 +3316,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 					ffnx_trace("Detected GOG edition.\n");
 				}
 				else
-				{
 					ffnx_trace("Detected Steam edition.\n");
-				}
 
 				use_external_music = true;
 				if (external_music_path.empty()) external_music_path = "data/music/dmusic/ogg";

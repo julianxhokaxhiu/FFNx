@@ -205,12 +205,12 @@ struct ff8_tex_header *ff8_load_tex_file(struct ff8_file_context* file_context, 
 		if (!is_remastered_hd_textures_disabled("menu") && (ff8_high_res_font == -1 || ff8_high_res_font == 2 || (!strstr(suffix, "hires\\sysevn") && !strstr(suffix, "hires\\sysodd") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "font8")))) {
 			// Non-paletted + lang path
 			_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s_%s.png", suffix, langPath);
-			if (remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
+			if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
 				_snprintf(ret->file.pc_name + 512, 511, "%s_%s", suffix, langPath);
 			} else {
 				// Paletted + lang path
 				_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s\\%s\\0.png", suffix, langPath);
-				if (remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
+				if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
 					_snprintf(ret->file.pc_name + 512, 511, "%s\\%s", suffix, langPath);
 				} else {
 					strncpy(ret->file.pc_name + 512, suffix, strlen(suffix));
@@ -1647,7 +1647,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(ff8_externals.moriya_filesystem_open + 0x83C, ff8_fs_archive_search_filename_sub_archive);
 	replace_function(ff8_externals._open, ff8_open);
 	replace_function(ff8_externals.fopen, ff8_fopen);
-	if (remastered_edition) {
+	if (ff8_remastered_edition) {
 		replace_function(uint32_t(ff8_externals._lseek), ff8_lseek);
 		replace_function(uint32_t(ff8_externals._read), ff8_read);
 		replace_function(uint32_t(ff8_externals._write), ff8_write);
@@ -1861,7 +1861,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(ff8_externals.load_credits_image + 0x164, credits_controller_music_play);
 	replace_call(ff8_externals.load_credits_image + 0x305, credits_controller_input_call);
 
-	if (!steam_edition && !remastered_edition) {
+	if (!steam_edition && !ff8_remastered_edition) {
 		// Look again with the DataDrive specified in the register
 		replace_call(ff8_externals.get_disk_number + 0x6E, ff8_retry_configured_drive);
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);

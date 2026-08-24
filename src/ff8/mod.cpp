@@ -52,7 +52,7 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 		_image = loadPng(&defaultAllocator, filename, targetFormat);
 
 		// Remastered fix (Convert 768x288 to 768x384)
-		if (remastered_edition && _image != nullptr && _image->m_width == 768 && _image->m_height == 288 && _image->m_width == originalTexturePixelWidth * 3 * 2 && _image->m_height < originalTextureHeight * 3) {
+		if (ff8_remastered_edition && _image != nullptr && _image->m_width == 768 && _image->m_height == 288 && _image->m_width == originalTexturePixelWidth * 3 * 2 && _image->m_height < originalTextureHeight * 3) {
 			bimg::ImageContainer *resizedImage = bimg::imageAlloc(&defaultAllocator, targetFormat, _image->m_width, 384, _image->m_depth, _image->m_numLayers, false, false);
 
 			if (resizedImage == nullptr) {
@@ -252,7 +252,7 @@ bool ModdedTexture::findExternalTextureRemastered(const char *name, char *filena
 	// Retry inside ZZZ archive
 	_snprintf(filename, MAX_PATH, "textures\\%s.png", name);
 
-	if (remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
+	if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
 	{
 		_snprintf(filename, MAX_PATH, "zzz://textures\\%s.png", name);
 
