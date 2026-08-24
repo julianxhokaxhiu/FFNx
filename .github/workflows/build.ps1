@@ -91,12 +91,10 @@ Copy-Item -R "$releasePath\bin\*" .dist\pkg\FF8_2000
 Copy-Item -R "$releasePath\bin\*" .dist\pkg\FF8_Remastered
 Copy-Item -R "$releasePath\bin\*" .dist\pkg\FFNx_Steam
 Remove-Item .dist\pkg\FF7_1998\FF8.reg
-Remove-Item .dist\pkg\FF7_1998\FFNx_steam_api.dll
 Remove-Item .dist\pkg\FF7_1998\AF4DN.P
 Remove-Item .dist\pkg\FF7_1998\FFVIII_EFIGS.dll
 Remove-Item .dist\pkg\FF7_1998\FFVIII_JP.dll
 Remove-Item .dist\pkg\FF8_2000\FF7.reg
-Remove-Item .dist\pkg\FF8_2000\FFNx_steam_api.dll
 Remove-Item .dist\pkg\FF8_2000\AF4DN.P
 Remove-Item .dist\pkg\FF8_2000\FFVIII_EFIGS.dll
 Remove-Item .dist\pkg\FF8_2000\FFVIII_JP.dll
