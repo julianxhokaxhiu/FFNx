@@ -468,6 +468,145 @@ bgra_byte get_character_color(int n_shapes)
   return color;
 }
 
+static int jp_physical_button_for_action(int action)
+{
+  if (ff7_externals.savemap && (ff7_externals.savemap->config_bitmap_1 & 0x04))
+  {
+    for (int button = 0; button < 16; ++button)
+      if ((byte)ff7_externals.savemap->controller_mapping[button] == action)
+        return button;
+  }
+
+  return action < 16 ? action : -1;
+}
+
+struct jp_prompt_sprite
+{
+  ff7_graphics_object* graphics_object;
+  int u;
+  int v;
+};
+
+static bool jp_prompt_sprite_for_button(int button, jp_prompt_sprite* sprite)
+{
+  switch (button)
+  {
+    case 0:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,  32, 160 }; break; // L2
+    case 1:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 160 }; break; // R2
+    case 2:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,   0, 160 }; break; // L1
+    case 3:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 160 }; break; // R1
+    case 4:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,   0, 128 }; break; // Triangle
+    case 5:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 128 }; break; // Circle
+    case 6:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,  32, 128 }; break; // Cross
+    case 7:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 128 }; break; // Square
+    case 8:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 192 }; break; // Select
+    case 11: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 192 }; break; // Start
+    case 12: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 160,  64 }; break; // Up
+    case 13: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 160,  96 }; break; // Right
+    case 14: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192,  64 }; break; // Down
+    case 15: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192,  96 }; break; // Left
+    default: return false;
+  }
+
+  return true;
+}
+
+static bool jp_submit_field_quad(ff7_graphics_object* graphics_object, float x, float y, float z,
+  float width, float height, float u, float v, float u_width, float v_height, bgra_byte color, byte shape)
+{
+  if (!graphics_object || !common_externals.draw_graphics_object(1, (struct graphics_object*)graphics_object))
+    return false;
+
+  graphics_vertex* vertices = graphics_object->vertex_transform;
+  vertices[0].position = { x, y, z, 1.0f };
+  vertices[0].color = color;
+  vertices[0].alpha_mask = -16777216;
+  vertices[0].u = u;
+  vertices[0].v = v;
+  vertices[1] = vertices[0];
+  vertices[1].position.y = y + height;
+  vertices[1].v = v + v_height;
+  vertices[2] = vertices[0];
+  vertices[2].position.x = x + width;
+  vertices[2].u = u + u_width;
+  vertices[3] = vertices[2];
+  vertices[3].position.y = y + height;
+  vertices[3].v = v + v_height;
+  *(byte*)graphics_object->curr_total_n_shape = shape;
+  graphics_object->field_7C = shape;
+  return true;
+}
+
+static int jp_draw_field_prompt_action(int action, int x, int y, float z, bgra_byte color)
+{
+  jp_prompt_sprite sprite;
+  if (!jp_prompt_sprite_for_button(jp_physical_button_for_action(action), &sprite))
+    return x;
+
+  jp_submit_field_quad(sprite.graphics_object, (float)x, (float)y, z, 20.0f, 20.0f,
+    sprite.u / 256.0f, sprite.v / 256.0f, 32.0f / 256.0f, 32.0f / 256.0f, color, 7);
+  return x + 20;
+}
+
+static int jp_draw_field_letter(uint16_t letter, int x, int y, float z, bgra_byte color, int color_index)
+{
+  int page = letter > 0xFF ? (letter >> 8) - 0xF9 : 0;
+  byte character = (byte)letter;
+  ff7_graphics_object* graphics_objects[] = {
+    ff7_externals.menu_jafont_1_graphics_object,
+    ff7_externals.menu_jafont_2_graphics_object,
+    ff7_externals.menu_jafont_3_graphics_object,
+    ff7_externals.menu_jafont_4_graphics_object,
+    ff7_externals.menu_jafont_5_graphics_object,
+    ff7_externals.menu_jafont_6_graphics_object,
+  };
+  int char_width = charWidthData[page][character] & 0x1F;
+  int spacing = jp_spacing_metric(letter, char_width);
+  float width = spacing * 0.3125f;
+  jp_submit_field_quad(graphics_objects[page], (float)x, (float)y, z, width, 20.0f,
+    32.0f * (character % 16) / 512.0f, 32.0f * (character / 16) / 512.0f,
+    spacing * 0.5f / 512.0f, 32.0f / 512.0f, color, (byte)(2 * color_index));
+  return x + (int)width;
+}
+
+static int jp_draw_field_fd_control(byte control, int x, int y, float z, bgra_byte color, int color_index)
+{
+  if (control <= 0xFD)
+    return jp_draw_field_prompt_action(control & 0x0F, x, y, z, color);
+
+  if (control == 0xFE)
+  {
+    x = jp_draw_field_prompt_action(4, x, y, z, color);
+    x = jp_draw_field_letter(0xFAE7, x, y, z, color, color_index);
+    return jp_draw_field_prompt_action(5, x, y, z, color);
+  }
+
+  x = jp_draw_field_letter(0xFA7D, x, y, z, color, color_index);
+  return jp_draw_field_letter(0xFD33, x, y, z, color, color_index);
+}
+
+static int jp_measure_field_letter(uint16_t letter, bool use_fixed_spacing)
+{
+  if (use_fixed_spacing)
+    return 10;
+
+  int page = letter > 0xFF ? (letter >> 8) - 0xF9 : 0;
+  byte character = (byte)letter;
+  int char_width = charWidthData[page][character] & 0x1F;
+  int left_padding = charWidthData[page][character] >> 5;
+  return jp_center_advance(letter, left_padding, char_width);
+}
+
+static int jp_measure_field_fd_control(byte control, bool use_fixed_spacing)
+{
+  if (control <= 0xFD)
+    return 10;
+  if (control == 0xFE)
+    return 20 + jp_measure_field_letter(0xFAE7, use_fixed_spacing);
+  return jp_measure_field_letter(0xFA7D, use_fixed_spacing)
+    + jp_measure_field_letter(0xFD33, use_fixed_spacing);
+}
+
 /////////////////////////////////////////////////////////////////////
 int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t character_y, int16_t text_box_right_position, byte *buffer_text, float z_value)
 {
@@ -537,6 +676,25 @@ int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t ch
     }
     else
     {
+      if (ff7_japanese_edition && buffer_text[0] == 0xFD && buffer_text[1] >= 0xF0)
+      {
+        int color_index = *ff7_externals.word_91F028;
+        if (*ff7_externals.word_DC3CC4)
+          color_index = ((unsigned __int8)((*ff7_externals.word_DC3CC8) >> 2) - character_count) & 7;
+        else if (*ff7_externals.word_DC3CC0)
+          color_index = (((*ff7_externals.word_DC3CC8) >> 2) & 1) ? color_index : 0;
+
+        character_x = jp_draw_field_fd_control(buffer_text[1], character_x, character_y, z_value,
+          get_character_color(color_index), color_index);
+        buffer_text += 2;
+        *ff7_externals.field_text_box_curr_n_characters_DC3CB0 += 2;
+        --(*ff7_externals.field_remaining_character_length_DC3CCC);
+        *ff7_externals.field_do_draw_character_DC3CEC = 1;
+        *ff7_externals.field_do_draw_text_boxes_DC3CE8 = 1;
+        ++character_count;
+        continue;
+      }
+
       heartAtD9 = false;
       isPrompt = false;
       switch ( *buffer_text )
@@ -2531,6 +2689,14 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         possibleOpcode = false;
         continue;
       case 0xFDu:
+        if (ff7_japanese_edition && next_character >= 0xF0)
+        {
+          W += jp_measure_field_fd_control(next_character, useFixedSpacing);
+          ++i;
+          possibleOpcode = true;
+          isKanjiDetected = false;
+          continue;
+        }
         charWidth = charWidthData[4][next_character] & 0x1F;
         leftPadding = charWidthData[4][next_character] >> 5;
         letter = (uint16_t)(0xFD00 | next_character);
