@@ -18,6 +18,7 @@
 #include "../log.h"
 #include "../ff7.h"
 #include "../gl.h"
+#include "../joystick.h"
 #include "../patch.h"
 #include "../redirect.h"
 #include "../renderer.h"
@@ -36,12 +37,29 @@ static uint32_t jp_prompt_texture_width = 0;
 static uint32_t jp_prompt_texture_height = 0;
 static constexpr int jp_prompt_size = 40;
 
-static bool jp_use_xbox_prompt_atlas()
+enum class jp_prompt_atlas
+{
+  keyboard,
+  playstation,
+  xbox,
+};
+
+static jp_prompt_atlas jp_current_prompt_atlas = jp_prompt_atlas::playstation;
+
+static jp_prompt_atlas jp_select_prompt_atlas()
 {
   if (use_sdl_gamepad)
-    return sdlgamepad.CheckConnection() && sdlgamepad.IsXbox();
+  {
+    if (!sdlgamepad.CheckConnection())
+      return jp_prompt_atlas::keyboard;
+    return sdlgamepad.IsXbox() ? jp_prompt_atlas::xbox : jp_prompt_atlas::playstation;
+  }
 
-  return xinput_connected || gamepad.CheckConnection();
+  if (xinput_connected || gamepad.CheckConnection())
+    return jp_prompt_atlas::xbox;
+  if (joystick.CheckConnection())
+    return jp_prompt_atlas::playstation;
+  return jp_prompt_atlas::keyboard;
 }
 
 static void jp_unload_prompt_graphics_object()
@@ -81,11 +99,16 @@ static void jp_unload_prompt_graphics_object()
 static void jp_load_prompt_graphics_object(struc_3* graphics_context, char* template_path, ff7_game_obj* game_object)
 {
   char path[BASEDIR_LENGTH + 64];
-  bool use_xbox_atlas = jp_use_xbox_prompt_atlas();
-  _snprintf(path, sizeof(path), R"(%s\data\png\%s)", basedir,
-    use_xbox_atlas ? "buttons.png" : "buttons_ps4.png");
-  if (use_xbox_atlas && !fileExists(path))
+  jp_current_prompt_atlas = jp_select_prompt_atlas();
+  const char* atlas_name = jp_current_prompt_atlas == jp_prompt_atlas::keyboard
+    ? "buttons_pc_en.png"
+    : jp_current_prompt_atlas == jp_prompt_atlas::xbox ? "buttons.png" : "buttons_ps4.png";
+  _snprintf(path, sizeof(path), R"(%s\data\png\%s)", basedir, atlas_name);
+  if (jp_current_prompt_atlas != jp_prompt_atlas::playstation && !fileExists(path))
+  {
+    jp_current_prompt_atlas = jp_prompt_atlas::playstation;
     _snprintf(path, sizeof(path), R"(%s\data\png\buttons_ps4.png)", basedir);
+  }
   if (!fileExists(path))
     return;
 
@@ -97,7 +120,10 @@ static void jp_load_prompt_graphics_object(struc_3* graphics_context, char* temp
 
   jp_prompt_texture = newRenderer.createTextureLibPng(
     path, &jp_prompt_texture_width, &jp_prompt_texture_height, true);
-  if (!jp_prompt_texture || jp_prompt_texture_width != 512 || jp_prompt_texture_height != 512)
+  uint32_t expected_width = jp_current_prompt_atlas == jp_prompt_atlas::keyboard ? 1000 : 512;
+  uint32_t expected_height = jp_current_prompt_atlas == jp_prompt_atlas::keyboard ? 1200 : 512;
+  if (!jp_prompt_texture || jp_prompt_texture_width != expected_width
+      || jp_prompt_texture_height != expected_height)
   {
     jp_unload_prompt_graphics_object();
     ffnx_warning("Japanese button prompt atlas must be 512x512: %s\n", path);
@@ -613,10 +639,134 @@ struct jp_prompt_sprite
   int texture_height;
 };
 
+static int jp_keyboard_atlas_cell(byte key)
+{
+  switch (key)
+  {
+    case DIK_SPACE: return 1;
+    case DIK_APOSTROPHE: return 2;
+    case DIK_COMMA: return 3;
+    case DIK_MINUS: return 4;
+    case DIK_PERIOD: return 5;
+    case DIK_SLASH: return 6;
+    case DIK_0: return 7;
+    case DIK_1: return 8;
+    case DIK_2: return 9;
+    case DIK_3: return 10;
+    case DIK_4: return 11;
+    case DIK_5: return 12;
+    case DIK_6: return 13;
+    case DIK_7: return 14;
+    case DIK_8: return 15;
+    case DIK_9: return 16;
+    case DIK_SEMICOLON: return 17;
+    case DIK_EQUALS: return 18;
+    case DIK_A: return 19;
+    case DIK_B: return 20;
+    case DIK_C: return 21;
+    case DIK_D: return 22;
+    case DIK_E: return 23;
+    case DIK_F: return 24;
+    case DIK_G: return 25;
+    case DIK_H: return 26;
+    case DIK_I: return 27;
+    case DIK_J: return 28;
+    case DIK_K: return 29;
+    case DIK_L: return 30;
+    case DIK_M: return 31;
+    case DIK_N: return 32;
+    case DIK_O: return 33;
+    case DIK_P: return 34;
+    case DIK_Q: return 35;
+    case DIK_R: return 36;
+    case DIK_S: return 37;
+    case DIK_T: return 38;
+    case DIK_U: return 39;
+    case DIK_V: return 40;
+    case DIK_W: return 41;
+    case DIK_X: return 42;
+    case DIK_Y: return 43;
+    case DIK_Z: return 44;
+    case DIK_LBRACKET: return 45;
+    case DIK_RBRACKET: return 46;
+    case DIK_BACKSLASH: return 47;
+    case DIK_ESCAPE: return 48;
+    case DIK_RETURN: return 49;
+    case DIK_TAB: return 50;
+    case DIK_BACK: return 51;
+    case DIK_INSERT: return 52;
+    case DIK_DELETE: return 53;
+    case DIK_RIGHT: return 54;
+    case DIK_LEFT: return 55;
+    case DIK_DOWN: return 56;
+    case DIK_UP: return 57;
+    case DIK_PRIOR: return 58;
+    case DIK_NEXT: return 59;
+    case DIK_HOME: return 60;
+    case DIK_END: return 61;
+    case DIK_CAPITAL: return 62;
+    case DIK_SCROLL: return 63;
+    case DIK_NUMLOCK: return 64;
+    case DIK_SYSRQ: return 65;
+    case DIK_PAUSE: return 66;
+    case DIK_F1: return 67;
+    case DIK_F2: return 68;
+    case DIK_F3: return 69;
+    case DIK_F4: return 70;
+    case DIK_F5: return 71;
+    case DIK_F6: return 72;
+    case DIK_F7: return 73;
+    case DIK_F8: return 74;
+    case DIK_F9: return 75;
+    case DIK_F10: return 76;
+    case DIK_F11: return 77;
+    case DIK_F12: return 78;
+    case DIK_NUMPAD0: return 79;
+    case DIK_NUMPAD1: return 80;
+    case DIK_NUMPAD2: return 81;
+    case DIK_NUMPAD3: return 82;
+    case DIK_NUMPAD4: return 83;
+    case DIK_NUMPAD5: return 84;
+    case DIK_NUMPAD6: return 85;
+    case DIK_NUMPAD7: return 86;
+    case DIK_NUMPAD8: return 87;
+    case DIK_NUMPAD9: return 88;
+    case DIK_DECIMAL: return 89;
+    case DIK_DIVIDE: return 90;
+    case DIK_MULTIPLY: return 91;
+    case DIK_SUBTRACT: return 92;
+    case DIK_ADD: return 93;
+    case DIK_NUMPADENTER: return 94;
+    case DIK_LSHIFT: return 95;
+    case DIK_LCONTROL: return 96;
+    case DIK_LMENU: return 97;
+    case DIK_LWIN: return 98;
+    case DIK_RSHIFT: return 99;
+    case DIK_RCONTROL: return 100;
+    case DIK_RMENU: return 101;
+    case DIK_RWIN: return 102;
+    case DIK_APPS: return 103;
+    case DIK_GRAVE: return 104;
+    default: return -1;
+  }
+}
+
 static bool jp_prompt_sprite_for_button(int button, jp_prompt_sprite* sprite)
 {
   if (jp_prompt_graphics_object)
   {
+    if (jp_current_prompt_atlas == jp_prompt_atlas::keyboard)
+    {
+      if (!ff7_externals.input_mapping || button < 0 || button >= 25)
+        return false;
+      int cell = jp_keyboard_atlas_cell((byte)ff7_externals.input_mapping[button]);
+      if (cell < 0)
+        return false;
+      *sprite = { jp_prompt_graphics_object, cell % 10 * 100, cell / 10 * 100, 100, 100,
+        (int)jp_prompt_texture_width, (int)jp_prompt_texture_height };
+      return true;
+    }
+
     int column;
     int row;
     switch (button)
@@ -722,7 +872,11 @@ static int jp_draw_field_prompt_action(int action, int x, int y, float z)
   if (action < 0 || action >= sizeof(action_map))
     return x;
 
-  return jp_draw_field_prompt_button(jp_physical_button_for_action(action_map[action]), x, y, z);
+  int mapped_action = action_map[action];
+  int button = jp_current_prompt_atlas == jp_prompt_atlas::keyboard
+    ? mapped_action
+    : jp_physical_button_for_action(mapped_action);
+  return jp_draw_field_prompt_button(button, x, y, z);
 }
 
 static int jp_draw_field_letter(uint16_t letter, int x, int y, float z, bgra_byte color, int color_index)

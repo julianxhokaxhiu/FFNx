@@ -3077,6 +3077,7 @@ struct ff7_externals
 	uint32_t init_stuff;
 	uint32_t init_game;
 	uint32_t sub_41A1B0;
+	uint32_t *input_mapping;
 	uint32_t init_directinput;
 	uint32_t dinput_createdevice_mouse;
 	void (*sub_69C69F)(struct matrix *, struct ff7_light *);
