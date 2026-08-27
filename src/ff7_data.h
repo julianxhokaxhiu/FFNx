@@ -440,7 +440,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.name_menu_pane_cursor_rows_DD453C = get_absolute_value(ff7_externals.menu_sub_718DBE, 0x284);
 	ff7_externals.name_menu_action_jump_table_719B61 = get_absolute_value(ff7_externals.menu_sub_718DBE, 0x29B);
 	// the `ja` that guards the menu-action dispatch jumps to the shared continuation
-	ff7_externals.name_menu_action_continue_71914C = ff7_externals.menu_sub_718DBE + 0x28F + 6 + get_absolute_value(ff7_externals.menu_sub_718DBE, 0x291);
+	ff7_externals.name_menu_action_continue_71914C = ff7_externals.menu_sub_718DBE + 0x295 + *(int32_t *)(ff7_externals.menu_sub_718DBE + 0x291);
 	// original US action targets, read from the (still unpatched) jump table
 	ff7_externals.name_menu_action_space_71905D = get_absolute_value(ff7_externals.name_menu_action_jump_table_719B61, 0 * 4);
 	ff7_externals.name_menu_action_delete_71906C = get_absolute_value(ff7_externals.name_menu_action_jump_table_719B61, 1 * 4);
