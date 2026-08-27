@@ -131,6 +131,8 @@ int common_submit_draw_char_from_buffer_large_6F564E_jp(int x, int vertex_y, int
 int common_submit_draw_text_from_buffer_jp(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value);
 int common_submit_draw_text_from_buffer_large_jp(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value);
 void menu_draw_everything_6CC9D3_jp();
+ff7_game_obj* menu_draw_with_viewport_6FA12F_jp(unsigned int x, unsigned int y, unsigned int width, unsigned int height);
+ff7_game_obj* menu_draw_640x480_6FA347_jp();
 void battle_draw_menu_everything_6CEE84_jp();
 void battle_draw_graphics_object_and_jafonts(ff7_graphics_object* graphics_object, ff7_game_obj* game_object);
 void battle_reset_graphics_object_and_jafonts(ff7_graphics_object* graphics_object);

@@ -2975,6 +2975,8 @@ struct ff7_externals
 	uint32_t *party_member_to_char_map;
 	uint32_t menu_sub_6CB56A;
 	uint32_t menu_sub_6FEDB0;
+	uint32_t menu_draw_with_viewport_6FA12F;
+	uint32_t menu_draw_640x480_6FA347;
 	void *(*menu_sub_6F5C0C)(uint32_t,uint32_t,uint8_t,uint8_t,uint32_t);
 	void *(*menu_sub_6FAC38)(uint32_t,uint32_t,uint8_t,uint8_t,uint32_t);
 	BOOL (*write_save_file)(char);
@@ -3957,7 +3959,7 @@ struct ff7_externals
 
 	int* dword_DC12DC;
 
-	void (*engine_gfx_setviewport_sub_66067A)(unsigned int, unsigned int, unsigned int, unsigned int, ff7_game_obj*);
+	ff7_game_obj* (*engine_gfx_setviewport_sub_66067A)(unsigned int, unsigned int, unsigned int, unsigned int, ff7_game_obj*);
 
 	unsigned int* menu_viewport_x_DC105C;
 	unsigned int* menu_viewport_y_DC1060;

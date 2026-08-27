@@ -301,6 +301,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.status_menu_sub = ff7_externals.menu_subs_call_table[5];
 	ff7_externals.config_menu_sub = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.menu_sub_6FEDB0 = ff7_externals.menu_subs_call_table[10];
+	ff7_externals.menu_draw_with_viewport_6FA12F = get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x2E6);
+	ff7_externals.menu_draw_640x480_6FA347 = get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x450);
 	ff7_externals.menu_status_draw_sub = get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x3B1);
 
 	ff7_externals.config_initialize = get_relative_call(main_init_loop, 0x4B0);
@@ -1681,7 +1683,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.dword_DC12DC = (int*)get_absolute_value((uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E, 0x1D5);
 
 	ff7_externals.engine_gfx_draw_graphics_object_polygon_set_field_80_sub_660E6A = (void (*)(ff7_graphics_object*, ff7_game_obj*))get_relative_call((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x42);
-	ff7_externals.engine_gfx_setviewport_sub_66067A = (void (*)(unsigned int, unsigned int, unsigned int, unsigned int, ff7_game_obj*))get_relative_call((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x381);
+	ff7_externals.engine_gfx_setviewport_sub_66067A = (ff7_game_obj* (*)(unsigned int, unsigned int, unsigned int, unsigned int, ff7_game_obj*))get_relative_call((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x381);
 
 	ff7_externals.menu_unknown3_graphics_object_DC0FFC = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x3D);
 	ff7_externals.dword_DC12EC = (int*)get_absolute_value((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x129);

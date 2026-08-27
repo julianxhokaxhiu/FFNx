@@ -400,6 +400,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	}
 	if (ff7_japanese_edition)
 	{
+		replace_function(ff7_externals.menu_draw_with_viewport_6FA12F, menu_draw_with_viewport_6FA12F_jp);
+		replace_function(ff7_externals.menu_draw_640x480_6FA347, menu_draw_640x480_6FA347_jp);
 		replace_call_function(ff7_externals.flush_battle_text_640x480_6DC1EB + 0x5A, battle_draw_graphics_object_and_jafonts);
 		replace_call_function(ff7_externals.flush_battle_text_640x480_6DC1EB + 0x22F, battle_reset_graphics_object_and_jafonts);
 
