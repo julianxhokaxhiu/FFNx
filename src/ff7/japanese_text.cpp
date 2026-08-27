@@ -15,13 +15,118 @@
 #include "../globals.h"
 #include "../log.h"
 #include "../ff7.h"
+#include "../gl.h"
 #include "../patch.h"
 #include "../redirect.h"
+#include "../renderer.h"
+#include "../utils.h"
 #include <string.h>
 
 static void multibyte_load_widths();
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value);
 static bool jp_small_glyphs = true;
+static ff7_graphics_object* jp_prompt_graphics_object = nullptr;
+static ff7_texture_set* jp_prompt_original_texture_set = nullptr;
+static ff7_texture_set* jp_prompt_polygon_original_texture_set = nullptr;
+static uint32_t jp_prompt_texture = 0;
+static uint32_t jp_prompt_texture_width = 0;
+static uint32_t jp_prompt_texture_height = 0;
+static constexpr int jp_prompt_size = 40;
+
+static void jp_unload_prompt_graphics_object()
+{
+  ff7_texture_set* private_texture_set = nullptr;
+  ff7_polygon_set* polygon_set = jp_prompt_graphics_object
+    ? (ff7_polygon_set*)jp_prompt_graphics_object->polygon_set
+    : nullptr;
+  if (jp_prompt_graphics_object && jp_prompt_graphics_object->hundred_data
+      && jp_prompt_original_texture_set)
+  {
+    private_texture_set = (ff7_texture_set*)jp_prompt_graphics_object->hundred_data->texture_set;
+    jp_prompt_graphics_object->hundred_data->texture_set = (struct texture_set*)jp_prompt_original_texture_set;
+  }
+  if (polygon_set && polygon_set->hundred_data
+      && jp_prompt_polygon_original_texture_set)
+  {
+    polygon_set->hundred_data->texture_set =
+      (struct texture_set*)jp_prompt_polygon_original_texture_set;
+  }
+  ff7_externals.sub_671082(&jp_prompt_graphics_object);
+  if (private_texture_set && private_texture_set != jp_prompt_original_texture_set)
+  {
+    delete private_texture_set->ogl.gl_set;
+    delete[] private_texture_set->texturehandle;
+    delete private_texture_set;
+  }
+  jp_prompt_original_texture_set = nullptr;
+  jp_prompt_polygon_original_texture_set = nullptr;
+  if (jp_prompt_texture)
+    newRenderer.deleteTexture(jp_prompt_texture);
+  jp_prompt_texture = 0;
+  jp_prompt_texture_width = 0;
+  jp_prompt_texture_height = 0;
+}
+
+static void jp_load_prompt_graphics_object(struc_3* graphics_context, char* template_path, ff7_game_obj* game_object)
+{
+  char path[BASEDIR_LENGTH + 64];
+  _snprintf(path, sizeof(path), R"(%s\data\png\buttons_ps4.png)", basedir);
+  if (!fileExists(path))
+    return;
+
+  jp_prompt_graphics_object = ff7_externals.engine_load_graphics_object_6710AC(
+    1, 12, graphics_context, template_path, (int)game_object->dx_sfx_something);
+  if (!jp_prompt_graphics_object || !jp_prompt_graphics_object->hundred_data
+      || !jp_prompt_graphics_object->hundred_data->texture_set)
+    return;
+
+  jp_prompt_texture = newRenderer.createTextureLibPng(
+    path, &jp_prompt_texture_width, &jp_prompt_texture_height, true);
+  if (!jp_prompt_texture || jp_prompt_texture_width != 512 || jp_prompt_texture_height != 512)
+  {
+    jp_unload_prompt_graphics_object();
+    ffnx_warning("Japanese button prompt atlas must be 512x512: %s\n", path);
+    return;
+  }
+  ff7_polygon_set* polygon_set = (ff7_polygon_set*)jp_prompt_graphics_object->polygon_set;
+  if (!polygon_set || !polygon_set->hundred_data || !polygon_set->hundred_data->texture_set)
+  {
+    jp_unload_prompt_graphics_object();
+    ffnx_warning("Japanese button prompt graphics object has no render texture set\n");
+    return;
+  }
+
+  jp_prompt_original_texture_set = (ff7_texture_set*)jp_prompt_graphics_object->hundred_data->texture_set;
+  jp_prompt_polygon_original_texture_set =
+    (ff7_texture_set*)polygon_set->hundred_data->texture_set;
+  ff7_tex_header* texture_header = (ff7_tex_header*)jp_prompt_polygon_original_texture_set->tex_header;
+  uint32_t texture_count = std::max(std::max(texture_header->palettes,
+    texture_header->palette_index + 1), 8u);
+  ff7_texture_set* private_texture_set = new ff7_texture_set(*jp_prompt_polygon_original_texture_set);
+  private_texture_set->texturehandle = new uint32_t[texture_count];
+  memcpy(private_texture_set->texturehandle, jp_prompt_polygon_original_texture_set->texturehandle,
+    texture_count * sizeof(*private_texture_set->texturehandle));
+  private_texture_set->texturehandle[7] = jp_prompt_texture;
+  private_texture_set->ogl.gl_set = jp_prompt_polygon_original_texture_set->ogl.gl_set
+    ? new gl_texture_set(*jp_prompt_polygon_original_texture_set->ogl.gl_set)
+    : nullptr;
+  if (private_texture_set->ogl.gl_set)
+    private_texture_set->ogl.gl_set->force_filter = true;
+  private_texture_set->ogl.external = true;
+  private_texture_set->ogl.width = jp_prompt_texture_width;
+  private_texture_set->ogl.height = jp_prompt_texture_height;
+  jp_prompt_graphics_object->hundred_data->texture_set = (struct texture_set*)private_texture_set;
+  polygon_set->hundred_data->texture_set = (struct texture_set*)private_texture_set;
+  ffnx_info("Using Japanese button prompt atlas: %s\n", path);
+}
+
+static void jp_draw_prompt_graphics_object(ff7_game_obj* game_object)
+{
+  if (!jp_prompt_graphics_object || !jp_prompt_texture)
+    return;
+
+  ff7_externals.engine_draw_graphics_object_66E641(jp_prompt_graphics_object, game_object);
+}
 
 void engine_load_menu_graphics_objects_6C1468_jp(int a1)
 {
@@ -47,6 +152,7 @@ void engine_load_menu_graphics_objects_6C1468_jp(int a1)
 
   viewport_type_404D80 = ff7_externals.engine_get_viewport_type_404D80();
   game_object_676578 = ff7_externals.engine_get_game_object_676578();
+  jp_unload_prompt_graphics_object();
   if ( viewport_type_404D80 == 2 )
   {
     ff7_externals.sub_671082(ff7_externals.menu_font_a_graphics_object_DC100C);
@@ -127,6 +233,7 @@ void engine_load_menu_graphics_objects_6C1468_jp(int a1)
       battle_menu_win_b_texture_path = ff7_externals.aBtl_win_b_l_ti;
     ff7_externals.engine_set_blendmode_674659(4, &a2);
     *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC = ff7_externals.engine_load_graphics_object_6710AC(1, 12, &a2, battle_menu_win_b_texture_path, (int)game_object_676578->dx_sfx_something);
+    jp_load_prompt_graphics_object(&a2, battle_menu_win_b_texture_path, game_object_676578);
     ff7_externals.engine_set_blendmode_674659(1, &a2);
     *ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4 = ff7_externals.engine_load_graphics_object_6710AC(1, 12, &a2, battle_menu_win_b_texture_path, (int)game_object_676578->dx_sfx_something);
     if ( a1 )
@@ -485,26 +592,58 @@ struct jp_prompt_sprite
   ff7_graphics_object* graphics_object;
   int u;
   int v;
+  int width;
+  int height;
+  int texture_width;
+  int texture_height;
 };
 
 static bool jp_prompt_sprite_for_button(int button, jp_prompt_sprite* sprite)
 {
+  if (jp_prompt_graphics_object)
+  {
+    int column;
+    int row;
+    switch (button)
+    {
+      case 0:  column = 3; row = 0; break; // L2
+      case 1:  column = 4; row = 0; break; // R2
+      case 2:  column = 2; row = 0; break; // L1
+      case 3:  column = 2; row = 1; break; // R1
+      case 4:  column = 1; row = 1; break; // Triangle
+      case 5:  column = 1; row = 0; break; // Circle
+      case 6:  column = 0; row = 0; break; // Cross
+      case 7:  column = 0; row = 1; break; // Square
+      case 8:  column = 3; row = 1; break; // Select / Share
+      case 11: column = 4; row = 1; break; // Start / Options
+      case 12: column = 0; row = 2; break; // Up
+      case 13: column = 2; row = 2; break; // Right
+      case 14: column = 1; row = 2; break; // Down
+      case 15: column = 0; row = 3; break; // Left
+      default: return false;
+    }
+
+    *sprite = { jp_prompt_graphics_object, column * 100, row * 100, 100, 100,
+      (int)jp_prompt_texture_width, (int)jp_prompt_texture_height };
+    return true;
+  }
+
   switch (button)
   {
-    case 0:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,  32, 160 }; break; // L2
-    case 1:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 160 }; break; // R2
-    case 2:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,   0, 160 }; break; // L1
-    case 3:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 160 }; break; // R1
-    case 4:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,   0, 128 }; break; // Triangle
-    case 5:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 128 }; break; // Circle
-    case 6:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,  32, 128 }; break; // Cross
-    case 7:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 128 }; break; // Square
-    case 8:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 192 }; break; // Select
-    case 11: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 192 }; break; // Start
-    case 12: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 160,  64 }; break; // Up
-    case 13: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 160,  96 }; break; // Right
-    case 14: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192,  64 }; break; // Down
-    case 15: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192,  96 }; break; // Left
+    case 0:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,  32, 160, 32, 32, 256, 256 }; break; // L2
+    case 1:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 160, 32, 32, 256, 256 }; break; // R2
+    case 2:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,   0, 160, 32, 32, 256, 256 }; break; // L1
+    case 3:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 160, 32, 32, 256, 256 }; break; // R1
+    case 4:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,   0, 128, 32, 32, 256, 256 }; break; // Triangle
+    case 5:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 128, 32, 32, 256, 256 }; break; // Circle
+    case 6:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,  32, 128, 32, 32, 256, 256 }; break; // Cross
+    case 7:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 128, 32, 32, 256, 256 }; break; // Square
+    case 8:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 192, 32, 32, 256, 256 }; break; // Select
+    case 11: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 192, 32, 32, 256, 256 }; break; // Start
+    case 12: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 160,  64, 32, 32, 256, 256 }; break; // Up
+    case 13: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 160,  96, 32, 32, 256, 256 }; break; // Right
+    case 14: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192,  64, 32, 32, 256, 256 }; break; // Down
+    case 15: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192,  96, 32, 32, 256, 256 }; break; // Left
     default: return false;
   }
 
@@ -537,15 +676,38 @@ static bool jp_submit_field_quad(ff7_graphics_object* graphics_object, float x, 
   return true;
 }
 
-static int jp_draw_field_prompt_action(int action, int x, int y, float z, bgra_byte color)
+static int jp_draw_field_prompt_button(int button, int x, int y, float z)
 {
   jp_prompt_sprite sprite;
-  if (!jp_prompt_sprite_for_button(jp_physical_button_for_action(action), &sprite))
+  if (!jp_prompt_sprite_for_button(button, &sprite))
     return x;
 
-  jp_submit_field_quad(sprite.graphics_object, (float)x, (float)y, z, 20.0f, 20.0f,
-    sprite.u / 256.0f, sprite.v / 256.0f, 32.0f / 256.0f, 32.0f / 256.0f, color, 7);
-  return x + 20;
+  if (!jp_submit_field_quad(sprite.graphics_object, (float)x,
+      (float)y - jp_prompt_size / 4.0f, z, (float)jp_prompt_size, (float)jp_prompt_size,
+      (float)sprite.u / sprite.texture_width, (float)sprite.v / sprite.texture_height,
+      (float)sprite.width / sprite.texture_width, (float)sprite.height / sprite.texture_height,
+      get_character_color(7), 7))
+  {
+    static bool logged_submit_failure = false;
+    if (!logged_submit_failure)
+    {
+      ffnx_warning("Failed to submit Japanese button prompt for button %d\n", button);
+      logged_submit_failure = true;
+    }
+  }
+  return x + jp_prompt_size;
+}
+
+static int jp_draw_field_prompt_action(int action, int x, int y, float z)
+{
+  static constexpr byte action_map[] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15
+  };
+
+  if (action < 0 || action >= sizeof(action_map))
+    return x;
+
+  return jp_draw_field_prompt_button(jp_physical_button_for_action(action_map[action]), x, y, z);
 }
 
 static int jp_draw_field_letter(uint16_t letter, int x, int y, float z, bgra_byte color, int color_index)
@@ -572,13 +734,13 @@ static int jp_draw_field_letter(uint16_t letter, int x, int y, float z, bgra_byt
 static int jp_draw_field_fd_control(byte control, int x, int y, float z, bgra_byte color, int color_index)
 {
   if (control <= 0xFD)
-    return jp_draw_field_prompt_action(control & 0x0F, x, y, z, color);
+    return jp_draw_field_prompt_action(control & 0x0F, x, y, z);
 
   if (control == 0xFE)
   {
-    x = jp_draw_field_prompt_action(4, x, y, z, color);
+    x = jp_draw_field_prompt_action(4, x, y, z);
     x = jp_draw_field_letter(0xFAE7, x, y, z, color, color_index);
-    return jp_draw_field_prompt_action(5, x, y, z, color);
+    return jp_draw_field_prompt_action(5, x, y, z);
   }
 
   x = jp_draw_field_letter(0xFA7D, x, y, z, color, color_index);
@@ -600,9 +762,9 @@ static int jp_measure_field_letter(uint16_t letter, bool use_fixed_spacing)
 static int jp_measure_field_fd_control(byte control, bool use_fixed_spacing)
 {
   if (control <= 0xFD)
-    return 10;
+    return jp_prompt_size / 2;
   if (control == 0xFE)
-    return 20 + jp_measure_field_letter(0xFAE7, use_fixed_spacing);
+    return jp_prompt_size + jp_measure_field_letter(0xFAE7, use_fixed_spacing);
   return jp_measure_field_letter(0xFA7D, use_fixed_spacing)
     + jp_measure_field_letter(0xFD33, use_fixed_spacing);
 }
@@ -955,6 +1117,54 @@ LABEL_39:
           {
             heartAtD9 = false;  // clear flag now that we are here
             isPrompt = false;   // clear flag now that we are here;
+            int prompt_button = -1;
+            if (jp_prompt_graphics_object)
+            {
+              switch (*buffer_text)
+              {
+                case 0xF6u:
+                  switch (buffer_text[1])
+                  {
+                    case 0x33u: prompt_button = 5; break;  // Circle
+                    case 0x34u: prompt_button = 2; break;  // L1
+                    case 0x35u: prompt_button = 0; break;  // L2
+                    case 0x36u: prompt_button = 3; break;  // R1
+                    case 0x37u: prompt_button = 1; break;  // R2
+                    case 0x38u: prompt_button = 11; break; // Start / Options
+                    case 0x39u: prompt_button = 8; break;  // Select / Share
+                    case 0x3Au: prompt_button = 12; break; // Up
+                    case 0x3Bu: prompt_button = 14; break; // Down
+                    case 0x3Cu: prompt_button = 15; break; // Left
+                    case 0x3Du: prompt_button = 13; break; // Right
+                    default: prompt_button = 5; break;     // Circle
+                  }
+                  if (buffer_text[1] >= 0x33u && buffer_text[1] <= 0x3Du)
+                  {
+                    ++buffer_text;
+                    ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
+                  }
+                  break;
+                case 0xF7u: prompt_button = 4; break; // Triangle
+                case 0xF8u: prompt_button = 7; break; // Square
+                case 0xF9u: prompt_button = 6; break; // Cross
+              }
+            }
+            if (prompt_button >= 0)
+            {
+              int color_index = character_n_shapes;
+              if (*ff7_externals.word_DC3CC4)
+                color_index = ((unsigned __int8)(*ff7_externals.word_DC3CC8 >> 2) - character_count) & 7;
+              else if (*ff7_externals.word_DC3CC0)
+                color_index = ((*ff7_externals.word_DC3CC8 >> 2) & 1)
+                  ? *ff7_externals.word_91F028
+                  : 0;
+              character_x = jp_draw_field_prompt_button(prompt_button, character_x, character_y, z_value);
+              *ff7_externals.field_do_draw_text_boxes_DC3CE8 = 1;
+              ++buffer_text;
+              --(*ff7_externals.field_remaining_character_length_DC3CCC);
+              ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
+              break;
+            }
             switch ( *buffer_text ) // what button prompt do we have?
             {
               case 0xD9u: // heart
@@ -1093,7 +1303,9 @@ LABEL_39:
             }
             if ( special_character_do_draw )
             {
-              auto color = get_character_color(character_n_shapes);
+              auto color = offset_u_in_byte == 144
+                ? get_character_color(character_n_shapes)
+                : get_character_color(7);
 
               special_character_u = (double)offset_u_in_byte / 256.0f;
               special_character_top_left = graphics_object->vertex_transform;
@@ -1222,11 +1434,14 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
+      jp_draw_prompt_graphics_object(game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8);
+      if (jp_prompt_graphics_object)
+        ff7_externals.reset_field_54_graphics_object_66E62C(jp_prompt_graphics_object);
       *ff7_externals.text_box_do_draw_menu_win_c_blend_4_DC3CE4 = 0;
       *ff7_externals.field_do_draw_text_boxes_DC3CE8 = 0;
     }
@@ -2754,6 +2969,15 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       }
 
       continue; // back to the start, we already added to the length
+    }
+    if (ff7_japanese_edition && possibleOpcode
+        && (character == 0xF6u || character == 0xF7u
+          || character == 0xF8u || character == 0xF9u))
+    {
+      W += jp_prompt_size / 2;
+      if (character == 0xF6u && next_character >= 0x33u && next_character <= 0x3Du)
+        ++i;
+      continue;
     }
     // if its' an opcode, then we need to account for variables
     if (possibleOpcode && (character == 0XFEu))
