@@ -653,12 +653,11 @@ int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t ch
   for ( i = 0;
         i < 1024
      && (*ff7_externals.field_remaining_character_length_DC3CCC)
-     && *buffer_text != 0xFF
-     && *buffer_text != 0xE8
-     && *buffer_text != 0xE9;
+     && (kanjiDetected || *buffer_text != 0xFF)
+     && (kanjiDetected || *buffer_text != 0xE8);
         ++i )
   {
-    if ( *buffer_text == 231 )
+    if ( !kanjiDetected && *buffer_text == 0xE7 )
     {
       character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20; // need to indent this far for pointers to point properly
       _lsq_acc += multibyte_field_linestep_q;
