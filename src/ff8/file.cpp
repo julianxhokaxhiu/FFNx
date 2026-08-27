@@ -68,22 +68,49 @@ bool set_direct_path(const char *fullpath, char *output, size_t output_size)
 		return true;
 	}
 
-	if (strnicmp(fullpath + 2, ff8_externals.archive_path_prefix, strlen(ff8_externals.archive_path_prefix)) != 0)
+	char fullpath_copy[MAX_PATH] = {};
+
+	if (ff8_remastered_edition && strnicmp(fullpath + 2, "\\ff8\\data\\x\\", strlen("\\ff8\\data\\x\\")) == 0)
 	{
-		if (trace_all || trace_direct) ffnx_warning("%s: file ignored for direct path %s (should match %s)\n", __func__, fullpath, ff8_externals.archive_path_prefix);
+		/* For field and world, the lang part may be replaced by "x", while archive_path_prefix still contains "c:\\ff8\\data\\eng\\"
+		 * We put back the lang in the prefix instead of "x" to ensure uniformity of the direct layer accross game versions
+		 */
+		char suffix[MAX_PATH] = "_";
+		const char *extension = fullpath + strlen(fullpath) - 4;
+
+		concat_lang_str(suffix);
+		strcat(suffix, extension);
+
+		_snprintf(fullpath_copy, sizeof(fullpath_copy), "c:%s%s", ff8_externals.archive_path_prefix, fullpath + strlen("c:\\ff8\\data\\x\\"));
+
+		// Ends with _{lang}{extension}
+		if (strnicmp(fullpath + strlen(fullpath) - 7, suffix, 7) == 0)
+		{
+			fullpath_copy[strlen(fullpath_copy) - 7] = '\0'; // Remove _{lang}{extension}
+			strcat(fullpath_copy, extension);
+		}
+	}
+	else
+	{
+		strncpy(fullpath_copy, fullpath, sizeof(fullpath_copy));
+	}
+	
+	if (strnicmp(fullpath_copy + 2, ff8_externals.archive_path_prefix, strlen(ff8_externals.archive_path_prefix)) != 0)
+	{
+		if (trace_all || trace_direct) ffnx_warning("%s: file ignored for direct path %s (should match %s)\n", __func__, fullpath_copy, ff8_externals.archive_path_prefix);
 
 		return false;
 	}
 
 	// Try with the lang prefix
-	_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size(false));
+	_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath_copy + get_fl_prefix_size(false));
 
 	if (!fileExists(output))
 	{
 		if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", output);
 
 		// Retry without the lang prefix
-		_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath + get_fl_prefix_size());
+		_snprintf(output, output_size, "%s/%s/%s", basedir, direct_mode_path.c_str(), fullpath_copy + get_fl_prefix_size());
 
 		if (!fileExists(output))
 		{
