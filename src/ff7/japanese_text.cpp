@@ -13,12 +13,15 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 #include "../globals.h"
+#include "../cfg.h"
+#include "../gamepad.h"
 #include "../log.h"
 #include "../ff7.h"
 #include "../gl.h"
 #include "../patch.h"
 #include "../redirect.h"
 #include "../renderer.h"
+#include "../sdl_gamepad.h"
 #include "../utils.h"
 #include <string.h>
 
@@ -32,6 +35,14 @@ static uint32_t jp_prompt_texture = 0;
 static uint32_t jp_prompt_texture_width = 0;
 static uint32_t jp_prompt_texture_height = 0;
 static constexpr int jp_prompt_size = 40;
+
+static bool jp_use_xbox_prompt_atlas()
+{
+  if (use_sdl_gamepad)
+    return sdlgamepad.CheckConnection() && sdlgamepad.IsXbox();
+
+  return xinput_connected || gamepad.CheckConnection();
+}
 
 static void jp_unload_prompt_graphics_object()
 {
@@ -70,7 +81,11 @@ static void jp_unload_prompt_graphics_object()
 static void jp_load_prompt_graphics_object(struc_3* graphics_context, char* template_path, ff7_game_obj* game_object)
 {
   char path[BASEDIR_LENGTH + 64];
-  _snprintf(path, sizeof(path), R"(%s\data\png\buttons_ps4.png)", basedir);
+  bool use_xbox_atlas = jp_use_xbox_prompt_atlas();
+  _snprintf(path, sizeof(path), R"(%s\data\png\%s)", basedir,
+    use_xbox_atlas ? "buttons.png" : "buttons_ps4.png");
+  if (use_xbox_atlas && !fileExists(path))
+    _snprintf(path, sizeof(path), R"(%s\data\png\buttons_ps4.png)", basedir);
   if (!fileExists(path))
     return;
 

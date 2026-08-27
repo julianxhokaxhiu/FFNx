@@ -77,6 +77,13 @@ const char* SDLGamepad::GetName() const
     return name ? name : "";
 }
 
+bool SDLGamepad::IsXbox() const
+{
+    if (!sdlgamepad) return false;
+    SDL_GamepadType type = SDL_GetGamepadType(sdlgamepad);
+    return type == SDL_GAMEPAD_TYPE_XBOX360 || type == SDL_GAMEPAD_TYPE_XBOXONE;
+}
+
 static float applyDeadzone(float value, float deadzone)
 {
     float norm = fmaxf(-1.0f, value / SDL_JOYSTICK_AXIS_MAX);
