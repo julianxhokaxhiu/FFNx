@@ -2495,18 +2495,14 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
   byte* buffer_text = (byte*)ff7_externals.current_dialog_string_pointer[WINDOW_ID];
   bool isKanjiDetected = false;
   bool possibleOpcode = true; // some opcodes mmust be parsed, so we must look for them
+  bool useFixedSpacing = false;
   int charWidth = 0;
   int leftPadding = 0;
   uint16_t letter = 0;
 	for ( int i = 0;	i < 1024; ++i )
 	{
-    bool fixedWidthEstimate = false;
     byte character = buffer_text[i];
     byte next_character = buffer_text[i + 1];
-    byte next_character2 = buffer_text[i + 2]; // additional ones needed to parse fixed length strings later
-    byte next_character3 = buffer_text[i + 3];
-    byte next_character4 = buffer_text[i + 4]; // this is the counter of characters, which is what we need to do that.
-    byte next_character5 = buffer_text[i + 5]; //
 
     if(character == 0xFF) break;
 
@@ -2565,7 +2561,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
     }
 
     // character names need to be counted to resize proprely.
-    if(character >= 0xEA && character <= 0xF5)
+    if(possibleOpcode && character >= 0xEA && character <= 0xF5)
     {
       auto name_buffer = ff7_externals.sub_6CB9B8(character - 0xEA);
       for (int j = 0; j < 9; ++j)
@@ -2574,10 +2570,21 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
         if (name_char == 0xFF) break;
 
-        charWidth = charWidthData[0][name_char] & 0x1F;
-        leftPadding = charWidthData[0][name_char] >> 5;
-        W += ff7_japanese_edition
-          ? jp_center_advance(name_char, leftPadding, charWidth)
+        int name_page = 0;
+        uint16_t name_letter = name_char;
+        if (name_char >= 0xFA && name_char <= 0xFE && j + 1 < 9 && name_buffer[j + 1] != 0xFF)
+        {
+          name_page = name_char - 0xF9;
+          name_char = name_buffer[++j];
+          name_letter = (uint16_t)(((0xF9 + name_page) << 8) | name_char);
+        }
+
+        charWidth = charWidthData[name_page][name_char] & 0x1F;
+        leftPadding = charWidthData[name_page][name_char] >> 5;
+        W += useFixedSpacing
+          ? 10
+          : ff7_japanese_edition
+          ? jp_center_advance(name_letter, leftPadding, charWidth)
           : leftPadding + std::ceil(z_half_width(charWidth));
       }
 
@@ -2589,33 +2596,34 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       switch (next_character)
       {
         case 0xE9u: // monospace toggle
-          return;   // if present, assume flevel is correct (it seems to be for the one I saw in wonder square)
+          useFixedSpacing = !useFixedSpacing;
+          i = i + 1;
+          continue;
         case 0xDEu: // these are variable length
-        case 0xDFu: // variable opcodes
         case 0xE1u: // FIXME: actually parse them and account for string length
-          charWidth = 32 * 8; // assume there are no more than 8 characters for now?
-          leftPadding = 0;                  // no padding.
-          fixedWidthEstimate = true;
-          // gets added in later
-          i = i + 1; // skip the byte after the opcode
-          break;
+          W += 50;
+          i = i + 1;
+          continue;
         case 0xE2u: // fixed length string. this, i can parse well enough.
-          int stringlength = next_character5 << 8 | next_character4; // we know how many characters. for safety, assume max width.
-          charWidth = 32 * stringlength; // assume characters are maximum width
-          leftPadding = 0;                  // no padding.  // gets added in later
-          fixedWidthEstimate = true;
+          W += 60;
           i = i + 5; // skip the opcode bytes for next go around 5 out of six, with the last one done at start of loop
+          continue;
+        default:
+          // The driver consumes every FE D2..FF pair as one extended control code.
+          // In particular, FE E7 must not leave E7 to be parsed as a bare newline.
+          i = i + 1;
+          continue;
       }
     }
     // more special character handling
-		if(character == 0xE7) // next line
+    if(possibleOpcode && character == 0xE7) // next line
 		{
       maxW = std::max(maxW, W); // update max
       W = 0;
 			H += multibyte_field_linestep_q / 4;
       continue;
 		}
-		if(character == 0xE9 || character == 0xE8) // next window
+    if(possibleOpcode && character == 0xE8) // next window
 		{
 			maxW = std::max(maxW, W); // update maxes
 			maxH = std::max(maxH, H);
@@ -2625,12 +2633,9 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 		}
 
     if (ff7_japanese_edition)
-    {
-      int legacyAdvance = leftPadding + (int)std::ceil(z_half_width(charWidth));
-      W += fixedWidthEstimate
-        ? (int)(legacyAdvance * scaleFactor / 2.0f)
+      W += useFixedSpacing
+        ? 10
         : jp_center_advance(letter, leftPadding, charWidth);
-    }
     else
       W += leftPadding + std::ceil(z_half_width(charWidth));
 	}
