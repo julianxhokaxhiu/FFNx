@@ -2807,11 +2807,6 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
   float pOutWtmp = ff7_japanese_edition
     ? (float)(std::max(maxW, W) + 25)
     : (std::max(maxW, W) + 40) * scaleFactor;
-  // final sanity check
-  // if our resiser thinks it's shorter than flevel has it, its' wrong, abort.
-  if (((std::max(maxH, H) + 50) / 2) < *pOutH) // flevel is taller
-    return;
-
   *pOutW = ff7_japanese_edition ? (int)pOutWtmp : (int)(pOutWtmp / 2);
 	*pOutH = (std::max(maxH, H) + 50) / 2;
 }
