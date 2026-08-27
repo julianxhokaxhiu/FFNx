@@ -2497,8 +2497,10 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
   bool possibleOpcode = true; // some opcodes mmust be parsed, so we must look for them
   int charWidth = 0;
   int leftPadding = 0;
+  uint16_t letter = 0;
 	for ( int i = 0;	i < 1024; ++i )
 	{
+    bool fixedWidthEstimate = false;
     byte character = buffer_text[i];
     byte next_character = buffer_text[i + 1];
     byte next_character2 = buffer_text[i + 2]; // additional ones needed to parse fixed length strings later
@@ -2513,6 +2515,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       case 0xFAu:
         charWidth = charWidthData[1][next_character] & 0x1F;
         leftPadding = charWidthData[1][next_character] >> 5;
+        letter = (uint16_t)(0xFA00 | next_character);
         isKanjiDetected = true;
         possibleOpcode = false; // not an opcode for sure
         continue;
@@ -2520,18 +2523,21 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
         charWidth = charWidthData[2][next_character] & 0x1F;
         leftPadding = charWidthData[2][next_character] >> 5;
+        letter = (uint16_t)(0xFB00 | next_character);
         isKanjiDetected = true;
         possibleOpcode = false;
         continue;
       case 0xFCu:
         charWidth = charWidthData[3][next_character] & 0x1F;
         leftPadding = charWidthData[3][next_character] >> 5;
+        letter = (uint16_t)(0xFC00 | next_character);
         isKanjiDetected = true;
         possibleOpcode = false;
         continue;
       case 0xFDu:
         charWidth = charWidthData[4][next_character] & 0x1F;
         leftPadding = charWidthData[4][next_character] >> 5;
+        letter = (uint16_t)(0xFD00 | next_character);
         isKanjiDetected = true;
         possibleOpcode = false;
         continue;
@@ -2540,6 +2546,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         {
           charWidth = charWidthData[5][next_character] & 0x1F;
           leftPadding = charWidthData[5][next_character] >> 5;
+          letter = (uint16_t)(0xFE00 | next_character);
           isKanjiDetected = true;
           possibleOpcode = false; // not an opcode
           continue;
@@ -2550,6 +2557,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         {
           charWidth = charWidthData[0][character] & 0x1F;
           leftPadding = charWidthData[0][character] >> 5;
+          letter = character;
           possibleOpcode = true; // again, this shouldn't be required, but can't hurt.
         }
         isKanjiDetected = false;
@@ -2568,7 +2576,9 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
         charWidth = charWidthData[0][name_char] & 0x1F;
         leftPadding = charWidthData[0][name_char] >> 5;
-        W += leftPadding + std::ceil(z_half_width(charWidth));
+        W += ff7_japanese_edition
+          ? jp_center_advance(name_char, leftPadding, charWidth)
+          : leftPadding + std::ceil(z_half_width(charWidth));
       }
 
       continue; // back to the start, we already added to the length
@@ -2585,6 +2595,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         case 0xE1u: // FIXME: actually parse them and account for string length
           charWidth = 32 * 8; // assume there are no more than 8 characters for now?
           leftPadding = 0;                  // no padding.
+          fixedWidthEstimate = true;
           // gets added in later
           i = i + 1; // skip the byte after the opcode
           break;
@@ -2592,6 +2603,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
           int stringlength = next_character5 << 8 | next_character4; // we know how many characters. for safety, assume max width.
           charWidth = 32 * stringlength; // assume characters are maximum width
           leftPadding = 0;                  // no padding.  // gets added in later
+          fixedWidthEstimate = true;
           i = i + 5; // skip the opcode bytes for next go around 5 out of six, with the last one done at start of loop
       }
     }
@@ -2612,15 +2624,25 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       continue;
 		}
 
-		W += leftPadding + std::ceil(z_half_width(charWidth)); // if we get here, normal charcter, OR fixed string. add char width
+    if (ff7_japanese_edition)
+    {
+      int legacyAdvance = leftPadding + (int)std::ceil(z_half_width(charWidth));
+      W += fixedWidthEstimate
+        ? (int)(legacyAdvance * scaleFactor / 2.0f)
+        : jp_center_advance(letter, leftPadding, charWidth);
+    }
+    else
+      W += leftPadding + std::ceil(z_half_width(charWidth));
 	}
-  float pOutWtmp = (std::max(maxW, W) + 40) * scaleFactor;  // make calculated length bigger, but not height.
+  float pOutWtmp = ff7_japanese_edition
+    ? (float)(std::max(maxW, W) + 25)
+    : (std::max(maxW, W) + 40) * scaleFactor;
   // final sanity check
   // if our resiser thinks it's shorter than flevel has it, its' wrong, abort.
   if (((std::max(maxH, H) + 50) / 2) < *pOutH) // flevel is taller
     return;
 
-	*pOutW = (int)((pOutWtmp)/ 2);  // usual shrink from 32 to 16. but we scaled up before.
+  *pOutW = ff7_japanese_edition ? (int)pOutWtmp : (int)(pOutWtmp / 2);
 	*pOutH = (std::max(maxH, H) + 50) / 2;
 }
 
