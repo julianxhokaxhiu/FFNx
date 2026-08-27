@@ -1489,6 +1489,44 @@ void battle_draw_menu_everything_6CEE84_jp()
   ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_text_box_quad_graphics_object_DC1008);
 }
 
+void battle_draw_graphics_object_and_jafonts(ff7_graphics_object* graphics_object, ff7_game_obj* game_object)
+{
+  ff7_externals.engine_draw_graphics_object_66E641(graphics_object, game_object);
+
+  ff7_graphics_object* jafont_objects[] = {
+    ff7_externals.menu_jafont_1_graphics_object,
+    ff7_externals.menu_jafont_2_graphics_object,
+    ff7_externals.menu_jafont_3_graphics_object,
+    ff7_externals.menu_jafont_4_graphics_object,
+    ff7_externals.menu_jafont_5_graphics_object,
+    ff7_externals.menu_jafont_6_graphics_object,
+  };
+
+  for (ff7_graphics_object* graphics_object : jafont_objects)
+  {
+    ff7_externals.engine_draw_graphics_object_66E641(graphics_object, game_object);
+  }
+}
+
+void battle_reset_graphics_object_and_jafonts(ff7_graphics_object* graphics_object)
+{
+  ff7_externals.reset_field_54_graphics_object_66E62C(graphics_object);
+
+  ff7_graphics_object* jafont_objects[] = {
+    ff7_externals.menu_jafont_1_graphics_object,
+    ff7_externals.menu_jafont_2_graphics_object,
+    ff7_externals.menu_jafont_3_graphics_object,
+    ff7_externals.menu_jafont_4_graphics_object,
+    ff7_externals.menu_jafont_5_graphics_object,
+    ff7_externals.menu_jafont_6_graphics_object,
+  };
+
+  for (ff7_graphics_object* jafont_graphics_object : jafont_objects)
+  {
+    ff7_externals.reset_field_54_graphics_object_66E62C(jafont_graphics_object);
+  }
+}
+
 void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint16_t a4) // used printing centered texts.
 {
   // probably should be scaled up, but until the other one is fixed, not bothering.

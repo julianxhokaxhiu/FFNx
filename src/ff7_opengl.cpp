@@ -400,6 +400,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	}
 	if (ff7_japanese_edition)
 	{
+		replace_call_function(ff7_externals.flush_battle_text_640x480_6DC1EB + 0x5A, battle_draw_graphics_object_and_jafonts);
+		replace_call_function(ff7_externals.flush_battle_text_640x480_6DC1EB + 0x22F, battle_reset_graphics_object_and_jafonts);
+
 		for (uint32_t i = 0; i < ff7_externals.japanese_text_small_glyph_call_count; ++i)
 			replace_call_function(ff7_externals.japanese_text_small_glyph_call_addresses[i], common_submit_draw_text_from_buffer_jp);
 

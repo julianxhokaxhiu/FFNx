@@ -3578,6 +3578,7 @@ struct ff7_externals
 
 	// battle menu
 	uint32_t display_battle_menu_6D797C;
+	uint32_t flush_battle_text_640x480_6DC1EB;
 	void (*display_tifa_slots_handler_6E3135)();
 	uint32_t battle_draw_text_ui_graphics_objects_call;
 	uint32_t battle_draw_box_ui_graphics_objects_call;
