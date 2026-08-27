@@ -25,6 +25,7 @@
 #include "ff7.h"
 #include "patch.h"
 #include "ff7/defs.h"
+#include "ff7/universal_buttons.h"
 #include "ff7_data.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
@@ -377,12 +378,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// ###########################
 	// japanese text
 	// ###########################
-	// Shared multi-font glyph space (extra jafont_2..6 via FA-FE escape bytes): needed by BOTH the JP
-	// edition AND English-exe multibyte translations (e.g. Arabic). Only the font LOAD + per-char draw
-	// are shared; the remaining hooks below are JP-only layout that breaks native EN menus.
+	// The menu loader also owns the universal field-button atlas for every language. Multi-font
+	// glyph submission and flushing remain limited to JP and multibyte translations.
+	replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468_jp);
 	if (ff7_japanese_edition || ff7_multibyte_font)
 	{
-		replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468_jp);
 		replace_function((uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E, common_submit_draw_char_from_buffer_6F564E_jp);
 		replace_function(ff7_externals.sub_6F54A2, sub_6F54A2_jp);
 		// jafont glyph FLUSH + field char submitter — without these, multibyte glyphs queue but never draw
@@ -398,6 +398,25 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// the ff7_japanese_edition-only block below) since it's needed by BOTH JP edition and ff7_multibyte_font.
 		replace_function((uint32_t)ff7_externals.draw_text_top_display_6D1CC0, draw_text_top_display_6D1CC0_jp);
 	}
+	else
+	{
+		// Native text keeps the original renderer. Pass its frame to the universal F6-F9 submitter
+		// by replacing `mov/push graphics_object; push 1; call; add esp, 8` in place.
+		byte submit_vanilla_prompt_patch[] = {
+			0xFF, 0x75, 0xE0,             // push [ebp-0x20] (graphics_object)
+			0x6A, 0x01,                   // push 1 (use_alpha)
+			0x55,                         // push ebp (caller_frame)
+			0xE8, 0x00, 0x00, 0x00, 0x00, // call universal_buttons_submit_vanilla_prompt
+			0x83, 0xC4, 0x0C,             // add esp, 12
+		};
+		uint32_t submit_vanilla_prompt_address = ff7_externals.field_submit_draw_text_640x480_6E706D + 0x36E;
+		memcpy_code(submit_vanilla_prompt_address, submit_vanilla_prompt_patch, sizeof(submit_vanilla_prompt_patch));
+		replace_call(submit_vanilla_prompt_address + 0x6, universal_buttons_submit_vanilla_prompt);
+		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0xBD, universal_buttons_flush_vanilla_field);
+		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0x633, universal_buttons_flush_vanilla_field);
+		replace_call_function(ff7_externals.field_draw_everything_sub_63A60B + 0x3A2, universal_buttons_flush_vanilla_field);
+	}
+	replace_function((uint32_t)ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_jp);
 	if (ff7_japanese_edition)
 	{
 		replace_function(ff7_externals.menu_draw_with_viewport_6FA12F, menu_draw_with_viewport_6FA12F_jp);
@@ -412,13 +431,6 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.japanese_text_large_glyph_char_call_6DD3C3, common_submit_draw_char_from_buffer_large_6F564E_jp);
 		replace_call_function(ff7_externals.japanese_text_large_glyph_char_call_7193DE, common_submit_draw_char_from_buffer_large_6F564E_jp);
 		//replace_function((uint32_t)	ff7_externals.field_text_box_window_paging_631945, field_text_box_window_paging_631945_jp);
-		// This hook is JP-edition only: its window auto-resize can feed back into itself across
-		// frames (each call recomputes the target size from values it wrote the previous frame),
-		// which can prevent multi-window field scenes from ever finishing their open animation.
-		// The English-exe multibyte path avoids this by using the vanilla opening function and
-		// relying on field files that already ship with correctly sized windows.
-		replace_function((uint32_t)	ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_jp);
-
 		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E, 0xC);
 		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x1, 0xC);
 		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x2, 0xC);

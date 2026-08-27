@@ -14,160 +14,19 @@
 /****************************************************************************/
 #include "../globals.h"
 #include "../cfg.h"
-#include "../gamepad.h"
 #include "../log.h"
 #include "../ff7.h"
 #include "../gl.h"
-#include "../joystick.h"
 #include "../patch.h"
 #include "../redirect.h"
 #include "../renderer.h"
-#include "../sdl_gamepad.h"
 #include "../utils.h"
+#include "universal_buttons.h"
 #include <string.h>
 
 static void multibyte_load_widths();
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value);
 static bool jp_small_glyphs = true;
-static ff7_graphics_object* jp_prompt_graphics_object = nullptr;
-static ff7_texture_set* jp_prompt_original_texture_set = nullptr;
-static ff7_texture_set* jp_prompt_polygon_original_texture_set = nullptr;
-static uint32_t jp_prompt_texture = 0;
-static uint32_t jp_prompt_texture_width = 0;
-static uint32_t jp_prompt_texture_height = 0;
-static constexpr int jp_prompt_size = 40;
-
-enum class jp_prompt_atlas
-{
-  keyboard,
-  playstation,
-  xbox,
-};
-
-static jp_prompt_atlas jp_current_prompt_atlas = jp_prompt_atlas::playstation;
-
-static jp_prompt_atlas jp_select_prompt_atlas()
-{
-  if (use_sdl_gamepad)
-  {
-    if (!sdlgamepad.CheckConnection())
-      return jp_prompt_atlas::keyboard;
-    return sdlgamepad.IsXbox() ? jp_prompt_atlas::xbox : jp_prompt_atlas::playstation;
-  }
-
-  if (xinput_connected || gamepad.CheckConnection())
-    return jp_prompt_atlas::xbox;
-  if (joystick.CheckConnection())
-    return jp_prompt_atlas::playstation;
-  return jp_prompt_atlas::keyboard;
-}
-
-static void jp_unload_prompt_graphics_object()
-{
-  ff7_texture_set* private_texture_set = nullptr;
-  ff7_polygon_set* polygon_set = jp_prompt_graphics_object
-    ? (ff7_polygon_set*)jp_prompt_graphics_object->polygon_set
-    : nullptr;
-  if (jp_prompt_graphics_object && jp_prompt_graphics_object->hundred_data
-      && jp_prompt_original_texture_set)
-  {
-    private_texture_set = (ff7_texture_set*)jp_prompt_graphics_object->hundred_data->texture_set;
-    jp_prompt_graphics_object->hundred_data->texture_set = (struct texture_set*)jp_prompt_original_texture_set;
-  }
-  if (polygon_set && polygon_set->hundred_data
-      && jp_prompt_polygon_original_texture_set)
-  {
-    polygon_set->hundred_data->texture_set =
-      (struct texture_set*)jp_prompt_polygon_original_texture_set;
-  }
-  ff7_externals.sub_671082(&jp_prompt_graphics_object);
-  if (private_texture_set && private_texture_set != jp_prompt_original_texture_set)
-  {
-    delete private_texture_set->ogl.gl_set;
-    delete[] private_texture_set->texturehandle;
-    delete private_texture_set;
-  }
-  jp_prompt_original_texture_set = nullptr;
-  jp_prompt_polygon_original_texture_set = nullptr;
-  if (jp_prompt_texture)
-    newRenderer.deleteTexture(jp_prompt_texture);
-  jp_prompt_texture = 0;
-  jp_prompt_texture_width = 0;
-  jp_prompt_texture_height = 0;
-}
-
-static void jp_load_prompt_graphics_object(struc_3* graphics_context, char* template_path, ff7_game_obj* game_object)
-{
-  char path[BASEDIR_LENGTH + 64];
-  jp_current_prompt_atlas = jp_select_prompt_atlas();
-  const char* atlas_name = jp_current_prompt_atlas == jp_prompt_atlas::keyboard
-    ? "buttons_pc_en.png"
-    : jp_current_prompt_atlas == jp_prompt_atlas::xbox ? "buttons.png" : "buttons_ps4.png";
-  _snprintf(path, sizeof(path), R"(%s\data\png\%s)", basedir, atlas_name);
-  if (jp_current_prompt_atlas != jp_prompt_atlas::playstation && !fileExists(path))
-  {
-    jp_current_prompt_atlas = jp_prompt_atlas::playstation;
-    _snprintf(path, sizeof(path), R"(%s\data\png\buttons_ps4.png)", basedir);
-  }
-  if (!fileExists(path))
-    return;
-
-  jp_prompt_graphics_object = ff7_externals.engine_load_graphics_object_6710AC(
-    1, 12, graphics_context, template_path, (int)game_object->dx_sfx_something);
-  if (!jp_prompt_graphics_object || !jp_prompt_graphics_object->hundred_data
-      || !jp_prompt_graphics_object->hundred_data->texture_set)
-    return;
-
-  jp_prompt_texture = newRenderer.createTextureLibPng(
-    path, &jp_prompt_texture_width, &jp_prompt_texture_height, true);
-  uint32_t expected_width = jp_current_prompt_atlas == jp_prompt_atlas::keyboard ? 1000 : 512;
-  uint32_t expected_height = jp_current_prompt_atlas == jp_prompt_atlas::keyboard ? 1200 : 512;
-  if (!jp_prompt_texture || jp_prompt_texture_width != expected_width
-      || jp_prompt_texture_height != expected_height)
-  {
-    jp_unload_prompt_graphics_object();
-    ffnx_warning("Japanese button prompt atlas must be 512x512: %s\n", path);
-    return;
-  }
-  ff7_polygon_set* polygon_set = (ff7_polygon_set*)jp_prompt_graphics_object->polygon_set;
-  if (!polygon_set || !polygon_set->hundred_data || !polygon_set->hundred_data->texture_set)
-  {
-    jp_unload_prompt_graphics_object();
-    ffnx_warning("Japanese button prompt graphics object has no render texture set\n");
-    return;
-  }
-
-  jp_prompt_original_texture_set = (ff7_texture_set*)jp_prompt_graphics_object->hundred_data->texture_set;
-  jp_prompt_polygon_original_texture_set =
-    (ff7_texture_set*)polygon_set->hundred_data->texture_set;
-  ff7_tex_header* texture_header = (ff7_tex_header*)jp_prompt_polygon_original_texture_set->tex_header;
-  uint32_t texture_count = std::max(std::max(texture_header->palettes,
-    texture_header->palette_index + 1), 8u);
-  ff7_texture_set* private_texture_set = new ff7_texture_set(*jp_prompt_polygon_original_texture_set);
-  private_texture_set->texturehandle = new uint32_t[texture_count];
-  memcpy(private_texture_set->texturehandle, jp_prompt_polygon_original_texture_set->texturehandle,
-    texture_count * sizeof(*private_texture_set->texturehandle));
-  private_texture_set->texturehandle[7] = jp_prompt_texture;
-  private_texture_set->ogl.gl_set = jp_prompt_polygon_original_texture_set->ogl.gl_set
-    ? new gl_texture_set(*jp_prompt_polygon_original_texture_set->ogl.gl_set)
-    : nullptr;
-  if (private_texture_set->ogl.gl_set)
-    private_texture_set->ogl.gl_set->force_filter = true;
-  private_texture_set->ogl.external = true;
-  private_texture_set->ogl.width = jp_prompt_texture_width;
-  private_texture_set->ogl.height = jp_prompt_texture_height;
-  jp_prompt_graphics_object->hundred_data->texture_set = (struct texture_set*)private_texture_set;
-  polygon_set->hundred_data->texture_set = (struct texture_set*)private_texture_set;
-  ffnx_info("Using Japanese button prompt atlas: %s\n", path);
-}
-
-static void jp_draw_prompt_graphics_object(ff7_game_obj* game_object)
-{
-  if (!jp_prompt_graphics_object || !jp_prompt_texture)
-    return;
-
-  ff7_externals.engine_draw_graphics_object_66E641(jp_prompt_graphics_object, game_object);
-}
 
 void engine_load_menu_graphics_objects_6C1468_jp(int a1)
 {
@@ -193,7 +52,7 @@ void engine_load_menu_graphics_objects_6C1468_jp(int a1)
 
   viewport_type_404D80 = ff7_externals.engine_get_viewport_type_404D80();
   game_object_676578 = ff7_externals.engine_get_game_object_676578();
-  jp_unload_prompt_graphics_object();
+  universal_buttons_unload();
   if ( viewport_type_404D80 == 2 )
   {
     ff7_externals.sub_671082(ff7_externals.menu_font_a_graphics_object_DC100C);
@@ -274,7 +133,7 @@ void engine_load_menu_graphics_objects_6C1468_jp(int a1)
       battle_menu_win_b_texture_path = ff7_externals.aBtl_win_b_l_ti;
     ff7_externals.engine_set_blendmode_674659(4, &a2);
     *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC = ff7_externals.engine_load_graphics_object_6710AC(1, 12, &a2, battle_menu_win_b_texture_path, (int)game_object_676578->dx_sfx_something);
-    jp_load_prompt_graphics_object(&a2, battle_menu_win_b_texture_path, game_object_676578);
+    universal_buttons_load(&a2, battle_menu_win_b_texture_path, game_object_676578);
     ff7_externals.engine_set_blendmode_674659(1, &a2);
     *ff7_externals.menu_win_b_blend_1_graphics_object_DC0FE4 = ff7_externals.engine_load_graphics_object_6710AC(1, 12, &a2, battle_menu_win_b_texture_path, (int)game_object_676578->dx_sfx_something);
     if ( a1 )
@@ -318,6 +177,7 @@ void engine_load_menu_graphics_objects_6C1468_jp(int a1)
       menu_win_texture_path = ff7_externals.aBtl_win_l_tim;
     ff7_externals.engine_set_blendmode_674659(4, &a2);
     *ff7_externals.menu_win_blend_4_graphics_object_DC104C = ff7_externals.engine_load_graphics_object_6710AC(1, 12, &a2, menu_win_texture_path, (int)game_object_676578->dx_sfx_something);
+    universal_buttons_load(&a2, menu_win_texture_path, game_object_676578);
     ff7_externals.engine_set_blendmode_674659(0, &a2);
     *ff7_externals.menu_win_blend_0_graphics_object_DC1050 = ff7_externals.engine_load_graphics_object_6710AC(1, 12, &a2, menu_win_texture_path, (int)game_object_676578->dx_sfx_something);
     ff7_externals.engine_set_blendmode_674659(1, &a2);
@@ -616,205 +476,6 @@ bgra_byte get_character_color(int n_shapes)
   return color;
 }
 
-static int jp_physical_button_for_action(int action)
-{
-  if (ff7_externals.savemap && (ff7_externals.savemap->config_bitmap_1 & 0x04))
-  {
-    for (int button = 0; button < 16; ++button)
-      if ((byte)ff7_externals.savemap->controller_mapping[button] == action)
-        return button;
-  }
-
-  return action < 16 ? action : -1;
-}
-
-struct jp_prompt_sprite
-{
-  ff7_graphics_object* graphics_object;
-  int u;
-  int v;
-  int width;
-  int height;
-  int texture_width;
-  int texture_height;
-};
-
-static int jp_keyboard_atlas_cell(byte key)
-{
-  switch (key)
-  {
-    case DIK_SPACE: return 1;
-    case DIK_APOSTROPHE: return 2;
-    case DIK_COMMA: return 3;
-    case DIK_MINUS: return 4;
-    case DIK_PERIOD: return 5;
-    case DIK_SLASH: return 6;
-    case DIK_0: return 7;
-    case DIK_1: return 8;
-    case DIK_2: return 9;
-    case DIK_3: return 10;
-    case DIK_4: return 11;
-    case DIK_5: return 12;
-    case DIK_6: return 13;
-    case DIK_7: return 14;
-    case DIK_8: return 15;
-    case DIK_9: return 16;
-    case DIK_SEMICOLON: return 17;
-    case DIK_EQUALS: return 18;
-    case DIK_A: return 19;
-    case DIK_B: return 20;
-    case DIK_C: return 21;
-    case DIK_D: return 22;
-    case DIK_E: return 23;
-    case DIK_F: return 24;
-    case DIK_G: return 25;
-    case DIK_H: return 26;
-    case DIK_I: return 27;
-    case DIK_J: return 28;
-    case DIK_K: return 29;
-    case DIK_L: return 30;
-    case DIK_M: return 31;
-    case DIK_N: return 32;
-    case DIK_O: return 33;
-    case DIK_P: return 34;
-    case DIK_Q: return 35;
-    case DIK_R: return 36;
-    case DIK_S: return 37;
-    case DIK_T: return 38;
-    case DIK_U: return 39;
-    case DIK_V: return 40;
-    case DIK_W: return 41;
-    case DIK_X: return 42;
-    case DIK_Y: return 43;
-    case DIK_Z: return 44;
-    case DIK_LBRACKET: return 45;
-    case DIK_RBRACKET: return 46;
-    case DIK_BACKSLASH: return 47;
-    case DIK_ESCAPE: return 48;
-    case DIK_RETURN: return 49;
-    case DIK_TAB: return 50;
-    case DIK_BACK: return 51;
-    case DIK_INSERT: return 52;
-    case DIK_DELETE: return 53;
-    case DIK_RIGHT: return 54;
-    case DIK_LEFT: return 55;
-    case DIK_DOWN: return 56;
-    case DIK_UP: return 57;
-    case DIK_PRIOR: return 58;
-    case DIK_NEXT: return 59;
-    case DIK_HOME: return 60;
-    case DIK_END: return 61;
-    case DIK_CAPITAL: return 62;
-    case DIK_SCROLL: return 63;
-    case DIK_NUMLOCK: return 64;
-    case DIK_SYSRQ: return 65;
-    case DIK_PAUSE: return 66;
-    case DIK_F1: return 67;
-    case DIK_F2: return 68;
-    case DIK_F3: return 69;
-    case DIK_F4: return 70;
-    case DIK_F5: return 71;
-    case DIK_F6: return 72;
-    case DIK_F7: return 73;
-    case DIK_F8: return 74;
-    case DIK_F9: return 75;
-    case DIK_F10: return 76;
-    case DIK_F11: return 77;
-    case DIK_F12: return 78;
-    case DIK_NUMPAD0: return 79;
-    case DIK_NUMPAD1: return 80;
-    case DIK_NUMPAD2: return 81;
-    case DIK_NUMPAD3: return 82;
-    case DIK_NUMPAD4: return 83;
-    case DIK_NUMPAD5: return 84;
-    case DIK_NUMPAD6: return 85;
-    case DIK_NUMPAD7: return 86;
-    case DIK_NUMPAD8: return 87;
-    case DIK_NUMPAD9: return 88;
-    case DIK_DECIMAL: return 89;
-    case DIK_DIVIDE: return 90;
-    case DIK_MULTIPLY: return 91;
-    case DIK_SUBTRACT: return 92;
-    case DIK_ADD: return 93;
-    case DIK_NUMPADENTER: return 94;
-    case DIK_LSHIFT: return 95;
-    case DIK_LCONTROL: return 96;
-    case DIK_LMENU: return 97;
-    case DIK_LWIN: return 98;
-    case DIK_RSHIFT: return 99;
-    case DIK_RCONTROL: return 100;
-    case DIK_RMENU: return 101;
-    case DIK_RWIN: return 102;
-    case DIK_APPS: return 103;
-    case DIK_GRAVE: return 104;
-    default: return -1;
-  }
-}
-
-static bool jp_prompt_sprite_for_button(int button, jp_prompt_sprite* sprite)
-{
-  if (jp_prompt_graphics_object)
-  {
-    if (jp_current_prompt_atlas == jp_prompt_atlas::keyboard)
-    {
-      if (!ff7_externals.input_mapping || button < 0 || button >= 25)
-        return false;
-      int cell = jp_keyboard_atlas_cell((byte)ff7_externals.input_mapping[button]);
-      if (cell < 0)
-        return false;
-      *sprite = { jp_prompt_graphics_object, cell % 10 * 100, cell / 10 * 100, 100, 100,
-        (int)jp_prompt_texture_width, (int)jp_prompt_texture_height };
-      return true;
-    }
-
-    int column;
-    int row;
-    switch (button)
-    {
-      case 0:  column = 3; row = 0; break; // L2
-      case 1:  column = 4; row = 0; break; // R2
-      case 2:  column = 2; row = 0; break; // L1
-      case 3:  column = 2; row = 1; break; // R1
-      case 4:  column = 1; row = 1; break; // Triangle
-      case 5:  column = 1; row = 0; break; // Circle
-      case 6:  column = 0; row = 0; break; // Cross
-      case 7:  column = 0; row = 1; break; // Square
-      case 8:  column = 3; row = 1; break; // Select / Share
-      case 11: column = 4; row = 1; break; // Start / Options
-      case 12: column = 0; row = 2; break; // Up
-      case 13: column = 2; row = 2; break; // Right
-      case 14: column = 1; row = 2; break; // Down
-      case 15: column = 0; row = 3; break; // Left
-      default: return false;
-    }
-
-    *sprite = { jp_prompt_graphics_object, column * 100, row * 100, 100, 100,
-      (int)jp_prompt_texture_width, (int)jp_prompt_texture_height };
-    return true;
-  }
-
-  switch (button)
-  {
-    case 0:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,  32, 160, 32, 32, 256, 256 }; break; // L2
-    case 1:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 160, 32, 32, 256, 256 }; break; // R2
-    case 2:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,   0, 160, 32, 32, 256, 256 }; break; // L1
-    case 3:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 160, 32, 32, 256, 256 }; break; // R1
-    case 4:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,   0, 128, 32, 32, 256, 256 }; break; // Triangle
-    case 5:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 128, 32, 32, 256, 256 }; break; // Circle
-    case 6:  *sprite = { *ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC,  32, 128, 32, 32, 256, 256 }; break; // Cross
-    case 7:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 128, 32, 32, 256, 256 }; break; // Square
-    case 8:  *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192, 192, 32, 32, 256, 256 }; break; // Select
-    case 11: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 224, 192, 32, 32, 256, 256 }; break; // Start
-    case 12: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 160,  64, 32, 32, 256, 256 }; break; // Up
-    case 13: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 160,  96, 32, 32, 256, 256 }; break; // Right
-    case 14: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192,  64, 32, 32, 256, 256 }; break; // Down
-    case 15: *sprite = { *ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, 192,  96, 32, 32, 256, 256 }; break; // Left
-    default: return false;
-  }
-
-  return true;
-}
-
 static bool jp_submit_field_quad(ff7_graphics_object* graphics_object, float x, float y, float z,
   float width, float height, float u, float v, float u_width, float v_height, bgra_byte color, byte shape)
 {
@@ -841,44 +502,6 @@ static bool jp_submit_field_quad(ff7_graphics_object* graphics_object, float x, 
   return true;
 }
 
-static int jp_draw_field_prompt_button(int button, int x, int y, float z)
-{
-  jp_prompt_sprite sprite;
-  if (!jp_prompt_sprite_for_button(button, &sprite))
-    return x;
-
-  if (!jp_submit_field_quad(sprite.graphics_object, (float)x,
-      (float)y - jp_prompt_size / 4.0f, z, (float)jp_prompt_size, (float)jp_prompt_size,
-      (float)sprite.u / sprite.texture_width, (float)sprite.v / sprite.texture_height,
-      (float)sprite.width / sprite.texture_width, (float)sprite.height / sprite.texture_height,
-      get_character_color(7), 7))
-  {
-    static bool logged_submit_failure = false;
-    if (!logged_submit_failure)
-    {
-      ffnx_warning("Failed to submit Japanese button prompt for button %d\n", button);
-      logged_submit_failure = true;
-    }
-  }
-  return x + jp_prompt_size;
-}
-
-static int jp_draw_field_prompt_action(int action, int x, int y, float z)
-{
-  static constexpr byte action_map[] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15
-  };
-
-  if (action < 0 || action >= sizeof(action_map))
-    return x;
-
-  int mapped_action = action_map[action];
-  int button = jp_current_prompt_atlas == jp_prompt_atlas::keyboard
-    ? mapped_action
-    : jp_physical_button_for_action(mapped_action);
-  return jp_draw_field_prompt_button(button, x, y, z);
-}
-
 static int jp_draw_field_letter(uint16_t letter, int x, int y, float z, bgra_byte color, int color_index)
 {
   int page = letter > 0xFF ? (letter >> 8) - 0xF9 : 0;
@@ -903,13 +526,13 @@ static int jp_draw_field_letter(uint16_t letter, int x, int y, float z, bgra_byt
 static int jp_draw_field_fd_control(byte control, int x, int y, float z, bgra_byte color, int color_index)
 {
   if (control <= 0xFD)
-    return jp_draw_field_prompt_action(control & 0x0F, x, y, z);
+    return universal_buttons_draw_field_action(control & 0x0F, x, y, z);
 
   if (control == 0xFE)
   {
-    x = jp_draw_field_prompt_action(4, x, y, z);
+    x = universal_buttons_draw_field_action(4, x, y, z);
     x = jp_draw_field_letter(0xFAE7, x, y, z, color, color_index);
-    return jp_draw_field_prompt_action(5, x, y, z);
+    return universal_buttons_draw_field_action(5, x, y, z);
   }
 
   x = jp_draw_field_letter(0xFA7D, x, y, z, color, color_index);
@@ -931,9 +554,10 @@ static int jp_measure_field_letter(uint16_t letter, bool use_fixed_spacing)
 static int jp_measure_field_fd_control(byte control, bool use_fixed_spacing)
 {
   if (control <= 0xFD)
-    return jp_prompt_size / 2;
+    return universal_buttons_field_prompt_width();
   if (control == 0xFE)
-    return jp_prompt_size + jp_measure_field_letter(0xFAE7, use_fixed_spacing);
+    return 2 * universal_buttons_field_prompt_width()
+      + jp_measure_field_letter(0xFAE7, use_fixed_spacing);
   return jp_measure_field_letter(0xFA7D, use_fixed_spacing)
     + jp_measure_field_letter(0xFD33, use_fixed_spacing);
 }
@@ -1286,39 +910,10 @@ LABEL_39:
           {
             heartAtD9 = false;  // clear flag now that we are here
             isPrompt = false;   // clear flag now that we are here;
-            int prompt_button = -1;
-            if (jp_prompt_graphics_object)
-            {
-              switch (*buffer_text)
-              {
-                case 0xF6u:
-                  switch (buffer_text[1])
-                  {
-                    case 0x33u: prompt_button = 5; break;  // Circle
-                    case 0x34u: prompt_button = 2; break;  // L1
-                    case 0x35u: prompt_button = 0; break;  // L2
-                    case 0x36u: prompt_button = 3; break;  // R1
-                    case 0x37u: prompt_button = 1; break;  // R2
-                    case 0x38u: prompt_button = 11; break; // Start / Options
-                    case 0x39u: prompt_button = 8; break;  // Select / Share
-                    case 0x3Au: prompt_button = 12; break; // Up
-                    case 0x3Bu: prompt_button = 14; break; // Down
-                    case 0x3Cu: prompt_button = 15; break; // Left
-                    case 0x3Du: prompt_button = 13; break; // Right
-                    default: prompt_button = 5; break;     // Circle
-                  }
-                  if (buffer_text[1] >= 0x33u && buffer_text[1] <= 0x3Du)
-                  {
-                    ++buffer_text;
-                    ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
-                  }
-                  break;
-                case 0xF7u: prompt_button = 4; break; // Triangle
-                case 0xF8u: prompt_button = 7; break; // Square
-                case 0xF9u: prompt_button = 6; break; // Cross
-              }
-            }
-            if (prompt_button >= 0)
+            int prompt_button;
+            int prompt_byte_count;
+            if (universal_buttons_parse_field_prompt(
+                buffer_text, &prompt_button, &prompt_byte_count))
             {
               int color_index = character_n_shapes;
               if (*ff7_externals.word_DC3CC4)
@@ -1327,7 +922,13 @@ LABEL_39:
                 color_index = ((*ff7_externals.word_DC3CC8 >> 2) & 1)
                   ? *ff7_externals.word_91F028
                   : 0;
-              character_x = jp_draw_field_prompt_button(prompt_button, character_x, character_y, z_value);
+              character_x = universal_buttons_draw_field_prompt(
+                prompt_button, character_x, character_y, z_value);
+              if (prompt_byte_count == 2)
+              {
+                ++buffer_text;
+                ++(*ff7_externals.field_text_box_curr_n_characters_DC3CB0);
+              }
               *ff7_externals.field_do_draw_text_boxes_DC3CE8 = 1;
               ++buffer_text;
               --(*ff7_externals.field_remaining_character_length_DC3CCC);
@@ -1603,14 +1204,13 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
-      jp_draw_prompt_graphics_object(game_object);
+      universal_buttons_draw(game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8);
-      if (jp_prompt_graphics_object)
-        ff7_externals.reset_field_54_graphics_object_66E62C(jp_prompt_graphics_object);
+      universal_buttons_reset();
       *ff7_externals.text_box_do_draw_menu_win_c_blend_4_DC3CE4 = 0;
       *ff7_externals.field_do_draw_text_boxes_DC3CE8 = 0;
     }
@@ -3025,6 +2625,9 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 {
   // as many textboxes in flevel are set wrong, we need to resize them.
   float scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f; // resizer needs to match the draw scale (JP 1.25 / multibyte EN 1.0)
+  if (!ff7_japanese_edition && !ff7_multibyte_font
+      && ff7_externals.g_text_spacing_DB958C && *ff7_externals.g_text_spacing_DB958C)
+    memcpy(charWidthData[0], (byte*)*ff7_externals.g_text_spacing_DB958C, 256);
 	int16_t W = 0;
 	int16_t H = 0;
 	int16_t maxW = 0; // used to remember the longest row so far.
@@ -3139,12 +2742,13 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 
       continue; // back to the start, we already added to the length
     }
-    if (ff7_japanese_edition && possibleOpcode
-        && (character == 0xF6u || character == 0xF7u
-          || character == 0xF8u || character == 0xF9u))
+    int prompt_button;
+    int prompt_byte_count;
+    if (possibleOpcode && universal_buttons_parse_field_prompt(
+        &buffer_text[i], &prompt_button, &prompt_byte_count))
     {
-      W += jp_prompt_size / 2;
-      if (character == 0xF6u && next_character >= 0x33u && next_character <= 0x3Du)
+      W += universal_buttons_field_prompt_width();
+      if (prompt_byte_count == 2)
         ++i;
       continue;
     }
