@@ -920,6 +920,7 @@ LABEL_39:
             if (universal_buttons_parse_field_prompt(
                 buffer_text, &prompt_button, &prompt_byte_count))
             {
+              int prompt_x = character_x;
               int color_index = character_n_shapes;
               if (*ff7_externals.word_DC3CC4)
                 color_index = ((unsigned __int8)(*ff7_externals.word_DC3CC8 >> 2) - character_count) & 7;
@@ -929,6 +930,8 @@ LABEL_39:
                   : 0;
               character_x = universal_buttons_draw_field_prompt(
                 prompt_button, character_x, character_y, z_value);
+              if (ff7_japanese_edition)
+                character_x = prompt_x + (int)(16.0f * scaleFactor);
               if (prompt_byte_count == 2)
               {
                 ++buffer_text;
