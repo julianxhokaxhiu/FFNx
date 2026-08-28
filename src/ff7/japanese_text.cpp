@@ -1203,12 +1203,17 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
     }
     if ( *ff7_externals.field_do_draw_text_boxes_DC3CE8 || *ff7_externals.text_box_do_draw_menu_win_c_blend_4_DC3CE4 )
     {
+      uint32_t previous_viewport[4];
+      memcpy(previous_viewport, current_state.viewport, sizeof(previous_viewport));
+      ff7_externals.engine_gfx_setviewport_sub_66067A(0, 0, 640, 480, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_c_blend_4_diff_graphics_object_DC0FD8, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_win_d_blend_4_graphics_object_DC0FD4, game_object);
       universal_buttons_draw(game_object);
+      ff7_externals.engine_gfx_setviewport_sub_66067A(previous_viewport[0], previous_viewport[1],
+        previous_viewport[2], previous_viewport[3], game_object);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_b_blend_4_graphics_object_DC0FCC);
       ff7_externals.reset_field_54_graphics_object_66E62C(*ff7_externals.menu_win_c_blend_4_graphics_object_DC0FD0);
