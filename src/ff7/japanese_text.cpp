@@ -22,6 +22,7 @@
 #include "../renderer.h"
 #include "../utils.h"
 #include "universal_buttons.h"
+#include <algorithm>
 #include <string.h>
 
 static void multibyte_load_widths();
@@ -2852,15 +2853,16 @@ void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
   // Field files already ship with correctly sized windows, so this only fixes the animation target.
   if ( ff7_japanese_edition || (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8) ) // must run every frame as before to properly handle japanese edition.
   {
-    if (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x < 0)
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_pos_x = 0;              // if off the left, move it back on. :)
-
+    auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
+    // Field windows remain in 320x224 logical coordinates in the 640x480 renderer.
     if (ff7_field_autosize_text_box)
     {
       int16_t W = 0, H = 0;
       auto_resize_text_box(WINDOW_ID, &W, &H);
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width = W;
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height = H;
+      window.window_width = std::clamp<int16_t>(W, 0, 320);
+      window.window_height = std::clamp<int16_t>(H, 0, 224);
+      window.window_pos_x = std::clamp<int16_t>(window.window_pos_x, 0, 320 - window.window_width);
+      window.window_pos_y = std::clamp<int16_t>(window.window_pos_y, 0, 224 - window.window_height);
     }
   }
 
