@@ -3799,6 +3799,11 @@ struct ff7_externals
 	uint32_t chocobo_submit_draw_water_quad_77A7D0;
 	uint32_t chocobo_end_scene_call_77B79E;
 	void (*chocobo_end_scene_660EEB)(ff7_game_obj*);
+	uint32_t chocobo_populate_race_data_call_77C448;
+	void (*chocobo_populate_race_data_772357)();
+	byte* chocobo_race_names_E711E0;
+	byte* chocobo_special_racer_DC0AF2;
+	uint32_t chocobo_name_text_call_776B76;
 	uint32_t chocobo_gift_text_call_addresses[3];
 	int (*chocobo_draw_text_77941B)(byte*, int, int, int);
 	void(*chocobo_switch_mode_76DB33)(void* ff7_game_obj);

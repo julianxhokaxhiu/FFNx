@@ -130,13 +130,14 @@ int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_sha
 int common_submit_draw_char_from_buffer_large_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value);
 int common_submit_draw_text_from_buffer_jp(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value);
 int common_submit_draw_text_from_buffer_large_jp(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value);
+void chocobo_populate_race_data_jp();
 void menu_draw_everything_6CC9D3_jp();
 ff7_game_obj* menu_draw_with_viewport_6FA12F_jp(unsigned int x, unsigned int y, unsigned int width, unsigned int height);
 ff7_game_obj* menu_draw_640x480_6FA347_jp();
 void battle_draw_menu_everything_6CEE84_jp();
 void battle_draw_graphics_object_and_jafonts(ff7_graphics_object* graphics_object, ff7_game_obj* game_object);
 void battle_reset_graphics_object_and_jafonts(ff7_graphics_object* graphics_object);
-int chocobo_draw_gift_text_jp(byte* buffer, int color, int x, int y);
+int chocobo_draw_text_up_jp(byte* buffer, int color, int x, int y);
 void chocobo_end_scene_with_jafonts(ff7_game_obj* game_object);
 void draw_text_top_display_6D1CC0(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4);
 void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4);
