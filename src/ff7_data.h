@@ -1429,8 +1429,17 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.chocobo_init_viewport_values_76D320 = get_relative_call(main_init_loop, 0x38B);
 	uint32_t chocobo_sub_77C462 = get_relative_call(ff7_externals.chocobo_main_loop, 0x5E);
 	uint32_t chocobo_sub_77946A = get_relative_call(chocobo_sub_77C462, 0x649);
+	uint32_t chocobo_sub_77B2CA = get_relative_call(chocobo_sub_77C462, 0x64E);
+	uint32_t chocobo_sub_778C5D = get_relative_call(chocobo_sub_77C462, 0x849);
+	uint32_t chocobo_sub_7792CD = get_relative_call(chocobo_sub_778C5D, 0x65D);
 	ff7_externals.chocobo_submit_draw_fade_quad_77B1CE = get_relative_call(chocobo_sub_77946A, 0x33);
 	ff7_externals.chocobo_submit_draw_water_quad_77A7D0 = get_relative_call(chocobo_sub_77C462, 0x30B);
+	ff7_externals.chocobo_end_scene_call_77B79E = chocobo_sub_77B2CA + 0x4D4;
+	ff7_externals.chocobo_end_scene_660EEB = (void (*)(ff7_game_obj*))get_relative_call(chocobo_sub_77B2CA, 0x4D4);
+	ff7_externals.chocobo_gift_text_call_addresses[0] = chocobo_sub_7792CD + 0x1B;
+	ff7_externals.chocobo_gift_text_call_addresses[1] = chocobo_sub_7792CD + 0x3C;
+	ff7_externals.chocobo_gift_text_call_addresses[2] = chocobo_sub_7792CD + 0x5D;
+	ff7_externals.chocobo_draw_text_77941B = (int (*)(byte*, int, int, int))get_relative_call(chocobo_sub_7792CD, 0x1B);
 	ff7_externals.generic_submit_quad_graphics_object_671D2A = (void(*)(int, int, int, int, int, int, float, DWORD*))get_relative_call(ff7_externals.chocobo_submit_draw_water_quad_77A7D0, 0x9F);
 	ff7_externals.chocobo_fade_quad_data_97A498 = (byte*)get_absolute_value(chocobo_sub_77946A, 0x2F);
 	ff7_externals.snowboard_draw_sky_and_mountains_72DAF0 = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0x27);

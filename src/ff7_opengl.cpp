@@ -419,6 +419,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	replace_function((uint32_t)ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_jp);
 	if (ff7_japanese_edition)
 	{
+		replace_call_function(ff7_externals.chocobo_end_scene_call_77B79E, chocobo_end_scene_with_jafonts);
+		for (uint32_t address : ff7_externals.chocobo_gift_text_call_addresses)
+			replace_call_function(address, chocobo_draw_gift_text_jp);
 		replace_function(ff7_externals.menu_draw_with_viewport_6FA12F, menu_draw_with_viewport_6FA12F_jp);
 		replace_function(ff7_externals.menu_draw_640x480_6FA347, menu_draw_640x480_6FA347_jp);
 		replace_call_function(ff7_externals.flush_battle_text_640x480_6DC1EB + 0x5A, battle_draw_graphics_object_and_jafonts);

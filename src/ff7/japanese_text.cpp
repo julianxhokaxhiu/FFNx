@@ -1267,6 +1267,11 @@ int common_submit_draw_text_from_buffer_large_jp(int16_t x, int16_t y, byte* buf
   return jp_submit_draw_text_from_buffer(x, y, buffer, n_shapes, z_value, false);
 }
 
+int chocobo_draw_gift_text_jp(byte* buffer, int color, int x, int y)
+{
+  return ff7_externals.chocobo_draw_text_77941B(buffer, color, x, y - 4);
+}
+
 int common_submit_draw_char_from_buffer_large_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value)
 {
   bool previous_small_glyphs = jp_small_glyphs;
@@ -1599,6 +1604,15 @@ static void reset_jafonts()
 
   for (ff7_graphics_object* graphics_object : jafont_objects)
     ff7_externals.reset_field_54_graphics_object_66E62C(graphics_object);
+}
+
+void chocobo_end_scene_with_jafonts(ff7_game_obj* game_object)
+{
+  ff7_externals.engine_gfx_draw_predefined_polygon_set_field_84_sub_660E95(0, game_object);
+  ff7_externals.engine_gfx_set_single_renderstate_sub_660C3A(2, 0, game_object);
+  draw_jafonts(game_object);
+  reset_jafonts();
+  ff7_externals.chocobo_end_scene_660EEB(game_object);
 }
 
 ff7_game_obj* menu_draw_with_viewport_6FA12F_jp(unsigned int x, unsigned int y, unsigned int width, unsigned int height)

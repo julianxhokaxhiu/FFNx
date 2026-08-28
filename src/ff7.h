@@ -3797,6 +3797,10 @@ struct ff7_externals
 	uint32_t chocobo_init_viewport_values_76D320;
 	uint32_t chocobo_submit_draw_fade_quad_77B1CE;
 	uint32_t chocobo_submit_draw_water_quad_77A7D0;
+	uint32_t chocobo_end_scene_call_77B79E;
+	void (*chocobo_end_scene_660EEB)(ff7_game_obj*);
+	uint32_t chocobo_gift_text_call_addresses[3];
+	int (*chocobo_draw_text_77941B)(byte*, int, int, int);
 	void(*chocobo_switch_mode_76DB33)(void* ff7_game_obj);
 	void(*generic_submit_quad_graphics_object_671D2A)(int, int, int, int, int, int, float, DWORD*) ;
 	byte* chocobo_fade_quad_data_97A498;

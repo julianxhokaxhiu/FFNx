@@ -136,6 +136,8 @@ ff7_game_obj* menu_draw_640x480_6FA347_jp();
 void battle_draw_menu_everything_6CEE84_jp();
 void battle_draw_graphics_object_and_jafonts(ff7_graphics_object* graphics_object, ff7_game_obj* game_object);
 void battle_reset_graphics_object_and_jafonts(ff7_graphics_object* graphics_object);
+int chocobo_draw_gift_text_jp(byte* buffer, int color, int x, int y);
+void chocobo_end_scene_with_jafonts(ff7_game_obj* game_object);
 void draw_text_top_display_6D1CC0(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4);
 void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsigned __int16 a4);
 void main_menu_draw_everything_maybe_6C0B91_jp();
