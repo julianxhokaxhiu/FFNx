@@ -430,6 +430,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		for (uint32_t i = 0; i < ff7_externals.japanese_text_small_glyph_call_count; ++i)
 			replace_call_function(ff7_externals.japanese_text_small_glyph_call_addresses[i], common_submit_draw_text_from_buffer_jp);
 
+		// Match the item/materia cursor stride to the proportional Japanese label spacing.
+		patch_code_byte(ff7_externals.menu_shop_loop + 0xC9, 85);
+
 		replace_function((uint32_t)ff7_externals.draw_string_from_buffer_sub_6F5B03, common_submit_draw_text_from_buffer_large_jp);
 		replace_call_function(ff7_externals.japanese_text_large_glyph_char_call_6DD3C3, common_submit_draw_char_from_buffer_large_6F564E_jp);
 		replace_call_function(ff7_externals.japanese_text_large_glyph_char_call_7193DE, common_submit_draw_char_from_buffer_large_6F564E_jp);
