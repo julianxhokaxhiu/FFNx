@@ -203,17 +203,6 @@ void universal_buttons_flush_menu(ff7_graphics_object* graphics_object, ff7_game
   universal_buttons_reset();
 }
 
-static int physical_button_for_action(int action)
-{
-  if (ff7_externals.savemap && (ff7_externals.savemap->config_bitmap_1 & 0x04))
-  {
-    for (int button = 0; button < 16; ++button)
-      if ((byte)ff7_externals.savemap->controller_mapping[button] == action)
-        return button;
-  }
-  return action < 16 ? action : -1;
-}
-
 struct prompt_sprite
 {
   ff7_graphics_object* graphics_object;
@@ -404,14 +393,22 @@ static bool submit_prompt_quad(const prompt_sprite& sprite, float x, float y, fl
   return true;
 }
 
+static int keyboard_binding_for_button(int button)
+{
+  if (button < 0 || button > 15 || button == 9 || button == 10)
+    return -1;
+  return button + 1;
+}
+
 int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
 {
   prompt_sprite sprite;
   if (current_prompt_atlas == prompt_atlas::keyboard)
   {
-    if (!ff7_externals.input_mapping || button < 0 || button >= 25)
+    int binding = keyboard_binding_for_button(button);
+    if (!ff7_externals.input_mapping || binding < 0)
       return x;
-    button = ff7_externals.input_mapping[button];
+    button = ff7_externals.input_mapping[binding];
   }
   if (!sprite_for_button(current_prompt_atlas, button, &sprite))
     return x;
@@ -429,17 +426,43 @@ int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
   return x + prompt_size;
 }
 
-int universal_buttons_draw_field_action(int action, int x, int y, float z)
+int universal_buttons_draw_menu_prompt(int button, int x, int y, float z)
 {
-  static constexpr byte action_map[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15 };
-  if (action < 0 || action >= sizeof(action_map))
+  prompt_sprite sprite;
+  if (current_prompt_atlas == prompt_atlas::keyboard)
+  {
+    int binding = keyboard_binding_for_button(button);
+    if (!ff7_externals.input_mapping || binding < 0)
+      return x;
+    button = ff7_externals.input_mapping[binding];
+  }
+  if (!sprite_for_button(current_prompt_atlas, button, &sprite))
     return x;
 
-  int mapped_action = action_map[action];
-  int button = current_prompt_atlas == prompt_atlas::keyboard
-    ? mapped_action
-    : physical_button_for_action(mapped_action);
-  return universal_buttons_draw_field_prompt(button, x, y, z);
+  if (!submit_prompt_quad(sprite, (float)x, (float)y - config_prompt_size / 4.0f,
+      z, config_prompt_size))
+    return x;
+  return x + config_prompt_size;
+}
+
+static int button_for_jp_control(int control)
+{
+  static constexpr int buttons[] = {
+    6, 5, 4, 12, 14, 13, 15, 11, 7, 2, 3, 1, 8, 0,
+  };
+  if (control < 0 || control >= sizeof(buttons) / sizeof(buttons[0]))
+    return -1;
+  return buttons[control];
+}
+
+int universal_buttons_draw_field_jp_control(int control, int x, int y, float z)
+{
+  return universal_buttons_draw_field_prompt(button_for_jp_control(control), x, y, z);
+}
+
+int universal_buttons_draw_menu_jp_control(int control, int x, int y, float z)
+{
+  return universal_buttons_draw_menu_prompt(button_for_jp_control(control), x, y, z);
 }
 
 int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color, float z)

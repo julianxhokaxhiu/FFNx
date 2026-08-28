@@ -527,13 +527,13 @@ static int jp_draw_field_letter(uint16_t letter, int x, int y, float z, bgra_byt
 static int jp_draw_field_fd_control(byte control, int x, int y, float z, bgra_byte color, int color_index)
 {
   if (control <= 0xFD)
-    return universal_buttons_draw_field_action(control & 0x0F, x, y, z);
+    return universal_buttons_draw_field_jp_control(control & 0x0F, x, y, z);
 
   if (control == 0xFE)
   {
-    x = universal_buttons_draw_field_action(4, x, y, z);
+    x = universal_buttons_draw_field_jp_control(4, x, y, z);
     x = jp_draw_field_letter(0xFAE7, x, y, z, color, color_index);
-    return universal_buttons_draw_field_action(5, x, y, z);
+    return universal_buttons_draw_field_jp_control(5, x, y, z);
   }
 
   x = jp_draw_field_letter(0xFA7D, x, y, z, color, color_index);
@@ -1254,8 +1254,34 @@ static int jp_submit_draw_text_from_buffer(int16_t x, int16_t y, byte* buffer, b
 
   for (int i = 0; i < 1024 && buffer[i] != 0xFF; ++i)
   {
+    if (ff7_japanese_edition && buffer[i] == 0xFD
+        && buffer[i + 1] >= 0xF0 && buffer[i + 1] <= 0xFD)
+    {
+      int prompt_x = universal_buttons_draw_menu_jp_control(buffer[i + 1] & 0x0F,
+        x, y, z_value);
+      if (prompt_x != x)
+      {
+        x = (int16_t)prompt_x;
+        ++i;
+        continue;
+      }
+    }
+
+    int prompt_button;
+    int prompt_byte_count;
+    if (universal_buttons_parse_field_prompt(&buffer[i], &prompt_button, &prompt_byte_count))
+    {
+      int prompt_x = universal_buttons_draw_menu_prompt(prompt_button, x, y, z_value);
+      if (prompt_x != x)
+      {
+        x = (int16_t)prompt_x;
+        i += prompt_byte_count - 1;
+        continue;
+      }
+    }
+
     uint16_t letter = buffer[i];
-    if (buffer[i] >= 0xF8 && buffer[i] <= 0xFE && buffer[i + 1] != 0xFF)
+    if (buffer[i] >= 0xFA && buffer[i] <= 0xFE && buffer[i + 1] != 0xFF)
       letter = (uint16_t)(buffer[i] << 8 | buffer[++i]);
     x = (int16_t)common_submit_draw_char_from_buffer_6F564E_jp(x, y, n_shapes, letter, z_value);
   }
