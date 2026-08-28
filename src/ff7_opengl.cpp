@@ -440,6 +440,20 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// 3-mode (hiragana/katakana/eisuu) name-entry screen
 		name_input_jp_install();
 	}
+	if (version == VERSION_FF7_102_US)
+	{
+		replace_call_function(ff7_externals.menu_sub_6CDE72 + 0x202,
+			universal_buttons_draw_config_binding);
+		replace_call_function(ff7_externals.menu_sub_6CDE72 + 0x4A1,
+			universal_buttons_draw_config_binding);
+	}
+	if (!ff7_japanese_edition && !ff7_multibyte_font)
+	{
+		replace_call_function((uint32_t)ff7_externals.menu_draw_everything_6CC9D3 + 0xE5,
+			universal_buttons_flush_menu);
+		replace_call_function((uint32_t)ff7_externals.menu_draw_everything_6CC9D3 + 0x11F,
+			universal_buttons_flush_menu);
+	}
 
 	//######################
 	// menu rendering fix

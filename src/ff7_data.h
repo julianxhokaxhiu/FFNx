@@ -1603,6 +1603,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 		ff7_externals.menu_sub_6C85F1 = get_relative_call(ff7_externals.menu_sub_6C7B54, 0x3BA);
 		ff7_externals.menu_sub_6CA346 = ff7_externals.menu_subs_call_table[0];
 		ff7_externals.menu_sub_6CDE72 = get_relative_call(ff7_externals.config_menu_sub, 0xE8);
+		ff7_externals.config_input_mapping = (uint32_t*)get_absolute_value(ff7_externals.menu_sub_6CDE72, 0x145);
 		ff7_externals.menu_sub_6DE3DB = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x46);
 		ff7_externals.menu_sub_6E0D28 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1A6);
 		ff7_externals.menu_sub_6E1308 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1AD);

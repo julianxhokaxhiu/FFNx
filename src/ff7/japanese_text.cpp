@@ -1521,6 +1521,8 @@ void menu_draw_everything_6CC9D3_jp()
       ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_5_graphics_object, game_object);
       ff7_externals.engine_draw_graphics_object_66E641(ff7_externals.menu_jafont_6_graphics_object, game_object);
     }
+    universal_buttons_draw(game_object);
+    universal_buttons_reset();
     if (*ff7_externals.dword_DC12EC == 9 || *ff7_externals.dword_DC12E4)
     {
       ff7_externals.engine_draw_graphics_object_66E641(*ff7_externals.menu_avatar2_1_graphics_object_DC1020, game_object);
