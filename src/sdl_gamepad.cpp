@@ -84,6 +84,16 @@ bool SDLGamepad::IsXbox() const
     return type == SDL_GAMEPAD_TYPE_XBOX360 || type == SDL_GAMEPAD_TYPE_XBOXONE;
 }
 
+bool SDLGamepad::IsSwitch() const
+{
+    if (!sdlgamepad) return false;
+    SDL_GamepadType type = SDL_GetGamepadType(sdlgamepad);
+    return type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO ||
+        type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT ||
+        type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT ||
+        type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR;
+}
+
 static float applyDeadzone(float value, float deadzone)
 {
     float norm = fmaxf(-1.0f, value / SDL_JOYSTICK_AXIS_MAX);

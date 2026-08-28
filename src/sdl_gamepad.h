@@ -51,6 +51,7 @@ public:
     int  GetPort() const;
     const char* GetName() const;
     bool IsXbox() const;
+    bool IsSwitch() const;
     bool CheckConnection();
     bool HasRumble() const;
     bool Refresh();

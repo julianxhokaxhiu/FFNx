@@ -21,6 +21,7 @@ enum class prompt_atlas
   keyboard,
   playstation,
   xbox,
+  switch_controller,
   count,
 };
 
@@ -43,12 +44,20 @@ static prompt_resource& resource_for(prompt_atlas atlas)
   return prompt_resources[(int)atlas];
 }
 
+static bool resource_available(prompt_atlas atlas)
+{
+  const prompt_resource& resource = resource_for(atlas);
+  return resource.graphics_object && resource.texture;
+}
+
 static prompt_atlas select_prompt_atlas()
 {
   if (use_sdl_gamepad)
   {
     if (!sdlgamepad.CheckConnection())
       return prompt_atlas::keyboard;
+    if (sdlgamepad.IsSwitch())
+      return prompt_atlas::switch_controller;
     return sdlgamepad.IsXbox() ? prompt_atlas::xbox : prompt_atlas::playstation;
   }
 
@@ -98,7 +107,9 @@ static void load_prompt_atlas(prompt_atlas atlas, struc_3* graphics_context,
   prompt_resource& resource = resource_for(atlas);
   const char* atlas_name = atlas == prompt_atlas::keyboard
     ? "buttons_pc_en.png"
-    : atlas == prompt_atlas::xbox ? "buttons.png" : "buttons_ps4.png";
+    : atlas == prompt_atlas::xbox ? "buttons.png"
+    : atlas == prompt_atlas::switch_controller ? "buttons_switch.png"
+    : "buttons_ps4.png";
   _snprintf(path, sizeof(path), R"(%s\data\png\%s)", basedir, atlas_name);
   if (!fileExists(path))
     return;
@@ -158,7 +169,8 @@ void universal_buttons_load(struc_3* graphics_context, char* template_path, ff7_
   load_prompt_atlas(prompt_atlas::keyboard, graphics_context, template_path, game_object);
   load_prompt_atlas(prompt_atlas::playstation, graphics_context, template_path, game_object);
   load_prompt_atlas(prompt_atlas::xbox, graphics_context, template_path, game_object);
-  if (!resource_for(current_prompt_atlas).graphics_object)
+  load_prompt_atlas(prompt_atlas::switch_controller, graphics_context, template_path, game_object);
+  if (!resource_available(current_prompt_atlas))
     current_prompt_atlas = prompt_atlas::playstation;
 }
 
@@ -328,7 +340,7 @@ static int keyboard_atlas_cell(byte key)
 static bool sprite_for_button(prompt_atlas atlas, int button, prompt_sprite* sprite)
 {
   prompt_resource& resource = resource_for(atlas);
-  if (!resource.graphics_object)
+  if (!resource_available(atlas))
     return false;
 
   if (atlas == prompt_atlas::keyboard)
@@ -450,7 +462,7 @@ int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color
   const int binding = ff7_externals.config_input_mapping[25 * column + binding_indices[row]];
   const prompt_atlas connected_atlas = select_prompt_atlas();
   const prompt_atlas atlas = column == 0 ? prompt_atlas::keyboard
-    : resource_for(connected_atlas).graphics_object && connected_atlas != prompt_atlas::keyboard
+    : resource_available(connected_atlas) && connected_atlas != prompt_atlas::keyboard
       ? connected_atlas
       : prompt_atlas::playstation;
   int button = binding;

@@ -9,6 +9,7 @@ The prompt atlas is selected automatically when the menu graphics are loaded:
 | Keyboard | `buttons_pc_en.png` | 1000 x 1200 pixels |
 | PlayStation-compatible controller | `buttons_ps4.png` | 512 x 512 pixels |
 | Xbox-compatible controller | `buttons.png` | 512 x 512 pixels |
+| Nintendo Switch-compatible controller | `buttons_switch.png` | 512 x 512 pixels |
 
 The files must be installed in:
 
@@ -22,15 +23,16 @@ For example:
 C:\Games\Final Fantasy VII\data\png\buttons_pc_en.png
 C:\Games\Final Fantasy VII\data\png\buttons_ps4.png
 C:\Games\Final Fantasy VII\data\png\buttons.png
+C:\Games\Final Fantasy VII\data\png\buttons_switch.png
 ```
 
 These atlases are FFNx runtime assets and are loaded directly from `data\png`; they do not use the regular `mod_path` external-texture directory.
 
 ## Device selection and fallback
 
-When SDL gamepad input is enabled, FFNx selects the Xbox or PlayStation atlas from the connected controller type. With the legacy input backend, XInput devices use the Xbox atlas, DirectInput joysticks use the PlayStation atlas, and keyboard input uses the keyboard atlas.
+When SDL gamepad input is enabled, FFNx selects the Xbox, PlayStation, or Nintendo Switch atlas from the connected controller type. Switch Pro Controllers, individual Joy-Cons, and paired Joy-Cons use the Switch atlas. With the legacy input backend, XInput devices use the Xbox atlas, DirectInput joysticks use the PlayStation atlas, and keyboard input uses the keyboard atlas.
 
-If `buttons_pc_en.png` or `buttons.png` is missing, FFNx falls back to `buttons_ps4.png`. If the selected image has the wrong dimensions, FFNx rejects it and records a warning in `FFNx.log`.
+If the selected keyboard, Xbox, or Switch atlas is missing, FFNx falls back to `buttons_ps4.png`. If the selected image has the wrong dimensions, FFNx rejects it and records a warning in `FFNx.log`.
 
 Restart the game after replacing an atlas. The selected path is reported in `FFNx.log` as `Using button prompt atlas`.
 
@@ -57,7 +59,7 @@ The keyboard prompt shown for an action follows the player's current FF7 keyboar
 
 ## Controller atlases
 
-Both controller textures use the same cell layout. This lets a mod replace only the artwork while FFNx keeps the action and controller mapping behavior consistent.
+All controller textures use the same cell layout. This lets a mod replace only the artwork while FFNx keeps the action and controller mapping behavior consistent.
 
 | Row | Column 0 | Column 1 | Column 2 | Column 3 | Column 4 |
 | --- | --- | --- | --- | --- | --- |
@@ -78,6 +80,10 @@ The templates use the same layout but different labels to make their intended co
 ### XBox
 
 ![Download the Xbox template](universal_buttons/buttons.png)
+
+### Nintendo Switch
+
+![Download the Nintendo Switch template](universal_buttons/buttons_switch.png)
 
 ## Adding prompts to field dialogue
 
@@ -147,8 +153,9 @@ data\
     buttons_pc_en.png
     buttons_ps4.png
     buttons.png
+    buttons_switch.png
 ```
 
-All three files are recommended. A controller-only pack may omit the keyboard atlas, but FFNx will then use `buttons_ps4.png` when no controller is connected. A keyboard-only pack should also include a PlayStation atlas because it is the final fallback.
+All four files are recommended. A controller-only pack may omit the keyboard atlas, but FFNx will then use `buttons_ps4.png` when no controller is connected. A keyboard-only pack should also include a PlayStation atlas because it is the final fallback.
 
 Do not rename the files or change their dimensions. Existing files in `data\png` should be backed up before installing another button pack.
