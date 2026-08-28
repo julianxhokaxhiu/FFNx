@@ -749,7 +749,7 @@ int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t ch
               ++buffer_text;
               break;
             }
-            if (*buffer_text != 233)  // if we aren't goign to the next window
+            if (*buffer_text != 233)  // FE E9 toggles fixed glyph spacing
               goto LABEL_39;  // not a prompts skip the check for them.
             (*ff7_externals.dword_DC3CD4) ^= 1u;
             ++buffer_text;
@@ -804,7 +804,9 @@ LABEL_39:
             uint16_t field_letter = curPage == 0
               ? (uint16_t)character
               : (uint16_t)(((0xFA + curPage - 1) << 8) | character);
-            int field_spacing = jp_spacing_metric(field_letter, charWidth);
+            int field_spacing = ff7_japanese_edition && *ff7_externals.dword_DC3CD4
+              ? 64
+              : jp_spacing_metric(field_letter, charWidth);
             if (ff7_japanese_edition)
               leftPadding = 0;
             offset_u_in_byte = 32 * (character % 16);
@@ -828,7 +830,7 @@ LABEL_39:
                 ++(*ff7_externals.field_text_line_row_DC3CB8);   // deref: soft-wrap advances the real row (see newline block).
               }
             }
-            if ( !(*ff7_externals.dword_DC3CD4) ) // if not going to next window
+            if ( !(*ff7_externals.dword_DC3CD4) ) // proportional spacing keeps the glyph's left padding
               character_x += leftPadding; // apply padding
             if ( offset_u_in_byte <= 480 ) // can't actually fail, but just in case...
             {
@@ -896,8 +898,10 @@ LABEL_39:
               graphics_object->field_7C = 2 * character_n_shapes;
               (*ff7_externals.field_do_draw_character_DC3CEC) = 1;
             }
-            if ( (*ff7_externals.dword_DC3CD4) )  // if goign to next window
-              character_x += 30; // extra padding
+            if ( (*ff7_externals.dword_DC3CD4) )
+              character_x += ff7_japanese_edition
+                ? (int)(field_spacing * 0.3125f)
+                : 30;
             else
               character_x += ff7_japanese_edition
                 ? (int)(field_spacing * 0.3125f)
