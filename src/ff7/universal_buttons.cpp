@@ -149,7 +149,7 @@ static void load_prompt_atlas(prompt_atlas atlas, struc_3* graphics_context,
   private_texture_set->ogl.height = resource.texture_height;
   resource.graphics_object->hundred_data->texture_set = (struct texture_set*)private_texture_set;
   polygon_set->hundred_data->texture_set = (struct texture_set*)private_texture_set;
-  ffnx_info("Using button prompt atlas: %s\n", path);
+  if (trace_all || trace_gamepad) ffnx_info("Using button prompt atlas: %s\n", path);
 }
 
 void universal_buttons_load(struc_3* graphics_context, char* template_path, ff7_game_obj* game_object)
