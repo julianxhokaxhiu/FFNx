@@ -1,5 +1,6 @@
 #include "universal_buttons.h"
 
+#include "../cfg.h"
 #include "defs.h"
 #include "../gamepad.h"
 #include "../globals.h"
@@ -7,6 +8,7 @@
 #include "../joystick.h"
 #include "../log.h"
 #include "../renderer.h"
+#include "../saveload.h"
 #include "../sdl_gamepad.h"
 #include "../utils.h"
 
@@ -298,23 +300,41 @@ static void load_prompt_atlas(prompt_atlas atlas, struc_3* graphics_context,
 {
   char path[BASEDIR_LENGTH + 64];
   prompt_resource& resource = resource_for(atlas);
-  const char* atlas_name = atlas == prompt_atlas::keyboard
-    ? "buttons_pc_en.png"
-    : atlas == prompt_atlas::xbox ? "buttons.png"
-    : atlas == prompt_atlas::switch_controller ? "buttons_switch.png"
-    : "buttons_ps4.png";
-  _snprintf(path, sizeof(path), R"(%s\data\png\%s)", basedir, atlas_name);
-  if (!fileExists(path))
+  const char* atlas_name = atlas == prompt_atlas::keyboard ? "buttons_pc_en"
+    : atlas == prompt_atlas::xbox ? "buttons"
+    : atlas == prompt_atlas::switch_controller ? "buttons_switch"
+    : "buttons_ps4";
+  bool atlas_found = false;
+  for (const std::string& extension : mod_ext)
+  {
+    _snprintf(path, sizeof(path), R"(%s\data\png\%s.%s)",
+      basedir, atlas_name, extension.c_str());
+    if (!fileExists(path))
+      continue;
+
+    atlas_found = true;
+    resource.texture_width = 0;
+    resource.texture_height = 0;
+    resource.texture = load_texture_helper(path, &resource.texture_width,
+      &resource.texture_height, stricmp(extension.c_str(), "png") == 0, true);
+    if (texture_available(resource))
+      break;
+  }
+  if (!atlas_found)
     return;
 
   resource.graphics_object = ff7_externals.engine_load_graphics_object_6710AC(
     1, 12, graphics_context, template_path, (int)game_object->dx_sfx_something);
   if (!resource.graphics_object || !resource.graphics_object->hundred_data
       || !resource.graphics_object->hundred_data->texture_set)
+  {
+    delete_texture(resource);
+    resource.texture = 0;
+    resource.texture_width = 0;
+    resource.texture_height = 0;
     return;
+  }
 
-  resource.texture = newRenderer.createTextureLibPng(
-    path, &resource.texture_width, &resource.texture_height, true);
   const uint32_t reference_width = atlas_reference_width(atlas);
   const uint32_t reference_height = atlas_reference_height(atlas);
   if (!texture_available(resource))

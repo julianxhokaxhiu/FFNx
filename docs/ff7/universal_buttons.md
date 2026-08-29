@@ -4,12 +4,12 @@ FFNx can replace button symbols in Final Fantasy VII field dialogue with prompts
 
 The prompt atlas is selected automatically when the menu graphics are loaded:
 
-| Input device | Texture | Reference size |
+| Input device | Texture basename | Reference size |
 | --- | --- | --- |
-| Keyboard | `buttons_pc_en.png` | 1000 x 1200 pixels |
-| PlayStation-compatible controller | `buttons_ps4.png` | 512 x 512 pixels |
-| Xbox-compatible controller | `buttons.png` | 512 x 512 pixels |
-| Nintendo Switch-compatible controller | `buttons_switch.png` | 512 x 512 pixels |
+| Keyboard | `buttons_pc_en` | 1000 x 1200 pixels |
+| PlayStation-compatible controller | `buttons_ps4` | 512 x 512 pixels |
+| Xbox-compatible controller | `buttons` | 512 x 512 pixels |
+| Nintendo Switch-compatible controller | `buttons_switch` | 512 x 512 pixels |
 
 The files must be installed in:
 
@@ -28,17 +28,19 @@ C:\Games\Final Fantasy VII\data\png\buttons_switch.png
 
 These atlases are FFNx runtime assets and are loaded directly from `data\png`; they do not use the regular `mod_path` external-texture directory.
 
+FFNx tries each extension listed in the `mod_ext` configuration option, in order, and loads the first available supported texture. With the default `mod_ext = ["dds", "png"]`, for example, `buttons_ps4.dds` takes priority over `buttons_ps4.png`. This extension priority applies independently to all four atlas basenames.
+
 ## Device selection and fallback
 
 When SDL gamepad input is enabled, FFNx selects the Xbox, PlayStation, or Nintendo Switch atlas from the connected controller type. Switch Pro Controllers, individual Joy-Cons, and paired Joy-Cons use the Switch atlas. With the legacy input backend, XInput devices use the Xbox atlas, DirectInput joysticks use the PlayStation atlas, and keyboard input uses the keyboard atlas.
 
-If the selected keyboard, Xbox, or Switch atlas is missing, FFNx falls back to `buttons_ps4.png`. If the selected image has the wrong proportions, FFNx rejects it and records a warning in `FFNx.log`.
+If the selected keyboard, Xbox, or Switch atlas is missing, FFNx falls back to the available `buttons_ps4` atlas format. If the selected image has the wrong proportions, FFNx rejects it and records a warning in `FFNx.log`.
 
 Restart the game after replacing an atlas. The selected path is reported in `FFNx.log` as `Using button prompt atlas`.
 
 ## Atlas rules
 
-- Save the atlas as a PNG with transparency.
+- Save the atlas in a supported format listed in `mod_ext`, such as DDS or PNG, with transparency.
 - Keep the canvas proportions listed above. The dimensions may be scaled proportionally; for example, controller atlases may be 128 x 128 pixels.
 - At the reference dimensions, every sprite occupies a 100 x 100 pixel cell. Scale the cells with the canvas.
 - Do not move a sprite into another cell; the cell position defines its key or button.
@@ -49,7 +51,7 @@ Restart the game after replacing an atlas. The selected path is reported in `FFN
 
 ## Keyboard atlas
 
-`buttons_pc_en.png` is a 10-column by 12-row atlas. Cell 0 is unused. Cells 1 through 104 contain the supported keyboard keys, ordered left-to-right and then top-to-bottom.
+`buttons_pc_en` is a 10-column by 12-row atlas. Cell 0 is unused. Cells 1 through 104 contain the supported keyboard keys, ordered left-to-right and then top-to-bottom.
 
 The supplied template labels every populated cell with its index and key name:
 
@@ -145,7 +147,7 @@ Keep these points in mind when editing or rebuilding an `flevel`:
 
 ## Packaging a button pack
 
-A distributable pack can contain this structure:
+A PNG-based distributable pack can contain this structure:
 
 ```text
 data\
@@ -158,4 +160,4 @@ data\
 
 All four files are recommended. A controller-only pack may omit the keyboard atlas, but FFNx will then use `buttons_ps4.png` when no controller is connected. A keyboard-only pack should also include a PlayStation atlas because it is the final fallback.
 
-Do not rename the files or change their proportions. Existing files in `data\png` should be backed up before installing another button pack.
+The same basenames may use DDS or another supported extension enabled in `mod_ext`. Do not rename the basenames or change their proportions. Existing files in `data\png` should be backed up before installing another button pack.
