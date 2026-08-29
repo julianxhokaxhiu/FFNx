@@ -845,17 +845,28 @@ void SteamAchievementsFF8::unlockTopLevelAchievement(int level)
     }
 }
 
-void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
+void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement(const savemap_ff8 &savemap)
 {
-    auto opt_kills = this->steamManager->getUserStat(ENEMY_KILLED_STAT_NAME);
-    if (!opt_kills.has_value()) {
-        ffnx_error("%s - failed to get %s stat\n", __func__, ENEMY_KILLED_STAT_NAME.c_str());
-        return;
-    }
+    int new_kills = 0;
+    if (this->isRemastered) {
+        for (int i = 0; i < G_FORCE_NUM; i++) {
+            new_kills += savemap.gfs[i].kills;
+        }
+        for (int i = 0; i < CHAR_NUM; i++) {
+            new_kills += savemap.chars[i].kills;
+        }
+        new_kills++;
+    } else {
+        auto opt_kills = this->steamManager->getUserStat(ENEMY_KILLED_STAT_NAME);
+        if (!opt_kills.has_value()) {
+            ffnx_error("%s - failed to get %s stat\n", __func__, ENEMY_KILLED_STAT_NAME.c_str());
+            return;
+        }
 
-    int new_kills = opt_kills.value() + 1;
-    ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, new_kills);
-    this->steamManager->updateUserStat(ENEMY_KILLED_STAT_NAME, new_kills);
+        new_kills += opt_kills.value() + 1;
+        ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, new_kills);
+        this->steamManager->updateUserStat(ENEMY_KILLED_STAT_NAME, new_kills);
+    }
 
     int achId100 = getAchievementIdByVersion(TOTAL_KILLS_100, NEW_ACHIEVEMENT_1_10);
     int achId1000 = getAchievementIdByVersion(TOTAL_KILLS_1000, NEW_ACHIEVEMENT_1_22);
@@ -881,16 +892,46 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement()
     }
 }
 
-void SteamAchievementsFF8::increaseMagicStockAndTryUnlockAchievement()
+void SteamAchievementsFF8::increaseMagicStockAndTryUnlockAchievement(savemap_ff8 &savemap)
 {
-    int achId = getAchievementIdByVersion(DRAW_100_MAGIC, NEW_ACHIEVEMENT_1_12);
-    this->increaseUserStatAndTryUnlockAchievement(achId, STOCK_MAGIC_STAT_NAME, 100, true);
+    if (this->isRemastered) {
+        savemap.header.curr_disk.bytes.draw_magic_storage += 1;
+        byte draw_count = savemap.header.curr_disk.bytes.draw_magic_storage;
+
+        ach_trace("%s - trying to unlock DRAW_100_MAGIC achivement (count: %d)\n", __func__, draw_count);
+
+        if (draw_count >= 100)
+        {
+            this->steamManager->setAchievement(NEW_ACHIEVEMENT_1_12);
+        }
+        else if (draw_count % 10 == 0)
+        {
+            this->steamManager->showAchievementProgress(NEW_ACHIEVEMENT_1_12, draw_count, 100);
+        }
+    } else {
+        this->increaseUserStatAndTryUnlockAchievement(DRAW_100_MAGIC, STOCK_MAGIC_STAT_NAME, 100, true);
+    }
 }
 
-void SteamAchievementsFF8::increaseMagicDrawsAndTryUnlockAchievement()
+void SteamAchievementsFF8::increaseMagicDrawsAndTryUnlockAchievement(savemap_ff8 &savemap)
 {
-    int achId = getAchievementIdByVersion(MAGIC_FINDER, NEW_ACHIEVEMENT_1_24);
-    this->increaseUserStatAndTryUnlockAchievement(achId, DRAW_MAGIC_STAT_NAME, 100, true);
+    if (this->isRemastered) {
+        savemap.header.curr_disk.bytes.magic_finder_storage += 1;
+        byte draw_count = savemap.header.curr_disk.bytes.magic_finder_storage;
+
+        ach_trace("%s - trying to unlock MAGIC_FINDER achivement (count: %d)\n", __func__, draw_count);
+
+        if (draw_count >= 100)
+        {
+            this->steamManager->setAchievement(NEW_ACHIEVEMENT_1_24);
+        }
+        else if (draw_count % 10 == 0)
+        {
+            this->steamManager->showAchievementProgress(NEW_ACHIEVEMENT_1_24, draw_count, 100);
+        }
+    } else {
+        this->increaseUserStatAndTryUnlockAchievement(MAGIC_FINDER, DRAW_MAGIC_STAT_NAME, 100, true);
+    }
 }
 
 void SteamAchievementsFF8::unlockTimberManiacsAchievement(WORD timber_maniacs_bitmap)

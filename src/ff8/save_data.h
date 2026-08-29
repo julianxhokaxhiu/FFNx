@@ -27,6 +27,17 @@
 
 #include <cstdint>
 
+typedef union FF8CurrentDisk {
+    uint32_t raw;
+
+    struct {
+        uint8_t disk_low;
+        uint8_t disk_high;
+        uint8_t draw_magic_storage;
+        uint8_t magic_finder_storage;
+    } bytes;
+} FF8CurrentDisk;
+
 struct savemap_ff8_item {
 	uint8_t item_id;
 	uint8_t item_quantity;
@@ -47,7 +58,7 @@ struct savemap_ff8_header {
 	uint8_t rinoa_name[12];
 	uint8_t angelo_name[12];
 	uint8_t boko_name[12];
-	uint32_t curr_disk;
+	FF8CurrentDisk curr_disk;
 	uint32_t curr_save;
 };
 

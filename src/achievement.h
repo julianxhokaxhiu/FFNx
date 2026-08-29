@@ -592,9 +592,9 @@ public:
     void unlockMaxHpAchievement(int max_hp);
     void unlockMaxGilAchievement(uint32_t gil);
     void unlockTopLevelAchievement(int level);
-    void increaseKillsAndTryUnlockAchievement();
-    void increaseMagicStockAndTryUnlockAchievement();
-    void increaseMagicDrawsAndTryUnlockAchievement();
+    void increaseKillsAndTryUnlockAchievement(const savemap_ff8 &savemap);
+    void increaseMagicStockAndTryUnlockAchievement(savemap_ff8 &savemap);
+    void increaseMagicDrawsAndTryUnlockAchievement(savemap_ff8 &savemap);
     void unlockTimberManiacsAchievement(WORD timber_maniacs_bitmap);
     void unlockFirstSalaryAchievement();
     void unlockQuistisLimitBreaksAchievement(WORD quistis_lb_bitmap);

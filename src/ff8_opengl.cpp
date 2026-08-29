@@ -1465,26 +1465,26 @@ int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
 void ff8_battle_after_enemy_kill_sub_494AF0(int party_char_id, int monster_id, int current_actor_second_byte, int a2)
 {
 	ff8_externals.battle_sub_494AF0(party_char_id, monster_id, current_actor_second_byte, a2);
-	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement();
+	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement(*ff8_externals.savemap);
 }
 
 int ff8_opcode_drawpoint_sub_4A0850(int a1, int draw_magic_count)
 {
 	int ret = ff8_externals.opcode_drawpoint_sub_4A0850(a1, draw_magic_count);
-	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement(*ff8_externals.savemap);
 	return ret;
 }
 
 void ff8_set_drawpoint_state_52D190(uint8_t drawpoint_id, char value)
 {
 	ff8_externals.set_drawpoint_state_521D90(drawpoint_id, value);
-	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement(*ff8_externals.savemap);
 }
 
 int ff8_battle_get_magic_draw_amount_48FD20(int actor_idx, int monster_id, int magic_id)
 {
 	int ret = ff8_externals.battle_get_draw_magic_amount_48FD20(actor_idx, monster_id, magic_id);
-	g_FF8SteamAchievements->increaseMagicStockAndTryUnlockAchievement();
+	g_FF8SteamAchievements->increaseMagicStockAndTryUnlockAchievement(*ff8_externals.savemap);
 	return ret;
 }
 
