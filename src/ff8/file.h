@@ -44,6 +44,7 @@ int ff8_write(int fd, void *buffer, unsigned int bufferSize);
 __int32 ff8_lseek(int fd, __int32 offset, int whence);
 __int32 ff8_filelength(int fd);
 int ff8_close(int fd);
+bool ff8_is_direct_file(int fd);
 // stdio (low level)
 FILE *ff8_fopen(const char *fileName, const char *mode);
 

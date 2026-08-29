@@ -314,7 +314,7 @@ void field_model_vertices_scale()
 double get_model_divisor(uint32_t addr)
 {
     auto it = field_model_map.find(addr);
-    if (it == field_model_map.end()) {
+    if (it == field_model_map.end() || it->second.isDirect) {
         return 1.0;
     }
 

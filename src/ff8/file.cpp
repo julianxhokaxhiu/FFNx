@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <lz4.h>
 #include <map>
+#include <unordered_set>
 #include "Shlwapi.h"
 
 char next_direct_file[MAX_PATH] = "";
@@ -41,6 +42,7 @@ uint32_t last_compression_type = 0;
 size_t last_compressed_size = 0;
 size_t last_uncompressed_size = 0;
 std::map<int, Zzz::File *> openedZzzFiles;
+std::unordered_set<int> openedDirectFiles;
 
 size_t get_fl_prefix_size(bool with_lang = true)
 {
@@ -381,6 +383,9 @@ int ff8_open(const char *fileName, int oflag, ...)
 		if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", next_direct_file);
 
 		int ret = ff8_externals._sopen(next_direct_file, oflag, shflag, pmode);
+		if (ff8_remastered_edition && ret != -1) {
+			openedDirectFiles.insert(ret);
+		}
 
 		*next_direct_file = '\0';
 
@@ -544,6 +549,8 @@ int ff8_close(int fd)
 {
 	if (trace_all || trace_files) ffnx_info("%s: fd=%X\n", __func__, fd);
 
+	openedDirectFiles.erase(fd);
+
 	if (ff8_remastered_edition && openedZzzFiles.contains(fd)) {
 		Zzz::closeFile(openedZzzFiles.at(fd));
 		openedZzzFiles.erase(fd);
@@ -565,6 +572,11 @@ int ff8_close(int fd)
 	*(ff8_externals.__doserrno()) = 0;
 
 	return -1;
+}
+
+bool ff8_is_direct_file(int fd)
+{
+	return openedDirectFiles.contains(fd);
 }
 
 FILE *ff8_fopen(const char *fileName, const char *mode)
@@ -664,6 +676,9 @@ ff8_file *ff8_open_file(ff8_file_context *infos, const char *fs_path)
 				if (set_direct_path(fullpath, direct_path, sizeof(direct_path)))
 				{
 					file->fd = ff8_externals._sopen(direct_path, oflag, shflag, pmode);
+					if (ff8_remastered_edition && file->fd != -1) {
+						openedDirectFiles.insert(file->fd);
+					}
 
 					if (trace_all || trace_direct) ffnx_info("Direct file using %s\n", direct_path);
 				}

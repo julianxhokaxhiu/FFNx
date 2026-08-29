@@ -29,6 +29,7 @@
 struct CharaOneModel {
 	char name[6];
 	bool isMch;
+	bool isDirect;
 	std::vector<uint32_t> texturesData;
 	uint32_t modelId;
 };

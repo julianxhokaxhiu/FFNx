@@ -1387,6 +1387,8 @@ int ff8_field_chara_one_read_model(int fd, uint8_t *const data, size_t size)
 	if (trace_all || trace_vram) ffnx_trace("%s: size=%d\n", __func__, size);
 
 	if (chara_one_models.contains(chara_one_current_pos)) {
+		chara_one_models[chara_one_current_pos].isDirect = ff8_is_direct_file(fd);
+
 		if (save_textures) {
 			char filename[MAX_PATH];
 			snprintf(filename, sizeof(filename), "field/model/second_chr");
@@ -1409,6 +1411,7 @@ int ff8_field_chara_one_read_mch(int fd, uint8_t *const data, size_t size)
 	for (uint32_t addr: chara_one_loaded_models) {
 		if (chara_one_models[addr].isMch) {
 			if (id == chara_one_current_mch) {
+				chara_one_models[addr].isDirect = ff8_is_direct_file(fd);
 				ff8_mch_parse_model(chara_one_models[addr], data, size);
 				if (save_textures) {
 					char filename[MAX_PATH];
