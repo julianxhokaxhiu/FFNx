@@ -563,6 +563,18 @@ static int jp_measure_field_fd_control(byte control, bool use_fixed_spacing)
     + jp_measure_field_letter(0xFD33, use_fixed_spacing);
 }
 
+static bool jp_prompt_followed_by_text_after_color_control(const byte* buffer)
+{
+  bool skippedColorControl = false;
+  while (buffer[0] == 0xFE && buffer[1] >= 0xD2 && buffer[1] <= 0xDB)
+  {
+    skippedColorControl = true;
+    buffer += 2;
+  }
+  return skippedColorControl
+    && buffer[0] != 0xE7 && buffer[0] != 0xE8 && buffer[0] != 0xFF;
+}
+
 /////////////////////////////////////////////////////////////////////
 int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t character_y, int16_t text_box_right_position, byte *buffer_text, float z_value)
 {
@@ -927,6 +939,9 @@ LABEL_39:
               int next_prompt_byte_count;
               const bool precedesUniversalPrompt = universal_buttons_parse_field_prompt(
                 buffer_text + prompt_byte_count, &next_prompt_button, &next_prompt_byte_count);
+              const bool followedByText = !precedesUniversalPrompt
+                && jp_prompt_followed_by_text_after_color_control(
+                  buffer_text + prompt_byte_count);
               const int prompt_x = character_x;
               int color_index = character_n_shapes;
               if (*ff7_externals.word_DC3CC4)
@@ -938,8 +953,10 @@ LABEL_39:
               const int drawn_x = universal_buttons_draw_field_prompt(
                 prompt_button, character_x, character_y, z_value);
               if (drawn_x != character_x)
-                character_x = prompt_x + universal_buttons_field_prompt_width(
-                  followsUniversalPrompt, precedesUniversalPrompt);
+                character_x = followedByText
+                  ? drawn_x
+                  : prompt_x + universal_buttons_field_prompt_width(
+                    followsUniversalPrompt, precedesUniversalPrompt);
               previousUniversalPrompt = true;
               if (prompt_byte_count == 2)
               {
