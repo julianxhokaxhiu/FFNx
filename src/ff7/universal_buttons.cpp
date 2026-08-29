@@ -221,10 +221,27 @@ static uint32_t atlas_reference_height(prompt_atlas atlas)
   return atlas == prompt_atlas::keyboard ? 1200 : 512;
 }
 
+static bool texture_available(const prompt_resource& resource)
+{
+  const bgfx::TextureHandle handle = { (uint16_t)resource.texture };
+  return resource.texture_width && resource.texture_height && bgfx::isValid(handle);
+}
+
+static void delete_texture(prompt_resource& resource)
+{
+  if (!texture_available(resource))
+    return;
+
+  if (resource.texture)
+    newRenderer.deleteTexture(resource.texture);
+  else
+    bgfx::destroy(bgfx::TextureHandle{ (uint16_t)resource.texture });
+}
+
 static bool resource_available(prompt_atlas atlas)
 {
   const prompt_resource& resource = resource_for(atlas);
-  return resource.graphics_object && resource.texture;
+  return resource.graphics_object && texture_available(resource);
 }
 
 static prompt_atlas select_prompt_atlas()
@@ -271,8 +288,7 @@ void universal_buttons_unload()
       delete[] private_texture_set->texturehandle;
       delete private_texture_set;
     }
-    if (resource.texture)
-      newRenderer.deleteTexture(resource.texture);
+    delete_texture(resource);
     resource = {};
   }
 }
@@ -301,11 +317,20 @@ static void load_prompt_atlas(prompt_atlas atlas, struc_3* graphics_context,
     path, &resource.texture_width, &resource.texture_height, true);
   const uint32_t reference_width = atlas_reference_width(atlas);
   const uint32_t reference_height = atlas_reference_height(atlas);
-  if (!resource.texture
-      || (uint64_t)resource.texture_width * reference_height
-        != (uint64_t)resource.texture_height * reference_width)
+  if (!texture_available(resource))
   {
-    ffnx_warning("Button prompt atlas has invalid proportions: %s\n", path);
+    ffnx_warning("Button prompt atlas could not be loaded: %s\n", path);
+    return;
+  }
+  if ((uint64_t)resource.texture_width * reference_height
+      != (uint64_t)resource.texture_height * reference_width)
+  {
+    ffnx_warning("Button prompt atlas has invalid proportions (%ux%u): %s\n",
+      resource.texture_width, resource.texture_height, path);
+    delete_texture(resource);
+    resource.texture = 0;
+    resource.texture_width = 0;
+    resource.texture_height = 0;
     return;
   }
 
@@ -355,7 +380,7 @@ void universal_buttons_load(struc_3* graphics_context, char* template_path, ff7_
 void universal_buttons_draw(ff7_game_obj* game_object)
 {
   for (prompt_resource& resource : prompt_resources)
-    if (resource.graphics_object && resource.texture)
+    if (resource.graphics_object && texture_available(resource))
       ff7_externals.engine_draw_graphics_object_66E641(resource.graphics_object, game_object);
 }
 
