@@ -37,7 +37,7 @@ struct ff8_remastered_model_divisor {
     uint16_t divisor;
 };
 
-std::unordered_map<uint32_t, CharaOneModel> field_model_map;
+std::unordered_map<uint32_t, double> field_model_divisor_map;
 double next_field_model_divisor = 0.0;
 constexpr int model_divisors_size = 142;
 ff8_remastered_model_divisor model_divisors[model_divisors_size] = {
@@ -313,16 +313,22 @@ void field_model_vertices_scale()
 
 double get_model_divisor(uint32_t addr)
 {
-    auto it = field_model_map.find(addr);
-    if (it == field_model_map.end() || it->second.isDirect) {
+    auto it = field_model_divisor_map.find(addr);
+    if (it == field_model_divisor_map.end()) {
         return 1.0;
     }
 
-    for (int i = 0; i < model_divisors_size; ++i) {
-        char *modelId = model_divisors[i].modelId;
+    return it->second;
+}
 
-        if (*(uint32_t *)modelId == *(uint32_t *)it->second.name) {
-            return double(model_divisors[i].divisor);
+double ff8_remaster_get_model_divisor_by_name(const char *name)
+{
+    for (int i = 0; i < model_divisors_size; ++i) {
+        const ff8_remastered_model_divisor &model_divisor = model_divisors[i];
+        const char *modelId = model_divisor.modelId;
+
+        if (*(const uint32_t *)modelId == *(const uint32_t *)name) {
+            return double(model_divisor.divisor);
         }
     }
 
@@ -356,13 +362,21 @@ int field_open_chara_one(
         models_ordered.insert(std::pair<uint32_t, CharaOneModel>(model.second.modelId, model.second));
     }
 
-    field_model_map.clear();
+    field_model_divisor_map.clear();
 
     for (int i = 0; i < *ff8_externals.field_state_other_count; ++i) {
         int16_t model_id = (*ff8_externals.field_state_others)[i].model_id;
 
         if (model_id >= 0) {
-            field_model_map.insert(std::pair<uint32_t, CharaOneModel>(((uint32_t *)ff8_externals.dword_1DCB340)[i], models_ordered.at(model_id)));
+            const CharaOneModel &model = models_ordered.at(model_id);
+
+            if (! model.isDirect) {
+                const double divisor = ff8_remaster_get_model_divisor_by_name(model.name);
+
+                if (divisor != 1.0) {
+                    field_model_divisor_map.insert(std::pair<uint32_t, double>(((uint32_t *)ff8_externals.dword_1DCB340)[i], divisor));
+                }
+            }
         }
     }
 
