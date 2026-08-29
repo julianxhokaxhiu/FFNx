@@ -203,6 +203,9 @@ void field_model_vertices_scale()
     int32_t x_related;
     int32_t y_related;
     uint32_t z_related;
+    double precise_x_related;
+    double precise_y_related;
+    double precise_z_related;
     double v11;
     int16_t *v3 = ff8_externals.dword_1CA8A10;
 
@@ -210,13 +213,18 @@ void field_model_vertices_scale()
         double v4 = double(v3[0]), v6 = double(v3[1]), v7 = double(v3[2]);
         v3 += 4;
 
-        x_related = ff8_externals.dword_1CA9290[0] + round(double(ff8_externals.flt_1CA9234[0] * v7 + ff8_externals.flt_1CA9234[1] * v6 + ff8_externals.flt_1CA9234[2] * v4) / unzoom_model);
-        y_related = ff8_externals.dword_1CA9290[1] + round(double(ff8_externals.flt_1CA9234[3] * v7 + ff8_externals.flt_1CA9234[4] * v6 + ff8_externals.flt_1CA9234[5] * v4) / unzoom_model);
-        z_related = ff8_externals.dword_1CA9290[2] + round(double(ff8_externals.flt_1CA9234[6] * v7 + ff8_externals.flt_1CA9234[7] * v6 + ff8_externals.flt_1CA9234[8] * v4) / unzoom_model);
+        precise_x_related = ff8_externals.dword_1CA9290[0] + double(ff8_externals.flt_1CA9234[0] * v7 + ff8_externals.flt_1CA9234[1] * v6 + ff8_externals.flt_1CA9234[2] * v4) / unzoom_model;
+        precise_y_related = ff8_externals.dword_1CA9290[1] + double(ff8_externals.flt_1CA9234[3] * v7 + ff8_externals.flt_1CA9234[4] * v6 + ff8_externals.flt_1CA9234[5] * v4) / unzoom_model;
+        precise_z_related = ff8_externals.dword_1CA9290[2] + double(ff8_externals.flt_1CA9234[6] * v7 + ff8_externals.flt_1CA9234[7] * v6 + ff8_externals.flt_1CA9234[8] * v4) / unzoom_model;
+        x_related = int32_t(round(precise_x_related));
+        y_related = int32_t(round(precise_y_related));
+        z_related = uint32_t(round(precise_z_related));
 
         uint32_t z_related2 = z_related;
+        double precise_z_related2 = precise_z_related;
         if (z_related2 > 0xFFFF) {
             z_related2 = 0xFFFF;
+            precise_z_related2 = 0xFFFF;
             flags |= 0x80040000;
         }
         *v2 = uint16_t(z_related2);
@@ -225,10 +233,11 @@ void field_model_vertices_scale()
                 flags |= 0x80040000;
             }
             z_related2 = v1;
+            precise_z_related2 = v1;
             flags |= 0x80020000;
         }
-        v11 = v30 / z_related2;
-        double v20 = round(8.0 * x_related * v11);
+        v11 = v30 / precise_z_related2;
+        double v20 = round(8.0 * precise_x_related * v11);
         int v12 = v31 + int(v20);
         if (v12 < -8192) {
             v12 = -8192;
@@ -238,7 +247,7 @@ void field_model_vertices_scale()
             flags |= 0x80004000;
         }
 
-        double v21 = round(8.0 * y_related * v11);
+        double v21 = round(8.0 * precise_y_related * v11);
         int v14 = v32 + int(v21);
         if (v14 < -8192) {
             v14 = -8192;
