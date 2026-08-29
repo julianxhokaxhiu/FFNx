@@ -524,7 +524,6 @@ bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* 
     case 0xF6:
       switch (buffer[1])
       {
-        case 0x0C: *button = 13; break;
         case 0x10: *button = 5; break;
         case 0x11: *button = 2; break;
         case 0x12: *button = 0; break;
@@ -535,6 +534,7 @@ bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* 
         case 0x17: *button = 12; break;
         case 0x18: *button = 14; break;
         case 0x19: *button = 15; break;
+        case 0x1A: *button = 13; break;
         case 0x33: *button = 5; break;
         case 0x34: *button = 2; break;
         case 0x35: *button = 0; break;

@@ -119,7 +119,7 @@ of the target `flevel`:
 | Up | `F6 17` | `F6 3A` |
 | Down | `F6 18` | `F6 3B` |
 | Left | `F6 19` | `F6 3C` |
-| Right | `F6 0C` | `F6 3D` |
+| Right | `F6 1A` | `F6 3D` |
 
 For example, a non-Japanese dialogue that displays the configured L1 and R1 controls followed
 by `: TURN` contains this text sequence:
