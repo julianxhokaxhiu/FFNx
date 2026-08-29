@@ -4,7 +4,7 @@ FFNx can replace button symbols in Final Fantasy VII field dialogue with prompts
 
 The prompt atlas is selected automatically when the menu graphics are loaded:
 
-| Input device | Texture | Required size |
+| Input device | Texture | Reference size |
 | --- | --- | --- |
 | Keyboard | `buttons_pc_en.png` | 1000 x 1200 pixels |
 | PlayStation-compatible controller | `buttons_ps4.png` | 512 x 512 pixels |
@@ -32,15 +32,15 @@ These atlases are FFNx runtime assets and are loaded directly from `data\png`; t
 
 When SDL gamepad input is enabled, FFNx selects the Xbox, PlayStation, or Nintendo Switch atlas from the connected controller type. Switch Pro Controllers, individual Joy-Cons, and paired Joy-Cons use the Switch atlas. With the legacy input backend, XInput devices use the Xbox atlas, DirectInput joysticks use the PlayStation atlas, and keyboard input uses the keyboard atlas.
 
-If the selected keyboard, Xbox, or Switch atlas is missing, FFNx falls back to `buttons_ps4.png`. If the selected image has the wrong dimensions, FFNx rejects it and records a warning in `FFNx.log`.
+If the selected keyboard, Xbox, or Switch atlas is missing, FFNx falls back to `buttons_ps4.png`. If the selected image has the wrong proportions, FFNx rejects it and records a warning in `FFNx.log`.
 
 Restart the game after replacing an atlas. The selected path is reported in `FFNx.log` as `Using button prompt atlas`.
 
 ## Atlas rules
 
 - Save the atlas as a PNG with transparency.
-- Keep the exact canvas dimensions listed above.
-- Every sprite occupies a 100 x 100 pixel cell.
+- Keep the canvas proportions listed above. The dimensions may be scaled proportionally; for example, controller atlases may be 128 x 128 pixels.
+- At the reference dimensions, every sprite occupies a 100 x 100 pixel cell. Scale the cells with the canvas.
 - Do not move a sprite into another cell; the cell position defines its key or button.
 - Keep artwork inside its cell to prevent neighboring prompts from bleeding into it.
 - Prompts are rendered at 40 x 40 game-space units, so use bold shapes and avoid very small details.
@@ -158,4 +158,4 @@ data\
 
 All four files are recommended. A controller-only pack may omit the keyboard atlas, but FFNx will then use `buttons_ps4.png` when no controller is connected. A keyboard-only pack should also include a PlayStation atlas because it is the final fallback.
 
-Do not rename the files or change their dimensions. Existing files in `data\png` should be backed up before installing another button pack.
+Do not rename the files or change their proportions. Existing files in `data\png` should be backed up before installing another button pack.

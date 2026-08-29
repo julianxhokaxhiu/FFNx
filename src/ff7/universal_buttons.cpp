@@ -45,6 +45,16 @@ static prompt_resource& resource_for(prompt_atlas atlas)
   return prompt_resources[(int)atlas];
 }
 
+static uint32_t atlas_reference_width(prompt_atlas atlas)
+{
+  return atlas == prompt_atlas::keyboard ? 1000 : 512;
+}
+
+static uint32_t atlas_reference_height(prompt_atlas atlas)
+{
+  return atlas == prompt_atlas::keyboard ? 1200 : 512;
+}
+
 static bool resource_available(prompt_atlas atlas)
 {
   const prompt_resource& resource = resource_for(atlas);
@@ -123,12 +133,13 @@ static void load_prompt_atlas(prompt_atlas atlas, struc_3* graphics_context,
 
   resource.texture = newRenderer.createTextureLibPng(
     path, &resource.texture_width, &resource.texture_height, true);
-  uint32_t expected_width = atlas == prompt_atlas::keyboard ? 1000 : 512;
-  uint32_t expected_height = atlas == prompt_atlas::keyboard ? 1200 : 512;
-  if (!resource.texture || resource.texture_width != expected_width
-      || resource.texture_height != expected_height)
+  const uint32_t reference_width = atlas_reference_width(atlas);
+  const uint32_t reference_height = atlas_reference_height(atlas);
+  if (!resource.texture
+      || (uint64_t)resource.texture_width * reference_height
+        != (uint64_t)resource.texture_height * reference_width)
   {
-    ffnx_warning("Button prompt atlas has invalid dimensions: %s\n", path);
+    ffnx_warning("Button prompt atlas has invalid proportions: %s\n", path);
     return;
   }
 
@@ -339,7 +350,7 @@ static bool sprite_for_button(prompt_atlas atlas, int button, prompt_sprite* spr
     if (cell < 0)
       return false;
     *sprite = { resource.graphics_object, cell % 10 * 100, cell / 10 * 100, 100, 100,
-      (int)resource.texture_width, (int)resource.texture_height };
+      (int)atlas_reference_width(atlas), (int)atlas_reference_height(atlas) };
     return true;
   }
 
@@ -365,7 +376,7 @@ static bool sprite_for_button(prompt_atlas atlas, int button, prompt_sprite* spr
   }
 
   *sprite = { resource.graphics_object, column * 100, row * 100, 100, 100,
-    (int)resource.texture_width, (int)resource.texture_height };
+    (int)atlas_reference_width(atlas), (int)atlas_reference_height(atlas) };
   return true;
 }
 
