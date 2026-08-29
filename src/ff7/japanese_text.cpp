@@ -601,6 +601,7 @@ int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t ch
   bool possibleOpcode = true; // 0xFEu i ssometimes JP text, and sometimes an FE opcode.  we must parse the opcodes.
   bool heartAtD9 = false;     // used to decide if d9 is suppose dot be a heart from btl_win;
   bool isPrompt = false;      // if true, and it's within range, make it a button prompt
+  bool previousUniversalPrompt = false;
   int curPage = 0;            // track which ja_font page we are on, so we can check widths later to set the above.
   int charWidth = 16;
   int leftPadding = 0;
@@ -613,6 +614,8 @@ int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t ch
      && (kanjiDetected || *buffer_text != 0xE8);
         ++i )
   {
+    const bool followsUniversalPrompt = previousUniversalPrompt;
+    previousUniversalPrompt = false;
     if ( !kanjiDetected && *buffer_text == 0xE7 )
     {
       character_x = (*ff7_externals.field_current_window_pos_x_DC3CB4) + 20; // need to indent this far for pointers to point properly
@@ -920,7 +923,11 @@ LABEL_39:
             if (universal_buttons_parse_field_prompt(
                 buffer_text, &prompt_button, &prompt_byte_count))
             {
-              int prompt_x = character_x;
+              int next_prompt_button;
+              int next_prompt_byte_count;
+              const bool precedesUniversalPrompt = universal_buttons_parse_field_prompt(
+                buffer_text + prompt_byte_count, &next_prompt_button, &next_prompt_byte_count);
+              const int prompt_x = character_x;
               int color_index = character_n_shapes;
               if (*ff7_externals.word_DC3CC4)
                 color_index = ((unsigned __int8)(*ff7_externals.word_DC3CC8 >> 2) - character_count) & 7;
@@ -928,10 +935,12 @@ LABEL_39:
                 color_index = ((*ff7_externals.word_DC3CC8 >> 2) & 1)
                   ? *ff7_externals.word_91F028
                   : 0;
-              character_x = universal_buttons_draw_field_prompt(
+              const int drawn_x = universal_buttons_draw_field_prompt(
                 prompt_button, character_x, character_y, z_value);
-              if (ff7_japanese_edition)
-                character_x = prompt_x + (int)(16.0f * scaleFactor);
+              if (drawn_x != character_x)
+                character_x = prompt_x + universal_buttons_field_prompt_width(
+                  followsUniversalPrompt, precedesUniversalPrompt);
+              previousUniversalPrompt = true;
               if (prompt_byte_count == 2)
               {
                 ++buffer_text;
@@ -2723,11 +2732,14 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
   bool isKanjiDetected = false;
   bool possibleOpcode = true; // some opcodes mmust be parsed, so we must look for them
   bool useFixedSpacing = false;
+  bool previousUniversalPrompt = false;
   int charWidth = 0;
   int leftPadding = 0;
   uint16_t letter = 0;
 	for ( int i = 0;	i < 1024; ++i )
 	{
+    const bool followsUniversalPrompt = previousUniversalPrompt;
+    previousUniversalPrompt = false;
     byte character = buffer_text[i];
     byte next_character = buffer_text[i + 1];
 
@@ -2830,7 +2842,13 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
     if (possibleOpcode && universal_buttons_parse_field_prompt(
         &buffer_text[i], &prompt_button, &prompt_byte_count))
     {
-      W += universal_buttons_field_prompt_width();
+      int next_prompt_button;
+      int next_prompt_byte_count;
+      const bool precedesUniversalPrompt = universal_buttons_parse_field_prompt(
+        &buffer_text[i + prompt_byte_count], &next_prompt_button, &next_prompt_byte_count);
+      W += universal_buttons_field_prompt_width(
+        followsUniversalPrompt, precedesUniversalPrompt);
+      previousUniversalPrompt = true;
       if (prompt_byte_count == 2)
         ++i;
       continue;

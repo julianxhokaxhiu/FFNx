@@ -14,7 +14,8 @@ int universal_buttons_draw_field_prompt(int button, int x, int y, float z);
 int universal_buttons_draw_menu_prompt(int button, int x, int y, float z);
 int universal_buttons_draw_field_jp_control(int control, int x, int y, float z);
 int universal_buttons_draw_menu_jp_control(int control, int x, int y, float z);
-int universal_buttons_field_prompt_width();
+int universal_buttons_field_prompt_width(bool follows_prompt = false,
+	bool precedes_prompt = false);
 int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color, float z);
 
 int universal_buttons_submit_vanilla_prompt(void* caller_frame, int use_alpha,

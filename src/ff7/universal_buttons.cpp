@@ -15,6 +15,7 @@
 
 static constexpr int prompt_size = 40;
 static constexpr int config_prompt_size = 32;
+static constexpr int vanilla_prompt_x_offset = 8;
 
 enum class prompt_atlas
 {
@@ -556,9 +557,11 @@ bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* 
   }
 }
 
-int universal_buttons_field_prompt_width()
+int universal_buttons_field_prompt_width(bool follows_prompt, bool precedes_prompt)
 {
-  return prompt_size / 2;
+  if (precedes_prompt)
+    return prompt_size * 3 / 4;
+  return follows_prompt ? prompt_size : prompt_size / 2;
 }
 
 int universal_buttons_submit_vanilla_prompt(void* caller_frame, int use_alpha,
@@ -573,10 +576,10 @@ int universal_buttons_submit_vanilla_prompt(void* caller_frame, int use_alpha,
   int16_t& x = *(int16_t*)((byte*)caller_frame + 0x08);
   int16_t y = *(int16_t*)((byte*)caller_frame + 0x0C);
   float z = *(float*)((byte*)caller_frame + 0x18);
-  if (universal_buttons_draw_field_prompt(button, x, y, z) == x)
+  const int prompt_x = x - vanilla_prompt_x_offset;
+  if (universal_buttons_draw_field_prompt(button, prompt_x, y, z) == prompt_x)
     return common_externals.draw_graphics_object(use_alpha, graphics_object);
 
-  x += prompt_size - 16;
   if (byte_count == 2)
   {
     ++buffer;
