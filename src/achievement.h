@@ -376,6 +376,43 @@ private:
         TOTAL_KILLS_1000 = 43,
         TOTAL_KILLS_10000 = 44
     };
+    enum AchievementsRemastered
+    {
+        NEW_ACHIEVEMENT_1_0 = 0, // Quetzal
+        NEW_ACHIEVEMENT_1_1,     // Shiva
+        NEW_ACHIEVEMENT_1_2,     // Ifrit
+        NEW_ACHIEVEMENT_1_3,     // Siren
+        NEW_ACHIEVEMENT_1_5,     // Handyman
+        NEW_ACHIEVEMENT_1_6,     // Card player
+        NEW_ACHIEVEMENT_1_7,     // First salary
+        NEW_ACHIEVEMENT_1_8,     // Brothers
+        NEW_ACHIEVEMENT_1_9,     // Max HP
+        NEW_ACHIEVEMENT_1_10,    // 100 kills
+        NEW_ACHIEVEMENT_1_11,    // Chocobo
+        NEW_ACHIEVEMENT_1_12,    // Magician
+        NEW_ACHIEVEMENT_1_13,    // Alexander
+        NEW_ACHIEVEMENT_1_14,    // Leviathan
+        NEW_ACHIEVEMENT_1_15,    // Pandemona
+        NEW_ACHIEVEMENT_1_16,    // Cerberus
+        NEW_ACHIEVEMENT_1_17,    // Carbuncle
+        NEW_ACHIEVEMENT_1_18,    // Doomtrain
+        NEW_ACHIEVEMENT_1_19,    // Loser
+        NEW_ACHIEVEMENT_1_20,    // Cards Club Master
+        NEW_ACHIEVEMENT_1_21,    // Obel Lake Secret
+        NEW_ACHIEVEMENT_1_22,    // 1000 kills
+        NEW_ACHIEVEMENT_1_23,    // Omega Destroyed
+        NEW_ACHIEVEMENT_1_24,    // Magic Miner
+        NEW_ACHIEVEMENT_1_25,    // Timber Maniacs
+        NEW_ACHIEVEMENT_1_26,    // Cactuar
+        NEW_ACHIEVEMENT_1_27,    // Tonberry
+        NEW_ACHIEVEMENT_1_28,    // Eden
+        NEW_ACHIEVEMENT_1_29,    // End of Game
+        NEW_ACHIEVEMENT_1_30,    // Diablos
+        NEW_ACHIEVEMENT_1_31,    // Bahamut
+        NEW_ACHIEVEMENT_2_0,     // Ragnarok
+        NEW_ACHIEVEMENT_2_1,     // Top rank
+        NEW_ACHIEVEMENT_2_2      // UFO
+    };
 
     static inline const achievement ACHIEVEMENTS[] = {
         _ACH_ID(UNLOCK_GF_QUEZACOTL),
@@ -425,6 +462,43 @@ private:
         _ACH_ID(TOTAL_KILLS_10000),
     };
 
+    static inline const achievement ACHIEVEMENTS_REMASTERED[] = {
+        _ACH_ID(NEW_ACHIEVEMENT_1_0),
+        _ACH_ID(NEW_ACHIEVEMENT_1_1),
+        _ACH_ID(NEW_ACHIEVEMENT_1_2),
+        _ACH_ID(NEW_ACHIEVEMENT_1_3),
+        _ACH_ID(NEW_ACHIEVEMENT_1_5),
+        _ACH_ID(NEW_ACHIEVEMENT_1_6),
+        _ACH_ID(NEW_ACHIEVEMENT_1_7),
+        _ACH_ID(NEW_ACHIEVEMENT_1_8),
+        _ACH_ID(NEW_ACHIEVEMENT_1_9),
+        _ACH_ID(NEW_ACHIEVEMENT_1_10),
+        _ACH_ID(NEW_ACHIEVEMENT_1_11),
+        _ACH_ID(NEW_ACHIEVEMENT_1_12),
+        _ACH_ID(NEW_ACHIEVEMENT_1_13),
+        _ACH_ID(NEW_ACHIEVEMENT_1_14),
+        _ACH_ID(NEW_ACHIEVEMENT_1_15),
+        _ACH_ID(NEW_ACHIEVEMENT_1_16),
+        _ACH_ID(NEW_ACHIEVEMENT_1_17),
+        _ACH_ID(NEW_ACHIEVEMENT_1_18),
+        _ACH_ID(NEW_ACHIEVEMENT_1_19),
+        _ACH_ID(NEW_ACHIEVEMENT_1_20),
+        _ACH_ID(NEW_ACHIEVEMENT_1_21),
+        _ACH_ID(NEW_ACHIEVEMENT_1_22),
+        _ACH_ID(NEW_ACHIEVEMENT_1_23),
+        _ACH_ID(NEW_ACHIEVEMENT_1_24),
+        _ACH_ID(NEW_ACHIEVEMENT_1_25),
+        _ACH_ID(NEW_ACHIEVEMENT_1_26),
+        _ACH_ID(NEW_ACHIEVEMENT_1_27),
+        _ACH_ID(NEW_ACHIEVEMENT_1_28),
+        _ACH_ID(NEW_ACHIEVEMENT_1_29),
+        _ACH_ID(NEW_ACHIEVEMENT_1_30),
+        _ACH_ID(NEW_ACHIEVEMENT_1_31),
+        _ACH_ID(NEW_ACHIEVEMENT_2_0),
+        _ACH_ID(NEW_ACHIEVEMENT_2_1),
+        _ACH_ID(NEW_ACHIEVEMENT_2_2)
+    };
+
     struct upgrade_data {
         byte char_id = 0xFF;
         byte prev_weapon_id = 0xFF;
@@ -449,6 +523,25 @@ private:
         UNLOCK_GF_EDEN,
     };
 
+    static inline const AchievementsRemastered gfIndexToAchRemasteredMap[16] = {
+        NEW_ACHIEVEMENT_1_0,
+        NEW_ACHIEVEMENT_1_1,
+        NEW_ACHIEVEMENT_1_2,
+        NEW_ACHIEVEMENT_1_3,
+        NEW_ACHIEVEMENT_1_8,
+        NEW_ACHIEVEMENT_1_30,
+        NEW_ACHIEVEMENT_1_17,
+        NEW_ACHIEVEMENT_1_14,
+        NEW_ACHIEVEMENT_1_15,
+        NEW_ACHIEVEMENT_1_16,
+        NEW_ACHIEVEMENT_1_13,
+        NEW_ACHIEVEMENT_1_18,
+        NEW_ACHIEVEMENT_1_31,
+        NEW_ACHIEVEMENT_1_26,
+        NEW_ACHIEVEMENT_1_27,
+        NEW_ACHIEVEMENT_1_28,
+    };
+
     static inline constexpr int FF8_N_ACHIEVEMENTS = 45;
 
     static inline const std::string ENEMY_KILLED_STAT_NAME = "nmy_kill";
@@ -467,18 +560,20 @@ private:
     static inline constexpr int ITEM_SLOTS = 198;
     static inline constexpr int MAGAZINES_TO_COLLECT = 22;
 
+    boolean isRemastered;
     std::unique_ptr<SteamManager> steamManager;
     std::array<bool, N_RARE_CARDS> prevOwnedRareCards;
     upgrade_data prevWeaponUpgradeData;
     byte statCharId = 0xFF;
 
-    void increaseUserStatAndTryUnlockAchievement(Achievements achId, const std::string &statName, int achValue, bool showAchievementProgress = false);
+    int getAchievementIdByVersion(Achievements ach_original, AchievementsRemastered ach_remastered);
+    void increaseUserStatAndTryUnlockAchievement(int achId, const std::string &statName, int achValue, bool showAchievementProgress = false);
 
 public:
     static inline constexpr byte DIABLOS_GF_IDX = 5;
     static inline constexpr WORD DIABLOS_ENCOUNTER_ID = 811;
 
-    SteamAchievementsFF8();
+    SteamAchievementsFF8(boolean isRemastered);
     ~SteamAchievementsFF8() = default;
 
     void initOwnedTripleTriadRareCards(const savemap_ff8_triple_triad &triple_triad);
