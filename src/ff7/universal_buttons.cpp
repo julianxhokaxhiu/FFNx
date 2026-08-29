@@ -204,6 +204,8 @@ struct prompt_resource
   uint32_t texture = 0;
   uint32_t texture_width = 0;
   uint32_t texture_height = 0;
+  std::string texture_path;
+  bool texture_load_attempted = false;
 };
 
 static prompt_resource prompt_resources[(int)prompt_atlas::count];
@@ -290,8 +292,9 @@ void universal_buttons_unload()
       delete[] private_texture_set->texturehandle;
       delete private_texture_set;
     }
-    delete_texture(resource);
-    resource = {};
+    resource.graphics_object = nullptr;
+    resource.original_texture_set = nullptr;
+    resource.polygon_original_texture_set = nullptr;
   }
 }
 
@@ -304,53 +307,60 @@ static void load_prompt_atlas(prompt_atlas atlas, struc_3* graphics_context,
     : atlas == prompt_atlas::xbox ? "buttons"
     : atlas == prompt_atlas::switch_controller ? "buttons_switch"
     : "buttons_ps4";
-  bool atlas_found = false;
-  for (const std::string& extension : mod_ext)
+  const bool load_texture = !resource.texture_load_attempted;
+  if (load_texture)
   {
-    _snprintf(path, sizeof(path), R"(%s\data\png\%s.%s)",
-      basedir, atlas_name, extension.c_str());
-    if (!fileExists(path))
-      continue;
+    resource.texture_load_attempted = true;
+    bool atlas_found = false;
+    for (const std::string& extension : mod_ext)
+    {
+      _snprintf(path, sizeof(path), R"(%s\data\png\%s.%s)",
+        basedir, atlas_name, extension.c_str());
+      if (!fileExists(path))
+        continue;
 
-    atlas_found = true;
-    resource.texture_width = 0;
-    resource.texture_height = 0;
-    resource.texture = load_texture_helper(path, &resource.texture_width,
-      &resource.texture_height, stricmp(extension.c_str(), "png") == 0, true);
-    if (texture_available(resource))
-      break;
-  }
-  if (!atlas_found)
-    return;
-
-  resource.graphics_object = ff7_externals.engine_load_graphics_object_6710AC(
-    1, 12, graphics_context, template_path, (int)game_object->dx_sfx_something);
-  if (!resource.graphics_object || !resource.graphics_object->hundred_data
-      || !resource.graphics_object->hundred_data->texture_set)
-  {
-    delete_texture(resource);
-    resource.texture = 0;
-    resource.texture_width = 0;
-    resource.texture_height = 0;
-    return;
+      atlas_found = true;
+      resource.texture_path = path;
+      resource.texture_width = 0;
+      resource.texture_height = 0;
+      resource.texture = load_texture_helper(path, &resource.texture_width,
+        &resource.texture_height, stricmp(extension.c_str(), "png") == 0, true);
+      if (texture_available(resource))
+      {
+        break;
+      }
+    }
+    if (!atlas_found)
+      return;
   }
 
   const uint32_t reference_width = atlas_reference_width(atlas);
   const uint32_t reference_height = atlas_reference_height(atlas);
   if (!texture_available(resource))
   {
-    ffnx_warning("Button prompt atlas could not be loaded: %s\n", path);
+    if (load_texture)
+      ffnx_warning("Button prompt atlas could not be loaded: %s\n", resource.texture_path.c_str());
     return;
   }
   if ((uint64_t)resource.texture_width * reference_height
       != (uint64_t)resource.texture_height * reference_width)
   {
     ffnx_warning("Button prompt atlas has invalid proportions (%ux%u): %s\n",
-      resource.texture_width, resource.texture_height, path);
+      resource.texture_width, resource.texture_height, resource.texture_path.c_str());
     delete_texture(resource);
     resource.texture = 0;
     resource.texture_width = 0;
     resource.texture_height = 0;
+    resource.texture_path.clear();
+    return;
+  }
+
+  resource.graphics_object = ff7_externals.engine_load_graphics_object_6710AC(
+    1, 12, graphics_context, template_path, (int)game_object->dx_sfx_something);
+  if (!resource.graphics_object || !resource.graphics_object->hundred_data
+      || !resource.graphics_object->hundred_data->texture_set)
+  {
+    resource.graphics_object = nullptr;
     return;
   }
 
@@ -383,7 +393,8 @@ static void load_prompt_atlas(prompt_atlas atlas, struc_3* graphics_context,
   private_texture_set->ogl.height = resource.texture_height;
   resource.graphics_object->hundred_data->texture_set = (struct texture_set*)private_texture_set;
   polygon_set->hundred_data->texture_set = (struct texture_set*)private_texture_set;
-  if (trace_all || trace_gamepad) ffnx_info("Using button prompt atlas: %s\n", path);
+  if (trace_all || trace_gamepad)
+    ffnx_info("Using button prompt atlas: %s\n", resource.texture_path.c_str());
 }
 
 void universal_buttons_load(struc_3* graphics_context, char* template_path, ff7_game_obj* game_object)
