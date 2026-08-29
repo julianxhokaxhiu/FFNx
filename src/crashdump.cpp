@@ -97,15 +97,8 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 		DWORD procid = GetCurrentProcessId();
 		MINIDUMP_EXCEPTION_INFORMATION mdei;
 
-		CONTEXT c;
-		HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, GetCurrentThreadId());;
-		memset(&c, 0, sizeof(c));
-		c.ContextFlags = CONTEXT_FULL;
-		GetThreadContext(hThread, &c);
-
 		mdei.ThreadId = GetCurrentThreadId();
 		mdei.ExceptionPointers = ep;
-		mdei.ExceptionPointers->ContextRecord = &c;
 		mdei.ClientPointers = true;
 
 		if (!MiniDumpWriteDump(
