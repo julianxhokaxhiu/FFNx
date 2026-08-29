@@ -214,18 +214,25 @@ ModdedTexture::ModdedTexture(const TexturePacker::IdentifiedTexture &originalTex
 
 bool ModdedTexture::findExternalTexture(char *outFilename, uint8_t palette_index, bool hasPal, const char *extension, char *foundExtension) const
 {
+	std::string remasterName = originalTexture().remasteredName();
+	const bool isRemasteredFieldModel = remasterName.starts_with("field.fs\\field_hd_new\\");
+
+	if (isRemasteredFieldModel && findExternalTextureRemastered(remasterName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+	{
+		return true;
+	}
+
 	if (findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
 	{
 		return true;
 	}
 
-	std::string remasterName = originalTexture().remasteredName();
 	if (remasterName.empty())
 	{
 		return false;
 	}
 
-	if (findExternalTextureRemastered(remasterName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+	if (!isRemasteredFieldModel && findExternalTextureRemastered(remasterName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
 	{
 		return true;
 	}
