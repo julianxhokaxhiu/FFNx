@@ -563,16 +563,14 @@ static int jp_measure_field_fd_control(byte control, bool use_fixed_spacing)
     + jp_measure_field_letter(0xFD33, use_fixed_spacing);
 }
 
-static bool jp_prompt_followed_by_text_after_color_control(const byte* buffer)
+static bool jp_prompt_followed_by_visible_text(const byte* buffer)
 {
-  bool skippedColorControl = false;
   while (buffer[0] == 0xFE && buffer[1] >= 0xD2 && buffer[1] <= 0xDB)
-  {
-    skippedColorControl = true;
     buffer += 2;
-  }
-  return skippedColorControl
-    && buffer[0] != 0xE7 && buffer[0] != 0xE8 && buffer[0] != 0xFF;
+  return buffer[0] != 0x3F
+    && buffer[0] != 0xE7
+    && buffer[0] != 0xE8
+    && buffer[0] != 0xFF;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -940,7 +938,7 @@ LABEL_39:
               const bool precedesUniversalPrompt = universal_buttons_parse_field_prompt(
                 buffer_text + prompt_byte_count, &next_prompt_button, &next_prompt_byte_count);
               const bool followedByText = !precedesUniversalPrompt
-                && jp_prompt_followed_by_text_after_color_control(
+                && jp_prompt_followed_by_visible_text(
                   buffer_text + prompt_byte_count);
               const int prompt_x = character_x;
               int color_index = character_n_shapes;
