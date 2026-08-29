@@ -954,6 +954,8 @@ void ff8_find_externals()
 	ff8_externals.sub_50A790 = get_relative_call(ff8_externals.sub_502380, 0x51);
 	ff8_externals.sub_502670 = get_absolute_value(ff8_externals.sub_502380, 0x22);
 	ff8_externals.battle_entity_task_dispatch_sub_507080 = get_relative_call(ff8_externals.sub_502670, 0x110);
+	ff8_externals.battle_character_dat_loader = get_absolute_value(ff8_externals.battle_entity_task_dispatch_sub_507080, 0x26);
+	ff8_externals.battle_character_dat_loader_alt = get_absolute_value(ff8_externals.battle_entity_task_dispatch_sub_507080, 0x2D);
 	ff8_externals.battle_monster_dat_loader = get_absolute_value(ff8_externals.battle_entity_task_dispatch_sub_507080, 0x4B);
 	ff8_externals.battle_monster_file_load_call_site = ff8_externals.battle_monster_dat_loader + 0x240;
 	ff8_externals.battle_load_file_sub_508480 = get_relative_call(ff8_externals.battle_monster_file_load_call_site, 0);

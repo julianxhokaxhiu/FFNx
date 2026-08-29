@@ -1706,6 +1706,8 @@ struct ff8_externals
 	uint32_t sub_50A790;
 	uint32_t sub_502670; // embedded pointer read out of sub_502380 ("push offset ...")
 	uint32_t battle_entity_task_dispatch_sub_507080; // maps a battle entity id to its task function; called from sub_502670
+	uint32_t battle_character_dat_loader;
+	uint32_t battle_character_dat_loader_alt;
 	uint32_t battle_monster_dat_loader; // sub_507120, the entity task for monsters; embedded pointer read out of the dispatcher
 	uint32_t battle_load_file_sub_508480; // generic "load battle file by index" wrapper, the monster loader's file-load call target (see monsters.cpp)
 	uint32_t battle_enemy_scanned_read_operand;  // disp32 of the ATTACK_TYPE_SCAN "already scanned?" test (see monsters.cpp)

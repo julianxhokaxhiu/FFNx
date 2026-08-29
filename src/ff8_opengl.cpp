@@ -1988,14 +1988,21 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	if (extended_memory) {
 		uint32_t memory_offsets = JP_VERSION ? 0xD6DD60 : 0xB6D060;
+		uint32_t battle_model_memory_offset = ff8_remastered_edition ? 0x800000 : 0x80000;
+		uint32_t battle_character_memory_offset = ff8_remastered_edition ? 0xC00000 : 0x100000;
 		patch_code_dword(memory_offsets + 0xC, uint32_t(extended_memory) + 0x300000);
-		patch_code_dword(memory_offsets + 0x18, uint32_t(extended_memory) + 0x80000);
-		patch_code_dword(memory_offsets + 0x1C, uint32_t(extended_memory) + 0x80000);
-		patch_code_dword(memory_offsets + 0x20, uint32_t(extended_memory) + 0x100000);
-		patch_code_dword(memory_offsets + 0x24, uint32_t(extended_memory) + 0x100000);
+		patch_code_dword(memory_offsets + 0x18, uint32_t(extended_memory) + battle_model_memory_offset);
+		patch_code_dword(memory_offsets + 0x1C, uint32_t(extended_memory) + battle_model_memory_offset);
+		patch_code_dword(memory_offsets + 0x20, uint32_t(extended_memory) + battle_character_memory_offset);
+		patch_code_dword(memory_offsets + 0x24, uint32_t(extended_memory) + battle_character_memory_offset);
 		patch_code_dword(memory_offsets + 0x2C, uint32_t(extended_memory) + 0x180000);
 		patch_code_dword(memory_offsets + 0x30, uint32_t(extended_memory) + 0x180000);
 		patch_code_dword(memory_offsets + 0x34, uint32_t(extended_memory) + 0x180000);
+
+		if (ff8_remastered_edition) {
+			patch_code_byte(ff8_externals.battle_character_dat_loader + 0xA2, 0x11);
+			patch_code_byte(ff8_externals.battle_character_dat_loader_alt + 0x138, 0x11);
+		}
 
 		// Extend field data size
 		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF64 : 0xED1), uint32_t(extended_memory) + 0x5F0000);
