@@ -121,7 +121,6 @@ void ff7_condor_fix_unit_texture_load(uint32_t unk, struc_3 *struc_3);
 void __fastcall ff7_snowboard_parse_model_vertices(snowboard_this* _this, void* edx, const matrix *matrix, int current_obj, int obj_type, int unk);
 
 // japanese
-void engine_load_menu_graphics_objects_6C1468_jp(int a1);
 //__int16 field_submit_draw_text_640x480_6E706D(__int16 character_x, __int16 character_y, __int16 text_box_right_position, byte *buffer_text, float z_value);
 __int16 field_submit_draw_text_640x480_6E706D_jp(__int16 character_x, __int16 character_y, __int16 text_box_right_position, byte *buffer_text, float z_value);
 void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp();

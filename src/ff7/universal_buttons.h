@@ -2,6 +2,7 @@
 
 #include "../ff7.h"
 
+void engine_load_menu_graphics_objects_6C1468(int a1);
 void universal_buttons_load(struc_3* graphics_context, char* template_path, ff7_game_obj* game_object);
 void universal_buttons_unload();
 void universal_buttons_draw(ff7_game_obj* game_object);

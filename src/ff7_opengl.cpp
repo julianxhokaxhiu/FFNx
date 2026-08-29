@@ -380,7 +380,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// ###########################
 	// The menu loader also owns the universal field-button atlas for every language. Multi-font
 	// glyph submission and flushing remain limited to JP and multibyte translations.
-	replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468_jp);
+	replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468);
 	if (ff7_japanese_edition || ff7_multibyte_font)
 	{
 		replace_function((uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E, common_submit_draw_char_from_buffer_6F564E_jp);
