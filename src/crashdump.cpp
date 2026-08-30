@@ -89,7 +89,7 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 
 	if (create_crash_dump)
 	{
-		if (steam_edition) get_userdata_path(filePath, sizeof(filePath), false);
+		if (steam_edition || ff8_remastered_edition) get_userdata_path(filePath, sizeof(filePath), false);
 		PathAppendA(filePath, "crash.dmp");
 
 		HANDLE file = CreateFile(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);

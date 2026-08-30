@@ -436,9 +436,7 @@ const std::string &tex_name_special_cases_remastered(std::string &filename, cons
 		}
 	} else if (vram_id >= 20 && full_filename.starts_with("ff8logo\\")) {
 		// Add lang
-		char langPath[16] = {};
-		concat_lang_str(langPath);
-		if (JP_VERSION) {
+		if (JP_VERSION || game_language == GAME_LANGUAGE_JP) {
 			filename.append("_jp");
 		} else {
 			filename.append("_efigs");

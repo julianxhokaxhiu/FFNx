@@ -2893,7 +2893,20 @@ uint32_t get_version()
 
 void concat_lang_str(PCHAR buffer)
 {
-	switch (version)
+	int v = version;
+
+	if (ff8_remastered_edition) {
+		switch (game_language) {
+			case GAME_LANGUAGE_EN: v = VERSION_FF8_12_US; break;
+			case GAME_LANGUAGE_FR: v = VERSION_FF8_12_FR; break;
+			case GAME_LANGUAGE_DE: v = VERSION_FF8_12_DE; break;
+			case GAME_LANGUAGE_SP: v = VERSION_FF8_12_SP; break;
+			case GAME_LANGUAGE_IT: v = VERSION_FF8_12_IT; break;
+			case GAME_LANGUAGE_JP: v = VERSION_FF8_12_JP; break;
+		}
+	}
+
+	switch (v)
 	{
 	case VERSION_FF7_102_US:
 	case VERSION_FF8_12_US:
@@ -2928,6 +2941,20 @@ void concat_lang_str(PCHAR buffer)
 		strcat(buffer, "jp");
 		break;
 	}
+}
+
+bool ff8_language_paths(char *fs_lang, char *wmset_lang)
+{
+	switch (game_language) {
+		case GAME_LANGUAGE_EN: strcpy(fs_lang, "eng");strcpy(wmset_lang, "us"); return true;
+		case GAME_LANGUAGE_FR: strcpy(fs_lang, "fre");strcpy(wmset_lang, "fr"); return true;
+		case GAME_LANGUAGE_DE: strcpy(fs_lang, "ger");strcpy(wmset_lang, "gr"); return true;
+		case GAME_LANGUAGE_SP: strcpy(fs_lang, "spa");strcpy(wmset_lang, "sp"); return true;
+		case GAME_LANGUAGE_IT: strcpy(fs_lang, "ita");strcpy(wmset_lang, "it"); return true;
+		case GAME_LANGUAGE_JP: strcpy(fs_lang, "jp"); strcpy(wmset_lang, "jp"); return true;
+	}
+
+	return false;
 }
 
 void get_data_lang_path(PCHAR buffer, bool absolute)
@@ -3332,6 +3359,23 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				patch_code_byte(uint32_t(ff8_externals.set_game_paths) + 0x1F0, DRIVE_NO_ROOT_DIR);
 				memcpy_code(uint32_t(ff8_externals.archive_path_prefix_field), "\\ff8\\data\\x\\field\\", sizeof("\\ff8\\data\\x\\field\\"));
 				memcpy_code(uint32_t(ff8_externals.archive_path_prefix_world), "\\ff8\\data\\x\\world\\", sizeof("\\ff8\\data\\x\\world\\"));
+				if (game_language > GAME_LANGUAGE_AUTO) {
+					char fs_lang[4] = {}, wmset_lang[3] = {};
+					ff8_language_paths(fs_lang, wmset_lang);
+					char archive_path_prefix[MAX_PATH] = {};
+					snprintf(archive_path_prefix, sizeof(archive_path_prefix), "\\ff8\\data\\%s\\", fs_lang);
+					memcpy_code(uint32_t(ff8_externals.archive_path_prefix), archive_path_prefix, strlen(archive_path_prefix) + 1);
+					snprintf(archive_path_prefix, sizeof(archive_path_prefix), "\\ff8\\data\\%s\\menu\\", fs_lang);
+					memcpy_code(uint32_t(ff8_externals.archive_path_prefix_menu), archive_path_prefix, strlen(archive_path_prefix) + 1);
+					snprintf(archive_path_prefix, sizeof(archive_path_prefix), "\\ff8\\data\\%s\\battle\\", fs_lang);
+					memcpy_code(uint32_t(ff8_externals.archive_path_prefix_battle), archive_path_prefix, strlen(archive_path_prefix) + 1);
+					// Update lookup for main.fs
+					_strupr(fs_lang);
+					snprintf(archive_path_prefix, sizeof(archive_path_prefix), "\\DATA\\%s\\", fs_lang);
+					memcpy_code(ff8_externals.moriya_filesystem_archives_lookup + 800 * 5 + sizeof(uint32_t), archive_path_prefix, strlen(archive_path_prefix) + 1);
+					// Set wmsetxx.dat path
+					memcpy_code(uint32_t(*ff8_externals.worldmap_wmset_path) + 9, wmset_lang, 2);
+				}
 			}
 			else if (strstr(dllName, "af3dn.p") != NULL)
 			{

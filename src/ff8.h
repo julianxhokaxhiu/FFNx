@@ -1323,6 +1323,7 @@ struct ff8_externals
 	uint32_t worldmap_main_loop;
 	uint32_t worldmap_enter_main;
 	uint32_t worldmap_sub_53F310;
+	char **worldmap_wmset_path;
 	uint32_t worldmap_sub_53F310_call_24D;
 	uint32_t worldmap_sub_53F310_call_2A9;
 	uint32_t worldmap_sub_53F310_call_30D;
@@ -1560,10 +1561,14 @@ struct ff8_externals
 	uint32_t moriya_filesystem_seek;
 	uint32_t moriya_filesystem_read;
 	uint32_t moriya_filesystem_close;
+	uint32_t moriya_filesystem_archives_lookup;
 	uint32_t read_or_uncompress_fs_data;
 	uint32_t lzs_uncompress;
 	void(*free_file_container)(ff8_file_container *);
 	ff8_file_container*(*archive_open)(char*,char*,char*);
+	uint32_t archive_open_fi;
+	uint32_t archive_open_fi_2;
+	uint8_t*(*open_read_close_file)(ff8_file_context*,int,int32_t*,const char*);
 	void(*sub_archive_get_filename)(const char*,char*);
 	char *temp_fs_path_cache;
 	uint32_t field_get_dialog_string;
