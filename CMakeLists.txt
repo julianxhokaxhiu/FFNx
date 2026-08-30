@@ -320,6 +320,10 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.toml
           ${CMAKE_BINARY_DIR}/bin
+  # multibyte .toml
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.multibyte.toml
+          ${CMAKE_BINARY_DIR}/bin
   # FF7.reg
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/FF7.reg

@@ -55,53 +55,42 @@ Each sheet is a 16×16 grid of glyph cells (256 cells per sheet). Author them ex
 other FFNx-replaceable menu texture — external hi-res textures are supported through the normal
 texture replacement path (see [External textures](../mods/external_textures.md)).
 
-## Per-character widths: `multibyte_widths.bin`
+## Runtime configuration: `FFNx.multibyte.toml`
 
-Glyph advance widths come from a table you can override **at runtime, without recompiling**:
+Glyph widths, field line spacing, and icon cells can be overridden **at runtime, without
+recompiling**, in `FFNx.multibyte.toml` beside `FFNx.toml`. The file is entirely optional and
+the shipped copy is a comment-only template; built-in defaults apply until an entry is enabled.
 
-- Path: `data/kernel/multibyte_widths.bin`, resolved through the standard layers — the
-  `override_path` layer is checked first, then the release's data path: `data/lang-en/kernel/`
-  (or the active language) on Steam/GOG/Store/2026 releases, plain `data/kernel/` on the 1998
-  release.
-- Format: raw `6 * 256` bytes — one byte per glyph, sheets in order 1..6, code order `0x00-0xFF`
-  within each sheet.
-- Byte packing: `(left_padding << 5) | width`, i.e. low 5 bits = advance width in font units
-  (0-31), high 3 bits = left padding. Same packing as member 3 of `window.bin`.
-- Hot-reload: FFNx re-reads the file whenever its modification time changes (checked at most
-  once per second). You can tune spacing live while the game runs.
+Each `[widths.page_N]` table corresponds to `jafont_1` through `jafont_6`. Keys are hexadecimal
+glyph codes without the `0x` prefix. Values use the same packed byte as member 3 of `window.bin`:
+`(left_padding << 5) | width`, where the low 5 bits hold width and the high 3 bits hold padding.
+Only values that differ from the built-in Japanese defaults need to be listed.
 
-If the file is missing, built-in defaults are used.
+```toml
+line_spacing = 32.0
+icons = [0xF6, 0xF7]
 
-## Field line step: `multibyte_linestep.bin`
+[widths.page_0]
+"41" = 15
 
-Optional. Controls the vertical line advance of field dialogue for multibyte text:
+[widths.page_1]
+"00" = 31
+```
 
-- Path: `data/kernel/multibyte_linestep.bin` (same layered resolution as the widths file).
-- Format: a 2-byte little-endian value, line step in **quarter pixels** (e.g. `128` = 32.0 px,
-  `98` = 24.5 px). A 1-byte file is also accepted as whole pixels. Accepted range 80–160
-  quarter-px; out-of-range values are ignored.
-- Hot-reloaded the same way as the widths file.
+`line_spacing` controls field dialogue line advance in pixels and accepts values from 20 through
+40, including fractions. `icons` lists sheet-1 codes that contain colored icon art and must be
+drawn white rather than tinted with the current text color.
 
-Taller scripts (e.g. Arabic with diacritics) typically need a larger step than the Latin
-default; adjust live until lines neither overlap nor float apart.
-
-## Icon cells: `multibyte_iconmask.bin`
-
-Optional, read once at startup. Marks sheet-1 cells that contain icon art (item/weapon type
-icons, button prompts) rather than letters:
-
-- Path: `data/kernel/multibyte_iconmask.bin` (same layered resolution as the widths file).
-- Format: raw 256 bytes, one per `jafont_1` code. Non-zero = icon cell.
-- Effect: marked cells are always drawn pure white instead of taking the current text color,
-  so colored icon art keeps its true colors. This addresses the recolor conflict with icon
-  mods noted above.
+The file is hot-reloaded when its modification time changes, checked at most once per second.
+Invalid edits leave the last valid configuration active. If the file or a page entry is omitted,
+the built-in defaults remain active. The same overrides are available to the Japanese edition.
 
 ## What ff7_multibyte_font does NOT do
 
 - **Name-entry screen**: the 3-mode (hiragana/katakana/eisuu) name-entry screen stays gated
   behind `ff7_japanese_edition`. A translation whose alphabet doesn't fit the stock name screen
   needs its own solution (the Arabic project keeps default names / renames via save editing).
-- **Window auto-resize**: the shared field-window autosizer uses `multibyte_widths.bin` while this
+- **Window auto-resize**: the shared field-window autosizer uses `FFNx.multibyte.toml` while this
   mode is active. Standard single-byte editions instead read the active game's `window.bin` metrics.
 - **Text conversion**: FFNx only draws bytes. Reshaping/bidi (Arabic), charmap design, and
   re-encoding game files remain the translation pipeline's job.
@@ -113,5 +102,5 @@ icons, button prompts) rather than letters:
    multibyte mode).
 2. Paint `jafont_1..6` textures (16×16 grid per sheet).
 3. Re-encode game text (kernel, field, battle, world, exe strings) to your charmap.
-4. Generate `multibyte_widths.bin` from your glyph metrics.
+4. Add your glyph metrics to `FFNx.multibyte.toml`.
 5. Set `ff7_multibyte_font = true` and iterate on widths/linestep live in-game.

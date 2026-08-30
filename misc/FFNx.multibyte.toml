@@ -1,0 +1,16 @@
+# FFNx Japanese and multibyte font overrides.
+
+# Field dialogue line spacing in pixels. Valid range: 20.0 to 40.0.
+# line_spacing = 32.0
+
+# Sheet-1 glyph codes containing colored icons that should not inherit text color.
+# icons = [0xF6, 0xF7]
+
+# Width keys are hexadecimal glyph codes without the 0x prefix. Values are packed as
+# (left_padding << 5) | width, matching member 3 of window.bin. Unlisted glyphs retain
+# the built-in Japanese defaults.
+# [widths.page_0]
+# "41" = 15
+
+# [widths.page_1]
+# "00" = 31

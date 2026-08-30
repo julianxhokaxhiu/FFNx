@@ -23,9 +23,10 @@
 #include "../utils.h"
 #include "universal_buttons.h"
 #include <algorithm>
+#include <charconv>
 #include <string.h>
 
-static void multibyte_load_widths();
+static void multibyte_load_config();
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value);
 static bool jp_small_glyphs = true;
 
@@ -209,72 +210,103 @@ static inline int jp_center_advance(uint16_t letter, int left_padding, int char_
   return 10 * jp_spacing_metric(letter, char_width) / 64;
 }
 
-// ff7_multibyte_font: override the hardcoded width table from <basedir>/multibyte_widths.bin
-// (6*256 bytes, one per font sheet/code, same (pad<<5|width) packing as window.bin member 3),
-// so translations can tune advances without recompiling FFNx.
 static byte multibyte_icon_mask[256] = {0};
-static int multibyte_field_linestep_q = 128;   // field line advance in QUARTER px (128 = 32.0), live-tunable
+static constexpr double multibyte_default_line_spacing = 32.0;
+static constexpr double multibyte_min_line_spacing = 20.0;
+static constexpr double multibyte_max_line_spacing = 40.0;
+static int multibyte_field_linestep_q = (int)(multibyte_default_line_spacing * 4.0);
 
-// Resolve a multibyte tuning file through the standard layers: override_path first, then the
-// per-release data path (data/lang-*/kernel on Steam/GOG/Store/2026, data/kernel on 1998).
-static bool multibyte_resolve_path(const char *name, char *out, size_t out_size)
+static bool multibyte_parse_character(const std::string_view key, int& character)
 {
-  char in[MAX_PATH]{ 0 };
-  _snprintf(in, sizeof(in), R"(data\kernel\%s)", name);
-  return redirect_path_with_override(in, out, out_size) != 1;
+  auto result = std::from_chars(key.data(), key.data() + key.size(), character, 16);
+  return result.ec == std::errc{} && result.ptr == key.data() + key.size()
+    && character >= 0 && character <= 0xFF;
 }
 
-static void multibyte_load_widths()
+static void multibyte_load_config()
 {
-  // Hot-reload: re-read the widths file whenever its mtime changes (checked at most 1x/sec),
-  // so letter advances can be tuned live while the game runs (width_gui.py writes the file).
-  static bool tried = false;
+  static bool initialized = false;
+  static bool has_override = false;
+  static int default_char_width_data[6][256];
   static long long last_mtime = -1;
   static DWORD last_check = 0;
-  if (!ff7_multibyte_font) return;
+
+  if (!ff7_japanese_edition && !ff7_multibyte_font) return;
+  if (!initialized)
+  {
+    memcpy(default_char_width_data, charWidthData, sizeof(charWidthData));
+    initialized = true;
+  }
+
   DWORD now = GetTickCount();
-  if (tried && (now - last_check) < 1000) return;
+  if (last_check && (now - last_check) < 1000) return;
   last_check = now;
-  char path[MAX_PATH]{ 0 };
-  // line step re-read every 1s tick — must NOT sit behind the widths mtime gate,
-  // or moving only the spacing slider never reaches it
-  multibyte_resolve_path("multibyte_linestep.bin", path, sizeof(path));
-  FILE *lf = fopen(path, "rb");
-  if (lf)
+
+  char path[MAX_PATH];
+  _snprintf(path, sizeof(path), "%s/FFNx.multibyte.toml", basedir);
+  struct _stat64 file_status;
+  if (_stat64(path, &file_status) != 0)
   {
-    unsigned char lb[2]; size_t ln = fread(lb, 1, 2, lf);
-    int q = (ln == 2) ? (lb[0] | (lb[1] << 8)) : (ln == 1 ? lb[0] * 4 : 0);  // 1-byte legacy = whole px
-    if (q >= 80 && q <= 160 && q != multibyte_field_linestep_q)
-      multibyte_field_linestep_q = q;
-    fclose(lf);
+    if (has_override)
+    {
+      memcpy(charWidthData, default_char_width_data, sizeof(charWidthData));
+      memset(multibyte_icon_mask, 0, sizeof(multibyte_icon_mask));
+      multibyte_field_linestep_q = (int)(multibyte_default_line_spacing * 4.0);
+      has_override = false;
+      last_mtime = -1;
+    }
+    return;
   }
-  multibyte_resolve_path("multibyte_widths.bin", path, sizeof(path));
-  struct _stat64 st;
-  bool first = !tried;
-  if (_stat64(path, &st) == 0)
+  if ((long long)file_status.st_mtime == last_mtime) return;
+
+  try
   {
-    if (tried && (long long)st.st_mtime == last_mtime) return;
-    last_mtime = (long long)st.st_mtime;
+    toml::parse_result config = toml::parse_file(path);
+    int new_char_width_data[6][256];
+    byte new_icon_mask[256] = {0};
+    memcpy(new_char_width_data, default_char_width_data, sizeof(new_char_width_data));
+
+    double line_spacing = config["line_spacing"].value_or(multibyte_default_line_spacing);
+    if (line_spacing < multibyte_min_line_spacing || line_spacing > multibyte_max_line_spacing)
+      throw std::runtime_error("line_spacing must be between 20 and 40");
+
+    if (toml::array* icons = config["icons"].as_array())
+    {
+      for (const toml::node& node : *icons)
+      {
+        auto icon = node.value<int64_t>();
+        if (!icon || *icon < 0 || *icon > 0xFF)
+          throw std::runtime_error("icons entries must be byte values");
+        new_icon_mask[*icon] = 1;
+      }
+    }
+
+    for (int page = 0; page < 6; ++page)
+    {
+      std::string page_name = "page_" + std::to_string(page);
+      toml::table* page_config = config["widths"][page_name].as_table();
+      if (!page_config) continue;
+
+      for (auto&& [key, node] : *page_config)
+      {
+        int character;
+        auto metric = node.value<int64_t>();
+        if (!multibyte_parse_character(key.str(), character) || !metric || *metric < 0 || *metric > 0xFF)
+          throw std::runtime_error("width entries must use hexadecimal byte keys and byte values");
+        new_char_width_data[page][character] = (int)*metric;
+      }
+    }
+
+    memcpy(charWidthData, new_char_width_data, sizeof(charWidthData));
+    memcpy(multibyte_icon_mask, new_icon_mask, sizeof(multibyte_icon_mask));
+    multibyte_field_linestep_q = (int)std::lround(line_spacing * 4.0);
+    has_override = true;
+    last_mtime = (long long)file_status.st_mtime;
   }
-  tried = true;
-  FILE *f = fopen(path, "rb");
-  if (!f) return;
-  unsigned char buf[6 * 256];
-  if (fread(buf, 1, sizeof(buf), f) == sizeof(buf))
+  catch (const std::exception& error)
   {
-    for (int i = 0; i < 6; i++)
-      for (int j = 0; j < 256; j++)
-        charWidthData[i][j] = buf[i * 256 + j];
-  }
-  else ffnx_error("ff7_multibyte_font: %s wrong size (need 1536 bytes)\n", path);
-  fclose(f);
-  if (!first) return;
-  multibyte_resolve_path("multibyte_iconmask.bin", path, sizeof(path));
-  f = fopen(path, "rb");
-  if (f)
-  {
-    fread(multibyte_icon_mask, 1, 256, f);
-    fclose(f);
+    ffnx_warning("Could not load %s: %s\n", path, error.what());
+    last_mtime = (long long)file_status.st_mtime;
   }
 }
 
@@ -444,7 +476,7 @@ static bool jp_prompt_followed_by_visible_text(const byte* buffer)
 /////////////////////////////////////////////////////////////////////
 int16_t field_submit_draw_text_640x480_6E706D_jp(int16_t character_x, int16_t character_y, int16_t text_box_right_position, byte *buffer_text, float z_value)
 {
-  multibyte_load_widths();   // hot-reload here too: dialogs must respond to live width tuning
+  multibyte_load_config();   // hot-reload here too: dialogs must respond to live width tuning
   int _lsq_acc = 0;   // quarter-px remainder for fractional line stepping
   float scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f;  // JP upscales 1.25x; multibyte (EN) draws native 1.0x
   int special_character_do_draw;
@@ -1238,7 +1270,7 @@ int common_submit_draw_char_from_buffer_large_6F564E_jp(int x, int vertex_y, int
 
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, uint16_t letter, float z_value)
 {
-  multibyte_load_widths();   // 1s-gated hot-reload for live width tuning
+  multibyte_load_config();   // 1s-gated hot-reload for live width tuning
 
   // FIXME: this function can draw characters with different scaling, dependent on what sorta text is being printed.
   // But it needs to know what the source of hte text that was put into the buffer was to work this out, and that info is NOT passed as a parameter
@@ -2598,6 +2630,7 @@ void main_menu_draw_everything_maybe_6C0B91_jp()
 
 void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 {
+  multibyte_load_config();
   // as many textboxes in flevel are set wrong, we need to resize them.
   float scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f; // resizer needs to match the draw scale (JP 1.25 / multibyte EN 1.0)
   int W = 0;
