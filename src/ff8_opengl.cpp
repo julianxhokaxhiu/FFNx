@@ -28,6 +28,7 @@
 #include "macro.h"
 #include "movies.h"
 #include "gl.h"
+#include "renderer.h"
 #include "gamepad.h"
 #include "joystick.h"
 #include "sdl_gamepad.h"
@@ -2021,17 +2022,68 @@ int ff8_limit_fps()
 	return 0;
 }
 
+static bool ff8_is_widescreen_mode(uint32_t mode)
+{
+	return mode == MODE_BATTLE || mode == MODE_WORLDMAP || mode == MODE_SWIRL
+		|| mode == MODE_MENU || mode == MODE_MAIN_MENU;
+}
+
+void ff8_flip(struct game_obj *game_object)
+{
+	if (widescreen_enabled && !ff8_is_widescreen_mode(getmode_cached()->driver_mode))
+	{
+		// Cover overflow and retained pixels only after all game geometry has been drawn.
+		gl_draw_sorted_deferred();
+
+		const float left = wide_viewport_x;
+		const float right = wide_viewport_x + wide_viewport_width;
+		const float width = game_width;
+		const float height = game_height;
+		struct nvertex vertices[] = {
+			{left, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{left, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{0.0f, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{0.0f, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{width, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{width, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{right, 0.0f, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+			{right, height, 0.0f, 1.0f, 0xff000000, 0, 0.0f, 0.0f},
+		};
+		WORD indices[] = {0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6};
+
+		struct driver_state saved_state;
+		gl_save_state(&saved_state);
+		gl_bind_texture_set(nullptr);
+		gl_set_blend_func(RendererBlendMode::BLEND_NONE);
+		internal_set_renderstate(V_DEPTHTEST, 0, game_object);
+		internal_set_renderstate(V_DEPTHMASK, 0, game_object);
+		internal_set_renderstate(V_ALPHATEST, 0, game_object);
+		internal_set_renderstate(V_NOCULL, 1, game_object);
+		internal_set_renderstate(V_WIREFRAME, 0, game_object);
+		gl_draw_indexed_primitive(RendererPrimitiveType::PT_TRIANGLES, TLVERTEX, vertices, nullptr, 8, indices, 12, nullptr, nullptr, nullptr, 0, 0);
+		gl_load_state(&saved_state);
+	}
+
+	common_flip(game_object);
+}
+
 void* ff8_engine_set_wide_viewport(int x, int y, int w, int h)
 {
-	*ff8_externals.current_viewport_x_dword_1A7764C = wide_viewport_x;
-	*ff8_externals.current_viewport_y_dword_1A77648 = wide_viewport_y;
-	*ff8_externals.current_viewport_width_dword_1A77654 = wide_viewport_width;
-	*ff8_externals.current_viewport_height_dword_1A77650 = wide_viewport_height;
+	const bool use_wide_viewport = ff8_is_widescreen_mode(getmode()->driver_mode);
+	const int viewport_x = use_wide_viewport ? wide_viewport_x : x;
+	const int viewport_y = use_wide_viewport ? wide_viewport_y : y;
+	const int viewport_width = use_wide_viewport ? wide_viewport_width : w;
+	const int viewport_height = use_wide_viewport ? wide_viewport_height : h;
 
-	*ff8_externals.ssigpu_viewport_x_dword_1CA89D8 = wide_viewport_x;
-	*ff8_externals.ssigpu_viewport_y_dword_1CA89DC = wide_viewport_y;
-	*ff8_externals.ssigpu_viewport_width_dword_B7CBF8 = wide_viewport_width;
-	*ff8_externals.ssigpu_viewport_height_dword_B7CBFC = wide_viewport_height;
+	*ff8_externals.current_viewport_x_dword_1A7764C = viewport_x;
+	*ff8_externals.current_viewport_y_dword_1A77648 = viewport_y;
+	*ff8_externals.current_viewport_width_dword_1A77654 = viewport_width;
+	*ff8_externals.current_viewport_height_dword_1A77650 = viewport_height;
+
+	*ff8_externals.ssigpu_viewport_x_dword_1CA89D8 = x;
+	*ff8_externals.ssigpu_viewport_y_dword_1CA89DC = y;
+	*ff8_externals.ssigpu_viewport_width_dword_B7CBF8 = w;
+	*ff8_externals.ssigpu_viewport_height_dword_B7CBFC = h;
 
 	if ( w >= 540 || h >= 380 )
 	{
@@ -2045,12 +2097,165 @@ void* ff8_engine_set_wide_viewport(int x, int y, int w, int h)
 		*ff8_externals.dword_B7CE28 = tmp;
 	}
 
-	return ff8_externals.engine_setviewport_sub_41E070(wide_viewport_x, wide_viewport_y, wide_viewport_width, wide_viewport_height, common_externals.get_game_object());
+	return ff8_externals.engine_setviewport_sub_41E070(viewport_x, viewport_y, viewport_width, viewport_height, common_externals.get_game_object());
+}
+
+void* ff8_swirl_set_wide_viewport(int x, int y, int w, int h)
+{
+	x = 0;
+	y = 0;
+	w = 640;
+	h = 480;
+
+	*ff8_externals.swirl_viewport_x = x;
+	*ff8_externals.swirl_viewport_y = y;
+	*ff8_externals.swirl_viewport_width = w;
+	*ff8_externals.swirl_viewport_height = h;
+
+	return ff8_engine_set_wide_viewport(x, y, w, h);
+}
+
+static bool ff8_battle_stage_projection = false;
+
+int ff8_battle_stage_draw(uint32_t *model, int descriptor, int depth_table, int depth_shift, int output)
+{
+	const bool previous_stage_projection = ff8_battle_stage_projection;
+	ff8_battle_stage_projection = true;
+	const int result = reinterpret_cast<int (*)(uint32_t *, int, int, int, int)>(ff8_externals.sub_5099D0)(model, descriptor, depth_table, depth_shift, output);
+	ff8_battle_stage_projection = previous_stage_projection;
+
+	return result;
+}
+
+int16_t ff8_battle_world_calc_zoom(int16_t *descriptor, int16_t **vertices, uint32_t **projected_vertices)
+{
+	const int16_t clip_x = descriptor[10];
+	const int16_t clip_width = descriptor[12];
+	const int16_t clip_height = descriptor[13];
+	int16_t *const source_begin = *vertices;
+	uint32_t *const projected_begin = *projected_vertices;
+
+	if (getmode_cached()->driver_mode == MODE_BATTLE)
+	{
+		const int wide_right = wide_viewport_x + wide_viewport_width;
+		const int half_bottom = static_cast<int>(ceil((wide_viewport_y + wide_viewport_height) / 2.0));
+		const int half_left = static_cast<int>(floor((wide_viewport_x - wide_viewport_width) / 2.0));
+		const int half_right = static_cast<int>(ceil((wide_right + wide_viewport_width) / 2.0));
+
+		descriptor[10] = static_cast<int16_t>(half_left);
+		descriptor[12] = static_cast<int16_t>(half_right - half_left);
+		if (descriptor[11] + descriptor[13] < half_bottom)
+			descriptor[13] = static_cast<int16_t>(half_bottom - descriptor[11]);
+	}
+
+	const int16_t result = ff8_externals.world_calc_zoom_sub_50F900(descriptor, vertices, projected_vertices);
+	if (ff8_battle_stage_projection && clip_height > 0)
+	{
+		const int vertex_count = *source_begin;
+		const int zoom = ff8_externals.camera_zoom_dword_1CA92E4[0];
+		const int near_guard = zoom / 8;
+		const int clip_left = 8 * descriptor[10];
+		const int clip_top = 8 * descriptor[11];
+		const int clip_right = clip_left + 8 * descriptor[12];
+		const int clip_bottom = clip_top + 8 * descriptor[13];
+
+		for (int vertex_index = 0; vertex_index < vertex_count; ++vertex_index)
+		{
+			const int16_t *const source = source_begin + 1 + 3 * vertex_index;
+			uint32_t *const projected = projected_begin + 2 * vertex_index;
+			if ((projected[1] & 0x20000) != 0)
+			{
+				const double precise_x = ff8_externals.dword_1CA9290[0]
+					+ ff8_externals.flt_1CA9234[0] * source[2]
+					+ ff8_externals.flt_1CA9234[1] * source[1]
+					+ ff8_externals.flt_1CA9234[2] * source[0];
+				const double precise_y = ff8_externals.dword_1CA9290[1]
+					+ ff8_externals.flt_1CA9234[3] * source[2]
+					+ ff8_externals.flt_1CA9234[4] * source[1]
+					+ ff8_externals.flt_1CA9234[5] * source[0];
+				const double precise_z = ff8_externals.dword_1CA9290[2]
+					+ ff8_externals.flt_1CA9234[6] * source[2]
+					+ ff8_externals.flt_1CA9234[7] * source[1]
+					+ ff8_externals.flt_1CA9234[8] * source[0];
+				const int projected_z = static_cast<int>(round(precise_z));
+
+				if (projected_z > near_guard)
+				{
+					int projected_x = 8 * ff8_externals.word_1CA92DE[0] + static_cast<int>(round(8.0 * precise_x * zoom / projected_z));
+					int projected_y = 8 * ff8_externals.word_1CA92DE[2] + static_cast<int>(round(8.0 * precise_y * zoom / projected_z));
+					if (projected_x < -8192) projected_x = -8192;
+					if (projected_x > 8184) projected_x = 8184;
+					if (projected_y < -8192) projected_y = -8192;
+					if (projected_y > 8184) projected_y = 8184;
+
+					projected[0] = static_cast<uint16_t>(projected_x) | (static_cast<uint32_t>(static_cast<uint16_t>(projected_y)) << 16);
+					projected[1] &= ~(0x20000 | 0x3F00000);
+					if (projected_x < clip_left) projected[1] |= 0x1100000;
+					else if (projected_x > clip_right) projected[1] |= 0x1200000;
+					if (projected_y < clip_top) projected[1] |= 0x2400000;
+					else if (projected_y > clip_bottom) projected[1] |= 0x2800000;
+				}
+			}
+		}
+	}
+	if (getmode_cached()->driver_mode == MODE_BATTLE && clip_height == 216)
+	{
+		const int clip_top = 8 * descriptor[11];
+		const int source_height = 8 * clip_height;
+		const int target_height = 4 * (wide_viewport_y + wide_viewport_height) - clip_top;
+
+		for (uint32_t *projected = projected_begin; projected < *projected_vertices; projected += 2)
+		{
+			const int projected_y = static_cast<int16_t>(*projected >> 16);
+			int scaled_y = static_cast<int>(round(clip_top + (projected_y - clip_top) * static_cast<double>(target_height) / source_height));
+			if (ff8_battle_stage_projection)
+			{
+				const int target_center = clip_top + target_height / 2;
+				scaled_y = static_cast<int>(round(target_center + (scaled_y - target_center) * static_cast<double>(target_height) / source_height));
+			}
+			if (scaled_y < -32768) scaled_y = -32768;
+			if (scaled_y > 32767) scaled_y = 32767;
+			*projected = (*projected & 0xFFFF) | (static_cast<uint32_t>(static_cast<uint16_t>(scaled_y)) << 16);
+		}
+	}
+	descriptor[10] = clip_x;
+	descriptor[12] = clip_width;
+	descriptor[13] = clip_height;
+
+	return result;
 }
 
 void ff8_widescreen_hook_init() {
+	if (FF8_US_VERSION)
+	{
+		replace_call(ff8_externals.swirl_enter + 0x111, ff8_swirl_set_wide_viewport);
+		replace_call(ff8_externals.sub_5099D0 + 0xCD, ff8_battle_world_calc_zoom);
+		replace_call(ff8_externals.sub_500870 + 0x760 + 0x15E, ff8_battle_stage_draw);
+
+		const uint32_t battle_stage_init = get_relative_call(ff8_externals.sub_500870, 0x13);
+		const uint32_t battle_height = (wide_viewport_y + wide_viewport_height) / 2;
+		patch_code_int(battle_stage_init + 0x21, battle_height);
+		patch_code_int(battle_stage_init + 0x39, battle_height);
+		patch_code_int(battle_stage_init + 0x51, battle_height);
+		patch_code_short(battle_stage_init + 0x85, battle_height);
+		patch_code_int(battle_stage_init + 0x90, battle_height);
+		patch_code_short(battle_stage_init + 0xD3, battle_height);
+	}
+
 	// Viewport fixes
 	replace_function(ff8_externals.engine_setviewport_sub_45B4C0, ff8_engine_set_wide_viewport);
+
+	// Keep world-map polygons outside the original 0..320 horizontal viewport.
+	// Replace "cmp ecx, 0xA00" with STC so the following SBB sets the horizontal visibility bit.
+	memcpy_code(ff8_externals.sub_4023D0 + 0x211, "\xF9\x90\x90\x90\x90\x90", 6);
+	// Extend the original 224-line bottom test to the full widescreen viewport without disabling Y rejection.
+	patch_code_int(ff8_externals.sub_4023D0 + 0x201, 4 * (wide_viewport_y + wide_viewport_height));
+	memset_code(ff8_externals.worldmap_fog_filter_polygons_fallback + 0x1D9, 0x90, 2);
+	if (FF8_US_VERSION)
+	{
+		memset_code(ff8_externals.worldmap_cull_blocks_sub_53D3C0 + 0x3A2, 0x90, 2);
+		memset_code(ff8_externals.worldmap_cull_blocks_sub_53D3C0 + 0x3A8, 0x90, 2);
+	}
 
 	// Menu
 	ff8_externals.menu_viewport[2].scale_x = 2.0;
@@ -2562,7 +2767,7 @@ struct ff8_gfx_driver *ff8_load_driver(void* _game_object)
 	ret->cleanup = common_cleanup;
 	ret->lock = common_lock;
 	ret->unlock = common_unlock;
-	ret->flip = common_flip;
+	ret->flip = ff8_flip;
 	ret->clear = common_clear;
 	ret->clear_all= common_clear_all;
 	ret->setviewport = common_setviewport;

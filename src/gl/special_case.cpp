@@ -49,6 +49,55 @@ uint32_t gl_special_case(uint32_t primitivetype, uint32_t vertextype, struct nve
 	// Force disabling filter for ff8 worldmap
 	if(ff8 && mode == MODE_WORLDMAP && (isExternalTexture || ff8_worldmap_internal_highres_textures)) current_state.texture_filter = false;
 
+	if(ff8 && widescreen_enabled && mode == MODE_SWIRL && vertextype == TLVERTEX)
+	{
+		const float scale_x = wide_viewport_width / static_cast<float>(game_width);
+		const float scale_y = wide_viewport_height / static_cast<float>(game_height);
+
+		for(uint32_t i = 0; i < vertexcount; ++i)
+		{
+			vertices[i]._.x = wide_viewport_x + vertices[i]._.x * scale_x;
+			vertices[i]._.y = wide_viewport_y + vertices[i]._.y * scale_y;
+		}
+	}
+
+	if(ff8 && widescreen_enabled && vertextype == TLVERTEX
+		&& ((mode == MODE_WORLDMAP && vertexcount == 8 && count == 12)
+			|| ((mode == MODE_WORLDMAP || mode == MODE_BATTLE)
+				&& vertexcount == 4 && count == 6)))
+	{
+		float min_x = vertices[0]._.x;
+		float max_x = vertices[0]._.x;
+		float min_y = vertices[0]._.y;
+		float max_y = vertices[0]._.y;
+
+		for(uint32_t i = 1; i < vertexcount; ++i)
+		{
+			if(vertices[i]._.x < min_x) min_x = vertices[i]._.x;
+			if(vertices[i]._.x > max_x) max_x = vertices[i]._.x;
+			if(vertices[i]._.y < min_y) min_y = vertices[i]._.y;
+			if(vertices[i]._.y > max_y) max_y = vertices[i]._.y;
+		}
+
+		if(max_x - min_x >= game_width)
+		{
+			float wide_min_x = min_x < wide_viewport_x ? min_x : wide_viewport_x;
+			float wide_max_x = max_x > wide_viewport_x + wide_viewport_width ? max_x : wide_viewport_x + wide_viewport_width;
+
+			for(uint32_t i = 0; i < vertexcount; ++i)
+			{
+				if(vertices[i]._.x == min_x) vertices[i]._.x = wide_min_x;
+				if(vertices[i]._.x == max_x) vertices[i]._.x = wide_max_x;
+
+				if(vertexcount == 4)
+				{
+					if(vertices[i]._.y == min_y) vertices[i]._.y = wide_viewport_y;
+					if(vertices[i]._.y == max_y) vertices[i]._.y = wide_viewport_y + wide_viewport_height;
+				}
+			}
+		}
+	}
+
 	// some modpath textures have filtering forced on
 	if(current_state.texture_set && VREF(texture_set, ogl.gl_set->force_filter) && isExternalTexture) current_state.texture_filter = true;
 

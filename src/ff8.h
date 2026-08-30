@@ -1237,6 +1237,10 @@ struct ff8_externals
 	const char *data_drive_path;
 	uint32_t swirl_enter;
 	uint32_t swirl_main_loop;
+	int32_t *swirl_viewport_x;
+	int32_t *swirl_viewport_y;
+	int32_t *swirl_viewport_width;
+	int32_t *swirl_viewport_height;
 	uint32_t sub_460B60;
 	uint32_t field_main_loop;
 	uint32_t field_main_exit;
@@ -1451,12 +1455,14 @@ struct ff8_externals
 	uint32_t loc_460BB0;
 	float *psx_floats1;
 	uint32_t sub_53BB90;
+	uint32_t worldmap_cull_blocks_sub_53D3C0;
 	uint32_t worldmap_fog_filter_polygons_in_block_1;
 	uint32_t worldmap_polygon_condition_2045C8C;
 	uint32_t worldmap_has_polygon_condition_2045C90;
 	uint32_t worldmap_sub_45DF20;
 	uint32_t sub_45E3A0;
 	uint32_t worldmap_fog_filter_polygons_in_block_2;
+	uint32_t worldmap_fog_filter_polygons_fallback;
 	uint32_t sub_461E00;
 	uint32_t dword_1CA8848;
 	uint32_t sub_53E2A0;
@@ -1725,6 +1731,8 @@ struct ff8_externals
 	uint32_t sub_500870;
 	uint32_t sub_500C00;
 	uint32_t sub_500CC0;
+	uint32_t sub_5099D0;
+	int16_t (*world_calc_zoom_sub_50F900)(int16_t *, int16_t **, uint32_t **);
 	uint32_t sub_506C90;
 	uint32_t sub_506CF0;
 	uint32_t sub_5084B0;

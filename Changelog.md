@@ -56,6 +56,7 @@
 - Movie: Add support for Music/Voice layer for external movies
 - Movie: Fix field models and scripts running too fast on top of movies above 15 FPS, models move smoothly between the 15 FPS steps
 - Voice: Add main character and enemy voice actions (attack, magic, etc.)
+- Widescreen: Refine 16:9 mode by unlocking true 16:9 for 3D scenes while keeping 4:3 for the remaining ones until they can be ported natively
 
 ## FF8 Remastered
 
