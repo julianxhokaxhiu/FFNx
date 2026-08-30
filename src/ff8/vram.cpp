@@ -34,6 +34,7 @@
 #include "world/chara_one.h"
 #include "world/wmset.h"
 #include "battle/stage.h"
+#include "remaster.h"
 #include "./file.h"
 
 #include <shlwapi.h>
@@ -57,6 +58,7 @@ int next_texture_count = -1;
 int next_do_not_clear_old_texture = false;
 Tim::Bpp next_bpp = Tim::Bpp16;
 int last_CLUT = 0;
+int8_t *next_rgba_modifier = nullptr;
 
 // Field background
 uint8_t *mim_texture_buffer = nullptr;
@@ -70,6 +72,8 @@ int chara_one_current_pos = 0;
 uint32_t chara_one_current_model = 0;
 uint32_t chara_one_current_mch = 0;
 uint32_t chara_one_current_texture = 0;
+const uint8_t *chara_one_pcb_data = 0;
+int chara_one_pcb_size = 0;
 // World
 std::vector<CharaOneModelTextures> chara_one_world_texture_offsets;
 uint8_t *chara_one_world_data;
@@ -219,7 +223,8 @@ void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 	bool isPal = (next_pal_data != nullptr && (uint8_t *)next_pal_data == texture_buffer)
 		|| (palette_infos.isValid() && palette_infos.x() == x && palette_infos.y() == y && palette_infos.w() == w && palette_infos.h() == h);
 
-	if (trace_all || trace_vram) ffnx_trace("%s x=%d y=%d w=%d h=%d bpp=%d isPal=%d texture_buffer=0x%X\n", __func__, x, y, w, h, next_bpp, isPal, texture_buffer);
+	if (trace_all || trace_vram) ffnx_trace("%s x=%d y=%d w=%d h=%d bpp=%d isPal=%d texture_buffer=0x%X rgba_modifier=(%d, %d, %d, %d)\n", __func__, x, y, w, h, next_bpp, isPal, texture_buffer,
+		next_rgba_modifier ? next_rgba_modifier[0] : 0, next_rgba_modifier ? next_rgba_modifier[1] : 0, next_rgba_modifier ? next_rgba_modifier[2] : 0, next_rgba_modifier ? next_rgba_modifier[3] : 0);
 
 	uint8_t *vram = ff8_vram_seek(x, y);
 	const int vramLineWidth = VRAM_DEPTH * VRAM_WIDTH;
@@ -233,12 +238,12 @@ void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 	}
 
 	if (texture_infos.isValid() && palette_infos.isValid()) {
-		texturePacker.setTexture(next_texture_name, next_remastered_texture_name, texture_infos, palette_infos, next_texture_count, !next_do_not_clear_old_texture);
+		texturePacker.setTexture(next_texture_name, next_remastered_texture_name, texture_infos, palette_infos, next_texture_count, next_rgba_modifier, !next_do_not_clear_old_texture);
 
 		texture_infos = TexturePacker::TextureInfos();
 		palette_infos = TexturePacker::TextureInfos();
 	} else if (!texture_infos.isValid() && !palette_infos.isValid() && !isPal) {
-		texturePacker.setTexture(next_texture_name, next_remastered_texture_name, TexturePacker::TextureInfos(x, y, w, h, next_bpp), TexturePacker::TextureInfos(), next_texture_count, !next_do_not_clear_old_texture);
+		texturePacker.setTexture(next_texture_name, next_remastered_texture_name, TexturePacker::TextureInfos(x, y, w, h, next_bpp), TexturePacker::TextureInfos(), next_texture_count, next_rgba_modifier, !next_do_not_clear_old_texture);
 	}
 
 	ff8_externals.sub_464850(x, y, x + w - 1, h + y - 1);
@@ -247,6 +252,7 @@ void ff8_upload_vram(int16_t *pos_and_size, uint8_t *texture_buffer)
 	*next_remastered_texture_name = '\0';
 	next_do_not_clear_old_texture = false;
 	next_texture_count = -1;
+	next_rgba_modifier = nullptr;
 }
 
 void ff8_vram_copy_part(int x, int y, int w, int h, int target_x, int target_y)
@@ -822,7 +828,7 @@ void ff8_wm_section_17_set_texture(int texture_id)
 
 	snprintf(texture_name, sizeof(texture_name), "world/dat/wmset/section17/texture%d", texture_id);
 
-	texturePacker.setTexture(texture_name, nullptr, texture_infos, palette_infos, tex.textureFramePositions.size(), true);
+	texturePacker.setTexture(texture_name, nullptr, texture_infos, palette_infos, tex.textureFramePositions.size(), nullptr, true);
 }
 
 uint32_t ff8_wm_section_38_prepare_texture_for_upload(uint8_t *tim_file_data, ff8_tim *tim_infos)
@@ -1356,6 +1362,52 @@ uint32_t ff8_field_read_map_data(char *filename, uint8_t *map_data)
 	return ret;
 }
 
+int ff8_field_open_chara_one(
+	int current_data_pointer,
+	void *models_infos,
+	VramPos *palette_vram_positions,
+	VramPos *texture_vram_positions,
+	const char *dir_name,
+	const uint8_t *pcb_data,
+	int allocated_size,
+	int pcb_data_size
+) {
+	if (trace_all || trace_vram) ffnx_trace("%s\n", __func__);
+
+	chara_one_pcb_data = pcb_data;
+	chara_one_pcb_size = pcb_data_size;
+
+	VramPos tex_vram_pos[FIELD_VRAM_POS_LENGTH] = {}, pal_vram_pos[FIELD_VRAM_POS_LENGTH] = {};
+
+	// Maximize texture positioning by eliminating taken spots
+	int j = 0;
+	for (int i = 0; i < FIELD_VRAM_POS_LENGTH; ++i) {
+		VramPos pos = i < FIELD_MODEL_TEX_VRAM_POS_ORIGINAL_LENGTH ? texture_vram_positions[i] : field_model_tex_vram_pos[i - FIELD_MODEL_TEX_VRAM_POS_ORIGINAL_LENGTH];
+		// Background is at (0, 256, mim_real_width, 256)
+		if (pos.y >= 256 && pos.x < mim_real_width) {
+			if (trace_all || trace_vram) ffnx_warning("%s: (%d, %d) cell taken by mim, continue\n", __func__, pos.x, pos.y);
+			continue;
+		}
+		// Effects can be positionned anywhere, depending on the pmp file content
+		if (pos.x >= field_effect_texture_infos.x() && pos.x < field_effect_texture_infos.x() + field_effect_texture_infos.w()
+			&& pos.y >= field_effect_texture_infos.y() && pos.y < field_effect_texture_infos.y() + field_effect_texture_infos.h()) {
+			if (trace_all || trace_vram) ffnx_warning("%s: (%d, %d) cell taken by pmp, continue\n", __func__, pos.x, pos.y);
+			continue;
+		}
+		pal_vram_pos[j] = {0, uint16_t(i + 128u)}; // Relocate palettes on (0, 128) instead of (512, 240)
+		tex_vram_pos[j] = pos;
+		j += 1;
+	}
+
+	int ret = ((int(*)(int,void*,VramPos*,VramPos*,const char*,const uint8_t*,int,int))ff8_externals.load_field_models)(current_data_pointer, models_infos, palette_vram_positions, texture_vram_positions, dir_name, pcb_data, allocated_size, pcb_data_size);
+
+	if (ff8_remastered_edition) {
+		ff8_remaster_set_field_model_scaling(chara_one_models);
+	}
+	
+	return ret;
+}
+
 int ff8_field_chara_one_read_file_header(int fd, uint8_t *const data, size_t size)
 {
 	int read = ((int(*)(int,uint8_t*const,size_t))ff8_externals.chara_one_read_file)(fd, data, size);
@@ -1363,6 +1415,8 @@ int ff8_field_chara_one_read_file_header(int fd, uint8_t *const data, size_t siz
 	if (trace_all || trace_vram) ffnx_trace("%s: size=%d\n", __func__, size);
 
 	chara_one_models = ff8_chara_one_parse_models(data, size);
+	ff8_parse_pcb(chara_one_pcb_data, chara_one_pcb_size, chara_one_models);
+
 	chara_one_loaded_models.clear();
 	chara_one_current_model = 0;
 	chara_one_current_mch = 0;
@@ -1438,6 +1492,7 @@ int ff8_field_texture_upload_one(char *image_buffer, char bpp, char a3, int x, i
 		CharaOneModel model = chara_one_models[chara_one_loaded_models.at(chara_one_current_model)];
 
 		if (chara_one_current_texture < model.texturesData.size()) {
+			next_rgba_modifier = model.rgbaModifier;
 			next_bpp = Tim::Bpp(bpp);
 			if (!model.isDirect && !is_remastered_hd_textures_disabled("field")) {
 				snprintf(next_remastered_texture_name, MAX_PATH, "field.fs\\field_hd_new\\%s_%d", model.name, chara_one_current_texture);
@@ -1954,50 +2009,6 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 	}
 }
 
-int ff8_load_field_models(
-	int current_data_pointer,
-	void *models_infos,
-	VramPos *palette_vram_positions,
-	VramPos *texture_vram_positions,
-	const char *dirName,
-	int field_data_pointer,
-	int field_data_max_pointer,
-	int pcb_data_size)
-{
-	VramPos tex_vram_pos[FIELD_VRAM_POS_LENGTH] = {}, pal_vram_pos[FIELD_VRAM_POS_LENGTH] = {};
-
-	// Maximize texture positioning by eliminating taken spots
-	int j = 0;
-	for (int i = 0; i < FIELD_VRAM_POS_LENGTH; ++i) {
-		VramPos pos = i < FIELD_MODEL_TEX_VRAM_POS_ORIGINAL_LENGTH ? texture_vram_positions[i] : field_model_tex_vram_pos[i - FIELD_MODEL_TEX_VRAM_POS_ORIGINAL_LENGTH];
-		// Background is at (0, 256, mim_real_width, 256)
-		if (pos.y >= 256 && pos.x < mim_real_width) {
-			if (trace_all || trace_vram) ffnx_warning("%s: (%d, %d) cell taken by mim, continue\n", __func__, pos.x, pos.y);
-			continue;
-		}
-		// Effects can be positionned anywhere, depending on the pmp file content
-		if (pos.x >= field_effect_texture_infos.x() && pos.x < field_effect_texture_infos.x() + field_effect_texture_infos.w()
-			&& pos.y >= field_effect_texture_infos.y() && pos.y < field_effect_texture_infos.y() + field_effect_texture_infos.h()) {
-			if (trace_all || trace_vram) ffnx_warning("%s: (%d, %d) cell taken by pmp, continue\n", __func__, pos.x, pos.y);
-			continue;
-		}
-		pal_vram_pos[j] = {0, uint16_t(i + 128u)}; // Relocate palettes on (0, 128) instead of (512, 240)
-		tex_vram_pos[j] = pos;
-		j += 1;
-	}
-
-	return ((int(*)(int,void*,VramPos*,VramPos*,const char*,int,int,int))ff8_externals.load_field_models)(
-		current_data_pointer,
-		models_infos,
-		pal_vram_pos,
-		tex_vram_pos,
-		dirName,
-		field_data_pointer,
-		field_data_max_pointer,
-		pcb_data_size
-	);
-}
-
 void engine_set_init_time(double fps_adjust)
 {
 	texturePacker.clearTextures();
@@ -2054,6 +2065,7 @@ void vram_init()
 	replace_call(ff8_externals.upload_mim_file + 0x2E, ff8_field_mim_palette_upload_vram);
 	replace_call(ff8_externals.read_field_data + (JP_VERSION ? 0x990 : 0x915), ff8_field_read_map_data);
 	// field: characters
+	replace_call(ff8_externals.read_field_data + (JP_VERSION ? 0xFA2 : 0xF0F), ff8_field_open_chara_one);
 	replace_call(ff8_externals.load_field_models + 0x15F, ff8_field_chara_one_read_file_header);
 	replace_call(ff8_externals.load_field_models + 0x582, ff8_field_chara_one_seek_to_model);
 	replace_call(ff8_externals.load_field_models + 0x594, ff8_field_chara_one_read_model);
@@ -2111,11 +2123,6 @@ void vram_init()
 	// Read palette from VRAM to Graphic driver
 	replace_call(ff8_externals.write_palette_texture_set_sub_466190 + 0x2C, ff8_read_vram_palette);
 	replace_call(ff8_externals.write_palette_texture_set_sub_466190 + 0x7E, ff8_write_palette_to_driver);
-
-	//---- Field VRAM arrangement
-
-	// Change texture positions in VRAM
-	replace_call(ff8_externals.read_field_data + (JP_VERSION ? 0xFA2 : 0xF0F), ff8_load_field_models);
 
 	//---- Misc
 

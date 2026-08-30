@@ -107,6 +107,54 @@ std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uin
 	return models;
 }
 
+void ff8_parse_pcb(const uint8_t *pcb_data, int pcb_data_size, std::unordered_map<uint32_t, CharaOneModel> &models)
+{
+	int count = std::min(pcb_data_size / 8, 64);
+	std::unordered_map<uint32_t, uint32_t> model_light_colors;
+	uint32_t default_light_color = 0x80808080;
+
+	for (int i = 0; i < count; ++i)
+	{
+		char name[5] = "";
+		for (uint8_t j = 0; j < 4; ++j)
+		{
+			name[j] = pcb_data[i * 8 + j];
+
+			if (name[j] > 'z' || name[j] < '0')
+			{
+				name[j] = '\0';
+				break;
+			}
+		}
+
+		model_light_colors[*(uint32_t *)name] = *(uint32_t *)(pcb_data + i * 8 + 4);
+
+		if (i == 0) {
+			default_light_color = *(uint32_t *)(pcb_data + i * 8 + 4);
+		}
+	}
+
+	// Set color modifiers to models
+	std::unordered_map<uint32_t, CharaOneModel> ret;
+
+	for (const auto pair: models)
+	{
+		CharaOneModel model = pair.second;
+		auto it = model_light_colors.find(*(uint32_t *)model.name);
+		uint32_t raw_color = it == model_light_colors.end() ? default_light_color : (*it).second;
+		uint8_t *color_modifier = (uint8_t *)&raw_color;
+
+		model.rgbaModifier[0] = int(color_modifier[1]) - 128;
+		model.rgbaModifier[1] = int(color_modifier[2]) - 128;
+		model.rgbaModifier[2] = int(color_modifier[3]) - 128;
+		model.rgbaModifier[3] = 0;
+
+		ret[pair.first] = model;
+	}
+
+	models = ret;
+}
+
 void ff8_mch_parse_model(CharaOneModel &model, const uint8_t *mch_data, size_t size)
 {
 	if(size < 0x100) {

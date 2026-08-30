@@ -32,8 +32,10 @@ struct CharaOneModel {
 	bool isDirect;
 	std::vector<uint32_t> texturesData;
 	uint32_t modelId;
+	int8_t rgbaModifier[4];
 };
 
 std::unordered_map<uint32_t, CharaOneModel> ff8_chara_one_parse_models(const uint8_t *chara_one_data, size_t size);
 void ff8_mch_parse_model(CharaOneModel &model, const uint8_t *mch_data, size_t size);
+void ff8_parse_pcb(const uint8_t *pcb_data, int pcb_data_size, std::unordered_map<uint32_t, CharaOneModel> &models);
 bool ff8_chara_one_model_save_textures(const CharaOneModel &models, const uint8_t *chara_one_model_data, const char *dirname);

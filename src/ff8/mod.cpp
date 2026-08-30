@@ -37,7 +37,7 @@ TextureImage::TextureImage() :
 {
 }
 
-bool TextureImage::createImage(const char *filename, int originalTexturePixelWidth, int originalTextureHeight, int internalLodScale)
+bool TextureImage::createImage(const char *filename, int originalTexturePixelWidth, int originalTextureHeight, int internalLodScale, int8_t *rgbaModifier)
 {
 	if (_image != nullptr)
 	{
@@ -110,6 +110,8 @@ bool TextureImage::createImage(const char *filename, int originalTexturePixelWid
 
 	_scale = scale;
 
+	alterColors(rgbaModifier);
+
 	return true;
 }
 
@@ -127,6 +129,35 @@ void TextureImage::setLod(uint8_t lod)
 	if (_image != nullptr)
 	{
 		bimg::imageGetRawData(*_image, 0, lod, _image->m_data, _image->m_size, _mip);
+	}
+}
+
+void TextureImage::alterColors(int8_t *rgbaModifier)
+{
+	if (rgbaModifier == nullptr || rgbaModifier[0] == 0 && rgbaModifier[1] == 0 && rgbaModifier[2] == 0 && rgbaModifier[3] == 0)
+	{
+		return;
+	}
+
+	if (trace_all || trace_vram) ffnx_info("%s: rgbaModifier=(%d, %d, %d, %d)\n", __func__, rgbaModifier[0], rgbaModifier[1], rgbaModifier[2], rgbaModifier[3]);
+
+	uint32_t *bgra = const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(_mip.m_data));
+
+	for (int i = 0; i < _mip.m_width * _mip.m_height; ++i)
+	{
+		int32_t b = (bgra[i] & 0xFF) + rgbaModifier[2],
+			g = ((bgra[i] >> 8) & 0xFF) + rgbaModifier[1],
+			r = ((bgra[i] >> 16) & 0xFF) + rgbaModifier[0],
+			a = ((bgra[i] >> 24) & 0xFF) + rgbaModifier[3];
+		if (r < 0) r = 0;
+		if (g < 0) g = 0;
+		if (b < 0) b = 0;
+		if (a < 0) a = 0;
+		if (r > 255) r = 255;
+		if (g > 255) g = 255;
+		if (b > 255) b = 255;
+		if (a > 255) a = 255;
+		bgra[i] = (b & 0xFF) | ((g & 0xFF) << 8) | ((r & 0xFF) << 16) | ((a & 0xFF) << 24);
 	}
 }
 
@@ -393,7 +424,7 @@ TextureModStandard::~TextureModStandard()
 	}
 }
 
-bool TextureModStandard::createImages(int paletteCount, int internalLodScale)
+bool TextureModStandard::createImages(int paletteCount, int internalLodScale, int8_t *rgbaModifier)
 {
 	paletteCount = paletteCount >= 0 ? paletteCount : originalTexture().palette().h(); // Works most of the time
 
@@ -412,7 +443,7 @@ bool TextureModStandard::createImages(int paletteCount, int internalLodScale)
 		extension = found_extension;
 
 		TextureImage externalTexture;
-		if (!externalTexture.createImage(filename, originalTexture().texture().pixelW(), originalTexture().texture().h(), internalLodScale))
+		if (!externalTexture.createImage(filename, originalTexture().texture().pixelW(), originalTexture().texture().h(), internalLodScale, rgbaModifier))
 		{
 			continue;
 		}
@@ -530,9 +561,10 @@ void TextureModStandard::copyRect(
 
 	for (const std::pair<uint8_t, TextureImage> &image: _textures)
 	{
+		const bimg::ImageMip &mip = image.second.mip();
+
 		for (const std::pair<uint8_t, TextureImage> &targetImage: targetTexture._textures)
 		{
-			const bimg::ImageMip &mip = image.second.mip();
 			const bimg::ImageMip &targetMip = targetImage.second.mip();
 
 			if (image.second.scale() != targetImage.second.scale()) {
