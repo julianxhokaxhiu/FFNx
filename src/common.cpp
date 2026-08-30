@@ -849,7 +849,7 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			return 1;
 		}
 		if (ff8) {
-			g_FF8SteamAchievements = std::make_unique<SteamAchievementsFF8>();
+			g_FF8SteamAchievements = std::make_unique<SteamAchievementsFF8>(ff8_remastered_edition);
 		} else if (ff7_steam_rerelease_edition) {
 			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>(false);
 		} else {
