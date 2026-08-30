@@ -37,6 +37,7 @@
 #include "ff8/file.h"
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
+#include "ff8/battle/ai.h"
 #include "ff8/battle/monsters.h"
 #include "ff8/remaster.h"
 #include "metadata.h"
@@ -2146,6 +2147,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Unlock unused battle monster models c0m144-c0m199
 	// #####################
 	ff8_battle_monsters_init();
+
+	// #####################
+	// Monster-AI target values 228-248 -> fixed battle-slot pairs
+	// #####################
+	ff8_battle_ai_init();
 
 }
 
