@@ -779,7 +779,7 @@ void SteamAchievementsFF8::unlockGuardianForceAchievement(int gf_idx)
     }
 
     ach_trace("%s - trying to unlock guardian force achievement (gf id: %d)\n", __func__, gf_idx);
-    int achId = (this->isRemastered) ? this->gfIndexToAchRemasteredMap[gf_idx] : this->gfIndexToAchMap[gf_idx];
+    int achId = (this->isRemastered) ? (int)this->gfIndexToAchRemasteredMap[gf_idx] : (int)this->gfIndexToAchMap[gf_idx];
     this->steamManager->setAchievement(achId);
 }
 
@@ -895,8 +895,7 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement(const savemap_ff
 void SteamAchievementsFF8::increaseMagicStockAndTryUnlockAchievement(savemap_ff8 &savemap)
 {
     if (this->isRemastered) {
-        savemap.header.curr_disk.bytes.draw_magic_storage += 1;
-        byte draw_count = savemap.header.curr_disk.bytes.draw_magic_storage;
+        byte draw_count = savemap.header.curr_disk.bytes.draw_magic_storage + 1;
 
         ach_trace("%s - trying to unlock DRAW_100_MAGIC achivement (count: %d)\n", __func__, draw_count);
 
@@ -916,8 +915,7 @@ void SteamAchievementsFF8::increaseMagicStockAndTryUnlockAchievement(savemap_ff8
 void SteamAchievementsFF8::increaseMagicDrawsAndTryUnlockAchievement(savemap_ff8 &savemap)
 {
     if (this->isRemastered) {
-        savemap.header.curr_disk.bytes.magic_finder_storage += 1;
-        byte draw_count = savemap.header.curr_disk.bytes.magic_finder_storage;
+        byte draw_count = savemap.header.curr_disk.bytes.magic_finder_storage + 1;
 
         ach_trace("%s - trying to unlock MAGIC_FINDER achivement (count: %d)\n", __func__, draw_count);
 

@@ -31,10 +31,10 @@ typedef union FF8CurrentDisk {
     uint32_t raw;
 
     struct {
-        uint8_t disk_low;
-        uint8_t disk_high;
-        uint8_t draw_magic_storage;
-        uint8_t magic_finder_storage;
+        uint32_t disk: 17;
+        uint32_t draw_magic_storage: 7;
+        uint32_t magic_finder_storage: 7;
+        uint32_t unk: 1;
     } bytes;
 } FF8CurrentDisk;
 

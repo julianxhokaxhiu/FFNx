@@ -1468,23 +1468,48 @@ void ff8_battle_after_enemy_kill_sub_494AF0(int party_char_id, int monster_id, i
 	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement(*ff8_externals.savemap);
 }
 
+// This function does not replace any hooked function, it is just a helper function for the drawpoint logic
+void handle_drawpoint_update() {
+	if (enable_steam_achievements) {
+		g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement(*ff8_externals.savemap);
+	}
+
+	if (ff8_remastered_edition) {
+		// NOTE:Achievement is unlocked at 100, there is no need to increase it further also because
+		// it uses only 7 bits to store the draw magic count
+		if (ff8_externals.savemap->header.curr_disk.bytes.magic_finder_storage < 100) {
+			ff8_externals.savemap->header.curr_disk.bytes.magic_finder_storage++;
+		}
+	}
+}
+
 int ff8_opcode_drawpoint_sub_4A0850(int a1, int draw_magic_count)
 {
 	int ret = ff8_externals.opcode_drawpoint_sub_4A0850(a1, draw_magic_count);
-	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement(*ff8_externals.savemap);
+	handle_drawpoint_update();
 	return ret;
 }
 
 void ff8_set_drawpoint_state_52D190(uint8_t drawpoint_id, char value)
 {
 	ff8_externals.set_drawpoint_state_521D90(drawpoint_id, value);
-	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement(*ff8_externals.savemap);
+	handle_drawpoint_update();
 }
 
 int ff8_battle_get_magic_draw_amount_48FD20(int actor_idx, int monster_id, int magic_id)
 {
 	int ret = ff8_externals.battle_get_draw_magic_amount_48FD20(actor_idx, monster_id, magic_id);
-	g_FF8SteamAchievements->increaseMagicStockAndTryUnlockAchievement(*ff8_externals.savemap);
+	if (enable_steam_achievements) {
+		g_FF8SteamAchievements->increaseMagicStockAndTryUnlockAchievement(*ff8_externals.savemap);
+	}
+
+	if (ff8_remastered_edition) {
+		// NOTE:Achievement is unlocked at 100, there is no need to increase it further also because
+		// it uses only 7 bits to store the draw magic count
+		if (ff8_externals.savemap->header.curr_disk.bytes.draw_magic_storage < 100) {
+			ff8_externals.savemap->header.curr_disk.bytes.draw_magic_storage++;
+		}
+	}
 	return ret;
 }
 
@@ -2008,6 +2033,16 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x69], (DWORD)&ff8_opcode_battle);
 
 	//###############################
+	// FF8 remastered support
+	//###############################
+	// draw magic from draw points increase counter in savemap
+	replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
+	replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : (FF8_SP_VERSION ? 0x89A : 0x85F)), (void*)ff8_set_drawpoint_state_52D190);
+
+	// draw magic via stock in battle increase counter in savemap
+	replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355)), (void*)ff8_battle_get_magic_draw_amount_48FD20);
+
+	//###############################
 	// steam achievement unlock calls
 	//###############################
 	if(enable_steam_achievements)
@@ -2051,13 +2086,6 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		// kills
 		replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_494AF0);
-
-		// draw magic from draw points
-		replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
-		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : (FF8_SP_VERSION ? 0x89A : 0x85F)), (void*)ff8_set_drawpoint_state_52D190);
-
-		// draw magic via stock in battle
-		replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355)), (void*)ff8_battle_get_magic_draw_amount_48FD20);
 
 		// timber maniacs
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0B], (uint32_t)&ff8_field_opcode_POPM_B);
