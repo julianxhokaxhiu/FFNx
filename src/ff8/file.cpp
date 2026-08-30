@@ -134,6 +134,37 @@ bool check_direct_sub_archive_exists(const char *ext, const char *path_without_e
 	return set_direct_path(archive_path, direct_path, sizeof(direct_path));
 }
 
+bool set_classic_mch_path(const char *fullpath, char *output, size_t output_size)
+{
+	const size_t fullpath_length = strlen(fullpath);
+
+	if (!ff8_remastered_edition || fullpath_length < 4 || _stricmp(fullpath + fullpath_length - 4, ".mch") != 0)
+	{
+		return false;
+	}
+
+	const char *relative_path = nullptr;
+	const char *remastered_prefix = "c:\\ff8\\data\\x\\";
+
+	if (strnicmp(fullpath, remastered_prefix, strlen(remastered_prefix)) == 0)
+	{
+		relative_path = fullpath + strlen(remastered_prefix);
+	}
+	else if (strnicmp(fullpath + 2, ff8_externals.archive_path_prefix, strlen(ff8_externals.archive_path_prefix)) == 0)
+	{
+		relative_path = fullpath + get_fl_prefix_size();
+	}
+
+	if (relative_path == nullptr)
+	{
+		return false;
+	}
+
+	_snprintf(output, output_size, "%s/data/%s", basedir, relative_path);
+
+	return fileExists(output);
+}
+
 void ff8_fs_archive_sub_archive_get_filename(const char *filename, char *dirname)
 {
 	ff8_externals.sub_archive_get_filename(filename, dirname);
@@ -259,6 +290,14 @@ int ff8_fs_archive_search_filename_sub_archive(const char *fullpath, ff8_file_fi
 	if (trace_all || trace_files) ffnx_trace("%s %s\n", __func__, fullpath);
 
 	char direct_path[MAX_PATH];
+	char classic_path[MAX_PATH];
+
+	if (set_classic_mch_path(fullpath, classic_path, sizeof(classic_path)))
+	{
+		strncpy(next_direct_file, classic_path, sizeof(next_direct_file));
+
+		return 0; // Bypass Moriya filesystem
+	}
 
 	if (set_direct_path(fullpath, direct_path, sizeof(direct_path)))
 	{
