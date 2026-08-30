@@ -147,7 +147,7 @@ void TexturePacker::setVramTextureId(ModdedTextureId textureId, int xBpp2, int y
 	}
 }
 
-bool TexturePacker::setTexture(const char *name, const char *remasteredName, const TextureInfos &texture, const TextureInfos &palette, int textureCount, bool clearOldTexture)
+bool TexturePacker::setTexture(const char *name, const char *remasteredName, const TextureInfos &texture, const TextureInfos &palette, int textureCount, int8_t *rgbaModifier, bool clearOldTexture)
 {
 	bool hasNamedTexture = name != nullptr && *name != '\0',
 		hasRemasteredNamedTexture = remasteredName != nullptr && *remasteredName != '\0';
@@ -172,7 +172,7 @@ bool TexturePacker::setTexture(const char *name, const char *remasteredName, con
 	{
 		TextureModStandard *mod = new TextureModStandard(tex);
 
-		if (mod->createImages(textureCount))
+		if (mod->createImages(textureCount, 1, rgbaModifier))
 		{
 			tex.setMod(mod);
 		}

@@ -26,7 +26,6 @@
 #include "../log.h"
 #include "../patch.h"
 #include "remaster.h"
-#include "vram.h"
 
 Zzz g_FF8ZzzArchiveMain;
 Zzz g_FF8ZzzArchiveOther;
@@ -344,18 +343,8 @@ void field_sub_530C30(int a1, int a2, int **a3)
     next_field_model_divisor = 1.0;
 }
 
-int field_open_chara_one(
-    int current_data_pointer,
-    void *models_infos,
-    void *palette_vram_positions,
-    void *texture_vram_positions,
-    const char *dir_name,
-    int field_data_pointer,
-    int allocated_size,
-    int pcb_data_size
-) {
-    int ret = ((int(*)(int,void*,void*,void*,const char*,int,int,int))ff8_externals.load_field_models)(current_data_pointer, models_infos, palette_vram_positions, texture_vram_positions, dir_name, field_data_pointer, allocated_size, pcb_data_size);
-
+void ff8_remaster_set_field_model_scaling(const std::unordered_map<uint32_t, CharaOneModel> &chara_one_models)
+{
     std::map<uint32_t, CharaOneModel> models_ordered;
 
     for (auto model: chara_one_models) {
@@ -379,15 +368,12 @@ int field_open_chara_one(
             }
         }
     }
-
-    return ret;
 }
 
 void ff8_remaster_init()
 {
     replace_call(ff8_externals.sub_533C30 + 0x44, field_model_vertices_scale);
     replace_call(ff8_externals.sub_533CD0 + 0x28E, field_sub_530C30);
-    replace_call(ff8_externals.read_field_data + (JP_VERSION ? 0xFA2 : 0xF0F), field_open_chara_one);
 
     char fullpath[MAX_PATH];
 

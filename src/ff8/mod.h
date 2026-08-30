@@ -34,7 +34,7 @@
 class TextureImage {
 public:
 	TextureImage();
-	bool createImage(const char *filename, int originalTexturePixelWidth, int originalTextureHeight, int internalLodScale = 1);
+	bool createImage(const char *filename, int originalTexturePixelWidth, int originalTextureHeight, int internalLodScale = 1, int8_t *rgbaModifier = nullptr);
 	void destroyImage();
 	inline uint8_t scale() const {
 		return _scale;
@@ -51,6 +51,7 @@ public:
 	static int computeMaxScale();
 private:
 	void setLod(uint8_t lod);
+	void alterColors(int8_t *rgbaModifier);
 	uint8_t computeLod(int originalTexturePixelWidth, int imageWidth, int numMips, int internalScale = 1, const char *filename = "") const;
 	uint8_t computeScale(int originalTexturePixelWidth, int originalTextureHeight, const char *filename = "") const;
 	bimg::ImageContainer *_image;
@@ -111,7 +112,7 @@ public:
 	inline bool canCopyRect() const override {
 		return true;
 	}
-	bool createImages(int paletteCount, int internalLodScale = 1);
+	bool createImages(int paletteCount, int internalLodScale = 1, int8_t *rgbaModifier = nullptr);
 	uint8_t scale(int vramPalXBpp2, int vramPalY) const override;
 	TexturePacker::TextureTypes drawToImage(
 		int offsetX, int offsetY,
