@@ -124,6 +124,7 @@ enum class ff8_battle_effect_layout_patch_mode
 	direct,
 	effect_arena,
 	effect_arena_push,
+	relative_call,
 };
 
 struct ff8_battle_effect_layout_patch
@@ -195,15 +196,44 @@ static void patch_ff8_remastered_battle_effect_layout()
 		{ 0x73A33B, 0x19E0F58, 0x26000, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x73A345, 0x19E1028, 0x26100, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x746BC3, 0x258BFB0, 0xC0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6ABF, 0x278C79C, 0x403004, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6ACE, 0x278C798, 0x403000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6ADA, 0x278C628, 0x400010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6ADF, 0x278A228, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6B0D, 0x278A238, 0x400180, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6B12, 0x278C788, 0x400170, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BB9, 0x278C79C, 0x403004, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BC4, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BD2, 0x278C798, 0x403000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BDD, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BF6, 0x278A228, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6C18, 0x278C788, 0x400170, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6C9E, 0x278A228, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6E85, 0x278C7E8, 0x402580, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6E8C, 0x278C89E, 0x402636, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6E96, 0x278C7E8, 0x402580, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6F50, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6F7D, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D7019, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D703F, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D7DB7, 0x278C788, 0x400170, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D7DC1, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D825D, 0x277AEC8, 0x403014, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D8262, 0x278C7E8, 0x402580, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D82B3, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8DFFA3, 0xB65150, 0x8DFF70, ff8_battle_effect_layout_patch_mode::relative_call },
 	};
 
 	for (const auto &patch : patches)
 	{
-		const bool valid = patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push
-			? *reinterpret_cast<const uint8_t *>(patch.address) == 0xA1
+		const bool valid = patch.mode == ff8_battle_effect_layout_patch_mode::relative_call
+			? *reinterpret_cast<const uint8_t *>(patch.address) == 0xE8
+				&& patch.address + 5 + *reinterpret_cast<const int32_t *>(patch.address + 1) == patch.classic_offset
+			: patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push
+				? *reinterpret_cast<const uint8_t *>(patch.address) == 0xA1
 				&& *reinterpret_cast<const uint32_t *>(patch.address + 1) == patch.classic_offset
 				&& *reinterpret_cast<const uint8_t *>(patch.address + 5) == 0x50
-			: *reinterpret_cast<const uint32_t *>(patch.address) == patch.classic_offset;
+				: *reinterpret_cast<const uint32_t *>(patch.address) == patch.classic_offset;
 
 		if (!valid)
 		{
@@ -216,11 +246,16 @@ static void patch_ff8_remastered_battle_effect_layout()
 
 	for (const auto &patch : patches)
 	{
-		const uint32_t value = patch.mode != ff8_battle_effect_layout_patch_mode::direct
+		const uint32_t value = patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena
+			|| patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push
 			? effect_arena + patch.remastered_offset
 			: patch.remastered_offset;
 
-		if (patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push)
+		if (patch.mode == ff8_battle_effect_layout_patch_mode::relative_call)
+		{
+			replace_call(patch.address, reinterpret_cast<void *>(value));
+		}
+		else if (patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push)
 		{
 			patch_code_byte(patch.address, 0x68);
 			patch_code_dword(patch.address + 1, value);

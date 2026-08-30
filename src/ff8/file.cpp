@@ -908,7 +908,12 @@ bool ff8_steam_redirection(const char *lpFileName, char *newPath, bool *isZzzFil
 	}
 	else if (isZzzFile != nullptr)
 	{
-		if (strncmp(lpFileName, ff8_externals.app_path, strlen(ff8_externals.app_path)) == 0) {
+		const char *root_relative_data_prefix = "\\FF8\\Data\\";
+		if (strnicmp(lpFileName, root_relative_data_prefix, strlen(root_relative_data_prefix)) == 0) {
+			_snprintf(newPath, MAX_PATH, "c:%s", lpFileName);
+
+			redirected = true;
+		} else if (strncmp(lpFileName, ff8_externals.app_path, strlen(ff8_externals.app_path)) == 0) {
 			// Remove app_path
 			strcpy(newPath, lpFileName + strlen(ff8_externals.app_path) + 1);
 
