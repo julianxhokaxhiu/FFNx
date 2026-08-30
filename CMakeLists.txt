@@ -136,30 +136,6 @@ target_compile_features(${CHOCO_RELEASE_NAME}
 )
 target_link_options(${CHOCO_RELEASE_NAME} PRIVATE /PDBALTPATH:${CHOCO_RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${CHOCO_RELEASE_NAME}.def)
 
-# Remastered proxy
-set(REMASTERED_RELEASE_NAME "FFNx-Remastered-Proxy")
-file(GLOB_RECURSE remastered_source_files "${CMAKE_SOURCE_DIR}/remastered-proxy/*.cpp")
-add_library(${REMASTERED_RELEASE_NAME} SHARED ${remastered_source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-target_include_directories(
-  ${REMASTERED_RELEASE_NAME}
-  PRIVATE "${CMAKE_SOURCE_DIR}/remastered-proxy"
-)
-target_compile_options(
-  ${REMASTERED_RELEASE_NAME}
-  PRIVATE /DVERSION="${_DLL_VERSION}"
-  PRIVATE /D_CRT_SECURE_NO_WARNINGS
-  PRIVATE /DNOMINMAX
-  PRIVATE /Zc:strictStrings-
-  PRIVATE /Zc:__cplusplus
-  PRIVATE /Zc:preprocessor
-  PRIVATE /Qpar
-  PRIVATE /MP
-)
-target_compile_features(${REMASTERED_RELEASE_NAME}
-  PRIVATE cxx_std_20
-)
-target_link_options(${REMASTERED_RELEASE_NAME} PRIVATE /PDBALTPATH:${REMASTERED_RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${REMASTERED_RELEASE_NAME}.def)
-
 # Include all the source code files
 file(GLOB_RECURSE source_files "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
@@ -173,7 +149,7 @@ cmrc_add_resource_library(
 )
 
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME} ${REMASTERED_RELEASE_NAME})
+add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME})
 target_include_directories(
   ${RELEASE_NAME}
   PRIVATE "${CMAKE_SOURCE_DIR}/src"
@@ -332,17 +308,6 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E rename
           ${CMAKE_BINARY_DIR}/bin/${CHOCO_RELEASE_NAME}.dll
           ${CMAKE_BINARY_DIR}/bin/AF4DN.P
-  # remastered proxy .dll
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${REMASTERED_RELEASE_NAME}.dll
-          ${CMAKE_BINARY_DIR}/bin
-  # rename remastered .dll to FFVIII_EFIGS.dll
-  COMMAND ${CMAKE_COMMAND} -E rename
-          ${CMAKE_BINARY_DIR}/bin/${REMASTERED_RELEASE_NAME}.dll
-          ${CMAKE_BINARY_DIR}/bin/FFVIII_EFIGS.dll
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_BINARY_DIR}/bin/FFVIII_EFIGS.dll
-          ${CMAKE_BINARY_DIR}/bin/FFVIII_JP.dll
   # steam_api.dll
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/steamworkssdk/steam_api.dll

@@ -102,16 +102,14 @@ external_music_ext = "akb"
 
 #### [Remastered Release](https://store.steampowered.com/app/1026680/FINAL_FANTASY_VIII__REMASTERED/)
 
-**Warning:** Compatibility with the Remastered version is incomplete. You will encounter crashes in battle as well as model rendering issues.
-
 0. Install the game using Steam
 1. Open the installation directory of the game (see [How to access game files](https://steamcommunity.com/sharedfiles/filedetails/?id=760447682))
 2. Download the FF8 patch v1.2 (you can find a collection here: [FF8.fr download page](https://www.ff8.fr/telechargements/programmes#archives_conserve_pour_la_posterite))
 3. Extract the patch ZIP content next to `FFVIII_LAUNCHER.exe` file
-4. Rename `FF8.exe` to `FF8.ffnx`
-5. Download the latest `FFNx-FF8_Remastered` release here: https://github.com/julianxhokaxhiu/FFNx/releases
+4. Run the `EAXUnified.exe` installer
+5. Download the latest `FFNx-FF8_2000` release here: https://github.com/julianxhokaxhiu/FFNx/releases
 6. Extract the FFNx ZIP content next to `FFVIII_LAUNCHER.exe` file
-7. Replace all files when asked.
+7. Run `FF8.exe`
 8. Enjoy!
 
 ## Mod Launchers
