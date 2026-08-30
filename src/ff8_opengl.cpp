@@ -60,6 +60,120 @@ uint16_t *field_current_poly = nullptr;
 
 int (*ff8_opcode_old_battle)(int);
 
+enum class ff8_battle_effect_layout_patch_mode
+{
+	direct,
+	effect_arena,
+	effect_arena_push,
+};
+
+struct ff8_battle_effect_layout_patch
+{
+	uint32_t address;
+	uint32_t classic_offset;
+	uint32_t remastered_offset;
+	ff8_battle_effect_layout_patch_mode mode;
+};
+
+static void patch_ff8_remastered_battle_effect_layout()
+{
+	if (!FF8_US_VERSION)
+	{
+		ffnx_warning("FF8 Remastered battle effect layout: unsupported game version, skipping.\n");
+		return;
+	}
+
+	static constexpr ff8_battle_effect_layout_patch patches[] = {
+		{ 0x5C0D5B, 0x2C000, 0xCC000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D6C, 0x2D000, 0xCD000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D78, 0x33000, 0xD3000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D7E, 0x2E000, 0xCE000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D83, 0x30800, 0xD0800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0FF4, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C1025, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C11EF, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C123F, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C75A8, 0x20000, 0xC0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C75C4, 0x24000, 0xC4000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C7851, 0x20000, 0xC0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C78A6, 0x24000, 0xC4000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C7A09, 0x20000, 0xC0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C7F61, 0x10000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C7F74, 0x18000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x592605, 0x22000, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5926A2, 0x2200FB8, 0x60000, ff8_battle_effect_layout_patch_mode::effect_arena_push },
+		{ 0x62A83C, 0xEECC30, 0x80000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x62AA6C, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62AACC, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62ABD2, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62AC03, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62ACF9, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62ADE8, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632950, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632981, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632A9A, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632ACB, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632AE7, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632B1A, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63F3AB, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63F3DD, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63F455, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63F6C5, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x64756C, 0x14000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6475CC, 0x14000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6476D4, 0x14000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x647705, 0x14000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x70EE36, 0x25658C0, 0xC0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x70EE4A, 0x25658C0, 0xC0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A29F, 0x19F1018, 0x20000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A2B9, 0x19D1018, 0xA0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A2E1, 0x19DFCC4, 0x24000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A303, 0x19E10F8, 0x27000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A30D, 0x19EBF30, 0x37000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A317, 0x19ED200, 0x39000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A321, 0x19EE4D0, 0x3B000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A32B, 0x19F19BC, 0x3D000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A33B, 0x19E0F58, 0x26000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A345, 0x19E1028, 0x26100, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x746BC3, 0x258BFB0, 0xC0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+	};
+
+	for (const auto &patch : patches)
+	{
+		const bool valid = patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push
+			? *reinterpret_cast<const uint8_t *>(patch.address) == 0xA1
+				&& *reinterpret_cast<const uint32_t *>(patch.address + 1) == patch.classic_offset
+				&& *reinterpret_cast<const uint8_t *>(patch.address + 5) == 0x50
+			: *reinterpret_cast<const uint32_t *>(patch.address) == patch.classic_offset;
+
+		if (!valid)
+		{
+			ffnx_warning("FF8 Remastered battle effect layout: unexpected value at 0x%08X, skipping patches.\n", patch.address);
+			return;
+		}
+	}
+
+	const uint32_t effect_arena = uint32_t(extended_memory) + 0x200000;
+
+	for (const auto &patch : patches)
+	{
+		const uint32_t value = patch.mode != ff8_battle_effect_layout_patch_mode::direct
+			? effect_arena + patch.remastered_offset
+			: patch.remastered_offset;
+
+		if (patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push)
+		{
+			patch_code_byte(patch.address, 0x68);
+			patch_code_dword(patch.address + 1, value);
+			patch_code_byte(patch.address + 5, 0x90);
+		}
+		else
+		{
+			patch_code_dword(patch.address, value);
+		}
+	}
+}
+
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
 {
 	struct matrix_set *matrix_set;
@@ -2015,6 +2129,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		patch_code_dword(ff8_externals.get_battle_effect_buffer_size_sub_571B60 + 0x1, 0x380000); // Patch size
 		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x5, 0x380000); // Patch size
 		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x13, uint32_t(extended_memory) + 0x200000); // Patch offset
+
+		if (ff8_remastered_edition)
+			patch_ff8_remastered_battle_effect_layout();
 	} else {
 		ffnx_error("%s: cannot allocate extended_memory\n", __func__);
 	}
