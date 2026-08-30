@@ -661,12 +661,12 @@ void SteamAchievementsFF7::unlockBikeHighscoreAchievement(int score)
 
 SteamAchievementsFF8::SteamAchievementsFF8(boolean isRemastered)
 {
-    std::vector<std::string> statsNameVec = { ENEMY_KILLED_STAT_NAME, DRAW_MAGIC_STAT_NAME, STOCK_MAGIC_STAT_NAME, WON_CARDGAME_STAT_NAME };
-
     this->isRemastered = isRemastered;
     if (isRemastered) {
+        std::vector<std::string> statsNameVec = {};
         this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS_REMASTERED, std::size(SteamAchievementsFF8::ACHIEVEMENTS_REMASTERED), statsNameVec);
     } else {
+        std::vector<std::string> statsNameVec = { ENEMY_KILLED_STAT_NAME, DRAW_MAGIC_STAT_NAME, STOCK_MAGIC_STAT_NAME, WON_CARDGAME_STAT_NAME };
         this->steamManager = std::make_unique<SteamManager>(SteamAchievementsFF8::ACHIEVEMENTS, std::size(SteamAchievementsFF8::ACHIEVEMENTS), statsNameVec);
     }
 }
