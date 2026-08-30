@@ -57,7 +57,7 @@ texture replacement path (see [External textures](../mods/external_textures.md))
 
 ## Runtime configuration: `FFNx.multibyte.toml`
 
-Glyph widths, field line spacing, and icon cells can be overridden **at runtime, without
+Glyph widths and field line spacing can be overridden **at runtime, without
 recompiling**, in `FFNx.multibyte.toml` beside `FFNx.toml`. The file is entirely optional and
 the shipped copy is a comment-only template; built-in defaults apply until an entry is enabled.
 
@@ -68,7 +68,6 @@ Only values that differ from the built-in Japanese defaults need to be listed.
 
 ```toml
 line_spacing = 32.0
-icons = [0xF6, 0xF7]
 
 [widths.page_0]
 "41" = 15
@@ -78,8 +77,7 @@ icons = [0xF6, 0xF7]
 ```
 
 `line_spacing` controls field dialogue line advance in pixels and accepts values from 20 through
-40, including fractions. `icons` lists sheet-1 codes that contain colored icon art and must be
-drawn white rather than tinted with the current text color.
+40, including fractions.
 
 The file is hot-reloaded when its modification time changes, checked at most once per second.
 Invalid edits leave the last valid configuration active. If the file or a page entry is omitted,

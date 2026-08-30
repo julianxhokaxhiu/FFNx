@@ -210,7 +210,6 @@ static inline int jp_center_advance(uint16_t letter, int left_padding, int char_
   return 10 * jp_spacing_metric(letter, char_width) / 64;
 }
 
-static byte multibyte_icon_mask[256] = {0};
 static constexpr double multibyte_default_line_spacing = 32.0;
 static constexpr double multibyte_min_line_spacing = 20.0;
 static constexpr double multibyte_max_line_spacing = 40.0;
@@ -243,14 +242,13 @@ static void multibyte_load_config()
   last_check = now;
 
   char path[MAX_PATH];
-  _snprintf(path, sizeof(path), "%s/FFNx.multibyte.toml", basedir);
+  _snprintf(path, sizeof(path), "%s/data/FFNx.multibyte.toml", basedir);
   struct _stat64 file_status;
   if (_stat64(path, &file_status) != 0)
   {
     if (has_override)
     {
       memcpy(charWidthData, default_char_width_data, sizeof(charWidthData));
-      memset(multibyte_icon_mask, 0, sizeof(multibyte_icon_mask));
       multibyte_field_linestep_q = (int)(multibyte_default_line_spacing * 4.0);
       has_override = false;
       last_mtime = -1;
@@ -263,23 +261,11 @@ static void multibyte_load_config()
   {
     toml::parse_result config = toml::parse_file(path);
     int new_char_width_data[6][256];
-    byte new_icon_mask[256] = {0};
     memcpy(new_char_width_data, default_char_width_data, sizeof(new_char_width_data));
 
     double line_spacing = config["line_spacing"].value_or(multibyte_default_line_spacing);
     if (line_spacing < multibyte_min_line_spacing || line_spacing > multibyte_max_line_spacing)
       throw std::runtime_error("line_spacing must be between 20 and 40");
-
-    if (toml::array* icons = config["icons"].as_array())
-    {
-      for (const toml::node& node : *icons)
-      {
-        auto icon = node.value<int64_t>();
-        if (!icon || *icon < 0 || *icon > 0xFF)
-          throw std::runtime_error("icons entries must be byte values");
-        new_icon_mask[*icon] = 1;
-      }
-    }
 
     for (int page = 0; page < 6; ++page)
     {
@@ -298,7 +284,6 @@ static void multibyte_load_config()
     }
 
     memcpy(charWidthData, new_char_width_data, sizeof(charWidthData));
-    memcpy(multibyte_icon_mask, new_icon_mask, sizeof(multibyte_icon_mask));
     multibyte_field_linestep_q = (int)std::lround(line_spacing * 4.0);
     has_override = true;
     last_mtime = (long long)file_status.st_mtime;
@@ -711,8 +696,6 @@ LABEL_39:
             {
               character_n_shapes = (*ff7_externals.word_91F028); // read external to select chacter color normally.
             }
-            if (!ff7_japanese_edition && multibyte_icon_mask[*buffer_text])
-              character_n_shapes = 8; // icon cells: force pure white so icon art keeps true colors so icon art keeps true colors
             current_character = *buffer_text;
             character = current_character;
             uint16_t field_letter = curPage == 0
