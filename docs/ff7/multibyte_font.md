@@ -101,9 +101,8 @@ icons, button prompts) rather than letters:
 - **Name-entry screen**: the 3-mode (hiragana/katakana/eisuu) name-entry screen stays gated
   behind `ff7_japanese_edition`. A translation whose alphabet doesn't fit the stock name screen
   needs its own solution (the Arabic project keeps default names / renames via save editing).
-- **Window auto-resize**: the JP-edition window auto-resize hook is not installed. Field files
-  are expected to ship with correctly sized windows for the translated text (retranslation
-  pipelines normally rebuild field files anyway).
+- **Window auto-resize**: the shared field-window autosizer uses `multibyte_widths.bin` while this
+  mode is active. Standard single-byte editions instead read the active game's `window.bin` metrics.
 - **Text conversion**: FFNx only draws bytes. Reshaping/bidi (Arabic), charmap design, and
   re-encoding game files remain the translation pipeline's job.
 

@@ -1560,7 +1560,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.word_DC3CC4 = (short*)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x28E);	
 	ff7_externals.dword_DC3CD4 = (int*)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x2B9);
 	ff7_externals.word_DC3CC8 = (short*)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x62D);	
-	ff7_externals.g_text_spacing_DB958C = (int*)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x717);	
+	ff7_externals.g_text_spacing_DB958C = (byte**)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x717);
 	ff7_externals.menu_font_a_graphics_object_DC100C = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x7ED);
 	ff7_externals.menu_font_b_graphics_object_DC1010 = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x7AC);
 	ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8 = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x323);

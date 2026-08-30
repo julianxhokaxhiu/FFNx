@@ -3849,7 +3849,7 @@ struct ff7_externals
 	short* word_DC3CC4;
 	int* dword_DC3CD4;
 	short* word_DC3CC8;
-	int* g_text_spacing_DB958C;
+	byte** g_text_spacing_DB958C;
 	ff7_graphics_object** menu_font_a_graphics_object_DC100C;
 	ff7_graphics_object** menu_font_b_graphics_object_DC1010;
 	ff7_graphics_object** menu_win_a_blend_4_graphics_object_DC0FC8;

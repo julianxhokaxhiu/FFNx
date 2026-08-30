@@ -398,6 +398,39 @@ static int jp_measure_field_fd_control(byte control, bool use_fixed_spacing)
     + jp_measure_field_letter(0xFD33, use_fixed_spacing);
 }
 
+static bool field_font_metric(int page, byte character, int& char_width, int& left_padding)
+{
+  byte metric;
+  if (!ff7_japanese_edition && !ff7_multibyte_font)
+  {
+    // Offsets used by FF7's field renderer after FA-FE select an alternate font page.
+    static constexpr int native_page_offsets[] = { 0, 231, 441, 672, 882, 1092 };
+    if (!ff7_externals.g_text_spacing_DB958C || !*ff7_externals.g_text_spacing_DB958C)
+      return false;
+    metric = (*ff7_externals.g_text_spacing_DB958C)[native_page_offsets[page] + character];
+  }
+  else
+  {
+    metric = (byte)charWidthData[page][character];
+  }
+
+  char_width = metric & 0x1F;
+  left_padding = metric >> 5;
+  return true;
+}
+
+static int field_autosize_glyph_advance(uint16_t letter, int left_padding, int char_width,
+  bool use_fixed_spacing)
+{
+  if (!ff7_japanese_edition && !ff7_multibyte_font)
+    return use_fixed_spacing ? 26 : 2 * (left_padding + char_width);
+  if (use_fixed_spacing)
+    return 10;
+  if (ff7_japanese_edition)
+    return jp_center_advance(letter, left_padding, char_width);
+  return left_padding + (int)std::ceil(z_half_width(char_width));
+}
+
 static bool jp_prompt_followed_by_visible_text(const byte* buffer)
 {
   while (buffer[0] == 0xFE && buffer[1] >= 0xD2 && buffer[1] <= 0xDB)
@@ -2567,13 +2600,10 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 {
   // as many textboxes in flevel are set wrong, we need to resize them.
   float scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f; // resizer needs to match the draw scale (JP 1.25 / multibyte EN 1.0)
-  if (!ff7_japanese_edition && !ff7_multibyte_font
-      && ff7_externals.g_text_spacing_DB958C && *ff7_externals.g_text_spacing_DB958C)
-    memcpy(charWidthData[0], (byte*)*ff7_externals.g_text_spacing_DB958C, 256);
-	int16_t W = 0;
-	int16_t H = 0;
-	int16_t maxW = 0; // used to remember the longest row so far.
-	int16_t maxH = 0;
+  int W = 0;
+  int H = 0;
+  int maxW = 0; // used to remember the longest row so far.
+  int maxH = 0;
   // first store what the flevel says it is, in case we need to give up
   *pOutW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;
   *pOutH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height;
@@ -2598,23 +2628,20 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
     switch ( character )
     {
       case 0xFAu:
-        charWidth = charWidthData[1][next_character] & 0x1F;
-        leftPadding = charWidthData[1][next_character] >> 5;
+        if (!field_font_metric(1, next_character, charWidth, leftPadding)) return;
         letter = (uint16_t)(0xFA00 | next_character);
         isKanjiDetected = true;
         possibleOpcode = false; // not an opcode for sure
         continue;
       case 0xFBu:
 
-        charWidth = charWidthData[2][next_character] & 0x1F;
-        leftPadding = charWidthData[2][next_character] >> 5;
+        if (!field_font_metric(2, next_character, charWidth, leftPadding)) return;
         letter = (uint16_t)(0xFB00 | next_character);
         isKanjiDetected = true;
         possibleOpcode = false;
         continue;
       case 0xFCu:
-        charWidth = charWidthData[3][next_character] & 0x1F;
-        leftPadding = charWidthData[3][next_character] >> 5;
+        if (!field_font_metric(3, next_character, charWidth, leftPadding)) return;
         letter = (uint16_t)(0xFC00 | next_character);
         isKanjiDetected = true;
         possibleOpcode = false;
@@ -2628,8 +2655,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
           isKanjiDetected = false;
           continue;
         }
-        charWidth = charWidthData[4][next_character] & 0x1F;
-        leftPadding = charWidthData[4][next_character] >> 5;
+        if (!field_font_metric(4, next_character, charWidth, leftPadding)) return;
         letter = (uint16_t)(0xFD00 | next_character);
         isKanjiDetected = true;
         possibleOpcode = false;
@@ -2637,8 +2663,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       case 0xFEu:
         if (next_character < 0xD2u)
         {
-          charWidth = charWidthData[5][next_character] & 0x1F;
-          leftPadding = charWidthData[5][next_character] >> 5;
+          if (!field_font_metric(5, next_character, charWidth, leftPadding)) return;
           letter = (uint16_t)(0xFE00 | next_character);
           isKanjiDetected = true;
           possibleOpcode = false; // not an opcode
@@ -2648,8 +2673,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       default:
         if(!isKanjiDetected)
         {
-          charWidth = charWidthData[0][character] & 0x1F;
-          leftPadding = charWidthData[0][character] >> 5;
+          if (!field_font_metric(0, character, charWidth, leftPadding)) return;
           letter = character;
           possibleOpcode = true; // again, this shouldn't be required, but can't hurt.
         }
@@ -2676,13 +2700,8 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
           name_letter = (uint16_t)(((0xF9 + name_page) << 8) | name_char);
         }
 
-        charWidth = charWidthData[name_page][name_char] & 0x1F;
-        leftPadding = charWidthData[name_page][name_char] >> 5;
-        W += useFixedSpacing
-          ? 10
-          : ff7_japanese_edition
-          ? jp_center_advance(name_letter, leftPadding, charWidth)
-          : leftPadding + std::ceil(z_half_width(charWidth));
+        if (!field_font_metric(name_page, name_char, charWidth, leftPadding)) return;
+        W += field_autosize_glyph_advance(name_letter, leftPadding, charWidth, useFixedSpacing);
       }
 
       continue; // back to the start, we already added to the length
@@ -2745,76 +2764,13 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       continue;
 		}
 
-    if (ff7_japanese_edition)
-      W += useFixedSpacing
-        ? 10
-        : jp_center_advance(letter, leftPadding, charWidth);
-    else
-      W += leftPadding + std::ceil(z_half_width(charWidth));
+    W += field_autosize_glyph_advance(letter, leftPadding, charWidth, useFixedSpacing);
 	}
   float pOutWtmp = ff7_japanese_edition
     ? (float)(std::max(maxW, W) + 25)
     : (std::max(maxW, W) + 40) * scaleFactor;
   *pOutW = ff7_japanese_edition ? (int)pOutWtmp : (int)(pOutWtmp / 2);
 	*pOutH = (std::max(maxH, H) + 50) / 2;
-}
-
-void field_text_box_window_opening_6317A9_jp(short WINDOW_ID)
-{
-  // The vanilla create routine (0x631586) assigns this window's owner (CC0960[win] = the entity
-  // that opened it) before marking it active, and clears both owner and mode together on close.
-  // On the multibyte path a window can end up active with no owner assigned (0xFF) — the owner
-  // check below then never matches the current entity, the window never grows, and the field
-  // script that's waiting on it deadlocks. Restore the normal owner assignment for any window
-  // found in this orphaned state before continuing.
-  if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == 0xFF )
-    ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] = *ff7_externals.current_entity_id_byte_CC0964;
-
-  // auto_resize_text_box recomputes the window's target width/height from the text every time
-  // it's called, including reading back the values it wrote the previous call — so calling it
-  // every frame makes the target keep moving and the window's grow animation never reaches it,
-  // stalling the open. Instead, compute the target once here while the window is still small,
-  // then hold width/height fixed so the animation converges normally, matching vanilla behavior.
-  // Field files already ship with correctly sized windows, so this only fixes the animation target.
-  if ( ff7_japanese_edition || (ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8) ) // must run every frame as before to properly handle japanese edition.
-  {
-    auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
-    // Field windows remain in 320x224 logical coordinates in the 640x480 renderer.
-    if (ff7_field_autosize_text_box)
-    {
-      int16_t W = 0, H = 0;
-      auto_resize_text_box(WINDOW_ID, &W, &H);
-      window.window_width = std::clamp<int16_t>(W, 0, 320);
-      window.window_height = std::clamp<int16_t>(H, 0, 224);
-      window.window_pos_x = std::clamp<int16_t>(window.window_pos_x, 0, 320 - window.window_width);
-      window.window_pos_y = std::clamp<int16_t>(window.window_pos_y, 0, 224 - window.window_height);
-    }
-  }
-
-  if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
-  {
-    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width / 4;
-
-    if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8 )
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width = 8;
-
-    if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width > ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width )
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;
-
-    ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height / 4;
-
-    if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height < 8 )
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height = 8;
-
-    if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height > ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height )
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height;
-
-    if (
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width
-      && ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height
-    )
-      ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_mode = 2;
-  }
 }
 
 int sub_6F54A2_jp(byte *a1)

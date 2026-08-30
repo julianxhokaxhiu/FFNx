@@ -416,7 +416,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0x633, universal_buttons_flush_vanilla_field);
 		replace_call_function(ff7_externals.field_draw_everything_sub_63A60B + 0x3A2, universal_buttons_flush_vanilla_field);
 	}
-	replace_function((uint32_t)ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_jp);
+	replace_function((uint32_t)ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_autosize);
 	if (ff7_japanese_edition)
 	{
 		replace_call_function(ff7_externals.chocobo_end_scene_call_77B79E, chocobo_end_scene_with_jafonts);
