@@ -864,10 +864,10 @@ void SteamAchievementsFF8::increaseKillsAndTryUnlockAchievement(const savemap_ff
         }
 
         new_kills += opt_kills.value() + 1;
-        ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, new_kills);
         this->steamManager->updateUserStat(ENEMY_KILLED_STAT_NAME, new_kills);
     }
 
+    ach_trace("%s - trying to unlock kills achivements (kills: %d)\n", __func__, new_kills);
     int achId100 = getAchievementIdByVersion(TOTAL_KILLS_100, NEW_ACHIEVEMENT_1_10);
     int achId1000 = getAchievementIdByVersion(TOTAL_KILLS_1000, NEW_ACHIEVEMENT_1_22);
     if (new_kills >= 100)
