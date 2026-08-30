@@ -57,3 +57,4 @@ void ff8_fs_lang_string(char *data);
 
 bool ff8_fs_last_fopen_is_redirected();
 bool ff8_steam_redirection(const char *path, char *out, bool *is_zzz_file = nullptr);
+bool ff8_is_remastered_font_asset();

@@ -45,6 +45,7 @@
 #include "macro.h"
 #include "ff7.h"
 #include "ff8.h"
+#include "ff8/file.h"
 #include "patch.h"
 #include "gl.h"
 #include "movies.h"
@@ -1705,6 +1706,10 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			{
 				char filename[MAX_PATH] = {};
 				if (VREF(tex_header, palettes) > 1
+						&& ff8_is_remastered_font_asset()
+						&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "hires\\sysfnt00.tex", sizeof("hires\\sysfnt00.tex") - 1) == 0) {
+					_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d_hd.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
+				} else if (VREF(tex_header, palettes) > 1
 						&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\", sizeof("cards\\") - 1) != 0
 						&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "field.fs\\field_hd_new\\wmset_014_0", sizeof("field.fs\\field_hd_new\\wmset_014_0") - 1) != 0) {
 					_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));

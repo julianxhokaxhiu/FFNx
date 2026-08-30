@@ -43,6 +43,7 @@ size_t last_compressed_size = 0;
 size_t last_uncompressed_size = 0;
 std::map<int, Zzz::File *> openedZzzFiles;
 std::unordered_set<int> openedDirectFiles;
+bool remastered_font_asset = false;
 
 size_t get_fl_prefix_size(bool with_lang = true)
 {
@@ -291,9 +292,11 @@ int ff8_fs_archive_search_filename_sub_archive(const char *fullpath, ff8_file_fi
 
 	char direct_path[MAX_PATH];
 	char classic_path[MAX_PATH];
+	const bool is_font_asset = _stricmp(PathFindFileNameA(fullpath), "sysfnt.tdw") == 0;
 
 	if (set_classic_mch_path(fullpath, classic_path, sizeof(classic_path)))
 	{
+		if (is_font_asset) remastered_font_asset = false;
 		strncpy(next_direct_file, classic_path, sizeof(next_direct_file));
 
 		return 0; // Bypass Moriya filesystem
@@ -301,12 +304,21 @@ int ff8_fs_archive_search_filename_sub_archive(const char *fullpath, ff8_file_fi
 
 	if (set_direct_path(fullpath, direct_path, sizeof(direct_path)))
 	{
+		if (is_font_asset) remastered_font_asset = false;
 		strncpy(next_direct_file, direct_path, sizeof(next_direct_file));
 
 		return 0; // Bypass Moriya filesystem
 	}
 
-	return ff8_fs_archive_search_filename2(fullpath, fi_infos_for_the_path, file_container);
+	const int result = ff8_fs_archive_search_filename2(fullpath, fi_infos_for_the_path, file_container);
+	if (is_font_asset) remastered_font_asset = result == 1;
+
+	return result;
+}
+
+bool ff8_is_remastered_font_asset()
+{
+	return remastered_font_asset;
 }
 
 void ff8_fs_archive_free_file_container_sub_archive(ff8_file_container *file_container)
