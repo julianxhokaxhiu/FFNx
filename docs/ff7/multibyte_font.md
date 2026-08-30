@@ -57,9 +57,9 @@ texture replacement path (see [External textures](../mods/external_textures.md))
 
 ## Runtime configuration: `FFNx.multibyte.toml`
 
-Glyph widths and field line spacing can be overridden **at runtime, without
-recompiling**, in `FFNx.multibyte.toml` beside `FFNx.toml`. The file is entirely optional and
-the shipped copy is a comment-only template; built-in defaults apply until an entry is enabled.
+Glyph widths and field line spacing can be overridden using the `data/FFNx.multibyte.toml` file.
+The file is entirely optional and the shipped copy is a comment-only template; built-in defaults
+apply until an entry is enabled.
 
 Each `[widths.page_N]` table corresponds to `jafont_1` through `jafont_6`. Keys are hexadecimal
 glyph codes without the `0x` prefix. Values use the same packed byte as member 3 of `window.bin`:
