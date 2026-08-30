@@ -1464,8 +1464,9 @@ int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
 // Replace a function that is called before increasing the kills of a character
 void ff8_battle_after_enemy_kill_sub_494AF0(int party_char_id, int monster_id, int current_actor_second_byte, int a2)
 {
-	ff8_externals.battle_sub_494AF0(party_char_id, monster_id, current_actor_second_byte, a2);
+	// NOTE: achievement function needs to be called before since 494AF0 increase GF kills
 	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement(*ff8_externals.savemap);
+	ff8_externals.battle_sub_494AF0(party_char_id, monster_id, current_actor_second_byte, a2);
 }
 
 // This function does not replace any hooked function, it is just a helper function for the drawpoint logic
