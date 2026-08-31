@@ -627,22 +627,14 @@ static bool submit_prompt_quad(const prompt_sprite& sprite, float x, float y, fl
   return true;
 }
 
-static int keyboard_binding_for_button(int button)
-{
-  if (button < 0 || button > 15 || button == 9 || button == 10)
-    return -1;
-  return button + 1;
-}
-
 int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
 {
   prompt_sprite sprite;
   if (current_prompt_atlas == prompt_atlas::keyboard)
   {
-    int binding = keyboard_binding_for_button(button);
-    if (!ff7_externals.input_mapping || binding < 0)
+    if (!ff7_externals.input_mapping || button < 0 || button >= 25)
       return x;
-    button = ff7_externals.input_mapping[binding];
+    button = ff7_externals.input_mapping[button];
   }
   if (!sprite_for_button(current_prompt_atlas, button, &sprite))
     return x;
@@ -665,10 +657,9 @@ int universal_buttons_draw_menu_prompt(int button, int x, int y, float z)
   prompt_sprite sprite;
   if (current_prompt_atlas == prompt_atlas::keyboard)
   {
-    int binding = keyboard_binding_for_button(button);
-    if (!ff7_externals.input_mapping || binding < 0)
+    if (!ff7_externals.input_mapping || button < 0 || button >= 25)
       return x;
-    button = ff7_externals.input_mapping[binding];
+    button = ff7_externals.input_mapping[button];
   }
   if (!sprite_for_button(current_prompt_atlas, button, &sprite))
     return x;
