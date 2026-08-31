@@ -1148,6 +1148,16 @@ void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp()
   }
 }
 
+void field_draw_graphics_object_full_viewport(ff7_graphics_object* graphics_object, ff7_game_obj* game_object)
+{
+  uint32_t previous_viewport[4];
+  memcpy(previous_viewport, current_state.viewport, sizeof(previous_viewport));
+  ff7_externals.engine_gfx_setviewport_sub_66067A(0, 0, 640, 480, game_object);
+  ff7_externals.engine_draw_graphics_object_66E641(graphics_object, game_object);
+  ff7_externals.engine_gfx_setviewport_sub_66067A(previous_viewport[0], previous_viewport[1],
+    previous_viewport[2], previous_viewport[3], game_object);
+}
+
 static int jp_submit_draw_text_from_buffer(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value, bool small_glyphs)
 {
   bool previous_small_glyphs = jp_small_glyphs;
@@ -2632,6 +2642,8 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
   int charWidth = 0;
   int leftPadding = 0;
   uint16_t letter = 0;
+
+  const bool useNativeFieldFont = !ff7_japanese_edition && !ff7_multibyte_font;
 	for ( int i = 0;	i < 1024; ++i )
 	{
     const bool followsUniversalPrompt = previousUniversalPrompt;
@@ -2697,6 +2709,26 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         break;
     }
 
+      if (possibleOpcode && !ff7_japanese_edition && character >= 0xE0 && character <= 0xE4)
+      {
+        static constexpr byte expandedCharacters[][10] = {
+          { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+          { 0x00, 0x00, 0x00, 0x00 },
+          { 0x0C, 0x00 },
+          { 0x0E, 0x02 },
+          { 0xA9, 0x02 },
+        };
+        static constexpr int expandedLengths[] = { 10, 4, 2, 2, 2 };
+        const int expansion = character - 0xE0;
+        for (int j = 0; j < expandedLengths[expansion]; ++j)
+        {
+          const byte expandedCharacter = expandedCharacters[expansion][j];
+          if (!field_font_metric(0, expandedCharacter, charWidth, leftPadding)) return;
+          W += field_autosize_glyph_advance(expandedCharacter, leftPadding, charWidth, useFixedSpacing);
+        }
+        continue;
+      }
+
     // character names need to be counted to resize proprely.
     if(possibleOpcode && character >= 0xEA && character <= 0xF5)
     {
@@ -2717,7 +2749,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
         }
 
         if (!field_font_metric(name_page, name_char, charWidth, leftPadding)) return;
-        W += field_autosize_glyph_advance(name_letter, leftPadding, charWidth, useFixedSpacing);
+  W += field_autosize_glyph_advance(name_letter, leftPadding, charWidth, useFixedSpacing);
       }
 
       continue; // back to the start, we already added to the length
@@ -2731,8 +2763,9 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
       int next_prompt_byte_count;
       const bool precedesUniversalPrompt = universal_buttons_parse_field_prompt(
         &buffer_text[i + prompt_byte_count], &next_prompt_button, &next_prompt_byte_count);
-      W += universal_buttons_field_prompt_width(
+      int promptWidth = universal_buttons_field_prompt_width(
         followsUniversalPrompt, precedesUniversalPrompt);
+      W += useNativeFieldFont ? 2 * promptWidth : promptWidth;
       previousUniversalPrompt = true;
       if (prompt_byte_count == 2)
         ++i;
@@ -2771,7 +2804,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 			H += multibyte_field_linestep_q / 4;
       continue;
 		}
-    if(possibleOpcode && character == 0xE8) // next window
+    if(possibleOpcode && (character == 0xE8 || character == 0xE9)) // next window
 		{
 			maxW = std::max(maxW, W); // update maxes
 			maxH = std::max(maxH, H);
@@ -2784,7 +2817,7 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
 	}
   float pOutWtmp = ff7_japanese_edition
     ? (float)(std::max(maxW, W) + 25)
-    : (std::max(maxW, W) + 40) * scaleFactor;
+    : (std::max(maxW, W) + (useNativeFieldFont ? 32 : 40)) * scaleFactor;
   *pOutW = ff7_japanese_edition ? (int)pOutWtmp : (int)(pOutWtmp / 2);
 	*pOutH = (std::max(maxH, H) + 50) / 2;
 }

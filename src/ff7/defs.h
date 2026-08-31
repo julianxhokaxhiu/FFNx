@@ -124,6 +124,7 @@ void __fastcall ff7_snowboard_parse_model_vertices(snowboard_this* _this, void* 
 //__int16 field_submit_draw_text_640x480_6E706D(__int16 character_x, __int16 character_y, __int16 text_box_right_position, byte *buffer_text, float z_value);
 __int16 field_submit_draw_text_640x480_6E706D_jp(__int16 character_x, __int16 character_y, __int16 text_box_right_position, byte *buffer_text, float z_value);
 void field_draw_text_boxes_and_text_graphics_object_6ECA68_jp();
+void field_draw_graphics_object_full_viewport(ff7_graphics_object* graphics_object, ff7_game_obj* game_object);
 //int common_submit_draw_char_from_buffer_6F564E(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value);
 int common_submit_draw_char_from_buffer_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value);
 int common_submit_draw_char_from_buffer_large_6F564E_jp(int x, int vertex_y, int n_shapes, unsigned __int16 letter, float z_value);

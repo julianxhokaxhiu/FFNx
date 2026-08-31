@@ -82,19 +82,20 @@ void field_text_box_window_opening_6317A9_autosize(short WINDOW_ID)
 		&& ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == 0xFF )
 		ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] = *ff7_externals.current_entity_id_byte_CC0964;
 
-	// auto_resize_text_box recomputes the window's target width/height from the text every time
-	// it's called, including reading back the values it wrote the previous call — so calling it
-	// every frame makes the target keep moving and the window's grow animation never reaches it,
-	// stalling the open. Instead, compute the target once here while the window is still small,
-	// then hold width/height fixed so the animation converges normally, matching vanilla behavior.
-	// Field files already ship with correctly sized windows, so this only fixes the animation target.
+	auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
+	// The native create routine initializes both current dimensions to one quarter of their target,
+	// clamped to 8. This identifies the first opening frame without recomputing a moving target.
+	const bool firstOpeningFrame =
+		window.current_window_width == std::max<int16_t>(window.window_width / 4, 8)
+		&& window.current_window_height == std::max<int16_t>(window.window_height / 4, 8);
 	if ( ff7_field_autosize_text_box
-		&& (ff7_japanese_edition || ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8) ) // must run every frame as before to properly handle japanese edition.
+		&& (ff7_japanese_edition || firstOpeningFrame) ) // must run every frame as before to properly handle japanese edition.
 	{
-		auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
 		// Field windows remain in 320x224 logical coordinates in the 640x480 renderer.
 		int16_t W = 0, H = 0;
 		auto_resize_text_box(WINDOW_ID, &W, &H);
+		if (!ff7_japanese_edition)
+			H = window.window_height;
 		window.window_width = std::clamp<int16_t>(W, 0, 320);
 		window.window_height = std::clamp<int16_t>(H, 0, 224);
 		window.window_pos_x = std::clamp<int16_t>(window.window_pos_x, 0, 320 - window.window_width);
