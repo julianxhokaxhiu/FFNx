@@ -210,7 +210,45 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 		_snprintf(camName, sizeof(camName), "data/movies/disc%02i_%02i.cam", disc, movie);
 		bool camdata_read = false;
 
-		if (ff8_remastered_edition)
+		if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) != 0) {
+			_snprintf(newCamName, sizeof(newCamName), "%s/%s", ff8_externals.app_path, camName);
+		}
+
+		FILE *camFile = fopen(newCamName, "rb");
+
+		if (!camFile)
+		{
+			if (!steam_edition)
+			{
+				// Try to open the cam files using the FF8 2000 PAK files
+				const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
+
+				char filename[MAX_PATH] = {};
+				strcpy(filename, ff8_externals.data_drive_path);
+				strcat(filename, ff8_externals.disc_pak_filenames[disc]);
+
+				camFile = fopen(filename, "rb");
+
+				if (camFile)
+				{
+					fseek(camFile, pak_pointer.cam_offset, SEEK_SET);
+					fread(&ff8_movie_cam_buffer, 1, pak_pointer.bik_offset - pak_pointer.cam_offset, camFile);
+					fclose(camFile);
+					camdata_read = true;
+				}
+			}
+		}
+		else
+		{
+			fseek(camFile, 0, SEEK_END);
+			long camFileSize = ftell(camFile);
+			rewind(camFile);
+			fread(&ff8_movie_cam_buffer, 1, camFileSize, camFile);
+			fclose(camFile);
+			camdata_read = true;
+		}
+
+		if (!camdata_read && ff8_remastered_edition)
 		{
 			Zzz::File *f = g_FF8ZzzArchiveOther.openFile(camName);
 
@@ -221,54 +259,12 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 
 				camdata_read = true;
 			}
-			else
-			{
-				ffnx_warning("could not load camera data from %s in other.zzz\n", camName);
-			}
 		}
 
-		if (!camdata_read) {
-			if (redirect_path_with_override(camName, newCamName, sizeof(newCamName)) != 0) {
-				_snprintf(newCamName, sizeof(newCamName), "%s/%s", ff8_externals.app_path, camName);
-			}
-
-			FILE *camFile = fopen(newCamName, "rb");
-
-			if (!camFile)
-			{
-				if (steam_edition)
-				{
-					ffnx_error("could not load camera data from %s\n", newCamName);
-					return;
-				}
-
-				// Try to open the cam files using the FF8 2000 PAK files
-				const pak_pointers_entry &pak_pointer = ff8_externals.disc_pak_offsets[disc][movie];
-
-				char filename[MAX_PATH] = {};
-				strcpy(filename, ff8_externals.data_drive_path);
-				strcat(filename, ff8_externals.disc_pak_filenames[disc]);
-
-				FILE *camFile = fopen(filename, "rb");
-
-				if (!camFile)
-				{
-					ffnx_error("could not load camera data from %s\n", filename);
-					return;
-				}
-
-				fseek(camFile, pak_pointer.cam_offset, SEEK_SET);
-				fread(&ff8_movie_cam_buffer, 1, pak_pointer.bik_offset - pak_pointer.cam_offset, camFile);
-				fclose(camFile);
-			}
-			else
-			{
-				fseek(camFile, 0, SEEK_END);
-				long camFileSize = ftell(camFile);
-				rewind(camFile);
-				fread(&ff8_movie_cam_buffer, 1, camFileSize, camFile);
-				fclose(camFile);
-			}
+		if (!camdata_read)
+		{
+			ffnx_error("could not load camera data from %s\n", camName);
+			return;
 		}
 
 		ff8_externals.movie_object->movie_intro_pak = false;
