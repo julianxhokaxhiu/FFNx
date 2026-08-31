@@ -205,15 +205,32 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *fi
 
 	if (targetPixelW < sourcePixelW
 		|| targetH < sourceH
-		|| targetPixelW % sourcePixelW != 0
-		|| targetH % sourceH != 0)
+		|| targetPixelW % sourcePixelW != 0)
 	{
 		ffnx_warning("External texture size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d, filename=%s)\n", targetPixelW, targetH, sourcePixelW, sourceH, filename);
 
 		return 0;
 	}
 
-	int scaleW = targetPixelW / sourcePixelW, scaleH = targetH / sourceH;
+	int scaleW = targetPixelW / sourcePixelW;
+
+	// Some Remastered battle textures use a full 128-row canvas even when the
+	// original TIM only occupies part of it (notably Rinoa's 97-row texture).
+	if (ff8_remastered_edition && scaleW % 2 == 0) {
+		int remasteredScale = scaleW / 2;
+
+		if (remasteredScale <= MAX_SCALE && sourceH <= 128 && targetH == 128 * remasteredScale) {
+			return remasteredScale;
+		}
+	}
+
+	if (targetH % sourceH != 0) {
+		ffnx_warning("External texture size must be scaled to the original texture size with the same ratio (modded texture size: %dx%d, original texture size: %dx%d, filename=%s)\n", targetPixelW, targetH, sourcePixelW, sourceH, filename);
+
+		return 0;
+	}
+
+	int scaleH = targetH / sourceH;
 
 	// Remastered textures
 	if (scaleW == scaleH * 2)
