@@ -95,7 +95,7 @@ void field_text_box_window_opening_6317A9_autosize(short WINDOW_ID)
 		int16_t W = 0, H = 0;
 		auto_resize_text_box(WINDOW_ID, &W, &H);
 		if (!ff7_japanese_edition)
-			H = window.window_height;
+			H = std::min(H, window.window_height);
 		window.window_width = std::clamp<int16_t>(W, 0, 320);
 		window.window_height = std::clamp<int16_t>(H, 0, 224);
 		window.window_pos_x = std::clamp<int16_t>(window.window_pos_x, 0, 320 - window.window_width);
