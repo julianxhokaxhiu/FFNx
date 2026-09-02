@@ -735,7 +735,7 @@ ff7_field_center = true
 #~~~~~~~~~~~~~~~~~~~~~~~~
 # This flag will automatically size text boxes in FIELD mode.
 #~~~~~~~~~~~~~~~~~~~~~~~~
-ff7_field_autosize_text_box = true
+ff7_field_autosize_text_box = false
 
 # Native Japanese edition
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
