@@ -2607,7 +2607,7 @@ void main_menu_draw_everything_maybe_6C0B91_jp()
   ff7_externals.engine_gfx_setviewport_sub_66067A(*ff7_externals.menu_viewport_x_DC105C, *ff7_externals.menu_viewport_y_DC1060, *ff7_externals.menu_viewport_width_DC1064, *ff7_externals.menu_viewport_view_DC1068, game_object);
 }
 
-void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
+void auto_resize_text_box(int16_t WINDOW_ID, byte* buffer_text, int16_t* pOutW, int16_t* pOutH)
 {
   multibyte_load_config();
   // as many textboxes in flevel are set wrong, we need to resize them.
@@ -2620,7 +2620,6 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
   *pOutW = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;
   *pOutH = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height;
 
-  byte* buffer_text = (byte*)ff7_externals.current_dialog_string_pointer[WINDOW_ID];
   bool isKanjiDetected = false;
   bool possibleOpcode = true; // some opcodes mmust be parsed, so we must look for them
   bool useFixedSpacing = false;
@@ -2806,6 +2805,12 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
     : (std::max(maxW, W) + (useNativeFieldFont ? 32 : 40)) * scaleFactor;
   *pOutW = ff7_japanese_edition ? (int)pOutWtmp : (int)(pOutWtmp / 2);
 	*pOutH = (std::max(maxH, H) + 50) / 2;
+}
+
+void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH)
+{
+  auto_resize_text_box(WINDOW_ID,
+    reinterpret_cast<byte*>(ff7_externals.current_dialog_string_pointer[WINDOW_ID]), pOutW, pOutH);
 }
 
 int sub_6F54A2_jp(byte *a1)

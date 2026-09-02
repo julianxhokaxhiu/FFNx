@@ -3657,6 +3657,7 @@ struct ff7_externals
 	uint32_t world_opcode_ask_sub_75EEBB;
 	uint32_t world_opcode_message;
 	uint32_t world_opcode_ask;
+	DWORD* world_current_dialog_string_pointer;
 	uint32_t world_text_box_window_opening_769A66;
 	uint32_t world_text_box_window_paging_769C02;
 	uint32_t world_text_box_reverse_paging_76ABE9;

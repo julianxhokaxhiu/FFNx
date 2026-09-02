@@ -1257,7 +1257,9 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_opcode_ask_sub_75EEBB = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xBA1);
 	ff7_externals.world_opcode_message = get_relative_call(ff7_externals.world_sub_75EF46, 0x8C);
 	ff7_externals.world_opcode_ask = get_relative_call(ff7_externals.world_sub_75EF46, 0xAF);
+	const uint32_t world_text_box_window_create = get_relative_call(ff7_externals.world_opcode_message, 0x39);
 	ff7_externals.world_text_box_window_opening_769A66 = get_relative_call(ff7_externals.world_opcode_message, 0x5A);
+	ff7_externals.world_current_dialog_string_pointer = (DWORD*)get_absolute_value(world_text_box_window_create, 0x161);
 	ff7_externals.world_text_box_window_paging_769C02 = get_relative_call(ff7_externals.world_opcode_message, 0x6D);
 	ff7_externals.world_text_box_reverse_paging_76ABE9 = get_relative_call(ff7_externals.world_opcode_message, 0x80);
 	ff7_externals.world_text_box_window_closing_76ADF7 = get_relative_call(ff7_externals.world_opcode_message, 0x235);

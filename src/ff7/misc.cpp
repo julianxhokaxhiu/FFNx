@@ -52,11 +52,44 @@ struct autosize_window_state
 	bool initialized;
 };
 
-static std::unordered_map<short, autosize_window_state> autosize_state;
+static std::unordered_map<short, autosize_window_state> field_autosize_state;
+static std::unordered_map<short, autosize_window_state> world_autosize_state;
+
+static void autosize_text_box_window(short WINDOW_ID, byte* buffer_text,
+	std::unordered_map<short, autosize_window_state>& autosize_state)
+{
+	auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
+	const bool firstOpeningFrame =
+		window.current_window_width == std::max<int16_t>(window.window_width / 4, 8)
+		&& window.current_window_height == std::max<int16_t>(window.window_height / 4, 8);
+	if ( !ff7_field_autosize_text_box || !buffer_text
+		|| (!ff7_japanese_edition && !firstOpeningFrame) )
+		return;
+
+	auto& state = autosize_state[WINDOW_ID];
+	if ( !state.initialized
+		|| window.window_width != state.applied_width
+		|| window.window_height != state.applied_height )
+	{
+		state.authored_height = window.window_height;
+		state.initialized = true;
+	}
+
+	int16_t W = 0, H = 0;
+	auto_resize_text_box(WINDOW_ID, buffer_text, &W, &H);
+	if (!ff7_japanese_edition)
+		H = std::min(H, state.authored_height);
+	window.window_width = std::clamp<int16_t>(W, 0, 320);
+	window.window_height = std::clamp<int16_t>(H, 0, 224);
+	state.applied_width = window.window_width;
+	state.applied_height = window.window_height;
+	window.window_pos_x = std::clamp<int16_t>(window.window_pos_x, 0, 320 - window.window_width);
+	window.window_pos_y = std::clamp<int16_t>(window.window_pos_y, 0, 224 - window.window_height);
+}
 
 void field_autosize_window_geometry_changed(short WINDOW_ID, short W, short H)
 {
-	auto& state = autosize_state[WINDOW_ID];
+	auto& state = field_autosize_state[WINDOW_ID];
 	state.authored_height = H;
 	state.applied_width = W;
 	state.applied_height = H;
@@ -103,35 +136,8 @@ void field_text_box_window_opening_6317A9_autosize(short WINDOW_ID)
 		ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] = *ff7_externals.current_entity_id_byte_CC0964;
 
 	auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
-	// The native create routine initializes both current dimensions to one quarter of their target,
-	// clamped to 8. This identifies the first opening frame without recomputing a moving target.
-	const bool firstOpeningFrame =
-		window.current_window_width == std::max<int16_t>(window.window_width / 4, 8)
-		&& window.current_window_height == std::max<int16_t>(window.window_height / 4, 8);
-	if ( ff7_field_autosize_text_box
-		&& (ff7_japanese_edition || firstOpeningFrame) ) // must run every frame as before to properly handle japanese edition.
-	{
-		auto& state = autosize_state[WINDOW_ID];
-		if ( !state.initialized
-			|| window.window_width != state.applied_width
-			|| window.window_height != state.applied_height )
-		{
-			state.authored_height = window.window_height;
-			state.initialized = true;
-		}
-
-		// Field windows remain in 320x224 logical coordinates in the 640x480 renderer.
-		int16_t W = 0, H = 0;
-		auto_resize_text_box(WINDOW_ID, &W, &H);
-		if (!ff7_japanese_edition)
-			H = std::min(H, state.authored_height);
-		window.window_width = std::clamp<int16_t>(W, 0, 320);
-		window.window_height = std::clamp<int16_t>(H, 0, 224);
-		state.applied_width = window.window_width;
-		state.applied_height = window.window_height;
-		window.window_pos_x = std::clamp<int16_t>(window.window_pos_x, 0, 320 - window.window_width);
-		window.window_pos_y = std::clamp<int16_t>(window.window_pos_y, 0, 224 - window.window_height);
-	}
+	autosize_text_box_window(WINDOW_ID,
+		reinterpret_cast<byte*>(ff7_externals.current_dialog_string_pointer[WINDOW_ID]), field_autosize_state);
 
 	if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
 	{
@@ -157,6 +163,13 @@ void field_text_box_window_opening_6317A9_autosize(short WINDOW_ID)
 		)
 			ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_mode = 2;
 	}
+}
+
+void world_text_box_window_opening_autosize(short WINDOW_ID)
+{
+	autosize_text_box_window(WINDOW_ID,
+		reinterpret_cast<byte*>(ff7_externals.world_current_dialog_string_pointer[WINDOW_ID]), world_autosize_state);
+	reinterpret_cast<void (*)(short)>(ff7_externals.world_text_box_window_opening_769A66)(WINDOW_ID);
 }
 
 // MDEF fix
