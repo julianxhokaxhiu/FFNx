@@ -147,4 +147,5 @@ void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH);
 void field_autosize_window_geometry_changed(short WINDOW_ID, short W, short H);
 void field_text_box_window_opening_6317A9_autosize(short);
 int sub_6F54A2_jp(byte *a1);
+int battle_command_text_width_jp(byte* buffer);
 void name_input_jp_install();

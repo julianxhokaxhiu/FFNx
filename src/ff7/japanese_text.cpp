@@ -2890,6 +2890,24 @@ int sub_6F54A2_jp(byte *a1)
   return v2;
 }
 
+int battle_command_text_width_jp(byte* buffer)
+{
+  int width = 0;
+  for (int i = 0; i < 64 && buffer && *buffer != 0xFF; ++i)
+  {
+    uint16_t letter = *buffer++;
+    if (letter >= 0xFA && letter <= 0xFE && *buffer != 0xFF)
+    {
+      letter = (uint16_t)(letter << 8 | *buffer++);
+      ++i;
+    }
+
+    width += 16 * jp_spacing_metric(letter, 16) / 64;
+  }
+
+  return width + 3;
+}
+
 // ===========================================================================
 //  JP name-entry screen: 3-mode (hiragana / katakana / eisuu) support
 // ---------------------------------------------------------------------------
