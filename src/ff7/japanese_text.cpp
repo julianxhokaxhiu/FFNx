@@ -1778,10 +1778,9 @@ void battle_reset_graphics_object_and_jafonts(ff7_graphics_object* graphics_obje
 
 void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint16_t a4) // used printing centered texts.
 {
-  // probably should be scaled up, but until the other one is fixed, not bothering.
-  double scaleFactor = 1.0f; // default scale factor. only one ever used for field texts. use 1.0 for normal small text behavior
+  double scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f;
   // no x position fudging for battle text.
-  float yPosFudge = 4;       // smaller text is lower.
+  float yPosFudge = ff7_japanese_edition ? 0.0f : 4.0f;
 
   __int64 v4;
   __int64 menu_width;
