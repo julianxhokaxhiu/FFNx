@@ -415,6 +415,12 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0xBD, universal_buttons_flush_vanilla_field);
 		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0x633, universal_buttons_flush_vanilla_field);
 		replace_call_function(ff7_externals.field_draw_everything_sub_63A60B + 0x3A2, universal_buttons_flush_vanilla_field);
+		replace_call_function((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x23D,
+			universal_buttons_flush_vanilla_field);
+		replace_call_function((uint32_t)ff7_externals.world_wm2_underwater_draw_all_74C3F0 + 0x15F,
+			universal_buttons_flush_vanilla_field);
+		replace_call_function((uint32_t)ff7_externals.world_wm3_snowstorm_draw_all_74C589 + 0xED,
+			universal_buttons_flush_vanilla_field);
 		for (uint32_t offset : { 0x174, 0x186, 0x199, 0x1AC, 0x1BE })
 			replace_call_function((uint32_t)ff7_externals.field_draw_text_boxes_and_text_graphics_object_6ECA68 + offset,
 				field_draw_graphics_object_full_viewport);

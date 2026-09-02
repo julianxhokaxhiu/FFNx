@@ -17,7 +17,8 @@
 
 static constexpr int prompt_size = 40;
 static constexpr int config_prompt_size = 32;
-static constexpr int vanilla_prompt_x_offset = 8;
+static constexpr int vanilla_prompt_advance = 32;
+static constexpr int vanilla_prompt_x_offset = (prompt_size - vanilla_prompt_advance) / 2 + 1;
 
 void engine_load_menu_graphics_objects_6C1468(int a1)
 {
