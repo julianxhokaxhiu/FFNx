@@ -1187,21 +1187,8 @@ static int jp_submit_draw_text_from_buffer(int16_t x, int16_t y, byte* buffer, b
       }
     }
 
-    int prompt_button;
-    int prompt_byte_count;
-    if (universal_buttons_parse_field_prompt(&buffer[i], &prompt_button, &prompt_byte_count))
-    {
-      int prompt_x = universal_buttons_draw_menu_prompt(prompt_button, x, y, z_value);
-      if (prompt_x != x)
-      {
-        x = (int16_t)prompt_x;
-        i += prompt_byte_count - 1;
-        continue;
-      }
-    }
-
     uint16_t letter = buffer[i];
-    if (buffer[i] >= 0xFA && buffer[i] <= 0xFE && buffer[i + 1] != 0xFF)
+    if (buffer[i] >= 0xF8 && buffer[i] <= 0xFE && buffer[i + 1] != 0xFF)
       letter = (uint16_t)(buffer[i] << 8 | buffer[++i]);
     x = (int16_t)common_submit_draw_char_from_buffer_6F564E_jp(x, y, n_shapes, letter, z_value);
   }
