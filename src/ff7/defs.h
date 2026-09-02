@@ -144,6 +144,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, __int16 menu_box_idx, char a3, unsi
 void main_menu_draw_everything_maybe_6C0B91_jp();
 void field_text_box_window_paging_631945_jp(short);
 void auto_resize_text_box(int16_t WINDOW_ID, int16_t* pOutW, int16_t* pOutH);
+void field_autosize_window_geometry_changed(short WINDOW_ID, short W, short H);
 void field_text_box_window_opening_6317A9_autosize(short);
 int sub_6F54A2_jp(byte *a1);
 void name_input_jp_install();

@@ -31,6 +31,7 @@
 
 #include "field.h"
 
+#include "ff7/defs.h"
 #include "ff7/field/model.h"
 
 // Data for debug map jumps
@@ -223,6 +224,7 @@ int opcode_pc_map_change() {
 
 int field_calc_window_pos(int16_t WINDOW_ID, int16_t X, int16_t Y, int16_t W, int16_t H)
 {
+	field_autosize_window_geometry_changed(WINDOW_ID, W, H);
 	return ff7_externals.sub_630C48(WINDOW_ID, X, ff7_field_center ? Y + 8 : Y, W, H);
 }
 

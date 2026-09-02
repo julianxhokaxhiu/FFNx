@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <stdint.h>
+#include <unordered_map>
 
 #include "defs.h"
 #include "battle/camera.h"
@@ -42,6 +43,25 @@
 #include "../achievement.h"
 
 #include <bx/math.h>
+
+struct autosize_window_state
+{
+	int16_t authored_height;
+	int16_t applied_width;
+	int16_t applied_height;
+	bool initialized;
+};
+
+static std::unordered_map<short, autosize_window_state> autosize_state;
+
+void field_autosize_window_geometry_changed(short WINDOW_ID, short W, short H)
+{
+	auto& state = autosize_state[WINDOW_ID];
+	state.authored_height = H;
+	state.applied_width = W;
+	state.applied_height = H;
+	state.initialized = true;
+}
 
 // CORE GAME LOOP
 void ff7_core_game_loop()
@@ -91,13 +111,24 @@ void field_text_box_window_opening_6317A9_autosize(short WINDOW_ID)
 	if ( ff7_field_autosize_text_box
 		&& (ff7_japanese_edition || firstOpeningFrame) ) // must run every frame as before to properly handle japanese edition.
 	{
+		auto& state = autosize_state[WINDOW_ID];
+		if ( !state.initialized
+			|| window.window_width != state.applied_width
+			|| window.window_height != state.applied_height )
+		{
+			state.authored_height = window.window_height;
+			state.initialized = true;
+		}
+
 		// Field windows remain in 320x224 logical coordinates in the 640x480 renderer.
 		int16_t W = 0, H = 0;
 		auto_resize_text_box(WINDOW_ID, &W, &H);
 		if (!ff7_japanese_edition)
-			H = std::min(H, window.window_height);
+			H = std::min(H, state.authored_height);
 		window.window_width = std::clamp<int16_t>(W, 0, 320);
 		window.window_height = std::clamp<int16_t>(H, 0, 224);
+		state.applied_width = window.window_width;
+		state.applied_height = window.window_height;
 		window.window_pos_x = std::clamp<int16_t>(window.window_pos_x, 0, 320 - window.window_width);
 		window.window_pos_y = std::clamp<int16_t>(window.window_pos_y, 0, 224 - window.window_height);
 	}
