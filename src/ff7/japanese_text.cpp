@@ -2999,6 +2999,7 @@ static void jp_name_apply_mode(int mode)
 // word). The engine's own dispatch in menu_sub_718DBE tests the bit in
 // both halves of that word (it pushes exactly this mask), so we do the same.
 #define JP_NAME_DECISION_MASK (0x0020 | (0x0020 << 16))
+#define JP_NAME_SELECT_SHORTCUT_MASK 0x00010800
 
 // Per-frame wrapper around name_menu_sub_719C08 (cdecl, one argument, called
 // every frame while the name screen is up). Installed with
@@ -3016,7 +3017,16 @@ static void jp_name_apply_mode(int mode)
 // dispatch, so the feedback is unchanged.
 static void jp_name_frame_719C08(int a1)
 {
+  const bool select_shortcut =
+    ff7_externals.menu_input_check_6F53F1(JP_NAME_SELECT_SHORTCUT_MASK) != 0;
+
   ((void(__cdecl*)(int))ff7_externals.name_menu_sub_719C08)(a1);
+
+  if (select_shortcut)
+  {
+    *ff7_externals.name_menu_selected_pane_921ED4 = 1;
+    *(uint32_t*)(ff7_externals.name_menu_pane_cursor_rows_DD453C + 1 * 0x38) = 5;
+  }
 
   if (*ff7_externals.name_menu_selected_pane_921ED4 == 1)
   {
