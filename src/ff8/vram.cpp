@@ -1658,6 +1658,8 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 	return ret;
 }
 
+static uint8_t *ff8_remastered_battle_effect_parent_cursor = nullptr;
+
 void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWORD *outSize)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
@@ -1665,7 +1667,22 @@ void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWO
 	battle_texture_id = 0;
 	snprintf(battle_texture_name, sizeof(battle_texture_name), "magic/%s", fileName);
 
-	return ((void *(*)(const char*,void*,int,DWORD*))ff8_externals.load_magic_data_sub_571900)(fileName, data, dataSize, outSize);
+	auto open_effect = (void *(*)(const char*,void*,int,DWORD*))ff8_externals.load_magic_data_sub_571900;
+	if (!ff8_remastered_edition || data == nullptr)
+		return open_effect(fileName, data, dataSize, outSize);
+
+	uint8_t *effect_arena = ((uint8_t *(*)())ff8_externals.get_battle_effect_buffer_sub_571B50)();
+	uint8_t *effect_parent_begin = effect_arena + 0x100000;
+	uint8_t *effect_parent_end = effect_arena + 0x380000;
+	if (data == effect_arena || ff8_remastered_battle_effect_parent_cursor == nullptr)
+		ff8_remastered_battle_effect_parent_cursor = effect_parent_begin;
+
+	uint8_t *destination = ff8_remastered_battle_effect_parent_cursor;
+	void *result = open_effect(fileName, destination, int(effect_parent_end - destination), outSize);
+	if (result == destination && outSize != nullptr && *outSize <= DWORD(effect_parent_end - destination))
+		ff8_remastered_battle_effect_parent_cursor += *outSize;
+
+	return result;
 }
 
 size_t ff8_battle_read_file(char *fileName, void *data)

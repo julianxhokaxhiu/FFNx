@@ -1709,6 +1709,7 @@ struct ff8_externals
 	DWORD* battle_current_actor_talking;
 	uint32_t sub_502380;
 	uint32_t sub_50A790;
+	uint32_t sub_50B2A0;
 	uint32_t sub_502670; // embedded pointer read out of sub_502380 ("push offset ...")
 	uint32_t battle_entity_task_dispatch_sub_507080; // maps a battle entity id to its task function; called from sub_502670
 	uint32_t battle_character_dat_loader;
