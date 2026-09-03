@@ -53,6 +53,14 @@
 #define HWVA_AMF 8
 #define HWVA_QSV 9
 
+#define GAME_LANGUAGE_AUTO 0
+#define GAME_LANGUAGE_EN 1
+#define GAME_LANGUAGE_FR 2
+#define GAME_LANGUAGE_DE 3
+#define GAME_LANGUAGE_SP 4
+#define GAME_LANGUAGE_IT 5
+#define GAME_LANGUAGE_JP 6
+
 extern std::string mod_path;
 extern std::vector<std::string> mod_ext;
 extern long enable_ffmpeg_videos;
@@ -186,6 +194,7 @@ extern long display_index;
 extern long ff8_high_res_font;
 extern long hardware_video_decoding;
 extern std::vector<std::string> ff8_disable_remastered_hd_textures;
+extern long game_language;
 
 void read_cfg();
 bool is_remastered_hd_textures_disabled(const std::string &module);

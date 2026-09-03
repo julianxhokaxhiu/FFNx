@@ -182,6 +182,7 @@ void ff8_find_externals()
 	ff8_externals.moriya_filesystem_read = get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0xB7);
 	ff8_externals._read = (int (*)(int,void*,unsigned int))get_relative_call(uint32_t(ff8_externals.sm_pc_read), 0xC7);
 	ff8_externals._read_lk = (unsigned int (*)(int,LPVOID,DWORD))get_relative_call(uint32_t(ff8_externals._read), 0x38);
+	ff8_externals.moriya_filesystem_archives_lookup = get_absolute_value(ff8_externals.moriya_filesystem_open, 0x90);
 	ff8_externals.open_and_write_to_archive = get_relative_call(ff8_externals.moriya_filesystem_open, 0x3E1);
 	ff8_externals.write_to_archive = get_relative_call(ff8_externals.open_and_write_to_archive, 0x30);
 	ff8_externals._write = (int (*)(int,void*,unsigned int))get_relative_call(ff8_externals.write_to_archive, 0x44);
@@ -193,6 +194,9 @@ void ff8_find_externals()
 	ff8_externals.sub_archive_get_filename = (void(*)(const char*,char*))get_relative_call(ff8_externals.moriya_filesystem_open, 0x126);
 	ff8_externals.temp_fs_path_cache = (char *)get_absolute_value(ff8_externals.moriya_filesystem_open, 0x161);
 	ff8_externals.archive_open = (ff8_file_container*(*)(char*,char*,char*))get_relative_call(ff8_externals.moriya_filesystem_open, 0x27D);
+	ff8_externals.archive_open_fi = get_relative_call(uint32_t(ff8_externals.archive_open), 0x27);
+	ff8_externals.archive_open_fi_2 = get_relative_call(ff8_externals.archive_open_fi, 0xD);
+	ff8_externals.open_read_close_file = (uint8_t*(*)(ff8_file_context*,int,int32_t*,const char*))get_relative_call(ff8_externals.archive_open_fi_2, 0x24);
 
 	ff8_externals.cdcheck_sub_52F9E0 = get_relative_call(ff8_externals.cdcheck_main_loop, 0x95);
 
@@ -707,6 +711,7 @@ void ff8_find_externals()
 
 	if(FF8_US_VERSION)
 	{
+		ff8_externals.worldmap_wmset_path = (char **)get_absolute_value(ff8_externals.worldmap_sub_53F310, 0x51);
 		ff8_externals.worldmap_sub_53F310_call_24D = ff8_externals.worldmap_sub_53F310 + 0x24D;
 		ff8_externals.worldmap_wmset_set_pointers_sub_542DA0 = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x24D);
 		ff8_externals.worldmap_section17_position = (uint32_t **)get_absolute_value(ff8_externals.worldmap_wmset_set_pointers_sub_542DA0, 0x1ED);
@@ -784,6 +789,7 @@ void ff8_find_externals()
 	}
 	else
 	{
+		ff8_externals.worldmap_wmset_path = (char **)get_absolute_value(ff8_externals.worldmap_sub_53F310, 0x4E);
 		ff8_externals.worldmap_sub_53F310_call_24D = ff8_externals.worldmap_sub_53F310 + 0x249;
 		ff8_externals.worldmap_wmset_set_pointers_sub_542DA0 = get_relative_call(ff8_externals.worldmap_sub_53F310, 0x249);
 		ff8_externals.worldmap_section17_position = (uint32_t **)get_absolute_value(ff8_externals.worldmap_wmset_set_pointers_sub_542DA0, 0x21C);

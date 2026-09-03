@@ -478,6 +478,20 @@ steam_game_userdata = ""
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 enable_steam_achievements = false
 
+#[LANGUAGE]
+# Language of the game on multilingual installations
+# FF8 REMASTERED: de, en, es, fr, it, jp (jp is partially supported)
+# Available choices are:
+# - 0: Auto ( default, use the language of the exe )
+# - 1: English
+# - 2: French
+# - 3: German
+# - 4: Spanish
+# - 5: Italian
+# - 6: Japanese
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+game_language = 0
+
 ########################
 ## MODDER OPTIONS
 ########################

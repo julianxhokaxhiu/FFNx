@@ -28,6 +28,10 @@
 - External textures: Change texture color for model field external textures, depending on the current map ( https://github.com/julianxhokaxhiu/FFNx/pull/981 )
 - Widescreen: Fix text dialogues in battles when using 16:9 ( https://github.com/julianxhokaxhiu/FFNx/pull/960 )
 
+## FF8 Remastered
+
+- Add support for multi language switch ( https://github.com/julianxhokaxhiu/FFNx/pull/982 )
+
 # 1.24.3
 
 - Full commit list since last stable release: https://github.com/julianxhokaxhiu/FFNx/compare/1.24.2...1.24.3
