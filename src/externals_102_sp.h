@@ -63,6 +63,7 @@ ff7_externals.matrix4x3_multiply =            0x66CBDB;
 ff7_externals.sub_6B26C0 =                    0x6B2660;
 ff7_externals.sub_6B2720 =                    0x6B26C0;
 ff7_externals.sub_673F5C =                    0x673EFC;
+ff7_externals.set_blend_mode =                0x694C20;
 ff7_externals.savemap =               (savemap *)0xF3A548;
 ff7_externals.menu_objects =          (menu_objects *)0xF3B7D0;
 ff7_externals.magic_thread_start =            0x427938;
