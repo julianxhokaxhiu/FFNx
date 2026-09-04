@@ -143,7 +143,38 @@ static void patch_ff8_remastered_battle_effect_layout()
 		return;
 	}
 
-	static constexpr ff8_battle_effect_layout_patch patches[] = {
+	struct runtime_layout_patch
+	{
+		uint16_t script_id;
+		uint32_t remastered_offset;
+	};
+
+	static constexpr runtime_layout_patch runtime_patches[] = {
+		{ 623, 0x1DE7AC },
+	};
+
+	static const auto process_battle_effect_scripts = []() -> int
+	{
+		uint8_t *effect_state = reinterpret_cast<uint8_t *>(*ff8_externals.effect_struct_27973EC);
+		const uint16_t script_id = *reinterpret_cast<uint16_t *>(effect_state + 0xA0);
+
+		for (const auto &patch : runtime_patches)
+		{
+			if (script_id != patch.script_id) continue;
+
+			const uint32_t workspace = uint32_t(extended_memory) + 0x200000 + patch.remastered_offset;
+			if (*reinterpret_cast<uint32_t *>(effect_state + 0x70) != workspace)
+			{
+				*reinterpret_cast<uint32_t *>(effect_state + 0x70) = workspace;
+				*reinterpret_cast<uint32_t *>(effect_state + 0x74) = workspace;
+			}
+			break;
+		}
+
+		return reinterpret_cast<int (*)()>(0xB0BFC0)();
+	};
+
+	static const ff8_battle_effect_layout_patch patches[] = {
 		{ 0x58D770, 0x2E000, 0xCE000, ff8_battle_effect_layout_patch_mode::direct },
 		{ 0x58D776, 0x2F800, 0xCF800, ff8_battle_effect_layout_patch_mode::direct },
 		{ 0x58D77B, 0x31800, 0xD1800, ff8_battle_effect_layout_patch_mode::direct },
@@ -342,6 +373,7 @@ static void patch_ff8_remastered_battle_effect_layout()
 		{ 0x8D8262, 0x278C7E8, 0x402580, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x8D82B3, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x8DFFA3, 0xB65150, 0x8DFF70, ff8_battle_effect_layout_patch_mode::relative_call },
+		{ 0xB004CF, 0xB0BFC0, reinterpret_cast<uint32_t>(+process_battle_effect_scripts), ff8_battle_effect_layout_patch_mode::relative_call },
 	};
 
 	for (const auto &patch : patches)
