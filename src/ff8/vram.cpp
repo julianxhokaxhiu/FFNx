@@ -1680,7 +1680,7 @@ void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWO
 	uint8_t *destination = ff8_remastered_battle_effect_parent_cursor;
 	void *result = open_effect(fileName, destination, int(effect_parent_end - destination), outSize);
 	if (result == destination && outSize != nullptr && *outSize <= DWORD(effect_parent_end - destination))
-		ff8_remastered_battle_effect_parent_cursor += *outSize;
+		ff8_remastered_battle_effect_parent_cursor += (*outSize + 3) & ~DWORD(3); // mag201_b.00 has an odd size
 
 	return result;
 }
