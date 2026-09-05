@@ -2417,13 +2417,13 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// 3D model extended memory
 	// #####################
-	extended_memory = (uint8_t *)driver_malloc(0x1000000); // 16 MB
+	extended_memory = (uint8_t *)driver_malloc(0x2000000); // 32 MB
 
 	if (extended_memory) {
 		uint32_t memory_offsets = JP_VERSION ? 0xD6DD60 : 0xB6D060;
 		uint32_t battle_model_memory_offset = ff8_remastered_edition ? 0x800000 : 0x80000;
 		uint32_t battle_character_memory_offset = ff8_remastered_edition ? 0xC00000 : 0x100000;
-		patch_code_dword(memory_offsets + 0xC, uint32_t(extended_memory) + 0x300000);
+		patch_code_dword(memory_offsets + 0xC, uint32_t(extended_memory) + 0x1000000);
 		patch_code_dword(memory_offsets + 0x18, uint32_t(extended_memory) + battle_model_memory_offset);
 		patch_code_dword(memory_offsets + 0x1C, uint32_t(extended_memory) + battle_model_memory_offset);
 		patch_code_dword(memory_offsets + 0x20, uint32_t(extended_memory) + battle_character_memory_offset);
@@ -2444,8 +2444,8 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		}
 
 		// Extend field data size
-		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF64 : 0xED1), uint32_t(extended_memory) + 0x5F0000);
-		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF6B : 0xED8), uint32_t(extended_memory) + 0x600000);
+		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF64 : 0xED1), uint32_t(extended_memory) + 0x17F0000);
+		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF6B : 0xED8), uint32_t(extended_memory) + 0x1800000);
 
 		// Relocate effect buffer
 		patch_code_dword(ff8_externals.sub_571870 + 0x3, FF8_BATTLE_EFFECT_BUFFER_SIZE / 4); // Patch size

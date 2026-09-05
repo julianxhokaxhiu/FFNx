@@ -29,7 +29,6 @@
 
 Zzz g_FF8ZzzArchiveMain;
 Zzz g_FF8ZzzArchiveOther;
-uint8_t *extended_memory = nullptr;
 
 struct ff8_remastered_model_divisor {
     char modelId[5];
