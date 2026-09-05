@@ -374,6 +374,7 @@ static void patch_ff8_remastered_battle_effect_layout()
 		{ 0x8D82B3, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x8DFFA3, 0xB65150, 0x8DFF70, ff8_battle_effect_layout_patch_mode::relative_call },
 		{ 0xB004CF, 0xB0BFC0, reinterpret_cast<uint32_t>(+process_battle_effect_scripts), ff8_battle_effect_layout_patch_mode::relative_call },
+		{ 0x1871A5C, 0x7A24, 0x17CD8, ff8_battle_effect_layout_patch_mode::direct },
 	};
 
 	for (const auto &patch : patches)
