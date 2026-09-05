@@ -422,6 +422,44 @@ static void patch_ff8_remastered_battle_effect_layout()
 	}
 }
 
+// BdLinkTask failure path: report which task pool ran out so its capacity can be sized.
+static void ff8_battle_link_task_failed(const char *message)
+{
+	uint32_t *stack = reinterpret_cast<uint32_t *>(&message);
+	const uint32_t caller = stack[3];
+	uint8_t *descriptor = reinterpret_cast<uint8_t *>(stack[4]);
+
+	if (descriptor != nullptr)
+	{
+		uint8_t *records = *reinterpret_cast<uint8_t **>(descriptor + 8);
+		const int16_t stride = *reinterpret_cast<int16_t *>(descriptor + 0xC);
+		const int16_t count = *reinterpret_cast<int16_t *>(descriptor + 0xE);
+		int active = 0;
+
+		for (int16_t i = 0; records != nullptr && i < count; ++i)
+			if (records[i * stride] & 1) ++active;
+
+		ffnx_warning("BdLinkTask failed: caller=0x%08X descriptor=0x%08X records=0x%08X stride=0x%X count=%d active=%d\n",
+			caller, uint32_t(descriptor), uint32_t(records), stride, count, active);
+	}
+
+	reinterpret_cast<void (*)(const char *)>(0x403D99)(message);
+}
+
+static void patch_ff8_battle_link_task_diagnostic()
+{
+	if (!FF8_US_VERSION || !more_debug) return;
+
+	if (*reinterpret_cast<const uint8_t *>(0x5083A9) != 0xE8
+		|| 0x5083A9 + 5 + *reinterpret_cast<const int32_t *>(0x5083AA) != 0x403D99)
+	{
+		ffnx_warning("BdLinkTask diagnostic: unexpected call at 0x005083A9, skipping.\n");
+		return;
+	}
+
+	replace_call(0x5083A9, ff8_battle_link_task_failed);
+}
+
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
 {
 	struct matrix_set *matrix_set;
@@ -2431,6 +2469,8 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 		if (ff8_remastered_edition)
 			patch_ff8_remastered_battle_effect_layout();
+
+		patch_ff8_battle_link_task_diagnostic();
 	} else {
 		ffnx_error("%s: cannot allocate extended_memory\n", __func__);
 	}
