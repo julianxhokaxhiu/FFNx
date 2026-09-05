@@ -2414,6 +2414,20 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x5, 0x380000); // Patch size
 		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x13, uint32_t(extended_memory) + 0x200000); // Patch offset
 
+		// Fault on the instruction that runs past the effect buffer instead of silently
+		// corrupting unrelated state and crashing much later somewhere else.
+		if (more_debug)
+		{
+			// extended_memory is not page aligned, so round up to avoid protecting arena bytes.
+			uint8_t *guard = (uint8_t *)((uintptr_t(extended_memory) + 0x200000 + 0x380000 + 0xFFF) & ~uintptr_t(0xFFF));
+			DWORD previous_protect = 0;
+
+			if (VirtualProtect(guard, 0x1000, PAGE_NOACCESS, &previous_protect))
+				ffnx_info("Battle effect buffer guard page armed at 0x%p\n", guard);
+			else
+				ffnx_warning("Battle effect buffer guard page could not be armed (error %u)\n", GetLastError());
+		}
+
 		if (ff8_remastered_edition)
 			patch_ff8_remastered_battle_effect_layout();
 	} else {
