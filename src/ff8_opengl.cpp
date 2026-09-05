@@ -375,6 +375,7 @@ static void patch_ff8_remastered_battle_effect_layout()
 		{ 0x8DFFA3, 0xB65150, 0x8DFF70, ff8_battle_effect_layout_patch_mode::relative_call },
 		{ 0xB004CF, 0xB0BFC0, reinterpret_cast<uint32_t>(+process_battle_effect_scripts), ff8_battle_effect_layout_patch_mode::relative_call },
 		{ 0x1871A5C, 0x7A24, 0x17CD8, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x1873E4C, 0x13BA8, 0x200000, ff8_battle_effect_layout_patch_mode::direct },
 	};
 
 	for (const auto &patch : patches)
@@ -2407,19 +2408,19 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF6B : 0xED8), uint32_t(extended_memory) + 0x600000);
 
 		// Relocate effect buffer
-		patch_code_dword(ff8_externals.sub_571870 + 0x3, 0x380000 / 4); // Patch size
-		patch_code_dword(ff8_externals.sub_571870 + 0xA, uint32_t(extended_memory) + 0x200000); // Patch offset
-		patch_code_dword(ff8_externals.get_battle_effect_buffer_sub_571B50 + 0x1, uint32_t(extended_memory) + 0x200000); // Patch offset
-		patch_code_dword(ff8_externals.get_battle_effect_buffer_size_sub_571B60 + 0x1, 0x380000); // Patch size
-		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x5, 0x380000); // Patch size
-		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x13, uint32_t(extended_memory) + 0x200000); // Patch offset
+		patch_code_dword(ff8_externals.sub_571870 + 0x3, FF8_BATTLE_EFFECT_BUFFER_SIZE / 4); // Patch size
+		patch_code_dword(ff8_externals.sub_571870 + 0xA, uint32_t(extended_memory) + FF8_BATTLE_EFFECT_BUFFER_OFFSET); // Patch offset
+		patch_code_dword(ff8_externals.get_battle_effect_buffer_sub_571B50 + 0x1, uint32_t(extended_memory) + FF8_BATTLE_EFFECT_BUFFER_OFFSET); // Patch offset
+		patch_code_dword(ff8_externals.get_battle_effect_buffer_size_sub_571B60 + 0x1, FF8_BATTLE_EFFECT_BUFFER_SIZE); // Patch size
+		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x5, FF8_BATTLE_EFFECT_BUFFER_SIZE); // Patch size
+		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x13, uint32_t(extended_memory) + FF8_BATTLE_EFFECT_BUFFER_OFFSET); // Patch offset
 
 		// Fault on the instruction that runs past the effect buffer instead of silently
 		// corrupting unrelated state and crashing much later somewhere else.
 		if (more_debug)
 		{
 			// extended_memory is not page aligned, so round up to avoid protecting arena bytes.
-			uint8_t *guard = (uint8_t *)((uintptr_t(extended_memory) + 0x200000 + 0x380000 + 0xFFF) & ~uintptr_t(0xFFF));
+			uint8_t *guard = (uint8_t *)((uintptr_t(extended_memory) + FF8_BATTLE_EFFECT_BUFFER_OFFSET + FF8_BATTLE_EFFECT_BUFFER_SIZE + 0xFFF) & ~uintptr_t(0xFFF));
 			DWORD previous_protect = 0;
 
 			if (VirtualProtect(guard, 0x1000, PAGE_NOACCESS, &previous_protect))

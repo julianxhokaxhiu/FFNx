@@ -1673,7 +1673,7 @@ void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWO
 
 	uint8_t *effect_arena = ((uint8_t *(*)())ff8_externals.get_battle_effect_buffer_sub_571B50)();
 	uint8_t *effect_parent_begin = effect_arena + 0x100000;
-	uint8_t *effect_parent_end = effect_arena + 0x380000;
+	uint8_t *effect_parent_end = effect_arena + FF8_BATTLE_EFFECT_BUFFER_SIZE;
 	if (data == effect_arena || ff8_remastered_battle_effect_parent_cursor == nullptr)
 		ff8_remastered_battle_effect_parent_cursor = effect_parent_begin;
 
