@@ -62,6 +62,35 @@ HRESULT CALLBACK TaskDialogCallbackProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 	return S_OK;
 }
 
+// SetUnhandledExceptionFilter is never invoked for fail-fast terminations, so catch the
+// ones that end the process silently (heap corruption, stack buffer overrun) up front.
+LONG WINAPI FailFastExceptionHandler(EXCEPTION_POINTERS *ep)
+{
+	const DWORD code = ep->ExceptionRecord->ExceptionCode;
+
+	// Trace anything unusual so a silent termination still leaves a breadcrumb.
+	static uint32_t traced = 0;
+	if (code != 0xE06D7363 && code != 0x406D1388 && traced < 32)
+	{
+		++traced;
+		ffnx_trace("First chance exception 0x%x at 0x%p\n", code, ep->ExceptionRecord->ExceptionAddress);
+	}
+
+	switch (code)
+	{
+	case 0xC0000374: // STATUS_HEAP_CORRUPTION
+	case 0xC0000409: // STATUS_STACK_BUFFER_OVERRUN
+	case 0xC00000FD: // STATUS_STACK_OVERFLOW
+		ffnx_error("Fail-fast exception 0x%x, generating a crash dump.\n", code);
+		ExceptionHandler(ep);
+		break;
+	default:
+		break;
+	}
+
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
 LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 {
 	static uint32_t had_exception = false;

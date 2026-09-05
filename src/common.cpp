@@ -3131,6 +3131,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		// install crash handler
 		open_applog("FFNx.log");
 		SetUnhandledExceptionFilter(ExceptionHandler);
+		AddVectoredExceptionHandler(1, FailFastExceptionHandler);
 
 		// prevent screensavers
 		SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
@@ -3435,6 +3436,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	}
 	else if (fdwReason == DLL_PROCESS_DETACH)
 	{
+		// lpvReserved is non-null when the process is terminating rather than unloading us.
+		ffnx_info("DllMain: process detach (terminating=%d)\n", lpvReserved != nullptr);
 		unreplace_functions();
 	}
 

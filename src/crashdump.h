@@ -73,3 +73,4 @@ private:
 };
 
 LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep);
+LONG WINAPI FailFastExceptionHandler(EXCEPTION_POINTERS *ep);
