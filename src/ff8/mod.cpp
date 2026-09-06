@@ -203,6 +203,10 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *fi
 {
 	int targetPixelW = _mip.m_width, targetH = _mip.m_height;
 	const bool isRemasteredTexture = ff8_remastered_edition && strncmp(filename, "zzz://textures\\", sizeof("zzz://textures\\") - 1) == 0;
+	if (isRemasteredTexture && sourceH == sourcePixelW * 2 && targetPixelW == targetH)
+	{
+		sourceH = sourcePixelW;
+	}
 
 	if (isRemasteredTexture && targetPixelW <= sourcePixelW && targetH <= sourceH)
 	{
@@ -547,6 +551,11 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 		imageH = mip.m_height / image.scale(),
 		width = std::min({ origTexture.pixelW() - sourceX, imageW - sourceX, targetW - targetX }),
 		height = std::min({ origTexture.h() - sourceY, imageH - sourceY, targetH - targetY });
+	if (imageH < origTexture.h())
+	{
+		targetY += origTexture.h() - imageH;
+		height = std::min({ origTexture.h() - sourceY, imageH - sourceY, targetH - targetY });
+	}
 
 	if (width <= 0 || height <= 0)
 	{

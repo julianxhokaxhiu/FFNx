@@ -105,6 +105,31 @@ struct BattleTextureFileName {
 std::vector<BattleTextureFileName> battle_texture_data_list = std::vector<BattleTextureFileName>(battle_texture_data_list_size);
 int battle_texture_data_list_cursor = 0;
 
+bool set_remastered_battle_texture_name(char *output, size_t outputSize, const char *classicName, const char *battleName)
+{
+	const char *group = strchr(battleName, '.');
+	if (group == nullptr || group[1] < '2' || group[1] > '9' || group[2] != 'T') {
+		return false;
+	}
+
+	const size_t nameLength = strlen(classicName);
+	if (nameLength < 2 || classicName[nameLength - 2] != '_' || classicName[nameLength - 1] != 'B') {
+		return false;
+	}
+
+	char candidate[MAX_PATH] = {};
+	snprintf(candidate, sizeof(candidate), "%.*s_%d", int(nameLength - 2), classicName, group[1] - '1');
+
+	char archivePath[MAX_PATH] = {};
+	snprintf(archivePath, sizeof(archivePath), "textures\\battle.fs\\hd_new\\%s.png", candidate);
+	if (!g_FF8ZzzArchiveMain.fileExists(archivePath)) {
+		return false;
+	}
+
+	snprintf(output, outputSize, "battle.fs\\hd_new\\%s", candidate);
+	return true;
+}
+
 struct VramPos {
 	uint16_t x, y;
 };
@@ -464,6 +489,7 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 	}
 
 	std::string filename, remasteredFilename;
+	const bool hasSingleTexture = textures.size() == 1;
 	int file_count = 0;
 	int start_vram_id = 0;
 
@@ -471,7 +497,7 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 	{
 		if (tex.isValid())
 		{
-			if (remasteredFilename.empty() && !tex.remasteredName().empty()) {
+			if (hasSingleTexture && remasteredFilename.empty() && !tex.remasteredName().empty()) {
 				remasteredFilename.append(tex.remasteredName());
 			}
 			if (file_count == 0)
@@ -540,7 +566,7 @@ void set_tex_name(const TexturePacker::TiledTex &tiledTex, ff8_tex_header *tex_h
 		{
 			strncpy(tex_header->file.pc_name, filename.c_str(), 511);
 
-			if (!remasteredFilename.empty()) {
+			if (hasSingleTexture && !remasteredFilename.empty()) {
 				full_filename = remasteredFilename;
 				remasteredFilename.append("_");
 				remasteredFilename.append(std::to_string(vramId));
@@ -1997,7 +2023,10 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 			next_texture_name[strlen(ff8_externals.battle_filenames[battle_file_id]) - 4] = '\0';
 
 			if (!is_remastered_hd_textures_disabled("battle")) {
-				snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "battle.fs\\hd_new\\%s_%d", next_texture_name, battle_texture_id);
+				if (!set_remastered_battle_texture_name(next_remastered_texture_name, sizeof(next_remastered_texture_name), next_texture_name, battle_texture_name))
+				{
+					snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "battle.fs\\hd_new\\%s_%d", next_texture_name, battle_texture_id);
+				}
 			}
 		}
 		snprintf(next_texture_name, sizeof(next_texture_name), "%s-%d", battle_texture_name, battle_texture_id);
