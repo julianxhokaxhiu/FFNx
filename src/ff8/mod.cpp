@@ -202,6 +202,19 @@ uint8_t TextureImage::computeLod(int originalTexturePixelWidth, int imageWidth, 
 uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *filename) const
 {
 	int targetPixelW = _mip.m_width, targetH = _mip.m_height;
+	const bool isRemasteredTexture = ff8_remastered_edition && strncmp(filename, "zzz://textures\\", sizeof("zzz://textures\\") - 1) == 0;
+
+	if (isRemasteredTexture && targetPixelW <= sourcePixelW && targetH <= sourceH)
+	{
+		for (int scale = MAX_SCALE; scale > 0; --scale)
+		{
+			if (targetPixelW % scale == 0 && targetH % scale == 0
+				&& targetPixelW / scale <= sourcePixelW && targetH / scale <= sourceH)
+			{
+				return uint8_t(scale);
+			}
+		}
+	}
 
 	if (targetPixelW < sourcePixelW
 		|| targetH < sourceH
@@ -525,18 +538,20 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 	int sourceX = offsetX < 0 ? -offsetX : 0,
 		sourceY = offsetY < 0 ? -offsetY : 0,
 		targetX = offsetX > 0 ? offsetX : 0,
-		targetY = offsetY > 0 ? offsetY : 0,
-		width = std::min(origTexture.pixelW() - sourceX, targetW - targetX),
-		height = std::min(origTexture.h() - sourceY, targetH - targetY);
+		targetY = offsetY > 0 ? offsetY : 0;
+
+	uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
+	const TextureImage &image = textureImage(paletteId);
+	const bimg::ImageMip &mip = image.mip();
+	int imageW = mip.m_width / image.scale(),
+		imageH = mip.m_height / image.scale(),
+		width = std::min({ origTexture.pixelW() - sourceX, imageW - sourceX, targetW - targetX }),
+		height = std::min({ origTexture.h() - sourceY, imageH - sourceY, targetH - targetY });
 
 	if (width <= 0 || height <= 0)
 	{
 		return TexturePacker::NoTexture;
 	}
-
-	uint8_t paletteId = computePaletteId(vramPalXBpp2, vramPalY);
-	const TextureImage &image = textureImage(paletteId);
-	const bimg::ImageMip &mip = image.mip();
 
 	drawImage(
 		reinterpret_cast<const uint32_t *>(mip.m_data), mip.m_width / image.scale(), image.scale(),

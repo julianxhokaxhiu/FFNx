@@ -1991,12 +1991,14 @@ void ff8_battle_upload_texture_palette(int16_t *pos_and_size, uint8_t *texture_b
 	} else if (battle_texture_id < 0) {
 		strncpy(next_texture_name, battle_texture_name, sizeof(next_texture_name));
 	} else {
-		// Remove extension
-		strncpy(next_texture_name, ff8_externals.battle_filenames[battle_file_id], strlen(ff8_externals.battle_filenames[battle_file_id]) - 4);
-		next_texture_name[strlen(ff8_externals.battle_filenames[battle_file_id]) - 4] = '\0';
-		
-		if (!is_remastered_hd_textures_disabled("battle")) {
-			snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "battle.fs\\hd_new\\%s_%d", next_texture_name, battle_texture_id);
+		if (strncmp(battle_texture_name, "battle/", sizeof("battle/") - 1) == 0) {
+			// Remove extension
+			strncpy(next_texture_name, ff8_externals.battle_filenames[battle_file_id], strlen(ff8_externals.battle_filenames[battle_file_id]) - 4);
+			next_texture_name[strlen(ff8_externals.battle_filenames[battle_file_id]) - 4] = '\0';
+
+			if (!is_remastered_hd_textures_disabled("battle")) {
+				snprintf(next_remastered_texture_name, sizeof(next_remastered_texture_name), "battle.fs\\hd_new\\%s_%d", next_texture_name, battle_texture_id);
+			}
 		}
 		snprintf(next_texture_name, sizeof(next_texture_name), "%s-%d", battle_texture_name, battle_texture_id);
 		++battle_texture_id;
