@@ -2490,6 +2490,8 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
 	// #####################
 	ff8_kernel_magic_init();
+
+	// #####################
 	// Unlock unused battle monster models c0m144-c0m199
 	// #####################
 	ff8_battle_monsters_init();
