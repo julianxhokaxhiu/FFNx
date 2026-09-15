@@ -146,3 +146,4 @@ std::string sha1_file(const char* filename);
 std::string md5_hash(const unsigned char* data, size_t length);
 bool isMacOSLauncher();
 uint32_t getProcessEntryPoint();
+void getProcessCodeSection(uint32_t *start, uint32_t *end);

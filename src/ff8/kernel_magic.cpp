@@ -21,6 +21,7 @@
 #include "../globals.h"
 #include "../common.h"
 #include "../log.h"
+#include "../utils.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -215,26 +216,12 @@ static bool install_gf_check_trampoline(int stub_index, uint32_t site, uint8_t i
 // All this section will scan the code to find a specific value which reference the kernel table, and replace it with the new table address.
 // This is needed because the exe has hardcoded addresses for the kernel tables, and we need to redirect them to our new tables in FFNx.
 
-// The exe's own .text bounds, from its PE header (adapts to any build).
-static void get_code_section_bounds(uint32_t *start, uint32_t *end)
+// Repoints every dword in the exe code section [scan_start, scan_end) that
+// falls in [from, range_end) by the same delta. A call/jmp rel32 whose bytes
+// happen to land in range is skipped - its opcode is the low byte and it
+// targets real code, which a data operand never does.
+static uint32_t relocate_scan(uint32_t scan_start, uint32_t scan_end, uint32_t from, uint32_t to, uint32_t range_end, const char *what)
 {
-	HMODULE base = GetModuleHandleA(nullptr);
-	PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
-	PIMAGE_NT_HEADERS nt = (PIMAGE_NT_HEADERS)((BYTE *)base + dos->e_lfanew);
-
-	*start = (uint32_t)base + nt->OptionalHeader.BaseOfCode;
-	*end = *start + nt->OptionalHeader.SizeOfCode;
-}
-
-// Repoints every dword in .text that falls in [from, range_end) by the same
-// delta. A call/jmp rel32 whose bytes happen to land in range is skipped -
-// its opcode is the low byte and it targets real code, which a data operand
-// never does.
-static uint32_t relocate_scan(uint32_t from, uint32_t to, uint32_t range_end, const char *what)
-{
-	uint32_t scan_start, scan_end;
-	get_code_section_bounds(&scan_start, &scan_end);
-
 	uint32_t rewritten = 0, skipped_branch = 0;
 
 	for (uint32_t addr = scan_start; addr < scan_end - 4; ++addr)
@@ -366,7 +353,7 @@ static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 // 753, verified unused and inside the save CRC span) big enough for all 256
 // ids. Its DRAWN_ONCE_SITE_COUNT accessors are scattered and one has no anchor,
 // so a value-scan repoints them all. A stock game never gets here.
-static void relocate_drawn_once_bitfield()
+static void relocate_drawn_once_bitfield(uint32_t code_start, uint32_t code_end)
 {
 	if (ff8_magic_count <= EXTENDED_MAGIC_FIRST)
 	{
@@ -376,7 +363,7 @@ static void relocate_drawn_once_bitfield()
 
 	uint32_t sg_drawn_once_ext = ff8_externals.field_vars_stack_1CFE9B8 + 753;
 
-	uint32_t patched = relocate_scan(ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext, ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
+	uint32_t patched = relocate_scan(code_start, code_end, ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext, ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
 	if (patched != DRAWN_ONCE_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: expected %d drawn-once sites, found %u - some drawn-once state may not persist correctly!\n", DRAWN_ONCE_SITE_COUNT, patched);
 }
@@ -435,11 +422,14 @@ static void ff8_kernel_magic_arm()
 	if (ff8_magic_armed) return;
 	ff8_magic_armed = true;
 
+	uint32_t code_start, code_end;
+	getProcessCodeSection(&code_start, &code_end);
+
 	// The exe bakes K_MAGIC_SITE_COUNT operands pointing into the magic table,
 	// too many and too scattered to resolve individually; repoint them all to
 	// the FFNx-side table with a value-scan.
 	uint32_t k_magic_end = ff8_externals.magic_k_magic + VANILLA_MAGIC_COUNT * MAGIC_ENTRY_SIZE;
-	uint32_t rewritten = relocate_scan(ff8_externals.magic_k_magic, (uint32_t)&ff8_magic_table[0][0], k_magic_end, "K_MAGIC table");
+	uint32_t rewritten = relocate_scan(code_start, code_end, ff8_externals.magic_k_magic, (uint32_t)&ff8_magic_table[0][0], k_magic_end, "K_MAGIC table");
 	if (rewritten != K_MAGIC_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: expected %d K_MAGIC sites, rewrote %u - some magic reads may still use the vanilla table!\n", K_MAGIC_SITE_COUNT, rewritten);
 
@@ -453,7 +443,7 @@ static void ff8_kernel_magic_arm()
 	replace_function(ff8_externals.magic_fn_reorder_magic, (void *)ff8_menu_reorder_magic);
 	replace_function(ff8_externals.magic_fn_validate_magic, (void *)ff8_char_validate_magic);
 
-	relocate_drawn_once_bitfield();
+	relocate_drawn_once_bitfield(code_start, code_end);
 
 	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs; mmagic.bin must cover %d entries / %d bytes).\n", ff8_magic_count, EXTENDED_MAGIC_FIRST, ff8_magic_count - 1, ff8_magic_count, ff8_magic_count * 4);
 }

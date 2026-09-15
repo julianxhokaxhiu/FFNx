@@ -182,3 +182,15 @@ uint32_t getProcessEntryPoint()
 
     return (uint32_t)((BYTE*)base + nt->OptionalHeader.AddressOfEntryPoint);
 }
+
+// Bounds [start, end) of the game exe code section, from its PE header
+void getProcessCodeSection(uint32_t *start, uint32_t *end)
+{
+    HMODULE base = GetModuleHandleA(nullptr);
+
+    PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
+    PIMAGE_NT_HEADERS nt  = (PIMAGE_NT_HEADERS)((BYTE*)base + dos->e_lfanew);
+
+    *start = (uint32_t)((BYTE*)base + nt->OptionalHeader.BaseOfCode);
+    *end = *start + nt->OptionalHeader.SizeOfCode;
+}
