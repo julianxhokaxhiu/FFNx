@@ -23,6 +23,8 @@
 #pragma once
 
 #include "texture_packer.h"
+#include "field/chara_one.h"
+#include <unordered_map>
 
 extern TexturePacker texturePacker;
 

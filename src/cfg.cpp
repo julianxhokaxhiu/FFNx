@@ -128,6 +128,7 @@ std::vector<std::string> disable_animated_textures_on_field;
 long ff7_fps_limiter;
 bool ff7_footsteps;
 bool ff7_field_center;
+bool ff7_field_autosize_text_box;
 bool use_sdl_gamepad;
 bool ff7_japanese_text;
 bool enable_analogue_controls;
@@ -161,6 +162,8 @@ bool ff7_advanced_blinking;
 long display_index;
 long ff8_high_res_font;
 long hardware_video_decoding;
+std::vector<std::string> ff8_disable_remastered_hd_textures;
+long game_language;
 
 std::vector<std::string> get_string_or_array_of_strings(const toml::node_view<toml::node> &node)
 {
@@ -297,6 +300,7 @@ void read_cfg()
 	ff7_fps_limiter = config["ff7_fps_limiter"].value_or(FPS_LIMITER_DEFAULT);
 	ff7_footsteps = config["ff7_footsteps"].value_or(false);
 	ff7_field_center = config["ff7_field_center"].value_or(true);
+	ff7_field_autosize_text_box = config["ff7_field_autosize_text_box"].value_or(false);
 	ff7_multibyte_font = config["ff7_multibyte_font"].value_or(false);
 	use_sdl_gamepad = config["use_sdl_gamepad"].value_or(false);
 	ff7_japanese_text = config["ff7_japanese_text"].value_or(false);
@@ -333,6 +337,8 @@ void read_cfg()
 	display_index = config["display_index"].value_or(-1);
 	ff8_high_res_font = config["ff8_high_res_font"].value_or(-1);
 	hardware_video_decoding = config["hardware_video_decoding"].value_or(HWVA_NONE);
+	ff8_disable_remastered_hd_textures = get_string_or_array_of_strings(config["ff8_disable_remastered_hd_textures"]);
+	game_language = config["game_language"].value_or(GAME_LANGUAGE_AUTO);
 
 	// Windows x or y size can't be less then 0
 	if (window_size_x < 0) window_size_x = 0;
@@ -533,4 +539,9 @@ void read_cfg()
 
 	// DISPLAY INDEX
 	if (display_index < 1) display_index = -1;
+}
+
+bool is_remastered_hd_textures_disabled(const std::string &module)
+{
+	return std::find(ff8_disable_remastered_hd_textures.begin(), ff8_disable_remastered_hd_textures.end(), module) != ff8_disable_remastered_hd_textures.end();
 }

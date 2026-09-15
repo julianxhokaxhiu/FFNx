@@ -19,12 +19,19 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <shlwapi.h>
+
 #include "common.h"
 #include "log.h"
 #include "utils.h"
 #include "patch.h"
 #include "saveload.h"
 #include "ff8/file.h"
+
+constexpr char *FF8_EXE_BATTLE_SCANS = "battle_scans";
+constexpr char *FF8_EXE_CARD_NAMES = "card_names";
+constexpr char *FF8_EXE_DRAW_POINT = "draw_point";
+constexpr char *FF8_EXE_CARD_TEXTS = "card_texts";
 
 uint8_t *ff8_exe_scan_texts = nullptr;
 bool ff8_exe_scan_texts_file_absent = false;
@@ -34,6 +41,11 @@ uint8_t *ff8_exe_draw_point = nullptr;
 bool ff8_exe_draw_point_file_absent = false;
 uint8_t *ff8_exe_card_texts = nullptr;
 bool ff8_exe_card_texts_file_absent = false;
+
+uint8_t *ff8_remastered_scan_texts = nullptr;
+uint8_t *ff8_remastered_card_names = nullptr;
+uint8_t *ff8_remastered_draw_point = nullptr;
+uint8_t *ff8_remastered_card_texts = nullptr;
 
 bool ff8_get_exe_path(const char *name, char *target_filename)
 {
@@ -62,24 +74,25 @@ bool ff8_get_exe_path(const char *name, char *target_filename)
     return false;
 }
 
-bool ff8_get_battle_scan_texts_filename(char *filename)
+uint8_t *ff8_remastered_open_exe_file(const char *name, int32_t *out_size = nullptr)
 {
-    return ff8_get_exe_path("battle_scans", filename);
-}
+    char target_filename[MAX_PATH] = {};
+    get_data_lang_path(target_filename, false);
+    PathAppendA(target_filename, name);
+    strcat(target_filename, "_");
+    concat_lang_str(target_filename);
+    strcat(target_filename, ".dat");
 
-bool ff8_get_card_names_filename(char *filename)
-{
-    return ff8_get_exe_path("card_names", filename);
-}
+    ff8_file_context context = ff8_file_context();
+    int32_t file_size = 0;
+    // Use FF8 filesystem
+    uint8_t *buffer = ff8_externals.open_read_close_file(&context, 0, &file_size, target_filename);
 
-bool ff8_get_draw_point_filename(char *filename)
-{
-    return ff8_get_exe_path("draw_point", filename);
-}
+    if (out_size != nullptr) {
+        *out_size = file_size;
+    }
 
-bool ff8_get_card_texts_filename(char *filename)
-{
-    return ff8_get_exe_path("card_texts", filename);
+    return buffer;
 }
 
 void ff8_dump_msd(const char *filename, uint8_t *data)
@@ -136,7 +149,7 @@ void ff8_dump_battle_scan_texts()
     }
 
     char filename[MAX_PATH] = {};
-    if (ff8_get_battle_scan_texts_filename(filename)) {
+    if (ff8_get_exe_path(FF8_EXE_BATTLE_SCANS, filename)) {
         ffnx_warning("Save exe file skipped because the file [ %s ] already exists.\n", filename);
 
         return;
@@ -177,7 +190,7 @@ void ff8_dump_card_names()
     }
 
     char filename[MAX_PATH] = {};
-    if (ff8_get_card_names_filename(filename)) {
+    if (ff8_get_exe_path(FF8_EXE_CARD_NAMES, filename)) {
         ffnx_warning("Save exe file skipped because the file [ %s ] already exists.\n", filename);
 
         return;
@@ -218,7 +231,7 @@ void ff8_dump_card_texts()
     }
 
     char filename[MAX_PATH] = {};
-    if (ff8_get_card_texts_filename(filename)) {
+    if (ff8_get_exe_path(FF8_EXE_CARD_TEXTS, filename)) {
         ffnx_warning("Save exe file skipped because the file [ %s ] already exists.\n", filename);
 
         return;
@@ -269,75 +282,29 @@ uint8_t *ff8_open_msd(char *filename, int *data_size = nullptr)
     return target_data;
 }
 
-uint8_t *ff8_override_battle_scans()
+uint8_t *ff8_override_msd_data(const char *name, uint8_t *&msd_texts, bool &file_is_absent, int *data_size = nullptr)
 {
-    if (ff8_exe_scan_texts != nullptr || ff8_exe_scan_texts_file_absent) {
-        return ff8_exe_scan_texts;
+    if (msd_texts != nullptr || file_is_absent) {
+        return msd_texts;
     }
 
     char filename[MAX_PATH] = {};
-    if (! ff8_get_battle_scan_texts_filename(filename)) {
-        ff8_exe_scan_texts_file_absent = true;
+    if (! ff8_get_exe_path(name, filename)) {
+        file_is_absent = true;
 
         return nullptr;
     }
 
-    ff8_exe_scan_texts = ff8_open_msd(filename);
+    msd_texts = ff8_open_msd(filename, data_size);
 
-    return ff8_exe_scan_texts;
-}
-
-uint8_t *ff8_override_card_names()
-{
-    if (ff8_exe_card_names != nullptr || ff8_exe_card_names_file_absent) {
-        return ff8_exe_card_names;
-    }
-
-    char filename[MAX_PATH] = {};
-    if (! ff8_get_card_names_filename(filename)) {
-        ff8_exe_card_names_file_absent = true;
-
-        return nullptr;
-    }
-
-    ff8_exe_card_names = ff8_open_msd(filename);
-
-    return ff8_exe_card_names;
-}
-
-uint8_t *ff8_override_draw_point()
-{
-    if (ff8_exe_draw_point != nullptr || ff8_exe_draw_point_file_absent) {
-        return ff8_exe_draw_point;
-    }
-
-    char filename[MAX_PATH] = {};
-    if (! ff8_get_draw_point_filename(filename)) {
-        ff8_exe_draw_point_file_absent = true;
-
-        return nullptr;
-    }
-
-    ff8_exe_draw_point = ff8_open_msd(filename);
-
-    return ff8_exe_draw_point;
+    return msd_texts;
 }
 
 uint8_t *ff8_override_card_texts()
 {
-    if (ff8_exe_card_texts != nullptr || ff8_exe_card_texts_file_absent) {
-        return ff8_exe_card_texts;
-    }
-
-    char filename[MAX_PATH] = {};
-    if (! ff8_get_card_texts_filename(filename)) {
-        ff8_exe_card_texts_file_absent = true;
-
-        return nullptr;
-    }
-
     int data_size = 0;
-    uint8_t *ff8_exe_card_texts_msd = ff8_open_msd(filename, &data_size);
+    uint8_t *ff8_exe_card_texts_msd = nullptr;
+    ff8_exe_card_texts_msd = ff8_override_msd_data(FF8_EXE_CARD_TEXTS, ff8_exe_card_texts_msd, ff8_exe_card_texts_file_absent, &data_size);
 
     if (ff8_exe_card_texts_msd == nullptr) {
         return nullptr;
@@ -373,15 +340,26 @@ uint8_t *ff8_override_card_texts()
 
 uint8_t *ff8_battle_get_scan_text(uint8_t target_id)
 {
-    uint8_t *direct_data_msd = ff8_override_battle_scans();
+    uint8_t *direct_data_msd = ff8_override_msd_data(FF8_EXE_BATTLE_SCANS, ff8_exe_scan_texts, ff8_exe_scan_texts_file_absent);
+    uint8_t *entities = (uint8_t *)ff8_externals.battle_entities_1D27BCB;
 
     if (direct_data_msd != nullptr) {
         uint32_t *positions = (uint32_t *)direct_data_msd;
-        uint8_t *entities = (uint8_t *)ff8_externals.battle_entities_1D27BCB;
 
         if (trace_all) ffnx_trace("%s: get scan text target_id=%d entity_id=%d\n", __func__, target_id, entities[208 * target_id]);
 
         return direct_data_msd + positions[entities[208 * target_id]];
+    }
+
+    if (ff8_remastered_edition) {
+        if (ff8_remastered_scan_texts == nullptr) {
+            ff8_remastered_scan_texts = ff8_remastered_open_exe_file("desc_scan");
+        }
+        if (ff8_remastered_scan_texts != nullptr) {
+            uint16_t *positions = (uint16_t *)ff8_remastered_scan_texts;
+
+            return ff8_remastered_scan_texts + 320 + positions[entities[208 * target_id]];
+        }
     }
 
     return ((uint8_t*(*)(uint8_t))ff8_externals.scan_get_text_sub_B687C0)(target_id);
@@ -393,13 +371,24 @@ char *ff8_get_card_name(int32_t card_id)
         return nullptr;
     }
 
-    uint8_t *direct_data_msd = ff8_override_card_names();
+    uint8_t *direct_data_msd = ff8_override_msd_data(FF8_EXE_CARD_NAMES, ff8_exe_card_names, ff8_exe_card_names_file_absent);
     if (direct_data_msd != nullptr) {
         uint32_t *positions = (uint32_t *)direct_data_msd;
 
         if (trace_all) ffnx_trace("%s: get card name card_id=%d\n", __func__, card_id);
 
         return (char *)direct_data_msd + positions[card_id];
+    }
+
+    if (ff8_remastered_edition) {
+        if (ff8_remastered_card_names == nullptr) {
+            ff8_remastered_card_names = ff8_remastered_open_exe_file("off_cards_names");
+        }
+        if (ff8_remastered_card_names != nullptr) {
+            uint16_t *positions = (uint16_t *)ff8_remastered_card_names;
+
+            return (char *)ff8_remastered_card_names + positions[card_id + 1];
+        }
     }
 
     uint16_t *positions = *(uint16_t **)ff8_externals.card_name_positions;
@@ -420,7 +409,7 @@ void dump_exe_data()
         ff8_dump_battle_scan_texts();
         ff8_dump_card_names();
 
-        if (!ff8_get_draw_point_filename(dirname)) {
+        if (!ff8_get_exe_path(FF8_EXE_DRAW_POINT, dirname)) {
             ff8_dump_msd(dirname, *(uint8_t **)ff8_externals.drawpoint_messages);
         }
 
@@ -439,11 +428,17 @@ void exe_data_init()
     {
         replace_call(ff8_externals.sub_84F8D0 + 0x88, ff8_battle_get_scan_text);
         replace_function(ff8_externals.get_card_name, ff8_get_card_name);
-        uint8_t *msd = ff8_override_draw_point();
+        uint8_t *msd = ff8_override_msd_data(FF8_EXE_DRAW_POINT, ff8_exe_draw_point, ff8_exe_draw_point_file_absent);
+        if (msd == nullptr && ff8_remastered_edition) {
+            msd = ff8_remastered_open_exe_file("off_text_draw_point");
+        }
         if (msd != nullptr) {
             patch_code_uint(ff8_externals.drawpoint_messages, uint32_t(msd));
         }
         msd = ff8_override_card_texts();
+        if (msd == nullptr && ff8_remastered_edition) {
+            msd = ff8_remastered_open_exe_file("byte_card_texts");
+        }
         if (msd != nullptr) {
             patch_code_uint(uint32_t(ff8_externals.card_texts_off_B96504), uint32_t(msd));
             patch_code_uint(uint32_t(ff8_externals.card_texts_off_B96968), uint32_t(msd));

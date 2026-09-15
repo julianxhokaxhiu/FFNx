@@ -188,7 +188,6 @@ target_link_libraries(
   imgui::imgui
   pugixml::pugixml
   tomlplusplus::tomlplusplus
-  STEAMWORKSSDK::STEAMWORKSSDK
   xxHash::xxhash
   lz4::lz4
   Vorbis::vorbisfile
@@ -312,7 +311,7 @@ add_custom_command(
   # steam_api.dll
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/steamworkssdk/steam_api.dll
-          ${CMAKE_BINARY_DIR}/bin
+          ${CMAKE_BINARY_DIR}/bin/FFNx_steam_api.dll
   # .pdb
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.pdb
@@ -321,6 +320,10 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.toml
           ${CMAKE_BINARY_DIR}/bin
+  # multibyte .toml
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/misc/${RELEASE_NAME}.multibyte.toml
+          ${CMAKE_BINARY_DIR}/bin/data/${RELEASE_NAME}.multibyte.toml
   # FF7.reg
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/misc/FF7.reg
@@ -551,46 +554,108 @@ if(NOT "${FF8_STEAM_GAME_PATH}" STREQUAL "")
   )
 endif()
 
-# Copy FFNx release to FF7 Rerelease Steam game path if installed
+# Copy FFNx release to FF7 2026 Rerelease Steam/GOG game path if installed
 execute_process(
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 3837340
-  OUTPUT_VARIABLE FF7_STEAM_RERELEASE_GAME_PATH
+  OUTPUT_VARIABLE FF7_2026_RERELEASE_GAME_PATH
   ERROR_VARIABLE FF7_STEAM_RERELEASE_ERROR
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-if(NOT "${FF7_STEAM_RERELEASE_GAME_PATH}" STREQUAL "")
-  cmake_path(CONVERT "${FF7_STEAM_RERELEASE_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_STEAM_RERELEASE_GAME_PATH)
-  set(FF7_STEAM_RERELEASE_GAME_PATH "${FF7_STEAM_RERELEASE_GAME_PATH}/ff7/workingdir")
+if("${FF7_2026_RERELEASE_GAME_PATH}" STREQUAL "")
+  execute_process(
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindGOGGamePath 1698970154
+    OUTPUT_VARIABLE FF7_2026_RERELEASE_GAME_PATH
+    ERROR_VARIABLE FF7_STEAM_RERELEASE_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endif()
+if(NOT "${FF7_2026_RERELEASE_GAME_PATH}" STREQUAL "")
+  cmake_path(CONVERT "${FF7_2026_RERELEASE_GAME_PATH}" TO_CMAKE_PATH_LIST FF7_2026_RERELEASE_GAME_PATH)
+  set(FF7_2026_RERELEASE_GAME_PATH "${FF7_2026_RERELEASE_GAME_PATH}/ff7/workingdir")
   # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
-  if(NOT EXISTS "${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml")
+  if(NOT EXISTS "${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml")
     # Copy file if it doesn't exist
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF7_STEAM_RERELEASE_GAME_PATH}/")
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF7_2026_RERELEASE_GAME_PATH}/")
   endif()
   add_custom_command(
     TARGET ${RELEASE_NAME}
     POST_BUILD
-    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_STEAM_RERELEASE_GAME_PATH}...
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF7_2026_RERELEASE_GAME_PATH}...
     # Preserve the current FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml
-            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml.bak
+            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml
+            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml.bak
     # Copy all dist files
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_BINARY_DIR}/bin
-            ${FF7_STEAM_RERELEASE_GAME_PATH}
+            ${FF7_2026_RERELEASE_GAME_PATH}
     # Delete previous AF3DN.P
     COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF7_STEAM_RERELEASE_GAME_PATH}/AF3DN.P
+            ${FF7_2026_RERELEASE_GAME_PATH}/AF3DN.P
     # Rename FFNx.dll to AF3DN.P
     COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.dll
-            ${FF7_STEAM_RERELEASE_GAME_PATH}/AF3DN.P
+            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.dll
+            ${FF7_2026_RERELEASE_GAME_PATH}/AF3DN.P
     # Delete the new copied FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E remove
-            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml
+            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml
     # Bring back the existing FFNx.toml
     COMMAND ${CMAKE_COMMAND} -E rename
-            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml.bak
-            ${FF7_STEAM_RERELEASE_GAME_PATH}/FFNx.toml
+            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml.bak
+            ${FF7_2026_RERELEASE_GAME_PATH}/FFNx.toml
+  )
+endif()
+
+# Copy FFNx release to FF8 Remastered Steam/GOG game path if installed
+execute_process(
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindSteamGamePath 1026680
+  OUTPUT_VARIABLE FF8_REMASTERED_GAME_PATH
+  ERROR_VARIABLE FF8_REMASTERED_ERROR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if("${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
+  execute_process(
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/utils/FindGOGGamePath 1086370078
+    OUTPUT_VARIABLE FF8_REMASTERED_GAME_PATH
+    ERROR_VARIABLE FF8_REMASTERED_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endif()
+if(NOT "${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
+  cmake_path(CONVERT "${FF8_REMASTERED_GAME_PATH}" TO_CMAKE_PATH_LIST FF8_REMASTERED_GAME_PATH)
+  # Ensure FFNx.toml exists so the copy on build does not error on fresh installs
+  if(NOT EXISTS "${FF8_REMASTERED_GAME_PATH}/FFNx.toml")
+    # Copy file if it doesn't exist
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/misc/FFNx.toml" DESTINATION "${FF8_REMASTERED_GAME_PATH}/")
+  endif()
+  add_custom_command(
+    TARGET ${RELEASE_NAME}
+    POST_BUILD
+    COMMAND echo Copying ${RELEASE_NAME} ${_DLL_VERSION} release to ${FF8_REMASTERED_GAME_PATH}...
+    # Preserve the current FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
+    # Prevent steam_api.dll to be deployed
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${CMAKE_BINARY_DIR}/bin/steam_api.dll
+    # Copy all dist files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_BINARY_DIR}/bin
+            ${FF8_REMASTERED_GAME_PATH}
+    # Delete previous eax.dll
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_REMASTERED_GAME_PATH}/eax.dll
+    # Rename FFNx.dll to eax.dll
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.dll
+            ${FF8_REMASTERED_GAME_PATH}/eax.dll
+    # Delete the new copied FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E remove
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
+    # Bring back the existing FFNx.toml
+    COMMAND ${CMAKE_COMMAND} -E rename
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
+            ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
   )
 endif()

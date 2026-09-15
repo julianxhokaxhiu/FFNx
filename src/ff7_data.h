@@ -23,6 +23,7 @@
 #pragma once
 
 #include <functional>
+#include <initializer_list>
 
 #include "ff7.h"
 #include "globals.h"
@@ -300,6 +301,9 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.status_menu_sub = ff7_externals.menu_subs_call_table[5];
 	ff7_externals.config_menu_sub = ff7_externals.menu_subs_call_table[8];
 	ff7_externals.menu_sub_6FEDB0 = ff7_externals.menu_subs_call_table[10];
+	ff7_externals.menu_draw_with_viewport_6FA12F = get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x2E6);
+	ff7_externals.menu_draw_640x480_6FA347 = get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x450);
+	ff7_externals.menu_status_draw_sub = get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x3B1);
 
 	ff7_externals.config_initialize = get_relative_call(main_init_loop, 0x4B0);
 
@@ -322,6 +326,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.millisecond_counter = (DWORD *)get_absolute_value(ff7_externals.timer_menu_sub, 0xD06);
 	ff7_externals.draw_status_limit_level_stats = get_relative_call(ff7_externals.status_menu_sub, 0x8E);
+	ff7_externals.menu_time_label = (byte*)get_absolute_value(ff7_externals.menu_status_draw_sub, 0x1DA);
 
 	ff7_externals.menu_sub_6F5C0C = (void *(*)(uint32_t, uint32_t, uint8_t, uint8_t, uint32_t))(get_relative_call(ff7_externals.timer_menu_sub, 0x72F));
 	ff7_externals.menu_sub_6FAC38 = (void *(*)(uint32_t, uint32_t, uint8_t, uint8_t, uint32_t))(get_relative_call(ff7_externals.timer_menu_sub, 0xD77));
@@ -435,7 +440,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.name_menu_pane_cursor_rows_DD453C = get_absolute_value(ff7_externals.menu_sub_718DBE, 0x284);
 	ff7_externals.name_menu_action_jump_table_719B61 = get_absolute_value(ff7_externals.menu_sub_718DBE, 0x29B);
 	// the `ja` that guards the menu-action dispatch jumps to the shared continuation
-	ff7_externals.name_menu_action_continue_71914C = ff7_externals.menu_sub_718DBE + 0x28F + 6 + get_absolute_value(ff7_externals.menu_sub_718DBE, 0x291);
+	ff7_externals.name_menu_action_continue_71914C = ff7_externals.menu_sub_718DBE + 0x295 + *(int32_t *)(ff7_externals.menu_sub_718DBE + 0x291);
 	// original US action targets, read from the (still unpatched) jump table
 	ff7_externals.name_menu_action_space_71905D = get_absolute_value(ff7_externals.name_menu_action_jump_table_719B61, 0 * 4);
 	ff7_externals.name_menu_action_delete_71906C = get_absolute_value(ff7_externals.name_menu_action_jump_table_719B61, 1 * 4);
@@ -447,6 +452,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 
 	ff7_externals.init_game = get_absolute_value(ff7_externals.init_stuff, 0x336);
 	ff7_externals.sub_41A1B0 = get_relative_call(ff7_externals.init_game, 0x85);
+	uint32_t init_gamepad_keyboard_mapping = get_relative_call(ff7_externals.sub_41A1B0, 0x3C);
+	ff7_externals.input_mapping = (uint32_t*)get_absolute_value(init_gamepad_keyboard_mapping, 0xC);
 	ff7_externals.init_directinput = get_relative_call(ff7_externals.sub_41A1B0, 0x34);
 	ff7_externals.dinput_createdevice_mouse = get_relative_call(ff7_externals.init_directinput, 0x48);
 
@@ -549,6 +556,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.field_text_box_window_create_631586 = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x39);
 	ff7_externals.field_text_box_window_opening_6317A9 = (void (*)(short))get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x5A);
 	ff7_externals.field_text_box_window_paging_631945 = (void (*)(short))get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x6D);;
+	ff7_externals.field_dialog_print_table_632C4E = (byte*)((uint32_t)ff7_externals.field_text_box_window_paging_631945 + 0x1309);
 	ff7_externals.sub_6CB9B8 = (byte* (*)(int))get_relative_call((uint32_t)ff7_externals.field_text_box_window_paging_631945, 0x693);
 	ff7_externals.field_text_box_window_reverse_paging_632CAA = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x80);
 	ff7_externals.field_text_box_window_closing_632EB8 = get_relative_call(ff7_externals.field_opcode_message_update_loop_630D50, 0x235);
@@ -1193,6 +1201,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	uint32_t battle_sub_6D83C8 = get_relative_call(ff7_externals.battle_menu_update_6CE8B3, 0x77);
 	uint32_t battle_sub_6D82EA = get_relative_call(battle_sub_6D83C8, 0xE0);
 	ff7_externals.display_battle_menu_6D797C = get_relative_call(battle_sub_6D82EA, 0x59);
+	ff7_externals.flush_battle_text_640x480_6DC1EB = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1D5);
 	ff7_externals.display_tifa_slots_handler_6E3135 = (void(*)())get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1C2);
 	ff7_externals.battle_draw_text_ui_graphics_objects_call = battle_main_loop + 0x289;
 	ff7_externals.battle_draw_box_ui_graphics_objects_call = battle_main_loop + 0x2CF;
@@ -1248,7 +1257,9 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.world_opcode_ask_sub_75EEBB = get_relative_call(ff7_externals.run_world_event_scripts_system_operations, 0xBA1);
 	ff7_externals.world_opcode_message = get_relative_call(ff7_externals.world_sub_75EF46, 0x8C);
 	ff7_externals.world_opcode_ask = get_relative_call(ff7_externals.world_sub_75EF46, 0xAF);
+	const uint32_t world_text_box_window_create = get_relative_call(ff7_externals.world_opcode_message, 0x39);
 	ff7_externals.world_text_box_window_opening_769A66 = get_relative_call(ff7_externals.world_opcode_message, 0x5A);
+	ff7_externals.world_current_dialog_string_pointer = (DWORD*)get_absolute_value(world_text_box_window_create, 0x161);
 	ff7_externals.world_text_box_window_paging_769C02 = get_relative_call(ff7_externals.world_opcode_message, 0x6D);
 	ff7_externals.world_text_box_reverse_paging_76ABE9 = get_relative_call(ff7_externals.world_opcode_message, 0x80);
 	ff7_externals.world_text_box_window_closing_76ADF7 = get_relative_call(ff7_externals.world_opcode_message, 0x235);
@@ -1420,8 +1431,23 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.chocobo_init_viewport_values_76D320 = get_relative_call(main_init_loop, 0x38B);
 	uint32_t chocobo_sub_77C462 = get_relative_call(ff7_externals.chocobo_main_loop, 0x5E);
 	uint32_t chocobo_sub_77946A = get_relative_call(chocobo_sub_77C462, 0x649);
+	uint32_t chocobo_sub_77B2CA = get_relative_call(chocobo_sub_77C462, 0x64E);
+	uint32_t chocobo_sub_776452 = get_relative_call(chocobo_sub_77C462, 0x93);
+	uint32_t chocobo_sub_778C5D = get_relative_call(chocobo_sub_77C462, 0x849);
+	uint32_t chocobo_sub_7792CD = get_relative_call(chocobo_sub_778C5D, 0x65D);
 	ff7_externals.chocobo_submit_draw_fade_quad_77B1CE = get_relative_call(chocobo_sub_77946A, 0x33);
 	ff7_externals.chocobo_submit_draw_water_quad_77A7D0 = get_relative_call(chocobo_sub_77C462, 0x30B);
+	ff7_externals.chocobo_end_scene_call_77B79E = chocobo_sub_77B2CA + 0x4D4;
+	ff7_externals.chocobo_end_scene_660EEB = (void (*)(ff7_game_obj*))get_relative_call(chocobo_sub_77B2CA, 0x4D4);
+	ff7_externals.chocobo_populate_race_data_call_77C448 = chocobo_sub_77C462 - 0x1A;
+	ff7_externals.chocobo_populate_race_data_772357 = (void (*)())get_relative_call(ff7_externals.chocobo_populate_race_data_call_77C448, 0);
+	ff7_externals.chocobo_race_names_E711E0 = (byte*)get_absolute_value(chocobo_sub_778C5D, 0x8D);
+	ff7_externals.chocobo_special_racer_DC0AF2 = (byte*)get_absolute_value((uint32_t)ff7_externals.chocobo_populate_race_data_772357, 0xC4C);
+	ff7_externals.chocobo_name_text_call_776B76 = chocobo_sub_776452 + 0x724;
+	ff7_externals.chocobo_gift_text_call_addresses[0] = chocobo_sub_7792CD + 0x1B;
+	ff7_externals.chocobo_gift_text_call_addresses[1] = chocobo_sub_7792CD + 0x3C;
+	ff7_externals.chocobo_gift_text_call_addresses[2] = chocobo_sub_7792CD + 0x5D;
+	ff7_externals.chocobo_draw_text_77941B = (int (*)(byte*, int, int, int))get_relative_call(chocobo_sub_7792CD, 0x1B);
 	ff7_externals.generic_submit_quad_graphics_object_671D2A = (void(*)(int, int, int, int, int, int, float, DWORD*))get_relative_call(ff7_externals.chocobo_submit_draw_water_quad_77A7D0, 0x9F);
 	ff7_externals.chocobo_fade_quad_data_97A498 = (byte*)get_absolute_value(chocobo_sub_77946A, 0x2F);
 	ff7_externals.snowboard_draw_sky_and_mountains_72DAF0 = get_relative_call(ff7_externals.snowboard_loop_sub_72381C, 0x27);
@@ -1536,7 +1562,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.word_DC3CC4 = (short*)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x28E);	
 	ff7_externals.dword_DC3CD4 = (int*)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x2B9);
 	ff7_externals.word_DC3CC8 = (short*)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x62D);	
-	ff7_externals.g_text_spacing_DB958C = (int*)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x717);	
+	ff7_externals.g_text_spacing_DB958C = (byte**)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x717);
 	ff7_externals.menu_font_a_graphics_object_DC100C = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x7ED);
 	ff7_externals.menu_font_b_graphics_object_DC1010 = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x7AC);
 	ff7_externals.menu_win_a_blend_4_graphics_object_DC0FC8 = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.field_submit_draw_text_640x480_6E706D, 0x323);
@@ -1578,6 +1604,97 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_menu_display_menu_6D82EA = get_relative_call(battle_sub_6D83C8, 0xE0);
 	ff7_externals.battle_display_base_menu_6DD041 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x29);
 	ff7_externals.common_submit_draw_char_from_buffer_6F564E = (int (*)(int, int, int, unsigned __int16, float))get_relative_call(ff7_externals.battle_display_base_menu_6DD041, 0x382); 
+	ff7_externals.draw_string_from_buffer_sub_6F5B03 = (int (*)(int, int, byte*, byte, float))get_relative_call(ff7_externals.menu_sub_6FEDB0, 0x127);
+	ff7_externals.menu_shop_draw_string_from_buffer = (int (*)(int, int, byte*, byte, float))get_relative_call(ff7_externals.menu_shop_loop, 0x1814);
+	ff7_externals.japanese_text_small_glyph_call_count = 0;
+	if (version == VERSION_FF7_102_US)
+	{
+		auto add_japanese_text_small_glyph_calls = [](uint32_t base, std::initializer_list<uint32_t> offsets)
+		{
+			for (uint32_t offset : offsets)
+				ff7_externals.japanese_text_small_glyph_call_addresses[ff7_externals.japanese_text_small_glyph_call_count++] = base + offset;
+		};
+
+		ff7_externals.menu_config_sub_6C3197 = get_relative_call(ff7_externals.config_menu_sub, 0x352);
+		ff7_externals.menu_sub_6C7B54 = get_relative_call(ff7_externals.menu_battle_end_sub_6C9543, 0x77);
+		ff7_externals.menu_sub_6C85F1 = get_relative_call(ff7_externals.menu_sub_6C7B54, 0x3BA);
+		ff7_externals.menu_sub_6CA346 = ff7_externals.menu_subs_call_table[0];
+		ff7_externals.menu_sub_6CDE72 = get_relative_call(ff7_externals.config_menu_sub, 0xE8);
+		ff7_externals.config_input_mapping = (uint32_t*)get_absolute_value(ff7_externals.menu_sub_6CDE72, 0x145);
+		ff7_externals.menu_sub_6DE3DB = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x46);
+		ff7_externals.menu_sub_6E0D28 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1A6);
+		ff7_externals.menu_sub_6E1308 = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1AD);
+		ff7_externals.menu_sub_6E384F = get_relative_call(ff7_externals.display_battle_menu_6D797C, 0x1C9);
+		ff7_externals.menu_sub_700090 = get_relative_call(ff7_externals.phs_menu_sub, 0x7D2);
+		ff7_externals.menu_sub_701B4C = get_relative_call(ff7_externals.phs_menu_sub, 0x7DE);
+		ff7_externals.menu_sub_703176 = get_relative_call(ff7_externals.menu_subs_call_table[7], 0x3FC);
+		ff7_externals.menu_sub_703DF1 = get_relative_call(ff7_externals.status_menu_sub, 0x9F);
+		ff7_externals.menu_sub_704612 = get_relative_call(ff7_externals.status_menu_sub, 0x76);
+		ff7_externals.menu_sub_704D34 = get_relative_call(ff7_externals.status_menu_sub, 0x82);
+		ff7_externals.menu_sub_7059FB = get_relative_call(ff7_externals.status_menu_sub, 0x64);
+		ff7_externals.menu_sub_707891 = get_relative_call(ff7_externals.menu_sub_705D16, 0x5C4);
+		ff7_externals.menu_sub_70CF0B = ff7_externals.menu_subs_call_table[3];
+		ff7_externals.menu_sub_709FD8 = get_relative_call(ff7_externals.menu_sub_70CF0B, 0xB9);
+		ff7_externals.menu_sub_70CAF0 = get_relative_call(ff7_externals.menu_sub_70CF0B, 0xCA);
+		ff7_externals.menu_sub_7086BE = get_relative_call(ff7_externals.menu_sub_70CAF0, 0x11C);
+		ff7_externals.menu_sub_70B032 = get_relative_call(ff7_externals.menu_sub_70CAF0, 0xFC);
+		ff7_externals.menu_sub_70B092 = get_relative_call(ff7_externals.menu_sub_70B032, 0x56);
+		ff7_externals.menu_sub_70BA7E = get_relative_call(ff7_externals.menu_sub_70B092, 0x788);
+		ff7_externals.menu_sub_70ECF4 = get_relative_call(ff7_externals.menu_sub_70CF0B, 0x30A);
+		ff7_externals.menu_sub_710DFA = ff7_externals.menu_subs_call_table[2];
+		ff7_externals.menu_sub_715105 = ff7_externals.menu_subs_call_table[1];
+		ff7_externals.menu_sub_719E90 = get_relative_call(ff7_externals.menu_shop_loop, 0x1049);
+		ff7_externals.menu_sub_71E415 = get_relative_call(ff7_externals.menu_shop_loop, 0x399);
+		ff7_externals.menu_sub_71EE01 = get_relative_call(ff7_externals.menu_sub_71E415, 0x788);
+		ff7_externals.menu_sub_720775 = ff7_externals.menu_status_draw_sub;
+
+#define ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(base, ...) \
+		add_japanese_text_small_glyph_calls((base), { __VA_ARGS__ })
+
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_config_sub_6C3197, 0x31, 0x76, 0x9D, 0xD6, 0x123, 0x171, 0x1C2, 0x22E, 0x269, 0x2CF, 0x2F4, 0x41D, 0x447);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_draw_party_member_stats, 0x3E1, 0x41A);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6C7B54, 0x7B6);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6C85F1, 0x1D);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6CA346, 0x783, 0x7CB, 0xA94, 0xAB8);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6CDE72, 0xC6, 0x202);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.display_battle_menu_6D797C, 0x115, 0x195);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6DE3DB, 0x2AF, 0x2F6, 0x35E);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6E0D28, 0x37, 0x55, 0x73);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6E1308, 0x565);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6E384F, 0xB3);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_700090, 0x102, 0x124, 0x149);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_701B4C, 0x1C0);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_703176, 0x48, 0x1A7, 0x1C2);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_703DF1, 0x3D, 0x59, 0x78, 0x9A, 0xBB, 0x270, 0x28F, 0x2B4);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_704612, 0x110, 0x132, 0x157);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_704D34, 0x54, 0x1EB);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.draw_status_limit_level_stats, 0x22F, 0x24A);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_7059FB, 0xE8);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_705D16, 0x5AB);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_707891, 0x56);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_7086BE, 0xF8);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_709FD8, 0x4ED);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_70B092, 0x1FB, 0x216, 0x234, 0x252, 0x26D, 0x28B, 0x343, 0x385, 0x415, 0x462, 0x4E1, 0x561, 0x5E1, 0x65D, 0x6D7, 0x75B, 0x780);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_70BA7E, 0x116);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_70CF0B, 0x16E, 0x189, 0x1A4, 0x1CB);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_70ECF4, 0x50E, 0x530);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_710DFA, 0x145C, 0x15B0, 0x1B02, 0x214C);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_715105, 0x3CF, 0x545);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_719E90, 0x2FB, 0x31D);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_shop_loop, 0x690, 0x6B1, 0x6D5, 0x701, 0x722, 0x742, 0x8C3, 0x8F0, 0xBEE, 0xC1D, 0xC4F, 0x1190, 0x11B0, 0x11D0, 0x11F0, 0x1210, 0x1230);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_71E415, 0x1FB, 0x216, 0x234, 0x252, 0x26D, 0x28B, 0x343, 0x385, 0x415, 0x462, 0x4E1, 0x561, 0x5E1, 0x65D, 0x6D7, 0x75B, 0x780);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_71EE01, 0x116);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_720775, 0x1A8, 0x1EC, 0x20E);
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_7212FB, 0x50A, 0x53D, 0x13A);
+		// Save/load slot list ("save1".. "save10"): draws via draw_string_from_buffer_sub_6F5B03,
+		// which is otherwise replaced whole-function with the large-glyph wrapper below.
+		ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS(ff7_externals.menu_sub_6FEDB0, 0x1A3);
+
+#undef ADD_JAPANESE_TEXT_SMALL_GLYPH_CALLS
+
+		ff7_externals.japanese_text_large_glyph_char_call_6DD3C3 = ff7_externals.battle_display_base_menu_6DD041 + 0x382;
+		ff7_externals.japanese_text_large_glyph_char_call_7193DE = ff7_externals.menu_sub_718DBE + 0x620;
+	}
 	ff7_externals.menu_loop_sub_6CC623 = get_absolute_value(ff7_externals.engine_loop_main_loop_sub_4090E6, 0x62E);
 	ff7_externals.menu_draw_everything_6CC9D3 = (void (*)())get_relative_call(ff7_externals.menu_loop_sub_6CC623, 0x117);
 	
@@ -1586,7 +1703,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.dword_DC12DC = (int*)get_absolute_value((uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E, 0x1D5);
 
 	ff7_externals.engine_gfx_draw_graphics_object_polygon_set_field_80_sub_660E6A = (void (*)(ff7_graphics_object*, ff7_game_obj*))get_relative_call((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x42);
-	ff7_externals.engine_gfx_setviewport_sub_66067A = (void (*)(unsigned int, unsigned int, unsigned int, unsigned int, ff7_game_obj*))get_relative_call((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x381);
+	ff7_externals.engine_gfx_setviewport_sub_66067A = (ff7_game_obj* (*)(unsigned int, unsigned int, unsigned int, unsigned int, ff7_game_obj*))get_relative_call((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x381);
 
 	ff7_externals.menu_unknown3_graphics_object_DC0FFC = (ff7_graphics_object**)get_absolute_value((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x3D);
 	ff7_externals.dword_DC12EC = (int*)get_absolute_value((uint32_t)ff7_externals.menu_draw_everything_6CC9D3, 0x129);
