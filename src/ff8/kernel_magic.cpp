@@ -22,6 +22,7 @@
 #include "../common.h"
 #include "../log.h"
 
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -90,12 +91,10 @@ static int ff8_magic_count = VANILLA_MAGIC_COUNT;
 static bool ff8_magic_armed = false;
 static char *ff8_kernel_stash = nullptr;     // full grown kernel.bin image
 
-typedef int(__cdecl *load_file_to_buffer_t)(const char *, char *);
-
 // ---- magic-vs-GF classification -----------------------------------------
 // True only for a real GF id. The exe's "id >= 64 is a GF" checks are all
 // narrowed to this range - the two getters below by full replacement, the
-// two deep-in-function sites by a small stub (ff8_build_classify_stub).
+// two deep-in-function sites by a small stub (install_gf_check_trampoline).
 static int __cdecl ff8_is_gf_id(int id)
 {
 	id &= 0xFFFF; // the draw-execute site classifies on BX (16-bit); harmless elsewhere
@@ -139,113 +138,75 @@ static char *__cdecl ff8_get_magic_description(int id)
 	if (ff8_is_gf_id(id))
 	{
 		const uint8_t *k_gf = (const uint8_t *)ff8_externals.unk_1CF3E48 + vanilla_data_offsets[KERNEL_GF_SECTION];
-		return ff8_kernel_text(KERNEL_TEXT_GF_DESC_SEC,
-			*(const uint16_t *)(k_gf + K_GF_STRIDE * (id - GF_FIRST_ID) + K_GF_DESC_OFF));
+		return ff8_kernel_text(KERNEL_TEXT_GF_DESC_SEC, *(const uint16_t *)(k_gf + K_GF_STRIDE * (id - GF_FIRST_ID) + K_GF_DESC_OFF));
 	}
 
 	return ff8_kernel_text(KERNEL_TEXT_MAGIC_SEC, ff8_magic_text_offset(id, MAGIC_DESC_OFF));
 }
 
-// x86 register encodings (push/pop opcode = base + index).
+// ---- GF check trampolines -----------------------------------------------
+// Two "cmp id,40h / jcc" GF checks sit deep inside large exe functions, so they
+// cannot be replaced whole in C. Each check is overwritten with a jmp to a
+// ff8_gf_check_stub (see ff8.h) that asks ff8_is_gf_id instead.
+
+// x86 register encodings (push opcode = 0x50 + index, cmp modrm = 0xF8 + index).
 #define REG_EAX 0
 #define REG_EBX 3
 
-// This part is to retrieve the condition > 64, trampoline from there into a code we manage in FFNx
-#pragma pack(push, 1)
-struct ff8_classify_stub
+#define GF_CHECK_SITE_COUNT 2
+static ff8_gf_check_stub ff8_gf_check_stubs[GF_CHECK_SITE_COUNT];
+
+// rel32 operands are relative to the end of the 4-byte operand itself.
+static int32_t ff8_rel32(uint32_t operand_address, uint32_t target)
 {
-	uint8_t push_id_reg;   // 50+reg
-	uint8_t call_opcode;   // E8
-	int32_t call_offset;   // rel32 -> ff8_is_gf_id
-	uint8_t test_al_al[2]; // 84 C0
-	uint8_t pop_id_reg;    // 58+reg
-	uint8_t jnz_opcode[2]; // 0F 85
-	int32_t jnz_offset;    // rel32 -> the site's original GF branch target
-	uint8_t ret_opcode;    // C3
-};
-#pragma pack(pop)
-
-
-#define CLASSIFY_SITE_COUNT 2 // Number of place in the code where we need to apply this stub
-static ff8_classify_stub ff8_classify_stubs[CLASSIFY_SITE_COUNT];
-static int ff8_classify_stubs_used = 0;
-
-// rel32 operands are relative to the end of the instruction they belong to.
-static int32_t ff8_rel32_to(const void *operand_field, uint32_t target)
-{
-	return (int32_t)(target - ((uint32_t)operand_field + sizeof(int32_t)));
+	return int32_t(target - (operand_address + 4));
 }
 
-// The stub is a small piece of code that will call ff8_is_gf_id and then jump to the original target if it is a GF, or return if it is not.
-static const ff8_classify_stub *ff8_build_classify_stub(uint8_t id_reg, uint32_t gf_target)
+// site points at "(66) 83 F8+reg 40 / jcc"; the 0x66 prefix is used by the draw-execute check (cmp bx,40h).
+static bool install_gf_check_trampoline(int stub_index, uint32_t site, uint8_t id_reg, const char *what)
 {
-	if (ff8_classify_stubs_used >= CLASSIFY_SITE_COUNT)
-		return nullptr;
+	const uint8_t *code = (const uint8_t *)site;
+	uint32_t cmp_size = code[0] == 0x66 ? 4 : 3;
 
-	ff8_classify_stub *stub = &ff8_classify_stubs[ff8_classify_stubs_used++];
-
-	stub->push_id_reg = 0x50 + id_reg;
-	stub->call_opcode = 0xE8;
-	stub->call_offset = ff8_rel32_to(&stub->call_offset, (uint32_t)&ff8_is_gf_id);
-	stub->test_al_al[0] = 0x84;
-	stub->test_al_al[1] = 0xC0;
-	stub->pop_id_reg = 0x58 + id_reg;
-	stub->jnz_opcode[0] = 0x0F;
-	stub->jnz_opcode[1] = 0x85;
-	stub->jnz_offset = ff8_rel32_to(&stub->jnz_offset, gf_target);
-	stub->ret_opcode = 0xC3;
-
-	return stub;
-}
-
-// Overwrites a id > 64 check site with a call to its stub. Handles the
-// optional 0x66 prefix (draw-execute is "cmp bx,40h"); the site must start at
-// it, or the leftover 0x66 would corrupt our call.
-static bool install_id_trampoline(uint32_t site, uint8_t reg, const char *what)
-{
-	const uint8_t *p = (const uint8_t *)site;
-	uint32_t pre = (p[0] == 0x66) ? 1 : 0;   // optional operand-size prefix
-
-	// cmp reg,imm8: (66) 83 /7 ib  (modrm F8=eax/ax, FB=ebx/bx)
-	// Just guarding if anything is unexpected in the byte we will replace
-	if (p[pre] != 0x83 || p[pre + 2] != 0x40)
+	if (code[cmp_size - 3] != 0x83 || code[cmp_size - 2] != 0xF8 + id_reg || code[cmp_size - 1] != 0x40)
 	{
-		ffnx_warning("AddMoreMagic: unexpected bytes at %s site 0x%X (%02X %02X %02X %02X), skipping patch!\n",
-			what, site, p[0], p[1], p[2], p[3]);
+		ffnx_warning("AddMoreMagic: unexpected bytes at %s site 0x%X (%02X %02X %02X %02X), skipping patch!\n", what, site, code[0], code[1], code[2], code[3]);
 		return false;
 	}
 
-  // Change the id > 64 by the correct check between GF/magic
-	uint32_t cmp_len = pre + 3;           // (prefix) + opcode + modrm + imm8
-	const uint8_t *j = p + cmp_len;       // the following jcc
-	uint32_t patch_size, gf_target;
-	if ((j[0] & 0xF0) == 0x70)            // jcc rel8 (2 bytes)
+	const uint8_t *jcc = code + cmp_size;
+	uint32_t check_size, gf_target;
+	if ((jcc[0] & 0xF0) == 0x70) // jcc rel8
 	{
-		gf_target = site + cmp_len + 2 + (int8_t)j[1];
-		patch_size = cmp_len + 2;
+		check_size = cmp_size + 2;
+		gf_target = site + check_size + int8_t(jcc[1]);
 	}
-	else if (j[0] == 0x0F && (j[1] & 0xF0) == 0x80) // jcc rel32 (6 bytes)
+	else if (jcc[0] == 0x0F && (jcc[1] & 0xF0) == 0x80) // jcc rel32
 	{
-		gf_target = site + cmp_len + 6 + *(int32_t *)(j + 2);
-		patch_size = cmp_len + 6;
+		check_size = cmp_size + 6;
+		gf_target = site + check_size + *(const int32_t *)(jcc + 2);
 	}
 	else
 	{
-		ffnx_warning("AddMoreMagic: unexpected jcc at %s site 0x%X (%02X), skipping patch!\n", what, site, j[0]);
+		ffnx_warning("AddMoreMagic: unexpected jcc at %s site 0x%X (%02X), skipping patch!\n", what, site, jcc[0]);
 		return false;
 	}
 
-	const ff8_classify_stub *stub = ff8_build_classify_stub(reg, gf_target);
-	if (!stub)
-	{
-		ffnx_warning("AddMoreMagic: out of classify stubs for %s site 0x%X, skipping patch!\n", what, site);
-		return false;
-	}
+	uint32_t stub_address = uint32_t(&ff8_gf_check_stubs[stub_index]);
+	ff8_gf_check_stub stub = {
+		0x50, 0x51, 0x52, uint8_t(0x50 + id_reg),
+		0xE8, ff8_rel32(stub_address + offsetof(ff8_gf_check_stub, call_offset), uint32_t(&ff8_is_gf_id)),
+		{ 0x83, 0xC4, 0x04 },
+		{ 0x84, 0xC0 },
+		0x5A, 0x59, 0x58,
+		{ 0x0F, 0x85 }, ff8_rel32(stub_address + offsetof(ff8_gf_check_stub, jnz_offset), gf_target),
+		0xE9, ff8_rel32(stub_address + offsetof(ff8_gf_check_stub, jmp_offset), site + check_size)
+	};
+	memcpy_code(stub_address, &stub, sizeof(stub));
 
-	// NOP the whole compare-and-branch, then turn its first 5 bytes into the
-	// call, so whatever follows the site stays exactly where it was.
-	memset_code(site, 0x90, patch_size);
-	replace_call_function(site, (void *)stub);
+	// NOP the whole compare-and-branch so the disassembly stays readable, then jump to the stub.
+	memset_code(site, 0x90, check_size);
+	replace_function(site, (void *)stub_address);
 
 	return true;
 }
@@ -299,8 +260,7 @@ static uint32_t relocate_scan(uint32_t from, uint32_t to, uint32_t range_end, co
 		}
 	}
 
-	if (trace_all) ffnx_trace("AddMoreMagic: %s: relocated %u displacement(s), skipped %u branch false-positive(s).\n",
-		what, rewritten, skipped_branch);
+	if (trace_all) ffnx_trace("AddMoreMagic: %s: relocated %u displacement(s), skipped %u branch false-positive(s).\n", what, rewritten, skipped_branch);
 	return rewritten;
 }
 
@@ -410,15 +370,13 @@ static void relocate_drawn_once_bitfield()
 {
 	if (ff8_magic_count <= EXTENDED_MAGIC_FIRST)
 	{
-		if (trace_all) ffnx_trace("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n",
-			EXTENDED_MAGIC_FIRST, ff8_externals.magic_sg_drawn_once);
+		if (trace_all) ffnx_trace("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n", EXTENDED_MAGIC_FIRST, ff8_externals.magic_sg_drawn_once);
 		return;
 	}
 
 	uint32_t sg_drawn_once_ext = ff8_externals.field_vars_stack_1CFE9B8 + 753;
 
-	uint32_t patched = relocate_scan(ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext,
-		ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
+	uint32_t patched = relocate_scan(ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext, ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
 	if (patched != DRAWN_ONCE_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: expected %d drawn-once sites, found %u - some drawn-once state may not persist correctly!\n", DRAWN_ONCE_SITE_COUNT, patched);
 }
@@ -486,10 +444,8 @@ static void ff8_kernel_magic_arm()
 		ffnx_warning("AddMoreMagic: expected %d K_MAGIC sites, rewrote %u - some magic reads may still use the vanilla table!\n", K_MAGIC_SITE_COUNT, rewritten);
 
 	// The two deep-in-function GF checks; the rest are replaced whole below.
-	DWORD stub_protect;
-	VirtualProtect(ff8_classify_stubs, sizeof(ff8_classify_stubs), PAGE_EXECUTE_READWRITE, &stub_protect);
-	install_id_trampoline(ff8_externals.magic_site_spell_visibility, REG_EAX, "draw-list visibility");
-	install_id_trampoline(ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
+	install_gf_check_trampoline(0, ff8_externals.magic_site_spell_visibility, REG_EAX, "draw-list visibility");
+	install_gf_check_trampoline(1, ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
 
 	replace_function(ff8_externals.magic_fn_name_getter, (void *)ff8_get_magic_name);
 	replace_function(ff8_externals.magic_fn_desc_getter, (void *)ff8_get_magic_description);
@@ -499,8 +455,7 @@ static void ff8_kernel_magic_arm()
 
 	relocate_drawn_once_bitfield();
 
-	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs; mmagic.bin must cover %d entries / %d bytes).\n",
-		ff8_magic_count, EXTENDED_MAGIC_FIRST, ff8_magic_count - 1, ff8_magic_count, ff8_magic_count * 4);
+	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs; mmagic.bin must cover %d entries / %d bytes).\n", ff8_magic_count, EXTENDED_MAGIC_FIRST, ff8_magic_count - 1, ff8_magic_count, ff8_magic_count * 4);
 }
 
 // ---- kernel.bin load interception ---------------------------------------
@@ -511,7 +466,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	if (ff8_kernel_stash == nullptr)
 		ff8_kernel_stash = (char *)driver_malloc(KERNEL_FILE_MAX);
 
-	int size = ((load_file_to_buffer_t)ff8_externals.magic_load_file_to_buf)(filename, ff8_kernel_stash);
+	int size = int(ff8_externals.sm_pc_read((char *)filename, ff8_kernel_stash));
 
 	const uint32_t *header = (const uint32_t *)ff8_kernel_stash;
 	const uint32_t *offsets = header + 1;
@@ -531,6 +486,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	// Grown kernel.bin: build the vanilla-layout image the exe expects.
 	uint32_t data_growth = (entries - VANILLA_MAGIC_COUNT) * MAGIC_ENTRY_SIZE;
 	uint32_t *out_header = (uint32_t *)dest;
+	int non_vanilla_sections = 0;
 
 	out_header[0] = KERNEL_SECTION_COUNT;
 
@@ -546,10 +502,16 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 		out_header[1 + i] = dst;
 
 		if (i != KERNEL_MAGIC_SECTION && src_size != copy_size)
-			ffnx_warning("AddMoreMagic: kernel.bin data section %d has non-vanilla size %u (expected %u) - only the magic section may grow; game will likely misbehave!\n", i, src_size, copy_size);
+		{
+			++non_vanilla_sections;
+			if (trace_all) ffnx_trace("AddMoreMagic: kernel.bin data section %d has size %u, expected %u.\n", i, src_size, copy_size);
+		}
 
 		memcpy(dest + dst, ff8_kernel_stash + src, copy_size);
 	}
+
+	if (non_vanilla_sections > 0)
+		ffnx_warning("AddMoreMagic: kernel.bin has %d data section(s) with a non-vanilla size - only the magic section may grow; game will likely misbehave!\n", non_vanilla_sections);
 
 	// Text sections (31..55): point the header at the stash so they can grow
 	// freely. Also fill dest's vanilla-sized text area with real bytes - some
@@ -560,8 +522,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 
 	uint32_t text_dest_size = VANILLA_KERNEL_SIZE - vanilla_data_offsets[KERNEL_FIRST_TEXT_SEC];
 	uint32_t text_src_size = (uint32_t)size - offsets[KERNEL_FIRST_TEXT_SEC];
-	memcpy(dest + vanilla_data_offsets[KERNEL_FIRST_TEXT_SEC], ff8_kernel_stash + offsets[KERNEL_FIRST_TEXT_SEC],
-		text_src_size < text_dest_size ? text_src_size : text_dest_size);
+	memcpy(dest + vanilla_data_offsets[KERNEL_FIRST_TEXT_SEC], ff8_kernel_stash + offsets[KERNEL_FIRST_TEXT_SEC], text_src_size < text_dest_size ? text_src_size : text_dest_size);
 
 	// FFNx-side full magic table.
 	memcpy(ff8_magic_table, ff8_kernel_stash + offsets[KERNEL_MAGIC_SECTION], entries * MAGIC_ENTRY_SIZE);
@@ -583,12 +544,11 @@ void ff8_kernel_magic_init()
 		return;
 	}
 
-	// Sanity: the call we replace must be an E8 to LoadFileToBuffer.
-	const uint8_t *call_site = (const uint8_t *)ff8_externals.magic_kernel_read_call;
-	uint32_t call_target = ff8_externals.magic_kernel_read_call + 5 + *(const int32_t *)(call_site + 1);
-	if (call_site[0] != 0xE8 || call_target != ff8_externals.magic_load_file_to_buf)
+	// Sanity: the call we replace must be the kernel.bin read through sm_pc_read.
+	uint32_t call_target = get_relative_call(ff8_externals.magic_kernel_read_call, 0);
+	if (call_target != uint32_t(ff8_externals.sm_pc_read))
 	{
-		ffnx_warning("AddMoreMagic: kernel load call site mismatch (0x%02X -> 0x%X), extension disabled.\n", call_site[0], call_target);
+		ffnx_warning("AddMoreMagic: kernel load call site mismatch (0x%X), extension disabled.\n", call_target);
 		return;
 	}
 

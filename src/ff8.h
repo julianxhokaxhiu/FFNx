@@ -1151,6 +1151,30 @@ struct SsigpuExecutionInstructionRect44 {
 
 // --------------- end of FF8 imports ---------------
 
+// AddMoreMagic (src/ff8/kernel_magic.cpp): stub reached by a jmp placed over an
+// exe "cmp id,40h / jcc" GF check. It calls the FFNx GF check (scratch registers
+// preserved), then jumps to the original GF branch or back after the check.
+#pragma pack(push, 1)
+struct ff8_gf_check_stub
+{
+	uint8_t push_eax;      // 50
+	uint8_t push_ecx;      // 51
+	uint8_t push_edx;      // 52
+	uint8_t push_id_reg;   // 50+reg
+	uint8_t call_opcode;   // E8
+	int32_t call_offset;   // rel32 -> ff8_is_gf_id
+	uint8_t add_esp_4[3];  // 83 C4 04
+	uint8_t test_al_al[2]; // 84 C0
+	uint8_t pop_edx;       // 5A
+	uint8_t pop_ecx;       // 59
+	uint8_t pop_eax;       // 58
+	uint8_t jnz_opcode[2]; // 0F 85
+	int32_t jnz_offset;    // rel32 -> the original GF branch target
+	uint8_t jmp_opcode;    // E9
+	int32_t jmp_offset;    // rel32 -> the instruction after the original check
+};
+#pragma pack(pop)
+
 // memory addresses and function pointers from FF8.exe
 struct ff8_externals
 {
@@ -1786,9 +1810,8 @@ struct ff8_externals
 	uint32_t set_all_monster_info_sub_48BA10;
 	uint32_t manage_monster_spell_visibility_sub_48C7A0;
 	uint32_t linked_menu_magic_sub_4F02F0;
-	uint32_t magic_k_magic;               // buffer + 540 (K_MAGIC data label)
-	uint32_t magic_load_file_to_buf;      // int LoadFileToBuffer(const char*, char*)
-	uint32_t magic_kernel_read_call;      // call LoadFileToBuffer(name, KERNEL_HEADER)
+	uint32_t magic_k_magic;               // buffer + 0x21C (K_MAGIC data label)
+	uint32_t magic_kernel_read_call;      // call sm_pc_read(name, KERNEL_HEADER)
 	uint32_t magic_fn_name_getter;        // getMagicText(int id), replaced wholesale in C
 	uint32_t magic_fn_desc_getter;        // magic description getter(int id), replaced wholesale in C
 	uint32_t magic_site_spell_visibility; // draw-list vis:     (66)? cmp reg,40h / jcc

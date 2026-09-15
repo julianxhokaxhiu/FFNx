@@ -1043,8 +1043,7 @@ void ff8_find_externals()
 	// relatively from an already-known anchor. Offsets that differ per language
 	// are grouped by the exe build they come from, not hardcoded per address.
 	ff8_externals.read_kernel_files_sub_47D2A0 = get_relative_call(get_relative_call(ff8_externals.sub_470440, 0x22), 0);
-	ff8_externals.magic_kernel_read_call = ff8_externals.read_kernel_files_sub_47D2A0 + 0x96; // call LoadFileToBuffer(name, KERNEL_HEADER)
-	ff8_externals.magic_load_file_to_buf = uint32_t(ff8_externals.sm_pc_read);
+	ff8_externals.magic_kernel_read_call = ff8_externals.read_kernel_files_sub_47D2A0 + 0x96; // call sm_pc_read(name, KERNEL_HEADER)
 
 	ff8_externals.set_all_monster_info_sub_48BA10 = get_relative_call(ff8_externals.sub_47CCB0, 0x996);
 	ff8_externals.manage_monster_spell_visibility_sub_48C7A0 = get_relative_call(ff8_externals.set_all_monster_info_sub_48BA10, 0x1A7);
@@ -1088,8 +1087,8 @@ void ff8_find_externals()
 	ff8_externals.linked_menu_magic_sub_4F02F0 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[3].func), 0x8);
 	ff8_externals.magic_fn_reorder_magic = get_relative_call(ff8_externals.linked_menu_magic_sub_4F02F0, 0x47BC);
 
-	ff8_externals.magic_k_battle_command = uint32_t(ff8_externals.unk_1CF3E48) + 228;  // kernel.bin data section 0
-	ff8_externals.magic_k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 540;  // kernel.bin data section 1
+	ff8_externals.magic_k_battle_command = uint32_t(ff8_externals.unk_1CF3E48) + 0xE4;  // kernel.bin data section 0
+	ff8_externals.magic_k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 0x21C; // kernel.bin data section 1
 
 	ff8_externals.magic_sg_gf_data      = get_absolute_value(ff8_externals.magic_fn_name_getter, 0x43);     // lea eax, SG_GF_DATA[edx*4]
 	ff8_externals.magic_f_char_data     = get_absolute_value(ff8_externals.magic_fn_linked_stock, 0x28);    // lea eax, F_CHAR_DATA[edx]
