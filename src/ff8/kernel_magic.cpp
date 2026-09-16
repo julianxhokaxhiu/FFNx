@@ -49,7 +49,7 @@
 #define MAX_MAGIC_ID            256
 // Instruction operands that read the magic table; listed in ff8_data.cpp.
 #define K_MAGIC_SITE_COUNT      71
-// How many code sites the drawn-once value-scan expects to rewrite.
+// Instruction operands that read the drawn-once bitfield; listed in ff8_data.cpp.
 #define DRAWN_ONCE_SITE_COUNT   5
 #define GF_FIRST_ID             64
 #define GF_LAST_ID              79          // the exe's 16 real GF ids (64..79)
@@ -143,45 +143,6 @@ static char *__cdecl ff8_get_magic_description(int id)
 	}
 
 	return ff8_kernel_text(KERNEL_TEXT_MAGIC_SEC, ff8_magic_text_offset(id, MAGIC_DESC_OFF));
-}
-
-// ---- value-scan relocation (shared by K_MAGIC and drawn-once) -----------
-// All this section will scan the code to find a specific value which reference the kernel table, and replace it with the new table address.
-// This is needed because the exe has hardcoded addresses for the kernel tables, and we need to redirect them to our new tables in FFNx.
-
-// Repoints every dword in the exe code section [scan_start, scan_end) that
-// falls in [from, range_end) by the same delta. A call/jmp rel32 whose bytes
-// happen to land in range is skipped - its opcode is the low byte and it
-// targets real code, which a data operand never does.
-static uint32_t relocate_scan(uint32_t scan_start, uint32_t scan_end, uint32_t from, uint32_t to, uint32_t range_end, const char *what)
-{
-	uint32_t rewritten = 0, skipped_branch = 0;
-
-	for (uint32_t addr = scan_start; addr < scan_end - 4; ++addr)
-	{
-		uint32_t value = *(uint32_t *)addr;
-
-		if (value >= from && value < range_end)
-		{
-			uint8_t op = *(uint8_t *)addr;
-			if (op == 0xE8 || op == 0xE9) // call/jmp rel32?
-			{
-				uint32_t target = addr + 5 + *(int32_t *)(addr + 1);
-				if (target >= scan_start && target < scan_end)
-				{
-					++skipped_branch; // real branch instruction - never touch it
-					continue;
-				}
-			}
-
-			patch_code_dword(addr, (DWORD)(to + (value - from)));
-			++rewritten;
-			addr += 3; // skip the rewritten dword
-		}
-	}
-
-	if (trace_all) ffnx_trace("AddMoreMagic: %s: relocated %u displacement(s), skipped %u branch false-positive(s).\n", what, rewritten, skipped_branch);
-	return rewritten;
 }
 
 // ---- replaced functions -------------------------------------------------
@@ -284,9 +245,9 @@ static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 // no bounds check, so a magic id >= 96 writes past it and corrupts the savemap.
 // When such an id exists, move the field to free savemap space (field variable
 // 753, verified unused and inside the save CRC span) big enough for all 256
-// ids. Its DRAWN_ONCE_SITE_COUNT accessors are scattered and one has no anchor,
-// so a value-scan repoints them all. A stock game never gets here.
-static void relocate_drawn_once_bitfield(uint32_t code_start, uint32_t code_end)
+// ids, and repoint its DRAWN_ONCE_SITE_COUNT accessors at it. A stock game
+// never gets here.
+static void relocate_drawn_once_bitfield()
 {
 	if (ff8_magic_count <= EXTENDED_MAGIC_FIRST)
 	{
@@ -294,12 +255,26 @@ static void relocate_drawn_once_bitfield(uint32_t code_start, uint32_t code_end)
 		return;
 	}
 
-	uint32_t sg_drawn_once_ext = ff8_externals.field_vars_stack_1CFE9B8 + 753;
-	ff8_drawn_once = sg_drawn_once_ext;
+	ff8_drawn_once = ff8_externals.field_vars_stack_1CFE9B8 + 753;
 
-	uint32_t patched = relocate_scan(code_start, code_end, ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext, ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
+	uint32_t patched = 0;
+	for (int i = 0; i < DRAWN_ONCE_SITE_COUNT; ++i)
+	{
+		uint32_t operand = ff8_externals.magic_drawn_once_reads[i];
+		uint32_t points_at = *(uint32_t *)operand;
+
+		if (points_at != ff8_externals.magic_sg_drawn_once)
+		{
+			ffnx_warning("AddMoreMagic: drawn-once read %d at 0x%X points at 0x%X, not at the bitfield - skipping it!\n", i, operand, points_at);
+			continue;
+		}
+
+		patch_code_dword(operand, (DWORD)ff8_drawn_once);
+		++patched;
+	}
+
 	if (patched != DRAWN_ONCE_SITE_COUNT)
-		ffnx_warning("AddMoreMagic: expected %d drawn-once sites, found %u - some drawn-once state may not persist correctly!\n", DRAWN_ONCE_SITE_COUNT, patched);
+		ffnx_warning("AddMoreMagic: moved %u of %d drawn-once reads - some drawn-once state may not persist correctly!\n", patched, DRAWN_ONCE_SITE_COUNT);
 }
 
 // Per-character held-magic + junction validation (replaces sub_4BE790).
@@ -432,8 +407,6 @@ static void *__cdecl ff8_manage_monster_spell_visibility()
 
 typedef int(__cdecl *compute_command_action_t)(int, int, int, int, int, int, int);
 
-static uint32_t ff8_compute_command_action_replaced = 0;
-
 static uint8_t *ff8_battle_state(int offset)
 {
 	return (uint8_t *)(ff8_externals.magic_battle_slot_data + offset);
@@ -465,18 +438,14 @@ static int ff8_stand_in_magic_id(const uint8_t *inventory, const uint8_t *monste
 
 static int ff8_call_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
 {
-	unreplace_function(ff8_compute_command_action_replaced);
-	int ret = ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, command, id, variant, target_slot, target_mask, linked);
-	rereplace_function(ff8_compute_command_action_replaced);
-
-	return ret;
+	return ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 }
 
 static int __cdecl ff8_compute_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
 {
 	uint16_t spell_id = (uint16_t)id;
 
-	// Everything vanilla still gets right goes straight to the original.
+	// Everything vanilla still gets right goes straight to the dispatcher.
 	if (command != COMMAND_DRAW || variant != DRAW_VARIANT_STOCK || spell_id < GF_FIRST_ID || ff8_is_gf_id(spell_id) || spell_id >= MAX_MAGIC_ID)
 		return ff8_call_command_action(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 
@@ -536,9 +505,6 @@ static void ff8_kernel_magic_arm()
 	if (ff8_magic_armed) return;
 	ff8_magic_armed = true;
 
-	uint32_t code_start, code_end;
-	getProcessCodeSection(&code_start, &code_end);
-
 	// Repoint every instruction that reads the vanilla magic table at the FFNx
 	// side one. The operands are listed in ff8_data.cpp; each is checked to
 	// still point into the table before it is touched.
@@ -564,7 +530,7 @@ static void ff8_kernel_magic_arm()
 	if (rewritten != K_MAGIC_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: repointed %u of %d magic table reads - some magic reads may still use the vanilla table!\n", rewritten, K_MAGIC_SITE_COUNT);
 
-	relocate_drawn_once_bitfield(code_start, code_end);
+	relocate_drawn_once_bitfield();
 
 	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs; mmagic.bin must cover %d entries / %d bytes).\n", ff8_magic_count, EXTENDED_MAGIC_FIRST, ff8_magic_count - 1, ff8_magic_count, ff8_magic_count * 4);
 }

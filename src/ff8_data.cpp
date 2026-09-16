@@ -1276,6 +1276,18 @@ void ff8_find_externals()
 	};
 	memcpy(ff8_externals.magic_k_magic_reads, magic_reads, sizeof(magic_reads));
 
+	// The five instructions that index the drawn-once bitfield. Four sit around
+	// ParseBattleParty, the fifth in the draw list visibility function.
+	ff8_externals.magic_drawn_once_reads[0] = ff8_externals.sub_48B7E0 - 0x54;
+	ff8_externals.magic_drawn_once_reads[1] = ff8_externals.sub_48B7E0 - 0x13;
+	ff8_externals.magic_drawn_once_reads[2] = ff8_externals.sub_48B7E0 + 0x71;
+	ff8_externals.magic_drawn_once_reads[3] = ff8_externals.sub_48B7E0 + 0x15E;
+	ff8_externals.magic_drawn_once_reads[4] = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + 0x7C;
+
+	// The call BattleAction_ExecuteCommand makes to run a queued command; it is
+	// the same one battle_sub_48D200 is read from.
+	ff8_externals.magic_command_action_call = ff8_externals.sub_485610 + 0x323;
+
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
 }

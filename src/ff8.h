@@ -1826,6 +1826,8 @@ struct ff8_externals
 	uint32_t magic_fn_menu_magic_hp;        // magic menu HP preview
 	uint32_t magic_fn_unused_magic_read;    // never called; repointed anyway
 	uint32_t magic_k_magic_reads[71];       // every operand pointing into the magic table
+	uint32_t magic_drawn_once_reads[5];     // every operand pointing at the drawn-once bitfield
+	uint32_t magic_command_action_call;     // the call that runs a queued battle command
 
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
