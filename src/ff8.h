@@ -1804,6 +1804,29 @@ struct ff8_externals
 	uint32_t magic_sg_drawn_once;         // savemap 64-bit drawn-once bitfield (ids 1-64)
 	uint32_t magic_sg_gf_data;            // savemap GF records, stride 68, name at +0
 
+	// The functions that read the magic table, resolved so every operand that
+	// points into it can be repointed by address instead of by searching.
+	uint32_t magic_fn_target_mask;          // getMagicTargetMask(int id)
+	uint32_t magic_fn_pick_random_action;   // confused/berserk action roll
+	uint32_t magic_fn_confused_action;      // confused target pick
+	uint32_t magic_fn_queue_command;        // queuePlayerBattleCommand
+	uint32_t magic_fn_stat_compute;         // Stat_ComputeCharaStat
+	uint32_t magic_fn_stat_hit;             // Stat_ComputeCharaHit
+	uint32_t magic_fn_stat_eva;             // Stat_ComputeCharaEva
+	uint32_t magic_fn_elem_attack;          // get_elem_attack
+	uint32_t magic_fn_elem_attack_value;    // get_elem_attack_value
+	uint32_t magic_fn_elem_def_value;       // getMagicElemDefValue
+	uint32_t magic_fn_jstatus_attack;       // getJStatusAttack
+	uint32_t magic_fn_status2_from_jstatus; // getStatus2FromJstatusAttack
+	uint32_t magic_fn_status_attack_value;  // computeStatusAttackValue
+	uint32_t magic_fn_mental_defense;       // get_mental_defense
+	uint32_t magic_fn_junction_swap;        // junction menu magic swap
+	uint32_t magic_fn_junction_value;       // linkedMagicJunctionValue
+	uint32_t magic_fn_auto_junction_spell;  // Junction_AutoPickBestSpellForStat
+	uint32_t magic_fn_menu_magic_hp;        // magic menu HP preview
+	uint32_t magic_fn_unused_magic_read;    // never called; repointed anyway
+	uint32_t magic_k_magic_reads[71];       // every operand pointing into the magic table
+
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;

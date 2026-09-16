@@ -1094,6 +1094,188 @@ void ff8_find_externals()
 	ff8_externals.magic_sg_chara_data   = get_absolute_value(ff8_externals.magic_fn_validate_magic, 0x38) - 16; // lea esi, SG_CHARA_DATA[edi]
 	ff8_externals.magic_sg_drawn_once   = get_absolute_value(ff8_externals.sub_48B7E0, 0x71);               // or DRAWN_ONCE[eax*4], edx
 
+	// The functions whose code reads the magic table. Each is resolved from an
+	// address FFNx already knows.
+	uint32_t battle_tick_atb = get_relative_call(ff8_externals.sub_4A84E0, 0x2F6);
+	uint32_t player_random_attack = get_relative_call(battle_tick_atb, 0x18D);
+	ff8_externals.magic_fn_queue_command = get_relative_call(player_random_attack, 0x35);
+	ff8_externals.magic_fn_pick_random_action = get_relative_call(ff8_externals.sub_485610, 0x2E7);
+	ff8_externals.magic_fn_confused_action = get_relative_call(ff8_externals.sub_485610, 0x20B);
+	// getMagicTargetMask is only reached from MonsterAI, whose call sits at a
+	// different offset on every build; it always precedes the action roll.
+	ff8_externals.magic_fn_target_mask = ff8_externals.magic_fn_pick_random_action - 0x80;
+
+	ff8_externals.magic_fn_stat_compute = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0xF2);
+	ff8_externals.magic_fn_stat_hit = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x285);
+	ff8_externals.magic_fn_stat_eva = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x2C8);
+	ff8_externals.magic_fn_elem_attack = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x302);
+	ff8_externals.magic_fn_elem_attack_value = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x30E);
+	ff8_externals.magic_fn_elem_def_value = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x326);
+	ff8_externals.magic_fn_status2_from_jstatus = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x33C);
+	ff8_externals.magic_fn_jstatus_attack = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x348);
+	ff8_externals.magic_fn_status_attack_value = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x355);
+	ff8_externals.magic_fn_mental_defense = get_relative_call(ff8_externals.compute_char_stats_sub_495960, 0x368);
+
+	uint32_t junction_menu_init = get_relative_call(uint32_t(ff8_externals.menu_callbacks[18].func), 0x31);
+	uint32_t junction_menu = get_absolute_value(junction_menu_init, 0xB);
+	ff8_externals.magic_fn_junction_swap = get_relative_call(junction_menu, 0xB78);
+	ff8_externals.magic_fn_auto_junction_spell = get_relative_call(get_relative_call(junction_menu, 0x1B6C), 0x35);
+	ff8_externals.magic_fn_junction_value = get_relative_call(get_relative_call(ff8_externals.linked_menu_magic_sub_4F02F0, 0xA37), 0x27F);
+	ff8_externals.magic_fn_menu_magic_hp = get_absolute_value(get_absolute_value(uint32_t(ff8_externals.menu_callbacks[3].func), 0x3), 0x8A8);
+	// Dead code on every build, but it still reads the table.
+	ff8_externals.magic_fn_unused_magic_read = ff8_externals.magic_fn_name_getter + 0x3FE0;
+
+	// Offsets that differ per build: these sit in functions that assemble
+	// battle or menu text, whose code layout is language specific.
+	// computeCommandAction
+	static const uint16_t dispatcher_reads_us[10] = { 0x533, 0x53A, 0x576, 0x5BB, 0x5C6, 0x6A0, 0x6A6, 0x6B1, 0x9DC, 0x9E3 };
+	static const uint16_t dispatcher_reads_fr[10] = { 0x507, 0x50E, 0x549, 0x58E, 0x599, 0x673, 0x679, 0x684, 0x9B5, 0x9BC };
+	static const uint16_t dispatcher_reads_de[10] = { 0x4FD, 0x508, 0x53D, 0x585, 0x58C, 0x66A, 0x670, 0x67B, 0x9B7, 0x9BE };
+	static const uint16_t dispatcher_reads_sp[10] = { 0x521, 0x528, 0x563, 0x5A8, 0x5B3, 0x68D, 0x693, 0x69E, 0x9DA, 0x9E1 };
+	static const uint16_t dispatcher_reads_it[10] = { 0x54A, 0x551, 0x58A, 0x5D2, 0x5D9, 0x6B7, 0x6BD, 0x6C8, 0xA04, 0xA0B };
+	static const uint16_t dispatcher_reads_jp[10] = { 0x4EF, 0x4FA, 0x52F, 0x577, 0x57E, 0x65C, 0x662, 0x66D, 0x99E, 0x9A5 };
+	// Battle_applyDamage (text part)
+	static const uint16_t damage_reads_us[8] = { 0xB93, 0xBAB, 0xBB9, 0xBC1, 0xC68, 0xC80, 0xC8E, 0xC96 };
+	static const uint16_t damage_reads_fr[8] = { 0xAF8, 0xB10, 0xB1E, 0xB26, 0xBCD, 0xBE5, 0xBF3, 0xBFB };
+	static const uint16_t damage_reads_de[8] = { 0xB2F, 0xB47, 0xB55, 0xB5D, 0xC04, 0xC1C, 0xC2A, 0xC32 };
+	static const uint16_t damage_reads_sp[8] = { 0xB02, 0xB1A, 0xB28, 0xB30, 0xBD7, 0xBEF, 0xBFD, 0xC05 };
+	static const uint16_t damage_reads_it[8] = { 0xB18, 0xB30, 0xB3E, 0xB46, 0xBED, 0xC05, 0xC13, 0xC1B };
+	static const uint16_t damage_reads_jp[8] = { 0xAF7, 0xB0F, 0xB1D, 0xB25, 0xBCC, 0xBE4, 0xBF2, 0xBFA };
+	// MonsterAI
+	static const uint16_t monster_ai_reads_us[2] = { 0x1A86, 0x222A };
+	static const uint16_t monster_ai_reads_fr[2] = { 0x1A90, 0x2234 };
+	static const uint16_t monster_ai_reads_de[2] = { 0x1A8B, 0x222F };
+	static const uint16_t monster_ai_reads_sp[2] = { 0x1ABA, 0x225E };
+	static const uint16_t monster_ai_reads_it[2] = { 0x1AA6, 0x224A };
+	static const uint16_t monster_ai_reads_jp[2] = { 0x1A58, 0x2206 };
+	// magic menu (text part)
+	static const uint16_t menu_magic_reads_us[2] = { 0x2C04, 0x2C0B };
+	static const uint16_t menu_magic_reads_fr[2] = { 0x2C04, 0x2C0B };
+	static const uint16_t menu_magic_reads_de[2] = { 0x2C04, 0x2C0B };
+	static const uint16_t menu_magic_reads_sp[2] = { 0x2C04, 0x2C0B };
+	static const uint16_t menu_magic_reads_it[2] = { 0x2C04, 0x2C0B };
+	static const uint16_t menu_magic_reads_jp[2] = { 0x2C10, 0x2C17 };
+
+	const uint16_t *dispatcher_reads = dispatcher_reads_us;
+	const uint16_t *damage_reads = damage_reads_us;
+	const uint16_t *monster_ai_reads = monster_ai_reads_us;
+	const uint16_t *menu_magic_reads = menu_magic_reads_us;
+	switch (version)
+	{
+	case VERSION_FF8_12_FR:
+	case VERSION_FF8_12_FR_NV:
+		dispatcher_reads = dispatcher_reads_fr;
+		damage_reads = damage_reads_fr;
+		monster_ai_reads = monster_ai_reads_fr;
+		menu_magic_reads = menu_magic_reads_fr;
+		break;
+	case VERSION_FF8_12_DE:
+	case VERSION_FF8_12_DE_NV:
+		dispatcher_reads = dispatcher_reads_de;
+		damage_reads = damage_reads_de;
+		monster_ai_reads = monster_ai_reads_de;
+		menu_magic_reads = menu_magic_reads_de;
+		break;
+	case VERSION_FF8_12_SP:
+	case VERSION_FF8_12_SP_NV:
+		dispatcher_reads = dispatcher_reads_sp;
+		damage_reads = damage_reads_sp;
+		monster_ai_reads = monster_ai_reads_sp;
+		menu_magic_reads = menu_magic_reads_sp;
+		break;
+	case VERSION_FF8_12_IT:
+	case VERSION_FF8_12_IT_NV:
+		dispatcher_reads = dispatcher_reads_it;
+		damage_reads = damage_reads_it;
+		monster_ai_reads = monster_ai_reads_it;
+		menu_magic_reads = menu_magic_reads_it;
+		break;
+	case VERSION_FF8_12_JP:
+	case VERSION_FF8_12_JP_NV:
+		dispatcher_reads = dispatcher_reads_jp;
+		damage_reads = damage_reads_jp;
+		monster_ai_reads = monster_ai_reads_jp;
+		menu_magic_reads = menu_magic_reads_jp;
+		break;
+	default: // US (incl. Eidos)
+		break;
+	}
+
+	uint32_t magic_reads[] = {
+		ff8_externals.magic_fn_name_getter + 0x13, // getMagicText
+		ff8_externals.magic_fn_desc_getter + 0x13, // magic description getter
+		ff8_externals.magic_fn_unused_magic_read + 0xAC, // never called, kept for parity
+		ff8_externals.magic_fn_target_mask + 0x10, // getMagicTargetMask
+		ff8_externals.magic_fn_target_mask + 0x65, // getMagicTargetMask
+		ff8_externals.magic_fn_pick_random_action + 0xF2, // confused/berserk action roll
+		ff8_externals.magic_fn_pick_random_action + 0x12F, // confused/berserk action roll
+		ff8_externals.magic_fn_pick_random_action + 0x17E, // confused/berserk action roll
+		ff8_externals.magic_fn_confused_action + 0x3B, // confused target pick
+		ff8_externals.magic_fn_confused_action + 0x82, // confused target pick
+		ff8_externals.magic_fn_confused_action + 0xB8, // confused target pick
+		ff8_externals.magic_fn_confused_action + 0x105, // confused target pick
+		ff8_externals.magic_fn_queue_command + 0x1CE, // queuePlayerBattleCommand
+		ff8_externals.magic_fn_queue_command + 0x1ED, // queuePlayerBattleCommand
+		ff8_externals.sub_485610 + 0x671, // BattleAction_ExecuteCommand
+		ff8_externals.magic_fn_linked_stock + 0x4B, // linkedStockFieldCharData
+		ff8_externals.magic_fn_linked_stock + 0x54, // linkedStockFieldCharData
+		ff8_externals.magic_fn_linked_stock + 0x5A, // linkedStockFieldCharData
+		uint32_t(ff8_externals.battle_get_draw_magic_amount_48FD20) + 0x99, // draw quantity
+		ff8_externals.battle_sub_48FE20 + 0x29B, // Battle_applyDamage
+		ff8_externals.battle_sub_48FE20 + 0x2A6, // Battle_applyDamage
+		ff8_externals.battle_sub_48FE20 + 0x2B2, // Battle_applyDamage
+		ff8_externals.battle_sub_48FE20 + 0x2BE, // Battle_applyDamage
+		uint32_t(ff8_externals.sub_4954B0) + 0x33, // setMenuFlagMagicOnCharaData
+		uint32_t(ff8_externals.sub_4954B0) + 0x62, // setMenuFlagMagicOnCharaData
+		uint32_t(ff8_externals.sub_4954B0) + 0x72, // setMenuFlagMagicOnCharaData
+		uint32_t(ff8_externals.compute_char_max_hp_496310) + 0x7A, // Stat_ComputeCharaMaxHP
+		ff8_externals.magic_fn_stat_compute + 0x64, // Stat_ComputeCharaStat
+		ff8_externals.magic_fn_stat_compute + 0xEC, // Stat_ComputeCharaStat
+		ff8_externals.magic_fn_stat_compute + 0x120, // Stat_ComputeCharaStat
+		ff8_externals.magic_fn_stat_compute + 0x154, // Stat_ComputeCharaStat
+		ff8_externals.magic_fn_stat_compute + 0x185, // Stat_ComputeCharaStat
+		ff8_externals.magic_fn_stat_compute + 0x1B6, // Stat_ComputeCharaStat
+		ff8_externals.magic_fn_stat_hit + 0x26, // Stat_ComputeCharaHit
+		ff8_externals.magic_fn_stat_eva + 0x26, // Stat_ComputeCharaEva
+		ff8_externals.magic_fn_elem_attack + 0x1E, // get_elem_attack
+		ff8_externals.magic_fn_elem_attack_value + 0x26, // get_elem_attack_value
+		ff8_externals.magic_fn_elem_def_value + 0x45, // getMagicElemDefValue
+		ff8_externals.magic_fn_elem_def_value + 0x4F, // getMagicElemDefValue
+		ff8_externals.magic_fn_jstatus_attack + 0x1C, // getJStatusAttack
+		ff8_externals.magic_fn_status2_from_jstatus + 0x21, // getStatus2FromJstatusAttack
+		ff8_externals.magic_fn_status_attack_value + 0x26, // computeStatusAttackValue
+		ff8_externals.magic_fn_mental_defense + 0x44, // get_mental_defense
+		ff8_externals.magic_fn_mental_defense + 0x50, // get_mental_defense
+		ff8_externals.magic_fn_junction_swap + 0xD, // junction menu magic swap
+		ff8_externals.magic_fn_junction_value + 0x1A, // linkedMagicJunctionValue
+		ff8_externals.magic_fn_auto_junction_spell + 0x4D, // Junction_AutoPickBestSpellForStat
+		ff8_externals.linked_menu_magic_sub_4F02F0 + 0x35A, // magic menu
+		ff8_externals.magic_fn_menu_magic_hp + 0xC0, // magic menu HP preview
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[0], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[1], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[2], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[3], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[4], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[5], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[6], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[7], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[8], // computeCommandAction
+		ff8_externals.battle_sub_48D200 + dispatcher_reads[9], // computeCommandAction
+		ff8_externals.battle_sub_48FE20 + damage_reads[0], // Battle_applyDamage (text part)
+		ff8_externals.battle_sub_48FE20 + damage_reads[1], // Battle_applyDamage (text part)
+		ff8_externals.battle_sub_48FE20 + damage_reads[2], // Battle_applyDamage (text part)
+		ff8_externals.battle_sub_48FE20 + damage_reads[3], // Battle_applyDamage (text part)
+		ff8_externals.battle_sub_48FE20 + damage_reads[4], // Battle_applyDamage (text part)
+		ff8_externals.battle_sub_48FE20 + damage_reads[5], // Battle_applyDamage (text part)
+		ff8_externals.battle_sub_48FE20 + damage_reads[6], // Battle_applyDamage (text part)
+		ff8_externals.battle_sub_48FE20 + damage_reads[7], // Battle_applyDamage (text part)
+		ff8_externals.battle_ai_opcode_sub_487DF0 + monster_ai_reads[0], // MonsterAI
+		ff8_externals.battle_ai_opcode_sub_487DF0 + monster_ai_reads[1], // MonsterAI
+		ff8_externals.linked_menu_magic_sub_4F02F0 + menu_magic_reads[0], // magic menu (text part)
+		ff8_externals.linked_menu_magic_sub_4F02F0 + menu_magic_reads[1], // magic menu (text part)
+	};
+	memcpy(ff8_externals.magic_k_magic_reads, magic_reads, sizeof(magic_reads));
+
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
 }

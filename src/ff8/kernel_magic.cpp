@@ -47,8 +47,9 @@
 #define VANILLA_MAGIC_COUNT     57
 #define MAGIC_ENTRY_SIZE        60
 #define MAX_MAGIC_ID            256
-// How many code sites each value-scan expects to rewrite. Same on every build.
+// Instruction operands that read the magic table; listed in ff8_data.cpp.
 #define K_MAGIC_SITE_COUNT      71
+// How many code sites the drawn-once value-scan expects to rewrite.
 #define DRAWN_ONCE_SITE_COUNT   5
 #define GF_FIRST_ID             64
 #define GF_LAST_ID              79          // the exe's 16 real GF ids (64..79)
@@ -538,23 +539,30 @@ static void ff8_kernel_magic_arm()
 	uint32_t code_start, code_end;
 	getProcessCodeSection(&code_start, &code_end);
 
-	// The exe bakes K_MAGIC_SITE_COUNT operands pointing into the magic table,
-	// too many and too scattered to resolve individually; repoint them all to
-	// the FFNx-side table with a value-scan.
+	// Repoint every instruction that reads the vanilla magic table at the FFNx
+	// side one. The operands are listed in ff8_data.cpp; each is checked to
+	// still point into the table before it is touched.
 	uint32_t k_magic_end = ff8_externals.magic_k_magic + VANILLA_MAGIC_COUNT * MAGIC_ENTRY_SIZE;
-	uint32_t rewritten = relocate_scan(code_start, code_end, ff8_externals.magic_k_magic, (uint32_t)&ff8_magic_table[0][0], k_magic_end, "K_MAGIC table");
+	uint32_t table = (uint32_t)&ff8_magic_table[0][0];
+	uint32_t rewritten = 0;
+
+	for (int i = 0; i < K_MAGIC_SITE_COUNT; ++i)
+	{
+		uint32_t operand = ff8_externals.magic_k_magic_reads[i];
+		uint32_t points_at = *(uint32_t *)operand;
+
+		if (points_at < ff8_externals.magic_k_magic || points_at >= k_magic_end)
+		{
+			ffnx_warning("AddMoreMagic: magic table read %d at 0x%X points at 0x%X, not at the magic table - skipping it!\n", i, operand, points_at);
+			continue;
+		}
+
+		patch_code_dword(operand, (DWORD)(table + (points_at - ff8_externals.magic_k_magic)));
+		++rewritten;
+	}
+
 	if (rewritten != K_MAGIC_SITE_COUNT)
-		ffnx_warning("AddMoreMagic: expected %d K_MAGIC sites, rewrote %u - some magic reads may still use the vanilla table!\n", K_MAGIC_SITE_COUNT, rewritten);
-
-	ff8_drawn_once = ff8_externals.magic_sg_drawn_once;
-
-	replace_function(ff8_externals.manage_monster_spell_visibility_sub_48C7A0, (void *)ff8_manage_monster_spell_visibility);
-	ff8_compute_command_action_replaced = replace_function(ff8_externals.battle_sub_48D200, (void *)ff8_compute_command_action);
-	replace_function(ff8_externals.magic_fn_name_getter, (void *)ff8_get_magic_name);
-	replace_function(ff8_externals.magic_fn_desc_getter, (void *)ff8_get_magic_description);
-	replace_function(ff8_externals.magic_fn_linked_stock, (void *)ff8_linked_stock_field_char_data);
-	replace_function(ff8_externals.magic_fn_reorder_magic, (void *)ff8_menu_reorder_magic);
-	replace_function(ff8_externals.magic_fn_validate_magic, (void *)ff8_char_validate_magic);
+		ffnx_warning("AddMoreMagic: repointed %u of %d magic table reads - some magic reads may still use the vanilla table!\n", rewritten, K_MAGIC_SITE_COUNT);
 
 	relocate_drawn_once_bitfield(code_start, code_end);
 
