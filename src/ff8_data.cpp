@@ -1047,7 +1047,8 @@ void ff8_find_externals()
 
 	ff8_externals.set_all_monster_info_sub_48BA10 = get_relative_call(ff8_externals.sub_47CCB0, 0x996);
 	ff8_externals.manage_monster_spell_visibility_sub_48C7A0 = get_relative_call(ff8_externals.set_all_monster_info_sub_48BA10, 0x1A7);
-	ff8_externals.magic_site_spell_visibility = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + 0x43; // cmp eax,40h / jge
+	ff8_externals.magic_battle_first_monster_slot = get_absolute_value(ff8_externals.manage_monster_spell_visibility_sub_48C7A0, 0x6); // mov eax, offset BATTLE_SLOT_DATA[3]
+	ff8_externals.magic_monster_draw_data = get_absolute_value(ff8_externals.manage_monster_spell_visibility_sub_48C7A0, 0xD) - 0x46; // mov ebp, offset MONSTER_DATA_INVENTORY[0].levelTier
 	ff8_externals.magic_fn_linked_stock = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + 0x340;
 
 	// computeCommandAction: the "66 cmp bx,40h / jnb" GF check and the

@@ -91,6 +91,7 @@ static uint8_t ff8_magic_table[MAX_MAGIC_ID][MAGIC_ENTRY_SIZE];
 static int ff8_magic_count = VANILLA_MAGIC_COUNT;
 static bool ff8_magic_armed = false;
 static char *ff8_kernel_stash = nullptr;     // full grown kernel.bin image
+static uint32_t ff8_drawn_once = 0;          // drawn-once bitfield, vanilla address or the relocated one
 
 // ---- magic-vs-GF classification -----------------------------------------
 // True only for a real GF id. The exe's "id >= 64 is a GF" checks are all
@@ -146,15 +147,15 @@ static char *__cdecl ff8_get_magic_description(int id)
 }
 
 // ---- GF check trampolines -----------------------------------------------
-// Two "cmp id,40h / jcc" GF checks sit deep inside large exe functions, so they
-// cannot be replaced whole in C. Each check is overwritten with a jmp to a
-// ff8_gf_check_stub (see ff8.h) that asks ff8_is_gf_id instead.
+// The draw-execute "cmp bx,40h / jnb" GF check sits in the middle of
+// computeCommandAction, too large to replace whole in C. The check is
+// overwritten with a jmp to a ff8_gf_check_stub (see ff8.h) that asks
+// ff8_is_gf_id instead.
 
 // x86 register encodings (push opcode = 0x50 + index, cmp modrm = 0xF8 + index).
-#define REG_EAX 0
 #define REG_EBX 3
 
-#define GF_CHECK_SITE_COUNT 2
+#define GF_CHECK_SITE_COUNT 1
 static ff8_gf_check_stub ff8_gf_check_stubs[GF_CHECK_SITE_COUNT];
 
 // rel32 operands are relative to the end of the 4-byte operand itself.
@@ -362,6 +363,7 @@ static void relocate_drawn_once_bitfield(uint32_t code_start, uint32_t code_end)
 	}
 
 	uint32_t sg_drawn_once_ext = ff8_externals.field_vars_stack_1CFE9B8 + 753;
+	ff8_drawn_once = sg_drawn_once_ext;
 
 	uint32_t patched = relocate_scan(code_start, code_end, ff8_externals.magic_sg_drawn_once, sg_drawn_once_ext, ff8_externals.magic_sg_drawn_once + 1, "drawn-once bitfield");
 	if (patched != DRAWN_ONCE_SITE_COUNT)
@@ -416,6 +418,65 @@ static int __cdecl ff8_char_validate_magic(int char_idx)
 	return 0;
 }
 
+// ---- draw-list spell visibility (replaces manageMonsterSpellVisibility) --
+// For every monster slot, copy its 4 draw-list spells into the draw menu and
+// flag each one as "new" (never drawn before). Vanilla reads any id >= 64 as a
+// GF, which an extended magic id is not, so the whole function is replaced.
+#define BATTLE_SLOT_STRIDE        208   // FF8BattleSlotData
+#define BATTLE_MONSTER_COUNT      4     // slots 3..6; slots 0..2 are the party
+#define BATTLE_SLOT_FLAGS_OFF     0x7C
+#define BATTLE_SLOT_FLAG_ENABLED  1
+#define MONSTER_INFO_DRAW_OFF     0x104 // draw list: 3 level tiers x 4 entries of {id, amount}
+#define MONSTER_DRAW_STRIDE       71    // one monster's draw menu record
+#define MONSTER_DRAW_LEVEL_OFF    0x46  // level tier (0..2), picks the draw list row
+#define MONSTER_DRAW_SLOT_COUNT   4
+#define MONSTER_DRAW_SLOT_SIZE    4     // {id, flags, unused, unused}
+#define DRAW_SLOT_NEVER_DRAWN     8     // flag bit: spell not in the drawn-once bitfield yet
+#define GF_DATA_EXISTS_OFF        0x11  // "GF already obtained" byte of a savemap GF record
+static void *__cdecl ff8_manage_monster_spell_visibility()
+{
+	const uint32_t *drawn_once = (const uint32_t *)ff8_drawn_once;
+	uint8_t *slot = (uint8_t *)ff8_externals.magic_battle_first_monster_slot;
+	uint8_t *monster = (uint8_t *)ff8_externals.magic_monster_draw_data;
+	// Vanilla keeps this across slots and reads it back on an empty draw slot.
+	int already_drawn = 0;
+
+	for (int i = 0; i < BATTLE_MONSTER_COUNT; ++i, slot += BATTLE_SLOT_STRIDE, monster += MONSTER_DRAW_STRIDE)
+	{
+		if (!(slot[BATTLE_SLOT_FLAGS_OFF] & BATTLE_SLOT_FLAG_ENABLED))
+			continue;
+
+		const uint8_t *monster_info = *(const uint8_t **)*(const uint8_t **)slot;
+		const uint8_t *draw_list = monster_info + MONSTER_INFO_DRAW_OFF + 2 * MONSTER_DRAW_SLOT_COUNT * monster[MONSTER_DRAW_LEVEL_OFF];
+
+		for (int draw_slot = 0; draw_slot < MONSTER_DRAW_SLOT_COUNT; ++draw_slot)
+		{
+			uint8_t *menu_entry = monster + MONSTER_DRAW_SLOT_SIZE * draw_slot; // {id, flags, ...}
+			uint8_t id = draw_list[2 * draw_slot];
+
+			menu_entry[2] = 0;
+
+			if (ff8_is_gf_id(id))
+			{
+				const uint8_t *gf = (const uint8_t *)(ff8_externals.magic_sg_gf_data + GF_DATA_STRIDE * (id - GF_FIRST_ID));
+				menu_entry[0] = gf[GF_DATA_EXISTS_OFF] ? 0 : id; // a GF you already own is not drawable
+				continue;
+			}
+
+			menu_entry[0] = id;
+			if (id)
+				already_drawn = (drawn_once[(id - 1) / 32] >> ((id - 1) % 32)) & 1;
+
+			if (already_drawn)
+				menu_entry[1] &= ~DRAW_SLOT_NEVER_DRAWN;
+			else
+				menu_entry[1] |= DRAW_SLOT_NEVER_DRAWN;
+		}
+	}
+
+	return slot; // vanilla returns the slot it stopped on; no caller uses it
+}
+
 // ---- patch application (once, on first grown-kernel load) ---------------
 static void ff8_kernel_magic_arm()
 {
@@ -433,10 +494,12 @@ static void ff8_kernel_magic_arm()
 	if (rewritten != K_MAGIC_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: expected %d K_MAGIC sites, rewrote %u - some magic reads may still use the vanilla table!\n", K_MAGIC_SITE_COUNT, rewritten);
 
-	// The two deep-in-function GF checks; the rest are replaced whole below.
-	install_gf_check_trampoline(0, ff8_externals.magic_site_spell_visibility, REG_EAX, "draw-list visibility");
-	install_gf_check_trampoline(1, ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
+	// The last deep-in-function GF check; every other one is replaced whole below.
+	install_gf_check_trampoline(0, ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
 
+	ff8_drawn_once = ff8_externals.magic_sg_drawn_once;
+
+	replace_function(ff8_externals.manage_monster_spell_visibility_sub_48C7A0, (void *)ff8_manage_monster_spell_visibility);
 	replace_function(ff8_externals.magic_fn_name_getter, (void *)ff8_get_magic_name);
 	replace_function(ff8_externals.magic_fn_desc_getter, (void *)ff8_get_magic_description);
 	replace_function(ff8_externals.magic_fn_linked_stock, (void *)ff8_linked_stock_field_char_data);

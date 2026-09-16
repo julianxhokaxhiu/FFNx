@@ -1814,7 +1814,8 @@ struct ff8_externals
 	uint32_t magic_kernel_read_call;      // call sm_pc_read(name, KERNEL_HEADER)
 	uint32_t magic_fn_name_getter;        // getMagicText(int id), replaced wholesale in C
 	uint32_t magic_fn_desc_getter;        // magic description getter(int id), replaced wholesale in C
-	uint32_t magic_site_spell_visibility; // draw-list vis:     (66)? cmp reg,40h / jcc
+	uint32_t magic_battle_first_monster_slot; // FF8BattleSlotData[3], stride 208: the 4 monster slots
+	uint32_t magic_monster_draw_data;     // monster draw menu records, stride 71: {id, flags, 0, 0}[4], level tier at +0x46
 	uint32_t magic_site_draw_execute;     // draw command:      66 cmp bx,40h / jcc -- includes the 0x66 prefix
 	uint32_t magic_fn_linked_stock;       // linkedStockFieldCharData(int char, int id)
 	uint32_t magic_fn_reorder_magic;      // menu_reorder_magic(int char, int preset)
