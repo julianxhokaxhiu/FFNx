@@ -1151,30 +1151,6 @@ struct SsigpuExecutionInstructionRect44 {
 
 // --------------- end of FF8 imports ---------------
 
-// AddMoreMagic (src/ff8/kernel_magic.cpp): stub reached by a jmp placed over an
-// exe "cmp id,40h / jcc" GF check. It calls the FFNx GF check (scratch registers
-// preserved), then jumps to the original GF branch or back after the check.
-#pragma pack(push, 1)
-struct ff8_gf_check_stub
-{
-	uint8_t push_eax;      // 50
-	uint8_t push_ecx;      // 51
-	uint8_t push_edx;      // 52
-	uint8_t push_id_reg;   // 50+reg
-	uint8_t call_opcode;   // E8
-	int32_t call_offset;   // rel32 -> ff8_is_gf_id
-	uint8_t add_esp_4[3];  // 83 C4 04
-	uint8_t test_al_al[2]; // 84 C0
-	uint8_t pop_edx;       // 5A
-	uint8_t pop_ecx;       // 59
-	uint8_t pop_eax;       // 58
-	uint8_t jnz_opcode[2]; // 0F 85
-	int32_t jnz_offset;    // rel32 -> the original GF branch target
-	uint8_t jmp_opcode;    // E9
-	int32_t jmp_offset;    // rel32 -> the instruction after the original check
-};
-#pragma pack(pop)
-
 // memory addresses and function pointers from FF8.exe
 struct ff8_externals
 {
@@ -1816,7 +1792,7 @@ struct ff8_externals
 	uint32_t magic_fn_desc_getter;        // magic description getter(int id), replaced wholesale in C
 	uint32_t magic_battle_first_monster_slot; // FF8BattleSlotData[3], stride 208: the 4 monster slots
 	uint32_t magic_monster_draw_data;     // monster draw menu records, stride 71: {id, flags, 0, 0}[4], level tier at +0x46
-	uint32_t magic_site_draw_execute;     // draw command:      66 cmp bx,40h / jcc -- includes the 0x66 prefix
+	uint32_t magic_battle_slot_data;      // FF8BattleSlotData[7], stride 208: 3 party slots then 4 monster slots
 	uint32_t magic_fn_linked_stock;       // linkedStockFieldCharData(int char, int id)
 	uint32_t magic_fn_reorder_magic;      // menu_reorder_magic(int char, int preset)
 	uint32_t magic_fn_validate_magic;     // sub_4BE790(int char): per-char held-magic + junction validate

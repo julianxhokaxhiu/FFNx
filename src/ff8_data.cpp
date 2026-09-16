@@ -1049,38 +1049,34 @@ void ff8_find_externals()
 	ff8_externals.manage_monster_spell_visibility_sub_48C7A0 = get_relative_call(ff8_externals.set_all_monster_info_sub_48BA10, 0x1A7);
 	ff8_externals.magic_battle_first_monster_slot = get_absolute_value(ff8_externals.manage_monster_spell_visibility_sub_48C7A0, 0x6); // mov eax, offset BATTLE_SLOT_DATA[3]
 	ff8_externals.magic_monster_draw_data = get_absolute_value(ff8_externals.manage_monster_spell_visibility_sub_48C7A0, 0xD) - 0x46; // mov ebp, offset MONSTER_DATA_INVENTORY[0].levelTier
+	ff8_externals.magic_battle_slot_data = ff8_externals.magic_battle_first_monster_slot - 3 * 208; // the 3 party slots sit before the monsters
 	ff8_externals.magic_fn_linked_stock = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + 0x340;
 
-	// computeCommandAction: the "66 cmp bx,40h / jnb" GF check and the
-	// getMagicText call it later makes. Both offsets are build-specific.
-	uint32_t draw_execute_offset, name_getter_offset;
+	// computeCommandAction: the getMagicText call it makes, at a build
+	// specific offset.
+	uint32_t name_getter_offset;
 	switch (version)
 	{
 	case VERSION_FF8_12_JP:
 	case VERSION_FF8_12_JP_NV:
-		draw_execute_offset = 0xDB6;
 		name_getter_offset = 0x3EB;
 		break;
 	case VERSION_FF8_12_DE:
 	case VERSION_FF8_12_DE_NV:
 	case VERSION_FF8_12_IT:
 	case VERSION_FF8_12_IT_NV:
-		draw_execute_offset = 0xD9C;
 		name_getter_offset = 0x3F0;
 		break;
 	case VERSION_FF8_12_FR:
 	case VERSION_FF8_12_FR_NV:
 	case VERSION_FF8_12_SP:
 	case VERSION_FF8_12_SP_NV:
-		draw_execute_offset = 0xD9C;
 		name_getter_offset = 0x3BC;
 		break;
 	default: // US (incl. Eidos)
-		draw_execute_offset = 0xD9B;
 		name_getter_offset = 0x3C3;
 		break;
 	}
-	ff8_externals.magic_site_draw_execute = ff8_externals.manage_monster_spell_visibility_sub_48C7A0 + draw_execute_offset;
 	ff8_externals.magic_fn_name_getter = get_relative_call(ff8_externals.battle_sub_48D200, name_getter_offset);
 	ff8_externals.magic_fn_desc_getter = ff8_externals.magic_fn_name_getter + 0x50;
 

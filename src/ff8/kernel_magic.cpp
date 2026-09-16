@@ -30,11 +30,10 @@
 // -------------------------------------------------------------------------
 // AddMoreMagic - lets kernel.bin hold more than the vanilla 57 magic spells.
 //
-// Vanilla caps magic at 57 entries and routes ids >= 64 to GF handling. When
-// a grown kernel.bin is loaded we arm the extension: serve the game a
-// vanilla-layout image, copy the full magic table FFNx-side, and patch the
-// exe to read from it and to treat only 64..79 as GFs. A stock kernel.bin is
-// left completely untouched.
+// The exe caps magic at 57 entries and reads any id >= 64 as a GF. On a grown
+// kernel.bin we hand the game a vanilla-layout image, keep the full magic
+// table FFNx-side, repoint the exe's reads to it, and replace the functions
+// that would misread an extended id. A stock kernel.bin is left untouched.
 //
 // Modder contract: kernel.bin section 1 must list ids 0..N-1, including 32
 // dummy rows for the GF-reserved ids 64..95, once N > 64. mmagic.bin must
@@ -94,12 +93,11 @@ static char *ff8_kernel_stash = nullptr;     // full grown kernel.bin image
 static uint32_t ff8_drawn_once = 0;          // drawn-once bitfield, vanilla address or the relocated one
 
 // ---- magic-vs-GF classification -----------------------------------------
-// True only for a real GF id. The exe's "id >= 64 is a GF" checks are all
-// narrowed to this range - the two getters below by full replacement, the
-// two deep-in-function sites by a small stub (install_gf_check_trampoline).
+// Only 64..79 are real GFs. The exe's "id >= 64" shortcut is what an extended
+// magic id trips over.
 static int __cdecl ff8_is_gf_id(int id)
 {
-	id &= 0xFFFF; // the draw-execute site classifies on BX (16-bit); harmless elsewhere
+	id &= 0xFFFF; // battle code passes a 16-bit id
 	return (id >= GF_FIRST_ID && id <= GF_LAST_ID) ? 1 : 0;
 }
 
@@ -144,73 +142,6 @@ static char *__cdecl ff8_get_magic_description(int id)
 	}
 
 	return ff8_kernel_text(KERNEL_TEXT_MAGIC_SEC, ff8_magic_text_offset(id, MAGIC_DESC_OFF));
-}
-
-// ---- GF check trampolines -----------------------------------------------
-// The draw-execute "cmp bx,40h / jnb" GF check sits in the middle of
-// computeCommandAction, too large to replace whole in C. The check is
-// overwritten with a jmp to a ff8_gf_check_stub (see ff8.h) that asks
-// ff8_is_gf_id instead.
-
-// x86 register encodings (push opcode = 0x50 + index, cmp modrm = 0xF8 + index).
-#define REG_EBX 3
-
-#define GF_CHECK_SITE_COUNT 1
-static ff8_gf_check_stub ff8_gf_check_stubs[GF_CHECK_SITE_COUNT];
-
-// rel32 operands are relative to the end of the 4-byte operand itself.
-static int32_t ff8_rel32(uint32_t operand_address, uint32_t target)
-{
-	return int32_t(target - (operand_address + 4));
-}
-
-// site points at "(66) 83 F8+reg 40 / jcc"; the 0x66 prefix is used by the draw-execute check (cmp bx,40h).
-static bool install_gf_check_trampoline(int stub_index, uint32_t site, uint8_t id_reg, const char *what)
-{
-	const uint8_t *code = (const uint8_t *)site;
-	uint32_t cmp_size = code[0] == 0x66 ? 4 : 3;
-
-	if (code[cmp_size - 3] != 0x83 || code[cmp_size - 2] != 0xF8 + id_reg || code[cmp_size - 1] != 0x40)
-	{
-		ffnx_warning("AddMoreMagic: unexpected bytes at %s site 0x%X (%02X %02X %02X %02X), skipping patch!\n", what, site, code[0], code[1], code[2], code[3]);
-		return false;
-	}
-
-	const uint8_t *jcc = code + cmp_size;
-	uint32_t check_size, gf_target;
-	if ((jcc[0] & 0xF0) == 0x70) // jcc rel8
-	{
-		check_size = cmp_size + 2;
-		gf_target = site + check_size + int8_t(jcc[1]);
-	}
-	else if (jcc[0] == 0x0F && (jcc[1] & 0xF0) == 0x80) // jcc rel32
-	{
-		check_size = cmp_size + 6;
-		gf_target = site + check_size + *(const int32_t *)(jcc + 2);
-	}
-	else
-	{
-		ffnx_warning("AddMoreMagic: unexpected jcc at %s site 0x%X (%02X), skipping patch!\n", what, site, jcc[0]);
-		return false;
-	}
-
-	uint32_t stub_address = uint32_t(&ff8_gf_check_stubs[stub_index]);
-	ff8_gf_check_stub stub = {
-		0x50, 0x51, 0x52, uint8_t(0x50 + id_reg),
-		0xE8, ff8_rel32(stub_address + offsetof(ff8_gf_check_stub, call_offset), uint32_t(&ff8_is_gf_id)),
-		{ 0x83, 0xC4, 0x04 },
-		{ 0x84, 0xC0 },
-		0x5A, 0x59, 0x58,
-		{ 0x0F, 0x85 }, ff8_rel32(stub_address + offsetof(ff8_gf_check_stub, jnz_offset), gf_target),
-		0xE9, ff8_rel32(stub_address + offsetof(ff8_gf_check_stub, jmp_offset), site + check_size)
-	};
-	memcpy_code(stub_address, &stub, sizeof(stub));
-
-	// NOP the whole compare-and-branch so the disassembly stays readable, then jump to the stub.
-	memset_code(site, 0x90, check_size);
-	replace_function(site, (void *)stub_address);
-
-	return true;
 }
 
 // ---- value-scan relocation (shared by K_MAGIC and drawn-once) -----------
@@ -419,11 +350,12 @@ static int __cdecl ff8_char_validate_magic(int char_idx)
 }
 
 // ---- draw-list spell visibility (replaces manageMonsterSpellVisibility) --
-// For every monster slot, copy its 4 draw-list spells into the draw menu and
-// flag each one as "new" (never drawn before). Vanilla reads any id >= 64 as a
-// GF, which an extended magic id is not, so the whole function is replaced.
+// Copies each monster's 4 draw-list spells into the draw menu and flags the
+// ones never drawn before. Replaced whole because vanilla reads any id >= 64
+// as a GF.
 #define BATTLE_SLOT_STRIDE        208   // FF8BattleSlotData
-#define BATTLE_MONSTER_COUNT      4     // slots 3..6; slots 0..2 are the party
+#define BATTLE_FIRST_MONSTER_SLOT 3     // slots 0..2 are the party
+#define BATTLE_MONSTER_COUNT      4     // slots 3..6
 #define BATTLE_SLOT_FLAGS_OFF     0x7C
 #define BATTLE_SLOT_FLAG_ENABLED  1
 #define MONSTER_INFO_DRAW_OFF     0x104 // draw list: 3 level tiers x 4 entries of {id, amount}
@@ -477,6 +409,126 @@ static void *__cdecl ff8_manage_monster_spell_visibility()
 	return slot; // vanilla returns the slot it stopped on; no caller uses it
 }
 
+// ---- draw command: stocking an extended magic ---------------------------
+// The exe only stocks a drawn spell whose id is < 64; above that it takes the
+// GF path. Its battle message is built differently in every language, so the
+// original function keeps doing the whole draw: the spell is handed to it
+// under a free vanilla id whose magic entry points at the real spell, and
+// everything the call wrote with that id is renamed back afterwards.
+#define COMMAND_DRAW              6
+#define DRAW_VARIANT_STOCK        10    // 9 is draw-and-cast, which has no GF check
+#define F_CHAR_DATA_STRIDE        464
+#define BATTLE_MAGIC_OFF          130   // 32 x {id, amount, ...} in FF8FieldCharData
+#define BATTLE_MAGIC_STRIDE       5
+#define BATTLE_MAGIC_SLOTS        32
+// Battle state globals, as offsets from the battle slot array. The data
+// section has the same layout on every retail build, only its base moves.
+#define BATTLE_ABILITY_ID         (-0x1C)
+#define BATTLE_SEQUENCE_COUNTER   0x5B0
+#define BATTLE_TASK_DATA          0x5B4
+#define BATTLE_TASK_STRIDE        20
+#define BATTLE_TASK_ABILITY_OFF   4
+
+typedef int(__cdecl *compute_command_action_t)(int, int, int, int, int, int, int);
+
+static uint32_t ff8_compute_command_action_replaced = 0;
+
+static uint8_t *ff8_battle_state(int offset)
+{
+	return (uint8_t *)(ff8_externals.magic_battle_slot_data + offset);
+}
+
+// A free id below GF_FIRST_ID - above it the game would read a GF again - that
+// the caster does not hold and the monster does not offer. Counts down, so it
+// takes the ids above the vanilla 57 spells first.
+static int ff8_stand_in_magic_id(const uint8_t *inventory, const uint8_t *monster)
+{
+	for (int id = GF_FIRST_ID - 1; id > 0; --id)
+	{
+		bool used = false;
+
+		for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
+			if (inventory[BATTLE_MAGIC_STRIDE * i] == id)
+				used = true;
+
+		for (int i = 0; i < MONSTER_DRAW_SLOT_COUNT; ++i)
+			if (monster[MONSTER_DRAW_SLOT_SIZE * i] == id)
+				used = true;
+
+		if (!used)
+			return id;
+	}
+
+	return 0;
+}
+
+static int ff8_call_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
+{
+	unreplace_function(ff8_compute_command_action_replaced);
+	int ret = ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, command, id, variant, target_slot, target_mask, linked);
+	rereplace_function(ff8_compute_command_action_replaced);
+
+	return ret;
+}
+
+static int __cdecl ff8_compute_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
+{
+	uint16_t spell_id = (uint16_t)id;
+
+	// Everything vanilla still gets right goes straight to the original.
+	if (command != COMMAND_DRAW || variant != DRAW_VARIANT_STOCK || spell_id < GF_FIRST_ID || ff8_is_gf_id(spell_id) || spell_id >= MAX_MAGIC_ID)
+		return ff8_call_command_action(attacker_slot, command, id, variant, target_slot, target_mask, linked);
+
+	uint8_t *inventory = (uint8_t *)(ff8_externals.magic_f_char_data + F_CHAR_DATA_STRIDE * attacker_slot + BATTLE_MAGIC_OFF);
+	uint8_t *monster = (uint8_t *)ff8_externals.magic_monster_draw_data + MONSTER_DRAW_STRIDE * (target_slot - BATTLE_FIRST_MONSTER_SLOT);
+
+	int stand_in = ff8_stand_in_magic_id(inventory, monster);
+	if (!stand_in)
+	{
+		if (trace_all) ffnx_trace("AddMoreMagic: no free magic id to stand in for %d, drawing it as vanilla would.\n", spell_id);
+		return ff8_call_command_action(attacker_slot, command, id, variant, target_slot, target_mask, linked);
+	}
+
+	// The entry carries the name and the draw resistance, so the call behaves
+	// exactly as it would for a vanilla spell.
+	uint8_t saved_entry[MAGIC_ENTRY_SIZE];
+	memcpy(saved_entry, ff8_magic_table[stand_in], MAGIC_ENTRY_SIZE);
+	memcpy(ff8_magic_table[stand_in], ff8_magic_table[spell_id], MAGIC_ENTRY_SIZE);
+
+	// Rename it where the call looks it up, so a spell the caster already owns
+	// keeps stacking on its own slot.
+	int draw_slot = 0;
+	while (draw_slot < MONSTER_DRAW_SLOT_COUNT && monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] != (uint8_t)spell_id)
+		++draw_slot;
+	if (draw_slot < MONSTER_DRAW_SLOT_COUNT)
+		monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] = (uint8_t)stand_in;
+
+	for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
+		if (inventory[BATTLE_MAGIC_STRIDE * i] == (uint8_t)spell_id)
+			inventory[BATTLE_MAGIC_STRIDE * i] = (uint8_t)stand_in;
+
+	int ret = ff8_call_command_action(attacker_slot, command, stand_in, variant, target_slot, target_mask, linked);
+
+	// Put the real spell back everywhere the call left the stand-in.
+	for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
+		if (inventory[BATTLE_MAGIC_STRIDE * i] == (uint8_t)stand_in)
+			inventory[BATTLE_MAGIC_STRIDE * i] = (uint8_t)spell_id;
+
+	if (draw_slot < MONSTER_DRAW_SLOT_COUNT)
+		monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] = (uint8_t)spell_id;
+
+	memcpy(ff8_magic_table[stand_in], saved_entry, MAGIC_ENTRY_SIZE);
+
+	// The queued action carries the ability id the animation will play.
+	uint8_t *task = ff8_battle_state(BATTLE_TASK_DATA) + BATTLE_TASK_STRIDE * *ff8_battle_state(BATTLE_SEQUENCE_COUNTER);
+	if (*(uint16_t *)(task + BATTLE_TASK_ABILITY_OFF) == stand_in)
+		*(uint16_t *)(task + BATTLE_TASK_ABILITY_OFF) = spell_id;
+	if (*(uint16_t *)ff8_battle_state(BATTLE_ABILITY_ID) == stand_in)
+		*(uint16_t *)ff8_battle_state(BATTLE_ABILITY_ID) = spell_id;
+
+	return ret;
+}
+
 // ---- patch application (once, on first grown-kernel load) ---------------
 static void ff8_kernel_magic_arm()
 {
@@ -494,12 +546,10 @@ static void ff8_kernel_magic_arm()
 	if (rewritten != K_MAGIC_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: expected %d K_MAGIC sites, rewrote %u - some magic reads may still use the vanilla table!\n", K_MAGIC_SITE_COUNT, rewritten);
 
-	// The last deep-in-function GF check; every other one is replaced whole below.
-	install_gf_check_trampoline(0, ff8_externals.magic_site_draw_execute, REG_EBX, "draw execution");
-
 	ff8_drawn_once = ff8_externals.magic_sg_drawn_once;
 
 	replace_function(ff8_externals.manage_monster_spell_visibility_sub_48C7A0, (void *)ff8_manage_monster_spell_visibility);
+	ff8_compute_command_action_replaced = replace_function(ff8_externals.battle_sub_48D200, (void *)ff8_compute_command_action);
 	replace_function(ff8_externals.magic_fn_name_getter, (void *)ff8_get_magic_name);
 	replace_function(ff8_externals.magic_fn_desc_getter, (void *)ff8_get_magic_description);
 	replace_function(ff8_externals.magic_fn_linked_stock, (void *)ff8_linked_stock_field_char_data);
