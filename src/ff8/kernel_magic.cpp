@@ -43,6 +43,7 @@
 #define CHAR_STRIDE             152         // FF8CharacterData record size
 #define CHAR_MAGIC_OFF          16          // 32 x {id:u8, amount:u8}
 #define CHAR_JUNCTION_OFF       92          // 20 stat slots, each = a junctioned magic id
+#define BATTLE_MAGIC_SLOTS      32          // held spells per character, in and out of battle
 #define VANILLA_KERNEL_SIZE     37992u
 #define VANILLA_MAGIC_COUNT     57
 #define MAGIC_ENTRY_SIZE        60
@@ -197,46 +198,45 @@ static char *__cdecl ff8_get_magic_description(int id)
 // Draw->Stock setup (replaces linkedStockFieldCharData); only 64..79 are GFs.
 static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_id)
 {
-	uint8_t *chr = (uint8_t *)(ff8_externals.char_comp_stats_1CFF000.data() + char_slot);
+	ff8_char_computed_stats *chr = ff8_externals.char_comp_stats_1CFF000.data() + char_slot;
 	const uint8_t *draw_cmd = (const uint8_t *)(magic_ext.k_battle_command + 8 * 10);
 
-	chr[0] = 10;          // battle command id: Draw
-	chr[1] = draw_cmd[5]; // command menuFlags
-	chr[2] = draw_cmd[6]; // command targetInfo
-	chr[3] = 0;
-	chr[4] = 9;
+	chr->battle_command_id = 10; // Draw
+	chr->command_menu_flags = draw_cmd[5];
+	chr->command_target_info = draw_cmd[6];
+	chr->stock_flags = 0;
+	chr->unk_04 = 9;
 
 	if (spell_id >= GF_FIRST_ID && spell_id <= GF_LAST_ID)
 	{
-		chr[5] = 0;
-		chr[6] = 0;
-		chr[7] = 2; // stock target type: GF
+		chr->magic_status_window_flags = 0;
+		chr->magic_target_info = 0;
+		chr->stock_target_type = 2; // GF
 	}
 	else
 	{
 		const uint8_t *magic = ff8_magic_table[spell_id & 0xFF];
-		chr[5] = magic[9];  // statusWindowFlags
-		chr[6] = magic[10]; // targetInfo
-		chr[7] = 0;
+		chr->magic_status_window_flags = magic[9];
+		chr->magic_target_info = magic[10];
+		chr->stock_target_type = 0;
 		if (magic[11] & 0x80) // attackFlags: can target KO'd units
 		{
-			chr[7] = 1;
-			chr[3] |= 1;
+			chr->stock_target_type = 1;
+			chr->stock_flags |= 1;
 		}
 
-		// Inventory: full-stock flag (amount 100) / no-free-slot flag.
-		uint8_t *inventory = chr + 130; // FF8FieldMagicData[32], stride 5, {id, amount, ...}
+		// Flag a spell already stocked to the maximum, or a full inventory.
 		int slot = 0;
-		while (inventory[5 * slot] != (uint8_t)spell_id)
+		while (chr->magic[slot].id != (uint8_t)spell_id)
 		{
-			if (++slot >= 32)
+			if (++slot >= BATTLE_MAGIC_SLOTS)
 			{
-				for (slot = 0; slot < 32 && inventory[5 * slot]; ++slot);
-				if (slot >= 32) chr[3] |= 2; // inventory full
+				for (slot = 0; slot < BATTLE_MAGIC_SLOTS && chr->magic[slot].id; ++slot);
+				if (slot >= BATTLE_MAGIC_SLOTS) chr->stock_flags |= 2; // no free slot
 				return chr;
 			}
 		}
-		if (inventory[5 * slot + 1] == 100) chr[3] |= 2; // already at max stock
+		if (chr->magic[slot].amount == 100) chr->stock_flags |= 2;
 	}
 
 	return chr;
@@ -445,9 +445,6 @@ static void *__cdecl ff8_manage_monster_spell_visibility()
 // everything the call wrote with that id is renamed back afterwards.
 #define COMMAND_DRAW              6
 #define DRAW_VARIANT_STOCK        10    // 9 is draw-and-cast, which has no GF check
-#define BATTLE_MAGIC_OFF          130   // 32 x {id, amount, ...} in FF8FieldCharData
-#define BATTLE_MAGIC_STRIDE       5
-#define BATTLE_MAGIC_SLOTS        32
 // Battle state globals, as offsets from the battle slot array. The data
 // section has the same layout on every retail build, only its base moves.
 #define BATTLE_ABILITY_ID         (-0x1C)
@@ -469,14 +466,14 @@ static uint8_t *ff8_battle_state(int offset)
 // A free id below GF_FIRST_ID - above it the game would read a GF again - that
 // the caster does not hold and the monster does not offer. Counts down, so it
 // takes the ids above the vanilla 57 spells first.
-static int ff8_stand_in_magic_id(const uint8_t *inventory, const uint8_t *monster)
+static int ff8_stand_in_magic_id(const ff8_field_magic_slot *inventory, const uint8_t *monster)
 {
 	for (int id = GF_FIRST_ID - 1; id > 0; --id)
 	{
 		bool used = false;
 
 		for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
-			if (inventory[BATTLE_MAGIC_STRIDE * i] == id)
+			if (inventory[i].id == id)
 				used = true;
 
 		for (int i = 0; i < MONSTER_DRAW_SLOT_COUNT; ++i)
@@ -519,7 +516,7 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 	if (command_id != COMMAND_DRAW || draw_variant != DRAW_VARIANT_STOCK || spell_id < GF_FIRST_ID || ff8_is_gf_id(spell_id) || spell_id >= MAX_MAGIC_ID)
 		return ff8_call_command_action(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 
-	uint8_t *inventory = (uint8_t *)(ff8_externals.char_comp_stats_1CFF000.data() + attacker_slot) + BATTLE_MAGIC_OFF;
+	ff8_field_magic_slot *inventory = (ff8_externals.char_comp_stats_1CFF000.data() + attacker_slot)->magic;
 	uint8_t *monster = (uint8_t *)magic_ext.monster_draw_data + MONSTER_DRAW_STRIDE * (target - BATTLE_FIRST_MONSTER_SLOT);
 
 	int stand_in = ff8_stand_in_magic_id(inventory, monster);
@@ -544,15 +541,15 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 		monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] = (uint8_t)stand_in;
 
 	for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
-		if (inventory[BATTLE_MAGIC_STRIDE * i] == (uint8_t)spell_id)
-			inventory[BATTLE_MAGIC_STRIDE * i] = (uint8_t)stand_in;
+		if (inventory[i].id == (uint8_t)spell_id)
+			inventory[i].id = (uint8_t)stand_in;
 
 	int ret = ff8_call_command_action(attacker_slot, command, stand_in, variant, target_slot, target_mask, linked);
 
 	// Put the real spell back everywhere the call left the stand-in.
 	for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
-		if (inventory[BATTLE_MAGIC_STRIDE * i] == (uint8_t)stand_in)
-			inventory[BATTLE_MAGIC_STRIDE * i] = (uint8_t)spell_id;
+		if (inventory[i].id == (uint8_t)stand_in)
+			inventory[i].id = (uint8_t)spell_id;
 
 	if (draw_slot < MONSTER_DRAW_SLOT_COUNT)
 		monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] = (uint8_t)spell_id;
