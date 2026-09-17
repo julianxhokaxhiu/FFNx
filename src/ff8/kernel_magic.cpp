@@ -507,14 +507,22 @@ static int ff8_call_command_action(int attacker_slot, int command, int id, int v
 
 static int __cdecl ff8_compute_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
 {
+	// The dispatcher takes these as a word and as bytes, so its callers write only
+	// the low part of the register they push ("mov dl, [esi+2]") and leave whatever
+	// was in the rest. Read them at their real width or a stocked draw shows up as
+	// 0x4000000A rather than 10.
 	uint16_t spell_id = (uint16_t)id;
+	uint8_t command_id = (uint8_t)command;
+	uint8_t draw_variant = (uint8_t)variant;
+	uint8_t target = (uint8_t)target_slot;
 
-	// Everything vanilla still gets right goes straight to the dispatcher.
-	if (command != COMMAND_DRAW || variant != DRAW_VARIANT_STOCK || spell_id < GF_FIRST_ID || ff8_is_gf_id(spell_id) || spell_id >= MAX_MAGIC_ID)
+	// Everything vanilla still gets right goes straight to the dispatcher, with the
+	// arguments exactly as they arrived.
+	if (command_id != COMMAND_DRAW || draw_variant != DRAW_VARIANT_STOCK || spell_id < GF_FIRST_ID || ff8_is_gf_id(spell_id) || spell_id >= MAX_MAGIC_ID)
 		return ff8_call_command_action(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 
 	uint8_t *inventory = (uint8_t *)(magic_ext.f_char_data + F_CHAR_DATA_STRIDE * attacker_slot + BATTLE_MAGIC_OFF);
-	uint8_t *monster = (uint8_t *)magic_ext.monster_draw_data + MONSTER_DRAW_STRIDE * (target_slot - BATTLE_FIRST_MONSTER_SLOT);
+	uint8_t *monster = (uint8_t *)magic_ext.monster_draw_data + MONSTER_DRAW_STRIDE * (target - BATTLE_FIRST_MONSTER_SLOT);
 
 	int stand_in = ff8_stand_in_magic_id(inventory, monster);
 	if (!stand_in)
