@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Enable monster-AI target values 228-255 (fixed battle-slot pairs). Call once.
+// Enable monster-AI target values 228-248 (fixed battle-slot pairs). Call once.
 void ff8_battle_ai_init();
