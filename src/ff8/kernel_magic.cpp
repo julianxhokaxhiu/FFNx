@@ -219,7 +219,7 @@ static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_i
 		chr[5] = magic[9];  // statusWindowFlags
 		chr[6] = magic[10]; // targetInfo
 		chr[7] = 0;
-		if (magic[11] & 0x40) // ATTACK_FLAG_REVIVE
+		if (magic[11] & 0x80) // attackFlags: can target KO'd units
 		{
 			chr[7] = 1;
 			chr[3] |= 1;
