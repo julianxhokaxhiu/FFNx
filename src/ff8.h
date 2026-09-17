@@ -1776,59 +1776,6 @@ struct ff8_externals
 	double *time_volume_change_related_1A78BE0;
 	uint32_t field_vars_stack_1CFE9B8;
 
-	// AddMoreMagic (src/ff8/kernel_magic.cpp): extended kernel.bin magic
-	// section support. Everything is resolved relatively in ff8_data.cpp;
-	// see that file for how each address was derived.
-	// magic_sg_drawn_once_ext is NOT stored here - it is computed from
-	// field_vars_stack_1CFE9B8 (already resolved above) + 753, the
-	// field-script variable slot it relocates to.
-	uint32_t read_kernel_files_sub_47D2A0;
-	uint32_t set_all_monster_info_sub_48BA10;
-	uint32_t manage_monster_spell_visibility_sub_48C7A0;
-	uint32_t linked_menu_magic_sub_4F02F0;
-	uint32_t magic_k_magic;               // buffer + 0x21C (K_MAGIC data label)
-	uint32_t magic_kernel_read_call;      // call sm_pc_read(name, KERNEL_HEADER)
-	uint32_t magic_fn_name_getter;        // getMagicText(int id), replaced wholesale in C
-	uint32_t magic_fn_desc_getter;        // magic description getter(int id), replaced wholesale in C
-	uint32_t magic_battle_first_monster_slot; // FF8BattleSlotData[3], stride 208: the 4 monster slots
-	uint32_t magic_monster_draw_data;     // monster draw menu records, stride 71: {id, flags, 0, 0}[4], level tier at +0x46
-	uint32_t magic_battle_slot_data;      // FF8BattleSlotData[7], stride 208: 3 party slots then 4 monster slots
-	uint32_t magic_fn_linked_stock;       // linkedStockFieldCharData(int char, int id)
-	uint32_t magic_fn_reorder_magic;      // menu_reorder_magic(int char, int preset)
-	uint32_t magic_fn_validate_magic;     // sub_4BE790(int char): per-char held-magic + junction validate
-	uint32_t magic_f_char_data;           // FF8FieldCharData[], stride 464
-	uint32_t magic_k_battle_command;      // FF8KernelBattleCommand[], stride 8
-	uint32_t magic_valid_junction;        // uint32[2] per char (8 chars): valid-junction bitfield
-	uint32_t magic_sg_chara_data;         // CharacterData[], stride 152, Magic @+16
-	uint32_t magic_magsort_buffer;        // magsortData magsortbuffer[N][7], stride 64/preset (direct array, not a pointer)
-	uint32_t magic_sg_drawn_once;         // savemap 64-bit drawn-once bitfield (ids 1-64)
-	uint32_t magic_sg_gf_data;            // savemap GF records, stride 68, name at +0
-
-	// The functions that read the magic table, resolved so every operand that
-	// points into it can be repointed by address instead of by searching.
-	uint32_t magic_fn_target_mask;          // getMagicTargetMask(int id)
-	uint32_t magic_fn_pick_random_action;   // confused/berserk action roll
-	uint32_t magic_fn_confused_action;      // confused target pick
-	uint32_t magic_fn_queue_command;        // queuePlayerBattleCommand
-	uint32_t magic_fn_stat_compute;         // Stat_ComputeCharaStat
-	uint32_t magic_fn_stat_hit;             // Stat_ComputeCharaHit
-	uint32_t magic_fn_stat_eva;             // Stat_ComputeCharaEva
-	uint32_t magic_fn_elem_attack;          // get_elem_attack
-	uint32_t magic_fn_elem_attack_value;    // get_elem_attack_value
-	uint32_t magic_fn_elem_def_value;       // getMagicElemDefValue
-	uint32_t magic_fn_jstatus_attack;       // getJStatusAttack
-	uint32_t magic_fn_status2_from_jstatus; // getStatus2FromJstatusAttack
-	uint32_t magic_fn_status_attack_value;  // computeStatusAttackValue
-	uint32_t magic_fn_mental_defense;       // get_mental_defense
-	uint32_t magic_fn_junction_swap;        // junction menu magic swap
-	uint32_t magic_fn_junction_value;       // linkedMagicJunctionValue
-	uint32_t magic_fn_auto_junction_spell;  // Junction_AutoPickBestSpellForStat
-	uint32_t magic_fn_menu_magic_hp;        // magic menu HP preview
-	uint32_t magic_fn_unused_magic_read;    // never called; repointed anyway
-	uint32_t magic_k_magic_reads[71];       // every operand pointing into the magic table
-	uint32_t magic_drawn_once_reads[5];     // every operand pointing at the drawn-once bitfield
-	uint32_t magic_command_action_call;     // the call that runs a queued battle command
-
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;
