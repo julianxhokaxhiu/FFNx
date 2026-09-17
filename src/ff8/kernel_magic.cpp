@@ -105,7 +105,6 @@ static struct
 	uint32_t fn_linked_stock;       // linkedStockFieldCharData(int char, int id)
 	uint32_t fn_reorder_magic;      // menu_reorder_magic(int char, int preset)
 	uint32_t fn_validate_magic;     // sub_4BE790(int char): per-char held-magic + junction validate
-	uint32_t f_char_data;           // FF8FieldCharData[], stride 464
 	uint32_t k_battle_command;      // FF8KernelBattleCommand[], stride 8
 	uint32_t valid_junction;        // uint32[2] per char (8 chars): valid-junction bitfield
 	uint32_t sg_chara_data;         // CharacterData[], stride 152, Magic @+16
@@ -198,7 +197,7 @@ static char *__cdecl ff8_get_magic_description(int id)
 // Draw->Stock setup (replaces linkedStockFieldCharData); only 64..79 are GFs.
 static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_id)
 {
-	uint8_t *chr = (uint8_t *)(magic_ext.f_char_data + 464 * char_slot);
+	uint8_t *chr = (uint8_t *)(ff8_externals.char_comp_stats_1CFF000.data() + char_slot);
 	const uint8_t *draw_cmd = (const uint8_t *)(magic_ext.k_battle_command + 8 * 10);
 
 	chr[0] = 10;          // battle command id: Draw
@@ -446,7 +445,6 @@ static void *__cdecl ff8_manage_monster_spell_visibility()
 // everything the call wrote with that id is renamed back afterwards.
 #define COMMAND_DRAW              6
 #define DRAW_VARIANT_STOCK        10    // 9 is draw-and-cast, which has no GF check
-#define F_CHAR_DATA_STRIDE        464
 #define BATTLE_MAGIC_OFF          130   // 32 x {id, amount, ...} in FF8FieldCharData
 #define BATTLE_MAGIC_STRIDE       5
 #define BATTLE_MAGIC_SLOTS        32
@@ -521,7 +519,7 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 	if (command_id != COMMAND_DRAW || draw_variant != DRAW_VARIANT_STOCK || spell_id < GF_FIRST_ID || ff8_is_gf_id(spell_id) || spell_id >= MAX_MAGIC_ID)
 		return ff8_call_command_action(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 
-	uint8_t *inventory = (uint8_t *)(magic_ext.f_char_data + F_CHAR_DATA_STRIDE * attacker_slot + BATTLE_MAGIC_OFF);
+	uint8_t *inventory = (uint8_t *)(ff8_externals.char_comp_stats_1CFF000.data() + attacker_slot) + BATTLE_MAGIC_OFF;
 	uint8_t *monster = (uint8_t *)magic_ext.monster_draw_data + MONSTER_DRAW_STRIDE * (target - BATTLE_FIRST_MONSTER_SLOT);
 
 	int stand_in = ff8_stand_in_magic_id(inventory, monster);
@@ -745,7 +743,6 @@ static void ff8_kernel_magic_find_externals()
 	magic_ext.k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 0x21C; // kernel.bin data section 1
 
 	magic_ext.sg_gf_data      = get_absolute_value(magic_ext.fn_name_getter, 0x43);     // lea eax, SG_GF_DATA[edx*4]
-	magic_ext.f_char_data     = get_absolute_value(magic_ext.fn_linked_stock, 0x28);    // lea eax, F_CHAR_DATA[edx]
 	magic_ext.valid_junction  = get_absolute_value(magic_ext.fn_validate_magic, 0x14);  // mov VALID_JUNCTION[ebp*8], ebx
 	magic_ext.magsort_buffer  = get_absolute_value(magic_ext.fn_reorder_magic, 0x2);    // mov ecx, MAGSORT_BUFFER
 	magic_ext.sg_chara_data   = get_absolute_value(magic_ext.fn_validate_magic, 0x38) - 16; // lea esi, SG_CHARA_DATA[edi]
@@ -953,7 +950,9 @@ void ff8_kernel_magic_init()
 	}
 
 	// Sanity: the call we replace must be the kernel.bin read through sm_pc_read.
-	uint32_t call_target = get_relative_call(magic_ext.kernel_read_call, 0);
+	// The rel32 is read here rather than with get_relative_call, which would count
+	// sm_pc_read as resolved a second time - ff8_data.cpp already has it.
+	uint32_t call_target = magic_ext.kernel_read_call + 5 + *(int32_t *)(magic_ext.kernel_read_call + 1);
 	if (call_target != uint32_t(ff8_externals.sm_pc_read))
 	{
 		ffnx_warning("AddMoreMagic: kernel load call site mismatch (0x%X), extension disabled.\n", call_target);
