@@ -133,7 +133,6 @@ static struct
 	uint32_t fn_unused_magic_read;    // never called; repointed anyway
 	uint32_t k_magic_reads[71];       // every operand pointing into the magic table
 	uint32_t drawn_once_reads[5];     // every operand pointing at the drawn-once bitfield
-	uint32_t command_action_call;     // the call that runs a queued battle command
 } magic_ext;
 
 // ---- state --------------------------------------------------------------
@@ -461,6 +460,9 @@ static void *__cdecl ff8_manage_monster_spell_visibility()
 
 typedef int(__cdecl *compute_command_action_t)(int, int, int, int, int, int, int);
 
+// Handle from replace_function, so the original can be called back below.
+static uint32_t ff8_compute_command_action_replaced = 0;
+
 static uint8_t *ff8_battle_state(int offset)
 {
 	return (uint8_t *)(magic_ext.battle_slot_data + offset);
@@ -490,9 +492,17 @@ static int ff8_stand_in_magic_id(const uint8_t *inventory, const uint8_t *monste
 	return 0;
 }
 
+// The dispatcher itself is replaced, so its first bytes are a jump back here.
+// Lift the replacement for the length of the call and put it straight back, the
+// way ff8/vibration.cpp does - the alternative, hooking call sites, has to know
+// all twelve of them and misses whichever one a future build adds.
 static int ff8_call_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
 {
-	return ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, command, id, variant, target_slot, target_mask, linked);
+	unreplace_function(ff8_compute_command_action_replaced);
+	int ret = ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, command, id, variant, target_slot, target_mask, linked);
+	rereplace_function(ff8_compute_command_action_replaced);
+
+	return ret;
 }
 
 static int __cdecl ff8_compute_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
@@ -584,10 +594,8 @@ static void ff8_kernel_magic_arm()
 	if (rewritten != K_MAGIC_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: repointed %u of %d magic table reads - some magic reads may still use the vanilla table!\n", rewritten, K_MAGIC_SITE_COUNT);
 
-	// Take over the functions that would misread an extended id. The battle command
-	// dispatcher is hooked on its call site instead, so the dispatcher itself is left
-	// alone and every other command reaches it untouched.
-	replace_call(magic_ext.command_action_call, (void *)ff8_compute_command_action);
+	// Take over the functions that would misread an extended id.
+	ff8_compute_command_action_replaced = replace_function(ff8_externals.battle_sub_48D200, (void *)ff8_compute_command_action);
 	replace_function(magic_ext.manage_monster_spell_visibility_sub_48C7A0, (void *)ff8_manage_monster_spell_visibility);
 	replace_function(magic_ext.fn_name_getter, (void *)ff8_get_magic_name);
 	replace_function(magic_ext.fn_desc_getter, (void *)ff8_get_magic_description);
@@ -924,10 +932,6 @@ static void ff8_kernel_magic_find_externals()
 	magic_ext.drawn_once_reads[2] = ff8_externals.sub_48B7E0 + 0x71;
 	magic_ext.drawn_once_reads[3] = ff8_externals.sub_48B7E0 + 0x15E;
 	magic_ext.drawn_once_reads[4] = magic_ext.manage_monster_spell_visibility_sub_48C7A0 + 0x7C;
-
-	// The call BattleAction_ExecuteCommand makes to run a queued command; it is
-	// the same one battle_sub_48D200 is read from.
-	magic_ext.command_action_call = ff8_externals.sub_485610 + 0x323;
 }
 
 void ff8_kernel_magic_init()
