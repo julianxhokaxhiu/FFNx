@@ -584,6 +584,17 @@ static void ff8_kernel_magic_arm()
 	if (rewritten != K_MAGIC_SITE_COUNT)
 		ffnx_warning("AddMoreMagic: repointed %u of %d magic table reads - some magic reads may still use the vanilla table!\n", rewritten, K_MAGIC_SITE_COUNT);
 
+	// Take over the functions that would misread an extended id. The battle command
+	// dispatcher is hooked on its call site instead, so the dispatcher itself is left
+	// alone and every other command reaches it untouched.
+	replace_call(magic_ext.command_action_call, (void *)ff8_compute_command_action);
+	replace_function(magic_ext.manage_monster_spell_visibility_sub_48C7A0, (void *)ff8_manage_monster_spell_visibility);
+	replace_function(magic_ext.fn_name_getter, (void *)ff8_get_magic_name);
+	replace_function(magic_ext.fn_desc_getter, (void *)ff8_get_magic_description);
+	replace_function(magic_ext.fn_linked_stock, (void *)ff8_linked_stock_field_char_data);
+	replace_function(magic_ext.fn_reorder_magic, (void *)ff8_menu_reorder_magic);
+	replace_function(magic_ext.fn_validate_magic, (void *)ff8_char_validate_magic);
+
 	relocate_drawn_once_bitfield();
 
 	ffnx_info("AddMoreMagic: armed with %d magic entries (ids 57-63 free below GFs; extended magic %d-%d; ids 64-95 reserved for GFs; mmagic.bin must cover %d entries / %d bytes).\n", ff8_magic_count, EXTENDED_MAGIC_FIRST, ff8_magic_count - 1, ff8_magic_count, ff8_magic_count * 4);
