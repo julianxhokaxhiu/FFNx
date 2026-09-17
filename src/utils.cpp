@@ -128,7 +128,7 @@ bool isFileSigned(const char* dllPath)
 
     LONG status = WinVerifyTrust(NULL, &actionID, &trustData);
 
-    if (status != ERROR_SUCCESS) ffnx_error("Unable to verify '%ls': %ls", dllPath, GetErrorMessage(status));
+    if (status != ERROR_SUCCESS) ffnx_error("Unable to verify '%s': %ls", dllPath, GetErrorMessage(status).c_str());
 
     trustData.dwStateAction = WTD_STATEACTION_CLOSE;
     WinVerifyTrust(NULL, &actionID, &trustData);

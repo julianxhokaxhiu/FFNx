@@ -140,7 +140,7 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS *ep)
 				MiniDumpWithUnloadedModules |
 				MiniDumpWithThreadInfo),
 			&mdei, NULL, NULL)) {
-			ffnx_trace("MiniDumpWriteDump failed with error: %ls\n", GetErrorMessage(GetLastError()));
+			ffnx_trace("MiniDumpWriteDump failed with error: %ls\n", GetErrorMessage(GetLastError()).c_str());
 		}
 	}
 
