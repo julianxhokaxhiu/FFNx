@@ -299,6 +299,10 @@ static int __cdecl ff8_menu_reorder_magic(int character_id, int sort_preset)
 // never gets here.
 static void relocate_drawn_once_bitfield()
 {
+	// The replaced draw-list function reads this, so it must point somewhere real
+	// even when the field stays where the game put it.
+	ff8_drawn_once = magic_ext.sg_drawn_once;
+
 	if (ff8_magic_count <= EXTENDED_MAGIC_FIRST)
 	{
 		if (trace_all) ffnx_trace("AddMoreMagic: no magic id >= %d, drawn-once left at vanilla 0x%08X.\n", EXTENDED_MAGIC_FIRST, magic_ext.sg_drawn_once);
