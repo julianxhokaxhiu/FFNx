@@ -33,6 +33,10 @@
 #include "common_imports.h"
 #include "ff8/save_data.h"
 
+// Battle effect buffer, relocated inside extended_memory.
+#define FF8_BATTLE_EFFECT_BUFFER_OFFSET 0x200000
+#define FF8_BATTLE_EFFECT_BUFFER_SIZE 0x380000
+
 // FF7 modules, unknowns are either unused or not relevant to rendering
 enum ff8_game_modes
 {
@@ -1197,6 +1201,16 @@ struct ff8_externals
 	uint32_t (*ctrl_keyboard_actions)();
 	uint32_t get_key_state;
 	byte **keyboard_state;
+	uint32_t sub_533C30;
+	uint32_t model_vertices_scale_sub_45FE10;
+	uint16_t *camera_zoom_dword_1CA92E4;
+	int16_t *word_1CA92DE;
+	int *dword_1CA8A50;
+	int *dword_1CA92F8;
+	int16_t *dword_1CA8A10;
+	int *dword_1CA9290;
+	float *flt_1CA9234;
+	int *dword_1CA8A30;
 	uint32_t sub_4789A0;
 	char (*sub_47CA90)();
 	uint32_t field_update_seed_level_52B140;
@@ -1297,6 +1311,7 @@ struct ff8_externals
 	uint32_t read_field_data;
 	uint32_t upload_mim_file;
 	uint32_t upload_pmp_file;
+	uint32_t field_filename_concat_extension;
 	char *field_filename;
 	int (*field_scripts_init)(int, int, int, int);
 	uint8_t *field_state_background_count;
@@ -1312,6 +1327,7 @@ struct ff8_externals
 	uint32_t worldmap_main_loop;
 	uint32_t worldmap_enter_main;
 	uint32_t worldmap_sub_53F310;
+	char **worldmap_wmset_path;
 	uint32_t worldmap_sub_53F310_call_24D;
 	uint32_t worldmap_sub_53F310_call_2A9;
 	uint32_t worldmap_sub_53F310_call_30D;
@@ -1449,6 +1465,7 @@ struct ff8_externals
 	uint32_t opcode_movie;
 	uint32_t opcode_moviesync;
 	uint32_t opcode_spuready;
+	uint32_t opcode_show;
 	uint32_t opcode_movieready;
 	uint32_t opcode_setvibrate;
 	uint32_t opcode_musicload;
@@ -1512,6 +1529,10 @@ struct ff8_externals
 	uint32_t sub_464DB0;
 	uint32_t sub_4649A0;
 	char *archive_path_prefix;
+	char *archive_path_prefix_menu;
+	char *archive_path_prefix_battle;
+	char *archive_path_prefix_field;
+	char *archive_path_prefix_world;
 	int(*fs_archive_search_filename)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
 	int(*ff8_fs_archive_search_filename2)(const char *, ff8_file_fi_infos *, const ff8_file_container *);
 	char *(*fs_archive_get_fl_filepath)(int, const ff8_file_fl *);
@@ -1519,6 +1540,23 @@ struct ff8_externals
 	int(*_sopen)(const char*, int, int, ...);
 	uint32_t fopen;
 	FILE *(*_fsopen)(const char*, const char*, int);
+	int (*_lseek)(int,long,int);
+	int (*_lseek_lk)(int,long,int);
+	unsigned int *_io_fd_number;
+	int *_io_known_fds;
+	void (*_lock_fhandle)(int);
+	int (*_unlock_fhandle)(int);
+	int* (*_errno)();
+	unsigned long* (*__doserrno)();
+	int (*_read)(int,void*,unsigned int);
+	unsigned int (*_read_lk)(int,LPVOID,DWORD);
+	uint32_t open_and_write_to_archive;
+	uint32_t write_to_archive;
+	int (*_write)(int,void*,unsigned int);
+	int (*_write_lk)(int,LPVOID,DWORD);
+	int (*_close)(int);
+	int (*_close_lk)(int);
+	__int32 (*_filelength)(int);
 	uint32_t input_init;
 	uint32_t ff8input_cfg_read;
 	uint32_t ff8input_cfg_reset;
@@ -1527,10 +1565,14 @@ struct ff8_externals
 	uint32_t moriya_filesystem_seek;
 	uint32_t moriya_filesystem_read;
 	uint32_t moriya_filesystem_close;
+	uint32_t moriya_filesystem_archives_lookup;
 	uint32_t read_or_uncompress_fs_data;
 	uint32_t lzs_uncompress;
 	void(*free_file_container)(ff8_file_container *);
 	ff8_file_container*(*archive_open)(char*,char*,char*);
+	uint32_t archive_open_fi;
+	uint32_t archive_open_fi_2;
+	uint8_t*(*open_read_close_file)(ff8_file_context*,int,int32_t*,const char*);
 	void(*sub_archive_get_filename)(const char*,char*);
 	char *temp_fs_path_cache;
 	uint32_t field_get_dialog_string;
@@ -1610,6 +1652,7 @@ struct ff8_externals
 	uint32_t sfx_is_playing;
 	uint32_t sfx_set_panning;
 	uint16_t *sfx_sound_count;
+	uint32_t sfx_initialize_audio_data;
 	ff8_audio_fmt **sfx_audio_fmt;
 	uint32_t manage_time_engine_sub_569971;
 	int (*enable_rdtsc_sub_40AA00)(int enable);
@@ -1670,8 +1713,11 @@ struct ff8_externals
 	DWORD* battle_current_actor_talking;
 	uint32_t sub_502380;
 	uint32_t sub_50A790;
+	uint32_t sub_50B2A0;
 	uint32_t sub_502670; // embedded pointer read out of sub_502380 ("push offset ...")
 	uint32_t battle_entity_task_dispatch_sub_507080; // maps a battle entity id to its task function; called from sub_502670
+	uint32_t battle_character_dat_loader;
+	uint32_t battle_character_dat_loader_alt;
 	uint32_t battle_monster_dat_loader; // sub_507120, the entity task for monsters; embedded pointer read out of the dispatcher
 	uint32_t battle_load_file_sub_508480; // generic "load battle file by index" wrapper, the monster loader's file-load call target (see monsters.cpp)
 	uint32_t battle_enemy_scanned_read_operand;  // disp32 of the ATTACK_TYPE_SCAN "already scanned?" test (see monsters.cpp)
@@ -1682,6 +1728,9 @@ struct ff8_externals
 	int* battle_magic_id;
 	uint32_t sub_571870;
 	DWORD* func_off_battle_effect_textures_50AF93;
+	uint32_t get_battle_effect_buffer_sub_571B50;
+	uint32_t get_battle_effect_buffer_size_sub_571B60;
+	uint32_t init_battle_effect_buffer_sub_571B80;
 	uint32_t sub_6C3640;
 	uint32_t sub_6C3760;
 	uint8_t **vibrate_data_summon_quezacotl;
@@ -1754,6 +1803,7 @@ struct ff8_externals
 	int32_t *current_viewport_y_dword_1A77648;
 	int32_t *current_viewport_width_dword_1A77654;
 	int32_t *current_viewport_height_dword_1A77650;
+	void **dword_1DCB340;
 	uint32_t set_render_to_vram_current_screen_flag_before_battle;
 	uint32_t sub_472B30;
 	uint32_t sub_530810;

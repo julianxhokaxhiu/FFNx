@@ -2,10 +2,11 @@
 //    Copyright (C) 2009 Aali132                                            //
 //    Copyright (C) 2018 quantumpencil                                      //
 //    Copyright (C) 2018 Maxime Bacoux                                      //
-//    Copyright (C) 2020 myst6re                                            //
 //    Copyright (C) 2020 Chris Rizzitello                                   //
 //    Copyright (C) 2020 John Pritchard                                     //
-//    Copyright (C) 2026 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 myst6re                                            //
+//    Copyright (C) 2022 Julian Xhokaxhiu                                   //
+//    Copyright (C) 2022 Tang-Tang Zhou                                     //
 //                                                                          //
 //    This file is part of FFNx                                             //
 //                                                                          //
@@ -21,43 +22,13 @@
 
 #pragma once
 
-#include <Windows.h>
-#include <SDL3/SDL.h>
+#include <memory>
 
-// Kudos to https://katyscode.wordpress.com/2013/08/30/xinput-tutorial-part-1-adding-gamepad-support-to-your-windows-game/
-// for the foundation of FFNx's original XInput implementation
+#include "field/chara_one.h"
+#include "zzz_archive.h"
 
-class SDLGamepad
-{
-private:
-    SDL_Gamepad *sdlgamepad = nullptr;
-    SDL_JoystickID sdlInstanceId = 0;
-    bool sdlInitialized = false;
+void ff8_remaster_init();
+void ff8_remaster_set_field_model_scaling(const std::unordered_map<uint32_t, CharaOneModel> &chara_one_models);
 
-    bool init();
-    void GamepadEvents();
-    void closeGamepad();
-
-public:
-    ~SDLGamepad();
-
-    float leftStickX = 0.0f;
-    float leftStickY = 0.0f;
-    float rightStickX = 0.0f;
-    float rightStickY = 0.0f;
-    float leftTrigger = 0.0f;
-    float rightTrigger = 0.0f;
-
-    int  GetPort() const;
-    const char* GetName() const;
-    bool IsXbox() const;
-    bool IsSwitch() const;
-    bool CheckConnection();
-    bool HasRumble() const;
-    bool Refresh();
-    bool Vibrate(WORD wLeftMotorSpeed, WORD wRightMotorSpeed);
-    bool IsPressed(SDL_GamepadButton) const;
-    bool IsIdle() const;
-};
-
-extern SDLGamepad sdlgamepad;
+extern Zzz g_FF8ZzzArchiveMain;
+extern Zzz g_FF8ZzzArchiveOther;

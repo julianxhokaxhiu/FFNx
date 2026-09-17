@@ -20,7 +20,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
+#include <algorithm>
 #include <stdint.h>
+#include <unordered_map>
 
 #include "defs.h"
 #include "battle/camera.h"
@@ -29,6 +31,7 @@
 #include "world/world.h"
 
 #include "../audio.h"
+#include "../cfg.h"
 #include "../gamepad.h"
 #include "../gamehacks.h"
 #include "../joystick.h"
@@ -40,6 +43,58 @@
 #include "../achievement.h"
 
 #include <bx/math.h>
+
+struct autosize_window_state
+{
+	int16_t authored_height;
+	int16_t applied_width;
+	int16_t applied_height;
+	bool initialized;
+};
+
+static std::unordered_map<short, autosize_window_state> field_autosize_state;
+static std::unordered_map<short, autosize_window_state> world_autosize_state;
+
+static void autosize_text_box_window(short WINDOW_ID, byte* buffer_text,
+	std::unordered_map<short, autosize_window_state>& autosize_state)
+{
+	auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
+	const bool firstOpeningFrame =
+		window.current_window_width == std::max<int16_t>(window.window_width / 4, 8)
+		&& window.current_window_height == std::max<int16_t>(window.window_height / 4, 8);
+	if ( !ff7_field_autosize_text_box || !buffer_text
+		|| (!ff7_japanese_edition && !firstOpeningFrame) )
+		return;
+
+	auto& state = autosize_state[WINDOW_ID];
+	if ( !state.initialized
+		|| window.window_width != state.applied_width
+		|| window.window_height != state.applied_height )
+	{
+		state.authored_height = window.window_height;
+		state.initialized = true;
+	}
+
+	int16_t W = 0, H = 0;
+	auto_resize_text_box(WINDOW_ID, buffer_text, &W, &H);
+	if (!ff7_japanese_edition)
+		H = std::min(H, state.authored_height);
+	window.window_width = std::clamp<int16_t>(W, 0, 320);
+	window.window_height = std::clamp<int16_t>(H, 0, 224);
+	state.applied_width = window.window_width;
+	state.applied_height = window.window_height;
+	window.window_pos_x = std::clamp<int16_t>(window.window_pos_x, 0, 320 - window.window_width);
+	window.window_pos_y = std::clamp<int16_t>(window.window_pos_y, 0, 224 - window.window_height);
+}
+
+void field_autosize_window_geometry_changed(short WINDOW_ID, short W, short H)
+{
+	auto& state = field_autosize_state[WINDOW_ID];
+	state.authored_height = H;
+	state.applied_width = W;
+	state.applied_height = H;
+	state.initialized = true;
+}
 
 // CORE GAME LOOP
 void ff7_core_game_loop()
@@ -66,6 +121,55 @@ void ff7_core_game_loop()
 
 	common_externals.get_time(&end_t);
 	if ( game_object->field_794 ) common_externals.diff_time(&end_t, &start_t, (uint64_t*)(game_object->field_794 + 0x98));
+}
+
+void field_text_box_window_opening_6317A9_autosize(short WINDOW_ID)
+{
+	// The vanilla create routine (0x631586) assigns this window's owner (CC0960[win] = the entity
+	// that opened it) before marking it active, and clears both owner and mode together on close.
+	// On the multibyte path a window can end up active with no owner assigned (0xFF) — the owner
+	// check below then never matches the current entity, the window never grows, and the field
+	// script that's waiting on it deadlocks. Restore the normal owner assignment for any window
+	// found in this orphaned state before continuing.
+	if ( (ff7_japanese_edition || ff7_multibyte_font)
+		&& ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == 0xFF )
+		ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] = *ff7_externals.current_entity_id_byte_CC0964;
+
+	auto& window = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID];
+	autosize_text_box_window(WINDOW_ID,
+		reinterpret_cast<byte*>(ff7_externals.current_dialog_string_pointer[WINDOW_ID]), field_autosize_state);
+
+	if ( ff7_externals.field_text_box_window_entity_id_CC0960[WINDOW_ID] == *ff7_externals.current_entity_id_byte_CC0964 )
+	{
+		ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width / 4;
+
+		if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width < 8 )
+			ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width = 8;
+
+		if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width > ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width )
+			ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width;
+
+		ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height += ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height / 4;
+
+		if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height < 8 )
+			ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height = 8;
+
+		if ( ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height > ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height )
+			ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height = ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height;
+
+		if (
+			ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_width == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_width
+			&& ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].current_window_height == ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_height
+		)
+			ff7_externals.text_box_window_data_array_CFF5B8[WINDOW_ID].window_mode = 2;
+	}
+}
+
+void world_text_box_window_opening_autosize(short WINDOW_ID)
+{
+	autosize_text_box_window(WINDOW_ID,
+		reinterpret_cast<byte*>(ff7_externals.world_current_dialog_string_pointer[WINDOW_ID]), world_autosize_state);
+	reinterpret_cast<void (*)(short)>(ff7_externals.world_text_box_window_opening_769A66)(WINDOW_ID);
 }
 
 // MDEF fix

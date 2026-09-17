@@ -21,9 +21,11 @@
 /****************************************************************************/
 
 #include <stdio.h>
+#include <vector>
 #include <libpng16/png.h>
 
 #include "image.h"
+#include "../ff8/remaster.h"
 #include "../common.h"
 #include "../renderer.h"
 #include "log.h"
@@ -50,21 +52,74 @@ void read_png_file(png_structp png_ptr, png_bytep data, size_t size)
     }
 }
 
-bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat)
+class Win32PngReader : public bx::ReaderI
 {
-    bimg::ImageContainer *ret;
-    bx::FileReader reader;
-    bx::Error err;
-
-    if (!bx::open(&reader, filename, &err) || !err.isOk()) {
-        return nullptr;
+public:
+    explicit Win32PngReader(HANDLE file) : file(file)
+    {
     }
 
-    if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
+    ~Win32PngReader() override
+    {
+        CloseHandle(file);
+    }
 
-    ret = loadPng(allocator, &reader, targetFormat);
+    int32_t read(void *data, int32_t size, bx::Error *err) override
+    {
+        DWORD bytesRead = 0;
+        if (!ReadFile(file, data, size, &bytesRead, nullptr)) {
+            return 0;
+        }
+        return bytesRead;
+    }
 
-    bx::close(&reader);
+private:
+    HANDLE file;
+};
+
+static HANDLE openPngWin32(const char *filename)
+{
+    int filenameLength = MultiByteToWideChar(CP_ACP, 0, filename, -1, nullptr, 0);
+    if (filenameLength == 0) {
+        return INVALID_HANDLE_VALUE;
+    }
+
+    std::vector<wchar_t> wideFilename(filenameLength);
+    if (MultiByteToWideChar(CP_ACP, 0, filename, -1, wideFilename.data(), filenameLength) == 0) {
+        return INVALID_HANDLE_VALUE;
+    }
+
+    return CreateFileW(wideFilename.data(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+}
+
+bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, bimg::TextureFormat::Enum targetFormat)
+{
+    bimg::ImageContainer *ret = nullptr;
+
+    if (ff8_remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
+        Zzz::File *zzzFile = g_FF8ZzzArchiveMain.openFile(filename + 6);
+
+        if (zzzFile == nullptr) {
+            return nullptr;
+        }
+
+        if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
+
+        ret = loadPng(allocator, zzzFile, targetFormat);
+
+        Zzz::closeFile(zzzFile);
+    } else {
+        HANDLE file = openPngWin32(filename);
+        if (file == INVALID_HANDLE_VALUE) {
+            return nullptr;
+        }
+
+        if (trace_all || trace_loaders) ffnx_trace("%s: %s\n", __func__, filename);
+
+        Win32PngReader reader(file);
+        ret = loadPng(allocator, &reader, targetFormat);
+    }
 
     return ret;
 }

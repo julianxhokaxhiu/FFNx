@@ -12,6 +12,7 @@ Welcome to the FFNx documentation!
 ## FF7
 
 - [Multibyte Font Mode](ff7/multibyte_font.md)
+- [Universal Field Button Prompts](ff7/universal_buttons.md)
 
 ## FF8
 

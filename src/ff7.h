@@ -2975,6 +2975,8 @@ struct ff7_externals
 	uint32_t *party_member_to_char_map;
 	uint32_t menu_sub_6CB56A;
 	uint32_t menu_sub_6FEDB0;
+	uint32_t menu_draw_with_viewport_6FA12F;
+	uint32_t menu_draw_640x480_6FA347;
 	void *(*menu_sub_6F5C0C)(uint32_t,uint32_t,uint8_t,uint8_t,uint32_t);
 	void *(*menu_sub_6FAC38)(uint32_t,uint32_t,uint8_t,uint8_t,uint32_t);
 	BOOL (*write_save_file)(char);
@@ -2983,8 +2985,10 @@ struct ff7_externals
 	BYTE* menu_tutorial_window_state;
 	DWORD* menu_tutorial_window_text_ptr;
 	uint32_t status_menu_sub;
+	uint32_t menu_status_draw_sub;
 	uint32_t draw_status_limit_level_stats;
 	uint32_t timer_menu_sub;
+	byte* menu_time_label;
 	DWORD *millisecond_counter;
 	char *(*get_kernel_text)(uint32_t, uint32_t, uint32_t);
 	uint32_t sub_5CF282;
@@ -3073,6 +3077,8 @@ struct ff7_externals
 	uint32_t init_stuff;
 	uint32_t init_game;
 	uint32_t sub_41A1B0;
+	uint32_t *input_mapping;
+	uint32_t *config_input_mapping;
 	uint32_t init_directinput;
 	uint32_t dinput_createdevice_mouse;
 	void (*sub_69C69F)(struct matrix *, struct ff7_light *);
@@ -3230,6 +3236,7 @@ struct ff7_externals
 	uint32_t field_text_box_window_create_631586;
 	void (*field_text_box_window_opening_6317A9)(short);
 	void (*field_text_box_window_paging_631945)(short);
+	byte* field_dialog_print_table_632C4E;
 	byte* (*sub_6CB9B8)(int a1);
 	uint32_t field_text_box_window_reverse_paging_632CAA;
 	uint32_t field_text_box_window_closing_632EB8;
@@ -3575,6 +3582,7 @@ struct ff7_externals
 
 	// battle menu
 	uint32_t display_battle_menu_6D797C;
+	uint32_t flush_battle_text_640x480_6DC1EB;
 	void (*display_tifa_slots_handler_6E3135)();
 	uint32_t battle_draw_text_ui_graphics_objects_call;
 	uint32_t battle_draw_box_ui_graphics_objects_call;
@@ -3649,6 +3657,7 @@ struct ff7_externals
 	uint32_t world_opcode_ask_sub_75EEBB;
 	uint32_t world_opcode_message;
 	uint32_t world_opcode_ask;
+	DWORD* world_current_dialog_string_pointer;
 	uint32_t world_text_box_window_opening_769A66;
 	uint32_t world_text_box_window_paging_769C02;
 	uint32_t world_text_box_reverse_paging_76ABE9;
@@ -3789,6 +3798,15 @@ struct ff7_externals
 	uint32_t chocobo_init_viewport_values_76D320;
 	uint32_t chocobo_submit_draw_fade_quad_77B1CE;
 	uint32_t chocobo_submit_draw_water_quad_77A7D0;
+	uint32_t chocobo_end_scene_call_77B79E;
+	void (*chocobo_end_scene_660EEB)(ff7_game_obj*);
+	uint32_t chocobo_populate_race_data_call_77C448;
+	void (*chocobo_populate_race_data_772357)();
+	byte* chocobo_race_names_E711E0;
+	byte* chocobo_special_racer_DC0AF2;
+	uint32_t chocobo_name_text_call_776B76;
+	uint32_t chocobo_gift_text_call_addresses[3];
+	int (*chocobo_draw_text_77941B)(byte*, int, int, int);
 	void(*chocobo_switch_mode_76DB33)(void* ff7_game_obj);
 	void(*generic_submit_quad_graphics_object_671D2A)(int, int, int, int, int, int, float, DWORD*) ;
 	byte* chocobo_fade_quad_data_97A498;
@@ -3832,7 +3850,7 @@ struct ff7_externals
 	short* word_DC3CC4;
 	int* dword_DC3CD4;
 	short* word_DC3CC8;
-	int* g_text_spacing_DB958C;
+	byte** g_text_spacing_DB958C;
 	ff7_graphics_object** menu_font_a_graphics_object_DC100C;
 	ff7_graphics_object** menu_font_b_graphics_object_DC1010;
 	ff7_graphics_object** menu_win_a_blend_4_graphics_object_DC0FC8;
@@ -3910,13 +3928,50 @@ struct ff7_externals
 	uint32_t battle_menu_display_menu_6D82EA;
 	uint32_t battle_display_base_menu_6DD041;
 	int (*common_submit_draw_char_from_buffer_6F564E)(int, int, int, unsigned __int16, float);
+	uint32_t menu_config_sub_6C3197;
+	uint32_t menu_sub_6C7B54;
+	uint32_t menu_sub_6C85F1;
+	uint32_t menu_sub_6CA346;
+	uint32_t menu_sub_6CDE72;
+	uint32_t menu_sub_6DE3DB;
+	uint32_t menu_sub_6E0D28;
+	uint32_t menu_sub_6E1308;
+	uint32_t menu_sub_6E384F;
+	uint32_t menu_sub_700090;
+	uint32_t menu_sub_701B4C;
+	uint32_t menu_sub_703176;
+	uint32_t menu_sub_703DF1;
+	uint32_t menu_sub_704612;
+	uint32_t menu_sub_704D34;
+	uint32_t menu_sub_7059FB;
+	uint32_t menu_sub_707891;
+	uint32_t menu_sub_70CF0B;
+	uint32_t menu_sub_709FD8;
+	uint32_t menu_sub_70CAF0;
+	uint32_t menu_sub_7086BE;
+	uint32_t menu_sub_70B032;
+	uint32_t menu_sub_70B092;
+	uint32_t menu_sub_70BA7E;
+	uint32_t menu_sub_70ECF4;
+	uint32_t menu_sub_710DFA;
+	uint32_t menu_sub_715105;
+	uint32_t menu_sub_719E90;
+	uint32_t menu_sub_71E415;
+	uint32_t menu_sub_71EE01;
+	uint32_t menu_sub_720775;
+	uint32_t japanese_text_small_glyph_call_count;
+	uint32_t japanese_text_small_glyph_call_addresses[134];
+	uint32_t japanese_text_large_glyph_char_call_6DD3C3;
+	uint32_t japanese_text_large_glyph_char_call_7193DE;
+	int (*draw_string_from_buffer_sub_6F5B03)(int, int, byte*, byte, float);
+	int (*menu_shop_draw_string_from_buffer)(int, int, byte*, byte, float);
 	uint32_t menu_loop_sub_6CC623;
 	void (*menu_draw_everything_6CC9D3)();
 	int (*g_get_do_render_menu_6CDBF2)();
 
 	int* dword_DC12DC;
 
-	void (*engine_gfx_setviewport_sub_66067A)(unsigned int, unsigned int, unsigned int, unsigned int, ff7_game_obj*);
+	ff7_game_obj* (*engine_gfx_setviewport_sub_66067A)(unsigned int, unsigned int, unsigned int, unsigned int, ff7_game_obj*);
 
 	unsigned int* menu_viewport_x_DC105C;
 	unsigned int* menu_viewport_y_DC1060;

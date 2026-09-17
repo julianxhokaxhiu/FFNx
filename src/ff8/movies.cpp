@@ -26,6 +26,7 @@
 
 #include "../globals.h"
 #include "../log.h"
+#include "remaster.h"
 
 struct FF8Bink {
 	pak_pointers_entry entry;
@@ -148,4 +149,86 @@ void ff8_bink_close(void *opaque)
 	fclose(f->f);
 
 	delete f;
+}
+
+void *ff8_zzz_open(const char *fmv_name)
+{
+	return g_FF8ZzzArchiveOther.openFile(fmv_name);
+}
+
+int ff8_zzz_read(void *opaque, uint8_t *buf, int buf_size)
+{
+	if (trace_all) ffnx_trace("%s: buf_size=%d\n", __func__, buf_size);
+
+	if (opaque == nullptr) {
+		return AVERROR_EXIT;
+	}
+
+	if (buf_size == 0) {
+		return 0;
+	}
+
+	Zzz::File *f = (Zzz::File *)opaque;
+
+	int r = f->read(buf, buf_size);
+
+	if (r == 0) {
+		return AVERROR_EOF;
+	}
+
+	if (r < 0) {
+		return AVERROR_EXIT;
+	}
+
+	return r;
+}
+
+int64_t ff8_zzz_seek(void *opaque, int64_t offset, int whence)
+{
+	if (trace_all) ffnx_trace("%s: offset=%d, whence=%d\n", __func__, offset, whence);
+
+	if (opaque == nullptr) {
+		return AVERROR_EXIT;
+	}
+
+	Zzz::File *f = (Zzz::File *)opaque;
+
+	if (whence == AVSEEK_SIZE) {
+		return int64_t(f->size());
+	}
+
+	whence &= 0xFFFF;
+
+	bx::Whence::Enum zzzWhence = bx::Whence::Begin;
+
+	if (whence == SEEK_END) {
+		zzzWhence = bx::Whence::End;
+	} else if (whence == SEEK_CUR) {
+		zzzWhence = bx::Whence::Current;
+	} else if (whence != SEEK_SET) {
+		ffnx_error("%s: seek type not supported: %d\n", __func__, whence);
+
+		return AVERROR_EXIT;
+	}
+
+	int64_t pos = f->seek(offset, zzzWhence);
+
+	if (pos < 0) {
+		return AVERROR_EXIT;
+	}
+
+	return pos;
+}
+
+void ff8_zzz_close(void *opaque)
+{
+	if (trace_all || trace_files) ffnx_trace("%s\n", __func__);
+
+	if (opaque == nullptr) {
+		return;
+	}
+
+	Zzz::File *f = (Zzz::File *)opaque;
+
+	Zzz::closeFile(f);
 }

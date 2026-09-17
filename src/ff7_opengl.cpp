@@ -25,6 +25,7 @@
 #include "ff7.h"
 #include "patch.h"
 #include "ff7/defs.h"
+#include "ff7/universal_buttons.h"
 #include "ff7_data.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
@@ -377,12 +378,11 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// ###########################
 	// japanese text
 	// ###########################
-	// Shared multi-font glyph space (extra jafont_2..6 via FA-FE escape bytes): needed by BOTH the JP
-	// edition AND English-exe multibyte translations (e.g. Arabic). Only the font LOAD + per-char draw
-	// are shared; the remaining hooks below are JP-only layout that breaks native EN menus.
+	// The menu loader also owns the universal field-button atlas for every language. Multi-font
+	// glyph submission and flushing remain limited to JP and multibyte translations.
+	replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468);
 	if (ff7_japanese_edition || ff7_multibyte_font)
 	{
-		replace_function((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, engine_load_menu_graphics_objects_6C1468_jp);
 		replace_function((uint32_t)ff7_externals.common_submit_draw_char_from_buffer_6F564E, common_submit_draw_char_from_buffer_6F564E_jp);
 		replace_function(ff7_externals.sub_6F54A2, sub_6F54A2_jp);
 		// jafont glyph FLUSH + field char submitter — without these, multibyte glyphs queue but never draw
@@ -398,24 +398,81 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		// the ff7_japanese_edition-only block below) since it's needed by BOTH JP edition and ff7_multibyte_font.
 		replace_function((uint32_t)ff7_externals.draw_text_top_display_6D1CC0, draw_text_top_display_6D1CC0_jp);
 	}
+	else
+	{
+		// Native text keeps the original renderer. Pass its frame to the universal F6-F9 submitter
+		// by replacing `mov/push graphics_object; push 1; call; add esp, 8` in place.
+		byte submit_vanilla_prompt_patch[] = {
+			0xFF, 0x75, 0xE0,             // push [ebp-0x20] (graphics_object)
+			0x6A, 0x01,                   // push 1 (use_alpha)
+			0x55,                         // push ebp (caller_frame)
+			0xE8, 0x00, 0x00, 0x00, 0x00, // call universal_buttons_submit_vanilla_prompt
+			0x83, 0xC4, 0x0C,             // add esp, 12
+		};
+		uint32_t submit_vanilla_prompt_address = ff7_externals.field_submit_draw_text_640x480_6E706D + 0x36E;
+		memcpy_code(submit_vanilla_prompt_address, submit_vanilla_prompt_patch, sizeof(submit_vanilla_prompt_patch));
+		replace_call(submit_vanilla_prompt_address + 0x6, universal_buttons_submit_vanilla_prompt);
+		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0xBD, universal_buttons_flush_vanilla_field);
+		replace_call_function(ff7_externals.field_submit_and_draw_text_box_and_text_6EBF2C + 0x633, universal_buttons_flush_vanilla_field);
+		replace_call_function(ff7_externals.field_draw_everything_sub_63A60B + 0x3A2, universal_buttons_flush_vanilla_field);
+		replace_call_function((uint32_t)ff7_externals.world_wm0_overworld_draw_all_74C179 + 0x23D,
+			universal_buttons_flush_vanilla_field);
+		replace_call_function((uint32_t)ff7_externals.world_wm2_underwater_draw_all_74C3F0 + 0x15F,
+			universal_buttons_flush_vanilla_field);
+		replace_call_function((uint32_t)ff7_externals.world_wm3_snowstorm_draw_all_74C589 + 0xED,
+			universal_buttons_flush_vanilla_field);
+		for (uint32_t offset : { 0x174, 0x186, 0x199, 0x1AC, 0x1BE })
+			replace_call_function((uint32_t)ff7_externals.field_draw_text_boxes_and_text_graphics_object_6ECA68 + offset,
+				field_draw_graphics_object_full_viewport);
+	}
+	replace_function((uint32_t)ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_autosize);
+	replace_call_function(ff7_externals.world_opcode_message + 0x5A, world_text_box_window_opening_autosize);
+	replace_call_function(ff7_externals.world_opcode_ask + 0x5A, world_text_box_window_opening_autosize);
 	if (ff7_japanese_edition)
 	{
-		//replace_function((uint32_t)	ff7_externals.field_text_box_window_paging_631945, field_text_box_window_paging_631945_jp);
-		// This hook is JP-edition only: its window auto-resize can feed back into itself across
-		// frames (each call recomputes the target size from values it wrote the previous frame),
-		// which can prevent multi-window field scenes from ever finishing their open animation.
-		// The English-exe multibyte path avoids this by using the vanilla opening function and
-		// relying on field files that already ship with correctly sized windows.
-		replace_function((uint32_t)	ff7_externals.field_text_box_window_opening_6317A9, field_text_box_window_opening_6317A9_jp);
+		replace_call_function(ff7_externals.chocobo_end_scene_call_77B79E, chocobo_end_scene_with_jafonts);
+		replace_call_function(ff7_externals.chocobo_populate_race_data_call_77C448, chocobo_populate_race_data_jp);
+		replace_call_function(ff7_externals.chocobo_name_text_call_776B76, chocobo_draw_text_up_jp);
+		for (uint32_t address : ff7_externals.chocobo_gift_text_call_addresses)
+			replace_call_function(address, chocobo_draw_text_up_jp);
+		replace_function(ff7_externals.menu_draw_with_viewport_6FA12F, menu_draw_with_viewport_6FA12F_jp);
+		replace_function(ff7_externals.menu_draw_640x480_6FA347, menu_draw_640x480_6FA347_jp);
+		replace_call_function(ff7_externals.flush_battle_text_640x480_6DC1EB + 0x5A, battle_draw_graphics_object_and_jafonts);
+		replace_call_function(ff7_externals.flush_battle_text_640x480_6DC1EB + 0x22F, battle_reset_graphics_object_and_jafonts);
 
-		patch_code_byte(0x632C4E, 0xC);
-		patch_code_byte(0x632C4E + 0x1, 0xC);
-		patch_code_byte(0x632C4E + 0x2, 0xC);
-		patch_code_byte(0x632C4E + 0x3, 0xC);
-		patch_code_byte(0x632C4E + 0x4, 0xC);
+		for (uint32_t i = 0; i < ff7_externals.japanese_text_small_glyph_call_count; ++i)
+			replace_call_function(ff7_externals.japanese_text_small_glyph_call_addresses[i], common_submit_draw_text_from_buffer_jp);
+		replace_call_function(ff7_externals.menu_sub_6DE3DB + 0x392, battle_command_text_width_jp);
+
+		// Match the item/materia cursor stride to the proportional Japanese label spacing.
+		patch_code_byte(ff7_externals.menu_shop_loop + 0xC9, 85);
+
+		replace_function((uint32_t)ff7_externals.draw_string_from_buffer_sub_6F5B03, common_submit_draw_text_from_buffer_large_jp);
+		replace_call_function(ff7_externals.japanese_text_large_glyph_char_call_6DD3C3, common_submit_draw_char_from_buffer_large_6F564E_jp);
+		replace_call_function(ff7_externals.japanese_text_large_glyph_char_call_7193DE, common_submit_draw_char_from_buffer_large_6F564E_jp);
+		//replace_function((uint32_t)	ff7_externals.field_text_box_window_paging_631945, field_text_box_window_paging_631945_jp);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x1, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x2, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x3, 0xC);
+		patch_code_byte((uint32_t)ff7_externals.field_dialog_print_table_632C4E + 0x4, 0xC);
 
 		// 3-mode (hiragana/katakana/eisuu) name-entry screen
 		name_input_jp_install();
+	}
+	if (version == VERSION_FF7_102_US)
+	{
+		replace_call_function(ff7_externals.menu_sub_6CDE72 + 0x202,
+			universal_buttons_draw_config_binding);
+		replace_call_function(ff7_externals.menu_sub_6CDE72 + 0x4A1,
+			universal_buttons_draw_config_binding);
+	}
+	if (!ff7_japanese_edition && !ff7_multibyte_font)
+	{
+		replace_call_function((uint32_t)ff7_externals.menu_draw_everything_6CC9D3 + 0xE5,
+			universal_buttons_flush_menu);
+		replace_call_function((uint32_t)ff7_externals.menu_draw_everything_6CC9D3 + 0x11F,
+			universal_buttons_flush_menu);
 	}
 
 	//######################

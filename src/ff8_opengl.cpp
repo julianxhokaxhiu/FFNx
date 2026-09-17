@@ -39,6 +39,7 @@
 #include "ff8/save_data.h"
 #include "ff8/battle/ai.h"
 #include "ff8/battle/monsters.h"
+#include "ff8/remaster.h"
 #include "metadata.h"
 #include "achievement.h"
 #include "widescreen.h"
@@ -59,6 +60,410 @@ uint8_t *extended_memory = nullptr;
 uint16_t *field_current_poly = nullptr;
 
 int (*ff8_opcode_old_battle)(int);
+
+static constexpr uint8_t ff8_remastered_font_alignment_data[] = {
+	0x85, 0x86, 0x88, 0x88, 0x88, 0xB8, 0x47, 0x74, 0x7A, 0x77, 0x89, 0x77, 0x55, 0x44, 0x84, 0x77,
+	0x74, 0x47, 0x89, 0x87, 0x68, 0x86, 0x38, 0x76, 0x96, 0x87, 0x86, 0x66, 0x88, 0x98, 0x88, 0x68,
+	0x66, 0x66, 0x65, 0x36, 0x54, 0x93, 0x66, 0x66, 0x54, 0x64, 0x96, 0x66, 0x76, 0x66, 0x77, 0x55,
+	0x55, 0x34, 0x44, 0x76, 0x77, 0x67, 0x66, 0xA6, 0x66, 0x66, 0x66, 0x66, 0x66, 0x34, 0x44, 0x66,
+	0x66, 0x66, 0x66, 0xA6, 0x5D, 0x95, 0x99, 0x66, 0xA9, 0x77, 0x49, 0x9A, 0xA7, 0x74, 0x35, 0xD7,
+	0x88, 0x97, 0x74, 0x79, 0x93, 0xAA, 0x89, 0x8E, 0x8C, 0x8A, 0x88, 0x88, 0x8A, 0x8F, 0x88, 0x8C,
+	0xC8, 0x09, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x0C, 0x01, 0x00, 0x00,
+	0x00, 0x00, 0xE0, 0x01, 0x10, 0x00, 0x10, 0x00, 0x00, 0x00, 0x52, 0xCA, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0xEF, 0xBD, 0xAD, 0xB5, 0x4A, 0xA9, 0x08, 0xA1, 0x00, 0x00, 0xE7, 0x9C, 0xFF, 0x83, 0xFF, 0x83,
+	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
+	0x4A, 0xA9, 0xAD, 0xB5, 0x10, 0xC2, 0x94, 0xD2, 0x00, 0x00, 0xA5, 0x94, 0xFF, 0x83, 0xFF, 0x83,
+	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
+	0xA5, 0x94, 0x31, 0x86, 0xD6, 0x86, 0x7B, 0x87, 0x00, 0x00, 0xA5, 0x94, 0xFF, 0x83, 0xFF, 0x83,
+	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
+	0xA9, 0x94, 0x73, 0x8C, 0x5A, 0x88, 0x1D, 0x80, 0x00, 0x00, 0xA5, 0x94, 0xFF, 0x83, 0xFF, 0x83,
+	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
+	0xE4, 0x90, 0x22, 0x8A, 0xC2, 0x8A, 0xA0, 0x83, 0x00, 0x00, 0xA5, 0x94, 0xFF, 0x83, 0xFF, 0x83,
+	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
+	0x06, 0xA1, 0xE8, 0xD9, 0x2A, 0xE2, 0xCD, 0xF6, 0x00, 0x00, 0xC6, 0x98, 0xFF, 0x83, 0xFF, 0x83,
+	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
+	0x88, 0xA0, 0x92, 0xC8, 0x58, 0xE0, 0x1D, 0xF4, 0x00, 0x00, 0xE7, 0x9C, 0xFF, 0x83, 0xFF, 0x83,
+	0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83, 0xFF, 0x83,
+	0x4A, 0xA9, 0x10, 0x42, 0xB5, 0x56, 0x9C, 0x73, 0x0C, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x40, 0x00, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static_assert(sizeof(ff8_remastered_font_alignment_data) == 0x1B9);
+
+static uint32_t ff8_load_fonts(uint32_t font_id, uint32_t unknown_arg2, uint32_t unknown_arg3)
+{
+	const auto load_fonts = reinterpret_cast<uint32_t (*)(uint32_t, uint32_t, uint32_t)>(ff8_externals.load_fonts);
+	const uint32_t result = load_fonts(font_id, unknown_arg2, unknown_arg3);
+
+	if (font_id == 0 && ff8_is_remastered_font_asset())
+	{
+		uint8_t *font_alignment_data = reinterpret_cast<uint8_t *>(ff8_externals.dword_1D2B808) + 0x10;
+		memcpy(font_alignment_data, ff8_remastered_font_alignment_data, sizeof(ff8_remastered_font_alignment_data));
+	}
+
+	return result;
+}
+
+static uint32_t ff8_get_character_width(uint32_t character_id)
+{
+	if (character_id == 173) return 9;
+	if (character_id == 174) return 10;
+
+	const uint8_t *font_alignment_data = ff8_is_remastered_font_asset()
+		? ff8_remastered_font_alignment_data
+		: reinterpret_cast<uint8_t *>(ff8_externals.dword_1D2B808) + 0x10;
+	const uint8_t packed_widths = font_alignment_data[character_id >> 1];
+	return ((character_id & 1) != 0 ? packed_widths >> 4 : packed_widths) & 0xF;
+}
+
+enum class ff8_battle_effect_layout_patch_mode
+{
+	direct,
+	effect_arena,
+	effect_arena_push,
+	relative_call,
+};
+
+struct ff8_battle_effect_layout_patch
+{
+	uint32_t address;
+	uint32_t classic_offset;
+	uint32_t remastered_offset;
+	ff8_battle_effect_layout_patch_mode mode;
+};
+
+static void patch_ff8_remastered_battle_effect_layout()
+{
+	if (!FF8_US_VERSION)
+	{
+		ffnx_warning("FF8 Remastered battle effect layout: unsupported game version, skipping.\n");
+		return;
+	}
+
+	struct runtime_layout_patch
+	{
+		uint16_t script_id;
+		uint32_t remastered_offset;
+	};
+
+	static constexpr runtime_layout_patch runtime_patches[] = {
+		{ 623, 0x1DE7AC },
+	};
+
+	static const auto process_battle_effect_scripts = []() -> int
+	{
+		uint8_t *effect_state = reinterpret_cast<uint8_t *>(*ff8_externals.effect_struct_27973EC);
+		const uint16_t script_id = *reinterpret_cast<uint16_t *>(effect_state + 0xA0);
+
+		for (const auto &patch : runtime_patches)
+		{
+			if (script_id != patch.script_id) continue;
+
+			const uint32_t workspace = uint32_t(extended_memory) + 0x200000 + patch.remastered_offset;
+			if (*reinterpret_cast<uint32_t *>(effect_state + 0x70) != workspace)
+			{
+				*reinterpret_cast<uint32_t *>(effect_state + 0x70) = workspace;
+				*reinterpret_cast<uint32_t *>(effect_state + 0x74) = workspace;
+			}
+			break;
+		}
+
+		return reinterpret_cast<int (*)()>(0xB0BFC0)();
+	};
+
+	static const ff8_battle_effect_layout_patch patches[] = {
+		{ 0x58D770, 0x2E000, 0xCE000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58D776, 0x2F800, 0xCF800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58D77B, 0x31800, 0xD1800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58D940, 0x2E000, 0xCE000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58D946, 0x2F800, 0xCF800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58D94B, 0x31800, 0xD1800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58DB20, 0x2E000, 0xCE000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58DB26, 0x2F800, 0xCF800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58DB2B, 0x31800, 0xD1800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58DD00, 0x2E000, 0xCE000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58DD06, 0x2F800, 0xCF800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x58DD0B, 0x31800, 0xD1800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5A877E, 0x2A000, 0xCA000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5A8784, 0x2B000, 0xCB000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5A8789, 0x20000, 0xC0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D5B, 0x2C000, 0xCC000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D6C, 0x2D000, 0xCD000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D78, 0x33000, 0xD3000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D7E, 0x2E000, 0xCE000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0D83, 0x30800, 0xD0800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C0FF4, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C1025, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C11EF, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C123F, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C75A8, 0x20000, 0xC0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C75C4, 0x24000, 0xC4000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C7851, 0x20000, 0xC0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C78A6, 0x24000, 0xC4000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C7A09, 0x20000, 0xC0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C7F61, 0x10000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5C7F74, 0x18000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x592605, 0x22000, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x595F8C, 0x22000, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x596750, 0x22000, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x5926A2, 0x2200FB8, 0x60000, ff8_battle_effect_layout_patch_mode::effect_arena_push },
+		{ 0x62A7EB, 0x30800, 0xD0800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62A7FC, 0x31800, 0xD1800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62A802, 0x32800, 0xD2800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62A807, 0x38800, 0xD8800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62A83C, 0xEECC30, 0x80000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x62AA6C, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62AACC, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62ABD2, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62AC03, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62ACF9, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x62ADE8, 0x14800, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6326E0, 0x2D000, 0xCD000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6326E6, 0x2E800, 0xCE800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6326EB, 0x2F800, 0xCF800, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632950, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632981, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632A9A, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632ACB, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632AE7, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x632B1A, 0x11000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63E73B, 0x2E000, 0xCE000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63E741, 0x2F000, 0xCF000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63E753, 0x30000, 0xD0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63E759, 0x31000, 0xD1000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63E770, 0x32000, 0xD2000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63E776, 0x33000, 0xD3000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63E77B, 0x37000, 0xD7000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63F3AB, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63F3DD, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63F455, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x63F6C5, 0x10000, 0x40000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6472EB, 0x30000, 0xD0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6472FC, 0x31000, 0xD1000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x647302, 0x32000, 0xD2000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x647307, 0x38000, 0xD8000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x64756C, 0x14000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6475CC, 0x14000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6476D4, 0x14000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x647705, 0x14000, 0x60000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654661, 0xD94, 0x80D94, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654C3F, 0xD94, 0x80D94, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654D1E, 0xD94, 0x80D94, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6550D5, 0xD94, 0x80D94, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x65524D, 0xD94, 0x80D94, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x655285, 0xD94, 0x80D94, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6552CC, 0xD94, 0x80D94, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x655371, 0xD94, 0x80D94, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654817, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654826, 0x3704C, 0x417E0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654833, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654842, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x65484F, 0x3704C, 0x417E0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x65485E, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654880, 0x4C244, 0x569D8, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6548C3, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6548E4, 0x4AFAC, 0x55740, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654909, 0x4BBC4, 0x56358, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x65492C, 0x4B558, 0x55CEC, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x65494F, 0x4BBC4, 0x56358, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654974, 0x4AFAC, 0x55740, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654994, 0x3903C, 0x437D0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6549A3, 0x3B02C, 0x457C0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6549B2, 0x3D01C, 0x477B0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6549BF, 0x3F00C, 0x497A0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6549CE, 0x40FFC, 0x4B790, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6549DD, 0x42FEC, 0x4D780, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6549EA, 0x44FDC, 0x4F770, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6549F9, 0x46FCC, 0x51760, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654A08, 0x48FBC, 0x53750, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654AD5, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654AE4, 0x3704C, 0x417E0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654AF3, 0x3903C, 0x437D0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B00, 0x3B02C, 0x457C0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B0F, 0x3D01C, 0x477B0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B1E, 0x3F00C, 0x497A0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B2B, 0x40FFC, 0x4B790, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B3A, 0x42FEC, 0x4D780, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B49, 0x44FDC, 0x4F770, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B56, 0x46FCC, 0x51760, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B65, 0x48FBC, 0x53750, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B74, 0x4AFAC, 0x55740, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654B81, 0x4CF9C, 0x57730, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654C0F, 0x51D40, 0x5C4D4, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654CC1, 0x51D40, 0x5C4D4, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654CF8, 0x4EF8C, 0x59720, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x654E3A, 0x35F7C, 0x40710, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6550AD, 0x3B4E4, 0x45C78, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x65532A, 0x31B5C, 0x3C2F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x655418, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x655563, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6555F7, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x655627, 0x42E54, 0x4D5E8, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x655829, 0x4BBC4, 0x56358, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6560BF, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x656148, 0x42620, 0x4CDB4, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x659784, 0x397CC, 0x43F60, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6597EF, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x659822, 0x35F7C, 0x40710, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C3773, 0x2E50, 0xA0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C378D, 0x15E50, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C51C6, 0x2E50, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C3CE2, 0x3C25C, 0x4425C, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C3D17, 0x3C27C, 0x4427C, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C3D27, 0x3BA5C, 0x43A5C, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C3D43, 0x3C27C, 0x4427C, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C3D61, 0x3F200, 0xFF200, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C769B, 0x40200, 0x48200, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C76B2, 0x43A00, 0x4BA00, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C779A, 0x43A00, 0x4BA00, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C77A4, 0x43A00, 0x4BA00, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C77AD, 0x40200, 0x48200, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C77B4, 0x40200, 0x48200, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C78EC, 0x43A00, 0x4BA00, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C796A, 0x43A00, 0x4BA00, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C7CCB, 0x3CA02, 0xFCA02, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C7CE2, 0x3F1FC, 0xFF1FC, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C7E38, 0x3F1FC, 0xFF1FC, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C7E42, 0x3F1FC, 0xFF1FC, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C7E4E, 0x3C9FC, 0xFC9FC, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C83F5, 0x3F1FC, 0xFF1FC, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C8B55, 0x3C25E, 0x4425E, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C8BB5, 0x3C27A, 0x4427A, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C8BF6, 0x3C25C, 0x4425C, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6C8C26, 0x3C27C, 0x4427C, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6ED367, 0x71D4, 0xA0000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x6ED37D, 0x151D4, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x70EE36, 0x25658C0, 0xC0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x70EE4A, 0x25658C0, 0xC0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x7155BB, 0x25642E8, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x717663, 0x25642E8, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A29F, 0x19F1018, 0x20000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A2B9, 0x19D1018, 0xA0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A2E1, 0x19DFCC4, 0x24000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A303, 0x19E10F8, 0x27000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A30D, 0x19EBF30, 0x37000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A317, 0x19ED200, 0x39000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A321, 0x19EE4D0, 0x3B000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A32B, 0x19F19BC, 0x3D000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A33B, 0x19E0F58, 0x26000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x73A345, 0x19E1028, 0x26100, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x746BC3, 0x258BFB0, 0xC0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6ABF, 0x278C79C, 0x403004, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6ACE, 0x278C798, 0x403000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6ADA, 0x278C628, 0x400010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6ADF, 0x278A228, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6B0D, 0x278A238, 0x400180, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6B12, 0x278C788, 0x400170, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BB9, 0x278C79C, 0x403004, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BC4, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BD2, 0x278C798, 0x403000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BDD, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6BF6, 0x278A228, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6C18, 0x278C788, 0x400170, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6C9E, 0x278A228, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6E85, 0x278C7E8, 0x402580, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6E8C, 0x278C89E, 0x402636, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6E96, 0x278C7E8, 0x402580, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6F50, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D6F7D, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D7019, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D703F, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D7DB7, 0x278C788, 0x400170, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D7DC1, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D825D, 0x277AEC8, 0x403014, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D8262, 0x278C7E8, 0x402580, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8D82B3, 0x277AEC4, 0x403010, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8DFFA3, 0xB65150, 0x8DFF70, ff8_battle_effect_layout_patch_mode::relative_call },
+		{ 0xB004CF, 0xB0BFC0, reinterpret_cast<uint32_t>(+process_battle_effect_scripts), ff8_battle_effect_layout_patch_mode::relative_call },
+		{ 0x1871A5C, 0x7A24, 0x17CD8, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x1873E4C, 0x13BA8, 0x200000, ff8_battle_effect_layout_patch_mode::direct },
+	};
+
+	for (const auto &patch : patches)
+	{
+		const bool valid = patch.mode == ff8_battle_effect_layout_patch_mode::relative_call
+			? *reinterpret_cast<const uint8_t *>(patch.address) == 0xE8
+				&& patch.address + 5 + *reinterpret_cast<const int32_t *>(patch.address + 1) == patch.classic_offset
+			: patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push
+				? *reinterpret_cast<const uint8_t *>(patch.address) == 0xA1
+				&& *reinterpret_cast<const uint32_t *>(patch.address + 1) == patch.classic_offset
+				&& *reinterpret_cast<const uint8_t *>(patch.address + 5) == 0x50
+				: *reinterpret_cast<const uint32_t *>(patch.address) == patch.classic_offset;
+
+		if (!valid)
+		{
+			ffnx_warning("FF8 Remastered battle effect layout: unexpected value at 0x%08X, skipping patches.\n", patch.address);
+			return;
+		}
+	}
+
+	const uint32_t effect_arena = uint32_t(extended_memory) + 0x200000;
+
+	for (const auto &patch : patches)
+	{
+		const uint32_t value = patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena
+			|| patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push
+			? effect_arena + patch.remastered_offset
+			: patch.remastered_offset;
+
+		if (patch.mode == ff8_battle_effect_layout_patch_mode::relative_call)
+		{
+			replace_call(patch.address, reinterpret_cast<void *>(value));
+		}
+		else if (patch.mode == ff8_battle_effect_layout_patch_mode::effect_arena_push)
+		{
+			patch_code_byte(patch.address, 0x68);
+			patch_code_dword(patch.address + 1, value);
+			patch_code_byte(patch.address + 5, 0x90);
+		}
+		else
+		{
+			patch_code_dword(patch.address, value);
+		}
+	}
+}
+
+// BdLinkTask failure path: report which task pool ran out so its capacity can be sized.
+static void ff8_battle_link_task_failed(const char *message)
+{
+	uint32_t *stack = reinterpret_cast<uint32_t *>(&message);
+	const uint32_t caller = stack[3];
+	uint8_t *descriptor = reinterpret_cast<uint8_t *>(stack[4]);
+
+	if (descriptor != nullptr)
+	{
+		uint8_t *records = *reinterpret_cast<uint8_t **>(descriptor + 8);
+		const int16_t stride = *reinterpret_cast<int16_t *>(descriptor + 0xC);
+		const int16_t count = *reinterpret_cast<int16_t *>(descriptor + 0xE);
+		int active = 0;
+
+		for (int16_t i = 0; records != nullptr && i < count; ++i)
+			if (records[i * stride] & 1) ++active;
+
+		ffnx_warning("BdLinkTask failed: caller=0x%08X descriptor=0x%08X records=0x%08X stride=0x%X count=%d active=%d\n",
+			caller, uint32_t(descriptor), uint32_t(records), stride, count, active);
+	}
+
+	reinterpret_cast<void (*)(const char *)>(0x403D99)(message);
+}
+
+static void patch_ff8_battle_link_task_diagnostic()
+{
+	if (!FF8_US_VERSION || !more_debug) return;
+
+	if (*reinterpret_cast<const uint8_t *>(0x5083A9) != 0xE8
+		|| 0x5083A9 + 5 + *reinterpret_cast<const int32_t *>(0x5083AA) != 0x403D99)
+	{
+		ffnx_warning("BdLinkTask diagnostic: unexpected call at 0x005083A9, skipping.\n");
+		return;
+	}
+
+	replace_call(0x5083A9, ff8_battle_link_task_failed);
+}
 
 void ff8gl_field_78(struct ff8_polygon_set *polygon_set, struct ff8_game_obj *game_object)
 {
@@ -182,16 +587,40 @@ struct ff8_tex_header *ff8_load_tex_file(struct ff8_file_context* file_context, 
 		}
 	}
 
-	ret->file.pc_name = (char*)external_malloc(1024);
+	ret->file.pc_name = (char*)external_calloc(1024, sizeof(char));
 
-	len = _snprintf(ret->file.pc_name, 1024, "%s", &filename[7]);
+	if (ret->file.pc_name != nullptr) {
+		len = _snprintf(ret->file.pc_name, 511, "%s", &filename[7]);
 
-	for(i = 0; i < len; i++)
-	{
-		if(ret->file.pc_name[i] == '.')
+		for(i = 0; i < len; i++)
 		{
-			if(!_strnicmp(&ret->file.pc_name[i], ".TEX", 4)) ret->file.pc_name[i] = 0;
-			else ret->file.pc_name[i] = '_';
+			if(ret->file.pc_name[i] == '.')
+			{
+				if(!_strnicmp(&ret->file.pc_name[i], ".TEX", 4)) ret->file.pc_name[i] = 0;
+				else ret->file.pc_name[i] = '_';
+			}
+		}
+
+		// Remastered alternative name
+		char langPath[16] = {}, suffix[ZZZ_FILENAME_MAX_SIZE] = {}, remasterFileName[ZZZ_FILENAME_MAX_SIZE] = {};
+		concat_lang_str(langPath);
+		_snprintf(suffix, sizeof(suffix), "%s", filename + 7 + strlen(ff8_externals.archive_path_prefix));
+
+		// Disable if ff8_high_res_font is 0 or 1 + font
+		if (!is_remastered_hd_textures_disabled("menu") && (ff8_high_res_font == -1 || ff8_high_res_font == 2 || (!strstr(suffix, "hires\\sysevn") && !strstr(suffix, "hires\\sysodd") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "hires\\sysfld") && !strstr(suffix, "font8")))) {
+			// Non-paletted + lang path
+			_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s_%s.png", suffix, langPath);
+			if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
+				_snprintf(ret->file.pc_name + 512, 511, "%s_%s", suffix, langPath);
+			} else {
+				// Paletted + lang path
+				_snprintf(remasterFileName, sizeof(remasterFileName), "textures\\%s\\%s\\0.png", suffix, langPath);
+				if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(remasterFileName)) {
+					_snprintf(ret->file.pc_name + 512, 511, "%s\\%s", suffix, langPath);
+				} else {
+					strncpy(ret->file.pc_name + 512, suffix, strlen(suffix));
+				}
+			}
 		}
 	}
 
@@ -1326,27 +1755,53 @@ int ff8_battle_menu_add_exp_and_bonus_496CB0(int party_char_id, uint16_t exp)
 // Replace a function that is called before increasing the kills of a character
 void ff8_battle_after_enemy_kill_sub_494AF0(int party_char_id, int monster_id, int current_actor_second_byte, int a2)
 {
+	// NOTE: achievement function needs to be called before since 494AF0 increase GF kills
+	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement(*ff8_externals.savemap);
 	ff8_externals.battle_sub_494AF0(party_char_id, monster_id, current_actor_second_byte, a2);
-	g_FF8SteamAchievements->increaseKillsAndTryUnlockAchievement();
+}
+
+// This function does not replace any hooked function, it is just a helper function for the drawpoint logic
+void handle_drawpoint_update() {
+	if (enable_steam_achievements) {
+		g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement(*ff8_externals.savemap);
+	}
+
+	if (ff8_remastered_edition) {
+		// NOTE:Achievement is unlocked at 100, there is no need to increase it further also because
+		// it uses only 7 bits to store the draw magic count
+		if (ff8_externals.savemap->header.curr_disk.bytes.magic_finder_storage < 100) {
+			ff8_externals.savemap->header.curr_disk.bytes.magic_finder_storage++;
+		}
+	}
 }
 
 int ff8_opcode_drawpoint_sub_4A0850(int a1, int draw_magic_count)
 {
 	int ret = ff8_externals.opcode_drawpoint_sub_4A0850(a1, draw_magic_count);
-	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+	handle_drawpoint_update();
 	return ret;
 }
 
 void ff8_set_drawpoint_state_52D190(uint8_t drawpoint_id, char value)
 {
 	ff8_externals.set_drawpoint_state_521D90(drawpoint_id, value);
-	g_FF8SteamAchievements->increaseMagicDrawsAndTryUnlockAchievement();
+	handle_drawpoint_update();
 }
 
 int ff8_battle_get_magic_draw_amount_48FD20(int actor_idx, int monster_id, int magic_id)
 {
 	int ret = ff8_externals.battle_get_draw_magic_amount_48FD20(actor_idx, monster_id, magic_id);
-	g_FF8SteamAchievements->increaseMagicStockAndTryUnlockAchievement();
+	if (enable_steam_achievements) {
+		g_FF8SteamAchievements->increaseMagicStockAndTryUnlockAchievement(*ff8_externals.savemap);
+	}
+
+	if (ff8_remastered_edition) {
+		// NOTE:Achievement is unlocked at 100, there is no need to increase it further also because
+		// it uses only 7 bits to store the draw magic count
+		if (ff8_externals.savemap->header.curr_disk.bytes.draw_magic_storage < 100) {
+			ff8_externals.savemap->header.curr_disk.bytes.draw_magic_storage++;
+		}
+	}
 	return ret;
 }
 
@@ -1623,6 +2078,16 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(ff8_externals.moriya_filesystem_open + 0x83C, ff8_fs_archive_search_filename_sub_archive);
 	replace_function(ff8_externals._open, ff8_open);
 	replace_function(ff8_externals.fopen, ff8_fopen);
+	if (ff8_remastered_edition) {
+		replace_call(ff8_externals.sub_4972A0 + 0x16, ff8_load_fonts);
+		replace_function(reinterpret_cast<uint32_t>(ff8_externals.get_character_width), ff8_get_character_width);
+		replace_function(uint32_t(ff8_externals._lseek), ff8_lseek);
+		replace_function(uint32_t(ff8_externals._read), ff8_read);
+		replace_function(uint32_t(ff8_externals._write), ff8_write);
+		replace_function(uint32_t(ff8_externals._close), ff8_close);
+		replace_function(uint32_t(ff8_externals._filelength), ff8_filelength);
+		replace_function(ff8_externals.field_filename_concat_extension, ff8_fs_archive_field_concat_extension);
+	}
 	replace_call(ff8_externals.moriya_filesystem_close + 0x1F, ff8_fs_archive_free_file_container_sub_archive);
 
 	ff8_read_file = (uint32_t(*)(uint32_t, void *, struct ff8_file *))common_externals.read_file;
@@ -1829,7 +2294,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(ff8_externals.load_credits_image + 0x164, credits_controller_music_play);
 	replace_call(ff8_externals.load_credits_image + 0x305, credits_controller_input_call);
 
-	if (!steam_edition) {
+	if (!steam_edition && !ff8_remastered_edition) {
 		// Look again with the DataDrive specified in the register
 		replace_call(ff8_externals.get_disk_number + 0x6E, ff8_retry_configured_drive);
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
@@ -1860,6 +2325,16 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// All possible message and ask windows
 	ff8_opcode_old_battle = (int (*)(int))ff8_externals.opcode_battle;
 	patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x69], (DWORD)&ff8_opcode_battle);
+
+	//###############################
+	// FF8 remastered support
+	//###############################
+	// draw magic from draw points increase counter in savemap
+	replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
+	replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : (FF8_SP_VERSION ? 0x89A : 0x85F)), (void*)ff8_set_drawpoint_state_52D190);
+
+	// draw magic via stock in battle increase counter in savemap
+	replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355)), (void*)ff8_battle_get_magic_draw_amount_48FD20);
 
 	//###############################
 	// steam achievement unlock calls
@@ -1906,13 +2381,6 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		// kills
 		replace_call(ff8_externals.battle_sub_494410 + 0x525, (void*)ff8_battle_after_enemy_kill_sub_494AF0);
 
-		// draw magic from draw points
-		replace_call(ff8_externals.opcode_drawpoint + 0x6B7, (void*)ff8_opcode_drawpoint_sub_4A0850);
-		replace_call(ff8_externals.sub_54E9B0 + (FF8_US_VERSION ? 0x845 : (FF8_SP_VERSION ? 0x89A : 0x85F)), (void*)ff8_set_drawpoint_state_52D190);
-
-		// draw magic via stock in battle
-		replace_call(ff8_externals.battle_sub_48D200 + (FF8_US_VERSION ? 0x354 : (JP_VERSION ? 0x36F : 0x355)), (void*)ff8_battle_get_magic_draw_amount_48FD20);
-
 		// timber maniacs
 		patch_code_dword((uint32_t)&common_externals.execute_opcode_table[0x0B], (uint32_t)&ff8_field_opcode_POPM_B);
 
@@ -1952,22 +2420,62 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// #####################
 	// 3D model extended memory
 	// #####################
-	extended_memory = (uint8_t *)driver_malloc(0x1000000); // 16 MB
+	extended_memory = (uint8_t *)driver_malloc(0x2000000); // 32 MB
 
 	if (extended_memory) {
 		uint32_t memory_offsets = JP_VERSION ? 0xD6DD60 : 0xB6D060;
-		patch_code_dword(memory_offsets + 0xC, uint32_t(extended_memory) + 0x300000);
-		patch_code_dword(memory_offsets + 0x18, uint32_t(extended_memory) + 0x80000);
-		patch_code_dword(memory_offsets + 0x1C, uint32_t(extended_memory) + 0x80000);
-		patch_code_dword(memory_offsets + 0x20, uint32_t(extended_memory) + 0x100000);
-		patch_code_dword(memory_offsets + 0x24, uint32_t(extended_memory) + 0x100000);
+		uint32_t battle_model_memory_offset = ff8_remastered_edition ? 0x800000 : 0x80000;
+		uint32_t battle_character_memory_offset = ff8_remastered_edition ? 0xC00000 : 0x100000;
+		patch_code_dword(memory_offsets + 0xC, uint32_t(extended_memory) + 0x1000000);
+		patch_code_dword(memory_offsets + 0x18, uint32_t(extended_memory) + battle_model_memory_offset);
+		patch_code_dword(memory_offsets + 0x1C, uint32_t(extended_memory) + battle_model_memory_offset);
+		patch_code_dword(memory_offsets + 0x20, uint32_t(extended_memory) + battle_character_memory_offset);
+		patch_code_dword(memory_offsets + 0x24, uint32_t(extended_memory) + battle_character_memory_offset);
 		patch_code_dword(memory_offsets + 0x2C, uint32_t(extended_memory) + 0x180000);
 		patch_code_dword(memory_offsets + 0x30, uint32_t(extended_memory) + 0x180000);
 		patch_code_dword(memory_offsets + 0x34, uint32_t(extended_memory) + 0x180000);
 
+		if (ff8_remastered_edition) {
+			patch_code_byte(ff8_externals.battle_character_dat_loader + 0xA2, 0x11);
+			patch_code_byte(ff8_externals.battle_character_dat_loader_alt + 0x138, 0x11);
+			patch_code_dword(ff8_externals.sub_50B2A0 + 0x1E4, 0x20000);
+			patch_code_dword(ff8_externals.sub_50B2A0 + 0x1EA, 0x40000);
+			patch_code_byte(ff8_externals.sub_50B2A0 + 0x1F5, 0x11);
+			patch_code_dword(ff8_externals.sub_50B2A0 + 0x26B, 0x20000);
+			patch_code_byte(ff8_externals.sub_50B2A0 + 0x278, 0x11);
+			patch_code_dword(ff8_externals.sub_50B2A0 + 0x27C, 0x40000);
+		}
+
 		// Extend field data size
-		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF64 : 0xED1), uint32_t(extended_memory) + 0x5F0000);
-		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF6B : 0xED8), uint32_t(extended_memory) + 0x600000);
+		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF64 : 0xED1), uint32_t(extended_memory) + 0x17F0000);
+		patch_code_dword(ff8_externals.read_field_data + (JP_VERSION ? 0xF6B : 0xED8), uint32_t(extended_memory) + 0x1800000);
+
+		// Relocate effect buffer
+		patch_code_dword(ff8_externals.sub_571870 + 0x3, FF8_BATTLE_EFFECT_BUFFER_SIZE / 4); // Patch size
+		patch_code_dword(ff8_externals.sub_571870 + 0xA, uint32_t(extended_memory) + FF8_BATTLE_EFFECT_BUFFER_OFFSET); // Patch offset
+		patch_code_dword(ff8_externals.get_battle_effect_buffer_sub_571B50 + 0x1, uint32_t(extended_memory) + FF8_BATTLE_EFFECT_BUFFER_OFFSET); // Patch offset
+		patch_code_dword(ff8_externals.get_battle_effect_buffer_size_sub_571B60 + 0x1, FF8_BATTLE_EFFECT_BUFFER_SIZE); // Patch size
+		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x5, FF8_BATTLE_EFFECT_BUFFER_SIZE); // Patch size
+		patch_code_dword(ff8_externals.init_battle_effect_buffer_sub_571B80 + 0x13, uint32_t(extended_memory) + FF8_BATTLE_EFFECT_BUFFER_OFFSET); // Patch offset
+
+		// Fault on the instruction that runs past the effect buffer instead of silently
+		// corrupting unrelated state and crashing much later somewhere else.
+		if (more_debug)
+		{
+			// extended_memory is not page aligned, so round up to avoid protecting arena bytes.
+			uint8_t *guard = (uint8_t *)((uintptr_t(extended_memory) + FF8_BATTLE_EFFECT_BUFFER_OFFSET + FF8_BATTLE_EFFECT_BUFFER_SIZE + 0xFFF) & ~uintptr_t(0xFFF));
+			DWORD previous_protect = 0;
+
+			if (VirtualProtect(guard, 0x1000, PAGE_NOACCESS, &previous_protect))
+				ffnx_info("Battle effect buffer guard page armed at 0x%p\n", guard);
+			else
+				ffnx_warning("Battle effect buffer guard page could not be armed (error %u)\n", GetLastError());
+		}
+
+		if (ff8_remastered_edition)
+			patch_ff8_remastered_battle_effect_layout();
+
+		patch_ff8_battle_link_task_diagnostic();
 	} else {
 		ffnx_error("%s: cannot allocate extended_memory\n", __func__);
 	}
