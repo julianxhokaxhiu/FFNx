@@ -7,6 +7,7 @@
 - Renderer: Substantial overhaul of movie rendering, NTSC-J mode, and gamma functions ( https://github.com/julianxhokaxhiu/FFNx/pull/832 )
 - Renderer: fix `enable_bilinear` option for original game textures ( https://github.com/julianxhokaxhiu/FFNx/pull/914 )
 - Core: Add support for SDL3 Gamepad API (`use_sdl_gamepad`) ( https://github.com/julianxhokaxhiu/FFNx/pull/915 )
+- Core: Fix a crash during startup when a file signature check fails, which left FFNx.log truncated instead of naming the file ( https://github.com/julianxhokaxhiu/FFNx/pull/986 )
 
 ## FF7
 
