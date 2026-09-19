@@ -366,7 +366,7 @@ enable_ffmpeg_videos = -1
 # If -1, the engine will try to detect the volume by other meanings:
 # - FF7 1998: It will attempt to use the FFNx registry paths ( also used by 7th Heaven )
 # - FF7 Steam: It will be set to 100% by default
-# - FF8 2000: NOT SUPPORTED!
+# - FF8 2000: It will be set to 100% by default
 # - FF8 Steam: It will be set to 100% by default
 ffmpeg_video_volume = -1
 

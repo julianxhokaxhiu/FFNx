@@ -198,12 +198,20 @@ uint32_t ff8_movie_frames;
 void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 {
 	char fmvName[MAX_PATH], camName[MAX_PATH], newFmvName[MAX_PATH], newCamName[MAX_PATH];
+	char drivename[4], dirname[256], filename[128];
 
 	_snprintf(fmvName, sizeof(fmvName), "data/movies/disc%02i_%02ih.%s", disc, movie, ffmpeg_video_ext.c_str());
 
-	if (redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName)) != 0) {
+	const int redirect_status = redirect_path_with_override(fmvName, newFmvName, sizeof(newFmvName));
+	if (redirect_status != 0) {
 		_snprintf(newFmvName, sizeof(newFmvName), "%s/%s", ff8_externals.app_path, fmvName);
 	}
+
+	_splitpath(newFmvName, drivename, dirname, filename, NULL);
+	_snprintf(movie_music_path, sizeof(movie_music_path), "%s%s%s", drivename, dirname, filename);
+	_snprintf(movie_voice_path, sizeof(movie_voice_path), "%s_va", movie_music_path);
+	bool has_ext_audio_file = nxAudioEngine.canPlayMovieAudio(movie_music_path);
+	if (!has_ext_audio_file) nxAudioEngine.setStreamMasterVolume(ffmpeg_video_volume / 100.0f);
 
 	if(disc != 4)
 	{
@@ -295,7 +303,7 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 			void *opaque = ff8_zzz_open(fmvName);
 
 			if (opaque != nullptr) {
-				ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_zzz_read, ff8_zzz_seek, ff8_zzz_close);
+				ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_zzz_read, ff8_zzz_seek, ff8_zzz_close, !has_ext_audio_file);
 
 				return;
 			}
@@ -305,14 +313,14 @@ void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 			void *opaque = ff8_bink_open(disc, movie);
 
 			if (opaque != nullptr) {
-				ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_bink_read, ff8_bink_seek, ff8_bink_close);
+				ff8_movie_frames = ffmpeg_prepare_movie_from_io(fmvName, opaque, ff8_bink_read, ff8_bink_seek, ff8_bink_close, !has_ext_audio_file);
 
 				return;
 			}
 		}
 	}
 
-	ff8_movie_frames = ffmpeg_prepare_movie(newFmvName);
+	ff8_movie_frames = ffmpeg_prepare_movie(newFmvName, !has_ext_audio_file);
 }
 
 void ff8_release_movie_objects()
@@ -389,6 +397,10 @@ int ff8_start_movie()
 
 	ff8_externals.movie_object->movie_is_playing = true;
 
+	nxAudioEngine.setMovieMasterVolume(ffmpeg_video_volume / 100.0f);
+	nxAudioEngine.playMovieAudio(movie_music_path, MovieAudioLayers::MUSIC);
+	nxAudioEngine.playMovieAudio(movie_voice_path, MovieAudioLayers::VOICE, 3.0f);
+
 	return ff8_update_movie_sample();
 }
 
@@ -397,6 +409,9 @@ int ff8_stop_movie()
 	if(trace_all || trace_movies) ffnx_trace("stop_movie\n");
 
 	ffmpeg_stop_movie();
+
+	nxAudioEngine.stopMovieAudio(MovieAudioLayers::MUSIC);
+	nxAudioEngine.stopMovieAudio(MovieAudioLayers::VOICE);
 
 	ff8_externals.movie_object->movie_is_playing = false;
 
@@ -436,6 +451,8 @@ void movie_init()
 	}
 	else
 	{
+		nxAudioEngine.setMovieAudioMaxSlots(1);
+
 		replace_function(common_externals.prepare_movie, ff8_prepare_movie);
 		replace_function(common_externals.release_movie_objects, ff8_release_movie_objects);
 		replace_function(common_externals.start_movie, ff8_start_movie);
