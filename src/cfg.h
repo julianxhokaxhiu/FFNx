@@ -177,7 +177,6 @@ extern long external_audio_number_of_channels;
 extern long external_audio_sample_rate;
 extern bool ff8_worldmap_internal_highres_textures;
 extern bool ff8_fix_uv_coords_precision;
-extern bool ff8_external_music_force_original_filenames;
 extern bool ff8_use_gamepad_icons;
 extern bool ff8_always_capture_input;
 extern long ff8_fps_limiter;
