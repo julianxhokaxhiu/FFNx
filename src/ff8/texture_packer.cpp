@@ -20,6 +20,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 #include <set>
+#include <algorithm>
 
 #include "texture_packer.h"
 #include "../saveload.h"
@@ -629,7 +630,6 @@ uint32_t TexturePacker::composeTextures(
 	TextureTypes textureType = drawTextures(textures, tiledTex, palette, target, originalW, originalH, scale);
 
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s tex=(%d, %d) bpp=%d paletteVram=(%d, %d) drawnTextureTypes=0x%X scale=%d\n", __func__, tiledTex.x(), tiledTex.y(), tiledTex.bpp(), palette.x(), palette.y(), textureType, scale);
-
 	if (textureType == TexturePacker::InternalTexture || (!save_textures && textureType == TexturePacker::ExternalTexture))
 	{
 		*isExternal = textureType == TexturePacker::ExternalTexture;
@@ -827,6 +827,10 @@ void TexturePacker::IdentifiedTexture::setCurrentAnimationFrame(int frameId)
 {
 	_frameId = frameId;
 	_isAnimated = true;
+	if (TextureModStandard *mod = dynamic_cast<TextureModStandard *>(_mod))
+	{
+		mod->setCurrentAnimationFrame(_frameId);
+	}
 }
 
 void TexturePacker::IdentifiedTexture::setCurrentAnimationFrame(int xBpp2, int y, int wBpp2, int h)
@@ -842,5 +846,9 @@ void TexturePacker::IdentifiedTexture::setCurrentAnimationFrame(int xBpp2, int y
 	else
 	{
 		_frameId = std::distance(_frames.begin(), it);
+	}
+	if (TextureModStandard *mod = dynamic_cast<TextureModStandard *>(_mod))
+	{
+		mod->setCurrentAnimationFrame(_frameId);
 	}
 }

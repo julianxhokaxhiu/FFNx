@@ -106,7 +106,7 @@ private:
 
 class TextureModStandard : public ModdedTexture {
 public:
-	TextureModStandard(const TexturePacker::IdentifiedTexture &originalTexture) : ModdedTexture(originalTexture), _currentPalette(-1) {}
+	TextureModStandard(const TexturePacker::IdentifiedTexture &originalTexture) : ModdedTexture(originalTexture), _currentPalette(-1), _currentAnimationFrame(-1) {}
 	TextureModStandard(const TextureModStandard &other) = delete;
 	~TextureModStandard();
 	inline bool canCopyRect() const override {
@@ -125,12 +125,16 @@ public:
 	void copyRect(int sourceXBpp2, int sourceY, int sourceWBpp2, int sourceH, int targetXBpp2, int targetY, const TextureModStandard &targetTexture);
 	// Set to -1 to unforce
 	void forceCurrentPalette(int8_t currentPalette);
+	void setCurrentAnimationFrame(int frameId);
 private:
 	bool createImage(const char *name, int paletteId = -1, const char *extension = nullptr, char *foundExtension = nullptr);
 	uint8_t computePaletteId(int vramPalXBpp2, int vramPalY) const;
 	const TextureImage &textureImage(uint8_t paletteId) const;
 	std::map<uint8_t, TextureImage> _textures; // Index: paletteId or current texture
+	TextureImage _remasteredUpperImage;
+	TextureImage _remasteredLowerImage;
 	int8_t _currentPalette;
+	int _currentAnimationFrame;
 };
 
 class TextureBackground : public ModdedTexture {
