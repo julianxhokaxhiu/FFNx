@@ -1801,7 +1801,6 @@ struct ff8_externals
 	uint32_t fps_limiter;
 	double *time_volume_change_related_1A78BE0;
 	uint32_t field_vars_stack_1CFE9B8;
-
 	uint32_t get_card_name;
 	uint32_t card_name_positions;
 	uint32_t drawpoint_messages;

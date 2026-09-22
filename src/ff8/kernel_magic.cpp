@@ -149,7 +149,7 @@ static uint32_t ff8_drawn_once = 0;          // drawn-once bitfield, vanilla add
 static int __cdecl ff8_is_gf_id(int id)
 {
 	id &= 0xFFFF; // battle code passes a 16-bit id
-	return (id >= GF_FIRST_ID && id <= GF_LAST_ID) ? 1 : 0;
+	return id >= GF_FIRST_ID && id <= GF_LAST_ID;
 }
 
 // ---- name / description getters (replace_function) ----------------------
