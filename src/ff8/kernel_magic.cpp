@@ -76,10 +76,20 @@
 // Savemap GF record stride; the GF's name sits at offset 0 of the record.
 #define GF_DATA_STRIDE          68
 
-// Vanilla data-section offsets (sections 0..31; index 31 = first text
-// section, used as the end bound of data section 30). Data section sizes are
-// language-independent, so this table is the same for every retail build.
-static const uint32_t vanilla_data_offsets[32] = {
+// Where the exe expects each kernel.bin data section to start (sections 0..30;
+// index 31 is the first text section, used as the end bound of section 30).
+//
+// The exe reads these sections at hardcoded addresses, so it cannot be handed a
+// file whose sections moved. That is why a grown kernel.bin is not passed through:
+// it is copied section by section into an image with exactly this layout, and the
+// magic entries past the vanilla 57 are kept FFNx-side instead of being allowed to
+// shift everything after them. The image always has this shape, so reads into it
+// resolve through its own header - only the builder below needs these numbers.
+//
+// A modded file whose other data sections changed size is reported and still
+// loaded, minus whatever did not fit. Data section sizes are language-independent,
+// so this is the same for every retail build.
+static const uint32_t exe_data_section_offsets[32] = {
 	228, 540, 3960, 6072, 13752, 14148, 14244, 14640, 15432, 16096,
 	16416, 16608, 16768, 16920, 17072, 17232, 17272, 17344, 17536, 17656,
 	17912, 18424, 18616, 18936, 19036, 19052, 19152, 19212, 19468, 19660,
@@ -188,7 +198,8 @@ static char *__cdecl ff8_get_magic_description(int id)
 {
 	if (ff8_is_gf_id(id))
 	{
-		const uint8_t *k_gf = (const uint8_t *)ff8_externals.unk_1CF3E48 + vanilla_data_offsets[KERNEL_GF_SECTION];
+		const uint8_t *buffer = (const uint8_t *)ff8_externals.unk_1CF3E48;
+		const uint8_t *k_gf = buffer + KERNEL_SECTION_OFFSET(buffer, KERNEL_GF_SECTION);
 		return ff8_kernel_text(KERNEL_TEXT_GF_DESC_SEC, *(const uint16_t *)(k_gf + K_GF_STRIDE * (id - GF_FIRST_ID) + K_GF_DESC_OFF));
 	}
 
@@ -232,8 +243,15 @@ static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_i
 		{
 			if (++slot >= BATTLE_MAGIC_SLOTS)
 			{
-				for (slot = 0; slot < BATTLE_MAGIC_SLOTS && chr->magic[slot].id; ++slot);
-				if (slot >= BATTLE_MAGIC_SLOTS) chr->stock_flags |= 2; // no free slot
+				// Not held yet: the draw needs a free slot to put it in.
+				for (slot = 0; slot < BATTLE_MAGIC_SLOTS; ++slot)
+				{
+					if (chr->magic[slot].id == 0)
+						break;
+				}
+
+				if (slot >= BATTLE_MAGIC_SLOTS)
+					chr->stock_flags |= 2; // no free slot
 				return chr;
 			}
 		}
@@ -471,12 +489,16 @@ static int ff8_stand_in_magic_id(const ff8_field_magic_slot *inventory, const ui
 		bool used = false;
 
 		for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
+		{
 			if (inventory[i].id == id)
 				used = true;
+		}
 
 		for (int i = 0; i < MONSTER_DRAW_SLOT_COUNT; ++i)
+		{
 			if (monster[MONSTER_DRAW_SLOT_SIZE * i] == id)
 				used = true;
+		}
 
 		if (!used)
 			return id;
@@ -530,20 +552,26 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 	// keeps stacking on its own slot.
 	int draw_slot = 0;
 	while (draw_slot < MONSTER_DRAW_SLOT_COUNT && monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] != (uint8_t)spell_id)
+	{
 		++draw_slot;
+	}
 	if (draw_slot < MONSTER_DRAW_SLOT_COUNT)
 		monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] = (uint8_t)stand_in;
 
 	for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
+	{
 		if (inventory[i].id == (uint8_t)spell_id)
 			inventory[i].id = (uint8_t)stand_in;
+	}
 
 	int ret = ff8_call_command_action(attacker_slot, command, stand_in, variant, target_slot, target_mask, linked);
 
 	// Put the real spell back everywhere the call left the stand-in.
 	for (int i = 0; i < BATTLE_MAGIC_SLOTS; ++i)
+	{
 		if (inventory[i].id == (uint8_t)stand_in)
 			inventory[i].id = (uint8_t)spell_id;
+	}
 
 	if (draw_slot < MONSTER_DRAW_SLOT_COUNT)
 		monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] = (uint8_t)spell_id;
@@ -642,8 +670,8 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	for (int i = 0; i < KERNEL_FIRST_TEXT_SEC; ++i)
 	{
 		uint32_t src = offsets[i];
-		uint32_t dst = vanilla_data_offsets[i];
-		uint32_t copy_size = vanilla_data_offsets[i + 1] - dst;
+		uint32_t dst = exe_data_section_offsets[i];
+		uint32_t copy_size = exe_data_section_offsets[i + 1] - dst;
 		uint32_t src_size = offsets[i + 1] - src;
 
 		out_header[1 + i] = dst;
@@ -665,11 +693,13 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	// code reads it by hardcoded offset, and leaving it uninitialised crashed
 	// the first menu open.
 	for (int i = KERNEL_FIRST_TEXT_SEC; i < KERNEL_SECTION_COUNT; ++i)
+	{
 		out_header[1 + i] = (uint32_t)(ff8_kernel_stash + offsets[i]) - (uint32_t)dest;
+	}
 
-	uint32_t text_dest_size = VANILLA_KERNEL_SIZE - vanilla_data_offsets[KERNEL_FIRST_TEXT_SEC];
+	uint32_t text_dest_size = VANILLA_KERNEL_SIZE - exe_data_section_offsets[KERNEL_FIRST_TEXT_SEC];
 	uint32_t text_src_size = (uint32_t)size - offsets[KERNEL_FIRST_TEXT_SEC];
-	memcpy(dest + vanilla_data_offsets[KERNEL_FIRST_TEXT_SEC], ff8_kernel_stash + offsets[KERNEL_FIRST_TEXT_SEC], text_src_size < text_dest_size ? text_src_size : text_dest_size);
+	memcpy(dest + exe_data_section_offsets[KERNEL_FIRST_TEXT_SEC], ff8_kernel_stash + offsets[KERNEL_FIRST_TEXT_SEC], text_src_size < text_dest_size ? text_src_size : text_dest_size);
 
 	// FFNx-side full magic table.
 	memcpy(ff8_magic_table, ff8_kernel_stash + offsets[KERNEL_MAGIC_SECTION], entries * MAGIC_ENTRY_SIZE);
