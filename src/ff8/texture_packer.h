@@ -175,7 +175,8 @@ public:
 
 	uint32_t composeTextures(
 		const uint8_t *texData, uint32_t *rgbaImageData, int originalW, int originalH,
-		int palIndex, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set, bool *isExternal
+		int palIndex, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set, bool *isExternal,
+		const char *textureName, uint32_t savePaletteIndex
 	) const;
 
 	static void debugSaveTexture(int textureId, const uint32_t *source, int w, int h, bool removeAlpha = true, bool after = false, TextureTypes textureType = NoTexture);

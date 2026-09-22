@@ -1729,7 +1729,8 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 		texture = texturePacker.composeTextures(
 			VREF(tex_header, image_data), reinterpret_cast<uint32_t *>(image_data), originalWidth, originalHeight,
 			VREF(tex_header, palette_index) / 2,
-			VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set, &external
+			VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set, &external,
+			VREF(tex_header, file.pc_name), saveload_palette_index
 		);
 
 		if (texture == uint32_t(-1))
@@ -2075,6 +2076,11 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 			// check if this texture can be loaded from the modpath, we may not have to do any conversion
 			if (!load_external_texture(image_data, image_data_size, _texture_set, _tex_header, w, h, saveload_palette_index))
 			{
+				if (save_gpu_textures && (uint32_t)VREF(tex_header, file.pc_name) > 32)
+				{
+					save_gpu_texture(image_data, image_data_size, w, h, saveload_palette_index, VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated));
+				}
+
 				// commit PBO and populate texture set
 				gl_upload_texture(_texture_set, VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA);
 			}

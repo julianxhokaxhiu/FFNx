@@ -528,7 +528,8 @@ std::list<TexturePacker::IdentifiedTexture> TexturePacker::matchTextures(const T
 
 uint32_t TexturePacker::composeTextures(
 	const uint8_t *texData, uint32_t *rgbaImageData, int originalW, int originalH,
-	int palIndex, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set, bool *isExternal) const
+	int palIndex, uint32_t* width, uint32_t* height, struct gl_texture_set* gl_set, bool *isExternal,
+	const char *textureName, uint32_t savePaletteIndex) const
 {
 	if (trace_all || trace_vram) ffnx_trace("TexturePacker::%s texData=0x%X originalSize=(%d, %d) palIndex=%d\n", __func__, texData, originalW, originalH, palIndex);
 
@@ -636,6 +637,10 @@ uint32_t TexturePacker::composeTextures(
 		*height = originalH * scale;
 		// Data is passed to bgfx, not need to free it here
 		bool copyData = target == rgbaImageData;
+		if (save_gpu_textures && textureName != nullptr)
+		{
+			save_gpu_texture(target, *width * *height * sizeof(uint32_t), *width, *height, savePaletteIndex, textureName, gl_set != nullptr && gl_set->is_animated);
+		}
 		return newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, true, copyData);
 	}
 

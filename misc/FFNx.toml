@@ -522,6 +522,10 @@ save_textures = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 save_textures_legacy = false
 
+# Dump final textures uploaded to the GPU to PNG files in dump/gpu
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
+save_gpu_textures = false
+
 # Dump identified data from EXE to "<direct_mode_path>/exe/"
 # List of files dumped here: https://github.com/julianxhokaxhiu/FFNx/tree/master/docs/mods/exe_data.md
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
