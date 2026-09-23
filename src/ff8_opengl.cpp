@@ -37,6 +37,7 @@
 #include "ff8/file.h"
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
+#include "ff8/battle/ai.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/battle/monsters.h"
 #include "ff8/remaster.h"
@@ -352,6 +353,8 @@ static void patch_ff8_remastered_battle_effect_layout()
 		{ 0x73A33B, 0x19E0F58, 0x26000, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x73A345, 0x19E1028, 0x26100, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x746BC3, 0x258BFB0, 0xC0000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8C00A7, 0x274C3E0, 0x420000, ff8_battle_effect_layout_patch_mode::effect_arena },
+		{ 0x8C00B1, 0x27437C0, 0x400000, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x8D6ABF, 0x278C79C, 0x403004, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x8D6ACE, 0x278C798, 0x403000, ff8_battle_effect_layout_patch_mode::effect_arena },
 		{ 0x8D6ADA, 0x278C628, 0x400010, ff8_battle_effect_layout_patch_mode::effect_arena },
@@ -2495,6 +2498,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Unlock unused battle monster models c0m144-c0m199
 	// #####################
 	ff8_battle_monsters_init();
+
+	// #####################
+	// Monster-AI target values 228-248 -> fixed battle-slot pairs
+	// #####################
+	ff8_battle_ai_init();
 
 }
 

@@ -18,6 +18,7 @@
 
 ## FF8
 
+- Core: Add monster-AI `target` opcode values 228-248 to target two battle slots at once ( https://github.com/julianxhokaxhiu/FFNx/pull/961 )
 - Core: Add support for remastered version, [see manual](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/how_to_install.md#remastered-release) for more informations ( https://github.com/julianxhokaxhiu/FFNx/pull/887 https://github.com/julianxhokaxhiu/FFNx/pull/977 https://github.com/julianxhokaxhiu/FFNx/pull/979 )
 - Core: Fix IT and DE versions crashing on launch ( https://github.com/julianxhokaxhiu/FFNx/pull/957 )
 - Core: Support kernel.bin Magic sections beyond the vanilla 57 spells, unlocking ids 57-63 and 96-255 (64-95 reserved for GFs) ( https://github.com/julianxhokaxhiu/FFNx/pull/956 )
@@ -29,6 +30,7 @@
 - External textures: Disable texture filtering in worldmap when filtering is enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/954 )
 - External textures: Change texture color for model field external textures, depending on the current map ( https://github.com/julianxhokaxhiu/FFNx/pull/981 )
 - Widescreen: Fix text dialogues in battles when using 16:9 ( https://github.com/julianxhokaxhiu/FFNx/pull/960 )
+- Movie: Add support for Music/Voice layer for external movies
 
 ## FF8 Remastered
 

@@ -146,7 +146,6 @@ long external_audio_number_of_channels;
 long external_audio_sample_rate;
 bool ff8_worldmap_internal_highres_textures;
 bool ff8_fix_uv_coords_precision;
-bool ff8_external_music_force_original_filenames;
 bool ff8_use_gamepad_icons;
 bool ff8_always_capture_input;
 long ff8_fps_limiter;
@@ -321,7 +320,6 @@ void read_cfg()
 	external_audio_sample_rate = config["external_audio_sample_rate"].value_or(44100);
 	ff8_worldmap_internal_highres_textures = config["ff8_worldmap_internal_highres_textures"].value_or(true);
 	ff8_fix_uv_coords_precision = config["ff8_fix_uv_coords_precision"].value_or(true);
-	ff8_external_music_force_original_filenames = config["ff8_external_music_force_original_filenames"].value_or(false);
 	ff8_use_gamepad_icons = config["ff8_use_gamepad_icons"].value_or(false);
 	ff8_always_capture_input = config["ff8_always_capture_input"].value_or(false);
 	ff8_fps_limiter = config["ff8_fps_limiter"].value_or(FPS_LIMITER_DEFAULT);

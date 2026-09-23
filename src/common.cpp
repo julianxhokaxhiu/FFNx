@@ -3355,7 +3355,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 				if (external_music_path.empty()) external_music_path = "data/music/dmusic/ogg";
 				// Steam edition contains movies unpacked
 				enable_ffmpeg_videos = true;
-				ff8_external_music_force_original_filenames = true; // FIXME: allow old mods?
 
 				patch_code_byte(uint32_t(ff8_externals.set_game_paths) + 0x1F0, DRIVE_NO_ROOT_DIR);
 				memcpy_code(uint32_t(ff8_externals.archive_path_prefix_field), "\\ff8\\data\\x\\field\\", sizeof("\\ff8\\data\\x\\field\\"));
