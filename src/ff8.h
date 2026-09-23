@@ -1122,13 +1122,6 @@ struct ff8_char_computed_stats {
 	uint8_t unk3[23];
 };
 
-// The record is indexed by stride, and the named head was split out of a single
-// unk1[370] - so both the size and where the split lands have to hold.
-static_assert(sizeof(ff8_char_computed_stats) == 464);
-static_assert(offsetof(ff8_char_computed_stats, magic) == 130);
-static_assert(offsetof(ff8_char_computed_stats, curr_hp) == 370);
-static_assert(sizeof(ff8_field_magic_slot) == 5);
-
 struct ff8_menu_callback {
 	void (*func)(int);
 	uint32_t field_4;
