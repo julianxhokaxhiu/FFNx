@@ -628,6 +628,23 @@ static bool submit_prompt_quad(const prompt_sprite& sprite, float x, float y, fl
   return true;
 }
 
+static int controller_button_for_binding(int binding)
+{
+  static constexpr byte controller_button_map[] = { 7, 6, 5, 4, 2, 3, 0, 1, 8, 11 };
+  switch (binding)
+  {
+    case 227: return 12;
+    case 228: return 14;
+    case 229: return 15;
+    case 230: return 13;
+    default:
+      const int raw_button = binding - 235;
+      return raw_button >= 0 && raw_button < sizeof(controller_button_map)
+        ? controller_button_map[raw_button]
+        : -1;
+  }
+}
+
 int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
 {
   prompt_sprite sprite;
@@ -636,6 +653,20 @@ int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
     if (!ff7_externals.input_mapping || button < 0 || button >= 25)
       return x;
     button = ff7_externals.input_mapping[button];
+  }
+  else if (ff7_externals.config_input_mapping)
+  {
+    // Config action slots differ from the atlas button IDs.
+    static constexpr byte config_indices[] = {
+      1, 2, 3, 4, 5, 6, 7, 8, 0xFF, 0xFF, 0xFF, 9, 13, 14, 15, 16,
+    };
+    if (button >= 0 && button < sizeof(config_indices) && config_indices[button] != 0xFF)
+    {
+      const int binding = ff7_externals.config_input_mapping[25 + config_indices[button]];
+      const int configured_button = controller_button_for_binding(binding);
+      if (configured_button >= 0)
+        button = configured_button;
+    }
   }
   if (!sprite_for_button(current_prompt_atlas, button, &sprite))
     return x;
@@ -694,7 +725,6 @@ int universal_buttons_draw_menu_jp_control(int control, int x, int y, float z)
 int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color, float z)
 {
   static constexpr byte binding_indices[] = { 6, 7, 5, 8, 3, 4, 1, 2, 9, 12, 13, 15, 16, 14 };
-  static constexpr byte controller_button_map[] = { 7, 6, 5, 4, 2, 3, 0, 1, 8, 11 };
   static constexpr int row_height = 24;
   static constexpr int first_row_y = 124;
   const int row = (y - first_row_y) / row_height;
@@ -716,21 +746,7 @@ int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color
       : prompt_atlas::playstation;
   int button = binding;
   if (column == 1)
-  {
-    switch (binding)
-    {
-      case 227: button = 12; break;
-      case 228: button = 14; break;
-      case 229: button = 15; break;
-      case 230: button = 13; break;
-      default:
-        const int raw_button = binding - 235;
-        button = raw_button >= 0 && raw_button < sizeof(controller_button_map)
-          ? controller_button_map[raw_button]
-          : -1;
-        break;
-    }
-  }
+    button = controller_button_for_binding(binding);
   prompt_sprite sprite;
   if (!sprite_for_button(atlas, button, &sprite))
     return draw_text();
