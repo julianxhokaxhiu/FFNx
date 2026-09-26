@@ -1120,7 +1120,9 @@ static const pacing_signature pacing_signatures[] = {
 
 static bool pacing_check_executable()
 {
-	if (version != VERSION_FF8_12_US || ff8_remastered_edition) return false;
+	// The Steam executable is detected as the Nvidia variant: every English 1.2 build is
+	// accepted, the code signatures below decide
+	if (!FF8_US_VERSION || ff8_remastered_edition) return false;
 
 	for (const pacing_signature &s : pacing_signatures)
 	{
