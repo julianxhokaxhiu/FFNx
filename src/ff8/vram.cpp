@@ -215,6 +215,14 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 		}
 	}
 
+	if (resourceId < 0 && strlen(classicName) == 6 && strnicmp(classicName, "C0M", 3) == 0
+		&& classicName[3] >= '0' && classicName[3] <= '9'
+		&& classicName[4] >= '0' && classicName[4] <= '9'
+		&& classicName[5] >= '0' && classicName[5] <= '9')
+	{
+		resourceId = 1000 + (classicName[3] - '0') * 100 + (classicName[4] - '0') * 10 + (classicName[5] - '0');
+	}
+
 	if (resourceId >= 0)
 	{
 		const char *family = nullptr;
@@ -1850,6 +1858,78 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 
 static uint8_t *ff8_remastered_battle_effect_parent_cursor = nullptr;
 
+static void *ff8_remastered_open_exe_dat(const char *fileName, void *data, int dataSize, DWORD *outSize)
+{
+	if (fileName == nullptr)
+	{
+		return nullptr;
+	}
+
+	const char *baseName = PathFindFileNameA(fileName);
+	const char *extension = strrchr(baseName, '.');
+	if (extension == nullptr || stricmp(extension, ".dat") != 0)
+	{
+		return nullptr;
+	}
+
+	char archivePath[MAX_PATH] = {};
+	snprintf(archivePath, sizeof(archivePath), "data\\exe_dat\\%s", baseName);
+	Zzz::File *file = g_FF8ZzzArchiveMain.openFile(archivePath);
+	if (file == nullptr)
+	{
+		return nullptr;
+	}
+
+	std::vector<uint8_t> fileData(file->size());
+	const int bytesRead = file->read(fileData.data(), unsigned(fileData.size()));
+	Zzz::closeFile(file);
+	if (bytesRead != int(fileData.size()))
+	{
+		ffnx_warning("%s: failed to read %s from main.zzz\n", __func__, archivePath);
+		return nullptr;
+	}
+
+	uint8_t *destination = nullptr;
+	if (data != nullptr && dataSize >= 0 && fileData.size() <= size_t(dataSize))
+	{
+		destination = (uint8_t *)data;
+	}
+	else
+	{
+		uint8_t *effect_arena = ((uint8_t *(*)())ff8_externals.get_battle_effect_buffer_sub_571B50)();
+		uint8_t *effect_parent_begin = effect_arena + 0x100000;
+		uint8_t *effect_parent_end = effect_arena + FF8_BATTLE_EFFECT_BUFFER_SIZE;
+		if (data == effect_arena || ff8_remastered_battle_effect_parent_cursor == nullptr)
+		{
+			ff8_remastered_battle_effect_parent_cursor = effect_parent_begin;
+		}
+
+		const size_t alignedSize = (fileData.size() + 3) & ~size_t(3);
+		if (ff8_remastered_battle_effect_parent_cursor > effect_parent_end
+			|| alignedSize > size_t(effect_parent_end - ff8_remastered_battle_effect_parent_cursor))
+		{
+			ffnx_warning("%s: %s exceeds the Remastered battle effect arena\n", __func__, archivePath);
+			return nullptr;
+		}
+
+		destination = ff8_remastered_battle_effect_parent_cursor;
+		ff8_remastered_battle_effect_parent_cursor += alignedSize;
+	}
+
+	memcpy(destination, fileData.data(), fileData.size());
+	if (outSize != nullptr)
+	{
+		*outSize = DWORD(fileData.size());
+	}
+
+	if (trace_all || trace_files)
+	{
+		ffnx_info("%s: loaded %s from main.zzz (%u bytes)\n", __func__, archivePath, unsigned(fileData.size()));
+	}
+
+	return destination;
+}
+
 void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWORD *outSize)
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: %s\n", __func__, fileName);
@@ -1858,6 +1938,15 @@ void *ff8_battle_open_effect(const char *fileName, void *data, int dataSize, DWO
 	snprintf(battle_texture_name, sizeof(battle_texture_name), "magic/%s", fileName);
 
 	auto open_effect = (void *(*)(const char*,void*,int,DWORD*))ff8_externals.load_magic_data_sub_571900;
+	if (ff8_remastered_edition)
+	{
+		void *exeDat = ff8_remastered_open_exe_dat(fileName, data, dataSize, outSize);
+		if (exeDat != nullptr)
+		{
+			return exeDat;
+		}
+	}
+
 	if (!ff8_remastered_edition || data == nullptr)
 		return open_effect(fileName, data, dataSize, outSize);
 
@@ -1902,6 +1991,7 @@ int battle_get_texture_header_index(uint8_t *texture_buffer)
 void battle_read_effect_alloc()
 {
 	if (trace_all || trace_vram) ffnx_trace("%s: magic_id=%d\n", __func__, *ff8_externals.battle_magic_id);
+	ff8_remastered_battle_effect_parent_cursor = nullptr;
 
 	// Reset list
 	for (int i = 0; i < battle_texture_headers.size(); ++i) {
