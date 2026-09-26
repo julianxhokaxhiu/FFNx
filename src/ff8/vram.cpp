@@ -1816,8 +1816,8 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 		{
 			uint32_t *toc = (uint32_t *)data + 1;
 			uint32_t cur_data_pos = (11 + 2) * sizeof(uint32_t);
-			byte *old_data = new byte[toc[12]];
-			memcpy(old_data, data, toc[12] * sizeof(byte));
+			byte *old_data = new byte[toc[11]];
+			memcpy(old_data, data, toc[11] * sizeof(byte));
 			uint32_t *old_toc = (uint32_t *)old_data + 1;
 
 			for (int chunkId = 0; chunkId < 11; ++chunkId)
