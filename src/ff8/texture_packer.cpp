@@ -641,7 +641,13 @@ uint32_t TexturePacker::composeTextures(
 		{
 			save_gpu_texture(target, *width * *height * sizeof(uint32_t), *width, *height, savePaletteIndex, textureName, gl_set != nullptr && gl_set->is_animated);
 		}
-		return newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, true, copyData);
+		std::string debugName;
+		if ((uint32_t)textureName > 32)
+		{
+			debugName = get_gpu_texture_name(target, *width * *height * sizeof(uint32_t), savePaletteIndex,
+				textureName, gl_set != nullptr && gl_set->is_animated);
+		}
+		return newRenderer.createTexture(reinterpret_cast<uint8_t *>(target), *width, *height, 0, RendererTextureType::BGRA, true, copyData, debugName.empty() ? nullptr : debugName.c_str());
 	}
 
 	if (target != nullptr && target != rgbaImageData)

@@ -1873,7 +1873,7 @@ void Renderer::setBackgroundColor(float r, float g, float b, float a)
     internalState.clearColorValue = createBGRA(r * 255, g * 255, b * 255, a * 255);
 }
 
-uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb, bool copyData)
+uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int stride, RendererTextureType type, bool isSrgb, bool copyData, const char* debugName)
 {
     bgfx::TextureHandle ret = FFNX_RENDERER_INVALID_HANDLE;
 
@@ -1936,6 +1936,9 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
                 mem,
                 stride
             );
+
+        if (bgfx::isValid(ret) && debugName != nullptr && debugName[0] != '\0')
+            bgfx::setName(ret, debugName);
 
         if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from data with stride %u\n", __func__, ret.idx, width, height, stride);
     }
@@ -2010,6 +2013,9 @@ bgfx::TextureHandle Renderer::createTextureHandle(char* filename, uint32_t* widt
             *height = img->m_height;
             *mipCount = img->m_numMips;
 
+            if (bgfx::isValid(ret) && filename != nullptr)
+                bgfx::setName(ret, filename);
+
             if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
         }
     }
@@ -2061,6 +2067,9 @@ bgfx::TextureHandle Renderer::createTextureHandle(cmrc::file* file, char* filena
             *height = img->m_height;
             *mipCount = img->m_numMips;
 
+            if (bgfx::isValid(ret) && filename != nullptr)
+                bgfx::setName(ret, filename);
+
             if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, width, height, filename);
         }
     }
@@ -2096,6 +2105,9 @@ uint32_t Renderer::createTextureLibPng(char* filename, uint32_t* width, uint32_t
 
     *width = img->m_width;
     *height = img->m_height;
+
+    if (bgfx::isValid(ret) && filename != nullptr)
+        bgfx::setName(ret, filename);
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u => %ux%u from filename %s\n", __func__, ret.idx, *width, *height, filename);
 

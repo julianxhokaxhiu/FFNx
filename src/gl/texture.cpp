@@ -24,6 +24,7 @@
 #include "../log.h"
 #include "../gl.h"
 #include "../macro.h"
+#include "../saveload.h"
 
 // check to make sure we can actually load a given texture
 bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source)
@@ -52,7 +53,7 @@ void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index,
 }
 
 // upload texture for a texture set from raw pixel data
-void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, void *image_data, uint32_t format)
+void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, void *image_data, uint32_t format, uint32_t savePaletteIndex)
 {
 	uint32_t w, h;
 	VOBJ(texture_set, texture_set, texture_set);
@@ -70,13 +71,22 @@ void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, 
 	}
 
 	gl_check_texture_dimensions(w, h, "unknown");
+	std::string debugName;
+	if ((uint32_t)VREF(tex_header, file.pc_name) > 32)
+	{
+		debugName = get_gpu_texture_name(image_data, w * h * sizeof(uint32_t), savePaletteIndex,
+			VREF(tex_header, file.pc_name), VREF(texture_set, ogl.gl_set->is_animated));
+	}
 
 	uint32_t newTexture = newRenderer.createTexture(
 		(uint8_t*)image_data,
 		w,
 		h,
 		0,
-		RendererTextureType(format)
+		RendererTextureType(format),
+		true,
+		true,
+		debugName.empty() ? nullptr : debugName.c_str()
 	);
 
 	gl_replace_texture(
