@@ -1004,8 +1004,6 @@ void ff8_battle_pacing_frame_end(uint32_t driver_mode)
 
 void ff8_battle_pacing_init()
 {
-	if (ff8_remastered_edition) return;
-
 	uint32_t bdlink = ff8_externals.battle_load_textures_sub_500900;
 
 	// Frame phase

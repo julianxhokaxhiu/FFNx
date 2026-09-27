@@ -1,6 +1,6 @@
 # Battle at 60 FPS with the original battle pace
 
-Enabled with `ff8_fps_limiter = 4`. Outside battles this mode behaves like `ff8_fps_limiter = 1`. Not available on the remastered edition.
+Enabled with `ff8_fps_limiter = 4`. Outside battles this mode behaves like `ff8_fps_limiter = 1`. Also available on the remastered edition (it runs the same 1.2 executable).
 
 ## The problem
 
