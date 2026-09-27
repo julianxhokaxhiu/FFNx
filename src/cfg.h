@@ -181,7 +181,7 @@ extern bool ff8_fix_uv_coords_precision;
 extern bool ff8_use_gamepad_icons;
 extern bool ff8_always_capture_input;
 extern long ff8_fps_limiter;
-extern bool ff8_battle_ui_60hz;
+extern bool ff8_battle_input_60hz;
 extern std::string app_path;
 extern std::string data_drive;
 extern bool enable_ntscj_gamut_mode;

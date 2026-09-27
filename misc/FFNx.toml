@@ -812,16 +812,16 @@ ff8_always_capture_input = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_fps_limiter = 1
 
-# Battle at 60 FPS with the original battle speed
+# Battle controller read 60 times per second
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Runs battles at 60 FPS like the PlayStation version ran its battle menu: the menu, cursor
-# and ATB gauges update every frame and the controller is read every frame,
-# so fast inputs (GF Boost, Renzokuken, Zell's Duel, quick menu navigation) are no longer lost.
-# The battle itself keeps its original speed and look: models, camera and effects still move
-# 15 times per second, and ATB, status timers and game time run at their original speed.
+# The PC version reads the controller only once per battle frame (15 times per second) while
+# the PlayStation read it 60 times per second: quick presses are merged or lost in GF Boost,
+# Renzokuken, Zell's Duel and fast menu inputs. With this option the controller is read
+# 60 times per second in battle and every read reaches the battle menu, like on the PlayStation.
+# Nothing else changes: the battle still runs at 15 FPS with its original speed and timing.
 # Requires ff8_fps_limiter >= 1. FF8 2000 / Steam English 1.2 only (ignored on other versions).
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ff8_battle_ui_60hz = false
+ff8_battle_input_60hz = false
 
 ## GAME INSTALLATION OPTIONS
 

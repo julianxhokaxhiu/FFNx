@@ -40,7 +40,7 @@
 #include "ff8/battle/ai.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/battle/monsters.h"
-#include "ff8/battle/pacing.h"
+#include "ff8/battle/pad_sampling.h"
 #include "ff8/remaster.h"
 #include "metadata.h"
 #include "achievement.h"
@@ -1975,30 +1975,21 @@ int ff8_limit_fps()
 		}
 	}
 
-	ff8_battle_pacing_on_host_frame(mode->driver_mode);
-
-	int extra_pad_reads = 0;
-
-	if (mode->driver_mode == MODE_BATTLE && ff8_battle_pacing_enabled())
-	{
-		framerate = ff8_battle_pacing_battle_framerate();
-		extra_pad_reads = ff8_battle_pacing_extra_pad_reads();
-	}
-
 	framerate *= gamehacks.getCurrentSpeedhack();
 	double frame_time = game_object->countspersecond / framerate;
+	int extra_pad_reads = ff8_battle_pad_sampling_extra_reads(mode->driver_mode);
 	int pad_reads_done = 0;
 
 	do
 	{
 		qpc_get_time(&gametime);
 
-		// Pad reads spread evenly over the frame wait (battle pacing below 60 fps)
+		// Extra pad readings spread evenly over the frame (battle pad sampling at 60 Hz)
 		if (pad_reads_done < extra_pad_reads && gametime > last_gametime
 			&& qpc_diff_time(&gametime, &last_gametime, nullptr) >= frame_time * (pad_reads_done + 1) / (extra_pad_reads + 1))
 		{
+			ff8_battle_pad_sampling_read(pad_reads_done);
 			pad_reads_done++;
-			ff8_battle_pacing_read_pad();
 		}
 	}
 	while (gametime > last_gametime && qpc_diff_time(&gametime, &last_gametime, nullptr) < frame_time);
@@ -2529,14 +2520,14 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_battle_ai_init();
 
 	// #####################
-	// Battle at 60 fps: menu, cursor, gauges and pad at 60 Hz, battle logic at its original pace
+	// Battle pad read 60 times per second like on the PlayStation (battle unchanged)
 	// #####################
-	if (ff8_battle_ui_60hz)
+	if (ff8_battle_input_60hz)
 	{
 		if (ff8_fps_limiter < FPS_LIMITER_DEFAULT)
-			ffnx_warning("ff8_battle_ui_60hz needs ff8_fps_limiter >= 1, ignored\n");
+			ffnx_warning("ff8_battle_input_60hz needs ff8_fps_limiter >= 1, ignored\n");
 		else
-			ff8_battle_pacing_init(4);
+			ff8_battle_pad_sampling_init();
 	}
 
 }
