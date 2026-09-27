@@ -35,6 +35,7 @@
 #include "world/wmset.h"
 #include "battle/stage.h"
 #include "remaster.h"
+#include "remastered_battle_texture.h"
 #include "./file.h"
 
 #include <shlwapi.h>
@@ -105,23 +106,6 @@ struct BattleTextureFileName {
 std::vector<BattleTextureFileName> battle_texture_data_list = std::vector<BattleTextureFileName>(battle_texture_data_list_size);
 int battle_texture_data_list_cursor = 0;
 
-struct RemasteredBattleResourceMapping {
-	const char *battleName;
-	int resourceId;
-};
-
-struct RemasteredBattleTextureOverride {
-	const char *battleName;
-	const char *family;
-	int textureIndex;
-};
-
-struct RemasteredBattleTextureFamily {
-	int resourceId;
-	int variant;
-	const char *family;
-};
-
 bool set_remastered_battle_texture_name(char *output, size_t outputSize, const char *classicName, const char *battleName, int textureIndex)
 {
 	if (outputSize > 0)
@@ -131,55 +115,14 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 
 	const char *group = strchr(battleName, '.');
 	const int variant = textureIndex;
-
-	static const RemasteredBattleTextureOverride textureOverrides[] = {
-		{ "battle/MAG099_B.4T0", "mag099", 1 },
-		{ "battle/MAG099_B.4T1", "mag099", 2 },
-	};
-	static const char *const noGenericFallbackPrefixes[] = {
-		"battle/MAG099_B.",
-	};
-	static const RemasteredBattleResourceMapping sourceMappings[] = {
-		{ "battle/MAG095_B.1T2", 99 },
-		{ "battle/MAG089_B.1T0", 95 },
-		{ "battle/MAG201_B.04", 991 },
-		{ "battle/MAG202_B.03", 201 },
-		{ "battle/MAG203_B.05", 202 },
-		{ "battle/MAG005_B.03", 203 },
-		{ "battle/MAG186_A.DAT", 902 },
-		{ "battle/MAG325_A.DAT", 186 },
-		{ "battle/MAG325_F.DAT", 325 },
-		{ "battle/MAG326_A.DAT", 990 },
-		{ "battle/MAG326_E.DAT", 326 },
-		{ "battle/MAG217_A.DAT", 326 },
-	};
-	static const RemasteredBattleTextureFamily textureFamilies[] = {
-		{ 5, 0, "mag005" },
-		{ 85, 0, "mag085" }, { 86, 0, "mag085" }, { 87, 0, "mag085" }, { 88, 0, "mag085" },
-		{ 90, 0, "mag085" }, { 91, 0, "mag085" }, { 92, 0, "mag085" }, { 93, 0, "mag085" },
-		{ 1056, -1, "mag089" }, { 89, 0, "mag089" }, { 991, 1, "mag089" },
-		{ 94, 0, "mag094" }, { 94, 1, "mag094" }, { 95, 0, "mag095" },
-		{ 99, -1, "mag099" }, { 115, 0, "mag115" }, { 115, 1, "mag115" },
-		{ 139, 0, "mag139" }, { 139, 1, "mag139" }, { 184, -1, "mag184" }, { 190, -1, "mag190" },
-		{ 1061, -1, "mag200" }, { 200, 0, "mag200" }, { 1067, -1, "mag201" },
-		{ 201, 0, "mag201" }, { 201, 1, "mag201" }, { 1065, -1, "mag202" },
-		{ 202, 0, "mag202" }, { 202, 1, "mag202" }, { 203, 0, "mag203" }, { 203, 1, "mag203" },
-		{ 204, 0, "mag204" }, { 204, 1, "mag204" }, { 205, -1, "mag205" },
-		{ 217, 2, "mag217" }, { 277, 0, "mag277" }, { 290, 0, "mag290" }, { 290, 1, "mag290" },
-		{ 1066, -1, "mag324" }, { 324, -1, "mag324" }, { 1070, -1, "mag325" },
-		{ 186, 0, "mag325" }, { 186, 1, "mag325" }, { 186, 2, "mag325" }, { 186, 3, "mag325" },
-		{ 325, 0, "mag325" }, { 325, 1, "mag325" }, { 990, 2, "mag325" },
-		{ 326, 0, "mag326" }, { 326, 1, "mag326" }, { 326, 2, "mag326" }, { 326, 3, "mag326" },
-		{ 217, 0, "mag326" }, { 217, 1, "mag326" }, { 1055, -1, "mag900" },
-		{ 900, 0, "mag900" }, { 901, 0, "mag901" }, { 902, -1, "mag902" },
-	};
-	for (const RemasteredBattleTextureOverride &mapping : textureOverrides)
+	for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
 	{
-		if (stricmp(battleName, mapping.battleName) == 0)
+		if (mapping.kind == remastered_battle_texture::MappingKind::NamedOverride
+			&& stricmp(battleName, mapping.battleName) == 0)
 		{
 			char candidate[MAX_PATH] = {};
 			char archivePath[MAX_PATH] = {};
-			snprintf(candidate, sizeof(candidate), "battle.fs\\hd_new\\%s_%d", mapping.family, mapping.textureIndex);
+			snprintf(candidate, sizeof(candidate), "battle.fs\\hd_new\\%s_%d", mapping.family, mapping.outputIndex);
 			snprintf(archivePath, sizeof(archivePath), "textures\\%s.png", candidate);
 			if (g_FF8ZzzArchiveMain.fileExists(archivePath))
 			{
@@ -188,18 +131,20 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 			return true;
 		}
 	}
-	for (const char *prefix : noGenericFallbackPrefixes)
+	for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
 	{
-		if (strnicmp(battleName, prefix, strlen(prefix)) == 0)
+		if (mapping.kind == remastered_battle_texture::MappingKind::BlockedPrefix
+			&& strnicmp(battleName, mapping.battleName, strlen(mapping.battleName)) == 0)
 		{
 			return true;
 		}
 	}
 
 	int resourceId = -1;
-	for (const RemasteredBattleResourceMapping &mapping : sourceMappings)
+	for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
 	{
-		if (stricmp(battleName, mapping.battleName) == 0)
+		if (mapping.kind == remastered_battle_texture::MappingKind::SourceAlias
+			&& stricmp(battleName, mapping.battleName) == 0)
 		{
 			resourceId = mapping.resourceId;
 			break;
@@ -226,23 +171,24 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 
 	if (resourceId >= 0)
 	{
-		const char *family = nullptr;
-		for (const RemasteredBattleTextureFamily &mapping : textureFamilies)
+		const remastered_battle_texture::Mapping *familyMapping = nullptr;
+		for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
 		{
-			if (mapping.resourceId == resourceId && (mapping.variant == variant || mapping.variant == -1))
+			if (mapping.kind == remastered_battle_texture::MappingKind::FamilyVariant
+				&& mapping.resourceId == resourceId && (mapping.variant == variant || mapping.variant == -1))
 			{
-				family = mapping.family;
+				familyMapping = &mapping;
 				if (mapping.variant == variant)
 				{
 					break;
 				}
 			}
 		}
-		if (family != nullptr)
+		if (familyMapping != nullptr)
 		{
 			char candidate[MAX_PATH] = {};
 			char archivePath[MAX_PATH] = {};
-			snprintf(candidate, sizeof(candidate), "battle.fs\\hd_new\\%s_%d", family, variant);
+			snprintf(candidate, sizeof(candidate), "battle.fs\\hd_new\\%s_%d", familyMapping->family, variant);
 			snprintf(archivePath, sizeof(archivePath), "textures\\%s.png", candidate);
 			if (g_FF8ZzzArchiveMain.fileExists(archivePath))
 			{
@@ -272,6 +218,38 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 
 	snprintf(output, outputSize, "battle.fs\\hd_new\\%s", candidate);
 	return true;
+}
+
+const remastered_battle_texture::ImageLayout *remastered_battle_texture::findImageLayout(
+	const std::string &remasteredName, int imageIndexOverride)
+{
+	const size_t familyStart = remasteredName.find_last_of("\\/");
+	const size_t suffixSeparator = remasteredName.find_last_of('_');
+	const size_t familyOffset = familyStart == std::string::npos ? 0 : familyStart + 1;
+	if (suffixSeparator == std::string::npos || suffixSeparator <= familyOffset)
+	{
+		return nullptr;
+	}
+
+	char *suffixEnd = nullptr;
+	const long parsedIndex = strtol(remasteredName.c_str() + suffixSeparator + 1, &suffixEnd, 10);
+	if (suffixEnd == remasteredName.c_str() + suffixSeparator + 1 || *suffixEnd != '\0' || parsedIndex < 0 || parsedIndex > INT_MAX)
+	{
+		return nullptr;
+	}
+
+	const std::string family = remasteredName.substr(familyOffset, suffixSeparator - familyOffset);
+	const int imageIndex = imageIndexOverride >= 0 ? imageIndexOverride : int(parsedIndex);
+	for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
+	{
+		if (mapping.kind == remastered_battle_texture::MappingKind::ImageLayout
+			&& mapping.layout.imageIndex == imageIndex && _stricmp(mapping.family, family.c_str()) == 0)
+		{
+			return &mapping.layout;
+		}
+	}
+
+	return nullptr;
 }
 
 struct VramPos {
