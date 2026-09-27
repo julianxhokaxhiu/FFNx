@@ -153,7 +153,7 @@ void gl_set_d3dprojection_matrix(struct matrix *matrix);
 void gl_set_blend_func(uint32_t);
 bool gl_check_texture_dimensions(uint32_t width, uint32_t height, char *source);
 void gl_replace_texture(struct texture_set *texture_set, uint32_t palette_index, uint32_t new_texture);
-void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, void *image_data, uint32_t format);
+void gl_upload_texture(struct texture_set *texture_set, uint32_t palette_index, void *image_data, uint32_t format, uint32_t savePaletteIndex);
 void gl_bind_texture_set(struct texture_set *);
 void gl_set_texture(uint32_t texture, struct gl_texture_set* gl_set);
 uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, char *fmt, ...);

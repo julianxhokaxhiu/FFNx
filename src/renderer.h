@@ -346,6 +346,13 @@ private:
         bool isViewMatrixSet = false;
     };
 
+    struct DownsampleTarget
+    {
+        bgfx::FrameBufferHandle frameBuffer = BGFX_INVALID_HANDLE;
+        uint16_t width = 0;
+        uint16_t height = 0;
+    };
+
     std::string vertexPathFlat = "shaders/FFNx";
     std::string fragmentPathFlat = "shaders/FFNx";
     std::string vertexPathSmooth = "shaders/FFNx";
@@ -379,6 +386,7 @@ private:
 
     std::vector<bgfx::TextureHandle> backendFrameBufferRT = { BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE };
     bgfx::FrameBufferHandle backendFrameBuffer = BGFX_INVALID_HANDLE;
+    std::vector<DownsampleTarget> downsampleTargets;
 
     bgfx::TextureHandle shadowMapTexture = BGFX_INVALID_HANDLE;
     bgfx::FrameBufferHandle shadowMapFrameBuffer = BGFX_INVALID_HANDLE;
@@ -475,7 +483,7 @@ public:
     void drawToShadowMap(bool uniformsAlreadyAttached = false, bool texturesAlreadyAttached = false);
     void drawWithLighting(bool uniformsAlreadyAttached = false, bool texturesAlreadyAttached = false, bool keepBindings = false);
     void drawFieldShadow();
-    void draw(bool uniformsAlreadyAttached = false, bool texturesAlreadyAttached = false, bool keepBindings = false);
+    void draw(bool uniformsAlreadyAttached = false, bool texturesAlreadyAttached = false, bool keepBindings = false, bgfx::FrameBufferHandle targetFrameBuffer = BGFX_INVALID_HANDLE, uint16_t targetWidth = 0, uint16_t targetHeight = 0);
     void discardAllBindings();
     void drawOverlay();
     void drawFFNxLogo(float fade);
@@ -502,7 +510,7 @@ public:
     void setClearFlags(bool doClearColor = false, bool doClearDepth = false);
     void setBackgroundColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
-    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true);
+    uint32_t createTexture(uint8_t* data, size_t width, size_t height, int stride = 0, RendererTextureType type = RendererTextureType::BGRA, bool isSrgb = true, bool copyData = true, const char* debugName = nullptr);
     uint32_t createTexture(char* filename, uint32_t* width, uint32_t* height, uint32_t* mipCount, bool isSrgb = true);
     bimg::ImageContainer* createImageContainer(const char* filename, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);
     bimg::ImageContainer* createImageContainer(cmrc::file* file, bimg::TextureFormat::Enum targetFormat = bimg::TextureFormat::Enum::Count);

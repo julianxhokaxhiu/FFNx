@@ -2082,7 +2082,7 @@ struct texture_set *common_load_texture(struct texture_set *_texture_set, struct
 				}
 
 				// commit PBO and populate texture set
-				gl_upload_texture(_texture_set, VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA);
+				gl_upload_texture(_texture_set, VREF(tex_header, palette_index), image_data, RendererTextureType::BGRA, saveload_palette_index);
 			}
 		}
 	}

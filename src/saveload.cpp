@@ -71,14 +71,13 @@ void normalize_path(char *name)
 	}
 }
 
-static void save_texture_to_directory(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated, const char *outputDirectory)
+static std::string make_texture_filename(const void *data, uint32_t dataSize, uint32_t palette_index, const char *name, bool is_animated, const char *outputDirectory)
 {
-	char filename[sizeof(basedir) + 1024];
-	uint64_t hash;
+	char filename[sizeof(basedir) + 1024] = {};
 
 	if (is_animated)
 	{
-		hash = XXH3_64bits(data, dataSize);
+		const uint64_t hash = XXH3_64bits(data, dataSize);
 		_snprintf(filename, sizeof(filename), "%s/%s/%s_%02i_%llx.png", basedir, outputDirectory, name, palette_index, hash);
 	}
 	else if (palette_index == uint32_t(-1))
@@ -95,15 +94,27 @@ static void save_texture_to_directory(const void *data, uint32_t dataSize, uint3
 	}
 
 	normalize_path(filename);
+	return filename;
+}
 
-	make_path(filename);
+std::string get_gpu_texture_name(const void *data, uint32_t dataSize, uint32_t palette_index, const char *name, bool is_animated)
+{
+	const std::string filename = make_texture_filename(data, dataSize, palette_index, name, is_animated, "dump/gpu");
+	return std::filesystem::path(filename).stem().string();
+}
 
-	if (!fileExists(filename))
+static void save_texture_to_directory(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated, const char *outputDirectory)
+{
+	const std::string filename = make_texture_filename(data, dataSize, palette_index, name, is_animated, outputDirectory);
+
+	make_path(filename.c_str());
+
+	if (!fileExists(filename.c_str()))
 	{
-		if (!newRenderer.saveTexture(filename, width, height, data)) ffnx_error("Save texture failed for the file [ %s ].\n", filename);
+		if (!newRenderer.saveTexture(filename.c_str(), width, height, data)) ffnx_error("Save texture failed for the file [ %s ].\n", filename.c_str());
 	}
 	else
-		ffnx_warning("Save texture skipped because the file [ %s ] already exists.\n", filename);
+		ffnx_warning("Save texture skipped because the file [ %s ] already exists.\n", filename.c_str());
 }
 
 void save_texture(const void *data, uint32_t dataSize, uint32_t width, uint32_t height, uint32_t palette_index, const char *name, bool is_animated)
