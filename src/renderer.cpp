@@ -444,6 +444,52 @@ void Renderer::resetState()
 
 void Renderer::renderFrame()
 {
+    bgfx::TextureHandle frameTexture = bgfx::getTexture(backendFrameBuffer);
+
+    // Do staged down-sampling for high-quality super-sampling
+    if (!downsampleTargets.empty())
+    {
+        const float fullWidth = widescreen_enabled ? wide_game_width : game_width;
+        const float fullHeight = widescreen_enabled ? wide_game_height : game_height;
+        const float bottomV = getCaps()->originBottomLeft ? 1.0f : 0.0f;
+        const float topV = getCaps()->originBottomLeft ? 0.0f : 1.0f;
+
+        struct nvertex downsampleVertices[] = {
+            {0.0f, 0.0f, 1.0f, 1.0f, 0xff000000, 0, 0.0f, bottomV},
+            {0.0f, fullHeight, 1.0f, 1.0f, 0xff000000, 0, 0.0f, topV},
+            {fullWidth, 0.0f, 1.0f, 1.0f, 0xff000000, 0, 1.0f, bottomV},
+            {fullWidth, fullHeight, 1.0f, 1.0f, 0xff000000, 0, 1.0f, topV},
+        };
+        WORD downsampleIndices[] = {
+            0, 1, 2,
+            1, 3, 2
+        };
+
+        backendProgram = RendererProgram::BLIT;
+        setCullMode(RendererCullMode::DISABLED);
+        setBlendMode(RendererBlendMode::BLEND_DISABLED);
+        doDepthTest(false);
+        doDepthWrite(false);
+        setPrimitiveType(RendererPrimitiveType::PT_TRIANGLES);
+
+        for (const DownsampleTarget& target : downsampleTargets)
+        {
+            backendViewId++;
+            setClearFlags(false, false);
+            useTexture(frameTexture.idx);
+            bgfx::setTexture(
+                RendererTextureSlot::TEX_Y,
+                bgfxTexUniformHandles[RendererTextureSlot::TEX_Y],
+                frameTexture,
+                BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC
+            );
+            bindVertexBuffer(downsampleVertices, 0, 4);
+            bindIndexBuffer(downsampleIndices, 6);
+            draw(false, true, false, target.frameBuffer, target.width, target.height);
+            frameTexture = bgfx::getTexture(target.frameBuffer);
+        }
+    }
+
     /*  y0    y2
      x0 +-----+ x2
         |    /|
@@ -498,7 +544,7 @@ void Renderer::renderFrame()
     backendViewId++;
     {
         useTexture(
-            bgfx::getTexture(backendFrameBuffer).idx
+            frameTexture.idx
         );
 
         setClearFlags(true, true);
@@ -672,6 +718,13 @@ void Renderer::prepareFramebuffer()
     if (bgfx::isValid(backendFrameBuffer))
         bgfx::destroy(backendFrameBuffer);
 
+    for (const DownsampleTarget& target : downsampleTargets)
+    {
+        if (bgfx::isValid(target.frameBuffer))
+            bgfx::destroy(target.frameBuffer);
+    }
+    downsampleTargets.clear();
+
     uint64_t fbFlags = BGFX_TEXTURE_RT;
 
     if (enable_antialiasing > 0)
@@ -709,6 +762,36 @@ void Renderer::prepareFramebuffer()
         backendFrameBufferRT.data(),
         true
     );
+
+    uint16_t sourceWidth = framebufferWidth;
+    uint16_t sourceHeight = framebufferHeight;
+    while (viewWidth != 0 && viewHeight != 0 &&
+        (sourceWidth > static_cast<uint32_t>(viewWidth) * 2 || sourceHeight > static_cast<uint32_t>(viewHeight) * 2))
+    {
+        const uint16_t targetWidth = sourceWidth > static_cast<uint32_t>(viewWidth) * 2
+            ? static_cast<uint16_t>(std::max<uint32_t>(static_cast<uint32_t>(viewWidth) * 2, (sourceWidth + 1) / 2))
+            : sourceWidth;
+        const uint16_t targetHeight = sourceHeight > static_cast<uint32_t>(viewHeight) * 2
+            ? static_cast<uint16_t>(std::max<uint32_t>(static_cast<uint32_t>(viewHeight) * 2, (sourceHeight + 1) / 2))
+            : sourceHeight;
+
+        bgfx::TextureHandle texture = bgfx::createTexture2D(
+            targetWidth,
+            targetHeight,
+            false,
+            1,
+            internalState.bIsHDR ? bgfx::TextureFormat::RGB10A2 : bgfx::TextureFormat::RGBA16,
+            BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+        );
+        DownsampleTarget target;
+        target.frameBuffer = bgfx::createFrameBuffer(1, &texture, true);
+        target.width = targetWidth;
+        target.height = targetHeight;
+        downsampleTargets.push_back(target);
+
+        sourceWidth = targetWidth;
+        sourceHeight = targetHeight;
+    }
 }
 
 void Renderer::bindTextures()
@@ -1348,12 +1431,18 @@ void Renderer::drawFieldShadow()
     draw();
 }
 
-void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, bool keepBindings)
+void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, bool keepBindings, bgfx::FrameBufferHandle targetFrameBuffer, uint16_t targetWidth, uint16_t targetHeight)
 {
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s with backendProgram %d\n", __func__, backendProgram);
 
     // Set current view rect
-    if ((backendProgram == RendererProgram::POSTPROCESSING) || (backendProgram == RendererProgram::POSTPROCESSING_NTSCJ))
+    if (bgfx::isValid(targetFrameBuffer))
+    {
+        bgfx::setViewFrameBuffer(backendViewId, targetFrameBuffer);
+        bgfx::setViewRect(backendViewId, 0, 0, targetWidth, targetHeight);
+        bgfx::setViewTransform(backendViewId, NULL, internalState.postprocessingProjMatrix);
+    }
+    else if ((backendProgram == RendererProgram::POSTPROCESSING) || (backendProgram == RendererProgram::POSTPROCESSING_NTSCJ))
     {
         bgfx::setViewRect(backendViewId, 0, 0, window_size_x, window_size_y);
 
@@ -2640,4 +2729,3 @@ void Renderer::setGameLightData(light_data* lightdata)
         internalState.gameScriptedLightColor[2] = 1.0;
     }
 }
-
