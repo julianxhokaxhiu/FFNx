@@ -33,11 +33,14 @@ What a held frame does:
 | Death / escape / appear fades | the colours of the last real tick are put back (fades also trigger events and roll the battle RNG) |
 | Camera animation and camera script | not run; the camera shake of the last real tick is applied again |
 | Damage numbers, screen fade | drawn from the state of the last real tick |
+| Active character marker (rotating triangle) | drawn from the state of the last real tick |
 | Choreography tasks (wobble, texture blink, footsteps, camera shake, run-up, camera return) | not run |
 | Drag to bone, detached / restored model parts | drawn without counting |
 | Battle messages | shown without counting their display time |
 | Stage | drawn with the engine's own freeze bits (sky rotation, texture animation, stage scripts) |
 | Status timers, Gilgamesh / Angelo countdown, AI text and waits, game time, end of battle countdown | not counted |
+
+The cursor fingers (hands) are recorded by each UI tick in the slots of its position in the frame (tick phase 0 to 3) and drawn once per frame, which then resets the phase: the original frame shows the fingers of its 4 UI ticks together (a hand on each target of a multiple target selection) and the finger blink toggles on its 4th UI tick. With one UI tick per frame, the phase keeps counting over 4 frames and every frame draws the fingers of the last 4 UI ticks.
 
 ## Known limitation
 
@@ -71,6 +74,8 @@ All resolved in `ff8_data.cpp` from functions FFNx already knows (`get_relative_
 | Tasks: damage number, text, screen fade, camera oscillation, stage 147 | `0x5069B0`, `0x506F70`, `0x501D10`, `0x509930`, `0x511EF0` |
 | Tasks: wobble, texture blink, footstep, camera shake, move, drag, restore part, detach part | `0x501F90`, `0x5057D0`, `0x50F830`, `0x50F6C0`, `0x50F750`, `0x50F500`, `0x50F0E0`, `0x50F2E0` |
 | Stage texture animation / stage render | `0x51B0D0` / `0x500FD0` |
+| Cursor finger draw (`battle_main_loop` + `0x1EB`) / UI tick phase / finger slots | `0x4A78E0` / `0x1D74EA8` / `0x1D6D4B0` |
+| Active character marker (`BdLink` + `0x60`) / animation state | `0x4BB090` / `0x1D76708` - `0x1D76713` |
 | Battle UI context / UI ticks per frame | `0x1D6D490` / `0xB8A3E4` |
 | Screen feedback request value / end of battle countdown | `0x1CFF6F4` / `0x1D27B0C` |
 | Camera setting / camera shake | `0x1D99A34` / `0x1D97710` |

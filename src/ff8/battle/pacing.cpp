@@ -935,6 +935,82 @@ static void *pacing_stage_142_fade()
 }
 
 // ---------------------------------------------------------------------------
+// Battle UI drawn once per battle frame
+// ---------------------------------------------------------------------------
+// The original battle frame runs 4 UI ticks and draws the UI once: some UI animations count
+// per draw, others depend on the position of the UI tick in its frame.
+
+// Cursor fingers: every UI tick records the fingers it shows in the slots of its tick phase
+// (0 to 3), and the battle loop draws all the recorded slots once per frame, then resets the
+// phase and the slots. The original frame so shows the fingers of its 4 UI ticks together (a
+// hand on each target of a multiple target selection), and the finger blink toggles on the
+// 4th UI tick of the frame. With one UI tick per frame, the phase keeps counting over 4 frames
+// and every frame draws the fingers of the last 4 UI ticks.
+#define PACING_FINGER_SLOT_SIZE 0x2C
+#define PACING_FINGER_SLOTS 8
+
+static void (*pacing_draw_cursor_fingers_orig)() = nullptr;
+
+// Same reset as the engine's after drawing: inactive, no position, no target, no icon
+static void pacing_clear_finger_slot(uint8_t *slot)
+{
+	slot[0] = 0;
+	slot[1] = 0;
+	memset(slot + 4, 0xFF, 5 * sizeof(uint32_t));
+	slot[0x2B] = 0;
+}
+
+static void pacing_draw_cursor_fingers()
+{
+	uint8_t slots[PACING_FINGER_SLOTS * PACING_FINGER_SLOT_SIZE];
+	uint32_t phase = *ff8_externals.battle_ui_tick_phase, phase_base = *ff8_externals.battle_ui_finger_slot_phase_base;
+
+	memcpy(slots, ff8_externals.battle_ui_finger_slots, sizeof(slots));
+	pacing_draw_cursor_fingers_orig();
+	memcpy(ff8_externals.battle_ui_finger_slots, slots, sizeof(slots));
+	*ff8_externals.battle_ui_tick_phase = phase;
+	*ff8_externals.battle_ui_finger_slot_phase_base = phase_base;
+
+	// The next UI tick records the fingers of this phase again
+	for (int finger = 0; finger < 2; finger++) pacing_clear_finger_slot(ff8_externals.battle_ui_finger_slots + (2 * phase + finger) * PACING_FINGER_SLOT_SIZE);
+}
+
+// Active character marker (rotating triangle above the character whose turn it is): BdLink
+// draws it, and every draw advances its rotation, colour and brightness. Held frames draw the
+// state of the last real tick.
+static void (*pacing_draw_active_chara_marker_orig)() = nullptr;
+
+static struct
+{
+	uint32_t frame, color_table;
+	uint16_t color_step, rotation;
+	bool valid;
+} pacing_marker_memo;
+
+static void pacing_draw_active_chara_marker()
+{
+	auto &memo = pacing_marker_memo;
+
+	if (pacing_phase == 0)
+	{
+		memo.frame = *ff8_externals.battle_active_chara_marker_frame;
+		memo.color_table = *ff8_externals.battle_active_chara_marker_color_table;
+		memo.color_step = *ff8_externals.battle_active_chara_marker_color_step;
+		memo.rotation = *ff8_externals.battle_active_chara_marker_rotation;
+		memo.valid = true;
+	}
+	else if (memo.valid)
+	{
+		*ff8_externals.battle_active_chara_marker_frame = memo.frame;
+		*ff8_externals.battle_active_chara_marker_color_table = memo.color_table;
+		*ff8_externals.battle_active_chara_marker_color_step = memo.color_step;
+		*ff8_externals.battle_active_chara_marker_rotation = memo.rotation;
+	}
+
+	pacing_draw_active_chara_marker_orig();
+}
+
+// ---------------------------------------------------------------------------
 // Frame phase
 // ---------------------------------------------------------------------------
 
@@ -957,6 +1033,8 @@ static void pacing_battle_start()
 	memset(pacing_task_memos, 0, sizeof(pacing_task_memos));
 	memset(pacing_status_memos, 0, sizeof(pacing_status_memos));
 	memset(pacing_fade_memos, 0, sizeof(pacing_fade_memos));
+	memset(&pacing_marker_memo, 0, sizeof(pacing_marker_memo));
+	for (int i = 0; i < PACING_FINGER_SLOTS; i++) pacing_clear_finger_slot(ff8_externals.battle_ui_finger_slots + i * PACING_FINGER_SLOT_SIZE);
 	pacing_latch_counts = false;
 }
 
@@ -1059,6 +1137,12 @@ void ff8_battle_pacing_init()
 	replace_call(bdlink + 0x7E, pacing_stage_queue);
 	pacing_stage_142_fade_orig = (void *(*)())get_relative_call(ff8_externals.battle_task_stage_142_sub_512980, 0x27);
 	replace_call(ff8_externals.battle_task_stage_142_sub_512980 + 0x27, pacing_stage_142_fade);
+
+	// Battle UI drawn once per battle frame
+	pacing_draw_cursor_fingers_orig = (void (*)())ff8_externals.battle_draw_cursor_fingers_sub_4A78E0;
+	replace_call(ff8_externals.battle_main_loop + 0x1EB, pacing_draw_cursor_fingers);
+	pacing_draw_active_chara_marker_orig = (void (*)())ff8_externals.battle_draw_active_chara_marker_sub_4BB090;
+	replace_call(bdlink + 0x60, pacing_draw_active_chara_marker);
 
 	pacing_enabled = true;
 

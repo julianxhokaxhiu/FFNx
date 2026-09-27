@@ -1910,6 +1910,16 @@ struct ff8_externals
 	int16_t *battle_camera_shake;
 	uint32_t *battle_update_flags;
 	uint8_t *battle_detached_part_matrix;
+	uint32_t battle_draw_cursor_fingers_sub_4A78E0;
+	uint32_t *battle_ui_tick_phase;
+	uint32_t *battle_ui_finger_slot_phase_base;
+	uint8_t *battle_ui_finger_slots;
+	uint32_t battle_draw_active_chara_marker_sub_4BB090;
+	uint32_t battle_draw_active_chara_marker_prims_sub_4BB0B0;
+	uint32_t *battle_active_chara_marker_frame;
+	uint16_t *battle_active_chara_marker_color_step;
+	uint32_t *battle_active_chara_marker_color_table;
+	uint16_t *battle_active_chara_marker_rotation;
 	uint32_t *battle_render_list_base;
 	uint8_t *ssigpu_exec_start;
 	uint32_t *ssigpu_exec_cur;

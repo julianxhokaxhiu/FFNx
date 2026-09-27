@@ -1115,13 +1115,24 @@ void ff8_find_externals()
 	ff8_externals.battle_update_flags = (uint32_t *)get_absolute_value(ff8_externals.battle_load_textures_sub_500900, -0x35E);
 	ff8_externals.battle_ui_ticks_per_frame = (uint32_t *)get_absolute_value(ff8_externals.battle_load_textures_sub_500900, -0x352);
 	ff8_externals.battle_render_list_base = (uint32_t *)get_absolute_value(ff8_externals.battle_load_textures_sub_500900, -0x337);
-	ff8_externals.battle_ui_ctx = (uint8_t **)get_absolute_value(ff8_externals.sub_4A84E0, 0xF);
+	ff8_externals.battle_ui_ctx = (uint8_t **)ff8_externals.battle_menu_state;
 	ff8_externals.battle_camera_shake = (int16_t *)get_absolute_value(ff8_externals.battle_camera_operations_sub_5033E0, 0x9E);
 	ff8_externals.ssigpu_exec_cur = (uint32_t *)get_absolute_value(ff8_externals.sub_45D080, 0x3);
 	ff8_externals.ssigpu_exec_start = (uint8_t *)get_absolute_value(ff8_externals.sub_45D080, 0xE);
 	ff8_externals.battle_stage_freeze = (uint8_t *)get_absolute_value(ff8_externals.sub_506C50, 0xF);
 	ff8_externals.battle_camera_setting = (void **)get_absolute_value(ff8_externals.battle_camera_sequence_sub_509610, 0x1);
 	ff8_externals.battle_detached_part_matrix = (uint8_t *)get_absolute_value(ff8_externals.battle_task_a6_detach_part_sub_50F2E0, 0x5E);
+	ff8_externals.battle_draw_cursor_fingers_sub_4A78E0 = get_relative_call(ff8_externals.battle_main_loop, 0x1EB);
+	ff8_externals.battle_ui_tick_phase = (uint32_t *)get_absolute_value(ff8_externals.battle_draw_cursor_fingers_sub_4A78E0, 0x601);
+	ff8_externals.battle_ui_finger_slot_phase_base = (uint32_t *)get_absolute_value(ff8_externals.battle_draw_cursor_fingers_sub_4A78E0, 0x607);
+	// The slot clear loop walks the second byte of each slot
+	ff8_externals.battle_ui_finger_slots = (uint8_t *)get_absolute_value(ff8_externals.battle_draw_cursor_fingers_sub_4A78E0, 0x5FB) - 1;
+	ff8_externals.battle_draw_active_chara_marker_sub_4BB090 = get_relative_call(ff8_externals.battle_load_textures_sub_500900, 0x60);
+	ff8_externals.battle_draw_active_chara_marker_prims_sub_4BB0B0 = get_relative_call(ff8_externals.battle_draw_active_chara_marker_sub_4BB090, 0xE);
+	ff8_externals.battle_active_chara_marker_frame = (uint32_t *)get_absolute_value(ff8_externals.battle_draw_active_chara_marker_prims_sub_4BB0B0, 0x19);
+	ff8_externals.battle_active_chara_marker_color_step = (uint16_t *)get_absolute_value(ff8_externals.battle_draw_active_chara_marker_prims_sub_4BB0B0, 0x20);
+	ff8_externals.battle_active_chara_marker_color_table = (uint32_t *)get_absolute_value(ff8_externals.battle_draw_active_chara_marker_prims_sub_4BB0B0, 0x27);
+	ff8_externals.battle_active_chara_marker_rotation = (uint16_t *)get_absolute_value(ff8_externals.battle_draw_active_chara_marker_prims_sub_4BB0B0, 0xF3);
 
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
