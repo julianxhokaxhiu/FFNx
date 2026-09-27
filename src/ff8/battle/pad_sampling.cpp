@@ -169,10 +169,9 @@ static int pad_sampling_catch_up_tick_3() { return pad_sampling_catch_up_tick(2)
 
 void ff8_battle_pad_sampling_init()
 {
-	// Only tested on the english release so far
-	if (!FF8_US_VERSION || ff8_remastered_edition)
+	if (ff8_remastered_edition)
 	{
-		ffnx_warning("battle pad sampling: only supported on the english release, not enabled\n");
+		ffnx_warning("battle pad sampling: not supported on the remastered edition, not enabled\n");
 		return;
 	}
 

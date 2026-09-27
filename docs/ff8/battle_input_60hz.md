@@ -1,6 +1,6 @@
 # Battle controller read at 60 Hz
 
-Option: `ff8_battle_input_60hz` (requires `ff8_fps_limiter` >= 1). English release only for now.
+Option: `ff8_battle_input_60hz` (requires `ff8_fps_limiter` >= 1). Not available on the remastered edition.
 
 ## The problem
 
@@ -53,4 +53,4 @@ All resolved in `ff8_data.cpp` from functions FFNx already knows:
 | Raw gamepad button update | call at `engine_eval_keyboard_gamepad_input` + `0x4BE` | `0x468790` |
 | Raw gamepad button words (edges[8], current[8], previous[8]) | raw button update + `0x11`, - 8 DWORDs | `0x1CD0394` |
 
-The offsets are identical in the JP and JP_NV executables; the option is limited to the english release until other versions are tested in game.
+The same offsets were verified in the JP and JP_NV executables; the other languages share the EN code layout. Only the english release has been tested in game so far.
