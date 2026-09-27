@@ -357,7 +357,7 @@ void read_cfg()
 	else if (ff7_fps_limiter > FPS_LIMITER_60FPS) ff7_fps_limiter = FPS_LIMITER_60FPS;
 
 	if (ff8_fps_limiter < FPS_LIMITER_ORIGINAL) ff8_fps_limiter = FPS_LIMITER_ORIGINAL;
-	else if (ff8_fps_limiter > FPS_LIMITER_60FPS) ff8_fps_limiter = FPS_LIMITER_60FPS;
+	else if (ff8_fps_limiter > FPS_LIMITER_60FPS_BATTLE_UI) ff8_fps_limiter = FPS_LIMITER_60FPS_BATTLE_UI;
 
 	if (hext_patching_path.empty())
 	{

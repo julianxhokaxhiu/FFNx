@@ -41,6 +41,7 @@
 #include "ff8/kernel_magic.h"
 #include "ff8/battle/monsters.h"
 #include "ff8/battle/pad_sampling.h"
+#include "ff8/battle/pacing.h"
 #include "ff8/remaster.h"
 #include "metadata.h"
 #include "achievement.h"
@@ -1948,12 +1949,13 @@ int ff8_limit_fps()
 	qpc_get_time(&gametime);
 	*ff8_externals.time_volume_change_related_1A78BE0 = (1000.0 / game_object->countspersecond) * qpc_diff_time(&gametime, &last_gametime, nullptr);
 
-	if (ff8_fps_limiter < FPS_LIMITER_60FPS)
+	if (ff8_fps_limiter < FPS_LIMITER_60FPS || ff8_fps_limiter == FPS_LIMITER_60FPS_BATTLE_UI)
 	{
 		switch (mode->driver_mode)
 		{
 		case MODE_BATTLE:
-			if (ff8_fps_limiter < FPS_LIMITER_30FPS) framerate = 15.0f;
+			if (ff8_fps_limiter == FPS_LIMITER_60FPS_BATTLE_UI) framerate = 60.0f;
+			else if (ff8_fps_limiter < FPS_LIMITER_30FPS) framerate = 15.0f;
 			break;
 		case MODE_CREDITS:
 		case MODE_CARDGAME:
@@ -1977,6 +1979,8 @@ int ff8_limit_fps()
 
 	framerate *= gamehacks.getCurrentSpeedhack();
 	double frame_time = game_object->countspersecond / framerate;
+	// Battle at 60 fps: next frame phase
+	ff8_battle_pacing_frame_end(mode->driver_mode);
 	// Battle pad sampling: extra pad reads spread evenly over the frame
 	int extra_pad_reads = ff8_battle_pad_sampling_frame_end(mode->driver_mode, (1000.0 / game_object->countspersecond) * qpc_diff_time(&gametime, &last_gametime, nullptr));
 	int pad_reads_done = 0;
@@ -2521,10 +2525,12 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_battle_ai_init();
 
 	// #####################
-	// Battle pad read 60 times per second like on the PlayStation (battle unchanged)
+	// Battle pad read 60 times per second like on the PlayStation
 	// #####################
-	// The extra pad reads happen in the FFNx frame limiter
-	if (ff8_fps_limiter < FPS_LIMITER_DEFAULT)
+	// At 60 fps the battle UI reads the pad every frame, else the extra pad reads happen in the FFNx frame limiter
+	if (ff8_fps_limiter == FPS_LIMITER_60FPS_BATTLE_UI)
+		ff8_battle_pacing_init();
+	else if (ff8_fps_limiter < FPS_LIMITER_DEFAULT)
 		ffnx_warning("battle pad sampling needs ff8_fps_limiter >= 1, not enabled\n");
 	else
 		ff8_battle_pad_sampling_init();
