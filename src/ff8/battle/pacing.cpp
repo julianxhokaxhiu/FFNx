@@ -75,6 +75,7 @@
 #define FF8_BATTLE_STAGE_RENDER             0x500FD0 // BS_RenderRelated: stage parts animation + draw
 // Call site inside the battle loop
 #define FF8_BATTLE_CALL_TEXT_MANAGEMENT     0x47D7FB // executeTextManagementBattleAction: AI text / waits / end fade trigger
+#define FF8_BATTLE_END_COUNTDOWN_DECREMENT  0x47D82A // "mov cl, [countdown]; dec cl; mov [countdown], cl" (14 bytes), after BdLink
 // Call sites inside the per-entity task
 #define FF8_BATTLE_CALL_STATUS_VISUALS      0x502B5D // status colour pulse, Float bob, spin, status sprites
 #define FF8_BATTLE_CALL_ENTITY_FADES        0x502B74 // computeCommandRank: death / escape / appear fades
@@ -103,6 +104,7 @@
 #define FF8_BATTLE_OT_BUCKETS               4386
 #define FF8_BATTLE_STAGE_FREEZE             (*(uint8_t *)0x1D9898C)  // 1 sky rotation, 2 texture animation, 8 stage scripts
 #define FF8_BATTLE_TASKS_BUSY               (*(uint8_t *)0x1D96A88)  // holds the next actions back while set
+#define FF8_BATTLE_END_COUNTDOWN            (*(uint8_t *)0x1D27B0C)  // FADE_OUT_END_BATTLE_DURATION: 0xFF idle, 0 = leave battle
 
 // UI context fields
 #define FF8_BATTLE_UI_CTX_FRESH_INPUT       33   // 1 on the tick that latched a fresh pad snapshot
@@ -559,6 +561,11 @@ struct pacing_status_memo
 
 static pacing_status_memo pacing_status_memos[PACING_STATUS_MEMOS];
 
+// Entity fades (see pacing_entity_fades_hook)
+#define PACING_FADE_MEMOS 16
+
+static struct pacing_fade_memo { uint8_t *entity; uint32_t tick; uint8_t palettes[8]; uint8_t alpha; } pacing_fade_memos[PACING_FADE_MEMOS];
+
 // ---------------------------------------------------------------------------
 // Frame phase driver
 // ---------------------------------------------------------------------------
@@ -586,6 +593,7 @@ static void pacing_battle_reset()
 	memset(&pacing_a6_memo, 0, sizeof(pacing_a6_memo));
 	memset(pacing_task_memos, 0, sizeof(pacing_task_memos));
 	memset(pacing_status_memos, 0, sizeof(pacing_status_memos));
+	memset(pacing_fade_memos, 0, sizeof(pacing_fade_memos));
 	pacing_ui_latch_counts = false;
 	pacing_ui_hidden_index = 0;
 	pacing_ui_skip_tick = false;
@@ -932,12 +940,73 @@ static char (__cdecl *pacing_text_management_orig)() = nullptr;
 static void *(__cdecl *pacing_stage_queue_orig)() = nullptr;
 static void *(__cdecl *pacing_stage_142_fade_orig)() = nullptr;
 
-// Death / escape / appear fades: held frames keep the entity's colours (0 = draw it)
+// Death / escape / appear / GF-summon fades (computeCommandRank, entity +5 fade kind,
+// +6 fade counter). The per-entity task resets the model colours every frame (status
+// visuals) and this call then applies the fade to them. Some fade kinds also trigger the
+// victory sequence, death flags or roll the battle RNG, so held frames do not run it again:
+// they put back the colours the real tick produced (model and shadow palettes +0x28..+0x2F,
+// shadow alpha +7). A fade that starts on a held frame (no real tick yet) is drawn with its
+// current state, for the side-effect-free kinds only, and its counter is left untouched.
 static int __cdecl pacing_entity_fades_hook(void *entity)
 {
-	if (pacing_phase != 0) return 0;
+	uint8_t *e = (uint8_t *)entity;
+	pacing_fade_memo *memo = nullptr, *free_slot = nullptr;
 
-	return pacing_entity_fades_orig(entity);
+	for (pacing_fade_memo &m : pacing_fade_memos)
+	{
+		if (m.entity == e) { memo = &m; break; }
+		if (!m.entity && !free_slot) free_slot = &m;
+	}
+
+	if (pacing_phase == 0)
+	{
+		int r = pacing_entity_fades_orig(entity);
+
+		if (!memo) memo = free_slot;
+		if (memo)
+		{
+			memo->entity = e;
+			memo->tick = pacing_frame_no;
+			memcpy(memo->palettes, e + 0x28, sizeof(memo->palettes));
+			memo->alpha = e[7];
+		}
+
+		return r;
+	}
+
+	if (memo && pacing_frame_no - memo->tick < (uint32_t)pacing_n)
+	{
+		memcpy(e + 0x28, memo->palettes, sizeof(memo->palettes));
+		e[7] = memo->alpha;
+
+		return 0; // 0 = draw the entity
+	}
+
+	switch (e[5])
+	{
+	case 1: case 2: case 3: case 4: case 9: case 10: case 11: case 12:
+	{
+		uint8_t state[7];
+		uint32_t flags = FF8_BATTLE_UPDATE_FLAGS;
+
+		memcpy(state, e, sizeof(state));
+		FF8_BATTLE_UPDATE_FLAGS = flags | 1; // draw only: most fades do not count while set
+		pacing_entity_fades_orig(entity);
+		FF8_BATTLE_UPDATE_FLAGS = flags;
+		memcpy(e, state, sizeof(state));
+		break;
+	}
+	}
+
+	return 0;
+}
+
+// End of battle: once the result is decided this countdown runs to 0 (then the battle
+// unloads), one step per battle loop iteration, while the victory poses and the fade out
+// play at the battle's pace: it counts on real ticks only
+static void __cdecl pacing_end_countdown_step()
+{
+	if (pacing_phase == 0) FF8_BATTLE_END_COUNTDOWN--;
 }
 
 // Status visuals advance their counters and draw the status sprites in the same call
@@ -1114,6 +1183,8 @@ static const pacing_signature pacing_signatures[] = {
 	{ FF8_BATTLE_CALL_ENTITY_FADES,       { 0xE8, 0x97, 0x95, 0x00, 0x00 } },
 	{ FF8_BATTLE_CALL_STAGE_142_FADE,     { 0xE8, 0x54, 0x00, 0x00, 0x00 } },
 	{ FF8_BATTLE_CALL_STAGE_QUEUE,        { 0xE8, 0xAD, 0x62, 0x00, 0x00 } },
+	{ FF8_BATTLE_END_COUNTDOWN_DECREMENT, { 0x8A, 0x0D, 0x0C, 0x7B, 0xD2 } },
+	{ FF8_BATTLE_END_COUNTDOWN_DECREMENT + 5, { 0x01, 0xFE, 0xC9, 0x88, 0x0D } },
 	{ FF8_BATTLE_UI_TICKS_PER_FRAME,      { 0x04, 0x00, 0x00, 0x00, 0x80 } },
 	{ FF8_BATTLE_RENZOKUKEN_LATCH_STEP - 4, { 0x98, 0x67, 0xD7, 0x01, 0x04 } },
 };
@@ -1194,6 +1265,17 @@ bool ff8_battle_pacing_init(int host_frames_per_tick)
 	// Entities, messages, screen fades, stage
 	pacing_entity_fades_orig = (int (__cdecl *)(void *))get_relative_call(FF8_BATTLE_CALL_ENTITY_FADES, 0);
 	replace_call(FF8_BATTLE_CALL_ENTITY_FADES, (void *)pacing_entity_fades_hook);
+	{
+		// the countdown decrement becomes "call pacing_end_countdown_step" (the checks for
+		// idle 0xFF and 0 before it are kept; eax/ecx/edx are not live there)
+		uint8_t code[14];
+		int32_t rel = (int32_t)(uintptr_t)pacing_end_countdown_step - (int32_t)(FF8_BATTLE_END_COUNTDOWN_DECREMENT + 5);
+
+		memset(code, 0x90, sizeof(code));
+		code[0] = 0xE8;
+		memcpy(code + 1, &rel, sizeof(rel));
+		memcpy_code(FF8_BATTLE_END_COUNTDOWN_DECREMENT, code, sizeof(code));
+	}
 	pacing_status_visuals_orig = (void (__cdecl *)(void *))get_relative_call(FF8_BATTLE_CALL_STATUS_VISUALS, 0);
 	replace_call(FF8_BATTLE_CALL_STATUS_VISUALS, (void *)pacing_status_visuals_hook);
 	pacing_text_management_orig = (char (__cdecl *)())get_relative_call(FF8_BATTLE_CALL_TEXT_MANAGEMENT, 0);
