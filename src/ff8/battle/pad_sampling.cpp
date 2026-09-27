@@ -148,8 +148,9 @@ static int __cdecl pad_sampling_display_hook()
 }
 
 // One FFNx.log line per GF Boost: the Square presses the gauge saw, so the input rate a
-// player (or a turbo button) actually gets through can be checked.
-static struct { uint32_t ticks, safe, danger; } pad_boost_stats;
+// player (or a turbo button) actually gets through can be checked, and on which UI tick of
+// the frame each press arrived (vanilla: always the last one, right after the frame's read).
+static struct { uint32_t ticks, safe, danger, by_tick[PAD_SAMPLING_HIDDEN_TICKS + 1]; } pad_boost_stats;
 
 static void __cdecl pad_sampling_boost_hook()
 {
@@ -164,6 +165,10 @@ static void __cdecl pad_sampling_boost_hook()
 		{
 			if (FF8_BATTLE_GF_BOOST_SAFE_PHASE) pad_boost_stats.safe++;
 			else pad_boost_stats.danger++;
+
+			// hidden ticks are counted by the display hook before they run
+			int tick = FF8_BATTLE_UI_MENU_RENDERING == 0 ? pad_hidden_tick - 1 : PAD_SAMPLING_HIDDEN_TICKS;
+			if (tick >= 0 && tick <= PAD_SAMPLING_HIDDEN_TICKS) pad_boost_stats.by_tick[tick]++;
 		}
 	}
 
@@ -175,8 +180,9 @@ static void __cdecl pad_sampling_boost_hook()
 		double seconds = b.ticks / 60.0;
 		uint16_t boost = FF8_BATTLE_GF_BOOST_VALUE ? FF8_BATTLE_GF_BOOST_VALUE : 100;
 
-		ffnx_info("battle pad sampling: GF Boost: %u Square presses in %.1f s (%.1f per second: %u during safe phases, %u during danger phases), Boost %u\n",
-			b.safe + b.danger, seconds, (b.safe + b.danger) / seconds, b.safe, b.danger, boost);
+		ffnx_info("battle pad sampling: GF Boost: %u Square presses in %.1f s (%.1f per second: %u during safe phases, %u during danger phases), Boost %u; presses per UI tick: %u / %u / %u (extra reads) %u (regular read)\n",
+			b.safe + b.danger, seconds, (b.safe + b.danger) / seconds, b.safe, b.danger, boost,
+			b.by_tick[0], b.by_tick[1], b.by_tick[2], b.by_tick[3]);
 	}
 }
 
