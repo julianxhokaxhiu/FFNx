@@ -1977,30 +1977,20 @@ int ff8_limit_fps()
 
 	framerate *= gamehacks.getCurrentSpeedhack();
 	double frame_time = game_object->countspersecond / framerate;
-	int extra_pad_reads = ff8_battle_pad_sampling_extra_reads(mode->driver_mode);
+	// Battle pad sampling: extra pad reads spread evenly over the frame
+	int extra_pad_reads = ff8_battle_pad_sampling_frame_end(mode->driver_mode, (1000.0 / game_object->countspersecond) * qpc_diff_time(&gametime, &last_gametime, nullptr));
 	int pad_reads_done = 0;
-	bool wait_started = false;
 
 	do
 	{
 		qpc_get_time(&gametime);
 
-		// Extra pad readings spread evenly over the frame (battle pad sampling at 60 Hz)
-		if (extra_pad_reads && gametime > last_gametime)
+		if (pad_reads_done < extra_pad_reads && gametime > last_gametime)
 		{
 			double elapsed = qpc_diff_time(&gametime, &last_gametime, nullptr);
-			double elapsed_ms = elapsed * 1000.0 / game_object->countspersecond;
 
-			if (!wait_started)
-			{
-				wait_started = true;
-				ff8_battle_pad_sampling_frame_work_done(elapsed_ms);
-			}
-			if (pad_reads_done < extra_pad_reads && elapsed >= frame_time * (pad_reads_done + 1) / (extra_pad_reads + 1))
-			{
-				ff8_battle_pad_sampling_read(pad_reads_done, elapsed_ms);
-				pad_reads_done++;
-			}
+			if (elapsed >= frame_time * (pad_reads_done + 1) / (extra_pad_reads + 1))
+				ff8_battle_pad_sampling_read(pad_reads_done++, (1000.0 / game_object->countspersecond) * elapsed);
 		}
 	}
 	while (gametime > last_gametime && qpc_diff_time(&gametime, &last_gametime, nullptr) < frame_time);

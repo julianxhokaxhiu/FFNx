@@ -1390,6 +1390,9 @@ struct ff8_externals
 	uint32_t dinput_init_gamepad;
 	BYTE* engine_gamepad_button_pressed;
 	DWORD* engine_mapped_buttons;
+	DWORD* engine_input_autorepeat_interval;
+	uint32_t engine_update_raw_gamepad_buttons;
+	DWORD* engine_raw_gamepad_buttons;
 	uint32_t draw_movie_frame;
 	struct ff8_movie_obj *movie_object;
 	char **disc_pak_filenames;

@@ -819,7 +819,8 @@ ff8_fps_limiter = 1
 # Renzokuken, Zell's Duel and fast menu inputs. With this option the controller is read
 # 60 times per second in battle and every read reaches the battle menu, like on the PlayStation.
 # Nothing else changes: the battle still runs at 15 FPS with its original speed and timing.
-# Requires ff8_fps_limiter >= 1. FF8 2000 / Steam English 1.2 only (ignored on other versions).
+# Requires ff8_fps_limiter >= 1. English release only for now (ignored on other versions).
+# With trace_gamepad = true, FFNx.log reports after each battle how many presses the extra reads caught.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_battle_input_60hz = false
 

@@ -590,6 +590,9 @@ void ff8_find_externals()
 	ff8_externals.engine_input_valid_buttons = (uint32_t*)get_absolute_value(ff8_externals.engine_eval_is_button_pressed, 0x3C);
 	ff8_externals.engine_gamepad_button_pressed = (BYTE*)get_absolute_value((uint32_t)ff8_externals.has_keyboard_gamepad_input, 0x22);
 	ff8_externals.engine_mapped_buttons = (DWORD*)get_absolute_value((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0xB9);
+	ff8_externals.engine_input_autorepeat_interval = (DWORD*)get_absolute_value((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0x49D);
+	ff8_externals.engine_update_raw_gamepad_buttons = get_relative_call((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0x4BE);
+	ff8_externals.engine_raw_gamepad_buttons = (DWORD*)get_absolute_value(ff8_externals.engine_update_raw_gamepad_buttons, 0x11);
 
 	common_externals.get_keyboard_state = get_relative_call((uint32_t)ff8_externals.engine_eval_keyboard_gamepad_input, 0x11);
 	ff8_externals.dinput_init_gamepad = get_relative_call(ff8_externals.sub_468810, 0xB4);

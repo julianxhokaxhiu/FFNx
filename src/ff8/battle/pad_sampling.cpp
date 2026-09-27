@@ -1,9 +1,4 @@
 /****************************************************************************/
-//    Copyright (C) 2009 Aali132                                            //
-//    Copyright (C) 2018 quantumpencil                                      //
-//    Copyright (C) 2018 Maxime Bacoux                                      //
-//    Copyright (C) 2020 Chris Rizzitello                                   //
-//    Copyright (C) 2020 John Pritchard                                     //
 //    Copyright (C) 2026 Julian Xhokaxhiu                                   //
 //    Copyright (C) 2026 HobbitDur                                          //
 //                                                                          //
@@ -22,85 +17,100 @@
 #include "pad_sampling.h"
 
 #include "../../ff8.h"
+#include "../../patch.h"
+#include "../../globals.h"
 #include "../../cfg.h"
 #include "../../common.h"
-#include "../../globals.h"
-#include "../../patch.h"
 #include "../../log.h"
 
 #include <string.h>
-#include <windows.h>
 
-// All addresses: FF8_EN.exe 1.2 (FF8 2000 / Steam English). See the FF8ModdingWiki page
-// "Battle UI Timing and Input Sampling" for the battle frame anatomy.
-//
-// One battle frame (battle_cardgame_main_loop, 15 fps):
-//   3 hidden UI ticks -> pad read (Input_ProcessInput) -> battle logic -> visible UI tick -> wait
-// Every UI tick advances the battle pad ring from the engine pad mask (Input_GetPadState):
-// the hidden ticks run before the frame's pad read and all see the previous frame's reading.
-// The 3 extra readings are taken during the frame wait, so the next frame's hidden ticks get
-// readings 16 ms apart and the visible tick gets the regular one: PlayStation pad timing.
+// One battle frame (battle main loop, 15 fps):
+//   3 catch-up UI ticks -> pad read -> battle logic -> visible UI tick -> frame wait
+// Every UI tick advances the battle pad ring from the pad mask of the last pad read, so the
+// 3 catch-up ticks, which run before the frame's pad read, all see the previous frame's
+// reading. The pad is read 3 more times during the frame wait, at 1/4, 2/4 and 3/4 of the
+// frame, and the next frame's catch-up ticks each use one of those readings.
 
-#define FF8_BATTLE_UI_DISPLAY               0x4A84E0 // isBattle_HUDdisplay: UI tick part 2 (pad ring advance)
-#define FF8_INPUT_PROCESS                   0x467D10 // Input_ProcessInput: keyboard/mouse/joystick read
-#define FF8_BATTLE_GF_BOOST                 0x56DD70 // computeGFBoost_: GF Boost gauge, once per UI tick
-#define FF8_READ_PAD_PRESSED_REMAPPED       0x4A8420 // press edges of the current UI tick
+#define PAD_SAMPLING_EXTRA_READS 3
+#define PAD_SAMPLING_PAD_STRIDE 28 // DWORDs between the 2 pads' input state blocks
 
-#define FF8_BATTLE_UI_MENU_RENDERING        (*(uint32_t *)0x1D6D4AC) // 0 on the hidden catch-up UI ticks
-#define FF8_BATTLE_UI_CTX                   (*(uint8_t **)0x1D6D490) // battle UI context
-#define FF8_INPUT_PAD_BLOCKS                0x1CD01F8u               // per pad (112 bytes): +0 edges, +4 current, +12 previous
-#define FF8_INPUT_PAD_STRIDE                112
-#define FF8_INPUT_PAD_CURRENT(pad)          (*(uint32_t *)(FF8_INPUT_PAD_BLOCKS + 4 + FF8_INPUT_PAD_STRIDE * (pad)))
-#define FF8_INPUT_AUTOREPEAT_INTERVAL       (*(uint32_t *)0x1CD02F0) // 0 = engine auto-repeat off
-#define FF8_INPUT_RAW_JOY_WORDS             0x1CD0394u               // edges / current / previous button words, 8 devices each
-#define FF8_INPUT_RAW_JOY_WORDS_SIZE        (3 * 8 * 4)
-#define FF8_BATTLE_GF_BOOST_VALUE           (*(uint16_t *)0x209CEF0) // current Boost (75..250, 0 = untouched = 100)
-#define FF8_BATTLE_GF_BOOST_SAFE_PHASE      (*(uint8_t *)0x209CEF9)  // 1 = presses raise the Boost, 0 = they reset it
-#define FF8_BATTLE_GF_BOOST_STATE           (*(uint8_t *)0x209CEFB)  // 4 = gauge running, 6 = done
+// Offsets in battle_main_loop of the 3 catch-up UI ticks (the "display" half of the pair)
+static const uint32_t pad_sampling_catch_up_ticks[PAD_SAMPLING_EXTRA_READS] = { 0x142, 0x14C, 0x156 };
 
-#define PAD_SAMPLING_HIDDEN_TICKS 3
+static struct
+{
+	DWORD pad[2];
+	bool valid;
+} pad_samples[PAD_SAMPLING_EXTRA_READS];
 
 static bool pad_sampling_enabled = false;
-static uint32_t pad_sampling_display_ri = 0, pad_sampling_boost_ri = 0;
 
-// Readings taken during the last frame wait, for the next frame's hidden UI ticks
-static struct { uint32_t pad[2]; bool valid; } pad_samples[PAD_SAMPLING_HIDDEN_TICKS];
-static int pad_hidden_tick = 0;
-
-bool ff8_battle_pad_sampling_enabled() { return pad_sampling_enabled; }
-
-// Scope in which a function hooked with replace_function can call its original
-struct pad_sampling_unhooked
+// Statistics for trace_gamepad, reported once per battle
+static struct
 {
-	uint32_t ri;
-	pad_sampling_unhooked(uint32_t replacement) : ri(replacement) { unreplace_function(ri); }
-	~pad_sampling_unhooked() { rereplace_function(ri); }
-};
+	uint32_t frames, presses[PAD_SAMPLING_EXTRA_READS + 1], reads[PAD_SAMPLING_EXTRA_READS];
+	double work_ms, read_ms[PAD_SAMPLING_EXTRA_READS];
+	DWORD last_read;
+} pad_sampling_stats;
 
-int ff8_battle_pad_sampling_extra_reads(uint32_t driver_mode)
+static int pad_sampling_count_presses(DWORD before, DWORD after)
 {
-	return (pad_sampling_enabled && driver_mode == MODE_BATTLE) ? PAD_SAMPLING_HIDDEN_TICKS : 0;
+	int count = 0;
+
+	for (DWORD pressed = after & ~before; pressed; pressed &= pressed - 1) count++;
+
+	return count;
 }
 
-// When the readings actually happen (ms since the frame started), summed over the frames of
-// the current GF Boost: the readings can only be taken once the frame's own work is done
-static struct { double work, read[PAD_SAMPLING_HIDDEN_TICKS]; uint32_t frames, reads[PAD_SAMPLING_HIDDEN_TICKS]; } pad_timing;
-
-void ff8_battle_pad_sampling_frame_work_done(double frame_ms)
+int ff8_battle_pad_sampling_frame_end(uint32_t driver_mode, double frame_ms)
 {
-	pad_timing.work += frame_ms;
-	pad_timing.frames++;
+	if (!pad_sampling_enabled) return 0;
+
+	auto &stats = pad_sampling_stats;
+
+	if (driver_mode != MODE_BATTLE)
+	{
+		if (stats.frames && stats.reads[PAD_SAMPLING_EXTRA_READS - 1] && (trace_all || trace_gamepad))
+		{
+			ffnx_trace("battle pad sampling: %u presses this battle: %u / %u / %u from the extra reads, %u from the game's own read; frame work %.1f ms, extra reads at %.1f / %.1f / %.1f ms\n", stats.presses[0] + stats.presses[1] + stats.presses[2] + stats.presses[3], stats.presses[0], stats.presses[1], stats.presses[2], stats.presses[3], stats.work_ms / stats.frames, stats.read_ms[0] / stats.reads[0], stats.read_ms[1] / stats.reads[1], stats.read_ms[2] / stats.reads[2]);
+		}
+
+		memset(&stats, 0, sizeof(stats));
+		for (auto &sample : pad_samples) sample.valid = false;
+
+		return 0;
+	}
+
+	if (trace_all || trace_gamepad)
+	{
+		// Readings of this frame in time order: the extra reads of the last frame wait, then the
+		// game's own read (still in the engine pad mask at the end of the frame)
+		DWORD read = ff8_externals.engine_mapped_buttons[0];
+
+		if (pad_samples[PAD_SAMPLING_EXTRA_READS - 1].valid)
+		{
+			DWORD before = stats.last_read;
+
+			for (int i = 0; i < PAD_SAMPLING_EXTRA_READS; i++)
+			{
+				stats.presses[i] += pad_sampling_count_presses(before, pad_samples[i].pad[0]);
+				before = pad_samples[i].pad[0];
+			}
+			stats.presses[PAD_SAMPLING_EXTRA_READS] += pad_sampling_count_presses(before, read);
+			stats.work_ms += frame_ms;
+			stats.frames++;
+		}
+
+		stats.last_read = read;
+	}
+
+	return PAD_SAMPLING_EXTRA_READS;
 }
 
-// Takes a reading with the engine's own pad read, then puts back everything that read
-// changed (pad masks and their press edges, raw joystick words; the engine auto-repeat is
-// off meanwhile), so the frame's regular read still behaves exactly as in the original game.
 void ff8_battle_pad_sampling_read(int index, double frame_ms)
 {
-	if (index < 0 || index >= PAD_SAMPLING_HIDDEN_TICKS) return;
-
-	pad_timing.read[index] += frame_ms;
-	pad_timing.reads[index]++;
+	if (index < 0 || index >= PAD_SAMPLING_EXTRA_READS) return;
 
 	pad_samples[index].valid = false;
 
@@ -108,151 +118,69 @@ void ff8_battle_pad_sampling_read(int index, double frame_ms)
 
 	if (!ff8_always_capture_input && game_object->hwnd != GetActiveWindow()) return;
 
-	uint8_t pad_blocks[2 * FF8_INPUT_PAD_STRIDE], joy_words[FF8_INPUT_RAW_JOY_WORDS_SIZE];
-	uint32_t autorepeat = FF8_INPUT_AUTOREPEAT_INTERVAL;
+	// The game's pad read also updates the press edges and the previous state of each pad, the
+	// raw gamepad button words and the auto-repeat: all of it is put back after the reading, so
+	// the frame's own read still behaves exactly like in the original game
+	DWORD *pad_state = ff8_externals.engine_mapped_buttons - 1; // edges, current, -, previous...
+	DWORD *raw_buttons = ff8_externals.engine_raw_gamepad_buttons - 8; // edges[8], current[8], previous[8]
+	DWORD saved_pad_state[2 * PAD_SAMPLING_PAD_STRIDE], saved_raw_buttons[3 * 8];
+	DWORD autorepeat = *ff8_externals.engine_input_autorepeat_interval;
 
-	memcpy(pad_blocks, (void *)FF8_INPUT_PAD_BLOCKS, sizeof(pad_blocks));
-	memcpy(joy_words, (void *)FF8_INPUT_RAW_JOY_WORDS, sizeof(joy_words));
-	FF8_INPUT_AUTOREPEAT_INTERVAL = 0;
+	memcpy(saved_pad_state, pad_state, sizeof(saved_pad_state));
+	memcpy(saved_raw_buttons, raw_buttons, sizeof(saved_raw_buttons));
+	*ff8_externals.engine_input_autorepeat_interval = 0;
 
-	((void *(*)())FF8_INPUT_PROCESS)();
+	ff8_externals.engine_eval_keyboard_gamepad_input();
 
-	pad_samples[index].pad[0] = FF8_INPUT_PAD_CURRENT(0);
-	pad_samples[index].pad[1] = FF8_INPUT_PAD_CURRENT(1);
+	pad_samples[index].pad[0] = ff8_externals.engine_mapped_buttons[0];
+	pad_samples[index].pad[1] = ff8_externals.engine_mapped_buttons[PAD_SAMPLING_PAD_STRIDE];
 	pad_samples[index].valid = true;
 
-	FF8_INPUT_AUTOREPEAT_INTERVAL = autorepeat;
-	memcpy((void *)FF8_INPUT_RAW_JOY_WORDS, joy_words, sizeof(joy_words));
-	memcpy((void *)FF8_INPUT_PAD_BLOCKS, pad_blocks, sizeof(pad_blocks));
+	*ff8_externals.engine_input_autorepeat_interval = autorepeat;
+	memcpy(raw_buttons, saved_raw_buttons, sizeof(saved_raw_buttons));
+	memcpy(pad_state, saved_pad_state, sizeof(saved_pad_state));
+
+	pad_sampling_stats.read_ms[index] += frame_ms;
+	pad_sampling_stats.reads[index]++;
 }
 
-// UI tick part 2: the n-th hidden tick of a frame advances the pad ring from the n-th reading
-// of the last frame wait; the visible tick uses the frame's regular read and ends the frame.
-static int __cdecl pad_sampling_display_hook()
+// A catch-up UI tick, with the pad mask of its reading while it runs
+static int pad_sampling_catch_up_tick(int index)
 {
-	int r;
+	int (*battle_ui_tick)() = (int (*)())ff8_externals.sub_4A84E0;
 
-	if (FF8_BATTLE_UI_MENU_RENDERING == 0)
-	{
-		int index = pad_hidden_tick++;
+	if (!pad_samples[index].valid) return battle_ui_tick();
 
-		if (index < PAD_SAMPLING_HIDDEN_TICKS && pad_samples[index].valid)
-		{
-			uint32_t current[2] = { FF8_INPUT_PAD_CURRENT(0), FF8_INPUT_PAD_CURRENT(1) };
+	DWORD *pad0 = &ff8_externals.engine_mapped_buttons[0], *pad1 = &ff8_externals.engine_mapped_buttons[PAD_SAMPLING_PAD_STRIDE];
+	DWORD current0 = *pad0, current1 = *pad1;
 
-			FF8_INPUT_PAD_CURRENT(0) = pad_samples[index].pad[0];
-			FF8_INPUT_PAD_CURRENT(1) = pad_samples[index].pad[1];
-			{ pad_sampling_unhooked u(pad_sampling_display_ri); r = ((int (__cdecl *)())FF8_BATTLE_UI_DISPLAY)(); }
-			FF8_INPUT_PAD_CURRENT(0) = current[0];
-			FF8_INPUT_PAD_CURRENT(1) = current[1];
+	*pad0 = pad_samples[index].pad[0];
+	*pad1 = pad_samples[index].pad[1];
+	int ret = battle_ui_tick();
+	*pad0 = current0;
+	*pad1 = current1;
 
-			return r;
-		}
-	}
-	else
-	{
-		pad_hidden_tick = 0;
-		for (auto &sample : pad_samples) sample.valid = false;
-	}
-
-	{ pad_sampling_unhooked u(pad_sampling_display_ri); r = ((int (__cdecl *)())FF8_BATTLE_UI_DISPLAY)(); }
-
-	return r;
+	return ret;
 }
 
-// One FFNx.log line per GF Boost: the Square presses the gauge saw, so the input rate a
-// player (or a turbo button) actually gets through can be checked, and on which UI tick of
-// the frame each press arrived (vanilla: always the last one, right after the frame's read).
-static struct { uint32_t ticks, safe, danger, by_tick[PAD_SAMPLING_HIDDEN_TICKS + 1]; } pad_boost_stats;
+static int pad_sampling_catch_up_tick_1() { return pad_sampling_catch_up_tick(0); }
+static int pad_sampling_catch_up_tick_2() { return pad_sampling_catch_up_tick(1); }
+static int pad_sampling_catch_up_tick_3() { return pad_sampling_catch_up_tick(2); }
 
-static void __cdecl pad_sampling_boost_hook()
+void ff8_battle_pad_sampling_init()
 {
-	uint8_t *ctx = FF8_BATTLE_UI_CTX;
-	uint8_t state = FF8_BATTLE_GF_BOOST_STATE;
-
-	if (state <= 1)
+	// Only tested on the english release so far
+	if (!FF8_US_VERSION || ff8_remastered_edition)
 	{
-		memset(&pad_boost_stats, 0, sizeof(pad_boost_stats));
-		memset(&pad_timing, 0, sizeof(pad_timing));
-	}
-	if (state == 4 && ctx && (ctx[30] & 1)) // gauge running, Boost ability on
-	{
-		pad_boost_stats.ticks++;
-		if (((int (__cdecl *)(int))FF8_READ_PAD_PRESSED_REMAPPED)(0) & 0x80) // Square press edge
-		{
-			if (FF8_BATTLE_GF_BOOST_SAFE_PHASE) pad_boost_stats.safe++;
-			else pad_boost_stats.danger++;
-
-			// hidden ticks are counted by the display hook before they run
-			int tick = FF8_BATTLE_UI_MENU_RENDERING == 0 ? pad_hidden_tick - 1 : PAD_SAMPLING_HIDDEN_TICKS;
-			if (tick >= 0 && tick <= PAD_SAMPLING_HIDDEN_TICKS) pad_boost_stats.by_tick[tick]++;
-		}
+		ffnx_warning("battle pad sampling: only supported on the english release, not enabled\n");
+		return;
 	}
 
-	{ pad_sampling_unhooked u(pad_sampling_boost_ri); ((void (__cdecl *)())FF8_BATTLE_GF_BOOST)(); }
-
-	if (state != 6 && FF8_BATTLE_GF_BOOST_STATE == 6 && pad_boost_stats.ticks)
-	{
-		const auto &b = pad_boost_stats;
-		double seconds = b.ticks / 60.0;
-		uint16_t boost = FF8_BATTLE_GF_BOOST_VALUE ? FF8_BATTLE_GF_BOOST_VALUE : 100;
-		const auto &t = pad_timing;
-		auto avg = [](double sum, uint32_t n) { return n ? sum / n : 0.0; };
-
-		ffnx_info("battle pad sampling: GF Boost: %u Square presses in %.1f s (%.1f per second: %u during safe phases, %u during danger phases), Boost %u; presses per UI tick: %u / %u / %u (extra reads) %u (regular read)\n",
-			b.safe + b.danger, seconds, (b.safe + b.danger) / seconds, b.safe, b.danger, boost,
-			b.by_tick[0], b.by_tick[1], b.by_tick[2], b.by_tick[3]);
-		ffnx_info("battle pad sampling: frame work done after %.1f ms on average, extra reads at %.1f / %.1f / %.1f ms (frames: %u)\n",
-			avg(t.work, t.frames), avg(t.read[0], t.reads[0]), avg(t.read[1], t.reads[1]), avg(t.read[2], t.reads[2]), t.frames);
-	}
-}
-
-// Code and data references checked before anything is patched
-struct pad_sampling_signature { uint32_t addr; uint8_t bytes[5]; };
-
-static const pad_sampling_signature pad_sampling_signatures[] = {
-	{ FF8_BATTLE_UI_DISPLAY,         { 0x57, 0x33, 0xFF, 0x57, 0xE8 } },
-	{ FF8_INPUT_PROCESS,             { 0x83, 0xEC, 0x08, 0x53, 0x55 } },
-	{ FF8_BATTLE_GF_BOOST,           { 0x83, 0xEC, 0x08, 0x8A, 0x0D } },
-	{ FF8_READ_PAD_PRESSED_REMAPPED, { 0x8B, 0x44, 0x24, 0x04, 0x6A } },
-	{ 0x468511,                      { 0x81, 0xFC, 0x01, 0xCD, 0x01 } }, // Input_GetPadState: current mask
-	{ 0x467DCE,                      { 0x88, 0x04, 0x02, 0xCD, 0x01 } }, // Input_ProcessInput: previous mask
-	{ 0x4681A7,                      { 0x90, 0xF8, 0x01, 0xCD, 0x01 } }, // Input_ProcessInput: press edges
-	{ 0x4681AC,                      { 0xA1, 0xF0, 0x02, 0xCD, 0x01 } }, // Input_ProcessInput: auto-repeat interval
-	{ 0x4687A0,                      { 0xB8, 0xB4, 0x03, 0xCD, 0x01 } }, // Input_UpdateRawJoyButtonWords
-};
-
-bool ff8_battle_pad_sampling_init()
-{
-	if (pad_sampling_enabled) return true;
-
-	// The Steam executable is detected as the Nvidia variant: every English 1.2 build is
-	// accepted, the code signatures decide
-	bool supported = FF8_US_VERSION && !ff8_remastered_edition;
-
-	for (const pad_sampling_signature &s : pad_sampling_signatures)
-	{
-		if (!supported) break;
-
-		if (memcmp((const void *)s.addr, s.bytes, sizeof(s.bytes)) != 0)
-		{
-			ffnx_warning("battle pad sampling: unexpected code at 0x%X\n", s.addr);
-			supported = false;
-		}
-	}
-
-	if (!supported)
-	{
-		ffnx_warning("battle pad sampling: requires FF8 2000 / Steam English 1.2, not installed\n");
-		return false;
-	}
-
-	pad_sampling_display_ri = replace_function(FF8_BATTLE_UI_DISPLAY, (void *)pad_sampling_display_hook);
-	pad_sampling_boost_ri = replace_function(FF8_BATTLE_GF_BOOST, (void *)pad_sampling_boost_hook);
+	replace_call(ff8_externals.battle_main_loop + pad_sampling_catch_up_ticks[0], (void *)pad_sampling_catch_up_tick_1);
+	replace_call(ff8_externals.battle_main_loop + pad_sampling_catch_up_ticks[1], (void *)pad_sampling_catch_up_tick_2);
+	replace_call(ff8_externals.battle_main_loop + pad_sampling_catch_up_ticks[2], (void *)pad_sampling_catch_up_tick_3);
 
 	pad_sampling_enabled = true;
 
-	ffnx_info("battle pad sampling: pad read 60 times per second in battle (battle unchanged, 15 fps)\n");
-
-	return true;
+	ffnx_info("battle pad sampling: pad read 60 times per second in battle\n");
 }
