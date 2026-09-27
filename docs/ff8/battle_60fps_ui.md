@@ -34,6 +34,7 @@ What a held frame does:
 | Camera animation and camera script | not run; the camera shake of the last real tick is applied again |
 | Damage numbers, screen fade | drawn from the state of the last real tick |
 | Active character marker (rotating triangle) | drawn from the state of the last real tick |
+| Description window transparency blink | its counter advances on real ticks only |
 | Choreography tasks (wobble, texture blink, footsteps, camera shake, run-up, camera return) | not run |
 | Drag to bone, detached / restored model parts | drawn without counting |
 | Battle messages | shown without counting their display time |
@@ -76,6 +77,7 @@ All resolved in `ff8_data.cpp` from functions FFNx already knows (`get_relative_
 | Stage texture animation / stage render | `0x51B0D0` / `0x500FD0` |
 | Cursor finger draw (`battle_main_loop` + `0x1EB`) / UI tick phase / finger slots | `0x4A78E0` / `0x1D74EA8` / `0x1D6D4B0` |
 | Active character marker (`BdLink` + `0x60`) / animation state | `0x4BB090` / `0x1D76708` - `0x1D76713` |
+| Description window draw (`battle_pause_sub_4CD140`) / blink counter (+ `0x17`, JP + `0x13`) | `0x4C8B70` / `0x1D77311` |
 | Battle UI context / UI ticks per frame | `0x1D6D490` / `0xB8A3E4` |
 | Screen feedback request value / end of battle countdown | `0x1CFF6F4` / `0x1D27B0C` |
 | Camera setting / camera shake | `0x1D99A34` / `0x1D97710` |

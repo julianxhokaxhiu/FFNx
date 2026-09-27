@@ -1920,6 +1920,7 @@ struct ff8_externals
 	uint16_t *battle_active_chara_marker_color_step;
 	uint32_t *battle_active_chara_marker_color_table;
 	uint16_t *battle_active_chara_marker_rotation;
+	uint8_t *battle_description_blink_counter;
 	uint32_t *battle_render_list_base;
 	uint8_t *ssigpu_exec_start;
 	uint32_t *ssigpu_exec_cur;

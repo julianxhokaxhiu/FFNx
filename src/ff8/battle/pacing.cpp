@@ -1010,6 +1010,21 @@ static void pacing_draw_active_chara_marker()
 	pacing_draw_active_chara_marker_orig();
 }
 
+// Description window (text of the selected command, list entry or target): every draw
+// advances the counter that blinks its transparency. Held frames step it back first, so the
+// draw puts it back to the value of the last real tick (the draw resets it to 0 when the
+// window is not shown).
+static uint32_t pacing_description_window_ri = 0;
+
+static int pacing_description_window(int prims, int next)
+{
+	if (pacing_phase != 0) (*ff8_externals.battle_description_blink_counter)--;
+
+	pacing_unhooked u(pacing_description_window_ri);
+
+	return ((int (*)(int, int))ff8_externals.battle_pause_sub_4CD140)(prims, next);
+}
+
 // ---------------------------------------------------------------------------
 // Frame phase
 // ---------------------------------------------------------------------------
@@ -1143,6 +1158,7 @@ void ff8_battle_pacing_init()
 	replace_call(ff8_externals.battle_main_loop + 0x1EB, pacing_draw_cursor_fingers);
 	pacing_draw_active_chara_marker_orig = (void (*)())ff8_externals.battle_draw_active_chara_marker_sub_4BB090;
 	replace_call(bdlink + 0x60, pacing_draw_active_chara_marker);
+	pacing_description_window_ri = replace_function(ff8_externals.battle_pause_sub_4CD140, pacing_description_window);
 
 	pacing_enabled = true;
 

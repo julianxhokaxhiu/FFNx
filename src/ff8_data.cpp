@@ -1133,6 +1133,8 @@ void ff8_find_externals()
 	ff8_externals.battle_active_chara_marker_color_step = (uint16_t *)get_absolute_value(ff8_externals.battle_draw_active_chara_marker_prims_sub_4BB0B0, 0x20);
 	ff8_externals.battle_active_chara_marker_color_table = (uint32_t *)get_absolute_value(ff8_externals.battle_draw_active_chara_marker_prims_sub_4BB0B0, 0x27);
 	ff8_externals.battle_active_chara_marker_rotation = (uint16_t *)get_absolute_value(ff8_externals.battle_draw_active_chara_marker_prims_sub_4BB0B0, 0xF3);
+	// battle_pause_sub_4CD140 is the battle description window draw
+	ff8_externals.battle_description_blink_counter = (uint8_t *)get_absolute_value(ff8_externals.battle_pause_sub_4CD140, JP_VERSION ? 0x13 : 0x17);
 
 	common_externals.current_triangle_id = 0x0;
 	common_externals.field_game_moment = (WORD*)(ff8_externals.field_vars_stack_1CFE9B8 + 0x100); //0x1CFEAB8
