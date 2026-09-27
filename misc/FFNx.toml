@@ -812,18 +812,6 @@ ff8_always_capture_input = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ff8_fps_limiter = 1
 
-# Battle controller read 60 times per second
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The PC version reads the controller only once per battle frame (15 times per second) while
-# the PlayStation read it 60 times per second: quick presses are merged or lost in GF Boost,
-# Renzokuken, Zell's Duel and fast menu inputs. With this option the controller is read
-# 60 times per second in battle and every read reaches the battle menu, like on the PlayStation.
-# Nothing else changes: the battle still runs at 15 FPS with its original speed and timing.
-# Requires ff8_fps_limiter >= 1. Not available on the remastered edition.
-# With trace_gamepad = true, FFNx.log reports after each battle how many presses the extra reads caught.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ff8_battle_input_60hz = false
-
 ## GAME INSTALLATION OPTIONS
 
 #[APP PATH]

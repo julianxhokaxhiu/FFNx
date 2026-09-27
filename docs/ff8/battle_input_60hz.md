@@ -1,6 +1,6 @@
 # Battle controller read at 60 Hz
 
-Option: `ff8_battle_input_60hz` (requires `ff8_fps_limiter` >= 1). Not available on the remastered edition.
+Always active in battle when the FFNx frame limiter is used (`ff8_fps_limiter` >= 1, the default). Not available on the remastered edition.
 
 ## The problem
 
@@ -20,7 +20,7 @@ Every UI tick advances the battle pad ring from the current pad mask (`engine_ma
 - GF Boost mashing tops out at about 7.5 presses per second (a press needs a release in between, so one press every 2 frames), against 30 per second on the PlayStation;
 - Renzokuken trigger presses and Zell's Duel inputs are sampled 4 times less often than the game logic allows.
 
-## What the option does
+## What FFNx does
 
 The pad is also read 3 times during the frame wait, at 1/4, 2/4 and 3/4 of the frame. On the next frame, each catch-up UI tick runs with one of those readings as the current pad mask (the 3 calls to the UI tick in the battle main loop are redirected). The 4 UI ticks of a frame now see 4 readings taken 16.7 ms apart, in time order, exactly like the PlayStation reading the pad at every vertical blank.
 
@@ -30,7 +30,7 @@ Nothing else changes: frame rate, battle speed, ATB, GF Boost phase lengths, Ren
 
 ## Checking it works
 
-With `trace_gamepad = true` (or `trace_all`), FFNx.log gets one line at the end of each battle:
+With `trace_gamepad = true` (or `trace_all`), FFNx.log says `battle pad sampling: pad read 60 times per second in battle` at startup, and gets one line at the end of each battle:
 
 ```
 battle pad sampling: 52 presses this battle: 18 / 11 / 12 from the extra reads, 11 from the game's own read; frame work 6.5 ms, extra reads at 16.7 / 33.3 / 50.0 ms

@@ -150,7 +150,6 @@ bool ff8_fix_uv_coords_precision;
 bool ff8_use_gamepad_icons;
 bool ff8_always_capture_input;
 long ff8_fps_limiter;
-bool ff8_battle_input_60hz;
 std::string app_path;
 std::string data_drive;
 bool enable_ntscj_gamut_mode;
@@ -326,7 +325,6 @@ void read_cfg()
 	ff8_use_gamepad_icons = config["ff8_use_gamepad_icons"].value_or(false);
 	ff8_always_capture_input = config["ff8_always_capture_input"].value_or(false);
 	ff8_fps_limiter = config["ff8_fps_limiter"].value_or(FPS_LIMITER_DEFAULT);
-	ff8_battle_input_60hz = config["ff8_battle_input_60hz"].value_or(false);
 	app_path = config["app_path"].value_or("");
 	data_drive = config["data_drive"].value_or("");
 	enable_ntscj_gamut_mode = config["enable_ntscj_gamut_mode"].value_or(false);
