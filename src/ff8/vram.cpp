@@ -34,6 +34,7 @@
 #include "world/chara_one.h"
 #include "world/wmset.h"
 #include "battle/stage.h"
+#include "battle/effects.h"
 #include "remaster.h"
 #include "remastered_battle_texture.h"
 #include "./file.h"
@@ -1719,6 +1720,9 @@ int battle_get_texture_file_name_index(void *texture_buffer)
 
 	return -1;
 }
+static constexpr uint16_t GILGAMESH_FIRST_EFFECT_ID = FF8BattleEffect::GilgameshZantetsukenReverse;
+static constexpr uint16_t GILGAMESH_LAST_EFFECT_ID = FF8BattleEffect::GilgameshExcalipoor;
+static constexpr int GILGAMESH_G_FILE_ID = 751;
 
 int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callback)
 {
@@ -1752,6 +1756,55 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 	}
 
 	int16_t ret = ((int16_t(*)(int,void*,int,int))ff8_externals.battle_open_file)(fileId, data, a3, callback);
+	const int effect_id = ff8_externals.battle_magic_id != nullptr ? *ff8_externals.battle_magic_id : -1;
+	if (ff8_remastered_edition && fileId == GILGAMESH_G_FILE_ID && (trace_files || trace_all))
+		ffnx_trace("Gilgamesh G load: effect_id=%d data=0x%08X result=%d\n", effect_id, uint32_t(data), ret);
+
+	if (ff8_remastered_edition && fileId == GILGAMESH_G_FILE_ID
+		&& effect_id >= GILGAMESH_FIRST_EFFECT_ID && effect_id <= GILGAMESH_LAST_EFFECT_ID
+		&& ret == 0 && data != nullptr)
+	{
+		const uint32_t source_offset = FF8_GILGAMESH_G_DESCRIPTOR_SOURCE_OFFSET;
+		uint8_t *effect_arena = ((uint8_t *(*)())ff8_externals.get_battle_effect_buffer_sub_571B50)();
+		if (effect_arena != nullptr && data == effect_arena + source_offset)
+		{
+			const uint32_t *g_header = static_cast<const uint32_t *>(data);
+			uint32_t *root_header = reinterpret_cast<uint32_t *>(static_cast<uint8_t *>(data) - source_offset);
+			uint32_t relocated_offsets[4]{};
+			bool offsets_valid = true;
+
+			for (uint32_t field_index = 1; field_index <= 4; ++field_index)
+			{
+				const uint32_t relative_offset = g_header[field_index];
+				if (relative_offset >= FF8_BATTLE_EFFECT_BUFFER_SIZE - source_offset)
+				{
+					ffnx_warning("Gilgamesh G descriptor offset[%u]=0x%X exceeds the battle effect buffer; skipping relocation.\n",
+						field_index, relative_offset);
+					offsets_valid = false;
+					break;
+				}
+				relocated_offsets[field_index - 1] = source_offset + relative_offset;
+			}
+
+			if (offsets_valid)
+			{
+				const uint32_t previous_offsets[4] = { root_header[1], root_header[2], root_header[3], root_header[4] };
+				for (uint32_t field_index = 1; field_index <= 4; ++field_index)
+					root_header[field_index] = relocated_offsets[field_index - 1];
+
+				if (trace_files || trace_all)
+					ffnx_trace("Gilgamesh descriptor offsets: G=[%X,%X,%X,%X] B=[%X,%X,%X,%X]->[%X,%X,%X,%X]\n",
+						g_header[1], g_header[2], g_header[3], g_header[4],
+						previous_offsets[0], previous_offsets[1], previous_offsets[2], previous_offsets[3],
+						relocated_offsets[0], relocated_offsets[1], relocated_offsets[2], relocated_offsets[3]);
+			}
+		}
+		else
+		{
+			ffnx_warning("Gilgamesh G destination 0x%08X does not match the relocated effect-buffer slot, skipping descriptor relocation.\n",
+				uint32_t(data));
+		}
+	}
 
 	// c0mXXX.dat files (battle ennemies)
 	if (fileId >= 166 && fileId <= 309 && *(uint32_t *)data == 11)
