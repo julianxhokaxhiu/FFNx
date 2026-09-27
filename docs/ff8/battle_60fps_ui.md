@@ -45,7 +45,7 @@ The full-screen flash task (used by a few effects) is only reachable from the ef
 
 ## Checking it works
 
-With `trace_all = true`, FFNx.log says `battle pacing: battle at 60 fps, battle logic at 15 ticks per second` at startup.
+With `trace_battle_animation = true` (or `trace_all`), FFNx.log says `battle pacing: battle at 60 fps, battle logic at 15 ticks per second` at startup.
 
 ## Addresses
 

@@ -40,7 +40,6 @@ static const uint32_t pacing_catch_up_ui_calls[] = { 0x13D, 0x142, 0x147, 0x14C,
 // Battle UI context
 #define PACING_UI_CTX_FRESH_INPUT 0x21   // 1 on the UI tick that latched a fresh pad snapshot
 #define PACING_UI_CTX_BLINK_COUNTER 0x2C // HUD blink / pulse counter, incremented on each latch
-#define PACING_UI_CTX_FLAGS 0x1E         // bit 0: GF Boost ability
 
 // SSIGPU execution node arena (draw list), same limit as the engine inserts
 #define PACING_SSIGPU_EXEC_LIMIT 0x60000
@@ -186,7 +185,7 @@ static void pacing_rec_capture(pacing_recorder &rec)
 
 	if (n > PACING_REC_MAX_PRIMS)
 	{
-		if (!rec.overflow_logged && trace_all) ffnx_trace("battle pacing: %d draws in one %s tick, held frames not redrawn\n", n, rec.name);
+		if (!rec.overflow_logged && (trace_all || trace_battle_animation)) ffnx_trace("battle pacing: %d draws in one %s tick, held frames not redrawn\n", n, rec.name);
 		rec.overflow_logged = true;
 		return;
 	}
@@ -1065,5 +1064,5 @@ void ff8_battle_pacing_init()
 
 	pacing_enabled = true;
 
-	if (trace_all) ffnx_trace("battle pacing: battle at 60 fps, battle logic at 15 ticks per second\n");
+	if (trace_all || trace_battle_animation) ffnx_trace("battle pacing: battle at 60 fps, battle logic at 15 ticks per second\n");
 }
