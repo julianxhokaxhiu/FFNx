@@ -169,8 +169,6 @@ static int pad_sampling_catch_up_tick_3() { return pad_sampling_catch_up_tick(2)
 
 void ff8_battle_pad_sampling_init()
 {
-	if (ff8_remastered_edition) return;
-
 	replace_call(ff8_externals.battle_main_loop + pad_sampling_catch_up_ticks[0], (void *)pad_sampling_catch_up_tick_1);
 	replace_call(ff8_externals.battle_main_loop + pad_sampling_catch_up_ticks[1], (void *)pad_sampling_catch_up_tick_2);
 	replace_call(ff8_externals.battle_main_loop + pad_sampling_catch_up_ticks[2], (void *)pad_sampling_catch_up_tick_3);

@@ -1,6 +1,6 @@
 # Battle controller read at 60 Hz
 
-Always active in battle when the FFNx frame limiter is used (`ff8_fps_limiter` >= 1, the default). Not available on the remastered edition.
+Always active in battle when the FFNx frame limiter is used (`ff8_fps_limiter` >= 1, the default), including on the remastered edition (it runs the same 1.2 executable).
 
 ## The problem
 
