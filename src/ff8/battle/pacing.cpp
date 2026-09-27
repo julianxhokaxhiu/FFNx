@@ -75,7 +75,7 @@
 #define FF8_BATTLE_STAGE_RENDER             0x500FD0 // BS_RenderRelated: stage parts animation + draw
 // Call site inside the battle loop
 #define FF8_BATTLE_CALL_TEXT_MANAGEMENT     0x47D7FB // executeTextManagementBattleAction: AI text / waits / end fade trigger
-#define FF8_BATTLE_END_COUNTDOWN_DECREMENT  0x47D82A // "mov cl, [countdown]; dec cl; mov [countdown], cl" (14 bytes), after BdLink
+#define FF8_BATTLE_END_COUNTDOWN_DECREMENT  0x47D828 // "mov cl, [countdown]; dec cl; mov [countdown], cl" (14 bytes), after BdLink
 // Call sites inside the per-entity task
 #define FF8_BATTLE_CALL_STATUS_VISUALS      0x502B5D // status colour pulse, Float bob, spin, status sprites
 #define FF8_BATTLE_CALL_ENTITY_FADES        0x502B74 // computeCommandRank: death / escape / appear fades
@@ -104,6 +104,10 @@
 #define FF8_BATTLE_OT_BUCKETS               4386
 #define FF8_BATTLE_STAGE_FREEZE             (*(uint8_t *)0x1D9898C)  // 1 sky rotation, 2 texture animation, 8 stage scripts
 #define FF8_BATTLE_TASKS_BUSY               (*(uint8_t *)0x1D96A88)  // holds the next actions back while set
+#define FF8_BATTLE_GF_BOOST_VALUE           (*(uint16_t *)0x209CEF0) // current Boost (75..250, 0 = untouched = 100)
+#define FF8_BATTLE_GF_BOOST_SAFE_PHASE      (*(uint8_t *)0x209CEF9)  // 1 = presses raise the Boost, 0 = they reset it
+#define FF8_BATTLE_GF_BOOST_STATE           (*(uint8_t *)0x209CEFB)  // 4 = gauge running, 6 = done
+#define FF8_READ_PAD_PRESSED_REMAPPED       0x4A8420                 // press edges of the current UI tick
 #define FF8_BATTLE_END_COUNTDOWN            (*(uint8_t *)0x1D27B0C)  // FADE_OUT_END_BATTLE_DURATION: 0xFF idle, 0 = leave battle
 
 // UI context fields
@@ -683,16 +687,42 @@ static int __cdecl pacing_ui_display_hook()
 // second in vanilla, on the PlayStation too): only the latches that count reach it. Its
 // 4-tick input budget is refilled by those latches, as in vanilla. Square presses are read
 // on every UI tick, now fed by a pad read per tick.
+// One FFNx.log line per Boost reports the Square presses the gauge saw, so the input rate a
+// player (or a turbo button) actually gets through can be checked.
+static struct { uint32_t ticks, safe, danger; } pacing_boost_stats;
+
 static void __cdecl pacing_boost_hook()
 {
 	uint8_t *ctx = FF8_BATTLE_UI_CTX;
 	uint8_t saved = ctx ? ctx[FF8_BATTLE_UI_CTX_FRESH_INPUT] : 0;
+	uint8_t state = FF8_BATTLE_GF_BOOST_STATE;
+
+	if (state <= 1) memset(&pacing_boost_stats, 0, sizeof(pacing_boost_stats));
+	if (state == 4 && ctx && (ctx[30] & 1)) // gauge running, Boost ability on
+	{
+		pacing_boost_stats.ticks++;
+		if (((int (__cdecl *)(int))FF8_READ_PAD_PRESSED_REMAPPED)(0) & 0x80) // Square press edge
+		{
+			if (FF8_BATTLE_GF_BOOST_SAFE_PHASE) pacing_boost_stats.safe++;
+			else pacing_boost_stats.danger++;
+		}
+	}
 
 	if (ctx && !pacing_ui_latch_counts) ctx[FF8_BATTLE_UI_CTX_FRESH_INPUT] = 0;
 
 	{ pacing_unhooked u(pacing_boost_ri); ((void (__cdecl *)())FF8_BATTLE_GF_BOOST)(); }
 
 	if (ctx) ctx[FF8_BATTLE_UI_CTX_FRESH_INPUT] = saved;
+
+	if (state != 6 && FF8_BATTLE_GF_BOOST_STATE == 6 && pacing_boost_stats.ticks)
+	{
+		const auto &b = pacing_boost_stats;
+		double seconds = b.ticks / 60.0;
+		uint16_t boost = FF8_BATTLE_GF_BOOST_VALUE ? FF8_BATTLE_GF_BOOST_VALUE : 100;
+
+		ffnx_info("battle pacing: GF Boost: %u Square presses in %.1f s (%.1f per second: %u during safe phases, %u during danger phases), Boost %u\n",
+			b.safe + b.danger, seconds, (b.safe + b.danger) / seconds, b.safe, b.danger, boost);
+	}
 }
 
 // Game time / battle countdown: called 4 times per loop iteration whatever the frame rate
@@ -1159,6 +1189,7 @@ static const pacing_signature pacing_signatures[] = {
 	{ FF8_BATTLE_STATUS_TIMERS,           { 0x83, 0xEC, 0x0C, 0x53, 0x55 } },
 	{ FF8_BATTLE_GILGAMESH_ANGELO,        { 0x66, 0x83, 0x3D, 0xE4, 0x8D } },
 	{ FF8_INPUT_PROCESS,                  { 0x83, 0xEC, 0x08, 0x53, 0x55 } },
+	{ FF8_READ_PAD_PRESSED_REMAPPED,      { 0x8B, 0x44, 0x24, 0x04, 0x6A } },
 	{ FF8_SSIGPU_CLEAR_OT,                { 0x8B, 0x44, 0x24, 0x08, 0x56 } },
 	{ FF8_BATTLE_TASK_84_WOBBLE,          { 0x56, 0x8B, 0x74, 0x24, 0x08 } },
 	{ FF8_BATTLE_TASK_9F_TEXTURE_BLINK,   { 0x56, 0x8B, 0x74, 0x24, 0x08 } },
@@ -1185,6 +1216,7 @@ static const pacing_signature pacing_signatures[] = {
 	{ FF8_BATTLE_CALL_STAGE_QUEUE,        { 0xE8, 0xAD, 0x62, 0x00, 0x00 } },
 	{ FF8_BATTLE_END_COUNTDOWN_DECREMENT, { 0x8A, 0x0D, 0x0C, 0x7B, 0xD2 } },
 	{ FF8_BATTLE_END_COUNTDOWN_DECREMENT + 5, { 0x01, 0xFE, 0xC9, 0x88, 0x0D } },
+	{ FF8_BATTLE_END_COUNTDOWN_DECREMENT + 10, { 0x0C, 0x7B, 0xD2, 0x01, 0xA0 } },
 	{ FF8_BATTLE_UI_TICKS_PER_FRAME,      { 0x04, 0x00, 0x00, 0x00, 0x80 } },
 	{ FF8_BATTLE_RENZOKUKEN_LATCH_STEP - 4, { 0x98, 0x67, 0xD7, 0x01, 0x04 } },
 };
