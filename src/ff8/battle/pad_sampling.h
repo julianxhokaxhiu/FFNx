@@ -41,6 +41,8 @@ bool ff8_battle_pad_sampling_init();
 bool ff8_battle_pad_sampling_enabled();
 
 // Frame limiter integration (ff8_limit_fps): number of extra pad readings to spread evenly
-// over the current frame wait (3 in battle, 0 elsewhere), and the reading itself.
+// over the current frame wait (3 in battle, 0 elsewhere), and the reading itself. Times are
+// milliseconds since the frame started (reported in FFNx.log with the GF Boost statistics).
 int ff8_battle_pad_sampling_extra_reads(uint32_t driver_mode);
-void ff8_battle_pad_sampling_read(int index);
+void ff8_battle_pad_sampling_frame_work_done(double frame_ms);
+void ff8_battle_pad_sampling_read(int index, double frame_ms);

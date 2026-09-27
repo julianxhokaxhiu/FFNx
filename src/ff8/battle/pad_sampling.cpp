@@ -82,12 +82,25 @@ int ff8_battle_pad_sampling_extra_reads(uint32_t driver_mode)
 	return (pad_sampling_enabled && driver_mode == MODE_BATTLE) ? PAD_SAMPLING_HIDDEN_TICKS : 0;
 }
 
+// When the readings actually happen (ms since the frame started), summed over the frames of
+// the current GF Boost: the readings can only be taken once the frame's own work is done
+static struct { double work, read[PAD_SAMPLING_HIDDEN_TICKS]; uint32_t frames, reads[PAD_SAMPLING_HIDDEN_TICKS]; } pad_timing;
+
+void ff8_battle_pad_sampling_frame_work_done(double frame_ms)
+{
+	pad_timing.work += frame_ms;
+	pad_timing.frames++;
+}
+
 // Takes a reading with the engine's own pad read, then puts back everything that read
 // changed (pad masks and their press edges, raw joystick words; the engine auto-repeat is
 // off meanwhile), so the frame's regular read still behaves exactly as in the original game.
-void ff8_battle_pad_sampling_read(int index)
+void ff8_battle_pad_sampling_read(int index, double frame_ms)
 {
 	if (index < 0 || index >= PAD_SAMPLING_HIDDEN_TICKS) return;
+
+	pad_timing.read[index] += frame_ms;
+	pad_timing.reads[index]++;
 
 	pad_samples[index].valid = false;
 
@@ -157,7 +170,11 @@ static void __cdecl pad_sampling_boost_hook()
 	uint8_t *ctx = FF8_BATTLE_UI_CTX;
 	uint8_t state = FF8_BATTLE_GF_BOOST_STATE;
 
-	if (state <= 1) memset(&pad_boost_stats, 0, sizeof(pad_boost_stats));
+	if (state <= 1)
+	{
+		memset(&pad_boost_stats, 0, sizeof(pad_boost_stats));
+		memset(&pad_timing, 0, sizeof(pad_timing));
+	}
 	if (state == 4 && ctx && (ctx[30] & 1)) // gauge running, Boost ability on
 	{
 		pad_boost_stats.ticks++;
@@ -179,10 +196,14 @@ static void __cdecl pad_sampling_boost_hook()
 		const auto &b = pad_boost_stats;
 		double seconds = b.ticks / 60.0;
 		uint16_t boost = FF8_BATTLE_GF_BOOST_VALUE ? FF8_BATTLE_GF_BOOST_VALUE : 100;
+		const auto &t = pad_timing;
+		auto avg = [](double sum, uint32_t n) { return n ? sum / n : 0.0; };
 
 		ffnx_info("battle pad sampling: GF Boost: %u Square presses in %.1f s (%.1f per second: %u during safe phases, %u during danger phases), Boost %u; presses per UI tick: %u / %u / %u (extra reads) %u (regular read)\n",
 			b.safe + b.danger, seconds, (b.safe + b.danger) / seconds, b.safe, b.danger, boost,
 			b.by_tick[0], b.by_tick[1], b.by_tick[2], b.by_tick[3]);
+		ffnx_info("battle pad sampling: frame work done after %.1f ms on average, extra reads at %.1f / %.1f / %.1f ms (frames: %u)\n",
+			avg(t.work, t.frames), avg(t.read[0], t.reads[0]), avg(t.read[1], t.reads[1]), avg(t.read[2], t.reads[2]), t.frames);
 	}
 }
 
