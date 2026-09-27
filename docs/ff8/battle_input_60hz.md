@@ -53,4 +53,4 @@ All resolved in `ff8_data.cpp` from functions FFNx already knows:
 | Raw gamepad button update | call at `engine_eval_keyboard_gamepad_input` + `0x4BE` | `0x468790` |
 | Raw gamepad button words (edges[8], current[8], previous[8]) | raw button update + `0x11`, - 8 DWORDs | `0x1CD0394` |
 
-The same offsets were verified in the JP and JP_NV executables; the other languages share the EN code layout. Only the english release has been tested in game so far.
+The same offsets were verified in the EN, FR, DE, ES, IT, JP and JP_NV executables (only the data addresses differ, and they are resolved from the code). Tested in game on the english Steam release.
