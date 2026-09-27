@@ -167,7 +167,8 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 		{ 204, 0, "mag204" }, { 204, 1, "mag204" }, { 205, -1, "mag205" },
 		{ 217, 2, "mag217" }, { 277, 0, "mag277" }, { 290, 0, "mag290" }, { 290, 1, "mag290" },
 		{ 1066, -1, "mag324" }, { 324, -1, "mag324" }, { 1070, -1, "mag325" },
-		{ 186, -1, "mag325" }, { 325, 0, "mag325" }, { 325, 1, "mag325" }, { 990, 2, "mag325" },
+		{ 186, 0, "mag325" }, { 186, 1, "mag325" }, { 186, 2, "mag325" }, { 186, 3, "mag325" },
+		{ 325, 0, "mag325" }, { 325, 1, "mag325" }, { 990, 2, "mag325" },
 		{ 326, 0, "mag326" }, { 326, 1, "mag326" }, { 326, 2, "mag326" }, { 326, 3, "mag326" },
 		{ 217, 0, "mag326" }, { 217, 1, "mag326" }, { 1055, -1, "mag900" },
 		{ 900, 0, "mag900" }, { 901, 0, "mag901" }, { 902, -1, "mag902" },
@@ -209,7 +210,7 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 	{
 		char *end = nullptr;
 		const long parsedId = strtol(classicName + 3, &end, 10);
-		if (end != classicName + 3 && *end == '\0' && parsedId <= INT_MAX)
+		if (end != classicName + 3 && (*end == '\0' || *end == '_' || *end == '.') && parsedId >= 0 && parsedId <= INT_MAX)
 		{
 			resourceId = int(parsedId);
 		}
