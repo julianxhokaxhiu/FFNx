@@ -245,8 +245,7 @@ struct pacing_recorder
 
 static pacing_recorder pacing_rec_effect = { "effect", FF8_BATTLE_PACING_QUEUE_EFFECT };
 static pacing_recorder pacing_rec_hit = { "hit-effect queue", FF8_BATTLE_PACING_QUEUE_HIT_EFFECT };
-static int (__cdecl *pacing_effect_tick_orig)(void *) = nullptr;
-static int (__cdecl *pacing_hit_tick_orig)(void *) = nullptr;
+static int (__cdecl *pacing_execute_task_queue)(void *) = nullptr; // ExecuteTaskQueue: both call sites
 static int16_t pacing_node_bucket[PACING_REC_MAX_PRIMS];
 
 static uint32_t *pacing_current_ot()
@@ -464,12 +463,12 @@ static int pacing_queue_tick(pacing_recorder &rec, void *ctx, int (__cdecl *orig
 // Held frames report "still running" (the caller would otherwise drop the effect pointer)
 static int __cdecl pacing_effect_tick_hook(void *effect_ctx)
 {
-	return pacing_queue_tick(pacing_rec_effect, effect_ctx, pacing_effect_tick_orig, 1);
+	return pacing_queue_tick(pacing_rec_effect, effect_ctx, pacing_execute_task_queue, 1);
 }
 
 static int __cdecl pacing_hit_tick_hook(void *queue)
 {
-	return pacing_queue_tick(pacing_rec_hit, queue, pacing_hit_tick_orig, pacing_rec_hit.last_ret);
+	return pacing_queue_tick(pacing_rec_hit, queue, pacing_execute_task_queue, pacing_rec_hit.last_ret);
 }
 
 // Screen feedback (Eden and others draw a ghost of the whole screen): an effect tick arms a
@@ -1278,9 +1277,9 @@ bool ff8_battle_pacing_init(int host_frames_per_tick)
 	pacing_camera_ops_ri = replace_function(FF8_BATTLE_CAMERA_OPERATIONS, (void *)pacing_camera_ops_hook);
 
 	// Effects and hit effects: native-rate tick, recorded draws redrawn on held frames
-	pacing_effect_tick_orig = (int (__cdecl *)(void *))get_relative_call(FF8_BATTLE_CALL_EFFECT_TICK, 0);
+	// both calls go to ExecuteTaskQueue (their signatures include the call targets)
+	pacing_execute_task_queue = (int (__cdecl *)(void *))get_relative_call(FF8_BATTLE_CALL_EFFECT_TICK, 0);
 	replace_call(FF8_BATTLE_CALL_EFFECT_TICK, (void *)pacing_effect_tick_hook);
-	pacing_hit_tick_orig = (int (__cdecl *)(void *))get_relative_call(FF8_BATTLE_CALL_HIT_EFFECT_QUEUE, 0);
 	replace_call(FF8_BATTLE_CALL_HIT_EFFECT_QUEUE, (void *)pacing_hit_tick_hook);
 	replace_function(FF8_BATTLE_REQUEST_SCREEN_FEEDBACK, (void *)pacing_feedback_request_hook);
 
