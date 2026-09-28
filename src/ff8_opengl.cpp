@@ -2530,9 +2530,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// At 60 fps the battle UI reads the pad every frame, else the extra pad reads happen in the FFNx frame limiter
 	if (ff8_fps_limiter == FPS_LIMITER_60FPS_BATTLE_UI)
 		ff8_battle_pacing_init();
-	else if (ff8_fps_limiter < FPS_LIMITER_DEFAULT)
-		ffnx_warning("battle pad sampling needs ff8_fps_limiter >= 1, not enabled\n");
-	else
+	else if (ff8_fps_limiter >= FPS_LIMITER_DEFAULT)
 		ff8_battle_pad_sampling_init();
 
 }
