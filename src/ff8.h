@@ -36,6 +36,7 @@
 // Battle effect buffer, relocated inside extended_memory.
 #define FF8_BATTLE_EFFECT_BUFFER_OFFSET 0x200000
 #define FF8_BATTLE_EFFECT_BUFFER_SIZE 0x380000
+#define FF8_GILGAMESH_G_DESCRIPTOR_SOURCE_OFFSET 0x60000
 
 // FF7 modules, unknowns are either unused or not relevant to rendering
 enum ff8_game_modes
