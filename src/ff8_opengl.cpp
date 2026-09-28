@@ -2524,9 +2524,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Battle pad read 60 times per second like on the PlayStation (battle unchanged)
 	// #####################
 	// The extra pad reads happen in the FFNx frame limiter
-	if (ff8_fps_limiter < FPS_LIMITER_DEFAULT)
-		ffnx_warning("battle pad sampling needs ff8_fps_limiter >= 1, not enabled\n");
-	else
+	if (ff8_fps_limiter >= FPS_LIMITER_DEFAULT)
 		ff8_battle_pad_sampling_init();
 
 }
