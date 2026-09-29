@@ -750,14 +750,15 @@ TexturePacker::TextureTypes TextureModStandard::drawToImage(
 	if (_remasteredUpperImage.hasImage())
 	{
 		const bimg::ImageMip &upperMip = _remasteredUpperImage.mip();
-		const int upperWidth = std::min(origTexture.pixelW() - sourceX, int(upperMip.m_width / _remasteredUpperImage.scale()) - sourceX);
+		const int upperSourceX = sourceX - wideFrameOffset;
+		const int upperWidth = std::min(origTexture.pixelW() - upperSourceX, int(upperMip.m_width / _remasteredUpperImage.scale()) - upperSourceX);
 		const int upperHeight = std::min(origTexture.h() - sourceY, int(upperMip.m_height / _remasteredUpperImage.scale()));
 		if (upperWidth > 0 && upperHeight > 0)
 		{
 			drawImage(
 				reinterpret_cast<const uint32_t *>(upperMip.m_data), upperMip.m_width / _remasteredUpperImage.scale(), _remasteredUpperImage.scale(),
 				targetRgba, targetW, targetScale,
-				sourceX, 0, upperWidth, upperHeight,
+				upperSourceX, 0, upperWidth, upperHeight,
 				targetX, 0
 			);
 		}
