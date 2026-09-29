@@ -119,6 +119,7 @@ inline constexpr Mapping mappings[] = {
 	sourceAlias("battle/MAG326_A.DAT", 990),
 	sourceAlias("battle/MAG326_E.DAT", 326),
 	sourceAlias("battle/MAG217_A.DAT", 326),
+	namedOverride("battle/MAG325_F.DAT", "mag325", 4),
 	namedOverride("battle/MAG326_B.DAT", "mag326", 0),
 	blockedPrefix("battle/MAG326_C.DAT"),
 	namedOverride("battle/MAG326_E.DAT", "mag326", 6),
@@ -158,6 +159,7 @@ inline constexpr Mapping mappings[] = {
 	imageLayout("mag325", 1, 3, 2, -1, CompanionPosition::None, false, true, true, true),
 	imageLayout("mag325", 2, 3, 2, -1, CompanionPosition::None, false, false, true, true),
 	imageLayout("mag325", 3, 3, 2, -1, CompanionPosition::None, false, true, true, true),
+	imageLayout("mag325", 4, 1, 1, -1, CompanionPosition::None, false, false, true, false),
 	imageLayout("mag326", 0, 3, 2, -1, CompanionPosition::None, false, false, true, false, gilgameshBodyLayers),
 	imageLayout("mag326", 6, 1, 2, -1, CompanionPosition::None, false, false, true, false, gilgameshEffectLayers),
 };
