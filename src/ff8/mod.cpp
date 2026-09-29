@@ -576,10 +576,16 @@ uint8_t TextureModStandard::computePaletteId(int vramPalXBpp2, int vramPalY) con
 	const remastered_battle_texture::ImageLayout *layout = ff8_remastered_edition
 		? remastered_battle_texture::findImageLayout(originalTexture().remasteredName())
 		: nullptr;
+	if (layout != nullptr && !layout->paletteLayers.empty())
+	{
+		const int paletteOffset = vramPalY - palette.y();
+		return vramPalXBpp2 == palette.x() && paletteOffset >= 0 && paletteOffset < palette.h()
+			? uint8_t(paletteOffset) : uint8_t(-1);
+	}
 	if (vramPalXBpp2 == palette.x())
 	{
 		const int paletteOffset = vramPalY - palette.y();
-		if (layout != nullptr && (layout->palettePageImages || !layout->paletteLayers.empty())
+		if (layout != nullptr && layout->palettePageImages
 			&& paletteOffset >= 0 && paletteOffset < palette.h())
 		{
 			return uint8_t(paletteOffset);
