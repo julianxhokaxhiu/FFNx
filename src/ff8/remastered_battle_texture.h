@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <string>
 
 namespace remastered_battle_texture
@@ -20,6 +21,20 @@ enum class CompanionPosition
 	Lower
 };
 
+struct PaletteLayer
+{
+	int firstPaletteId;
+	int lastPaletteId;
+	int imageIndex;
+	bool alignRight;
+	bool alignBottom;
+
+	constexpr bool matchesPalette(int paletteId) const
+	{
+		return paletteId >= firstPaletteId && paletteId <= lastPaletteId;
+	}
+};
+
 struct ImageLayout
 {
 	int imageIndex;
@@ -31,6 +46,7 @@ struct ImageLayout
 	bool alignBottom;
 	bool useTargetPosition;
 	bool palettePageImages;
+	std::span<const PaletteLayer> paletteLayers{};
 };
 
 struct Mapping
@@ -71,12 +87,24 @@ constexpr Mapping familyVariant(int resourceId, int variant, const char *family)
 
 constexpr Mapping imageLayout(const char *family, int imageIndex, int sourceWidthDivisor, int sourceHeightDivisor,
 	int companionIndex, CompanionPosition companionPosition, bool alignRight, bool alignBottom,
-	bool useTargetPosition, bool palettePageImages)
+	bool useTargetPosition, bool palettePageImages, std::span<const PaletteLayer> paletteLayers = {})
 {
 	return { MappingKind::ImageLayout, nullptr, -1, -1, family, -1,
 		{ imageIndex, sourceWidthDivisor, sourceHeightDivisor, companionIndex, companionPosition,
-			alignRight, alignBottom, useTargetPosition, palettePageImages } };
+			alignRight, alignBottom, useTargetPosition, palettePageImages, paletteLayers } };
 }
+
+inline constexpr PaletteLayer gilgameshBodyLayers[] = {
+	{ 0, 1, 0, false, false }, { 0, 1, 1, false, true },
+	{ 2, 3, 2, false, false }, { 2, 2, 3, false, true }, { 2, 3, 0, true, false },
+	{ 4, 5, 4, true, false },
+	{ 6, 10, 4, false, false },
+};
+
+inline constexpr PaletteLayer gilgameshEffectLayers[] = {
+	{ 0, 1, 6, false, false },
+	{ 0, 0, 1, false, true }, { 1, 1, 7, false, true },
+};
 
 inline constexpr Mapping mappings[] = {
 	sourceAlias("battle/MAG095_B.1T2", 99),
@@ -91,6 +119,10 @@ inline constexpr Mapping mappings[] = {
 	sourceAlias("battle/MAG326_A.DAT", 990),
 	sourceAlias("battle/MAG326_E.DAT", 326),
 	sourceAlias("battle/MAG217_A.DAT", 326),
+	namedOverride("battle/MAG326_B.DAT", "mag326", 0),
+	blockedPrefix("battle/MAG326_C.DAT"),
+	namedOverride("battle/MAG326_E.DAT", "mag326", 6),
+	blockedPrefix("battle/MAG326_K.DAT"),
 	namedOverride("battle/MAG099_B.4T0", "mag099", 1),
 	namedOverride("battle/MAG099_B.4T1", "mag099", 2),
 	blockedPrefix("battle/MAG099_B."),
@@ -126,6 +158,8 @@ inline constexpr Mapping mappings[] = {
 	imageLayout("mag325", 1, 3, 2, -1, CompanionPosition::None, false, true, true, true),
 	imageLayout("mag325", 2, 3, 2, -1, CompanionPosition::None, false, false, true, true),
 	imageLayout("mag325", 3, 3, 2, -1, CompanionPosition::None, false, true, true, true),
+	imageLayout("mag326", 0, 3, 2, -1, CompanionPosition::None, false, false, true, false, gilgameshBodyLayers),
+	imageLayout("mag326", 6, 1, 2, -1, CompanionPosition::None, false, false, true, false, gilgameshEffectLayers),
 };
 
 const ImageLayout *findImageLayout(const std::string &remasteredName, int imageIndexOverride = -1);
