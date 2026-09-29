@@ -94,17 +94,8 @@ constexpr Mapping imageLayout(const char *family, int imageIndex, int sourceWidt
 			alignRight, alignBottom, useTargetPosition, palettePageImages, paletteLayers } };
 }
 
-inline constexpr PaletteLayer gilgameshBodyLayers[] = {
-	{ 0, 1, 0, false, false }, { 0, 1, 1, false, true },
-	{ 2, 3, 2, false, false }, { 2, 2, 3, false, true }, { 2, 3, 0, true, false },
-	{ 4, 5, 4, true, false },
-	{ 6, 10, 4, false, false },
-};
-
-inline constexpr PaletteLayer gilgameshEffectLayers[] = {
-	{ 0, 1, 6, false, false },
-	{ 0, 0, 1, false, true }, { 1, 1, 7, false, true },
-};
+template<PaletteLayer... Layers>
+inline constexpr PaletteLayer layerList[] = { Layers... };
 
 inline constexpr Mapping mappings[] = {
 	sourceAlias("battle/MAG095_B.1T2", 99),
@@ -166,8 +157,16 @@ inline constexpr Mapping mappings[] = {
 	imageLayout("mag325", 2, 3, 2, -1, CompanionPosition::None, false, false, true, true),
 	imageLayout("mag325", 3, 3, 2, -1, CompanionPosition::None, false, true, true, true),
 	imageLayout("mag325", 4, 1, 1, -1, CompanionPosition::None, false, false, true, false),
-	imageLayout("mag326", 0, 3, 2, -1, CompanionPosition::None, false, false, true, false, gilgameshBodyLayers),
-	imageLayout("mag326", 6, 1, 2, -1, CompanionPosition::None, false, false, true, false, gilgameshEffectLayers),
+	imageLayout("mag326", 0, 3, 2, -1, CompanionPosition::None, false, false, true, false,
+		layerList<
+			PaletteLayer{ 0, 1, 0, false, false }, PaletteLayer{ 0, 1, 1, false, true },
+			PaletteLayer{ 2, 3, 2, false, false }, PaletteLayer{ 2, 2, 3, false, true }, PaletteLayer{ 2, 3, 0, true, false },
+			PaletteLayer{ 4, 5, 4, true, false },
+			PaletteLayer{ 6, 10, 4, false, false }>),
+	imageLayout("mag326", 6, 1, 2, -1, CompanionPosition::None, false, false, true, false,
+		layerList<
+			PaletteLayer{ 0, 1, 6, false, false },
+			PaletteLayer{ 0, 0, 1, false, true }, PaletteLayer{ 1, 1, 7, false, true }>),
 };
 
 const ImageLayout *findImageLayout(const std::string &remasteredName, int imageIndexOverride = -1);
