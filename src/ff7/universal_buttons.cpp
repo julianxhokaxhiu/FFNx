@@ -760,10 +760,32 @@ int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color
 bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* byte_count)
 {
   *byte_count = 1;
+  byte extension = buffer[0] == 0xF6 ? buffer[1] : 0xFF;
+  if (buffer[0] == 0xF6 && extension == 0xFF
+      && ff7_externals.text_box_window_data_array_CFF5B8
+      && ff7_externals.current_dialog_string_pointer)
+  {
+    for (int window_index = 0; window_index < 4; ++window_index)
+    {
+      const text_box_data& window = ff7_externals.text_box_window_data_array_CFF5B8[window_index];
+      const uintptr_t buffer_address = reinterpret_cast<uintptr_t>(buffer);
+      const uintptr_t window_buffer_address = reinterpret_cast<uintptr_t>(window.text_buffer);
+      if (!window.window_mode || !window.text_buffer
+          || buffer_address < window_buffer_address
+          || buffer_address - window_buffer_address >= 255)
+        continue;
+
+      const byte* source = reinterpret_cast<const byte*>(
+        ff7_externals.current_dialog_string_pointer[window_index]);
+      if (source && source[-1] == 0xF6)
+        extension = source[0];
+      break;
+    }
+  }
   switch (buffer[0])
   {
     case 0xF6:
-      switch (buffer[1])
+      switch (extension)
       {
         case 0x10: *button = 5; break;
         case 0x11: *button = 2; break;
@@ -789,7 +811,7 @@ bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* 
         case 0x3D: *button = 13; break;
         default: *button = 5; return true;
       }
-      *byte_count = 2;
+      *byte_count = buffer[1] == 0xFF ? 1 : 2;
       return true;
     case 0xF7: *button = 4; return true;
     case 0xF8: *button = 7; return true;
