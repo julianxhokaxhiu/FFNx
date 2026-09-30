@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <string>
 
 namespace remastered_battle_texture
@@ -20,6 +21,20 @@ enum class CompanionPosition
 	Lower
 };
 
+struct PaletteLayer
+{
+	int firstPaletteId;
+	int lastPaletteId;
+	int imageIndex;
+	bool alignRight;
+	bool alignBottom;
+
+	constexpr bool matchesPalette(int paletteId) const
+	{
+		return paletteId >= firstPaletteId && paletteId <= lastPaletteId;
+	}
+};
+
 struct ImageLayout
 {
 	int imageIndex;
@@ -31,6 +46,7 @@ struct ImageLayout
 	bool alignBottom;
 	bool useTargetPosition;
 	bool palettePageImages;
+	std::span<const PaletteLayer> paletteLayers{};
 };
 
 struct Mapping
@@ -71,12 +87,15 @@ constexpr Mapping familyVariant(int resourceId, int variant, const char *family)
 
 constexpr Mapping imageLayout(const char *family, int imageIndex, int sourceWidthDivisor, int sourceHeightDivisor,
 	int companionIndex, CompanionPosition companionPosition, bool alignRight, bool alignBottom,
-	bool useTargetPosition, bool palettePageImages)
+	bool useTargetPosition, bool palettePageImages, std::span<const PaletteLayer> paletteLayers = {})
 {
 	return { MappingKind::ImageLayout, nullptr, -1, -1, family, -1,
 		{ imageIndex, sourceWidthDivisor, sourceHeightDivisor, companionIndex, companionPosition,
-			alignRight, alignBottom, useTargetPosition, palettePageImages } };
+			alignRight, alignBottom, useTargetPosition, palettePageImages, paletteLayers } };
 }
+
+template<PaletteLayer... Layers>
+inline constexpr PaletteLayer layerList[] = { Layers... };
 
 inline constexpr Mapping mappings[] = {
 	sourceAlias("battle/MAG095_B.1T2", 99),
@@ -91,9 +110,22 @@ inline constexpr Mapping mappings[] = {
 	sourceAlias("battle/MAG326_A.DAT", 990),
 	sourceAlias("battle/MAG326_E.DAT", 326),
 	sourceAlias("battle/MAG217_A.DAT", 326),
+	blockedPrefix("battle/MAG095_B.1T0"),
+	blockedPrefix("battle/MAG095_B.1T1"),
+	namedOverride("battle/MAG095_B.1T2", "mag095", 0),
+	namedOverride("battle/MAG095_B.1T3", "mag095", 1),
+	namedOverride("battle/MAG325_F.DAT", "mag325", 4),
+	namedOverride("battle/MAG326_B.DAT", "mag326", 0),
+	blockedPrefix("battle/MAG326_C.DAT"),
+	namedOverride("battle/MAG326_E.DAT", "mag326", 6),
+	blockedPrefix("battle/MAG326_K.DAT"),
 	namedOverride("battle/MAG099_B.4T0", "mag099", 1),
 	namedOverride("battle/MAG099_B.4T1", "mag099", 2),
 	blockedPrefix("battle/MAG099_B."),
+	namedOverride("battle/MAG139_H.00", "mag139", 0),
+	namedOverride("battle/MAG139_H.01", "mag139", 1),
+	namedOverride("battle/MAG139_H.06", "mag139", 1),
+	blockedPrefix("battle/MAG139"),
 	familyVariant(5, 0, "mag005"),
 	familyVariant(85, 0, "mag085"), { MappingKind::FamilyVariant, nullptr, 86, 0, "mag085", -1, noLayout() },
 	familyVariant(87, 0, "mag085"), familyVariant(88, 0, "mag085"),
@@ -120,12 +152,29 @@ inline constexpr Mapping mappings[] = {
 	familyVariant(217, 0, "mag326"), familyVariant(217, 1, "mag326"),
 	familyVariant(1055, -1, "mag900"), familyVariant(900, 0, "mag900"),
 	familyVariant(901, 0, "mag901"), familyVariant(902, -1, "mag902"),
+	imageLayout("mag095", 0, 1, 1, -1, CompanionPosition::None, false, false, true, false),
+	imageLayout("mag095", 1, 1, 1, -1, CompanionPosition::None, false, true, true, false),
 	imageLayout("mag099", 1, 2, 2, 0, CompanionPosition::Upper, false, false, false, false),
 	imageLayout("mag099", 2, 2, 2, 3, CompanionPosition::Lower, false, false, false, false),
+	imageLayout("mag139", 0, 1, 2, -1, CompanionPosition::None, false, false, true, false,
+		layerList<PaletteLayer{ 0, 1, 0, false, false }, PaletteLayer{ 0, 1, 2, false, true }>),
+	imageLayout("mag139", 1, 1, 1, -1, CompanionPosition::None, false, false, true, false,
+		layerList<PaletteLayer{ 0, 0, 1, false, false }>),
 	imageLayout("mag325", 0, 3, 2, -1, CompanionPosition::None, false, false, true, true),
 	imageLayout("mag325", 1, 3, 2, -1, CompanionPosition::None, false, true, true, true),
 	imageLayout("mag325", 2, 3, 2, -1, CompanionPosition::None, false, false, true, true),
 	imageLayout("mag325", 3, 3, 2, -1, CompanionPosition::None, false, true, true, true),
+	imageLayout("mag325", 4, 1, 1, -1, CompanionPosition::None, false, false, true, false),
+	imageLayout("mag326", 0, 3, 2, -1, CompanionPosition::None, false, false, true, false,
+		layerList<
+			PaletteLayer{ 0, 1, 0, false, false }, PaletteLayer{ 0, 1, 1, false, true },
+			PaletteLayer{ 2, 3, 2, false, false }, PaletteLayer{ 2, 2, 3, false, true }, PaletteLayer{ 2, 3, 0, true, false },
+			PaletteLayer{ 4, 5, 4, true, false },
+			PaletteLayer{ 6, 10, 4, false, false }>),
+	imageLayout("mag326", 6, 1, 2, -1, CompanionPosition::None, false, false, true, false,
+		layerList<
+			PaletteLayer{ 0, 1, 6, false, false },
+			PaletteLayer{ 0, 0, 1, false, true }, PaletteLayer{ 1, 1, 7, false, true }>),
 };
 
 const ImageLayout *findImageLayout(const std::string &remasteredName, int imageIndexOverride = -1);
