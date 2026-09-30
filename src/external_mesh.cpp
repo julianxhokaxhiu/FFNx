@@ -33,6 +33,17 @@
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
 
+// Name used to find an image's DDS files: its file name without extension
+// (e.g. "textures/cloud_0.png" -> "cloud_0"), or its name when it has no file
+static std::string getImageTextureName(const cgltf_image* image)
+{
+    if (image == nullptr) return "";
+
+    std::string path = image->uri != nullptr ? image->uri : (image->name != nullptr ? image->name : "");
+    std::string filename = path.substr(path.find_last_of("/") + 1);
+    return filename.substr(0, filename.find_last_of("."));
+}
+
 void createJointHierarchy(Skin* pSkin, int parentIndex, cgltf_node* pJointNode, int* curIndex)
 {
     Joint outJoint;
@@ -86,10 +97,8 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 	for (size_t i = 0; i < data->textures_count; i++)
 	{
 		auto texture = data->textures[i];
-		std::string relativePath = texture.image->uri;
-
-		std::string filename = relativePath.substr(relativePath.find_last_of("/") + 1);
-		std::string name = filename.substr(0, filename.find_last_of("."));
+		std::string name = getImageTextureName(texture.image);
+		if (name.empty()) continue;
 
 		std::string texFullPath = tex_path + name + ".dds";
 
@@ -208,15 +217,20 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 				}
 			}
 
-            outShape.isDoubleSided = primitive.material->double_sided;
+            auto material = primitive.material;
+            outShape.isDoubleSided = material != nullptr && material->double_sided;
 
-			auto texture = primitive.material->pbr_metallic_roughness.base_color_texture.texture;
+			// Look the texture up by the same name its DDS files were loaded under
+			auto texture = material != nullptr ? material->pbr_metallic_roughness.base_color_texture.texture : nullptr;
 			if(texture != nullptr)
 			{
-				std::string texName = texture->image->name;
+				std::string texName = getImageTextureName(texture->image);
 				if(materials.contains(texName)) outShape.pMaterial = &materials[texName];
 			}
-			auto baseColorFactor = primitive.material->pbr_metallic_roughness.base_color_factor;
+
+			// Parts without a material are drawn white
+			const cgltf_float defaultBaseColorFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			const cgltf_float* baseColorFactor = material != nullptr ? material->pbr_metallic_roughness.base_color_factor : defaultBaseColorFactor;
 			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 			{
 				struct nvertex vertex;
