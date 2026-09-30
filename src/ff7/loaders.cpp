@@ -21,6 +21,7 @@
 
 #include "../ff7.h"
 #include "../log.h"
+#include "../utils.h"
 
 #include "defs.h"
 
@@ -177,12 +178,23 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 		char tex_path[MAX_PATH];
 		sprintf(tex_path, "%s/%s/field/textures/", basedir, external_mesh_path.data());
 
-		if (externalModel->importExternalMeshGltfFile(file_path_gltf, tex_path, true))
+		if (!fileExists(file_path_gltf))
 		{
+			if(trace_all || trace_loaders) ffnx_trace("External mesh: %s not found, using original model\n", file_path_gltf);
+
+			ret->field_48 = nullptr;
+			delete externalModel;
+		}
+		else if (externalModel->importExternalMeshGltfFile(file_path_gltf, tex_path, true))
+		{
+			if(trace_all || trace_loaders) ffnx_trace("External mesh: loaded %s\n", file_path_gltf);
+
 			ret->field_48 = reinterpret_cast<vector3<float>*>(externalModel);
 		}
 		else
 		{
+			ffnx_error("External mesh: failed to load %s, using original model\n", file_path_gltf);
+
 			ret->field_48 = nullptr;
 			delete externalModel;
 		}
