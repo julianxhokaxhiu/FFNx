@@ -290,15 +290,29 @@ ModdedTexture::ModdedTexture(const TexturePacker::IdentifiedTexture &originalTex
 {
 }
 
+static bool findRemasteredArchiveTexture(const char *name, char *filename, char *foundExtension)
+{
+	_snprintf(filename, MAX_PATH, "textures\\%s.png", name);
+
+	if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
+	{
+		_snprintf(filename, MAX_PATH, "zzz://textures\\%s.png", name);
+
+		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", filename);
+
+		if (foundExtension != nullptr) {
+			strncpy(foundExtension, "png", 3);
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 bool ModdedTexture::findExternalTexture(char *outFilename, uint8_t palette_index, bool hasPal, const char *extension, char *foundExtension) const
 {
 	std::string remasterName = originalTexture().remasteredName();
-	const bool isRemasteredFieldModel = remasterName.starts_with("field.fs\\field_hd_new\\");
-
-	if (isRemasteredFieldModel && findExternalTextureRemastered(remasterName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
-	{
-		return true;
-	}
 
 	if (findExternalTexture(originalTexture().name().c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
 	{
@@ -310,13 +324,24 @@ bool ModdedTexture::findExternalTexture(char *outFilename, uint8_t palette_index
 		return false;
 	}
 
-	if (!isRemasteredFieldModel && findExternalTextureRemastered(remasterName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+	if (findExternalTexture(remasterName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
 	{
 		return true;
 	}
 
 	size_t pos = remasterName.find("field_hd_new");
-	if (pos != std::string::npos && findExternalTextureRemastered(remasterName.replace(pos, sizeof("field_hd_new"), "field_hd").c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+	std::string fallbackName = remasterName;
+	if (pos != std::string::npos)
+	{
+		fallbackName.replace(pos, sizeof("field_hd_new") - 1, "field_hd");
+		if (findExternalTexture(fallbackName.c_str(), outFilename, palette_index, hasPal, extension, foundExtension))
+		{
+			return true;
+		}
+	}
+
+	if (findRemasteredArchiveTexture(remasterName.c_str(), outFilename, foundExtension)
+		|| (pos != std::string::npos && findRemasteredArchiveTexture(fallbackName.c_str(), outFilename, foundExtension)))
 	{
 		return true;
 	}
@@ -335,22 +360,7 @@ bool ModdedTexture::findExternalTextureRemastered(const char *name, char *filena
 	}
 
 	// Retry inside ZZZ archive
-	_snprintf(filename, MAX_PATH, "textures\\%s.png", name);
-
-	if (ff8_remastered_edition && g_FF8ZzzArchiveMain.fileExists(filename))
-	{
-		_snprintf(filename, MAX_PATH, "zzz://textures\\%s.png", name);
-
-		if (trace_all || trace_loaders) ffnx_trace("Using texture: %s\n", filename);
-
-		if (found_extension != nullptr) {
-			strncpy(found_extension, "png", 3);
-		}
-
-		return true;
-	}
-
-	return false;
+	return findRemasteredArchiveTexture(name, filename, found_extension);
 }
 
 bool ModdedTexture::findExternalTexture(const char *name, char *filename, uint8_t palette_index, bool hasPal, const char *extension, char *found_extension)

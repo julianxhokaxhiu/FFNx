@@ -1672,6 +1672,8 @@ int ff8_field_texture_upload_one(char *image_buffer, char bpp, char a3, int x, i
 			next_bpp = Tim::Bpp(bpp);
 			if (!model.isDirect && !is_remastered_hd_textures_disabled("field")) {
 				snprintf(next_remastered_texture_name, MAX_PATH, "field.fs\\field_hd_new\\%s_%d", model.name, chara_one_current_texture);
+			} else {
+				next_remastered_texture_name[0] = '\0';
 			}
 			snprintf(next_texture_name, MAX_PATH, "field/model/%s_chr/%s-%d", model.isMch ? "main" : "second", model.name, chara_one_current_texture);
 
