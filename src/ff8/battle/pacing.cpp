@@ -119,9 +119,11 @@ static pacing_recorder pacing_rec_effect = { "effect" };
 static pacing_recorder pacing_rec_hit = { "hit effect" };
 static int16_t pacing_node_bucket[PACING_REC_MAX_PRIMS];
 
+// Battle ordering table of the frame: 0x1122 buckets from the render list base, the first ones
+// being layers drawn over the 3D scene (screen overlays, letterbox bars...)
 static uint32_t *pacing_current_ot()
 {
-	return (uint32_t *)(*ff8_externals.battle_render_list_base + 68);
+	return (uint32_t *)*ff8_externals.battle_render_list_base;
 }
 
 // VRAM transfers (framebuffer copies of mirror/warp effects) are not redrawn: repeating them
