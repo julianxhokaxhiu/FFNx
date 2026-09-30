@@ -105,6 +105,10 @@ int ff8_battle_pad_sampling_frame_end(uint32_t driver_mode, double frame_ms)
 		stats.last_read = read;
 	}
 
+	// Only the readings taken during this frame wait are used by the next frame: a long frame
+	// leaves no time for some of them, and an older reading would come back out of order
+	for (auto &sample : pad_samples) sample.valid = false;
+
 	return PAD_SAMPLING_EXTRA_READS;
 }
 
