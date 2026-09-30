@@ -1700,26 +1700,6 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 			{
 				texture = load_texture(image_data, dataSize, VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palettes) > 1 ? VREF(tex_header, palette_index) | 0xC0000000 : -1, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height), gl_set);
 			}
-
-			// Retry inside zzz archive for the remastered
-			if (ff8_remastered_edition && texture == 0)
-			{
-				char filename[MAX_PATH] = {};
-				if (VREF(tex_header, palettes) > 1
-						&& ff8_is_remastered_font_asset()
-						&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "hires\\sysfnt00.tex", sizeof("hires\\sysfnt00.tex") - 1) == 0) {
-					_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d_hd.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
-				} else if (VREF(tex_header, palettes) > 1
-						&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\", sizeof("cards\\") - 1) != 0
-						&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "field.fs\\field_hd_new\\wmset_014_0", sizeof("field.fs\\field_hd_new\\wmset_014_0") - 1) != 0) {
-					_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
-				} else if (VREF(tex_header, palette_index) == 0 && _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\text_1", sizeof("cards\\text_1") - 1) == 0) {
-					_snprintf(filename, sizeof(filename), "zzz://textures\\cards\\text_1_mask%s.png", VREF(tex_header, file.pc_name) + 512 + sizeof("cards\\text_1") - 1);
-				} else {
-					_snprintf(filename, sizeof(filename), "zzz://textures\\%s.png", VREF(tex_header, file.pc_name) + 512);
-				}
-				texture = newRenderer.createTextureLibPng(filename, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height));
-			}
 		}
 	}
 
@@ -1749,6 +1729,27 @@ uint32_t load_external_texture(void* image_data, uint32_t dataSize, struct textu
 
 			return true;
 		}
+	}
+
+	if (ff8_remastered_edition && texture == 0 && !save_textures
+		&& (uint32_t)VREF(tex_header, file.pc_name) > 32
+		&& *(VREF(tex_header, file.pc_name) + 512) != '\0')
+	{
+		char filename[MAX_PATH] = {};
+		if (VREF(tex_header, palettes) > 1
+				&& ff8_is_remastered_font_asset()
+				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "hires\\sysfnt00.tex", sizeof("hires\\sysfnt00.tex") - 1) == 0) {
+			_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d_hd.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
+		} else if (VREF(tex_header, palettes) > 1
+				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\", sizeof("cards\\") - 1) != 0
+				&& _strnicmp(VREF(tex_header, file.pc_name) + 512, "field.fs\\field_hd_new\\wmset_014_0", sizeof("field.fs\\field_hd_new\\wmset_014_0") - 1) != 0) {
+			_snprintf(filename, sizeof(filename), "zzz://textures\\%s\\%d.png", VREF(tex_header, file.pc_name) + 512, VREF(tex_header, palette_index));
+		} else if (VREF(tex_header, palette_index) == 0 && _strnicmp(VREF(tex_header, file.pc_name) + 512, "cards\\text_1", sizeof("cards\\text_1") - 1) == 0) {
+			_snprintf(filename, sizeof(filename), "zzz://textures\\cards\\text_1_mask%s.png", VREF(tex_header, file.pc_name) + 512 + sizeof("cards\\text_1") - 1);
+		} else {
+			_snprintf(filename, sizeof(filename), "zzz://textures\\%s.png", VREF(tex_header, file.pc_name) + 512);
+		}
+		texture = newRenderer.createTextureLibPng(filename, VREFP(texture_set, ogl.width), VREFP(texture_set, ogl.height));
 	}
 
 	if(texture)
