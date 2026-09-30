@@ -26,6 +26,7 @@
 
 #include "image.h"
 #include "../ff8/remaster.h"
+#include "../cfg.h"
 #include "../common.h"
 #include "../renderer.h"
 #include "log.h"
@@ -98,6 +99,32 @@ bimg::ImageContainer *loadPng(bx::AllocatorI *allocator, const char *filename, b
     bimg::ImageContainer *ret = nullptr;
 
     if (ff8_remastered_edition && strncmp(filename, "zzz://", 6) == 0) {
+        if (strncmp(filename + 6, "textures\\", sizeof("textures\\") - 1) == 0
+            || strncmp(filename + 6, "textures/", sizeof("textures/") - 1) == 0) {
+            std::string textureName = filename + 6;
+            const size_t extensionOffset = textureName.find_last_of('.');
+            if (extensionOffset != std::string::npos) {
+                textureName.resize(extensionOffset);
+            }
+
+            for (const std::string *texturePath : { &override_mod_path, &mod_path }) {
+                if (texturePath->empty()) {
+                    continue;
+                }
+
+                for (const std::string &extension : mod_ext) {
+                    const std::string overrideFilename = std::string(basedir) + "/" + *texturePath + "/" + textureName + "." + extension;
+                    ret = stricmp(extension.c_str(), "png") == 0
+                        ? loadPng(allocator, overrideFilename.c_str(), targetFormat)
+                        : loadImageContainer(allocator, overrideFilename.c_str(), targetFormat);
+                    if (ret != nullptr) {
+                        if (trace_all || trace_loaders) ffnx_trace("%s: overriding %s with %s\n", __func__, filename, overrideFilename.c_str());
+                        return ret;
+                    }
+                }
+            }
+        }
+
         Zzz::File *zzzFile = g_FF8ZzzArchiveMain.openFile(filename + 6);
 
         if (zzzFile == nullptr) {
