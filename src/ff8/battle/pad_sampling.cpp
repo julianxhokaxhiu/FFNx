@@ -164,6 +164,11 @@ static int pad_sampling_catch_up_tick(int index)
 	*pad0 = current0;
 	*pad1 = current1;
 
+	// A reading is used once: while the battle is paused the loop does not go through the FFNx
+	// frame limiter, so no new reading comes and the old one would repeat the same press on
+	// every iteration (pause undone right away)
+	pad_samples[index].valid = false;
+
 	return ret;
 }
 
