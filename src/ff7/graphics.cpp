@@ -22,6 +22,8 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <algorithm>
+#include <cctype>
 #include "../renderer.h"
 
 #include "../ff7.h"
@@ -900,6 +902,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 							std::string animFullName = anim_header->file.pc_name;
 							std::string animName = animFullName.substr(animFullName.length() - 6, 4);
+							std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
 							externalMesh->skins[0].current_anim = animName;
 							externalMesh->skins[0].current_frame = current_frame;

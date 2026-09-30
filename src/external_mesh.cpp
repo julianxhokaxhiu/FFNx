@@ -23,6 +23,9 @@
 
 #include "external_mesh.h"
 
+#include <algorithm>
+#include <cctype>
+
 #include "cfg.h"
 #include "log.h"
 #include "utils.h"
@@ -356,8 +359,12 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
     for (size_t i = 0; i < data->animations_count; i++)
     {
         cgltf_animation anim = data->animations[i];
+        if (anim.name == nullptr) continue;
+
+        // Matched case-insensitively against the game's animation names
         std::string animFullName = anim.name;
         auto animName = animFullName.substr(0, 4);
+        std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
         Animation outAnim;
         
