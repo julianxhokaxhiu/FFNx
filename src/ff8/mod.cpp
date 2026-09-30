@@ -246,7 +246,7 @@ uint8_t TextureImage::computeScale(int sourcePixelW, int sourceH, const char *fi
 
 	// Some Remastered battle textures use a full 128-row canvas even when the
 	// original TIM only occupies part of it (notably Rinoa's 97-row texture).
-	if (ff8_remastered_edition && scaleW % 2 == 0) {
+	if (isRemasteredTexture && scaleW % 2 == 0) {
 		int remasteredScale = scaleW / 2;
 
 		if (remasteredScale <= MAX_SCALE && sourceH <= 128 && targetH == 128 * remasteredScale) {
