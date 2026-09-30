@@ -139,7 +139,6 @@ enum RendererUniform
     INV_VIEW_OFFSET_MATRIX,
 
     BONE_MATRICES,
-    SKINNING_FLAGS,
 
     COUNT,
 };
@@ -262,6 +261,9 @@ private:
         BLIT,
         YUVMOVIE,
         YUVMOVIE_TRUECOLOR,
+        SKINNED_SMOOTH,
+        LIGHTING_SKINNED_SMOOTH,
+        SHADOW_MAP_SKINNED,
         COUNT
     };
 
@@ -308,13 +310,13 @@ private:
         std::vector<float> FSTexFlags;
         std::vector<float> WMFlags;
         std::vector<float> FSMovieFlags;
-        std::vector<float> SmoothSkinningFlags;
         std::vector<float> FSMoreMovieFlags;
 
         std::array<float, 4> TimeColor;
         std::array<float, 4> TimeData;
 
         float bone_matrices[16*MAX_BONE_MATRICES];
+        uint16_t bone_matrix_count = 1;
 
         std::array<float, 4> gameLightingFlags;
         float gameGlobalLightColor[4] = { 0.0, 0.0, 0.0, 0.0 };
@@ -369,6 +371,9 @@ private:
     std::string fragmentLightingPathSmooth = "shaders/FFNx.lighting";
     std::string vertexShadowMapPath = "shaders/FFNx.shadowmap";
     std::string fragmentShadowMapPath = "shaders/FFNx.shadowmap";
+    std::string vertexSkinnedPath = "shaders/FFNx.skinned";
+    std::string vertexLightingSkinnedPath = "shaders/FFNx.lighting.skinned";
+    std::string vertexShadowMapSkinnedPath = "shaders/FFNx.shadowmap.skinned";
     std::string vertexFieldShadowPath = "shaders/FFNx.field.shadow";
     std::string fragmentFieldShadowPath = "shaders/FFNx.field.shadow";
     std::string vertexBlitPath = "shaders/FFNx.blit";
@@ -437,6 +442,7 @@ private:
     bgfx::RendererType::Enum getUserChosenRenderer();
     void updateRendererShaderPaths();
     bgfx::ShaderHandle getShader(const char* filePath);
+    RendererProgram getSkinnedProgram(RendererProgram program);
 
     bgfx::UniformHandle createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType, uint16_t arraySize = 1);
 
@@ -587,7 +593,7 @@ public:
 
     // Smooth skinning
     void isSmoothSkinning(bool flag = false);
-    void setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette);
+    void setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette, size_t joint_count);
     void setSmoothSkinningUniforms();
     
     // Worldmap
