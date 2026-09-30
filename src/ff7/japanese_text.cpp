@@ -1768,6 +1768,12 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
   double scaleFactor = ff7_japanese_edition ? 1.25f : 1.0f;
   // no x position fudging for battle text.
   float yPosFudge = ff7_japanese_edition ? 0.0f : 4.0f;
+  auto battle_text_advance = [](uint16_t letter, int left_padding, int char_width)
+  {
+    return ff7_japanese_edition
+      ? 20 * jp_spacing_metric(letter, char_width) / 64
+      : jp_center_advance(letter, left_padding, char_width);
+  };
 
   __int64 v4;
   __int64 menu_width;
@@ -1973,7 +1979,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[1][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[1][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += jp_center_advance((uint16_t)(0xFA00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
+          v106 += battle_text_advance((uint16_t)(0xFA00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -1981,7 +1987,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[2][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[2][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += jp_center_advance((uint16_t)(0xFB00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
+          v106 += battle_text_advance((uint16_t)(0xFB00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -1989,7 +1995,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[3][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[3][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += jp_center_advance((uint16_t)(0xFC00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
+          v106 += battle_text_advance((uint16_t)(0xFC00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -1997,7 +2003,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[4][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[4][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += jp_center_advance((uint16_t)(0xFD00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
+          v106 += battle_text_advance((uint16_t)(0xFD00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -2005,7 +2011,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
           charWidth = charWidthData[5][*(byte*)(text_sub_41963C)] & 0x1F;
           leftPadding = charWidthData[5][*(byte*)(text_sub_41963C)] >> 5;
-          v106 += jp_center_advance((uint16_t)(0xFE00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
+          v106 += battle_text_advance((uint16_t)(0xFE00 | *(byte*)(text_sub_41963C)), leftPadding, charWidth);
           isKanjiDetected = true;
           ++v95;
           break;
@@ -2018,7 +2024,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           {
             charWidth = charWidthData[0][*(byte*)(text_sub_41963C)] & 0x1F;
             leftPadding = charWidthData[0][*(byte*)(text_sub_41963C)] >> 5;
-            v106 += jp_center_advance((uint16_t)*(byte*)(text_sub_41963C), leftPadding, charWidth);
+            v106 += battle_text_advance((uint16_t)*(byte*)(text_sub_41963C), leftPadding, charWidth);
           }
           isKanjiDetected = false;
           ++v95;
@@ -2027,13 +2033,18 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
       text_sub_41963C = (attack_name_fixed_buffer *)((char *)text_sub_41963C + 1);
     }
     v135 = v123;
-    v106 = (short)(((float)v106 * scaleFactor));  // recenter based on JP text scale factor.
+    if (!ff7_japanese_edition)
+      v106 = (short)(((float)v106 * scaleFactor));
     v4 = (*ff7_externals.battle_menu_data_DC3630)[menu_box_idx].menu_width;
-    v107 = (((int)v4 - HIWORD(v4)) >> 1) - v106 / 2; // starting point for text set.
+    v107 = ff7_japanese_edition ? ((int)v4 - v106) / 2
+      : (((int)v4 - HIWORD(v4)) >> 1) - v106 / 2;
     v120 = 0;
     bool isKanjiDetected = false;                    // reset for second pass
     int charWidth = 16;
     int leftPadding = 0;
+    uint16_t glyph_page = 0;
+    float glyph_width = 0.0f;
+    int glyph_advance = 0;
     ff7_graphics_object* graphics_object = ff7_externals.menu_jafont_1_graphics_object;
     while ( v120 < 256 && v135->name[0] != 255 )
     {
@@ -2043,6 +2054,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 2);
           goto LABEL_31;
         case 0xFAu:
+          glyph_page = 0xFA00;
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
           graphics_object = ff7_externals.menu_jafont_2_graphics_object;
           charWidth = charWidthData[1][v135->name[0]] & 0x1F;
@@ -2050,6 +2062,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           isKanjiDetected = true;
           continue;
         case 0xFBu:
+          glyph_page = 0xFB00;
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
           graphics_object = ff7_externals.menu_jafont_3_graphics_object;
           charWidth = charWidthData[2][v135->name[0]] & 0x1F;
@@ -2057,6 +2070,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           isKanjiDetected = true;
           continue;
         case 0xFCu:
+          glyph_page = 0xFC00;
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
           graphics_object = ff7_externals.menu_jafont_4_graphics_object;
           charWidth = charWidthData[3][v135->name[0]] & 0x1F;
@@ -2064,6 +2078,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           isKanjiDetected = true;
           continue;
         case 0xFDu:
+          glyph_page = 0xFD00;
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
           graphics_object = ff7_externals.menu_jafont_5_graphics_object;
           charWidth = charWidthData[4][v135->name[0]] & 0x1F;
@@ -2071,6 +2086,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
           isKanjiDetected = true;
           continue;
         case 0xFEu:
+          glyph_page = 0xFE00;
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
           graphics_object = ff7_externals.menu_jafont_6_graphics_object;
           charWidth = charWidthData[5][v135->name[0]] & 0x1F;
@@ -2080,6 +2096,7 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
         default:
           if (!isKanjiDetected)
           {
+            glyph_page = 0;
             graphics_object = ff7_externals.menu_jafont_1_graphics_object;
             charWidth = charWidthData[0][v135->name[0]] & 0x1F;
             leftPadding = charWidthData[0][v135->name[0]] >> 5;
@@ -2103,6 +2120,16 @@ void draw_text_top_display_6D1CC0_jp(int a1, int16_t menu_box_idx, char a3, uint
               v126 = 16;
             }
             a2 = graphics_object;
+          }
+          glyph_width = (float)v126 * scaleFactor;
+          glyph_advance = leftPadding + (int)std::ceil(z_half_width(charWidth) * scaleFactor);
+          if (ff7_japanese_edition)
+          {
+            uint16_t glyph_letter = glyph_page | (byte)v135->name[0];
+            int glyph_spacing = jp_spacing_metric(glyph_letter, charWidth);
+            glyph_width = glyph_spacing * 0.3125f;
+            v137 = glyph_spacing * 0.5f;
+            glyph_advance = battle_text_advance(glyph_letter, leftPadding, charWidth);
           }
           v108 = v107;   // change! was adding character width before printing character isntead of after.  this was incorrect. will add it at end of loop later
           v96 = leftPadding;   // padding from above.
@@ -2134,7 +2161,7 @@ LABEL_49:
             v93->u = v102;
             v93->v = v99 + 32.0f / 512.0f;
             v92 = a2->vertex_transform + 2;
-            v92->position.x = (double)offset_x + (double)v108 + (double)v126 * scaleFactor; // add base width to right corners
+            v92->position.x = (double)offset_x + (double)v108 + glyph_width;
             v92->position.y = (double)offset_y + (double)12 + yPosFudge;
             v92->position.z = 0.0;
             v92->position.w = 1.0;
@@ -2143,7 +2170,7 @@ LABEL_49:
             v92->u = v102 + v98;
             v92->v = v99;
             v91 = a2->vertex_transform + 3;
-            v91->position.x = (double)offset_x + (double)v108 + (double)v126 * scaleFactor;
+            v91->position.x = (double)offset_x + (double)v108 + glyph_width;
             v91->position.y = (double)offset_y + (double)12 + 16.0*scaleFactor+yPosFudge;
             v91->position.z = 0.0;
             v91->position.w = 1.0;
@@ -2155,7 +2182,7 @@ LABEL_49:
             a2->field_7C = 14;
           }
           v135 = (attack_name_fixed_buffer *)((char *)v135 + 1);
-          v107 = v96 + v108+ std::ceil(z_half_width(charWidth)*scaleFactor); // character width+padding+previous centering offset.
+          v107 = v108 + glyph_advance;
 LABEL_31:
           ++v120;
           break;
