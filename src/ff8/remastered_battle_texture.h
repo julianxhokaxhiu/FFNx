@@ -168,13 +168,13 @@ inline constexpr Mapping mappings[] = {
 	imageLayout("mag326", 0, 3, 2, -1, CompanionPosition::None, false, false, true, false,
 		layerList<
 			PaletteLayer{ 0, 1, 0, false, false }, PaletteLayer{ 0, 1, 1, false, true },
-			PaletteLayer{ 2, 3, 2, false, false }, PaletteLayer{ 2, 2, 3, false, true }, PaletteLayer{ 2, 3, 0, true, false },
+			PaletteLayer{ 2, 3, 2, false, false }, PaletteLayer{ 2, 3, 3, false, true }, PaletteLayer{ 2, 3, 0, true, false },
 			PaletteLayer{ 4, 5, 4, true, false },
 			PaletteLayer{ 6, 10, 4, false, false }>),
 	imageLayout("mag326", 6, 1, 2, -1, CompanionPosition::None, false, false, true, false,
 		layerList<
 			PaletteLayer{ 0, 1, 6, false, false },
-			PaletteLayer{ 0, 0, 1, false, true }, PaletteLayer{ 1, 1, 7, false, true }>),
+			PaletteLayer{ 0, 0, 7, false, true }, PaletteLayer{ 1, 1, 7, false, true }>),
 };
 
 const ImageLayout *findImageLayout(const std::string &remasteredName, int imageIndexOverride = -1);
