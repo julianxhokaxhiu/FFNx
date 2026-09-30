@@ -352,10 +352,10 @@ bgfx::ShaderHandle Renderer::getShader(const char* filePath)
     return handle;
 }
 
-bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType)
+bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType, uint16_t arraySize)
 {
     bgfx::UniformHandle handle;
-    handle = bgfx::createUniform(uniformName.c_str(), uniformType);
+    handle = bgfx::createUniform(uniformName.c_str(), uniformType, arraySize);
     return handle;
 }
 
@@ -1167,7 +1167,7 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR3] = createUniform("gameLightDir3", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::GAME_SCRIPTED_LIGHT_COLOR] = createUniform("gameScriptedLightColor", bgfx::UniformType::Vec4);
 
-    bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4);
+    bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4, MAX_BONE_MATRICES);
     bgfxUniformHandles[RendererUniform::SKINNING_FLAGS] = createUniform("skinningFlags", bgfx::UniformType::Vec4);
 
     for(int i = 0; i < RendererTextureSlot::COUNT; ++i)
