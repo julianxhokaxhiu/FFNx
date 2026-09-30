@@ -43,6 +43,24 @@ What a held frame does:
 
 The cursor fingers (hands) are recorded by each UI tick in the slots of its position in the frame (tick phase 0 to 3) and drawn once per frame, which then resets the phase: the original frame shows the fingers of its 4 UI ticks together (a hand on each target of a multiple target selection) and the finger blink toggles on its 4th UI tick. With one UI tick per frame, the phase keeps counting over 4 frames and every frame draws the fingers of the last 4 UI ticks.
 
+## Why held frames do not flicker
+
+A held frame is a complete frame: the stage, the models, the effects and the UI are all drawn again, only nothing advances. Skipping a subsystem on a held frame is not enough, because many battle functions draw and advance in the same call, and some per-frame state is reset after each draw. Every part is handled so that a held frame shows exactly the picture of the last real tick:
+
+| Risk | What FFNx does |
+|------|----------------|
+| Effects (magic, GF, limit breaks, Draw) and hit effects draw from the same code that advances them, so they cannot be run on a held frame | at the end of the real tick, every SSIGPU execution node the effect queue created (arena cursor before / after the queue) is copied, and the ordering table bucket of each node is found by walking the bucket chains. Held frames link the copies again into their own ordering table, in the same bucket, so the depth order and the blending are those of the real tick. The whole ordering table is scanned (all `0x1122` buckets from the render list base), including the first layers drawn over the 3D scene, such as the black bars of Zell's Duel |
+| VRAM transfers inside effect packets (framebuffer copies of mirror / warp effects) | not repeated: they would copy whatever the screen holds by then. The rest of the packets is redrawn |
+| Models | the animation frame and the choreography do not advance, but the geometry is rebuilt from the current pose every frame, so no model disappears on a held frame |
+| Status visuals reset the model palettes every frame, then the colour pulse is applied again | held frames apply again the palettes and colours of the last real tick |
+| Fades (death, escape, appear) | the colours of the last real tick are put back after the call |
+| Camera shake offsets are cleared after being applied | held frames apply again the shake of the last real tick |
+| Screen feedback request (screen ghost) is cleared after each frame | armed again on held frames while the effect still wants it |
+| Stage (sky rotation, texture animation, stage scripts) | drawn with the engine's own freeze bits set for the held frames |
+| Damage number and screen fade tasks count their time in the same call that draws them | drawn from the state of the last real tick |
+| Animations that advance once per draw (active character marker, description window blink) and the cursor fingers, drawn once per frame | brought back to their original pace, so they do not blink 4 times faster |
+| A fault while copying or redrawing one effect | caught: that effect is no longer redrawn on held frames, the battle goes on |
+
 ## Known limitation
 
 The full-screen flash task (used by a few effects) is only reachable from the effect opcode handlers, so it is not paced: it plays 4 times faster.
