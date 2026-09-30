@@ -34,7 +34,9 @@
 #include "world/chara_one.h"
 #include "world/wmset.h"
 #include "battle/stage.h"
+#include "battle/effects.h"
 #include "remaster.h"
+#include "remastered_battle_texture.h"
 #include "./file.h"
 
 #include <shlwapi.h>
@@ -105,23 +107,6 @@ struct BattleTextureFileName {
 std::vector<BattleTextureFileName> battle_texture_data_list = std::vector<BattleTextureFileName>(battle_texture_data_list_size);
 int battle_texture_data_list_cursor = 0;
 
-struct RemasteredBattleResourceMapping {
-	const char *battleName;
-	int resourceId;
-};
-
-struct RemasteredBattleTextureOverride {
-	const char *battleName;
-	const char *family;
-	int textureIndex;
-};
-
-struct RemasteredBattleTextureFamily {
-	int resourceId;
-	int variant;
-	const char *family;
-};
-
 bool set_remastered_battle_texture_name(char *output, size_t outputSize, const char *classicName, const char *battleName, int textureIndex)
 {
 	if (outputSize > 0)
@@ -131,54 +116,14 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 
 	const char *group = strchr(battleName, '.');
 	const int variant = textureIndex;
-
-	static const RemasteredBattleTextureOverride textureOverrides[] = {
-		{ "battle/MAG099_B.4T0", "mag099", 1 },
-		{ "battle/MAG099_B.4T1", "mag099", 2 },
-	};
-	static const char *const noGenericFallbackPrefixes[] = {
-		"battle/MAG099_B.",
-	};
-	static const RemasteredBattleResourceMapping sourceMappings[] = {
-		{ "battle/MAG095_B.1T2", 99 },
-		{ "battle/MAG089_B.1T0", 95 },
-		{ "battle/MAG201_B.04", 991 },
-		{ "battle/MAG202_B.03", 201 },
-		{ "battle/MAG203_B.05", 202 },
-		{ "battle/MAG005_B.03", 203 },
-		{ "battle/MAG186_A.DAT", 902 },
-		{ "battle/MAG325_A.DAT", 186 },
-		{ "battle/MAG325_F.DAT", 325 },
-		{ "battle/MAG326_A.DAT", 990 },
-		{ "battle/MAG326_E.DAT", 326 },
-		{ "battle/MAG217_A.DAT", 326 },
-	};
-	static const RemasteredBattleTextureFamily textureFamilies[] = {
-		{ 5, 0, "mag005" },
-		{ 85, 0, "mag085" }, { 86, 0, "mag085" }, { 87, 0, "mag085" }, { 88, 0, "mag085" },
-		{ 90, 0, "mag085" }, { 91, 0, "mag085" }, { 92, 0, "mag085" }, { 93, 0, "mag085" },
-		{ 1056, -1, "mag089" }, { 89, 0, "mag089" }, { 991, 1, "mag089" },
-		{ 94, 0, "mag094" }, { 94, 1, "mag094" }, { 95, 0, "mag095" },
-		{ 99, -1, "mag099" }, { 115, 0, "mag115" }, { 115, 1, "mag115" },
-		{ 139, 0, "mag139" }, { 139, 1, "mag139" }, { 184, -1, "mag184" }, { 190, -1, "mag190" },
-		{ 1061, -1, "mag200" }, { 200, 0, "mag200" }, { 1067, -1, "mag201" },
-		{ 201, 0, "mag201" }, { 201, 1, "mag201" }, { 1065, -1, "mag202" },
-		{ 202, 0, "mag202" }, { 202, 1, "mag202" }, { 203, 0, "mag203" }, { 203, 1, "mag203" },
-		{ 204, 0, "mag204" }, { 204, 1, "mag204" }, { 205, -1, "mag205" },
-		{ 217, 2, "mag217" }, { 277, 0, "mag277" }, { 290, 0, "mag290" }, { 290, 1, "mag290" },
-		{ 1066, -1, "mag324" }, { 324, -1, "mag324" }, { 1070, -1, "mag325" },
-		{ 186, -1, "mag325" }, { 325, 0, "mag325" }, { 325, 1, "mag325" }, { 990, 2, "mag325" },
-		{ 326, 0, "mag326" }, { 326, 1, "mag326" }, { 326, 2, "mag326" }, { 326, 3, "mag326" },
-		{ 217, 0, "mag326" }, { 217, 1, "mag326" }, { 1055, -1, "mag900" },
-		{ 900, 0, "mag900" }, { 901, 0, "mag901" }, { 902, -1, "mag902" },
-	};
-	for (const RemasteredBattleTextureOverride &mapping : textureOverrides)
+	for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
 	{
-		if (stricmp(battleName, mapping.battleName) == 0)
+		if (mapping.kind == remastered_battle_texture::MappingKind::NamedOverride
+			&& stricmp(battleName, mapping.battleName) == 0)
 		{
 			char candidate[MAX_PATH] = {};
 			char archivePath[MAX_PATH] = {};
-			snprintf(candidate, sizeof(candidate), "battle.fs\\hd_new\\%s_%d", mapping.family, mapping.textureIndex);
+			snprintf(candidate, sizeof(candidate), "battle.fs\\hd_new\\%s_%d", mapping.family, mapping.outputIndex);
 			snprintf(archivePath, sizeof(archivePath), "textures\\%s.png", candidate);
 			if (g_FF8ZzzArchiveMain.fileExists(archivePath))
 			{
@@ -187,18 +132,20 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 			return true;
 		}
 	}
-	for (const char *prefix : noGenericFallbackPrefixes)
+	for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
 	{
-		if (strnicmp(battleName, prefix, strlen(prefix)) == 0)
+		if (mapping.kind == remastered_battle_texture::MappingKind::BlockedPrefix
+			&& strnicmp(battleName, mapping.battleName, strlen(mapping.battleName)) == 0)
 		{
 			return true;
 		}
 	}
 
 	int resourceId = -1;
-	for (const RemasteredBattleResourceMapping &mapping : sourceMappings)
+	for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
 	{
-		if (stricmp(battleName, mapping.battleName) == 0)
+		if (mapping.kind == remastered_battle_texture::MappingKind::SourceAlias
+			&& stricmp(battleName, mapping.battleName) == 0)
 		{
 			resourceId = mapping.resourceId;
 			break;
@@ -209,7 +156,7 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 	{
 		char *end = nullptr;
 		const long parsedId = strtol(classicName + 3, &end, 10);
-		if (end != classicName + 3 && *end == '\0' && parsedId <= INT_MAX)
+		if (end != classicName + 3 && (*end == '\0' || *end == '_' || *end == '.') && parsedId >= 0 && parsedId <= INT_MAX)
 		{
 			resourceId = int(parsedId);
 		}
@@ -225,23 +172,24 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 
 	if (resourceId >= 0)
 	{
-		const char *family = nullptr;
-		for (const RemasteredBattleTextureFamily &mapping : textureFamilies)
+		const remastered_battle_texture::Mapping *familyMapping = nullptr;
+		for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
 		{
-			if (mapping.resourceId == resourceId && (mapping.variant == variant || mapping.variant == -1))
+			if (mapping.kind == remastered_battle_texture::MappingKind::FamilyVariant
+				&& mapping.resourceId == resourceId && (mapping.variant == variant || mapping.variant == -1))
 			{
-				family = mapping.family;
+				familyMapping = &mapping;
 				if (mapping.variant == variant)
 				{
 					break;
 				}
 			}
 		}
-		if (family != nullptr)
+		if (familyMapping != nullptr)
 		{
 			char candidate[MAX_PATH] = {};
 			char archivePath[MAX_PATH] = {};
-			snprintf(candidate, sizeof(candidate), "battle.fs\\hd_new\\%s_%d", family, variant);
+			snprintf(candidate, sizeof(candidate), "battle.fs\\hd_new\\%s_%d", familyMapping->family, variant);
 			snprintf(archivePath, sizeof(archivePath), "textures\\%s.png", candidate);
 			if (g_FF8ZzzArchiveMain.fileExists(archivePath))
 			{
@@ -271,6 +219,38 @@ bool set_remastered_battle_texture_name(char *output, size_t outputSize, const c
 
 	snprintf(output, outputSize, "battle.fs\\hd_new\\%s", candidate);
 	return true;
+}
+
+const remastered_battle_texture::ImageLayout *remastered_battle_texture::findImageLayout(
+	const std::string &remasteredName, int imageIndexOverride)
+{
+	const size_t familyStart = remasteredName.find_last_of("\\/");
+	const size_t suffixSeparator = remasteredName.find_last_of('_');
+	const size_t familyOffset = familyStart == std::string::npos ? 0 : familyStart + 1;
+	if (suffixSeparator == std::string::npos || suffixSeparator <= familyOffset)
+	{
+		return nullptr;
+	}
+
+	char *suffixEnd = nullptr;
+	const long parsedIndex = strtol(remasteredName.c_str() + suffixSeparator + 1, &suffixEnd, 10);
+	if (suffixEnd == remasteredName.c_str() + suffixSeparator + 1 || *suffixEnd != '\0' || parsedIndex < 0 || parsedIndex > INT_MAX)
+	{
+		return nullptr;
+	}
+
+	const std::string family = remasteredName.substr(familyOffset, suffixSeparator - familyOffset);
+	const int imageIndex = imageIndexOverride >= 0 ? imageIndexOverride : int(parsedIndex);
+	for (const remastered_battle_texture::Mapping &mapping : remastered_battle_texture::mappings)
+	{
+		if (mapping.kind == remastered_battle_texture::MappingKind::ImageLayout
+			&& mapping.layout.imageIndex == imageIndex && _stricmp(mapping.family, family.c_str()) == 0)
+		{
+			return &mapping.layout;
+		}
+	}
+
+	return nullptr;
 }
 
 struct VramPos {
@@ -1740,6 +1720,9 @@ int battle_get_texture_file_name_index(void *texture_buffer)
 
 	return -1;
 }
+static constexpr uint16_t GILGAMESH_FIRST_EFFECT_ID = FF8BattleEffect::GilgameshZantetsukenReverse;
+static constexpr uint16_t GILGAMESH_LAST_EFFECT_ID = FF8BattleEffect::GilgameshExcalipoor;
+static constexpr int GILGAMESH_G_FILE_ID = 751;
 
 int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callback)
 {
@@ -1773,6 +1756,55 @@ int16_t ff8_battle_open_and_read_file(int fileId, void *data, int a3, int callba
 	}
 
 	int16_t ret = ((int16_t(*)(int,void*,int,int))ff8_externals.battle_open_file)(fileId, data, a3, callback);
+	const int effect_id = ff8_externals.battle_magic_id != nullptr ? *ff8_externals.battle_magic_id : -1;
+	if (ff8_remastered_edition && fileId == GILGAMESH_G_FILE_ID && (trace_files || trace_all))
+		ffnx_trace("Gilgamesh G load: effect_id=%d data=0x%08X result=%d\n", effect_id, uint32_t(data), ret);
+
+	if (ff8_remastered_edition && fileId == GILGAMESH_G_FILE_ID
+		&& effect_id >= GILGAMESH_FIRST_EFFECT_ID && effect_id <= GILGAMESH_LAST_EFFECT_ID
+		&& ret == 0 && data != nullptr)
+	{
+		const uint32_t source_offset = FF8_GILGAMESH_G_DESCRIPTOR_SOURCE_OFFSET;
+		uint8_t *effect_arena = ((uint8_t *(*)())ff8_externals.get_battle_effect_buffer_sub_571B50)();
+		if (effect_arena != nullptr && data == effect_arena + source_offset)
+		{
+			const uint32_t *g_header = static_cast<const uint32_t *>(data);
+			uint32_t *root_header = reinterpret_cast<uint32_t *>(static_cast<uint8_t *>(data) - source_offset);
+			uint32_t relocated_offsets[4]{};
+			bool offsets_valid = true;
+
+			for (uint32_t field_index = 1; field_index <= 4; ++field_index)
+			{
+				const uint32_t relative_offset = g_header[field_index];
+				if (relative_offset >= FF8_BATTLE_EFFECT_BUFFER_SIZE - source_offset)
+				{
+					ffnx_warning("Gilgamesh G descriptor offset[%u]=0x%X exceeds the battle effect buffer; skipping relocation.\n",
+						field_index, relative_offset);
+					offsets_valid = false;
+					break;
+				}
+				relocated_offsets[field_index - 1] = source_offset + relative_offset;
+			}
+
+			if (offsets_valid)
+			{
+				const uint32_t previous_offsets[4] = { root_header[1], root_header[2], root_header[3], root_header[4] };
+				for (uint32_t field_index = 1; field_index <= 4; ++field_index)
+					root_header[field_index] = relocated_offsets[field_index - 1];
+
+				if (trace_files || trace_all)
+					ffnx_trace("Gilgamesh descriptor offsets: G=[%X,%X,%X,%X] B=[%X,%X,%X,%X]->[%X,%X,%X,%X]\n",
+						g_header[1], g_header[2], g_header[3], g_header[4],
+						previous_offsets[0], previous_offsets[1], previous_offsets[2], previous_offsets[3],
+						relocated_offsets[0], relocated_offsets[1], relocated_offsets[2], relocated_offsets[3]);
+			}
+		}
+		else
+		{
+			ffnx_warning("Gilgamesh G destination 0x%08X does not match the relocated effect-buffer slot, skipping descriptor relocation.\n",
+				uint32_t(data));
+		}
+	}
 
 	// c0mXXX.dat files (battle ennemies)
 	if (fileId >= 166 && fileId <= 309 && *(uint32_t *)data == 11)
