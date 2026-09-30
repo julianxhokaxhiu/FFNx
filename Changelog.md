@@ -19,7 +19,7 @@
 
 ## FF8
 
-- Core: Read the controller 60 times per second in battle like on the PlayStation, [see docs](docs/ff8/battle_input_60hz.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/XXX )
+- Core: Read the controller 60 times per second in battle like on the PlayStation, [see docs](docs/ff8/battle_input_60hz.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/994 )
 - Core: Add `ff8_fps_limiter = 4`: battles at 60 FPS with the battle UI and the controller at 60 Hz like on the PlayStation, while the battle keeps its original pace, [see docs](docs/ff8/battle_60fps_ui.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/XXX )
 - Core: Add monster-AI `target` opcode values 228-248 to target two battle slots at once ( https://github.com/julianxhokaxhiu/FFNx/pull/961 )
 - Core: Add support for remastered version, [see manual](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/how_to_install.md#remastered-release) for more informations ( https://github.com/julianxhokaxhiu/FFNx/pull/887 https://github.com/julianxhokaxhiu/FFNx/pull/977 https://github.com/julianxhokaxhiu/FFNx/pull/979 )

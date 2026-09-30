@@ -105,6 +105,10 @@ int ff8_battle_pad_sampling_frame_end(uint32_t driver_mode, double frame_ms)
 		stats.last_read = read;
 	}
 
+	// Only the readings taken during this frame wait are used by the next frame: a long frame
+	// leaves no time for some of them, and an older reading would come back out of order
+	for (auto &sample : pad_samples) sample.valid = false;
+
 	return PAD_SAMPLING_EXTRA_READS;
 }
 
@@ -159,6 +163,11 @@ static int pad_sampling_catch_up_tick(int index)
 	int ret = battle_ui_tick();
 	*pad0 = current0;
 	*pad1 = current1;
+
+	// A reading is used once: while the battle is paused the loop does not go through the FFNx
+	// frame limiter, so no new reading comes and the old one would repeat the same press on
+	// every iteration (pause undone right away)
+	pad_samples[index].valid = false;
 
 	return ret;
 }
