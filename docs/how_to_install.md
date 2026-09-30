@@ -66,7 +66,7 @@ external_music_ext = "akb"
 
 #### [2026 Steam Rerelease](https://store.steampowered.com/app/3837340/FINAL_FANTASY_VII/)/[GOG](https://www.gog.com/en/game/final_fantasy_vii)/[Windows Store](https://www.xbox.com/en-us/games/store/FINAL-FANTASY-VII-WINDOWS-EDITION/9PN0W216SKZB)
 
-##### 2026 Steam Rerelease - EN
+##### 2026 Steam Rerelease - EN, SP, DE, FR
 
 0. Install the game using the relative Store install option
 1. Open the installation directory of the game
@@ -76,7 +76,8 @@ external_music_ext = "akb"
 5. Rename `ff7_en` to `ff7_en.exe`
 6. Copy the file in `ff7/workingdir/data/lang-ja/kernel/window.bin` in `ff7/workingdir/data/kernel/windows.bin` (create missing folders if needed)
 7. **ONLY FOR STEAM:** Create the file in `ff7/workingdir/steam_appid.txt` with this content `3837340` inside and save it
-8. Run `ff7_en.exe` and enjoy!
+8. Update the `game_language` flag value, on the `FFNx.toml` file, with the language you want to play the game
+9. Run `ff7_en.exe` and enjoy!
 
 ##### 2026 Steam Rerelease - JP
 

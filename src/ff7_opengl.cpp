@@ -26,6 +26,7 @@
 #include "patch.h"
 #include "ff7/defs.h"
 #include "ff7/universal_buttons.h"
+#include "ff7/multilanguage.h"
 #include "ff7_data.h"
 #include "ff7/widescreen.h"
 #include "ff7/time.h"
@@ -598,6 +599,9 @@ void ff7_init_hooks(struct game_obj *_game_object)
 	// snowboard .P model vertices limit fix + allow float vertex data type
 	//######################
 	replace_function(ff7_externals.snowboard_parse_model_vertices_732159, ff7_snowboard_parse_model_vertices);
+
+	// Multilanguage patch support for 2026 edition
+	if(ff7_2026_rerelease && !ff7_japanese_edition) ff7::multilanguage::init();
 }
 
 struct ff7_gfx_driver *ff7_load_driver(void* _game_object)

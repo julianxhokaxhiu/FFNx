@@ -137,7 +137,7 @@ target_compile_features(${CHOCO_RELEASE_NAME}
 target_link_options(${CHOCO_RELEASE_NAME} PRIVATE /PDBALTPATH:${CHOCO_RELEASE_NAME}.pdb PRIVATE /DEF:${CMAKE_SOURCE_DIR}/misc/${CHOCO_RELEASE_NAME}.def)
 
 # Include all the source code files
-file(GLOB_RECURSE source_files "${CMAKE_SOURCE_DIR}/src/*.cpp")
+file(GLOB_RECURSE source_files CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp")
 
 configure_file(misc/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 

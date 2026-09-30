@@ -2912,6 +2912,14 @@ void concat_lang_str(PCHAR buffer)
 			case GAME_LANGUAGE_JP: v = VERSION_FF8_12_JP; break;
 		}
 	}
+	else if (!ff8 && ff7_2026_rerelease && version == VERSION_FF7_102_US && !ff7_japanese_edition) {
+		switch (game_language) {
+			case GAME_LANGUAGE_EN: v = VERSION_FF7_102_US; break;
+			case GAME_LANGUAGE_FR: v = VERSION_FF7_102_FR; break;
+			case GAME_LANGUAGE_DE: v = VERSION_FF7_102_DE; break;
+			case GAME_LANGUAGE_SP: v = VERSION_FF7_102_SP; break;
+		}
+	}
 
 	switch (v)
 	{

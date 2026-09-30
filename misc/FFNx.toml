@@ -480,7 +480,9 @@ enable_steam_achievements = false
 
 #[LANGUAGE]
 # Language of the game on multilingual installations
+# FF7 2026 RERELEASE (ff7_en.exe): en, fr, de, es
 # FF8 REMASTERED: de, en, es, fr, it, jp (jp is partially supported)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Available choices are:
 # - 0: Auto ( default, use the language of the exe )
 # - 1: English
