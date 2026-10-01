@@ -42,7 +42,9 @@
 
 #define FFNX_RENDERER_INVALID_HANDLE { 0 }
 
-#define MAX_BONE_MATRICES 128
+// bgfx stores a uniform array's element count in 8 bits, so 255 matrices is the largest array it supports.
+// Keep in sync with misc/FFNx.common.sh
+#define MAX_BONE_MATRICES 255
 
 enum RendererInterpolationQualifier {
     FLAT = 0,
