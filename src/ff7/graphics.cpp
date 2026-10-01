@@ -676,7 +676,9 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 	bool is_external_mesh = isExternalMesh(hrc_data);
 	if(is_external_mesh)
 	{
-		identity_matrix(&world_matrix);
+		// Start from the animation's root motion (e.g. the height that stands the model on the floor, the train
+		// jump), then apply the struc_110 transforms on top of it, exactly like the vanilla path below
+		memcpy(&world_matrix, root_matrix, sizeof(world_matrix));
 
 		if(struc_110)
 		{
@@ -718,19 +720,14 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 			world_matrix._43 += struc_110->position.z;
 		}
 
-		if(hrc_data->flags & 0x800)
-		{
-			struct matrix pos_matrix;
-			multiply_matrix(root_matrix, &world_matrix, &pos_matrix);
-
-			memcpy(&hrc_data->field_64, &pos_matrix, sizeof(pos_matrix));
-		}
+		// world_matrix already includes the root motion, so it's used as is (like root_matrix in the vanilla path)
+		if(hrc_data->flags & 0x800) memcpy(&hrc_data->field_64, &world_matrix, sizeof(world_matrix));
 
 		if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
 		{
-			struc_110->bone_positions[0].x = world_matrix._41 + root_matrix->_41;
-			struc_110->bone_positions[0].y = world_matrix._42 + root_matrix->_42;
-			struc_110->bone_positions[0].z = world_matrix._43 + root_matrix->_43;
+			struc_110->bone_positions[0].x = world_matrix._41;
+			struc_110->bone_positions[0].y = world_matrix._42;
+			struc_110->bone_positions[0].z = world_matrix._43;
 		}
 	}
 	else
