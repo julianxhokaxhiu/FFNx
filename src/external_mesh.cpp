@@ -374,6 +374,36 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         skins.push_back(outSkin);
     }
 
+    // Spring bones: joints whose name contains "spring" (any case), and every joint below them
+    for (auto& skin : skins)
+    {
+        for (size_t j = 0; j < skin.joints.size(); j++)
+        {
+            Joint& joint = skin.joints[j];
+
+            std::string lowerName = joint.name;
+            std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), [](unsigned char c) { return std::tolower(c); });
+            joint.isSpring = lowerName.find("spring") != std::string::npos
+                || (joint.parentJointIndex >= 0 && skin.joints[joint.parentJointIndex].isSpring);
+            if (!joint.isSpring) continue;
+
+            // The bone points at its first child, or (at the end of a chain) its own length further on
+            joint.springTail = joint.translation;
+            for (size_t c = j + 1; c < skin.joints.size(); c++)
+            {
+                if (skin.joints[c].parentJointIndex == static_cast<int>(j))
+                {
+                    joint.springTail = skin.joints[c].translation;
+                    break;
+                }
+            }
+
+            float length = std::sqrt(joint.springTail.x * joint.springTail.x + joint.springTail.y * joint.springTail.y + joint.springTail.z * joint.springTail.z);
+            if (length <= 0.0f) joint.isSpring = false;
+            else hasSpringBones = true;
+        }
+    }
+
     // The skeleton's root node is the non-joint parent of its top joint. Its channels carry the root motion
     // (the height that stands the model on the floor, moves like jumps)
     cgltf_node* rootNode = nullptr;
@@ -874,4 +904,125 @@ void ExternalMesh::blendJointPose(size_t jointIndex, size_t jointCount, float cl
     if (lastRotation.size() != jointCount) lastRotation.resize(jointCount);
     lastTranslation[jointIndex] = translation;
     lastRotation[jointIndex] = rotation;
+}
+
+// How many fixed physics steps spring bones should advance since they were last drawn
+int ExternalMesh::getSpringSteps()
+{
+    auto now = std::chrono::steady_clock::now();
+
+    if (!springTimeStarted)
+    {
+        springTimeStarted = true;
+        springLastTime = now;
+        return 0;
+    }
+
+    // Long pauses (menus, loading) don't fast-forward the physics
+    float elapsed = std::min(std::chrono::duration<float>(now - springLastTime).count(), 0.1f);
+    springLastTime = now;
+
+    springTimeAccumulator += elapsed;
+    int steps = static_cast<int>(springTimeAccumulator / SPRING_BONE_STEP_SECONDS);
+    springTimeAccumulator -= steps * SPRING_BONE_STEP_SECONDS;
+
+    return steps;
+}
+
+static vector3<float> transformPoint(const vector3<float>& point, const float* matrix)
+{
+    return {
+        point.x * matrix[0] + point.y * matrix[4] + point.z * matrix[8] + matrix[12],
+        point.x * matrix[1] + point.y * matrix[5] + point.z * matrix[9] + matrix[13],
+        point.x * matrix[2] + point.y * matrix[6] + point.z * matrix[10] + matrix[14]
+    };
+}
+
+static float vectorLength(const vector3<float>& v)
+{
+    return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+// Swings a spring bone: simulates where its tail is in the field (inertia, gravity, pull back to the animated
+// direction) and turns the bone's animated matrix (row-vector, model space) to point there.
+void ExternalMesh::simulateSpringBone(Joint& joint, float* globalMatrix, int steps, float modelScale)
+{
+    if (!hasSpringWorldMatrix) return;
+
+    float worldMatrix[16], inverseWorldMatrix[16], worldGlobalMatrix[16];
+    memcpy(worldMatrix, springWorldMatrix.m, sizeof(worldMatrix));
+    bx::mtxInverse(inverseWorldMatrix, worldMatrix);
+    bx::mtxMul(worldGlobalMatrix, globalMatrix, worldMatrix);
+
+    vector3<float> head = { worldGlobalMatrix[12], worldGlobalMatrix[13], worldGlobalMatrix[14] };
+    vector3<float> animatedTail = transformPoint(joint.springTail, worldGlobalMatrix);
+    vector3<float> animatedDirection = { animatedTail.x - head.x, animatedTail.y - head.y, animatedTail.z - head.z };
+    float length = vectorLength(animatedDirection);
+    if (length <= 0.0f) return;
+
+    // Start (or restart after a jump across the field) from the animated pose
+    vector3<float> offset = { joint.springTailPosition.x - head.x, joint.springTailPosition.y - head.y, joint.springTailPosition.z - head.z };
+    if (!joint.springStarted || vectorLength(offset) > 3.0f * length)
+    {
+        joint.springTailPosition = joint.springTailPrevious = animatedTail;
+        joint.springStarted = true;
+    }
+
+    // The game's field space has Y pointing down
+    float gravity = SPRING_BONE_GRAVITY * modelScale * SPRING_BONE_STEP_SECONDS * SPRING_BONE_STEP_SECONDS;
+
+    for (int step = 0; step < steps; step++)
+    {
+        vector3<float>& tail = joint.springTailPosition;
+        vector3<float>& previous = joint.springTailPrevious;
+
+        vector3<float> next = {
+            tail.x + (tail.x - previous.x) * (1.0f - SPRING_BONE_DRAG) + (animatedTail.x - tail.x) * SPRING_BONE_STIFFNESS,
+            tail.y + (tail.y - previous.y) * (1.0f - SPRING_BONE_DRAG) + (animatedTail.y - tail.y) * SPRING_BONE_STIFFNESS + gravity,
+            tail.z + (tail.z - previous.z) * (1.0f - SPRING_BONE_DRAG) + (animatedTail.z - tail.z) * SPRING_BONE_STIFFNESS
+        };
+
+        // Keep the bone's length
+        vector3<float> direction = { next.x - head.x, next.y - head.y, next.z - head.z };
+        float directionLength = vectorLength(direction);
+        if (directionLength > 0.0f)
+        {
+            next = { head.x + direction.x * length / directionLength, head.y + direction.y * length / directionLength, head.z + direction.z * length / directionLength };
+        }
+
+        previous = tail;
+        tail = next;
+    }
+
+    // Turn the bone from its animated direction to the simulated one (around its head)
+    vector3<float> from = { animatedDirection.x / length, animatedDirection.y / length, animatedDirection.z / length };
+    vector3<float> to = { joint.springTailPosition.x - head.x, joint.springTailPosition.y - head.y, joint.springTailPosition.z - head.z };
+    float toLength = vectorLength(to);
+    if (toLength <= 0.0f) return;
+    to = { to.x / toLength, to.y / toLength, to.z / toLength };
+
+    vector3<float> axis = { from.y * to.z - from.z * to.y, from.z * to.x - from.x * to.z, from.x * to.y - from.y * to.x };
+    float sinAngle = vectorLength(axis);
+    float cosAngle = from.x * to.x + from.y * to.y + from.z * to.z;
+    if (sinAngle < 1e-6f) return;
+    axis = { axis.x / sinAngle, axis.y / sinAngle, axis.z / sinAngle };
+
+    // Rotation matrix (column-vector form) around axis by the angle between from and to
+    float c = cosAngle, s = sinAngle, t = 1.0f - cosAngle;
+    float rotation[3][3] = {
+        { t * axis.x * axis.x + c, t * axis.x * axis.y - s * axis.z, t * axis.x * axis.z + s * axis.y },
+        { t * axis.x * axis.y + s * axis.z, t * axis.y * axis.y + c, t * axis.y * axis.z - s * axis.x },
+        { t * axis.x * axis.z - s * axis.y, t * axis.y * axis.z + s * axis.x, t * axis.z * axis.z + c }
+    };
+
+    // Row-vector matrices keep each local axis in a row: turn the three axes, keep the head where it is
+    for (int row = 0; row < 3; row++)
+    {
+        float x = worldGlobalMatrix[row * 4 + 0], y = worldGlobalMatrix[row * 4 + 1], z = worldGlobalMatrix[row * 4 + 2];
+        worldGlobalMatrix[row * 4 + 0] = rotation[0][0] * x + rotation[0][1] * y + rotation[0][2] * z;
+        worldGlobalMatrix[row * 4 + 1] = rotation[1][0] * x + rotation[1][1] * y + rotation[1][2] * z;
+        worldGlobalMatrix[row * 4 + 2] = rotation[2][0] * x + rotation[2][1] * y + rotation[2][2] * z;
+    }
+
+    bx::mtxMul(globalMatrix, worldGlobalMatrix, inverseWorldMatrix);
 }
