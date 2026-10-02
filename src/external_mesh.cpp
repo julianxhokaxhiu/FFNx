@@ -657,7 +657,7 @@ int ExternalMesh::getFrameInterval(std::string tex_name)
 // Builds the game's root matrix for this frame (as its root animation would) from the gltf root node's keys.
 // translationScale converts gltf units to the game's, normally the scale the mesh is drawn with.
 // Returns false when the animation doesn't animate the root node, so the game's own root motion is used.
-bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float translationScale, struct matrix* outMatrix)
+bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix)
 {
     auto it = animations.find(animName);
     if (it == animations.end()) return false;
@@ -665,7 +665,7 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, i
     const Animation& anim = it->second;
     if (anim.rootTranslation.empty() || anim.rootRotation.empty()) return false;
 
-    AnimationPosition position = getAnimationPosition(anim, frame, frameCount);
+    AnimationPosition position = getAnimationPosition(anim, frame, frameCount, clockSeconds);
     const auto t = sampleTranslation(anim.rootTranslationTimes, anim.rootTranslation, position, anim.rootTranslation.front());
     const auto q = sampleRotation(anim.rootRotationTimes, anim.rootRotation, position, anim.rootRotation.front());
 
@@ -694,9 +694,31 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, i
     return true;
 }
 
-AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount)
+// Seconds since the game switched this model to animName (restarts on every switch)
+float ExternalMesh::getAnimationClock(const std::string& animName)
+{
+    auto now = std::chrono::steady_clock::now();
+
+    if (animName != clockAnim)
+    {
+        clockAnim = animName;
+        clockStart = now;
+    }
+
+    return std::chrono::duration<float>(now - clockStart).count();
+}
+
+AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds)
 {
     AnimationPosition position;
+
+    // The game holds a single frame (e.g. an idle) but the gltf animates: loop it on its own clock
+    if (frameCount <= 1 && anim.keyCount > 1 && anim.endTime > anim.startTime)
+    {
+        position.useKeyIndex = false;
+        position.time = anim.startTime + std::fmod(std::max(clockSeconds, 0.0f), anim.endTime - anim.startTime);
+        return position;
+    }
 
     // One key per game frame (or a single held game frame): show the key of the game's frame, as before.
     // One extra key also counts: KimeraCS's 60 fps exports end with a loop-closing key between the last
