@@ -69,6 +69,15 @@ struct Joint
     vector3<float> springTailPosition = {}; // Simulated tail in field world space
     vector3<float> springTailPrevious = {};
     bool springStarted = false;
+
+    // Body joints (not springs) carry a capsule spring bones collide with, in the joint's local space, fitted
+    // to the vertices skinned to it
+    bool hasCollider = false;
+    vector3<float> colliderStart = {};
+    vector3<float> colliderEnd = {};
+    float colliderRadius = 0.0f;
+
+    float localMatrix[16]; // This frame's animated local transform
 };
 
 struct Skin
@@ -126,6 +135,16 @@ constexpr float SPRING_BONE_STIFFNESS = 0.03f;
 constexpr float SPRING_BONE_DRAG = 0.1f;
 constexpr float SPRING_BONE_GRAVITY = 200.0f;
 constexpr float SPRING_BONE_STEP_SECONDS = 1.0f / 60.0f;
+// Body capsules use this share of the typical distance of their vertices from the bone, so they stay inside
+// the surface (hair resting on the scalp isn't pushed off)
+constexpr float SPRING_BONE_COLLIDER_RADIUS_SCALE = 0.8f;
+
+struct SpringCollider
+{
+    vector3<float> start;
+    vector3<float> end;
+    float radius;
+};
 
 // Animation switches blend from the previous pose over this long instead of snapping
 constexpr float EXTERNAL_MESH_SWITCH_BLEND_SECONDS = 0.15f;
@@ -146,6 +165,7 @@ public:
     float getAnimationClock(const std::string& animName);
     void blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation);
     int getSpringSteps();
+    void updateSpringColliders(const Skin& skin, size_t jointCount);
     void simulateSpringBone(Joint& joint, float* globalMatrix, int steps, float modelScale);
 
     std::vector<Shape> shapes;
@@ -174,7 +194,9 @@ public:
     std::chrono::steady_clock::time_point springLastTime;
     bool springTimeStarted = false;
     float springTimeAccumulator = 0.0f;
+    std::vector<SpringCollider> springColliders; // Body capsules in field space for the current frame
 private:
+    void setupSpringColliders();
     void loadConfig(const std::string& path);
 
     int getTextureCount(std::string tex_name);

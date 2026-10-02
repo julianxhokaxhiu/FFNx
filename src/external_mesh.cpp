@@ -404,6 +404,8 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         }
     }
 
+    if (hasSpringBones) setupSpringColliders();
+
     // The skeleton's root node is the non-joint parent of its top joint. Its channels carry the root motion
     // (the height that stands the model on the floor, moves like jumps)
     cgltf_node* rootNode = nullptr;
@@ -943,6 +945,47 @@ static float vectorLength(const vector3<float>& v)
     return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
+// Moves point along the line from head so it is length away from head
+static void keepLength(vector3<float>& point, const vector3<float>& head, float length)
+{
+    vector3<float> direction = { point.x - head.x, point.y - head.y, point.z - head.z };
+    float directionLength = vectorLength(direction);
+    if (directionLength <= 0.0f) return;
+
+    point = { head.x + direction.x * length / directionLength, head.y + direction.y * length / directionLength, head.z + direction.z * length / directionLength };
+}
+
+// The point on the segment start-end closest to point
+static vector3<float> closestPointOnSegment(const vector3<float>& point, const vector3<float>& start, const vector3<float>& end)
+{
+    vector3<float> segment = { end.x - start.x, end.y - start.y, end.z - start.z };
+    float lengthSquared = segment.x * segment.x + segment.y * segment.y + segment.z * segment.z;
+    float along = 0.0f;
+    if (lengthSquared > 0.0f)
+    {
+        along = ((point.x - start.x) * segment.x + (point.y - start.y) * segment.y + (point.z - start.z) * segment.z) / lengthSquared;
+        along = std::clamp(along, 0.0f, 1.0f);
+    }
+    return { start.x + segment.x * along, start.y + segment.y * along, start.z + segment.z * along };
+}
+
+// Pushes point out of any capsule it is inside of; returns whether it moved
+static bool pushOutOfColliders(vector3<float>& point, const std::vector<SpringCollider>& colliders)
+{
+    bool moved = false;
+    for (const auto& collider : colliders)
+    {
+        vector3<float> closest = closestPointOnSegment(point, collider.start, collider.end);
+        vector3<float> away = { point.x - closest.x, point.y - closest.y, point.z - closest.z };
+        float distance = vectorLength(away);
+        if (distance >= collider.radius || distance <= 0.0f) continue;
+
+        point = { closest.x + away.x * collider.radius / distance, closest.y + away.y * collider.radius / distance, closest.z + away.z * collider.radius / distance };
+        moved = true;
+    }
+    return moved;
+}
+
 // Swings a spring bone: simulates where its tail is in the field (inertia, gravity, pull back to the animated
 // direction) and turns the bone's animated matrix (row-vector, model space) to point there.
 void ExternalMesh::simulateSpringBone(Joint& joint, float* globalMatrix, int steps, float modelScale)
@@ -982,13 +1025,9 @@ void ExternalMesh::simulateSpringBone(Joint& joint, float* globalMatrix, int ste
             tail.z + (tail.z - previous.z) * (1.0f - SPRING_BONE_DRAG) + (animatedTail.z - tail.z) * SPRING_BONE_STIFFNESS
         };
 
-        // Keep the bone's length
-        vector3<float> direction = { next.x - head.x, next.y - head.y, next.z - head.z };
-        float directionLength = vectorLength(direction);
-        if (directionLength > 0.0f)
-        {
-            next = { head.x + direction.x * length / directionLength, head.y + direction.y * length / directionLength, head.z + direction.z * length / directionLength };
-        }
+        // Keep the bone's length, push the tail out of the body, then keep the length again
+        keepLength(next, head, length);
+        if (pushOutOfColliders(next, springColliders)) keepLength(next, head, length);
 
         previous = tail;
         tail = next;
@@ -1025,4 +1064,108 @@ void ExternalMesh::simulateSpringBone(Joint& joint, float* globalMatrix, int ste
     }
 
     bx::mtxMul(globalMatrix, worldGlobalMatrix, inverseWorldMatrix);
+}
+
+// Fits a capsule to every body joint (not a spring bone) from the vertices it mainly drives: from the joint to
+// its first body child (or to the middle of its vertices at the end of a chain), as thick as its vertices'
+// typical distance from that line, a bit smaller.
+void ExternalMesh::setupSpringColliders()
+{
+    if (skins.empty()) return;
+    Skin& skin = skins[0];
+    size_t jointCount = skin.joints.size();
+
+    // Joint positions in the bind pose (the mesh's space)
+    std::vector<vector3<float>> bindPositions(jointCount);
+    for (size_t j = 0; j < jointCount; j++)
+    {
+        float bindMatrix[16];
+        bx::mtxInverse(bindMatrix, skin.joints[j].inverseBindPoseMatrix);
+        bindPositions[j] = { bindMatrix[12], bindMatrix[13], bindMatrix[14] };
+    }
+
+    // Vertices by the joint with the largest weight on them
+    std::vector<std::vector<vector3<float>>> jointVertices(jointCount);
+    for (const auto& shape : shapes)
+    {
+        if (shape.joints.size() != shape.vertices.size() || shape.weights.size() != shape.vertices.size()) continue;
+
+        for (size_t v = 0; v < shape.vertices.size(); v++)
+        {
+            const auto& joints = shape.joints[v];
+            const auto& weights = shape.weights[v];
+            float jointIndices[4] = { joints.x, joints.y, joints.z, joints.w };
+            float jointWeights[4] = { weights.x, weights.y, weights.z, weights.w };
+
+            int best = 0;
+            for (int k = 1; k < 4; k++) if (jointWeights[k] > jointWeights[best]) best = k;
+
+            size_t jointIndex = static_cast<size_t>(jointIndices[best]);
+            if (jointWeights[best] > 0.0f && jointIndex < jointCount) jointVertices[jointIndex].push_back(shape.vertices[v]._);
+        }
+    }
+
+    for (size_t j = 0; j < jointCount; j++)
+    {
+        Joint& joint = skin.joints[j];
+        const auto& vertices = jointVertices[j];
+        if (joint.isSpring || vertices.size() < 8) continue;
+
+        vector3<float> start = bindPositions[j];
+        vector3<float> end = start;
+        bool hasChild = false;
+        for (size_t c = j + 1; c < jointCount; c++)
+        {
+            if (skin.joints[c].parentJointIndex == static_cast<int>(j) && !skin.joints[c].isSpring)
+            {
+                end = bindPositions[c];
+                hasChild = true;
+                break;
+            }
+        }
+        if (!hasChild)
+        {
+            vector3<float> center = {};
+            for (const auto& vertex : vertices) { center.x += vertex.x; center.y += vertex.y; center.z += vertex.z; }
+            end = { center.x / vertices.size(), center.y / vertices.size(), center.z / vertices.size() };
+        }
+
+        std::vector<float> distances;
+        distances.reserve(vertices.size());
+        for (const auto& vertex : vertices)
+        {
+            vector3<float> closest = closestPointOnSegment(vertex, start, end);
+            distances.push_back(vectorLength({ vertex.x - closest.x, vertex.y - closest.y, vertex.z - closest.z }));
+        }
+        std::nth_element(distances.begin(), distances.begin() + distances.size() / 2, distances.end());
+        float radius = distances[distances.size() / 2] * SPRING_BONE_COLLIDER_RADIUS_SCALE;
+        if (radius <= 0.0f) continue;
+
+        // Stored in the joint's own space so it follows the animated joint
+        joint.colliderStart = transformPoint(start, joint.inverseBindPoseMatrix);
+        joint.colliderEnd = transformPoint(end, joint.inverseBindPoseMatrix);
+        joint.colliderRadius = radius;
+        joint.hasCollider = true;
+    }
+}
+
+// Places the body capsules in field space for this frame (body joints must already be posed)
+void ExternalMesh::updateSpringColliders(const Skin& skin, size_t jointCount)
+{
+    springColliders.clear();
+    if (!hasSpringWorldMatrix) return;
+
+    for (size_t j = 0; j < jointCount; j++)
+    {
+        const Joint& joint = skin.joints[j];
+        if (!joint.hasCollider) continue;
+
+        float worldGlobalMatrix[16];
+        bx::mtxMul(worldGlobalMatrix, joint.calculatedMatrix, springWorldMatrix.m[0]);
+
+        // The joint's scale (model scale and the game's) applies to the radius too
+        float scale = vectorLength({ worldGlobalMatrix[0], worldGlobalMatrix[1], worldGlobalMatrix[2] });
+
+        springColliders.push_back({ transformPoint(joint.colliderStart, worldGlobalMatrix), transformPoint(joint.colliderEnd, worldGlobalMatrix), joint.colliderRadius * scale });
+    }
 }

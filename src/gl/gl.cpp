@@ -453,11 +453,9 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 			AnimationPosition position = getAnimationPosition(anim, skin.current_frame, skin.current_frame_count, skin.current_clock);
 			int springSteps = externalMesh->hasSpringBones ? externalMesh->getSpringSteps() : 0;
 
-			for(int i = 0; i < jointCount; ++i)
+			// Places a joint from its local transform and its parent (parents always come before their children)
+			auto poseJoint = [&](Joint& joint)
 			{
-				auto& joint = skin.joints[i];
-				const auto& keyFrame = anim.keyFrames[i];
-
 				float parentMatrix[16];
 				bx::mtxScale(parentMatrix, scale);
 
@@ -466,6 +464,15 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 					auto& parentBone = skin.joints[joint.parentJointIndex];
 					memcpy(parentMatrix, parentBone.calculatedMatrix, sizeof(float) * 16);
 				}
+
+				bx::mtxMul(joint.calculatedMatrix, joint.localMatrix, parentMatrix);
+			};
+
+			// The animation's pose; spring bones (and everything below them) wait until the body is posed
+			for(int i = 0; i < jointCount; ++i)
+			{
+				auto& joint = skin.joints[i];
+				const auto& keyFrame = anim.keyFrames[i];
 
 				auto currentTranslation = sampleTranslation(keyFrame.translationTimes, keyFrame.translation, position, joint.translation);
 				auto currentRotation = sampleRotation(keyFrame.rotationTimes, keyFrame.rotation, position, joint.rotation);
@@ -478,22 +485,32 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 				bx::Quaternion rotationQuaternion = {currentRotation.x, currentRotation.y, currentRotation.z, -currentRotation.w};
 				bx::mtxFromQuaternion(currentRotationMatrix, rotationQuaternion);
 
-				float currentMatrix[16];
-				bx::mtxMul(currentMatrix, currentRotationMatrix, currentTranslationMatrix);
-			
-				float currentGlobalMatrix[16];
-				bx::mtxMul(currentGlobalMatrix, currentMatrix, parentMatrix);
+				bx::mtxMul(joint.localMatrix, currentRotationMatrix, currentTranslationMatrix);
 
-				// Spring bones swing after the animation; their children follow the swung bone
-				if(joint.isSpring) externalMesh->simulateSpringBone(joint, currentGlobalMatrix, springSteps, scale);
-				
+				if(!joint.isSpring) poseJoint(joint);
+			}
+
+			// Spring bones swing after the animation, colliding with this frame's body; children follow the swung bone
+			if(externalMesh->hasSpringBones)
+			{
+				externalMesh->updateSpringColliders(skin, jointCount);
+
+				for(int i = 0; i < jointCount; ++i)
+				{
+					auto& joint = skin.joints[i];
+					if(!joint.isSpring) continue;
+
+					poseJoint(joint);
+					externalMesh->simulateSpringBone(joint, joint.calculatedMatrix, springSteps, scale);
+				}
+			}
+
+			for(int i = 0; i < jointCount; ++i)
+			{
+				auto& joint = skin.joints[i];
+
 				float boneMatrix[16];
-				bx::mtxMul(boneMatrix, joint.inverseBindPoseMatrix, currentGlobalMatrix);
-
-				memcpy(joint.calculatedMatrix, currentGlobalMatrix, sizeof(float) * 16);
-				
-				float identityMatrix[16];
-				bx::mtxIdentity(identityMatrix);
+				bx::mtxMul(boneMatrix, joint.inverseBindPoseMatrix, joint.calculatedMatrix);
 
 				memcpy(matrix_palette[i].m[0], boneMatrix, sizeof(float) * 16);
 			}
