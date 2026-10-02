@@ -750,7 +750,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		std::string anim_name = get_external_mesh_anim_name(anim_header);
 		struct matrix gltf_root_matrix;
 		float model_scale = gl_get_field_model_scale();
-		if(external_mesh->getRootMotionMatrix(anim_name, current_frame, model_scale, &gltf_root_matrix))
+		if(external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, model_scale, &gltf_root_matrix))
 		{
 			if((trace_all || trace_loaders) && external_mesh->rootMotionChecked.insert(anim_name).second)
 				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
@@ -930,6 +930,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 							externalMesh->skins[0].current_anim = get_external_mesh_anim_name(anim_header);
 							externalMesh->skins[0].current_frame = current_frame;
+							externalMesh->skins[0].current_frame_count = anim_header->num_frames;
 						}
 						if(hrc_data->field_4 && hrc_data->flags & 0x100000) ff7gl_field_78(polygon_set, game_object);
 					}

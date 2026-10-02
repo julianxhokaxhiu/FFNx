@@ -442,21 +442,20 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 	size_t jointCount = 0;
     if (externalMesh->skins.size() > 0)
 	{
-		auto skin = externalMesh->skins[0];
-		auto current_frame =  skin.current_frame;
+		auto& skin = externalMesh->skins[0];
 
 		// Joints past the bone limit are ignored instead of overflowing matrix_palette
 		jointCount = std::min(skin.joints.size(), static_cast<size_t>(MAX_BONE_MATRICES));
 
 		if(externalMesh->animations.contains(skin.current_anim))
 		{
-			auto anim = externalMesh->animations[skin.current_anim];
+			const auto& anim = externalMesh->animations[skin.current_anim];
+			AnimationPosition position = getAnimationPosition(anim, skin.current_frame, skin.current_frame_count);
 
 			for(int i = 0; i < jointCount; ++i)
 			{
 				auto& joint = skin.joints[i];
-
-				auto frame = std::min(current_frame, static_cast<int>(anim.keyFrames[i].rotation.size()) - 1);
+				const auto& keyFrame = anim.keyFrames[i];
 
 				float parentMatrix[16];
 				bx::mtxScale(parentMatrix, scale);
@@ -468,11 +467,11 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 				}
 
 				float currentTranslationMatrix[16];
-				auto currentTranslation = anim.keyFrames[i].translation[frame];
+				auto currentTranslation = sampleTranslation(keyFrame.translationTimes, keyFrame.translation, position, joint.translation);
 				bx::mtxTranslate(currentTranslationMatrix, currentTranslation.x, currentTranslation.y, currentTranslation.z);
 
 				float currentRotationMatrix[16];
-				auto currentRotation = anim.keyFrames[i].rotation[frame];
+				auto currentRotation = sampleRotation(keyFrame.rotationTimes, keyFrame.rotation, position, joint.rotation);
 				bx::Quaternion rotationQuaternion = {currentRotation.x, currentRotation.y, currentRotation.z, -currentRotation.w};
 				bx::mtxFromQuaternion(currentRotationMatrix, rotationQuaternion);
 

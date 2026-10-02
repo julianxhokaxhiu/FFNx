@@ -67,6 +67,7 @@ struct Skin
     std::vector<Joint> joints;
     std::string current_anim;
     int current_frame = 0;
+    int current_frame_count = 0; // Frame count of the game's current animation (.a)
 };
 
 struct KeyFrame
@@ -74,6 +75,8 @@ struct KeyFrame
     int targetJointIndex = 0;
     std::vector<vector4<float>> rotation;
     std::vector<vector3<float>> translation;
+    std::vector<float> rotationTimes;
+    std::vector<float> translationTimes;
 };
 
 struct Animation
@@ -83,7 +86,26 @@ struct Animation
     // Keys of the skeleton's root node (the non-joint parent of the top joint), if the file animates it
     std::vector<vector3<float>> rootTranslation;
     std::vector<vector4<float>> rootRotation;
+    std::vector<float> rootTranslationTimes;
+    std::vector<float> rootRotationTimes;
+
+    size_t keyCount = 0; // Most keys of any channel
+    float startTime = 0.0f;
+    float endTime = 0.0f;
 };
+
+// Where to sample an animation for one of the game's frames: a key index when the gltf has one key per game
+// frame, otherwise a time on the gltf's own timeline (stretched over the game animation's length)
+struct AnimationPosition
+{
+    bool useKeyIndex = true;
+    int keyIndex = 0;
+    float time = 0.0f;
+};
+
+AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount);
+vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback);
+vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback);
 
 class ExternalMesh
 {
@@ -96,7 +118,7 @@ public:
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
-    bool getRootMotionMatrix(const std::string& animName, int frame, float translationScale, struct matrix* outMatrix);
+    bool getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float translationScale, struct matrix* outMatrix);
 
     std::vector<Shape> shapes;
 	std::map<std::string, Material> materials;
