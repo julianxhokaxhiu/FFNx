@@ -59,6 +59,7 @@ struct Joint
     vector4<float> rotation;
     vector3<float> translation;
     std::string name;
+    std::string extras; // The node's glTF "extras" (custom properties) as JSON, or empty
     int parentJointIndex = -1;
     float inverseBindPoseMatrix[16];
     float calculatedMatrix[16];
@@ -69,6 +70,14 @@ struct Joint
     vector3<float> springTailPosition = {}; // Simulated tail in field world space
     vector3<float> springTailPrevious = {};
     bool springStarted = false;
+
+    // Spring settings, later sources winning: the driver's defaults (or the model config's [spring_bones]) at the
+    // start of a chain, else the parent spring bone's; the bone's custom properties (spring_stiffness,
+    // spring_drag, spring_gravity, spring_radius); the model config's [spring_bones.<bone name>]
+    float springStiffness = 0.0f;
+    float springDrag = 0.0f;
+    float springGravity = 0.0f;
+    float springRadius = 0.0f;
 
     // Body joints (not springs) carry a capsule spring bones collide with, in the joint's local space, fitted
     // to the vertices skinned to it
@@ -129,10 +138,14 @@ vector4<float> sampleRotation(const std::vector<float>& times, const std::vector
 vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend);
 vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float blend);
 
-// Spring bone physics (per 1/60 second step): how strongly a bone returns to its animated direction, how much
-// of its swing it loses, and gravity in mesh units per second squared (scaled by the field model scale)
-constexpr float SPRING_BONE_STIFFNESS = 0.03f;
-constexpr float SPRING_BONE_DRAG = 0.1f;
+// Spring bone defaults (per 1/60 second step): how strongly a bone returns to its animated direction (0 loose,
+// 1 rigid), how much of its swing it loses (0 keeps swinging, 1 no swing), and how much gravity pulls it (1 =
+// SPRING_BONE_GRAVITY mesh units per second squared, scaled by the field model scale). The tail's collision
+// radius is in mesh units.
+constexpr float SPRING_BONE_STIFFNESS = 0.06f;
+constexpr float SPRING_BONE_DRAG = 0.3f;
+constexpr float SPRING_BONE_GRAVITY_FACTOR = 1.0f;
+constexpr float SPRING_BONE_RADIUS = 0.0f;
 constexpr float SPRING_BONE_GRAVITY = 200.0f;
 constexpr float SPRING_BONE_STEP_SECONDS = 1.0f / 60.0f;
 // Body capsules use this share of the typical distance of their vertices from the bone, so they stay inside

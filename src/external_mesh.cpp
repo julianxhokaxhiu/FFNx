@@ -34,6 +34,35 @@
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
 
+// A number from a glTF "extras" JSON object (e.g. {"spring_drag": 0.4}); value is left alone when absent
+static bool readExtrasFloat(const std::string& extras, const char* key, float& value)
+{
+    size_t position = extras.find(std::string("\"") + key + "\"");
+    if (position == std::string::npos) return false;
+
+    position = extras.find(':', position);
+    if (position == std::string::npos) return false;
+
+    const char* start = extras.c_str() + position + 1;
+    char* end = nullptr;
+    float number = std::strtof(start, &end);
+    if (end == start) return false;
+
+    value = number;
+    return true;
+}
+
+// Spring settings from a model config table (stiffness, drag, gravity, radius); values it lacks are left alone
+static bool readConfigSpringSettings(toml::node_view<toml::node> table, Joint& joint)
+{
+    bool found = false;
+    if (auto value = table["stiffness"].value<double>()) { joint.springStiffness = static_cast<float>(*value); found = true; }
+    if (auto value = table["drag"].value<double>()) { joint.springDrag = static_cast<float>(*value); found = true; }
+    if (auto value = table["gravity"].value<double>()) { joint.springGravity = static_cast<float>(*value); found = true; }
+    if (auto value = table["radius"].value<double>()) { joint.springRadius = static_cast<float>(*value); found = true; }
+    return found;
+}
+
 // Name used to find an image's DDS files: its file name without extension
 // (e.g. "textures/cloud_0.png" -> "cloud_0"), or its name when it has no file
 static std::string getImageTextureName(const cgltf_image* image)
@@ -59,6 +88,7 @@ void createJointHierarchy(Skin* pSkin, int parentIndex, cgltf_node* pJointNode, 
     outJoint.translation.z = pJointNode->translation[2];
 
     outJoint.name = pJointNode->name;
+    outJoint.extras = pJointNode->extras.data != nullptr ? pJointNode->extras.data : "";
 
     outJoint.parentJointIndex = parentIndex;
 
@@ -401,6 +431,39 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             float length = std::sqrt(joint.springTail.x * joint.springTail.x + joint.springTail.y * joint.springTail.y + joint.springTail.z * joint.springTail.z);
             if (length <= 0.0f) joint.isSpring = false;
             else hasSpringBones = true;
+
+            // Settings, later sources winning (see Joint): defaults or the parent's, custom properties, config
+            bool chainStart = joint.parentJointIndex < 0 || !skin.joints[joint.parentJointIndex].isSpring;
+            if (chainStart)
+            {
+                joint.springStiffness = SPRING_BONE_STIFFNESS;
+                joint.springDrag = SPRING_BONE_DRAG;
+                joint.springGravity = SPRING_BONE_GRAVITY_FACTOR;
+                joint.springRadius = SPRING_BONE_RADIUS;
+                readConfigSpringSettings(config["spring_bones"], joint);
+            }
+            else
+            {
+                const Joint& parent = skin.joints[joint.parentJointIndex];
+                joint.springStiffness = parent.springStiffness;
+                joint.springDrag = parent.springDrag;
+                joint.springGravity = parent.springGravity;
+                joint.springRadius = parent.springRadius;
+            }
+
+            bool fromProperties = readExtrasFloat(joint.extras, "spring_stiffness", joint.springStiffness);
+            fromProperties |= readExtrasFloat(joint.extras, "spring_drag", joint.springDrag);
+            fromProperties |= readExtrasFloat(joint.extras, "spring_gravity", joint.springGravity);
+            fromProperties |= readExtrasFloat(joint.extras, "spring_radius", joint.springRadius);
+            bool fromConfig = readConfigSpringSettings(config["spring_bones"][joint.name], joint);
+            joint.springStiffness = std::clamp(joint.springStiffness, 0.0f, 1.0f);
+            joint.springDrag = std::clamp(joint.springDrag, 0.0f, 1.0f);
+            joint.springRadius = std::max(joint.springRadius, 0.0f);
+
+            if ((trace_all || trace_loaders) && joint.isSpring && (chainStart || fromProperties || fromConfig))
+                ffnx_trace("External mesh: spring bone %s: stiffness %.3f, drag %.3f, gravity %.3f, radius %.3f%s%s\n", joint.name.c_str(),
+                    joint.springStiffness, joint.springDrag, joint.springGravity, joint.springRadius,
+                    fromProperties ? " (custom properties)" : "", fromConfig ? " (config)" : "");
         }
     }
 
@@ -969,8 +1032,8 @@ static vector3<float> closestPointOnSegment(const vector3<float>& point, const v
     return { start.x + segment.x * along, start.y + segment.y * along, start.z + segment.z * along };
 }
 
-// Pushes point out of any capsule it is inside of; returns whether it moved
-static bool pushOutOfColliders(vector3<float>& point, const std::vector<SpringCollider>& colliders)
+// Pushes a point (a sphere of pointRadius) out of any capsule it is inside of; returns whether it moved
+static bool pushOutOfColliders(vector3<float>& point, const std::vector<SpringCollider>& colliders, float pointRadius)
 {
     bool moved = false;
     for (const auto& collider : colliders)
@@ -978,9 +1041,10 @@ static bool pushOutOfColliders(vector3<float>& point, const std::vector<SpringCo
         vector3<float> closest = closestPointOnSegment(point, collider.start, collider.end);
         vector3<float> away = { point.x - closest.x, point.y - closest.y, point.z - closest.z };
         float distance = vectorLength(away);
-        if (distance >= collider.radius || distance <= 0.0f) continue;
+        float radius = collider.radius + pointRadius;
+        if (distance >= radius || distance <= 0.0f) continue;
 
-        point = { closest.x + away.x * collider.radius / distance, closest.y + away.y * collider.radius / distance, closest.z + away.z * collider.radius / distance };
+        point = { closest.x + away.x * radius / distance, closest.y + away.y * radius / distance, closest.z + away.z * radius / distance };
         moved = true;
     }
     return moved;
@@ -1012,7 +1076,10 @@ void ExternalMesh::simulateSpringBone(Joint& joint, float* globalMatrix, int ste
     }
 
     // The game's field space has Y pointing down
-    float gravity = SPRING_BONE_GRAVITY * modelScale * SPRING_BONE_STEP_SECONDS * SPRING_BONE_STEP_SECONDS;
+    float gravity = joint.springGravity * SPRING_BONE_GRAVITY * modelScale * SPRING_BONE_STEP_SECONDS * SPRING_BONE_STEP_SECONDS;
+
+    // The tail's own thickness, scaled like the bone (model scale and the game's)
+    float tailRadius = joint.springRadius * vectorLength({ worldGlobalMatrix[0], worldGlobalMatrix[1], worldGlobalMatrix[2] });
 
     for (int step = 0; step < steps; step++)
     {
@@ -1020,14 +1087,14 @@ void ExternalMesh::simulateSpringBone(Joint& joint, float* globalMatrix, int ste
         vector3<float>& previous = joint.springTailPrevious;
 
         vector3<float> next = {
-            tail.x + (tail.x - previous.x) * (1.0f - SPRING_BONE_DRAG) + (animatedTail.x - tail.x) * SPRING_BONE_STIFFNESS,
-            tail.y + (tail.y - previous.y) * (1.0f - SPRING_BONE_DRAG) + (animatedTail.y - tail.y) * SPRING_BONE_STIFFNESS + gravity,
-            tail.z + (tail.z - previous.z) * (1.0f - SPRING_BONE_DRAG) + (animatedTail.z - tail.z) * SPRING_BONE_STIFFNESS
+            tail.x + (tail.x - previous.x) * (1.0f - joint.springDrag) + (animatedTail.x - tail.x) * joint.springStiffness,
+            tail.y + (tail.y - previous.y) * (1.0f - joint.springDrag) + (animatedTail.y - tail.y) * joint.springStiffness + gravity,
+            tail.z + (tail.z - previous.z) * (1.0f - joint.springDrag) + (animatedTail.z - tail.z) * joint.springStiffness
         };
 
         // Keep the bone's length, push the tail out of the body, then keep the length again
         keepLength(next, head, length);
-        if (pushOutOfColliders(next, springColliders)) keepLength(next, head, length);
+        if (pushOutOfColliders(next, springColliders, tailRadius)) keepLength(next, head, length);
 
         previous = tail;
         tail = next;
