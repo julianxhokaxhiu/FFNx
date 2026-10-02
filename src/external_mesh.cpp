@@ -666,8 +666,18 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, i
     if (anim.rootTranslation.empty() || anim.rootRotation.empty()) return false;
 
     AnimationPosition position = getAnimationPosition(anim, frame, frameCount, clockSeconds);
-    const auto t = sampleTranslation(anim.rootTranslationTimes, anim.rootTranslation, position, anim.rootTranslation.front());
-    const auto q = sampleRotation(anim.rootRotationTimes, anim.rootRotation, position, anim.rootRotation.front());
+    auto t = sampleTranslation(anim.rootTranslationTimes, anim.rootTranslation, position, anim.rootTranslation.front());
+    auto q = sampleRotation(anim.rootRotationTimes, anim.rootRotation, position, anim.rootRotation.front());
+
+    float blendWeight = getSwitchBlendWeight(clockSeconds);
+    if (blendWeight < 1.0f && blendFromHasRoot)
+    {
+        t = lerpTranslation(blendFromRootTranslation, t, blendWeight);
+        q = slerpRotation(blendFromRootRotation, q, blendWeight);
+    }
+    lastRootTranslation = t;
+    lastRootRotation = q;
+    lastHasRoot = true;
 
     // glTF rotation as a column-vector matrix
     float r[3][3] = {
@@ -701,6 +711,15 @@ float ExternalMesh::getAnimationClock(const std::string& animName)
 
     if (animName != clockAnim)
     {
+        // Blend from the pose shown last (the previous animation's, or a blend still in progress)
+        bool hadAnim = !clockAnim.empty();
+        blendFromTranslation = hadAnim ? lastTranslation : std::vector<vector3<float>>();
+        blendFromRotation = hadAnim ? lastRotation : std::vector<vector4<float>>();
+        blendFromHasRoot = hadAnim && lastHasRoot;
+        blendFromRootTranslation = lastRootTranslation;
+        blendFromRootRotation = lastRootRotation;
+        lastHasRoot = false;
+
         clockAnim = animName;
         clockStart = now;
     }
@@ -773,9 +792,7 @@ vector3<float> sampleTranslation(const std::vector<float>& times, const std::vec
     float blend;
     findKeys(times, values.size(), position.time, first, second, blend);
 
-    const auto& a = values[first];
-    const auto& b = values[second];
-    return { a.x + (b.x - a.x) * blend, a.y + (b.y - a.y) * blend, a.z + (b.z - a.z) * blend };
+    return lerpTranslation(values[first], values[second], blend);
 }
 
 vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback)
@@ -789,9 +806,16 @@ vector4<float> sampleRotation(const std::vector<float>& times, const std::vector
     float blend;
     findKeys(times, values.size(), position.time, first, second, blend);
 
-    const auto& a = values[first];
-    auto b = values[second];
+    return slerpRotation(values[first], values[second], blend);
+}
 
+vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend)
+{
+    return { a.x + (b.x - a.x) * blend, a.y + (b.y - a.y) * blend, a.z + (b.z - a.z) * blend };
+}
+
+vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float blend)
+{
     // Spherical interpolation along the shorter way around
     float cosAngle = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
     if (cosAngle < 0.0f)
@@ -819,4 +843,29 @@ vector4<float> sampleRotation(const std::vector<float>& times, const std::vector
         result.w /= length;
     }
     return result;
+}
+
+// How far a switch between animations has blended from the previous pose (0) to the new animation (1)
+float getSwitchBlendWeight(float clockSeconds)
+{
+    if (clockSeconds >= EXTERNAL_MESH_SWITCH_BLEND_SECONDS) return 1.0f;
+
+    float progress = std::max(clockSeconds, 0.0f) / EXTERNAL_MESH_SWITCH_BLEND_SECONDS;
+    return progress * progress * (3.0f - 2.0f * progress); // Eases in and out
+}
+
+// Blends a joint's sampled pose with the pose shown before an animation switch, and remembers the result
+void ExternalMesh::blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation)
+{
+    float blendWeight = getSwitchBlendWeight(clockSeconds);
+    if (blendWeight < 1.0f && jointIndex < blendFromTranslation.size() && jointIndex < blendFromRotation.size())
+    {
+        translation = lerpTranslation(blendFromTranslation[jointIndex], translation, blendWeight);
+        rotation = slerpRotation(blendFromRotation[jointIndex], rotation, blendWeight);
+    }
+
+    if (lastTranslation.size() != jointCount) lastTranslation.resize(jointCount);
+    if (lastRotation.size() != jointCount) lastRotation.resize(jointCount);
+    lastTranslation[jointIndex] = translation;
+    lastRotation[jointIndex] = rotation;
 }

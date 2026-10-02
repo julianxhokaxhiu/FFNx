@@ -466,12 +466,14 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 					memcpy(parentMatrix, parentBone.calculatedMatrix, sizeof(float) * 16);
 				}
 
-				float currentTranslationMatrix[16];
 				auto currentTranslation = sampleTranslation(keyFrame.translationTimes, keyFrame.translation, position, joint.translation);
+				auto currentRotation = sampleRotation(keyFrame.rotationTimes, keyFrame.rotation, position, joint.rotation);
+				externalMesh->blendJointPose(i, jointCount, skin.current_clock, currentTranslation, currentRotation);
+
+				float currentTranslationMatrix[16];
 				bx::mtxTranslate(currentTranslationMatrix, currentTranslation.x, currentTranslation.y, currentTranslation.z);
 
 				float currentRotationMatrix[16];
-				auto currentRotation = sampleRotation(keyFrame.rotationTimes, keyFrame.rotation, position, joint.rotation);
 				bx::Quaternion rotationQuaternion = {currentRotation.x, currentRotation.y, currentRotation.z, -currentRotation.w};
 				bx::mtxFromQuaternion(currentRotationMatrix, rotationQuaternion);
 
