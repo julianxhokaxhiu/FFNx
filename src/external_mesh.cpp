@@ -399,6 +399,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
         Animation outAnim;
+        std::map<const cgltf_accessor*, std::vector<float>> timelines;
         
         int jointCount = skins[0].joints.size();
         outAnim.keyFrames.resize(jointCount);
@@ -409,7 +410,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             int targetJointIndex = -1;
             for (int jointIndex = 0; jointIndex < jointCount; ++jointIndex)
             {
-                auto joint = skins[0].joints[jointIndex];
+                const auto& joint = skins[0].joints[jointIndex];
                 if(channel.target_node->name == joint.name)
                 {
                     targetJointIndex = jointIndex;
@@ -419,10 +420,16 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
             float* samplerBuffer = (float*)((char*)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
 
-            // Key times, used to stretch the animation when its key count differs from the game's frame count
-            std::vector<float> keyTimes(channel.sampler->input->count);
-            for (size_t k = 0; k < keyTimes.size(); ++k)
-                cgltf_accessor_read_float(channel.sampler->input, k, &keyTimes[k], 1);
+            // Key times, used to stretch the animation when its key count differs from the game's frame count.
+            // Channels usually share one timeline, so each is read once.
+            auto cachedTimes = timelines.find(channel.sampler->input);
+            if (cachedTimes == timelines.end())
+            {
+                std::vector<float> times(channel.sampler->input->count);
+                cgltf_accessor_unpack_floats(channel.sampler->input, times.data(), times.size());
+                cachedTimes = timelines.emplace(channel.sampler->input, std::move(times)).first;
+            }
+            const std::vector<float>& keyTimes = cachedTimes->second;
 
             if (!keyTimes.empty())
             {
@@ -465,7 +472,6 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                 }
                 outKeyFrame.translationTimes = keyTimes;
                 outKeyFrame.targetJointIndex = targetJointIndex;
-                outAnim.keyFrames.push_back(outKeyFrame);
             }
             else if (channel.target_path == cgltf_animation_path_type_rotation)
             {
@@ -483,7 +489,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             }        
         }
 
-        animations[animName] = outAnim;
+        animations[animName] = std::move(outAnim);
     }
 
     updateExternalMeshBuffers();
