@@ -760,6 +760,10 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 			memcpy(&world_matrix, &gltf_root_matrix, sizeof(world_matrix));
 			apply_struc110_transforms(&world_matrix, struc_110);
 		}
+
+		// Where the model is drawn in the field, for spring bones to react to its movement
+		memcpy(&external_mesh->springWorldMatrix, &world_matrix, sizeof(world_matrix));
+		external_mesh->hasSpringWorldMatrix = true;
 	}
 	else
 	{

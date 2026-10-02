@@ -30,6 +30,7 @@
 #include <toml++/toml.h>
 
 #include "renderer.h"
+#include "matrix.h"
 
 struct Material
 {
@@ -61,6 +62,13 @@ struct Joint
     int parentJointIndex = -1;
     float inverseBindPoseMatrix[16];
     float calculatedMatrix[16];
+
+    // Spring bones: joints named with "spring" (and the joints below them) swing on their own after animation
+    bool isSpring = false;
+    vector3<float> springTail = {}; // Local point the bone points at (its first child, or its own length again)
+    vector3<float> springTailPosition = {}; // Simulated tail in field world space
+    vector3<float> springTailPrevious = {};
+    bool springStarted = false;
 };
 
 struct Skin
@@ -112,6 +120,13 @@ vector4<float> sampleRotation(const std::vector<float>& times, const std::vector
 vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend);
 vector4<float> slerpRotation(const vector4<float>& a, vector4<float> b, float blend);
 
+// Spring bone physics (per 1/60 second step): how strongly a bone returns to its animated direction, how much
+// of its swing it loses, and gravity in mesh units per second squared (scaled by the field model scale)
+constexpr float SPRING_BONE_STIFFNESS = 0.03f;
+constexpr float SPRING_BONE_DRAG = 0.1f;
+constexpr float SPRING_BONE_GRAVITY = 200.0f;
+constexpr float SPRING_BONE_STEP_SECONDS = 1.0f / 60.0f;
+
 // Animation switches blend from the previous pose over this long instead of snapping
 constexpr float EXTERNAL_MESH_SWITCH_BLEND_SECONDS = 0.15f;
 float getSwitchBlendWeight(float clockSeconds);
@@ -130,6 +145,8 @@ public:
     bool getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix);
     float getAnimationClock(const std::string& animName);
     void blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation);
+    int getSpringSteps();
+    void simulateSpringBone(Joint& joint, float* globalMatrix, int steps, float modelScale);
 
     std::vector<Shape> shapes;
 	std::map<std::string, Material> materials;
@@ -149,6 +166,14 @@ public:
     vector3<float> lastRootTranslation = {}, blendFromRootTranslation = {};
     vector4<float> lastRootRotation = {}, blendFromRootRotation = {};
     bool lastHasRoot = false, blendFromHasRoot = false;
+
+    // Spring bones: where the model was placed in the field when last drawn (row-vector, game units), and timing
+    struct matrix springWorldMatrix = {};
+    bool hasSpringWorldMatrix = false;
+    bool hasSpringBones = false;
+    std::chrono::steady_clock::time_point springLastTime;
+    bool springTimeStarted = false;
+    float springTimeAccumulator = 0.0f;
 private:
     void loadConfig(const std::string& path);
 

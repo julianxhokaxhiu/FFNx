@@ -451,6 +451,7 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		{
 			const auto& anim = externalMesh->animations[skin.current_anim];
 			AnimationPosition position = getAnimationPosition(anim, skin.current_frame, skin.current_frame_count, skin.current_clock);
+			int springSteps = externalMesh->hasSpringBones ? externalMesh->getSpringSteps() : 0;
 
 			for(int i = 0; i < jointCount; ++i)
 			{
@@ -482,6 +483,9 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 			
 				float currentGlobalMatrix[16];
 				bx::mtxMul(currentGlobalMatrix, currentMatrix, parentMatrix);
+
+				// Spring bones swing after the animation; their children follow the swung bone
+				if(joint.isSpring) externalMesh->simulateSpringBone(joint, currentGlobalMatrix, springSteps, scale);
 				
 				float boneMatrix[16];
 				bx::mtxMul(boneMatrix, joint.inverseBindPoseMatrix, currentGlobalMatrix);
