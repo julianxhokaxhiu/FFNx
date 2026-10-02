@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 
 #include "cfg.h"
 #include "log.h"
@@ -418,6 +419,18 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
             float* samplerBuffer = (float*)((char*)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
 
+            // Key times, used to stretch the animation when its key count differs from the game's frame count
+            std::vector<float> keyTimes(channel.sampler->input->count);
+            for (size_t k = 0; k < keyTimes.size(); ++k)
+                cgltf_accessor_read_float(channel.sampler->input, k, &keyTimes[k], 1);
+
+            if (!keyTimes.empty())
+            {
+                if (outAnim.keyCount == 0 || keyTimes.front() < outAnim.startTime) outAnim.startTime = keyTimes.front();
+                if (outAnim.keyCount == 0 || keyTimes.back() > outAnim.endTime) outAnim.endTime = keyTimes.back();
+                outAnim.keyCount = std::max(outAnim.keyCount, keyTimes.size());
+            }
+
             if(targetJointIndex == -1)
             {
                 if (rootNode != nullptr && channel.target_node == rootNode)
@@ -426,11 +439,13 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     {
                         for (int k = 0; k < channel.sampler->output->count; ++k)
                             outAnim.rootTranslation.push_back({ samplerBuffer[k * 3 + 0], samplerBuffer[k * 3 + 1], samplerBuffer[k * 3 + 2] });
+                        outAnim.rootTranslationTimes = keyTimes;
                     }
                     else if (channel.target_path == cgltf_animation_path_type_rotation)
                     {
                         for (int k = 0; k < channel.sampler->output->count; ++k)
                             outAnim.rootRotation.push_back({ samplerBuffer[k * 4 + 0], samplerBuffer[k * 4 + 1], samplerBuffer[k * 4 + 2], samplerBuffer[k * 4 + 3] });
+                        outAnim.rootRotationTimes = keyTimes;
                     }
                 }
 
@@ -448,6 +463,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     translation.z = samplerBuffer[k * 3 + 2];
                     outKeyFrame.translation.push_back(translation);  
                 }
+                outKeyFrame.translationTimes = keyTimes;
                 outKeyFrame.targetJointIndex = targetJointIndex;
                 outAnim.keyFrames.push_back(outKeyFrame);
             }
@@ -463,6 +479,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                     rotation.w = samplerBuffer[k * 4 + 3];
                     outKeyFrame.rotation.push_back(rotation);  
                 }
+                outKeyFrame.rotationTimes = keyTimes;
             }        
         }
 
@@ -640,7 +657,7 @@ int ExternalMesh::getFrameInterval(std::string tex_name)
 // Builds the game's root matrix for this frame (as its root animation would) from the gltf root node's keys.
 // translationScale converts gltf units to the game's, normally the scale the mesh is drawn with.
 // Returns false when the animation doesn't animate the root node, so the game's own root motion is used.
-bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, float translationScale, struct matrix* outMatrix)
+bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float translationScale, struct matrix* outMatrix)
 {
     auto it = animations.find(animName);
     if (it == animations.end()) return false;
@@ -648,8 +665,9 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, f
     const Animation& anim = it->second;
     if (anim.rootTranslation.empty() || anim.rootRotation.empty()) return false;
 
-    const auto& t = anim.rootTranslation[std::clamp(frame, 0, static_cast<int>(anim.rootTranslation.size()) - 1)];
-    const auto& q = anim.rootRotation[std::clamp(frame, 0, static_cast<int>(anim.rootRotation.size()) - 1)];
+    AnimationPosition position = getAnimationPosition(anim, frame, frameCount);
+    const auto t = sampleTranslation(anim.rootTranslationTimes, anim.rootTranslation, position, anim.rootTranslation.front());
+    const auto q = sampleRotation(anim.rootRotationTimes, anim.rootRotation, position, anim.rootRotation.front());
 
     // glTF rotation as a column-vector matrix
     float r[3][3] = {
@@ -674,4 +692,109 @@ bool ExternalMesh::getRootMotionMatrix(const std::string& animName, int frame, f
     outMatrix->_44 = 1.0f;
 
     return true;
+}
+
+AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount)
+{
+    AnimationPosition position;
+
+    // One key per game frame (or a single held game frame): show the key of the game's frame, as before.
+    // One extra key also counts: KimeraCS's 60 fps exports end with a loop-closing key between the last
+    // frame and the first, which stretching would wrongly blend into the end of one-shot animations.
+    size_t frames = static_cast<size_t>(std::max(frameCount, 0));
+    if (frameCount <= 1 || anim.keyCount == frames || anim.keyCount == frames + 1 || anim.endTime <= anim.startTime)
+    {
+        position.keyIndex = frame;
+        return position;
+    }
+
+    // Otherwise stretch the gltf timeline over the game animation, first frame to first key, last to last
+    float progress = std::clamp(static_cast<float>(frame) / static_cast<float>(frameCount - 1), 0.0f, 1.0f);
+
+    position.useKeyIndex = false;
+    position.time = anim.startTime + progress * (anim.endTime - anim.startTime);
+    return position;
+}
+
+// The two keys around a time, and how far the time is between them (0 = first, 1 = second)
+static void findKeys(const std::vector<float>& times, size_t valueCount, float time, size_t& first, size_t& second, float& blend)
+{
+    size_t count = std::min(times.size(), valueCount);
+
+    second = std::upper_bound(times.begin(), times.begin() + count, time) - times.begin();
+    if (second == 0)
+    {
+        first = second = 0;
+        blend = 0.0f;
+        return;
+    }
+    if (second >= count)
+    {
+        first = second = count - 1;
+        blend = 0.0f;
+        return;
+    }
+
+    first = second - 1;
+    float span = times[second] - times[first];
+    blend = span > 0.0f ? (time - times[first]) / span : 0.0f;
+}
+
+vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback)
+{
+    if (values.empty()) return fallback;
+
+    if (position.useKeyIndex || times.empty())
+        return values[std::clamp(position.keyIndex, 0, static_cast<int>(values.size()) - 1)];
+
+    size_t first, second;
+    float blend;
+    findKeys(times, values.size(), position.time, first, second, blend);
+
+    const auto& a = values[first];
+    const auto& b = values[second];
+    return { a.x + (b.x - a.x) * blend, a.y + (b.y - a.y) * blend, a.z + (b.z - a.z) * blend };
+}
+
+vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback)
+{
+    if (values.empty()) return fallback;
+
+    if (position.useKeyIndex || times.empty())
+        return values[std::clamp(position.keyIndex, 0, static_cast<int>(values.size()) - 1)];
+
+    size_t first, second;
+    float blend;
+    findKeys(times, values.size(), position.time, first, second, blend);
+
+    const auto& a = values[first];
+    auto b = values[second];
+
+    // Spherical interpolation along the shorter way around
+    float cosAngle = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+    if (cosAngle < 0.0f)
+    {
+        b = { -b.x, -b.y, -b.z, -b.w };
+        cosAngle = -cosAngle;
+    }
+
+    float weightA = 1.0f - blend, weightB = blend;
+    if (cosAngle < 0.9995f)
+    {
+        float angle = std::acos(cosAngle);
+        float sinAngle = std::sin(angle);
+        weightA = std::sin((1.0f - blend) * angle) / sinAngle;
+        weightB = std::sin(blend * angle) / sinAngle;
+    }
+
+    vector4<float> result = { a.x * weightA + b.x * weightB, a.y * weightA + b.y * weightB, a.z * weightA + b.z * weightB, a.w * weightA + b.w * weightB };
+    float length = std::sqrt(result.x * result.x + result.y * result.y + result.z * result.z + result.w * result.w);
+    if (length > 0.0f)
+    {
+        result.x /= length;
+        result.y /= length;
+        result.z /= length;
+        result.w /= length;
+    }
+    return result;
 }
