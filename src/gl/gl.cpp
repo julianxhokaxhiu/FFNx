@@ -450,7 +450,7 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		if(externalMesh->animations.contains(skin.current_anim))
 		{
 			const auto& anim = externalMesh->animations[skin.current_anim];
-			AnimationPosition position = getAnimationPosition(anim, skin.current_frame, skin.current_frame_count);
+			AnimationPosition position = getAnimationPosition(anim, skin.current_frame, skin.current_frame_count, skin.current_clock);
 
 			for(int i = 0; i < jointCount; ++i)
 			{

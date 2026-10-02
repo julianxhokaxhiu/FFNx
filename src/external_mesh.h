@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <vector>
 #include <map>
 #include <set>
@@ -68,6 +69,7 @@ struct Skin
     std::string current_anim;
     int current_frame = 0;
     int current_frame_count = 0; // Frame count of the game's current animation (.a)
+    float current_clock = 0.0f; // Seconds since the game switched to the current animation
 };
 
 struct KeyFrame
@@ -95,7 +97,8 @@ struct Animation
 };
 
 // Where to sample an animation for one of the game's frames: a key index when the gltf has one key per game
-// frame, otherwise a time on the gltf's own timeline (stretched over the game animation's length)
+// frame, otherwise a time on the gltf's own timeline (stretched over the game animation's length, or looping on
+// its own clock when the game holds a single frame)
 struct AnimationPosition
 {
     bool useKeyIndex = true;
@@ -103,7 +106,7 @@ struct AnimationPosition
     float time = 0.0f;
 };
 
-AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount);
+AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds);
 vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback);
 vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback);
 
@@ -118,7 +121,8 @@ public:
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
-    bool getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float translationScale, struct matrix* outMatrix);
+    bool getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix);
+    float getAnimationClock(const std::string& animName);
 
     std::vector<Shape> shapes;
 	std::map<std::string, Material> materials;
@@ -127,6 +131,10 @@ public:
 
     // Animations already reported as using the gltf root motion (trace_loaders)
     std::set<std::string> rootMotionChecked;
+
+    // Animation the own clock is running for, and when the game switched to it
+    std::string clockAnim;
+    std::chrono::steady_clock::time_point clockStart;
 private:
     void loadConfig(const std::string& path);
 

@@ -728,6 +728,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 	ExternalMesh* external_mesh = getExternalMesh(hrc_data);
 	bool is_external_mesh = external_mesh != nullptr;
+	float external_mesh_clock = 0.0f;
 	if(is_external_mesh)
 	{
 		// Start from the animation's root motion (e.g. the height that stands the model on the floor, the train
@@ -748,9 +749,10 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		// When the gltf animates its own root node, draw the model with that root motion instead, so new
 		// animations can carry their own (e.g. a different standing height). The game keeps reading its own above.
 		std::string anim_name = get_external_mesh_anim_name(anim_header);
+		external_mesh_clock = external_mesh->getAnimationClock(anim_name);
 		struct matrix gltf_root_matrix;
 		float model_scale = gl_get_field_model_scale();
-		if(external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, model_scale, &gltf_root_matrix))
+		if(external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
 		{
 			if((trace_all || trace_loaders) && external_mesh->rootMotionChecked.insert(anim_name).second)
 				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
@@ -931,6 +933,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 							externalMesh->skins[0].current_anim = get_external_mesh_anim_name(anim_header);
 							externalMesh->skins[0].current_frame = current_frame;
 							externalMesh->skins[0].current_frame_count = anim_header->num_frames;
+							externalMesh->skins[0].current_clock = external_mesh_clock;
 						}
 						if(hrc_data->field_4 && hrc_data->flags & 0x100000) ff7gl_field_78(polygon_set, game_object);
 					}
