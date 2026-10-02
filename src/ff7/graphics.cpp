@@ -393,9 +393,10 @@ void sub_6B2720(struct indexed_primitive *ip)
 	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, true, true);
 }
 
-bool isExternalMesh(struct hrc_data *hrc_data)
+// The gltf model (external mesh) replacing this model's polygons, or nullptr when it has none
+ExternalMesh* getExternalMesh(struct hrc_data *hrc_data)
 {
-	bool is_external_mesh = false;
+	ExternalMesh* external_mesh = nullptr;
 	if(hrc_data->bone_list)
 	{
 		struct list_node *bone_list_node;
@@ -425,19 +426,71 @@ bool isExternalMesh(struct hrc_data *hrc_data)
 
 						if(polygon_set->polygon_data->field_48)
 						{
-							is_external_mesh = true;
+							external_mesh = reinterpret_cast<ExternalMesh*>(polygon_set->polygon_data->field_48);
 							break;
 						}
 					}
 				}
 			}
-			if (is_external_mesh)
+			if (external_mesh)
 			{
 				break;
 			}
-		}	
+		}
 	}
-	return is_external_mesh;
+	return external_mesh;
+}
+
+// Name gltf animations are matched against: the 4 characters of the game's .a file name, uppercased
+static std::string get_external_mesh_anim_name(struct anim_header *anim_header)
+{
+	std::string animFullName = anim_header->file.pc_name;
+	if(animFullName.length() < 6) return "";
+
+	std::string animName = animFullName.substr(animFullName.length() - 6, 4);
+	std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
+
+	return animName;
+}
+
+// The struc_110 transforms (scale, matrix, rotation, position) applied on top of a model's root matrix
+static void apply_struc110_transforms(struct matrix *matrix, struct struc_110 *struc_110)
+{
+	if(!struc_110) return;
+
+	struct matrix scale_matrix;
+
+	if(struc_110->scale_factor != 1.0f)
+	{
+		float scale_factor = struc_110->scale_factor;
+
+		matrix->_41 *= scale_factor;
+		matrix->_42 *= scale_factor;
+		matrix->_43 *= scale_factor;
+
+		uniform_scaling_matrix(scale_factor, &scale_matrix);
+		multiply_matrix_unary(matrix, &scale_matrix);
+	}
+
+	if(struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
+	{
+		scaling_matrix(&struc_110->scale, &scale_matrix);
+		multiply_matrix_unary(matrix, &scale_matrix);
+
+		matrix->_41 *= struc_110->scale.x;
+		matrix->_42 *= struc_110->scale.y;
+		matrix->_43 *= struc_110->scale.z;
+	}
+
+	if(*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX) multiply_matrix_unary(matrix, &struc_110->matrix);
+
+	if(struc_110->rotation.y != 0.0) rotate_matrix_y(DEG2RAD(struc_110->rotation.y), matrix);
+	if(struc_110->rotation.x != 0.0) rotate_matrix_x(DEG2RAD(struc_110->rotation.x), matrix);
+	if(struc_110->rotation.z != 0.0) rotate_matrix_z(DEG2RAD(struc_110->rotation.z), matrix);
+
+	matrix->_41 += struc_110->position.x;
+	matrix->_42 += struc_110->position.y;
+	matrix->_43 += struc_110->position.z;
 }
 
 void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
@@ -673,52 +726,14 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 	if(hrc_data->flags & 0x400) memcpy(&hrc_data->field_24, root_matrix, sizeof(*root_matrix));
 
-	bool is_external_mesh = isExternalMesh(hrc_data);
+	ExternalMesh* external_mesh = getExternalMesh(hrc_data);
+	bool is_external_mesh = external_mesh != nullptr;
 	if(is_external_mesh)
 	{
 		// Start from the animation's root motion (e.g. the height that stands the model on the floor, the train
 		// jump), then apply the struc_110 transforms on top of it, exactly like the vanilla path below
 		memcpy(&world_matrix, root_matrix, sizeof(world_matrix));
-
-		if(struc_110)
-		{
-			struct matrix scale_matrix;
-
-			if(struc_110->scale_factor != 1.0f)
-			{
-				float scale_factor = struc_110->scale_factor;
-
-				world_matrix._41 *= scale_factor;
-				world_matrix._42 *= scale_factor;
-				world_matrix._43 *= scale_factor;
-
-				uniform_scaling_matrix(scale_factor, &scale_matrix);
-				multiply_matrix_unary(&world_matrix, &scale_matrix);
-			}
-
-			if(struc_110->scale.x != 1.0f || struc_110->scale.y != 1.0f || struc_110->scale.z != 1.0f)
-			{
-				scaling_matrix(&struc_110->scale, &scale_matrix);
-				multiply_matrix_unary(&world_matrix, &scale_matrix);
-
-				world_matrix._41 *= struc_110->scale.x;
-				world_matrix._42 *= struc_110->scale.y;
-				world_matrix._43 *= struc_110->scale.z;
-			}
-
-			if(*ff7_externals.model_mode & MDL_USE_STRUC110_MATRIX)
-			{
-				multiply_matrix_unary(&world_matrix, &struc_110->matrix);
-			}
-
-			if(struc_110->rotation.y != 0.0) rotate_matrix_y(DEG2RAD(struc_110->rotation.y), &world_matrix);
-			if(struc_110->rotation.x != 0.0) rotate_matrix_x(DEG2RAD(struc_110->rotation.x), &world_matrix);
-			if(struc_110->rotation.z != 0.0) rotate_matrix_z(DEG2RAD(struc_110->rotation.z), &world_matrix);
-
-			world_matrix._41 += struc_110->position.x;
-			world_matrix._42 += struc_110->position.y;
-			world_matrix._43 += struc_110->position.z;
-		}
+		apply_struc110_transforms(&world_matrix, struc_110);
 
 		// world_matrix already includes the root motion, so it's used as is (like root_matrix in the vanilla path)
 		if(hrc_data->flags & 0x800) memcpy(&hrc_data->field_64, &world_matrix, sizeof(world_matrix));
@@ -728,6 +743,20 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 			struc_110->bone_positions[0].x = world_matrix._41;
 			struc_110->bone_positions[0].y = world_matrix._42;
 			struc_110->bone_positions[0].z = world_matrix._43;
+		}
+
+		// When the gltf animates its own root node, draw the model with that root motion instead, so new
+		// animations can carry their own (e.g. a different standing height). The game keeps reading its own above.
+		std::string anim_name = get_external_mesh_anim_name(anim_header);
+		struct matrix gltf_root_matrix;
+		float model_scale = gl_get_field_model_scale();
+		if(external_mesh->getRootMotionMatrix(anim_name, current_frame, model_scale, &gltf_root_matrix))
+		{
+			if((trace_all || trace_loaders) && external_mesh->rootMotionChecked.insert(anim_name).second)
+				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
+
+			memcpy(&world_matrix, &gltf_root_matrix, sizeof(world_matrix));
+			apply_struc110_transforms(&world_matrix, struc_110);
 		}
 	}
 	else
@@ -899,11 +928,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 						{
 							auto externalMesh = reinterpret_cast<ExternalMesh*>(polygon_set->polygon_data->field_48);
 
-							std::string animFullName = anim_header->file.pc_name;
-							std::string animName = animFullName.substr(animFullName.length() - 6, 4);
-							std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
-
-							externalMesh->skins[0].current_anim = animName;
+							externalMesh->skins[0].current_anim = get_external_mesh_anim_name(anim_header);
 							externalMesh->skins[0].current_frame = current_frame;
 						}
 						if(hrc_data->field_4 && hrc_data->flags & 0x100000) ff7gl_field_78(polygon_set, game_object);

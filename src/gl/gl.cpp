@@ -417,19 +417,26 @@ uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, ch
 	return true;
 }
 
-void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
-{	
-	if(gl_defer_external_mesh(externalMesh, lightdata)) return;
-
+// The current field's model scale (from its model loader data), or 0 when no field is loaded
+float gl_get_field_model_scale()
+{
 	byte *level_data = *ff7_externals.field_level_data_pointer;
-	if (!level_data)
-	{
-		return;
-	}
+	if (!level_data) return 0.0f;
 
 	uint32_t model_loader_offset = *(uint32_t *)(level_data + 0x0E);
 	auto pScale = (short*)(level_data + model_loader_offset + 0x8);
-	auto scale = static_cast<float>((*pScale)) / 128.0f;
+	return static_cast<float>((*pScale)) / 128.0f;
+}
+
+void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
+{
+	if(gl_defer_external_mesh(externalMesh, lightdata)) return;
+
+	auto scale = gl_get_field_model_scale();
+	if (scale == 0.0f)
+	{
+		return;
+	}
 
 	std::array<struct matrix, MAX_BONE_MATRICES> matrix_palette;
 	size_t jointCount = 0;

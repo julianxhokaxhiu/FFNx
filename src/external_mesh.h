@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <string>
 #include <toml++/toml.h>
 
@@ -78,6 +79,10 @@ struct KeyFrame
 struct Animation
 {
     std::vector<KeyFrame> keyFrames;
+
+    // Keys of the skeleton's root node (the non-joint parent of the top joint), if the file animates it
+    std::vector<vector3<float>> rootTranslation;
+    std::vector<vector4<float>> rootRotation;
 };
 
 class ExternalMesh
@@ -91,11 +96,15 @@ public:
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
+    bool getRootMotionMatrix(const std::string& animName, int frame, float translationScale, struct matrix* outMatrix);
 
     std::vector<Shape> shapes;
 	std::map<std::string, Material> materials;
     std::vector<Skin> skins;
     std::map<std::string, Animation> animations;
+
+    // Animations already reported as using the gltf root motion (trace_loaders)
+    std::set<std::string> rootMotionChecked;
 private:
     void loadConfig(const std::string& path);
 
