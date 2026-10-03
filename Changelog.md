@@ -33,6 +33,7 @@
 - External textures: Change texture color for model field external textures, depending on the current map ( https://github.com/julianxhokaxhiu/FFNx/pull/981 )
 - Widescreen: Fix text dialogues in battles when using 16:9 ( https://github.com/julianxhokaxhiu/FFNx/pull/960 )
 - Movie: Add support for Music/Voice layer for external movies
+- Voice: Add main character and enemy voice actions (attack, magic, etc.)
 
 ## FF8 Remastered
 

@@ -1731,6 +1731,7 @@ struct ff8_externals
 	char* unk_1CF3E48;
 	DWORD* dword_1CF3EE0;
 	DWORD* battle_current_actor_talking;
+	int (*battle_text_task_sub_5009B0)(int);
 	uint32_t sub_502380;
 	uint32_t sub_50A790;
 	uint32_t sub_50B2A0;

@@ -29,6 +29,7 @@
 #include "utils.h"
 
 #include "ff8/engine.h"
+#include "ff8/kernel_magic.h"
 
 #include <queue>
 
@@ -117,6 +118,9 @@ float voice_volume = -1.0f;
 std::array<battle_text_aux_data, 64> other_battle_display_text_queue;
 std::queue<short> display_string_actor_queue;
 std::map<int, opcode_message_status> current_opcode_message_status;
+battle_text_aux_data ff8_battle_voice_data;
+std::string ff8_battle_voice_actor;
+std::string ff8_battle_voice_command;
 
 //=============================================================================
 
@@ -187,68 +191,125 @@ bool play_battle_dialogue_voice(short enemy_id, std::string tokenized_dialogue)
 	return nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
 }
 
-bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenized_dialogue, int page_count)
+bool play_battle_named_cmd_voice(const std::string &actor_name, const std::string &command_name, const char *suffix, bool allow_generic)
+{
+	char name[MAX_PATH];
+	bool playing = false;
+
+	if (!command_name.empty())
+	{
+		snprintf(name, sizeof(name), "_battle/%s/cmd_%s_%s", actor_name.c_str(), command_name.c_str(), suffix);
+		playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
+
+		if (!playing && allow_generic)
+		{
+			snprintf(name, sizeof(name), "_battle/%s/cmd_%s", actor_name.c_str(), command_name.c_str());
+			playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
+		}
+	}
+
+	return playing;
+}
+
+bool play_battle_cmd_voice(byte char_id, cmd_id command_id, std::string tokenized_dialogue, int page_count, std::string actor_name = "", std::string command_name = "")
 {
 	char name[MAX_PATH];
 	bool playing;
+
+	if (actor_name.empty())
+	{
+		snprintf(name, sizeof(name), "char_%02X", char_id);
+		actor_name = name;
+	}
 
 	char page = 'a' + page_count;
 	if (page > 'z') page = 'z';
-	sprintf(name, "_battle/char_%02X/cmd_%02X_", char_id, command_id);
-
-	switch(command_id)
+	char suffix[] = {page, '\0'};
+	playing = ff8 && play_battle_named_cmd_voice(actor_name, command_name, suffix, page_count == 0);
+	if (!playing)
 	{
-	case cmd_id::CMD_MANIPULATE:
-		// 2 cases: manipulated, couldnt
-	case cmd_id::CMD_STEAL:
-	case cmd_id::CMD_MUG:
-		// 3 cases: nothing, couldnt, stole
-		snprintf(name + strlen(name), sizeof(name) - strlen(name), "%s", split(tokenized_dialogue, "_")[0].c_str());
-		break;
-	default:
-		sprintf(name + strlen(name), "%c", page);
-		break;
-	}
+		snprintf(name, sizeof(name), "_battle/%s/cmd_%02X_", actor_name.c_str(), command_id);
 
-	playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
+		if (ff8)
+			snprintf(name + strlen(name), sizeof(name) - strlen(name), "%c", page);
+		else switch(command_id)
+		{
+		case cmd_id::CMD_MANIPULATE:
+			// 2 cases: manipulated, couldnt
+		case cmd_id::CMD_STEAL:
+		case cmd_id::CMD_MUG:
+			// 3 cases: nothing, couldnt, stole
+			snprintf(name + strlen(name), sizeof(name) - strlen(name), "%s", split(tokenized_dialogue, "_")[0].c_str());
+			break;
+		default:
+			snprintf(name + strlen(name), sizeof(name) - strlen(name), "%c", page);
+			break;
+		}
+
+		playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
+	}
 
 	if(!playing && page_count == 0)
 	{
-		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
+		snprintf(name, sizeof(name), "_battle/%s/cmd_%02X", actor_name.c_str(), command_id);
 		playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
 	}
 
 	return playing;
 }
 
-bool play_battle_char_action_voice(byte char_id, byte command_id, short action_id)
+bool play_battle_char_action_voice(byte char_id, byte command_id, short action_id, std::string actor_name = "", std::string command_name = "")
 {
 	char name[MAX_PATH];
 	bool playing;
 
-	sprintf(name, "_battle/char_%02X/cmd_%02X_%04X", char_id, command_id, action_id);
-	playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
+	if (actor_name.empty())
+	{
+		snprintf(name, sizeof(name), "char_%02X", char_id);
+		actor_name = name;
+	}
+
+	char suffix[5];
+	snprintf(suffix, sizeof(suffix), "%04X", static_cast<uint16_t>(action_id));
+	playing = ff8 && play_battle_named_cmd_voice(actor_name, command_name, suffix, true);
+	if (!playing)
+	{
+		snprintf(name, sizeof(name), "_battle/%s/cmd_%02X_%04X", actor_name.c_str(), command_id, action_id);
+		playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
+	}
 
 	if(!playing)
 	{
-		sprintf(name, "_battle/char_%02X/cmd_%02X", char_id, command_id);
+		snprintf(name, sizeof(name), "_battle/%s/cmd_%02X", actor_name.c_str(), command_id);
 		playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
 	}
 
 	return playing;
 }
 
-bool play_battle_enemy_action_voice(uint16_t enemy_id, byte command_id, short action_id)
+bool play_battle_enemy_action_voice(uint16_t enemy_id, byte command_id, short action_id, std::string actor_name = "", std::string command_name = "")
 {
 	char name[MAX_PATH];
 	bool playing;
 
-	sprintf(name, "_battle/enemy_%04X/cmd_%02X_%04X", enemy_id, command_id, action_id);
-	playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
+	if (actor_name.empty())
+	{
+		snprintf(name, sizeof(name), "enemy_%04X", enemy_id);
+		actor_name = name;
+	}
+
+	char suffix[5];
+	snprintf(suffix, sizeof(suffix), "%04X", static_cast<uint16_t>(action_id));
+	playing = ff8 && play_battle_named_cmd_voice(actor_name, command_name, suffix, true);
+	if (!playing)
+	{
+		snprintf(name, sizeof(name), "_battle/%s/cmd_%02X_%04X", actor_name.c_str(), command_id, action_id);
+		playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
+	}
 
 	if(!playing)
 	{
-		sprintf(name, "_battle/enemy_%04X/cmd_%02X", enemy_id, command_id);
+		snprintf(name, sizeof(name), "_battle/%s/cmd_%02X", actor_name.c_str(), command_id);
 		playing = nxAudioEngine.playVoice(name, 0, voice_volume, *common_externals.field_game_moment);
 	}
 
@@ -929,6 +990,61 @@ int ff7_menu_tutorial_render()
 
 //=============================================================================
 
+std::string ff8_battle_voice_actor_name(int actor_id)
+{
+	return ff8_battle_actor_name.contains(actor_id) ? ff8_decode_text(ff8_battle_actor_name[actor_id]).substr(0, MAX_PATH) : "any";
+}
+
+int ff8_battle_action_voice(int task)
+{
+	const byte *action = *(const byte **)(task + 4);
+	byte actor_id = action[0];
+	byte command_id = action[1];
+	uint16_t action_id = *(const uint16_t *)(action + 4);
+
+	ff8_battle_voice_data = battle_text_aux_data();
+	ff8_battle_voice_data.command_id = static_cast<cmd_id>(command_id);
+	ff8_battle_voice_actor = tokenize_text(ff8_battle_voice_actor_name(actor_id));
+	const char *command_text = ff8_get_battle_command_name(command_id);
+	ff8_battle_voice_command = command_text ? tokenize_text(ff8_decode_text(command_text)) : "";
+	set_voice_volume();
+	if (trace_all || trace_battle_text)
+		ffnx_trace("[BATTLE ACTION]: actor=%s,actor_id=%u,command=%s,command_id=%02X,action_id=%04X\n", ff8_battle_voice_actor.c_str(), actor_id, ff8_battle_voice_command.c_str(), command_id, action_id);
+
+	if (actor_id < 3)
+	{
+		ff8_battle_voice_data.text_type = display_type::CHAR_CMD;
+		ff8_battle_voice_data.char_id = ff8_externals.character_data_1CFE74C[actor_id];
+		play_battle_char_action_voice(ff8_battle_voice_data.char_id, command_id, action_id, ff8_battle_voice_actor, ff8_battle_voice_command);
+	}
+	else if (actor_id < 11)
+	{
+		uint16_t enemy_id = *(byte *)(ff8_externals.battle_entities_1D27BCB + 208 * actor_id);
+		play_battle_enemy_action_voice(enemy_id, command_id, action_id, ff8_battle_voice_actor, ff8_battle_voice_command);
+	}
+
+	return ((int (*)(int))ff8_externals.sub_50A790)(task);
+}
+
+int ff8_battle_command_voice(int task)
+{
+	if (!*ff8_externals.battle_result_state_1CFF6E7 &&
+		*(const short *)(task + 2) == 8 && *(const byte *)(task + 10) == 3 &&
+		*(const byte *)(task + 11) == 86 && ff8_battle_voice_data.text_type == display_type::CHAR_CMD)
+	{
+		std::string decoded_text = ff8_decode_text(*(const char **)(task + 4));
+		std::string tokenized_dialogue = tokenize_text(decoded_text);
+		set_voice_volume();
+		play_battle_cmd_voice(ff8_battle_voice_data.char_id, ff8_battle_voice_data.command_id,
+			tokenized_dialogue, ff8_battle_voice_data.page_count++, ff8_battle_voice_actor, ff8_battle_voice_command);
+		if (trace_all || trace_battle_text)
+			ffnx_trace("[BATTLE COMMAND]: actor=%s,command=%s,command_id=%02X,text=%s\n",
+				ff8_battle_voice_actor.c_str(), ff8_battle_voice_command.c_str(), ff8_battle_voice_data.command_id, decoded_text.c_str());
+	}
+
+	return ff8_externals.battle_text_task_sub_5009B0(task);
+}
+
 char* ff8_battle_get_monster_name(int idx)
 {
 	char* ret = *((char**)*(ff8_externals.battle_char_struct_dword_1D27B10 + 0x34 * idx));
@@ -1248,7 +1364,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			std::string decoded_text = ff8_decode_text(win->text_data1).substr(0, MAX_PATH);
 			std::string tokenized_dialogue = tokenize_text(decoded_text);
 			int idx = LOBYTE(*ff8_externals.battle_current_actor_talking);
-			std::string actor_name = ff8_battle_actor_name.contains(idx) ? ff8_decode_text(ff8_battle_actor_name[idx]).substr(0, MAX_PATH) : "any";
+			std::string actor_name = ff8_battle_voice_actor_name(idx);
 			std::string tokenized_actor = tokenize_text(actor_name);
 
 			if (trace_all || trace_opcodes || trace_battle_text) ffnx_trace("[BATTLE]: scene_id=%u,actor=%s,text=%s\n", *ff8_externals.battle_encounter_id, actor_name.c_str(), decoded_text.c_str());
@@ -1426,6 +1542,8 @@ void voice_init()
 		replace_call(ff8_externals.sub_4A0C00 + 0x5F, ff8_show_dialog);
 
 		// == Battle ==
+		replace_call_function(ff8_externals.sub_502380 + 0x51, ff8_battle_action_voice);
+		replace_call_function(ff8_externals.sub_500CC0 + 0x55, ff8_battle_command_voice);
 		replace_function(ff8_externals.battle_get_monster_name_sub_495100, ff8_battle_get_monster_name);
 		replace_function(ff8_externals.battle_get_actor_name_sub_47EAF0, ff8_battle_get_actor_name);
 

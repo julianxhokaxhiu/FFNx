@@ -956,6 +956,7 @@ void ff8_find_externals()
 
 	ff8_externals.battle_current_actor_talking = (DWORD*)get_absolute_value(ff8_externals.sub_485610, 0x36E);
 
+	ff8_externals.battle_text_task_sub_5009B0 = (int (*)(int))get_relative_call(ff8_externals.sub_500CC0, 0x55);
 	ff8_externals.sub_502380 = get_relative_call(ff8_externals.sub_500CC0, 0x69);
 	ff8_externals.sub_50A790 = get_relative_call(ff8_externals.sub_502380, 0x51);
 	ff8_externals.sub_50B2A0 = get_absolute_value(ff8_externals.sub_50A790, 0x62);

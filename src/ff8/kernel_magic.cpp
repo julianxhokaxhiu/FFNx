@@ -175,6 +175,18 @@ static char *ff8_kernel_text(int section, uint16_t text_offset)
 	return (char *)(buffer + KERNEL_SECTION_OFFSET(buffer, section) + text_offset);
 }
 
+const char *ff8_get_battle_command_name(int command_id)
+{
+	const uint8_t *buffer = (const uint8_t *)ff8_externals.unk_1CF3E48;
+	const uint32_t command_stride = 8;
+	const uint32_t command_count = (exe_data_section_offsets[1] - exe_data_section_offsets[0]) / command_stride;
+	if (!buffer || command_id < 0 || command_id >= command_count) return nullptr;
+
+	uint16_t text_offset = *(const uint16_t *)(buffer + exe_data_section_offsets[0] + command_stride * command_id);
+	if (text_offset == KERNEL_NO_TEXT) return nullptr;
+	return ff8_kernel_text(KERNEL_FIRST_TEXT_SEC, text_offset);
+}
+
 // Magic entry text offsets: name at +0, description at +2 (both uint16).
 static uint16_t ff8_magic_text_offset(int id, int field_offset)
 {
