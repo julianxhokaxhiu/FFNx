@@ -26,6 +26,7 @@
 #include "../ff7.h"
 #include "../log.h"
 #include "../redirect.h"
+#include "defs.h"
 
 FILE *open_lgp_file(char *filename, uint32_t mode)
 {
@@ -212,6 +213,10 @@ struct lgp_file *lgp_open_file(char *filename, uint32_t lgp_num)
 	char name[_MAX_FNAME + _MAX_EXT];
 
 	_splitpath(filename, 0, 0, fname, ext);
+
+	// Limit break animation packs (magic.lgp, e.g. LIMIT/BLAVER.A00): gltf battle exports name their animations
+	// after the pack (BLAVER_00, BLAVER_01, ...)
+	if(!_stricmp(ext, ".a00")) note_limit_pack(fname);
 
 	if(!direct_mode_path.empty())
 	{

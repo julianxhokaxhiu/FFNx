@@ -548,6 +548,23 @@ static const void* get_character_key(struct hrc_data *hrc_data, struct struc_110
 	return struc_110 ? static_cast<const void*>(struc_110) : static_cast<const void*>(hrc_data);
 }
 
+// The limit break animation pack the game opened last (magic.lgp, e.g. BLAVER for LIMIT/BLAVER.A00): gltf battle
+// exports name limit animations after it (BLAVER_00, BLAVER_01, ...)
+static std::string last_limit_pack_name;
+
+void note_limit_pack(const char* name)
+{
+	last_limit_pack_name = name;
+	std::transform(last_limit_pack_name.begin(), last_limit_pack_name.end(), last_limit_pack_name.begin(), [](unsigned char c) { return std::toupper(c); });
+
+	if (trace_all || trace_loaders) ffnx_trace("External mesh: limit break pack %s\n", last_limit_pack_name.c_str());
+}
+
+const std::string& last_limit_pack()
+{
+	return last_limit_pack_name;
+}
+
 // In battle, animations have no name: a battle actor's model data holds its hrc (+0x04) and, from +0xA0, its
 // list of animations (enemies' lists start 20 slots further on). A gltf names them by their place in the list,
 // counted from the first animation (ANIM_00, ANIM_01, ...).
@@ -576,6 +593,16 @@ static std::string get_battle_anim_name(struct hrc_data *hrc_data, struct anim_h
 
 			char name[16];
 			sprintf(name, "ANIM_%02d", slot - first);
+			return name;
+		}
+
+		// Limit breaks play animations from their own pack (not in the list): the actor's state flags the limit
+		// and counts through the pack, and gltf exports name them after the pack (BLAVER_00, ...)
+		auto& state = ff7_externals.g_battle_model_state[actor];
+		if (state.setForLimitBreaks && !last_limit_pack().empty())
+		{
+			char name[64];
+			sprintf(name, "%s_%02u", last_limit_pack().c_str(), state.tableRelativeModelAnimIdx);
 			return name;
 		}
 	}

@@ -24,6 +24,7 @@
 #include "ff7.h"
 #include <windows.h>
 #include <stdint.h>
+#include <string>
 
 // kernel
 void kernel2_reset_counters();
@@ -102,6 +103,9 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 int battle_sub_684CC6(hrc_data *a1, ff7_game_obj *game_object);
 void fill_light_data(struct light_data* pOutLightData, struct ff7_polygon_set *polygon_set);
 void update_view_matrix(struct ff7_game_obj *game_object);
+// Battle limit breaks: the limit animation pack the game opened last (e.g. BLAVER for LIMIT/BLAVER.A00)
+void note_limit_pack(const char* name);
+const std::string& last_limit_pack();
 
 // loaders
 struct anim_header *load_animation(struct file_context *file_context, char *filename);

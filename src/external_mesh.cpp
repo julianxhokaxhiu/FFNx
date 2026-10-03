@@ -540,10 +540,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         if (anim.name == nullptr) continue;
 
         // Matched case-insensitively against the game's animation names: the 4 letters of a field .a file, or
-        // the whole ANIM_NN name of a battle animation (its number in the model's animation list)
+        // the whole name of a battle animation (ANIM_NN: its number in the model's list; <PACK>_NN: a limit
+        // break animation from that pack, e.g. BLAVER_02)
         std::string animName = anim.name;
         std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
-        if (animName.rfind("ANIM_", 0) != 0) animName = animName.substr(0, 4);
+        if (animName.find('_') == std::string::npos) animName = animName.substr(0, 4);
 
         Animation outAnim;
         std::map<const cgltf_accessor*, std::vector<float>> timelines;
@@ -1614,3 +1615,4 @@ ExternalMeshInstance* getBattleActorCharacter(const void* actorKey)
     auto it = battleActorCharacters.find(actorKey);
     return it != battleActorCharacters.end() ? it->second.first : nullptr;
 }
+
