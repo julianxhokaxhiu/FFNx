@@ -516,6 +516,32 @@ static void follow_gltf_bone(struct matrix *weapon_matrix, struct hrc_data *hrc_
 	weapon_matrix->_43 += to.z - from.z;
 }
 
+// The battle actor drawn with this hrc: the one whose model data holds it (+0x04) and whose position matches the
+// struc_110 being drawn (identical enemies share one hrc), or -1
+static int find_battle_actor_index(struct hrc_data *hrc_data, struct struc_110 *struc_110)
+{
+	constexpr int MODEL_DATA_HRC = 0x04 / 4;
+	int best = -1;
+	float bestDistance = 0.0f;
+
+	for (int actor = 0; actor < 10; actor++)
+	{
+		auto& state = ff7_externals.g_battle_model_state[actor];
+		if (!state.modelDataPtr || state.modelDataPtr[MODEL_DATA_HRC] != (uint32_t)hrc_data) continue;
+
+		float dx = struc_110 ? state.modelPosition.x - struc_110->position.x : 0.0f;
+		float dz = struc_110 ? state.modelPosition.z - struc_110->position.z : 0.0f;
+		float distance = dx * dx + dz * dz;
+		if (best < 0 || distance < bestDistance)
+		{
+			best = actor;
+			bestDistance = distance;
+		}
+	}
+
+	return best;
+}
+
 // What tells characters sharing one model apart. In battle the game draws every actor through one scratch
 // struc_110, so the key is the battle actor using this hrc whose position matches it; elsewhere each model
 // has its own struc_110.
@@ -523,26 +549,8 @@ static const void* get_character_key(struct hrc_data *hrc_data, struct struc_110
 {
 	if (getmode_cached()->driver_mode == MODE_BATTLE && struc_110)
 	{
-		constexpr int MODEL_DATA_HRC = 0x04 / 4;
-		const void* best = nullptr;
-		float bestDistance = 0.0f;
-
-		for (int actor = 0; actor < 10; actor++)
-		{
-			auto& state = ff7_externals.g_battle_model_state[actor];
-			if (!state.modelDataPtr || state.modelDataPtr[MODEL_DATA_HRC] != (uint32_t)hrc_data) continue;
-
-			float dx = state.modelPosition.x - struc_110->position.x;
-			float dz = state.modelPosition.z - struc_110->position.z;
-			float distance = dx * dx + dz * dz;
-			if (!best || distance < bestDistance)
-			{
-				best = &state;
-				bestDistance = distance;
-			}
-		}
-
-		if (best) return best;
+		int actor = find_battle_actor_index(hrc_data, struc_110);
+		if (actor >= 0) return &ff7_externals.g_battle_model_state[actor];
 	}
 
 	return struc_110 ? static_cast<const void*>(struc_110) : static_cast<const void*>(hrc_data);
@@ -565,56 +573,33 @@ const std::string& last_limit_pack()
 	return last_limit_pack_name;
 }
 
-// In battle, animations have no name: a battle actor's model data holds its hrc (+0x04) and, from +0xA0, its
-// list of animations (enemies' lists start 20 slots further on). A gltf names them by their place in the list,
-// counted from the first animation (ANIM_00, ANIM_01, ...).
-static std::string get_battle_anim_name(struct hrc_data *hrc_data, struct anim_header *anim_header)
+// In battle, animations have no name. The actor's battle state holds the number of the animation it plays
+// (runningAnimIdx), which battle gltf exports use (ANIM_00, ANIM_01, ...). Limit breaks play animations from their
+// own pack: the state flags the limit and counts through the pack, and exports name them after it (BLAVER_00).
+static std::string get_battle_anim_name(struct hrc_data *hrc_data, struct struc_110 *struc_110)
 {
-	constexpr int MODEL_DATA_HRC = 0x04 / 4, MODEL_DATA_ANIMATIONS = 0xA0 / 4, MAX_SLOTS = 96;
+	int actor = find_battle_actor_index(hrc_data, struc_110);
+	if (actor < 0) return "";
 
-	for (int actor = 0; actor < 10; actor++)
+	auto& state = ff7_externals.g_battle_model_state[actor];
+	char name[64];
+
+	if (state.setForLimitBreaks && !last_limit_pack().empty())
 	{
-		uint32_t *model_data = ff7_externals.g_battle_model_state[actor].modelDataPtr;
-		if (!model_data || model_data[MODEL_DATA_HRC] != (uint32_t)hrc_data) continue;
-
-		int first = -1;
-		for (int slot = 0; slot < MAX_SLOTS; slot++)
-		{
-			auto entry = reinterpret_cast<struct anim_header *>(model_data[MODEL_DATA_ANIMATIONS + slot]);
-
-			// The list starts at the first slot holding a real animation (empty slots and stray values before it)
-			if (first < 0)
-			{
-				if (entry == anim_header || (reinterpret_cast<uint32_t>(entry) >= 0x10000 && !IsBadReadPtr(entry, sizeof(*entry)) && entry->num_frames > 0 && entry->num_frames < 10000 && entry->num_bones < 256)) first = slot;
-				else continue;
-			}
-
-			if (entry != anim_header) continue;
-
-			char name[16];
-			sprintf(name, "ANIM_%02d", slot - first);
-			return name;
-		}
-
-		// Limit breaks play animations from their own pack (not in the list): the actor's state flags the limit
-		// and counts through the pack, and gltf exports name them after the pack (BLAVER_00, ...)
-		auto& state = ff7_externals.g_battle_model_state[actor];
-		if (state.setForLimitBreaks && !last_limit_pack().empty())
-		{
-			char name[64];
-			sprintf(name, "%s_%02u", last_limit_pack().c_str(), state.tableRelativeModelAnimIdx);
-			return name;
-		}
+		sprintf(name, "%s_%02u", last_limit_pack().c_str(), state.tableRelativeModelAnimIdx);
+		return name;
 	}
 
-	return "";
+	sprintf(name, "ANIM_%02u", state.runningAnimIdx);
+
+	return name;
 }
 
 // Name gltf animations are matched against: the 4 characters of the game's .a file name, uppercased (fields),
 // or ANIM_NN (battle)
-static std::string get_external_mesh_anim_name(struct anim_header *anim_header, struct hrc_data *hrc_data)
+static std::string get_external_mesh_anim_name(struct anim_header *anim_header, struct hrc_data *hrc_data, struct struc_110 *struc_110)
 {
-	if (getmode_cached()->driver_mode == MODE_BATTLE) return get_battle_anim_name(hrc_data, anim_header);
+	if (getmode_cached()->driver_mode == MODE_BATTLE) return get_battle_anim_name(hrc_data, struc_110);
 
 	std::string animFullName = anim_header->file.pc_name;
 	if(animFullName.length() < 6) return "";
@@ -932,7 +917,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 		// When the gltf animates its own root node, draw the model with that root motion instead, so new
 		// animations can carry their own (e.g. a different standing height). The game keeps reading its own above.
-		std::string anim_name = get_external_mesh_anim_name(anim_header, hrc_data);
+		std::string anim_name = get_external_mesh_anim_name(anim_header, hrc_data, struc_110);
 		external_mesh_clock = external_mesh->getAnimationClock(anim_name);
 		struct matrix gltf_root_matrix;
 		float model_scale = gl_get_external_mesh_scale();
