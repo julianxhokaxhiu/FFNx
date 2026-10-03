@@ -42,6 +42,14 @@ struct Material
     int frameInterval = 0;
 };
 
+// The glTF material's alpha mode: opaque, cut out below a cutoff (mask), or alpha blended
+enum class ShapeAlphaMode
+{
+    OPAQUE_MODE,
+    MASK_MODE,
+    BLEND_MODE
+};
+
 struct Shape
 {
     std::vector<nvertex> vertices;
@@ -53,6 +61,8 @@ struct Shape
     vector3<float> max;
     Material* pMaterial = nullptr;
     bool isDoubleSided = false;
+    ShapeAlphaMode alphaMode = ShapeAlphaMode::OPAQUE_MODE;
+    float alphaCutoff = 0.5f; // MASK: texels below this are cut out
 };
 
 struct Joint

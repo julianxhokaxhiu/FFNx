@@ -559,6 +559,9 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 	newRenderer.doDepthTest(true);
 	newRenderer.doDepthWrite(true);
 
+	// Alpha comes from the texture only: with alpha modulation the vertex alpha (0.5 for models) would halve it
+	newRenderer.doModulateAlpha(false);
+
 	struct matrix* pProjMatrix = nullptr;
 	if(!ff8)
 	{
@@ -592,6 +595,21 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 		// drawWithLighting() turns the program into its lighting variant, so every part starts from SMOOTH again
 		newRenderer.setInterpolationQualifier(SMOOTH);
 		newRenderer.setCullMode(shape.isDoubleSided ? RendererCullMode::DISABLED : RendererCullMode::FRONT);
+
+		// The material's alpha mode, not the game's current blend state: opaque and mask parts are drawn without
+		// blending (a mask cuts out texels below its cutoff), so the half-transparent texels texture filtering
+		// makes along cut-out edges can't hide whatever is drawn after them
+		if (shape.alphaMode == ShapeAlphaMode::BLEND_MODE)
+		{
+			newRenderer.setBlendMode(RendererBlendMode::BLEND_NONE); // Alpha blended for external textures
+			newRenderer.doAlphaTest(false);
+		}
+		else
+		{
+			newRenderer.setBlendMode(RendererBlendMode::BLEND_DISABLED);
+			newRenderer.doAlphaTest(shape.alphaMode == ShapeAlphaMode::MASK_MODE);
+			newRenderer.setAlphaRef(RendererAlphaFunc::GEQUAL, shape.alphaCutoff);
+		}
 
 		externalMesh->bindField3dVertexBuffer(vertexOffset, shape.vertices.size());
 		externalMesh->bindField3dIndexBuffer(indexOffset, shape.indices.size());

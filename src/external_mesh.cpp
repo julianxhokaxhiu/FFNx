@@ -254,6 +254,9 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
             auto material = primitive.material;
             outShape.isDoubleSided = material != nullptr && material->double_sided;
+            if (material != nullptr && material->alpha_mode == cgltf_alpha_mode_mask) outShape.alphaMode = ShapeAlphaMode::MASK_MODE;
+            else if (material != nullptr && material->alpha_mode == cgltf_alpha_mode_blend) outShape.alphaMode = ShapeAlphaMode::BLEND_MODE;
+            if (material != nullptr) outShape.alphaCutoff = material->alpha_cutoff;
 
 			// Look the texture up by the same name its DDS files were loaded under
 			auto texture = material != nullptr ? material->pbr_metallic_roughness.base_color_texture.texture : nullptr;
