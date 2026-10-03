@@ -1144,6 +1144,22 @@ ExternalMeshInstance::ExternalMeshInstance(std::shared_ptr<ExternalMesh> sharedM
     if (!mesh->skins.empty()) joints.resize(mesh->skins[0].joints.size());
 }
 
+// The state for one character drawn with this model (see ExternalMeshInstance::variants)
+ExternalMeshInstance* ExternalMeshInstance::variantFor(const void* key)
+{
+    auto& variant = variants[key];
+    if (!variant)
+    {
+        variant = std::make_unique<ExternalMeshInstance>(mesh);
+        variant->equippedWeapon = equippedWeapon;
+        variant->hidden = hidden;
+        if (trace_all || trace_loaders) ffnx_trace("External mesh: character %p gets its own state for %p (%u in total)\n", this, key, (unsigned)variants.size());
+    }
+
+    activeVariant = variant.get();
+    return activeVariant;
+}
+
 // Seconds since the game switched this character to animName (restarts on every switch)
 float ExternalMeshInstance::getAnimationClock(const std::string& animName)
 {

@@ -1450,6 +1450,10 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
             internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
             internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA);
             break;
+        case RendererBlendMode::BLEND_FACTOR:
+            internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
+            internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);
+            break;
         case RendererBlendMode::BLEND_ADD:
             internalState.state |= BGFX_STATE_BLEND_EQUATION(BGFX_STATE_BLEND_EQUATION_ADD);
             internalState.state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE);
@@ -1483,7 +1487,7 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
 
         if (internalState.bDoDepthWrite) internalState.state |= BGFX_STATE_WRITE_Z;
     }
-    bgfx::setState(internalState.state);
+    bgfx::setState(internalState.state, internalState.blendMode == RendererBlendMode::BLEND_FACTOR ? internalState.blendFactorRgba : 0);
 
     auto flags = keepBindings ? BGFX_DISCARD_STATE : BGFX_DISCARD_ALL;
     auto program = internalState.bIsSmoothSkinning ? getSkinnedProgram(backendProgram) : backendProgram;
@@ -2295,6 +2299,12 @@ void Renderer::isTLVertex(bool flag)
 void Renderer::setBlendMode(RendererBlendMode mode)
 {
     internalState.blendMode = mode;
+};
+
+void Renderer::setBlendFactor(float opacity)
+{
+    uint32_t value = static_cast<uint32_t>(std::clamp(opacity, 0.0f, 1.0f) * 255.0f + 0.5f);
+    internalState.blendFactorRgba = (value << 24) | (value << 16) | (value << 8) | value;
 };
 
 void Renderer::isTexture(bool flag)

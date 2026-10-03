@@ -168,6 +168,17 @@ void ff7gl_field_78(struct ff7_polygon_set *polygon_set, struct ff7_game_obj *ga
 	if(polygon_set->field_2C) hundred_data = polygon_set->hundred_data;
 	if(polygon_set->polygon_data) group_data = polygon_set->polygon_data->groupdata;
 
+	// A battle model replaced by a gltf takes the game's opacity for it (struc_173 color alpha: battle fade in,
+	// death fade out)
+	if(polygon_set->polygon_data && polygon_set->polygon_data->field_48)
+	{
+		auto character = reinterpret_cast<ExternalMeshInstance*>(polygon_set->polygon_data->field_48);
+		if(character->activeVariant) character = character->activeVariant;
+
+		bool in_battle = getmode_cached()->driver_mode == MODE_BATTLE;
+		character->fadeAlpha = (in_battle && polygon_set->has_struc_173 && polygon_set->struc_173) ? polygon_set->struc_173->color.a / 255.0f : 1.0f;
+	}
+
 	while(group_counter < polygon_set->numgroups)
 	{
 		uint32_t defer = false;
@@ -439,6 +450,38 @@ ExternalMeshInstance* getExternalMesh(struct hrc_data *hrc_data)
 		}
 	}
 	return external_mesh;
+}
+
+// What tells characters sharing one model apart. In battle the game draws every actor through one scratch
+// struc_110, so the key is the battle actor using this hrc whose position matches it; elsewhere each model
+// has its own struc_110.
+static const void* get_character_key(struct hrc_data *hrc_data, struct struc_110 *struc_110)
+{
+	if (getmode_cached()->driver_mode == MODE_BATTLE && struc_110)
+	{
+		constexpr int MODEL_DATA_HRC = 0x04 / 4;
+		const void* best = nullptr;
+		float bestDistance = 0.0f;
+
+		for (int actor = 0; actor < 10; actor++)
+		{
+			auto& state = ff7_externals.g_battle_model_state[actor];
+			if (!state.modelDataPtr || state.modelDataPtr[MODEL_DATA_HRC] != (uint32_t)hrc_data) continue;
+
+			float dx = state.modelPosition.x - struc_110->position.x;
+			float dz = state.modelPosition.z - struc_110->position.z;
+			float distance = dx * dx + dz * dz;
+			if (!best || distance < bestDistance)
+			{
+				best = &state;
+				bestDistance = distance;
+			}
+		}
+
+		if (best) return best;
+	}
+
+	return struc_110 ? static_cast<const void*>(struc_110) : static_cast<const void*>(hrc_data);
 }
 
 // In battle, animations have no name: a battle actor's model data holds its hrc (+0x04) and, from +0xA0, its
@@ -766,6 +809,9 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 	ExternalMeshInstance* external_mesh = getExternalMesh(hrc_data);
 	bool is_external_mesh = external_mesh != nullptr;
+
+	// Characters sharing the game's model (identical enemies) each keep their own animation state
+	if(external_mesh) external_mesh = external_mesh->variantFor(get_character_key(hrc_data, struc_110));
 	float external_mesh_clock = 0.0f;
 	if(is_external_mesh)
 	{
@@ -984,6 +1030,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 						if (polygon_set->polygon_data->field_48)
 						{
 							auto externalMesh = reinterpret_cast<ExternalMeshInstance*>(polygon_set->polygon_data->field_48);
+							if(externalMesh->activeVariant) externalMesh = externalMesh->activeVariant;
 
 							externalMesh->current_anim = get_external_mesh_anim_name(anim_header, hrc_data);
 							externalMesh->current_frame = current_frame;

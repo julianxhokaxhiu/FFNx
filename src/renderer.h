@@ -61,6 +61,7 @@ enum RendererBlendMode {
     BLEND_SUB,
     BLEND_25P,
     BLEND_NONE,
+    BLEND_FACTOR, // Blended with a constant opacity (setBlendFactor), e.g. a gltf model fading in or out
     BLEND_DISABLED = 999
 };
 
@@ -356,6 +357,7 @@ private:
 
         RendererCullMode cullMode = RendererCullMode::DISABLED;
         RendererBlendMode blendMode = RendererBlendMode::BLEND_NONE;
+        uint32_t blendFactorRgba = 0xFFFFFFFF;
         RendererPrimitiveType primitiveType = RendererPrimitiveType::PT_TRIANGLES;
 
         uint64_t state = BGFX_STATE_MSAA;
@@ -552,6 +554,7 @@ public:
     void isMovie(bool flag = false);
     void isTLVertex(bool flag = false);
     void setBlendMode(RendererBlendMode mode = RendererBlendMode::BLEND_NONE);
+    void setBlendFactor(float opacity);
     void isTexture(bool flag = false);
     void isFBTexture(bool flag = false);
     void isFullRange(bool flag = false);

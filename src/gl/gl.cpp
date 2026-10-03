@@ -447,8 +447,14 @@ float gl_get_field_model_scale()
 // Draws one character with its (possibly shared) gltf model
 void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* lightdata)
 {
+	// The character being drawn now, when several share this model (it may be queued, so resolve it before that)
+	if(character->activeVariant) character = character->activeVariant;
+
 	// Stands in for a game model drawn by another gltf (a battle weapon)
 	if(character->hidden) return;
+
+	// Fully faded out (or not faded in yet)
+	if(character->fadeAlpha <= 0.0f) return;
 
 	if(gl_defer_external_mesh(character, lightdata)) return;
 
@@ -643,6 +649,13 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 			newRenderer.setBlendMode(RendererBlendMode::BLEND_DISABLED);
 			newRenderer.doAlphaTest(shape.alphaMode == ShapeAlphaMode::MASK_MODE);
 			newRenderer.setAlphaRef(RendererAlphaFunc::GEQUAL, shape.alphaCutoff);
+		}
+
+		// The game fading the character in or out: blend the whole model with that opacity
+		if (character->fadeAlpha < 1.0f)
+		{
+			newRenderer.setBlendMode(RendererBlendMode::BLEND_FACTOR);
+			newRenderer.setBlendFactor(character->fadeAlpha);
 		}
 
 		externalMesh->bindField3dVertexBuffer(vertexOffset, shape.vertices.size());

@@ -244,6 +244,14 @@ public:
     std::string equippedWeapon;
     bool hidden = false;
 
+    // The game's opacity for this character (battle fade in, death fade out), 1 = opaque
+    float fadeAlpha = 1.0f;
+
+    // Characters sharing one loaded model (identical enemies share the game's model) each get their own state,
+    // keyed by their own placement data; the game draws them one after another, so the active one is drawn
+    ExternalMeshInstance* variantFor(const void* key);
+    ExternalMeshInstance* activeVariant = nullptr;
+
     std::string current_anim;
     int current_frame = 0;
     int current_frame_count = 0; // Frame count of the game's current animation (.a)
@@ -269,6 +277,8 @@ private:
     bool springTimeStarted = false;
     float springTimeAccumulator = 0.0f;
     std::vector<SpringCollider> springColliders; // Body capsules in field space for the current frame
+
+    std::map<const void*, std::unique_ptr<ExternalMeshInstance>> variants;
 };
 
 // Field models: the shared model for a gltf (loaded, or reused from the cache; outSource says which), or nullptr
