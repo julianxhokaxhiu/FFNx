@@ -441,9 +441,47 @@ ExternalMeshInstance* getExternalMesh(struct hrc_data *hrc_data)
 	return external_mesh;
 }
 
-// Name gltf animations are matched against: the 4 characters of the game's .a file name, uppercased
-static std::string get_external_mesh_anim_name(struct anim_header *anim_header)
+// In battle, animations have no name: a battle actor's model data holds its hrc (+0x04) and, from +0xA0, its
+// list of animations (enemies' lists start 20 slots further on). A gltf names them by their place in the list,
+// counted from the first animation (ANIM_00, ANIM_01, ...).
+static std::string get_battle_anim_name(struct hrc_data *hrc_data, struct anim_header *anim_header)
 {
+	constexpr int MODEL_DATA_HRC = 0x04 / 4, MODEL_DATA_ANIMATIONS = 0xA0 / 4, MAX_SLOTS = 96;
+
+	for (int actor = 0; actor < 10; actor++)
+	{
+		uint32_t *model_data = ff7_externals.g_battle_model_state[actor].modelDataPtr;
+		if (!model_data || model_data[MODEL_DATA_HRC] != (uint32_t)hrc_data) continue;
+
+		int first = -1;
+		for (int slot = 0; slot < MAX_SLOTS; slot++)
+		{
+			auto entry = reinterpret_cast<struct anim_header *>(model_data[MODEL_DATA_ANIMATIONS + slot]);
+
+			// The list starts at the first slot holding a real animation (empty slots and stray values before it)
+			if (first < 0)
+			{
+				if (entry == anim_header || (reinterpret_cast<uint32_t>(entry) >= 0x10000 && !IsBadReadPtr(entry, sizeof(*entry)) && entry->num_frames > 0 && entry->num_frames < 10000 && entry->num_bones < 256)) first = slot;
+				else continue;
+			}
+
+			if (entry != anim_header) continue;
+
+			char name[16];
+			sprintf(name, "ANIM_%02d", slot - first);
+			return name;
+		}
+	}
+
+	return "";
+}
+
+// Name gltf animations are matched against: the 4 characters of the game's .a file name, uppercased (fields),
+// or ANIM_NN (battle)
+static std::string get_external_mesh_anim_name(struct anim_header *anim_header, struct hrc_data *hrc_data)
+{
+	if (getmode_cached()->driver_mode == MODE_BATTLE) return get_battle_anim_name(hrc_data, anim_header);
+
 	std::string animFullName = anim_header->file.pc_name;
 	if(animFullName.length() < 6) return "";
 
@@ -748,11 +786,20 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 		// When the gltf animates its own root node, draw the model with that root motion instead, so new
 		// animations can carry their own (e.g. a different standing height). The game keeps reading its own above.
-		std::string anim_name = get_external_mesh_anim_name(anim_header);
+		std::string anim_name = get_external_mesh_anim_name(anim_header, hrc_data);
 		external_mesh_clock = external_mesh->getAnimationClock(anim_name);
 		struct matrix gltf_root_matrix;
-		float model_scale = gl_get_field_model_scale();
-		if(external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
+		float model_scale = gl_get_external_mesh_scale();
+		bool is_battle = getmode_cached()->driver_mode == MODE_BATTLE;
+
+		if((trace_all || trace_loaders) && is_battle && external_mesh->mesh->rootMotionChecked.insert("battle " + anim_name).second)
+		{
+			ffnx_trace("External mesh: battle animation %s (%u frames)%s\n", anim_name.empty() ? "(not found)" : anim_name.c_str(), anim_header->num_frames,
+				external_mesh->mesh->animations.contains(anim_name) ? "" : ", not in the gltf");
+		}
+
+		// Battle root motion still comes from the game until its gltf conversion is worked out
+		if(!is_battle && external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
 		{
 			if((trace_all || trace_loaders) && external_mesh->mesh->rootMotionChecked.insert(anim_name).second)
 				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
@@ -764,6 +811,10 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		// Where the model is drawn in the field, for spring bones to react to its movement
 		memcpy(&external_mesh->springWorldMatrix, &world_matrix, sizeof(world_matrix));
 		external_mesh->hasSpringWorldMatrix = true;
+
+		// The game's own skeleton still gets the model's placement, like the vanilla path: it reads its bone
+		// positions back (battle target cursor, damage numbers, spell effects). The gltf is drawn with world_matrix.
+		apply_struc110_transforms(root_matrix, struc_110);
 	}
 	else
 	{
@@ -934,7 +985,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 						{
 							auto externalMesh = reinterpret_cast<ExternalMeshInstance*>(polygon_set->polygon_data->field_48);
 
-							externalMesh->current_anim = get_external_mesh_anim_name(anim_header);
+							externalMesh->current_anim = get_external_mesh_anim_name(anim_header, hrc_data);
 							externalMesh->current_frame = current_frame;
 							externalMesh->current_frame_count = anim_header->num_frames;
 							externalMesh->current_clock = external_mesh_clock;
@@ -960,6 +1011,7 @@ int battle_sub_684CC6(hrc_data *a1, ff7_game_obj *game_object)
 
   if ( a1 )
   {
+    bool has_external_mesh = getExternalMesh(a1) != nullptr;
     bones = a1->bones;
     for ( bone_index = 0; ; ++bone_index )
     {
@@ -976,7 +1028,11 @@ int battle_sub_684CC6(hrc_data *a1, ff7_game_obj *game_object)
           {
             if ( rsd_array->rsd_data )
 			{
-              	ff7gl_field_78(rsd_array->rsd_data->polygon_set, game_object);
+				// A model replaced by a gltf still goes through all its original parts (the game works out things like
+				// effect positions on the way), but only the part carrying the gltf is drawn (see gl_draw_with_lighting)
+				gl_draw_only_external_mesh_parts = has_external_mesh;
+				ff7gl_field_78(rsd_array->rsd_data->polygon_set, game_object);
+				gl_draw_only_external_mesh_parts = false;
 			}
             ++rsd_array;
           }

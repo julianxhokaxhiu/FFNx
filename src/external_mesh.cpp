@@ -254,6 +254,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
             auto material = primitive.material;
             outShape.isDoubleSided = material != nullptr && material->double_sided;
+            if (mesh.name != nullptr)
+            {
+                outShape.name = mesh.name;
+                std::transform(outShape.name.begin(), outShape.name.end(), outShape.name.begin(), [](unsigned char c) { return std::toupper(c); });
+            }
             if (material != nullptr && material->alpha_mode == cgltf_alpha_mode_mask) outShape.alphaMode = ShapeAlphaMode::MASK_MODE;
             else if (material != nullptr && material->alpha_mode == cgltf_alpha_mode_blend) outShape.alphaMode = ShapeAlphaMode::BLEND_MODE;
             if (material != nullptr) outShape.alphaCutoff = material->alpha_cutoff;
@@ -408,6 +413,31 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         skins.push_back(outSkin);
     }
 
+    // Battle weapons: parts skinned only to a joint named "weapon" (all weapons share it; one is equipped)
+    if (!skins.empty())
+    {
+        int weaponJoint = -1;
+        for (size_t j = 0; j < skins[0].joints.size(); j++)
+            if (!_stricmp(skins[0].joints[j].name.c_str(), "weapon")) weaponJoint = static_cast<int>(j);
+
+        if (weaponJoint >= 0)
+        {
+            for (auto& shape : shapes)
+            {
+                bool onlyWeapon = !shape.joints.empty() && shape.joints.size() == shape.weights.size();
+                for (size_t v = 0; v < shape.joints.size() && onlyWeapon; v++)
+                {
+                    const auto& j = shape.joints[v];
+                    const auto& w = shape.weights[v];
+                    float indices[4] = { j.x, j.y, j.z, j.w }, weights[4] = { w.x, w.y, w.z, w.w };
+                    for (int k = 0; k < 4; k++)
+                        if (weights[k] > 0.0f && static_cast<int>(indices[k]) != weaponJoint) onlyWeapon = false;
+                }
+                shape.isWeapon = onlyWeapon;
+            }
+        }
+    }
+
     // Spring bones: joints whose name contains "spring" (any case), and every joint below them
     for (auto& skin : skins)
     {
@@ -492,10 +522,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         cgltf_animation anim = data->animations[i];
         if (anim.name == nullptr) continue;
 
-        // Matched case-insensitively against the game's animation names
-        std::string animFullName = anim.name;
-        auto animName = animFullName.substr(0, 4);
+        // Matched case-insensitively against the game's animation names: the 4 letters of a field .a file, or
+        // the whole ANIM_NN name of a battle animation (its number in the model's animation list)
+        std::string animName = anim.name;
         std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
+        if (animName.rfind("ANIM_", 0) != 0) animName = animName.substr(0, 4);
 
         Animation outAnim;
         std::map<const cgltf_accessor*, std::vector<float>> timelines;
@@ -814,10 +845,11 @@ AnimationPosition getAnimationPosition(const Animation& anim, int frame, int fra
     }
 
     // One key per game frame (or a single held game frame): show the key of the game's frame, as before.
-    // One extra key also counts: KimeraCS's 60 fps exports end with a loop-closing key between the last
-    // frame and the first, which stretching would wrongly blend into the end of one-shot animations.
+    // Up to three extra keys also count: KimeraCS's 60 fps exports end with loop-closing in-between keys after the
+    // last frame (one for fields at 2x, three for battle at 4x), which stretching would wrongly blend into the end
+    // of one-shot animations and shift against the game's root motion (feet sliding).
     size_t frames = static_cast<size_t>(std::max(frameCount, 0));
-    if (frameCount <= 1 || anim.keyCount == frames || anim.keyCount == frames + 1 || anim.endTime <= anim.startTime)
+    if (frameCount <= 1 || (anim.keyCount >= frames && anim.keyCount <= frames + 3) || anim.endTime <= anim.startTime)
     {
         position.keyIndex = frame;
         return position;
@@ -1391,6 +1423,9 @@ std::shared_ptr<ExternalMesh> acquireFieldExternalMesh(char* file_path, char* te
     return mesh;
 }
 
+// The battle character loaded last (its weapon file follows its parts)
+static ExternalMeshInstance* lastBattleCharacter = nullptr;
+
 // Characters freed while lighting is on may still have a draw queued for the end of the frame (deferred
 // draws), so they are deleted once the queue has been drawn
 static std::vector<ExternalMeshInstance*>& pendingFieldMeshReleases()
@@ -1401,6 +1436,8 @@ static std::vector<ExternalMeshInstance*>& pendingFieldMeshReleases()
 
 void releaseFieldExternalMesh(ExternalMeshInstance* instance)
 {
+    if (instance == lastBattleCharacter) lastBattleCharacter = nullptr;
+
     if (trace_all || trace_loaders) ffnx_trace("External mesh: character freed (%p)\n", instance);
 
     if (enable_lighting && !ff8)
@@ -1421,4 +1458,25 @@ void flushReleasedFieldExternalMeshes()
     for (auto* instance : pending) delete instance;
     pending.clear();
     trimFieldMeshCache();
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Battle weapons
+
+void setLastBattleCharacter(ExternalMeshInstance* instance)
+{
+    lastBattleCharacter = instance;
+}
+
+ExternalMeshInstance* getLastBattleCharacter()
+{
+    return lastBattleCharacter;
+}
+
+bool hasWeaponMesh(const ExternalMesh& mesh, const std::string& name)
+{
+    for (const auto& shape : mesh.shapes)
+        if (shape.isWeapon && shape.name == name) return true;
+
+    return false;
 }

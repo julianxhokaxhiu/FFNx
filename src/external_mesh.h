@@ -63,6 +63,8 @@ struct Shape
     bool isDoubleSided = false;
     ShapeAlphaMode alphaMode = ShapeAlphaMode::OPAQUE_MODE;
     float alphaCutoff = 0.5f; // MASK: texels below this are cut out
+    std::string name; // The glTF mesh's name (battle weapons are named after the game's weapon file, e.g. RTCK)
+    bool isWeapon = false; // Skinned only to a joint named "weapon": drawn only while it is the equipped weapon
 };
 
 struct Joint
@@ -237,6 +239,11 @@ public:
     std::shared_ptr<ExternalMesh> mesh;
     std::vector<JointState> joints;
 
+    // Battle: the weapon mesh to draw (the game's weapon file, e.g. RTCK); a hidden instance stands in for the
+    // game's own weapon model so it isn't drawn as well
+    std::string equippedWeapon;
+    bool hidden = false;
+
     std::string current_anim;
     int current_frame = 0;
     int current_frame_count = 0; // Frame count of the game's current animation (.a)
@@ -268,4 +275,10 @@ private:
 // when it fails to load. Characters are freed with releaseFieldExternalMesh, which also trims the cache.
 std::shared_ptr<ExternalMesh> acquireFieldExternalMesh(char* file_path, char* tex_path, const char** outSource);
 void releaseFieldExternalMesh(ExternalMeshInstance* instance);
+
+// Battle weapons: the battle character loaded last (its weapon file is loaded right after its parts), and whether
+// its gltf has a weapon mesh with this name
+void setLastBattleCharacter(ExternalMeshInstance* instance);
+ExternalMeshInstance* getLastBattleCharacter();
+bool hasWeaponMesh(const ExternalMesh& mesh, const std::string& name);
 void flushReleasedFieldExternalMeshes(); // After the deferred draws, which may still use freed characters

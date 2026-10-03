@@ -253,8 +253,13 @@ void gl_calculate_normals(std::vector<vector3<float>>* pNormals, struct indexed_
 	}
 }
 
+// While true, polygon sets without a gltf aren't drawn (the original parts of a battle model replaced by a gltf)
+bool gl_draw_only_external_mesh_parts = false;
+
 void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
 {
+	if (gl_draw_only_external_mesh_parts && !(polydata && polydata->field_48)) return;
+
 	if (enable_external_mesh && polydata->field_48)
 	{
 		auto externalMesh = reinterpret_cast<ExternalMeshInstance*>(polydata->field_48);
@@ -273,6 +278,8 @@ void gl_draw_without_lighting(struct indexed_primitive* ip, struct polygon_data 
 // draw a set of primitives with lighting
 void gl_draw_with_lighting(struct indexed_primitive *ip, struct polygon_data *polydata, struct light_data* lightdata, uint32_t clip)
 {
+	if (gl_draw_only_external_mesh_parts && !(polydata && polydata->field_48)) return;
+
 	if (enable_external_mesh && polydata->field_48)
 	{
 		auto externalMesh = reinterpret_cast<ExternalMeshInstance*>(polydata->field_48);
@@ -417,6 +424,15 @@ uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, ch
 	return true;
 }
 
+// The scale gltf models are drawn with: the field's model scale in fields, 1 in battle (battle exports are in
+// the battle model's own units)
+float gl_get_external_mesh_scale()
+{
+	if (!ff8 && getmode_cached()->driver_mode == MODE_BATTLE) return 1.0f;
+
+	return gl_get_field_model_scale();
+}
+
 // The current field's model scale (from its model loader data), or 0 when no field is loaded
 float gl_get_field_model_scale()
 {
@@ -431,11 +447,14 @@ float gl_get_field_model_scale()
 // Draws one character with its (possibly shared) gltf model
 void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* lightdata)
 {
+	// Stands in for a game model drawn by another gltf (a battle weapon)
+	if(character->hidden) return;
+
 	if(gl_defer_external_mesh(character, lightdata)) return;
 
 	ExternalMesh* externalMesh = character->mesh.get();
 
-	auto scale = gl_get_field_model_scale();
+	auto scale = gl_get_external_mesh_scale();
 	if (scale == 0.0f)
 	{
 		return;
@@ -450,9 +469,13 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 		// Joints past the bone limit are ignored instead of overflowing matrix_palette
 		jointCount = std::min(skin.joints.size(), static_cast<size_t>(MAX_BONE_MATRICES));
 
-		if(externalMesh->animations.contains(character->current_anim) && character->joints.size() >= jointCount)
+		// An animation the gltf doesn't have shows the skeleton's rest pose (the raw bind pose would include the
+		// export's root node, e.g. KimeraCS's 180 degree turn, and look upside down)
+		static const Animation restPose;
+		if(character->joints.size() >= jointCount)
 		{
-			const auto& anim = externalMesh->animations[character->current_anim];
+			auto found = externalMesh->animations.find(character->current_anim);
+			const auto& anim = found != externalMesh->animations.end() ? found->second : restPose;
 			AnimationPosition position = getAnimationPosition(anim, character->current_frame, character->current_frame_count, character->current_clock);
 			int springSteps = externalMesh->hasSpringBones ? character->getSpringSteps() : 0;
 
@@ -477,7 +500,8 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 			for(int i = 0; i < jointCount; ++i)
 			{
 				const auto& joint = skin.joints[i];
-				const auto& keyFrame = anim.keyFrames[i];
+				static const KeyFrame noKeys;
+				const auto& keyFrame = i < anim.keyFrames.size() ? anim.keyFrames[i] : noKeys;
 
 				auto currentTranslation = sampleTranslation(keyFrame.translationTimes, keyFrame.translation, position, joint.translation);
 				auto currentRotation = sampleRotation(keyFrame.rotationTimes, keyFrame.rotation, position, joint.rotation);
@@ -591,6 +615,14 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 	for (int i = 0; i < shapeCount; ++i)
 	{
 		auto& shape = externalMesh->shapes[i];
+
+		// Battle models carry every weapon: draw only the equipped one
+		if (shape.isWeapon && shape.name != character->equippedWeapon)
+		{
+			vertexOffset += shape.vertices.size();
+			indexOffset += shape.indices.size();
+			continue;
+		}
 
 		// drawWithLighting() turns the program into its lighting variant, so every part starts from SMOOTH again
 		newRenderer.setInterpolationQualifier(SMOOTH);

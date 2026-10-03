@@ -167,17 +167,42 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 
 	if (enable_external_mesh)
 	{
+		// Battle models are asked for by name (CLOUD.P00) and stored in battle.lgp under another (rtam): the
+		// file context's name mangler converts them, and gltf exports use the stored name (RTAM.gltf)
+		bool is_battle = file_context->use_lgp && !_stricmp(lgp_names[file_context->lgp_num], "battle");
 		std::string full_filename = filename;
-		size_t lastindex = full_filename.find_last_of("."); 
+		if (is_battle && file_context->name_mangler)
+		{
+			char mangled_name[MAX_PATH] = {};
+			file_context->name_mangler(filename, mangled_name);
+			if (mangled_name[0]) full_filename = mangled_name;
+		}
+		size_t lastindex = full_filename.find_last_of(".");
 		std::string filename_no_ext = full_filename.substr(0, lastindex);
+		std::transform(filename_no_ext.begin(), filename_no_ext.end(), filename_no_ext.begin(), [](unsigned char c) { return std::toupper(c); });
+		const char* mesh_folder = is_battle ? "battle" : "field";
 
 		char file_path_gltf[MAX_PATH];
-		sprintf(file_path_gltf, "%s/%s/field/%s.gltf", basedir, external_mesh_path.data(), filename_no_ext.data());
+		sprintf(file_path_gltf, "%s/%s/%s/%s.gltf", basedir, external_mesh_path.data(), mesh_folder, filename_no_ext.data());
 
 		char tex_path[MAX_PATH];
-		sprintf(tex_path, "%s/%s/field/textures/", basedir, external_mesh_path.data());
+		sprintf(tex_path, "%s/%s/%s/textures/", basedir, external_mesh_path.data(), mesh_folder);
 
-		if (!fileExists(file_path_gltf))
+		ExternalMeshInstance* battleCharacter = is_battle ? getLastBattleCharacter() : nullptr;
+
+		if (!fileExists(file_path_gltf) && battleCharacter && hasWeaponMesh(*battleCharacter->mesh, filename_no_ext))
+		{
+			// The weapon of the battle character just loaded: its gltf draws the matching weapon mesh, and the
+			// game's own weapon model gets a hidden stand-in
+			battleCharacter->equippedWeapon = filename_no_ext;
+
+			auto weaponStandIn = new ExternalMeshInstance(battleCharacter->mesh);
+			weaponStandIn->hidden = true;
+			ret->field_48 = reinterpret_cast<vector3<float>*>(weaponStandIn);
+
+			if(trace_all || trace_loaders) ffnx_trace("External mesh: weapon %s drawn by the battle model's gltf\n", filename_no_ext.c_str());
+		}
+		else if (!fileExists(file_path_gltf))
 		{
 			if(trace_all || trace_loaders) ffnx_trace("External mesh: %s not found, using original model\n", file_path_gltf);
 
@@ -195,7 +220,9 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 			{
 				if(trace_all || trace_loaders) ffnx_trace("External mesh: %s %s in %.0f ms\n", source, file_path_gltf, loadMilliseconds);
 
-				ret->field_48 = reinterpret_cast<vector3<float>*>(new ExternalMeshInstance(sharedMesh));
+				auto character = new ExternalMeshInstance(sharedMesh);
+				ret->field_48 = reinterpret_cast<vector3<float>*>(character);
+				if (is_battle) setLastBattleCharacter(character);
 			}
 			else
 			{
