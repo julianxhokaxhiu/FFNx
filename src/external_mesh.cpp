@@ -1391,8 +1391,34 @@ std::shared_ptr<ExternalMesh> acquireFieldExternalMesh(char* file_path, char* te
     return mesh;
 }
 
+// Characters freed while lighting is on may still have a draw queued for the end of the frame (deferred
+// draws), so they are deleted once the queue has been drawn
+static std::vector<ExternalMeshInstance*>& pendingFieldMeshReleases()
+{
+    static auto* pending = new std::vector<ExternalMeshInstance*>();
+    return *pending;
+}
+
 void releaseFieldExternalMesh(ExternalMeshInstance* instance)
 {
+    if (trace_all || trace_loaders) ffnx_trace("External mesh: character freed (%p)\n", instance);
+
+    if (enable_lighting && !ff8)
+    {
+        pendingFieldMeshReleases().push_back(instance);
+        return;
+    }
+
     delete instance;
+    trimFieldMeshCache();
+}
+
+void flushReleasedFieldExternalMeshes()
+{
+    auto& pending = pendingFieldMeshReleases();
+    if (pending.empty()) return;
+
+    for (auto* instance : pending) delete instance;
+    pending.clear();
     trimFieldMeshCache();
 }

@@ -23,6 +23,7 @@
 #include "../renderer.h"
 
 #include "../gl.h"
+#include "../external_mesh.h"
 #include "../macro.h"
 #include "../log.h"
 #include "../common.h"
@@ -617,6 +618,7 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 
 	if (num_deferred == 0) {
 		if (trace_all) ffnx_trace("gl_draw_deferred: num_deferred == 0\n");
+		flushReleasedFieldExternalMeshes();
 		return;
 	}
 
@@ -725,6 +727,9 @@ void gl_draw_deferred(draw_field_shadow_callback shadow_callback)
 	nodefer = false;
 
 	gl_load_state(&saved_state);
+
+	// Characters freed this frame are no longer referenced by the queue
+	flushReleasedFieldExternalMeshes();
 }
 
 struct boundingbox calculateSceneAabb()

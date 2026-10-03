@@ -268,3 +268,4 @@ private:
 // when it fails to load. Characters are freed with releaseFieldExternalMesh, which also trims the cache.
 std::shared_ptr<ExternalMesh> acquireFieldExternalMesh(char* file_path, char* tex_path, const char** outSource);
 void releaseFieldExternalMesh(ExternalMeshInstance* instance);
+void flushReleasedFieldExternalMeshes(); // After the deferred draws, which may still use freed characters
