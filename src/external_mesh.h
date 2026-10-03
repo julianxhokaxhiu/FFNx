@@ -205,6 +205,10 @@ public:
     std::set<std::string> rootMotionChecked;
 
     bool hasSpringBones = false;
+
+    // The gltf joint standing for the game's bone (battle exports name joints bone_00, bone_01, ...), or -1
+    int jointForGameBone(uint32_t boneIndex) const;
+    std::vector<int> gameBoneJoints; // Game bone index -> joint index (joints named bone_NN), -1 when none
 private:
     void setupSpringColliders();
     void loadConfig(const std::string& path);
@@ -252,6 +256,18 @@ public:
     ExternalMeshInstance* variantFor(const void* key);
     ExternalMeshInstance* activeVariant = nullptr;
 
+    // Poses the skeleton for the current animation, frame and clock (animation, switch blend, spring bones):
+    // each joint's calculatedMatrix, in model space with the mesh scale. Done when the game draws the model, so
+    // the game can use the gltf's bones; poseReady tells the final draw it doesn't need to do it again.
+    void updatePose(float scale);
+    bool poseReady = false;
+
+    // Battle: this frame's world positions of the game's own bones and of the gltf joints standing for them
+    // (by game bone index), so the game's original weapon can follow the gltf's hand
+    std::vector<vector3<float>> gameBonePositions;
+    std::vector<vector3<float>> gltfBonePositions;
+    std::vector<bool> hasGltfBonePosition;
+
     std::string current_anim;
     int current_frame = 0;
     int current_frame_count = 0; // Frame count of the game's current animation (.a)
@@ -289,6 +305,11 @@ void releaseFieldExternalMesh(ExternalMeshInstance* instance);
 // Battle weapons: the battle character loaded last (its weapon file is loaded right after its parts), and whether
 // its gltf has a weapon mesh with this name
 void setLastBattleCharacter(ExternalMeshInstance* instance);
+
+// Battle: the gltf character drawn last for a battle actor (its original weapon is drawn right after it), and
+// the instance owning it (freeing that forgets the actor)
+void setBattleActorCharacter(const void* actorKey, ExternalMeshInstance* character, ExternalMeshInstance* owner);
+ExternalMeshInstance* getBattleActorCharacter(const void* actorKey);
 ExternalMeshInstance* getLastBattleCharacter();
 bool hasWeaponMesh(const ExternalMesh& mesh, const std::string& name);
 void flushReleasedFieldExternalMeshes(); // After the deferred draws, which may still use freed characters

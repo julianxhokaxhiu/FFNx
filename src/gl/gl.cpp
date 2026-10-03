@@ -475,70 +475,13 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 		// Joints past the bone limit are ignored instead of overflowing matrix_palette
 		jointCount = std::min(skin.joints.size(), static_cast<size_t>(MAX_BONE_MATRICES));
 
-		// An animation the gltf doesn't have shows the skeleton's rest pose (the raw bind pose would include the
-		// export's root node, e.g. KimeraCS's 180 degree turn, and look upside down)
-		static const Animation restPose;
+		// The pose is normally worked out when the game draws the model (so the game can use the gltf's bones);
+		// work it out here when it hasn't been
+		if(!character->poseReady) character->updatePose(scale);
+		character->poseReady = false;
+
 		if(character->joints.size() >= jointCount)
 		{
-			auto found = externalMesh->animations.find(character->current_anim);
-			const auto& anim = found != externalMesh->animations.end() ? found->second : restPose;
-			AnimationPosition position = getAnimationPosition(anim, character->current_frame, character->current_frame_count, character->current_clock);
-			int springSteps = externalMesh->hasSpringBones ? character->getSpringSteps() : 0;
-
-			// Places a joint from its local transform and its parent (parents always come before their children)
-			auto poseJoint = [&](int i)
-			{
-				const auto& joint = skin.joints[i];
-				auto& state = character->joints[i];
-
-				float parentMatrix[16];
-				bx::mtxScale(parentMatrix, scale);
-
-				if(joint.parentJointIndex != -1)
-				{
-					memcpy(parentMatrix, character->joints[joint.parentJointIndex].calculatedMatrix, sizeof(float) * 16);
-				}
-
-				bx::mtxMul(state.calculatedMatrix, state.localMatrix, parentMatrix);
-			};
-
-			// The animation's pose; spring bones (and everything below them) wait until the body is posed
-			for(int i = 0; i < jointCount; ++i)
-			{
-				const auto& joint = skin.joints[i];
-				static const KeyFrame noKeys;
-				const auto& keyFrame = i < anim.keyFrames.size() ? anim.keyFrames[i] : noKeys;
-
-				auto currentTranslation = sampleTranslation(keyFrame.translationTimes, keyFrame.translation, position, joint.translation);
-				auto currentRotation = sampleRotation(keyFrame.rotationTimes, keyFrame.rotation, position, joint.rotation);
-				character->blendJointPose(i, jointCount, character->current_clock, currentTranslation, currentRotation);
-
-				float currentTranslationMatrix[16];
-				bx::mtxTranslate(currentTranslationMatrix, currentTranslation.x, currentTranslation.y, currentTranslation.z);
-
-				float currentRotationMatrix[16];
-				bx::Quaternion rotationQuaternion = {currentRotation.x, currentRotation.y, currentRotation.z, -currentRotation.w};
-				bx::mtxFromQuaternion(currentRotationMatrix, rotationQuaternion);
-
-				bx::mtxMul(character->joints[i].localMatrix, currentRotationMatrix, currentTranslationMatrix);
-
-				if(!joint.isSpring) poseJoint(i);
-			}
-
-			// Spring bones swing after the animation, colliding with this frame's body; children follow the swung bone
-			if(externalMesh->hasSpringBones)
-			{
-				character->updateSpringColliders(jointCount);
-
-				for(int i = 0; i < jointCount; ++i)
-				{
-					if(!skin.joints[i].isSpring) continue;
-
-					poseJoint(i);
-					character->simulateSpringBone(skin.joints[i], character->joints[i], springSteps, scale);
-				}
-			}
-
 			for(int i = 0; i < jointCount; ++i)
 			{
 				float boneMatrix[16];

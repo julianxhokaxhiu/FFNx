@@ -452,6 +452,70 @@ ExternalMeshInstance* getExternalMesh(struct hrc_data *hrc_data)
 	return external_mesh;
 }
 
+// The battle actor whose model data holds this hrc (body or weapon) and is nearest to the struc_110 position
+static const void* find_battle_actor(struct hrc_data *hrc_data, struct struc_110 *struc_110)
+{
+	const void* best = nullptr;
+	float bestDistance = 0.0f;
+
+	for (int actor = 0; actor < 10; actor++)
+	{
+		auto& state = ff7_externals.g_battle_model_state[actor];
+		if (!state.modelDataPtr) continue;
+
+		// The body's hrc is at +0x04 of the model data, a weapon's further in at a place that differs between
+		// models, so the first words of the model data are scanned
+		bool holds = false;
+		for (int k = 0; k < 96 && !holds; k++) holds = state.modelDataPtr[k] == (uint32_t)hrc_data;
+		if (!holds) continue;
+
+		float dx = struc_110 ? state.modelPosition.x - struc_110->position.x : 0.0f;
+		float dz = struc_110 ? state.modelPosition.z - struc_110->position.z : 0.0f;
+		float distance = dx * dx + dz * dz;
+		if (!best || distance < bestDistance)
+		{
+			best = &state;
+			bestDistance = distance;
+		}
+	}
+
+	return best;
+}
+
+// Moves an original battle weapon by the offset between the game bone it is nearest to and the gltf joint
+// standing for that bone (the actor's body is drawn just before its weapon)
+static void follow_gltf_bone(struct matrix *weapon_matrix, struct hrc_data *hrc_data, struct struc_110 *struc_110)
+{
+	const void* actor = find_battle_actor(hrc_data, struc_110);
+	if (!actor) return;
+
+	ExternalMeshInstance* body = getBattleActorCharacter(actor);
+	if (!body) return;
+
+	int nearest = -1;
+	float nearestDistance = 0.0f;
+	for (size_t bone = 0; bone < body->gameBonePositions.size(); bone++)
+	{
+		if (!body->hasGltfBonePosition[bone]) continue;
+
+		const auto& p = body->gameBonePositions[bone];
+		float dx = p.x - weapon_matrix->_41, dy = p.y - weapon_matrix->_42, dz = p.z - weapon_matrix->_43;
+		float distance = dx * dx + dy * dy + dz * dz;
+		if (nearest < 0 || distance < nearestDistance)
+		{
+			nearest = static_cast<int>(bone);
+			nearestDistance = distance;
+		}
+	}
+	if (nearest < 0) return;
+
+	const auto& from = body->gameBonePositions[nearest];
+	const auto& to = body->gltfBonePositions[nearest];
+	weapon_matrix->_41 += to.x - from.x;
+	weapon_matrix->_42 += to.y - from.y;
+	weapon_matrix->_43 += to.z - from.z;
+}
+
 // What tells characters sharing one model apart. In battle the game draws every actor through one scratch
 // struc_110, so the key is the battle actor using this hrc whose position matches it; elsewhere each model
 // has its own struc_110.
@@ -811,7 +875,16 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 	bool is_external_mesh = external_mesh != nullptr;
 
 	// Characters sharing the game's model (identical enemies) each keep their own animation state
-	if(external_mesh) external_mesh = external_mesh->variantFor(get_character_key(hrc_data, struc_110));
+	ExternalMeshInstance* external_mesh_owner = external_mesh;
+	const void* character_key = get_character_key(hrc_data, struc_110);
+	if(external_mesh) external_mesh = external_mesh->variantFor(character_key);
+	if(external_mesh && !external_mesh->hidden && getmode_cached()->driver_mode == MODE_BATTLE)
+	{
+		setBattleActorCharacter(character_key, external_mesh, external_mesh_owner);
+		external_mesh->gameBonePositions.assign(hrc_data->num_bones + 1, vector3<float>{});
+		external_mesh->gltfBonePositions.assign(hrc_data->num_bones + 1, vector3<float>{});
+		external_mesh->hasGltfBonePosition.assign(hrc_data->num_bones + 1, false);
+	}
 	float external_mesh_clock = 0.0f;
 	if(is_external_mesh)
 	{
@@ -858,6 +931,16 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		memcpy(&external_mesh->springWorldMatrix, &world_matrix, sizeof(world_matrix));
 		external_mesh->hasSpringWorldMatrix = true;
 
+		// Pose the gltf now (not only when it is finally drawn), so the game can use its bones below
+		if(!external_mesh->hidden)
+		{
+			external_mesh->current_anim = anim_name;
+			external_mesh->current_frame = current_frame;
+			external_mesh->current_frame_count = anim_header->num_frames;
+			external_mesh->current_clock = external_mesh_clock;
+			external_mesh->updatePose(model_scale);
+		}
+
 		// The game's own skeleton still gets the model's placement, like the vanilla path: it reads its bone
 		// positions back (battle target cursor, damage numbers, spell effects). The gltf is drawn with world_matrix.
 		apply_struc110_transforms(root_matrix, struc_110);
@@ -900,6 +983,11 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 			root_matrix->_42 += struc_110->position.y;
 			root_matrix->_43 += struc_110->position.z;
 		}
+
+		// An original weapon (a one-bone model) of a battle actor drawn with a gltf: move it from the game bone it
+		// is nearest to onto the gltf joint standing for that bone, so it stays in the gltf's hand
+		if(hrc_data->field_4 && hrc_data->num_bones <= 1 && getmode_cached()->driver_mode == MODE_BATTLE)
+			follow_gltf_bone(root_matrix, hrc_data, struc_110);
 
 		if(hrc_data->flags & 0x800) memcpy(&hrc_data->field_64, root_matrix, sizeof(*root_matrix));
 
@@ -959,6 +1047,26 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 						struc_110->bone_positions[bone_index + 1].x = bone_matrix->_41;
 						struc_110->bone_positions[bone_index + 1].y = bone_matrix->_42;
 						struc_110->bone_positions[bone_index + 1].z = bone_matrix->_43;
+
+						// A gltf joint standing for this bone (bone_NN) gives its position instead, so what the game
+						// places on the model's bones (cursor, damage numbers, effects) follows the gltf's body
+						int joint = (external_mesh && !external_mesh->hidden) ? external_mesh->mesh->jointForGameBone(bone_index) : -1;
+						if(joint >= 0 && joint < (int)external_mesh->joints.size())
+						{
+							const float* jointMatrix = external_mesh->joints[joint].calculatedMatrix;
+							struct matrix jointWorld;
+							multiply_matrix((struct matrix*)jointMatrix, &world_matrix, &jointWorld);
+							struc_110->bone_positions[bone_index + 1].x = jointWorld._41;
+							struc_110->bone_positions[bone_index + 1].y = jointWorld._42;
+							struc_110->bone_positions[bone_index + 1].z = jointWorld._43;
+
+							if(bone_index < external_mesh->gltfBonePositions.size())
+							{
+								external_mesh->gameBonePositions[bone_index] = { bone_matrix->_41, bone_matrix->_42, bone_matrix->_43 };
+								external_mesh->gltfBonePositions[bone_index] = { jointWorld._41, jointWorld._42, jointWorld._43 };
+								external_mesh->hasGltfBonePosition[bone_index] = true;
+							}
+						}
 					}
 				}
 				else matrix = bone_matrix;
@@ -1026,16 +1134,6 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 								common_externals.generic_light_polygon_set((struct polygon_set *)polygon_set, (struct light *)light);
 							}
-						}
-						if (polygon_set->polygon_data->field_48)
-						{
-							auto externalMesh = reinterpret_cast<ExternalMeshInstance*>(polygon_set->polygon_data->field_48);
-							if(externalMesh->activeVariant) externalMesh = externalMesh->activeVariant;
-
-							externalMesh->current_anim = get_external_mesh_anim_name(anim_header, hrc_data);
-							externalMesh->current_frame = current_frame;
-							externalMesh->current_frame_count = anim_header->num_frames;
-							externalMesh->current_clock = external_mesh_clock;
 						}
 						if(hrc_data->field_4 && hrc_data->flags & 0x100000) ff7gl_field_78(polygon_set, game_object);
 					}

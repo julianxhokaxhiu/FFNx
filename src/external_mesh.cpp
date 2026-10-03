@@ -413,6 +413,23 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         skins.push_back(outSkin);
     }
 
+    // Joints named after the game's bones (bone_00, bone_01, ...: KimeraCS battle exports)
+    if (!skins.empty())
+    {
+        for (size_t j = 0; j < skins[0].joints.size(); j++)
+        {
+            const std::string& name = skins[0].joints[j].name;
+            if (name.size() < 6 || _strnicmp(name.c_str(), "bone_", 5) != 0) continue;
+
+            char* end = nullptr;
+            long boneIndex = strtol(name.c_str() + 5, &end, 10);
+            if (end == name.c_str() + 5 || *end != 0 || boneIndex < 0 || boneIndex >= 512) continue;
+
+            if (gameBoneJoints.size() <= static_cast<size_t>(boneIndex)) gameBoneJoints.resize(boneIndex + 1, -1);
+            gameBoneJoints[boneIndex] = static_cast<int>(j);
+        }
+    }
+
     // Battle weapons: parts skinned only to a joint named "weapon" (all weapons share it; one is equipped)
     if (!skins.empty())
     {
@@ -1442,6 +1459,9 @@ std::shared_ptr<ExternalMesh> acquireFieldExternalMesh(char* file_path, char* te
 // The battle character loaded last (its weapon file follows its parts)
 static ExternalMeshInstance* lastBattleCharacter = nullptr;
 
+// The gltf character drawn last for each battle actor (the base instance owning it, for releasing)
+static std::map<const void*, std::pair<ExternalMeshInstance*, ExternalMeshInstance*>> battleActorCharacters;
+
 // Characters freed while lighting is on may still have a draw queued for the end of the frame (deferred
 // draws), so they are deleted once the queue has been drawn
 static std::vector<ExternalMeshInstance*>& pendingFieldMeshReleases()
@@ -1453,6 +1473,11 @@ static std::vector<ExternalMeshInstance*>& pendingFieldMeshReleases()
 void releaseFieldExternalMesh(ExternalMeshInstance* instance)
 {
     if (instance == lastBattleCharacter) lastBattleCharacter = nullptr;
+    for (auto it = battleActorCharacters.begin(); it != battleActorCharacters.end();)
+    {
+        if (it->second.second == instance) it = battleActorCharacters.erase(it);
+        else ++it;
+    }
 
     if (trace_all || trace_loaders) ffnx_trace("External mesh: character freed (%p)\n", instance);
 
@@ -1495,4 +1520,97 @@ bool hasWeaponMesh(const ExternalMesh& mesh, const std::string& name)
         if (shape.isWeapon && shape.name == name) return true;
 
     return false;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Posing
+
+int ExternalMesh::jointForGameBone(uint32_t boneIndex) const
+{
+    return boneIndex < gameBoneJoints.size() ? gameBoneJoints[boneIndex] : -1;
+}
+
+void ExternalMeshInstance::updatePose(float scale)
+{
+    poseReady = true;
+    if (mesh->skins.empty()) return;
+
+    const auto& skin = mesh->skins[0];
+
+    // Joints past the bone limit are ignored instead of overflowing the bone matrices
+    size_t jointCount = std::min(skin.joints.size(), static_cast<size_t>(MAX_BONE_MATRICES));
+    if (joints.size() < jointCount) return;
+
+    // An animation the gltf doesn't have shows the skeleton's rest pose (the raw bind pose would include the
+    // export's root node, e.g. KimeraCS's 180 degree turn, and look upside down)
+    static const Animation restPose;
+    auto found = mesh->animations.find(current_anim);
+    const auto& anim = found != mesh->animations.end() ? found->second : restPose;
+    AnimationPosition position = getAnimationPosition(anim, current_frame, current_frame_count, current_clock);
+    int springSteps = mesh->hasSpringBones ? getSpringSteps() : 0;
+
+    // Places a joint from its local transform and its parent (parents always come before their children)
+    auto poseJoint = [&](size_t i)
+    {
+        const auto& joint = skin.joints[i];
+        auto& state = joints[i];
+
+        float parentMatrix[16];
+        bx::mtxScale(parentMatrix, scale);
+
+        if (joint.parentJointIndex != -1)
+        {
+            memcpy(parentMatrix, joints[joint.parentJointIndex].calculatedMatrix, sizeof(float) * 16);
+        }
+
+        bx::mtxMul(state.calculatedMatrix, state.localMatrix, parentMatrix);
+    };
+
+    // The animation's pose; spring bones (and everything below them) wait until the body is posed
+    for (size_t i = 0; i < jointCount; ++i)
+    {
+        const auto& joint = skin.joints[i];
+        static const KeyFrame noKeys;
+        const auto& keyFrame = i < anim.keyFrames.size() ? anim.keyFrames[i] : noKeys;
+
+        auto currentTranslation = sampleTranslation(keyFrame.translationTimes, keyFrame.translation, position, joint.translation);
+        auto currentRotation = sampleRotation(keyFrame.rotationTimes, keyFrame.rotation, position, joint.rotation);
+        blendJointPose(i, jointCount, current_clock, currentTranslation, currentRotation);
+
+        float currentTranslationMatrix[16];
+        bx::mtxTranslate(currentTranslationMatrix, currentTranslation.x, currentTranslation.y, currentTranslation.z);
+
+        float currentRotationMatrix[16];
+        bx::Quaternion rotationQuaternion = { currentRotation.x, currentRotation.y, currentRotation.z, -currentRotation.w };
+        bx::mtxFromQuaternion(currentRotationMatrix, rotationQuaternion);
+
+        bx::mtxMul(joints[i].localMatrix, currentRotationMatrix, currentTranslationMatrix);
+
+        if (!joint.isSpring) poseJoint(i);
+    }
+
+    // Spring bones swing after the animation, colliding with this frame's body; children follow the swung bone
+    if (mesh->hasSpringBones)
+    {
+        updateSpringColliders(jointCount);
+
+        for (size_t i = 0; i < jointCount; ++i)
+        {
+            if (!skin.joints[i].isSpring) continue;
+
+            poseJoint(i);
+            simulateSpringBone(skin.joints[i], joints[i], springSteps, scale);
+        }
+    }
+}
+
+void setBattleActorCharacter(const void* actorKey, ExternalMeshInstance* character, ExternalMeshInstance* owner)
+{
+    battleActorCharacters[actorKey] = { character, owner };
+}
+
+ExternalMeshInstance* getBattleActorCharacter(const void* actorKey)
+{
+    auto it = battleActorCharacters.find(actorKey);
+    return it != battleActorCharacters.end() ? it->second.first : nullptr;
 }
