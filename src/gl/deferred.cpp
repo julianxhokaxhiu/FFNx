@@ -290,7 +290,7 @@ uint32_t gl_defer_zoom()
 	return true;
 }
 
-uint32_t gl_defer_external_mesh(ExternalMesh* externalMesh, struct light_data* lightdata)
+uint32_t gl_defer_external_mesh(ExternalMeshInstance* externalMesh, struct light_data* lightdata)
 {
 	if (ff8 || !enable_lighting)
 	{

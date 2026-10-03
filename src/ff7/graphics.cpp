@@ -393,10 +393,10 @@ void sub_6B2720(struct indexed_primitive *ip)
 	gl_draw_indexed_primitive(ip->primitivetype, TLVERTEX, ip->vertices, 0, ip->vertexcount, ip->indices, ip->indexcount, 0, 0, 0, true, true);
 }
 
-// The gltf model (external mesh) replacing this model's polygons, or nullptr when it has none
-ExternalMesh* getExternalMesh(struct hrc_data *hrc_data)
+// The gltf model (external mesh) character replacing this model's polygons, or nullptr when it has none
+ExternalMeshInstance* getExternalMesh(struct hrc_data *hrc_data)
 {
-	ExternalMesh* external_mesh = nullptr;
+	ExternalMeshInstance* external_mesh = nullptr;
 	if(hrc_data->bone_list)
 	{
 		struct list_node *bone_list_node;
@@ -426,7 +426,7 @@ ExternalMesh* getExternalMesh(struct hrc_data *hrc_data)
 
 						if(polygon_set->polygon_data->field_48)
 						{
-							external_mesh = reinterpret_cast<ExternalMesh*>(polygon_set->polygon_data->field_48);
+							external_mesh = reinterpret_cast<ExternalMeshInstance*>(polygon_set->polygon_data->field_48);
 							break;
 						}
 					}
@@ -726,7 +726,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 	if(hrc_data->flags & 0x400) memcpy(&hrc_data->field_24, root_matrix, sizeof(*root_matrix));
 
-	ExternalMesh* external_mesh = getExternalMesh(hrc_data);
+	ExternalMeshInstance* external_mesh = getExternalMesh(hrc_data);
 	bool is_external_mesh = external_mesh != nullptr;
 	float external_mesh_clock = 0.0f;
 	if(is_external_mesh)
@@ -754,7 +754,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		float model_scale = gl_get_field_model_scale();
 		if(external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
 		{
-			if((trace_all || trace_loaders) && external_mesh->rootMotionChecked.insert(anim_name).second)
+			if((trace_all || trace_loaders) && external_mesh->mesh->rootMotionChecked.insert(anim_name).second)
 				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
 
 			memcpy(&world_matrix, &gltf_root_matrix, sizeof(world_matrix));
@@ -932,12 +932,12 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 						}
 						if (polygon_set->polygon_data->field_48)
 						{
-							auto externalMesh = reinterpret_cast<ExternalMesh*>(polygon_set->polygon_data->field_48);
+							auto externalMesh = reinterpret_cast<ExternalMeshInstance*>(polygon_set->polygon_data->field_48);
 
-							externalMesh->skins[0].current_anim = get_external_mesh_anim_name(anim_header);
-							externalMesh->skins[0].current_frame = current_frame;
-							externalMesh->skins[0].current_frame_count = anim_header->num_frames;
-							externalMesh->skins[0].current_clock = external_mesh_clock;
+							externalMesh->current_anim = get_external_mesh_anim_name(anim_header);
+							externalMesh->current_frame = current_frame;
+							externalMesh->current_frame_count = anim_header->num_frames;
+							externalMesh->current_clock = external_mesh_clock;
 						}
 						if(hrc_data->field_4 && hrc_data->flags & 0x100000) ff7gl_field_78(polygon_set, game_object);
 					}
