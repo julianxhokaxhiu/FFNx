@@ -195,6 +195,9 @@ public:
     void destroyFieldResources();
     size_t estimateMemory() const;
     bool getRootMotionSample(const std::string& animName, const AnimationPosition& position, vector3<float>& translation, vector4<float>& rotation) const;
+    // The animation for a game animation of this many frames when the game gives no other way to tell (a summon
+    // model that isn't a battle actor): the one with one key per frame, or the only one; empty if neither
+    std::string animationForFrameCount(int frameCount) const;
 
     std::vector<Shape> shapes;
 	std::map<std::string, Material> materials;

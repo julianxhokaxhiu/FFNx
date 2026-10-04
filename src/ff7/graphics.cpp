@@ -599,7 +599,20 @@ static std::string get_battle_anim_name(struct hrc_data *hrc_data, struct struc_
 // or ANIM_NN (battle)
 static std::string get_external_mesh_anim_name(struct anim_header *anim_header, struct hrc_data *hrc_data, struct struc_110 *struc_110)
 {
-	if (getmode_cached()->driver_mode == MODE_BATTLE) return get_battle_anim_name(hrc_data, struc_110);
+	if (getmode_cached()->driver_mode == MODE_BATTLE)
+	{
+		std::string name = get_battle_anim_name(hrc_data, struc_110);
+
+		// Models that aren't battle actors (summon models like the Knights of the Round) have no animation number:
+		// pick the gltf animation by its length instead
+		if (name.empty())
+		{
+			ExternalMeshInstance* character = getExternalMesh(hrc_data);
+			if (character && !character->hidden) name = character->mesh->animationForFrameCount(anim_header->num_frames);
+		}
+
+		return name;
+	}
 
 	std::string animFullName = anim_header->file.pc_name;
 	if(animFullName.length() < 6) return "";

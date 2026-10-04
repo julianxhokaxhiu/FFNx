@@ -823,6 +823,26 @@ bool ExternalMesh::getRootMotionSample(const std::string& animName, const Animat
     return true;
 }
 
+std::string ExternalMesh::animationForFrameCount(int frameCount) const
+{
+    // One key per game frame, allowing the up to three loop-closing keys KimeraCS's 60 fps exports add
+    std::string match;
+    int matches = 0;
+    for (const auto& [name, anim] : animations)
+    {
+        if (frameCount > 0 && anim.keyCount >= (size_t)frameCount && anim.keyCount <= (size_t)frameCount + 3)
+        {
+            match = name;
+            matches++;
+        }
+    }
+    if (matches == 1) return match;
+
+    if (animations.size() == 1) return animations.begin()->first;
+
+    return "";
+}
+
 // Builds the game's root matrix (as its root animation would) from a gltf root translation and rotation.
 // translationScale converts gltf units to the game's, normally the scale the mesh is drawn with.
 void buildRootMatrix(const vector3<float>& t, const vector4<float>& q, float translationScale, struct matrix* outMatrix)

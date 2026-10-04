@@ -90,6 +90,9 @@ error:
 };
 
 // load battle HRC file (does not save modpath name)
+// A model's parts are loaded right after its skeleton: true once the magic.lgp model being loaded has its gltf part
+static bool magic_model_has_gltf_part = false;
+
 struct battle_hrc_header *read_battle_hrc(uint32_t use_file_context, struct file_context *file_context, char *filename)
 {
 	struct battle_hrc_header *ret;
@@ -101,6 +104,8 @@ struct battle_hrc_header *read_battle_hrc(uint32_t use_file_context, struct file
 	else ff7_externals.battle_regular_chdir(&olddir);
 
 	ff7_externals.swap_extension("D", filename, hrc_filename);
+
+	magic_model_has_gltf_part = false;
 
 	if(trace_all || trace_loaders)
 	{
@@ -183,7 +188,7 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 
 		// Summons (and other animated models in magic.lgp, e.g. LIMIT/CYVADAT for Shiva) are battle-format models whose
 		// parts are named <model>.P00, .P01...: one gltf in mesh/magic/, named after the model (CYVADAT.gltf), carries
-		// all of them (on the first part)
+		// all of them (on the first part loaded; some models have no .P00)
 		bool is_magic_model = false;
 		if (!is_battle && file_context->use_lgp && !_stricmp(lgp_names[file_context->lgp_num], "magic"))
 		{
@@ -195,7 +200,8 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 				if (slash != std::string::npos) filename_no_ext = filename_no_ext.substr(slash + 1);
 			}
 		}
-		bool is_magic_model_first_part = is_magic_model && full_filename.size() >= 3 && full_filename.substr(full_filename.size() - 2) == "00";
+		bool is_magic_model_first_part = is_magic_model && !magic_model_has_gltf_part;
+		if (is_magic_model) magic_model_has_gltf_part = true;
 
 		// Exports go in a folder named after the lgp the original comes from
 		const char* mesh_folder = is_battle ? "battle" : is_magic_model ? "magic" : "field";
