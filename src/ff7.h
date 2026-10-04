@@ -861,9 +861,9 @@ struct battle_model_state
     byte field_25;
     byte actorIsNotActing;
     byte field_27;
-    byte field_28;
-    byte unkActorFlags;
-    byte field_2A;
+    byte modelColorR;           // BE11A0, 0x28: color added to the model (red while dying, status tints)
+    byte modelColorG;           // 0x29
+    byte modelColorB;           // 0x2A
     byte bData0x12[16];         // 0x2B
     byte isScriptExecuting;     // BE11B3, 0x3B
     byte currentScriptPosition; // 0x3C

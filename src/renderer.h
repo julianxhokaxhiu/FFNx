@@ -149,6 +149,7 @@ enum RendererUniform
     INV_VIEW_OFFSET_MATRIX,
 
     BONE_MATRICES,
+    SKINNED_COLOR_OVERRIDE,
 
     COUNT,
 };
@@ -618,7 +619,10 @@ public:
     void isSmoothSkinning(bool flag = false);
     void setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette, size_t joint_count);
     void setSmoothSkinningUniforms();
-    
+    // Draws a skinned model in one flat color instead of its own (a color the game adds to a model, drawn as an
+    // additive pass); call without arguments to go back to the model's own colors
+    void setSkinnedColorOverride(bool enabled = false, float r = 0.0f, float g = 0.0f, float b = 0.0f);
+
     // Worldmap
     void setSphericalWorldRate(float value = 0.0f);
     void setFogEnabled(bool flag = false);

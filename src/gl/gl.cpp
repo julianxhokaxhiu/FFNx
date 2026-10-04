@@ -557,6 +557,8 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 		}
 	}
 
+	bool addedColor = character->addedColor.x > 0.0f || character->addedColor.y > 0.0f || character->addedColor.z > 0.0f;
+
 	auto shapeCount = externalMesh->shapes.size();
 	int vertexOffset = 0;
 	int indexOffset = 0;
@@ -624,6 +626,7 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 		// Which textures are present is sent with the common uniforms, so they are set per part
 		newRenderer.setCommonUniforms();
 		if (enable_lighting) newRenderer.setLightingUniforms();
+		newRenderer.setSkinnedColorOverride();
 
  		if (enable_lighting)
 		{
@@ -631,6 +634,25 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 			newRenderer.drawWithLighting(true, true, true);
 		}
 		else newRenderer.draw(true, true, true);
+
+		// A color the game adds to the character (battle: red while dying, status tints) is drawn over the part in
+		// that color, additively, like the game adds it to its own models' colors; it fades with the character
+		if (addedColor)
+		{
+			newRenderer.setInterpolationQualifier(SMOOTH);
+			newRenderer.setBlendMode(RendererBlendMode::BLEND_ADD);
+			newRenderer.doAlphaTest(false);
+			newRenderer.doDepthWrite(false);
+			newRenderer.isTexture(false);
+			newRenderer.setCommonUniforms();
+			newRenderer.setSkinnedColorOverride(true, character->addedColor.x * character->fadeAlpha,
+				character->addedColor.y * character->fadeAlpha, character->addedColor.z * character->fadeAlpha);
+			newRenderer.draw(true, true, true);
+
+			newRenderer.setSkinnedColorOverride();
+			newRenderer.isTexture(true);
+			newRenderer.doDepthWrite(true);
+		}
 
 		vertexOffset += shape.vertices.size();
 		indexOffset += shape.indices.size();

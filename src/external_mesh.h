@@ -251,6 +251,10 @@ public:
     // The game's opacity for this character (battle fade in, death fade out), 1 = opaque
     float fadeAlpha = 1.0f;
 
+    // The color the game adds to this character (battle: red while dying, status tints), 0..1 per channel;
+    // drawn as an additive pass over the model
+    vector3<float> addedColor = { 0.0f, 0.0f, 0.0f };
+
     // Characters sharing one loaded model (identical enemies share the game's model) each get their own state,
     // keyed by their own placement data; the game draws them one after another, so the active one is drawn
     ExternalMeshInstance* variantFor(const void* key);

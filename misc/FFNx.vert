@@ -47,6 +47,8 @@ uniform vec4 gameScriptedLightColor;
 // so ordinary 3D draws don't pay for it
 #ifdef SMOOTH_SKINNING
 uniform mat4 boneMatrices[MAX_BONE_MATRICES];
+// When w > 0, the model is drawn in this flat color (a color the game adds to a model, drawn as an additive pass)
+uniform vec4 skinnedColorOverride;
 #endif
 
 uniform vec4 VSFlags;
@@ -126,6 +128,10 @@ void main()
 
     if (blendMode == 4.0) color.a = 1.0;
     else if (blendMode == 3.0) color.a = 0.25;
+
+#ifdef SMOOTH_SKINNING
+    if (skinnedColorOverride.w > 0.0) color = vec4(skinnedColorOverride.rgb, 1.0);
+#endif
 
 #if BGFX_SHADER_LANGUAGE_HLSL
 #else

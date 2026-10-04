@@ -890,8 +890,17 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 	ExternalMeshInstance* external_mesh_owner = external_mesh;
 	const void* character_key = get_character_key(hrc_data, struc_110);
 	if(external_mesh) external_mesh = external_mesh->variantFor(character_key);
+	if(external_mesh) external_mesh->addedColor = { 0.0f, 0.0f, 0.0f };
 	if(external_mesh && !external_mesh->hidden && getmode_cached()->driver_mode == MODE_BATTLE)
 	{
+		// The color the game adds to this actor's model (red while dying, status tints)
+		int actor = find_battle_actor_index(hrc_data, struc_110);
+		if(actor >= 0)
+		{
+			auto& state = ff7_externals.g_battle_model_state[actor];
+			external_mesh->addedColor = { state.modelColorR / 255.0f, state.modelColorG / 255.0f, state.modelColorB / 255.0f };
+		}
+
 		setBattleActorCharacter(character_key, external_mesh, external_mesh_owner);
 		external_mesh->gameBonePositions.assign(hrc_data->num_bones + 1, vector3<float>{});
 		external_mesh->gltfBonePositions.assign(hrc_data->num_bones + 1, vector3<float>{});

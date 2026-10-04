@@ -634,8 +634,8 @@ namespace ff7::battle
         else
         {
             battle_model_state.field_14 += 0x80 / battle_frame_multiplier;
-            if (battle_model_state.field_28 > 0)
-                battle_model_state.field_28 -= 0x10 / battle_frame_multiplier;
+            if (battle_model_state.modelColorR > 0)
+                battle_model_state.modelColorR -= 0x10 / battle_frame_multiplier;
 
             battle_model_state.field_1AC8 = 1;
 

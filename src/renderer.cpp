@@ -1175,6 +1175,7 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::GAME_SCRIPTED_LIGHT_COLOR] = createUniform("gameScriptedLightColor", bgfx::UniformType::Vec4);
 
     bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4, MAX_BONE_MATRICES);
+    bgfxUniformHandles[RendererUniform::SKINNED_COLOR_OVERRIDE] = createUniform("skinnedColorOverride", bgfx::UniformType::Vec4);
 
     for(int i = 0; i < RendererTextureSlot::COUNT; ++i)
     {
@@ -2607,6 +2608,12 @@ void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_
 void Renderer::setSmoothSkinningUniforms()
 {
     setUniform(RendererUniform::BONE_MATRICES, internalState.bone_matrices, internalState.bone_matrix_count);
+}
+
+void Renderer::setSkinnedColorOverride(bool enabled, float r, float g, float b)
+{
+    float color[4] = { r, g, b, enabled ? 1.0f : 0.0f };
+    setUniform(RendererUniform::SKINNED_COLOR_OVERRIDE, color);
 }
 
 void Renderer::setSphericalWorldRate(float value)
