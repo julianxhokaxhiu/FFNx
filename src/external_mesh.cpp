@@ -75,32 +75,14 @@ static std::string getImageTextureName(const cgltf_image* image)
     return filename.substr(0, filename.find_last_of("."));
 }
 
-void createJointHierarchy(Skin* pSkin, int parentIndex, cgltf_node* pJointNode, int* curIndex)
+// Adds a joint and the joints below it (in the file's order) to a parents-first order of a skin's joints
+static void appendJointsDepthFirst(int joint, const std::vector<int>& fileParents, std::vector<int>& order)
 {
-    Joint outJoint;
-
-    outJoint.rotation.x = pJointNode->rotation[0];
-    outJoint.rotation.y = pJointNode->rotation[1];
-    outJoint.rotation.z = pJointNode->rotation[2];
-    outJoint.rotation.w = pJointNode->rotation[3];
-
-    outJoint.translation.x = pJointNode->translation[0];
-    outJoint.translation.y = pJointNode->translation[1];
-    outJoint.translation.z = pJointNode->translation[2];
-
-    outJoint.name = pJointNode->name;
-    outJoint.extras = pJointNode->extras.data != nullptr ? pJointNode->extras.data : "";
-
-    outJoint.parentJointIndex = parentIndex;
-
-    pSkin->joints[*curIndex] = outJoint;
-    auto newParentIndex = *curIndex;
-    (*curIndex)++;
-
-    for (int i = 0; i < pJointNode->children_count; ++i)
+    order.push_back(joint);
+    for (size_t child = 0; child < fileParents.size(); child++)
     {
-        createJointHierarchy(pSkin, newParentIndex, pJointNode->children[i], curIndex);
-    }    
+        if (fileParents[child] == joint) appendJointsDepthFirst(static_cast<int>(child), fileParents, order);
+    }
 }
 
 bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, bool isZUp)
@@ -197,6 +179,66 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
         }
 	}
 
+	// Skeletons first: the parts refer to joints by their place in the skin's joint list. A joint's parent is the
+	// nearest node above it that is one of the skin's joints. Joints are kept parents first (posing works down the
+	// skeleton in that order), so a file listing them in another order is renumbered, parts included.
+	std::vector<std::vector<int>> skinJointRemaps; // per skin: place in the file's joint list -> place in skins[]
+	for (size_t i = 0; i < data->skins_count; i++)
+	{
+		const cgltf_skin& skin = data->skins[i];
+		size_t jointCount = skin.joints_count;
+
+		std::vector<int> fileParents(jointCount, -1);
+		for (size_t j = 0; j < jointCount; j++)
+		{
+			for (const cgltf_node* node = skin.joints[j]->parent; node != nullptr && fileParents[j] < 0; node = node->parent)
+			{
+				auto found = std::find(skin.joints, skin.joints + jointCount, node);
+				if (found != skin.joints + jointCount) fileParents[j] = static_cast<int>(found - skin.joints);
+			}
+		}
+
+		std::vector<int> order;
+		for (size_t j = 0; j < jointCount; j++)
+		{
+			if (fileParents[j] < 0) appendJointsDepthFirst(static_cast<int>(j), fileParents, order);
+		}
+
+		std::vector<int> remap(jointCount);
+		for (size_t k = 0; k < order.size(); k++) remap[order[k]] = static_cast<int>(k);
+
+		Skin outSkin;
+		outSkin.joints.resize(jointCount);
+		bool reordered = false;
+		for (size_t k = 0; k < order.size(); k++)
+		{
+			int j = order[k];
+			if (j != static_cast<int>(k)) reordered = true;
+
+			const cgltf_node* node = skin.joints[j];
+			Joint& outJoint = outSkin.joints[k];
+			outJoint.rotation.x = node->rotation[0];
+			outJoint.rotation.y = node->rotation[1];
+			outJoint.rotation.z = node->rotation[2];
+			outJoint.rotation.w = node->rotation[3];
+			outJoint.translation.x = node->translation[0];
+			outJoint.translation.y = node->translation[1];
+			outJoint.translation.z = node->translation[2];
+			outJoint.name = node->name != nullptr ? node->name : "";
+			outJoint.extras = node->extras.data != nullptr ? node->extras.data : "";
+			outJoint.parentJointIndex = fileParents[j] >= 0 ? remap[fileParents[j]] : -1;
+
+			if (skin.inverse_bind_matrices == nullptr || !cgltf_accessor_read_float(skin.inverse_bind_matrices, j, outJoint.inverseBindPoseMatrix, 16))
+				bx::mtxIdentity(outJoint.inverseBindPoseMatrix);
+		}
+
+		if ((trace_all || trace_loaders) && reordered)
+			ffnx_trace("External mesh: %s lists its joints in another order than parents first, renumbered\n", file_path);
+
+		skins.push_back(outSkin);
+		skinJointRemaps.push_back(remap);
+	}
+
 	for (size_t i = 0; i < data->meshes_count; i++)
 	{
 		cgltf_mesh mesh = data->meshes[i];
@@ -209,12 +251,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 			auto indexCount = primitive.indices->count;
 			auto vertexCount = 0;
 
-			float* posBuffer = nullptr;
-			float* normalBuffer = nullptr;
-			float* uvBuffer = nullptr;
-			float* colorBuffer = nullptr;
-            byte* jointsBuffer = nullptr;
-            float * weightsBuffer = nullptr;
+			// Vertex data is read through cgltf's accessor functions, which handle the file's byte offsets, strides
+			// and number formats
+			std::vector<float> positions, normals, uvs;
+            const cgltf_accessor* jointsAccessor = nullptr;
+            const cgltf_accessor* weightsAccessor = nullptr;
 			for (size_t k = 0; k < primitive.attributes_count; k++)
 			{
 				cgltf_attribute attr = primitive.attributes[k];
@@ -222,7 +263,8 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 				if(strcmp(attr.name, "POSITION") == 0)
 				{
 					vertexCount = attr.data->count;
-					posBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+					positions.resize(vertexCount * 3);
+					cgltf_accessor_unpack_floats(attr.data, positions.data(), positions.size());
 					outShape.min.x = attr.data->min[0];
 					outShape.min.y = attr.data->min[1];
 					outShape.min.z = attr.data->min[2];
@@ -232,23 +274,21 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 				}
 				else if(strcmp(attr.name, "NORMAL") == 0)
 				{
-					normalBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+					normals.resize(attr.data->count * 3);
+					cgltf_accessor_unpack_floats(attr.data, normals.data(), normals.size());
 				}
 				else if(strcmp(attr.name, "TEXCOORD_0") == 0)
 				{
-					uvBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
-				}
-				else if(strcmp(attr.name, "COLOR_0") == 0)
-				{
-					colorBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+					uvs.resize(attr.data->count * 2);
+					cgltf_accessor_unpack_floats(attr.data, uvs.data(), uvs.size());
 				}
                 else if(strcmp(attr.name, "JOINTS_0") == 0)
 				{
-					jointsBuffer = (byte*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+					jointsAccessor = attr.data;
 				}
                 else if(strcmp(attr.name, "WEIGHTS_0") == 0)
 				{
-					weightsBuffer = (float*)((char*)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset);
+					weightsAccessor = attr.data;
 				}
 			}
 
@@ -274,19 +314,21 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 			// Parts without a material are drawn white
 			const cgltf_float defaultBaseColorFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			const cgltf_float* baseColorFactor = material != nullptr ? material->pbr_metallic_roughness.base_color_factor : defaultBaseColorFactor;
+			if (normals.empty()) normals.assign(vertexCount * 3, 0.0f);
+
 			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 			{
 				struct nvertex vertex;
-				vertex._.x = posBuffer[3 * vertexIndex];
+				vertex._.x = positions[3 * vertexIndex];
                 if (isZUp)
                 {
-                    vertex._.y = posBuffer[3 * vertexIndex + 1];
-                    vertex._.z = posBuffer[3 * vertexIndex + 2];
+                    vertex._.y = positions[3 * vertexIndex + 1];
+                    vertex._.z = positions[3 * vertexIndex + 2];
                 }
                 else
                 {
-                    vertex._.y = posBuffer[3 * vertexIndex + 2];
-                    vertex._.z = posBuffer[3 * vertexIndex + 1];
+                    vertex._.y = positions[3 * vertexIndex + 2];
+                    vertex._.z = positions[3 * vertexIndex + 1];
                 }
 
 				vertex.color.w = 1.0f;
@@ -295,10 +337,10 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 				vertex.color.b = static_cast<char>(baseColorFactor[2] * 255);
 				vertex.color.a = static_cast<char>(baseColorFactor[3] * 255);
 
-                if (uvBuffer != nullptr)
+                if (!uvs.empty())
                 {
-				    vertex.u = uvBuffer[2 * vertexIndex];
-				    vertex.v = uvBuffer[2 * vertexIndex + 1];
+				    vertex.u = uvs[2 * vertexIndex];
+				    vertex.v = uvs[2 * vertexIndex + 1];
                 }
                 else
                 {
@@ -310,61 +352,55 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
 				struct vector3<float> normal;
 
-				normal.x = normalBuffer[3 * vertexIndex];
+				normal.x = normals[3 * vertexIndex];
                 if (isZUp)
                 {
-                    normal.y = normalBuffer[3 * vertexIndex + 1];
-				    normal.z = normalBuffer[3 * vertexIndex + 2];
+                    normal.y = normals[3 * vertexIndex + 1];
+				    normal.z = normals[3 * vertexIndex + 2];
                 }
                 else
                 {
-                    normal.y = normalBuffer[3 * vertexIndex + 2];
-				    normal.z = normalBuffer[3 * vertexIndex + 1];
+                    normal.y = normals[3 * vertexIndex + 2];
+				    normal.z = normals[3 * vertexIndex + 1];
                 }
 
 				outShape.normals.push_back(normal);
 
-                if (jointsBuffer != nullptr)
+                if (jointsAccessor != nullptr)
                 {
+                    // Joint references may be stored as bytes or 16-bit numbers; renumbered like the skin's joints
+                    cgltf_uint fileJoints[4] = {};
+                    cgltf_accessor_read_uint(jointsAccessor, vertexIndex, fileJoints, 4);
+                    const std::vector<int>* remap = skinJointRemaps.empty() ? nullptr : &skinJointRemaps[0];
+                    auto joint = [remap](cgltf_uint j) { return static_cast<float>(remap != nullptr && j < remap->size() ? (*remap)[j] : j); };
+
                     struct vector4<float> joints;
-         
-                    joints.x = jointsBuffer[4 * vertexIndex];
-                    joints.y = jointsBuffer[4 * vertexIndex + 1];
-                    joints.z = jointsBuffer[4 * vertexIndex + 2];
-                    joints.w = jointsBuffer[4 * vertexIndex + 3];
+                    joints.x = joint(fileJoints[0]);
+                    joints.y = joint(fileJoints[1]);
+                    joints.z = joint(fileJoints[2]);
+                    joints.w = joint(fileJoints[3]);
 
                     outShape.joints.push_back(joints);
                 }
 
-                if (weightsBuffer != nullptr)
+                if (weightsAccessor != nullptr)
                 {
-                    struct vector4<float> weights;
+                    // Weights may be stored as floats or normalized integers
+                    cgltf_float fileWeights[4] = {};
+                    cgltf_accessor_read_float(weightsAccessor, vertexIndex, fileWeights, 4);
 
-                    weights.x = weightsBuffer[4 * vertexIndex];
-                    weights.y = weightsBuffer[4 * vertexIndex + 1];
-                    weights.z = weightsBuffer[4 * vertexIndex + 2];
-                    weights.w = weightsBuffer[4 * vertexIndex + 3];
+                    struct vector4<float> weights;
+                    weights.x = fileWeights[0];
+                    weights.y = fileWeights[1];
+                    weights.z = fileWeights[2];
+                    weights.w = fileWeights[3];
 
                     outShape.weights.push_back(weights);
                 }
 			}
 
-			if(primitive.indices->component_type == cgltf_component_type_r_16u)
-			{
-				auto indexBuffer = (unsigned short*)((char*)primitive.indices->buffer_view->buffer->data + primitive.indices->buffer_view->offset);
-
-				for (int id = 0; id < indexCount; ++id)
-				{
-					outShape.indices.push_back(indexBuffer[id]);
-				}
-			}else if(primitive.indices->component_type == cgltf_component_type_r_32u)
-			{
-				auto indexBuffer = (unsigned int*)((char*)primitive.indices->buffer_view->buffer->data + primitive.indices->buffer_view->offset);
-				for (int id = 0; id < indexCount; ++id)
-				{
-					outShape.indices.push_back(indexBuffer[id]);
-				}
-			}
+			outShape.indices.resize(indexCount);
+			cgltf_accessor_unpack_indices(primitive.indices, outShape.indices.data(), sizeof(uint32_t), indexCount);
 
             fillExternalMeshVertexBuffer(outShape.vertices.data(), outShape.normals.data(), outShape.joints.data(), outShape.weights.data(), outShape.vertices.size());
             fillExternalMeshIndexBuffer(outShape.indices.data(), outShape.indices.size());
@@ -372,46 +408,6 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             shapes.push_back(outShape);
 		}
 	}
-
-    for (size_t i = 0; i < data->skins_count; i++)
-	{
-        Skin outSkin;
-
-        cgltf_skin skin = data->skins[i];
-
-        outSkin.joints.resize(skin.joints_count);
-        int curIndex = 0;
-        while (curIndex != skin.joints_count)
-        {
-            createJointHierarchy(&outSkin, -1, skin.joints[curIndex], &curIndex);
-        }
-
-        auto joint_count = outSkin.joints.size();
-        for (size_t j = 0; j < joint_count; j++)
-		{
-            auto inverseBindPoseMatrixBuffer = (float*)((char*)skin.inverse_bind_matrices->buffer_view->buffer->data + skin.inverse_bind_matrices->buffer_view->offset);
-            memcpy(outSkin.joints[j].inverseBindPoseMatrix, &inverseBindPoseMatrixBuffer[16 * j], sizeof(float) * 16);
-        }
-		/*for (size_t j = 0; j < skin.joints_count; j++)
-		{
-			Joint outJoint;
-
-            auto joint = skin.joints[j];
-
-            outJoint.rotation.x = joint->rotation[0];
-            outJoint.rotation.y = joint->rotation[1];
-            outJoint.rotation.z = joint->rotation[2];
-            outJoint.rotation.w = joint->rotation[3];
-
-            outJoint.translation.x = joint->translation[0];
-            outJoint.translation.y = joint->translation[1];
-            outJoint.translation.z = joint->translation[2];
-
-            outSkin.joints.push_back(outJoint);
-        }*/
-
-        skins.push_back(outSkin);
-    }
 
     // Joints named after the game's bones (bone_00, bone_01, ...: KimeraCS battle exports)
     if (!skins.empty())
@@ -566,7 +562,10 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
                 }
             }
 
-            float* samplerBuffer = (float*)((char*)channel.sampler->output->buffer_view->buffer->data + channel.sampler->output->buffer_view->offset);
+            // The channel's keys (byte offsets, strides and number formats handled by cgltf)
+            std::vector<float> keyValues(channel.sampler->output->count * cgltf_num_components(channel.sampler->output->type));
+            cgltf_accessor_unpack_floats(channel.sampler->output, keyValues.data(), keyValues.size());
+            const float* samplerBuffer = keyValues.data();
 
             // Key times, used to stretch the animation when its key count differs from the game's frame count.
             // Channels usually share one timeline, so each is read once.
