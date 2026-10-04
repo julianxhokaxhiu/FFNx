@@ -649,7 +649,7 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 				character->addedColor.y * character->fadeAlpha, character->addedColor.z * character->fadeAlpha);
 			newRenderer.draw(true, true, true);
 
-			newRenderer.setSkinnedColorOverride();
+			// The override is switched off before the next part's draw (setting it twice for one draw is an error)
 			newRenderer.isTexture(true);
 			newRenderer.doDepthWrite(true);
 		}
