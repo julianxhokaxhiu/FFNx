@@ -2307,7 +2307,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
 	}
 
-	// Show Has nothing instead of [Card] when a monster has no drawable magic.
+	// Show "Has nothing" instead of "[Card]" when a monster has no drawable magic.
 	patch_code_byte(ff8_externals.battle_get_monster_name_sub_495100 + 0x30 + 1, 0x12);
 
 	// Force SFX IDs for Quezacotl
