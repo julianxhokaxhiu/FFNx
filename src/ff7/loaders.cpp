@@ -180,7 +180,25 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 		size_t lastindex = full_filename.find_last_of(".");
 		std::string filename_no_ext = full_filename.substr(0, lastindex);
 		std::transform(filename_no_ext.begin(), filename_no_ext.end(), filename_no_ext.begin(), [](unsigned char c) { return std::toupper(c); });
-		const char* mesh_folder = is_battle ? "battle" : "field";
+
+		// Summons (and other animated models in magic.lgp, e.g. LIMIT/CYVADAT for Shiva) are battle-format models whose
+		// parts are named <model>.P00, .P01...: one gltf in mesh/magic/, named after the model (CYVADAT.gltf), carries
+		// all of them (on the first part)
+		bool is_magic_model = false;
+		if (!is_battle && file_context->use_lgp && !_stricmp(lgp_names[file_context->lgp_num], "magic"))
+		{
+			std::string ext = lastindex == std::string::npos ? "" : full_filename.substr(lastindex + 1);
+			if (ext.size() == 3 && toupper(ext[0]) == 'P' && isdigit(ext[1]) && isdigit(ext[2]))
+			{
+				is_magic_model = true;
+				size_t slash = filename_no_ext.find_last_of("/\\");
+				if (slash != std::string::npos) filename_no_ext = filename_no_ext.substr(slash + 1);
+			}
+		}
+		bool is_magic_model_first_part = is_magic_model && full_filename.size() >= 3 && full_filename.substr(full_filename.size() - 2) == "00";
+
+		// Exports go in a folder named after the lgp the original comes from
+		const char* mesh_folder = is_battle ? "battle" : is_magic_model ? "magic" : "field";
 
 		char file_path_gltf[MAX_PATH];
 		sprintf(file_path_gltf, "%s/%s/%s/%s.gltf", basedir, external_mesh_path.data(), mesh_folder, filename_no_ext.data());
@@ -201,6 +219,11 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 			ret->field_48 = reinterpret_cast<vector3<float>*>(weaponStandIn);
 
 			if(trace_all || trace_loaders) ffnx_trace("External mesh: weapon %s drawn by the battle model's gltf\n", filename_no_ext.c_str());
+		}
+		else if (is_magic_model && !is_magic_model_first_part)
+		{
+			// Drawn by the gltf on the model's first part
+			ret->field_48 = nullptr;
 		}
 		else if (!fileExists(file_path_gltf))
 		{
