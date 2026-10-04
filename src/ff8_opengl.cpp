@@ -2307,6 +2307,22 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
 	}
 
+	// An empty monster Draw list uses the helper at get_monster_name + 0x30.
+	// It requests kernel misc text 0x10 ("[Card]") instead of 0x12 ("Has nothing").
+	// Check the complete instruction layout before changing the push immediate.
+	uint32_t empty_draw_text = ff8_externals.battle_get_monster_name_sub_495100 + 0x30;
+	const uint8_t *empty_draw_code = (const uint8_t *)empty_draw_text;
+	if (empty_draw_code[0] == 0x6A && empty_draw_code[1] == 0x10 && empty_draw_code[2] == 0xE8
+		&& empty_draw_code[7] == 0x83 && empty_draw_code[8] == 0xC4
+		&& empty_draw_code[9] == 0x04 && empty_draw_code[10] == 0xC3)
+	{
+		patch_code_byte(empty_draw_text + 1, 0x12);
+	}
+	else
+	{
+		ffnx_warning("FF8: empty Draw message helper has an unexpected layout; skipping fix.\n");
+	}
+
 	// Force SFX IDs for Quezacotl
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 16, 240030); // 240030 - 240000 + 370 = ID 400
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 12, 240033); // 240033 - 240000 + 370 = ID 403
