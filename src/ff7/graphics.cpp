@@ -929,8 +929,9 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 				external_mesh->mesh->animations.contains(anim_name) ? "" : ", not in the gltf");
 		}
 
-		// Battle root motion still comes from the game until its gltf conversion is worked out
-		if(!is_battle && external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
+		// The gltf's root motion is drawn in battle too: original animations exported from KimeraCS carry the game's
+		// own root movement (lunges, Braver's leap), new ones may change it. The game keeps its own (above).
+		if(!external_mesh->hidden && external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
 		{
 			if((trace_all || trace_loaders) && external_mesh->mesh->rootMotionChecked.insert(anim_name).second)
 				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
