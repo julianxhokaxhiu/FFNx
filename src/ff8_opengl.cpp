@@ -2307,6 +2307,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 		replace_call(ff8_externals.cdcheck_sub_52F9E0 + 0x15E, ff8_retry_configured_drive);
 	}
 
+	// Show "Has nothing" instead of "[Card]" when a monster has no drawable magic.
+	patch_code_byte(ff8_externals.battle_get_monster_name_sub_495100 + 0x30 + 1, 0x12);
+
 	// Force SFX IDs for Quezacotl
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 16, 240030); // 240030 - 240000 + 370 = ID 400
 	patch_code_dword(int(ff8_externals.vibrate_data_summon_quezacotl) - 12, 240033); // 240033 - 240000 + 370 = ID 403
