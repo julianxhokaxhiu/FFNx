@@ -424,10 +424,11 @@ uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, ch
 	return true;
 }
 
-// The scale gltf models are drawn with: the field's model scale in fields, 1 in battle (battle exports are in
-// the battle model's own units)
-float gl_get_external_mesh_scale()
+// The scale gltf models are drawn with: the field's model scale in fields, the model's own scale on the world map
+// (measured from the game, 0 until known), 1 in battle (battle exports are in the battle model's own units)
+float gl_get_external_mesh_scale(const ExternalMesh* mesh)
 {
+	if (!ff8 && getmode_cached()->driver_mode == MODE_WORLDMAP) return mesh ? mesh->worldScale : 0.0f;
 	if (!ff8 && getmode_cached()->driver_mode == MODE_BATTLE) return 1.0f;
 
 	return gl_get_field_model_scale();
@@ -460,7 +461,7 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 
 	ExternalMesh* externalMesh = character->mesh.get();
 
-	auto scale = gl_get_external_mesh_scale();
+	auto scale = gl_get_external_mesh_scale(externalMesh);
 	if (scale == 0.0f)
 	{
 		return;

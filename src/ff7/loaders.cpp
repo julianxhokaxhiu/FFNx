@@ -203,8 +203,11 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 		bool is_magic_model_first_part = is_magic_model && !magic_model_has_gltf_part;
 		if (is_magic_model) magic_model_has_gltf_part = true;
 
+		// World map models (Cloud, the chocobo, the Highwind...) come from world_us.lgp and have 3-letter names
+		bool is_world = file_context->use_lgp && !_stricmp(lgp_names[file_context->lgp_num], "world");
+
 		// Exports go in a folder named after the lgp the original comes from
-		const char* mesh_folder = is_battle ? "battle" : is_magic_model ? "magic" : "field";
+		const char* mesh_folder = is_battle ? "battle" : is_magic_model ? "magic" : is_world ? "world" : "field";
 
 		char file_path_gltf[MAX_PATH];
 		sprintf(file_path_gltf, "%s/%s/%s/%s.gltf", basedir, external_mesh_path.data(), mesh_folder, filename_no_ext.data());
@@ -267,6 +270,9 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 	}
 
 	ret->vertdata = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->vertdata), ret->numverts, (struct file *)file);
+	// The world map scales a model's parts after loading them: note the original, to measure that scale later
+	if(enable_external_mesh && ret->field_48 && file_context->use_lgp && !_stricmp(lgp_names[file_context->lgp_num], "world"))
+		reinterpret_cast<ExternalMeshInstance*>(ret->field_48)->noteGameVertices(&ret->vertdata, ret->numverts);
 	ret->normaldata = (vector3<float>*)common_externals.alloc_read_file(sizeof(*ret->normaldata), ret->numnormals, (struct file *)file);
 	ret->texcoorddata = (struct texcoords*)common_externals.alloc_read_file(sizeof(*ret->texcoorddata), ret->numtexcoords, (struct file *)file);
 	ret->vertexcolordata = (uint32_t*)common_externals.alloc_read_file(sizeof(*ret->vertexcolordata), ret->numvertcolors, (struct file *)file);

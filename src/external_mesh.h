@@ -145,7 +145,7 @@ struct AnimationPosition
     float time = 0.0f;
 };
 
-AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds);
+AnimationPosition getAnimationPosition(const Animation& anim, float frame, int frameCount, float clockSeconds, size_t extraKeys);
 vector3<float> sampleTranslation(const std::vector<float>& times, const std::vector<vector3<float>>& values, const AnimationPosition& position, const vector3<float>& fallback);
 vector4<float> sampleRotation(const std::vector<float>& times, const std::vector<vector4<float>>& values, const AnimationPosition& position, const vector4<float>& fallback);
 vector3<float> lerpTranslation(const vector3<float>& a, const vector3<float>& b, float blend);
@@ -176,6 +176,10 @@ struct SpringCollider
 constexpr float EXTERNAL_MESH_SWITCH_BLEND_SECONDS = 0.15f;
 float getSwitchBlendWeight(float clockSeconds);
 void buildRootMatrix(const vector3<float>& translation, const vector4<float>& rotation, float translationScale, struct matrix* outMatrix);
+
+// The world map draws its models at 95% of the scale it loads them with (e.g. 16 x 0.95 = 15.2 for Cloud); gltf
+// models use the full scale, like field models
+constexpr float WORLD_GAME_MODEL_SCALE = 0.95f;
 
 // Field models no field uses any more stay loaded for later fields, up to this much memory or this many models
 constexpr size_t FIELD_MESH_CACHE_BUDGET_BYTES = 256 * 1024 * 1024;
@@ -208,6 +212,9 @@ public:
 
     // Animations already reported as using the gltf root motion (trace_loaders)
     std::set<std::string> rootMotionChecked;
+    // World map: the scale this model is drawn with (the game's own scale for it, see WORLD_GAME_MODEL_SCALE), 0 until
+    // measured
+    float worldScale = 0.0f;
 
     bool hasSpringBones = false;
 
@@ -248,7 +255,16 @@ public:
     explicit ExternalMeshInstance(std::shared_ptr<ExternalMesh> sharedMesh);
 
     float getAnimationClock(const std::string& animName);
-    bool getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix);
+    bool getRootMotionMatrix(const std::string& animName, float frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix);
+
+    // World map: the game scales a model's parts when it loads them. The largest coordinate of the original part,
+    // noted before that, and the same coordinate later give the game's scale (0 when unknown)
+    void noteGameVertices(vector3<float>* const* vertices, size_t count);
+    float gameScale() const;
+
+    // World map: how far the game is through its current animation frame (0 to 1). It shows each frame twice in
+    // 60 fps mode, so the gltf is sampled between the game's frames to move smoothly.
+    float worldFrameFraction(const std::string& animName, int frame);
     void blendJointPose(size_t jointIndex, size_t jointCount, float clockSeconds, vector3<float>& translation, vector4<float>& rotation);
     int getSpringSteps();
     void updateSpringColliders(size_t jointCount);
@@ -287,15 +303,29 @@ public:
     std::vector<bool> hasGltfBonePosition;
 
     std::string current_anim;
-    int current_frame = 0;
+    float current_frame = 0.0f; // The game's frame, plus how far it is towards the next one on the world map
     int current_frame_count = 0; // Frame count of the game's current animation (.a)
     float current_clock = 0.0f; // Seconds since the game switched to the current animation
+    // Extra keys after the game's last frame that still count as one key per frame (loop-closing keys some
+    // exports add in fields and battle; world map exports have none, and their short 60 fps animations would
+    // otherwise be mistaken for them)
+    size_t extraKeys = 3;
 
     // Spring bones: where the character was placed in the field when last drawn (row-vector, game units)
     struct matrix springWorldMatrix = {};
     bool hasSpringWorldMatrix = false;
 
 private:
+    vector3<float>* const* gameVertices = nullptr;
+    size_t gameVertexIndex = 0;
+    int gameVertexAxis = 0;
+    float gameVertexOriginal = 0.0f;
+
+    std::string fractionAnim;
+    int fractionFrame = -1;
+    std::chrono::steady_clock::time_point fractionFrameStart;
+    float fractionFrameSeconds = 1.0f / 30.0f;
+
     // Animation the own clock is running for, and when the game switched to it
     std::string clockAnim;
     std::chrono::steady_clock::time_point clockStart;

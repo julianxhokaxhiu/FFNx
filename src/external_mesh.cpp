@@ -579,12 +579,12 @@ void ExternalMesh::loadAnimations(cgltf_data* data)
         cgltf_animation anim = data->animations[i];
         if (anim.name == nullptr) continue;
 
-        // Matched case-insensitively against the game's animation names: the 4 letters of a field .a file, or
-        // the whole name of a battle animation (ANIM_NN: its number in the model's list; <PACK>_NN: a limit
-        // break animation from that pack, e.g. BLAVER_02)
+        // Matched case-insensitively against the game's animation names: the name of a field or world map .a file
+        // (4 or 3 letters, up to any extension), or the whole name of a battle animation (ANIM_NN: its number in
+        // the model's list; <PACK>_NN: a limit break animation from that pack, e.g. BLAVER_02)
         std::string animName = anim.name;
         std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
-        if (animName.find('_') == std::string::npos) animName = animName.substr(0, 4);
+        if (animName.find('_') == std::string::npos) animName = animName.substr(0, std::min(animName.find('.'), size_t(4)));
 
         Animation outAnim;
         std::map<const cgltf_accessor*, std::vector<float>> timelines;
@@ -907,7 +907,7 @@ void buildRootMatrix(const vector3<float>& t, const vector4<float>& q, float tra
     outMatrix->_44 = 1.0f;
 }
 
-AnimationPosition getAnimationPosition(const Animation& anim, int frame, int frameCount, float clockSeconds)
+AnimationPosition getAnimationPosition(const Animation& anim, float frame, int frameCount, float clockSeconds, size_t extraKeys)
 {
     AnimationPosition position;
 
@@ -920,18 +920,26 @@ AnimationPosition getAnimationPosition(const Animation& anim, int frame, int fra
     }
 
     // One key per game frame (or a single held game frame): show the key of the game's frame, as before.
-    // Up to three extra keys also count: KimeraCS's 60 fps exports end with loop-closing in-between keys after the
-    // last frame (one for fields at 2x, three for battle at 4x), which stretching would wrongly blend into the end
-    // of one-shot animations and shift against the game's root motion (feet sliding).
+    // Up to extraKeys more keys also count: KimeraCS's 60 fps exports end with loop-closing in-between keys after
+    // the last frame (one for fields at 2x, three for battle at 4x), which stretching would wrongly blend into the
+    // end of one-shot animations and shift against the game's root motion (feet sliding).
     size_t frames = static_cast<size_t>(std::max(frameCount, 0));
-    if (frameCount <= 1 || (anim.keyCount >= frames && anim.keyCount <= frames + 3) || anim.endTime <= anim.startTime)
+    if (frameCount <= 1 || (anim.keyCount >= frames && anim.keyCount <= frames + extraKeys) || anim.endTime <= anim.startTime)
     {
-        position.keyIndex = frame;
+        position.keyIndex = static_cast<int>(frame);
+
+        // Between two of the game's frames (world map): between their keys, which are evenly spaced
+        float between = frame - std::floor(frame);
+        if (between > 0.0f && anim.keyCount > 1 && anim.endTime > anim.startTime)
+        {
+            position.useKeyIndex = false;
+            position.time = anim.startTime + frame * (anim.endTime - anim.startTime) / static_cast<float>(anim.keyCount - 1);
+        }
         return position;
     }
 
     // Otherwise stretch the gltf timeline over the game animation, first frame to first key, last to last
-    float progress = std::clamp(static_cast<float>(frame) / static_cast<float>(frameCount - 1), 0.0f, 1.0f);
+    float progress = std::clamp(frame / static_cast<float>(frameCount - 1), 0.0f, 1.0f);
 
     position.useKeyIndex = false;
     position.time = anim.startTime + progress * (anim.endTime - anim.startTime);
@@ -1219,6 +1227,62 @@ ExternalMeshInstance::ExternalMeshInstance(std::shared_ptr<ExternalMesh> sharedM
     if (!mesh->skins.empty()) joints.resize(mesh->skins[0].joints.size());
 }
 
+void ExternalMeshInstance::noteGameVertices(vector3<float>* const* vertices, size_t count)
+{
+    gameVertices = nullptr;
+    if (vertices == nullptr || *vertices == nullptr) return;
+
+    // The largest coordinate measures the scale most precisely
+    float largest = 0.0f;
+    for (size_t i = 0; i < count; ++i)
+    {
+        const float coordinates[3] = { (*vertices)[i].x, (*vertices)[i].y, (*vertices)[i].z };
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            if (std::fabs(coordinates[axis]) <= largest) continue;
+
+            largest = std::fabs(coordinates[axis]);
+            gameVertexIndex = i;
+            gameVertexAxis = axis;
+            gameVertexOriginal = coordinates[axis];
+        }
+    }
+
+    if (largest > 0.0f) gameVertices = vertices;
+}
+
+float ExternalMeshInstance::gameScale() const
+{
+    if (gameVertices == nullptr || *gameVertices == nullptr) return 0.0f;
+
+    const auto& vertex = (*gameVertices)[gameVertexIndex];
+    float now = gameVertexAxis == 0 ? vertex.x : gameVertexAxis == 1 ? vertex.y : vertex.z;
+    return std::max(now / gameVertexOriginal, 0.0f);
+}
+
+float ExternalMeshInstance::worldFrameFraction(const std::string& animName, int frame)
+{
+    auto now = std::chrono::steady_clock::now();
+
+    if (animName != fractionAnim || frame != fractionFrame)
+    {
+        // How long the game shows a frame, from the last one (normally 1/30 s; longer when the game runs slower)
+        if (animName == fractionAnim)
+        {
+            float seconds = std::chrono::duration<float>(now - fractionFrameStart).count();
+            if (seconds > 0.005f && seconds < 0.25f) fractionFrameSeconds = seconds;
+        }
+
+        fractionAnim = animName;
+        fractionFrame = frame;
+        fractionFrameStart = now;
+        return 0.0f;
+    }
+
+    float seconds = std::chrono::duration<float>(now - fractionFrameStart).count();
+    return std::clamp(seconds / fractionFrameSeconds, 0.0f, 0.99f);
+}
+
 // The state for one character drawn with this model (see ExternalMeshInstance::variants)
 ExternalMeshInstance* ExternalMeshInstance::variantFor(const void* key)
 {
@@ -1260,14 +1324,14 @@ float ExternalMeshInstance::getAnimationClock(const std::string& animName)
 
 // The game's root matrix for this frame from the gltf root node's keys (blended after a switch). Returns false
 // when the animation doesn't animate the root node, so the game's own root motion is used.
-bool ExternalMeshInstance::getRootMotionMatrix(const std::string& animName, int frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix)
+bool ExternalMeshInstance::getRootMotionMatrix(const std::string& animName, float frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix)
 {
     auto it = mesh->animations.find(animName);
     if (it == mesh->animations.end()) return false;
 
     vector3<float> t;
     vector4<float> q;
-    if (!mesh->getRootMotionSample(animName, getAnimationPosition(it->second, frame, frameCount, clockSeconds), t, q)) return false;
+    if (!mesh->getRootMotionSample(animName, getAnimationPosition(it->second, frame, frameCount, clockSeconds, extraKeys), t, q)) return false;
 
     float blendWeight = getSwitchBlendWeight(clockSeconds);
     if (blendWeight < 1.0f && blendFromHasRoot)
@@ -1604,7 +1668,7 @@ void ExternalMeshInstance::updatePose(float scale)
     static const Animation restPose;
     auto found = mesh->animations.find(current_anim);
     const auto& anim = found != mesh->animations.end() ? found->second : restPose;
-    AnimationPosition position = getAnimationPosition(anim, current_frame, current_frame_count, current_clock);
+    AnimationPosition position = getAnimationPosition(anim, current_frame, current_frame_count, current_clock, extraKeys);
     int springSteps = mesh->hasSpringBones ? getSpringSteps() : 0;
 
     // Places a joint from its local transform and its parent (parents always come before their children)

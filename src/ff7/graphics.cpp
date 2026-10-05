@@ -595,8 +595,8 @@ static std::string get_battle_anim_name(struct hrc_data *hrc_data, struct struc_
 	return name;
 }
 
-// Name gltf animations are matched against: the 4 characters of the game's .a file name, uppercased (fields),
-// or ANIM_NN (battle)
+// Name gltf animations are matched against: the game's .a file name without its folder and extension, uppercased
+// (4 letters in fields, e.g. AAFF; 3 on the world map, e.g. ASC), or ANIM_NN (battle)
 static std::string get_external_mesh_anim_name(struct anim_header *anim_header, struct hrc_data *hrc_data, struct struc_110 *struc_110)
 {
 	if (getmode_cached()->driver_mode == MODE_BATTLE)
@@ -614,10 +614,13 @@ static std::string get_external_mesh_anim_name(struct anim_header *anim_header, 
 		return name;
 	}
 
-	std::string animFullName = anim_header->file.pc_name;
-	if(animFullName.length() < 6) return "";
+	if(!anim_header->file.pc_name) return "";
 
-	std::string animName = animFullName.substr(animFullName.length() - 6, 4);
+	std::string animName = anim_header->file.pc_name;
+	size_t slash = animName.find_last_of("/\\");
+	if(slash != std::string::npos) animName = animName.substr(slash + 1);
+	// The game's name keeps the extension with its dot turned into an underscore (char/AAFF_A, world/ASC_A)
+	animName = animName.substr(0, animName.find_last_of("._"));
 	std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
 	return animName;
@@ -942,8 +945,18 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		std::string anim_name = get_external_mesh_anim_name(anim_header, hrc_data, struc_110);
 		external_mesh_clock = external_mesh->getAnimationClock(anim_name);
 		struct matrix gltf_root_matrix;
-		float model_scale = gl_get_external_mesh_scale();
 		bool is_battle = getmode_cached()->driver_mode == MODE_BATTLE;
+		bool is_world = getmode_cached()->driver_mode == MODE_WORLDMAP;
+
+		// The world map scales its models when it loads them (by a different amount for each model): measure it
+		if(is_world) external_mesh->mesh->worldScale = external_mesh_owner->gameScale() / WORLD_GAME_MODEL_SCALE;
+		float model_scale = gl_get_external_mesh_scale(external_mesh->mesh.get());
+
+		// The world map shows each animation frame twice in 60 fps mode: sample between the game's frames so the
+		// gltf moves smoothly
+		float frame_position = current_frame;
+		if(is_world) frame_position += external_mesh->worldFrameFraction(anim_name, current_frame);
+		external_mesh->extraKeys = is_world ? 0 : 3;
 
 		if((trace_all || trace_loaders) && is_battle && external_mesh->mesh->rootMotionChecked.insert("battle " + anim_name).second)
 		{
@@ -953,7 +966,9 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 		// The gltf's root motion is drawn in battle too: original animations exported from KimeraCS carry the game's
 		// own root movement (lunges, Braver's leap), new ones may change it. The game keeps its own (above).
-		if(!external_mesh->hidden && external_mesh->getRootMotionMatrix(anim_name, current_frame, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix))
+		bool has_gltf_root = !external_mesh->hidden && external_mesh->getRootMotionMatrix(anim_name, frame_position, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix);
+
+		if(has_gltf_root)
 		{
 			if((trace_all || trace_loaders) && external_mesh->mesh->rootMotionChecked.insert(anim_name).second)
 				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
@@ -970,7 +985,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		if(!external_mesh->hidden)
 		{
 			external_mesh->current_anim = anim_name;
-			external_mesh->current_frame = current_frame;
+			external_mesh->current_frame = frame_position;
 			external_mesh->current_frame_count = anim_header->num_frames;
 			external_mesh->current_clock = external_mesh_clock;
 			external_mesh->updatePose(model_scale);
