@@ -17,6 +17,7 @@
 - Core: Add support for [Universal Button Prompts](docs/ff7/universal_buttons.md)
 - Core: Add support for Field text window autoresize for all languages
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
+- Renderer: Draw untextured gltf model parts with their material color ( https://github.com/julianxhokaxhiu/FFNx/pull/1003 )
 
 ## FF8
 
