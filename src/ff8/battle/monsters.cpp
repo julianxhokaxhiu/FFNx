@@ -189,9 +189,7 @@ static void ff8_relocate_enemy_scanned_once()
 	if (trace_all) ffnx_trace("Extra battle monsters: Scan scanned-once bitfield relocated to var %d.\n", FF8_SCANNED_ONCE_RELOCATE_VAR);
 }
 
-// Retail stores 160 rows in the EXE. Keep the original rows and append zeroed
-// slots for c0m144-199. All three lookups (2D and both positional paths) must
-// point at the same replacement. The normal path also checks com_id < 160.
+// Preserve the original 160 rows; new monster sound slots start at zero.
 static uint32_t extended_actor_sounds[FF8_BATTLE_ACTOR_SOUND_ROWS][FF8_BATTLE_ACTOR_SOUND_SLOTS] = {};
 uint32_t (*ff8_battle_actor_sounds)[FF8_BATTLE_ACTOR_SOUND_SLOTS] = nullptr;
 
@@ -200,9 +198,7 @@ static void ff8_extend_battle_actor_sounds()
 	if (ff8_battle_actor_sounds != nullptr)
 		return;
 
-	// Locate the retail sound routines by their instructions rather than EN
-	// absolute addresses. Validate every reader before changing any code; a
-	// different executable layout leaves sound playback untouched.
+	// Check the sound routines before redirecting their table lookups.
 	const uint8_t signature[] = {
 		0x81, 0xEC, 0x00, 0x01, 0x00, 0x00, 0x55, 0x56,
 		0x8B, 0xB4, 0x24, 0x0C, 0x01, 0x00, 0x00,
@@ -236,8 +232,7 @@ static void ff8_extend_battle_actor_sounds()
 			bool valid = true;
 			for (unsigned reader : lookup_offsets)
 			{
-				uint32_t operand;
-				memcpy(&operand, candidate + reader + 3, sizeof(operand));
+				uint32_t operand = get_absolute_value((uint32_t)(uintptr_t)candidate, reader + 3);
 				if (memcmp(candidate + reader, table_lookup, sizeof(table_lookup)) != 0
 					|| (address != 0 && operand != address))
 					valid = false;
@@ -259,7 +254,7 @@ static void ff8_extend_battle_actor_sounds()
 		return;
 	}
 
-	memcpy(extended_actor_sounds, (const void *)(uintptr_t)table_address, 160 * 7 * sizeof(uint32_t));
+	memcpy_code((uint32_t)(uintptr_t)extended_actor_sounds, (void *)(uintptr_t)table_address, 160 * 7 * sizeof(uint32_t));
 	for (unsigned reader : lookup_offsets)
 		patch_code_dword((uint32_t)(uintptr_t)(sound_fn + reader + 3), (uint32_t)(uintptr_t)extended_actor_sounds);
 	patch_code_byte((uint32_t)(uintptr_t)(sound_fn + 0x13), FF8_BATTLE_ACTOR_SOUND_ROWS);

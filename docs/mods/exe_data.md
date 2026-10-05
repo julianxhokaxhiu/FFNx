@@ -26,26 +26,10 @@ And then FFNx will look for those files directly instead of data from the EXE.
 
 ### FF8 battle actor sounds
 
-`battle_actor_sounds.bin` overrides the complete actor sound table, including
-new monsters through c0m199. Enable `save_exe_data` to generate a starting file
-in `direct/exe/` (or your configured `direct_mode_path`). Existing files are
-never overwritten. Language-specific `direct/<language>/exe/` overrides take
-precedence, as for the other EXE data files.
+`battle_actor_sounds.bin` contains the sound IDs for characters and monsters through c0m199. Enable `save_exe_data` to create it in `direct/exe/`. Existing files are kept. As with other EXE data, `direct/<language>/exe/` takes precedence.
 
-The file is exactly **6,048 bytes**: 216 rows of seven little-endian unsigned
-32-bit world sound IDs, with no header. Rows 0-15 are characters; a monster's
-row is its c0m file number plus 16. The original 160 rows are preserved by
-default; the new rows 160-215 start at zero. A missing or incorrectly sized
-file leaves the default table intact. Zero is the original table's unused-slot
-value; this feature does not change how the game handles that value.
+The file has no header and must contain exactly 6,048 bytes: 216 rows of seven little-endian unsigned 32-bit world sound IDs. The original 160 rows are preserved; rows 160-215 start at zero for mods to fill.
 
-To set slot `slot` for monster `c0m`, write at byte offset
-`((c0m + 16) * 7 + slot) * 4`, where slots are 0-6. For example, copying row 87
-(c0m071, G-Soldier) to row 161 (c0m145) reuses its sounds. G-Soldier slot 0
-contains world sound ID 400000 (`80 1A 06 00`), not audio archive index 1230.
-Animation actor-sound commands continue to address local slots; global sound
-commands are unchanged. This adds table capacity and an override, not new
-audio decoding or automatic sound inheritance from DAT files.
+A monster's row is its c0m number plus 16. Slot numbers are 0-6, with byte offset `((c0m + 16) * 7 + slot) * 4`. To reuse G-Soldier sounds for c0m145, copy row 87 to row 161. G-Soldier slot 0 uses world sound ID 400000 (`80 1A 06 00`).
 
-The extension validates the executable's sound-routine layout before patching;
-unsupported layouts log a warning and keep the original table.
+The table uses world sound IDs, not audio archive indices. DAT sound sections are not imported automatically. Missing or incorrectly sized files keep the defaults.
