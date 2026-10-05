@@ -16,7 +16,14 @@
 
 #pragma once
 
+#include <stdint.h>
+
 // Unlock the unused battle monster models c0m144..c0m199 so encounters can
 // reference them. Call once from ff8_init_hooks(), after ff8_externals is
 // resolved.
 void ff8_battle_monsters_init();
+
+// Seven world sound IDs per actor: character rows 0-15, monster rows c0m# + 16.
+constexpr unsigned FF8_BATTLE_ACTOR_SOUND_ROWS = 216; // through c0m199
+constexpr unsigned FF8_BATTLE_ACTOR_SOUND_SLOTS = 7;
+extern uint32_t (*ff8_battle_actor_sounds)[FF8_BATTLE_ACTOR_SOUND_SLOTS];

@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <windows.h>
 
 // -------------------------------------------------------------------------
 // Unlock the unused battle monster models c0m144..c0m199.
@@ -188,8 +189,87 @@ static void ff8_relocate_enemy_scanned_once()
 	if (trace_all) ffnx_trace("Extra battle monsters: Scan scanned-once bitfield relocated to var %d.\n", FF8_SCANNED_ONCE_RELOCATE_VAR);
 }
 
+// Retail stores 160 rows in the EXE. Keep the original rows and append zeroed
+// slots for c0m144-199. All three lookups (2D and both positional paths) must
+// point at the same replacement. The normal path also checks com_id < 160.
+static uint32_t extended_actor_sounds[FF8_BATTLE_ACTOR_SOUND_ROWS][FF8_BATTLE_ACTOR_SOUND_SLOTS] = {};
+uint32_t (*ff8_battle_actor_sounds)[FF8_BATTLE_ACTOR_SOUND_SLOTS] = nullptr;
+
+static void ff8_extend_battle_actor_sounds()
+{
+	if (ff8_battle_actor_sounds != nullptr)
+		return;
+
+	// Locate the retail sound routines by their instructions rather than EN
+	// absolute addresses. Validate every reader before changing any code; a
+	// different executable layout leaves sound playback untouched.
+	const uint8_t signature[] = {
+		0x81, 0xEC, 0x00, 0x01, 0x00, 0x00, 0x55, 0x56,
+		0x8B, 0xB4, 0x24, 0x0C, 0x01, 0x00, 0x00,
+		0x8A, 0x46, 0x04, 0x3C, 0xA0
+	};
+	const uint8_t table_lookup[] = {0x8B, 0x14, 0x8D}; // mov edx,[ecx*4+table]
+	const uint8_t spatial_stack[] = {0x81, 0xEC, 0x04, 0x01, 0x00, 0x00};
+	constexpr unsigned lookup_offsets[] = {0x7E, 0x13B, 0x179};
+	uint8_t *image = (uint8_t *)GetModuleHandleA(nullptr);
+	const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)image;
+	const IMAGE_NT_HEADERS *nt = (const IMAGE_NT_HEADERS *)(image + dos->e_lfanew);
+	const IMAGE_SECTION_HEADER *sections = IMAGE_FIRST_SECTION(nt);
+	uint8_t *sound_fn = nullptr;
+	uint32_t table_address = 0;
+	unsigned matches = 0;
+	for (unsigned section = 0; section < nt->FileHeader.NumberOfSections; ++section)
+	{
+		if (!(sections[section].Characteristics & IMAGE_SCN_MEM_EXECUTE))
+			continue;
+		uint8_t *begin = image + sections[section].VirtualAddress;
+		unsigned size = sections[section].Misc.VirtualSize;
+		for (unsigned offset = 0; offset + 0x180 <= size; ++offset)
+		{
+			uint8_t *candidate = begin + offset;
+			if (memcmp(candidate, signature, sizeof(signature)) != 0
+				|| candidate[0x14] != 0x73 // unsigned com_id bounds check
+				|| candidate[0xA0] != 0xA1 // positional function: mov eax,[log flag]
+				|| memcmp(candidate + 0xA5, spatial_stack, sizeof(spatial_stack)) != 0)
+				continue;
+			uint32_t address = 0;
+			bool valid = true;
+			for (unsigned reader : lookup_offsets)
+			{
+				uint32_t operand;
+				memcpy(&operand, candidate + reader + 3, sizeof(operand));
+				if (memcmp(candidate + reader, table_lookup, sizeof(table_lookup)) != 0
+					|| (address != 0 && operand != address))
+					valid = false;
+				address = operand;
+			}
+			uintptr_t image_start = (uintptr_t)image;
+			if (!valid || address < image_start
+				|| nt->OptionalHeader.SizeOfImage < 160 * 7 * sizeof(uint32_t)
+				|| address - image_start > nt->OptionalHeader.SizeOfImage - 160 * 7 * sizeof(uint32_t))
+				continue;
+			sound_fn = candidate;
+			table_address = address;
+			++matches;
+		}
+	}
+	if (matches != 1)
+	{
+		ffnx_warning("Extra battle monster sounds: unsupported sound routine layout, keeping the original table.\n");
+		return;
+	}
+
+	memcpy(extended_actor_sounds, (const void *)(uintptr_t)table_address, 160 * 7 * sizeof(uint32_t));
+	for (unsigned reader : lookup_offsets)
+		patch_code_dword((uint32_t)(uintptr_t)(sound_fn + reader + 3), (uint32_t)(uintptr_t)extended_actor_sounds);
+	patch_code_byte((uint32_t)(uintptr_t)(sound_fn + 0x13), FF8_BATTLE_ACTOR_SOUND_ROWS);
+	ff8_battle_actor_sounds = extended_actor_sounds;
+}
+
 void ff8_battle_monsters_init()
 {
+	ff8_extend_battle_actor_sounds();
+
 	if (!ff8_externals.battle_monster_file_load_call_site || !ff8_externals.battle_load_file_sub_508480)
 	{
 		if (trace_all) ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");

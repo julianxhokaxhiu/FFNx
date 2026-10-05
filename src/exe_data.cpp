@@ -27,6 +27,7 @@
 #include "patch.h"
 #include "saveload.h"
 #include "ff8/file.h"
+#include "ff8/battle/monsters.h"
 
 constexpr char *FF8_EXE_BATTLE_SCANS = "battle_scans";
 constexpr char *FF8_EXE_CARD_NAMES = "card_names";
@@ -47,12 +48,12 @@ uint8_t *ff8_remastered_card_names = nullptr;
 uint8_t *ff8_remastered_draw_point = nullptr;
 uint8_t *ff8_remastered_card_texts = nullptr;
 
-bool ff8_get_exe_path(const char *name, char *target_filename)
+bool ff8_get_exe_path(const char *name, char *target_filename, const char *extension = "msd")
 {
     char langPath[16] = "";
     ff8_fs_lang_string(langPath);
 
-    snprintf(target_filename, MAX_PATH, "%s/%s/%s/exe/%s.msd", basedir, direct_mode_path.c_str(), langPath, name);
+    snprintf(target_filename, MAX_PATH, "%s/%s/%s/exe/%s.%s", basedir, direct_mode_path.c_str(), langPath, name, extension);
     normalize_path(target_filename);
 
     if (fileExists(target_filename)) {
@@ -62,7 +63,7 @@ bool ff8_get_exe_path(const char *name, char *target_filename)
     if (trace_all || trace_direct) ffnx_warning("Direct file not found %s\n", target_filename);
 
     // Retry without lang
-    snprintf(target_filename, MAX_PATH, "%s/%s/exe/%s.msd", basedir, direct_mode_path.c_str(), name);
+    snprintf(target_filename, MAX_PATH, "%s/%s/exe/%s.%s", basedir, direct_mode_path.c_str(), name, extension);
     normalize_path(target_filename);
 
     if (fileExists(target_filename)) {
@@ -417,8 +418,54 @@ void dump_exe_data()
     }
 }
 
+// One fixed-size table, loaded once. A malformed file cannot partially replace
+// the original rows. save_exe_data writes a starting table without overwriting
+// an existing mod override (including a language-specific override).
+static void ff8_actor_sound_data_init()
+{
+    if (ff8_battle_actor_sounds == nullptr)
+        return;
+    char filename[MAX_PATH] = {};
+    constexpr size_t size = FF8_BATTLE_ACTOR_SOUND_ROWS * FF8_BATTLE_ACTOR_SOUND_SLOTS * sizeof(uint32_t);
+    if (ff8_get_exe_path("battle_actor_sounds", filename, "bin"))
+    {
+        FILE *file = fopen(filename, "rb");
+        if (file == nullptr)
+        {
+            ffnx_warning("Cannot open actor sound table %s\n", filename);
+            return;
+        }
+        uint32_t sounds[FF8_BATTLE_ACTOR_SOUND_ROWS][FF8_BATTLE_ACTOR_SOUND_SLOTS];
+        bool valid = fread(sounds, 1, size, file) == size && fgetc(file) == EOF && !ferror(file);
+        fclose(file);
+        if (valid)
+            memcpy(ff8_battle_actor_sounds, sounds, size);
+        else
+            ffnx_warning("Actor sound table %s must contain exactly %u bytes; keeping defaults.\n", filename, (unsigned)size);
+    }
+    else if (save_exe_data)
+    {
+        char dirname[MAX_PATH];
+        snprintf(dirname, sizeof(dirname), "%s/%s/exe/", basedir, direct_mode_path.c_str());
+        normalize_path(dirname);
+        make_path(dirname);
+        FILE *file = fopen(filename, "wb");
+        if (file != nullptr)
+        {
+            bool valid = fwrite(ff8_battle_actor_sounds, 1, size, file) == size;
+            if (fclose(file) != 0 || !valid)
+                ffnx_warning("Cannot write actor sound table %s\n", filename);
+        }
+        else
+            ffnx_warning("Cannot create actor sound table %s\n", filename);
+    }
+}
+
 void exe_data_init()
 {
+    if (ff8)
+        ff8_actor_sound_data_init();
+
     if (save_exe_data)
     {
         dump_exe_data();

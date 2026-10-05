@@ -20,6 +20,8 @@
 
 ## FF8
 
+- Core: Extend the seven-slot battle actor sound table through c0m199, with a direct EXE-data override for mod-defined sound IDs
+
 - Core: Add monster-AI `target` opcode values 228-248 to target two battle slots at once ( https://github.com/julianxhokaxhiu/FFNx/pull/961 )
 - Core: Add support for remastered version, [see manual](https://github.com/julianxhokaxhiu/FFNx/blob/master/docs/how_to_install.md#remastered-release) for more informations ( https://github.com/julianxhokaxhiu/FFNx/pull/887 https://github.com/julianxhokaxhiu/FFNx/pull/977 https://github.com/julianxhokaxhiu/FFNx/pull/979 )
 - Core: Fix IT and DE versions crashing on launch ( https://github.com/julianxhokaxhiu/FFNx/pull/957 )
