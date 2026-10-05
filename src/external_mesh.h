@@ -181,6 +181,8 @@ void buildRootMatrix(const vector3<float>& translation, const vector4<float>& ro
 constexpr size_t FIELD_MESH_CACHE_BUDGET_BYTES = 256 * 1024 * 1024;
 constexpr size_t FIELD_MESH_CACHE_MAX_UNUSED = 32;
 
+struct cgltf_data;
+
 class ExternalMesh
 {
 public:
@@ -214,6 +216,15 @@ public:
     std::vector<int> gameBoneJoints; // Game bone index -> joint index (joints named bone_NN), -1 when none
 private:
     void setupSpringColliders();
+
+    // The steps of importExternalMeshGltfFile, in order
+    void loadTextures(cgltf_data* data, char* tex_path);
+    std::vector<std::vector<int>> loadSkins(cgltf_data* data, const char* file_path);
+    void loadMeshes(cgltf_data* data, const std::vector<std::vector<int>>& skinJointRemaps, bool isZUp);
+    void findGameBoneJoints();
+    void findWeaponShapes();
+    void setupSpringBones();
+    void loadAnimations(cgltf_data* data);
     void loadConfig(const std::string& path);
 
     int getTextureCount(std::string tex_name);

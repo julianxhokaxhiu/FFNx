@@ -111,6 +111,24 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
     std::string configPath = modelFolder + modelFilenameWithoutExt + "_config.toml";
     loadConfig(configPath);
 
+	loadTextures(data, tex_path);
+	auto skinJointRemaps = loadSkins(data, file_path);
+	loadMeshes(data, skinJointRemaps, isZUp);
+	findGameBoneJoints();
+	findWeaponShapes();
+	setupSpringBones();
+	loadAnimations(data);
+
+    updateExternalMeshBuffers();
+
+    cgltf_free(data);
+
+	return true;
+}
+
+// Loads each texture's DDS files (base color, normal and PBR maps) into materials, by image file name
+void ExternalMesh::loadTextures(cgltf_data* data, char* tex_path)
+{
 	for (size_t i = 0; i < data->textures_count; i++)
 	{
 		auto texture = data->textures[i];
@@ -178,7 +196,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             }
         }
 	}
+}
 
+// Builds the skeletons from the file's skins; returns, per skin, where each of the file's joints ended up
+std::vector<std::vector<int>> ExternalMesh::loadSkins(cgltf_data* data, const char* file_path)
+{
 	// Skeletons first: the parts refer to joints by their place in the skin's joint list. A joint's parent is the
 	// nearest node above it that is one of the skin's joints. Joints are kept parents first (posing works down the
 	// skeleton in that order), so a file listing them in another order is renumbered, parts included.
@@ -239,6 +261,12 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 		skinJointRemaps.push_back(remap);
 	}
 
+	return skinJointRemaps;
+}
+
+// Reads every mesh primitive into a Shape and its vertex and index data into the GPU buffers
+void ExternalMesh::loadMeshes(cgltf_data* data, const std::vector<std::vector<int>>& skinJointRemaps, bool isZUp)
+{
 	for (size_t i = 0; i < data->meshes_count; i++)
 	{
 		cgltf_mesh mesh = data->meshes[i];
@@ -408,7 +436,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             shapes.push_back(outShape);
 		}
 	}
+}
 
+// Joints named after the game's bones (bone_NN) give the game their positions in battle
+void ExternalMesh::findGameBoneJoints()
+{
     // Joints named after the game's bones (bone_00, bone_01, ...: KimeraCS battle exports)
     if (!skins.empty())
     {
@@ -425,7 +457,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             gameBoneJoints[boneIndex] = static_cast<int>(j);
         }
     }
+}
 
+// Parts skinned only to the "weapon" joint are battle weapons, drawn only while equipped
+void ExternalMesh::findWeaponShapes()
+{
     // Battle weapons: parts skinned only to a joint named "weapon" (all weapons share it; one is equipped)
     if (!skins.empty())
     {
@@ -450,7 +486,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
             }
         }
     }
+}
 
+// Spring bones and their settings, then the body capsules they collide with
+void ExternalMesh::setupSpringBones()
+{
     // Spring bones: joints whose name contains "spring" (any case), and every joint below them
     for (auto& skin : skins)
     {
@@ -515,7 +555,11 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
     }
 
     if (hasSpringBones) setupSpringColliders();
+}
 
+// The animations, keyed by the game's animation names, plus the root node's motion
+void ExternalMesh::loadAnimations(cgltf_data* data)
+{
     // The skeleton's root node is the non-joint parent of its top joint. Its channels carry the root motion
     // (the height that stands the model on the floor, moves like jumps)
     cgltf_node* rootNode = nullptr;
@@ -638,12 +682,6 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 
         animations[animName] = std::move(outAnim);
     }
-
-    updateExternalMeshBuffers();
-
-    cgltf_free(data);
-
-	return true;
 }
 
 uint32_t ExternalMesh::fillExternalMeshVertexBuffer(struct nvertex* inVertex, struct vector3<float>* normals, struct vector4<float>* joints, struct vector4<float>* weights, uint32_t inCount)
