@@ -1733,6 +1733,9 @@ struct ff8_externals
 	DWORD* battle_current_actor_talking;
 	int (*battle_text_task_sub_5009B0)(int);
 	uint32_t sub_502380;
+	uint32_t battle_actor_sound;
+	uint32_t battle_actor_sound_3d;
+	uint32_t (*battle_actor_sounds)[7];
 	uint32_t sub_50A790;
 	uint32_t sub_50B2A0;
 	uint32_t sub_502670; // embedded pointer read out of sub_502380 ("push offset ...")

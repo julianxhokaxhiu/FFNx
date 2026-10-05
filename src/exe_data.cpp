@@ -420,10 +420,10 @@ void dump_exe_data()
 
 static void ff8_actor_sound_data_init()
 {
-    if (ff8_battle_actor_sounds == nullptr)
+    if (ff8_externals.battle_actor_sounds == nullptr)
         return;
     char filename[MAX_PATH] = {};
-    constexpr size_t size = FF8_BATTLE_ACTOR_SOUND_ROWS * FF8_BATTLE_ACTOR_SOUND_SLOTS * sizeof(uint32_t);
+    constexpr size_t size = FF8_BATTLE_ACTOR_SOUND_ROWS * sizeof(*ff8_externals.battle_actor_sounds);
     if (ff8_get_exe_path("battle_actor_sounds", filename, "bin"))
     {
         FILE *file = fopen(filename, "rb");
@@ -436,7 +436,7 @@ static void ff8_actor_sound_data_init()
         bool valid = fread(sounds, 1, size, file) == size && fgetc(file) == EOF && !ferror(file);
         fclose(file);
         if (valid)
-            memcpy_code((uint32_t)(uintptr_t)ff8_battle_actor_sounds, sounds, size);
+            memcpy_code((uint32_t)ff8_externals.battle_actor_sounds, sounds, size);
         else
             ffnx_warning("Actor sound table %s must contain exactly %u bytes; keeping defaults.\n", filename, (unsigned)size);
     }
@@ -449,7 +449,7 @@ static void ff8_actor_sound_data_init()
         FILE *file = fopen(filename, "wb");
         if (file != nullptr)
         {
-            bool valid = fwrite(ff8_battle_actor_sounds, 1, size, file) == size;
+            bool valid = fwrite(ff8_externals.battle_actor_sounds, 1, size, file) == size;
             if (fclose(file) != 0 || !valid)
                 ffnx_warning("Cannot write actor sound table %s\n", filename);
         }
