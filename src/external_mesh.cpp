@@ -430,6 +430,16 @@ void ExternalMesh::loadMeshes(cgltf_data* data, const std::vector<std::vector<in
 			outShape.indices.resize(indexCount);
 			cgltf_accessor_unpack_indices(primitive.indices, outShape.indices.data(), sizeof(uint32_t), indexCount);
 
+			// glTF triangles face the side they wind counter-clockwise around, the game's own models the other side.
+			// Swapping Y and Z (above, when not Z-up) mirrors the mesh, which already turns every triangle around;
+			// Z-up meshes keep their coordinates, so turn their triangles around here. Either way, back faces are then
+			// culled like the game's own models.
+			if (isZUp)
+			{
+				for (size_t triangle = 0; triangle + 2 < outShape.indices.size(); triangle += 3)
+					std::swap(outShape.indices[triangle + 1], outShape.indices[triangle + 2]);
+			}
+
             fillExternalMeshVertexBuffer(outShape.vertices.data(), outShape.normals.data(), outShape.joints.data(), outShape.weights.data(), outShape.vertices.size());
             fillExternalMeshIndexBuffer(outShape.indices.data(), outShape.indices.size());
 

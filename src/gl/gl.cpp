@@ -578,9 +578,9 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 
 		// drawWithLighting() turns the program into its lighting variant, so every part starts from SMOOTH again
 		newRenderer.setInterpolationQualifier(SMOOTH);
-		// No culling: RendererCullMode::FRONT reaches bgfx as CULL_CW | CULL_CCW (an invalid mode) and could hide
-		// the front faces, so models looked see-through. Depth testing hides the back faces anyway.
-		newRenderer.setCullMode(RendererCullMode::DISABLED);
+		// Back faces are culled like the game's own models (e.g. a one-sided tree seen from behind in a battle scene),
+		// unless the material is double-sided
+		newRenderer.setCullMode(shape.isDoubleSided ? RendererCullMode::DISABLED : RendererCullMode::BACK);
 
 		// The material's alpha mode, not the game's current blend state: opaque and mask parts are drawn without
 		// blending (a mask cuts out texels below its cutoff), so the half-transparent texels texture filtering
