@@ -1654,6 +1654,14 @@ bool hasWeaponMesh(const ExternalMesh& mesh, const std::string& name)
     return false;
 }
 
+bool hasMeshNamed(const ExternalMesh& mesh, const std::string& name)
+{
+    for (const auto& shape : mesh.shapes)
+        if (shape.name == name) return true;
+
+    return false;
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // Posing
 

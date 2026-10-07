@@ -568,8 +568,8 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 	{
 		auto& shape = externalMesh->shapes[i];
 
-		// Battle models carry every weapon: draw only the equipped one
-		if (shape.isWeapon && shape.name != character->equippedWeapon)
+		// Battle models carry every weapon: draw only the equipped one. A battle scene piece draws only its own mesh.
+		if ((shape.isWeapon && shape.name != character->equippedWeapon) || (!character->onlyMesh.empty() && shape.name != character->onlyMesh))
 		{
 			vertexOffset += shape.vertices.size();
 			indexOffset += shape.indices.size();

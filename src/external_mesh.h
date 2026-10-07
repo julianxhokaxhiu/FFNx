@@ -278,6 +278,10 @@ public:
     std::string equippedWeapon;
     bool hidden = false;
 
+    // Battle scenes: the mesh of the gltf this piece of the scene draws (named after the piece, e.g. ONAN), so each
+    // piece is drawn only when the game draws it (it leaves some out depending on the camera); empty = every mesh
+    std::string onlyMesh;
+
     // The game's opacity for this character (battle fade in, death fade out), 1 = opaque
     float fadeAlpha = 1.0f;
 
@@ -360,4 +364,5 @@ void setBattleActorCharacter(const void* actorKey, ExternalMeshInstance* charact
 ExternalMeshInstance* getBattleActorCharacter(const void* actorKey);
 ExternalMeshInstance* getLastBattleCharacter();
 bool hasWeaponMesh(const ExternalMesh& mesh, const std::string& name);
+bool hasMeshNamed(const ExternalMesh& mesh, const std::string& name);
 void flushReleasedFieldExternalMeshes(); // After the deferred draws, which may still use freed characters

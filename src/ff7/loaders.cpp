@@ -92,6 +92,8 @@ error:
 // load battle HRC file (does not save modpath name)
 // A model's parts are loaded right after its skeleton: true once the magic.lgp model being loaded has its gltf part
 static bool magic_model_has_gltf_part = false;
+// The gltf of the battle scene being loaded (on its first part), which has a mesh for each of its pieces
+static ExternalMeshInstance* battle_scene_character = nullptr;
 
 struct battle_hrc_header *read_battle_hrc(uint32_t use_file_context, struct file_context *file_context, char *filename)
 {
@@ -106,6 +108,7 @@ struct battle_hrc_header *read_battle_hrc(uint32_t use_file_context, struct file
 	ff7_externals.swap_extension("D", filename, hrc_filename);
 
 	magic_model_has_gltf_part = false;
+	battle_scene_character = nullptr;
 
 	if(trace_all || trace_loaders)
 	{
@@ -203,6 +206,11 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 		bool is_magic_model_first_part = is_magic_model && !magic_model_has_gltf_part;
 		if (is_magic_model) magic_model_has_gltf_part = true;
 
+		// Battle scenes (the arena: STAGEnn.D with parts .P00, .P01...) are exported whole into the gltf of their first
+		// part, every piece a mesh named after its part (ONAM, ONAN...). Each piece draws its own mesh, when the game
+		// draws that piece.
+		bool is_battle_scene = is_battle && !_strnicmp(filename, "STAGE", 5);
+
 		// World map models (Cloud, the chocobo, the Highwind...) come from world_us.lgp and have 3-letter names
 		bool is_world = file_context->use_lgp && !_stricmp(lgp_names[file_context->lgp_num], "world");
 
@@ -234,6 +242,14 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 			// Drawn by the gltf on the model's first part
 			ret->field_48 = nullptr;
 		}
+		else if (!fileExists(file_path_gltf) && is_battle_scene && battle_scene_character && hasMeshNamed(*battle_scene_character->mesh, filename_no_ext))
+		{
+			auto piece = new ExternalMeshInstance(battle_scene_character->mesh);
+			piece->onlyMesh = filename_no_ext;
+			ret->field_48 = reinterpret_cast<vector3<float>*>(piece);
+
+			if(trace_all || trace_loaders) ffnx_trace("External mesh: %s drawn from the battle scene's gltf\n", filename_no_ext.c_str());
+		}
 		else if (!fileExists(file_path_gltf))
 		{
 			if(trace_all || trace_loaders) ffnx_trace("External mesh: %s not found, using original model\n", file_path_gltf);
@@ -254,7 +270,12 @@ struct polygon_data *load_p_file(struct file_context *file_context, uint32_t cre
 
 				auto character = new ExternalMeshInstance(sharedMesh);
 				ret->field_48 = reinterpret_cast<vector3<float>*>(character);
-				if (is_battle) setLastBattleCharacter(character);
+				if (is_battle_scene)
+				{
+					battle_scene_character = character;
+					if (hasMeshNamed(*sharedMesh, filename_no_ext)) character->onlyMesh = filename_no_ext;
+				}
+				else if (is_battle) setLastBattleCharacter(character);
 			}
 			else
 			{
