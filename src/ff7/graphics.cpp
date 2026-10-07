@@ -958,7 +958,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		if(is_world) frame_position += external_mesh->worldFrameFraction(anim_name, current_frame);
 		external_mesh->extraKeys = is_world ? 0 : 3;
 
-		if((trace_all || trace_loaders) && is_battle && external_mesh->mesh->rootMotionChecked.insert("battle " + anim_name).second)
+		if((trace_all || trace_loaders) && is_battle && !external_mesh->hidden && external_mesh->mesh->rootMotionChecked.insert("battle " + anim_name).second)
 		{
 			ffnx_trace("External mesh: battle animation %s (%u frames)%s\n", anim_name.empty() ? "(not found)" : anim_name.c_str(), anim_header->num_frames,
 				external_mesh->mesh->animations.contains(anim_name) ? "" : ", not in the gltf");
