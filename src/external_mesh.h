@@ -65,6 +65,9 @@ struct Shape
     float alphaCutoff = 0.5f; // MASK: texels below this are cut out
     std::string name; // The glTF mesh's name (battle weapons are named after the game's weapon file, e.g. RTCK)
     bool isWeapon = false; // Skinned only to a joint named "weapon": drawn only while it is the equipped weapon
+    // BLEND and double-sided (hair, lashes, cloth cards): drawn as a cut-out core that writes depth plus blended soft
+    // edges, instead of one blended pass (overlapping cards would otherwise need an exact order)
+    bool blendWithMaskCore = false;
 };
 
 struct Joint
@@ -253,6 +256,20 @@ class ExternalMeshInstance
 {
 public:
     explicit ExternalMeshInstance(std::shared_ptr<ExternalMesh> sharedMesh);
+    ~ExternalMeshInstance();
+
+    // An alpha-blended part of this draw: its triangles, sorted back to front, in sortedBlendIndexBuffer
+    struct BlendShapeDraw
+    {
+        size_t shape;
+        uint32_t indexOffset;
+        uint32_t indexCount;
+        float depth; // Mean view depth (larger = farther)
+    };
+    // Sorts the blended parts' triangles back to front for the pose in palette (skinned on the CPU for their depth),
+    // uploads them and lists the parts farthest first
+    void sortBlendTriangles(const struct matrix* palette, size_t jointCount, const struct matrix& worldView, std::vector<BlendShapeDraw>& out);
+    bgfx::DynamicIndexBufferHandle sortedBlendIndexBuffer = BGFX_INVALID_HANDLE;
 
     float getAnimationClock(const std::string& animName);
     bool getRootMotionMatrix(const std::string& animName, float frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix);

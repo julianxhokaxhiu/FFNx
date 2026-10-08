@@ -568,21 +568,35 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 
 	bool addedColor = character->addedColor.x > 0.0f || character->addedColor.y > 0.0f || character->addedColor.z > 0.0f;
 
-	auto shapeCount = externalMesh->shapes.size();
-	int vertexOffset = 0;
-	int indexOffset = 0;
+	auto& shapes = externalMesh->shapes;
+	auto shapeCount = shapes.size();
 
-	for (int i = 0; i < shapeCount; ++i)
+	// Where each part's vertices and indices start in the model's buffers
+	std::vector<uint32_t> vertexOffsets(shapeCount), indexOffsets(shapeCount);
+	for (size_t i = 0, vertexOffset = 0, indexOffset = 0; i < shapeCount; ++i)
 	{
-		auto& shape = externalMesh->shapes[i];
+		vertexOffsets[i] = static_cast<uint32_t>(vertexOffset);
+		indexOffsets[i] = static_cast<uint32_t>(indexOffset);
+		vertexOffset += shapes[i].vertices.size();
+		indexOffset += shapes[i].indices.size();
+	}
 
-		// Battle models carry every weapon: draw only the equipped one. A battle scene piece draws only its own mesh.
-		if ((shape.isWeapon && shape.name != character->equippedWeapon) || (!character->onlyMesh.empty() && shape.name != character->onlyMesh))
-		{
-			vertexOffset += shape.vertices.size();
-			indexOffset += shape.indices.size();
-			continue;
-		}
+	// Battle models carry every weapon: draw only the equipped one. A battle scene piece draws only its own mesh.
+	auto isDrawn = [&](const Shape& shape)
+	{
+		return !((shape.isWeapon && shape.name != character->equippedWeapon) || (!character->onlyMesh.empty() && shape.name != character->onlyMesh));
+	};
+
+	// Blended parts of a character are drawn after its other parts, triangles sorted back to front and without
+	// depth writes, so they never hide what is behind them (Blend). A double-sided blended part (hair, lashes,
+	// cloth cards) first draws its cut-out core with the opaque parts, writing depth (BlendCore), and blends only
+	// the soft texels below its cutoff afterwards. A battle scene piece keeps the game's own order and depth state.
+	bool scenePiece = !character->onlyMesh.empty();
+	enum class ShapePass { Solid, BlendCore, Blend };
+
+	auto drawShape = [&](size_t i, ShapePass pass, bool sortedIndices, uint32_t sortedIndexOffset, uint32_t sortedIndexCount)
+	{
+		auto& shape = shapes[i];
 
 		// drawWithLighting() turns the program into its lighting variant, so every part starts from SMOOTH again
 		newRenderer.setInterpolationQualifier(SMOOTH);
@@ -593,7 +607,21 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 		// The material's alpha mode, not the game's current blend state: opaque and mask parts are drawn without
 		// blending (a mask cuts out texels below its cutoff), so the half-transparent texels texture filtering
 		// makes along cut-out edges can't hide whatever is drawn after them
-		if (shape.alphaMode == ShapeAlphaMode::BLEND_MODE)
+		if (pass == ShapePass::Blend)
+		{
+			newRenderer.setBlendMode(RendererBlendMode::BLEND_NONE); // Alpha blended for external textures
+			newRenderer.doDepthWrite(false);
+			// The core was drawn already: only the soft edges below the cutoff are blended
+			newRenderer.doAlphaTest(shape.blendWithMaskCore);
+			newRenderer.setAlphaRef(RendererAlphaFunc::LESS, shape.alphaCutoff);
+		}
+		else if (pass == ShapePass::BlendCore)
+		{
+			newRenderer.setBlendMode(RendererBlendMode::BLEND_DISABLED);
+			newRenderer.doAlphaTest(true);
+			newRenderer.setAlphaRef(RendererAlphaFunc::GEQUAL, shape.alphaCutoff);
+		}
+		else if (shape.alphaMode == ShapeAlphaMode::BLEND_MODE)
 		{
 			newRenderer.setBlendMode(RendererBlendMode::BLEND_NONE); // Alpha blended for external textures
 			newRenderer.doAlphaTest(false);
@@ -612,8 +640,9 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 			newRenderer.setBlendFactor(character->fadeAlpha);
 		}
 
-		externalMesh->bindField3dVertexBuffer(vertexOffset, shape.vertices.size());
-		externalMesh->bindField3dIndexBuffer(indexOffset, shape.indices.size());
+		externalMesh->bindField3dVertexBuffer(vertexOffsets[i], shape.vertices.size());
+		if (sortedIndices) bgfx::setIndexBuffer(character->sortedBlendIndexBuffer, sortedIndexOffset, sortedIndexCount);
+		else externalMesh->bindField3dIndexBuffer(indexOffsets[i], shape.indices.size());
 
 		// Set every texture slot for every part, so a part never samples the previous part's textures.
 		// A part without a base color texture is drawn with its material color instead of being discarded.
@@ -639,7 +668,8 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 
  		if (enable_lighting)
 		{
-			newRenderer.drawToShadowMap(true, true);
+			// Soft blended edges cast no shadow (the core does)
+			if (pass != ShapePass::Blend) newRenderer.drawToShadowMap(true, true);
 			newRenderer.drawWithLighting(true, true, true);
 		}
 		else newRenderer.draw(true, true, true);
@@ -660,11 +690,30 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 
 			// The override is switched off before the next part's draw (setting it twice for one draw is an error)
 			newRenderer.isTexture(true);
-			newRenderer.doDepthWrite(true);
+			newRenderer.doDepthWrite(pass != ShapePass::Blend);
 		}
+	};
 
-		vertexOffset += shape.vertices.size();
-		indexOffset += shape.indices.size();
+	// Opaque and mask parts, and the cores of double-sided blended parts
+	for (size_t i = 0; i < shapeCount; ++i)
+	{
+		auto& shape = shapes[i];
+		if (!isDrawn(shape)) continue;
+		if (shape.alphaMode != ShapeAlphaMode::BLEND_MODE || scenePiece) drawShape(i, ShapePass::Solid, false, 0, 0);
+		else if (shape.blendWithMaskCore) drawShape(i, ShapePass::BlendCore, false, 0, 0);
+	}
+
+	// Blended parts, farthest first
+	if (!scenePiece)
+	{
+		static std::vector<ExternalMeshInstance::BlendShapeDraw> blendDraws;
+		character->sortBlendTriangles(matrix_palette.data(), jointCount, current_state.world_view_matrix, blendDraws);
+		for (const auto& draw : blendDraws)
+		{
+			if (!isDrawn(shapes[draw.shape])) continue;
+			drawShape(draw.shape, ShapePass::Blend, true, draw.indexOffset, draw.indexCount);
+		}
+		if (!blendDraws.empty()) newRenderer.doDepthWrite(true);
 	}
 
 	newRenderer.discardAllBindings();

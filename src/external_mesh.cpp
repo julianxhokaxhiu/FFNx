@@ -31,6 +31,7 @@
 #include "cfg.h"
 #include "log.h"
 #include "utils.h"
+#include "matrix.h"
 
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
@@ -330,6 +331,7 @@ void ExternalMesh::loadMeshes(cgltf_data* data, const std::vector<std::vector<in
             if (material != nullptr && material->alpha_mode == cgltf_alpha_mode_mask) outShape.alphaMode = ShapeAlphaMode::MASK_MODE;
             else if (material != nullptr && material->alpha_mode == cgltf_alpha_mode_blend) outShape.alphaMode = ShapeAlphaMode::BLEND_MODE;
             if (material != nullptr) outShape.alphaCutoff = material->alpha_cutoff;
+            outShape.blendWithMaskCore = outShape.alphaMode == ShapeAlphaMode::BLEND_MODE && outShape.isDoubleSided;
 
 			// Look the texture up by the same name its DDS files were loaded under
 			auto texture = material != nullptr ? material->pbr_metallic_roughness.base_color_texture.texture : nullptr;
@@ -1235,6 +1237,100 @@ void ExternalMesh::destroyFieldResources()
 ExternalMeshInstance::ExternalMeshInstance(std::shared_ptr<ExternalMesh> sharedMesh) : mesh(std::move(sharedMesh))
 {
     if (!mesh->skins.empty()) joints.resize(mesh->skins[0].joints.size());
+}
+
+ExternalMeshInstance::~ExternalMeshInstance()
+{
+    if (bgfx::isValid(sortedBlendIndexBuffer)) bgfx::destroy(sortedBlendIndexBuffer);
+}
+
+// Alpha-blended parts are drawn after the others with their triangles sorted back to front, so a blended texel never
+// hides what is behind it and overlapping cards blend in the right order. Depth is the view-space z of the skinned
+// triangle (larger = farther, like the game's own sorted draws).
+void ExternalMeshInstance::sortBlendTriangles(const struct matrix* palette, size_t jointCount, const struct matrix& worldView, std::vector<BlendShapeDraw>& out)
+{
+    out.clear();
+
+    std::vector<uint32_t> indices;
+    std::vector<float> depths;
+    std::vector<float> triangleDepths;
+    std::vector<uint32_t> order;
+    struct matrix view = worldView;
+
+    for (size_t s = 0; s < mesh->shapes.size(); s++)
+    {
+        const Shape& shape = mesh->shapes[s];
+        if (shape.alphaMode != ShapeAlphaMode::BLEND_MODE || shape.indices.size() < 3) continue;
+
+        // Each vertex's depth after skinning
+        depths.resize(shape.vertices.size());
+        for (size_t v = 0; v < shape.vertices.size(); v++)
+        {
+            vector3<float> rest = shape.vertices[v]._;
+            vector3<float> skinned = { 0.0f, 0.0f, 0.0f };
+            float total = 0.0f;
+            if (v < shape.joints.size() && v < shape.weights.size())
+            {
+                const float jointIndices[4] = { shape.joints[v].x, shape.joints[v].y, shape.joints[v].z, shape.joints[v].w };
+                const float weights[4] = { shape.weights[v].x, shape.weights[v].y, shape.weights[v].z, shape.weights[v].w };
+                for (int k = 0; k < 4; k++)
+                {
+                    int joint = static_cast<int>(jointIndices[k]);
+                    if (weights[k] <= 0.0f || joint < 0 || static_cast<size_t>(joint) >= jointCount) continue;
+
+                    struct matrix bone = palette[joint];
+                    vector3<float> q;
+                    transform_point(&bone, &rest, &q);
+                    skinned.x += q.x * weights[k];
+                    skinned.y += q.y * weights[k];
+                    skinned.z += q.z * weights[k];
+                    total += weights[k];
+                }
+            }
+            if (total <= 0.0f) skinned = rest;
+            else if (total != 1.0f) { skinned.x /= total; skinned.y /= total; skinned.z /= total; }
+
+            vector3<float> eye;
+            transform_point(&view, &skinned, &eye);
+            depths[v] = eye.z;
+        }
+
+        // Triangles farthest first
+        size_t triangleCount = shape.indices.size() / 3;
+        triangleDepths.resize(triangleCount);
+        order.resize(triangleCount);
+        float shapeDepth = 0.0f;
+        for (size_t t = 0; t < triangleCount; t++)
+        {
+            float depth = 0.0f;
+            for (int k = 0; k < 3; k++)
+            {
+                uint32_t index = shape.indices[t * 3 + k];
+                if (index < depths.size()) depth += depths[index];
+            }
+            triangleDepths[t] = depth / 3.0f;
+            shapeDepth += triangleDepths[t];
+            order[t] = static_cast<uint32_t>(t);
+        }
+        std::sort(order.begin(), order.end(), [&](uint32_t a, uint32_t b) { return triangleDepths[a] > triangleDepths[b]; });
+
+        BlendShapeDraw draw;
+        draw.shape = s;
+        draw.indexOffset = static_cast<uint32_t>(indices.size());
+        draw.indexCount = static_cast<uint32_t>(triangleCount * 3);
+        draw.depth = shapeDepth / triangleCount;
+        for (uint32_t t : order)
+            for (int k = 0; k < 3; k++) indices.push_back(shape.indices[t * 3 + k]);
+        out.push_back(draw);
+    }
+
+    if (indices.empty()) return;
+
+    if (!bgfx::isValid(sortedBlendIndexBuffer)) sortedBlendIndexBuffer = bgfx::createDynamicIndexBuffer(static_cast<uint32_t>(indices.size()), BGFX_BUFFER_ALLOW_RESIZE | BGFX_BUFFER_INDEX32);
+    bgfx::update(sortedBlendIndexBuffer, 0, bgfx::copy(indices.data(), static_cast<uint32_t>(indices.size() * sizeof(uint32_t))));
+
+    // Parts farthest first too
+    std::sort(out.begin(), out.end(), [](const BlendShapeDraw& a, const BlendShapeDraw& b) { return a.depth > b.depth; });
 }
 
 void ExternalMeshInstance::noteGameVertices(vector3<float>* const* vertices, size_t count)
