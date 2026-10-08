@@ -26,6 +26,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <toml++/toml.h>
@@ -68,6 +69,10 @@ struct Shape
     // BLEND and double-sided (hair, lashes, cloth cards): drawn as a cut-out core that writes depth plus blended soft
     // edges, instead of one blended pass (overlapping cards would otherwise need an exact order)
     bool blendWithMaskCore = false;
+    // Shading values for this material from the model's config file ([materials."<name>"]); unset ones keep the
+    // lighting settings. Used by the advanced lighting shader only.
+    std::optional<float> roughness, metallic, specular, roughnessScale, metallicScale, specularScale, normalStrength, aoStrength;
+    bool hasShadingOverrides() const { return roughness || metallic || specular || roughnessScale || metallicScale || specularScale || normalStrength || aoStrength; }
 };
 
 struct Joint

@@ -30,6 +30,7 @@
 #include "../macro.h"
 #include "../log.h"
 #include "../matrix.h"
+#include "../lighting.h"
 
 #include "../ff7/widescreen.h"
 #include "external_mesh.h"
@@ -663,7 +664,36 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 
 		// Which textures are present is sent with the common uniforms, so they are set per part
 		newRenderer.setCommonUniforms();
+
+		// The material's own shading values from the model's config replace the lighting settings for this part
+		bool shadingOverride = enable_lighting && shape.hasShadingOverrides();
+		float savedShading[8];
+		if (shadingOverride)
+		{
+			float saved[8] = { lighting.getRoughness(), lighting.getMetallic(), lighting.getSpecular(), lighting.getRoughnessScale(),
+				lighting.getMetallicScale(), lighting.getSpecularScale(), lighting.getNormalStrength(), lighting.getAoStrength() };
+			memcpy(savedShading, saved, sizeof(saved));
+			if (shape.roughness) lighting.setRoughness(*shape.roughness);
+			if (shape.metallic) lighting.setMetallic(*shape.metallic);
+			if (shape.specular) lighting.setSpecular(*shape.specular);
+			if (shape.roughnessScale) lighting.setRoughnessScale(*shape.roughnessScale);
+			if (shape.metallicScale) lighting.setMetallicScale(*shape.metallicScale);
+			if (shape.specularScale) lighting.setSpecularScale(*shape.specularScale);
+			if (shape.normalStrength) lighting.setNormalStrength(*shape.normalStrength);
+			if (shape.aoStrength) lighting.setAoStrength(*shape.aoStrength);
+		}
 		if (enable_lighting) newRenderer.setLightingUniforms();
+		if (shadingOverride)
+		{
+			lighting.setRoughness(savedShading[0]);
+			lighting.setMetallic(savedShading[1]);
+			lighting.setSpecular(savedShading[2]);
+			lighting.setRoughnessScale(savedShading[3]);
+			lighting.setMetallicScale(savedShading[4]);
+			lighting.setSpecularScale(savedShading[5]);
+			lighting.setNormalStrength(savedShading[6]);
+			lighting.setAoStrength(savedShading[7]);
+		}
 		newRenderer.setSkinnedColorOverride();
 
  		if (enable_lighting)

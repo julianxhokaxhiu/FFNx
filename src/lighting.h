@@ -64,8 +64,8 @@ struct LightingState
     float lightDirData[4] = { 0.3, -1.0, -0.3, 0.0 };
     float lightData[4] = { 1.0, 1.0, 1.0, 4.0 };
     float ambientLightData[4] = { 1.0, 1.0, 1.0, 1.0 };
-    float materialData[4] = { 0.7, 0.5, 0.1, 0.0 };
-    float materialScaleData[4] = { 1.0, 1.0, 1.0, 1.0 };
+    float materialData[4] = { 0.7, 0.5, 0.1, 1.0 }; // roughness, metallic, specular, AO strength
+    float materialScaleData[4] = { 1.0, 1.0, 1.0, 1.0 }; // PBR texture scales for roughness, metallic, specular; normal map strength
     float shadowData[4] = { 0.001, 0.0, 0.0, 2048.0 };
     float fieldShadowData[4] = { 0.3, 1000.0, 100.0, 0.0 };
     float iblData[4] = { 1.0, 0.0, 0.0, 0.0 };
@@ -163,6 +163,10 @@ public:
     float getMetallicScale();
     void setSpecularScale(float scale);
     float getSpecularScale();
+    void setNormalStrength(float strength);
+    float getNormalStrength();
+    void setAoStrength(float strength);
+    float getAoStrength();
 
     // Shadow (common)
     void setShadowFaceCullingEnabled(bool isEnabled);

@@ -1035,6 +1035,28 @@ float Lighting::getSpecularScale()
 	return lightingState.materialScaleData[2];
 }
 
+// How much of the normal map is applied (1 = as painted, 0 = flat)
+void Lighting::setNormalStrength(float strength)
+{
+	lightingState.materialScaleData[3] = strength;
+}
+
+float Lighting::getNormalStrength()
+{
+	return lightingState.materialScaleData[3];
+}
+
+// How much of the PBR texture's ambient occlusion is applied (1 = as painted, 0 = none)
+void Lighting::setAoStrength(float strength)
+{
+	lightingState.materialData[3] = strength;
+}
+
+float Lighting::getAoStrength()
+{
+	return lightingState.materialData[3];
+}
+
 void Lighting::setShadowFaceCullingEnabled(bool isEnabled)
 {
 	lightingState.isShadowMapFaceCullingEnabled = isEnabled;

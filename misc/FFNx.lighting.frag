@@ -199,7 +199,7 @@ void main()
 
         // Normal
         normal = normalize(v_normal0);
-        if(isNmlTextureLoaded && isPbrTextureEnabled) normal = perturb_normal(normal, v_position0.xyz, color_nml.rgb, v_texcoord0.xy );
+        if(isNmlTextureLoaded && isPbrTextureEnabled) normal = perturb_normal(normal, v_position0.xyz, mix(vec3(0.5, 0.5, 1.0), color_nml.rgb, materialScaleData.w), v_texcoord0.xy );
 
         // Roughness
         float perceptualRoughness = materialData.x;
@@ -218,7 +218,7 @@ void main()
 
         // Ambient Occlusion
         float ao = 1.0;
-        if(isPbrTextureLoaded && isPbrTextureEnabled) ao = color_pbr.a;
+        if(isPbrTextureLoaded && isPbrTextureEnabled) ao = mix(1.0, color_pbr.a, materialData.w);
 
         // Luminance
         vec3 luminance = calcLuminance(color.rgb, v_position0.xyz, viewDir, normal, perceptualRoughness, roughness, metallic, specular, shadowUv);

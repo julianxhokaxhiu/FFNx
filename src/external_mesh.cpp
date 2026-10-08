@@ -331,7 +331,52 @@ void ExternalMesh::loadMeshes(cgltf_data* data, const std::vector<std::vector<in
             if (material != nullptr && material->alpha_mode == cgltf_alpha_mode_mask) outShape.alphaMode = ShapeAlphaMode::MASK_MODE;
             else if (material != nullptr && material->alpha_mode == cgltf_alpha_mode_blend) outShape.alphaMode = ShapeAlphaMode::BLEND_MODE;
             if (material != nullptr) outShape.alphaCutoff = material->alpha_cutoff;
-            outShape.blendWithMaskCore = outShape.alphaMode == ShapeAlphaMode::BLEND_MODE && outShape.isDoubleSided;
+
+            // Parts without a material are drawn white
+            float baseColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+            if (material != nullptr) memcpy(baseColor, material->pbr_metallic_roughness.base_color_factor, sizeof(baseColor));
+
+            // The material's settings from the model's config file ([materials."<glTF material name>"]): alpha
+            // handling, a tint and shading values; whatever it doesn't set comes from the glTF
+            std::optional<std::string> alphaSetting;
+            if (material != nullptr && material->name != nullptr && config["materials"][material->name])
+            {
+                auto table = config["materials"][material->name];
+                alphaSetting = table["alpha"].value<std::string>();
+                if (auto value = table["alpha_cutoff"].value<double>()) outShape.alphaCutoff = static_cast<float>(*value);
+                if (auto value = table["double_sided"].value<bool>()) outShape.isDoubleSided = *value;
+                if (auto value = table["roughness"].value<double>()) outShape.roughness = static_cast<float>(*value);
+                if (auto value = table["metallic"].value<double>()) outShape.metallic = static_cast<float>(*value);
+                if (auto value = table["specular"].value<double>()) outShape.specular = static_cast<float>(*value);
+                if (auto value = table["roughness_scale"].value<double>()) outShape.roughnessScale = static_cast<float>(*value);
+                if (auto value = table["metallic_scale"].value<double>()) outShape.metallicScale = static_cast<float>(*value);
+                if (auto value = table["specular_scale"].value<double>()) outShape.specularScale = static_cast<float>(*value);
+                if (auto value = table["normal_strength"].value<double>()) outShape.normalStrength = static_cast<float>(*value);
+                if (auto value = table["ao_strength"].value<double>()) outShape.aoStrength = static_cast<float>(*value);
+                if (auto tint = table["tint"].as_array(); tint != nullptr && tint->size() == 3)
+                {
+                    for (size_t c = 0; c < 3; c++) baseColor[c] *= static_cast<float>(tint->get(c)->value<double>().value_or(1.0));
+                }
+                if (trace_all || trace_loaders) ffnx_trace("External mesh: material %s uses settings from the config\n", material->name);
+            }
+
+            // How the alpha channel is drawn: the glTF's mode, where "hair" (or BLEND on a double-sided material) is a
+            // cut-out core plus blended soft edges
+            if (alphaSetting)
+            {
+                std::string mode = *alphaSetting;
+                std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) { return std::tolower(c); });
+                if (mode == "opaque") { outShape.alphaMode = ShapeAlphaMode::OPAQUE_MODE; outShape.blendWithMaskCore = false; }
+                else if (mode == "mask") { outShape.alphaMode = ShapeAlphaMode::MASK_MODE; outShape.blendWithMaskCore = false; }
+                else if (mode == "blend") { outShape.alphaMode = ShapeAlphaMode::BLEND_MODE; outShape.blendWithMaskCore = false; }
+                else if (mode == "hair") { outShape.alphaMode = ShapeAlphaMode::BLEND_MODE; outShape.blendWithMaskCore = true; }
+                else
+                {
+                    ffnx_warning("External mesh: material %s: unknown alpha setting \"%s\" (opaque, mask, blend or hair)\n", material->name, alphaSetting->c_str());
+                    alphaSetting.reset();
+                }
+            }
+            if (!alphaSetting) outShape.blendWithMaskCore = outShape.alphaMode == ShapeAlphaMode::BLEND_MODE && outShape.isDoubleSided;
 
 			// Look the texture up by the same name its DDS files were loaded under
 			auto texture = material != nullptr ? material->pbr_metallic_roughness.base_color_texture.texture : nullptr;
@@ -341,9 +386,7 @@ void ExternalMesh::loadMeshes(cgltf_data* data, const std::vector<std::vector<in
 				if(materials.contains(texName)) outShape.pMaterial = &materials[texName];
 			}
 
-			// Parts without a material are drawn white
-			const cgltf_float defaultBaseColorFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			const cgltf_float* baseColorFactor = material != nullptr ? material->pbr_metallic_roughness.base_color_factor : defaultBaseColorFactor;
+			const float* baseColorFactor = baseColor;
 			if (normals.empty()) normals.assign(vertexCount * 3, 0.0f);
 
 			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
