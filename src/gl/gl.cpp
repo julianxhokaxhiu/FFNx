@@ -533,6 +533,14 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 	newRenderer.doDepthTest(true);
 	newRenderer.doDepthWrite(true);
 
+	// A battle scene piece keeps the depth test and write the game asked for its own piece: scenes have layers in one
+	// plane (e.g. platform edges over water) that would flicker against each other with depth writes forced on
+	if(!character->onlyMesh.empty())
+	{
+		newRenderer.doDepthTest(current_state.depthtest);
+		newRenderer.doDepthWrite(current_state.depthmask);
+	}
+
 	// Alpha comes from the texture only: with alpha modulation the vertex alpha (0.5 for models) would halve it
 	newRenderer.doModulateAlpha(false);
 
