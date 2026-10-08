@@ -87,8 +87,8 @@ void ff7_init_hooks(struct game_obj *_game_object)
 
 	if (enable_external_mesh)
 	{
-		// TODO: Comment this if Chocobo's not visible in race
-		replace_function(ff7_externals.draw_3d_model, draw_3d_model_smooth_skinning);
+		// Models without a gltf are still drawn by the game's own function (see draw_3d_model_smooth_skinning)
+		draw_3d_model_replace_id = replace_function(ff7_externals.draw_3d_model, draw_3d_model_smooth_skinning);
 		replace_function(ff7_externals.battle_sub_684CC6, battle_sub_684CC6);
 		replace_function((uint32_t)ff7_externals.free_polygon_data, free_polygon_data);
 	}

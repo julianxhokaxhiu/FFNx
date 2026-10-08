@@ -29,6 +29,7 @@
 #include "../ff7.h"
 #include "../macro.h"
 #include "../log.h"
+#include "../patch.h"
 #include "../gl.h"
 #include "defs.h"
 #include "field/model.h"
@@ -871,8 +872,21 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 	ff7_externals.stack_pop(matrix_stack);
 }
 
+uint32_t draw_3d_model_replace_id = 0;
+
 void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *anim_header, struct struc_110 *struc_110, struct hrc_data *hrc_data, struct ff7_game_obj *game_object)
 {
+	// Outside battle, models without a gltf are drawn by the game's own function, exactly as without external meshes:
+	// this rewrite of it doesn't cover every mode (the chocobo race's models disappeared). Battle keeps the rewrite for
+	// every model, which the battle draw hook (battle_sub_684CC6) is built on.
+	if(hrc_data && getmode_cached()->driver_mode != MODE_BATTLE && !getExternalMesh(hrc_data))
+	{
+		unreplace_function(draw_3d_model_replace_id);
+		((void (*)(uint32_t, struct anim_header*, struct struc_110*, struct hrc_data*, struct ff7_game_obj*))ff7_externals.draw_3d_model)(current_frame, anim_header, struc_110, hrc_data, game_object);
+		rereplace_function(draw_3d_model_replace_id);
+		return;
+	}
+
 	struct anim_frame *anim_frame;
 	struct stack *matrix_stack;
 	struct matrix *root_matrix;
