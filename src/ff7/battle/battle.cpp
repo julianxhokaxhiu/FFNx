@@ -21,6 +21,7 @@
 
 #include "../../globals.h"
 #include "../../log.h"
+#include "../../patch.h"
 #include "../../achievement.h"
 
 #include "defs.h"
@@ -60,6 +61,43 @@ namespace ff7::battle
 		ff7_externals.battle_actor_data->action_index = action_id;
 
 		g_FF7SteamAchievements->unlockAchievementByBattleCommandAndAction(command_id, action_id);
+	}
+
+	static uint32_t destroy_graphics_object_replace_id = 0;
+
+	/*
+	* Battle effects bind graphics objects into the texture pages of the PSX
+	* GPU emulation and never unbind them. When such an object is destroyed the
+	* pages keep pointing at freed memory, and the next effect that draws a
+	* textured primitive without binding its own texture reads it. Ruby
+	* Weapon's tentacle emerge followed by Cid's Hyper Jump crashes this way
+	* (#673). Unbind the object first; an unbound texture slot draws nothing.
+	*/
+	static void destroy_graphics_object(ff7_graphics_object *object)
+	{
+		battle_gpu_render_context *context = *ff7_externals.battle_gpu_render_context;
+
+		if (object != nullptr && context != nullptr)
+		{
+			for (battle_gpu_texture_page *page : context->pages)
+			{
+				if (page == nullptr) continue;
+
+				for (ff7_graphics_object *&texture : page->textures)
+				{
+					if (texture == object) texture = nullptr;
+				}
+			}
+		}
+
+		unreplace_function(destroy_graphics_object_replace_id);
+		((void(*)(ff7_graphics_object *))ff7_externals.destroy_graphics_object_670FD3)(object);
+		rereplace_function(destroy_graphics_object_replace_id);
+	}
+
+	void texture_page_hook_init()
+	{
+		destroy_graphics_object_replace_id = replace_function(ff7_externals.destroy_graphics_object_670FD3, destroy_graphics_object);
 	}
 
 	int load_scene_bin_chunk(char *filename, int offset, int size, char **out_buffer, void (*callback)(void))

@@ -2853,6 +2853,19 @@ struct ff7_channel_6_state
 	float panning;
 };
 
+// One texture page of the battle PSX GPU emulation. Effects bind graphics
+// objects into its four texture fields before drawing textured primitives.
+struct battle_gpu_texture_page
+{
+	uint32_t unknown[10];
+	struct ff7_graphics_object *textures[4];
+};
+
+struct battle_gpu_render_context
+{
+	battle_gpu_texture_page *pages[7];
+};
+
 // memory addresses and function pointers from FF7.exe
 struct ff7_externals
 {
@@ -2921,6 +2934,8 @@ struct ff7_externals
 	uint32_t comet2_unload_sub_5A4359;
 	uint32_t battle_b3ddata_sub_428B12;
 	uint32_t graphics_render_sub_68A638;
+	uint32_t battle_create_primitive_system_66BF8E;
+	struct battle_gpu_render_context **battle_gpu_render_context;
 	uint32_t create_dx_sfx_something;
 	uint32_t load_p_file;
 	struct polygon_data *(*create_polygon_data)(uint32_t, uint32_t);
@@ -3893,6 +3908,7 @@ struct ff7_externals
 	uint32_t menu_enter_sub_6CD3B0;
 	void (*engine_load_menu_graphics_objects_6C1468)(int);
 	void (*sub_671082)(ff7_graphics_object**);
+	uint32_t destroy_graphics_object_670FD3;
 	int (*sub_674530)();
 	void (*sub_67453A)(int);
 	void (*make_struc3_6745E6)(int, struc_3*);
