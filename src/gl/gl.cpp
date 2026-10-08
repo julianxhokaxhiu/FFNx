@@ -462,6 +462,9 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 
 	ExternalMesh* externalMesh = character->mesh.get();
 
+	// Material settings edited in the model's config file while the game runs
+	externalMesh->refreshMaterialSettings();
+
 	auto scale = gl_get_external_mesh_scale(externalMesh);
 	if (scale == 0.0f)
 	{

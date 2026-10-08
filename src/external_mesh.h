@@ -23,6 +23,7 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 #include <vector>
 #include <map>
 #include <memory>
@@ -73,6 +74,14 @@ struct Shape
     // lighting settings. Used by the advanced lighting shader only.
     std::optional<float> roughness, metallic, specular, roughnessScale, metallicScale, specularScale, normalStrength, aoStrength;
     bool hasShadingOverrides() const { return roughness || metallic || specular || roughnessScale || metallicScale || specularScale || normalStrength || aoStrength; }
+    float baseColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f }; // The material colour (its glTF factor times the config's tint)
+
+    // As the glTF has them, before the config file's settings (which can be reloaded while the game runs)
+    std::string materialName;
+    float gltfBaseColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    ShapeAlphaMode gltfAlphaMode = ShapeAlphaMode::OPAQUE_MODE;
+    bool gltfDoubleSided = false;
+    float gltfAlphaCutoff = 0.5f;
 };
 
 struct Joint
@@ -204,6 +213,9 @@ public:
     void updateExternalMeshBuffers();
     void bindField3dVertexBuffer(uint32_t offset, uint32_t inCount);
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
+
+    // Re-reads the config file's material settings when the file changed on disk (checked about once a second)
+    void refreshMaterialSettings();
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
     void destroyFieldResources();
@@ -248,6 +260,10 @@ private:
 private:
     // Config
     toml::parse_result config;
+    std::string configPath;
+    std::filesystem::file_time_type configWriteTime = std::filesystem::file_time_type::min();
+    std::chrono::steady_clock::time_point configLastCheck = {};
+    void applyMaterialSettings(Shape& shape);
 
     std::vector<Vertex> vertexBufferData;
     bgfx::DynamicVertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;

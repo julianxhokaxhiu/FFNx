@@ -650,8 +650,11 @@ trace_direct = false
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
 trace_files = false
 
+# external_mesh_live_config - Re-read a gltf model's _config.toml while the game runs, when the file changes (checked
+#                             about once a second per loaded model), so material settings can be tuned live
 # trace_loaders - Dump in the logs only APIs that has to do with internal textures overrides
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external_mesh_live_config = false
 trace_loaders = false
 
 # trace_vram - Dump in the logs only APIs that has to do with FF8 VRAM
