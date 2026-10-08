@@ -452,6 +452,18 @@ ExternalMeshInstance* getExternalMesh(struct hrc_data *hrc_data)
 	return external_mesh;
 }
 
+// How many of the words starting at data can be read (up to maxWords): the end of a small block can be the end of
+// readable memory
+static size_t readable_words(const uint32_t* data, size_t maxWords)
+{
+	MEMORY_BASIC_INFORMATION info;
+	if (!VirtualQuery(data, &info, sizeof(info)) || info.State != MEM_COMMIT) return 0;
+	if (info.Protect & (PAGE_NOACCESS | PAGE_GUARD)) return 0;
+
+	uintptr_t end = reinterpret_cast<uintptr_t>(info.BaseAddress) + info.RegionSize;
+	return std::min(maxWords, static_cast<size_t>((end - reinterpret_cast<uintptr_t>(data)) / sizeof(uint32_t)));
+}
+
 // The battle actor whose model data holds this hrc (body or weapon) and is nearest to the struc_110 position
 static const void* find_battle_actor(struct hrc_data *hrc_data, struct struc_110 *struc_110)
 {
@@ -464,9 +476,10 @@ static const void* find_battle_actor(struct hrc_data *hrc_data, struct struc_110
 		if (!state.modelDataPtr) continue;
 
 		// The body's hrc is at +0x04 of the model data, a weapon's further in at a place that differs between
-		// models, so the first words of the model data are scanned
+		// models, so the first words of the model data are scanned (no further than readable memory goes)
 		bool holds = false;
-		for (int k = 0; k < 96 && !holds; k++) holds = state.modelDataPtr[k] == (uint32_t)hrc_data;
+		size_t words = readable_words(state.modelDataPtr, 96);
+		for (size_t k = 0; k < words && !holds; k++) holds = state.modelDataPtr[k] == (uint32_t)hrc_data;
 		if (!holds) continue;
 
 		float dx = struc_110 ? state.modelPosition.x - struc_110->position.x : 0.0f;
