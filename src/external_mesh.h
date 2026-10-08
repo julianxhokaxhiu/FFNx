@@ -314,6 +314,8 @@ public:
     // exports add in fields and battle; world map exports have none, and their short 60 fps animations would
     // otherwise be mistaken for them)
     size_t extraKeys = 3;
+    // Whether the gltf root blends after a switch like the joints do (not where the game re-bases the model's position)
+    bool blendRootOnSwitch = true;
 
     // Spring bones: where the character was placed in the field when last drawn (row-vector, game units)
     struct matrix springWorldMatrix = {};

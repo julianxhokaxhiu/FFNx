@@ -1344,7 +1344,7 @@ bool ExternalMeshInstance::getRootMotionMatrix(const std::string& animName, floa
     if (!mesh->getRootMotionSample(animName, getAnimationPosition(it->second, frame, frameCount, clockSeconds, extraKeys), t, q)) return false;
 
     float blendWeight = getSwitchBlendWeight(clockSeconds);
-    if (blendWeight < 1.0f && blendFromHasRoot)
+    if (blendWeight < 1.0f && blendFromHasRoot && blendRootOnSwitch)
     {
         t = lerpTranslation(blendFromRootTranslation, t, blendWeight);
         q = slerpRotation(blendFromRootRotation, q, blendWeight);

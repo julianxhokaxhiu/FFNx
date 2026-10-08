@@ -984,6 +984,11 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		float frame_position = current_frame;
 		if(is_world) frame_position += external_mesh->worldFrameFraction(anim_name, current_frame);
 		external_mesh->extraKeys = is_world ? 0 : 3;
+		// Battle moves the actor's position to where a run ended when the next animation starts, and that animation's
+		// root is relative to the new position: blending the root from the last pose would start the model a whole
+		// run away (and the game spawns effects like the casting circle on its bones at that moment). The root snaps
+		// like the game's own; the joints still blend.
+		external_mesh->blendRootOnSwitch = !is_battle;
 
 		if((trace_all || trace_loaders) && is_battle && !external_mesh->hidden && external_mesh->mesh->rootMotionChecked.insert("battle " + anim_name).second)
 		{
