@@ -27,6 +27,7 @@
 #include "macro.h"
 #include "cfg.h"
 #include "utils.h"
+#include "log.h"
 #include <fstream>
 
 Lighting lighting;
@@ -238,13 +239,39 @@ void Lighting::updateLightMatrices(const vector3<float>& center)
 	bx::mtxInverse(lightingState.lightInvViewProjTexMatrix, lightingState.lightViewProjTexMatrix);
 }
 
+// Loads a scene's image-based lighting cubemaps (<name>_s.dds and <name>_d.dds in the ibl folder). A scene without
+// its own pair gets the default pair (default_s.dds and default_d.dds), when present, so reflective materials have
+// an environment everywhere.
+static void load_ibl(const char* name)
+{
+	static char specularFullpath[MAX_PATH];
+	static char diffuseFullpath[MAX_PATH];
+	static bool defaultReported = false;
+
+	sprintf(specularFullpath, "%s/%s/ibl/%s_s.dds", basedir, external_lighting_path.c_str(), name);
+	sprintf(diffuseFullpath, "%s/%s/ibl/%s_d.dds", basedir, external_lighting_path.c_str(), name);
+
+	if (!fileExists(specularFullpath) || !fileExists(diffuseFullpath))
+	{
+		sprintf(specularFullpath, "%s/%s/ibl/default_s.dds", basedir, external_lighting_path.c_str());
+		sprintf(diffuseFullpath, "%s/%s/ibl/default_d.dds", basedir, external_lighting_path.c_str());
+
+		bool hasDefault = fileExists(specularFullpath) && fileExists(diffuseFullpath);
+		if ((trace_all || trace_loaders) && (hasDefault || !defaultReported))
+			ffnx_trace("Lighting: %s has no IBL cubemaps, %s\n", name, hasDefault ? "using the default pair" : "and there is no default pair (ibl/default_s.dds + default_d.dds)");
+		if (!hasDefault) defaultReported = true;
+	}
+	else if (trace_all || trace_loaders) ffnx_trace("Lighting: IBL cubemaps for %s\n", name);
+
+	newRenderer.prepareSpecularIbl(specularFullpath);
+	newRenderer.prepareDiffuseIbl(diffuseFullpath);
+}
+
 void Lighting::ff7_load_ibl()
 {
 	struct game_mode *mode = getmode_cached();
 	static uint32_t prev_mode = -1;
 	static char filename[64]{0};
-	static char specularFullpath[MAX_PATH];
-	static char diffuseFullpath[MAX_PATH];
 	static WORD last_field_id = 0, last_battle_id = 0;
 
 	switch (mode->driver_mode)
@@ -253,27 +280,21 @@ void Lighting::ff7_load_ibl()
 		if (mode->driver_mode != prev_mode || last_battle_id != ff7_externals.modules_global_object->battle_id)
 		{
 			last_battle_id = ff7_externals.modules_global_object->battle_id;
-
 			sprintf(filename, "bat_%d", last_battle_id);
-			sprintf(specularFullpath, "%s/%s/ibl/%s_s.dds", basedir, external_lighting_path.c_str(), filename);
-			sprintf(diffuseFullpath, "%s/%s/ibl/%s_d.dds", basedir, external_lighting_path.c_str(), filename);
-
-			newRenderer.prepareSpecularIbl(specularFullpath);
-			newRenderer.prepareDiffuseIbl(diffuseFullpath);
+			load_ibl(filename);
 		}
 		break;
 	case MODE_FIELD:
 		if (mode->driver_mode != prev_mode || last_field_id != *ff7_externals.field_id)
 		{
 			last_field_id = *ff7_externals.field_id;
-
 			sprintf(filename, "field_%d", last_field_id);
-			sprintf(specularFullpath, "%s/%s/ibl/%s_s.dds", basedir, external_lighting_path.c_str(), filename);
-			sprintf(diffuseFullpath, "%s/%s/ibl/%s_d.dds", basedir, external_lighting_path.c_str(), filename);
-
-			newRenderer.prepareSpecularIbl(specularFullpath);
-			newRenderer.prepareDiffuseIbl(diffuseFullpath);
+			load_ibl(filename);
 		}
+		break;
+	case MODE_WORLDMAP:
+		// One pair for the whole world map (world_s.dds + world_d.dds), or the default
+		if (mode->driver_mode != prev_mode) load_ibl("world");
 		break;
 	default:
 		break;
