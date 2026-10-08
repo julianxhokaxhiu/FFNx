@@ -52,11 +52,12 @@ void RendererCallbacks::fatal(const char* _filePath, uint16_t _line, bgfx::Fatal
     std::string error;
 
     switch (_code) {
-    case bgfx::Fatal::Enum::DebugCheck: error = "Debug Check";
-    case bgfx::Fatal::Enum::InvalidShader: error = "Invalid Shader";
-    case bgfx::Fatal::Enum::UnableToInitialize: error = "Unable To Initialize";
-    case bgfx::Fatal::Enum::UnableToCreateTexture: error = "Unable To Create Texture";
-    case bgfx::Fatal::Enum::DeviceLost: error = "Device Lost";
+    case bgfx::Fatal::Enum::DebugCheck: error = "Debug Check"; break;
+    case bgfx::Fatal::Enum::InvalidShader: error = "Invalid Shader"; break;
+    case bgfx::Fatal::Enum::UnableToInitialize: error = "Unable To Initialize"; break;
+    case bgfx::Fatal::Enum::UnableToCreateTexture: error = "Unable To Create Texture"; break;
+    case bgfx::Fatal::Enum::DeviceLost: error = "Device Lost"; break;
+    default: error = "Unknown"; break;
     }
 
     ffnx_error("[%s] %s\n", error.c_str(), _str);
@@ -1304,8 +1305,8 @@ void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlread
     {
         switch (internalState.cullMode)
         {
-        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW;
-        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW;
+        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW; break;
+        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW; break;
         }
     }
     bgfx::setState(internalState.state);
@@ -1411,8 +1412,8 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
 
         switch (internalState.cullMode)
         {
-        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW;
-        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW;
+        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW; break;
+        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW; break;
         }
 
         switch (internalState.blendMode)
