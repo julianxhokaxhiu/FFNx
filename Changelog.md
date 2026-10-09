@@ -17,6 +17,7 @@
 - Core: Add support for [Universal Button Prompts](docs/ff7/universal_buttons.md)
 - Core: Add support for Field text window autoresize for all languages
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
+- Battle: Fix a crash when an effect draws through a battle texture page whose texture was already freed, e.g. Hyper Jump after Ruby Weapon's tentacles emerge ( https://github.com/julianxhokaxhiu/FFNx/issues/673 )
 
 ## FF8
 
