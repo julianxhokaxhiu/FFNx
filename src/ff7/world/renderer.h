@@ -71,5 +71,7 @@ namespace ff7::world {
         ExternalMesh externalMeteorModel;
     };
 
-    Renderer worldRenderer;
+    // inline: one object shared by every file including this header (a plain definition here gives each of them
+    // its own, all built and destroyed at the same address, and the repeated destruction crashed on exit)
+    inline Renderer worldRenderer;
 }
