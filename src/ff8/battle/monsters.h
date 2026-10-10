@@ -20,3 +20,7 @@
 // reference them. Call once from ff8_init_hooks(), after ff8_externals is
 // resolved.
 void ff8_battle_monsters_init();
+
+// Seven world sound IDs per actor: character rows 0-15, monster rows c0m# + 16.
+constexpr unsigned FF8_BATTLE_ACTOR_SOUND_ROWS = 216; // through c0m199
+constexpr unsigned FF8_BATTLE_ACTOR_SOUND_SLOTS = 7;
