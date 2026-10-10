@@ -429,7 +429,7 @@ void exe_data_init()
         replace_call(ff8_externals.sub_84F8D0 + 0x88, ff8_battle_get_scan_text);
         replace_function(ff8_externals.get_card_name, ff8_get_card_name);
         uint8_t *msd = ff8_override_msd_data(FF8_EXE_DRAW_POINT, ff8_exe_draw_point, ff8_exe_draw_point_file_absent);
-        if (msd == nullptr && ff8_remastered_edition) {
+        if (msd == nullptr && ff8_remastered_edition && !JP_VERSION) {
             msd = ff8_remastered_open_exe_file("off_text_draw_point");
         }
         if (msd != nullptr) {
