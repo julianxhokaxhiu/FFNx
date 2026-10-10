@@ -432,16 +432,18 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 	auto scale = static_cast<float>((*pScale)) / 128.0f;
 
 	std::array<struct matrix, MAX_BONE_MATRICES> matrix_palette;
+	size_t jointCount = 0;
     if (externalMesh->skins.size() > 0)
 	{
 		auto skin = externalMesh->skins[0];
 		auto current_frame =  skin.current_frame;
-	
+
+		// Joints past the bone limit are ignored instead of overflowing matrix_palette
+		jointCount = std::min(skin.joints.size(), static_cast<size_t>(MAX_BONE_MATRICES));
+
 		if(externalMesh->animations.contains(skin.current_anim))
 		{
-			auto anim = externalMesh->animations[skin.current_anim];		
-
-			auto jointCount = skin.joints.size();
+			auto anim = externalMesh->animations[skin.current_anim];
 
 			for(int i = 0; i < jointCount; ++i)
 			{
@@ -486,7 +488,6 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		}
 		else
 		{
-			auto jointCount = skin.joints.size();
 			for(int i = 0; i < jointCount; ++i)
 			{			
 				float parentMatrix[16];
@@ -512,7 +513,7 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 
 	if (externalMesh->skins.size())
 	{
-		newRenderer.setSmoothSkinningBoneMatrices(&matrix_palette);
+		newRenderer.setSmoothSkinningBoneMatrices(&matrix_palette, jointCount);
 
 		newRenderer.isSmoothSkinning(true);
 		newRenderer.setSmoothSkinningUniforms();
@@ -604,6 +605,9 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		vertexOffset += shape.vertices.size();
 		indexOffset += shape.indices.size();
 	}
-	
+
 	newRenderer.discardAllBindings();
+
+	// Don't let the skinned programs leak into whatever is drawn next
+	newRenderer.isSmoothSkinning(false);
 }

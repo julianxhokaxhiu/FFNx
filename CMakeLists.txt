@@ -234,6 +234,9 @@ target_link_options(
 
 # SHADER COMPILATION
 set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.post.ntscj" "FFNx.blit" "FFNx.yuvmovie" "FFNx.yuvmovie.truecolor")
+# The 3D vertex shaders also get a skinned variant (smooth shaded only), built from the same source with
+# SMOOTH_SKINNING defined, so ordinary draws carry no bone data
+set(FFNX_SKINNED_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap")
 foreach(FFNX_SHADER IN LISTS FFNX_SHADERS)
   foreach(BGFX_VARYING flat smooth)
     add_custom_command(
@@ -278,6 +281,32 @@ foreach(FFNX_SHADER IN LISTS FFNX_SHADERS)
         ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.vert -o
         ${CMAKE_BINARY_DIR}/bin/shaders/${FFNX_SHADER}.${BGFX_VARYING}.d3d12.vert --type v --varyingdef
         ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc ${BGFX_SHADERC_DIRECT3D_FLAGS})
+    if(FFNX_SHADER IN_LIST FFNX_SKINNED_SHADERS AND BGFX_VARYING STREQUAL "smooth")
+      add_custom_command(
+        TARGET ${RELEASE_NAME}
+        POST_BUILD
+        COMMAND echo Building ${FFNX_SHADER}.skinned.${BGFX_VARYING} vert shader...
+        # OpenGL
+        COMMAND
+          ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.vert -o
+          ${CMAKE_BINARY_DIR}/bin/shaders/${FFNX_SHADER}.skinned.${BGFX_VARYING}.gl.vert --type v --varyingdef
+          ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --define SMOOTH_SKINNING ${BGFX_SHADERC_OPENGL_FLAGS}
+        # Vulkan
+        COMMAND
+          ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.vert -o
+          ${CMAKE_BINARY_DIR}/bin/shaders/${FFNX_SHADER}.skinned.${BGFX_VARYING}.vk.vert --type v --varyingdef
+          ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --define SMOOTH_SKINNING ${BGFX_SHADERC_VULKAN_FLAGS}
+        # Direct3D 11
+        COMMAND
+          ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.vert -o
+          ${CMAKE_BINARY_DIR}/bin/shaders/${FFNX_SHADER}.skinned.${BGFX_VARYING}.d3d11.vert --type v --varyingdef
+          ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --define SMOOTH_SKINNING ${BGFX_SHADERC_DIRECT3D_FLAGS}
+        # Direct3D 12
+        COMMAND
+          ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease -i ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/include -f ${CMAKE_SOURCE_DIR}/misc/${FFNX_SHADER}.vert -o
+          ${CMAKE_BINARY_DIR}/bin/shaders/${FFNX_SHADER}.skinned.${BGFX_VARYING}.d3d12.vert --type v --varyingdef
+          ${CMAKE_SOURCE_DIR}/misc/${RELEASE_NAME}.varying.${BGFX_VARYING}.def.sc --define SMOOTH_SKINNING ${BGFX_SHADERC_DIRECT3D_FLAGS})
+    endif()
   endforeach()
 endforeach()
 

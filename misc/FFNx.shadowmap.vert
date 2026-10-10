@@ -22,10 +22,11 @@ $output v_color0, v_texcoord0, v_position0, v_shadow0, v_normal0
 uniform mat4 worldView;
 uniform mat4 lightViewProjMatrix;
 
+// Only the skinned variant (compiled with SMOOTH_SKINNING) carries bone data,
+// so ordinary 3D draws don't pay for it
+#ifdef SMOOTH_SKINNING
 uniform mat4 boneMatrices[MAX_BONE_MATRICES];
-uniform vec4 skinningFlags;
-
-//#define isSmoothSkinning skinningFlags.x > 0.0
+#endif
 
 void main()
 {
@@ -41,18 +42,16 @@ void main()
         color.a = -1;
     }
 
-    // if (isSmoothSkinning)
-    // {
-    //     int boneIndex = a_indices.x;
-    //     vec3 avgPos = vec3(0.0, 0.0, 0.0);
-    //     avgPos += a_weight.x * mul(boneMatrices[a_indices.x], vec4(pos.xyz, 1.0)).xyz;
-    //     avgPos += a_weight.y * mul(boneMatrices[a_indices.y], vec4(pos.xyz, 1.0)).xyz;
-    //     avgPos += a_weight.z * mul(boneMatrices[a_indices.z], vec4(pos.xyz, 1.0)).xyz;
-    //     avgPos += a_weight.w * mul(boneMatrices[a_indices.w], vec4(pos.xyz, 1.0)).xyz;
+#ifdef SMOOTH_SKINNING
+    vec3 avgPos = vec3(0.0, 0.0, 0.0);
+    avgPos += a_weight.x * mul(boneMatrices[a_indices.x], vec4(pos.xyz, 1.0)).xyz;
+    avgPos += a_weight.y * mul(boneMatrices[a_indices.y], vec4(pos.xyz, 1.0)).xyz;
+    avgPos += a_weight.z * mul(boneMatrices[a_indices.z], vec4(pos.xyz, 1.0)).xyz;
+    avgPos += a_weight.w * mul(boneMatrices[a_indices.w], vec4(pos.xyz, 1.0)).xyz;
 
-    //     pos = vec4(avgPos, 1.0);
-    // }
-    
+    pos = vec4(avgPos, 1.0);
+#endif
+
     pos = mul(mul(lightViewProjMatrix, worldView), vec4(pos.xyz, 1.0));
 
     gl_Position = pos;
