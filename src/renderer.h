@@ -438,7 +438,7 @@ private:
     void updateRendererShaderPaths();
     bgfx::ShaderHandle getShader(const char* filePath);
 
-    bgfx::UniformHandle createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType);
+    bgfx::UniformHandle createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType, uint16_t arraySize = 1);
 
     void destroyUniforms();
     void destroyAll();
