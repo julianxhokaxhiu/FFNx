@@ -174,14 +174,6 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) ffnx_trace("%s: gameLightingFlags XYZW(game_lighting %f, NULL, NULL, NULL)\n", __func__, internalState.gameLightingFlags[0]);
 
-    internalState.SmoothSkinningFlags = {
-        (float)internalState.bIsSmoothSkinning,
-        NULL,
-        NULL,
-        NULL
-    };
-    if (uniform_log) ffnx_trace("%s: SmoothSkinningFlags XYZW(isSmoothSkinning %f, NULL, NULL, NULL)\n", __func__, internalState.SmoothSkinningFlags[0]);
-
     setUniform(RendererUniform::VS_FLAGS,  internalState.VSFlags.data());
     setUniform(RendererUniform::FS_ALPHA_FLAGS, internalState.FSAlphaFlags.data());
     setUniform(RendererUniform::FS_MISC_FLAGS, internalState.FSMiscFlags.data());
@@ -190,7 +182,6 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::FS_MOVIE_FLAGS, internalState.FSMovieFlags.data());
     setUniform(RendererUniform::FS_MORE_MOVIE_FLAGS, internalState.FSMoreMovieFlags.data());
     setUniform(RendererUniform::WM_FLAGS, internalState.WMFlags.data());
-    setUniform(RendererUniform::SKINNING_FLAGS, internalState.SmoothSkinningFlags.data());
     setUniform(RendererUniform::TIME_COLOR, internalState.TimeColor.data());
     setUniform(RendererUniform::TIME_DATA, internalState.TimeData.data());
 
@@ -303,6 +294,9 @@ void Renderer::updateRendererShaderPaths()
     fragmentLightingPathSmooth += ".smooth" + shaderSuffix + ".frag";
     vertexShadowMapPath += ".smooth" + shaderSuffix + ".vert";
     fragmentShadowMapPath += ".smooth" + shaderSuffix + ".frag";
+    vertexSkinnedPath += ".smooth" + shaderSuffix + ".vert";
+    vertexLightingSkinnedPath += ".smooth" + shaderSuffix + ".vert";
+    vertexShadowMapSkinnedPath += ".smooth" + shaderSuffix + ".vert";
     vertexFieldShadowPath += ".smooth" + shaderSuffix + ".vert";
     fragmentFieldShadowPath += ".smooth" + shaderSuffix + ".frag";
     vertexBlitPath += ".flat" + shaderSuffix + ".vert";
@@ -311,6 +305,20 @@ void Renderer::updateRendererShaderPaths()
     fragmentYUVMoviePath += ".smooth" + shaderSuffix + ".frag";
     vertexYUVMovieTrueColorPath += ".smooth" + shaderSuffix + ".vert";
     fragmentYUVMovieTrueColorPath += ".smooth" + shaderSuffix + ".frag";
+}
+
+// Skinned counterpart of a 3D program (smooth shaded: external meshes have real normals, so there is no flat
+// variant); any other program is returned unchanged
+Renderer::RendererProgram Renderer::getSkinnedProgram(RendererProgram program)
+{
+    switch (program)
+    {
+    case RendererProgram::FLAT:
+    case RendererProgram::SMOOTH: return RendererProgram::SKINNED_SMOOTH;
+    case RendererProgram::LIGHTING_FLAT:
+    case RendererProgram::LIGHTING_SMOOTH: return RendererProgram::LIGHTING_SKINNED_SMOOTH;
+    default: return program;
+    }
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
@@ -352,10 +360,10 @@ bgfx::ShaderHandle Renderer::getShader(const char* filePath)
     return handle;
 }
 
-bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType)
+bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType, uint16_t arraySize)
 {
     bgfx::UniformHandle handle;
-    handle = bgfx::createUniform(uniformName.c_str(), uniformType);
+    handle = bgfx::createUniform(uniformName.c_str(), uniformType, arraySize);
     return handle;
 }
 
@@ -1080,6 +1088,26 @@ void Renderer::init()
         true
     );
 
+    // Smooth skinning variants (smooth shaded only): the same fragment shaders, vertex shaders built with
+    // SMOOTH_SKINNING
+    backendProgramHandles[RendererProgram::SKINNED_SMOOTH] = bgfx::createProgram(
+        getShader(vertexSkinnedPath.c_str()),
+        getShader(fragmentPathSmooth.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::LIGHTING_SKINNED_SMOOTH] = bgfx::createProgram(
+        getShader(vertexLightingSkinnedPath.c_str()),
+        getShader(fragmentLightingPathSmooth.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::SHADOW_MAP_SKINNED] = bgfx::createProgram(
+        getShader(vertexShadowMapSkinnedPath.c_str()),
+        getShader(fragmentShadowMapPath.c_str()),
+        true
+    );
+
     backendProgramHandles[RendererProgram::BLIT] = bgfx::createProgram(
         getShader(vertexBlitPath.c_str()),
         getShader(fragmentBlitPath.c_str()),
@@ -1167,8 +1195,7 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR3] = createUniform("gameLightDir3", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::GAME_SCRIPTED_LIGHT_COLOR] = createUniform("gameScriptedLightColor", bgfx::UniformType::Vec4);
 
-    bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4);
-    bgfxUniformHandles[RendererUniform::SKINNING_FLAGS] = createUniform("skinningFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4, MAX_BONE_MATRICES);
 
     for(int i = 0; i < RendererTextureSlot::COUNT; ++i)
     {
@@ -1383,7 +1410,8 @@ void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlread
     }
     bgfx::setState(internalState.state);
 
-    bgfx::submit(0, backendProgramHandles[RendererProgram::SHADOW_MAP], 0, BGFX_DISCARD_NONE);
+    auto shadowMapProgram = internalState.bIsSmoothSkinning ? RendererProgram::SHADOW_MAP_SKINNED : RendererProgram::SHADOW_MAP;
+    bgfx::submit(0, backendProgramHandles[shadowMapProgram], 0, BGFX_DISCARD_NONE);
 };
 
 void Renderer::drawWithLighting(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, bool keepBindings)
@@ -1530,7 +1558,8 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
     bgfx::setState(internalState.state);
 
     auto flags = keepBindings ? BGFX_DISCARD_STATE : BGFX_DISCARD_ALL;
-    bgfx::submit(backendViewId, backendProgramHandles[backendProgram], 0, flags);
+    auto program = internalState.bIsSmoothSkinning ? getSkinnedProgram(backendProgram) : backendProgram;
+    bgfx::submit(backendViewId, backendProgramHandles[program], 0, flags);
 
     internalState.bHasDrawBeenDone = true;
     internalState.bTexturesBound = false;
@@ -2606,11 +2635,14 @@ void Renderer::isSmoothSkinning(bool flag)
     internalState.bIsSmoothSkinning = flag;
 }
 
-void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette)
+void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette, size_t joint_count)
 {
     if(matrix_palette != nullptr)
     {
-        for(int i = 0; i < MAX_BONE_MATRICES; ++i)
+        // Only the joints the model actually has are copied and uploaded
+        internalState.bone_matrix_count = static_cast<uint16_t>(std::clamp<size_t>(joint_count, 1, MAX_BONE_MATRICES));
+
+        for(int i = 0; i < internalState.bone_matrix_count; ++i)
         {
             ::memcpy(&internalState.bone_matrices[16*i], &(*matrix_palette)[i].m[0][0], sizeof((*matrix_palette)[i].m));
         }
@@ -2619,7 +2651,7 @@ void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_
 
 void Renderer::setSmoothSkinningUniforms()
 {
-    setUniform(RendererUniform::BONE_MATRICES, internalState.bone_matrices, MAX_BONE_MATRICES);
+    setUniform(RendererUniform::BONE_MATRICES, internalState.bone_matrices, internalState.bone_matrix_count);
 }
 
 void Renderer::setSphericalWorldRate(float value)

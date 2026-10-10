@@ -43,15 +43,16 @@ uniform vec4 gameLightDir2;
 uniform vec4 gameLightDir3;
 uniform vec4 gameScriptedLightColor;
 
+// Only the skinned variant (compiled with SMOOTH_SKINNING) carries bone data,
+// so ordinary 3D draws don't pay for it
+#ifdef SMOOTH_SKINNING
 uniform mat4 boneMatrices[MAX_BONE_MATRICES];
-uniform vec4 skinningFlags;
+#endif
 
 #define isTLVertex VSFlags.x > 0.0
 #define blendMode VSFlags.y
 #define isFBTexture VSFlags.z > 0.0
 #define isNotTexture VSFlags.w == 0.0
-
-//#define isSmoothSkinning skinningFlags.x > 0.0
 
 #define isApplySphericalWorld WMFlags.x > 0.0
 #define sphericaWorldRadiusScale WMFlags.x
@@ -80,25 +81,23 @@ void main()
     }
     else
     {
-        // if (isSmoothSkinning)
-        // {
-        //     int boneIndex = a_indices.x;
-        //     vec3 avgPos = vec3(0.0, 0.0, 0.0);
-        //     avgPos += a_weight.x * mul(boneMatrices[a_indices.x], vec4(pos.xyz, 1.0)).xyz;
-        //     avgPos += a_weight.y * mul(boneMatrices[a_indices.y], vec4(pos.xyz, 1.0)).xyz;
-        //     avgPos += a_weight.z * mul(boneMatrices[a_indices.z], vec4(pos.xyz, 1.0)).xyz;
-        //     avgPos += a_weight.w * mul(boneMatrices[a_indices.w], vec4(pos.xyz, 1.0)).xyz;
+#ifdef SMOOTH_SKINNING
+        vec3 avgPos = vec3(0.0, 0.0, 0.0);
+        avgPos += a_weight.x * mul(boneMatrices[a_indices.x], vec4(pos.xyz, 1.0)).xyz;
+        avgPos += a_weight.y * mul(boneMatrices[a_indices.y], vec4(pos.xyz, 1.0)).xyz;
+        avgPos += a_weight.z * mul(boneMatrices[a_indices.z], vec4(pos.xyz, 1.0)).xyz;
+        avgPos += a_weight.w * mul(boneMatrices[a_indices.w], vec4(pos.xyz, 1.0)).xyz;
 
-        //     pos = vec4(avgPos, 1.0);
+        pos = vec4(avgPos, 1.0);
 
-        //     vec3 avgNrm = vec3(0.0, 0.0, 0.0);
-        //     avgNrm += a_weight.x * mul(boneMatrices[a_indices.x], vec4(nrm.xyz, 0.0)).xyz;
-        //     avgNrm += a_weight.y * mul(boneMatrices[a_indices.y], vec4(nrm.xyz, 0.0)).xyz;
-        //     avgNrm += a_weight.z * mul(boneMatrices[a_indices.z], vec4(nrm.xyz, 0.0)).xyz;
-        //     avgNrm += a_weight.w * mul(boneMatrices[a_indices.w], vec4(nrm.xyz, 0.0)).xyz;
+        vec3 avgNrm = vec3(0.0, 0.0, 0.0);
+        avgNrm += a_weight.x * mul(boneMatrices[a_indices.x], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.y * mul(boneMatrices[a_indices.y], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.z * mul(boneMatrices[a_indices.z], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.w * mul(boneMatrices[a_indices.w], vec4(nrm.xyz, 0.0)).xyz;
 
-        //     nrm = avgNrm;
-        // }
+        nrm = avgNrm;
+#endif
 
         v_position0 = mul(worldView, vec4(pos.xyz, 1.0));
 
