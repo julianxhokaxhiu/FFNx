@@ -332,7 +332,7 @@ void ffnx_log_current_pc_specs()
 				(newRenderer.getCaps()->vendorId == vendorId && newRenderer.getCaps()->deviceId == deviceId) ||
 				(newRenderer.getCaps()->vendorId == vendorId && renderer_backend == RENDERER_BACKEND_OPENGL)
 			)
-				ffnx_info("   GPU: %s (Dedicated: %dMB/Shared: %dMB) [%s]\n", gpu.name().c_str(), (int)(gpu.dedicated_memory_Bytes() / 1024.0 / 1024.0), (int)(gpu.shared_memory_Bytes() / 1024.0 / 1024.0), newRenderer.currentRenderer.c_str());
+				ffnx_info("   GPU: %s @ %d Mhz (Dedicated: %d MB / Shared: %d MB) [%s @ %s]\n", gpu.name().c_str(), (int)(gpu.frequency_hz() / 1000.0 / 1000.0), (int)(gpu.dedicated_memory_Bytes() / 1024.0 / 1024.0), (int)(gpu.shared_memory_Bytes() / 1024.0 / 1024.0), newRenderer.currentRenderer.c_str(), gpu.driverVersion().c_str());
 		}
 	}
 	catch (const std::exception& e)
