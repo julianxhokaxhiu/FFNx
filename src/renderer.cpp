@@ -384,6 +384,12 @@ void Renderer::destroyAll()
 {
     destroyUniforms();
 
+    if (bgfx::isValid(fallbackTexture))
+    {
+        bgfx::destroy(fallbackTexture);
+        fallbackTexture = BGFX_INVALID_HANDLE;
+    }
+
     for (auto& handle : internalState.texHandlers)
     {
         if (bgfx::isValid(handle))
@@ -802,6 +808,11 @@ void Renderer::bindTextures()
         {
             bgfx::TextureHandle handle = internalState.texHandlers[idx];
 
+            if (idx == RendererTextureSlot::TEX_Y && !internalState.bIsTexture && !bgfx::isValid(handle))
+            {
+                handle = fallbackTexture;
+            }
+
             if (bgfx::isValid(handle))
             {
                 uint32_t flags = 0;
@@ -1174,6 +1185,15 @@ void Renderer::init()
     {
         bgfxTexUniformHandles[i] = createUniform("tex_" + std::to_string(i), bgfx::UniformType::Sampler);
     }
+
+    const uint8_t fallbackPixel[] = { 255, 255, 255, 255 };
+    fallbackTexture = bgfx::createTexture2D(
+        1, 1, false, 1, bgfx::TextureFormat::RGBA8,
+        BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+        bgfx::copy(fallbackPixel, sizeof(fallbackPixel))
+    );
+    if (bgfx::isValid(fallbackTexture))
+        bgfx::setName(fallbackTexture, "Untextured draw fallback");
 
     // Set defaults
     show();

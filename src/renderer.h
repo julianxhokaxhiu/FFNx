@@ -407,6 +407,8 @@ private:
 
     bgfx::TextureHandle FFNxLogoHandle = BGFX_INVALID_HANDLE;
 
+    bgfx::TextureHandle fallbackTexture = BGFX_INVALID_HANDLE;
+
     bgfx::TextureHandle GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleSMPTECtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
