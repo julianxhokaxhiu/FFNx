@@ -561,7 +561,7 @@ void Renderer::renderFrame()
     }
 };
 
-void Renderer::printMatrix(char* name, float* mat)
+void Renderer::printMatrix(const char* name, float* mat)
 {
     ffnx_trace("%s: 0 [%f, %f, %f, %f]\n", name, mat[0], mat[1], mat[2], mat[3]);
     ffnx_trace("%s: 1 [%f, %f, %f, %f]\n", name, mat[4], mat[5], mat[6], mat[7]);
@@ -888,16 +888,16 @@ void Renderer::init()
     recalcInternals();
 
     // Init renderer
-    bgfxInit.platformData.nwh = gameHwnd;
     bgfxInit.type = getUserChosenRenderer();
-    bgfxInit.resolution.width = window_size_x;
-    bgfxInit.resolution.height = window_size_y;
+    bgfxInit.swapChain.nwh = gameHwnd;
+    bgfxInit.swapChain.width = window_size_x;
+    bgfxInit.swapChain.height = window_size_y;
 
     if (enable_anisotropic)
-        bgfxInit.resolution.reset |= BGFX_RESET_MAXANISOTROPY;
+        bgfxInit.reset |= BGFX_RESET_MAXANISOTROPY;
 
     if (enable_vsync)
-        bgfxInit.resolution.reset |= BGFX_RESET_VSYNC;
+        bgfxInit.reset |= BGFX_RESET_VSYNC;
 
     bgfxInit.debug = renderer_debug;
     bgfxInit.callback = &bgfxCallbacks;
@@ -910,8 +910,8 @@ void Renderer::init()
         internalState.bIsHDR = true;
         ffnx_info("HDR monitor detected. HDR enabled.\n");
 
-        bgfxInit.resolution.reset |= BGFX_RESET_HDR10;
-        bgfxInit.resolution.formatColor = bgfx::TextureFormat::RGB10A2;
+        bgfxInit.reset |= BGFX_RESET_HDR10;
+        bgfxInit.swapChain.formatColor = bgfx::TextureFormat::RGB10A2;
 
         if (hdr_max_nits <= 0) {
             ffnx_info("Attempting to autodetect SDR white level for HDR...\n");
@@ -1018,7 +1018,7 @@ void Renderer::init()
             }
         } // end if  (hdr_max_nits <= 0)
 
-        bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.formatColor);
+        bgfx::reset(bgfxInit.reset, &bgfxInit.swapChain);
     } //end if HDR
 
     internalState.texHandlers.resize(RendererTextureSlot::COUNT, BGFX_INVALID_HANDLE);
@@ -1189,7 +1189,9 @@ void Renderer::reset()
 
     if(!ff8 && enable_lighting) prepareShadowMap();
 
-    bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.formatColor);
+    bgfxInit.swapChain.width = window_size_x;
+    bgfxInit.swapChain.height = window_size_y;
+    bgfx::reset(bgfxInit.reset, &bgfxInit.swapChain);
 }
 
 #define FFNX_LOGO_PATH ".logo/logo_nobg.png"
@@ -2215,7 +2217,7 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
     backendViewId++;
 
     bgfx::TextureHandle texHandle = { dest };
-    bgfx::blit(backendViewId, texHandle, 0, dstY, bgfx::getTexture(backendFrameBuffer, 0), newX, newY, newWidth, newHeight);
+    bgfx::blit(backendViewId, {.handle = texHandle, .x = 0, .y = dstY}, {.handle = bgfx::getTexture(backendFrameBuffer, 0), .x = newX, .y = newY, .width = newWidth, .height = newHeight} );
     bgfx::touch(backendViewId);
     setClearFlags(false, false);
 
@@ -2223,7 +2225,7 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
     setClearFlags(false, false);
 }
 
-void Renderer::zoomBackendFrameBuffer(int x, int y, int width, int height)
+void Renderer::zoomBackendFrameBuffer(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
     if(!internalState.bHasDrawBeenDone) return;
 
@@ -2232,7 +2234,7 @@ void Renderer::zoomBackendFrameBuffer(int x, int y, int width, int height)
     backendViewId++;
     bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
-    bgfx::blit(backendViewId, textureHandle, 0, 0, bgfx::getTexture(backendFrameBuffer, 0), x, y, width, height);
+    bgfx::blit(backendViewId, {.handle = textureHandle, .x = 0, .y = 0}, {.handle = bgfx::getTexture(backendFrameBuffer, 0), .x = x, .y = y, .width = width, .height = height});
     backendViewId++;
     bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);

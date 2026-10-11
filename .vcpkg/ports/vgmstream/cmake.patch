@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d623860b..8b657d5e 100644
+index 76abdb50..3939b124 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,4 +1,5 @@
@@ -9,10 +9,10 @@ index d623860b..8b657d5e 100644
  
  if(CMAKE_SYSTEM_NAME MATCHES Darwin)
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 65768024..31d0b762 100644
+index 9f55187b..8cdb08f0 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -105,3 +105,30 @@ if(BUILD_SHARED_LIBS)
+@@ -128,3 +128,30 @@ if(BUILD_SHARED_LIBS)
  		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/vgmstream
  	)
  endif()
@@ -44,7 +44,7 @@ index 65768024..31d0b762 100644
 +	install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/coding/g72x_state.h DESTINATION include/libvgmstream/coding )
 +endif()
 diff --git a/src/base/streamfile_stdio.c b/src/base/streamfile_stdio.c
-index 4548bd5e..a4246075 100644
+index 154cb6ca..7fcff989 100644
 --- a/src/base/streamfile_stdio.c
 +++ b/src/base/streamfile_stdio.c
 @@ -281,7 +281,10 @@ static STREAMFILE* open_stdio_streamfile_buffer_by_file(FILE* infile, const char

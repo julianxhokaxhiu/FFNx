@@ -25,6 +25,11 @@
 #include <map>
 #include <string>
 #include <windows.h>
+
+#ifdef small
+#undef small
+#endif
+
 #include <bx/file.h>
 
 constexpr size_t ZZZ_FILENAME_MAX_SIZE = 128;

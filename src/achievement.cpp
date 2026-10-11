@@ -65,7 +65,7 @@ bool SteamManager::requestStats()
     }
     ach_trace("%s - Request user stats sent\n", __func__);
 
-    return SteamUserStats()->RequestCurrentStats();
+    return true;
 }
 
 bool SteamManager::setAchievement(int achID)

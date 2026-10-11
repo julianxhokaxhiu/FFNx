@@ -32,7 +32,7 @@ bool load_library()
 
 	const char *lib_path = "FFNx_steam_api.dll";
 	bool is_genuine_steam_api = isFileSigned(lib_path);
-	if (!is_genuine_steam_api) is_genuine_steam_api = sha1_file(lib_path) == "03bd9f3e352553a0af41f5fe006f6249a168c243";
+	if (!is_genuine_steam_api) is_genuine_steam_api = sha1_file(lib_path) == "772afa31bd0d16a79dd1d0036bb9a9cb8f2eaf30";
 	if (!is_genuine_steam_api)
 	{
 		char message[256] = {};

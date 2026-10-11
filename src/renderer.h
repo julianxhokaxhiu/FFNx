@@ -23,6 +23,11 @@
 #pragma once
 
 #include "common.h"
+
+#ifdef small
+#undef small
+#endif
+
 #include "overlay.h"
 
 #include <cmrc/cmrc.hpp>
@@ -37,7 +42,6 @@
 #include <bimg/bimg.h>
 #include <bimg/decode.h>
 #include <bimg/encode.h>
-#include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
 
 #define FFNX_RENDERER_INVALID_HANDLE { 0 }
@@ -447,7 +451,7 @@ private:
 
     void renderFrame();
 
-    void printMatrix(char* name, float* mat);
+    void printMatrix(const char* name, float* mat);
 
     void recalcInternals();
     void calcBackendProjMatrix();
@@ -522,7 +526,7 @@ public:
     void useTexture(uint16_t texId, uint32_t slot = 0);
     uint32_t createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     void blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
-    void zoomBackendFrameBuffer(int x, int y, int width, int height);
+    void zoomBackendFrameBuffer(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
     void clearDepthBuffer();
 
     void isMovie(bool flag = false);
