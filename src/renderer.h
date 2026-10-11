@@ -95,7 +95,10 @@ enum RendererPrimitiveType
 enum RendererTextureType
 {
     BGRA = 0,
-    YUV
+    YUV,
+    YUV8,
+    UV8,
+    UV16
 };
 
 enum RendererUniform
@@ -292,6 +295,12 @@ private:
         bool bModulateAlpha = false;
         bool bIsMovie = false;
         bool bIsMovieFullRange = false;
+        bool bIsMovieRGB = false;
+        float movieRGBScaleX = 1.0f;
+        float movieRGBScaleY = 1.0f;
+        bool movieYUV8 = false;
+        bool movieUVInterleaved = false;
+        bool movieP010 = false;
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
         bool bIsFogEnabled = false;
@@ -543,6 +552,8 @@ public:
     void isExternalTexture(bool flag = false);
     bool isHDR();
     void setColorMatrix(ColorMatrixType cmtype = COLORMATRIX_BT601);
+    void setMovieRGB(bool flag = false, float scaleX = 1.0f, float scaleY = 1.0f);
+    void setMovieYUVFormat(bool eightBit = false, bool interleaved = false, bool p010 = false);
     void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);

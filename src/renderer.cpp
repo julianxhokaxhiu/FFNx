@@ -160,9 +160,9 @@ void Renderer::setCommonUniforms()
 
     internalState.FSMoreMovieFlags = {
         (float)internalState.bChromaLocation,
-        NULL,
-        NULL,
-        NULL
+        (float)internalState.bIsMovieRGB,
+        internalState.bIsMovieRGB ? internalState.movieRGBScaleX : (internalState.movieYUV8 ? 1020.0f / 1023.0f : 65535.0f / (1023.0f * (internalState.movieP010 ? 64.0f : 1.0f))),
+        internalState.bIsMovieRGB ? internalState.movieRGBScaleY : (internalState.movieYUV8 ? 256.0f : 1024.0f) * (internalState.movieUVInterleaved ? -1.0f : 1.0f)
     };
     if (uniform_log) ffnx_trace("%s: FSMoreMovieFlags XYZW(chroma location %f, reserved %f, reserved %f, reserved %f)\n", __func__, internalState.FSMoreMovieFlags[0], internalState.FSMoreMovieFlags[1], internalState.FSMoreMovieFlags[2], internalState.FSMoreMovieFlags[3]);
 
@@ -911,6 +911,7 @@ void Renderer::init()
         bgfxInit.reset |= BGFX_RESET_VSYNC;
 
     bgfxInit.debug = renderer_debug;
+    bgfxInit.videoDecode = true;
     bgfxInit.callback = &bgfxCallbacks;
 
     if (!bgfx::init(bgfxInit)) exit(1);
@@ -1908,27 +1909,43 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
         texFormat = bgfx::TextureFormat::BGRA8;
         imgFormat = bimg::TextureFormat::BGRA8;
     }
+    else if (type == RendererTextureType::YUV8)
+    {
+        texFormat = bgfx::TextureFormat::R8;
+        imgFormat = bimg::TextureFormat::R8;
+    }
+    else if (type == RendererTextureType::UV8)
+    {
+        texFormat = bgfx::TextureFormat::RG8;
+        imgFormat = bimg::TextureFormat::RG8;
+    }
+    else if (type == RendererTextureType::UV16)
+    {
+        texFormat = bgfx::TextureFormat::RG16;
+        imgFormat = bimg::TextureFormat::RG16;
+    }
 
     bimg::TextureInfo texInfo;
     bimg::imageGetSize(&texInfo, width, height, 0, false, false, 1, imgFormat);
+	uint32_t uploadSize = stride > 0 ? uint32_t(stride * height) : texInfo.storageSize;
 
     // If the texture we are going to create does not fit in memory, return an empty one.
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
-    if (doesItFitInMemory(texInfo.storageSize) && (data != NULL))
+    if (doesItFitInMemory(uploadSize) && (data != NULL))
     {
         const bgfx::Memory* mem;
 
         if (copyData)
         {
-            mem = bgfx::alloc(texInfo.storageSize);
+            mem = bgfx::alloc(uploadSize);
             // Protect from crashes
             if (mem != NULL) {
-                bx::memCopy(mem->data, data, texInfo.storageSize);
+                bx::memCopy(mem->data, data, uploadSize);
             }
         }
         else
         {
-            mem = bgfx::makeRef(data, texInfo.storageSize, RendererReleaseData, (void *)data);
+            mem = bgfx::makeRef(data, uploadSize, RendererReleaseData, (void *)data);
         }
 
         uint64_t flags = BGFX_SAMPLER_NONE;
@@ -2384,6 +2401,18 @@ void Renderer::isExternalTexture(bool flag)
 bool Renderer::isHDR()
 {
     return internalState.bIsHDR;
+}
+
+void Renderer::setMovieYUVFormat(bool eightBit, bool interleaved, bool p010){
+    internalState.movieYUV8 = eightBit;
+    internalState.movieUVInterleaved = interleaved;
+    internalState.movieP010 = p010;
+}
+
+void Renderer::setMovieRGB(bool flag, float scaleX, float scaleY){
+    internalState.bIsMovieRGB = flag;
+    internalState.movieRGBScaleX = scaleX;
+    internalState.movieRGBScaleY = scaleY;
 }
 
 void Renderer::setColorMatrix(ColorMatrixType cmtype){

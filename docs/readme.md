@@ -7,6 +7,7 @@ Welcome to the FFNx documentation!
 - [How To Install](how_to_install.md)
 - [FAQ - Frequently Asked Questions](faq.md)
 - [Built-In Shortcuts](shortcuts.md)
+- [External Movies](external_movies.md)
 - [Gamma and Color Gamut Information](gamma_and_gamut.md)
 
 ## FF7

@@ -22,6 +22,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <atomic>
 #include <soloud.h>
 
 namespace SoLoud
@@ -30,7 +31,9 @@ namespace SoLoud
 	{
 	public:
 		uint32_t mPushLength;
-		uint32_t mPushOffset;
+		std::atomic<uint32_t> mPushOffset;
+		std::atomic<uint32_t> mReadOffset;
+		std::atomic<uint32_t> mUnderrunSamples;
 		uint32_t mSampleCount;
 		float* mData;
 
@@ -38,6 +41,7 @@ namespace SoLoud
 		virtual ~MemoryStream();
 
     result push(uint8_t* data, uint32_t size);
+		double getBufferedDuration() const;
 
 		virtual AudioSourceInstance* createInstance();
 		time getLength();
