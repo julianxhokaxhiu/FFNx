@@ -42,17 +42,6 @@
 #define GAME_LIGHTING_PER_VERTEX 1
 #define GAME_LIGHTING_PER_PIXEL 2
 
-#define HWVA_NONE 0
-#define HWVA_AUTO 1
-#define HWVA_VULKAN 2
-#define HWVA_OPENCL 3
-#define HWVA_DXVA2 4
-#define HWVA_D3D11VA 5
-#define HWVA_D3D12VA 6
-#define HWVA_CUDA 7
-#define HWVA_AMF 8
-#define HWVA_QSV 9
-
 #define GAME_LANGUAGE_AUTO 0
 #define GAME_LANGUAGE_EN 1
 #define GAME_LANGUAGE_FR 2
@@ -192,7 +181,6 @@ extern long ffmpeg_video_volume;
 extern bool ff7_advanced_blinking;
 extern long display_index;
 extern long ff8_high_res_font;
-extern long hardware_video_decoding;
 extern std::vector<std::string> ff8_disable_remastered_hd_textures;
 extern long game_language;
 

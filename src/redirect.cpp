@@ -214,6 +214,10 @@ int redirect_path_with_override(const char* in, char* out, size_t out_size)
 			strcpy(out, in);
 		}
 	}
+	else
+	{
+		strcpy_s(out, out_size, in);
+	}
 
 	return redirect_status;
 }

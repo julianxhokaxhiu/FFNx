@@ -9,6 +9,7 @@
 - Core: Add support for SDL3 Gamepad API (`use_sdl_gamepad`) ( https://github.com/julianxhokaxhiu/FFNx/pull/915 )
 - Core: Fix a crash during startup when a file signature check fails, which left FFNx.log truncated instead of naming the file ( https://github.com/julianxhokaxhiu/FFNx/pull/986 )
 - Renderer: Improved super sampling to prevent aliasing and shimmering ( https://github.com/julianxhokaxhiu/FFNx/pull/990 )
+- Movie: Rework movie hardware and software decoding, allowing to smoothly decode 4K movies in both cases
 
 ## FF7
 
@@ -17,6 +18,7 @@
 - Core: Add support for [Universal Button Prompts](docs/ff7/universal_buttons.md)
 - Core: Add support for Field text window autoresize for all languages
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
+- Lighting: Minor adjustment to ambient light and shadow map resolution default values ( https://github.com/julianxhokaxhiu/FFNx/pull/1007 )
 
 ## FF8
 

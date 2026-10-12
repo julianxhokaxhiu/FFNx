@@ -1526,7 +1526,26 @@ void NxAudioEngine::pushStreamData(uint8_t* data, uint32_t size)
 	if (_currentStream.stream)
 	{
 		_currentStream.stream->push(data, size);
+		uint32_t missing_samples = _currentStream.stream->mUnderrunSamples.exchange(0, std::memory_order_relaxed);
+		if (missing_samples)
+			ffnx_warning("Movie audio underrun: %u missing samples, %.3f seconds buffered after refill\n", missing_samples, _currentStream.stream->getBufferedDuration());
 	}
+}
+
+double NxAudioEngine::getStreamBufferedDuration() const
+{
+	return _currentStream.stream ? _currentStream.stream->getBufferedDuration() : 0.0;
+}
+
+double NxAudioEngine::getStreamPlaybackTime()
+{
+	return _engine.isValidVoiceHandle(_currentStream.handle) ? _engine.getStreamTime(_currentStream.handle) : -1.0;
+}
+
+double NxAudioEngine::getStreamBufferDuration()
+{
+	const auto sample_rate = _engine.getBackendSamplerate();
+	return sample_rate ? double(_engine.getBackendBufferSize()) / sample_rate : 0.0;
 }
 
 bool NxAudioEngine::playStream(float volume)

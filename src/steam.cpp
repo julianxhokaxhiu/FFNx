@@ -15,7 +15,7 @@ FARPROC procSteamUtils = nullptr;
 FARPROC procUserStats = nullptr;
 
 typedef bool(*LPRESTARTAPPIFNECESSARY)(uint32);
-typedef bool(*LPINIT)();
+typedef ESteamAPIInitResult(*LPINIT)(SteamErrMsg *pOutErrMsg);
 typedef void(*LPRUNCALLBACKS)();
 typedef void(*LPSHUTDOWN)();
 typedef void(*LPREGISTERCALLBACK)(class CCallbackBase *pCallback, int iCallback);
@@ -32,7 +32,7 @@ bool load_library()
 
 	const char *lib_path = "FFNx_steam_api.dll";
 	bool is_genuine_steam_api = isFileSigned(lib_path);
-	if (!is_genuine_steam_api) is_genuine_steam_api = sha1_file(lib_path) == "03bd9f3e352553a0af41f5fe006f6249a168c243";
+	if (!is_genuine_steam_api) is_genuine_steam_api = sha1_file(lib_path) == "772afa31bd0d16a79dd1d0036bb9a9cb8f2eaf30";
 	if (!is_genuine_steam_api)
 	{
 		char message[256] = {};
@@ -75,14 +75,14 @@ bool FFNx_SteamAPI_Init()
 		return false;
 	}
 
-	FARPROC proc = GetProcAddress(hDll, "SteamAPI_Init");
+	FARPROC proc = GetProcAddress(hDll, "SteamAPI_InitFlat");
 	if (proc == nullptr) {
 		ffnx_error("%s: Function not found in Steam lib\n", __func__);
 
 		return false;
 	}
 
-	return LPINIT(proc)();
+	return LPINIT(proc)(nullptr) == k_ESteamAPIInitResult_OK;
 }
 
 void FFNx_SteamAPI_RunCallbacks()
@@ -162,7 +162,7 @@ ISteamUser *FFNx_SteamUser()
 	}
 
 	if (procSteamUser == nullptr) {
-		procSteamUser = GetProcAddress(hDll, "SteamUser");
+		procSteamUser = GetProcAddress(hDll, "SteamAPI_SteamUser_v023");
 		if (procSteamUser == nullptr) {
 			ffnx_error("%s: Function not found in Steam lib\n", __func__);
 
@@ -180,7 +180,7 @@ ISteamUtils *FFNx_SteamUtils()
 	}
 
 	if (procSteamUtils == nullptr) {
-		procSteamUtils = GetProcAddress(hDll, "SteamUtils");
+		procSteamUtils = GetProcAddress(hDll, "SteamAPI_SteamUtils_v011");
 		if (procSteamUtils == nullptr) {
 			ffnx_error("%s: Function not found in Steam lib\n", __func__);
 
@@ -198,7 +198,7 @@ ISteamUserStats *FFNx_SteamUserStats()
 	}
 
 	if (procUserStats == nullptr) {
-		procUserStats = GetProcAddress(hDll, "SteamUserStats");
+		procUserStats = GetProcAddress(hDll, "SteamAPI_SteamUserStats_v013");
 		if (procUserStats == nullptr) {
 			ffnx_error("%s: Function not found in Steam lib\n", __func__);
 

@@ -1,7 +1,7 @@
 {
   "name": "ffnx",
   "version": "1.24.3",
-  "builtin-baseline": "c3867e714dd3a51c272826eea77267876517ed99",
+  "builtin-baseline": "e456309491fd875487bf02b8a0dca76c1b1b00cc",
   "dependencies": [
     "bgfx",
     {
@@ -13,7 +13,6 @@
         "avfilter",
         "avformat",
         "avresample",
-        "postproc",
         "swresample",
         "swscale",
         "amf",
@@ -78,27 +77,27 @@
     },
     {
       "name": "ffmpeg",
-      "version": "7.1.2",
-      "port-version": 5
+      "version": "9.0.2",
+      "port-version": 1
     },
     {
       "name": "imgui",
-      "version": "1.92.6",
+      "version": "1.92.9",
       "port-version": 0
     },
     {
       "name": "libpng",
-      "version": "1.6.55",
+      "version": "1.6.59",
       "port-version": 0
     },
     {
       "name": "directxtex",
-      "version": "2025-10-27",
+      "version": "2026-05-07",
       "port-version": 0
     },
     {
       "name": "mimalloc",
-      "version": "3.2.8",
+      "version": "3.5.3",
       "port-version": 0
     },
     {
@@ -108,8 +107,8 @@
     },
     {
       "name": "pugixml",
-      "version": "1.15",
-      "port-version": 1
+      "version": "1.16",
+      "port-version": 0
     },
     {
       "name": "soloud",
@@ -133,12 +132,12 @@
     },
     {
       "name": "steamworkssdk",
-      "version": "1.23.0",
+      "version": "1.65.0",
       "port-version": 0
     },
     {
       "name": "xxhash",
-      "version": "0.8.3",
+      "version": "0.8.4",
       "port-version": 0
     },
     {
@@ -148,7 +147,7 @@
     },
     {
       "name": "cpuinfo",
-      "version": "2025-09-06",
+      "version": "2026-04-13",
       "port-version": 0
     },
     {
@@ -173,7 +172,7 @@
     },
     {
       "name": "sdl3",
-      "version": "3.4.2",
+      "version": "3.4.18",
       "port-version": 0
     }
   ]

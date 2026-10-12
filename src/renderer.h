@@ -23,6 +23,11 @@
 #pragma once
 
 #include "common.h"
+
+#ifdef small
+#undef small
+#endif
+
 #include "overlay.h"
 
 #include <cmrc/cmrc.hpp>
@@ -37,7 +42,6 @@
 #include <bimg/bimg.h>
 #include <bimg/decode.h>
 #include <bimg/encode.h>
-#include <bgfx/platform.h>
 #include <bgfx/bgfx.h>
 
 #define FFNX_RENDERER_INVALID_HANDLE { 0 }
@@ -91,7 +95,10 @@ enum RendererPrimitiveType
 enum RendererTextureType
 {
     BGRA = 0,
-    YUV
+    YUV,
+    YUV8,
+    UV8,
+    UV16
 };
 
 enum RendererUniform
@@ -288,6 +295,12 @@ private:
         bool bModulateAlpha = false;
         bool bIsMovie = false;
         bool bIsMovieFullRange = false;
+        bool bIsMovieRGB = false;
+        float movieRGBScaleX = 1.0f;
+        float movieRGBScaleY = 1.0f;
+        bool movieYUV8 = false;
+        bool movieUVInterleaved = false;
+        bool movieP010 = false;
         bool bIsExternalTexture = false;
         bool bIsHDR = false;
         bool bIsFogEnabled = false;
@@ -403,6 +416,8 @@ private:
 
     bgfx::TextureHandle FFNxLogoHandle = BGFX_INVALID_HANDLE;
 
+    bgfx::TextureHandle fallbackTexture = BGFX_INVALID_HANDLE;
+
     bgfx::TextureHandle GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleSMPTECtoSRGB = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
@@ -447,7 +462,7 @@ private:
 
     void renderFrame();
 
-    void printMatrix(char* name, float* mat);
+    void printMatrix(const char* name, float* mat);
 
     void recalcInternals();
     void calcBackendProjMatrix();
@@ -522,7 +537,7 @@ public:
     void useTexture(uint16_t texId, uint32_t slot = 0);
     uint32_t createBlitTexture(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
     void blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
-    void zoomBackendFrameBuffer(int x, int y, int width, int height);
+    void zoomBackendFrameBuffer(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
     void clearDepthBuffer();
 
     void isMovie(bool flag = false);
@@ -537,6 +552,8 @@ public:
     void isExternalTexture(bool flag = false);
     bool isHDR();
     void setColorMatrix(ColorMatrixType cmtype = COLORMATRIX_BT601);
+    void setMovieRGB(bool flag = false, float scaleX = 1.0f, float scaleY = 1.0f);
+    void setMovieYUVFormat(bool eightBit = false, bool interleaved = false, bool p010 = false);
     void setColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setOverallColorGamut(ColorGamutType cgtype = COLORGAMUT_SRGB);
     void setGammaType(InverseGammaFunctionType gtype = GAMMAFUNCTION_SRGB);

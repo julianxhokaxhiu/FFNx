@@ -160,9 +160,9 @@ void Renderer::setCommonUniforms()
 
     internalState.FSMoreMovieFlags = {
         (float)internalState.bChromaLocation,
-        NULL,
-        NULL,
-        NULL
+        (float)internalState.bIsMovieRGB,
+        internalState.bIsMovieRGB ? internalState.movieRGBScaleX : (internalState.movieYUV8 ? 1020.0f / 1023.0f : 65535.0f / (1023.0f * (internalState.movieP010 ? 64.0f : 1.0f))),
+        internalState.bIsMovieRGB ? internalState.movieRGBScaleY : (internalState.movieYUV8 ? 256.0f : 1024.0f) * (internalState.movieUVInterleaved ? -1.0f : 1.0f)
     };
     if (uniform_log) ffnx_trace("%s: FSMoreMovieFlags XYZW(chroma location %f, reserved %f, reserved %f, reserved %f)\n", __func__, internalState.FSMoreMovieFlags[0], internalState.FSMoreMovieFlags[1], internalState.FSMoreMovieFlags[2], internalState.FSMoreMovieFlags[3]);
 
@@ -384,6 +384,12 @@ void Renderer::destroyAll()
 {
     destroyUniforms();
 
+    if (bgfx::isValid(fallbackTexture))
+    {
+        bgfx::destroy(fallbackTexture);
+        fallbackTexture = BGFX_INVALID_HANDLE;
+    }
+
     for (auto& handle : internalState.texHandlers)
     {
         if (bgfx::isValid(handle))
@@ -561,7 +567,7 @@ void Renderer::renderFrame()
     }
 };
 
-void Renderer::printMatrix(char* name, float* mat)
+void Renderer::printMatrix(const char* name, float* mat)
 {
     ffnx_trace("%s: 0 [%f, %f, %f, %f]\n", name, mat[0], mat[1], mat[2], mat[3]);
     ffnx_trace("%s: 1 [%f, %f, %f, %f]\n", name, mat[4], mat[5], mat[6], mat[7]);
@@ -802,6 +808,11 @@ void Renderer::bindTextures()
         {
             bgfx::TextureHandle handle = internalState.texHandlers[idx];
 
+            if (idx == RendererTextureSlot::TEX_Y && !internalState.bIsTexture && !bgfx::isValid(handle))
+            {
+                handle = fallbackTexture;
+            }
+
             if (bgfx::isValid(handle))
             {
                 uint32_t flags = 0;
@@ -888,18 +899,19 @@ void Renderer::init()
     recalcInternals();
 
     // Init renderer
-    bgfxInit.platformData.nwh = gameHwnd;
     bgfxInit.type = getUserChosenRenderer();
-    bgfxInit.resolution.width = window_size_x;
-    bgfxInit.resolution.height = window_size_y;
+    bgfxInit.swapChain.nwh = gameHwnd;
+    bgfxInit.swapChain.width = window_size_x;
+    bgfxInit.swapChain.height = window_size_y;
 
     if (enable_anisotropic)
-        bgfxInit.resolution.reset |= BGFX_RESET_MAXANISOTROPY;
+        bgfxInit.reset |= BGFX_RESET_MAXANISOTROPY;
 
     if (enable_vsync)
-        bgfxInit.resolution.reset |= BGFX_RESET_VSYNC;
+        bgfxInit.reset |= BGFX_RESET_VSYNC;
 
     bgfxInit.debug = renderer_debug;
+    bgfxInit.videoDecode = true;
     bgfxInit.callback = &bgfxCallbacks;
 
     if (!bgfx::init(bgfxInit)) exit(1);
@@ -910,8 +922,8 @@ void Renderer::init()
         internalState.bIsHDR = true;
         ffnx_info("HDR monitor detected. HDR enabled.\n");
 
-        bgfxInit.resolution.reset |= BGFX_RESET_HDR10;
-        bgfxInit.resolution.formatColor = bgfx::TextureFormat::RGB10A2;
+        bgfxInit.reset |= BGFX_RESET_HDR10;
+        bgfxInit.swapChain.formatColor = bgfx::TextureFormat::RGB10A2;
 
         if (hdr_max_nits <= 0) {
             ffnx_info("Attempting to autodetect SDR white level for HDR...\n");
@@ -1018,7 +1030,7 @@ void Renderer::init()
             }
         } // end if  (hdr_max_nits <= 0)
 
-        bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.formatColor);
+        bgfx::reset(bgfxInit.reset, &bgfxInit.swapChain);
     } //end if HDR
 
     internalState.texHandlers.resize(RendererTextureSlot::COUNT, BGFX_INVALID_HANDLE);
@@ -1175,6 +1187,15 @@ void Renderer::init()
         bgfxTexUniformHandles[i] = createUniform("tex_" + std::to_string(i), bgfx::UniformType::Sampler);
     }
 
+    const uint8_t fallbackPixel[] = { 255, 255, 255, 255 };
+    fallbackTexture = bgfx::createTexture2D(
+        1, 1, false, 1, bgfx::TextureFormat::RGBA8,
+        BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+        bgfx::copy(fallbackPixel, sizeof(fallbackPixel))
+    );
+    if (bgfx::isValid(fallbackTexture))
+        bgfx::setName(fallbackTexture, "Untextured draw fallback");
+
     // Set defaults
     show();
 };
@@ -1189,7 +1210,9 @@ void Renderer::reset()
 
     if(!ff8 && enable_lighting) prepareShadowMap();
 
-    bgfx::reset(window_size_x, window_size_y, bgfxInit.resolution.reset, bgfxInit.resolution.formatColor);
+    bgfxInit.swapChain.width = window_size_x;
+    bgfxInit.swapChain.height = window_size_y;
+    bgfx::reset(bgfxInit.reset, &bgfxInit.swapChain);
 }
 
 #define FFNX_LOGO_PATH ".logo/logo_nobg.png"
@@ -1886,27 +1909,43 @@ uint32_t Renderer::createTexture(uint8_t* data, size_t width, size_t height, int
         texFormat = bgfx::TextureFormat::BGRA8;
         imgFormat = bimg::TextureFormat::BGRA8;
     }
+    else if (type == RendererTextureType::YUV8)
+    {
+        texFormat = bgfx::TextureFormat::R8;
+        imgFormat = bimg::TextureFormat::R8;
+    }
+    else if (type == RendererTextureType::UV8)
+    {
+        texFormat = bgfx::TextureFormat::RG8;
+        imgFormat = bimg::TextureFormat::RG8;
+    }
+    else if (type == RendererTextureType::UV16)
+    {
+        texFormat = bgfx::TextureFormat::RG16;
+        imgFormat = bimg::TextureFormat::RG16;
+    }
 
     bimg::TextureInfo texInfo;
     bimg::imageGetSize(&texInfo, width, height, 0, false, false, 1, imgFormat);
+	uint32_t uploadSize = stride > 0 ? uint32_t(stride * height) : texInfo.storageSize;
 
     // If the texture we are going to create does not fit in memory, return an empty one.
     // Will prevent the game from crashing, while allowing the player to not loose its progress.
-    if (doesItFitInMemory(texInfo.storageSize) && (data != NULL))
+    if (doesItFitInMemory(uploadSize) && (data != NULL))
     {
         const bgfx::Memory* mem;
 
         if (copyData)
         {
-            mem = bgfx::alloc(texInfo.storageSize);
+            mem = bgfx::alloc(uploadSize);
             // Protect from crashes
             if (mem != NULL) {
-                bx::memCopy(mem->data, data, texInfo.storageSize);
+                bx::memCopy(mem->data, data, uploadSize);
             }
         }
         else
         {
-            mem = bgfx::makeRef(data, texInfo.storageSize, RendererReleaseData, (void *)data);
+            mem = bgfx::makeRef(data, uploadSize, RendererReleaseData, (void *)data);
         }
 
         uint64_t flags = BGFX_SAMPLER_NONE;
@@ -2215,7 +2254,7 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
     backendViewId++;
 
     bgfx::TextureHandle texHandle = { dest };
-    bgfx::blit(backendViewId, texHandle, 0, dstY, bgfx::getTexture(backendFrameBuffer, 0), newX, newY, newWidth, newHeight);
+    bgfx::blit(backendViewId, {.handle = texHandle, .x = 0, .y = dstY}, {.handle = bgfx::getTexture(backendFrameBuffer, 0), .x = newX, .y = newY, .width = newWidth, .height = newHeight} );
     bgfx::touch(backendViewId);
     setClearFlags(false, false);
 
@@ -2223,7 +2262,7 @@ void Renderer::blitTexture(uint16_t dest, uint32_t x, uint32_t y, uint32_t width
     setClearFlags(false, false);
 }
 
-void Renderer::zoomBackendFrameBuffer(int x, int y, int width, int height)
+void Renderer::zoomBackendFrameBuffer(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
     if(!internalState.bHasDrawBeenDone) return;
 
@@ -2232,7 +2271,7 @@ void Renderer::zoomBackendFrameBuffer(int x, int y, int width, int height)
     backendViewId++;
     bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
-    bgfx::blit(backendViewId, textureHandle, 0, 0, bgfx::getTexture(backendFrameBuffer, 0), x, y, width, height);
+    bgfx::blit(backendViewId, {.handle = textureHandle, .x = 0, .y = 0}, {.handle = bgfx::getTexture(backendFrameBuffer, 0), .x = x, .y = y, .width = width, .height = height});
     backendViewId++;
     bgfx::setViewClear(backendViewId, BGFX_CLEAR_NONE, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
@@ -2362,6 +2401,18 @@ void Renderer::isExternalTexture(bool flag)
 bool Renderer::isHDR()
 {
     return internalState.bIsHDR;
+}
+
+void Renderer::setMovieYUVFormat(bool eightBit, bool interleaved, bool p010){
+    internalState.movieYUV8 = eightBit;
+    internalState.movieUVInterleaved = interleaved;
+    internalState.movieP010 = p010;
+}
+
+void Renderer::setMovieRGB(bool flag, float scaleX, float scaleY){
+    internalState.bIsMovieRGB = flag;
+    internalState.movieRGBScaleX = scaleX;
+    internalState.movieRGBScaleY = scaleY;
 }
 
 void Renderer::setColorMatrix(ColorMatrixType cmtype){

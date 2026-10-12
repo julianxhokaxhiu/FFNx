@@ -29,6 +29,10 @@
 
 #include "common_imports.h"
 
+#ifdef small
+#undef small
+#endif
+
 // all known OFFICIAL versions of FF7 & FF8 released for the PC
 #define VERSION_FF7_102_US          1
 #define VERSION_FF7_102_FR          2

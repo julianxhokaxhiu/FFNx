@@ -25,6 +25,12 @@
 #include <map>
 #include <vector>
 #include <unordered_map>
+#include <windows.h>
+
+#ifdef small
+#undef small
+#endif
+
 #include <bimg/bimg.h>
 #include <bx/allocator.h>
 

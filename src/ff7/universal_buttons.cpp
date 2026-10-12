@@ -658,7 +658,7 @@ int universal_buttons_draw_field_prompt(int button, int x, int y, float z)
   {
     // Config action slots differ from the atlas button IDs.
     static constexpr byte config_indices[] = {
-      1, 2, 3, 4, 5, 6, 7, 8, 0xFF, 0xFF, 0xFF, 9, 13, 14, 15, 16,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 0xFF, 0xFF, 12, 13, 14, 15, 16,
     };
     if (button >= 0 && button < sizeof(config_indices) && config_indices[button] != 0xFF)
     {

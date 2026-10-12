@@ -93,6 +93,12 @@ void main()
     // all we need do is move our sampling coordinates the opposite of the chroma sampling location's offset from center,
     // and the texture sampler's blending should do the rest.
     // (This would be more clear as a const array of vec2, but bgfx's shader language doesn't like that.)
+    if (FSMoreMovieFlags.y > 0.0){
+        vec2 halfTexel = vec2_splat(0.5) / textureSize(tex_0, 0);
+        vec2 coordinates = clamp(v_texcoord0.xy * FSMoreMovieFlags.zw, halfTexel, FSMoreMovieFlags.zw - halfTexel);
+        color.rgb = texture2D(tex_0, coordinates).rgb;
+    }
+    else {
     float chromaxoff = (mod(chromaLocation, 2.0) < 0.5) ? 0.25 : 0.0;
     float chromayoff = (chromaLocation < 1.1) ? 0.25 : -2.5;
     chromayoff = (chromaLocation < 3.1) ? 0.0 : chromayoff;
@@ -100,22 +106,25 @@ void main()
     vec2 chromaoffset = uvdxdy * vec2(chromaxoff, chromayoff);
 
     // fetch Y'UV from 3 textures
-    vec3 yuv = vec3(
-        texture2D(tex_0, v_texcoord0.xy).r,
-        texture2D(tex_1, v_texcoord0.xy + chromaoffset).r,
-        texture2D(tex_2, v_texcoord0.xy + chromaoffset).r
-    );
+    vec3 yuv = vec3(texture2D(tex_0, v_texcoord0.xy).r, 0.0, 0.0);
+    if (FSMoreMovieFlags.w < 0.0){
+        yuv.gb = texture2D(tex_1, v_texcoord0.xy + chromaoffset).rg;
+    }
+    else {
+        yuv.g = texture2D(tex_1, v_texcoord0.xy + chromaoffset).r;
+        yuv.b = texture2D(tex_2, v_texcoord0.xy + chromaoffset).r;
+    }
 
-    // swscale guarantees our input pixel format is YUV420P10
-    // scale the 10 bits of data to fill up the 16 bits it's stored in
-    yuv *= vec3_splat(65535/1023);
+    // Normalize R8, low-aligned R16, or high-aligned P010 samples to 10-bit units.
+    yuv *= vec3_splat(FSMoreMovieFlags.z);
     // dither because we increased bit depth
     // (unless HDR, since we will dither later)
     if (!(isHDR)){
       ivec2 ydimensions = textureSize(tex_0, 0);
       ivec2 udimensions = textureSize(tex_1, 0);
-      ivec2 vdimensions = textureSize(tex_2, 0);
-      yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, vec3_splat(1024.0), 1.0);
+    ivec2 vdimensions = udimensions;
+    if (FSMoreMovieFlags.w > 0.0) vdimensions = textureSize(tex_2, 0);
+    yuv = QuasirandomDither(yuv, v_texcoord0.xy, ydimensions, udimensions, vdimensions, vec3_splat(abs(FSMoreMovieFlags.w)), 1.0);
     }
 
     // Convert Y'UV to R'G'B'
@@ -135,6 +144,7 @@ void main()
     }
     else if (isBinkColorMatrix){
         color.rgb = toRGB_bink_fullrange(yuv);
+    }
     }
 
 

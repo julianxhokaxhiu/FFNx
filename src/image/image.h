@@ -23,6 +23,12 @@
 #pragma once
 
 #include <stdint.h>
+#include <windows.h>
+
+#ifdef small
+#undef small
+#endif
+
 #include <bimg/bimg.h>
 #include <DirectXTex.h>
 #include <bx/file.h>

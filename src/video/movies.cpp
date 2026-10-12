@@ -26,6 +26,11 @@
 #include "movies.h"
 
 #include <cctype>
+#include <deque>
+
+extern "C" {
+#include <libavcodec/bsf.h>
+}
 
 // 10 frames
 #define VIDEO_BUFFER_SIZE 10
@@ -41,14 +46,22 @@ AVCodecContext* acodec_ctx = nullptr;
 const AVCodec* acodec = nullptr;
 AVFrame* movie_frame = nullptr;
 AVFrame* sws_frame = nullptr;
-AVFrame* wb_frame = nullptr;
 AVFrame* usethis_frame = nullptr;
 SwsContext* sws_ctx = nullptr;
-SwsContext* sws_wb_ctx = nullptr;
 SwsContext* usethis_sws = nullptr;
 SwrContext* swr_ctx = nullptr;
 void(*io_close)(void *opaque) = nullptr;
-AVBufferRef* hw_device_ctx = nullptr;
+AVBSFContext* video_bsf = nullptr;
+bgfx::TextureHandle decoded_video_texture = BGFX_INVALID_HANDLE;
+bool video_decode_set = true;
+bool video_decode_eof = false;
+int64_t video_decode_origin = AV_NOPTS_VALUE;
+int64_t video_decode_time_us = INT64_MIN;
+uint64_t video_presentation_frame = 0;
+int64_t video_presentation_time_us = 0;
+float video_rgb_scale_x = 1.0f;
+float video_rgb_scale_y = 1.0f;
+std::deque<AVPacket> software_video_packets;
 
 int videostream;
 int audiostream;
@@ -56,6 +69,10 @@ int audiostream;
 struct video_frame
 {
 	uint32_t yuv_textures[3] = { 0 };
+	bool eight_bit = false;
+	bool interleaved = false;
+	bool p010 = false;
+	int64_t pts_us = AV_NOPTS_VALUE;
 };
 
 struct video_frame video_buffer[VIDEO_BUFFER_SIZE];
@@ -72,63 +89,124 @@ ColorMatrixType colormatrix = COLORMATRIX_BT601;
 ColorGamutType colorgamut = COLORGAMUT_SRGB;
 InverseGammaFunctionType gammatype = GAMMAFUNCTION_SRGB;
 const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P10;
-AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
-AVPixelFormat wb_pix_fmt = AV_PIX_FMT_NONE;
 ChromaLocationType chromaloc = CHROMALOC_CENTER;
 bool dofirstframestuff = false;
 bool needsws = false;
 bool okcolorspace = false;
 bool yuvjfixneeded = false;
+AVPixelFormat upload_pixel_format = targetpixelformat;
 
 bool first_audio_packet;
 
 time_t timer_freq;
 time_t start_time;
 
-// We need to set a pointer to this function in AVCodecContext for hardware decoding.
-// Somewhat cogent explanation of what this does: https://stackoverflow.com/a/9654397
-static AVPixelFormat get_hw_format(AVCodecContext* ctx, const AVPixelFormat* pix_fmts)
+static bool shader_supports_pixel_format(AVPixelFormat format)
 {
-		// ffmpeg docs promise us that pix_fmts always contains:
-		//	the file's native pixel format as the second-to-last entry, and
-		//	-1 as the last entry
-
-		const AVPixelFormat* p = nullptr;
-		const AVPixelFormat* lastp = nullptr;
-
-		if (trace_movies  || trace_all){
-			for (p = pix_fmts; *p != -1; p++) {
-				ffnx_trace("get_hw_format: Hardware decoder's pixel format candidate list: %s.\n", av_get_pix_fmt_name(*p));
-			}
-		}
-
-		/*
-		TODO: Favor one particular format for bypassing writeback.
-		Needs to be commonly supported and easy to deal with in the shader.
-		Probably NV12.
-		for (p = pix_fmts; *p != -1; p++) {
-				if (*p == some preferred format){
-						if (trace_movies  || trace_all) ffnx_trace("get_hw_format: Using hardware pixel format %s to avoid CPU writeback.\n", av_get_pix_fmt_name(*p));
-						return *p;
-				}
-		}
-		*/
-
-		for (p = pix_fmts; *p != -1; p++) {
-				if (*p == hw_pix_fmt){
-						return *p;
-				}
-				lastp = p;
-		}
-		if (trace_movies  || trace_all) ffnx_trace("get_hw_format: Hardware decoder says it can't decode this movie after all. (Possibly unsupported bit-depth, profile, or level.) Software decoding will be used.\n");
-		if (lastp) return *lastp; // return the second-to-last object on the list, the software type
-
-		if (trace_movies  || trace_all) ffnx_trace("get_hw_format: Got bad list from hardware decoder. Unrecoverable error.\n");
-		return AV_PIX_FMT_NONE;
+	switch (format) {
+		case AV_PIX_FMT_NV12:
+		case AV_PIX_FMT_P010LE:
+		case AV_PIX_FMT_YUV420P:
+		case AV_PIX_FMT_YUV422P:
+		case AV_PIX_FMT_YUV444P:
+		case AV_PIX_FMT_YUVJ420P:
+		case AV_PIX_FMT_YUVJ422P:
+		case AV_PIX_FMT_YUVJ444P:
+		case AV_PIX_FMT_YUV420P10LE:
+		case AV_PIX_FMT_YUV422P10LE:
+		case AV_PIX_FMT_YUV444P10LE:
+			return true;
+		default:
+			return false;
+	}
 }
 
-// prepare a swscale context and put it in sws_ctx (if hw=false) or sws_wb_ctx (if hw=true)
-void prepare_sws_context(bool hw, AVPixelFormat pixfmtin, AVColorSpace colorspacein){
+static bool prepare_bgfx_decoder()
+{
+	const bgfx::Caps* caps = newRenderer.getCaps();
+	const AVCodecParameters* parameters = format_ctx->streams[videostream]->codecpar;
+	if (!(caps->supported & BGFX_CAPS_VIDEO_DECODE) ||
+		parameters->codec_id != AV_CODEC_ID_H264 || parameters->format != AV_PIX_FMT_YUV420P ||
+		parameters->color_space != AVCOL_SPC_BT709 || parameters->color_range != AVCOL_RANGE_MPEG ||
+		(parameters->chroma_location != AVCHROMA_LOC_CENTER && parameters->chroma_location != AVCHROMA_LOC_LEFT) ||
+		(parameters->field_order != AV_FIELD_UNKNOWN && parameters->field_order != AV_FIELD_PROGRESSIVE) ||
+		parameters->width <= 0 || parameters->height <= 0 ||
+		parameters->width > max_texture_size || parameters->height > max_texture_size)
+		return false;
+
+	uint32_t coded_width = (parameters->width + 15) & ~15;
+	uint32_t coded_height = (parameters->height + 15) & ~15;
+	if (coded_width > max_texture_size || coded_height > max_texture_size ||
+		coded_width > UINT16_MAX || coded_height > UINT16_MAX ||
+		!(caps->formats[bgfx::TextureFormat::RGBA8] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST) ||
+		!bgfx::isVideoCodecValid(bgfx::VideoCodec::H264, 0, 8, coded_width, coded_height, 16, 16))
+		return false;
+
+	const AVBitStreamFilter* filter = av_bsf_get_by_name("h264_mp4toannexb");
+	if (!filter || av_bsf_alloc(filter, &video_bsf) < 0)
+		return false;
+	if (avcodec_parameters_copy(video_bsf->par_in, parameters) < 0) {
+		av_bsf_free(&video_bsf);
+		return false;
+	}
+	video_bsf->time_base_in = format_ctx->streams[videostream]->time_base;
+	if (av_bsf_init(video_bsf) < 0 || video_bsf->par_out->extradata_size <= 0) {
+		av_bsf_free(&video_bsf);
+		return false;
+	}
+
+	const bgfx::Memory* memory = bgfx::alloc(sizeof(bgfx::VideoDecoderInit) + video_bsf->par_out->extradata_size);
+	auto* init = reinterpret_cast<bgfx::VideoDecoderInit*>(memory->data);
+	*init = {};
+	init->magic = BX_MAKEFOURCC('V', 'D', 'I', 0);
+	init->codec = bgfx::VideoCodec::H264;
+	init->parameterSets = memory->data + sizeof(*init);
+	init->parameterSetsSize = video_bsf->par_out->extradata_size;
+	memcpy(memory->data + sizeof(*init), video_bsf->par_out->extradata, init->parameterSetsSize);
+	decoded_video_texture = bgfx::createTexture2D(coded_width, coded_height, false, 1,
+		bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_NONE, memory);
+	if (!bgfx::isValid(decoded_video_texture)) {
+		av_bsf_free(&video_bsf);
+		return false;
+	}
+	video_rgb_scale_x = float(parameters->width) / coded_width;
+	video_rgb_scale_y = float(parameters->height) / coded_height;
+	video_decode_set = true;
+	video_decode_eof = false;
+	video_decode_origin = format_ctx->streams[videostream]->start_time;
+	video_decode_time_us = INT64_MIN;
+	video_presentation_frame = 0;
+	video_presentation_time_us = 0;
+	bgfx::setName(decoded_video_texture, "Movie hardware decoder");
+	return true;
+}
+
+static void submit_bgfx_video(const std::vector<uint8_t>& bitstream, const std::vector<bgfx::VideoDecoderAu>& access_units, int64_t presentation_time)
+{
+	const bgfx::Memory* memory = bgfx::alloc(sizeof(bgfx::VideoDecoderFrame) +
+		access_units.size() * sizeof(bgfx::VideoDecoderAu) + bitstream.size());
+	auto* frame = reinterpret_cast<bgfx::VideoDecoderFrame*>(memory->data);
+	*frame = {};
+	frame->magic = BX_MAKEFOURCC('V', 'D', 'F', 0);
+	frame->presentationTimeUs = presentation_time;
+	frame->flags = video_decode_eof ? BGFX_VIDEO_DECODE_FRAME_FINAL : BGFX_VIDEO_DECODE_FRAME_NONE;
+	if (!access_units.empty()) {
+		uint8_t* payload = memory->data + sizeof(*frame);
+		frame->aus = reinterpret_cast<const bgfx::VideoDecoderAu*>(payload);
+		frame->numAus = access_units.size();
+		memcpy(payload, access_units.data(), access_units.size() * sizeof(bgfx::VideoDecoderAu));
+		payload += access_units.size() * sizeof(bgfx::VideoDecoderAu);
+		frame->bitstream = payload;
+		memcpy(payload, bitstream.data(), bitstream.size());
+		if (video_decode_set) {
+			frame->flags |= BGFX_VIDEO_DECODE_FRAME_SET;
+			video_decode_set = false;
+		}
+	}
+	bgfx::updateTexture2D(decoded_video_texture, 0, 0, 0, 0, 1, 1, memory);
+}
+
+void prepare_sws_context(AVPixelFormat pixfmtin, AVColorSpace colorspacein){
 	if (trace_movies || trace_all){
 		if (pixfmtin != targetpixelformat){
 			ffnx_trace("prepare_movie: Using swscale to convert pixel format from %s to %s.\n", av_get_pix_fmt_name(pixfmtin), av_get_pix_fmt_name(targetpixelformat));
@@ -187,12 +265,7 @@ void prepare_sws_context(bool hw, AVPixelFormat pixfmtin, AVColorSpace colorspac
 
 		sws_setColorspaceDetails(this_sws_ctx, coefs_in, srcRange, coefs_out, dstRange, brightness, contrast, saturation);
 	}
-	if (hw){
-		sws_wb_ctx = this_sws_ctx;
-	}
-	else {
-		sws_ctx = this_sws_ctx;
-	}
+	sws_ctx = this_sws_ctx;
 	return;
 }
 
@@ -207,10 +280,20 @@ void ffmpeg_movie_init()
 void ffmpeg_release_movie_objects()
 {
 	uint32_t i;
+	for (auto& queued_packet : software_video_packets) av_packet_unref(&queued_packet);
+	software_video_packets.clear();
+	av_bsf_free(&video_bsf);
+	if (bgfx::isValid(decoded_video_texture)) bgfx::destroy(decoded_video_texture);
+	decoded_video_texture = BGFX_INVALID_HANDLE;
+	video_decode_set = true;
+	video_decode_eof = false;
+	video_decode_origin = AV_NOPTS_VALUE;
+	video_decode_time_us = INT64_MIN;
+	video_presentation_frame = 0;
+	video_presentation_time_us = 0;
 
 	if (movie_frame) av_frame_free(&movie_frame);
 	if (sws_frame) av_frame_free(&sws_frame);
-	if (wb_frame) av_frame_free(&wb_frame);
 	if (codec_ctx) avcodec_free_context(&codec_ctx);
 	if (acodec_ctx) avcodec_free_context(&acodec_ctx);
 	if (format_ctx) {
@@ -231,15 +314,11 @@ void ffmpeg_release_movie_objects()
 		swr_free(&swr_ctx);
 	}
 	if(sws_ctx) sws_freeContext(sws_ctx);
-	if(sws_wb_ctx) sws_freeContext(sws_wb_ctx);
-	if(hw_device_ctx) av_buffer_unref(&hw_device_ctx);
 
 	codec_ctx = nullptr;
 	acodec_ctx = nullptr;
 	format_ctx = nullptr;
 	sws_ctx = nullptr;
-	sws_wb_ctx = nullptr;
-	hw_device_ctx = nullptr;
 
 	audio_must_be_converted = false;
 
@@ -266,18 +345,16 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	DSBUFFERDESC1 sbdesc;
 	bool okpixelformat = false;
 	bool islogomovie = false;
-	bool tryhwdecode = false;
 	int lastbackslashindex = -1;
 	int bytessincebackslash = 0;
 	int scanoffset = 0;
 	int chromawidthshift = 0;
 	int chromaheightshift = 0;
 	const AVPixFmtDescriptor* pix_desc = nullptr;
-	AVHWDeviceType hwacceltype = AV_HWDEVICE_TYPE_NONE;
 	AVPixelFormat nativepixformat = AV_PIX_FMT_NONE;
-	AVPixelFormat wb_nonblank_fmt = AV_PIX_FMT_NONE;
 
 	movie_frames = 0;
+	first_audio_packet = false;
 
 	if(avformat_open_input(&format_ctx, name, NULL, NULL))
 	{
@@ -308,108 +385,8 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	else
 		audiostream = -1;
 
-	// Does the user want to try hardware decoding?
-	// if "auto," make a guess
-	if (hardware_video_decoding == HWVA_AUTO){
-		switch (newRenderer.getCaps()->rendererType){
-			case bgfx::RendererType::OpenGL:
-				hardware_video_decoding = HWVA_DXVA2;
-				break;
-			case bgfx::RendererType::Direct3D11:
-				hardware_video_decoding = HWVA_D3D11VA;
-				break;
-			case bgfx::RendererType::Direct3D12:
-				hardware_video_decoding = HWVA_D3D12VA;
-				break;
-			case bgfx::RendererType::Vulkan:
-				hardware_video_decoding = HWVA_VULKAN;
-				break;
-			default:
-				hardware_video_decoding = HWVA_NONE;
-				break;
-		}
-	}
-	tryhwdecode = true;
-	switch (hardware_video_decoding){
-		case HWVA_NONE:
-			tryhwdecode = false;
-			break;
-		case HWVA_VULKAN:
-			hwacceltype = AV_HWDEVICE_TYPE_VULKAN;
-			break;
-		case HWVA_OPENCL:
-			hwacceltype = AV_HWDEVICE_TYPE_OPENCL;
-			break;
-		case HWVA_DXVA2:
-			hwacceltype = AV_HWDEVICE_TYPE_DXVA2;
-			break;
-		case HWVA_D3D11VA:
-			hwacceltype = AV_HWDEVICE_TYPE_D3D11VA;
-			break;
-		case HWVA_D3D12VA:
-			hwacceltype = AV_HWDEVICE_TYPE_D3D12VA;
-			break;
-		case HWVA_CUDA: // nvidia CPU only
-			hwacceltype = AV_HWDEVICE_TYPE_CUDA;
-			break;
-		// not supported in this version of ffmpeg
-		//case HWVA_AMF: // amd GPU only
-		//	hwacceltype = AV_HWDEVICE_TYPE_AMF;
-		//	break;
-		case HWVA_QSV: // intel GPU only
-			hwacceltype = AV_HWDEVICE_TYPE_QSV;
-			break;
-		default:
-			tryhwdecode = false;
-			break;
-
-		// additional unsupported types:
-		// AV_HWDEVICE_TYPE_VDPAU - Linux only
-		// AV_HWDEVICE_TYPE_VAAPI - Formerly Linux only. Now supported by Windows, but ffmpeg doesn't seem to support it on Windows, and vcpkg won't build ffmpeg with support for it on Windows
-		// AV_HWDEVICE_TYPE_DRM - Linux only?
-		// AV_HWDEVICE_TYPE_VIDEOTOOLBOX - Apple only
-		// AV_HWDEVICE_TYPE_MEDIACODEC - Android only
-		// AV_HWDEVICE_TYPE_OHCODEC - Huawei only
-	}
-
-	if (tryhwdecode){
-		// Check if the chosen hardware decoding API can theoretically decode this codec.
-		hw_pix_fmt = AV_PIX_FMT_NONE;
-		wb_pix_fmt = AV_PIX_FMT_NONE;
-		tryhwdecode = false;
-		for (int i = 0;; i++) {
-			const AVCodecHWConfig *hwconfig = avcodec_get_hw_config(codec, i);
-			if (!hwconfig) {
-					if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Codec %s cannot be decoded by hardware decoding API %s. Software decoding will be used.\n", codec->name, av_hwdevice_get_type_name(hwacceltype));
-					tryhwdecode = false;
-					break;
-			}
-			if (hwconfig->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
-					hwconfig->device_type == hwacceltype) {
-					hw_pix_fmt = hwconfig->pix_fmt;
-					if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Codec %s can be decoded by hardware decoding API %s. The hardware pixel format used is %s.\n", codec->name, av_hwdevice_get_type_name(hwacceltype), av_get_pix_fmt_name(hw_pix_fmt));
-					tryhwdecode = true;
-					break;
-			}
-		}
-	}
-	// if hardware decoding is theoretically possible, then try to initialize the hardware decoder
-	if (hw_device_ctx) av_buffer_unref(&hw_device_ctx); // clear prior decoder if somehow still around
-	hw_device_ctx = nullptr;
-	if (tryhwdecode){
-		int retcd = 0;
-		// TODO: ffmpeg's examples use av_hwdevice_ctx_create() like this.
-		// Alternatively, we could set the 3rd and 4th parameters to set API-specific decoder parameters.
-		// Also, accoring to the documentation: "This is a convenience function intended to cover the simple cases. Callers who need to fine-tune device creation/management should open the device manually and then wrap it in an AVHWDeviceContext using av_hwdevice_ctx_alloc()/av_hwdevice_ctx_init()."
-		retcd = av_hwdevice_ctx_create(&hw_device_ctx, hwacceltype, NULL, NULL, 0);
-		if (retcd < 0){
-			tryhwdecode = false;
-			if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Failed to initialize a %s decoder. Your hardware may not support it. Software decoding will be used.\n", av_hwdevice_get_type_name(hwacceltype));
-		}
-		else if (trace_movies  || trace_all) {
-			ffnx_trace("prepare_movie: Successfully initialized %s decoder.\n", av_hwdevice_get_type_name(hwacceltype));
-		}
-	}
+	prepare_bgfx_decoder();
+	if (trace_movies || trace_all) ffnx_trace("prepare_movie: Using %s video decoding\n", bgfx::isValid(decoded_video_texture) ? "Hardware" : "Software");
 
 	codec_ctx = avcodec_alloc_context3(codec);
 	if (!codec_ctx) {
@@ -419,12 +396,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		goto exit;
 	}
 	avcodec_parameters_to_context(codec_ctx, format_ctx->streams[videostream]->codecpar);
-
-	// if we successfully initialized a hardware decoder, attach it to codec context
-	if (tryhwdecode){
-		codec_ctx->get_format = get_hw_format;
-		codec_ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
-	}
 
 	if(avcodec_open2(codec_ctx, codec, NULL) < 0)
 	{
@@ -512,13 +483,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			break;
 	}
 
-	// hardware decoding may have swapped the pixel format if get_hw_format() has already been called by now
-	if (tryhwdecode && (codec_ctx->pix_fmt != codec_ctx->sw_pix_fmt) && (codec_ctx->sw_pix_fmt != AV_PIX_FMT_NONE)){
-		nativepixformat = codec_ctx->sw_pix_fmt;
-	}
-	else {
-		nativepixformat = codec_ctx->pix_fmt;
-	}
+	nativepixformat = codec_ctx->pix_fmt;
 
 	// some pixel formats are inherently full-range
 	// so we should treat them as such, even if the color range metadata is missing
@@ -559,6 +524,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Assuming FF8 bink or bink-derived movie. (e.g., PC2000 or Steam) Using bink color matrix and forcing color range to TV (limited).\n");
 				colormatrix = COLORMATRIX_BINK;
 				fullrange_input = false;
+				okcolorspace = true;
 				break;
 			}
 			// fall through to next case if we didn't already break
@@ -572,6 +538,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 			if (trace_movies || trace_all) ffnx_trace("prepare_movie: bt709 color matrix detected.\n");
 			colormatrix = COLORMATRIX_BT709;
 			okcolorspace = true;
+			break;
 		case AVCOL_SPC_RGB:
 			okcolorspace = false;
 			break;
@@ -625,21 +592,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	// We'll target 10-bit so we don't lose data when input is 10-bit,
 	// to speed up our most common and slowest input case by not needing swscale,
 	// and opening the door to HDR video someday.
-	if (tryhwdecode){
-		// Note for future: If we ever implement no-CPU-writeback hardware decoding, then we would always set okpixelformat = true when that was active.
-		if (wb_pix_fmt == targetpixelformat){
-			okpixelformat = true;
-		}
-		else {
-			okpixelformat = false;
-		}
-	}
-	else if (codec_ctx->pix_fmt == targetpixelformat){
-		okpixelformat = true;
-	}
-	else {
-		okpixelformat = false;
-	}
+	okpixelformat = bgfx::isValid(decoded_video_texture) || shader_supports_pixel_format(nativepixformat);
 
 	// Figure out which color gamut to use.
 	switch(codec_ctx->color_primaries){
@@ -785,30 +738,16 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 
 	if(!movie_frame) movie_frame = av_frame_alloc();
 	if(!sws_frame) sws_frame = av_frame_alloc();
-	if(!wb_frame) wb_frame = av_frame_alloc();
 
 	vbuffer_read = 0;
 	vbuffer_write = 0;
 
 	dofirstframestuff = true;
 
-	// Swscale is used to convert pixel format, convert YUV colorspace, suppress a bogus color range expansion, or crop a padded bitstream.
-	// We won't know if we have a padded bitstream until the first frame is decoded.
-	// If using hardware decoding, we won't know the source pixel format until the first frame is decoded.
-	// So make one sws context for software decoding now.
-	// And potentially make a second one for hardware decoding later.
-
 	// Make sure the swscale context is cleared out first
 	if(sws_ctx) sws_freeContext(sws_ctx);
 	sws_ctx = nullptr;
-	if(sws_wb_ctx) sws_freeContext(sws_wb_ctx);
-	sws_wb_ctx = nullptr;
-	needsws = false;
-	if(!okpixelformat || !okcolorspace || yuvjfixneeded){
-		needsws = true;
-	}
-
-	prepare_sws_context(false, nativepixformat, codec_ctx->colorspace);
+	needsws = !okpixelformat || !okcolorspace;
 
 	// if we're using swscale to fix the color matrix, tell the shader it's 601
 	if (!okcolorspace){
@@ -912,25 +851,12 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 	uint32_t upload_width = strides[num];
 	uint32_t tex_width = movie_width;
 	uint32_t tex_height = movie_height;
-	// Since our target format is 420, U & V planes are half size.
-	// (We're *assuming* dimensions will always be even and not worrying about rounding up.)
+	// Match chroma plane dimensions to the decoded format.
 	if (num > 0){
-		tex_width /= 2;
-		tex_height /= 2;
+		const AVPixFmtDescriptor* descriptor = av_pix_fmt_desc_get(upload_pixel_format);
+		tex_width = AV_CEIL_RSHIFT(tex_width, descriptor->log2_chroma_w);
+		tex_height = AV_CEIL_RSHIFT(tex_height, descriptor->log2_chroma_h);
 	}
-
-	// Check if the bitstream is padded.
-	// ffmpeg_update_movie_sample() should be sending these to swscale to fix it,
-	// but let's make sure it actually got fixed.
-	// (tex_width should equal 1/2 upload_width because we should have a 10-bit format at this point (stored in 16 bits))
-	if (upload_width > (2*tex_width)){
-		if (dofirstframestuff && (trace_movies || trace_all)){
-			ffnx_trace("upload_yuv_texture: Bitstream is unexpectedly wide. Plane %i. Movie width is %i, but frame stride is %i.\n", num, tex_width, upload_width);
-		}
-		// include the green crap so bgfx texture creation works
-		tex_width = upload_width/2;
-	}
-
 
 	if (video_buffer[buffer_index].yuv_textures[num])
 		newRenderer.deleteTexture(video_buffer[buffer_index].yuv_textures[num]);
@@ -940,16 +866,30 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 		tex_width,
 		tex_height,
 		upload_width,
-		RendererTextureType::YUV,
+		(num > 0 && video_buffer[buffer_index].interleaved) ?
+			(video_buffer[buffer_index].eight_bit ? RendererTextureType::UV8 : RendererTextureType::UV16) :
+			(video_buffer[buffer_index].eight_bit ? RendererTextureType::YUV8 : RendererTextureType::YUV),
 		false
 	);
 }
 
 void buffer_yuv_frame(uint8_t **planes, int *strides)
 {
+	const AVPixFmtDescriptor* descriptor = av_pix_fmt_desc_get(upload_pixel_format);
+	const AVStream* stream = format_ctx->streams[videostream];
+	const int64_t origin = stream->start_time == AV_NOPTS_VALUE ? 0 : stream->start_time;
+	video_buffer[vbuffer_write].pts_us = movie_frame->best_effort_timestamp == AV_NOPTS_VALUE ? AV_NOPTS_VALUE :
+		av_rescale_q(movie_frame->best_effort_timestamp - origin, stream->time_base, AV_TIME_BASE_Q);
+	video_buffer[vbuffer_write].eight_bit = descriptor->comp[0].depth == 8;
+	video_buffer[vbuffer_write].interleaved = upload_pixel_format == AV_PIX_FMT_NV12 || upload_pixel_format == AV_PIX_FMT_P010LE;
+	video_buffer[vbuffer_write].p010 = upload_pixel_format == AV_PIX_FMT_P010LE;
 	upload_yuv_texture(planes, strides, 0, vbuffer_write); // Y
 	upload_yuv_texture(planes, strides, 1, vbuffer_write); // U
-	upload_yuv_texture(planes, strides, 2, vbuffer_write); // V
+	if (!video_buffer[vbuffer_write].interleaved) upload_yuv_texture(planes, strides, 2, vbuffer_write); // V
+	else if (video_buffer[vbuffer_write].yuv_textures[2]) {
+		newRenderer.deleteTexture(video_buffer[vbuffer_write].yuv_textures[2]);
+		video_buffer[vbuffer_write].yuv_textures[2] = 0;
+	}
 	vbuffer_write = (vbuffer_write + 1) % VIDEO_BUFFER_SIZE;
 }
 
@@ -957,10 +897,20 @@ void draw_yuv_frame(uint32_t buffer_index)
 {
 	if(gl_defer_yuv_frame(buffer_index)) return;
 
-	for (uint32_t idx = 0; idx < 3; idx++)
-		newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
+	bool rgb_movie = bgfx::isValid(decoded_video_texture);
+	if (rgb_movie) {
+		newRenderer.useTexture(decoded_video_texture.idx);
+		newRenderer.useTexture(0, RendererTextureSlot::TEX_U);
+		newRenderer.useTexture(0, RendererTextureSlot::TEX_V);
+	}
+	else {
+		for (uint32_t idx = 0; idx < 3; idx++)
+			newRenderer.useTexture(video_buffer[buffer_index].yuv_textures[idx], idx);
+	}
 
 	newRenderer.isMovie(true);
+	newRenderer.setMovieRGB(rgb_movie, video_rgb_scale_x, video_rgb_scale_y);
+	newRenderer.setMovieYUVFormat(video_buffer[buffer_index].eight_bit, video_buffer[buffer_index].interleaved, video_buffer[buffer_index].p010);
 	newRenderer.isFullRange(fullrange_input);
 	newRenderer.setColorMatrix(colormatrix);
 	newRenderer.setColorGamut(colorgamut);
@@ -968,6 +918,8 @@ void draw_yuv_frame(uint32_t buffer_index)
 	newRenderer.setChromaLocationType(chromaloc);
 	gl_draw_movie_quad(movie_width, movie_height);
 	newRenderer.isMovie(false);
+	newRenderer.setMovieRGB();
+	newRenderer.setMovieYUVFormat();
 	// set these back to default
 	newRenderer.isFullRange();
 	newRenderer.setColorMatrix();
@@ -980,20 +932,97 @@ void draw_yuv_frame(uint32_t buffer_index)
 uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 {
 	AVPacket packet;
-	int ret;
+	int ret = 0;
 	time_t now;
 	DWORD DSStatus;
+	std::vector<uint8_t> video_bitstream;
+	std::vector<bgfx::VideoDecoderAu> video_access_units;
+	int64_t presentation_time = movie_fps > 0.0 ? int64_t(movie_frame_counter * 1000000.0 / movie_fps) : 0;
+	const bool native_video = bgfx::isValid(decoded_video_texture);
+	const double audio_buffer_target = 0.5;
+	bool software_frame_drawn = false;
 
 	// no playable movie loaded, skip it
 	if(!format_ctx) return false;
 
 	// keep track of when we started playing this movie
 	if(movie_frame_counter == 0) QueryPerformanceCounter((LARGE_INTEGER *)&start_time);
+	if (!first_audio_packet) {
+		QueryPerformanceCounter((LARGE_INTEGER *)&now);
+		presentation_time = int64_t(double(now - start_time) * 1000000.0 / timer_freq);
+		double audio_time = audiostream >= 0 ? nxAudioEngine.getStreamPlaybackTime() : -1.0;
+		if (audio_time >= 0.0) {
+			const int64_t audio_time_us = int64_t(audio_time * 1000000.0);
+			if (native_video) presentation_time = audio_time_us;
+			else {
+				const int64_t buffer_duration_us = int64_t(nxAudioEngine.getStreamBufferDuration() * 1000000.0);
+				presentation_time = std::max(audio_time_us - buffer_duration_us,
+					std::min(audio_time_us + buffer_duration_us, presentation_time));
+			}
+		}
+		if (native_video && presentation_time < video_presentation_time_us) presentation_time = video_presentation_time_us;
+	}
+	const int64_t video_read_target = presentation_time + (movie_fps > 0.0 ? int64_t(VIDEO_BUFFER_SIZE * 1000000.0 / movie_fps) : 0);
 
-	while((ret = av_read_frame(format_ctx, &packet)) >= 0)
+	if (!native_video && movie_frame_counter > 0 && vbuffer_read != vbuffer_write &&
+		video_buffer[vbuffer_read].pts_us != AV_NOPTS_VALUE && video_buffer[vbuffer_read].pts_us > presentation_time) {
+		draw_yuv_frame((vbuffer_read + VIDEO_BUFFER_SIZE - 1) % VIDEO_BUFFER_SIZE);
+		software_frame_drawn = true;
+	}
+
+	while ((native_video ? video_decode_time_us < video_read_target : !software_frame_drawn) ||
+		(audiostream >= 0 && nxAudioEngine.getStreamBufferedDuration() < audio_buffer_target))
 	{
+		if (!native_video && !software_frame_drawn && !software_video_packets.empty()) {
+			av_packet_move_ref(&packet, &software_video_packets.front());
+			software_video_packets.pop_front();
+			ret = 0;
+		}
+		else ret = av_read_frame(format_ctx, &packet);
+		if (ret < 0) break;
+
 		if(packet.stream_index == videostream)
 		{
+			if (!native_video && software_frame_drawn) {
+				software_video_packets.emplace_back();
+				av_packet_move_ref(&software_video_packets.back(), &packet);
+				continue;
+			}
+			if (bgfx::isValid(decoded_video_texture)) {
+				if (video_decode_set && video_access_units.empty() && !(packet.flags & AV_PKT_FLAG_KEY)) {
+					av_packet_unref(&packet);
+					continue;
+				}
+				ret = av_bsf_send_packet(video_bsf, &packet);
+				if (ret < 0) {
+					ffnx_error("%s: video bitstream filter send failed: %d\n", __func__, ret);
+					av_packet_unref(&packet);
+					goto packet_loop_exit;
+				}
+				AVPacket filtered_packet{};
+				while ((ret = av_bsf_receive_packet(video_bsf, &filtered_packet)) >= 0) {
+					int64_t timestamp = filtered_packet.pts != AV_NOPTS_VALUE ? filtered_packet.pts : filtered_packet.dts;
+					if (timestamp == AV_NOPTS_VALUE) {
+						ffnx_error("%s: native video decoding requires packet timestamps\n", __func__);
+						av_packet_unref(&filtered_packet);
+						ret = AVERROR_INVALIDDATA;
+						goto packet_loop_exit;
+					}
+					if (video_decode_origin == AV_NOPTS_VALUE) video_decode_origin = timestamp;
+					int64_t pts_us = av_rescale_q(timestamp - video_decode_origin, video_bsf->time_base_out, AV_TIME_BASE_Q);
+					video_decode_time_us = filtered_packet.dts == AV_NOPTS_VALUE ? pts_us :
+						av_rescale_q(filtered_packet.dts - video_decode_origin, video_bsf->time_base_out, AV_TIME_BASE_Q);
+					video_access_units.push_back({ uint32_t(filtered_packet.size), pts_us });
+					video_bitstream.insert(video_bitstream.end(), filtered_packet.data, filtered_packet.data + filtered_packet.size);
+					av_packet_unref(&filtered_packet);
+				}
+				if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+					ffnx_error("%s: video bitstream filter receive failed: %d\n", __func__, ret);
+					goto packet_loop_exit;
+				}
+				ret = 0;
+				continue;
+			}
 			ret = avcodec_send_packet(codec_ctx, &packet);
 
 			if (ret < 0)
@@ -1021,107 +1050,23 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					goto packet_loop_exit;
 				}
 
-
-
 				// use a pointer to identify the AVFrame object we ultimately want to use
 				// so we can call buffer_yuv_frame() in just one place using this pointer
 				usethis_frame = movie_frame;
 				// ditto for sws context
 				usethis_sws = sws_ctx;
 
-				// was this frame decoded with hardware decoding?
-				if ((movie_frame->format == hw_pix_fmt) && (hw_pix_fmt != AV_PIX_FMT_NONE)){
-					// if this is the first frame, we need to figure out our writeback pixel format
-					// we also need to figure out if we need swscale and, if so, to set it up
-					if (dofirstframestuff){
-						if (trace_movies || trace_all) ffnx_trace("ffmpeg_update_movie_sample: Frame was decoded using hardware. Hardware pixel format is %s,\n", av_get_pix_fmt_name(AVPixelFormat(movie_frame->format)));
-						// get the list of possible formats the hardware decoder can use for writeback
-						AVPixelFormat* formats;
-						ret = av_hwframe_transfer_get_formats(movie_frame->hw_frames_ctx, AV_HWFRAME_TRANSFER_DIRECTION_FROM, &formats, 0);
-						if (ret < 0) {
-							ffnx_error("ffmpeg_update_movie_sample: av_hwframe_transfer_get_formats() failed!\n");
-							goto packet_loop_exit;
-						}
-						const AVPixelFormat* p = nullptr;
-						// print the list
-						if (trace_movies || trace_all){
-							for (p = formats; *p != -1; p++) {
-								const AVPixFmtDescriptor* p_pix_desc = av_pix_fmt_desc_get(*p);
-								ffnx_trace("ffmpeg_update_movie_sample: writeback pixel format candidate list: %s. Usable for swscale %i. isYUV %i.\n", av_get_pix_fmt_name(*p), sws_isSupportedInput(*p), !(p_pix_desc->flags & AV_PIX_FMT_FLAG_RGB));
-							}
-						}
-						bool found_good_wb_format = false;
-						// can we write back our target format?
-						for (p = formats; *p != -1; p++) {
-							if (*p == targetpixelformat){
-								wb_pix_fmt = *p;
-								found_good_wb_format = true;
-								break;
-							}
-						}
-						// can we find a YUV format that swscale can use?
-						// we want to avoid RGB formats because we have no control over how the YUV-to-RGB conversion gets done.
-						if (!found_good_wb_format){
-							for (p = formats; *p != -1; p++) {
-								const AVPixFmtDescriptor* p_pix_desc = av_pix_fmt_desc_get(*p);
-								if (sws_isSupportedInput(*p) && !(p_pix_desc->flags & AV_PIX_FMT_FLAG_RGB)){
-									wb_pix_fmt = *p;
-									found_good_wb_format = true;
-									break;
-								}
-							}
-						}
-						// failing that, is there an RGB format swscale can use?
-						if (!found_good_wb_format){
-							for (p = formats; *p != -1; p++) {
-								if (sws_isSupportedInput(*p)){
-									wb_pix_fmt = *p;
-									found_good_wb_format = true;
-									if (trace_movies || trace_all) ffnx_trace("ffmpeg_update_movie_sample: Warning: YUV-to-RGB conversion is being done by hardware decoder without adult supervision. It may be incorrect.\n");
-									break;
-								}
-							}
-						}
-						if (found_good_wb_format){
-							if (trace_movies || trace_all) ffnx_trace("ffmpeg_update_movie_sample: Selected %s as pixel format for CPU writeback.\n", av_get_pix_fmt_name(wb_pix_fmt));
-							// do we need to use swscale?
-							needsws = ((wb_pix_fmt != targetpixelformat) || !okcolorspace || yuvjfixneeded);
-							// we need to set up a sws context now.
-							// (we couldn't do it earlier because we didn't know the source pixel format)
-							// (we might later find out we need this to crop green crap from padded bitstream)
-							prepare_sws_context(true, wb_pix_fmt, codec_ctx->colorspace);
-						} // end if found_good_wb_format
-						else {
-							ffnx_error("ffmpeg_update_movie_sample: Frame was decoded using hardware, but there is no usable format for CPU writeback!\n");
-							goto packet_loop_exit;
-						}
-					} //endif dofirstframestuff
-					// copy back to CPU so swsscale can convert the pixel format to what the shaders expect
-					// Future note for if/when we implement no-CPU-writeback hardware decoding:
-					//		If the shaders were capable of dealing with a favored hardware pixel format,
-					//		and if we didn't need swscale for some other reason
-					//		(so we'd need to check for padded bitstream here),
-					//		this would be the spot where we'd branch and try to do a GPU-to-GPU copy instead.
-					wb_frame->format = wb_pix_fmt;
-					ret = av_hwframe_transfer_data(wb_frame, movie_frame, 0);
-					if (ret < 0){
-						ffnx_error("ffmpeg_update_movie_sample: av_hwframe_transfer_data() failed!\n");
-						goto packet_loop_exit;
-					}
-					// swap pointers' targets
-					usethis_frame = wb_frame;
-					usethis_sws = sws_wb_ctx;
-				} // endif frame was decoded using hardware decoding
-				else if ((trace_movies || trace_all) && dofirstframestuff) ffnx_trace("ffmpeg_update_movie_sample: Frame was decoded using software. Pixel format is %s.\n", av_get_pix_fmt_name(AVPixelFormat(usethis_frame->format)));
-
 				// Successfully received a frame
 				QueryPerformanceCounter((LARGE_INTEGER *)&now);
 
-				// check if we have a padded bitstream that needs cropped
-				if (!needsws && (usethis_frame->linesize[0] % movie_width != 0)){
-					needsws = true;
+				needsws = !okcolorspace || !shader_supports_pixel_format(AVPixelFormat(usethis_frame->format)) ||
+					usethis_frame->linesize[0] <= 0 || usethis_frame->linesize[1] <= 0 ||
+					(usethis_frame->data[2] && usethis_frame->linesize[2] <= 0);
+				if (needsws && !usethis_sws){
+					prepare_sws_context(AVPixelFormat(usethis_frame->format), codec_ctx->colorspace);
+					usethis_sws = sws_ctx;
 					if (dofirstframestuff && (trace_movies || trace_all)){
-						ffnx_trace("ffmpeg_update_movie_sample: Bitstream is padded. Using Swscale to crop.\n");
+						ffnx_trace("ffmpeg_update_movie_sample: Using swscale for unsupported pixel format, colorspace, or negative stride.\n");
 					}
 				}
 
@@ -1140,6 +1085,7 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					usethis_frame = sws_frame;
 				}
 				// send frame data to buffer
+				upload_pixel_format = AVPixelFormat(usethis_frame->format);
 				buffer_yuv_frame(usethis_frame->extended_data, usethis_frame->linesize);
 
 				// clear out the AVFrame objects before reusing them
@@ -1148,20 +1094,22 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 					av_freep(&sws_frame->data[0]);
 				}
 				av_frame_unref(sws_frame);
-				av_frame_unref(wb_frame);
 
 				dofirstframestuff = false;
 
 				if(vbuffer_write == vbuffer_read)
 				{
+					const uint32_t next_frame = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
+					if (video_buffer[next_frame].pts_us != AV_NOPTS_VALUE && video_buffer[next_frame].pts_us <= presentation_time) {
+						vbuffer_read = next_frame;
+						continue;
+					}
 					draw_yuv_frame(vbuffer_read);
 
 					vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
 
-					av_packet_unref(&packet);
-
-					// Exit both the receive loop and packet loop
-					goto packet_loop_exit;
+					software_frame_drawn = true;
+					break;
 				}
 			}
 		}
@@ -1206,11 +1154,26 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				{
 					uint8_t *buffer;
 
-					av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->ch_layout.nb_channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : acodec_ctx->sample_fmt), 0);
-					if (audio_must_be_converted) swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
-					else av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->ch_layout.nb_channels, acodec_ctx->sample_fmt);
-
-					nxAudioEngine.pushStreamData(buffer, _size);
+					ret = av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->ch_layout.nb_channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : acodec_ctx->sample_fmt), 0);
+					if (ret < 0) {
+						ffnx_error("%s: could not allocate movie audio samples: %d\n", __func__, ret);
+						av_packet_unref(&packet);
+						goto packet_loop_exit;
+					}
+					int converted_samples = movie_frame->nb_samples;
+					if (audio_must_be_converted) {
+						converted_samples = swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
+						ret = converted_samples;
+					}
+					else ret = av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->ch_layout.nb_channels, acodec_ctx->sample_fmt);
+					if (ret < 0) {
+						ffnx_error("%s: could not convert movie audio samples: %d\n", __func__, ret);
+						av_freep(&buffer);
+						av_packet_unref(&packet);
+						goto packet_loop_exit;
+					}
+					_size = bytesperpacket * converted_samples * acodec_ctx->ch_layout.nb_channels;
+					if (_size) nxAudioEngine.pushStreamData(buffer, _size);
 
 					av_freep(&buffer);
 				}
@@ -1218,11 +1181,35 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 		}
 
 		av_packet_unref(&packet);
+		if (native_video) ret = 0;
 	}
 
 packet_loop_exit:
 
-	if (first_audio_packet)
+	if (bgfx::isValid(decoded_video_texture)) {
+		if (ret == AVERROR_EOF) video_decode_eof = true;
+		else if (ret < 0) return false;
+		if (video_decode_eof && video_access_units.empty() && presentation_time >= int64_t(movie_duration * 1000000.0)) {
+			movie_frame_counter = movie_frames;
+			return false;
+		}
+		if (!video_access_units.empty())
+			submit_bgfx_video(video_bitstream, video_access_units, video_presentation_time_us);
+		if (movie_fps > 0.0) {
+			int64_t tick_time = int64_t(ceil(video_presentation_frame * 1000000.0 / movie_fps));
+			while (tick_time <= presentation_time) {
+				submit_bgfx_video({}, {}, tick_time);
+				video_presentation_time_us = tick_time;
+				video_presentation_frame++;
+				tick_time = int64_t(ceil(video_presentation_frame * 1000000.0 / movie_fps));
+			}
+		}
+		else submit_bgfx_video({}, {}, presentation_time);
+		draw_yuv_frame(0);
+		ret = 0;
+	}
+
+	if (first_audio_packet && nxAudioEngine.getStreamBufferedDuration() > 0.0)
 	{
 		first_audio_packet = false;
 
@@ -1232,19 +1219,35 @@ packet_loop_exit:
 		nxAudioEngine.playStream();
 	}
 
-	movie_frame_counter++;
+	if (native_video) movie_frame_counter = uint32_t(video_presentation_frame);
 
 	// could not read any more frames, exhaust video buffer then end movie
-	if(ret < 0)
+	if(ret < 0 && !software_frame_drawn)
 	{
 		if(vbuffer_write != vbuffer_read)
 		{
+			uint32_t next_frame = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
+			while (next_frame != vbuffer_write && video_buffer[next_frame].pts_us != AV_NOPTS_VALUE &&
+				video_buffer[next_frame].pts_us <= presentation_time) {
+				vbuffer_read = next_frame;
+				next_frame = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
+			}
 			draw_yuv_frame(vbuffer_read);
 
 			vbuffer_read = (vbuffer_read + 1) % VIDEO_BUFFER_SIZE;
 		}
 
-		if(vbuffer_write == vbuffer_read) return false;
+		if(vbuffer_write == vbuffer_read) {
+			movie_frame_counter = movie_frames;
+			return false;
+		}
+	}
+
+	if (!native_video) {
+		const int64_t frame_time_us = video_buffer[(vbuffer_read + VIDEO_BUFFER_SIZE - 1) % VIDEO_BUFFER_SIZE].pts_us;
+		if (frame_time_us != AV_NOPTS_VALUE && frame_time_us >= 0 && movie_fps > 0.0)
+			movie_frame_counter = uint32_t(frame_time_us * movie_fps / 1000000.0 + 0.5) + 1;
+		else movie_frame_counter++;
 	}
 
 	// Pure movie playback has no frame limiter, although it is not always required. Use it only when necessary
@@ -1270,7 +1273,18 @@ void ffmpeg_draw_current_frame()
 // loop back to the beginning of the movie
 void ffmpeg_loop()
 {
+	for (auto& queued_packet : software_video_packets) av_packet_unref(&queued_packet);
+	software_video_packets.clear();
 	if(format_ctx) avformat_seek_file(format_ctx, -1, 0, 0, 0, 0);
+	if (video_bsf) {
+		av_bsf_flush(video_bsf);
+		video_decode_set = true;
+		video_decode_eof = false;
+		video_decode_time_us = INT64_MIN;
+		video_presentation_frame = 0;
+		video_presentation_time_us = 0;
+		movie_frame_counter = 0;
+	}
 }
 
 // get the current frame number
