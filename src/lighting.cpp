@@ -103,7 +103,7 @@ void Lighting::initParamsFromConfig()
 		lighting.setLightColor(r, g, b);
 	}
 
-	float ambientLightIntensity = getConfigEntry("ambient_light_intensity").value_or(1.0);
+	float ambientLightIntensity = getConfigEntry("ambient_light_intensity").value_or(1.5);
 	lighting.setAmbientIntensity(ambientLightIntensity);
 
 	toml::array *ambientLightColorArray = getConfigEntry("ambient_light_color").as_array();
@@ -124,7 +124,7 @@ void Lighting::initParamsFromConfig()
 	float specular = config["material_specular"].value_or(0.1);
 	lighting.setSpecular(specular);
 
-	int shadowMapResolution = config["shadowmap_resolution"].value_or(2048);
+	int shadowMapResolution = config["shadowmap_resolution"].value_or(4096);
 	shadowMapResolution = std::max(0, std::min(16384, shadowMapResolution));
 	lighting.setShadowMapResolution(shadowMapResolution);
 
