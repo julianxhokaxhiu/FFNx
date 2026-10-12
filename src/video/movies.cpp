@@ -951,7 +951,15 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 		QueryPerformanceCounter((LARGE_INTEGER *)&now);
 		presentation_time = int64_t(double(now - start_time) * 1000000.0 / timer_freq);
 		double audio_time = audiostream >= 0 ? nxAudioEngine.getStreamPlaybackTime() : -1.0;
-		if (audio_time >= 0.0) presentation_time = int64_t(audio_time * 1000000.0);
+		if (audio_time >= 0.0) {
+			const int64_t audio_time_us = int64_t(audio_time * 1000000.0);
+			if (native_video) presentation_time = audio_time_us;
+			else {
+				const int64_t buffer_duration_us = int64_t(nxAudioEngine.getStreamBufferDuration() * 1000000.0);
+				presentation_time = std::max(audio_time_us - buffer_duration_us,
+					std::min(audio_time_us + buffer_duration_us, presentation_time));
+			}
+		}
 		if (native_video && presentation_time < video_presentation_time_us) presentation_time = video_presentation_time_us;
 	}
 	const int64_t video_read_target = presentation_time + (movie_fps > 0.0 ? int64_t(VIDEO_BUFFER_SIZE * 1000000.0 / movie_fps) : 0);

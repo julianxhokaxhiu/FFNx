@@ -311,6 +311,7 @@ public:
 	void pushStreamData(uint8_t* data, uint32_t size);
 	double getStreamBufferedDuration() const;
 	double getStreamPlaybackTime();
+	double getStreamBufferDuration();
 	bool playStream(float volume = 1.0f);
 	void stopStream(double time = 0.0f);
 	void pauseStream(double time = 0.0f);

@@ -1542,6 +1542,12 @@ double NxAudioEngine::getStreamPlaybackTime()
 	return _engine.isValidVoiceHandle(_currentStream.handle) ? _engine.getStreamTime(_currentStream.handle) : -1.0;
 }
 
+double NxAudioEngine::getStreamBufferDuration()
+{
+	const auto sample_rate = _engine.getBackendSamplerate();
+	return sample_rate ? double(_engine.getBackendBufferSize()) / sample_rate : 0.0;
+}
+
 bool NxAudioEngine::playStream(float volume)
 {
 	_currentStream.volume = volume * getStreamMasterVolume();
