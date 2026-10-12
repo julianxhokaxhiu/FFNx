@@ -63,6 +63,10 @@ int64_t video_presentation_time_us = 0;
 float video_rgb_scale_x = 1.0f;
 float video_rgb_scale_y = 1.0f;
 std::deque<AVPacket> software_video_packets;
+std::vector<uint8_t> video_bitstream;
+std::vector<bgfx::VideoDecoderAu> video_access_units;
+uint8_t* audio_conversion_buffer = nullptr;
+unsigned int audio_conversion_buffer_size = 0;
 
 int videostream;
 int audiostream;
@@ -70,6 +74,9 @@ int audiostream;
 struct video_frame
 {
 	uint32_t yuv_textures[3] = { 0 };
+	uint32_t texture_widths[3] = { 0 };
+	uint32_t texture_heights[3] = { 0 };
+	RendererTextureType texture_types[3] = {};
 	bool eight_bit = false;
 	bool interleaved = false;
 	bool p010 = false;
@@ -300,6 +307,10 @@ void ffmpeg_release_movie_objects()
 	uint32_t i;
 	for (auto& queued_packet : software_video_packets) av_packet_unref(&queued_packet);
 	software_video_packets.clear();
+	std::vector<uint8_t>().swap(video_bitstream);
+	std::vector<bgfx::VideoDecoderAu>().swap(video_access_units);
+	av_freep(&audio_conversion_buffer);
+	audio_conversion_buffer_size = 0;
 	av_bsf_free(&video_bsf);
 	if (bgfx::isValid(decoded_video_texture)) bgfx::destroy(decoded_video_texture);
 	decoded_video_texture = BGFX_INVALID_HANDLE;
@@ -593,19 +604,37 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 		tex_height = AV_CEIL_RSHIFT(tex_height, descriptor->log2_chroma_h);
 	}
 
-	if (video_buffer[buffer_index].yuv_textures[num])
-		newRenderer.deleteTexture(video_buffer[buffer_index].yuv_textures[num]);
+	video_frame& frame = video_buffer[buffer_index];
+	const RendererTextureType texture_type = (num > 0 && frame.interleaved) ?
+		(frame.eight_bit ? RendererTextureType::UV8 : RendererTextureType::UV16) :
+		(frame.eight_bit ? RendererTextureType::YUV8 : RendererTextureType::YUV);
+	const bgfx::TextureHandle texture = { uint16_t(frame.yuv_textures[num]) };
+	if (frame.yuv_textures[num] && bgfx::isValid(texture) &&
+		frame.texture_widths[num] == tex_width && frame.texture_heights[num] == tex_height &&
+		frame.texture_types[num] == texture_type) {
+		const uint32_t upload_size = upload_width * tex_height;
+		if (planes[num] && Renderer::doesItFitInMemory(upload_size)) {
+			const bgfx::Memory* memory = bgfx::copy(planes[num], upload_size);
+			if (memory)
+				bgfx::updateTexture2D(texture, 0, 0, 0, 0, tex_width, tex_height, memory, upload_width);
+		}
+		return;
+	}
 
-	video_buffer[buffer_index].yuv_textures[num] = newRenderer.createTexture(
+	if (frame.yuv_textures[num])
+		newRenderer.deleteTexture(frame.yuv_textures[num]);
+
+	frame.yuv_textures[num] = newRenderer.createTexture(
 		planes[num],
 		tex_width,
 		tex_height,
 		upload_width,
-		(num > 0 && video_buffer[buffer_index].interleaved) ?
-			(video_buffer[buffer_index].eight_bit ? RendererTextureType::UV8 : RendererTextureType::UV16) :
-			(video_buffer[buffer_index].eight_bit ? RendererTextureType::YUV8 : RendererTextureType::YUV),
+		texture_type,
 		false
 	);
+	frame.texture_widths[num] = tex_width;
+	frame.texture_heights[num] = tex_height;
+	frame.texture_types[num] = texture_type;
 }
 
 void buffer_yuv_frame(uint8_t **planes, int *strides)
@@ -666,12 +695,11 @@ void draw_yuv_frame(uint32_t buffer_index)
 // display the next frame
 uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 {
-	AVPacket packet;
+	AVPacket packet{};
 	int ret = 0;
 	time_t now;
-	DWORD DSStatus;
-	std::vector<uint8_t> video_bitstream;
-	std::vector<bgfx::VideoDecoderAu> video_access_units;
+	video_bitstream.clear();
+	video_access_units.clear();
 	int64_t presentation_time = movie_fps > 0.0 ? int64_t(movie_frame_counter * 1000000.0 / movie_fps) : 0;
 	const bool native_video = bgfx::isValid(decoded_video_texture);
 	const double audio_buffer_target = 0.5;
@@ -791,9 +819,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// ditto for sws context
 				usethis_sws = sws_ctx;
 
-				// Successfully received a frame
-				QueryPerformanceCounter((LARGE_INTEGER *)&now);
-
 				needsws = !okcolorspace || !shader_supports_pixel_format(AVPixelFormat(usethis_frame->format)) ||
 					usethis_frame->linesize[0] <= 0 || usethis_frame->linesize[1] <= 0 ||
 					(usethis_frame->data[2] && usethis_frame->linesize[2] <= 0);
@@ -808,11 +833,23 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// if we need to use swscale, do so
 				if(needsws)
 				{
-					sws_frame->width = movie_width;
-					sws_frame->height = movie_height;
-					sws_frame->format = targetpixelformat;
-
-					av_image_alloc(sws_frame->data, sws_frame->linesize, sws_frame->width, sws_frame->height, AVPixelFormat(sws_frame->format), 1);
+					if (!sws_frame->buf[0]) {
+						sws_frame->width = movie_width;
+						sws_frame->height = movie_height;
+						sws_frame->format = targetpixelformat;
+						ret = av_frame_get_buffer(sws_frame, 0);
+						if (ret < 0) {
+							ffnx_error("%s: could not allocate movie conversion frame: %d\n", __func__, ret);
+							av_packet_unref(&packet);
+							goto packet_loop_exit;
+						}
+					}
+					ret = av_frame_make_writable(sws_frame);
+					if (ret < 0) {
+						ffnx_error("%s: could not make movie conversion frame writable: %d\n", __func__, ret);
+						av_packet_unref(&packet);
+						goto packet_loop_exit;
+					}
 
 					sws_scale(usethis_sws, usethis_frame->extended_data, usethis_frame->linesize, 0, sws_frame->height, sws_frame->data, sws_frame->linesize);
 
@@ -825,10 +862,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 				// clear out the AVFrame objects before reusing them
 				av_frame_unref(movie_frame);
-				if (sws_frame->data[0]){
-					av_freep(&sws_frame->data[0]);
-				}
-				av_frame_unref(sws_frame);
 
 				dofirstframestuff = false;
 
@@ -851,8 +884,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 		if(packet.stream_index == audiostream)
 		{
-			QueryPerformanceCounter((LARGE_INTEGER *)&now);
-
 			ret = avcodec_send_packet(acodec_ctx, &packet);
 
 			if (ret < 0)
@@ -887,30 +918,27 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// Sometimes the captured frame may have no sound samples. Just skip and move forward
 				if (_size)
 				{
-					uint8_t *buffer;
-
-					ret = av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->ch_layout.nb_channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : acodec_ctx->sample_fmt), 0);
-					if (ret < 0) {
-						ffnx_error("%s: could not allocate movie audio samples: %d\n", __func__, ret);
-						av_packet_unref(&packet);
-						goto packet_loop_exit;
-					}
+					uint8_t* buffer = movie_frame->extended_data[0];
 					int converted_samples = movie_frame->nb_samples;
 					if (audio_must_be_converted) {
+						av_fast_malloc(&audio_conversion_buffer, &audio_conversion_buffer_size, _size);
+						if (!audio_conversion_buffer) {
+							ret = AVERROR(ENOMEM);
+							ffnx_error("%s: could not allocate movie audio samples: %d\n", __func__, ret);
+							av_packet_unref(&packet);
+							goto packet_loop_exit;
+						}
+						buffer = audio_conversion_buffer;
 						converted_samples = swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
 						ret = converted_samples;
-					}
-					else ret = av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->ch_layout.nb_channels, acodec_ctx->sample_fmt);
-					if (ret < 0) {
-						ffnx_error("%s: could not convert movie audio samples: %d\n", __func__, ret);
-						av_freep(&buffer);
-						av_packet_unref(&packet);
-						goto packet_loop_exit;
+						if (ret < 0) {
+							ffnx_error("%s: could not convert movie audio samples: %d\n", __func__, ret);
+							av_packet_unref(&packet);
+							goto packet_loop_exit;
+						}
 					}
 					_size = bytesperpacket * converted_samples * acodec_ctx->ch_layout.nb_channels;
 					if (_size) nxAudioEngine.pushStreamData(buffer, _size);
-
-					av_freep(&buffer);
 				}
 			}
 		}
