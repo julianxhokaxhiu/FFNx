@@ -469,6 +469,7 @@ private:
     void prepareFramebuffer();
 
     void AssignGamutLUT();
+    void setPostprocessingBackend();
 
     bx::DefaultAllocator defaultAllocator;
     bx::FileWriter defaultWriter;
