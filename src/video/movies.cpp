@@ -27,6 +27,7 @@
 #include "ntscj.h"
 
 #include <deque>
+#include <memory>
 
 extern "C" {
 #include <libavcodec/bsf.h>
@@ -114,59 +115,83 @@ static bool shader_supports_pixel_format(AVPixelFormat format)
 	}
 }
 
+static bool bgfx_movie_format_is_eligible(const AVCodecParameters& parameters)
+{
+	return parameters.codec_id == AV_CODEC_ID_H264 &&
+		parameters.format == AV_PIX_FMT_YUV420P &&
+		parameters.color_space == AVCOL_SPC_BT709 &&
+		parameters.color_range == AVCOL_RANGE_MPEG &&
+		(parameters.chroma_location == AVCHROMA_LOC_CENTER || parameters.chroma_location == AVCHROMA_LOC_LEFT) &&
+		(parameters.field_order == AV_FIELD_UNKNOWN || parameters.field_order == AV_FIELD_PROGRESSIVE);
+}
+
 static bool prepare_bgfx_decoder()
 {
-	const bgfx::Caps* caps = newRenderer.getCaps();
-	const AVCodecParameters* parameters = format_ctx->streams[videostream]->codecpar;
-	if (!(caps->supported & BGFX_CAPS_VIDEO_DECODE) ||
-		parameters->codec_id != AV_CODEC_ID_H264 || parameters->format != AV_PIX_FMT_YUV420P ||
-		parameters->color_space != AVCOL_SPC_BT709 || parameters->color_range != AVCOL_RANGE_MPEG ||
-		(parameters->chroma_location != AVCHROMA_LOC_CENTER && parameters->chroma_location != AVCHROMA_LOC_LEFT) ||
-		(parameters->field_order != AV_FIELD_UNKNOWN && parameters->field_order != AV_FIELD_PROGRESSIVE) ||
-		parameters->width <= 0 || parameters->height <= 0 ||
-		parameters->width > max_texture_size || parameters->height > max_texture_size)
+	const bgfx::Caps& caps = *newRenderer.getCaps();
+	if (!(caps.supported & BGFX_CAPS_VIDEO_DECODE) ||
+		!(caps.formats[bgfx::TextureFormat::RGBA8] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST))
 		return false;
 
-	uint32_t coded_width = (parameters->width + 15) & ~15;
-	uint32_t coded_height = (parameters->height + 15) & ~15;
+	const AVStream& stream = *format_ctx->streams[videostream];
+	const AVCodecParameters& parameters = *stream.codecpar;
+	if (!bgfx_movie_format_is_eligible(parameters))
+		return false;
+
+	if (parameters.width <= 0 || parameters.height <= 0 ||
+		parameters.width > max_texture_size || parameters.height > max_texture_size)
+		return false;
+
+	const uint32_t coded_width = (uint32_t(parameters.width) + 15) & ~15u;
+	const uint32_t coded_height = (uint32_t(parameters.height) + 15) & ~15u;
 	if (coded_width > max_texture_size || coded_height > max_texture_size ||
-		coded_width > UINT16_MAX || coded_height > UINT16_MAX ||
-		!(caps->formats[bgfx::TextureFormat::RGBA8] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST) ||
-		!bgfx::isVideoCodecValid(bgfx::VideoCodec::H264, 0, 8, coded_width, coded_height, 16, 16))
+		coded_width > UINT16_MAX || coded_height > UINT16_MAX)
+		return false;
+
+	if (!bgfx::isVideoCodecValid(bgfx::VideoCodec::H264, 0, 8, coded_width, coded_height, 16, 16))
 		return false;
 
 	const AVBitStreamFilter* filter = av_bsf_get_by_name("h264_mp4toannexb");
-	if (!filter || av_bsf_alloc(filter, &video_bsf) < 0)
+	if (!filter)
 		return false;
-	if (avcodec_parameters_copy(video_bsf->par_in, parameters) < 0) {
-		av_bsf_free(&video_bsf);
-		return false;
-	}
-	video_bsf->time_base_in = format_ctx->streams[videostream]->time_base;
-	if (av_bsf_init(video_bsf) < 0 || video_bsf->par_out->extradata_size <= 0) {
-		av_bsf_free(&video_bsf);
-		return false;
-	}
 
-	const bgfx::Memory* memory = bgfx::alloc(sizeof(bgfx::VideoDecoderInit) + video_bsf->par_out->extradata_size);
+	AVBSFContext* filter_context = nullptr;
+	if (av_bsf_alloc(filter, &filter_context) < 0)
+		return false;
+
+	const auto free_filter = [](AVBSFContext* context) { av_bsf_free(&context); };
+	std::unique_ptr<AVBSFContext, decltype(free_filter)> bitstream_filter(filter_context, free_filter);
+	if (avcodec_parameters_copy(bitstream_filter->par_in, &parameters) < 0)
+		return false;
+
+	bitstream_filter->time_base_in = stream.time_base;
+	if (av_bsf_init(bitstream_filter.get()) < 0)
+		return false;
+
+	const AVCodecParameters& filtered_parameters = *bitstream_filter->par_out;
+	if (!filtered_parameters.extradata || filtered_parameters.extradata_size <= 0)
+		return false;
+
+	const bgfx::Memory* memory = bgfx::alloc(sizeof(bgfx::VideoDecoderInit) + filtered_parameters.extradata_size);
 	auto* init = reinterpret_cast<bgfx::VideoDecoderInit*>(memory->data);
 	*init = {};
 	init->magic = BX_MAKEFOURCC('V', 'D', 'I', 0);
 	init->codec = bgfx::VideoCodec::H264;
 	init->parameterSets = memory->data + sizeof(*init);
-	init->parameterSetsSize = video_bsf->par_out->extradata_size;
-	memcpy(memory->data + sizeof(*init), video_bsf->par_out->extradata, init->parameterSetsSize);
-	decoded_video_texture = bgfx::createTexture2D(coded_width, coded_height, false, 1,
+	init->parameterSetsSize = filtered_parameters.extradata_size;
+	memcpy(memory->data + sizeof(*init), filtered_parameters.extradata, init->parameterSetsSize);
+
+	const bgfx::TextureHandle texture = bgfx::createTexture2D(coded_width, coded_height, false, 1,
 		bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_NONE, memory);
-	if (!bgfx::isValid(decoded_video_texture)) {
-		av_bsf_free(&video_bsf);
+	if (!bgfx::isValid(texture))
 		return false;
-	}
-	video_rgb_scale_x = float(parameters->width) / coded_width;
-	video_rgb_scale_y = float(parameters->height) / coded_height;
+
+	video_bsf = bitstream_filter.release();
+	decoded_video_texture = texture;
+	video_rgb_scale_x = float(parameters.width) / coded_width;
+	video_rgb_scale_y = float(parameters.height) / coded_height;
 	video_decode_set = true;
 	video_decode_eof = false;
-	video_decode_origin = format_ctx->streams[videostream]->start_time;
+	video_decode_origin = stream.start_time;
 	video_decode_time_us = INT64_MIN;
 	video_presentation_frame = 0;
 	video_presentation_time_us = 0;
