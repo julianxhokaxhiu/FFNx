@@ -19,6 +19,7 @@
 - Core: Add support for Field text window autoresize for all languages
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
 - Lighting: Minor adjustment to ambient light and shadow map resolution default values ( https://github.com/julianxhokaxhiu/FFNx/pull/1007 )
+- Renderer: Fix gltf model parts drawn flat-shaded or twice with advanced lighting ( https://github.com/julianxhokaxhiu/FFNx/pull/1011 )
 
 ## FF8
 
