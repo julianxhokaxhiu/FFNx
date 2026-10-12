@@ -181,6 +181,8 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.battle_b3ddata_sub_428B12 = get_relative_call(ff7_externals.battle_sub_429AC0, 0x71);
 	ff7_externals.graphics_render_sub_68A638 = get_relative_call(ff7_externals.battle_b3ddata_sub_428B12, 0x10A);
 	ff7_externals.create_dx_sfx_something = get_relative_call(ff7_externals.graphics_render_sub_68A638, 0xD3);
+	ff7_externals.battle_create_primitive_system_66BF8E = get_relative_call(ff7_externals.battle_b3ddata_sub_428B12, 0x132);
+	ff7_externals.battle_gpu_render_context = (battle_gpu_render_context **)get_absolute_value(ff7_externals.battle_create_primitive_system_66BF8E, 0x32);
 	ff7_externals.load_p_file = get_relative_call(ff7_externals.create_dx_sfx_something, 0x144);
 
 	ff7_externals.comet2_sub_5A42E5 = get_relative_call(ff7_externals.magic_effects_fn_table[46], 0x1A);
@@ -1523,6 +1525,7 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.engine_load_menu_graphics_objects_6C1468 = (void (*)(int))get_relative_call(ff7_externals.menu_enter_sub_6CD3B0, 0x2B);
 
 	ff7_externals.sub_671082 = (void (*)(ff7_graphics_object**))get_relative_call((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, 0x28);
+	ff7_externals.destroy_graphics_object_670FD3 = get_relative_call((uint32_t)ff7_externals.sub_671082, 0x17);
 	ff7_externals.sub_674530 = (int (*)())get_relative_call((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, 0xF5);
 	ff7_externals.sub_67453A = (void (*)(int))get_relative_call((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, 0xFF);
 	ff7_externals.make_struc3_6745E6 = (void (*)(int, struc_3*))get_relative_call((uint32_t)ff7_externals.engine_load_menu_graphics_objects_6C1468, 0x10D);
