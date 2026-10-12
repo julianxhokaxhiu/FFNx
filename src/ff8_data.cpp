@@ -958,6 +958,12 @@ void ff8_find_externals()
 
 	ff8_externals.battle_text_task_sub_5009B0 = (int (*)(int))get_relative_call(ff8_externals.sub_500CC0, 0x55);
 	ff8_externals.sub_502380 = get_relative_call(ff8_externals.sub_500CC0, 0x69);
+	uint32_t battle_animation_init = get_relative_call(ff8_externals.sub_502380, 0x3F);
+	uint32_t battle_animation_update = get_relative_call(get_absolute_value(battle_animation_init, 0x6), 0x10E);
+	uint32_t battle_animation_opcode = get_absolute_value(battle_animation_update, 0x53);
+	ff8_externals.battle_actor_sound = get_relative_call(get_relative_call(battle_animation_opcode, 0x5CD), 0xEF);
+	ff8_externals.battle_actor_sound_3d = get_relative_call(battle_animation_update, 0x1F3);
+	ff8_externals.battle_actor_sounds = (uint32_t (*)[7])get_absolute_value(ff8_externals.battle_actor_sound, 0x81);
 	ff8_externals.sub_50A790 = get_relative_call(ff8_externals.sub_502380, 0x51);
 	ff8_externals.sub_50B2A0 = get_absolute_value(ff8_externals.sub_50A790, 0x62);
 	ff8_externals.sub_502670 = get_absolute_value(ff8_externals.sub_502380, 0x22);

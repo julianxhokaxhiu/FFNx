@@ -188,8 +188,33 @@ static void ff8_relocate_enemy_scanned_once()
 	if (trace_all) ffnx_trace("Extra battle monsters: Scan scanned-once bitfield relocated to var %d.\n", FF8_SCANNED_ONCE_RELOCATE_VAR);
 }
 
+static void ff8_extend_battle_actor_sounds()
+{
+	static uint32_t extended_actor_sounds[FF8_BATTLE_ACTOR_SOUND_ROWS][FF8_BATTLE_ACTOR_SOUND_SLOTS] = {};
+	if (ff8_externals.battle_actor_sounds == nullptr || ff8_externals.battle_actor_sounds == extended_actor_sounds)
+		return;
+
+	if ((uint8_t)get_absolute_value(ff8_externals.battle_actor_sound, 0x13) != FF8_FIRST_NEW_COM_ID
+		|| get_absolute_value(ff8_externals.battle_actor_sound_3d, 0x9E) != (uint32_t)ff8_externals.battle_actor_sounds
+		|| get_absolute_value(ff8_externals.battle_actor_sound_3d, 0xDC) != (uint32_t)ff8_externals.battle_actor_sounds)
+	{
+		if (trace_all) ffnx_warning("Extra battle monster sounds: unsupported sound table layout.\n");
+		ff8_externals.battle_actor_sounds = nullptr;
+		return;
+	}
+
+	memcpy_code((uint32_t)extended_actor_sounds, ff8_externals.battle_actor_sounds, FF8_FIRST_NEW_COM_ID * sizeof(extended_actor_sounds[0]));
+	patch_code_dword(ff8_externals.battle_actor_sound + 0x81, (uint32_t)extended_actor_sounds);
+	patch_code_dword(ff8_externals.battle_actor_sound_3d + 0x9E, (uint32_t)extended_actor_sounds);
+	patch_code_dword(ff8_externals.battle_actor_sound_3d + 0xDC, (uint32_t)extended_actor_sounds);
+	patch_code_byte(ff8_externals.battle_actor_sound + 0x13, FF8_BATTLE_ACTOR_SOUND_ROWS);
+	ff8_externals.battle_actor_sounds = extended_actor_sounds;
+}
+
 void ff8_battle_monsters_init()
 {
+	ff8_extend_battle_actor_sounds();
+
 	if (!ff8_externals.battle_monster_file_load_call_site || !ff8_externals.battle_load_file_sub_508480)
 	{
 		if (trace_all) ffnx_trace("Extra battle monsters (c0m144-c0m199): unsupported game version, skipping.\n");
