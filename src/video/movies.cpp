@@ -1039,6 +1039,17 @@ void ffmpeg_loop()
 	for (auto& queued_packet : software_video_packets) av_packet_unref(&queued_packet);
 	software_video_packets.clear();
 	if(format_ctx) avformat_seek_file(format_ctx, -1, 0, 0, 0, 0);
+	if (codec_ctx) avcodec_flush_buffers(codec_ctx);
+	if (acodec_ctx) avcodec_flush_buffers(acodec_ctx);
+	if (movie_frame) av_frame_unref(movie_frame);
+	vbuffer_read = 0;
+	vbuffer_write = 0;
+	movie_frame_counter = 0;
+	first_audio_packet = audiostream >= 0;
+	if (first_audio_packet) {
+		nxAudioEngine.stopStream();
+		nxAudioEngine.initStream(movie_duration, acodec_ctx->sample_rate, acodec_ctx->ch_layout.nb_channels);
+	}
 	if (video_bsf) {
 		av_bsf_flush(video_bsf);
 		video_decode_set = true;
@@ -1046,7 +1057,6 @@ void ffmpeg_loop()
 		video_decode_time_us = INT64_MIN;
 		video_presentation_frame = 0;
 		video_presentation_time_us = 0;
-		movie_frame_counter = 0;
 	}
 }
 
