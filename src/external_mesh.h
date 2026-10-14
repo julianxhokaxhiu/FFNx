@@ -248,7 +248,8 @@ public:
     void bindField3dVertexBuffer(uint32_t offset, uint32_t inCount);
     void bindField3dIndexBuffer(uint32_t offset, uint32_t inCount);
 
-    // Re-reads the config file's material settings when the file changed on disk (checked about once a second)
+    // Re-reads the config file's material and model settings when the file changed on disk (checked about once a
+    // second)
     void refreshMaterialSettings();
 
     // The GPU vertices (rest pose) of every part, in part order (see Shape::vertexOffset)
@@ -274,6 +275,9 @@ public:
     // World map: the scale this model is drawn with (the game's own scale for it, see WORLD_GAME_MODEL_SCALE), 0 until
     // measured
     float worldScale = 0.0f;
+    // The model's size from its config file ([model] scale): a multiplier on the size it is drawn at. The feet stay on
+    // the floor: only the root's height above it follows the size, not where the game places the model or moves it
+    float sizeScale = 1.0f;
 
     bool hasSpringBones = false;
 
@@ -303,6 +307,7 @@ private:
     std::filesystem::file_time_type configWriteTime = std::filesystem::file_time_type::min();
     std::chrono::steady_clock::time_point configLastCheck = {};
     void applyMaterialSettings(Shape& shape);
+    void applyModelSettings();
 
     std::vector<Vertex> vertexBufferData;
     bgfx::DynamicVertexBufferHandle vertexBufferHandle = BGFX_INVALID_HANDLE;

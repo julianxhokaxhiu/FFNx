@@ -978,6 +978,11 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 		// The world map scales its models when it loads them (by a different amount for each model): measure it
 		if(is_world) external_mesh->mesh->worldScale = external_mesh_owner->gameScale() / WORLD_GAME_MODEL_SCALE;
 		float model_scale = gl_get_external_mesh_scale(external_mesh->mesh.get());
+		// model_scale includes the model's own size ([model] scale in its config). Where the game places the model and
+		// how far it moves stay the game's: only the root's height above the floor follows the size, so the feet stay
+		// on the floor
+		float size_scale = external_mesh->mesh->sizeScale;
+		float placement_scale = size_scale > 0.0f ? model_scale / size_scale : model_scale;
 
 		// The world map shows each animation frame twice in 60 fps mode: sample between the game's frames so the
 		// gltf moves smoothly
@@ -998,7 +1003,8 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 		// The gltf's root motion is drawn in battle too: original animations exported from KimeraCS carry the game's
 		// own root movement (lunges, Braver's leap), new ones may change it. The game keeps its own (above).
-		bool has_gltf_root = !external_mesh->hidden && external_mesh->getRootMotionMatrix(anim_name, frame_position, anim_header->num_frames, external_mesh_clock, model_scale, &gltf_root_matrix);
+		bool has_gltf_root = !external_mesh->hidden && external_mesh->getRootMotionMatrix(anim_name, frame_position, anim_header->num_frames, external_mesh_clock, placement_scale, &gltf_root_matrix);
+		if(has_gltf_root) gltf_root_matrix._42 *= size_scale;
 
 		if(has_gltf_root)
 		{
@@ -1006,6 +1012,13 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
 
 			memcpy(&world_matrix, &gltf_root_matrix, sizeof(world_matrix));
+			apply_struc110_transforms(&world_matrix, struc_110);
+		}
+		else if(size_scale != 1.0f)
+		{
+			// Drawn on the game's root: its height above the floor follows the model's size too
+			memcpy(&world_matrix, root_matrix, sizeof(world_matrix));
+			world_matrix._42 *= size_scale;
 			apply_struc110_transforms(&world_matrix, struc_110);
 		}
 

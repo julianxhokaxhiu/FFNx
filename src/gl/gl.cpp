@@ -426,13 +426,15 @@ uint32_t gl_draw_text(uint32_t x, uint32_t y, uint32_t color, uint32_t alpha, ch
 }
 
 // The scale gltf models are drawn with: the field's model scale in fields, the model's own scale on the world map
-// (measured from the game, 0 until known), 1 in battle (battle exports are in the battle model's own units)
+// (measured from the game, 0 until known), 1 in battle (battle exports are in the battle model's own units), times the
+// size set in the model's config file ([model] scale)
 float gl_get_external_mesh_scale(const ExternalMesh* mesh)
 {
-	if (!ff8 && getmode_cached()->driver_mode == MODE_WORLDMAP) return mesh ? mesh->worldScale : 0.0f;
-	if (!ff8 && getmode_cached()->driver_mode == MODE_BATTLE) return 1.0f;
+	float size = mesh ? mesh->sizeScale : 1.0f;
+	if (!ff8 && getmode_cached()->driver_mode == MODE_WORLDMAP) return mesh ? mesh->worldScale * size : 0.0f;
+	if (!ff8 && getmode_cached()->driver_mode == MODE_BATTLE) return size;
 
-	return gl_get_field_model_scale();
+	return gl_get_field_model_scale() * size;
 }
 
 // The current field's model scale (from its model loader data), or 0 when no field is loaded

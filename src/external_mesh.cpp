@@ -114,6 +114,7 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
     std::string modelFilenameWithoutExt =  modelFilename.substr(0, modelFilename.find_last_of("."));
     configPath = modelFolder + modelFilenameWithoutExt + "_config.toml";
     loadConfig(configPath);
+    applyModelSettings();
     configWriteTime = configFileTime(configPath);
     configLastCheck = std::chrono::steady_clock::now();
 
@@ -979,9 +980,23 @@ void ExternalMesh::applyMaterialSettings(Shape& shape)
     if (!alphaSetting) shape.blendWithMaskCore = shape.alphaMode == ShapeAlphaMode::BLEND_MODE && shape.isDoubleSided;
 }
 
-// Material settings can be tuned while the game runs (external_mesh_live_config, a modder option): when the config
-// file changes on disk, they are read again and applied to the parts, and a changed tint is written into the parts'
-// vertex colours
+// The model's own settings from its config file ([model]): its size, as a multiplier on the size FFNx draws it at
+void ExternalMesh::applyModelSettings()
+{
+    float scale = 1.0f;
+    if (auto value = config["model"]["scale"].value<double>())
+    {
+        if (*value > 0.0 && *value <= 100.0) scale = static_cast<float>(*value);
+        else ffnx_warning("External mesh: %s: [model] scale must be above 0 (it is %g), using 1\n", configPath.c_str(), *value);
+    }
+
+    if ((trace_all || trace_loaders) && scale != sizeScale) ffnx_trace("External mesh: %s: drawn at %g times its size\n", configPath.c_str(), scale);
+    sizeScale = scale;
+}
+
+// Material settings and the model's size can be tuned while the game runs (external_mesh_live_config, a modder
+// option): when the config file changes on disk, they are read again and applied to the parts, and a changed tint is
+// written into the parts' vertex colours
 void ExternalMesh::refreshMaterialSettings()
 {
     if (!external_mesh_live_config || configPath.empty()) return;
@@ -995,6 +1010,7 @@ void ExternalMesh::refreshMaterialSettings()
     configWriteTime = time;
 
     loadConfig(configPath);
+    applyModelSettings();
 
     size_t vertexOffset = 0;
     for (auto& shape : shapes)
