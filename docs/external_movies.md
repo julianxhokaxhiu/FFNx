@@ -20,6 +20,8 @@ Hardware decoding also requires GPU and driver support for the stream. A rendere
 
 FFNx currently enables hardware decoding only for H.264/AVC streams meeting **all** of these requirements:
 
+The bundled bgfx API exposes H.264, HEVC/H.265, and AV1 codec capabilities, but its current Direct3D11, Direct3D12, and Vulkan decoder implementations only initialize H.264 streams. HEVC and AV1 therefore remain software-decoded; reported GPU codec capabilities alone are not enough to enable them.
+
 | Property | Required value |
 | --- | --- |
 | Video codec | H.264/AVC. |
