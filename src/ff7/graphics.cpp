@@ -592,7 +592,9 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 						if(!polygon_set) continue;
 
 						common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-						if(polygon_set->matrix_set) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
+						// The set keeps one view matrix for the bone matrix copied below (the game's draw passes a stack matrix); a
+						// new one was allocated on every draw and never freed
+						if(polygon_set->matrix_set && !polygon_set->matrix_set->matrix_view) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
 						common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
 
 						if(hrc_data->flags & 0x2000000)
@@ -868,7 +870,9 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 						else
 						{
 							common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-							if(polygon_set->matrix_set) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
+							// The set keeps one view matrix for the bone matrix copied below (the game's draw passes a stack matrix); a
+							// new one was allocated on every draw and never freed
+							if(polygon_set->matrix_set && !polygon_set->matrix_set->matrix_view) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
 							common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
 						}
 
