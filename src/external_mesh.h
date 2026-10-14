@@ -158,9 +158,19 @@ struct MorphTrack
     size_t targetCount = 0;
 };
 
+// How an animation follows the game's frames: by the automatic rules, or always on its own clock (a long clip on an
+// idle, whatever the game's frame count), or always stretched over the game animation's length
+enum class AnimationTiming
+{
+    AUTO,
+    OWN_CLOCK,
+    STRETCH
+};
+
 struct Animation
 {
     std::vector<KeyFrame> keyFrames;
+    AnimationTiming timing = AnimationTiming::AUTO;
 
     // Morph target weights per glTF mesh index, when the animation drives them
     std::map<int, MorphTrack> morphTracks;

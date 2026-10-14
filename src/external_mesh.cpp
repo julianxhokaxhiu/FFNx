@@ -753,6 +753,27 @@ void ExternalMesh::loadAnimations(cgltf_data* data)
             }        
         }
 
+        // Timing: the animation's glTF extras ("ffnx_timing": "own" | "stretch" | "auto") or, winning, the model's
+        // config file ([animations."NAME"] timing = ...)
+        std::string timing;
+        if (anim.extras.data != nullptr)
+        {
+            std::string extras = anim.extras.data;
+            size_t at = extras.find("\"ffnx_timing\"");
+            if (at != std::string::npos)
+            {
+                at = extras.find('"', extras.find(':', at) + 1);
+                if (at != std::string::npos) timing = extras.substr(at + 1, extras.find('"', at + 1) - at - 1);
+            }
+        }
+        if (auto value = config["animations"][animName]["timing"].value<std::string>()) timing = *value;
+        std::transform(timing.begin(), timing.end(), timing.begin(), [](unsigned char c) { return std::tolower(c); });
+        if (timing == "own" || timing == "own_clock" || timing == "clock") outAnim.timing = AnimationTiming::OWN_CLOCK;
+        else if (timing == "stretch") outAnim.timing = AnimationTiming::STRETCH;
+        else if (!timing.empty() && timing != "auto") ffnx_warning("External mesh: animation %s: unknown timing \"%s\" (auto, own or stretch)\n", animName.c_str(), timing.c_str());
+        if ((trace_all || trace_loaders) && outAnim.timing != AnimationTiming::AUTO)
+            ffnx_trace("External mesh: animation %s plays %s\n", animName.c_str(), outAnim.timing == AnimationTiming::OWN_CLOCK ? "on its own clock" : "stretched over the game's animation");
+
         animations[animName] = std::move(outAnim);
     }
 }
@@ -1090,8 +1111,10 @@ AnimationPosition getAnimationPosition(const Animation& anim, float frame, int f
 {
     AnimationPosition position;
 
-    // The game holds a single frame (e.g. an idle) but the gltf animates: loop it on its own clock
-    if (frameCount <= 1 && anim.keyCount > 1 && anim.endTime > anim.startTime)
+    // The game holds a single frame (e.g. an idle) but the gltf animates, or the animation asks for it: loop it on its
+    // own clock
+    bool ownClock = anim.timing == AnimationTiming::OWN_CLOCK || (anim.timing == AnimationTiming::AUTO && frameCount <= 1);
+    if (ownClock && anim.keyCount > 1 && anim.endTime > anim.startTime)
     {
         position.useKeyIndex = false;
         position.time = anim.startTime + std::fmod(std::max(clockSeconds, 0.0f), anim.endTime - anim.startTime);
@@ -1103,7 +1126,8 @@ AnimationPosition getAnimationPosition(const Animation& anim, float frame, int f
     // the last frame (one for fields at 2x, three for battle at 4x), which stretching would wrongly blend into the
     // end of one-shot animations and shift against the game's root motion (feet sliding).
     size_t frames = static_cast<size_t>(std::max(frameCount, 0));
-    if (frameCount <= 1 || (anim.keyCount >= frames && anim.keyCount <= frames + extraKeys) || anim.endTime <= anim.startTime)
+    bool keyPerFrame = anim.timing != AnimationTiming::STRETCH && anim.keyCount >= frames && anim.keyCount <= frames + extraKeys;
+    if (frameCount <= 1 || keyPerFrame || anim.endTime <= anim.startTime)
     {
         position.keyIndex = static_cast<int>(frame);
 
