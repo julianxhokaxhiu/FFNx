@@ -284,6 +284,7 @@ void ff8_find_externals()
 
 	ff8_externals.sub_471F70 = get_relative_call(ff8_externals.field_main_loop, 0x148);
 	ff8_externals.field_fade_transition_sub_472990 = get_relative_call(ff8_externals.field_main_loop, 0x19E);
+	ff8_externals.update_game_time_sub_4701B0 = get_relative_call(ff8_externals.field_main_loop, 0x119);
 	ff8_externals.sub_45CDD0 = get_relative_call(ff8_externals.field_fade_transition_sub_472990, 0x5C);
 
 	if (JP_VERSION)

@@ -194,6 +194,7 @@ uint32_t ff7_get_movie_frame()
 }
 
 uint32_t ff8_movie_frames;
+bool ff8_movie_new_15fps_frame = true;
 
 void ff8_prepare_movie(uint8_t disc, uint32_t movie)
 {
@@ -334,7 +335,11 @@ int ff8_update_movie_sample()
 {
 	if(trace_all || trace_movies) ffnx_trace("update_movie_sample\n");
 
+	WORD previous_frame = ff8_externals.movie_object->movie_current_frame;
+
 	ff8_externals.movie_object->movie_current_frame = ffmpeg_get_movie_frame();
+
+	ff8_movie_new_15fps_frame = movie_fps_ratio == 1 || ff8_externals.movie_object->movie_current_frame / movie_fps_ratio != previous_frame / movie_fps_ratio;
 
 	if(ff8_externals.movie_object->camdata_pointer->flag & 0x8) *ff8_externals.byte_1CE4907 = 0;
 	if(ff8_externals.movie_object->camdata_pointer->flag & 0x10) *ff8_externals.byte_1CE4907 = 1;
@@ -378,6 +383,9 @@ int ff8_start_movie()
 	if(trace_all || trace_movies) ffnx_trace("start_movie\n");
 
 	ff8_externals.movie_object->field_4C4B0 = 0;
+
+	// Required by > 15 FPS movies
+	movie_fps_ratio = ffmpeg_get_fps_ratio();
 
 	if(ff8_externals.movie_object->movie_intro_pak)
 	{
@@ -431,6 +439,40 @@ int ff8_stop_movie()
 	return ret;
 }
 
+// The field logic steps once per movie frame and its timings are made for 15 FPS movies (the MOVIE opcode
+// doubles move and animation speeds, and the field loop runs fades and the game time twice as often).
+// With faster movies only step it on new 15 FPS frames, the video and the camera still update on every frame.
+bool ff8_field_logic_step()
+{
+	return !ff8_externals.movie_object->movie_is_playing || ff8_movie_new_15fps_frame;
+}
+
+uint32_t ff8_get_movie_frame()
+{
+	// Field scripts compare it with 15 FPS frame numbers
+	return ff8_externals.movie_object->movie_current_frame / movie_fps_ratio;
+}
+
+void ff8_field_update_entities(int drawbuf)
+{
+	if (ff8_field_logic_step()) ((void(*)(int))common_externals.update_field_entities)(drawbuf);
+}
+
+void ff8_field_update_movement(void *entities, uint32_t keys)
+{
+	if (ff8_field_logic_step()) ((void(*)(void *, uint32_t))ff8_externals.sub_4789A0)(entities, keys);
+}
+
+void ff8_field_update_game_time()
+{
+	if (ff8_field_logic_step()) ((void(*)())ff8_externals.update_game_time_sub_4701B0)();
+}
+
+void ff8_field_fade_transition()
+{
+	if (ff8_field_logic_step()) ((void(*)())ff8_externals.field_fade_transition_sub_472990)();
+}
+
 bool is_overlapping_movie_playing()
 {
 	return ff7_externals.movie_object->is_playing && !is_movie_bgfield;
@@ -459,6 +501,14 @@ void movie_init()
 		replace_function(common_externals.update_movie_sample, ff8_update_movie_sample);
 		replace_function(ff8_externals.draw_movie_frame, draw_current_frame);
 		replace_function(common_externals.stop_movie, ff8_stop_movie);
+		replace_function(common_externals.get_movie_frame, ff8_get_movie_frame);
+
+		replace_call(ff8_externals.sub_4767B0 + (JP_VERSION ? 0x14F : 0x14E), ff8_field_update_entities);
+		replace_call(ff8_externals.sub_4767B0 + (JP_VERSION ? 0x412 : 0x40F), ff8_field_update_movement);
+		for (uint32_t offset : { 0x119, 0x11E, 0x12C, 0x131 })
+			replace_call(ff8_externals.field_main_loop + offset, ff8_field_update_game_time);
+		for (uint32_t offset : { 0x19E, 0x1A3, 0x1B1, 0x1B6 })
+			replace_call(ff8_externals.field_main_loop + offset, ff8_field_fade_transition);
 	}
 
 	ffmpeg_movie_init();

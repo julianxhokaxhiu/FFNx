@@ -1068,5 +1068,6 @@ uint32_t ffmpeg_get_movie_frame()
 
 short ffmpeg_get_fps_ratio()
 {
-	return ceil(movie_fps / 15.0f);
+	// FF8 divides by this ratio, keep it at 1 when no movie could be opened
+	return movie_fps > 0.0 ? ceil(movie_fps / 15.0f) : 1;
 }

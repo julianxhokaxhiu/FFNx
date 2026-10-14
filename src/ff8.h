@@ -1216,6 +1216,7 @@ struct ff8_externals
 	uint32_t sub_4672C0;
 	uint32_t sub_471F70;
 	uint32_t field_fade_transition_sub_472990;
+	uint32_t update_game_time_sub_4701B0;
 	uint32_t sub_45CDD0;
 	uint32_t sub_4767B0;
 	uint32_t (*ctrl_keyboard_actions)();
