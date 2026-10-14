@@ -359,9 +359,9 @@ int ff8_update_movie_sample()
 
 	int ret = 0;
 
-	if (ff8_externals.movie_object->movie_current_frame <= ff8_externals.movie_object->movie_total_frames)
+	if (ff8_externals.movie_object->movie_current_frame <= ff8_externals.movie_object->movie_total_frames &&
+		ffmpeg_update_movie_sample())
 	{
-		ffmpeg_update_movie_sample();
 		ret = (int)ff8_externals.movie_object->camdata_start;
 		ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_current_frame];
 	}

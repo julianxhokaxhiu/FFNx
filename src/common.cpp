@@ -38,6 +38,7 @@
 #include <fstream>
 
 #include "renderer.h"
+#include "video/ntscj.h"
 #include "hext.h"
 #include "ff8_data.h"
 
@@ -3740,7 +3741,7 @@ bool drawFFNxLogoFrame(struct game_obj* game_object)
 	if (was_lighting_enabled == -1) was_lighting_enabled = enable_lighting;
 
 	if (ffnx_logo_current_frame >= FFNX_LOGO_FRAME_COUNT) {
-		newRenderer.setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB); // set the gamut back to what it was before newRenderer.drawFFNxLogo() changed it
+		newRenderer.setOverallColorGamut(ntscj_get_overall_color_gamut()); // set the gamut back to what it was before newRenderer.drawFFNxLogo() changed it
 		enable_lighting = was_lighting_enabled;
 		return false;
 	}
