@@ -432,16 +432,18 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 	auto scale = static_cast<float>((*pScale)) / 128.0f;
 
 	std::array<struct matrix, MAX_BONE_MATRICES> matrix_palette;
+	size_t jointCount = 0;
     if (externalMesh->skins.size() > 0)
 	{
 		auto skin = externalMesh->skins[0];
 		auto current_frame =  skin.current_frame;
-	
+
+		// Joints past the bone limit are ignored instead of overflowing matrix_palette
+		jointCount = std::min(skin.joints.size(), static_cast<size_t>(MAX_BONE_MATRICES));
+
 		if(externalMesh->animations.contains(skin.current_anim))
 		{
-			auto anim = externalMesh->animations[skin.current_anim];		
-
-			auto jointCount = skin.joints.size();
+			auto anim = externalMesh->animations[skin.current_anim];
 
 			for(int i = 0; i < jointCount; ++i)
 			{
@@ -486,7 +488,6 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		}
 		else
 		{
-			auto jointCount = skin.joints.size();
 			for(int i = 0; i < jointCount; ++i)
 			{			
 				float parentMatrix[16];
@@ -512,7 +513,7 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 
 	if (externalMesh->skins.size())
 	{
-		newRenderer.setSmoothSkinningBoneMatrices(&matrix_palette);
+		newRenderer.setSmoothSkinningBoneMatrices(&matrix_palette, jointCount);
 
 		newRenderer.isSmoothSkinning(true);
 		newRenderer.setSmoothSkinningUniforms();
@@ -549,9 +550,6 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		}
 	}
 
-	newRenderer.setCommonUniforms();
-	if (enable_lighting) newRenderer.setLightingUniforms();
-
 	auto shapeCount = externalMesh->shapes.size();
 	int vertexOffset = 0;
 	int indexOffset = 0;
@@ -565,34 +563,26 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		externalMesh->bindField3dVertexBuffer(vertexOffset, shape.vertices.size());
 		externalMesh->bindField3dIndexBuffer(indexOffset, shape.indices.size());
 
-		if(shape.pMaterial != nullptr)
+		// Set every texture slot for every part, so a part never samples the previous part's textures.
+		// A part without a base color texture is drawn with its material color instead of being discarded.
+		auto pMaterial = shape.pMaterial;
+		bgfx::TextureHandle baseColorTexHandle = BGFX_INVALID_HANDLE;
+		bgfx::TextureHandle normalTexHandle = BGFX_INVALID_HANDLE;
+		bgfx::TextureHandle pbrTexHandle = BGFX_INVALID_HANDLE;
+		if(pMaterial != nullptr)
 		{
-			if(shape.pMaterial->baseColorTexHandles.size() > 0)
-			{
-				auto baseColorTexHandle = shape.pMaterial->baseColorTexHandles[shape.pMaterial->texIndex];
-				if(bgfx::isValid(baseColorTexHandle))
-					newRenderer.useTexture(baseColorTexHandle.idx, RendererTextureSlot::TEX_Y);
-				else newRenderer.useTexture(0, RendererTextureSlot::TEX_Y);
-			}
-
-			if(shape.pMaterial->normalTexHandles.size() > 0)
-			{
-				auto normalTexHandle = shape.pMaterial->normalTexHandles[0];
-				if(bgfx::isValid(normalTexHandle))
-					newRenderer.useTexture(normalTexHandle.idx, RendererTextureSlot::TEX_NML);
-				else newRenderer.useTexture(0, RendererTextureSlot::TEX_NML);
-			}
-
-			if(shape.pMaterial->pbrTexHandles.size() > 0)
-			{
-				auto pbrTexHandle = shape.pMaterial->pbrTexHandles[0];
-				if(bgfx::isValid(pbrTexHandle))
-					newRenderer.useTexture(pbrTexHandle.idx, RendererTextureSlot::TEX_PBR);
-				else newRenderer.useTexture(0, RendererTextureSlot::TEX_PBR);
-			}
-
-			newRenderer.bindTextures();      
+			if(pMaterial->baseColorTexHandles.size() > 0) baseColorTexHandle = pMaterial->baseColorTexHandles[pMaterial->texIndex];
+			if(pMaterial->normalTexHandles.size() > 0) normalTexHandle = pMaterial->normalTexHandles[0];
+			if(pMaterial->pbrTexHandles.size() > 0) pbrTexHandle = pMaterial->pbrTexHandles[0];
 		}
+		newRenderer.useTexture(bgfx::isValid(baseColorTexHandle) ? baseColorTexHandle.idx : 0, RendererTextureSlot::TEX_Y);
+		newRenderer.useTexture(bgfx::isValid(normalTexHandle) ? normalTexHandle.idx : 0, RendererTextureSlot::TEX_NML);
+		newRenderer.useTexture(bgfx::isValid(pbrTexHandle) ? pbrTexHandle.idx : 0, RendererTextureSlot::TEX_PBR);
+		newRenderer.bindTextures();
+
+		// Which textures are present is sent with the common uniforms, so they are set per part
+		newRenderer.setCommonUniforms();
+		if (enable_lighting) newRenderer.setLightingUniforms();
 
  		if (enable_lighting)
 		{
@@ -604,6 +594,9 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		vertexOffset += shape.vertices.size();
 		indexOffset += shape.indices.size();
 	}
-	
+
 	newRenderer.discardAllBindings();
+
+	// Don't let the skinned programs leak into whatever is drawn next
+	newRenderer.isSmoothSkinning(false);
 }

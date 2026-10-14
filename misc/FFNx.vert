@@ -43,8 +43,11 @@ uniform vec4 gameLightDir2;
 uniform vec4 gameLightDir3;
 uniform vec4 gameScriptedLightColor;
 
+// Only the skinned variant (compiled with SMOOTH_SKINNING) carries bone data,
+// so ordinary 3D draws don't pay for it
+#ifdef SMOOTH_SKINNING
 uniform mat4 boneMatrices[MAX_BONE_MATRICES];
-uniform vec4 skinningFlags;
+#endif
 
 uniform vec4 VSFlags;
 uniform vec4 WMFlags;
@@ -52,8 +55,6 @@ uniform vec4 WMFlags;
 #define isTLVertex VSFlags.x > 0.0
 #define blendMode VSFlags.y
 #define isFBTexture VSFlags.z > 0.0
-
-//#define isSmoothSkinning skinningFlags.x > 0.0
 
 #define isApplySphericalWorld WMFlags.x > 0.0
 #define sphericaWorldRadiusScale  WMFlags.x
@@ -64,6 +65,7 @@ uniform vec4 WMFlags;
 void main()
 {
     vec4 pos = a_position;
+    vec3 nrm = a_normal;
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
 
@@ -77,25 +79,33 @@ void main()
     }
     else
     {
-        // if (isSmoothSkinning)
-        // {
-        //     int boneIndex = a_indices.x;
-        //     vec3 avgPos = vec3(0.0, 0.0, 0.0);
-        //     avgPos += a_weight.x * mul(boneMatrices[a_indices.x], vec4(pos.xyz, 1.0)).xyz;
-        //     avgPos += a_weight.y * mul(boneMatrices[a_indices.y], vec4(pos.xyz, 1.0)).xyz;
-        //     avgPos += a_weight.z * mul(boneMatrices[a_indices.z], vec4(pos.xyz, 1.0)).xyz;
-        //     avgPos += a_weight.w * mul(boneMatrices[a_indices.w], vec4(pos.xyz, 1.0)).xyz;
+#ifdef SMOOTH_SKINNING
+        vec3 avgPos = vec3(0.0, 0.0, 0.0);
+        avgPos += a_weight.x * mul(boneMatrices[a_indices.x], vec4(pos.xyz, 1.0)).xyz;
+        avgPos += a_weight.y * mul(boneMatrices[a_indices.y], vec4(pos.xyz, 1.0)).xyz;
+        avgPos += a_weight.z * mul(boneMatrices[a_indices.z], vec4(pos.xyz, 1.0)).xyz;
+        avgPos += a_weight.w * mul(boneMatrices[a_indices.w], vec4(pos.xyz, 1.0)).xyz;
 
-        //     pos = vec4(avgPos, 1.0);
-        // }
-        
+        pos = vec4(avgPos, 1.0);
+
+        // Normals follow the bones too, or game lighting shades the raw, unposed mesh
+        vec3 avgNrm = vec3(0.0, 0.0, 0.0);
+        avgNrm += a_weight.x * mul(boneMatrices[a_indices.x], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.y * mul(boneMatrices[a_indices.y], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.z * mul(boneMatrices[a_indices.z], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.w * mul(boneMatrices[a_indices.w], vec4(nrm.xyz, 0.0)).xyz;
+
+        // The bone matrices include the field's model scale
+        nrm = normalize(avgNrm);
+#endif
+
         v_position0 = mul(worldView, vec4(pos.xyz, 1.0));
 
         if (isApplySphericalWorld) pos.xyz = ApplySphericalWorld(v_position0.xyz, sphericaWorldRadiusScale);
         else pos = v_position0;
 
         pos = mul(mul(d3dViewport, d3dProjection), vec4(pos.xyz, 1.0));
-        v_normal0 = mul(normalMatrix, vec4(a_normal, 0.0)).xyz;
+        v_normal0 = mul(normalMatrix, vec4(nrm, 0.0)).xyz;
 
         // In this default shader, lighting is applied in gamma space so that it does better match the original lighting
         if (gameLightingMode == GAME_LIGHTING_PER_VERTEX)
