@@ -1269,6 +1269,18 @@ struct ff8_externals
 	uint32_t sub_41BC76;
 	uint32_t d3d_load_texture;
 	uint32_t sub_559910;
+	uint32_t boss_battle_transition;
+	uint32_t boss_battle_transition_draw;
+	struct ff8_graphics_object *(*boss_battle_transition_get_graphics_object)();
+	int (*graphics_object_alloc_shapes)(int, struct ff8_graphics_object *);
+	void (*graphics_object_sub_41E752)(int, struct ff8_game_obj *);
+	void (*gfx_begin_end_scene_alternative)(int, struct ff8_game_obj *);
+	void (*gfx_set_renderstate)(int, int, struct ff8_game_obj *);
+	void (*graphics_object_draw)(struct ff8_graphics_object *, struct ff8_game_obj *);
+	int32_t *boss_battle_transition_x;
+	int32_t *boss_battle_transition_y;
+	int32_t *boss_battle_transition_w;
+	int32_t *boss_battle_transition_h;
 	uint32_t swirl_sub_56D1D0;
 	uint32_t load_credits_image;
 	void (*input_fill_keystate)();

@@ -38,6 +38,7 @@
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
 #include "ff8/battle/ai.h"
+#include "ff8/battle/boss_transition.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/battle/monsters.h"
 #include "ff8/remaster.h"
@@ -2510,6 +2511,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Monster-AI target values 228-248 -> fixed battle-slot pairs
 	// #####################
 	ff8_battle_ai_init();
+
+	// #####################
+	// PS1-style boss battle transition
+	// #####################
+	ff8_battle_boss_transition_init();
 
 }
 

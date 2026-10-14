@@ -472,6 +472,18 @@ void ff8_find_externals()
 	ff8_externals.movie_hack2 = common_externals.update_movie_sample + 0x1DF;
 
 	ff8_externals.sub_559910 = get_relative_call(ff8_externals.swirl_main_loop, 0x1A);
+	ff8_externals.boss_battle_transition = get_relative_call(ff8_externals.swirl_main_loop, 0x28);
+	ff8_externals.boss_battle_transition_draw = get_relative_call(ff8_externals.boss_battle_transition, 0xC1);
+	ff8_externals.boss_battle_transition_get_graphics_object = (ff8_graphics_object *(*)())get_relative_call(ff8_externals.boss_battle_transition_draw, 0x2A);
+	ff8_externals.graphics_object_alloc_shapes = (int (*)(int, ff8_graphics_object *))get_relative_call(ff8_externals.boss_battle_transition_draw, 0x34);
+	ff8_externals.graphics_object_sub_41E752 = (void (*)(int, ff8_game_obj *))get_relative_call(ff8_externals.boss_battle_transition_draw, 0x1A3);
+	ff8_externals.gfx_begin_end_scene_alternative = (void (*)(int, ff8_game_obj *))get_relative_call(ff8_externals.boss_battle_transition_draw, 0x1AB);
+	ff8_externals.gfx_set_renderstate = (void (*)(int, int, ff8_game_obj *))get_relative_call(ff8_externals.boss_battle_transition_draw, 0x1B5);
+	ff8_externals.graphics_object_draw = (void (*)(ff8_graphics_object *, ff8_game_obj *))get_relative_call(ff8_externals.boss_battle_transition_draw, 0x1BC);
+	ff8_externals.boss_battle_transition_w = (int32_t *)get_absolute_value(ff8_externals.boss_battle_transition_draw, 0x5A);
+	ff8_externals.boss_battle_transition_h = (int32_t *)get_absolute_value(ff8_externals.boss_battle_transition_draw, 0x6A);
+	ff8_externals.boss_battle_transition_y = (int32_t *)get_absolute_value(ff8_externals.boss_battle_transition_draw, 0xA4);
+	ff8_externals.boss_battle_transition_x = (int32_t *)get_absolute_value(ff8_externals.boss_battle_transition_draw, 0xCD);
 
 	ff8_externals.swirl_sub_56D1D0 = get_relative_call(ff8_externals.battle_main_loop, 0x285);
 	ff8_externals.swirl_sub_56D390 = get_relative_call(ff8_externals.swirl_sub_56D1D0, 0x2A);
