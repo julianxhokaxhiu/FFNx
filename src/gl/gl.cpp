@@ -644,7 +644,10 @@ void gl_draw_external_mesh(ExternalMeshInstance* character, struct light_data* l
 			newRenderer.setBlendFactor(character->fadeAlpha);
 		}
 
-		externalMesh->bindField3dVertexBuffer(vertexOffsets[i], shape.vertices.size());
+		// A part with morph targets is drawn from this character's morphed copy of its vertices
+		if (i < character->morphShapeOffset.size() && character->morphShapeOffset[i] != UINT32_MAX && bgfx::isValid(character->morphVertexBuffer))
+			bgfx::setVertexBuffer(0, character->morphVertexBuffer, character->morphShapeOffset[i], static_cast<uint32_t>(shape.vertices.size()));
+		else externalMesh->bindField3dVertexBuffer(vertexOffsets[i], shape.vertices.size());
 		if (sortedIndices) bgfx::setIndexBuffer(character->sortedBlendIndexBuffer, sortedIndexOffset, sortedIndexCount);
 		else externalMesh->bindField3dIndexBuffer(indexOffsets[i], shape.indices.size());
 

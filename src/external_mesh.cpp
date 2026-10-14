@@ -452,12 +452,47 @@ void ExternalMesh::loadMeshes(cgltf_data* data, const std::vector<std::vector<in
 					std::swap(outShape.indices[triangle + 1], outShape.indices[triangle + 2]);
 			}
 
-            fillExternalMeshVertexBuffer(outShape.vertices.data(), outShape.normals.data(), outShape.joints.data(), outShape.weights.data(), outShape.vertices.size());
+            outShape.vertexOffset = fillExternalMeshVertexBuffer(outShape.vertices.data(), outShape.normals.data(), outShape.joints.data(), outShape.weights.data(), outShape.vertices.size());
             fillExternalMeshIndexBuffer(outShape.indices.data(), outShape.indices.size());
+
+            // Morph targets: each target's POSITION deltas, kept sparse (a facial key moves a few hundred vertices)
+            outShape.morphMesh = static_cast<int>(i);
+            for (size_t t = 0; t < primitive.targets_count; t++)
+            {
+                MorphTarget target;
+                for (size_t k = 0; k < primitive.targets[t].attributes_count; k++)
+                {
+                    const cgltf_attribute& attr = primitive.targets[t].attributes[k];
+                    if (attr.type != cgltf_attribute_type_position || attr.data == nullptr) continue;
+
+                    std::vector<float> deltas(attr.data->count * 3);
+                    cgltf_accessor_unpack_floats(attr.data, deltas.data(), deltas.size());
+                    for (size_t v = 0; v < attr.data->count && v < static_cast<size_t>(vertexCount); v++)
+                    {
+                        float x = deltas[3 * v], y = deltas[3 * v + 1], z = deltas[3 * v + 2];
+                        if (x == 0.0f && y == 0.0f && z == 0.0f) continue;
+                        target.indices.push_back(static_cast<uint32_t>(v));
+                        target.deltas.push_back(isZUp ? vector3<float>{ x, y, z } : vector3<float>{ x, z, y });
+                    }
+                }
+                outShape.morphTargets.push_back(std::move(target));
+            }
+            if (!outShape.morphTargets.empty()) hasMorphTargets = true;
 
             shapes.push_back(outShape);
 		}
+
+        // The targets' names (Blender and our exporter put them in the mesh's extras)
+        if (morphTargetNames.size() < data->meshes_count) morphTargetNames.resize(data->meshes_count);
+        for (size_t n = 0; n < mesh.target_names_count; n++) morphTargetNames[i].push_back(mesh.target_names[n] ? mesh.target_names[n] : "");
 	}
+
+    if (hasMorphTargets && (trace_all || trace_loaders))
+    {
+        size_t parts = 0, targets = 0;
+        for (const auto& shape : shapes) if (!shape.morphTargets.empty()) { parts++; targets += shape.morphTargets.size(); }
+        ffnx_trace("External mesh: %zu morph targets on %zu parts\n", targets, parts);
+    }
 }
 
 // Joints named after the game's bones (bone_NN) give the game their positions in battle
@@ -653,6 +688,22 @@ void ExternalMesh::loadAnimations(cgltf_data* data)
 
             if(targetJointIndex == -1)
             {
+                // Morph target weights of a mesh (targetCount values per key)
+                if (channel.target_path == cgltf_animation_path_type_weights && channel.target_node != nullptr && channel.target_node->mesh != nullptr)
+                {
+                    const cgltf_mesh* targetMesh = channel.target_node->mesh;
+                    size_t targetCount = targetMesh->primitives_count > 0 ? targetMesh->primitives[0].targets_count : 0;
+                    if (targetCount > 0 && keyValues.size() >= targetCount)
+                    {
+                        MorphTrack track;
+                        track.targetCount = targetCount;
+                        track.times = keyTimes;
+                        track.values = keyValues;
+                        outAnim.morphTracks[static_cast<int>(targetMesh - data->meshes)] = std::move(track);
+                    }
+                    continue;
+                }
+
                 if (rootNode != nullptr && channel.target_node == rootNode)
                 {
                     if (channel.target_path == cgltf_animation_path_type_translation)
@@ -1358,6 +1409,7 @@ ExternalMeshInstance::ExternalMeshInstance(std::shared_ptr<ExternalMesh> sharedM
 ExternalMeshInstance::~ExternalMeshInstance()
 {
     if (bgfx::isValid(sortedBlendIndexBuffer)) bgfx::destroy(sortedBlendIndexBuffer);
+    if (bgfx::isValid(morphVertexBuffer)) bgfx::destroy(morphVertexBuffer);
 }
 
 // Alpha-blended parts are drawn after the others with their triangles sorted back to front, so a blended texel never
@@ -1954,6 +2006,99 @@ void ExternalMeshInstance::updatePose(float scale)
             simulateSpringBone(skin.joints[i], joints[i], springSteps, scale);
         }
     }
+
+    updateMorphs(anim, position);
+}
+
+// Samples the animation's morph target weights for this frame and rebuilds the morphed parts' vertices when they
+// changed: rest position plus each active target's deltas
+void ExternalMeshInstance::updateMorphs(const Animation& anim, const AnimationPosition& position)
+{
+    if (!mesh->hasMorphTargets) return;
+
+    const auto& shapes = mesh->shapes;
+    const auto& base = mesh->gpuVertices();
+
+    // The morphed parts' vertices, laid out once
+    if (morphShapeOffset.size() != shapes.size())
+    {
+        morphShapeOffset.assign(shapes.size(), UINT32_MAX);
+        morphVertices.clear();
+        for (size_t s = 0; s < shapes.size(); s++)
+        {
+            const Shape& shape = shapes[s];
+            if (shape.morphTargets.empty() || shape.vertexOffset + shape.vertices.size() > base.size()) continue;
+            morphShapeOffset[s] = static_cast<uint32_t>(morphVertices.size());
+            morphVertices.insert(morphVertices.end(), base.begin() + shape.vertexOffset, base.begin() + shape.vertexOffset + shape.vertices.size());
+        }
+        if (morphVertices.empty()) return;
+        if (!bgfx::isValid(morphVertexBuffer))
+            morphVertexBuffer = bgfx::createDynamicVertexBuffer(static_cast<uint32_t>(morphVertices.size()), newRenderer.GetVertexLayout(), BGFX_BUFFER_ALLOW_RESIZE);
+        morphDirty = true;
+    }
+    if (!bgfx::isValid(morphVertexBuffer)) return;
+
+    // This frame's weights per glTF mesh
+    bool changed = morphDirty;
+    std::vector<float> sampled;
+    for (const auto& [meshIndex, track] : anim.morphTracks)
+    {
+        size_t keyCount = track.targetCount > 0 ? track.values.size() / track.targetCount : 0;
+        if (keyCount == 0) continue;
+        sampled.assign(track.targetCount, 0.0f);
+        if (position.useKeyIndex || track.times.size() < keyCount)
+        {
+            size_t key = static_cast<size_t>(std::clamp(position.keyIndex, 0, static_cast<int>(keyCount) - 1));
+            for (size_t t = 0; t < track.targetCount; t++) sampled[t] = track.values[key * track.targetCount + t];
+        }
+        else
+        {
+            size_t first, second;
+            float blend;
+            findKeys(track.times, keyCount, position.time, first, second, blend);
+            for (size_t t = 0; t < track.targetCount; t++)
+                sampled[t] = track.values[first * track.targetCount + t] * (1.0f - blend) + track.values[second * track.targetCount + t] * blend;
+        }
+        auto& weights = morphWeights[meshIndex];
+        if (weights != sampled) { weights = sampled; changed = true; }
+    }
+    // Meshes this animation doesn't drive go back to their rest shape
+    for (auto& [meshIndex, weights] : morphWeights)
+    {
+        if (anim.morphTracks.count(meshIndex) > 0) continue;
+        if (std::any_of(weights.begin(), weights.end(), [](float w) { return w != 0.0f; })) { std::fill(weights.begin(), weights.end(), 0.0f); changed = true; }
+    }
+    if (!changed) return;
+    morphDirty = false;
+
+    for (size_t s = 0; s < shapes.size(); s++)
+    {
+        if (morphShapeOffset[s] == UINT32_MAX) continue;
+        const Shape& shape = shapes[s];
+        Vertex* out = morphVertices.data() + morphShapeOffset[s];
+        const Vertex* in = base.data() + shape.vertexOffset;
+        size_t count = shape.vertices.size();
+        for (size_t v = 0; v < count; v++) { out[v].x = in[v].x; out[v].y = in[v].y; out[v].z = in[v].z; }
+
+        auto it = morphWeights.find(shape.morphMesh);
+        if (it == morphWeights.end()) continue;
+        const auto& weights = it->second;
+        for (size_t t = 0; t < shape.morphTargets.size() && t < weights.size(); t++)
+        {
+            float w = weights[t];
+            if (std::fabs(w) < 1e-4f) continue;
+            const MorphTarget& target = shape.morphTargets[t];
+            for (size_t k = 0; k < target.indices.size(); k++)
+            {
+                uint32_t v = target.indices[k];
+                if (v >= count) continue;
+                out[v].x += target.deltas[k].x * w;
+                out[v].y += target.deltas[k].y * w;
+                out[v].z += target.deltas[k].z * w;
+            }
+        }
+    }
+    bgfx::update(morphVertexBuffer, 0, bgfx::copy(morphVertices.data(), static_cast<uint32_t>(morphVertices.size() * sizeof(Vertex))));
 }
 
 void setBattleActorCharacter(const void* actorKey, ExternalMeshInstance* character, ExternalMeshInstance* owner)

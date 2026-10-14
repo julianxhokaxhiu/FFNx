@@ -52,6 +52,13 @@ enum class ShapeAlphaMode
     BLEND_MODE
 };
 
+// A morph target (blend shape) of a part: the vertices it moves and by how much (most targets move a few)
+struct MorphTarget
+{
+    std::vector<uint32_t> indices;
+    std::vector<vector3<float>> deltas;
+};
+
 struct Shape
 {
     std::vector<nvertex> vertices;
@@ -75,6 +82,12 @@ struct Shape
     std::optional<float> roughness, metallic, specular, roughnessScale, metallicScale, specularScale, normalStrength, aoStrength;
     bool hasShadingOverrides() const { return roughness || metallic || specular || roughnessScale || metallicScale || specularScale || normalStrength || aoStrength; }
     float baseColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f }; // The material colour (its glTF factor times the config's tint)
+
+    // Morph targets, in the glTF mesh's target order; morphMesh is the glTF mesh the part belongs to (the animation's
+    // weights channel names it) and vertexOffset the part's first vertex in the model's GPU buffer
+    std::vector<MorphTarget> morphTargets;
+    int morphMesh = -1;
+    uint32_t vertexOffset = 0;
 
     // As the glTF has them, before the config file's settings (which can be reloaded while the game runs)
     std::string materialName;
@@ -137,9 +150,20 @@ struct KeyFrame
     std::vector<float> translationTimes;
 };
 
+// A glTF mesh's morph target weights over an animation: targetCount values per key
+struct MorphTrack
+{
+    std::vector<float> times;
+    std::vector<float> values;
+    size_t targetCount = 0;
+};
+
 struct Animation
 {
     std::vector<KeyFrame> keyFrames;
+
+    // Morph target weights per glTF mesh index, when the animation drives them
+    std::map<int, MorphTrack> morphTracks;
 
     // Keys of the skeleton's root node (the non-joint parent of the top joint), if the file animates it
     std::vector<vector3<float>> rootTranslation;
@@ -216,6 +240,11 @@ public:
 
     // Re-reads the config file's material settings when the file changed on disk (checked about once a second)
     void refreshMaterialSettings();
+
+    // The GPU vertices (rest pose) of every part, in part order (see Shape::vertexOffset)
+    const std::vector<Vertex>& gpuVertices() const { return vertexBufferData; }
+    bool hasMorphTargets = false;
+    std::vector<std::vector<std::string>> morphTargetNames; // Per glTF mesh index
     void clearExternalMesh3dBuffers();
     void unloadExternalMesh();
     void destroyFieldResources();
@@ -291,6 +320,15 @@ public:
     // uploads them and lists the parts farthest first
     void sortBlendTriangles(const struct matrix* palette, size_t jointCount, const struct matrix& worldView, std::vector<BlendShapeDraw>& out);
     bgfx::DynamicIndexBufferHandle sortedBlendIndexBuffer = BGFX_INVALID_HANDLE;
+
+    // Morph targets: the parts that have them are drawn from this character's own copy of their vertices, moved by
+    // the weights the current animation gives them (the shared model keeps the rest pose)
+    void updateMorphs(const Animation& anim, const AnimationPosition& position);
+    bgfx::DynamicVertexBufferHandle morphVertexBuffer = BGFX_INVALID_HANDLE;
+    std::vector<uint32_t> morphShapeOffset; // Per part: its first vertex in morphVertexBuffer, or UINT32_MAX
+    std::vector<Vertex> morphVertices;
+    std::map<int, std::vector<float>> morphWeights; // Per glTF mesh index, this frame
+    bool morphDirty = true;
 
     float getAnimationClock(const std::string& animName);
     bool getRootMotionMatrix(const std::string& animName, float frame, int frameCount, float clockSeconds, float translationScale, struct matrix* outMatrix);
