@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 const char *ff8_get_battle_command_name(int command_id);
 
 // AddMoreMagic: support kernel.bin files whose Magic section (section 1)
@@ -25,3 +27,6 @@ const char *ff8_get_battle_command_name(int command_id);
 // versions are skipped. Call once from ff8_init_hooks(). Completely inert
 // while the loaded kernel.bin is vanilla-sized.
 void ff8_kernel_magic_init();
+
+// Existing magic-name anchor, shared with the ability extension.
+uint32_t ff8_kernel_magic_name_getter();

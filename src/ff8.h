@@ -1119,6 +1119,16 @@ struct ff8_field_fade {
 	int16_t color_to[3];
 };
 
+struct ff8_gf_ability_entry {
+	uint8_t id;
+	uint8_t slot;
+	uint8_t state;
+	uint8_t group;
+	uint8_t required_ap;
+	uint8_t earned_ap;
+	uint8_t unused[2];
+};
+
 // One held spell of a battle character: id and how many are stocked.
 struct ff8_field_magic_slot {
 	uint8_t id;
