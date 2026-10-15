@@ -41,6 +41,7 @@
 #include "ff8/battle/ai.h"
 #include "ff8/field/movie.h"
 #include "ff8/kernel_magic.h"
+#include "ff8/kernel_ability.h"
 #include "ff8/battle/monsters.h"
 #include "ff8/remaster.h"
 #include "ff8/menu/volume.h"
@@ -2757,6 +2758,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
 	// #####################
 	ff8_kernel_magic_init();
+	ff8_kernel_ability_init();
 
 	// #####################
 	// Unlock unused battle monster models c0m144-c0m199
