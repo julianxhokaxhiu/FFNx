@@ -716,6 +716,15 @@ struct ff8_menu_config_input_keymap {
 	uint8_t padd_7;
 };
 
+// Menu task running menu_config_controller and menu_config_render
+struct ff8_menu_config_task {
+	uint8_t gap1[16];
+	uint16_t state; // field_10, 3 while the cursor is in the list
+	uint8_t gap2[22];
+	int8_t row; // field_28, cursor position in menu_config_input_desc
+	uint8_t gap3[79];
+};
+
 struct ff8_draw_menu_sprite_texture_infos {
 	uint32_t field_0;
 	uint32_t field_4;
@@ -1297,6 +1306,9 @@ struct ff8_externals
 	uint32_t menu_config_render_submenu;
 	ff8_menu_config_input *menu_config_input_desc;
 	ff8_menu_config_input_keymap *menu_config_input_desc_keymap;
+	uint32_t menu_config_render_list_sub_4EEB70;
+	uint16_t *menu_config_input_count;
+	void (*menu_play_sound_sub_4B92A0)(int);
 	uint32_t menu_junkshop_sub_4EA890;
 	uint32_t menu_shop_sub_4EBE40;
 	uint32_t main_menu_render_sub_4E5550;
@@ -1461,6 +1473,7 @@ struct ff8_externals
 	uint32_t stop_music;
 	uint32_t set_midi_volume;
 	BOOL (*dmusicperf_set_volume_sub_46C6F0)(uint32_t, int32_t);
+	BOOL (*dmusicperf_set_master_volume_sub_46F530)(int32_t);
 	uint32_t sub_46C050;
 	uint32_t sub_501B60;
 	uint32_t pause_music_and_sfx;

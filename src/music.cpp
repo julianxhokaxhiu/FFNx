@@ -1183,6 +1183,28 @@ uint32_t ff8_set_music_volume_intro_credits(uint32_t channel, uint32_t volume)
 	return 1;
 }
 
+// MIDI music: external_music_volume goes on top of the DirectMusic master volume set by the game (in hundredths of dB)
+int32_t ff8_midi_master_volume = 0;
+
+BOOL ff8_dmusicperf_set_master_volume(int32_t volume)
+{
+	if (trace_all || trace_music) ffnx_trace("%s: volume=%d\n", __func__, volume);
+
+	ff8_midi_master_volume = volume;
+
+	// Same as the external music: 50% is -6 dB, 0% is silence
+	if (external_music_volume <= 0) volume = -10000;
+	else if (external_music_volume < 100) volume = std::max<int32_t>(volume + int32_t(2000 * log10(external_music_volume / 100.0)), -10000);
+
+	return ff8_externals.dmusicperf_set_master_volume_sub_46F530(volume);
+}
+
+void ff8_apply_music_master_volume()
+{
+	if (use_external_music) nxAudioEngine.setMusicMasterVolume(external_music_volume / 100.0f);
+	else ff8_dmusicperf_set_master_volume(ff8_midi_master_volume);
+}
+
 void music_init()
 {
 	if (!ff8)
@@ -1302,5 +1324,10 @@ void music_init()
 				patch_code_byte(ff7_externals.field_music_helper + 0xD1 + 2, 0x00);
 			}
 		}
+	}
+	else if (ff8)
+	{
+		replace_call(uint32_t(ff8_externals.dmusicperf_set_volume_sub_46C6F0) + 0x48, ff8_dmusicperf_set_master_volume); // MIDI volume set right away
+		replace_call(ff8_externals.volume_music_update + 0x98, ff8_dmusicperf_set_master_volume); // MIDI volume fade step
 	}
 }

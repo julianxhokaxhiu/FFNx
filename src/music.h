@@ -25,4 +25,5 @@
 
 void handle_mainmenu_playback();
 void ff7_play_midi(uint32_t music_id);
+void ff8_apply_music_master_volume();
 void music_init();
