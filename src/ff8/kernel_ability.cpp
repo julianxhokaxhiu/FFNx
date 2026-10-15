@@ -44,16 +44,13 @@
 // Data sections, 0-based as the kernel.bin header lists them.
 #define KERNEL_FIRST_ABIL_SEC      11
 #define KERNEL_AFTER_ABIL_SEC      18
-// The junction menu builds its candidate lists into two fixed buffers that sit
-// immediately before the GF summary table - room for 20 command entries and 48
-// equippable-passive ones, against 19 and 44 in vanilla. Both move FFNx-side so
-// the groups they list can use the whole id space.
+// Vanilla junction lists sit before the GF summary table, with room for 20
+// command and 48 passive entries. Expanded lists need separate storage.
 #define VANILLA_COMMAND_CANDIDATES 20
 #define CANDIDATE_ENTRY_SIZE       2      // {u8 ability id, u8 group}
 // A learned menu ability is one bit of a single dword (RebuildLearnedMenuAbilityMask).
 #define MAX_MENU_ABILITIES         32
 #define VANILLA_MENU_ABILITIES     24
-// Groups whose first id the standalone checks below care about.
 #define GROUP_COMMAND              1
 #define GROUP_STAT_PERCENT         2
 #define GROUP_CHARACTER            3
@@ -61,14 +58,10 @@
 #define GROUP_GF                   5
 #define GROUP_MENU                 6
 
-// Vanilla first id of each group.
 static const uint8_t vanilla_group_first[ABILITY_GROUP_COUNT] = { 0, 20, 39, 58, 78, 83, 92 };
 
-// Where these functions sit relative to BuildGFAbilityList, measured on every retail
-// database. The seven builds fall into three layouts: US, the other Latin ones (DE, ES,
-// FR, IT - identical to US except that the 0x4E7-0x4E8 cluster sits 0x40 higher), and
-// the two Japanese ones. Everything INSIDE a function is at the same offset on all of
-// them, the learned popup's compare chain excepted, so that chain is layout data too.
+// Function offsets are relative to BuildGFAbilityList. US, other Latin builds
+// and Japanese builds use different layouts; popup instruction offsets also vary.
 enum ability_layout { ABILITY_LAYOUT_US, ABILITY_LAYOUT_LATIN, ABILITY_LAYOUT_JP };
 
 struct ability_layout_offsets
@@ -92,14 +85,59 @@ struct ability_layout_offsets
 
 static const ability_layout_offsets ability_layouts[] = {
 	// US
-	{ 0x3CA6, 0x2550, 0x26E0, -0x50, -0x6890, 0x27A60, 0x2DAF0, 0x2DE40, 0x335A0, 0x359D0, 0x360B0,
-	  0x3AAB0, 0x3AC30, 0x3BCF0, { 0x059, 0x068, 0x077, 0x086, 0x095, 0x0A6 } },
+	{
+		.menu_mask_call = 0x3CA6,
+		.seal_row = 0x2550,
+		.seal_list = 0x26E0,
+		.group_from_id = -0x50,
+		.learned_popup = -0x6890,
+		.draw_learn_status = 0x27A60,
+		.validate_passives = 0x2DAF0,
+		.junction_menu = 0x2DE40,
+		.chara_ability_lists = 0x335A0,
+		.junction_ability_page = 0x359D0,
+		.gf_summary = 0x360B0,
+		.ability_entry_ptr = 0x3AAB0,
+		.call_shop_list = 0x3AC30,
+		.draw_list_row = 0x3BCF0,
+		.popup_chain = { 0x059, 0x068, 0x077, 0x086, 0x095, 0x0A6 },
+	},
 	// DE, ES, FR, IT
-	{ 0x3CA6, 0x2550, 0x26E0, -0x50, -0x6890, 0x27A60, 0x2DAF0, 0x2DE40, 0x335A0, 0x359D0, 0x360B0,
-	  0x3AAF0, 0x3AC70, 0x3BD30, { 0x059, 0x068, 0x077, 0x086, 0x095, 0x0A6 } },
+	{
+		.menu_mask_call = 0x3CA6,
+		.seal_row = 0x2550,
+		.seal_list = 0x26E0,
+		.group_from_id = -0x50,
+		.learned_popup = -0x6890,
+		.draw_learn_status = 0x27A60,
+		.validate_passives = 0x2DAF0,
+		.junction_menu = 0x2DE40,
+		.chara_ability_lists = 0x335A0,
+		.junction_ability_page = 0x359D0,
+		.gf_summary = 0x360B0,
+		.ability_entry_ptr = 0x3AAF0,
+		.call_shop_list = 0x3AC70,
+		.draw_list_row = 0x3BD30,
+		.popup_chain = { 0x059, 0x068, 0x077, 0x086, 0x095, 0x0A6 },
+	},
 	// JP, JP_NV
-	{ 0x3A7D, 0x24E0, 0x2670, -0x50, -0x6950, 0x278E0, 0x2D890, 0x2DBE0, 0x33340, 0x35700, 0x35DE0,
-	  0x3A6F0, 0x3A870, 0x3B900, { 0x041, 0x04E, 0x05D, 0x06C, 0x07B, 0x08C } },
+	{
+		.menu_mask_call = 0x3A7D,
+		.seal_row = 0x24E0,
+		.seal_list = 0x2670,
+		.group_from_id = -0x50,
+		.learned_popup = -0x6950,
+		.draw_learn_status = 0x278E0,
+		.validate_passives = 0x2D890,
+		.junction_menu = 0x2DBE0,
+		.chara_ability_lists = 0x33340,
+		.junction_ability_page = 0x35700,
+		.gf_summary = 0x35DE0,
+		.ability_entry_ptr = 0x3A6F0,
+		.call_shop_list = 0x3A870,
+		.draw_list_row = 0x3B900,
+		.popup_chain = { 0x041, 0x04E, 0x05D, 0x06C, 0x07B, 0x08C },
+	},
 };
 
 static const ability_layout_offsets &layout_of(int build)
@@ -147,7 +185,7 @@ static struct
 	uint32_t fn_gf_summary;         // Menu_BuildGFJunctionSummary
 	uint32_t fn_draw_list_row;      // Menu_DrawAbilityListRow
 	uint32_t fn_validate_passives;  // Menu_ValidateCharaPassiveAbilities
-	uint32_t fn_chara_ability_lists;// Menu_BuildCharaAbilityMaskAndLists
+	uint32_t fn_chara_ability_lists; // Menu_BuildCharaAbilityMaskAndLists
 	uint32_t fn_junction_ability_page; // the junction menu's ability page
 	uint32_t fn_ability_entry_ptr;  // id -> entry pointer, called by the refine menu
 	uint32_t fn_call_shop_list;     // the Call Shop menu's ability list
@@ -359,10 +397,7 @@ static uint32_t ability_table_base()
 	return (uint32_t)&ff8_ability_table[0][0];
 }
 
-// Resolve every address this file patches. The ones marked as deltas are
-// measured on the US 1.2 build; a delta that does not hold on some other build
-// makes the validation pass below fail, which disables the feature instead of
-// patching the wrong instruction.
+// Resolve feature-private addresses from the existing FFNx anchors.
 static void ff8_kernel_ability_find_externals()
 {
 	ability_ext.kernel_buffer = uint32_t(ff8_externals.unk_1CF3E48);
@@ -399,9 +434,7 @@ static void ff8_kernel_ability_find_externals()
 			memcpy(chain.offset, layout.popup_chain, sizeof(chain.offset));
 
 	ability_ext.fn_junction_ability_page = list ? list + layout.junction_ability_page : 0;
-	// Two reads IDA renders as a bare number rather than as the array symbol, so
-	// they are easy to miss: a twelve-byte "id -> entry pointer" helper the refine
-	// menu calls, and the Call Shop menu's own availability check.
+	// Refine and Call Shop use their own ability lookup helpers.
 	ability_ext.fn_ability_entry_ptr = list ? list + layout.ability_entry_ptr : 0;
 	ability_ext.fn_call_shop_list = list ? list + layout.call_shop_list : 0;
 	ability_ext.fn_menu_list_refresh = ability_ext.fn_call_shop_list ? ability_ext.fn_call_shop_list - 0x110 : 0;
@@ -432,8 +465,7 @@ static void ff8_kernel_ability_find_externals()
 	ability_ext.group_table = list ? get_absolute_value(list, 0x28A) : 0;
 }
 
-// Check every site before touching any of them: a bad anchor must disable the
-// feature, never half-patch the exe.
+// Validate all required sites before installing any patch.
 static bool ff8_kernel_ability_validate()
 {
 	uint32_t lo = ability_ext.k_ability, hi = ability_array_end();
@@ -598,16 +630,12 @@ static void ff8_rebuild_learned_menu_abilities()
 	*ability_ext.learned_menu_mask = mask;
 }
 
-void ff8_kernel_ability_arm()
+static void ff8_patch_ability_data()
 {
-	if (ff8_ability_armed || !ff8_ability_supported) return;
-	ff8_ability_armed = true;
-
 	uint32_t k_ability = ability_ext.k_ability;
 	uint32_t table = ability_table_base();
 
-	// Every read of the array moves to the FFNx-side table, keeping whatever
-	// field offset the instruction had.
+	// Preserve each field offset when redirecting reads to the FFNx table.
 	for (const ability_site &site : array_sites)
 	{
 		uint32_t operand = *site.owner + site.offset;
@@ -615,16 +643,27 @@ void ff8_kernel_ability_arm()
 		patch_code_dword(operand, (DWORD)(table + (*(uint32_t *)operand - k_ability)));
 	}
 
-	// The GF group's bounds are ids, not a fixed delta: both point at the
-	// stat_to_increase byte (+6) of a group's first entry.
+	// AP reads use kernel base + group offset + 8 * (id - first ID).
+	// Rebase the kernel pointer so the group table still indexes our records.
+	for (const ability_site &site : ap_base_sites)
+	{
+		uint32_t operand = *site.owner + site.offset;
+
+		patch_code_dword(operand, (DWORD)(table + 4 - ABILITY_BLOCK_OFFSET));
+	}
+}
+
+static void ff8_patch_ability_groups()
+{
+	uint32_t table = ability_table_base();
+
+	// GF effect bounds point to the stat_to_increase field (+6).
 	uint32_t low = ability_ext.fn_gf_battle_stats + SITE_GF_RANGE_LOW;
 	uint32_t high = ability_ext.fn_gf_battle_stats + SITE_GF_RANGE_HIGH;
 
 	patch_code_dword(low, (DWORD)(table + ff8_group_first[GROUP_GF] * ABILITY_ENTRY_SIZE + 6));
 	patch_code_dword(high, (DWORD)(table + ff8_group_first[GROUP_MENU] * ABILITY_ENTRY_SIZE + 6));
 
-	// Where each group now starts: the inlined chains first, then the
-	// standalone checks.
 	for (const chain_sites &chain : group_chains)
 	{
 		for (int group = 1; group < ABILITY_GROUP_COUNT; ++group)
@@ -641,6 +680,15 @@ void ff8_kernel_ability_arm()
 		patch_code_byte(*site.owner + site.offset + 2, ff8_group_first[site.group] + site.delta);
 	}
 
+	for (int group = 0; group < ABILITY_GROUP_COUNT; ++group)
+	{
+		patch_code_word(ability_ext.group_table + 4 * group, (WORD)(ABILITY_BLOCK_OFFSET + ABILITY_ENTRY_SIZE * ff8_group_first[group]));
+		patch_code_byte(ability_ext.group_table + 4 * group + 2, ff8_group_first[group]);
+	}
+}
+
+static void ff8_patch_ability_menus()
+{
 	replace_function(ability_ext.fn_menu_mask, (void *)ff8_rebuild_learned_menu_abilities);
 
 	for (const ability_site &site : menu_candidate_sites)
@@ -655,19 +703,6 @@ void ff8_kernel_ability_arm()
 		patch_code_byte(*sites.owner + sites.count + 2, (unsigned char)(ff8_ability_count - ff8_group_first[GROUP_MENU]));
 	}
 
-	// The AP reads go through the group table: base + row offset + size * (id -
-	// first id). With row offset == block offset + 8 * first id, rebasing the
-	// table on ours keeps that arithmetic exact for every group.
-	for (const ability_site &site : ap_base_sites)
-	{
-		uint32_t operand = *site.owner + site.offset;
-
-		patch_code_dword(operand, (DWORD)(table + 4 - ABILITY_BLOCK_OFFSET));
-	}
-
-	// Both candidate lists move to buffers wide enough for the whole id space, so
-	// the groups they list are no longer capped by what fits in front of the GF
-	// summary table behind them.
 	for (const candidate_site &site : candidate_sites)
 	{
 		uint32_t from, to;
@@ -678,13 +713,16 @@ void ff8_kernel_ability_arm()
 
 		patch_code_dword(operand, (DWORD)(to + (*(uint32_t *)operand - from)));
 	}
+}
 
-	// Every group table row follows its group.
-	for (int group = 0; group < ABILITY_GROUP_COUNT; ++group)
-	{
-		patch_code_word(ability_ext.group_table + 4 * group, (WORD)(ABILITY_BLOCK_OFFSET + ABILITY_ENTRY_SIZE * ff8_group_first[group]));
-		patch_code_byte(ability_ext.group_table + 4 * group + 2, ff8_group_first[group]);
-	}
+void ff8_kernel_ability_arm()
+{
+	if (ff8_ability_armed || !ff8_ability_supported) return;
+	ff8_ability_armed = true;
+
+	ff8_patch_ability_data();
+	ff8_patch_ability_groups();
+	ff8_patch_ability_menus();
 }
 
 bool ff8_kernel_ability_section_may_grow(int section)
@@ -726,9 +764,7 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 	// Vanilla files do not resolve or patch ability functions.
 	if (total == VANILLA_ABILITY_COUNT && !memcmp(first, vanilla_group_first, sizeof(first))) return false;
 
-	// First extended file seen: only now is it worth resolving the addresses and
-	// checking every site, so a build this does not support stays quiet for anyone
-	// who never mods abilities.
+	// Resolve and validate patches only when an extended kernel is loaded.
 	if (!ff8_ability_checked)
 	{
 		ff8_ability_checked = true;
@@ -783,8 +819,6 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 
 void ff8_kernel_ability_init()
 {
-	// Nothing is resolved or patched here. The feature wakes up in
-	// ff8_kernel_ability_read(), and only for a kernel.bin whose ability sections
-	// are not the vanilla 116; AddMoreMagic's load hook is what calls it.
+	// The shared kernel loader activates patches only for extended ability sections.
 	memcpy(ff8_group_first, vanilla_group_first, sizeof(ff8_group_first));
 }
