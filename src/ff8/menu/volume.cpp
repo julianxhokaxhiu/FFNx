@@ -23,6 +23,7 @@
 #include "../engine.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <string>
 
@@ -60,6 +61,10 @@ static const sound_texts translations[] = {
 
 static long *volumes[SOUND_COUNT] = { nullptr, &external_music_volume, &external_voice_volume, &external_ambient_volume, &ffmpeg_video_volume };
 
+// Without external music the game plays MIDI music, its volume is not in FFNx.toml and starts at 100% like in the game
+static long midi_volume = 100;
+static int32_t game_midi_volume = 0; // DirectMusic master volume set by the game, in hundredths of dB
+
 static std::string texts[SOUND_COUNT + 1][2]; // Name and help
 static ff8_menu_config_input screen_rows[SOUND_COUNT + 1]; // And the end row
 static uint16_t screen_row_count = 0;
@@ -76,13 +81,27 @@ static void swap_screen_rows()
 	for (int i = SOUND_MUSIC; i < SOUND_COUNT; ++i) std::swap(screen_volumes[i], config[FFNX_CONFIG_BYTES[i - SOUND_MUSIC]]);
 }
 
+// The Music volume goes on top of the game one, like the external music: 50% is -6 dB, 0% is silence
+static BOOL ff8_menu_volume_set_midi_volume(int32_t volume)
+{
+	game_midi_volume = volume;
+
+	if (midi_volume <= 0) volume = -10000;
+	else if (midi_volume < 100) volume = std::max<int32_t>(volume + int32_t(2000 * log10(midi_volume / 100.0)), -10000);
+
+	return ff8_externals.dmusicperf_set_master_volume_sub_46F530(volume);
+}
+
 static void set_volume(int i, long volume)
 {
 	*volumes[i] = volume;
 
 	switch (i)
 	{
-	case SOUND_MUSIC: nxAudioEngine.setMusicMasterVolume(volume / 100.0f); break;
+	case SOUND_MUSIC:
+		if (use_external_music) nxAudioEngine.setMusicMasterVolume(volume / 100.0f);
+		else ff8_menu_volume_set_midi_volume(game_midi_volume);
+		break;
 	case SOUND_VOICE: nxAudioEngine.setVoiceMasterVolume(volume / 100.0f); break;
 	case SOUND_AMBIENT: nxAudioEngine.setAmbientMasterVolume(volume / 100.0f); break;
 	// Movies read ffmpeg_video_volume when they start
@@ -180,8 +199,8 @@ void ff8_menu_volume_init()
 
 	for (int i = SOUND_MUSIC; i < SOUND_COUNT; ++i)
 	{
-		// External layers only, the game's own MIDI music and movie player stay vanilla
-		if ((i == SOUND_MUSIC && !use_external_music) || (i == SOUND_MOVIE && !enable_ffmpeg_videos)) continue;
+		// Without FFmpeg the game plays the movies itself
+		if (i == SOUND_MOVIE && !enable_ffmpeg_videos) continue;
 
 		ff8_menu_config_input &row = screen_rows[screen_row_count++];
 
@@ -203,4 +222,12 @@ void ff8_menu_volume_init()
 	replace_call(ff8_externals.menu_config_render + 0x125, ff8_menu_volume_render_list);
 	replace_call(ff8_externals.menu_config_controller + 0x255, ff8_menu_volume_get_text); // Help text
 	replace_call(ff8_externals.menu_config_render_list_sub_4EEB70 + 0x3D3, ff8_menu_volume_get_text); // Row names
+
+	// Without external music, Music sets the volume of the game MIDI music
+	if (!use_external_music)
+	{
+		volumes[SOUND_MUSIC] = &midi_volume;
+		replace_call(uint32_t(ff8_externals.dmusicperf_set_volume_sub_46C6F0) + 0x48, ff8_menu_volume_set_midi_volume); // MIDI volume set right away
+		replace_call(ff8_externals.volume_music_update + 0x98, ff8_menu_volume_set_midi_volume); // MIDI volume fade step
+	}
 }
