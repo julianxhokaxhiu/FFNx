@@ -17,5 +17,3 @@
 #pragma once
 
 void ff8_menu_volume_init();
-void ff8_menu_volume_load();
-void ff8_menu_volume_save();

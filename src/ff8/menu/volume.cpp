@@ -19,12 +19,10 @@
 #include "../../audio.h"
 #include "../../cfg.h"
 #include "../../common.h"
-#include "../../music.h"
 #include "../../patch.h"
 #include "../engine.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <cstring>
 #include <string>
 
@@ -36,7 +34,6 @@ enum { SOUND_SFX, SOUND_MUSIC, SOUND_VOICE, SOUND_AMBIENT, SOUND_MOVIE, SOUND_CO
 constexpr int CONFIG_SOUND_ROW = 8; // Game sound effects slider
 constexpr int16_t SFX_TEXT_ID = 0x35; // The game checks this id to apply the sound effects volume
 constexpr int16_t FIRST_TEXT_ID = 0x100; // FFNx texts, past the game ones: the screen rows, then the Sound row
-constexpr char VOLUMES_FILE[] = "FFNx.sound.cfg";
 
 // Config bytes for the music, voice, ambient and movie sliders: battle speed, battle message, field message and camera
 constexpr uint16_t FFNX_CONFIG_BYTES[] = { 0, 1, 2, 6 };
@@ -62,12 +59,10 @@ static const sound_texts translations[] = {
 };
 
 static long *volumes[SOUND_COUNT] = { nullptr, &external_music_volume, &external_voice_volume, &external_ambient_volume, &ffmpeg_video_volume };
-static long toml_volumes[SOUND_COUNT] = {};
-static bool volumes_changed = false;
 
 static std::string texts[SOUND_COUNT + 1][2]; // Name and help
 static ff8_menu_config_input screen_rows[SOUND_COUNT + 1]; // And the end row
-static uint16_t screen_row_count = SOUND_COUNT;
+static uint16_t screen_row_count = 0;
 static uint8_t screen_volumes[SOUND_COUNT] = {};
 static bool screen_open = false;
 
@@ -84,57 +79,14 @@ static void swap_screen_rows()
 static void set_volume(int i, long volume)
 {
 	*volumes[i] = volume;
-	volumes_changed = true;
 
 	switch (i)
 	{
-	case SOUND_MUSIC: ff8_apply_music_master_volume(); break;
+	case SOUND_MUSIC: nxAudioEngine.setMusicMasterVolume(volume / 100.0f); break;
 	case SOUND_VOICE: nxAudioEngine.setVoiceMasterVolume(volume / 100.0f); break;
 	case SOUND_AMBIENT: nxAudioEngine.setAmbientMasterVolume(volume / 100.0f); break;
 	// Movies read ffmpeg_video_volume when they start
 	}
-}
-
-// Each volume set in game is saved next to the FFNx.toml value it replaced, so a new value in FFNx.toml (from a launcher) wins
-void ff8_menu_volume_load()
-{
-	for (int i = SOUND_MUSIC; i < SOUND_COUNT; ++i) toml_volumes[i] = *volumes[i];
-
-	FILE *file = fopen(VOLUMES_FILE, "rb");
-
-	if (file == nullptr) return;
-
-	int32_t saved[2]; // FFNx.toml value, volume set in game
-
-	for (int i = SOUND_MUSIC; i < SOUND_COUNT && fread(saved, sizeof(saved), 1, file) == 1; ++i)
-	{
-		if (saved[0] == toml_volumes[i] && saved[1] >= 0 && saved[1] <= 100)
-		{
-			ffnx_info("%s: %s volume %d replaces FFNx.toml value %d\n", VOLUMES_FILE, translations[0].names[i], saved[1], saved[0]);
-			*volumes[i] = saved[1];
-		}
-	}
-
-	fclose(file);
-}
-
-void ff8_menu_volume_save()
-{
-	if (!volumes_changed) return;
-
-	FILE *file = fopen(VOLUMES_FILE, "wb");
-
-	if (file == nullptr) return;
-
-	for (int i = SOUND_MUSIC; i < SOUND_COUNT; ++i)
-	{
-		const int32_t saved[2] = { int32_t(toml_volumes[i]), int32_t(*volumes[i]) };
-
-		fwrite(saved, sizeof(saved), 1, file);
-	}
-
-	fclose(file);
-	volumes_changed = false;
 }
 
 static void ff8_menu_volume_controller(ff8_menu_config_task *task)
@@ -160,7 +112,6 @@ static void ff8_menu_volume_controller(ff8_menu_config_task *task)
 		ff8_externals.menu_play_sound_sub_4B92A0(3); // Back sound
 		task->row = CONFIG_SOUND_ROW;
 		screen_open = false;
-		ff8_menu_volume_save();
 	}
 
 	if (screen_open) swap_screen_rows();
@@ -225,16 +176,21 @@ void ff8_menu_volume_init()
 
 	ff8_menu_config_input &sound_row = ff8_externals.menu_config_input_desc[CONFIG_SOUND_ROW];
 
-	screen_rows[SOUND_SFX] = sound_row; // Game slider
+	screen_rows[screen_row_count++] = sound_row; // Game slider
 
 	for (int i = SOUND_MUSIC; i < SOUND_COUNT; ++i)
 	{
-		screen_rows[i].text_id_name = int16_t(FIRST_TEXT_ID + i);
-		screen_rows[i].type = 0x21; // Slider 0..100
-		screen_rows[i].mask = FFNX_CONFIG_BYTES[i - SOUND_MUSIC]; // Savemap config byte
+		// External layers only, the game's own MIDI music and movie player stay vanilla
+		if ((i == SOUND_MUSIC && !use_external_music) || (i == SOUND_MOVIE && !enable_ffmpeg_videos)) continue;
+
+		ff8_menu_config_input &row = screen_rows[screen_row_count++];
+
+		row.text_id_name = int16_t(FIRST_TEXT_ID + i);
+		row.type = 0x21; // Slider 0..100
+		row.mask = FFNX_CONFIG_BYTES[i - SOUND_MUSIC]; // Savemap config byte
 	}
 
-	screen_rows[SOUND_COUNT].text_id_name = -1; // End of configuration lines
+	screen_rows[screen_row_count].text_id_name = -1; // End of configuration lines
 
 	sound_row.text_id_name = int16_t(FIRST_TEXT_ID + SOUND_COUNT); // "Sound"
 	sound_row.type = 6; // Label, OK opens the Sound screen

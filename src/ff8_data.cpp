@@ -644,7 +644,6 @@ void ff8_find_externals()
 	ff8_externals.dmusicperf_set_volume_sub_46C6F0 = (BOOL (*)(uint32_t, int32_t))get_relative_call(ff8_externals.stop_music, 0x22);
 	common_externals.set_midi_volume = get_relative_call(ff8_externals.sm_battle_sound, 0x173); // Formally set_music_volume
 	common_externals.master_midi_volume = (DWORD*)get_absolute_value(uint32_t(ff8_externals.dmusicperf_set_volume_sub_46C6F0), 0x24);
-	ff8_externals.dmusicperf_set_master_volume_sub_46F530 = (BOOL (*)(int32_t))get_relative_call(uint32_t(ff8_externals.dmusicperf_set_volume_sub_46C6F0), 0x48);
 	common_externals.stop_wav = get_relative_call(ff8_externals.stop_music, 0x14);
 	common_externals.stop_midi = get_relative_call(ff8_externals.stop_music, 0x2A);
 

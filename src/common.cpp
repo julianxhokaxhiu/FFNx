@@ -83,7 +83,6 @@
 #include "ff8/ambient.h"
 #include "ff8/file.h"
 #include "ff8/remaster.h"
-#include "ff8/menu/volume.h"
 
 #include "wine.h"
 
@@ -1157,9 +1156,6 @@ void common_cleanup(struct game_obj *game_object)
 			}
 		}
 	}
-
-	// In case the game is closed with the Config Sound screen open
-	if (ff8) ff8_menu_volume_save();
 
 	// Shutdown Steam API
 	if(enable_steam_achievements)
@@ -3438,8 +3434,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 			}
 
 			if (external_music_path.empty()) external_music_path = "data/music/dmusic/ogg";
-			// Before the defaults below, so it compares the FFNx.toml values as written
-			ff8_menu_volume_load();
 			if (external_music_volume < 0) external_music_volume = 100;
 			if (external_sfx_volume < 0) external_sfx_volume = 100;
 			if (external_voice_volume < 0) external_voice_volume = 100;

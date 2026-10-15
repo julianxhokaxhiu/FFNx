@@ -244,8 +244,6 @@ use_external_music = false
 # - FF7 Steam: It will attempt to read it from the ff7sound.cfg file
 # - FF8 2000: It will be set to 100% by default
 # - FF8 Steam: It will be set to 100% by default
-# FF8: It also sets the volume of the game's MIDI music, when use_external_music is false
-# FF8: Config > Sound in game overrides this value, until you change it here
 external_music_volume = -1
 
 #[EXTERNAL MUSIC RESUME]
@@ -309,7 +307,6 @@ external_voice_ext = "ogg"
 # - FF7 Steam: It will be set to 100% by default
 # - FF8 2000: It will be set to 100% by default
 # - FF8 Steam: It will be set to 100% by default
-# FF8: Config > Sound in game overrides this value, until you change it here
 external_voice_volume = -1
 
 #[ENABLE VOICE MUSIC FADE]
@@ -350,7 +347,6 @@ external_ambient_ext = "ogg"
 # - FF7 Steam: It will be set to 100% by default
 # - FF8 2000: It will be set to 100% by default
 # - FF8 Steam: It will be set to 100% by default
-# FF8: Config > Sound in game overrides this value, until you change it here
 external_ambient_volume = -1
 
 ###########################
@@ -372,7 +368,6 @@ enable_ffmpeg_videos = -1
 # - FF7 Steam: It will be set to 100% by default
 # - FF8 2000: It will be set to 100% by default
 # - FF8 Steam: It will be set to 100% by default
-# FF8: Config > Sound in game overrides this value, until you change it here
 ffmpeg_video_volume = -1
 
 #[FFMPEG VIDEO FILE EXTENSION]
