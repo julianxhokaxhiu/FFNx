@@ -32,6 +32,4 @@ Use a new game or a disposable test save when changing IDs. Existing saves store
 
 The extension keeps full ability records in FFNx memory and hands the game its original data-section layout. It also moves the junction and menu candidate buffers. Patch locations are resolved from existing game anchors, with separate Latin and Japanese layout details, and validated before any ability patch is installed. Diagnostics for invalid sections or unexpected game code require `trace_all`.
 
-Native regression tests are documented in [tests/ff8](../../tests/ff8/README.md). Tests exercise retail functions in a private process, including learn lists, names, GF effects and both menu-list builders. IDA-derived checks cover EN, DE, ES, FR, IT, JP and JP_NV; they do not replace a full interactive playthrough of each language.
-
 Install a development runtime as `AF3DN.P` together with its matching shaders and `FFNx_steam_api.dll`. Preserve `FFNx.toml` and back up the previous runtime and kernel.
