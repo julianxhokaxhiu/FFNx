@@ -1073,11 +1073,17 @@ struct ff8_field_state_background {
 
 struct ff8_field_state_other {
 	ff8_field_state_common common;
-	uint8_t gap1[114];
+	uint8_t gap1[8];
+	int32_t position_x; // field_190, 12-bit fraction
+	int32_t position_y; // field_194
+	int32_t position_z; // field_198
+	uint8_t gap1a[94];
 	uint16_t current_triangle_id;
 	uint8_t gap1b[28];
 	int16_t model_id;
-	uint8_t gap2[47];
+	uint8_t gap2[39];
+	uint8_t direction; // field_241
+	uint8_t gap2a[7];
 	uint8_t pushonoff;
 	uint8_t gap3;
 	uint8_t talkonoff;
@@ -1090,9 +1096,27 @@ struct ff8_field_state_other {
 	uint8_t ladderanim2;
 	uint8_t ladderanim3;
 	uint8_t setpc;
-	uint8_t gap5;
+	uint8_t model_index; // field_256, in dword_1DCB340
 	uint8_t setgeta;
 	uint8_t gap6[12];
+};
+
+// What dword_1DCB340 points to, one per field model
+struct ff8_field_model_data {
+	uint8_t gap1[8];
+	void *animation; // field_8, frames of the current animation
+	uint8_t gap2[70];
+	int16_t animation_frame; // field_52, 4-bit fraction
+};
+
+// Set by FADEIN, FADEOUT, DCOLADD..., stepped and drawn by field_fade_sub_47B980
+struct ff8_field_fade {
+	int16_t mode;
+	int16_t value; // fade level, or frame for TCOLADD and FCOLADD
+	int16_t speed; // fade step, or frame count for TCOLADD and FCOLADD
+	int16_t color[3];
+	int16_t color_from[3];
+	int16_t color_to[3];
 };
 
 // One held spell of a battle character: id and how many are stocked.
@@ -1216,6 +1240,7 @@ struct ff8_externals
 	uint32_t sub_4672C0;
 	uint32_t sub_471F70;
 	uint32_t field_fade_transition_sub_472990;
+	uint32_t update_game_time_sub_4701B0;
 	uint32_t sub_45CDD0;
 	uint32_t sub_4767B0;
 	uint32_t (*ctrl_keyboard_actions)();
@@ -1232,6 +1257,12 @@ struct ff8_externals
 	float *flt_1CA9234;
 	int *dword_1CA8A30;
 	uint32_t sub_4789A0;
+	uint32_t field_shake_sub_4765C0;
+	uint32_t field_scroll_sub_475E60;
+	uint32_t field_fade_sub_47B980;
+	uint32_t field_draw_shadows_sub_472F20;
+	ff8_field_fade *field_fade;
+	uint32_t *field_keys_pressed;
 	char (*sub_47CA90)();
 	uint32_t field_update_seed_level_52B140;
 	uint32_t field_update_rinoa_limit_breaks_52B320;
@@ -1476,6 +1507,7 @@ struct ff8_externals
 	uint32_t opcode_mes;
 	uint32_t opcode_ames;
 	uint32_t opcode_amesw;
+	uint32_t opcode_keyon;
 	uint32_t opcode_ramesw;
 	uint32_t opcode_ask;
 	uint32_t opcode_aask;
