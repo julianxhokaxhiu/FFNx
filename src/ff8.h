@@ -1136,10 +1136,17 @@ struct ff8_field_magic_slot {
 	uint8_t unk[3];
 };
 
+struct ff8_character_command_slot {
+	uint8_t command_id;
+	uint8_t menu_flags;
+	uint8_t target_info;
+	uint8_t flags;
+};
+
 struct ff8_char_computed_stats {
 	// The head of the record is the command being set up for this character,
 	// written by linkedStockFieldCharData. Offsets past curr_hp are unchanged.
-	uint8_t battle_command_id;         // 10 = Draw
+	uint8_t battle_command_id;         // 10 = Stock
 	uint8_t command_menu_flags;        // copied from the kernel battle command
 	uint8_t command_target_info;       // copied from the kernel battle command
 	uint8_t stock_flags;               // bit0 targets KO'd, bit1 cannot stock more
@@ -1147,7 +1154,10 @@ struct ff8_char_computed_stats {
 	uint8_t magic_status_window_flags; // copied from the magic entry
 	uint8_t magic_target_info;         // copied from the magic entry
 	uint8_t stock_target_type;         // 0 magic, 1 revive, 2 GF
-	uint8_t unk_08[122];
+	uint8_t unk_08[22];
+	ff8_character_command_slot commands[4]; // +0x1E: Attack/Mug and equipped commands
+	ff8_character_command_slot limit_command; // +0x2E
+	uint8_t unk_32[80];
 	ff8_field_magic_slot magic[32];    // +0x82: the spells this character holds
 	uint8_t unk_122[80];
 	uint16_t curr_hp;

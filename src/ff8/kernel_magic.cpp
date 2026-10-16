@@ -180,7 +180,7 @@ static char *ff8_kernel_text(int section, uint16_t text_offset)
 const char *ff8_get_battle_command_name(int command_id)
 {
 	const uint8_t *entry = ff8_kernel_command_get(command_id);
-	if (!entry) return nullptr;
+	if (!entry || ff8_kernel_command_removed((uint8_t)command_id)) return nullptr;
 	uint16_t text_offset = *(const uint16_t *)entry;
 	if (text_offset == KERNEL_NO_TEXT) return nullptr;
 	return ff8_kernel_text(KERNEL_FIRST_TEXT_SEC, text_offset);
@@ -222,9 +222,9 @@ static char *__cdecl ff8_get_magic_description(int id)
 static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_id)
 {
 	ff8_char_computed_stats *chr = ff8_externals.char_comp_stats_1CFF000.data() + char_slot;
-	const uint8_t *draw_cmd = ff8_kernel_command_get(10); // Draw
+	const uint8_t *draw_cmd = ff8_kernel_command_get(10); // Stock
 
-	chr->battle_command_id = 10; // Draw
+	chr->battle_command_id = 10; // Stock
 	chr->command_menu_flags = draw_cmd[5];
 	chr->command_target_info = draw_cmd[6];
 	chr->stock_flags = 0;
@@ -524,6 +524,8 @@ static int ff8_stand_in_magic_id(const ff8_field_magic_slot *inventory, const ui
 // command that is never a stocked draw.
 static int ff8_call_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
 {
+	if (ff8_kernel_command_removed((uint8_t)command))
+		return ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, command & ~0xFF, 0, variant, target_slot, target_mask, linked);
 	if (ff8_kernel_command_owns((uint8_t)command))
 		return ff8_kernel_command_execute(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 	return ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, command, id, variant, target_slot, target_mask, linked);

@@ -25,3 +25,5 @@ bool ff8_kernel_command_owns(uint8_t command);
 int ff8_kernel_command_execute(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked);
 
 const uint8_t *ff8_kernel_command_get(int command);
+
+bool ff8_kernel_command_removed(uint8_t command);
