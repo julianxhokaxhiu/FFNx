@@ -251,6 +251,7 @@ static const ability_site array_sites[] = {
 // stat_to_increase byte of the first GF and of the first menu ability.
 #define SITE_GF_RANGE_LOW   0x076
 #define SITE_GF_RANGE_HIGH  0x07D
+#define SITE_JUNCTION_LIST_REFRESH 0x5239
 
 // The inlined group chain: six "is the id past the start of group N" compares,
 // in id order, repeated in five functions. The immediate sits at insn + 2.
@@ -598,7 +599,8 @@ static bool ff8_kernel_ability_validate()
 		|| get_absolute_value(builder, 0x059) != (uint32_t)ability_ext.chara_ability_mask + 16
 		|| get_absolute_value(builder, 0x124) != (uint32_t)ability_ext.candidate_counts + 1
 		|| get_absolute_value(builder, 0x074) != vanilla_group_first[GROUP_COMMAND]
-		|| get_absolute_value(builder, 0x0D0) != vanilla_group_first[GROUP_STAT_PERCENT])
+		|| get_absolute_value(builder, 0x0D0) != vanilla_group_first[GROUP_STAT_PERCENT]
+		|| get_relative_call(ability_ext.fn_junction_menu, SITE_JUNCTION_LIST_REFRESH) != ability_ext.fn_equipped_ability_mask)
 	{
 		if (trace_all) ffnx_trace("AddMoreAbility: junction ability list builder is not the vanilla layout.\n");
 		ok = false;
@@ -756,6 +758,8 @@ static void ff8_patch_ability_menus()
 {
 	replace_function(ability_ext.fn_menu_mask, (void *)ff8_rebuild_learned_menu_abilities);
 	replace_function(ability_ext.fn_chara_ability_lists, (void *)ff8_build_chara_ability_lists);
+	// The menu also rebuilds these lists inline before its equipped-mask call.
+	replace_call(ability_ext.fn_junction_menu + SITE_JUNCTION_LIST_REFRESH, (void *)ff8_build_chara_ability_lists);
 
 	for (const ability_site &site : menu_candidate_sites)
 	{
