@@ -22,6 +22,8 @@ The first six sections together can contain at most 127 entries because the menu
 
 Ability sections may grow or shrink; keep entry 0 in the junction section because ID 0 means no ability. The combined count must not exceed **128**: each GF save record has a 128-bit learned-ability mask. The menu group has an additional **32-entry** limit because its learned capabilities use one 32-bit value. Group start IDs must stay below 128; when the menu group is empty, the preceding groups can therefore use at most 127 entries. Adding records changes the IDs of every later record; adding in the middle of a group also changes the IDs of its later entries.
 
+The junction menu builds command candidates from section 13 and passive candidates from sections 14-16, using the current section boundaries. Empty ranges produce no candidates.
+
 Update all ability references to match, especially the 21 learning slots of each GF in section 3. A GF can display at most 22 learned/learnable abilities at once. Adding records does not add learning slots. Names and descriptions belong in the text section linked to their data section; rebuild the file header and text offsets when saving. An editor such as SolomonRing from [FF8UltimateEditor](https://github.com/HobbitDur/FF8UltimateEditor) can maintain these references and offsets.
 
 ## Battle commands

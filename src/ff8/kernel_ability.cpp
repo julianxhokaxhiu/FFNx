@@ -183,6 +183,7 @@ static struct
 	uint32_t fn_draw_list_row;      // Menu_DrawAbilityListRow
 	uint32_t fn_validate_passives;  // Menu_ValidateCharaPassiveAbilities
 	uint32_t fn_chara_ability_lists; // Menu_BuildCharaAbilityMaskAndLists
+	uint32_t fn_equipped_ability_mask; // rebuilds the currently equipped ability mask
 	uint32_t fn_junction_ability_page; // the junction menu's ability page
 	uint32_t fn_ability_entry_ptr;  // id -> entry pointer, called by the refine menu
 	uint32_t fn_call_shop_list;     // the Call Shop menu's ability list
@@ -192,6 +193,9 @@ static struct
 	uint32_t fn_draw_seal_row;      // junction menu ability row, greyed out by map seals
 	uint32_t fn_draw_seal_list;     // junction window command list, greyed out by map seals
 
+	uint8_t *chara_ability_mask;    // learned abilities from the junction menu's selected GFs
+	uint8_t *chara_gf_masks;        // preview GF masks, one per 28-byte menu character record
+	uint8_t *candidate_counts;      // command and passive list sizes
 	uint32_t command_candidates;    // {id, group}[20] the junction menu builds
 	uint32_t passive_candidates;    // {id, group}[48], right behind it
 	uint32_t menu_candidates;       // field menu ability ids, 24 bytes in vanilla
@@ -272,8 +276,6 @@ struct group_bound_site { uint32_t *owner; uint32_t offset; int group; int delta
 static const group_bound_site group_bound_sites[] = {
 	{ &ability_ext.fn_validate_passives,   0x04F, GROUP_STAT_PERCENT, 0, false, "equippable passives start" },
 	{ &ability_ext.fn_validate_passives,   0x054, GROUP_GF,           0, false, "equippable passives end" },
-	{ &ability_ext.fn_chara_ability_lists, 0x0B8, GROUP_STAT_PERCENT, 0, false, "passive candidate list start" },
-	{ &ability_ext.fn_chara_ability_lists, 0x114, GROUP_GF,           0, false, "passive candidate list end" },
 	{ &ability_ext.fn_gf_summary,          0x074, GROUP_COMMAND,      0, false, "junction ability check" },
 	// The battle character setup: equipped abilities become flags and commands.
 	{ &ability_ext.fn_reset_parse_chara,   0x0C2, GROUP_CHARACTER,    0, false, "character abilities start" },
@@ -428,6 +430,14 @@ static void ff8_kernel_ability_find_externals()
 	ability_ext.fn_validate_passives = list ? list + layout.validate_passives : 0;
 	ability_ext.fn_junction_menu = list ? list + layout.junction_menu : 0;
 	ability_ext.fn_chara_ability_lists = list ? list + layout.chara_ability_lists : 0;
+	if (ability_ext.fn_chara_ability_lists)
+	{
+		uint32_t builder = ability_ext.fn_chara_ability_lists;
+		ability_ext.chara_ability_mask = (uint8_t *)get_absolute_value(builder, 0x00A);
+		ability_ext.chara_gf_masks = (uint8_t *)get_absolute_value(builder, 0x025);
+		ability_ext.candidate_counts = (uint8_t *)get_absolute_value(builder, 0x0CB);
+		ability_ext.fn_equipped_ability_mask = get_relative_call(builder, 0x128);
+	}
 	ability_ext.fn_gf_summary = list ? list + layout.gf_summary : 0;
 	ability_ext.fn_draw_list_row = list ? list + layout.draw_list_row : 0;
 
@@ -582,6 +592,18 @@ static bool ff8_kernel_ability_validate()
 		}
 	}
 
+	uint32_t builder = ability_ext.fn_chara_ability_lists;
+	if (!ability_ext.chara_ability_mask || !ability_ext.chara_gf_masks || !ability_ext.candidate_counts || !ability_ext.fn_equipped_ability_mask
+		|| get_absolute_value(builder, 0x048) != (uint32_t)ability_ext.chara_ability_mask
+		|| get_absolute_value(builder, 0x059) != (uint32_t)ability_ext.chara_ability_mask + 16
+		|| get_absolute_value(builder, 0x124) != (uint32_t)ability_ext.candidate_counts + 1
+		|| get_absolute_value(builder, 0x074) != vanilla_group_first[GROUP_COMMAND]
+		|| get_absolute_value(builder, 0x0D0) != vanilla_group_first[GROUP_STAT_PERCENT])
+	{
+		if (trace_all) ffnx_trace("AddMoreAbility: junction ability list builder is not the vanilla layout.\n");
+		ok = false;
+	}
+
 	// The command list holds 20 entries and the passive one starts right behind it.
 	if (ability_ext.passive_candidates - ability_ext.command_candidates
 			!= VANILLA_COMMAND_CANDIDATES * CANDIDATE_ENTRY_SIZE)
@@ -703,9 +725,37 @@ static void ff8_patch_ability_groups()
 	}
 }
 
+static uint8_t ff8_build_ability_candidates(uint8_t (*out)[CANDIDATE_ENTRY_SIZE], int first, int end)
+{
+	uint8_t count = 0;
+	for (int id = first; id < end; ++id)
+	{
+		if (!(ability_ext.chara_ability_mask[id / 8] & (1u << (id % 8)))) continue;
+		out[count][0] = id;
+		out[count++][1] = ((int (*)(int))ability_ext.fn_group_from_id)(id);
+	}
+	return count;
+}
+
+static int ff8_build_chara_ability_lists(int character)
+{
+	memset(ability_ext.chara_ability_mask, 0, 16);
+	uint16_t junctioned_gfs = *(uint16_t *)(ability_ext.chara_gf_masks + 28 * character);
+	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
+	{
+		if (!(junctioned_gfs & (1u << gf))) continue;
+		for (int byte = 0; byte < 16; ++byte)
+			ability_ext.chara_ability_mask[byte] |= ff8_externals.savemap->gfs[gf].complete_abilities[byte];
+	}
+	ability_ext.candidate_counts[0] = ff8_build_ability_candidates(ff8_command_candidates, ff8_group_first[GROUP_COMMAND], ff8_group_first[GROUP_STAT_PERCENT]);
+	ability_ext.candidate_counts[1] = ff8_build_ability_candidates(ff8_passive_candidates, ff8_group_first[GROUP_STAT_PERCENT], ff8_group_first[GROUP_GF]);
+	return ((int (*)(int))ability_ext.fn_equipped_ability_mask)(character);
+}
+
 static void ff8_patch_ability_menus()
 {
 	replace_function(ability_ext.fn_menu_mask, (void *)ff8_rebuild_learned_menu_abilities);
+	replace_function(ability_ext.fn_chara_ability_lists, (void *)ff8_build_chara_ability_lists);
 
 	for (const ability_site &site : menu_candidate_sites)
 	{
