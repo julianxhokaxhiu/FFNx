@@ -43,6 +43,7 @@
 - Core: Fix crash when entering battle in JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/1022 )
 - Core: Support extended kernel.bin abilities (up to 128), including GF learning and menu abilities, [see manual](docs/ff8/kernel_abilities.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1016 )
 - Core: Support extended kernel.bin abilities (up to 128), battle commands (up to 176) and command ability data (up to 255), [see manual](docs/ff8/kernel_abilities.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1016 )
+- Core: Support extended kernel.bin abilities (up to 128), battle commands (up to 176) and command ability data (up to 255), including ability removal and reserved command slots, [see manual](docs/ff8/kernel_abilities.md) ( https://github.com/julianxhokaxhiu/FFNx/pull/1016 )
 - Core: Support kernel.bin Magic sections beyond the vanilla 57 spells, unlocking ids 57-63 and 96-255 (64-95 reserved for GFs) ( https://github.com/julianxhokaxhiu/FFNx/pull/956 )
 - Core: Unlock unused battle monster models c0m144-c0m199 (EN/FR/DE/IT/SP/JP), selectable via `enemy_com_value` 160-215 in scene.out ( https://github.com/julianxhokaxhiu/FFNx/pull/955 )
 - Core: Add an Esc menu to return to the game, restart it or exit it ( https://github.com/julianxhokaxhiu/FFNx/pull/1019 )

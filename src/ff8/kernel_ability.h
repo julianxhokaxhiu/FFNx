@@ -25,8 +25,8 @@
 // savemap's per-GF learned mask is 128 bits, so the array can reach 128
 // entries - 12 more than vanilla - with no save format change.
 //
-// Any of the seven may grow, as long as the total stays within 128 and the GF
-// ability group still starts at id 64 or above. Completely inert while the
+// The sections may grow or shrink within 128 IDs; ability zero remains reserved.
+// GF effects scan all 128 learned bits. Completely inert while the
 // loaded kernel.bin is vanilla.
 //
 // Shares AddMoreMagic's kernel.bin load hook: the exe is handed a

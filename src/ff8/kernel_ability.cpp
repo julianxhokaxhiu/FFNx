@@ -36,9 +36,6 @@
 #define MAX_ABILITY_COUNT          128
 #define VANILLA_ABILITY_COUNT      116
 #define ABILITY_GROUP_COUNT        7
-// computeGFBattleStats only walks learned bits 64..127, so the GF ability group
-// may move up but never below that.
-#define GF_EFFECT_FIRST_BIT        64
 // Ability block start, relative to the kernel.bin buffer.
 #define ABILITY_BLOCK_OFFSET       0x40E0
 // Data sections, 0-based as the kernel.bin header lists them.
@@ -291,28 +288,33 @@ static const group_bound_site group_bound_sites[] = {
 	{ &ability_ext.fn_validate_commands,   0x040, GROUP_COMMAND,      0, false, "equipped commands start" },
 	{ &ability_ext.fn_validate_commands,   0x045, GROUP_STAT_PERCENT, 0, false, "equipped commands end" },
 	// Map seals grey out Magic, GF, Draw, Item (two ids) and every other command.
-	{ &ability_ext.fn_draw_seal_row,       0x0D7, GROUP_COMMAND,      4, true,  "seal row item" },
-	{ &ability_ext.fn_draw_seal_row,       0x0DC, GROUP_COMMAND,      3, true,  "seal row item" },
-	{ &ability_ext.fn_draw_seal_row,       0x0F4, GROUP_COMMAND,      0, true,  "seal row magic" },
-	{ &ability_ext.fn_draw_seal_row,       0x10C, GROUP_COMMAND,      1, true,  "seal row GF" },
-	{ &ability_ext.fn_draw_seal_row,       0x124, GROUP_COMMAND,      2, true,  "seal row draw" },
 	{ &ability_ext.fn_draw_seal_row,       0x13C, GROUP_COMMAND,      0, true,  "seal row commands start" },
 	{ &ability_ext.fn_draw_seal_row,       0x141, GROUP_STAT_PERCENT, 0, true,  "seal row commands end" },
-	{ &ability_ext.fn_draw_seal_row,       0x146, GROUP_COMMAND,      0, true,  "seal row not magic" },
-	{ &ability_ext.fn_draw_seal_row,       0x14B, GROUP_COMMAND,      1, true,  "seal row not GF" },
-	{ &ability_ext.fn_draw_seal_row,       0x150, GROUP_COMMAND,      2, true,  "seal row not draw" },
-	{ &ability_ext.fn_draw_seal_row,       0x155, GROUP_COMMAND,      4, true,  "seal row not item" },
-	{ &ability_ext.fn_draw_seal_row,       0x15A, GROUP_COMMAND,      3, true,  "seal row not item" },
-	{ &ability_ext.fn_draw_seal_list,      0x098, GROUP_COMMAND,      0, true,  "seal list magic" },
-	{ &ability_ext.fn_draw_seal_list,      0x0B0, GROUP_COMMAND,      1, true,  "seal list GF" },
-	{ &ability_ext.fn_draw_seal_list,      0x0C8, GROUP_COMMAND,      2, true,  "seal list draw" },
-	{ &ability_ext.fn_draw_seal_list,      0x0E0, GROUP_COMMAND,      4, true,  "seal list item" },
-	{ &ability_ext.fn_draw_seal_list,      0x0E5, GROUP_COMMAND,      3, true,  "seal list item" },
-	{ &ability_ext.fn_draw_seal_list,      0x0FD, GROUP_COMMAND,      0, true,  "seal list not magic" },
-	{ &ability_ext.fn_draw_seal_list,      0x102, GROUP_COMMAND,      1, true,  "seal list not GF" },
-	{ &ability_ext.fn_draw_seal_list,      0x107, GROUP_COMMAND,      2, true,  "seal list not draw" },
-	{ &ability_ext.fn_draw_seal_list,      0x10C, GROUP_COMMAND,      4, true,  "seal list not item" },
-	{ &ability_ext.fn_draw_seal_list,      0x111, GROUP_COMMAND,      3, true,  "seal list not item" },
+};
+
+struct command_role_site { uint32_t *owner; uint32_t offset; int role; const char *what; };
+static const uint8_t command_roles[] = { 2, 3, 6, 4, 0 }; // Magic, GF, Draw, Item, Empty
+static const command_role_site command_role_sites[] = {
+	{ &ability_ext.fn_draw_seal_row, 0x0D7, 4, "seal row item" },
+	{ &ability_ext.fn_draw_seal_row, 0x0DC, 3, "seal row item" },
+	{ &ability_ext.fn_draw_seal_row, 0x0F4, 0, "seal row magic" },
+	{ &ability_ext.fn_draw_seal_row, 0x10C, 1, "seal row GF" },
+	{ &ability_ext.fn_draw_seal_row, 0x124, 2, "seal row draw" },
+	{ &ability_ext.fn_draw_seal_row, 0x146, 0, "seal row not magic" },
+	{ &ability_ext.fn_draw_seal_row, 0x14B, 1, "seal row not GF" },
+	{ &ability_ext.fn_draw_seal_row, 0x150, 2, "seal row not draw" },
+	{ &ability_ext.fn_draw_seal_row, 0x155, 4, "seal row not item" },
+	{ &ability_ext.fn_draw_seal_row, 0x15A, 3, "seal row not item" },
+	{ &ability_ext.fn_draw_seal_list, 0x098, 0, "seal list magic" },
+	{ &ability_ext.fn_draw_seal_list, 0x0B0, 1, "seal list GF" },
+	{ &ability_ext.fn_draw_seal_list, 0x0C8, 2, "seal list draw" },
+	{ &ability_ext.fn_draw_seal_list, 0x0E0, 4, "seal list item" },
+	{ &ability_ext.fn_draw_seal_list, 0x0E5, 3, "seal list item" },
+	{ &ability_ext.fn_draw_seal_list, 0x0FD, 0, "seal list not magic" },
+	{ &ability_ext.fn_draw_seal_list, 0x102, 1, "seal list not GF" },
+	{ &ability_ext.fn_draw_seal_list, 0x107, 2, "seal list not draw" },
+	{ &ability_ext.fn_draw_seal_list, 0x10C, 4, "seal list not item" },
+	{ &ability_ext.fn_draw_seal_list, 0x111, 3, "seal list not item" },
 };
 
 // Optional sites whose function did not hold the expected constants.
@@ -497,6 +499,15 @@ static bool ff8_kernel_ability_validate()
 		}
 	}
 
+	if (*(uint8_t *)(ability_ext.fn_gf_battle_stats + 0x4C) != 0x1C || get_absolute_value(ability_ext.fn_gf_battle_stats, 0x5D) != 2)
+		return false;
+	for (const command_role_site &site : command_role_sites)
+	{
+		if (*site.owner && *(uint8_t *)(*site.owner + site.offset + 2) == vanilla_group_first[GROUP_COMMAND] + site.role) continue;
+		bool &owner_ok = site.owner == &ability_ext.fn_draw_seal_row ? ff8_seal_row_ok : ff8_seal_list_ok;
+		owner_ok = false;
+	}
+
 	// Each chain must still read as the vanilla 20/39/58/78/83/92.
 	for (const chain_sites &chain : group_chains)
 	{
@@ -640,8 +651,13 @@ static void ff8_patch_ability_data()
 	{
 		uint32_t operand = *site.owner + site.offset;
 
-		patch_code_dword(operand, (DWORD)(table + (*(uint32_t *)operand - k_ability)));
+		uint32_t offset = *(uint32_t *)operand - k_ability;
+		if (site.owner == &ability_ext.fn_gf_battle_stats) offset = 6;
+		patch_code_dword(operand, (DWORD)(table + offset));
 	}
+
+	patch_code_byte(ability_ext.fn_gf_battle_stats + 0x4C, 0x14); // CompleteAbilities[0]
+	patch_code_dword(ability_ext.fn_gf_battle_stats + 0x5D, 4);   // all four learned-mask words
 
 	// AP reads use kernel base + group offset + 8 * (id - first ID).
 	// Rebase the kernel pointer so the group table still indexes our records.
@@ -715,6 +731,20 @@ static void ff8_patch_ability_menus()
 	}
 }
 
+static void ff8_patch_command_ability_roles()
+{
+	uint8_t ids[5] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+	for (int id = ff8_group_first[GROUP_COMMAND]; id < ff8_group_first[GROUP_STAT_PERCENT]; ++id)
+		for (int role = 0; role < 5; ++role)
+			if (ids[role] == 0xFF && ff8_ability_table[id][5] == command_roles[role]) ids[role] = id;
+	for (const command_role_site &site : command_role_sites)
+	{
+		if (site.owner == &ability_ext.fn_draw_seal_row && !ff8_seal_row_ok) continue;
+		if (site.owner == &ability_ext.fn_draw_seal_list && !ff8_seal_list_ok) continue;
+		patch_code_byte(*site.owner + site.offset + 2, ids[site.role]);
+	}
+}
+
 void ff8_kernel_ability_arm()
 {
 	if (ff8_ability_armed || !ff8_ability_supported) return;
@@ -750,10 +780,9 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 		int section = KERNEL_FIRST_ABIL_SEC + group;
 		int entries = (int)((offsets[section + 1] - offsets[section]) / ABILITY_ENTRY_SIZE);
 
-		int vanilla_count = (group + 1 < ABILITY_GROUP_COUNT ? vanilla_group_first[group + 1] : VANILLA_ABILITY_COUNT) - vanilla_group_first[group];
-		if (entries < vanilla_count || total + entries > MAX_ABILITY_COUNT)
+		if ((group == 0 && entries == 0) || total + entries > MAX_ABILITY_COUNT)
 		{
-			if (trace_all) ffnx_trace("AddMoreAbility: kernel.bin ability sections must retain their vanilla entries and fit within %d IDs - ignoring the extension.\n", MAX_ABILITY_COUNT);
+			if (trace_all) ffnx_trace("AddMoreAbility: kernel.bin must retain ability zero and fit within %d ability IDs - ignoring the extension.\n", MAX_ABILITY_COUNT);
 			return false;
 		}
 
@@ -762,9 +791,15 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 	}
 
 	// Vanilla files do not resolve or patch ability functions.
-	if (total == VANILLA_ABILITY_COUNT && !memcmp(first, vanilla_group_first, sizeof(first))) return false;
+	if (total == VANILLA_ABILITY_COUNT && !memcmp(first, vanilla_group_first, sizeof(first)))
+	{
+		const uint8_t *commands = (const uint8_t *)stash + offsets[KERNEL_FIRST_ABIL_SEC + GROUP_COMMAND];
+		bool roles_unchanged = true;
+		for (int role = 0; role < 5; ++role) roles_unchanged &= commands[role * ABILITY_ENTRY_SIZE + 5] == command_roles[role];
+		if (roles_unchanged) return false;
+	}
 
-	// Resolve and validate patches only when an extended kernel is loaded.
+	// Resolve and validate patches only when the ability layout differs.
 	if (!ff8_ability_checked)
 	{
 		ff8_ability_checked = true;
@@ -777,19 +812,10 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 
 	if (!ff8_ability_supported) return false;
 
-	// computeGFBattleStats only walks learned bits 64..127; GF abilities below
-	// that would silently stop working.
-	if (first[GROUP_GF] < GF_EFFECT_FIRST_BIT)
+	// Group comparisons sign-extend their byte immediates, including an empty menu group.
+	if (first[GROUP_MENU] >= MAX_ABILITY_COUNT)
 	{
-		if (trace_all) ffnx_trace("AddMoreAbility: the GF ability group starts at id %d, but its effects are only read from id %d up - ignoring the extension.\n", first[GROUP_GF], GF_EFFECT_FIRST_BIT);
-		return false;
-	}
-
-	// The party range check compares against the GF group's first id as a signed
-	// byte immediate, so it has to stay below 128.
-	if (first[GROUP_GF] >= MAX_ABILITY_COUNT)
-	{
-		if (trace_all) ffnx_trace("AddMoreAbility: the GF ability group starts at id %d, past the last id the exe can compare against - ignoring the extension.\n", first[GROUP_GF]);
+		if (trace_all) ffnx_trace("AddMoreAbility: group start IDs must remain below %d - ignoring the extension.\n", MAX_ABILITY_COUNT);
 		return false;
 	}
 
@@ -813,6 +839,7 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 	ff8_ability_count = total;
 
 	ff8_kernel_ability_arm();
+	ff8_patch_command_ability_roles();
 
 	return true;
 }

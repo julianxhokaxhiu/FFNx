@@ -46,6 +46,9 @@
 #define COMMAND_BLOCK_OFFSET		  0xE4
 #define COMMAND_DATA_BLOCK_OFFSET	 0x4020
 
+#define REMOVED_COMMAND              0xFE
+#define REMOVED_COMMAND_DATA         0xFE
+
 #define COMMAND_MAD_RUSH			  0x18
 
 // The data-driven family, the only case a new command can run through.
@@ -58,6 +61,10 @@ static uint8_t ff8_command_behaves_like[MAX_COMMAND_COUNT];
 static int ff8_command_count = VANILLA_COMMAND_COUNT;
 static int ff8_command_data_count = VANILLA_COMMAND_DATA_COUNT;
 static bool ff8_command_armed = false;
+static bool ff8_command_filter_hooked = false;
+static bool ff8_command_disabled[MAX_COMMAND_COUNT];
+static bool ff8_command_has_disabled = false;
+static uint32_t command_parse_calls[3];
 static bool ff8_command_checked = false;
 static bool ff8_command_supported = false;
 
@@ -167,6 +174,9 @@ static void ff8_kernel_command_find_externals()
 	command_ext.several_hit = visibility + 0x180;
 	command_ext.linked_stock = visibility + 0x340;
 	command_ext.limit_menu = visibility + 0x540;
+	command_parse_calls[0] = ff8_externals.sub_48B7E0 + 0x94;
+	command_parse_calls[1] = ff8_externals.compute_char_stats_sub_495960 + 0x5A5;
+	command_parse_calls[2] = ff8_externals.compute_char_stats_sub_495960 + 0x18AC;
 	command_ext.parse = get_relative_call(ff8_externals.sub_48B7E0, 0x94);
 
 	int count = 0;
@@ -182,6 +192,9 @@ static void ff8_kernel_command_find_externals()
 
 static bool ff8_kernel_command_validate()
 {
+	for (uint32_t call : command_parse_calls)
+		if (get_relative_call(call, 0) != command_ext.parse) return false;
+
 	for (const command_site &site : command_sites)
 	{
 		if (!*site.owner) return false;
@@ -197,19 +210,37 @@ static bool ff8_kernel_command_validate()
 	return true;
 }
 
+static int ff8_kernel_command_parse_character(int character, int slot)
+{
+	int result = ((int (*)(int, int))command_ext.parse)(character, slot);
+	if (character == 0xFF || slot < 0 || slot >= (int)ff8_externals.char_comp_stats_1CFF000.size()) return result;
+	auto &stats = ff8_externals.char_comp_stats_1CFF000[slot];
+	for (auto &command : stats.commands)
+		if (ff8_kernel_command_removed(command.command_id)) memset(&command, 0, sizeof(command));
+	if (ff8_kernel_command_removed(stats.limit_command.command_id)) memset(&stats.limit_command, 0, sizeof(stats.limit_command));
+	return result;
+}
+
 static void ff8_kernel_command_arm()
 {
-	if (ff8_command_armed || !ff8_command_supported) return;
-	ff8_command_armed = true;
-
-	for (const command_site &site : command_sites)
+	if (!ff8_command_supported) return;
+	if (!ff8_command_armed)
 	{
-		uint32_t old_base = site.data ? k_command_data : k_command;
-		uint32_t new_base = site.data ? (uint32_t)ff8_command_data_table : (uint32_t)ff8_command_table;
-		patch_code_dword(*site.owner + site.offset, new_base + get_absolute_value(*site.owner, site.offset) - old_base);
+		for (const command_site &site : command_sites)
+		{
+			uint32_t old_base = site.data ? k_command_data : k_command;
+			uint32_t new_base = site.data ? (uint32_t)ff8_command_data_table : (uint32_t)ff8_command_table;
+			patch_code_dword(*site.owner + site.offset, new_base + get_absolute_value(*site.owner, site.offset) - old_base);
+		}
+		ff8_command_armed = true;
 	}
-	if (ff8_command_count > VANILLA_COMMAND_COUNT)
+	if (ff8_command_count > VANILLA_COMMAND_COUNT || ff8_command_has_disabled)
 		ff8_kernel_magic_hook_dispatcher();
+	if (ff8_command_has_disabled && !ff8_command_filter_hooked)
+	{
+		for (uint32_t call : command_parse_calls) replace_call(call, (void *)ff8_kernel_command_parse_character);
+		ff8_command_filter_hooked = true;
+	}
 }
 
 bool ff8_kernel_command_section_may_grow(int section)
@@ -238,7 +269,15 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 	int data = (int)(data_bytes / COMMAND_DATA_ENTRY_SIZE);
 
 	// A stock kernel.bin leaves here, before anything is resolved or patched.
-	if (command_bytes == VANILLA_COMMAND_COUNT * COMMAND_ENTRY_SIZE && data_bytes == VANILLA_COMMAND_DATA_COUNT * COMMAND_DATA_ENTRY_SIZE) return false;
+	bool removed = false;
+	const uint8_t *command_section = (const uint8_t *)stash + offsets[KERNEL_COMMAND_SECTION];
+	const uint8_t *data_section = (const uint8_t *)stash + offsets[KERNEL_COMMAND_DATA_SECTION];
+	if (command_bytes == VANILLA_COMMAND_COUNT * COMMAND_ENTRY_SIZE && data_bytes == VANILLA_COMMAND_DATA_COUNT * COMMAND_DATA_ENTRY_SIZE)
+	{
+		for (int id = 0; id < commands; ++id) removed |= command_section[id * COMMAND_ENTRY_SIZE + COMMAND_BEHAVES_LIKE_OFF] == REMOVED_COMMAND;
+		for (int id = 0; id < data; ++id) removed |= data_section[id * COMMAND_DATA_ENTRY_SIZE + 2] == REMOVED_COMMAND_DATA;
+		if (!removed) return false;
+	}
 
 	if (command_bytes % COMMAND_ENTRY_SIZE || data_bytes % COMMAND_DATA_ENTRY_SIZE
 		|| commands < VANILLA_COMMAND_COUNT || commands > MAX_COMMAND_COUNT
@@ -249,14 +288,19 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 		return false;
 	}
 
-	const uint8_t *command_section = (const uint8_t *)stash + offsets[KERNEL_COMMAND_SECTION];
 	uint8_t behaves_like[MAX_COMMAND_COUNT] = {};
+	bool disabled[MAX_COMMAND_COUNT] = {};
 
 	for (int id = 0; id < commands; ++id)
 	{
 		const uint8_t *entry = command_section + COMMAND_ENTRY_SIZE * id;
 		uint8_t data_id = entry[COMMAND_ABILITY_DATA_OFF];
 
+		bool fixed_effect = id == 7 || id == 29 || is_data_driven((uint8_t)id) || id >= VANILLA_COMMAND_COUNT;
+		bool missing_data = data_id == NO_COMMAND_DATA || (data_id < data && data_section[data_id * COMMAND_DATA_ENTRY_SIZE + 2] == REMOVED_COMMAND_DATA);
+		disabled[id] = entry[COMMAND_BEHAVES_LIKE_OFF] == REMOVED_COMMAND || (fixed_effect && missing_data);
+		removed |= disabled[id];
+		if (entry[COMMAND_BEHAVES_LIKE_OFF] == REMOVED_COMMAND) continue;
 		if (data_id != NO_COMMAND_DATA && data_id >= data)
 		{
 			if (trace_all) ffnx_trace("AddMoreCommand: battle command %d uses command ability data %d, but there are only %d - ignoring the extension.\n", id, data_id, data);
@@ -265,7 +309,7 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 
 		if (id < VANILLA_COMMAND_COUNT) continue;
 
-		if (data_id == NO_COMMAND_DATA)
+		if (missing_data)
 		{
 			if (trace_all) ffnx_trace("AddMoreCommand: battle command %d has no command ability data, which a new command needs - ignoring the extension.\n", id);
 			return false;
@@ -304,6 +348,8 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 	memcpy(ff8_command_table, command_section, commands * COMMAND_ENTRY_SIZE);
 	memcpy(ff8_command_data_table, stash + offsets[KERNEL_COMMAND_DATA_SECTION], data * COMMAND_DATA_ENTRY_SIZE);
 	memcpy(ff8_command_behaves_like, behaves_like, sizeof(behaves_like));
+	memcpy(ff8_command_disabled, disabled, sizeof(disabled));
+	ff8_command_has_disabled = removed;
 	ff8_command_count = commands;
 	ff8_command_data_count = data;
 
@@ -321,9 +367,14 @@ const uint8_t *ff8_kernel_command_get(int command)
 }
 
 // ---- battle -------------------------------------------------------------
+bool ff8_kernel_command_removed(uint8_t command)
+{
+	return ff8_command_armed && command < MAX_COMMAND_COUNT && ff8_command_disabled[command];
+}
+
 bool ff8_kernel_command_owns(uint8_t command)
 {
-	return ff8_command_armed && command >= VANILLA_COMMAND_COUNT && command < ff8_command_count;
+	return ff8_command_armed && command >= VANILLA_COMMAND_COUNT && command < ff8_command_count && !ff8_command_disabled[command];
 }
 
 typedef int(__cdecl *compute_command_action_t)(int, int, int, int, int, int, int);
