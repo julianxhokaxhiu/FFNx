@@ -30,3 +30,7 @@ void ff8_kernel_magic_init();
 
 // Existing magic-name anchor, shared with the ability extension.
 uint32_t ff8_kernel_magic_name_getter();
+
+// Shared anchors and the single battle dispatcher call-site hook.
+uint32_t ff8_kernel_magic_spell_visibility_fn();
+void ff8_kernel_magic_hook_dispatcher();

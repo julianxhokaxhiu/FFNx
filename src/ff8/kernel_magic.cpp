@@ -16,6 +16,7 @@
 
 #include "kernel_magic.h"
 #include "kernel_ability.h"
+#include "kernel_command.h"
 
 #include "../ff8.h"
 #include "../patch.h"
@@ -178,12 +179,9 @@ static char *ff8_kernel_text(int section, uint16_t text_offset)
 
 const char *ff8_get_battle_command_name(int command_id)
 {
-	const uint8_t *buffer = (const uint8_t *)ff8_externals.unk_1CF3E48;
-	const uint32_t command_stride = 8;
-	const uint32_t command_count = (exe_data_section_offsets[1] - exe_data_section_offsets[0]) / command_stride;
-	if (!buffer || command_id < 0 || command_id >= command_count) return nullptr;
-
-	uint16_t text_offset = *(const uint16_t *)(buffer + exe_data_section_offsets[0] + command_stride * command_id);
+	const uint8_t *entry = ff8_kernel_command_get(command_id);
+	if (!entry) return nullptr;
+	uint16_t text_offset = *(const uint16_t *)entry;
 	if (text_offset == KERNEL_NO_TEXT) return nullptr;
 	return ff8_kernel_text(KERNEL_FIRST_TEXT_SEC, text_offset);
 }
@@ -224,7 +222,7 @@ static char *__cdecl ff8_get_magic_description(int id)
 static void *__cdecl ff8_linked_stock_field_char_data(int char_slot, int spell_id)
 {
 	ff8_char_computed_stats *chr = ff8_externals.char_comp_stats_1CFF000.data() + char_slot;
-	const uint8_t *draw_cmd = (const uint8_t *)(magic_ext.k_battle_command + 8 * 10);
+	const uint8_t *draw_cmd = ff8_kernel_command_get(10); // Draw
 
 	chr->battle_command_id = 10; // Draw
 	chr->command_menu_flags = draw_cmd[5];
@@ -526,6 +524,8 @@ static int ff8_stand_in_magic_id(const ff8_field_magic_slot *inventory, const ui
 // command that is never a stocked draw.
 static int ff8_call_command_action(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked)
 {
+	if (ff8_kernel_command_owns((uint8_t)command))
+		return ff8_kernel_command_execute(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 	return ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 }
 
@@ -542,7 +542,7 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 
 	// Everything vanilla still gets right goes straight to the dispatcher, with the
 	// arguments exactly as they arrived.
-	if (command_id != COMMAND_DRAW || draw_variant != DRAW_VARIANT_STOCK || spell_id < GF_FIRST_ID || ff8_is_gf_id(spell_id) || spell_id >= MAX_MAGIC_ID)
+	if (!ff8_magic_armed || command_id != COMMAND_DRAW || draw_variant != DRAW_VARIANT_STOCK || spell_id < GF_FIRST_ID || ff8_is_gf_id(spell_id) || spell_id >= MAX_MAGIC_ID)
 		return ff8_call_command_action(attacker_slot, command, id, variant, target_slot, target_mask, linked);
 
 	ff8_field_magic_slot *inventory = (ff8_externals.char_comp_stats_1CFF000.data() + attacker_slot)->magic;
@@ -601,6 +601,14 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 	return ret;
 }
 
+void ff8_kernel_magic_hook_dispatcher()
+{
+	static bool hooked = false;
+	if (hooked) return;
+	replace_call(magic_ext.command_action_call, (void *)ff8_compute_command_action);
+	hooked = true;
+}
+
 // ---- patch application (once, on first grown-kernel load) ---------------
 static void ff8_kernel_magic_arm()
 {
@@ -633,7 +641,7 @@ static void ff8_kernel_magic_arm()
 		ffnx_warning("AddMoreMagic: repointed %u of %d magic table reads - some magic reads may still use the vanilla table!\n", rewritten, K_MAGIC_SITE_COUNT);
 
 	// Take over the functions that would misread an extended id.
-	replace_call(magic_ext.command_action_call, (void *)ff8_compute_command_action);
+	ff8_kernel_magic_hook_dispatcher();
 	replace_function(magic_ext.manage_monster_spell_visibility_sub_48C7A0, (void *)ff8_manage_monster_spell_visibility);
 	replace_function(magic_ext.fn_name_getter, (void *)ff8_get_magic_name);
 	replace_function(magic_ext.fn_desc_getter, (void *)ff8_get_magic_description);
@@ -663,8 +671,9 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 
 	bool magic_grown = valid && entries > VANILLA_MAGIC_COUNT && entries <= MAX_MAGIC_ID;
 	bool ability_grown = valid && ff8_kernel_ability_read(ff8_kernel_stash, offsets, size);
+	bool command_grown = valid && ff8_kernel_command_read(ff8_kernel_stash, offsets, size);
 
-	if (!magic_grown && !ability_grown)
+	if (!magic_grown && !ability_grown && !command_grown)
 	{
 		// Vanilla (or unexpected) kernel.bin: behave exactly like the
 		// original call. Nothing is armed, nothing else is patched.
@@ -680,8 +689,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 
 	out_header[0] = KERNEL_SECTION_COUNT;
 
-	// Data sections (0..30) go to their vanilla offsets. Only the magic
-	// section may grow; validate the others still have vanilla sizes.
+	// Keep the executable's fixed data layout; full extended tables live in FFNx.
 	for (int i = 0; i < KERNEL_FIRST_TEXT_SEC; ++i)
 	{
 		uint32_t src = offsets[i];
@@ -691,7 +699,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 
 		out_header[1 + i] = dst;
 
-		if (i != KERNEL_MAGIC_SECTION && !ff8_kernel_ability_section_may_grow(i) && src_size != copy_size)
+		if (i != KERNEL_MAGIC_SECTION && !ff8_kernel_ability_section_may_grow(i) && !ff8_kernel_command_section_may_grow(i) && src_size != copy_size)
 		{
 			++non_vanilla_sections;
 			if (trace_all) ffnx_trace("AddMoreMagic: kernel.bin data section %d has size %u, expected %u.\n", i, src_size, copy_size);
@@ -701,7 +709,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	}
 
 	if (non_vanilla_sections > 0)
-		ffnx_warning("AddMoreMagic: kernel.bin has %d data section(s) with a non-vanilla size - only the magic and ability sections may grow; game will likely misbehave!\n", non_vanilla_sections);
+		ffnx_warning("AddMoreMagic: kernel.bin has %d data section(s) with a non-vanilla size - only supported kernel sections may grow; game will likely misbehave!\n", non_vanilla_sections);
 
 	// Text sections (31..55): point the header at the stash so they can grow
 	// freely. Also fill dest's vanilla-sized text area with real bytes - some
@@ -1007,4 +1015,9 @@ void ff8_kernel_magic_init()
 	}
 
 	replace_call(magic_ext.kernel_read_call, (void *)ff8_kernel_load_hook);
+}
+
+uint32_t ff8_kernel_magic_spell_visibility_fn()
+{
+	return magic_ext.manage_monster_spell_visibility_sub_48C7A0;
 }
