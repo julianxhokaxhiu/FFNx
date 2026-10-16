@@ -28,6 +28,8 @@
 #include <stdint.h>
 #include <string.h>
 
+// ---- Kernel format and executable layouts -------------------------------
+
 // Ability data stays FFNx-side so growing it does not move the game's other
 // kernel sections. See docs/ff8/kernel_abilities.md for the file and save limits.
 
@@ -158,6 +160,8 @@ static const ability_layout_offsets &layout_of(int build)
 	}
 }
 
+// ---- Game addresses and runtime state -----------------------------------
+
 // Every address this file needs, resolved from anchors ff8_externals already
 // holds, or from an anchor this file resolves first.
 static struct
@@ -211,6 +215,8 @@ static uint8_t ff8_menu_candidates[MAX_MENU_ABILITIES];
 static bool ff8_ability_armed = false;
 static bool ff8_ability_checked = false;
 static bool ff8_ability_supported = false;
+
+// ---- Patch locations ----------------------------------------------------
 
 // Operand offsets inside their owning functions, verified against each retail layout.
 struct ability_site { uint32_t *owner; uint32_t offset; const char *what; };
@@ -375,6 +381,8 @@ static const menu_list_sites menu_list_builders[] = {
 	{ &ability_ext.fn_menu_list_init,    0x058, 0x061 },
 };
 
+// ---- Address helpers and resolution -------------------------------------
+
 static uint32_t ability_array_end()
 {
 	return ability_ext.k_ability + VANILLA_ABILITY_COUNT * ABILITY_ENTRY_SIZE;
@@ -477,6 +485,8 @@ static void ff8_kernel_ability_find_externals()
 	// inside BuildGFAbilityList; that operand is the table itself.
 	ability_ext.group_table = list ? get_absolute_value(list, 0x28A) : 0;
 }
+
+// ---- Validation ---------------------------------------------------------
 
 // Validate all required sites before installing any patch.
 static bool ff8_kernel_ability_validate()
@@ -644,6 +654,8 @@ static bool ff8_kernel_ability_validate()
 	return ok;
 }
 
+// ---- Runtime replacements -----------------------------------------------
+
 static void ff8_rebuild_learned_menu_abilities()
 {
 	uint32_t mask = 0;
@@ -664,6 +676,35 @@ static void ff8_rebuild_learned_menu_abilities()
 
 	*ability_ext.learned_menu_mask = mask;
 }
+
+static uint8_t ff8_build_ability_candidates(uint8_t (*out)[CANDIDATE_ENTRY_SIZE], int first, int end)
+{
+	uint8_t count = 0;
+	for (int id = first; id < end; ++id)
+	{
+		if (!(ability_ext.chara_ability_mask[id / 8] & (1u << (id % 8)))) continue;
+		out[count][0] = id;
+		out[count++][1] = ((int (*)(int))ability_ext.fn_group_from_id)(id);
+	}
+	return count;
+}
+
+static int ff8_build_chara_ability_lists(int character)
+{
+	memset(ability_ext.chara_ability_mask, 0, 16);
+	uint16_t junctioned_gfs = *(uint16_t *)(ability_ext.chara_gf_masks + 28 * character);
+	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
+	{
+		if (!(junctioned_gfs & (1u << gf))) continue;
+		for (int byte = 0; byte < 16; ++byte)
+			ability_ext.chara_ability_mask[byte] |= ff8_externals.savemap->gfs[gf].complete_abilities[byte];
+	}
+	ability_ext.candidate_counts[0] = ff8_build_ability_candidates(ff8_command_candidates, ff8_group_first[GROUP_COMMAND], ff8_group_first[GROUP_STAT_PERCENT]);
+	ability_ext.candidate_counts[1] = ff8_build_ability_candidates(ff8_passive_candidates, ff8_group_first[GROUP_STAT_PERCENT], ff8_group_first[GROUP_GF]);
+	return ((int (*)(int))ability_ext.fn_equipped_ability_mask)(character);
+}
+
+// ---- Patch installation -------------------------------------------------
 
 static void ff8_patch_ability_data()
 {
@@ -727,33 +768,6 @@ static void ff8_patch_ability_groups()
 	}
 }
 
-static uint8_t ff8_build_ability_candidates(uint8_t (*out)[CANDIDATE_ENTRY_SIZE], int first, int end)
-{
-	uint8_t count = 0;
-	for (int id = first; id < end; ++id)
-	{
-		if (!(ability_ext.chara_ability_mask[id / 8] & (1u << (id % 8)))) continue;
-		out[count][0] = id;
-		out[count++][1] = ((int (*)(int))ability_ext.fn_group_from_id)(id);
-	}
-	return count;
-}
-
-static int ff8_build_chara_ability_lists(int character)
-{
-	memset(ability_ext.chara_ability_mask, 0, 16);
-	uint16_t junctioned_gfs = *(uint16_t *)(ability_ext.chara_gf_masks + 28 * character);
-	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
-	{
-		if (!(junctioned_gfs & (1u << gf))) continue;
-		for (int byte = 0; byte < 16; ++byte)
-			ability_ext.chara_ability_mask[byte] |= ff8_externals.savemap->gfs[gf].complete_abilities[byte];
-	}
-	ability_ext.candidate_counts[0] = ff8_build_ability_candidates(ff8_command_candidates, ff8_group_first[GROUP_COMMAND], ff8_group_first[GROUP_STAT_PERCENT]);
-	ability_ext.candidate_counts[1] = ff8_build_ability_candidates(ff8_passive_candidates, ff8_group_first[GROUP_STAT_PERCENT], ff8_group_first[GROUP_GF]);
-	return ((int (*)(int))ability_ext.fn_equipped_ability_mask)(character);
-}
-
 static void ff8_patch_ability_menus()
 {
 	replace_function(ability_ext.fn_menu_mask, (void *)ff8_rebuild_learned_menu_abilities);
@@ -808,6 +822,8 @@ void ff8_kernel_ability_arm()
 	ff8_patch_ability_groups();
 	ff8_patch_ability_menus();
 }
+
+// ---- Kernel loading and initialization ----------------------------------
 
 bool ff8_kernel_ability_section_may_grow(int section)
 {
