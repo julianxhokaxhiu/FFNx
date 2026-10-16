@@ -6,15 +6,19 @@ FFNx can load more than the original 116 abilities from `direct/kernel.bin`. FFN
 
 Kernel data sections 12 through 18 contain eight-byte ability records. Ability IDs run across all seven sections in order:
 
-| Section | Group           | Original first ID | Original count |
-| ------- | --------------- | ----------------: | -------------: |
-| 12      | Junction        |                 0 |             20 |
-| 13      | Command         |                20 |             19 |
-| 14      | Stat percentage |                39 |             19 |
-| 15      | Character       |                58 |             20 |
-| 16      | Party           |                78 |              5 |
-| 17      | GF              |                83 |              9 |
-| 18      | Menu            |                92 |             24 |
+| Section | Group           | Original first ID | Original count | Minimum count | Absolute maximum* |
+| ------- | --------------- | ----------------: | -------------: | ------------: | ----------------: |
+| 12      | Junction        |                 0 |             20 |             1 |               127 |
+| 13      | Command         |                20 |             19 |             0 |               126 |
+| 14      | Stat percentage |                39 |             19 |             0 |               126 |
+| 15      | Character       |                58 |             20 |             0 |               126 |
+| 16      | Party           |                78 |              5 |             0 |               126 |
+| 17      | GF              |                83 |              9 |             0 |               126 |
+| 18      | Menu            |                92 |             24 |             0 |                32 |
+
+\* Each maximum assumes all other ability sections are reduced to their minimum counts. Only junction ability 0 (None) must remain; other groups may be empty. Junction's maximum includes None. These maxima cannot be used simultaneously. The original 116 abilities leave 12 shared slots; removing original abilities frees more.
+
+The first six sections together can contain at most 127 entries because the menu group must start below ID 128, even when empty. This makes the maximum 126 for any one non-junction, non-menu section after retaining None. A menu entry can occupy the remaining ID 127: for example, 1 junction entry + 126 GF entries + 1 menu entry = 128.
 
 Ability sections may grow or shrink; keep entry 0 in the junction section because ID 0 means no ability. The combined count must not exceed **128**: each GF save record has a 128-bit learned-ability mask. The menu group has an additional **32-entry** limit because its learned capabilities use one 32-bit value. Group start IDs must stay below 128; when the menu group is empty, the preceding groups can therefore use at most 127 entries. Adding records changes the IDs of every later record; adding in the middle of a group also changes the IDs of its later entries.
 
