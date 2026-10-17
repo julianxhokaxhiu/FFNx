@@ -19,6 +19,7 @@
 - Core: Add support for Field text window autoresize for all languages
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
 - Lighting: Minor adjustment to ambient light and shadow map resolution default values ( https://github.com/julianxhokaxhiu/FFNx/pull/1007 )
+- Renderer: Draw untextured gltf model parts with their material color ( https://github.com/julianxhokaxhiu/FFNx/pull/1003 )
 - Core: Match gltf animation names case-insensitively ( https://github.com/julianxhokaxhiu/FFNx/pull/1002 )
 - Renderer: Raise the gltf bone limit to 255 ( https://github.com/julianxhokaxhiu/FFNx/pull/1001 )
 - Renderer: Re-enable smooth skinning for gltf models without slowing down other draws ( https://github.com/julianxhokaxhiu/FFNx/pull/1000 )
