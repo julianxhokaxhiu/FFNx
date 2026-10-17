@@ -560,6 +560,8 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 	{
 		auto& shape = externalMesh->shapes[i];
 
+		// drawWithLighting() turns the program into its lighting variant, so every part starts from SMOOTH again
+		newRenderer.setInterpolationQualifier(SMOOTH);
 		newRenderer.setCullMode(shape.isDoubleSided ? RendererCullMode::DISABLED : RendererCullMode::FRONT);
 
 		externalMesh->bindField3dVertexBuffer(vertexOffset, shape.vertices.size());
@@ -599,7 +601,7 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 			newRenderer.drawToShadowMap(true, true);
 			newRenderer.drawWithLighting(true, true, true);
 		}
-		newRenderer.draw(true, true, true);
+		else newRenderer.draw(true, true, true);
 
 		vertexOffset += shape.vertices.size();
 		indexOffset += shape.indices.size();
