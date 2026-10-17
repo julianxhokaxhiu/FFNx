@@ -234,8 +234,6 @@ static void ff8_kernel_command_arm()
 		}
 		ff8_command_armed = true;
 	}
-	if (ff8_command_count > VANILLA_COMMAND_COUNT || ff8_command_has_disabled)
-		ff8_kernel_magic_hook_dispatcher();
 	if (ff8_command_has_disabled && !ff8_command_filter_hooked)
 	{
 		for (uint32_t call : command_parse_calls) replace_call(call, (void *)ff8_kernel_command_parse_character);
@@ -345,10 +343,10 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 		return true;
 	}
 
-	memcpy(ff8_command_table, command_section, commands * COMMAND_ENTRY_SIZE);
-	memcpy(ff8_command_data_table, stash + offsets[KERNEL_COMMAND_DATA_SECTION], data * COMMAND_DATA_ENTRY_SIZE);
-	memcpy(ff8_command_behaves_like, behaves_like, sizeof(behaves_like));
-	memcpy(ff8_command_disabled, disabled, sizeof(disabled));
+	memcpy_code((uint32_t)(ff8_command_table), (void *)(command_section), commands * COMMAND_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_command_data_table), (void *)(stash + offsets[KERNEL_COMMAND_DATA_SECTION]), data * COMMAND_DATA_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_command_behaves_like), (void *)(behaves_like), sizeof(behaves_like));
+	memcpy_code((uint32_t)(ff8_command_disabled), (void *)(disabled), sizeof(disabled));
 	ff8_command_has_disabled = removed;
 	ff8_command_count = commands;
 	ff8_command_data_count = data;
@@ -389,12 +387,12 @@ int ff8_kernel_command_execute(int attacker_slot, int command, int id, int varia
 	// The family's case reads the battle command entry for the data id and the
 	// name, so the new command's entry stands in for the family's own.
 	uint8_t saved[COMMAND_ENTRY_SIZE];
-	memcpy(saved, ff8_command_table[family], COMMAND_ENTRY_SIZE);
-	memcpy(ff8_command_table[family], ff8_command_table[command_id], COMMAND_ENTRY_SIZE);
+	memcpy_code((uint32_t)(saved), (void *)(ff8_command_table[family]), COMMAND_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_command_table[family]), (void *)(ff8_command_table[command_id]), COMMAND_ENTRY_SIZE);
 
 	int ret = ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, (command & ~0xFF) | family, id, variant, target_slot, target_mask, linked);
 
-	memcpy(ff8_command_table[family], saved, COMMAND_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_command_table[family]), (void *)(saved), COMMAND_ENTRY_SIZE);
 
 	return ret;
 }

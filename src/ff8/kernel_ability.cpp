@@ -466,7 +466,7 @@ static void ff8_kernel_ability_find_externals()
 
 	for (auto &chain : group_chains)
 		if (chain.owner == &ability_ext.fn_learned_popup)
-			memcpy(chain.offset, layout.popup_chain, sizeof(chain.offset));
+			memcpy_code((uint32_t)(chain.offset), (void *)(layout.popup_chain), sizeof(chain.offset));
 
 	ability_ext.fn_junction_ability_page = list ? list + layout.junction_ability_page : 0;
 	// Refine and Call Shop use their own ability lookup helpers.
@@ -990,8 +990,8 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 		return false;
 	}
 
-	memcpy(ff8_ability_table, stash + offsets[KERNEL_FIRST_ABIL_SEC], total * ABILITY_ENTRY_SIZE);
-	memcpy(ff8_group_first, first, sizeof(first));
+	memcpy_code((uint32_t)(ff8_ability_table), (void *)(stash + offsets[KERNEL_FIRST_ABIL_SEC]), total * ABILITY_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_group_first), (void *)(first), sizeof(first));
 	ff8_ability_count = total;
 
 	// A later kernel load also replaces GF slots and text. Refresh the table and
@@ -1006,5 +1006,5 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 void ff8_kernel_ability_init()
 {
 	// The shared kernel loader activates patches only for extended ability sections.
-	memcpy(ff8_group_first, vanilla_group_first, sizeof(ff8_group_first));
+	memcpy_code((uint32_t)(ff8_group_first), (void *)(vanilla_group_first), sizeof(ff8_group_first));
 }

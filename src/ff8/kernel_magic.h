@@ -25,12 +25,12 @@ const char *ff8_get_battle_command_name(int command_id);
 // 96-255 (64-95 stay reserved for GFs - 16 used today, 16 free for a future
 // 32-GF exe patch). Supports EN/FR/DE/SP/IT/JP/JP_NV retail 1.2; other
 // versions are skipped. Call once from ff8_init_hooks(). Completely inert
-// while the loaded kernel.bin is vanilla-sized.
+// while the loaded kernel.bin is vanilla-sized, except for the shared battle
+// dispatcher hook, which forwards unchanged until an extension is active.
 void ff8_kernel_magic_init();
 
 // Existing magic-name anchor, shared with the ability extension.
 uint32_t ff8_kernel_magic_name_getter();
 
-// Shared anchors and the single battle dispatcher call-site hook.
+// Existing draw-visibility anchor, shared with the command extension.
 uint32_t ff8_kernel_magic_spell_visibility_fn();
-void ff8_kernel_magic_hook_dispatcher();

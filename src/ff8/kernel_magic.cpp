@@ -35,7 +35,8 @@
 // The exe caps magic at 57 entries and reads any id >= 64 as a GF. On a grown
 // kernel.bin we hand the game a vanilla-layout image, keep the full magic
 // table FFNx-side, repoint the exe's reads to it, and replace the functions
-// that would misread an extended id. A stock kernel.bin is left untouched.
+// that would misread an extended id. A stock kernel.bin keeps its tables;
+// the shared dispatcher hook forwards unchanged until an extension is active.
 //
 // Modder contract: kernel.bin section 1 must list ids 0..N-1, including 32
 // dummy rows for the GF-reserved ids 64..95, once N > 64. mmagic.bin must
@@ -560,8 +561,8 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 	// The entry carries the name and the draw resistance, so the call behaves
 	// exactly as it would for a vanilla spell.
 	uint8_t saved_entry[MAGIC_ENTRY_SIZE];
-	memcpy(saved_entry, ff8_magic_table[stand_in], MAGIC_ENTRY_SIZE);
-	memcpy(ff8_magic_table[stand_in], ff8_magic_table[spell_id], MAGIC_ENTRY_SIZE);
+	memcpy_code((uint32_t)(saved_entry), (void *)(ff8_magic_table[stand_in]), MAGIC_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_magic_table[stand_in]), (void *)(ff8_magic_table[spell_id]), MAGIC_ENTRY_SIZE);
 
 	// Rename it where the call looks it up, so a spell the caster already owns
 	// keeps stacking on its own slot.
@@ -591,7 +592,7 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 	if (draw_slot < MONSTER_DRAW_SLOT_COUNT)
 		monster[MONSTER_DRAW_SLOT_SIZE * draw_slot] = (uint8_t)spell_id;
 
-	memcpy(ff8_magic_table[stand_in], saved_entry, MAGIC_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_magic_table[stand_in]), (void *)(saved_entry), MAGIC_ENTRY_SIZE);
 
 	// The queued action carries the ability id the animation will play.
 	uint8_t *task = ff8_battle_state(BATTLE_TASK_DATA) + BATTLE_TASK_STRIDE * *ff8_battle_state(BATTLE_SEQUENCE_COUNTER);
@@ -601,14 +602,6 @@ static int __cdecl ff8_compute_command_action(int attacker_slot, int command, in
 		*(uint16_t *)ff8_battle_state(BATTLE_ABILITY_ID) = spell_id;
 
 	return ret;
-}
-
-void ff8_kernel_magic_hook_dispatcher()
-{
-	static bool hooked = false;
-	if (hooked) return;
-	replace_call(magic_ext.command_action_call, (void *)ff8_compute_command_action);
-	hooked = true;
 }
 
 // ---- patch application (once, on first grown-kernel load) ---------------
@@ -643,7 +636,6 @@ static void ff8_kernel_magic_arm()
 		ffnx_warning("AddMoreMagic: repointed %u of %d magic table reads - some magic reads may still use the vanilla table!\n", rewritten, K_MAGIC_SITE_COUNT);
 
 	// Take over the functions that would misread an extended id.
-	ff8_kernel_magic_hook_dispatcher();
 	replace_function(magic_ext.manage_monster_spell_visibility_sub_48C7A0, (void *)ff8_manage_monster_spell_visibility);
 	replace_function(magic_ext.fn_name_getter, (void *)ff8_get_magic_name);
 	replace_function(magic_ext.fn_desc_getter, (void *)ff8_get_magic_description);
@@ -679,7 +671,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 	{
 		// Vanilla (or unexpected) kernel.bin: behave exactly like the
 		// original call. Nothing is armed, nothing else is patched.
-		if (size > 0) memcpy(dest, ff8_kernel_stash, size);
+		if (size > 0) memcpy_code((uint32_t)(dest), (void *)(ff8_kernel_stash), size);
 		if (valid && entries != VANILLA_MAGIC_COUNT)
 			ffnx_warning("AddMoreMagic: kernel.bin has %d magic entries (max %d), ignoring extension.\n", entries, MAX_MAGIC_ID);
 		return size;
@@ -707,7 +699,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 			if (trace_all) ffnx_trace("AddMoreMagic: kernel.bin data section %d has size %u, expected %u.\n", i, src_size, copy_size);
 		}
 
-		memcpy(dest + dst, ff8_kernel_stash + src, copy_size);
+		memcpy_code((uint32_t)(dest + dst), (void *)(ff8_kernel_stash + src), copy_size);
 	}
 
 	if (non_vanilla_sections > 0)
@@ -724,13 +716,13 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 
 	uint32_t text_dest_size = VANILLA_KERNEL_SIZE - exe_data_section_offsets[KERNEL_FIRST_TEXT_SEC];
 	uint32_t text_src_size = (uint32_t)size - offsets[KERNEL_FIRST_TEXT_SEC];
-	memcpy(dest + exe_data_section_offsets[KERNEL_FIRST_TEXT_SEC], ff8_kernel_stash + offsets[KERNEL_FIRST_TEXT_SEC], text_src_size < text_dest_size ? text_src_size : text_dest_size);
+	memcpy_code((uint32_t)(dest + exe_data_section_offsets[KERNEL_FIRST_TEXT_SEC]), (void *)(ff8_kernel_stash + offsets[KERNEL_FIRST_TEXT_SEC]), text_src_size < text_dest_size ? text_src_size : text_dest_size);
 
 	if (magic_grown)
 	{
 		uint32_t data_growth = (entries - VANILLA_MAGIC_COUNT) * MAGIC_ENTRY_SIZE;
 		// FFNx-side full magic table.
-		memcpy(ff8_magic_table, ff8_kernel_stash + offsets[KERNEL_MAGIC_SECTION], entries * MAGIC_ENTRY_SIZE);
+		memcpy_code((uint32_t)(ff8_magic_table), (void *)(ff8_kernel_stash + offsets[KERNEL_MAGIC_SECTION]), entries * MAGIC_ENTRY_SIZE);
 		ff8_magic_count = entries;
 		if (trace_all) ffnx_trace("AddMoreMagic: extended kernel.bin detected (%d magic entries, +%u bytes data growth).\n", entries, data_growth);
 		ff8_kernel_magic_arm();
@@ -976,7 +968,7 @@ static void ff8_kernel_magic_find_externals()
 		magic_ext.linked_menu_magic_sub_4F02F0 + menu_magic_reads[0], // magic menu (text part)
 		magic_ext.linked_menu_magic_sub_4F02F0 + menu_magic_reads[1], // magic menu (text part)
 	};
-	memcpy(magic_ext.k_magic_reads, magic_reads, sizeof(magic_reads));
+	memcpy_code((uint32_t)(magic_ext.k_magic_reads), (void *)(magic_reads), sizeof(magic_reads));
 
 	// The five instructions that index the drawn-once bitfield. Four sit around
 	// ParseBattleParty, the fifth in the draw list visibility function.
@@ -1016,6 +1008,15 @@ void ff8_kernel_magic_init()
 		return;
 	}
 
+	uint32_t command_target = magic_ext.command_action_call + 5 + *(int32_t *)(magic_ext.command_action_call + 1);
+	if (*(uint8_t *)magic_ext.command_action_call != 0xE8 || command_target != ff8_externals.battle_sub_48D200)
+	{
+		if (trace_all) ffnx_trace("AddMoreMagic: battle dispatcher call site mismatch (0x%X), extension disabled.\n", command_target);
+		return;
+	}
+
+	// Shared by magic and command extensions; inactive features pass through.
+	replace_call(magic_ext.command_action_call, (void *)ff8_compute_command_action);
 	replace_call(magic_ext.kernel_read_call, (void *)ff8_kernel_load_hook);
 }
 
