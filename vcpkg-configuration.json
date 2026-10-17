@@ -4,6 +4,7 @@
       "kind": "filesystem",
       "path": ".vcpkg",
       "packages": [
+        "amd-amf",
         "bx",
         "bimg",
         "bgfx",
