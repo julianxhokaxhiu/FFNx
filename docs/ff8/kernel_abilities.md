@@ -1,6 +1,6 @@
 # Extended kernel abilities and battle commands
 
-FFNx can load more than the original 116 abilities from `direct/kernel.bin`. FFNx also supports additional battle commands and command ability data. A vanilla kernel keeps the original ability code and tables. No configuration switch enables the extension: FFNx detects the section counts when it reads the file.
+FFNx can load more than the original 116 abilities from `direct/kernel.bin`. FFNx also supports additional battle commands and command ability data. A vanilla kernel keeps the original ability code and tables. The shared battle-dispatch hook is installed during initialization and forwards commands unchanged while the extensions are inactive. No configuration switch enables the extension: FFNx detects the section counts when it reads the file.
 
 ## Limits and IDs
 
