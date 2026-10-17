@@ -100,3 +100,29 @@ std::string ff8_decode_text(const char* encoded_text)
 
   return ret;
 }
+
+std::string ff8_encode_text(const char* text)
+{
+  std::string ret{};
+
+  while (*text != '\0')
+  {
+    size_t length = 1; // Skip characters the font lacks
+
+    for (size_t i = 0; i < ff8_table.size(); ++i)
+    {
+      const std::string& character = ff8_table[i];
+
+      if (!character.empty() && strncmp(text, character.c_str(), character.size()) == 0)
+      {
+        ret.push_back(char(0x20 + i));
+        length = character.size();
+        break;
+      }
+    }
+
+    text += length;
+  }
+
+  return ret;
+}

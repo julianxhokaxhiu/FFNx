@@ -20,6 +20,8 @@ Hardware decoding also requires GPU and driver support for the stream. A rendere
 
 FFNx currently enables hardware decoding only for H.264/AVC streams meeting **all** of these requirements:
 
+The bundled bgfx API exposes H.264, HEVC/H.265, and AV1 codec capabilities, but its current Direct3D11, Direct3D12, and Vulkan decoder implementations only initialize H.264 streams. HEVC and AV1 therefore remain software-decoded; reported GPU codec capabilities alone are not enough to enable them.
+
 | Property | Required value |
 | --- | --- |
 | Video codec | H.264/AVC. |
@@ -75,6 +77,10 @@ Expect the following differences and limitations:
 - Enabling NTSC-J mode does not broaden hardware eligibility. A 10-bit, BT.601-matrix, or otherwise ineligible movie remains software-decoded.
 
 Preserve metadata appropriate to the source rather than changing it solely for acceleration. NTSC-J mode intentionally changes how untagged original-style content is displayed; this is color processing, not a hardware-decoder conflict.
+
+## FF8 Movies Above 15 FPS
+
+FF8 field movies can be encoded at 30 or 60 FPS, with a `.cam` file that has one camera entry per video frame. Field scripts keep their original 15 FPS timing, and the 3D models drawn on top of the movie move smoothly between those steps.
 
 ## Checking the Selected Path
 

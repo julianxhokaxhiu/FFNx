@@ -39,6 +39,7 @@
 #include "cfg.h"
 #include "utils.h"
 #include "renderer.h"
+#include "video/ntscj.h"
 
 CMRC_DECLARE(FFNx);
 
@@ -51,11 +52,12 @@ void RendererCallbacks::fatal(const char* _filePath, uint16_t _line, bgfx::Fatal
     std::string error;
 
     switch (_code) {
-    case bgfx::Fatal::Enum::DebugCheck: error = "Debug Check";
-    case bgfx::Fatal::Enum::InvalidShader: error = "Invalid Shader";
-    case bgfx::Fatal::Enum::UnableToInitialize: error = "Unable To Initialize";
-    case bgfx::Fatal::Enum::UnableToCreateTexture: error = "Unable To Create Texture";
-    case bgfx::Fatal::Enum::DeviceLost: error = "Device Lost";
+    case bgfx::Fatal::Enum::DebugCheck: error = "Debug Check"; break;
+    case bgfx::Fatal::Enum::InvalidShader: error = "Invalid Shader"; break;
+    case bgfx::Fatal::Enum::UnableToInitialize: error = "Unable To Initialize"; break;
+    case bgfx::Fatal::Enum::UnableToCreateTexture: error = "Unable To Create Texture"; break;
+    case bgfx::Fatal::Enum::DeviceLost: error = "Device Lost"; break;
+    default: error = "Unknown"; break;
     }
 
     ffnx_error("[%s] %s\n", error.c_str(), _str);
@@ -174,14 +176,6 @@ void Renderer::setCommonUniforms()
     };
     if (uniform_log) ffnx_trace("%s: gameLightingFlags XYZW(game_lighting %f, NULL, NULL, NULL)\n", __func__, internalState.gameLightingFlags[0]);
 
-    internalState.SmoothSkinningFlags = {
-        (float)internalState.bIsSmoothSkinning,
-        NULL,
-        NULL,
-        NULL
-    };
-    if (uniform_log) ffnx_trace("%s: SmoothSkinningFlags XYZW(isSmoothSkinning %f, NULL, NULL, NULL)\n", __func__, internalState.SmoothSkinningFlags[0]);
-
     setUniform(RendererUniform::VS_FLAGS,  internalState.VSFlags.data());
     setUniform(RendererUniform::FS_ALPHA_FLAGS, internalState.FSAlphaFlags.data());
     setUniform(RendererUniform::FS_MISC_FLAGS, internalState.FSMiscFlags.data());
@@ -190,7 +184,6 @@ void Renderer::setCommonUniforms()
     setUniform(RendererUniform::FS_MOVIE_FLAGS, internalState.FSMovieFlags.data());
     setUniform(RendererUniform::FS_MORE_MOVIE_FLAGS, internalState.FSMoreMovieFlags.data());
     setUniform(RendererUniform::WM_FLAGS, internalState.WMFlags.data());
-    setUniform(RendererUniform::SKINNING_FLAGS, internalState.SmoothSkinningFlags.data());
     setUniform(RendererUniform::TIME_COLOR, internalState.TimeColor.data());
     setUniform(RendererUniform::TIME_DATA, internalState.TimeData.data());
 
@@ -303,6 +296,9 @@ void Renderer::updateRendererShaderPaths()
     fragmentLightingPathSmooth += ".smooth" + shaderSuffix + ".frag";
     vertexShadowMapPath += ".smooth" + shaderSuffix + ".vert";
     fragmentShadowMapPath += ".smooth" + shaderSuffix + ".frag";
+    vertexSkinnedPath += ".smooth" + shaderSuffix + ".vert";
+    vertexLightingSkinnedPath += ".smooth" + shaderSuffix + ".vert";
+    vertexShadowMapSkinnedPath += ".smooth" + shaderSuffix + ".vert";
     vertexFieldShadowPath += ".smooth" + shaderSuffix + ".vert";
     fragmentFieldShadowPath += ".smooth" + shaderSuffix + ".frag";
     vertexBlitPath += ".flat" + shaderSuffix + ".vert";
@@ -311,6 +307,20 @@ void Renderer::updateRendererShaderPaths()
     fragmentYUVMoviePath += ".smooth" + shaderSuffix + ".frag";
     vertexYUVMovieTrueColorPath += ".smooth" + shaderSuffix + ".vert";
     fragmentYUVMovieTrueColorPath += ".smooth" + shaderSuffix + ".frag";
+}
+
+// Skinned counterpart of a 3D program (smooth shaded: external meshes have real normals, so there is no flat
+// variant); any other program is returned unchanged
+Renderer::RendererProgram Renderer::getSkinnedProgram(RendererProgram program)
+{
+    switch (program)
+    {
+    case RendererProgram::FLAT:
+    case RendererProgram::SMOOTH: return RendererProgram::SKINNED_SMOOTH;
+    case RendererProgram::LIGHTING_FLAT:
+    case RendererProgram::LIGHTING_SMOOTH: return RendererProgram::LIGHTING_SKINNED_SMOOTH;
+    default: return program;
+    }
 }
 
 // Via https://dev.to/pperon/hello-bgfx-4dka
@@ -352,10 +362,10 @@ bgfx::ShaderHandle Renderer::getShader(const char* filePath)
     return handle;
 }
 
-bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType)
+bgfx::UniformHandle Renderer::createUniform(std::string uniformName, bgfx::UniformType::Enum uniformType, uint16_t arraySize)
 {
     bgfx::UniformHandle handle;
-    handle = bgfx::createUniform(uniformName.c_str(), uniformType);
+    handle = bgfx::createUniform(uniformName.c_str(), uniformType, arraySize);
     return handle;
 }
 
@@ -436,7 +446,7 @@ void Renderer::resetState()
     isSmoothSkinning();
     setColorMatrix();
     setColorGamut();
-    setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB);
+    setOverallColorGamut(ntscj_get_overall_color_gamut());
     setGammaType();
     setChromaLocationType();
     setGameLightData();
@@ -541,12 +551,7 @@ void Renderer::renderFrame()
         1, 3, 2
     };
 
-    if (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ){
-      backendProgram = RendererProgram::POSTPROCESSING_NTSCJ;
-    }
-    else {
-      backendProgram = RendererProgram::POSTPROCESSING;
-    }
+    setPostprocessingBackend();
     backendViewId++;
     {
         useTexture(
@@ -862,36 +867,6 @@ void Renderer::bindTextures()
     }
 }
 
-void Renderer::AssignGamutLUT()
-{
-  // If we aren't in NTSC-J mode, we won't be using a LUT at all
-  if (internalState.bIsOverallColorGamut != COLORGAMUT_NTSCJ){
-    return;
-  }
-
-  // NTSC-J mode post-processing uses the NTSCJ to sRGB LUT in SDR mode (but uses a matrix in HDR mode)
-  if ((backendProgram == RendererProgram::POSTPROCESSING_NTSCJ) && !internalState.bIsHDR){
-    LoadGamutLUT(INDEX_LUT_NTSCJ_TO_SRGB); // load LUT if not already loaded
-    useTexture(GLUTHandleNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
-  }
-  // Movies may use LUTs in NTSC-J mode
-  else if (backendProgram == RendererProgram::YUVMOVIE_TRUECOLOR){
-    // This is slightly wrong for HDR, since the LUTs invert gamut compression that wouldn't happen in HDR.
-    // The consequence is that some colors near places where the P22 gamut exceeds the sRGB/SMPTE-C gamuts
-    // will appear slightly brighter and/or more saturated in HDR than they would if the round-trip were perfect.
-    // I don't think anyone will mind...
-    if (internalState.bIsMovieColorGamut == COLORGAMUT_SRGB){
-      LoadGamutLUT(INDEX_LUT_INVERSE_NTSCJ_TO_SRGB); // load LUT if not already loaded
-      useTexture(GLUTHandleInverseNTSCJtoSRGB.idx, RendererTextureSlot::TEX_G_LUT);
-    }
-    else if (internalState.bIsMovieColorGamut == COLORGAMUT_SMPTEC){
-      LoadGamutLUT(INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC); // load LUT if not already loaded
-      useTexture(GLUTHandleInverseNTSCJtoSMPTEC.idx, RendererTextureSlot::TEX_G_LUT);
-    }
-  }
-  return;
-}
-
 // PUBLIC
 
 void Renderer::init()
@@ -1092,6 +1067,26 @@ void Renderer::init()
         true
     );
 
+    // Smooth skinning variants (smooth shaded only): the same fragment shaders, vertex shaders built with
+    // SMOOTH_SKINNING
+    backendProgramHandles[RendererProgram::SKINNED_SMOOTH] = bgfx::createProgram(
+        getShader(vertexSkinnedPath.c_str()),
+        getShader(fragmentPathSmooth.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::LIGHTING_SKINNED_SMOOTH] = bgfx::createProgram(
+        getShader(vertexLightingSkinnedPath.c_str()),
+        getShader(fragmentLightingPathSmooth.c_str()),
+        true
+    );
+
+    backendProgramHandles[RendererProgram::SHADOW_MAP_SKINNED] = bgfx::createProgram(
+        getShader(vertexShadowMapSkinnedPath.c_str()),
+        getShader(fragmentShadowMapPath.c_str()),
+        true
+    );
+
     backendProgramHandles[RendererProgram::BLIT] = bgfx::createProgram(
         getShader(vertexBlitPath.c_str()),
         getShader(fragmentBlitPath.c_str()),
@@ -1179,8 +1174,7 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::GAME_LIGHT_DIR3] = createUniform("gameLightDir3", bgfx::UniformType::Vec4);
     bgfxUniformHandles[RendererUniform::GAME_SCRIPTED_LIGHT_COLOR] = createUniform("gameScriptedLightColor", bgfx::UniformType::Vec4);
 
-    bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4);
-    bgfxUniformHandles[RendererUniform::SKINNING_FLAGS] = createUniform("skinningFlags", bgfx::UniformType::Vec4);
+    bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4, MAX_BONE_MATRICES);
 
     for(int i = 0; i < RendererTextureSlot::COUNT; ++i)
     {
@@ -1287,68 +1281,6 @@ void Renderer::prepareEnvBrdf()
     if (!envBrdfTexture.idx) envBrdfTexture = BGFX_INVALID_HANDLE;
 }
 
-void Renderer::prepareGamutLUTs()
-{
-
-  // flush everything (they should have all initialized to BGFX_INVALID_HANDLE, but let's be careful)
-  if (bgfx::isValid(GLUTHandleNTSCJtoSRGB))
-    bgfx::destroy(GLUTHandleNTSCJtoSRGB);
-  if (bgfx::isValid(GLUTHandleInverseNTSCJtoSRGB))
-    bgfx::destroy(GLUTHandleInverseNTSCJtoSRGB);
-  if (bgfx::isValid(GLUTHandleInverseNTSCJtoSMPTEC))
-    bgfx::destroy(GLUTHandleInverseNTSCJtoSMPTEC);
-
-  // load the NTSC-J to sRGB LUT if we're likely to need it.
-  // (consult the global setting so we don't get tripped up by renderer state changing to accomodate the FFNx logo)
-  if (enable_ntscj_gamut_mode && !internalState.bIsHDR){
-    LoadGamutLUT(INDEX_LUT_NTSCJ_TO_SRGB);
-  }
-  // Any other LUTs we end up needing will be lazy loaded by AssignGamutLUT()
-
-  return;
-}
-
-void Renderer::LoadGamutLUT(GamutLUTIndexType whichLUT)
-{
-
-  static char fullpath[MAX_PATH];
-  uint32_t width = 0;
-  uint32_t height = 0;
-  uint32_t mipCount = 0;
-
-  // Note: It's important that the final parameter to createTextureHandle() -- isSrgb -- is false.
-  // Otherwise the sRGB gamma function will be applied to convert sRGB to linear RGB.
-  // But we don't want that because these LUTs are already in linear RGB.
-
-  switch (whichLUT){
-    case INDEX_LUT_NTSCJ_TO_SRGB:
-      if (!bgfx::isValid(GLUTHandleNTSCJtoSRGB)){
-        sprintf(fullpath, "%s/shaders/glut_ntscj_to_srgb.png", basedir);
-        GLUTHandleNTSCJtoSRGB = createTextureHandle(fullpath, &width, &height, &mipCount, false);
-        if (!GLUTHandleNTSCJtoSRGB.idx) GLUTHandleNTSCJtoSRGB = BGFX_INVALID_HANDLE;
-      }
-      break;
-    case INDEX_LUT_INVERSE_NTSCJ_TO_SRGB:
-      if (!bgfx::isValid(GLUTHandleInverseNTSCJtoSRGB)){
-        sprintf(fullpath, "%s/shaders/glut_inverse_ntscj_to_srgb.png", basedir);
-        GLUTHandleInverseNTSCJtoSRGB = createTextureHandle(fullpath, &width, &height, &mipCount, false);
-        if (!GLUTHandleInverseNTSCJtoSRGB.idx) GLUTHandleInverseNTSCJtoSRGB = BGFX_INVALID_HANDLE;
-      }
-      break;
-    case INDEX_LUT_INVERSE_NTSCJ_TO_SMPTEC:
-      if (!bgfx::isValid(GLUTHandleInverseNTSCJtoSMPTEC)){
-        sprintf(fullpath, "%s/shaders/glut_inverse_ntscj_to_smptec.png", basedir);
-        GLUTHandleInverseNTSCJtoSMPTEC = createTextureHandle(fullpath, &width, &height, &mipCount, false);
-        if (!GLUTHandleInverseNTSCJtoSMPTEC.idx) GLUTHandleInverseNTSCJtoSMPTEC = BGFX_INVALID_HANDLE;
-      }
-      break;
-    default:
-      ffnx_error("LoadGamutLUT: called with invalid index: %i\n", whichLUT);
-      break;
-  }
-  return;
-}
-
 void Renderer::shutdown()
 {
     destroyAll();
@@ -1400,13 +1332,14 @@ void Renderer::drawToShadowMap(bool uniformsAlreadyAttached, bool texturesAlread
     {
         switch (internalState.cullMode)
         {
-        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW;
-        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW;
+        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW; break;
+        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW; break;
         }
     }
     bgfx::setState(internalState.state);
 
-    bgfx::submit(0, backendProgramHandles[RendererProgram::SHADOW_MAP], 0, BGFX_DISCARD_NONE);
+    auto shadowMapProgram = internalState.bIsSmoothSkinning ? RendererProgram::SHADOW_MAP_SKINNED : RendererProgram::SHADOW_MAP;
+    bgfx::submit(0, backendProgramHandles[shadowMapProgram], 0, BGFX_DISCARD_NONE);
 };
 
 void Renderer::drawWithLighting(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, bool keepBindings)
@@ -1507,8 +1440,8 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
 
         switch (internalState.cullMode)
         {
-        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW;
-        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW;
+        case RendererCullMode::FRONT: internalState.state |= BGFX_STATE_CULL_CW; break;
+        case RendererCullMode::BACK: internalState.state |= BGFX_STATE_CULL_CCW; break;
         }
 
         switch (internalState.blendMode)
@@ -1553,7 +1486,8 @@ void Renderer::draw(bool uniformsAlreadyAttached, bool texturesAlreadyAttached, 
     bgfx::setState(internalState.state);
 
     auto flags = keepBindings ? BGFX_DISCARD_STATE : BGFX_DISCARD_ALL;
-    bgfx::submit(backendViewId, backendProgramHandles[backendProgram], 0, flags);
+    auto program = internalState.bIsSmoothSkinning ? getSkinnedProgram(backendProgram) : backendProgram;
+    bgfx::submit(backendViewId, backendProgramHandles[program], 0, flags);
 
     internalState.bHasDrawBeenDone = true;
     internalState.bTexturesBound = false;
@@ -2463,17 +2397,6 @@ void Renderer::setInterpolationQualifier(RendererInterpolationQualifier qualifie
     }
 }
 
-void Renderer::setYUVMovieBackend(){
-    if (internalState.bIsOverallColorGamut == COLORGAMUT_NTSCJ){
-        backendProgram = RendererProgram::YUVMOVIE_TRUECOLOR;
-        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: YUVMOVIE_TRUECOLOR\n", __func__);
-    }
-    else {
-        backendProgram = RendererProgram::YUVMOVIE;
-        if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: YUVMOVIE\n", __func__);
-    }
-}
-
 void Renderer::setPrimitiveType(RendererPrimitiveType type)
 {
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s: %u\n", __func__, type);
@@ -2657,11 +2580,14 @@ void Renderer::isSmoothSkinning(bool flag)
     internalState.bIsSmoothSkinning = flag;
 }
 
-void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette)
+void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_MATRICES>* matrix_palette, size_t joint_count)
 {
     if(matrix_palette != nullptr)
     {
-        for(int i = 0; i < MAX_BONE_MATRICES; ++i)
+        // Only the joints the model actually has are copied and uploaded
+        internalState.bone_matrix_count = static_cast<uint16_t>(std::clamp<size_t>(joint_count, 1, MAX_BONE_MATRICES));
+
+        for(int i = 0; i < internalState.bone_matrix_count; ++i)
         {
             ::memcpy(&internalState.bone_matrices[16*i], &(*matrix_palette)[i].m[0][0], sizeof((*matrix_palette)[i].m));
         }
@@ -2670,7 +2596,7 @@ void Renderer::setSmoothSkinningBoneMatrices(std::array<struct matrix, MAX_BONE_
 
 void Renderer::setSmoothSkinningUniforms()
 {
-    setUniform(RendererUniform::BONE_MATRICES, internalState.bone_matrices, MAX_BONE_MATRICES);
+    setUniform(RendererUniform::BONE_MATRICES, internalState.bone_matrices, internalState.bone_matrix_count);
 }
 
 void Renderer::setSphericalWorldRate(float value)

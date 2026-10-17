@@ -38,9 +38,11 @@
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
 #include "ff8/battle/ai.h"
+#include "ff8/field/movie.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/battle/monsters.h"
 #include "ff8/remaster.h"
+#include "ff8/menu/volume.h"
 #include "metadata.h"
 #include "achievement.h"
 #include "widescreen.h"
@@ -2497,6 +2499,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_call(uint32_t(ff8_externals.field_push_mch_vertices_rect_sub_533A90) + 0x4D, ff8_field_calc_triangle_condition);
 
 	// #####################
+	// Config menu: Sound volumes
+	// #####################
+	ff8_menu_volume_init();
+
+	// #####################
 	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
 	// #####################
 	ff8_kernel_magic_init();
@@ -2510,6 +2517,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Monster-AI target values 228-248 -> fixed battle-slot pairs
 	// #####################
 	ff8_battle_ai_init();
+
+	// #####################
+	// Field scripts and models in sync with movies above 15 FPS
+	// #####################
+	ff8_field_movie_init();
 
 }
 
