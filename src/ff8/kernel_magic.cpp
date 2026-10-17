@@ -770,7 +770,7 @@ static void ff8_kernel_magic_find_externals()
 
 	magic_ext.fn_validate_magic = get_relative_call(uint32_t(ff8_externals.menu_callbacks[1].func), 0xE5);
 	magic_ext.linked_menu_magic_sub_4F02F0 = get_absolute_value(uint32_t(ff8_externals.menu_callbacks[3].func), 0x8);
-	magic_ext.fn_reorder_magic = get_relative_call(magic_ext.linked_menu_magic_sub_4F02F0, 0x47BC);
+	magic_ext.fn_reorder_magic = get_relative_call(magic_ext.linked_menu_magic_sub_4F02F0, JP_VERSION ? 0x479D : 0x47BC);
 
 	magic_ext.k_battle_command = uint32_t(ff8_externals.unk_1CF3E48) + 0xE4;  // kernel.bin data section 0
 	magic_ext.k_magic          = uint32_t(ff8_externals.unk_1CF3E48) + 0x21C; // kernel.bin data section 1
