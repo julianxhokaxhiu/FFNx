@@ -48,7 +48,7 @@ The GF learns the section 13 ability; that ability grants the section 1 battle c
 
 ## Removing entries
 
-SolomonRing can remove original abilities in sections 12-18, clear GF references to the removed ability and shift later IDs. This frees shared IDs for other ability sections. Empty groups are supported; GF effects still work when their IDs move below 64. Use a fresh or migrated save after changing IDs.
+SolomonRing can remove original abilities in sections 12-18, clear GF references to the removed ability and shift later IDs. Cleared learning slots (ability 0, None) do not appear in the GF Learn list. Learned bits beyond the current kernel are also ignored. If the game reloads a changed kernel, the ability records and group bounds refresh with its GF slots and text. This frees shared IDs for other ability sections. Empty groups are supported; GF effects still work when their IDs move below 64. Use a fresh or migrated save after changing IDs.
 
 Original battle commands and command ability data use fixed engine IDs. Removing one clears its editor references and hides it from lists and pickers, but retains a reserved slot. Removed effect-data rows retain their payload for engine-internal actions. Other rows keep their IDs. These reserved slots are shown in the entry counter and do not provide extra command/effect capacity. Added rows beyond the original tables are removed and compacted normally. Command 0 remains reserved as the empty action.
 
