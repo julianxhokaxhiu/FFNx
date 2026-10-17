@@ -266,7 +266,7 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 	int commands = (int)(command_bytes / COMMAND_ENTRY_SIZE);
 	int data = (int)(data_bytes / COMMAND_DATA_ENTRY_SIZE);
 
-	// A stock kernel.bin leaves here, before anything is resolved or patched.
+	// A stock kernel.bin leaves here unless an earlier load needs its tables reset.
 	bool removed = false;
 	const uint8_t *command_section = (const uint8_t *)stash + offsets[KERNEL_COMMAND_SECTION];
 	const uint8_t *data_section = (const uint8_t *)stash + offsets[KERNEL_COMMAND_DATA_SECTION];
@@ -274,7 +274,7 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 	{
 		for (int id = 0; id < commands; ++id) removed |= command_section[id * COMMAND_ENTRY_SIZE + COMMAND_BEHAVES_LIKE_OFF] == REMOVED_COMMAND;
 		for (int id = 0; id < data; ++id) removed |= data_section[id * COMMAND_DATA_ENTRY_SIZE + 2] == REMOVED_COMMAND_DATA;
-		if (!removed) return false;
+		if (!removed && !ff8_command_armed) return false;
 	}
 
 	if (command_bytes % COMMAND_ENTRY_SIZE || data_bytes % COMMAND_DATA_ENTRY_SIZE
