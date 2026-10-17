@@ -193,6 +193,14 @@ uint32_t ff7_get_movie_frame()
 	return ffmpeg_get_movie_frame();
 }
 
+uint32_t ff8_get_movie_frame()
+{
+	// Field scripts wait for movie frames counted at 15 FPS
+	if (movie_fps_ratio > 1) return ff8_externals.movie_object->movie_current_frame / movie_fps_ratio;
+
+	return ff8_externals.movie_object->movie_current_frame;
+}
+
 uint32_t ff8_movie_frames;
 
 void ff8_prepare_movie(uint8_t disc, uint32_t movie)
@@ -359,9 +367,9 @@ int ff8_update_movie_sample()
 
 	int ret = 0;
 
-	if (ff8_externals.movie_object->movie_current_frame <= ff8_externals.movie_object->movie_total_frames)
+	if (ff8_externals.movie_object->movie_current_frame <= ff8_externals.movie_object->movie_total_frames &&
+		ffmpeg_update_movie_sample())
 	{
-		ffmpeg_update_movie_sample();
 		ret = (int)ff8_externals.movie_object->camdata_start;
 		ff8_externals.movie_object->camdata_pointer = &ff8_externals.movie_object->camdata_start[ff8_externals.movie_object->movie_current_frame];
 	}
@@ -378,6 +386,9 @@ int ff8_start_movie()
 	if(trace_all || trace_movies) ffnx_trace("start_movie\n");
 
 	ff8_externals.movie_object->field_4C4B0 = 0;
+
+	// Required by > 15 FPS movies
+	movie_fps_ratio = ffmpeg_get_fps_ratio();
 
 	if(ff8_externals.movie_object->movie_intro_pak)
 	{
@@ -459,6 +470,7 @@ void movie_init()
 		replace_function(common_externals.update_movie_sample, ff8_update_movie_sample);
 		replace_function(ff8_externals.draw_movie_frame, draw_current_frame);
 		replace_function(common_externals.stop_movie, ff8_stop_movie);
+		replace_function(common_externals.get_movie_frame, ff8_get_movie_frame);
 	}
 
 	ffmpeg_movie_init();

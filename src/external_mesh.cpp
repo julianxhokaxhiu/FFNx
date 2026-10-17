@@ -64,12 +64,15 @@ bool ExternalMesh::importExternalMeshGltfFile(char* file_path, char* tex_path, b
 	cgltf_result result = cgltf_parse_file(&options, file_path, &data);
 	if (result != cgltf_result_success)
 	{
+		ffnx_error("External mesh: could not parse %s (cgltf error %d)\n", file_path, result);
 		return false;
 	}
 
 	result = cgltf_load_buffers(&options, data, file_path);
 	if (result != cgltf_result_success)
 	{
+		ffnx_error("External mesh: could not load buffers for %s (cgltf error %d)\n", file_path, result);
+		cgltf_free(data);
 		return false;
 	}
 
