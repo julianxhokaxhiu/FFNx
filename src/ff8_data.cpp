@@ -284,6 +284,7 @@ void ff8_find_externals()
 
 	ff8_externals.sub_471F70 = get_relative_call(ff8_externals.field_main_loop, 0x148);
 	ff8_externals.field_fade_transition_sub_472990 = get_relative_call(ff8_externals.field_main_loop, 0x19E);
+	ff8_externals.update_game_time_sub_4701B0 = get_relative_call(ff8_externals.field_main_loop, 0x119);
 	ff8_externals.sub_45CDD0 = get_relative_call(ff8_externals.field_fade_transition_sub_472990, 0x5C);
 
 	if (JP_VERSION)
@@ -292,7 +293,11 @@ void ff8_find_externals()
 		common_externals.update_field_entities = get_relative_call(ff8_externals.sub_4767B0, 0x14E + 1);
 		ff8_externals.ctrl_keyboard_actions = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0x156 + 1);
 		ff8_externals.sub_4789A0 = get_relative_call(ff8_externals.sub_4767B0, 0x40F + 3);
+		ff8_externals.field_shake_sub_4765C0 = get_relative_call(ff8_externals.sub_4767B0, 0x446 + 3);
+		ff8_externals.field_scroll_sub_475E60 = get_relative_call(ff8_externals.sub_4767B0, 0x45D + 3);
+		ff8_externals.field_fade_sub_47B980 = get_relative_call(ff8_externals.sub_4767B0, 0x920 - 13);
 		ff8_externals.sub_472B30 = get_relative_call(ff8_externals.sub_4767B0, 0x4C9 + 3);
+		ff8_externals.field_draw_shadows_sub_472F20 = get_relative_call(ff8_externals.sub_4767B0, 0x4F0 + 3);
 		ff8_externals.sub_530810 = get_relative_call(ff8_externals.sub_472B30, 0x35D + 7);
 		ff8_externals.stop_cdrom = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0xB46 - 13);
 		ff8_externals.stop_cdrom_field_call = ff8_externals.sub_4767B0 + 0xB46 - 0xD;
@@ -304,12 +309,18 @@ void ff8_find_externals()
 		common_externals.update_field_entities = get_relative_call(ff8_externals.sub_4767B0, 0x14E);
 		ff8_externals.ctrl_keyboard_actions = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0x156);
 		ff8_externals.sub_4789A0 = get_relative_call(ff8_externals.sub_4767B0, 0x40F);
+		ff8_externals.field_shake_sub_4765C0 = get_relative_call(ff8_externals.sub_4767B0, 0x446);
+		ff8_externals.field_scroll_sub_475E60 = get_relative_call(ff8_externals.sub_4767B0, 0x45D);
+		ff8_externals.field_fade_sub_47B980 = get_relative_call(ff8_externals.sub_4767B0, 0x920);
 		ff8_externals.sub_472B30 = get_relative_call(ff8_externals.sub_4767B0, 0x4C9);
+		ff8_externals.field_draw_shadows_sub_472F20 = get_relative_call(ff8_externals.sub_4767B0, 0x4F0);
 		ff8_externals.sub_530810 = get_relative_call(ff8_externals.sub_472B30, 0x35D);
 		ff8_externals.stop_cdrom = (uint32_t(*)())get_relative_call(ff8_externals.sub_4767B0, 0xB46);
 		ff8_externals.stop_cdrom_field_call = ff8_externals.sub_4767B0 + 0xB46;
 		ff8_externals.sub_47CA90 = (char (*)())get_relative_call(ff8_externals.sub_4789A0, 0x68B);
 	}
+
+	ff8_externals.field_fade = (ff8_field_fade *)get_absolute_value(ff8_externals.field_fade_sub_47B980, 0x7);
 
 	ff8_externals.sub_533CD0 = get_relative_call(ff8_externals.sub_530810, 0x27B);
 	ff8_externals.sub_530C30 = get_relative_call(ff8_externals.sub_533CD0, 0x28E);
@@ -378,6 +389,7 @@ void ff8_find_externals()
 	ff8_externals.opcode_amesw = common_externals.execute_opcode_table[0x64];
 	ff8_externals.opcode_ames = common_externals.execute_opcode_table[0x65];
 	ff8_externals.opcode_battle = common_externals.execute_opcode_table[0x69];
+	ff8_externals.opcode_keyon = common_externals.execute_opcode_table[0x6E];
 	ff8_externals.opcode_aask = common_externals.execute_opcode_table[0x6F];
 	ff8_externals.opcode_setvibrate = common_externals.execute_opcode_table[0xA1];
 	ff8_externals.opcode_movieready = common_externals.execute_opcode_table[0xA3];
@@ -402,6 +414,7 @@ void ff8_find_externals()
 	ff8_externals.cardgame_deck_id_1DCD7AD = (uint8_t*)get_absolute_value((uint32_t)ff8_externals.opcode_cardgame, 0xAE);
 	ff8_externals.vibrate_data_field = (uint8_t*)get_absolute_value(ff8_externals.opcode_setvibrate, 0x27);
 	ff8_externals.current_tutorial_id = (BYTE*)get_absolute_value(ff8_externals.opcode_tuto, 0x2A);
+	ff8_externals.field_keys_pressed = (uint32_t *)get_absolute_value(ff8_externals.opcode_keyon, 0x7);
 
 	common_externals.cross_fade_midi = get_relative_call(ff8_externals.opcode_crossmusic, 0x5C);
 	ff8_externals.music_load = get_relative_call(ff8_externals.opcode_musicload, 0x8C);

@@ -78,6 +78,10 @@ Expect the following differences and limitations:
 
 Preserve metadata appropriate to the source rather than changing it solely for acceleration. NTSC-J mode intentionally changes how untagged original-style content is displayed; this is color processing, not a hardware-decoder conflict.
 
+## FF8 Movies Above 15 FPS
+
+FF8 field movies can be encoded at 30 or 60 FPS, with a `.cam` file that has one camera entry per video frame. Field scripts keep their original 15 FPS timing, and the 3D models drawn on top of the movie move smoothly between those steps.
+
 ## Checking the Selected Path
 
 Enable `trace_movies = true` and inspect the runtime log:
