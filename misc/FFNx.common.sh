@@ -120,4 +120,6 @@ vec3 ApplySphericalWorld(vec3 viewPosition, float radiusScale)
 	return outResult;
 }
 
-#define MAX_BONE_MATRICES 128
+// bgfx stores a uniform array's element count in 8 bits, so 255 matrices is the largest array it supports.
+// Keep in sync with src/renderer.h
+#define MAX_BONE_MATRICES 255
