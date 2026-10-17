@@ -1648,6 +1648,8 @@ struct ff8_externals
 	BYTE* field_dialog_current_choice;
 	uint32_t sub_470440;
 	uint32_t sub_49ACD0;
+	uint32_t sub_4974B0;
+	uint32_t convert_ascii_to_ff8enc_sub_4A2F20;
 	uint32_t sub_4A0880;
 	uint32_t sub_4A09A0;
 	uint32_t sub_49FC10;

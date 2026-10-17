@@ -45,8 +45,8 @@ static const esc_menu_texts translations[] = {
 	{ "it", { "Torna al gioco", "Riavvia il gioco", "Esci dal gioco" } },
 };
 
-static bool enabled = false;
 static std::string texts[ESC_MENU_COUNT];
+static bool japanese = false;
 
 static ff8_draw_menu_sprite_texture_infos sprites[256]; // The menu draws up to 117 sprites, the game pause screen has room for 85
 static uint32_t ot = 0; // PlayStation ordering table, the draw calls read it
@@ -83,9 +83,18 @@ static int update_menu(int keyon)
 
 static void draw_menu(int a1, const int16_t *pause_window)
 {
+	std::string rows[ESC_MENU_COUNT];
 	int text_width = 0;
 
-	for (const std::string &text : texts) text_width = std::max(text_width, ff8_externals.get_text_width_sub_4A0F80(text.c_str()));
+	for (int i = 0; i < ESC_MENU_COUNT; ++i)
+	{
+		rows[i] = texts[i];
+
+		// No Japanese table in ff8_encode_text: the game converts the English rows each time they are drawn, like the title screen's Credits
+		if (japanese) ((void(*)(char *))ff8_externals.convert_ascii_to_ff8enc_sub_4A2F20)(rows[i].data());
+
+		text_width = std::max(text_width, ff8_externals.get_text_width_sub_4A0F80(rows[i].c_str()));
+	}
 
 	// The first row goes where the game draws PAUSE (in battle, under the help text), the others below it.
 	// Horizontally centered on the pause window, with room for the hand cursor on the left
@@ -98,7 +107,7 @@ static void draw_menu(int a1, const int16_t *pause_window)
 	// Front to back, like the game pause window. The hand cursor goes where the game menus put it
 	ff8_draw_menu_sprite_texture_infos *next = draw_icon(a1, sprites, 0, x - 26, y + cursor * ROW_HEIGHT + 3, WINDOW_COLOR);
 
-	for (int i = 0; i < ESC_MENU_COUNT; ++i) next = ff8_externals.draw_text_sub_4A1020(a1, next, x, y + i * ROW_HEIGHT, texts[i].c_str(), 7); // White
+	for (int i = 0; i < ESC_MENU_COUNT; ++i) next = ff8_externals.draw_text_sub_4A1020(a1, next, x, y + i * ROW_HEIGHT, rows[i].c_str(), 7); // White
 
 	next = ff8_externals.draw_window_frame_sub_4B6A60(a1, next, window, WINDOW_COLOR);
 	ff8_externals.draw_window_background_sub_4B6A80(a1, next, window, WINDOW_COLOR, 8); // Same style as the game pause window
@@ -117,8 +126,6 @@ static void restart_game()
 void ff8_esc_menu_update(bool esc_down)
 {
 	static bool esc_was_down = false;
-
-	if (!enabled) return;
 
 	esc_pressed = esc_down && !esc_was_down;
 	esc_was_down = esc_down;
@@ -216,8 +223,7 @@ void ff8_esc_menu_init()
 
 	concat_lang_str(lang);
 
-	// No Japanese table in ff8_encode_text, Esc keeps doing nothing
-	if (strcmp(lang, "jp") == 0) return;
+	japanese = strcmp(lang, "jp") == 0;
 
 	const esc_menu_texts *t = &translations[0];
 
@@ -226,7 +232,5 @@ void ff8_esc_menu_init()
 		if (strcmp(lang, translation.lang) == 0) t = &translation;
 	}
 
-	for (int i = 0; i < ESC_MENU_COUNT; ++i) texts[i] = ff8_encode_text(t->rows[i]);
-
-	enabled = true;
+	for (int i = 0; i < ESC_MENU_COUNT; ++i) texts[i] = japanese ? t->rows[i] : ff8_encode_text(t->rows[i]);
 }

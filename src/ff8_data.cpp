@@ -917,6 +917,8 @@ void ff8_find_externals()
 
 	ff8_externals.sub_470440 = get_absolute_value(ff8_externals.credits_main_loop, 0xD2);
 	ff8_externals.sub_49ACD0 = get_relative_call(ff8_externals.sub_470440, JP_VERSION ? 0x9C : 0x98);
+	ff8_externals.sub_4974B0 = get_relative_call(ff8_externals.sub_470440, JP_VERSION ? 0xA4 : 0xA0);
+	ff8_externals.convert_ascii_to_ff8enc_sub_4A2F20 = get_relative_call(ff8_externals.sub_4974B0, 0xE);
 	ff8_externals.sub_4A0880 = get_relative_call(ff8_externals.sub_49ACD0, 0x58);
 	ff8_externals.sub_4A09A0 = get_absolute_value(ff8_externals.sub_4A0880, 0x25);
 	ff8_externals.sub_49FC10 = get_relative_call(ff8_externals.sub_4A09A0, 0xCF);
