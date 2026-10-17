@@ -1175,7 +1175,6 @@ void Renderer::init()
     bgfxUniformHandles[RendererUniform::GAME_SCRIPTED_LIGHT_COLOR] = createUniform("gameScriptedLightColor", bgfx::UniformType::Vec4);
 
     bgfxUniformHandles[RendererUniform::BONE_MATRICES] = createUniform("boneMatrices", bgfx::UniformType::Mat4, MAX_BONE_MATRICES);
-    bgfxUniformHandles[RendererUniform::SKINNING_FLAGS] = createUniform("skinningFlags", bgfx::UniformType::Vec4);
 
     for(int i = 0; i < RendererTextureSlot::COUNT; ++i)
     {
