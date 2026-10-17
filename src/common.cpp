@@ -838,6 +838,11 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			steam_appid_file.close();
 		}
 
+		if (!FFNx_SteamAPI_ValidateLibrary())
+		{
+			return 1;
+		}
+
 		if (SteamAPI_RestartAppIfNecessary(app_id))
 		{
 			MessageBoxA(gameHwnd, "Steam Error - Could not find steam_appid.txt containing the app ID of the game.\n", "Steam App ID Wrong", 0);
