@@ -92,6 +92,14 @@ Shortcuts:
 
 - Keyboard Shortcut: `CTRL + T`
 
+### Esc Menu ( FF8 only! )
+
+This will pause the game in field, world map and battle, and show a menu to return to the game, restart it (soft reset) or exit it.
+
+Shortcuts:
+
+- Keyboard Shortcut: `ESC`
+
 ### Quit Game ( FF8 only! )
 
 Shortcuts:
