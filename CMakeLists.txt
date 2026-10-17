@@ -234,6 +234,9 @@ target_link_options(
 
 # SHADER COMPILATION
 set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.post.ntscj" "FFNx.blit" "FFNx.yuvmovie" "FFNx.yuvmovie.truecolor")
+# The 3D vertex shaders also get a skinned variant (smooth shaded only), built from the same source with
+# SMOOTH_SKINNING defined, so ordinary draws carry no bone data
+set(FFNX_SKINNED_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap")
 set(SHADERC_EXECUTABLE "${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease")
 set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/bin/shaders")
 set(SHADER_LOG "${SHADER_OUTPUT_DIR}/shaderc.log")
@@ -248,6 +251,7 @@ add_custom_command(
     "-DSHADER_OUTPUT_DIR=${SHADER_OUTPUT_DIR}"
     "-DSHADER_LOG=${SHADER_LOG}"
     "-DFFNX_SHADERS=${FFNX_SHADERS}"
+    "-DFFNX_SKINNED_SHADERS=${FFNX_SKINNED_SHADERS}"
     "-DBGFX_SHADERC_OPENGL_FLAGS=${BGFX_SHADERC_OPENGL_FLAGS}"
     "-DBGFX_SHADERC_VULKAN_FLAGS=${BGFX_SHADERC_VULKAN_FLAGS}"
     "-DBGFX_SHADERC_DIRECT3D_FLAGS=${BGFX_SHADERC_DIRECT3D_FLAGS}"
