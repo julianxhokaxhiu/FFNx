@@ -32,6 +32,10 @@
 
 namespace ff7::world {
 
+    // The one world renderer (declared extern in renderer.h): a definition in the header gave every file including
+    // it its own copy at the same address, destroyed once per file on exit
+    Renderer worldRenderer;
+
     void init_load_wm_bot_blocks() {
         ff7_externals.world_init_load_wm_bot_block_7533AF();
 
