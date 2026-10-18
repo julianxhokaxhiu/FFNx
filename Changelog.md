@@ -28,6 +28,7 @@
 - Renderer: Fix gltf model parts drawn flat-shaded or twice with advanced lighting ( https://github.com/julianxhokaxhiu/FFNx/pull/1011 )
 - Core: Log gltf models that fail to load, and their load time with `trace_loaders` ( https://github.com/julianxhokaxhiu/FFNx/pull/1012 )
 - Core: Fix a memory leak in the model draw with external meshes enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/1008 )
+- Renderer: Fix see-through gltf models and a crash with advanced lighting when a character is freed ( https://github.com/julianxhokaxhiu/FFNx/pull/1029 )
 
 ## FF8
 
