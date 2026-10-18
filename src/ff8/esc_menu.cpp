@@ -96,10 +96,11 @@ static void draw_menu(int a1, const int16_t *pause_window)
 		text_width = std::max(text_width, ff8_externals.get_text_width_sub_4A0F80(rows[i].c_str()));
 	}
 
-	// The first row goes where the game draws PAUSE (in battle, under the help text), the others below it.
-	// Horizontally centered on the pause window, with room for the hand cursor on the left
+	// Centered on the pause window, with room for the hand cursor on the left. In battle and on the world map only the
+	// first row is centered, where the game draws PAUSE (in battle, under the help text), and the others go below it
+	int text_height = getmode_cached()->driver_mode == MODE_FIELD ? (ESC_MENU_COUNT - 1) * ROW_HEIGHT + 12 : 12; // 12 high text
 	int x = pause_window[0] + (pause_window[2] - text_width) / 2 + 8;
-	int y = pause_window[1] + pause_window[3] / 2 - 6; // 12 high text
+	int y = pause_window[1] + (pause_window[3] - text_height) / 2;
 	int16_t window[4] = { int16_t(x - 32), int16_t(y - 8), int16_t(text_width + 48), int16_t(ESC_MENU_COUNT * ROW_HEIGHT + 12) };
 
 	auto draw_icon = (ff8_draw_menu_sprite_texture_infos *(*)(int, ff8_draw_menu_sprite_texture_infos *, int, uint16_t, uint16_t, int))ff8_externals.ff8_draw_icon_or_key1;
