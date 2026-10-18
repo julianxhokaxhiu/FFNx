@@ -582,9 +582,14 @@ void gl_draw_external_mesh(ExternalMesh* externalMesh, struct light_data* lightd
 		newRenderer.useTexture(bgfx::isValid(pbrTexHandle) ? pbrTexHandle.idx : 0, RendererTextureSlot::TEX_PBR);
 		newRenderer.bindTextures();
 
-		// Which textures are present is sent with the common uniforms, so they are set per part
-		newRenderer.setCommonUniforms();
-		if (enable_lighting) newRenderer.setLightingUniforms();
+		// The common and lighting uniforms are set once per model, with the first part (its textures are bound by now);
+		// for the other parts only the texture flags (normal and PBR maps present) change
+		if (i == 0)
+		{
+			newRenderer.setCommonUniforms();
+			if (enable_lighting) newRenderer.setLightingUniforms();
+		}
+		else newRenderer.setTextureFlagsUniform();
 
  		if (enable_lighting)
 		{
