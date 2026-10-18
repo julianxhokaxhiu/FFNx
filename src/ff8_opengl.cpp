@@ -313,6 +313,8 @@ static void patch_ff8_remastered_battle_effect_layout()
 		{ 0x659784, 0x397CC, 0x43F60, ff8_battle_effect_layout_patch_mode::direct },
 		{ 0x6597EF, 0x3505C, 0x3F7F0, ff8_battle_effect_layout_patch_mode::direct },
 		{ 0x659822, 0x35F7C, 0x40710, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x66DA03, 0x6204, 0x400000, ff8_battle_effect_layout_patch_mode::direct },
+		{ 0x66DA1D, 0x16204, 0x410000, ff8_battle_effect_layout_patch_mode::direct },
 		{ 0x6C3773, 0x2E50, 0xA0000, ff8_battle_effect_layout_patch_mode::direct },
 		{ 0x6C378D, 0x15E50, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
 		{ 0x6C51C6, 0x2E50, 0x80000, ff8_battle_effect_layout_patch_mode::direct },
