@@ -28,6 +28,7 @@
 - Renderer: Fix gltf model parts drawn flat-shaded or twice with advanced lighting ( https://github.com/julianxhokaxhiu/FFNx/pull/1011 )
 - Core: Log gltf models that fail to load, and their load time with `trace_loaders` ( https://github.com/julianxhokaxhiu/FFNx/pull/1012 )
 - Core: Fix a memory leak in the model draw with external meshes enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/1008 )
+- Core: Fix a battle crash, the chocobo race, battle scene z-fighting and misplaced spell effects with gltf models ( https://github.com/julianxhokaxhiu/FFNx/pull/1036 )
 
 ## FF8
 
