@@ -10,6 +10,7 @@ on:
     tags:
     - "*"
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
     - master
 
@@ -28,6 +29,7 @@ env:
 
 jobs:
   FFNx:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: windows-2025-vs2026
     timeout-minutes: 1440
     strategy:

@@ -22,6 +22,8 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <algorithm>
+#include <cctype>
 #include "../renderer.h"
 
 #include "../ff7.h"
@@ -592,7 +594,8 @@ void draw_3d_model(uint32_t current_frame, struct anim_header *anim_header, stru
 						if(!polygon_set) continue;
 
 						common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-						if(polygon_set->matrix_set) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
+						// The set keeps one view matrix for the bone matrix copied below (the game's draw passes a stack matrix)
+						if(polygon_set->matrix_set && !polygon_set->matrix_set->matrix_view) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
 						common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
 
 						if(hrc_data->flags & 0x2000000)
@@ -868,7 +871,8 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 						else
 						{
 							common_setmatrix(0, matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
-							if(polygon_set->matrix_set) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
+							// The set keeps one view matrix for the bone matrix copied below (the game's draw passes a stack matrix)
+							if(polygon_set->matrix_set && !polygon_set->matrix_set->matrix_view) polygon_set->matrix_set->matrix_view = (struct matrix*)external_calloc(sizeof(struct matrix), 1);
 							common_setmatrix(1, bone_matrix, polygon_set->matrix_set, (struct game_obj *)game_object);
 						}
 
@@ -900,6 +904,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 
 							std::string animFullName = anim_header->file.pc_name;
 							std::string animName = animFullName.substr(animFullName.length() - 6, 4);
+							std::transform(animName.begin(), animName.end(), animName.begin(), [](unsigned char c) { return std::toupper(c); });
 
 							externalMesh->skins[0].current_anim = animName;
 							externalMesh->skins[0].current_frame = current_frame;

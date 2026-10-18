@@ -71,5 +71,5 @@ namespace ff7::world {
         ExternalMesh externalMeteorModel;
     };
 
-    Renderer worldRenderer;
+    extern Renderer worldRenderer;
 }

@@ -88,7 +88,7 @@ find_package(mimalloc CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(SOLOUD REQUIRED)
 find_package(OPENPSF REQUIRED)
-find_package(STEAMWORKSSDK CONFIG REQUIRED)
+include("${CMAKE_SOURCE_DIR}/.cmake/steamworks.cmake")
 find_package(xxHash CONFIG REQUIRED)
 find_package(LZ4 REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
@@ -149,6 +149,7 @@ cmrc_add_resource_library(
 )
 
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+ffnx_setup_steamworks(${RELEASE_NAME})
 add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME})
 target_include_directories(
   ${RELEASE_NAME}
@@ -234,6 +235,9 @@ target_link_options(
 
 # SHADER COMPILATION
 set(FFNX_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap" "FFNx.field.shadow" "FFNx.overlay" "FFNx.post" "FFNx.post.ntscj" "FFNx.blit" "FFNx.yuvmovie" "FFNx.yuvmovie.truecolor")
+# The 3D vertex shaders also get a skinned variant (smooth shaded only), built from the same source with
+# SMOOTH_SKINNING defined, so ordinary draws carry no bone data
+set(FFNX_SKINNED_SHADERS "FFNx" "FFNx.lighting" "FFNx.shadowmap")
 set(SHADERC_EXECUTABLE "${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/bgfx/shadercRelease")
 set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/bin/shaders")
 set(SHADER_LOG "${SHADER_OUTPUT_DIR}/shaderc.log")
@@ -248,6 +252,7 @@ add_custom_command(
     "-DSHADER_OUTPUT_DIR=${SHADER_OUTPUT_DIR}"
     "-DSHADER_LOG=${SHADER_LOG}"
     "-DFFNX_SHADERS=${FFNX_SHADERS}"
+    "-DFFNX_SKINNED_SHADERS=${FFNX_SKINNED_SHADERS}"
     "-DBGFX_SHADERC_OPENGL_FLAGS=${BGFX_SHADERC_OPENGL_FLAGS}"
     "-DBGFX_SHADERC_VULKAN_FLAGS=${BGFX_SHADERC_VULKAN_FLAGS}"
     "-DBGFX_SHADERC_DIRECT3D_FLAGS=${BGFX_SHADERC_DIRECT3D_FLAGS}"
@@ -282,10 +287,6 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E rename
           ${CMAKE_BINARY_DIR}/bin/${CHOCO_RELEASE_NAME}.dll
           ${CMAKE_BINARY_DIR}/bin/AF4DN.P
-  # steam_api.dll
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/steamworkssdk/steam_api.dll
-          ${CMAKE_BINARY_DIR}/bin/FFNx_steam_api.dll
   # .pdb
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.pdb
@@ -610,9 +611,6 @@ if(NOT "${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
     COMMAND ${CMAKE_COMMAND} -E rename
             ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
             ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
-    # Prevent steam_api.dll to be deployed
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${CMAKE_BINARY_DIR}/bin/steam_api.dll
     # Copy all dist files
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_BINARY_DIR}/bin

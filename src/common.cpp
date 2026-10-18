@@ -38,6 +38,7 @@
 #include <fstream>
 
 #include "renderer.h"
+#include "video/ntscj.h"
 #include "hext.h"
 #include "ff8_data.h"
 
@@ -828,13 +829,18 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	// Init Steam API
 	if(enable_steam_achievements)
 	{
-		int app_id = ff8 ? (ff8_remastered_edition ? FF8_REMASTERED_APPID : FF8_APPID) : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID);
-		// generate automatically steam_appid.txt
-		if(!steam_edition && !ff8_remastered_edition)
+		int app_id = ff8 ? (steam_edition ? FF8_APPID : FF8_REMASTERED_APPID) : (steam_edition ? FF7_APPID : FF7_RERELEASE_APPID);
+		// generate automatically steam_appid.txt if missing
+		if(!fileExists("steam_appid.txt"))
 		{
 			std::ofstream steam_appid_file("steam_appid.txt");
 			steam_appid_file << app_id;
 			steam_appid_file.close();
+		}
+
+		if (!FFNx_SteamAPI_ValidateLibrary())
+		{
+			return 1;
 		}
 
 		if (SteamAPI_RestartAppIfNecessary(app_id))
@@ -849,13 +855,10 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 			ffnx_error( "Steam Error - Steam must be running to play this game with achievements (SteamAPI_Init() failed).\n" );
 			return 1;
 		}
-		if (ff8) {
+		if (ff8)
 			g_FF8SteamAchievements = std::make_unique<SteamAchievementsFF8>(ff8_remastered_edition);
-		} else if (ff7_steam_rerelease_edition) {
-			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>(false);
-		} else {
-			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>(true);
-		}
+		else
+			g_FF7SteamAchievements = std::make_unique<SteamAchievementsFF7>(steam_edition);
 	}
 
 	// Enumerate available monitors
@@ -3740,7 +3743,7 @@ bool drawFFNxLogoFrame(struct game_obj* game_object)
 	if (was_lighting_enabled == -1) was_lighting_enabled = enable_lighting;
 
 	if (ffnx_logo_current_frame >= FFNX_LOGO_FRAME_COUNT) {
-		newRenderer.setOverallColorGamut(enable_ntscj_gamut_mode ? COLORGAMUT_NTSCJ : COLORGAMUT_SRGB); // set the gamut back to what it was before newRenderer.drawFFNxLogo() changed it
+		newRenderer.setOverallColorGamut(ntscj_get_overall_color_gamut()); // set the gamut back to what it was before newRenderer.drawFFNxLogo() changed it
 		enable_lighting = was_lighting_enabled;
 		return false;
 	}

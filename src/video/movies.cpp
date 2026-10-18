@@ -24,9 +24,10 @@
 #include "../gl.h"
 
 #include "movies.h"
+#include "ntscj.h"
 
-#include <cctype>
 #include <deque>
+#include <memory>
 
 extern "C" {
 #include <libavcodec/bsf.h>
@@ -62,6 +63,10 @@ int64_t video_presentation_time_us = 0;
 float video_rgb_scale_x = 1.0f;
 float video_rgb_scale_y = 1.0f;
 std::deque<AVPacket> software_video_packets;
+std::vector<uint8_t> video_bitstream;
+std::vector<bgfx::VideoDecoderAu> video_access_units;
+uint8_t* audio_conversion_buffer = nullptr;
+unsigned int audio_conversion_buffer_size = 0;
 
 int videostream;
 int audiostream;
@@ -69,6 +74,9 @@ int audiostream;
 struct video_frame
 {
 	uint32_t yuv_textures[3] = { 0 };
+	uint32_t texture_widths[3] = { 0 };
+	uint32_t texture_heights[3] = { 0 };
+	RendererTextureType texture_types[3] = {};
 	bool eight_bit = false;
 	bool interleaved = false;
 	bool p010 = false;
@@ -84,16 +92,9 @@ uint32_t movie_frames = 0;
 uint32_t movie_width, movie_height;
 double movie_fps;
 double movie_duration;
-bool fullrange_input = false;
-ColorMatrixType colormatrix = COLORMATRIX_BT601;
-ColorGamutType colorgamut = COLORGAMUT_SRGB;
-InverseGammaFunctionType gammatype = GAMMAFUNCTION_SRGB;
 const AVPixelFormat targetpixelformat = AV_PIX_FMT_YUV420P10;
-ChromaLocationType chromaloc = CHROMALOC_CENTER;
 bool dofirstframestuff = false;
 bool needsws = false;
-bool okcolorspace = false;
-bool yuvjfixneeded = false;
 AVPixelFormat upload_pixel_format = targetpixelformat;
 
 bool first_audio_packet;
@@ -121,59 +122,83 @@ static bool shader_supports_pixel_format(AVPixelFormat format)
 	}
 }
 
+static bool bgfx_movie_format_is_eligible(const AVCodecParameters& parameters)
+{
+	return parameters.codec_id == AV_CODEC_ID_H264 &&
+		parameters.format == AV_PIX_FMT_YUV420P &&
+		parameters.color_space == AVCOL_SPC_BT709 &&
+		parameters.color_range == AVCOL_RANGE_MPEG &&
+		(parameters.chroma_location == AVCHROMA_LOC_CENTER || parameters.chroma_location == AVCHROMA_LOC_LEFT) &&
+		(parameters.field_order == AV_FIELD_UNKNOWN || parameters.field_order == AV_FIELD_PROGRESSIVE);
+}
+
 static bool prepare_bgfx_decoder()
 {
-	const bgfx::Caps* caps = newRenderer.getCaps();
-	const AVCodecParameters* parameters = format_ctx->streams[videostream]->codecpar;
-	if (!(caps->supported & BGFX_CAPS_VIDEO_DECODE) ||
-		parameters->codec_id != AV_CODEC_ID_H264 || parameters->format != AV_PIX_FMT_YUV420P ||
-		parameters->color_space != AVCOL_SPC_BT709 || parameters->color_range != AVCOL_RANGE_MPEG ||
-		(parameters->chroma_location != AVCHROMA_LOC_CENTER && parameters->chroma_location != AVCHROMA_LOC_LEFT) ||
-		(parameters->field_order != AV_FIELD_UNKNOWN && parameters->field_order != AV_FIELD_PROGRESSIVE) ||
-		parameters->width <= 0 || parameters->height <= 0 ||
-		parameters->width > max_texture_size || parameters->height > max_texture_size)
+	const bgfx::Caps& caps = *newRenderer.getCaps();
+	if (!(caps.supported & BGFX_CAPS_VIDEO_DECODE) ||
+		!(caps.formats[bgfx::TextureFormat::RGBA8] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST))
 		return false;
 
-	uint32_t coded_width = (parameters->width + 15) & ~15;
-	uint32_t coded_height = (parameters->height + 15) & ~15;
+	const AVStream& stream = *format_ctx->streams[videostream];
+	const AVCodecParameters& parameters = *stream.codecpar;
+	if (!bgfx_movie_format_is_eligible(parameters))
+		return false;
+
+	if (parameters.width <= 0 || parameters.height <= 0 ||
+		parameters.width > max_texture_size || parameters.height > max_texture_size)
+		return false;
+
+	const uint32_t coded_width = (uint32_t(parameters.width) + 15) & ~15u;
+	const uint32_t coded_height = (uint32_t(parameters.height) + 15) & ~15u;
 	if (coded_width > max_texture_size || coded_height > max_texture_size ||
-		coded_width > UINT16_MAX || coded_height > UINT16_MAX ||
-		!(caps->formats[bgfx::TextureFormat::RGBA8] & BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST) ||
-		!bgfx::isVideoCodecValid(bgfx::VideoCodec::H264, 0, 8, coded_width, coded_height, 16, 16))
+		coded_width > UINT16_MAX || coded_height > UINT16_MAX)
+		return false;
+
+	if (!bgfx::isVideoCodecValid(bgfx::VideoCodec::H264, 0, 8, coded_width, coded_height, 16, 16))
 		return false;
 
 	const AVBitStreamFilter* filter = av_bsf_get_by_name("h264_mp4toannexb");
-	if (!filter || av_bsf_alloc(filter, &video_bsf) < 0)
+	if (!filter)
 		return false;
-	if (avcodec_parameters_copy(video_bsf->par_in, parameters) < 0) {
-		av_bsf_free(&video_bsf);
-		return false;
-	}
-	video_bsf->time_base_in = format_ctx->streams[videostream]->time_base;
-	if (av_bsf_init(video_bsf) < 0 || video_bsf->par_out->extradata_size <= 0) {
-		av_bsf_free(&video_bsf);
-		return false;
-	}
 
-	const bgfx::Memory* memory = bgfx::alloc(sizeof(bgfx::VideoDecoderInit) + video_bsf->par_out->extradata_size);
+	AVBSFContext* filter_context = nullptr;
+	if (av_bsf_alloc(filter, &filter_context) < 0)
+		return false;
+
+	const auto free_filter = [](AVBSFContext* context) { av_bsf_free(&context); };
+	std::unique_ptr<AVBSFContext, decltype(free_filter)> bitstream_filter(filter_context, free_filter);
+	if (avcodec_parameters_copy(bitstream_filter->par_in, &parameters) < 0)
+		return false;
+
+	bitstream_filter->time_base_in = stream.time_base;
+	if (av_bsf_init(bitstream_filter.get()) < 0)
+		return false;
+
+	const AVCodecParameters& filtered_parameters = *bitstream_filter->par_out;
+	if (!filtered_parameters.extradata || filtered_parameters.extradata_size <= 0)
+		return false;
+
+	const bgfx::Memory* memory = bgfx::alloc(sizeof(bgfx::VideoDecoderInit) + filtered_parameters.extradata_size);
 	auto* init = reinterpret_cast<bgfx::VideoDecoderInit*>(memory->data);
 	*init = {};
 	init->magic = BX_MAKEFOURCC('V', 'D', 'I', 0);
 	init->codec = bgfx::VideoCodec::H264;
 	init->parameterSets = memory->data + sizeof(*init);
-	init->parameterSetsSize = video_bsf->par_out->extradata_size;
-	memcpy(memory->data + sizeof(*init), video_bsf->par_out->extradata, init->parameterSetsSize);
-	decoded_video_texture = bgfx::createTexture2D(coded_width, coded_height, false, 1,
+	init->parameterSetsSize = filtered_parameters.extradata_size;
+	memcpy(memory->data + sizeof(*init), filtered_parameters.extradata, init->parameterSetsSize);
+
+	const bgfx::TextureHandle texture = bgfx::createTexture2D(coded_width, coded_height, false, 1,
 		bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_NONE, memory);
-	if (!bgfx::isValid(decoded_video_texture)) {
-		av_bsf_free(&video_bsf);
+	if (!bgfx::isValid(texture))
 		return false;
-	}
-	video_rgb_scale_x = float(parameters->width) / coded_width;
-	video_rgb_scale_y = float(parameters->height) / coded_height;
+
+	video_bsf = bitstream_filter.release();
+	decoded_video_texture = texture;
+	video_rgb_scale_x = float(parameters.width) / coded_width;
+	video_rgb_scale_y = float(parameters.height) / coded_height;
 	video_decode_set = true;
 	video_decode_eof = false;
-	video_decode_origin = format_ctx->streams[videostream]->start_time;
+	video_decode_origin = stream.start_time;
 	video_decode_time_us = INT64_MIN;
 	video_presentation_frame = 0;
 	video_presentation_time_us = 0;
@@ -282,6 +307,10 @@ void ffmpeg_release_movie_objects()
 	uint32_t i;
 	for (auto& queued_packet : software_video_packets) av_packet_unref(&queued_packet);
 	software_video_packets.clear();
+	std::vector<uint8_t>().swap(video_bitstream);
+	std::vector<bgfx::VideoDecoderAu>().swap(video_access_units);
+	av_freep(&audio_conversion_buffer);
+	audio_conversion_buffer_size = 0;
 	av_bsf_free(&video_bsf);
 	if (bgfx::isValid(decoded_video_texture)) bgfx::destroy(decoded_video_texture);
 	decoded_video_texture = BGFX_INVALID_HANDLE;
@@ -345,12 +374,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	DSBUFFERDESC1 sbdesc;
 	bool okpixelformat = false;
 	bool islogomovie = false;
-	int lastbackslashindex = -1;
-	int bytessincebackslash = 0;
-	int scanoffset = 0;
-	int chromawidthshift = 0;
-	int chromaheightshift = 0;
-	const AVPixFmtDescriptor* pix_desc = nullptr;
 	AVPixelFormat nativepixformat = AV_PIX_FMT_NONE;
 
 	movie_frames = 0;
@@ -426,45 +449,7 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 		}
 	}
 
-	// figure out if this is the eidos logo or square logo; they need special treatment
-	// scan till we hit 0 terminator
-	if ((codec_ctx->color_trc == AVCOL_TRC_UNSPECIFIED) && (codec_ctx->color_primaries == AVCOL_PRI_UNSPECIFIED)){
-		while (true){
-			bytessincebackslash++;
-			// note the index of the last backslash, and how far the string continues after that
-			if (name[scanoffset] == 92){
-				lastbackslashindex = scanoffset;
-				bytessincebackslash = 0;
-			}
-			else if (name[scanoffset] == 0){
-				break;
-			}
-			scanoffset++;
-		}
-		char upperbuffer[128];
-		memset(upperbuffer, 0, 128);
-		if ((lastbackslashindex > -1) && (bytessincebackslash > 1) && (bytessincebackslash <= 128)){
-			memcpy(&upperbuffer, &name[lastbackslashindex+1], bytessincebackslash);
-			// convert to uppercase
-			for (int i=0; i<bytessincebackslash; i++){
-				upperbuffer[i] = toupper(upperbuffer[i]);
-			}
-			// strip the file extension
-			for (int i=bytessincebackslash-1; i>=0; i--){
-				char backchar = upperbuffer[i];
-				upperbuffer[i] = 0;
-				if (backchar == 46){
-					break;
-				}
-			}
-			if (	(strcmp(upperbuffer, "EIDOSLOGO") == 0) ||
-				(strcmp(upperbuffer, "SQLOGO") == 0)
-			){
-				islogomovie = true;
-				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: %s detected as logo movie.\n", name);
-			}
-		}
-	}
+	islogomovie = ntscj_detect_logo_movie(name, codec_ctx);
 
 	movie_width = codec_ctx->width;
 	movie_height = codec_ctx->height;
@@ -472,118 +457,8 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	movie_duration = (double)format_ctx->duration / (double)AV_TIME_BASE;
 	movie_frames = (uint32_t)::round(movie_fps * movie_duration);
 
-	switch (codec_ctx->color_range){
-		case AVCOL_RANGE_JPEG:
-			fullrange_input = true;
-			break;
-		case AVCOL_RANGE_UNSPECIFIED:
-		case AVCOL_RANGE_MPEG:
-		default:
-			fullrange_input = false;
-			break;
-	}
-
 	nativepixformat = codec_ctx->pix_fmt;
-
-	// some pixel formats are inherently full-range
-	// so we should treat them as such, even if the color range metadata is missing
-	// some of these formats also trigger a bogus automatic color range conversion that we must suppress
-	switch (nativepixformat){
-		case AV_PIX_FMT_YUVJ420P:
-		case AV_PIX_FMT_YUVJ411P:
-		case AV_PIX_FMT_YUVJ422P:
-		case AV_PIX_FMT_YUVJ444P:
-		case AV_PIX_FMT_YUVJ440P:
-		case AV_PIX_FMT_GRAY8:
-		case AV_PIX_FMT_YA8:
-		case AV_PIX_FMT_GRAY16LE:
-		case AV_PIX_FMT_GRAY16BE:
-		case AV_PIX_FMT_YA16BE:
-		case AV_PIX_FMT_YA16LE:
-		case AV_PIX_FMT_BGR24:
-			fullrange_input = true;
-			yuvjfixneeded = true;
-			break;
-		default:
-			yuvjfixneeded = false;
-	}
-
-	if (trace_movies  || trace_all) ffnx_trace("prepare_movie: color range detected as %i (0=tv, 1=pc).\n", fullrange_input);
-
-	// will we need to convert the YUV colorspace?
-	switch(codec_ctx->colorspace){
-		// these are all the same (bt601)
-		case AVCOL_SPC_UNSPECIFIED: // ffmpeg guesses and treats this as bt601
-		case AVCOL_SPC_RESERVED: // ffmpeg guesses and treats this as bt601
-			if (nativepixformat == AV_PIX_FMT_BGR24){
-				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: BGR24 detected.\n");
-				okcolorspace = false;
-				break;
-			}
-			else if (ff8 && (codec_ctx->color_range != AVCOL_RANGE_JPEG) && !yuvjfixneeded){
-				if (trace_movies  || trace_all) ffnx_trace("prepare_movie: Assuming FF8 bink or bink-derived movie. (e.g., PC2000 or Steam) Using bink color matrix and forcing color range to TV (limited).\n");
-				colormatrix = COLORMATRIX_BINK;
-				fullrange_input = false;
-				okcolorspace = true;
-				break;
-			}
-			// fall through to next case if we didn't already break
-		case AVCOL_SPC_BT470BG:
-		case AVCOL_SPC_SMPTE170M:
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: bt601 color matrix detected or defaulted to.\n");
-			colormatrix = COLORMATRIX_BT601;
-			okcolorspace = true;
-			break;
-		case AVCOL_SPC_BT709:
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: bt709 color matrix detected.\n");
-			colormatrix = COLORMATRIX_BT709;
-			okcolorspace = true;
-			break;
-		case AVCOL_SPC_RGB:
-			okcolorspace = false;
-			break;
-		default:
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: unhandled color matrix detected; will use swscale to convert. Expect incorrect gamut.\n");
-			okcolorspace = false;
-	}
-
-	// what gamma should we use?
-	switch(codec_ctx->color_trc){
-		case AVCOL_TRC_UNSPECIFIED:
-		case AVCOL_TRC_RESERVED:
-		case AVCOL_TRC_RESERVED0:
-			if (islogomovie){
-				gammatype = GAMMAFUNCTION_BT1886_APPX1;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, using BT1886 Appendix 1 (CRT television/monitor) gamma curve because this is a logo movie.\n");
-			}
-			else {
-				gammatype = GAMMAFUNCTION_BT1886_APPX1;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing gamma metadata, assuming Playstation-derived video, using BT1886 Appendix 1 (CRT television) gamma curve.\n");
-			}
-			break;
-		case AVCOL_TRC_IEC61966_2_1: //srgb
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb gamma transfer function detected\n");
-			gammatype = GAMMAFUNCTION_SRGB;
-			break;
-		case AVCOL_TRC_GAMMA22: //2.2
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: 2.2 gamma transfer function detected, using sRGB instead.\n");
-			gammatype = GAMMAFUNCTION_SRGB;
-			break;
-		case AVCOL_TRC_SMPTE170M:
-		case AVCOL_TRC_BT709: // same as SMPTE170M
-		case AVCOL_TRC_BT2020_10: // same as SMPTE170M
-		case AVCOL_TRC_BT2020_12: // same as SMPTE170M
-		case AVCOL_TRC_IEC61966_2_4: // same as SMPTE170M, but is defined for negative numbers too (which we ignore)
-		case AVCOL_TRC_BT1361_ECG: // same as SMPTE170M, but is defined for negative numbers too (which we ignore)
-			gammatype = GAMMAFUNCTION_SMPTE170M;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: SMPTE170M transfer function detected\n");
-			break;
-		case AVCOL_TRC_GAMMA28: //fall through
-		default:
-			ffnx_error("prepare_movie: Unsupported transfer (inverse gamma) function. Using default instead.\n");
-			gammatype = GAMMAFUNCTION_BT1886_APPX1;
-      break;
-	}
+	ntscj_prepare_movie_colors(codec_ctx, islogomovie);
 
 	// will we need to convert the pixel format?
 	// We're going to target YUV420 on the assumption that most of our input will already be 420,
@@ -593,135 +468,6 @@ uint32_t ffmpeg_prepare_movie(const char *name, bool with_audio)
 	// to speed up our most common and slowest input case by not needing swscale,
 	// and opening the door to HDR video someday.
 	okpixelformat = bgfx::isValid(decoded_video_texture) || shader_supports_pixel_format(nativepixformat);
-
-	// Figure out which color gamut to use.
-	switch(codec_ctx->color_primaries){
-		case AVCOL_PRI_BT709:
-			colorgamut = COLORGAMUT_SRGB;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: srgb/bt709 color gamut detected.\n");
-			break;
-		case AVCOL_PRI_BT470M:
-			// Assume user meant SMPTE-C.
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: NTSC1953 color gamut detected. Assuming user error and using SMPTE-C instead.\n");
-			// fall through to next case
-		case AVCOL_PRI_SMPTE170M:
-		case AVCOL_PRI_SMPTE240M:
-
-			colorgamut = COLORGAMUT_SMPTEC;
-			if (trace_movies || trace_all) ffnx_trace("prepare_movie: SMPTE-C color gamut detected.\n");
-			break;
-		case AVCOL_PRI_UNSPECIFIED:
-		case AVCOL_PRI_RESERVED0:
-		case AVCOL_PRI_RESERVED:
-			if (islogomovie){
-				colorgamut = COLORGAMUT_RAWP22;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming uncorrected P22 (CRT computer monitor) because this is a logo movie.\n");
-			}
-			else {
-				colorgamut = COLORGAMUT_NTSCJ;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: missing color gamut metadata; assuming NTSC-J.\n");
-			}
-			break;
-		case AVCOL_PRI_BT470BG: // fall through
-		default:
-			if (islogomovie){
-				colorgamut = COLORGAMUT_RAWP22;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unsupported color primaries. Instead using uncorrected P22 (CRT computer monitor) because this is a logo movie. (This will probably look wrong.)\n");
-			}
-			else {
-				colorgamut = COLORGAMUT_NTSCJ;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unsupported color primaries. Instead using NTSC-J. (This will probably look wrong.)\n");
-			}
-	}
-
-	// what is the chroma sample location?
-	// first, we may need to know about the pixel format
-	pix_desc = av_pix_fmt_desc_get(nativepixformat);
-	if (pix_desc){
-		chromawidthshift = pix_desc->log2_chroma_w;
-		chromaheightshift = pix_desc->log2_chroma_h;
-	}
-	switch (codec_ctx->chroma_sample_location){
-		case AVCHROMA_LOC_LEFT:
-			chromaloc = CHROMALOC_LEFT;
-			break;
-		case AVCHROMA_LOC_CENTER:
-			chromaloc = CHROMALOC_CENTER;
-			break;
-		case AVCHROMA_LOC_TOPLEFT:
-			chromaloc = CHROMALOC_TOPLEFT;
-			break;
-		case AVCHROMA_LOC_TOP:
-			chromaloc = CHROMALOC_TOP;
-			break;
-		case AVCHROMA_LOC_BOTTOMLEFT:
-			chromaloc = CHROMALOC_BOTTOMLEFT;
-			break;
-		case AVCHROMA_LOC_BOTTOM:
-			chromaloc = CHROMALOC_BOTTOM;
-			break;
-		case AVCHROMA_LOC_UNSPECIFIED: //fall through
-		default:
-			// chroma sample location isn't specified so we must guess
-
-			// if the pixel format is 444, it must be center
-			if (pix_desc && (chromawidthshift == 0) && (chromaheightshift == 0)){
-				chromaloc = CHROMALOC_CENTER;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location must be center because 4:4:4 pixel format.\n");
-			}
-			// if the pixel format is 420, guess from the codec
-			else if (pix_desc && (chromawidthshift == 1) && (chromaheightshift == 1)){
-				// defaults for some common codecs
-				switch (codec_ctx->codec_id){
-					case AV_CODEC_ID_MPEG2VIDEO:
-					case AV_CODEC_ID_MPEG4:
-					case AV_CODEC_ID_H264:
-					case AV_CODEC_ID_HEVC:
-						chromaloc = CHROMALOC_LEFT;
-						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is left for 4:2:0 pixel format based on codec.\n");
-						break;
-					case AV_CODEC_ID_MJPEG:
-					case AV_CODEC_ID_H261:
-					case AV_CODEC_ID_MPEG1VIDEO:
-					case AV_CODEC_ID_H263:
-						chromaloc = CHROMALOC_CENTER;
-						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is center for 4:2:0 pixel format based on codec.\n");
-						break;
-					default:
-						// per jpsxdec documentation, PSX video has chroma position center https://github.com/m35/jpsxdec/blob/readme/jpsxdec/PlayStation1_STR_format.txt
-						// no idea what bink chroma position is.
-						chromaloc = CHROMALOC_CENTER;
-						if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location for 4:2:0 pixel format based on codec. Assuming center.\n");
-						break;
-				}
-			}
-			else if (pix_desc && (chromawidthshift == 1) && (chromaheightshift == 0)){
-				if (codec_ctx->codec_id == AV_CODEC_ID_MPEG2VIDEO){
-					// ffmpeg docs say topleft, but that's impossible for 422
-					// (Think ffmpeg docs are always relative to 420's 2x2 box even when it's not 420.)
-					chromaloc = CHROMALOC_LEFT;
-					if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location is left for 4:2:2 pixel format based on codec.\n");
-				}
-				else {
-					chromaloc = CHROMALOC_CENTER;
-					if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location for 4:2:2 pixel format based on codec. Assuming center.\n");
-				}
-			}
-			else {
-				chromaloc = CHROMALOC_CENTER;
-				if (trace_movies || trace_all) ffnx_trace("prepare_movie: Unable to guess chroma sample location based on pixel format and codec. Assuming center.\n");
-			}
-			break;
-	}
-	// Metadata may have lied. Force center for 4:4:4.
-	if (pix_desc && (chromawidthshift == 0) && (chromaheightshift == 0) && (chromaloc != CHROMALOC_CENTER)){
-		chromaloc = CHROMALOC_CENTER;
-		if (trace_movies || trace_all) ffnx_trace("prepare_movie: Guessing chroma sample location must be center because 4:4:4 pixel format. (Overriding erroneous metadata.)\n");
-	}
-	// We also haven't addressed the possibility that a modder did an improper conversion without adjusting the chroma sample location.
-	// But that's the modder's fault and we can't fix it here.
-	if (trace_movies || trace_all) ffnx_trace("prepare_movie: Chroma sample location detected or guessed as %d (0=topleft, 1=top, 2=left, 3=center, 4=bottomleft, 5=bottom).\n", chromaloc);
-
 
 	if (trace_movies || trace_all)
 	{
@@ -858,19 +604,37 @@ void upload_yuv_texture(uint8_t **planes, int *strides, uint32_t num, uint32_t b
 		tex_height = AV_CEIL_RSHIFT(tex_height, descriptor->log2_chroma_h);
 	}
 
-	if (video_buffer[buffer_index].yuv_textures[num])
-		newRenderer.deleteTexture(video_buffer[buffer_index].yuv_textures[num]);
+	video_frame& frame = video_buffer[buffer_index];
+	const RendererTextureType texture_type = (num > 0 && frame.interleaved) ?
+		(frame.eight_bit ? RendererTextureType::UV8 : RendererTextureType::UV16) :
+		(frame.eight_bit ? RendererTextureType::YUV8 : RendererTextureType::YUV);
+	const bgfx::TextureHandle texture = { uint16_t(frame.yuv_textures[num]) };
+	if (frame.yuv_textures[num] && bgfx::isValid(texture) &&
+		frame.texture_widths[num] == tex_width && frame.texture_heights[num] == tex_height &&
+		frame.texture_types[num] == texture_type) {
+		const uint32_t upload_size = upload_width * tex_height;
+		if (planes[num] && Renderer::doesItFitInMemory(upload_size)) {
+			const bgfx::Memory* memory = bgfx::copy(planes[num], upload_size);
+			if (memory)
+				bgfx::updateTexture2D(texture, 0, 0, 0, 0, tex_width, tex_height, memory, upload_width);
+		}
+		return;
+	}
 
-	video_buffer[buffer_index].yuv_textures[num] = newRenderer.createTexture(
+	if (frame.yuv_textures[num])
+		newRenderer.deleteTexture(frame.yuv_textures[num]);
+
+	frame.yuv_textures[num] = newRenderer.createTexture(
 		planes[num],
 		tex_width,
 		tex_height,
 		upload_width,
-		(num > 0 && video_buffer[buffer_index].interleaved) ?
-			(video_buffer[buffer_index].eight_bit ? RendererTextureType::UV8 : RendererTextureType::UV16) :
-			(video_buffer[buffer_index].eight_bit ? RendererTextureType::YUV8 : RendererTextureType::YUV),
+		texture_type,
 		false
 	);
+	frame.texture_widths[num] = tex_width;
+	frame.texture_heights[num] = tex_height;
+	frame.texture_types[num] = texture_type;
 }
 
 void buffer_yuv_frame(uint8_t **planes, int *strides)
@@ -931,12 +695,11 @@ void draw_yuv_frame(uint32_t buffer_index)
 // display the next frame
 uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 {
-	AVPacket packet;
+	AVPacket packet{};
 	int ret = 0;
 	time_t now;
-	DWORD DSStatus;
-	std::vector<uint8_t> video_bitstream;
-	std::vector<bgfx::VideoDecoderAu> video_access_units;
+	video_bitstream.clear();
+	video_access_units.clear();
 	int64_t presentation_time = movie_fps > 0.0 ? int64_t(movie_frame_counter * 1000000.0 / movie_fps) : 0;
 	const bool native_video = bgfx::isValid(decoded_video_texture);
 	const double audio_buffer_target = 0.5;
@@ -1056,9 +819,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// ditto for sws context
 				usethis_sws = sws_ctx;
 
-				// Successfully received a frame
-				QueryPerformanceCounter((LARGE_INTEGER *)&now);
-
 				needsws = !okcolorspace || !shader_supports_pixel_format(AVPixelFormat(usethis_frame->format)) ||
 					usethis_frame->linesize[0] <= 0 || usethis_frame->linesize[1] <= 0 ||
 					(usethis_frame->data[2] && usethis_frame->linesize[2] <= 0);
@@ -1073,11 +833,23 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// if we need to use swscale, do so
 				if(needsws)
 				{
-					sws_frame->width = movie_width;
-					sws_frame->height = movie_height;
-					sws_frame->format = targetpixelformat;
-
-					av_image_alloc(sws_frame->data, sws_frame->linesize, sws_frame->width, sws_frame->height, AVPixelFormat(sws_frame->format), 1);
+					if (!sws_frame->buf[0]) {
+						sws_frame->width = movie_width;
+						sws_frame->height = movie_height;
+						sws_frame->format = targetpixelformat;
+						ret = av_frame_get_buffer(sws_frame, 0);
+						if (ret < 0) {
+							ffnx_error("%s: could not allocate movie conversion frame: %d\n", __func__, ret);
+							av_packet_unref(&packet);
+							goto packet_loop_exit;
+						}
+					}
+					ret = av_frame_make_writable(sws_frame);
+					if (ret < 0) {
+						ffnx_error("%s: could not make movie conversion frame writable: %d\n", __func__, ret);
+						av_packet_unref(&packet);
+						goto packet_loop_exit;
+					}
 
 					sws_scale(usethis_sws, usethis_frame->extended_data, usethis_frame->linesize, 0, sws_frame->height, sws_frame->data, sws_frame->linesize);
 
@@ -1090,10 +862,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 				// clear out the AVFrame objects before reusing them
 				av_frame_unref(movie_frame);
-				if (sws_frame->data[0]){
-					av_freep(&sws_frame->data[0]);
-				}
-				av_frame_unref(sws_frame);
 
 				dofirstframestuff = false;
 
@@ -1116,8 +884,6 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 
 		if(packet.stream_index == audiostream)
 		{
-			QueryPerformanceCounter((LARGE_INTEGER *)&now);
-
 			ret = avcodec_send_packet(acodec_ctx, &packet);
 
 			if (ret < 0)
@@ -1152,30 +918,27 @@ uint32_t ffmpeg_update_movie_sample(bool use_movie_fps)
 				// Sometimes the captured frame may have no sound samples. Just skip and move forward
 				if (_size)
 				{
-					uint8_t *buffer;
-
-					ret = av_samples_alloc(&buffer, movie_frame->linesize, acodec_ctx->ch_layout.nb_channels, movie_frame->nb_samples, (audio_must_be_converted ? AV_SAMPLE_FMT_FLT : acodec_ctx->sample_fmt), 0);
-					if (ret < 0) {
-						ffnx_error("%s: could not allocate movie audio samples: %d\n", __func__, ret);
-						av_packet_unref(&packet);
-						goto packet_loop_exit;
-					}
+					uint8_t* buffer = movie_frame->extended_data[0];
 					int converted_samples = movie_frame->nb_samples;
 					if (audio_must_be_converted) {
+						av_fast_malloc(&audio_conversion_buffer, &audio_conversion_buffer_size, _size);
+						if (!audio_conversion_buffer) {
+							ret = AVERROR(ENOMEM);
+							ffnx_error("%s: could not allocate movie audio samples: %d\n", __func__, ret);
+							av_packet_unref(&packet);
+							goto packet_loop_exit;
+						}
+						buffer = audio_conversion_buffer;
 						converted_samples = swr_convert(swr_ctx, &buffer, movie_frame->nb_samples, (const uint8_t**)movie_frame->extended_data, movie_frame->nb_samples);
 						ret = converted_samples;
-					}
-					else ret = av_samples_copy(&buffer, movie_frame->extended_data, 0, 0, movie_frame->nb_samples, acodec_ctx->ch_layout.nb_channels, acodec_ctx->sample_fmt);
-					if (ret < 0) {
-						ffnx_error("%s: could not convert movie audio samples: %d\n", __func__, ret);
-						av_freep(&buffer);
-						av_packet_unref(&packet);
-						goto packet_loop_exit;
+						if (ret < 0) {
+							ffnx_error("%s: could not convert movie audio samples: %d\n", __func__, ret);
+							av_packet_unref(&packet);
+							goto packet_loop_exit;
+						}
 					}
 					_size = bytesperpacket * converted_samples * acodec_ctx->ch_layout.nb_channels;
 					if (_size) nxAudioEngine.pushStreamData(buffer, _size);
-
-					av_freep(&buffer);
 				}
 			}
 		}
@@ -1276,6 +1039,17 @@ void ffmpeg_loop()
 	for (auto& queued_packet : software_video_packets) av_packet_unref(&queued_packet);
 	software_video_packets.clear();
 	if(format_ctx) avformat_seek_file(format_ctx, -1, 0, 0, 0, 0);
+	if (codec_ctx) avcodec_flush_buffers(codec_ctx);
+	if (acodec_ctx) avcodec_flush_buffers(acodec_ctx);
+	if (movie_frame) av_frame_unref(movie_frame);
+	vbuffer_read = 0;
+	vbuffer_write = 0;
+	movie_frame_counter = 0;
+	first_audio_packet = audiostream >= 0;
+	if (first_audio_packet) {
+		nxAudioEngine.stopStream();
+		nxAudioEngine.initStream(movie_duration, acodec_ctx->sample_rate, acodec_ctx->ch_layout.nb_channels);
+	}
 	if (video_bsf) {
 		av_bsf_flush(video_bsf);
 		video_decode_set = true;
@@ -1283,7 +1057,6 @@ void ffmpeg_loop()
 		video_decode_time_us = INT64_MIN;
 		video_presentation_frame = 0;
 		video_presentation_time_us = 0;
-		movie_frame_counter = 0;
 	}
 }
 
