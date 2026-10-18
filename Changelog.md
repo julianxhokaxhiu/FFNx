@@ -28,6 +28,7 @@
 - Renderer: Fix gltf model parts drawn flat-shaded or twice with advanced lighting ( https://github.com/julianxhokaxhiu/FFNx/pull/1011 )
 - Core: Log gltf models that fail to load, and their load time with `trace_loaders` ( https://github.com/julianxhokaxhiu/FFNx/pull/1012 )
 - Core: Fix a memory leak in the model draw with external meshes enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/1008 )
+- Core: A gltf animation can choose its timing (own clock or stretch) in its glTF extras or the model's config file ( https://github.com/julianxhokaxhiu/FFNx/pull/1042 )
 
 ## FF8
 
