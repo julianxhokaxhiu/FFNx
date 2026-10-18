@@ -55,14 +55,16 @@ private:
     int appID;                                          // Our current AppID
     std::vector<achievement> achievementList;           // Achievements data
     int nAchievements;                                  // The number of Achievements
-    bool isInitialized;                                 // Have we called Request stats and received the callback?
+    bool isInitialized;                                 // Are Steam stats and achievements ready for use?
     std::unordered_map<std::string, int> stats;         // Steam stats used by the game
+
+    bool checkStatsAvailability();
+    void loadStatsAndAchievements();
 
 public:
     SteamManager(const achievement *achievements, int nAchievements, std::vector<std::string> statsNameVec = {});
     ~SteamManager() = default;
 
-    bool requestStats();
     bool showAchievementProgress(int achID, int progressValue, int maxValue);
     bool setAchievement(int achID);
     bool isAchieved(int achID);

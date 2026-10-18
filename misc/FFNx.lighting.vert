@@ -96,7 +96,8 @@ void main()
         avgNrm += a_weight.z * mul(boneMatrices[a_indices.z], vec4(nrm.xyz, 0.0)).xyz;
         avgNrm += a_weight.w * mul(boneMatrices[a_indices.w], vec4(nrm.xyz, 0.0)).xyz;
 
-        nrm = avgNrm;
+        // The bone matrices include the field's model scale
+        nrm = normalize(avgNrm);
 #endif
 
         v_position0 = mul(worldView, vec4(pos.xyz, 1.0));

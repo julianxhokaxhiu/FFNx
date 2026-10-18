@@ -65,6 +65,7 @@ uniform vec4 WMFlags;
 void main()
 {
     vec4 pos = a_position;
+    vec3 nrm = a_normal;
     vec4 color = a_color0;
     vec2 coords = a_texcoord0;
 
@@ -86,6 +87,16 @@ void main()
         avgPos += a_weight.w * mul(boneMatrices[a_indices.w], vec4(pos.xyz, 1.0)).xyz;
 
         pos = vec4(avgPos, 1.0);
+
+        // Normals follow the bones too, or game lighting shades the raw, unposed mesh
+        vec3 avgNrm = vec3(0.0, 0.0, 0.0);
+        avgNrm += a_weight.x * mul(boneMatrices[a_indices.x], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.y * mul(boneMatrices[a_indices.y], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.z * mul(boneMatrices[a_indices.z], vec4(nrm.xyz, 0.0)).xyz;
+        avgNrm += a_weight.w * mul(boneMatrices[a_indices.w], vec4(nrm.xyz, 0.0)).xyz;
+
+        // The bone matrices include the field's model scale
+        nrm = normalize(avgNrm);
 #endif
 
         v_position0 = mul(worldView, vec4(pos.xyz, 1.0));
@@ -94,7 +105,7 @@ void main()
         else pos = v_position0;
 
         pos = mul(mul(d3dViewport, d3dProjection), vec4(pos.xyz, 1.0));
-        v_normal0 = mul(normalMatrix, vec4(a_normal, 0.0)).xyz;
+        v_normal0 = mul(normalMatrix, vec4(nrm, 0.0)).xyz;
 
         // In this default shader, lighting is applied in gamma space so that it does better match the original lighting
         if (gameLightingMode == GAME_LIGHTING_PER_VERTEX)
