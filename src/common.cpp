@@ -829,9 +829,9 @@ int common_create_window(HINSTANCE hInstance, struct game_obj* game_object)
 	// Init Steam API
 	if(enable_steam_achievements)
 	{
-		int app_id = ff8 ? (ff8_remastered_edition ? FF8_REMASTERED_APPID : FF8_APPID) : (ff7_steam_rerelease_edition ? FF7_RERELEASE_APPID : FF7_APPID);
-		// generate automatically steam_appid.txt
-		if(!steam_edition && !ff8_remastered_edition)
+		int app_id = ff8 ? (steam_edition ? FF8_APPID : FF8_REMASTERED_APPID) : (steam_edition ? FF7_APPID : FF7_RERELEASE_APPID);
+		// generate automatically steam_appid.txt if missing
+		if(!fileExists("steam_appid.txt"))
 		{
 			std::ofstream steam_appid_file("steam_appid.txt");
 			steam_appid_file << app_id;
