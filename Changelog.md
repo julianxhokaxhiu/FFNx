@@ -28,6 +28,7 @@
 - Renderer: Fix gltf model parts drawn flat-shaded or twice with advanced lighting ( https://github.com/julianxhokaxhiu/FFNx/pull/1011 )
 - Core: Log gltf models that fail to load, and their load time with `trace_loaders` ( https://github.com/julianxhokaxhiu/FFNx/pull/1012 )
 - Core: Fix a memory leak in the model draw with external meshes enabled ( https://github.com/julianxhokaxhiu/FFNx/pull/1008 )
+- Core: Add gltf battle scenes, and cull gltf back faces like the game's own models ( https://github.com/julianxhokaxhiu/FFNx/pull/1035 )
 
 ## FF8
 
