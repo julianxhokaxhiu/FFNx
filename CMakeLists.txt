@@ -88,7 +88,7 @@ find_package(mimalloc CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(SOLOUD REQUIRED)
 find_package(OPENPSF REQUIRED)
-find_package(STEAMWORKSSDK CONFIG REQUIRED)
+include("${CMAKE_SOURCE_DIR}/.cmake/steamworks.cmake")
 find_package(xxHash CONFIG REQUIRED)
 find_package(LZ4 REQUIRED)
 find_package(CMakeRC CONFIG REQUIRED)
@@ -149,6 +149,7 @@ cmrc_add_resource_library(
 )
 
 add_library(${RELEASE_NAME} SHARED ${source_files} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+ffnx_setup_steamworks(${RELEASE_NAME})
 add_dependencies(${RELEASE_NAME} ${CHOCO_RELEASE_NAME})
 target_include_directories(
   ${RELEASE_NAME}
@@ -286,10 +287,6 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E rename
           ${CMAKE_BINARY_DIR}/bin/${CHOCO_RELEASE_NAME}.dll
           ${CMAKE_BINARY_DIR}/bin/AF4DN.P
-  # steam_api.dll
-  COMMAND ${CMAKE_COMMAND} -E copy
-          ${CMAKE_BINARY_DIR}/vcpkg_installed/x86-windows-static/tools/steamworkssdk/steam_api.dll
-          ${CMAKE_BINARY_DIR}/bin/FFNx_steam_api.dll
   # .pdb
   COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${RELEASE_NAME}.pdb
@@ -614,9 +611,6 @@ if(NOT "${FF8_REMASTERED_GAME_PATH}" STREQUAL "")
     COMMAND ${CMAKE_COMMAND} -E rename
             ${FF8_REMASTERED_GAME_PATH}/FFNx.toml
             ${FF8_REMASTERED_GAME_PATH}/FFNx.toml.bak
-    # Prevent steam_api.dll to be deployed
-    COMMAND ${CMAKE_COMMAND} -E remove
-            ${CMAKE_BINARY_DIR}/bin/steam_api.dll
     # Copy all dist files
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_BINARY_DIR}/bin
