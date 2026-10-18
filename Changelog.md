@@ -40,7 +40,7 @@
 - Core: Fix crash when entering battle in JP version ( https://github.com/julianxhokaxhiu/FFNx/pull/1022 )
 - Core: Support kernel.bin Magic sections beyond the vanilla 57 spells, unlocking ids 57-63 and 96-255 (64-95 reserved for GFs) ( https://github.com/julianxhokaxhiu/FFNx/pull/956 )
 - Core: Unlock unused battle monster models c0m144-c0m199 (EN/FR/DE/IT/SP/JP), selectable via `enemy_com_value` 160-215 in scene.out ( https://github.com/julianxhokaxhiu/FFNx/pull/955 )
-- Core: Add an Esc menu to the pause screen, to return to the game, restart it or exit it ( https://github.com/julianxhokaxhiu/FFNx/pull/1019 )
+- Core: Show a menu in the pause screen to return to the game, restart it, exit it or turn the vibration on or off, and pause with Esc too ( https://github.com/julianxhokaxhiu/FFNx/pull/1019 )
 - Achievements: Add support for remastered achievements
 - Audio: Add a Sound screen to the Config menu, to set the sound effects, music, voice, ambient and movie volumes in game ( https://github.com/julianxhokaxhiu/FFNx/pull/1015 )
 - Direct mode: Optionally add the language prefix to the path for multi-language mods ( https://github.com/julianxhokaxhiu/FFNx/pull/898 )

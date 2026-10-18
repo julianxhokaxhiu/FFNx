@@ -92,9 +92,9 @@ Shortcuts:
 
 - Keyboard Shortcut: `CTRL + T`
 
-### Esc Menu ( FF8 only! )
+### Pause Menu ( FF8 only! )
 
-This will pause the game in field, world map and battle, and show a menu to return to the game, restart it (soft reset) or exit it.
+This will show a menu in the pause screen of the field, world map and battle, to return to the game, restart it (soft reset) or exit it. With a gamepad that can rumble, it also turns the vibration on or off. The game pauses as usual, or with the shortcut below.
 
 Shortcuts:
 

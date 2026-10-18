@@ -1820,12 +1820,9 @@ struct ff8_externals
 	uint32_t sub_4BCBE0;
 	uint32_t sub_4C8B10;
 	uint32_t battle_pause_sub_4CD140;
-	uint32_t *is_alternative_pause_menu;
-	uint32_t *pause_menu_option_state;
 	void *battle_menu_state;
 	uint32_t battle_pause_window_sub_4CD350;
 	int16_t *battle_pause_window_rect;
-	uint32_t sub_4A7210;
 	uint32_t sub_B586F0;
 	uint32_t sub_B64B80;
 	DWORD* leviathan_funcs_B64C3C;

@@ -43,7 +43,7 @@
 #include "ff8/battle/monsters.h"
 #include "ff8/remaster.h"
 #include "ff8/menu/volume.h"
-#include "ff8/esc_menu.h"
+#include "ff8/pause_menu.h"
 #include "metadata.h"
 #include "achievement.h"
 #include "widescreen.h"
@@ -1250,8 +1250,8 @@ int ff8_get_key_state(WPARAM dinput_scan_code)
 {
 	int virt_key = 0;
 
-	// Esc menu Restart: Ctrl+R held for the game's own reset in the field, world map or battle (it checks right Ctrl first)
-	if (ff8_esc_menu_restarting() && (dinput_scan_code == DIK_RCONTROL || dinput_scan_code == DIK_R)) return 1;
+	// Pause menu Restart: Ctrl+R held for the game's own reset in the field, world map or battle (it checks right Ctrl first)
+	if (ff8_pause_menu_restarting() && (dinput_scan_code == DIK_RCONTROL || dinput_scan_code == DIK_R)) return 1;
 
 	if (!*ff8_externals.keyboard_state || dinput_scan_code > 0xFF) {
 		return 0; // What are you doing, William?
@@ -1309,7 +1309,7 @@ int ff8_is_window_active()
 			is_q_pressed = 0;
 		}
 
-		ff8_esc_menu_update(ff8_get_key_state(DIK_ESCAPE));
+		ff8_pause_menu_update(ff8_get_key_state(DIK_ESCAPE));
 	}
 
 	return 0;
@@ -2513,9 +2513,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_menu_volume_init();
 
 	// #####################
-	// Esc menu in the pause screen
+	// Pause menu
 	// #####################
-	ff8_esc_menu_init();
+	ff8_pause_menu_init();
 
 	// #####################
 	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
