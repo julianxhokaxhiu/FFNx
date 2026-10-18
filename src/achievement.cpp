@@ -47,25 +47,67 @@ SteamManager::SteamManager(const achievement *achievements, int nAchievements, s
         this->stats.insert({statName, 0});
     }
     this->achievementList.insert(this->achievementList.end(), &achievements[0], &achievements[nAchievements]);
-    this->requestStats();
+    if (this->checkStatsAvailability())
+    {
+        this->loadStatsAndAchievements();
+    }
     ach_trace("%s - Init steam achievements with appID: %d\n", __func__, this->appID);
 }
 
-bool SteamManager::requestStats()
+bool SteamManager::checkStatsAvailability()
 {
-    // Is Steam loaded?
-    if (NULL == SteamUserStats() || NULL == SteamUser())
+    ISteamUserStats *userStats = SteamUserStats();
+    ISteamUser *user = SteamUser();
+    if (userStats == nullptr || user == nullptr)
     {
+        ach_trace("%s - Steam user stats interfaces are unavailable\n", __func__);
         return false;
     }
-    // Is the user logged on?
-    if (!SteamUser()->BLoggedOn())
+    if (!user->BLoggedOn())
     {
+        ach_trace("%s - Steam user is not logged in; cannot load user stats\n", __func__);
         return false;
     }
-    ach_trace("%s - Request user stats sent\n", __func__);
 
+    ach_trace("%s - Steam user is logged in; loading current stats directly (AppID: %u)\n", __func__, this->appID);
     return true;
+}
+
+void SteamManager::loadStatsAndAchievements()
+{
+    ISteamUserStats *userStats = SteamUserStats();
+    if (userStats == nullptr)
+    {
+        ach_trace("%s - Steam user stats interface is unavailable\n", __func__);
+        return;
+    }
+
+    for (auto &stat : this->stats) {
+        int statValue;
+        if (userStats->GetStat(stat.first.c_str(), &statValue)) {
+            stat.second = statValue;
+            ach_trace("%s - user stat(%s, %d)\n", __func__, stat.first.c_str(), statValue);
+        } else {
+            ach_trace("%s - failed to read user stat(%s)\n", __func__, stat.first.c_str());
+        }
+    }
+
+    for (int i = 0; i < this->nAchievements; ++i)
+    {
+        achievement &ach = this->achievementList[i];
+
+        userStats->GetAchievement(ach.chAchID, &ach.isAchieved);
+        _snprintf(ach.achName, sizeof(ach.achName), "%s",
+                  userStats->GetAchievementDisplayAttribute(ach.chAchID, "name"));
+        _snprintf(ach.achDescription, sizeof(ach.achDescription), "%s",
+                  userStats->GetAchievementDisplayAttribute(ach.chAchID, "desc"));
+
+        ach_trace("%s - achievement data(%s, %s, %s)\n",
+                  __func__, ach.chAchID, ach.achDescription, ach.isAchieved ? "true" : "false");
+    }
+
+    this->isInitialized = true;
+    ach_trace("%s - Steam stats and achievements are ready\n", __func__);
 }
 
 bool SteamManager::setAchievement(int achID)
@@ -77,18 +119,33 @@ bool SteamManager::setAchievement(int achID)
             return true;
         }
 
-        ach_trace("%s - Achievement %s set, Store request sent to Steam\n", __func__, this->getStringAchievementID(achID));
-
-        this->achievementList[achID].isAchieved = true;
         if (steam_achievements_debug_mode)
         {
             return SteamUserStats()->IndicateAchievementProgress(this->getStringAchievementID(achID), 99, 100);
         }
-        else
+
+        ISteamUserStats *userStats = SteamUserStats();
+        if (userStats == nullptr)
         {
-            SteamUserStats()->SetAchievement(this->getStringAchievementID(achID));
-            return SteamUserStats()->StoreStats();
+            ffnx_error("%s - Steam user stats interface is unavailable\n", __func__);
+            return false;
         }
+
+        const char *achievementID = this->getStringAchievementID(achID);
+        if (!userStats->SetAchievement(achievementID))
+        {
+            ffnx_error("%s - Steam rejected SetAchievement for %s\n", __func__, achievementID);
+            return false;
+        }
+        if (!userStats->StoreStats())
+        {
+            ffnx_error("%s - Steam rejected StoreStats for %s\n", __func__, achievementID);
+            return false;
+        }
+
+        this->achievementList[achID].isAchieved = true;
+        ach_trace("%s - Achievement %s submitted to Steam; waiting for store callback\n", __func__, achievementID);
+        return true;
     }
 
     if (trace_all || trace_achievement)
@@ -141,67 +198,63 @@ bool SteamManager::updateUserStat(const std::string &statName, int value) {
 
 void SteamManager::OnUserStatsReceived(UserStatsReceived_t *pCallback)
 {
-    if (this->appID == pCallback->m_nGameID)
+    const uint32 callbackAppID = CGameID(pCallback->m_nGameID).AppID();
+    ach_trace("%s - callback received (AppID: %u, expected AppID: %u, result: %d)\n",
+              __func__, callbackAppID, this->appID, static_cast<int>(pCallback->m_eResult));
+
+    if (this->appID != callbackAppID)
     {
-        if (k_EResultOK == pCallback->m_eResult)
-        {
-            ach_trace("%s - received stats and achievements from Steam\n", __func__);
-            this->isInitialized = true;
-
-            // load stats (assume all stats to be integers)
-            for (auto statName: this->stats) {
-                int statValue;
-                if (SteamUserStats()->GetStat(statName.first.c_str(), &statValue)) {
-                    this->stats.insert_or_assign(statName.first, statValue);
-                }
-
-                ach_trace("%s - user stat(%s, %d)\n", __func__, statName.first.c_str(), statValue);
-            }
-
-            // load achievements
-            for (int i = 0; i < this->nAchievements; ++i)
-            {
-                achievement &ach = this->achievementList[i];
-
-                SteamUserStats()->GetAchievement(ach.chAchID, &ach.isAchieved);
-                _snprintf(ach.achName, sizeof(ach.achName), "%s",
-                          SteamUserStats()->GetAchievementDisplayAttribute(ach.chAchID,
-                                                                           "name"));
-                _snprintf(ach.achDescription, sizeof(ach.achDescription), "%s",
-                          SteamUserStats()->GetAchievementDisplayAttribute(ach.chAchID,
-                                                                           "desc"));
-
-                ach_trace("%s - achievement data(%s, %s, %s)\n", __func__, ach.chAchID, ach.achDescription, ach.isAchieved ? "true" : "false");
-            }
-        }
-        else
-        {
-            ach_trace("%s - RequestStats - failed, %d\n", __func__, pCallback->m_eResult);
-        }
+        ach_trace("%s - ignoring callback for a different AppID\n", __func__);
+        return;
     }
+
+    if (k_EResultOK != pCallback->m_eResult)
+    {
+        ach_trace("%s - failed to receive stats from Steam, result: %d\n",
+                  __func__, static_cast<int>(pCallback->m_eResult));
+        return;
+    }
+
+    this->loadStatsAndAchievements();
 }
 
 void SteamManager::OnUserStatsStored(UserStatsStored_t *pCallback)
 {
-    if (this->appID == pCallback->m_nGameID)
+    const uint32 callbackAppID = CGameID(pCallback->m_nGameID).AppID();
+    ach_trace("%s - callback received (AppID: %u, expected AppID: %u, result: %d)\n",
+              __func__, callbackAppID, this->appID, static_cast<int>(pCallback->m_eResult));
+
+    if (this->appID != callbackAppID)
     {
-        if (k_EResultOK == pCallback->m_eResult)
-        {
-            if (trace_all || trace_achievement)
-                ffnx_info("%s - success\n", __func__);
-        }
-        else
-        {
-            ach_trace("%s - failed, %d\n", __func__, pCallback->m_eResult);
-        }
+        ach_trace("%s - ignoring callback for a different AppID\n", __func__);
+        return;
+    }
+
+    if (k_EResultOK == pCallback->m_eResult)
+    {
+        ach_trace("%s - stats stored successfully\n", __func__);
+    }
+    else
+    {
+        ffnx_error("%s - Steam failed to store stats, result: %d\n",
+                   __func__, static_cast<int>(pCallback->m_eResult));
+        this->loadStatsAndAchievements();
     }
 }
 
 void SteamManager::OnAchievementStored(UserAchievementStored_t *pCallback)
 {
-    if (this->appID == pCallback->m_nGameID)
+    const uint32 callbackAppID = CGameID(pCallback->m_nGameID).AppID();
+    ach_trace("%s - callback received (AppID: %u, expected AppID: %u, achievement: %s)\n",
+              __func__, callbackAppID, this->appID, pCallback->m_rgchAchievementName);
+
+    if (this->appID == callbackAppID)
     {
         ach_trace("%s - Stored Achievement %s for Steam\n", __func__, pCallback->m_rgchAchievementName);
+    }
+    else
+    {
+        ach_trace("%s - ignoring callback for a different AppID\n", __func__);
     }
 }
 
@@ -1105,4 +1158,3 @@ void SteamAchievementsFF8::increaseUserStatAndTryUnlockAchievement(int achId, co
         this->steamManager->showAchievementProgress(achId, new_stat_value, achValue);
     }
 }
-
