@@ -269,7 +269,10 @@ void ff8_find_externals()
 	ff8_externals.battle_pause_sub_4CD140 = get_absolute_value(ff8_externals.sub_4C8B10, 0x3);
 	ff8_externals.battle_pause_window_sub_4CD350 = get_relative_call(ff8_externals.battle_pause_sub_4CD140, JP_VERSION ? 0x1F1 : 0x225);
 	ff8_externals.battle_pause_window_rect = (int16_t *)get_absolute_value(ff8_externals.battle_pause_window_sub_4CD350, 0x2F);
+	ff8_externals.is_alternative_pause_menu = (uint32_t *)get_absolute_value(ff8_externals.battle_pause_window_sub_4CD350, 0x6B);
+	ff8_externals.pause_menu_option_state = (uint32_t *)get_absolute_value(ff8_externals.battle_pause_window_sub_4CD350, 0x9C);
 	ff8_externals.battle_menu_state = (void *)get_absolute_value(ff8_externals.battle_pause_window_sub_4CD350, 0x29);
+	ff8_externals.sub_4A7210 = get_relative_call(ff8_externals.battle_pause_window_sub_4CD350, 0xC3);
 
 	ff8_externals.battle_load_textures_sub_500900 = get_relative_call(ff8_externals.sub_47CCB0, 0x98D);
 	ff8_externals.loc_5005A0 = ff8_externals.battle_load_textures_sub_500900 + 0x9D + 0x4 + *((int32_t *)(ff8_externals.battle_load_textures_sub_500900 + 0x9D));

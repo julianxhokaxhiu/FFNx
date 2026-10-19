@@ -16,6 +16,11 @@
 
 #pragma once
 
-void ff8_pause_menu_init();
-void ff8_pause_menu_update(bool esc_down);
-bool ff8_pause_menu_restarting();
+#include "../ff8.h"
+
+void ff8_esc_menu_init();
+void ff8_esc_menu_update(bool esc_down);
+bool ff8_esc_menu_is_open();
+bool ff8_esc_menu_restarting();
+int ff8_esc_menu_pause_screen(int callback);
+ff8_draw_menu_sprite_texture_infos *ff8_esc_menu_battle_pause_window(int a1, ff8_draw_menu_sprite_texture_infos *draw_infos);
