@@ -18,6 +18,9 @@
 - Core: Add support for [Universal Button Prompts](docs/ff7/universal_buttons.md)
 - Core: Add support for Field text window autoresize for all languages
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
+- Core: Fix battle swirl battle effect to correctly match the software renderer
+- 60FPS: Interpolate native battle swirl transforms and fading while keeping the original speed
+- Widescreen: Fix battle swirl to correctly capture the widescreen content instead of the original 4:3
 - Lighting: Minor adjustment to ambient light and shadow map resolution default values ( https://github.com/julianxhokaxhiu/FFNx/pull/1007 )
 - Core: Fix a crash on exit after the world map loaded gltf models ( https://github.com/julianxhokaxhiu/FFNx/pull/1004 )
 - Core: Match gltf animation names case-insensitively ( https://github.com/julianxhokaxhiu/FFNx/pull/1002 )

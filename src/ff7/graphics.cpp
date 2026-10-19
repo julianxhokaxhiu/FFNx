@@ -31,6 +31,7 @@
 #include "../log.h"
 #include "../gl.h"
 #include "defs.h"
+#include "widescreen.h"
 #include "field/model.h"
 
 #include "../external_mesh.h"
@@ -373,7 +374,16 @@ struct tex_header *sub_673F5C(struct struc_91 *struc91)
 
 	if(struc91->field_0 == 2) ffnx_glitch_once("unsupported framebuffer operation\n");
 
-	return make_framebuffer_tex(struc91->width, struc91->height, struc91->x_offset, struc91->y_offset, struc91->width * struc91->xscale, struc91->height * struc91->yscale, struc91->color_key);
+	uint32_t x = struc91->x_offset;
+	uint32_t width = struc91->width * struc91->xscale;
+	// Captures precede begin_scene, so the frame-cached mode can still be the previous module.
+	if (widescreen_enabled && getmode()->driver_mode == MODE_SWIRL)
+	{
+		x = std::lround(double(x) * wide_viewport_width / game_width);
+		width = std::lround(double(width) * wide_viewport_width / game_width);
+	}
+
+	return make_framebuffer_tex(struc91->width, struc91->height, x, struc91->y_offset, width, struc91->height * struc91->yscale, struc91->color_key);
 }
 
 void draw_single_triangle(struct nvertex *vertices)

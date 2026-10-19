@@ -329,6 +329,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	}
 
 	bool isLightingEnabledTexture = true;
+	bool framebufferColorKey = false;
 
 	// If we're attaching a texture, and it is an external one, then use a better blending that considers the alpha channel
 	if (current_state.texture_set)
@@ -336,6 +337,12 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 		VOBJ(texture_set, texture_set, current_state.texture_set);
 
 		if (VREF(texture_set, ogl.external)) newRenderer.isExternalTexture(true);
+
+		if (current_state.fb_texture)
+		{
+			VOBJ(tex_header, tex_header, VREF(texture_set, tex_header));
+			framebufferColorKey = VREF(tex_header, color_key) != 0;
+		}
 
 		if(enable_lighting && VREF(texture_set, ogl.gl_set->disable_lighting))
 		{
@@ -354,7 +361,7 @@ void gl_draw_indexed_primitive(uint32_t primitivetype, uint32_t vertextype, stru
 	}
 
 	newRenderer.isTLVertex(vertextype == TLVERTEX);
-	newRenderer.isFBTexture(current_state.fb_texture);
+	newRenderer.isFBTexture(current_state.fb_texture, framebufferColorKey);
 
 	newRenderer.doModulateAlpha(true);
 

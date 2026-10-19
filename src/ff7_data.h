@@ -1366,6 +1366,9 @@ inline void ff7_find_externals(struct ff7_game_obj* game_object)
 	ff7_externals.swirl_loop_sub_4026D4 = get_relative_call(swirl_main_loop, 0xC9);
 	ff7_externals.swirl_enter_40164E = get_absolute_value(main_loop, 0x254);
 	ff7_externals.swirl_enter_sub_401810 = get_relative_call(ff7_externals.swirl_enter_40164E, 0x160);
+	ff7_externals.swirl_grid = reinterpret_cast<vector4<short> (*)[9]>(get_absolute_value(ff7_externals.swirl_enter_sub_401810, 0xE) + 0xC88);
+	ff7_externals.swirl_animation = reinterpret_cast<ff7_swirl_animation *>(get_absolute_value(ff7_externals.swirl_enter_sub_401810, 0xE) + 0x112C);
+	ff7_externals.swirl_draw_quad = reinterpret_cast<int (*)(const uint8_t *, ff7_graphics_object *)>(get_relative_call(ff7_externals.swirl_loop_sub_4026D4, 0x609));
 
 	// --------------------------------
 

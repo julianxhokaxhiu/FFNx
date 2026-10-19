@@ -37,10 +37,19 @@
 #include "field/background.h"
 
 int viewport_width_plus_x_widescreen_fix = 750;
-int swirl_framebuffer_offset_x_widescreen_fix = 106;
-int swirl_framebuffer_offset_y_widescreen_fix = 64;
 
 Widescreen widescreen;
+
+static void ff7_swirl_init_widescreen()
+{
+    reinterpret_cast<void (*)()>(ff7_externals.swirl_enter_sub_401810)();
+    const int left = ff7_externals.swirl_grid[0][0].x;
+    for (int column = 0; column <= 10; ++column)
+    {
+        for (auto &point : ff7_externals.swirl_grid[column])
+            point.x = static_cast<short>(left + wide_viewport_width * column / 10);
+    }
+}
 
 // This function should be called at each frame after drawing backgrounds and 3d models
 void Widescreen::zoomBackground()
@@ -167,14 +176,12 @@ void ff7_widescreen_hook_init() {
     // For zoom field maps
     replace_call_function(ff7_externals.field_draw_everything + 0x360, ff7::field::draw_gray_quads_sub_644E90);
 
-    // Swirl fix
-    patch_code_dword(ff7_externals.swirl_loop_sub_4026D4 + 0x335, (uint32_t)&wide_viewport_x);
-    patch_code_dword(ff7_externals.swirl_enter_sub_401810 + 0x21, (uint32_t)&wide_viewport_width);
-    patch_code_dword(ff7_externals.swirl_enter_40164E + 0xEE, (uint32_t)&swirl_framebuffer_offset_x_widescreen_fix);
-    patch_code_dword(ff7_externals.swirl_enter_40164E + 0x112, (uint32_t)&swirl_framebuffer_offset_x_widescreen_fix);
-    patch_code_dword(ff7_externals.swirl_enter_40164E + 0xFB, (uint32_t)&swirl_framebuffer_offset_y_widescreen_fix);
-    patch_code_dword(ff7_externals.swirl_enter_40164E + 0x11F, (uint32_t)&swirl_framebuffer_offset_y_widescreen_fix);
-    patch_code_int(ff7_externals.swirl_enter_40164E + 0xE8, 85);
+    if (widescreen_enabled)
+    {
+        patch_code_dword(ff7_externals.swirl_loop_sub_4026D4 + 0x335, (uint32_t)&wide_viewport_x);
+        patch_code_dword(ff7_externals.swirl_enter_sub_401810 + 0x21, (uint32_t)&wide_viewport_width);
+        replace_call_function(ff7_externals.swirl_enter_40164E + 0x160, ff7_swirl_init_widescreen);
+    }
 
     // Battle fix
     patch_code_dword(ff7_externals.battle_sub_5BD050 + 0x4B, (uint32_t)&wide_viewport_width);
@@ -376,7 +383,6 @@ void Widescreen::init()
         wide_viewport_width = 768;
         wide_game_width = 768;
         viewport_width_plus_x_widescreen_fix = 704;
-        swirl_framebuffer_offset_x_widescreen_fix = 64;
     }
 }
 
