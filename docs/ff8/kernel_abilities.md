@@ -2,6 +2,8 @@
 
 FFNx can load more than the original 116 abilities from `direct/kernel.bin`. FFNx also supports additional battle commands and command ability data. A vanilla kernel keeps the original ability code and tables. The shared battle-dispatch hook is installed during initialization and forwards commands unchanged while the extensions are inactive. No configuration switch enables the extension: FFNx detects the section counts when it reads the file.
 
+The shared [kernel mapping](kernel.md) defines every data record and reads file offsets and counts from the header. The executable still receives its fixed compatibility layout.
+
 ## Limits and IDs
 
 Kernel data sections 12 through 18 contain eight-byte ability records. Ability IDs run across all seven sections in order:
@@ -35,12 +37,12 @@ These tables have independent limits; they do not consume the shared ability bud
 | 1       | Battle commands      |             39 |           176 |           137 |
 | 11      | Command ability data |             12 |           255 |           243 |
 
-Keep the original rows first and append new rows. Battle command IDs `0xB0` and above belong to engine actions. An eight-byte battle command names its effect-data row in byte 4 (`0xFF` means none). Each effect-data row is 16 bytes. An added command requires valid effect data; byte 7 selects the vanilla command it **behaves like**. Zero defaults to Mad Rush. Supported families are Defend, Mad Rush, Treatment, Recover, Revive, Doom, Kamikaze, Absorb, LV Down and LV Up. These reuse the game's existing handlers; effect data controls the attack type, power, statuses, animation and hit count.
+Keep the original rows first and append new rows. Battle command IDs `0xB0` and above belong to engine actions. An eight-byte battle command names its effect-data row in byte 4 (`0xFF` means none). Each effect-data row is 16 bytes. An added command requires valid effect data; byte 7 selects its vanilla **Execution type**. Zero defaults to Mad Rush. Supported families are Defend, Mad Rush, Treatment, Recover, Revive, Doom, Kamikaze, Absorb, LV Down and LV Up. These reuse the game's existing handlers; effect data controls the attack type, power, statuses, animation and hit count.
 
 For a new Treatment-style command in SolomonRing:
 
 1. In **Command Ability Data**, select Treatment and add an entry; edit the copied effect data.
-2. In **Battle Commands**, select Treatment and add an entry. Name it and select the new effect-data row; keep **Behaves like: Treatment**.
+2. In **Battle Commands**, select Treatment and add an entry. Name it and select the new effect-data row; keep the same built-in **Execution type** (Seq anim 11, initial cam anim 0-5).
 3. In **Command Abilities**, add an ability, set its AP and point it at the new battle command.
 4. Assign that ability's unified ID to a GF learning slot in **G-Forces**, then save `direct/kernel.bin`.
 

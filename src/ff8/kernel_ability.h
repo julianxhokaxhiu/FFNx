@@ -18,6 +18,8 @@
 
 #include <stdint.h>
 
+class ff8_kernel_file;
+
 // AddMoreAbility: support kernel.bin files whose ability sections (12-18) hold
 // more than the vanilla 116 entries between them. The seven sections are one
 // contiguous array of 8-byte entries to the exe, indexed by a unified ability
@@ -37,7 +39,7 @@ void ff8_kernel_ability_init();
 // when the ability sections no longer have their vanilla layout and this
 // feature wants the vanilla-layout image to be built. Fills the FFNx-side
 // ability table and records where each group now starts.
-bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int size);
+bool ff8_kernel_ability_read(const ff8_kernel_file &file);
 
 // True for the data sections this feature allows to have a non-vanilla size,
 // so the load hook does not warn about them.

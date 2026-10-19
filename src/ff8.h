@@ -33,6 +33,8 @@
 #include "common_imports.h"
 #include "ff8/save_data.h"
 
+struct ff8_kernel_vanilla_data;
+
 // Battle effect buffer, relocated inside extended_memory.
 #define FF8_BATTLE_EFFECT_BUFFER_OFFSET 0x200000
 #define FF8_BATTLE_EFFECT_BUFFER_SIZE 0x380000
@@ -1807,10 +1809,8 @@ struct ff8_externals
 	BYTE* byte_1CFF1C3;
 	char* unk_1CFDC70;
 	char* unk_1CFDC7C;
-	WORD* word_1CF75EC;
 	char* unk_1CFF84C;
-	char* unk_1CF3E48;
-	DWORD* dword_1CF3EE0;
+	struct ff8_kernel_vanilla_data *kernel;
 	DWORD* battle_current_actor_talking;
 	int (*battle_text_task_sub_5009B0)(int);
 	uint32_t sub_502380;

@@ -20,7 +20,7 @@
 
 const char *ff8_get_battle_command_name(int command_id);
 
-// AddMoreMagic: support kernel.bin files whose Magic section (section 1)
+// AddMoreMagic: support kernel.bin files whose Magic section (section 2 in the wiki/editor)
 // holds more than the vanilla 57 spells, unlocking spell ids 57-63 and
 // 96-255 (64-95 stay reserved for GFs - 16 used today, 16 free for a future
 // 32-GF exe patch). Supports EN/FR/DE/SP/IT/JP/JP_NV retail 1.2; other

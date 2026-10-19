@@ -18,12 +18,15 @@
 
 #include <stdint.h>
 
+class ff8_kernel_file;
+
 // Added battle commands and their effect data share the kernel loader and dispatcher.
-bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int size);
+bool ff8_kernel_command_read(const ff8_kernel_file &file);
 bool ff8_kernel_command_section_may_grow(int section);
 bool ff8_kernel_command_owns(uint8_t command);
 int ff8_kernel_command_execute(int attacker_slot, int command, int id, int variant, int target_slot, int target_mask, int linked);
 
-const uint8_t *ff8_kernel_command_get(int command);
+struct ff8_kernel_battle_command;
+const ff8_kernel_battle_command *ff8_kernel_command_get(int command);
 
 bool ff8_kernel_command_removed(uint8_t command);

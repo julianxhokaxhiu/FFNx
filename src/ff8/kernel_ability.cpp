@@ -16,6 +16,7 @@
 
 #include "kernel_ability.h"
 #include "kernel_magic.h"
+#include "kernel.h"
 
 #include "../ff8.h"
 #include "../patch.h"
@@ -26,20 +27,19 @@
 
 #include <initializer_list>
 #include <stdint.h>
-#include <string.h>
 
 // ---- Kernel format and executable layouts -------------------------------
 
 // Ability data stays FFNx-side so growing it does not move the game's other
 // kernel sections. See docs/ff8/kernel_abilities.md for the file and save limits.
 
-#define ABILITY_ENTRY_SIZE         8
+#define ABILITY_ENTRY_SIZE sizeof(ff8_kernel_ability)
 // The savemap's per-GF learned-ability bitfield is 16 bytes wide.
 #define MAX_ABILITY_COUNT          128
 #define VANILLA_ABILITY_COUNT      116
 #define ABILITY_GROUP_COUNT        7
 // Ability block start, relative to the kernel.bin buffer.
-#define ABILITY_BLOCK_OFFSET       0x40E0
+#define ABILITY_BLOCK_OFFSET offsetof(ff8_kernel_vanilla_data, junction_abilities)
 // Data sections, 0-based as the kernel.bin header lists them.
 #define KERNEL_FIRST_ABIL_SEC      11
 #define KERNEL_AFTER_ABIL_SEC      18
@@ -59,17 +59,26 @@
 #define GROUP_GF                   5
 #define GROUP_MENU                 6
 
-struct gf_learning_slot {
-	uint8_t unlocker;          // level 0..100, or prerequisite slot + 101
-	uint8_t excluded_slot;     // hides this choice after the other slot is learned
-	uint8_t ability;
-	uint8_t unused;
-};
-
 static const uint8_t vanilla_group_first[ABILITY_GROUP_COUNT] = { 0, 20, 39, 58, 78, 83, 92 };
 
 // Function offsets are relative to BuildGFAbilityList. US, other Latin builds
 // and Japanese builds use different layouts; popup instruction offsets also vary.
+#pragma pack(push, 1)
+struct ff8_kernel_indexed_operand { uint8_t opcode, modrm, sib; uint32_t address; };
+struct ff8_kernel_compare_byte { uint8_t opcode, modrm, value; };
+struct ff8_kernel_menu_range_check
+{
+	ff8_kernel_compare_byte first;
+	uint8_t jump_low, low_displacement;
+	ff8_kernel_compare_byte last;
+	uint8_t jump_high, high_displacement;
+	uint8_t lea_opcode, lea_modrm;
+	int8_t negated_first;
+};
+#pragma pack(pop)
+static_assert(sizeof(ff8_kernel_indexed_operand) == 7);
+static_assert(sizeof(ff8_kernel_menu_range_check) == 13);
+
 enum ability_layout { ABILITY_LAYOUT_US, ABILITY_LAYOUT_LATIN, ABILITY_LAYOUT_JP };
 
 struct ability_layout_offsets
@@ -180,7 +189,7 @@ static struct
 	uint32_t *learned_menu_mask;
 	uint32_t group_table;           // {u16 section offset, u8 first id, u8 entry size}[7]
 
-	const gf_learning_slot *gf_learning; // first GF learning slot, 132 bytes per GF
+	uint32_t gf_learning;          // native operand for the first GF learning condition
 	const uint8_t *gf_levels;       // computed GF level, 12 bytes per GF
 
 	uint32_t fn_get_name;           // getAbilityName(int id)
@@ -217,7 +226,7 @@ static struct
 	uint32_t menu_candidates;       // field menu ability ids, 24 bytes in vanilla
 } ability_ext;
 
-static uint8_t ff8_ability_table[MAX_ABILITY_COUNT][ABILITY_ENTRY_SIZE];
+static ff8_kernel_ability ff8_ability_table[MAX_ABILITY_COUNT];
 static int ff8_ability_count = VANILLA_ABILITY_COUNT;
 static uint8_t ff8_group_first[ABILITY_GROUP_COUNT];
 // The two candidate lists, FFNx-side and wide enough for the whole id space.
@@ -419,13 +428,13 @@ static uint32_t candidate_end(bool passive)
 
 static uint32_t ability_table_base()
 {
-	return (uint32_t)&ff8_ability_table[0][0];
+	return (uint32_t)ff8_ability_table;
 }
 
 // Resolve feature-private addresses from the existing FFNx anchors.
 static void ff8_kernel_ability_find_externals()
 {
-	ability_ext.kernel_buffer = uint32_t(ff8_externals.unk_1CF3E48);
+	ability_ext.kernel_buffer = uint32_t(ff8_externals.kernel);
 	ability_ext.k_ability = ability_ext.kernel_buffer + ABILITY_BLOCK_OFFSET;
 
 	// Call chains.
@@ -445,7 +454,7 @@ static void ff8_kernel_ability_find_externals()
 	uint32_t list = ability_ext.fn_build_list;
 	const ability_layout_offsets &layout = layout_of(version);
 
-	ability_ext.gf_learning = list ? (const gf_learning_slot *)(get_absolute_value(list, 0x0AA) + 0x1C) : nullptr;
+	ability_ext.gf_learning = list ? get_absolute_value(list, 0x0AA) + offsetof(ff8_kernel_junctionable_gf, ability_data) + offsetof(ff8_kernel_gf_learning_slot, level_or_prereq_slot) : 0;
 	ability_ext.gf_levels = list ? (const uint8_t *)get_absolute_value(list, 0x0B7) : nullptr;
 	ability_ext.fn_group_from_id = list ? list + layout.group_from_id : 0;
 	ability_ext.fn_learned_popup = list ? list + layout.learned_popup : 0;
@@ -516,11 +525,11 @@ static bool ff8_kernel_ability_validate()
 
 	// The GF list replacement reads the same fixed-layout kernel slots and level
 	// records as the original function. Reject another instruction layout first.
-	const uint8_t slot_base_code[] = { 0x8D, 0x04, 0x8D };
-	const uint8_t level_code[] = { 0x8A, 0x1C, 0x8D };
-	if (memcmp((const void *)(ability_ext.fn_build_list + 0x0A7), slot_base_code, sizeof(slot_base_code))
-		|| memcmp((const void *)(ability_ext.fn_build_list + 0x0B4), level_code, sizeof(level_code))
-		|| (uint32_t)ability_ext.gf_learning != ability_ext.kernel_buffer + 3960 + 0x1C
+	const auto &slot_address = *(const ff8_kernel_indexed_operand *)(ability_ext.fn_build_list + 0x0A7);
+	const auto &level_address = *(const ff8_kernel_indexed_operand *)(ability_ext.fn_build_list + 0x0B4);
+	if (slot_address.opcode != 0x8D || slot_address.modrm != 0x04 || slot_address.sib != 0x8D
+		|| level_address.opcode != 0x8A || level_address.modrm != 0x1C || level_address.sib != 0x8D
+		|| ability_ext.gf_learning != (uint32_t)&ff8_externals.kernel->junctionable_gfs[0].ability_data[0].level_or_prereq_slot
 		|| !ability_ext.gf_levels)
 		return false;
 
@@ -588,9 +597,12 @@ static bool ff8_kernel_ability_validate()
 	}
 
 	// Reject an incompatible mask routine before replacing it.
-	const uint8_t menu_mask_code[] = { 0x83, 0xF8, 92, 0x7C, 0x11,
-		0x83, 0xF8, 116, 0x7D, 0x0C, 0x8D, 0x48, 0xA4 };
-	if (memcmp((const void *)(ability_ext.fn_menu_mask + SITE_MENU_FIRST_CMP), menu_mask_code, sizeof(menu_mask_code)))
+	const auto &range = *(const ff8_kernel_menu_range_check *)(ability_ext.fn_menu_mask + SITE_MENU_FIRST_CMP);
+	if (range.first.opcode != 0x83 || range.first.modrm != 0xF8 || range.first.value != 92
+		|| range.jump_low != 0x7C || range.low_displacement != 0x11
+		|| range.last.opcode != 0x83 || range.last.modrm != 0xF8 || range.last.value != 116
+		|| range.jump_high != 0x7D || range.high_displacement != 0x0C
+		|| range.lea_opcode != 0x8D || range.lea_modrm != 0x48 || range.negated_first != -92)
 	{
 		if (trace_all) ffnx_trace("AddMoreAbility: the learned menu ability range checks are not vanilla.\n");
 		ok = false;
@@ -698,7 +710,7 @@ static int ff8_build_gf_ability_list(int gf, ff8_gf_ability_entry *out, int incl
 
 	if (include_learnable)
 	{
-		const auto *slots = (const gf_learning_slot *)((const uint8_t *)ability_ext.gf_learning + 132 * gf);
+		const auto &slots = ff8_externals.kernel->junctionable_gfs[gf].ability_data;
 		uint32_t forgotten = save.forgotten1 | (save.forgotten2 << 8) | (save.forgotten3 << 16);
 		// Preserve vanilla priority: level unlocks, then learned prerequisites.
 		for (int pass = 0; pass < 2; ++pass)
@@ -706,28 +718,28 @@ static int ff8_build_gf_ability_list(int gf, ff8_gf_ability_entry *out, int incl
 			for (int slot = 0; slot < GF_LEARNING_SLOTS && count < GF_ABILITY_LIST_SIZE; ++slot)
 			{
 				const auto &learn = slots[slot];
-				int id = learn.ability;
+				int id = learn.ability_id;
 				if (!id || id >= ff8_ability_count || entries[id].state || (forgotten & (1u << slot))) continue;
 				if (pass == 0)
 				{
-					if (learn.unlocker > 100 || ability_ext.gf_levels[12 * gf] < learn.unlocker) continue;
+					if (learn.level_or_prereq_slot > 100 || ability_ext.gf_levels[12 * gf] < learn.level_or_prereq_slot) continue;
 				}
 				else
 				{
-					int prerequisite = learn.unlocker - 101;
+					int prerequisite = learn.level_or_prereq_slot - 101;
 					if (prerequisite < 0 || prerequisite >= GF_LEARNING_SLOTS) continue;
-					int required_id = slots[prerequisite].ability;
+					int required_id = slots[prerequisite].ability_id;
 					if (required_id >= ff8_ability_count || entries[required_id].state != 2) continue;
 					if (learn.excluded_slot != 0xFF)
 					{
 						if (learn.excluded_slot >= GF_LEARNING_SLOTS) continue;
-						int excluded_id = slots[learn.excluded_slot].ability;
+						int excluded_id = slots[learn.excluded_slot].ability_id;
 						if (excluded_id < ff8_ability_count && entries[excluded_id].state == 2) continue;
 					}
 				}
 				entries[id].state = 1;
 				entries[id].slot = slot;
-				entries[id].required_ap = ff8_ability_table[id][4];
+				entries[id].required_ap = ff8_ability_table[id].common.ap_required;
 				entries[id].earned_ap = save.APs[slot];
 				++count;
 			}
@@ -782,7 +794,7 @@ static uint8_t ff8_build_ability_candidates(uint8_t (*out)[CANDIDATE_ENTRY_SIZE]
 
 static int ff8_build_chara_ability_lists(int character)
 {
-	memset(ability_ext.chara_ability_mask, 0, 16);
+	memset_code((uint32_t)ability_ext.chara_ability_mask, 0, 16);
 	uint16_t junctioned_gfs = *(uint16_t *)(ability_ext.chara_gf_masks + 28 * character);
 	for (int gf = 0; gf < G_FORCE_NUM; ++gf)
 	{
@@ -896,7 +908,7 @@ static void ff8_patch_command_ability_roles()
 	uint8_t ids[5] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 	for (int id = ff8_group_first[GROUP_COMMAND]; id < ff8_group_first[GROUP_STAT_PERCENT]; ++id)
 		for (int role = 0; role < 5; ++role)
-			if (ids[role] == 0xFF && ff8_ability_table[id][5] == command_roles[role]) ids[role] = id;
+			if (ids[role] == 0xFF && ff8_ability_table[id].command.battle_command_id == command_roles[role]) ids[role] = id;
 	for (const command_role_site &site : command_role_sites)
 	{
 		if (site.owner == &ability_ext.fn_draw_seal_row && !ff8_seal_row_ok) continue;
@@ -922,25 +934,18 @@ bool ff8_kernel_ability_section_may_grow(int section)
 	return section >= KERNEL_FIRST_ABIL_SEC && section < KERNEL_AFTER_ABIL_SEC;
 }
 
-bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int size)
+bool ff8_kernel_ability_read(const ff8_kernel_file &file)
 {
 	uint8_t first[ABILITY_GROUP_COUNT];
 	int total = 0;
 
-	if (!stash || !offsets || size < 0xE4) return false;
-	for (int section = KERNEL_FIRST_ABIL_SEC; section < KERNEL_AFTER_ABIL_SEC; ++section)
-	{
-		if (offsets[section] < 0xE4 || offsets[section] > offsets[section + 1] || offsets[section + 1] > (uint32_t)size || (offsets[section + 1] - offsets[section]) % ABILITY_ENTRY_SIZE)
-		{
-			if (trace_all) ffnx_trace("AddMoreAbility: invalid ability section %d.\n", section + 1);
-			return false;
-		}
-	}
+	if (!file.valid()) return false;
+	bool vanilla_groups = true;
 
 	for (int group = 0; group < ABILITY_GROUP_COUNT; ++group)
 	{
 		int section = KERNEL_FIRST_ABIL_SEC + group;
-		int entries = (int)((offsets[section + 1] - offsets[section]) / ABILITY_ENTRY_SIZE);
+		int entries = (int)(file.bytes(static_cast<ff8_kernel_section>(section)).size() / ABILITY_ENTRY_SIZE);
 
 		if ((group == 0 && entries == 0) || total + entries > MAX_ABILITY_COUNT)
 		{
@@ -949,15 +954,16 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 		}
 
 		first[group] = (uint8_t)total;
+		vanilla_groups &= first[group] == vanilla_group_first[group];
 		total += entries;
 	}
 
 	// Vanilla files do not resolve or patch ability functions.
-	if (!ff8_ability_armed && total == VANILLA_ABILITY_COUNT && !memcmp(first, vanilla_group_first, sizeof(first)))
+	if (!ff8_ability_armed && total == VANILLA_ABILITY_COUNT && vanilla_groups)
 	{
-		const uint8_t *commands = (const uint8_t *)stash + offsets[KERNEL_FIRST_ABIL_SEC + GROUP_COMMAND];
+		auto commands = file.section<ff8_kernel_section::command_abilities>();
 		bool roles_unchanged = true;
-		for (int role = 0; role < 5; ++role) roles_unchanged &= commands[role * ABILITY_ENTRY_SIZE + 5] == command_roles[role];
+		for (int role = 0; role < 5; ++role) roles_unchanged &= commands[role].battle_command_id == command_roles[role];
 		if (roles_unchanged) return false;
 	}
 
@@ -990,7 +996,7 @@ bool ff8_kernel_ability_read(const char *stash, const uint32_t *offsets, int siz
 		return false;
 	}
 
-	memcpy_code((uint32_t)(ff8_ability_table), (void *)(stash + offsets[KERNEL_FIRST_ABIL_SEC]), total * ABILITY_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_ability_table), (void *)(file.section<ff8_kernel_section::junction_abilities>().data()), total * ABILITY_ENTRY_SIZE);
 	memcpy_code((uint32_t)(ff8_group_first), (void *)(first), sizeof(first));
 	ff8_ability_count = total;
 

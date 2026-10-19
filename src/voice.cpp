@@ -30,6 +30,7 @@
 
 #include "ff8/engine.h"
 #include "ff8/kernel_magic.h"
+#include "ff8/kernel.h"
 
 #include <queue>
 
@@ -1063,10 +1064,10 @@ char* ff8_battle_get_actor_name(int idx)
 		ret = ff8_externals.unk_1CFDC70;
 	else if ( actor_id == 4 )
 		ret = ff8_externals.unk_1CFDC7C;
-	else if ( *(ff8_externals.word_1CF75EC + 0x12 * *(ff8_externals.byte_1CFF1C3 + 0x1D0 * idx)) == -1 )
+	else if ( actor_id >= 11 || ff8_externals.kernel->characters[actor_id].offset_character_name == 0xFFFF )
 		ret = ff8_externals.unk_1CFF84C;
 	else
-		ret = ff8_externals.unk_1CF3E48 + *(ff8_externals.word_1CF75EC + 0x12 * *(ff8_externals.byte_1CFF1C3 + 0x1D0 * idx)) + *ff8_externals.dword_1CF3EE0;
+		ret = (char *)ff8_externals.kernel + ff8_externals.kernel->header.section_offsets[static_cast<uint32_t>(ff8_kernel_section::character_names)] + ff8_externals.kernel->characters[actor_id].offset_character_name;
 
 	ff8_battle_actor_name[idx] = ret;
 

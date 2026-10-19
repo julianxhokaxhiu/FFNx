@@ -16,6 +16,7 @@
 
 #include "kernel_command.h"
 #include "kernel_magic.h"
+#include "kernel.h"
 
 #include "../ff8.h"
 #include "../patch.h"
@@ -24,13 +25,12 @@
 #include "../log.h"
 
 #include <stdint.h>
-#include <string.h>
 
 // Added commands reuse a data-driven vanilla command, with their own name and effect.
 #define KERNEL_COMMAND_SECTION		0
 #define KERNEL_COMMAND_DATA_SECTION   10
-#define COMMAND_ENTRY_SIZE			8
-#define COMMAND_DATA_ENTRY_SIZE	   16
+#define COMMAND_ENTRY_SIZE sizeof(ff8_kernel_battle_command)
+#define COMMAND_DATA_ENTRY_SIZE sizeof(ff8_kernel_command_ability_data)
 #define VANILLA_COMMAND_COUNT		 39
 #define VANILLA_COMMAND_DATA_COUNT	12
 // Command ids from 0xB0 up are the engine's own (Ultimecia, Renzokuken finisher,
@@ -39,13 +39,6 @@
 // abilityDataID is a byte and 0xFF means "no data".
 #define NO_COMMAND_DATA			   0xFF
 #define MAX_COMMAND_DATA_COUNT		0xFF
-// Battle command entry fields.
-#define COMMAND_ABILITY_DATA_OFF	  4
-#define COMMAND_BEHAVES_LIKE_OFF	  7
-// Kernel buffer offsets of the two sections in the vanilla layout.
-#define COMMAND_BLOCK_OFFSET		  0xE4
-#define COMMAND_DATA_BLOCK_OFFSET	 0x4020
-
 #define REMOVED_COMMAND              0xFE
 #define REMOVED_COMMAND_DATA         0xFE
 
@@ -55,8 +48,8 @@
 static const uint8_t data_driven_commands[] = { 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1E, 0x1F, 0x20, 0x21, 0x22 };
 
 // ---- state --------------------------------------------------------------
-static uint8_t ff8_command_table[MAX_COMMAND_COUNT][COMMAND_ENTRY_SIZE];
-static uint8_t ff8_command_data_table[MAX_COMMAND_DATA_COUNT][COMMAND_DATA_ENTRY_SIZE];
+static ff8_kernel_battle_command ff8_command_table[MAX_COMMAND_COUNT];
+static ff8_kernel_command_ability_data ff8_command_data_table[MAX_COMMAND_DATA_COUNT];
 static uint8_t ff8_command_behaves_like[MAX_COMMAND_COUNT];
 static int ff8_command_count = VANILLA_COMMAND_COUNT;
 static int ff8_command_data_count = VANILLA_COMMAND_DATA_COUNT;
@@ -161,10 +154,9 @@ static uint32_t k_command, k_command_end, k_command_data, k_command_data_end;
 
 static void ff8_kernel_command_find_externals()
 {
-	uint32_t kernel = uint32_t(ff8_externals.unk_1CF3E48);
-	k_command = kernel + COMMAND_BLOCK_OFFSET;
+	k_command = (uint32_t)ff8_externals.kernel->battle_commands;
 	k_command_end = k_command + VANILLA_COMMAND_COUNT * COMMAND_ENTRY_SIZE;
-	k_command_data = kernel + COMMAND_DATA_BLOCK_OFFSET;
+	k_command_data = (uint32_t)ff8_externals.kernel->command_ability_data;
 	k_command_data_end = k_command_data + VANILLA_COMMAND_DATA_COUNT * COMMAND_DATA_ENTRY_SIZE;
 
 	uint32_t magic_name = ff8_kernel_magic_name_getter();
@@ -216,8 +208,8 @@ static int ff8_kernel_command_parse_character(int character, int slot)
 	if (character == 0xFF || slot < 0 || slot >= (int)ff8_externals.char_comp_stats_1CFF000.size()) return result;
 	auto &stats = ff8_externals.char_comp_stats_1CFF000[slot];
 	for (auto &command : stats.commands)
-		if (ff8_kernel_command_removed(command.command_id)) memset(&command, 0, sizeof(command));
-	if (ff8_kernel_command_removed(stats.limit_command.command_id)) memset(&stats.limit_command, 0, sizeof(stats.limit_command));
+		if (ff8_kernel_command_removed(command.command_id)) memset_code((uint32_t)&command, 0, sizeof(command));
+	if (ff8_kernel_command_removed(stats.limit_command.command_id)) memset_code((uint32_t)&stats.limit_command, 0, sizeof(stats.limit_command));
 	return result;
 }
 
@@ -254,31 +246,24 @@ static bool is_data_driven(uint8_t command)
 	return false;
 }
 
-bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int size)
+bool ff8_kernel_command_read(const ff8_kernel_file &file)
 {
-	if (!stash || !offsets || size < COMMAND_BLOCK_OFFSET) return false;
-	for (int section : { KERNEL_COMMAND_SECTION, KERNEL_COMMAND_DATA_SECTION })
-		if (offsets[section] < COMMAND_BLOCK_OFFSET || offsets[section] > offsets[section + 1] || offsets[section + 1] > (uint32_t)size)
-			return false;
-
-	uint32_t command_bytes = offsets[KERNEL_COMMAND_SECTION + 1] - offsets[KERNEL_COMMAND_SECTION];
-	uint32_t data_bytes = offsets[KERNEL_COMMAND_DATA_SECTION + 1] - offsets[KERNEL_COMMAND_DATA_SECTION];
-	int commands = (int)(command_bytes / COMMAND_ENTRY_SIZE);
-	int data = (int)(data_bytes / COMMAND_DATA_ENTRY_SIZE);
+	if (!file.valid()) return false;
+	auto command_section = file.section<ff8_kernel_section::battle_commands>();
+	auto data_section = file.section<ff8_kernel_section::command_ability_data>();
+	int commands = (int)command_section.size();
+	int data = (int)data_section.size();
 
 	// A stock kernel.bin leaves here unless an earlier load needs its tables reset.
 	bool removed = false;
-	const uint8_t *command_section = (const uint8_t *)stash + offsets[KERNEL_COMMAND_SECTION];
-	const uint8_t *data_section = (const uint8_t *)stash + offsets[KERNEL_COMMAND_DATA_SECTION];
-	if (command_bytes == VANILLA_COMMAND_COUNT * COMMAND_ENTRY_SIZE && data_bytes == VANILLA_COMMAND_DATA_COUNT * COMMAND_DATA_ENTRY_SIZE)
+	if (commands == VANILLA_COMMAND_COUNT && data == VANILLA_COMMAND_DATA_COUNT)
 	{
-		for (int id = 0; id < commands; ++id) removed |= command_section[id * COMMAND_ENTRY_SIZE + COMMAND_BEHAVES_LIKE_OFF] == REMOVED_COMMAND;
-		for (int id = 0; id < data; ++id) removed |= data_section[id * COMMAND_DATA_ENTRY_SIZE + 2] == REMOVED_COMMAND_DATA;
+		for (int id = 0; id < commands; ++id) removed |= command_section[id].execution_type == REMOVED_COMMAND;
+		for (int id = 0; id < data; ++id) removed |= data_section[id].padding == REMOVED_COMMAND_DATA;
 		if (!removed && !ff8_command_armed) return false;
 	}
 
-	if (command_bytes % COMMAND_ENTRY_SIZE || data_bytes % COMMAND_DATA_ENTRY_SIZE
-		|| commands < VANILLA_COMMAND_COUNT || commands > MAX_COMMAND_COUNT
+	if (commands < VANILLA_COMMAND_COUNT || commands > MAX_COMMAND_COUNT
 		|| data < VANILLA_COMMAND_DATA_COUNT || data > MAX_COMMAND_DATA_COUNT)
 	{
 		if (trace_all) ffnx_trace("AddMoreCommand: kernel.bin has %d battle commands (%d-%d allowed) and %d command ability data entries (%d-%d allowed) - ignoring the extension.\n",
@@ -291,14 +276,14 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 
 	for (int id = 0; id < commands; ++id)
 	{
-		const uint8_t *entry = command_section + COMMAND_ENTRY_SIZE * id;
-		uint8_t data_id = entry[COMMAND_ABILITY_DATA_OFF];
+		const auto &entry = command_section[id];
+		uint8_t data_id = entry.ability_data_id;
 
 		bool fixed_effect = id == 7 || id == 29 || is_data_driven((uint8_t)id) || id >= VANILLA_COMMAND_COUNT;
-		bool missing_data = data_id == NO_COMMAND_DATA || (data_id < data && data_section[data_id * COMMAND_DATA_ENTRY_SIZE + 2] == REMOVED_COMMAND_DATA);
-		disabled[id] = entry[COMMAND_BEHAVES_LIKE_OFF] == REMOVED_COMMAND || (fixed_effect && missing_data);
+		bool missing_data = data_id == NO_COMMAND_DATA || (data_id < data && data_section[data_id].padding == REMOVED_COMMAND_DATA);
+		disabled[id] = entry.execution_type == REMOVED_COMMAND || (fixed_effect && missing_data);
 		removed |= disabled[id];
-		if (entry[COMMAND_BEHAVES_LIKE_OFF] == REMOVED_COMMAND) continue;
+		if (entry.execution_type == REMOVED_COMMAND) continue;
 		if (data_id != NO_COMMAND_DATA && data_id >= data)
 		{
 			if (trace_all) ffnx_trace("AddMoreCommand: battle command %d uses command ability data %d, but there are only %d - ignoring the extension.\n", id, data_id, data);
@@ -313,7 +298,7 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 			return false;
 		}
 
-		uint8_t family = entry[COMMAND_BEHAVES_LIKE_OFF] ? entry[COMMAND_BEHAVES_LIKE_OFF] : COMMAND_MAD_RUSH;
+		uint8_t family = entry.execution_type ? entry.execution_type : COMMAND_MAD_RUSH;
 
 		if (!is_data_driven(family))
 		{
@@ -343,8 +328,8 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 		return true;
 	}
 
-	memcpy_code((uint32_t)(ff8_command_table), (void *)(command_section), commands * COMMAND_ENTRY_SIZE);
-	memcpy_code((uint32_t)(ff8_command_data_table), (void *)(stash + offsets[KERNEL_COMMAND_DATA_SECTION]), data * COMMAND_DATA_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_command_table), (void *)(command_section.data()), commands * COMMAND_ENTRY_SIZE);
+	memcpy_code((uint32_t)(ff8_command_data_table), (void *)(data_section.data()), data * COMMAND_DATA_ENTRY_SIZE);
 	memcpy_code((uint32_t)(ff8_command_behaves_like), (void *)(behaves_like), sizeof(behaves_like));
 	memcpy_code((uint32_t)(ff8_command_disabled), (void *)(disabled), sizeof(disabled));
 	ff8_command_has_disabled = removed;
@@ -356,12 +341,11 @@ bool ff8_kernel_command_read(const char *stash, const uint32_t *offsets, int siz
 	return true;
 }
 
-const uint8_t *ff8_kernel_command_get(int command)
+const ff8_kernel_battle_command *ff8_kernel_command_get(int command)
 {
 	if (command < 0 || command >= ff8_command_count) return nullptr;
-	if (ff8_command_armed) return ff8_command_table[command];
-	const uint8_t *kernel = (const uint8_t *)ff8_externals.unk_1CF3E48;
-	return kernel ? kernel + COMMAND_BLOCK_OFFSET + command * COMMAND_ENTRY_SIZE : nullptr;
+	if (ff8_command_armed) return &ff8_command_table[command];
+	return ff8_externals.kernel ? &ff8_externals.kernel->battle_commands[command] : nullptr;
 }
 
 // ---- battle -------------------------------------------------------------
@@ -386,13 +370,13 @@ int ff8_kernel_command_execute(int attacker_slot, int command, int id, int varia
 
 	// The family's case reads the battle command entry for the data id and the
 	// name, so the new command's entry stands in for the family's own.
-	uint8_t saved[COMMAND_ENTRY_SIZE];
-	memcpy_code((uint32_t)(saved), (void *)(ff8_command_table[family]), COMMAND_ENTRY_SIZE);
-	memcpy_code((uint32_t)(ff8_command_table[family]), (void *)(ff8_command_table[command_id]), COMMAND_ENTRY_SIZE);
+	ff8_kernel_battle_command saved;
+	memcpy_code((uint32_t)(&saved), (void *)(&ff8_command_table[family]), COMMAND_ENTRY_SIZE);
+	memcpy_code((uint32_t)(&ff8_command_table[family]), (void *)(&ff8_command_table[command_id]), COMMAND_ENTRY_SIZE);
 
 	int ret = ((compute_command_action_t)ff8_externals.battle_sub_48D200)(attacker_slot, (command & ~0xFF) | family, id, variant, target_slot, target_mask, linked);
 
-	memcpy_code((uint32_t)(ff8_command_table[family]), (void *)(saved), COMMAND_ENTRY_SIZE);
+	memcpy_code((uint32_t)(&ff8_command_table[family]), (void *)(&saved), COMMAND_ENTRY_SIZE);
 
 	return ret;
 }
