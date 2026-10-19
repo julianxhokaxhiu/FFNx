@@ -489,6 +489,12 @@ void ff8_find_externals()
 
 	ff8_externals.sub_559910 = get_relative_call(ff8_externals.swirl_main_loop, 0x1A);
 
+	ff8_externals.swirl_wipe_init = get_relative_call(ff8_externals.swirl_enter, 0x127);
+	ff8_externals.swirl_wipe_draw = get_relative_call(ff8_externals.sub_559910, 0xC6);
+	const uint32_t swirl_zoom = get_relative_call(ff8_externals.sub_559910, 0x98);
+	ff8_externals.swirl_allocate_quads = get_relative_call(swirl_zoom, 0xA6);
+	ff8_externals.swirl_submit_graphics_object = (void (*)(ff8_graphics_object *, ff8_game_obj *))get_relative_call(ff8_externals.swirl_wipe_draw, 0x1B6);
+
 	ff8_externals.swirl_sub_56D1D0 = get_relative_call(ff8_externals.battle_main_loop, 0x285);
 	ff8_externals.swirl_sub_56D390 = get_relative_call(ff8_externals.swirl_sub_56D1D0, 0x2A);
 	ff8_externals.swirl_texture1 = (ff8_graphics_object **)get_absolute_value(ff8_externals.swirl_sub_56D1D0, 0x1);
@@ -516,15 +522,6 @@ void ff8_find_externals()
 	ff8_externals.read_vram_2_paletted = (void(*)(uint8_t*,int,uint8_t*,int,signed int,int,int,uint16_t*))get_relative_call(ff8_externals.sub_464DB0, 0xEC);
 	ff8_externals.sub_4649A0 = get_relative_call(ff8_externals.ssigpu_callbacks_2[100], 0x33);
 	ff8_externals.read_vram_3_paletted = (void(*)(uint8_t*,uint8_t*,signed int,int,int,uint16_t*))get_relative_call(ff8_externals.sub_4649A0, 0x13F);
-
-	ff8_externals.sub_559E40 = get_relative_call(ff8_externals.swirl_main_loop, 0x28);
-	ff8_externals.sub_559F30 = get_relative_call(ff8_externals.sub_559E40, 0xC1);
-
-	if(NV_VERSION)
-	{
-		ff8_externals.nvidia_hack1 = get_absolute_value(ff8_externals.sub_559F30, 0x3E);
-		ff8_externals.nvidia_hack2 = get_absolute_value(ff8_externals.sub_559F30, 0xAC);
-	}
 
 	ff8_externals.sprite_viewport = (sprite_viewport *)get_absolute_value(ff8_externals.sub_4972A0, 0xB);
 	ff8_externals.menu_viewport = (sprite_viewport*)get_absolute_value(ff8_externals.engine_reset_viewport_sub_4972D0, 0xB);

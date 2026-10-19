@@ -1211,8 +1211,6 @@ struct ff8_externals
 	uint32_t movie_hack1;
 	uint32_t movie_hack2;
 	uint32_t swirl_sub_56D390;
-	uint32_t nvidia_hack1;
-	uint32_t nvidia_hack2;
 	struct sprite_viewport *sprite_viewport; // 0xB86D40
 	struct sprite_viewport *menu_viewport; // 0xB86DA0
 	uint32_t main_loop; // 0x4706B0
@@ -1310,6 +1308,10 @@ struct ff8_externals
 	uint32_t sub_41BC76;
 	uint32_t d3d_load_texture;
 	uint32_t sub_559910;
+	uint32_t swirl_wipe_init;
+	uint32_t swirl_wipe_draw;
+	uint32_t swirl_allocate_quads;
+	void (*swirl_submit_graphics_object)(ff8_graphics_object *, ff8_game_obj *);
 	uint32_t swirl_sub_56D1D0;
 	uint32_t load_credits_image;
 	void (*input_fill_keystate)();
@@ -1319,8 +1321,6 @@ struct ff8_externals
 	uint32_t sub_45D080;
 	uint32_t sub_464BD0;
 	uint32_t sub_4653B0;
-	uint32_t sub_559E40;
-	uint32_t sub_559F30;
 	uint32_t sub_497380;
 	uint32_t sub_4B3410;
 	uint32_t sub_4B3310;
