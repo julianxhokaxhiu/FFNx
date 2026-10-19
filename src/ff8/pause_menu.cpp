@@ -33,7 +33,7 @@ enum { PAUSE_MENU_RETURN, PAUSE_MENU_RESTART, PAUSE_MENU_EXIT, PAUSE_MENU_VIBRAT
 
 constexpr uint32_t WINDOW_COLOR = 0x64808080; // Same as the game pause window
 constexpr int ROW_HEIGHT = 16;
-constexpr int VALUE_SPACING = 12; // Between Vibration and ON or OFF
+constexpr int VALUE_SPACING = 16; // Between Vibration and ON or OFF, with the divider
 
 struct pause_menu_texts
 {
@@ -137,12 +137,16 @@ static void draw_menu(int a1, const int16_t *pause_window)
 		text_width = std::max(text_width, width);
 	}
 
-	// Centered on the pause window, with room for the hand cursor on the left. In battle and on the world map only the
-	// first row is centered, where the game draws PAUSE (in battle, under the help text), and the others go below it
-	int text_height = getmode_cached()->driver_mode == MODE_FIELD ? (row_count - 1) * ROW_HEIGHT + 12 : 12; // 12 high text
+	// Centered on the pause window, with room for the hand cursor on the left. In battle only the first row is centered,
+	// where the game draws PAUSE under the help text, and the others go below it
+	int text_height = getmode_cached()->driver_mode == MODE_BATTLE ? 12 : (row_count - 1) * ROW_HEIGHT + 12; // 12 high text
 	int x = pause_window[0] + (pause_window[2] - text_width) / 2 + 8;
 	int y = pause_window[1] + (pause_window[3] - text_height) / 2;
 	int16_t window[4] = { int16_t(x - 32), int16_t(y - 8), int16_t(text_width + 48), int16_t(row_count * ROW_HEIGHT + 12) };
+	int value_x = x + text_width - value_width;
+	int vibration_y = y + PAUSE_MENU_VIBRATION * ROW_HEIGHT;
+	// The game's divider line runs down the rect's left edge from 8 pixels under its top: here 8 before ON or OFF, from the row to the window bottom
+	int16_t divider[4] = { int16_t(value_x - 8), int16_t(vibration_y - 8), 8, int16_t(window[1] + window[3] - vibration_y + 8) };
 
 	auto draw_icon = (ff8_draw_menu_sprite_texture_infos *(*)(int, ff8_draw_menu_sprite_texture_infos *, int, uint16_t, uint16_t, int))ff8_externals.ff8_draw_icon_or_key1;
 
@@ -151,8 +155,13 @@ static void draw_menu(int a1, const int16_t *pause_window)
 
 	for (int i = 0; i < row_count; ++i) next = ff8_externals.draw_text_sub_4A1020(a1, next, x, y + i * ROW_HEIGHT, rows[i].c_str(), 7); // White
 
-	if (vibration) next = ff8_externals.draw_text_sub_4A1020(a1, next, x + text_width - value_width, y + PAUSE_MENU_VIBRATION * ROW_HEIGHT, (vibration_on() ? on : off).c_str(), 7);
+	if (vibration)
+	{
+		next = ff8_externals.draw_text_sub_4A1020(a1, next, value_x, vibration_y, (vibration_on() ? on : off).c_str(), 7);
+		next = ff8_externals.draw_window_divider_sub_4B6530(a1, next, divider, WINDOW_COLOR, 1); // Vertical, like the game's vibration pause screen
+	}
 
+	next = draw_icon(a1, next, 0x4B, window[0], window[1], WINDOW_COLOR); // PAUSE on the corner, like the game's pause screens with options
 	next = ff8_externals.draw_window_frame_sub_4B6A60(a1, next, window, WINDOW_COLOR);
 	ff8_externals.draw_window_background_sub_4B6A80(a1, next, window, WINDOW_COLOR, 8); // Same style as the game pause window
 }
