@@ -282,6 +282,7 @@ private:
         bool bTexturesBound = false;
 
         bool bHasDrawBeenDone = false;
+        bool bHasColorClearBeenDone = false;
 
         bool bDoAlphaTest = false;
         float alphaRef = 0.0f;

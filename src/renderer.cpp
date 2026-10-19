@@ -1582,7 +1582,16 @@ void Renderer::show()
     // Reset internal state
     resetState();
 
-    if (internalState.bHasDrawBeenDone)
+    const bool presentFrame = internalState.bHasDrawBeenDone
+        || internalState.bHasColorClearBeenDone;
+
+    if (presentFrame && !internalState.bHasDrawBeenDone)
+    {
+        bgfx::setViewFrameBuffer(backendViewId, backendFrameBuffer);
+        bgfx::setViewRect(backendViewId, 0, 0, framebufferWidth, framebufferHeight);
+    }
+
+    if (presentFrame)
     {
         renderFrame();
 
@@ -1605,7 +1614,12 @@ void Renderer::show()
         );
     }
 
-    bgfx::frame(doCaptureFrame ? BGFX_FRAME_DEBUG_CAPTURE : BGFX_FRAME_NONE);
+    uint8_t frameFlags = doCaptureFrame ? BGFX_FRAME_DEBUG_CAPTURE : BGFX_FRAME_NONE;
+    if (!presentFrame) frameFlags |= BGFX_FRAME_FLUSH;
+    bgfx::frame(frameFlags);
+
+    internalState.bHasDrawBeenDone = false;
+    internalState.bHasColorClearBeenDone = false;
 
     if (trace_all || trace_renderer) ffnx_trace("Renderer::%s\n", __func__);
 
@@ -1822,7 +1836,7 @@ void Renderer::setClearFlags(bool doClearColor, bool doClearDepth)
     bgfx::setViewClear(backendViewId, clearFlags, internalState.clearColorValue, 1.0f);
     bgfx::touch(backendViewId);
 
-    internalState.bHasDrawBeenDone = false;
+    internalState.bHasColorClearBeenDone |= doClearColor;
 }
 
 void Renderer::setBackgroundColor(float r, float g, float b, float a)
