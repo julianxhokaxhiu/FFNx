@@ -1670,7 +1670,6 @@ struct ff8_externals
 	ff8_draw_menu_sprite_texture_infos *(*draw_text_sub_4A1020)(int, ff8_draw_menu_sprite_texture_infos *, int, int, const char *, int);
 	ff8_draw_menu_sprite_texture_infos *(*draw_window_frame_sub_4B6A60)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t);
 	ff8_draw_menu_sprite_texture_infos *(*draw_window_background_sub_4B6A80)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t, int);
-	ff8_draw_menu_sprite_texture_infos *(*draw_window_divider_sub_4B6530)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t, int);
 	uint32_t sub_49BB30;
 	uint32_t sub_49FE60;
 	uint32_t get_icon_sp1_data;

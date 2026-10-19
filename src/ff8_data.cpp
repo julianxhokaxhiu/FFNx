@@ -354,7 +354,6 @@ void ff8_find_externals()
 	ff8_externals.draw_text_sub_4A1020 = (ff8_draw_menu_sprite_texture_infos *(*)(int, ff8_draw_menu_sprite_texture_infos *, int, int, const char *, int))get_relative_call(uint32_t(ff8_externals.pause_menu), 0x94);
 	ff8_externals.draw_window_frame_sub_4B6A60 = (ff8_draw_menu_sprite_texture_infos *(*)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t))get_relative_call(uint32_t(ff8_externals.pause_menu), 0x1F6);
 	ff8_externals.draw_window_background_sub_4B6A80 = (ff8_draw_menu_sprite_texture_infos *(*)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t, int))get_relative_call(uint32_t(ff8_externals.pause_menu), 0x214);
-	ff8_externals.draw_window_divider_sub_4B6530 = (ff8_draw_menu_sprite_texture_infos *(*)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t, int))get_relative_call(uint32_t(ff8_externals.pause_menu), 0x1D7);
 	ff8_externals.pause_menu_with_vibration = (int(*)(int))(ff8_externals.init_pause_menu - 0x290);
 	ff8_externals.ff8_draw_icon_or_key1 = get_relative_call(uint32_t(ff8_externals.pause_menu_with_vibration), 0x1CF);
 	ff8_externals.get_icon_sp1_data = get_relative_call(ff8_externals.ff8_draw_icon_or_key1, 0x2);
