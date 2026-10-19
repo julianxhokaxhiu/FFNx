@@ -761,6 +761,27 @@ void swirl_sub_56D390(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 	last_tex_header = tex_header;
 }
 
+static void ff8_swirl_draw_wipe(ff8_graphics_object *graphics_object, ff8_game_obj *game_object)
+{
+	nvertex *vertices = reinterpret_cast<nvertex *>(graphics_object->field_74);
+
+	// The native wipe still writes pairs; expand backwards into its native quad allocation.
+	for (uint32_t row = graphics_object->indexed_vertices->count; row > 0; --row)
+	{
+		const nvertex left = vertices[(row - 1) * 2];
+		const nvertex right = vertices[(row - 1) * 2 + 1];
+		const uint32_t base = (row - 1) * 4;
+		vertices[base] = left;
+		vertices[base + 1] = right;
+		vertices[base + 2] = left;
+		vertices[base + 3] = right;
+		vertices[base + 2]._.y += 1.0f;
+		vertices[base + 3]._.y += 1.0f;
+	}
+
+	ff8_externals.swirl_submit_graphics_object(graphics_object, game_object);
+}
+
 void ff8_set_render_to_vram_current_screen_flag_before_battle()
 {
 	if(trace_all) ffnx_trace("%s\n", __func__);
@@ -2079,6 +2100,9 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	replace_function(ff8_externals.get_key_state, ff8_get_key_state);
 
 	replace_function(ff8_externals.swirl_sub_56D390, swirl_sub_56D390);
+	patch_code_byte(ff8_externals.swirl_wipe_init + 0x42, 0xA); // Native smooth 2D quads instead of smooth lines.
+	replace_call(ff8_externals.swirl_wipe_draw + 0x14, reinterpret_cast<void *>(ff8_externals.swirl_allocate_quads));
+	replace_call(ff8_externals.swirl_wipe_draw + 0x1B6, ff8_swirl_draw_wipe);
 	replace_call(ff8_externals.worldmap_with_fog_sub_53FAC0 + (FF8_US_VERSION ? 0xB3C: (JP_VERSION ? 0xB24 : 0xB2F)), ff8_wm_set_render_to_vram_current_screen_flag_before_battle);
 	replace_function(ff8_externals.set_render_to_vram_current_screen_flag_before_battle, ff8_set_render_to_vram_current_screen_flag_before_battle);
 	replace_call(ff8_externals.swirl_enter + 0x9, ff8_swirl_init);
@@ -2195,11 +2219,6 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	// don't set system speaker config to stereo
 	memset_code(common_externals.directsound_create + 0x6D, 0x90, 34);
-
-	if (ff8_externals.nvidia_hack1)
-		patch_code_double(ff8_externals.nvidia_hack1, 0.0);
-	if (ff8_externals.nvidia_hack2)
-		patch_code_float(ff8_externals.nvidia_hack2, 0.0f);
 
 	memcpy_code(ff8_externals.sub_4653B0 + 0xA5, texture_reload_fix1, sizeof(texture_reload_fix1));
 	replace_function(ff8_externals.sub_4653B0 + 0xA5 + sizeof(texture_reload_fix1), texture_reload_hack1);
