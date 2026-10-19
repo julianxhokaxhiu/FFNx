@@ -211,9 +211,91 @@ static void ff8_extend_battle_actor_sounds()
 	ff8_externals.battle_actor_sounds = extended_actor_sounds;
 }
 
+// Scan frames each target with a 16-byte camera row per com_id, but its table
+// stops at 166 rows (com_id 0-159, then 6 rows for alternate monster forms):
+// give the new monsters rows of their own after those, G-Soldier's by default.
+#define FF8_BATTLE_SLOT_DATA_SIZE 0xD0
+
+struct ff8_scan_camera_row
+{
+	int16_t distance;
+	int16_t offset_x;
+	int16_t offset_y;
+	int16_t model_offset_y;
+	int16_t aim_at_model;
+	int16_t view_offset_y;
+	uint8_t can_pitch;
+	uint8_t can_yaw;
+	uint8_t short_scan_orbit;
+	uint8_t padding;
+};
+static_assert(sizeof(ff8_scan_camera_row) == FF8_SCAN_CAMERA_ROW_SIZE, "Scan camera rows are 16 bytes");
+
+static const ff8_scan_camera_row ff8_scan_camera_default_row = { -0x1200, 0x200, -0x280, 0x280, 1, 0, 1, 1, 1, 0 };
+
+static uint32_t ff8_scan_original_camera_row[2];
+static ff8_scan_camera_row ff8_scan_camera_rows[2][FF8_SCAN_CAMERA_ROWS];
+static bool ff8_scan_camera_extended[2] = {};
+
+static int ff8_scan_camera_row_index(int lookup, int slot)
+{
+	uint8_t com_id = ((uint8_t *)ff8_externals.battle_entities_1D27BCB)[(int16_t)slot * FF8_BATTLE_SLOT_DATA_SIZE];
+
+	if (com_id >= FF8_FIRST_NEW_COM_ID)
+		return FF8_SCAN_CAMERA_VANILLA_ROWS + (com_id - FF8_FIRST_NEW_COM_ID);
+
+	return ((int (*)(int))ff8_scan_original_camera_row[lookup])(slot);
+}
+
+static int ff8_scan_camera_row_index_39(int slot)
+{
+	return ff8_scan_camera_row_index(0, slot);
+}
+
+static int ff8_scan_camera_row_index_67(int slot)
+{
+	return ff8_scan_camera_row_index(1, slot);
+}
+
+static void ff8_extend_scan_camera_rows(int lookup, uint32_t get_camera_row, int (*row_index)(int), ff8_scan_camera_row *rows)
+{
+	if (get_camera_row == 0 || ff8_externals.battle_entities_1D27BCB == 0)
+		return;
+
+	ff8_scan_original_camera_row[lookup] = get_relative_call(get_camera_row, 0xA);
+
+	memcpy(rows, (void *)get_absolute_value(get_camera_row, 0x23), FF8_SCAN_CAMERA_VANILLA_ROWS * sizeof(rows[0]));
+	for (int row = FF8_SCAN_CAMERA_VANILLA_ROWS; row < FF8_SCAN_CAMERA_ROWS; ++row)
+		rows[row] = ff8_scan_camera_default_row;
+
+	replace_call(get_camera_row + 0xA, (void *)row_index);
+	patch_code_dword(get_camera_row + 0x23, (uint32_t)rows);
+	ff8_scan_camera_extended[lookup] = true;
+}
+
+static void ff8_extend_scan_camera()
+{
+	ff8_extend_scan_camera_rows(0, ff8_externals.scan_get_camera_row, ff8_scan_camera_row_index_39, ff8_scan_camera_rows[0]);
+	ff8_extend_scan_camera_rows(1, ff8_externals.scan2_get_camera_row, ff8_scan_camera_row_index_67, ff8_scan_camera_rows[1]);
+}
+
+const uint8_t *ff8_get_scan_camera_rows()
+{
+	return ff8_scan_camera_extended[0] ? (const uint8_t *)ff8_scan_camera_rows[0] : nullptr;
+}
+
+void ff8_set_scan_camera_rows(const uint8_t *rows)
+{
+	// Both Scan effects carry the same table, so one file feeds both.
+	for (int lookup = 0; lookup < 2; ++lookup)
+		if (ff8_scan_camera_extended[lookup])
+			memcpy(ff8_scan_camera_rows[lookup], rows, sizeof(ff8_scan_camera_rows[lookup]));
+}
+
 void ff8_battle_monsters_init()
 {
 	ff8_extend_battle_actor_sounds();
+	ff8_extend_scan_camera();
 
 	if (!ff8_externals.battle_monster_file_load_call_site || !ff8_externals.battle_load_file_sub_508480)
 	{

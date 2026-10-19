@@ -1056,6 +1056,17 @@ void ff8_find_externals()
 	ff8_externals.battle_entities_1D27BCB = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x18);
 	ff8_externals.scan_text_positions = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x20);
 	ff8_externals.scan_text_data = get_absolute_value(ff8_externals.scan_get_text_sub_B687C0, 0x27);
+	uint32_t scan_viewer_setup = get_relative_call(ff8_externals.sub_84F8D0, 0xF7);
+	ff8_externals.scan_get_camera_row = get_relative_call(scan_viewer_setup, 0x51);
+	uint32_t scan2_root = get_absolute_value(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::Scan2], 0x28);
+	uint32_t scan2_root_spawn_emitter = get_absolute_value(scan2_root, 0x14);
+	uint32_t scan2_emitter = get_absolute_value(scan2_root_spawn_emitter, 0x9);
+	uint32_t scan2_emitter_spawn_scanner = get_absolute_value(scan2_emitter, 0xC);
+	uint32_t scan2_scanner = get_absolute_value(scan2_emitter_spawn_scanner, 0x22);
+	uint32_t scan2_scanner_spawn_camera = get_absolute_value(scan2_scanner, 0xD);
+	uint32_t scan2_camera = get_absolute_value(scan2_scanner_spawn_camera, 0xE);
+	uint32_t scan2_camera_setup = get_absolute_value(scan2_camera, 0xD);
+	ff8_externals.scan2_get_camera_row = get_relative_call(scan2_camera_setup, 0xC);
 	ff8_externals.get_card_name = get_relative_call(ff8_externals.sub_4EFCD0, 0x89);
 	ff8_externals.card_name_positions = get_absolute_value(ff8_externals.get_card_name, 0xB);
 

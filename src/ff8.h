@@ -1807,6 +1807,8 @@ struct ff8_externals
 	uint32_t battle_load_file_sub_508480; // generic "load battle file by index" wrapper, the monster loader's file-load call target (see monsters.cpp)
 	uint32_t battle_enemy_scanned_read_operand;  // disp32 of the ATTACK_TYPE_SCAN "already scanned?" test (see monsters.cpp)
 	uint32_t battle_enemy_scanned_write_operand; // disp32 of the "mark this com_id scanned" or (see monsters.cpp)
+	uint32_t scan_get_camera_row;
+	uint32_t scan2_get_camera_row;
 	uint32_t sub_50A9A0;
 	uint32_t battle_read_effect_sub_50AF20;
 	DWORD* func_off_battle_effects_C81774;
