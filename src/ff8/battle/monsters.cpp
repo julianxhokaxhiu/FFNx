@@ -264,7 +264,7 @@ static void ff8_extend_scan_camera_rows(int lookup, uint32_t get_camera_row, int
 
 	ff8_scan_original_camera_row[lookup] = get_relative_call(get_camera_row, 0xA);
 
-	memcpy(rows, (void *)get_absolute_value(get_camera_row, 0x23), FF8_SCAN_CAMERA_VANILLA_ROWS * sizeof(rows[0]));
+	memcpy_code((uint32_t)rows, (void *)get_absolute_value(get_camera_row, 0x23), FF8_SCAN_CAMERA_VANILLA_ROWS * sizeof(rows[0]));
 	for (int row = FF8_SCAN_CAMERA_VANILLA_ROWS; row < FF8_SCAN_CAMERA_ROWS; ++row)
 		rows[row] = ff8_scan_camera_default_row;
 
@@ -289,7 +289,7 @@ void ff8_set_scan_camera_rows(const uint8_t *rows)
 	// Both Scan effects carry the same table, so one file feeds both.
 	for (int lookup = 0; lookup < 2; ++lookup)
 		if (ff8_scan_camera_extended[lookup])
-			memcpy(ff8_scan_camera_rows[lookup], rows, sizeof(ff8_scan_camera_rows[lookup]));
+			memcpy_code((uint32_t)ff8_scan_camera_rows[lookup], (void *)rows, sizeof(ff8_scan_camera_rows[lookup]));
 }
 
 void ff8_battle_monsters_init()
