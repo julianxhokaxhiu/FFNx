@@ -1021,7 +1021,6 @@ void ff8_find_externals()
 	ff8_externals.get_battle_effect_buffer_sub_571B50 = get_relative_call(ff8_externals.battle_read_effect_sub_50AF20, 0x75);
 	ff8_externals.get_battle_effect_buffer_size_sub_571B60 = ff8_externals.get_battle_effect_buffer_sub_571B50 + 0x10;
 	ff8_externals.init_battle_effect_buffer_sub_571B80 = ff8_externals.get_battle_effect_buffer_size_sub_571B60 + 0x20;
-	ff8_externals.battle_magic_effect_callback = (uint32_t *)get_absolute_value(ff8_externals.sub_50A9A0, 0xEB);
 	ff8_externals.battle_magic_effect_start_call = ff8_externals.sub_50A9A0 + 0x27F;
 	ff8_externals.battle_play_camera_animation_sub_5099A0 = get_relative_call(ff8_externals.func_off_battle_effects_C81774[FF8BattleEffect::Cure], 0xA3);
 	ff8_externals.battle_set_camera_track_sub_509970 = get_relative_call(ff8_externals.battle_play_camera_animation_sub_5099A0, 0x5);

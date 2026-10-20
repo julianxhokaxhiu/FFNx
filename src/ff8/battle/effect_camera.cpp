@@ -14,37 +14,9 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-// -------------------------------------------------------------------------
-// Battle effect cameras from external files, one file per effect:
-//
-//     <direct_mode_path>/exe/effect_NNN.cam
-//     (or <direct_mode_path>/<lang>/exe/effect_NNN.cam, like the other exe data)
-//
-// NNN is the effect id of the action (kernel.bin magic "effect id", the one
-// passed to the effect loader; 1 = Cure). The file is a camera track exactly
-// as the exe stores it (see docs/ff8/mods/effect_camera.md).
-//
-// A magic cast loads its effect init with battle_read_effect_sub_50AF20, then
-// calls it once through a function pointer when the effect starts:
-//
-//     C3_28_GF_data_pointer = MAGIC_EFFECT_LOGIC_CALLBACK(&g_MagicCastContext);
-//
-// Most effect inits start their camera from there with a static track:
-//
-//     if (!(cast_context->flags & 1)) Battle_PlayCameraAnimation(&MAGnnn_cameraAnim);
-//
-// We hook the loader call and hand the game our wrapper instead of the init.
-// While the wrapper runs the init, a hook on Battle_PlayCameraAnimation swaps
-// in the file track (override). If the init started no camera at all, the
-// wrapper starts the file track itself right after it (add). The tick then
-// waits for the camera like for a built-in one, and restores the view at the
-// end of the effect.
-//
-// Without a file nothing changes: many effects with no camera track move the
-// camera with their own code, so a camera is never forced on them. Tracks
-// started outside the effect start (GF cinematics, victory, battle intro)
-// are never touched.
-// -------------------------------------------------------------------------
+// Battle effect cameras from <direct_mode_path>/exe/effect_NNN.cam, see docs/ff8/mods/effect_camera.md.
+// While a magic cast starts its effect, the file track replaces the camera the effect plays,
+// or is played after it when the effect plays none.
 
 #include "effect_camera.h"
 
@@ -58,88 +30,50 @@
 #include <intrin.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <unordered_map>
 #include <vector>
 
 #pragma intrinsic(_ReturnAddress)
 
-#define FF8_CAMERA_TRACK_POINTER_COUNT 2  // every exe track: script + keyframe collection
-#define FF8_CAMERA_TRACK_SCRIPT_OFFSET 8  // the script follows the header
-#define FF8_CAMERA_TRACK_MAX_SIZE      0xFFFF // the header size field is a u16
-#define FF8_MAGIC_CAST_NO_CAMERA       0x01 // MagicCastContext.flags: the effect must not move the camera
-#define FF8_CALL_INDIRECT_SIZE         6    // call dword ptr [disp32]
+#define FF8_CAMERA_TRACK_MAX_SIZE 0xFFFF
+#define FF8_MAGIC_CAST_NO_CAMERA 0x01
+#define FF8_CALL_INDIRECT_SIZE 6
 
-struct ff8_camera_track_header
-{
-	uint16_t pointer_count;
-	uint16_t script_offset;
-	uint16_t keyframes_offset;
-	uint16_t size;
-};
+typedef int (*ff8_magic_effect_init)(ff8_battle_magic_cast_context *cast_context);
 
-static_assert(sizeof(ff8_camera_track_header) == 8, "camera track header is 8 bytes");
-
-struct ff8_magic_cast_context
-{
-	uint8_t attacker_slot;
-	uint8_t flags;
-	uint16_t target_slot_mask;
-	void *action_data;
-	uint8_t sequence_mode;
-	uint8_t done_flag;
-	uint8_t sequence_submode;
-	uint8_t unknown_11;
-};
-
-typedef int (*ff8_magic_effect_init)(ff8_magic_cast_context *cast_context);
-typedef void *(*ff8_battle_read_effect)(int effect_id, ff8_magic_effect_init *init);
-typedef void *(*ff8_battle_camera_track)(uint8_t *track);
-
-// Effect id -> file track, read the first time the effect plays. An empty
-// track means no usable file. Kept for the whole game: the engine reads the
-// track in place for as long as the camera plays.
+// Effect id -> file track, empty when there is no valid file. Kept for the whole game, the engine reads the track in place.
 static std::unordered_map<int, std::vector<uint8_t>> effect_camera_tracks;
 
 static ff8_magic_effect_init effect_camera_original_init = nullptr;
 static int effect_camera_effect_id = 0;
-static uint8_t *effect_camera_track = nullptr; // file track of the effect starting now
+static uint8_t *effect_camera_track = nullptr;
 static bool effect_camera_inside_start = false;
 static bool effect_camera_started = false;
 
 static bool ff8_effect_camera_is_valid(const std::vector<uint8_t> &track, const char *filename)
 {
 	const char *error = nullptr;
-	const ff8_camera_track_header *header = (const ff8_camera_track_header *)track.data();
+	const ff8_battle_camera_track_header *header = (const ff8_battle_camera_track_header *)track.data();
 
-	if (track.size() < sizeof(ff8_camera_track_header))
-		error = "file too small";
-	else if (header->pointer_count != FF8_CAMERA_TRACK_POINTER_COUNT || header->script_offset != FF8_CAMERA_TRACK_SCRIPT_OFFSET)
-		error = "bad header";
-	else if (header->size != track.size())
-		error = "header size does not match the file size";
-	else if (header->keyframes_offset <= header->script_offset || header->keyframes_offset + 2 > header->size)
-		error = "keyframe offset out of range";
+	if (track.size() < sizeof(ff8_battle_camera_track_header)) error = "file too small";
+	else if (header->pointer_count != 2 || header->script_offset != sizeof(ff8_battle_camera_track_header)) error = "bad header";
+	else if (header->size != track.size()) error = "header size does not match the file size";
+	else if (header->keyframes_offset <= header->script_offset || header->keyframes_offset + 2 > header->size) error = "keyframe offset out of range";
 	else
 	{
-		// Keyframe collection: u16 set count, u16 set offsets[count], u16 collection size,
-		// all relative to the collection start.
-		const uint8_t *collection = track.data() + header->keyframes_offset;
+		// Keyframe collection: u16 count, u16 offsets[count], u16 collection size
+		const uint16_t *collection = (const uint16_t *)(track.data() + header->keyframes_offset);
 		uint32_t collection_size = header->size - header->keyframes_offset;
-		uint32_t set_count = *(const uint16_t *)collection;
-		uint32_t table_size = 2 + 2 * set_count + 2;
+		uint32_t count = collection[0];
+		uint32_t table_size = 2 * (count + 2);
 
-		if (set_count == 0 || table_size > collection_size)
-			error = "bad keyframe set count";
-		else if (*(const uint16_t *)(collection + table_size - 2) != collection_size)
-			error = "keyframe collection size does not match the file size";
+		if (count == 0 || table_size > collection_size) error = "bad keyframe set count";
+		else if (collection[count + 1] != collection_size) error = "keyframe collection size does not match the file size";
 		else
 		{
-			for (uint32_t i = 0; i < set_count; ++i)
+			for (uint32_t i = 1; i <= count; ++i)
 			{
-				uint16_t set_offset = *(const uint16_t *)(collection + 2 + 2 * i);
-
-				if (set_offset < table_size || set_offset >= collection_size)
+				if (collection[i] < table_size || collection[i] >= collection_size)
 				{
 					error = "keyframe set offset out of range";
 					break;
@@ -197,7 +131,6 @@ static uint8_t *ff8_effect_camera_get_track(int effect_id)
 	return track.data();
 }
 
-// Replaces Battle_PlayCameraAnimation
 static void *ff8_effect_camera_play(uint8_t *track)
 {
 	if (effect_camera_inside_start)
@@ -212,16 +145,14 @@ static void *ff8_effect_camera_play(uint8_t *track)
 		}
 	}
 
-	return ((ff8_battle_camera_track)ff8_externals.battle_set_camera_track_sub_509970)(track);
+	return ((void *(*)(uint8_t *))ff8_externals.battle_set_camera_track_sub_509970)(track);
 }
 
-// Stands in for the effect init the game called MAGIC_EFFECT_LOGIC_CALLBACK
-static int ff8_effect_camera_effect_start(ff8_magic_cast_context *cast_context)
+static int ff8_effect_camera_effect_start(ff8_battle_magic_cast_context *cast_context)
 {
 	ff8_magic_effect_init init = effect_camera_original_init;
 
-	// Only the effect start of a magic cast: the Duel and Shot ticks call the
-	// same pointer again for the later stages of their effect.
+	// Duel and Shot call the same effect again later from elsewhere: leave those calls alone
 	if (uint32_t(_ReturnAddress()) != ff8_externals.battle_magic_effect_start_call + FF8_CALL_INDIRECT_SIZE) return init(cast_context);
 
 	effect_camera_track = ff8_effect_camera_get_track(effect_camera_effect_id);
@@ -236,7 +167,7 @@ static int ff8_effect_camera_effect_start(ff8_magic_cast_context *cast_context)
 	{
 		if (trace_all || trace_battle_animation) ffnx_trace("%s: effect %d camera added from its file\n", __func__, effect_camera_effect_id);
 
-		((ff8_battle_camera_track)ff8_externals.battle_play_camera_animation_sub_5099A0)(effect_camera_track);
+		((void *(*)(uint8_t *))ff8_externals.battle_play_camera_animation_sub_5099A0)(effect_camera_track);
 	}
 
 	effect_camera_track = nullptr;
@@ -244,10 +175,10 @@ static int ff8_effect_camera_effect_start(ff8_magic_cast_context *cast_context)
 	return ret;
 }
 
-// Replaces the battle_read_effect_sub_50AF20 call of the magic cast tick
+// The game calls the loaded effect through a pointer, so we hand it our wrapper instead
 static void *ff8_effect_camera_read_effect(int effect_id, ff8_magic_effect_init *init)
 {
-	void *ret = ((ff8_battle_read_effect)ff8_externals.battle_read_effect_sub_50AF20)(effect_id, init);
+	void *ret = ((void *(*)(int, ff8_magic_effect_init *))ff8_externals.battle_read_effect_sub_50AF20)(effect_id, init);
 
 	if (*init != nullptr)
 	{
@@ -261,17 +192,6 @@ static void *ff8_effect_camera_read_effect(int effect_id, ff8_magic_effect_init 
 
 void ff8_battle_effect_camera_init()
 {
-	// mov eax, [esp+4] ; push eax ; call battle_set_camera_track_sub_509970
-	static const uint8_t play_camera_code[] = { 0x8B, 0x44, 0x24, 0x04, 0x50, 0xE8 };
-	const uint8_t *start_call = (const uint8_t *)ff8_externals.battle_magic_effect_start_call;
-
-	if (memcmp((const void *)ff8_externals.battle_play_camera_animation_sub_5099A0, play_camera_code, sizeof(play_camera_code)) != 0
-		|| start_call[0] != 0xFF || start_call[1] != 0x15 || *(uint32_t *)(start_call + 2) != uint32_t(ff8_externals.battle_magic_effect_callback))
-	{
-		ffnx_warning("Battle effect camera: unexpected battle code layout, external effect cameras disabled\n");
-		return;
-	}
-
 	replace_call(ff8_externals.sub_50A9A0 + 0xF4, ff8_effect_camera_read_effect);
 	replace_function(ff8_externals.battle_play_camera_animation_sub_5099A0, ff8_effect_camera_play);
 }
