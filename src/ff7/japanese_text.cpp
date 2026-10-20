@@ -3023,6 +3023,17 @@ static const uint8_t jp_name_menu_table[7][8] = {
   {0x24,0x44,0xAC,0x8A,0x66,0xFF,0x00,0x00}, // デフォルト (default)
 };
 
+// Original Japanese driver positions, shared by the labels and cursor.
+static const int32_t jp_name_menu_y[7] = {210, 238, 266, 322, 350, 406, 434};
+static int jp_name_current_mode = 0;
+
+static int jp_name_draw_menu(int16_t x, int16_t y, byte* buffer, byte n_shapes, float z_value)
+{
+  if (buffer == jp_name_menu_table[jp_name_current_mode])
+    n_shapes = 6;
+  return common_submit_draw_text_from_buffer_jp(x, y, buffer, n_shapes, z_value);
+}
+
 static void jp_name_apply_mode(int mode)
 {
   const uint8_t* src;
@@ -3030,6 +3041,7 @@ static void jp_name_apply_mode(int mode)
   else if (mode == 2) src = jp_name_grid_eisuu;
   else                src = jp_name_grid_hiragana;
   memcpy(jp_name_current_grid, src, 90);
+  jp_name_current_mode = mode;
 }
 
 // Decision (OK) button bit for the engine's menu-input check
@@ -3134,11 +3146,16 @@ void name_input_jp_install()
   patch_code_dword(ff7_externals.menu_sub_718DBE + 0xAE7, (DWORD)(uintptr_t)&jp_name_current_grid[0]);
   patch_code_dword(ff7_externals.menu_sub_718B9A + 0x5C, (DWORD)(uintptr_t)&jp_name_current_grid[0]);
 
-  // the right menu now has 7 items; move the column up so all 7 fit on screen.
-  //   menu text draw  : y = 0x14A + i*0x22 -> base 0xD2 (imm32 @menu_sub_718DBE+0x486)
-  //   menu cursor hand: y = 0x14C + i*0x22 -> base 0xD4 (imm32 @menu_sub_718DBE+0x20E)
-  patch_code_dword(ff7_externals.menu_sub_718DBE + 0x486, 0xD2);
-  patch_code_dword(ff7_externals.menu_sub_718DBE + 0x20E, 0xD4);
+  // Replace both `imul edx, 0x22; add edx, base` sequences with
+  // `mov edx, [edx*4 + jp_name_menu_y]; nop; nop`, as in the JP driver.
+  byte menu_y_patch[] = {0x8B, 0x14, 0x95, 0, 0, 0, 0, 0x90, 0x90};
+  for (uint32_t offset : {0x209, 0x481})
+  {
+    uint32_t address = ff7_externals.menu_sub_718DBE + offset;
+    memcpy_code(address, menu_y_patch, sizeof(menu_y_patch));
+    patch_code_dword(address + 3, (DWORD)(uintptr_t)jp_name_menu_y);
+  }
+  replace_call_function(ff7_externals.menu_sub_718DBE + 0x490, jp_name_draw_menu);
 
   // initialise the displayed grid to the full 9-row hiragana table
   jp_name_apply_mode(0);
