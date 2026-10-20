@@ -1811,6 +1811,10 @@ struct ff8_externals
 	uint32_t battle_read_effect_sub_50AF20;
 	DWORD* func_off_battle_effects_C81774;
 	int* battle_magic_id;
+	uint32_t *battle_magic_effect_callback; // MAGIC_EFFECT_LOGIC_CALLBACK, the effect init loaded by battle_read_effect_sub_50AF20
+	uint32_t battle_magic_effect_start_call; // call [battle_magic_effect_callback] in sub_50A9A0 (see battle/effect_camera.cpp)
+	uint32_t battle_play_camera_animation_sub_5099A0; // starts a battle camera track
+	uint32_t battle_set_camera_track_sub_509970; // the camera track setter battle_play_camera_animation_sub_5099A0 forwards to
 	uint32_t sub_571870;
 	DWORD* func_off_battle_effect_textures_50AF93;
 	uint32_t get_battle_effect_buffer_sub_571B50;

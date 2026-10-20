@@ -39,6 +39,7 @@
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
 #include "ff8/battle/ai.h"
+#include "ff8/battle/effect_camera.h"
 #include "ff8/field/movie.h"
 #include "ff8/kernel_magic.h"
 #include "ff8/battle/monsters.h"
@@ -2767,6 +2768,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Monster-AI target values 228-248 -> fixed battle-slot pairs
 	// #####################
 	ff8_battle_ai_init();
+
+	// #####################
+	// Battle effect cameras from <direct_mode_path>/battle/effect_camera/
+	// #####################
+	ff8_battle_effect_camera_init();
 
 	// #####################
 	// Field scripts and models in sync with movies above 15 FPS
