@@ -1252,6 +1252,7 @@ struct ff8_externals
 	uint32_t sub_471F70;
 	uint32_t field_fade_transition_sub_472990;
 	uint32_t update_game_time_sub_4701B0;
+	int (*is_paused_sub_49F510)();
 	uint32_t sub_45CDD0;
 	uint32_t sub_4767B0;
 	uint32_t (*ctrl_keyboard_actions)();
@@ -1342,6 +1343,7 @@ struct ff8_externals
 	ff8_menu_config_input *menu_config_input_desc;
 	ff8_menu_config_input_keymap *menu_config_input_desc_keymap;
 	uint32_t menu_config_render_list_sub_4EEB70;
+	int (*get_text_width_sub_4A0F80)(const char *);
 	uint16_t *menu_config_input_count;
 	void (*menu_play_sound_sub_4B92A0)(int);
 	uint32_t menu_junkshop_sub_4EA890;
@@ -1652,6 +1654,8 @@ struct ff8_externals
 	BYTE* field_dialog_current_choice;
 	uint32_t sub_470440;
 	uint32_t sub_49ACD0;
+	uint32_t sub_4974B0;
+	uint32_t convert_ascii_to_ff8enc_sub_4A2F20;
 	uint32_t sub_4A0880;
 	uint32_t sub_4A09A0;
 	uint32_t sub_49FC10;
@@ -1668,6 +1672,10 @@ struct ff8_externals
 	uint8_t *battle_boost_cross_icon_display_1D76604;
 	int(*pause_menu)(int);
 	uint32_t init_pause_menu;
+	int16_t *pause_menu_window_rect;
+	ff8_draw_menu_sprite_texture_infos *(*draw_text_sub_4A1020)(int, ff8_draw_menu_sprite_texture_infos *, int, int, const char *, int);
+	ff8_draw_menu_sprite_texture_infos *(*draw_window_frame_sub_4B6A60)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t);
+	ff8_draw_menu_sprite_texture_infos *(*draw_window_background_sub_4B6A80)(int, ff8_draw_menu_sprite_texture_infos *, const int16_t *, uint32_t, int);
 	uint32_t sub_49BB30;
 	uint32_t sub_49FE60;
 	uint32_t get_icon_sp1_data;
@@ -1824,6 +1832,7 @@ struct ff8_externals
 	uint32_t *pause_menu_option_state;
 	void *battle_menu_state;
 	uint32_t battle_pause_window_sub_4CD350;
+	int16_t *battle_pause_window_rect;
 	uint32_t sub_4A7210;
 	uint32_t sub_B586F0;
 	uint32_t sub_B64B80;

@@ -44,6 +44,7 @@
 #include "ff8/battle/monsters.h"
 #include "ff8/remaster.h"
 #include "ff8/menu/volume.h"
+#include "ff8/esc_menu.h"
 #include "metadata.h"
 #include "achievement.h"
 #include "widescreen.h"
@@ -1282,6 +1283,10 @@ int ff8_get_key_state(WPARAM dinput_scan_code)
 {
 	int virt_key = 0;
 
+	// Esc menu Restart: for a moment only Ctrl+R reads as held (right Ctrl is enough), so the field, world map or battle
+	// runs its own reset, and Q held meanwhile (L1 by default) does not make FFNx's Ctrl+Q quit
+	if (ff8_esc_menu_restarting()) return dinput_scan_code == DIK_RCONTROL || dinput_scan_code == DIK_R;
+
 	if (!*ff8_externals.keyboard_state || dinput_scan_code > 0xFF) {
 		return 0; // What are you doing, William?
 	}
@@ -1337,6 +1342,8 @@ int ff8_is_window_active()
 		{
 			is_q_pressed = 0;
 		}
+
+		ff8_esc_menu_update(ff8_get_key_state(DIK_ESCAPE));
 	}
 
 	return 0;
@@ -2740,6 +2747,11 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	// Config menu: Sound volumes
 	// #####################
 	ff8_menu_volume_init();
+
+	// #####################
+	// Esc menu
+	// #####################
+	ff8_esc_menu_init();
 
 	// #####################
 	// AddMoreMagic: extended kernel.bin magic section (ids 57-63 and 96-255; 64-95 reserved for GFs)
