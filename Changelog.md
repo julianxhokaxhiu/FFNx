@@ -16,6 +16,7 @@
 - Core: Add native support for japanese text rendering ( https://github.com/julianxhokaxhiu/FFNx/pull/737 + https://github.com/julianxhokaxhiu/FFNx/pull/925 + https://github.com/julianxhokaxhiu/FFNx/pull/952 + https://github.com/julianxhokaxhiu/FFNx/pull/953 + https://github.com/julianxhokaxhiu/FFNx/pull/951) 
 - Core: Add `ff7_multibyte_font` mode: multibyte text support for non-Japanese translations on the English executable ( https://github.com/julianxhokaxhiu/FFNx/pull/948 )
 - Core: Add support for [Universal Button Prompts](docs/ff7/universal_buttons.md)
+- Core: Fix Universal Button Prompts in the Controller Config menu showing the binding of the row above when a mod changes the row spacing ( https://github.com/julianxhokaxhiu/FFNx/pull/1049 )
 - Core: Add support for Field text window autoresize for all languages
 - Core: Add 2026 multilanguage support for DE, FR and SP editions
 - Core: Fix battle swirl battle effect to correctly match the software renderer
