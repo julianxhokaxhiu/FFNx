@@ -722,12 +722,28 @@ int universal_buttons_draw_menu_jp_control(int control, int x, int y, float z)
   return universal_buttons_draw_menu_prompt(button_for_jp_control(control), x, y, z);
 }
 
-int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color, float z)
+// The config menu places binding row N at y = N * spacing + first_row_y, compiled as `imul reg, row, imm8` followed
+// by `add reg, imm8`. Mods patch those immediates (ESUI tightens the spacing from 24 to 22), so the row is worked out
+// from the code as it is at draw time; assuming the vanilla layout made every row show the binding of the row above.
+static int config_binding_row(uint32_t row_layout, int y)
+{
+  const byte* code = (const byte*)row_layout;
+  int row_height = 24;
+  int first_row_y = 124;
+  if (code[0] == 0x6B && code[3] == 0x83)
+  {
+    row_height = (int8_t)code[2];
+    first_row_y = (int8_t)code[5];
+  }
+  if (row_height <= 0 || y < first_row_y)
+    return -1;
+  return (y - first_row_y) / row_height;
+}
+
+static int draw_config_binding(uint32_t row_layout, int x, int y, byte* buffer, byte color, float z)
 {
   static constexpr byte binding_indices[] = { 6, 7, 5, 8, 3, 4, 1, 2, 9, 12, 13, 15, 16, 14 };
-  static constexpr int row_height = 24;
-  static constexpr int first_row_y = 124;
-  const int row = (y - first_row_y) / row_height;
+  const int row = config_binding_row(row_layout, y);
   static constexpr int controller_column_x = 300;
   const int column = x >= controller_column_x ? 1 : 0;
   auto draw_text = [=]() {
@@ -755,6 +771,16 @@ int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color
   if (!submit_prompt_quad(sprite, (float)x, (float)y - size / 4.0f, z, size))
     return draw_text();
   return x + size;
+}
+
+int universal_buttons_draw_config_binding(int x, int y, byte* buffer, byte color, float z)
+{
+  return draw_config_binding(ff7_externals.menu_sub_6CDE72 + 0x1E4, x, y, buffer, color, z);
+}
+
+int universal_buttons_draw_config_binding_alt(int x, int y, byte* buffer, byte color, float z)
+{
+  return draw_config_binding(ff7_externals.menu_sub_6CDE72 + 0x481, x, y, buffer, color, z);
 }
 
 bool universal_buttons_parse_field_prompt(const byte* buffer, int* button, int* byte_count)

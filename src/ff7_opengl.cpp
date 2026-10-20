@@ -531,7 +531,7 @@ void ff7_init_hooks(struct game_obj *_game_object)
 		replace_call_function(ff7_externals.menu_sub_6CDE72 + 0x202,
 			universal_buttons_draw_config_binding);
 		replace_call_function(ff7_externals.menu_sub_6CDE72 + 0x4A1,
-			universal_buttons_draw_config_binding);
+			universal_buttons_draw_config_binding_alt);
 	}
 	if (!ff7_japanese_edition && !ff7_multibyte_font)
 	{
