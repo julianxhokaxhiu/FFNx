@@ -17,7 +17,8 @@
 // -------------------------------------------------------------------------
 // Battle effect cameras from external files, one file per effect:
 //
-//     <direct_mode_path>/battle/effect_camera/effect_NNN.cam
+//     <direct_mode_path>/exe/effect_NNN.cam
+//     (or <direct_mode_path>/<lang>/exe/effect_NNN.cam, like the other exe data)
 //
 // NNN is the effect id of the action (kernel.bin magic "effect id", the one
 // passed to the effect loader; 1 = Cure). The file is a camera track exactly
@@ -52,6 +53,7 @@
 #include "../../globals.h"
 #include "../../cfg.h"
 #include "../../log.h"
+#include "../../exe_data.h"
 
 #include <intrin.h>
 #include <stdint.h>
@@ -158,9 +160,11 @@ static uint8_t *ff8_effect_camera_get_track(int effect_id)
 	if (it != effect_camera_tracks.end()) return it->second.empty() ? nullptr : it->second.data();
 
 	std::vector<uint8_t> &track = effect_camera_tracks[effect_id];
-	char filename[MAX_PATH];
+	char name[16], filename[MAX_PATH];
 
-	_snprintf(filename, sizeof(filename), "%s/%s/battle/effect_camera/effect_%03d.cam", basedir, direct_mode_path.c_str(), effect_id);
+	_snprintf(name, sizeof(name), "effect_%03d", effect_id);
+
+	if (!ff8_get_exe_path(name, filename, "cam")) return nullptr;
 
 	FILE *file = fopen(filename, "rb");
 

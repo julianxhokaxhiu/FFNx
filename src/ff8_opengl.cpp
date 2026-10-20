@@ -2770,7 +2770,7 @@ void ff8_init_hooks(struct game_obj *_game_object)
 	ff8_battle_ai_init();
 
 	// #####################
-	// Battle effect cameras from <direct_mode_path>/battle/effect_camera/
+	// Battle effect cameras from <direct_mode_path>/exe/effect_NNN.cam
 	// #####################
 	ff8_battle_effect_camera_init();
 

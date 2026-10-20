@@ -11,15 +11,17 @@ Mods only ship the files of the effects they change, so several mods can be comb
 ## File path
 
 ```
-<direct_mode_path>/battle/effect_camera/effect_NNN.cam
+<direct_mode_path>/exe/effect_NNN.cam
 ```
+
+Like the other [EXE data](../../mods/exe_data.md) files, `<direct_mode_path>/<language>/exe/effect_NNN.cam` takes precedence when it exists.
 
 - `<direct_mode_path>` is the `direct_mode_path` option of `FFNx.toml` (`direct` by default), inside the game folder.
 - `NNN` is the effect id, zero padded to 3 digits: the effect id that `kernel.bin` gives to the magic, item or ability (offset `0x04` of a magic entry), the same id that FF8UltimateEditor shows. `1` is Cure, `35` is Life, `5` is the Phoenix Down item effect.
 
-For example, `direct/battle/effect_camera/effect_005.cam` is the camera of the Phoenix Down effect.
+For example, `direct/exe/effect_005.cam` is the camera of the Phoenix Down effect.
 
-Camera tracks are the same in every language, so one file works with every exe language.
+Camera tracks are the same in every language, so one file in `direct/exe/` works with every exe language.
 
 Files are read the first time the effect is used in a game session. Restart the game after changing one.
 
@@ -62,4 +64,5 @@ Notes:
 
 - No file means vanilla behaviour. FFNx never forces a camera on an effect without a file: many effects that have no camera track move the camera with their own code (Irvine's Shots, Duel, Zell's finishers, Angelo, several GF summons, Gilgamesh...). Adding a file to one of them makes both move the camera at the same time.
 - A camera longer than its effect makes the action last longer, since the action waits for the camera to end.
+- The camera script decides what plays from the battle state. Camera variable 0 holds the opening shot that the command played before the effect (0-5 for a character's Magic and similar commands, 8 for a monster's Magic, -1 for none, like the Item command). Most exe effect tracks (175 of 221, every spell and item among them) end the script at once when variable 0 is below 0, so copied as they are, they play nothing for a command without an opening shot. For such commands, use a script that does not stop there, or one of the tracks that handle it (limit breaks and Quistis' Blue Magic, for example White Wind).
 - Only the cameras started by the effect start are replaced. Cameras that an effect starts later from its own code, GF summon cinematics (their tracks come from the summon files), the victory camera and the battle intro camera are not affected.

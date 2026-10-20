@@ -22,3 +22,6 @@
 #pragma once
 
 void exe_data_init();
+
+// <direct_mode_path>/<lang>/exe/<name>.<extension>, or else <direct_mode_path>/exe/<name>.<extension>. False if neither exists.
+bool ff8_get_exe_path(const char *name, char *target_filename, const char *extension = "msd");

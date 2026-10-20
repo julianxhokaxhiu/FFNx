@@ -21,6 +21,7 @@
 
 #include <shlwapi.h>
 
+#include "exe_data.h"
 #include "common.h"
 #include "log.h"
 #include "utils.h"
@@ -48,7 +49,7 @@ uint8_t *ff8_remastered_card_names = nullptr;
 uint8_t *ff8_remastered_draw_point = nullptr;
 uint8_t *ff8_remastered_card_texts = nullptr;
 
-bool ff8_get_exe_path(const char *name, char *target_filename, const char *extension = "msd")
+bool ff8_get_exe_path(const char *name, char *target_filename, const char *extension)
 {
     char langPath[16] = "";
     ff8_fs_lang_string(langPath);
