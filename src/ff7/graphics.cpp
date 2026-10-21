@@ -29,6 +29,7 @@
 #include "../ff7.h"
 #include "../macro.h"
 #include "../log.h"
+#include "../patch.h"
 #include "../gl.h"
 #include "defs.h"
 #include "field/model.h"
@@ -732,11 +733,11 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 	{
 		// Start from the animation's root motion (e.g. the height that stands the model on the floor, the train
 		// jump), then apply the struc_110 transforms on top of it, exactly like the vanilla path below
-		memcpy(&world_matrix, root_matrix, sizeof(world_matrix));
+		memcpy_code((uint32_t)&world_matrix, root_matrix, sizeof(world_matrix));
 		apply_struc110_transforms(&world_matrix, struc_110);
 
 		// world_matrix already includes the root motion, so it's used as is (like root_matrix in the vanilla path)
-		if(hrc_data->flags & 0x800) memcpy(&hrc_data->field_64, &world_matrix, sizeof(world_matrix));
+		if(hrc_data->flags & 0x800) memcpy_code((uint32_t)&hrc_data->field_64, &world_matrix, sizeof(world_matrix));
 
 		if(hrc_data->flags & 0x2000 && struc_110->bone_positions)
 		{
@@ -755,7 +756,7 @@ void draw_3d_model_smooth_skinning(uint32_t current_frame, struct anim_header *a
 			if((trace_all || trace_loaders) && external_mesh->rootMotionChecked.insert(anim_name).second)
 				ffnx_trace("External mesh: %s uses the gltf root motion\n", anim_name.c_str());
 
-			memcpy(&world_matrix, &gltf_root_matrix, sizeof(world_matrix));
+			memcpy_code((uint32_t)&world_matrix, &gltf_root_matrix, sizeof(world_matrix));
 			apply_struc110_transforms(&world_matrix, struc_110);
 		}
 	}
