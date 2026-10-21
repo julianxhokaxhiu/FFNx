@@ -14,7 +14,7 @@
 //    GNU General Public License for more details.                          //
 /****************************************************************************/
 
-// Battle effect cameras from <direct_mode_path>/exe/effect_NNN.cam, see docs/ff8/mods/effect_camera.md.
+// Battle effect cameras from <direct_mode_path>/exe/effect_NNN.bcam, see docs/ff8/mods/effect_camera.md.
 // While a magic cast starts its effect, the file track replaces the camera the effect plays,
 // or is played after it when the effect plays none.
 
@@ -98,7 +98,7 @@ static uint8_t *ff8_effect_camera_get_track(int effect_id)
 
 	_snprintf(name, sizeof(name), "effect_%03d", effect_id);
 
-	if (!ff8_get_exe_path(name, filename, "cam")) return nullptr;
+	if (!ff8_get_exe_path(name, filename, "bcam")) return nullptr;
 
 	FILE *file = fopen(filename, "rb");
 

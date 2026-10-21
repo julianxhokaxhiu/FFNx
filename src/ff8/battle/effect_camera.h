@@ -16,5 +16,5 @@
 
 #pragma once
 
-// Load battle effect camera tracks from <direct_mode_path>/exe/effect_NNN.cam. Call once.
+// Load battle effect camera tracks from <direct_mode_path>/exe/effect_NNN.bcam. Call once.
 void ff8_battle_effect_camera_init();

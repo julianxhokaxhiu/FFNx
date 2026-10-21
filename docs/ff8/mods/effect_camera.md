@@ -11,15 +11,15 @@ Mods only ship the files of the effects they change, so several mods can be comb
 ## File path
 
 ```
-<direct_mode_path>/exe/effect_NNN.cam
+<direct_mode_path>/exe/effect_NNN.bcam
 ```
 
-Like the other [EXE data](../../mods/exe_data.md) files, `<direct_mode_path>/<language>/exe/effect_NNN.cam` takes precedence when it exists.
+Like the other [EXE data](../../mods/exe_data.md) files, `<direct_mode_path>/<language>/exe/effect_NNN.bcam` takes precedence when it exists.
 
 - `<direct_mode_path>` is the `direct_mode_path` option of `FFNx.toml` (`direct` by default), inside the game folder.
 - `NNN` is the effect id, zero padded to 3 digits: the effect id that `kernel.bin` gives to the magic, item or ability (offset `0x04` of a magic entry), the same id that FF8UltimateEditor shows. `1` is Cure, `35` is Life, `5` is the Phoenix Down item effect.
 
-For example, `direct/exe/effect_005.cam` is the camera of the Phoenix Down effect.
+For example, `direct/exe/effect_005.bcam` is the camera of the Phoenix Down effect.
 
 Camera tracks are the same in every language, so one file in `direct/exe/` works with every exe language.
 
