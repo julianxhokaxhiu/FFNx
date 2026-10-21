@@ -85,8 +85,9 @@ storage. Copies stop at each source section's boundary and zero-fill unused nati
 space. Text header entries point into the persistent file buffer.
 
 Mapping all sections does not extend every native consumer. The currently supported
-count changes remain Magic, Battle commands, Command ability data and the seven
-learned-ability groups. Their limits and references are described in
-[Extended kernel abilities and battle commands](kernel_abilities.md). Other tables
+count changes include Magic, Battle commands, Command ability data, the seven
+learned-ability groups and the item sections. Their limits and references are described in
+[Extended kernel abilities and battle commands](kernel_abilities.md) and
+[Extended items and inventory pages](items.md). Other tables
 retain the counts expected by the game; a changed unsupported table is reported.
-Existing saves are not migrated.
+The item extension imports legacy inventories and persists its extra slots in the save-image tail.

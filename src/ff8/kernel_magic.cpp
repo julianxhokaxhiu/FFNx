@@ -18,6 +18,7 @@
 #include "kernel.h"
 #include "kernel_ability.h"
 #include "kernel_command.h"
+#include "kernel_item.h"
 
 #include "../ff8.h"
 #include "../patch.h"
@@ -639,11 +640,13 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 		ffnx_warning("AddMoreMagic: kernel.bin has %d magic entries (max %d), ignoring extension.\n", entries, MAX_MAGIC_ID);
 	bool ability_grown = ff8_kernel_ability_read(file);
 	bool command_grown = ff8_kernel_command_read(file);
+	bool item_grown = false;
+	if (!ff8_kernel_item_read(file, item_grown)) return 0;
 	bool moved = (uint32_t)size > VANILLA_KERNEL_SIZE;
 	for (int i = 0; i <= KERNEL_FIRST_TEXT_SEC; ++i)
 		moved |= file.header().section_offsets[i] != ff8_kernel_vanilla_offsets[i];
 
-	if (!magic_grown && !ability_grown && !command_grown && !moved)
+	if (!magic_grown && !ability_grown && !command_grown && !item_grown && !moved)
 	{
 		memcpy_code((uint32_t)dest, (void *)ff8_kernel_stash, size);
 		return size;
@@ -660,7 +663,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 		uint32_t dst = ff8_kernel_vanilla_offsets[i];
 		uint32_t capacity = ff8_kernel_vanilla_offsets[i + 1] - dst;
 		out_header.section_offsets[i] = dst;
-		if (i != KERNEL_MAGIC_SECTION && !ff8_kernel_ability_section_may_grow(i) && !ff8_kernel_command_section_may_grow(i) && source.size() != capacity)
+		if (i != KERNEL_MAGIC_SECTION && !ff8_kernel_ability_section_may_grow(i) && !ff8_kernel_command_section_may_grow(i) && !ff8_kernel_item_section_may_grow(i) && source.size() != capacity)
 		{
 			++non_vanilla_sections;
 			if (trace_all) ffnx_trace("FF8: kernel.bin data section %d has size %u, expected %u.\n", i + 1, (uint32_t)source.size(), capacity);
@@ -669,7 +672,7 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 		memcpy_code((uint32_t)(dest + dst), (void *)source.data(), copy_size);
 	}
 	if (non_vanilla_sections)
-		ffnx_warning("FF8: kernel.bin has %d unsupported data section sizes; only Magic, battle commands, command ability data and abilities may change size.\n", non_vanilla_sections);
+		ffnx_warning("FF8: kernel.bin has %d unsupported data section sizes; only Magic, items, battle commands, command ability data and abilities may change size.\n", non_vanilla_sections);
 
 	// Text remains in the persistent file buffer; native header offsets are relative to dest.
 	for (int i = KERNEL_FIRST_TEXT_SEC; i < KERNEL_SECTION_COUNT; ++i)

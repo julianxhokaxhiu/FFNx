@@ -2,6 +2,7 @@
 
  - [Kernel mapping](kernel.md)
  - [Extended kernel abilities and battle commands](kernel_abilities.md)
+ - [Extended items and inventory pages](items.md)
  - [Item expansion investigation](item_expansion_investigation.md)
  - [VRAM](vram.md)
  - [List of external textures](mods/external_textures.md)

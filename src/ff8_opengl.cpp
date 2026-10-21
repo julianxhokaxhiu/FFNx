@@ -38,6 +38,7 @@
 #include "ff8/file.h"
 #include "ff8/vram.h"
 #include "ff8/save_data.h"
+#include "ff8/kernel_item.h"
 #include "ff8/battle/ai.h"
 #include "ff8/battle/effect_camera.h"
 #include "ff8/field/movie.h"
@@ -1919,12 +1920,13 @@ int ff8_world_sub_54D7E0(WORD* a1)
 // because the original function in FF8 exe code has been completely replaced
 int ff8_add_item_to_player(int item_id, char quantity)
 {
+	if (ff8_kernel_item_active()) return ff8_kernel_item_add(item_id, quantity);
 	if (!item_id) {
 		return 0;
 	}
 
-	savemap_ff8_item *items = ff8_externals.savemap->items.items;
-	for (int i = 0; i < 198; ++i)
+	auto items = ff8_player_items();
+	for (size_t i = 0; i < items.size(); ++i)
 	{
 		if (items[i].item_id == item_id )
 		{
@@ -1957,7 +1959,7 @@ int ff8_add_item_to_player_wrapper(int item_id, char quantity)
 {
 	int ret = ff8_add_item_to_player(item_id, quantity);
 	if (SteamAchievementsFF8::itemIsMagazine(item_id)) {
-		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_externals.savemap->items);
+		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_player_items());
 	}
 	return ret;
 }
@@ -1965,8 +1967,8 @@ int ff8_add_item_to_player_wrapper(int item_id, char quantity)
 void ff8_menu_shop_update_gil_and_items(int gil)
 {
 	bool bought_magazine = false;
-	savemap_ff8_item *items = ff8_externals.savemap->items.items;
-	for (int i = 0; i < 198; ++i)
+	auto items = ff8_player_items();
+	for (size_t i = 0; i < items.size(); ++i)
 	{
 		if (SteamAchievementsFF8::itemIsMagazine(items[i].item_id)
 			&& ff8_externals.menu_shop_staged_items_1D8D058[items[i].item_id] > items[i].item_quantity)
@@ -1980,7 +1982,7 @@ void ff8_menu_shop_update_gil_and_items(int gil)
 
 	if (bought_magazine)
 	{
-		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_externals.savemap->items);
+		g_FF8SteamAchievements->unlockMagazineAddictAchievement(ff8_player_items());
 	}
 }
 

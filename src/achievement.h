@@ -25,6 +25,7 @@
 #include <memory>
 #include <optional>
 #include <array>
+#include <span>
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -610,7 +611,7 @@ public:
     void unlockObelLakeQuestAchievement();
     void unlockRagnarokAchievement();
     void unlockEndOfGameAchievement(int squall_lvl);
-    void unlockMagazineAddictAchievement(const savemap_ff8_items &items);
+    void unlockMagazineAddictAchievement(std::span<const savemap_ff8_item> items);
 
     static bool itemIsMagazine(uint8_t item_id);
 

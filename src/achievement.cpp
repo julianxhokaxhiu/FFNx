@@ -1108,16 +1108,16 @@ void SteamAchievementsFF8::unlockEndOfGameAchievement(int squall_lvl)
     }
 }
 
-void SteamAchievementsFF8::unlockMagazineAddictAchievement(const savemap_ff8_items &items)
+void SteamAchievementsFF8::unlockMagazineAddictAchievement(std::span<const savemap_ff8_item> items)
 {
     if (this->isRemastered) {
         return;
     }
 
     std::unordered_set<uint8_t> magazines_found = {};
-    for (int i = 0; i < ITEM_SLOTS; i++) {
-        if (itemIsMagazine(items.items[i].item_id) && items.items[i].item_quantity > 0) {
-            magazines_found.insert(items.items[i].item_id);
+    for (const auto &item : items) {
+        if (itemIsMagazine(item.item_id) && item.item_quantity > 0) {
+            magazines_found.insert(item.item_id);
         }
     }
     ach_trace("%s - trying to unlock magazine addict achivement (magazines found: %d)\n", __func__, magazines_found.size());

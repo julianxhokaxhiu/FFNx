@@ -1,6 +1,7 @@
 # AddMoreItems investigation
 
-Status: design investigation; item expansion is not implemented by this branch yet.
+Status: historical investigation. The implementation and its current limits are
+documented in [Extended items and inventory pages](items.md).
 
 Investigated on 2026-10-21. Branch `AddMoreItems` starts at `aa5fea54`
 (`fork/codex/add-more-abilities`), which includes the typed kernel file reader,
