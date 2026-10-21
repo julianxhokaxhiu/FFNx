@@ -46,3 +46,7 @@ bounds in item use and both rearrangement lists, manual swapping, the intercepte
 state, native save construction and both vanilla CRC copies, accepted-load
 migration, and bounded asset loading/reloads. Rendering and input presentation
 still require an interactive game test.
+
+The SHA-256-guarded `ida_annotations.py` replays the 40 item audit comments and
+eight verified helper names in IDA. It changes annotations only. Save the IDB
+after applying if automatic saving is disabled.

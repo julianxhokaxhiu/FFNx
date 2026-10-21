@@ -119,3 +119,6 @@ records for IDs 199-254. Fixtures are generated locally and are not committed.
 See [test instructions](../../tests/ff8_items/README.md). Native harness checks
 are not an interactive in-game graphics/input validation; test the resulting DLL
 with a copied save and modded assets before using this branch for a playthrough.
+
+See the [implementation summary](item_expansion_summary.md) for the changes,
+validation status and exported IDA annotations.
