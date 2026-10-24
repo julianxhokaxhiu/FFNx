@@ -419,6 +419,28 @@ static void ff8_dump_battle_actor_sounds()
         ffnx_warning("Cannot write actor sound table %s\n", filename);
 }
 
+static void ff8_dump_battle_scan_cameras()
+{
+    const uint8_t *rows = ff8_get_scan_camera_rows();
+    if (rows == nullptr)
+        return;
+
+    char filename[MAX_PATH] = {};
+    if (ff8_get_exe_path("battle_scan_cameras", filename, "bin"))
+        return;
+
+    FILE *file = fopen(filename, "wb");
+    if (file == nullptr)
+    {
+        ffnx_warning("Cannot create scan camera table %s\n", filename);
+        return;
+    }
+
+    bool valid = fwrite(rows, FF8_SCAN_CAMERA_ROW_SIZE, FF8_SCAN_CAMERA_ROWS, file) == FF8_SCAN_CAMERA_ROWS;
+    if (fclose(file) != 0 || !valid)
+        ffnx_warning("Cannot write scan camera table %s\n", filename);
+}
+
 void dump_exe_data()
 {
     char dirname[MAX_PATH] = {};
@@ -431,6 +453,7 @@ void dump_exe_data()
     {
         ff8_dump_battle_scan_texts();
         ff8_dump_battle_actor_sounds();
+        ff8_dump_battle_scan_cameras();
         ff8_dump_card_names();
 
         if (!ff8_get_exe_path(FF8_EXE_DRAW_POINT, dirname)) {
@@ -465,6 +488,30 @@ static void ff8_actor_sound_data_init()
     }
 }
 
+static void ff8_scan_camera_data_init()
+{
+    if (ff8_get_scan_camera_rows() == nullptr)
+        return;
+    char filename[MAX_PATH] = {};
+    constexpr size_t size = FF8_SCAN_CAMERA_ROWS * FF8_SCAN_CAMERA_ROW_SIZE;
+    if (ff8_get_exe_path("battle_scan_cameras", filename, "bin"))
+    {
+        FILE *file = fopen(filename, "rb");
+        if (file == nullptr)
+        {
+            ffnx_warning("Cannot open scan camera table %s\n", filename);
+            return;
+        }
+        uint8_t rows[size];
+        bool valid = fread(rows, 1, size, file) == size && fgetc(file) == EOF && !ferror(file);
+        fclose(file);
+        if (valid)
+            ff8_set_scan_camera_rows(rows);
+        else
+            ffnx_warning("Scan camera table %s must contain exactly %u bytes; keeping defaults.\n", filename, (unsigned)size);
+    }
+}
+
 void exe_data_init()
 {
     if (save_exe_data)
@@ -475,6 +522,7 @@ void exe_data_init()
     if (ff8)
     {
         ff8_actor_sound_data_init();
+        ff8_scan_camera_data_init();
         replace_call(ff8_externals.sub_84F8D0 + 0x88, ff8_battle_get_scan_text);
         replace_function(ff8_externals.get_card_name, ff8_get_card_name);
         uint8_t *msd = ff8_override_msd_data(FF8_EXE_DRAW_POINT, ff8_exe_draw_point, ff8_exe_draw_point_file_absent);

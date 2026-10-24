@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 // Unlock the unused battle monster models c0m144..c0m199 so encounters can
 // reference them. Call once from ff8_init_hooks(), after ff8_externals is
 // resolved.
@@ -24,3 +26,12 @@ void ff8_battle_monsters_init();
 // Seven world sound IDs per actor: character rows 0-15, monster rows c0m# + 16.
 constexpr unsigned FF8_BATTLE_ACTOR_SOUND_ROWS = 216; // through c0m199
 constexpr unsigned FF8_BATTLE_ACTOR_SOUND_SLOTS = 7;
+
+// Scan camera rows: com_id 0-159, 6 alternate monster forms, then c0m144+ at c0m# + 22.
+constexpr unsigned FF8_SCAN_CAMERA_VANILLA_ROWS = 166;
+constexpr unsigned FF8_SCAN_CAMERA_ROWS = 262; // through com_id 255
+constexpr unsigned FF8_SCAN_CAMERA_ROW_SIZE = 0x10;
+
+// nullptr when the Scan lookups were not extended
+const uint8_t *ff8_get_scan_camera_rows();
+void ff8_set_scan_camera_rows(const uint8_t *rows);
