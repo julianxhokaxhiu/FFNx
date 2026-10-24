@@ -987,10 +987,8 @@ void ff8_find_externals()
 	ff8_externals.byte_1CFF1C3 = (BYTE*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x15);
 	ff8_externals.unk_1CFDC70 = (char*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x1E);
 	ff8_externals.unk_1CFDC7C = (char*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x28);
-	ff8_externals.word_1CF75EC = (WORD*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x39);
 	ff8_externals.unk_1CFF84C = (char*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x44);
-	ff8_externals.unk_1CF3E48 = (char*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x57);
-	ff8_externals.dword_1CF3EE0 = (DWORD*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x4B);
+	ff8_externals.kernel = (ff8_kernel_vanilla_data*)get_absolute_value(ff8_externals.battle_get_actor_name_sub_47EAF0, 0x57);
 
 	ff8_externals.battle_current_actor_talking = (DWORD*)get_absolute_value(ff8_externals.sub_485610, 0x36E);
 
