@@ -76,7 +76,9 @@ static void map_executable(bytes file)
 	ff8_externals.kernel = reinterpret_cast<ff8_kernel_vanilla_data *>(0x1CF3E48);
 	ff8_externals.main_menu_controller = 0x4E3090;
 	ff8_externals.menu_use_items_sub_4F81F0 = reinterpret_cast<char(*)(int)>(0x4F81F0);
-	ff8_externals.sm_pc_read = reinterpret_cast<uint32_t(*)(char *, void *)>(0x4C0BCC + 5 + *reinterpret_cast<int32_t *>(0x4C0BCD));
+	// As FFNx resolves it (main_loop + 0x9C): LoadFileToBuffer, not the au_re_SmPcRead wrapper
+	// that the main menu calls - taking it from that call site hid a check that always failed.
+	ff8_externals.sm_pc_read = reinterpret_cast<uint32_t(*)(char *, void *)>(0x52D400);
 	static char empty[] = ""; ff8_externals.unk_1CFF84C = empty;
 }
 

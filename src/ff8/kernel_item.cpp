@@ -141,7 +141,9 @@ bool supported()
 		}
 	return call_site_is(0x4E3BB0, 0x4E2EF0) && call_site_is(0x4E3C11, 0x4E2EF0) &&
 		call_site_is(0x4E4F1E, 0x49A7B0) && call_site_is(0x4E4401, 0x56DA10) &&
-		call_site_is(0x4C0BCC, reinterpret_cast<uint32_t>(ff8_externals.sm_pc_read)) &&
+		// The main menu reads its assets through au_re_SmPcRead (0x4ABF30), a thin wrapper of
+		// LoadFileToBuffer - FFNx's sm_pc_read - so the call never targets sm_pc_read itself.
+		call_site_is(0x4C0BCC, 0x4ABF30) &&
 		call_site_is(0x4F831B, 0x4C0A30) && call_site_is(0x4F8C50, 0x4C0A30) && call_site_is(0x4FB8E0, 0x4C0A30);
 }
 
