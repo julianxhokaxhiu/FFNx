@@ -126,6 +126,54 @@ struct savemap_ff8_shop {
 	uint8_t unk1[3];
 };
 
+enum SavemapConfigFlags : uint8_t
+{
+	SAVEMAP_CONFIG_WAIT_MODE = 0x1,
+	SAVEMAP_CONFIG_MONO_SOUND = 0x2,
+	SAVEMAP_CONFIG_CURSOR_MEMORY = 0x4,
+	SAVEMAP_CONFIG_UNKNOWN_0008 = 0x8,
+	SAVEMAP_CONFIG_TARGET_NAME_LIST = 0x10,
+	SAVEMAP_CONFIG_CUSTOM_CONTROLS = 0x20,
+	SAVEMAP_CONFIG_VIBRATION_ENABLED = 0x40,
+	SAVEMAP_CONFIG_SWAP_ANALOG_STICKS = 0x80,
+};
+
+enum MapSeal : uint8_t
+{
+	MAP_SEAL_ITEM_LOCKED = 0x1,
+	MAP_SEAL_MAGIC_LOCKED = 0x2,
+	MAP_SEAL_GF_LOCKED = 0x4,
+	MAP_SEAL_DRAW_LOCKED = 0x8,
+	MAP_SEAL_COMMAND_ABILITY_LOCKED = 0x10,
+	MAP_SEAL_LIMIT_BREAK_LOCKED = 0x20,
+	MAP_SEAL_RESURRECTION_LOCKED = 0x40,
+	MAP_SEAL_SAVE_LOCKED = 0x80,
+};
+
+struct savemap_ff8_config
+{
+	uint8_t battle_speed;
+	uint8_t battle_message_speed;
+	uint8_t message_speed;
+	uint8_t analog_or_volume;
+	SavemapConfigFlags flags;
+	uint8_t scan;
+	uint8_t camera;
+	MapSeal map_seal;
+	uint8_t l2;
+	uint8_t r2;
+	uint8_t l1;
+	uint8_t r1;
+	uint8_t triangle;
+	uint8_t circle;
+	uint8_t cross;
+	uint8_t square;
+	uint8_t select;
+	uint8_t u4;
+	uint8_t u5;
+	uint8_t start;
+};
+
 struct savemap_ff8_limit_break {
 	uint16_t quistis_lb;
 	uint16_t zell_lb;
@@ -324,7 +372,7 @@ struct savemap_ff8 {
 	savemap_ff8_gf gfs[G_FORCE_NUM];
 	savemap_ff8_character chars[CHAR_NUM];
 	savemap_ff8_shop shop[20];
-	uint8_t config[20];
+	savemap_ff8_config config;
 	uint8_t party[4]; // 0xFF terminated
 	uint32_t unlocked_weapons; // bitmap for weapons unlocked
 	uint8_t griever_name[12];

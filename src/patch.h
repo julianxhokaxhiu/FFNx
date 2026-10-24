@@ -70,7 +70,7 @@ void patch_divide_code(uint32_t offset, int multiplier)
     // TODO Add assertion
 }
 
-void memcpy_code(uint32_t offset, void *data, uint32_t size);
+void memcpy_code(uint32_t offset, const void *data, uint32_t size);
 void memset_code(uint32_t offset, uint32_t val, uint32_t size);
 
 void* member_func_to_ptr(char i, ...);
