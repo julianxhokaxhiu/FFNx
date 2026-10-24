@@ -90,4 +90,4 @@ learned-ability groups and the item sections. Their limits and references are de
 [Extended kernel abilities and battle commands](kernel_abilities.md) and
 [Extended items and inventory pages](items.md). Other tables
 retain the counts expected by the game; a changed unsupported table is reported.
-The item extension imports legacy inventories and persists its extra slots in the save-image tail.
+Existing saves are not migrated, except for items: see [Saves](items.md#saves).
