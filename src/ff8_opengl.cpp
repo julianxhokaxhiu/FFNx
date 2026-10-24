@@ -57,6 +57,8 @@ int left_stick_y = 0x80;
 int left_stick_x = 0x80;
 int right_stick_y = 0x80;
 int right_stick_x = 0x80;
+static const double ff8_swirl_half_pixel_double = 0.5;
+static const float ff8_swirl_half_pixel_float = 0.5f;
 
 std::chrono::time_point<std::chrono::high_resolution_clock> intro_credits_music_start_time;
 constexpr int intro_credits_fade_frames = 33;
@@ -2437,6 +2439,19 @@ void ff8_init_hooks(struct game_obj *_game_object)
 
 	// don't set system speaker config to stereo
 	memset_code(common_externals.directsound_create + 0x6D, 0x90, 34);
+
+	if (NV_VERSION)
+	{
+		// Keep the shared half-pixel correction for ordinary rendering, but not the swirl zoom geometry.
+		patch_code_double(ff8_externals.nvidia_half_pixel_fix_double, 0.0);
+		patch_code_float(ff8_externals.nvidia_half_pixel_fix_float, 0.0f);
+
+		patch_code_dword(ff8_externals.swirl_zoom_transition + 0x3E, uint32_t(&ff8_swirl_half_pixel_double));
+		patch_code_dword(ff8_externals.swirl_zoom_transition + 0xAC, uint32_t(&ff8_swirl_half_pixel_float));
+		patch_code_dword(ff8_externals.swirl_zoom_transition + 0xBC, uint32_t(&ff8_swirl_half_pixel_float));
+		patch_code_dword(ff8_externals.swirl_zoom_transition + 0xC7, uint32_t(&ff8_swirl_half_pixel_float));
+		patch_code_dword(ff8_externals.swirl_zoom_transition + 0xE5, uint32_t(&ff8_swirl_half_pixel_float));
+	}
 
 	memcpy_code(ff8_externals.sub_4653B0 + 0xA5, texture_reload_fix1, sizeof(texture_reload_fix1));
 	replace_function(ff8_externals.sub_4653B0 + 0xA5 + sizeof(texture_reload_fix1), texture_reload_hack1);

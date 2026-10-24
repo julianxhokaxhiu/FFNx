@@ -510,6 +510,11 @@ void ff8_find_externals()
 	ff8_externals.swirl_allocate_quads = get_relative_call(swirl_zoom, 0xA6);
 	ff8_externals.swirl_submit_graphics_object = (void (*)(ff8_graphics_object *, ff8_game_obj *))get_relative_call(ff8_externals.swirl_wipe_draw, 0x1B6);
 
+	const uint32_t swirl_transition = get_relative_call(ff8_externals.swirl_main_loop, 0x28);
+	ff8_externals.swirl_zoom_transition = get_relative_call(swirl_transition, 0xC1);
+	ff8_externals.nvidia_half_pixel_fix_double = get_absolute_value(ff8_externals.swirl_zoom_transition, 0x3E);
+	ff8_externals.nvidia_half_pixel_fix_float = get_absolute_value(ff8_externals.swirl_zoom_transition, 0xAC);
+
 	ff8_externals.swirl_sub_56D1D0 = get_relative_call(ff8_externals.battle_main_loop, 0x285);
 	ff8_externals.swirl_sub_56D390 = get_relative_call(ff8_externals.swirl_sub_56D1D0, 0x2A);
 	ff8_externals.swirl_texture1 = (ff8_graphics_object **)get_absolute_value(ff8_externals.swirl_sub_56D1D0, 0x1);

@@ -1252,6 +1252,9 @@ struct ff8_externals
 	uint32_t movie_hack1;
 	uint32_t movie_hack2;
 	uint32_t swirl_sub_56D390;
+	uint32_t swirl_zoom_transition;
+	uint32_t nvidia_half_pixel_fix_double;
+	uint32_t nvidia_half_pixel_fix_float;
 	struct sprite_viewport *sprite_viewport; // 0xB86D40
 	struct sprite_viewport *menu_viewport; // 0xB86DA0
 	uint32_t main_loop; // 0x4706B0
