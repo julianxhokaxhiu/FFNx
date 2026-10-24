@@ -8,7 +8,9 @@ kernels do not enable the extension or change the number of pages.
 
 The first implementation checks all native operands and hook signatures before
 installing any item patches. Extended item kernels on another executable, or on
-an incompatible patched executable, are rejected with an AddMoreItems diagnostic.
+an incompatible patched executable, load without the added items: the log names the
+check that failed (an operand, function start or call site another mod patched) and
+items 0-198 work as usual.
 The existing Magic/Ability/Command features retain their own version support.
 
 ## File format

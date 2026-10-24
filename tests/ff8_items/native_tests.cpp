@@ -20,6 +20,7 @@ extern "C" const void *__cdecl memchr(const void *p, int value, size_t n) { auto
 static void print(const char *message) { DWORD written; WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), message, static_cast<DWORD>(strlen(message)), &written, nullptr); }
 static void require(bool ok, const char *message) { print(ok ? "PASS: " : "FAIL: "); print(message); print("\n"); if (!ok) ExitProcess(1); }
 void ffnx_warning(const char *message, ...) { print(message); }
+void ffnx_error(const char *message, ...) { print(message); }
 void ffnx_trace(const char *, ...) {}
 void ffnx_info(const char *message, ...) { print(message); }
 void *item_test_malloc(unsigned size) { return HeapAlloc(GetProcessHeap(), 0, size); }

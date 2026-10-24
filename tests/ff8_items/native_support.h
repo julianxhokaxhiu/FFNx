@@ -17,6 +17,7 @@ extern item_test_externals ff8_externals;
 extern int version;
 #define FF8_US_VERSION (version == 5)
 void ffnx_warning(const char *, ...);
+void ffnx_error(const char *, ...);
 void ffnx_trace(const char *, ...);
 void ffnx_info(const char *, ...);
 uint32_t replace_function(uint32_t, void *);

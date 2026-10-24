@@ -640,8 +640,12 @@ static int __cdecl ff8_kernel_load_hook(const char *filename, char *dest)
 		ffnx_warning("AddMoreMagic: kernel.bin has %d magic entries (max %d), ignoring extension.\n", entries, MAX_MAGIC_ID);
 	bool ability_grown = ff8_kernel_ability_read(file);
 	bool command_grown = ff8_kernel_command_read(file);
+	// A kernel.bin the item extension cannot take still loads: its first 33 battle items and
+	// 166 item names fill the native tables as usual and the added items are ignored (the
+	// reason is in the log). Refusing the whole file left the game without a kernel and it
+	// crashed at the title screen.
 	bool item_grown = false;
-	if (!ff8_kernel_item_read(file, item_grown)) return 0;
+	ff8_kernel_item_read(file, item_grown);
 	bool moved = (uint32_t)size > VANILLA_KERNEL_SIZE;
 	for (int i = 0; i <= KERNEL_FIRST_TEXT_SEC; ++i)
 		moved |= file.header().section_offsets[i] != ff8_kernel_vanilla_offsets[i];

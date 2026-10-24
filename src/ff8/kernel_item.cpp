@@ -96,26 +96,53 @@ bool call_is(uint32_t site, uint32_t target)
 		site + 5 + *reinterpret_cast<const int32_t *>(site + 1) == target;
 }
 
+// Every check names what it found: another mod (a hext, a DLL) patching the same code is the
+// usual reason, and the log has to say where to look.
+bool unsupported(const char *what, uint32_t address, uint32_t found, uint32_t expected)
+{
+	ffnx_error("AddMoreItems: %s at 0x%X is 0x%X, expected 0x%X (another mod patching this code?); "
+		"items stay vanilla.\n", what, address, found, expected);
+	return false;
+}
+
+bool call_site_is(uint32_t site, uint32_t target)
+{
+	if (call_is(site, target)) return true;
+	const uint8_t opcode = *reinterpret_cast<const uint8_t *>(site);
+	return unsupported("call site", site, opcode == 0xE8 ? site + 5 + *reinterpret_cast<const int32_t *>(site + 1)
+		: 0xFF000000u | opcode, target);
+}
+
 bool supported()
 {
-	if (!FF8_US_VERSION || reinterpret_cast<uint32_t>(ff8_externals.savemap->items.items) != native_inventory ||
-		reinterpret_cast<uint32_t>(ff8_externals.menu_use_items_sub_4F81F0) != 0x4F81F0 ||
-		ff8_externals.main_menu_controller != 0x4E3090 ||
-		reinterpret_cast<uint32_t>(ff8_externals.kernel->battle_items) != native_battle_items) return false;
-	for (const auto &patch : item_patches)
+	if (!FF8_US_VERSION)
 	{
-		if (read_operand(patch) != patch.expected)
-		{
-			ffnx_warning("AddMoreItems: unsupported operand at 0x%X; no item patches applied.\n", patch.address);
-			return false;
-		}
+		ffnx_error("AddMoreItems: only the 2013 English executable is supported; items stay vanilla.\n");
+		return false;
 	}
+	const uint32_t inventory_address = reinterpret_cast<uint32_t>(ff8_externals.savemap->items.items);
+	if (inventory_address != native_inventory) return unsupported("savemap inventory", 0, inventory_address, native_inventory);
+	const uint32_t menu = reinterpret_cast<uint32_t>(ff8_externals.menu_use_items_sub_4F81F0);
+	if (menu != 0x4F81F0) return unsupported("item menu", 0, menu, 0x4F81F0);
+	if (ff8_externals.main_menu_controller != 0x4E3090)
+		return unsupported("main menu controller", 0, ff8_externals.main_menu_controller, 0x4E3090);
+	const uint32_t battle_items = reinterpret_cast<uint32_t>(ff8_externals.kernel->battle_items);
+	if (battle_items != native_battle_items) return unsupported("kernel battle items", 0, battle_items, native_battle_items);
+	for (const auto &patch : item_patches)
+		if (read_operand(patch) != patch.expected)
+			return unsupported("operand", patch.address, read_operand(patch), patch.expected);
 	for (const auto &hook : item_hook_signatures)
-		if (std::memcmp(reinterpret_cast<const void *>(hook.address), hook.bytes, hook.length)) return false;
-	return call_is(0x4E3BB0, 0x4E2EF0) && call_is(0x4E3C11, 0x4E2EF0) &&
-		call_is(0x4E4F1E, 0x49A7B0) && call_is(0x4E4401, 0x56DA10) &&
-		call_is(0x4C0BCC, reinterpret_cast<uint32_t>(ff8_externals.sm_pc_read)) &&
-		call_is(0x4F831B, 0x4C0A30) && call_is(0x4F8C50, 0x4C0A30) && call_is(0x4FB8E0, 0x4C0A30);
+		if (std::memcmp(reinterpret_cast<const void *>(hook.address), hook.bytes, hook.length))
+		{
+			uint32_t found = 0, expected = 0;
+			std::memcpy(&found, reinterpret_cast<const void *>(hook.address), 4);
+			std::memcpy(&expected, hook.bytes, 4);
+			return unsupported("function start", hook.address, found, expected);
+		}
+	return call_site_is(0x4E3BB0, 0x4E2EF0) && call_site_is(0x4E3C11, 0x4E2EF0) &&
+		call_site_is(0x4E4F1E, 0x49A7B0) && call_site_is(0x4E4401, 0x56DA10) &&
+		call_site_is(0x4C0BCC, reinterpret_cast<uint32_t>(ff8_externals.sm_pc_read)) &&
+		call_site_is(0x4F831B, 0x4C0A30) && call_site_is(0x4F8C50, 0x4C0A30) && call_site_is(0x4FB8E0, 0x4C0A30);
 }
 
 // An added battle record whose data (everything after the two text offsets) is all zero is
@@ -431,12 +458,12 @@ bool ff8_kernel_item_read(const ff8_kernel_file &file, bool &changed)
 	if (battle.size() < vanilla_battle_count || battle.size() > max_battle_records || other.size() < 166 || other.size() > non_battle_records.size() ||
 		(battle.size() > vanilla_battle_count && first_added_item + battle.size() - vanilla_battle_count > vanilla_battle_count + other.size()))
 	{
-		ffnx_warning("AddMoreItems: invalid item section counts; kernel load rejected.\n");
+		ffnx_error("AddMoreItems: invalid item section counts; items 199-255 are ignored.\n");
 		return false;
 	}
 	if (!active && !supported())
 	{
-		ffnx_warning("AddMoreItems: item expansion requires the verified EN executable; kernel load rejected.\n");
+		ffnx_warning("AddMoreItems: the item extension cannot start (see above); items 199-255 are ignored.\n");
 		return false;
 	}
 	// Check text offsets against the file's real section boundaries, including
@@ -449,13 +476,13 @@ bool ff8_kernel_item_read(const ff8_kernel_file &file, bool &changed)
 	for (const auto &entry : battle)
 		if (!valid_text(ff8_kernel_section::battle_item_text, entry.offset_item_name) || !valid_text(ff8_kernel_section::battle_item_text, entry.offset_item_description))
 		{
-			ffnx_warning("AddMoreItems: invalid battle-item text offset; kernel load rejected.\n");
+			ffnx_error("AddMoreItems: invalid battle-item text offset; items 199-255 are ignored.\n");
 			return false;
 		}
 	for (const auto &entry : other)
 		if (!valid_text(ff8_kernel_section::non_battle_item_text, entry.offset_to_item_name) || !valid_text(ff8_kernel_section::non_battle_item_text, entry.offset_to_item_description))
 		{
-			ffnx_warning("AddMoreItems: invalid item text offset; kernel load rejected.\n");
+			ffnx_error("AddMoreItems: invalid item text offset; items 199-255 are ignored.\n");
 			return false;
 		}
 	battle_records.fill({});
